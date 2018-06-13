@@ -121,6 +121,11 @@ class GModel {
   void _createFMInternals();
   void _deleteFMInternals();
 
+#if defined(HAVE_LIBCGNS)
+  int _readCGNSStructured(const std::string& name);
+  int _readCGNSUnstructured(const std::string& name);
+#endif
+
   // characteristic length (mesh size) fields
   FieldManager *_fields;
 
@@ -734,25 +739,6 @@ class GModel {
 
   // GAMBIT neutral mesh file (.neu)
   int writeNEU(const std::string &name, bool saveAll, double scalingFactor);
-
-#if defined HAVE_LIBCGNS
-protected:
-
-  int readCGNSBase(const std::string& name,int& nbases) const;
-  int readCGNSStructured  (const std::string& name);
-  int readCGNSUnstructured(const std::string& name);
-  int addCGNSPoints(const std::string&,
-                    int fileIndex,
-                    int baseIndex,
-                    int zoneIndex,
-                    CGNS::cgsize_t nbPoints,
-                    int dim,
-                    double scale,
-                    GEntity* ge,
-                    int& pointIndex,
-                    std::vector<MVertex*>& vertices);
-
-#endif
 };
 
 #endif

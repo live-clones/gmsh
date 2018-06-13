@@ -3,15 +3,20 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 //
-// GModelIO_CGNS.cpp - Copyright (C) 2008-2017 S. Guzik, B. Gorissen, K. Hillewaert, C. Geuzaine, J.-F. Remacle
+// CGNSFunctions.cpp - Copyright (C) 2008-2018 S. Guzik, B. Gorissen,
+// K. Hillewaert, C. Geuzaine, J.-F. Remacle
 
 #include "GmshConfig.h"
-#include "GmshMessage.h"
-#include "GModel.h"
-#include "CGNSOptions.h"
 
 #if defined(HAVE_LIBCGNS)
 
+#include <vector>
+#include <sstream>
+#include <fstream>
+#include <iomanip>
+#include "GmshMessage.h"
+#include "GModel.h"
+#include "CGNSOptions.h"
 #include "BasisFactory.h"
 #include "SVector3.h"
 #include "fullMatrix.h"
@@ -23,84 +28,65 @@ namespace CGNS {
 
 using namespace CGNS;
 
-#include <vector>
-// -----------------------------------------------------------------------------
-
-int parentFromCGNSType(ElementType_t cgnsType) {
-
-  switch(cgnsType) {
+int parentFromCGNSType(ElementType_t cgnsType)
+{
+  switch(cgnsType){
   case NODE:
     return TYPE_PNT;
-    break;
   case BAR_2: case BAR_3: case BAR_4: case BAR_5:
     return TYPE_LIN;
-    break;
   case TRI_3: case TRI_6: case TRI_9: case TRI_10: case TRI_12: case TRI_15:
     return TYPE_TRI;
-    break;
   case QUAD_4: case QUAD_9: case QUAD_16: case QUAD_25:
                case QUAD_8: case QUAD_12: case QUAD_P4_16:
     return TYPE_QUA;
-    break;
   case TETRA_4: case TETRA_10: case TETRA_20: case TETRA_35:
                                case TETRA_16: case TETRA_22:
                                               case TETRA_34:
     return TYPE_TET;
-    break;
   case PYRA_5: case PYRA_14: case PYRA_30: case PYRA_55:
                case PYRA_13: case PYRA_21: case PYRA_P4_29:
                              case PYRA_29: case PYRA_50:
     return TYPE_PYR;
-    break;
-   // pentahedra
   case PENTA_6:  case PENTA_18: case PENTA_40: case PENTA_75:
                  case PENTA_15: case PENTA_24: case PENTA_33:
                                 case PENTA_38: case PENTA_66:
     return TYPE_PRI;
-    break;
-    // hexahedra
   case HEXA_8: case HEXA_27: case HEXA_64: case HEXA_125:
                case HEXA_20: case HEXA_32: case HEXA_44:
-    // case HEXA_26:
                              case HEXA_56: case HEXA_98:
     return TYPE_HEX;
-    break;
   case MIXED:
   case NGON_n:
   case NFACE_n:
   case ElementTypeUserDefined:
   case ElementTypeNull:
-    Msg::Warning("Finding parent type for unsupported CGNS element type %i",cgnsType);
+    Msg::Warning("Finding parent type for unsupported CGNS element type %i",
+                 cgnsType);
     return -1;
-    break;
   }
   return -1;
 }
 
-int orderFromCGNSType(ElementType_t cgnsType) {
+int orderFromCGNSType(ElementType_t cgnsType)
+{
 
-  switch( cgnsType ) {
+  switch(cgnsType){
   case NODE:
     return 0;
-    break;
   case BAR_2: case TRI_3:  case QUAD_4:     case TETRA_4:  case PYRA_5:  case PENTA_6:  case HEXA_8:
     return 1;
-    break;
   case BAR_3: case TRI_6:  case QUAD_9:     case TETRA_10: case PYRA_14: case PENTA_18: case HEXA_27:
                            case QUAD_8:                    case PYRA_13: case PENTA_15: case HEXA_20:
-    //                                                                           case HEXA_26:
     return 2;
-    break;
   case BAR_4: case TRI_10: case QUAD_16:    case TETRA_20: case PYRA_30: case PENTA_40: case HEXA_64:
               case TRI_9:  case QUAD_12:    case TETRA_16: case PYRA_21: case PENTA_24: case HEXA_32:
                                                            case PYRA_29: case PENTA_38: case HEXA_56:
     return 3;
-    break;
   case BAR_5: case TRI_15: case QUAD_25:    case TETRA_35: case PYRA_55:    case PENTA_75: case HEXA_125:
               case TRI_12: case QUAD_P4_16: case TETRA_22: case PYRA_P4_29: case PENTA_33: case HEXA_44:
                                             case TETRA_34: case PYRA_50:    case PENTA_66: case HEXA_98:
     return 4;
-    break;
   case MIXED:
   case NGON_n:
   case NFACE_n:
@@ -108,14 +94,14 @@ int orderFromCGNSType(ElementType_t cgnsType) {
   case ElementTypeNull:
     Msg::Warning("Finding order for unsupported CGNS element type %i",cgnsType);
     return -1;
-    break;
   }
   return -1;
 }
 
-bool completeCGNSType(ElementType_t cgnsType) {
+bool completeCGNSType(ElementType_t cgnsType)
+{
 
-  switch( cgnsType ) {
+  switch(cgnsType){
     // complete elements
   case NODE:
   case BAR_2: case TRI_3:  case QUAD_4:     case TETRA_4:  case PYRA_5:  case PENTA_6:  case HEXA_8:
@@ -123,26 +109,22 @@ bool completeCGNSType(ElementType_t cgnsType) {
   case BAR_4: case TRI_10: case QUAD_16:    case TETRA_20: case PYRA_30: case PENTA_40: case HEXA_64:
   case BAR_5: case TRI_15: case QUAD_25:    case TETRA_35: case PYRA_55: case PENTA_75: case HEXA_125:
     return true;
-    break;
     // serendipity edge elements
-               case QUAD_8:                    case PYRA_13:    case PENTA_15: case HEXA_20:
-               case QUAD_12:    case TETRA_16: case PYRA_21:    case PENTA_24: case HEXA_32:
+  case QUAD_8:                    case PYRA_13:    case PENTA_15: case HEXA_20:
+  case QUAD_12:    case TETRA_16: case PYRA_21:    case PENTA_24: case HEXA_32:
   case TRI_12: case QUAD_P4_16: case TETRA_22: case PYRA_P4_29: case PENTA_33: case HEXA_44:
     return false;
-    break;
     // serendipity elements
-    //                       case HEXA_26:
-                 case PYRA_29:  case PENTA_38: case HEXA_56:
+  case PYRA_29:  case PENTA_38: case HEXA_56:
   case TETRA_34: case PYRA_50:  case PENTA_66: case HEXA_98:
-
   default:
     return false;
   }
   return false;
 }
 
-int tagFromCGNSType(ElementType_t cgnsType) {
-
+int tagFromCGNSType(ElementType_t cgnsType)
+{
   return ElementType::getType(parentFromCGNSType(cgnsType),
                               orderFromCGNSType(cgnsType),
                               !completeCGNSType(cgnsType));
@@ -153,7 +135,8 @@ std::vector<SVector3> generatePointsCGNS(int,int,bool,bool);
 void addEdgePointsCGNS(const SVector3 p0,
                          const SVector3 p1,
                          int order,
-                         std::vector<SVector3>& points) {
+                         std::vector<SVector3>& points)
+{
   double ds = 1./order;
   for (int i=1;i<order;i++) {
     double f = ds*i;
@@ -166,8 +149,8 @@ void addTriPointsCGNS(const SVector3 p0,
                       const SVector3 p2,
                       int order,
                       bool equidistant,
-                      std::vector<SVector3>& points) {
-
+                      std::vector<SVector3>& points)
+{
   std::vector<SVector3> triPoints = generatePointsCGNS(TYPE_TRI,
                                                        order-3,
                                                        true,true);
@@ -186,10 +169,8 @@ void addTriPointsCGNS(const SVector3 p0,
   }
 }
 
-
-
-void addQuaPointsCGNS(int order,std::vector<SVector3>& points) {
-
+void addQuaPointsCGNS(int order,std::vector<SVector3>& points)
+{
   if (order > 2) {
 
     double scale = double (order -2) / double(order);
@@ -214,8 +195,8 @@ void addQuaPointsCGNS(const SVector3 p0,
                       const SVector3 p2,
                       const SVector3 p3,
                       int order,
-                      std::vector<SVector3>& points) {
-
+                      std::vector<SVector3>& points)
+{
   std::vector<SVector3> quaPoints;
 
   addQuaPointsCGNS(order,quaPoints);
@@ -232,8 +213,8 @@ void addQuaPointsCGNS(const SVector3 p0,
   }
 }
 
-void print(std::vector<SVector3>& points,const char* title,int iStart,int iEnd=-1) {
-
+void print(std::vector<SVector3>& points,const char* title,int iStart,int iEnd=-1)
+{
   iEnd = iEnd == -1 ? points.size() : iEnd;
 
   std::cout << title << std::endl;
@@ -244,12 +225,11 @@ void print(std::vector<SVector3>& points,const char* title,int iStart,int iEnd=-
   }
 }
 
-
 std::vector<SVector3> generatePointsCGNS(int parentType,
                                          int order,
                                          bool complete,
-                                         bool equidistant) {
-
+                                         bool equidistant)
+{
   std::vector<SVector3> pp;
 
   if (order == 0) pp.push_back(SVector3(0,0,0));
@@ -479,9 +459,8 @@ std::vector<SVector3> generatePointsCGNS(int parentType,
   return pp;
 }
 
-fullMatrix<double> getTransformationToGmsh(ElementType_t cgnsType) {
-
-
+fullMatrix<double> getTransformationToGmsh(ElementType_t cgnsType)
+{
   int parent = parentFromCGNSType(cgnsType);
   int order  = orderFromCGNSType(cgnsType);
   bool complete = completeCGNSType(cgnsType);
@@ -508,12 +487,8 @@ fullMatrix<double> getTransformationToGmsh(ElementType_t cgnsType) {
   return tfo;
 }
 
-#include <sstream>
-#include <fstream>
-#include <iomanip>
-
-int* getRenumberingToGmsh(ElementType_t cgnsType) {
-
+int* getRenumberingToGmsh(ElementType_t cgnsType)
+{
   int parent = parentFromCGNSType(cgnsType);
   int order  = orderFromCGNSType(cgnsType);
   bool complete = completeCGNSType(cgnsType);
@@ -553,8 +528,8 @@ int* getRenumberingToGmsh(ElementType_t cgnsType) {
   return renum;
 }
 
-int gridLocationDimCGNS(GridLocation_t lt) {
-
+int gridLocationDimCGNS(GridLocation_t lt)
+{
   switch (lt) {
   case CellCenter:
     return 3;
@@ -579,9 +554,8 @@ int gridLocationDimCGNS(GridLocation_t lt) {
   return -1;
 }
 
-
-GridLocation_t unstructuredGridLocationCGNS(int dim) {
-
+GridLocation_t unstructuredGridLocationCGNS(int dim)
+{
   switch (dim) {
   case 3:
     return CellCenter;
@@ -596,9 +570,7 @@ GridLocation_t unstructuredGridLocationCGNS(int dim) {
     return Vertex;
     break;
   }
-
   return GridLocationNull;
 }
-
 
 #endif

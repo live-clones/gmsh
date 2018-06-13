@@ -46,7 +46,8 @@ class MEdge {
     return 0;
   }
 
-  inline bool alignWith(MEdge& other)  {
+  inline bool alignWith(MEdge& other)
+  {
     int orientation = computeCorrespondence(other);
     if (!orientation) return false;
     if (orientation == -1) {
@@ -55,7 +56,7 @@ class MEdge {
     }
     return true;
   }
-  
+
 
   SVector3 scaledTangent() const
   {

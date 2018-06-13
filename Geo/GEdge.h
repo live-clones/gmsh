@@ -190,13 +190,9 @@ class GEdge : public GEntity {
   // return the parmater location on the edge given a point in space
   // that is on the edge
   virtual double parFromPoint(const SPoint3 &P) const;
-
-
-  virtual bool refineProjection(const SVector3& Q,
-                                double& u,
-                                int MaxIter,
-                                double relax,
-                                double tol,double& err) const;
+  virtual bool refineProjection(const SVector3 &Q, double &u,
+                                int MaxIter, double relax, double tol,
+                                double& err) const;
 
   // compute the parameter U from a point XYZ
   virtual bool XYZToU(const double X, const double Y, const double Z,

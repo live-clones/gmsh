@@ -3,7 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 //
-// GModelIO_CGNS.cpp - Copyright (C) 2008-2012 S. Guzik, B. Gorissen, C. Geuzaine, J.-F. Remacle
+// GModelIO_CGNS.cpp - Copyright (C) 2008-2012 S. Guzik, B. Gorissen,
+// C. Geuzaine, J.-F. Remacle
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -962,10 +963,10 @@ protected:
       break;
     case PointList:
     case PointListDonor:
-      for (int i=0;i<size;i++)                 pts.push_back(ptsList[i]-1);
+      for (int i=0;i<size;i++) pts.push_back(ptsList[i]-1);
       break;
     default:
-      throw;
+      break;
     }
 
   }
@@ -999,11 +1000,11 @@ public: // constructors
     std::vector<int> tgtPts;
     addPoints(tType,tSize,tPts,tgtPts);
 
-    if (tgtPts.size() != srcPts.size()) throw;
-
-    for (unsigned i=0;i<tgtPts.size();i++) {
-      tgtToSrcPts[tgtPts[i]] = srcPts[i];
-      srcToTgtPts[srcPts[i]] = tgtPts[i];
+    if (tgtPts.size() == srcPts.size()) {
+      for (unsigned i=0;i<tgtPts.size();i++) {
+        tgtToSrcPts[tgtPts[i]] = srcPts[i];
+        srcToTgtPts[srcPts[i]] = tgtPts[i];
+      }
     }
   }
 
@@ -1332,17 +1333,16 @@ bool readCGNSPeriodicConnections(int fileIndex,
 
 // -----------------------------------------------------------------------------
 
-int GModel::addCGNSPoints(const string& fileName,
-                          int fileIndex,
-                          int baseIndex,
-                          int zoneIndex,
-                          cgsize_t nbPoints,int dim,
-                          double scale,
-                          GEntity* entity,
-                          int& index,
-                          std::vector<MVertex*>& vertices) {
-
-
+int addCGNSPoints(const string& fileName,
+                  int fileIndex,
+                  int baseIndex,
+                  int zoneIndex,
+                  cgsize_t nbPoints,int dim,
+                  double scale,
+                  GEntity* entity,
+                  int& index,
+                  std::vector<MVertex*>& vertices)
+{
 
   int nbDim;
   if (cg_ncoords(fileIndex,baseIndex,zoneIndex,&nbDim) != CG_OK) {
@@ -1397,9 +1397,8 @@ int GModel::addCGNSPoints(const string& fileName,
 
 // -----------------------------------------------------------------------------
 
-int GModel::readCGNSUnstructured(const std::string& fileName)
+int GModel::_readCGNSUnstructured(const std::string& fileName)
 {
-
 
   // --- global containers and indices for points and elements
 
@@ -1760,7 +1759,7 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
 
 // -----------------------------------------------------------------------------
 
-int GModel::readCGNSStructured(const std::string &name)
+int GModel::_readCGNSStructured(const std::string &name)
 {
 
   // cgsize_t isize[9];
@@ -2246,9 +2245,9 @@ int GModel::readCGNSStructured(const std::string &name)
 
 int GModel::readCGNS(const std::string &name) {
 
-  int structured = readCGNSStructured(name);
+  int structured = _readCGNSStructured(name);
   if (structured) return structured;
-  return readCGNSUnstructured(name);
+  return _readCGNSUnstructured(name);
 }
 
 

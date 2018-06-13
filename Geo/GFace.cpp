@@ -2127,15 +2127,15 @@ void GFace::alignElementsWithMaster()
         MVertex* tv = face->getVertex(j);
 
         std::map<MVertex*,MVertex*>::iterator cIter = correspondingVertices.find(tv);
-        if (cIter == correspondingVertices.end()) throw;
-        vtcs.push_back(cIter->second);
+        if (cIter != correspondingVertices.end())
+          vtcs.push_back(cIter->second);
       }
 
       MFace mf(vtcs);
 
       std::set<MFace,Less_Face>::iterator sIter = srcFaces.find(mf);
 
-      if (sIter==srcFaces.end()) throw;
+      if (sIter == srcFaces.end()) continue;
 
       MFace of = *sIter;
 
@@ -2149,19 +2149,17 @@ void GFace::alignElementsWithMaster()
       case 3:
         {
           MTriangle* tri = dynamic_cast<MTriangle*>(face);
-          if (!tri) throw;
-          tri->reorient(orientation,swap);
+          if (tri)
+            tri->reorient(orientation,swap);
           break;
         }
       case 4:
         {
           MQuadrangle* qua = dynamic_cast<MQuadrangle*>(face);
-          if (!qua) throw;
-          qua->reorient(orientation,swap);
+          if (qua)
+            qua->reorient(orientation,swap);
           break;
         }
-      default:
-        throw;
       }
     }
   }

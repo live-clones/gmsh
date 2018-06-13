@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 //
-// affineTransformation.cpp - Copyright (C) 2008-2012 K. Hillewaert, C. Geuzaine, J.-F. Remacle
+// Contributed by K. Hillewaert
 
 #include <vector>
 
@@ -15,19 +15,19 @@ bool computeAffineTransformationTemplate(const FLOAT* rc,
                                          const FLOAT* ra,
                                          const FLOAT *tr,
                                          std::vector<double>& tfo) {
-  
+
   tfo.clear();
   tfo.reserve(16);
 
   fullMatrix<double> compoundRotation(3,3);
   for (int i=0;i<3;i++) compoundRotation(i,i) = 1;
-  
+
   for (int i=0;i<3;i++) {
-    
+
     if (ra[i] != 0) {
-      
+
       fullMatrix<double> tmp(compoundRotation);
-      
+
       fullMatrix<double> rotation(3,3);
       rotation(i,i) = 1;
 
@@ -36,26 +36,26 @@ bool computeAffineTransformationTemplate(const FLOAT* rc,
 
       double ca = cos(ra[i]);
       double sa = sin(ra[i]);
-        
+
       // rotation with alpha
-        
+
       rotation(ii,ii) = ca;
       rotation(ii,jj) = sa;
       rotation(jj,ii) = -sa;
       rotation(jj,jj) = ca;
-        
+
       compoundRotation.gemm(rotation,tmp,1,0);
     }
   }
-    
+
   // compute displacement from rotation center
-    
+
   fullVector<double> disp(3);
 
   fullVector<double> center(3);
   for (int i=0;i<3;i++) center(i) = rc[i];
   compoundRotation.mult(center,disp);
-    
+
   // add specified translation
 
   for (int i=0;i<3;i++) disp(i) = - tr[i];
@@ -63,14 +63,14 @@ bool computeAffineTransformationTemplate(const FLOAT* rc,
   // copy to tfo
 
   tfo.clear();
-    
+
   for (int i=0;i<3;i++) {
     for (int j=0;j<3;j++) tfo.push_back(compoundRotation(i,j));
     tfo.push_back(disp(i));
   }
   for (int i=0;i<3;i++) tfo.push_back(0);
   tfo.push_back(1);
-    
+
   return true;
 }
 
@@ -90,14 +90,14 @@ bool computeAffineTransformation(const double* rc,
 
 bool invertAffineTransformation(const std::vector<double>& tfo,
                                 std::vector<double>& newTfo) {
-  
+
   fullMatrix<double> inv(4,4);
-  for (int i=0;i<4;i++) for (int j=0;j<4;j++) inv(i,j) = tfo[i*4+j];    
+  for (int i=0;i<4;i++) for (int j=0;j<4;j++) inv(i,j) = tfo[i*4+j];
   inv.invertInPlace();
   newTfo.clear();
   for (int i=0;i<4;i++) for (int j=0;j<4;j++) newTfo.push_back(inv(i,j));
   return true;
-} 
+}
 
 
 bool setUnitAffineTransformation(std::vector<double>& tfo) {

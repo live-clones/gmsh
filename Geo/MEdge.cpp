@@ -68,7 +68,6 @@ bool MEdge::isInside(MVertex *v) const
   return true;
 }
 
-
 bool SortEdgeConsecutive(const std::vector<MEdge> &e,
                          std::vector<std::vector<MVertex*> >&vs)
 {

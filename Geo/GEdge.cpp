@@ -513,13 +513,10 @@ double GEdge::parFromPoint(const SPoint3 &P) const
   return t;
 }
 
-bool GEdge::refineProjection(const SVector3& Q,
-                             double& u,
-                             int MaxIter,
-                             double relax,
-                             double tol,
-                             double& err) const {
-
+bool GEdge::refineProjection(const SVector3 &Q, double &u,
+                             int MaxIter, double relax, double tol,
+                             double &err) const
+{
   double maxDist = tol * CTX::instance()->lc;
 
   SVector3 P = position(u);
@@ -551,7 +548,6 @@ bool GEdge::refineProjection(const SVector3& Q,
 
   if (err <= maxDist) return true;
   return false;
-
 }
 
 bool GEdge::XYZToU(const double X, const double Y, const double Z,
