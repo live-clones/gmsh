@@ -532,7 +532,6 @@ void BarycentricRefineMesh(GModel *m)
       gr->tetrahedra = tetrahedra2;
       gr->deleteVertexArrays();
     }
-    m->setAllVolumesPositive();
   }
 
   CTX::instance()->mesh.changed = ENT_ALL;
