@@ -807,3 +807,62 @@ void nodalBasis::getReferenceNodesForBezier(fullMatrix<double> &nodes) const
     }
   }
 }
+
+bool nodalBasis::forwardTransformation(const fullMatrix<double>& nodes,
+                                       fullMatrix<double>& projection,
+                                       int elementType)  const {
+  
+  if (elementType != -1 && elementType != type) {
+    std::cout << "Incorrect element type " << std::endl;
+    return false;
+  }
+  if (nodes.size1() != points.size1()) return false;
+  
+  projection.resize(nodes.size1(),points.size1());
+  f(nodes,projection);
+  
+  projection.invertInPlace();
+  // projection.transposeInPlace();
+  return true;
+}
+
+
+bool nodalBasis::forwardRenumbering(const fullMatrix<double>& nodes,int* renum,
+                                    int elementType)  const {
+  
+  if (nodes.size1() != points.size1()) {
+    std::cout << "Non-matching node counts " 
+              << nodes.size1() << " vs " 
+              << points.size1() << std::endl;
+    return false;
+  }
+  
+  double tol = 1e-10;
+
+  fullMatrix<double> tfo;
+  if (!forwardTransformation(nodes,tfo, elementType)) {
+    std::cout << "Could not find forward transformation " << std::endl;
+    return false;
+  }
+
+  // tfo.print("Projection matrix","%1.f");
+  
+  for (int i=0;i<nodes.size1();i++) {
+    int idx = -1;
+    int nbOnes = 0;
+    int nbZeroes = 0;
+    for (int j=0;j<nodes.size1();j++) {
+      if (fabs(tfo(i,j)-1.0) < tol) {idx = j; nbOnes++;}
+      if (fabs(tfo(i,j))     < tol) {nbZeroes++;}
+    }
+    if (nbOnes   != 1            )     return false; 
+    if (nbZeroes != nodes.size1() - 1) return false;
+    renum[i] = idx;
+  }
+
+  // for (int i=0;i<nodes.size1();i++) {
+  //   std::cout << i << " -> " << renum[i] << std::endl;
+  // }
+
+  return renum;
+}

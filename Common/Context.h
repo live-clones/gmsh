@@ -79,7 +79,9 @@ struct contextGeometryOptions {
   std::string occTargetUnit;
   int copyMeshingMethod, exactExtrusion;
   int matchGeomAndMesh;
-  int orientedPhysicals;
+  double matchMeshScaleFactor;
+  double matchMeshTolerance;
+  int hideCompounds, orientedPhysicals, doubleClickedEntityTag;
   int reparamOnFaceRobust;
   // geometry display
   int draw, light, lightTwoSide, points, curves, surfaces, volumes;

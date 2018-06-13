@@ -71,6 +71,9 @@ class GEdge : public GEntity {
   // returns the parent entity for partitioned entities
   virtual GEntity* getParentEntity() { return 0; }
 
+  // get the list of vertices
+  virtual std::list<GVertex*> vertices() const;
+
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive = false);
 
@@ -188,9 +191,16 @@ class GEdge : public GEntity {
   // that is on the edge
   virtual double parFromPoint(const SPoint3 &P) const;
 
+
+  virtual bool refineProjection(const SVector3& Q,
+                                double& u,
+                                int MaxIter,
+                                double relax,
+                                double tol,double& err) const;
+
   // compute the parameter U from a point XYZ
   virtual bool XYZToU(const double X, const double Y, const double Z,
-                      double &U, const double relax=1) const;
+                      double &U, const double relax=1,bool first=true) const;
 
   // relocate mesh vertices using parametric coordinates
   void relocateMeshVertices();

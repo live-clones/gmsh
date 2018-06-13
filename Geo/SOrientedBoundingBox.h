@@ -70,7 +70,7 @@ class SOrientedBoundingBox {
   // valid values for axis are 0 (X-axis), 1 (Y-axis) or 2 (Z-axis)
   SVector3 getAxis(int axis);
 
-  static SOrientedBoundingBox* buildOBB(std::vector<SPoint3> vertices);
+  static SOrientedBoundingBox* buildOBB(std::vector<SPoint3>& vertices);
 
   bool intersects(SOrientedBoundingBox &obb);
 

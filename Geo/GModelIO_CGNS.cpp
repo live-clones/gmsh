@@ -51,10 +51,49 @@
 
 #include "MZone.h"
 #include "MZoneBoundary.h"
+#include "affineTransformation.h"
 
+namespace CGNS {
 #include <cgnslib.h>
+}
 
 using namespace std;
+using namespace CGNS;
+
+#define maxLenCGNS 32
+
+// --- encoding the CGNS element conventions, implementation in cgnsConventions.cpp
+
+// get gmsh parent tag
+extern int  parentFromCGNSType(ElementType_t cgnsType);
+
+// get mapping order
+extern int  orderFromCGNSType (ElementType_t cgnsType);
+
+// is the element complete ?
+extern bool completeCGNSType  (ElementType_t cgnsType);
+
+// get the gmsh tag for this element type
+extern int  tagFromCGNSType   (ElementType_t cgnsType);
+
+// get the dimension for a grid location
+extern int gridLocationDimCGNS(GridLocation_t location);
+
+// get element location for a given dimension
+extern GridLocation_t unstructuredGridLocationCGNS(int d);
+
+// // generate the projection matrix from cgns to gmsh control points
+// // equidistant corresponds to gmsh/equidistant, else strict cgns standard
+// extern fullMatrix<double> projectionFromCGNS(int parentType,
+//                                              int order,
+//                                              bool complete,
+//                                              bool equidistant);
+
+// generate the index renumbering from cgns to gmsh control points
+// equidistant corresponds to gmsh/equidistant, else strict cgns standard
+// will fail in case non-equidistant points are used (NULL pointer).
+extern int* getRenumberingToGmsh(ElementType_t);
+extern fullMatrix<double> getTransformationToGmsh(ElementType_t);
 
 //--Error function for the CGNS library
 
@@ -67,172 +106,222 @@ int cgnsErr(const int cgIndexFile = -1)
   return 0;
 }
 
+// --- read length scale in the file
+
+double readCGNSScale() {
+
+  double scale = 1;
+
+  MassUnits_t mass;
+  LengthUnits_t length;
+  TimeUnits_t time;
+  TemperatureUnits_t temperature;
+  AngleUnits_t angle;
+
+  cg_units_read(&mass,&length,&time,&temperature,&angle);
+
+  switch (length) {
+
+  case Centimeter:
+    Msg::Info("Length unit in CGNS file is cm, rescaling");
+    scale = 0.01;
+    break;
+  case Millimeter:
+    Msg::Info("Length unit in CGNS file is mm, rescaling");
+    scale = 0.001;
+    break;
+  case Foot:
+    Msg::Info("Length unit in CGNS file is feet, rescaling");
+    scale = 0.3048;
+    break;
+  case Inch:
+    Msg::Info("Length unit in CGNS file is inch, rescaling");
+    scale = 0.0254;
+    break;
+  case Meter:
+    Msg::Info("Length unit in CGNS file is meter, not rescaling");
+    break;
+  case CG_Null:
+  case CG_UserDefined:
+  default:
+    Msg::Info("Length unit in CGNS file not defined, therefore not rescaling");
+    break;
+  }
+
+  return scale;
+}
+
 
 /*==============================================================================
  * Required types
  *============================================================================*/
 
-typedef std::map<int, std::vector<GEntity*> > PhysGroupMap;
-                                        // Type providing a vector of entities
-                                        // for a physical group index
+// typedef std::map<int, std::vector<GEntity*> > PhysGroupMap;
+// Type providing a vector of entities
+// for a physical group index
 
 //--Class to gather elements that belong to a partition.  This class mimics a
 //--GEntity class.
 
-class DummyPartitionEntity : public GEntity
-{
- public:
-  DummyPartitionEntity()
-    : GEntity(0, 0)
-  { }
+// class DummyPartitionEntity : public GEntity
+// {
+//  public:
+//   DummyPartitionEntity()
+//     : GEntity(0, 0)
+//   { }
 
-  // number of types of elements
-  int getNumElementTypes() const { return 1; }
-  void getNumMeshElements(unsigned *const c) const
-  {
-    c[0] += elements.size();
-  }
+//   // number of types of elements
+//   int getNumElementTypes() const { return 1; }
+//   void getNumMeshElements(unsigned *const c) const
+//   {
+//     c[0] += elements.size();
+//   }
 
-  // get the start of the array of a type of element
-  MElement *const *getStartElementType(int type) const
-  {
-    return &elements[0];
-  }
+//   // get the start of the array of a type of element
+//   MElement *const *getStartElementType(int type) const
+//   {
+//     return &elements[0];
+//   }
 
-  std::vector<MElement*> elements;
-};
+//   std::vector<MElement*> elements;
+// };
 
-//--Class to make C style CGNS name strings act like C++ types
+// //--Class to make C style CGNS name strings act like C++ types
 
-class CGNSNameStr
-{
- private:
-  char name[33];
- public:
-  // Constructors
-  CGNSNameStr() { name[0] = '\0'; }
-  CGNSNameStr(const char *const cstr)
-  {
-    std::strncpy(name, cstr, 32);
-    name[32] = '\0';
-  }
-  CGNSNameStr(std::string &s)
-  {
-    std::strncpy(name, s.c_str(), 32);
-    name[32] = '\0';
-  }
-  CGNSNameStr(const int d, const char *const fmt = "%d")
-  {
-    std::sprintf(name, fmt, d);
-  }
-  CGNSNameStr(const CGNSNameStr& cgs) { std::strcpy(name, cgs.name); }
-  // Assignment
-  CGNSNameStr &operator=(const CGNSNameStr& cgs)
-  {
-    if ( &cgs != this ) {
-      std::strcpy(name, cgs.name);
-    }
-    return *this;
-  }
-  CGNSNameStr &operator=(const char *const cstr)
-  {
-    std::strncpy(name, cstr, 32);
-    name[32] = '\0';
-    return *this;
-  }
-  // Return the C string
-  char *c_str() { return name; }
-  const char *c_str() const { return name; }
-};
+// class CGNSNameStr
+// {
+//  private:
+//   char name[33];
+//  public:
+//   // Constructors
+//   CGNSNameStr() { name[0] = '\0'; }
+//   CGNSNameStr(const char *const cstr)
+//   {
+//     std::strncpy(name, cstr, 32);
+//     name[32] = '\0';
+//   }
+//   CGNSNameStr(std::string &s)
+//   {
+//     std::strncpy(name, s.c_str(), 32);
+//     name[32] = '\0';
+//   }
+//   CGNSNameStr(const int d, const char *const fmt = "%d")
+//   {
+//     std::sprintf(name, fmt, d);
+//   }
+//   CGNSNameStr(const CGNSNameStr& cgs) { std::strcpy(name, cgs.name); }
+//   // Assignment
+//   CGNSNameStr &operator=(const CGNSNameStr& cgs)
+//   {
+//     if ( &cgs != this ) {
+//       std::strcpy(name, cgs.name);
+//     }
+//     return *this;
+//   }
+//   CGNSNameStr &operator=(const char *const cstr)
+//   {
+//     std::strncpy(name, cstr, 32);
+//     name[32] = '\0';
+//     return *this;
+//   }
+//   // Return the C string
+//   char *c_str() { return name; }
+//   const char *c_str() const { return name; }
+// };
 
-//--Provides a CGNS element type for a MSH element type and indicates the order
-//--in which the CGNS elements are to be written:
-//    3D first-order elements
-//    3D second-order elements
-//    2D first-order elements
-//    2D second-order elements
-//    1D first-order elements
-//    1D second-order elements
-//    MSH_NUM_TYPE+1 is used to place non-cgns elements last.
-static const int msh2cgns[MSH_NUM_TYPE][2] = {
-  {CG_BAR_2,          16},
-  {CG_TRI_3,          11},
-  {CG_QUAD_4,         12},
-  {CG_TETRA_4,         1},
-  {CG_HEXA_8,          4},
-  {CG_PENTA_6,         3},
-  {CG_PYRA_5,          2},
-  {CG_BAR_3,          17},
-  {CG_TRI_6,          13},
-  {CG_QUAD_9,         15},
-  {CG_TETRA_10,        5},
-  {CG_HEXA_27,        10},
-  {CG_PENTA_18,        8},
-  {CG_PYRA_14,         6},
-  {-1, MSH_NUM_TYPE+1},  // MSH_PNT (NODE in CGNS but not used herein)
-  {CG_QUAD_8,         14},
-  {CG_HEXA_20,         9},
-  {CG_PENTA_15,        7},
-  {-1, MSH_NUM_TYPE+1},  // MSH_PYR_13
-  {-1, MSH_NUM_TYPE+1},  // MSH_TRI_9
-  {-1, MSH_NUM_TYPE+1},  // MSH_TRI_10
-  {-1, MSH_NUM_TYPE+1},  // MSH_TRI_12
-  {-1, MSH_NUM_TYPE+1},  // MSH_TRI_15
-  {-1, MSH_NUM_TYPE+1},  // MSH_TRI_15I
-  {-1, MSH_NUM_TYPE+1},  // MSH_TRI_21
-  {-1, MSH_NUM_TYPE+1},  // MSH_LIN_4
-  {-1, MSH_NUM_TYPE+1},  // MSH_LIN_5
-  {-1, MSH_NUM_TYPE+1},  // MSH_LIN_6
-  {-1, MSH_NUM_TYPE+1},  // MSH_TET_20
-  {-1, MSH_NUM_TYPE+1},  // MSH_TET_35
-  {-1, MSH_NUM_TYPE+1},  // MSH_TET_56
-  {-1, MSH_NUM_TYPE+1},  // MSH_TET_22
-  {-1, MSH_NUM_TYPE+1}   // MSH_TET_28
-};
+// //--Provides a CGNS element type for a MSH element type and indicates the order
+// //--in which the CGNS elements are to be written:
+// //    3D first-order elements
+// //    3D second-order elements
+// //    2D first-order elements
+// //    2D second-order elements
+// //    1D first-order elements
+// //    1D second-order elements
+// //    MSH_NUM_TYPE+1 is used to place non-cgns elements last.
+// static const int msh2cgns[MSH_NUM_TYPE][2] = {
+//   {BAR_2,          16},
+//   {TRI_3,          11},
+//   {QUAD_4,         12},
+//   {TETRA_4,         1},
+//   {HEXA_8,          4},
+//   {PENTA_6,         3},
+//   {PYRA_5,          2},
+//   {BAR_3,          17},
+//   {TRI_6,          13},
+//   {QUAD_9,         15},
+//   {TETRA_10,        5},
+//   {HEXA_27,        10},
+//   {PENTA_18,        8},
+//   {PYRA_14,         6},
+//   {-1, MSH_NUM_TYPE+1},  // MSH_PNT (NODE in CGNS but not used herein)
+//   {QUAD_8,         14},
+//   {HEXA_20,         9},
+//   {PENTA_15,        7},
+//   {-1, MSH_NUM_TYPE+1},  // MSH_PYR_13
+//   {-1, MSH_NUM_TYPE+1},  // MSH_TRI_9
+//   {-1, MSH_NUM_TYPE+1},  // MSH_TRI_10
+//   {-1, MSH_NUM_TYPE+1},  // MSH_TRI_12
+//   {-1, MSH_NUM_TYPE+1},  // MSH_TRI_15
+//   {-1, MSH_NUM_TYPE+1},  // MSH_TRI_15I
+//   {-1, MSH_NUM_TYPE+1},  // MSH_TRI_21
+//   {-1, MSH_NUM_TYPE+1},  // MSH_LIN_4
+//   {-1, MSH_NUM_TYPE+1},  // MSH_LIN_5
+//   {-1, MSH_NUM_TYPE+1},  // MSH_LIN_6
+//   {-1, MSH_NUM_TYPE+1},  // MSH_TET_20
+//   {-1, MSH_NUM_TYPE+1},  // MSH_TET_35
+//   {-1, MSH_NUM_TYPE+1},  // MSH_TET_56
+//   {-1, MSH_NUM_TYPE+1},  // MSH_TET_22
+//   {-1, MSH_NUM_TYPE+1}   // MSH_TET_28
+// };
 
-//--This functor allows for sorting of the element types according to the
-//--"write-order" in array 'msh2cgns'
 
-struct ElemSortCGNSType
-{
-  bool operator()(const int t0, const int t1)
-  {
-    if(zoneElemConn[t0].numElem > 0 && zoneElemConn[t1].numElem > 0)
-      return msh2cgns[t0][1] < msh2cgns[t1][1];
-    else if(zoneElemConn[t0].numElem > 0)
-      return true;
-    else
-      return false;
-  }
-  ElemSortCGNSType(const ElementConnectivity *const _zoneElemConn)
-    : zoneElemConn(_zoneElemConn)
-  { }
- private:
-  const ElementConnectivity *const zoneElemConn;
-};
+
+// //--This functor allows for sorting of the element types according to the
+// //--"write-order" in array 'msh2cgns'
+
+// struct ElemSortCGNSType
+// {
+//   bool operator()(const int t0, const int t1)
+//   {
+//     if(zoneElemConn[t0].numElem > 0 && zoneElemConn[t1].numElem > 0)
+//       return msh2cgns[t0][1] < msh2cgns[t1][1];
+//     else if(zoneElemConn[t0].numElem > 0)
+//       return true;
+//     else
+//       return false;
+//   }
+//   ElemSortCGNSType(const ElementConnectivity *const _zoneElemConn)
+//     : zoneElemConn(_zoneElemConn)
+//   { }
+//  private:
+//   const ElementConnectivity *const zoneElemConn;
+// };
 
 
 /*==============================================================================
  * Forward declarations
  *============================================================================*/
 
-template <unsigned DIM>
-int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
-                     const CGNSOptions &options, const double scalingFactor,
-                     const int vectorDim, const PhysGroupMap &group,
-                     const int cgIndexFile, const int cgIndexBase);
+// template <unsigned DIM>
+// int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
+//                      const CGNSOptions &options, const double scalingFactor,
+//                      const int vectorDim, const PhysGroupMap &group,
+//                      const int cgIndexFile, const int cgIndexBase);
 
 
 
-static MElement *createElementMSH(GModel *m, int num, int typeMSH, int reg, int part,
-                                  std::vector<MVertex*> &v, std::map<int, std::vector<MElement*> > elements[10])
+static MElement *
+createElementMSH(GModel *m, int num,
+                 int typeMSH, int reg, int part,
+                 std::vector<MVertex*> &v,
+                 std::map<int, std::vector<MElement*> > elements[10])
 {
   /*
-  if(CTX::instance()->mesh.switchElementTags) {
+    if(CTX::instance()->mesh.switchElementTags) {
     int tmp = reg;
     reg = physical;
     physical = reg;
-  }
+    }
   */
   MElementFactory factory;
   MElement *e = factory.create(typeMSH, v, num, part, false, 0, 0, 0);
@@ -267,8 +356,8 @@ static MElement *createElementMSH(GModel *m, int num, int typeMSH, int reg, int 
   }
 
   /*
-  int dim = e->getDim();
-  if(physical && (!physicals[dim].count(reg) || !physicals[dim][reg].count(physical)))
+    int dim = e->getDim();
+    if(physical && (!physicals[dim].count(reg) || !physicals[dim][reg].count(physical)))
     physicals[dim][reg][physical] = "unnamed";
   */
   //if(part) m->getMeshPartitions().insert(part);
@@ -280,9 +369,9 @@ static int to1D(int i, int j, int k, int max_i, int max_j, int max_k) {
 }
 
 static int getIndicesQuad(int i1, int i2, int i3, int i4,
-			  int j1, int j2, int j3, int j4,
-			  int k1, int k2, int k3, int k4,
-			  std::vector<int>& ind_i, std::vector<int>& ind_j, std::vector<int>& ind_k, int order, int f) {
+                          int j1, int j2, int j3, int j4,
+                          int k1, int k2, int k3, int k4,
+                          std::vector<int>& ind_i, std::vector<int>& ind_j, std::vector<int>& ind_k, int order, int f) {
 
   static const int offset[6][4][3] = {
     {{ 1, 1, 0}, { 1,-1, 0}, {-1,-1, 0}, {-1, 1, 0}},
@@ -342,16 +431,16 @@ static int getIndicesQuad(int i1, int i2, int i3, int i4,
       added++;
     }
 
-  /*
-  int ioffset = (i3-i1)/abs(i2-i1);
-  int joffset = (j3-j1)/abs(j2-j1);
-  int koffset = (k3-k1)/abs(k2-k1);
-  */
-  added += getIndicesQuad(i1+offset[f][0][0], i2+offset[f][1][0], i3+offset[f][2][0], i4+offset[f][3][0],
-                          j1+offset[f][0][1], j2+offset[f][1][1], j3+offset[f][2][1], j4+offset[f][3][1],
-                          k1+offset[f][0][2], k2+offset[f][1][2], k3+offset[f][2][2], k4+offset[f][3][2],
-                          ind_i, ind_j, ind_k, order-2, f);
-  /**/
+    /*
+      int ioffset = (i3-i1)/abs(i2-i1);
+      int joffset = (j3-j1)/abs(j2-j1);
+      int koffset = (k3-k1)/abs(k2-k1);
+    */
+    added += getIndicesQuad(i1+offset[f][0][0], i2+offset[f][1][0], i3+offset[f][2][0], i4+offset[f][3][0],
+                            j1+offset[f][0][1], j2+offset[f][1][1], j3+offset[f][2][1], j4+offset[f][3][1],
+                            k1+offset[f][0][2], k2+offset[f][1][2], k3+offset[f][2][2], k4+offset[f][3][2],
+                            ind_i, ind_j, ind_k, order-2, f);
+    /**/
   }
   return added;
 }
@@ -424,14 +513,14 @@ static int getIndicesFace(int i1, int i2, int i3, int i4,
     }
   }
   /*
-  int ioffset = (i3-i1)/abs(i2-i1);
-  int joffset = (j3-j1)/abs(j2-j1);
-  int koffset = (k3-k1)/abs(k2-k1);
+    int ioffset = (i3-i1)/abs(i2-i1);
+    int joffset = (j3-j1)/abs(j2-j1);
+    int koffset = (k3-k1)/abs(k2-k1);
   */
   added += getIndicesFace(i1+offset[f][0][0], i2-offset[f][1][0], i3-offset[f][2][0], i4+offset[f][3][0],
-			  j1+offset[f][0][1], j2-offset[f][1][1], j3-offset[f][2][1], j4+offset[f][3][1],
-			  k1+offset[f][0][2], k2-offset[f][1][2], k3-offset[f][2][2], k4+offset[f][3][2],
-			  ind_i, ind_j, ind_k, order-2, f);
+                          j1+offset[f][0][1], j2-offset[f][1][1], j3-offset[f][2][1], j4+offset[f][3][1],
+                          k1+offset[f][0][2], k2-offset[f][1][2], k3-offset[f][2][2], k4+offset[f][3][2],
+                          ind_i, ind_j, ind_k, order-2, f);
   /**/
   return added;
 }
@@ -478,8 +567,8 @@ static void getIndices(int i, int j, int k,
 
 
   if (order == 0) {
-      ind_i.push_back(i); ind_j.push_back(j); ind_k.push_back(k);
-      return;
+    ind_i.push_back(i); ind_j.push_back(j); ind_k.push_back(k);
+    return;
   }
 
   // 8 principal points
@@ -586,12 +675,11 @@ int computeCGNSFace(const cgsize_t* range) {
 
 // --- structure for storing periodic connections ------------------------------
 
-struct CGNSPeriodic {
+struct CGNSStruPeriodic {
 
-
-  // the data that are modified on the fly by looping on the CGNSPeriodicSet
+  // the data that are modified on the fly by looping on the CGNSStruPeriodicSet
   //
-  // - should not affect the ordering in CGNSPeriodicLess
+  // - should not affect the ordering in CGNSStruPeriodicLess
   // - should be modified with a const operation (STL only returns const data)
   // - should hence be mutable
   //
@@ -599,7 +687,7 @@ struct CGNSPeriodic {
   //
   // All ordering data should only be modified in constructor-like operations
 
-  friend class CGNSPeriodicLess;
+  friend class CGNSStruPeriodicLess;
 
 public:
 
@@ -622,20 +710,20 @@ public:
 
   };
 
-  string targetZone;           // cgns name of the block
-  int targetFace;              // index of the face in the block
-  mutable int targetFaceId;    // elementary tag corresponding to the face
+  string tgtZone;           // cgns name of the block
+  int tgtFace;              // index of the face in the block
+  mutable int tgtFaceId;    // elementary tag corresponding to the face
   mutable
-  vector<MVertex*> targetVertices; // ordered vertices in the target
-  vector<IJK>   targetIJK;    // ijk indices of the face points in the block
+  vector<MVertex*> tgtVertices; // ordered vertices in the tgt
+  vector<IJK>   tgtIJK;    // ijk indices of the face points in the block
 
 
-  string sourceZone;           // cgns name of the block
-  int sourceFace;              // index of the face in the block
-  mutable int sourceFaceId;    // elementary tag corresponding to the face
+  string srcName;           // cgns name of the block
+  int srcFace;              // index of the face in the block
+  mutable int srcFaceId;    // elementary tag corresponding to the face
   mutable
-  vector<MVertex*> sourceVertices; // ordered vertices in the source
-  vector<IJK>   sourceIJK;  // ijk indices in the source face, ordered following target
+  vector<MVertex*> srcVertices; // ordered vertices in the src
+  vector<IJK>   srcIJK;  // ijk indices in the source face, ordered following tgt
 
   std::vector<double> tfo;     // transformation
 
@@ -643,10 +731,10 @@ public:
 
   void print(ostream& out) const {
 
-    out << "Connection of face " << targetFace << " (" << targetFaceId << ")"
-        << " of domain " << targetZone << " to "
-        << sourceFace << " (" << sourceFaceId << ")" << " of "
-        << sourceZone << std::endl;
+    out << "Connection of face " << tgtFace << " (" << tgtFaceId << ")"
+        << " of domain " << tgtZone << " to "
+        << srcFace << " (" << srcFaceId << ")" << " of "
+        << srcName << std::endl;
   }
 
 
@@ -655,19 +743,19 @@ public: // constructors
 
   // -- empty constructor
 
-  CGNSPeriodic() { setUnitTransformation(); }
+  CGNSStruPeriodic() { setUnitAffineTransformation(tfo); }
 
   // -- standard constructor
 
-  CGNSPeriodic(const char* tn,const cgsize_t* tr,
-               const char* sn,const cgsize_t* sr,const int* iTfo,int o,
-               int tfid,
-               const float* rotationCenter,
-               const float* rotationAngle,
-               const float* translation):
+  CGNSStruPeriodic(const char* tn,const cgsize_t* tr,
+                   const char* sn,const cgsize_t* sr,const int* iTfo,int o,
+                   int tfid,
+                   const float* rotationCenter,
+                   const float* rotationAngle,
+                   const float* translation):
 
-    targetZone(tn),targetFace(computeCGNSFace(tr)),targetFaceId(tfid),
-    sourceZone(sn),sourceFace(computeCGNSFace(sr)),sourceFaceId(-1) {
+    tgtZone(tn),tgtFace(computeCGNSFace(tr)),tgtFaceId(tfid),
+    srcName(sn),srcFace(computeCGNSFace(sr)),srcFaceId(-1) {
 
     // compute the structured grid indices
 
@@ -686,11 +774,11 @@ public: // constructors
     for (int k=0;k<3;k++) nbIJK[k] = (tr[k]==tr[k+3])?1:((abs(tr[k]-tr[k+3]))/o +1);
     for (int k=0;k<3;k++) nbPoints *= nbIJK[k];
 
-    targetIJK.reserve(nbPoints);
-    sourceIJK.reserve(nbPoints);
+    tgtIJK.reserve(nbPoints);
+    srcIJK.reserve(nbPoints);
 
-    targetVertices.resize(nbPoints,NULL);
-    sourceVertices.resize(nbPoints,NULL);
+    tgtVertices.resize(nbPoints,NULL);
+    srcVertices.resize(nbPoints,NULL);
 
     IJK src(sr[idx[0]],sr[idx[1]],sr[idx[2]]);
     IJK tgt(tr[0],tr[1],tr[2]);
@@ -707,8 +795,8 @@ public: // constructors
 
         for (int k=0;k<nbIJK[2];k++) {
 
-          targetIJK.push_back(tgt);
-          sourceIJK.push_back(src);
+          tgtIJK.push_back(tgt);
+          srcIJK.push_back(src);
 
           tgt[2]      += dIJKTgt[2];
           src[idx[2]] += dIJKSrc[idx[2]];
@@ -721,56 +809,55 @@ public: // constructors
     }
 
     // now compute the transformation
-
-    computeTransformation(rotationCenter,rotationAngle,translation);
+    computeAffineTransformation(rotationCenter,rotationAngle,translation,tfo);
   }
 
 
   // -- copy constructor
 
-  CGNSPeriodic(const CGNSPeriodic& old) {
+  CGNSStruPeriodic(const CGNSStruPeriodic& old) {
 
-    targetVertices.resize(old.getNbPoints(),NULL);
-    sourceVertices.resize(old.getNbPoints(),NULL);
+    tgtVertices.resize(old.getNbPoints(),NULL);
+    srcVertices.resize(old.getNbPoints(),NULL);
 
-    targetZone     = old.targetZone;
-    targetFace     = old.targetFace;
-    targetFaceId   = old.targetFaceId;
-    targetIJK      = old.targetIJK;
-    targetVertices = old.targetVertices;
+    tgtZone     = old.tgtZone;
+    tgtFace     = old.tgtFace;
+    tgtFaceId   = old.tgtFaceId;
+    tgtIJK      = old.tgtIJK;
+    tgtVertices = old.tgtVertices;
 
-    sourceZone     = old.sourceZone;
-    sourceFace     = old.sourceFace;
-    sourceFaceId   = old.sourceFaceId;
-    sourceIJK      = old.sourceIJK;
-    sourceVertices = old.sourceVertices;
+    srcName     = old.srcName;
+    srcFace     = old.srcFace;
+    srcFaceId   = old.srcFaceId;
+    srcIJK      = old.srcIJK;
+    srcVertices = old.srcVertices;
 
     tfo = old.tfo;
   }
 
   // -- constructor of the inverse connection
 
-  CGNSPeriodic getInverse() const {
+  CGNSStruPeriodic getInverse() const {
 
-    CGNSPeriodic inv;
+    CGNSStruPeriodic inv;
 
-    inv.targetVertices.resize(getNbPoints(),NULL);
-    inv.sourceVertices.resize(getNbPoints(),NULL);
+    inv.tgtVertices.resize(getNbPoints(),NULL);
+    inv.srcVertices.resize(getNbPoints(),NULL);
 
-    inv.targetZone     = sourceZone;
-    inv.targetFace     = sourceFace;
-    inv.targetFaceId   = sourceFaceId;
-    inv.targetIJK      = sourceIJK;
-    inv.targetVertices = sourceVertices;
+    inv.tgtZone     = srcName;
+    inv.tgtFace     = srcFace;
+    inv.tgtFaceId   = srcFaceId;
+    inv.tgtIJK      = srcIJK;
+    inv.tgtVertices = srcVertices;
 
-    inv.sourceZone     = targetZone;
-    inv.sourceFace     = targetFace;
-    inv.sourceFaceId   = targetFaceId;
-    inv.sourceIJK      = targetIJK;
-    inv.sourceVertices = targetVertices;
+    inv.srcName     = tgtZone;
+    inv.srcFace     = tgtFace;
+    inv.srcFaceId   = tgtFaceId;
+    inv.srcIJK      = tgtIJK;
+    inv.srcVertices = tgtVertices;
 
     inv.tfo = tfo;
-    invertTransformation(inv.tfo);
+    invertAffineTransformation(tfo,inv.tfo);
 
     return inv;
   }
@@ -778,148 +865,914 @@ public: // constructors
 public: // vertex functions
 
 
-  size_t getNbPoints() const {return targetIJK.size();}
+  size_t getNbPoints() const {return tgtIJK.size();}
 
 
-  bool getTargetIJK(size_t ip,int& i,int& j,int& k) const {
-    if (ip > targetIJK.size())  return false;
-    i = targetIJK[ip][0] - 1;
-    j = targetIJK[ip][1] - 1;
-    k = targetIJK[ip][2] - 1;
+  bool getTgtIJK(size_t ip,int& i,int& j,int& k) const {
+    if (ip > tgtIJK.size())  return false;
+    i = tgtIJK[ip][0] - 1;
+    j = tgtIJK[ip][1] - 1;
+    k = tgtIJK[ip][2] - 1;
     return true;
   }
 
-  bool getSourceIJK(size_t ip,int& i,int& j,int& k) const {
-    if (ip > sourceIJK.size())  return false;
-    i = sourceIJK[ip][0] - 1;
-    j = sourceIJK[ip][1] - 1;
-    k = sourceIJK[ip][2] - 1;
+  bool getSrcIJK(size_t ip,int& i,int& j,int& k) const {
+    if (ip > srcIJK.size())  return false;
+    i = srcIJK[ip][0] - 1;
+    j = srcIJK[ip][1] - 1;
+    k = srcIJK[ip][2] - 1;
     return true;
   }
 
-  bool insertTargetVertex(size_t ip,MVertex* v) const {
-    if (ip > targetVertices.size()) return false;
-    targetVertices[ip] = v;
+  bool insertTgtVertex(size_t ip,MVertex* v) const {
+    if (ip > tgtVertices.size()) return false;
+    tgtVertices[ip] = v;
     return true;
   }
 
-  bool insertSourceVertex(size_t ip,MVertex* v) const {
-    if (ip > sourceVertices.size()) return false;
-    sourceVertices[ip] = v;
+  bool insertSrcVertex(size_t ip,MVertex* v) const {
+    if (ip > srcVertices.size()) return false;
+    srcVertices[ip] = v;
     return true;
   }
 
 
 public: // transformation operations
 
-  bool setUnitTransformation() {
-    tfo.resize(16,0);
-    for (int i=0;i<16;i+=5) tfo[i] = 1;
-    return true;
-  }
 
-  bool computeTransformation(const float* rc,const float* ra,const float *tr) {
-
-    fullMatrix<double> compoundRotation(3,3);
-    for (int i=0;i<3;i++) compoundRotation(i,i) = 1;
-
-    for (int i=0;i<3;i++) {
-
-      if (ra[i] != 0) {
-
-        fullMatrix<double> tmp(compoundRotation);
-
-        fullMatrix<double> rotation(3,3);
-        rotation(i,i) = 1;
-
-        int ii = (i+1)%3;
-        int jj = (i+2)%3;
-
-        double ca = cos(ra[i]);
-        double sa = sin(ra[i]);
-
-        // rotation with alpha
-
-        rotation(ii,ii) = ca;
-        rotation(ii,jj) = sa;
-        rotation(jj,ii) = -sa;
-        rotation(jj,jj) = ca;
-
-        compoundRotation.gemm(rotation,tmp,1,0);
-      }
-    }
-
-    // compute displacement from rotation center
-
-    fullVector<double> disp(3);
-
-    fullVector<double> center(3);
-    for (int i=0;i<3;i++) center(i) = rc[i];
-    compoundRotation.mult(center,disp);
-
-    // add specified translation
-
-    for (int i=0;i<3;i++) disp(i) = - tr[i];
-
-    // copy to tfo
-
-    tfo.clear();
-
-    for (int i=0;i<3;i++) {
-      for (int j=0;j<3;j++) tfo.push_back(compoundRotation(i,j));
-      tfo.push_back(disp(i));
-    }
-    for (int i=0;i<3;i++) tfo.push_back(0);
-    tfo.push_back(1);
-
-    return true;
-  }
-
-  bool invertTransformation(std::vector<double>& newTfo) const {
-
-    fullMatrix<double> inv(4,4);
-    for (int i=0;i<4;i++) for (int j=0;j<4;j++) inv(i,j) = tfo[i*4+j];
-    inv.invertInPlace();
-    newTfo.clear();
-    for (int i=0;i<4;i++) for (int j=0;j<4;j++) newTfo.push_back(inv(i,j));
-    return true;
-  }
 };
 
 // --- definition of a set for storing periodic connections --------------------
 
-struct CGNSPeriodicLess {
+struct CGNSStruPeriodicLess {
 
-  bool operator() (const CGNSPeriodic& f,const CGNSPeriodic& d) {
-    int s = f.sourceZone.compare(d.sourceZone);
+  bool operator() (const CGNSStruPeriodic& f,const CGNSStruPeriodic& d) {
+    int s = f.srcName.compare(d.srcName);
     if (s != 0) return (s < 0);
-    return (f.sourceFace < d.sourceFace);
+    return (f.srcFace < d.srcFace);
   }
 };
 
-typedef set<CGNSPeriodic,CGNSPeriodicLess> CGNSPeriodicSet;
+typedef set<CGNSStruPeriodic,CGNSStruPeriodicLess> CGNSStruPeriodicSet;
+
+// --- structure for storing periodic connections ------------------------------
+
+class CGNSUnstPeriodic {
+
+
+  // the data that are modified on the fly by looping on the CGNSUnstPeriodicSet
+  //
+  // - should not affect the ordering in CGNSUnstPeriodicLess
+  // - should be modified with a const operation (STL only returns const data)
+  // - should hence be mutable
+  //
+  // Currently this data includes the vectors of source and tgt vertices
+  //
+  // All ordering data should only be modified in constructor-like operations
+
+  friend class CGNSUnstPeriodicLess;
+
+public:
+
+  std::string name;    // cgns name of the connection
+
+  std::string tgtZone; // cgns name of the unstructured zone
+  std::string srcZone; // cgns name of the unstructured zone
+
+  std::map<int,int> srcToTgtPts;
+  std::map<int,int> tgtToSrcPts;
+
+  std::vector<double> tfo;  // transformation
+
+  std::map<std::set<int>,GEntity*> tgtEnts[3];
+  std::map<std::set<int>,GEntity*> srcEnts[3];
+
+  std::map<GEntity*,GEntity*>      tgtToSrcEnts[3];
+
+protected:
+
+  void addPoints(PointSetType_t setType,cgsize_t size,
+                 const cgsize_t* ptsList,
+                 std::vector<int>& pts) {
+
+    switch (setType) {
+    case PointRange:
+    case PointRangeDonor:
+      for (int i=ptsList[0];i<=ptsList[1];i++) pts.push_back(i-1);
+      break;
+    case PointList:
+    case PointListDonor:
+      for (int i=0;i<size;i++)                 pts.push_back(ptsList[i]-1);
+      break;
+    default:
+      throw;
+    }
+
+  }
+
+
+public: // constructors
+
+  // -- empty constructor
+
+  CGNSUnstPeriodic() { setUnitAffineTransformation(tfo); }
+
+  // -- standard constructor
+
+  CGNSUnstPeriodic(const char* n,
+                   const char* tn,const cgsize_t* tPts,
+                   PointSetType_t tType,cgsize_t tSize,
+                   const char* sn,const cgsize_t* sPts,
+                   PointSetType_t sType,cgsize_t sSize,
+                   const float* rotationCenter,
+                   const float* rotationAngle,
+                   const float* translation):
+    name(n),tgtZone(tn),srcZone(sn) {
+
+    // compute the structured grid indices
+
+    computeAffineTransformation(rotationCenter,rotationAngle,translation,tfo);
+
+    std::vector<int> srcPts;
+    addPoints(sType,sSize,sPts,srcPts);
+
+    std::vector<int> tgtPts;
+    addPoints(tType,tSize,tPts,tgtPts);
+
+    if (tgtPts.size() != srcPts.size()) throw;
+
+    for (unsigned i=0;i<tgtPts.size();i++) {
+      tgtToSrcPts[tgtPts[i]] = srcPts[i];
+      srcToTgtPts[srcPts[i]] = tgtPts[i];
+    }
+  }
+
+public: // vertex functions
+
+  size_t nbPoints() const {return tgtToSrcPts.size();}
+
+};
+
+/*
+bool matchGEntities(GModel* model,int dim) {
+
+  // provide an exhaustive list of all the points
+
+  if (dim == 3) return false;
+
+  std::set<int> myPts;
+  for (unsigned iElmt=0;iElmt<ge->getNumMeshElements();iElmt++) {
+    MElement* elt = ge->getMeshElement(iElmt);
+    switch(elt->getType()) {
+    case TYPE_QUA:
+      myPts.insert(elt->getVertex(3)->getNum());
+    case TYPE_TRI:
+      myPts.insert(elt->getVertex(2)->getNum());
+    case TYPE_LIN:
+      myPts.insert(elt->getVertex(1)->getNum());
+    case TYPE_PNT:
+      myPts.insert(elt->getVertex(0)->getNum());
+      break;
+    default:
+      abort();
+    }
+  }
+
+  // see whether a source or target is already present
+
+    std::map<std::set<int>,GEntity*>::iterator tIter = tgtEnts.find(myPts);
+    if (tIter!=tgtEnts.end()) {
+      tgtToSrcEnts[dim][tIter->second] = ge;
+      tgtEnts[dim].erase(tIter);
+      std::cout << "Coupled " << dim << "D entity " << ge->tag()
+                << " to " << tIter->second->tag() << std::endl;
+      return true;
+    }
+
+    std::map<std::set<int>,GEntity*>::iterator sIter = srcEnts.find(myPts);
+    if (sIter!=srcEnts.end()) {
+      tgtToSrcEnts[ge] = sIter->second;
+      srcEnts.erase(sIter);
+
+      std::cout << "Coupled " << dim << "D entity"
+                << tIter->second->tag() << " to " << ge->tag() << std::endl;
+
+      return true;
+    }
+
+    std::map<int,int> s2t;
+    std::map<int,int> t2s;
+
+    // locate entity on target or source side and put in wait
+
+    std::map<int,int>::iterator it;
+
+    for (std::set<int>::iterator mIter=myPts.begin();mIter!=myPts.end();++mIter) {
+      int id = *mIter;
+      it=tgtToSrcPts.find(id);
+      if (it!=tgtToSrcPts.end()) t2s[id] = it->second;
+      it=srcToTgtPts.find(id);
+      if (it!=srcToTgtPts.end()) s2t[id] = it->second;
+    }
+
+    if (t2s.size() == myPts.size()) {
+      std::set<int> srcPoints;
+      for (it=t2s.begin();it!=t2s.end();++it) srcPoints.insert(it->second);
+      tgtEnts[srcPoints] = ge;
+      std::cout << "Added " << ge->tag() << " to the targets " << std::endl;
+      return true;
+    }
+
+    if (s2t.size() == myPts.size()) {
+      std::set<int> tgtPoints;
+      for (it=s2t.begin();it!=s2t.end();++it) tgtPoints.insert(it->second);
+      srcEnts[tgtPoints] = ge;
+      std::cout << "Added " << ge->tag() << " to the sources " << std::endl;
+      return true;
+    }
+    return false;
+  }
+};*/
+
+// -----------------------------------------------------------------------------
+
+struct CGNSUnstPeriodicLess {
+
+  bool operator() (const CGNSUnstPeriodic& f,const CGNSUnstPeriodic& d) {
+
+    if (f.nbPoints() == d.nbPoints()) {
+
+      if (f.tgtZone == d.tgtZone) {
+        if (f.srcZone == d.srcZone) return f.tgtToSrcPts < d.tgtToSrcPts;
+        return (f.srcZone.compare(d.srcZone) < 0);
+      }
+      if (f.tgtZone == d.srcZone) {
+        if (f.srcZone == d.tgtZone) return f.tgtToSrcPts < d.srcToTgtPts;
+        return (f.srcZone.compare(d.tgtZone) < 0);
+      }
+      return (f.srcZone.compare(d.srcZone) < 0);
+    }
+    return (f.nbPoints() < d.nbPoints());
+  }
+};
+
+// -----------------------------------------------------------------------------
+
+typedef std::set<CGNSUnstPeriodic,
+                 CGNSUnstPeriodicLess> CGNSUnstPeriodicSet;
+
+// -----------------------------------------------------------------------------
+
+int openCGNSFile(const std::string& fileName,int& fileIndex,int& nbBasis,
+                 double& scale) {
+
+  // Open the CGNS file
+  if (cg_open(fileName.c_str(), CG_MODE_READ, &fileIndex)) {
+    Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+               __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+    return 0;
+  }
+
+  scale = readCGNSScale();
+
+  cg_nbases(fileIndex, &nbBasis);
+  return 1;
+}
+
+// ------------------------------------------------------------------------------
+
+bool readCGNSBoundaryConditions(int fileIndex,
+                                int baseIndex,
+                                int zoneIndex,
+                                int classIndex,
+                                int meshDim,
+                                std::map<int,int>& eltToClass,
+                                std::map<int,std::string>& classToName) {
+
+
+
+  int nbBoCos;
+
+  if (cg_nbocos(fileIndex,baseIndex,zoneIndex,&nbBoCos) != CG_OK) return false;
+
+  for (int boCoIndex=1;boCoIndex<=nbBoCos;boCoIndex++,classIndex++) {
+
+    PointSetType_t ptSetType;
+    int normalIndex;
+    cgsize_t normalSize;
+    DataType_t normalType;
+    int nbDataSet;
+
+    char bcName[maxLenCGNS];
+    BCType_t bcType;
+    cgsize_t nbElts;
+    int ierr;
+
+    ierr = cg_boco_info(fileIndex,baseIndex,zoneIndex,boCoIndex,
+                        bcName,&bcType,&ptSetType,&nbElts,
+                        &normalIndex,&normalSize,
+                        &normalType, &nbDataSet);
+    if (ierr != CG_OK ) {
+      Msg::Error("%s (%i) : %s",__FILE__,__LINE__,cg_get_error());
+      return false;
+    }
+
+    GridLocation_t location;
+    ierr = cg_boco_gridlocation_read(fileIndex,baseIndex,zoneIndex,
+                                     boCoIndex,&location);
+    if (ierr != CG_OK) {
+      Msg::Error("%s (%i) : %s",__FILE__,__LINE__,cg_get_error());
+      return false;
+    }
+
+    Msg::Info("Boundary conditions %s specified on %s and set type %s",
+              bcName,cg_GridLocationName(location),cg_PointSetTypeName(ptSetType));
+
+    if (meshDim == 2 &&
+        location != CGNS::EdgeCenter &&
+        location != CGNS::Vertex) {
+      Msg::Error("Boundary condition %s should be specified on edges "
+                 "for 2D zone and not on %s",
+                 bcName,cg_GridLocationName(location));
+      return false;
+    }
+
+    if (meshDim == 3 &&
+        location != CGNS::FaceCenter &&
+        location != CGNS::Vertex) {
+      Msg::Error("Boundary condition %s should be specified on faces "
+                 "for 3D zones and not on %s",
+                 bcName,cg_GridLocationName(location));
+      return false;
+    }
+
+
+    cgsize_t* elt = new cgsize_t[nbElts];
+
+
+
+    ierr = cg_boco_read(fileIndex,baseIndex,zoneIndex,boCoIndex,elt,NULL);
+    if (ierr != CG_OK) {
+      Msg::Error("%s (%i) : %s",__FILE__,__LINE__,cg_get_error());
+      return false;
+    }
+
+    ierr = cg_goto(fileIndex,baseIndex,"Zone_t",zoneIndex,
+                   "ZoneBC_t",1,"BC_t",boCoIndex,"end");
+
+    if (ierr !=CG_OK) {
+      Msg::Error("%s (%i) : %s",__FILE__,__LINE__,cg_get_error());
+      return false;
+    }
+
+    char family[maxLenCGNS];
+    ierr = cg_famname_read(family);
+
+    if (ierr == CG_ERROR) {
+      Msg::Error("%s (%i) : %s",__FILE__,__LINE__,cg_get_error());
+      return false;
+    }
+    if (ierr == CG_OK) {
+      Msg::Info("Boundary condition is linked to family %s",family);
+    }
+
+
+
+    classToName[classIndex] = bcName;
+
+    switch (ptSetType) {
+    case ElementRange:
+    case PointRange:
+    case PointRangeDonor:
+      Msg::Info("Boundary condition %s is defined on %i %s",
+                bcName,elt[1]-elt[0]+1,cg_GridLocationName(location));
+      for (cgsize_t i=elt[0];i<=elt[1];i++) eltToClass[i] = classIndex;
+      break;
+    case ElementList:
+    case PointList:
+    case PointListDonor:
+      Msg::Info("Boundary condition %s is defined on %i %s",
+                bcName,nbElts,cg_GridLocationName(location));
+      for (cgsize_t i=0;i<nbElts;i++) eltToClass[elt[i]] = classIndex;
+      break;
+    default:
+      Msg::Error("Point set type %s is currently not supported "
+                 "for boundary conditions",
+                 cg_PointSetTypeName(ptSetType));
+      break;
+    }
+  }
+  return true;
+}
+
+bool readCGNSPeriodicConnections(int fileIndex,
+                                 int baseIndex,
+                                 int zoneIndex,
+                                 char* zoneName,
+                                 ZoneType_t zoneType,
+                                 CGNSUnstPeriodicSet& connections)  {
+
+
+  int nbConn(0);
+  cg_nconns(fileIndex,baseIndex,zoneIndex,&nbConn);
+
+  for (int connIndex=0;connIndex<nbConn;connIndex++){
+
+    GridLocation_t tgtLocation;
+
+    GridConnectivityType_t connType;
+    PointSetType_t tgtSetType;
+    PointSetType_t srcSetType;
+    ZoneType_t srcZoneType;
+    DataType_t srcDataType;
+
+    cgsize_t tgtSize;
+    cgsize_t srcSize;
+
+    char connName[maxLenCGNS];
+    char tgtName[maxLenCGNS];
+    std::memcpy(tgtName,zoneName,maxLenCGNS*sizeof(char));
+    char srcName[maxLenCGNS];
+
+    cg_conn_info(fileIndex,baseIndex,zoneIndex,connIndex,
+                 connName,&tgtLocation,&connType,&tgtSetType,&tgtSize,
+                 srcName,&srcZoneType,&srcSetType,&srcDataType,&srcSize);
+
+    if (connType != Abutting1to1) {
+      Msg::Error("Non-conformal connection not supported");
+    }
+
+    cgsize_t* tgtPts = new cgsize_t[tgtSize];
+    cgsize_t* srcPts = new cgsize_t[srcSize];
+
+    cg_conn_read(fileIndex,baseIndex,zoneIndex,connIndex,tgtPts,srcDataType,srcPts);
+
+    if (srcZoneType == Structured) break;
+
+    float center[3] = {0,0,0};
+    float angle[3]  = {0,0,0};
+    float disp[3]   = {0,0,0};
+
+    cg_conn_periodic_read(fileIndex,baseIndex,zoneIndex,connIndex,
+                          center,angle,disp);
+
+    connections.insert(CGNSUnstPeriodic(connName,
+                                        srcName,srcPts,srcSetType,srcSize,
+                                        tgtName,tgtPts,tgtSetType,tgtSize,
+                                        center,angle,disp));
+
+
+    delete [] tgtPts;
+    delete [] srcPts;
+
+  }
+  return true;
+}
+
+// -----------------------------------------------------------------------------
+
+int GModel::addCGNSPoints(const string& fileName,
+                          int fileIndex,
+                          int baseIndex,
+                          int zoneIndex,
+                          cgsize_t nbPoints,int dim,
+                          double scale,
+                          GEntity* entity,
+                          int& index,
+                          std::vector<MVertex*>& vertices) {
+
+
+
+  int nbDim;
+  if (cg_ncoords(fileIndex,baseIndex,zoneIndex,&nbDim) != CG_OK) {
+    Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+               __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+    return 0;
+  }
+
+  if (nbDim != dim) {
+    Msg::Error("%s (%i) : Error reading CGNS file %s: incoherent coordinate count",
+               __FILE__,__LINE__,fileName.c_str());
+    return 0;
+  }
+
+  double* xyz = new double[nbPoints*3];
+  for (int i=0;i<3*nbPoints;i++) xyz[i] = 0;
+
+  for (int iCoord=0;iCoord<dim;iCoord++) {
+
+    char coordName[maxLenCGNS];
+    cgsize_t indBeg(1);
+
+    DataType_t dataType;
+    if (cg_coord_info(fileIndex,baseIndex,zoneIndex,
+                      iCoord+1, &dataType, coordName) != CG_OK) {
+      Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+                 __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+      delete [] xyz;
+      return 0;
+    }
+
+    if(cg_coord_read(fileIndex,baseIndex,zoneIndex,coordName,
+                     RealDouble,&indBeg,&nbPoints,xyz+iCoord*nbPoints) != CG_OK ) {
+      Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+                 __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+      delete [] xyz;
+      return 0;
+    }
+  }
+
+  const double* x = xyz;
+  const double* y = xyz + nbPoints;
+  const double* z = xyz + nbPoints*2;
+
+  for (int i=0;i<nbPoints;i++) {
+    vertices.push_back(new MVertex(x[i]*scale,y[i]*scale,z[i]*scale,entity,index));
+    index++;
+  }
+  delete [] xyz;
+  return 1;
+}
+
+// -----------------------------------------------------------------------------
+
+int GModel::readCGNSUnstructured(const std::string& fileName)
+{
+
+
+  // --- global containers and indices for points and elements
+
+  std::map<int, std::vector<MElement*> > eltMap[10];
+  std::vector<MVertex*> vertices;
+
+  // --- keep connectivity information
+
+  CGNSUnstPeriodicSet periodic;
+
+  // --- open file and read generic information
+
+  int fileIndex(-1);
+  int nbBases(0);
+  double scale;
+
+  if (!openCGNSFile(fileName,fileIndex,nbBases,scale)) return 0;
+
+
+  int baseIndex = 1;
+  int topoDim(0);
+  int meshDim(0);
+  char baseName[maxLenCGNS];
+
+  if (cg_base_read(fileIndex,baseIndex,baseName,&topoDim,&meshDim) != CG_OK) {
+    Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+               __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+    return 0;
+  }
+
+  // --- read boundary conditions to retain name for physical classification
+
+  int nbFamilies(0);
+  if (cg_nfamilies(fileIndex,baseIndex,&nbFamilies) != CG_OK) {
+    Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+               __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+    return 0;
+  }
+
+  map<string,int> family;
+
+  for (int familyIndex = 1;familyIndex<=nbFamilies;familyIndex++) {
+    char familyName[maxLenCGNS];
+    int nbBC;
+    int nbGeo;
+    int ierr = cg_family_read(fileIndex,baseIndex,familyIndex,familyName,&nbBC,&nbGeo);
+    if (ierr != CG_OK) {
+      Msg::Error("%s (%i) : Error reading family %i in CGNS file %s : %s",
+                 __FILE__,__LINE__,familyIndex,fileName.c_str(),cg_get_error());
+      return 0;
+    }
+    Msg::Info("Read family %s with index %i",familyName,familyIndex);
+
+    family[familyName] = familyIndex;
+  }
+
+  // ---------------------------------------------------------------------------
+  // --- read the zones containing the elements --------------------------------
+  // ---------------------------------------------------------------------------
+
+  // keep renumbering table once generated
+
+  std::map<ElementType_t,int*> renumbering;
+
+  // --- read mesh zones -------------------------------------------------------
+
+  int nbZones(0);
+  if (cg_nzones(fileIndex,baseIndex,&nbZones) != CG_OK) {
+    Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+               __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+    return 0;
+  }
+
+
+  // --- node and element numbering is implicit in the zone, therefore offset required
+
+  // provide a global numbering
+
+  int vtxIndex(1);
+
+  // classify zones following their index, and start new numbering beyond
+
+  std::map<int,std::string> classNames;
+
+  // retain global zone information
+
+  std::map<std::string,int> zoneIndices;
+  std::map<std::string,int> zoneOffsets;
+
+  // retain boundary conditions
+
+  std::map<int,std::string> bcToName;
+  std::map<int,std::string> zoneToName;
+
+  int classIndex = nbZones + 1;
+
+  for (int zoneIndex=1;zoneIndex<=nbZones;zoneIndex++) {
+
+    // --- using an offset to translate zone local numbering to global numbering
+
+    int vtxOffset = vertices.size();
+
+    // --- check that this is an unstructured zone
+    //     we can later add ijk here to allow for mixed meshes
+
+    ZoneType_t zoneType;
+    if (cg_zone_type(fileIndex,baseIndex,zoneIndex,&zoneType) != CG_OK) {
+      Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+                 __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+      return 0;
+    }
+
+    if (zoneType != Unstructured) return 0;
+
+    // --- get element counts
+
+    cgsize_t sizes[3];
+
+    char zoneName[maxLenCGNS];
+    if (cg_zone_read(fileIndex,baseIndex,zoneIndex,zoneName,sizes) != CG_OK) {
+      Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+                 __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+      return 0;
+    }
+
+    zoneToName[zoneIndex] = zoneName;
+    zoneIndices[zoneName] = zoneIndex;
+    zoneOffsets[zoneName] = vtxOffset;
+
+    Msg::Info("Reading unstructured zone %s",zoneName);
+
+    cgsize_t nbPoints = sizes[0];
+
+    // --- read the family attached to the zone
+
+    if(cg_goto(fileIndex, baseIndex, "Zone_t", zoneIndex, "end") != CG_OK ) {
+      Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+                 __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+      return 0;
+    }
+
+    char zoneFamilyName[maxLenCGNS];
+    int zoneFamilyIndex;
+
+    int ierr = cg_famname_read(zoneFamilyName);
+
+    if (ierr == CG_ERROR) {
+      Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+                 __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+      return 0;
+    }
+
+    if (ierr == CG_OK) {
+      Msg::Info("Zone %i has family name %s",zoneIndex,zoneFamilyName);
+      map<string,int>::iterator fIter = family.find(zoneFamilyName);
+      if (fIter != family.end()) zoneFamilyIndex = fIter->second;
+      else Msg::Error("%s (%i) : Error reading CGNS file %s : "
+                      "cannot find CGNS family in available list",
+                      __FILE__,__LINE__,fileName.c_str());
+
+    }
+
+    // --- read coordinates and create vertices
+
+    addCGNSPoints(fileName,
+                  fileIndex,
+                  baseIndex,
+                  zoneIndex,
+                  nbPoints,
+                  meshDim,
+                  scale,
+                  NULL,
+                  vtxIndex,
+                  vertices);
+
+    Msg::Info("Read %i points",nbPoints);
+
+    // --- provide a finer classification based on boundary conditions
+
+    std::map<int,int> eltToBC;
+
+    bool topologyDefined = readCGNSBoundaryConditions(fileIndex,baseIndex,
+                                                      zoneIndex,classIndex,
+                                                      meshDim,eltToBC,bcToName);
+
+    // --- create element using the sections
+
+    int nbSections;
+
+    if (cg_nsections(fileIndex,baseIndex,zoneIndex,&nbSections) != CG_OK) {
+      Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+                 __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+      return 0;
+    }
+
+    size_t eltIndex = 1;
+    for (int sectIndex=1;sectIndex<=nbSections;sectIndex++) {
+
+      char sectName[maxLenCGNS];
+      ElementType_t cgnsType;
+      cgsize_t eltBeg;
+      cgsize_t eltEnd;
+      int nbBound;
+      int parentFlag;
+
+      std::map<ElementType_t,int> elementCount;
+
+      // --- read connection block size
+
+      if (cg_section_read(fileIndex,baseIndex,zoneIndex,sectIndex,sectName,
+                          &cgnsType,&eltBeg,&eltEnd,&nbBound,&parentFlag) != CG_OK ){
+        Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+                   __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+        return 0;
+      }
+
+      int nbElt = eltEnd - eltBeg + 1;
+
+      // --- read connections
+
+      cgsize_t sectSize;
+      if(cg_ElementDataSize(fileIndex,baseIndex,zoneIndex,
+                            sectIndex,&sectSize)!=CG_OK) {
+        Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+                   __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+        return 0;
+      }
+
+      // --- read elements
+
+      cgsize_t* elts = new cgsize_t[sectSize];
+
+
+      if(cg_elements_read(fileIndex,baseIndex,zoneIndex,sectIndex,
+                          elts,NULL)!=CG_OK) {
+        Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+                   __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+        return 0;
+      }
+
+      // --- create elements
+
+      cgsize_t* pElt = elts;
+      for (int iElt=0;iElt<nbElt;iElt++,eltIndex++) {
+
+        vector<MVertex*> vtcs;
+
+        ElementType_t myType = cgnsType;
+        if (cgnsType == MIXED) myType = (ElementType_t) *pElt++;
+
+        if (elementCount.find(myType) == elementCount.end()) elementCount[myType] = 0;
+        elementCount[myType]++;
+
+
+        int eltType = tagFromCGNSType(myType);
+        int eltSize = ElementType::NbNodesFromTag(eltType);
+
+        int* renum = NULL;
+
+        std::map<ElementType_t,int*>::iterator rIter = renumbering.find(myType);
+        if (rIter == renumbering.end()) {
+          renum = getRenumberingToGmsh(myType);
+          renumbering[myType] = renum;
+        }
+        else renum = rIter->second;
+
+        for (int iVtx=0;iVtx<eltSize;iVtx++) {
+          int num = vtxOffset + pElt[renum[iVtx]]-1;
+          vtcs.push_back(vertices[num]);
+        }
+
+        int topoIndex = zoneIndex;
+        std::map<int,int>::iterator tIter = eltToBC.find(eltIndex);
+        if (tIter!=eltToBC.end() && topologyDefined) topoIndex = tIter->second;
+
+        pElt += eltSize;
+        int partition(0);
+        createElementMSH(this,
+                         eltIndex,
+                         eltType,
+                         topoIndex,
+                         partition,
+                         vtcs,eltMap);
+      }
+
+      std::ostringstream elementList;
+      std::map<ElementType_t,int>::iterator ecIter = elementCount.begin();
+      for (;ecIter!=elementCount.end();++ecIter) {
+        elementList << ecIter->second << " "
+                    << ElementType::nameOfParentType(parentFromCGNSType(ecIter->first))
+                    << "s ";
+      }
+
+      Msg::Info("Section %i of zone %i has %s",
+                sectIndex,zoneIndex,elementList.str().c_str());
+
+      delete [] elts;
+    }
+
+    // readCGNSPeriodicConnections(fileIndex,baseIndex,zoneIndex,zoneName,zoneType,periodic);
+  }
+
+  for (std::map<ElementType_t,int*>::iterator rIter=renumbering.begin();
+       rIter!=renumbering.end();++rIter) delete [] rIter->second;
+
+  removeDuplicateMeshVertices(1e-8);
+
+  for(int i = 0; i < 10 ; i++) _storeElementsInEntities(eltMap[i]);
+
+  createTopologyFromMeshNew();
+
+  for (int zoneIndex=1;zoneIndex<=nbZones;zoneIndex++) {
+    cgsize_t sizes[3];
+    char zoneName[maxLenCGNS];
+    if (cg_zone_read(fileIndex,baseIndex,zoneIndex,zoneName,sizes) != CG_OK) {
+      Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+                 __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+      return 0;
+    }
+    readCGNSPeriodicConnections(fileIndex,baseIndex,
+                                zoneIndex,zoneName,Unstructured,periodic);
+  }
+
+  _associateEntityWithMeshVertices();
+  _storeVerticesInEntities(vertices);
+
+  // add physical entities corresponding to the bc and zones
+
+  std::map<int,std::map<int,std::string> > physicalSurfaces;
+
+  std::map<int,std::string>::iterator bIter = bcToName.begin();
+  for (;bIter!=bcToName.end();bIter++) {
+    int tag = bIter->first;
+    std::string name = bIter->second;
+    physicalSurfaces[tag][tag] = name;
+    physicalNames[std::make_pair(meshDim-1,tag)] = name;
+  }
+
+  _storePhysicalTagsInEntities(meshDim-1,physicalSurfaces);
+
+  std::map<int,std::map<int,std::string> > physicalZones;
+
+  std::map<int,std::string>::iterator zIter = zoneToName.begin();
+  for (;zIter!=zoneToName.end();zIter++) {
+    int tag = zIter->first;
+    std::string name = zIter->second;
+    physicalZones[tag][tag] = name;
+    physicalNames[std::make_pair(meshDim,tag)] = name;
+  }
+
+  _storePhysicalTagsInEntities(meshDim,physicalZones);
+
+  //_createGeometryOfDiscreteEntities();
+
+  return 1;
+}
 
 
 // -----------------------------------------------------------------------------
 
-int GModel::readCGNS(const std::string &name)
+int GModel::readCGNSStructured(const std::string &name)
 {
 
   // cgsize_t isize[9];
   // char basename[33],zonename[33];
   std::map<int, std::vector<MElement*> > elements[10];
 
+  int index_file(-1);
+  int nBases(0);
+  double scale;
 
-  // Open the CGNS file
-  int index_file;
-  if (cg_open(name.c_str(), CG_MODE_READ, &index_file)) {
-    Msg::Error("Could not open file !");
-    return 0;
-  }
+  if (!openCGNSFile(name,index_file,nBases,scale)) return 0;
 
-  // Get the number of bases
-  int nBases;
-  cg_nbases(index_file, &nBases);
+
   Msg::Debug("Found %i base(s).", nBases);
   if (nBases > 1) {
     Msg::Warning("Found %i bases in the file, "
@@ -944,13 +1797,14 @@ int GModel::readCGNS(const std::string &name)
   int* sizeIJK = new int[nZones*3];
 
   for (int index_zone = 1; index_zone <= nZones; index_zone++) {
+
     Msg::Debug("Reading zone to compute MG level %i.", index_zone);
 
     CG_ZoneType_t zoneType;
     cg_zone_type(index_file, index_base, index_zone, &zoneType);
-    if ( zoneType == CG_Unstructured ) {
-      Msg::Debug("Unstructured zone detected, skipping.");
-      continue;
+    if ( zoneType == Unstructured ) {
+      Msg::Info("Unstructured zone detected");
+      return 0;
     }
     // cgsize_t irmin[3];
     cgsize_t irmax[3];
@@ -992,10 +1846,12 @@ int GModel::readCGNS(const std::string &name)
   }
 
 
-  opt_mesh_cgns_import_order(0, GMSH_SET, max_order);;
+  opt_mesh_cgns_import_order(0, GMSH_SET, max_order);
 
   int order = CTX::instance()->mesh.cgnsImportOrder;
-  if (CTX::instance()->batch == 0 &&  FlGui::instance()->available() && CTX::instance()->expertMode) {
+  if (CTX::instance()->batch == 0 &&
+      FlGui::instance()->available() &&
+      CTX::instance()->expertMode) {
     order = cgnsImport();
     CTX::instance()->mesh.order = order;
   }
@@ -1029,7 +1885,7 @@ int GModel::readCGNS(const std::string &name)
     // int elementary_edge = getNumEdges();
     // int elementary_vertex = getNumVertices();
 
-    CGNSPeriodicSet periodicConnections;
+    CGNSStruPeriodicSet periodicConnections;
 
     // Read the zones
     for (int index_zone = 1; index_zone <= nZones ; index_zone++) {
@@ -1100,7 +1956,7 @@ int GModel::readCGNS(const std::string &name)
             return 0;
           }
           for (int iNode = 0; iNode < nnodesZone; iNode++) {
-            nodes[iNode][iCoord] = (double)((float*)coord)[iNode];
+            nodes[iNode][iCoord] = (double)((float*)coord)[iNode] * scale;
           }
           delete [] (float*)coord;
           break;
@@ -1114,7 +1970,7 @@ int GModel::readCGNS(const std::string &name)
             return 0;
           }
           for (int iNode = 0; iNode < nnodesZone; iNode++) {
-            nodes[iNode][iCoord] = ((double*) coord)[iNode];
+            nodes[iNode][iCoord] = ((double*) coord)[iNode] * scale;
           }
           delete [] (double*)coord;
           break;
@@ -1194,36 +2050,35 @@ int GModel::readCGNS(const std::string &name)
                                   RotationCenter,
                                   RotationAngle,
                                   Translation) != CG_NODE_NOT_FOUND) {
+          CGNSStruPeriodic pnew(zoneName,range,
+                                DonorName,donor_range,transform,order,faceIndex,
+                                RotationCenter,RotationAngle,Translation);
 
-          CGNSPeriodic pnew(zoneName,range,
-                            DonorName,donor_range,transform,order,faceIndex,
-                            RotationCenter,RotationAngle,Translation);
-
-          CGNSPeriodic pinv(pnew.getInverse());
-          CGNSPeriodicSet::iterator pIter = periodicConnections.find(pinv);
+          CGNSStruPeriodic pinv(pnew.getInverse());
+          CGNSStruPeriodicSet::iterator pIter = periodicConnections.find(pinv);
 
           // create a new connection if inverse not found
           if (pIter == periodicConnections.end()) {
             for (size_t ip=0;ip<pnew.getNbPoints();ip++) {
               int i(0),j(0),k(0);
-              pnew.getTargetIJK(ip,i,j,k);
-              pnew.insertTargetVertex(ip,vertexMap[offset+to1D(i,j,k,
-                                                               irmax[0],
-                                                               irmax[1],
-                                                               irmax[2])]);
+              pnew.getTgtIJK(ip,i,j,k);
+              pnew.insertTgtVertex(ip,vertexMap[offset+to1D(i,j,k,
+                                                            irmax[0],
+                                                            irmax[1],
+                                                            irmax[2])]);
             }
             periodicConnections.insert(pnew);
           }
           // if inverse is found, we need to complete
           else {
-            pIter->sourceFaceId = faceIndex;
+            pIter->srcFaceId = faceIndex;
             for (size_t ip=0;ip<pIter->getNbPoints();ip++) {
               int i(0),j(0),k(0);
-              pIter->getSourceIJK(ip,i,j,k);
-              pIter->insertSourceVertex(ip,vertexMap[offset+to1D(i,j,k,
-                                                                 irmax[0],
-                                                                 irmax[1],
-                                                                 irmax[2])]);
+              pIter->getSrcIJK(ip,i,j,k);
+              pIter->insertSrcVertex(ip,vertexMap[offset+to1D(i,j,k,
+                                                              irmax[0],
+                                                              irmax[1],
+                                                              irmax[2])]);
             }
           }
         }
@@ -1357,20 +2212,20 @@ int GModel::readCGNS(const std::string &name)
 
     // --- now encode the periodic boundaries
 
-    CGNSPeriodicSet::iterator pIter = periodicConnections.begin();
+    CGNSStruPeriodicSet::iterator pIter = periodicConnections.begin();
 
     for (;pIter!=periodicConnections.end();++pIter) {
 
-      GFace* target = getFaceByTag(pIter->targetFaceId);
-      GFace* source = getFaceByTag(pIter->sourceFaceId);
+      GFace* tgt = getFaceByTag(pIter->tgtFaceId);
+      GFace* src = getFaceByTag(pIter->srcFaceId);
 
-      target->setMeshMaster(source,pIter->tfo);
+      tgt->setMeshMaster(src,pIter->tfo);
 
-      std::vector<MVertex*>::const_iterator tIter = pIter->targetVertices.begin();
-      std::vector<MVertex*>::const_iterator sIter = pIter->sourceVertices.begin();
+      std::vector<MVertex*>::const_iterator tIter = pIter->tgtVertices.begin();
+      std::vector<MVertex*>::const_iterator sIter = pIter->srcVertices.begin();
 
-      for (;tIter!=pIter->targetVertices.end();++tIter,++sIter) {
-        target->correspondingVertices[*tIter] = *sIter;
+      for (;tIter!=pIter->tgtVertices.end();++tIter,++sIter) {
+        tgt->correspondingVertices[*tIter] = *sIter;
       }
     }
 
@@ -1378,13 +2233,23 @@ int GModel::readCGNS(const std::string &name)
     //createTopologyFromMesh();
 
     if ( cg_close (index_file) ) {
-      Msg::Error("Couldnt close the file !");
+      Msg::Error("Couldn't close the file !");
       return 0;
     }
     return 1;
   }
   return 0;
 }
+
+
+
+int GModel::readCGNS(const std::string &name) {
+
+  int structured = readCGNSStructured(name);
+  if (structured) return structured;
+  return readCGNSUnstructured(name);
+}
+
 
 /*******************************************************************************
  *
@@ -1409,193 +2274,193 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
                       const CGNSOptions &options, double scalingFactor)
 {
 
-  enum {
-    vertex = 0,
-    edge   = 1,
-    face   = 2,
-    region = 3
-  };
+  //   enum {
+  //     vertex = 0,
+  //     edge   = 1,
+  //     face   = 2,
+  //     region = 3
+  //   };
 
-  PhysGroupMap groups[4];               // vector of entities that belong to
-                                        // each physical group (in each
-                                        // dimension)
-  std::vector<DummyPartitionEntity> partitions;
-                                        // Dummy entities that store the
-                                        // elements in each partition
-  int numZone(0);
-  int meshDim(0);
+  //   PhysGroupMap groups[4];               // vector of entities that belong to
+  //                                         // each physical group (in each
+  //                                         // dimension)
+  //   std::vector<DummyPartitionEntity> partitions;
+  //                                         // Dummy entities that store the
+  //                                         // elements in each partition
+  //   int numZone(0);
+  //   int meshDim(0);
 
-  Msg::Warning("CGNS I/O is at an \"alpha\" software stage");
+  //   Msg::Warning("CGNS I/O is at an \"alpha\" software stage");
 
-  switch(zoneDefinition) {
-  case 1:  // By partition
+  //   switch(zoneDefinition) {
+  //   case 1:  // By partition
 
-//--Group the elements of each partition into a dummy entity.  Pointers to the
-//--entities are then made available in groups[DIM][0].
+  // //--Group the elements of each partition into a dummy entity.  Pointers to the
+  // //--entities are then made available in groups[DIM][0].
 
-    {
-      numZone = getNumPartitions();
-      if(numZone == 0) zoneDefinition = 0;
-      else {
-        partitions.resize(numZone);
-        //for(int i = 0; i != numZone; ++i)
-        //  partitions[i].elements.reserve(getMaxPartitionSize());
-        unsigned numElem[5];
-        meshDim = getNumMeshElements(numElem);
-        // Load the dummy entities with the elements in each partition
-        switch(meshDim) {
-        case 3:
-          for(riter it = firstRegion(); it != lastRegion(); ++it) {
-            numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
-            numElem[4] = 0;
-            (*it)->getNumMeshElements(numElem);
-            const int nType = (*it)->getNumElementTypes();
-            for(int iType = 0; iType != nType; ++iType) {
-              MElement *const *element = (*it)->getStartElementType(iType);
-              const int nElem = numElem[iType];
-              for(int iElem = 0; iElem != nElem; ++iElem) {
-                partitions[element[iElem]->getPartition() - 1].elements
-                  .push_back(element[iElem]);
-              }
-            }
-          }
-          break;
-        case 2:
-          for(fiter it = firstFace(); it != lastFace(); ++it) {
-            numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
-            numElem[4] = 0;
-            (*it)->getNumMeshElements(numElem);
-            const int nType = (*it)->getNumElementTypes();
-            for(int iType = 0; iType != nType; ++iType) {
-              MElement *const *element = (*it)->getStartElementType(iType);
-              const int nElem = numElem[iType];
-              for(int iElem = 0; iElem != nElem; ++iElem) {
-                partitions[element[iElem]->getPartition() - 1].elements
-                  .push_back(element[iElem]);
-              }
-            }
-          }
-          break;
-        default:
-          Msg::Error("No mesh elements were found");
-          return 0;
-        }
-        // Place pointers to the entities in the 'groups' object
-        std::vector<GEntity*> &ents = groups[meshDim][0];
-        ents.resize(numZone);
-        for(int iPart = 0; iPart != numZone; ++iPart)
-          ents[iPart] = &partitions[iPart];
-      }
-    }
-    break;
-  case 2:  // By physical
+  //     {
+  //       numZone = meshPartitions.size();
+  //       if(numZone == 0) zoneDefinition = 0;
+  //       else {
+  //         partitions.resize(numZone);
+  //         for(int i = 0; i != numZone; ++i)
+  //           partitions[i].elements.reserve(getMaxPartitionSize());
+  //         unsigned numElem[5];
+  //         meshDim = getNumMeshElements(numElem);
+  //         // Load the dummy entities with the elements in each partition
+  //         switch(meshDim) {
+  //         case 3:
+  //           for(riter it = firstRegion(); it != lastRegion(); ++it) {
+  //             numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+  //             numElem[4] = 0;
+  //             (*it)->getNumMeshElements(numElem);
+  //             const int nType = (*it)->getNumElementTypes();
+  //             for(int iType = 0; iType != nType; ++iType) {
+  //               MElement *const *element = (*it)->getStartElementType(iType);
+  //               const int nElem = numElem[iType];
+  //               for(int iElem = 0; iElem != nElem; ++iElem) {
+  //                 partitions[element[iElem]->getPartition() - 1].elements
+  //                   .push_back(element[iElem]);
+  //               }
+  //             }
+  //           }
+  //           break;
+  //         case 2:
+  //           for(fiter it = firstFace(); it != lastFace(); ++it) {
+  //             numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+  //             numElem[4] = 0;
+  //             (*it)->getNumMeshElements(numElem);
+  //             const int nType = (*it)->getNumElementTypes();
+  //             for(int iType = 0; iType != nType; ++iType) {
+  //               MElement *const *element = (*it)->getStartElementType(iType);
+  //               const int nElem = numElem[iType];
+  //               for(int iElem = 0; iElem != nElem; ++iElem) {
+  //                 partitions[element[iElem]->getPartition() - 1].elements
+  //                   .push_back(element[iElem]);
+  //               }
+  //             }
+  //           }
+  //           break;
+  //         default:
+  //           Msg::Error("No mesh elements were found");
+  //           return 0;
+  //         }
+  //         // Place pointers to the entities in the 'groups' object
+  //         std::vector<GEntity*> &ents = groups[meshDim][0];
+  //         ents.resize(numZone);
+  //         for(int iPart = 0; iPart != numZone; ++iPart)
+  //           ents[iPart] = &partitions[iPart];
+  //       }
+  //     }
+  //     break;
+  //   case 2:  // By physical
 
-//--Get a list of groups in each dimension and each of the entities in that
-//--group.
+  // //--Get a list of groups in each dimension and each of the entities in that
+  // //--group.
 
-    getPhysicalGroups(groups);
-    if(groups[region].size()) {
-      numZone = groups[region].size();
-      meshDim = 3;
-    }
-    else if(groups[face].size()) {
-      numZone = groups[face].size();
-      meshDim = 2;
-    }
-    else {
-      zoneDefinition = 0;  // Use single zone
-    }
-    break;
-  }
+  //     getPhysicalGroups(groups);
+  //     if(groups[region].size()) {
+  //       numZone = groups[region].size();
+  //       meshDim = 3;
+  //     }
+  //     else if(groups[face].size()) {
+  //       numZone = groups[face].size();
+  //       meshDim = 2;
+  //     }
+  //     else {
+  //       zoneDefinition = 0;  // Use single zone
+  //     }
+  //     break;
+  //   }
 
-//--For a single zone, put all the entities for a dimension into groups[DIM][0]
+  // //--For a single zone, put all the entities for a dimension into groups[DIM][0]
 
-  if(zoneDefinition == 0) {
-    numZone = 1;
-    unsigned numElem[5];
-    numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0; numElem[4] = 0;
-    meshDim = getNumMeshElements(numElem);
-    switch(meshDim) {
-    case 3:
-      {
-        groups[region].clear();
-        std::vector<GEntity*> &ents = groups[region][0];
-        ents.resize(getNumRegions());
-        int iEnt = 0;
-        for(riter it = firstRegion(); it != lastRegion(); ++it)
-          ents[iEnt++] = *it;
-      }
-      break;
-    case 2:
-      {
-        groups[face].clear();
-        std::vector<GEntity*> &ents = groups[face][0];
-        ents.resize(getNumFaces());
-        int iEnt = 0;
-        for(fiter it = firstFace(); it != lastFace(); ++it)
-          ents[iEnt++] = *it;
-      }
-      break;
-    default:
-      Msg::Error("No mesh elements were found");
-      return 0;
-    }
-  }
+  //   if(zoneDefinition == 0) {
+  //     numZone = 1;
+  //     unsigned numElem[5];
+  //     numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0; numElem[4] = 0;
+  //     meshDim = getNumMeshElements(numElem);
+  //     switch(meshDim) {
+  //     case 3:
+  //       {
+  //         groups[region].clear();
+  //         std::vector<GEntity*> &ents = groups[region][0];
+  //         ents.resize(getNumRegions());
+  //         int iEnt = 0;
+  //         for(riter it = firstRegion(); it != lastRegion(); ++it)
+  //           ents[iEnt++] = *it;
+  //       }
+  //       break;
+  //     case 2:
+  //       {
+  //         groups[face].clear();
+  //         std::vector<GEntity*> &ents = groups[face][0];
+  //         ents.resize(getNumFaces());
+  //         int iEnt = 0;
+  //         for(fiter it = firstFace(); it != lastFace(); ++it)
+  //           ents[iEnt++] = *it;
+  //       }
+  //       break;
+  //     default:
+  //       Msg::Error("No mesh elements were found");
+  //       return 0;
+  //     }
+  //   }
 
-/*--------------------------------------------------------------------*
- * Summary of three possibilities for the 'zoneDefinition':
- * 0) single zone: all the entities are placed in physical 0.  All the
- *    entities form the zone.
- * 1) defined by partitions:  all the entities are place in physical
- *    0.  Each entity is a zone.
- * 2) defined by physicals:  all the entities in a physical form a
- *    zone.
- *--------------------------------------------------------------------*/
+  // /*--------------------------------------------------------------------*
+  //  * Summary of three possibilities for the 'zoneDefinition':
+  //  * 0) single zone: all the entities are placed in physical 0.  All the
+  //  *    entities form the zone.
+  //  * 1) defined by partitions:  all the entities are place in physical
+  //  *    0.  Each entity is a zone.
+  //  * 2) defined by physicals:  all the entities in a physical form a
+  //  *    zone.
+  //  *--------------------------------------------------------------------*/
 
-//--Open the file and get ready to write the zones
+  // //--Open the file and get ready to write the zones
 
-  // Get the dimension of a vector in the mesh
-  int vectorDim = 3;
-  if(meshDim == 2) vectorDim = options.vectorDim;
+  //   // Get the dimension of a vector in the mesh
+  //   int vectorDim = 3;
+  //   if(meshDim == 2) vectorDim = options.vectorDim;
 
-  // open the file
-  int cgIndexFile=0;
-  if(cg_open(name.c_str(), CG_MODE_WRITE, &cgIndexFile)) return cgnsErr();
+  //   // open the file
+  //   int cgIndexFile=0;
+  //   if(cg_open(name.c_str(), CG_MODE_WRITE, &cgIndexFile)) return cgnsErr();
 
-  // write the base node
-  int cgIndexBase=0;
-  if(cg_base_write(cgIndexFile, options.baseName.c_str(), meshDim, meshDim,
-                   &cgIndexBase))
-    return cgnsErr();
+  //   // write the base node
+  //   int cgIndexBase=0;
+  //   if(cg_base_write(cgIndexFile, options.baseName.c_str(), meshDim, meshDim,
+  //                    &cgIndexBase))
+  //     return cgnsErr();
 
-  // write information about who generated the mesh
-  if(cg_goto(cgIndexFile, cgIndexBase, "end")) return(cgnsErr());
-  if(cg_descriptor_write("About", "Created by Gmsh")) return cgnsErr();
+  //   // write information about who generated the mesh
+  //   if(cg_goto(cgIndexFile, cgIndexBase, "end")) return(cgnsErr());
+  //   if(cg_descriptor_write("About", "Created by Gmsh")) return cgnsErr();
 
-  switch(meshDim) {
-  case 2:
-    MZone<2>::preInit();
-    MZoneBoundary<2>::preInit();
-    write_CGNS_zones<2>(*this, zoneDefinition, numZone, options,
-                        scalingFactor, vectorDim, groups[face],
-                        cgIndexFile, cgIndexBase);
-    MZone<2>::postDestroy();
-    MZoneBoundary<2>::postDestroy();
-    break;
-  case 3:
-    MZone<3>::preInit();
-    MZoneBoundary<3>::preInit();
-    write_CGNS_zones<3>(*this, zoneDefinition, numZone, options,
-                        scalingFactor, vectorDim, groups[region],
-                        cgIndexFile, cgIndexBase);
-    MZone<3>::postDestroy();
-    MZoneBoundary<3>::postDestroy();
-    break;
-  }
+  //   switch(meshDim) {
+  //   case 2:
+  //     MZone<2>::preInit();
+  //     MZoneBoundary<2>::preInit();
+  //     write_CGNS_zones<2>(*this, zoneDefinition, numZone, options,
+  //                         scalingFactor, vectorDim, groups[face],
+  //                         cgIndexFile, cgIndexBase);
+  //     MZone<2>::postDestroy();
+  //     MZoneBoundary<2>::postDestroy();
+  //     break;
+  //   case 3:
+  //     MZone<3>::preInit();
+  //     MZoneBoundary<3>::preInit();
+  //     write_CGNS_zones<3>(*this, zoneDefinition, numZone, options,
+  //                         scalingFactor, vectorDim, groups[region],
+  //                         cgIndexFile, cgIndexBase);
+  //     MZone<3>::postDestroy();
+  //     MZoneBoundary<3>::postDestroy();
+  //     break;
+  //   }
 
-//--Close the file
+  // //--Close the file
 
-  if(cg_close(cgIndexFile)) return cgnsErr();
+  //   if(cg_close(cgIndexFile)) return cgnsErr();
 
   return 0;
 }
@@ -1619,94 +2484,94 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
  *
  ******************************************************************************/
 
-void translateElementMSH2CGNS(ElementConnectivity *const zoneElemConn)
-{
-  const int maxVPE = 27;
-  // Location to write a MSH_TET_10 vertex to get a CGNS TETRA_10
-  static const int trTET10[10] = {
-    0, 1, 2, 3, 4, 5, 6, 7, 9, 8
-  };
-  // Location to write a MSH_HEX_20 vertex to get a CGNS HEXA_20
-  static const int trHEX20[20] = {
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 9, 13, 10, 14, 15, 16, 19, 17, 18
-  };
-  // Location to write a MSH_HEX_27 vertex to get a CGNS HEXA_27
-  static const int trHEX27[27] = {
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 9, 13, 10, 14, 15, 16, 19, 17, 18,
-    20, 21, 24, 22, 23, 25, 26
-  };
-  // Location to write a MSH_PRI_15 vertex to get a CGNS PENTA_15
-  static const int trPRI15[15] = {
-    0, 1, 2, 3, 4, 5, 6, 8, 9, 7, 10, 11, 12, 14, 13
-  };
-  // Location to write a MSH_PRI_18 vertex to get a CGNS PENTA_18
-  static const int trPRI18[18] = {
-    0, 1, 2, 3, 4, 5, 6, 8, 9, 7, 10, 11, 12, 14, 13,
-    15, 17, 16
-  };
-  // Location to write a MSH_PYR_13 vertex to get a CGNS PYRA_13
-  // PYRA_13 are not in the CGNS standard but if ever added they would have the
-  // same ordering as PYRA_14
-  static const int trPYR13[13] = {
-    0, 1, 2, 3, 4, 5, 8, 9, 6, 10, 7, 11, 12
-  };
-  // Location to write a MSH_PYR_14 vertex to get a CGNS PYRA_14
-  static const int trPYR14[14] = {
-    0, 1, 2, 3, 4, 5, 8, 9, 6, 10, 7, 11, 12,
-    13
-  };
+// void translateElementMSH2CGNS(ElementConnectivity *const zoneElemConn)
+// {
+//   const int maxVPE = 27;
+//   // Location to write a MSH_TET_10 vertex to get a CGNS TETRA_10
+//   static const int trTET10[10] = {
+//     0, 1, 2, 3, 4, 5, 6, 7, 9, 8
+//   };
+//   // Location to write a MSH_HEX_20 vertex to get a CGNS HEXA_20
+//   static const int trHEX20[20] = {
+//     0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 9, 13, 10, 14, 15, 16, 19, 17, 18
+//   };
+//   // Location to write a MSH_HEX_27 vertex to get a CGNS HEXA_27
+//   static const int trHEX27[27] = {
+//     0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 9, 13, 10, 14, 15, 16, 19, 17, 18,
+//     20, 21, 24, 22, 23, 25, 26
+//   };
+//   // Location to write a MSH_PRI_15 vertex to get a CGNS PENTA_15
+//   static const int trPRI15[15] = {
+//     0, 1, 2, 3, 4, 5, 6, 8, 9, 7, 10, 11, 12, 14, 13
+//   };
+//   // Location to write a MSH_PRI_18 vertex to get a CGNS PENTA_18
+//   static const int trPRI18[18] = {
+//     0, 1, 2, 3, 4, 5, 6, 8, 9, 7, 10, 11, 12, 14, 13,
+//     15, 17, 16
+//   };
+//   // Location to write a MSH_PYR_13 vertex to get a CGNS PYRA_13
+//   // PYRA_13 are not in the CGNS standard but if ever added they would have the
+//   // same ordering as PYRA_14
+//   static const int trPYR13[13] = {
+//     0, 1, 2, 3, 4, 5, 8, 9, 6, 10, 7, 11, 12
+//   };
+//   // Location to write a MSH_PYR_14 vertex to get a CGNS PYRA_14
+//   static const int trPYR14[14] = {
+//     0, 1, 2, 3, 4, 5, 8, 9, 6, 10, 7, 11, 12,
+//     13
+//   };
 
-  int tmp[maxVPE];
-  for(int iElemType = 0; iElemType != MSH_NUM_TYPE; ++iElemType) {
-    int numVPE;
-    const int *tr;
-    if(zoneElemConn[iElemType].numElem > 0) {
-      switch(iElemType + 1) {
-      case MSH_TET_10:
-          numVPE = 10;
-          tr = trTET10;
-        break;
-      case MSH_HEX_20:
-          numVPE = 20;
-          tr = trHEX20;
-        break;
-      case MSH_HEX_27:
-          numVPE = 27;
-          tr = trHEX27;
-        break;
-      case MSH_PRI_15:
-          numVPE = 15;
-          tr = trPRI15;
-        break;
-      case MSH_PRI_18:
-          numVPE = 18;
-          tr = trPRI18;
-        break;
-      case MSH_PYR_13:  // Although not in the CGNS standard, I assume it would
-                        // be the same as PYRA_14 if ever added
-          numVPE = 13;
-          tr = trPYR13;
-        break;
-      case MSH_PYR_14:
-          numVPE = 14;
-          tr = trPYR14;
-        break;
-      default:
-        numVPE = 0;
-        tr = 0;
-        break;
-      }
-      if(numVPE > 0) {
-        int *aConn = &zoneElemConn[iElemType].connectivity[0];
-        for(int n = zoneElemConn[iElemType].numElem; n--; ) {
-          std::memcpy(tmp, aConn, numVPE*sizeof(int));
-          for(int iV = 0; iV != numVPE; ++iV) aConn[tr[iV]] = tmp[iV];
-          aConn += numVPE;
-        }
-      }
-    }
-  }
-}
+//   int tmp[maxVPE];
+//   for(int iElemType = 0; iElemType != MSH_NUM_TYPE; ++iElemType) {
+//     int numVPE;
+//     const int *tr;
+//     if(zoneElemConn[iElemType].numElem > 0) {
+//       switch(iElemType + 1) {
+//       case MSH_TET_10:
+//           numVPE = 10;
+//           tr = trTET10;
+//         break;
+//       case MSH_HEX_20:
+//           numVPE = 20;
+//           tr = trHEX20;
+//         break;
+//       case MSH_HEX_27:
+//           numVPE = 27;
+//           tr = trHEX27;
+//         break;
+//       case MSH_PRI_15:
+//           numVPE = 15;
+//           tr = trPRI15;
+//         break;
+//       case MSH_PRI_18:
+//           numVPE = 18;
+//           tr = trPRI18;
+//         break;
+//       case MSH_PYR_13:  // Although not in the CGNS standard, I assume it would
+//                         // be the same as PYRA_14 if ever added
+//           numVPE = 13;
+//           tr = trPYR13;
+//         break;
+//       case MSH_PYR_14:
+//           numVPE = 14;
+//           tr = trPYR14;
+//         break;
+//       default:
+//         numVPE = 0;
+//         tr = 0;
+//         break;
+//       }
+//       if(numVPE > 0) {
+//         int *aConn = &zoneElemConn[iElemType].connectivity[0];
+//         for(int n = zoneElemConn[iElemType].numElem; n--; ) {
+//           std::memcpy(tmp, aConn, numVPE*sizeof(int));
+//           for(int iV = 0; iV != numVPE; ++iV) aConn[tr[iV]] = tmp[iV];
+//           aConn += numVPE;
+//         }
+//       }
+//     }
+//   }
+// }
 
 /*******************************************************************************
  *
@@ -1726,45 +2591,45 @@ void translateElementMSH2CGNS(ElementConnectivity *const zoneElemConn)
  *
  ******************************************************************************/
 
-void expand_name(std::string &s, const int index, const char *const name)
-{
-  std::string::size_type r1 = s.find('&');
-  // Look for and replace "&-&" sub-strings
-  while(r1 != std::string::npos) {
-    const std::string::size_type r2 = s.find('&', r1+1);
-    if(r2 == std::string::npos) {
-      s.replace(r1, s.length()-r1, "");
-    }
-    else {
-      const int rn = r2 - r1 + 1;
-      switch(s[r1+1]) {
-      case 'I':
-        // &I[0][%width]&
-        {
-          int iplus = 1;
-          if(s[r1+2] == '0') iplus = 0;
-          char fmt[6] = "%d";
-          const std::string::size_type f = s.find('%', r1+1);
-          if(f != std::string::npos && f < r2) {
-            int w = std::atoi(s.substr(f+1, r2-f-1).c_str());
-            if(w > 0 && w < 33) std::sprintf(fmt, "%%0%dd", w);
-          }
-          s.replace(r1, rn, CGNSNameStr(index+iplus, fmt).c_str());
-          break;
-        }
-      case 'N':
-        // &N&
-        s.replace(r1, rn, name);
-        break;
-      default:
-        s.replace(r1, rn, "");
-      }
-    }
-    if(s.length() > 1024) s = "";  // idiot/recursive check
-    r1 = s.find('&');
-  }
+// void expand_name(std::string &s, const int index, const char *const name)
+// {
+//   std::string::size_type r1 = s.find('&');
+//   // Look for and replace "&-&" sub-strings
+//   while(r1 != std::string::npos) {
+//     const std::string::size_type r2 = s.find('&', r1+1);
+//     if(r2 == std::string::npos) {
+//       s.replace(r1, s.length()-r1, "");
+//     }
+//     else {
+//       const int rn = r2 - r1 + 1;
+//       switch(s[r1+1]) {
+//       case 'I':
+//         // &I[0][%width]&
+//         {
+//           int iplus = 1;
+//           if(s[r1+2] == '0') iplus = 0;
+//           char fmt[6] = "%d";
+//           const std::string::size_type f = s.find('%', r1+1);
+//           if(f != std::string::npos && f < r2) {
+//             int w = std::atoi(s.substr(f+1, r2-f-1).c_str());
+//             if(w > 0 && w < 33) std::sprintf(fmt, "%%0%dd", w);
+//           }
+//           s.replace(r1, rn, CGNSNameStr(index+iplus, fmt).c_str());
+//           break;
+//         }
+//       case 'N':
+//         // &N&
+//         s.replace(r1, rn, name);
+//         break;
+//       default:
+//         s.replace(r1, rn, "");
+//       }
+//     }
+//     if(s.length() > 1024) s = "";  // idiot/recursive check
+//     r1 = s.find('&');
+//   }
 
-}
+// }
 
 
 /*******************************************************************************
@@ -1796,545 +2661,543 @@ void expand_name(std::string &s, const int index, const char *const name)
  *
  ******************************************************************************/
 
-int get_zone_definition(GModel &model, const int zoneDefinition,
-                        const int numZone, const CGNSOptions &options,
-                        const int meshDim,
-                        const PhysGroupMap &group, int &globalZoneIndex,
-                        PhysGroupMap::const_iterator &globalPhysicalIt,
-                        int &zoneIndex, int &partition,
-                        PhysGroupMap::const_iterator &physicalItBegin,
-                        PhysGroupMap::const_iterator &physicalItEnd,
-                        CGNSNameStr &zoneName)
-{
+// int get_zone_definition(GModel &model, const int zoneDefinition,
+//                         const int numZone, const CGNSOptions &options,
+//                         const int meshDim,
+//                         const PhysGroupMap &group, int &globalZoneIndex,
+//                         PhysGroupMap::const_iterator &globalPhysicalIt,
+//                         int &zoneIndex, int &partition,
+//                         PhysGroupMap::const_iterator &physicalItBegin,
+//                         PhysGroupMap::const_iterator &physicalItEnd,
+//                         CGNSNameStr &zoneName)
+// {
 
-  int status = 0;
-  const char *_zoneName = "Partition";
-  // NBN: pass name to expand_name(): Zone_&N& ==> Zone_Fluid
-  std::string zn;
+//   int status = 0;
+//   const char *_zoneName = "Partition";
+//   // NBN: pass name to expand_name(): Zone_&N& ==> Zone_Fluid
+//   std::string zn;
 
-//--Get indices for the zonex
+// //--Get indices for the zonex
 
-#ifdef _OPENMP
-#pragma omp critical (get_zone_definition)
-#endif
-  {
-    if(globalZoneIndex >= numZone) status = 1;
-    else {
-      switch(zoneDefinition) {
-      case 0:  // Single zone
-        partition = -1;
-        physicalItBegin = group.begin();
-        physicalItEnd = group.end();
-        break;
-      case 1:  // Zone defined by partition
-        partition = globalZoneIndex;
-        physicalItBegin = group.begin();
-        physicalItEnd = group.end();
-        break;
-      case 2:  // Zone defined by physical
-        partition = -1;
-      //_zoneName = model.getPhysicalName(meshDim, globalPhysicalIt->first).c_str();
-        zn = model.getPhysicalName(meshDim, globalPhysicalIt->first);   // NBN:
-        _zoneName = zn.c_str();   // NBN:
-        physicalItBegin = globalPhysicalIt++;
-        physicalItEnd = globalPhysicalIt;
-        break;
-      }
-      zoneIndex = globalZoneIndex++;
-    }
-  }
-//omp: end critical
+// #ifdef _OPENMP
+// #pragma omp critical (get_zone_definition)
+// #endif
+//   {
+//     if(globalZoneIndex >= numZone) status = 1;
+//     else {
+//       switch(zoneDefinition) {
+//       case 0:  // Single zone
+//         partition = -1;
+//         physicalItBegin = group.begin();
+//         physicalItEnd = group.end();
+//         break;
+//       case 1:  // Zone defined by partition
+//         partition = globalZoneIndex;
+//         physicalItBegin = group.begin();
+//         physicalItEnd = group.end();
+//         break;
+//       case 2:  // Zone defined by physical
+//         partition = -1;
+//       //_zoneName = model.getPhysicalName(meshDim, globalPhysicalIt->first).c_str();
+//         zn = model.getPhysicalName(meshDim, globalPhysicalIt->first);   // NBN:
+//         _zoneName = zn.c_str();   // NBN:
+//         physicalItBegin = globalPhysicalIt++;
+//         physicalItEnd = globalPhysicalIt;
+//         break;
+//       }
+//       zoneIndex = globalZoneIndex++;
+//     }
+//   }
+// //omp: end critical
 
-//--Set the name for the zone
+// //--Set the name for the zone
 
-  if(status == 0) {
-    std::string s = options.zoneName;
-    expand_name(s, zoneIndex, _zoneName);
-    if(s.length() == 0) {  // If empty
-      s = "Zone_";
-      s += CGNSNameStr(zoneIndex+1).c_str();
-    }
-    zoneName = s.c_str();
-  }
+//   if(status == 0) {
+//     std::string s = options.zoneName;
+//     expand_name(s, zoneIndex, _zoneName);
+//     if(s.length() == 0) {  // If empty
+//       s = "Zone_";
+//       s += CGNSNameStr(zoneIndex+1).c_str();
+//     }
+//     zoneName = s.c_str();
+//   }
 
-  return status;
+//   return status;
 
-}
+// }
 
 
-/*******************************************************************************
- *
- * Routine write_CGNS_zone
- *
- * Purpose
- * =======
- *
- *   Writes the CGNS zones, splitting up the work between several processors if
- *   threads are enabled.
- *
- * I/O
- * ===
- *
- *   model              - (I)
- *   zoneDefinition     - (I) how to define a zone
- *   options            - (I) CGNS specific options
- *   scalingFactor
- *   vectorDim          - (I) Dimensions of a vector (must be 3 for a 3D mesh,
- *                            may be 2 or 3 for a 2D mesh)
- *   group              - (I) Group of physicals and associated entities
- *   cgIndexFile        - (I) index of the CGNS file node
- *   cgIndexBase        - (I) index of the CGNS base node
- *
- ******************************************************************************/
+// /*******************************************************************************
+//  *
+//  * Routine write_CGNS_zone
+//  *
+//  * Purpose
+//  * =======
+//  *
+//  *   Writes the CGNS zones, splitting up the work between several processors if
+//  *   threads are enabled.
+//  *
+//  * I/O
+//  * ===
+//  *
+//  *   model              - (I)
+//  *   zoneDefinition     - (I) how to define a zone
+//  *   options            - (I) CGNS specific options
+//  *   scalingFactor
+//  *   vectorDim          - (I) Dimensions of a vector (must be 3 for a 3D mesh,
+//  *                            may be 2 or 3 for a 2D mesh)
+//  *   group              - (I) Group of physicals and associated entities
+//  *   cgIndexFile        - (I) index of the CGNS file node
+//  *   cgIndexBase        - (I) index of the CGNS base node
+//  *
+//  ******************************************************************************/
 
-/*--------------------------------------------------------------------*
- * Required types
- *--------------------------------------------------------------------*/
+// /*--------------------------------------------------------------------*
+//  * Required types
+//  *--------------------------------------------------------------------*/
 
-//--A task for a thread
+// //--A task for a thread
 
-template <unsigned DIM>
-struct ZoneTask
-{
-  MZone<DIM> zone;
-  CGNSNameStr zoneName;
-  int zoneIndex;
-  int status;                           // 0 - free
-                                        // 1 - zone processed and waiting in
-                                        //     queue to be written
-                                        // 2 - zone defined and boundaries
-                                        //     processed
-  int indexInOwner;
-  ZoneTask() : status(0), indexInOwner(0) { }
-  void change_status(const int _status)
-  {
-#ifdef _OPENMP
-#pragma omp atomic
-#endif
-    status = _status;
-  }
-};
+// template <unsigned DIM>
+// struct ZoneTask
+// {
+//   MZone<DIM> zone;
+//   CGNSNameStr zoneName;
+//   int zoneIndex;
+//   int status;                           // 0 - free
+//                                         // 1 - zone processed and waiting in
+//                                         //     queue to be written
+//                                         // 2 - zone defined and boundaries
+//                                         //     processed
+//   int indexInOwner;
+//   ZoneTask() : status(0), indexInOwner(0) { }
+//   void change_status(const int _status)
+//   {
+// #ifdef _OPENMP
+// #pragma omp atomic
+// #endif
+//     status = _status;
+//   }
+// };
 
-//--Information about a zone
+// //--Information about a zone
 
-struct ZoneInfo
-{
-  CGNSNameStr name;
-  int cgIndex;
-  ZoneInfo() : cgIndex(-1) { }
-};
+// struct ZoneInfo
+// {
+//   CGNSNameStr name;
+//   int cgIndex;
+//   ZoneInfo() : cgIndex(-1) { }
+// };
 
-template <unsigned DIM>
-int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
-                     const CGNSOptions &options, const double scalingFactor,
-                     const int vectorDim, const PhysGroupMap &group,
-                     const int cgIndexFile, const int cgIndexBase)
-{
+// template <unsigned DIM>
+// int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
+//                      const CGNSOptions &options, const double scalingFactor,
+//                      const int vectorDim, const PhysGroupMap &group,
+//                      const int cgIndexFile, const int cgIndexBase)
+// {
 
-//--Shared data
+// //--Shared data
 
-  int threadsWorking = omp_get_num_threads();
-                                        // Semaphore for working threads
-  // ** omp_lock_t threadWLock;
-  std::queue<ZoneTask<DIM>*> zoneQueue; // Queue for zones that have been
-                                        // defined and are ready to be written
-  // ** omp_lock_t queueLock;
-  // Next two are locked by an omp critical
-  int globalZoneIndex = 0;
-  PhysGroupMap::const_iterator globalPhysicalIt = group.begin();
+//   int threadsWorking = omp_get_num_threads();
+//                                         // Semaphore for working threads
+//   // ** omp_lock_t threadWLock;
+//   std::queue<ZoneTask<DIM>*> zoneQueue; // Queue for zones that have been
+//                                         // defined and are ready to be written
+//   // ** omp_lock_t queueLock;
+//   // Next two are locked by an omp critical
+//   int globalZoneIndex = 0;
+//   PhysGroupMap::const_iterator globalPhysicalIt = group.begin();
 
-//--Initialize omp locks
+// //--Initialize omp locks
 
-  omp_init_lock(&threadWLock);
-  omp_init_lock(&queueLock);
+//   omp_init_lock(&threadWLock);
+//   omp_init_lock(&queueLock);
 
-//**Spawn threads
+// //**Spawn threads
 
-  {
+//   {
 
-//--Master thread (primary task is to define boundary connections and perform
-//--I/O but can also process a zone if idle)
+// //--Master thread (primary task is to define boundary connections and perform
+// //--I/O but can also process a zone if idle)
 
-    if(omp_get_thread_num() == 0) {
-      ZoneTask<DIM> zoneTask;
-      MZoneBoundary<DIM> mZoneBoundary;
-      ZoneConnMap zoneConnMap;          // Zone connectivity that is generated
-                                        // whenever a zone is added to
-                                        // mZoneBoundary
-      std::vector<ZoneInfo> zoneInfo; zoneInfo.resize(16);
-      std::vector<double> dBuffer;      // Buffer for double-precision data
-      std::vector<cgsize_t> iBuffer1, iBuffer2;
-                                        // Buffers for integer data
-      int interfaceIndex = 0;           // Index for interfaces
+//     if(omp_get_thread_num() == 0) {
+//       ZoneTask<DIM> zoneTask;
+//       MZoneBoundary<DIM> mZoneBoundary;
+//       ZoneConnMap zoneConnMap;          // Zone connectivity that is generated
+//                                         // whenever a zone is added to
+//                                         // mZoneBoundary
+//       std::vector<ZoneInfo> zoneInfo; zoneInfo.resize(16);
+//       std::vector<double> dBuffer;      // Buffer for double-precision data
+//       std::vector<cgsize_t> iBuffer1, iBuffer2;
+//                                         // Buffers for integer data
+//       int interfaceIndex = 0;           // Index for interfaces
 
-      while (threadsWorking || zoneQueue.size()) {
-        if (zoneQueue.size()) {
+//       while (threadsWorking || zoneQueue.size()) {
+//         if (zoneQueue.size()) {
 
-/*--------------------------------------------------------------------*
- * Write the zone in the queue
- *--------------------------------------------------------------------*/
+// /*--------------------------------------------------------------------*
+//  * Write the zone in the queue
+//  *--------------------------------------------------------------------*/
 
-          ZoneTask<DIM> *const writeTask = zoneQueue.front();
-          MZone<DIM> *const writeZone = &writeTask->zone;
+//           ZoneTask<DIM> *const writeTask = zoneQueue.front();
+//           MZone<DIM> *const writeZone = &writeTask->zone;
 
-//--Write the zone
+// //--Write the zone
 
-          // Write the zone node
-          int cgIndexZone=0;
-          cgsize_t cgZoneSize[3]={0};
-          cgZoneSize[0] = writeZone->zoneVertVec.size();  // Number of vertices
-#ifdef CGNS_TEST1
-          // Count all the sub-elements in a Triangle 10
-          cgZoneSize[1] = 0;
-          for(int iElemType = 0; iElemType != MSH_NUM_TYPE; ++iElemType) {
-            switch(iElemType) {
-            case MSH_TRI_10-1:
-              cgZoneSize[1] += writeZone->zoneElemConn[MSH_TRI_10-1].numElem*9;
-              break;
-            default:
-              cgZoneSize[1] += writeZone->zoneElemConn[iElemType].numElem;
-              break;
-            }
-          }
-#else
-          cgZoneSize[1] = writeZone->totalElements();  // Number of elements
-#endif
-          cgZoneSize[2] = writeZone->numBoVert;  // Number of boundary vertices
-          if(cg_zone_write(cgIndexFile, cgIndexBase,
-                           writeTask->zoneName.c_str(), cgZoneSize,
-                           CG_Unstructured, &cgIndexZone))
-          {
-            return cgnsErr();
-          }
-          // Manually maintain the size of the 'zoneInfo vector'.  'push_back'
-          // is not used because the elements are in order of 'zoneIndex'
-          if(writeTask->zoneIndex >= zoneInfo.size()) {
-            zoneInfo.resize(std::max(2*static_cast<int>(zoneInfo.size()),
-                            writeTask->zoneIndex));
-          }
-          zoneInfo[writeTask->zoneIndex].name = writeTask->zoneName;
-          zoneInfo[writeTask->zoneIndex].cgIndex = cgIndexZone;
+//           // Write the zone node
+//           int cgIndexZone=0;
+//           cgsize_t cgZoneSize[3]={0};
+//           cgZoneSize[0] = writeZone->zoneVertVec.size();  // Number of vertices
+// #ifdef CGNS_TEST1
+//           // Count all the sub-elements in a Triangle 10
+//           cgZoneSize[1] = 0;
+//           for(int iElemType = 0; iElemType != MSH_NUM_TYPE; ++iElemType) {
+//             switch(iElemType) {
+//             case MSH_TRI_10-1:
+//               cgZoneSize[1] += writeZone->zoneElemConn[MSH_TRI_10-1].numElem*9;
+//               break;
+//             default:
+//               cgZoneSize[1] += writeZone->zoneElemConn[iElemType].numElem;
+//               break;
+//             }
+//           }
+// #else
+//           cgZoneSize[1] = writeZone->totalElements();  // Number of elements
+// #endif
+//           cgZoneSize[2] = writeZone->numBoVert;  // Number of boundary vertices
+//           if(cg_zone_write(cgIndexFile, cgIndexBase,
+//                            writeTask->zoneName.c_str(), cgZoneSize,
+//                            Unstructured, &cgIndexZone))
+//           {
+//             return cgnsErr();
+//           }
+//           // Manually maintain the size of the 'zoneInfo vector'.  'push_back'
+//           // is not used because the elements are in order of 'zoneIndex'
+//           if(writeTask->zoneIndex >= zoneInfo.size()) {
+//             zoneInfo.resize(std::max(2*static_cast<int>(zoneInfo.size()),
+//                             writeTask->zoneIndex));
+//           }
+//           zoneInfo[writeTask->zoneIndex].name = writeTask->zoneName;
+//           zoneInfo[writeTask->zoneIndex].cgIndex = cgIndexZone;
 
-          // Write the grid node
-          int cgIndexGrid=0;
-          if(cg_grid_write(cgIndexFile, cgIndexBase, cgIndexZone,
-                           "GridCoordinates", &cgIndexGrid))
-            return cgnsErr();
+//           // Write the grid node
+//           int cgIndexGrid=0;
+//           if(cg_grid_write(cgIndexFile, cgIndexBase, cgIndexZone,
+//                            "GridCoordinates", &cgIndexGrid))
+//             return cgnsErr();
 
-          // Write the grid coordinates
-          int cgIndexCoord=0;
-          dBuffer.resize(cgZoneSize[0]);
+//           // Write the grid coordinates
+//           int cgIndexCoord=0;
+//           dBuffer.resize(cgZoneSize[0]);
 
-          // x-coordinates for this zone
-          for (int i = 0; i != cgZoneSize[0]; ++i) {
-            dBuffer[i] = writeZone->zoneVertVec[i]->x()*scalingFactor;
-          }
-          if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, CG_RealDouble,
-                            "CoordinateX", &dBuffer[0], &cgIndexCoord))
-            return cgnsErr();
+//           // x-coordinates for this zone
+//           for (int i = 0; i != cgZoneSize[0]; ++i) {
+//             dBuffer[i] = writeZone->zoneVertVec[i]->x()*scalingFactor;
+//           }
+//           if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
+//                             "CoordinateX", &dBuffer[0], &cgIndexCoord))
+//             return cgnsErr();
 
-          // y-coordinates for this zone
-          for(int i = 0; i != cgZoneSize[0]; ++i) {
-            dBuffer[i] = writeZone->zoneVertVec[i]->y()*scalingFactor;
-          }
-          if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, CG_RealDouble,
-                            "CoordinateY", &dBuffer[0], &cgIndexCoord))
-            return cgnsErr();
+//           // y-coordinates for this zone
+//           for(int i = 0; i != cgZoneSize[0]; ++i) {
+//             dBuffer[i] = writeZone->zoneVertVec[i]->y()*scalingFactor;
+//           }
+//           if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
+//                             "CoordinateY", &dBuffer[0], &cgIndexCoord))
+//             return cgnsErr();
 
-          // z-coordinates for this zone
-          if(vectorDim == 3) {
-            for(int i = 0; i != cgZoneSize[0]; ++i) {
-              dBuffer[i] = writeZone->zoneVertVec[i]->z()*scalingFactor;
-            }
-            if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, CG_RealDouble,
-                              "CoordinateZ", &dBuffer[0], &cgIndexCoord))
-              return cgnsErr();
-          }
+//           // z-coordinates for this zone
+//           if(vectorDim == 3) {
+//             for(int i = 0; i != cgZoneSize[0]; ++i) {
+//               dBuffer[i] = writeZone->zoneVertVec[i]->z()*scalingFactor;
+//             }
+//             if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
+//                               "CoordinateZ", &dBuffer[0], &cgIndexCoord))
+//               return cgnsErr();
+//           }
 
-          // Obtain indices sorted in the order the CGNS elements will be
-          // written
-          int indexElemType[MSH_NUM_TYPE];
-          for(int i = 0; i != MSH_NUM_TYPE; ++i) indexElemType[i] = i;
-          std::sort<int*, ElemSortCGNSType>
-            (indexElemType, indexElemType + MSH_NUM_TYPE,
-             ElemSortCGNSType(writeZone->zoneElemConn));
+//           // Obtain indices sorted in the order the CGNS elements will be
+//           // written
+//           int indexElemType[MSH_NUM_TYPE];
+//           for(int i = 0; i != MSH_NUM_TYPE; ++i) indexElemType[i] = i;
+//           std::sort<int*, ElemSortCGNSType>
+//             (indexElemType, indexElemType + MSH_NUM_TYPE,
+//              ElemSortCGNSType(writeZone->zoneElemConn));
 
-          // Write the element connectivity
-          const int numElemType = writeZone->numElementTypes();
-          int iElemSection = 0;
-          for(int iElemType = 0; iElemType != numElemType; ++iElemType) {
-            const int typeMSHm1 = indexElemType[iElemType];  // typeMSH-1
-            const int typeCGNS = msh2cgns[typeMSHm1][0];
-            const char *elemName;
-            MElement::getInfoMSH(typeMSHm1+1, &elemName);
-#ifdef CGNS_TEST1
-            if(typeMSHm1 == MSH_TRI_10-1) {
-              const int nElem3o = writeZone->zoneElemConn[20].numElem;
-              const int nElem1o = nElem3o*9;
-              std::vector<int> subConn(nElem1o*3);
-              int iV = 0;
-              for(int iElem3o = 0; iElem3o != nElem3o; ++iElem3o) {
-                int *elem3o =
-                  &writeZone->zoneElemConn[20].connectivity[iElem3o*10];
-                subConn[iV++] = elem3o[9];
-                subConn[iV++] = elem3o[8];
-                subConn[iV++] = elem3o[3];
-                subConn[iV++] = elem3o[5];
-                subConn[iV++] = elem3o[9];
-                subConn[iV++] = elem3o[4];
-                subConn[iV++] = elem3o[6];
-                subConn[iV++] = elem3o[7];
-                subConn[iV++] = elem3o[9];
-                subConn[iV++] = elem3o[3];
-                subConn[iV++] = elem3o[4];
-                subConn[iV++] = elem3o[9];
-                subConn[iV++] = elem3o[9];
-                subConn[iV++] = elem3o[5];
-                subConn[iV++] = elem3o[6];
-                subConn[iV++] = elem3o[8];
-                subConn[iV++] = elem3o[9];
-                subConn[iV++] = elem3o[7];
-                subConn[iV++] = elem3o[0];
-                subConn[iV++] = elem3o[3];
-                subConn[iV++] = elem3o[8];
-                subConn[iV++] = elem3o[4];
-                subConn[iV++] = elem3o[1];
-                subConn[iV++] = elem3o[5];
-                subConn[iV++] = elem3o[7];
-                subConn[iV++] = elem3o[6];
-                subConn[iV++] = elem3o[2];
-              }
-              elemName = "Sub-Triangle 10";
-              cgsize_t cgIndexSection;
-              if(cg_section_write
-                 (cgIndexFile, cgIndexBase, cgIndexZone, elemName,
-                  TRI_3, iElemSection + 1,
-                  nElem1o + iElemSection,
-                  writeZone->zoneElemConn[20].numBoElem*9 + iElemSection,
-                  &subConn[0], &cgIndexSection))
-                return cgnsErr();
-              ++iElemSection;
-            }
-            else
-#endif
-            if(typeCGNS == -1) {
-              // This type is not supported in CGNS
-              Msg::Warning("Element type %s is not supported in CGNS and "
-                               "has not been written to the file", elemName);
-            }
-            else {
-              int cgIndexSection;
-              stringstream sectionName;
-              sectionName << "Domain_" << cgIndexZone;
-              if(cg_section_write
-                 (cgIndexFile, cgIndexBase, cgIndexZone, sectionName.str().c_str(),
-                  static_cast<CG_ElementType_t>(typeCGNS), iElemSection + 1,
-                  writeZone->zoneElemConn[typeMSHm1].numElem + iElemSection,
-                  writeZone->zoneElemConn[typeMSHm1].numBoElem + iElemSection,
-                  (cgsize_t*)&writeZone->zoneElemConn[typeMSHm1].connectivity[0],
-                  &cgIndexSection))
-              {
-                return cgnsErr();
-              }
-              ++iElemSection;
-            }
-          }
+//           // Write the element connectivity
+//           const int numElemType = writeZone->numElementTypes();
+//           int iElemSection = 0;
+//           for(int iElemType = 0; iElemType != numElemType; ++iElemType) {
+//             const int typeMSHm1 = indexElemType[iElemType];  // typeMSH-1
+//             const int typeCGNS = msh2cgns[typeMSHm1][0];
+//             const char *elemName;
+//             MElement::getInfoMSH(typeMSHm1+1, &elemName);
+// #ifdef CGNS_TEST1
+//             if(typeMSHm1 == MSH_TRI_10-1) {
+//               const int nElem3o = writeZone->zoneElemConn[20].numElem;
+//               const int nElem1o = nElem3o*9;
+//               std::vector<int> subConn(nElem1o*3);
+//               int iV = 0;
+//               for(int iElem3o = 0; iElem3o != nElem3o; ++iElem3o) {
+//                 int *elem3o =
+//                   &writeZone->zoneElemConn[20].connectivity[iElem3o*10];
+//                 subConn[iV++] = elem3o[9];
+//                 subConn[iV++] = elem3o[8];
+//                 subConn[iV++] = elem3o[3];
+//                 subConn[iV++] = elem3o[5];
+//                 subConn[iV++] = elem3o[9];
+//                 subConn[iV++] = elem3o[4];
+//                 subConn[iV++] = elem3o[6];
+//                 subConn[iV++] = elem3o[7];
+//                 subConn[iV++] = elem3o[9];
+//                 subConn[iV++] = elem3o[3];
+//                 subConn[iV++] = elem3o[4];
+//                 subConn[iV++] = elem3o[9];
+//                 subConn[iV++] = elem3o[9];
+//                 subConn[iV++] = elem3o[5];
+//                 subConn[iV++] = elem3o[6];
+//                 subConn[iV++] = elem3o[8];
+//                 subConn[iV++] = elem3o[9];
+//                 subConn[iV++] = elem3o[7];
+//                 subConn[iV++] = elem3o[0];
+//                 subConn[iV++] = elem3o[3];
+//                 subConn[iV++] = elem3o[8];
+//                 subConn[iV++] = elem3o[4];
+//                 subConn[iV++] = elem3o[1];
+//                 subConn[iV++] = elem3o[5];
+//                 subConn[iV++] = elem3o[7];
+//                 subConn[iV++] = elem3o[6];
+//                 subConn[iV++] = elem3o[2];
+//               }
+//               elemName = "Sub-Triangle 10";
+//               cgsize_t cgIndexSection;
+//               if(cg_section_write
+//                  (cgIndexFile, cgIndexBase, cgIndexZone, elemName,
+//                   TRI_3, iElemSection + 1,
+//                   nElem1o + iElemSection,
+//                   writeZone->zoneElemConn[20].numBoElem*9 + iElemSection,
+//                   &subConn[0], &cgIndexSection))
+//                 return cgnsErr();
+//               ++iElemSection;
+//             }
+//             else
+// #endif
+//             if(typeCGNS == -1) {
+//               // This type is not supported in CGNS
+//               Msg::Warning("Element type %s is not supported in CGNS and "
+//                                "has not been written to the file", elemName);
+//             }
+//             else {
+//               int cgIndexSection;
+//               if(cg_section_write
+//                  (cgIndexFile, cgIndexBase, cgIndexZone, elemName,
+//                   static_cast<ElementType_t>(typeCGNS), iElemSection + 1,
+//                   writeZone->zoneElemConn[typeMSHm1].numElem + iElemSection,
+//                   writeZone->zoneElemConn[typeMSHm1].numBoElem + iElemSection,
+//                   (cgsize_t*)&writeZone->zoneElemConn[typeMSHm1].connectivity[0],
+//                   &cgIndexSection))
+//               {
+//                 return cgnsErr();
+//               }
+//               ++iElemSection;
+//             }
+//           }
 
-//--Process interior connectivity
+// //--Process interior connectivity
 
-          mZoneBoundary.interiorBoundaryVertices(writeTask->zoneIndex,
-                                                 *writeZone, zoneConnMap);
-          // Write the connectivity for each zone pair
-          const ZoneConnMap::const_iterator gCEnd = zoneConnMap.end();
-          for(ZoneConnMap::const_iterator gCIt = zoneConnMap.begin();
-              gCIt != gCEnd; ++gCIt)
-          {
-            const int nVert = gCIt->second.vertexPairVec.size();
-            iBuffer1.resize(nVert);
-            iBuffer2.resize(nVert);
-            for(int iVert = 0; iVert != nVert; ++iVert) {
-              const ZoneConnectivity::VertexPair &vp =
-                gCIt->second.vertexPairVec[iVert];
-              iBuffer1[iVert] = vp.vertexIndex1;
-              iBuffer2[iVert] = vp.vertexIndex2;
-            }
-            int cgIndexInterface;
-            std::string interfaceName = options.interfaceName;
-            expand_name(interfaceName, interfaceIndex++, "Interface");
-            if(interfaceName.length() == 0) {
-              interfaceName = "Interface_";
-              interfaceName += CGNSNameStr(interfaceIndex).c_str();
-            }
-            // In the first zone
-            if(cg_conn_write
-               (cgIndexFile, cgIndexBase, zoneInfo[gCIt->first.zone1].cgIndex,
-                interfaceName.c_str(), CG_Vertex, CG_Abutting1to1, CG_PointList, nVert,
-                &iBuffer1[0], zoneInfo[gCIt->first.zone2].name.c_str(),
-                CG_Unstructured, CG_PointListDonor, CG_Integer, nVert, &iBuffer2[0],
-                &cgIndexInterface))
-            {
-              return cgnsErr();
-            }
-            // In the second zone
-            if(cg_conn_write
-               (cgIndexFile, cgIndexBase, zoneInfo[gCIt->first.zone2].cgIndex,
-                interfaceName.c_str(), CG_Vertex, CG_Abutting1to1, CG_PointList, nVert,
-                &iBuffer2[0], zoneInfo[gCIt->first.zone1].name.c_str(),
-                CG_Unstructured, CG_PointListDonor, CG_Integer, nVert, &iBuffer1[0],
-                &cgIndexInterface))
-            {
-              return cgnsErr();
-            }
-          }
+//           mZoneBoundary.interiorBoundaryVertices(writeTask->zoneIndex,
+//                                                  *writeZone, zoneConnMap);
+//           // Write the connectivity for each zone pair
+//           const ZoneConnMap::const_iterator gCEnd = zoneConnMap.end();
+//           for(ZoneConnMap::const_iterator gCIt = zoneConnMap.begin();
+//               gCIt != gCEnd; ++gCIt)
+//           {
+//             const int nVert = gCIt->second.vertexPairVec.size();
+//             iBuffer1.resize(nVert);
+//             iBuffer2.resize(nVert);
+//             for(int iVert = 0; iVert != nVert; ++iVert) {
+//               const ZoneConnectivity::VertexPair &vp =
+//                 gCIt->second.vertexPairVec[iVert];
+//               iBuffer1[iVert] = vp.vertexIndex1;
+//               iBuffer2[iVert] = vp.vertexIndex2;
+//             }
+//             int cgIndexInterface;
+//             std::string interfaceName = options.interfaceName;
+//             expand_name(interfaceName, interfaceIndex++, "Interface");
+//             if(interfaceName.length() == 0) {
+//               interfaceName = "Interface_";
+//               interfaceName += CGNSNameStr(interfaceIndex).c_str();
+//             }
+//             // In the first zone
+//             if(cg_conn_write
+//                (cgIndexFile, cgIndexBase, zoneInfo[gCIt->first.zone1].cgIndex,
+//                 interfaceName.c_str(), CGNS::Vertex, Abutting1to1, PointList, nVert,
+//                 &iBuffer1[0], zoneInfo[gCIt->first.zone2].name.c_str(),
+//                 Unstructured, PointListDonor, Integer, nVert, &iBuffer2[0],
+//                 &cgIndexInterface))
+//             {
+//               return cgnsErr();
+//             }
+//             // In the second zone
+//             if(cg_conn_write
+//                (cgIndexFile, cgIndexBase, zoneInfo[gCIt->first.zone2].cgIndex,
+//                 interfaceName.c_str(), CGNS::Vertex, Abutting1to1, PointList, nVert,
+//                 &iBuffer2[0], zoneInfo[gCIt->first.zone1].name.c_str(),
+//                 Unstructured, PointListDonor, Integer, nVert, &iBuffer1[0],
+//                 &cgIndexInterface))
+//             {
+//               return cgnsErr();
+//             }
+//           }
 
-//--Pop from the queue
+// //--Pop from the queue
 
-          omp_set_lock(&queueLock);
-          zoneQueue.pop();
-          omp_unset_lock(&queueLock);
+//           omp_set_lock(&queueLock);
+//           zoneQueue.pop();
+//           omp_unset_lock(&queueLock);
 
-//--Task finished
+// //--Task finished
 
-          writeTask->change_status(0);
-        }
+//           writeTask->change_status(0);
+//         }
 
-/*--------------------------------------------------------------------*
- * No zones waiting in the queue, process a zone
- *--------------------------------------------------------------------*/
+// /*--------------------------------------------------------------------*
+//  * No zones waiting in the queue, process a zone
+//  *--------------------------------------------------------------------*/
 
-        else {
-          PhysGroupMap::const_iterator physicalItBegin;
-          PhysGroupMap::const_iterator physicalItEnd;
-          // --- int zoneIndex;
-          int partition;
-          if(get_zone_definition
-             (model, zoneDefinition, numZone, options, DIM, group,
-              globalZoneIndex, globalPhysicalIt, zoneTask.zoneIndex, partition,
-              physicalItBegin, physicalItEnd, zoneTask.zoneName))
-          {
-            omp_set_lock(&threadWLock);
-            --threadsWorking;
-            omp_unset_lock(&threadWLock);
-          }
-          else {
-            zoneTask.zone.clear();
-            // Loop through all physical in the zone definition
-            for(PhysGroupMap::const_iterator physicalIt = physicalItBegin;
-                physicalIt != physicalItEnd; ++physicalIt)
-            {
-              // Add elements from all entities in the physical with defined
-              // partition number
-              if(partition == -1) {
-                zoneTask.zone.template add_elements_in_entities
-                  <typename std::vector<GEntity*>::const_iterator>
-                  (physicalIt->second.begin(), physicalIt->second.end());
-              }
-              else {
-                zoneTask.zone.template add_elements_in_entities
-                  <typename std::vector<GEntity*>::const_iterator>
-                  (physicalIt->second.begin() + partition,
-                   physicalIt->second.begin() + (partition+1));
-              }
-            }
-            // Process the zone
-            zoneTask.zone.zoneData();
-            translateElementMSH2CGNS(zoneTask.zone.zoneElemConn);
-            // Add to the queue to get written
-            zoneTask.change_status(1);
-            omp_set_lock(&queueLock);
-            zoneQueue.push(&zoneTask);
-            omp_unset_lock(&queueLock);
-          }
-        }
-      }  // End master thread loop
+//         else {
+//           PhysGroupMap::const_iterator physicalItBegin;
+//           PhysGroupMap::const_iterator physicalItEnd;
+//           // --- int zoneIndex;
+//           int partition;
+//           if(get_zone_definition
+//              (model, zoneDefinition, numZone, options, DIM, group,
+//               globalZoneIndex, globalPhysicalIt, zoneTask.zoneIndex, partition,
+//               physicalItBegin, physicalItEnd, zoneTask.zoneName))
+//           {
+//             omp_set_lock(&threadWLock);
+//             --threadsWorking;
+//             omp_unset_lock(&threadWLock);
+//           }
+//           else {
+//             zoneTask.zone.clear();
+//             // Loop through all physical in the zone definition
+//             for(PhysGroupMap::const_iterator physicalIt = physicalItBegin;
+//                 physicalIt != physicalItEnd; ++physicalIt)
+//             {
+//               // Add elements from all entities in the physical with defined
+//               // partition number
+//               if(partition == -1) {
+//                 zoneTask.zone.template add_elements_in_entities
+//                   <typename std::vector<GEntity*>::const_iterator>
+//                   (physicalIt->second.begin(), physicalIt->second.end());
+//               }
+//               else {
+//                 zoneTask.zone.template add_elements_in_entities
+//                   <typename std::vector<GEntity*>::const_iterator>
+//                   (physicalIt->second.begin() + partition,
+//                    physicalIt->second.begin() + (partition+1));
+//               }
+//             }
+//             // Process the zone
+//             zoneTask.zone.zoneData();
+//             translateElementMSH2CGNS(zoneTask.zone.zoneElemConn);
+//             // Add to the queue to get written
+//             zoneTask.change_status(1);
+//             omp_set_lock(&queueLock);
+//             zoneQueue.push(&zoneTask);
+//             omp_unset_lock(&queueLock);
+//           }
+//         }
+//       }  // End master thread loop
 
-/*--------------------------------------------------------------------*
- * Write the remaining unconnected vertices as boundary conditions
- *--------------------------------------------------------------------*/
+// /*--------------------------------------------------------------------*
+//  * Write the remaining unconnected vertices as boundary conditions
+//  *--------------------------------------------------------------------*/
 
-      if(options.writeBC)
-      {
-        ZoneBoVec zoneBoVec;            // from 'MZoneBoundary.h'
-        if(mZoneBoundary.exteriorBoundaryVertices
-           (options.normalSource, zoneBoVec) == 0)
-        {
-          // Sort by zone index and then entity index
-          const int numBoVert = zoneBoVec.size();
-          if (numBoVert>=1)
-          {
-            Msg::Info("writing BoVerts...");
+//       if(options.writeBC)
+//       {
+//         ZoneBoVec zoneBoVec;            // from 'MZoneBoundary.h'
+//         if(mZoneBoundary.exteriorBoundaryVertices
+//            (options.normalSource, zoneBoVec) == 0)
+//         {
+//           // Sort by zone index and then entity index
+//           const int numBoVert = zoneBoVec.size();
+//           if (numBoVert>=1)
+//           {
+//             Msg::Info("writing BoVerts...");
 
-            std::vector<int> iZBV(numBoVert);
-            for(int i = 0; i != numBoVert; ++i) iZBV[i] = i;
-            std::sort(iZBV.begin(),iZBV.end(),ZoneBoVecSort(zoneBoVec));
+//             std::vector<int> iZBV(numBoVert);
+//             for(int i = 0; i != numBoVert; ++i) iZBV[i] = i;
+//             std::sort<int*, ZoneBoVecSort>(&iZBV[0], &iZBV[numBoVert-1],
+//                                            ZoneBoVecSort(zoneBoVec));
+//             dBuffer.reserve(1024);
+//             iBuffer1.reserve(1024);
 
-            dBuffer.reserve(1024);
-            iBuffer1.reserve(1024);
+//             int iVert = 0;
+//             while(iVert != numBoVert) {
+//               dBuffer.clear();
+//               iBuffer1.clear();
+//               const int zoneIndex = zoneBoVec[iZBV[iVert]].zoneIndex;
+//               const int patchIndex = zoneBoVec[iZBV[iVert]].bcPatchIndex;
+//               const int iVertStart = iVert;
+//               while(iVert != numBoVert &&
+//                     zoneBoVec[iZBV[iVert]].zoneIndex == zoneIndex &&
+//                     zoneBoVec[iZBV[iVert]].bcPatchIndex == patchIndex)
+//               {
+//                 VertexBoundary &vertBo = zoneBoVec[iZBV[iVert]];
+//                 dBuffer.push_back(vertBo.normal[0]);
+//                 dBuffer.push_back(vertBo.normal[1]);
+//                 if(vectorDim == 3) dBuffer.push_back(vertBo.normal[2]);
+//                 iBuffer1.push_back(vertBo.vertexIndex);
+//                 ++iVert;
+//               }
+//               const int numBCVert = iVert - iVertStart;
 
-            int iVert = 0;
-            while(iVert != numBoVert) {
-              dBuffer.clear();
-              iBuffer1.clear();
-              const int zoneIndex = zoneBoVec[iZBV[iVert]].zoneIndex;
-              const int patchIndex = zoneBoVec[iZBV[iVert]].bcPatchIndex;
-              const int iVertStart = iVert;
-              while(iVert != numBoVert &&
-                    zoneBoVec[iZBV[iVert]].zoneIndex == zoneIndex &&
-                    zoneBoVec[iZBV[iVert]].bcPatchIndex == patchIndex)
-              {
-                VertexBoundary &vertBo = zoneBoVec[iZBV[iVert]];
-                dBuffer.push_back(vertBo.normal[0]);
-                dBuffer.push_back(vertBo.normal[1]);
-                if(vectorDim == 3) dBuffer.push_back(vertBo.normal[2]);
-                iBuffer1.push_back(vertBo.vertexIndex);
-                ++iVert;
-              }
-              const int numBCVert = iVert - iVertStart;
+//               int cgIndexBoco;
+//               std::string patchName = options.patchName;
+//               expand_name(patchName, patchIndex, "Patch");
+//               if(patchName.length() == 0) {
+//                 patchName = "Patch_";
+//                 patchName += CGNSNameStr(patchIndex+1).c_str();
+//               }
+//               if(cg_boco_write(cgIndexFile, cgIndexBase,
+//                                zoneInfo[zoneIndex].cgIndex, patchName.c_str(),
+//                                BCTypeNull, PointList, numBCVert, &iBuffer1[0],
+//                                &cgIndexBoco))
+//               {
+//                 return cgnsErr();
+//               }
 
-              int cgIndexBoco;
-              std::string patchName = options.patchName;
-              expand_name(patchName, patchIndex, "Patch");
-              if(patchName.length() == 0) {
-                patchName = "Patch_";
-                patchName += CGNSNameStr(patchIndex+1).c_str();
-              }
-              if(cg_boco_write(cgIndexFile, cgIndexBase,
-                               zoneInfo[zoneIndex].cgIndex, patchName.c_str(),
-                               CG_BCTypeNull, CG_PointList, numBCVert, &iBuffer1[0],
-                               &cgIndexBoco))
-              {
-                return cgnsErr();
-              }
+//               if(options.normalSource) {
+//                 int normalIndex;
+//                 if(cg_boco_normal_write(cgIndexFile, cgIndexBase,
+//                                         zoneInfo[zoneIndex].cgIndex, cgIndexBoco,
+//                                         &normalIndex, 1, RealDouble, &dBuffer[0]))
+//                 {
+//                   return cgnsErr();
+//                 }
+//               }
+//             }
+//           }
+//         }
+//       }
 
-              if(options.normalSource) {
-                int normalIndex;
-                if(cg_boco_normal_write(cgIndexFile, cgIndexBase,
-                                        zoneInfo[zoneIndex].cgIndex, cgIndexBoco,
-                                        &normalIndex, 1, CG_RealDouble, &dBuffer[0]))
-                {
-                  return cgnsErr();
-                }
-              }
-            }
-          }
-        }
-      }
+//       // NBN: MZoneBoundary defines no destructor, so force
+//       // the deallocation of the new pointers with clear()
+//       mZoneBoundary.clear();
+//       Msg::Info("Leaving master thread");  // DBG
 
-      // NBN: MZoneBoundary defines no destructor, so force
-      // the deallocation of the new pointers with clear()
-      mZoneBoundary.clear();
-      Msg::Info("Leaving master thread");  // DBG
+//     }  // End master thread instructions
+//   }  // End omp parallel section
 
-    }  // End master thread instructions
-  }  // End omp parallel section
+// //--Destroy omp locks
 
-//--Destroy omp locks
+//   omp_destroy_lock(&threadWLock);
+//   omp_destroy_lock(&queueLock);
 
-  omp_destroy_lock(&threadWLock);
-  omp_destroy_lock(&queueLock);
-
-  return 0;
-}
+//   return 0;
+// }
 
 #else
 

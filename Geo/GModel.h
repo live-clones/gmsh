@@ -18,6 +18,12 @@
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
 
+#ifdef HAVE_LIBCGNS
+namespace CGNS {
+#include <cgnslib.h>
+}
+#endif
+
 template <class scalar> class simpleFunction;
 
 class FM_Internals;
@@ -728,6 +734,25 @@ class GModel {
 
   // GAMBIT neutral mesh file (.neu)
   int writeNEU(const std::string &name, bool saveAll, double scalingFactor);
+
+#if defined HAVE_LIBCGNS
+protected:
+
+  int readCGNSBase(const std::string& name,int& nbases) const;
+  int readCGNSStructured  (const std::string& name);
+  int readCGNSUnstructured(const std::string& name);
+  int addCGNSPoints(const std::string&,
+                    int fileIndex,
+                    int baseIndex,
+                    int zoneIndex,
+                    CGNS::cgsize_t nbPoints,
+                    int dim,
+                    double scale,
+                    GEntity* ge,
+                    int& pointIndex,
+                    std::vector<MVertex*>& vertices);
+
+#endif
 };
 
 #endif

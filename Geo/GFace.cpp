@@ -1685,7 +1685,7 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
     }
 
     if (l_vertex==NULL) {
-      Msg::Error("Unable to find corresponding node %d "
+      Msg::Error("Was not able to find corresponding node %d "
                  "for periodic connection of surface %d to %d "
                  "(min distance is %g with a tolerance of %g)",
                  m_vertex->tag(), master->tag(), tag(), dist_min,
@@ -2102,4 +2102,67 @@ bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
   }
 
   return false;
+}
+
+void GFace::alignElementsWithMaster()
+{
+  GEntity* master = meshMaster();
+
+  if (master != this) {
+
+    std::set<MFace,Less_Face> srcFaces;
+
+    for (unsigned i=0;i<master->getNumMeshElements();i++) {
+      MElement* face = master->getMeshElement(i);
+      std::vector<MVertex*> vtcs;
+      for (int j=0;j<face->getNumVertices();j++) vtcs.push_back(face->getVertex(j));
+      srcFaces.insert(MFace(vtcs));
+    }
+
+    for (unsigned i=0;i<getNumMeshElements();i++) {
+
+      MElement* face = getMeshElement(i);
+      std::vector<MVertex*> vtcs;
+      for (int j=0;j<face->getNumVertices();j++) {
+        MVertex* tv = face->getVertex(j);
+
+        std::map<MVertex*,MVertex*>::iterator cIter = correspondingVertices.find(tv);
+        if (cIter == correspondingVertices.end()) throw;
+        vtcs.push_back(cIter->second);
+      }
+
+      MFace mf(vtcs);
+
+      std::set<MFace,Less_Face>::iterator sIter = srcFaces.find(mf);
+
+      if (sIter==srcFaces.end()) throw;
+
+      MFace of = *sIter;
+
+      int orientation;
+      bool swap;
+      mf.computeCorrespondence(of,orientation,swap);
+
+
+      switch (face->getNumVertices()) {
+
+      case 3:
+        {
+          MTriangle* tri = dynamic_cast<MTriangle*>(face);
+          if (!tri) throw;
+          tri->reorient(orientation,swap);
+          break;
+        }
+      case 4:
+        {
+          MQuadrangle* qua = dynamic_cast<MQuadrangle*>(face);
+          if (!qua) throw;
+          qua->reorient(orientation,swap);
+          break;
+        }
+      default:
+        throw;
+      }
+    }
+  }
 }

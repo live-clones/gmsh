@@ -455,7 +455,20 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
   }
 #if defined(HAVE_LIBCGNS)
   else if(ext == ".cgns" || ext == ".CGNS"){
-    status = GModel::current()->readCGNS(fileName);
+    if(CTX::instance()->geom.matchGeomAndMesh && !GModel::current()->empty()) {
+      GModel* tmp2 = GModel::current();
+      GModel* tmp = new GModel();
+      tmp->readCGNS(fileName);
+      tmp->scaleMesh(CTX::instance()->geom.matchMeshScaleFactor);
+      status = GeomMeshMatcher::instance()->match(tmp2, tmp);
+      delete tmp;
+      GModel::setCurrent(tmp2);
+      tmp2->setVisibility(1);
+    }
+    else {
+      CTX::instance()->geom.matchMeshScaleFactor = 1;
+      status = GModel::current()->readCGNS(fileName);
+    }
   }
 #endif
 #if defined(HAVE_3M)
@@ -473,13 +486,16 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
         GModel* tmp2 = GModel::current();
         GModel* tmp = new GModel();
         tmp->readMSH(fileName);
+        tmp->scaleMesh(CTX::instance()->geom.matchMeshScaleFactor);
         status = GeomMeshMatcher::instance()->match(tmp2, tmp);
         delete tmp;
         GModel::setCurrent(tmp2);
         tmp2->setVisibility(1);
       }
-      else
+      else {
+        CTX::instance()->geom.matchMeshScaleFactor = 1;
         status = GModel::current()->readMSH(fileName);
+      }
 #if defined(HAVE_POST)
       if(status > 1) status = PView::readMSH(fileName);
 #endif
