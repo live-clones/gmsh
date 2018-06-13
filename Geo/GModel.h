@@ -18,12 +18,6 @@
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
 
-#ifdef HAVE_LIBCGNS
-namespace CGNS {
-#include <cgnslib.h>
-}
-#endif
-
 template <class scalar> class simpleFunction;
 
 class FM_Internals;
@@ -121,10 +115,9 @@ class GModel {
   void _createFMInternals();
   void _deleteFMInternals();
 
-#if defined(HAVE_LIBCGNS)
-  int _readCGNSStructured(const std::string& name);
-  int _readCGNSUnstructured(const std::string& name);
-#endif
+  // CGNS helpers
+  int _readCGNSStructured(const std::string &name);
+  int _readCGNSUnstructured(const std::string &name);
 
   // characteristic length (mesh size) fields
   FieldManager *_fields;

@@ -3201,6 +3201,10 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
 
 #else
 
+int GModel::_readCGNSUnstructured(const std::string& fileName){}
+
+int GModel::_readCGNSStructured(const std::string &name){}
+
 int GModel::readCGNS(const std::string &name)
 {
   Msg::Error("This version of Gmsh was compiled without CGNS support");
