@@ -14,6 +14,7 @@
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
 #include "SOrientedBoundingBox.h"
+#include "affineTransformation.h"
 
 #define MAX_LC 1.e22
 
@@ -68,6 +69,11 @@ class GEntity {
 
   // Set of high-order elements fixed by "fast curving"
   std::set<MElement*> curvedBLElements;
+
+ public:
+
+  // make a set of all the vertices in the entity, with/without closure
+  void addVerticesInSet(std::set<MVertex*>&,bool closure) const;
 
  public:
   // all known native model types
@@ -292,6 +298,10 @@ class GEntity {
   GEntity* meshMaster() const;
   void setMeshMaster(GEntity*);
   void setMeshMaster(GEntity*, const std::vector<double>&);
+  void updateCorrespondingVertices();
+  void copyMasterCoordinates();
+
+  virtual void alignElementsWithMaster() {}
 
   // get the bounding box
   virtual SBoundingBox3d bounds(bool fast = false) const { return SBoundingBox3d(); }

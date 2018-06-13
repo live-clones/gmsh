@@ -10,6 +10,7 @@
 #include <string>
 #include <stdio.h>
 #include "GmshMessage.h"
+#include <iostream>
 
 // concrete class for vector of size 3
 class SVector3 {
@@ -65,17 +66,15 @@ class SVector3 {
     P[0] *= v; P[1] *= v; P[2] *= v;
     return *this;
   }
+  SVector3 & operator = (const SVector3& a) {
+    P[0] = a[0]; P[1] = a[1]; P[2] = a[2];
+    return *this;
+  }
   SVector3 & operator = (double v)
   {
     P[0] = v; P[1] = v; P[2] = v;
     return *this;
   }
-  SVector3 & operator = (const SVector3& a)
-  {
-    P[0] = a[0]; P[1] = a[1]; P[2] = a[2];
-    return *this;
-  }
-  
   operator double *() { return P; }
   void print(std::string name="") const
   {

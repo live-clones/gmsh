@@ -298,7 +298,7 @@ void updateBoVec<2, MEdge>
 
       {
         // Get the edge entities that are connected to the vertex
-        std::list<GEdge*> gEdgeList = ent->edges();
+        std::vector<GEdge*> gEdgeList = ent->edges();
         // Find edge entities that are connected to elements in the zone
         std::vector<std::pair<GEdge*, int> > useGEdge;
         const int nFace = faces.size();
@@ -531,9 +531,9 @@ void updateBoVec<3, MFace>
         switch(ent->dim()) {
         case 0:
           {
-            std::list<GEdge*> gEdgeList = ent->edges();
+            std::vector<GEdge*> gEdgeList = ent->edges();
             std::list<GFace*> gFaceList;
-            for(std::list<GEdge*>::const_iterator gEIt = gEdgeList.begin();
+            for(std::vector<GEdge*>::const_iterator gEIt = gEdgeList.begin();
                 gEIt != gEdgeList.end(); ++gEIt) {
               std::vector<GFace*> alist = (*gEIt)->faces();
               gFaceList.insert(gFaceList.end(), alist.begin(), alist.end());
@@ -555,7 +555,7 @@ void updateBoVec<3, MFace>
 //--zone
 
         std::list<const GFace*> useGFace;
-        std::list<GEdge*> gEdgeList;
+        std::vector<GEdge*> gEdgeList;
         const int nFace = faces.size();
         for(int iFace = 0; iFace != nFace; ++iFace) {
           if(zoneIndex == faces[iFace].zoneIndex) {

@@ -2473,7 +2473,6 @@ int UnpartitionMesh(GModel *const model)
   // Loop over edges
   for(GModel::eiter it = edges.begin(); it != edges.end(); ++it){
     GEdge *edge = *it;
-
     if(edge->geomType() == GEntity::PartitionCurve){
       partitionEdge* pedge = static_cast<partitionEdge*>(edge);
       if(pedge->getParentEntity()){

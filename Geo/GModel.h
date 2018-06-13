@@ -115,6 +115,10 @@ class GModel {
   void _createFMInternals();
   void _deleteFMInternals();
 
+  // CGNS helpers
+  int _readCGNSStructured(const std::string &name);
+  int _readCGNSUnstructured(const std::string &name);
+
   // characteristic length (mesh size) fields
   FieldManager *_fields;
 

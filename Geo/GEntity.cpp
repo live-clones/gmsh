@@ -14,6 +14,7 @@
 #include "GEdge.h"
 #include "GFace.h"
 #include "GRegion.h"
+#include "closestVertex.h"
 
 GEntity::GEntity(GModel *m,int t)
   : _model(m), _tag(t),_meshMaster(this),_visible(1), _selection(0),
@@ -128,6 +129,7 @@ void GEntity::setMeshMaster(GEntity* gMaster,const std::vector<double>& tfo)
 
   affineTransform = tfo;
   _meshMaster = gMaster;
+  updateCorrespondingVertices();
 }
 
 // gets the entity from which the mesh will be copied
@@ -178,4 +180,115 @@ void GEntity::updateVertices(const std::map<MVertex*,MVertex*>& old2new)
 
   correspondingHOPoints.clear();
   correspondingHOPoints = newCorrespondingVertices;
+
+  copyMasterCoordinates();
+}
+
+void GEntity::addVerticesInSet(std::set<MVertex*>&vtcs,bool closure) const
+{
+  vtcs.insert(mesh_vertices.begin(),mesh_vertices.end());
+
+  if (closure) {
+    switch (dim()) {
+    case 3:
+      {
+        std::vector<GFace*> clos = faces();
+        std::vector<GFace*>::iterator cIter = clos.begin();
+        for (;cIter!=clos.end();++cIter) (*cIter)->addVerticesInSet(vtcs,true);
+        break;
+      }
+    case 2:
+      {
+        std::vector<GEdge*> clos = edges();
+        std::vector<GEdge*>::iterator cIter = clos.begin();
+        for (;cIter!=clos.end();++cIter) (*cIter)->addVerticesInSet(vtcs,true);
+        break;
+      }
+    case 1:
+      {
+        std::list<GVertex*> clos = vertices();
+        std::list<GVertex*>::iterator cIter = clos.begin();
+        for (;cIter!=clos.end();++cIter) (*cIter)->addVerticesInSet(vtcs,true);
+        break;
+      }
+    }
+  }
+}
+
+void GEntity::updateCorrespondingVertices()
+{
+  if (_meshMaster != this && affineTransform.size() == 16) {
+    correspondingVertices.clear();
+    closestVertexFinder cvf(_meshMaster,true);
+
+    if (cvf.getNbVtcs()) {
+      std::vector<double> tfo = affineTransform;
+      std::vector<double> inv;
+      invertAffineTransformation(tfo,inv);
+
+      std::set<MVertex*> vtcs;
+      this->addVerticesInSet(vtcs,true);
+
+      std::set<MVertex*>::iterator vIter = vtcs.begin();
+      for (;vIter!=vtcs.end();++vIter) {
+        MVertex* tv = *vIter;
+        // double tgt[4] = {tv->x(),tv->y(),tv->z(),1};
+        // double xyz[4] = {0,0,0,0};
+
+        // int idx = 0;
+        // for (int i=0;i<3;i++) for (int j=0;j<4;j++) tgt[i] += inv[idx++] * ori[j];
+        MVertex* sv = cvf(tv->point(),inv);
+
+        correspondingVertices[tv] = sv;
+
+        double src[4] = {sv->x(),sv->y(),sv->z(),1};
+        double xyz[4] = {0,0,0,0};
+        int idx = 0;
+        for (int i=0;i<3;i++) {
+          xyz[i] = 0;
+          for (int j=0;j<4;j++) xyz[i] += tfo[idx++] * src[j];
+        }
+
+        tv->x() = xyz[0];
+        tv->y() = xyz[1];
+        tv->z() = xyz[2];
+      }
+    }
+  }
+}
+
+void GEntity::copyMasterCoordinates()
+{
+  if (_meshMaster != this && affineTransform.size() == 16) {
+    std::map<MVertex*,MVertex*>::iterator cvIter = correspondingVertices.begin();
+
+    for (;cvIter!=correspondingVertices.end();++cvIter) {
+      MVertex* tv = cvIter->first;
+      MVertex* sv = cvIter->second;
+      double src[4] = {sv->x(),sv->y(),sv->z(),1};
+      double tgt[3] = {0,0,0};
+      int idx = 0;
+      for (int i=0;i<3;i++) for (int j=0;j<4;j++) tgt[i] += affineTransform[idx++] * src[j];
+      tv->x() = tgt[0];
+      tv->y() = tgt[1];
+      tv->z() = tgt[2];
+    }
+
+    cvIter = correspondingHOPoints.begin();
+
+    for (;cvIter!=correspondingHOPoints.end();++cvIter) {
+      MVertex* tv = cvIter->first;
+      MVertex* sv = cvIter->second;
+
+      double src[4] = {sv->x(),sv->y(),sv->z(),1};
+      double tgt[3] = {0,0,0};
+
+      int idx = 0;
+      for (int i=0;i<3;i++) for (int j=0;j<4;j++) tgt[i] += affineTransform[idx++] * src[j];
+
+      tv->x() = tgt[0];
+      tv->y() = tgt[1];
+      tv->z() = tgt[2];
+    }
+  }
 }

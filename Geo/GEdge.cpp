@@ -513,14 +513,53 @@ double GEdge::parFromPoint(const SPoint3 &P) const
   return t;
 }
 
+bool GEdge::refineProjection(const SVector3 &Q, double &u,
+                             int MaxIter, double relax, double tol,
+                             double &err) const
+{
+  double maxDist = tol * CTX::instance()->lc;
+
+  SVector3 P = position(u);
+  SVector3 dPQ = P - Q;
+
+  Range<double> uu = parBounds(0);
+  double uMin = uu.low();
+  double uMax = uu.high();
+  err = dPQ.norm();
+
+  int iter = 0;
+  while(iter++ < MaxIter && err > maxDist) {
+    SVector3 der = firstDer(u);
+    double du = dot(dPQ,der) / dot(der,der);
+
+    if (du < tol && dPQ.norm() > maxDist) du = 1;
+
+    // if (fabs(du) < tol) break;
+
+    double uNew = u - relax * du;
+    uNew = std::min(uMax,std::max(uMin,uNew));
+    P = position(uNew);
+
+    dPQ = P - Q;
+    err = dPQ.norm();
+    //err2 = fabs(uNew - u);
+    u = uNew;
+  }
+
+  if (err <= maxDist) return true;
+  return false;
+}
+
 bool GEdge::XYZToU(const double X, const double Y, const double Z,
-                   double &u, const double relax) const
+                   double &u, const double relax,bool first) const
 {
   const int MaxIter = 25;
-  const int NumInitGuess = 11;
+  const int NumInitGuess = 21;
 
-  double err;//, err2;
-  int iter;
+  std::map<double,double> errorVsParameter;
+
+  double err;
+  double tol = 1e-8;
 
   Range<double> uu = parBounds(0);
   double uMin = uu.low();
@@ -528,46 +567,27 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
 
   const SVector3 Q(X, Y, Z);
 
-  double init[NumInitGuess];
-
-  for (int i = 0; i < NumInitGuess; i++)
-    init[i] = uMin + (uMax - uMin) / (NumInitGuess - 1) * i;
+  double uTry = uMin;
 
   for(int i = 0; i < NumInitGuess; i++){
-    u = init[i];
-    double uNew = u;
-    //err2 = 1.0;
-    iter = 1;
+    uTry = uMin + (uMax - uMin) / (NumInitGuess - 1) * i;
+    if (refineProjection(Q,uTry,MaxIter,relax,tol,err)) {u = uTry;return true;}
+    errorVsParameter[err] = uTry;
+  }
 
-    SVector3 P = position(u);
+  if(relax > 1.e-1) {
+    if (XYZToU(X, Y, Z, uTry, 0.75 * relax,false)) {u = uTry; return true;}
+    SVector3 P = position(uTry);
     SVector3 dPQ = P - Q;
-    err = dPQ.norm();
-
-    if (err < 1.e-8 * CTX::instance()->lc) return true;
-
-    while(iter++ < MaxIter && err > 1e-8 * CTX::instance()->lc) {
-      SVector3 der = firstDer(u);
-      uNew = u - relax * dot(dPQ,der) / dot(der,der);
-      uNew = std::min(uMax,std::max(uMin,uNew));
-      P = position(uNew);
-
-      dPQ = P - Q;
-      err = dPQ.norm();
-      //err2 = fabs(uNew - u);
-      u = uNew;
-    }
-
-    if (err < 1e-8 * CTX::instance()->lc) return true;
+    errorVsParameter[dPQ.norm()] = uTry;
   }
 
-  if(relax > 1.e-2) {
-    // Msg::Info("point %g %g %g on edge %d : Relaxation factor = %g",
-    //           X, Y, Z, 0.75 * relax);
-    return XYZToU(X, Y, Z, u, 0.75 * relax);
+  u = errorVsParameter.begin()->second;
+  if (first) {
+    Msg::Warning("Could not converge parametrisation of (%g,%g,%g) on edge %d, "
+                 "taking parameter with lowest error ",X, Y, Z, tag());
   }
 
-  // Msg::Error("Could not converge reparametrisation of point (%e,%e,%e) on edge %d",
-  //            X, Y, Z, tag());
   return false;
 }
 
@@ -761,4 +781,12 @@ bool GEdge::reorder(const int elementType, const std::vector<int> &ordering)
   }
 
   return false;
+}
+
+std::list<GVertex*> GEdge::vertices() const
+{
+  std::list<GVertex*> res;
+  if (getBeginVertex()) res.insert(res.end(),getBeginVertex());
+  if (getEndVertex())   res.insert(res.end(),getEndVertex());
+  return res;
 }

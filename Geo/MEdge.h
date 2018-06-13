@@ -46,6 +46,18 @@ class MEdge {
     return 0;
   }
 
+  inline bool alignWith(MEdge& other)
+  {
+    int orientation = computeCorrespondence(other);
+    if (!orientation) return false;
+    if (orientation == -1) {
+      std::swap(_v [0],_v [1]);
+      std::swap(_si[0],_si[1]);
+    }
+    return true;
+  }
+
+
   SVector3 scaledTangent() const
   {
     return SVector3(_v[1]->x() - _v[0]->x(),

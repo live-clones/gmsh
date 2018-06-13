@@ -27,6 +27,16 @@ class nodalBasis {
   {
     return points;
   }
+
+  // compute the matrix that projects the provided points on the current control points
+  bool forwardTransformation(const fullMatrix<double>& otherPoints,
+                             fullMatrix<double>& projection, 
+                             int elementType=-1) const;
+
+  // compute the renumbering vector to map the provided points on the current control points
+  bool forwardRenumbering(const fullMatrix<double>& otherPoints,int* renum,
+                          int elemenType=-1) const;
+
   void getReferenceNodesForBezier(fullMatrix<double> &nodes) const;
 
   // Basis functions & gradients evaluation

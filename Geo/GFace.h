@@ -53,6 +53,9 @@ class GFace : public GEntity {
   // specify mesh master and edgeCounterparts, deduce transformation
   void setMeshMaster(GFace* master,const std::map<int,int>&);
 
+  // align elements with mesh master
+  void alignElementsWithMaster();
+
   // an array with additional vertices that are supposed to exist in
   // the final mesh of the model face. This can be used for boundary
   // layer meshes or when using Lloyd-like smoothing algorithms those
@@ -336,7 +339,7 @@ class GFace : public GEntity {
 
   // relocate mesh vertices using parametric coordinates
   void relocateMeshVertices();
-
+  
   std::vector<MTriangle*> triangles;
   std::vector<MQuadrangle*> quadrangles;
   std::vector<MPolygon*> polygons;

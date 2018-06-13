@@ -6,6 +6,8 @@
 #ifndef _ELEMENT_TYPE_H_
 #define _ELEMENT_TYPE_H_
 
+#include <string>
+
 namespace ElementType
 {
   // Give parent type, order & dimension corresponding to any element MSH type.
@@ -26,6 +28,7 @@ namespace ElementType
 
   // Give first order element tag
   int getPrimaryType(int type);
+  std::string nameOfParentType(int type);
 }
 
 #endif

@@ -4937,6 +4937,21 @@ double opt_geometry_match_geom_and_mesh(OPT_ARGS_NUM)
   return CTX::instance()->geom.matchGeomAndMesh;
 }
 
+double opt_geometry_match_mesh_scale_factor(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.matchMeshScaleFactor = (double) val;
+  return CTX::instance()->geom.matchMeshScaleFactor;
+}
+
+
+double opt_geometry_match_mesh_tolerance(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.matchMeshTolerance = (double) val;
+  return CTX::instance()->geom.matchMeshTolerance;
+}
+
 double opt_mesh_optimize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -6241,6 +6256,14 @@ double opt_mesh_cgns_import_order(OPT_ARGS_NUM)
     CTX::instance()->mesh.cgnsImportOrder = value;
   }
   return CTX::instance()->mesh.cgnsImportOrder;
+}
+
+double opt_mesh_cgns_construct_topology(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.cgnsConstructTopology = (int)val;
+  }
+  return CTX::instance()->mesh.cgnsConstructTopology;
 }
 
 double opt_mesh_dual(OPT_ARGS_NUM)

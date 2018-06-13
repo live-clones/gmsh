@@ -235,6 +235,9 @@ class MPyramidN : public MPyramid {
  protected:
   std::vector<MVertex*> _vs;
   const char _order;
+
+  void _addHOEdgePoints(int num,std::vector<MVertex*>& v,bool fw=true) const;
+
  public:
   MPyramidN(MVertex* v0, MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4,
       const std::vector<MVertex*> &v, char order, int num=0, int part=0)
@@ -272,32 +275,8 @@ class MPyramidN : public MPyramid {
     const int ie = (num + 1) * (_order - 1);
     for(int i = num * (_order -1); i != ie; ++i) v[j++] = _vs[i];
   }
-  virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
-  {
-    if (getIsAssimilatedSerendipity()) {
-      num == 4 ? v.resize(4 * _order)
-               : v.resize(3 * _order);
-    }
-    else {
-      num == 4 ? v.resize((_order+1) * (_order+1))
-               : v.resize((_order+1) * (_order+2) / 2);
-    }
+  virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const;
 
-    // FIXME Amaury continue fix serendipity
-
-    int j = 3;
-    if (num == 4) {
-      j = 4;
-    }
-
-    MPyramid::_getFaceVertices(num, v);
-    //int count = num == 4 ? 3 : 2;
-
-    int nbVQ =  (_order-1)*(_order-1);
-    int nbVT = (_order - 1) * (_order - 2) / 2;
-    const int ie = (num == 4) ? 4*nbVT + nbVQ : (num+1)*nbVT;
-    for (int i = num*nbVT; i != ie; ++i) v[j++] = _vs[i];
-  }
   virtual int getNumVolumeVertices() const
   {
     if (getIsAssimilatedSerendipity())

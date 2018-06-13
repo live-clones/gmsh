@@ -1800,6 +1800,7 @@ void GModel::_storePhysicalTagsInEntities(int dim,
     case 2: ge = getFaceByTag(it->first); break;
     case 3: ge = getRegionByTag(it->first); break;
     }
+    
     if(ge){
       std::map<int, std::string>::const_iterator it2 = it->second.begin();
       for(; it2 != it->second.end(); ++it2){

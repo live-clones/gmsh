@@ -26,6 +26,7 @@
 
 #if defined(HAVE_OPTHOM)
 #include "OptHomFastCurving.h"
+#include "OptHomPeriodicity.h"
 #endif
 
 // --------- Functions that help optimizing placement of points on geometry -----------
@@ -454,11 +455,15 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
     const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
     std::pair<MVertex*, MVertex*> p(vMin, vMax);
     std::vector<MVertex*> veEdge;
-    if(edgeVertices.count(p)) { // Vertices already exist
+
+    edgeContainer::iterator eIter = edgeVertices.find(p);
+
+    if(eIter!=edgeVertices.end()) { // Vertices already exist
+      std::vector<MVertex*>& eVtcs = eIter->second;
       if(increasing)
-        veEdge.assign(edgeVertices[p].begin(), edgeVertices[p].end());
+        veEdge.assign(eVtcs.begin(), eVtcs.end());
       else
-        veEdge.assign(edgeVertices[p].rbegin(), edgeVertices[p].rend());
+        veEdge.assign(eVtcs.rbegin(), eVtcs.rend());
     }
     else { // Vertices do not exist, create them
       // Get vertices on geometry if asked
@@ -470,10 +475,13 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
         interpVerticesInExistingEdge(gf, &edgeEl, veEdge, nPts);
       }
       newHOVert.insert(newHOVert.end(), veEdge.begin(), veEdge.end());
+
+      std::vector<MVertex*>& eVtcs = edgeVertices[p];
+
       if(increasing) // Add newly created vertices to list
-        edgeVertices[p].insert(edgeVertices[p].end(), veEdge.begin(), veEdge.end());
+        eVtcs.insert(eVtcs.end(), veEdge.begin(), veEdge.end());
       else
-        edgeVertices[p].insert(edgeVertices[p].end(), veEdge.rbegin(), veEdge.rend());
+        eVtcs.insert(eVtcs.end(), veEdge.rbegin(), veEdge.rend());
     }
     ve.insert(ve.end(), veEdge.begin(), veEdge.end());
   }
@@ -1233,6 +1241,15 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
     }
   }
 
+#if defined(HAVE_OPTHOM)
+  std::vector<GEntity*> modelEdges;
+  modelEdges.insert(modelEdges.end(),m->firstEdge(),m->lastEdge());
+  OptHomPeriodicity edgePeriodicity(modelEdges);
+  edgePeriodicity.fixPeriodicity();
+  edgePeriodicity.fixPeriodicity(); // apply twice for operation order effects
+#endif
+
+
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     GFace *tgt = *it;
     GFace *src = dynamic_cast<GFace*>(tgt->meshMaster());
@@ -1260,7 +1277,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
 
       for (unsigned int i = 0; i < tgt->getNumMeshElements(); ++i) {
         MElement* tgtElmt = tgt->getMeshElement(i);
-        Msg::Info("Checking element %d in face %d",i,tgt->tag());
+        // Msg::Info("Checking element %d in face %d",i,tgt->tag());
 
         int nbVtcs = 0;
         if (dynamic_cast<MTriangle*>   (tgtElmt)) nbVtcs = 3;
@@ -1300,7 +1317,15 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
       }
     }
   }
-  Msg::Debug("Finalized high order topology of periodic connections");
+
+#if defined(HAVE_OPTHOM)
+  std::vector<GEntity*> modelFaces;
+  modelFaces.insert(modelFaces.end(),m->firstFace(),m->lastFace());
+  OptHomPeriodicity facePeriodicity(modelFaces);
+  facePeriodicity.fixPeriodicity();
+#endif
+
+  Msg::Info("Finalized high order topology of periodic connections");
 }
 
 void SetOrder1(GModel *m, bool onlyVisible)
