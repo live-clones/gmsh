@@ -15,17 +15,20 @@
 
 void MElementBB(void *a, double *min, double *max)
 {
-  MElement *e = (MElement*)a;
-  if (e->getPolynomialOrder() == 1) {
+  MElement *e = static_cast<MElement *>(a);
+  if(e->getPolynomialOrder() == 1) {
     MVertex *v = e->getVertex(0);
     min[0] = max[0] = v->x();
     min[1] = max[1] = v->y();
     min[2] = max[2] = v->z();
-    for(int i = 1; i < e->getNumVertices(); i++){
+    for(int i = 1; i < e->getNumVertices(); i++) {
       v = e->getVertex(i);
-      min[0] = std::min(min[0], v->x()); max[0] = std::max(max[0], v->x());
-      min[1] = std::min(min[1], v->y()); max[1] = std::max(max[1], v->y());
-      min[2] = std::min(min[2], v->z()); max[2] = std::max(max[2], v->z());
+      min[0] = std::min(min[0], v->x());
+      max[0] = std::max(max[0], v->x());
+      min[1] = std::min(min[1], v->y());
+      max[1] = std::max(max[1], v->y());
+      min[2] = std::min(min[2], v->z());
+      max[2] = std::max(max[2], v->z());
     }
   }
   else {
@@ -33,12 +36,13 @@ void MElementBB(void *a, double *min, double *max)
     e->getNodesCoord(nodesXYZ);
 
     fullMatrix<double> bezNodes(e->getNumVertices(), 3);
+
     const bezierBasis *bez = BasisFactory::getBezierBasis(FuncSpaceData(e));
     bez->lag2Bez(nodesXYZ, bezNodes);
     min[0] = max[0] = bezNodes(0, 0);
     min[1] = max[1] = bezNodes(0, 1);
     min[2] = max[2] = bezNodes(0, 2);
-    for(int i = 1; i < e->getNumVertices(); i++){
+    for(int i = 1; i < e->getNumVertices(); i++) {
       min[0] = std::min(min[0], bezNodes(0, 0));
       max[0] = std::max(max[0], bezNodes(0, 0));
       min[1] = std::min(min[1], bezNodes(0, 1));
@@ -48,8 +52,8 @@ void MElementBB(void *a, double *min, double *max)
     }
   }
   // make bounding boxes larger up to (absolute) geometrical tolerance
-  double eps = CTX::instance()->geom.tolerance;
-  for(int i = 0; i < 3; i++){
+  double const eps = CTX::instance()->geom.tolerance;
+  for(int i = 0; i < 3; i++) {
     min[i] -= eps;
     max[i] += eps;
   }
