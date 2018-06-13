@@ -866,9 +866,9 @@ StringXNumber GeometryOptions_Number[] = {
     "Matches geometries and meshes" },
   { F|O, "MatchMeshScaleFactor" , opt_geometry_match_mesh_scale_factor, 1 ,
     "Rescaling factor for the mesh to correspond to size of the geometry" },
-  { F|O, "MatchMeshTolerance", opt_geometry_match_mesh_tolerance, 1e-6, 
+  { F|O, "MatchMeshTolerance", opt_geometry_match_mesh_tolerance, 1e-6,
     "Tolerance for matching mesh and geometry"},
- 
+
   { F|O, "Normals" , opt_geometry_normals , 0. ,
     "Display size of normal vectors (in pixels)" },
   { F|O, "NumSubEdges" , opt_geometry_num_sub_edges , 40. ,
@@ -999,6 +999,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
    "Enable the creation of high-order mesh from CGNS structured meshes"
    "(1, 2, 4, 8, ...)" },
+  { F|O, "CgnsConstructTopology" , opt_mesh_cgns_construct_topology , 0. ,
+   "Reconstruct the model topology (BREP) after reading a CGNS file" },
   { F|O, "CharacteristicLengthExtendFromBoundary" ,
     opt_mesh_lc_extend_from_boundary, 1. ,
     "Extend computation of mesh element sizes from the boundaries into the surfaces/volumes" },

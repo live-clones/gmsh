@@ -43,7 +43,7 @@ struct contextMeshOptions {
   int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
-  int cgnsImportOrder;
+  int cgnsImportOrder, cgnsConstructTopology;
   int preserveNumberingMsh2;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;

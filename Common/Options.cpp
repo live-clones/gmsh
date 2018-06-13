@@ -6258,6 +6258,14 @@ double opt_mesh_cgns_import_order(OPT_ARGS_NUM)
   return CTX::instance()->mesh.cgnsImportOrder;
 }
 
+double opt_mesh_cgns_construct_topology(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.cgnsConstructTopology = (int)val;
+  }
+  return CTX::instance()->mesh.cgnsConstructTopology;
+}
+
 double opt_mesh_dual(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
