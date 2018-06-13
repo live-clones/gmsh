@@ -53,7 +53,8 @@ static void setBLData(MVertex *v)
   }
 }
 
-// If all low-order nodes in are marked as BL, then mark high-order nodes as BL (only works in 2D)
+// If all low-order nodes in are marked as BL, then mark high-order nodes as BL
+// (only works in 2D)
 static bool setBLData(MElement *el)
 {
   // Check whether all low-order nodes are marked as BL nodes (only works in 2D)
@@ -481,6 +482,63 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads, bool splitIntoHexas
   Msg::StatusBar(true, "Done refining mesh (%g s)", t2 - t1);
 }
 
+void BarycentricRefineMesh(GModel *m)
+{
+  Msg::StatusBar(true, "Barycentrically refining mesh...");
+  double t1 = Cpu();
+
+  m->destroyMeshCaches();
+
+  // Only update triangles in 2D, only update tets in 3D
+  if (m->getNumRegions() == 0) {
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
+      GFace* gf = *it;
+      unsigned int numt = gf->triangles.size();
+      if(!numt) continue;
+      std::vector<MTriangle*> triangles2(3 * numt);
+      for(unsigned int i = 0; i < numt; i++){
+        MTriangle *t = gf->triangles[i];
+        SPoint3 bary = t->barycenter();
+        // FIXME: create an MFaceVertex (with correct parametric coordinates)?
+        MVertex* v = new MVertex(bary.x(), bary.y(), bary.z(), gf);
+        triangles2[3 * i] = new MTriangle(t->getVertex(0), t->getVertex(1), v);
+        triangles2[3 * i + 1] = new MTriangle(t->getVertex(1), t->getVertex(2), v);
+        triangles2[3 * i + 2] = new MTriangle(t->getVertex(2), t->getVertex(0), v);
+        delete t;
+        gf->mesh_vertices.push_back(v);
+      }
+      gf->triangles = triangles2;
+      gf->deleteVertexArrays();
+    }
+  }
+  else {
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
+      GRegion* gr = *it;
+      unsigned int numt = gr->tetrahedra.size();
+      if(!numt) continue;
+      std::vector<MTetrahedron*> tetrahedra2(4 * numt);
+      for(unsigned int i = 0; i < numt; i++){
+        MTetrahedron *t = gr->tetrahedra[i];
+        SPoint3 bary = t->barycenter();
+        // FIXME: create an MFaceVertex (with correct parametric coordinates)?
+        MVertex* v = new MVertex(bary.x(), bary.y(), bary.z(), gr);
+        tetrahedra2[4 * i] = new MTetrahedron(t->getVertex(0), t->getVertex(1), t->getVertex(2), v);
+        tetrahedra2[4 * i + 1] = new MTetrahedron(t->getVertex(1), t->getVertex(2), t->getVertex(3), v);
+        tetrahedra2[4 * i + 2] = new MTetrahedron(t->getVertex(2), t->getVertex(3), t->getVertex(0), v);
+        tetrahedra2[4 * i + 3] = new MTetrahedron(t->getVertex(3), t->getVertex(0), t->getVertex(1), v);
+        delete t;
+        gr->mesh_vertices.push_back(v);
+      }
+      gr->tetrahedra = tetrahedra2;
+      gr->deleteVertexArrays();
+    }
+  }
+
+  CTX::instance()->mesh.changed = ENT_ALL;
+
+  double t2 = Cpu();
+  Msg::StatusBar(true, "Done barycentrically refining mesh (%g s)", t2 - t1);
+}
 
 ///------ Tristan Carrier Baudouin's Contribution on Full Hex Meshing
 
