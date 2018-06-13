@@ -3201,9 +3201,9 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
 
 #else
 
-int GModel::_readCGNSUnstructured(const std::string& fileName){}
+int GModel::_readCGNSUnstructured(const std::string& fileName){ return 0; }
 
-int GModel::_readCGNSStructured(const std::string &name){}
+int GModel::_readCGNSStructured(const std::string &name){ return 0; }
 
 int GModel::readCGNS(const std::string &name)
 {
