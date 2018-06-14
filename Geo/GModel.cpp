@@ -534,8 +534,8 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
         }
         else{
           std::vector<GFace*> faces(gr->faces());
-          std::list<int> orientations(gr->faceOrientations());
-          std::list<int>::iterator ito = orientations.begin();
+          std::vector<int> const& orientations = gr->faceOrientations();
+          std::vector<int>::const_iterator ito = orientations.begin();
           for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
             int t = (*it)->tag();
             if(oriented && ito != orientations.end()){
