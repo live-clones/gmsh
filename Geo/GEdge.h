@@ -137,8 +137,8 @@ class GEdge : public GEntity {
   virtual bool is3D() const { return true; }
 
   // get/set/compute the length of the model edge
-  inline double length() const { return _length; }
-  inline void setLength(const double l) { _length = l; }
+  double length() const { return _length; }
+  void setLength(const double l) { _length = l; }
   double length(const double &u0, const double &u1, const int nbQuadPoints = 4);
 
   // get the prescribed mesh size on the edge

@@ -699,9 +699,9 @@ end:
     std::vector<GVertex*>::const_iterator itv = verts.begin();
     for(; itv != verts.end(); itv++){
       const GVertex *v = *itv;
-      double d = meanPlane.a * v->x() + meanPlane.b * v->y() +
+      double const d = meanPlane.a * v->x() + meanPlane.b * v->y() +
         meanPlane.c * v->z() - meanPlane.d;
-      if(fabs(d) > lc * 1.e-3) {
+      if(std::abs(d) > lc * 1.e-3) {
         Msg::Debug("Plane surface %d (%gx+%gy+%gz=%g) is not plane!",
                    tag(), meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
         Msg::Debug("Control point %d = (%g,%g,%g), val=%g",
