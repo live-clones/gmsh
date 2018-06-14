@@ -268,7 +268,7 @@ int GRegion::delFace(GFace* face)
   }
   l_faces.erase(it);
 
-  std::vector<int>::const_iterator itOri;
+  std::vector<int>::iterator itOri;
   int posOri = 0, orientation = 0;
   for(itOri = l_dirs.begin(); itOri != l_dirs.end(); ++itOri){
     if(posOri == pos){
