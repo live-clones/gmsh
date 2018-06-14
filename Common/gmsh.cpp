@@ -270,6 +270,24 @@ GMSH_API void gmsh::model::getEntitiesForPhysicalGroup(const int dim,
   }
 }
 
+GMSH_API void gmsh::model::getPhysicalGroupsForEntity(const int dim,
+                                                      const int tag,
+                                                      std::vector<int> &physicalTags)
+{
+  if(!_isInitialized()){ throw -1; }
+  physicalTags.clear();
+  GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
+  if(entity == NULL){
+    Msg::Error("Unknown entity of dimension '%g' with tag '%g'", dim, tag);
+    throw 1;
+  }
+  std::vector<int> phy = entity->getPhysicalEntities();
+  physicalTags.resize(phy.size());
+  for(unsigned int i = 0; i < phy.size(); i++){
+    physicalTags[i] = phy[i];
+  }
+}
+
 GMSH_API int gmsh::model::addPhysicalGroup(const int dim,
                                            const std::vector<int> &tags,
                                            const int tag)

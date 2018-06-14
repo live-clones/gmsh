@@ -117,12 +117,19 @@ GMSH_API void gmshModelGetPhysicalGroups(int ** dimTags, size_t * dimTags_n,
                                          const int dim,
                                          int * ierr);
 
-/* Get the tags of all the (elementary) geometrical entities making up the
- * physical group of dimension `dim' and tag `tag'. */
+/* Get the tags of all the physical groups that entity identified by `dim' and
+ * tag `tag' contains. */
 GMSH_API void gmshModelGetEntitiesForPhysicalGroup(const int dim,
                                                    const int tag,
                                                    int ** tags, size_t * tags_n,
                                                    int * ierr);
+
+/* Get the tags of all the (elementary) geometrical entities making up the
+ * physical group of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelGetPhysicalGroupsForEntity(const int dim,
+                                                  const int tag,
+                                                  int ** physicalTags, size_t * physicalTags_n,
+                                                  int * ierr);
 
 /* Add a physical group of dimension `dim', grouping the elementary entities
  * with tags `tags'. Return the tag of the physical group, equal to `tag' if
