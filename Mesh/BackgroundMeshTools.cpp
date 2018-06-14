@@ -289,12 +289,12 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
 
 bool Extend1dMeshIn2dSurfaces()
 {
-  return CTX::instance()->mesh.lcExtendFromBoundary ? true : false;
+  return CTX::instance()->mesh.lcExtendFromBoundary;
 }
 
 bool Extend2dMeshIn3dVolumes()
 {
-  return CTX::instance()->mesh.lcExtendFromBoundary ? true : false;
+  return CTX::instance()->mesh.lcExtendFromBoundary;
 }
 
 SMetric3 max_edge_curvature_metric(const GVertex *gv)
