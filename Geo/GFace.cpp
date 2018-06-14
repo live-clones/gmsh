@@ -235,6 +235,7 @@ SBoundingBox3d GFace::bounds(bool fast) const
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteSurface && geomType() != PartitionSurface){
+    // TODO C++11 std::accumulate
     std::vector<GEdge*>::const_iterator it = l_edges.begin();
     for(; it != l_edges.end(); it++)
       res += (*it)->bounds(fast);
@@ -321,19 +322,18 @@ std::vector<MVertex*> GFace::getEmbeddedMeshVertices() const
   return std::vector<MVertex*>(tmp.begin(), tmp.end());
 }
 
-std::list<GVertex*> GFace::vertices() const
+std::vector<GVertex*> GFace::vertices() const
 {
   std::set<GVertex*> v;
   for(std::vector<GEdge*>::const_iterator it = l_edges.begin();
       it != l_edges.end(); ++it){
-    GVertex *v1 = (*it)->getBeginVertex();
+    GVertex *const v1 = (*it)->getBeginVertex();
     if(v1) v.insert(v1);
-    GVertex *v2 = (*it)->getEndVertex();
+
+    GVertex *const v2 = (*it)->getEndVertex();
     if(v2) v.insert(v2);
   }
-  std::list<GVertex*> res;
-  res.insert(res.begin(), v.begin(), v.end());
-  return res;
+  return std::vector<GVertex*>(v.begin(), v.end());
 }
 
 void GFace::setVisibility(char val, bool recursive)
@@ -534,8 +534,8 @@ void GFace::computeMeanPlane()
     }
   }
 
-  std::list<GVertex*> verts = vertices();
-  std::list<GVertex*>::const_iterator itv = verts.begin();
+  std::vector<GVertex*> const& verts = vertices();
+  std::vector<GVertex*>::const_iterator itv = verts.begin();
   for(; itv != verts.end(); itv++){
     const GVertex *v = *itv;
     pts.push_back(SPoint3(v->x(), v->y(), v->z()));
@@ -695,8 +695,8 @@ end:
   if(geomType() == Plane) {
     SBoundingBox3d bb = bounds();
     double lc = norm(SVector3(bb.max(), bb.min()));
-    std::list<GVertex*> verts = vertices();
-    std::list<GVertex*>::const_iterator itv = verts.begin();
+    std::vector<GVertex*> const& verts = vertices();
+    std::vector<GVertex*>::const_iterator itv = verts.begin();
     for(; itv != verts.end(); itv++){
       const GVertex *v = *itv;
       double d = meanPlane.a * v->x() + meanPlane.b * v->y() +

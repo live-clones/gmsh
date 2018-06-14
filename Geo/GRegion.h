@@ -83,7 +83,7 @@ class GRegion : public GEntity {
   virtual std::vector<GEdge*> edges() const;
 
   // vertices that bound the region
-  virtual std::list<GVertex*> vertices() const;
+  virtual std::vector<GVertex*> vertices() const;
 
   // get the bounding box
   virtual SBoundingBox3d bounds(bool fast = false) const;
