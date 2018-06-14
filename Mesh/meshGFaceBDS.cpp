@@ -35,7 +35,7 @@ double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2)
 extern double lengthInfniteNorm(const double p[2], const double q[2],
 				const double quadAngle);
 
-inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2, GFace *f)
+double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2, GFace *f)
 {
   GPoint GP = f->point(SPoint2(0.5 * (p1->u + p2->u),
                                0.5 * (p1->v + p2->v)));
@@ -46,28 +46,28 @@ inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2, GFace *f)
   const double dx1 = p1->X - GP.x();
   const double dy1 = p1->Y - GP.y();
   const double dz1 = p1->Z - GP.z();
-  const double l1 = sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
+  const double l1 = std::sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
+
   const double dx2 = p2->X - GP.x();
   const double dy2 = p2->Y - GP.y();
   const double dz2 = p2->Z - GP.z();
-  const double l2 = sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2);
+  const double l2 = std::sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2);
+
   return l1 + l2;
 }
 
-inline double computeEdgeLinearLength(BDS_Edge *e, GFace *f)
+double computeEdgeLinearLength(BDS_Edge *e, GFace *f)
 {
   // FIXME !!!
-  if (f->geomType() == GEntity::Plane)
-    return e->length();
-  else
-    return computeEdgeLinearLength(e->p1, e->p2, f);
+  return f->geomType() == GEntity::Plane ?
+           e->length() :
+           computeEdgeLinearLength(e->p1, e->p2, f);
 }
 
-double NewGetLc(BDS_Point *p)
+double NewGetLc(BDS_Point *point)
 {
-
-  return Extend1dMeshIn2dSurfaces() ?
-    std::min(p->lc(), p->lcBGM()) : p->lcBGM();
+  return Extend1dMeshIn2dSurfaces() ? std::min(point->lc(), point->lcBGM()) :
+                                      point->lcBGM();
 }
 
 static double correctLC_(BDS_Point *p1,BDS_Point *p2, GFace *f)
@@ -86,7 +86,7 @@ static double correctLC_(BDS_Point *p1,BDS_Point *p2, GFace *f)
 
   if(CTX::instance()->mesh.lcFromCurvature){
     double l3 = l;
-    double lcmin = std::min(std::min(l1, l2), l3);
+    double const lcmin = std::min(std::min(l1, l2), l3);
     l1 = std::min(lcmin*1.2,l1);
     l2 = std::min(lcmin*1.2,l2);
     l3 = std::min(lcmin*1.2,l3);
@@ -95,12 +95,10 @@ static double correctLC_(BDS_Point *p1,BDS_Point *p2, GFace *f)
   return l;
 }
 
-double NewGetLc(BDS_Edge *e, GFace *f)
+double NewGetLc(BDS_Edge *const edge, GFace *const face)
 {
-  double linearLength = computeEdgeLinearLength(e, f);
-  double l = correctLC_ (e->p1,e->p2,f);
-  //  printf("BDS %d %d %g %g correct lc =%g lreal=%g \n",e->p1->iD, e->p2->iD,e->p1->lc(),e->p2->lc(),l,linearLength);
-  return linearLength / l;
+  return computeEdgeLinearLength(edge, face) /
+         correctLC_(edge->p1, edge->p2, face);
 }
 
 double NewGetLc(BDS_Point *p1, BDS_Point *p2, GFace *f)
