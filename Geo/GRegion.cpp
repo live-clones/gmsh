@@ -260,6 +260,7 @@ void GRegion::setColor(unsigned int val, bool recursive)
 
 int GRegion::delFace(GFace* face)
 {
+  // TODO C++11 fix the UB if deleting at it == .end()
   std::vector<GFace*>::iterator it;
   int pos = 0;
   for(it = l_faces.begin(); it != l_faces.end(); ++it){
