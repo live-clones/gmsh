@@ -44,7 +44,7 @@ public:
   void setEndVertex(GVertex *gv) { v1 = gv; }
   virtual GVertex *getBeginVertex() const { return v0; }
   virtual GVertex *getEndVertex() const { return v1; }
-  void setVertex(GVertex *f, const int orientation)
+  void setVertex(GVertex *const f, const int orientation)
   {
     if(orientation > 0)
       v0 = f;
@@ -187,8 +187,8 @@ public:
 
   // get bounds of parametric coordinate
   virtual Range<double> parBounds(int i) const = 0;
-  inline double getLowerBound() const { return parBounds(0).low(); };
-  inline double getUpperBound() const { return parBounds(0).high(); };
+  double getLowerBound() const { return parBounds(0).low(); };
+  double getUpperBound() const { return parBounds(0).high(); };
 
   // return the point on the face closest to the given point
   virtual GPoint closestPoint(const SPoint3 &queryPoint, double &param) const;
