@@ -486,7 +486,7 @@ namespace BoundaryLayerCurver
       repositionInnerVertices(subsetFaces, gface);
       double qual = jacobianBasedQuality::minIGEMeasure(lastElementBL);
       int currentOrder = lastEdge->getPolynomialOrder();
-      while (qual < .5 && qual < .8*qualLinear && currentOrder > 1) {
+      while (qual < .75 && qual < .8*qualLinear && currentOrder > 1) {
         _reduceOrderCurve(lastEdge, --currentOrder, gface);
         InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, gface);
         repositionInnerVertices(subsetFaces, gface);
@@ -502,7 +502,7 @@ namespace BoundaryLayerCurver
       qual = jacobianBasedQuality::minIGEMeasure(lastElement);
       int iter = 0;
       const int maxIter = 15;
-      while (qual < .5 && qual < .8*qualLinear && ++iter < maxIter) {
+      while (qual < .75 && qual < .8*qualLinear && ++iter < maxIter) {
         _reduceCurving(lastEdge, .25, gface);
         repositionInnerVertices(subsetFaces, gface);
         qual = jacobianBasedQuality::minIGEMeasure(lastElement);
@@ -1441,6 +1441,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
 //  }
 
   for (int i = 0; i < bndEl2column.size(); ++i) {
+//    if (bndEl2column[i].first->getNum() != 1156) continue; // trimesh
 //    if (   bndEl2column[i].first->getNum() != 1156
 //        && bndEl2column[i].first->getNum() != 1079
 //        && bndEl2column[i].first->getNum() != 1102
