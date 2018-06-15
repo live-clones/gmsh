@@ -145,7 +145,7 @@ class GEdge : public GEntity {
   virtual double prescribedMeshSizeAtVertex() const { return meshAttributes.meshSize; }
 
   // true if start == end and no more than 2 segments
-  void setTooSmall(bool b) { _tooSmall = b; }
+  void setTooSmall(bool const b) { _tooSmall = b; }
   bool isMeshDegenerated() const
   {
     if (_tooSmall)
