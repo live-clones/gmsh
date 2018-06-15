@@ -1055,10 +1055,10 @@ static bool dividedNonConnectedEntities(GModel *const model, int dim,
         graph.nn(numVertex);
         graph.createDualGraph(false);
 
-        // if a graph contains at least ((n-1)*(n-2))/2 + 1 edges
+        // if a graph contains more than ((n-1)*(n-2))/2 edges
         // (where n is the number of nodes), then it is connected.
-        if(((graph.numNodes()-1)*(graph.numNodes()-2))/2 + 1 <= graph.numEdges()){
-          break;
+        if(((graph.numNodes()-1)*(graph.numNodes()-2))/2 < graph.numEdges()){
+          continue;
         }
 
         std::vector< std::set<MElement*> > connectedElements;
@@ -1155,10 +1155,10 @@ static bool dividedNonConnectedEntities(GModel *const model, int dim,
         graph.nn(numVertex);
         graph.createDualGraph(false);
 
-        // if a graph contains at least ((n-1)*(n-2))/2 + 1 edges
+        // if a graph contains more than ((n-1)*(n-2))/2 edges
         // (where n is the number of nodes), then it is connected.
-        if(((graph.numNodes()-1)*(graph.numNodes()-2))/2 + 1 <= graph.numEdges()){
-          break;
+        if(((graph.numNodes()-1)*(graph.numNodes()-2))/2 < graph.numEdges()){
+          continue;
         }
 
         std::vector< std::set<MElement*> > connectedElements;
@@ -1259,10 +1259,10 @@ static bool dividedNonConnectedEntities(GModel *const model, int dim,
         graph.nn(numVertex);
         graph.createDualGraph(false);
 
-        // if a graph contains at least ((n-1)*(n-2))/2 + 1 edges
+        // if a graph contains more than ((n-1)*(n-2))/2 edges
         // (where n is the number of nodes), then it is connected.
-        if(((graph.numNodes()-1)*(graph.numNodes()-2))/2 + 1 <= graph.numEdges()){
-          break;
+        if(((graph.numNodes()-1)*(graph.numNodes()-2))/2 < graph.numEdges()){
+          continue;
         }
 
         std::vector< std::set<MElement*> > connectedElements;
