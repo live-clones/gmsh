@@ -842,6 +842,16 @@ int insertVertexB (std::list<edgeXface> &shell,
     refinementRequired = true;
   }
 
+  // For adding a point we require that
+  // - the volume (or rather area) remains the same after addition of the point
+  // - the point is not too close to an edge
+  // - plus that at least one of following conditions is satisfied:
+  //   + the cavity contains more than 2 elements
+  //   + or, refinement is required
+  //   + or, the minimum quality improves
+  // With the latter conditions we ensure that a configuration of 2 elements(or 1) is
+  // generally accepted; We only add a point to it if sizing requires so or the quality is
+  // improved by it.Generally for squares and rectangles the quality will not be improved by adding a point.
   if (fabs(oldVolume - newVolume) < EPS * oldVolume && !onePointIsTooClose &&
     (cavity.size() > 2 || refinementRequired || newMinQuality > oldMinQuality + 1e-8)){
     connectTris(new_cavity.begin(), new_cavity.end(),conn);
