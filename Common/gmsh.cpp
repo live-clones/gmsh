@@ -255,6 +255,19 @@ GMSH_API void gmsh::model::getPhysicalGroups(vectorpair &dimTags,
   }
 }
 
+static std::string _getEntityName(int dim, int tag)
+{
+  std::stringstream stream;
+  switch(dim){
+  case 0 : stream << "Point "; break;
+  case 1 : stream << "Curve "; break;
+  case 2 : stream << "Surface "; break;
+  case 3 : stream << "Volume "; break;
+  }
+  stream << tag;
+  return stream.str();
+}
+
 GMSH_API void gmsh::model::getEntitiesForPhysicalGroup(const int dim,
                                                        const int tag,
                                                        std::vector<int> &tags)
@@ -268,6 +281,10 @@ GMSH_API void gmsh::model::getEntitiesForPhysicalGroup(const int dim,
     for(unsigned j = 0; j < it->second.size(); j++)
       tags.push_back(it->second[j]->tag());
   }
+  else{
+    Msg::Error("Physical %s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
+  }
 }
 
 GMSH_API void gmsh::model::getPhysicalGroupsForEntity(const int dim,
@@ -276,12 +293,12 @@ GMSH_API void gmsh::model::getPhysicalGroupsForEntity(const int dim,
 {
   if(!_isInitialized()){ throw -1; }
   physicalTags.clear();
-  GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
-  if(entity == NULL){
-    Msg::Error("Unknown entity of dimension '%g' with tag '%g'", dim, tag);
-    throw 1;
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge){
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
   }
-  std::vector<int> phy = entity->getPhysicalEntities();
+  std::vector<int> phy = ge->getPhysicalEntities();
   physicalTags.resize(phy.size());
   for(unsigned int i = 0; i < phy.size(); i++){
     physicalTags[i] = phy[i];
@@ -350,19 +367,6 @@ GMSH_API void gmsh::model::getEntitiesInBoundingBox(const double xmin,
   GModel::current()->getEntitiesInBox(entities, box, dim);
   for(unsigned int i = 0; i < entities.size(); i++)
     dimTags.push_back(std::pair<int, int>(entities[i]->dim(), entities[i]->tag()));
-}
-
-static std::string _getEntityName(int dim, int tag)
-{
-  std::stringstream stream;
-  switch(dim){
-  case 0 : stream << "Point "; break;
-  case 1 : stream << "Curve "; break;
-  case 2 : stream << "Surface "; break;
-  case 3 : stream << "Volume "; break;
-  }
-  stream << tag;
-  return stream.str();
 }
 
 GMSH_API void gmsh::model::getBoundingBox(const int dim,

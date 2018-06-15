@@ -86,10 +86,10 @@ model.add('getEntities',doc,None,ovectorpair('dimTags'),iint('dim','-1'))
 doc = '''Get all the physical groups in the current model. If `dim' is >= 0, return only the entities of the specified dimension (e.g. physical points if `dim' == 0). The entities are returned as a vector of (dim, tag) integer pairs.'''
 model.add('getPhysicalGroups',doc,None,ovectorpair('dimTags'),iint('dim','-1'))
 
-doc = '''Get the tags of all the physical groups that entity identified by `dim' and tag `tag' contains.'''
+doc = '''Get the tags of the geometrical entities making up the physical group of dimension `dim' and tag `tag'.'''
 model.add('getEntitiesForPhysicalGroup',doc,None,iint('dim'),iint('tag'),ovectorint('tags'))
 
-doc = '''Get the tags of all the (elementary) geometrical entities making up the physical group of dimension `dim' and tag `tag'.'''
+doc = '''Get the tags of the physical groups (if any) to which the geometrical entity of dimension `dim' and tag `tag' belongs.'''
 model.add('getPhysicalGroupsForEntity',doc,None,iint('dim'),iint('tag'),ovectorint('physicalTags'))
 
 doc = '''Add a physical group of dimension `dim', grouping the elementary entities with tags `tags'. Return the tag of the physical group, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0.'''

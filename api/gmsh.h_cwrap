@@ -243,8 +243,8 @@ namespace gmsh { // Top-level functions
       dimTags.resize(api_dimTags_n_ / 2); for(size_t i = 0; i < api_dimTags_n_ / 2; ++i){ dimTags[i].first = api_dimTags_[i * 2 + 0]; dimTags[i].second = api_dimTags_[i * 2 + 1]; } gmshFree(api_dimTags_);
     }
 
-    // Get the tags of all the physical groups that entity identified by `dim' and
-    // tag `tag' contains.
+    // Get the tags of the geometrical entities making up the physical group of
+    // dimension `dim' and tag `tag'.
     GMSH_API void getEntitiesForPhysicalGroup(const int dim,
                                               const int tag,
                                               std::vector<int> & tags)
@@ -256,8 +256,8 @@ namespace gmsh { // Top-level functions
       tags.assign(api_tags_, api_tags_ + api_tags_n_); gmshFree(api_tags_);
     }
 
-    // Get the tags of all the (elementary) geometrical entities making up the
-    // physical group of dimension `dim' and tag `tag'.
+    // Get the tags of the physical groups (if any) to which the geometrical entity
+    // of dimension `dim' and tag `tag' belongs.
     GMSH_API void getPhysicalGroupsForEntity(const int dim,
                                              const int tag,
                                              std::vector<int> & physicalTags)

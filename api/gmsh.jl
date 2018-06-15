@@ -305,8 +305,8 @@ end
 """
     gmsh.model.getEntitiesForPhysicalGroup(dim, tag)
 
-Get the tags of all the physical groups that entity identified by `dim` and tag
-`tag` contains.
+Get the tags of the geometrical entities making up the physical group of
+dimension `dim` and tag `tag`.
 
 Return `tags`.
 """
@@ -325,8 +325,8 @@ end
 """
     gmsh.model.getPhysicalGroupsForEntity(dim, tag)
 
-Get the tags of all the (elementary) geometrical entities making up the physical
-group of dimension `dim` and tag `tag`.
+Get the tags of the physical groups (if any) to which the geometrical entity of
+dimension `dim` and tag `tag` belongs.
 
 Return `physicalTags`.
 """

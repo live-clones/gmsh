@@ -121,14 +121,14 @@ namespace gmsh { // Top-level functions
     GMSH_API void getPhysicalGroups(gmsh::vectorpair & dimTags,
                                     const int dim = -1);
 
-    // Get the tags of all the physical groups that entity identified by `dim' and
-    // tag `tag' contains.
+    // Get the tags of the geometrical entities making up the physical group of
+    // dimension `dim' and tag `tag'.
     GMSH_API void getEntitiesForPhysicalGroup(const int dim,
                                               const int tag,
                                               std::vector<int> & tags);
 
-    // Get the tags of all the (elementary) geometrical entities making up the
-    // physical group of dimension `dim' and tag `tag'.
+    // Get the tags of the physical groups (if any) to which the geometrical entity
+    // of dimension `dim' and tag `tag' belongs.
     GMSH_API void getPhysicalGroupsForEntity(const int dim,
                                              const int tag,
                                              std::vector<int> & physicalTags);
