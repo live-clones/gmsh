@@ -79,24 +79,13 @@ public:
   void delRegion(GRegion *r)
   {
     if(r1 == r) r1 = r2;
-    r2 = 0;
+    r2 = NULL;
   }
-  GRegion *getRegion(int num) const
-  {
-    if(num == 0)
-      return r1;
-    else
-      return r2;
-  }
+  GRegion *getRegion(int const num) const { return num == 0 ? r1 : r2; }
 
   // get number of regions
-  int numRegions() const
-  {
-    int num = 0;
-    if(r1) num++;
-    if(r2) num++;
-    return num;
-  }
+  int numRegions() const { return (r1 > 0) + (r2 > 0); }
+
   std::list<GRegion *> regions() const
   {
     std::list<GRegion *> r;
@@ -264,7 +253,7 @@ public:
   int getNumElementTypes() const { return 3; }
 
   // get total/by-type number of elements in the mesh
-  unsigned int getNumMeshElements() const;
+  size_type getNumMeshElements() const;
   unsigned int getNumMeshElementsByType(const int familyType) const;
   unsigned int getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
