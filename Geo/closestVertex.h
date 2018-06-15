@@ -30,7 +30,7 @@ class closestVertexFinder
   ANNpointArray vCoord;
   ANNidxArray index;
   ANNdistArray dist;
-  MVertex* (*vertex);
+  MVertex** vertex;
 #endif
 
   unsigned int nbVtcs;
