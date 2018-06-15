@@ -201,7 +201,7 @@ bool GVertex::reorder(const int elementType, const std::vector<int> &ordering)
 
     for(std::vector<int>::const_iterator it = ordering.begin();
         it != ordering.end(); ++it){
-      if(*it < 0 || *it >= points.size()) return false;
+      if(*it < 0 || *it >= static_cast<int>(points.size())) return false;
     }
 
     std::vector<MPoint*> newPointsOrder(points.size());
