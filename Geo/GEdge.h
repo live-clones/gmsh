@@ -72,7 +72,7 @@ class GEdge : public GEntity {
   virtual GEntity* getParentEntity() { return 0; }
 
   // get the list of vertices
-  virtual std::list<GVertex*> vertices() const;
+  virtual std::vector<GVertex*> vertices() const;
 
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive = false);

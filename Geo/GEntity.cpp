@@ -206,8 +206,8 @@ void GEntity::addVerticesInSet(std::set<MVertex*>&vtcs,bool closure) const
       }
     case 1:
       {
-        std::list<GVertex*> clos = vertices();
-        std::list<GVertex*>::iterator cIter = clos.begin();
+        std::vector<GVertex*> clos = vertices();
+        std::vector<GVertex*>::iterator cIter = clos.begin();
         for (;cIter!=clos.end();++cIter) (*cIter)->addVerticesInSet(vtcs,true);
         break;
       }

@@ -778,10 +778,10 @@ bool GEdge::reorder(const int elementType, const std::vector<int> &ordering)
   return true;
 }
 
-std::list<GVertex*> GEdge::vertices() const
+std::vector<GVertex*> GEdge::vertices() const
 {
-  std::list<GVertex*> res;
-  if (getBeginVertex()) res.insert(res.end(),getBeginVertex());
-  if (getEndVertex())   res.insert(res.end(),getEndVertex());
+  std::vector<GVertex*> res;
+  if (getBeginVertex()) res.push_back(getBeginVertex());
+  if (getEndVertex())   res.push_back(getEndVertex());
   return res;
 }
