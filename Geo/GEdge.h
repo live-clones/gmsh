@@ -6,10 +6,8 @@
 #ifndef _GEDGE_H_
 #define _GEDGE_H_
 
-#include <list>
 #include <string>
 #include <vector>
-#include <set>
 #include <stdio.h>
 #include "GmshMessage.h"
 #include "GEntity.h"
