@@ -19,12 +19,12 @@ class MElement;
 class MPoint;
 
 // A model vertex.
-class GVertex : public GEntity
-{
- protected:
-  std::vector<GEdge*> l_edges;
+class GVertex : public GEntity {
+protected:
+  std::vector<GEdge *> l_edges;
   double meshSize;
- public:
+
+public:
   GVertex(GModel *m, int tag, double ms = MAX_LC);
   virtual ~GVertex();
 
@@ -47,19 +47,19 @@ class GVertex : public GEntity
   void delEdge(GEdge *e);
 
   // regions that bound this entity or that this entity bounds.
-  virtual std::list<GRegion*> regions() const;
+  virtual std::list<GRegion *> regions() const;
 
   // get the edges that this vertex bounds
-  virtual std::vector<GEdge*> edges() const { return l_edges; }
+  virtual std::vector<GEdge *> edges() const { return l_edges; }
 
   // faces that bound this entity or that this entity bounds.
-  virtual std::vector<GFace*> faces() const;
+  virtual std::vector<GFace *> faces() const;
 
   // get the dimension of the vertex (0)
   virtual int dim() const { return 0; }
 
   // returns the parent entity for partitioned entities
-  virtual GEntity* getParentEntity() { return 0; }
+  virtual GEntity *getParentEntity() { return 0; }
 
   // get the geometric type of the vertex
   virtual GeomType geomType() const { return Point; }
@@ -91,7 +91,8 @@ class GVertex : public GEntity
   // get the element at the given index
   MElement *getMeshElement(unsigned int index) const;
   // get the element at the given index for a given familyType
-  MElement *getMeshElementByType(const int familyType, const unsigned int index) const;
+  MElement *getMeshElementByType(const int familyType,
+                                 const unsigned int index) const;
 
   // return true if this vertex is on a seam of the given face
   bool isOnSeam(const GFace *gf) const;
@@ -99,9 +100,9 @@ class GVertex : public GEntity
   // relocate mesh vertex using GVertex coordinates
   void relocateMeshVertices();
 
-  std::vector<MPoint*> points;
+  std::vector<MPoint *> points;
 
-  void addPoint(MPoint *p){ points.push_back(p); }
+  void addPoint(MPoint *p) { points.push_back(p); }
   void addElement(int type, MElement *e);
   void removeElement(int type, MElement *e);
 
