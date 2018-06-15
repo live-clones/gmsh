@@ -1146,10 +1146,10 @@ GMSH_API void gmsh::model::mesh::getElementsByType(const int elementType,
   std::map<int, std::vector<GEntity*> > typeMap;
   int dim = ElementType::getDimension(elementType);
   _getElementTypeMap(dim, tag, typeMap);
-  const int numElements = _getNumElementsByType(elementType, tag);
+  const std::size_t numElements = _getNumElementsByType(elementType, tag);
   const int numNodes = ElementType::getNumVertices(elementType);
-  const size_t begin = (task * numElements) / numTasks;
-  const size_t end = ((task + 1) * numElements) / numTasks;
+  const std::size_t begin = (task * numElements) / numTasks;
+  const std::size_t end = ((task + 1) * numElements) / numTasks;
   // check arrays
   bool haveElementTags = elementTags.size();
   bool haveNodeTags = nodeTags.size();
