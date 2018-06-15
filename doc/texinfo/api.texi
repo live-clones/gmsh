@@ -217,14 +217,27 @@ only the entities of the specified dimension (e.g. physical points if @code{dim}
 @end table
 
 @item getEntitiesForPhysicalGroup
-Get the tags of all the (elementary) geometrical entities making up the physical
-group of dimension @code{dim} and tag @code{tag}.
+Get the tags of the geometrical entities making up the physical group of
+dimension @code{dim} and tag @code{tag}.
 
 @table @asis
 @item Input:
 @code{dim}, @code{tag}
 @item Output:
 @code{tags}
+@item Return:
+-
+@end table
+
+@item getPhysicalGroupsForEntity
+Get the tags of the physical groups (if any) to which the geometrical entity of
+dimension @code{dim} and tag @code{tag} belongs.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{physicalTags}
 @item Return:
 -
 @end table
