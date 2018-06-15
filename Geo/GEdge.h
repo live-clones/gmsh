@@ -23,14 +23,16 @@ class closestPointFinder;
 
 // A model edge.
 class GEdge : public GEntity {
- private:
+private:
   double _length;
   bool _tooSmall;
   closestPointFinder *_cp;
- protected:
+
+protected:
   GVertex *v0, *v1;
   std::vector<GFace *> l_faces;
- public:
+
+public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
   virtual ~GEdge();
 
@@ -39,23 +41,25 @@ class GEdge : public GEntity {
 
   // get the start/end vertices of the edge
   void setBeginVertex(GVertex *gv) { v0 = gv; }
-  void setEndVertex(GVertex *gv)  { v1 = gv; }
+  void setEndVertex(GVertex *gv) { v1 = gv; }
   virtual GVertex *getBeginVertex() const { return v0; }
   virtual GVertex *getEndVertex() const { return v1; }
-  void setVertex(GVertex* f, const int orientation)
+  void setVertex(GVertex *f, const int orientation)
   {
-    if(orientation > 0) v0 = f;
-    else if(orientation < 0) v1 = f;
+    if(orientation > 0)
+      v0 = f;
+    else if(orientation < 0)
+      v1 = f;
   }
 
   // same or opposite direction to the master
   int masterOrientation;
 
   // specify mesh master with transformation, deduce edgeCounterparts
-  void setMeshMaster(GEdge* master,const std::vector<double>&);
+  void setMeshMaster(GEdge *master, const std::vector<double> &);
 
   // specify mesh master and edgeCounterparts, deduce transformation
-  void setMeshMaster(GEdge* master,int sign);
+  void setMeshMaster(GEdge *master, int sign);
 
   void reverse();
 
@@ -67,10 +71,10 @@ class GEdge : public GEntity {
   virtual int dim() const { return 1; }
 
   // returns the parent entity for partitioned entities
-  virtual GEntity* getParentEntity() { return 0; }
+  virtual GEntity *getParentEntity() { return 0; }
 
   // get the list of vertices
-  virtual std::vector<GVertex*> vertices() const;
+  virtual std::vector<GVertex *> vertices() const;
 
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive = false);
@@ -88,10 +92,10 @@ class GEdge : public GEntity {
   virtual SOrientedBoundingBox getOBB();
 
   // regions that are bounded by this entity
-  virtual std::list<GRegion*> regions() const;
+  virtual std::list<GRegion *> regions() const;
 
   // faces that this entity bounds
-  virtual std::vector<GFace*> faces() const { return l_faces; }
+  virtual std::vector<GFace *> faces() const { return l_faces; }
 
   // get the point for the given parameter location
   virtual GPoint point(double p) const = 0;
@@ -131,7 +135,8 @@ class GEdge : public GEntity {
   // export in GEO format
   virtual void writeGEO(FILE *fp);
 
-  // tell if the edge is a 3D edge (in opposition with a trimmed curve on a surface)
+  // tell if the edge is a 3D edge (in opposition with a trimmed curve on a
+  // surface)
   virtual bool is3D() const { return true; }
 
   // get/set/compute the length of the model edge
@@ -140,15 +145,17 @@ class GEdge : public GEntity {
   double length(const double &u0, const double &u1, const int nbQuadPoints = 4);
 
   // get the prescribed mesh size on the edge
-  virtual double prescribedMeshSizeAtVertex() const { return meshAttributes.meshSize; }
+  virtual double prescribedMeshSizeAtVertex() const
+  {
+    return meshAttributes.meshSize;
+  }
 
   // true if start == end and no more than 2 segments
   void setTooSmall(bool const b) { _tooSmall = b; }
   bool isMeshDegenerated() const
   {
-    if (_tooSmall)
-      Msg::Debug("degenerated mesh on edge %d: too small", tag());
-    if (v0 == v1 && mesh_vertices.size() < 2)
+    if(_tooSmall) Msg::Debug("degenerated mesh on edge %d: too small", tag());
+    if(v0 == v1 && mesh_vertices.size() < 2)
       Msg::Debug("degenerated mesh on edge %d: %d mesh vertices", tag(),
                  (int)mesh_vertices.size());
     return _tooSmall || (v0 == v1 && mesh_vertices.size() < 2);
@@ -169,7 +176,8 @@ class GEdge : public GEntity {
   // get the element at the given index
   MElement *getMeshElement(unsigned int index) const;
   // get the element at the given index for a given familyType
-  MElement *getMeshElementByType(const int familyType, const unsigned int index) const;
+  MElement *getMeshElementByType(const int familyType,
+                                 const unsigned int index) const;
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
@@ -179,8 +187,8 @@ class GEdge : public GEntity {
 
   // get bounds of parametric coordinate
   virtual Range<double> parBounds(int i) const = 0;
-  inline double getLowerBound() const{ return parBounds(0).low();};
-  inline double getUpperBound() const{ return parBounds(0).high();};
+  inline double getLowerBound() const { return parBounds(0).low(); };
+  inline double getUpperBound() const { return parBounds(0).high(); };
 
   // return the point on the face closest to the given point
   virtual GPoint closestPoint(const SPoint3 &queryPoint, double &param) const;
@@ -188,13 +196,12 @@ class GEdge : public GEntity {
   // return the parmater location on the edge given a point in space
   // that is on the edge
   virtual double parFromPoint(const SPoint3 &P) const;
-  virtual bool refineProjection(const SVector3 &Q, double &u,
-                                int MaxIter, double relax, double tol,
-                                double& err) const;
+  virtual bool refineProjection(const SVector3 &Q, double &u, int MaxIter,
+                                double relax, double tol, double &err) const;
 
   // compute the parameter U from a point XYZ
-  virtual bool XYZToU(const double X, const double Y, const double Z,
-                      double &U, const double relax=1,bool first=true) const;
+  virtual bool XYZToU(const double X, const double Y, const double Z, double &U,
+                      const double relax = 1, bool first = true) const;
 
   // relocate mesh vertices using parametric coordinates
   void relocateMeshVertices();
@@ -210,25 +217,26 @@ class GEdge : public GEntity {
     ExtrudeParams *extrude;
     // reverse mesh orientation
     bool reverseMesh;
-  } meshAttributes ;
+  } meshAttributes;
 
   struct {
     mutable GEntity::MeshGenerationStatus status;
   } meshStatistics;
 
-  std::vector<MLine*> lines;
+  std::vector<MLine *> lines;
 
   // when a compound of edges is created, both meshes should be kept alive this
   // is due to Gmsh's flow and it only applies to model edges
   GEdge *compound_edge;
 
-  void addLine(MLine *line){ lines.push_back(line); }
+  void addLine(MLine *line) { lines.push_back(line); }
   void addElement(int type, MElement *e);
   void removeElement(int type, MElement *e);
 
-  virtual void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts);
-  SPoint3 closestPoint (SPoint3 &p, double tolerance);
-  virtual void mesh(bool verbose) ;
+  virtual void discretize(double tol, std::vector<SPoint3> &dpts,
+                          std::vector<double> &ts);
+  SPoint3 closestPoint(SPoint3 &p, double tolerance);
+  virtual void mesh(bool verbose);
 
   virtual bool reorder(const int elementType, const std::vector<int> &ordering);
 };
