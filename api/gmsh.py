@@ -413,8 +413,8 @@ class model:
     @staticmethod
     def getEntitiesForPhysicalGroup(dim, tag):
         """
-        Get the tags of all the (elementary) geometrical entities making up the
-        physical group of dimension `dim' and tag `tag'.
+        Get the tags of the geometrical entities making up the physical group of
+        dimension `dim' and tag `tag'.
 
         Return `tags'.
         """
@@ -430,6 +430,27 @@ class model:
                 "gmshModelGetEntitiesForPhysicalGroup returned non-zero error code: ",
                 ierr.value)
         return _ovectorint(api_tags_, api_tags_n_.value)
+
+    @staticmethod
+    def getPhysicalGroupsForEntity(dim, tag):
+        """
+        Get the tags of the physical groups (if any) to which the geometrical
+        entity of dimension `dim' and tag `tag' belongs.
+
+        Return `physicalTags'.
+        """
+        api_physicalTags_, api_physicalTags_n_ = POINTER(c_int)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetPhysicalGroupsForEntity(
+            c_int(dim),
+            c_int(tag),
+            byref(api_physicalTags_), byref(api_physicalTags_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetPhysicalGroupsForEntity returned non-zero error code: ",
+                ierr.value)
+        return _ovectorint(api_physicalTags_, api_physicalTags_n_.value)
 
     @staticmethod
     def addPhysicalGroup(dim, tags, tag=-1):

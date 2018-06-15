@@ -2332,9 +2332,6 @@ int PartitionMesh(GModel *const model)
   CreateNewEntities(model, elmToPartition);
   elmToPartition.clear();
 
-  //+++
-  //return 0;
-
   double t2 = Cpu();
   Msg::StatusBar(true, "Done partitioning mesh (%g s)", t2 - t1);
 

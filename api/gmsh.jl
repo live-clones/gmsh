@@ -305,8 +305,8 @@ end
 """
     gmsh.model.getEntitiesForPhysicalGroup(dim, tag)
 
-Get the tags of all the (elementary) geometrical entities making up the physical
-group of dimension `dim` and tag `tag`.
+Get the tags of the geometrical entities making up the physical group of
+dimension `dim` and tag `tag`.
 
 Return `tags`.
 """
@@ -320,6 +320,26 @@ function getEntitiesForPhysicalGroup(dim, tag)
     ierr[] != 0 && error("gmshModelGetEntitiesForPhysicalGroup returned non-zero error code: $(ierr[])")
     tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], true)
     return tags
+end
+
+"""
+    gmsh.model.getPhysicalGroupsForEntity(dim, tag)
+
+Get the tags of the physical groups (if any) to which the geometrical entity of
+dimension `dim` and tag `tag` belongs.
+
+Return `physicalTags`.
+"""
+function getPhysicalGroupsForEntity(dim, tag)
+    api_physicalTags_ = Ref{Ptr{Cint}}()
+    api_physicalTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetPhysicalGroupsForEntity, gmsh.lib), Void,
+          (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, api_physicalTags_, api_physicalTags_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetPhysicalGroupsForEntity returned non-zero error code: $(ierr[])")
+    physicalTags = unsafe_wrap(Array, api_physicalTags_[], api_physicalTags_n_[], true)
+    return physicalTags
 end
 
 """

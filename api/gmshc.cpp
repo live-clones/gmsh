@@ -266,6 +266,19 @@ GMSH_API void gmshModelGetEntitiesForPhysicalGroup(const int dim, const int tag,
   }
 }
 
+GMSH_API void gmshModelGetPhysicalGroupsForEntity(const int dim, const int tag, int ** physicalTags, size_t * physicalTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_physicalTags_;
+    gmsh::model::getPhysicalGroupsForEntity(dim, tag, api_physicalTags_);
+    vector2ptr(api_physicalTags_, physicalTags, physicalTags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API int gmshModelAddPhysicalGroup(const int dim, int * tags, size_t tags_n, const int tag, int * ierr)
 {
   int result_api_;
