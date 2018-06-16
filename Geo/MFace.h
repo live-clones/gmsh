@@ -26,10 +26,10 @@ public:
   MFace() {}
   MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3 = 0);
   MFace(const std::vector<MVertex *> &v);
-  inline int getNumVertices() const { return (int)_v.size(); }
-  inline MVertex *getVertex(const int i) const { return _v[i]; }
-  inline MVertex *getSortedVertex(const int i) const { return _v[int(_si[i])]; }
-  inline MEdge getEdge(const int i) const
+  int getNumVertices() const { return (int)_v.size(); }
+  MVertex *getVertex(const int i) const { return _v[i]; }
+  MVertex *getSortedVertex(const int i) const { return _v[int(_si[i])]; }
+  MEdge getEdge(const int i) const
   {
     return MEdge(getVertex(i), getVertex((i + 1) % getNumVertices()));
   }
@@ -147,18 +147,15 @@ public:
   MFaceN() {}
   MFaceN(int type, int order, const std::vector<MVertex *> &v);
 
-  inline int getPolynomialOrder() const { return _order; }
-  inline int getType() const { return _type; }
-  inline bool isTriangular() const { return _type == TYPE_TRI; }
-  inline int getNumVertices() const { return (int)_v.size(); }
-  inline int getNumCorners() const { return isTriangular() ? 3 : 4; }
-  inline int getNumVerticesOnBoundary() const
-  {
-    return getNumCorners() * _order;
-  }
+  int getPolynomialOrder() const { return _order; }
+  int getType() const { return _type; }
+  bool isTriangular() const { return _type == TYPE_TRI; }
+  int getNumVertices() const { return (int)_v.size(); }
+  int getNumCorners() const { return isTriangular() ? 3 : 4; }
+  int getNumVerticesOnBoundary() const { return getNumCorners() * _order; }
 
-  inline MVertex *getVertex(int i) const { return _v[i]; }
-  inline const std::vector<MVertex *> &getVertices() const { return _v; }
+  MVertex *getVertex(int i) const { return _v[i]; }
+  const std::vector<MVertex *> &getVertices() const { return _v; }
 
   MEdgeN getHighOrderEdge(int num, int sign) const;
   MFace getFace() const;
