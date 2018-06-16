@@ -128,7 +128,7 @@ class GFace : public GEntity {
   std::vector<MVertex*> getEmbeddedMeshVertices() const;
 
   // vertices that bound the face
-  virtual std::list<GVertex*> vertices() const;
+  virtual std::vector<GVertex*> vertices() const;
 
   // dimension of the face (2)
   virtual int dim() const { return 2; }

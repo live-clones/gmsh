@@ -528,14 +528,14 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
       GRegion *gr = getRegionByTag(tag);
       if(gr){
         if(recursive){
-          std::list<GVertex*> vert(gr->vertices());
-          for(std::list<GVertex*>::iterator it = vert.begin(); it != vert.end(); it++)
+          std::vector<GVertex*> const& vert = gr->vertices();
+          for(std::vector<GVertex*>::const_iterator it = vert.begin(); it != vert.end(); it++)
             outDimTags.push_back(std::pair<int, int>(0, (*it)->tag()));
         }
         else{
           std::vector<GFace*> faces(gr->faces());
-          std::list<int> orientations(gr->faceOrientations());
-          std::list<int>::iterator ito = orientations.begin();
+          std::vector<int> const& orientations = gr->faceOrientations();
+          std::vector<int>::const_iterator ito = orientations.begin();
           for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
             int t = (*it)->tag();
             if(oriented && ito != orientations.end()){
@@ -555,8 +555,8 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
       GFace *gf = getFaceByTag(tag);
       if(gf){
         if(recursive){
-          std::list<GVertex*> vert(gf->vertices());
-          for(std::list<GVertex*>::iterator it = vert.begin(); it != vert.end(); it++)
+          std::vector<GVertex*> const& vert = gf->vertices();
+          for(std::vector<GVertex*>::const_iterator it = vert.begin(); it != vert.end(); it++)
             outDimTags.push_back(std::pair<int, int>(0, (*it)->tag()));
         }
         else{

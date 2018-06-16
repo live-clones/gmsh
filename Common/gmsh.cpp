@@ -600,7 +600,7 @@ static void _getAdditionalNodesOnBoundary(GEntity *entity,
 {
   std::vector<GFace*> f;
   std::vector<GEdge*> e;
-  std::list<GVertex*> v;
+  std::vector<GVertex*> v;
   if(entity->dim() > 2) f = entity->faces();
   if(entity->dim() > 1) e = entity->edges();
   if(entity->dim() > 0) v = entity->vertices();
@@ -632,7 +632,7 @@ static void _getAdditionalNodesOnBoundary(GEntity *entity,
       }
     }
   }
-  for(std::list<GVertex*>::iterator it = v.begin(); it != v.end(); it++){
+  for(std::vector<GVertex*>::iterator it = v.begin(); it != v.end(); it++){
     GVertex *gv = *it;
     for(unsigned int j = 0; j < gv->mesh_vertices.size(); j++){
       MVertex *v = gv->mesh_vertices[j];

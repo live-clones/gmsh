@@ -2561,7 +2561,7 @@ int UnpartitionMesh(GModel *const model)
       pregion->trihedra.clear();
       pregion->mesh_vertices.clear();
       pregion->set(std::vector<GFace*>());
-      pregion->setOrientations(std::list<int>());
+      pregion->setOrientations(std::vector<int>());
 
       model->remove(pregion);
       delete pregion;

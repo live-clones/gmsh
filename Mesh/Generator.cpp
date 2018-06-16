@@ -52,13 +52,13 @@
 class TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES {
 public:
   void operator () (GRegion *gr) {
-    std::list<GEdge*> e = gr->embeddedEdges();
-    std::list<GFace*> f = gr->embeddedFaces();
+    std::vector<GEdge*> const& e = gr->embeddedEdges();
+    std::vector<GFace*> const& f = gr->embeddedFaces();
     if (e.empty() && f.empty())return;
     std::map<MEdge,GEdge*,Less_Edge> edges;
     std::map<MFace,GFace*,Less_Face> faces;
-    std::list<GEdge*>::iterator it = e.begin();
-    std::list<GFace*>::iterator itf = f.begin();
+    std::vector<GEdge*>::const_iterator it = e.begin();
+    std::vector<GFace*>::const_iterator itf = f.begin();
     for ( ; it != e.end() ; ++it){
       for (unsigned int i=0;i<(*it)->lines.size(); ++i){
 	if (distance ((*it)->lines[i]->getVertex(0),(*it)->lines[i]->getVertex(1)) > 1.e-12)

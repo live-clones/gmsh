@@ -124,8 +124,8 @@ bool tetgenmesh::reconstructmesh(void *p)
   // Get the set of vertices from GRegion.
   {
     std::set<MVertex*, MVertexLessThanNum> all;
-    std::vector<GFace*> f = _gr->faces();
-    for(std::vector<GFace*>::iterator it = f.begin(); it != f.end(); ++it){
+    std::vector<GFace*> const& f = _gr->faces();
+    for(std::vector<GFace*>::const_iterator it = f.begin(); it != f.end(); ++it){
       GFace *gf = *it;
       for(unsigned int i = 0; i < gf->triangles.size(); i++){
         all.insert(gf->triangles[i]->getVertex(0));
@@ -133,16 +133,16 @@ bool tetgenmesh::reconstructmesh(void *p)
         all.insert(gf->triangles[i]->getVertex(2));
       }
     }
-    std::list<GEdge*> e = _gr->embeddedEdges();
-    for(std::list<GEdge*>::iterator it = e.begin(); it != e.end(); ++it){
+    std::vector<GEdge*> const& e = _gr->embeddedEdges();
+    for(std::vector<GEdge*>::const_iterator it = e.begin(); it != e.end(); ++it){
       GEdge *ge = *it;
       for(unsigned int i = 0; i < ge->lines.size(); i++){
         all.insert(ge->lines[i]->getVertex(0));
         all.insert(ge->lines[i]->getVertex(1));
       }
     }
-    std::list<GVertex*> v = _gr->embeddedVertices();
-    for(std::list<GVertex*>::iterator it = v.begin(); it != v.end(); ++it){
+    std::vector<GVertex*> const& v = _gr->embeddedVertices();
+    for(std::vector<GVertex*>::const_iterator it = v.begin(); it != v.end(); ++it){
       GVertex *gv = *it;
       for(unsigned int i = 0; i < gv->points.size(); i++){
         all.insert(gv->points[i]->getVertex(0));
@@ -394,8 +394,8 @@ bool tetgenmesh::reconstructmesh(void *p)
     tets.clear(); // Release all memory in this vector.
   }
 
-  std::vector<GFace*> f_list = _gr->faces();
-  std::list<GEdge*> e_list = _gr->embeddedEdges();
+  std::vector<GFace*> const& f_list = _gr->faces();
+  std::vector<GEdge*> const& e_list = _gr->embeddedEdges();
 
   {
     Msg::Info("Creating surface mesh...");
@@ -404,7 +404,7 @@ bool tetgenmesh::reconstructmesh(void *p)
     point p[4];
     int idx;
 
-    for(std::vector<GFace*>::iterator it = f_list.begin(); it != f_list.end(); ++it){
+    for(std::vector<GFace*>::const_iterator it = f_list.begin(); it != f_list.end(); ++it){
       GFace *gf = *it;
       for(unsigned int i = 0; i < gf->triangles.size(); i++){
 	for(int j = 0; j < 3; j++){
@@ -446,7 +446,7 @@ bool tetgenmesh::reconstructmesh(void *p)
     // Process the set of PSC edges.
     // Remeber that all segments have default marker '-1'.
     //    int COUNTER = 0;
-    for(std::list<GEdge*>::iterator it = e_list.begin(); it != e_list.end();
+    for(std::vector<GEdge*>::const_iterator it = e_list.begin(); it != e_list.end();
 	 ++it){
       GEdge *ge = *it;
       for(unsigned int i = 0; i < ge->lines.size(); i++){
@@ -650,7 +650,7 @@ bool tetgenmesh::reconstructmesh(void *p)
             GEdge *ge = NULL;
             GFace *gf = NULL;
             int etag = shellmark(parentseg);
-            for(std::list<GEdge*>::iterator it = e_list.begin();
+            for(std::vector<GEdge*>::const_iterator it = e_list.begin();
                  it != e_list.end(); ++it){
               if((*it)->tag() == etag){
                 ge = *it;
@@ -673,7 +673,7 @@ bool tetgenmesh::reconstructmesh(void *p)
               if(ge == NULL){
                 // We treat this vertex a facet vertex.
                 int ftag = shellmark(parentsh);
-                for(std::vector<GFace*>::iterator it = f_list.begin();
+                for(std::vector<GFace*>::const_iterator it = f_list.begin();
                      it != f_list.end(); ++it){
                   if((*it)->tag() == ftag){
                     gf = *it;
@@ -716,7 +716,7 @@ bool tetgenmesh::reconstructmesh(void *p)
             // Get the GFace containing this vertex.
             GFace *gf = NULL;
             int ftag = shellmark(parentsh);
-            for(std::vector<GFace*>::iterator it = f_list.begin();
+            for(std::vector<GFace*>::const_iterator it = f_list.begin();
                  it != f_list.end(); ++it){
               if((*it)->tag() == ftag){
                 gf = *it;
@@ -764,9 +764,11 @@ bool tetgenmesh::reconstructmesh(void *p)
       // Re-create the segment mesh in the corresponding GEdges.
       for(std::set<int>::iterator it = l_edges.begin(); it!=l_edges.end(); ++it){
         // Find the GFace with tag = *it.
+
+        // TODO C++11 use std::find_if
         GEdge *ge = NULL;
         int etag = *it;
-        for(std::list<GEdge*>::iterator eit = e_list.begin();
+        for(std::vector<GEdge*>::const_iterator eit = e_list.begin();
              eit != e_list.end(); ++eit){
           if((*eit)->tag() == etag){
             ge = (*eit);
@@ -808,7 +810,8 @@ bool tetgenmesh::reconstructmesh(void *p)
         // Find the GFace with tag = *it.
         GFace *gf = NULL;
         int ftag = *it;
-        for(std::vector<GFace*>::iterator fit = f_list.begin(); fit != f_list.end(); ++fit){
+        // TODO C++11 std::find_if
+        for(std::vector<GFace*>::const_iterator fit = f_list.begin(); fit != f_list.end(); ++fit){
           if((*fit)->tag() == ftag){
             gf = (*fit);
             break;
@@ -1112,8 +1115,8 @@ bool meshGRegionBoundaryRecovery(GRegion *gr)
           }
         }
       }
-      std::list<GEdge*> e = gr->embeddedEdges();
-      for(std::list<GEdge*>::iterator it = e.begin(); it != e.end(); ++it){
+      std::vector<GEdge*> const& e = gr->embeddedEdges();
+      for(std::vector<GEdge*>::const_iterator it = e.begin(); it != e.end(); ++it){
         GEdge *ge = *it;
         for(unsigned int i = 0; i < ge->lines.size(); i++){
           for(int j = 0; j < 2; j++){
@@ -1122,8 +1125,8 @@ bool meshGRegionBoundaryRecovery(GRegion *gr)
           }
         }
       }
-      std::list<GVertex*> v = gr->embeddedVertices();
-      for(std::list<GVertex*>::iterator it = v.begin(); it != v.end(); ++it){
+      std::vector<GVertex*> const& v = gr->embeddedVertices();
+      for(std::vector<GVertex*>::const_iterator it = v.begin(); it != v.end(); ++it){
         GVertex *gv = *it;
         for(unsigned int i = 0; i < gv->points.size(); i++){
           MVertex *v = gv->points[i]->getVertex(0);

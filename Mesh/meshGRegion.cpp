@@ -235,8 +235,9 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   std::vector<GFace*> faces = gr->faces();
   std::set<GFace*, GEntityLessThan> allFacesSet;
   for(unsigned int i = 0; i < regions.size(); i++){
-    std::vector<GFace*> f = regions[i]->faces();
-    std::list<GFace*> f_e = regions[i]->embeddedFaces();
+    std::vector<GFace*> const& f = regions[i]->faces();
+    std::vector<GFace*> const& f_e = regions[i]->embeddedFaces();
+
     allFacesSet.insert(f.begin(), f.end());
     allFacesSet.insert(f_e.begin(), f_e.end());
   }
@@ -245,23 +246,20 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 
   std::set<GEdge*> allEmbEdgesSet;
   for(unsigned int i = 0; i < regions.size(); i++){
-    std::list<GEdge*> e = regions[i]->embeddedEdges();
+    std::vector<GEdge*> const& e = regions[i]->embeddedEdges();
     allEmbEdgesSet.insert(e.begin(), e.end());
   }
-  std::list<GEdge*> allEmbEdges;
-  allEmbEdges.insert(allEmbEdges.end(), allEmbEdgesSet.begin(), allEmbEdgesSet.end());
-  std::list<GEdge*> oldEmbEdges = gr->embeddedEdges();
+  std::vector<GEdge*> allEmbEdges(allEmbEdgesSet.begin(), allEmbEdgesSet.end());
+  std::vector<GEdge*> oldEmbEdges = gr->embeddedEdges();
   gr->embeddedEdges() = allEmbEdges;
 
   std::set<GVertex*> allEmbVerticesSet;
   for(unsigned int i = 0; i < regions.size(); i++){
-    std::list<GVertex*> e = regions[i]->embeddedVertices();
+    std::vector<GVertex*> const& e = regions[i]->embeddedVertices();
     allEmbVerticesSet.insert(e.begin(), e.end());
   }
-  std::list<GVertex*> allEmbVertices;
-  allEmbVertices.insert(allEmbVertices.end(), allEmbVerticesSet.begin(),
-                        allEmbVerticesSet.end());
-  std::list<GVertex*> oldEmbVertices = gr->embeddedVertices();
+  std::vector<GVertex*> allEmbVertices(allEmbVerticesSet.begin(), allEmbVerticesSet.end());
+  std::vector<GVertex*> oldEmbVertices = gr->embeddedVertices();
   gr->embeddedVertices() = allEmbVertices;
 
   bool success = meshGRegionBoundaryRecovery(gr);

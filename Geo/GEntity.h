@@ -220,7 +220,7 @@ class GEntity {
   virtual std::vector<GEdge*> edges() const { return std::vector<GEdge*>(); }
 
   // vertices that bound this entity.
-  virtual std::list<GVertex*> vertices() const { return std::list<GVertex*>(); }
+  virtual std::vector<GVertex*> vertices() const { return std::vector<GVertex*>(); }
 
   // for Python, temporary solution while iterator are not binded
   std::vector<GRegion*> bindingsGetRegions()
@@ -239,8 +239,7 @@ class GEntity {
   }
   std::vector<GVertex*> bindingsGetVertices()
   {
-    std::list<GVertex*> v = vertices();
-    return std::vector<GVertex*> (v.begin(), v.end());
+    return vertices();
   }
 
   // underlying geometric representation of this entity.

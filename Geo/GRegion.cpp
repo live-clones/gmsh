@@ -260,6 +260,7 @@ void GRegion::setColor(unsigned int val, bool recursive)
 
 int GRegion::delFace(GFace* face)
 {
+  // TODO C++11 fix the UB if deleting at it == .end()
   std::vector<GFace*>::iterator it;
   int pos = 0;
   for(it = l_faces.begin(); it != l_faces.end(); ++it){
@@ -268,7 +269,7 @@ int GRegion::delFace(GFace* face)
   }
   l_faces.erase(it);
 
-  std::list<int>::iterator itOri;
+  std::vector<int>::iterator itOri;
   int posOri = 0, orientation = 0;
   for(itOri = l_dirs.begin(); itOri != l_dirs.end(); ++itOri){
     if(posOri == pos){
@@ -297,7 +298,7 @@ std::string GRegion::getAdditionalInfoString(bool multline)
   }
   if(embedded_faces.size()){
     sstream << "Embedded surfaces: ";
-    for(std::list<GFace*>::iterator it = embedded_faces.begin();
+    for(std::vector<GFace*>::iterator it = embedded_faces.begin();
         it != embedded_faces.end(); ++it){
       if(it != embedded_faces.begin()) sstream << ", ";
       sstream << (*it)->tag();
@@ -307,7 +308,7 @@ std::string GRegion::getAdditionalInfoString(bool multline)
   }
   if(embedded_edges.size()){
     sstream << "Embedded curves: ";
-    for(std::list<GEdge*>::iterator it = embedded_edges.begin();
+    for(std::vector<GEdge*>::iterator it = embedded_edges.begin();
         it != embedded_edges.end(); ++it){
       if(it != embedded_edges.begin()) sstream << ", ";
       sstream << (*it)->tag();
@@ -317,7 +318,7 @@ std::string GRegion::getAdditionalInfoString(bool multline)
   }
   if(embedded_vertices.size()){
     sstream << "Embedded points: ";
-    for(std::list<GVertex*>::iterator it = embedded_vertices.begin();
+    for(std::vector<GVertex*>::iterator it = embedded_vertices.begin();
         it != embedded_vertices.end(); ++it){
       if(it != embedded_vertices.begin()) sstream << ", ";
       sstream << (*it)->tag();
@@ -355,15 +356,15 @@ void GRegion::writeGEO(FILE *fp)
     fprintf(fp, "Volume(%d) = {%d};\n", tag(), tag());
   }
 
-  for(std::list<GFace*>::iterator it = embedded_faces.begin();
+  for(std::vector<GFace*>::iterator it = embedded_faces.begin();
       it != embedded_faces.end(); it++)
     fprintf(fp, "Surface {%d} In Volume {%d};\n", (*it)->tag(), tag());
 
-  for(std::list<GEdge*>::iterator it = embedded_edges.begin();
+  for(std::vector<GEdge*>::iterator it = embedded_edges.begin();
       it != embedded_edges.end(); it++)
     fprintf(fp, "Line {%d} In Volume {%d};\n", (*it)->tag(), tag());
 
-  for(std::list<GVertex*>::iterator it = embedded_vertices.begin();
+  for(std::vector<GVertex*>::iterator it = embedded_vertices.begin();
       it != embedded_vertices.end(); it++)
     fprintf(fp, "Point {%d} In Volume {%d};\n", (*it)->tag(), tag());
 
@@ -386,6 +387,7 @@ void GRegion::writeGEO(FILE *fp)
 
 std::vector<GEdge*> GRegion::edges() const
 {
+  // TODO C++11 clean this up
   std::vector<GEdge*> e;
   std::vector<GFace*>::const_iterator it = l_faces.begin();
   while(it != l_faces.end()){
@@ -419,7 +421,7 @@ double GRegion::computeSolidProperties(std::vector<double> cg,
                                        std::vector<double> inertia)
 {
   std::vector<GFace*>::iterator it = l_faces.begin();
-  std::list<int>::iterator itdir = l_dirs.begin();
+  std::vector<int>::iterator itdir = l_dirs.begin();
   double volumex = 0;
   double volumey = 0;
   double volumez = 0;
@@ -497,17 +499,15 @@ double GRegion::computeSolidProperties(std::vector<double> cg,
   return volume;
 }
 
-std::list<GVertex*> GRegion::vertices() const
+std::vector<GVertex*> GRegion::vertices() const
 {
   std::set<GVertex*> v;
   for (std::vector<GFace*>::const_iterator it = l_faces.begin(); it != l_faces.end() ; ++it){
-    const GFace *gf = *it;
-    std::list<GVertex*> vs = gf->vertices();
+    GFace const* const gf = *it;
+    std::vector<GVertex*>  const& vs = gf->vertices();
     v.insert(vs.begin(), vs.end());
   }
-  std::list<GVertex*> res;
-  res.insert(res.begin(), v.begin(), v.end());
-  return res;
+  return std::vector<GVertex*>(v.begin(), v.end());
 }
 
 void GRegion::addElement(int type, MElement *e)

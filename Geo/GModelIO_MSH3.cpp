@@ -520,12 +520,12 @@ void writeMSHEntities(FILE *fp, GModel *gm)  // also used in MSH2
   }
   for (GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); ++it) {
     std::vector<GFace*> faces = (*it)->faces();
-    std::list<int> ori = (*it)->faceOrientations();
+    std::vector<int> ori = (*it)->faceOrientations();
     fprintf(fp, "%d %d ", (*it)->tag(), (int)faces.size());
     std::vector<int> tags, signs;
     for(std::vector<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++)
       tags.push_back((*itf)->tag());
-    for(std::list<int>::iterator itf = ori.begin(); itf != ori.end(); itf++)
+    for(std::vector<int>::const_iterator itf = ori.begin(); itf != ori.end(); itf++)
       signs.push_back(*itf);
     if(tags.size() == signs.size()){
       for(unsigned int i = 0; i < tags.size(); i++)

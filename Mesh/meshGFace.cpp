@@ -237,18 +237,17 @@ static void copyMesh(GFace *source, GFace *target)
 
   // add principal vertex pairs
 
-  std::list<GVertex*> s_vtcs = source->vertices();
-  std::list<GVertex*> t_vtcs = target->vertices();
+  std::vector<GVertex*> const& s_vtcs = source->vertices();
+  std::vector<GVertex*> const& t_vtcs = target->vertices();
 
   if(s_vtcs.size() != t_vtcs.size()) {
     Msg::Info("Periodicity imposed on topologically incompatible surfaces"
               "(%d vs %d bounding vertices)",s_vtcs.size(),t_vtcs.size());
   }
 
-  std::set<GVertex*> checkVtcs;
-  checkVtcs.insert(s_vtcs.begin(),s_vtcs.end());
+  std::set<GVertex*> checkVtcs(s_vtcs.begin(),s_vtcs.end());
 
-  for(std::list<GVertex*>::iterator tvIter=t_vtcs.begin();tvIter!=t_vtcs.end();++tvIter) {
+  for(std::vector<GVertex*>::const_iterator tvIter=t_vtcs.begin();tvIter!=t_vtcs.end();++tvIter) {
 
     GVertex* gvt = *tvIter;
     std::map<GVertex*,GVertex*>::iterator gvsIter = target->vertexCounterparts.find(gvt);

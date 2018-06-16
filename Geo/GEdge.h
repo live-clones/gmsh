@@ -72,7 +72,7 @@ class GEdge : public GEntity {
   virtual GEntity* getParentEntity() { return 0; }
 
   // get the list of vertices
-  virtual std::list<GVertex*> vertices() const;
+  virtual std::vector<GVertex*> vertices() const;
 
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive = false);
@@ -137,8 +137,8 @@ class GEdge : public GEntity {
   virtual bool is3D() const { return true; }
 
   // get/set/compute the length of the model edge
-  inline double length() const { return _length; }
-  inline void setLength(const double l) { _length = l; }
+  double length() const { return _length; }
+  void setLength(const double l) { _length = l; }
   double length(const double &u0, const double &u1, const int nbQuadPoints = 4);
 
   // get the prescribed mesh size on the edge
