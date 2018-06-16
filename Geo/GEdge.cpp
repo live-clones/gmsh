@@ -773,7 +773,11 @@ bool GEdge::reorder(const int elementType, const std::vector<int> &ordering)
     newLinesOrder[i] = lines[ordering[i]];
   }
 
-  std::swap(lines, newLinesOrder);
+#if __cplusplus >= 201103L
+  lines = std::move(newLinesOrder);
+#else
+  lines = newLinesOrder;
+#endif
 
   return true;
 }
