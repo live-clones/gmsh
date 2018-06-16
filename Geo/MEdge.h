@@ -12,11 +12,11 @@
 
 // A mesh edge.
 class MEdge {
- private:
+private:
   MVertex *_v[2];
   char _si[2]; // sorted indices
 
- public:
+public:
   MEdge()
   {
     _v[0] = _v[1] = 0;
@@ -24,7 +24,8 @@ class MEdge {
   }
   MEdge(MVertex *v0, MVertex *v1)
   {
-    _v[0] = v0; _v[1] = v1;
+    _v[0] = v0;
+    _v[1] = v1;
     if(_v[1]->getNum() < _v[0]->getNum()) {
       _si[0] = 1;
       _si[1] = 0;
@@ -40,42 +41,41 @@ class MEdge {
   inline MVertex *getMinVertex() const { return _v[int(_si[0])]; }
   inline MVertex *getMaxVertex() const { return _v[int(_si[1])]; }
 
-  inline int computeCorrespondence(MEdge& other) {
-    if (other.getVertex(0) == _v[0] && other.getVertex(1) == _v[1]) return 1;
-    else if (other.getVertex(0) == _v[1] && other.getVertex(1) == _v[0]) return -1;
+  inline int computeCorrespondence(MEdge &other)
+  {
+    if(other.getVertex(0) == _v[0] && other.getVertex(1) == _v[1])
+      return 1;
+    else if(other.getVertex(0) == _v[1] && other.getVertex(1) == _v[0])
+      return -1;
     return 0;
   }
 
-  inline bool alignWith(MEdge& other)
+  inline bool alignWith(MEdge &other)
   {
     int orientation = computeCorrespondence(other);
-    if (!orientation) return false;
-    if (orientation == -1) {
-      std::swap(_v [0],_v [1]);
-      std::swap(_si[0],_si[1]);
+    if(!orientation) return false;
+    if(orientation == -1) {
+      std::swap(_v[0], _v[1]);
+      std::swap(_si[0], _si[1]);
     }
     return true;
   }
 
-
   SVector3 scaledTangent() const
   {
-    return SVector3(_v[1]->x() - _v[0]->x(),
-                    _v[1]->y() - _v[0]->y(),
+    return SVector3(_v[1]->x() - _v[0]->x(), _v[1]->y() - _v[0]->y(),
                     _v[1]->z() - _v[0]->z());
   }
   SVector3 tangent() const
   {
-    SVector3 t(_v[1]->x() - _v[0]->x(),
-               _v[1]->y() - _v[0]->y(),
+    SVector3 t(_v[1]->x() - _v[0]->x(), _v[1]->y() - _v[0]->y(),
                _v[1]->z() - _v[0]->z());
     t.normalize();
     return t;
   }
   double length() const
   {
-    SVector3 t(_v[1]->x() - _v[0]->x(),
-               _v[1]->y() - _v[0]->y(),
+    SVector3 t(_v[1]->x() - _v[0]->x(), _v[1]->y() - _v[0]->y(),
                _v[1]->z() - _v[0]->z());
     return t.norm();
   }
@@ -93,10 +93,7 @@ class MEdge {
     n.normalize();
     return n;
   }
-  inline SPoint3 barycenter() const
-  {
-    return interpolate(0.5);
-  }
+  inline SPoint3 barycenter() const { return interpolate(0.5); }
   inline SPoint3 interpolate(const double &t) const
   {
     return SPoint3(t * _v[1]->x() + (1. - t) * _v[0]->x(),
@@ -119,10 +116,7 @@ inline bool operator!=(const MEdge &e1, const MEdge &e2)
 }
 
 struct Equal_Edge : public std::binary_function<MEdge, MEdge, bool> {
-  bool operator()(const MEdge &e1, const MEdge &e2) const
-  {
-    return (e1 == e2);
-  }
+  bool operator()(const MEdge &e1, const MEdge &e2) const { return (e1 == e2); }
 };
 
 struct Less_Edge : public std::binary_function<MEdge, MEdge, bool> {
@@ -137,7 +131,7 @@ struct Less_Edge : public std::binary_function<MEdge, MEdge, bool> {
 
 // assume a set of MEdge, give consecutive list of vertices
 bool SortEdgeConsecutive(const std::vector<MEdge> &,
-                         std::vector<std::vector<MVertex*> >&vs);
+                         std::vector<std::vector<MVertex *> > &vs);
 
 class MEdgeN {
 private:
@@ -145,11 +139,11 @@ private:
 
 public:
   MEdgeN() {}
-  MEdgeN(const std::vector<MVertex*> &v);
+  MEdgeN(const std::vector<MVertex *> &v);
   int getNumVertices() const { return (int)_v.size(); }
   MVertex *getVertex(int i) const { return _v[i]; }
-  const std::vector<MVertex*> &getVertices() const { return _v; }
-  int getPolynomialOrder() const {return getNumVertices() - 1;}
+  const std::vector<MVertex *> &getVertices() const { return _v; }
+  int getPolynomialOrder() const { return getNumVertices() - 1; }
 
   MEdge getEdge() const;
 
