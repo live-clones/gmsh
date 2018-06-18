@@ -370,7 +370,7 @@ bool edges_sort(std::pair<double, BDS_Edge*> a, std::pair<double, BDS_Edge*> b)
     return (a.first < b.first);
 }
 
-
+#if 0
 static bool middlePoint2 (GFace *gf, BDS_Edge *e, double &u, double &v)
 {
   discreteFace *df = static_cast<discreteFace*> (gf);
@@ -412,6 +412,7 @@ static bool middlePoint2 (GFace *gf, BDS_Edge *e, double &u, double &v)
   }
   return true;
 }
+#endif
 
 static bool middlePoint (GFace *gf, BDS_Edge *e, double &u, double &v)
 {
