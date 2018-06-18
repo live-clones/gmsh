@@ -233,8 +233,6 @@ public:
   }
   std::vector<GFace *> bindingsGetFaces() { return faces(); }
   std::vector<GEdge *> bindingsGetEdges() const { return edges(); }
-  std::vector<GVertex *> bindingsGetVertices() { return faces(); }
-  std::vector<GEdge *> bindingsGetEdges() const { return edges(); }
   std::vector<GVertex *> bindingsGetVertices() { return vertices(); }
 
   // underlying geometric representation of this entity.
