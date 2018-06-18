@@ -33,6 +33,9 @@ protected:
   std::vector<GFace *> l_faces;
 
 public:
+  // same or opposite direction to the master
+  int masterOrientation;
+
   std::vector<MLine *> lines;
 
   // when a compound of edges is created, both meshes should be kept alive this
@@ -59,8 +62,6 @@ public:
       v1 = f;
   }
 
-  // same or opposite direction to the master
-  int masterOrientation;
 
   // specify mesh master with transformation, deduce edgeCounterparts
   void setMeshMaster(GEdge *master, const std::vector<double> &);
