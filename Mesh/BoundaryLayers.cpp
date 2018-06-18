@@ -54,12 +54,10 @@ static void addExtrudeNormals(std::vector<T*> &elements, int invert,
       }
       else{
 	std::vector<MVertex*> elem_verts;
-	double aveLength = 0.0;
 	elements[i]->getVertices(elem_verts);
-	if(skipScaleCalc)
-	  aveLength = 1.0;
-	else
-	  aveLength = GetAveEdgeLength(elem_verts);
+
+    double aveLength = skipScaleCalc ? 1.0 : GetAveEdgeLength(elem_verts);
+
 	for(unsigned int j = 0; j < elem_verts.size(); j++){
 	  verts.insert(elem_verts[j]);
 	  // if scaleLastLayer selection, but not doing gouraud, then still
