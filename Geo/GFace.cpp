@@ -2146,7 +2146,6 @@ void GFace::alignElementsWithMaster()
       bool swap;
       mf.computeCorrespondence(of,orientation,swap);
 
-
       switch (face->getNumVertices()) {
 
       case 3:

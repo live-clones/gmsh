@@ -5,9 +5,9 @@
 
 /*
  * MTrihedron
- * A MTrihedron is a plane element composed of 
+ * A MTrihedron is a plane element composed of
  * a quadrangle and two triangles.
- * It serves as an interface between two non-conforming 
+ * It serves as an interface between two non-conforming
  * elements
  *
  *         v
@@ -103,10 +103,10 @@ class MTrihedron : public MElement {
   {
     v.resize((num == 0) ? 4 : 3);
     _getFaceVertices(num, v);
-  }  
+  }
   virtual int getType() const { return TYPE_TRIH; }
   virtual int getTypeForMSH() const { return MSH_TRIH_4; }
-  
+
   virtual void reverse()
   {
     MVertex *tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
@@ -157,7 +157,7 @@ class MTrihedron : public MElement {
     };
     return f[face][vert];
   }
-  
+
   // Return the number of nodes that this element must have with the other in order to put an edge between them in the dual graph used during the partitioning.
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
 };

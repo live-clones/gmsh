@@ -28,7 +28,7 @@ class JacobianBasis;
 class MElement {
 private:
   // the id number of the element (this number is unique and is guaranteed never
-  // to change once a mesh has been generated, unless the mesh is explicitely
+  // to change once a mesh has been generated, unless the mesh is explicitly
   // renumbered)
   int _num;
   // the number of the mesh partition the element belongs to

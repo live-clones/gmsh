@@ -40,7 +40,7 @@ class groupOfElements {
 
   virtual ~groupOfElements(){}
 
-  virtual void addPhysical(int dim, int physical) 
+  virtual void addPhysical(int dim, int physical)
   {
     elementFilterTrivial filter;
     addPhysical (dim, physical, filter);
@@ -49,7 +49,7 @@ class groupOfElements {
   virtual void addElementary(GEntity *ge, const elementFilter &f);
 
   virtual void addPhysical(int dim, int physical, const elementFilter &);
-  
+
   vertexContainer::const_iterator vbegin() const { return _vertices.begin(); }
   vertexContainer::const_iterator vend() const { return _vertices.end(); }
   elementContainer::const_iterator begin() const { return _elements.begin(); }
@@ -64,16 +64,16 @@ class groupOfElements {
     if (e->getParent() && _parents.find(e->getParent()) != _parents.end()) return true;
     return (_elements.find(e) != _elements.end());
   }
-  
-  bool find (MVertex *v) const       
+
+  bool find (MVertex *v) const
   {
     return (_vertices.find(v) != _vertices.end());
   }
-  
+
   inline void insert (MElement *e)
   {
     _elements.insert(e);
-    
+
     if (e->getParent()){
       _parents.insert(e->getParent());
       for (MElement::size_type i = 0; i < e->getParent()->getNumVertices(); i++){
@@ -86,7 +86,7 @@ class groupOfElements {
       }
     }
   }
-  
+
   inline void clearAll()
   {
     _vertices.clear();
