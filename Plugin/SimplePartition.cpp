@@ -112,7 +112,7 @@ void GMSH_SimplePartitionPlugin::run()
     for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
       MElement *e = ge->getMeshElement(j);
       SPoint3 point = e->barycenter();
-      for(unsigned int k = 0; k < numSlices; k++){
+      for(int k = 0; k < numSlices; k++){
         if(pp[k] < point[direction] && pp[k+1] >= point[direction]){
           elmToPartition.insert(std::pair<MElement*, unsigned int>(e, k+1));
           break;

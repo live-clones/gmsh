@@ -76,7 +76,7 @@ class FilterElementsCutByLevelSet
     for (; it != LevelSetElements->end(); it++)	{
       MElement *e = *it;
       if (e->getParent()){ // if element got parents
-        for (int k = 0; k < e->getParent()->getNumVertices(); ++k){  // for all vertices in the element parent
+        for (MElement::size_type k = 0; k < e->getParent()->getNumVertices(); ++k){  // for all vertices in the element parent
           _TagEnrichedVertex.insert(e->getParent()->getVertex(k)->getNum());
         }
       }

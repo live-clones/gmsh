@@ -1515,7 +1515,9 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
         elementSplitMesh(e, RPN, verticesLs, gmEntities[i], gm, numEle, vertexMap,
                          newParents, newDomains, elements, physicals, newElemTags,
                          newPhysTags, borderElemTags, borderPhysTags);
-        if(e->getPartition() > cutGM->getNumPartitions()) cutGM->setNumPartitions(e->getPartition());
+        if(e->getPartition() > static_cast<int>(cutGM->getNumPartitions())) {
+            cutGM->setNumPartitions(e->getPartition());
+        }
       }
     }
     return cutGM;
@@ -1545,7 +1547,9 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
                      newVertices, newParents, newDomains, borders, elements, physicals,
                      newElemTags, newPhysTags, borderElemTags, borderPhysTags, cp,
                      lines, triangles, quads, tetras, hexas);
-      if(e->getPartition() > cutGM->getNumPartitions()) cutGM->setNumPartitions(e->getPartition());
+      if(e->getPartition() > static_cast<int>(cutGM->getNumPartitions())) {
+          cutGM->setNumPartitions(e->getPartition());
+      }
     }
 
     // Create elementary and physical for non connected border lines

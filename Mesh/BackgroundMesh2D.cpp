@@ -579,9 +579,9 @@ void frameFieldBackgroundMesh2D::computeSmoothness()
   std::multimap<MVertex*,MVertex*> vertex2vertex;
   for (std::vector<MElement*>::iterator it = beginelements();it!=endelements();it++){
     MElement *e = *it;
-    for (int i=0;i<e->getNumVertices();i++){
+    for (MElement::size_type i=0;i<e->getNumVertices();i++){
       MVertex *current = e->getVertex(i);
-      for (int j=0;j<e->getNumVertices();j++){
+      for (MVertex::size_type j=0;j<e->getNumVertices();j++){
         if (i==j) continue;
         MVertex *neighbor = e->getVertex(j);
         vertex2vertex.insert(std::make_pair(current,neighbor));

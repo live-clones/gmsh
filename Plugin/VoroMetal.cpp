@@ -79,30 +79,24 @@ void voroMetal3D::execute(double h)
 
 void voroMetal3D::execute(GRegion* gr,double h)
 {
-  unsigned int i;
-  int j;
-  MElement* element;
-  MVertex* vertex;
-  std::vector<SPoint3> vertices2;
-  std::vector<double> radii;
   std::set<MVertex*> vertices;
   std::set<MVertex*>::iterator it;
 
-  vertices2.clear();
-  radii.clear();
-  vertices.clear();
-
-  for(i = 0; i < gr->getNumMeshElements(); i++){
-    element = gr->getMeshElement(i);
-    for(j = 0; j < element->getNumVertices(); j++){
-      vertex = element->getVertex(j);
+  for(GRegion::size_type i = 0; i < gr->getNumMeshElements(); i++){
+    MElement* element = gr->getMeshElement(i);
+    for(MElement::size_type j = 0; j < element->getNumVertices(); j++){
+      MVertex* vertex = element->getVertex(j);
       vertices.insert(vertex);
     }
   }
 
+  std::vector<SPoint3> vertices2;
+  vertices2.reserve(vertices.size());
+
+  std::vector<double> radii(vertices.size(), 1.0);
+
   for(it = vertices.begin(); it != vertices.end(); it++){
     vertices2.push_back(SPoint3((*it)->x(),(*it)->y(),(*it)->z()));
-    radii.push_back(1.0);
   }
 
   double xMax = 1.0;

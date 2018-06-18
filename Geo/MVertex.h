@@ -38,6 +38,9 @@ class MVertex{
   // the geometrical entity the vertex is associated with
   GEntity *_ge;
 
+public:
+  typedef std::vector<int>::size_type size_type;
+
  public:
   MVertex(double x, double y, double z, GEntity *ge=0, int num=0);
   virtual ~MVertex(){}
@@ -48,34 +51,34 @@ class MVertex{
   virtual void setVisibility(char val){ _visible = val; }
 
   // get the "polynomial order" of the vertex
-  inline int getPolynomialOrder(){ return _order; }
-  inline void setPolynomialOrder(int order){ _order = (char)order; }
+  int getPolynomialOrder(){ return _order; }
+  void setPolynomialOrder(int order){ _order = (char)order; }
 
   // get/set the coordinates
-  inline double x() const { return _x; }
-  inline double y() const { return _y; }
-  inline double z() const { return _z; }
-  inline double & x() { return _x; }
-  inline double & y() { return _y; }
-  inline double & z() { return _z; }
+  double x() const { return _x; }
+  double y() const { return _y; }
+  double z() const { return _z; }
+  double & x() { return _x; }
+  double & y() { return _y; }
+  double & z() { return _z; }
 
-  inline SPoint3 point() const { return SPoint3(_x, _y, _z); }
-  inline void setXYZ(double x, double y, double z) { _x = x; _y = y; _z = z; }
+  SPoint3 point() const { return SPoint3(_x, _y, _z); }
+  void setXYZ(double x, double y, double z) { _x = x; _y = y; _z = z; }
 
   // get/set the parent entity
-  inline GEntity* onWhat() const { return _ge; }
-  inline void setEntity(GEntity *ge) { _ge = ge; }
+  GEntity* onWhat() const { return _ge; }
+  void setEntity(GEntity *ge) { _ge = ge; }
 
   // get the immutab vertex number
-  inline int getNum() const { return _num; }
+  int getNum() const { return _num; }
 
   // force the immutable number (this should never be used, except when
   // explicitly renumbering the mesh)
   void forceNum(int num);
 
   // get/set the index
-  inline int getIndex() const { return _index; }
-  inline void setIndex(int index) { _index = index; }
+  int getIndex() const { return _index; }
+  void setIndex(int index) { _index = index; }
 
 
   // get/set ith parameter
@@ -83,12 +86,12 @@ class MVertex{
   virtual bool setParameter(int i, double par){ return false; }
 
   // measure distance to another vertex
-  double distance(MVertex *v)
+  double distance(MVertex *const v)
   {
     double dx = _x - v->x();
     double dy = _y - v->y();
     double dz = _z - v->z();
-    return sqrt(dx * dx + dy * dy + dz * dz);
+    return std::sqrt(dx * dx + dy * dy + dz * dz);
   }
 
   // IO routines
@@ -181,7 +184,7 @@ inline double distance (MVertex *v1, MVertex *v2)
   const double dx = v1->x() - v2->x();
   const double dy = v1->y() - v2->y();
   const double dz = v1->z() - v2->z();
-  return sqrt(dx*dx+dy*dy+dz*dz);
+  return std::sqrt(dx*dx+dy*dy+dz*dz);
 }
 
 #endif

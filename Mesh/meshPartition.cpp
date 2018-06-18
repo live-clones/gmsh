@@ -2366,7 +2366,7 @@ static void assignToParent(std::set<MVertex*> &verts, partitionRegion *region,
       region->getParentEntity()->addElement((*it)->getType(), *it);
     (*it)->setPartition(0);
 
-    for(int i = 0; i < (*it)->getNumVertices(); i++){
+    for(MVertex::size_type i = 0; i < (*it)->getNumVertices(); i++){
       if(verts.find((*it)->getVertex(i)) == verts.end()){
         (*it)->getVertex(i)->setEntity(region->getParentEntity());
         region->getParentEntity()->addMeshVertex((*it)->getVertex(i));
@@ -2385,7 +2385,7 @@ static void assignToParent(std::set<MVertex*> &verts, partitionFace *face,
       face->getParentEntity()->addElement((*it)->getType(), *it);
     (*it)->setPartition(0);
 
-    for(int i = 0; i < (*it)->getNumVertices(); i++){
+    for(MVertex::size_type i = 0; i < (*it)->getNumVertices(); i++){
       if(verts.find((*it)->getVertex(i)) == verts.end()){
         (*it)->getVertex(i)->setEntity(face->getParentEntity());
         face->getParentEntity()->addMeshVertex((*it)->getVertex(i));
@@ -2404,7 +2404,7 @@ static void assignToParent(std::set<MVertex*> &verts, partitionEdge *edge,
       edge->getParentEntity()->addElement((*it)->getType(), *it);
     (*it)->setPartition(0);
 
-    for(int i = 0; i < (*it)->getNumVertices(); i++){
+    for(MVertex::size_type i = 0; i < (*it)->getNumVertices(); i++){
       if(verts.find((*it)->getVertex(i)) == verts.end()){
         (*it)->getVertex(i)->setEntity(edge->getParentEntity());
         edge->getParentEntity()->addMeshVertex((*it)->getVertex(i));

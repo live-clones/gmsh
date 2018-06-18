@@ -79,7 +79,7 @@ static bool setBLData(MElement *el)
     if (!isBL) return false;
   }
   // Mark high-order nodes as BL nodes (only works in 2D)
-  for(int i=el->getNumPrimaryVertices(); i<el->getNumVertices(); i++)
+  for(MVertex::size_type i=el->getNumPrimaryVertices(); i<el->getNumVertices(); i++)
     setBLData(el->getVertex(i));
   return true;
 }
