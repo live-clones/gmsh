@@ -172,6 +172,7 @@ const MElement* BGMBase::findElement(double u, double v, double w, bool strict)
 std::vector<double> BGMBase::get_field_value(double u, double v, double w,
                                              const VectorStorageType &data)
 {
+  // TODO C++11 remove const_cast and enforce const-correctness otherwise
   MElement *e = const_cast<MElement*>(findElement(u, v, w ));
 
   if (!e) return std::vector<double>(3,-1000.);
@@ -196,6 +197,7 @@ std::vector<double> BGMBase::get_field_value(double u, double v, double w,
 double BGMBase::get_field_value(double u, double v, double w,
                                 const DoubleStorageType &data)
 {
+  // TODO C++11 Remove const_cast
   MElement *e = const_cast<MElement*>(findElement(u, v, w));
   if (!e) return -1000.;
   std::vector<double> val = get_nodal_values(e,data);
