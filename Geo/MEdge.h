@@ -6,7 +6,6 @@
 #ifndef _MEDGE_H_
 #define _MEDGE_H_
 
-#include <functional>
 #include "MVertex.h"
 #include "SVector3.h"
 
@@ -53,7 +52,7 @@ public:
     return 0;
   }
 
-  inline bool alignWith(MEdge &other)
+  bool alignWith(MEdge &other)
   {
     int orientation = computeCorrespondence(other);
     if(!orientation) return false;
@@ -96,8 +95,8 @@ public:
     n.normalize();
     return n;
   }
-  inline SPoint3 barycenter() const { return interpolate(0.5); }
-  inline SPoint3 interpolate(const double &t) const
+  SPoint3 barycenter() const { return interpolate(0.5); }
+  SPoint3 interpolate(const double &t) const
   {
     return SPoint3(t * _v[1]->x() + (1. - t) * _v[0]->x(),
                    t * _v[1]->y() + (1. - t) * _v[0]->y(),
@@ -118,11 +117,11 @@ inline bool operator!=(const MEdge &e1, const MEdge &e2)
           e1.getMaxVertex() != e2.getMaxVertex());
 }
 
-struct Equal_Edge : public std::binary_function<MEdge, MEdge, bool> {
+struct Equal_Edge {
   bool operator()(const MEdge &e1, const MEdge &e2) const { return (e1 == e2); }
 };
 
-struct Less_Edge : public std::binary_function<MEdge, MEdge, bool> {
+struct Less_Edge {
   bool operator()(const MEdge &e1, const MEdge &e2) const
   {
     if(e1.getMinVertex()->getNum() < e2.getMinVertex()->getNum()) return true;
