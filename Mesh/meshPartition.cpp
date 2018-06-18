@@ -239,7 +239,7 @@ class Graph
   void eraseVertex()
   {
     if(_vertex){
-      for(unsigned int i = 0; i < _vertexSize; i++) _vertex[i] = -1;
+      for(int i = 0; i < _vertexSize; i++) _vertex[i] = -1;
     }
   }
 
@@ -821,7 +821,7 @@ template <class ITERATOR>
 static void setVerticesToEntity(GEntity *const entity, ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it){
-    for(int i = 0; i < (*it)->getNumVertices(); i++){
+    for(GEntity::size_type i = 0; i < (*it)->getNumVertices(); i++){
       if(!(*it)->getVertex(i)->onWhat()){
         (*it)->getVertex(i)->setEntity(entity);
         entity->addMeshVertex((*it)->getVertex(i));
@@ -836,7 +836,7 @@ static void AssignMeshVertices(GModel *model)
   // Loop over vertices
   for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex(); ++it){
     for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-      for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+      for(GModel::size_type j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
         (*it)->getMeshElement(i)->getVertex(j)->setEntity(0);
       }
     }
@@ -846,7 +846,7 @@ static void AssignMeshVertices(GModel *model)
   // Loop over edges
   for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
     for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-      for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+      for(GModel::size_type j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
         (*it)->getMeshElement(i)->getVertex(j)->setEntity(0);
       }
     }
@@ -856,7 +856,7 @@ static void AssignMeshVertices(GModel *model)
   // Loop over faces
   for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
     for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-      for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+      for(GModel::size_type j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
         (*it)->getMeshElement(i)->getVertex(j)->setEntity(0);
       }
     }
@@ -866,7 +866,7 @@ static void AssignMeshVertices(GModel *model)
   // Loop over regions
   for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
     for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-      for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+      for(GModel::size_type j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
         (*it)->getMeshElement(i)->getVertex(j)->setEntity(0);
       }
     }
@@ -1776,7 +1776,7 @@ static int computeOrientation(MElement* reference, MElement* element)
     std::vector<MVertex*> vertices;
     element->getVertices(vertices);
     MFace face = element->getFace(0);
-    for(unsigned int i = 0; i < reference->getNumFaces(); i++){
+    for(int i = 0; i < reference->getNumFaces(); i++){
       if(reference->getFace(i) == face){
         std::vector<MVertex*> referenceVertices;
         reference->getFaceVertices(i, referenceVertices);
@@ -1791,7 +1791,7 @@ static int computeOrientation(MElement* reference, MElement* element)
     std::vector<MVertex*> vertices;
     element->getVertices(vertices);
     MEdge face = element->getEdge(0);
-    for(unsigned int i = 0; i < reference->getNumEdges(); i++){
+    for(int i = 0; i < reference->getNumEdges(); i++){
       if(reference->getEdge(i) == face){
         std::vector<MVertex*> referenceVertices;
         reference->getEdgeVertices(i, referenceVertices);
@@ -2424,7 +2424,7 @@ static void assignToParent(std::set<MVertex*> &verts, partitionVertex *vertex,
       vertex->getParentEntity()->addElement((*it)->getType(), *it);
     (*it)->setPartition(0);
 
-    for(int i = 0; i < (*it)->getNumVertices(); i++){
+    for(MVertex::size_type i = 0; i < (*it)->getNumVertices(); i++){
       if(verts.find((*it)->getVertex(i)) == verts.end()){
         (*it)->getVertex(i)->setEntity(vertex->getParentEntity());
         vertex->getParentEntity()->addMeshVertex((*it)->getVertex(i));

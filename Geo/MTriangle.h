@@ -55,7 +55,7 @@ class MTriangle : public MElement {
   virtual double getInnerRadius();
   virtual double getOuterRadius();
   virtual double angleShapeMeasure();
-  virtual int getNumVertices() const { return 3; }
+  virtual size_type getNumVertices() const { return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual const MVertex *getVertex(int num) const { return _v[num]; }
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
@@ -186,7 +186,7 @@ class MTriangle6 : public MTriangle {
   }
   ~MTriangle6(){}
   virtual int getPolynomialOrder() const { return 2; }
-  virtual int getNumVertices() const { return 6; }
+  virtual size_type getNumVertices() const { return 6; }
   virtual MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
   virtual const MVertex *getVertex(int num) const { return num < 3 ? _v[num] : _vs[num - 3]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 3) _v[num] = v; else _vs[num - 3] = v; }
@@ -279,7 +279,7 @@ class MTriangleN : public MTriangle {
   }
   ~MTriangleN(){}
   virtual int getPolynomialOrder() const { return _order; }
-  virtual int getNumVertices() const { return 3 + _vs.size(); }
+  virtual size_type getNumVertices() const { return 3 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
   virtual const MVertex *getVertex(int num) const { return num < 3 ? _v[num] : _vs[num - 3]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 3) _v[num] = v; else _vs[num - 3] = v; }

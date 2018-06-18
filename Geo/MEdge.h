@@ -17,6 +17,9 @@ private:
   char _si[2]; // sorted indices
 
 public:
+    typedef std::vector<int>::size_type size_type;
+
+public:
   MEdge()
   {
     _v[0] = _v[1] = 0;
@@ -35,13 +38,13 @@ public:
       _si[1] = 1;
     }
   }
-  inline int getNumVertices() const { return 2; }
-  inline MVertex *getVertex(const int i) const { return _v[i]; }
-  inline MVertex *getSortedVertex(const int i) const { return _v[int(_si[i])]; }
-  inline MVertex *getMinVertex() const { return _v[int(_si[0])]; }
-  inline MVertex *getMaxVertex() const { return _v[int(_si[1])]; }
+  size_type getNumVertices() const { return 2; }
+  MVertex *getVertex(const int i) const { return _v[i]; }
+  MVertex *getSortedVertex(const int i) const { return _v[int(_si[i])]; }
+  MVertex *getMinVertex() const { return _v[int(_si[0])]; }
+  MVertex *getMaxVertex() const { return _v[int(_si[1])]; }
 
-  inline int computeCorrespondence(MEdge &other)
+  int computeCorrespondence(MEdge &other)
   {
     if(other.getVertex(0) == _v[0] && other.getVertex(1) == _v[1])
       return 1;
@@ -138,9 +141,12 @@ private:
   std::vector<MVertex *> _v;
 
 public:
+  typedef std::vector<MVertex *>::size_type size_type;
+
+public:
   MEdgeN() {}
   MEdgeN(const std::vector<MVertex *> &v);
-  int getNumVertices() const { return (int)_v.size(); }
+  size_type getNumVertices() const { return (int)_v.size(); }
   MVertex *getVertex(int i) const { return _v[i]; }
   const std::vector<MVertex *> &getVertices() const { return _v; }
   int getPolynomialOrder() const { return getNumVertices() - 1; }

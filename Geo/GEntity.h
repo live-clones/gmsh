@@ -70,6 +70,8 @@ public: // these will become protected at some point
   // Set of high-order elements fixed by "fast curving"
   std::set<MElement *> curvedBLElements;
 
+  typedef std::vector<MVertex *>::size_type size_type;
+
 public:
   // make a set of all the vertices in the entity, with/without closure
   void addVerticesInSet(std::set<MVertex *> &, bool closure) const;
@@ -342,7 +344,7 @@ public:
   virtual int getNumElementTypes() const { return 0; }
 
   // get the number of mesh elements (total and by type) in the entity
-  virtual unsigned int getNumMeshElements() const { return 0; }
+  virtual size_type getNumMeshElements() const { return 0; }
   virtual unsigned int getNumMeshElementsByType(const int familyType) const
   {
     return 0;

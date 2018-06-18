@@ -259,7 +259,7 @@ bool ElemChain::inEntity(GEntity* e) const
 {
   if(_vertexCache[e].empty()) {
     for(unsigned int i = 0; i < e->getNumMeshElements(); i++)
-      for(int j = 0; j < e->getMeshElement(i)->getNumVertices(); j++)
+      for(GEntity::size_type j = 0; j < e->getMeshElement(i)->getNumVertices(); j++)
         _vertexCache[e].insert(e->getMeshElement(i)->getVertex(j));
   }
 

@@ -59,7 +59,7 @@ class MTrihedron : public MElement {
   }
   ~MTrihedron(){}
   virtual int getDim() const { return 3; } //Can have a volume...
-  virtual int getNumVertices() const { return 4; }
+  virtual size_type getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual const MVertex *getVertex(int num) const { return _v[num]; }
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }

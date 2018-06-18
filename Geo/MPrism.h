@@ -61,7 +61,7 @@ class MPrism : public MElement {
   }
   ~MPrism(){}
   virtual int getDim() const { return 3; }
-  virtual int getNumVertices() const { return 6; }
+  virtual size_type getNumVertices() const { return 6; }
   virtual double getInnerRadius();
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual const MVertex *getVertex(int num)const{ return _v[num]; }
@@ -241,7 +241,7 @@ class MPrism15 : public MPrism {
   }
   ~MPrism15(){}
   virtual int getPolynomialOrder() const { return 2; }
-  virtual int getNumVertices() const { return 15; }
+  virtual size_type getNumVertices() const { return 15; }
   virtual MVertex *getVertex(int num){ return num < 6 ? _v[num] : _vs[num - 6]; }
   virtual const MVertex *getVertex(int num) const { return num < 6 ? _v[num] : _vs[num - 6]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 6) _v[num] = v; else _vs[num - 6] = v; }
@@ -346,7 +346,7 @@ class MPrism18 : public MPrism {
   }
   ~MPrism18(){}
   virtual int getPolynomialOrder() const { return 2; }
-  virtual int getNumVertices() const { return 18; }
+  virtual size_type getNumVertices() const { return 18; }
   virtual MVertex *getVertex(int num){ return num < 6 ? _v[num] : _vs[num - 6]; }
   virtual const MVertex *getVertex(int num) const{ return num < 6 ? _v[num] : _vs[num - 6]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 6) _v[num] = v; else _vs[num - 6] = v; }
@@ -429,7 +429,7 @@ class MPrismN : public MPrism {
   }
   ~MPrismN(){}
   virtual int getPolynomialOrder() const { return _order; }
-  virtual int getNumVertices() const { return 6+_vs.size(); }
+  virtual size_type getNumVertices() const { return 6+_vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 6 ? _v[num] : _vs[num-6]; }
   virtual const MVertex *getVertex(int num) const{ return num < 6 ? _v[num] : _vs[num - 6]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 6) _v[num] = v; else _vs[num - 6] = v; }

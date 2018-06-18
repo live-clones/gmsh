@@ -456,7 +456,7 @@ double frameFieldBackgroundMesh2D::angle(double u, double v)
   std::vector<double> val = get_nodal_values(e,angles);
   std::vector<double> element_uvw = get_element_uvw_from_xyz(e,u,v,0.);
   std::vector<double> cosvalues(e->getNumVertices()), sinvalues(e->getNumVertices());
-  for (int i=0;i<e->getNumVertices();i++){
+  for (MElement::size_type i=0;i<e->getNumVertices();i++){
     cosvalues[i]=std::cos(4*val[i]);
     sinvalues[i]=std::sin(4*val[i]);
   }

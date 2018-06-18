@@ -84,7 +84,7 @@ public:
   virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter = "");
 
   // get number of elements in the mesh
-  unsigned int getNumMeshElements() const;
+  size_type getNumMeshElements() const { return points.size(); }
   unsigned int getNumMeshElementsByType(const int familyType) const;
   void getNumMeshElements(unsigned *const c) const;
 

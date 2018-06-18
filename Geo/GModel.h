@@ -186,6 +186,11 @@ public:
   typedef std::set<GEdge *, GEntityLessThan>::const_iterator const_eiter;
   typedef std::set<GVertex *, GEntityLessThan>::const_iterator const_viter;
 
+  // elementary/physical name iterator
+  typedef std::map<std::pair<int, int>, std::string>::iterator piter;
+
+  typedef std::set<GVertex *, GEntityLessThan>::size_type size_type;
+
 public:
   GModel(std::string name = "");
   virtual ~GModel();
@@ -369,9 +374,6 @@ public:
   // return the highest number associated with a physical entity of a
   // given dimension (or highest for all dimenions if dim < 0)
   int getMaxPhysicalNumber(int dim);
-
-  // elementary/physical name iterator
-  typedef std::map<std::pair<int, int>, std::string>::iterator piter;
 
   // get an iterator on the elementary/physical names
   piter firstPhysicalName() { return physicalNames.begin(); }

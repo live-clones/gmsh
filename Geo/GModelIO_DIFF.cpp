@@ -204,7 +204,8 @@ int GModel::readDIFF(const std::string &name)
     std::vector<int> mapping;
     for(int i = 1; i <= numElements; i++){
       if(!fgets(str, sizeof(str), fp)){ fclose(fp); return 0; }
-      int num = 0, type, physical = 0, partition = 0;
+      int num = 0, type, physical = 0;
+      unsigned int partition = 0;
       int indices[60];
       if(sscanf(str, "%*d %s %d", eleTypec, &material[i-1]) != 2){ fclose(fp); return 0; }
       eleType = std::string(eleTypec);
@@ -393,7 +394,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
       boundaryIndicators.push_back(gf->tag());
       for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
         MElement *e = gf->getMeshElement(i);
-        for(int j = 0; j < e->getNumVertices(); j++){
+        for(MElement::size_type j = 0; j < e->getNumVertices(); j++){
           MVertex *v = e->getVertex(j);
           if(v->getIndex() > 0)
             vertexTags[v->getIndex() - 1].push_back(gf->tag());
@@ -420,7 +421,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
         dim = std::max(dim, entities[i]->getMeshElement(j)->getDim());
 
   // loop over all elements we need to save
-  int numElements = 0, maxNumNodesPerElement = 0;
+  MElement::size_type numElements = 0, maxNumNodesPerElement = 0;
   for(unsigned int i = 0; i < entities.size(); i++){
     if(entities[i]->physicals.size() || saveAll){
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
@@ -436,10 +437,10 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   fprintf(fp, "\n\n");
   fprintf(fp, " Finite element mesh (GridFE):\n\n");
   fprintf(fp, " Number of space dim. =   3\n");
-  fprintf(fp, " Number of elements   =  %d\n", numElements);
+  fprintf(fp, " Number of elements   =  %lu\n", numElements);
   fprintf(fp, " Number of nodes      =  %d\n\n", numVertices);
   fprintf(fp, " All elements are of the same type : dpTRUE\n");
-  fprintf(fp, " Max number of nodes in an element: %d \n", maxNumNodesPerElement);
+  fprintf(fp, " Max number of nodes in an element: %lu \n", maxNumNodesPerElement);
   fprintf(fp, " Only one subdomain               : dpFALSE\n");
   fprintf(fp, " Lattice data                     ? 0\n\n\n\n");
   fprintf(fp, " %d Boundary indicators:  ", (int)boundaryIndicators.size());

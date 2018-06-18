@@ -23,10 +23,13 @@ private:
   std::vector<char> _si; // sorted indices
 
 public:
+  typedef std::vector<MVertex *>::size_type size_type;
+
+public:
   MFace() {}
   MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3 = 0);
   MFace(const std::vector<MVertex *> &v);
-  int getNumVertices() const { return (int)_v.size(); }
+  size_type getNumVertices() const { return _v.size(); }
   MVertex *getVertex(const int i) const { return _v[i]; }
   MVertex *getSortedVertex(const int i) const { return _v[int(_si[i])]; }
   MEdge getEdge(const int i) const
@@ -38,12 +41,14 @@ public:
 
   void getOrderedVertices(std::vector<MVertex *> &verts) const
   {
-    for(int i = 0; i < getNumVertices(); i++)
+    for(size_type i = 0; i < getNumVertices(); i++)
       verts.push_back(getSortedVertex(i));
   }
   void getOrderedVertices(const MVertex **const verts) const
   {
-    for(int i = 0; i < getNumVertices(); i++) verts[i] = getSortedVertex(i);
+    for(size_type i = 0; i < getNumVertices(); i++) {
+      verts[i] = getSortedVertex(i);
+    }
   }
   double approximateArea() const;
   SVector3 normal() const;
@@ -67,17 +72,17 @@ public:
       p[1] += v->y();
       p[2] += v->z();
     }
-    p[0] /= (double)n;
-    p[1] /= (double)n;
-    p[2] /= (double)n;
+    p[0] /= static_cast<double>(n);
+    p[1] /= static_cast<double>(n);
+    p[2] /= static_cast<double>(n);
     return p;
   }
   SPoint3 interpolate(const double &u, const double &v) const
   {
-    SPoint3 p(0., 0., 0.);
+    SPoint3 p(0.0, 0.0, 0.0);
     int n = getNumVertices();
     if(n == 3) {
-      const double ff[3] = {1. - u - v, u, v};
+      const double ff[3] = {1.0 - u - v, u, v};
       for(int i = 0; i < n; i++) {
         MVertex *v = getVertex(i);
         p[0] += v->x() * ff[i];
@@ -90,9 +95,9 @@ public:
                             (1 + u) * (1. + v), (1 - u) * (1. + v)};
       for(int i = 0; i < n; i++) {
         MVertex *v = getVertex(i);
-        p[0] += v->x() * ff[i] * .25;
-        p[1] += v->y() * ff[i] * .25;
-        p[2] += v->z() * ff[i] * .25;
+        p[0] += v->x() * ff[i] * 0.25;
+        p[1] += v->y() * ff[i] * 0.25;
+        p[2] += v->z() * ff[i] * 0.25;
       }
     }
     else
@@ -105,7 +110,7 @@ public:
 inline bool operator==(const MFace &f1, const MFace &f2)
 {
   if(f1.getNumVertices() != f2.getNumVertices()) return false;
-  for(int i = 0; i < f1.getNumVertices(); i++)
+  for(MFace::size_type i = 0; i < f1.getNumVertices(); i++)
     if(f1.getSortedVertex(i) != f2.getSortedVertex(i)) return false;
   return true;
 }
@@ -113,7 +118,7 @@ inline bool operator==(const MFace &f1, const MFace &f2)
 inline bool operator!=(const MFace &f1, const MFace &f2)
 {
   if(f1.getNumVertices() != f2.getNumVertices()) return true;
-  for(int i = 0; i < f1.getNumVertices(); i++)
+  for(MFace::size_type i = 0; i < f1.getNumVertices(); i++)
     if(f1.getSortedVertex(i) != f2.getSortedVertex(i)) return true;
   return false;
 }
@@ -127,7 +132,7 @@ struct Less_Face : public std::binary_function<MFace, MFace, bool> {
   {
     if(f1.getNumVertices() != f2.getNumVertices())
       return f1.getNumVertices() < f2.getNumVertices();
-    for(int i = 0; i < f1.getNumVertices(); i++) {
+    for(MFace::size_type i = 0; i < f1.getNumVertices(); i++) {
       if(f1.getSortedVertex(i)->getNum() < f2.getSortedVertex(i)->getNum())
         return true;
       if(f1.getSortedVertex(i)->getNum() > f2.getSortedVertex(i)->getNum())
@@ -144,13 +149,16 @@ private:
   std::vector<MVertex *> _v;
 
 public:
+  typedef std::vector<MVertex *>::size_type size_type;
+
+public:
   MFaceN() {}
   MFaceN(int type, int order, const std::vector<MVertex *> &v);
 
   int getPolynomialOrder() const { return _order; }
   int getType() const { return _type; }
   bool isTriangular() const { return _type == TYPE_TRI; }
-  int getNumVertices() const { return (int)_v.size(); }
+  size_type getNumVertices() const { return (int)_v.size(); }
   int getNumCorners() const { return isTriangular() ? 3 : 4; }
   int getNumVerticesOnBoundary() const { return getNumCorners() * _order; }
 

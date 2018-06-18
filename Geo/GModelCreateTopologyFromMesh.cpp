@@ -552,7 +552,7 @@ public:
     std::vector<MVertex*> tmp;
     MFace face = elt->getFace(num);
 
-    for (int i=0;i<face.getNumVertices();i++) {
+    for (MElement::size_type i=0;i<face.getNumVertices();i++) {
       vtcs.insert(face.getVertex(i)->getNum());
     }
   }

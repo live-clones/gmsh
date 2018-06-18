@@ -58,7 +58,7 @@ class MTetrahedron : public MElement {
   }
   ~MTetrahedron(){}
   virtual int getDim() const { return 3; }
-  virtual int getNumVertices() const { return 4; }
+  virtual size_type getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual const MVertex *getVertex(int num) const { return _v[num]; }
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
@@ -226,7 +226,7 @@ class MTetrahedron10 : public MTetrahedron {
   }
   ~MTetrahedron10(){}
   virtual int getPolynomialOrder() const { return 2; }
-  virtual int getNumVertices() const { return 10; }
+  virtual size_type getNumVertices() const { return 10; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual const MVertex *getVertex(int num) const { return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 4) _v[num] = v; else _vs[num - 4] = v; }
@@ -337,7 +337,7 @@ class MTetrahedronN : public MTetrahedron {
   }
   ~MTetrahedronN(){}
   virtual int getPolynomialOrder() const { return _order; }
-  virtual int getNumVertices() const { return 4 + _vs.size(); }
+  virtual size_type getNumVertices() const { return 4 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual const MVertex *getVertex(int num) const{ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 4) _v[num] = v; else _vs[num - 4] = v; }

@@ -34,7 +34,7 @@ typedef std::map<MEdge, std::pair<MElement*, MElement*>, Less_Edge> e2t_cont;
 template <class T> void buildVertexToElement(std::vector<T*> &eles, v2t_cont &adj){
   for(unsigned int i = 0; i < eles.size(); i++){
     T *t = eles[i];
-    for(int j = 0; j < t->getNumVertices(); j++){
+    for(typename T::size_type j = 0; j < t->getNumVertices(); j++){
       MVertex *v = t->getVertex(j);
       v2t_cont :: iterator it = adj.find(v);
       if(it == adj.end()){

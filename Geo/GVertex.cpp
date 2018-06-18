@@ -86,11 +86,6 @@ void GVertex::writeGEO(FILE *fp, const std::string &meshSizeParameter)
             tag(), x(), y(), z());
 }
 
-unsigned int GVertex::getNumMeshElements() const
-{
-  return points.size();
-}
-
 unsigned int GVertex::getNumMeshElementsByType(const int familyType) const
 {
   if(familyType == TYPE_PNT) return points.size();

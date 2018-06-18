@@ -163,7 +163,7 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll, bool saveGroupsO
         for(unsigned int i = 0; i < entities.size(); i++){
           for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
             MElement *e = entities[i]->getMeshElement(j);
-            for (int k = 0; k < e->getNumVertices(); k++)
+            for (MElement::size_type k = 0; k < e->getNumVertices(); k++)
               nodes.insert(e->getVertex(k));
           }
         }

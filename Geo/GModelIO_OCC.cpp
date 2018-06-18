@@ -1093,7 +1093,8 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
                      "be equal", multiplicities.front(), multiplicities.back());
           return false;
         }
-        int sum = 0;
+        // TODO C++11 std::accumulate
+        std::size_t sum = 0;
         for(unsigned int i = 0; i < multiplicities.size() - 1; i++)
           sum += multiplicities[i];
         if(pointTags.size() - 1 != sum){
@@ -1104,7 +1105,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
         }
       }
       else{
-        int sum = 0;
+        std::size_t sum = 0;
         for(unsigned int i = 0; i < multiplicities.size(); i++)
           sum += multiplicities[i];
         if(pointTags.size() != sum - degree - 1){
@@ -1454,7 +1455,7 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
     TopExp_Explorer exp0;
-    int i = 0;
+    std::size_t i = 0;
     for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()){
       TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
       if(i < surfaceTags.size()){ // associated face constraint (does not seem to work...)

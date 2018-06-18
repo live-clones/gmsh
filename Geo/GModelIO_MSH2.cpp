@@ -62,7 +62,7 @@ static bool getMeshVertices(int num, int *indices, std::vector<MVertex*> &vec,
 }
 
 static MElement *createElementMSH2(GModel *m, int num, int typeMSH, int physical,
-                                   int reg, int part, std::vector<MVertex*> &v,
+                                   int reg, unsigned int part, std::vector<MVertex*> &v,
                                    std::map<int, std::vector<MElement*> > elements[10],
                                    std::map<int, std::map<int, std::string> > physicals[4],
                                    bool owner=false, MElement *parent=0,
@@ -987,7 +987,7 @@ int GModel::_writePartitionedMSH2(const std::string &baseName, bool binary,
 {
   int numElements;
   int startNum = 0;
-  for(int partition = 1; partition <= getNumPartitions(); partition++){
+  for(unsigned int partition = 1; partition <= getNumPartitions(); partition++){
 
     std::ostringstream sstream;
     sstream << baseName << "_" << partition << ".msh";

@@ -21,7 +21,7 @@ void MElementBB(void *a, double *min, double *max)
     min[0] = max[0] = v->x();
     min[1] = max[1] = v->y();
     min[2] = max[2] = v->z();
-    for(int i = 1; i < e->getNumVertices(); i++) {
+    for(MElement::size_type i = 1; i < e->getNumVertices(); i++) {
       v = e->getVertex(i);
       min[0] = std::min(min[0], v->x());
       max[0] = std::max(max[0], v->x());

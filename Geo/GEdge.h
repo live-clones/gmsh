@@ -172,7 +172,7 @@ public:
   int getNumElementTypes() const { return 1; }
 
   // get total/by-type number of elements in the mesh
-  unsigned int getNumMeshElements() const;
+  size_type getNumMeshElements() const { return lines.size(); }
   unsigned int getNumMeshElementsByType(const int familyType) const;
   unsigned int getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
