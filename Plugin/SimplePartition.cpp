@@ -78,7 +78,7 @@ StringXString *GMSH_SimplePartitionPlugin::getOptionStr(int iopt)
 
 void GMSH_SimplePartitionPlugin::run()
 {
-#ifdef HAVE_METIS
+#if defined(HAVE_METIS) && defined(HAVE_MESH)
   int numSlices = (int)SimplePartitionOptions_Number[0].def;
   int direction = (int)SimplePartitionOptions_Number[1].def;
   int createTopology = (int)SimplePartitionOptions_Number[2].def;
@@ -131,6 +131,6 @@ void GMSH_SimplePartitionPlugin::run()
   PartitionUsingThisSplit(m, numSlices, elmToPartition);
 
 #else
-  Msg::Error("Gmsh must be compiled with METIS support to partition meshes");
+  Msg::Error("Gmsh must be compiled with Mesh and METIS support to partition meshes");
 #endif
 }

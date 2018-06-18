@@ -34,7 +34,6 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "MTrihedron.h"
-#include "meshPartition.h"
 #include "StringUtils.h"
 
 static bool readMSH4Physicals(GModel *const model, FILE* fp, GEntity *const entity,

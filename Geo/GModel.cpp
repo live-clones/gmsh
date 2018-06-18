@@ -41,12 +41,12 @@
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "Options.h"
-#include "meshGEdge.h"
-#include "meshGFace.h"
-#include "meshGRegion.h"
 #include "GModelCreateTopologyFromMesh.h"
 
 #if defined(HAVE_MESH)
+#include "meshGEdge.h"
+#include "meshGFace.h"
+#include "meshGRegion.h"
 #include "Field.h"
 #include "Generator.h"
 #include "meshGFaceOptimize.h"
@@ -1800,7 +1800,7 @@ void GModel::_storePhysicalTagsInEntities(int dim,
     case 2: ge = getFaceByTag(it->first); break;
     case 3: ge = getRegionByTag(it->first); break;
     }
-    
+
     if(ge){
       std::map<int, std::string>::const_iterator it2 = it->second.begin();
       for(; it2 != it->second.end(); ++it2){

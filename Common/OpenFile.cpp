@@ -22,7 +22,10 @@ typedef unsigned long intptr_t;
 #include "OS.h"
 #include "StringUtils.h"
 #include "GeomMeshMatcher.h"
+
+#if defined(HAVE_MESH)
 #include "Field.h"
+#endif
 
 #if defined(HAVE_POPPLER)
 #include "gmshPopplerWrapper.h"

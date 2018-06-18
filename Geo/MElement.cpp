@@ -26,7 +26,10 @@
 #include "Numeric.h"
 #include "CondNumBasis.h"
 #include "Context.h"
+
+#if defined(HAVE_MESH)
 #include "qualityMeasuresJacobian.h"
+#endif
 
 #define SQU(a)      ((a)*(a))
 

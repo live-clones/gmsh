@@ -12,6 +12,7 @@
 
 #if defined(HAVE_MESH)
 #include "qualityMeasures.h"
+#include "HighOrder.h"
 #endif
 
 #include <cmath>
@@ -354,8 +355,6 @@ void MTriangle::reorient(int rot,bool swap)
   if (swap) for (int i=0;i<3;i++) _v[i] = tmp[(3-i+rot)%3];
   else      for (int i=0;i<3;i++) _v[i] = tmp[(3+i-rot)%3];
 }
-
-#include "HighOrder.h"
 
 void MTriangle6::reorient(int rot, bool swap)
 {

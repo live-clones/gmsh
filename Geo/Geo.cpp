@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "GmshMessage.h"
+#include "GmshConfig.h"
 #include "Numeric.h"
 #include "GModel.h"
 #include "GModelIO_GEO.h"
@@ -14,8 +15,14 @@
 #include "GeoInterpolation.h"
 #include "Context.h"
 #include "MVertexRTree.h"
+
+#if defined(HAVE_MESH)
 #include "Field.h"
+#endif
+
+#if defined(HAVE_PARSER)
 #include "Parser.h"
+#endif
 
 static List_T *ListOfTransformedPoints = NULL;
 

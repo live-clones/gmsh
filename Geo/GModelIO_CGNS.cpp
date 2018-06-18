@@ -26,33 +26,33 @@
 #endif
 
 #include <cstring>
-#include <iostream>  // DBG
+#include <iostream>
 #include <cstdio>
 #include <map>
 #include <string>
 #include <vector>
 #include <queue>
 #include <math.h>
-
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "GmshConfig.h"
 #include "gmshVertex.h"
 #include "gmshRegion.h"
 #include "Geo.h"
-//#include "cgnsWindow.h"
-//#include "manipWindow.h"
-#include "extraDialogs.h"
-#include "FlGui.h"
 #include "Context.h"
 #include "Options.h"
-
 #include "MZone.h"
 #include "MZoneBoundary.h"
 #include "affineTransformation.h"
+
+#if defined(HAVE_FLTK)
+#include "extraDialogs.h"
+#include "FlGui.h"
+#endif
 
 namespace CGNS {
 #include <cgnslib.h>
@@ -1767,6 +1767,7 @@ int GModel::_readCGNSStructured(const std::string &name)
   opt_mesh_cgns_import_order(0, GMSH_SET, max_order);
 
   int order = CTX::instance()->mesh.cgnsImportOrder;
+#if defined(HAVE_FLTK)
   if (CTX::instance()->batch == 0 &&
       FlGui::instance()->available() &&
       CTX::instance()->expertMode) {
@@ -1774,7 +1775,7 @@ int GModel::_readCGNSStructured(const std::string &name)
     CTX::instance()->mesh.order = order;
   }
   else order = CTX::instance()->mesh.order;
-
+#endif
 
   // check for the order
 
