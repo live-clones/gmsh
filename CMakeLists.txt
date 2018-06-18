@@ -431,10 +431,10 @@ add_subdirectory(Common)
 add_subdirectory(Numeric)
 add_subdirectory(Geo)
 
-if(ENABLE_MESH)
+if(ENABLE_MESH AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Mesh)
   add_subdirectory(Mesh)
   set_config_option(HAVE_MESH "Mesh")
-endif(ENABLE_MESH)
+endif(ENABLE_MESH AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Mesh)
 
 if(ENABLE_SOLVER)
   add_subdirectory(Solver)
@@ -743,7 +743,9 @@ if(HAVE_MESH OR HAVE_SOLVER)
 endif(HAVE_MESH OR HAVE_SOLVER)
 
 if(HAVE_MESH)
-  set_config_option(HAVE_TETGENBR "TetGen/BR")
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Mesh/tetgenBR.cxx)
+    set_config_option(HAVE_TETGENBR "TetGen/BR")
+  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Mesh/tetgenBR.cxx)
 
   if(ENABLE_VOROPP)
     find_library(VOROPP_LIB voro++ PATH_SUFFIXES lib)

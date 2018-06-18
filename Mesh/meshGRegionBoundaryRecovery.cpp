@@ -8,6 +8,9 @@
 #include <assert.h>
 #include <sstream>
 #include "GmshConfig.h"
+
+#if defined(HAVE_TETGENBR)
+
 #include "meshGRegionBoundaryRecovery.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "robustPredicates.h"
@@ -1214,3 +1217,12 @@ bool meshGRegionBoundaryRecovery(GRegion *gr)
   }
   return ret;
 }
+
+#else
+
+bool meshGRegionBoundaryRecovery(GRegion *gr)
+{
+  return false;
+}
+
+#endif
