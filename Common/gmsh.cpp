@@ -730,6 +730,27 @@ GMSH_API void gmsh::model::mesh::rebuildNodeCache(bool onlyIfNecessary)
   GModel::current()->rebuildMeshVertexCache(onlyIfNecessary);
 }
 
+GMSH_API void gmsh::model::mesh::getNodesForPhysicalGroup(const int dim,
+                                                          const int tag,
+                                                          std::vector<int> & nodeTags,
+                                                          std::vector<double> & coord)
+{
+  if(!_isInitialized()){ throw -1; }
+  nodeTags.clear();
+  coord.clear();
+  std::vector<MVertex*> v;
+  GModel::current()->getMeshVerticesForPhysicalGroup(dim, tag, v);
+  if(v.empty()) return;
+  nodeTags.resize(v.size());
+  coord.resize(v.size() * 3);
+  for(unsigned int i = 0; i < v.size(); i++){
+    nodeTags[i] = v[i]->getNum();
+    coord[3 * i + 0] = v[i]->x();
+    coord[3 * i + 1] = v[i]->y();
+    coord[3 * i + 2] = v[i]->z();
+  }
+}
+
 GMSH_API void gmsh::model::mesh::setNodes(const int dim,
                                           const int tag,
                                           const std::vector<int> &nodeTags,

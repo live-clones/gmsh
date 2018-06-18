@@ -576,6 +576,21 @@ GMSH_API void gmshModelMeshRebuildNodeCache(const int onlyIfNecessary, int * ier
   }
 }
 
+GMSH_API void gmshModelMeshGetNodesForPhysicalGroup(const int dim, const int tag, int ** nodeTags, size_t * nodeTags_n, double ** coord, size_t * coord_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_nodeTags_;
+    std::vector<double> api_coord_;
+    gmsh::model::mesh::getNodesForPhysicalGroup(dim, tag, api_nodeTags_, api_coord_);
+    vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
+    vector2ptr(api_coord_, coord, coord_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshSetNodes(const int dim, const int tag, int * nodeTags, size_t nodeTags_n, double * coord, size_t coord_n, double * parametricCoord, size_t parametricCoord_n, int * ierr)
 {
   if(ierr) *ierr = 0;

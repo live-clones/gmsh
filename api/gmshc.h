@@ -304,6 +304,14 @@ GMSH_API void gmshModelMeshGetNode(const int nodeTag,
 GMSH_API void gmshModelMeshRebuildNodeCache(const int onlyIfNecessary,
                                             int * ierr);
 
+/* Get the nodes from all the elements belonging to the physical group of
+ * dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelMeshGetNodesForPhysicalGroup(const int dim,
+                                                    const int tag,
+                                                    int ** nodeTags, size_t * nodeTags_n,
+                                                    double ** coord, size_t * coord_n,
+                                                    int * ierr);
+
 /* Set the nodes classified on the geometrical entity of dimension `dim' and
  * tag `tag'. `nodeTags' contains the node tags (their unique, strictly
  * positive identification numbers). `coord' is a vector of length 3 times the

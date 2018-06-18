@@ -162,6 +162,9 @@ mesh.add('getNode',doc,None,iint('nodeTag'),ovectordouble('coord'),ovectordouble
 doc = '''Rebuild the node cache.'''
 mesh.add('rebuildNodeCache',doc,None,ibool('onlyIfNecessary', 'true', 'True'))
 
+doc = '''Get the nodes from all the elements belonging to the physical group of dimension `dim' and tag `tag'.'''
+mesh.add('getNodesForPhysicalGroup',doc,None,iint('dim'),iint('tag'),ovectorint('nodeTags'),ovectordouble('coord'))
+
 doc = '''Set the nodes classified on the geometrical entity of dimension `dim' and tag `tag'. `nodeTags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the (x, y, z) coordinates of the nodes, concatenated. The optional `parametricCoord' vector contains the parametric coordinates of the nodes, if any. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'.'''
 mesh.add('setNodes',doc,None,iint('dim'),iint('tag'),ivectorint('nodeTags'),ivectordouble('coord'),ivectordouble('parametricCoord','std::vector<double>()',"[]","[]"))
 

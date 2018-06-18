@@ -585,6 +585,22 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
       }
 
+      // Get the nodes from all the elements belonging to the physical group of
+      // dimension `dim' and tag `tag'.
+      GMSH_API void getNodesForPhysicalGroup(const int dim,
+                                             const int tag,
+                                             std::vector<int> & nodeTags,
+                                             std::vector<double> & coord)
+      {
+        int ierr = 0;
+        int *api_nodeTags_; size_t api_nodeTags_n_;
+        double *api_coord_; size_t api_coord_n_;
+        gmshModelMeshGetNodesForPhysicalGroup(dim, tag, &api_nodeTags_, &api_nodeTags_n_, &api_coord_, &api_coord_n_, &ierr);
+        if(ierr) throw ierr;
+        nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
+        coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
+      }
+
       // Set the nodes classified on the geometrical entity of dimension `dim' and
       // tag `tag'. `nodeTags' contains the node tags (their unique, strictly
       // positive identification numbers). `coord' is a vector of length 3 times

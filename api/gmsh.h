@@ -288,6 +288,13 @@ namespace gmsh { // Top-level functions
       // Rebuild the node cache.
       GMSH_API void rebuildNodeCache(const bool onlyIfNecessary = true);
 
+      // Get the nodes from all the elements belonging to the physical group of
+      // dimension `dim' and tag `tag'.
+      GMSH_API void getNodesForPhysicalGroup(const int dim,
+                                             const int tag,
+                                             std::vector<int> & nodeTags,
+                                             std::vector<double> & coord);
+
       // Set the nodes classified on the geometrical entity of dimension `dim' and
       // tag `tag'. `nodeTags' contains the node tags (their unique, strictly
       // positive identification numbers). `coord' is a vector of length 3 times

@@ -786,6 +786,29 @@ function rebuildNodeCache(onlyIfNecessary = true)
 end
 
 """
+    gmsh.model.mesh.getNodesForPhysicalGroup(dim, tag)
+
+Get the nodes from all the elements belonging to the physical group of dimension
+`dim` and tag `tag`.
+
+Return `nodeTags`, `coord`.
+"""
+function getNodesForPhysicalGroup(dim, tag)
+    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetNodesForPhysicalGroup, gmsh.lib), Void,
+          (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetNodesForPhysicalGroup returned non-zero error code: $(ierr[])")
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], true)
+    return nodeTags, coord
+end
+
+"""
     gmsh.model.mesh.setNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
 
 Set the nodes classified on the geometrical entity of dimension `dim` and tag
