@@ -6,6 +6,7 @@
 #ifndef _MVERTEX_H_
 #define _MVERTEX_H_
 
+#include <cmath>
 #include <stdio.h>
 #include <set>
 #include <map>
