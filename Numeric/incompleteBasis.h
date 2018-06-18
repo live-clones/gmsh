@@ -20,7 +20,7 @@ public:
   incompleteBasis(int tag);
   ~incompleteBasis();
 
-  virtual inline int getNumShapeFunctions() const { return points.size1(); }
+  virtual int getNumShapeFunctions() const { return points.size1(); }
 
   virtual void f(double u, double v, double w, double *sf) const;
   virtual void f(const fullMatrix<double> &coord, fullMatrix<double> &sf) const;
