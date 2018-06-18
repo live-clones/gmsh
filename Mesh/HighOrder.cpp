@@ -1234,7 +1234,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
         else {
           MLine* srcLine = srcIter->second;
           if (tgtLine->getNumVertices() != srcLine->getNumVertices()) throw;
-          for (int i = 2; i < tgtLine->getNumVertices(); i++)
+          for (unsigned int i = 2; i < tgtLine->getNumVertices(); i++)
             p2p[tgtLine->getVertex(i)] = srcLine->getVertex(i);
         }
       }
