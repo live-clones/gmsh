@@ -8,10 +8,10 @@
 #include <assert.h>
 #include <sstream>
 #include "GmshConfig.h"
+#include "meshGRegionBoundaryRecovery.h"
 
 #if defined(HAVE_TETGENBR)
 
-#include "meshGRegionBoundaryRecovery.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "robustPredicates.h"
 #include "GModel.h"
