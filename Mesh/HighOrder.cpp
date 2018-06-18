@@ -1242,8 +1242,8 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
   }
 
 #if defined(HAVE_OPTHOM)
-  std::vector<GEntity*> modelEdges;
-  modelEdges.insert(modelEdges.end(),m->firstEdge(),m->lastEdge());
+  std::vector<GEntity*> modelEdges(m->firstEdge(),m->lastEdge());
+
   OptHomPeriodicity edgePeriodicity(modelEdges);
   edgePeriodicity.fixPeriodicity();
   edgePeriodicity.fixPeriodicity(); // apply twice for operation order effects
