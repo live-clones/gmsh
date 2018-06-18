@@ -22,19 +22,21 @@ class GFaceCompound;
 class meshGFace {
   const bool repairSelfIntersecting1dMesh;
   bool onlyInitialMesh;
- public :
+
+public:
   meshGFace(bool r = true)
-    : repairSelfIntersecting1dMesh(r), onlyInitialMesh(false)
+    : repairSelfIntersecting1dMesh(r)
+    , onlyInitialMesh(false)
   {
   }
-  void operator()(GFace *, bool print=true);
-  void setOnlyInitial(){ onlyInitialMesh = true; }
+  void operator()(GFace *, bool print = true);
+  void setOnlyInitial() { onlyInitialMesh = true; }
 };
 
 // Destroy the mesh of the face
 class deMeshGFace {
- public :
-  deMeshGFace(){}
+public:
+  deMeshGFace() {}
   void operator()(GFace *);
 };
 
@@ -45,21 +47,19 @@ class deMeshGFace {
 // 2) some volume algorithms need to change the surface mesh orientation
 // 3) users can choose to reverse the natural orientation
 class orientMeshGFace {
- public :
+public:
   void operator()(GFace *);
 };
 
 void fourthPoint(double *p1, double *p2, double *p3, double *p4);
-void findTransfiniteCorners(GFace *gf, std::vector<MVertex*> &corners);
+void findTransfiniteCorners(GFace *gf, std::vector<MVertex *> &corners);
 int MeshTransfiniteSurface(GFace *gf);
-int MeshExtrudedSurface(GFace *gf, std::set<std::pair<MVertex*, MVertex*> >
-                        *constrainedEdges=0);
+int MeshExtrudedSurface(
+  GFace *gf, std::set<std::pair<MVertex *, MVertex *> > *constrainedEdges = 0);
 void partitionAndRemesh(GFaceCompound *gf);
-bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges);
-bool meshGenerator(GFace *gf, int RECUR_ITER,
-		   bool repairSelfIntersecting1dMesh,
-		   bool onlyInitialMesh,
-		   bool debug = true,
-		   std::vector<GEdge*> *replacement_edges = 0);
+bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge *> &edges);
+bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
+                   bool onlyInitialMesh, bool debug = true,
+                   std::vector<GEdge *> *replacement_edges = 0);
 
 #endif
