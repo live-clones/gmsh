@@ -818,7 +818,7 @@ static void assignElementsToEntities(GModel *const model,
 }
 
 template <class ITERATOR>
-static void setVerticesToEntity(GEntity *const entity, ITERATOR it_beg, ITERATOR it_end)
+void setVerticesToEntity(GEntity *const entity, ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it){
     for(GEntity::size_type i = 0; i < (*it)->getNumVertices(); i++){
@@ -2415,8 +2415,8 @@ static void assignToParent(std::set<MVertex*> &verts, partitionEdge *edge,
 }
 
 template <class ITERATOR>
-static void assignToParent(std::set<MVertex*> &verts, partitionVertex *vertex,
-                           ITERATOR it_beg, ITERATOR it_end)
+void assignToParent(std::set<MVertex*> &verts, partitionVertex *vertex,
+                    ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it)
   {
