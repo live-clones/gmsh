@@ -42,6 +42,14 @@ private:
   std::set<GFace *, GEntityLessThan> _chainFaces;
   std::set<GEdge *, GEntityLessThan> _chainEdges;
   std::set<GVertex *, GEntityLessThan> _chainVertices;
+
+  // the maximum vertex and element id number in the mesh
+  int _maxVertexNum, _maxElementNum;
+  int _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
+  // flag set to true when the model is being destroyed
+  bool _destroying;
+
+private:
   int _readMSH2(const std::string &name);
   int _writeMSH2(const std::string &name, double version, bool binary,
                  bool saveAll, bool saveParametric, double scalingFactor,
@@ -64,11 +72,6 @@ private:
   int _writePartitionedMSH4(const std::string &baseName, double version,
                             bool binary, bool saveAll, bool saveParametric,
                             double scalingFactor);
-  // the maximum vertex and element id number in the mesh
-  int _maxVertexNum, _maxElementNum;
-  int _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
-  // flag set to true when the model is being destroyed
-  bool _destroying;
 
 protected:
   // the name of the model
@@ -99,29 +102,56 @@ protected:
 
   // Geo (Gmsh native) model internal data
   GEO_Internals *_geo_internals;
+  // OpenCascade model internal data
+  OCC_Internals *_occ_internals;
+  // ACIS model internal data
+  ACIS_Internals *_acis_internals;
+  // Fourier model internal data
+  FM_Internals *_fm_internals;
+
+  // characteristic length (mesh size) fields
+  FieldManager *_fields;
+
+  // entity that is currently being meshed (used for error reporting)
+  GEntity *_currentMeshEntity;
+
+  // last entities/vertices where a meshing error has been reported
+  std::vector<GEntity *> _lastMeshEntityError;
+  std::vector<MVertex *> _lastMeshVertexError;
+
+  // index of the current model (in the static list of all loaded
+  // models)
+  static int _current;
+
+  // the sets of geometrical regions, faces, edges and vertices in the
+  // model
+  std::set<GRegion *, GEntityLessThan> regions;
+  std::set<GFace *, GEntityLessThan> faces;
+  std::set<GEdge *, GEntityLessThan> edges;
+  std::set<GVertex *, GEntityLessThan> vertices;
+
+  // map between the pair <dimension, elementary or physical number>
+  // and an optional associated name
+  std::map<std::pair<int, int>, std::string> physicalNames, elementaryNames;
+
+  // the set of all used mesh partition numbers
+  unsigned int _numPartitions;
+
+protected:
   void _createGEOInternals();
   void _deleteGEOInternals();
 
-  // OpenCascade model internal data
-  OCC_Internals *_occ_internals;
   void _deleteOCCInternals();
   void _resetOCCInternals();
 
-  // ACIS model internal data
-  ACIS_Internals *_acis_internals;
   void _deleteACISInternals();
 
-  // Fourier model internal data
-  FM_Internals *_fm_internals;
   void _createFMInternals();
   void _deleteFMInternals();
 
   // CGNS helpers
   int _readCGNSStructured(const std::string &name);
   int _readCGNSUnstructured(const std::string &name);
-
-  // characteristic length (mesh size) fields
-  FieldManager *_fields;
 
   // store the elements given in the map (indexed by elementary region
   // number) into the model, creating discrete geometrical entities on
@@ -147,32 +177,6 @@ protected:
   void
   _storePhysicalTagsInEntities(int dim,
                                std::map<int, std::map<int, std::string> > &map);
-
-  // entity that is currently being meshed (used for error reporting)
-  GEntity *_currentMeshEntity;
-
-  // last entities/vertices where a meshing error has been reported
-  std::vector<GEntity *> _lastMeshEntityError;
-  std::vector<MVertex *> _lastMeshVertexError;
-
-  // index of the current model (in the static list of all loaded
-  // models)
-  static int _current;
-
-protected:
-  // the sets of geometrical regions, faces, edges and vertices in the
-  // model
-  std::set<GRegion *, GEntityLessThan> regions;
-  std::set<GFace *, GEntityLessThan> faces;
-  std::set<GEdge *, GEntityLessThan> edges;
-  std::set<GVertex *, GEntityLessThan> vertices;
-
-  // map between the pair <dimension, elementary or physical number>
-  // and an optional associated name
-  std::map<std::pair<int, int>, std::string> physicalNames, elementaryNames;
-
-  // the set of all used mesh partition numbers
-  unsigned int _numPartitions;
 
 public:
   // region, face, edge and vertex iterators
