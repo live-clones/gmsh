@@ -542,8 +542,8 @@ HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
 }
 #endif
 
+#if 0
 // create a list of internal edges
-
 static void eraseEdge(std::multimap<MVertex*,MVertex*> &conn, MVertex *v1, MVertex *v2)
 {
   std::multimap<MVertex*,MVertex*>::iterator it  = conn.lower_bound(v1);
@@ -555,7 +555,9 @@ static void eraseEdge(std::multimap<MVertex*,MVertex*> &conn, MVertex *v1, MVert
     if (it->second == v1){conn.erase(it);break;}
   }
 }
+#endif
 
+#if 0
 static void splitInternalEdges(std::vector<MEdge> &e, int ITH,
                                std::vector<std::vector<MVertex*> >&eds)
 {
@@ -647,6 +649,7 @@ static void splitInternalEdges(std::vector<MEdge> &e, int ITH,
   fprintf(f,"};\n");
   fclose(f);
 }
+#endif
 
 GPoint discreteFace::intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
 					    const SVector3 &p, const double &R,
