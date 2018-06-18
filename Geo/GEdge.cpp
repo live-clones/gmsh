@@ -141,11 +141,6 @@ void GEdge::reverse()
     (*line)->reverse();
 }
 
-unsigned int GEdge::getNumMeshElements() const
-{
-  return lines.size();
-}
-
 unsigned int GEdge::getNumMeshElementsByType(const int familyType) const
 {
   if(familyType == TYPE_LIN) return lines.size();
