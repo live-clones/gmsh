@@ -911,7 +911,7 @@ static void Mesh3D(GModel *m)
 
   for (GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
     if ((*it)->getNumMeshElements() == 0) {
-      Msg::Warning("Volume %d consists of no elements", (*it)->tag());
+      Msg::Error("No tetrahedra in region %d", (*it)->tag());
     }
   }
 
