@@ -222,11 +222,10 @@ SBoundingBox3d GEdge::bounds(bool fast) const
       bbox += SPoint3(p.x(), p.y(), p.z());
     }
   }
-  else{
-    int ipp = getNumMeshElements() / 20;
-    if(ipp < 1) ipp = 1;
-    for(unsigned int i = 0; i < getNumMeshElements(); i += ipp)
-      for(unsigned int j = 0; j < getMeshElement(i)->getNumVertices(); j++)
+  else {
+    std::size_t ipp = std::max(getNumMeshElements() / 20, std::size_t(1));
+    for(size_type i = 0; i < getNumMeshElements(); i += ipp)
+      for(size_type j = 0; j < getMeshElement(i)->getNumVertices(); j++)
         bbox += getMeshElement(i)->getVertex(j)->point();
   }
   return bbox;
