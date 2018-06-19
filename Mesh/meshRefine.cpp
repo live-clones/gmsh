@@ -24,8 +24,7 @@ void subdivide_pyramid(MElement *element, GRegion *gr,
                        faceContainer &faceVertices,
                        std::vector<MHexahedron *> &dwarfs88);
 
-class MVertexLessThanParam {
-public:
+struct MVertexLessThanParam {
   bool operator()(const MVertex *v1, const MVertex *v2) const
   {
     double u1 = 0., u2 = 1.;
@@ -76,7 +75,7 @@ static bool setBLData(MElement *el)
     if(!isBL) return false;
   }
   // Mark high-order nodes as BL nodes (only works in 2D)
-  for(MVertex::size_type i = el->getNumPrimaryVertices();
+  for(std::size_t i = el->getNumPrimaryVertices();
       i < el->getNumVertices(); i++)
     setBLData(el->getVertex(i));
   return true;
@@ -709,16 +708,7 @@ void subdivide_pyramid(MElement *element, GRegion *gr,
                        faceContainer &faceVertices,
                        std::vector<MHexahedron *> &dwarfs88)
 {
-  unsigned int i;
-  int index1, index2, index3, index4;
-  int index5, index6, index7, index8;
-  SPoint3 point;
-  std::vector<MVertex *> v;
-
-  dwarfs88.resize(88);
-  v.resize(105);
-
-  for(int i = 0; i < 105; i++) v[i] = NULL;
+  std::vector<MVertex *> v(105, NULL);
 
   v[29] = element->getVertex(0);
   v[27] = element->getVertex(1);
@@ -737,6 +727,8 @@ void subdivide_pyramid(MElement *element, GRegion *gr,
 
   // the one in the middle of rect face
   v[104] = element->getVertex(13);
+
+  SPoint3 point;
 
   faceContainer::iterator fIter;
 
@@ -780,7 +772,7 @@ void subdivide_pyramid(MElement *element, GRegion *gr,
     faceVertices[MFace(v[5], v[29], v[102])].push_back(v[99]);
   }
 
-  for(i = 0; i < 105; i++) {
+  for(int i = 0; i < 105; i++) {
     if(!v[i]) {
       element->pnt(schneiders_z(i), schneiders_x(i), schneiders_y(i) / 1.414213,
                    point);
@@ -789,17 +781,19 @@ void subdivide_pyramid(MElement *element, GRegion *gr,
     }
   }
 
-  for(i = 0; i < 88; i++) {
-    index1 = schneiders_connect(0, i);
-    index2 = schneiders_connect(1, i);
-    index3 = schneiders_connect(2, i);
-    index4 = schneiders_connect(3, i);
-    index5 = schneiders_connect(4, i);
-    index6 = schneiders_connect(5, i);
-    index7 = schneiders_connect(6, i);
-    index8 = schneiders_connect(7, i);
+  dwarfs88.resize(88);
 
-    dwarfs88[i] = (new MHexahedron(v[index1], v[index2], v[index3], v[index4],
-                                   v[index5], v[index6], v[index7], v[index8]));
+  for(int i = 0; i < 88; i++) {
+    int const index1 = schneiders_connect(0, i);
+    int const index2 = schneiders_connect(1, i);
+    int const index3 = schneiders_connect(2, i);
+    int const index4 = schneiders_connect(3, i);
+    int const index5 = schneiders_connect(4, i);
+    int const index6 = schneiders_connect(5, i);
+    int const index7 = schneiders_connect(6, i);
+    int const index8 = schneiders_connect(7, i);
+
+    dwarfs88[i] = new MHexahedron(v[index1], v[index2], v[index3], v[index4],
+                                  v[index5], v[index6], v[index7], v[index8]);
   }
 }
