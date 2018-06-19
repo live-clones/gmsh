@@ -1283,7 +1283,6 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
     opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
 
   std::vector<std::pair<int, int> > dimTags, dimTagsSaved;
-  std::vector<std::pair<int, int> >::iterator it;
   while(1) {
     std::string str;
     int type;

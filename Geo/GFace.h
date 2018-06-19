@@ -84,7 +84,7 @@ public:
   GRegion *getRegion(int const num) const { return num == 0 ? r1 : r2; }
 
   // get number of regions
-  int numRegions() const { return (r1 > 0) + (r2 > 0); }
+  int numRegions() const { return (r1 != NULL) + (r2 != NULL); }
 
   std::list<GRegion *> regions() const
   {
