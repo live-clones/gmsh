@@ -591,7 +591,7 @@ MFaceN MQuadrangleN::getHighOrderFace(int num, int sign, int rot)
   IndicesReoriented &indices = it->second;
 
   std::vector<MVertex*> vertices(getNumVertices());
-  for (size_type i = 0; i < getNumVertices(); ++i) {
+  for (std::size_t i = 0; i < getNumVertices(); ++i) {
     vertices[i] = getVertex(indices[i]);
   }
   return MFaceN(TYPE_QUA, _order, vertices);

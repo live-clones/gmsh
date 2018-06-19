@@ -367,7 +367,7 @@ void Filler::treat_region(GRegion* gr)
     limit = code(gf->tag());
     for(GFace::size_type i=0;i<gf->getNumMeshElements();i++){
       MElement* element = gf->getMeshElement(i);
-      for(MElement::size_type j=0;j<element->getNumVertices();j++){
+      for(std::size_t j=0;j<element->getNumVertices();j++){
         MVertex* vertex = element->getVertex(j);
         temp.insert(vertex);
         limits.insert(std::pair<MVertex*,int>(vertex,limit));
@@ -395,7 +395,7 @@ void Filler::treat_region(GRegion* gr)
 
   std::queue<Node*> fifo;
 
-  for(MVertex::size_type i=0;i<boundary_vertices.size();i++){
+  for(std::size_t i=0;i<boundary_vertices.size();i++){
     x = boundary_vertices[i]->x();
     y = boundary_vertices[i]->y();
     z = boundary_vertices[i]->z();
@@ -480,8 +480,8 @@ void Filler::treat_region(GRegion* gr)
 
   CTX::instance()->mesh.algo3d = option;
 
-  for(MVertex::size_type i=0;i<garbage.size();i++) delete garbage[i];
-  for(MVertex::size_type i=0;i<new_vertices.size();i++) delete new_vertices[i];
+  for(std::size_t i=0;i<garbage.size();i++) delete garbage[i];
+  for(std::size_t i=0;i<new_vertices.size();i++) delete new_vertices[i];
 
   delete octree;
   rtree.RemoveAll();

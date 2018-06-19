@@ -29,7 +29,7 @@ class MPoint : public MElement {
   }
   ~MPoint(){}
   virtual int getDim() const { return 0; }
-  virtual size_type getNumVertices() const { return 1; }
+  virtual std::size_t getNumVertices() const { return 1; }
   virtual MVertex *getVertex(int num){ return _v[0]; }
   virtual const MVertex *getVertex(int num) const { return _v[0]; }
   virtual void setVertex(int num,  MVertex *v){ _v[0] = v; }

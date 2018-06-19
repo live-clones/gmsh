@@ -394,7 +394,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
       boundaryIndicators.push_back(gf->tag());
       for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
         MElement *e = gf->getMeshElement(i);
-        for(MElement::size_type j = 0; j < e->getNumVertices(); j++){
+        for(std::size_t j = 0; j < e->getNumVertices(); j++){
           MVertex *v = e->getVertex(j);
           if(v->getIndex() > 0)
             vertexTags[v->getIndex() - 1].push_back(gf->tag());
@@ -421,7 +421,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
         dim = std::max(dim, entities[i]->getMeshElement(j)->getDim());
 
   // loop over all elements we need to save
-  MElement::size_type numElements = 0, maxNumNodesPerElement = 0;
+  std::size_t numElements = 0, maxNumNodesPerElement = 0;
   for(unsigned int i = 0; i < entities.size(); i++){
     if(entities[i]->physicals.size() || saveAll){
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){

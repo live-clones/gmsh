@@ -23,13 +23,10 @@ private:
   std::vector<char> _si; // sorted indices
 
 public:
-  typedef std::vector<MVertex *>::size_type size_type;
-
-public:
   MFace() {}
   MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3 = 0);
   MFace(const std::vector<MVertex *> &v);
-  size_type getNumVertices() const { return _v.size(); }
+  std::size_t getNumVertices() const { return _v.size(); }
   MVertex *getVertex(const int i) const { return _v[i]; }
   MVertex *getSortedVertex(const int i) const { return _v[int(_si[i])]; }
   MEdge getEdge(const int i) const
@@ -41,12 +38,12 @@ public:
 
   void getOrderedVertices(std::vector<MVertex *> &verts) const
   {
-    for(size_type i = 0; i < getNumVertices(); i++)
+    for(std::size_t i = 0; i < getNumVertices(); i++)
       verts.push_back(getSortedVertex(i));
   }
   void getOrderedVertices(const MVertex **const verts) const
   {
-    for(size_type i = 0; i < getNumVertices(); i++) {
+    for(std::size_t i = 0; i < getNumVertices(); i++) {
       verts[i] = getSortedVertex(i);
     }
   }
@@ -110,7 +107,7 @@ public:
 inline bool operator==(const MFace &f1, const MFace &f2)
 {
   if(f1.getNumVertices() != f2.getNumVertices()) return false;
-  for(MFace::size_type i = 0; i < f1.getNumVertices(); i++)
+  for(std::size_t i = 0; i < f1.getNumVertices(); i++)
     if(f1.getSortedVertex(i) != f2.getSortedVertex(i)) return false;
   return true;
 }
@@ -118,7 +115,7 @@ inline bool operator==(const MFace &f1, const MFace &f2)
 inline bool operator!=(const MFace &f1, const MFace &f2)
 {
   if(f1.getNumVertices() != f2.getNumVertices()) return true;
-  for(MFace::size_type i = 0; i < f1.getNumVertices(); i++)
+  for(std::size_t i = 0; i < f1.getNumVertices(); i++)
     if(f1.getSortedVertex(i) != f2.getSortedVertex(i)) return true;
   return false;
 }
@@ -132,7 +129,7 @@ struct Less_Face : public std::binary_function<MFace, MFace, bool> {
   {
     if(f1.getNumVertices() != f2.getNumVertices())
       return f1.getNumVertices() < f2.getNumVertices();
-    for(MFace::size_type i = 0; i < f1.getNumVertices(); i++) {
+    for(std::size_t i = 0; i < f1.getNumVertices(); i++) {
       if(f1.getSortedVertex(i)->getNum() < f2.getSortedVertex(i)->getNum())
         return true;
       if(f1.getSortedVertex(i)->getNum() > f2.getSortedVertex(i)->getNum())
@@ -149,16 +146,13 @@ private:
   std::vector<MVertex *> _v;
 
 public:
-  typedef std::vector<MVertex *>::size_type size_type;
-
-public:
   MFaceN() {}
   MFaceN(int type, int order, const std::vector<MVertex *> &v);
 
   int getPolynomialOrder() const { return _order; }
   int getType() const { return _type; }
   bool isTriangular() const { return _type == TYPE_TRI; }
-  size_type getNumVertices() const { return (int)_v.size(); }
+  std::size_t getNumVertices() const { return (int)_v.size(); }
   int getNumCorners() const { return isTriangular() ? 3 : 4; }
   int getNumVerticesOnBoundary() const { return getNumCorners() * _order; }
 

@@ -80,7 +80,7 @@ void backgroundMesh3D::computeSizeField()
     for (unsigned int i=0;i<face->getNumMeshElements();i++){// for all elements
       e = face->getMeshElement(i);
       if (e->getDim()!=2) continue;// of dim=2
-      for (MElement::size_type iv=0;iv<e->getNumVertices();iv++){
+      for (std::size_t iv=0;iv<e->getNumVertices();iv++){
         v = e->getVertex(iv);
         SPoint2 p;
         reparamMeshVertexOnFace(v, face, p);
@@ -229,7 +229,7 @@ MVertex* backgroundMesh3D::get_nearest_neighbor(const double* xyz, double & dist
   std::vector<MVertex*> candidates(elem->getNumVertices());
   std::vector<double> distances(elem->getNumVertices());
   SPoint3 p(xyz[0],xyz[1],xyz[2]);
-  for (MElement::size_type i=0;i<elem->getNumVertices();i++){
+  for (std::size_t i=0;i<elem->getNumVertices();i++){
     MVertex* const v = elem->getVertex(i);
     candidates[i] = v;
     distances[i] = p.distance(v->point());
@@ -621,7 +621,7 @@ void frameFieldBackgroundMesh3D::initiate_crossfield()
       MElement *e = face->getMeshElement(i);
       if (e->getDim()!=2) continue;// of dim=2
 
-      for (MElement::size_type iv=0;iv<e->getNumVertices();iv++){
+      for (std::size_t iv=0;iv<e->getNumVertices();iv++){
         v = e->getVertex(iv);
 
         // if already done: continue
@@ -640,7 +640,7 @@ void frameFieldBackgroundMesh3D::initiate_crossfield()
     MElement *e = gr->getMeshElement(i);
     if (e->getDim()!=3) continue;
 
-    for (MElement::size_type iv=0;iv<e->getNumVertices();iv++){
+    for (std::size_t iv=0;iv<e->getNumVertices();iv++){
       v = e->getVertex(iv);
 
       // if not in volume: continue
@@ -763,7 +763,7 @@ void frameFieldBackgroundMesh3D::build_vertex_to_element_table()
     e = gr->getMeshElement(i);
     if (e->getDim()!=3) continue;// of dim=3
 
-    for (MElement::size_type iv=0;iv<e->getNumVertices();iv++){// for all vertices
+    for (std::size_t iv=0;iv<e->getNumVertices();iv++){// for all vertices
       v = e->getVertex(iv);
       vert2elem[v].insert(e);
       elem2vert[e].insert(v);
@@ -869,7 +869,7 @@ void frameFieldBackgroundMesh3D::get_recursive_neighbors(std::set<MVertex const*
         continue;
       }
       //        std::cout << current_elem->getNum() << std::endl;
-      for (MElement::size_type i=0;i<current_elem->getNumVertices();i++){
+      for (std::size_t i=0;i<current_elem->getNumVertices();i++){
         MVertex *ver = current_elem->getVertex(i);
 
         if (visited.find(ver) != visited.end()) continue;
@@ -1200,7 +1200,7 @@ void frameFieldBackgroundMesh3D::exportVectorialSmoothness(const std::string &fi
 
   for (unsigned int ie = 0; ie < getNumMeshElements(); ie++){// for all elements
     const MElement *e = getElement(ie);
-    for (MElement::size_type iv = 0; iv < e->getNumVertices(); iv++){
+    for (std::size_t iv = 0; iv < e->getNumVertices(); iv++){
       const MVertex *v = e->getVertex(iv);
       std::set<const MVertex*>::iterator itfind = done.find(v);
       if (itfind!=done.end()) continue;

@@ -49,7 +49,7 @@ static void addExtrudeNormals(std::vector<T*> &elements, int invert,
     std::set<MVertex*> verts;
     for(unsigned int i = 0; i < elements.size(); i++){
       if(!ExtrudeParams::calcLayerScaleFactor[index]){
-	for(typename T::size_type j = 0; j < elements[i]->getNumVertices(); j++)
+	for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++)
           verts.insert(elements[i]->getVertex(j));
       }
       else{
@@ -89,7 +89,7 @@ static void addExtrudeNormals(std::vector<T*> &elements, int invert,
       if(invert) n *= -1.;
       double nn[3] = {n[0], n[1], n[2]};
       if(!ExtrudeParams::calcLayerScaleFactor[index]){
-	for(MElement::size_type k = 0; k < ele->getNumVertices(); k++){
+	for(std::size_t k = 0; k < ele->getNumVertices(); k++){
           MVertex *v = ele->getVertex(k);
           ExtrudeParams::normals[index]->add(v->x(), v->y(), v->z(), 3, nn);
         }

@@ -400,7 +400,7 @@ void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
 void parametricCoordinates(MElement *t, GFace *gf, double u[4], double v[4],
                            MVertex *close = 0)
 {
-  for(MElement::size_type j = 0; j < t->getNumVertices(); j++){
+  for(std::size_t j = 0; j < t->getNumVertices(); j++){
     MVertex *ver = t->getVertex(j);
     SPoint2 param, dummy;
     if (!close) reparamMeshVertexOnFace(ver, gf, param);

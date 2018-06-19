@@ -54,7 +54,7 @@ class MQuadrangle : public MElement {
   virtual double etaShapeMeasure();
   virtual double gammaShapeMeasure();
   virtual int getDim() const { return 2; }
-  virtual size_type getNumVertices() const { return 4; }
+  virtual std::size_t getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual const MVertex *getVertex(int num) const{ return _v[num]; }
   virtual void setVertex(int num, MVertex *v){ _v[num] = v; }
@@ -184,7 +184,7 @@ class MQuadrangle8 : public MQuadrangle {
   }
   ~MQuadrangle8(){}
   virtual int getPolynomialOrder() const { return 2; }
-  virtual size_type getNumVertices() const { return 8; }
+  virtual std::size_t getNumVertices() const { return 8; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual const MVertex *getVertex(int num) const { return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 4) _v[num] = v; else _vs[num - 4] = v; }
@@ -279,7 +279,7 @@ class MQuadrangle9 : public MQuadrangle {
   }
   ~MQuadrangle9(){}
   virtual int getPolynomialOrder() const { return 2; }
-  virtual size_type getNumVertices() const { return 9; }
+  virtual std::size_t getNumVertices() const { return 9; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual const MVertex *getVertex(int num) const { return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 4) _v[num] = v; else _vs[num - 4] = v; }
@@ -379,7 +379,7 @@ class MQuadrangleN : public MQuadrangle {
   }
   ~MQuadrangleN(){}
   virtual int getPolynomialOrder() const { return _order; }
-  virtual size_type getNumVertices() const {return 4 + _vs.size(); }
+  virtual std::size_t getNumVertices() const {return 4 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual const MVertex *getVertex(int num) const{ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual int getNumFaceVertices() const

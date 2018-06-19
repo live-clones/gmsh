@@ -83,7 +83,7 @@ PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
   if(outputdim == 0){ // create point elements for mesh vertices
     std::set<MVertex*> vertices;
     for(unsigned int i = 0; i < elements.size(); i++){
-      for(MVertex::size_type j = 0; j < elements[i]->getNumVertices(); j++){
+      for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++){
         MVertex *v = elements[i]->getVertex(j);
         vertices.insert(v);
       }

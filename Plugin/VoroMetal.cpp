@@ -84,7 +84,7 @@ void voroMetal3D::execute(GRegion* gr,double h)
 
   for(GRegion::size_type i = 0; i < gr->getNumMeshElements(); i++){
     MElement* element = gr->getMeshElement(i);
-    for(MElement::size_type j = 0; j < element->getNumVertices(); j++){
+    for(std::size_t j = 0; j < element->getNumVertices(); j++){
       MVertex* vertex = element->getVertex(j);
       vertices.insert(vertex);
     }

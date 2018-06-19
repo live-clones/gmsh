@@ -644,7 +644,7 @@ std::string MElement::getInfoString(bool multline)
   if(multline) sstream << "\n";
 
   sstream << " Nodes:";
-  for(MElement::size_type i = 0; i < getNumVertices(); i++)
+  for(std::size_t i = 0; i < getNumVertices(); i++)
     sstream << " " << getVertex(i)->getNum();
   if(multline) sstream << "\n";
 
@@ -1578,14 +1578,14 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
 void MElement::writePLY2(FILE *fp)
 {
   fprintf(fp, "3 ");
-  for(size_type i = 0; i < getNumVertices(); i++)
+  for(std::size_t i = 0; i < getNumVertices(); i++)
     fprintf(fp, " %d", getVertex(i)->getIndex() - 1);
   fprintf(fp, "\n");
 }
 
 void MElement::writeVRML(FILE *fp)
 {
-  for(size_type i = 0; i < getNumVertices(); i++)
+  for(std::size_t i = 0; i < getNumVertices(); i++)
     fprintf(fp, "%d,", getVertex(i)->getIndex() - 1);
   fprintf(fp, "-1,\n");
 }
@@ -1647,7 +1647,7 @@ void MElement::writeMATLAB(FILE *fp, int filetype, int elementary, int physical,
     {
       if(physical < 0) reverse();
 
-      for(size_type i = 0; i < getNumVertices(); i++)
+      for(std::size_t i = 0; i < getNumVertices(); i++)
 	fprintf(fp, " %d", getVertex(i)->getIndex());
       fprintf(fp, " %d\n", physical ? abs(physical) : elementary);
 
@@ -1691,7 +1691,7 @@ void MElement::writeMESH(FILE *fp, int elementTagType, int elementary,
 {
   if(physical < 0) reverse();
 
-  for(size_type i = 0; i < getNumVertices(); i++)
+  for(std::size_t i = 0; i < getNumVertices(); i++)
     if (getTypeForMSH() == MSH_TET_10 && i == 8)
       fprintf(fp, " %d", getVertex(9)->getIndex());
     else if (getTypeForMSH() == MSH_TET_10 && i == 9)
@@ -1709,7 +1709,7 @@ void MElement::writeNEU(FILE *fp, unsigned gambitType, int idAdjust, int phys)
   if(phys < 0) reverse();
 
   fprintf(fp, "%8d %2d %2lu ", _num-idAdjust, gambitType, getNumVertices());
-  for(size_type i = 0; i < getNumVertices(); ++i) {
+  for(std::size_t i = 0; i < getNumVertices(); ++i) {
     fprintf(fp, "%8d", getVertex(i)->getIndex());
   }
   fprintf(fp, "\n");
@@ -1815,7 +1815,7 @@ void MElement::writeINP(FILE *fp, int num)
 void MElement::writeSU2(FILE *fp, int num)
 {
   fprintf(fp, "%d ", getTypeForVTK());
-  for(size_type i = 0; i < getNumVertices(); i++)
+  for(std::size_t i = 0; i < getNumVertices(); i++)
     fprintf(fp, "%d ", getVertexVTK(i)->getIndex() - 1);
   if(num >= 0) fprintf(fp, "%d\n", num);
   else fprintf(fp, "\n");
@@ -1984,7 +1984,7 @@ MElement *MElement::copy(std::map<int, MVertex*> &vertexMap,
   int eType = getTypeForMSH();
   MElement *eParent = getParent();
   if(getNumChildren() == 0) {
-    for(size_type i = 0; i < getNumVertices(); i++) {
+    for(std::size_t i = 0; i < getNumVertices(); i++) {
       MVertex *v = getVertex(i);
       int numV = v->getNum(); //Index();
       if(vertexMap.count(numV))
@@ -1998,7 +1998,7 @@ MElement *MElement::copy(std::map<int, MVertex*> &vertexMap,
   }
   else {
     for(int i = 0; i < getNumChildren(); i++) {
-      for(size_type j = 0; j < getChild(i)->getNumVertices(); j++) {
+      for(std::size_t j = 0; j < getChild(i)->getNumVertices(); j++) {
         MVertex *v = getChild(i)->getVertex(j);
         int numV = v->getNum(); //Index();
         if(vertexMap.count(numV))

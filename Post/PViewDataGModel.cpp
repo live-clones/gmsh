@@ -717,7 +717,7 @@ void PViewDataGModel::smooth()
         MElement *e = _steps[step]->getEntity(ent)->getMeshElement(ele);
         double val;
         if(!getValueByIndex(step, e->getNum(), 0, 0, val)) continue;
-        for(MElement::size_type nod = 0; nod < e->getNumVertices(); nod++){
+        for(std::size_t nod = 0; nod < e->getNumVertices(); nod++){
           MVertex *v = e->getVertex(nod);
           if(nodeConnect.count(v->getNum()))
             nodeConnect[v->getNum()]++;

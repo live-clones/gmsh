@@ -482,10 +482,10 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
 
   std::vector<int> dataIndex(e->getNumVertices());
   if(_theViewDataGModel->getType() == PViewDataGModel::NodeData)
-    for(MElement::size_type i = 0; i < e->getNumVertices(); i++)
+    for(std::size_t i = 0; i < e->getNumVertices(); i++)
       dataIndex[i] = e->getVertex(i)->getNum();
   else
-    for(MElement::size_type i = 0; i < e->getNumVertices(); i++)
+    for(std::size_t i = 0; i < e->getNumVertices(); i++)
       dataIndex[i] = e->getNum();
 
   double U[3];
@@ -495,7 +495,7 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
   for(int step = 0; step < _theViewDataGModel->getNumTimeSteps(); step++){
     if(!_theViewDataGModel->hasTimeStep(step)) continue;
     if(timestep < 0 || step == timestep){
-      for(MElement::size_type nod = 0; nod < e->getNumVertices(); nod++){
+      for(std::size_t nod = 0; nod < e->getNumVertices(); nod++){
         for(int comp = 0; comp < nbComp; comp++)
           _theViewDataGModel->getValueByIndex(step, dataIndex[nod], nod, comp,
                                               nodeval[nod * nbComp + comp]);

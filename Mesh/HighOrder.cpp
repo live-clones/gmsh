@@ -1310,7 +1310,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
         }
         else {
           MElement* srcElmt = srcIter->second;
-          for (MElement::size_type i=nbVtcs;i<srcElmt->getNumVertices();i++) {
+          for (std::size_t i=nbVtcs;i<srcElmt->getNumVertices();i++) {
             p2p[tgtElmt->getVertex(i)] = srcElmt->getVertex(i);
           }
         }
@@ -1570,7 +1570,7 @@ void SetHighOrderComplete(GModel *m, bool onlyVisible)
     for (unsigned int i = 0; i < (*it)->triangles.size(); i++){
       MTriangle *t = (*it)->triangles[i];
       std::vector<MVertex*> vv;
-      for (MTriangle::size_type j=3;j<t->getNumVertices()-t->getNumFaceVertices();j++)
+      for (std::size_t j=3;j<t->getNumVertices()-t->getNumFaceVertices();j++)
         vv.push_back(t->getVertex(j));
       int nPts = t->getPolynomialOrder() - 1;
       getFaceVertices(*it, t, vv, dumNewHOVert, faceVertices, false, nPts);
@@ -1587,7 +1587,7 @@ void SetHighOrderComplete(GModel *m, bool onlyVisible)
       std::vector<MVertex*> vv;
       vv.reserve(t->getNumVertices()-t->getNumFaceVertices() - 4);
 
-      for (MQuadrangle::size_type j=4;j<t->getNumVertices()-t->getNumFaceVertices();j++)
+      for (std::size_t j=4;j<t->getNumVertices()-t->getNumFaceVertices();j++)
         vv.push_back(t->getVertex(j));
 
       int nPts = t->getPolynomialOrder() - 1;
@@ -1602,7 +1602,7 @@ void SetHighOrderComplete(GModel *m, bool onlyVisible)
     std::set<MVertex*> newV;
     for (unsigned int i = 0; i < (*it)->getNumMeshElements(); ++i){
       MElement *e = (*it)->getMeshElement(i);
-      for (MElement::size_type j=0;j<e->getNumVertices();j++) newV.insert(e->getVertex(j));
+      for (std::size_t j=0;j<e->getNumVertices();j++) newV.insert(e->getVertex(j));
     }
     (*it)->mesh_vertices.clear();
     (*it)->mesh_vertices.insert((*it)->mesh_vertices.begin(), newV.begin(), newV.end());
@@ -1622,9 +1622,9 @@ void SetHighOrderIncomplete(GModel *m, bool onlyVisible)
       MTriangle *t = (*it)->triangles[i];
       std::vector<MVertex*> vt;
       int order = t->getPolynomialOrder();
-      for (MTriangle::size_type j=3;j<t->getNumVertices()-t->getNumFaceVertices();j++)
+      for (std::size_t j=3;j<t->getNumVertices()-t->getNumFaceVertices();j++)
         vt.push_back(t->getVertex(j));
-      for (MTriangle::size_type j = t->getNumVertices()-t->getNumFaceVertices();
+      for (std::size_t j = t->getNumVertices()-t->getNumFaceVertices();
            j < t->getNumVertices(); j++)
         toDelete.insert(t->getVertex(j));
       newT.push_back(new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
@@ -1638,9 +1638,9 @@ void SetHighOrderIncomplete(GModel *m, bool onlyVisible)
       MQuadrangle *q = (*it)->quadrangles[i];
       std::vector<MVertex*> vt;
       int nPts = q->getPolynomialOrder() - 1;
-      for (MQuadrangle::size_type j = 4; j < q->getNumVertices()-q->getNumFaceVertices(); j++)
+      for (std::size_t j = 4; j < q->getNumVertices()-q->getNumFaceVertices(); j++)
         vt.push_back(q->getVertex(j));
-      for (MQuadrangle::size_type j = q->getNumVertices()-q->getNumFaceVertices();
+      for (std::size_t j = q->getNumVertices()-q->getNumFaceVertices();
            j < q->getNumVertices(); j++)
         toDelete.insert(q->getVertex(j));
       newQ.push_back(new MQuadrangleN(q->getVertex(0), q->getVertex(1),

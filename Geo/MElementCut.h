@@ -59,7 +59,7 @@ class MPolyhedron : public MElement {
     if(_intpt) delete [] _intpt;
   }
   virtual int getDim() const { return 3; }
-  virtual size_type getNumVertices() const { return _vertices.size() + _innerVertices.size(); }
+  virtual std::size_t getNumVertices() const { return _vertices.size() + _innerVertices.size(); }
   virtual int getNumVolumeVertices() const { return _innerVertices.size(); }
   virtual MVertex *getVertex(int num)
   {
@@ -220,7 +220,7 @@ class MPolygon : public MElement {
     if(_intpt) delete [] _intpt;
   }
   virtual int getDim() const { return 2; }
-  virtual size_type getNumVertices() const { return _vertices.size() + _innerVertices.size(); }
+  virtual std::size_t getNumVertices() const { return _vertices.size() + _innerVertices.size(); }
   virtual int getNumFaceVertices() const { return _innerVertices.size(); }
   virtual MVertex *getVertex(int num)
   {

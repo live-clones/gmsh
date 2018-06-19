@@ -257,13 +257,13 @@ PView* thermicSolver::buildTemperatureView (const std::string postFileName)
     for (groupOfElements::elementContainer::const_iterator it = thermicFields[i].g->begin(); it != thermicFields[i].g->end(); ++it){
       MElement *e = *it;
       if(e->getParent()) {
-        for (MElement::size_type j = 0; j < e->getNumVertices(); ++j) {
+        for (std::size_t j = 0; j < e->getNumVertices(); ++j) {
           if(vCut.find(e->getVertex(j)) == vCut.end())
             vCut[e->getVertex(j)] = e->getParent();
         }
       }
       else {
-        for (MElement::size_type j = 0; j < e->getNumVertices(); ++j)
+        for (std::size_t j = 0; j < e->getNumVertices(); ++j)
           v.insert(e->getVertex(j));
       }
     }
@@ -299,7 +299,7 @@ PView* thermicSolver::buildLagrangeMultiplierView (const std::string postFileNam
     for(groupOfElements::elementContainer::const_iterator it = LagrangeMultiplierFields[i].g->begin();
         it != LagrangeMultiplierFields[i].g->end(); ++it){
       MElement *e = *it;
-      for (MElement::size_type j = 0; j < e->getNumVertices(); ++j) v.insert(e->getVertex(j));
+      for (std::size_t j = 0; j < e->getNumVertices(); ++j) v.insert(e->getVertex(j));
     }
   }
   std::map<int, std::vector<double> > data;

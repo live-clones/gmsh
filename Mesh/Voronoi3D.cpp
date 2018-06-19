@@ -45,9 +45,9 @@ void clip::execute(GRegion* gr){
   std::set<MVertex*> vertices;
   std::set<MVertex*>::iterator it;
 
-  for(MVertex::size_type i=0;i<gr->getNumMeshElements();i++){
+  for(std::size_t i=0;i<gr->getNumMeshElements();i++){
     MElement* element = gr->getMeshElement(i);
-	for(MVertex::size_type j=0;j<element->getNumVertices();j++){
+	for(std::size_t j=0;j<element->getNumVertices();j++){
 	  MVertex* vertex = element->getVertex(j);
 	  vertices.insert(vertex);
 	}
@@ -67,7 +67,7 @@ void clip::execute(GRegion* gr){
 
   std::ofstream file("MicrostructurePolycrystal3D.pos");
   file << "View \"test\" {\n";
-  for(MVertex::size_type i=0;i<clipped.size();i++){
+  for(std::size_t i=0;i<clipped.size();i++){
     print_segment(clipped[i].get_v1().get_point(),clipped[i].get_v2().get_point(),file);
 	print_segment(clipped[i].get_v1().get_point(),clipped[i].get_v3().get_point(),file);
 	print_segment(clipped[i].get_v1().get_point(),clipped[i].get_v4().get_point(),file);

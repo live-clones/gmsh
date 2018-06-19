@@ -537,7 +537,7 @@ void fillv_(std::multimap<MVertex*, MElement*> &vertexToElement,
 {
   for (ITERATOR IT = it_beg; IT != it_end ; ++IT){
     MElement *el = *IT;
-    for(MElement::size_type j = 0; j < el->getNumVertices(); j++) {
+    for(std::size_t j = 0; j < el->getNumVertices(); j++) {
       MVertex* e = el->getVertex(j);
       vertexToElement.insert(std::make_pair(e, el));
     }

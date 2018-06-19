@@ -419,7 +419,7 @@ void smoothing::optimize_face(GFace* gf)
   // get all the points of the face ...
   for (unsigned int i = 0; i < gf->getNumMeshElements(); i++){
     MElement *e = gf->getMeshElement(i);
-    for (MElement::size_type j = 0;j<e->getNumVertices(); j++){
+    for (std::size_t j = 0;j<e->getNumVertices(); j++){
       MVertex *v = e->getVertex(j);
       all.insert(v);
     }

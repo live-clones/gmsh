@@ -523,7 +523,7 @@ bool Filler3D::treat_region(GRegion *gr)
     // int limit = code_kesskessai(gf->tag());
     for(unsigned int i=0;i<gf->getNumMeshElements();i++){
       element = gf->getMeshElement(i);
-      for(MElement::size_type j=0;j<element->getNumVertices();j++){// for all vertices
+      for(std::size_t j=0;j<element->getNumVertices();j++){// for all vertices
         vertex = element->getVertex(j);
         temp.insert(vertex);
         // limits.insert(make_pair(vertex,limit));

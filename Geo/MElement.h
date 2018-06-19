@@ -55,9 +55,6 @@ protected:
                            int &rot);
 
 public:
-  typedef std::vector<int>::size_type size_type;
-
-public:
   MElement(int num = 0, int part = 0);
   virtual ~MElement() {}
 
@@ -98,7 +95,7 @@ public:
   virtual void setVisibility(char val) { _visible = val; }
 
   // get & set the vertices
-  virtual size_type getNumVertices() const = 0;
+  virtual std::size_t getNumVertices() const = 0;
   virtual const MVertex *getVertex(int num) const = 0;
   virtual MVertex *getVertex(int num) = 0;
   void getVertices(std::vector<MVertex *> &verts)

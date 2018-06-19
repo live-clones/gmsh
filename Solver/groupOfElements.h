@@ -76,12 +76,12 @@ class groupOfElements {
 
     if (e->getParent()){
       _parents.insert(e->getParent());
-      for (MElement::size_type i = 0; i < e->getParent()->getNumVertices(); i++){
+      for (std::size_t i = 0; i < e->getParent()->getNumVertices(); i++){
 	_vertices.insert(e->getParent()->getVertex(i));
       }
     }
     else{
-      for (MElement::size_type i = 0; i < e->getNumVertices(); i++){
+      for (std::size_t i = 0; i < e->getNumVertices(); i++){
 	_vertices.insert(e->getVertex(i));
       }
     }

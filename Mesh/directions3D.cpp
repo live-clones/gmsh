@@ -279,9 +279,9 @@ void Frame_field::print_field2(GRegion* gr)
   double const color1 = 10.0;
   double const color2 = 20.0;
 
-  for(MVertex::size_type i=0;i<gr->getNumMeshElements();i++){
+  for(std::size_t i=0;i<gr->getNumMeshElements();i++){
     MElement* element = gr->getMeshElement(i);
-    for(MVertex::size_type j=0;j<element->getNumVertices();j++){
+    for(std::size_t j=0;j<element->getNumVertices();j++){
       MVertex* vertex = element->getVertex(j);
       if(vertex->onWhat()->dim()>2){
         SPoint3 point = SPoint3(vertex->x(),vertex->y(),vertex->z());
@@ -401,9 +401,9 @@ int Frame_field::build_vertex_to_elements(GEntity* gr, bool initialize)
 void Frame_field::build_listVertices(GEntity *gr, int dim, bool initialize)
 {
   std::set<MVertex *> list;
-  for(GEntity::size_type i = 0; i < gr->getNumMeshElements(); i++) {
+  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *pElem = gr->getMeshElement(i);
-    for(MVertex::size_type j = 0; j < pElem->getNumVertices(); j++) {
+    for(std::size_t j = 0; j < pElem->getNumVertices(); j++) {
       MVertex *pVertex = pElem->getVertex(j);
       if(pVertex->onWhat()->dim() == dim) list.insert(pVertex);
     }
@@ -684,8 +684,8 @@ void Frame_field::buildSmoothness()
     GEntity* eTmp = entities[i];
     for (unsigned int j = 0; j < eTmp->getNumMeshElements();j++){
       MElement* elem = eTmp->getMeshElement(j);
-      for (MElement::size_type k = 0;k < elem->getNumVertices();k++){
-        for (MElement::size_type l = k;l < elem->getNumVertices();l++){
+      for (std::size_t k = 0;k < elem->getNumVertices();k++){
+        for (std::size_t l = k;l < elem->getNumVertices();l++){
           if (k != l){
             MVertex* v1 = elem->getVertex(k);
             MVertex* v2 = elem->getVertex(l);
@@ -1085,13 +1085,13 @@ void Frame_field::save_energy(GRegion* gr, const std::string& filename)
                       pElem->getVertex(3));
     //std::vector<double> *out = data->incrementList(1, TYPE_TET, NumNodes);
     std::vector<double> *out = data->incrementList(3, TYPE_TET, NumNodes);
-    for(MTetrahedron::size_type j = 0; j < pTet->getNumVertices(); j++)
+    for(std::size_t j = 0; j < pTet->getNumVertices(); j++)
       out->push_back(pTet->getVertex(j)->x());
-    for(MTetrahedron::size_type j = 0; j < pTet->getNumVertices(); j++)
+    for(std::size_t j = 0; j < pTet->getNumVertices(); j++)
       out->push_back(pTet->getVertex(j)->y());
-    for(MTetrahedron::size_type j = 0; j < pTet->getNumVertices(); j++)
+    for(std::size_t j = 0; j < pTet->getNumVertices(); j++)
       out->push_back(pTet->getVertex(j)->z());
-    for(MTetrahedron::size_type j = 0; j < pTet->getNumVertices(); j++){
+    for(std::size_t j = 0; j < pTet->getNumVertices(); j++){
       double u, v, w;
       pTet->getNode(j,u,v,w);
       double sf[4], gsf[4][3];
@@ -1176,7 +1176,7 @@ void Size_field::init_region(GRegion* gr)
 
     for(GRegion::size_type i=0;i<gf->getNumMeshElements();i++){
       MElement* element = gf->getMeshElement(i);
-      for(MElement::size_type j=0;j<element->getNumVertices();j++){
+      for(std::size_t j=0;j<element->getNumVertices();j++){
          MVertex* vertex = element->getVertex(j);
 
         query[0] = vertex->x();

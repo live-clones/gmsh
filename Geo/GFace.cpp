@@ -153,7 +153,7 @@ void GFace::deleteMesh(bool onlyDeleteElements)
   model()->destroyMeshCaches();
 }
 
-GEntity::size_type GFace::getNumMeshElements() const
+std::size_t GFace::getNumMeshElements() const
 {
   return triangles.size() + quadrangles.size() + polygons.size();
 }
@@ -2112,21 +2112,21 @@ void GFace::alignElementsWithMaster()
 
     std::set<MFace,Less_Face> srcFaces;
 
-    for(GEntity::size_type i = 0; i < master->getNumMeshElements(); i++) {
+    for(std::size_t i = 0; i < master->getNumMeshElements(); i++) {
       MElement *face = master->getMeshElement(i);
       std::vector<MVertex *> vtcs;
       vtcs.reserve(face->getNumVertices());
-      for(MFace::size_type j = 0; j < face->getNumVertices(); j++) {
+      for(std::size_t j = 0; j < face->getNumVertices(); j++) {
         vtcs.push_back(face->getVertex(j));
       }
       srcFaces.insert(MFace(vtcs));
     }
 
-    for (GEntity::size_type i=0;i<getNumMeshElements();i++) {
+    for (std::size_t i=0;i<getNumMeshElements();i++) {
 
       MElement* face = getMeshElement(i);
       std::vector<MVertex*> vtcs;
-      for (MElement::size_type j=0;j<face->getNumVertices();j++) {
+      for (std::size_t j=0;j<face->getNumVertices();j++) {
         MVertex* tv = face->getVertex(j);
 
         std::map<MVertex*,MVertex*>::iterator cIter = correspondingVertices.find(tv);

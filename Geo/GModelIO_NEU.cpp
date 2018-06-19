@@ -119,7 +119,7 @@ namespace
     for (GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
       for (unsigned i = 0; i < (*it)->triangles.size(); ++i) {
         MTriangle* tri = (*it)->triangles[i];
-        for (MElement::size_type j = 0; j < tri->getNumVertices(); ++j) {
+        for (std::size_t j = 0; j < tri->getNumVertices(); ++j) {
           vertmap[tri->getVertex(j)->getNum()].push_back(tri->getNum());
         }
       }

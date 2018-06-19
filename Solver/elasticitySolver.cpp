@@ -672,13 +672,13 @@ double elasticitySolver::computeDisplacementError(simpleFunction<double> *f0, si
          it != elasticFields[i].g->end(); ++it){
       MElement *e = *it;
       if(e->getParent()) {
-        for (MElement::size_type j = 0; j < e->getNumVertices(); ++j) {
+        for (std::size_t j = 0; j < e->getNumVertices(); ++j) {
           if(vCut.find(e->getVertex(j)) == vCut.end())
             vCut[e->getVertex(j)] = e->getParent();
         }
       }
       else {
-        for (MElement::size_type j = 0; j < e->getNumVertices(); ++j)
+        for (std::size_t j = 0; j < e->getNumVertices(); ++j)
           v.insert(e->getVertex(j));
       }
     }
@@ -799,13 +799,13 @@ PView* elasticitySolver::buildDisplacementView (const std::string postFileName)
          it != elasticFields[i].g->end(); ++it){
       MElement *e = *it;
       if(e->getParent()) {
-        for (MElement::size_type j = 0; j < e->getNumVertices(); ++j) {
+        for (std::size_t j = 0; j < e->getNumVertices(); ++j) {
           if(vCut.find(e->getVertex(j)) == vCut.end())
             vCut[e->getVertex(j)] = e->getParent();
         }
       }
       else {
-        for (MElement::size_type j = 0; j < e->getNumVertices(); ++j)
+        for (std::size_t j = 0; j < e->getNumVertices(); ++j)
           v.insert(e->getVertex(j));
       }
     }
@@ -978,7 +978,7 @@ PView* elasticitySolver::buildLagrangeMultiplierView (const std::string postFile
           LagrangeMultiplierFields[i].g->begin();
         it != LagrangeMultiplierFields[i].g->end(); ++it){
       MElement *e = *it;
-      for (MElement::size_type j = 0; j < e->getNumVertices(); ++j) v.insert(e->getVertex(j));
+      for (std::size_t j = 0; j < e->getNumVertices(); ++j) v.insert(e->getVertex(j));
     }
   }
   std::map<int, std::vector<double> > data;

@@ -867,7 +867,7 @@ static void directions_storage(GFace* gf)
   std::set<MVertex*> vertices;
   for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
     MElement* element = gf->getMeshElement(i);
-    for(MElement::size_type j = 0; j < element->getNumVertices(); j++){
+    for(std::size_t j = 0; j < element->getNumVertices(); j++){
       MVertex *vertex = element->getVertex(j);
       vertices.insert(vertex);
     }
@@ -2590,7 +2590,7 @@ static bool getGFaceNormalFromVert(GFace *gf, MElement *el, SVector3 &nf)
 {
   // TODO C++11 use std::find_if
   bool found = false;
-  for(MElement::size_type iElV = 0; iElV < el->getNumVertices(); iElV++) {
+  for(std::size_t iElV = 0; iElV < el->getNumVertices(); iElV++) {
     MVertex *v = el->getVertex(iElV);
     SPoint2 param;
     if(v->onWhat() == gf && v->getParameter(0, param[0]) &&
@@ -2607,7 +2607,7 @@ static bool getGFaceNormalFromBary(GFace *gf, MElement *el, SVector3 &nf)
 {
   SPoint2 param(0., 0.);
   bool ok = true;
-  for(MElement::size_type j = 0; j < el->getNumVertices(); j++) {
+  for(std::size_t j = 0; j < el->getNumVertices(); j++) {
     SPoint2 p;
     // FIXME: use inexact reparam because some vertices might not be exactly on
     // the surface after the 3D Delaunay

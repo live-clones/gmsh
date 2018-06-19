@@ -69,7 +69,7 @@ static unsigned int getColorByElement(MElement *ele)
     // e.g. a triangle can have no vertices categorized on a surface),
     // but it's the best we can do "fast" since we don't store the
     // associated entity in the element
-    for(MElement::size_type i = 0; i < ele->getNumVertices(); i++){
+    for(std::size_t i = 0; i < ele->getNumVertices(); i++){
       GEntity *e = ele->getVertex(i)->onWhat();
       if(e && (e->dim() == ele->getDim()))
         return getColorByEntity(e);
@@ -90,7 +90,7 @@ static double intersectClipPlane(int clip, MElement *ele)
 {
   MVertex *v = ele->getVertex(0);
   double val = evalClipPlane(clip, v->x(), v->y(), v->z());
-  for(MElement::size_type i = 1; i < ele->getNumVertices(); i++){
+  for(std::size_t i = 1; i < ele->getNumVertices(); i++){
     v = ele->getVertex(i);
     if(val * evalClipPlane(clip, v->x(), v->y(), v->z()) <= 0)
       return 0.; // the element intersects the cut plane

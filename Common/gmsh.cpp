@@ -940,7 +940,7 @@ GMSH_API void gmsh::model::mesh::getElements(std::vector<int> &elementTypes,
         MElement *e = ge->getMeshElement(j);
         if(e->getTypeForMSH() == elementType){
           elementTags.back().push_back(e->getNum());
-          for(MElement::size_type k = 0; k < e->getNumVertices(); k++){
+          for(std::size_t k = 0; k < e->getNumVertices(); k++){
             nodeTags.back().push_back(e->getVertex(k)->getNum());
           }
         }
@@ -961,7 +961,7 @@ GMSH_API void gmsh::model::mesh::getElement(const int elementTag,
   }
   elementType = e->getTypeForMSH();
   nodeTags.clear();
-  for(MElement::size_type i = 0; i < e->getNumVertices(); i++){
+  for(std::size_t i = 0; i < e->getNumVertices(); i++){
     MVertex *v = e->getVertex(i);
     if(!v){
       Msg::Error("Unknown node in element %d", elementTag);
@@ -988,7 +988,7 @@ GMSH_API void gmsh::model::mesh::getElementByCoordinates(const double x,
   elementTag = e->getNum();
   elementType = e->getTypeForMSH();
   nodeTags.clear();
-  for(MElement::size_type i = 0; i < e->getNumVertices(); i++){
+  for(std::size_t i = 0; i < e->getNumVertices(); i++){
     MVertex *v = e->getVertex(i);
     if(!v){
       Msg::Error("Unknown node in element %d", elementTag);
@@ -1181,7 +1181,7 @@ GMSH_API void gmsh::model::mesh::getElementsByType(const int elementType,
         MElement *e = ge->getMeshElementByType(familyType, j);
         if(haveElementTags) elementTags[o] = e->getNum();
         if(haveNodeTags){
-          for(MElement::size_type k = 0; k < e->getNumVertices(); k++){
+          for(std::size_t k = 0; k < e->getNumVertices(); k++){
             nodeTags[idx++] = e->getVertex(k)->getNum();
           }
         }
