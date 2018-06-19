@@ -21,8 +21,8 @@ class GFace;
 class MVertex;
 
 // A mesh vertex.
-class MVertex{
- protected:
+class MVertex {
+protected:
   // the immutable id number of the vertex (this number is unique and is
   // guaranteed never to change once a vertex has been created, unless the mesh
   // is explicitely renumbered)
@@ -40,34 +40,36 @@ class MVertex{
   GEntity *_ge;
 
 public:
-  typedef std::vector<int>::size_type size_type;
-
- public:
-  MVertex(double x, double y, double z, GEntity *ge=0, int num=0);
-  virtual ~MVertex(){}
+  MVertex(double x, double y, double z, GEntity *ge = 0, int num = 0);
+  virtual ~MVertex() {}
   void deleteLast();
 
   // get/set the visibility flag
-  virtual char getVisibility(){ return _visible; }
-  virtual void setVisibility(char val){ _visible = val; }
+  virtual char getVisibility() { return _visible; }
+  virtual void setVisibility(char val) { _visible = val; }
 
   // get the "polynomial order" of the vertex
-  int getPolynomialOrder(){ return _order; }
-  void setPolynomialOrder(int order){ _order = (char)order; }
+  int getPolynomialOrder() { return _order; }
+  void setPolynomialOrder(int order) { _order = (char)order; }
 
   // get/set the coordinates
   double x() const { return _x; }
   double y() const { return _y; }
   double z() const { return _z; }
-  double & x() { return _x; }
-  double & y() { return _y; }
-  double & z() { return _z; }
+  double &x() { return _x; }
+  double &y() { return _y; }
+  double &z() { return _z; }
 
   SPoint3 point() const { return SPoint3(_x, _y, _z); }
-  void setXYZ(double x, double y, double z) { _x = x; _y = y; _z = z; }
+  void setXYZ(double x, double y, double z)
+  {
+    _x = x;
+    _y = y;
+    _z = z;
+  }
 
   // get/set the parent entity
-  GEntity* onWhat() const { return _ge; }
+  GEntity *onWhat() const { return _ge; }
   void setEntity(GEntity *ge) { _ge = ge; }
 
   // get the immutab vertex number
@@ -81,10 +83,13 @@ public:
   int getIndex() const { return _index; }
   void setIndex(int index) { _index = index; }
 
-
   // get/set ith parameter
-  virtual bool getParameter(int i, double &par) const { par = 0.; return false; }
-  virtual bool setParameter(int i, double par){ return false; }
+  virtual bool getParameter(int i, double &par) const
+  {
+    par = 0.;
+    return false;
+  }
+  virtual bool setParameter(int i, double par) { return false; }
 
   // measure distance to another vertex
   double distance(MVertex *const v)
@@ -96,59 +101,82 @@ public:
   }
 
   // IO routines
-  void writeMSH(FILE *fp, bool binary=false, bool saveParametric=false,
-                double scalingFactor=1.0);
-  void writeMSH2(FILE *fp, bool binary=false, bool saveParametric=false,
-                 double scalingFactor=1.0);
-  void writeMSH4(FILE *fp, bool binary=false, bool saveParametric=false,
-                 double scalingFactor=1.0);
+  void writeMSH(FILE *fp, bool binary = false, bool saveParametric = false,
+                double scalingFactor = 1.0);
+  void writeMSH2(FILE *fp, bool binary = false, bool saveParametric = false,
+                 double scalingFactor = 1.0);
+  void writeMSH4(FILE *fp, bool binary = false, bool saveParametric = false,
+                 double scalingFactor = 1.0);
   void writePLY2(FILE *fp);
-  void writeVRML(FILE *fp, double scalingFactor=1.0);
-  void writeUNV(FILE *fp, double scalingFactor=1.0);
-  void writeVTK(FILE *fp, bool binary=false, double scalingFactor=1.0,
-                bool bigEndian=false);
-  void writeMATLAB(FILE *fp, int type, bool binary, double scalingFactor=1.0);
-  void writeTOCHNOG(FILE *fp, int dim, double scalingFactor=1.0);
-  void writeMESH(FILE *fp, double scalingFactor=1.0);
-  void writeNEU(FILE *fp, int dim, double scalingFactor=1.0);
-  void writeBDF(FILE *fp, int format=0, double scalingFactor=1.0);
-  void writeINP(FILE *fp, double scalingFactor=1.0);
-  void writeDIFF(FILE *fp, bool binary, double scalingFactor=1.0);
-  void writeSU2(FILE *fp, int dim, double scalingFactor=1.0);
+  void writeVRML(FILE *fp, double scalingFactor = 1.0);
+  void writeUNV(FILE *fp, double scalingFactor = 1.0);
+  void writeVTK(FILE *fp, bool binary = false, double scalingFactor = 1.0,
+                bool bigEndian = false);
+  void writeMATLAB(FILE *fp, int type, bool binary, double scalingFactor = 1.0);
+  void writeTOCHNOG(FILE *fp, int dim, double scalingFactor = 1.0);
+  void writeMESH(FILE *fp, double scalingFactor = 1.0);
+  void writeNEU(FILE *fp, int dim, double scalingFactor = 1.0);
+  void writeBDF(FILE *fp, int format = 0, double scalingFactor = 1.0);
+  void writeINP(FILE *fp, double scalingFactor = 1.0);
+  void writeDIFF(FILE *fp, bool binary, double scalingFactor = 1.0);
+  void writeSU2(FILE *fp, int dim, double scalingFactor = 1.0);
 };
 
-class MEdgeVertex : public MVertex{
- protected:
+class MEdgeVertex : public MVertex {
+protected:
   double _u, _lc;
- public:
-  MVertexBoundaryLayerData* bl_data;
+
+public:
+  MVertexBoundaryLayerData *bl_data;
 
   MEdgeVertex(double x, double y, double z, GEntity *ge, double u, int num = 0,
               double lc = -1.0)
-    : MVertex(x, y, z, ge,num), _u(u), _lc(lc), bl_data(0)
+    : MVertex(x, y, z, ge, num)
+    , _u(u)
+    , _lc(lc)
+    , bl_data(0)
   {
   }
-  virtual ~MEdgeVertex(){ if(bl_data) delete bl_data; }
-  virtual bool getParameter(int i, double &par) const { par = _u; return true; }
-  virtual bool setParameter(int i, double par){ _u = par; return true; }
+  virtual ~MEdgeVertex()
+  {
+    if(bl_data) delete bl_data;
+  }
+  virtual bool getParameter(int i, double &par) const
+  {
+    par = _u;
+    return true;
+  }
+  virtual bool setParameter(int i, double par)
+  {
+    _u = par;
+    return true;
+  }
   double getLc() const { return _lc; }
 };
 
-class MFaceVertex : public MVertex{
- protected:
+class MFaceVertex : public MVertex {
+protected:
   double _u, _v;
- public :
-  MVertexBoundaryLayerData* bl_data;
+
+public:
+  MVertexBoundaryLayerData *bl_data;
 
   MFaceVertex(double x, double y, double z, GEntity *ge, double u, double v,
               int num = 0)
-    : MVertex(x, y, z, ge, num), _u(u), _v(v), bl_data(0)
+    : MVertex(x, y, z, ge, num)
+    , _u(u)
+    , _v(v)
+    , bl_data(0)
   {
   }
-  virtual ~MFaceVertex(){ if(bl_data) delete bl_data; }
+  virtual ~MFaceVertex()
+  {
+    if(bl_data) delete bl_data;
+  }
   virtual bool getParameter(int i, double &par) const
   {
-    par = (i ? _v : _u); return true;
+    par = (i ? _v : _u);
+    return true;
   }
   virtual bool setParameter(int i, double par)
   {
@@ -160,32 +188,33 @@ class MFaceVertex : public MVertex{
   }
 };
 
-class MVertexLessThanLexicographic{
+class MVertexLessThanLexicographic {
   static double tolerance;
+
 public:
   static double getTolerance();
   bool operator()(const MVertex *v1, const MVertex *v2) const;
 };
 
-class MVertexLessThanNum{
- public:
+class MVertexLessThanNum {
+public:
   bool operator()(const MVertex *v1, const MVertex *v2) const;
 };
 
-bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
-                           SPoint2 &param1, SPoint2 &param2);
-bool reparamMeshVertexOnFace(MVertex const* v, const GFace *gf, SPoint2 &param,
-                             bool onSurface=true);
+bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,
+                           SPoint2 &param2);
+bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
+                             bool onSurface = true);
 bool reparamMeshVertexOnEdge(MVertex *v, const GEdge *ge, double &param);
 
 double angle3Vertices(const MVertex *p1, const MVertex *p2, const MVertex *p3);
 
-inline double distance (MVertex *v1, MVertex *v2)
+inline double distance(MVertex *v1, MVertex *v2)
 {
   const double dx = v1->x() - v2->x();
   const double dy = v1->y() - v2->y();
   const double dz = v1->z() - v2->z();
-  return std::sqrt(dx*dx+dy*dy+dz*dz);
+  return std::sqrt(dx * dx + dy * dy + dz * dz);
 }
 
 #endif
