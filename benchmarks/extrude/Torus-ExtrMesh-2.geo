@@ -21,10 +21,6 @@ Extrude {{0.0,1,0}, {0,0.0,0.0}, 3.14159/2}
 Coherence;
 Extrude {0,0.0,2}{ Surface {6}; }
 
-
-Surface Loop(51) = {6,37,41,45,49,50};
-Volume(52) = {51};
-
 Extrude {0,2,0.0}
 {
   Surface {45}; Layers {{10,25,10},{.1,.9,1.}};
