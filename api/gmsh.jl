@@ -718,7 +718,7 @@ are negative, get all the nodes in the mesh. `nodeTags` contains the node tags
 (their unique, strictly positive identification numbers). `coord` is a vector of
 length 3 times the length of `nodeTags` that contains the (x, y, z) coordinates
 of the nodes, concatenated. If `dim` >= 0, `parametricCoord` contains the
-parametric coordinates u and/or v of the nodes, if available. The length of
+parametric coordinates u or (u, v) the nodes, if available. The length of
 `parametricCoord` can be 0 or `dim` times the length of `nodeTags`. If
 `includeBoundary` is set, also return the nodes classified on the boundary of
 the entity (wich will be reparametrized on the entity if `dim` >= 0 in order to
@@ -789,7 +789,9 @@ end
     gmsh.model.mesh.getNodesForPhysicalGroup(dim, tag)
 
 Get the nodes from all the elements belonging to the physical group of dimension
-`dim` and tag `tag`.
+`dim` and tag `tag`. `nodeTags` contains the node tags; `coord` is a vector of
+length 3 times the length of `nodeTags` that contains the (x, y, z) coordinates
+of the nodes, concatenated.
 
 Return `nodeTags`, `coord`.
 """
