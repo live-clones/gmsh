@@ -132,7 +132,7 @@ void readMSHPeriodicNodes(FILE *fp, GModel *gm) // also used in MSH2
 
     bool completePer = s && m;
 
-    char token[6];
+    char token[7];
     fpos_t pos;
     fgetpos(fp, &pos);
     if(fscanf(fp, "%s", token) != 1) return;
