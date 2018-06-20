@@ -286,7 +286,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
         for(unsigned int i = 0; i < entities.size(); i++){
           for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
             MElement *e = entities[i]->getMeshElement(j);
-            for (int k = 0; k < e->getNumVertices(); k++)
+            for (std::size_t k = 0; k < e->getNumVertices(); k++)
               nodes.insert(e->getVertex(k));
           }
         }

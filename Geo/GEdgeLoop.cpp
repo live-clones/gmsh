@@ -14,16 +14,9 @@ void GEdgeSigned::print() const
             ge->tag(), _sign, getBeginVertex()->tag(), getEndVertex()->tag());
 }
 
-int countInList(std::list<GEdge*> &wire, GEdge *ge)
+int countInList(std::list<GEdge *> &wire, GEdge *ge)
 {
-  std::list<GEdge*>::iterator it = wire.begin();
-  std::list<GEdge*>::iterator ite = wire.end();
-  int count = 0;
-  while(it != ite){
-    if(*it == ge) count++;
-    ++it;
-  }
-  return count;
+  return std::count(wire.begin(), wire.end(), ge);
 }
 
 GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge*> &wire)

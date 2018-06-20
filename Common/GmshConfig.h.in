@@ -65,7 +65,7 @@
 #cmakedefine HAVE_SLEPC
 #cmakedefine HAVE_SOLVER
 #cmakedefine HAVE_TAUCS
-#cmakedefine HAVE_TETGEN
+#cmakedefine HAVE_TETGENBR
 #cmakedefine HAVE_VISUDEV
 #cmakedefine HAVE_VOROPP
 #cmakedefine HAVE_ZIPPER

@@ -199,7 +199,7 @@ void GMSH_FaultZoneMesher::RetriveFissuresInfos(GFace* gFace){
   // fill _connectedElements
   for(unsigned int i = 0; i < gFace->getNumMeshElements(); i++){
     MElement *mElem = gFace->getMeshElement(i);
-    for (int j = 0; j < mElem->getNumVertices(); j++){
+    for (std::size_t j = 0; j < mElem->getNumVertices(); j++){
       MVertex *mVert = mElem->getVertex(j);
       std::set < MVertex* >::iterator its = allFissuresVertices.find( mVert );
       if (its != allFissuresVertices.end()){
@@ -214,7 +214,7 @@ void GMSH_FaultZoneMesher::RetriveFissuresInfos(GFace* gFace){
     GEdge *gEdge = *itl;
     for(unsigned int i = 0; i < gEdge->getNumMeshElements(); i++){
       MElement *mElem = gEdge->getMeshElement(i);
-      for (int j = 0; j < mElem->getNumVertices(); j++){
+      for (std::size_t j = 0; j < mElem->getNumVertices(); j++){
         MVertex *mVert = mElem->getVertex(j);
         std::set < MVertex* >::iterator its = allFissuresVertices.find( mVert );
         if (its != allFissuresVertices.end()){
@@ -273,7 +273,7 @@ void GMSH_FaultZoneMesher::RetriveFissuresInfos(GFace* gFace){
       }
 
       _jointElements.insert(mElem);
-      for(int j = 0; j < mElem->getNumVertices(); j++){
+      for(std::size_t j = 0; j < mElem->getNumVertices(); j++){
         MVertex *mVert = mElem->getVertex(j);
         _fissureByHeavNode[mVert] = gEdge;
       }
@@ -576,7 +576,7 @@ void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace,
                      "outgoing normal for its corresponding joint element",
                      mElem->getNum());
       // retriving MVertices to create the new MElement
-      for(int i = 0; i < mElem->getNumVertices(); i++){
+      for(std::size_t i = 0; i < mElem->getNumVertices(); i++){
         MVertex *mVert = mElem->getVertex(i);
 
         int j = (changeOri && i < 2) ? !i : i;

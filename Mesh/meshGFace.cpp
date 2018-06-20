@@ -237,18 +237,17 @@ static void copyMesh(GFace *source, GFace *target)
 
   // add principal vertex pairs
 
-  std::list<GVertex*> s_vtcs = source->vertices();
-  std::list<GVertex*> t_vtcs = target->vertices();
+  std::vector<GVertex*> const& s_vtcs = source->vertices();
+  std::vector<GVertex*> const& t_vtcs = target->vertices();
 
   if(s_vtcs.size() != t_vtcs.size()) {
     Msg::Info("Periodicity imposed on topologically incompatible surfaces"
               "(%d vs %d bounding vertices)",s_vtcs.size(),t_vtcs.size());
   }
 
-  std::set<GVertex*> checkVtcs;
-  checkVtcs.insert(s_vtcs.begin(),s_vtcs.end());
+  std::set<GVertex*> checkVtcs(s_vtcs.begin(),s_vtcs.end());
 
-  for(std::list<GVertex*>::iterator tvIter=t_vtcs.begin();tvIter!=t_vtcs.end();++tvIter) {
+  for(std::vector<GVertex*>::const_iterator tvIter=t_vtcs.begin();tvIter!=t_vtcs.end();++tvIter) {
 
     GVertex* gvt = *tvIter;
     std::map<GVertex*,GVertex*>::iterator gvsIter = target->vertexCounterparts.find(gvt);
@@ -868,7 +867,7 @@ static void directions_storage(GFace* gf)
   std::set<MVertex*> vertices;
   for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
     MElement* element = gf->getMeshElement(i);
-    for(int j = 0; j < element->getNumVertices(); j++){
+    for(std::size_t j = 0; j < element->getNumVertices(); j++){
       MVertex *vertex = element->getVertex(j);
       vertices.insert(vertex);
     }
@@ -2589,8 +2588,9 @@ void meshGFace::operator()(GFace *gf, bool print)
 
 static bool getGFaceNormalFromVert(GFace *gf, MElement *el, SVector3 &nf)
 {
+  // TODO C++11 use std::find_if
   bool found = false;
-  for(int iElV = 0; iElV < el->getNumVertices(); iElV++) {
+  for(std::size_t iElV = 0; iElV < el->getNumVertices(); iElV++) {
     MVertex *v = el->getVertex(iElV);
     SPoint2 param;
     if(v->onWhat() == gf && v->getParameter(0, param[0]) &&
@@ -2607,7 +2607,7 @@ static bool getGFaceNormalFromBary(GFace *gf, MElement *el, SVector3 &nf)
 {
   SPoint2 param(0., 0.);
   bool ok = true;
-  for(int j = 0; j < el->getNumVertices(); j++) {
+  for(std::size_t j = 0; j < el->getNumVertices(); j++) {
     SPoint2 p;
     // FIXME: use inexact reparam because some vertices might not be exactly on
     // the surface after the 3D Delaunay
@@ -2616,7 +2616,7 @@ static bool getGFaceNormalFromBary(GFace *gf, MElement *el, SVector3 &nf)
     param += p;
   }
   if(ok) {
-    param *= 1. / el->getNumVertices();
+    param *= 1.0 / el->getNumVertices();
     nf = gf->normal(param);
   }
   return ok;

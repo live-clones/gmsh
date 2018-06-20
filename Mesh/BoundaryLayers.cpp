@@ -49,17 +49,15 @@ static void addExtrudeNormals(std::vector<T*> &elements, int invert,
     std::set<MVertex*> verts;
     for(unsigned int i = 0; i < elements.size(); i++){
       if(!ExtrudeParams::calcLayerScaleFactor[index]){
-	for(int j = 0; j < elements[i]->getNumVertices(); j++)
+	for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++)
           verts.insert(elements[i]->getVertex(j));
       }
       else{
 	std::vector<MVertex*> elem_verts;
-	double aveLength = 0.0;
 	elements[i]->getVertices(elem_verts);
-	if(skipScaleCalc)
-	  aveLength = 1.0;
-	else
-	  aveLength = GetAveEdgeLength(elem_verts);
+
+    double aveLength = skipScaleCalc ? 1.0 : GetAveEdgeLength(elem_verts);
+
 	for(unsigned int j = 0; j < elem_verts.size(); j++){
 	  verts.insert(elem_verts[j]);
 	  // if scaleLastLayer selection, but not doing gouraud, then still
@@ -91,7 +89,7 @@ static void addExtrudeNormals(std::vector<T*> &elements, int invert,
       if(invert) n *= -1.;
       double nn[3] = {n[0], n[1], n[2]};
       if(!ExtrudeParams::calcLayerScaleFactor[index]){
-	for(int k = 0; k < ele->getNumVertices(); k++){
+	for(std::size_t k = 0; k < ele->getNumVertices(); k++){
           MVertex *v = ele->getVertex(k);
           ExtrudeParams::normals[index]->add(v->x(), v->y(), v->z(), 3, nn);
         }

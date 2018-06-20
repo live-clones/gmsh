@@ -712,12 +712,11 @@ int IsSurfaceALateralForRegion(GRegion *region, GFace *face)
   else if( reg_ep->geo.Type == ROTATE ||
            reg_ep->geo.Type == TRANSLATE_ROTATE ){
     // create lists of GVertex object for source face and present face
-    std::list<GVertex*> face_v, source_v;
-    face_v = face->vertices();
-    source_v = reg_source->vertices();
-    std::list<GVertex*>::iterator itvs;
-    double tol = 1.00e-12;
-    double eps = fabs( tol * CTX::instance()->lc );
+    std::vector<GVertex*> const& face_v = face->vertices();
+    std::vector<GVertex*> const& source_v = reg_source->vertices();
+    std::vector<GVertex*>::const_iterator itvs;
+    double const tol = 1.00e-12;
+    double const eps = std::abs( tol * CTX::instance()->lc );
     unsigned int j_top, k_top;
     j_top = reg_ep->mesh.NbLayer-1;
     k_top = reg_ep->mesh.NbElmLayer[j_top];
@@ -725,7 +724,7 @@ int IsSurfaceALateralForRegion(GRegion *region, GFace *face)
     for( itvs = source_v.begin(); itvs != source_v.end(); itvs++ ){
       double x1 = (*itvs)->x(), y1 = (*itvs)->y(), z1 = (*itvs)->z();
       reg_ep->Extrude( j_top, k_top, x1, y1, z1 );
-      std::list<GVertex*>::iterator itvf;
+      std::vector<GVertex*>::const_iterator itvf;
       bool found_one = false;
       for( itvf = face_v.begin(); itvf != face_v.end(); itvf++ ){
         double x2 = (*itvf)->x(), y2 = (*itvf)->y(), z2 = (*itvf)->z();

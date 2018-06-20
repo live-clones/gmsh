@@ -12,6 +12,7 @@
 
 #if defined(HAVE_MESH)
 #include "qualityMeasures.h"
+#include "HighOrder.h"
 #endif
 
 #include <cmath>
@@ -355,8 +356,6 @@ void MTriangle::reorient(int rot,bool swap)
   else      for (int i=0;i<3;i++) _v[i] = tmp[(3+i-rot)%3];
 }
 
-#include "HighOrder.h"
-
 void MTriangle6::reorient(int rot, bool swap)
 {
   if (rot == 0 && !swap) return;
@@ -479,7 +478,7 @@ MFaceN MTriangleN::getHighOrderFace(int num, int sign, int rot)
   IndicesReoriented &indices = it->second;
 
   std::vector<MVertex*> vertices(getNumVertices());
-  for (int i = 0; i < getNumVertices(); ++i) {
+  for (std::size_t i = 0; i < getNumVertices(); ++i) {
     vertices[i] = getVertex(indices[i]);
   }
   return MFaceN(TYPE_TRI, _order, vertices);

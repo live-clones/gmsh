@@ -52,13 +52,13 @@
 class TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES {
 public:
   void operator () (GRegion *gr) {
-    std::list<GEdge*> e = gr->embeddedEdges();
-    std::list<GFace*> f = gr->embeddedFaces();
+    std::vector<GEdge*> const& e = gr->embeddedEdges();
+    std::vector<GFace*> const& f = gr->embeddedFaces();
     if (e.empty() && f.empty())return;
     std::map<MEdge,GEdge*,Less_Edge> edges;
     std::map<MFace,GFace*,Less_Face> faces;
-    std::list<GEdge*>::iterator it = e.begin();
-    std::list<GFace*>::iterator itf = f.begin();
+    std::vector<GEdge*>::const_iterator it = e.begin();
+    std::vector<GFace*>::const_iterator itf = f.begin();
     for ( ; it != e.end() ; ++it){
       for (unsigned int i=0;i<(*it)->lines.size(); ++i){
 	if (distance ((*it)->lines[i]->getVertex(0),(*it)->lines[i]->getVertex(1)) > 1.e-12)
@@ -537,7 +537,7 @@ void fillv_(std::multimap<MVertex*, MElement*> &vertexToElement,
 {
   for (ITERATOR IT = it_beg; IT != it_end ; ++IT){
     MElement *el = *IT;
-    for(int j = 0; j < el->getNumVertices(); j++) {
+    for(std::size_t j = 0; j < el->getNumVertices(); j++) {
       MVertex* e = el->getVertex(j);
       vertexToElement.insert(std::make_pair(e, el));
     }
@@ -911,7 +911,7 @@ static void Mesh3D(GModel *m)
 
   for (GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
     if ((*it)->getNumMeshElements() == 0) {
-      Msg::Warning("Volume %d consists of no elements", (*it)->tag());
+      Msg::Error("No tetrahedra in region %d", (*it)->tag());
     }
   }
 

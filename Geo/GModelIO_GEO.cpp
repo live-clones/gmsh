@@ -18,9 +18,12 @@
 #include "gmshFace.h"
 #include "gmshEdge.h"
 #include "gmshRegion.h"
-#include "Field.h"
 #include "Context.h"
 #include "Parser.h"
+
+#if defined(HAVE_MESH)
+#include "Field.h"
+#endif
 
 void GEO_Internals::_allocateAll()
 {
@@ -1289,6 +1292,8 @@ void GModel::_deleteGEOInternals()
   _geo_internals = 0;
 }
 
+#if defined(HAVE_MESH)
+
 class writeFieldOptionGEO {
  private :
   FILE *geo;
@@ -1319,6 +1324,8 @@ class writeFieldGEO {
           writeFieldOptionGEO(geo, it.second));
     }
 };
+
+#endif
 
 class writePhysicalGroupGEO {
   private :
@@ -1458,9 +1465,11 @@ int GModel::writeGEO(const std::string &name, bool printLabels, bool onlyPhysica
     std::for_each(groups[i].begin(), groups[i].end(),
         writePhysicalGroupGEO(fp, i, printLabels, labels, physicalNames));
 
+#if defined(HAVE_MESH)
   std::for_each(getFields()->begin(), getFields()->end(), writeFieldGEO(fp));
   if(getFields()->getBackgroundField() > 0)
     fprintf(fp, "Background Field = %i;\n", getFields()->getBackgroundField());
+#endif
 
   fclose(fp);
   return 1;

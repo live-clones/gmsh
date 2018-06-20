@@ -79,30 +79,24 @@ void voroMetal3D::execute(double h)
 
 void voroMetal3D::execute(GRegion* gr,double h)
 {
-  unsigned int i;
-  int j;
-  MElement* element;
-  MVertex* vertex;
-  std::vector<SPoint3> vertices2;
-  std::vector<double> radii;
   std::set<MVertex*> vertices;
   std::set<MVertex*>::iterator it;
 
-  vertices2.clear();
-  radii.clear();
-  vertices.clear();
-
-  for(i = 0; i < gr->getNumMeshElements(); i++){
-    element = gr->getMeshElement(i);
-    for(j = 0; j < element->getNumVertices(); j++){
-      vertex = element->getVertex(j);
+  for(GRegion::size_type i = 0; i < gr->getNumMeshElements(); i++){
+    MElement* element = gr->getMeshElement(i);
+    for(std::size_t j = 0; j < element->getNumVertices(); j++){
+      MVertex* vertex = element->getVertex(j);
       vertices.insert(vertex);
     }
   }
 
+  std::vector<SPoint3> vertices2;
+  vertices2.reserve(vertices.size());
+
+  std::vector<double> radii(vertices.size(), 1.0);
+
   for(it = vertices.begin(); it != vertices.end(); it++){
     vertices2.push_back(SPoint3((*it)->x(),(*it)->y(),(*it)->z()));
-    radii.push_back(1.0);
   }
 
   double xMax = 1.0;
@@ -524,14 +518,14 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax, double zMax
   std::vector<int> indices1;
   std::vector<int> indices2;
   std::vector<int> indices3;
-  std::list<GVertex*> vertices;
+  std::vector<GVertex*> vertices;
   std::vector<GEdge*> edges1;
   std::vector<GEdge*> edges2;
   std::vector<int> orientations1;
   std::vector<int> orientations2;
   std::map<GFace*,SPoint3> centers;
   std::map<GFace*,bool> markings;
-  std::list<GVertex*>::iterator it2;
+  std::vector<GVertex*>::iterator it2;
   std::map<GFace*,SPoint3>::iterator it3;
   std::map<GFace*,SPoint3>::iterator it4;
   std::map<GFace*,bool>::iterator it5;
@@ -775,10 +769,10 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax, double zMax
   for(i = 0; i < pairs.size(); i++){
     gf1 = pairs[i].first;
     gf2 = pairs[i].second;
-    std::list<GVertex*> gv1 = gf1->vertices();
-    std::list<GVertex*> gv2 = gf2->vertices();
-    std::list<GVertex*>::iterator it1 = gv1.begin();
-    std::list<GVertex*>::iterator it2 = gv2.begin();
+    std::vector<GVertex*> gv1 = gf1->vertices();
+    std::vector<GVertex*> gv2 = gf2->vertices();
+    std::vector<GVertex*>::iterator it1 = gv1.begin();
+    std::vector<GVertex*>::iterator it2 = gv2.begin();
     SPoint3 cg1 (0,0,0);
     SPoint3 cg2 (0,0,0);
     for (; it1 != gv1.end(); it1++,it2++){

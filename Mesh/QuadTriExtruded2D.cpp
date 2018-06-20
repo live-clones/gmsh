@@ -372,7 +372,7 @@ static int MeshQuadToTriTopUnstructured(GFace *from, GFace *to, MVertexRTree &po
 
   for(unsigned int i = 0; i < from->quadrangles.size(); i++){
     std::vector<MVertex*> verts;
-    for(int j = 0; j < from->quadrangles[i]->getNumVertices(); j++){
+    for(std::size_t j = 0; j < from->quadrangles[i]->getNumVertices(); j++){
       MVertex *v = from->quadrangles[i]->getVertex(j);
       double x = v->x(), y = v->y(), z = v->z();
       ExtrudeParams *ep = to->meshAttributes.extrude;
@@ -467,7 +467,7 @@ int MeshQuadToTriTopSurface(GFace *from, GFace *to, MVertexRTree &pos)
     // loop through each element source quadrangle and extrude
     for(unsigned int i = 0; i < from->quadrangles.size(); i++){
       std::vector<MVertex*> verts;
-      for(int j = 0; j < from->quadrangles[i]->getNumVertices(); j++){
+      for(std::size_t j = 0; j < from->quadrangles[i]->getNumVertices(); j++){
         MVertex *v = from->quadrangles[i]->getVertex(j);
         double x = v->x(), y = v->y(), z = v->z();
         ExtrudeParams *ep = to->meshAttributes.extrude;
@@ -498,7 +498,7 @@ int MeshQuadToTriTopSurface(GFace *from, GFace *to, MVertexRTree &pos)
       int edge_verts_count = 0;
       //int skip_index = 0;
       int bnd_indices[4];
-      for(int p = 0; p < element->getNumVertices(); p++){
+      for(std::size_t p = 0; p < element->getNumVertices(); p++){
         if(pos_src_edge.find(element->getVertex(p)->x(),
                              element->getVertex(p)->y(),
                              element->getVertex(p)->z())){
@@ -560,7 +560,7 @@ int MeshQuadToTriTopSurface(GFace *from, GFace *to, MVertexRTree &pos)
     // quite easily. Loop through each element source quadrangle and extrude
     for(unsigned int i = 0; i < from->quadrangles.size(); i++){
       std::vector<MVertex*> verts;
-      for(int j = 0; j < from->quadrangles[i]->getNumVertices(); j++){
+      for(std::size_t j = 0; j < from->quadrangles[i]->getNumVertices(); j++){
         MVertex *v = from->quadrangles[i]->getVertex(j);
         double x = v->x(), y = v->y(), z = v->z();
         ExtrudeParams *ep = to->meshAttributes.extrude;

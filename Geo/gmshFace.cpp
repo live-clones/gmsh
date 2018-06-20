@@ -6,8 +6,6 @@
 #include <stdlib.h>
 #include "GModel.h"
 #include "gmshFace.h"
-#include "meshGFace.h"
-#include "meshGEdge.h"
 #include "Geo.h"
 #include "GeoInterpolation.h"
 #include "Numeric.h"
@@ -17,6 +15,8 @@
 #include "VertexArray.h"
 
 #if defined(HAVE_MESH)
+#include "meshGFace.h"
+#include "meshGEdge.h"
 #include "Field.h"
 #endif
 
@@ -80,7 +80,7 @@ void gmshFace::resetNativePtr(Surface *face)
 
   std::vector<GEdge*> l_wire;
   l_wire.reserve(eds.size());
-  
+
   GVertex *first = 0;
   for(unsigned int i = 0; i < eds.size(); i++){
     GEdge *e = eds[i];

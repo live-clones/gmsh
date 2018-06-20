@@ -34,7 +34,6 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "MTrihedron.h"
-#include "meshPartition.h"
 #include "StringUtils.h"
 
 static bool readMSH4Physicals(GModel *const model, FILE* fp, GEntity *const entity,
@@ -270,7 +269,7 @@ static bool readMSH4Entities(GModel *const model, FILE* fp, bool partition,
 
   if(partition){
     int numPartitions = 0;
-    int ghostSize = 0;
+    unsigned int ghostSize = 0;
     int *ghostTags = 0;
 
     if(binary){
@@ -1017,7 +1016,7 @@ static bool readMSH4GhostElements(GModel *const model, FILE* fp,
   for(int i = 0; i < numGhostCells; i++){
     int numElm = 0;
     int numPart = 0;
-    int numGhost = 0;
+    unsigned int numGhost = 0;
     char str[256];
 
     if(binary){
@@ -1497,7 +1496,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     }
 
     for(GModel::eiter it = edges.begin(); it != edges.end(); ++it){
-      std::list<GVertex*> vertices;
+      std::vector<GVertex*> vertices;
       std::vector<int> ori;
       if((*it)->getBeginVertex()){
         vertices.push_back((*it)->getBeginVertex());
@@ -1527,7 +1526,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       writeMSH4Physicals(fp, *it, binary);
       fwrite(&verticesSize, sizeof(unsigned long), 1, fp);
       int oriI = 0;
-      for(std::list<GVertex*>::iterator itv = vertices.begin();
+      for(std::vector<GVertex*>::const_iterator itv = vertices.begin();
           itv != vertices.end(); itv++){
         int brepTag = ori[oriI] * (*itv)->tag();
         fwrite(&brepTag, sizeof(int), 1, fp);
@@ -1575,7 +1574,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
     for(GModel::riter it = regions.begin(); it != regions.end(); ++it){
       std::vector<GFace*> faces = (*it)->faces();
-      std::list<int> const& ori = (*it)->faceOrientations();
+      std::vector<int> const& ori = (*it)->faceOrientations();
       unsigned long facesSize = faces.size();
       int entityTag = (*it)->tag();
       fwrite(&entityTag, sizeof(int), 1, fp);
@@ -1598,7 +1597,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       std::vector<int> tags, signs;
       for(std::vector<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++)
         tags.push_back((*itf)->tag());
-      for(std::list<int>::const_iterator itf = ori.begin(); itf != ori.end(); itf++)
+      for(std::vector<int>::const_iterator itf = ori.begin(); itf != ori.end(); itf++)
         signs.push_back(*itf);
       if(tags.size() == signs.size()){
         for(unsigned int i = 0; i < tags.size(); i++)
@@ -1670,7 +1669,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     }
 
     for(GModel::eiter it = edges.begin(); it != edges.end(); ++it){
-      std::list<GVertex*> vertices;
+      std::vector<GVertex*> vertices;
       std::vector<int> ori;
       if((*it)->getBeginVertex()){
         vertices.push_back((*it)->getBeginVertex());
@@ -1698,7 +1697,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       writeMSH4Physicals(fp, *it, binary);
       fprintf(fp, "%lu ", vertices.size());
       int oriI = 0;
-      for(std::list<GVertex*>::iterator itv = vertices.begin();
+      for(std::vector<GVertex*>::iterator itv = vertices.begin();
           itv != vertices.end(); itv++){
         fprintf(fp, "%d ", ori[oriI]*(*itv)->tag());
         oriI++;
@@ -1741,8 +1740,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     }
 
     for(GModel::riter it = regions.begin(); it != regions.end(); ++it){
-      std::vector<GFace*> faces = (*it)->faces();
-      std::list<int> ori = (*it)->faceOrientations();
+      std::vector<GFace*> const& faces = (*it)->faces();
+      std::vector<int> const& ori = (*it)->faceOrientations();
       fprintf(fp, "%d ", (*it)->tag());
       if(partition){
         partitionRegion *pr = static_cast<partitionRegion*>(*it);
@@ -1760,8 +1759,10 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary);
       writeMSH4Physicals(fp, *it, binary);
       fprintf(fp, "%lu ", faces.size());
+      // TODO C++11 std::transform or similiar
       std::vector<int> tags;
-      for(std::vector<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++)
+      tags.reserve(faces.size());
+      for(std::vector<GFace*>::const_iterator itf = faces.begin(); itf != faces.end(); itf++)
         tags.push_back((*itf)->tag());
 
       std::vector<int> signs(ori.begin(),  ori.end());
@@ -1792,8 +1793,8 @@ static unsigned long getAdditionalEntities(std::set<GRegion*, GEntityLessThan> &
   for(std::set<GEdge*, GEntityLessThan>::iterator it = edges.begin();
       it != edges.end(); ++it){
     numVertices += (*it)->getNumMeshVertices();
-    for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-      for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+    for(GFace::size_type i = 0; i < (*it)->getNumMeshElements(); i++){
+      for(GFace::size_type j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
         if((*it)->getMeshElement(i)->getVertex(j)->onWhat() != (*it)){
           GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
 
@@ -1833,8 +1834,8 @@ static unsigned long getAdditionalEntities(std::set<GRegion*, GEntityLessThan> &
   for(std::set<GFace*, GEntityLessThan>::iterator it = faces.begin();
       it != faces.end(); ++it){
     numVertices += (*it)->getNumMeshVertices();
-    for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-      for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+    for(GFace::size_type i = 0; i < (*it)->getNumMeshElements(); i++){
+      for(GFace::size_type j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
         if((*it)->getMeshElement(i)->getVertex(j)->onWhat() != (*it)){
           GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
 
@@ -1874,8 +1875,8 @@ static unsigned long getAdditionalEntities(std::set<GRegion*, GEntityLessThan> &
   for(std::set<GRegion*, GEntityLessThan>::iterator it = regions.begin();
       it != regions.end(); ++it){
     numVertices += (*it)->getNumMeshVertices();
-    for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-      for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+    for(GFace::size_type i = 0; i < (*it)->getNumMeshElements(); i++){
+      for(GFace::size_type j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
         if((*it)->getMeshElement(i)->getVertex(j)->onWhat() != (*it)){
           GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
 
@@ -2461,32 +2462,32 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 static void associateVertices(GModel *model)
 {
   for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex(); ++it){
-    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
-      for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+    for(GFace::size_type j = 0; j < (*it)->getNumMeshElements(); j++){
+      for(GFace::size_type k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
         (*it)->getMeshElement(j)->getVertex(k)->setEntity(0);
       }
     }
     (*it)->mesh_vertices.clear();
   }
   for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
-    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
-      for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+    for(GFace::size_type j = 0; j < (*it)->getNumMeshElements(); j++){
+      for(GFace::size_type k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
         (*it)->getMeshElement(j)->getVertex(k)->setEntity(0);
       }
     }
     (*it)->mesh_vertices.clear();
   }
   for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
-    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
-      for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+    for(GModel::size_type j = 0; j < (*it)->getNumMeshElements(); j++){
+      for(GModel::size_type k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
         (*it)->getMeshElement(j)->getVertex(k)->setEntity(0);
       }
     }
     (*it)->mesh_vertices.clear();
   }
   for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
-    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
-      for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+    for(GModel::size_type j = 0; j < (*it)->getNumMeshElements(); j++){
+      for(GModel::size_type k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
         (*it)->getMeshElement(j)->getVertex(k)->setEntity(0);
       }
     }
@@ -2494,8 +2495,8 @@ static void associateVertices(GModel *model)
   }
 
   for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex(); ++it){
-    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
-      for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+    for(GModel::size_type j = 0; j < (*it)->getNumMeshElements(); j++){
+      for(GModel::size_type k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
         if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == 0){
           (*it)->getMeshElement(j)->getVertex(k)->setEntity(*it);
           (*it)->mesh_vertices.push_back((*it)->getMeshElement(j)->getVertex(k));
@@ -2504,8 +2505,8 @@ static void associateVertices(GModel *model)
     }
   }
   for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
-    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
-      for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+    for(GModel::size_type j = 0; j < (*it)->getNumMeshElements(); j++){
+      for(GModel::size_type k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
         if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == 0){
           (*it)->getMeshElement(j)->getVertex(k)->setEntity(*it);
           (*it)->mesh_vertices.push_back((*it)->getMeshElement(j)->getVertex(k));
@@ -2514,8 +2515,8 @@ static void associateVertices(GModel *model)
     }
   }
   for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
-    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
-      for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+    for(GModel::size_type j = 0; j < (*it)->getNumMeshElements(); j++){
+      for(GModel::size_type k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
         if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == 0){
           (*it)->getMeshElement(j)->getVertex(k)->setEntity(*it);
           (*it)->mesh_vertices.push_back((*it)->getMeshElement(j)->getVertex(k));
@@ -2524,8 +2525,8 @@ static void associateVertices(GModel *model)
     }
   }
   for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
-    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
-      for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+    for(GModel::size_type j = 0; j < (*it)->getNumMeshElements(); j++){
+      for(GModel::size_type k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
         if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == 0){
           (*it)->getMeshElement(j)->getVertex(k)->setEntity(*it);
           (*it)->mesh_vertices.push_back((*it)->getMeshElement(j)->getVertex(k));

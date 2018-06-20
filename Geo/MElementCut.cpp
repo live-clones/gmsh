@@ -620,7 +620,7 @@ static void elementSplitMesh(MElement *e, std::vector<gLevelset *> &RPN,
   //split according to values of vertices (keep +)
   int lsTag = (verticesLs(iLs, e->getVertex(0)->getIndex()) > eps) ? -1 : 1;
   int ils = 0;
-  for(int k = 1; k < e->getNumVertices(); k++){
+  for(std::size_t k = 1; k < e->getNumVertices(); k++){
     int lsTag2 = (verticesLs(iLs, e->getVertex(k)->getIndex()) > eps) ? -1 : 1;
     if (lsTag * lsTag2 < 0) {
       lsTag = -1;
@@ -745,7 +745,7 @@ static void elementSplitMesh(MElement *e, std::vector<gLevelset *> &RPN,
       MFace mf = e->getFace(k);
       bool sameSign = true;
       double val0 = (verticesLs(iLs, mf.getVertex(0)->getIndex()) > eps) ? 1 : -1;
-      for (int j = 1; j < mf.getNumVertices(); j++){
+      for (std::size_t j = 1; j < mf.getNumVertices(); j++){
         double valj = (verticesLs(iLs, mf.getVertex(j)->getIndex()) > eps) ? 1 : -1;
         if (val0*valj < 0.0){ sameSign = false; break;}
       }
@@ -815,7 +815,7 @@ static bool equalV(MVertex *v, const DI_Point *p)
 
 static int getElementVertexNum(DI_Point *p, MElement *e)
 {
-  for(int i = 0; i < e->getNumVertices(); i++)
+  for(std::size_t i = 0; i < e->getNumVertices(); i++)
     if(equalV(e->getVertex(i), p))
       return e->getVertex(i)->getNum();
   return -1;
@@ -879,7 +879,7 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
                    e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
                    e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z());
         T.setPolynomialOrder(recur+1);
-        for(int i = 0; i < e->getNumVertices(); i++)
+        for(std::size_t i = 0; i < e->getNumVertices(); i++)
           nodeLs[i] = &verticesLs(0, e->getVertex(i)->getIndex());
         isCut = T.cut(RPN, ipV, ipS, cp, integOrder, integOrder, integOrder,
                       tetras, quads, triangles, recur, nodeLs);
@@ -894,7 +894,7 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
                   e->getVertex(6)->x(), e->getVertex(6)->y(), e->getVertex(6)->z(),
                   e->getVertex(7)->x(), e->getVertex(7)->y(), e->getVertex(7)->z());
         H.setPolynomialOrder(recur+1);
-        for(int i = 0; i < e->getNumVertices(); i++)
+        for(std::size_t i = 0; i < e->getNumVertices(); i++)
           nodeLs[i] = &verticesLs(0, e->getVertex(i)->getIndex());
         isCut = H.cut(RPN, ipV, ipS, cp, integOrder, integOrder, integOrder, integOrder,
                       hexas, tetras, quads, triangles, lines, recur, nodeLs);
@@ -961,7 +961,7 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
                        t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
                        t->getVertex(3)->x(), t->getVertex(3)->y(), t->getVertex(3)->z());
           Tet.setPolynomialOrder(recur+1);
-          for(int i = 0; i < t->getNumVertices(); i++)
+          for(std::size_t i = 0; i < t->getNumVertices(); i++)
             nodeLs[i] = &verticesLs(0, t->getVertex(i)->getIndex());
           bool iC = Tet.cut(RPN, ipV, ipS, cp, integOrder, integOrder, integOrder,
                             tetras, quads, triangles, recur, nodeLs);
@@ -1121,7 +1121,7 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
                       e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
                       e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z());
         T.setPolynomialOrder(recur+1);
-        for(int i = 0; i < e->getNumVertices(); i++)
+        for(std::size_t i = 0; i < e->getNumVertices(); i++)
           nodeLs[i] = &verticesLs(0, e->getVertex(i)->getIndex());
         isCut = T.cut(RPN, ipV, ipS, cp, integOrder, integOrder, integOrder,
                       quads, triangles, lines, recur, nodeLs);
@@ -1132,7 +1132,7 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
                   e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
                   e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z());
         Q.setPolynomialOrder(recur+1);
-        for(int i = 0; i < e->getNumVertices(); i++)
+        for(std::size_t i = 0; i < e->getNumVertices(); i++)
           nodeLs[i] = &verticesLs(0, e->getVertex(i)->getIndex());
         isCut = Q.cut(RPN, ipV, ipS, cp, integOrder,integOrder,integOrder,
                       quads, triangles, lines, recur, nodeLs);
@@ -1144,7 +1144,7 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
                           t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
                           t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z());
           Tri.setPolynomialOrder(recur+1);
-          for(int i = 0; i < t->getNumVertices(); i++)
+          for(std::size_t i = 0; i < t->getNumVertices(); i++)
             nodeLs[i] = &verticesLs(0, t->getVertex(i)->getIndex());
           bool iC = Tri.cut(RPN, ipV, ipS, cp, integOrder, integOrder, integOrder,
                             quads, triangles, lines, recur, nodeLs);
@@ -1343,7 +1343,7 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
       DI_Line L(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
                 e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z());
       L.setPolynomialOrder(recur+1);
-      for(int i = 0; i < e->getNumVertices(); i++)
+      for(std::size_t i = 0; i < e->getNumVertices(); i++)
         nodeLs[i] = &verticesLs(0, e->getVertex(i)->getIndex());
       isCut = L.cut(RPN, ipV, cp, integOrder, lines, recur, nodeLs);
 
@@ -1515,7 +1515,9 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
         elementSplitMesh(e, RPN, verticesLs, gmEntities[i], gm, numEle, vertexMap,
                          newParents, newDomains, elements, physicals, newElemTags,
                          newPhysTags, borderElemTags, borderPhysTags);
-        if(e->getPartition() > cutGM->getNumPartitions()) cutGM->setNumPartitions(e->getPartition());
+        if(e->getPartition() > static_cast<int>(cutGM->getNumPartitions())) {
+            cutGM->setNumPartitions(e->getPartition());
+        }
       }
     }
     return cutGM;
@@ -1545,12 +1547,14 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
                      newVertices, newParents, newDomains, borders, elements, physicals,
                      newElemTags, newPhysTags, borderElemTags, borderPhysTags, cp,
                      lines, triangles, quads, tetras, hexas);
-      if(e->getPartition() > cutGM->getNumPartitions()) cutGM->setNumPartitions(e->getPartition());
+      if(e->getPartition() > static_cast<int>(cutGM->getNumPartitions())) {
+          cutGM->setNumPartitions(e->getPartition());
+      }
     }
 
     // Create elementary and physical for non connected border lines
     if((int)borders[0].size() > nbBorders && gmEntities[i]->dim() == 2 &&
-       (int)i == gm->getNumVertices() + gm->getNumEdges() + gm->getNumFaces() - 1){
+       i == gm->getNumVertices() + gm->getNumEdges() + gm->getNumFaces() - 1){
       int k = 0;
       for (std::map<int, std::vector<MElement*> >::iterator it = elements[1].begin();
            it != elements[1].end(); it++){
@@ -1647,4 +1651,3 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   return 0;
 #endif
 }
-

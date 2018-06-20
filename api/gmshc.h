@@ -275,7 +275,7 @@ GMSH_API void gmshModelMeshGetLastNodeError(int ** nodeTags, size_t * nodeTags_n
  * node tags (their unique, strictly positive identification numbers). `coord'
  * is a vector of length 3 times the length of `nodeTags' that contains the
  * (x, y, z) coordinates of the nodes, concatenated. If `dim' >= 0,
- * `parametricCoord' contains the parametric coordinates u and/or v of the
+ * `parametricCoord' contains the parametric coordinates u or (u, v) the
  * nodes, if available. The length of `parametricCoord' can be 0 or `dim'
  * times the length of `nodeTags'. If `includeBoundary' is set, also return
  * the nodes classified on the boundary of the entity (wich will be
@@ -303,6 +303,16 @@ GMSH_API void gmshModelMeshGetNode(const int nodeTag,
 /* Rebuild the node cache. */
 GMSH_API void gmshModelMeshRebuildNodeCache(const int onlyIfNecessary,
                                             int * ierr);
+
+/* Get the nodes from all the elements belonging to the physical group of
+ * dimension `dim' and tag `tag'. `nodeTags' contains the node tags; `coord'
+ * is a vector of length 3 times the length of `nodeTags' that contains the
+ * (x, y, z) coordinates of the nodes, concatenated. */
+GMSH_API void gmshModelMeshGetNodesForPhysicalGroup(const int dim,
+                                                    const int tag,
+                                                    int ** nodeTags, size_t * nodeTags_n,
+                                                    double ** coord, size_t * coord_n,
+                                                    int * ierr);
 
 /* Set the nodes classified on the geometrical entity of dimension `dim' and
  * tag `tag'. `nodeTags' contains the node tags (their unique, strictly

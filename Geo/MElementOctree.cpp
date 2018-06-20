@@ -21,7 +21,7 @@ void MElementBB(void *a, double *min, double *max)
     min[0] = max[0] = v->x();
     min[1] = max[1] = v->y();
     min[2] = max[2] = v->z();
-    for(int i = 1; i < e->getNumVertices(); i++) {
+    for(std::size_t i = 1; i < e->getNumVertices(); i++) {
       v = e->getVertex(i);
       min[0] = std::min(min[0], v->x());
       max[0] = std::max(max[0], v->x());
@@ -42,7 +42,7 @@ void MElementBB(void *a, double *min, double *max)
     min[0] = max[0] = bezNodes(0, 0);
     min[1] = max[1] = bezNodes(0, 1);
     min[2] = max[2] = bezNodes(0, 2);
-    for(int i = 1; i < e->getNumVertices(); i++) {
+    for(std::size_t i = 1; i < e->getNumVertices(); i++) {
       min[0] = std::min(min[0], bezNodes(i, 0));
       max[0] = std::max(max[0], bezNodes(i, 0));
       min[1] = std::min(min[1], bezNodes(i, 1));
@@ -120,8 +120,8 @@ MElementOctree::MElementOctree(GModel *m) : _gm(m)
 MElementOctree::MElementOctree(const std::vector<MElement*> &v) : _gm(0), _elems(v)
 {
   SBoundingBox3d bb;
-  for (unsigned int i = 0; i < v.size(); i++){
-    for(int j = 0; j < v[i]->getNumVertices(); j++){
+  for (std::size_t i = 0; i < v.size(); i++){
+    for(std::size_t j = 0; j < v[i]->getNumVertices(); j++){
       //if (!_gm) _gm = v[i]->getVertex(j)->onWhat()->model();
       bb += SPoint3(v[i]->getVertex(j)->x(),
                     v[i]->getVertex(j)->y(),

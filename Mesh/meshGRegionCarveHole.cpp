@@ -34,7 +34,7 @@ void carveHole(std::vector<T*> &elements, double distance, ANNkd_tree *kdtree)
   ANNdistArray dist = new ANNdist[1];
   std::vector<T*> temp;
   for(unsigned int i = 0; i < elements.size(); i++){
-    for(int j = 0; j < elements[i]->getNumVertices(); j++){
+    for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++){
       MVertex *v = elements[i]->getVertex(j);
       double xyz[3] = {v->x(), v->y(), v->z()};
       kdtree->annkSearch(xyz, 1, index, dist);
@@ -127,7 +127,7 @@ void carveHole(GRegion *gr, int num, double distance, std::vector<int> &surfaces
 
   std::set<MVertex*> verts;
   for(std::set<MFace, Less_Face>::iterator it = faces.begin(); it != faces.end(); it++){
-    for(int i = 0; i < it->getNumVertices(); i++){
+    for(std::size_t i = 0; i < it->getNumVertices(); i++){
       it->getVertex(i)->setEntity(gf);
       verts.insert(it->getVertex(i));
     }

@@ -36,7 +36,7 @@ class MLine : public MElement {
   }
   ~MLine(){}
   virtual int getDim() const { return 1; }
-  virtual int getNumVertices() const { return 2; }
+  virtual std::size_t getNumVertices() const { return 2; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual const MVertex *getVertex(int num) const{ return _v[num]; }
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
@@ -127,7 +127,7 @@ class MLine3 : public MLine {
   }
   ~MLine3(){}
   virtual int getPolynomialOrder() const { return 2; }
-  virtual int getNumVertices() const { return 3; }
+  virtual std::size_t getNumVertices() const { return 3; }
   virtual MVertex *getVertex(int num){ return num < 2 ? _v[num] : _vs[num - 2]; }
   virtual const MVertex *getVertex(int num) const{ return num < 2 ? _v[num] : _vs[num - 2]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 2) _v[num] = v; else _vs[num - 2] = v; }
@@ -185,7 +185,7 @@ class MLineN : public MLine {
   }
   ~MLineN(){}
   virtual int getPolynomialOrder() const { return _vs.size() + 1; }
-  virtual int getNumVertices() const { return _vs.size() + 2; }
+  virtual std::size_t getNumVertices() const { return _vs.size() + 2; }
   virtual MVertex *getVertex(int num){ return num < 2 ? _v[num] : _vs[num - 2]; }
   virtual const MVertex *getVertex(int num) const{ return num < 2 ? _v[num] : _vs[num - 2]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 2) _v[num] = v; else _vs[num - 2] = v; }

@@ -29,7 +29,7 @@ class GRegion;
 
 // A model face.
 class GFace : public GEntity {
- protected:
+protected:
   // edge loops might replace what follows (list of all the edges of
   // the face + directions)
   std::vector<GEdge *> l_edges;
@@ -41,17 +41,17 @@ class GFace : public GEntity {
 
   BoundaryLayerColumns _columns;
 
- public: // this will become protected or private
+public: // this will become protected or private
   std::list<GEdgeLoop> edgeLoops;
 
   // periodic counterparts of edges
-  std::map<GEdge*,std::pair<GEdge*,int> > edgeCounterparts;
+  std::map<GEdge *, std::pair<GEdge *, int> > edgeCounterparts;
 
   // specify mesh master with transformation, deduce edgeCounterparts
-  void setMeshMaster(GFace* master,const std::vector<double>&);
+  void setMeshMaster(GFace *master, const std::vector<double> &);
 
   // specify mesh master and edgeCounterparts, deduce transformation
-  void setMeshMaster(GFace* master,const std::map<int,int>&);
+  void setMeshMaster(GFace *master, const std::map<int, int> &);
 
   // align elements with mesh master
   void alignElementsWithMaster();
@@ -61,9 +61,9 @@ class GFace : public GEntity {
   // layer meshes or when using Lloyd-like smoothing algorithms those
   // vertices are classifed on this GFace, their type is MFaceVertex.
   // After mesh generation, those are moved to the mesh_vertices array
-  std::vector<MVertex*> additionalVertices;
+  std::vector<MVertex *> additionalVertices;
 
- public:
+public:
   GFace(GModel *model, int tag);
   virtual ~GFace();
 
@@ -76,75 +76,84 @@ class GFace : public GEntity {
     if(r == r1 || r == r2) return;
     r1 ? r2 = r : r1 = r;
   }
-  void delRegion(GRegion *r){ if(r1 == r) r1 = r2; r2 = 0; }
-  GRegion* getRegion(int num) const{ if(num==0) return r1; else return r2; }
+  void delRegion(GRegion *r)
+  {
+    if(r1 == r) r1 = r2;
+    r2 = NULL;
+  }
+  GRegion *getRegion(int const num) const { return num == 0 ? r1 : r2; }
 
   // get number of regions
-  int numRegions() const { int num=0; if(r1) num++; if(r2) num++; return num; }
-  std::list<GRegion*> regions() const
+  int numRegions() const { return (r1 != NULL) + (r2 != NULL); }
+
+  std::list<GRegion *> regions() const
   {
-    std::list<GRegion*> r;
-    for (int i = 0; i <numRegions(); i++) r.push_back(getRegion(i));
+    std::list<GRegion *> r;
+    for(int i = 0; i < numRegions(); i++) r.push_back(getRegion(i));
     return r;
   }
 
   // add embedded vertices/edges
-  void addEmbeddedVertex(GVertex *v){ embedded_vertices.push_back(v); }
-  void addEmbeddedEdge(GEdge *e){ embedded_edges.push_back(e); }
+  void addEmbeddedVertex(GVertex *v) { embedded_vertices.push_back(v); }
+  void addEmbeddedEdge(GEdge *e) { embedded_edges.push_back(e); }
 
   // delete the edge from the face (the edge is supposed to be a free
   // edge in the face, not part of any edge loops--use with caution!)
   void delFreeEdge(GEdge *e);
 
   // edge orientations
-  virtual std::vector<int> const& orientations() const { return l_dirs; }
+  virtual std::vector<int> const &orientations() const { return l_dirs; }
 
   // edges that bound the face
-  int delEdge(GEdge* edge);
-  virtual std::vector<GEdge*> edges() const { return l_edges; }
-  void set(std::vector<GEdge*> f) { l_edges = f; }
+  int delEdge(GEdge *edge);
+  virtual std::vector<GEdge *> edges() const { return l_edges; }
+  void set(std::vector<GEdge *> f) { l_edges = f; }
   void setOrientations(std::vector<int> f) { l_dirs = f; }
-  void setEdge(GEdge* const f, int const orientation)
+  void setEdge(GEdge *const f, int const orientation)
   {
     l_edges.push_back(f);
     l_dirs.push_back(orientation);
   }
 
-  virtual std::vector<int> const& edgeOrientations() const { return l_dirs; }
+  virtual std::vector<int> const &edgeOrientations() const { return l_dirs; }
 
-  bool containsEdge (int const iEdge) const
+  bool containsEdge(int const iEdge) const
   {
-    for (std::vector<GEdge*>::const_iterator it = l_edges.begin(); it !=l_edges.end(); ++it)
-      if ((*it)->tag() == iEdge) return true;
+    for(std::vector<GEdge *>::const_iterator it = l_edges.begin();
+        it != l_edges.end(); ++it)
+      if((*it)->tag() == iEdge) return true;
     return false;
   }
 
   // edges that are embedded in the face
-  virtual std::vector<GEdge*> embeddedEdges() const { return embedded_edges; }
+  virtual std::vector<GEdge *> embeddedEdges() const { return embedded_edges; }
 
   // edges that are embedded in the face
-  virtual std::list<GVertex*> embeddedVertices() const { return embedded_vertices; }
+  virtual std::list<GVertex *> embeddedVertices() const
+  {
+    return embedded_vertices;
+  }
 
-  std::vector<MVertex*> getEmbeddedMeshVertices() const;
+  std::vector<MVertex *> getEmbeddedMeshVertices() const;
 
   // vertices that bound the face
-  virtual std::list<GVertex*> vertices() const;
+  virtual std::vector<GVertex *> vertices() const;
 
   // dimension of the face (2)
   virtual int dim() const { return 2; }
 
   // returns the parent entity for partitioned entities
-  virtual GEntity* getParentEntity() { return 0; }
+  virtual GEntity *getParentEntity() { return 0; }
 
   // set visibility flag
-  virtual void setVisibility(char val, bool recursive=false);
+  virtual void setVisibility(char val, bool recursive = false);
 
   // set color
-  virtual void setColor(unsigned int val, bool recursive=false);
+  virtual void setColor(unsigned int val, bool recursive = false);
 
   // compute the parameters UV from a point XYZ
-  void XYZtoUV(double X, double Y, double Z, double &U, double &V,
-               double relax, bool onSurface=true) const;
+  void XYZtoUV(double X, double Y, double Z, double &U, double &V, double relax,
+               bool onSurface = true) const;
 
   // get the bounding box
   virtual SBoundingBox3d bounds(bool fast = false) const;
@@ -158,7 +167,10 @@ class GFace : public GEntity {
 
   // return the point on the face corresponding to the given parameter
   virtual GPoint point(double par1, double par2) const = 0;
-  virtual GPoint point(const SPoint2 &pt) const { return point(pt.x(), pt.y()); }
+  virtual GPoint point(const SPoint2 &pt) const
+  {
+    return point(pt.x(), pt.y());
+  }
 
   // if the mapping is a conforming mapping, i.e. a mapping that
   // conserves angles, this function returns the eigenvalue of the
@@ -167,14 +179,14 @@ class GFace : public GEntity {
   // generation !
   virtual double getMetricEigenvalue(const SPoint2 &);
 
-  // eigen values are absolute values and sorted from min to max of absolute values
-  // eigen vectors are the COLUMNS of eigVec
-  virtual void getMetricEigenVectors(const SPoint2 &param,
-                                     double eigVal[2], double eigVec[4]) const;
+  // eigen values are absolute values and sorted from min to max of absolute
+  // values eigen vectors are the COLUMNS of eigVec
+  virtual void getMetricEigenVectors(const SPoint2 &param, double eigVal[2],
+                                     double eigVec[4]) const;
 
   // return the parmater location on the face given a point in space
   // that is on the face
-  virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface=true) const;
+  virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true) const;
 
   // true if the parameter value is interior to the face
   virtual bool containsParam(const SPoint2 &pt);
@@ -190,11 +202,14 @@ class GFace : public GEntity {
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const = 0;
 
   // compute the second derivates of the face at the parameter location
-  virtual void secondDer(const SPoint2 &param,
-                         SVector3 &dudu, SVector3 &dvdv, SVector3 &dudv) const = 0;
+  virtual void secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
+                         SVector3 &dudv) const = 0;
 
   // return the curvature computed as the divergence of the normal
-  inline double curvature(const SPoint2 &param) const { return curvatureMax(param); }
+  inline double curvature(const SPoint2 &param) const
+  {
+    return curvatureMax(param);
+  }
   virtual double curvatureDiv(const SPoint2 &param) const;
 
   // return the maximum curvature at a point
@@ -202,8 +217,9 @@ class GFace : public GEntity {
 
   // compute the min and max curvatures and the corresponding directions
   // return the max curvature
-  virtual double curvatures(const SPoint2 &param, SVector3 &dirMax, SVector3 &dirMin,
-                            double &curvMax, double &curvMin) const;
+  virtual double curvatures(const SPoint2 &param, SVector3 &dirMax,
+                            SVector3 &dirMin, double &curvMax,
+                            double &curvMin) const;
 
   // return a type-specific additional information string
   virtual std::string getAdditionalInfoString(bool multline = false);
@@ -212,32 +228,32 @@ class GFace : public GEntity {
   virtual void writeGEO(FILE *fp);
 
   // fill the crude representation cross
-  virtual bool buildRepresentationCross(bool force=false);
+  virtual bool buildRepresentationCross(bool force = false);
 
   // build an STL triangulation (or do nothing if it already exists,
   // unless force=true)
-  virtual bool buildSTLTriangulation(bool force=false);
+  virtual bool buildSTLTriangulation(bool force = false);
 
   // fill the vertex array using an STL triangulation
-  bool fillVertexArray(bool force=false);
+  bool fillVertexArray(bool force = false);
 
   // recompute the mean plane of the surface from a list of points
-  void computeMeanPlane(const std::vector<MVertex*> &points);
+  void computeMeanPlane(const std::vector<MVertex *> &points);
   void computeMeanPlane(const std::vector<SPoint3> &points);
 
   // recompute the mean plane of the surface from its bounding vertices
   void computeMeanPlane();
 
   // get the mean plane info
-  void getMeanPlaneData(double VX[3], double VY[3],
-                        double &x, double &y, double &z) const;
+  void getMeanPlaneData(double VX[3], double VY[3], double &x, double &y,
+                        double &z) const;
   void getMeanPlaneData(double plan[3][3]) const;
 
   // number of types of elements
   int getNumElementTypes() const { return 3; }
 
   // get total/by-type number of elements in the mesh
-  unsigned int getNumMeshElements() const;
+  size_type getNumMeshElements() const;
   unsigned int getNumMeshElementsByType(const int familyType) const;
   unsigned int getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
@@ -248,7 +264,8 @@ class GFace : public GEntity {
   // get the element at the given index
   MElement *getMeshElement(unsigned int index) const;
   // get the element at the given index for a given familyType
-  MElement *getMeshElementByType(const int familyType, const unsigned int index) const;
+  MElement *getMeshElementByType(const int familyType,
+                                 const unsigned int index) const;
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
@@ -257,22 +274,21 @@ class GFace : public GEntity {
   // for that face
   void moveToValidRange(SPoint2 &pt) const;
 
-  //compute mesh statistics
-  void computeMeshSizeFieldAccuracy(double &avg,double &max_e, double &min_e,
-				    int &nE, int &GS);
+  // compute mesh statistics
+  void computeMeshSizeFieldAccuracy(double &avg, double &max_e, double &min_e,
+                                    int &nE, int &GS);
 
   // add points (and optionally normals) in vectors so that two
   // points are at most maxDist apart
-  bool fillPointCloud(double maxDist,
-		      std::vector<SPoint3> *points,
-		      std::vector<SPoint2> *uvpoints = 0,
+  bool fillPointCloud(double maxDist, std::vector<SPoint3> *points,
+                      std::vector<SPoint2> *uvpoints = 0,
                       std::vector<SVector3> *normals = 0);
 
   // apply Lloyd's algorithm to the mesh
   void lloyd(int nIter, int infNorm = 0);
 
   // replace edges (for gluing)
-  void replaceEdges(std::vector<GEdge*> &);
+  void replaceEdges(std::vector<GEdge *> &);
 
   // tells if it's a sphere, and if it is, returns parameters
   virtual bool isSphere(double &radius, SPoint3 &center) const { return false; }
@@ -288,7 +304,7 @@ class GFace : public GEntity {
     // is this surface meshed using a transfinite interpolation
     char method;
     // corners of the transfinite interpolation
-    std::vector<GVertex*> corners;
+    std::vector<GVertex *> corners;
     // all diagonals of the triangulation are left (-1), right (1) or
     // alternated starting at right (2) or left (-2)
     int transfiniteArrangement;
@@ -300,11 +316,11 @@ class GFace : public GEntity {
     bool reverseMesh;
     // global mesh size constraint for the surface
     double meshSize;
-  } meshAttributes ;
+  } meshAttributes;
 
   int getMeshingAlgo() const;
   void setMeshingAlgo(int);
-  int getCurvatureControlParameter () const;
+  int getCurvatureControlParameter() const;
   void setCurvatureControlParameter(int);
   virtual double getMeshSize() const { return meshAttributes.meshSize; }
 
@@ -332,31 +348,31 @@ class GFace : public GEntity {
 
   // a array for accessing the transfinite vertices using a pair of
   // indices
-  std::vector<std::vector<MVertex*> > transfinite_vertices;
+  std::vector<std::vector<MVertex *> > transfinite_vertices;
 
   // FIXME: testing for constrained packing of parallelogram algo
-  std::set<MVertex*> constr_vertices;
+  std::set<MVertex *> constr_vertices;
 
   // relocate mesh vertices using parametric coordinates
   void relocateMeshVertices();
-  
-  std::vector<MTriangle*> triangles;
-  std::vector<MQuadrangle*> quadrangles;
-  std::vector<MPolygon*> polygons;
 
-  void addTriangle(MTriangle *t){ triangles.push_back(t); }
-  void addQuadrangle(MQuadrangle *q){ quadrangles.push_back(q); }
-  void addPolygon(MPolygon *p){ polygons.push_back(p); }
+  std::vector<MTriangle *> triangles;
+  std::vector<MQuadrangle *> quadrangles;
+  std::vector<MPolygon *> polygons;
+
+  void addTriangle(MTriangle *t) { triangles.push_back(t); }
+  void addQuadrangle(MQuadrangle *q) { quadrangles.push_back(q); }
+  void addPolygon(MPolygon *p) { polygons.push_back(p); }
   void addElement(int type, MElement *e);
   void removeElement(int type, MElement *e);
 
   // get the boundary layer columns
-  BoundaryLayerColumns *getColumns () {return &_columns;}
+  BoundaryLayerColumns *getColumns() { return &_columns; }
 
-  std::vector<SPoint3> storage1; //sizes and directions storage
-  std::vector<SVector3> storage2; //sizes and directions storage
-  std::vector<SVector3> storage3; //sizes and directions storage
-  std::vector<double> storage4; //sizes and directions storage
+  std::vector<SPoint3> storage1; // sizes and directions storage
+  std::vector<SVector3> storage2; // sizes and directions storage
+  std::vector<SVector3> storage3; // sizes and directions storage
+  std::vector<double> storage4; // sizes and directions storage
 
   virtual bool reorder(const int elementType, const std::vector<int> &ordering);
 };

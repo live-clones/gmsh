@@ -927,7 +927,7 @@ gLevelsetDistMesh::gLevelsetDistMesh(GModel *gm, std::string physical, int nbClo
   for(unsigned int i = 0; i < _entities.size(); i++){
     for(unsigned int k = 0; k < _entities[i]->getNumMeshElements(); k++) {
       MElement *e = _entities[i]->getMeshElement(k);
-      for(int j = 0; j<  e->getNumVertices();j++){
+      for(std::size_t j = 0; j<  e->getNumVertices();j++){
         MVertex *v = _entities[i]->getMeshElement(k)->getVertex(j);
         _all.insert(v);
         _v2e.insert(std::make_pair(v, e));

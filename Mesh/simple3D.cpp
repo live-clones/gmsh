@@ -330,27 +330,19 @@ void Filler::treat_region(GRegion* gr)
     Frame_field::saveCrossField("cross1.pos",scale);
   }
 
-  unsigned int i;
-  int j;
   int count;
   int limit;
   bool ok2;
   double x,y,z;
   SPoint3 point;
   Node *node,*individual,*parent;
-  MVertex* vertex;
-  MElement* element;
+
   MElementOctree* octree;
   deMeshGRegion deleter;
   Wrapper wrapper;
   GFace* gf;
-  std::queue<Node*> fifo;
-  std::vector<Node*> spawns;
   std::vector<Node*> garbage;
   std::vector<MVertex*> boundary_vertices;
-  std::set<MVertex*> temp;
-  std::vector<GFace*> faces;
-  std::map<MVertex*,int> limits;
   std::set<MVertex*>::iterator it;
   std::vector<GFace*>::iterator it2;
   std::map<MVertex*,int>::iterator it3;
@@ -363,19 +355,20 @@ void Filler::treat_region(GRegion* gr)
   octree = new MElementOctree(gr->model());
   garbage.clear();
   boundary_vertices.clear();
-  temp.clear();
   new_vertices.clear();
-  faces.clear();
-  limits.clear();
 
-  faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
+  std::map<MVertex*,int> limits;
+
+  std::set<MVertex*> temp;
+
   for(it2=faces.begin();it2!=faces.end();it2++){
     gf = *it2;
     limit = code(gf->tag());
-    for(i=0;i<gf->getNumMeshElements();i++){
-      element = gf->getMeshElement(i);
-      for(j=0;j<element->getNumVertices();j++){
-        vertex = element->getVertex(j);
+    for(GFace::size_type i=0;i<gf->getNumMeshElements();i++){
+      MElement* element = gf->getMeshElement(i);
+      for(std::size_t j=0;j<element->getNumVertices();j++){
+        MVertex* vertex = element->getVertex(j);
         temp.insert(vertex);
         limits.insert(std::pair<MVertex*,int>(vertex,limit));
       }
@@ -400,7 +393,9 @@ void Filler::treat_region(GRegion* gr)
     }
   }
 
-  for(i=0;i<boundary_vertices.size();i++){
+  std::queue<Node*> fifo;
+
+  for(std::size_t i=0;i<boundary_vertices.size();i++){
     x = boundary_vertices[i]->x();
     y = boundary_vertices[i]->y();
     z = boundary_vertices[i]->z();
@@ -426,16 +421,14 @@ void Filler::treat_region(GRegion* gr)
       continue;
     }
 
-    spawns.clear();
-    spawns.resize(6);
-
-    for(i=0;i<6;i++){
+    std::vector<Node*> spawns(6);
+    for(int i=0;i<6;i++){
       spawns[i] = new Node();
     }
 
     create_spawns(gr,octree,parent,spawns);
 
-    for(i=0;i<6;i++){
+    for(int i=0;i<6;i++){
       ok2 = 0;
       individual = spawns[i];
       point = individual->get_point();
@@ -457,8 +450,7 @@ void Filler::treat_region(GRegion* gr)
 	  if(wrapper.get_ok()){
 	    fifo.push(individual);
 	    rtree.Insert(individual->min,individual->max,individual);
-	    vertex = new MVertex(x,y,z,gr,0);
-	    new_vertices.push_back(vertex);
+	    new_vertices.push_back(new MVertex(x,y,z,gr,0));
 	    ok2 = 1;
 	    //print_segment(individual->get_point(),parent->get_point(),file);
 	  }
@@ -488,9 +480,9 @@ void Filler::treat_region(GRegion* gr)
 
   CTX::instance()->mesh.algo3d = option;
 
-  for(i=0;i<garbage.size();i++) delete garbage[i];
-  for(i=0;i<new_vertices.size();i++) delete new_vertices[i];
-  new_vertices.clear();
+  for(std::size_t i=0;i<garbage.size();i++) delete garbage[i];
+  for(std::size_t i=0;i<new_vertices.size();i++) delete new_vertices[i];
+
   delete octree;
   rtree.RemoveAll();
   Size_field::clear();

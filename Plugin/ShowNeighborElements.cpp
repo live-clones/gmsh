@@ -86,13 +86,13 @@ void GMSH_ShowNeighborElementsPlugin::_init(GEntity *ent)
         el->getNum() == _nel4 ||
         el->getNum() == _nel5) {
       el->setVisibility(true);
-      for (int k = 0; k < el->getNumVertices(); ++k) { // TODO only corner vertices?
+      for (std::size_t k = 0; k < el->getNumVertices(); ++k) { // TODO only corner vertices?
         _vertices.insert(el->getVertex(k));
       }
     }
     else {
       el->setVisibility(false);
-      for (int k = 0; k < el->getNumVertices(); ++k) { // TODO only corner vertices?
+      for (std::size_t k = 0; k < el->getNumVertices(); ++k) { // TODO only corner vertices?
         _vert2elem.insert(std::make_pair(el->getVertex(k), el));
       }
     }

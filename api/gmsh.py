@@ -869,7 +869,7 @@ class model:
             node tags (their unique, strictly positive identification numbers). `coord'
             is a vector of length 3 times the length of `nodeTags' that contains the
             (x, y, z) coordinates of the nodes, concatenated. If `dim' >= 0,
-            `parametricCoord' contains the parametric coordinates u and/or v of the
+            `parametricCoord' contains the parametric coordinates u or (u, v) the
             nodes, if available. The length of `parametricCoord' can be 0 or `dim'
             times the length of `nodeTags'. If `includeBoundary' is set, also return
             the nodes classified on the boundary of the entity (wich will be
@@ -940,6 +940,33 @@ class model:
                 raise ValueError(
                     "gmshModelMeshRebuildNodeCache returned non-zero error code: ",
                     ierr.value)
+
+        @staticmethod
+        def getNodesForPhysicalGroup(dim, tag):
+            """
+            Get the nodes from all the elements belonging to the physical group of
+            dimension `dim' and tag `tag'. `nodeTags' contains the node tags; `coord'
+            is a vector of length 3 times the length of `nodeTags' that contains the
+            (x, y, z) coordinates of the nodes, concatenated.
+
+            Return `nodeTags', `coord'.
+            """
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
+            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetNodesForPhysicalGroup(
+                c_int(dim),
+                c_int(tag),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
+                byref(api_coord_), byref(api_coord_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetNodesForPhysicalGroup returned non-zero error code: ",
+                    ierr.value)
+            return (
+                _ovectorint(api_nodeTags_, api_nodeTags_n_.value),
+                _ovectordouble(api_coord_, api_coord_n_.value))
 
         @staticmethod
         def setNodes(dim, tag, nodeTags, coord, parametricCoord=[]):

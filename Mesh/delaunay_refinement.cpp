@@ -417,8 +417,8 @@ void updateSize (MVertex *v, std::map<MVertex*, double> &s, double d){
 void createEmbeddedEdges (GRegion *gr,
 			  edgeContainer &embedded,
 			  std::vector<Vert *> &_vertices){
-  std::list<GEdge*> e = gr->embeddedEdges();
-  for (std::list<GEdge*>::iterator it = e.begin() ; it != e.end(); ++it){
+  std::vector<GEdge*> const& e = gr->embeddedEdges();
+  for (std::vector<GEdge*>::const_iterator it = e.begin() ; it != e.end(); ++it){
     for (unsigned int i = 0; i < (*it)->lines.size(); i++){
       Vert *v0 = _vertices[(*it)->lines[i]->getVertex(0)->getIndex()];
       Vert *v1 = _vertices[(*it)->lines[i]->getVertex(1)->getIndex()];
@@ -430,8 +430,8 @@ void createEmbeddedEdges (GRegion *gr,
 
 
 void disconnectEmbeddedFaces (GRegion *gr, connSet &faceToTet, std::vector<Vert *> &_vertices){
-  std::list<GFace*> f = gr->embeddedFaces();
-  for (std::list<GFace*>::iterator it = f.begin() ; it != f.end(); ++it){
+  std::vector<GFace*> const& f = gr->embeddedFaces();
+  for (std::vector<GFace*>::const_iterator it = f.begin() ; it != f.end(); ++it){
     for (unsigned int i = 0; i < (*it)->triangles.size(); i++){
       bool ok1 = false;
       bool ok2 = false;
@@ -457,20 +457,20 @@ void disconnectEmbeddedFaces (GRegion *gr, connSet &faceToTet, std::vector<Vert 
 }
 
 void computeMeshSizes (GRegion *gr, std::map<MVertex*, double> &s){
-  std::list<GEdge*> e = gr->embeddedEdges();
-  for (std::list<GEdge*>::iterator it = e.begin() ; it != e.end(); ++it){
+  std::vector<GEdge*> const& e = gr->embeddedEdges();
+  for (std::vector<GEdge*>::const_iterator it = e.begin() ; it != e.end(); ++it){
     for (unsigned int i = 0; i < (*it)->lines.size(); i++){
-      double d = distance((*it)->lines[i]->getVertex(0), (*it)->lines[i]->getVertex(1));
+      double const d = distance((*it)->lines[i]->getVertex(0), (*it)->lines[i]->getVertex(1));
       updateSize ((*it)->lines[i]->getVertex(0), s, d);
       updateSize ((*it)->lines[i]->getVertex(1), s, d);
     }
   }
-  std::list<GFace*> f ;
-  std::vector<GFace*> f1 = gr->faces();
-  std::list<GFace*> f2 = gr->embeddedFaces();
-  f.insert(f.end(),f1.begin(), f1.end());
+  std::vector<GFace*> const& f1 = gr->faces();
+  std::vector<GFace*> const& f2 = gr->embeddedFaces();
+  
+  std::vector<GFace*> f(f1.begin(), f1.end());
   f.insert(f.end(),f2.begin(), f2.end());
-  for (std::list<GFace*>::iterator it = f.begin() ; it != f.end(); ++it){
+  for (std::vector<GFace*>::const_iterator it = f.begin() ; it != f.end(); ++it){
     for (unsigned int i = 0; i < (*it)->triangles.size(); i++){
       for (unsigned int j = 0; j < 3; j++){
 	double d = distance((*it)->triangles[i]->getVertex(j), (*it)->triangles[i]->getVertex((j+1)%3));

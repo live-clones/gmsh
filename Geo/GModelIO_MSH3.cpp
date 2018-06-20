@@ -481,7 +481,7 @@ static void writeMSHPhysicals(FILE *fp, GEntity *ge)
 void writeMSHEntities(FILE *fp, GModel *gm)  // also used in MSH2
 {
   fprintf(fp, "$Entities\n");
-  fprintf (fp, "%d %d %d %d\n", gm->getNumVertices(), gm->getNumEdges(),
+  fprintf (fp, "%lu %d %d %d\n", gm->getNumVertices(), gm->getNumEdges(),
            gm->getNumFaces(), gm->getNumRegions());
   for (GModel::viter it = gm->firstVertex(); it != gm->lastVertex(); ++it) {
     fprintf(fp, "%d ", (*it)->tag());
@@ -520,12 +520,12 @@ void writeMSHEntities(FILE *fp, GModel *gm)  // also used in MSH2
   }
   for (GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); ++it) {
     std::vector<GFace*> faces = (*it)->faces();
-    std::list<int> ori = (*it)->faceOrientations();
+    std::vector<int> ori = (*it)->faceOrientations();
     fprintf(fp, "%d %d ", (*it)->tag(), (int)faces.size());
     std::vector<int> tags, signs;
     for(std::vector<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++)
       tags.push_back((*itf)->tag());
-    for(std::list<int>::iterator itf = ori.begin(); itf != ori.end(); itf++)
+    for(std::vector<int>::const_iterator itf = ori.begin(); itf != ori.end(); itf++)
       signs.push_back(*itf);
     if(tags.size() == signs.size()){
       for(unsigned int i = 0; i < tags.size(); i++)
@@ -743,7 +743,7 @@ int GModel::_writePartitionedMSH3(const std::string &baseName, double version,
     return 0;
   }
 
-  for(int partition = 0; partition < getNumPartitions(); partition++){
+  for(unsigned int partition = 0; partition < getNumPartitions(); partition++){
     std::ostringstream sstream;
     sstream << baseName << "_" << std::setw(6) << std::setfill('0') << partition;
     Msg::Info("Writing partition %d in file '%s'", partition, sstream.str().c_str());

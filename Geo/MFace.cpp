@@ -86,7 +86,7 @@ bool MFace::computeCorrespondence(const MFace &other,
   swap = false;
 
   if (*this == other) {
-    for (int i = 0; i < getNumVertices(); i++) {
+    for (std::size_t i = 0; i < getNumVertices(); i++) {
       if (_v[0] == other.getVertex(i)) {
         rotation = i;
         break;

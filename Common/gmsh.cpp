@@ -600,7 +600,7 @@ static void _getAdditionalNodesOnBoundary(GEntity *entity,
 {
   std::vector<GFace*> f;
   std::vector<GEdge*> e;
-  std::list<GVertex*> v;
+  std::vector<GVertex*> v;
   if(entity->dim() > 2) f = entity->faces();
   if(entity->dim() > 1) e = entity->edges();
   if(entity->dim() > 0) v = entity->vertices();
@@ -632,7 +632,7 @@ static void _getAdditionalNodesOnBoundary(GEntity *entity,
       }
     }
   }
-  for(std::list<GVertex*>::iterator it = v.begin(); it != v.end(); it++){
+  for(std::vector<GVertex*>::iterator it = v.begin(); it != v.end(); it++){
     GVertex *gv = *it;
     for(unsigned int j = 0; j < gv->mesh_vertices.size(); j++){
       MVertex *v = gv->mesh_vertices[j];
@@ -728,6 +728,27 @@ GMSH_API void gmsh::model::mesh::rebuildNodeCache(bool onlyIfNecessary)
 {
   if(!_isInitialized()){ throw -1; }
   GModel::current()->rebuildMeshVertexCache(onlyIfNecessary);
+}
+
+GMSH_API void gmsh::model::mesh::getNodesForPhysicalGroup(const int dim,
+                                                          const int tag,
+                                                          std::vector<int> & nodeTags,
+                                                          std::vector<double> & coord)
+{
+  if(!_isInitialized()){ throw -1; }
+  nodeTags.clear();
+  coord.clear();
+  std::vector<MVertex*> v;
+  GModel::current()->getMeshVerticesForPhysicalGroup(dim, tag, v);
+  if(v.empty()) return;
+  nodeTags.resize(v.size());
+  coord.resize(v.size() * 3);
+  for(unsigned int i = 0; i < v.size(); i++){
+    nodeTags[i] = v[i]->getNum();
+    coord[3 * i + 0] = v[i]->x();
+    coord[3 * i + 1] = v[i]->y();
+    coord[3 * i + 2] = v[i]->z();
+  }
 }
 
 GMSH_API void gmsh::model::mesh::setNodes(const int dim,
@@ -919,7 +940,7 @@ GMSH_API void gmsh::model::mesh::getElements(std::vector<int> &elementTypes,
         MElement *e = ge->getMeshElement(j);
         if(e->getTypeForMSH() == elementType){
           elementTags.back().push_back(e->getNum());
-          for(int k = 0; k < e->getNumVertices(); k++){
+          for(std::size_t k = 0; k < e->getNumVertices(); k++){
             nodeTags.back().push_back(e->getVertex(k)->getNum());
           }
         }
@@ -940,7 +961,7 @@ GMSH_API void gmsh::model::mesh::getElement(const int elementTag,
   }
   elementType = e->getTypeForMSH();
   nodeTags.clear();
-  for(int i = 0; i < e->getNumVertices(); i++){
+  for(std::size_t i = 0; i < e->getNumVertices(); i++){
     MVertex *v = e->getVertex(i);
     if(!v){
       Msg::Error("Unknown node in element %d", elementTag);
@@ -967,7 +988,7 @@ GMSH_API void gmsh::model::mesh::getElementByCoordinates(const double x,
   elementTag = e->getNum();
   elementType = e->getTypeForMSH();
   nodeTags.clear();
-  for(int i = 0; i < e->getNumVertices(); i++){
+  for(std::size_t i = 0; i < e->getNumVertices(); i++){
     MVertex *v = e->getVertex(i);
     if(!v){
       Msg::Error("Unknown node in element %d", elementTag);
@@ -1125,10 +1146,10 @@ GMSH_API void gmsh::model::mesh::getElementsByType(const int elementType,
   std::map<int, std::vector<GEntity*> > typeMap;
   int dim = ElementType::getDimension(elementType);
   _getElementTypeMap(dim, tag, typeMap);
-  const int numElements = _getNumElementsByType(elementType, tag);
+  const std::size_t numElements = _getNumElementsByType(elementType, tag);
   const int numNodes = ElementType::getNumVertices(elementType);
-  const size_t begin = (task * numElements) / numTasks;
-  const size_t end = ((task + 1) * numElements) / numTasks;
+  const std::size_t begin = (task * numElements) / numTasks;
+  const std::size_t end = ((task + 1) * numElements) / numTasks;
   // check arrays
   bool haveElementTags = elementTags.size();
   bool haveNodeTags = nodeTags.size();
@@ -1160,7 +1181,7 @@ GMSH_API void gmsh::model::mesh::getElementsByType(const int elementType,
         MElement *e = ge->getMeshElementByType(familyType, j);
         if(haveElementTags) elementTags[o] = e->getNum();
         if(haveNodeTags){
-          for(int k = 0; k < e->getNumVertices(); k++){
+          for(std::size_t k = 0; k < e->getNumVertices(); k++){
             nodeTags[idx++] = e->getVertex(k)->getNum();
           }
         }

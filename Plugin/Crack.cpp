@@ -125,7 +125,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   std::set<MVertex*> crackVertices, bndVertices;
   if(dim == 1){
     for(unsigned int i = 0; i < crackElements.size(); i++){
-      for(int j = 0; j < crackElements[i]->getNumVertices(); j++){
+      for(std::size_t j = 0; j < crackElements[i]->getNumVertices(); j++){
         MVertex *v = crackElements[i]->getVertex(j);
         crackVertices.insert(v);
       }
@@ -141,7 +141,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   else{
     std::set<EdgeData, Less_EdgeData> bnd;
     for(unsigned int i = 0; i < crackElements.size(); i++){
-      for(int j = 0; j < crackElements[i]->getNumVertices(); j++){
+      for(std::size_t j = 0; j < crackElements[i]->getNumVertices(); j++){
         MVertex *v = crackElements[i]->getVertex(j);
         crackVertices.insert(v);
       }
@@ -163,7 +163,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   for(unsigned int i = 0; i < openEntities.size(); i++){
     for(unsigned int j = 0; j < openEntities[i]->getNumMeshElements(); j++){
       MElement *e = openEntities[i]->getMeshElement(j);
-      for(int k = 0; k < e->getNumVertices(); k++){
+      for(std::size_t k = 0; k < e->getNumVertices(); k++){
         MVertex *v = e->getVertex(k);
         bndVertices.erase(v);
       }
@@ -181,7 +181,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     if(crackEntities.find(allentities[ent]) != crackEntities.end()) continue;
     for(unsigned int i = 0; i < allentities[ent]->getNumMeshElements(); i++){
       MElement *e = allentities[ent]->getMeshElement(i);
-      for(int j = 0; j < e->getNumVertices(); j++){
+      for(std::size_t j = 0; j < e->getNumVertices(); j++){
         if(crackVertices.find(e->getVertex(j)) != crackVertices.end()){
           // element touches the crack: find the closest crack element
           SPoint3 b = e->barycenter();
@@ -265,7 +265,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   // replace vertices in elements on one side of the crack
   for(std::set<MElement*>::iterator it = oneside.begin(); it != oneside.end(); it++){
     MElement *e = *it;
-    for(int i = 0; i < e->getNumVertices(); i++){
+    for(std::size_t i = 0; i < e->getNumVertices(); i++){
       if(vxv.count(e->getVertex(i)))
         e->setVertex(i, vxv[e->getVertex(i)]);
     }

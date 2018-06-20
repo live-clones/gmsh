@@ -25,15 +25,15 @@ class BoundaryLayerColumns;
 
 // A model region.
 class GRegion : public GEntity {
- protected:
-  std::vector<GFace*> l_faces;
-  std::list<GVertex *> embedded_vertices;
-  std::list<GFace *> embedded_faces;
-  std::list<GEdge *> embedded_edges;
-  std::list<int> l_dirs;
+protected:
+  std::vector<GFace *> l_faces;
+  std::vector<GVertex *> embedded_vertices;
+  std::vector<GFace *> embedded_faces;
+  std::vector<GEdge *> embedded_edges;
+  std::vector<int> l_dirs;
   BoundaryLayerColumns _columns;
 
- public:
+public:
   GRegion(GModel *model, int tag);
   virtual ~GRegion();
 
@@ -44,46 +44,49 @@ class GRegion : public GEntity {
   virtual int dim() const { return 3; }
 
   // returns the parent entity for partitioned entities
-  virtual GEntity* getParentEntity() { return 0; }
+  virtual GEntity *getParentEntity() { return 0; }
 
   // set the visibility flag
-  virtual void setVisibility(char val, bool recursive=false);
+  virtual void setVisibility(char val, bool recursive = false);
 
   // set color
-  virtual void setColor(unsigned int val, bool recursive=false);
+  virtual void setColor(unsigned int val, bool recursive = false);
 
   // add embedded vertices/edges/faces
-  void addEmbeddedVertex(GVertex *v){ embedded_vertices.push_back(v); }
-  void addEmbeddedEdge(GEdge *e){ embedded_edges.push_back(e); }
-  void addEmbeddedFace(GFace *f){ embedded_faces.push_back(f); }
+  void addEmbeddedVertex(GVertex *v) { embedded_vertices.push_back(v); }
+  void addEmbeddedEdge(GEdge *e) { embedded_edges.push_back(e); }
+  void addEmbeddedFace(GFace *f) { embedded_faces.push_back(f); }
 
   // get/set faces that bound the region
-  int delFace(GFace* face);
+  int delFace(GFace *face);
 
-  virtual std::vector<GFace*> faces() const { return l_faces; }
+  virtual std::vector<GFace *> faces() const { return l_faces; }
 
-  virtual std::list<int> faceOrientations() const{ return l_dirs; }
-  void set(std::vector<GFace*> const f) { l_faces = f; }
-  void setOrientations(const std::list<int> f) { l_dirs= f; }
-  void setFace(GFace* const f, int const orientation)
+  virtual std::vector<int> faceOrientations() const { return l_dirs; }
+  void set(std::vector<GFace *> const f) { l_faces = f; }
+  void setOrientations(std::vector<int> f) { l_dirs = f; }
+  void setFace(GFace *const f, int const orientation)
   {
     l_faces.push_back(f);
     l_dirs.push_back(orientation);
   }
 
   // vertices that are embedded in the region
-  virtual std::list<GVertex*> &embeddedVertices() { return embedded_vertices; }
+  virtual std::vector<GVertex *> &embeddedVertices()
+  {
+    return embedded_vertices;
+  }
   // edges that are embedded in the region
-  virtual std::list<GEdge*> embeddedEdges() const { return embedded_edges; }
-  virtual std::list<GEdge*> &embeddedEdges() { return embedded_edges; }
+  virtual std::vector<GEdge *> embeddedEdges() const { return embedded_edges; }
+  virtual std::vector<GEdge *> &embeddedEdges() { return embedded_edges; }
   // faces that are embedded in the region
-  virtual std::list<GFace*> embeddedFaces() const { return embedded_faces; }
+  virtual std::vector<GFace *> embeddedFaces() const { return embedded_faces; }
 
   // edges that bound the region
-  virtual std::vector<GEdge*> edges() const;
+  virtual std::vector<GEdge *> edges() const;
 
   // vertices that bound the region
-  virtual std::list<GVertex*> vertices() const;
+  virtual std::vector<GVertex *> vertices() const;
 
   // get the bounding box
   virtual SBoundingBox3d bounds(bool fast = false) const;
@@ -95,8 +98,8 @@ class GRegion : public GEntity {
   bool edgeConnected(GRegion *r) const;
 
   // compute volume, moment of intertia and center of gravity
-  double computeSolidProperties (std::vector<double> cg,
-				 std::vector<double> inertia);
+  double computeSolidProperties(std::vector<double> cg,
+                                std::vector<double> inertia);
 
   // return a type-specific additional information string
   virtual std::string getAdditionalInfoString(bool multline = false);
@@ -108,7 +111,7 @@ class GRegion : public GEntity {
   int getNumElementTypes() const { return 6; }
 
   // get total/by-type number of elements in the mesh
-  unsigned int getNumMeshElements() const;
+  size_type getNumMeshElements() const;
   unsigned int getNumMeshElementsByType(const int familyType) const;
   unsigned int getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
@@ -119,7 +122,8 @@ class GRegion : public GEntity {
   // get the element at the given index
   MElement *getMeshElement(unsigned int index) const;
   // get the element at the given index for a given familyType
-  MElement *getMeshElementByType(const int familyType, const unsigned int index) const;
+  MElement *getMeshElementByType(const int familyType,
+                                 const unsigned int index) const;
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
@@ -132,33 +136,33 @@ class GRegion : public GEntity {
     // the extrusion parameters (if any)
     ExtrudeParams *extrude;
     // corners of the transfinite interpolation
-    std::vector<GVertex*> corners;
+    std::vector<GVertex *> corners;
     // structured/unstructured coupling using pyramids
     int QuadTri;
-  } meshAttributes ;
+  } meshAttributes;
 
   // a array for accessing the transfinite vertices using a triplet of
   // indices
-  std::vector<std::vector<std::vector<MVertex*> > > transfinite_vertices;
+  std::vector<std::vector<std::vector<MVertex *> > > transfinite_vertices;
 
-  std::vector<MTetrahedron*> tetrahedra;
-  std::vector<MHexahedron*> hexahedra;
-  std::vector<MPrism*> prisms;
-  std::vector<MPyramid*> pyramids;
-  std::vector<MTrihedron*> trihedra;
-  std::vector<MPolyhedron*> polyhedra;
+  std::vector<MTetrahedron *> tetrahedra;
+  std::vector<MHexahedron *> hexahedra;
+  std::vector<MPrism *> prisms;
+  std::vector<MPyramid *> pyramids;
+  std::vector<MTrihedron *> trihedra;
+  std::vector<MPolyhedron *> polyhedra;
 
-  void addTetrahedron(MTetrahedron *t){ tetrahedra.push_back(t); }
-  void addHexahedron(MHexahedron *h){ hexahedra.push_back(h); }
-  void addPrism(MPrism *p){ prisms.push_back(p); }
-  void addPyramid(MPyramid *p){ pyramids.push_back(p); }
-  void addPolyhedron(MPolyhedron *p){ polyhedra.push_back(p); }
-  void addTrihedron(MTrihedron *t){ trihedra.push_back(t); }
+  void addTetrahedron(MTetrahedron *t) { tetrahedra.push_back(t); }
+  void addHexahedron(MHexahedron *h) { hexahedra.push_back(h); }
+  void addPrism(MPrism *p) { prisms.push_back(p); }
+  void addPyramid(MPyramid *p) { pyramids.push_back(p); }
+  void addPolyhedron(MPolyhedron *p) { polyhedra.push_back(p); }
+  void addTrihedron(MTrihedron *t) { trihedra.push_back(t); }
   void addElement(int type, MElement *e);
   void removeElement(int type, MElement *e);
 
   // get the boundary layer columns
-  BoundaryLayerColumns *getColumns () { return &_columns; }
+  BoundaryLayerColumns *getColumns() { return &_columns; }
 
   virtual bool reorder(const int elementType, const std::vector<int> &ordering);
 

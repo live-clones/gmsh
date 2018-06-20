@@ -107,9 +107,9 @@ struct edgeContainerB
 
 static void createAllEmbeddedEdges (GRegion *gr, std::set<MEdge, Less_Edge> &allEmbeddedEdges)
 {
-  std::list<GEdge*> e = gr->embeddedEdges();
+  std::vector<GEdge*> const& e = gr->embeddedEdges();
   //  printf("=================> %d embedded GEdges\n",e.size());
-  for (std::list<GEdge*>::iterator it = e.begin() ; it != e.end(); ++it){
+  for (std::vector<GEdge*>::const_iterator it = e.begin() ; it != e.end(); ++it){
     for (unsigned int i = 0; i < (*it)->lines.size(); i++){
       allEmbeddedEdges.insert (MEdge((*it)->lines[i]->getVertex(0),
                                      (*it)->lines[i]->getVertex(1)));
@@ -119,8 +119,8 @@ static void createAllEmbeddedEdges (GRegion *gr, std::set<MEdge, Less_Edge> &all
 
 static void createAllEmbeddedEdges (GRegion *gr, edgeContainerB &embedded)
 {
-  std::list<GEdge*> e = gr->embeddedEdges();
-  for (std::list<GEdge*>::iterator it = e.begin() ; it != e.end(); ++it){
+  std::vector<GEdge*> const& e = gr->embeddedEdges();
+  for (std::vector<GEdge*>::const_iterator it = e.begin() ; it != e.end(); ++it){
     for (unsigned int i = 0; i < (*it)->lines.size(); i++){
       embedded.addNewEdge(MEdge((*it)->lines[i]->getVertex(0),
                                 (*it)->lines[i]->getVertex(1)));
@@ -130,8 +130,8 @@ static void createAllEmbeddedEdges (GRegion *gr, edgeContainerB &embedded)
 
 static void createAllEmbeddedFaces(GRegion *gr, std::set<MFace, Less_Face> &allEmbeddedFaces)
 {
-  std::list<GFace*> f = gr->embeddedFaces();
-  for (std::list<GFace*>::iterator it = f.begin() ; it != f.end(); ++it){
+  std::vector<GFace*> const& f = gr->embeddedFaces();
+  for (std::vector<GFace*>::const_iterator it = f.begin() ; it != f.end(); ++it){
     for (unsigned int i = 0; i < (*it)->triangles.size(); i++){
       allEmbeddedFaces.insert ((*it)->triangles[i]->getFace(0));
     }
@@ -1189,8 +1189,8 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
 
     for (GModel::riter rit = gr->model()->firstRegion();
          rit != gr->model()->lastRegion(); ++rit){
-      std::list<GEdge*> e = (*rit)->embeddedEdges();
-      for (std::list<GEdge*>::iterator it = e.begin() ; it != e.end(); ++it){
+      std::vector<GEdge*> const& e = (*rit)->embeddedEdges();
+      for (std::vector<GEdge*>::const_iterator it = e.begin() ; it != e.end(); ++it){
         for (unsigned int i = 0; i < (*it)->lines.size(); i++){
     	  MVertex *vi = (*it)->lines[i]->getVertex(0);
     	  MVertex *vj = (*it)->lines[i]->getVertex(1);
@@ -1210,8 +1210,8 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
     }
 
     for (GModel::riter rit = gr->model()->firstRegion(); rit != gr->model()->lastRegion(); ++rit){
-      std::list<GVertex*> vertices = (*rit)->embeddedVertices();
-      for (std::list<GVertex*>::iterator it = vertices.begin(); it != vertices.end(); ++it){
+      std::vector<GVertex*> const& vertices = (*rit)->embeddedVertices();
+      for (std::vector<GVertex*>::const_iterator it = vertices.begin(); it != vertices.end(); ++it){
         MVertex *v = (*it)->getMeshVertex(0);
         double l = (*it)->prescribedMeshSizeAtVertex();
         std::map<MVertex*, double, MVertexLessThanNum>::iterator itv = vSizesMap.find(v);
