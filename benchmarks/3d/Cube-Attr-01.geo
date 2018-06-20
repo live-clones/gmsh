@@ -11,9 +11,6 @@ Line Loop(5) = {2,3,4,1};
 Plane Surface(6) = {5};
 Extrude {0,0.0,1}{ Surface {6}; }
 
-Surface Loop(29) = {23,6,15,19,28,27};
-Volume(30) = {29};
-
 Point(16) = {-.5,.5,.5,1.0};
 Point(17) = {1.5,.5,.8,1.0};
 Line(30) = {16,17};
