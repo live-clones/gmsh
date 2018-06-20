@@ -262,7 +262,7 @@ class Graph
 
   void assignGhostCells()
   {
-    std::vector<GEntity*> ghostEntities(_nparts, NULL);
+    std::vector<GEntity*> ghostEntities(_nparts, (GEntity*)NULL);
     int elementaryNumber = _model->getMaxElementaryNumber(_dim);
 
     for(unsigned int i = 1; i <= _nparts; i++){

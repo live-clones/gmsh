@@ -708,7 +708,7 @@ void subdivide_pyramid(MElement *element, GRegion *gr,
                        faceContainer &faceVertices,
                        std::vector<MHexahedron *> &dwarfs88)
 {
-  std::vector<MVertex *> v(105, NULL);
+  std::vector<MVertex *> v(105, (MVertex*)NULL);
 
   v[29] = element->getVertex(0);
   v[27] = element->getVertex(1);
