@@ -50,11 +50,10 @@ void GEdge::deleteMesh(bool onlyDeleteElements)
   model()->destroyMeshCaches();
 }
 
-void GEdge::setMeshMaster(GEdge* ge,int ori)
+void GEdge::setMeshMaster(GEdge* ge, int ori)
 {
-#if !defined(_MSC_VER)
-#warning missing:computation of affine transformation during setMeshMaster
-#endif
+  // FIXME: missing computation of affine transformation during setMeshMaster
+
   GEntity::setMeshMaster(ge);
   masterOrientation = ori > 0 ? 1 : -1;
 
@@ -72,7 +71,7 @@ void GEdge::setMeshMaster(GEdge* ge,int ori)
   }
 }
 
-void GEdge::setMeshMaster(GEdge* ge,const std::vector<double>& tfo)
+void GEdge::setMeshMaster(GEdge* ge, const std::vector<double> &tfo)
 {
   SPoint3 oriXYZ0 = ge->getBeginVertex()->xyz();
   SPoint3 oriXYZ1 = ge->getEndVertex()->xyz();
@@ -129,7 +128,7 @@ void GEdge::setMeshMaster(GEdge* ge,const std::vector<double>& tfo)
             this->getBeginVertex()->tag(),
             this->getEndVertex()->tag(),
             fwd ? d00.norm() : d01.norm(),
-            fwd ? d11.norm() : d10.norm(),tol);
+            fwd ? d11.norm() : d10.norm(), tol);
 }
 
 void GEdge::reverse()
@@ -150,9 +149,9 @@ unsigned int GEdge::getNumMeshElementsByType(const int familyType) const
 
 struct owns_parent
 {
-    // TODO C++11 use lambda instead
-    template <class T>
-    bool operator()(T const* const line) const {return line->ownsParent();}
+  // TODO C++11 use lambda instead
+  template <class T>
+  bool operator()(T const* const line) const {return line->ownsParent();}
 };
 
 unsigned int GEdge::getNumMeshParentElements()
