@@ -169,7 +169,7 @@ void ThinLayer::fillvecOfThinSheets(){
           MVertex* VToDo = (*CurrentSheet.begin());
           std::vector<MTetrahedron*> surroundingTet = VertexToTets[VToDo];
           for (unsigned int j = 0;j < surroundingTet.size();j++){
-            for (int k = 0;k < surroundingTet[j]->getNumVertices();k++){
+            for (std::size_t k = 0;k < surroundingTet[j]->getNumVertices();k++){
               MVertex* ToInsertTmp = surroundingTet[j]->getVertex(k);
               std::map<MVertex*,std::vector<CorrespVertices*> >::iterator it2 =
                 VertexToCorresp.find(ToInsertTmp);

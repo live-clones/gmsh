@@ -41,33 +41,33 @@ void clip::execute(){
 }
 
 void clip::execute(GRegion* gr){
-  unsigned int i;
-  int j;
-  MElement* element;
-  MVertex* vertex;
-  std::vector<SPoint3> vertices2;
+
   std::set<MVertex*> vertices;
   std::set<MVertex*>::iterator it;
-  std::vector<VoronoiElement> clipped;
 
-  for(i=0;i<gr->getNumMeshElements();i++){
-    element = gr->getMeshElement(i);
-	for(j=0;j<element->getNumVertices();j++){
-	  vertex = element->getVertex(j);
+  for(std::size_t i=0;i<gr->getNumMeshElements();i++){
+    MElement* element = gr->getMeshElement(i);
+	for(std::size_t j=0;j<element->getNumVertices();j++){
+	  MVertex* vertex = element->getVertex(j);
 	  vertices.insert(vertex);
 	}
   }
+
+  std::vector<SPoint3> vertices2;
+  vertices2.reserve(vertices.size());
 
   for(it=vertices.begin();it!=vertices.end();it++){
     vertices2.push_back(SPoint3((*it)->x(),(*it)->y(),(*it)->z()));
   }
 
+  std::vector<VoronoiElement> clipped;
   execute(vertices2,clipped);
+
   printf("%d\n", (int)clipped.size());
 
   std::ofstream file("MicrostructurePolycrystal3D.pos");
   file << "View \"test\" {\n";
-  for(i=0;i<clipped.size();i++){
+  for(std::size_t i=0;i<clipped.size();i++){
     print_segment(clipped[i].get_v1().get_point(),clipped[i].get_v2().get_point(),file);
 	print_segment(clipped[i].get_v1().get_point(),clipped[i].get_v3().get_point(),file);
 	print_segment(clipped[i].get_v1().get_point(),clipped[i].get_v4().get_point(),file);

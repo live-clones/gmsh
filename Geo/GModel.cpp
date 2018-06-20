@@ -911,9 +911,9 @@ static void checkConformity
   else{
     //A face can exist  twice (inside) or once (boundary)
     if(connectivity != 2){
-      for(int iV = 0; iV < face.getNumVertices(); iV++)
+      for(std::size_t iV = 0; iV < face.getNumVertices(); iV++)
         if(face.getVertex(iV)->onWhat()->dim() == 3 || connectivity != 1){
-          for(int jV = 0; jV < face.getNumVertices(); jV++)
+          for(std::size_t jV = 0; jV < face.getNumVertices(); jV++)
             Msg::Info("Vertex %i dim %i",face.getVertex(jV)->getNum(),
                       face.getVertex(iV)->onWhat()->dim());
           Msg::Error("Non conforming element %i (%i connection(s) for a face "
@@ -1345,9 +1345,9 @@ void GModel::getMeshVerticesForPhysicalGroup(int dim, int num, std::vector<MVert
       sv.insert(g->mesh_vertices[0]);
     }
     else{
-      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+      for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++){
         MElement *e = entities[i]->getMeshElement(j);
-        for(int k = 0; k < e->getNumVertices(); k++)
+        for(std::size_t k = 0; k < e->getNumVertices(); k++)
           sv.insert(e->getVertex(k));
       }
     }
@@ -1468,9 +1468,9 @@ int GModel::indexMeshVertices(bool all, int singlePartition, bool renumber)
   // in that partition)
   for(unsigned int i = 0; i < entities.size(); i++){
     if(all || entities[i]->physicals.size()){
-      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+      for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++){
         MElement *e = entities[i]->getMeshElement(j);
-        for(int k = 0; k < e->getNumVertices(); k++){
+        for(std::size_t k = 0; k < e->getNumVertices(); k++){
           if(singlePartition <= 0 || e->getPartition() == singlePartition)
             e->getVertex(k)->setIndex(0);
           else if(e->getVertex(k)->getIndex() == -1)
@@ -1482,8 +1482,8 @@ int GModel::indexMeshVertices(bool all, int singlePartition, bool renumber)
 
   // renumber all the mesh vertices tagged with 0
   int numVertices = 0, index = 0;
-  for(unsigned int i = 0; i < entities.size(); i++){
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+  for(std::size_t i = 0; i < entities.size(); i++){
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++){
       MVertex *v = entities[i]->mesh_vertices[j];
       if(!v->getIndex()){
         index++;
@@ -1506,8 +1506,8 @@ void GModel::scaleMesh(double factor)
 {
   std::vector<GEntity*> entities;
   getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++){
       MVertex *v = entities[i]->mesh_vertices[j];
       v->x() *= factor;
       v->y() *= factor;
@@ -1656,15 +1656,16 @@ void GModel::_storeParentsInSubElements(std::map<int, std::vector<MElement*> > &
       it->second[i]->updateParent(this);
 }
 
-template<class T>
-static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &elements,
-                                                bool force=false)
+template <class T>
+static void _associateEntityWithElementVertices(GEntity *ge,
+                                                std::vector<T *> &elements,
+                                                bool force = false)
 {
-  for(unsigned int i = 0; i < elements.size(); i++){
-    for(int j = 0; j < elements[i]->getNumVertices(); j++){
+  for(unsigned int i = 0; i < elements.size(); i++) {
+    for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++) {
       if(force || !elements[i]->getVertex(j)->onWhat() ||
-          elements[i]->getVertex(j)->onWhat()->dim() > ge->dim())
-	elements[i]->getVertex(j)->setEntity(ge);
+         elements[i]->getVertex(j)->onWhat()->dim() > ge->dim())
+        elements[i]->getVertex(j)->setEntity(ge);
     }
   }
 }
@@ -1991,13 +1992,13 @@ GModel *GModel::createGModel
         entityToElementsMap.begin(); it != entityToElementsMap.end();
       it++) {
     int entity = it->first;
-    for(unsigned int iE = 0; iE < it->second.size(); iE++) {
+    for(std::size_t iE = 0; iE < it->second.size(); iE++) {
       MElement* me = it->second[iE];
-      for(int iV = 0; iV < me->getNumVertices(); iV++) {
+      for(std::size_t iV = 0; iV < me->getNumVertices(); iV++) {
         vertexMap[me->getVertex(iV)->getNum()] = me->getVertex(iV);
       }
       std::vector<int> entityPhysicals = entityToPhysicalsMap[entity];
-      for(unsigned int i = 0; i < entityPhysicals.size(); i++) {
+      for(std::size_t i = 0; i < entityPhysicals.size(); i++) {
         physicals[me->getDim()][entity][entityPhysicals[i]] = "unnamed";
       }
     }
@@ -2125,14 +2126,14 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
     return 0;
   }
 
-  for(unsigned int i = 0; i < entities.size(); i++){
+  for(std::size_t i = 0; i < entities.size(); i++){
     GEntity* ge = entities[i];
     // clear list of vertices owned by entity
     ge->mesh_vertices.clear();
     // replace vertices in element
-    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++){
       MElement *e = ge->getMeshElement(j);
-      for(int k = 0; k < e->getNumVertices(); k++){
+      for(std::size_t k = 0; k < e->getNumVertices(); k++){
         std::map<MVertex*, MVertex*>::iterator it = duplicates.find(e->getVertex(k));
         if(it != duplicates.end())
           e->setVertex(k, it->second);

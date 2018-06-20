@@ -940,7 +940,7 @@ GMSH_API void gmsh::model::mesh::getElements(std::vector<int> &elementTypes,
         MElement *e = ge->getMeshElement(j);
         if(e->getTypeForMSH() == elementType){
           elementTags.back().push_back(e->getNum());
-          for(int k = 0; k < e->getNumVertices(); k++){
+          for(std::size_t k = 0; k < e->getNumVertices(); k++){
             nodeTags.back().push_back(e->getVertex(k)->getNum());
           }
         }
@@ -961,7 +961,7 @@ GMSH_API void gmsh::model::mesh::getElement(const int elementTag,
   }
   elementType = e->getTypeForMSH();
   nodeTags.clear();
-  for(int i = 0; i < e->getNumVertices(); i++){
+  for(std::size_t i = 0; i < e->getNumVertices(); i++){
     MVertex *v = e->getVertex(i);
     if(!v){
       Msg::Error("Unknown node in element %d", elementTag);
@@ -988,7 +988,7 @@ GMSH_API void gmsh::model::mesh::getElementByCoordinates(const double x,
   elementTag = e->getNum();
   elementType = e->getTypeForMSH();
   nodeTags.clear();
-  for(int i = 0; i < e->getNumVertices(); i++){
+  for(std::size_t i = 0; i < e->getNumVertices(); i++){
     MVertex *v = e->getVertex(i);
     if(!v){
       Msg::Error("Unknown node in element %d", elementTag);
@@ -1146,10 +1146,10 @@ GMSH_API void gmsh::model::mesh::getElementsByType(const int elementType,
   std::map<int, std::vector<GEntity*> > typeMap;
   int dim = ElementType::getDimension(elementType);
   _getElementTypeMap(dim, tag, typeMap);
-  const int numElements = _getNumElementsByType(elementType, tag);
+  const std::size_t numElements = _getNumElementsByType(elementType, tag);
   const int numNodes = ElementType::getNumVertices(elementType);
-  const size_t begin = (task * numElements) / numTasks;
-  const size_t end = ((task + 1) * numElements) / numTasks;
+  const std::size_t begin = (task * numElements) / numTasks;
+  const std::size_t end = ((task + 1) * numElements) / numTasks;
   // check arrays
   bool haveElementTags = elementTags.size();
   bool haveNodeTags = nodeTags.size();
@@ -1181,7 +1181,7 @@ GMSH_API void gmsh::model::mesh::getElementsByType(const int elementType,
         MElement *e = ge->getMeshElementByType(familyType, j);
         if(haveElementTags) elementTags[o] = e->getNum();
         if(haveNodeTags){
-          for(int k = 0; k < e->getNumVertices(); k++){
+          for(std::size_t k = 0; k < e->getNumVertices(); k++){
             nodeTags[idx++] = e->getVertex(k)->getNum();
           }
         }

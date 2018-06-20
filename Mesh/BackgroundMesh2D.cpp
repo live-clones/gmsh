@@ -456,7 +456,7 @@ double frameFieldBackgroundMesh2D::angle(double u, double v)
   std::vector<double> val = get_nodal_values(e,angles);
   std::vector<double> element_uvw = get_element_uvw_from_xyz(e,u,v,0.);
   std::vector<double> cosvalues(e->getNumVertices()), sinvalues(e->getNumVertices());
-  for (int i=0;i<e->getNumVertices();i++){
+  for (std::size_t i=0;i<e->getNumVertices();i++){
     cosvalues[i]=std::cos(4*val[i]);
     sinvalues[i]=std::sin(4*val[i]);
   }
@@ -579,9 +579,9 @@ void frameFieldBackgroundMesh2D::computeSmoothness()
   std::multimap<MVertex*,MVertex*> vertex2vertex;
   for (std::vector<MElement*>::iterator it = beginelements();it!=endelements();it++){
     MElement *e = *it;
-    for (int i=0;i<e->getNumVertices();i++){
+    for (std::size_t i=0;i<e->getNumVertices();i++){
       MVertex *current = e->getVertex(i);
-      for (int j=0;j<e->getNumVertices();j++){
+      for (std::size_t j=0;j<e->getNumVertices();j++){
         if (i==j) continue;
         MVertex *neighbor = e->getVertex(j);
         vertex2vertex.insert(std::make_pair(current,neighbor));

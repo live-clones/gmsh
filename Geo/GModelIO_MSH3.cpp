@@ -481,7 +481,7 @@ static void writeMSHPhysicals(FILE *fp, GEntity *ge)
 void writeMSHEntities(FILE *fp, GModel *gm)  // also used in MSH2
 {
   fprintf(fp, "$Entities\n");
-  fprintf (fp, "%d %d %d %d\n", gm->getNumVertices(), gm->getNumEdges(),
+  fprintf (fp, "%lu %d %d %d\n", gm->getNumVertices(), gm->getNumEdges(),
            gm->getNumFaces(), gm->getNumRegions());
   for (GModel::viter it = gm->firstVertex(); it != gm->lastVertex(); ++it) {
     fprintf(fp, "%d ", (*it)->tag());
@@ -743,7 +743,7 @@ int GModel::_writePartitionedMSH3(const std::string &baseName, double version,
     return 0;
   }
 
-  for(int partition = 0; partition < getNumPartitions(); partition++){
+  for(unsigned int partition = 0; partition < getNumPartitions(); partition++){
     std::ostringstream sstream;
     sstream << baseName << "_" << std::setw(6) << std::setfill('0') << partition;
     Msg::Info("Writing partition %d in file '%s'", partition, sstream.str().c_str());

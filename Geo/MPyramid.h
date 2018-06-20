@@ -65,7 +65,7 @@ class MPyramid : public MElement {
   }
   ~MPyramid(){}
   virtual int getDim() const { return 3; }
-  virtual int getNumVertices() const { return 5; }
+  virtual std::size_t getNumVertices() const { return 5; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual const MVertex *getVertex(int num) const{ return _v[num]; }
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
@@ -255,7 +255,7 @@ class MPyramidN : public MPyramid {
   }
   ~MPyramidN();
   virtual int getPolynomialOrder() const { return _order; }
-  virtual int getNumVertices() const { return 5 + _vs.size(); }
+  virtual std::size_t getNumVertices() const { return 5 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }
   virtual const MVertex *getVertex(int num) const { return num < 5 ? _v[num] : _vs[num - 5]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 5) _v[num] = v; else _vs[num - 5] = v; }

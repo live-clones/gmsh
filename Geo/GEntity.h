@@ -29,7 +29,7 @@ class VertexArray;
 
 // A geometric model entity.
 class GEntity {
- private:
+private:
   // all entities are owned by a GModel
   GModel *_model;
 
@@ -48,18 +48,18 @@ class GEntity {
   // the color of the entity (ignored if set to transparent blue)
   unsigned int _color;
 
- protected:
+protected:
   SOrientedBoundingBox *_obb;
 
- public: // these will become protected at some point
+public: // these will become protected at some point
   // the mesh vertices uniquely owned by the entity
-  std::vector<MVertex*> mesh_vertices;
+  std::vector<MVertex *> mesh_vertices;
 
   // a list of geometrical entities that form a compound mesh
   std::vector<GEntity *> _compound;
 
   // corresponding principal vertices
-  std::map<GVertex*,GVertex*> vertexCounterparts;
+  std::map<GVertex *, GVertex *> vertexCounterparts;
 
   // the physical entitites (if any) that contain this entity
   std::vector<int> physicals;
@@ -68,14 +68,15 @@ class GEntity {
   VertexArray *va_lines, *va_triangles;
 
   // Set of high-order elements fixed by "fast curving"
-  std::set<MElement*> curvedBLElements;
+  std::set<MElement *> curvedBLElements;
 
- public:
+  typedef std::vector<MVertex *>::size_type size_type;
 
+public:
   // make a set of all the vertices in the entity, with/without closure
-  void addVerticesInSet(std::set<MVertex*>&,bool closure) const;
+  void addVerticesInSet(std::set<MVertex *> &, bool closure) const;
 
- public:
+public:
   // all known native model types
   enum ModelType {
     UnknownModel,
@@ -133,11 +134,7 @@ class GEntity {
     GhostVolume
   };
 
-  enum MeshGenerationStatus {
-    PENDING,
-    DONE,
-    FAILED
-  };
+  enum MeshGenerationStatus { PENDING, DONE, FAILED };
 
   // return a string describing the entity type
   virtual std::string getTypeString()
@@ -185,8 +182,7 @@ class GEntity {
       "Partition volume",
       "Ghost curve",
       "Ghost surface",
-      "Ghost volume"
-    };
+      "Ghost volume"};
     unsigned int type = (unsigned int)geomType();
     if(type >= sizeof(name) / sizeof(name[0]))
       return "Undefined";
@@ -194,15 +190,15 @@ class GEntity {
       return name[type];
   }
 
-  GEntity(GModel *m,int t);
+  GEntity(GModel *m, int t);
 
-  virtual ~GEntity(){}
+  virtual ~GEntity() {}
 
   // mesh generation of the entity
   virtual void mesh(bool verbose) {}
 
   // delete the mesh data
-  virtual void deleteMesh(bool onlyDeleteElements = false){}
+  virtual void deleteMesh(bool onlyDeleteElements = false) {}
 
   // delete the vertex arrays, used to to draw the mesh efficiently
   void deleteVertexArrays();
@@ -211,36 +207,33 @@ class GEntity {
   virtual int dim() const { return -1; }
 
   // regions that bound this entity or that this entity bounds.
-  virtual std::list<GRegion*> regions() const { return std::list<GRegion*>(); }
+  virtual std::list<GRegion *> regions() const
+  {
+    return std::list<GRegion *>();
+  }
 
   // faces that bound this entity or that this entity bounds.
-  virtual std::vector<GFace*> faces() const { return std::vector<GFace*>(); }
+  virtual std::vector<GFace *> faces() const { return std::vector<GFace *>(); }
 
   // edges that bound this entity or that this entity bounds.
-  virtual std::vector<GEdge*> edges() const { return std::vector<GEdge*>(); }
+  virtual std::vector<GEdge *> edges() const { return std::vector<GEdge *>(); }
 
   // vertices that bound this entity.
-  virtual std::vector<GVertex*> vertices() const { return std::vector<GVertex*>(); }
+  virtual std::vector<GVertex *> vertices() const
+  {
+    return std::vector<GVertex *>();
+  }
 
   // for Python, temporary solution while iterator are not binded
-  std::vector<GRegion*> bindingsGetRegions()
+  std::vector<GRegion *> bindingsGetRegions()
   {
     // NOTE: two-line to not create two different lists with diff pointers
-    std::list<GRegion*> r = regions();
-    return std::vector<GRegion*> (r.begin(), r.end());
+    std::list<GRegion *> r = regions();
+    return std::vector<GRegion *>(r.begin(), r.end());
   }
-  std::vector<GFace*> bindingsGetFaces()
-  {
-    return faces();
-  }
-  std::vector<GEdge*> bindingsGetEdges() const
-  {
-    return edges();
-  }
-  std::vector<GVertex*> bindingsGetVertices()
-  {
-    return vertices();
-  }
+  std::vector<GFace *> bindingsGetFaces() { return faces(); }
+  std::vector<GEdge *> bindingsGetEdges() const { return edges(); }
+  std::vector<GVertex *> bindingsGetVertices() { return vertices(); }
 
   // underlying geometric representation of this entity.
   virtual GeomType geomType() const { return Unknown; }
@@ -256,7 +249,7 @@ class GEntity {
   virtual bool degenerate(int dim) const { return false; }
 
   // does the entity have a parametrization?
-  virtual bool haveParametrization(){ return true; }
+  virtual bool haveParametrization() { return true; }
 
   // parametric bounds of the entity in the "i" direction.
   virtual Range<double> parBounds(int i) const { return Range<double>(0., 0.); }
@@ -288,46 +281,56 @@ class GEntity {
   {
     physicals.push_back(physicalTag);
   }
-  virtual std::vector<int> getPhysicalEntities()
-  {
-    return physicals;
-  }
+  virtual std::vector<int> getPhysicalEntities() { return physicals; }
 
   // returns the master entity (for mesh)
-  GEntity* meshMaster() const;
-  void setMeshMaster(GEntity*);
-  void setMeshMaster(GEntity*, const std::vector<double>&);
+  GEntity *meshMaster() const;
+  void setMeshMaster(GEntity *);
+  void setMeshMaster(GEntity *, const std::vector<double> &);
   void updateCorrespondingVertices();
   void copyMasterCoordinates();
 
   virtual void alignElementsWithMaster() {}
 
   // get the bounding box
-  virtual SBoundingBox3d bounds(bool fast = false) const { return SBoundingBox3d(); }
+  virtual SBoundingBox3d bounds(bool fast = false) const
+  {
+    return SBoundingBox3d();
+  }
 
   //  get the oriented bounding box
-  virtual SOrientedBoundingBox getOBB() {return SOrientedBoundingBox(); }
+  virtual SOrientedBoundingBox getOBB() { return SOrientedBoundingBox(); }
 
   // get/set the visibility flag
   virtual char getVisibility();
-  virtual void setVisibility(char val, bool recursive=false){ _visible = val; }
+  virtual void setVisibility(char val, bool recursive = false)
+  {
+    _visible = val;
+  }
 
   // get/set the selection flag
-  virtual char getSelection(){ return _selection; }
-  virtual void setSelection(char val){ _selection = val; }
+  virtual char getSelection() { return _selection; }
+  virtual void setSelection(char val) { _selection = val; }
 
   // get/set the color
-  virtual unsigned int getColor(){ return _color; }
-  virtual void setColor(unsigned color, bool recursive=false){ _color = color; }
+  virtual unsigned int getColor() { return _color; }
+  virtual void setColor(unsigned color, bool recursive = false)
+  {
+    _color = color;
+  }
 
   // return true if we should use this color to represent the entity
   virtual bool useColor();
 
   // return an information string for the entity
-  virtual std::string getInfoString(bool additional = true, bool multiline = false);
+  virtual std::string getInfoString(bool additional = true,
+                                    bool multiline = false);
 
   // return a type-specific additional information string
-  virtual std::string getAdditionalInfoString(bool multline = false){ return ""; }
+  virtual std::string getAdditionalInfoString(bool multline = false)
+  {
+    return "";
+  }
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes() { return; }
@@ -339,10 +342,13 @@ class GEntity {
   virtual int getNumElementTypes() const { return 0; }
 
   // get the number of mesh elements (total and by type) in the entity
-  virtual unsigned int getNumMeshElements() const { return 0; }
-  virtual unsigned int getNumMeshElementsByType(const int familyType) const { return 0; }
+  virtual size_type getNumMeshElements() const { return 0; }
+  virtual unsigned int getNumMeshElementsByType(const int familyType) const
+  {
+    return 0;
+  }
   virtual unsigned int getNumMeshParentElements() { return 0; }
-  virtual void getNumMeshElements(unsigned *const c) const { }
+  virtual void getNumMeshElements(unsigned *const c) const {}
 
   // get the start of the array of a type of element
   virtual MElement *const *getStartElementType(int type) const { return 0; }
@@ -350,11 +356,15 @@ class GEntity {
   // get the element at the given index
   virtual MElement *getMeshElement(unsigned int index) const { return 0; }
   // get the element at the given index for a given familyType
-  virtual MElement *getMeshElementByType(const int familyType, const unsigned int index) const { return 0; }
+  virtual MElement *getMeshElementByType(const int familyType,
+                                         const unsigned int index) const
+  {
+    return 0;
+  }
 
   // get/set all mesh element visibility flag
-  bool getAllElementsVisible(){ return _allElementsVisible ? true : false; }
-  void setAllElementsVisible(bool val){ _allElementsVisible = val ? 1 : 0; }
+  bool getAllElementsVisible() { return _allElementsVisible ? true : false; }
+  void setAllElementsVisible(bool val) { _allElementsVisible = val ? 1 : 0; }
 
   // get the number of mesh vertices in the entity
   unsigned int getNumMeshVertices() { return mesh_vertices.size(); }
@@ -363,7 +373,7 @@ class GEntity {
   MVertex *getMeshVertex(unsigned int index) { return mesh_vertices[index]; }
 
   // add a MeshVertex
-  void addMeshVertex(MVertex *v) { mesh_vertices.push_back(v);}
+  void addMeshVertex(MVertex *v) { mesh_vertices.push_back(v); }
   // delete a MeshVertex
   void removeMeshVertex(MVertex *v);
 
@@ -373,37 +383,35 @@ class GEntity {
   virtual void removeElement(int type, MElement *e) {}
 
   // relocate mesh vertices using their parametric coordinates
-  virtual void relocateMeshVertices(){}
+  virtual void relocateMeshVertices() {}
 
   // clean downcasts
   GVertex *cast2Vertex();
-  GEdge   *cast2Edge();
-  GFace   *cast2Face();
+  GEdge *cast2Edge();
+  GFace *cast2Face();
   GRegion *cast2Region();
 
   // update all vertex lists, including periodic connections
-  void updateVertices(const std::map<MVertex*,MVertex*>&);
+  void updateVertices(const std::map<MVertex *, MVertex *> &);
 
   // transformation from master
   std::vector<double> affineTransform;
 
   // corresponding mesh vertices
-  std::map<MVertex*,MVertex*> correspondingVertices;
+  std::map<MVertex *, MVertex *> correspondingVertices;
 
   // corresponding high order control points
-  std::map<MVertex*,MVertex*> correspondingHOPoints;
+  std::map<MVertex *, MVertex *> correspondingHOPoints;
 
   // reorder the mesh elements of the given type, according to ordering
   virtual bool reorder(const int elementType, const std::vector<int> &ordering)
   {
     return false;
   }
-
 };
 
-class GEntityLessThan {
- public:
-  bool operator()(const GEntity *ent1, const GEntity *ent2) const
+struct GEntityLessThan {
+  bool operator()(GEntity const *const ent1, GEntity const *const ent2) const
   {
     return ent1->tag() < ent2->tag();
   }

@@ -172,6 +172,7 @@ const MElement* BGMBase::findElement(double u, double v, double w, bool strict)
 std::vector<double> BGMBase::get_field_value(double u, double v, double w,
                                              const VectorStorageType &data)
 {
+  // TODO C++11 remove const_cast and enforce const-correctness otherwise
   MElement *e = const_cast<MElement*>(findElement(u, v, w ));
 
   if (!e) return std::vector<double>(3,-1000.);
@@ -184,7 +185,7 @@ std::vector<double> BGMBase::get_field_value(double u, double v, double w,
   for (int j=0;j<3;j++) {
     std::vector<double> values(e->getNumVertices());
 
-    for (int i=0;i<e->getNumVertices();i++){
+    for (std::size_t i=0;i<e->getNumVertices();i++){
         values[i]=val[i][j];
     }
     res[j] = e->interpolate(&values[0], element_uvw[0], element_uvw[1],
@@ -196,12 +197,13 @@ std::vector<double> BGMBase::get_field_value(double u, double v, double w,
 double BGMBase::get_field_value(double u, double v, double w,
                                 const DoubleStorageType &data)
 {
+  // TODO C++11 Remove const_cast
   MElement *e = const_cast<MElement*>(findElement(u, v, w));
   if (!e) return -1000.;
   std::vector<double> val = get_nodal_values(e,data);
   std::vector<double> element_uvw = get_element_uvw_from_xyz(e,u,v,w);
   std::vector<double> values(e->getNumVertices());
-  for (int i=0;i<e->getNumVertices();i++)
+  for (std::size_t i=0;i<e->getNumVertices();i++)
     values[i]=val[i];
 
   return e->interpolate(&values[0], element_uvw[0], element_uvw[1],
@@ -244,7 +246,7 @@ BGMBase::get_nodal_values(const MElement *e,const VectorStorageType &data) const
 {
   std::vector<std::vector<double> > res(e->getNumVertices());
 
-  for (int i=0;i<e->getNumVertices();i++){
+  for (std::size_t i=0;i<e->getNumVertices();i++){
     VectorStorageType::const_iterator itfind = data.find(const_cast<MVertex*>(e->getVertex(i)));
     for (int j=0;j<3;j++)
       res[i].push_back((itfind->second)[j]);
@@ -257,7 +259,7 @@ std::vector<double> BGMBase::get_nodal_values(const MElement *element,
 {
   std::vector<double> res(element->getNumVertices(),0.);
 
-  for (int i=0;i<element->getNumVertices();i++)
+  for (std::size_t i=0;i<element->getNumVertices();i++)
     //res[i] = (data.find(const_cast<MVertex*>(e->getVertex(i))))->second;
     res[i] = data.find(element->getVertex(i))->second;
   return res;
@@ -279,7 +281,7 @@ std::set<MVertex*> BGMBase::get_vertices_of_maximum_dim(int dim)
   std::set<MVertex*> bnd_vertices;
   for(unsigned int i=0;i<gf->getNumMeshElements();i++){
     MElement* element = gf->getMeshElement(i);
-    for(int j=0;j<element->getNumVertices();j++){
+    for(std::size_t j=0;j<element->getNumVertices();j++){
       MVertex *vertex = element->getVertex(j);
       if (vertex->onWhat()->dim() <= dim)bnd_vertices.insert(vertex);
     }

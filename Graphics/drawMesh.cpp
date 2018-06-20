@@ -202,7 +202,7 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
 {
   for(unsigned int i = 0; i < elements.size(); i++){
     MElement *ele = elements[i];
-    for(int j = 0; j < ele->getNumVertices(); j++){
+    for(std::size_t j = 0; j < ele->getNumVertices(); j++){
       MVertex *v = ele->getVertex(j);
       // FIXME isElementVisible() can be slow: we should also use a
       // vertex array for drawing vertices...
@@ -262,7 +262,7 @@ static void drawBarycentricDual(std::vector<T*> &elements)
         SPoint3 p = f.barycenter();
         glVertex3d(pc.x(), pc.y(), pc.z());
         glVertex3d(p.x(), p.y(), p.z());
-        for(int k = 0; k < f.getNumVertices(); k++){
+        for(std::size_t k = 0; k < f.getNumVertices(); k++){
           MEdge e(f.getVertex(k), (k == f.getNumVertices() - 1) ?
                   f.getVertex(0) : f.getVertex(k + 1));
           SPoint3 pe = e.barycenter();
@@ -312,7 +312,7 @@ static void drawVoronoiDual(std::vector<T*> &elements)
         SPoint3 p = f.barycenter();
         glVertex3d(pc.x(), pc.y(), pc.z());
         glVertex3d(p.x(), p.y(), p.z());
-        for(int k = 0; k < f.getNumVertices(); k++){
+        for(std::size_t k = 0; k < f.getNumVertices(); k++){
           MEdge e(f.getVertex(k), (k == f.getNumVertices() - 1) ?
                   f.getVertex(0) : f.getVertex(k + 1));
           SPoint3 pe = e.barycenter();

@@ -759,7 +759,7 @@ static void copy_elements (std::vector<ELEMENT*> &to,
   for (unsigned int i=0;i < from.size();i++){
     ELEMENT *e = from[i];
     std::vector<MVertex*> nodes;
-    for(int j=0;j<e->getNumVertices();j++) {
+    for(std::size_t j=0;j<e->getNumVertices();j++) {
       nodes.push_back(_mesh_to_geom[e->getVertex(j)]);
       if (_mesh_to_geom[e->getVertex(j)] == 0) {
         printf("Error vertex %i\n", e->getVertex(j)->getNum());

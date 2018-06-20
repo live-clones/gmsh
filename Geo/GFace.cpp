@@ -153,7 +153,7 @@ void GFace::deleteMesh(bool onlyDeleteElements)
   model()->destroyMeshCaches();
 }
 
-unsigned int GFace::getNumMeshElements() const
+std::size_t GFace::getNumMeshElements() const
 {
   return triangles.size() + quadrangles.size() + polygons.size();
 }
@@ -1448,7 +1448,7 @@ static void meshCompound(GFace* gf, bool verbose)
   df->createGeometry();
   df->mesh(verbose);
 
-  for (int i = 0; i < df->mesh_vertices.size(); i++){
+  for (GFace::size_type i = 0; i < df->mesh_vertices.size(); i++){
     double u,v;
     df->mesh_vertices[i]->getParameter(0, u);
     df->mesh_vertices[i]->getParameter(1, v);
@@ -1476,7 +1476,7 @@ static void meshCompound(GFace* gf, bool verbose)
     }
   }
 
-  for (int i = 0; i < df->triangles.size(); i++){
+  for (GFace::size_type i = 0; i < df->triangles.size(); i++){
     MTriangle *t = df->triangles[i];
     if (t->getVertex(0)->onWhat()->dim() == 2)
       ((GFace*)t->getVertex(0)->onWhat())->triangles.push_back(t);
@@ -2043,7 +2043,7 @@ bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
 
     for(std::vector<int>::const_iterator it = ordering.begin();
         it != ordering.end(); ++it){
-      if(*it < 0 || *it >= triangles.size()) return false;
+      if(*it < 0 || *it >= static_cast<int>(triangles.size())) return false;
     }
 
     std::vector<MTriangle*> newTrianglesOrder(triangles.size());
@@ -2064,7 +2064,7 @@ bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
 
     for(std::vector<int>::const_iterator it = ordering.begin();
         it != ordering.end(); ++it){
-      if(*it < 0 || *it >= quadrangles.size()) return false;
+      if(*it < 0 || *it >= static_cast<int>(quadrangles.size())) return false;
     }
 
     std::vector<MQuadrangle*> newQuadranglesOrder(quadrangles.size());
@@ -2085,7 +2085,7 @@ bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
 
     for(std::vector<int>::const_iterator it = ordering.begin();
         it != ordering.end(); ++it){
-      if(*it < 0 || *it >= polygons.size()) return false;
+      if(*it < 0 || *it >= static_cast<int>(polygons.size())) return false;
     }
 
     std::vector<MPolygon*> newPolygonsOrder(polygons.size());
@@ -2112,18 +2112,21 @@ void GFace::alignElementsWithMaster()
 
     std::set<MFace,Less_Face> srcFaces;
 
-    for (unsigned i=0;i<master->getNumMeshElements();i++) {
-      MElement* face = master->getMeshElement(i);
-      std::vector<MVertex*> vtcs;
-      for (int j=0;j<face->getNumVertices();j++) vtcs.push_back(face->getVertex(j));
+    for(std::size_t i = 0; i < master->getNumMeshElements(); i++) {
+      MElement *face = master->getMeshElement(i);
+      std::vector<MVertex *> vtcs;
+      vtcs.reserve(face->getNumVertices());
+      for(std::size_t j = 0; j < face->getNumVertices(); j++) {
+        vtcs.push_back(face->getVertex(j));
+      }
       srcFaces.insert(MFace(vtcs));
     }
 
-    for (unsigned i=0;i<getNumMeshElements();i++) {
+    for (std::size_t i=0;i<getNumMeshElements();i++) {
 
       MElement* face = getMeshElement(i);
       std::vector<MVertex*> vtcs;
-      for (int j=0;j<face->getNumVertices();j++) {
+      for (std::size_t j=0;j<face->getNumVertices();j++) {
         MVertex* tv = face->getVertex(j);
 
         std::map<MVertex*,MVertex*>::iterator cIter = correspondingVertices.find(tv);
@@ -2142,7 +2145,6 @@ void GFace::alignElementsWithMaster()
       int orientation;
       bool swap;
       mf.computeCorrespondence(of,orientation,swap);
-
 
       switch (face->getNumVertices()) {
 

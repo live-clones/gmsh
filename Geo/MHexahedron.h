@@ -55,7 +55,7 @@ class MHexahedron : public MElement {
   }
   ~MHexahedron(){}
   virtual int getDim() const { return 3; }
-  virtual int getNumVertices() const { return 8; }
+  virtual std::size_t getNumVertices() const { return 8; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual const MVertex *getVertex(int num) const { return _v[num]; }
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
@@ -228,7 +228,7 @@ class MHexahedron20 : public MHexahedron {
   }
   ~MHexahedron20(){}
   virtual int getPolynomialOrder() const { return 2; }
-  virtual int getNumVertices() const { return 20; }
+  virtual std::size_t getNumVertices() const { return 20; }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual const MVertex *getVertex(int num) const { return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 8) _v[num] = v; else _vs[num - 8] = v; }
@@ -357,7 +357,7 @@ class MHexahedron27 : public MHexahedron {
   }
   ~MHexahedron27(){}
   virtual int getPolynomialOrder() const { return 2; }
-  virtual int getNumVertices() const { return 27; }
+  virtual std::size_t getNumVertices() const { return 27; }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual const MVertex *getVertex(int num) const { return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 8) _v[num] = v; else _vs[num - 8] = v; }
@@ -494,7 +494,7 @@ class MHexahedronN : public MHexahedron {
   }
   ~MHexahedronN(){}
   virtual int getPolynomialOrder() const { return (int)_order; }
-  virtual int getNumVertices() const { return 8 + _vs.size(); }
+  virtual std::size_t getNumVertices() const { return 8 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual const MVertex *getVertex(int num) const { return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 8) _v[num] = v; else _vs[num - 8] = v; }

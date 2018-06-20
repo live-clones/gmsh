@@ -136,7 +136,7 @@ void meshMetric::exportInfo(const char * fileendname)
       out_hess << "SS(";
       out_hessmat << "TS(";
     }
-    for ( int i = 0; i < e->getNumVertices(); i++) {
+    for (std::size_t i = 0; i < e->getNumVertices(); i++) {
       MVertex *ver = e->getVertex(i);
       out_metric << ver->x() << "," << ver->y() << "," << ver->z();
       out_grad << ver->x() << "," << ver->y() << "," << ver->z();
@@ -158,7 +158,7 @@ void meshMetric::exportInfo(const char * fileendname)
         out_hessmat << "){";
       }
     }
-    for ( int i = 0; i < e->getNumVertices(); i++) {
+    for ( std::size_t i = 0; i < e->getNumVertices(); i++) {
       MVertex *ver = e->getVertex(i);
       out_ls << vals[ver];
       out_hess << (hessians[ver](0,0) + hessians[ver](1,1) + hessians[ver](2,2));
@@ -241,7 +241,7 @@ std::vector<MVertex*> getLSBlob(unsigned int minNbPt, v2t_cont::iterator it,
     for (std::vector<MVertex*>::iterator itBV = bvv.begin(); itBV != bvv.end(); itBV++) {               // For each boundary vertex...
       std::vector<MElement*> &adjBV = adj[*itBV];
       for (std::vector<MElement*>::iterator itBVEl = adjBV.begin(); itBVEl != adjBV.end(); itBVEl++) {
-        for (int iV=0; iV<(*itBVEl)->getNumVertices(); iV++){                                           // ... look for adjacent vertices...
+        for (std::size_t iV=0; iV<(*itBVEl)->getNumVertices(); iV++){                                           // ... look for adjacent vertices...
           MVertex *v = (*itBVEl)->getVertex(iV);
 	  //          if ((find(vv.begin(),vv.end(),v) == vv.end()) && (p0.distance(v->point()) <= rad)) nbvv.insert(v);
           if (find(vv.begin(),vv.end(),v) == vv.end()) nbvv.insert(v);                                  // ... and add them in the new boundary if they are not already in the blob
@@ -708,7 +708,7 @@ double meshMetric::operator() (double x, double y, double z, GEntity *ge)
   if (e) {
     e->xyz2uvw(xyz,uvw);
     double *val = new double [e->getNumVertices()];
-    for (int i=0;i<e->getNumVertices();i++){
+    for (std::size_t i=0;i<e->getNumVertices();i++){
       val[i] = _nodalSizes[e->getVertex(i)];
     }
     value = e->interpolate(val,uvw[0],uvw[1],uvw[2]);
@@ -903,4 +903,3 @@ SVector3 meshMetric::getGradient (MVertex *v)
   }
   }
 */
-
