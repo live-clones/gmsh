@@ -186,9 +186,43 @@ static Vertex InterpolateBezier(Curve *Curve, double u, int derivee)
 // Uniform BSplines
 static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
 {
+  // Mat for 4 control points (=> just 1 curve => Bézier interpolation)
+  static double mat4[4][4] = { {-1,  3, -3, 1}, // t^3
+                               { 3, -6,  3, 0}, // t^2
+                               {-3,  3,  0, 0}, // t^1
+                               { 1,  0,  0, 0} }; // t^0
+                             // n0   n1   n2 n3
+  // Mat for 5 control points (left extremity, other obtained by symmetry)
+  static double mat5[4][4] = { {-1, 7./4,  -1, 1./4},
+                               { 3, -4.5, 1.5,    0},
+                               {-3,    3,   0,    0},
+                               { 1,    0,   0,    0} };
+  // Mat for 6 control points (left extremity + middle, right obtained by symmetry)
+  static double mat6_1[4][4] = { {-1, 7./4, -11./12, 2./12},
+                                 { 3, -4.5,     1.5,     0},
+                                 {-3,    3,       0,     0},
+                                 { 1,    0,       0,     0} };
+  static double mat6_2[4][4] = { {-1./4, 7./12, -7./12, 1./4},
+                                 { 3./4, -5./4,   1./2,    0},
+                                 {-3./4,  1./4,   1./2,    0},
+                                 { 1./4, 7./12,   1./6,    0} };
+  // Mat for 7+ control points
+  static double matext_1[4][4] = { {-1, 7./4, -11./12, 1./6},
+                                   { 3, -4.5,     1.5,    0},
+                                   {-3,    3,       0,    0},
+                                   { 1,    0,       0,    0} };
+  static double mat7_2[4][4] = { {-1./4, 7./12, -1./2, 1./6},
+                                 { 3./4, -5./4,  1./2,    0},
+                                 {-3./4,  1./4,  1./2,    0},
+                                 { 1./4, 7./12,  1./6,    0} };
+  static double matext_2[4][4] = { {-1./4, 7./12,  -.5, 1./6},
+                                   { 3./4, -5./4,   .5,    0},
+                                   {-3./4,  1./4,   .5,    0},
+                                   { 1./4, 7./12, 1./6,    0} };
+
   bool periodic = (Curve->end == Curve->beg);
   int NbControlPoints = List_Nbr(Curve->Control_Points);
-  int NbCurves = NbControlPoints + (periodic ? -1 : 1);
+  int NbCurves = NbControlPoints + (periodic ? -1 : -3);
   int iCurve = (int)floor(u * (double)NbCurves);
   if(iCurve == NbCurves) iCurve -= 1; // u = 1
   double t1 = (double)(iCurve) / (double)(NbCurves);
@@ -203,7 +237,7 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
         k += NbControlPoints - 1;
     }
     else {
-      k = std::max(0, std::min(iCurve - 2 + i, NbControlPoints -1));
+      k = iCurve + i;
     }
     if(k < NbControlPoints)
       List_Read(Curve->Control_Points, k , &v[i]);
@@ -214,8 +248,42 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
     }
   }
 
+  double (*matrix)[4][4] = &Curve->mat;
+  if (!periodic) {
+    // Inverse if right extremity
+    if (   (NbControlPoints > 6 && iCurve >= NbCurves - 2)
+        || (NbControlPoints > 4 && iCurve == NbCurves - 1)) {
+      Vertex *v_tmp = v[0];
+      v[0] = v[3];
+      v[3] = v_tmp;
+      v_tmp = v[1];
+      v[1] = v[2];
+      v[2] = v_tmp;
+      t = 1-t;
+      double t_tmp = t1;
+      t1 = t2;
+      t2 = t_tmp;
+      iCurve = NbCurves-1 - iCurve;
+    }
+    if (iCurve == 0) {
+      switch (NbControlPoints) {
+        case 4: matrix = &mat4; break;
+        case 5: matrix = &mat5; break;
+        case 6: matrix = &mat6_1; break;
+        default: matrix = &matext_1; break;
+      }
+    }
+    else if (iCurve == 1) {
+      switch (NbControlPoints) {
+        case 6: matrix = &mat6_2; break;
+        case 7: matrix = &mat7_2; break;
+        default: matrix = &matext_2; break;
+      }
+    }
+  }
+
   if(Curve->geometry){
-    SPoint2 pp = InterpolateCubicSpline(v, t, Curve->mat, t1, t2,
+    SPoint2 pp = InterpolateCubicSpline(v, t, *matrix, t1, t2,
                                         Curve->geometry, derivee);
     SPoint3 pt = Curve->geometry->point(pp);
     Vertex V;
@@ -225,7 +293,7 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
     return V;
   }
   else{
-    return InterpolateCubicSpline(v, t, Curve->mat, derivee, t1, t2);
+    return InterpolateCubicSpline(v, t, *matrix, derivee, t1, t2);
   }
 }
 
