@@ -2042,7 +2042,7 @@ void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Edge edge, GEdge *ge)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
-  ExtrudeParams *e = _meshAttributes->getExtrudeParams(1, std::move(edge),
+  ExtrudeParams *e = _meshAttributes->getExtrudeParams(1, edge,
                                                        sourceDim, sourceShape);
   if(!e) return;
   ge->meshAttributes.extrude = e;
@@ -2060,7 +2060,7 @@ void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Face face, GFace *gf)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
-  ExtrudeParams *e = _meshAttributes->getExtrudeParams(2, std::move(face),
+  ExtrudeParams *e = _meshAttributes->getExtrudeParams(2, face,
                                                        sourceDim, sourceShape);
   if(!e) return;
   gf->meshAttributes.extrude = e;
@@ -2078,7 +2078,7 @@ void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Solid solid, GRegion *gr)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
-  ExtrudeParams *e = _meshAttributes->getExtrudeParams(3, std::move(solid),
+  ExtrudeParams *e = _meshAttributes->getExtrudeParams(3, solid,
                                                        sourceDim, sourceShape);
   if(!e) return;
   gr->meshAttributes.extrude = e;
@@ -3854,7 +3854,7 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
 bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices_uv,
                                 std::vector<int> &triangles)
 {
-  return makeSTL(std::move(s), &vertices_uv, 0, 0, triangles);
+  return makeSTL(s, &vertices_uv, 0, 0, triangles);
 }
 
 bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices_uv,
@@ -3862,14 +3862,14 @@ bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices_uv
                                 std::vector<SVector3> &normals,
                                 std::vector<int> &triangles)
 {
-  return makeSTL(std::move(s), &vertices_uv, &vertices, &normals, triangles);
+  return makeSTL(s, &vertices_uv, &vertices, &normals, triangles);
 }
 
 bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint3> &vertices,
                                 std::vector<SVector3> &normals,
                                 std::vector<int> &triangles)
 {
-  return makeSTL(std::move(s), 0, &vertices, &normals, triangles);
+  return makeSTL(s, 0, &vertices, &normals, triangles);
 }
 
 bool OCC_Internals::makeSolidSTL(const TopoDS_Solid &s,
