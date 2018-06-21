@@ -558,6 +558,13 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
   vymin -= yborder;
   vymax += yborder;
 
+  // Put the origin of World coordinates at center of viewport
+  // (this is necessary for the scaling to be applied at center of viewport)
+  vxmin -= CTX::instance()->cg[0];
+  vxmax -= CTX::instance()->cg[0];
+  vymin -= CTX::instance()->cg[1];
+  vymax -= CTX::instance()->cg[1];
+
   // store what one pixel represents in world coordinates
   pixel_equiv_x = (vxmax - vxmin) / (viewport[2] - viewport[0]);
   pixel_equiv_y = (vymax - vymin) / (viewport[3] - viewport[1]);
@@ -745,7 +752,10 @@ void drawContext::initRenderModel()
 void drawContext::initPosition()
 {
   glScaled(s[0], s[1], s[2]);
-  glTranslated(t[0], t[1], t[2]);
+//  glTranslated(t[0], t[1], t[2]);
+  glTranslated(t[0]-CTX::instance()->cg[0],
+               t[1]-CTX::instance()->cg[1],
+               t[2]-CTX::instance()->cg[2]);
   if(CTX::instance()->rotationCenterCg)
     glTranslated(CTX::instance()->cg[0],
                  CTX::instance()->cg[1],
