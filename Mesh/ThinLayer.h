@@ -82,9 +82,9 @@ public:
   CorrespVertices();
   ~CorrespVertices();
   void setStartPoint(MVertex* v);
-  void setEndPoint(SPoint3 p);
-  void setStartNormal(SVector3 v);
-  void setEndNormal(SVector3 v);
+  void setEndPoint(const SPoint3 &p);
+  void setStartNormal(const SVector3 &v);
+  void setEndNormal(const SVector3 &v);
   void setEndTriangle(faceXtet f);
   void setdistP2P(double d);
   void setangleProd(double a);
@@ -116,10 +116,11 @@ public:
   static std::map<MVertex*,double> computeAllDistToOppSide();
   static double computeDistToOppSide(MVertex* v);
   static SVector3 computeInteriorNormal(MVertex* v);
-  static MTet4* getTetFromPoint(MVertex* v, SVector3 InteriorNormal);
-  static bool IsPositivOrientation(SVector3 a, SVector3 b, SVector3 c);
-  static void FindNewPoint(SPoint3* CurrentPoint, int* CurrentTri,
-                           MTet4* CurrentTet, SVector3 InteriorNormal);
+  static MTet4 *getTetFromPoint(MVertex *v, const SVector3 &InteriorNormal);
+  static bool IsPositivOrientation(const SVector3 &a, const SVector3 &b,
+                                   const SVector3 &c);
+  static void FindNewPoint(SPoint3 *CurrentPoint, int *CurrentTri,
+                           MTet4 *CurrentTet, const SVector3 &InteriorNormal);
   static std::map<MVertex*,std::vector<MTetrahedron*> > VertexToTets;
   static std::map<MTetrahedron*,MTet4*> TetToTet4;
   static std::map<MVertex*,std::vector<CorrespVertices*> > VertexToCorresp;

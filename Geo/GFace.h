@@ -107,8 +107,8 @@ public:
   // edges that bound the face
   int delEdge(GEdge *edge);
   virtual std::vector<GEdge *> edges() const { return l_edges; }
-  void set(std::vector<GEdge *> f) { l_edges = f; }
-  void setOrientations(std::vector<int> f) { l_dirs = f; }
+  void set(const std::vector<GEdge *> &f) { l_edges = f; }
+  void setOrientations(const std::vector<int> &f) { l_dirs = f; }
   void setEdge(GEdge *const f, int const orientation)
   {
     l_edges.push_back(f);

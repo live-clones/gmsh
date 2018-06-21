@@ -277,8 +277,8 @@ double get_smoothness(MVertex *v, GFace *gf, const map<MVertex*,double> &vertice
   return res;
 }
 
-
-void print_nodal_info_int(string filename, map<MVertex*, int> &mapp){
+void print_nodal_info_int(const string &filename, map<MVertex *, int> &mapp)
+{
   ofstream out(filename.c_str());
 
   out << "View \"\"{" << endl;
@@ -291,8 +291,9 @@ void print_nodal_info_int(string filename, map<MVertex*, int> &mapp){
   out.close();
 }
 
-
-void print_nodal_info_double(string filename, map<MVertex*, double> &mapp){
+void print_nodal_info_double(const string &filename,
+                             map<MVertex *, double> &mapp)
+{
   ofstream out(filename.c_str());
 
   out << "View \"\"{" << endl;
@@ -828,7 +829,10 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
 
 // fills a surface with points in order to build a nice
 // quad mesh ------------
-void packingOfParallelogramsConstrained(GFace* gf, std::set<MVertex*> constr_vertices, std::vector<MVertex*> &packed, std::vector<SMetric3> &metrics){
+void packingOfParallelogramsConstrained(
+  GFace *gf, const std::set<MVertex *> &constr_vertices,
+  std::vector<MVertex *> &packed, std::vector<SMetric3> &metrics)
+{
   //PE MODIF
 //  packingOfParallelogramsSmoothness(gf,packed,metrics);
 //  return;

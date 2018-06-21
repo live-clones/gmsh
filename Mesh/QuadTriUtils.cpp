@@ -496,8 +496,9 @@ std::vector<double> QtFindVertsCentroid(std::vector<MVertex*> v)
 
 // Add a new vertex at the centroid of a vector of vertices (this goes into a region
 // Added 2010-02-06
-MVertex* QtMakeCentroidVertex(std::vector<MVertex*> v, std::vector<MVertex*> *target,
-                              GEntity *entity, MVertexRTree &pos)
+MVertex *QtMakeCentroidVertex(const std::vector<MVertex *> &v,
+                              std::vector<MVertex *> *target, GEntity *entity,
+                              MVertexRTree &pos)
 {
   int v_size = v.size();
   if( v_size != 6 && v_size != 8 && v_size != 3 && v_size != 4){

@@ -83,7 +83,8 @@ class meshMetric: public Field {
   // 5: same as 4, except that the transition in band E uses linear interpolation of h, instead of linear interpolation of metric
   // 6: fct is a LS, metric is isotropic with linear interpolation of h in band E
   // 7: metric based on the Hessian of fct, scaled so that the smallest element has size lcmin
-  void addMetric(int technique, simpleFunction<double> *fct, std::vector<double> parameters);
+  void addMetric(int technique, simpleFunction<double> *fct,
+                 const std::vector<double> &parameters);
 
   inline SMetric3 metricAtVertex (MVertex* v) {
     if (needMetricUpdate) updateMetrics();

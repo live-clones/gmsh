@@ -30,9 +30,10 @@ class Filler{
   bool far_from_boundary(MElementOctree*,Node*);
   void compute_parameters(Node*,GEntity*);
   void create_spawns(GEntity*,MElementOctree*,Node*,std::vector<Node*>&);
-  double improvement(GEntity*,MElementOctree*,SPoint3,double,SVector3);
+  double improvement(GEntity *, MElementOctree *, const SPoint3 &, double,
+                     const SVector3 &);
   int code(int);
-  void print_segment(SPoint3,SPoint3,std::ofstream&);
+  void print_segment(const SPoint3 &, const SPoint3 &, std::ofstream &);
   void print_node(Node*,std::ofstream&);
  public:
   Filler();

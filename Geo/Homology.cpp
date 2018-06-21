@@ -14,16 +14,20 @@
 
 #if defined(HAVE_KBIPACK)
 
-Homology::Homology(GModel* model,
-                   std::vector<int> physicalDomain,
-		   std::vector<int> physicalSubdomain,
-                   std::vector<int> physicalImdomain,
-                   bool saveOrig,
-		   int combine, bool omit, bool smoothen, int heuristic) :
-  _model(model), _domain(physicalDomain), _subdomain(physicalSubdomain),
-  _imdomain(physicalImdomain), _saveOrig(saveOrig),
-  _combine(combine), _omit(omit), _smoothen(smoothen),
-  _heuristic(heuristic), _cellComplex(NULL)
+Homology::Homology(GModel *model, const std::vector<int> &physicalDomain,
+                   const std::vector<int> &physicalSubdomain,
+                   const std::vector<int> &physicalImdomain, bool saveOrig,
+                   int combine, bool omit, bool smoothen, int heuristic)
+  : _model(model)
+  , _domain(physicalDomain)
+  , _subdomain(physicalSubdomain)
+  , _imdomain(physicalImdomain)
+  , _saveOrig(saveOrig)
+  , _combine(combine)
+  , _omit(omit)
+  , _smoothen(smoothen)
+  , _heuristic(heuristic)
+  , _cellComplex(NULL)
 {
   _fileName = "";
 
@@ -584,8 +588,8 @@ int Homology::eulerCharacteristic()
   return _cellComplex->eulerCharacteristic();
 }
 
-void Homology::_createChain(std::map<Cell*, int, Less_Cell>& preChain,
-                            std::string name, bool co)
+void Homology::_createChain(std::map<Cell *, int, Less_Cell> &preChain,
+                            const std::string &name, bool co)
 {
   Chain<int>* chain = new Chain<int>();
   chain->setName(name);

@@ -71,7 +71,7 @@ class OCC_Internals {
 
   // get tag of shape, but search for other candidates at the same location if
   // the actual shape is not found
-  int _getFuzzyTag(int dim, TopoDS_Shape s);
+  int _getFuzzyTag(int dim, const TopoDS_Shape &s);
 
   // iterate on all bound entities and recompute the maximum tag
   void _recomputeMaxTag(int dim);
@@ -81,7 +81,7 @@ class OCC_Internals {
   // highestDimOnly is true, only bind the entities (and sub-entities, if
   // recursive is set) of the highest dimension; if returnNewOnly is set, only
   // return newly bound entities in outDimTags.
-  void _multiBind(TopoDS_Shape shape, int tag,
+  void _multiBind(const TopoDS_Shape &shape, int tag,
                   std::vector<std::pair<int, int> > &outDimTags,
                   bool returnHighestDimOnly, bool recursive = false,
                   bool returnNewOnly = false);
@@ -90,13 +90,13 @@ class OCC_Internals {
   bool _isBound(int dim, int tag);
 
   // is the entity of a given dimension and shape bound?
-  bool _isBound(int dim, TopoDS_Shape shape);
+  bool _isBound(int dim, const TopoDS_Shape &shape);
 
   // get the entity of a given dimension and tag
   TopoDS_Shape _find(int dim, int tag);
 
   // get the tag of a shape of a given dimension
-  int _find(int dim, TopoDS_Shape shape);
+  int _find(int dim, const TopoDS_Shape &shape);
 
   // get maximum dimension of shapes bound to tags
   int _getMaxDim();
@@ -105,7 +105,7 @@ class OCC_Internals {
   void _getAllDimTags(std::vector<std::pair<int, int> > &dimTags, int dim = 99);
 
   // add a shape and all its subshapes to _vmap, _emap, ..., _somap
-  void _addShapeToMaps(TopoDS_Shape shape);
+  void _addShapeToMaps(const TopoDS_Shape &shape);
 
   // apply various healing algorithms to try to fix the shape
   void _healShape(TopoDS_Shape &myshape, double tolerance, bool fixdegenerated,
@@ -154,19 +154,19 @@ class OCC_Internals {
 
   // bind and unbind OpenCASCADE shapes to tags (these methods will become
   // private)
-  void bind(TopoDS_Vertex vertex, int tag, bool recursive = false);
-  void bind(TopoDS_Edge edge, int tag, bool recursive = false);
-  void bind(TopoDS_Wire wire, int tag, bool recursive = false);
-  void bind(TopoDS_Face face, int tag, bool recursive = false);
-  void bind(TopoDS_Shell shell, int tag, bool recursive = false);
-  void bind(TopoDS_Solid solid, int tag, bool recursive = false);
+  void bind(const TopoDS_Vertex &vertex, int tag, bool recursive = false);
+  void bind(const TopoDS_Edge &edge, int tag, bool recursive = false);
+  void bind(const TopoDS_Wire &wire, int tag, bool recursive = false);
+  void bind(const TopoDS_Face &face, int tag, bool recursive = false);
+  void bind(const TopoDS_Shell &shell, int tag, bool recursive = false);
+  void bind(const TopoDS_Solid &solid, int tag, bool recursive = false);
   void bind(TopoDS_Shape shape, int dim, int tag, bool recursive = false);
-  void unbind(TopoDS_Vertex vertex, int tag, bool recursive = false);
-  void unbind(TopoDS_Edge edge, int tag, bool recursive = false);
-  void unbind(TopoDS_Wire wire, int tag, bool recursive = false);
-  void unbind(TopoDS_Face face, int tag, bool recursive = false);
-  void unbind(TopoDS_Shell shell, int tag, bool recursive = false);
-  void unbind(TopoDS_Solid solid, int tag, bool recursive = false);
+  void unbind(const TopoDS_Vertex &vertex, int tag, bool recursive = false);
+  void unbind(const TopoDS_Edge &edge, int tag, bool recursive = false);
+  void unbind(const TopoDS_Wire &wire, int tag, bool recursive = false);
+  void unbind(const TopoDS_Face &face, int tag, bool recursive = false);
+  void unbind(const TopoDS_Shell &shell, int tag, bool recursive = false);
+  void unbind(const TopoDS_Solid &solid, int tag, bool recursive = false);
   void unbind(TopoDS_Shape shape, int dim, int tag, bool recursive = false);
 
   // set/get max tag of entity for each dimension (0, 1, 2, 3), as well as
@@ -313,10 +313,10 @@ class OCC_Internals {
 
   // queries
   bool getVertex(int tag, double &x, double &y, double &z);
-  GVertex *getVertexForOCCShape(GModel *model, TopoDS_Vertex toFind);
-  GEdge *getEdgeForOCCShape(GModel *model, TopoDS_Edge toFind);
-  GFace *getFaceForOCCShape(GModel *model, TopoDS_Face toFind);
-  GRegion *getRegionForOCCShape(GModel *model, TopoDS_Solid toFind);
+  GVertex *getVertexForOCCShape(GModel *model, const TopoDS_Vertex &toFind);
+  GEdge *getEdgeForOCCShape(GModel *model, const TopoDS_Edge &toFind);
+  GFace *getFaceForOCCShape(GModel *model, const TopoDS_Face &toFind);
+  GRegion *getRegionForOCCShape(GModel *model, const TopoDS_Solid &toFind);
 
   // STL utilities
   bool makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices_uv,
@@ -326,8 +326,9 @@ class OCC_Internals {
                    std::vector<int> &triangles);
   bool makeFaceSTL(TopoDS_Face s, std::vector<SPoint3> &vertices,
                    std::vector<SVector3> &normals, std::vector<int> &triangles);
-  bool makeSolidSTL(TopoDS_Solid s, std::vector<SPoint3> &vertices,
-                    std::vector<SVector3> &normals, std::vector<int> &triangles);
+  bool makeSolidSTL(const TopoDS_Solid &s, std::vector<SPoint3> &vertices,
+                    std::vector<SVector3> &normals,
+                    std::vector<int> &triangles);
   bool makeRectangleSTL(double x, double y, double z, double dx, double dy,
                         double roundedRadius, std::vector<SPoint3> &vertices,
                         std::vector<SVector3> &normals, std::vector<int> &triangles);

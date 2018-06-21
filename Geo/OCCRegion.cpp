@@ -22,7 +22,8 @@
 #include <BRepBndLib.hxx>
 
 OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num)
-  : GRegion(m, num), s(_s)
+  : GRegion(m, num)
+  , s(_s)
 {
   setup();
   if(model()->getOCCInternals())
@@ -40,7 +41,7 @@ void OCCRegion::setup()
   l_faces.clear();
   TopExp_Explorer exp2, exp3;
   for(exp2.Init(s, TopAbs_SHELL); exp2.More(); exp2.Next()){
-    TopoDS_Shape shell = exp2.Current();
+    const TopoDS_Shape &shell = exp2.Current();
     Msg::Debug("OCC Region %d - New Shell",tag());
     for(exp3.Init(shell, TopAbs_FACE); exp3.More(); exp3.Next()){
       TopoDS_Face face = TopoDS::Face(exp3.Current());

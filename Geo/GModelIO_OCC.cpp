@@ -90,6 +90,7 @@
 #include <gce_MakeCirc.hxx>
 #include <gce_MakeElips.hxx>
 #include <gce_MakePln.hxx>
+#include <utility>
 
 #include "OCCMeshAttributes.h"
 
@@ -163,7 +164,7 @@ void OCC_Internals::_recomputeMaxTag(int dim)
     _maxTag[dim + 2] = std::max(_maxTag[dim + 2], exp.Key());
 }
 
-void OCC_Internals::bind(TopoDS_Vertex vertex, int tag, bool recursive)
+void OCC_Internals::bind(const TopoDS_Vertex &vertex, int tag, bool recursive)
 {
   if(vertex.IsNull()) return;
   if(_vertexTag.IsBound(vertex)){
@@ -185,7 +186,7 @@ void OCC_Internals::bind(TopoDS_Vertex vertex, int tag, bool recursive)
   }
 }
 
-void OCC_Internals::bind(TopoDS_Edge edge, int tag, bool recursive)
+void OCC_Internals::bind(const TopoDS_Edge &edge, int tag, bool recursive)
 {
   if(edge.IsNull()) return;
   if(_edgeTag.IsBound(edge)){
@@ -217,7 +218,7 @@ void OCC_Internals::bind(TopoDS_Edge edge, int tag, bool recursive)
   }
 }
 
-void OCC_Internals::bind(TopoDS_Wire wire, int tag, bool recursive)
+void OCC_Internals::bind(const TopoDS_Wire &wire, int tag, bool recursive)
 {
   if(wire.IsNull()) return;
   if(_wireTag.IsBound(wire)){
@@ -248,7 +249,7 @@ void OCC_Internals::bind(TopoDS_Wire wire, int tag, bool recursive)
   }
 }
 
-void OCC_Internals::bind(TopoDS_Face face, int tag, bool recursive)
+void OCC_Internals::bind(const TopoDS_Face &face, int tag, bool recursive)
 {
   if(face.IsNull()) return;
   if(_faceTag.IsBound(face)){
@@ -287,7 +288,7 @@ void OCC_Internals::bind(TopoDS_Face face, int tag, bool recursive)
   }
 }
 
-void OCC_Internals::bind(TopoDS_Shell shell, int tag, bool recursive)
+void OCC_Internals::bind(const TopoDS_Shell &shell, int tag, bool recursive)
 {
   if(shell.IsNull()) return;
   if(_shellTag.IsBound(shell)){
@@ -318,7 +319,7 @@ void OCC_Internals::bind(TopoDS_Shell shell, int tag, bool recursive)
   }
 }
 
-void OCC_Internals::bind(TopoDS_Solid solid, int tag, bool recursive)
+void OCC_Internals::bind(const TopoDS_Solid &solid, int tag, bool recursive)
 {
   if(solid.IsNull()) return;
   if(_solidTag.IsBound(solid)){
@@ -370,7 +371,7 @@ void OCC_Internals::bind(TopoDS_Shape shape, int dim, int tag, bool recursive)
   }
 }
 
-void OCC_Internals::unbind(TopoDS_Vertex vertex, int tag, bool recursive)
+void OCC_Internals::unbind(const TopoDS_Vertex &vertex, int tag, bool recursive)
 {
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagEdge);
   for(; exp0.More(); exp0.Next()){
@@ -389,7 +390,7 @@ void OCC_Internals::unbind(TopoDS_Vertex vertex, int tag, bool recursive)
   _changed = true;
 }
 
-void OCC_Internals::unbind(TopoDS_Edge edge, int tag, bool recursive)
+void OCC_Internals::unbind(const TopoDS_Edge &edge, int tag, bool recursive)
 {
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp2(_tagFace);
   for(; exp2.More(); exp2.Next()){
@@ -418,7 +419,7 @@ void OCC_Internals::unbind(TopoDS_Edge edge, int tag, bool recursive)
   _changed = true;
 }
 
-void OCC_Internals::unbind(TopoDS_Wire wire, int tag, bool recursive)
+void OCC_Internals::unbind(const TopoDS_Wire &wire, int tag, bool recursive)
 {
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagFace);
   for(; exp0.More(); exp0.Next()){
@@ -447,7 +448,7 @@ void OCC_Internals::unbind(TopoDS_Wire wire, int tag, bool recursive)
   _changed = true;
 }
 
-void OCC_Internals::unbind(TopoDS_Face face, int tag, bool recursive)
+void OCC_Internals::unbind(const TopoDS_Face &face, int tag, bool recursive)
 {
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp2(_tagSolid);
   for(; exp2.More(); exp2.Next()){
@@ -483,7 +484,7 @@ void OCC_Internals::unbind(TopoDS_Face face, int tag, bool recursive)
   _changed = true;
 }
 
-void OCC_Internals::unbind(TopoDS_Shell shell, int tag, bool recursive)
+void OCC_Internals::unbind(const TopoDS_Shell &shell, int tag, bool recursive)
 {
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagSolid);
   for(; exp0.More(); exp0.Next()){
@@ -512,7 +513,7 @@ void OCC_Internals::unbind(TopoDS_Shell shell, int tag, bool recursive)
   _changed = true;
 }
 
-void OCC_Internals::unbind(TopoDS_Solid solid, int tag, bool recursive)
+void OCC_Internals::unbind(const TopoDS_Solid &solid, int tag, bool recursive)
 {
   std::pair<int, int> dimTag(3, tag);
   if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
@@ -553,7 +554,7 @@ void OCC_Internals::unbind(TopoDS_Shape shape, int dim, int tag, bool recursive)
   }
 }
 
-void OCC_Internals::_multiBind(TopoDS_Shape shape, int tag,
+void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
                                std::vector<std::pair<int, int> > &outDimTags,
                                bool highestDimOnly, bool recursive,
                                bool returnNewOnly)
@@ -665,7 +666,7 @@ bool OCC_Internals::_isBound(int dim, int tag)
   }
 }
 
-bool OCC_Internals::_isBound(int dim, TopoDS_Shape shape)
+bool OCC_Internals::_isBound(int dim, const TopoDS_Shape &shape)
 {
   switch(dim){
   case 0 : return _vertexTag.IsBound(shape);
@@ -691,7 +692,7 @@ TopoDS_Shape OCC_Internals::_find(int dim, int tag)
   }
 }
 
-int OCC_Internals::_find(int dim, TopoDS_Shape shape)
+int OCC_Internals::_find(int dim, const TopoDS_Shape &shape)
 {
   switch(dim){
   case 0 : return _vertexTag.Find(shape);
@@ -2013,7 +2014,7 @@ void OCC_Internals::_setExtrudedMeshAttributes(const TopoDS_Compound &c,
   }
 }
 
-int OCC_Internals::_getFuzzyTag(int dim, TopoDS_Shape s)
+int OCC_Internals::_getFuzzyTag(int dim, const TopoDS_Shape &s)
 {
   if(_isBound(dim, s))
     return _find(dim, s);
@@ -2041,8 +2042,8 @@ void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Edge edge, GEdge *ge)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
-  ExtrudeParams *e = _meshAttributes->getExtrudeParams
-    (1, edge, sourceDim, sourceShape);
+  ExtrudeParams *e = _meshAttributes->getExtrudeParams(1, std::move(edge),
+                                                       sourceDim, sourceShape);
   if(!e) return;
   ge->meshAttributes.extrude = e;
   if(ge->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY){
@@ -2059,8 +2060,8 @@ void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Face face, GFace *gf)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
-  ExtrudeParams *e = _meshAttributes->getExtrudeParams
-    (2, face, sourceDim, sourceShape);
+  ExtrudeParams *e = _meshAttributes->getExtrudeParams(2, std::move(face),
+                                                       sourceDim, sourceShape);
   if(!e) return;
   gf->meshAttributes.extrude = e;
   if(gf->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY){
@@ -2077,8 +2078,8 @@ void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Solid solid, GRegion *gr)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
-  ExtrudeParams *e = _meshAttributes->getExtrudeParams
-    (3, solid, sourceDim, sourceShape);
+  ExtrudeParams *e = _meshAttributes->getExtrudeParams(3, std::move(solid),
+                                                       sourceDim, sourceShape);
   if(!e) return;
   gr->meshAttributes.extrude = e;
   if(gr->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY){
@@ -2699,7 +2700,8 @@ bool OCC_Internals::mergeVertices(const std::vector<int> &tags)
                           true, true);
 }
 
-void _addSimpleShapes(TopoDS_Shape shape, std::vector<TopoDS_Shape> &simple)
+void _addSimpleShapes(const TopoDS_Shape &shape,
+                      std::vector<TopoDS_Shape> &simple)
 {
   if(shape.ShapeType() != TopAbs_COMPOUND &&
      shape.ShapeType() != TopAbs_COMPSOLID) {
@@ -2711,7 +2713,7 @@ void _addSimpleShapes(TopoDS_Shape shape, std::vector<TopoDS_Shape> &simple)
   TopoDS_Iterator It(shape, Standard_True, Standard_True);
 
   for(; It.More(); It.Next()) {
-    TopoDS_Shape s = It.Value();
+    const TopoDS_Shape &s = It.Value();
     if(mapShape.Add(s)) {
       if(s.ShapeType() == TopAbs_COMPOUND ||
          s.ShapeType() == TopAbs_COMPSOLID) {
@@ -2890,7 +2892,7 @@ bool OCC_Internals::remove(const std::vector<std::pair<int, int> > &dimTags,
   return ret;
 }
 
-static void setTargetUnit(std::string unit)
+static void setTargetUnit(const std::string &unit)
 {
   if(unit.empty()) return; // use unit specified in the file
   if(!Interface_Static::SetCVal("xstep.cascade.unit", unit.c_str()))
@@ -3213,35 +3215,39 @@ void OCC_Internals::synchronize(GModel *model)
   _changed = false;
 }
 
-GVertex *OCC_Internals::getVertexForOCCShape(GModel *model, TopoDS_Vertex toFind)
+GVertex *OCC_Internals::getVertexForOCCShape(GModel *model,
+                                             const TopoDS_Vertex &toFind)
 {
   if(_vertexTag.IsBound(toFind))
     return model->getVertexByTag(_vertexTag.Find(toFind));
   return 0;
 }
 
-GEdge *OCC_Internals::getEdgeForOCCShape(GModel *model, TopoDS_Edge toFind)
+GEdge *OCC_Internals::getEdgeForOCCShape(GModel *model,
+                                         const TopoDS_Edge &toFind)
 {
   if(_edgeTag.IsBound(toFind))
     return model->getEdgeByTag(_edgeTag.Find(toFind));
   return 0;
 }
 
-GFace *OCC_Internals::getFaceForOCCShape(GModel *model, TopoDS_Face toFind)
+GFace *OCC_Internals::getFaceForOCCShape(GModel *model,
+                                         const TopoDS_Face &toFind)
 {
   if(_faceTag.IsBound(toFind))
     return model->getFaceByTag(_faceTag.Find(toFind));
   return 0;
 }
 
-GRegion *OCC_Internals::getRegionForOCCShape(GModel *model, TopoDS_Solid toFind)
+GRegion *OCC_Internals::getRegionForOCCShape(GModel *model,
+                                             const TopoDS_Solid &toFind)
 {
   if(_solidTag.IsBound(toFind))
     return model->getRegionByTag(_solidTag.Find(toFind));
   return 0;
 }
 
-void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
+void OCC_Internals::_addShapeToMaps(const TopoDS_Shape &shape)
 {
   // Solids
   TopExp_Explorer exp0, exp1, exp2, exp3, exp4, exp5;
@@ -3291,7 +3297,7 @@ void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
 
   // Free Shells
   for(exp1.Init(shape, TopAbs_SHELL, TopAbs_SOLID); exp1.More(); exp1.Next()){
-    TopoDS_Shape shell = exp1.Current();
+    const TopoDS_Shape &shell = exp1.Current();
     if(_shmap.FindIndex(shell) < 1){
       _shmap.Add(shell);
 
@@ -3747,11 +3753,9 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   Msg::Info("-----------------------------------");
 }
 
-static bool makeSTL(TopoDS_Face s,
-                    std::vector<SPoint2> *verticesUV,
+static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
                     std::vector<SPoint3> *verticesXYZ,
-                    std::vector<SVector3> *normals,
-                    std::vector<int> &triangles)
+                    std::vector<SVector3> *normals, std::vector<int> &triangles)
 {
   if(CTX::instance()->geom.occDisableSTL) return false;
 
@@ -3850,7 +3854,7 @@ static bool makeSTL(TopoDS_Face s,
 bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices_uv,
                                 std::vector<int> &triangles)
 {
-  return makeSTL(s, &vertices_uv, 0, 0, triangles);
+  return makeSTL(std::move(s), &vertices_uv, 0, 0, triangles);
 }
 
 bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices_uv,
@@ -3858,18 +3862,20 @@ bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices_uv
                                 std::vector<SVector3> &normals,
                                 std::vector<int> &triangles)
 {
-  return makeSTL(s, &vertices_uv, &vertices, &normals, triangles);
+  return makeSTL(std::move(s), &vertices_uv, &vertices, &normals, triangles);
 }
 
 bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint3> &vertices,
                                 std::vector<SVector3> &normals,
                                 std::vector<int> &triangles)
 {
-  return makeSTL(s, 0, &vertices, &normals, triangles);
+  return makeSTL(std::move(s), 0, &vertices, &normals, triangles);
 }
 
-bool OCC_Internals::makeSolidSTL(TopoDS_Solid s, std::vector<SPoint3> &vertices,
-                                 std::vector<SVector3> &normals, std::vector<int> &triangles)
+bool OCC_Internals::makeSolidSTL(const TopoDS_Solid &s,
+                                 std::vector<SPoint3> &vertices,
+                                 std::vector<SVector3> &normals,
+                                 std::vector<int> &triangles)
 {
   bool ret = true;
   TopExp_Explorer exp0;

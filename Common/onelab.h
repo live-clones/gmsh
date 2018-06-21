@@ -908,11 +908,13 @@ namespace onelab{
     {
       return _get(ps, name, client, _strings);
     }
-    void getPtr(number **ptr, const std::string name, const std::string client="")
+    void getPtr(number **ptr, const std::string &name,
+                const std::string &client = "")
     {
       *ptr = _getPtr(name, client, _numbers);
     }
-    void getPtr(string **ptr, const std::string name, const std::string client="")
+    void getPtr(string **ptr, const std::string &name,
+                const std::string &client = "")
     {
       *ptr = _getPtr(name, client, _strings);
     }

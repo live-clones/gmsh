@@ -64,13 +64,13 @@ class Node{
   double min[3];
   double max[3];
   Node();
-  Node(SPoint3);
+  Node(const SPoint3 &);
   ~Node();
   void set_layer(int);
   void set_limit(int);
   void set_size(double);
-  void set_metric(Metric);
-  void set_point(SPoint3);
+  void set_metric(const Metric &);
+  void set_point(const SPoint3 &);
   int get_layer();
   int get_limit();
   double get_size();
@@ -97,7 +97,7 @@ class Wrapper{
 
 /*********functions*********/
 
-double infinity_distance(SPoint3 p1,SPoint3 p2,Metric m)
+double infinity_distance(const SPoint3 &p1, const SPoint3 &p2, Metric m)
 {
   double distance;
   double x1,y1,z1;
@@ -210,7 +210,8 @@ Node::Node(){
   limit = -1;
 }
 
-Node::Node(SPoint3 new_point){
+Node::Node(const SPoint3 &new_point)
+{
   point = new_point;
   limit = -1;
 }
@@ -229,13 +230,9 @@ void Node::set_size(double new_h){
   h = new_h;
 }
 
-void Node::set_metric(Metric new_m){
-  m = new_m;
-}
+void Node::set_metric(const Metric &new_m) { m = new_m; }
 
-void Node::set_point(SPoint3 new_point){
-  point = new_point;
-}
+void Node::set_point(const SPoint3 &new_point) { point = new_point; }
 
 int Node::get_layer(){
   return layer;
@@ -688,8 +685,9 @@ void Filler::create_spawns(GEntity* ge,MElementOctree* octree,
   *spawns[5] = Node(SPoint3(x6,y6,z6));
 }
 
-double Filler::improvement(GEntity* ge,MElementOctree* octree,
-                           SPoint3 point,double h1,SVector3 direction)
+double Filler::improvement(GEntity *ge, MElementOctree *octree,
+                           const SPoint3 &point, double h1,
+                           const SVector3 &direction)
 {
   double x,y,z;
   double average;
@@ -749,7 +747,8 @@ MVertex* Filler::get_new_vertex(int i)
   return new_vertices[i];
 }
 
-void Filler::print_segment(SPoint3 p1,SPoint3 p2,std::ofstream& file)
+void Filler::print_segment(const SPoint3 &p1, const SPoint3 &p2,
+                           std::ofstream &file)
 {
   file << "SL ("
   << p1.x() << ", " << p1.y() << ", " << p1.z() << ", "

@@ -825,7 +825,7 @@ double gLevelsetPopcorn::operator()(double x, double y, double z) const
   return val;
 }
 
-gLevelsetMathEval::gLevelsetMathEval(std::string f, int tag)
+gLevelsetMathEval::gLevelsetMathEval(const std::string &f, int tag)
   : gLevelsetPrimitive(tag)
 {
   std::vector<std::string> expressions(1, f);
@@ -905,9 +905,10 @@ void gLevelsetMathEvalAll::hessian(double x, double y, double z,
 }
 
 #if defined(HAVE_ANN)
-gLevelsetDistMesh::gLevelsetDistMesh(GModel *gm, std::string physical, int nbClose,
-                                     int tag)
-  : gLevelsetPrimitive(tag), _nbClose(nbClose)
+gLevelsetDistMesh::gLevelsetDistMesh(GModel *gm, const std::string &physical,
+                                     int nbClose, int tag)
+  : gLevelsetPrimitive(tag)
+  , _nbClose(nbClose)
 {
   std::map<int, std::vector<GEntity*> > groups [4];
   gm->getPhysicalGroups(groups);

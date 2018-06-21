@@ -63,8 +63,8 @@ public:
   virtual std::vector<GFace *> faces() const { return l_faces; }
 
   virtual std::vector<int> faceOrientations() const { return l_dirs; }
-  void set(std::vector<GFace *> const f) { l_faces = f; }
-  void setOrientations(std::vector<int> f) { l_dirs = f; }
+  void set(std::vector<GFace *> const &f) { l_faces = f; }
+  void setOrientations(const std::vector<int> &f) { l_dirs = f; }
   void setFace(GFace *const f, int const orientation)
   {
     l_faces.push_back(f);

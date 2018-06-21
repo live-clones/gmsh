@@ -1568,13 +1568,11 @@ static void getPartitionInVector(std::vector<unsigned int> &partitions,
   std::sort(partitions.begin(), partitions.end());
 }
 
-static partitionFace* assignPartitionBoundary(GModel *const model, MFace &me,
-                                              MElement* reference,
-                                              std::vector<unsigned int> partitions,
-                                              std::multimap<partitionFace*, GEntity*,
-                                              Less_partitionFace> &pfaces,
-                                              hashmap<MElement*, GEntity*> &elementToEntity,
-                                              int &numEntity)
+static partitionFace *assignPartitionBoundary(
+  GModel *const model, MFace &me, MElement *reference,
+  const std::vector<unsigned int> &partitions,
+  std::multimap<partitionFace *, GEntity *, Less_partitionFace> &pfaces,
+  hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
 {
   partitionFace *newEntity = 0;
   partitionFace pf(model, 1, partitions);
@@ -1657,13 +1655,11 @@ static partitionFace* assignPartitionBoundary(GModel *const model, MFace &me,
   return newEntity;
 }
 
-static partitionEdge* assignPartitionBoundary(GModel *const model, MEdge &me,
-                                              MElement* reference,
-                                              std::vector<unsigned int> partitions,
-                                              std::multimap<partitionEdge*, GEntity*,
-                                              Less_partitionEdge> &pedges,
-                                              hashmap<MElement*, GEntity*> &elementToEntity,
-                                              int &numEntity)
+static partitionEdge *assignPartitionBoundary(
+  GModel *const model, MEdge &me, MElement *reference,
+  const std::vector<unsigned int> &partitions,
+  std::multimap<partitionEdge *, GEntity *, Less_partitionEdge> &pedges,
+  hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
 {
   partitionEdge *newEntity = 0;
   partitionEdge pe(model, 1, 0, 0, partitions);
@@ -1725,13 +1721,11 @@ static partitionEdge* assignPartitionBoundary(GModel *const model, MEdge &me,
   return newEntity;
 }
 
-static partitionVertex* assignPartitionBoundary(GModel *const model, MVertex *ve,
-                                                MElement* reference,
-                                                std::vector<unsigned int> partitions,
-                                                std::multimap<partitionVertex*, GEntity*,
-                                                Less_partitionVertex> &pvertices,
-                                                hashmap<MElement*, GEntity*> &elementToEntity,
-                                                int &numEntity)
+static partitionVertex *assignPartitionBoundary(
+  GModel *const model, MVertex *ve, MElement *reference,
+  const std::vector<unsigned int> &partitions,
+  std::multimap<partitionVertex *, GEntity *, Less_partitionVertex> &pvertices,
+  hashmap<MElement *, GEntity *> &elementToEntity, int &numEntity)
 {
   partitionVertex *newEntity = 0;
   partitionVertex pv(model, 1, partitions);

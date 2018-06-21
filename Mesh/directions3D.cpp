@@ -208,8 +208,8 @@ STensor3 Frame_field::combine(double x,double y,double z)
   return m2;
 }
 
-void Frame_field::print_segment(SPoint3 p1,SPoint3 p2,double val1,double val2,
-                                std::ofstream& file)
+void Frame_field::print_segment(const SPoint3 &p1, const SPoint3 &p2,
+                                double val1, double val2, std::ofstream &file)
 {
   file << "SL ("
   << p1.x() << ", " << p1.y() << ", " << p1.z() << ", "
@@ -443,7 +443,7 @@ void Frame_field::deleteAnnData()
 #endif
 }
 
-int Frame_field::findAnnIndex(SPoint3 p)
+int Frame_field::findAnnIndex(const SPoint3 &p)
 {
   int index = 0;
 #if defined(HAVE_ANN)
@@ -814,8 +814,8 @@ double Frame_field::smooth()
   return energy;
 }
 
-void Frame_field::save(const std::vector<std::pair<SPoint3, STensor3> > data,
-                       const std::string& filename)
+void Frame_field::save(const std::vector<std::pair<SPoint3, STensor3> > &data,
+                       const std::string &filename)
 {
   const cross3D origin(SVector3(1,0,0), SVector3(0,1,0));
   SPoint3 p1;
@@ -1572,7 +1572,7 @@ double Nearest_point::T(double u,double v,double val1,double val2,double val3)
 // gamedev.net/topic/552906-closest-point-on-triangle. It can also be found on
 // this page : geometrictools.com/LibMathematics/Distance/Distance.html
 
-SPoint3 Nearest_point::closest(MElement* element,SPoint3 point)
+SPoint3 Nearest_point::closest(MElement *element, const SPoint3 &point)
 {
   SVector3 edge0 = SVector3(element->getVertex(1)->x()-element->getVertex(0)->x(),
                             element->getVertex(1)->y()-element->getVertex(0)->y(),
@@ -1703,7 +1703,8 @@ void Nearest_point::print_field(GRegion* gr)
   file << "};\n";
 }
 
-void Nearest_point::print_segment(SPoint3 p1,SPoint3 p2,std::ofstream& file)
+void Nearest_point::print_segment(const SPoint3 &p1, const SPoint3 &p2,
+                                  std::ofstream &file)
 {
   file << "SL ("
   << p1.x() << ", " << p1.y() << ", " << p1.z() << ", "

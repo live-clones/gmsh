@@ -251,10 +251,7 @@ void Msg::SetInfoCpu(bool val)
   _infoCpu = val;
 }
 
-double &Msg::Timer(std::string str)
-{
-  return _timers[str];
-}
+double &Msg::Timer(const std::string &str) { return _timers[str]; }
 
 int Msg::GetWarningCount()
 {
@@ -893,7 +890,7 @@ double Msg::GetValue(const char *text, double defaultval)
     return atof(str);
 }
 
-std::string Msg::GetString(const char *text, std::string defaultval)
+std::string Msg::GetString(const char *text, const std::string &defaultval)
 {
   // if a callback is given let's assume we don't want to be bothered
   // with interactive stuff
@@ -953,7 +950,7 @@ bool Msg::UseOnelab()
 #endif
 }
 
-void Msg::SetOnelabNumber(std::string name, double val, bool visible,
+void Msg::SetOnelabNumber(const std::string &name, double val, bool visible,
                           bool persistent, bool readOnly, int changedValue)
 {
 #if defined(HAVE_ONELAB)
@@ -974,9 +971,9 @@ void Msg::SetOnelabNumber(std::string name, double val, bool visible,
 #endif
 }
 
-void Msg::SetOnelabString(std::string name, std::string val, bool visible,
-                          bool persistent, bool readOnly, int changedValue,
-                          const std::string &kind)
+void Msg::SetOnelabString(const std::string &name, const std::string &val,
+                          bool visible, bool persistent, bool readOnly,
+                          int changedValue, const std::string &kind)
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
@@ -997,8 +994,9 @@ void Msg::SetOnelabString(std::string name, std::string val, bool visible,
 #endif
 }
 
-void Msg::AddOnelabStringChoice(std::string name, std::string kind,
-                                std::string value, bool updateValue,
+void Msg::AddOnelabStringChoice(const std::string &name,
+                                const std::string &kind,
+                                const std::string &value, bool updateValue,
                                 bool readOnly, bool visible)
 {
 #if defined(HAVE_ONELAB)
@@ -1035,7 +1033,7 @@ void Msg::AddOnelabStringChoice(std::string name, std::string kind,
 #endif
 }
 
-double Msg::GetOnelabNumber(std::string name, double defaultValue,
+double Msg::GetOnelabNumber(const std::string &name, double defaultValue,
                             bool errorIfMissing)
 {
 #if defined(HAVE_ONELAB)
@@ -1056,7 +1054,8 @@ double Msg::GetOnelabNumber(std::string name, double defaultValue,
   return defaultValue;
 }
 
-std::string Msg::GetOnelabString(std::string name, const std::string &defaultValue,
+std::string Msg::GetOnelabString(const std::string &name,
+                                 const std::string &defaultValue,
                                  bool errorIfMissing)
 {
 #if defined(HAVE_ONELAB)

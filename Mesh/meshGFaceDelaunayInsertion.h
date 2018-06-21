@@ -162,11 +162,10 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad,
 void bowyerWatsonParallelograms(GFace *gf,
                                 std::map<MVertex*, MVertex*>* equivalence= 0,
                                 std::map<MVertex*, SPoint2> * parametricCoordinates = 0);
-void bowyerWatsonParallelogramsConstrained(GFace *gf,
-                                           std::set<MVertex*> constr_vertices,
-                                           std::map<MVertex*, MVertex*> *equivalence = 0,
-                                           std::map<MVertex*, SPoint2>
-                                           *parametricCoordinates = 0);
+void bowyerWatsonParallelogramsConstrained(
+  GFace *gf, const std::set<MVertex *> &constr_vertices,
+  std::map<MVertex *, MVertex *> *equivalence = 0,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = 0);
 void buildBackGroundMesh (GFace *gf,
                           std::map<MVertex*, MVertex*> *equivalence = 0,
                           std::map<MVertex*, SPoint2> *parametricCoordinates = 0);

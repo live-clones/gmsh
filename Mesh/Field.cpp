@@ -57,7 +57,7 @@ Field::~Field()
     delete it->second;
 }
 
-FieldOption *Field::getOption(const std::string optionName)
+FieldOption *Field::getOption(const std::string &optionName)
 {
   std::map<std::string, FieldOption*>::iterator it = options.find(optionName);
   if (it == options.end()) {
@@ -82,7 +82,7 @@ Field *FieldManager::get(int id)
   return it->second;
 }
 
-Field *FieldManager::newField(int id, std::string type_name)
+Field *FieldManager::newField(int id, const std::string &type_name)
 {
   if(find(id) != end()) {
     Msg::Error("Field id %i is already defined", id);

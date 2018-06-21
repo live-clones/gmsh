@@ -179,7 +179,7 @@ static std::string tryToGetGmshStringOption(const std::string &name)
 
 static bool tryToSetGmshNumberOption(onelab::number &p)
 {
-  std::string name = p.getName();
+  const std::string &name = p.getName();
   std::string::size_type dot = name.find('.');
   if(dot != std::string::npos){
     double val = p.getValue();
@@ -190,10 +190,10 @@ static bool tryToSetGmshNumberOption(onelab::number &p)
 
 static bool tryToSetGmshStringOption(onelab::string &p)
 {
-  std::string name = p.getName();
+  const std::string &name = p.getName();
   std::string::size_type dot = name.find('.');
   if(dot != std::string::npos){
-    std::string val = p.getValue();
+    const std::string &val = p.getValue();
     return GmshSetOption(name.substr(0, dot), name.substr(dot + 1), val);
   }
   return false;

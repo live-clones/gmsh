@@ -29,7 +29,8 @@ public:
   double v[4];
   Qtn(){}; 
   ~Qtn(){};
-  Qtn(const SVector3 axis, const double theta = M_PI ){
+  Qtn(const SVector3 &axis, const double theta = M_PI)
+  {
     double temp = sin(0.5 * theta);
     v[0] = axis[0] * temp; 
     v[1] = axis[1] * temp; 
@@ -385,7 +386,8 @@ Qtn cross3D::rotationToOnSurf(const cross3D &y) const{
   return R2;
 }
 
-STensor3 convert(const cross3D x){
+STensor3 convert(const cross3D &x)
+{
   STensor3 m;
   SVector3 v; 
   v = x.getFrst() ; m.set_m11(v[0]); m.set_m21(v[1]); m.set_m31(v[2]);

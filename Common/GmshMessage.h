@@ -100,7 +100,7 @@ class Msg {
   static int GetProgressMeterStep();
   static void ResetProgressMeter();
   static void SetInfoCpu(bool val);
-  static double &Timer(std::string str);
+  static double &Timer(const std::string &str);
   static void PrintTimers();
   static void ResetErrorCounter();
   static void PrintErrorCounter(const char *title);
@@ -109,7 +109,7 @@ class Msg {
   static std::string GetFirstWarning();
   static std::string GetFirstError();
   static double GetValue(const char *text, double defaultval);
-  static std::string GetString(const char *text, std::string defaultval);
+  static std::string GetString(const char *text, const std::string &defaultval);
   static int GetAnswer(const char *question, int defaultval, const char *zero,
                        const char *one, const char *two=0);
   static void InitializeOnelab(const std::string &name, const std::string &sockname="");
@@ -123,19 +123,24 @@ class Msg {
 #endif
   static void FinalizeOnelab();
   static bool UseOnelab();
-  static void SetOnelabNumber(std::string name, double val, bool visible=true,
-                              bool persistent=false, bool readOnly=false,
-                              int changedValue=3);
-  static void SetOnelabString(std::string name, std::string val, bool visible=true,
-                              bool persistent=false, bool readOnly=false,
-                              int changedValue=3, const std::string &kind="");
-  static double GetOnelabNumber(std::string name, double defaultValue=0.,
-                                bool errorIfMissing=false);
-  static std::string GetOnelabString(std::string name, const std::string &defaultValue="",
-                                     bool errorIfMissing=false);
-  static void AddOnelabStringChoice(std::string name, std::string kind,
-                                    std::string value, bool updateValue=true,
-                                    bool readOnly=false, bool visible=true);
+  static void SetOnelabNumber(const std::string &name, double val,
+                              bool visible = true, bool persistent = false,
+                              bool readOnly = false, int changedValue = 3);
+  static void SetOnelabString(const std::string &name, const std::string &val,
+                              bool visible = true, bool persistent = false,
+                              bool readOnly = false, int changedValue = 3,
+                              const std::string &kind = "");
+  static double GetOnelabNumber(const std::string &name,
+                                double defaultValue = 0.,
+                                bool errorIfMissing = false);
+  static std::string GetOnelabString(const std::string &name,
+                                     const std::string &defaultValue = "",
+                                     bool errorIfMissing = false);
+  static void AddOnelabStringChoice(const std::string &name,
+                                    const std::string &kind,
+                                    const std::string &value,
+                                    bool updateValue = true,
+                                    bool readOnly = false, bool visible = true);
   static void SetOnelabAction(const std::string &action);
   static std::string GetOnelabAction();
   static void ExchangeOnelabParameter(const std::string &key,

@@ -42,7 +42,9 @@
 #include <BRepTools.hxx>
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
-: GFace(m, num), s(_s),_radius(-1)
+  : GFace(m, num)
+  , s(_s)
+  , _radius(-1)
 {
   setup();
   if(model()->getOCCInternals())

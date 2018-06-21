@@ -8,9 +8,9 @@
 
 #include <string>
 
-int read_pnm(std::string fileName);
-int read_jpeg(std::string fileName);
-int read_png(std::string fileName);
-int read_bmp(std::string fileName);
+int read_pnm(const std::string &fileName);
+int read_jpeg(const std::string &fileName);
+int read_png(const std::string &fileName);
+int read_bmp(const std::string &fileName);
 
 #endif
