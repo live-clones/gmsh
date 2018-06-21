@@ -2386,7 +2386,8 @@ void GModel::alignPeriodicBoundaries()
         if(dynamic_cast<MTriangle*>   (srcElmt)) nbVtcs = 3;
         if(dynamic_cast<MQuadrangle*> (srcElmt)) nbVtcs = 4;
         std::vector<MVertex*> vtcs;
-        for(int iVtx = 0;iVtx < nbVtcs; iVtx++) {
+        vtcs.reserve(nbVtcs);
+        for(int iVtx = 0; iVtx < nbVtcs; iVtx++) {
           vtcs.push_back(srcElmt->getVertex(iVtx));
         }
         srcElmts[MFace(vtcs)] = srcElmt;

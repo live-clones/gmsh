@@ -1151,8 +1151,8 @@ static void setFirstOrder(GEntity *e, std::vector<T*> &elements, bool onlyVisibl
     T *ele = elements[i];
     int n = ele->getNumPrimaryVertices();
     std::vector<MVertex*> v1;
-    for(int j = 0; j < n; j++)
-      v1.push_back(ele->getVertex(j));
+    v1.reserve(n);
+    for(int j = 0; j < n; j++) v1.push_back(ele->getVertex(j));
     elements1.push_back(new T(v1, 0, ele->getPartition()));
     delete ele;
   }
@@ -1269,7 +1269,8 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
         if (dynamic_cast<MTriangle*>   (srcElmt)) nbVtcs = 3;
         if (dynamic_cast<MQuadrangle*> (srcElmt)) nbVtcs = 4;
         std::vector<MVertex*> vtcs;
-        for (int iVtx = 0; iVtx < nbVtcs; iVtx++) {
+        vtcs.reserve(nbVtcs);
+        for(int iVtx = 0; iVtx < nbVtcs; iVtx++) {
           vtcs.push_back(srcElmt->getVertex(iVtx));
         }
         srcFaces[MFace(vtcs)] = srcElmt;

@@ -62,6 +62,7 @@ Homology::Homology(GModel *model, const std::vector<int> &physicalDomain,
 std::vector<int> vecN0(int n)
 {
   std::vector<int> v;
+  v.reserve(n);
   for(int i = 0; i < n; i++) v.push_back(i);
   return v;
 }

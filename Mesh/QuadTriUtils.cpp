@@ -194,8 +194,9 @@ void ReplaceBndQuadsInFace(GFace *face)
       int num_verts = face->quadrangles[i]->getNumVertices();
       bool on_edge = false;
 
+      verts.reserve(num_verts);
       for(int j = 0; j < num_verts; j++)
-	verts.push_back(face->quadrangles[i]->getVertex(j));
+        verts.push_back(face->quadrangles[i]->getVertex(j));
 
       for(int j = 0; j < num_verts; j++){
 	if(pos_src_edge.find(verts[j]->x(), verts[j]->y(), verts[j]->z())){
