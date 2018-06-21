@@ -694,7 +694,7 @@ static int PartitionGraph(Graph &graph)
       if(graph.element(i)->getDim() == (int)graph.dim()) continue;
 
       for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
-        if(graph.element(i)->getDim() == graph.element(graph.adjncy(j))->getDim()+1){
+        if(graph.element(i)->getDim() == graph.element(graph.adjncy(j))->getDim()-1){
           if(epart[i] != epart[graph.adjncy(j)]){
             epart[i] = epart[graph.adjncy(j)];
             break;
@@ -703,7 +703,7 @@ static int PartitionGraph(Graph &graph)
       }
 
       for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
-        if(graph.element(i)->getDim() == graph.element(graph.adjncy(j))->getDim()+2){
+        if(graph.element(i)->getDim() == graph.element(graph.adjncy(j))->getDim()-2){
           if(epart[i] != epart[graph.adjncy(j)]){
             epart[i] = epart[graph.adjncy(j)];
             break;
@@ -712,7 +712,7 @@ static int PartitionGraph(Graph &graph)
       }
 
       for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
-        if(graph.element(i)->getDim() == graph.element(graph.adjncy(j))->getDim()+3){
+        if(graph.element(i)->getDim() == graph.element(graph.adjncy(j))->getDim()-3){
           if(epart[i] != epart[graph.adjncy(j)]){
             epart[i] = epart[graph.adjncy(j)];
             break;
