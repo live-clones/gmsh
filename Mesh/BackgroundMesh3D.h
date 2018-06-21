@@ -96,13 +96,12 @@ protected:
                                int max_level,
                                int level=0);
 
-  double compare_to_neighbors(SPoint3 current,
-                              STensor3 &ref,
-                              std::multimap<double, MVertex const*>::iterator itbegin,
-                              std::multimap<double, MVertex const*>::iterator itend,
-                              SVector3 &mean_axis,
-                              double &mean_angle,
-                              std::vector<double> &vectorial_smoothness);
+  double
+  compare_to_neighbors(const SPoint3 &current, STensor3 &ref,
+                       std::multimap<double, MVertex const *>::iterator itbegin,
+                       std::multimap<double, MVertex const *>::iterator itend,
+                       SVector3 &mean_axis, double &mean_angle,
+                       std::vector<double> &vectorial_smoothness);
 
   STensor3 apply_rotation(const SVector3 &axis, const double &angle, const STensor3 &thecross);
   void get_rotation_matrix(const double &angle_to_go, const SVector3 &rotvec, double* rotmat);

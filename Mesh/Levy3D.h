@@ -38,14 +38,14 @@ class VoronoiVertex{
   SVector3 get_normal1();
   SVector3 get_normal2();
   double get_h();
-  void set_point(SPoint3);
+  void set_point(const SPoint3 &);
   void set_category(int);
   void set_index1(int);
   void set_index2(int);
   void set_index3(int);
   void set_index4(int);
-  void set_normal1(SVector3);
-  void set_normal2(SVector3);
+  void set_normal1(const SVector3 &);
+  void set_normal2(const SVector3 &);
   void set_h(double);
 };
 
@@ -98,11 +98,11 @@ class VoronoiElement{
   double get_dh_dy();
   double get_dh_dz();
   Tensor get_tensor();
-  void set_v1(VoronoiVertex);
-  void set_v2(VoronoiVertex);
-  void set_v3(VoronoiVertex);
-  void set_v4(VoronoiVertex);
-  void set_tensor(Tensor);
+  void set_v1(const VoronoiVertex &);
+  void set_v2(const VoronoiVertex &);
+  void set_v3(const VoronoiVertex &);
+  void set_v4(const VoronoiVertex &);
+  void set_tensor(const Tensor &);
   double get_h(double,double,double);
   void deriv_h();
   void compute_jacobian();

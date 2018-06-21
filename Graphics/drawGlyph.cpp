@@ -148,7 +148,7 @@ void drawContext::drawImage(const std::string &name, double x, double y, double 
   // width and height (in model coordinates for T3 or in pixels for T2) of the
   // image, wx,wy,wz is the direction of the bottom edge of the image and
   // hx,hy,hz is the direction of the left edge of the image.
-  size_t p = name.find_last_of("@");
+  size_t p = name.find_last_of('@');
   std::string file = name, format;
   if(p != std::string::npos){
     format = name.substr(p + 1);
@@ -158,14 +158,14 @@ void drawContext::drawImage(const std::string &name, double x, double y, double 
   bool billboard = false;
   if(format.size()){
     bool ok;
-    if(format.find(",") != std::string::npos)
+    if(format.find(',') != std::string::npos)
       ok = (sscanf(format.c_str(), "%lfx%lf,%lf,%lf,%lf,%lf,%lf,%lf",
                    &w, &h, &wx, &wy, &wz, &hx, &hy, &hz) == 8);
     else
       ok = (sscanf(format.c_str(), "%lfx%lf", &w, &h) == 2);
     if(!ok)
       Msg::Warning("Bad image format: use `@wxh' or `@wxh,wx,wy,wz,hx,hy,hz'");
-    if(format.find("#") != std::string::npos)
+    if(format.find('#') != std::string::npos)
       billboard = true; // texture will always face camera
   }
 

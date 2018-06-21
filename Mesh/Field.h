@@ -40,7 +40,7 @@ class FieldCallback {
     std::string _help;
   public:
   virtual void run() = 0;
-  FieldCallback(const std::string help){ _help = help;}
+  FieldCallback(const std::string &help) { _help = help; }
   virtual ~FieldCallback(){};
   virtual std::string getDescription(){ return _help; }
 };
@@ -52,22 +52,27 @@ class FieldOption {
   bool *status;
   inline void modified(){ if(status) *status = true; }
  public:
-  FieldOption(std::string help, bool *_status) : _help(help), status(_status) {}
-  virtual ~FieldOption() {}
-  virtual FieldOptionType getType() = 0;
-  virtual void getTextRepresentation(std::string & v_str) = 0;
-  virtual std::string getDescription(){ return _help; }
-  std::string getTypeName(){
-    switch(getType()){
-    case FIELD_OPTION_INT: return "integer"; break;
-    case FIELD_OPTION_DOUBLE: return "float"; break;
-    case FIELD_OPTION_BOOL: return "boolean"; break;
-    case FIELD_OPTION_PATH: return "path"; break;
-    case FIELD_OPTION_STRING: return "string"; break;
-    case FIELD_OPTION_LIST: return "list"; break;
-    case FIELD_OPTION_LIST_DOUBLE: return "list_double"; break;
-    default: return "unknown";
-    }
+   FieldOption(const std::string &help, bool *_status)
+     : _help(help)
+     , status(_status)
+   {
+   }
+   virtual ~FieldOption() {}
+   virtual FieldOptionType getType() = 0;
+   virtual void getTextRepresentation(std::string &v_str) = 0;
+   virtual std::string getDescription() { return _help; }
+   std::string getTypeName()
+   {
+     switch(getType()) {
+     case FIELD_OPTION_INT: return "integer"; break;
+     case FIELD_OPTION_DOUBLE: return "float"; break;
+     case FIELD_OPTION_BOOL: return "boolean"; break;
+     case FIELD_OPTION_PATH: return "path"; break;
+     case FIELD_OPTION_STRING: return "string"; break;
+     case FIELD_OPTION_LIST: return "list"; break;
+     case FIELD_OPTION_LIST_DOUBLE: return "list_double"; break;
+     default: return "unknown";
+     }
   }
   virtual void numericalValue(double val) {}
   virtual double numericalValue() const { return 0.; }
@@ -107,7 +112,7 @@ class Field {
 #endif
   void putOnNewView();
   virtual std::string getDescription(){ return ""; }
-  FieldOption * getOption(const std::string optionName);
+  FieldOption *getOption(const std::string &optionName);
 };
 
 class FieldFactory {
@@ -125,7 +130,7 @@ class FieldManager : public std::map<int, Field*> {
   void initialize();
   void reset();
   Field *get(int id);
-  Field *newField(int id, std::string type_name);
+  Field *newField(int id, const std::string &type_name);
   void deleteField(int id);
   int newId();
   int maxId();
@@ -243,8 +248,12 @@ class FieldOptionString : public FieldOption
  public:
   std::string & val;
   virtual FieldOptionType getType(){ return FIELD_OPTION_STRING; }
-  FieldOptionString(std::string &_val, std::string _help, bool *_status=0)
-    : FieldOption(_help, _status), val(_val) {}
+  FieldOptionString(std::string &_val, const std::string &_help,
+                    bool *_status = 0)
+    : FieldOption(_help, _status)
+    , val(_val)
+  {
+  }
   void string(const std::string value) { modified(); val = value;}
   std::string string() const { return val; }
   void getTextRepresentation(std::string &v_str)
@@ -260,8 +269,11 @@ class FieldOptionDouble : public FieldOption
  public:
   double &val;
   FieldOptionType getType(){ return FIELD_OPTION_DOUBLE; }
-  FieldOptionDouble(double &_val, std::string _help, bool *_status=0)
-    : FieldOption(_help, _status), val(_val){}
+  FieldOptionDouble(double &_val, const std::string &_help, bool *_status = 0)
+    : FieldOption(_help, _status)
+    , val(_val)
+  {
+  }
   double numericalValue() const { return val; }
   void numericalValue(double v){ modified(); val = v; }
   void getTextRepresentation(std::string &v_str)
@@ -278,8 +290,11 @@ class FieldOptionInt : public FieldOption
  public:
   int &val;
   FieldOptionType getType(){ return FIELD_OPTION_INT; }
-  FieldOptionInt(int &_val, std::string _help, bool *_status=0)
-    : FieldOption(_help, _status), val(_val){}
+  FieldOptionInt(int &_val, const std::string &_help, bool *_status = 0)
+    : FieldOption(_help, _status)
+    , val(_val)
+  {
+  }
   double numericalValue() const { return val; }
   void numericalValue(double v){ modified(); val = (int)v; }
   void getTextRepresentation(std::string & v_str)
@@ -295,8 +310,12 @@ class FieldOptionList : public FieldOption
  public:
   std::list<int> &val;
   FieldOptionType getType(){ return FIELD_OPTION_LIST; }
-  FieldOptionList(std::list<int> &_val, std::string _help, bool *_status=0)
-    : FieldOption(_help, _status), val(_val) {}
+  FieldOptionList(std::list<int> &_val, const std::string &_help,
+                  bool *_status = 0)
+    : FieldOption(_help, _status)
+    , val(_val)
+  {
+  }
   void list(std::list<int> value){ modified(); val = value; }
   const std::list<int>& list() const { return val; }
   void getTextRepresentation(std::string & v_str)
@@ -318,8 +337,12 @@ class FieldOptionListDouble : public FieldOption
  public:
   std::list<double> &val;
   FieldOptionType getType(){ return FIELD_OPTION_LIST_DOUBLE; }
-  FieldOptionListDouble(std::list<double> &_val, std::string _help, bool *_status=0)
-    : FieldOption(_help, _status), val(_val) {}
+  FieldOptionListDouble(std::list<double> &_val, const std::string &_help,
+                        bool *_status = 0)
+    : FieldOption(_help, _status)
+    , val(_val)
+  {
+  }
   void listdouble(std::list<double> value){ modified(); val = value; }
   const std::list<double>& listdouble() const { return val; }
   void getTextRepresentation(std::string & v_str)
@@ -342,8 +365,11 @@ class FieldOptionPath : public FieldOptionString
 {
  public:
   virtual FieldOptionType getType(){ return FIELD_OPTION_PATH; }
-  FieldOptionPath(std::string &_val, std::string _help, bool *_status=0)
-    : FieldOptionString(_val, _help, _status) {}
+  FieldOptionPath(std::string &_val, const std::string &_help,
+                  bool *_status = 0)
+    : FieldOptionString(_val, _help, _status)
+  {
+  }
 };
 
 class FieldOptionBool : public FieldOption
@@ -351,8 +377,11 @@ class FieldOptionBool : public FieldOption
  public:
   bool & val;
   FieldOptionType getType(){ return FIELD_OPTION_BOOL; }
-  FieldOptionBool(bool & _val, std::string _help, bool *_status=0)
-    : FieldOption(_help, _status), val(_val) {}
+  FieldOptionBool(bool &_val, const std::string &_help, bool *_status = 0)
+    : FieldOption(_help, _status)
+    , val(_val)
+  {
+  }
   double numericalValue() const { return val; }
   void numericalValue(double v){ modified(); val = v; }
   void getTextRepresentation(std::string & v_str)

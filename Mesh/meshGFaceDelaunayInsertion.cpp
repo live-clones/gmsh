@@ -1836,10 +1836,10 @@ void bowyerWatsonParallelograms(GFace *gf,
   splitElementsInBoundaryLayerIfNeeded(gf);
 }
 
-void bowyerWatsonParallelogramsConstrained(GFace *gf,
-                                           std::set<MVertex*> constr_vertices,
-                                           std::map<MVertex* , MVertex*>* equivalence,
-                                           std::map<MVertex*, SPoint2> * parametricCoordinates)
+void bowyerWatsonParallelogramsConstrained(
+  GFace *gf, const std::set<MVertex *> &constr_vertices,
+  std::map<MVertex *, MVertex *> *equivalence,
+  std::map<MVertex *, SPoint2> *parametricCoordinates)
 {
   std::cout<<"   entered bowyerWatsonParallelogramsConstrained"<<std::endl;
   std::set<MTri3*,compareTri3Ptr> AllTris;

@@ -56,12 +56,9 @@ static double GMSHSIZE (const SPoint3 &p, Field *f, double lc_nodal) {
   return lc;
 }
 
-
-double adaptiveTrapezoidalRule(SPoint3 p1 , SPoint3 p2 ,
-                               double lc1 , double lc2 ,
-                               std::vector< IPT > & _result,
-                               double &dl, std::stack<IPT> &_stack,
-			       Field *bgm,
+double adaptiveTrapezoidalRule(const SPoint3 &p1, const SPoint3 &p2, double lc1,
+                               double lc2, std::vector<IPT> &_result,
+                               double &dl, std::stack<IPT> &_stack, Field *bgm,
                                double epsilon = 5.e-2)
 {
   //  _stack.clear();

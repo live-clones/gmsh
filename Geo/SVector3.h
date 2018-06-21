@@ -76,7 +76,7 @@ class SVector3 {
     return *this;
   }
   operator double *() { return P; }
-  void print(std::string name="") const
+  void print(const std::string &name = "") const
   {
     Msg::Info("Vector \'%s\':  %f  %f  %f", name.c_str(), P[0], P[1], P[2]);
   }

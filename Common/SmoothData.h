@@ -63,7 +63,7 @@ class smooth_data{
   void add_scale(double x, double y, double z, double scale_val);  // Trevor Strickler
   bool get_scale(double x, double y, double z, double *scale_val); // Trevor Strickler
   void normalize();
-  bool exportview(std::string filename);
+  bool exportview(const std::string &filename);
 };
 
 // Normal smoother with threshold (saves memory by storing normals as

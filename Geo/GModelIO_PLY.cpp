@@ -29,7 +29,7 @@ static bool getMeshVertices(int num, int *indices, std::vector<MVertex*> &vec,
   return true;
 }
 
-static void replaceCommaByDot(const std::string name)
+static void replaceCommaByDot(const std::string &name)
 {
   char myCommand[1000], myCommand2[1000];
   sprintf(myCommand, "sed 's/,/./g' %s > temp.txt", name.c_str());

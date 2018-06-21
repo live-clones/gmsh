@@ -404,7 +404,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
 static std::map<SPoint2, unsigned int> tags;
 static std::map<unsigned int, SPoint2> tags_rev;
 
-static unsigned int getTagForGraph2dDataPoint(SPoint2 p)
+static unsigned int getTagForGraph2dDataPoint(const SPoint2 &p)
 {
   std::map<SPoint2, unsigned int>::iterator it = tags.find(p);
   if(it != tags.end()) return it->second;

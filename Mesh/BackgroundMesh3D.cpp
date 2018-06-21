@@ -886,13 +886,11 @@ void frameFieldBackgroundMesh3D::get_recursive_neighbors(std::set<MVertex const*
                           proximity, max_level, level);
 }
 
-double frameFieldBackgroundMesh3D::compare_to_neighbors(SPoint3 current,
-                                                        STensor3 &ref,
-                                                        std::multimap<double, MVertex const*>::iterator itbegin,
-                                                        std::multimap<double, MVertex const*>::iterator itend,
-                                                        SVector3 &mean_axis,
-                                                        double &mean_angle,
-                                                        std::vector<double> &vectorial_smoothness)
+double frameFieldBackgroundMesh3D::compare_to_neighbors(
+  const SPoint3 &current, STensor3 &ref,
+  std::multimap<double, MVertex const *>::iterator itbegin,
+  std::multimap<double, MVertex const *>::iterator itend, SVector3 &mean_axis,
+  double &mean_angle, std::vector<double> &vectorial_smoothness)
 {
   for (int i=0;i<3;i++) mean_axis(i)=0.;
 

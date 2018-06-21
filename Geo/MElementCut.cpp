@@ -172,6 +172,7 @@ void MPolygon::_initVertices()
   // select only outer edges in vector edg
   std::vector<MEdge> edg;
   std::vector<MEdge> multiEdges;
+  edg.reserve(_parts[0]->getNumEdges());
   for(int j = 0; j < _parts[0]->getNumEdges(); j++)
     edg.push_back(_parts[0]->getEdge(j));
   for(unsigned int i = 1; i < _parts.size(); i++) {

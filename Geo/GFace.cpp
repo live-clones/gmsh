@@ -1066,7 +1066,7 @@ class data_wrapper{
   const GFace* get_face() { return gf; }
   void set_face(const GFace* face) { gf = face; }
   SPoint3 get_point() { return point; }
-  void set_point(SPoint3 _point) { point = SPoint3(_point); }
+  void set_point(const SPoint3 &_point) { point = SPoint3(_point); }
 };
 
 // Callback function for BFGS
@@ -1759,7 +1759,9 @@ struct myPlane {
   SVector3 n;
   double a;
   // nx x + ny y + nz z + a = 0
-  myPlane(SPoint3 _p, SVector3 _n) : p(_p),n(_n)
+  myPlane(const SPoint3 &_p, const SVector3 &_n)
+    : p(_p)
+    , n(_n)
   {
     n.normalize();
     a = -(n.x()*p.x()+n.y()*p.y()+n.z()*p.z());

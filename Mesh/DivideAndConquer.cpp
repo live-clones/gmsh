@@ -594,7 +594,7 @@ void DocRecord::voronoiCell(PointNumero pt, std::vector<SPoint2> &pts) const
   now in infinite norm, how to find X_P ?
 */
 
-void DocRecord::makePosView(std::string fileName, GFace *gf)
+void DocRecord::makePosView(const std::string &fileName, GFace *gf)
 {
   FILE *f = Fopen(fileName.c_str(),"w");
   if(!f){
@@ -664,7 +664,8 @@ void DocRecord::makePosView(std::string fileName, GFace *gf)
   fclose(f);
 }
 
-void DocRecord::printMedialAxis(Octree *_octree, std::string fileName, GFace *gf, GEdge *ge)
+void DocRecord::printMedialAxis(Octree *_octree, const std::string &fileName,
+                                GFace *gf, GEdge *ge)
 {
   FILE *f = Fopen(fileName.c_str(),"w");
   if(!f){

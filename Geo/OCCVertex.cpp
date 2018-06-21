@@ -17,7 +17,8 @@
 #include <gp_Pnt.hxx>
 
 OCCVertex::OCCVertex(GModel *m, int num, TopoDS_Vertex v, double lc)
-  : GVertex(m, num, lc), _v(v)
+  : GVertex(m, num, lc)
+  , _v(v)
 {
   max_curvature = -1;
   gp_Pnt pnt = BRep_Tool::Pnt(_v);

@@ -979,7 +979,7 @@ void CellComplex::printComplex(int dim)
   }
 }
 
-int CellComplex::saveComplex(std::string filename)
+int CellComplex::saveComplex(const std::string &filename)
 {
   /*FILE *fp = Fopen (filename.c_str(), "w");
   if(!fp){
@@ -1020,7 +1020,7 @@ int CellComplex::saveComplex(std::string filename)
   return 1;
 }
 
-int CellComplex::loadComplex(std::string filename)
+int CellComplex::loadComplex(const std::string &filename)
 {
   /*  FILE *fp = Fopen (filename.c_str(), "r");
   if(!fp){

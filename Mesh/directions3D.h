@@ -45,13 +45,14 @@ class Frame_field{
   static STensor3 combine(double,double,double);
   static void print_field1();
   static void print_field2(GRegion*);
-  static void print_segment(SPoint3,SPoint3,double,double,std::ofstream&);
+  static void print_segment(const SPoint3 &, const SPoint3 &, double, double,
+                            std::ofstream &);
   static int build_vertex_to_vertices(GEntity* gr, int onWhat, bool initialize=true);
   static int build_vertex_to_elements(GEntity* gr, bool initialize=true);
   static void build_listVertices(GEntity* gr, int dim, bool initialize=true);
   static int buildAnnData(GEntity* ge, int dim);
   static void deleteAnnData();
-  static int findAnnIndex(SPoint3 p);
+  static int findAnnIndex(const SPoint3 &p);
   static STensor3 findCross(double x, double y, double z);
   static void initFace(GFace* gf);
   static void initRegion(GRegion* gr, int n);
@@ -60,7 +61,8 @@ class Frame_field{
   static double smoothRegion(GRegion *gr, int n);
   static double smooth();
   static double findBarycenter(std::map<MVertex*, std::set<MVertex*> >::const_iterator iter, STensor3 &m0);
-  static void save(const std::vector<std::pair<SPoint3, STensor3> > data, const std::string& filename);
+  static void save(const std::vector<std::pair<SPoint3, STensor3> > &data,
+                   const std::string &filename);
   static void saveCrossField(const std::string& filename, double scale, bool full=true);
   static void continuousCrossField(GRegion *gr, GFace *gf);
   static void recur_connect_vert(FILE*fi, int count, MVertex *v,STensor3 &cross, std::multimap<MVertex*,MVertex*> &v2v,  std::set<MVertex*> &touched);
@@ -101,10 +103,10 @@ class Nearest_point{
   static void init_region(GRegion*);
   static bool search(double,double,double,SVector3&);
   static double T(double,double,double,double,double);
-  static SPoint3 closest(MElement*,SPoint3);
+  static SPoint3 closest(MElement *, const SPoint3 &);
   static double clamp(double,double,double);
   static void print_field(GRegion*);
-  static void print_segment(SPoint3,SPoint3,std::ofstream&);
+  static void print_segment(const SPoint3 &, const SPoint3 &, std::ofstream &);
   static GRegion* test();
   static void clear();
 };

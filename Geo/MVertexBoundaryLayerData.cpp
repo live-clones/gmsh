@@ -30,7 +30,8 @@ int MVertexBoundaryLayerData::getNumChildrenFamilies()
   return (int)this->children.size();
 }
 
-void MVertexBoundaryLayerData::addChildrenFamily(std::vector<MVertex*> family)
+void MVertexBoundaryLayerData::addChildrenFamily(
+  const std::vector<MVertex *> &family)
 {
   this->children.push_back(family);
 }

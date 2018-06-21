@@ -27,7 +27,7 @@ class MVertexBoundaryLayerData {
   int getNumChildren(int i);
 
   int getNumChildrenFamilies();
-  void addChildrenFamily(std::vector<MVertex*> family);
+  void addChildrenFamily(const std::vector<MVertex *> &family);
 };
 
 #endif

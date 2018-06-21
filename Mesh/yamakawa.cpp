@@ -480,9 +480,7 @@ namespace {
 
 } // anonymous namespace
 
-
-
-void export_gregion_mesh(GRegion *gr, string filename)
+void export_gregion_mesh(GRegion *gr, const string &filename)
 {
   // FIXME: use MElement::writeMSH
 
@@ -2312,7 +2310,9 @@ void Supplementary::find(MVertex* v1, MVertex* v2, const std::vector<MVertex*>& 
   }
 }
 
-void Supplementary::find(MVertex* getVertex, Prism prism, std::set<MElement*>& final) {
+void Supplementary::find(MVertex *getVertex, const Prism &prism,
+                         std::set<MElement *> &final)
+{
   bool flag1, flag2, flag3, flag4;
   MVertex *a, *b, *c, *d;
   Vertex2Elements::iterator it;
@@ -2422,7 +2422,8 @@ bool Supplementary::inclusion(MVertex* v1, MVertex* v2, MVertex* v3, const std::
   return ok;
 }
 
-bool Supplementary::inclusion(Facet facet) {
+bool Supplementary::inclusion(const Facet &facet)
+{
   bool flag;
   std::multiset<Facet>::iterator it;
 
@@ -2445,7 +2446,8 @@ bool Supplementary::inclusion(Facet facet) {
   return flag;
 }
 
-bool Supplementary::inclusion(Diagonal diagonal) {
+bool Supplementary::inclusion(const Diagonal &diagonal)
+{
   bool flag;
   std::multiset<Diagonal>::iterator it;
 
@@ -2468,7 +2470,8 @@ bool Supplementary::inclusion(Diagonal diagonal) {
   return flag;
 }
 
-bool Supplementary::duplicate(Diagonal diagonal) {
+bool Supplementary::duplicate(const Diagonal &diagonal)
+{
   bool flag;
   std::multiset<Diagonal>::iterator it;
 
@@ -2787,7 +2790,8 @@ void Supplementary::build_hash_tableA(MVertex* a, MVertex* b, MVertex* c, MVerte
   build_hash_tableA(Facet(b, d, c));
 }
 
-void Supplementary::build_hash_tableA(Facet facet) {
+void Supplementary::build_hash_tableA(const Facet &facet)
+{
   bool flag;
   std::multiset<Facet>::iterator it;
 
@@ -2833,7 +2837,8 @@ void Supplementary::build_hash_tableB(MVertex* a, MVertex* b, MVertex* c, MVerte
   build_hash_tableB(Diagonal(b, d));
 }
 
-void Supplementary::build_hash_tableB(Diagonal diagonal) {
+void Supplementary::build_hash_tableB(const Diagonal &diagonal)
+{
   bool flag;
   std::multiset<Diagonal>::iterator it;
 
@@ -2880,7 +2885,8 @@ void Supplementary::build_hash_tableC(Prism prism) {
   build_hash_tableC(Diagonal(b, c));
 }
 
-void Supplementary::build_hash_tableC(Diagonal diagonal) {
+void Supplementary::build_hash_tableC(const Diagonal &diagonal)
+{
   bool flag;
   std::multiset<Diagonal>::iterator it;
 
@@ -6274,7 +6280,10 @@ PETriangle* Recombinator_Graph::get_triangle(MElement *element, int i, int j, in
   return t;
 }
 
-Recombinator_Graph::Recombinator_Graph(unsigned int _n, string filename) :max_nb_cliques(_n), graphfilename(filename) {
+Recombinator_Graph::Recombinator_Graph(unsigned int _n, const string &filename)
+  : max_nb_cliques(_n)
+  , graphfilename(filename)
+{
 }
 
 
@@ -6446,8 +6455,9 @@ void Recombinator_Graph::merge(GRegion* gr) {
   throw;
 }
 
-
-void Recombinator_Graph::export_tets(set<MElement*> &tetset, Hex* hex, string s) {
+void Recombinator_Graph::export_tets(set<MElement *> &tetset, Hex *hex,
+                                     const string &s)
+{
   stringstream ss;
   ss << s.c_str();
   ss << "hexptr_";
@@ -6478,8 +6488,8 @@ void Recombinator_Graph::export_tets(set<MElement*> &tetset, Hex* hex, string s)
   out.close();
 }
 
-
-void Recombinator_Graph::export_single_hex_tet(Hex* hex, string s) {
+void Recombinator_Graph::export_single_hex_tet(Hex *hex, const string &s)
+{
   stringstream ss;
   ss << s.c_str();
   ss << "hexptr_";
@@ -6510,15 +6520,15 @@ void Recombinator_Graph::export_single_hex_tet(Hex* hex, string s) {
   out.close();
 }
 
-
-void Recombinator_Graph::export_single_hex_all(Hex* hex, string s) {
+void Recombinator_Graph::export_single_hex_all(Hex *hex, const string &s)
+{
   export_single_hex(hex, s);
   export_single_hex_tet(hex, s);
   export_single_hex_faces(hex, s);
 }
 
-
-void Recombinator_Graph::export_single_hex(Hex* hex, string s) {
+void Recombinator_Graph::export_single_hex(Hex *hex, const string &s)
+{
   stringstream ss;
   ss << s.c_str();
   ss << "hexptr_";
@@ -6544,9 +6554,8 @@ void Recombinator_Graph::export_single_hex(Hex* hex, string s) {
   out.close();
 }
 
-
-
-void Recombinator_Graph::export_single_hex_faces(Hex* hex, string s) {
+void Recombinator_Graph::export_single_hex_faces(Hex *hex, const string &s)
+{
   stringstream ss;
   ss << s.c_str();
   ss << "hexptr_";
