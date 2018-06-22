@@ -909,10 +909,19 @@ static void Mesh3D(GModel *m)
     std::for_each(m->firstRegion(), m->lastRegion(),
                   TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES());
 
+  std::stringstream debugInfo;
+  debugInfo << "No tetrahedra in region ";
+  bool emptyRegionFound = false;
   for (GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
     if ((*it)->getNumMeshElements() == 0) {
-      Msg::Error("No tetrahedra in region %d", (*it)->tag());
+      debugInfo << (*it)->tag() << ", ";
+      emptyRegionFound = true;
     }
+  }
+  if (emptyRegionFound)
+  {
+    debugInfo << std::endl;
+    Msg::Error(debugInfo.str().c_str());
   }
 
   CTX::instance()->mesh.changed = ENT_ALL;
