@@ -1320,7 +1320,7 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
     if (COUNT_MISS_2 > 100000)break;
     if (ITER >= maxVert)break;
     if(allTets.empty()){
-      Msg::Error("No tetrahedra in region %d %d", gr->tag(), allTets.size());
+      Msg::Error("No tetrahedra in region %d", gr->tag());
       break;
     }
 
