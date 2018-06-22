@@ -57,7 +57,7 @@ void _printTris(char *name, ITERATOR it,  ITERATOR end, bidimMeshData * data)
     MTri3 *worst = *it;
     if (!worst->isDeleted()){
       if (data)
-        fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
+        fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n",
                 data->Us[data->getIndex((worst)->tri()->getVertex(0))],
                 data->Vs[data->getIndex((worst)->tri()->getVertex(0))],
                 0.0,
@@ -67,9 +67,9 @@ void _printTris(char *name, ITERATOR it,  ITERATOR end, bidimMeshData * data)
                 data->Us[data->getIndex((worst)->tri()->getVertex(2))],
                 data->Vs[data->getIndex((worst)->tri()->getVertex(2))],
                 0.0,
-                (worst)->getRadius(),
-                (worst)->getRadius(),
-                (worst)->getRadius());
+                (worst)->tri()->getVertex(0)->getNum(),
+                (worst)->tri()->getVertex(1)->getNum(),
+                (worst)->tri()->getVertex(2)->getNum());
       else
         fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n",
                 (worst)->tri()->getVertex(0)->x(),
@@ -287,7 +287,7 @@ int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3,
 
 int inCircumCircleOsculatory(GFace *gf, MTriangle *base, const double *uv,   double r,  SPoint3 &c)
 {
-  //  return -1;
+  return -1;
   /********* T E S T **********************/
   GPoint gp = gf->point (uv[0],uv[1]);
   double pa [3] = {base->getVertex(0)->x(),base->getVertex(0)->y(),base->getVertex(0)->z()};
@@ -1465,6 +1465,15 @@ void bowyerWatsonFrontal(GFace *gf,
   }
   
   //  nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
+  char name[245];
+  sprintf(name,"delFrontal_GFace_%d.pos",gf->tag());
+  _printTris (name, AllTris.begin(), AllTris.end(), &DATA);
+  sprintf(name,"delFrontal_GFace_%d_Real.pos",gf->tag());
+  _printTris (name, AllTris.begin(), AllTris.end(), NULL);
+    //      sprintf(name,"delFrontal_GFace_%d_Layer_Real%d.pos",gf->tag(),ITERATION);
+    //      _printTris (name, AllTris.begin(), AllTris.end(),NULL);
+    //      sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
+    //      _printTris (name, ActiveTris.begin(), ActiveTris.end(), &DATA);
 
   transferDataStructure(gf, AllTris, DATA);
   //  removeThreeTrianglesNodes(gf);
@@ -1736,11 +1745,6 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad,
     if (!ActiveTris.size()) break;
   }
 
-  // char name[245];
-  // sprintf(name,"frontal%d-real.pos", gf->tag());
-  // _printTris (name, AllTris, Us, Vs,false);
-  // sprintf(name,"frontal%d-param.pos", gf->tag());
-  // _printTris (name, AllTris, Us, Vs,true);
   transferDataStructure(gf, AllTris, DATA);
   MTri3::radiusNorm = 2;
   LIMIT_ = 0.5 * sqrt(2.0) * 1;

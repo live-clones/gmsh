@@ -24,6 +24,28 @@
 #include "Field.h"
 #include "OS.h"
 
+
+void getDegeneratedVertices (BDS_Mesh &m,
+			     std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap,
+			     std::set<MVertex *, MVertexLessThanNum> &degenerated){
+  degenerated.clear();
+  
+  std::list<BDS_Edge*>::iterator it = m.edges.begin();
+
+  while (it != m.edges.end()){
+    BDS_Edge *e = *it;
+    if (!e->deleted && e->numfaces() == 1){
+      std::map<BDS_Point*, MVertex*,PointLessThan>::iterator itp1 = recoverMap->find(e->p1);
+      std::map<BDS_Point*, MVertex*,PointLessThan>::iterator itp2 = recoverMap->find(e->p2);
+      if (itp1 != recoverMap->end() && itp2 != recoverMap->end() &&
+          itp1->second == itp2->second){
+        degenerated.insert(itp1->second);
+      }
+    }
+    ++it;
+  }
+}
+
 double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2)
 {
   const double dx = p1->X - p2->X;
@@ -32,9 +54,6 @@ double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2)
   const double l = sqrt(dx * dx + dy * dy + dz * dz);
   return l;
 }
-
-extern double lengthInfniteNorm(const double p[2], const double q[2],
-				const double quadAngle);
 
 inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2, GFace *f)
 {
@@ -226,6 +245,7 @@ static bool evalSwapForOptimize(BDS_Edge *e, GFace *gf, BDS_Mesh &m)
   return false;
 }
 
+/*
 static bool edgeSwapTestDelaunay(BDS_Edge *e, GFace *gf)
 {
   BDS_Point *op[2];
@@ -249,7 +269,7 @@ static bool edgeSwapTestDelaunay(BDS_Edge *e, GFace *gf)
   double result = inSphere * robustPredicates::orient3d(p1x, p2x, op1x, fourth);
   return result > 1e-12;
 }
-
+*/
 static bool edgeSwapTestDelaunayAniso(BDS_Edge *e, GFace *gf, std::set<swapquad> &configs)
 {
   BDS_Point *op[2];
@@ -283,13 +303,12 @@ static int edgeSwapTest(GFace *gf, BDS_Edge *e)
 {
   BDS_Point *op[2];
 
-  if(!e->p1->config_modified && ! e->p2->config_modified) return 0;
+  const double THRESH = cos(CTX::instance()->mesh.allowSwapEdgeAngle * M_PI / 180.);
+  
   if(e->numfaces() != 2) return 0;
 
   e->oppositeof (op);
 
-  if (!edgeSwapTestAngle(e, cos(CTX::instance()->mesh.allowSwapEdgeAngle * M_PI / 180.)))
-    return -1;
 
   double qa1 = qmTriangle::gamma(e->p1, e->p2, op[0]);
   double qa2 = qmTriangle::gamma(e->p1, e->p2, op[1]);
@@ -297,30 +316,32 @@ static int edgeSwapTest(GFace *gf, BDS_Edge *e)
   double qb2 = qmTriangle::gamma(e->p2, op[0], op[1]);
   double qa = std::min(qa1, qa2);
   double qb = std::min(qb1, qb2);
+  if(qb > 15*qa) return 1;
+
+  if (!edgeSwapTestAngle(e, THRESH))
+    return -1;
+
   if(qb > qa) return 1;
   if(qb < qa) return -1;
   return 0;
 }
 
-void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap)
+static void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap)
 {
-  //  return;
   int NN1 = m.edges.size();
   int NN2 = 0;
   std::list<BDS_Edge*>::iterator it = m.edges.begin();
+  BDS_SwapEdgeTestQuality qual (false,false);
   while (1){
     if (NN2++ >= NN1) break;
     if (!(*it)->deleted){
       if (CTX::instance()->mesh.algo2d == ALGO_2D_MESHADAPT_OLD){
         if (m.swap_edge(*it, BDS_SwapEdgeTestQuality(true))) nb_swap++;
       }
-      else if (edgeSwapTestDelaunay(*it, gf)){
-	int result = edgeSwapTest(gf,*it);
-	// result = -1 => forbid swap because too badly shaped elements
-	// result = 0  => whatever
-	// result = 1  => oblige to swap because the quality is greatly improved
+      else{
+	int result = edgeSwapTest(gf,*it);	
 	if (result >= 0)
-	  if (m.swap_edge(*it, BDS_SwapEdgeTestQuality(false))) nb_swap++;
+	  if (m.swap_edge(*it,qual )) nb_swap++;
       }
     }
     ++it;
@@ -371,7 +392,7 @@ bool edges_sort(std::pair<double, BDS_Edge*> a, std::pair<double, BDS_Edge*> b)
 }
 
 
-static bool middlePoint2 (GFace *gf, BDS_Edge *e, double &u, double &v)
+/*static bool middlePoint2 (GFace *gf, BDS_Edge *e, double &u, double &v)
 {
   discreteFace *df = static_cast<discreteFace*> (gf);
   if (df){
@@ -412,7 +433,7 @@ static bool middlePoint2 (GFace *gf, BDS_Edge *e, double &u, double &v)
   }
   return true;
 }
-
+*/
 static bool middlePoint (GFace *gf, BDS_Edge *e, double &u, double &v)
 {
   // try that
@@ -457,10 +478,11 @@ static bool middlePoint (GFace *gf, BDS_Edge *e, double &u, double &v)
   return true;
 }
 
-void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
+static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 {
-  std::list<BDS_Edge*>::iterator it = m.edges.begin();
   std::vector<std::pair<double, BDS_Edge*> > edges;
+  
+  std::list<BDS_Edge*>::iterator it = m.edges.begin();
 
   while (it != m.edges.end()){
     if(!(*it)->deleted && (*it)->numfaces() == 2 && (*it)->g->classif_degree == 2){
@@ -469,33 +491,25 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
     }
     ++it;
   }
-
+  
   std::sort(edges.begin(), edges.end(), edges_sort);
-
+  
+  std::vector<BDS_Point*> mids(edges.size());
+  
   bool isPeriodic = gf->periodic(0) || gf->periodic(1) ;
-  //  SPoint3 center;
-  //  double radius;
-  //  bool isSphere = gf->isSphere (radius, center);
-
   bool faceDiscrete = gf->geomType() == GEntity::DiscreteSurface;
+
+  int MAXX = m.MAXPOINTNUMBER;
   
   for (unsigned int i = 0; i < edges.size(); ++i){
     BDS_Edge *e = edges[i].second;
+    BDS_Point *mid = NULL;
     if (!e->deleted){
-      BDS_Point *mid ;
-
-
       double U = 0.5*(e->p1->u+e->p2->u);
       double V = 0.5*(e->p1->v+e->p2->v);
-      if (faceDiscrete){
-	// Here, something has to be done for discreteFaces where
-	// parametrization can be flaky
-	//	if (!middlePoint2 (gf, e, U, V))
-	middlePoint (gf, e, U, V);
-      }
+      if (faceDiscrete)middlePoint (gf, e, U, V);
       
       GPoint gpp = gf->point(U,V);
-
       
       if ((!isPeriodic || gf->containsParam(SPoint2(U,V))) && gpp.succeeded()){
 	mid  = m.add_point(++m.MAXPOINTNUMBER, gpp.x(),gpp.y(),gpp.z());
@@ -503,14 +517,22 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
         mid->v = V;
 	mid->lcBGM() = BGM_MeshSize (gf,U,V, mid->X,mid->Y,mid->Z);
 	mid->lc() = 0.5 * (e->p1->lc() +  e->p2->lc());
-
-	// if(isSphere && !canWeSplitAnEdgeOnASphere(e, mid, center,radius))
-        //   m.del_point(mid);
+      }
+    }
+    mids[i] = mid;
+  }
+  
+  for (unsigned int i = 0; i < edges.size(); ++i){
+    BDS_Edge *e = edges[i].second;
+    if (!e->deleted){
+      BDS_Point *mid = mids[i];      
+      if (mid){
 	if(!m.split_edge(e, mid)) m.del_point(mid);
-        else nb_split++;
+	else nb_split++;
       }
     }
   }
+
 }
 
 double getMaxLcWhenCollapsingEdge(GFace *gf, BDS_Mesh &m, BDS_Edge *e, BDS_Point *p)
@@ -542,7 +564,7 @@ double getMaxLcWhenCollapsingEdge(GFace *gf, BDS_Mesh &m, BDS_Edge *e, BDS_Point
   return maxLc;
 }
 
-static bool revertTriangleSphere(SPoint3 &center, BDS_Point *p, BDS_Point *o)
+/*static bool revertTriangleSphere(SPoint3 &center, BDS_Point *p, BDS_Point *o)
 {
   std::list<BDS_Face*> t;
   p->getTriangles(t);
@@ -569,24 +591,16 @@ static bool revertTriangleSphere(SPoint3 &center, BDS_Point *p, BDS_Point *o)
   }
   return false;
 }
-
+*/
 void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_collaps)
 {
-  //  return;
   std::list<BDS_Edge*>::iterator it = m.edges.begin();
   std::vector<std::pair<double, BDS_Edge*> > edges;
 
-  double radius;
-  SPoint3 center;
-  bool isSphere = gf->isSphere (radius, center);
-
   while (it != m.edges.end()){
     if(!(*it)->deleted && (*it)->numfaces() == 2 && (*it)->g->classif_degree == 2){
-
       double lone = NewGetLc(*it, gf);
-      if(lone < MINE_){
-        edges.push_back (std::make_pair(lone, *it));
-      }
+      if(lone < MINE_) edges.push_back (std::make_pair(lone, *it));
     }
     ++it;
   }
@@ -598,10 +612,8 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_c
     if(!e->deleted){
       double lone1 = 0.;
       bool collapseP1Allowed = false;
-      if (e->p1->iD > MAXNP){
-        lone1 = getMaxLcWhenCollapsingEdge(gf, m, e, e->p1);
-        collapseP1Allowed = std::abs(lone1-1.0) < std::abs(edges[i].first - 1.0);
-      }
+      lone1 = getMaxLcWhenCollapsingEdge(gf, m, e, e->p1);
+      collapseP1Allowed = std::abs(lone1-1.0) < std::abs(edges[i].first - 1.0);
 
       double lone2 = 0.;
       bool collapseP2Allowed = false;
@@ -622,11 +634,8 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_c
       else if (collapseP1Allowed && !collapseP2Allowed)
         p = e->p2;
 
-      bool flip = false;
-      if (p && isSphere)flip = revertTriangleSphere(center, p, e->othervertex(p));
-
       bool res = false;
-      if(!flip && p)
+      if(p)
         res = m.collapse_edge_parametric(e, p);
       if(res)
         nb_collaps++;
@@ -637,7 +646,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_c
 void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q)
 {
   // FIXME SUPER HACK
-  //    return;
+  //  return;
   std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
   while(itp != m.points.end()){
     if(m.smooth_point_centroid(*itp, gf,q))
@@ -646,13 +655,118 @@ void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q)
   }
 }
 
+
+void computeNodalSizes(GFace *gf, BDS_Mesh &m, 
+		       std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap){
+  std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
+  while (itp != m.points.end()){
+    (*itp)->lc() = MAX_LC;
+    ++itp;
+  }
+  std::list<BDS_Edge*>::iterator it = m.edges.begin();
+  while (it != m.edges.end()){
+    bool degenerated = false;
+    if (recoverMap){
+      std::map<BDS_Point*, MVertex*,PointLessThan>::iterator itp1 = recoverMap->find((*it)->p1);
+      std::map<BDS_Point*, MVertex*,PointLessThan>::iterator itp2 = recoverMap->find((*it)->p2);
+      if (itp1 != recoverMap->end() && itp2 != recoverMap->end() &&
+	  itp1->second == itp2->second){
+	degenerated = true;
+      }
+    }	
+
+    if (!degenerated && (*it)->g && (*it)->g->classif_degree == 1){
+      double L = (*it)->length();
+      if ((*it)->p1->lc() == MAX_LC)(*it)->p1->lc() = L;
+      else (*it)->p1->lc() = std::max (L, (*it)->p1->lc());
+      if ((*it)->p2->lc() == MAX_LC)(*it)->p2->lc() = L;
+      else (*it)->p2->lc() = std::max (L, (*it)->p2->lc());
+    }
+    ++it;
+  }
+
+  itp = m.points.begin();
+  std::vector<BDS_Point*> pts;
+  while (itp != m.points.end()){
+    if ((*itp)->lc() == MAX_LC)pts.push_back(*itp);
+    ++itp;
+  }
+  int iter = 0; 
+  while (1){
+    bool allTouched = true;
+    for (size_t i=0; i< pts.size(); i++){
+      std::list<BDS_Edge*>::iterator it  = pts[i]->edges.begin();
+      std::list<BDS_Edge*>::iterator ite = pts[i]->edges.end();
+      while(it != ite){
+	BDS_Point *p = (*it)->othervertex (pts[i]);
+	if (p->lc() != MAX_LC){
+	  if (pts[i]->lc() == MAX_LC)pts[i]->lc() = p->lc();
+	  else pts[i]->lc() = 0.5*(p->lc()+pts[i]->lc());
+	}
+	++it;
+      }
+      if (pts[i]->lc() == MAX_LC) allTouched = false;
+    }
+    if (allTouched && iter++ == 5)break;
+  }
+}
+
+
+void computeNodalSizes2(GFace *gf, BDS_Mesh &m, 
+		       std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap)
+{
+  std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
+  while (itp != m.points.end()){
+    std::list<BDS_Edge*>::iterator it  = (*itp)->edges.begin();
+    std::list<BDS_Edge*>::iterator ite = (*itp)->edges.end();
+    double L = MAX_LC;
+    int ne = 0;
+    while(it != ite){
+      double l = (*it)->length();
+      if (recoverMap){
+	std::map<BDS_Point*, MVertex*,PointLessThan>::iterator itp1 = recoverMap->find((*it)->p1);
+	std::map<BDS_Point*, MVertex*,PointLessThan>::iterator itp2 = recoverMap->find((*it)->p2);
+	if (itp1 != recoverMap->end() && itp2 != recoverMap->end() &&
+	    itp1->second == itp2->second){
+	  l = 0.0;
+	}
+      }	
+      if (l > 1.e-22){
+	if ((*itp)->g->classif_degree == 2)
+	  L = ne ? std::min(L, l) : l;
+	else
+	  L = ne ? std::min(L, l) : l;
+
+	ne++;
+      }
+      ++it;
+    }
+    
+    if ((*itp)->g && (*itp)->g->classif_tag > 0 && (*itp)->g->classif_degree < 2){
+      if (!ne) L = MAX_LC;
+      if(CTX::instance()->mesh.lcFromPoints)
+	(*itp)->lc() = L;
+      (*itp)->lcBGM() = L;
+    }
+  ++itp;
+  }
+}
+
 void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
                    const bool computeNodalSizeField,
-                   std::map<MVertex*, BDS_Point*> *recoverMapInv)
+                   std::map<MVertex*, BDS_Point*> *recoverMapInv,
+		   std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap)
 {
+  //  return;
   int IT = 0;
   int MAXNP = m.MAXPOINTNUMBER;
 
+  //  std::set<MVertex *, MVertexLessThanNum> degenerated;
+  //  if (recoverMap){
+  //    getDegeneratedVertices (m,recoverMap,degenerated);
+  //  }
+  //  printf("%d degenerated vertices\n",degenerated.size());
+  
   // classify correctly the embedded vertices use a negative model
   // face number to avoid mesh motion
   if(recoverMapInv){
@@ -671,34 +785,11 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   }
 
   // If asked, compute nodal size field using 1D Mesh
-  if (computeNodalSizeField){
-    std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
-    while (itp != m.points.end()){
-      std::list<BDS_Edge*>::iterator it  = (*itp)->edges.begin();
-      std::list<BDS_Edge*>::iterator ite = (*itp)->edges.end();
-      double L = 0;
-      int ne = 0;
-      while(it != ite){
-        double l = (*it)->length();
-        if ((*it)->g && (*it)->g->classif_degree == 1){
-          L = ne ? std::max(L, l) : l;
-          ne++;
-        }
-        ++it;
-      }
-      if ((*itp)->g && (*itp)->g->classif_tag > 0){
-        if (!ne) L = MAX_LC;
-        if(CTX::instance()->mesh.lcFromPoints)
-          (*itp)->lc() = L;
-        (*itp)->lcBGM() = L;
-      }
-      ++itp;
-    }
-  }
+  if (computeNodalSizeField)computeNodalSizes(gf, m,recoverMap);
 
   double t_spl = 0, t_sw = 0,t_col = 0,t_sm = 0;
 
-  const double MINE_ = 0.6666, MAXE_ = 1.4;
+  const double MINE_ = 0.7, MAXE_ = 1.4;
 
   while (1){
 
@@ -734,17 +825,11 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
 
     double t2 = Cpu();
     swapEdgePass(gf, m, nb_swap);
-    swapEdgePass(gf, m, nb_swap);
-    swapEdgePass(gf, m, nb_swap);
 
-    //    if (computeNodalSizeField){
-    //      char name[256]; sprintf(name,"iter%d_SPLIT.pos",IT);
-    //      outputScalarField(m.triangles, name, 0);
-    //    }
     double t3 = Cpu();
     collapseEdgePass(gf, m, minE, MAXNP, nb_collaps);
-
     double t4 = Cpu();
+    swapEdgePass ( gf, m, nb_swap);
     double t5 = Cpu();
     smoothVertexPass(gf, m, nb_smooth, false);
     double t6 = Cpu();
@@ -770,7 +855,14 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     if (nb_split == 0 && nb_collaps == 0) break;
 
   }
-
+  // Remove all small edges ...
+  int  nb_collaps, nb_swap;
+  collapseEdgePass(gf, m, MINE_, MAXNP, nb_collaps);
+  swapEdgePass ( gf, m, nb_swap);
+  collapseEdgePass(gf, m, MINE_, MAXNP, nb_collaps);
+  swapEdgePass ( gf, m, nb_swap);
+  swapEdgePass ( gf, m, nb_swap);
+  
   double t_total = t_spl + t_sw + t_col + t_sm;
   if(!t_total) t_total = 1.e-6;
   Msg::Debug(" ---------------------------------------");
@@ -785,28 +877,35 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   Msg::Debug(" ---------------------------------------");
 }
 
+bool degeneratedTriangle (BDS_Face *f, std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap){
+
+  MVertex *v[3] = {0,0,0};
+  BDS_Point *n[4];
+  f->getNodes(n);
+  for (int i=0;i<3;i++){
+    std::map<BDS_Point*, MVertex*,PointLessThan>::iterator itp1 = recoverMap->find(n[i]);
+    if (itp1 != recoverMap->end())v[i] = itp1->second;
+  }
+  if (v[0] && (v[0] == v[1] || v[0] == v[2]))return true;
+  if (v[1] && (v[1] == v[2] || v[0] == v[1]))return true;
+  if (v[2] && (v[1] == v[2] || v[0] == v[2]))return true;
+  return false;
+}
+
+
 void invalidEdgesPeriodic(BDS_Mesh &m,
                           std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap,
                           std::set<BDS_Edge*, EdgeLessThan> &toSplit)
 {
-  // first look for degenerated vertices
-  std::list<BDS_Edge*>::iterator it = m.edges.begin();
-  std::set<MVertex *> degenerated;
-  while (it != m.edges.end()){
-    BDS_Edge *e = *it;
-    if (!e->deleted && e->numfaces() == 1){
-      std::map<BDS_Point*, MVertex*,PointLessThan>::iterator itp1 = recoverMap->find(e->p1);
-      std::map<BDS_Point*, MVertex*,PointLessThan>::iterator itp2 = recoverMap->find(e->p2);
-      if (itp1 != recoverMap->end() && itp2 != recoverMap->end() &&
-          itp1->second == itp2->second){
-        degenerated.insert(itp1->second);
-      }
-    }
-    ++it;
-  }
 
+  // first look for degenerated vertices
+  std::set<MVertex *, MVertexLessThanNum> degenerated;
+  getDegeneratedVertices (m,recoverMap,degenerated);
+  Msg::Debug("Found %d degenerated vertices",degenerated.size());
+
+  
   toSplit.clear();
-  it = m.edges.begin();
+  std::list<BDS_Edge*>::iterator it = m.edges.begin();
   std::map<std::pair<MVertex*, BDS_Point*>, BDS_Edge *> touchPeriodic;
   while (it != m.edges.end()){
     BDS_Edge *e = *it;
@@ -837,6 +936,41 @@ void invalidEdgesPeriodic(BDS_Mesh &m,
     }
     ++it;
   }
+  //return;
+  Msg::Debug("%d degenerated edges should be split",toSplit.size());
+  size_t aa = toSplit.size();
+  // same edges should be split
+  {
+    std::set<BDS_Point*, PointLessThan>::iterator it = m.points.begin();
+    while (it != m.points.end()){
+      std::map<BDS_Point*, MVertex*,PointLessThan>::iterator itp2 = recoverMap->find(*it);
+      if (itp2 == recoverMap->end()){      
+	std::list<BDS_Edge*>::iterator ite = (*it)->edges.begin();
+	std::map<MVertex*,BDS_Edge*> mp;
+	while (ite != (*it)->edges.end()){
+	  if (!(*ite)->deleted && (*ite)->numfaces() == 2){
+	    if (!degeneratedTriangle ((*ite)->faces(0),recoverMap) &&
+		!degeneratedTriangle ((*ite)->faces(1),recoverMap)){			      
+	      BDS_Point *other = (*it) == (*ite)->p1 ? (*ite)->p2 : (*ite)->p1;	  
+	      std::map<BDS_Point*, MVertex*,PointLessThan>::iterator itp1 = recoverMap->find(other);
+	      if (itp1 != recoverMap->end()){
+		if (mp.find(itp1->second) != mp.end()){
+		  toSplit.insert(*ite); toSplit.insert(mp[itp1->second]);
+		}
+		mp[itp1->second] = *ite; 
+	      }
+	    }	    
+	  }
+	  ++ite;
+	}
+      }
+      ++it;
+    }
+  }
+  Msg::Debug("%d similar edges should be split",toSplit.size()-aa);
+  //  printf("%d splits\n",toSplit.size());
+
+
 }
 
 // consider p1 and p2, 2 vertices that are different in the parametric
@@ -849,10 +983,19 @@ void invalidEdgesPeriodic(BDS_Mesh &m,
 int solveInvalidPeriodic(GFace *gf, BDS_Mesh &m,
                          std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap)
 {
+  if (!recoverMap) return 0;
+
+  BDS_GeomEntity *g = m.get_geom(gf->tag(),2); 
+  
+  //  return 0;
+  Msg::Debug("Solving invalid edges/triangles in initial meshes of periodic face %d",gf->tag());
+
   std::set<BDS_Edge*, EdgeLessThan> toSplit;
   invalidEdgesPeriodic(m, recoverMap, toSplit);
   std::set<BDS_Edge*>::iterator ite = toSplit.begin();
 
+  Msg::Debug("%d edges of the initial mesh are going to be split",toSplit.size());
+  
   for (;ite !=toSplit.end(); ++ite){
     BDS_Edge *e = *ite;
     if (!e->deleted && e->numfaces() == 2){
@@ -862,117 +1005,52 @@ int solveInvalidPeriodic(GFace *gf, BDS_Mesh &m,
                         coord * e->p1->u + (1 - coord) * e->p2->u,
                         coord * e->p1->v + (1 - coord) * e->p2->v, gf);
       mid->lcBGM() = BGM_MeshSize(gf,
-                                  (coord * e->p1->u + (1 - coord) * e->p2->u),
-                                  (coord * e->p1->v + (1 - coord) * e->p2->v),
-                                  mid->X, mid->Y, mid->Z);
+				  (coord * e->p1->u + (1 - coord) * e->p2->u),
+				  (coord * e->p1->v + (1 - coord) * e->p2->v),
+				  mid->X, mid->Y, mid->Z);
       mid->lc() = 0.5 * (e->p1->lc() + e->p2->lc());
-
-      //      printf("coucou\n");
+      mid->u = coord * e->p1->u + (1 - coord) * e->p2->u;
+      mid->v = coord * e->p1->v + (1 - coord) * e->p2->v;
+      mid->g = g;
 
       if(!m.split_edge(e, mid)) m.del_point(mid);
     }
   }
   int nb_smooth;
-  if(toSplit.size()) smoothVertexPass(gf, m, nb_smooth, true);
+  //  if(toSplit.size()) smoothVertexPass(gf, m, nb_smooth, true);
   m.cleanup();
   return toSplit.size();
 }
 
-void TRYTOFIXSPHERES(GFace *gf, BDS_Mesh &m,
-		     std::map<BDS_Point*,MVertex*,PointLessThan> *recoverMap=0)
-{
-  if(!recoverMap) return;
-  double radius;
-  SPoint3 center;
-  bool isSphere = gf->isSphere(radius, center);
-  if(!isSphere) return;
-
-  int tries = 0;
-
-  while(tries < 10){
-    int count = 0;
-    std::list<BDS_Edge*>::iterator ite = m.edges.begin();
-    while (ite != m.edges.end()){
-      tries++;
-      BDS_Edge *e = *ite;
-      if(e->numfaces() == 2){
-	double ps[2] = {1,1};
-	for (int i=0;i<2;i++){
-	  BDS_Face *f = e->faces(i);
-	  double norm[3];
-	  BDS_Point *n[4];
-	  f->getNodes(n);
-
-	  MVertex *v1 = (recoverMap->find(n[0])==recoverMap->end()) ? NULL
-            : (*recoverMap)[n[0]];
-	  MVertex *v2 = (recoverMap->find(n[1])==recoverMap->end()) ? NULL
-            : (*recoverMap)[n[1]];
-	  MVertex *v3 = (recoverMap->find(n[2])==recoverMap->end()) ? NULL
-            : (*recoverMap)[n[2]];
-
-	  if ((!v1 || (v1 != v2 && v1 != v3)) && (!v2 || v2 != v3)){
-	    normal_triangle(n[0], n[1], n[2], norm);
-	    double x = (n[0]->X+n[1]->X+n[2]->X)/3.0;
-	    double y = (n[0]->Y+n[1]->Y+n[2]->Y)/3.0;
-	    double z = (n[0]->Z+n[1]->Z+n[2]->Z)/3.0;
-	    double dx = center.x() - x;
-	    double dy = center.y() - y;
-	    double dz = center.z() - z;
-	    ps[i] = dx*norm[0]+dy*norm[1]+dz*norm[2];
-	  }
-	}
-	if (ps[0] * ps[1] < 0){
-          Msg::Info("Collapsing edge %d %d because one of the two triangles is reverted",
-                    e->p1->iD, e->p2->iD);
-	  count++;
-	  if (recoverMap->find(e->p1) == recoverMap->end()){
-	    m.collapse_edge_parametric(e, e->p1);
-	  }
-	  else if (recoverMap->find(e->p2) == recoverMap->end()){
-	    m.collapse_edge_parametric(e, e->p2);
-	  }
-	}
-      }
-      ++ite;
-    }
-    if(!count) break;
-  }
-
-  if(tries == 10)
-    Msg::Warning("Some triangles on sphere could be reverted");
-
-}
 
 void optimizeMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
                      std::map<BDS_Point*,MVertex*,PointLessThan> *recoverMap=0)
 {
-  //  return;
+  
   int nb_swap;
   delaunayizeBDS(gf, m, nb_swap);
-
-  for (int ITER = 0; ITER < 3; ITER++){
-    for (int KK = 0; KK < 4; KK++){
-      // swap edges that provide a better configuration
-      int NN1 = m.edges.size();
-      int NN2 = 0;
-      std::list<BDS_Edge*>::iterator it = m.edges.begin();
-      while (1){
-        if (NN2++ >= NN1)break;
-        if (evalSwapForOptimize(*it, gf, m))
-          m.swap_edge(*it, BDS_SwapEdgeTestQuality(false));
-        ++it;
+  //  return;
+  
+  while(solveInvalidPeriodic(gf, m, recoverMap)){
+    for (int ITER = 0; ITER < 4; ITER++){
+      for (int KK = 0; KK < 4; KK++){
+	// swap edges that provide a better configuration
+	int NN1 = m.edges.size();
+	int NN2 = 0;
+	std::list<BDS_Edge*>::iterator it = m.edges.begin();
+	while (1){
+	  if (NN2++ >= NN1)break;
+	  if (evalSwapForOptimize(*it, gf, m))
+	    m.swap_edge(*it, BDS_SwapEdgeTestQuality(false));
+	  ++it;
+	}
+	m.cleanup();
+	int nb_smooth;
+	//	smoothVertexPass(gf, m, nb_smooth, true);
       }
-      m.cleanup();
-      int nb_smooth;
-      smoothVertexPass(gf, m, nb_smooth, true);
     }
-  }
-
-  if (recoverMap){
-    while(solveInvalidPeriodic(gf, m, recoverMap)){
-    }
-  }
-  TRYTOFIXSPHERES(gf,m,recoverMap);
+    //    TRYTOFIXSPHERES(gf,m,recoverMap);
+  }  
 }
 
 // DELAUNAY BDS

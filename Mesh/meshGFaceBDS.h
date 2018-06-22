@@ -21,7 +21,8 @@ void computeMeshSizeFieldAccuracy(GFace *gf, BDS_Mesh &m, double &avg,
                                   double &max_e, double &min_e, int &nE, int &GS);
 void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT, 
                    const bool computeNodalSizeField,
-                   std::map<MVertex*, BDS_Point*> *recoverMapInv=0);
+                   std::map<MVertex*, BDS_Point*> *recoverMapInv=0,
+		   std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap=0);
 void optimizeMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT, 
 		     std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap=0);
 void delaunayizeBDS(GFace *gf, BDS_Mesh &m, int &nb_swap);

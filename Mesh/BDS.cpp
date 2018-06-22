@@ -1201,26 +1201,22 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p)
   return true;
 }
 
-bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
+
+
+bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
 {
-  //  printf("coucou\n");
-  //  if(!p->config_modified) return false;
   if(p->g && p->g->classif_degree <= 1) return false;
   if(p->g && p->g->classif_tag < 0) {
     p->config_modified = true;
     return true;
   }
   std::list<BDS_Edge*>::iterator eit = p->edges.begin();
-  while(eit != p->edges.end()) {
+  std::list<BDS_Edge *>::iterator itede = p->edges.end();
+  while(eit != itede) {
     if((*eit)->numfaces() == 1) return false;
     eit++;
   }
 
-  /*    TEST    */
-  double radius;
-  SPoint3 center;
-  bool isSphere = gf->isSphere(radius, center);
-  //  bool isBSplineSurface = gf->geomType() == GEntity::BSplineSurface;
   double XX=0,YY=0,ZZ=0;
 
   double U = 0;
@@ -1231,64 +1227,93 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
 
   std::list<BDS_Face*> ts;
   p->getTriangles(ts);
-  std::list<BDS_Edge *>::iterator ited = p->edges.begin();
-  std::list<BDS_Edge *>::iterator itede = p->edges.end();
 
-  double sTot = 0;
-  const double fact = 1.0;
-  while(ited != itede) {
-    BDS_Edge  *e = *ited;
+  double sTot = p->edges.size();
+  double fact = 0.0;
+  double ENERGY = 0.0;
+  eit = p->edges.begin();
+  
+  while(eit != itede) {
+    BDS_Edge  *e = *eit;
     BDS_Point *n = e->othervertex(p);
-    sTot += fact;
-    U  += n->u * fact;
-    V  += n->v * fact;
+    double du = sqrt((n->u-oldU)*(n->u-oldU)+(n->v-oldV)*(n->v-oldV));
+    if (du == 0)return false;
+    double length = e->length();
+    ENERGY += length*length;
+    double factloc = du/ length;
+    U  += n->u * factloc ;
+    V  += n->v * factloc;
+    fact += factloc;
     XX += n->X;
     YY += n->Y;
     ZZ += n->Z;
-    LC += n->lc() * fact;
-    ++ited;
+    LC += n->lc();
+    ++eit;
   }
-  U /= (sTot);
-  V /= (sTot);
+  //  printf("%g\n",fact);
+  //  sTot *= fact;
+  U /= (fact);
+  V /= (fact);
   LC /= (sTot);
   XX/= (sTot);
   YY/= (sTot);
   ZZ/= (sTot);
-
-  GPoint gp;double uv[2];
+  
+  
+  GPoint gp;
   SVector3 normal;
-  if (isSphere /*|| isBSplineSurface*/){
-    gp = gf->closestPoint(SPoint3(XX, YY, ZZ), uv);
-    U = gp.u();
-    V = gp.v();
-  }
-  else if (gf->geomType() == GEntity::DiscreteSurface){
-    //    gp = gf->closestPoint(SPoint3(XX, YY, ZZ), uv);
-    //    U = gp.u();
-    //    V = gp.v();
+  if (gf->geomType() == GEntity::DiscreteSurface){
     discreteFace *df = static_cast<discreteFace*> (gf);
     if (df){
       gp = df->closestPoint(SPoint3(XX, YY, ZZ), LC,&normal);
-      //      gp = gf->closestPoint(SPoint3(XX, YY, ZZ), uv);
       U = gp.u();
       V = gp.v();
-      //      double dx = sqrt ((gp.x()-gp2.x())*(gp.x()-gp2.x())+
-      //			(gp.y()-gp2.y())*(gp.y()-gp2.y())+
-      //			(gp.z()-gp2.z())*(gp.z()-gp2.z()));
-      //      if (dx > 1.e-8){
-      //	printf("ERROR %12.5E\n",dx);      
-      //	printf("%g %g %g vs. %g %g %g \n",gp2.x(),gp2.y(),gp2.z(),
-      //	       gp.x(),gp.y(),gp.z());
-      //      }
     }
   }
   else
     gp = gf->point(U , V );
-
+  
   if (!gp.succeeded()){
     return false;
   }
-  //    if (!gf->containsParam(SPoint2(U,V)))return false;
+
+  eit = p->edges.begin();
+  double ENERGY_NEW = 0;
+  while(eit != itede) {
+    BDS_Edge  *e = *eit;
+    BDS_Point *n = e->othervertex(p);
+    double l2 = (gp.x()-n->X)*(gp.x()-n->X)+
+      (gp.y()-n->Y)*(gp.y()-n->Y)+
+      (gp.z()-n->Z)*(gp.z()-n->Z);
+    ENERGY_NEW += l2;
+    ++eit;
+  }
+
+  // simple strategy has failed to reduce energy
+  if (ENERGY_NEW > ENERGY){
+    double uv[2] = {U,V};
+    gp = gf->closestPoint(SPoint3(XX, YY, ZZ),uv);
+    U = gp.u();
+    V = gp.v();
+    //    return false;
+    //    printf("%g %g\n",ENERGY_NEW,ENERGY);  
+    eit = p->edges.begin();
+    ENERGY_NEW = 0;
+    while(eit != itede) {
+      BDS_Edge  *e = *eit;
+      BDS_Point *n = e->othervertex(p);
+      double l2 = (gp.x()-n->X)*(gp.x()-n->X)+
+	(gp.y()-n->Y)*(gp.y()-n->Y)+
+	(gp.z()-n->Z)*(gp.z()-n->Z);
+      ENERGY_NEW += l2;
+      ++eit;
+    }
+    if (ENERGY_NEW > ENERGY){
+      Msg::Info("Impossible to move vertex using simple strategies... leaving it there");
+      return false;
+    }
+  }
+
   
   const double oldX = p->X;
   const double oldY = p->Y;
@@ -1300,7 +1325,6 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
   
   double newWorst = 1.0;
   double oldWorst = 1.0;
-
 
   while(it != ite) {
     BDS_Face *t = *it;
@@ -1314,47 +1338,25 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
     p->v = oldV;
     double sold = fabs(surface_triangle_param(n[0], n[1], n[2]));
     s2 += sold;
-    if(snew < .1 * sold) return false;
     
     p->X = gp.x();
     p->Y = gp.y();
     p->Z = gp.z();
     newWorst = std::min(newWorst, qmTriangle::gamma(*it));
-    double norm1[3],norm2[3];
-    normal_triangle(n[0], n[1], n[2], norm1);
+
     p->X = oldX;
     p->Y = oldY;
     p->Z = oldZ;
-    normal_triangle(n[0], n[1], n[2], norm2);
     oldWorst = std::min(oldWorst, qmTriangle::gamma(*it));
-    double ps;
-    if (gf->geomType() == GEntity::DiscreteSurface){    
-      prosca(norm1, normal, &ps);
-      if (ps > 0)return false;
-    }
-    if (isSphere){
-      double dx = center.x() - gp.x();
-      double dy = center.y() - gp.y();
-      double dz = center.z() - gp.z();
-      ps = dx*norm1[0]+dy*norm1[1]+dz*norm1[2];
-      if (ps < 0)return false;
-    }
-    else{
-      prosca(norm1, norm2, &ps);
-      double threshold = 0.5;
-      if(ps < threshold){
-	return false;
-      }
-    }
+
     ++it;
   }
-  // printf("%22.15E %22.15E %22.15E\n",s1,s2,fabs(s2-s1));
+  //  if (p->edges.size() == 3)printf("3 -> %22.15E\n",fabs(s2-s1));
   if(fabs(s2-s1) > 1.e-14 * (s2 + s1)) return false;
+  if (100*newWorst < oldWorst) return false;
+  //  if (p->edges.size() == 3)printf("OK \n");
   
-  //  if(test_quality && newWorst < oldWorst){
-  //    return false;
-  //  }
-
+  
   p->u = U;
   p->v = V;
   p->lc() = LC;

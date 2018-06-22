@@ -48,8 +48,8 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   if(model()->getOCCInternals())
     model()->getOCCInternals()->bind(s, num);
   // TEST
-  if (tag() == 119){
-    writeBREP("s119.brep");
+  if (tag() == 104){
+    writeBREP("s104.brep");
   }
 
 }

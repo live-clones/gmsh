@@ -20,6 +20,7 @@
 #include <TopExp_Explorer.hxx>
 #include <BRep_Builder.hxx>
 #include <BRepBndLib.hxx>
+#include <BRepTools.hxx>
 
 OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num)
   : GRegion(m, num), s(_s)
@@ -27,6 +28,10 @@ OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num)
   setup();
   if(model()->getOCCInternals())
     model()->getOCCInternals()->bind(s, num);
+  //  if (tag() == 1){
+  char name[256];
+  sprintf(name,"v%d.brep",tag());
+  writeBREP(name);
 }
 
 OCCRegion::~OCCRegion()
@@ -114,5 +119,15 @@ GEntity::GeomType OCCRegion::geomType() const
 {
   return Volume;
 }
+
+void OCCRegion::writeBREP (const char *filename){
+  BRep_Builder b;
+  TopoDS_Compound c;
+  b.MakeCompound(c);
+  b.Add(c, s);
+  BRepTools::Write(c, filename);
+}
+
+
 
 #endif

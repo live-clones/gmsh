@@ -1434,10 +1434,10 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     //   buildBackGroundMesh(gf);
     // }
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true,
-                  &recoverMapInv);
+                  &recoverMapInv,NULL);
     optimizeMeshBDS(gf, *m, 2);
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, false,
-                &recoverMapInv);
+		  &recoverMapInv,NULL);
     optimizeMeshBDS(gf, *m, 2);
     // if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
     //   backgroundMesh::unset();
@@ -2211,6 +2211,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     }
   }
 
+
+  
   // look for a triangle that has a negative node and recursively tag all
   // exterior triangles
   {
@@ -2304,17 +2306,47 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
 
   // start mesh generation for periodic face
+  optimizeMeshBDS(gf, *m, 2, &recoverMap); // fix periodic shit
+    if(debug){
+      char name[245];
+      sprintf(name, "surface%d-fixed-real.pos", gf->tag());
+      outputScalarField(m->triangles, name, 0);
+      sprintf(name, "surface%d-fixed-param.pos", gf->tag());
+      outputScalarField(m->triangles, name, 1);
+    }
+
   if(!algoDelaunay2D(gf)){
-    // need for a BGM for cross field
+
+  // need for a BGM for cross field
     //    if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
     //      printf("coucou here !!!\n");
     //      backgroundMesh::unset();
     //      buildBackGroundMesh(gf);
     //    }
-    refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true);
+    refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true,NULL,&recoverMap);
+    //    if(debug){
+    //      char name[245];
+    //      sprintf(name, "surface%d-phase1-real.pos", gf->tag());
+    //      outputScalarField(m->triangles, name, 0);
+    //    }
     optimizeMeshBDS(gf, *m, 2);
-    refineMeshBDS(gf, *m, -CTX::instance()->mesh.refineSteps, false);
-    optimizeMeshBDS(gf, *m, 2, &recoverMap);
+    //    if(debug){
+    //      char name[245];
+    //      sprintf(name, "surface%d-phase2-real.pos", gf->tag());
+    //      outputScalarField(m->triangles, name, 0);
+    //    }
+    refineMeshBDS(gf, *m, -CTX::instance()->mesh.refineSteps, false,NULL,&recoverMap);
+    //    if(debug){
+    //      char name[245];
+    //      sprintf(name, "surface%d-phase3-real.pos", gf->tag());
+    //      outputScalarField(m->triangles, name, 0);
+    //    }
+    optimizeMeshBDS(gf, *m, 2, &recoverMap); // fix periodic shit if broken
+    //    if(debug){
+    //      char name[245];
+    //      sprintf(name, "surface%d-phase4-real.pos", gf->tag());
+    //      outputScalarField(m->triangles, name, 0);
+    //    }
     // compute mesh statistics
     /*
     computeMeshSizeFieldAccuracy(gf, *m, gf->meshStatistics.efficiency_index,
@@ -2468,6 +2500,15 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     if(!infty || !(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine))
       laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing, infty);
   }
+
+   if(debug){
+     char name[256];
+     sprintf(name, "real%d.pos", gf->tag());
+     outputScalarField(m->triangles, name, 0, gf);
+     sprintf(name, "param%d.pos", gf->tag());
+     outputScalarField(m->triangles, name,1);
+   }
+
 
   // delete the mesh
   delete m;
