@@ -4,8 +4,9 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <stack>
-#include <math.h>
+#include <cmath>
 #include <stdio.h>
+
 #include "GmshMessage.h"
 #include "OS.h"
 #include "robustPredicates.h"
