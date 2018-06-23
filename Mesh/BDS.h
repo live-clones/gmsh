@@ -223,9 +223,9 @@ public:
   void oppositeof(BDS_Point *oface[2]) const;
   void update()
   {
-    _length = sqrt((p1->X - p2->X) * (p1->X - p2->X) +
-                   (p1->Y - p2->Y) * (p1->Y - p2->Y) +
-                   (p1->Z - p2->Z) * (p1->Z - p2->Z));
+    _length = std::sqrt((p1->X - p2->X) * (p1->X - p2->X) +
+                        (p1->Y - p2->Y) * (p1->Y - p2->Y) +
+                        (p1->Z - p2->Z) * (p1->Z - p2->Z));
   }
   BDS_Edge(BDS_Point *A, BDS_Point *B)
     : deleted(false)
