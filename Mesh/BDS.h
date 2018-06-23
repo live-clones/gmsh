@@ -32,7 +32,7 @@ class BDS_GeomEntity {
 public:
   int classif_tag;
   int classif_degree;
-  inline bool operator<(const BDS_GeomEntity &other) const
+  bool operator<(const BDS_GeomEntity &other) const
   {
     if(classif_degree < other.classif_degree) return true;
     if(classif_degree > other.classif_degree) return false;
@@ -67,7 +67,7 @@ public:
   {
     return BDS_Vector(x - v.x, y - v.y, z - v.z);
   }
-  inline BDS_Vector operator%(const BDS_Vector &other) const
+  BDS_Vector operator%(const BDS_Vector &other) const
   {
     return BDS_Vector(y * other.z - z * other.y, z * other.x - x * other.z,
                       x * other.y - y * other.x);
@@ -178,31 +178,31 @@ public:
   bool deleted;
   BDS_Point *p1, *p2;
   BDS_GeomEntity *g;
-  inline BDS_Face *faces(int i) const { return _faces[i]; }
-  inline double length() const { return _length; }
-  inline int numfaces() const { return (int)_faces.size(); }
+  BDS_Face *faces(int i) const { return _faces[i]; }
+  double length() const { return _length; }
+  int numfaces() const { return (int)_faces.size(); }
   int numTriangles() const;
-  inline BDS_Point *commonvertex(const BDS_Edge *other) const
+  BDS_Point *commonvertex(const BDS_Edge *other) const
   {
     if(p1 == other->p1 || p1 == other->p2) return p1;
     if(p2 == other->p1 || p2 == other->p2) return p2;
     return 0;
   }
-  inline BDS_Point *othervertex(const BDS_Point *p) const
+  BDS_Point *othervertex(const BDS_Point *p) const
   {
     if(p1 == p) return p2;
     if(p2 == p) return p1;
     return 0;
   }
-  inline void addface(BDS_Face *f) { _faces.push_back(f); }
-  inline bool operator<(const BDS_Edge &other) const
+  void addface(BDS_Face *f) { _faces.push_back(f); }
+  bool operator<(const BDS_Edge &other) const
   {
     if(*other.p1 < *p1) return true;
     if(*p1 < *other.p1) return false;
     if(*other.p2 < *p2) return true;
     return false;
   }
-  inline BDS_Face *otherFace(const BDS_Face *f) const
+  BDS_Face *otherFace(const BDS_Face *f) const
   {
     if(numfaces() != 2) {
       Msg::Fatal("otherFace wrong, ony %d faces attached to edge %d %d",
@@ -214,7 +214,7 @@ public:
     Msg::Fatal("otherFace wrong: the edge does not belong to the face");
     return 0;
   }
-  inline void del(BDS_Face *t)
+  void del(BDS_Face *t)
   {
     _faces.erase(std::remove_if(_faces.begin(), _faces.end(),
                                 std::bind2nd(std::equal_to<BDS_Face *>(), t)),
@@ -250,8 +250,8 @@ public:
   bool deleted;
   BDS_Edge *e1, *e2, *e3, *e4;
   BDS_GeomEntity *g;
-  inline int numEdges() const { return e4 ? 4 : 3; }
-  inline BDS_Edge *oppositeEdge(BDS_Point *p)
+  int numEdges() const { return e4 ? 4 : 3; }
+  BDS_Edge *oppositeEdge(BDS_Point *p)
   {
     if(e4) {
       Msg::Fatal("oppositeEdge to point %d cannot be applied to a quad", p->iD);
@@ -263,7 +263,7 @@ public:
     Msg::Fatal("point %d does not belong to this triangle", p->iD);
     return 0;
   }
-  inline BDS_Point *oppositeVertex(BDS_Edge *e)
+  BDS_Point *oppositeVertex(BDS_Edge *e)
   {
     if(e4) {
       Msg::Fatal("oppositeVertex to edge %d %d cannot be applied to a quad",
@@ -277,7 +277,7 @@ public:
                e->p2->iD);
     return 0;
   }
-  inline void getNodes(BDS_Point *n[4]) const
+  void getNodes(BDS_Point *n[4]) const
   {
     if(!e4) {
       n[0] = e1->commonvertex(e3);
