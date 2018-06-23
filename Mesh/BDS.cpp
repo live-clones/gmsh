@@ -674,10 +674,7 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
   int orientation = 0;
   for(int i = 0; i < 3; i++) {
     if(pts1[i] == p1) {
-      if(pts1[(i + 1) % 3] == p2)
-        orientation = 1;
-      else
-        orientation = -1;
+      orientation = pts1[(i + 1) % 3] == p2 ? 1 : -1;
       break;
     }
   }
