@@ -15,8 +15,8 @@
 #include <vector>
 #include <algorithm>
 #include <functional>
-#include <list>
 #include <cmath>
+
 #include "GmshMessage.h"
 
 class BDS_Edge;
