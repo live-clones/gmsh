@@ -810,7 +810,7 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
   // if(cosnq < .3 && cosonq > .5 && minb > .1)
   //   printf("mina = %g minb = %g cos %g %g\n",mina,minb,cosnq,cosonq);
 
-  if(cosnq < .3 && cosonq > .5 && minb > .1) return true;
+  if(cosnq < 0.3 && cosonq > 0.5 && minb > 0.1) return true;
 
   if(minb > mina) return true;
   //  if(mina > minb && cosnq <= cosonq)return true;
@@ -916,10 +916,7 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest)
   int orientation = 0;
   for(int i = 0; i < 3; i++) {
     if(pts1[i] == p1) {
-      if(pts1[(i + 1) % 3] == p2)
-        orientation = 1;
-      else
-        orientation = -1;
+      orientation = pts1[(i + 1) % 3] == p2 ? 1 : -1;
       break;
     }
   }
@@ -983,6 +980,7 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest)
 
 int BDS_Edge::numTriangles() const
 {
+  // TODO C++11 use std::count_if
   int NT = 0;
   for(unsigned int i = 0; i < _faces.size(); i++)
     if(faces(i)->numEdges() == 3) NT++;
@@ -991,7 +989,6 @@ int BDS_Edge::numTriangles() const
 
 // use robust predicates for not allowing to revert a triangle by
 // moving one of its vertices
-
 static bool test_move_point_parametric_quad(BDS_Point *p, double u, double v,
                                             BDS_Face *t)
 {
@@ -1003,8 +1000,8 @@ static bool test_move_point_parametric_quad(BDS_Point *p, double u, double v,
   double pc[2] = {pts[2]->u, pts[2]->v};
   double pd[2] = {pts[3]->u, pts[3]->v};
 
-  double ori_init1 = robustPredicates::orient2d(pa, pb, pc);
-  double ori_init2 = robustPredicates::orient2d(pc, pd, pa);
+  double const ori_init1 = robustPredicates::orient2d(pa, pb, pc);
+  double const ori_init2 = robustPredicates::orient2d(pc, pd, pa);
 
   if(p == pts[0]) {
     pa[0] = u;
@@ -1051,7 +1048,7 @@ static bool test_move_point_parametric_triangle(BDS_Point *p, double u,
 
   if(area_init == 0.0) return true;
 
-  double ori_init = robustPredicates::orient2d(pa, pb, pc);
+  double const ori_init = robustPredicates::orient2d(pa, pb, pc);
 
   if(p == pts[0]) {
     pa[0] = u;
