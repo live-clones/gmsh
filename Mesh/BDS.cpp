@@ -766,14 +766,15 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
 
     // printf("%d %d %d %d %g
     // %g\n",_p1->iD,_p2->iD,_q1->iD,_q2->iD,ori_t1,ori_t2);
+
     return (ori_t1 * ori_t2 > 0); // the quadrangle was strictly convex !
   }
 
-  double s1 = fabs(surface_triangle_param(_p1, _p2, _q1));
-  double s2 = fabs(surface_triangle_param(_p1, _p2, _q2));
-  double s3 = fabs(surface_triangle_param(_p1, _q1, _q2));
-  double s4 = fabs(surface_triangle_param(_p2, _q1, _q2));
-  if(fabs(s1 + s2 - s3 - s4) > 1.e-12 * (s1 + s2)) return false;
+  double s1 = std::abs(surface_triangle_param(_p1, _p2, _q1));
+  double s2 = std::abs(surface_triangle_param(_p1, _p2, _q2));
+  double s3 = std::abs(surface_triangle_param(_p1, _q1, _q2));
+  double s4 = std::abs(surface_triangle_param(_p2, _q1, _q2));
+  if(std::abs(s1 + s2 - s3 - s4) > 1.e-12 * (s1 + s2)) return false;
   if(s3 < .02 * (s1 + s2) || s4 < .02 * (s1 + s2)) return false;
   return true;
 }
@@ -1046,7 +1047,7 @@ static bool test_move_point_parametric_triangle(BDS_Point *p, double u,
   double a[2] = {pb[0] - pa[0], pb[1] - pa[1]};
   double b[2] = {pc[0] - pa[0], pc[1] - pa[1]};
 
-  double area_init = fabs(a[0] * b[1] - a[1] * b[0]);
+  double area_init = std::abs(a[0] * b[1] - a[1] * b[0]);
 
   if(area_init == 0.0) return true;
 
@@ -1064,15 +1065,16 @@ static bool test_move_point_parametric_triangle(BDS_Point *p, double u,
     pc[0] = u;
     pc[1] = v;
   }
-  else
+  else {
     return false;
+  }
 
   a[0] = pb[0] - pa[0];
   a[1] = pb[1] - pa[1];
   b[0] = pc[0] - pa[0];
   b[1] = pc[1] - pa[1];
 
-  double area_final = fabs(a[0] * b[1] - a[1] * b[0]);
+  double area_final = std::abs(a[0] * b[1] - a[1] * b[0]);
   if(area_final < 0.1 * area_init) return false;
   double ori_final = robustPredicates::orient2d(pa, pb, pc);
   // allow to move a point when a triangle was flat
@@ -1314,7 +1316,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
     }
     ++it;
   }
-  // printf("%22.15E %22.15E %22.15E\n",s1,s2,fabs(s2-s1));
+  // printf("%22.15E %22.15E %22.15E\n",s1,s2,std::abs(s2-s1));
   if(std::abs(s2 - s1) > 1.e-14 * (s2 + s1)) return false;
 
   //  if(test_quality && newWorst < oldWorst){
