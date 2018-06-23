@@ -103,14 +103,14 @@ public:
   }
   double angle(const BDS_Vector &v) const
   {
-    double a[3] = {x, y, z};
-    double b[3] = {v.x, v.y, v.z};
+    double const a[3] = {x, y, z};
+    double const b[3] = {v.x, v.y, v.z};
     double c[3];
     c[2] = a[0] * b[1] - a[1] * b[0];
     c[1] = -a[0] * b[2] + a[2] * b[0];
     c[0] = a[1] * b[2] - a[2] * b[1];
-    double cosa = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-    double sina = std::sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
+    double const cosa = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    double const sina = std::sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
     return std::atan2(sina, cosa);
   }
   double angle_deg(const BDS_Vector &v) const { return angle(v) * 180. / M_PI; }
