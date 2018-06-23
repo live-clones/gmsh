@@ -159,7 +159,7 @@ static double surface_triangle_param(BDS_Point *p1, BDS_Point *p2,
 {
   double c;
   vector_triangle_parametric(p1, p2, p3, c);
-  return (0.5 * c);
+  return 0.5 * c;
 }
 
 std::vector<BDS_Face *> BDS_Point::getTriangles() const
