@@ -272,23 +272,6 @@ static bool TooManyElements(GModel *m, int dim)
   return false;
 }
 
-static bool CancelDelaunayHybrid(GModel *m)
-{
-  if(CTX::instance()->expertMode) return false;
-  int n = 0;
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
-    n += (*it)->getNumMeshElements();
-  if(n)
-    return !Msg::GetAnswer
-      ("You are trying to generate a mixed structured/unstructured grid using\n"
-       "the 3D Delaunay algorithm. This algorithm cannot garantee that the\n"
-       "final mesh will be conforming. (You should probably use the 3D Frontal\n"
-       "algorithm instead.) Do you really want to continue with the Delaunay?\n\n"
-       "(To disable this warning in the future, select `Enable expert mode'\n"
-       "in the option dialog.)", 1, "Cancel", "Continue");
-  return false;
-}
-
 static void Mesh0D(GModel *m)
 {
 
@@ -801,9 +784,6 @@ static void Mesh3D(GModel *m)
   // then mesh all the non-delaunay regions (front3D with netgen)
   std::vector<GRegion*> delaunay;
   std::for_each(m->firstRegion(), m->lastRegion(), meshGRegion(delaunay));
-
-  // warn if attempting to use Delaunay for mixed meshes
-  if(delaunay.size() && CancelDelaunayHybrid(m)) return;
 
   // and finally mesh the delaunay regions (again, this is global; but
   // we mesh each connected part separately for performance and mesh
