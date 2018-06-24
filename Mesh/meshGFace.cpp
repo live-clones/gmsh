@@ -44,7 +44,7 @@
 // define this to use the old initial delaunay
 #define OLD_CODE_DELAUNAY 1
 
-void copyMesh(GEdge*,GEdge*,int);
+void copyMesh(GEdge*, GEdge*, int);
 
 static void computeElementShapes(GFace *gf, double &worst, double &avg,
                                  double &best, int &nT, int &greaterThan)
