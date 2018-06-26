@@ -206,6 +206,9 @@ public:
   // spatial dimension of the entity
   virtual int dim() const { return -1; }
 
+  // returns the parent entity for partitioned entities
+  virtual GEntity *getParentEntity() { return 0; }
+
   // regions that bound this entity or that this entity bounds.
   virtual std::list<GRegion *> regions() const
   {

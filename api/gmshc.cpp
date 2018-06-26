@@ -415,27 +415,52 @@ GMSH_API void gmshModelGetType(const int dim, const int tag, char ** entityType,
   }
 }
 
-GMSH_API void gmshModelGetNormals(const int tag, double * parametricCoord, size_t parametricCoord_n, double ** normals, size_t * normals_n, int * ierr)
+GMSH_API void gmshModelGetParent(const int dim, const int tag, int * parentDim, int * parentTag, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
-    std::vector<double> api_normals_;
-    gmsh::model::getNormals(tag, api_parametricCoord_, api_normals_);
-    vector2ptr(api_normals_, normals, normals_n);
+    gmsh::model::getParent(dim, tag, *parentDim, *parentTag);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
   }
 }
 
-GMSH_API void gmshModelGetCurvatures(const int tag, double * parametricCoord, size_t parametricCoord_n, double ** curvatures, size_t * curvatures_n, int * ierr)
+GMSH_API void gmshModelGetValue(const int dim, const int tag, double * parametricCoord, size_t parametricCoord_n, double ** points, size_t * points_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
+    std::vector<double> api_points_;
+    gmsh::model::getValue(dim, tag, api_parametricCoord_, api_points_);
+    vector2ptr(api_points_, points, points_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelGetDerivative(const int dim, const int tag, double * parametricCoord, size_t parametricCoord_n, double ** derivatives, size_t * derivatives_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
+    std::vector<double> api_derivatives_;
+    gmsh::model::getDerivative(dim, tag, api_parametricCoord_, api_derivatives_);
+    vector2ptr(api_derivatives_, derivatives, derivatives_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelGetCurvature(const int dim, const int tag, double * parametricCoord, size_t parametricCoord_n, double ** curvatures, size_t * curvatures_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
     std::vector<double> api_curvatures_;
-    gmsh::model::getCurvatures(tag, api_parametricCoord_, api_curvatures_);
+    gmsh::model::getCurvature(dim, tag, api_parametricCoord_, api_curvatures_);
     vector2ptr(api_curvatures_, curvatures, curvatures_n);
   }
   catch(int api_ierr_){
@@ -457,6 +482,20 @@ GMSH_API void gmshModelGetPrincipalCurvatures(const int tag, double * parametric
     vector2ptr(api_curvatureMin_, curvatureMin, curvatureMin_n);
     vector2ptr(api_directionMax_, directionMax, directionMax_n);
     vector2ptr(api_directionMin_, directionMin, directionMin_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelGetNormal(const int tag, double * parametricCoord, size_t parametricCoord_n, double ** normals, size_t * normals_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
+    std::vector<double> api_normals_;
+    gmsh::model::getNormal(tag, api_parametricCoord_, api_normals_);
+    vector2ptr(api_normals_, normals, normals_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

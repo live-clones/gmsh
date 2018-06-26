@@ -23,7 +23,7 @@ for e in ent:
     tags, coord, param = gmsh.model.mesh.getNodes(2, surf, True)
     # get surface normal on all nodes, i.e. including on the geometrical
     # singularities (edges/points)
-    normals = gmsh.model.getNormals(surf, param)
+    normals = gmsh.model.getNormal(surf, param)
     # get surface curvature
     curvMax, curvMin, _, _ = gmsh.model.getPrincipalCurvatures(surf, param)
     for i in range(0,len(coord),3):

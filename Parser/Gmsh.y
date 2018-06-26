@@ -129,6 +129,7 @@ void getAllPhysicalTags(int dim, List_T *in);
 void getElementaryTagsForPhysicalGroups(int dim, List_T *in, List_T *out);
 void getElementaryTagsInBoundingBox(int dim, double x1, double y1, double z1,
                                     double x2, double y2, double z2, List_T *out);
+void getParentTags(int dim, List_T *in, List_T *out);
 void getBoundingBox(int dim, int tag, List_T *out);
 void setVisibility(int dim, int visible, bool recursive);
 void setVisibility(const std::vector<std::pair<int, int> > &dimTags, int visible,
@@ -197,7 +198,7 @@ struct doubleXstring{
 %token tRectangle tDisk tWire tGeoEntity
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet
-%token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic
+%token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic tParent
 %token tUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
@@ -2525,6 +2526,24 @@ ListOfShapes :
     {
       List_T *tmp = List_Create(10, 10, sizeof(double));
       getElementaryTagsForPhysicalGroups($3, $5, tmp);
+      for(int i = 0; i < List_Nbr(tmp); i++){
+	double d;
+	List_Read(tmp, i, &d);
+ 	Shape s;
+	s.Num = (int)d; // FIXME
+        switch ($3) {
+        case 0: s.Type = MSH_POINT    ; break;
+        case 1: s.Type = MSH_SEGM_LINE; break;
+        case 2: s.Type = MSH_SURF_PLAN; break; // we don't care about the actual type
+        case 3: s.Type = MSH_VOLUME   ; break;
+        }
+        List_Add($$, &s);
+      }
+    }
+  | ListOfShapes tParent GeoEntity '{' RecursiveListOfDouble '}' tEND
+    {
+      List_T *tmp = List_Create(10, 10, sizeof(double));
+      getParentTags($3, $5, tmp);
       for(int i = 0; i < List_Nbr(tmp); i++){
 	double d;
 	List_Read(tmp, i, &d);
@@ -5543,6 +5562,12 @@ FExpr_Multi :
         List_Delete($3);
       }
     }
+  | tParent GeoEntity ListOfDouble
+    {
+      $$ = List_Create(10, 10, sizeof(double));
+      getParentTags($2, $3, $$);
+      List_Delete($3);
+    }
    | GeoEntity tIn tBoundingBox
       '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
@@ -6844,6 +6869,28 @@ void getElementaryTagsInBoundingBox(int dim, double x1, double y1, double z1,
   for(unsigned int i = 0; i < entities.size(); i++){
     double d = entities[i]->tag();
     List_Add(out, &d);
+  }
+}
+
+void getParentTags(int dim, List_T *in, List_T *out)
+{
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  if(GModel::current()->getGEOInternals()->getChanged())
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+
+  for(int i = 0; i < List_Nbr(in); i++){
+    double num;
+    List_Read(in, i, &num);
+    GEntity *ge = GModel::current()->getEntityByTag(dim, (int)num);
+    if(ge){
+      GEntity *parent = ge->getParentEntity();
+      if(parent){
+        double tag = parent->tag();
+        List_Add(out, &tag);
+      }
+    }
   }
 }
 
