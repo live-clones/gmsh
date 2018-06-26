@@ -216,23 +216,50 @@ GMSH_API void gmshModelGetType(const int dim,
                                char ** entityType,
                                int * ierr);
 
-/* Get the normal to the surface with tag `tag' at the parametric coordinates
- * `parametricCoord'. `parametricCoord' are given by pair of u and v
- * coordinates, concatenated. `normals' are returned as triplets of x, y and z
- * components, concatenated. */
-GMSH_API void gmshModelGetNormals(const int tag,
-                                  double * parametricCoord, size_t parametricCoord_n,
-                                  double ** normals, size_t * normals_n,
-                                  int * ierr);
+/* In a partitioned model, get the parent of the entity of dimension `dim' and
+ * tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and
+ * `parentTag' are set to -1 if the entity has no parent. */
+GMSH_API void gmshModelGetParent(const int dim,
+                                 const int tag,
+                                 int * parentDim,
+                                 int * parentTag,
+                                 int * ierr);
 
-/* Get the curvature of the curve with tag `tag' at the parametric coordinates
- * `parametricCoord'. */
-GMSH_API void gmshModelGetCurvatures(const int tag,
+/* Evaluate the parametrization of the entity of dimension `dim' and tag `tag'
+ * at the parametric coordinates `parametricCoord' and return triplets of x,
+ * y, z coordinates in `points'. Only valid for `dim' equal to 0 (), 1 (with
+ * `parametricCoord' containing parametric coordinates on the curve) or 2
+ * (with `parametricCoord' containing pairs of u, v parametric coordinates on
+ * the surface), */
+GMSH_API void gmshModelGetValue(const int dim,
+                                const int tag,
+                                double * parametricCoord, size_t parametricCoord_n,
+                                double ** points, size_t * points_n,
+                                int * ierr);
+
+/* Evaluate the derivative of the parametrization of the entity of dimension
+ * `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only
+ * valid for `dim' equal to 1 (with `parametricCoord' containing parametric
+ * coordinates on the curve) or 2 (with `parametricCoord' containing pairs of
+ * u, v parametric coordinates on the surface). */
+GMSH_API void gmshModelGetDerivative(const int dim,
+                                     const int tag,
                                      double * parametricCoord, size_t parametricCoord_n,
-                                     double ** curvatures, size_t * curvatures_n,
+                                     double ** derivatives, size_t * derivatives_n,
                                      int * ierr);
 
-/* Get the principal curvatures of the surface with tag `tag' at the
+/* Evaluate the (maximum) curvature of the entity of dimension `dim' and tag
+ * `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim'
+ * equal to 1 (with `parametricCoord' containing parametric coordinates on the
+ * curve) or 2 (with `parametricCoord' containing pairs of u, v parametric
+ * coordinates on the surface). */
+GMSH_API void gmshModelGetCurvature(const int dim,
+                                    const int tag,
+                                    double * parametricCoord, size_t parametricCoord_n,
+                                    double ** curvatures, size_t * curvatures_n,
+                                    int * ierr);
+
+/* Evaluate the principal curvatures of the surface with tag `tag' at the
  * parametric coordinates `parametricCoord', as well as their respective
  * directions. `parametricCoord' are given by pair of u and v coordinates,
  * concatenated. */
@@ -243,6 +270,15 @@ GMSH_API void gmshModelGetPrincipalCurvatures(const int tag,
                                               double ** directionMax, size_t * directionMax_n,
                                               double ** directionMin, size_t * directionMin_n,
                                               int * ierr);
+
+/* Get the normal to the surface with tag `tag' at the parametric coordinates
+ * `parametricCoord'. `parametricCoord' are given by pair of u and v
+ * coordinates, concatenated. `normals' are returned as triplets of x, y and z
+ * components, concatenated. */
+GMSH_API void gmshModelGetNormal(const int tag,
+                                 double * parametricCoord, size_t parametricCoord_n,
+                                 double ** normals, size_t * normals_n,
+                                 int * ierr);
 
 /* Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3). */
 GMSH_API void gmshModelMeshGenerate(const int dim,

@@ -682,55 +682,114 @@ class model:
         return _ostring(api_entityType_)
 
     @staticmethod
-    def getNormals(tag, parametricCoord):
+    def getParent(dim, tag):
         """
-        Get the normal to the surface with tag `tag' at the parametric coordinates
-        `parametricCoord'. `parametricCoord' are given by pair of u and v
-        coordinates, concatenated. `normals' are returned as triplets of x, y and z
-        components, concatenated.
+        In a partitioned model, get the parent of the entity of dimension `dim' and
+        tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and
+        `parentTag' are set to -1 if the entity has no parent.
 
-        Return `normals'.
+        Return `parentDim', `parentTag'.
         """
-        api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
-        api_normals_, api_normals_n_ = POINTER(c_double)(), c_size_t()
+        api_parentDim_ = c_int()
+        api_parentTag_ = c_int()
         ierr = c_int()
-        lib.gmshModelGetNormals(
+        lib.gmshModelGetParent(
+            c_int(dim),
             c_int(tag),
-            api_parametricCoord_, api_parametricCoord_n_,
-            byref(api_normals_), byref(api_normals_n_),
+            byref(api_parentDim_),
+            byref(api_parentTag_),
             byref(ierr))
         if ierr.value != 0:
             raise ValueError(
-                "gmshModelGetNormals returned non-zero error code: ",
+                "gmshModelGetParent returned non-zero error code: ",
                 ierr.value)
-        return _ovectordouble(api_normals_, api_normals_n_.value)
+        return (
+            api_parentDim_.value,
+            api_parentTag_.value)
 
     @staticmethod
-    def getCurvatures(tag, parametricCoord):
+    def getValue(dim, tag, parametricCoord):
         """
-        Get the curvature of the curve with tag `tag' at the parametric coordinates
-        `parametricCoord'.
+        Evaluate the parametrization of the entity of dimension `dim' and tag `tag'
+        at the parametric coordinates `parametricCoord' and return triplets of x,
+        y, z coordinates in `points'. Only valid for `dim' equal to 0 (), 1 (with
+        `parametricCoord' containing parametric coordinates on the curve) or 2
+        (with `parametricCoord' containing pairs of u, v parametric coordinates on
+        the surface),
+
+        Return `points'.
+        """
+        api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+        api_points_, api_points_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetValue(
+            c_int(dim),
+            c_int(tag),
+            api_parametricCoord_, api_parametricCoord_n_,
+            byref(api_points_), byref(api_points_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetValue returned non-zero error code: ",
+                ierr.value)
+        return _ovectordouble(api_points_, api_points_n_.value)
+
+    @staticmethod
+    def getDerivative(dim, tag, parametricCoord):
+        """
+        Evaluate the derivative of the parametrization of the entity of dimension
+        `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only
+        valid for `dim' equal to 1 (with `parametricCoord' containing parametric
+        coordinates on the curve) or 2 (with `parametricCoord' containing pairs of
+        u, v parametric coordinates on the surface).
+
+        Return `derivatives'.
+        """
+        api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+        api_derivatives_, api_derivatives_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetDerivative(
+            c_int(dim),
+            c_int(tag),
+            api_parametricCoord_, api_parametricCoord_n_,
+            byref(api_derivatives_), byref(api_derivatives_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetDerivative returned non-zero error code: ",
+                ierr.value)
+        return _ovectordouble(api_derivatives_, api_derivatives_n_.value)
+
+    @staticmethod
+    def getCurvature(dim, tag, parametricCoord):
+        """
+        Evaluate the (maximum) curvature of the entity of dimension `dim' and tag
+        `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim'
+        equal to 1 (with `parametricCoord' containing parametric coordinates on the
+        curve) or 2 (with `parametricCoord' containing pairs of u, v parametric
+        coordinates on the surface).
 
         Return `curvatures'.
         """
         api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
         api_curvatures_, api_curvatures_n_ = POINTER(c_double)(), c_size_t()
         ierr = c_int()
-        lib.gmshModelGetCurvatures(
+        lib.gmshModelGetCurvature(
+            c_int(dim),
             c_int(tag),
             api_parametricCoord_, api_parametricCoord_n_,
             byref(api_curvatures_), byref(api_curvatures_n_),
             byref(ierr))
         if ierr.value != 0:
             raise ValueError(
-                "gmshModelGetCurvatures returned non-zero error code: ",
+                "gmshModelGetCurvature returned non-zero error code: ",
                 ierr.value)
         return _ovectordouble(api_curvatures_, api_curvatures_n_.value)
 
     @staticmethod
     def getPrincipalCurvatures(tag, parametricCoord):
         """
-        Get the principal curvatures of the surface with tag `tag' at the
+        Evaluate the principal curvatures of the surface with tag `tag' at the
         parametric coordinates `parametricCoord', as well as their respective
         directions. `parametricCoord' are given by pair of u and v coordinates,
         concatenated.
@@ -760,6 +819,30 @@ class model:
             _ovectordouble(api_curvatureMin_, api_curvatureMin_n_.value),
             _ovectordouble(api_directionMax_, api_directionMax_n_.value),
             _ovectordouble(api_directionMin_, api_directionMin_n_.value))
+
+    @staticmethod
+    def getNormal(tag, parametricCoord):
+        """
+        Get the normal to the surface with tag `tag' at the parametric coordinates
+        `parametricCoord'. `parametricCoord' are given by pair of u and v
+        coordinates, concatenated. `normals' are returned as triplets of x, y and z
+        components, concatenated.
+
+        Return `normals'.
+        """
+        api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+        api_normals_, api_normals_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetNormal(
+            c_int(tag),
+            api_parametricCoord_, api_parametricCoord_n_,
+            byref(api_normals_), byref(api_normals_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetNormal returned non-zero error code: ",
+                ierr.value)
+        return _ovectordouble(api_normals_, api_normals_n_.value)
 
 
     class mesh:
