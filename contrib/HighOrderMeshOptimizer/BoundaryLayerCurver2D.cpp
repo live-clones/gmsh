@@ -53,6 +53,27 @@
 
 namespace
 {
+  void drawEquidistantPoints(GEdge *gedge, int N)
+  {
+    return;
+    const unsigned int numLine = gedge->getNumMeshElements();
+    for (unsigned int i = 0; i < numLine; ++i) {
+      gedge->getMeshElement(i)->setVisibility(0);
+    }
+
+    const double umin = gedge->getLowerBound();
+    const double umax = gedge->getUpperBound();
+    const double step = (umax-umin) / (N-1);
+
+    for (int i = 0; i < N; ++i) {
+      const double u = umin + i * step;
+      const GPoint p = gedge->point(u);
+      MVertex *v = new MVertex(p.x(), p.y(), p.z());
+      gedge->addMeshVertex(v);
+      gedge->addLine(new MLine(v, v));
+    }
+  }
+
   void drawBezierControlPolygon(const fullMatrix<double> &controlPoints,
                                 GEdge *gedge)
   {
@@ -133,15 +154,16 @@ namespace
   void draw3DFrame(SPoint3 &p, SVector3 &t, SVector3 &n, SVector3 &w,
                    double unitDimension, GFace *gFace = NULL)
   {
+    return;
     if (!gFace)
       gFace = *GModel::current()->firstFace();
 
     MVertex *v = new MVertex(p.x(), p.y(), p.z(), gFace);
 
-    SPoint3 pnt = p + n * unitDimension;
+    SPoint3 pnt = p + n * unitDimension * .75;
     MVertex *vn = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
 
-    pnt = p + w * unitDimension;
+    pnt = p + w * unitDimension * 2;
     MVertex *vw = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
 
     pnt = p + t * unitDimension;
@@ -197,53 +219,46 @@ namespace BoundaryLayerCurver
     // TODO: smooth normals if CAD not available
     // TODO: check quality of elements
 
-    SPoint2 _Frame::_paramOnGFace(const GFace *gface, MVertex *v)
+    _Frame::_Frame(const MEdgeN *edge, const GFace *gface, const GEdge *gedge,
+                   const SVector3 &normal)
+        : _normalToTheMesh(normal), _gface(gface), _gedge(gedge),
+          _edgeOnBoundary(edge)
     {
-      // FIXME: For now, just use parFromPoint and try better solution later
-      SPoint3 p(v->x(), v->y(), v->z());
-      return gface->parFromPoint(p);
+      const int nVert = (int)edge->getNumVertices();
 
-      GEntity *ent = v->onWhat();
-      if (ent->dim() == 1) {
-        // FIXME: Mvertex must be a MEdgeVertex to do this
-        GEdge *gedge = dynamic_cast<GEdge*>(ent);
-        double u;
-        v->getParameter(0, u);
-        return gedge->reparamOnFace(gface, u, 0);
-      }
-      else if (ent->dim() == 0) {
-        GVertex *gvert = dynamic_cast<GVertex*>(ent);
-        return gvert->reparamOnFace(gface, 0);
-      }
-
-      Msg::Error("entity with wrong dimension: %d", ent->dim());
-      return SPoint2();
-    }
-
-    double _Frame::_paramOnGEdge(const GEdge *gedge, MVertex *v)
-    {
-      // FIXME: For now, just use parFromPoint and try better solution later
-      SPoint3 p(v->x(), v->y(), v->z());
-      return gedge->parFromPoint(p);
-
-      GEntity *ent = v->onWhat();
-      double u;
-      if (ent->dim() == 1) {
-        // FIXME: Mvertex must be a MEdgeVertex to do this
-        if (gedge != ent) {
-          Msg::Error("vertex not on gedge");
-          return 0;
+      if (gface) {
+        for (int i = 0; i < nVert; ++i) {
+          SPoint2 param;
+          bool success =
+              reparamMeshVertexOnFace(edge->getVertex(i), gface, param, true);
+          _paramVerticesOnGFace[2*i+0] = param[0];
+          _paramVerticesOnGFace[2*i+1] = param[1];
+          if (!success) {
+            Msg::Warning("Could not compute param of vertex %d on surface %d",
+                         edge->getVertex(i)->getNum(), gface->tag());
+          }
+          // TODO: Check if periodic face
         }
-        v->getParameter(0, u);
-        return u;
-      }
-      else if (ent->dim() == 0) {
-        gedge->XYZToU(v->x(), v->y(), v->z(), u);
-        return u;
       }
 
-      Msg::Error("entity with wrong dimension: %d", ent->dim());
-      return 0;
+      if (gedge) {
+        for (int i = nVert - 1; i >= 0; --i) {
+          bool success = reparamMeshVertexOnEdge(edge->getVertex(i), gedge,
+                                                 _paramVerticesOnGEdge[i]);
+          if (!success) {
+            Msg::Warning("Could not compute param of vertex %d on edge %d",
+                         edge->getVertex(i)->getNum(), gedge->tag());
+          }
+          else if (gedge->periodic(0) &&
+                   edge->getVertex(i) == gedge->getBeginVertex()->mesh_vertices[0]) {
+            double u0 = gedge->getLowerBound();
+            double un = gedge->getUpperBound();
+            int k = (nVert == 2 ? 1-i : (i == 0 ? 2 : nVert-1)) ;
+            double uk = _paramVerticesOnGEdge[k];
+            _paramVerticesOnGEdge[i] = uk - u0 < un - uk ? u0 : un;
+          }
+        }
+      }
     }
 
     void _Frame::computeFrame(double paramEdge, SVector3 &t, SVector3 &n,
@@ -290,6 +305,17 @@ namespace BoundaryLayerCurver
       n = crossprod(w, t);
     }
 
+    SPoint3 _Frame::pnt(double u) const
+    {
+      if (!_gedge)
+        return SPoint3();
+
+      double paramGeoEdge =
+          _edgeOnBoundary->interpolate(_paramVerticesOnGEdge, u);
+      GPoint p = _gedge->point(paramGeoEdge);
+      return SPoint3(p.x(), p.y(), p.z());
+    }
+
     void _computeParameters(const MEdgeN *baseEdge, const MEdgeN *otherEdge,
                             const _Frame &frame, double coeffs[2][3])
     {
@@ -306,8 +332,9 @@ namespace BoundaryLayerCurver
       coeffs[0][1] = dot(h, t);
       coeffs[0][2] = dot(h, w);
 
+      SPoint3 p1 = frame.pnt(-1);
 //      SPoint3 p1(vb->x(), vb->y(), vb->z());
-//      draw3DFrame(p1, t, n, w, .005);
+      draw3DFrame(p1, t, n, w, .0004);
 
       frame.computeFrame(1, t, n, w, true);
       vb = baseEdge->getVertex(1);
@@ -318,9 +345,10 @@ namespace BoundaryLayerCurver
       coeffs[1][0] = dot(h, n);
       coeffs[1][1] = dot(h, t);
       coeffs[1][2] = dot(h, w);
-
+//
+      SPoint3 p2 = frame.pnt(1);
 //      SPoint3 p2(vb->x(), vb->y(), vb->z());
-//      draw3DFrame(p2, t, n, w, .005);
+      draw3DFrame(p2, t, n, w, .0004);
     }
 
     void _idealPositionEdge(const MEdgeN *baseEdge, const _Frame &frame,
@@ -333,7 +361,9 @@ namespace BoundaryLayerCurver
         SVector3 t, n, w;
         frame.computeFrame(u, t, n, w);
 
-//        draw3DFrame(p, t, n, w, .0025);
+//        draw3DFrame(p, t, n, w, .0002);
+        SPoint3 pp = frame.pnt(u);
+        draw3DFrame(pp, t, n, w, .0002);
 
         double interpolatedCoeffs[3];
         for (int j = 0; j < 3; ++j) {
@@ -531,10 +561,7 @@ namespace BoundaryLayerCurver
         int tagLine = ElementType::getType(TYPE_LIN, order);
         const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
         const fullMatrix<double> &refNodes = fs->getReferenceNodes();
-        int tagLineh = ElementType::getType(TYPE_LIN, order+1);
-        // FIXME replace with BasisFactory::getNodalBasis(funcSpaceData);
-        const nodalBasis *fsh = BasisFactory::getNodalBasis(tagLineh);
-        const fullMatrix<double> &refNodesh = fsh->getReferenceNodes();
+        const fullMatrix<double> refNodesh = gmshGeneratePointsLine(order + 1);
 
         int nbDofh = refNodesh.size1();
 
@@ -1441,6 +1468,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
 //  }
 
   for (int i = 0; i < bndEl2column.size(); ++i) {
+//    if (bndEl2column[i].first->getNum() != 316) continue; // t161
 //    if (bndEl2column[i].first->getNum() != 1156) continue; // trimesh
 //    if (   bndEl2column[i].first->getNum() != 1156
 //        && bndEl2column[i].first->getNum() != 1079
@@ -1450,6 +1478,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
 //    std::cout << "column " << bndEl2column[i].first->getNum() << std::endl;
 //    if (bndEl2column[i].first->getNum() != 1079) continue; // Good
 //    if (bndEl2column[i].first->getNum() != 1078) continue; // Next to good
+//    if (bndEl2column[i].first->getNum() != 1099) continue; // Long on corner
 //    if (bndEl2column[i].first->getNum() != 1102) continue; // Bad HO
 //    if (bndEl2column[i].first->getNum() != 1136) continue; // Bad linear
 //    if (bndEl2column[i].first->getNum() != 1149) continue; // shorter

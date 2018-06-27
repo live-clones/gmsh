@@ -87,31 +87,12 @@ namespace BoundaryLayerCurver
 
     public:
       _Frame(const MEdgeN *edge, const GFace *gface, const GEdge *gedge,
-            const SVector3 &normal)
-          : _normalToTheMesh(normal), _gface(gface), _gedge(gedge),
-            _edgeOnBoundary(edge)
-      {
-        if (gface) {
-          for (unsigned int i = 0; i < edge->getNumVertices(); ++i) {
-            SPoint2 param = _paramOnGFace(gface, edge->getVertex(i));
-            _paramVerticesOnGFace[2*i+0] = param[0];
-            _paramVerticesOnGFace[2*i+1] = param[1];
-          }
-        }
-
-        if (gedge) {
-          for (unsigned int i = 0; i < edge->getNumVertices(); ++i) {
-            _paramVerticesOnGEdge[i] = _paramOnGEdge(gedge, edge->getVertex(i));
-          }
-        }
-      }
+            const SVector3 &normal);
 
       void computeFrame(double paramEdge, SVector3 &t, SVector3 &n,
                         SVector3 &w, bool atExtremity = false) const;
 
-    private:
-      SPoint2 _paramOnGFace(const GFace *gface, MVertex *v);
-      double _paramOnGEdge(const GEdge *gedge, MVertex *v);
+      SPoint3 pnt(double u) const;
     };
   }
 
