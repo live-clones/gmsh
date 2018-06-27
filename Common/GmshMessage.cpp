@@ -9,6 +9,10 @@
 #include <mpi.h>
 #endif
 
+#if !defined(WIN32) || defined(__CYGWIN__)
+#include <unistd.h>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -360,7 +364,7 @@ void Msg::Exit(int level)
   exit(_atLeastOneErrorInRun);
 }
 
-static int streamIsFile(FILE* stream)
+static int streamIsFile(FILE *stream)
 {
   // the given stream is definitely not interactive if it is a regular file
   struct stat stream_stat;
@@ -370,8 +374,15 @@ static int streamIsFile(FILE* stream)
   return 0;
 }
 
-static int streamIsVT100(FILE* stream)
+static int streamIsVT100(FILE *stream)
 {
+  // on unix directly check if the file descriptor refers to a terminal
+#if !defined(WIN32) || defined(__CYGWIN__)
+  return isatty(fileno(stream));
+#endif
+
+  // otherwise try to detect some known cases:
+
   // if running inside emacs the terminal is not VT100
   const char* emacs = getenv("EMACS");
   if(emacs && *emacs == 't') return 0;
