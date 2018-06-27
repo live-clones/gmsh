@@ -111,6 +111,16 @@ Matches geometries and meshes@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.MatchMeshScaleFactor
+Rescaling factor for the mesh to correspond to size of the geometry@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.MatchMeshTolerance
+Tolerance for matching mesh and geometry@*
+Default value: @code{1e-06}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.Normals
 Display size of normal vectors (in pixels)@*
 Default value: @code{0}@*
