@@ -14,6 +14,7 @@
 #include <stack>
 #include <cstdlib>
 #include <map>
+#include <utility>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -87,25 +88,24 @@ class Graph
   // consecutive locations of eind starting at position eptr[i] up to (but not
   // including) position eptr[i+1]. The size of the eind array is of size equal
   // to the sum of the number of nodes in all the elements of the mesh.
-  unsigned int *_eind;
+  std::vector<unsigned int> _eind;
   // The size of the eptr array is n + 1, where n is the number of elements in
   // the mesh.
-  unsigned int *_eptr;
+  std::vector<unsigned int> _eptr;
   // The metis graph structure
-  unsigned int *_xadj, *_adjncy;
+  std::vector<unsigned int> _xadj, _adjncy;
   // Elements corresponding to each graph elements in eptr
-  MElement **_element;
+  std::vector<MElement*> _element;
   // Vertices corresponding to each graph vertices in eptr
-  int *_vertex;
-  int _vertexSize;
+  std::vector<int> _vertex;
   // The width associated to each elements of eptr
-  unsigned int *_vwgt;
+  std::vector<unsigned int> _vwgt;
   // The partitions output from the partitioner
-  unsigned int *_partition;
+  std::vector<unsigned int> _partition;
  public:
   Graph(GModel * const model)
-    : _model(model), _nparts(0), _ne(0), _nn(0), _dim(0), _eind(0), _eptr(0),
-    _xadj(0), _adjncy(0), _element(0), _vertex(0), _vertexSize(0), _vwgt(0), _partition(0)
+    : _model(model), _nparts(0), _ne(0), _nn(0), _dim(0), _eind(), _eptr(),
+    _xadj(), _adjncy(), _element(), _vertex(), _vwgt(), _partition()
   {
   }
   void fillDefaultWeights()
@@ -117,7 +117,7 @@ class Graph
        CTX::instance()->mesh.partitionPriWeight == 1 &&
        CTX::instance()->mesh.partitionHexWeight == 1) return;
 
-    _vwgt = new unsigned int[_ne];
+    _vwgt.resize(_ne);
     for(unsigned int i = 0; i < _ne; i++){
       if(!_element[i]){
         _vwgt[i] = 1;
@@ -143,112 +143,62 @@ class Graph
   unsigned int nn() const { return _nn; };
   unsigned int dim() const { return _dim; };
   unsigned int eind(unsigned int i) const { return _eind[i]; };
-  unsigned int *eind() const { return _eind; };
+  std::vector<unsigned int> eind() const { return _eind; };
   unsigned int eptr(unsigned int i) const { return _eptr[i]; };
-  unsigned int *eptr() const { return _eptr; };
+  std::vector<unsigned int> eptr() const { return _eptr; };
   unsigned int xadj(unsigned int i) const { return _xadj[i]; };
-  unsigned int *xadj() const { return _xadj; };
+  std::vector<unsigned int> xadj() const { return _xadj; };
   unsigned int adjncy(unsigned int i) const { return _adjncy[i]; };
-  unsigned int *adjncy() const { return _adjncy; };
+  std::vector<unsigned int> adjncy() const { return _adjncy; };
   MElement* element(unsigned int i) const { return _element[i]; };
   int vertex(unsigned int i) const { return _vertex[i]; };
-  unsigned int *vwgt() const { return _vwgt; };
+  std::vector<unsigned int> vwgt() const { return _vwgt; };
   unsigned int partition(unsigned int i) const { return _partition[i]; };
-  unsigned int *partition() const { return _partition; };
+  std::vector<unsigned int> partition() const { return _partition; };
   unsigned int numNodes() const { return _ne; };
   unsigned int numEdges() const { return _xadj[_ne]/2; };
   void nparts(unsigned int nparts) { _nparts = nparts; };
   void ne(unsigned int ne) { _ne = ne; };
   void nn(unsigned int nn) { _nn = nn; };
   void dim(unsigned int dim) { _dim = dim; };
-  void eindResize(unsigned int size)
-  {
-    _eind = new unsigned int[size];
-    for(unsigned int i = 0; i < size; i++) _eind[i] = 0;
-  }
-  void eind(unsigned int i, unsigned int eind) { _eind[i] = eind; };
-  void eptrResize(unsigned int size)
-  {
-    _eptr = new unsigned int[size];
-    for(unsigned int i = 0; i < size; i++) _eptr[i] = 0;
-  }
-  void eptr(unsigned int i, unsigned int eptr) { _eptr[i] = eptr; };
-  void elementResize(unsigned int size)
-  {
-    _element = new MElement*[size];
-    for(unsigned int i = 0; i < size; i++) _element[i] = 0;
-  }
-  void element(unsigned int i, MElement* element) { _element[i] = element; };
-  void vertexResize(unsigned int size)
-  {
-    _vertexSize = size;
-    _vertex = new int[size];
-    for(unsigned int i = 0; i < size; i++) _vertex[i] = -1;
-  }
-  void adjncy(unsigned int i, unsigned int adjncy) { _adjncy[i] = adjncy; };
-  void vertex(unsigned int i, int vertex) { _vertex[i] = vertex; };
-  void vwgt(unsigned int *vwgt) { _vwgt = vwgt; };
-  void partition(unsigned int *partition) { _partition = partition; };
+  void eindResize(size_t size) { _eind.resize(size,0); }
+  void eind(size_t i, unsigned int eind) { _eind[i] = eind; };
+  void eptrResize(size_t size) { _eptr.resize(size, 0); }
+  void eptr(size_t i, unsigned int eptr) { _eptr[i] = eptr; };
+  void elementResize(size_t size){ _element.resize(size, 0); }
+  void element(size_t i, MElement* element) { _element[i] = element; };
+  void vertexResize(size_t size) { _vertex.resize(size, -1); }
+  void adjncy(size_t i, unsigned int adjncy) { _adjncy[i] = adjncy; };
+  void vertex(size_t i, int vertex) { _vertex[i] = vertex; };
+  void vwgt(std::vector<unsigned int> &vwgt) { std::swap(_vwgt, vwgt); };
+  void partition(std::vector<unsigned int> &partition) { std::swap(_partition, partition); };
   void clear()
   {
-    if(_eind){
-      delete[] _eind;
-      _eind = 0;
-    }
-    if(_eptr){
-      delete[] _eptr;
-      _eptr = 0;
-    }
-    if(_xadj){
-      delete[] _xadj;
-      _xadj = 0;
-    }
-    if(_adjncy){
-      delete[] _adjncy;
-      _adjncy = 0;
-    }
-    if(_element){
-      delete[] _element;
-      _element = 0;
-    }
-    if(_vertex){
-      delete[] _vertex;
-      _vertex = 0;
-    }
-    _vertexSize = 0;
-    if(_vwgt){
-      delete[] _vwgt;
-      _vwgt = 0;
-    }
-    if(_partition){
-      delete[] _partition;
-      _partition = 0;
-    }
+    _eind.clear();
+    _eptr.clear();
+    _xadj.clear();
+    _adjncy.clear();
+    _element.clear();
+    _vertex.clear();
+    _vwgt.clear();
+    _partition.clear();
   }
   void clearDualGraph()
   {
-    if(_xadj){
-      delete[] _xadj;
-      _xadj = 0;
-    }
-    if(_adjncy){
-      delete[] _adjncy;
-      _adjncy = 0;
-    }
+    _xadj.clear();
+    _adjncy.clear();
   }
   void eraseVertex()
   {
-    if(_vertex){
-      for(int i = 0; i < _vertexSize; i++) _vertex[i] = -1;
-    }
+    for(size_t i = 0; i < _vertex.size(); ++i) _vertex[i] = -1;
   }
 
-  std::vector< std::set<MElement*> > getBoundaryElements(int size = 0)
+  std::vector< std::set<MElement*> > getBoundaryElements(size_t size = 0)
   {
     std::vector< std::set<MElement*> > elements
       ((size ? size : _nparts), std::set<MElement*>());
-    for(unsigned int i = 0; i < _ne; i++){
-      for(unsigned int j = _xadj[i]; j < _xadj[i+1]; j++){
+    for(unsigned int i = 0; i < _ne; ++i){
+      for(unsigned int j = _xadj[i]; j < _xadj[i+1]; ++j){
         if(_partition[i] != _partition[_adjncy[j]]){
           if(_element[i]->getDim() == (int)_dim){
             elements[_partition[i]].insert(_element[i]);
@@ -265,7 +215,7 @@ class Graph
     std::vector<GEntity*> ghostEntities(_nparts, (GEntity*)NULL);
     int elementaryNumber = _model->getMaxElementaryNumber(_dim);
 
-    for(unsigned int i = 1; i <= _nparts; i++){
+    for(unsigned int i = 1; i <= _nparts; ++i){
       switch (_dim) {
         case 1:
           ghostEntities[i - 1] = new ghostEdge(_model, ++elementaryNumber, i);
@@ -284,7 +234,7 @@ class Graph
       }
     }
 
-    for(unsigned int i = 0; i < _ne; i++){
+    for(unsigned int i = 0; i < _ne; ++i){
       std::set<short> ghostCellsPartition;
       for(unsigned int j = _xadj[i]; j < _xadj[i+1]; j++){
         if(_partition[i] != _partition[_adjncy[j]] &&
@@ -315,43 +265,36 @@ class Graph
 
   void createDualGraph(bool connectedAll)
   {
-    int *nptr = new int[_nn+1];
-    for(unsigned int i = 0; i < _nn+1; i++) nptr[i] = 0;
-    int *nind = new int[_eptr[_ne]];
-    for(unsigned int i = 0; i < _eptr[_ne]; i++) nind[i] = 0;
+    std::vector<unsigned int> nptr(_nn+1, 0);
+    std::vector<unsigned int> nind(_eptr[_ne], 0);
 
-    for(unsigned int i = 0; i < _ne; i++){
-      for(unsigned int j = _eptr[i]; j < _eptr[i+1]; j++){
+    for(unsigned int i = 0; i < _ne; ++i){
+      for(unsigned int j = _eptr[i]; j < _eptr[i+1]; ++j){
         nptr[_eind[j]]++;
       }
     }
 
-    for(unsigned int i = 1; i < _nn; i++) nptr[i] += nptr[i-1];
-    for(unsigned int i = _nn; i > 0; i--) nptr[i] = nptr[i-1];
+    for(unsigned int i = 1; i < _nn; ++i) nptr[i] += nptr[i-1];
+    for(unsigned int i = _nn; i > 0; --i) nptr[i] = nptr[i-1];
     nptr[0] = 0;
 
-    for(unsigned int i = 0; i < _ne; i++){
-      for(unsigned int j = _eptr[i]; j < _eptr[i+1]; j++){
+    for(unsigned int i = 0; i < _ne; ++i){
+      for(unsigned int j = _eptr[i]; j < _eptr[i+1]; ++j){
         nind[nptr[_eind[j]]++] = i;
       }
     }
 
-    for(unsigned int i = _nn; i > 0; i--) nptr[i] = nptr[i-1];
+    for(unsigned int i = _nn; i > 0; --i) nptr[i] = nptr[i-1];
     nptr[0] = 0;
 
-    _xadj = new unsigned int[_ne+1];
-    for(unsigned int i = 0; i < _ne+1; i++) _xadj[i] = 0;
-    int *nbrs = new int[_ne];
-    int *marker = new int[_ne];
-    for(unsigned int i = 0; i < _ne; i++){
-      nbrs[i] = 0;
-      marker[i] = 0;
-    }
+    _xadj.resize(_ne+1, 0);
+    std::vector<unsigned int> nbrs(_ne, 0);
+    std::vector<unsigned int> marker(_ne, 0);
 
-    for(unsigned int i = 0; i < _ne; i++){
+    for(unsigned int i = 0; i < _ne; ++i){
       unsigned int l = 0;
-      for(unsigned int j = _eptr[i]; j < _eptr[i+1]; j++){
-        for(int k = nptr[_eind[j]]; k < nptr[_eind[j]+1]; k++){
+      for(unsigned int j = _eptr[i]; j < _eptr[i+1]; ++j){
+        for(int k = nptr[_eind[j]]; k < nptr[_eind[j]+1]; ++k){
           if(nind[k] != (int)i){
             if(marker[nind[k]] == 0) nbrs[l++] = nind[k];
             marker[nind[k]]++;
@@ -372,17 +315,16 @@ class Graph
       _xadj[i] = nbrsNeighbors;
     }
 
-    for(unsigned int i = 1; i < _ne; i++) _xadj[i] = _xadj[i] + _xadj[i-1];
-    for(unsigned int i = _ne; i > 0; i--) _xadj[i] = _xadj[i-1];
+    for(unsigned int i = 1; i < _ne; ++i) _xadj[i] = _xadj[i] + _xadj[i-1];
+    for(unsigned int i = _ne; i > 0; --i) _xadj[i] = _xadj[i-1];
     _xadj[0] = 0;
 
-    _adjncy = new unsigned int[_xadj[_ne]];
-    for(unsigned int i = 0; i < _xadj[_ne]; i++) _adjncy[i] = 0;
+    _adjncy.resize(_xadj[_ne], 0);
 
-    for(unsigned int i = 0; i < _ne; i++){
+    for(unsigned int i = 0; i < _ne; ++i){
       unsigned int l = 0;
-      for(unsigned int j = _eptr[i]; j < _eptr[i+1]; j++){
-        for(int k = nptr[_eind[j]]; k < nptr[_eind[j]+1]; k++){
+      for(unsigned int j = _eptr[i]; j < _eptr[i+1]; ++j){
+        for(int k = nptr[_eind[j]]; k < nptr[_eind[j]+1]; ++k){
           if(nind[k] != (int)i){
             if (marker[nind[k]] == 0) nbrs[l++] = nind[k];
             marker[nind[k]]++;
@@ -390,7 +332,7 @@ class Graph
         }
       }
 
-      for(unsigned int j = 0; j < l; j++){
+      for(unsigned int j = 0; j < l; ++j){
         if(marker[nbrs[j]] >=
            (connectedAll ? 1 :
             _element[i]->numCommonNodesInDualGraph(_element[nbrs[j]]))){
@@ -401,14 +343,8 @@ class Graph
         nbrs[j] = 0;
       }
     }
-    delete[] nbrs;
-    delete[] marker;
-
-    for(unsigned int i = _ne; i > 0; i--) _xadj[i] = _xadj[i-1];
+    for(unsigned int i = _ne; i > 0; --i) _xadj[i] = _xadj[i-1];
     _xadj[0] = 0;
-
-    delete[] nptr;
-    delete[] nind;
   }
 };
 
@@ -431,9 +367,9 @@ static void fillElementsToNodesMap(Graph &graph, const GEntity *const entity,
   }
 }
 
-static int getSizeOfEind(const GModel *const model)
+static size_t getSizeOfEind(const GModel *const model)
 {
-  int size = 0;
+  size_t size = 0;
   // Loop over regions
   for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
     size += 4*(*it)->tetrahedra.size();
@@ -466,7 +402,7 @@ static int getSizeOfEind(const GModel *const model)
 // = no elements found, 2 = error.
 static int MakeGraph(GModel *const model, Graph &graph, int selectDim)
 {
-  int eindSize = 0;
+  size_t eindSize = 0;
   if(selectDim < 0){
     graph.ne(model->getNumMeshElements());
     graph.nn(model->getNumMeshVertices());
@@ -649,7 +585,7 @@ static int PartitionGraph(Graph &graph)
     //metisOptions[METIS_OPTION_CONTIG] = 1;
 
     int objval;
-    unsigned int *epart = new unsigned int[graph.ne()];
+    std::vector<unsigned int> epart(graph.ne());
     const unsigned int ne = graph.ne();
     const int numPart = graph.nparts();
     int ncon = 1;
@@ -661,17 +597,17 @@ static int PartitionGraph(Graph &graph)
 
     if (metisOptions[METIS_OPTION_PTYPE] == METIS_PTYPE_KWAY){
       metisError = METIS_PartGraphKway
-        ((idx_t *)&ne, (idx_t *)&ncon, (idx_t *)graph.xadj(),
-         (idx_t *)graph.adjncy(), (idx_t *)graph.vwgt(),
+        ((idx_t *)&ne, (idx_t *)&ncon, (idx_t *)graph.xadj().data(),
+         (idx_t *)graph.adjncy().data(), (idx_t *)graph.vwgt().data(),
          (idx_t *)0, 0, (idx_t *)&numPart, 0, 0,
-         (idx_t *)metisOptions, (idx_t *)&objval, (idx_t *)epart);
+         (idx_t *)metisOptions, (idx_t *)&objval, (idx_t *)epart.data());
     }
     else{
       metisError = METIS_PartGraphRecursive
-        ((idx_t *)&ne, (idx_t *)&ncon, (idx_t *)graph.xadj(),
-         (idx_t *)graph.adjncy(), (idx_t *)graph.vwgt(),
+        ((idx_t *)&ne, (idx_t *)&ncon, (idx_t *)graph.xadj().data(),
+         (idx_t *)graph.adjncy().data(), (idx_t *)graph.vwgt().data(),
          (idx_t *)0, 0, (idx_t *)&numPart, 0, 0,
-         (idx_t *)metisOptions, (idx_t *)&objval, (idx_t *)epart);
+         (idx_t *)metisOptions, (idx_t *)&objval, (idx_t *)epart.data());
     }
 
     switch(metisError){
@@ -1988,7 +1924,7 @@ static void CreatePartitionTopology(GModel *const model,
       Graph subGraph(model);
       MakeGraph(model, subGraph, 2);
       subGraph.createDualGraph(false);
-      unsigned int *part = new unsigned int[subGraph.ne()];
+      std::vector<unsigned int>part(subGraph.ne());
       int partIndex = 0;
 
       std::map<unsigned int, std::vector<unsigned int> > mapOfPartitions;
@@ -2078,7 +2014,7 @@ static void CreatePartitionTopology(GModel *const model,
       Graph subGraph(model);
       MakeGraph(model, subGraph, 1);
       subGraph.createDualGraph(false);
-      unsigned int *part = new unsigned int[subGraph.ne()];
+      std::vector<unsigned int> part(subGraph.ne());
       int partIndex = 0;
 
       std::map<unsigned int, std::vector<unsigned int> > mapOfPartitions;
@@ -2595,7 +2531,7 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
     return 1;
   }
 
-  unsigned int *part = new unsigned int[graph.ne()];
+  std::vector<unsigned int> part(graph.ne());
   for(unsigned int i = 0; i < graph.ne(); i++){
     if(graph.element(i)){
       part[i] = elmToPartition[graph.element(i)]-1;
