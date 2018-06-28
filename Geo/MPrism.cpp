@@ -77,7 +77,7 @@ bool MPrism::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) c
   return false;
 }
 
-int MPrism::numCommonNodesInDualGraph(const MElement *const other) const
+unsigned int MPrism::numCommonNodesInDualGraph(const MElement *const other) const
 {
   switch (other->getType())
   {

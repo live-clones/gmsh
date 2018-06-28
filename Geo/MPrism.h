@@ -196,7 +196,7 @@ class MPrism : public MElement {
     };
     return f[face][edge];
   }
-  virtual int numCommonNodesInDualGraph(const MElement *const other) const;
+  virtual unsigned int numCommonNodesInDualGraph(const MElement *const other) const;
 };
 
 /*

@@ -295,7 +295,7 @@ class Graph
       unsigned int l = 0;
       for(unsigned int j = _eptr[i]; j < _eptr[i+1]; ++j){
         for(unsigned int k = nptr[_eind[j]]; k < nptr[_eind[j]+1]; ++k){
-          if(nind[k] != (int)i){
+          if(nind[k] != i){
             if(marker[nind[k]] == 0) nbrs[l++] = nind[k];
             marker[nind[k]]++;
           }
@@ -325,7 +325,7 @@ class Graph
       unsigned int l = 0;
       for(unsigned int j = _eptr[i]; j < _eptr[i+1]; ++j){
         for(unsigned int k = nptr[_eind[j]]; k < nptr[_eind[j]+1]; ++k){
-          if(nind[k] != (int)i){
+          if(nind[k] != i){
             if (marker[nind[k]] == 0) nbrs[l++] = nind[k];
             marker[nind[k]]++;
           }

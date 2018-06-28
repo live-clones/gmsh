@@ -370,7 +370,7 @@ void MPyramid::getFaceRep(bool curved, int num,
               x, y, z, n);
 }
 
-int MPyramid::numCommonNodesInDualGraph(const MElement *const other) const
+unsigned int MPyramid::numCommonNodesInDualGraph(const MElement *const other) const
 {
   switch (other->getType()) {
     case TYPE_PNT: return 1;

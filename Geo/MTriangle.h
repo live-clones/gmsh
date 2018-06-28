@@ -152,7 +152,7 @@ class MTriangle : public MElement {
     };
     return e[edge][vert];
   }
-  virtual int numCommonNodesInDualGraph(const MElement *const other) const;
+  virtual unsigned int numCommonNodesInDualGraph(const MElement *const other) const;
 };
 
 /*

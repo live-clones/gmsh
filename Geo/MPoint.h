@@ -82,7 +82,7 @@ class MPoint : public MElement {
     *npts = 1;
     *pts = GQL;
   }
-  virtual int numCommonNodesInDualGraph(const MElement *const other) const
+  virtual unsigned int numCommonNodesInDualGraph(const MElement *const other) const
   {
     return 1;
   }

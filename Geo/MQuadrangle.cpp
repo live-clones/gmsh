@@ -69,7 +69,7 @@ double MQuadrangle::getVolume()
   return sqrt( mn*mn - abcd*abcd ) / 4.;
 }
 
-int MQuadrangle::numCommonNodesInDualGraph(const MElement *const other) const
+unsigned int MQuadrangle::numCommonNodesInDualGraph(const MElement *const other) const
 {
   switch (other->getType())
   {

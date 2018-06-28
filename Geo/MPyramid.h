@@ -182,7 +182,7 @@ class MPyramid : public MElement {
     };
     return e[face][edge];
   }
-  virtual int numCommonNodesInDualGraph(const MElement *const other) const;
+  virtual unsigned int numCommonNodesInDualGraph(const MElement *const other) const;
 };
 
 /*

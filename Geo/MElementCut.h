@@ -176,7 +176,7 @@ class MPolyhedron : public MElement {
       for(int j = 0; j < 4; j++)
         verts[i * 4 + j] = _parts[i]->getVertex(j)->getIndex();
   }
-  virtual int numCommonNodesInDualGraph(const MElement *const other) const
+  virtual unsigned int numCommonNodesInDualGraph(const MElement *const other) const
   {
     return 1;
   }
@@ -325,7 +325,7 @@ class MPolygon : public MElement {
       for(int j = 0; j < 3; j++)
         verts[i * 3 + j] = _parts[i]->getVertex(j)->getIndex();
   }
-  virtual int numCommonNodesInDualGraph(const MElement *const other) const
+  virtual unsigned int numCommonNodesInDualGraph(const MElement *const other) const
   {
     return 1;
   }

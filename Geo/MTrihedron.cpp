@@ -1,7 +1,7 @@
 #include "GmshConfig.h"
 #include "MTrihedron.h"
 
-int MTrihedron::numCommonNodesInDualGraph(const MElement *const other) const
+unsigned int MTrihedron::numCommonNodesInDualGraph(const MElement *const other) const
 {
   switch (other->getType()) {
     case TYPE_PNT: return 1;

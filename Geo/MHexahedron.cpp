@@ -94,7 +94,7 @@ bool MHexahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &r
   return false;
 }
 
-int MHexahedron::numCommonNodesInDualGraph(const MElement *const other) const
+unsigned int MHexahedron::numCommonNodesInDualGraph(const MElement *const other) const
 {
   switch (other->getType())
   {

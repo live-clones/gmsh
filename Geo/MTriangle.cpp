@@ -157,7 +157,7 @@ void MTriangle::xyz2uvw(double xyz[3], double uvw[3]) const
   uvw[2] = 0.0;
 }
 
-int MTriangle::numCommonNodesInDualGraph(const MElement *const other) const
+unsigned int MTriangle::numCommonNodesInDualGraph(const MElement *const other) const
 {
   switch (other->getType())
   {

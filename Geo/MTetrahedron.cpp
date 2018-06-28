@@ -124,7 +124,7 @@ void MTetrahedron::xyz2uvw(double xyz[3], double uvw[3]) const
   sys3x3(mat, b, uvw, &det);
 }
 
-int MTetrahedron::numCommonNodesInDualGraph(const MElement *const other) const
+unsigned int MTetrahedron::numCommonNodesInDualGraph(const MElement *const other) const
 {
   switch (other->getType())
   {
