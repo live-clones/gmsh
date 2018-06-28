@@ -2144,6 +2144,13 @@ static void addPhysical(GModel *const model, GEntity *entity,
   int dim = entity->dim();
   for(size_t i = 0; i < physical.size(); ++i){
     std::string name = model->getPhysicalName(dim, physical[i]);
+#if __cplusplus >= 201103L
+    name += "_" + std::to_string(physical[i]);
+#else
+    char intToChar[20];
+    sprintf(intToChar, "_%d", physical[i]);
+    name += intToChar;
+#endif
     name += "_part{";
     
     for(unsigned int i = 0; i < numPartitions; i++){

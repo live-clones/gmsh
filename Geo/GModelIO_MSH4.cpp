@@ -2731,6 +2731,7 @@ std::string getSubstr(GModel* model, GEntity* entity)
 
 int GModel::writePartitionedTopology(std::string &name)
 {
+  
   std::multimap<unsigned int, GEntity*> omega;
   std::multimap<unsigned int, GEntity*> sigma;
   std::multimap<unsigned int, GEntity*> tau;
@@ -3163,7 +3164,7 @@ int GModel::writePartitionedTopology(std::string &name)
   fprintf(fp, "}\n\n");
 
   fclose(fp);
-
+  
   Msg::Info("Done writing '%s'", name.c_str());
 
   return 0;
