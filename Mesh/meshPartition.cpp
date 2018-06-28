@@ -350,7 +350,7 @@ class Graph
 
 template <class ITERATOR>
 static void fillElementsToNodesMap(Graph &graph, const GEntity *const entity,
-                                   int &eptrIndex, int &eindIndex, int &numVertex,
+                                   size_t &eptrIndex, size_t &eindIndex, size_t &numVertex,
                                    ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it){
@@ -460,9 +460,9 @@ static int MakeGraph(GModel *const model, Graph &graph, int selectDim)
     delete tmp;
   }
 
-  int eptrIndex = 0;
-  int eindIndex = 0;
-  int numVertex = 0;
+  size_t eptrIndex = 0;
+  size_t eindIndex = 0;
+  size_t numVertex = 0;
 
   if(graph.ne() == 0){
     Msg::Error("No mesh elements were found");
