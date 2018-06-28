@@ -982,9 +982,9 @@ static bool dividedNonConnectedEntities(GModel *const model, int dim,
         graph.clearDualGraph();
         graph.eraseVertex();
 
-        int eptrIndex = 0;
-        int eindIndex = 0;
-        int numVertex = 0;
+        size_t eptrIndex = 0;
+        size_t eindIndex = 0;
+        size_t numVertex = 0;
 
         fillElementsToNodesMap(graph, edge, eptrIndex, eindIndex, numVertex,
                                edge->lines.begin(), edge->lines.end());
@@ -1080,9 +1080,9 @@ static bool dividedNonConnectedEntities(GModel *const model, int dim,
         graph.clearDualGraph();
         graph.eraseVertex();
 
-        int eptrIndex = 0;
-        int eindIndex = 0;
-        int numVertex = 0;
+        size_t eptrIndex = 0;
+        size_t eindIndex = 0;
+        size_t numVertex = 0;
 
         fillElementsToNodesMap(graph, face, eptrIndex, eindIndex, numVertex,
                                face->triangles.begin(), face->triangles.end());
@@ -1178,9 +1178,9 @@ static bool dividedNonConnectedEntities(GModel *const model, int dim,
         graph.clearDualGraph();
         graph.eraseVertex();
 
-        int eptrIndex = 0;
-        int eindIndex = 0;
-        int numVertex = 0;
+        size_t eptrIndex = 0;
+        size_t eindIndex = 0;
+        size_t numVertex = 0;
 
         fillElementsToNodesMap(graph, region, eptrIndex, eindIndex, numVertex,
                                region->tetrahedra.begin(), region->tetrahedra.end());
