@@ -873,11 +873,31 @@ DocRecord::~DocRecord()
   }
 }
 
+
+bool DocRecord::AdjacentNullptrExists()
+{
+  for (int i = 0; i < numPoints; i++)
+  {
+    if (points[i].adjacent == nullptr)
+      return false;
+  }
+  return true;
+}
+
 void DocRecord::MakeMeshWithPoints()
 {
   if(numPoints < 3) return;
   BuildDelaunay();
-  ConvertDListToTriangles();
+
+  if (AdjacentNullptrExists())     
+  {
+    ConvertDListToTriangles();
+  }
+  else
+  {
+    Msg::Error("Adjacent nullptrs found");
+  }
+
   RemoveAllDList();
 }
 
