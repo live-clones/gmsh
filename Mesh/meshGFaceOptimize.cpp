@@ -111,7 +111,6 @@ void buildMeshGenerationDataStructures(GFace *gf,
                                        bidimMeshData & data)
 {
   std::map<MVertex*, double> vSizesMap;
-  std::vector<GEdge*> const& edges = gf->edges();
 
   for(unsigned int i = 0;i < gf->triangles.size(); i++)
     setLcsInit(gf->triangles[i], vSizesMap);
