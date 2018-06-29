@@ -340,9 +340,14 @@ class MLineChild : public MLine {
   MLineChild(MVertex *v0, MVertex *v1, int num = 0, int part = 0,
              bool owner = false, MElement* orig = NULL)
     : MLine(v0, v1, num, part), _owner(owner), _orig(orig), _intpt(0) {}
-  MLineChild(std::vector<MVertex*> v, int num = 0, int part = 0,
-           bool owner = false, MElement* orig = NULL)
-    : MLine(v, num, part), _owner(owner), _orig(orig), _intpt(0) {}
+  MLineChild(const std::vector<MVertex *> &v, int num = 0, int part = 0,
+             bool owner = false, MElement *orig = NULL)
+    : MLine(v, num, part)
+    , _owner(owner)
+    , _orig(orig)
+    , _intpt(0)
+  {
+  }
   ~MLineChild()
   {
     if(_owner)
@@ -394,9 +399,10 @@ class MTriangleBorder : public MTriangle {
   {
     _domains[0] = d1; _domains[1] = d2;
   }
-  MTriangleBorder(std::vector<MVertex*> v, int num = 0, int part = 0,
-                  MElement* d1 = NULL, MElement* d2 = NULL)
-    : MTriangle(v, num, part), _intpt(0)
+  MTriangleBorder(const std::vector<MVertex *> &v, int num = 0, int part = 0,
+                  MElement *d1 = NULL, MElement *d2 = NULL)
+    : MTriangle(v, num, part)
+    , _intpt(0)
   {
     _domains[0] = d1; _domains[1] = d2;
   }
@@ -419,15 +425,20 @@ class MPolygonBorder : public MPolygon {
   MElement* _domains[2];
   IntPt *_intpt;
  public:
-  MPolygonBorder(std::vector<MTriangle*> v, int num = 0, int part = 0, bool own = false,
-                 MElement *p = NULL, MElement *d1 = NULL, MElement *d2 = NULL)
-    : MPolygon(v, num, part, own, p), _intpt(0)
-  {
-    _domains[0] = d1; _domains[1] = d2;
+   MPolygonBorder(const std::vector<MTriangle *> &v, int num = 0, int part = 0,
+                  bool own = false, MElement *p = NULL, MElement *d1 = NULL,
+                  MElement *d2 = NULL)
+     : MPolygon(v, num, part, own, p)
+     , _intpt(0)
+   {
+     _domains[0] = d1;
+     _domains[1] = d2;
   }
-  MPolygonBorder(std::vector<MVertex*> v, int num = 0, int part = 0, bool own = false,
-                 MElement *p = NULL, MElement* d1 = NULL, MElement* d2 = NULL)
-    : MPolygon(v, num, part, own, p), _intpt(0)
+  MPolygonBorder(const std::vector<MVertex *> &v, int num = 0, int part = 0,
+                 bool own = false, MElement *p = NULL, MElement *d1 = NULL,
+                 MElement *d2 = NULL)
+    : MPolygon(v, num, part, own, p)
+    , _intpt(0)
   {
     _domains[0] = d1; _domains[1] = d2;
   }
@@ -453,9 +464,10 @@ class MLineBorder : public MLine {
   {
     _domains[0] = d1; _domains[1] = d2;
   }
-  MLineBorder(std::vector<MVertex*> v, int num = 0, int part = 0,
-              MElement* d1 = NULL, MElement* d2 = NULL)
-    : MLine(v, num, part), _intpt(0)
+  MLineBorder(const std::vector<MVertex *> &v, int num = 0, int part = 0,
+              MElement *d1 = NULL, MElement *d2 = NULL)
+    : MLine(v, num, part)
+    , _intpt(0)
   {
     _domains[0] = d1; _domains[1] = d2;
   }

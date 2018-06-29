@@ -26,9 +26,10 @@ Amaury Johnen (Bezier, high-order element validity), Benjamin Ruard (old Java
 wrappers), Maxime Graulich (iOS/Android port), Francois Henrotte (onelab
 metamodels), Sebastian Eiser (PGF output), Alexis Salzman (compressed IO), Hang
 Si (TetGen/BR boundary recovery code), Fernando Lorenzo (Tochnog support), Larry
-Price (Gambit export), Anthony Royer (new partitioning code, MSH4 format). See
-comments in the sources for more information. If we forgot to list your
-contributions please send us an email!
+Price (Gambit export), Anthony Royer (new partitioning code, MSH4 format), Darcy
+Beurle (code cleanup and performance improvements). See comments in the sources
+for more information. If we forgot to list your contributions please send us an
+email!
 
 Thanks to the following folks who have contributed by providing fresh ideas on
 theoretical or programming topics, who have sent patches, requests for changes
@@ -46,7 +47,7 @@ Hackbarth, Peter Wainwright, Jiri Hnidek, Thierry Thomas, Konstantinos Poulios,
 Laurent Van Miegroet, Shahrokh Ghavamian, Geordie McBain, Jose Paulo Moitinho de
 Almeida, Guillaume Demesy, Wendy Merks-Swolfs, Cosmin Stefan Deaconu, Nigel
 Nunn, Serban Georgescu, Julien Troufflard, Michele Mocciola, Matthijs Sypkens
-Smit, Sauli Ruuska, Romain Boman, Fredrik Ekre, Darcy Beurle.
+Smit, Sauli Ruuska, Romain Boman, Fredrik Ekre.
 
 Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
 and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See

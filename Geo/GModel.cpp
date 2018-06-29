@@ -66,14 +66,23 @@ static const float EDGE_ANGLE_THRESHOLD = 0.698132;
 std::vector<GModel*> GModel::list;
 int GModel::_current = -1;
 
-GModel::GModel(std::string name)
-  : _maxVertexNum(0), _maxElementNum(0),
-    _checkPointedMaxVertexNum(0), _checkPointedMaxElementNum(0),
-    _destroying(false),
-    _name(name), _visible(1), _elementOctree(0), _geo_internals(0),
-    _occ_internals(0), _acis_internals(0), _fm_internals(0),
-    _fields(0), _currentMeshEntity(0),
-    _numPartitions(0), normals(0)
+GModel::GModel(const std::string &name)
+  : _maxVertexNum(0)
+  , _maxElementNum(0)
+  , _checkPointedMaxVertexNum(0)
+  , _checkPointedMaxElementNum(0)
+  , _destroying(false)
+  , _name(name)
+  , _visible(1)
+  , _elementOctree(0)
+  , _geo_internals(0)
+  , _occ_internals(0)
+  , _acis_internals(0)
+  , _fm_internals(0)
+  , _fields(0)
+  , _currentMeshEntity(0)
+  , _numPartitions(0)
+  , normals(0)
 {
 
   // hide all other models
@@ -115,7 +124,7 @@ GModel::~GModel()
 #endif
 }
 
-void GModel::setFileName(std::string fileName)
+void GModel::setFileName(const std::string &fileName)
 {
   _fileName = fileName;
   _fileNames.insert(fileName);
@@ -490,8 +499,8 @@ void GModel::getEntities(std::vector<GEntity*> &entities, int dim) const
   }
 }
 
-void GModel::getEntitiesInBox(std::vector<GEntity*> &entities, SBoundingBox3d box,
-                              int dim) const
+void GModel::getEntitiesInBox(std::vector<GEntity *> &entities,
+                              const SBoundingBox3d &box, int dim) const
 {
   entities.clear();
   std::vector<GEntity*> all;
@@ -737,7 +746,7 @@ void GModel::getInnerPhysicalNamesIterators(std::vector<piter> &iterators)
     iterators[physIt->first.first] = physIt;
 }
 
-int GModel::setPhysicalName(std::string name, int dim, int number)
+int GModel::setPhysicalName(const std::string &name, int dim, int number)
 {
   // check if the name is already used
   int findPhy = getPhysicalNumber(dim, name);
@@ -750,7 +759,8 @@ int GModel::setPhysicalName(std::string name, int dim, int number)
   return number;
 }
 
-GModel::piter GModel::setPhysicalName(piter pos, std::string name, int dim, int number)
+GModel::piter GModel::setPhysicalName(piter pos, const std::string &name,
+                                      int dim, int number)
 {
   // if no number is given, find the next available one
   if(!number) number = getMaxPhysicalNumber(dim) + 1;
@@ -896,10 +906,11 @@ static void addToMap
   }
 }
 
-static void checkConformity
-  (std::multimap< MFace , MElement *, Less_Face> &faceToElement,
-   std::map< MElement *, std::vector < std::pair <MElement *, bool> > > &elToNeighbors,
-   MFace face, MElement *el)
+static void
+checkConformity(std::multimap<MFace, MElement *, Less_Face> &faceToElement,
+                std::map<MElement *, std::vector<std::pair<MElement *, bool> > >
+                  &elToNeighbors,
+                const MFace &face, MElement *el)
 {
   int connectivity = faceToElement.count(face);
   if(ElementType::getParentType(el->getType()) == TYPE_TRIH){
@@ -2375,7 +2386,8 @@ void GModel::alignPeriodicBoundaries()
         if(dynamic_cast<MTriangle*>   (srcElmt)) nbVtcs = 3;
         if(dynamic_cast<MQuadrangle*> (srcElmt)) nbVtcs = 4;
         std::vector<MVertex*> vtcs;
-        for(int iVtx = 0;iVtx < nbVtcs; iVtx++) {
+        vtcs.reserve(nbVtcs);
+        for(int iVtx = 0; iVtx < nbVtcs; iVtx++) {
           vtcs.push_back(srcElmt->getVertex(iVtx));
         }
         srcElmts[MFace(vtcs)] = srcElmt;
@@ -2792,7 +2804,7 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
   return cutGM;
 }
 
-void GModel::load(std::string fileName)
+void GModel::load(const std::string &fileName)
 {
   GModel *temp = GModel::current();
   GModel::setCurrent(this);
@@ -2800,7 +2812,7 @@ void GModel::load(std::string fileName)
   GModel::setCurrent(temp);
 }
 
-void GModel::save(std::string fileName)
+void GModel::save(const std::string &fileName)
 {
   GModel *temp = GModel::current();
   GModel::setCurrent(this);

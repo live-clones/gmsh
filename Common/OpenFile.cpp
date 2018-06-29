@@ -233,7 +233,8 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
 #endif
 }
 
-static bool doSystemUncompress(std::string fileName, std::string noExt)
+static bool doSystemUncompress(const std::string &fileName,
+                               const std::string &noExt)
 {
   std::ostringstream sstream;
   sstream << "File '"<< fileName << "' is in gzip format.\n\n"

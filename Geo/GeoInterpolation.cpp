@@ -639,8 +639,8 @@ static Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
 
 #define TRAN_TRI(c1,c2,c3,s1,s2,s3,u,v) u*c2+(1.-v)*c1+v*c3-(u*(1.-v)*s2+u*v*s3);
 
-static Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
-                             Vertex s1, Vertex s2, Vertex s3, double u, double v)
+static Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3, const Vertex &s1,
+                             Vertex s2, Vertex s3, double u, double v)
 {
   Vertex V;
   V.lc = TRAN_TRI(c1.lc, c2.lc, c3.lc, s1.lc, s2.lc, s3.lc, u, v);

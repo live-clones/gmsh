@@ -194,8 +194,9 @@ void ReplaceBndQuadsInFace(GFace *face)
       int num_verts = face->quadrangles[i]->getNumVertices();
       bool on_edge = false;
 
+      verts.reserve(num_verts);
       for(int j = 0; j < num_verts; j++)
-	verts.push_back(face->quadrangles[i]->getVertex(j));
+        verts.push_back(face->quadrangles[i]->getVertex(j));
 
       for(int j = 0; j < num_verts; j++){
 	if(pos_src_edge.find(verts[j]->x(), verts[j]->y(), verts[j]->z())){
@@ -496,8 +497,9 @@ std::vector<double> QtFindVertsCentroid(std::vector<MVertex*> v)
 
 // Add a new vertex at the centroid of a vector of vertices (this goes into a region
 // Added 2010-02-06
-MVertex* QtMakeCentroidVertex(std::vector<MVertex*> v, std::vector<MVertex*> *target,
-                              GEntity *entity, MVertexRTree &pos)
+MVertex *QtMakeCentroidVertex(const std::vector<MVertex *> &v,
+                              std::vector<MVertex *> *target, GEntity *entity,
+                              MVertexRTree &pos)
 {
   int v_size = v.size();
   if( v_size != 6 && v_size != 8 && v_size != 3 && v_size != 4){

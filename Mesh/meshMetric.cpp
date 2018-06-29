@@ -61,7 +61,7 @@ meshMetric::meshMetric(std::vector<MElement*> elements)
 }
 
 void meshMetric::addMetric(int technique, simpleFunction<double> *fct,
-                           std::vector<double> parameters)
+                           const std::vector<double> &parameters)
 {
   needMetricUpdate = true;
 

@@ -196,7 +196,7 @@ public:
   typedef std::set<GVertex *, GEntityLessThan>::size_type size_type;
 
 public:
-  GModel(std::string name = "");
+  GModel(const std::string &name = "");
   virtual ~GModel();
 // Required for python bindings on Windows
 #ifndef SWIG
@@ -264,11 +264,11 @@ public:
   FieldManager *getFields() { return _fields; }
 
   // get/set the model name
-  void setName(std::string name) { _name = name; }
+  void setName(const std::string &name) { _name = name; }
   std::string getName() { return _name; }
 
   // get/set the model file name
-  void setFileName(std::string fileName);
+  void setFileName(const std::string &fileName);
   std::string getFileName() { return _fileName; }
   bool hasFileName(const std::string &name)
   {
@@ -341,8 +341,8 @@ public:
   void getEntities(std::vector<GEntity *> &entities, int dim = -1) const;
 
   // fill a vector containing all the entities in a given bounding box
-  void getEntitiesInBox(std::vector<GEntity *> &entities, SBoundingBox3d box,
-                        int dim = -1) const;
+  void getEntitiesInBox(std::vector<GEntity *> &entities,
+                        const SBoundingBox3d &box, int dim = -1) const;
 
   // get tags of entities of the boundary of the given input entities
   bool getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
@@ -393,8 +393,9 @@ public:
 
   // associate a name with a physical entity of dimension "dim" and
   // number "num" (returns a new number id if "num"==0)
-  int setPhysicalName(std::string name, int dim, int num = 0);
-  piter setPhysicalName(piter pos, std::string name, int dim, int num = 0);
+  int setPhysicalName(const std::string &name, int dim, int num = 0);
+  piter setPhysicalName(piter pos, const std::string &name, int dim,
+                        int num = 0);
 
   // get the name (if any) of a given physical group of dimension
   // "dim" and id number "num"
@@ -408,7 +409,7 @@ public:
   // name
   std::vector<int> getTagsForPhysicalName(int dim, const std::string &name);
   // deprecated
-  std::vector<int> getEdgesByStringTag(const std::string name)
+  std::vector<int> getEdgesByStringTag(const std::string &name)
   {
     return getTagsForPhysicalName(1, name);
   }
@@ -615,8 +616,8 @@ public:
   void computeHomology();
 
   // "automatic" IO based on Gmsh global functions
-  void load(std::string fileName);
-  void save(std::string fileName);
+  void load(const std::string &fileName);
+  void save(const std::string &fileName);
 
   // Gmsh native CAD format (readGEO is static, since it can create
   // multiple models)

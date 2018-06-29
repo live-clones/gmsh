@@ -301,7 +301,9 @@ int clip::category(int a,int b,int c,int d)
   else return 4;
 }
 
-void clip::print_segment(SPoint3 p1,SPoint3 p2,std::ofstream& file){
+void clip::print_segment(const SPoint3 &p1, const SPoint3 &p2,
+                         std::ofstream &file)
+{
   file << "SL ("
   << p1.x() << ", " << p1.y() << ", " << p1.z() << ", "
   << p2.x() << ", " << p2.y() << ", " << p2.z()

@@ -2999,12 +2999,17 @@ Force mesh of the surface on the left-hand side (slave, with boundary
 edges specified between braces) to match the mesh of the surface on the
 right-hand side (master, with boundary edges specified between braces).
 
-@item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Affine | Rotate | Translate @{ @var{expression-list} @} ;
+@item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Affine | Translate @{ @var{expression-list} @} ;
 Force mesh of curves or surfaces on the left-hand side (slaves) to match
-the mesh of the curves on the right-hand side (masters), using prescribed
-geometrical transformations. @code{Affine} takes a 4 x 4 affine
-transform matrix given by row; @code{Rotate} and @code{Translate} are
-specified as in @ref{Transformations}.
+the mesh of the curves on the right-hand side (masters), using
+prescribed geometrical transformations. @code{Affine} takes a 4 x 4 (or
+4 x 3) affine transformation matrix given by row; @code{Translate} takes
+the 3 components of the translation as in @ref{Transformations}.
+
+@item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Rotate @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} ;
+Force mesh of curves or surfaces on the left-hand side (slaves) to match
+the mesh of the curves on the right-hand side (masters), using
+a rotation specified as in @ref{Transformations}.
 
 @item Coherence Mesh;
 Removes all duplicate mesh nodes.

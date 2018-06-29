@@ -28,8 +28,9 @@ bool old_algo_hexa(){
   return true;
 }
 
-template<typename T>
-void print_nodal_info(std::string filename, std::map<MVertex*, T> const &map)
+template <typename T>
+void print_nodal_info(const std::string &filename,
+                      std::map<MVertex *, T> const &map)
 {
   std::ofstream out(filename.c_str());
 

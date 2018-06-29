@@ -2035,19 +2035,21 @@ static void addEdgesForQuadToTriFullHexa(GRegion *gr, MElement *elem, ExtrudePar
 // Generate face diagonals to subdivide hexahedra by BRUTE FORCE.  Not recommended for general use, but it
 // is required for some elements which have all vertices on an external region boundary.
 // Added 2010-01-29
-static void bruteForceEdgeQuadToTriHexa(GRegion *gr, MElement *elem,
-                                        int j, int k, std::vector<MVertex *> verts,
-                                        std::map<std::string, std::vector<int> > &face_types,
-                                        std::set<std::pair<MVertex*, MVertex*> > &edges_new,
-                                        std::set<std::pair<MVertex*, MVertex*> > &forbidden_new,
-                                        std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
-                                        std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges,
-                                        std::set<std::pair<MVertex*, MVertex*> > &lat_tri_diags,
-                                        std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
-                                        std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
-                                        std::vector<int> nfix1, std::vector<int> nfix2,
-                                        std::vector<int> nadj1, std::vector<int> nadj2,
-                                        std::vector<int> free_flag)
+static void bruteForceEdgeQuadToTriHexa(
+  GRegion *gr, MElement *elem, int j, int k, std::vector<MVertex *> verts,
+  std::map<std::string, std::vector<int> > &face_types,
+  std::set<std::pair<MVertex *, MVertex *> > &edges_new,
+  std::set<std::pair<MVertex *, MVertex *> > &forbidden_new,
+  std::set<std::pair<MVertex *, MVertex *> > &quadToTri_edges,
+  std::set<std::pair<MVertex *, MVertex *> > &forbidden_edges,
+  std::set<std::pair<MVertex *, MVertex *> > &lat_tri_diags,
+  std::map<MElement *, std::set<std::pair<unsigned int, unsigned int> > >
+    &problems_new,
+  std::map<MElement *, std::set<std::pair<unsigned int, unsigned int> > >
+    &problems,
+  const std::vector<int> &nfix1, const std::vector<int> &nfix2,
+  std::vector<int> nadj1, std::vector<int> nadj2,
+  const std::vector<int> &free_flag)
 {
 
   ExtrudeParams *ep = gr->meshAttributes.extrude;

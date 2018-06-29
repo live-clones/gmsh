@@ -354,7 +354,7 @@ XYZ::XYZ(double _x,double _y,double _z) : x(_x),y(_y),z(_z){}
 
 void XYZ::set(const double& _x, const double& _y, const double& _z){ x = _x; y =_y; z = _z; }
 
-void rotate(Quaternion omega,XYZ axe)
+void rotate(const Quaternion &omega, XYZ axe)
 {
   XYZ new_axe;
   Quaternion qaxe,new_qaxe;

@@ -532,43 +532,91 @@ function getType(dim, tag)
 end
 
 """
-    gmsh.model.getNormals(tag, parametricCoord)
+    gmsh.model.getParent(dim, tag)
 
-Get the normal to the surface with tag `tag` at the parametric coordinates
-`parametricCoord`. `parametricCoord` are given by pair of u and v coordinates,
-concatenated. `normals` are returned as triplets of x, y and z components,
-concatenated.
+In a partitioned model, get the parent of the entity of dimension `dim` and tag
+`tag`, i.e. from which the entity is a part of, if any. `parentDim` and
+`parentTag` are set to -1 if the entity has no parent.
 
-Return `normals`.
+Return `parentDim`, `parentTag`.
 """
-function getNormals(tag, parametricCoord)
-    api_normals_ = Ref{Ptr{Cdouble}}()
-    api_normals_n_ = Ref{Csize_t}()
+function getParent(dim, tag)
+    api_parentDim_ = Ref{Cint}()
+    api_parentTag_ = Ref{Cint}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGetNormals, gmsh.lib), Void,
-          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          tag, parametricCoord, length(parametricCoord), api_normals_, api_normals_n_, ierr)
-    ierr[] != 0 && error("gmshModelGetNormals returned non-zero error code: $(ierr[])")
-    normals = unsafe_wrap(Array, api_normals_[], api_normals_n_[], true)
-    return normals
+    ccall((:gmshModelGetParent, gmsh.lib), Void,
+          (Cint, Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}),
+          dim, tag, api_parentDim_, api_parentTag_, ierr)
+    ierr[] != 0 && error("gmshModelGetParent returned non-zero error code: $(ierr[])")
+    return api_parentDim_[], api_parentTag_[]
 end
 
 """
-    gmsh.model.getCurvatures(tag, parametricCoord)
+    gmsh.model.getValue(dim, tag, parametricCoord)
 
-Get the curvature of the curve with tag `tag` at the parametric coordinates
-`parametricCoord`.
+Evaluate the parametrization of the entity of dimension `dim` and tag `tag` at
+the parametric coordinates `parametricCoord` and return triplets of x, y, z
+coordinates in `points`. Only valid for `dim` equal to 0, 1 (with
+`parametricCoord` containing parametric coordinates on the curve) or 2 (with
+`parametricCoord` containing pairs of u, v parametric coordinates on the
+surface),
+
+Return `points`.
+"""
+function getValue(dim, tag, parametricCoord)
+    api_points_ = Ref{Ptr{Cdouble}}()
+    api_points_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetValue, gmsh.lib), Void,
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, parametricCoord, length(parametricCoord), api_points_, api_points_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetValue returned non-zero error code: $(ierr[])")
+    points = unsafe_wrap(Array, api_points_[], api_points_n_[], true)
+    return points
+end
+
+"""
+    gmsh.model.getDerivative(dim, tag, parametricCoord)
+
+Evaluate the derivative of the parametrization of the entity of dimension `dim`
+and tag `tag` at the parametric coordinates `parametricCoord`. Only valid for
+`dim` equal to 1 (with `parametricCoord` containing parametric coordinates on
+the curve) or 2 (with `parametricCoord` containing pairs of u, v parametric
+coordinates on the surface).
+
+Return `derivatives`.
+"""
+function getDerivative(dim, tag, parametricCoord)
+    api_derivatives_ = Ref{Ptr{Cdouble}}()
+    api_derivatives_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetDerivative, gmsh.lib), Void,
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, parametricCoord, length(parametricCoord), api_derivatives_, api_derivatives_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetDerivative returned non-zero error code: $(ierr[])")
+    derivatives = unsafe_wrap(Array, api_derivatives_[], api_derivatives_n_[], true)
+    return derivatives
+end
+
+"""
+    gmsh.model.getCurvature(dim, tag, parametricCoord)
+
+Evaluate the (maximum) curvature of the entity of dimension `dim` and tag `tag`
+at the parametric coordinates `parametricCoord`. Only valid for `dim` equal to 1
+(with `parametricCoord` containing parametric coordinates on the curve) or 2
+(with `parametricCoord` containing pairs of u, v parametric coordinates on the
+surface).
 
 Return `curvatures`.
 """
-function getCurvatures(tag, parametricCoord)
+function getCurvature(dim, tag, parametricCoord)
     api_curvatures_ = Ref{Ptr{Cdouble}}()
     api_curvatures_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGetCurvatures, gmsh.lib), Void,
-          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          tag, parametricCoord, length(parametricCoord), api_curvatures_, api_curvatures_n_, ierr)
-    ierr[] != 0 && error("gmshModelGetCurvatures returned non-zero error code: $(ierr[])")
+    ccall((:gmshModelGetCurvature, gmsh.lib), Void,
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, parametricCoord, length(parametricCoord), api_curvatures_, api_curvatures_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetCurvature returned non-zero error code: $(ierr[])")
     curvatures = unsafe_wrap(Array, api_curvatures_[], api_curvatures_n_[], true)
     return curvatures
 end
@@ -576,9 +624,10 @@ end
 """
     gmsh.model.getPrincipalCurvatures(tag, parametricCoord)
 
-Get the principal curvatures of the surface with tag `tag` at the parametric
-coordinates `parametricCoord`, as well as their respective directions.
-`parametricCoord` are given by pair of u and v coordinates, concatenated.
+Evaluate the principal curvatures of the surface with tag `tag` at the
+parametric coordinates `parametricCoord`, as well as their respective
+directions. `parametricCoord` are given by pair of u and v coordinates,
+concatenated.
 
 Return `curvatureMax`, `curvatureMin`, `directionMax`, `directionMin`.
 """
@@ -601,6 +650,28 @@ function getPrincipalCurvatures(tag, parametricCoord)
     directionMax = unsafe_wrap(Array, api_directionMax_[], api_directionMax_n_[], true)
     directionMin = unsafe_wrap(Array, api_directionMin_[], api_directionMin_n_[], true)
     return curvatureMax, curvatureMin, directionMax, directionMin
+end
+
+"""
+    gmsh.model.getNormal(tag, parametricCoord)
+
+Get the normal to the surface with tag `tag` at the parametric coordinates
+`parametricCoord`. `parametricCoord` are given by pair of u and v coordinates,
+concatenated. `normals` are returned as triplets of x, y and z components,
+concatenated.
+
+Return `normals`.
+"""
+function getNormal(tag, parametricCoord)
+    api_normals_ = Ref{Ptr{Cdouble}}()
+    api_normals_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetNormal, gmsh.lib), Void,
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, parametricCoord, length(parametricCoord), api_normals_, api_normals_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetNormal returned non-zero error code: $(ierr[])")
+    normals = unsafe_wrap(Array, api_normals_[], api_normals_n_[], true)
+    return normals
 end
 
 """

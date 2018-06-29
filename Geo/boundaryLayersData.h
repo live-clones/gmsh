@@ -25,8 +25,11 @@ struct BoundaryLayerData {
   SVector3 _n;
   std::vector<MVertex*> _column;
   BoundaryLayerData(){}
-  BoundaryLayerData(const SVector3 & dir, std::vector<MVertex*> column)
-    : _n(dir), _column(column){}
+  BoundaryLayerData(const SVector3 &dir, const std::vector<MVertex *> &column)
+    : _n(dir)
+    , _column(column)
+  {
+  }
 };
 
 struct BoundaryLayerFan {
@@ -77,8 +80,8 @@ class BoundaryLayerColumns
   iterf beginf() { return _fans.begin(); }
   iterf endf() { return _fans.end(); }
   BoundaryLayerColumns (){}
-  inline void addColumn(const SVector3 &dir, MVertex* v,
-                        std::vector<MVertex*> _column)
+  inline void addColumn(const SVector3 &dir, MVertex *v,
+                        const std::vector<MVertex *> &_column)
   {
     _data.insert (std::make_pair(v, BoundaryLayerData(dir, _column)));
   }

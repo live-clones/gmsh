@@ -94,7 +94,22 @@ opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 set(GMSH_MAJOR_VERSION 3)
 set(GMSH_MINOR_VERSION 0)
 set(GMSH_PATCH_VERSION 7)
-set(GMSH_EXTRA_VERSION "" CACHE STRING "Gmsh extra version string")
+set(GMSH_EXTRA_VERSION "")
+
+if(NOT GMSH_RELEASE)
+  find_package(Git)
+  if(GIT_FOUND)
+    execute_process(COMMAND ${GIT_EXECUTABLE} log -1 --format=%h
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                    OUTPUT_VARIABLE GIT_COMMIT_HASH
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  endif(GIT_FOUND)
+  if(GIT_COMMIT_HASH)
+    set(GMSH_EXTRA_VERSION "-git-${GIT_COMMIT_HASH}")
+  else(GIT_COMMIT_HASH)
+    set(GMSH_EXTRA_VERSION "-git")
+  endif(GIT_COMMIT_HASH)
+endif(NOT GMSH_RELEASE)
 
 set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
 set(GMSH_VERSION "${GMSH_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}")

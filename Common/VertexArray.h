@@ -204,8 +204,9 @@ class VertexArray{
   double getMemoryInMb();
   // serialize the vertex array into a string (for sending over the
   // network)
-  char *toChar(int num, std::string name, int type, double min, double max,
-               int numsteps, double time, SBoundingBox3d bbox, int &len);
+  char *toChar(int num, const std::string &name, int type, double min,
+               double max, int numsteps, double time,
+               const SBoundingBox3d &bbox, int &len);
   void fromChar(int length, const char *bytes, int swap);
   static int decodeHeader(int length, const char *bytes, int swap,
                           std::string &name, int &tag, int &type,

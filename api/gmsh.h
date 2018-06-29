@@ -209,29 +209,63 @@ namespace gmsh { // Top-level functions
                           const int tag,
                           std::string & entityType);
 
-    // Get the normal to the surface with tag `tag' at the parametric coordinates
-    // `parametricCoord'. `parametricCoord' are given by pair of u and v
-    // coordinates, concatenated. `normals' are returned as triplets of x, y and z
-    // components, concatenated.
-    GMSH_API void getNormals(const int tag,
-                             const std::vector<double> & parametricCoord,
-                             std::vector<double> & normals);
+    // In a partitioned model, get the parent of the entity of dimension `dim' and
+    // tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and
+    // `parentTag' are set to -1 if the entity has no parent.
+    GMSH_API void getParent(const int dim,
+                            const int tag,
+                            int & parentDim,
+                            int & parentTag);
 
-    // Get the curvature of the curve with tag `tag' at the parametric coordinates
-    // `parametricCoord'.
-    GMSH_API void getCurvatures(const int tag,
+    // Evaluate the parametrization of the entity of dimension `dim' and tag `tag'
+    // at the parametric coordinates `parametricCoord' and return triplets of x, y,
+    // z coordinates in `points'. Only valid for `dim' equal to 0, 1 (with
+    // `parametricCoord' containing parametric coordinates on the curve) or 2 (with
+    // `parametricCoord' containing pairs of u, v parametric coordinates on the
+    // surface),
+    GMSH_API void getValue(const int dim,
+                           const int tag,
+                           const std::vector<double> & parametricCoord,
+                           std::vector<double> & points);
+
+    // Evaluate the derivative of the parametrization of the entity of dimension
+    // `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only
+    // valid for `dim' equal to 1 (with `parametricCoord' containing parametric
+    // coordinates on the curve) or 2 (with `parametricCoord' containing pairs of
+    // u, v parametric coordinates on the surface).
+    GMSH_API void getDerivative(const int dim,
+                                const int tag,
                                 const std::vector<double> & parametricCoord,
-                                std::vector<double> & curvatures);
+                                std::vector<double> & derivatives);
 
-    // Get the principal curvatures of the surface with tag `tag' at the parametric
-    // coordinates `parametricCoord', as well as their respective directions.
-    // `parametricCoord' are given by pair of u and v coordinates, concatenated.
+    // Evaluate the (maximum) curvature of the entity of dimension `dim' and tag
+    // `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim'
+    // equal to 1 (with `parametricCoord' containing parametric coordinates on the
+    // curve) or 2 (with `parametricCoord' containing pairs of u, v parametric
+    // coordinates on the surface).
+    GMSH_API void getCurvature(const int dim,
+                               const int tag,
+                               const std::vector<double> & parametricCoord,
+                               std::vector<double> & curvatures);
+
+    // Evaluate the principal curvatures of the surface with tag `tag' at the
+    // parametric coordinates `parametricCoord', as well as their respective
+    // directions. `parametricCoord' are given by pair of u and v coordinates,
+    // concatenated.
     GMSH_API void getPrincipalCurvatures(const int tag,
                                          const std::vector<double> & parametricCoord,
                                          std::vector<double> & curvatureMax,
                                          std::vector<double> & curvatureMin,
                                          std::vector<double> & directionMax,
                                          std::vector<double> & directionMin);
+
+    // Get the normal to the surface with tag `tag' at the parametric coordinates
+    // `parametricCoord'. `parametricCoord' are given by pair of u and v
+    // coordinates, concatenated. `normals' are returned as triplets of x, y and z
+    // components, concatenated.
+    GMSH_API void getNormal(const int tag,
+                            const std::vector<double> & parametricCoord,
+                            std::vector<double> & normals);
 
     namespace mesh { // Per-model meshing functions
 

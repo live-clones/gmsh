@@ -185,8 +185,8 @@ class CellComplex
 
 
   // experimental
-  int saveComplex(std::string filename);
-  int loadComplex(std::string filename);
+  int saveComplex(const std::string &filename);
+  int loadComplex(const std::string &filename);
 };
 
 #endif

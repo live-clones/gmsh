@@ -23,8 +23,10 @@ struct MElement_Wrapper
   bool _overlap;
   MElement *_e;
   std::vector<MElement*> _notOverlap;
-  MElement_Wrapper (MElement *e, std::vector<MElement*> notOverlap)
-    : _overlap(false), _e(e), _notOverlap(notOverlap)
+  MElement_Wrapper(MElement *e, const std::vector<MElement *> &notOverlap)
+    : _overlap(false)
+    , _e(e)
+    , _notOverlap(notOverlap)
   {
     std::sort(_notOverlap.begin(),_notOverlap.end());
   }

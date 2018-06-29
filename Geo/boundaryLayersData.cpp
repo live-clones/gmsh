@@ -39,7 +39,7 @@ edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2 , int side)
              +
 */
 
-SVector3 interiorNormal(SPoint2 p1, SPoint2 p2, SPoint2 p3)
+SVector3 interiorNormal(const SPoint2 &p1, const SPoint2 &p2, const SPoint2 &p3)
 {
   SVector3 ez(0,0,1);
   SVector3 d(p1.x()-p2.x(),p1.y()-p2.y(),0);

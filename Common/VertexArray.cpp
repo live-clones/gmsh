@@ -227,8 +227,9 @@ double VertexArray::getMemoryInMb()
   return (double)bytes / 1024. / 1024.;
 }
 
-char *VertexArray::toChar(int num, std::string name, int type, double min, double max,
-                          int numsteps, double time, SBoundingBox3d bbox, int &len)
+char *VertexArray::toChar(int num, const std::string &name, int type,
+                          double min, double max, int numsteps, double time,
+                          const SBoundingBox3d &bbox, int &len)
 {
   int vn = _vertices.size(), nn = _normals.size(), cn = _colors.size();
   int vs = vn * sizeof(float),

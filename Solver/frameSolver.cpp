@@ -236,9 +236,8 @@ void frameSolver2d::exportFrameData(const char * DISPL, const char * M) {
       //      tmp.push_back(_beams[i]._E);
       //      tmp.push_back(_beams[i]._I);
       //      tmp.push_back(_beams[i]._A);
-      for (int j=0;j<6;j++){
-	tmp.push_back(_beams[i]._displacement[j]);
-      }
+      tmp.reserve(6);
+      for(int j = 0; j < 6; j++) { tmp.push_back(_beams[i]._displacement[j]); }
       data[_beams[i]._element->getNum()] = tmp;
     }
     PView *pv = new PView ("displacements", "Beam", _myModel, data, 0.0, 6);

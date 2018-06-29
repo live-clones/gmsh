@@ -659,6 +659,7 @@ static void addScalarPolygon(PView *p, double **xyz,
     const int il[3][2] = {{0, 1}, {1, 2}, {2, 0}};
     std::map<MEdge, int, Less_Edge> edges;
     std::vector<MVertex *> verts;
+    verts.reserve(numNodes);
     for(int i = 0; i < numNodes; i++)
       verts.push_back(new MVertex(xyz[i][0], xyz[i][1], xyz[i][2]));
     for(int i = 0; i < numNodes / 3; i++){
@@ -874,6 +875,7 @@ static void addOutlinePolyhedron(PView *p, double **xyz,
   const int it[4][3] = {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
   std::map<MFace, int, Less_Face> triFaces;
   std::vector<MVertex *> verts;
+  verts.reserve(numNodes);
   for(int i = 0; i < numNodes; i++)
     verts.push_back(new MVertex(xyz[i][0], xyz[i][1], xyz[i][2]));
   for(int i = 0; i < numNodes / 4; i++){

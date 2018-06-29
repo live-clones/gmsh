@@ -502,7 +502,7 @@ void CreatePath(const std::string &fullPath)
   std::string dirname = std::string(fullPath, 0, lastp);
   size_t cur = 0;
   while(cur != std::string::npos) {
-    cur = dirname.find("/", cur + 1);
+    cur = dirname.find('/', cur + 1);
     CreateSingleDir(dirname.substr(0, cur));
   }
 }

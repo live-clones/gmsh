@@ -967,7 +967,7 @@ int FlGui::testArrowShortcuts()
   return 0;
 }
 
-void FlGui::setGraphicTitle(std::string title)
+void FlGui::setGraphicTitle(const std::string &title)
 {
   for(unsigned int i = 0; i < graph.size(); i++){
     std::ostringstream sstream;

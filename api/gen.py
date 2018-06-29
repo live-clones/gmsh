@@ -122,14 +122,23 @@ model.add('removeEntities',doc,None,ivectorpair('dimTags'),ibool('recursive','fa
 doc = '''Get the type of the entity of dimension `dim' and tag `tag'.'''
 model.add('getType',doc,None,iint('dim'),iint('tag'),ostring('entityType'))
 
-doc = '''Get the normal to the surface with tag `tag' at the parametric coordinates `parametricCoord'. `parametricCoord' are given by pair of u and v coordinates, concatenated. `normals' are returned as triplets of x, y and z components, concatenated.'''
-model.add('getNormals',doc,None,iint('tag'),ivectordouble('parametricCoord'),ovectordouble('normals'))
+doc = '''In a partitioned model, get the parent of the entity of dimension `dim' and tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and `parentTag' are set to -1 if the entity has no parent.'''
+model.add('getParent',doc,None,iint('dim'),iint('tag'),oint('parentDim'),oint('parentTag'))
 
-doc = '''Get the curvature of the curve with tag `tag' at the parametric coordinates `parametricCoord'.'''
-model.add('getCurvatures',doc,None,iint('tag'),ivectordouble('parametricCoord'),ovectordouble('curvatures'))
+doc = '''Evaluate the parametrization of the entity of dimension `dim' and tag `tag' at the parametric coordinates `parametricCoord' and return triplets of x, y, z coordinates in `points'. Only valid for `dim' equal to 0, 1 (with `parametricCoord' containing parametric coordinates on the curve) or 2 (with `parametricCoord' containing pairs of u, v parametric coordinates on the surface),'''
+model.add('getValue',doc,None,iint('dim'),iint('tag'),ivectordouble('parametricCoord'),ovectordouble('points'))
 
-doc = '''Get the principal curvatures of the surface with tag `tag' at the parametric coordinates `parametricCoord', as well as their respective directions. `parametricCoord' are given by pair of u and v coordinates, concatenated.'''
+doc = '''Evaluate the derivative of the parametrization of the entity of dimension `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim' equal to 1 (with `parametricCoord' containing parametric coordinates on the curve) or 2 (with `parametricCoord' containing pairs of u, v parametric coordinates on the surface).'''
+model.add('getDerivative',doc,None,iint('dim'),iint('tag'),ivectordouble('parametricCoord'),ovectordouble('derivatives'))
+
+doc = '''Evaluate the (maximum) curvature of the entity of dimension `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim' equal to 1 (with `parametricCoord' containing parametric coordinates on the curve) or 2 (with `parametricCoord' containing pairs of u, v parametric coordinates on the surface).'''
+model.add('getCurvature',doc,None,iint('dim'),iint('tag'),ivectordouble('parametricCoord'),ovectordouble('curvatures'))
+
+doc = '''Evaluate the principal curvatures of the surface with tag `tag' at the parametric coordinates `parametricCoord', as well as their respective directions. `parametricCoord' are given by pair of u and v coordinates, concatenated.'''
 model.add('getPrincipalCurvatures',doc,None,iint('tag'),ivectordouble('parametricCoord'),ovectordouble('curvatureMax'),ovectordouble('curvatureMin'),ovectordouble('directionMax'),ovectordouble('directionMin'))
+
+doc = '''Get the normal to the surface with tag `tag' at the parametric coordinates `parametricCoord'. `parametricCoord' are given by pair of u and v coordinates, concatenated. `normals' are returned as triplets of x, y and z components, concatenated.'''
+model.add('getNormal',doc,None,iint('tag'),ivectordouble('parametricCoord'),ovectordouble('normals'))
 
 ################################################################################
 

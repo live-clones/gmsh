@@ -380,7 +380,86 @@ Get the type of the entity of dimension @code{dim} and tag @code{tag}.
 -
 @end table
 
-@item getNormals
+@item getParent
+In a partitioned model, get the parent of the entity of dimension @code{dim} and
+tag @code{tag}, i.e. from which the entity is a part of, if any.
+@code{parentDim} and @code{parentTag} are set to -1 if the entity has no parent.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{parentDim}, @code{parentTag}
+@item Return:
+-
+@end table
+
+@item getValue
+Evaluate the parametrization of the entity of dimension @code{dim} and tag
+@code{tag} at the parametric coordinates @code{parametricCoord} and return
+triplets of x, y, z coordinates in @code{points}. Only valid for @code{dim}
+equal to 0, 1 (with @code{parametricCoord} containing parametric coordinates on
+the curve) or 2 (with @code{parametricCoord} containing pairs of u, v parametric
+coordinates on the surface),
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{parametricCoord}
+@item Output:
+@code{points}
+@item Return:
+-
+@end table
+
+@item getDerivative
+Evaluate the derivative of the parametrization of the entity of dimension
+@code{dim} and tag @code{tag} at the parametric coordinates
+@code{parametricCoord}. Only valid for @code{dim} equal to 1 (with
+@code{parametricCoord} containing parametric coordinates on the curve) or 2
+(with @code{parametricCoord} containing pairs of u, v parametric coordinates on
+the surface).
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{parametricCoord}
+@item Output:
+@code{derivatives}
+@item Return:
+-
+@end table
+
+@item getCurvature
+Evaluate the (maximum) curvature of the entity of dimension @code{dim} and tag
+@code{tag} at the parametric coordinates @code{parametricCoord}. Only valid for
+@code{dim} equal to 1 (with @code{parametricCoord} containing parametric
+coordinates on the curve) or 2 (with @code{parametricCoord} containing pairs of
+u, v parametric coordinates on the surface).
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{parametricCoord}
+@item Output:
+@code{curvatures}
+@item Return:
+-
+@end table
+
+@item getPrincipalCurvatures
+Evaluate the principal curvatures of the surface with tag @code{tag} at the
+parametric coordinates @code{parametricCoord}, as well as their respective
+directions. @code{parametricCoord} are given by pair of u and v coordinates,
+concatenated.
+
+@table @asis
+@item Input:
+@code{tag}, @code{parametricCoord}
+@item Output:
+@code{curvatureMax}, @code{curvatureMin}, @code{directionMax}, @code{directionMin}
+@item Return:
+-
+@end table
+
+@item getNormal
 Get the normal to the surface with tag @code{tag} at the parametric coordinates
 @code{parametricCoord}. @code{parametricCoord} are given by pair of u and v
 coordinates, concatenated. @code{normals} are returned as triplets of x, y and z
@@ -391,34 +470,6 @@ components, concatenated.
 @code{tag}, @code{parametricCoord}
 @item Output:
 @code{normals}
-@item Return:
--
-@end table
-
-@item getCurvatures
-Get the curvature of the curve with tag @code{tag} at the parametric coordinates
-@code{parametricCoord}.
-
-@table @asis
-@item Input:
-@code{tag}, @code{parametricCoord}
-@item Output:
-@code{curvatures}
-@item Return:
--
-@end table
-
-@item getPrincipalCurvatures
-Get the principal curvatures of the surface with tag @code{tag} at the
-parametric coordinates @code{parametricCoord}, as well as their respective
-directions. @code{parametricCoord} are given by pair of u and v coordinates,
-concatenated.
-
-@table @asis
-@item Input:
-@code{tag}, @code{parametricCoord}
-@item Output:
-@code{curvatureMax}, @code{curvatureMin}, @code{directionMax}, @code{directionMin}
 @item Return:
 -
 @end table
