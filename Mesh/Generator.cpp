@@ -892,14 +892,13 @@ static void Mesh3D(GModel *m)
   std::stringstream debugInfo;
   debugInfo << "No tetrahedra in region ";
   bool emptyRegionFound = false;
-  for (GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
-    if ((*it)->getNumMeshElements() == 0) {
-      debugInfo << (*it)->tag() << ", ";
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+    if((*it)->getNumMeshElements() == 0) {
+      debugInfo << (*it)->tag() << " ";
       emptyRegionFound = true;
     }
   }
-  if (emptyRegionFound)
-  {
+  if(emptyRegionFound){
     debugInfo << std::endl;
     Msg::Error(debugInfo.str().c_str());
   }
