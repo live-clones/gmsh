@@ -380,6 +380,44 @@ namespace BoundaryLayerCurver
       }
     }
 
+    void _drawIdealPositionEdge(const MEdgeN *baseEdge, const _Frame &frame,
+                                double coeffs[2][3], GEdge *gedge)
+    {
+      int N = 100;
+      MVertex *previous = NULL;
+
+      for (int i = 0; i < N+1; ++i) {
+        const double u = (double)i / N * 2 - 1;
+        SPoint3 p = baseEdge->pnt(u);
+        SVector3 t, n, w;
+        frame.computeFrame(u, t, n, w);
+
+        double interpolatedCoeffs[3];
+        for (int j = 0; j < 3; ++j) {
+          interpolatedCoeffs[j] =   coeffs[0][j] * (1-u)/2
+                                  + coeffs[1][j] * (1+u)/2;
+        }
+        SVector3 h;
+        h =   interpolatedCoeffs[0] * n
+            + interpolatedCoeffs[1] * t
+            + interpolatedCoeffs[2] * w;
+        double x = p.x() + h.x();
+        double y = p.y() + h.y();
+        double z = p.z() + h.z();
+
+        MVertex *current = new MVertex(x, y, z, gedge);
+        gedge->addMeshVertex(current);
+        if (previous) {
+          MLine *line = new MLine(previous, current);
+          gedge->addLine(line);
+        }
+//        MVertex *base = new MVertex(p.x(), p.y(), p.z(), gedge);
+//        MLine *line = new MLine(base, current);
+//        gedge->addLine(line);
+        previous = current;
+      }
+    }
+
     void curveEdge(const MEdgeN *baseEdge, MEdgeN *edge, const GFace *gface,
                    const GEdge *gedge, const SVector3 &normal)
     {
@@ -396,6 +434,7 @@ namespace BoundaryLayerCurver
       // Least square projection
       fullMatrix<double> xyz(sizeSystem + 2, 3);
       _idealPositionEdge(baseEdge, frame, coeffs, sizeSystem, gaussPnts, xyz);
+//      _drawIdealPositionEdge(baseEdge, frame, coeffs, (GEdge*)gedge);
       for (int i = 0; i < 2; ++i) {
         xyz(sizeSystem + i, 0) = edge->getVertex(i)->x();
         xyz(sizeSystem + i, 1) = edge->getVertex(i)->y();
@@ -516,8 +555,16 @@ namespace BoundaryLayerCurver
       repositionInnerVertices(subsetFaces, gface);
       double qual = jacobianBasedQuality::minIGEMeasure(lastElementBL);
       int currentOrder = lastEdge->getPolynomialOrder();
-      while (qual < .75 && qual < .8*qualLinear && currentOrder > 1) {
+      while (qual < .75 && qual < .8*qualLinear && currentOrder > 2) {
         _reduceOrderCurve(lastEdge, --currentOrder, gface);
+        InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, gface);
+        repositionInnerVertices(subsetFaces, gface);
+        qual = jacobianBasedQuality::minIGEMeasure(lastElementBL);
+      }
+      int iter = 0;
+      const int maxIter = 15;
+      while (qual < .75 && qual < .8*qualLinear && ++iter < maxIter) {
+        _reduceCurving(lastEdge, .25, gface);
         InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, gface);
         repositionInnerVertices(subsetFaces, gface);
         qual = jacobianBasedQuality::minIGEMeasure(lastElementBL);
@@ -530,8 +577,6 @@ namespace BoundaryLayerCurver
       delete linear;
 
       qual = jacobianBasedQuality::minIGEMeasure(lastElement);
-      int iter = 0;
-      const int maxIter = 15;
       while (qual < .75 && qual < .8*qualLinear && ++iter < maxIter) {
         _reduceCurving(lastEdge, .25, gface);
         repositionInnerVertices(subsetFaces, gface);
@@ -1468,6 +1513,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
 //  }
 
   for (int i = 0; i < bndEl2column.size(); ++i) {
+//    if (bndEl2column[i].first->getNum() != 205) continue; // t161
 //    if (bndEl2column[i].first->getNum() != 316) continue; // t161
 //    if (bndEl2column[i].first->getNum() != 1156) continue; // trimesh
 //    if (   bndEl2column[i].first->getNum() != 1156
