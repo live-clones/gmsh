@@ -37,6 +37,7 @@ struct contextMeshOptions {
   int NewtonConvergenceTestXYZ;
   int ignorePeriodicity, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
+  double angleToleranceFacetOverlap;
   // mesh IO
   int fileFormat;
   double mshFileVersion, scalingFactor;
