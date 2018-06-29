@@ -878,7 +878,7 @@ bool DocRecord::AdjacentNullptrExists()
 {
   for (int i = 0; i < numPoints; i++)
   {
-    if (points[i].adjacent == nullptr)
+    if (points[i].adjacent == NULL)
       return false;
   }
   return true;
