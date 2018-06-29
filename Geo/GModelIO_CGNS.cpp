@@ -7,9 +7,9 @@
 // C. Geuzaine, J.-F. Remacle
 
 #include "GmshConfig.h"
-#include "GmshMessage.h"
 #include "GModel.h"
 #include "CGNSOptions.h"
+#include "GmshMessage.h"
 
 #if defined(HAVE_LIBCGNS)
 
@@ -676,7 +676,7 @@ int computeCGNSFace(const cgsize_t* range) {
 
 struct CGNSStruPeriodic {
 
-  // the data that are modified on the fly by looping on the CGNSStruPeriodicSet
+  // the data that are modified on the fly by looping on the CGNSStruPeriodic set
   //
   // - should not affect the ordering in CGNSStruPeriodicLess
   // - should be modified with a const operation (STL only returns const data)
@@ -905,21 +905,18 @@ public: // transformation operations
 
 class CGNSStruPeriodicLess {
 public:
-  bool operator() (const CGNSStruPeriodic& f,const CGNSStruPeriodic& d) {
+  bool operator() (const CGNSStruPeriodic& f,const CGNSStruPeriodic& d) const {
     int s = f.srcName.compare(d.srcName);
     if (s != 0) return (s < 0);
     return (f.srcFace < d.srcFace);
   }
 };
 
-typedef set<CGNSStruPeriodic,CGNSStruPeriodicLess> CGNSStruPeriodicSet;
-
 // --- structure for storing periodic connections ------------------------------
 
 class CGNSUnstPeriodic {
 
-
-  // the data that are modified on the fly by looping on the CGNSUnstPeriodicSet
+  // the data that are modified on the fly by looping on the CGNSUnstPeriodic set
   //
   // - should not affect the ordering in CGNSUnstPeriodicLess
   // - should be modified with a const operation (STL only returns const data)
@@ -1016,7 +1013,7 @@ public: // vertex functions
 
 class CGNSUnstPeriodicLess {
  public:
-  bool operator() (const CGNSUnstPeriodic& f,const CGNSUnstPeriodic& d) {
+  bool operator() (const CGNSUnstPeriodic& f,const CGNSUnstPeriodic& d) const {
 
     if (f.nbPoints() == d.nbPoints()) {
 
@@ -1033,11 +1030,6 @@ class CGNSUnstPeriodicLess {
     return (f.nbPoints() < d.nbPoints());
   }
 };
-
-// -----------------------------------------------------------------------------
-
-typedef std::set<CGNSUnstPeriodic,
-                 CGNSUnstPeriodicLess> CGNSUnstPeriodicSet;
 
 // -----------------------------------------------------------------------------
 
@@ -1183,14 +1175,14 @@ bool readCGNSBoundaryConditions(int fileIndex,
   return true;
 }
 
-bool readCGNSPeriodicConnections(int fileIndex,
-                                 int baseIndex,
-                                 int zoneIndex,
-                                 char* zoneName,
-                                 ZoneType_t zoneType,
-                                 CGNSUnstPeriodicSet& connections)  {
-
-
+bool readCGNSPeriodicConnections
+  (int fileIndex,
+   int baseIndex,
+   int zoneIndex,
+   char* zoneName,
+   ZoneType_t zoneType,
+   std::set<CGNSUnstPeriodic, CGNSUnstPeriodicLess> &connections)
+{
   int nbConn(0);
   cg_nconns(fileIndex,baseIndex,zoneIndex,&nbConn);
 
@@ -1324,7 +1316,7 @@ int GModel::_readCGNSUnstructured(const std::string& fileName)
 
   // --- keep connectivity information
 
-  CGNSUnstPeriodicSet periodic;
+  std::set<CGNSUnstPeriodic, CGNSUnstPeriodicLess> periodic;
 
   // --- open file and read generic information
 
@@ -1804,7 +1796,7 @@ int GModel::_readCGNSStructured(const std::string &name)
     // int elementary_edge = getNumEdges();
     // int elementary_vertex = getNumVertices();
 
-    CGNSStruPeriodicSet periodicConnections;
+    set<CGNSStruPeriodic,CGNSStruPeriodicLess> periodicConnections;
 
     // Read the zones
     for (int index_zone = 1; index_zone <= nZones ; index_zone++) {
@@ -1974,7 +1966,8 @@ int GModel::_readCGNSStructured(const std::string &name)
                                 RotationCenter,RotationAngle,Translation);
 
           CGNSStruPeriodic pinv(pnew.getInverse());
-          CGNSStruPeriodicSet::iterator pIter = periodicConnections.find(pinv);
+          set<CGNSStruPeriodic,CGNSStruPeriodicLess>::iterator pIter =
+            periodicConnections.find(pinv);
 
           // create a new connection if inverse not found
           if (pIter == periodicConnections.end()) {
@@ -2131,7 +2124,8 @@ int GModel::_readCGNSStructured(const std::string &name)
 
     // --- now encode the periodic boundaries
 
-    CGNSStruPeriodicSet::iterator pIter = periodicConnections.begin();
+    set<CGNSStruPeriodic,CGNSStruPeriodicLess>::iterator pIter =
+      periodicConnections.begin();
 
     for (;pIter!=periodicConnections.end();++pIter) {
 
