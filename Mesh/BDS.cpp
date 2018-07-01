@@ -131,12 +131,12 @@ static void vector_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3,
   c[0] = a[1] * b[2] - a[2] * b[1];
 }
 
-static void vector_triangle_parametric(BDS_Point *p1, BDS_Point *p2,
-                                       BDS_Point *p3, double &c)
+static double vector_triangle_parametric(BDS_Point *p1, BDS_Point *p2,
+                                         BDS_Point *p3)
 {
-  double a[2] = {p1->u - p2->u, p1->v - p2->v};
-  double b[2] = {p1->u - p3->u, p1->v - p3->v};
-  c = a[0] * b[1] - a[1] * b[0];
+  double const a[2] = {p1->u - p2->u, p1->v - p2->v};
+  double const b[2] = {p1->u - p3->u, p1->v - p3->v};
+  return a[0] * b[1] - a[1] * b[0];
 }
 
 void normal_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3])
@@ -157,9 +157,7 @@ static double surface_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3)
 static double surface_triangle_param(BDS_Point *p1, BDS_Point *p2,
                                      BDS_Point *p3)
 {
-  double c;
-  vector_triangle_parametric(p1, p2, p3, c);
-  return 0.5 * c;
+  return 0.5 * vector_triangle_parametric(p1, p2, p3);
 }
 
 std::vector<BDS_Face *> BDS_Point::getTriangles() const
