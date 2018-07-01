@@ -444,20 +444,21 @@ BDS_Face *BDS_Mesh::find_triangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3)
   return 0;
 }
 
-BDS_Edge *BDS_Mesh::add_edge(int p1, int p2)
+BDS_Edge *BDS_Mesh::add_edge(int const p1, int const p2)
 {
   BDS_Edge *efound = find_edge(p1, p2);
   if(efound) return efound;
 
   BDS_Point *pp1 = find_point(p1);
   BDS_Point *pp2 = find_point(p2);
+
   if(!pp1 || !pp2) {
     Msg::Fatal("Could not find points %d or %d in BDS mesh", p1, p2);
     return 0;
   }
-  BDS_Edge *e = new BDS_Edge(pp1, pp2);
-  edges.push_back(e);
-  return e;
+  edges.push_back(new BDS_Edge(pp1, pp2));
+
+  return edges.back();
 }
 
 BDS_Face *BDS_Mesh::add_triangle(int p1, int p2, int p3)
