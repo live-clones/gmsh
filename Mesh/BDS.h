@@ -141,6 +141,7 @@ public:
   int iD;
   BDS_GeomEntity *g;
   std::vector<BDS_Edge *> edges;
+
   // just a transition
   double &lcBGM() { return _lcBGM; }
 
@@ -150,6 +151,7 @@ public:
   double const &lc() const { return _lcPTS; }
 
   bool operator<(const BDS_Point &other) const { return iD < other.iD; }
+
   void del(BDS_Edge *e)
   {
     edges.erase(std::remove(edges.begin(), edges.end(), e), edges.end());
@@ -307,24 +309,21 @@ public:
   }
 };
 
-class GeomLessThan {
-public:
+struct GeomLessThan {
   bool operator()(const BDS_GeomEntity *ent1, const BDS_GeomEntity *ent2) const
   {
     return *ent1 < *ent2;
   }
 };
 
-class PointLessThan {
-public:
+struct PointLessThan {
   bool operator()(const BDS_Point *ent1, const BDS_Point *ent2) const
   {
     return *ent1 < *ent2;
   }
 };
 
-class PointLessThanLexicographic {
-public:
+struct PointLessThanLexicographic {
   static double t;
   bool operator()(const BDS_Point *ent1, const BDS_Point *ent2) const
   {
@@ -337,8 +336,7 @@ public:
   }
 };
 
-class EdgeLessThan {
-public:
+struct EdgeLessThan {
   bool operator()(const BDS_Edge *ent1, const BDS_Edge *ent2) const
   {
     return *ent1 < *ent2;
