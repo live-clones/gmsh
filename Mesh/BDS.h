@@ -180,7 +180,7 @@ public:
   bool deleted;
   BDS_Point *p1, *p2;
   BDS_GeomEntity *g;
-  BDS_Face *faces(int i) const { return _faces[i]; }
+  BDS_Face *faces(std::size_t const i) const { return _faces[i]; }
   double length() const { return _length; }
   int numfaces() const { return (int)_faces.size(); }
   int numTriangles() const;
