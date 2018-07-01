@@ -2140,20 +2140,13 @@ static void addPhysical(GModel *const model, GEntity *entity,
     numPartitions = static_cast<partitionVertex*>(entity)->numPartitions();
   }
  
-#if __cplusplus >= 201103L
+#if __cplusplus < 201103L
   char intToChar[20];
 #endif
   std::vector<int> physical = parent->getPhysicalEntities();
   int dim = entity->dim();
   for(size_t i = 0; i < physical.size(); ++i){
-    std::string name = model->getPhysicalName(dim, physical[i]);
-#if __cplusplus >= 201103L
-    name += "_" + std::to_string(physical[i]);
-#else
-    sprintf(intToChar, "_%d", physical[i]);
-    name += intToChar;
-#endif
-    name += "_part{";
+    std::string name = "_part{";
     
     for(unsigned int i = 0; i < numPartitions; i++){
       if(i > 0) name += ",";
@@ -2179,9 +2172,9 @@ static void addPhysical(GModel *const model, GEntity *entity,
     }
     name += "}_";
 #if __cplusplus >= 201103L
-    name += std::to_string(dim);
+    name += std::to_string(physical[i]) + "_" + std::to_string(dim);
 #else
-    sprintf(intToChar, "%d", dim);
+    sprintf(intToChar, "%d_%d", physical[i], dim);
     name += intToChar;
 #endif
     
@@ -2220,15 +2213,15 @@ static void addPhysical(GModel *const model, GEntity *entity,
 #if __cplusplus >= 201103L
       name += std::to_string(partition);
 #else
-      sprintf(intToChar, "%d", partition);
+      sprintf(intToChar, "%d", physical[i]);
       name += intToChar;
 #endif
     }
     name += "}_";
 #if __cplusplus >= 201103L
-    name += std::to_string(dim);
+    name += "0_" + std::to_string(dim);
 #else
-    sprintf(intToChar, "%d", dim);
+    sprintf(intToChar, "0_%d", physical[i], dim);
     name += intToChar;
 #endif
     
