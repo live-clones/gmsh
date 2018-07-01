@@ -359,13 +359,11 @@ public:
     double v[3];
     for(int i = 0; i < 3; i++)
       v[i] = integrate(&val[i], 3);
-    double d;
-    prosca(t, v, &d);
-    return d;
+    return prosca(t, v);
   }
   int isInside(double u, double v, double w)
   {
-    if(u < -(1. + TOL) || u > (1. + TOL) || fabs(v) > TOL || fabs(w) > TOL)
+    if(u < -(1. + TOL) || u > (1. + TOL) || std::abs(v) > TOL || std::abs(w) > TOL)
       return 0;
     return 1;
   }
@@ -441,9 +439,7 @@ public:
     double v[3];
     for(int i = 0; i < 3; i++)
       v[i] = integrate(&val[i], 3);
-    double d;
-    prosca(n, v, &d);
-    return d;
+    return prosca(n, v);
   }
 #if 0 // faster, but only valid for triangles in the z=0 plane
   void xyz2uvw(double xyz[3], double uvw[3])
@@ -536,14 +532,12 @@ public:
     double v[3];
     for(int i = 0; i < 3; i++)
       v[i] = integrate(&val[i], 3);
-    double d;
-    prosca(n, v, &d);
-    return d;
+    return prosca(n, v);
   }
   int isInside(double u, double v, double w)
   {
     if(u < -(1. + TOL) || v < -(1. + TOL) || u > (1. + TOL) || v > (1. + TOL) ||
-       fabs(w) > TOL)
+       std::abs(w) > TOL)
       return 0;
     return 1;
   }

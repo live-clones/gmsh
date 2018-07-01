@@ -777,10 +777,8 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
   normal_triangle(_op1, _op2, _op3, on);
   normal_triangle(_oq1, _oq2, _oq3, oq);
 
-  double cosnq;
-  prosca(n, q, &cosnq);
-  double cosonq;
-  prosca(on, oq, &cosonq);
+  double const cosnq = prosca(n, q);
+  double const cosonq = prosca(on, oq);
 
   double qa1 = qmTriangle::gamma(_p1, _p2, _p3);
   double qa2 = qmTriangle::gamma(_q1, _q2, _q3);
@@ -788,17 +786,15 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
   double qb2 = qmTriangle::gamma(_oq1, _oq2, _oq3);
 
   // we swap for a better configuration
-  double mina = std::min(qa1, qa2);
-  double minb = std::min(qb1, qb2);
+  double const mina = std::min(qa1, qa2);
+  double const minb = std::min(qb1, qb2);
 
   // if(cosnq < .3 && cosonq > .5 && minb > .1)
   //   printf("mina = %g minb = %g cos %g %g\n",mina,minb,cosnq,cosonq);
-
   if(cosnq < 0.3 && cosonq > 0.5 && minb > 0.1) return true;
 
-  if(minb > mina) return true;
+  return minb > mina;
   //  if(mina > minb && cosnq <= cosonq)return true;
-  return false;
 }
 
 void swap_config(BDS_Edge *e, BDS_Point **p11, BDS_Point **p12, BDS_Point **p13,
@@ -1280,7 +1276,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
     oldWorst = std::min(oldWorst, qmTriangle::gamma(*it));
     double ps;
     if(gf->geomType() == GEntity::DiscreteSurface) {
-      prosca(norm1, normal, &ps);
+      ps = prosca(norm1, normal);
       if(ps > 0) return false;
     }
     if(isSphere) {
@@ -1291,7 +1287,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
       if(ps < 0) return false;
     }
     else {
-      prosca(norm1, norm2, &ps);
+      ps = prosca(norm1, norm2);
       double threshold = 0.5;
       if(ps < threshold) { return false; }
     }

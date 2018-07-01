@@ -306,9 +306,9 @@ SPoint2 gmshFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
   if(s->Typ == MSH_SURF_PLAN){
     double x, y, z, VX[3], VY[3];
     getMeanPlaneData(VX, VY, x, y, z);
-    double u, v, vec[3] = {qp.x() - x, qp.y() - y, qp.z() - z};
-    prosca(vec, VX, &u);
-    prosca(vec, VY, &v);
+    double const vec[3] = {qp.x() - x, qp.y() - y, qp.z() - z};
+    double const u = prosca(vec, VX);
+    double const v = prosca(vec, VY);
     return SPoint2(u, v);
   }
   else{

@@ -146,8 +146,8 @@ static bool edgeSwapTestAngle(BDS_Edge *e, double min_cos)
   double norm2[3];
   normal_triangle(n1[0], n1[1], n1[2], norm1);
   normal_triangle(n2[0], n2[1], n2[2], norm2);
-  double cosa;prosca (norm1, norm2, &cosa);
-  return cosa > min_cos;
+
+  return prosca(norm1, norm2) > min_cos;
 }
 
 static bool evalSwapForOptimize(BDS_Edge *e, GFace *gf, BDS_Mesh &m)
@@ -182,8 +182,8 @@ static bool evalSwapForOptimize(BDS_Edge *e, GFace *gf, BDS_Mesh &m)
   normal_triangle(p21, p22, p23, norm12);
   normal_triangle(p31, p32, p33, norm21);
   normal_triangle(p41, p42, p43, norm22);
-  double cosa; prosca(norm11, norm12, &cosa);
-  double cosb; prosca(norm21, norm22, &cosb);
+  double const cosa = prosca(norm11, norm12);
+  double const cosb = prosca(norm21, norm22);
   // double smoothIndicator = cosb - cosa;
   // bool smoothShouldSwap = (cosa < 0.1 && cosb > 0.3);
   // bool smoothCouldSwap = !(cosb < cosa * .5);

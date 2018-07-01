@@ -627,7 +627,7 @@ int openglWindow::handle(int event)
       // find closest point to the center of gravity
       double r[3] = {CTX::instance()->cg[0] - p[0], CTX::instance()->cg[1] - p[1],
                      CTX::instance()->cg[2] - p[2]}, t;
-      prosca(r, d, &t);
+      t = prosca(r, d);
       for(int i = 0; i < 3; i++){
         if(!FlGui::instance()->elementaryContext->frozenPointCoord(i)){
           _point[i] = p[i] + t * d[i];

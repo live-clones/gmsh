@@ -101,9 +101,9 @@ inline void prodve(double a[3], double b[3], double c[3])
   c[0] = a[1] * b[2] - a[2] * b[1];
 }
 
-inline void prosca(double a[3], double b[3], double *c)
+inline double prosca(double const a[3], double const b[3])
 {
-  *c = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
 void matvec(double mat[3][3], double vec[3], double res[3]);

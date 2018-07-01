@@ -118,8 +118,8 @@ double GMSH_NearToFarFieldPlugin::getFarFieldJin(std::vector<element*> &allElems
     for(int nod = 0; nod < numNodes; nod++){
       double x, y, z;
       e->getXYZ(nod, x, y, z) ;
-      double rr, r_nod[3] = {x, y, z};
-      prosca(r_nod, r, &rr) ;
+      double r_nod[3] = {x, y, z};
+      double rr = prosca(r_nod, r) ;
       double e_jk0rr[2] = {cos(k0*rr), sin(k0*rr)} ;
 
       for(int comp = 0; comp < numComps; comp++){
@@ -198,9 +198,9 @@ double GMSH_NearToFarFieldPlugin::getFarFieldMonk(std::vector<element*> &allElem
     int numNodes = e->getNumNodes() ;
     std::vector<double> integrand_r(numNodes * 3), integrand_i(numNodes * 3);
     for(int nod = 0; nod < numNodes; nod++){
-      double y[3], xHat_dot_y;
+      double y[3];
       e->getXYZ(nod, y[0], y[1], y[2]) ;
-      prosca(xHat, y, &xHat_dot_y) ;
+      double const xHat_dot_y = prosca(xHat, y);
       double n_x_e_r[3] = {-ms[0][i], -ms[0][i + 1], -ms[0][i + 2]};
       double n_x_e_i[3] = {-ms[1][i], -ms[1][i + 1], -ms[1][i + 2]};
       double n_x_h_r[3] = {js[0][i], js[0][i + 1], js[0][i + 2]};
