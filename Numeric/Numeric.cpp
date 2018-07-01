@@ -38,16 +38,16 @@ double myacos(double a)
 double norm2(double a[3][3])
 {
   double norm2sq =
-    gmsh_SQU(a[0][0])+
-    gmsh_SQU(a[0][1])+
-    gmsh_SQU(a[0][2])+
-    gmsh_SQU(a[1][0])+
-    gmsh_SQU(a[1][1])+
-    gmsh_SQU(a[1][2])+
-    gmsh_SQU(a[2][0])+
-    gmsh_SQU(a[2][1])+
-    gmsh_SQU(a[2][2]);
-  return sqrt(norm2sq);
+    std::pow(a[0][0], 2)+
+    std::pow(a[0][1], 2)+
+    std::pow(a[0][2], 2)+
+    std::pow(a[1][0], 2)+
+    std::pow(a[1][1], 2)+
+    std::pow(a[1][2], 2)+
+    std::pow(a[2][0], 2)+
+    std::pow(a[2][1], 2)+
+    std::pow(a[2][2], 2);
+  return std::sqrt(norm2sq);
 }
 
 void matvec(double mat[3][3], double vec[3], double res[3])
@@ -100,29 +100,27 @@ void normal2points(double x0, double y0, double z0,
 
 int sys2x2(double mat[2][2], double b[2], double res[2])
 {
-  double det, ud, norm;
-  int i;
+  double const norm = std::pow(mat[0][0], 2) + std::pow(mat[1][1], 2) +
+                      std::pow(mat[0][1], 2) + std::pow(mat[1][0], 2);
 
-  norm = gmsh_SQU(mat[0][0]) + gmsh_SQU(mat[1][1]) + gmsh_SQU(mat[0][1]) + gmsh_SQU(mat[1][0]);
-  det = mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1];
+  double const det = mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1];
 
   // TOLERANCE ! WARNING WARNING
-  if(norm == 0.0 || fabs(det) / norm < 1.e-12) {
+  if(norm == 0.0 || std::abs(det) / norm < 1.e-12) {
     if(norm)
       Msg::Debug("Assuming 2x2 matrix is singular (det/norm == %.16g)",
-                 fabs(det) / norm);
+                 std::abs(det) / norm);
     res[0] = res[1] = 0.0;
     return 0;
   }
-  ud = 1. / det;
+  double const ud = 1.0 / det;
 
   res[0] = b[0] * mat[1][1] - mat[0][1] * b[1];
   res[1] = mat[0][0] * b[1] - mat[1][0] * b[0];
 
-  for(i = 0; i < 2; i++)
-    res[i] *= ud;
+  for(int i = 0; i < 2; i++) res[i] *= ud;
 
-  return (1);
+  return 1;
 }
 
 double det3x3(double mat[3][3])
@@ -184,19 +182,18 @@ int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det)
 
   out = sys3x3(mat, b, res, det);
   norm =
-    gmsh_SQU(mat[0][0]) + gmsh_SQU(mat[0][1]) + gmsh_SQU(mat[0][2]) +
-    gmsh_SQU(mat[1][0]) + gmsh_SQU(mat[1][1]) + gmsh_SQU(mat[1][2]) +
-    gmsh_SQU(mat[2][0]) + gmsh_SQU(mat[2][1]) + gmsh_SQU(mat[2][2]);
+    std::pow(mat[0][0], 2) + std::pow(mat[0][1], 2) + std::pow(mat[0][2], 2) +
+    std::pow(mat[1][0], 2) + std::pow(mat[1][1], 2) + std::pow(mat[1][2], 2) +
+    std::pow(mat[2][0], 2) + std::pow(mat[2][1], 2) + std::pow(mat[2][2], 2);
 
   // TOLERANCE ! WARNING WARNING
-  if(norm == 0.0 || fabs(*det) / norm < 1.e-12) {
+  if(norm == 0.0 || std::abs(*det) / norm < 1.e-12) {
     if(norm)
       Msg::Debug("Assuming 3x3 matrix is singular (det/norm == %.16g)",
-                 fabs(*det) / norm);
+                 std::abs(*det) / norm);
     res[0] = res[1] = res[2] = 0.0;
     return 0;
   }
-
   return out;
 }
 

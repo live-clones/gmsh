@@ -6,23 +6,20 @@
 #ifndef _NUMERIC_H_
 #define _NUMERIC_H_
 
-#include <math.h>
+#include <cmath>
 #include <vector>
+
 #include "fullMatrix.h"
 #include "SPoint2.h"
 #include "SPoint3.h"
 #include "SVector3.h"
 
-//#define myhypot(a,b) (sqrt((a)*(a)+(b)*(b)))
-
 template <class T> inline double myhypot(const T &a, const T &b)
 {
-  return sqrt((a) * (a) + (b) * (b));
+  return std::sqrt(a * a + b * b);
 }
 
 template <class T> inline int gmsh_sign(const T &x) { return (x < 0) ? -1 : 1; }
-
-template <class T> inline T gmsh_SQU(const T &x) { return (x * x); }
 
 struct mean_plane {
   double plan[3][3];

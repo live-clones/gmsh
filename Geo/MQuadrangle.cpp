@@ -149,7 +149,7 @@ int MQuadrangle::getNumFacesRep(bool curved)
 #if defined(HAVE_VISUDEV)
   if (CTX::instance()->heavyVisu) {
     if (CTX::instance()->mesh.numSubEdges == 1) return 4;
-    return 2 * gmsh_SQU(CTX::instance()->mesh.numSubEdges);
+    return 2 * std::pow(CTX::instance()->mesh.numSubEdges, 2);
   }
 #endif
   return 2;
@@ -157,19 +157,19 @@ int MQuadrangle::getNumFacesRep(bool curved)
 
 int MQuadrangleN::getNumFacesRep(bool curved)
 {
-  return curved ? 2 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+  return curved ? 2 * std::pow(CTX::instance()->mesh.numSubEdges, 2) :
          MQuadrangle::getNumFacesRep(curved);
 }
 
 int MQuadrangle8::getNumFacesRep(bool curved)
 {
-  return curved ? 2 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+  return curved ? 2 * std::pow(CTX::instance()->mesh.numSubEdges, 2) :
          MQuadrangle::getNumFacesRep(curved);
 }
 
 int MQuadrangle9::getNumFacesRep(bool curved)
 {
-  return curved ? 2 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+  return curved ? 2 * std::pow(CTX::instance()->mesh.numSubEdges, 2) :
          MQuadrangle::getNumFacesRep(curved);
 }
 
