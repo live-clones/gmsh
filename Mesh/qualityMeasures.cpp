@@ -163,7 +163,7 @@ double qmTriangle::eta(MTriangle *el)
   double a3 = 180 * angle3Vertices(_v[2], _v[0], _v[1]) / M_PI;
 
   double amin = std::min(std::min(a1,a2),a3);
-  double angle = fabs(60. - amin);
+  double angle = std::abs(60. - amin);
   return 1.-angle/60;
 }
 
@@ -209,18 +209,16 @@ double qmTriangle::angles(MTriangle *e)
     prodve(v3,v4,v34);
     norme(v12);
     norme(v34);
-    double orientation;
-    prosca(v12,v34,&orientation);
+    double const orientation = prosca(v12, v34);
 
     // If the triangle is "flipped" it's no good
     if (orientation < 0)
       return -std::numeric_limits<double>::max();
 
-    double c;
-    prosca(v1,v2,&c);
-    double x = acos(c)-M_PI/3;
+    double const c = prosca(v1,v2);
+    double x = std::acos(c)-M_PI/3;
     //double angle = (x+M_PI/3)/M_PI*180;
-    double quality = (atan(a*(x+M_PI/9)) + atan(a*(M_PI/9-x)))/den;
+    double quality = (std::atan(a*(x+M_PI/9)) + std::atan(a*(M_PI/9-x)))/den;
     worst_quality = std::min(worst_quality, quality);
 
     //minAngle = std::min(angle, minAngle);
@@ -281,10 +279,9 @@ void qmTriangle::NCJ(const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2,
 
   // Compute NCJ at vertex from unit vectors a and b as 0.5*||a^b||/A_equilateral
   // Factor = 2./sqrt(3.) = 0.5/A_equilateral
-  static const double fact = 2./sqrt(3.);
-  NCJ[0] = fact * dot(crossprod(v01n, -v20n), normal);
-  NCJ[1] = fact * dot(crossprod(v12n, -v01n), normal);
-  NCJ[2] = fact * dot(crossprod(v20n, -v12n), normal);
+  NCJ[0] = 2.0 / std::sqrt(3.0) * dot(crossprod(v01n, -v20n), normal);
+  NCJ[1] = 2.0 / std::sqrt(3.0) * dot(crossprod(v12n, -v01n), normal);
+  NCJ[2] = 2.0 / std::sqrt(3.0) * dot(crossprod(v20n, -v12n), normal);
 }
 
 
@@ -446,23 +443,19 @@ double qmQuadrangle::angles(MQuadrangle *e)
     prodve(v3,v4,v34);
     norme(v12);
     norme(v34);
-    double orientation;
-    prosca(v12,v34,&orientation);
 
     // If the if the triangle is "flipped" it's no good
+    // double const orientation = prosca(v12, v34);
     //    if (orientation < 0)
     //      return -std::numeric_limits<double>::max();
 
-    double c;
-    prosca(v1,v2,&c);
-    double x = fabs(acos(c))-M_PI/2;
-    //double angle = fabs(acos(c))*180/M_PI;
-    double quality = (atan(a*(x+M_PI/4)) + atan(a*(2*M_PI/4 - (x+M_PI/4))))/den;
+    double const c = prosca(v1, v2);
+    double const x = std::abs(std::acos(c))-M_PI/2;
+    //double angle = std::fabs(std::acos(c))*180/M_PI;
+    double const quality = (std::atan(a*(x+M_PI/4)) + std::atan(a*(2*M_PI/4 - (x+M_PI/4))))/den;
     worst_quality = std::min(worst_quality, quality);
   }
-
   return worst_quality;
-
 }
 
 
@@ -668,7 +661,7 @@ double qmTetrahedron::gamma(const double &x1, const double &y1, const double &z1
   double p3[3] = {x4, y4, z4};
 
   *volume =fabs (robustPredicates::orient3d (p0,p1,p2,p3)) / 6.0;
-  
+
   // double mat[3][3];
   // mat[0][0] = x2 - x1;
   // mat[0][1] = x3 - x1;

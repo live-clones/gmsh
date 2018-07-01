@@ -615,9 +615,9 @@ void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
   svd[1] = sigma(1);
   svd[2] = sigma(2);
   int min;
-  if(fabs(svd[0]) < fabs(svd[1]) && fabs(svd[0]) < fabs(svd[2]))
+  if(std::abs(svd[0]) < std::abs(svd[1]) && std::abs(svd[0]) < std::abs(svd[2]))
     min = 0;
-  else if(fabs(svd[1]) < fabs(svd[0]) && fabs(svd[1]) < fabs(svd[2]))
+  else if(std::abs(svd[1]) < std::abs(svd[0]) && std::abs(svd[1]) < std::abs(svd[2]))
     min = 1;
   else
     min = 2;
@@ -630,7 +630,7 @@ void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
 
   // check coherence of results for non-plane surfaces
   if(geomType() != Plane && geomType() != DiscreteSurface) {
-    double res2[3], c[3], cosc, sinc, angplan;
+    double res2[3], c[3], sinc, angplan;
     double eps = 1.e-3;
 
     GPoint v1 = point(0.5, 0.5);
@@ -645,12 +645,13 @@ void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
     norme(t1);
     norme(t2);
     // prodve(t1, t2, res2);
-    // Warning: the rest of the code assumes res = t2 x t1, not t1 x t2 (WTF?)
+    // WARNING: the rest of the code assumes res = t2 x t1, not t1 x t2 (WTF?)
     prodve(t2, t1, res2);
     norme(res2);
+
     prodve(res, res2, c);
-    prosca(res, res2, &cosc);
-    sinc = sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
+    double const cosc = prosca(res, res2);
+    sinc = std::sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
     angplan = myatan2(sinc, cosc);
     angplan = angle_02pi(angplan) * 180. / M_PI;
     if((angplan > 70 && angplan < 110) || (angplan > 260 && angplan < 280)) {

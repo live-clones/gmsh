@@ -17,33 +17,31 @@ xyzv::xyzv(const xyzv &other)
   x = other.x;
   y = other.y;
   z = other.z;
-  scaleValue = other.scaleValue;  // Added by Trevor Strickler 07/10/2013
-  scale_numvals = other.scale_numvals;  // Added by Trevor Strickler 07/10/2013
+  scaleValue = other.scaleValue; // Added by Trevor Strickler 07/10/2013
+  scale_numvals = other.scale_numvals; // Added by Trevor Strickler 07/10/2013
   nbvals = other.nbvals;
   nboccurrences = other.nboccurrences;
   if(other.vals && other.nbvals) {
     vals = new double[other.nbvals];
-    for(int i = 0; i < nbvals; i++)
-      vals[i] = other.vals[i];
+    for(int i = 0; i < nbvals; i++) vals[i] = other.vals[i];
   }
   else
     vals = 0;
 }
 
-xyzv &xyzv::operator = (const xyzv &other)
+xyzv &xyzv::operator=(const xyzv &other)
 {
   if(this != &other) {
     x = other.x;
     y = other.y;
     z = other.z;
-    scaleValue = other.scaleValue;  // Added by Trevor Strickler 07/10/2013
-    scale_numvals = other.scale_numvals;  // Added by Trevor Strickler 07/10/2013
+    scaleValue = other.scaleValue; // Added by Trevor Strickler 07/10/2013
+    scale_numvals = other.scale_numvals; // Added by Trevor Strickler 07/10/2013
     nbvals = other.nbvals;
     nboccurrences = other.nboccurrences;
     if(other.vals && other.nbvals) {
       vals = new double[other.nbvals];
-      for(int i = 0; i < nbvals; i++)
-        vals[i] = other.vals[i];
+      for(int i = 0; i < nbvals; i++) vals[i] = other.vals[i];
     }
   }
   return *this;
@@ -53,8 +51,7 @@ void xyzv::update(int n, double *v)
 {
   if(!vals) {
     vals = new double[n];
-    for(int i = 0; i < n; i++)
-      vals[i] = 0.0;
+    for(int i = 0; i < n; i++) vals[i] = 0.0;
     nbvals = n;
     nboccurrences = 0;
   }
@@ -62,23 +59,20 @@ void xyzv::update(int n, double *v)
     return; // error
   double x1 = (double)(nboccurrences) / (double)(nboccurrences + 1);
   double x2 = 1. / (double)(nboccurrences + 1);
-  for(int i = 0; i < nbvals; i++)
-    vals[i] = (x1 * vals[i] + x2 * v[i]);
+  for(int i = 0; i < nbvals; i++) vals[i] = (x1 * vals[i] + x2 * v[i]);
   nboccurrences++;
 }
 
 // Added by Trevor Strickler
 void xyzv::scale_update(double scale_inp)
 {
-  if( fabs(1.0 - scale_inp) <= eps )
-    scale_inp = 1.0;
-  if( scale_inp != 1.0 || scaleValue != 1.0 ){
+  if(std::abs(1.0 - scale_inp) <= eps) scale_inp = 1.0;
+  if(scale_inp != 1.0 || scaleValue != 1.0) {
     double x1 = (double)(scale_numvals) / (double)(scale_numvals + 1);
     double x2 = 1.0 / (double)(scale_numvals + 1);
-    scaleValue = ( x1 * scaleValue + x2 * scale_inp);
+    scaleValue = (x1 * scaleValue + x2 * scale_inp);
   }
-  if( fabs(1.0 - scaleValue) <= eps )
-    scaleValue = 1.0;
+  if(std::abs(1.0 - scaleValue) <= eps) scaleValue = 1.0;
   scale_numvals++;
 }
 
@@ -93,24 +87,24 @@ void smooth_data::add(double x, double y, double z, int n, double *vals)
   else {
     // we can do this because we know that it will not destroy the set
     // ordering
-    xyzv *p = (xyzv *) & (*it);
+    xyzv *p = (xyzv *)&(*it);
     p->update(n, vals);
   }
 }
 
-//added by Trevor Strickler
+// added by Trevor Strickler
 void smooth_data::add_scale(double x, double y, double z, double scale_val)
 {
   xyzv xyz(x, y, z);
   std::set<xyzv, lessthanxyzv>::const_iterator it = c.find(xyz);
-  if(it == c.end()){
+  if(it == c.end()) {
     xyz.scale_update(scale_val);
     c.insert(xyz);
   }
   else {
     // we can do this because we know that it will not destroy the set
     // ordering
-    xyzv *p = (xyzv *) & (*it);
+    xyzv *p = (xyzv *)&(*it);
     p->scale_update(scale_val);
   }
 }
@@ -118,19 +112,16 @@ void smooth_data::add_scale(double x, double y, double z, double scale_val)
 bool smooth_data::get(double x, double y, double z, int n, double *vals)
 {
   std::set<xyzv, lessthanxyzv>::const_iterator it = c.find(xyzv(x, y, z));
-  if(it == c.end())
-    return false;
-  for(int k = 0; k < n; k++)
-    vals[k] = it->vals[k];
+  if(it == c.end()) return false;
+  for(int k = 0; k < n; k++) vals[k] = it->vals[k];
   return true;
 }
 
-//added by Trevor Strickler
+// added by Trevor Strickler
 bool smooth_data::get_scale(double x, double y, double z, double *scale_val)
 {
   std::set<xyzv, lessthanxyzv>::const_iterator it = c.find(xyzv(x, y, z));
-  if(it == c.end())
-    return false;
+  if(it == c.end()) return false;
   (*scale_val) = it->scaleValue;
   return true;
 }
@@ -138,7 +129,7 @@ bool smooth_data::get_scale(double x, double y, double z, double *scale_val)
 void smooth_data::normalize()
 {
   std::set<xyzv, lessthanxyzv>::iterator it = c.begin();
-  while(it != c.end()){
+  while(it != c.end()) {
     if(it->nbvals == 3) norme(it->vals);
     it++;
   }
@@ -150,15 +141,15 @@ bool smooth_data::exportview(const std::string &filename)
   if(!fp) return false;
   fprintf(fp, "View \"data\" {\n");
   std::set<xyzv, lessthanxyzv>::iterator it = c.begin();
-  while(it != c.end()){
-    switch(it->nbvals){
+  while(it != c.end()) {
+    switch(it->nbvals) {
     case 1:
-      fprintf(fp, "SP(%.16g,%.16g,%.16g){%.16g};\n",
-              it->x, it->y, it->z, it->vals[0]);
+      fprintf(fp, "SP(%.16g,%.16g,%.16g){%.16g};\n", it->x, it->y, it->z,
+              it->vals[0]);
       break;
     case 3:
-      fprintf(fp, "VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",
-              it->x, it->y, it->z, it->vals[0], it->vals[1], it->vals[2]);
+      fprintf(fp, "VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n", it->x, it->y,
+              it->z, it->vals[0], it->vals[1], it->vals[2]);
       break;
     }
     it++;
@@ -176,20 +167,17 @@ float xyzn::angle(int i, char nx, char ny, char nz)
 {
   // returns the angle (in [-180,180]) between the ith normal stored
   // at point xyz and the new normal nx,ny,nz
-  double a[3] = {char2float(n[i].nx),
-                 char2float(n[i].ny),
-                 char2float(n[i].nz)};
-  double b[3] = {char2float(nx),
-                 char2float(ny),
-                 char2float(nz)};
+  double a[3] = {char2float(n[i].nx), char2float(n[i].ny), char2float(n[i].nz)};
+  double b[3] = {char2float(nx), char2float(ny), char2float(nz)};
   norme(a);
   norme(b);
+
   double c[3];
   prodve(a, b, c);
-  double cosc;
-  prosca(a, b, &cosc);
-  double sinc = sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
-  double angplan = myatan2(sinc, cosc);
+
+  double const cosc = prosca(a, b);
+  double const sinc = std::sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
+  double const angplan = myatan2(sinc, cosc);
   return (float)(angplan * 180. / M_PI);
 }
 
@@ -203,11 +191,11 @@ void xyzn::update(char nx, char ny, char nz, float tol)
   // store the average value as the cluster center as we go), but it
   // seems to work very nicely in practice (and it's faster than
   // storing everyting and averaging at the end)
-  for(unsigned int i = 0; i < n.size(); i++){
-    if(tol >= 180. || fabs(angle(i, nx, ny, nz)) < tol){
+  for(unsigned int i = 0; i < n.size(); i++) {
+    if(tol >= 180. || std::abs(angle(i, nx, ny, nz)) < tol) {
       // just ignore it if we have more than 100 contributions to a
       // single point...
-      if(n[i].nb < 100){
+      if(n[i].nb < 100) {
         float c1 = (float)(n[i].nb) / (float)(n[i].nb + 1);
         float c2 = 1.0F / (float)(n[i].nb + 1);
         n[i].nx = (char)(c1 * n[i].nx + c2 * nx);
@@ -224,40 +212,37 @@ void xyzn::update(char nx, char ny, char nz, float tol)
   n.push_back(nn);
 }
 
-void smooth_normals::add(double x, double y, double z,
-                         double nx, double ny, double nz)
+void smooth_normals::add(double x, double y, double z, double nx, double ny,
+                         double nz)
 {
   xyzn xyz((float)x, (float)y, (float)z);
   std::set<xyzn, lessthanxyzn>::const_iterator it = c.find(xyz);
   if(it == c.end()) {
-    xyz.update(float2char((float)nx),
-               float2char((float)ny),
+    xyz.update(float2char((float)nx), float2char((float)ny),
                float2char((float)nz), tol);
     c.insert(xyz);
   }
   else {
     // we can do this because we know that it will not destroy the set
     // ordering
-    xyzn *p = (xyzn *) & (*it);
-    p->update(float2char((float)nx),
-              float2char((float)ny),
+    xyzn *p = (xyzn *)&(*it);
+    p->update(float2char((float)nx), float2char((float)ny),
               float2char((float)nz), tol);
   }
 }
 
-bool smooth_normals::get(double x, double y, double z,
-                         double &nx, double &ny, double &nz)
+bool smooth_normals::get(double x, double y, double z, double &nx, double &ny,
+                         double &nz)
 {
   std::set<xyzn, lessthanxyzn>::const_iterator it =
     c.find(xyzn((float)x, (float)y, (float)z));
 
   if(it == c.end()) return false;
 
-  xyzn *p = (xyzn *) & (*it);
-  for(unsigned int i = 0; i < p->n.size(); i++){
-    if(fabs(p->angle(i, float2char((float)nx),
-                     float2char((float)ny),
-                     float2char((float)nz))) < tol) {
+  xyzn *p = (xyzn *)&(*it);
+  for(unsigned int i = 0; i < p->n.size(); i++) {
+    if(std::abs(p->angle(i, float2char((float)nx), float2char((float)ny),
+                         float2char((float)nz))) < tol) {
       nx = char2float(p->n[i].nx);
       ny = char2float(p->n[i].ny);
       nz = char2float(p->n[i].nz);

@@ -190,8 +190,9 @@ void circumCenterMetricXYZ(double *p1, double *p2, double *p3, SMetric3 & metric
   double vz[3]; prodve(vx, vy, vz); prodve(vz, vx, vy);
   norme(vx); norme(vy); norme(vz);
   double p1P[2] = {0.0, 0.0};
-  double p2P[2]; prosca(v1, vx, &p2P[0]); prosca(v1, vy, &p2P[1]);
-  double p3P[2]; prosca(v2, vx, &p3P[0]); prosca(v2, vy, &p3P[1]);
+  double p2P[2] = {prosca(v1, vx), prosca(v1, vy)};
+  double p3P[2] = {prosca(v2, vx), prosca(v2, vy)};
+
   double resP[2];
 
   fullMatrix<double> T(3,3);

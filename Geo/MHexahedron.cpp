@@ -405,7 +405,7 @@ int MHexahedron::getNumFacesRep(bool curved)
 #if defined(HAVE_VISUDEV)
   if (CTX::instance()->heavyVisu) {
     if (CTX::instance()->mesh.numSubEdges == 1) return 24;
-    return 12 * gmsh_SQU(CTX::instance()->mesh.numSubEdges);
+    return 12 * std::pow(CTX::instance()->mesh.numSubEdges, 2);
   }
 #endif
   return 12;
@@ -413,19 +413,19 @@ int MHexahedron::getNumFacesRep(bool curved)
 
 int MHexahedron20::getNumFacesRep(bool curved)
 {
-  return curved ? 12 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+  return curved ? 12 * std::pow(CTX::instance()->mesh.numSubEdges, 2) :
          MHexahedron::getNumFacesRep(curved);
 }
 
 int MHexahedron27::getNumFacesRep(bool curved)
 {
-  return curved ? 12 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+  return curved ? 12 * std::pow(CTX::instance()->mesh.numSubEdges, 2) :
          MHexahedron::getNumFacesRep(curved);
 }
 
 int MHexahedronN::getNumFacesRep(bool curved)
 {
-  return curved ? 12 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+  return curved ? 12 * std::pow(CTX::instance()->mesh.numSubEdges, 2) :
          MHexahedron::getNumFacesRep(curved);
 }
 

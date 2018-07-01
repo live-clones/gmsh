@@ -2525,7 +2525,7 @@ int ExtrudePoint(int type, int ip,
     T[0] = pv->Pos.X - X0;
     T[1] = pv->Pos.Y - X1;
     T[2] = pv->Pos.Z - X2;
-    prosca(T, Ax, &d);
+    d = prosca(T, Ax);
     newp->Pos.X = X0 + d * Ax[0];
     newp->Pos.Y = X1 + d * Ax[1];
     newp->Pos.Z = X2 + d * Ax[2];

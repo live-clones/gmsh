@@ -1248,9 +1248,8 @@ double MElement::integrateCirc(double val[], int edge, int pOrder, int order)
 
   double t[3] = {v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(), v[1]->z() - v[0]->z()};
   norme(t);
-  double result;
-  prosca(t, intv, &result);
-  return result;
+
+  return prosca(t, intv);
 }
 
 double MElement::integrateFlux(double val[], int face, int pOrder, int order)
@@ -1292,9 +1291,8 @@ double MElement::integrateFlux(double val[], int face, int pOrder, int order)
   normal3points(v[0]->x(), v[0]->y(), v[0]->z(),
                 v[1]->x(), v[1]->y(), v[1]->z(),
                 v[2]->x(), v[2]->y(), v[2]->z(), n);
-  double result;
-  prosca(n, intv, &result);
-  return result;
+
+  return prosca(n, intv);
 }
 
 void MElement::writeMSH(FILE *fp, bool binary, int entity,

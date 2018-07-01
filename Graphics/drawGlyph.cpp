@@ -268,7 +268,7 @@ void drawContext::drawCube(double x, double y, double z, double val[9],
   double x5[3] = {x - d1[0] + d1[0] - d2[0] , x - d0[1] + d1[1] - d2[1] , z - d0[2] + d1[2] - d2[2] };
   double x6[3] = {x - d1[0] - d1[0] - d2[0] , x - d0[1] - d1[1] - d2[1] , z - d0[2] - d1[2] - d2[2] };
   double x7[3] = {x + d1[0] - d1[0] - d2[0] , x + d0[1] - d1[1] - d2[1] , z + d0[2] - d1[2] - d2[2] };
-  
+
   if(light) glEnable(GL_LIGHTING);
   glPushMatrix();
 
@@ -388,15 +388,15 @@ void drawContext::drawTaperedCylinder(double width, double val1, double val2,
   double dx = x[1] - x[0];
   double dy = y[1] - y[0];
   double dz = z[1] - z[0];
-  double length = sqrt(dx * dx + dy * dy + dz * dz);
+  double const length = std::sqrt(dx * dx + dy * dy + dz * dz);
   double fact = width * pixel_equiv_x / s[0] / (ValMax - ValMin);
   double radius1 = (val1 - ValMin) * fact;
   double radius2 = (val2 - ValMin) * fact;
   double zdir[3] = {0., 0., 1.};
   double vdir[3] = {dx / length, dy / length, dz / length};
-  double axis[3], cosphi, phi;
+  double axis[3], phi;
   prodve(zdir, vdir, axis);
-  prosca(zdir, vdir, &cosphi);
+  double const cosphi = prosca(zdir, vdir);
   if(!norme(axis)){
     axis[0] = 0.;
     axis[1] = 1.;
@@ -420,13 +420,13 @@ void drawContext::drawCylinder(double width, double *x, double *y, double *z, in
   double dx = x[1] - x[0];
   double dy = y[1] - y[0];
   double dz = z[1] - z[0];
-  double length = sqrt(dx * dx + dy * dy + dz * dz);
+  double const length = std::sqrt(dx * dx + dy * dy + dz * dz);
   double radius = width * pixel_equiv_x / s[0];
   double zdir[3] = {0., 0., 1.};
   double vdir[3] = {dx / length, dy / length, dz / length};
-  double axis[3], cosphi, phi;
+  double axis[3], phi;
   prodve(zdir, vdir, axis);
-  prosca(zdir, vdir, &cosphi);
+  double const cosphi = prosca(zdir, vdir);
   if(!norme(axis)){
     axis[0] = 0.;
     axis[1] = 1.;
@@ -618,9 +618,9 @@ void drawContext::drawArrow3d(double x, double y, double z,
 {
   double zdir[3] = {0., 0., 1.};
   double vdir[3] = {dx / length, dy / length, dz / length};
-  double axis[3], cosphi;
+  double axis[3];
   prodve(zdir, vdir, axis);
-  prosca(zdir, vdir, &cosphi);
+  double const cosphi = prosca(zdir, vdir);
   if(!norme(axis)){
     axis[0] = 0.;
     axis[1] = 1.;

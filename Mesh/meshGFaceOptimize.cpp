@@ -68,9 +68,9 @@ edge_angle::edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2)
     norme(c1);
     norme(c2);
     prodve(c1, c2, c3);
-    double cosa; prosca(c1, c2, &cosa);
-    double sina = norme(c3);
-    angle = atan2(sina, cosa);
+    double const cosa = prosca(c1, c2);
+    double const sina = norme(c3);
+    angle = std::atan2(sina, cosa);
   }
 }
 
@@ -324,9 +324,8 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
 		      v1->x(),v1->y(),v1->z(),
 		      v2->x(),v2->y(),v2->z(), n2);
       }
-      double pp; prosca(n1, n2, &pp);
       // orient the bignou
-      if(pp < 0) t->reverse();
+      if(prosca(n1, n2) < 0.0) t->reverse();
     }
   }
   splitEquivalentTriangles(gf, data);
