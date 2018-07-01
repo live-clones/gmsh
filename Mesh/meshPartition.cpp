@@ -2139,7 +2139,10 @@ static void addPhysical(GModel *const model, GEntity *entity,
   else if(entity->dim() == 0){
     numPartitions = static_cast<partitionVertex*>(entity)->numPartitions();
   }
-  
+ 
+#if __cplusplus >= 201103L
+  char intToChar[20];
+#endif
   std::vector<int> physical = parent->getPhysicalEntities();
   int dim = entity->dim();
   for(size_t i = 0; i < physical.size(); ++i){
@@ -2147,7 +2150,6 @@ static void addPhysical(GModel *const model, GEntity *entity,
 #if __cplusplus >= 201103L
     name += "_" + std::to_string(physical[i]);
 #else
-    char intToChar[20];
     sprintf(intToChar, "_%d", physical[i]);
     name += intToChar;
 #endif
