@@ -2171,7 +2171,6 @@ static void addPhysical(GModel *const model, GEntity *entity,
 #if __cplusplus >= 201103L
       name += std::to_string(partition);
 #else
-      char intToChar[20];
       sprintf(intToChar, "%d", partition);
       name += intToChar;
 #endif
@@ -2180,7 +2179,6 @@ static void addPhysical(GModel *const model, GEntity *entity,
 #if __cplusplus >= 201103L
     name += std::to_string(dim);
 #else
-    char intToChar[20];
     sprintf(intToChar, "%d", dim);
     name += intToChar;
 #endif
@@ -2220,7 +2218,6 @@ static void addPhysical(GModel *const model, GEntity *entity,
 #if __cplusplus >= 201103L
       name += std::to_string(partition);
 #else
-      char intToChar[20];
       sprintf(intToChar, "%d", partition);
       name += intToChar;
 #endif
@@ -2229,7 +2226,6 @@ static void addPhysical(GModel *const model, GEntity *entity,
 #if __cplusplus >= 201103L
     name += std::to_string(dim);
 #else
-    char intToChar[20];
     sprintf(intToChar, "%d", dim);
     name += intToChar;
 #endif
