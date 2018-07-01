@@ -416,44 +416,30 @@ BDS_Edge *BDS_Mesh::find_edge(BDS_Point *p1, BDS_Point *p2, BDS_Face *t) const
   return 0;
 }
 
+static bool is_equivalent(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3,
+                          BDS_Edge *o1, BDS_Edge *o2, BDS_Edge *o3)
+{
+  return (o1 == e1 && o2 == e2 && o3 == e3) ||
+         (o1 == e1 && o2 == e3 && o3 == e2) ||
+         (o1 == e2 && o2 == e1 && o3 == e3) ||
+         (o1 == e2 && o2 == e3 && o3 == e1) ||
+         (o1 == e3 && o2 == e1 && o3 == e2) ||
+         (o1 == e3 && o2 == e2 && o3 == e1);
+}
+
 BDS_Face *BDS_Mesh::find_triangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3)
 {
-  int i;
-  for(i = 0; i < e1->numfaces(); i++) {
+  for(int i = 0; i < e1->numfaces(); i++) {
     BDS_Face *t = e1->faces(i);
-    BDS_Edge *o1 = t->e1;
-    BDS_Edge *o2 = t->e2;
-    BDS_Edge *o3 = t->e3;
-    if((o1 == e1 && o2 == e2 && o3 == e3) ||
-       (o1 == e1 && o2 == e3 && o3 == e2) ||
-       (o1 == e2 && o2 == e1 && o3 == e3) ||
-       (o1 == e2 && o2 == e3 && o3 == e1) ||
-       (o1 == e3 && o2 == e1 && o3 == e2) || (o1 == e3 && o2 == e2 && o3 == e1))
-      return t;
+    if(is_equivalent(e1, e2, e3, t->e1, t->e2, t->e3)) { return t; }
   }
-  for(i = 0; i < e2->numfaces(); i++) {
+  for(int i = 0; i < e2->numfaces(); i++) {
     BDS_Face *t = e2->faces(i);
-    BDS_Edge *o1 = t->e1;
-    BDS_Edge *o2 = t->e2;
-    BDS_Edge *o3 = t->e3;
-    if((o1 == e1 && o2 == e2 && o3 == e3) ||
-       (o1 == e1 && o2 == e3 && o3 == e2) ||
-       (o1 == e2 && o2 == e1 && o3 == e3) ||
-       (o1 == e2 && o2 == e3 && o3 == e1) ||
-       (o1 == e3 && o2 == e1 && o3 == e2) || (o1 == e3 && o2 == e2 && o3 == e1))
-      return t;
+    if(is_equivalent(e1, e2, e3, t->e1, t->e2, t->e3)) { return t; }
   }
-  for(i = 0; i < e3->numfaces(); i++) {
+  for(int i = 0; i < e3->numfaces(); i++) {
     BDS_Face *t = e3->faces(i);
-    BDS_Edge *o1 = t->e1;
-    BDS_Edge *o2 = t->e2;
-    BDS_Edge *o3 = t->e3;
-    if((o1 == e1 && o2 == e2 && o3 == e3) ||
-       (o1 == e1 && o2 == e3 && o3 == e2) ||
-       (o1 == e2 && o2 == e1 && o3 == e3) ||
-       (o1 == e2 && o2 == e3 && o3 == e1) ||
-       (o1 == e3 && o2 == e1 && o3 == e2) || (o1 == e3 && o2 == e2 && o3 == e1))
-      return t;
+    if(is_equivalent(e1, e2, e3, t->e1, t->e2, t->e3)) { return t; }
   }
   return 0;
 }
@@ -785,6 +771,7 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
                                          BDS_Point *_oq2, BDS_Point *_oq3) const
 {
   if(!testQuality) return true;
+
   double n[3], q[3], on[3], oq[3];
   normal_triangle(_p1, _p2, _p3, n);
   normal_triangle(_q1, _q2, _q3, q);
