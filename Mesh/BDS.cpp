@@ -167,10 +167,9 @@ std::vector<BDS_Face *> BDS_Point::getTriangles() const
 
   std::vector<BDS_Edge *>::const_iterator it = edges.begin();
   while(it != edges.end()) {
-    std::vector<BDS_Face *>::size_type const number_of_faces =
-      (*it)->numfaces();
+    std::size_t const number_of_faces = (*it)->numfaces();
 
-    for(std::vector<BDS_Face *>::size_type i = 0; i < number_of_faces; ++i) {
+    for(std::size_t i = 0; i < number_of_faces; ++i) {
       BDS_Face *const tt = (*it)->faces(i);
       if(tt && std::find(t.begin(), t.end(), tt) == t.end()) {
         t.push_back(tt);
@@ -181,11 +180,12 @@ std::vector<BDS_Face *> BDS_Point::getTriangles() const
   return t;
 }
 
-BDS_Point *BDS_Mesh::add_point(int num, double x, double y, double z)
+BDS_Point *BDS_Mesh::add_point(int const num, double const x, double const y,
+                               double const z)
 {
   BDS_Point *pp = new BDS_Point(num, x, y, z);
   points.insert(pp);
-  MAXPOINTNUMBER = (MAXPOINTNUMBER < num) ? num : MAXPOINTNUMBER;
+  MAXPOINTNUMBER = std::max(MAXPOINTNUMBER, num);
   return pp;
 }
 
@@ -196,7 +196,7 @@ BDS_Point *BDS_Mesh::add_point(int num, double u, double v, GFace *gf)
   pp->u = u;
   pp->v = v;
   points.insert(pp);
-  MAXPOINTNUMBER = (MAXPOINTNUMBER < num) ? num : MAXPOINTNUMBER;
+  MAXPOINTNUMBER = std::max(MAXPOINTNUMBER, num);
   return pp;
 }
 
@@ -204,10 +204,8 @@ BDS_Point *BDS_Mesh::find_point(int p)
 {
   BDS_Point P(p);
   std::set<BDS_Point *, PointLessThan>::iterator it = points.find(&P);
-  if(it != points.end())
-    return (BDS_Point *)(*it);
-  else
-    return 0;
+
+  return it != points.end() ? static_cast<BDS_Point *>(*it) : NULL;
 }
 
 BDS_Edge *BDS_Mesh::find_edge(BDS_Point *p, int num2)

@@ -32,6 +32,15 @@ class BDS_GeomEntity {
 public:
   int classif_tag;
   int classif_degree;
+
+  BDS_GeomEntity(int a, int b)
+    : classif_tag(a)
+    , classif_degree(b)
+  {
+  }
+
+  ~BDS_GeomEntity() {}
+
   bool operator<(const BDS_GeomEntity &other) const
   {
     if(classif_degree < other.classif_degree) return true;
@@ -39,12 +48,6 @@ public:
     if(classif_tag < other.classif_tag) return true;
     return false;
   }
-  BDS_GeomEntity(int a, int b)
-    : classif_tag(a)
-    , classif_degree(b)
-  {
-  }
-  ~BDS_GeomEntity() {}
 };
 
 class BDS_Vector {
