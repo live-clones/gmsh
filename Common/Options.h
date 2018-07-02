@@ -550,6 +550,7 @@ double opt_mesh_preserve_numbering_msh2(OPT_ARGS_NUM);
 double opt_mesh_max_num_threads_1d(OPT_ARGS_NUM);
 double opt_mesh_max_num_threads_2d(OPT_ARGS_NUM);
 double opt_mesh_max_num_threads_3d(OPT_ARGS_NUM);
+double opt_mesh_angle_tolerance_facet_overlap(OPT_ARGS_NUM);
 double opt_solver_listen(OPT_ARGS_NUM);
 double opt_solver_timeout(OPT_ARGS_NUM);
 double opt_solver_plugins(OPT_ARGS_NUM);

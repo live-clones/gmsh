@@ -38,16 +38,16 @@ double myacos(double a)
 double norm2(double a[3][3])
 {
   double norm2sq =
-    gmsh_SQU(a[0][0])+
-    gmsh_SQU(a[0][1])+
-    gmsh_SQU(a[0][2])+
-    gmsh_SQU(a[1][0])+
-    gmsh_SQU(a[1][1])+
-    gmsh_SQU(a[1][2])+
-    gmsh_SQU(a[2][0])+
-    gmsh_SQU(a[2][1])+
-    gmsh_SQU(a[2][2]);
-  return sqrt(norm2sq);
+    std::pow(a[0][0], 2)+
+    std::pow(a[0][1], 2)+
+    std::pow(a[0][2], 2)+
+    std::pow(a[1][0], 2)+
+    std::pow(a[1][1], 2)+
+    std::pow(a[1][2], 2)+
+    std::pow(a[2][0], 2)+
+    std::pow(a[2][1], 2)+
+    std::pow(a[2][2], 2);
+  return std::sqrt(norm2sq);
 }
 
 void matvec(double mat[3][3], double vec[3], double res[3])
@@ -100,29 +100,27 @@ void normal2points(double x0, double y0, double z0,
 
 int sys2x2(double mat[2][2], double b[2], double res[2])
 {
-  double det, ud, norm;
-  int i;
+  double const norm = std::pow(mat[0][0], 2) + std::pow(mat[1][1], 2) +
+                      std::pow(mat[0][1], 2) + std::pow(mat[1][0], 2);
 
-  norm = gmsh_SQU(mat[0][0]) + gmsh_SQU(mat[1][1]) + gmsh_SQU(mat[0][1]) + gmsh_SQU(mat[1][0]);
-  det = mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1];
+  double const det = mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1];
 
   // TOLERANCE ! WARNING WARNING
-  if(norm == 0.0 || fabs(det) / norm < 1.e-12) {
+  if(norm == 0.0 || std::abs(det) / norm < 1.e-12) {
     if(norm)
       Msg::Debug("Assuming 2x2 matrix is singular (det/norm == %.16g)",
-                 fabs(det) / norm);
+                 std::abs(det) / norm);
     res[0] = res[1] = 0.0;
     return 0;
   }
-  ud = 1. / det;
+  double const ud = 1.0 / det;
 
   res[0] = b[0] * mat[1][1] - mat[0][1] * b[1];
   res[1] = mat[0][0] * b[1] - mat[1][0] * b[0];
 
-  for(i = 0; i < 2; i++)
-    res[i] *= ud;
+  for(int i = 0; i < 2; i++) res[i] *= ud;
 
-  return (1);
+  return 1;
 }
 
 double det3x3(double mat[3][3])
@@ -184,19 +182,18 @@ int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det)
 
   out = sys3x3(mat, b, res, det);
   norm =
-    gmsh_SQU(mat[0][0]) + gmsh_SQU(mat[0][1]) + gmsh_SQU(mat[0][2]) +
-    gmsh_SQU(mat[1][0]) + gmsh_SQU(mat[1][1]) + gmsh_SQU(mat[1][2]) +
-    gmsh_SQU(mat[2][0]) + gmsh_SQU(mat[2][1]) + gmsh_SQU(mat[2][2]);
+    std::pow(mat[0][0], 2) + std::pow(mat[0][1], 2) + std::pow(mat[0][2], 2) +
+    std::pow(mat[1][0], 2) + std::pow(mat[1][1], 2) + std::pow(mat[1][2], 2) +
+    std::pow(mat[2][0], 2) + std::pow(mat[2][1], 2) + std::pow(mat[2][2], 2);
 
   // TOLERANCE ! WARNING WARNING
-  if(norm == 0.0 || fabs(*det) / norm < 1.e-12) {
+  if(norm == 0.0 || std::abs(*det) / norm < 1.e-12) {
     if(norm)
       Msg::Debug("Assuming 3x3 matrix is singular (det/norm == %.16g)",
-                 fabs(*det) / norm);
+                 std::abs(*det) / norm);
     res[0] = res[1] = res[2] = 0.0;
     return 0;
   }
-
   return out;
 }
 
@@ -273,7 +270,6 @@ double angle_02pi(double A3)
 double angle_plan(double v[3], double p1[3], double p2[3], double n[3])
 {
   double PA[3], PB[3], angplan;
-  double cosc, sinc, c[3];
 
   PA[0] = p1[0] - v[0];
   PA[1] = p1[1] - v[1];
@@ -286,10 +282,12 @@ double angle_plan(double v[3], double p1[3], double p2[3], double n[3])
   norme(PA);
   norme(PB);
 
+  double c[3];
   prodve(PA, PB, c);
 
-  prosca(PA, PB, &cosc);
-  prosca(c, n, &sinc);
+  double const cosc = prosca(PA, PB);
+  double const sinc = prosca(c, n);
+
   angplan = myatan2(sinc, cosc);
 
   return angplan;
@@ -308,7 +306,7 @@ double triangle_area(double p0[3], double p1[3], double p2[3])
   b[2] = p0[2] - p1[2];
 
   prodve(a, b, c);
-  return 0.5 * sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
+  return 0.5 * std::sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
 }
 
 double triangle_area2d(double p0[2], double p1[2], double p2[2])
@@ -317,7 +315,7 @@ double triangle_area2d(double p0[2], double p1[2], double p2[2])
     (p2[0] - p1[0])*(p0[1] - p1[1]) -
     (p2[1] - p1[1])*(p0[0] - p1[0]);
 
-  return 0.5 * sqrt(c*c);
+  return 0.5 * std::sqrt(c*c);
 }
 
 void circumCenterXY(double *p1, double *p2, double *p3, double *res)
@@ -353,9 +351,11 @@ void circumCenterXYZ(double *p1, double *p2, double *p3, double *res, double *uv
   double vy[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
   double vz[3]; prodve(vx, vy, vz); prodve(vz, vx, vy);
   norme(vx); norme(vy); norme(vz);
+
   double p1P[2] = {0.0, 0.0};
-  double p2P[2]; prosca(v1, vx, &p2P[0]); prosca(v1, vy, &p2P[1]);
-  double p3P[2]; prosca(v2, vx, &p3P[0]); prosca(v2, vy, &p3P[1]);
+  double p2P[2] = {prosca(v1, vx), prosca(v1, vy)};
+  double p3P[2] = { prosca(v2, vx), prosca(v2, vy)};
+
   double resP[2];
 
   circumCenterXY(p1P, p2P, p3P,resP);
@@ -385,9 +385,9 @@ void planarQuad_xyz2xy(double *x, double *y, double *z, double *xn, double *yn)
   norme(vx); norme(vy); norme(vz);
 
   double p1P[2] = {0.0, 0.0};
-  double p2P[2]; prosca(v1, vx, &p2P[0]); prosca(v1, vy, &p2P[1]);
-  double p3P[2]; prosca(v2, vx, &p3P[0]); prosca(v2, vy, &p3P[1]);
-  double p4P[2]; prosca(v3, vx, &p4P[0]); prosca(v3, vy, &p4P[1]);
+  double p2P[2] = {prosca(v1, vx), prosca(v1, vy)};
+  double p3P[2] = {prosca(v2, vx), prosca(v2, vy)};
+  double p4P[2] = {prosca(v3, vx), prosca(v3, vy)};
 
   xn[0] = p1P[0];
   xn[1] = p2P[0];
@@ -415,9 +415,9 @@ double computeInnerRadiusForQuad(double *x, double *y, int i)
   double c3 = y[(7+i)%4]*x[(6+i)%4]-y[(6+i)%4]*x[(7+i)%4];
 
   // length of the 3 edges
-  double l1 = sqrt(a1*a1+b1*b1);
-  double l2 = sqrt(a2*a2+b2*b2);
-  double l3 = sqrt(a3*a3+b3*b3);
+  double l1 = std::sqrt(a1*a1+b1*b1);
+  double l2 = std::sqrt(a2*a2+b2*b2);
+  double l3 = std::sqrt(a3*a3+b3*b3);
 
   // parameters of the 2 bisectors
   double a12 = a1/l1-a2/l2;
@@ -665,13 +665,13 @@ bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
   fullMatrix<double> J(N, N);
   fullVector<double> f(N), feps(N), dx(N);
 
-  
-  for (int iter = 0; iter < MAXIT; iter++){    
+
+  for (int iter = 0; iter < MAXIT; iter++){
     if (x.norm() > 1.e6)return false;
     if(!func(x, f, data)) {
       return false;
     }
-      
+
     bool isZero = false;
     for (int k=0; k<N; k++) {
       if (f(k) == 0. ) isZero = true;

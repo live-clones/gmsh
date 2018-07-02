@@ -983,6 +983,9 @@ StringXNumber MeshOptions_Number[] = {
     "7=MMG3D, 9=R-tree)" },
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" },
+  { F|O, "AngleToleranceFacetOverlap" , opt_mesh_angle_tolerance_facet_overlap , 0.1,
+    "Consider connected facets as overlapping when the dihedral angle between the facets is "
+    "smaller than the user's defined tolerance" },
   { F|O, "AnisoMax" , opt_mesh_aniso_max, 1.e33,
     "Maximum anisotropy of the mesh" },
   { F|O, "AllowSwapAngle" , opt_mesh_allow_swap_edge_angle , 10.0 ,

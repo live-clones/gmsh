@@ -117,9 +117,9 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   double x, y, z, VX[3], VY[3];
   s->getMeanPlaneData(VX, VY, x, y, z);
   for(unsigned int i = 0; i < points.size(); i++) {
-    double vec[3] = {points[i]->x() - x, points[i]->y() - y, points[i]->z() - z}, u, v;
-    prosca(vec, VX, &u);
-    prosca(vec, VY, &v);
+    double vec[3] = {points[i]->x() - x, points[i]->y() - y, points[i]->z() - z};
+    double u = prosca(vec, VX);
+    double v = prosca(vec, VY);
     points[i]->x() = u;
     points[i]->y() = v;
     points[i]->z() = 0.;
