@@ -31,7 +31,7 @@ StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "IGE measure", NULL, 1},
   {GMSH_FULLRC, "ICN measure", NULL, 1},
   {GMSH_FULLRC, "Hiding threshold", NULL, 9},
-  {GMSH_FULLRC, "Draw PView", NULL, 0},
+  {GMSH_FULLRC, "Draw PView", NULL, 1},
   {GMSH_FULLRC, "Recompute", NULL, 0},
   {GMSH_FULLRC, "Dimension of elements", NULL, -1}
 #if defined(HAVE_VISUDEV)
