@@ -1186,7 +1186,7 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
   // degree 3 if not specified:
   if(d <= 0) d = 3;
   // But degree nPts-1 if nPts is 2 or 3:
-  if(d > pointTags.size() - 1) d = pointTags.size() - 1;
+  if(d > static_cast<int>(pointTags.size()) - 1) d = pointTags.size() - 1;
   // automatic default weights if not provided:
   if(w.empty()) w.resize(pointTags.size(), 1);
   // automatic default knots and multiplicities if not provided:
