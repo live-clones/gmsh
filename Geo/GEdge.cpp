@@ -492,9 +492,7 @@ GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
 double GEdge::parFromPoint(const SPoint3 &P) const
 {
   double t;
-  if (!XYZToU(P.x(), P.y(), P.z(), t))
-    std::cout << "aaaarg" << std::endl;
-
+  XYZToU(P.x(), P.y(), P.z(), t);
   return t;
 }
 

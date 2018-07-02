@@ -275,8 +275,6 @@ namespace BoundaryLayerCurver
 
         t = _gedge->firstDer(paramGeoEdge);
         t.normalize();
-        if (t.norm() == 0)
-          std::cout << "aarg " << _gedge->tag() << " " << paramGeoEdge << std::endl;
       }
       if (!_gedge || t.norm() == 0) {
         t = _edgeOnBoundary->tangent(paramEdge);
@@ -1507,12 +1505,12 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
     return;
   }
 
-  for (int i = 0; i < bndEl2column.size(); ++i) {
-    bndEl2column[i].first->setVisibility(1);
-    for (unsigned int j = 0; j < bndEl2column[i].second.size(); ++j) {
-      bndEl2column[i].second[j]->setVisibility(1);
-    }
-  }
+//  for (int i = 0; i < bndEl2column.size(); ++i) {
+//    bndEl2column[i].first->setVisibility(1);
+//    for (unsigned int j = 0; j < bndEl2column[i].second.size(); ++j) {
+//      bndEl2column[i].second[j]->setVisibility(1);
+//    }
+//  }
 
   for (int i = 0; i < bndEl2column.size(); ++i) {
 //    if (bndEl2column[i].first->getNum() != 205) continue; // t161

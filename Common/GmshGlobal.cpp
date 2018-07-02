@@ -48,7 +48,6 @@ typedef unsigned long intptr_t;
 
 #if defined(HAVE_PLUGINS)
 #include "PluginManager.h"
-#include "AnalyseCurvedMesh.h"
 #endif
 
 #if defined(HAVE_FLTK)
@@ -57,11 +56,6 @@ typedef unsigned long intptr_t;
 #include "drawContext.h"
 #include "onelabGroup.h"
 #endif
-
-#include "highOrderToolsWindow.h"
-#include "OptHomFastCurving.h"
-#include "incompleteBasis.h"
-#include "MLine.h"
 
 int GmshInitialize(int argc, char **argv, bool readConfigFiles,
                    bool exitOnCommandLineError)
@@ -351,8 +345,6 @@ int GmshBatch()
   onelabUtils::runClient();
 #endif
 
-  GMSH_AnalyseCurvedMeshPlugin().execute(NULL);
-
   time_t now;
   time(&now);
   std::string currtime = ctime(&now);
@@ -427,19 +419,6 @@ int GmshFLTK(int argc, char **argv)
     gmshLocalNetworkClient *c = new gmshLocalNetworkClient("Listen", "");
     c->run();
   }
-
-//  new incompleteBasis(MSH_TRI_3);
-//  new incompleteBasis(MSH_TRI_6);
-//  new incompleteBasis(MSH_TRI_9);
-//  new incompleteBasis(MSH_TRI_12);
-//  new incompleteBasis(MSH_TRI_15I);
-  FastCurvingParameters p;
-  p.dim = 2;
-  p.maxRho = .5;
-  p.thickness = true;
-  HighOrderMeshFastCurving(GModel::current(), p);
-//  p.dim = 3;
-//  HighOrderMeshFastCurving(GModel::current(), p);
 
   // launch solver (if requested) and fill onelab tree
   solver_cb(0, (void*)(intptr_t)CTX::instance()->launchSolverAtStartup);
