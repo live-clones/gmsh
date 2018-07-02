@@ -2694,27 +2694,31 @@ static bool getPhyscialNameInfo(const std::string &name, int &parentPhysicalTag,
 {
   if(name[0] != '_') return false;
   
-  size_t first = name.find_first_of('{');
-  size_t last = name.find_last_of('}');
-  std::string partitionsString = name.substr(first+1, last-first-1);
-  std::string parentPhysicalTagString;
-  for(size_t i = last+2; i < name.size(); ++i){
-    if(name[i] == '_') break;
-    parentPhysicalTagString += name[i];
-  }
-  parentPhysicalTag = atoi(parentPhysicalTagString.c_str());
+  const std::string part = "_part{";
+  const std::string physical = "_part{";
+  const std::string dim = "_dim{";
+  
+  size_t firstPart = name.find_first_of(part)+part.size();
+  size_t lastPart = name.find_first_of('}', firstPart);
+  const std::string partString = name.substr(firstPart, lastPart-firstPart);
+  
+  size_t firstPhysical = name.find_first_of(physical)+physical.size();
+  size_t lastPhysical = name.find_first_of('}', firstPhysical);
+  const std::string physicalString = name.substr(firstPhysical, lastPhysical-firstPhysical);
   
   std::string number;
-  for(size_t i = 0; i < partitionsString.size(); ++i){
-    if(partitionsString[i] == ','){
+  for(size_t i = 0; i < partString.size(); ++i){
+    if(partString[i] == ','){
       partitions.push_back(atoi(number.c_str()));
       number.clear();
     }
     else{
-      number += partitionsString[i];
+      number += partString[i];
     }
   }
   partitions.push_back(atoi(number.c_str()));
+  
+  parentPhysicalTag = atoi(physicalString.c_str());
   
   return true;
 }
@@ -2744,10 +2748,10 @@ int GModel::writePartitionedTopology(std::string &name)
   char intToChar[20];
 #endif
   fprintf(fp, "Group{\n");
-  fprintf(fp, "\t//Part~{dim}~{parentPhysicalTag}~{part1}~{part2}~...\n\n");
+  fprintf(fp, "  // Part~{dim}~{parentPhysicalTag}~{part1}~{part2}~...\n\n");
   std::vector< std::map<int, std::string> > tagToString(4);
   for(size_t i = 4; i > 0; --i){
-    fprintf(fp, "\t//Dim %lu\n", i-1);
+    fprintf(fp, "  // Dim %lu\n", i-1);
     for(std::multimap<int, std::pair<int, std::vector<int> > >::iterator it = allParts[i-1].begin(); it != allParts[i-1].end(); ++it){
 #if __cplusplus >= 201103L
       std::string partName = "Part~{" + std::to_string(i-1) + "}~{" + std::to_string(it->second.first) + "}";
@@ -2760,7 +2764,7 @@ int GModel::writePartitionedTopology(std::string &name)
       partName += intToChar;
       partName += "}";
 #endif
-      fprintf(fp, "\tPart~{%lu}~{%d}", i-1, it->second.first);
+      fprintf(fp, "  Part~{%lu}~{%d}", i-1, it->second.first);
       for(size_t j = 0; j < it->second.second.size(); ++j){
 #if __cplusplus >= 201103L
         partName += "~{" + std::to_string(it->second.second[j]) + "}";
@@ -2778,7 +2782,7 @@ int GModel::writePartitionedTopology(std::string &name)
     fprintf(fp, "\n");
   }
   
-  fprintf(fp, "\t//Global names\n\n");
+  fprintf(fp, "  // Global names\n\n");
   std::map<int, std::vector<int> > omegas;
   std::map< std::pair<int, int> , std::vector<int> > sigmasij;
   std::map<int, std::vector<int> > sigmas;
@@ -2798,9 +2802,9 @@ int GModel::writePartitionedTopology(std::string &name)
       omegas[it->second.second[0]].push_back(it->first);
     }
   }
-  fprintf(fp, "\t//Omega\n");
+  fprintf(fp, "  // Omega\n");
   for(std::map<int, std::vector<int> >::iterator it = omegas.begin(); it != omegas.end(); ++it){
-    fprintf(fp, "\tOmega~{%d} = Region[{", it->first);
+    fprintf(fp, "  Omega~{%d} = Region[{", it->first);
     for(size_t j = 0; j < it->second.size(); ++j){
       if(j == 0) fprintf(fp, "%s", tagToString[omegaDim][it->second[j]].c_str());
       else       fprintf(fp, ",%s", tagToString[omegaDim][it->second[j]].c_str());
@@ -2818,9 +2822,9 @@ int GModel::writePartitionedTopology(std::string &name)
       sigmas[it->second.second[1]].push_back(it->first);
     }
   }
-  fprintf(fp, "\t//Sigma\n");
+  fprintf(fp, "  // Sigma\n");
   for(std::map< std::pair<int, int> , std::vector<int> >::iterator it = sigmasij.begin(); it != sigmasij.end(); ++it){
-    fprintf(fp, "\tSigma~{%d}~{%d} = Region[{", it->first.first, it->first.second);
+    fprintf(fp, "  Sigma~{%d}~{%d} = Region[{", it->first.first, it->first.second);
     for(size_t j = 0; j < it->second.size(); ++j){
       if(j == 0) fprintf(fp, "%s", tagToString[omegaDim-1][it->second[j]].c_str());
       else       fprintf(fp, ",%s", tagToString[omegaDim-1][it->second[j]].c_str());
@@ -2830,7 +2834,7 @@ int GModel::writePartitionedTopology(std::string &name)
   fprintf(fp, "\n");
   
   for(std::map<int, std::vector<int> >::iterator it = sigmas.begin(); it != sigmas.end(); ++it){
-    fprintf(fp, "\tSigma~{%d} = Region[{", it->first);
+    fprintf(fp, "  Sigma~{%d} = Region[{", it->first);
     for(size_t j = 0; j < it->second.size(); ++j){
       if(j == 0) fprintf(fp, "%s", tagToString[omegaDim-1][it->second[j]].c_str());
       else       fprintf(fp, ",%s", tagToString[omegaDim-1][it->second[j]].c_str());
@@ -2840,7 +2844,7 @@ int GModel::writePartitionedTopology(std::string &name)
   fprintf(fp, "\n");
   
   //D
-  fprintf(fp, "\tD() = {");
+  fprintf(fp, "  D() = {");
   for(size_t i = 1; i <= getNumPartitions(); ++i){
     if(i != 1) fprintf(fp, ", ");
     fprintf(fp, "%lu", i);
@@ -2855,7 +2859,7 @@ int GModel::writePartitionedTopology(std::string &name)
     }
   }
   for(size_t i = 1; i <= getNumPartitions(); ++i){
-    fprintf(fp, "\tD~{%lu}() = {", i);
+    fprintf(fp, "  D~{%lu}() = {", i);
     for(std::set<int>::iterator it = neighbors[i].begin(); it != neighbors[i].end(); ++it){
       if(it != neighbors[i].begin()) fprintf(fp, ", ");
       fprintf(fp, "%d", *it);

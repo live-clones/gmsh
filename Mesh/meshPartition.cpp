@@ -2170,11 +2170,11 @@ static void addPhysical(GModel *const model, GEntity *entity,
       name += intToChar;
 #endif
     }
-    name += "}_";
+    name += "}_physical{";
 #if __cplusplus >= 201103L
-    name += std::to_string(physical[i]) + "_" + std::to_string(dim);
+    name += std::to_string(physical[i]) + "}_dim{" + std::to_string(dim) + "}";
 #else
-    sprintf(intToChar, "%d_%d", physical[i], dim);
+    sprintf(intToChar, "%d}_dim{%d}", physical[i], dim);
     name += intToChar;
 #endif
     
@@ -2219,9 +2219,9 @@ static void addPhysical(GModel *const model, GEntity *entity,
     }
     name += "}_";
 #if __cplusplus >= 201103L
-    name += "0_" + std::to_string(dim);
+    name += "physical{0}_dim{" + std::to_string(dim) + "}";
 #else
-    sprintf(intToChar, "0_%d", dim);
+    sprintf(intToChar, "physical{0}_dim{%d}", dim);
     name += intToChar;
 #endif
     
