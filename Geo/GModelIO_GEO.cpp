@@ -138,6 +138,10 @@ bool GEO_Internals::addLine(int &tag, const std::vector<int> &pointTags)
     Msg::Error("GEO curve with tag %d already exists", tag);
     return false;
   }
+  if(pointTags.size() < 2){
+    Msg::Error("Line curve requires 2 points");
+    return false;
+  }
   if(tag < 0) tag = getMaxTag(1) + 1;
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < pointTags.size(); i++){
@@ -223,6 +227,10 @@ bool GEO_Internals::addSpline(int &tag, const std::vector<int> &pointTags)
     Msg::Error("GEO curve with tag %d already exists", tag);
     return false;
   }
+  if(pointTags.size() < 2){
+    Msg::Error("Spline curve requires at least 2 control points");
+    return false;
+  }
   if(tag < 0) tag = getMaxTag(1) + 1;
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < pointTags.size(); i++){
@@ -269,7 +277,7 @@ bool GEO_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
     return false;
   }
   if(pointTags.size() < 2){
-    Msg::Error("At least 2 control points are needed for building a BSpline");
+    Msg::Error("BSpline curve requires at least 2 control points");
     return false;
   }
   if(tag < 0) tag = getMaxTag(1) + 1;

@@ -1048,7 +1048,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       // General BSpline curve, polynomial or rational, with explicit degree,
       // weights, knots and multiplicities
       if(degree < 0){
-        Msg::Error("BSpline degree (%d) should be > 0", degree);
+        Msg::Error("BSpline degree (%d) should be >= 0", degree);
         return false;
       }
       if(weights.size() != pointTags.size()){
@@ -1177,7 +1177,7 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
                                const std::vector<int> &multiplicities)
 {
   if(pointTags.size() < 2){
-    Msg::Error("At least 2 control points are needed for building a BSpline");
+    Msg::Error("BSpline curve requires at least 2 control points");
     return false;
   }
   int d = degree;
