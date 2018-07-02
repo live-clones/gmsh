@@ -85,6 +85,8 @@ class DocRecord{
   int BuildDelaunay();
   int CountPointsOnHull();
   void ConvexHull();
+  bool AdjacentNullptrExists();
+
  public:
   STriangle *_adjacencies;
   int numPoints;        // number of points
