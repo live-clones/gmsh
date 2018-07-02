@@ -1176,11 +1176,17 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
                                const std::vector<double> &knots,
                                const std::vector<int> &multiplicities)
 {
+  if(pointTags.size() < 2){
+    Msg::Error("At least 2 control points are needed for building a BSpline");
+    return false;
+  }
   int d = degree;
   std::vector<double> w(weights), k(knots);
   std::vector<int> m(multiplicities);
   // degree 3 if not specified:
   if(d <= 0) d = 3;
+  // But degree nPts-1 if nPts is 2 or 3:
+  if(d > pointTags.size() - 1) d = pointTags.size() - 1;
   // automatic default weights if not provided:
   if(w.empty()) w.resize(pointTags.size(), 1);
   // automatic default knots and multiplicities if not provided:
