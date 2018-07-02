@@ -186,12 +186,22 @@ static Vertex InterpolateBezier(Curve *Curve, double u, int derivee)
 // Uniform BSplines
 static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
 {
-  // Mat for 4 control points (=> just 1 curve => Bézier interpolation)
+  // Mat for 2 control points (=> linear)
+  static double mat2[4][4] = { { 0, 0, 0, 0},
+                               { 0, 0, 0, 0},
+                               {-1, 1, 0, 0},
+                               { 1, 0, 0, 0} };
+  // Mat for 3 control points (=> quadratic, Bézier)
+  static double mat3[4][4] = { { 0,  0, 0, 0},
+                               { 1, -2, 1, 0},
+                               {-2,  2, 0, 0},
+                               { 1,  0, 0, 0} };
+  // Mat for 4 control points (=> cubic, Bézier)
   static double mat4[4][4] = { {-1,  3, -3, 1}, // t^3
                                { 3, -6,  3, 0}, // t^2
                                {-3,  3,  0, 0}, // t^1
                                { 1,  0,  0, 0} }; // t^0
-                             // n0   n1   n2 n3
+                             // n0  n1  n2  n3
   // Mat for 5 control points (left extremity, other obtained by symmetry)
   static double mat5[4][4] = { {-1, 7./4,  -1, 1./4},
                                { 3, -4.5, 1.5,    0},
@@ -223,6 +233,7 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
   bool periodic = (Curve->end == Curve->beg);
   int NbControlPoints = List_Nbr(Curve->Control_Points);
   int NbCurves = NbControlPoints + (periodic ? -1 : -3);
+  NbCurves = std::max(NbCurves, 1);
   int iCurve = (int)floor(u * (double)NbCurves);
   if(iCurve == NbCurves) iCurve -= 1; // u = 1
   double t1 = (double)(iCurve) / (double)(NbCurves);
@@ -237,7 +248,7 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
         k += NbControlPoints - 1;
     }
     else {
-      k = iCurve + i;
+      k = std::min(iCurve + i, NbControlPoints - 1);
     }
     if(k < NbControlPoints)
       List_Read(Curve->Control_Points, k , &v[i]);
@@ -267,6 +278,8 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
     }
     if (iCurve == 0) {
       switch (NbControlPoints) {
+        case 2: matrix = &mat2; break;
+        case 3: matrix = &mat3; break;
         case 4: matrix = &mat4; break;
         case 5: matrix = &mat5; break;
         case 6: matrix = &mat6_1; break;
