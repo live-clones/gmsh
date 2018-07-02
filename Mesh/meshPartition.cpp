@@ -2221,7 +2221,7 @@ static void addPhysical(GModel *const model, GEntity *entity,
 #if __cplusplus >= 201103L
     name += "0_" + std::to_string(dim);
 #else
-    sprintf(intToChar, "0_%d", physical[i], dim);
+    sprintf(intToChar, "0_%d", dim);
     name += intToChar;
 #endif
     
