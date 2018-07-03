@@ -785,11 +785,12 @@ static int _removeDiamonds(GFace *const gf)
   v2t_cont adj;
   buildVertexToElement(gf->quadrangles, adj);
 
-  std::set<MElement *> diamonds;
+  std::vector<MElement *> diamonds;
   std::set<MVertex *> touched;
-  std::set<MVertex *> deleted;
-  std::vector<MVertex *> mesh_vertices2;
+  std::vector<MVertex *> deleted;
+
   std::vector<MQuadrangle *> quadrangles2;
+  quadrangles2.reserve(gf->quadrangles.size());
 
   for(unsigned int i = 0; i < gf->triangles.size(); i++) {
     touched.insert(gf->triangles[i]->getVertex(0));
@@ -811,7 +812,6 @@ static int _removeDiamonds(GFace *const gf)
     v2t_cont::iterator it4 = adj.find(v4);
 
     if(has_none_of(touched, v1, v2, v3, v4)) {
-
       if(are_all_on_dimension_two(v1, v2, v3, v4) && are_size_three(it1, it3) &&
          _tryToCollapseThatVertex(gf, it1->second, it3->second, q, v1, v3)) {
         touched.insert(v1);
@@ -819,9 +819,9 @@ static int _removeDiamonds(GFace *const gf)
         touched.insert(v3);
         touched.insert(v4);
 
-        deleted.insert(v3);
+        deleted.push_back(v3);
 
-        diamonds.insert(q);
+        diamonds.push_back(q);
       }
       else if(are_all_on_dimension_two(v1, v2, v3, v4) &&
               are_size_three(it2, it4) &&
@@ -832,9 +832,9 @@ static int _removeDiamonds(GFace *const gf)
         touched.insert(v3);
         touched.insert(v4);
 
-        deleted.insert(v4);
+        deleted.push_back(v4);
 
-        diamonds.insert(q);
+        diamonds.push_back(q);
       }
       else {
         quadrangles2.push_back(q);
@@ -844,12 +844,17 @@ static int _removeDiamonds(GFace *const gf)
       quadrangles2.push_back(q);
     }
   }
+  std::sort(deleted.begin(), deleted.end());
+  deleted.erase(std::unique(deleted.begin(), deleted.end()), deleted.end());
 
   gf->quadrangles = quadrangles2;
-  quadrangles2.reserve(gf->mesh_vertices.size() / 2);
+
+  std::vector<MVertex *> mesh_vertices2;
+  mesh_vertices2.reserve(gf->mesh_vertices.size());
 
   for(unsigned int i = 0; i < gf->mesh_vertices.size(); i++) {
-    if(deleted.find(gf->mesh_vertices[i]) == deleted.end()) {
+    if(!std::binary_search(deleted.begin(), deleted.end(),
+                           gf->mesh_vertices[i])) {
       mesh_vertices2.push_back(gf->mesh_vertices[i]);
     }
     else {
@@ -857,10 +862,12 @@ static int _removeDiamonds(GFace *const gf)
       //      delete gf->mesh_vertices[i];
     }
   }
-
   gf->mesh_vertices = mesh_vertices2;
 
-  return diamonds.size();
+  std::sort(diamonds.begin(), diamonds.end());
+
+  return std::distance(diamonds.begin(),
+                       std::unique(diamonds.begin(), diamonds.end()));
 }
 
 int removeDiamonds(GFace *gf)
