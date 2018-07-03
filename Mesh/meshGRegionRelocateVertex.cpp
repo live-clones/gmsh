@@ -60,13 +60,13 @@ static double objective_function(double xi, MVertex *ver, GFace *gf,
   return minQual;
 }
 
-static double objective_function(double xi, MVertex *ver, GFace *gf,
-                                 SPoint3 &p1, SPoint3 &p2,
+static double objective_function(double const xi, MVertex *const ver,
+                                 GFace *const gf, SPoint3 &p1, SPoint3 &p2,
                                  const std::vector<MElement *> &lt)
 {
-  double x = ver->x();
-  double y = ver->y();
-  double z = ver->z();
+  double const x = ver->x();
+  double const y = ver->y();
+  double const z = ver->z();
   SPoint3 p = p1 * (1. - xi) + p2 * xi;
 
   double initialGuess[2] = {0, 0};
@@ -78,7 +78,7 @@ static double objective_function(double xi, MVertex *ver, GFace *gf,
   double minQual = 1.0;
   for(unsigned int i = 0; i < lt.size(); i++) {
     if(lt[i]->getNumVertices() == 4)
-      minQual = std::min((lt[i]->etaShapeMeasure()), minQual);
+      minQual = std::min(lt[i]->etaShapeMeasure(), minQual);
     else
       minQual = std::min(std::abs(lt[i]->gammaShapeMeasure()), minQual);
   }
@@ -88,7 +88,7 @@ static double objective_function(double xi, MVertex *ver, GFace *gf,
   return minQual;
 }
 
-static int Stopping_Rule(double x0, double x1, double tol)
+static bool Stopping_Rule(double const x0, double const x1, double const tol)
 {
   return std::abs(x1 - x0) < tol;
 }
@@ -96,7 +96,7 @@ static int Stopping_Rule(double x0, double x1, double tol)
 double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
                                        double yTarget, double zTarget,
                                        const std::vector<MElement *> &lt,
-                                       double tol, double &q)
+                                       double const tol, double &q)
 {
   const double lambda = 0.5 * (std::sqrt(5.0) - 1.0);
   const double mu = 0.5 * (3.0 - std::sqrt(5.0)); // = 1 - lambda
@@ -232,10 +232,11 @@ void _relocateVertexGolden(MVertex *ver, const std::vector<MElement *> &lt,
                            double relax, double tol)
 {
   if(ver->onWhat()->dim() != 3) return;
-  double x = 0, y = 0, z = 0;
+  double x = 0.0, y = 0.0, z = 0.0;
   int N = 0;
   for(unsigned int i = 0; i < lt.size(); i++) {
-    double XCG = 0, YCG = 0, ZCG = 0;
+    // TODO C++11 use std::accumulate instead
+    double XCG = 0.0, YCG = 0.0, ZCG = 0.0;
     for(std::size_t j = 0; j < lt[i]->getNumVertices(); j++) {
       XCG += lt[i]->getVertex(j)->x();
       YCG += lt[i]->getVertex(j)->y();
@@ -260,7 +261,7 @@ static double _relocateVertex2(GFace *gf, MVertex *ver,
                                const std::vector<MElement *> &lt, double tol)
 {
   SPoint3 p1(0, 0, 0);
-  int counter = 0;
+  std::size_t counter = 0;
   for(unsigned int i = 0; i < lt.size(); i++) {
     for(std::size_t j = 0; j < lt[i]->getNumVertices(); j++) {
       MVertex *v = lt[i]->getVertex(j);
@@ -268,7 +269,7 @@ static double _relocateVertex2(GFace *gf, MVertex *ver,
       counter++;
     }
   }
-  p1 *= 1. / (double)counter;
+  p1 *= 1.0 / (double)counter;
   SPoint3 p2(ver->x(), ver->y(), ver->z());
   double worst;
   double xi = Maximize_Quality_Golden_Section(ver, gf, p1, p2, lt, tol, worst);
@@ -295,7 +296,7 @@ static double _relocateVertex(GFace *gf, MVertex *ver,
     return _relocateVertex2(gf, ver, lt, tol);
   }
 
-  int counter = 0;
+  std::size_t counter = 0;
   for(unsigned int i = 0; i < lt.size(); i++) {
     for(std::size_t j = 0; j < lt[i]->getNumVertices(); j++) {
       MVertex *v = lt[i]->getVertex(j);
