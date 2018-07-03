@@ -27,7 +27,7 @@ static double objective_function(double xi, MVertex *ver, double xTarget,
       minQual = std::min((lt[i]->minSICNShapeMeasure()), minQual);
     else
       //  minQual = std::min((lt[i]->specialQuality()), minQual);
-      minQual = std::min(fabs(lt[i]->minSICNShapeMeasure()) * .2, minQual);
+      minQual = std::min(std::abs(lt[i]->minSICNShapeMeasure()) * .2, minQual);
   }
   ver->x() = x;
   ver->y() = y;
@@ -52,7 +52,7 @@ static double objective_function(double xi, MVertex *ver, GFace *gf,
     if(lt[i]->getNumVertices() == 4)
       minQual = std::min((lt[i]->etaShapeMeasure()), minQual);
     else
-      minQual = std::min(fabs(lt[i]->gammaShapeMeasure()), minQual);
+      minQual = std::min(std::abs(lt[i]->gammaShapeMeasure()), minQual);
   }
   ver->x() = x;
   ver->y() = y;
@@ -80,7 +80,7 @@ static double objective_function(double xi, MVertex *ver, GFace *gf,
     if(lt[i]->getNumVertices() == 4)
       minQual = std::min((lt[i]->etaShapeMeasure()), minQual);
     else
-      minQual = std::min(fabs(lt[i]->gammaShapeMeasure()), minQual);
+      minQual = std::min(std::abs(lt[i]->gammaShapeMeasure()), minQual);
   }
   ver->x() = x;
   ver->y() = y;
@@ -92,7 +92,7 @@ static double objective_function(double xi, MVertex *ver, GFace *gf,
 
 static int Stopping_Rule(double x0, double x1, double tol)
 {
-  return (fabs(x1 - x0) < tol) ? 1 : 0;
+  return std::abs(x1 - x0) < tol;
 }
 
 double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
