@@ -442,12 +442,6 @@ void MVertex::writeSU2(FILE *fp, int dim, double scalingFactor)
             y() * scalingFactor, z() * scalingFactor, _index - 1);
 }
 
-bool MVertexLessThanNum::operator()(const MVertex *v1, const MVertex *v2) const
-{
-  if(v1->getNum() < v2->getNum()) return true;
-  return false;
-}
-
 double MVertexLessThanLexicographic::tolerance = 1.e-6;
 
 double MVertexLessThanLexicographic::getTolerance() { return tolerance; }
