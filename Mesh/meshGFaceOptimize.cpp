@@ -759,10 +759,32 @@ static bool _isItAGoodIdeaToMoveThatVertex(GFace *gf,
   return true;
 }
 
-static int _removeDiamonds(GFace *gf)
+static bool has_none_of(std::set<MVertex *> const &touched, MVertex *const v1,
+                        MVertex *const v2, MVertex *const v3, MVertex *const v4)
+{
+  return touched.find(v1) == touched.end() &&
+         touched.find(v2) == touched.end() &&
+         touched.find(v3) == touched.end() && touched.find(v4) == touched.end();
+}
+
+static bool are_all_on_dimension_two(MVertex *const v1, MVertex *const v2,
+                                     MVertex *const v3, MVertex *const v4)
+{
+  return v1->onWhat()->dim() == 2 && v2->onWhat()->dim() == 2 &&
+         v3->onWhat()->dim() == 2 && v4->onWhat()->dim() == 2;
+}
+
+template <class InputIterator>
+bool are_size_three(InputIterator iterator1, InputIterator iterator2)
+{
+  return iterator1->second.size() == 3 && iterator2->second.size() == 3;
+}
+
+static int _removeDiamonds(GFace *const gf)
 {
   v2t_cont adj;
   buildVertexToElement(gf->quadrangles, adj);
+
   std::set<MElement *> diamonds;
   std::set<MVertex *> touched;
   std::set<MVertex *> deleted;
@@ -776,38 +798,42 @@ static int _removeDiamonds(GFace *gf)
   }
 
   for(unsigned int i = 0; i < gf->quadrangles.size(); i++) {
-    MQuadrangle *q = gf->quadrangles[i];
-    MVertex *v1 = q->getVertex(0);
-    MVertex *v2 = q->getVertex(1);
-    MVertex *v3 = q->getVertex(2);
-    MVertex *v4 = q->getVertex(3);
+    MQuadrangle *const q = gf->quadrangles[i];
+
+    MVertex *const v1 = q->getVertex(0);
+    MVertex *const v2 = q->getVertex(1);
+    MVertex *const v3 = q->getVertex(2);
+    MVertex *const v4 = q->getVertex(3);
+
     v2t_cont::iterator it1 = adj.find(v1);
     v2t_cont::iterator it2 = adj.find(v2);
     v2t_cont::iterator it3 = adj.find(v3);
     v2t_cont::iterator it4 = adj.find(v4);
-    if(touched.find(v1) == touched.end() && touched.find(v2) == touched.end() &&
-       touched.find(v3) == touched.end() && touched.find(v4) == touched.end()) {
-      if(v1->onWhat()->dim() == 2 && v2->onWhat()->dim() == 2 &&
-         v3->onWhat()->dim() == 2 && v4->onWhat()->dim() == 2 &&
-         it1->second.size() == 3 && it3->second.size() == 3 &&
+
+    if(has_none_of(touched, v1, v2, v3, v4)) {
+
+      if(are_all_on_dimension_two(v1, v2, v3, v4) && are_size_three(it1, it3) &&
          _tryToCollapseThatVertex(gf, it1->second, it3->second, q, v1, v3)) {
         touched.insert(v1);
         touched.insert(v2);
         touched.insert(v3);
         touched.insert(v4);
+
         deleted.insert(v3);
+
         diamonds.insert(q);
       }
-      else if(v1->onWhat()->dim() == 2 && v2->onWhat()->dim() == 2 &&
-              v3->onWhat()->dim() == 2 && v4->onWhat()->dim() == 2 &&
-              it2->second.size() == 3 && it4->second.size() == 3 &&
+      else if(are_all_on_dimension_two(v1, v2, v3, v4) &&
+              are_size_three(it2, it4) &&
               _tryToCollapseThatVertex(gf, it2->second, it4->second, q, v2,
                                        v4)) {
         touched.insert(v1);
         touched.insert(v2);
         touched.insert(v3);
         touched.insert(v4);
+
         deleted.insert(v4);
+
         diamonds.insert(q);
       }
       else {
@@ -818,7 +844,9 @@ static int _removeDiamonds(GFace *gf)
       quadrangles2.push_back(q);
     }
   }
+
   gf->quadrangles = quadrangles2;
+  quadrangles2.reserve(gf->mesh_vertices.size() / 2);
 
   for(unsigned int i = 0; i < gf->mesh_vertices.size(); i++) {
     if(deleted.find(gf->mesh_vertices[i]) == deleted.end()) {
