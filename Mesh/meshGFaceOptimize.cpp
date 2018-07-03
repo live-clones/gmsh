@@ -762,20 +762,20 @@ static bool _isItAGoodIdeaToMoveThatVertex(GFace *gf,
 static int _removeDiamonds(GFace *gf)
 {
   v2t_cont adj;
-  buildVertexToElement(gf->quadrangles,adj);
-  std::set<MElement*> diamonds;
-  std::set<MVertex*> touched;
-  std::set<MVertex*> deleted;
-  std::vector<MVertex*> mesh_vertices2;
-  std::vector<MQuadrangle*> quadrangles2;
+  buildVertexToElement(gf->quadrangles, adj);
+  std::set<MElement *> diamonds;
+  std::set<MVertex *> touched;
+  std::set<MVertex *> deleted;
+  std::vector<MVertex *> mesh_vertices2;
+  std::vector<MQuadrangle *> quadrangles2;
 
-  for(unsigned int i = 0; i < gf->triangles.size(); i++){
+  for(unsigned int i = 0; i < gf->triangles.size(); i++) {
     touched.insert(gf->triangles[i]->getVertex(0));
     touched.insert(gf->triangles[i]->getVertex(1));
     touched.insert(gf->triangles[i]->getVertex(2));
   }
 
-  for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
+  for(unsigned int i = 0; i < gf->quadrangles.size(); i++) {
     MQuadrangle *q = gf->quadrangles[i];
     MVertex *v1 = q->getVertex(0);
     MVertex *v2 = q->getVertex(1);
@@ -785,17 +785,12 @@ static int _removeDiamonds(GFace *gf)
     v2t_cont::iterator it2 = adj.find(v2);
     v2t_cont::iterator it3 = adj.find(v3);
     v2t_cont::iterator it4 = adj.find(v4);
-    if (touched.find(v1) == touched.end() &&
-        touched.find(v2) == touched.end() &&
-        touched.find(v3) == touched.end() &&
-        touched.find(v4) == touched.end() ) {
-      if (v1->onWhat()->dim() == 2 &&
-          v2->onWhat()->dim() == 2 &&
-          v3->onWhat()->dim() == 2 &&
-          v4->onWhat()->dim() == 2 &&
-          it1->second.size() == 3 && it3->second.size() == 3 &&
-          _tryToCollapseThatVertex (gf, it1->second, it3->second,
-                                      q, v1, v3)){
+    if(touched.find(v1) == touched.end() && touched.find(v2) == touched.end() &&
+       touched.find(v3) == touched.end() && touched.find(v4) == touched.end()) {
+      if(v1->onWhat()->dim() == 2 && v2->onWhat()->dim() == 2 &&
+         v3->onWhat()->dim() == 2 && v4->onWhat()->dim() == 2 &&
+         it1->second.size() == 3 && it3->second.size() == 3 &&
+         _tryToCollapseThatVertex(gf, it1->second, it3->second, q, v1, v3)) {
         touched.insert(v1);
         touched.insert(v2);
         touched.insert(v3);
@@ -803,13 +798,11 @@ static int _removeDiamonds(GFace *gf)
         deleted.insert(v3);
         diamonds.insert(q);
       }
-      else if (v1->onWhat()->dim() == 2 &&
-               v2->onWhat()->dim() == 2 &&
-               v3->onWhat()->dim() == 2 &&
-               v4->onWhat()->dim() == 2 &&
-               it2->second.size() ==3 &&  it4->second.size() == 3 &&
-               _tryToCollapseThatVertex (gf, it2->second, it4->second,
-                                         q, v2, v4)){
+      else if(v1->onWhat()->dim() == 2 && v2->onWhat()->dim() == 2 &&
+              v3->onWhat()->dim() == 2 && v4->onWhat()->dim() == 2 &&
+              it2->second.size() == 3 && it4->second.size() == 3 &&
+              _tryToCollapseThatVertex(gf, it2->second, it4->second, q, v2,
+                                       v4)) {
         touched.insert(v1);
         touched.insert(v2);
         touched.insert(v3);
@@ -821,14 +814,14 @@ static int _removeDiamonds(GFace *gf)
         quadrangles2.push_back(q);
       }
     }
-    else{
+    else {
       quadrangles2.push_back(q);
     }
   }
   gf->quadrangles = quadrangles2;
 
-  for(unsigned int i = 0; i < gf->mesh_vertices.size(); i++){
-    if(deleted.find(gf->mesh_vertices[i]) == deleted.end()){
+  for(unsigned int i = 0; i < gf->mesh_vertices.size(); i++) {
+    if(deleted.find(gf->mesh_vertices[i]) == deleted.end()) {
       mesh_vertices2.push_back(gf->mesh_vertices[i]);
     }
     else {
@@ -844,7 +837,7 @@ static int _removeDiamonds(GFace *gf)
 
 int removeDiamonds(GFace *gf)
 {
-  int nbRemove = 0;
+  std::size_t nbRemove = 0;
   while(1){
     int x = _removeDiamonds(gf);
     if (!x)break;
