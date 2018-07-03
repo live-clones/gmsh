@@ -2702,7 +2702,7 @@ static bool getPhyscialNameInfo(const std::string &name, int &parentPhysicalTag,
   size_t lastPart = name.find_first_of('}', firstPart);
   const std::string partString = name.substr(firstPart, lastPart-firstPart);
 
-  size_t firstPhysical = name.find_first_of(physical)+physical.size();
+  size_t firstPhysical = name.find(physical)+physical.size();
   size_t lastPhysical = name.find_first_of('}', firstPhysical);
   const std::string physicalString = name.substr(firstPhysical, lastPhysical-firstPhysical);
 
