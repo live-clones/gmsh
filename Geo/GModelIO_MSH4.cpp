@@ -2695,7 +2695,7 @@ static bool getPhyscialNameInfo(const std::string &name, int &parentPhysicalTag,
   if(name[0] != '_') return false;
   
   const std::string part = "_part{";
-  const std::string physical = "_part{";
+  const std::string physical = "_physical{";
   const std::string dim = "_dim{";
   
   size_t firstPart = name.find_first_of(part)+part.size();
