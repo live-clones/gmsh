@@ -2690,10 +2690,11 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
   return 1;
 }
 
-static bool getPhyscialNameInfo(const std::string &name, int &parentPhysicalTag, std::vector<int> &partitions)
+static bool getPhyscialNameInfo(const std::string &name, int &parentPhysicalTag,
+                                std::vector<int> &partitions)
 {
   if(name[0] != '_') return false;
-  
+
   const std::string part = "_part{";
   const std::string physical = "_physical{";
   
@@ -2702,9 +2703,13 @@ static bool getPhyscialNameInfo(const std::string &name, int &parentPhysicalTag,
   const std::string partString = name.substr(firstPart, lastPart-firstPart);
   
   size_t firstPhysical = name.find(physical)+physical.size();
+  size_t lastPart = name.find_first_of('}', firstPart);
+  const std::string partString = name.substr(firstPart, lastPart-firstPart);
+
+  size_t firstPhysical = name.find_first_of(physical)+physical.size();
   size_t lastPhysical = name.find_first_of('}', firstPhysical);
   const std::string physicalString = name.substr(firstPhysical, lastPhysical-firstPhysical);
-  
+
   std::string number;
   for(size_t i = 0; i < partString.size(); ++i){
     if(partString[i] == ','){
@@ -2716,9 +2721,9 @@ static bool getPhyscialNameInfo(const std::string &name, int &parentPhysicalTag,
     }
   }
   partitions.push_back(atoi(number.c_str()));
-  
+
   parentPhysicalTag = atoi(physicalString.c_str());
-  
+
   return true;
 }
 
@@ -2736,12 +2741,19 @@ int GModel::writePartitionedTopology(std::string &name)
       int parentPhysicalTag;
       std::vector<int> partitions;
       if(getPhyscialNameInfo(phyName, parentPhysicalTag, partitions)){
-        allParts[entities[i]->dim()].insert(std::pair<int, std::pair<int, std::vector<int> > >(physicals[j], std::pair<int, std::vector<int> >(parentPhysicalTag,partitions)));
+        allParts[entities[i]->dim()].insert
+          (std::pair<int, std::pair<int, std::vector<int> > >
+           (physicals[j], std::pair<int, std::vector<int> >(parentPhysicalTag,
+                                                            partitions)));
       }
     }
   }
 
   FILE *fp = Fopen(name.c_str(), "w");
+  if(!fp){
+    Msg::Error("Could not open file '%s'", name.c_str());
+    return 0;
+  }
 
 #if __cplusplus < 201103L
   char intToChar[20];
@@ -2751,9 +2763,11 @@ int GModel::writePartitionedTopology(std::string &name)
   std::vector< std::map<int, std::string> > tagToString(4);
   for(size_t i = 4; i > 0; --i){
     fprintf(fp, "  // Dim %lu\n", i-1);
-    for(std::multimap<int, std::pair<int, std::vector<int> > >::iterator it = allParts[i-1].begin(); it != allParts[i-1].end(); ++it){
+    for(std::multimap<int, std::pair<int, std::vector<int> > >::iterator it =
+          allParts[i-1].begin(); it != allParts[i-1].end(); ++it){
 #if __cplusplus >= 201103L
-      std::string partName = "Part~{" + std::to_string(i-1) + "}~{" + std::to_string(it->second.first) + "}";
+      std::string partName = "Part~{" + std::to_string(i-1) + "}~{" +
+        std::to_string(it->second.first) + "}";
 #else
       std::string partName = "Part~{";
       sprintf(intToChar, "%lu", i-1);
@@ -2780,7 +2794,7 @@ int GModel::writePartitionedTopology(std::string &name)
     }
     fprintf(fp, "\n");
   }
-  
+
   fprintf(fp, "  // Global names\n\n");
   std::map<int, std::vector<int> > omegas;
   std::map< std::pair<int, int> , std::vector<int> > sigmasij;
@@ -2793,16 +2807,18 @@ int GModel::writePartitionedTopology(std::string &name)
       break;
     }
   }
-  
-  
-  //omega
-  for(std::multimap<int, std::pair<int, std::vector<int> > >::iterator it = allParts[omegaDim].begin(); it != allParts[omegaDim].end(); ++it){
+
+
+  // omega
+  for(std::multimap<int, std::pair<int, std::vector<int> > >::iterator it =
+        allParts[omegaDim].begin(); it != allParts[omegaDim].end(); ++it){
     if(it->second.second.size() == 1){
       omegas[it->second.second[0]].push_back(it->first);
     }
   }
   fprintf(fp, "  // Omega\n");
-  for(std::map<int, std::vector<int> >::iterator it = omegas.begin(); it != omegas.end(); ++it){
+  for(std::map<int, std::vector<int> >::iterator it = omegas.begin();
+      it != omegas.end(); ++it){
     fprintf(fp, "  Omega~{%d} = Region[{", it->first);
     for(size_t j = 0; j < it->second.size(); ++j){
       if(j == 0) fprintf(fp, "%s", tagToString[omegaDim][it->second[j]].c_str());
@@ -2811,67 +2827,76 @@ int GModel::writePartitionedTopology(std::string &name)
     fprintf(fp, "}];\n");
   }
   fprintf(fp, "\n");
-  
-  //sigma
-  for(std::multimap<int, std::pair<int, std::vector<int> > >::iterator it = allParts[omegaDim-1].begin(); it != allParts[omegaDim-1].end(); ++it){
-    if(it->second.second.size() == 2){
-      sigmasij[std::pair<int, int>(it->second.second[0], it->second.second[1])].push_back(it->first);
-      sigmasij[std::pair<int, int>(it->second.second[1], it->second.second[0])].push_back(it->first);
-      sigmas[it->second.second[0]].push_back(it->first);
-      sigmas[it->second.second[1]].push_back(it->first);
+
+  if(omegaDim > 0){
+    // sigma
+    for(std::multimap<int, std::pair<int, std::vector<int> > >::iterator it =
+          allParts[omegaDim-1].begin(); it != allParts[omegaDim-1].end(); ++it){
+      if(it->second.second.size() == 2){
+        sigmasij[std::pair<int, int>(it->second.second[0], it->second.second[1])].
+          push_back(it->first);
+        sigmasij[std::pair<int, int>(it->second.second[1], it->second.second[0])].
+          push_back(it->first);
+        sigmas[it->second.second[0]].push_back(it->first);
+        sigmas[it->second.second[1]].push_back(it->first);
+      }
     }
-  }
-  fprintf(fp, "  // Sigma\n");
-  for(std::map< std::pair<int, int> , std::vector<int> >::iterator it = sigmasij.begin(); it != sigmasij.end(); ++it){
-    fprintf(fp, "  Sigma~{%d}~{%d} = Region[{", it->first.first, it->first.second);
-    for(size_t j = 0; j < it->second.size(); ++j){
-      if(j == 0) fprintf(fp, "%s", tagToString[omegaDim-1][it->second[j]].c_str());
-      else       fprintf(fp, ",%s", tagToString[omegaDim-1][it->second[j]].c_str());
+    fprintf(fp, "  // Sigma\n");
+    for(std::map< std::pair<int, int> , std::vector<int> >::iterator it =
+          sigmasij.begin(); it != sigmasij.end(); ++it){
+      fprintf(fp, "  Sigma~{%d}~{%d} = Region[{", it->first.first, it->first.second);
+      for(size_t j = 0; j < it->second.size(); ++j){
+        if(j == 0) fprintf(fp, "%s", tagToString[omegaDim-1][it->second[j]].c_str());
+        else       fprintf(fp, ",%s", tagToString[omegaDim-1][it->second[j]].c_str());
+      }
+      fprintf(fp, "}];\n");
     }
-    fprintf(fp, "}];\n");
-  }
-  fprintf(fp, "\n");
-  
-  for(std::map<int, std::vector<int> >::iterator it = sigmas.begin(); it != sigmas.end(); ++it){
-    fprintf(fp, "  Sigma~{%d} = Region[{", it->first);
-    for(size_t j = 0; j < it->second.size(); ++j){
-      if(j == 0) fprintf(fp, "%s", tagToString[omegaDim-1][it->second[j]].c_str());
-      else       fprintf(fp, ",%s", tagToString[omegaDim-1][it->second[j]].c_str());
+    fprintf(fp, "\n");
+
+    for(std::map<int, std::vector<int> >::iterator it = sigmas.begin();
+        it != sigmas.end(); ++it){
+      fprintf(fp, "  Sigma~{%d} = Region[{", it->first);
+      for(size_t j = 0; j < it->second.size(); ++j){
+        if(j == 0) fprintf(fp, "%s", tagToString[omegaDim-1][it->second[j]].c_str());
+        else       fprintf(fp, ",%s", tagToString[omegaDim-1][it->second[j]].c_str());
+      }
+      fprintf(fp, "}];\n");
     }
-    fprintf(fp, "}];\n");
+    fprintf(fp, "\n");
   }
-  fprintf(fp, "\n");
-  
-  //D
+
+  // D
   fprintf(fp, "  D() = {");
   for(size_t i = 1; i <= getNumPartitions(); ++i){
     if(i != 1) fprintf(fp, ", ");
     fprintf(fp, "%lu", i);
   }
   fprintf(fp, "};\n");
-  
-  //D~{i}
-  for(std::multimap<int, std::pair<int, std::vector<int> > >::iterator it = allParts[omegaDim-1].begin(); it != allParts[omegaDim-1].end(); ++it){
-    if(it->second.second.size() == 2){
-      neighbors[it->second.second[0]].insert(it->second.second[1]);
-      neighbors[it->second.second[1]].insert(it->second.second[0]);
+
+  if(omegaDim > 0){
+    // D~{i}
+    for(std::multimap<int, std::pair<int, std::vector<int> > >::iterator it =
+          allParts[omegaDim-1].begin(); it != allParts[omegaDim-1].end(); ++it){
+      if(it->second.second.size() == 2){
+        neighbors[it->second.second[0]].insert(it->second.second[1]);
+        neighbors[it->second.second[1]].insert(it->second.second[0]);
+      }
     }
-  }
-  for(size_t i = 1; i <= getNumPartitions(); ++i){
-    fprintf(fp, "  D~{%lu}() = {", i);
-    for(std::set<int>::iterator it = neighbors[i].begin(); it != neighbors[i].end(); ++it){
-      if(it != neighbors[i].begin()) fprintf(fp, ", ");
-      fprintf(fp, "%d", *it);
+    for(size_t i = 1; i <= getNumPartitions(); ++i){
+      fprintf(fp, "  D~{%lu}() = {", i);
+      for(std::set<int>::iterator it = neighbors[i].begin(); it != neighbors[i].end(); ++it){
+        if(it != neighbors[i].begin()) fprintf(fp, ", ");
+        fprintf(fp, "%d", *it);
+      }
+      fprintf(fp, "};\n");
     }
-    fprintf(fp, "};\n");
   }
 
-  
   fprintf(fp, "}\n\n");
 
   fclose(fp);
-  
+
   Msg::Info("Done writing '%s'", name.c_str());
 
-  return 0;
+  return 1;
 }
