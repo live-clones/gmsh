@@ -414,7 +414,7 @@ static Vertex InterpolateNurbs(Curve *Curve, double u, int derivee)
   return p;
 }
 
-Vertex InterpolateCurve(Curve *c, double u, int derivee)
+Vertex InterpolateCurve(Curve *c, double u, int const derivee)
 {
   if(c->Num < 0) {
     Curve *C0 = FindCurve(-c->Num);
@@ -539,11 +539,11 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
       theta = c->Circle.t1 - (c->Circle.t1 - c->Circle.t2) * u;
       theta -= c->Circle.incl; // for ellipses
       V.Pos.X =
-        c->Circle.f1 * cos(theta) * cos(c->Circle.incl) -
-        c->Circle.f2 * sin(theta) * sin(c->Circle.incl);
+        c->Circle.f1 * std::cos(theta) * std::cos(c->Circle.incl) -
+        c->Circle.f2 * std::sin(theta) * std::sin(c->Circle.incl);
       V.Pos.Y =
-        c->Circle.f1 * cos(theta) * sin(c->Circle.incl) +
-        c->Circle.f2 * sin(theta) * cos(c->Circle.incl);
+        c->Circle.f1 * std::cos(theta) * std::sin(c->Circle.incl) +
+        c->Circle.f2 * std::sin(theta) * std::cos(c->Circle.incl);
       V.Pos.Z = 0.0;
       Projette(&V, c->Circle.invmat);
       List_Read(c->Control_Points, 1, &v[0]);
