@@ -88,8 +88,6 @@ static double objective_function(double xi, MVertex *ver, GFace *gf,
   return minQual;
 }
 
-#define sqrt5 2.236067977499789696
-
 static int Stopping_Rule(double x0, double x1, double tol)
 {
   return std::abs(x1 - x0) < tol;
@@ -100,8 +98,8 @@ double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
                                        const std::vector<MElement *> &lt,
                                        double tol, double &q)
 {
-  static const double lambda = 0.5 * (sqrt5 - 1.0);
-  static const double mu = 0.5 * (3.0 - sqrt5); // = 1 - lambda
+  const double lambda = 0.5 * (std::sqrt(5.0) - 1.0);
+  const double mu = 0.5 * (3.0 - std::sqrt(5.0)); // = 1 - lambda
   double a = 0.0;
   double b = 2.0;
 
@@ -141,8 +139,8 @@ double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf, SPoint2 &p1,
                                        const std::vector<MElement *> &lt,
                                        double tol, double &worst)
 {
-  static const double lambda = 0.5 * (sqrt5 - 1.0);
-  static const double mu = 0.5 * (3.0 - sqrt5); // = 1 - lambda
+  const double lambda = 0.5 * (std::sqrt(5.0) - 1.0);
+  const double mu = 0.5 * (3.0 - std::sqrt(5.0)); // = 1 - lambda
   double a = 0.0;
   double b = 1.0;
 
@@ -188,8 +186,8 @@ double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf, SPoint3 &p1,
                                        const std::vector<MElement *> &lt,
                                        double tol, double &worst)
 {
-  static const double lambda = 0.5 * (sqrt5 - 1.0);
-  static const double mu = 0.5 * (3.0 - sqrt5); // = 1 - lambda
+  const double lambda = 0.5 * (std::sqrt(5.0) - 1.0);
+  const double mu = 0.5 * (3.0 - std::sqrt(5.0)); // = 1 - lambda
   double a = 0.0;
   double b = 1.0;
 
