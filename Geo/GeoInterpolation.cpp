@@ -149,28 +149,66 @@ SPoint2 InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
   return p;
 }
 
-static Vertex InterpolateBezier(Curve *Curve, double u, int derivee)
+  static Vertex InterpolateBezier(Curve *Curve, double u, int derivee)
 {
-  int NbCurves = (List_Nbr(Curve->Control_Points) - 1) / 3;
-  if(NbCurves <= 0){
-    Msg::Error("Bezier curve requires at least 4 control points");
-    Vertex V;
-    return V;
+  int NbControls = List_Nbr(Curve->Control_Points);
+  if (NbControls - derivee <= 0) return Vertex(0, 0, 0);
+
+  List_T *controls = List_Create(NbControls, 1, sizeof(Coord));
+
+  if (Curve->geometry) {
+    for (int i = 0; i < NbControls; ++i) {
+      Vertex *v;
+      List_Read(Curve->Control_Points, i, &v);
+      Coord c = {v->pntOnGeometry.x(), v->pntOnGeometry.y(), 0};
+      List_Add(controls, &c);
+    }
   }
-  int iCurve = (int)floor(u * (double)NbCurves);
-  if(iCurve >= NbCurves) iCurve = NbCurves - 1; // u = 1
-  if(iCurve <= 0) iCurve = 0;
-  double t1 = (double)(iCurve) / (double)(NbCurves);
-  double t2 = (double)(iCurve+1) / (double)(NbCurves);
-  double t = (u - t1) / (t2 - t1);
-  Vertex *v[4];
-  for(int i = 0; i < 4; i++) {
-    List_Read(Curve->Control_Points, iCurve * 3 + i , &v[i]);
+  else {
+    for (int i = 0; i < NbControls; ++i) {
+      Vertex *v;
+      List_Read(Curve->Control_Points, i, &v);
+      List_Add(controls, &v->Pos);
+    }
   }
 
+  // Compute derivative:
+  while (derivee > 0) {
+    NbControls--;
+    derivee--;
+    for (int i = 0; i < NbControls; ++i) {
+      Coord c1;
+      Coord c2;
+      List_Read(controls,   i, &c1);
+      List_Read(controls, i+1, &c2);
+      c2.X -= c1.X;
+      c2.Y -= c1.Y;
+      c2.Z -= c1.Z;
+      List_Write(controls, i, &c2);
+    }
+  }
+
+  // De Casteljau's algorithm:
+  while (NbControls > 1) {
+    NbControls--;
+    for (int i = 0; i < NbControls; ++i) {
+      Coord c1;
+      Coord c2;
+      List_Read(controls,   i, &c1);
+      List_Read(controls, i+1, &c2);
+      c2.X = (1-u) * c1.X + u * c2.X;
+      c2.Y = (1-u) * c1.Y + u * c2.Y;
+      c2.Z = (1-u) * c1.Z + u * c2.Z;
+      List_Write(controls, i, &c2);
+    }
+  }
+
+  Coord c;
+  List_Read(controls, 0, &c);
+  List_Delete(controls);
+
   if(Curve->geometry){
-    SPoint2 pp = InterpolateCubicSpline(v, t, Curve->mat, t1, t2,
-                                        Curve->geometry, derivee);
+    SPoint2 pp(c.X, c.Y);
     SPoint3 pt = Curve->geometry->point(pp);
     Vertex V;
     V.Pos.X = pt.x();
@@ -179,7 +217,11 @@ static Vertex InterpolateBezier(Curve *Curve, double u, int derivee)
     return V;
   }
   else{
-    return InterpolateCubicSpline(v, t, Curve->mat, derivee, t1, t2);
+    Vertex V;
+    V.Pos.X = c.X;
+    V.Pos.Y = c.Y;
+    V.Pos.Z = c.Z;
+    return V;
   }
 }
 
