@@ -252,8 +252,8 @@ bool GEO_Internals::addBezier(int &tag, const std::vector<int> &pointTags)
     return false;
   }
   if(tag < 0) tag = getMaxTag(1) + 1;
-  if(pointTags.size() < 4){
-    Msg::Error("Bezier curve requires at least 4 control points");
+  if(pointTags.size() < 2){
+    Msg::Error("Bezier curve requires at least 2 control points");
     return false;
   }
   List_T *tmp = List_Create(2, 2, sizeof(int));
