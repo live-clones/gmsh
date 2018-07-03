@@ -180,8 +180,8 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE* fp,
   return true;
 }
 
-static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, bool swap,
-                               bool partition, int &tag,
+static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, int sizeofstr,
+                               bool swap, bool partition, int &tag,
                                int &parentDim, int &parentTag,
                                std::vector<unsigned int> &partitions,
                                double &minX, double &minY, double &minZ,
@@ -227,8 +227,11 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, bool swap,
           return false;
         }
       }
-      if(fscanf(fp, "%lf %lf %lf %lf %lf %lf %[0-9- ]",
-                &minX, &minY, &minZ, &maxX, &maxY, &maxZ, str) != 7){
+      if(fscanf(fp, "%lf %lf %lf %lf %lf %lf",
+                &minX, &minY, &minZ, &maxX, &maxY, &maxZ) != 6){
+        return false;
+      }
+      if(!fgets(str, sizeofstr, fp)){
         return false;
       }
     }
@@ -254,8 +257,11 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, bool swap,
       maxZ = dataDouble[5];
     }
     else{
-      if(fscanf(fp, "%d %lf %lf %lf %lf %lf %lf %[0-9- ]",
-                &tag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ, str) != 8){
+      if(fscanf(fp, "%d %lf %lf %lf %lf %lf %lf",
+                &tag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ) != 7){
+        return false;
+      }
+      if(!fgets(str, sizeofstr, fp)){
         return false;
       }
     }
@@ -266,7 +272,9 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, bool swap,
 static bool readMSH4Entities(GModel *const model, FILE* fp, bool partition,
                              bool binary, bool swap)
 {
-  char str[256];
+  // max length of line for ascii input file (should large enough to handle
+  // entities with many entities on their boundary)
+  char str[4096];
 
   if(partition){
     int numPartitions = 0;
@@ -356,7 +364,7 @@ static bool readMSH4Entities(GModel *const model, FILE* fp, bool partition,
       int tag = 0, parentDim = 0, parentTag = 0;
       std::vector<unsigned int> partitions;
       double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
-      if(!readMSH4EntityInfo(fp, binary, str, swap,
+      if(!readMSH4EntityInfo(fp, binary, str, sizeof(str), swap,
                              partition, tag, parentDim, parentTag, partitions,
                              minX, minY, minZ, maxX, maxY, maxZ))
         return false;
@@ -442,6 +450,7 @@ static bool readMSH4Entities(GModel *const model, FILE* fp, bool partition,
           if(!readMSH4BoundingEntities(model, fp, gr, binary, str, swap))
             return false;
         }
+        break;
       }
     }
   }
@@ -672,7 +681,7 @@ static std::pair<int, MElement*> *readMSH4Elements(GModel *const model, FILE* fp
                                                    unsigned long &maxElementNum,
                                                    bool swap)
 {
-  char str[256];
+  char str[1024];
   unsigned long numBlock = 0;
   nbrElements = 0;
   maxElementNum = 0;
@@ -784,7 +793,10 @@ static std::pair<int, MElement*> *readMSH4Elements(GModel *const model, FILE* fp
     else{
       for(unsigned int j = 0; j < numElements; j++){
         int elmTag = 0;
-        if(fscanf(fp, "%d %[0-9- ]", &elmTag, str) != 2){
+        if(fscanf(fp, "%d", &elmTag) != 1){
+          return 0;
+        }
+        if(!fgets(str, sizeof(str), fp)){
           return 0;
         }
 
@@ -1018,7 +1030,7 @@ static bool readMSH4GhostElements(GModel *const model, FILE* fp,
     int numElm = 0;
     int numPart = 0;
     unsigned int numGhost = 0;
-    char str[256];
+    char str[1024];
 
     if(binary){
       int data[3];
@@ -1032,7 +1044,10 @@ static bool readMSH4GhostElements(GModel *const model, FILE* fp,
       Msg::Info("%d", numPart);
     }
     else{
-      if(fscanf(fp, "%d %d %d %[0-9- ]", &numElm, &numPart, &numGhost, str) != 4){
+      if(fscanf(fp, "%d %d %d", &numElm, &numPart, &numGhost) != 3){
+        return false;
+      }
+      if(!fgets(str, sizeof(str), fp)){
         return false;
       }
     }
@@ -1108,7 +1123,7 @@ int GModel::_readMSH4(const std::string &name)
     return 0;
   }
 
-  char str[256] = "x";
+  char str[1024] = "x";
   double version = 1.0;
   bool binary = false, swap = false, postpro = false;
 
@@ -2697,7 +2712,7 @@ static bool getPhyscialNameInfo(const std::string &name, int &parentPhysicalTag,
 
   const std::string part = "_part{";
   const std::string physical = "_physical{";
-  
+
   size_t firstPart = name.find(part)+part.size();
   size_t lastPart = name.find_first_of('}', firstPart);
   const std::string partString = name.substr(firstPart, lastPart-firstPart);
@@ -2818,7 +2833,7 @@ int GModel::writePartitionedTopology(std::string &name)
     fprintf(fp, "  Omega~{%d} = Region[{", it->first);
     for(size_t j = 0; j < it->second.size(); ++j){
       if(j == 0) fprintf(fp, "%s", tagToString[omegaDim][it->second[j]].c_str());
-      else       fprintf(fp, ",%s", tagToString[omegaDim][it->second[j]].c_str());
+      else       fprintf(fp, ", %s", tagToString[omegaDim][it->second[j]].c_str());
     }
     fprintf(fp, "}];\n");
   }
@@ -2843,7 +2858,7 @@ int GModel::writePartitionedTopology(std::string &name)
       fprintf(fp, "  Sigma~{%d}~{%d} = Region[{", it->first.first, it->first.second);
       for(size_t j = 0; j < it->second.size(); ++j){
         if(j == 0) fprintf(fp, "%s", tagToString[omegaDim-1][it->second[j]].c_str());
-        else       fprintf(fp, ",%s", tagToString[omegaDim-1][it->second[j]].c_str());
+        else       fprintf(fp, ", %s", tagToString[omegaDim-1][it->second[j]].c_str());
       }
       fprintf(fp, "}];\n");
     }
@@ -2854,7 +2869,7 @@ int GModel::writePartitionedTopology(std::string &name)
       fprintf(fp, "  Sigma~{%d} = Region[{", it->first);
       for(size_t j = 0; j < it->second.size(); ++j){
         if(j == 0) fprintf(fp, "%s", tagToString[omegaDim-1][it->second[j]].c_str());
-        else       fprintf(fp, ",%s", tagToString[omegaDim-1][it->second[j]].c_str());
+        else       fprintf(fp, ", %s", tagToString[omegaDim-1][it->second[j]].c_str());
       }
       fprintf(fp, "}];\n");
     }
