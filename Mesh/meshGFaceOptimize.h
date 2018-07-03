@@ -30,20 +30,18 @@ typedef std::map<MVertex *, std::vector<MElement *>, MVertexLessThanNum>
 typedef std::map<MEdge, std::pair<MElement *, MElement *>, Less_Edge> e2t_cont;
 
 template <class T>
-void buildVertexToElement(std::vector<T *> &eles, v2t_cont &adj)
+void buildVertexToElement(std::vector<T *> const &eles, v2t_cont &adj)
 {
-  for(unsigned int i = 0; i < eles.size(); i++) {
-    T *t = eles[i];
+  for(std::size_t i = 0; i < eles.size(); i++) {
+    T *const t = eles[i];
     for(std::size_t j = 0; j < t->getNumVertices(); j++) {
-      MVertex *v = t->getVertex(j);
-      v2t_cont ::iterator it = adj.find(v);
-      if(it == adj.end()) {
-        std::vector<MElement *> one;
-        one.push_back(t);
-        adj[v] = one;
-      }
+      MVertex *const vertex = t->getVertex(j);
+
+      v2t_cont::iterator adj_it = adj.find(vertex);
+
+      if(adj_it == adj.end()) { adj[vertex] = std::vector<MElement *>(1, t); }
       else {
-        it->second.push_back(t);
+        adj_it->second.push_back(t);
       }
     }
   }
@@ -97,6 +95,7 @@ struct swapquad {
     if(v[3] < o.v[3]) return true;
     return false;
   }
+
   swapquad(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4)
   {
     v[0] = v1->getNum();
@@ -105,7 +104,8 @@ struct swapquad {
     v[3] = v4->getNum();
     std::sort(v, v + 4);
   }
-  swapquad(int v1, int v2, int v3, int v4)
+
+  swapquad(int const v1, int const v2, int const v3, int const v4)
   {
     v[0] = v1;
     v[1] = v2;
@@ -120,6 +120,7 @@ struct RecombineTriangle {
   double angle;
   double quality;
   MVertex *n1, *n2, *n3, *n4;
+
   RecombineTriangle(const MEdge &me, MElement *_t1, MElement *_t2)
     : t1(_t1)
     , t2(_t2)
@@ -146,15 +147,16 @@ struct RecombineTriangle {
     MQuadrangle q(n1, n3, n2, n4);
     angle = q.etaShapeMeasure();
 
-    double a1 = 180 * angle3Vertices(n1, n4, n2) / M_PI;
-    double a2 = 180 * angle3Vertices(n4, n2, n3) / M_PI;
-    double a3 = 180 * angle3Vertices(n2, n3, n1) / M_PI;
-    double a4 = 180 * angle3Vertices(n3, n1, n4) / M_PI;
-    quality = fabs(90. - a1);
-    quality = std::max(fabs(90. - a2), quality);
-    quality = std::max(fabs(90. - a3), quality);
-    quality = std::max(fabs(90. - a4), quality);
+    double const a1 = 180 * angle3Vertices(n1, n4, n2) / M_PI;
+    double const a2 = 180 * angle3Vertices(n4, n2, n3) / M_PI;
+    double const a3 = 180 * angle3Vertices(n2, n3, n1) / M_PI;
+    double const a4 = 180 * angle3Vertices(n3, n1, n4) / M_PI;
+    quality = std::abs(90. - a1);
+    quality = std::max(std::abs(90. - a2), quality);
+    quality = std::max(std::abs(90. - a3), quality);
+    quality = std::max(std::abs(90. - a4), quality);
   }
+
   bool operator<(const RecombineTriangle &other) const
   {
     return quality < other.quality;
