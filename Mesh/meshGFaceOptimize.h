@@ -30,19 +30,15 @@ typedef std::map<MVertex *, std::vector<MElement *>, MVertexLessThanNum>
 typedef std::map<MEdge, std::pair<MElement *, MElement *>, Less_Edge> e2t_cont;
 
 template <class T>
-void buildVertexToElement(std::vector<T *> const &eles, v2t_cont &adj)
+void buildVertexToElement(std::vector<T *> const &elements, v2t_cont &adj)
 {
-  for(std::size_t i = 0; i < eles.size(); i++) {
-    T *const t = eles[i];
-    for(std::size_t j = 0; j < t->getNumVertices(); j++) {
-      MVertex *const vertex = t->getVertex(j);
+  for(std::size_t i = 0, elements_size = elements.size(); i < elements_size;
+      i++) {
+    T *const t = elements[i];
 
-      v2t_cont::iterator adj_it = adj.find(vertex);
-
-      if(adj_it == adj.end()) { adj[vertex] = std::vector<MElement *>(1, t); }
-      else {
-        adj_it->second.push_back(t);
-      }
+    for(std::size_t j = 0, vertices_size = t->getNumVertices();
+        j < vertices_size; j++) {
+      adj[t->getVertex(j)].push_back(t);
     }
   }
 }
