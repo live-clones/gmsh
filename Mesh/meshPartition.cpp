@@ -2122,10 +2122,10 @@ static void addPhysical(GModel *const model, GEntity *entity,
                         std::vector<GModel::piter> &iterators, int &numPhysical)
 {
   if(!CTX::instance()->mesh.partitionCreatePhysicals) return;
-  
+
   GEntity *parent = entity->getParentEntity();
   if(parent == 0) return;
-  
+
   unsigned int numPartitions = 0;
   if(entity->dim() == 3){
     numPartitions = static_cast<partitionRegion*>(entity)->numPartitions();
@@ -2139,15 +2139,15 @@ static void addPhysical(GModel *const model, GEntity *entity,
   else if(entity->dim() == 0){
     numPartitions = static_cast<partitionVertex*>(entity)->numPartitions();
   }
- 
+
 #if __cplusplus < 201103L
   char intToChar[20];
 #endif
   std::vector<int> physical = parent->getPhysicalEntities();
   int dim = entity->dim();
-  for(size_t i = 0; i < physical.size(); ++i){
+  for(size_t phys = 0; phys < physical.size(); ++phys){
     std::string name = "_part{";
-    
+
     for(unsigned int i = 0; i < numPartitions; i++){
       if(i > 0) name += ",";
       unsigned int partition = 0;
@@ -2172,12 +2172,12 @@ static void addPhysical(GModel *const model, GEntity *entity,
     }
     name += "}_physical{";
 #if __cplusplus >= 201103L
-    name += std::to_string(physical[i]) + "}_dim{" + std::to_string(dim) + "}";
+    name += std::to_string(physical[phys]) + "}_dim{" + std::to_string(dim) + "}";
 #else
-    sprintf(intToChar, "%d}_dim{%d}", physical[i], dim);
+    sprintf(intToChar, "%d}_dim{%d}", physical[phys], dim);
     name += intToChar;
 #endif
-    
+
     int number = 0;
     hashmap<std::string, int>::iterator it = nameToNumber.find(name);
     if(it == nameToNumber.end()){
@@ -2191,10 +2191,10 @@ static void addPhysical(GModel *const model, GEntity *entity,
     }
     entity->addPhysicalEntity(number);
   }
-  
+
   if(physical.size() == 0){
     std::string name = "_part{";
-    
+
     for(unsigned int i = 0; i < numPartitions; i++){
       if(i > 0) name += ",";
       unsigned int partition = 0;
@@ -2213,7 +2213,7 @@ static void addPhysical(GModel *const model, GEntity *entity,
 #if __cplusplus >= 201103L
       name += std::to_string(partition);
 #else
-      sprintf(intToChar, "%d", physical[i]);
+      sprintf(intToChar, "%d", partition);
       name += intToChar;
 #endif
     }
@@ -2224,7 +2224,7 @@ static void addPhysical(GModel *const model, GEntity *entity,
     sprintf(intToChar, "physical{0}_dim{%d}", dim);
     name += intToChar;
 #endif
-    
+
     int number = 0;
     hashmap<std::string, int>::iterator it = nameToNumber.find(name);
     if(it == nameToNumber.end()){
@@ -2267,7 +2267,7 @@ static void AssignPhysicalName(GModel *model)
       addPhysical(model, *it, nameToNumber, iterators, numPhysical);
     }
   }
-  
+
   // Loop over vertices
   for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex(); ++it){
     if((*it)->geomType() == GEntity::PartitionVertex){
