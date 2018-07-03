@@ -1226,21 +1226,23 @@ int edgeSwapPass2(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
 static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
 {
   // never recombine a face that is part of a compound!
-  if(gf->triangles.size() == 0) return 1;
+  if(gf->triangles.empty()) return 1;
 
   int success = 1;
 
-  std::set<MVertex *> emb_edgeverts;
+  std::vector<MVertex *> emb_edgeverts;
   {
     std::vector<GEdge *> const &emb_edges = gf->embeddedEdges();
     std::vector<GEdge *>::const_iterator ite = emb_edges.begin();
     while(ite != emb_edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {
-        emb_edgeverts.insert((*ite)->mesh_vertices.begin(),
+        emb_edgeverts.insert(emb_edgeverts.end(), (*ite)->mesh_vertices.begin(),
                              (*ite)->mesh_vertices.end());
-        emb_edgeverts.insert((*ite)->getBeginVertex()->mesh_vertices.begin(),
+        emb_edgeverts.insert(emb_edgeverts.end(),
+                             (*ite)->getBeginVertex()->mesh_vertices.begin(),
                              (*ite)->getBeginVertex()->mesh_vertices.end());
-        emb_edgeverts.insert((*ite)->getEndVertex()->mesh_vertices.begin(),
+        emb_edgeverts.insert(emb_edgeverts.end(),
+                             (*ite)->getEndVertex()->mesh_vertices.begin(),
                              (*ite)->getEndVertex()->mesh_vertices.end());
       }
       ++ite;
@@ -1253,40 +1255,50 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
     while(ite != _edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {
         if((*ite)->isSeam(gf)) {
-          emb_edgeverts.insert((*ite)->mesh_vertices.begin(),
+          emb_edgeverts.insert(emb_edgeverts.end(),
+                               (*ite)->mesh_vertices.begin(),
                                (*ite)->mesh_vertices.end());
-          emb_edgeverts.insert((*ite)->getBeginVertex()->mesh_vertices.begin(),
+          emb_edgeverts.insert(emb_edgeverts.end(),
+                               (*ite)->getBeginVertex()->mesh_vertices.begin(),
                                (*ite)->getBeginVertex()->mesh_vertices.end());
-          emb_edgeverts.insert((*ite)->getEndVertex()->mesh_vertices.begin(),
+          emb_edgeverts.insert(emb_edgeverts.end(),
+                               (*ite)->getEndVertex()->mesh_vertices.begin(),
                                (*ite)->getEndVertex()->mesh_vertices.end());
         }
       }
       ++ite;
     }
   }
+  // Sort and erase the duplicates
+  std::sort(emb_edgeverts.begin(), emb_edgeverts.end());
+  emb_edgeverts.erase(std::unique(emb_edgeverts.begin(), emb_edgeverts.end()),
+                      emb_edgeverts.end());
 
   e2t_cont adj;
   buildEdgeToElement(gf->triangles, adj);
 
   std::vector<RecombineTriangle> pairs;
+
   std::map<MVertex *, std::pair<MElement *, MElement *> > makeGraphPeriodic;
 
   for(e2t_cont::iterator it = adj.begin(); it != adj.end(); ++it) {
     if(it->second.second && it->second.first->getNumVertices() == 3 &&
        it->second.second->getNumVertices() == 3 &&
-       (emb_edgeverts.find(it->first.getVertex(0)) == emb_edgeverts.end() ||
-        emb_edgeverts.find(it->first.getVertex(1)) == emb_edgeverts.end())) {
+       (!std::binary_search(emb_edgeverts.begin(), emb_edgeverts.end(),
+                            it->first.getVertex(0)) ||
+        !std::binary_search(emb_edgeverts.begin(), emb_edgeverts.end(),
+                            it->first.getVertex(1)))) {
       pairs.push_back(
         RecombineTriangle(it->first, it->second.first, it->second.second));
     }
     else if(!it->second.second && it->second.first->getNumVertices() == 3) {
       for(int i = 0; i < 2; i++) {
-        MVertex *v = it->first.getVertex(i);
+        MVertex *const v = it->first.getVertex(i);
         std::map<MVertex *, std::pair<MElement *, MElement *> >::iterator itv =
           makeGraphPeriodic.find(v);
         if(itv == makeGraphPeriodic.end()) {
           makeGraphPeriodic[v] =
-            std::make_pair(it->second.first, (MElement *)0);
+            std::make_pair(it->second.first, static_cast<MElement *>(NULL));
         }
         else {
           if(itv->second.first != it->second.first)
@@ -1327,16 +1339,17 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
       // delete
       int *elist = (int *)malloc(sizeof(int) * 2 * ecount);
       int *elen = (int *)malloc(sizeof(int) * ecount);
-      for(unsigned int i = 0; i < pairs.size(); ++i) {
+
+      for(std::size_t i = 0; i < pairs.size(); ++i) {
         elist[2 * i] = t2n[pairs[i].t1];
         elist[2 * i + 1] = t2n[pairs[i].t2];
-        elen[i] = (int)1000 * exp(-pairs[i].angle);
+        elen[i] = (int)1000 * std::exp(-pairs[i].angle);
         int NB = 0;
         if(pairs[i].n1->onWhat()->dim() < 2) NB++;
         if(pairs[i].n2->onWhat()->dim() < 2) NB++;
         if(pairs[i].n3->onWhat()->dim() < 2) NB++;
         if(pairs[i].n4->onWhat()->dim() < 2) NB++;
-        if(elen[i] > (int)1000 * exp(.1) && NB > 2) { elen[i] = 5000; }
+        if(elen[i] > static_cast<int>(1000 * std::exp(0.1)) && NB > 2) { elen[i] = 5000; }
         else if(elen[i] >= 1000 && NB > 2) {
           elen[i] = 10000;
         }
@@ -1345,7 +1358,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
       if(cubicGraph) {
         std::map<MVertex *, std::pair<MElement *, MElement *> >::iterator itv =
           makeGraphPeriodic.begin();
-        int CC = pairs.size();
+        std::size_t CC = pairs.size();
         for(; itv != makeGraphPeriodic.end(); ++itv) {
           elist[2 * CC] = t2n[itv->second.first];
           elist[2 * CC + 1] = t2n[itv->second.second];
@@ -1380,7 +1393,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
             MElement *t2 = n2t[i2];
             touched.insert(t1);
             touched.insert(t2);
-            MVertex *other = 0;
+            MVertex *other = NULL;
             for(int i = 0; i < 3; i++) {
               if(t1->getVertex(0) != t2->getVertex(i) &&
                  t1->getVertex(1) != t2->getVertex(i) &&
@@ -1442,19 +1455,17 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
             break;
           }
         }
-        MQuadrangle *q;
-        if(orientation < 0)
-          q = new MQuadrangle(itp->n1, itp->n3, itp->n2, itp->n4);
-        else
-          q = new MQuadrangle(itp->n1, itp->n4, itp->n2, itp->n3);
-        gf->quadrangles.push_back(q);
+        gf->quadrangles.push_back(
+          new MQuadrangle(itp->n1, orientation < 0 ? itp->n3 : itp->n4, itp->n2,
+                          orientation < 0 ? itp->n4 : itp->n3));
       }
     }
     ++itp;
   }
 
   std::vector<MTriangle *> triangles2;
-  for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+  triangles2.reserve(gf->triangles.size());
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     if(touched.find(gf->triangles[i]) == touched.end()) {
       triangles2.push_back(gf->triangles[i]);
     }
