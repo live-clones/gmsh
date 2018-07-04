@@ -6,7 +6,7 @@
 #ifndef _SPOINT3_H_
 #define _SPOINT3_H_
 
-#include <math.h>
+#include <cmath>
 // A point in 3-space
 class SPoint3 {
  protected:
@@ -104,7 +104,7 @@ inline double SPoint3::operator[](int i) const
 inline double SPoint3::distance(const SPoint3 &p)const
 {
   double x = P[0] - p.P[0], y = P[1] - p.P[1], z = P[2] - p.P[2];
-  return sqrt(x * x + y * y + z * z);
+  return std::sqrt(x * x + y * y + z * z);
 }
 
 #endif
