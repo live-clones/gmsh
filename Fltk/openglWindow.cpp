@@ -58,7 +58,7 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &cl
   tmp.wnr[1] = 0.5 * (click1.wnr[1] + click2.wnr[1]);
   tmp.recenter(ctx);
 
-  ctx->initPosition();
+  ctx->initPosition(false);
   drawContext::global()->draw();
   FlGui::instance()->manip->update();
 }

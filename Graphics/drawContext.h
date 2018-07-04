@@ -202,7 +202,7 @@ class drawContext {
   void setEulerAnglesFromRotationMatrix();
   void initProjection(int xpick=0, int ypick=0, int wpick=0, int hpick=0);
   void initRenderModel();
-  void initPosition();
+  void initPosition(bool saveMatrices);
   void unproject(double winx, double winy, double p[3], double d[3]);
   void viewport2World(double vp[3], double xyz[3]);
   void world2Viewport(double xyz[3], double vp[3]);

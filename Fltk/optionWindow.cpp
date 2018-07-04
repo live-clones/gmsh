@@ -232,6 +232,20 @@ static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
     opt_general_rotation_center0(0, GMSH_SET|GMSH_GUI, pc.x());
     opt_general_rotation_center1(0, GMSH_SET|GMSH_GUI, pc.y());
     opt_general_rotation_center2(0, GMSH_SET|GMSH_GUI, pc.z());
+
+    // Recompute model translation so that the view is not changed:
+    double vp[3];
+    drawContext *ctx = FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+    gluProject(pc.x(), pc.y(), pc.z(), ctx->model, ctx->proj, ctx->viewport, &vp[0], &vp[1], &vp[2]);
+    double wnr[3]; // look at mousePosition::recenter()
+    wnr[0] =
+        (ctx->vxmin + vp[0] / (double)ctx->viewport[2] * (ctx->vxmax - ctx->vxmin))
+        / ctx->s[0] - ctx->t[0] + ctx->t_init[0] / ctx->s[0];
+    wnr[1] =
+        (ctx->vymin + vp[1] / (double)ctx->viewport[3] * (ctx->vymax - ctx->vymin))
+        / ctx->s[1] - ctx->t[1] + ctx->t_init[1] / ctx->s[1];
+    ctx->t[0] += wnr[0] - CTX::instance()->rotationCenter[0];
+    ctx->t[1] += wnr[1] - CTX::instance()->rotationCenter[1];
   }
   CTX::instance()->pickElements = 0;
   CTX::instance()->mesh.changed = ENT_ALL;
