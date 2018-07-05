@@ -1053,6 +1053,10 @@ static bool readMSH4GhostElements(GModel *const model, FILE* fp,
     }
 
     MElement *elm = model->getMeshElementByTag(numElm);
+    if(!elm){
+      Msg::Error("No element with tag %d", numElm);
+      continue;
+    }
 
     for(unsigned int j = 0; j < numGhost; j++){
       int ghostPartition = 0;
@@ -1081,7 +1085,7 @@ static bool readMSH4GhostElements(GModel *const model, FILE* fp,
     }
   }
 
-  std::vector<GEntity*> ghostEntities(model->getNumPartitions(), 0);
+  std::vector<GEntity*> ghostEntities(model->getNumPartitions() + 1, 0);
   std::vector<GEntity*> entities;
   model->getEntities(entities);
   for(unsigned int i = 0; i < entities.size(); i++){
