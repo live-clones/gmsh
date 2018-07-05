@@ -690,7 +690,7 @@ static int PartitionGraph(Graph &graph)
     }
 
     // Check and correct the topology
-    for(unsigned int i = 1; i < 4; i++){
+    for(int i = 1; i < 4; i++){
       for(unsigned int j = 0; j < graph.ne(); j++){
         if(graph.element(j)->getDim() == (int)graph.dim()) continue;
         
@@ -2201,77 +2201,19 @@ int PartitionMesh(GModel *const model)
   return 0;
 }
 
-template <class ITERATOR>
-static void assignToParent(std::set<MVertex*> &verts, partitionRegion *region,
+template <class ITERATOR, class PART_ENTITY>
+static void assignToParent(std::set<MVertex*> &verts, PART_ENTITY *entity,
                            ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it){
-    if(region->getParentEntity()->dim() == 3)
-      region->getParentEntity()->addElement((*it)->getType(), *it);
+    if(entity->getParentEntity()->dim() == 3)
+      entity->getParentEntity()->addElement((*it)->getType(), *it);
     (*it)->setPartition(0);
 
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++){
       if(verts.find((*it)->getVertex(i)) == verts.end()){
-        (*it)->getVertex(i)->setEntity(region->getParentEntity());
-        region->getParentEntity()->addMeshVertex((*it)->getVertex(i));
-        verts.insert((*it)->getVertex(i));
-      }
-    }
-  }
-}
-
-template <class ITERATOR>
-static void assignToParent(std::set<MVertex*> &verts, partitionFace *face,
-                           ITERATOR it_beg, ITERATOR it_end)
-{
-  for(ITERATOR it = it_beg; it != it_end; ++it){
-    if(face->getParentEntity()->dim() == 2)
-      face->getParentEntity()->addElement((*it)->getType(), *it);
-    (*it)->setPartition(0);
-
-    for(std::size_t i = 0; i < (*it)->getNumVertices(); i++){
-      if(verts.find((*it)->getVertex(i)) == verts.end()){
-        (*it)->getVertex(i)->setEntity(face->getParentEntity());
-        face->getParentEntity()->addMeshVertex((*it)->getVertex(i));
-        verts.insert((*it)->getVertex(i));
-      }
-    }
-  }
-}
-
-template <class ITERATOR>
-static void assignToParent(std::set<MVertex*> &verts, partitionEdge *edge,
-                           ITERATOR it_beg, ITERATOR it_end)
-{
-  for(ITERATOR it = it_beg; it != it_end; ++it){
-    if(edge->getParentEntity()->dim() == 1)
-      edge->getParentEntity()->addElement((*it)->getType(), *it);
-    (*it)->setPartition(0);
-
-    for(std::size_t i = 0; i < (*it)->getNumVertices(); i++){
-      if(verts.find((*it)->getVertex(i)) == verts.end()){
-        (*it)->getVertex(i)->setEntity(edge->getParentEntity());
-        edge->getParentEntity()->addMeshVertex((*it)->getVertex(i));
-        verts.insert((*it)->getVertex(i));
-      }
-    }
-  }
-}
-
-template <class ITERATOR>
-void assignToParent(std::set<MVertex*> &verts, partitionVertex *vertex,
-                    ITERATOR it_beg, ITERATOR it_end)
-{
-  for(ITERATOR it = it_beg; it != it_end; ++it)
-  {
-    if(vertex->getParentEntity()->dim() == 0)
-      vertex->getParentEntity()->addElement((*it)->getType(), *it);
-    (*it)->setPartition(0);
-
-    for(std::size_t i = 0; i < (*it)->getNumVertices(); i++){
-      if(verts.find((*it)->getVertex(i)) == verts.end()){
-        (*it)->getVertex(i)->setEntity(vertex->getParentEntity());
-        vertex->getParentEntity()->addMeshVertex((*it)->getVertex(i));
+        (*it)->getVertex(i)->setEntity(entity->getParentEntity());
+        entity->getParentEntity()->addMeshVertex((*it)->getVertex(i));
         verts.insert((*it)->getVertex(i));
       }
     }
@@ -2452,7 +2394,7 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
   }
   
   // Check and correct the topology
-  for(unsigned int i = 1; i < 4; i++){
+  for(int i = 1; i < 4; i++){
     for(unsigned int j = 0; j < graph.ne(); j++){
       if(graph.element(j)->getDim() == (int)graph.dim()) continue;
       
