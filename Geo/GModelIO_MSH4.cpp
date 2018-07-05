@@ -1041,7 +1041,6 @@ static bool readMSH4GhostElements(GModel *const model, FILE* fp,
       numElm = data[0];
       numPart = data[1];
       numGhost = data[2];
-      Msg::Info("%d", numPart);
     }
     else{
       if(fscanf(fp, "%d %d %d", &numElm, &numPart, &numGhost) != 3){
