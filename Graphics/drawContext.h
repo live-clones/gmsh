@@ -211,6 +211,7 @@ class drawContext {
               std::vector<GFace*> &faces, std::vector<GRegion*> &regions,
               std::vector<MElement*> &elements, std::vector<SPoint2> &points,
               std::vector<PView*> &views);
+  void recenterForRotationCenterChange(SPoint3 newRotationCenter);
   int fix2dCoordinates(double *x, double *y);
   void draw3d();
   void draw2d();

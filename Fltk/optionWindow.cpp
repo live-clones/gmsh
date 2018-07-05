@@ -24,6 +24,7 @@ typedef unsigned long intptr_t;
 #include "graphicWindow.h"
 #include "openglWindow.h"
 #include "paletteWindow.h"
+#include "manipWindow.h"
 #include "extraDialogs.h"
 #include "drawContext.h"
 #include "Options.h"
@@ -233,19 +234,10 @@ static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
     opt_general_rotation_center1(0, GMSH_SET|GMSH_GUI, pc.y());
     opt_general_rotation_center2(0, GMSH_SET|GMSH_GUI, pc.z());
 
-    // Recompute model translation so that the view is not changed:
-    double vp[3];
-    drawContext *ctx = FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
-    gluProject(pc.x(), pc.y(), pc.z(), ctx->model, ctx->proj, ctx->viewport, &vp[0], &vp[1], &vp[2]);
-    double wnr[3]; // look at mousePosition::recenter()
-    wnr[0] =
-        (ctx->vxmin + vp[0] / (double)ctx->viewport[2] * (ctx->vxmax - ctx->vxmin))
-        / ctx->s[0] - ctx->t[0] + ctx->t_init[0] / ctx->s[0];
-    wnr[1] =
-        (ctx->vymin + vp[1] / (double)ctx->viewport[3] * (ctx->vymax - ctx->vymin))
-        / ctx->s[1] - ctx->t[1] + ctx->t_init[1] / ctx->s[1];
-    ctx->t[0] += wnr[0] - CTX::instance()->rotationCenter[0];
-    ctx->t[1] += wnr[1] - CTX::instance()->rotationCenter[1];
+    drawContext *ctx =
+        FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+    ctx->recenterForRotationCenterChange(pc);
+    FlGui::instance()->manip->update();
   }
   CTX::instance()->pickElements = 0;
   CTX::instance()->mesh.changed = ENT_ALL;
@@ -271,11 +263,25 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
     const char *name = (const char*)data;
     if(!strcmp(name, "rotation_center_coord")){
       CTX::instance()->drawRotationCenter = 1;
+      SPoint3 p(o->general.value[8]->value(),
+                o->general.value[9]->value(),
+                o->general.value[10]->value());
+      drawContext *ctx =
+          FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+      ctx->recenterForRotationCenterChange(p);
+      FlGui::instance()->manip->update();
     }
     else if(!strcmp(name, "rotation_center")){
       // pre-fill with cg
       for(int i = 0; i < 3; i++)
         o->general.value[8 + i]->value(CTX::instance()->cg[i]);
+      SPoint3 p(CTX::instance()->cg[0],
+                CTX::instance()->cg[1],
+                CTX::instance()->cg[2]);
+      drawContext *ctx =
+          FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+      ctx->recenterForRotationCenterChange(p);
+      FlGui::instance()->manip->update();
     }
     else if(!strcmp(name, "light_value")){
       double x, y, z;

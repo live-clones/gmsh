@@ -559,11 +559,12 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
   vymax += yborder;
 
   // Put the origin of World coordinates at center of viewport
-  // (this is necessary for the scaling to be applied at center of viewport)
-//  vxmin -= CTX::instance()->cg[0];
-//  vxmax -= CTX::instance()->cg[0];
-//  vymin -= CTX::instance()->cg[1];
-//  vymax -= CTX::instance()->cg[1];
+  // (this is necessary for the scaling to be applied at center of viewport
+  // instead of at initial position of center of gravity)
+  vxmin -= CTX::instance()->cg[0];
+  vxmax -= CTX::instance()->cg[0];
+  vymin -= CTX::instance()->cg[1];
+  vymax -= CTX::instance()->cg[1];
 
   // store what one pixel represents in world coordinates
   pixel_equiv_x = (vxmax - vxmin) / (viewport[2] - viewport[0]);
@@ -751,14 +752,12 @@ void drawContext::initRenderModel()
 
 void drawContext::initPosition(bool saveMatrices)
 {
-  // FIXME: Regarder ici
-  // Those operations are applied at the model in the view coordinates
-  // in opposite order
+  // NB: Those operations are applied to the model in the view coordinates
+  // (in opposite order)
   glScaled(s[0], s[1], s[2]);
-  glTranslated(t[0], t[1], t[2]);
-//  glTranslated(t[0]-CTX::instance()->cg[0],
-//               t[1]-CTX::instance()->cg[1],
-//               t[2]-CTX::instance()->cg[2]);
+  glTranslated(t[0]-CTX::instance()->cg[0],
+               t[1]-CTX::instance()->cg[1],
+               t[2]-CTX::instance()->cg[2]);
   if(CTX::instance()->rotationCenterCg)
     glTranslated(CTX::instance()->cg[0],
                  CTX::instance()->cg[1],
@@ -1091,4 +1090,21 @@ bool drawContext::select(int type, bool multiple, bool mesh, bool post,
      elements.size() || points.size() || views.size())
     return true;
   return false;
+}
+
+void drawContext::recenterForRotationCenterChange(SPoint3 newRotationCenter)
+{
+  // Recompute model translation so that the view is not changed
+  SPoint3 &p = newRotationCenter;
+  double vp[3];
+  gluProject(p.x(), p.y(), p.z(), model, proj, viewport, &vp[0], &vp[1], &vp[2]);
+  double wnr[3]; // look at mousePosition::recenter()
+  const double &width = viewport[2];
+  const double &height = viewport[3];
+  wnr[0] = (vxmin + vp[0] / width * (vxmax - vxmin)) / s[0]
+           - t[0] + t_init[0] / s[0];
+  wnr[1] = (vymin + vp[1] / height * (vymax - vymin)) / s[1]
+           - t[1] + t_init[1] / s[1];
+  t[0] += wnr[0] + CTX::instance()->cg[0] - p.x();
+  t[1] += wnr[1] + CTX::instance()->cg[1] - p.y();
 }
