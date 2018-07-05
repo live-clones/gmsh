@@ -662,12 +662,33 @@ static void writeElementsMSH(FILE *fp, GModel *model, std::vector<T*> &ele,
   }
 }
 
+static int getNumPhysicals(GEntity *ge)
+{
+  // compatibility with new partitioning - always ignore new physicals
+  // associated with partitioned entities (we don't save these entities in MSH2)
+  if(ge->getParentEntity())
+    return ge->getParentEntity()->physicals.size();
+  else
+    return ge->physicals.size();
+}
+
+static void getTagAndPhysicals(GEntity *ge, int &tag, std::vector<int> &physicals)
+{
+  // compatibility with new partitioning - always ignore new physicals
+  // associated with partitioned entities (we don't save these entities in MSH2)
+  if(ge->getParentEntity()){
+    tag = ge->getParentEntity()->tag();
+    physicals = ge->getParentEntity()->physicals;
+  }
+  else{
+    tag = ge->tag();
+    physicals = ge->physicals;
+  }
+}
+
 static int getNumElementsMSH(GEntity *ge, bool saveAll, int saveSinglePartition)
 {
-  int nphys = ge->getParentEntity() ? ge->getParentEntity()->physicals.size() :
-    ge->physicals.size();
-
-  int n = 0, p = saveAll ? 1 : nphys;
+  int n = 0, p = saveAll ? 1 : getNumPhysicals(ge);
 
   if(saveSinglePartition < 0 && ge->tag() < 0) p = 1; // partition boundary
 
@@ -680,14 +701,6 @@ static int getNumElementsMSH(GEntity *ge, bool saveAll, int saveSinglePartition)
   return n;
 }
 
-static int numPhysicals(GEntity *ge)
-{
-  if(ge->getParentEntity())
-    return ge->getParentEntity()->physicals.size();
-  else
-    return ge->physicals.size();
-}
-
 static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
 {
   int n = 0;
@@ -696,7 +709,7 @@ static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
     if(!CTX::instance()->mesh.saveTri){
       for(unsigned int i = 0; i < (*it)->points.size(); i++)
         if((*it)->points[i]->ownsParent())
-          n += (saveAll ? 1 : numPhysicals(*it));
+          n += (saveAll ? 1 : getNumPhysicals(*it));
     }
   }
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
@@ -704,7 +717,7 @@ static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
     if(!CTX::instance()->mesh.saveTri){
       for(unsigned int i = 0; i < (*it)->lines.size(); i++)
         if((*it)->lines[i]->ownsParent())
-          n += (saveAll ? 1 : numPhysicals(*it));
+          n += (saveAll ? 1 : getNumPhysicals(*it));
     }
   }
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
@@ -712,16 +725,16 @@ static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
     if(CTX::instance()->mesh.saveTri){
       for(unsigned int i = 0; i < (*it)->polygons.size(); i++){
         int nbC = (*it)->polygons[i]->getNumChildren()-1;
-        n += (saveAll ? nbC : nbC * numPhysicals(*it));
+        n += (saveAll ? nbC : nbC * getNumPhysicals(*it));
       }
     }
     else{
       for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
         if((*it)->triangles[i]->ownsParent())
-          n += (saveAll ? 1 : numPhysicals(*it));
+          n += (saveAll ? 1 : getNumPhysicals(*it));
       for(unsigned int i = 0; i < (*it)->polygons.size(); i++)
         if((*it)->polygons[i]->ownsParent())
-          n += (saveAll ? 1 : numPhysicals(*it));
+          n += (saveAll ? 1 : getNumPhysicals(*it));
     }
   }
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
@@ -729,32 +742,20 @@ static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
     if(CTX::instance()->mesh.saveTri){
       for(unsigned int i = 0; i < (*it)->polyhedra.size(); i++){
         int nbC = (*it)->polyhedra[i]->getNumChildren()-1;
-        n += (saveAll ? nbC : nbC * numPhysicals(*it));
+        n += (saveAll ? nbC : nbC * getNumPhysicals(*it));
       }
     }
     else{
       for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
         if((*it)->tetrahedra[i]->ownsParent())
-          n += (saveAll ? 1 : numPhysicals(*it));
+          n += (saveAll ? 1 : getNumPhysicals(*it));
       for(unsigned int i = 0; i < (*it)->polyhedra.size(); i++)
         if((*it)->polyhedra[i]->ownsParent())
-          n += (saveAll ? 1 : numPhysicals(*it));
+          n += (saveAll ? 1 : getNumPhysicals(*it));
     }
     n -= (*it)->trihedra.size();
   }
   return n;
-}
-
-static void getTagAndPhysicals(GEntity *ge, int &tag, std::vector<int> &physicals)
-{
-  if(ge->getParentEntity()){
-    tag = ge->getParentEntity()->tag();
-    physicals = ge->getParentEntity()->physicals;
-  }
-  else{
-    tag = ge->tag();
-    physicals = ge->physicals;
-  }
 }
 
 int GModel::_writeMSH2(const std::string &name, double version, bool binary,
