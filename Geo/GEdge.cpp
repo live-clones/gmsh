@@ -30,6 +30,14 @@ GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
   resetMeshAttributes();
 }
 
+GEdge::GEdge(GModel *model, int tag)
+: GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0),
+v0(0), v1(0), masterOrientation(0), compound_edge(NULL)
+{
+  meshStatistics.status = GEdge::PENDING;
+  resetMeshAttributes();
+}
+
 GEdge::~GEdge()
 {
   if(v0) v0->delEdge(this);

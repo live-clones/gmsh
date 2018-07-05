@@ -44,6 +44,7 @@ public:
 
 public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
+  GEdge(GModel *model, int tag);
   virtual ~GEdge();
 
   // delete mesh data
