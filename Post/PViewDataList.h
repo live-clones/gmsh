@@ -72,13 +72,13 @@ class PViewDataList : public PViewData {
   bool finalize(bool computeMinMax=true, const std::string &interpolationScheme="");
   int getNumTimeSteps(){ return NbTimeStep; }
   double getTime(int step);
-  double getMin(int step=-1, bool onlyVisible=false, int forceNumComponents=0,
-                int componentMap[9]=0);
-  double getMax(int step=-1, bool onlyVisible=false, int forceNumComponents=0,
-                int componentMap[9]=0);
+  double getMin(int step = -1, bool onlyVisible = false, int forceNumComponents = 0,
+                int componentMap[9] = 0);
+  double getMax(int step = -1, bool onlyVisible = false, int forceNumComponents = 0,
+                int componentMap[9] = 0);
   void setMin(double min) {Min = min;}
   void setMax(double max) {Max = max;}
-  SBoundingBox3d getBoundingBox(int step=-1){ return BBox; }
+  SBoundingBox3d getBoundingBox(int step = -1){ return BBox; }
   void setBoundingBox(SBoundingBox3d& box) {BBox = box;}
   int getNumScalars(int step=-1);
   int getNumVectors(int step=-1);
@@ -131,10 +131,11 @@ class PViewDataList : public PViewData {
   bool readPOS(FILE *fp, double version, bool binary);
   bool writePOS(const std::string &fileName, bool binary=false, bool parsed=true,
                 bool append=false);
-  virtual bool writeMSH(const std::string &fileName, double version=2.2, bool binary=false,
-                        bool savemesh=true, bool multipleView=false,
-                        int partitionNum=0, bool saveInterpolationMatrices=true,
-                        bool forceNodeData=false, bool forceElementData=false);
+  virtual bool writeMSH(const std::string &fileName, double version = 2.2,
+                        bool binary = false, bool savemesh = true,
+                        bool multipleView = false, int partitionNum = 0,
+                        bool saveInterpolationMatrices = true,
+                        bool forceNodeData = false, bool forceElementData = false);
   virtual void importLists(int N[24], std::vector<double> *V[24]);
   virtual void getListPointers(int N[24], std::vector<double> *V[24]);
   void importList(int index, int n, const std::vector<double> &v, bool finalize);

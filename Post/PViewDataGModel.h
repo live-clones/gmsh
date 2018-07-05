@@ -49,8 +49,9 @@ class stepData{
   // a set of all "partitions" encountered in the data
   std::set<int> _partitions;
  public:
-  stepData(GModel *model, int numComp, const std::string &fileName="", int fileIndex=-1,
-           double time=0., double min=VAL_INF, double max=-VAL_INF)
+  stepData(GModel *model, int numComp, const std::string &fileName = "",
+           int fileIndex = -1, double time = 0., double min = VAL_INF,
+           double max = -VAL_INF)
     : _model(model), _fileName(fileName), _fileIndex(fileIndex), _time(time),
       _min(min), _max(max), _numComp(numComp), _data(0)
   {
@@ -115,7 +116,7 @@ class stepData{
     if(!_data) _data = new std::vector<Real*>(n, (Real*)0);
     if(n > (int)_data->size()) _data->resize(n, (Real*)0);
   }
-  Real *getData(int index, bool allocIfNeeded=false, int mult=1)
+  Real *getData(int index, bool allocIfNeeded = false, int mult = 1)
   {
     if(index < 0) return 0;
     if(allocIfNeeded){
@@ -180,14 +181,14 @@ class PViewDataGModel : public PViewData {
  public:
   PViewDataGModel(DataType type=NodeData);
   ~PViewDataGModel();
-  bool finalize(bool computeMinMax=true, const std::string &interpolationScheme="");
-  std::string getFileName(int step=-1);
+  bool finalize(bool computeMinMax = true, const std::string &interpolationScheme = "");
+  std::string getFileName(int step = -1);
   int getNumTimeSteps();
-  int getFirstNonEmptyTimeStep(int start=0);
+  int getFirstNonEmptyTimeStep(int start = 0);
   double getTime(int step);
-  double getMin(int step=-1, bool onlyVisible=false, int forceNumComponents=0,
+  double getMin(int step = -1, bool onlyVisible = false, int forceNumComponents = 0,
                 int componentMap[9]=0);
-  double getMax(int step=-1, bool onlyVisible=false, int forceNumComponents=0,
+  double getMax(int step = -1, bool onlyVisible=false, int forceNumComponents = 0,
                 int componentMap[9]=0);
   void setMin(double min){ _min = min; }
   void setMax(double max){ _max = max; }
@@ -226,12 +227,12 @@ class PViewDataGModel : public PViewData {
   double getMemoryInMb();
   bool combineTime(nameData &nd);
   bool skipEntity(int step, int ent);
-  bool skipElement(int step, int ent, int ele, bool checkVisibility=false,
-                   int samplingRate=1);
+  bool skipElement(int step, int ent, int ele, bool checkVisibility = false,
+                   int samplingRate = 1);
   bool hasTimeStep(int step);
   bool hasPartition(int step, int part);
   bool hasMultipleMeshes();
-  bool hasModel(GModel *model, int step=-1);
+  bool hasModel(GModel *model, int step = -1);
   bool isNodeData(){ return _type == NodeData; }
   bool useGaussPoints(){ return _type == GaussPointData; }
   GModel* getModel(int step){ return _steps[step]->getModel(); }
@@ -260,10 +261,11 @@ class PViewDataGModel : public PViewData {
                int fileIndex, FILE *fp, bool binary, bool swap, int step,
                double time, int partition, int numComp, int numNodes,
                const std::string &interpolationScheme);
-  virtual bool writeMSH(const std::string &fileName, double version=2.2,
-                        bool binary=false, bool savemesh=true, bool multipleView=false,
-                        int partitionNum=0, bool saveInterpolationMatrices=true,
-                        bool forceNodeData=false, bool forceElementData=false);
+  virtual bool writeMSH(const std::string &fileName, double version = 2.2,
+                        bool binary = false, bool savemesh = true,
+                        bool multipleView = false, int partitionNum = 0,
+                        bool saveInterpolationMatrices = true,
+                        bool forceNodeData = false, bool forceElementData = false);
   bool readMED(const std::string &fileName, int fileIndex);
   bool writeMED(const std::string &fileName);
   void importLists(int N[24], std::vector<double> *V[24]);
