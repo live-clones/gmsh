@@ -473,9 +473,6 @@ int GModel::_readMSH3(const std::string &name)
 static void writeMSHPhysicals(FILE *fp, GEntity *ge)
 {
   std::vector<int> phys = ge->physicals;
-  // for compatibility with new partitioner
-  if(phys.empty() && ge->getParentEntity())
-    phys = ge->getParentEntity()->physicals;
   fprintf(fp, "%d ", (int)phys.size());
   for(std::vector<int>::iterator itp = phys.begin(); itp != phys.end(); itp++)
     fprintf(fp, "%d ", *itp);
@@ -545,9 +542,7 @@ void writeMSHEntities(FILE *fp, GModel *gm)  // also used in MSH2
 static int getNumElementsMSH(GEntity *ge, bool saveAll, int saveSinglePartition)
 {
   int n = 0;
-  if(saveAll || ge->physicals.size() ||
-     // for compatibility with new partitioner
-     (ge->getParentEntity() && ge->getParentEntity()->physicals.size())){
+  if(saveAll || ge->physicals.size()){
     if(saveSinglePartition <= 0)
       n = ge->getNumMeshElements();
     else
@@ -579,9 +574,7 @@ template<class T>
 static void writeElementsMSH(FILE *fp, GModel *model, GEntity *ge, std::vector<T*> &ele,
                              bool saveAll, int saveSinglePartition, bool binary)
 {
-  if(saveAll || ge->physicals.size() ||
-     // for compatibility with new partitioner
-     (ge->getParentEntity() && ge->getParentEntity()->physicals.size())){
+  if(saveAll || ge->physicals.size()){
     for(unsigned int i = 0; i < ele.size(); i++){
       if(saveSinglePartition && ele[i]->getPartition() != saveSinglePartition)
         continue;
