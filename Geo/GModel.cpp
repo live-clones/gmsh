@@ -1478,7 +1478,8 @@ int GModel::indexMeshVertices(bool all, int singlePartition, bool renumber)
   // not to be saved (because we save a single partition and they are not used
   // in that partition)
   for(unsigned int i = 0; i < entities.size(); i++){
-    if(all || entities[i]->physicals.size()){
+    if(all || entities[i]->physicals.size() ||
+       (entities[i]->getParentEntity() && entities[i]->getParentEntity()->physicals.size())){
       for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++){
         MElement *e = entities[i]->getMeshElement(j);
         for(std::size_t k = 0; k < e->getNumVertices(); k++){

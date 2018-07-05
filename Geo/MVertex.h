@@ -196,9 +196,11 @@ public:
   bool operator()(const MVertex *v1, const MVertex *v2) const;
 };
 
-class MVertexLessThanNum {
-public:
-  bool operator()(const MVertex *v1, const MVertex *v2) const;
+struct MVertexLessThanNum {
+  bool operator()(const MVertex *v1, const MVertex *v2) const
+  {
+    return v1->getNum() < v2->getNum();
+  }
 };
 
 bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,

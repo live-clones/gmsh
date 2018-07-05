@@ -49,7 +49,7 @@ class Vertex {
   }
   void norme()
   {
-    double d = sqrt(Pos.X * Pos.X + Pos.Y * Pos.Y + Pos.Z * Pos.Z);
+    double const d = std::sqrt(Pos.X * Pos.X + Pos.Y * Pos.Y + Pos.Z * Pos.Z);
     if(d == 0.0) return;
     Pos.X /= d;
     Pos.Y /= d;
