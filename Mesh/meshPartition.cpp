@@ -2086,7 +2086,7 @@ static void CreatePartitionTopology(GModel *const model,
         }
       }
     }
-    int numVertexEntity = model->getMaxElementaryNumber(1);
+    int numVertexEntity = model->getMaxElementaryNumber(0);
     for(hashmapvertex::const_iterator it = vertexToElement.begin();
         it != vertexToElement.end(); ++it){
       MVertex *v = it->first;
