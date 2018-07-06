@@ -3,7 +3,6 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
-#include <functional>
 #include <sstream>
 #include <stdlib.h>
 #include <map>
@@ -898,29 +897,37 @@ static void directions_storage(GFace* gf)
   backgroundMesh::unset();
 }
 
-bool hasSmallerDistance(const SPoint3 &referencePoint, const MVertex *v1, const MVertex *v2)
+struct HasSmallerDistanceCompare
 {
-  if (v1 == v2)
+  HasSmallerDistanceCompare(const SPoint3 &referencePoint) : referencePoint(referencePoint)
+  {}
+
+  bool operator()(const MVertex *v1, const MVertex *v2)
   {
-    return false;
+    if (v1 == v2)
+    {
+      return false;
+    }
+
+    const double dist1 = v1->point().distance(referencePoint);
+    const double dist2 = v2->point().distance(referencePoint);
+
+    const double tolerance = 1e-12;
+    if (abs(dist1 - dist2) > tolerance) return dist1 < dist2;
+
+    for (int dim = 0; dim < 3; dim++)
+    {
+      const double coor1 = abs(v1->point()[dim] - referencePoint[dim]);
+      const double coor2 = abs(v2->point()[dim] - referencePoint[dim]);
+      if (abs(coor1 - coor2) > tolerance) return coor1 < coor2;
+    }
+
+    Msg::Info("Something went wrong here with vertices %d and %d\n", v1->getNum(), v2->getNum());
+    return v1->getNum() < v2->getNum();
   }
 
-  const double dist1 = v1->point().distance(referencePoint);
-  const double dist2 = v2->point().distance(referencePoint);
-
-  const double tolerance = 1e-12;
-  if (abs(dist1 - dist2) > tolerance) return dist1 < dist2;
-
-  for (int dim = 0; dim < 3; dim++)
-  {
-    const double coor1 = abs(v1->point()[dim] - referencePoint[dim]);
-    const double coor2 = abs(v2->point()[dim] - referencePoint[dim]);
-    if (abs(coor1 - coor2) > tolerance) return coor1 < coor2;
-  }
-
-  Msg::Info("Something went wrong here with vertices %d and %d\n", v1->getNum(), v2->getNum());
-  return v1->getNum() < v2->getNum();
-}
+  SPoint3 referencePoint;
+};
 
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
@@ -1044,9 +1051,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   if (gf->geomType() == GEntity::Plane){
     const SBoundingBox3d boundingBox = gf->bounds();
     const SPoint3 minBoundingBoxPoint = boundingBox.min();
-    std::sort(all_vertices_ordered.begin(), all_vertices_ordered.end(),
-      std::tr1::bind(hasSmallerDistance, minBoundingBoxPoint, std::tr1::placeholders::_1,
-      std::tr1::placeholders::_2));
+    HasSmallerDistanceCompare compare(minBoundingBoxPoint);
+    std::sort(all_vertices_ordered.begin(), all_vertices_ordered.end(), compare);
   }
 
   // Buid a BDS_Mesh structure that is convenient for doing the actual
