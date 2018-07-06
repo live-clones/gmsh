@@ -1759,7 +1759,7 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "PostSICN" , opt_print_pos_SICN , 0. ,
     "Save SICN (signed inverse condition number) quality measure in mesh "
     "statistics exported as post-processing views" },
-  { F|O, "PostSICN" , opt_print_pos_SIGE , 0. ,
+  { F|O, "PostSIGE" , opt_print_pos_SIGE , 0. ,
     "Save SIGE (signed inverse gradient error) quality measure in mesh "
     "statistics exported as post-processing views" },
   { F|O, "PostDisto" , opt_print_pos_disto , 0. ,
