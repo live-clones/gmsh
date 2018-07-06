@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
+#include <functional>
 #include <sstream>
 #include <stdlib.h>
 #include <map>
