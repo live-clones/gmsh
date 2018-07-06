@@ -45,7 +45,7 @@
 // define this to use the old initial delaunay
 #define OLD_CODE_DELAUNAY 1
 
-void copyMesh(GEdge*, GEdge*, int);
+void copyMesh(GEdge*,GEdge*,int);
 
 static void computeElementShapes(GFace *gf, double &worst, double &avg,
                                  double &best, int &nT, int &greaterThan)
@@ -238,45 +238,45 @@ static void copyMesh(GFace *source, GFace *target)
 
   // add principal vertex pairs
 
-  std::vector<GVertex*> const& s_vtcs = source->vertices();
-  std::vector<GVertex*> const& t_vtcs = target->vertices();
+  std::list<GVertex*> s_vtcs = source->vertices();
+  std::list<GVertex*> t_vtcs = target->vertices();
 
   if(s_vtcs.size() != t_vtcs.size()) {
     Msg::Info("Periodicity imposed on topologically incompatible surfaces"
-              "(%d vs %d bounding vertices)", s_vtcs.size(), t_vtcs.size());
+              "(%d vs %d bounding vertices)",s_vtcs.size(),t_vtcs.size());
   }
 
-  std::set<GVertex*> checkVtcs(s_vtcs.begin(), s_vtcs.end());
+  std::set<GVertex*> checkVtcs;
+  checkVtcs.insert(s_vtcs.begin(),s_vtcs.end());
 
-  for(std::vector<GVertex*>::const_iterator tvIter = t_vtcs.begin();
-      tvIter != t_vtcs.end(); ++tvIter) {
+  for(std::list<GVertex*>::iterator tvIter=t_vtcs.begin();tvIter!=t_vtcs.end();++tvIter) {
 
-    GVertex *gvt = *tvIter;
-    std::map<GVertex*, GVertex*>::iterator gvsIter = target->vertexCounterparts.find(gvt);
+    GVertex* gvt = *tvIter;
+    std::map<GVertex*,GVertex*>::iterator gvsIter = target->vertexCounterparts.find(gvt);
 
     if(gvsIter == target->vertexCounterparts.end()) {
-      Msg::Error("Periodic meshing of surface %d with surface %d: "
-                 "point %d has no periodic counterpart",
-                 target->tag(), source->tag(), gvt->tag());
+      Msg::Info("Error during periodic meshing of surface %d with surface %d:"
+                "vertex %d has no periodic counterpart",
+                target->tag(),source->tag(),gvt->tag());
     }
-    else{
-      GVertex *gvs = gvsIter->second;
-      if(checkVtcs.find(gvs) == checkVtcs.end()) {
-        if(gvs)
-          Msg::Error("Periodic meshing of surface %d with surface %d: "
-                     "point %d has periodic counterpart %d outside of source surface",
-                     target->tag(), source->tag(), gvt->tag(), gvs->tag());
 
-        else
-          Msg::Error("Periodic meshing of surface %d with surface %d: "
-                     "point %d has no periodic counterpart",
-                     target->tag(), source->tag(), gvt->tag());
-      }
-      MVertex *vs = gvs->mesh_vertices[0];
-      MVertex *vt = gvt->mesh_vertices[0];
-      vs2vt[vs] = vt;
-      target->correspondingVertices[vt] = vs;
+    GVertex* gvs = gvsIter->second;
+    if(checkVtcs.find(gvs) == checkVtcs.end()) {
+      if(gvs)
+        Msg::Info("Error during periodic meshing of surface %d with surface %d:"
+                  "vertex %d has periodic counterpart %d outside of source surface",
+                  target->tag(),source->tag(),gvt->tag(),gvs->tag());
+
+      else
+        Msg::Info("Error during periodic meshing of surface %d with surface %d:"
+                  "vertex %d has no periodic counterpart",
+                  target->tag(),source->tag(),gvt->tag());
     }
+
+    MVertex* vs = gvs->mesh_vertices[0];
+    MVertex* vt = gvt->mesh_vertices[0];
+    vs2vt[vs] = vt;
+    target->correspondingVertices[vt] = vs;
   }
 
   // add corresponding edge nodes assuming edges were correctly meshed already
@@ -288,39 +288,41 @@ static void copyMesh(GFace *source, GFace *target)
   checkEdges.insert(s_edges.begin(),s_edges.end());
 
   for(std::vector<GEdge*>::iterator te_iter = t_edges.begin();
-      te_iter != t_edges.end(); ++te_iter) {
+       te_iter != t_edges.end(); ++te_iter) {
 
     GEdge* get = *te_iter;
 
-    std::map<GEdge*, std::pair<GEdge*, int> >::iterator gesIter =
+    std::map<GEdge*,std::pair<GEdge*,int> >::iterator gesIter =
       target->edgeCounterparts.find(get);
     if(gesIter == target->edgeCounterparts.end()) {
-      Msg::Error("Periodic meshing of surface %d with surface %d: "
-                 "curve %d has no periodic counterpart",
-                 target->tag(), source->tag(), get->tag());
+      Msg::Info("Error during periodic meshing of surface %d with surface %d:"
+                "edge %d has no periodic counterpart",
+                target->tag(),source->tag(),get->tag());
     }
-    else{
-      GEdge* ges = gesIter->second.first;
-      if(checkEdges.find(ges) == checkEdges.end()) {
-        Msg::Error("Periodic meshing of surface %d with surface %d: "
-                   "curve %d has periodic counterpart %d outside of get surface",
-                   target->tag(), source->tag(), get->tag(), ges->tag());
-      }
-      if(get->mesh_vertices.size() != ges->mesh_vertices.size()) {
-        Msg::Error("Periodic meshing of surface %d with surface %d: "
-                   "curve %d has %d vertices, whereas correspondant %d has %d",
-                   target->tag(), source->tag(),
-                   get->tag(), get->mesh_vertices.size(),
-                   ges->tag(), ges->mesh_vertices.size());
-      }
-      int orientation = gesIter->second.second;
-      int is = orientation == 1 ? 0 : get->mesh_vertices.size()-1;
-      for(unsigned it=0;it<get->mesh_vertices.size();it++,is+=orientation) {
-        MVertex* vs = ges->mesh_vertices[is];
-        MVertex* vt = get->mesh_vertices[it];
-        vs2vt[vs] = vt;
-        target->correspondingVertices[vt] = vs;
-      }
+
+    GEdge* ges = gesIter->second.first;
+    if(checkEdges.find(ges) == checkEdges.end()) {
+      Msg::Info("Error during periodic meshing of surface %d with surface %d:"
+                "edge %d has periodic counterpart %d outside of get surface",
+                target->tag(),source->tag(),get->tag(),ges->tag());
+    }
+
+    if(get->mesh_vertices.size() != ges->mesh_vertices.size()) {
+      Msg::Info("Error during periodic meshing of surface %d with surface %d:"
+                "edge %d has %d vertices, whereas correspondant %d has %d",
+                target->tag(),source->tag(),
+                get->tag(),get->mesh_vertices.size(),
+                ges->tag(),ges->mesh_vertices.size());
+    }
+
+    int orientation = gesIter->second.second;
+    int is = orientation == 1 ? 0 : get->mesh_vertices.size()-1;
+
+    for(unsigned it=0;it<get->mesh_vertices.size();it++,is+=orientation) {
+      MVertex* vs = ges->mesh_vertices[is];
+      MVertex* vt = get->mesh_vertices[it];
+      vs2vt[vs] = vt;
+      target->correspondingVertices[vt] = vs;
     }
   }
 
@@ -867,7 +869,7 @@ static void directions_storage(GFace* gf)
   std::set<MVertex*> vertices;
   for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
     MElement* element = gf->getMeshElement(i);
-    for(std::size_t j = 0; j < element->getNumVertices(); j++){
+    for(int j = 0; j < element->getNumVertices(); j++){
       MVertex *vertex = element->getVertex(j);
       vertices.insert(vertex);
     }
@@ -898,6 +900,7 @@ static void directions_storage(GFace* gf)
   backgroundMesh::unset();
 }
 
+//// Plaxis modification ////
 bool hasSmallerDistance(const SPoint3 &referencePoint, const MVertex *v1, const MVertex *v2)
 {
   if (v1 == v2)
@@ -921,6 +924,7 @@ bool hasSmallerDistance(const SPoint3 &referencePoint, const MVertex *v1, const 
   Msg::Info("Something went wrong here with vertices %d and %d\n", v1->getNum(), v2->getNum());
   return v1->getNum() < v2->getNum();
 }
+//// End Plaxis modification ////
 
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
@@ -1036,17 +1040,19 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     return true;
   }
 
+  //// Plaxis modification ////
   std::vector<MVertex *> all_vertices_ordered(all_vertices.begin(), all_vertices.end());
 
   // Order vertices according to distance to lower, bottom node of bounding box
   // but only for planar surfaces. This will ensure that parallel surfaces will always have
   // the same mesh and thus that cubes can mesh with 6 elements always
-  if (gf->geomType() == GEntity::GeomType::Plane){
+  if (gf->geomType() == GEntity::Plane){
     const SBoundingBox3d boundingBox = gf->bounds();
     const SPoint3 minBoundingBoxPoint = boundingBox.min();
     std::sort(all_vertices_ordered.begin(), all_vertices_ordered.end(),
       std::bind(hasSmallerDistance, minBoundingBoxPoint, std::placeholders::_1, std::placeholders::_2));
   }
+  //// End Plaxis modification ////
 
   // Buid a BDS_Mesh structure that is convenient for doing the actual
   // meshing procedure
@@ -1085,7 +1091,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     DocRecord doc(points.size() + 4);
     for(unsigned int i = 0; i < points.size(); i++){
       double hNew, vNew;
-      if (gf->geomType() == GEntity::GeomType::Plane){
+      if (gf->geomType() == GEntity::Plane){
+        //// Plaxis modification ////
         // Disturb in Cartesian space to make sure that the left corner node will always
         // be disturbed the same, independent of its local coordinate system
         SPoint3 point3D = recoverMap.at(points[i])->point();
@@ -2641,9 +2648,8 @@ void meshGFace::operator()(GFace *gf, bool print)
 
 static bool getGFaceNormalFromVert(GFace *gf, MElement *el, SVector3 &nf)
 {
-  // TODO C++11 use std::find_if
   bool found = false;
-  for(std::size_t iElV = 0; iElV < el->getNumVertices(); iElV++) {
+  for(int iElV = 0; iElV < el->getNumVertices(); iElV++) {
     MVertex *v = el->getVertex(iElV);
     SPoint2 param;
     if(v->onWhat() == gf && v->getParameter(0, param[0]) &&
@@ -2660,7 +2666,7 @@ static bool getGFaceNormalFromBary(GFace *gf, MElement *el, SVector3 &nf)
 {
   SPoint2 param(0., 0.);
   bool ok = true;
-  for(std::size_t j = 0; j < el->getNumVertices(); j++) {
+  for(int j = 0; j < el->getNumVertices(); j++) {
     SPoint2 p;
     // FIXME: use inexact reparam because some vertices might not be exactly on
     // the surface after the 3D Delaunay
@@ -2669,7 +2675,7 @@ static bool getGFaceNormalFromBary(GFace *gf, MElement *el, SVector3 &nf)
     param += p;
   }
   if(ok) {
-    param *= 1.0 / el->getNumVertices();
+    param *= 1. / el->getNumVertices();
     nf = gf->normal(param);
   }
   return ok;
