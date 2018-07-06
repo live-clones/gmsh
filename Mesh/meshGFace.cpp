@@ -897,6 +897,32 @@ static void directions_storage(GFace* gf)
   backgroundMesh::unset();
 }
 
+bool hasSmallerDistance(const SPoint3 &referencePoint, const MVertex *v1, const MVertex *v2)
+{
+  if (v1 == v2)
+  {
+    return false;
+  }
+
+  const double dist1 = v1->point().distance(referencePoint);
+  const double dist2 = v2->point().distance(referencePoint);
+
+  const double tolerance = 1e-12;
+  if (abs(dist1 - dist2) > tolerance) return dist1 < dist2;
+
+  Msg::Info("Distance between %d and %d with reference point is the same\n", v1->getNum(), v2->getNum());
+
+  for (int dim = 0; dim < 3; dim++)
+  {
+    const double coor1 = abs(v1->point()[dim] - referencePoint[dim]);
+    const double coor2 = abs(v2->point()[dim] - referencePoint[dim]);
+    if (abs(coor1 - coor2) > tolerance) return coor1 < coor2;
+  }
+
+  Msg::Info("Something went wrong here with vertices %d and %d\n", v1->getNum(), v2->getNum());
+  return v1->getNum() < v2->getNum();
+}
+
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
 bool meshGenerator(GFace *gf, int RECUR_ITER,
@@ -1011,6 +1037,18 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     return true;
   }
 
+  std::vector<MVertex *> all_vertices_ordered(all_vertices.begin(), all_vertices.end());
+
+  // Order vertices according to distance to lower, bottom node of bounding box
+  // but only for planar surfaces. This will ensure that parallel surfaces will always have
+  // the same mesh and thus that cubes can mesh with 6 elements always
+  if (gf->geomType() == GEntity::GeomType::Plane){
+    const SBoundingBox3d boundingBox = gf->bounds();
+    const SPoint3 minBoundingBoxPoint = boundingBox.min();
+    std::sort(all_vertices_ordered.begin(), all_vertices_ordered.end(),
+      std::bind(hasSmallerDistance, minBoundingBoxPoint, std::placeholders::_1, std::placeholders::_2));
+  }
+
   // Buid a BDS_Mesh structure that is convenient for doing the actual
   // meshing procedure
   BDS_Mesh *m = new BDS_Mesh;
@@ -1018,8 +1056,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   std::vector<BDS_Point*> points(all_vertices.size());
   SBoundingBox3d bbox;
   int count = 0;
-  for(std::set<MVertex*, MVertexLessThanNum>::iterator it = all_vertices.begin();
-      it != all_vertices.end(); it++){
+  for(std::vector<MVertex*>::iterator it = all_vertices_ordered.begin();
+    it != all_vertices_ordered.end(); it++){
     MVertex *here = *it;
     GEntity *ge = here->onWhat();
     SPoint2 param;
@@ -1047,16 +1085,32 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     double LC2D = norm(dd);
     DocRecord doc(points.size() + 4);
     for(unsigned int i = 0; i < points.size(); i++){
-      double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-        (double)RAND_MAX;
-      double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
-        (double)RAND_MAX;
-      //      printf("%22.15E %22.15E \n",XX,YY);
-      doc.points[i].where.h = points[i]->u + XX;
-      doc.points[i].where.v = points[i]->v + YY;
+      double hNew, vNew;
+      if (gf->geomType() == GEntity::GeomType::Plane){
+        // Disturb in Cartesian space to make sure that the left corner node will always
+        // be disturbed the same, independ of it local coordinate system
+        SPoint3 point3D = recoverMap.at(points[i])->point();
+        for (size_t dim = 0; dim < 3; ++dim){
+          point3D[dim] += CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
+            (double)RAND_MAX;
+        }
+        SPoint2 param = gf->parFromPoint(point3D);
+        hNew = param[0];
+        vNew = param[1];
+      }
+      else{
+        double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
+          (double)RAND_MAX;
+        double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
+          (double)RAND_MAX;
+        //      printf("%22.15E %22.15E \n",XX,YY);
+        hNew = points[i]->u + XX;
+        vNew = points[i]->v + YY;
+      }
+      doc.points[i].where.h = hNew;
+      doc.points[i].where.v = vNew;
       doc.points[i].data = points[i];
       doc.points[i].adjacent = NULL;
-
     }
 
     // increase the size of the bounding box
@@ -2496,6 +2550,7 @@ int debugSurface = -1; //-100;
 
 void meshGFace::operator()(GFace *gf, bool print)
 {
+  srand(1);  // Initialize per surface to force that disturbance is always the same
   gf->model()->setCurrentMeshEntity(gf);
 
   if(debugSurface >= 0 && gf->tag() != debugSurface){
