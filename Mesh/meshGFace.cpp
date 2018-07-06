@@ -910,8 +910,6 @@ bool hasSmallerDistance(const SPoint3 &referencePoint, const MVertex *v1, const 
   const double tolerance = 1e-12;
   if (abs(dist1 - dist2) > tolerance) return dist1 < dist2;
 
-  Msg::Info("Distance between %d and %d with reference point is the same\n", v1->getNum(), v2->getNum());
-
   for (int dim = 0; dim < 3; dim++)
   {
     const double coor1 = abs(v1->point()[dim] - referencePoint[dim]);
