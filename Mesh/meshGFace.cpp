@@ -1041,11 +1041,12 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   // Order vertices according to distance to lower, bottom node of bounding box
   // but only for planar surfaces. This will ensure that parallel surfaces will always have
   // the same mesh and thus that cubes can mesh with 6 elements always
-  if (gf->geomType() == GEntity::GeomType::Plane){
+  if (gf->geomType() == GEntity::Plane){
     const SBoundingBox3d boundingBox = gf->bounds();
     const SPoint3 minBoundingBoxPoint = boundingBox.min();
     std::sort(all_vertices_ordered.begin(), all_vertices_ordered.end(),
-      std::bind(hasSmallerDistance, minBoundingBoxPoint, std::placeholders::_1, std::placeholders::_2));
+      std::tr1::bind(hasSmallerDistance, minBoundingBoxPoint, std::tr1::placeholders::_1,
+      std::tr1::placeholders::_2));
   }
 
   // Buid a BDS_Mesh structure that is convenient for doing the actual
@@ -1085,7 +1086,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     DocRecord doc(points.size() + 4);
     for(unsigned int i = 0; i < points.size(); i++){
       double hNew, vNew;
-      if (gf->geomType() == GEntity::GeomType::Plane){
+      if (gf->geomType() == GEntity::Plane){
         // Disturb in Cartesian space to make sure that the left corner node will always
         // be disturbed the same, independent of its local coordinate system
         SPoint3 point3D = recoverMap.at(points[i])->point();
