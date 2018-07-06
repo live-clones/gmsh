@@ -1086,7 +1086,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       double hNew, vNew;
       if (gf->geomType() == GEntity::GeomType::Plane){
         // Disturb in Cartesian space to make sure that the left corner node will always
-        // be disturbed the same, independ of its local coordinate system
+        // be disturbed the same, indepent of its local coordinate system
         SPoint3 point3D = recoverMap.at(points[i])->point();
         for (size_t dim = 0; dim < 3; ++dim){
           point3D[dim] += CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
