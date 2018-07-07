@@ -45,6 +45,7 @@ opt(CGNS "Enable CGNS mesh import" ${DEFAULT})
 opt(CAIRO "Enable Cairo to render fonts (experimental)" ${DEFAULT})
 opt(CXX11 "Enable C++11" ${DEFAULT})
 opt(C99 "Enable C99" ${DEFAULT})
+opt(PROFILE "Enable profiling compiler flags" OFF)
 opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT})
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
 opt(FOURIER_MODEL "Enable Fourier geometrical models (experimental)" OFF)
@@ -264,6 +265,15 @@ if(ENABLE_C99)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
   endif(STDC99)
 endif(ENABLE_C99)
+
+if(ENABLE_PROFILE)
+    # Using the perf set of profiling tools doesn't work without the frame
+    # pointer and a common optimisation is to remove it
+    check_cxx_compiler_flag("-fno-omit-frame-pointer" FNOFP)
+    if(FNOFP)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")
+    endif(FNOFP)
+endif(ENABLE_PROFILE)
 
 macro(append_gmsh_src DIRNAME FILES)
   foreach(FILE ${FILES})
