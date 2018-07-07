@@ -97,16 +97,6 @@ int ComparePhysicalGroup(const void *a, const void *b)
     return q->Num - w->Num;
 }
 
-void Projette(Vertex *v, double mat[3][3])
-{
-  double X = v->Pos.X * mat[0][0] + v->Pos.Y * mat[0][1] + v->Pos.Z * mat[0][2];
-  double Y = v->Pos.X * mat[1][0] + v->Pos.Y * mat[1][1] + v->Pos.Z * mat[1][2];
-  double Z = v->Pos.X * mat[2][0] + v->Pos.Y * mat[2][1] + v->Pos.Z * mat[2][2];
-  v->Pos.X = X;
-  v->Pos.Y = Y;
-  v->Pos.Z = Z;
-}
-
 Vertex *CreateVertex(int Num, double X, double Y, double Z, double lc, double u)
 {
   Vertex *pV = new Vertex(X, Y, Z, lc);
