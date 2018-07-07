@@ -77,178 +77,176 @@ static double smoothPrimitive(GEdge *ge, double alpha,
   return Points[Points.size() - 1].p;
 }
 
-static double F_LcB(GEdge *ge, double t)
-{
-  /*  BoundaryLayerField *blf = 0;
-#if defined(HAVE_ANN)
-  FieldManager *fields = ge->model()->getFields();
-  Field *bl_field = fields->get(fields->getBoundaryLayerField());
-  blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-#endif
-  */
-  GPoint p = ge->point(t);
-  double lc = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
+struct F_LcB {
+  double operator()(GEdge *ge, double t)
+  {
+    /*  BoundaryLayerField *blf = 0;
+  #if defined(HAVE_ANN)
+    FieldManager *fields = ge->model()->getFields();
+    Field *bl_field = fields->get(fields->getBoundaryLayerField());
+    blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+  #endif
+    */
+    GPoint p = ge->point(t);
 
-  /*  if (blf){
-    double lc2 = (*blf)( p.x(), p.y(), p.z() , ge);
-    lc = std::min(lc, lc2);
+    return BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
   }
-  */
+};
 
-  return lc;
-}
+struct F_Lc {
+  double operator()(GEdge *ge, double t)
+  {
+    /*
+    BoundaryLayerField *blf = 0;
+    #if defined(HAVE_ANN)
+    FieldManager *fields = ge->model()->getFields();
+    Field *bl_field = fields->get(fields->getBoundaryLayerField());
+    blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+    #endif
+    */
+    GPoint p = ge->point(t);
 
-static double F_Lc(GEdge *ge, double t)
-{
-  /*
-  BoundaryLayerField *blf = 0;
-#if defined(HAVE_ANN)
-  FieldManager *fields = ge->model()->getFields();
-  Field *bl_field = fields->get(fields->getBoundaryLayerField());
-  blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-#endif
-  */
-  GPoint p = ge->point(t);
-  double lc_here;
+    Range<double> bounds = ge->parBounds(0);
+    double t_begin = bounds.low();
+    double t_end = bounds.high();
 
-  Range<double> bounds = ge->parBounds(0);
-  double t_begin = bounds.low();
-  double t_end = bounds.high();
+    double lc_here;
 
-  if(t == t_begin)
-    lc_here = BGM_MeshSize(ge->getBeginVertex(), t, 0, p.x(), p.y(), p.z());
-  else if(t == t_end)
-    lc_here = BGM_MeshSize(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
-  else
-    lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
-  /*
-  if (blf){
-    double lc2 = (*blf)( p.x(), p.y(), p.z() , ge);
-    lc_here = std::min(lc_here, lc2);
+    if(t == t_begin)
+      lc_here = BGM_MeshSize(ge->getBeginVertex(), t, 0, p.x(), p.y(), p.z());
+    else if(t == t_end)
+      lc_here = BGM_MeshSize(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
+    else
+      lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
+
+    SVector3 der = ge->firstDer(t);
+
+    return norm(der) / lc_here;
   }
-  */
-  SVector3 der = ge->firstDer(t);
-  const double d = norm(der);
+};
 
-  return d / lc_here;
-}
+struct F_Lc_aniso {
+  double operator()(GEdge *ge, double t)
+  {
+    GPoint p = ge->point(t);
+    SMetric3 lc_here;
 
-static double F_Lc_aniso(GEdge *ge, double t)
-{
-  GPoint p = ge->point(t);
-  SMetric3 lc_here;
+    Range<double> bounds = ge->parBounds(0);
+    double t_begin = bounds.low();
+    double t_end = bounds.high();
 
-  Range<double> bounds = ge->parBounds(0);
-  double t_begin = bounds.low();
-  double t_end = bounds.high();
-
-  if(t == t_begin)
-    lc_here = BGM_MeshMetric(ge->getBeginVertex(), t, 0, p.x(), p.y(), p.z());
-  else if(t == t_end)
-    lc_here = BGM_MeshMetric(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
-  else
-    lc_here = BGM_MeshMetric(ge, t, 0, p.x(), p.y(), p.z());
+    if(t == t_begin)
+      lc_here = BGM_MeshMetric(ge->getBeginVertex(), t, 0, p.x(), p.y(), p.z());
+    else if(t == t_end)
+      lc_here = BGM_MeshMetric(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
+    else
+      lc_here = BGM_MeshMetric(ge, t, 0, p.x(), p.y(), p.z());
 
 #if defined(HAVE_ANN)
-  FieldManager *fields = ge->model()->getFields();
-  int n = fields->getNumBoundaryLayerFields();
+    FieldManager *fields = ge->model()->getFields();
+    int n = fields->getNumBoundaryLayerFields();
 
-  for(int i = 0; i < n; ++i) {
-    Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
-    if(bl_field == NULL) continue;
-    BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
-    if(blf->isEdgeBL(ge->tag())) break;
-    SMetric3 lc_bgm;
-    blf->computeFor1dMesh(p.x(), p.y(), p.z(), lc_bgm);
-    lc_here = intersection_conserveM1(lc_here, lc_bgm);
-  }
-#endif
-
-  SVector3 der = ge->firstDer(t);
-  return std::sqrt(dot(der, lc_here, der));
-}
-
-static double F_Transfinite(GEdge *ge, double t_)
-{
-  double length = ge->length();
-  if(length == 0.0) {
-    Msg::Error("Zero-length curve %d in transfinite mesh", ge->tag());
-    return 1.;
-  }
-
-  SVector3 der = ge->firstDer(t_);
-  double d = norm(der);
-  double coef = ge->meshAttributes.coeffTransfinite;
-  int type = ge->meshAttributes.typeTransfinite;
-  int nbpt = ge->meshAttributes.nbPointsTransfinite;
-
-  if(CTX::instance()->mesh.flexibleTransfinite &&
-     CTX::instance()->mesh.lcFactor)
-    nbpt /= CTX::instance()->mesh.lcFactor;
-
-  Range<double> bounds = ge->parBounds(0);
-  double t_begin = bounds.low();
-  double t_end = bounds.high();
-  double t = (t_ - t_begin) / (t_end - t_begin);
-
-  double val;
-
-  if(coef <= 0.0 || coef == 1.0) {
-    // coef < 0 should never happen
-    val = d * coef / ge->length();
-  }
-  else {
-    switch(std::abs(type)) {
-    case 1: // Geometric progression ar^i; Sum of n terms = length = a
-            // (r^n-1)/(r-1)
-    {
-      double r = (gmsh_sign(type) >= 0) ? coef : 1. / coef;
-      double a = length * (r - 1.) / (std::pow(r, nbpt - 1.) - 1.);
-      int i = (int)(std::log(t * length / a * (r - 1.) + 1.) / std::log(r));
-      val = d / (a * std::pow(r, (double)i));
-    } break;
-
-    case 2: // Bump
-    {
-      double a;
-      if(coef > 1.0) {
-        a = -4. * std::sqrt(coef - 1.) * std::atan2(1.0, std::sqrt(coef - 1.)) /
-            ((double)nbpt * length);
-      }
-      else {
-        a = 2. * std::sqrt(1. - coef) *
-            std::log(std::abs((1. + 1. / std::sqrt(1. - coef)) /
-                              (1. - 1. / std::sqrt(1. - coef)))) /
-            ((double)nbpt * length);
-      }
-      double b = -a * length * length / (4. * (coef - 1.));
-      val = d / (-a * std::pow(t * length - (length)*0.5, 2) + b);
-      break;
+    for(int i = 0; i < n; ++i) {
+      Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
+      if(bl_field == NULL) continue;
+      BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
+      if(blf->isEdgeBL(ge->tag())) break;
+      SMetric3 lc_bgm;
+      blf->computeFor1dMesh(p.x(), p.y(), p.z(), lc_bgm);
+      lc_here = intersection_conserveM1(lc_here, lc_bgm);
     }
-    default:
-      Msg::Warning("Unknown case in Transfinite Line mesh");
-      val = 1.;
-      break;
-    }
+#endif
+
+    SVector3 der = ge->firstDer(t);
+    return std::sqrt(dot(der, lc_here, der));
   }
-  return val;
-}
+};
 
-static double F_One(GEdge *ge, double t)
+struct F_Transfinite {
+  double operator()(GEdge *ge, double t_)
+  {
+    double length = ge->length();
+    if(length == 0.0) {
+      Msg::Error("Zero-length curve %d in transfinite mesh", ge->tag());
+      return 1.;
+    }
+
+    SVector3 der = ge->firstDer(t_);
+    double d = norm(der);
+    double coef = ge->meshAttributes.coeffTransfinite;
+    int type = ge->meshAttributes.typeTransfinite;
+    int nbpt = ge->meshAttributes.nbPointsTransfinite;
+
+    if(CTX::instance()->mesh.flexibleTransfinite &&
+       CTX::instance()->mesh.lcFactor)
+      nbpt /= CTX::instance()->mesh.lcFactor;
+
+    Range<double> bounds = ge->parBounds(0);
+    double t_begin = bounds.low();
+    double t_end = bounds.high();
+    double t = (t_ - t_begin) / (t_end - t_begin);
+
+    double val;
+
+    if(coef <= 0.0 || coef == 1.0) {
+      // coef < 0 should never happen
+      val = d * coef / ge->length();
+    }
+    else {
+      switch(std::abs(type)) {
+      case 1: // Geometric progression ar^i; Sum of n terms = length = a
+              // (r^n-1)/(r-1)
+      {
+        double r = (gmsh_sign(type) >= 0) ? coef : 1. / coef;
+        double a = length * (r - 1.) / (std::pow(r, nbpt - 1.) - 1.);
+        int i = (int)(std::log(t * length / a * (r - 1.) + 1.) / std::log(r));
+        val = d / (a * std::pow(r, (double)i));
+      } break;
+
+      case 2: // Bump
+      {
+        double a;
+        if(coef > 1.0) {
+          a = -4. * std::sqrt(coef - 1.) *
+              std::atan2(1.0, std::sqrt(coef - 1.)) / ((double)nbpt * length);
+        }
+        else {
+          a = 2. * std::sqrt(1. - coef) *
+              std::log(std::abs((1. + 1. / std::sqrt(1. - coef)) /
+                                (1. - 1. / std::sqrt(1. - coef)))) /
+              ((double)nbpt * length);
+        }
+        double b = -a * length * length / (4. * (coef - 1.));
+        val = d / (-a * std::pow(t * length - (length)*0.5, 2) + b);
+        break;
+      }
+      default:
+        Msg::Warning("Unknown case in Transfinite Line mesh");
+        val = 1.;
+        break;
+      }
+    }
+    return val;
+  }
+};
+
+struct F_One {
+  double operator()(GEdge *ge, double t)
+  {
+    SVector3 der = ge->firstDer(t);
+    return norm(der);
+  }
+};
+
+static double trapezoidal(IntPoint *const P1, IntPoint *const P2)
 {
-  SVector3 der = ge->firstDer(t);
-  return norm(der);
+  return 0.5 * (P1->lc + P2->lc) * (P2->t - P1->t);
 }
 
-static double trapezoidal(IntPoint *P1, IntPoint *P2)
-{
-  return (0.5 * (P1->lc + P2->lc) * (P2->t - P1->t));
-}
-
+template <typename function>
 static void RecursiveIntegration(GEdge *ge, IntPoint *from, IntPoint *to,
-                                 double (*f)(GEdge *e, double X),
-                                 std::vector<IntPoint> &Points, double Prec,
-                                 int *depth)
+                                 function f, std::vector<IntPoint> &Points,
+                                 double Prec, int *depth)
 {
   IntPoint P, p1;
 
@@ -257,10 +255,10 @@ static void RecursiveIntegration(GEdge *ge, IntPoint *from, IntPoint *to,
   P.t = 0.5 * (from->t + to->t);
   P.lc = f(ge, P.t);
 
-  double val1 = trapezoidal(from, to);
-  double val2 = trapezoidal(from, &P);
-  double val3 = trapezoidal(&P, to);
-  double err = std::abs(val1 - val2 - val3);
+  double const val1 = trapezoidal(from, to);
+  double const val2 = trapezoidal(from, &P);
+  double const val3 = trapezoidal(&P, to);
+  double const err = std::abs(val1 - val2 - val3);
 
   if(((err < Prec) && (*depth > 6)) || (*depth > 25)) {
     p1 = Points.back();
@@ -279,8 +277,8 @@ static void RecursiveIntegration(GEdge *ge, IntPoint *from, IntPoint *to,
   (*depth)--;
 }
 
-static double Integration(GEdge *ge, double t1, double t2,
-                          double (*f)(GEdge *e, double X),
+template <typename function>
+static double Integration(GEdge *ge, double t1, double t2, function f,
                           std::vector<IntPoint> &Points, double Prec)
 {
   IntPoint from, to;
@@ -411,7 +409,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
 
       t = 0.5 * (t + t0);
     }
-    double lc = F_LcB(ge, t);
+    double lc = F_LcB()(ge, t);
     // double lc = v->getLc();
     if(d < lc * .3) { lengths.push_back(std::make_pair(lc / d, v)); }
     else
@@ -600,7 +598,7 @@ void meshGEdge::operator()(GEdge *ge)
        CTX::instance()->geom.tolerance)
     length = 0.0; // special case to avoid infinite loop in integration
   else
-    length = Integration(ge, t_begin, t_end, F_One, Points,
+    length = Integration(ge, t_begin, t_end, F_One(), Points,
                          1.e-12 * CTX::instance()->lc);
   ge->setLength(length);
   Points.clear();
@@ -624,7 +622,7 @@ void meshGEdge::operator()(GEdge *ge)
     N = 1;
   }
   else if(ge->meshAttributes.method == MESH_TRANSFINITE) {
-    a = Integration(ge, t_begin, t_end, F_Transfinite, Points,
+    a = Integration(ge, t_begin, t_end, F_Transfinite(), Points,
                     CTX::instance()->mesh.lcIntegrationPrecision);
     N = ge->meshAttributes.nbPointsTransfinite;
     if(CTX::instance()->mesh.flexibleTransfinite &&
@@ -633,11 +631,11 @@ void meshGEdge::operator()(GEdge *ge)
   }
   else {
     if(CTX::instance()->mesh.algo2d == ALGO_2D_BAMG /* || blf*/) {
-      a = Integration(ge, t_begin, t_end, F_Lc_aniso, Points,
+      a = Integration(ge, t_begin, t_end, F_Lc_aniso(), Points,
                       CTX::instance()->mesh.lcIntegrationPrecision);
     }
     else {
-      a = Integration(ge, t_begin, t_end, F_Lc, Points,
+      a = Integration(ge, t_begin, t_end, F_Lc(), Points,
                       CTX::instance()->mesh.lcIntegrationPrecision);
     }
 
@@ -664,8 +662,8 @@ void meshGEdge::operator()(GEdge *ge)
     }
     else {
       std::vector<GFace *> const &faces = ge->faces();
-      for(std::vector<GFace *>::const_iterator it = faces.begin(); it != faces.end();
-          it++) {
+      for(std::vector<GFace *>::const_iterator it = faces.begin();
+          it != faces.end(); it++) {
         if((*it)->meshAttributes.recombine) {
           if(N % 2 == 0) N++;
           if(CTX::instance()->mesh.algoRecombine == 2) N = increaseN(N);
