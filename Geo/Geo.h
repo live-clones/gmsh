@@ -27,7 +27,7 @@ struct Coord {
 };
 
 class Vertex {
- public :
+public:
   int Num;
   int Typ;
   double lc, u, w;
@@ -37,10 +37,16 @@ class Vertex {
   // of a surface: pntOnGeometry stores the local coodinates of the
   // vertex in the gmshSurface it belongs to.
   gmshSurface *geometry;
-  SPoint2  pntOnGeometry;
+  SPoint2 pntOnGeometry;
   int boundaryLayerIndex;
-  Vertex(double X=0., double Y=0., double Z=0., double l=1., double W=1.)
-    : Num(0), lc(l), u(0.), w(W), geometry(0), boundaryLayerIndex(0)
+  Vertex(double X = 0., double Y = 0., double Z = 0., double l = 1.,
+         double W = 1.)
+    : Num(0)
+    , lc(l)
+    , u(0.)
+    , w(W)
+    , geometry(0)
+    , boundaryLayerIndex(0)
   {
     Typ = MSH_POINT;
     Pos.X = X;
@@ -55,7 +61,7 @@ class Vertex {
     Pos.Y /= d;
     Pos.Z /= d;
   }
-  Vertex operator % (Vertex & autre) // cross product
+  Vertex operator%(Vertex &autre) // cross product
   {
     return Vertex(Pos.Y * autre.Pos.Z - Pos.Z * autre.Pos.Y,
                   -(Pos.X * autre.Pos.Z - Pos.Z * autre.Pos.X),
@@ -64,14 +70,14 @@ class Vertex {
 };
 
 class CircParam {
- public:
+public:
   double t1, t2, f1, f2, incl;
   double invmat[3][3];
   double n[3];
 };
 
 class Curve {
- public:
+public:
   int Num;
   int Typ;
   bool degenerated;
@@ -94,19 +100,19 @@ class Curve {
   std::list<double> affineTransformation;
   bool degenerate() const
   {
-    if (beg == end && Typ ==  MSH_SEGM_LINE) return true;
+    if(beg == end && Typ == MSH_SEGM_LINE) return true;
     return false;
   }
 };
 
 class EdgeLoop {
- public:
+public:
   int Num;
   List_T *Curves;
 };
 
 class Surface {
- public:
+public:
   int Num;
   int Typ;
   int Method;
@@ -129,13 +135,13 @@ class Surface {
 };
 
 class SurfaceLoop {
- public:
+public:
   int Num;
   List_T *Surfaces;
 };
 
 class Volume {
- public:
+public:
   int Num;
   int Typ;
   int Method;
@@ -149,7 +155,7 @@ class Volume {
 };
 
 class PhysicalGroup {
- public:
+public:
   int Num;
   int Typ;
   List_T *Entities;
@@ -173,10 +179,11 @@ void FreeVolume(void *a, void *b);
 
 void Projette(Vertex *v, double mat[3][3]);
 
-Vertex *CreateVertex(int Num, double X, double Y, double Z, double lc, double u);
+Vertex *CreateVertex(int Num, double X, double Y, double Z, double lc,
+                     double u);
 Vertex *CreateVertex(int Num, double u, double v, gmshSurface *s, double lc);
-Curve *CreateCurve(int Num, int Typ, int Order, List_T *Liste,
-                    List_T *Knots, int p1, int p2, double u1, double u2);
+Curve *CreateCurve(int Num, int Typ, int Order, List_T *Liste, List_T *Knots,
+                   int p1, int p2, double u1, double u2);
 Curve *CreateReversedCurve(Curve *c);
 Surface *CreateSurface(int Num, int Typ);
 Volume *CreateVolume(int Num, int Typ);
@@ -195,46 +202,45 @@ SurfaceLoop *FindSurfaceLoop(int inum);
 Volume *FindVolume(int inum);
 PhysicalGroup *FindPhysicalGroup(int inum, int type);
 
-void TranslateShapes(double X,double Y,double Z, List_T *shapes);
-void DilatShapes(double X,double Y,double Z, double A, double B, double C,
+void TranslateShapes(double X, double Y, double Z, List_T *shapes);
+void DilatShapes(double X, double Y, double Z, double A, double B, double C,
                  List_T *shapes);
-void RotateShapes(double Ax,double Ay,double Az,
-                  double Px,double Py, double Pz, double alpha, List_T *shapes);
-void SymmetryShapes(double A,double B,double C, double D, List_T *shapes);
+void RotateShapes(double Ax, double Ay, double Az, double Px, double Py,
+                  double Pz, double alpha, List_T *shapes);
+void SymmetryShapes(double A, double B, double C, double D, List_T *shapes);
 
 Vertex *DuplicateVertex(Vertex *v);
 Curve *DuplicateCurve(Curve *c);
 Surface *DuplicateSurface(Surface *s);
 Volume *DuplicateVolume(Volume *s);
 
-void DeletePoint(int Num, bool recursive=false);
-void DeleteCurve(int Num, bool recursive=false);
-void DeleteSurface(int Num, bool recursive=false);
-void DeleteVolume(int Num, bool recursive=false);
+void DeletePoint(int Num, bool recursive = false);
+void DeleteCurve(int Num, bool recursive = false);
+void DeleteSurface(int Num, bool recursive = false);
+void DeleteVolume(int Num, bool recursive = false);
 void DeletePhysicalPoint(int Num);
 void DeletePhysicalLine(int Num);
 void DeletePhysicalSurface(int Num);
 void DeletePhysicalVolume(int Num);
 
-void ExtrudeShapes(int extrude_type, List_T *in,
-                   double T0, double T1, double T2,
-                   double A0, double A1, double A2,
-                   double X0, double X1, double X2, double alpha,
-                   ExtrudeParams *e,
+void ExtrudeShapes(int extrude_type, List_T *in, double T0, double T1,
+                   double T2, double A0, double A1, double A2, double X0,
+                   double X1, double X2, double alpha, ExtrudeParams *e,
                    List_T *out);
 void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e);
 
 void ReplaceAllDuplicates();
-void ReplaceAllDuplicatesNew(double tol=-1.);
+void ReplaceAllDuplicatesNew(double tol = -1.);
 
 bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2]);
-bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shapes);
+bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id,
+                                List_T *shapes);
 bool SplitCurve(int line_id, List_T *vertices_id, List_T *curves);
 
 int RecognizeLineLoop(List_T *liste, int *loop);
 int RecognizeSurfaceLoop(List_T *liste, int *loop);
 
-void SortEdgesInLoop(int num, List_T *edges, bool orient=false);
+void SortEdgesInLoop(int num, List_T *edges, bool orient = false);
 void SetSurfaceGeneratrices(Surface *s, List_T *loops);
 void SetVolumeSurfaces(Volume *v, List_T *loops);
 
