@@ -53,7 +53,7 @@ static double smoothPrimitive(GEdge *ge, double alpha,
     for(int i = Points.size() - 1; i > 0; i--) {
       double dh =
         (Points[i - 1].xp / Points[i - 1].lc - Points[i].xp / Points[i].lc);
-      double dt = fabs(Points[i - 1].t - Points[i].t);
+      double dt = std::abs(Points[i - 1].t - Points[i].t);
       double dhdt = dh / dt;
       if(dhdt / Points[i - 1].xp > (alpha - 1.) * 1.01) {
         double hnew =
@@ -69,7 +69,7 @@ static double smoothPrimitive(GEdge *ge, double alpha,
   }
 
   // recompute the primitive
-  for(int i = 1; i < (int)Points.size(); i++) {
+  for(std::size_t i = 1; i < Points.size(); i++) {
     IntPoint &pt2 = Points[i];
     IntPoint &pt1 = Points[i - 1];
     pt2.p = pt1.p + (pt2.t - pt1.t) * 0.5 * (pt2.lc + pt1.lc);
@@ -165,8 +165,7 @@ static double F_Lc_aniso(GEdge *ge, double t)
 #endif
 
   SVector3 der = ge->firstDer(t);
-  double lSquared = dot(der, lc_here, der);
-  return sqrt(lSquared);
+  return std::sqrt(dot(der, lc_here, der));
 }
 
 static double F_Transfinite(GEdge *ge, double t_)
@@ -204,28 +203,28 @@ static double F_Transfinite(GEdge *ge, double t_)
             // (r^n-1)/(r-1)
     {
       double r = (gmsh_sign(type) >= 0) ? coef : 1. / coef;
-      double a = length * (r - 1.) / (pow(r, nbpt - 1.) - 1.);
-      int i = (int)(log(t * length / a * (r - 1.) + 1.) / log(r));
-      val = d / (a * pow(r, (double)i));
+      double a = length * (r - 1.) / (std::pow(r, nbpt - 1.) - 1.);
+      int i = (int)(std::log(t * length / a * (r - 1.) + 1.) / std::log(r));
+      val = d / (a * std::pow(r, (double)i));
     } break;
 
     case 2: // Bump
     {
       double a;
       if(coef > 1.0) {
-        a = -4. * sqrt(coef - 1.) * atan2(1., sqrt(coef - 1.)) /
+        a = -4. * std::sqrt(coef - 1.) * std::atan2(1.0, std::sqrt(coef - 1.)) /
             ((double)nbpt * length);
       }
       else {
-        a =
-          2. * sqrt(1. - coef) *
-          log(fabs((1. + 1. / sqrt(1. - coef)) / (1. - 1. / sqrt(1. - coef)))) /
-          ((double)nbpt * length);
+        a = 2. * std::sqrt(1. - coef) *
+            std::log(std::abs((1. + 1. / std::sqrt(1. - coef)) /
+                              (1. - 1. / std::sqrt(1. - coef)))) /
+            ((double)nbpt * length);
       }
       double b = -a * length * length / (4. * (coef - 1.));
       val = d / (-a * std::pow(t * length - (length)*0.5, 2) + b);
-    } break;
-
+      break;
+    }
     default:
       Msg::Warning("Unknown case in Transfinite Line mesh");
       val = 1.;
@@ -440,7 +439,8 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
     for(int i = 0; i < last; i++) {
       std::vector<MVertex *>::iterator it = std::find(
         ge->mesh_vertices.begin(), ge->mesh_vertices.end(), lengths[i].second);
-      ge->mesh_vertices.erase(it);
+
+      if(it != ge->mesh_vertices.end()) { ge->mesh_vertices.erase(it); }
       delete lengths[i].second;
     }
   }
@@ -455,12 +455,13 @@ static void createPoints(GVertex *gv, GEdge *ge, BoundaryLayerField *blf,
   double LEdge = distance(ge->getBeginVertex()->mesh_vertices[0],
                           ge->getEndVertex()->mesh_vertices[0]);
   while(1) {
-    if(L > blf->thickness || L > LEdge * .4) break;
+    if(L > blf->thickness || L > LEdge * .4) { break; }
+
     SPoint3 p(gv->x() + dir.x() * L, gv->y() + dir.y() * L, 0.0);
     v.push_back(new MEdgeVertex(p.x(), p.y(), p.z(), ge, ge->parFromPoint(p), 0,
                                 blf->hfar));
     int ith = v.size();
-    L += hwall * pow(blf->ratio, ith);
+    L += hwall * std::pow(blf->ratio, ith);
   }
 #endif
 }
@@ -477,6 +478,7 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
   // _addBegin/_addEnd : additional points @ left/right
   FieldManager *fields = ge->model()->getFields();
   int n = fields->getNumBoundaryLayerFields();
+
   if(n == 0) return;
 
   // Check if edge is a BL edge
@@ -542,10 +544,6 @@ void meshGEdge::operator()(GEdge *ge)
   if(ge->meshAttributes.method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return;
 
-  // look if we are doing the STL triangulation
-  std::vector<MVertex *> &mesh_vertices = ge->mesh_vertices;
-  std::vector<MLine *> &lines = ge->lines;
-
   deMeshGEdge dem;
   dem(ge);
 
@@ -600,7 +598,7 @@ void meshGEdge::operator()(GEdge *ge)
      // do not consider closed lines as degenerated
      (ge->position(0.5) - ge->getBeginVertex()->xyz()).norm() <
        CTX::instance()->geom.tolerance)
-    length = 0.; // special case to avoid infinite loop in integration
+    length = 0.0; // special case to avoid infinite loop in integration
   else
     length = Integration(ge, t_begin, t_end, F_One, Points,
                          1.e-12 * CTX::instance()->lc);
@@ -644,13 +642,14 @@ void meshGEdge::operator()(GEdge *ge)
     }
 
     // we should maybe provide an option to disable the smoothing
-    for(unsigned int i = 0; i < Points.size(); i++) {
+    for(std::size_t i = 0; i < Points.size(); i++) {
       IntPoint &pt = Points[i];
       SVector3 der = ge->firstDer(pt.t);
       pt.xp = der.norm();
     }
     if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG)
-      a = smoothPrimitive(ge, sqrt(CTX::instance()->mesh.smoothRatio), Points);
+      a = smoothPrimitive(ge, std::sqrt(CTX::instance()->mesh.smoothRatio),
+                          Points);
     filterMinimumN = ge->minimumMeshSegments() + 1;
     N = std::max(filterMinimumN, (int)(a + 1.99));
   }
@@ -664,8 +663,8 @@ void meshGEdge::operator()(GEdge *ge)
       if(CTX::instance()->mesh.algoRecombine == 2) N = increaseN(N);
     }
     else {
-      std::vector<GFace *> faces = ge->faces();
-      for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
+      std::vector<GFace *> const &faces = ge->faces();
+      for(std::vector<GFace *>::const_iterator it = faces.begin(); it != faces.end();
           it++) {
         if((*it)->meshAttributes.recombine) {
           if(N % 2 == 0) N++;
@@ -683,6 +682,10 @@ void meshGEdge::operator()(GEdge *ge)
   // adjacent to it, then the vertex is not connecting any other
   // curve. So, the mesh vertex and its associated geom vertex are not
   // necessary at the same location
+
+  // look if we are doing the STL triangulation
+  std::vector<MVertex *> &mesh_vertices = ge->mesh_vertices;
+
   GPoint beg_p, end_p;
   if(!ge->getBeginVertex() && !ge->getEndVertex()) {
     Msg::Warning("Skipping curve with no begin nor end vertex");
@@ -703,19 +706,20 @@ void meshGEdge::operator()(GEdge *ge)
   // do not consider the first and the last vertex (those are not
   // classified on this mesh edge)
   if(N > 1) {
-    const double b = a / (double)(N - 1);
+    const double b = a / static_cast<double>(N - 1);
     int count = 1, NUMP = 1;
     IntPoint P1, P2;
     mesh_vertices.resize(N - 2);
+
     while(NUMP < N - 1) {
       P1 = Points[count - 1];
       P2 = Points[count];
       const double d = (double)NUMP * b;
-      if((fabs(P2.p) >= fabs(d)) && (fabs(P1.p) < fabs(d))) {
-        double dt = P2.t - P1.t;
-        double dlc = P2.lc - P1.lc;
-        double dp = P2.p - P1.p;
-        double t = P1.t + dt / dp * (d - P1.p);
+      if((std::abs(P2.p) >= std::abs(d)) && (std::abs(P1.p) < std::abs(d))) {
+        double const dt = P2.t - P1.t;
+        double const dlc = P2.lc - P1.lc;
+        double const dp = P2.p - P1.p;
+        double const t = P1.t + dt / dp * (d - P1.p);
         SVector3 der = ge->firstDer(t);
         const double d = norm(der);
         double lc = d / (P1.lc + dlc / dp * (d - P1.p));
@@ -746,9 +750,12 @@ void meshGEdge::operator()(GEdge *ge)
     if(_addBegin.empty() && _addEnd.empty())
       filterPoints(ge, filterMinimumN - 2);
 
+  std::vector<MLine *> &lines = ge->lines;
+
   for(std::size_t i = 0; i <= mesh_vertices.size(); i++) {
     MVertex *v0 =
-      i == 0 ? ge->getBeginVertex()->mesh_vertices[0] : mesh_vertices[i - 1];
+      (i == 0) ? ge->getBeginVertex()->mesh_vertices[0] : mesh_vertices[i - 1];
+
     MVertex *v1 = (i == mesh_vertices.size()) ?
                     ge->getEndVertex()->mesh_vertices[0] :
                     mesh_vertices[i];
