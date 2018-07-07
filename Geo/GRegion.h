@@ -83,7 +83,7 @@ public:
   virtual std::vector<GFace *> embeddedFaces() const { return embedded_faces; }
 
   // edges that bound the region
-  virtual std::vector<GEdge *> edges() const;
+  virtual std::vector<GEdge *> const &edges() const;
 
   // vertices that bound the region
   virtual std::vector<GVertex *> vertices() const;
