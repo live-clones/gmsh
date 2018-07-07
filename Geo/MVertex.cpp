@@ -20,7 +20,7 @@ double angle3Vertices(const MVertex *p1, const MVertex *p2, const MVertex *p3)
   SVector3 c = crossprod(a, b);
   double sinA = c.norm();
   double cosA = dot(a, b);
-  return atan2(sinA, cosA);
+  return std::atan2(sinA, cosA);
 }
 
 MVertex::MVertex(double x, double y, double z, GEntity *ge, int num)

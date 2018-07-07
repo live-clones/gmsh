@@ -385,16 +385,17 @@ void GRegion::writeGEO(FILE *fp)
   }
 }
 
-std::vector<GEdge*> GRegion::edges() const
+std::vector<GEdge*> const &GRegion::edges() const
 {
   // TODO C++11 clean this up
-  std::vector<GEdge*> e;
+  static std::vector<GEdge*> e;
+  e.clear();
   std::vector<GFace*>::const_iterator it = l_faces.begin();
   while(it != l_faces.end()){
-    std::vector<GEdge*> e2 = (*it)->edges();
+    std::vector<GEdge*> const &e2 = (*it)->edges();
     std::vector<GEdge*>::const_iterator it2 = e2.begin();
     while (it2 != e2.end()){
-      GEdge *edge = *it2;
+      GEdge *const edge = *it2;
       if(std::find(e.begin(), e.end(), edge) == e.end())
         e.push_back(edge);
       ++it2;
