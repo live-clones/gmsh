@@ -17,8 +17,7 @@ class GFace;
 class GVertex;
 class MVertex;
 
-class edge_angle {
-public:
+struct edge_angle {
   MVertex *v1, *v2;
   double angle;
   edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2);
