@@ -27,13 +27,13 @@
 class bezierBasis;
 
 StringXNumber CurvedMeshOptions_Number[] = {
-  {GMSH_FULLRC, "Jacobian determinant", NULL, 1},
-  {GMSH_FULLRC, "IGE measure", NULL, 1},
-  {GMSH_FULLRC, "ICN measure", NULL, 1},
-  {GMSH_FULLRC, "Hiding threshold", NULL, 9},
-  {GMSH_FULLRC, "Draw PView", NULL, 0},
+  {GMSH_FULLRC, "JacobianDeterminant", NULL, 0},
+  {GMSH_FULLRC, "IGEMeasure", NULL, 0},
+  {GMSH_FULLRC, "ICNMeasure", NULL, 0},
+  {GMSH_FULLRC, "HidingThreshold", NULL, 9},
+  {GMSH_FULLRC, "DrawPView", NULL, 0},
   {GMSH_FULLRC, "Recompute", NULL, 0},
-  {GMSH_FULLRC, "Dimension of elements", NULL, -1}
+  {GMSH_FULLRC, "DimensionOfElements", NULL, -1}
 #if defined(HAVE_VISUDEV)
  ,{GMSH_FULLRC, "Element to draw quality", NULL, 0}
 #endif
@@ -79,26 +79,26 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
     "\n"
     "Parameters:\n"
     "\n"
-    "- Jacobian determinant = {0, 1}\n"
+    "- JacobianDeterminant = {0, 1}\n"
     "\n"
-    "- IGE measure = {0, 1}\n"
+    "- IGEMeasure = {0, 1}\n"
     "\n"
-    "- ICN measure = {0, 1}\n"
+    "- ICNMeasure = {0, 1}\n"
     "\n"
-    "- Hiding threshold = [0, 1]: Hides all element for which min(mu) is "
+    "- HidingThreshold = [0, 1]: Hides all element for which min(mu) is "
     "strictly greater than the threshold, where mu is the ICN if ICN measure == 1, "
     "otherwise mu is the IGE it IGE measure == 1, "
     "otherwise mu is the Jacobian determinant.\n"
     "If threshold == 0, hides all elements except invalid.\n"
     "\n"
-    "- Draw PView = {0, 1}: Creates a PView of min(J)/max(J), min(IGE) "
+    "- DrawPView = {0, 1}: Creates a PView of min(J)/max(J), min(IGE) "
     "and/or min(ICN) according to what is asked. If 'Recompute' = 1, "
     "new PViews are created.\n"
     "\n"
     "- Recompute = {0,1}: Should be 1 if the mesh has changed.\n"
     "\n"
-    "- Dimension = {-1, 1, 2, 3, 4}: If == -1, analyse element of the greater "
-    "dimension. If == 4, analyse 2D and 3D elements.";
+    "- DimensionOfElements = {-1, 1, 2, 3, 4}: If == -1, analyse element of the "
+    "greater dimension. If == 4, analyse 2D and 3D elements.";
 }
 
 PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
