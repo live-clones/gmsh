@@ -555,12 +555,15 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
       V.Pos.X = V.Pos.Y = V.Pos.Z = 0;
     }
     else {
-      i = (int)((double)(N - 1) * u);
+      i = static_cast<int>(static_cast<double>(N - 1) * u);
+
       if(i < 0) i = 0;
       if(i >= N - 1) i = N - 2;
-      t1 = (double)(i) / (double)(N - 1);
-      t2 = (double)(i + 1) / (double)(N - 1);
+
+      t1 = static_cast<double>(i) / static_cast<double>(N - 1);
+      t2 = static_cast<double>(i + 1) / static_cast<double>(N - 1);
       t = (u - t1) / (t2 - t1);
+
       List_Read(c->Control_Points, i, &v[1]);
       List_Read(c->Control_Points, i + 1, &v[2]);
       if(!i) {
@@ -622,10 +625,14 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
 // f(u,v) = (1-u)c4(v) + u c2(v) + (1-v)c1(u) + v c3(u)
 //          - [ (1-u)(1-v)s1 + u(1-v)s2 + uv s3 + (1-u)v s4 ]
 
-#define TRAN_QUA(c1, c2, c3, c4, s1, s2, s3, s4, u, v)                         \
-  (1. - u) * c4 + u *c2 + (1. - v) * c1 + v *c3 -                              \
-    ((1. - u) * (1. - v) * s1 + u * (1. - v) * s2 + u * v * s3 +               \
-     (1. - u) * v * s4)
+template <class T>
+T TRAN_QUA(T const c1, T const c2, T const c3, T const c4, T const s1,
+           T const s2, T const s3, T const s4, T const u, T const v)
+{
+  return (1.0 - u) * c4 + u * c2 + (1.0 - v) * c1 + v * c3 -
+         ((1.0 - u) * (1.0 - v) * s1 + u * (1.0 - v) * s2 + u * v * s3 +
+          (1.0 - u) * v * s4);
+}
 
 static Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
                              Vertex s1, Vertex s2, Vertex s3, Vertex s4,
