@@ -257,9 +257,20 @@ public:
 
 class BDS_Face {
 public:
-  bool deleted;
-  BDS_Edge *e1, *e2, *e3, *e4;
-  BDS_GeomEntity *g;
+  BDS_Face(BDS_Edge *A, BDS_Edge *B, BDS_Edge *C, BDS_Edge *D = 0)
+    : deleted(false)
+    , e1(A)
+    , e2(B)
+    , e3(C)
+    , e4(D)
+    , g(0)
+  {
+    e1->addface(this);
+    e2->addface(this);
+    e3->addface(this);
+    if(e4) e4->addface(this);
+  }
+
   int numEdges() const { return e4 ? 4 : 3; }
   BDS_Edge *oppositeEdge(BDS_Point *p)
   {
@@ -302,19 +313,11 @@ public:
       n[3] = e3->commonvertex(e4);
     }
   }
-  BDS_Face(BDS_Edge *A, BDS_Edge *B, BDS_Edge *C, BDS_Edge *D = 0)
-    : deleted(false)
-    , e1(A)
-    , e2(B)
-    , e3(C)
-    , e4(D)
-    , g(0)
-  {
-    e1->addface(this);
-    e2->addface(this);
-    e3->addface(this);
-    if(e4) e4->addface(this);
-  }
+
+public:
+  bool deleted;
+  BDS_Edge *e1, *e2, *e3, *e4;
+  BDS_GeomEntity *g;
 };
 
 struct GeomLessThan {
