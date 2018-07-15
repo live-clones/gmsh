@@ -63,7 +63,7 @@ public:
   {
     return Vert(x() * other, y() * other, z() * other, _lc * other);
   }
-  inline SPoint3 point() const { return SPoint3(x(), y(), z()); }
+  SPoint3 point() const { return SPoint3(x(), y(), z()); }
 };
 
 inline double orientationTestFast(double *pa, double *pb, double *pc,
@@ -185,7 +185,7 @@ public:
 
   bool find(const Edge &e) const
   {
-    std::vector<Edge> &const v = _hash[H(e)];
+    std::vector<Edge> const &v = _hash[H(e)];
     return std::find(v.begin(), v.end(), e) != v.end();
   }
 
