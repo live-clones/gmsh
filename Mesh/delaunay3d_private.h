@@ -127,7 +127,7 @@ inline bool inSphereTest_s(Vert *va, Vert *vb, Vert *vc, Vert *vd, Vert *ve)
       val = oriB;
     }
   }
-  return val > 0 ? 1 : 0;
+  return val > 0;
 }
 
 inline double orientationTest(Vert *va, Vert *vb, Vert *vc, Vert *vd)
