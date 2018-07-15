@@ -180,12 +180,10 @@ struct edgeContainer {
     return (h / _size_obj) % _hash.size();
   }
 
-  inline bool find(const Edge &e) const
+  bool find(const Edge &e) const
   {
-    const std::vector<Edge> &v = _hash[H(e)];
-    for(unsigned int i = 0; i < v.size(); i++)
-      if(e == v[i]) { return true; }
-    return false;
+    std::vector<Edge> &const v = _hash[H(e)];
+    return std::find(v.begin(), v.end(), e) != v.end();
   }
 
   bool empty() const { return _size == 0; }
