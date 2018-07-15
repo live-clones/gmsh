@@ -145,7 +145,6 @@ int HilbertSortB::Split(Vert **vertices, int arraysize, int GrayCode0,
   Vert *swapvert;
   int axis, d;
   double split;
-  int i, j;
 
   // Find the current splitting axis. 'axis' is a value 0, or 1, or 2, which
   // correspoding to x-, or y- or z-axis.
@@ -166,8 +165,8 @@ int HilbertSortB::Split(Vert **vertices, int arraysize, int GrayCode0,
 
   // Partition the vertices into left- and right-arrays such that left points
   // have Hilbert indices lower than the right points.
-  i = 0;
-  j = arraysize - 1;
+  int i = 0;
+  int j = arraysize - 1;
 
   // Partition the vertices into left- and right-arrays.
   if(d > 0) {
