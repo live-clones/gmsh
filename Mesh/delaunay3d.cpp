@@ -27,8 +27,7 @@
 #include "meshGRegionLocalMeshMod.h"
 #include "Context.h"
 
-inline double tetQuality(Vert *vx0, Vert *vx1, Vert *vx2, Vert *vx3,
-                         double *volume)
+double tetQuality(Vert *vx0, Vert *vx1, Vert *vx2, Vert *vx3, double *volume)
 {
   return qmTetrahedron::gamma(vx0->x(), vx0->y(), vx0->z(), vx1->x(), vx1->y(),
                               vx1->z(), vx2->x(), vx2->y(), vx2->z(), vx3->x(),
