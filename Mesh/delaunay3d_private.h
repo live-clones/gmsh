@@ -164,8 +164,11 @@ public:
 };
 
 struct edgeContainer {
+public:
   std::vector<std::vector<Edge> > _hash;
-  size_t _size, _size_obj;
+  std::size_t _size, _size_obj;
+
+public:
   edgeContainer(unsigned int N = 1000000)
   {
     _size = 0;
@@ -173,9 +176,9 @@ struct edgeContainer {
     _size_obj = sizeof(Edge);
   }
 
-  inline size_t H(const Edge &e) const
+  std::size_t H(const Edge &edge) const
   {
-    const size_t h = ((size_t)e.first);
+    const std::size_t h = ((std::size_t)edge.first);
     //    printf("%lu %lu %lu %lu\n",h,(h/2)%_hash.size(),h/64,h>>6);
     return (h / _size_obj) % _hash.size();
   }
@@ -219,10 +222,12 @@ struct Face {
     cswap(v[1], v[2]);
     cswap(v[0], v[1]);
   }
+
   bool operator==(const Face &other) const
   {
     return v[0] == other.v[0] && v[1] == other.v[1] && v[2] == other.v[2];
   }
+
   bool operator<(const Face &other) const
   {
     if(v[0] < other.v[0]) return true;
@@ -295,33 +300,37 @@ struct Tet {
     T[0] = T[1] = T[2] = T[3] = NULL;
     setAllDeleted();
   }
+
   void setAllDeleted()
   {
     for(int i = 0; i < MAX_NUM_THREADS_; i++) _bitset[i] = 0x0;
   }
-  inline void unset(int thread, int iPnt) { _bitset[thread] &= ~(1 << iPnt); }
-  inline void set(int thread, int iPnt) { _bitset[thread] |= (1 << iPnt); }
-  inline CHECKTYPE isSet(int thread, int iPnt) const
+
+  void unset(int thread, int iPnt) { _bitset[thread] &= ~(1 << iPnt); }
+
+  void set(int thread, int iPnt) { _bitset[thread] |= (1 << iPnt); }
+
+  CHECKTYPE isSet(int thread, int iPnt) const
   {
     return _bitset[thread] & (1 << iPnt);
   }
-  inline Face getFace(int k) const
+  Face getFace(int k) const
   {
     const int fac[4][3] = {{0, 1, 2}, {1, 3, 2}, {2, 3, 0}, {1, 0, 3}};
     return Face(V[fac[k][0]], V[fac[k][1]], V[fac[k][2]]);
   }
-  inline Vert *getOppositeVertex(int k) const
+  Vert *getOppositeVertex(int k) const
   {
     const int o[4] = {3, 0, 1, 2};
     return V[o[k]];
   }
-  inline Edge getEdge(int k) const
+  Edge getEdge(int k) const
   {
     const int edg[6][2] = {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}};
     return Edge(std::min(V[edg[k][0]], V[edg[k][1]]),
                 std::max(V[edg[k][0]], V[edg[k][1]]));
   }
-  inline bool inSphere(Vert *vd, int thread)
+  bool inSphere(Vert *vd, int thread)
   {
     //    in_sphere_counter++;
     return inSphereTest_s(V[0], V[1], V[2], V[3], vd);
@@ -344,8 +353,8 @@ struct conn {
     , t(_t)
   {
   }
-  inline bool operator==(const conn &c) const { return f == c.f; }
-  inline bool operator<(const conn &c) const { return f < c.f; }
+  bool operator==(const conn &c) const { return f == c.f; }
+  bool operator<(const conn &c) const { return f < c.f; }
 };
 
 // tetrahedra (one per thread)
@@ -355,23 +364,28 @@ public:
   unsigned int _current;
   unsigned int _nbAlloc;
   unsigned int size() { return _current + (_all.size() - 1) * _nbAlloc; }
-  inline T *operator()(unsigned int i)
+
+public:
+  T *operator()(unsigned int i)
   {
     const unsigned int _array = i / _nbAlloc;
     const unsigned int _offset = i % _nbAlloc;
     // printf("%d %d %d\n",i,_array,_offset);
     return _all[_array] + _offset;
   }
+
   aBunchOfStuff(unsigned int s)
     : _current(0)
     , _nbAlloc(s)
   {
     _all.push_back(new T[_nbAlloc]);
   }
+
   ~aBunchOfStuff()
   {
     for(unsigned int i = 0; i < _all.size(); i++) { delete[] _all[i]; }
   }
+
   T *newStuff()
   {
     if(_current == _nbAlloc) {
@@ -394,10 +408,9 @@ public:
     if((int)_perThread.size() <= thread) return 0;
     return _perThread[thread]->size();
   }
-  inline Tet *operator()(int thread, int j) const
-  {
-    return (*_perThread[thread])(j);
-  }
+
+  Tet *operator()(int thread, int j) const { return (*_perThread[thread])(j); }
+
   tetContainer(int nbThreads, int preallocSizePerThread)
   {
     // FIXME !!!
@@ -415,7 +428,7 @@ public:
       _perThread[myThread] = new aBunchOfStuff<Tet>(preallocSizePerThread);
     }
   }
-  inline Tet *newTet(int thread) { return _perThread[thread]->newStuff(); }
+  Tet *newTet(int thread) { return _perThread[thread]->newStuff(); }
   ~tetContainer() { delete _perThread[0]; }
 };
 
