@@ -1109,14 +1109,29 @@ void bezierCoeff::subdivide(std::vector<bezierCoeff> &subCoeff)
   // prism: faire d'abord tri puis lignes
 }
 
-void bezierCoeff::_subdivide(fullMatrix<double> &coeff, int start, int n)
+void bezierCoeff::_subdivide(fullMatrix<double> &coeff, int n, int start)
 {
-  // One dimensional De Casteljau algorithm if consecutive data
+  // One-dimensional De Casteljau algorithm if consecutive data
   const int sz = coeff.size2();
   for (int i = 1; i < n; ++i) {
     for (int j = start + i; j < start+2*n-i; j += 2) {
       for (int k = 0; k < sz; ++k) {
-        coeff(j, k) = .5 * (coeff(j+1, k) + coeff(j-1, k));
+        coeff(j, k) = .5 * (coeff(j-1, k) + coeff(j+1, k));
+      }
+    }
+  }
+}
+
+void bezierCoeff::_subdivide(fullMatrix<double> &coeff, int n, int start,
+                             int inc)
+{
+  // One-dimensional De Casteljau algorithm if non-consecutive data
+  const int sz = coeff.size2();
+  for (int i = 1; i < n; ++i) {
+    for (int j = i; j < 2*n-i; j += 2) {
+      int J = start + j * inc;
+      for (int k = 0; k < sz; ++k) {
+        coeff(J, k) = .5 * (coeff(J-inc, k) + coeff(J+inc, k));
       }
     }
   }

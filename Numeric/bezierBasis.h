@@ -164,7 +164,8 @@ public:
   void subdivide(std::vector<bezierCoeff> &subCoeff);
 
 private:
-  static void _subdivide(fullMatrix<double> &coeff, int start, int n);
+  static void _subdivide(fullMatrix<double> &coeff, int n, int start);
+  static void _subdivide(fullMatrix<double> &coeff, int n, int start, int inc);
 };
 
 #endif
