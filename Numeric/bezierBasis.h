@@ -9,6 +9,7 @@
 #include <vector>
 #include "fullMatrix.h"
 #include "FuncSpaceData.h"
+#include "BasisFactory.h"
 
 class MElement;
 class bezierBasisRaiser;
@@ -38,6 +39,7 @@ public:
   inline int getType() const { return _data.elementType(); }
   inline int getOrder() const { return _data.spaceOrder(); }
   inline int getDimSimplex() const { return _dimSimplex; }
+  inline int getNumCoeff() const { return _exponents.size1(); }
   inline int getNumLagCoeff() const { return _numLagCoeff; }
   inline int getNumDivision() const { return _numDivisions; }
   inline int getNumSubNodes() const { return subDivisor.size1(); }
@@ -126,6 +128,38 @@ public:
 private:
   void _fillRaiserData();
   void _fillRaiserDataPyr();
+};
+
+class bezierCoeff : public fullMatrix<double> {
+  // TODO: test if access would be faster if fullMatrix::operator(int r) was
+  // implemented (for fullmatrix with only 1 column)
+private :
+  FuncSpaceData _data;
+  const bezierBasis *_basis;
+
+public:
+  bezierCoeff(FuncSpaceData data)
+      : _data(data), _basis(BasisFactory::getBezierBasis(data))
+  {
+    this->resize(getNumCoeff(), 1);
+  };
+  bezierCoeff(FuncSpaceData data, fullMatrix<double> &lagCoeff)
+      : _data(data), _basis(BasisFactory::getBezierBasis(data))
+  {
+    this->resize(getNumCoeff(), lagCoeff.size2());
+    _basis->matrixLag2Bez.mult(lagCoeff, *this);
+  };
+  bezierCoeff(FuncSpaceData data, fullVector<double> &lagCoeff)
+      : _data(data), _basis(BasisFactory::getBezierBasis(data))
+  {
+    this->resize(getNumCoeff(), 1);
+    fullMatrix prox;
+    prox.setAsProxy(lagCoeff.getDataPtr(), lagCoeff.size(), 1);
+    _basis->matrixLag2Bez.mult(prox, *this);
+  };
+
+  inline int getNumCoeff() {return _basis->getNumCoeff();}
+  inline int getNumLagCoeff() {return _basis->getNumLagCoeff();}
 };
 
 #endif
