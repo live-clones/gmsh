@@ -1097,3 +1097,27 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
     }
   }
 }
+
+
+
+void bezierCoeff::subdivide(std::vector<bezierCoeff> &subCoeff)
+{
+  fullMatrix<double> sub;
+  // size all subcoeff (- coeff identical)
+  // simplicial: same size and copy before subdividing
+  // non simplicial: 2x size, subdivide then copy
+  // prism: faire d'abord tri puis lignes
+}
+
+void bezierCoeff::_subdivide(fullMatrix<double> &coeff, int start, int n)
+{
+  // One dimensional De Casteljau algorithm if consecutive data
+  const int sz = coeff.size2();
+  for (int i = 1; i < n; ++i) {
+    for (int j = start + i; j < start+2*n-i; j += 2) {
+      for (int k = 0; k < sz; ++k) {
+        coeff(j, k) = .5 * (coeff(j+1, k) + coeff(j-1, k));
+      }
+    }
+  }
+}

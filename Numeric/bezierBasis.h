@@ -160,6 +160,11 @@ public:
 
   inline int getNumCoeff() {return _basis->getNumCoeff();}
   inline int getNumLagCoeff() {return _basis->getNumLagCoeff();}
+
+  void subdivide(std::vector<bezierCoeff> &subCoeff);
+
+private:
+  static void _subdivide(fullMatrix<double> &coeff, int start, int n);
 };
 
 #endif
