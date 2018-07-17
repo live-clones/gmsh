@@ -1102,6 +1102,44 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
 
 void bezierCoeff::subdivide(std::vector<bezierCoeff> &subCoeff)
 {
+  int n = _data.spaceOrder()+1;
+
+  switch(_data.elementType()) {
+    case TYPE_TRI:
+      subCoeff.resize(4);
+      subCoeff[0].resize(size1(), size2());
+      subCoeff[1].resize(size1(), size2());
+      subCoeff[2].resize(size1(), size2());
+      subCoeff[3].resize(size1(), size2());
+      _subdivideTriangle(*this, n, 0, subCoeff);
+      return;
+    case TYPE_QUA:
+    {
+      const int N = 2*n-1;
+      const int dim = size2();
+      fullMatrix<double> sub(N*N, dim);
+      for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+          const int I = (2*i) + (2*j)*N;
+          for (int k = 0; k < dim; ++k) {
+            sub(I, k) = this->(i, j);
+          }
+        }
+      }
+      for (int j = 0; j < N; j += 2) {
+        _subdivide(sub, n, j*N);
+      }
+      for (int i = 0; i < N; ++i) {
+        _subdivide(sub, n, i, N);
+      }
+      subCoeff.resize(4);
+      _copyQuad(sub,   0,   0, n, subCoeff[0]);
+      _copyQuad(sub, n-1,   0, n, subCoeff[1]);
+      _copyQuad(sub, n-1, n-1, n, subCoeff[2]);
+      _copyQuad(sub,   0, n-1, n, subCoeff[3]);
+      return;
+    }
+  }
   fullMatrix<double> sub;
   // size all subcoeff (- coeff identical)
   // simplicial: same size and copy before subdividing
@@ -1139,13 +1177,13 @@ void bezierCoeff::_subdivide(fullMatrix<double> &coeff, int n, int start,
 
 void bezierCoeff::_subdivideTriangle(const fullMatrix<double> &coeff, int n,
                                      int start,
-                                     std::vector<fullMatrix<double> > &vSubCoeff)
+                                     std::vector<bezierCoeff> &vSubCoeff)
 {
   const int dim = coeff.size2();
 
   // copy into first subdomain
   fullMatrix<double> &sub = vSubCoeff[0];
-  _copy(coeff, sub, start, (n+1)*n/2);
+  _copy(coeff, start, (n + 1) * n / 2, sub);
 
   // Subdivide in u direction
   // TODO: consider precompute vector<pair<int, int>> for this
@@ -1174,7 +1212,7 @@ void bezierCoeff::_subdivideTriangle(const fullMatrix<double> &coeff, int n,
   }
 
   fullMatrix<double> &sub2 = vSubCoeff[1];
-  _copy(sub, sub2, start, (n+1)*n/2);
+  _copy(sub, start, (n + 1) * n / 2, sub2);
 
   //
   // TODO: consider precompute vector<tuple<int, int, int>> for this
@@ -1192,7 +1230,7 @@ void bezierCoeff::_subdivideTriangle(const fullMatrix<double> &coeff, int n,
   }
 
   fullMatrix<double> &sub3 = vSubCoeff[2];
-  _copy(sub3, sub2, start, (n+1)*n/2);
+  _copy(sub3, start, (n + 1) * n / 2, sub2);
   for (int iter = 1; iter < n; ++iter) {
     for (int j = 0; j < n-iter; ++j) {
       for (int i = n-1-j; i >= iter; --i) {
@@ -1207,7 +1245,7 @@ void bezierCoeff::_subdivideTriangle(const fullMatrix<double> &coeff, int n,
   }
 
   fullMatrix<double> &sub4 = vSubCoeff[3];
-  _copy(sub4, sub2, start, (n+1)*n/2); // copy 2, not 3
+  _copy(sub4, start, (n + 1) * n / 2, sub2); // copy 2, not 3
   for (int iter = 1; iter < n; ++iter) {
     for (int j = n-1; j >= iter; --j) {
       for (int i = 0; i < n-j; ++i) {
@@ -1222,13 +1260,30 @@ void bezierCoeff::_subdivideTriangle(const fullMatrix<double> &coeff, int n,
   }
 }
 
-void bezierCoeff::_copy(const fullMatrix<double> &from, fullMatrix<double> &to,
-                        int start, int num)
+void bezierCoeff::_copy(const fullMatrix<double> &from, int start, int num,
+                        fullMatrix<double> &to)
 {
   const int dim = from.size2();
   for (int i = start; i < start + num; ++i) {
     for (int j = 0; j < dim; ++j) {
       to(i, j) = from(i, j);
+    }
+  }
+}
+
+void
+bezierCoeff::_copyQuad(const fullMatrix<double> &allSub, int starti, int startj,
+                       int n, fullMatrix<double> &sub)
+{
+  const int dim = allSub.size2();
+  const int N = 2*n-1;
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < n; ++j) {
+      const int I1 = i + j*n;
+      const int I2 = (starti+i) + (startj+j) * N;
+      for (int K = 0; K < dim; ++K) {
+        sub(I1, K) = allSub(I2, K);
+      }
     }
   }
 }
