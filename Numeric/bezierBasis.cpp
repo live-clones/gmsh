@@ -1137,10 +1137,6 @@ void bezierCoeff::_subdivide(fullMatrix<double> &coeff, int n, int start,
   }
 }
 
-namespace {
-
-}
-
 void bezierCoeff::_subdivideTriangle(const fullMatrix<double> &coeff, int n,
                                      int start,
                                      std::vector<fullMatrix<double> > &vSubCoeff)
@@ -1152,12 +1148,12 @@ void bezierCoeff::_subdivideTriangle(const fullMatrix<double> &coeff, int n,
   _copy(coeff, sub, start, (n+1)*n/2);
 
   // Subdivide in u direction
-  // TODO: consider precompute vector<vector<pair<int, int>>> for this
+  // TODO: consider precompute vector<pair<int, int>> for this
   for (int iter = 1; iter < n; ++iter) {
     for (int j = 0; j < n-iter; ++j) {
       for (int i = n-1-j; i >= iter; --i) {
-        const int I = start + _ij2index(i, j, n);
-        const int Im = start + _ij2index(i-1, j, n);
+        const int I = start + _ij2Index(i, j, n);
+        const int Im = start + _ij2Index(i - 1, j, n);
         for (int K = 0; K < dim; ++K) {
           sub(I, K) = .5 * (sub(Im, K) + sub(I, K));
         }
@@ -1168,8 +1164,8 @@ void bezierCoeff::_subdivideTriangle(const fullMatrix<double> &coeff, int n,
   for (int iter = 1; iter < n; ++iter) {
     for (int j = n-1; j >= iter; --j) {
       for (int i = 0; i < n-j; ++i) {
-        const int I = start + _ij2index(i, j, n);
-        const int Im = start + _ij2index(i, j-1, n);
+        const int I = start + _ij2Index(i, j, n);
+        const int Im = start + _ij2Index(i, j - 1, n);
         for (int K = 0; K < dim; ++K) {
           sub(I, K) = .5 * (sub(Im, K) + sub(I, K));
         }
@@ -1181,12 +1177,43 @@ void bezierCoeff::_subdivideTriangle(const fullMatrix<double> &coeff, int n,
   _copy(sub, sub2, start, (n+1)*n/2);
 
   //
+  // TODO: consider precompute vector<tuple<int, int, int>> for this
   for (int iter = 1; iter < n; ++iter) {
     for (int j = 0; j < n-iter; ++j) {
+      for (int i = 0; i < n-1-j; ++i) {
+        const int I = start  + _ij2Index(  i,   j, n);
+        const int Ia = start + _ij2Index(i+1,   j, n);
+        const int Ib = start + _ij2Index(  i, j+1, n);
+        for (int K = 0; K < dim; ++K) {
+          sub(I, K) = sub(Ia, K) + sub(Ib, K) - sub(I, K);
+        }
+      }
+    }
+  }
+
+  fullMatrix<double> &sub3 = vSubCoeff[2];
+  _copy(sub3, sub2, start, (n+1)*n/2);
+  for (int iter = 1; iter < n; ++iter) {
+    for (int j = 0; j < n-iter; ++j) {
+      for (int i = n-1-j; i >= iter; --i) {
+        const int I = start  + _ij2Index(  i,   j, n);
+        const int Ia = start + _ij2Index(i-1,   j, n);
+        const int Ib = start + _ij2Index(i-1, j+1, n);
+        for (int K = 0; K < dim; ++K) {
+          sub(I, K) = sub(Ia, K) + sub(Ib, K) - sub(I, K);
+        }
+      }
+    }
+  }
+
+  fullMatrix<double> &sub4 = vSubCoeff[3];
+  _copy(sub4, sub2, start, (n+1)*n/2); // copy 2, not 3
+  for (int iter = 1; iter < n; ++iter) {
+    for (int j = n-1; j >= iter; --j) {
       for (int i = 0; i < n-j; ++i) {
-        const int I = start  + _ij2index(  i,   j, n);
-        const int Ia = start + _ij2index(i+1,   j, n);
-        const int Ib = start + _ij2index(  i, j+1, n);
+        const int I = start  + _ij2Index(  i,   j, n);
+        const int Ia = start + _ij2Index(  i, j-1, n);
+        const int Ib = start + _ij2Index(i+1, j-1, n);
         for (int K = 0; K < dim; ++K) {
           sub(I, K) = sub(Ia, K) + sub(Ib, K) - sub(I, K);
         }

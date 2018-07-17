@@ -130,9 +130,42 @@ private:
   void _fillRaiserDataPyr();
 };
 
+//class bezierCoeffSubdivisor {
+//  // Two type of operation are perform for subdividing simplices:
+//  // 1) [ coeff(I) + coeff(Ib) ] / 2     :> coeff(I)
+//  // 2) coeff(Ia) + coeff(Ib) - coeff(I) :> coeff(I)
+//  typedef std::vector<std::pair<int, int> >  data1;
+//  typedef std::vector<std::pair<int, std::pair<int, int> > >  data2;
+//
+//  struct {
+//    data1 subdivideU;
+//    data1 subdivideV;
+//    data2 return2;
+//  };
+//
+//private:
+//  // mapTri (order) -> list (data1 or data2)
+//
+//
+//  static std::map<int, data1> _triangleSubU;
+//  static std::map<int, data1> _triangleSubV;
+//  static std::map<int, data1> _triangleSubV;
+//  static std::map<int, data1> _triangleSubV;
+//  static std::map<int, data1> _triangleSubV;
+//};
+
 class bezierCoeff : public fullMatrix<double> {
   // TODO: test if access would be faster if fullMatrix::operator(int r) was
   // implemented (for fullmatrix with only 1 column)
+//  typedef std::vector<std::pair<int, int> >  data1;
+//  typedef std::vector<std::pair<int, std::pair<int, int> > >  data2;
+//  // map (type, order, num) -> (data1 or data2)
+//  static std::map<int, data1> _triangleSubU;
+//  static std::map<int, data1> _triangleSubV;
+//  static std::map<int, data1> _triangleSubV;
+//  static std::map<int, data1> _triangleSubV;
+//  static std::map<int, data1> _triangleSubV;
+
 private :
   FuncSpaceData _data;
   const bezierBasis *_basis;
@@ -174,7 +207,7 @@ private:
                                    std::vector<fullMatrix<double> > &subCoeff);
   static void _copy(const fullMatrix<double> &from, fullMatrix<double> &to,
                     int start, int num);
-  inline static int _ij2index(int i, int j, int n)  {
+  inline static int _ij2Index(int i, int j, int n)  {
     return i + j*n - j*(j-1)/2;
   }
 };
