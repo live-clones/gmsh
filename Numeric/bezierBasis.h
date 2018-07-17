@@ -166,6 +166,17 @@ public:
 private:
   static void _subdivide(fullMatrix<double> &coeff, int n, int start);
   static void _subdivide(fullMatrix<double> &coeff, int n, int start, int inc);
+  static void _subdivideTriangle(const fullMatrix<double> &coeff, int n,
+                                 int start,
+                                 std::vector<fullMatrix<double> > &subCoeff);
+  static void _subdivideTetrahedra(const fullMatrix<double> &coeff, int n,
+                                   int start,
+                                   std::vector<fullMatrix<double> > &subCoeff);
+  static void _copy(const fullMatrix<double> &from, fullMatrix<double> &to,
+                    int start, int num);
+  inline static int _ij2index(int i, int j, int n)  {
+    return i + j*n - j*(j-1)/2;
+  }
 };
 
 #endif

@@ -1112,11 +1112,11 @@ void bezierCoeff::subdivide(std::vector<bezierCoeff> &subCoeff)
 void bezierCoeff::_subdivide(fullMatrix<double> &coeff, int n, int start)
 {
   // One-dimensional De Casteljau algorithm if consecutive data
-  const int sz = coeff.size2();
-  for (int i = 1; i < n; ++i) {
-    for (int j = start + i; j < start+2*n-i; j += 2) {
-      for (int k = 0; k < sz; ++k) {
-        coeff(j, k) = .5 * (coeff(j-1, k) + coeff(j+1, k));
+  const int dim = coeff.size2();
+  for (int iter = 1; iter < n; ++iter) {
+    for (int I = start + iter; I < start+2*n-iter; I += 2) {
+      for (int K = 0; K < dim; ++K) {
+        coeff(I, K) = .5 * (coeff(I-1, K) + coeff(I+1, K));
       }
     }
   }
@@ -1126,13 +1126,82 @@ void bezierCoeff::_subdivide(fullMatrix<double> &coeff, int n, int start,
                              int inc)
 {
   // One-dimensional De Casteljau algorithm if non-consecutive data
-  const int sz = coeff.size2();
-  for (int i = 1; i < n; ++i) {
-    for (int j = i; j < 2*n-i; j += 2) {
-      int J = start + j * inc;
-      for (int k = 0; k < sz; ++k) {
-        coeff(J, k) = .5 * (coeff(J-inc, k) + coeff(J+inc, k));
+  const int dim = coeff.size2();
+  for (int iter = 1; iter < n; ++iter) {
+    for (int i = iter; i < 2*n-iter; i += 2) {
+      int I = start + i * inc;
+      for (int K = 0; K < dim; ++K) {
+        coeff(I, K) = .5 * (coeff(I-inc, K) + coeff(I+inc, K));
       }
+    }
+  }
+}
+
+namespace {
+
+}
+
+void bezierCoeff::_subdivideTriangle(const fullMatrix<double> &coeff, int n,
+                                     int start,
+                                     std::vector<fullMatrix<double> > &vSubCoeff)
+{
+  const int dim = coeff.size2();
+
+  // copy into first subdomain
+  fullMatrix<double> &sub = vSubCoeff[0];
+  _copy(coeff, sub, start, (n+1)*n/2);
+
+  // Subdivide in u direction
+  // TODO: consider precompute vector<vector<pair<int, int>>> for this
+  for (int iter = 1; iter < n; ++iter) {
+    for (int j = 0; j < n-iter; ++j) {
+      for (int i = n-1-j; i >= iter; --i) {
+        const int I = start + _ij2index(i, j, n);
+        const int Im = start + _ij2index(i-1, j, n);
+        for (int K = 0; K < dim; ++K) {
+          sub(I, K) = .5 * (sub(Im, K) + sub(I, K));
+        }
+      }
+    }
+  }
+  // Subdivide in v direction
+  for (int iter = 1; iter < n; ++iter) {
+    for (int j = n-1; j >= iter; --j) {
+      for (int i = 0; i < n-j; ++i) {
+        const int I = start + _ij2index(i, j, n);
+        const int Im = start + _ij2index(i, j-1, n);
+        for (int K = 0; K < dim; ++K) {
+          sub(I, K) = .5 * (sub(Im, K) + sub(I, K));
+        }
+      }
+    }
+  }
+
+  fullMatrix<double> &sub2 = vSubCoeff[1];
+  _copy(sub, sub2, start, (n+1)*n/2);
+
+  //
+  for (int iter = 1; iter < n; ++iter) {
+    for (int j = 0; j < n-iter; ++j) {
+      for (int i = 0; i < n-j; ++i) {
+        const int I = start  + _ij2index(  i,   j, n);
+        const int Ia = start + _ij2index(i+1,   j, n);
+        const int Ib = start + _ij2index(  i, j+1, n);
+        for (int K = 0; K < dim; ++K) {
+          sub(I, K) = sub(Ia, K) + sub(Ib, K) - sub(I, K);
+        }
+      }
+    }
+  }
+}
+
+void bezierCoeff::_copy(const fullMatrix<double> &from, fullMatrix<double> &to,
+                        int start, int num)
+{
+  const int dim = from.size2();
+  for (int i = start; i < start + num; ++i) {
+    for (int j = 0; j < dim; ++j) {
+      to(i, j) = from(i, j);
     }
   }
 }
