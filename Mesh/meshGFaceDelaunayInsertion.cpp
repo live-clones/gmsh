@@ -272,6 +272,13 @@ void buildMetric(GFace *gf, double *uv, const SMetric3 & m, double *metric)
   metric[2] = dot(x2, der.second());
 }
 
+static double computeTolerance(const double radius)
+{
+  if (radius <= 1e3) return 1e-12;
+  if (radius <= 1e5) return 1e-11;
+  return  1e-9;
+}
+
 int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3,
                         double *uv, double *metric)
 {
@@ -283,7 +290,7 @@ int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3,
   const double d0 = (x[0] - uv[0]);
   const double d1 = (x[1] - uv[1]);
   const double d3 =  d0*d0*a + d1*d1*d + 2.0*d0*d1*b;
-  const double tolerance = (Radius2 > 1e5)?  1e-9 : 1e-12;
+  const double tolerance = computeTolerance(Radius2);
   return d3 < Radius2 - tolerance;
 }
 
