@@ -1121,7 +1121,17 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
       return false;
     }
   } break;
-  default:
+  case SWCR_ZEROAREA: {
+    // Swap edges if one of the original elements has a zero area in parametric space
+    const double tolerance = 1e-12;
+    if ((areaTriangle1 > tolerance && areaTriangle2 > tolerance) ||
+      areaTriangle3 <= tolerance || areaTriangle4 <= tolerance){
+      delete t1b;
+      delete t2b;
+      return false;
+    }
+  } break;
+  default :
     Msg::Error("Unknown swapping criterion");
     delete t1b;
     delete t2b;
