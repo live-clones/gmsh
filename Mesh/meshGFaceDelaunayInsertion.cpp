@@ -1418,9 +1418,12 @@ void bowyerWatsonFrontal(GFace *gf,
 
   buildMeshGenerationDataStructures(gf, AllTris, DATA);
 
-  // delaunise the initial mesh
+  // Check whether we need edge swaps to get rid of elements with zero area
+  // in parametric space. If we do, make sure that it is conform Delaunay again.
+  edgeSwapPass(gf, AllTris, SWCR_ZEROAREA, DATA);
   edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
-  //  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
+  // Msg::Info("Delaunization of the initial mesh done (%d swaps zero area, %d swaps delaunay)",
+  //   nbEdgeSwapsZeroArea, nbEdgeSwapsDelaunay);
 
   int ITER = 0, active_edge;
   // compute active triangle
@@ -1464,7 +1467,7 @@ void bowyerWatsonFrontal(GFace *gf,
     }
   }
 
-  //  nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
+  edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
 
   transferDataStructure(gf, AllTris, DATA);
   //  removeThreeTrianglesNodes(gf);
@@ -1837,10 +1840,10 @@ void bowyerWatsonParallelograms(GFace *gf,
   splitElementsInBoundaryLayerIfNeeded(gf);
 }
 
-void bowyerWatsonParallelogramsConstrained(
-  GFace *gf, const std::set<MVertex *> &constr_vertices,
-  std::map<MVertex *, MVertex *> *equivalence,
-  std::map<MVertex *, SPoint2> *parametricCoordinates)
+void bowyerWatsonParallelogramsConstrained(GFace *gf,
+                                           std::set<MVertex*> constr_vertices,
+                                           std::map<MVertex* , MVertex*>* equivalence,
+                                           std::map<MVertex*, SPoint2> * parametricCoordinates)
 {
   std::cout<<"   entered bowyerWatsonParallelogramsConstrained"<<std::endl;
   std::set<MTri3*,compareTri3Ptr> AllTris;
