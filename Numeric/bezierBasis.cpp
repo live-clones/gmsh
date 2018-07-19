@@ -1098,41 +1098,38 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
   }
 }
 
-
-
 void bezierCoeff::subdivide(std::vector<bezierCoeff> &subCoeff)
 {
-  int n = _data.spaceOrder()+1;
+  int n = _funcSpaceData.spaceOrder()+1;
 
-  switch(_data.elementType()) {
+  switch(_funcSpaceData.elementType()) {
     case TYPE_TRI:
-      subCoeff.resize(4);
-      subCoeff[0].resize(size1(), size2());
-      subCoeff[1].resize(size1(), size2());
-      subCoeff[2].resize(size1(), size2());
-      subCoeff[3].resize(size1(), size2());
+      subCoeff.resize(4, *this);
       _subdivideTriangle(*this, n, 0, subCoeff);
       return;
     case TYPE_QUA:
     {
       const int N = 2*n-1;
       const int dim = size2();
-      fullMatrix<double> sub(N*N, dim);
+      static fullMatrix<double> sub; // FIXME: Warning not thread safe!
+      sub.resize(N*N, dim);
+//      fullMatrix<double> sub(N*N, dim);
       for (int i = 0; i < n; ++i) {
         for (int j = 0; j < n; ++j) {
-          const int I = (2*i) + (2*j)*N;
+          const int I1 = i + j*n;
+          const int I2 = (2*i) + (2*j)*N;
           for (int k = 0; k < dim; ++k) {
-            sub(I, k) = this->(i, j);
+            sub(I2, k) = (*this)(I1, k);
           }
         }
       }
-      for (int j = 0; j < N; j += 2) {
-        _subdivide(sub, n, j*N);
-      }
-      for (int i = 0; i < N; ++i) {
+      for (int i = 0; i < N; i += 2) {
         _subdivide(sub, n, i, N);
       }
-      subCoeff.resize(4);
+      for (int j = 0; j < N; ++j) {
+        _subdivide(sub, n, j*N);
+      }
+      subCoeff.resize(4, *this);
       _copyQuad(sub,   0,   0, n, subCoeff[0]);
       _copyQuad(sub, n-1,   0, n, subCoeff[1]);
       _copyQuad(sub, n-1, n-1, n, subCoeff[2]);
@@ -1286,4 +1283,55 @@ bezierCoeff::_copyQuad(const fullMatrix<double> &allSub, int starti, int startj,
       }
     }
   }
+}
+
+double* subdivisionMemoryPool::giveBlock(int size) {
+  std::multimap<int, std::vector<double*> >::iterator itAvailable;
+  itAvailable = _availableBlocks.find(size);
+  double *block;
+  if (itAvailable != _availableBlocks.end() && itAvailable->second.size()) {
+    block = itAvailable->second.back();
+    itAvailable->second.pop_back();
+  }
+  else {
+    block = new double[size];
+  }
+  _usedBlocks[size].insert(block);
+  return block;
+}
+
+void subdivisionMemoryPool::takeBackBlock(double *block, int size) {
+  std::multimap<int, std::set<double*> >::iterator itUsed;
+  itUsed = _usedBlocks.find(size);
+  if (itUsed == _usedBlocks.end()) {
+    Msg::Error("No blocks of size %d", size);
+    return;
+  }
+  std::set<double*> &theSet = itUsed->second;
+  std::set<double*>::iterator it = theSet.find(block);
+  if (it == theSet.end()) {
+    Msg::Error("No block %d (of size %d)", block, size);
+    return;
+  }
+  theSet.erase(it);
+  _availableBlocks[size].push_back(block);
+}
+
+void subdivisionMemoryPool::freeMemory() {
+  std::multimap<int, std::set<double*> >::iterator itUsed;
+  int cnt = 0;
+  for (itUsed = _usedBlocks.begin(); itUsed != _usedBlocks.end(); ++itUsed)
+    cnt += itUsed->second.size();
+  if (cnt)
+    Msg::Error("%d blocks of memory are still in use and may never be freed!", cnt);
+  _usedBlocks.clear();
+
+  std::multimap<int, std::vector<double*> >::iterator itAvailable;
+  itAvailable = _availableBlocks.begin();
+  for (; itAvailable != _availableBlocks.end(); ++itAvailable) {
+    std::vector<double*> &theVector = itAvailable->second;
+    for (unsigned int i = 0; i < theVector.size(); ++i)
+      delete theVector[i];
+  }
+  _availableBlocks.clear();
 }

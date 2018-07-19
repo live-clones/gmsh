@@ -6,6 +6,8 @@
 #ifndef BEZIER_BASIS_H
 #define BEZIER_BASIS_H
 
+#include <set>
+#include <map>
 #include <vector>
 #include "fullMatrix.h"
 #include "FuncSpaceData.h"
@@ -154,6 +156,24 @@ private:
 //  static std::map<int, data1> _triangleSubV;
 //};
 
+class subdivisionMemoryPool {
+  // This class is for avoiding multiple allocation / deallocation during
+  // the subdivision algorithm.
+private:
+  std::map<int, std::set<double*> > _usedBlocks;
+  // TODO: would be better multiset<pair>?
+  std::map<int, std::vector<double*> > _availableBlocks;
+  // TODO: would be better multimap?
+
+public:
+  subdivisionMemoryPool() {}
+  ~subdivisionMemoryPool() {freeMemory();}
+
+  double* giveBlock(int size);
+  void takeBackBlock(double *block, int size);
+  void freeMemory();
+};
+
 class bezierCoeff : public fullMatrix<double> {
   // TODO: test if access would be faster if fullMatrix::operator(int r) was
   // implemented (for fullmatrix with only 1 column)
@@ -167,37 +187,49 @@ class bezierCoeff : public fullMatrix<double> {
 //  static std::map<int, data1> _triangleSubV;
 
 private :
-  FuncSpaceData _data;
+  FuncSpaceData _funcSpaceData;
   const bezierBasis *_basis;
+  bool _dataFromPool;
+  static subdivisionMemoryPool *_pool;
+  // FIXME: not thread safe. We shoud use one pool per thread.
+  //        The best would be to give the pool to the constructor.
+  //        (the pool should be created and deleted e.g. by the plugin
+  //        AnalyseCurvedMesh)
 
 public:
+  bezierCoeff() {};
+  bezierCoeff(const bezierCoeff &other)
+      : fullMatrix<double>(other.size1(), other.size2(), false),
+        _funcSpaceData(other._funcSpaceData), _basis(other._basis) {};
   bezierCoeff(FuncSpaceData data)
-      : _data(data), _basis(BasisFactory::getBezierBasis(data))
-  {
-    this->resize(getNumCoeff(), 1);
-  };
+      : fullMatrix<double>(BasisFactory::getBezierBasis(data)->getNumCoeff(),
+                           1, false),
+        _funcSpaceData(data), _basis(BasisFactory::getBezierBasis(data)) {};
   bezierCoeff(FuncSpaceData data, fullMatrix<double> &lagCoeff)
-      : _data(data), _basis(BasisFactory::getBezierBasis(data))
+      : fullMatrix<double>(lagCoeff.size1(), lagCoeff.size2(), false),
+        _funcSpaceData(data), _basis(BasisFactory::getBezierBasis(data))
   {
-    this->resize(getNumCoeff(), lagCoeff.size2());
-    _basis->matrixLag2Bez.mult(lagCoeff, *this);
+    _basis->matrixLag2Bez2.mult(lagCoeff, *this);
   };
   bezierCoeff(FuncSpaceData data, fullVector<double> &lagCoeff)
-      : _data(data), _basis(BasisFactory::getBezierBasis(data))
+      : fullMatrix<double>(lagCoeff.size(), 1, false),
+        _funcSpaceData(data), _basis(BasisFactory::getBezierBasis(data))
   {
-    this->resize(getNumCoeff(), 1);
-    fullMatrix prox;
+    fullMatrix<double> prox;
     prox.setAsProxy(lagCoeff.getDataPtr(), lagCoeff.size(), 1);
-    _basis->matrixLag2Bez.mult(prox, *this);
+    _basis->matrixLag2Bez2.mult(prox, *this);
   };
+
+  static void usePool();
+  static void releasePool();
 
   inline int getNumCoeff() {return _basis->getNumCoeff();}
   inline int getNumLagCoeff() {return _basis->getNumLagCoeff();}
-  inline double getLagCoeff(int i) {
-    switch (_data.elementType()) {
-
-    }
-  }
+//  inline double getLagCoeff(int i) {
+//    switch (_funcSpaceData.elementType()) {
+//
+//    }
+//  }
 
   void subdivide(std::vector<bezierCoeff> &subCoeff);
 
