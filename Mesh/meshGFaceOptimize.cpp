@@ -1064,6 +1064,37 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
   MTriangle *t1b = new MTriangle(v2, v3, v4);
   MTriangle *t2b = new MTriangle(v4, v3, v1);
 
+  // Check if no overlapping elements will start to exist
+  // by checking the areas in parametric space
+  int index1 = data.getIndex(v1);
+  int index2 = data.getIndex(v2);
+  int index3 = data.getIndex(v3);
+  int index4 = data.getIndex(v4);
+
+  double p1[2] = {data.Us[index1], data.Vs[index1]};
+  double p2[2] = {data.Us[index2], data.Vs[index2]};
+  double p3[2] = {data.Us[index3], data.Vs[index3]};
+  double p4[2] = {data.Us[index4], data.Vs[index4]};
+
+  const double areaTriangle1 = triangle_area2d(p1, p2, p3);
+  const double areaTriangle2 = triangle_area2d(p1, p4, p2);
+  const double areaTriangle3 = triangle_area2d(p2, p3, p4);
+  const double areaTriangle4 = triangle_area2d(p4, p3, p1);
+
+  if (abs(areaTriangle1 + areaTriangle2 - (areaTriangle3 + areaTriangle4)) >
+    1e-12 * (areaTriangle1 + areaTriangle2)){
+    delete t1b;
+    delete t2b;
+    return false;
+  }
+
+  if (areaTriangle3 < 1e-12 || areaTriangle4 < 1e-12)
+  {
+    delete t1b;
+    delete t2b;
+    return false;
+  }
+
   switch(cr) {
   case SWCR_QUAL: {
     const double triQualityRef =
