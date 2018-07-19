@@ -1285,53 +1285,106 @@ bezierCoeff::_copyQuad(const fullMatrix<double> &allSub, int starti, int startj,
   }
 }
 
-double* subdivisionMemoryPool::giveBlock(int size) {
-  std::multimap<int, std::vector<double*> >::iterator itAvailable;
-  itAvailable = _availableBlocks.find(size);
-  double *block;
-  if (itAvailable != _availableBlocks.end() && itAvailable->second.size()) {
-    block = itAvailable->second.back();
-    itAvailable->second.pop_back();
+double* subdivisionMemoryPool::giveBlock(int num, bezierCoeff *bez)
+{
+  if (num < 0 || num > 1) {
+    Msg::Error("'num' must be 0 or 1!");
+    return NULL;
   }
-  else {
-    block = new double[size];
+
+  _checkEnoughMemory(num);
+
+  if (_numUsedBlocks[num] == _endOfSearch[num]) {
+    int idx = _endOfSearch[num];
+    if (_bezierCoeff[num][idx]) {
+      Msg::Error("this lock is being used!?");
+      return NULL;
+    }
+    _bezierCoeff[num][idx] = bez;
+    ++_numUsedBlocks[num];
+    ++_endOfSearch[num];
+    return &_memory.front() + _sizeBothBlocks * idx + num * _sizeBlocks[0];
   }
-  _usedBlocks[size].insert(block);
-  return block;
+
+  for (int i = 0; i < _endOfSearch[num]; ++i) {
+    int idx = _currentIndexOfSearch[num];
+    ++_currentIndexOfSearch[num];
+    if (_currentIndexOfSearch[num] == _endOfSearch[num])
+      _currentIndexOfSearch[num] = 0;
+    if (!_bezierCoeff[num][idx]) {
+      _bezierCoeff[num][idx] = bez;
+      ++_numUsedBlocks[num];
+      return &_memory.front() + _sizeBothBlocks * idx + num * _sizeBlocks[0];
+    }
+  }
+
+  // We must never be here. If yes, this means that
+  // _numUsedBlocks[num] < _endOfSearch[num]
+  // and _bezierCoeff[num][i] for i < _endOfSearch[num] are all different from
+  // NULL which should never happens.
+  Msg::Error("Wrong state of subdivisionMemoryPool. "
+             "_bezierCoeff[num][i] not correct?");
+  return NULL;
 }
 
-void subdivisionMemoryPool::takeBackBlock(double *block, int size) {
-  std::multimap<int, std::set<double*> >::iterator itUsed;
-  itUsed = _usedBlocks.find(size);
-  if (itUsed == _usedBlocks.end()) {
-    Msg::Error("No blocks of size %d", size);
-    return;
+void subdivisionMemoryPool::takeBackBlock(double *block, bezierCoeff *bez)
+{
+  long diff = block - &_memory.front();
+  int num;
+  if (diff % _sizeBothBlocks) num = 1;
+  else num = 0;
+  int idx = diff / _sizeBothBlocks;
+  if (_bezierCoeff[num][idx] == bez)
+    Msg::Info("It's a good guess!");
+  else
+    Msg::Info("Did not work :'( ");
+  _bezierCoeff[num][idx] = NULL;
+  if (idx == _endOfSearch[num]-1) {
+    do {--_endOfSearch[num];}
+    while (_endOfSearch[num] && _bezierCoeff[num][_endOfSearch[num]-1]);
+    if (_currentIndexOfSearch[num] >= _endOfSearch[num])
+      _currentIndexOfSearch[num] = 0;
   }
-  std::set<double*> &theSet = itUsed->second;
-  std::set<double*>::iterator it = theSet.find(block);
-  if (it == theSet.end()) {
-    Msg::Error("No block %d (of size %d)", block, size);
-    return;
-  }
-  theSet.erase(it);
-  _availableBlocks[size].push_back(block);
+  --_numUsedBlocks[num];
 }
 
-void subdivisionMemoryPool::freeMemory() {
-  std::multimap<int, std::set<double*> >::iterator itUsed;
-  int cnt = 0;
-  for (itUsed = _usedBlocks.begin(); itUsed != _usedBlocks.end(); ++itUsed)
-    cnt += itUsed->second.size();
-  if (cnt)
-    Msg::Error("%d blocks of memory are still in use and may never be freed!", cnt);
-  _usedBlocks.clear();
+void subdivisionMemoryPool::freeMemory()
+{
+  // force deallocation:
+  std::vector<double> dummy;
+  _memory.swap(dummy);
+}
 
-  std::multimap<int, std::vector<double*> >::iterator itAvailable;
-  itAvailable = _availableBlocks.begin();
-  for (; itAvailable != _availableBlocks.end(); ++itAvailable) {
-    std::vector<double*> &theVector = itAvailable->second;
-    for (unsigned int i = 0; i < theVector.size(); ++i)
-      delete theVector[i];
+void subdivisionMemoryPool::setSizeBlocks(int size[2])
+{
+  if (_numUsedBlocks[0] || _numUsedBlocks[1]) {
+    Msg::Error("Cannot change size of blocks if blocks are still being used!");
+    return;
   }
-  _availableBlocks.clear();
+  _sizeBlocks[0] = size[0];
+  _sizeBlocks[1] = size[1];
+  _endOfSearch[0] = 0;
+  _endOfSearch[1] = 0;
+  _sizeBothBlocks = size[0] + size[1];
+}
+
+void subdivisionMemoryPool::_checkEnoughMemory(int num)
+{
+  if (_numUsedBlocks[num] < _memory.size() / _sizeBothBlocks) return;
+
+  double *pointer = &_memory.front();
+  _memory.resize(_memory.size() + _sizeBothBlocks);
+
+  if (pointer == &_memory.front()) return;
+
+  // If a reallocation has been performed at a different place of the memory,
+  // then we need to update pointers
+
+  long diff = &_memory.front() - pointer;
+  for (unsigned int i = 0; i < _bezierCoeff[0].size(); ++i) {
+    if (_bezierCoeff[0][i]) _bezierCoeff[0][i]->updateDataPtr(diff);
+  }
+  for (unsigned int i = 0; i < _bezierCoeff[1].size(); ++i) {
+    if (_bezierCoeff[1][i]) _bezierCoeff[1][i]->updateDataPtr(diff);
+  }
 }

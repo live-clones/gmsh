@@ -15,6 +15,7 @@
 
 class MElement;
 class bezierBasisRaiser;
+class bezierCoeff;
 
 class bezierBasis {
 private:
@@ -157,21 +158,32 @@ private:
 //};
 
 class subdivisionMemoryPool {
-  // This class is for avoiding multiple allocation / deallocation during
+  // This class is to avoid multiple allocation / deallocation during
   // the subdivision algorithm.
 private:
-  std::map<int, std::set<double*> > _usedBlocks;
-  // TODO: would be better multiset<pair>?
-  std::map<int, std::vector<double*> > _availableBlocks;
-  // TODO: would be better multimap?
+  std::vector<double> _memory;
+  long _sizeBlocks[2];
+  long _sizeBothBlocks; // = sum of two values in _sizeBlocks
+  long _numUsedBlocks[2];
+  long _currentIndexOfSearch[2];
+  long _endOfSearch[2];
+  // if a reallocation is performed, the pointers must be updated, we need to
+  // know which bezierCoeff have to be updated:
+  std::vector<bezierCoeff*> _bezierCoeff[2];
 
 public:
   subdivisionMemoryPool() {}
   ~subdivisionMemoryPool() {freeMemory();}
 
-  double* giveBlock(int size);
-  void takeBackBlock(double *block, int size);
+  // before to be used, the size of the blocks has to be specified
+  void setSizeBlocks(int size[2]);
+
+  double* giveBlock(int num, bezierCoeff *bez); // gives a block of size _sizeBlocks[num]
+  void takeBackBlock(double *block, bezierCoeff *bez);
   void freeMemory();
+
+private:
+  void _checkEnoughMemory(int num);
 };
 
 class bezierCoeff : public fullMatrix<double> {
