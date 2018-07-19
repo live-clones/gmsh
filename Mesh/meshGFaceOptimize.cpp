@@ -1123,6 +1123,21 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
   } break;
   case SWCR_ZEROAREA: {
     // Swap edges if one of the original elements has a zero area in parametric space
+    int index1 = data.getIndex(v1);
+    int index2 = data.getIndex(v2);
+    int index3 = data.getIndex(v3);
+    int index4 = data.getIndex(v4);
+
+    double p1[2] = {data.Us[index1], data.Vs[index1]};
+    double p2[2] = {data.Us[index2], data.Vs[index2]};
+    double p3[2] = {data.Us[index3], data.Vs[index3]};
+    double p4[2] = {data.Us[index4], data.Vs[index4]};
+
+    const double areaTriangle1 = triangle_area2d(p1, p2, p3);
+    const double areaTriangle2 = triangle_area2d(p1, p4, p2);
+    const double areaTriangle3 = triangle_area2d(p2, p3, p4);
+    const double areaTriangle4 = triangle_area2d(p4, p3, p1);
+
     const double tolerance = 1e-12;
     if ((areaTriangle1 > tolerance && areaTriangle2 > tolerance) ||
       areaTriangle3 <= tolerance || areaTriangle4 <= tolerance){
