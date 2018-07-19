@@ -1170,6 +1170,29 @@ int isCavityCompatibleWithEmbeddedEdges(std::list<MTet4*> &cavity,
   return 1;
 }
 
+int isCavityCompatibleWithEmbeddedFace(const std::vector<MTet4*> &cavity,
+  const std::vector<faceXtet> &shell,
+  const std::set<MFace, Less_Face> &allEmbeddedFaces)
+{
+  std::vector<MFace> shellFaces;
+  shellFaces.reserve(shell.size());
+
+  for (std::vector<faceXtet>::const_iterator it = shell.begin(); it != shell.end(); it++){
+    shellFaces.push_back(MFace((*it).unsorted[0], (*it).unsorted[1], (*it).unsorted[2]));
+  }
+
+  for (std::vector<MTet4*>::const_iterator itc = cavity.begin(); itc != cavity.end(); ++itc){
+    for (int j = 0; j<4; j++){
+      MFace f = (*itc)->tet()->getFace(j);
+      if ((std::find(shellFaces.cbegin(), shellFaces.cend(), f) == shellFaces.end()) &&
+        (allEmbeddedFaces.find(f) != allEmbeddedFaces.end())){
+        return 0;
+      }
+    }
+  }
+  return 1;
+}
+
 void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
 {
   //  TEST_IF_BOUNDARY_IS_RECOVERED (gr);
@@ -1376,10 +1399,11 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
       /// END TETS
 
       if (FOUND && !allEmbeddedEdges.empty()){
-        FOUND = isCavityCompatibleWithEmbeddedEdges(cavity, shell, allEmbeddedEdges);
+        FOUND = isCavityCompatibleWithEmbeddedEdges(cavity, shell, allEmbeddedEdges) &&
+          isCavityCompatibleWithEmbeddedFace(cavity, shell, allEmbeddedFaces);
       }
 
-      bool correctedCavityIncompatibleWithEmbeddedEdge = false;
+      bool correctedCavityIncompatibleWithEmbeddedEntities = false;
 
       if(FOUND){
         MVertex *v = new MVertex(center[0], center[1], center[2], worst->onWhat());
@@ -1397,8 +1421,9 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
 	}
 	if (correctCavity && starShaped) {
 	  NB_CORRECTION_OF_CAVITY ++;
-	  if(!isCavityCompatibleWithEmbeddedEdges(cavity, shell, allEmbeddedEdges)){
-	    correctedCavityIncompatibleWithEmbeddedEdge = true;
+      if(!isCavityCompatibleWithEmbeddedEdges(cavity, shell, allEmbeddedEdges) ||
+        !isCavityCompatibleWithEmbeddedFace(cavity, shell, allEmbeddedFaces)){
+        correctedCavityIncompatibleWithEmbeddedEntities = true;
 	  }
 	}
 	double lc1 =
@@ -1408,7 +1433,7 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
 	  uvw[2] * vSizes[worst->tet()->getVertex(3)->getIndex()];
 	double lc2 = BGM_MeshSize(gr, 0, 0, center[0], center[1], center[2]);
 
-	if(correctedCavityIncompatibleWithEmbeddedEdge || !starShaped ||
+	if(correctedCavityIncompatibleWithEmbeddedEntities || !starShaped ||
            !insertVertexB(shell, cavity, v, lc1, lc2, vSizes, vSizesBGM, worst,
                           myFactory, allTets)){
 	  COUNT_MISS_1++;
