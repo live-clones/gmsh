@@ -1185,7 +1185,7 @@ int isCavityCompatibleWithEmbeddedFace(const std::vector<MTet4*> &cavity,
     for (int j = 0; j<4; j++){
       MFace f = (*itc)->tet()->getFace(j);
       if ((std::find(shellFaces.begin(), shellFaces.end(), f) == shellFaces.end()) &&
-        (allEmbeddedFaces.find(f) != allEmbeddedFaces.end())){
+        (allEmbeddedFaces.count(f) > 0)){
         return 0;
       }
     }
