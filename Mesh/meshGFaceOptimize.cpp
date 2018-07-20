@@ -1135,10 +1135,6 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
     break;
     */
   case SWCR_DEL: {
-    int index1 = data.getIndex(v1);
-    int index2 = data.getIndex(v2);
-    int index3 = data.getIndex(v3);
-    int index4 = data.getIndex(v4);
     double edgeCenter[2] = {
       (data.Us[index1] + data.Us[index2] + data.Us[index3] + data.Us[index4]) *
         .25,
