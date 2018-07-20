@@ -1130,7 +1130,7 @@ void bowyerWatson(GFace *gf, int MAXPNT,
   //  if (equivalence)_printTris ("before.pos", AllTris.begin(), AllTris.end(), DATA);
   // int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
   // _printTris ("after2.pos", AllTris, Us,Vs);
-  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
+  // Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
 
   if(AllTris.empty()){
     Msg::Error("No triangles in initial mesh");
