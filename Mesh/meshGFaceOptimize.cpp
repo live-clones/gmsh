@@ -1248,7 +1248,6 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
 int edgeSwapPass(GFace *gf, std::set<MTri3 *, compareTri3Ptr> &allTris,
                  const swapCriterion &cr, bidimMeshData &data)
 {
-  return 0;
   typedef std::set<MTri3 *, compareTri3Ptr> CONTAINER;
 
   int nbSwapTot = 0;

@@ -1128,7 +1128,7 @@ void bowyerWatson(GFace *gf, int MAXPNT,
   buildMeshGenerationDataStructures(gf, AllTris, DATA);
 
   //  if (equivalence)_printTris ("before.pos", AllTris.begin(), AllTris.end(), DATA);
-  int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
+  // int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
   // _printTris ("after2.pos", AllTris, Us,Vs);
   Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
 
@@ -1183,7 +1183,7 @@ void bowyerWatson(GFace *gf, int MAXPNT,
       insertAPoint(gf, AllTris.begin(), center, metric, DATA, AllTris);
     }
   }
-  nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
+  // nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
   //  printf("%12.5E %12.5E %12.5E %12.5E %12.5E\n",DT1,DT2,DT3,__DT1,__DT2);
   //  printf("%12.5E \n",__DT2);
 
@@ -1420,10 +1420,12 @@ void bowyerWatsonFrontal(GFace *gf,
 
   // Check whether we need edge swaps to get rid of elements with zero area
   // in parametric space. If we do, make sure that it is conform Delaunay again.
-  edgeSwapPass(gf, AllTris, SWCR_ZEROAREA, DATA);
-  edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
-  // Msg::Info("Delaunization of the initial mesh done (%d swaps zero area, %d swaps delaunay)",
-  //   nbEdgeSwapsZeroArea, nbEdgeSwapsDelaunay);
+  const int nbEdgeSwapsZeroArea = edgeSwapPass(gf, AllTris, SWCR_ZEROAREA, DATA);
+  if (nbEdgeSwapsZeroArea > 0){
+    const int nbEdgeSwapsDelaunay = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
+    Msg::Info("Delaunization of the initial mesh done (%d swaps zero area, %d swaps delaunay)",
+      nbEdgeSwapsZeroArea, nbEdgeSwapsDelaunay);
+  }
 
   int ITER = 0, active_edge;
   // compute active triangle
@@ -1467,7 +1469,7 @@ void bowyerWatsonFrontal(GFace *gf,
     }
   }
 
-  edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
+  // edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
 
   transferDataStructure(gf, AllTris, DATA);
   //  removeThreeTrianglesNodes(gf);
@@ -1641,8 +1643,8 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad,
   buildMeshGenerationDataStructures (gf, AllTris, DATA);
 
   // delaunise the initial mesh
-  int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
-  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
+  //int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
+  //Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
 
   int ITER = 0, active_edge;
   // compute active triangle
@@ -1776,8 +1778,8 @@ void bowyerWatsonParallelograms(GFace *gf,
   buildMeshGenerationDataStructures (gf, AllTris, DATA);
 
   // delaunise the initial mesh
-  int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
-  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
+  //int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
+  //Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
 
   //std::sort(packed.begin(), packed.end(), MVertexLessThanLexicographic());
   SortHilbert(packed);
@@ -1861,8 +1863,8 @@ void bowyerWatsonParallelogramsConstrained(
 
   std::cout<<"out of buildMeshGenerationDataStructures"<<std::endl;
   // delaunise the initial mesh
-  int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
-  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
+  //int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
+  //Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
 
   std::sort(packed.begin(), packed.end(), MVertexLessThanLexicographic());
   std::cout<<"out of sort"<<std::endl;
