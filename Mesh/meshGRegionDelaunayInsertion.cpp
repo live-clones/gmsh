@@ -1177,7 +1177,8 @@ int isCavityCompatibleWithEmbeddedFace(const std::vector<MTet4*> &cavity,
   std::vector<MFace> shellFaces;
   shellFaces.reserve(shell.size());
 
-  for (const faceXtet &face : shell){
+  for (std::vector<faceXtet>::const_iterator it = shell.begin(); it != shell.end(); it++){
+    const faceXtet &face = (*it);
     shellFaces.emplace_back(face.unsorted[0], face.unsorted[1], face.unsorted[2]);
   }
 
