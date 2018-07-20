@@ -1098,6 +1098,8 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
   }
 }
 
+bezierMemoryPool bezierCoeff::_pool = NULL;
+
 void bezierCoeff::subdivide(std::vector<bezierCoeff> &subCoeff)
 {
   int n = _funcSpaceData.spaceOrder()+1;
@@ -1285,7 +1287,7 @@ bezierCoeff::_copyQuad(const fullMatrix<double> &allSub, int starti, int startj,
   }
 }
 
-double* subdivisionMemoryPool::giveBlock(int num, bezierCoeff *bez)
+double* bezierMemoryPool::reserveBlock(int num, bezierCoeff *bez)
 {
   if (num < 0 || num > 1) {
     Msg::Error("'num' must be 0 or 1!");
@@ -1322,12 +1324,12 @@ double* subdivisionMemoryPool::giveBlock(int num, bezierCoeff *bez)
   // _numUsedBlocks[num] < _endOfSearch[num]
   // and _bezierCoeff[num][i] for i < _endOfSearch[num] are all different from
   // NULL which should never happens.
-  Msg::Error("Wrong state of subdivisionMemoryPool. "
+  Msg::Error("Wrong state of bezierMemoryPool. "
              "_bezierCoeff[num][i] not correct?");
   return NULL;
 }
 
-void subdivisionMemoryPool::takeBackBlock(double *block, bezierCoeff *bez)
+void bezierMemoryPool::releaseBlock(double *block, bezierCoeff *bez)
 {
   long diff = block - &_memory.front();
   int num;
@@ -1348,14 +1350,14 @@ void subdivisionMemoryPool::takeBackBlock(double *block, bezierCoeff *bez)
   --_numUsedBlocks[num];
 }
 
-void subdivisionMemoryPool::freeMemory()
+void bezierMemoryPool::freeMemory()
 {
   // force deallocation:
   std::vector<double> dummy;
   _memory.swap(dummy);
 }
 
-void subdivisionMemoryPool::setSizeBlocks(int size[2])
+void bezierMemoryPool::setSizeBlocks(int size[2])
 {
   if (_numUsedBlocks[0] || _numUsedBlocks[1]) {
     Msg::Error("Cannot change size of blocks if blocks are still being used!");
@@ -1368,7 +1370,7 @@ void subdivisionMemoryPool::setSizeBlocks(int size[2])
   _sizeBothBlocks = size[0] + size[1];
 }
 
-void subdivisionMemoryPool::_checkEnoughMemory(int num)
+void bezierMemoryPool::_checkEnoughMemory(int num)
 {
   if (_numUsedBlocks[num] < _memory.size() / _sizeBothBlocks) return;
 
@@ -1382,9 +1384,9 @@ void subdivisionMemoryPool::_checkEnoughMemory(int num)
 
   long diff = &_memory.front() - pointer;
   for (unsigned int i = 0; i < _bezierCoeff[0].size(); ++i) {
-    if (_bezierCoeff[0][i]) _bezierCoeff[0][i]->updateDataPtr(diff);
+//    if (_bezierCoeff[0][i]) _bezierCoeff[0][i]->updateDataPtr(diff);
   }
   for (unsigned int i = 0; i < _bezierCoeff[1].size(); ++i) {
-    if (_bezierCoeff[1][i]) _bezierCoeff[1][i]->updateDataPtr(diff);
+//    if (_bezierCoeff[1][i]) _bezierCoeff[1][i]->updateDataPtr(diff);
   }
 }

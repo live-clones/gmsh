@@ -157,7 +157,7 @@ private:
 //  static std::map<int, data1> _triangleSubV;
 //};
 
-class subdivisionMemoryPool {
+class bezierMemoryPool {
   // This class is to avoid multiple allocation / deallocation during
   // the subdivision algorithm.
 private:
@@ -172,14 +172,14 @@ private:
   std::vector<bezierCoeff*> _bezierCoeff[2];
 
 public:
-  subdivisionMemoryPool() {}
-  ~subdivisionMemoryPool() {freeMemory();}
+  bezierMemoryPool() {}
+  ~bezierMemoryPool() {freeMemory();}
 
   // before to be used, the size of the blocks has to be specified
   void setSizeBlocks(int size[2]);
 
-  double* giveBlock(int num, bezierCoeff *bez); // gives a block of size _sizeBlocks[num]
-  void takeBackBlock(double *block, bezierCoeff *bez);
+  double* reserveBlock(int num, bezierCoeff *bez); // gives a block of size _sizeBlocks[num]
+  void releaseBlock(double *block, bezierCoeff *bez);
   void freeMemory();
 
 private:
@@ -201,11 +201,10 @@ class bezierCoeff : public fullMatrix<double> {
 private :
   FuncSpaceData _funcSpaceData;
   const bezierBasis *_basis;
-  bool _dataFromPool;
-  static subdivisionMemoryPool *_pool;
+  static bezierMemoryPool *_pool;
   // FIXME: not thread safe. We shoud use one pool per thread.
   //        The best would be to give the pool to the constructor.
-  //        (the pool should be created and deleted e.g. by the plugin
+  //        (the pools should be created and deleted e.g. by the plugin
   //        AnalyseCurvedMesh)
 
 public:
@@ -233,6 +232,7 @@ public:
   };
 
   static void usePool();
+  static bezierMemoryPool* getPool();
   static void releasePool();
 
   inline int getNumCoeff() {return _basis->getNumCoeff();}
