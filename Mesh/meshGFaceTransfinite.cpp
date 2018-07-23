@@ -15,8 +15,6 @@
 #include "GmshMessage.h"
 #include "Numeric.h"
 
-#define SQU(a) ((a) * (a))
-
 /*
    s4 +-----c3-----+ s3
       |            |
@@ -403,10 +401,10 @@ int MeshTransfiniteSurface(GFace *gf)
     for(int IT = 0; IT < numSmooth; IT++) {
       for(int i = 1; i < L; i++) {
         for(int j = 1; j < H; j++) {
-          double alpha = 0.25 * (SQU(u[i][j + 1] - u[i][j - 1]) +
-                                 SQU(v[i][j + 1] - v[i][j - 1]));
-          double gamma = 0.25 * (SQU(u[i + 1][j] - u[i - 1][j]) +
-                                 SQU(v[i + 1][j] - v[i - 1][j]));
+          double alpha = 0.25 * (std::pow(u[i][j + 1] - u[i][j - 1], 2) +
+                                 std::pow(v[i][j + 1] - v[i][j - 1], 2));
+          double gamma = 0.25 * (std::pow(u[i + 1][j] - u[i - 1][j], 2) +
+                                 std::pow(v[i + 1][j] - v[i - 1][j], 2));
           double beta =
             0.0625 *
             ((u[i + 1][j] - u[i - 1][j]) * (u[i][j + 1] - u[i][j - 1]) +
