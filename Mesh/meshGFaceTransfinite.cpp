@@ -89,9 +89,9 @@ static void computeEdgeLoops(const GFace *gf,
                              std::vector<int> &indices)
 {
   std::vector<GEdge *> const &edges = gf->edges();
-  std::vector<int> ori = gf->orientations();
+  std::vector<int> const &ori = gf->orientations();
   std::vector<GEdge *>::const_iterator it = edges.begin();
-  std::vector<int>::iterator ito = ori.begin();
+  std::vector<int>::const_iterator ito = ori.begin();
 
   indices.push_back(0);
   GVertex *start =
