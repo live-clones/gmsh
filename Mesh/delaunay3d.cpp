@@ -14,7 +14,7 @@
 #include <map>
 #include <vector>
 #include <algorithm>
-#include <math.h>
+#include <cmath>
 #include <queue>
 #include "SBoundingBox3d.h"
 #include "OS.h"

@@ -8,7 +8,7 @@
 #ifndef _POINTINSERTIONRTREETOOLS_H_
 #define _POINTINSERTIONRTREETOOLS_H_
 
-#include <math.h>
+#include <cmath>
 #include <queue>
 #include "MVertex.h"
 #include "STensor3.h"

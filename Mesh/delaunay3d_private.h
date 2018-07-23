@@ -8,7 +8,7 @@
 
 #include <vector>
 #include "SPoint3.h"
-#include <math.h>
+#include <cmath>
 #include "robustPredicates.h"
 #include <stdio.h>
 #if defined(_OPENMP)

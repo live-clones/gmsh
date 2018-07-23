@@ -57,7 +57,7 @@ GNU General Public License for more details.
 #include "MHexahedron.h"
 #include "Numeric.h"
 #include <map>
-#include <math.h>
+#include <cmath>
 
 
 // CategorizedSourceElements: This is a data structure to hold categorized source element info for extruded regions.

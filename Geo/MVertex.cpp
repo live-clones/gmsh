@@ -4,7 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <string.h>
-#include <math.h>
+#include <cmath>
 #include "MVertex.h"
 #include "GModel.h"
 #include "GVertex.h"

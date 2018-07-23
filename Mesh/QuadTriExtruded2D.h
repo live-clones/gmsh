@@ -50,7 +50,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "MQuadrangle.h"
 #include "Numeric.h"
 #include <map>
-#include <math.h>
+#include <cmath>
 #include "QuadTriUtils.h"
 
 // The function that tests whether a 2D surface is a lateral of a valid

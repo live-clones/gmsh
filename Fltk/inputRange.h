@@ -10,7 +10,7 @@
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
+#include <cmath>
 #include "inputValue.h"
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>

@@ -53,7 +53,7 @@
  * Modified for inclusion in Gmsh (rotmatrix as a vector +
  * float->double + optional use of hyperbolic sheet for z-rotation)
  */
-#include <math.h>
+#include <cmath>
 #include "Trackball.h"
 #include "Context.h"
 #include <iostream>

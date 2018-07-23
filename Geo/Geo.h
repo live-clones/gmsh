@@ -10,7 +10,7 @@
 // legacy code and should never be used directly: use GEO_Internals instead, or
 // the public api.
 
-#include <math.h>
+#include <cmath>
 #include <vector>
 #include <list>
 #include "GmshDefines.h"

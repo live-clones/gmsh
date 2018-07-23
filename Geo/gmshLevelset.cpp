@@ -9,7 +9,7 @@
 
 #include <queue>
 #include <stack>
-#include <math.h>
+#include <cmath>
 #include "gmshLevelset.h"
 #include "fullMatrix.h"
 #include "GModel.h"

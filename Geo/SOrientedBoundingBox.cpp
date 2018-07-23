@@ -7,7 +7,7 @@
 //   Bastien Gorissen
 //
 
-#include <math.h>
+#include <cmath>
 #include <time.h>
 #include <stdlib.h>
 #include "GmshConfig.h"
