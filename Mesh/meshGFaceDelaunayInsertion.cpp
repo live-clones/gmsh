@@ -1344,12 +1344,12 @@ double optimalPointFrontal(GFace *gf, MTri3 *worst, int active_edge,
 
   //  printf("%12.5E %12.5E\n",d,RATIO);
 
-  const double L = d > q ? q : d;
+  const double L = std::min(d, q);
 
   newPoint[0] = midpoint[0] + L * dir[0] / RATIO;
   newPoint[1] = midpoint[1] + L * dir[1] / RATIO;
 
-  return L; // > q ? d : q;
+  return L;
 }
 
 /*
