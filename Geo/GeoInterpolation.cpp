@@ -10,7 +10,7 @@
 #include "Numeric.h"
 #include "Context.h"
 
-static double fd_eps = 1e-8;
+static double const fd_eps = 1.0e-8;
 
 static void InterpolateCatmullRom(Vertex *v[4], double t, Vertex &V)
 {
@@ -412,7 +412,7 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
       Msg::Error("Unknown curve %d", -c->Num);
       return Vertex(0., 0., 0.);
     }
-    return InterpolateCurve(C0, C0->ubeg + (C0->uend - C0->ubeg) * (1. - u),
+    return InterpolateCurve(C0, C0->ubeg + (C0->uend - C0->ubeg) * (1.0 - u),
                             derivee);
   }
 
@@ -472,55 +472,55 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
     return V;
   }
 
-  int N, i;
   Vertex *v[5];
   double theta, t1, t2, t;
   Vertex temp1, temp2;
 
   switch(c->Typ) {
-  case MSH_SEGM_LINE:
-    N = List_Nbr(c->Control_Points);
+  case MSH_SEGM_LINE: {
+    int N = List_Nbr(c->Control_Points);
+
     if(N < 2) {
       Msg::Error("Line with less than 2 control points");
       V.Pos.X = V.Pos.Y = V.Pos.Z = 0;
     }
+
+    int i = static_cast<int>(static_cast<double>(N - 1) * u);
+
+    // clamp
+    if(i >= N - 1) i = N - 2;
+    if(i < 0) i = 0;
+
+    t1 = static_cast<double>(i) / static_cast<double>(N - 1);
+    t2 = static_cast<double>(i + 1) / static_cast<double>(N - 1);
+    t = (u - t1) / (t2 - t1);
+
+    List_Read(c->Control_Points, i, &v[1]);
+    List_Read(c->Control_Points, i + 1, &v[2]);
+
+    if(!c->geometry) {
+      V.Pos.X = v[1]->Pos.X + t * (v[2]->Pos.X - v[1]->Pos.X);
+      V.Pos.Y = v[1]->Pos.Y + t * (v[2]->Pos.Y - v[1]->Pos.Y);
+      V.Pos.Z = v[1]->Pos.Z + t * (v[2]->Pos.Z - v[1]->Pos.Z);
+      V.w = (1. - t) * v[1]->w + t * v[2]->w;
+      V.lc = (1. - t) * v[1]->lc + t * v[2]->lc;
+    }
     else {
-      i = static_cast<int>(static_cast<double>(N - 1) * u);
-
-      while(i >= N - 1) i--;
-
-      while(i < 0) i++;
-
-      t1 = static_cast<double>(i) / static_cast<double>(N - 1);
-      t2 = static_cast<double>(i + 1) / static_cast<double>(N - 1);
-      t = (u - t1) / (t2 - t1);
-
-      List_Read(c->Control_Points, i, &v[1]);
-      List_Read(c->Control_Points, i + 1, &v[2]);
-
-      if(!c->geometry) {
-        V.Pos.X = v[1]->Pos.X + t * (v[2]->Pos.X - v[1]->Pos.X);
-        V.Pos.Y = v[1]->Pos.Y + t * (v[2]->Pos.Y - v[1]->Pos.Y);
-        V.Pos.Z = v[1]->Pos.Z + t * (v[2]->Pos.Z - v[1]->Pos.Z);
-        V.w = (1. - t) * v[1]->w + t * v[2]->w;
-        V.lc = (1. - t) * v[1]->lc + t * v[2]->lc;
-      }
-      else {
-        SPoint2 p =
-          v[1]->pntOnGeometry + (v[2]->pntOnGeometry - v[1]->pntOnGeometry) * t;
-        SPoint3 pp = c->geometry->point(p);
-        V.Pos.X = pp.x();
-        V.Pos.Y = pp.y();
-        V.Pos.Z = pp.z();
-      }
+      SPoint2 p =
+        v[1]->pntOnGeometry + (v[2]->pntOnGeometry - v[1]->pntOnGeometry) * t;
+      SPoint3 pp = c->geometry->point(p);
+      V.Pos.X = pp.x();
+      V.Pos.Y = pp.y();
+      V.Pos.Z = pp.z();
     }
     break;
+  }
 
   case MSH_SEGM_CIRC:
   case MSH_SEGM_CIRC_INV:
   case MSH_SEGM_ELLI:
-  case MSH_SEGM_ELLI_INV:
-    N = List_Nbr(c->Control_Points);
+  case MSH_SEGM_ELLI_INV: {
+    int N = List_Nbr(c->Control_Points);
     if(N < 2) {
       Msg::Error("Circle or ellipse with less than 2 control points");
       V.Pos.X = V.Pos.Y = V.Pos.Z = 0;
@@ -550,6 +550,7 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
       V.lc = (1. - u) * c->beg->lc + u * c->end->lc;
     }
     break;
+  }
 
   case MSH_SEGM_BSPLN: V = InterpolateUBS(c, u, 0); break;
 
@@ -557,15 +558,16 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
 
   case MSH_SEGM_NURBS: V = InterpolateNurbs(c, u, 0); break;
 
-  case MSH_SEGM_SPLN:
-    N = List_Nbr(c->Control_Points);
+  case MSH_SEGM_SPLN: {
+    int N = List_Nbr(c->Control_Points);
     if(N < 2) {
       Msg::Error("Spline with less than 2 control points");
       V.Pos.X = V.Pos.Y = V.Pos.Z = 0;
     }
     else {
-      i = static_cast<int>(static_cast<double>(N - 1) * u);
+      int i = static_cast<double>(N - 1) * u;
 
+      // clamp
       if(i < 0) i = 0;
       if(i >= N - 1) i = N - 2;
 
@@ -615,6 +617,7 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
       }
     }
     break;
+  }
 
   case MSH_SEGM_BND_LAYER:
     Msg::Debug("Cannot interpolate boundary layer curve");
