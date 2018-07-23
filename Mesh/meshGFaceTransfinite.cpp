@@ -230,23 +230,35 @@ int MeshTransfiniteSurface(GFace *gf)
     }
   }
 
-  std::vector<double> lengths_i, lengths_j;
-  double L_i = 0, L_j = 0;
-  lengths_i.push_back(0.);
-  lengths_j.push_back(0.);
+  std::vector<double> lengths_i;
+  lengths_i.reserve(L);
+
+  lengths_i.push_back(0.0);
+
+  double L_i = 0.0;
+
   for(int i = 0; i < L; i++) {
     MVertex *v1 = m_vertices[i];
     MVertex *v2 = m_vertices[i + 1];
+
     L_i += v1->distance(v2);
     lengths_i.push_back(L_i);
   }
+
+  std::vector<double> lengths_j;
+  lengths_j.reserve(L + H);
+
+  lengths_j.push_back(0.0);
+
+  double L_j = 0.0;
+
   for(int i = L; i < L + H; i++) {
     MVertex *v1 = m_vertices[i];
     MVertex *v2 = m_vertices[i + 1];
+
     L_j += v1->distance(v2);
     lengths_j.push_back(L_j);
   }
-
   /*
       2L+H +------------+ L+H
            |            |
