@@ -11486,6 +11486,7 @@ enum tetgenmesh::interresult
   }
 
   // Walk through tets around pa until the right one is found.
+  size_t loopCount = 0;
   while (1) {
 
     pd = oppo(*searchtet);
@@ -11618,6 +11619,15 @@ enum tetgenmesh::interresult
     }
     pb = dest(*searchtet);
     pc = apex(*searchtet);
+
+    // Highest loopCount encountered in a valid testcase is 124. For values
+    // much higher than that, we are likely stuck in an infinite loop.
+    const size_t surelyHangingLoopCountThreshold = 1000000;
+    if (loopCount > surelyHangingLoopCountThreshold)
+    {
+      terminatetetgen(this, 1000);
+    }
+    loopCount++;
 
   } // while (1)
 
@@ -15922,7 +15932,7 @@ long tetgenmesh::lawsonflip3d(flipconstraints *fc)
   int t1ver;
   int i;
 
-
+  size_t loopCount = 0;
   while (1) {
 
     if (b->verbose > 2) {
@@ -16164,6 +16174,15 @@ long tetgenmesh::lawsonflip3d(flipconstraints *fc)
       }
     }
     unflipqueue->restart();
+
+    // Highest loopCount encountered in a valid testcase is 4. For values
+    // much higher than that, we are likely stuck in an infinite loop.
+    const size_t surelyHangingLoopCountThreshold = 10000;
+    if (loopCount > surelyHangingLoopCountThreshold)
+    {
+      terminatetetgen(this, 1000);
+    }
+    loopCount++;
 
   } // while (1)
 
