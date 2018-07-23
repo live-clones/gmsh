@@ -6,6 +6,7 @@
 #include <set>
 #include <map>
 #include <algorithm>
+
 #include "GmshMessage.h"
 #include "OS.h"
 #include "robustPredicates.h"
@@ -578,8 +579,8 @@ bool findCavityTangentPlane(GFace *gf, double *center,
     t = *i;
     SPoint3 b = t->tri()->getFace(0).barycenter();
     //    SVector3 n = t->tri()->getFace(0).normal();
-    //    double a = fabs(dot(N,n));
-    double dist = fabs(N.x() * b.x() + N.y() * b.y() + N.z() * b.z() + d);
+    //    double a = std::abs(dot(N,n));
+    double dist = std::abs(N.x() * b.x() + N.y() * b.y() + N.z() * b.z() + d);
     DMAX = std::max(DMAX, dist);
     //    AMIN = std::min(a,AMIN);
     //    printf("%g %g %g -- %g %g %g\n",N.x(),N.y(),N.z(),n.x(),n.y(),n.z());
@@ -757,7 +758,7 @@ int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
   std::list<MTri3 *>::iterator ittet = cavity.begin();
   std::list<MTri3 *>::iterator ittete = cavity.end();
   while(ittet != ittete) {
-    oldVolume += fabs(getSurfUV((*ittet)->tri(), data));
+    oldVolume += std::abs(getSurfUV((*ittet)->tri(), data));
     ++ittet;
   }
 
@@ -789,17 +790,17 @@ int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
                    data.vSizesBGM[index2]);
     double LL = Extend1dMeshIn2dSurfaces() ? std::min(lc, lcBGM) : lcBGM;
 
-    MTri3 *t4;
-    t4 = new MTri3(t, LL, 0, &data, gf);
+    MTri3 *t4 = new MTri3(t, LL, 0, &data, gf);
+
     if(oneNewTriangle) {
       force = true;
       *oneNewTriangle = t4;
     }
     //    double din = t->getInnerRadius();
 
-    double d1 = distance(v0, v);
-    double d2 = distance(v1, v);
-    double d3 = distance(v0, v1);
+    double const d1 = distance(v0, v);
+    double const d2 = distance(v1, v);
+    double const d3 = distance(v0, v1);
     SVector3 v0v1(v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z());
     SVector3 v0v(v->x() - v0->x(), v->y() - v0->y(), v->z() - v0->z());
     SVector3 pv = crossprod(v0v1, v0v);
@@ -820,13 +821,13 @@ int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
     new_cavity.push_back(t4);
     MTri3 *otherSide = it->t1->getNeigh(it->i1);
     if(otherSide) new_cavity.push_back(otherSide);
-    double ss = fabs(getSurfUV(t4->tri(), data));
+    double ss = std::abs(getSurfUV(t4->tri(), data));
     if(ss < 1.e-25) ss = 1.e22;
     newVolume += ss;
     ++it;
   }
 
-  if(fabs(oldVolume - newVolume) < EPS * oldVolume && !onePointIsTooClose) {
+  if(std::abs(oldVolume - newVolume) < EPS * oldVolume && !onePointIsTooClose) {
     connectTris(new_cavity.begin(), new_cavity.end(), conn);
     //    printf("%d %d\n",shell.size(),cavity.size());
     // 30 % of the time is spent here !!!
@@ -844,9 +845,9 @@ int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
     delete[] newTris;
     return 1;
   }
-
-  // The cavity is NOT star shaped
   else {
+    // The cavity is NOT star shaped
+
     // printf("(%g %g) %22.15E %22.15E %d %d %d %d %d\n",
     //        v->x(),v->y(),oldVolume,  newVolume, shell.size(),
     //        onePointIsTooClose, cavity.size(),
@@ -864,14 +865,14 @@ int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
     // Vs, false); _printTris("newTris.pos", &newTris[0], newTris+shell.size(),
     // Us, Vs, false); _printTris("allTris.pos", allTets.begin(),allTets.end(),
     // Us, Vs, false);
-    for(unsigned int i = 0; i < shell.size(); i++) {
+    for(std::size_t i = 0; i < shell.size(); i++) {
       delete newTris[i]->tri(), delete newTris[i];
     }
     delete[] newTris;
     // throw;
     // double t2 = Cpu();
     // DT_INSERT_VERTEX += t2-t1;
-    if(fabs(oldVolume - newVolume) > EPS * oldVolume) return -3;
+    if(std::abs(oldVolume - newVolume) > EPS * oldVolume) return -3;
     if(onePointIsTooClose) return -4;
     return -5;
   }
@@ -1510,7 +1511,7 @@ void optimalPointFrontalQuad(GFace *gf, MTri3 *worst, int active_edge,
   double yp = -XP1 * sin(quadAngle) + YP1 * cos(quadAngle);
   // ensure xp > yp
   bool exchange = false;
-  if(fabs(xp) < fabs(yp)) {
+  if(std::abs(xp) < std::abs(yp)) {
     double temp = xp;
     xp = yp;
     yp = temp;
@@ -1537,12 +1538,12 @@ void optimalPointFrontalQuad(GFace *gf, MTri3 *worst, int active_edge,
 
   double npx, npy;
   if(xp * yp > 0) {
-    npx = -fabs(xp) * factor;
-    npy = fabs(xp) * (1. + factor) - fabs(yp);
+    npx = -std::abs(xp) * factor;
+    npy = std::abs(xp) * (1. + factor) - std::abs(yp);
   }
   else {
-    npx = fabs(xp) * factor;
-    npy = (1. + factor) * fabs(xp) - fabs(yp);
+    npx = std::abs(xp) * factor;
+    npy = (1. + factor) * std::abs(xp) - std::abs(yp);
   }
   if(exchange) {
     double temp = npx;
@@ -2051,7 +2052,7 @@ void delaunayMeshIn2D(std::vector<MVertex *> &v,
     tb += Cpu() - T;
     // double V = 0.0;
     // for (unsigned int
-    // k=0;k<cavity.size();k++)V+=fabs(cavity[k]->tri()->getVolume());
+    // k=0;k<cavity.size();k++)V+=std::abs(cavity[k]->tri()->getVolume());
 
     std::vector<MTri3 *> extended_cavity;
     // double Vb = 0.0;
@@ -2076,12 +2077,12 @@ void delaunayMeshIn2D(std::vector<MVertex *> &v,
         t3 = new MTri3(tr, 0.0);
         t.push_back(t3);
       }
-      // Vb+= fabs(tr->getVolume());
+      // Vb+= std::abs(tr->getVolume());
       extended_cavity.push_back(t3);
       if(otherSide) extended_cavity.push_back(otherSide);
     }
     tc += Cpu() - T;
-    // if (fabs(Vb-V) > 1.e-8 * (Vb+V))printf("%12.5E %12.5E\n",Vb,V);
+    // if (std::abs(Vb-V) > 1.e-8 * (Vb+V))printf("%12.5E %12.5E\n",Vb,V);
 
     for(unsigned int k = 0; k < std::min(cavity.size(), shell.size()); k++) {
       cavity[k]->setDeleted(false);
@@ -2129,7 +2130,7 @@ bool swapedge(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, MTri3 *t1,
   double AFTER = t1b->getVolume() + t2b->getVolume();
   // printf("swapping %d %d %d %d %g %g\n",
   //        v1->getNum(),v2->getNum(),v3->getNum(),v4->getNum(),BEFORE,AFTER);
-  if(fabs(BEFORE - AFTER) / BEFORE > 1.e-8) {
+  if(std::abs(BEFORE - AFTER) / BEFORE > 1.e-8) {
     delete t1b;
     delete t2b;
     return false;
