@@ -1227,36 +1227,36 @@ void bowyerWatson(GFace *gf, int MAXPNT,
 double lengthInfniteNorm(const double p[2], const double q[2],
                          const double quadAngle)
 {
-  double xp = p[0] * std::cos(quadAngle) + p[1] * std::sin(quadAngle);
-  double yp = -p[0] * std::sin(quadAngle) + p[1] * std::cos(quadAngle);
-  double xq = q[0] * std::cos(quadAngle) + q[1] * std::sin(quadAngle);
-  double yq = -q[0] * std::sin(quadAngle) + q[1] * std::cos(quadAngle);
-  double xmax = std::max(xp, xq);
-  double xmin = std::min(xp, xq);
-  double ymax = std::max(yp, yq);
-  double ymin = std::min(yp, yq);
+  double const xp = p[0] * std::cos(quadAngle) + p[1] * std::sin(quadAngle);
+  double const yp = -p[0] * std::sin(quadAngle) + p[1] * std::cos(quadAngle);
+  double const xq = q[0] * std::cos(quadAngle) + q[1] * std::sin(quadAngle);
+  double const yq = -q[0] * std::sin(quadAngle) + q[1] * std::cos(quadAngle);
+  double const xmax = std::max(xp, xq);
+  double const xmin = std::min(xp, xq);
+  double const ymax = std::max(yp, yq);
+  double const ymin = std::min(yp, yq);
   return std::max(xmax - xmin, ymax - ymin);
 }
 
 void circumCenterInfinite(MTriangle *base, double quadAngle,
                           bidimMeshData &data, double *x)
 {
-  int index0 = data.getIndex(base->getVertex(0));
-  int index1 = data.getIndex(base->getVertex(1));
-  int index2 = data.getIndex(base->getVertex(2));
-  double pa[2] = {data.Us[index0], data.Vs[index0]};
-  double pb[2] = {data.Us[index1], data.Vs[index1]};
-  double pc[2] = {data.Us[index2], data.Vs[index2]};
-  double xa = pa[0] * std::cos(quadAngle) - pa[1] * std::sin(quadAngle);
-  double ya = pa[0] * std::sin(quadAngle) + pa[1] * std::cos(quadAngle);
-  double xb = pb[0] * std::cos(quadAngle) - pb[1] * std::sin(quadAngle);
-  double yb = pb[0] * std::sin(quadAngle) + pb[1] * std::cos(quadAngle);
-  double xc = pc[0] * std::cos(quadAngle) - pc[1] * std::sin(quadAngle);
-  double yc = pc[0] * std::sin(quadAngle) + pc[1] * std::cos(quadAngle);
-  double xmax = std::max(std::max(xa, xb), xc);
-  double ymax = std::max(std::max(ya, yb), yc);
-  double xmin = std::min(std::min(xa, xb), xc);
-  double ymin = std::min(std::min(ya, yb), yc);
+  int const index0 = data.getIndex(base->getVertex(0));
+  int const index1 = data.getIndex(base->getVertex(1));
+  int const index2 = data.getIndex(base->getVertex(2));
+  double const pa[2] = {data.Us[index0], data.Vs[index0]};
+  double const pb[2] = {data.Us[index1], data.Vs[index1]};
+  double const pc[2] = {data.Us[index2], data.Vs[index2]};
+  double const xa = pa[0] * std::cos(quadAngle) - pa[1] * std::sin(quadAngle);
+  double const ya = pa[0] * std::sin(quadAngle) + pa[1] * std::cos(quadAngle);
+  double const xb = pb[0] * std::cos(quadAngle) - pb[1] * std::sin(quadAngle);
+  double const yb = pb[0] * std::sin(quadAngle) + pb[1] * std::cos(quadAngle);
+  double const xc = pc[0] * std::cos(quadAngle) - pc[1] * std::sin(quadAngle);
+  double const yc = pc[0] * std::sin(quadAngle) + pc[1] * std::cos(quadAngle);
+  double const xmax = std::max(std::max(xa, xb), xc);
+  double const ymax = std::max(std::max(ya, yb), yc);
+  double const xmin = std::min(std::min(xa, xb), xc);
+  double const ymin = std::min(std::min(ya, yb), yc);
   x[0] = 0.5 * (xmax - xmin);
   x[1] = 0.5 * (ymax - ymin);
 }
