@@ -393,10 +393,9 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, bidimMeshData *data,
       double metric[3];
       buildMetric(gf, midpoint, metric);
       double RATIO =
-        1. / pow(metric[0] * metric[2] - metric[1] * metric[1], 0.25);
+        std::pow(metric[0] * metric[2] - metric[1] * metric[1], -0.25);
 
-      circum_radius = std::max(xmax - xmin, ymax - ymin) / RATIO;
-      circum_radius /= lc;
+      circum_radius = std::max(xmax - xmin, ymax - ymin) / (RATIO * lc);
     }
   }
   else {
@@ -1532,13 +1531,13 @@ void optimalPointFrontalQuad(GFace *gf, MTri3 *worst, int active_edge,
   }
 
   buildMetric(gf, midpoint, metric);
-  double RATIO = 1. / pow(metric[0] * metric[2] - metric[1] * metric[1], 0.25);
+  double RATIO = std::pow(metric[0] * metric[2] - metric[1] * metric[1], -0.25);
 
   const double p = 0.5 * lengthInfniteNorm(P, Q, quadAngle);
   const double q = lengthInfniteNorm(center, midpoint, quadAngle);
 
   const double rhoM1 =
-    0.5 * RATIO * (data.vSizes[index1] + data.vSizes[index2]) / std::sqrt(3.);
+    0.5 * RATIO * (data.vSizes[index1] + data.vSizes[index2]) / std::sqrt(3.0);
   const double rhoM2 = 0.5 * RATIO *
                        (data.vSizesBGM[index1] + data.vSizesBGM[index2]) /
                        std::sqrt(3.);
@@ -1655,7 +1654,7 @@ void bowyerWatsonFrontalLayers(
   bidimMeshData DATA(equivalence, parametricCoordinates);
 
   if(quad) {
-    LIMIT_ = std::sqrt(2.) * .99;
+    LIMIT_ = std::sqrt(2.0) * 0.99;
     // LIMIT_ = 4./3.;//std::sqrt(2.) * .99;
     MTri3::radiusNorm = -1;
   }
@@ -1978,7 +1977,7 @@ static void initialSquare(std::vector<MVertex *> &v, MVertex *box[4],
                           std::vector<MTri3 *> &t)
 {
   SBoundingBox3d bbox;
-  for(size_t i = 0; i < v.size(); i++) {
+  for(std::size_t i = 0; i < v.size(); i++) {
     MVertex *pv = v[i];
     bbox += SPoint3(pv->x(), pv->y(), pv->z());
   }
