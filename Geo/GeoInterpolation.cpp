@@ -260,14 +260,19 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
                                   {1. / 4, 7. / 12, 1. / 6, 0}};
 
   bool periodic = (Curve->end == Curve->beg);
+
   int NbControlPoints = List_Nbr(Curve->Control_Points);
   int NbCurves = NbControlPoints + (periodic ? -1 : -3);
+
   NbCurves = std::max(NbCurves, 1);
+
   int iCurve = static_cast<int>(std::floor(u * static_cast<double>(NbCurves)));
   if(iCurve == NbCurves) iCurve -= 1; // u = 1
+
   double t1 = static_cast<double>(iCurve) / static_cast<double>(NbCurves);
   double t2 = static_cast<double>(iCurve + 1) / static_cast<double>(NbCurves);
   double t = (u - t1) / (t2 - t1);
+
   Vertex *v[4];
   for(int i = 0; i < 4; i++) {
     int k;
@@ -527,16 +532,20 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
       }
       theta = c->Circle.t1 - (c->Circle.t1 - c->Circle.t2) * u;
       theta -= c->Circle.incl; // for ellipses
+
       V.Pos.X = c->Circle.f1 * std::cos(theta) * std::cos(c->Circle.incl) -
                 c->Circle.f2 * std::sin(theta) * std::sin(c->Circle.incl);
       V.Pos.Y = c->Circle.f1 * std::cos(theta) * std::sin(c->Circle.incl) +
                 c->Circle.f2 * std::sin(theta) * std::cos(c->Circle.incl);
       V.Pos.Z = 0.0;
+
       Projette(&V, c->Circle.invmat);
       List_Read(c->Control_Points, 1, &v[0]);
+
       V.Pos.X += v[0]->Pos.X;
       V.Pos.Y += v[0]->Pos.Y;
       V.Pos.Z += v[0]->Pos.Z;
+
       V.w = (1. - u) * c->beg->w + u * c->end->w;
       V.lc = (1. - u) * c->beg->lc + u * c->end->lc;
     }
