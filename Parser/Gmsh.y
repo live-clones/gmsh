@@ -1807,8 +1807,6 @@ Shape :
       std::vector<int> tags; ListOfDouble2Vector($7, tags);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        for(unsigned int i = 0; i < tags.size(); i++)
-          tags[i] = std::abs(tags[i]); // all edge tags > 0 for OCC
         r = GModel::current()->getOCCInternals()->addLineLoop(num, tags);
       }
       else{

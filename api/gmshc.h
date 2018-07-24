@@ -1128,11 +1128,9 @@ GMSH_API int gmshModelOccAddWire(int * curveTags, size_t curveTags_n,
                                  int * ierr);
 
 /* Add a curve loop (a closed wire) formed by the curves `curveTags'.
- * `curveTags' should contain (signed) tags of curves forming a closed loop: a
- * negative tag signifies that the underlying curve is considered with
- * reversed orientation. If `tag' is positive, set the tag explicitly;
- * otherwise a new tag is selected automatically. Return the tag of the curve
- * loop. */
+ * `curveTags' should contain tags of curves forming a closed loop. If `tag'
+ * is positive, set the tag explicitly; otherwise a new tag is selected
+ * automatically. Return the tag of the curve loop. */
 GMSH_API int gmshModelOccAddCurveLoop(int * curveTags, size_t curveTags_n,
                                       const int tag,
                                       int * ierr);

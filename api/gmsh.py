@@ -2895,11 +2895,9 @@ class model:
         def addCurveLoop(curveTags, tag=-1):
             """
             Add a curve loop (a closed wire) formed by the curves `curveTags'.
-            `curveTags' should contain (signed) tags of curves forming a closed loop: a
-            negative tag signifies that the underlying curve is considered with
-            reversed orientation. If `tag' is positive, set the tag explicitly;
-            otherwise a new tag is selected automatically. Return the tag of the curve
-            loop.
+            `curveTags' should contain tags of curves forming a closed loop. If `tag'
+            is positive, set the tag explicitly; otherwise a new tag is selected
+            automatically. Return the tag of the curve loop.
 
             Return an integer.
             """

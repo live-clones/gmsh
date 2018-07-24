@@ -1254,7 +1254,12 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
 
 bool OCC_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags)
 {
-  return addWire(tag, curveTags, true);
+  std::vector<int> tags(curveTags);
+  // all edge tags > 0 for OCC : to improve compatibility between GEO and OCC
+  // factories, allow negative tags - and simply ignore the sign here
+  for(unsigned int i = 0; i < tags.size(); i++)
+    tags[i] = std::abs(tags[i]);
+  return addWire(tag, tags, true);
 }
 
 static bool makeRectangle(TopoDS_Face &result, double x, double y, double z,
