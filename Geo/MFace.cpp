@@ -12,7 +12,10 @@
 #include "nodalBasis.h"
 #include "BasisFactory.h"
 
-bool compare(const MVertex *const v0, const MVertex *const v1){ return v0->getNum() < v1->getNum(); }
+bool compare(const MVertex *const v0, const MVertex *const v1)
+{
+  return v0->getNum() < v1->getNum();
+}
 
 void sortVertices(const std::vector<MVertex*> &v, std::vector<char> &s)
 {
@@ -40,12 +43,14 @@ void sortVertices(const std::vector<MVertex*> &v, std::vector<char> &s)
 
   std::vector<MVertex*> sorted = v;
   std::sort(sorted.begin(), sorted.end(), compare);
+  s.reserve(sorted.size());
   for(unsigned int i = 0; i < sorted.size(); i++)
     s.push_back(std::distance(v.begin(), std::find(v.begin(), v.end(), sorted[i])));
 }
 
 MFace::MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3)
 {
+  _v.reserve(v3 ? 4 : 3);
   _v.push_back(v0);
   _v.push_back(v1);
   _v.push_back(v2);
@@ -55,9 +60,10 @@ MFace::MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3)
 
 MFace::MFace(const std::vector<MVertex*> &v)
 {
+  _v.reserve(v.size());
   for(unsigned int i = 0; i < v.size(); i++)
     _v.push_back(v[i]);
-  sortVertices(_v,_si);
+  sortVertices(_v, _si);
 }
 
 double MFace::approximateArea() const
