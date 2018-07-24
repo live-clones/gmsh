@@ -184,7 +184,7 @@ public:
   virtual void getMetricEigenVectors(const SPoint2 &param, double eigVal[2],
                                      double eigVec[4]) const;
 
-  // return the parmater location on the face given a point in space
+  // return the parameter location on the face given a point in space
   // that is on the face
   virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true) const;
 
