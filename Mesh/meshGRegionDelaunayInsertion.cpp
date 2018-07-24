@@ -1399,7 +1399,7 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
       }
       /// END TETS
 
-      if (FOUND && !allEmbeddedEdges.empty()){
+      if (FOUND && (allEmbeddedEdges.size() || allEmbeddedFace.size())){
         FOUND = isCavityCompatibleWithEmbeddedEdges(cavity, shell, allEmbeddedEdges) &&
           isCavityCompatibleWithEmbeddedFace(cavity, shell, allEmbeddedFaces);
       }
