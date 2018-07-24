@@ -455,7 +455,8 @@ bool insertVertexB(std::vector<faceXtet> &shell,
                    std::vector<double> &vSizesBGM,
                    MTet4 *t,
                    MTet4Factory &myFactory,
-                   std::set<MTet4*,compareTet4Ptr> &allTets)
+                   std::set<MTet4*,compareTet4Ptr> &allTets,
+                   const std::set<MFace, Less_Face> &allEmbeddedFaces)
 {
   std::vector<MTet4*> new_cavity;
   new_cavity.reserve(shell.size());
@@ -487,8 +488,15 @@ bool insertVertexB(std::vector<faceXtet> &shell,
     ++it;
   }
   if (!onePointIsTooClose){
-    std::vector<faceXtet> conn;
-    connectTets_vector2(new_cavity,conn);
+    if (allEmbeddedFaces.empty())
+    {
+      std::vector<faceXtet> conn;
+      connectTets_vector2(new_cavity, conn);
+    }
+    else
+    {
+      connectTets(new_cavity.begin(), new_cavity.end(), &allEmbeddedFaces);
+    }
 
     allTets.insert(new_tets.begin(), new_tets.end());
 
@@ -1410,7 +1418,7 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
 
 	if(correctedCavityIncompatibleWithEmbeddedEdge || !starShaped ||
            !insertVertexB(shell, cavity, v, lc1, lc2, vSizes, vSizesBGM, worst,
-                          myFactory, allTets)){
+           myFactory, allTets, allEmbeddedFaces)){
 	  COUNT_MISS_1++;
 	  myFactory.changeTetRadius(allTets.begin(), 0.);
 	  for (std::vector<MTet4*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc)
