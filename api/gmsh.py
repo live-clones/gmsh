@@ -3686,6 +3686,31 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
+        def importShapesNativePointer(shape, highestDimOnly=True):
+            """
+            Imports native OpenCASCADE shapes by providing a raw pointer to a
+            TopoDS_Shape, as a `void *'. The imported entities are returned in
+            `outDimTags'. If the optional argument `highestDimOnly' is set, only import
+            the highest dimensional entities in the file. Warning: this function is
+            unsafe, as providing an invalid pointer to `shape' will lead to undefined
+            behavior.
+
+            Return `outDimTags'.
+            """
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelOccImportShapesNativePointer(
+                c_void_p(shape),
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                c_int(bool(highestDimOnly)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccImportShapesNativePointer returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+
+        @staticmethod
         def setMeshSize(dimTags, size):
             """
             Set a mesh size constraint on the geometrical entities `dimTags'. Currently

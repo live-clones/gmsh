@@ -3027,6 +3027,7 @@ bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnl
 bool OCC_Internals::importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
                                  std::vector<std::pair<int, int> > &outDimTags)
 {
+  if(!shape) return false;
   _multiBind(*shape, -1, outDimTags, highestDimOnly, true);
   return true;
 }

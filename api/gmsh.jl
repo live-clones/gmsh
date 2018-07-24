@@ -3115,6 +3115,30 @@ function importShapes(fileName, highestDimOnly = true, format = "")
 end
 
 """
+    gmsh.model.occ.importShapesNativePointer(shape, highestDimOnly = true)
+
+Imports native OpenCASCADE shapes by providing a raw pointer to a TopoDS_Shape,
+as a `void *`. The imported entities are returned in `outDimTags`. If the
+optional argument `highestDimOnly` is set, only import the highest dimensional
+entities in the file. Warning: this function is unsafe, as providing an invalid
+pointer to `shape` will lead to undefined behavior.
+
+Return `outDimTags`.
+"""
+function importShapesNativePointer(shape, highestDimOnly = true)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccImportShapesNativePointer, gmsh.lib), Void,
+          (Ptr{Void}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          shape, api_outDimTags_, api_outDimTags_n_, highestDimOnly, ierr)
+    ierr[] != 0 && error("gmshModelOccImportShapesNativePointer returned non-zero error code: $(ierr[])")
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+
+"""
     gmsh.model.occ.setMeshSize(dimTags, size)
 
 Set a mesh size constraint on the geometrical entities `dimTags`. Currently only

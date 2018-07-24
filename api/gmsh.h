@@ -1381,6 +1381,16 @@ namespace gmsh { // Top-level functions
                                  const bool highestDimOnly = true,
                                  const std::string & format = "");
 
+      // Imports native OpenCASCADE shapes by providing a raw pointer to a
+      // TopoDS_Shape, as a `void *'. The imported entities are returned in
+      // `outDimTags'. If the optional argument `highestDimOnly' is set, only
+      // import the highest dimensional entities in the file. Warning: this
+      // function is unsafe, as providing an invalid pointer to `shape' will lead
+      // to undefined behavior.
+      GMSH_API void importShapesNativePointer(const void * shape,
+                                              gmsh::vectorpair & outDimTags,
+                                              const bool highestDimOnly = true);
+
       // Set a mesh size constraint on the geometrical entities `dimTags'.
       // Currently only entities of dimension 0 (points) are handled.
       GMSH_API void setMeshSize(const gmsh::vectorpair & dimTags,

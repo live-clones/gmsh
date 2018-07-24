@@ -2555,6 +2555,23 @@ namespace gmsh { // Top-level functions
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
       }
 
+      // Imports native OpenCASCADE shapes by providing a raw pointer to a
+      // TopoDS_Shape, as a `void *'. The imported entities are returned in
+      // `outDimTags'. If the optional argument `highestDimOnly' is set, only
+      // import the highest dimensional entities in the file. Warning: this
+      // function is unsafe, as providing an invalid pointer to `shape' will lead
+      // to undefined behavior.
+      GMSH_API void importShapesNativePointer(const void * shape,
+                                              gmsh::vectorpair & outDimTags,
+                                              const bool highestDimOnly = true)
+      {
+        int ierr = 0;
+        int *api_outDimTags_; size_t api_outDimTags_n_;
+        gmshModelOccImportShapesNativePointer(shape, &api_outDimTags_, &api_outDimTags_n_, (int)highestDimOnly, &ierr);
+        if(ierr) throw ierr;
+        outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+      }
+
       // Set a mesh size constraint on the geometrical entities `dimTags'.
       // Currently only entities of dimension 0 (points) are handled.
       GMSH_API void setMeshSize(const gmsh::vectorpair & dimTags,

@@ -3285,23 +3285,23 @@ GMSH_API void gmsh::model::occ::importShapes(const std::string &fileName,
   }
 }
 
-// GMSH_API void gmsh::model::occ::importShapesNativePointer(const void *shape,
-//                                                          vectorpair &outDimTags,
-//                                                          const bool highestDimOnly)
-// {
-//   if(!_isInitialized()){ throw -1; }
-//   _createOcc();
-//   outDimTags.clear();
-// #if defined(HAVE_OCC)
-//   if(!GModel::current()->getOCCInternals()->importShapes
-//      (static_cast<TopoDS_Shape*>(shape), outDimTags, highestDimOnly)){
-//     throw 1;
-//   }
-// #else
-//   Msg::Error("Gmsh requires OpenCASCADE to import native shape");
-//   throw -1;
-// #endif
-// }
+GMSH_API void gmsh::model::occ::importShapesNativePointer(const void *shape,
+                                                          vectorpair &outDimTags,
+                                                          const bool highestDimOnly)
+{
+  if(!_isInitialized()){ throw -1; }
+  _createOcc();
+  outDimTags.clear();
+#if defined(HAVE_OCC)
+  if(!GModel::current()->getOCCInternals()->importShapes
+     (static_cast<const TopoDS_Shape*>(shape), highestDimOnly, outDimTags)){
+    throw 1;
+  }
+#else
+  Msg::Error("Gmsh requires OpenCASCADE to import native shape");
+  throw -1;
+#endif
+}
 
 GMSH_API void gmsh::model::occ::setMeshSize(const vectorpair &dimTags,
                                             const double size)

@@ -2210,6 +2210,19 @@ GMSH_API void gmshModelOccImportShapes(const char * fileName, int ** outDimTags,
   }
 }
 
+GMSH_API void gmshModelOccImportShapesNativePointer(const void * shape, int ** outDimTags, size_t * outDimTags_n, const int highestDimOnly, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::occ::importShapesNativePointer(shape, api_outDimTags_, highestDimOnly);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelOccSetMeshSize(int * dimTags, size_t dimTags_n, const double size, int * ierr)
 {
   if(ierr) *ierr = 0;

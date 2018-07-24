@@ -73,6 +73,13 @@ def istring(name, value=None, python_value=None, julia_value=None):
     a.julia_ctype = "Ptr{Cchar}"
     return a
 
+def ivoidstar(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "const void *", "const void *", False)
+    a.python_arg = "c_void_p(" + name + ")"
+    a.julia_ctype = "Ptr{Void}"
+    return a
+
 def ivectorint(name, value=None, python_value=None, julia_value=None):
     if julia_value == "[]":
         julia_value = "Cint[]"
@@ -519,11 +526,11 @@ class Module:
         self.submodules = []
 
     def add(self, name, doc, rtype, *args):
-        self.fs.append((rtype, name, args, doc, False))
+        self.fs.append((rtype, name, args, doc, ''))
 
     # a raw C implementation of the function is available
     def add_rawc(self, name, doc, rtype, *args):
-        self.fs.append((rtype, name, args, doc, True))
+        self.fs.append((rtype, name, args, doc, 'rawc'))
 
     def add_module(self, name, doc):
         module = Module(name, doc)
@@ -923,7 +930,7 @@ class API:
         def write_module(module, indent):
             f.write(indent + "namespace " + module.name + " { // " + module.doc + "\n\n")
             indent += "  "
-            for rtype, name, args, doc, rawc in module.fs:
+            for rtype, name, args, doc, special in module.fs:
                 f.write(indent + "// " + ("\n" + indent + "// ").join(
                     textwrap.wrap(doc, 80-len(indent))) + "\n")
                 rt = rtype.rcpp_type if rtype else "void"
@@ -950,7 +957,7 @@ class API:
                 c_namespace = module.name
             fcwrap.write(indent + "namespace " + module.name + " { // " + module.doc + "\n\n")
             indent += "  "
-            for rtype, name, args, doc, rawc in module.fs:
+            for rtype, name, args, doc, special in module.fs:
                 # gmshc.h
                 fname = c_namespace + name[0].upper() + name[1:]
                 f.write("\n/* " + "\n * ".join(textwrap.wrap(doc, 75)) + " */\n")
@@ -959,7 +966,7 @@ class API:
                         + (",\n" + ' ' * len(fnameapi)).join(
                             list((a.c for a in args + (oint("ierr"), ))))
                         + ");\n")
-                if not rawc:
+                if special != 'rawc':
                     # gmshc.cpp
                     fc.write("GMSH_API " + (rtype.rc_type if rtype else "void"))
                     fc.write(" " + fname + "(" +
@@ -1035,7 +1042,7 @@ class API:
         def parg(a):
             return a.name + (("=" + a.python_value) if a.python_value else "")
         def write_function(f, fun, modulepath, indent):
-            (rtype, name, args, doc, rawc) = fun
+            (rtype, name, args, doc, special) = fun
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write("\n")
@@ -1097,7 +1104,7 @@ class API:
         def parg(a):
             return a.name + ((" = " + a.julia_value) if a.julia_value else "")
         def write_function(f, fun, c_mpath, jl_mpath):
-            (rtype, name, args, doc, rawc) = fun
+            (rtype, name, args, doc, special) = fun
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write('\n"""\n    ')
@@ -1171,7 +1178,7 @@ class API:
             full = parent + "/" + module.name
             f.write("@heading Module @code{" + full + "}\n");
             f.write("@ftable @code\n");
-            for rtype, name, args, doc, rawc in module.fs:
+            for rtype, name, args, doc, special in module.fs:
                 f.write("@item " + name + "\n");
                 tdoc = doc.replace("`", "@code{").replace("'", "}")
                 f.write("\n".join(textwrap.wrap(tdoc, 80)) + "\n\n")
