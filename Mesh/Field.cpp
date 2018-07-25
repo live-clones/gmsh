@@ -10,7 +10,7 @@
 #include <cstdlib>
 #include <limits>
 #include <list>
-#include <math.h>
+#include <cmath>
 #include <fstream>
 #include <string>
 #include <string.h>

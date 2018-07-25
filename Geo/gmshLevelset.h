@@ -10,7 +10,7 @@
 #define _GMSH_LEVELSET_H_
 
 #include <string>
-#include <math.h>
+#include <cmath>
 #include <stdio.h>
 #include <stdlib.h> // for abs()
 #include <vector>

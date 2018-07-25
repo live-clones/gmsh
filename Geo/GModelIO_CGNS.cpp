@@ -32,7 +32,7 @@
 #include <string>
 #include <vector>
 #include <queue>
-#include <math.h>
+#include <cmath>
 #include <fstream>
 #include <sstream>
 #include <string>

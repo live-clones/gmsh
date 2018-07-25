@@ -6,7 +6,7 @@
 #ifndef _SPHERE_POSITION_WIDGET_H_
 #define _SPHERE_POSITION_WIDGET_H_
 
-#include <math.h>
+#include <cmath>
 #include <FL/Fl_Widget.H>
 #include <FL/fl_draw.H>
 #include <FL/Fl.H>

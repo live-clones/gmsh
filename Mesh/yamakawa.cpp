@@ -9,7 +9,7 @@
 #include <iterator>
 #include <fstream>
 #include <sstream>
-#include <math.h>
+#include <cmath>
 #include "yamakawa.h"
 #include "GModel.h"
 #include "OS.h"

@@ -8,7 +8,7 @@
 
 // Intersection of a curve and a surface using newton's method
 // FD are used to compute derivatives of the parametrizations
-#include <math.h>
+#include <cmath>
 #include "SPoint3.h"
 #include "SVector3.h"
 #include "GFace.h"

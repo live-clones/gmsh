@@ -4,7 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <stdlib.h>
-#include <math.h>
+#include <cmath>
 #include <limits>
 #include "GmshConfig.h"
 #include "GmshMessage.h"

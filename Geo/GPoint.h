@@ -6,7 +6,7 @@
 #ifndef _GPOINT_H_
 #define _GPOINT_H_
 
-#include <math.h>
+#include <cmath>
 
 class GEntity;
 

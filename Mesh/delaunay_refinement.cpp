@@ -10,7 +10,7 @@
 #include <set>
 #include <vector>
 #include <algorithm>
-#include <math.h>
+#include <cmath>
 #include "GmshMessage.h"
 #include "OS.h"
 #include "SPoint3.h"

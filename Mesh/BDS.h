@@ -159,7 +159,9 @@ public:
   {
     edges.erase(std::remove(edges.begin(), edges.end(), e), edges.end());
   }
+
   std::vector<BDS_Face *> getTriangles() const;
+
   BDS_Point(int id, double x = 0, double y = 0, double z = 0)
     : _lcBGM(1.e22)
     , _lcPTS(1.e22)
@@ -180,12 +182,26 @@ class BDS_Edge {
   std::vector<BDS_Face *> _faces;
 
 public:
-  bool deleted;
-  BDS_Point *p1, *p2;
-  BDS_GeomEntity *g;
+  BDS_Edge(BDS_Point *A, BDS_Point *B)
+    : deleted(false)
+    , g(0)
+  {
+    if(*A < *B) {
+      p1 = A;
+      p2 = B;
+    }
+    else {
+      p1 = B;
+      p2 = A;
+    }
+    p1->edges.push_back(this);
+    p2->edges.push_back(this);
+    update();
+  }
+
   BDS_Face *faces(std::size_t const i) const { return _faces[i]; }
   double length() const { return _length; }
-  int numfaces() const { return (int)_faces.size(); }
+  int numfaces() const { return static_cast<int>(_faces.size()); }
   int numTriangles() const;
   BDS_Point *commonvertex(const BDS_Edge *other) const
   {
@@ -197,7 +213,7 @@ public:
   {
     if(p1 == p) return p2;
     if(p2 == p) return p1;
-    return 0;
+    return NULL;
   }
   void addface(BDS_Face *f) { _faces.push_back(f); }
   bool operator<(const BDS_Edge &other) const
@@ -232,29 +248,29 @@ public:
                         (p1->Y - p2->Y) * (p1->Y - p2->Y) +
                         (p1->Z - p2->Z) * (p1->Z - p2->Z));
   }
-  BDS_Edge(BDS_Point *A, BDS_Point *B)
-    : deleted(false)
-    , g(0)
-  {
-    if(*A < *B) {
-      p1 = A;
-      p2 = B;
-    }
-    else {
-      p1 = B;
-      p2 = A;
-    }
-    p1->edges.push_back(this);
-    p2->edges.push_back(this);
-    update();
-  }
+
+public:
+  bool deleted;
+  BDS_Point *p1, *p2;
+  BDS_GeomEntity *g;
 };
 
 class BDS_Face {
 public:
-  bool deleted;
-  BDS_Edge *e1, *e2, *e3, *e4;
-  BDS_GeomEntity *g;
+  BDS_Face(BDS_Edge *A, BDS_Edge *B, BDS_Edge *C, BDS_Edge *D = 0)
+    : deleted(false)
+    , e1(A)
+    , e2(B)
+    , e3(C)
+    , e4(D)
+    , g(0)
+  {
+    e1->addface(this);
+    e2->addface(this);
+    e3->addface(this);
+    if(e4) e4->addface(this);
+  }
+
   int numEdges() const { return e4 ? 4 : 3; }
   BDS_Edge *oppositeEdge(BDS_Point *p)
   {
@@ -297,19 +313,11 @@ public:
       n[3] = e3->commonvertex(e4);
     }
   }
-  BDS_Face(BDS_Edge *A, BDS_Edge *B, BDS_Edge *C, BDS_Edge *D = 0)
-    : deleted(false)
-    , e1(A)
-    , e2(B)
-    , e3(C)
-    , e4(D)
-    , g(0)
-  {
-    e1->addface(this);
-    e2->addface(this);
-    e3->addface(this);
-    if(e4) e4->addface(this);
-  }
+
+public:
+  bool deleted;
+  BDS_Edge *e1, *e2, *e3, *e4;
+  BDS_GeomEntity *g;
 };
 
 struct GeomLessThan {

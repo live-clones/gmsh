@@ -6,7 +6,7 @@
 #ifndef _GMSH_SURFACE_H_
 #define _GMSH_SURFACE_H_
 
-#include <math.h>
+#include <cmath>
 #include <map>
 #include "Pair.h"
 #include "Range.h"
