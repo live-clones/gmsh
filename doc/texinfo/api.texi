@@ -2312,11 +2312,12 @@ the file (currently "brep", "step" or "iges").
 @end table
 
 @item importShapesNativePointer
-Imports native OpenCASCADE shapes by providing a raw pointer to a TopoDS_Shape,
-as a @code{void *}. The imported entities are returned in @code{outDimTags}. If
-the optional argument @code{highestDimOnly} is set, only import the highest
-dimensional entities in the file. This function is unsafe, as providing an
-invalide pointer to @code{shape} will lead to undefined behavior.
+Imports an OpenCASCADE @code{shape} by providing a pointer to a native
+OpenCASCADE @code{TopoDS_Shape} object (passed as a pointer to void). The
+imported entities are returned in @code{outDimTags}. If the optional argument
+@code{highestDimOnly} is set, only import the highest dimensional entities in
+@code{shape}. Warning: this function is unsafe, as providing an invalid pointer
+will lead to undefined behavior.
 
 @table @asis
 @item Input:

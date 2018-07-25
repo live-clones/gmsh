@@ -1483,12 +1483,12 @@ GMSH_API void gmshModelOccImportShapes(const char * fileName,
                                        const char * format,
                                        int * ierr);
 
-/* Imports native OpenCASCADE shapes by providing a raw pointer to a
- * TopoDS_Shape, as a `void *'. The imported entities are returned in
- * `outDimTags'. If the optional argument `highestDimOnly' is set, only import
- * the highest dimensional entities in the file. Warning: this function is
- * unsafe, as providing an invalid pointer to `shape' will lead to undefined
- * behavior. */
+/* Imports an OpenCASCADE `shape' by providing a pointer to a native
+ * OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The
+ * imported entities are returned in `outDimTags'. If the optional argument
+ * `highestDimOnly' is set, only import the highest dimensional entities in
+ * `shape'. Warning: this function is unsafe, as providing an invalid pointer
+ * will lead to undefined behavior. */
 GMSH_API void gmshModelOccImportShapesNativePointer(const void * shape,
                                                     int ** outDimTags, size_t * outDimTags_n,
                                                     const int highestDimOnly,
