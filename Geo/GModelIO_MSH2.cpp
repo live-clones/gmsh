@@ -557,25 +557,28 @@ int GModel::_readMSH2(const std::string &name)
 
   // copying periodic information from the mesh
 
-  rewind(fp);
-
-  while(1) {
-
-    while(str[0] != '$'){
-      if(!fgets(str, sizeof(str), fp) || feof(fp))
+  if(!CTX::instance()->mesh.ignorePeriodicity) {
+    
+    rewind(fp);
+    
+    while(1) {
+      
+      while(str[0] != '$'){
+        if(!fgets(str, sizeof(str), fp) || feof(fp))
+          break;
+      }
+      if(feof(fp))
         break;
-    }
-    if(feof(fp))
-      break;
-
-    if(!strncmp(&str[1], "Periodic",8) && strncmp(&str[1],"PeriodicNodes",13)) {
-      readMSHPeriodicNodes(fp,this);
-      break;
-    }
-    do {
-      if(!fgets(str, sizeof(str), fp) || feof(fp))
+      
+      if(!strncmp(&str[1], "Periodic",8) && strncmp(&str[1],"PeriodicNodes",13)) {
+        readMSHPeriodicNodes(fp,this);
         break;
-    } while(str[0] != '$');
+      }
+      do {
+        if(!fgets(str, sizeof(str), fp) || feof(fp))
+          break;
+      } while(str[0] != '$');
+    }
   }
 
   fclose(fp);
