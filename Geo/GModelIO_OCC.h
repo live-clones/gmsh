@@ -532,7 +532,7 @@ public:
   }
   bool fillet(const std::vector<int> &volumeTags,
               const std::vector<int> &curveTags,
-              std::vector<double> &radii,
+              const std::vector<double> &radii,
               std::vector<std::pair<int, int> > &outDimTags,
               bool removeVolume)
   {
