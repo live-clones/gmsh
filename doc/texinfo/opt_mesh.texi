@@ -16,6 +16,11 @@ Threshold angle below which normals are not smoothed@*
 Default value: @code{30}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.AngleToleranceFacetOverlap
+Consider connected facets as overlapping when the dihedral angle between the facets is smaller than the user's defined tolerance@*
+Default value: @code{0.1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.AnisoMax
 Maximum anisotropy of the mesh@*
 Default value: @code{1e+33}@*
@@ -302,8 +307,8 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionCreatePhysicals
-Create physical groups for partitions@*
-Default value: @code{0}@*
+Create physical groups for partitions, based on existing physical groups@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionCreateGhostCells
