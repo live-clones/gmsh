@@ -2123,13 +2123,35 @@ Add a pipe by extruding the entities @code{dimTags} along the wire
 @end table
 
 @item fillet
-Fillet the volumes @code{volumeTags} on the curves @code{curveTags} with radius
-@code{radius}. Return the filleted entities in @code{outDimTags}. Remove the
+Fillet the volumes @code{volumeTags} on the curves @code{curveTags} with radii
+@code{radii}. The @code{radii} vector can either contain a single radius, as
+many radii as @code{curveTags}, or twice as many as @code{curveTags} (in which
+case different radii are provided for the begin and end points of the curves).
+Return the filleted entities in @code{outDimTags}. Remove the original volume if
+@code{removeVolume} is set.
+
+@table @asis
+@item Input:
+@code{volumeTags}, @code{curveTags}, @code{radii}, @code{removeVolume}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item chamfer
+Chamfer the volumes @code{volumeTags} on the curves @code{curveTags} with
+distances @code{distances} measured on surfaces @code{surfaceTags}. The
+@code{distances} vector can either contain a single distance, as many distances
+as @code{curveTags} and @code{surfaceTags}, or twice as many as @code{curveTags}
+and @code{surfaceTags} (in which case the first in each pair is measured on the
+corresponding surface in @code{surfaceTags}, the other on the other adjacent
+surface). Return the chamfered entities in @code{outDimTags}. Remove the
 original volume if @code{removeVolume} is set.
 
 @table @asis
 @item Input:
-@code{volumeTags}, @code{curveTags}, @code{radius}, @code{removeVolume}
+@code{volumeTags}, @code{curveTags}, @code{surfaceTags}, @code{distances}, @code{removeVolume}
 @item Output:
 @code{outDimTags}
 @item Return:
