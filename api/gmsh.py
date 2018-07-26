@@ -22,11 +22,11 @@ GMSH_API_VERSION = "3.0"
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == 'Windows':
-    lib = CDLL(libdir + "/gmsh-3.0.dll")
+    lib = CDLL(os.path.join(libdir, "gmsh-3.0.dll"))
 elif platform.system() == 'Darwin':
-    lib = CDLL(libdir + "/libgmsh.dylib")
+    lib = CDLL(os.path.join(libdir, "libgmsh.dylib"))
 else:
-    lib = CDLL(libdir + "/libgmsh.so")
+    lib = CDLL(os.path.join(libdir, "libgmsh.so"))
 
 use_numpy = False
 try:

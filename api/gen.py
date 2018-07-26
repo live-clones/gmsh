@@ -25,7 +25,7 @@
 import os
 from GenApi import *
 
-dirname = os.path.dirname(os.path.abspath(__file__))
+dirname = os.path.dirname(os.path.realpath(__file__))
 
 with open(os.path.join(dirname, '..', 'CMakeLists.txt'), 'rt') as f:
     contents = f.read()
