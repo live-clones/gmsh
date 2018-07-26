@@ -11,7 +11,7 @@ gmsh.model.occ.synchronize()
 ent = gmsh.model.getEntities(0);
 gmsh.model.mesh.setSize(ent, 0.4);
 gmsh.model.mesh.setSize([(0,1)], 0.01);
-gmsh.model.mesh.setPeriodic(2, [2], [1], [1,0,0,R, 0,1,0,0, 0,0,1,0, 0,0,0,0])
+gmsh.model.mesh.setPeriodic(2, [2], [1], [1,0,0,R, 0,1,0,0, 0,0,1,0, 0,0,0,1])
 
 gmsh.model.mesh.generate(3)
 
