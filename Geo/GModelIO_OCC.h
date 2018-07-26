@@ -530,11 +530,22 @@ public:
   {
     return _error("add pipe");
   }
-  bool fillet(const std::vector<int> &volumeTags, const std::vector<int> &curveTags,
-              double radius, std::vector<std::pair<int, int> > &outDimTags,
+  bool fillet(const std::vector<int> &volumeTags,
+              const std::vector<int> &curveTags,
+              std::vector<double> &radii,
+              std::vector<std::pair<int, int> > &outDimTags,
               bool removeVolume)
   {
     return _error("create fillet");
+  }
+  bool chamfer(const std::vector<int> &volumeTags,
+               const std::vector<int> &curveTags,
+               const std::vector<int> &surfaceTags,
+               const std::vector<double> &distances,
+               std::vector<std::pair<int, int> > &outDimTags,
+               bool removeVolume)
+  {
+    return _error("create chamfer");
   }
   bool booleanOperator(int tag, BooleanOperator op,
                        const std::vector<std::pair<int, int> > &objectDimTags,
