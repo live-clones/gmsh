@@ -3096,7 +3096,7 @@ GMSH_API void gmsh::model::occ::addPipe(const vectorpair &dimTags,
 
 GMSH_API void gmsh::model::occ::fillet(const std::vector<int> &volumeTags,
                                        const std::vector<int> &curveTags,
-                                       const double radius,
+                                       const std::vector<double> &radii,
                                        vectorpair &outDimTags,
                                        const bool removeVolume)
 {
@@ -3104,7 +3104,23 @@ GMSH_API void gmsh::model::occ::fillet(const std::vector<int> &volumeTags,
   _createOcc();
   outDimTags.clear();
   if(!GModel::current()->getOCCInternals()->fillet
-     (volumeTags, curveTags, radius, outDimTags, removeVolume)){
+     (volumeTags, curveTags, radii, outDimTags, removeVolume)){
+    throw 1;
+  }
+}
+
+GMSH_API void gmsh::model::occ::chamfer(const std::vector<int> &volumeTags,
+                                        const std::vector<int> &curveTags,
+                                        const std::vector<int> &surfaceTags,
+                                        const std::vector<double> &distances,
+                                        vectorpair &outDimTags,
+                                        const bool removeVolume)
+{
+  if(!_isInitialized()){ throw -1; }
+  _createOcc();
+  outDimTags.clear();
+  if(!GModel::current()->getOCCInternals()->chamfer
+     (volumeTags, curveTags, surfaceTags, distances, outDimTags, removeVolume)){
     throw 1;
   }
 }

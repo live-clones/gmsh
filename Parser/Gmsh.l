@@ -148,6 +148,7 @@ Call                    return tCall;
 Catenary                return tCatenary;
 CatmullRom		return tSpline;
 Ceil                    return tCeil;
+Chamfer                 return tChamfer;
 Characteristic          return tCharacteristic;
 Circle                  return tCircle;
 CodeName                return tCodeName;

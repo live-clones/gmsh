@@ -197,7 +197,7 @@ struct doubleXstring{
 %token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk tWire tGeoEntity
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
-%token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet
+%token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet tChamfer
 %token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic tParent
 %token tUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
@@ -3918,17 +3918,19 @@ Extrude :
       if(!r) yymsg(0, "Could not add ruled thrusections");
       List_Delete($3);
     }
-  | tFillet '{' RecursiveListOfDouble '}' '{' RecursiveListOfDouble '}' '{' FExpr '}'
+  | tFillet '{' RecursiveListOfDouble '}' '{' RecursiveListOfDouble '}'
+            '{' RecursiveListOfDouble '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        double radius = $9;
         std::vector<int> regions, edges;
         ListOfDouble2Vector($3, regions); ListOfDouble2Vector($6, edges);
+        std::vector<double> radii;
+        ListOfDouble2Vector($9, radii);
         std::vector<std::pair<int, int> > outDimTags;
         r = GModel::current()->getOCCInternals()->fillet
-          (regions, edges, radius, outDimTags, true);
+          (regions, edges, radii, outDimTags, true);
         VectorOfPairs2ListOfShapes(outDimTags, $$);
       }
       else{
@@ -3937,6 +3939,32 @@ Extrude :
       if(!r) yymsg(0, "Could not fillet shapes");
       List_Delete($3);
       List_Delete($6);
+      List_Delete($9);
+    }
+  | tChamfer '{' RecursiveListOfDouble '}' '{' RecursiveListOfDouble '}'
+             '{' RecursiveListOfDouble '}' '{' RecursiveListOfDouble '}'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      bool r = true;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> regions, edges, surfaces;
+        ListOfDouble2Vector($3, regions); ListOfDouble2Vector($6, edges);
+        ListOfDouble2Vector($9, surfaces);
+        std::vector<double> distances;
+        ListOfDouble2Vector($12, distances);
+        std::vector<std::pair<int, int> > outDimTags;
+        r = GModel::current()->getOCCInternals()->chamfer
+          (regions, edges, surfaces, distances, outDimTags, true);
+        VectorOfPairs2ListOfShapes(outDimTags, $$);
+      }
+      else{
+        yymsg(0, "Chamfer only available with OpenCASCADE geometry kernel");
+      }
+      if(!r) yymsg(0, "Could not chamfer shapes");
+      List_Delete($3);
+      List_Delete($6);
+      List_Delete($9);
+      List_Delete($12);
     }
 ;
 

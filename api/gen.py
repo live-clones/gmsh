@@ -22,9 +22,22 @@
 # `demos/api' contains C++, C, Python and Julia versions of several of the
 # `.geo' tutorials from `tutorials'.
 
+import os
 from GenApi import *
 
-api = API('3.0')
+dirname = os.path.dirname(os.path.abspath(__file__))
+
+with open(os.path.join(dirname, '..', 'CMakeLists.txt'), 'rt') as f:
+    contents = f.read()
+    start = contents.find('GMSH_MAJOR_VERSION') + 18
+    end = contents.find(')', start)
+    major = int(contents[start:end])
+    start = contents.find('GMSH_MINOR_VERSION') + 18
+    end = contents.find(')', start)
+    minor = int(contents[start:end])
+
+version = str(major) + '.' + str(minor)
+api = API(version)
 
 ################################################################################
 
@@ -484,8 +497,18 @@ occ.add('revolve',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idou
 doc = '''Add a pipe by extruding the entities `dimTags' along the wire `wireTag'. Return the pipe in `outDimTags'.'''
 occ.add('addPipe',doc,None,ivectorpair('dimTags'),iint('wireTag'),ovectorpair('outDimTags'))
 
-doc = '''Fillet the volumes `volumeTags' on the curves `curveTags' with radius `radius'. Return the filleted entities in `outDimTags'. Remove the original volume if `removeVolume' is set.'''
-occ.add('fillet',doc,None,ivectorint('volumeTags'),ivectorint('curveTags'),idouble('radius'),ovectorpair('outDimTags'),ibool('removeVolume','true','True'))
+doc = '''Fillet the volumes `volumeTags' on the curves `curveTags' with radii `radii'. The `radii' vector can either contain a single radius, as many radii as `curveTags', or twice as many as `curveTags' (in which case different radii are provided for the begin and end points of the curves). Return the filleted entities in `outDimTags'. Remove the original volume if `removeVolume' is set.'''
+occ.add('fillet',doc,None,ivectorint('volumeTags'),ivectorint('curveTags'),ivectordouble('radii'),ovectorpair('outDimTags'),ibool('removeVolume','true','True'))
+
+doc = '''Chamfer the volumes `volumeTags' on the curves `curveTags' with distances
+`distances' measured on surfaces `surfaceTags'. The `distances' vector can
+either contain a single distance, as many distances as `curveTags' and
+`surfaceTags', or twice as many as `curveTags' and `surfaceTags' (in which case
+the first in each pair is measured on the corresponding surface in
+`surfaceTags', the other on the other adjacent surface). Return the chamfered
+entities in `outDimTags'. Remove the original volume if `removeVolume' is
+set.'''
+occ.add('chamfer',doc,None,ivectorint('volumeTags'),ivectorint('curveTags'),ivectorint('surfaceTags'),ivectordouble('distances'),ovectorpair('outDimTags'),ibool('removeVolume','true','True'))
 
 doc = '''Compute the boolean union (the fusion) of the entities `objectDimTags' and `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (ony valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('fuse',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))

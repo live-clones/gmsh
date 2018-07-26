@@ -1258,14 +1258,32 @@ namespace gmsh { // Top-level functions
                             const int wireTag,
                             gmsh::vectorpair & outDimTags);
 
-      // Fillet the volumes `volumeTags' on the curves `curveTags' with radius
-      // `radius'. Return the filleted entities in `outDimTags'. Remove the
-      // original volume if `removeVolume' is set.
+      // Fillet the volumes `volumeTags' on the curves `curveTags' with radii
+      // `radii'. The `radii' vector can either contain a single radius, as many
+      // radii as `curveTags', or twice as many as `curveTags' (in which case
+      // different radii are provided for the begin and end points of the curves).
+      // Return the filleted entities in `outDimTags'. Remove the original volume
+      // if `removeVolume' is set.
       GMSH_API void fillet(const std::vector<int> & volumeTags,
                            const std::vector<int> & curveTags,
-                           const double radius,
+                           const std::vector<double> & radii,
                            gmsh::vectorpair & outDimTags,
                            const bool removeVolume = true);
+
+      // Chamfer the volumes `volumeTags' on the curves `curveTags' with distances
+      // `distances' measured on surfaces `surfaceTags'. The `distances' vector can
+      // either contain a single distance, as many distances as `curveTags' and
+      // `surfaceTags', or twice as many as `curveTags' and `surfaceTags' (in which
+      // case the first in each pair is measured on the corresponding surface in
+      // `surfaceTags', the other on the other adjacent surface). Return the
+      // chamfered entities in `outDimTags'. Remove the original volume if
+      // `removeVolume' is set.
+      GMSH_API void chamfer(const std::vector<int> & volumeTags,
+                            const std::vector<int> & curveTags,
+                            const std::vector<int> & surfaceTags,
+                            const std::vector<double> & distances,
+                            gmsh::vectorpair & outDimTags,
+                            const bool removeVolume = true);
 
       // Compute the boolean union (the fusion) of the entities `objectDimTags' and
       // `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is

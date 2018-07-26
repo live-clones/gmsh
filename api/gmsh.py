@@ -3366,28 +3366,66 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def fillet(volumeTags, curveTags, radius, removeVolume=True):
+        def fillet(volumeTags, curveTags, radii, removeVolume=True):
             """
-            Fillet the volumes `volumeTags' on the curves `curveTags' with radius
-            `radius'. Return the filleted entities in `outDimTags'. Remove the original
-            volume if `removeVolume' is set.
+            Fillet the volumes `volumeTags' on the curves `curveTags' with radii
+            `radii'. The `radii' vector can either contain a single radius, as many
+            radii as `curveTags', or twice as many as `curveTags' (in which case
+            different radii are provided for the begin and end points of the curves).
+            Return the filleted entities in `outDimTags'. Remove the original volume if
+            `removeVolume' is set.
 
             Return `outDimTags'.
             """
             api_volumeTags_, api_volumeTags_n_ = _ivectorint(volumeTags)
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
+            api_radii_, api_radii_n_ = _ivectordouble(radii)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelOccFillet(
                 api_volumeTags_, api_volumeTags_n_,
                 api_curveTags_, api_curveTags_n_,
-                c_double(radius),
+                api_radii_, api_radii_n_,
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
                 c_int(bool(removeVolume)),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelOccFillet returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+
+        @staticmethod
+        def chamfer(volumeTags, curveTags, surfaceTags, distances, removeVolume=True):
+            """
+            Chamfer the volumes `volumeTags' on the curves `curveTags' with distances
+            `distances' measured on surfaces `surfaceTags'. The `distances' vector can
+            either contain a single distance, as many distances as `curveTags' and
+            `surfaceTags', or twice as many as `curveTags' and `surfaceTags' (in which
+            case the first in each pair is measured on the corresponding surface in
+            `surfaceTags', the other on the other adjacent surface). Return the
+            chamfered entities in `outDimTags'. Remove the original volume if
+            `removeVolume' is set.
+
+            Return `outDimTags'.
+            """
+            api_volumeTags_, api_volumeTags_n_ = _ivectorint(volumeTags)
+            api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
+            api_surfaceTags_, api_surfaceTags_n_ = _ivectorint(surfaceTags)
+            api_distances_, api_distances_n_ = _ivectordouble(distances)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelOccChamfer(
+                api_volumeTags_, api_volumeTags_n_,
+                api_curveTags_, api_curveTags_n_,
+                api_surfaceTags_, api_surfaceTags_n_,
+                api_distances_, api_distances_n_,
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                c_int(bool(removeVolume)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccChamfer returned non-zero error code: ",
                     ierr.value)
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 

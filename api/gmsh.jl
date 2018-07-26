@@ -2817,22 +2817,50 @@ function addPipe(dimTags, wireTag)
 end
 
 """
-    gmsh.model.occ.fillet(volumeTags, curveTags, radius, removeVolume = true)
+    gmsh.model.occ.fillet(volumeTags, curveTags, radii, removeVolume = true)
 
-Fillet the volumes `volumeTags` on the curves `curveTags` with radius `radius`.
-Return the filleted entities in `outDimTags`. Remove the original volume if
-`removeVolume` is set.
+Fillet the volumes `volumeTags` on the curves `curveTags` with radii `radii`.
+The `radii` vector can either contain a single radius, as many radii as
+`curveTags`, or twice as many as `curveTags` (in which case different radii are
+provided for the begin and end points of the curves). Return the filleted
+entities in `outDimTags`. Remove the original volume if `removeVolume` is set.
 
 Return `outDimTags`.
 """
-function fillet(volumeTags, curveTags, radius, removeVolume = true)
+function fillet(volumeTags, curveTags, radii, removeVolume = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccFillet, gmsh.lib), Void,
-          (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, volumeTags), length(volumeTags), convert(Vector{Cint}, curveTags), length(curveTags), radius, api_outDimTags_, api_outDimTags_n_, removeVolume, ierr)
+          (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, volumeTags), length(volumeTags), convert(Vector{Cint}, curveTags), length(curveTags), radii, length(radii), api_outDimTags_, api_outDimTags_n_, removeVolume, ierr)
     ierr[] != 0 && error("gmshModelOccFillet returned non-zero error code: $(ierr[])")
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+
+"""
+    gmsh.model.occ.chamfer(volumeTags, curveTags, surfaceTags, distances, removeVolume = true)
+
+Chamfer the volumes `volumeTags` on the curves `curveTags` with distances
+`distances` measured on surfaces `surfaceTags`. The `distances` vector can
+either contain a single distance, as many distances as `curveTags` and
+`surfaceTags`, or twice as many as `curveTags` and `surfaceTags` (in which case
+the first in each pair is measured on the corresponding surface in
+`surfaceTags`, the other on the other adjacent surface). Return the chamfered
+entities in `outDimTags`. Remove the original volume if `removeVolume` is set.
+
+Return `outDimTags`.
+"""
+function chamfer(volumeTags, curveTags, surfaceTags, distances, removeVolume = true)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccChamfer, gmsh.lib), Void,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, volumeTags), length(volumeTags), convert(Vector{Cint}, curveTags), length(curveTags), convert(Vector{Cint}, surfaceTags), length(surfaceTags), distances, length(distances), api_outDimTags_, api_outDimTags_n_, removeVolume, ierr)
+    ierr[] != 0 && error("gmshModelOccChamfer returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags

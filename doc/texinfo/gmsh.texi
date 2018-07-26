@@ -2198,10 +2198,20 @@ Creates ruled surfaces through the given curve loops or
 wires. @code{Ruled ThruSections} is only available with the OpenCASCADE
 kernel.
 
-@item Fillet @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression} @}
-Fillets volumes (first list) on some edges (second list), using the
-provided radius. @code{Fillet} is only available with the OpenCASCADE
-kernel.
+@item Fillet @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression-list} @}
+Fillets volumes (first list) on some curves (second list), using the
+provided radii (third list). The radius list can either contain a single
+radius, as many radii as curves, or twice as many as curves (in which
+case different radii are provided for the begin and end points of the
+curves). @code{Fillet} is only available with the OpenCASCADE kernel.
+
+@item Chamfer @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression-list} @}
+Chamfer volumes (first list) on some curves (second list), using the
+provided distance (fourth list) measured on the given surfaces (third
+list). The distance list can either contain a single distance, as many
+distances as curves, or twice as many as curves (in which case the first
+in each pair is measured on the given corresponding
+surface). @code{Chamfer} is only available with the OpenCASCADE kernel.
 @end ftable
 
 @noindent with

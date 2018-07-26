@@ -1973,14 +1973,32 @@ GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n, const int wir
   }
 }
 
-GMSH_API void gmshModelOccFillet(int * volumeTags, size_t volumeTags_n, int * curveTags, size_t curveTags_n, const double radius, int ** outDimTags, size_t * outDimTags_n, const int removeVolume, int * ierr)
+GMSH_API void gmshModelOccFillet(int * volumeTags, size_t volumeTags_n, int * curveTags, size_t curveTags_n, double * radii, size_t radii_n, int ** outDimTags, size_t * outDimTags_n, const int removeVolume, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_volumeTags_(volumeTags, volumeTags + volumeTags_n);
     std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
+    std::vector<double> api_radii_(radii, radii + radii_n);
     gmsh::vectorpair api_outDimTags_;
-    gmsh::model::occ::fillet(api_volumeTags_, api_curveTags_, radius, api_outDimTags_, removeVolume);
+    gmsh::model::occ::fillet(api_volumeTags_, api_curveTags_, api_radii_, api_outDimTags_, removeVolume);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelOccChamfer(int * volumeTags, size_t volumeTags_n, int * curveTags, size_t curveTags_n, int * surfaceTags, size_t surfaceTags_n, double * distances, size_t distances_n, int ** outDimTags, size_t * outDimTags_n, const int removeVolume, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_volumeTags_(volumeTags, volumeTags + volumeTags_n);
+    std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
+    std::vector<int> api_surfaceTags_(surfaceTags, surfaceTags + surfaceTags_n);
+    std::vector<double> api_distances_(distances, distances + distances_n);
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::occ::chamfer(api_volumeTags_, api_curveTags_, api_surfaceTags_, api_distances_, api_outDimTags_, removeVolume);
     vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
   }
   catch(int api_ierr_){

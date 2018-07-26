@@ -1349,15 +1349,34 @@ GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n,
                                   int ** outDimTags, size_t * outDimTags_n,
                                   int * ierr);
 
-/* Fillet the volumes `volumeTags' on the curves `curveTags' with radius
- * `radius'. Return the filleted entities in `outDimTags'. Remove the original
- * volume if `removeVolume' is set. */
+/* Fillet the volumes `volumeTags' on the curves `curveTags' with radii
+ * `radii'. The `radii' vector can either contain a single radius, as many
+ * radii as `curveTags', or twice as many as `curveTags' (in which case
+ * different radii are provided for the begin and end points of the curves).
+ * Return the filleted entities in `outDimTags'. Remove the original volume if
+ * `removeVolume' is set. */
 GMSH_API void gmshModelOccFillet(int * volumeTags, size_t volumeTags_n,
                                  int * curveTags, size_t curveTags_n,
-                                 const double radius,
+                                 double * radii, size_t radii_n,
                                  int ** outDimTags, size_t * outDimTags_n,
                                  const int removeVolume,
                                  int * ierr);
+
+/* Chamfer the volumes `volumeTags' on the curves `curveTags' with distances
+ * `distances' measured on surfaces `surfaceTags'. The `distances' vector can
+ * either contain a single distance, as many distances as `curveTags' and
+ * `surfaceTags', or twice as many as `curveTags' and `surfaceTags' (in which
+ * case the first in each pair is measured on the corresponding surface in
+ * `surfaceTags', the other on the other adjacent surface). Return the
+ * chamfered entities in `outDimTags'. Remove the original volume if
+ * `removeVolume' is set. */
+GMSH_API void gmshModelOccChamfer(int * volumeTags, size_t volumeTags_n,
+                                  int * curveTags, size_t curveTags_n,
+                                  int * surfaceTags, size_t surfaceTags_n,
+                                  double * distances, size_t distances_n,
+                                  int ** outDimTags, size_t * outDimTags_n,
+                                  const int removeVolume,
+                                  int * ierr);
 
 /* Compute the boolean union (the fusion) of the entities `objectDimTags' and
  * `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is

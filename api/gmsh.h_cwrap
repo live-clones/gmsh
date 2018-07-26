@@ -2313,23 +2313,58 @@ namespace gmsh { // Top-level functions
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
       }
 
-      // Fillet the volumes `volumeTags' on the curves `curveTags' with radius
-      // `radius'. Return the filleted entities in `outDimTags'. Remove the
-      // original volume if `removeVolume' is set.
+      // Fillet the volumes `volumeTags' on the curves `curveTags' with radii
+      // `radii'. The `radii' vector can either contain a single radius, as many
+      // radii as `curveTags', or twice as many as `curveTags' (in which case
+      // different radii are provided for the begin and end points of the curves).
+      // Return the filleted entities in `outDimTags'. Remove the original volume
+      // if `removeVolume' is set.
       GMSH_API void fillet(const std::vector<int> & volumeTags,
                            const std::vector<int> & curveTags,
-                           const double radius,
+                           const std::vector<double> & radii,
                            gmsh::vectorpair & outDimTags,
                            const bool removeVolume = true)
       {
         int ierr = 0;
         int *api_volumeTags_; size_t api_volumeTags_n_; vector2ptr(volumeTags, &api_volumeTags_, &api_volumeTags_n_);
         int *api_curveTags_; size_t api_curveTags_n_; vector2ptr(curveTags, &api_curveTags_, &api_curveTags_n_);
+        double *api_radii_; size_t api_radii_n_; vector2ptr(radii, &api_radii_, &api_radii_n_);
         int *api_outDimTags_; size_t api_outDimTags_n_;
-        gmshModelOccFillet(api_volumeTags_, api_volumeTags_n_, api_curveTags_, api_curveTags_n_, radius, &api_outDimTags_, &api_outDimTags_n_, (int)removeVolume, &ierr);
+        gmshModelOccFillet(api_volumeTags_, api_volumeTags_n_, api_curveTags_, api_curveTags_n_, api_radii_, api_radii_n_, &api_outDimTags_, &api_outDimTags_n_, (int)removeVolume, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_volumeTags_);
         gmshFree(api_curveTags_);
+        gmshFree(api_radii_);
+        outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+      }
+
+      // Chamfer the volumes `volumeTags' on the curves `curveTags' with distances
+      // `distances' measured on surfaces `surfaceTags'. The `distances' vector can
+      // either contain a single distance, as many distances as `curveTags' and
+      // `surfaceTags', or twice as many as `curveTags' and `surfaceTags' (in which
+      // case the first in each pair is measured on the corresponding surface in
+      // `surfaceTags', the other on the other adjacent surface). Return the
+      // chamfered entities in `outDimTags'. Remove the original volume if
+      // `removeVolume' is set.
+      GMSH_API void chamfer(const std::vector<int> & volumeTags,
+                            const std::vector<int> & curveTags,
+                            const std::vector<int> & surfaceTags,
+                            const std::vector<double> & distances,
+                            gmsh::vectorpair & outDimTags,
+                            const bool removeVolume = true)
+      {
+        int ierr = 0;
+        int *api_volumeTags_; size_t api_volumeTags_n_; vector2ptr(volumeTags, &api_volumeTags_, &api_volumeTags_n_);
+        int *api_curveTags_; size_t api_curveTags_n_; vector2ptr(curveTags, &api_curveTags_, &api_curveTags_n_);
+        int *api_surfaceTags_; size_t api_surfaceTags_n_; vector2ptr(surfaceTags, &api_surfaceTags_, &api_surfaceTags_n_);
+        double *api_distances_; size_t api_distances_n_; vector2ptr(distances, &api_distances_, &api_distances_n_);
+        int *api_outDimTags_; size_t api_outDimTags_n_;
+        gmshModelOccChamfer(api_volumeTags_, api_volumeTags_n_, api_curveTags_, api_curveTags_n_, api_surfaceTags_, api_surfaceTags_n_, api_distances_, api_distances_n_, &api_outDimTags_, &api_outDimTags_n_, (int)removeVolume, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_volumeTags_);
+        gmshFree(api_curveTags_);
+        gmshFree(api_surfaceTags_);
+        gmshFree(api_distances_);
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
       }
 
