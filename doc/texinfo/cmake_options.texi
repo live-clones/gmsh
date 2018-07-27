@@ -113,7 +113,7 @@ Enable SLEPc eigensolvers (required for conformal compounds) (default: ON)
 @item ENABLE_SOLVER
 Enable built-in finite element solvers (required for compounds) (default: ON)
 @item ENABLE_SYSTEM_CONTRIB
-Use system versions of contrib libraries, when possible (default: ON)
+Use system versions of contrib libraries, when possible (default: OFF)
 @item ENABLE_TCMALLOC
 Enable libtcmalloc, a fast malloc implementation but that does not release memory (default: OFF)
 @item ENABLE_VISUDEV
