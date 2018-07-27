@@ -969,7 +969,7 @@ static void onelab_input_choice_file_chooser_cb(Fl_Widget *w, void *data)
   Fl_Input_Choice *but = (Fl_Input_Choice*)w->parent();
   if(fileChooser(FILE_CHOOSER_SINGLE, "Choose", "", but->value())){
     but->value(fileChooserGetName(1).c_str());
-    but->do_callback(but, data);
+    but->do_callback();
   }
 }
 
