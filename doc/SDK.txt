@@ -20,12 +20,12 @@ SDK layout:
   * include/gmshc.h: C API header
   * include/gmsh.h_cwrap: C++ wrapper of the C API (see the `Notes' below)
   * bin/gmsh: gmsh executable (linked with the shared Gmsh library)
-  * share/doc/gmsh/demos/api : API examples in C++, Python and C
+  * share/doc/gmsh/demos/api : API examples in C++, C, Python and Julia
 
 Notes:
 
-  * The C API (and the Python bindings, which use the C API internally) should
-    work with most compilers.
+  * The C API (as well as the Python and Julia bindings, which use the C API 
+    internally) should work with most compilers.
 
   * The C++ API will only work if your compiler has the same Application Binary
     Interface (ABI) as the compiler used to build this SDK. (The SDKs compiled
