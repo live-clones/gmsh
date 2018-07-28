@@ -1989,7 +1989,8 @@ static void addPhysical(GModel *const model, GEntity *entity,
   GEntity *parent = entity->getParentEntity();
   if(parent == 0) return;
 
-  if(!CTX::instance()->mesh.partitionCreatePhysicals){
+  if(!CTX::instance()->mesh.partitionCreatePhysicals ||
+     CTX::instance()->mesh.partitionOldStyleMsh2){
     // reuse physicals from parent entity
     entity->physicals = parent->physicals;
     return;

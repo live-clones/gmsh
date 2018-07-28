@@ -5826,6 +5826,13 @@ double opt_mesh_partition_create_ghost_cells(OPT_ARGS_NUM)
   return CTX::instance()->mesh.partitionCreateGhostCells;
 }
 
+double opt_mesh_partition_old_style_msh2(OPT_ARGS_NUM)
+{
+  if (action & GMSH_SET)
+    CTX::instance()->mesh.partitionOldStyleMsh2 = val;
+  return CTX::instance()->mesh.partitionOldStyleMsh2;
+}
+
 double opt_mesh_binary(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

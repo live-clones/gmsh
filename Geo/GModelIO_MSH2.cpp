@@ -558,18 +558,18 @@ int GModel::_readMSH2(const std::string &name)
   // copying periodic information from the mesh
 
   if(!CTX::instance()->mesh.ignorePeriodicity) {
-    
+
     rewind(fp);
-    
+
     while(1) {
-      
+
       while(str[0] != '$'){
         if(!fgets(str, sizeof(str), fp) || feof(fp))
           break;
       }
       if(feof(fp))
         break;
-      
+
       if(!strncmp(&str[1], "Periodic",8) && strncmp(&str[1],"PeriodicNodes",13)) {
         readMSHPeriodicNodes(fp,this);
         break;
@@ -737,6 +737,20 @@ static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
   return n;
 }
 
+static int _getElementary(GEntity *ge)
+{
+  if(CTX::instance()->mesh.partitionOldStyleMsh2 &&
+     ge->getParentEntity() && ge->getParentEntity()->dim() == ge->dim()){
+    // hack for backward compatibility of partitioned meshes in MSH2 format: use
+    // elementary tag of parent entity if they are of the same dimension
+    // (i.e. if they are not partition boundaries)
+    return ge->getParentEntity()->tag();
+  }
+  else{
+    return ge->tag();
+  }
+}
+
 int GModel::_writeMSH2(const std::string &name, double version, bool binary,
                        bool saveAll, bool saveParametric, double scalingFactor,
                        int elementStartNum, int saveSinglePartition, bool multipleView,
@@ -837,103 +851,103 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
         if((*it)->points[i]->ownsParent())
           writeElementMSH(fp, this, (*it)->points[i]->getParent(),
                           saveAll, version, binary, num,
-                          (*it)->tag(), (*it)->physicals);
+                          _getElementary(*it), (*it)->physicals);
     }
     for(eiter it = firstEdge(); it != lastEdge(); ++it){
       for(unsigned int i = 0; i < (*it)->lines.size(); i++)
         if((*it)->lines[i]->ownsParent())
           writeElementMSH(fp, this, (*it)->lines[i]->getParent(),
                           saveAll, version, binary, num,
-                          (*it)->tag(), (*it)->physicals);
+                          _getElementary(*it), (*it)->physicals);
     }
     for(fiter it = firstFace(); it != lastFace(); ++it){
       for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
         if((*it)->triangles[i]->ownsParent())
           writeElementMSH(fp, this, (*it)->triangles[i]->getParent(),
                           saveAll, version, binary, num,
-                          (*it)->tag(), (*it)->physicals);
+                          _getElementary(*it), (*it)->physicals);
     }
     for(riter it = firstRegion(); it != lastRegion(); ++it){
       for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
         if((*it)->tetrahedra[i]->ownsParent())
           writeElementMSH(fp, this, (*it)->tetrahedra[i]->getParent(),
                           saveAll, version, binary, num,
-                          (*it)->tag(), (*it)->physicals);
+                          _getElementary(*it), (*it)->physicals);
     }
     for(fiter it = firstFace(); it != lastFace(); ++it){
       for(unsigned int i = 0; i < (*it)->polygons.size(); i++)
         if((*it)->polygons[i]->ownsParent())
           writeElementMSH(fp, this, (*it)->polygons[i]->getParent(),
                           saveAll, version, binary, num,
-                          (*it)->tag(), (*it)->physicals);
+                          _getElementary(*it), (*it)->physicals);
     }
     for(riter it = firstRegion(); it != lastRegion(); ++it){
       for(unsigned int i = 0; i < (*it)->polyhedra.size(); i++)
         if((*it)->polyhedra[i]->ownsParent())
           writeElementMSH(fp, this, (*it)->polyhedra[i]->getParent(),
                           saveAll, version, binary, num,
-                          (*it)->tag(), (*it)->physicals);
+                          _getElementary(*it), (*it)->physicals);
     }
   }
   // points
   for(viter it = firstVertex(); it != lastVertex(); ++it){
     writeElementsMSH(fp, this, (*it)->points, saveAll, saveSinglePartition,
                      version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     _getElementary(*it), (*it)->physicals);
   }
   // lines
   for(eiter it = firstEdge(); it != lastEdge(); ++it){
     writeElementsMSH(fp, this, (*it)->lines, saveAll, saveSinglePartition,
                      version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     _getElementary(*it), (*it)->physicals);
   }
   // triangles
   for(fiter it = firstFace(); it != lastFace(); ++it){
     writeElementsMSH(fp, this, (*it)->triangles, saveAll, saveSinglePartition,
                      version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     _getElementary(*it), (*it)->physicals);
   }
   // quads
   for(fiter it = firstFace(); it != lastFace(); ++it){
     writeElementsMSH(fp, this, (*it)->quadrangles, saveAll, saveSinglePartition,
                      version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     _getElementary(*it), (*it)->physicals);
   }
   // polygons
   for(fiter it = firstFace(); it != lastFace(); it++){
     writeElementsMSH(fp, this, (*it)->polygons, saveAll, saveSinglePartition,
                      version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     _getElementary(*it), (*it)->physicals);
   }
   // tets
   for(riter it = firstRegion(); it != lastRegion(); ++it){
     writeElementsMSH(fp, this, (*it)->tetrahedra, saveAll, saveSinglePartition,
                      version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     _getElementary(*it), (*it)->physicals);
   }
   // hexas
   for(riter it = firstRegion(); it != lastRegion(); ++it){
     writeElementsMSH(fp, this, (*it)->hexahedra, saveAll, saveSinglePartition,
                      version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     _getElementary(*it), (*it)->physicals);
   }
   // prisms
   for(riter it = firstRegion(); it != lastRegion(); ++it){
     writeElementsMSH(fp, this, (*it)->prisms, saveAll, saveSinglePartition,
                      version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     _getElementary(*it), (*it)->physicals);
   }
   // pyramids
   for(riter it = firstRegion(); it != lastRegion(); ++it){
     writeElementsMSH(fp, this, (*it)->pyramids, saveAll, saveSinglePartition,
                      version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     _getElementary(*it), (*it)->physicals);
   }
   // polyhedra
   for(riter it = firstRegion(); it != lastRegion(); ++it){
     writeElementsMSH(fp, this, (*it)->polyhedra, saveAll, saveSinglePartition,
                      version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     _getElementary(*it), (*it)->physicals);
   }
   // level set faces
   for(fiter it = firstFace(); it != lastFace(); ++it) {
@@ -941,7 +955,7 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
       MTriangle *t = (*it)->triangles[i];
       if(t->getDomain(0))
         writeElementMSH(fp, this, t, saveAll, version, binary, num,
-                        (*it)->tag(), (*it)->physicals, 0,
+                        _getElementary(*it), (*it)->physicals, 0,
                         getMeshElementIndex(t->getDomain(0)),
                         getMeshElementIndex(t->getDomain(1)));
     }
@@ -949,7 +963,7 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
       MPolygon *p = (*it)->polygons[i];
       if(p->getDomain(0))
         writeElementMSH(fp, this, p, saveAll, version, binary, num,
-                        (*it)->tag(), (*it)->physicals, 0,
+                        _getElementary(*it), (*it)->physicals, 0,
                         getMeshElementIndex(p->getDomain(0)),
                         getMeshElementIndex(p->getDomain(1)));
     }
@@ -960,7 +974,7 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
       MLine *l = (*it)->lines[i];
       if(l->getDomain(0))
         writeElementMSH(fp, this, l, saveAll, version, binary, num,
-                        (*it)->tag(), (*it)->physicals, 0,
+                        _getElementary(*it), (*it)->physicals, 0,
                         getMeshElementIndex(l->getDomain(0)),
                         getMeshElementIndex(l->getDomain(1)));
     }

@@ -51,6 +51,7 @@ struct contextMeshOptions {
   int partitionCreatePhysicals, partitionSplitMeshFiles, partitionSaveTopologyFile;
   int partitionTriWeight, partitionQuaWeight, partitionTetWeight, partitionHexWeight;
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
+  int partitionOldStyleMsh2;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
   // recombination
   int doRecombinationTest, recombinationTestStart;

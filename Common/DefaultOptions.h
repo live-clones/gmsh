@@ -1126,6 +1126,10 @@ StringXNumber MeshOptions_Number[] = {
     "Write one file for each mesh partition" },
   { F|O, "PartitionTopologyFile" , opt_mesh_partition_save_topology_file , 0 ,
     "Write a .pro file with the partition topology" },
+  { F|O, "PartitionOldStyleMsh2" , opt_mesh_partition_old_style_msh2 , 1 ,
+    "Write partitioned meshes in MSH2 format using old style (i.e. by not "
+    "referencing new partitioned entities, except on partition boundaries), "
+    "for backward compatibility" },
 
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. ,
     "Number of hexahedra in the current mesh (read-only)" },
