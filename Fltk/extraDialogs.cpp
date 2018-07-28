@@ -303,7 +303,7 @@ class cgnsImportDialog {
     int order_max = CTX::instance()->mesh.cgnsImportOrder;
     int order = 1;
     input_choice->clear();
-    char text[5];
+    char text[128];
     while (order < 5 && order <= order_max && order_max < 10 && order_max > 0) {
       sprintf(text, "%d", order);
       input_choice->add(text);
