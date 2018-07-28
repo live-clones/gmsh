@@ -12,6 +12,8 @@ RUN cd occt-V7_3_0 && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Releas
 
 RUN cd occt-V7_3_0/build && make install
 
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+
 VOLUME ["/etc/gitlab-runner"]
 RUN useradd -ms /bin/bash validator
 USER validator
