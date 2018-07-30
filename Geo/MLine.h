@@ -70,6 +70,7 @@ class MLine : public MElement {
   virtual const char *getStringForPOS() const { return "SL"; }
   virtual const char *getStringForBDF() const { return "CBAR"; }
   virtual const char *getStringForINP() const { return "T3D2"/*"C1D2"*/; }
+  virtual const char *getStringForKEY() const { return "_BEAM"; }
   virtual const char *getStringForTOCHNOG() const { return "-bar2"; }
   virtual void reverse()
   {
@@ -137,6 +138,7 @@ class MLine3 : public MLine {
     return getVertex(map[num]);
   }
   virtual MVertex *getVertexINP(int num){ return getVertexUNV(num); }
+  virtual MVertex *getVertexKEY(int num){ return getVertexUNV(num); }
   virtual int getNumEdgeVertices() const { return 1; }
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
@@ -151,6 +153,7 @@ class MLine3 : public MLine {
   virtual int getTypeForVTK() const { return 21; }
   virtual const char *getStringForPOS() const { return "SL2"; }
   virtual const char *getStringForINP() const { return "T3D3"/*"C1D3"*/; }
+  virtual const char *getStringForKEY() const { return "_BEAM_ELBOW"; }
   virtual const char *getStringForTOCHNOG() const { return "-bar3"; }
   virtual void getNode(int num, double &u, double &v, double &w) const
   {

@@ -98,6 +98,7 @@ class MQuadrangle : public MElement {
   virtual const char *getStringForBDF() const { return "CQUAD4"; }
   virtual const char *getStringForDIFF() const { return "ElmB4n2D"; }
   virtual const char *getStringForINP() const { return "CPS4"/*"C2D4"*/; }
+  virtual const char *getStringForKEY() const { return "_SHELL"; }
   virtual const char *getStringForTOCHNOG() const { return "-quad4"; }
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
@@ -225,6 +226,7 @@ class MQuadrangle8 : public MQuadrangle {
   virtual const char *getStringForBDF() const { return "CQUAD8"; }
   virtual const char *getStringForDIFF() const { return "ElmB8n2D"; }
   virtual const char *getStringForINP() const { return "CPS8"/*"C2D8"*/; }
+  virtual const char *getStringForKEY() const { return "_SHELL"; }
   virtual void reverse()
   {
     MVertex *tmp;

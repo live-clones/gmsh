@@ -110,6 +110,7 @@ class MPrism : public MElement {
   virtual const char *getStringForPOS() const { return "SI"; }
   virtual const char *getStringForBDF() const { return "CPENTA"; }
   virtual const char *getStringForINP() const { return "C3D6"; }
+  virtual const char *getStringForKEY() const { return "_SOLID"; }
   virtual void reverse()
   {
     MVertex *tmp;
@@ -256,6 +257,7 @@ class MPrism15 : public MPrism {
     return getVertex(map[num]);
   }
   virtual MVertex *getVertexINP(int num){ return getVertexBDF(num); }
+  virtual MVertex *getVertexKEY(int num){ return getVertexBDF(num); }
   virtual int getNumEdgeVertices() const { return 9; }
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
@@ -288,6 +290,7 @@ class MPrism15 : public MPrism {
   virtual int getTypeForUNV() const { return 113; } // solid parabolic wedge
   virtual const char *getStringForBDF() const { return "CPENTA"; }
   virtual const char *getStringForINP() const { return "C3D15"; }
+  virtual const char *getStringForKEY() const { return "_SOLID_P15"; } /* not implemented yet */
   virtual void reverse()
   {
     MVertex *tmp;

@@ -106,6 +106,7 @@ class MHexahedron : public MElement {
   virtual const char *getStringForBDF() const { return "CHEXA"; }
   virtual const char *getStringForDIFF() const { return "ElmB8n3D"; }
   virtual const char *getStringForINP() const { return "C3D8"; }
+  virtual const char *getStringForKEY() const { return "_SOLID"; }
    virtual const char *getStringForTOCHNOG() const { return "-hex8"; }
   virtual void reverse()
   {
@@ -250,6 +251,12 @@ class MHexahedron20 : public MHexahedron {
                               9, 16, 18, 19, 17, 10, 12, 14, 15};
     return getVertex(map[num]);
   }
+  virtual MVertex *getVertexKEY(int num)
+  {
+    static const int map[20]={0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 13,
+                              9, 16, 18, 19, 17, 10, 12, 14, 15};
+    return getVertex(map[num]);
+  }
   virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[20] = {2, 3, 7, 6, 0, 1, 5, 4, 9, 18, 12,
@@ -295,6 +302,7 @@ class MHexahedron20 : public MHexahedron {
   virtual int getTypeForVTK() const { return 25; }
   virtual const char *getStringForBDF() const { return "CHEXA"; }
   virtual const char *getStringForINP() const { return "C3D20"; }
+  virtual const char *getStringForKEY() const { return "_SOLID_H20"; }
   virtual const char *getStringForDIFF() const { return "ElmB20n3D"; }
   virtual void reverse()
   {
@@ -367,6 +375,12 @@ class MHexahedron27 : public MHexahedron {
                                 17, 10, 12, 14, 15, 26, 20, 25, 21, 23, 24, 22};
     return getVertex(map[num]);
   }
+  virtual MVertex *getVertexKEY(int num)
+  {
+    static const int map[27] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 13, 9, 16, 18, 19,
+                                17, 10, 12, 14, 15, 26, 20, 25, 21, 23, 24, 22};
+    return getVertex(map[num]);
+  }
   virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[27] = {6, 8, 26, 24, 0, 2, 20, 18, 7, 15, 3, 17, 5, 25,
@@ -415,6 +429,7 @@ class MHexahedron27 : public MHexahedron {
   virtual const char *getStringForPOS() const { return "SH2"; }
   virtual const char *getStringForDIFF() const { return "ElmB27n3D"; }
   virtual const char *getStringForINP() const { return "C3D27"; }
+  virtual const char *getStringForKEY() const { return "_SOLID_H27"; }
   virtual const char *getStringForTOCHNOG() const { return "-hex27"; }
   virtual void reverse()
   {

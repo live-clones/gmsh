@@ -1810,6 +1810,54 @@ void MElement::writeINP(FILE *fp, int num)
   fprintf(fp, "\n");
 }
 
+void MElement::writeKEY(FILE *fp, int pid, int num)
+{
+  fprintf(fp, "%d, %d, ", num, pid);
+  int n = getNumVertices();
+  int nid[64];
+  int i;
+  for(i = 0; i < n; i++)
+    nid[i]=getVertexKEY(i)->getIndex();
+  if(getDim()==3){
+    if(n==4){ /* tet4, repeating n4 */
+      nid[7]=nid[6]=nid[5]=nid[4]=nid[3];
+    }
+    else if(n==6){ /* penta6, n8=n7 & n4=n3 */
+      nid[7]=nid[6]=nid[5];
+      nid[5]=nid[4];
+    }
+    if(n<8)n=8;
+  }
+  else if(getDim()==2){
+    if(n==3){ /* 3-node shell */
+      nid[3]=nid[2];
+      n++;
+    }
+    else if(n==6){ /* 6-node shell */
+      nid[7]=nid[6]=nid[5];
+      nid[5]=nid[4];
+      nid[4]=nid[3];
+      nid[3]=nid[2];
+      n=8;
+    }
+  }
+  else if(getDim()==1){
+    if(n==3){ /* elbow, write the third node on the next line */
+      nid[8]=nid[2];
+      for(i=2;i<8;i++)nid[i]=0;
+      n=9;
+    }
+  }
+  for(i = 0; i < n; i++){
+    fprintf(fp, "%d", nid[i]);
+    if(i != n - 1){
+      fprintf(fp, ", ");
+      if(!((i+2) % 10)) fprintf(fp, "\n");
+    }
+  }
+  fprintf(fp, "\n");
+}
+
 void MElement::writeSU2(FILE *fp, int num)
 {
   fprintf(fp, "%d ", getTypeForVTK());
