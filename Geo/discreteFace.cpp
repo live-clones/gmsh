@@ -61,6 +61,7 @@ void discreteFace::setBoundEdges(const std::vector<int> &tagEdges,
 
 // split old GEdge's
 
+#ifdef HAVE_HXT
 static void splitDiscreteEdge(GEdge *de , MVertex *v, GVertex *gv, int &TAG)
 {
   GVertex *gv0 = de->getBeginVertex();
@@ -89,6 +90,7 @@ static void splitDiscreteEdge(GEdge *de , MVertex *v, GVertex *gv, int &TAG)
   de->model()->add(de_new[0]);
   de->model()->add(de_new[1]);
 }
+#endif
 
 void discreteFace::writeGEO(FILE *fp)
 {
@@ -160,20 +162,22 @@ class dfWrapper{
     : _p(p) , _distance (1.e22) , _t3d(NULL), _t2d(NULL){}
 };
 
-static SVector3 _NORMAL_ ( const MTriangle &t3d)
+#ifdef HAVE_HXT
+static SVector3 _NORMAL_(const MTriangle &t3d)
 {
 
-  SVector3 v31 (t3d.getVertex(2)->x()- t3d.getVertex(0)->x(),
-		t3d.getVertex(2)->y()- t3d.getVertex(0)->y(),
-		t3d.getVertex(2)->z()- t3d.getVertex(0)->z());
-  SVector3 v21 (t3d.getVertex(1)->x()- t3d.getVertex(0)->x(),
-		t3d.getVertex(1)->y()- t3d.getVertex(0)->y(),
-		t3d.getVertex(1)->z()- t3d.getVertex(0)->z());
+  SVector3 v31 (t3d.getVertex(2)->x() - t3d.getVertex(0)->x(),
+		t3d.getVertex(2)->y() - t3d.getVertex(0)->y(),
+		t3d.getVertex(2)->z() - t3d.getVertex(0)->z());
+  SVector3 v21 (t3d.getVertex(1)->x() - t3d.getVertex(0)->x(),
+		t3d.getVertex(1)->y() - t3d.getVertex(0)->y(),
+		t3d.getVertex(1)->z() - t3d.getVertex(0)->z());
   SVector3 n = crossprod(v31,v21);
 
   n.normalize();
   return n;
 }
+#endif
 
 bool discreteFace_rtree_callback(std::pair<MTriangle*,MTriangle*> *t,void* w)
 {
