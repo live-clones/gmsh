@@ -122,10 +122,10 @@ set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap)
 if(ENABLE_PRIVATE_API)
   message(WARNING "The private API is unsupported and undocumented. It is meant "
           "for expert Gmsh developers, not for regular Gmsh users, who should rely "
-          "on the stable public API (gmsh.h) instead. If you are packaging Gmsh "
-          "for redistribution (e.g. for a Linux distro), please DO NOT distribute the "
-          "private API (i.e. all the internal header files), and ship the stable "
-          "public API instead (i.e. gmsh.h).")
+          "on the stable public API (gmsh/api) instead. If you are repackaging Gmsh, "
+          "e.g. for a Linux distribution, please DO NOT distribute the private API "
+          "(i.e. all the internal headers) and ship the stable public API instead "
+          "(i.e. only the headers and modules in gmsh/api).")
   file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Geo/*.h Mesh/*.h Solver/*.h
     Post/*.h Graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
     contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
