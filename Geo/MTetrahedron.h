@@ -105,6 +105,7 @@ class MTetrahedron : public MElement {
   virtual const char *getStringForBDF() const { return "CTETRA"; }
   virtual const char *getStringForDIFF() const { return "ElmT4n3D"; }
   virtual const char *getStringForINP() const { return "C3D4"; }
+  virtual const char *getStringForKEY() const { return "_SOLID"; }
   virtual const char *getStringForTOCHNOG() const { return "-tet4"; }
   virtual void reverse()
   {
@@ -247,6 +248,7 @@ class MTetrahedron10 : public MTetrahedron {
   }
   virtual MVertex *getVertexDIFF(int num){ return getVertexBDF(num); }
   virtual MVertex *getVertexINP(int num){ return getVertexBDF(num); }
+  virtual MVertex *getVertexKEY(int num){ return getVertexBDF(num); }
   virtual int getNumEdgeVertices() const { return 6; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual int getNumEdgesRep(bool curved);
@@ -279,6 +281,7 @@ class MTetrahedron10 : public MTetrahedron {
   virtual const char *getStringForBDF() const { return "CTETRA"; }
   virtual const char *getStringForDIFF() const { return "ElmT10n3D"; }
   virtual const char *getStringForINP() const { return "C3D10"; }
+  virtual const char *getStringForKEY() const { return "_SOLID"; }
   virtual const char *getStringForTOCHNOG() const { return "-tet10"; }
   virtual void reverse()
   {
