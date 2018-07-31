@@ -40,6 +40,12 @@ RUN cd ${SLEPC_DIR} && ./configure && make
 RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git gmsh_mini_lib
 RUN cd gmsh_mini_lib && mkdir lib && cd lib && cmake -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_BUILD_LIB=1 -DENABLE_PRIVATE_API=1 .. && make -j8 lib && make install/fast
 
+# -----------------------
+# HDF5 and CGNS
+# -----------------------
+
+RUN apt-get install -y libhdf5-dev
+RUN apt-get install -y libcgns-dev
 
 VOLUME ["/etc/gitlab-runner"]
 RUN useradd -ms /bin/bash validator
