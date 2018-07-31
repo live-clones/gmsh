@@ -54,11 +54,17 @@ linux64_docker_cxx98_compat_ci:
     - tags
 
 linux64_docker_minimal_ci:
-  image: onelab/ubuntu16.04
+  image: onelab/ubuntu18.04
   script:
     - mkdir build
     - cd build
-    - cmake -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 ${EXTRA_OPTION} ..
+    - cmake -DDEFAULT=0 ${EXTRA_OPTION} ..
+    - make -j 4
+    - cmake -DENABLE_PARSER=1 ..
+    - make -j 4
+    - cmake -DENABLE_POST=1 ..
+    - make -j 4
+    - cmake -DENABLE_MESH=1 ..
     - make -j 4
   tags:
     - linux64
