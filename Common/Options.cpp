@@ -6300,7 +6300,7 @@ double opt_mesh_draw_skin_only(OPT_ARGS_NUM)
 double opt_mesh_save_all(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.saveAll = val ? 1 : 0;
+    CTX::instance()->mesh.saveAll = (int)val;
   return CTX::instance()->mesh.saveAll;
 }
 
@@ -6328,7 +6328,7 @@ double opt_mesh_save_topology(OPT_ARGS_NUM)
 double opt_mesh_save_groups_of_nodes(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.saveGroupsOfNodes = val ? 1 : 0;
+    CTX::instance()->mesh.saveGroupsOfNodes = (int)val;
   return CTX::instance()->mesh.saveGroupsOfNodes;
 }
 
