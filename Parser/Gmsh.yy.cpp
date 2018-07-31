@@ -1251,9 +1251,9 @@ char *gmsh_yytext;
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModelIO_GEO.h"
+#include "Geo.h" // for Shape, NEWPOINT(), etc.
 #include "Parser.h"
 #include "Gmsh.tab.hpp"
-#include "Geo.h" // for NEWPOINT(), etc.
 
 void   parsestring(char endchar);
 char  *strsave(char *ptr);
