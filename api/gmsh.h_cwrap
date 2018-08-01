@@ -2923,6 +2923,28 @@ namespace gmsh { // Top-level functions
 
   } // namespace onelab
 
+  namespace logger { // Message logger functions
+
+    // Start logging messages in `log'.
+    GMSH_API void start(std::vector<std::string> & log)
+    {
+      int ierr = 0;
+      char **api_log_; size_t api_log_n_;
+      gmshLoggerStart(&api_log_, &api_log_n_, &ierr);
+      if(ierr) throw ierr;
+      log.resize(api_log_n_); for(size_t i = 0; i < api_log_n_; ++i){ log[i] = std::string(api_log_[i]); gmshFree(api_log_[i]); } gmshFree(api_log_);
+    }
+
+    // Stop logging messages.
+    GMSH_API void stop()
+    {
+      int ierr = 0;
+      gmshLoggerStop(&ierr);
+      if(ierr) throw ierr;
+    }
+
+  } // namespace logger
+
 } // namespace gmsh
 
 #endif

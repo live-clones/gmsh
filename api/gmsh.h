@@ -1581,6 +1581,16 @@ namespace gmsh { // Top-level functions
 
   } // namespace onelab
 
+  namespace logger { // Message logger functions
+
+    // Start logging messages in `log'.
+    GMSH_API void start(std::vector<std::string> & log);
+
+    // Stop logging messages.
+    GMSH_API void stop();
+
+  } // namespace logger
+
 } // namespace gmsh
 
 #endif

@@ -1679,4 +1679,11 @@ GMSH_API void gmshOnelabRun(const char * name,
                             const char * command,
                             int * ierr);
 
+/* Start logging messages in `log'. */
+GMSH_API void gmshLoggerStart(char *** log, size_t * log_n,
+                              int * ierr);
+
+/* Stop logging messages. */
+GMSH_API void gmshLoggerStop(int * ierr);
+
 #endif

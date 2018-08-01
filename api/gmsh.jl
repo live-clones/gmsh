@@ -3621,4 +3621,49 @@ end
 
 end # end of module onelab
 
+"""
+    module gmsh.logger
+
+Message logger functions
+"""
+module logger
+
+import ..gmsh
+
+"""
+    gmsh.logger.start()
+
+Start logging messages in `log`.
+
+Return `log`.
+"""
+function start()
+    api_log_ = Ref{Ptr{Ptr{Cchar}}}()
+    api_log_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshLoggerStart, gmsh.lib), Void,
+          (Ptr{Ptr{Cchar}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_log_, api_log_n_, ierr)
+    ierr[] != 0 && error("gmshLoggerStart returned non-zero error code: $(ierr[])")
+    tmp_api_log_ = unsafe_wrap(Array, api_log_[], api_log_n_[], true)
+    log = [unsafe_string(tmp_api_log_[i]) for i in 1:length(tmp_api_log_) ]
+    return log
+end
+
+"""
+    gmsh.logger.stop()
+
+Stop logging messages.
+"""
+function stop()
+    ierr = Ref{Cint}()
+    ccall((:gmshLoggerStop, gmsh.lib), Void,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshLoggerStop returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+end # end of module logger
+
 end # end of module gmsh

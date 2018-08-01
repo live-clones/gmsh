@@ -150,6 +150,43 @@ GMSH_API void gmsh::clear()
   throw 1;
 }
 
+class apiMsg : public GmshMessage{
+ private:
+  std::vector<std::string> &_log;
+ public:
+  apiMsg(std::vector<std::string> &log) : _log(log) {}
+  virtual void operator()(std::string level, std::string message)
+  {
+    _log.push_back(level + ": " + message);
+  }
+};
+
+GMSH_API void gmsh::logger::start(std::vector<std::string> &log)
+{
+  if(!_isInitialized()){ throw -1; }
+  GmshMessage *msg = Msg::GetCallback();
+  if(msg){
+    Msg::Warning("Logger already started - ignoring");
+  }
+  else{
+    msg = new apiMsg(log);
+    Msg::SetCallback(msg);
+  }
+}
+
+GMSH_API void gmsh::logger::stop()
+{
+  if(!_isInitialized()){ throw -1; }
+  GmshMessage *msg = Msg::GetCallback();
+  if(msg){
+    delete msg;
+    Msg::SetCallback(0);
+  }
+  else{
+    Msg::Warning("Logger not started - ignoring");
+  }
+}
+
 // gmsh::option
 
 GMSH_API void gmsh::option::setNumber(const std::string &name,

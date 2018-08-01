@@ -4210,3 +4210,40 @@ class onelab:
             raise ValueError(
                 "gmshOnelabRun returned non-zero error code: ",
                 ierr.value)
+
+
+class logger:
+    """
+    Message logger functions
+    """
+
+    @staticmethod
+    def start():
+        """
+        Start logging messages in `log'.
+
+        Return `log'.
+        """
+        api_log_, api_log_n_ = POINTER(POINTER(c_char))(), c_size_t()
+        ierr = c_int()
+        lib.gmshLoggerStart(
+            byref(api_log_), byref(api_log_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshLoggerStart returned non-zero error code: ",
+                ierr.value)
+        return _ovectorstring(api_log_, api_log_n_.value)
+
+    @staticmethod
+    def stop():
+        """
+        Stop logging messages.
+        """
+        ierr = c_int()
+        lib.gmshLoggerStop(
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshLoggerStop returned non-zero error code: ",
+                ierr.value)

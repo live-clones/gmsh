@@ -637,6 +637,16 @@ onelab.add('run',doc,None,istring('name', '""'),istring('command', '""'))
 
 ################################################################################
 
+onelab = gmsh.add_module('logger','Message logger functions')
+
+doc = '''Start logging messages in `log'.'''
+onelab.add('start',doc,None,ovectorstring('log'))
+
+doc = '''Stop logging messages.'''
+onelab.add('stop',doc,None)
+
+################################################################################
+
 api.write_cpp()
 api.write_c()
 api.write_python()
