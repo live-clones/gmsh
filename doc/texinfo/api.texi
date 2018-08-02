@@ -2679,3 +2679,31 @@ might be linked to the processed input files.
 
 @end ftable
 
+@heading Module @code{/gmsh/logger}
+@ftable @code
+@item start
+Start logging messages in @code{log}.
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{log}
+@item Return:
+-
+@end table
+
+@item stop
+Stop logging messages.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@end ftable
+
