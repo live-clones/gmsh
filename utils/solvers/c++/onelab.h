@@ -39,6 +39,11 @@
 #include <sstream>
 #include "GmshSocket.h"
 
+//#define HAVE_PICOJSON
+#if defined(HAVE_PICOJSON)
+#include "picojson.h"
+#endif
+
 namespace onelab{
 
   // The base parameter class.
@@ -230,6 +235,16 @@ namespace onelab{
         out.push_back(getNextToken(msg, first, separator));
       return out;
     }
+    static std::string trim(const std::string &str,
+                            const std::string &whitespace = " \t\n")
+    {
+      std::string::size_type strBegin = str.find_first_not_of(whitespace);
+      if(strBegin == std::string::npos)
+        return ""; // no content
+      std::string::size_type strEnd = str.find_last_not_of(whitespace);
+      std::string::size_type strRange = strEnd - strBegin + 1;
+      return str.substr(strBegin, strRange);
+    }
     std::string sanitize(const std::string &in) const
     {
       std::string out(in);
@@ -322,35 +337,95 @@ namespace onelab{
       }
       return true;
     }
+    std::string sanitizeJSON(const std::string &in) const
+    {
+      // FIXME: replace \n with \\n, \t with \\t, etc.
+      return in;
+    }
     virtual std::string toJSON() const
     {
       std::ostringstream sstream;
       sstream << "\"type\":\"" << getType() << "\""
-              << ", \"version\":\"" << version() << "\""
-              << ", \"name\":\"" << sanitize(getName()) << "\""
-              << ", \"label\":\"" << sanitize(getLabel()) << "\""
-              << ", \"help\":\"" << sanitize(getHelp()) << "\""
-              << ", \"changedValue\":" << getChangedValue() << "\""
+              << ", \"name\":\"" << sanitizeJSON(getName()) << "\"";
+      if(getLabel().size())
+        sstream << ", \"label\":\"" << sanitizeJSON(getLabel()) << "\"";
+      if(getHelp().size())
+        sstream << ", \"help\":\"" << sanitizeJSON(getHelp()) << "\"";
+      sstream << ", \"changedValue\":" << getChangedValue()
               << ", \"visible\":" << (getVisible() ? "true" : "false")
-              << ", \"readOnly\":" << (getReadOnly() ? "true" : "false")
-              << ", \"attributes\":{ ";
-      for(std::map<std::string, std::string>::const_iterator it = _attributes.begin();
-          it != _attributes.end(); it++){
-        if(it != _attributes.begin()) sstream << ", ";
-        sstream << "\"" << sanitize(it->first) << "\":\""
-                << sanitize(it->second) << "\"";
+              << ", \"readOnly\":" << (getReadOnly() ? "true" : "false");
+      if(_attributes.size()){
+        sstream << ", \"attributes\":{ ";
+        for(std::map<std::string, std::string>::const_iterator it = _attributes.begin();
+            it != _attributes.end(); it++){
+          if(it != _attributes.begin()) sstream << ", ";
+          sstream << "\"" << sanitizeJSON(it->first) << "\":\""
+                  << sanitizeJSON(it->second) << "\"";
+        }
+        sstream << " }";
       }
-      sstream << " }"
-              << ", \"clients\":{ ";
-      for(std::map<std::string, int>::const_iterator it = getClients().begin();
-          it != getClients().end(); it++){
-        if(it != getClients().begin()) sstream << ", ";
-        sstream << "\"" << sanitize(it->first) << "\":"
-                << (it->second ? "true" : "false");
+      if(getClients().size()){
+        sstream << ", \"clients\":{ ";
+        for(std::map<std::string, int>::const_iterator it = getClients().begin();
+            it != getClients().end(); it++){
+          if(it != getClients().begin()) sstream << ", ";
+          sstream << "\"" << sanitizeJSON(it->first) << "\":"
+                  << it->second;
+        }
+        sstream << " }";
       }
-      sstream << " }";
       return sstream.str();
     }
+#if defined(HAVE_PICOJSON)
+    virtual bool fromJSON(const picojson::value::object& par)
+    {
+      for(picojson::value::object::const_iterator it = par.begin(); it != par.end(); ++it){
+        if(it->first == "name"){
+          if(!it->second.is<std::string>()) return false;
+          setName(it->second.get<std::string>());
+        }
+        else if(it->first == "label"){
+          if(!it->second.is<std::string>()) return false;
+          setLabel(it->second.get<std::string>());
+        }
+        else if(it->first == "help"){
+          if(!it->second.is<std::string>()) return false;
+          setHelp(it->second.get<std::string>());
+        }
+        else if(it->first == "changedValue"){
+          if(!it->second.is<double>()) return false;
+          setChangedValue((int)it->second.get<double>());
+        }
+        else if(it->first == "visible"){
+          if(!it->second.is<bool>()) return false;
+          setVisible(it->second.get<bool>());
+        }
+        else if(it->first == "readOnly"){
+          if(!it->second.is<bool>()) return false;
+          setReadOnly(it->second.get<bool>());
+        }
+        else if(it->first == "attributes"){
+          if(!it->second.is<picojson::object>()) return false;
+          const picojson::value::object &obj = it->second.get<picojson::object>();
+          for (picojson::value::object::const_iterator i = obj.begin(); i != obj.end(); ++i) {
+            std::string key(i->first);
+            if(!i->second.is<std::string>()) return false;
+            setAttribute(key, i->second.get<std::string>());
+          }
+        }
+        else if(it->first == "clients"){
+          if(!it->second.is<picojson::object>()) return false;
+          const picojson::value::object &obj = it->second.get<picojson::object>();
+          for (picojson::value::object::const_iterator i = obj.begin(); i != obj.end(); ++i) {
+            std::string client(i->first);
+            if(!i->second.is<double>()) return false;
+            addClient(client, (int)i->second.get<double>());
+          }
+        }
+      }
+      return true;
+    }
+#endif
   };
 
   class parameterLessThan{
@@ -490,7 +565,7 @@ namespace onelab{
       std::ostringstream sstream;
       sstream.precision(16);
       sstream << "{ " << parameter::toJSON()
-              << ", \"values\":[";
+              << ", \"values\":[ ";
       for(unsigned int i = 0; i < _values.size(); i++){
         if(i) sstream << ", ";
         sstream << _values[i];
@@ -499,22 +574,78 @@ namespace onelab{
               << ", \"min\":" << _min
               << ", \"max\":" << _max
               << ", \"step\":" << _step
-              << ", \"index\":" << _index
-              << ", \"choices\":[ ";
-      for(unsigned int i = 0; i < _choices.size(); i++){
-        if(i) sstream << ", ";
-        sstream << _choices[i];
+              << ", \"index\":" << _index;
+      if(_choices.size()){
+        sstream << ", \"choices\":[ ";
+        for(unsigned int i = 0; i < _choices.size(); i++){
+          if(i) sstream << ", ";
+          sstream << _choices[i];
+        }
+        sstream << " ]";
       }
-      sstream << " ]"
-              << ", \"valueLabels\":{ ";
-      for(std::map<double, std::string>::const_iterator it = _valueLabels.begin();
-          it != _valueLabels.end(); it++){
-        if(it != _valueLabels.begin()) sstream << ", ";
-        sstream << "\"" << sanitize(it->second) << "\":" << it->first;
+      if(_valueLabels.size()){
+        sstream << ", \"valueLabels\":{ ";
+        for(std::map<double, std::string>::const_iterator it = _valueLabels.begin();
+            it != _valueLabels.end(); it++){
+          if(it != _valueLabels.begin()) sstream << ", ";
+          sstream << "\"" << sanitizeJSON(it->second) << "\":" << it->first;
+        }
+        sstream << " }";
       }
-      sstream << " } }";
+      sstream << " }";
       return sstream.str();
     }
+#if defined(HAVE_PICOJSON)
+    bool fromJSON(const picojson::value::object& par)
+    {
+      if(!parameter::fromJSON(par)) return false;
+      for(picojson::value::object::const_iterator it = par.begin(); it != par.end(); ++it){
+        if(it->first == "values"){
+          if(!it->second.is<picojson::array>()) return false;
+          const picojson::value::array &arr = it->second.get<picojson::array>();
+          _values.resize(arr.size());
+          for(unsigned int i = 0; i < arr.size(); i++){
+            if(!arr[i].is<double>()) return false;
+            _values[i] = arr[i].get<double>();
+          }
+        }
+        else if(it->first == "min"){
+          if(!it->second.is<double>()) return false;
+          setMin(it->second.get<double>());
+        }
+        else if(it->first == "max"){
+          if(!it->second.is<double>()) return false;
+          setMax(it->second.get<double>());
+        }
+        else if(it->first == "step"){
+          if(!it->second.is<double>()) return false;
+          setStep(it->second.get<double>());
+        }
+        else if(it->first == "index"){
+          if(!it->second.is<double>()) return false;
+          setIndex((int)it->second.get<double>());
+        }
+        else if(it->first == "choices"){
+          if(!it->second.is<picojson::array>()) return false;
+          const picojson::value::array &arr = it->second.get<picojson::array>();
+          _choices.resize(arr.size());
+          for(unsigned int i = 0; i < arr.size(); i++){
+            if(!arr[i].is<double>()) return false;
+            _choices[i] = arr[i].get<double>();
+          }
+        }
+        else if(it->first == "valueLabels"){
+          if(!it->second.is<picojson::object>()) return false;
+          const picojson::value::object &obj = it->second.get<picojson::object>();
+          for (picojson::value::object::const_iterator i = obj.begin(); i != obj.end(); ++i) {
+            if(!i->second.is<double>()) return false;
+            _valueLabels[i->second.get<double>()] = i->first;
+          }
+        }
+      }
+      return true;
+    }
+#endif
   };
 
   // The string class. A string has a mutable "kind", that can be changed at
@@ -598,18 +729,53 @@ namespace onelab{
               << ", \"values\":[ " ;
       for(unsigned int i = 0; i < _values.size(); i++){
         if(i) sstream << ", ";
-        sstream << "\"" << sanitize(_values[i]) << "\"";
+        sstream << "\"" << sanitizeJSON(_values[i]) << "\"";
       }
-      sstream << " ] "
-              << ", \"kind\":\"" << sanitize(_kind) <<  "\""
-              << ", \"choices\":[ ";
-      for(unsigned int i = 0; i < _choices.size(); i++){
-        if(i) sstream << ", ";
-        sstream << "\"" << sanitize(_choices[i]) << "\"";
+      sstream << " ] ";
+      if(_kind.size())
+        sstream << ", \"kind\":\"" << sanitizeJSON(_kind) <<  "\"";
+      if(_choices.size()){
+        sstream << ", \"choices\":[ ";
+        for(unsigned int i = 0; i < _choices.size(); i++){
+          if(i) sstream << ", ";
+          sstream << "\"" << sanitizeJSON(_choices[i]) << "\"";
+        }
+        sstream << " ]";
       }
-      sstream << " ] }";
+      sstream << " }";
       return sstream.str();
     }
+#if defined(HAVE_PICOJSON)
+    bool fromJSON(const picojson::value::object& par)
+    {
+      if(!parameter::fromJSON(par)) return false;
+      for(picojson::value::object::const_iterator it = par.begin(); it != par.end(); ++it){
+        if(it->first == "values"){
+          if(!it->second.is<picojson::array>()) return false;
+          const picojson::value::array &arr = it->second.get<picojson::array>();
+          _values.resize(arr.size());
+          for(unsigned int i = 0; i < arr.size(); i++){
+            if(!arr[i].is<std::string>()) return false;
+            _values[i] = arr[i].get<std::string>();
+          }
+        }
+        else if(it->first == "kind"){
+          if(!it->second.is<std::string>()) return false;
+          setKind(it->second.get<std::string>());
+        }
+        else if(it->first == "choices"){
+          if(!it->second.is<picojson::array>()) return false;
+          const picojson::value::array &arr = it->second.get<picojson::array>();
+          _choices.resize(arr.size());
+          for(unsigned int i = 0; i < arr.size(); i++){
+            if(!arr[i].is<std::string>()) return false;
+            _choices[i] = arr[i].get<std::string>();
+          }
+        }
+      }
+      return true;
+    }
+#endif
   };
 
   // The parameter space, i.e., the set of parameters stored and handled by the
@@ -705,11 +871,6 @@ namespace onelab{
       }
       return NULL;
     }
-    void _getAllParameters(std::set<parameter*, parameterLessThan> &ps) const
-    {
-      ps.insert(_numbers.begin(), _numbers.end());
-      ps.insert(_strings.begin(), _strings.end());
-    }
   public:
     parameterSpace(){}
     ~parameterSpace(){ clear(); }
@@ -717,7 +878,7 @@ namespace onelab{
     {
       if(name.empty() && client.empty()){
         std::set<parameter*, parameterLessThan> ps;
-        _getAllParameters(ps);
+        getAllParameters(ps);
         for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
             it != ps.end(); it++)
           delete *it;
@@ -747,11 +908,13 @@ namespace onelab{
     {
       return _get(ps, name, client, _strings);
     }
-    void getPtr(number **ptr, const std::string name, const std::string client="")
+    void getPtr(number **ptr, const std::string &name,
+                const std::string &client = "")
     {
       *ptr = _getPtr(name, client, _numbers);
     }
-    void getPtr(string **ptr, const std::string name, const std::string client="")
+    void getPtr(string **ptr, const std::string &name,
+                const std::string &client = "")
     {
       *ptr = _getPtr(name, client, _strings);
     }
@@ -768,7 +931,7 @@ namespace onelab{
     bool hasClient(const std::string &client) const
     {
       std::set<parameter*, parameterLessThan> ps;
-      _getAllParameters(ps);
+      getAllParameters(ps);
       for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
           it != ps.end(); it++)
         if((*it)->hasClient(client)) return true;
@@ -779,7 +942,7 @@ namespace onelab{
     int getChanged(const std::string &client="") const
     {
       std::set<parameter*, parameterLessThan> ps;
-      _getAllParameters(ps);
+      getAllParameters(ps);
       int changed = 0;
       for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
           it != ps.end(); it++){
@@ -792,7 +955,7 @@ namespace onelab{
     void setChanged(int changed, const std::string &client="")
     {
       std::set<parameter*, parameterLessThan> ps;
-      _getAllParameters(ps);
+      getAllParameters(ps);
       for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
           it != ps.end(); it++)
         (*it)->setChanged(changed, client);
@@ -800,7 +963,7 @@ namespace onelab{
     void thresholdChanged(int threshold, const std::string &client="")
     {
       std::set<parameter*, parameterLessThan> ps;
-      _getAllParameters(ps);
+      getAllParameters(ps);
       for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
           it != ps.end(); it++){
         int changed = (*it)->getChanged(client);
@@ -814,7 +977,7 @@ namespace onelab{
     {
       std::vector<std::string> s;
       std::set<parameter*, parameterLessThan> ps;
-      _getAllParameters(ps);
+      getAllParameters(ps);
       for(std::set<parameter*, parameterLessThan>::const_iterator it = ps.begin();
           it != ps.end(); it++)
         if(client.empty() || (*it)->hasClient(client)){
@@ -841,7 +1004,7 @@ namespace onelab{
       }
       return true;
     }
-    void toJSON(std::string &json, const std::string &creator="",
+    bool toJSON(std::string &json, const std::string &creator="",
                 const std::string &client="") const
     {
       time_t now;
@@ -852,17 +1015,62 @@ namespace onelab{
       json += "{ \"onelab\":{\n";
       json += "  \"creator\":\"" + creator + "\",\n";
       json += "  \"date\":\"" + t + "\",\n";
-      json += "  \"parameters\":[ \n";
+      json += "  \"version\":\"" + parameter::version() + "\",\n";
+      json += "  \"parameters\":[\n";
       std::set<parameter*, parameterLessThan> ps;
-      _getAllParameters(ps);
+      getAllParameters(ps);
       for(std::set<parameter*, parameterLessThan>::const_iterator it = ps.begin();
           it != ps.end(); it++){
+        if(it != ps.begin()) json += ",\n";
         if(client.empty() || (*it)->hasClient(client)){
-	  if((*it)->getAttribute("NotInDb") != "True")
-	    json += "    " + (*it)->toJSON() + "\n";
+	  if((*it)->getAttribute("NotInDb") != "True"){
+	    json += "    " + (*it)->toJSON();
+          }
 	}
       }
-      json += "] }\n";
+      json += "\n  ] }\n}\n";
+      return true;
+    }
+    bool fromJSON(const std::string &json, const std::string &client="")
+    {
+#if defined(HAVE_PICOJSON)
+      picojson::value v;
+      std::string err = picojson::parse(v, json);
+      if(err.size()) return false;
+      if(!v.is<picojson::object>()) return false;
+      const picojson::value::object &obj = v.get<picojson::object>();
+      for (picojson::value::object::const_iterator i = obj.begin(); i != obj.end(); ++i) {
+        if(i->first == "onelab"){ // onelab database
+          if(!i->second.is<picojson::object>()) return false;
+          const picojson::value::object &db = i->second.get<picojson::object>();
+          for (picojson::value::object::const_iterator j = db.begin(); j != db.end(); ++j) {
+            if(j->first == "version"){
+              if(!j->second.is<std::string>()) return false;
+              if(j->second.get<std::string>() != parameter::version()) return false;
+            }
+            else if(j->first == "parameters"){
+              if(!j->second.is<picojson::array>()) return false;
+              const picojson::value::array &arr = j->second.get<picojson::array>();
+              for(unsigned int k = 0; k < arr.size(); k++){
+                if(!arr[k].is<picojson::object>()) return false;
+                const picojson::value::object &par = arr[k].get<picojson::object>();
+                picojson::value::object::const_iterator it = par.find("type");
+                if(it == par.end()) return false;
+                if(it->second.to_str() == "number"){
+                  number p; p.fromJSON(par); set(p, client);
+                }
+                else if(it->second.to_str() == "string"){
+                  string p; p.fromJSON(par); set(p, client);
+                }
+              }
+            }
+          }
+        }
+      }
+      return true;
+#else
+      return false;
+#endif
     }
   };
 
@@ -1024,9 +1232,13 @@ namespace onelab{
       if(parameter::fromFile(msg, fp)) return fromChar(msg, client);
       return false;
     }
-    void toJSON(std::string &json, const std::string &client="")
+    bool toJSON(std::string &json, const std::string &client="")
     {
-      _parameterSpace.toJSON(json, client);
+      return _parameterSpace.toJSON(json, client);
+    }
+    bool fromJSON(const std::string &json, const std::string &client="")
+    {
+      return _parameterSpace.fromJSON(json, client);
     }
   };
 
@@ -1343,6 +1555,7 @@ namespace onelab{
     }
     void runNonBlockingSubClient(const std::string &name, const std::string &command)
     {
+#if !defined(BUILD_IOS)
       if(!_gmshClient){
         int res = system(command.c_str());
         if(res){
@@ -1350,6 +1563,7 @@ namespace onelab{
         }
         return;
       }
+#endif
       std::string msg = name + parameter::charSep() + command;
       _gmshClient->SendMessage(GmshSocket::GMSH_CONNECT, msg.size(), &msg[0]);
       _numSubClients += 1;
