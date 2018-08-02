@@ -48,7 +48,7 @@ information), you should use the "gmsh.h_cwrap" header instead of "gmsh.h".  For
 example, to compile a C++ example with Microsoft Visual Studio 2017 in the
 Visual Studio shell:
 
-C:\gmsh-git-Windows64-sdk> ren include\gmsh.h_cwrap include\gmsh.h
+C:\gmsh-git-Windows64-sdk> ren include\gmsh.h_cwrap gmsh.h
 C:\gmsh-git-Windows64-sdk> cl /Iinclude share\doc\gmsh\demos\api\simple.cpp lib\libgmsh.dll.a
 C:\gmsh-git-Windows64-sdk> cd lib
 C:\gmsh-git-Windows64-sdk\lib> ..\simple.exe
