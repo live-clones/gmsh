@@ -55,8 +55,8 @@ class onelabGmshServer : public GmshServer{
       if(_client->getPid() < 0 || (_client->getExecutable().empty() &&
                                    !CTX::instance()->solver.listen))
         return 1; // process has been killed or we stopped listening
-#if defined(HAVE_FLTK)
       int ret = 0;
+#if defined(HAVE_FLTK)
       if(FlGui::available()){
         // if GUI available, check if there is data and return immediately (we
         // will wait for GUI events later - see below)
