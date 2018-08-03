@@ -1196,8 +1196,11 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
       std::map<MEdge,MLine*,Less_Edge> srcEdges;
       for (unsigned int i = 0; i < src->getNumMeshElements(); i++)  {
         MLine* srcLine = dynamic_cast<MLine*>(src->getMeshElement(i));
-        if (!srcLine) Msg::Error("Master element %d is not an edge",
-                                 src->getMeshElement(i)->getNum());
+        if (!srcLine){
+          Msg::Error("Master element %d is not an edge",
+                     src->getMeshElement(i)->getNum());
+          return;
+        }
         srcEdges[MEdge(srcLine->getVertex(0),
                        srcLine->getVertex(1))] = srcLine;
       }
@@ -1205,16 +1208,18 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
       for (unsigned int i = 0; i < tgt->getNumMeshElements(); ++i) {
         MLine* tgtLine = dynamic_cast<MLine*> (tgt->getMeshElement(i));
         MVertex* vtcs[2];
-        if (!tgtLine) Msg::Error("Slave element %d is not an edge ",
-                            tgt->getMeshElement(i)->getNum());
-
+        if (!tgtLine){
+          Msg::Error("Slave element %d is not an edge",
+                     tgt->getMeshElement(i)->getNum());
+          return;
+        }
         for (int iVtx = 0; iVtx < 2; iVtx++) {
           MVertex* vtx = tgtLine->getVertex(iVtx);
           std::map<MVertex*,MVertex*>::iterator tIter = v2v.find(vtx);
           if (tIter == v2v.end()) {
             Msg::Error("Cannot find periodic counterpart of vertex %d"
                        " of edge %d on edge %d",
-                       vtx->getNum(),tgt->tag(),src->tag());
+                       vtx->getNum(), tgt->tag(), src->tag());
           }
           else vtcs[iVtx] = tIter->second;
         }

@@ -915,10 +915,12 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE* fp,
     if(!slave){
       Msg::Error("Could not find periodic slave entity %d of dimension %d",
                  slaveTag, slaveDim);
+      return false;
     }
     if(!master){
       Msg::Error("Could not find periodic master entity %d of dimension %d",
                  masterTag, slaveDim);
+      return false;
     }
 
     long correspondingVertexSize = 0;

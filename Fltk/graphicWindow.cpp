@@ -1848,7 +1848,7 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
     if(ib == 'q')
       break;
-    if(ib == 'e'){
+    if(ib == 'e' && edge_to_split){
       split_edge(edge_to_split->tag(), List1, GModel::current()->getFileName());
       break;
     }
