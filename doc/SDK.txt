@@ -25,8 +25,7 @@ SDK layout:
 
 Notes:
 
-  * The C API (as well as the Python and Julia bindings, which use the C API
-    internally) should work with most compilers.
+  * The C API should work with most compilers.
 
   * The C++ API will only work if your compiler has the same Application Binary
     Interface (ABI) as the compiler used to build this SDK.
