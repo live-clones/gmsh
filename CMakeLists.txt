@@ -174,8 +174,20 @@ set(GMSH_PACKAGER "${PACKAGER}")
 if(APPLE)
   set(GMSH_OS "MacOSX")
 elseif(CYGWIN)
-  set(GMSH_OS "Windows")
-  add_definitions(-DWIN32) # recent mingw compiler doesn't define it
+  # detect if we use the mingw compilers on Cygwin - if we do, handle the build
+  # as a pure Windows build
+  if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR
+     CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpmachine
+                    OUTPUT_VARIABLE CXX_COMPILER_MACHINE
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(CXX_COMPILER_MACHINE MATCHES "mingw")
+      set(GMSH_OS "Windows")
+      set(WIN32 1)
+      add_definitions(-DWIN32)
+    endif(CXX_COMPILER_MACHINE MATCHES "mingw")
+  endif(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR
+        CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 else(APPLE)
   set(GMSH_OS "${CMAKE_SYSTEM_NAME}")
 endif(APPLE)
