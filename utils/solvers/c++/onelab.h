@@ -504,7 +504,14 @@ namespace onelab{
       setVisible(p.getVisible());
       setReadOnly(p.getReadOnly());
       setAttributes(p.getAttributes());
-      if(p.getValue() != getValue()){ // FIXME change this
+      bool changed = false;
+      for(unsigned int i = 0; i < p.getValues().size(); i++){
+        if(p.getValues()[i] != getValues()[i]){
+          changed = true;
+          break;
+        }
+      }
+      if(changed){
         setValues(p.getValues());
         setChanged(getChangedValue());
       }
@@ -685,7 +692,14 @@ namespace onelab{
       setVisible(p.getVisible());
       setReadOnly(p.getReadOnly());
       setAttributes(p.getAttributes());
-      if(p.getValue() != getValue()){ // FIXME: change this
+      bool changed = false;
+      for(unsigned int i = 0; i < p.getValues().size(); i++){
+        if(p.getValues()[i] != getValues()[i]){
+          changed = true;
+          break;
+        }
+      }
+      if(changed){
         setValues(p.getValues());
         setChanged(getChangedValue());
       }
