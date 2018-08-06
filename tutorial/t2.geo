@@ -95,7 +95,7 @@ Characteristic Length {103, 105, 109, 102, 28, 24, 6, 5} = lc * 3;
 // Note that, if the transformation tools are handy to create complex
 // geometries, it is also sometimes useful to generate the `flat' geometry, with
 // an explicit list of all elementary entities. This can be achieved by
-// selecting the `File->Save as->Gmsh unrolled geometry' menu or by typing
+// selecting the `File->Export->Gmsh unrolled geometry' menu or by typing
 //
 // > gmsh t2.geo -0
 //

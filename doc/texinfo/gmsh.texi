@@ -5675,7 +5675,7 @@ Use `Tools->Plugins->Cut Plane'.
 @item Can I save an isosurface to a file?
 
 Yes: first run `Tools->Plugins->Cut Map' to extract the isosurface,
-then use `View->Save As' to save the new view.
+then use `View->Export' to save the new view.
 
 @item Can Gmsh generate isovolumes?
 
