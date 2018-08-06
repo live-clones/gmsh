@@ -13,7 +13,7 @@
 // By design, the Gmsh C++ API is purely functional, and only uses elementary
 // types from the standard library. See `demos/api' for examples.
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(_USE_MATH_DEFINES)
 #define _USE_MATH_DEFINES
 #endif
 
