@@ -246,6 +246,8 @@ class CTX {
   int forcedBBox;
   // enable selection/hover/picking using the mouse
   int mouseSelection, mouseHoverMeshes, pickElements;
+  // invert sense of mouse wheel zoom
+  int mouseInvertZoom;
   // disable some warnings for expert users?
   int expertMode;
 #if defined(HAVE_VISUDEV)

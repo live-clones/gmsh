@@ -237,6 +237,7 @@ double opt_general_confirm_overwrite(OPT_ARGS_NUM);
 double opt_general_orthographic(OPT_ARGS_NUM);
 double opt_general_mouse_selection(OPT_ARGS_NUM);
 double opt_general_mouse_hover_meshes(OPT_ARGS_NUM);
+double opt_general_mouse_invert_zoom(OPT_ARGS_NUM);
 double opt_general_draw_bounding_box(OPT_ARGS_NUM);
 double opt_general_draw_oriented_bounding_box(OPT_ARGS_NUM);
 double opt_general_fast_redraw(OPT_ARGS_NUM);

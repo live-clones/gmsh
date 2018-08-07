@@ -303,6 +303,7 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_small_axes(0, GMSH_SET, o->general.butt[1]->value());
   opt_general_fast_redraw(0, GMSH_SET, o->general.butt[2]->value());
   opt_general_mouse_hover_meshes(0, GMSH_SET, o->general.butt[11]->value());
+  opt_general_mouse_invert_zoom(0, GMSH_SET, o->general.butt[22]->value());
   if(opt_general_double_buffer(0, GMSH_GET, 0) != o->general.butt[3]->value())
     opt_general_double_buffer(0, GMSH_SET, o->general.butt[3]->value());
   if(opt_general_antialiasing(0, GMSH_GET, 0) != o->general.butt[12]->value())
@@ -1343,7 +1344,7 @@ optionWindow::optionWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 37 * FL_NORMAL_SIZE + WB;
-  int height = 12 * BH + 4 * WB;
+  int height = 13 * BH + 4 * WB;
   int L = 7 * FL_NORMAL_SIZE;
 
   win = new paletteWindow
@@ -1447,6 +1448,11 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB + 2 * IW / 3, 2 * WB + 11 * BH, IW / 3, BH, "Rotation center");
       general.value[10]->align(FL_ALIGN_RIGHT);
       general.value[10]->callback(general_options_ok_cb, (void*)"rotation_center_coord");
+
+      general.butt[22] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 12 * BH, BW, BH, "Invert mouse wheel zoom direction");
+      general.butt[22]->type(FL_TOGGLE_BUTTON);
+      general.butt[22]->callback(general_options_ok_cb);
 
       o->end();
     }

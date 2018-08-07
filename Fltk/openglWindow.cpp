@@ -511,14 +511,15 @@ int openglWindow::handle(int event)
       _prev.set(_ctx, Fl::event_x(), Fl::event_y());
       double dy = Fl::event_dy();
       double fact = (5. * CTX::instance()->zoomFactor * fabs(dy) + h()) / (double)h();
+      bool direction = (CTX::instance()->mouseInvertZoom) ? (dy <= 0) : (dy > 0);
       if (CTX::instance()->camera){
-	fact = ((dy > 0) ? fact : 1. / fact);
+	fact = (direction ? fact : 1. / fact);
 	_ctx->camera.zoom(fact);
        	_ctx->camera.update();
 	redraw();
       }
       else{
-	_ctx->s[0] *= ((dy > 0) ? fact : 1./fact);
+	_ctx->s[0] *= (direction ? fact : 1./fact);
 	_ctx->s[1] = _ctx->s[0];
 	_ctx->s[2] = _ctx->s[0];
 	_prev.recenter(_ctx);
