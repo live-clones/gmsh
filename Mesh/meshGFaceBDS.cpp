@@ -169,8 +169,8 @@ static bool edgeSwapTestAngle(BDS_Edge *e, double min_cos)
   double norm2[3];
   normal_triangle(n1[0], n1[1], n1[2], norm1);
   normal_triangle(n2[0], n2[1], n2[2], norm2);
-  double cosa;prosca (norm1, norm2, &cosa);
-  return cosa > min_cos;
+
+  return prosca(norm1, norm2) > min_cos;
 }
 
 
@@ -229,14 +229,16 @@ static int edgeSwapTest(GFace *gf, BDS_Edge *e)
 
 static void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap, int FINALIZE = 0)
 {
+  //  return;
   BDS_SwapEdgeTest *qual;
-  if (gf->getNativeType() != GEntity::GmshModel)  qual = new BDS_SwapEdgeTestNormals(gf);
+  if (FINALIZE && gf->getNativeType() != GEntity::GmshModel)  qual = new BDS_SwapEdgeTestNormals(gf);
   else qual = new BDS_SwapEdgeTestQuality (true,true);
+  //    qual = new BDS_SwapEdgeTestQuality (true,true);
   typedef std::vector<BDS_Edge *>::size_type size_type;
   size_type origSize = m.edges.size();
   for(size_type index = 0; index < 2*origSize && index < m.edges.size(); ++index) {
     if(!m.edges.at(index)->deleted &&   m.edges.at(index)->numfaces() == 2) {
-      int const result = 1;//FINALIZE ? 1 : edgeSwapTest(gf, m.edges.at(index));
+      int const result = FINALIZE ? 1 : edgeSwapTest(gf, m.edges.at(index));
       if(result >= 0) {
 	if(m.swap_edge(m.edges.at(index), *qual)) {
 	  ++nb_swap;
@@ -244,6 +246,7 @@ static void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap, int FINALIZE = 0)
       }
     }
   }
+  m.cleanup();
   delete qual;
 }
 
@@ -620,6 +623,7 @@ void modifyInitialMeshToRemoveDegeneracies(GFace *gf, BDS_Mesh &m,
   std::set<MVertex *, MVertexLessThanNum> degenerated;
   std::vector<BDS_Edge*> degenerated_edges;
   getDegeneratedVertices (m,recoverMap,degenerated,degenerated_edges);
+  printf("%d degenerated vertices\n",degenerated.size());
   for (std::map<BDS_Point*, MVertex*,PointLessThan>::iterator it = recoverMap->begin();
        it != recoverMap->end(); ++it){
     std::set<MVertex *, MVertexLessThanNum>::iterator it2 = degenerated.find(it->second);
@@ -663,7 +667,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     }
   }
 
-  if (recoverMap)outputScalarField(m.triangles, "init.pos", 1, gf);
+  //  if (recoverMap)outputScalarField(m.triangles, "init.pos", 1, gf);
 
 
   // If asked, compute nodal size field using 1D Mesh
@@ -740,10 +744,10 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     t_col += t4 - t3;
     t_sm  += t6 - t5;
     m.cleanup();
-    //        char nn[256];
-    //        sprintf(nn,"ITER%d.pos",IT);
-    //        outputScalarField(m.triangles, nn, 1, gf);
-    //	getchar();
+    //            char nn[256];
+    //            sprintf(nn,"ITER%d.pos",IT);
+    //            outputScalarField(m.triangles, nn, 1, gf);
+    //    	getchar();
     
     IT++;
     Msg::Debug(" iter %3d minL %8.3f/%8.3f maxL %8.3f/%8.3f : "
@@ -753,7 +757,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     if (nb_split == 0 && nb_collaps == 0) break;
 
   }
-  outputScalarField(m.triangles, "before.pos", 1, gf);
+  //  outputScalarField(m.triangles, "before.pos", 1, gf);
 
   int ITER = 0;
   int bad = 0;
@@ -782,6 +786,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
 	pts[1]->config_modified = true;
 	pts[2]->config_modified = true;
 	bad ++;
+	if (val < 0) invalid++;
       }
 	//      }
     }
@@ -790,7 +795,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
       int nb_smooth = 0;
       swapEdgePass ( gf, m, nb_swap, 1);
       smoothVertexPass(gf, m, nb_smooth, true);
-      if (nb_swap == 0 &&  nb_smooth == 0){
+      if ((nb_swap == 0 &&  nb_smooth == 0) || ITER == 10){
 	if (invalid && !computeNodalSizeField)Msg::Warning("Meshing surface %d : %d elements remain invalid\n", gf->tag(),invalid);
 	break;
       }
@@ -801,7 +806,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     }
   }
   //  printf("NITER %d \n",ITER);
-  outputScalarField(m.triangles, "after.pos", 1, gf);
+  //  outputScalarField(m.triangles, "after.pos", 1, gf);
   //  getchar();
   //  for (size_t i=0;i<m.edges.size();i++){
   //    if (!m.edges[i]->deleted){

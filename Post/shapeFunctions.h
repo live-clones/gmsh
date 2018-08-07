@@ -74,7 +74,7 @@ public:
         jac[1][0] += _x[i] * s[1]; jac[1][1] += _y[i] * s[1]; jac[1][2] += _z[i] * s[1];
         jac[2][0] += _x[i] * s[2]; jac[2][1] += _y[i] * s[2]; jac[2][2] += _z[i] * s[2];
       }
-      return fabs(
+      return std::abs(
         jac[0][0] * jac[1][1] * jac[2][2] + jac[0][2] * jac[1][0] * jac[2][1] +
         jac[0][1] * jac[1][2] * jac[2][0] - jac[0][2] * jac[1][1] * jac[2][0] -
         jac[0][0] * jac[1][2] * jac[2][1] - jac[0][1] * jac[1][0] * jac[2][2]);
@@ -91,9 +91,10 @@ public:
         prodve(a, b, c);
         jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2];
       }
-      return sqrt(gmsh_SQU(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0]) +
-                  gmsh_SQU(jac[0][2] * jac[1][0] - jac[0][0] * jac[1][2]) +
-                  gmsh_SQU(jac[0][1] * jac[1][2] - jac[0][2] * jac[1][1]));
+      return std::sqrt(
+        std::pow(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0], 2) +
+        std::pow(jac[0][2] * jac[1][0] - jac[0][0] * jac[1][2], 2) +
+        std::pow(jac[0][1] * jac[1][2] - jac[0][2] * jac[1][1], 2));
     case 1:
       for(int i = 0; i < getNumNodes(); i++) {
         getGradShapeFunction(i, u, v, w, s);
@@ -102,8 +103,8 @@ public:
       {
         double a[3], b[3], c[3];
         a[0]= _x[1] - _x[0]; a[1]= _y[1] - _y[0]; a[2]= _z[1] - _z[0];
-        if((fabs(a[0]) >= fabs(a[1]) && fabs(a[0]) >= fabs(a[2])) ||
-           (fabs(a[1]) >= fabs(a[0]) && fabs(a[1]) >= fabs(a[2]))) {
+        if((std::abs(a[0]) >= std::abs(a[1]) && std::abs(a[0]) >= std::abs(a[2])) ||
+           (std::abs(a[1]) >= std::abs(a[0]) && std::abs(a[1]) >= std::abs(a[2]))) {
           b[0] = a[1]; b[1] = -a[0]; b[2] = 0.;
         }
         else {
@@ -113,7 +114,7 @@ public:
         jac[1][0] = b[0]; jac[1][1] = b[1]; jac[1][2] = b[2];
         jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2];
       }
-      return sqrt(gmsh_SQU(jac[0][0])+gmsh_SQU(jac[0][1])+gmsh_SQU(jac[0][2]));
+      return std::sqrt(std::pow(jac[0][0], 2)+std::pow(jac[0][1], 2)+std::pow(jac[0][2], 2));
     default:
       jac[0][0] = jac[1][1] = jac[2][2] = 1.;
       return 1.;
@@ -196,7 +197,7 @@ public:
     double sum = 0, sumabs = 0.;
     for(int i = 0; i < getNumNodes(); i++){
       sum += val[i];
-      sumabs += fabs(val[i]);
+      sumabs += std::abs(val[i]);
     }
     double res = 0.;
     if(sumabs)
@@ -245,7 +246,7 @@ public:
       double wn = uvw[2] +
         inv[0][2] * (xyz[0] - xn) + inv[1][2] * (xyz[1] - yn) + inv[2][2] * (xyz[2] - zn) ;
 
-      error = sqrt(gmsh_SQU(un - uvw[0]) + gmsh_SQU(vn - uvw[1]) + gmsh_SQU(wn - uvw[2]));
+      error = std::sqrt(std::pow(un - uvw[0], 2) + std::pow(vn - uvw[1], 2) + std::pow(wn - uvw[2], 2));
       uvw[0] = un;
       uvw[1] = vn;
       uvw[2] = wn;
@@ -260,7 +261,7 @@ public:
     for(int i = 0; i < getNumEdges(); i++){
       int n1, n2;
       getEdge(i, n1, n2);
-      double d = sqrt(gmsh_SQU(_x[n1]-_x[n2]) + gmsh_SQU(_y[n1]-_y[n2]) + gmsh_SQU(_z[n1]-_z[n2]));
+      double d = std::sqrt(std::pow(_x[n1]-_x[n2], 2) + std::pow(_y[n1]-_y[n2], 2) + std::pow(_z[n1]-_z[n2], 2));
       if(d > max) max = d;
     }
     return max;
@@ -304,7 +305,7 @@ public:
   }
   int isInside(double u, double v, double w)
   {
-    if(fabs(u) > TOL || fabs(v) > TOL || fabs(w) > TOL)
+    if(std::abs(u) > TOL || std::abs(v) > TOL || std::abs(w) > TOL)
       return 0;
     return 1;
   }
@@ -359,13 +360,11 @@ public:
     double v[3];
     for(int i = 0; i < 3; i++)
       v[i] = integrate(&val[i], 3);
-    double d;
-    prosca(t, v, &d);
-    return d;
+    return prosca(t, v);
   }
   int isInside(double u, double v, double w)
   {
-    if(u < -(1. + TOL) || u > (1. + TOL) || fabs(v) > TOL || fabs(w) > TOL)
+    if(u < -(1. + TOL) || u > (1. + TOL) || std::abs(v) > TOL || std::abs(w) > TOL)
       return 0;
     return 1;
   }
@@ -441,9 +440,7 @@ public:
     double v[3];
     for(int i = 0; i < 3; i++)
       v[i] = integrate(&val[i], 3);
-    double d;
-    prosca(n, v, &d);
-    return d;
+    return prosca(n, v);
   }
 #if 0 // faster, but only valid for triangles in the z=0 plane
   void xyz2uvw(double xyz[3], double uvw[3])
@@ -461,7 +458,7 @@ public:
 #endif
   int isInside(double u, double v, double w)
   {
-    if(u < -TOL || v < -TOL || u > ((1. + TOL) - v) || fabs(w) > TOL)
+    if(u < -TOL || v < -TOL || u > ((1. + TOL) - v) || std::abs(w) > TOL)
       return 0;
     return 1;
   }
@@ -536,14 +533,12 @@ public:
     double v[3];
     for(int i = 0; i < 3; i++)
       v[i] = integrate(&val[i], 3);
-    double d;
-    prosca(n, v, &d);
-    return d;
+    return prosca(n, v);
   }
   int isInside(double u, double v, double w)
   {
     if(u < -(1. + TOL) || v < -(1. + TOL) || u > (1. + TOL) || v > (1. + TOL) ||
-       fabs(w) > TOL)
+       std::abs(w) > TOL)
       return 0;
     return 1;
   }
@@ -935,16 +930,16 @@ public:
       switch(num) {
       case 0  : s[0] = 0.25 * ( -(1.-v) + v*w/(1.-w) ) ;
                 s[1] = 0.25 * ( -(1.-u) + u*w/(1.-w) ) ;
-                s[2] = 0.25 * ( -1.     + u*v/(1.-w) + u*v*w/gmsh_SQU(1.-w) ) ; break ;
+                s[2] = 0.25 * ( -1.     + u*v/(1.-w) + u*v*w/std::pow(1.-w, 2) ) ; break ;
       case 1  : s[0] = 0.25 * (  (1.-v) - v*w/(1.-w) ) ;
                 s[1] = 0.25 * ( -(1.+u) - u*w/(1.-w) ) ;
-                s[2] = 0.25 * ( -1.     - u*v/(1.-w) - u*v*w/gmsh_SQU(1.-w) ) ; break ;
+                s[2] = 0.25 * ( -1.     - u*v/(1.-w) - u*v*w/std::pow(1.-w, 2) ) ; break ;
       case 2  : s[0] = 0.25 * (  (1.+v) + v*w/(1.-w) ) ;
                 s[1] = 0.25 * (  (1.+u) + u*w/(1.-w) ) ;
-                s[2] = 0.25 * ( -1.     + u*v/(1.-w) + u*v*w/gmsh_SQU(1.-w) ) ; break ;
+                s[2] = 0.25 * ( -1.     + u*v/(1.-w) + u*v*w/std::pow(1.-w, 2) ) ; break ;
       case 3  : s[0] = 0.25 * ( -(1.+v) - v*w/(1.-w) ) ;
                 s[1] = 0.25 * (  (1.-u) - u*w/(1.-w) ) ;
-                s[2] = 0.25 * ( -1.     - u*v/(1.-w) - u*v*w/gmsh_SQU(1.-w) ) ; break ;
+                s[2] = 0.25 * ( -1.     - u*v/(1.-w) - u*v*w/std::pow(1.-w, 2) ) ; break ;
       case 4  : s[0] = 0. ;
                 s[1] = 0. ;
                 s[2] = 1. ; break ;

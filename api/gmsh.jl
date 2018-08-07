@@ -25,9 +25,10 @@ const lib = joinpath(libdir, is_windows() ? "gmsh-3.0" : "libgmsh")
     gmsh.initialize(argv = Vector{String}(), readConfigFiles = true)
 
 Initialize Gmsh. This must be called before any call to the other functions in
-the API. If `argc` and `argv` are provided, they will be handled in the same way
-as the command line arguments in the Gmsh app. If `readConfigFiles` is set, read
-system Gmsh configuration files (gmshrc and gmsh-options).
+the API. If `argc` and `argv` (or just `argv` in Python or Julia) are provided,
+they will be handled in the same way as the command line arguments in the Gmsh
+app. If `readConfigFiles` is set, read system Gmsh configuration files (gmshrc
+and gmsh-options).
 """
 function initialize(argv = Vector{String}(), readConfigFiles = true)
     ierr = Ref{Cint}()
@@ -532,43 +533,91 @@ function getType(dim, tag)
 end
 
 """
-    gmsh.model.getNormals(tag, parametricCoord)
+    gmsh.model.getParent(dim, tag)
 
-Get the normal to the surface with tag `tag` at the parametric coordinates
-`parametricCoord`. `parametricCoord` are given by pair of u and v coordinates,
-concatenated. `normals` are returned as triplets of x, y and z components,
-concatenated.
+In a partitioned model, get the parent of the entity of dimension `dim` and tag
+`tag`, i.e. from which the entity is a part of, if any. `parentDim` and
+`parentTag` are set to -1 if the entity has no parent.
 
-Return `normals`.
+Return `parentDim`, `parentTag`.
 """
-function getNormals(tag, parametricCoord)
-    api_normals_ = Ref{Ptr{Cdouble}}()
-    api_normals_n_ = Ref{Csize_t}()
+function getParent(dim, tag)
+    api_parentDim_ = Ref{Cint}()
+    api_parentTag_ = Ref{Cint}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGetNormals, gmsh.lib), Void,
-          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          tag, parametricCoord, length(parametricCoord), api_normals_, api_normals_n_, ierr)
-    ierr[] != 0 && error("gmshModelGetNormals returned non-zero error code: $(ierr[])")
-    normals = unsafe_wrap(Array, api_normals_[], api_normals_n_[], true)
-    return normals
+    ccall((:gmshModelGetParent, gmsh.lib), Void,
+          (Cint, Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}),
+          dim, tag, api_parentDim_, api_parentTag_, ierr)
+    ierr[] != 0 && error("gmshModelGetParent returned non-zero error code: $(ierr[])")
+    return api_parentDim_[], api_parentTag_[]
 end
 
 """
-    gmsh.model.getCurvatures(tag, parametricCoord)
+    gmsh.model.getValue(dim, tag, parametricCoord)
 
-Get the curvature of the curve with tag `tag` at the parametric coordinates
-`parametricCoord`.
+Evaluate the parametrization of the entity of dimension `dim` and tag `tag` at
+the parametric coordinates `parametricCoord` and return triplets of x, y, z
+coordinates in `points`. Only valid for `dim` equal to 0, 1 (with
+`parametricCoord` containing parametric coordinates on the curve) or 2 (with
+`parametricCoord` containing pairs of u, v parametric coordinates on the
+surface),
+
+Return `points`.
+"""
+function getValue(dim, tag, parametricCoord)
+    api_points_ = Ref{Ptr{Cdouble}}()
+    api_points_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetValue, gmsh.lib), Void,
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, parametricCoord, length(parametricCoord), api_points_, api_points_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetValue returned non-zero error code: $(ierr[])")
+    points = unsafe_wrap(Array, api_points_[], api_points_n_[], true)
+    return points
+end
+
+"""
+    gmsh.model.getDerivative(dim, tag, parametricCoord)
+
+Evaluate the derivative of the parametrization of the entity of dimension `dim`
+and tag `tag` at the parametric coordinates `parametricCoord`. Only valid for
+`dim` equal to 1 (with `parametricCoord` containing parametric coordinates on
+the curve) or 2 (with `parametricCoord` containing pairs of u, v parametric
+coordinates on the surface).
+
+Return `derivatives`.
+"""
+function getDerivative(dim, tag, parametricCoord)
+    api_derivatives_ = Ref{Ptr{Cdouble}}()
+    api_derivatives_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetDerivative, gmsh.lib), Void,
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, parametricCoord, length(parametricCoord), api_derivatives_, api_derivatives_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetDerivative returned non-zero error code: $(ierr[])")
+    derivatives = unsafe_wrap(Array, api_derivatives_[], api_derivatives_n_[], true)
+    return derivatives
+end
+
+"""
+    gmsh.model.getCurvature(dim, tag, parametricCoord)
+
+Evaluate the (maximum) curvature of the entity of dimension `dim` and tag `tag`
+at the parametric coordinates `parametricCoord`. Only valid for `dim` equal to 1
+(with `parametricCoord` containing parametric coordinates on the curve) or 2
+(with `parametricCoord` containing pairs of u, v parametric coordinates on the
+surface).
 
 Return `curvatures`.
 """
-function getCurvatures(tag, parametricCoord)
+function getCurvature(dim, tag, parametricCoord)
     api_curvatures_ = Ref{Ptr{Cdouble}}()
     api_curvatures_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGetCurvatures, gmsh.lib), Void,
-          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          tag, parametricCoord, length(parametricCoord), api_curvatures_, api_curvatures_n_, ierr)
-    ierr[] != 0 && error("gmshModelGetCurvatures returned non-zero error code: $(ierr[])")
+    ccall((:gmshModelGetCurvature, gmsh.lib), Void,
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, parametricCoord, length(parametricCoord), api_curvatures_, api_curvatures_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetCurvature returned non-zero error code: $(ierr[])")
     curvatures = unsafe_wrap(Array, api_curvatures_[], api_curvatures_n_[], true)
     return curvatures
 end
@@ -576,9 +625,10 @@ end
 """
     gmsh.model.getPrincipalCurvatures(tag, parametricCoord)
 
-Get the principal curvatures of the surface with tag `tag` at the parametric
-coordinates `parametricCoord`, as well as their respective directions.
-`parametricCoord` are given by pair of u and v coordinates, concatenated.
+Evaluate the principal curvatures of the surface with tag `tag` at the
+parametric coordinates `parametricCoord`, as well as their respective
+directions. `parametricCoord` are given by pair of u and v coordinates,
+concatenated.
 
 Return `curvatureMax`, `curvatureMin`, `directionMax`, `directionMin`.
 """
@@ -601,6 +651,28 @@ function getPrincipalCurvatures(tag, parametricCoord)
     directionMax = unsafe_wrap(Array, api_directionMax_[], api_directionMax_n_[], true)
     directionMin = unsafe_wrap(Array, api_directionMin_[], api_directionMin_n_[], true)
     return curvatureMax, curvatureMin, directionMax, directionMin
+end
+
+"""
+    gmsh.model.getNormal(tag, parametricCoord)
+
+Get the normal to the surface with tag `tag` at the parametric coordinates
+`parametricCoord`. `parametricCoord` are given by pair of u and v coordinates,
+concatenated. `normals` are returned as triplets of x, y and z components,
+concatenated.
+
+Return `normals`.
+"""
+function getNormal(tag, parametricCoord)
+    api_normals_ = Ref{Ptr{Cdouble}}()
+    api_normals_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetNormal, gmsh.lib), Void,
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, parametricCoord, length(parametricCoord), api_normals_, api_normals_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetNormal returned non-zero error code: $(ierr[])")
+    normals = unsafe_wrap(Array, api_normals_[], api_normals_n_[], true)
+    return normals
 end
 
 """
@@ -2383,10 +2455,9 @@ end
     gmsh.model.occ.addCurveLoop(curveTags, tag = -1)
 
 Add a curve loop (a closed wire) formed by the curves `curveTags`. `curveTags`
-should contain (signed) tags of curves forming a closed loop: a negative tag
-signifies that the underlying curve is considered with reversed orientation. If
-`tag` is positive, set the tag explicitly; otherwise a new tag is selected
-automatically. Return the tag of the curve loop.
+should contain tags of curves forming a closed loop. If `tag` is positive, set
+the tag explicitly; otherwise a new tag is selected automatically. Return the
+tag of the curve loop.
 
 Return an integer.
 """
@@ -2747,22 +2818,50 @@ function addPipe(dimTags, wireTag)
 end
 
 """
-    gmsh.model.occ.fillet(volumeTags, curveTags, radius, removeVolume = true)
+    gmsh.model.occ.fillet(volumeTags, curveTags, radii, removeVolume = true)
 
-Fillet the volumes `volumeTags` on the curves `curveTags` with radius `radius`.
-Return the filleted entities in `outDimTags`. Remove the original volume if
-`removeVolume` is set.
+Fillet the volumes `volumeTags` on the curves `curveTags` with radii `radii`.
+The `radii` vector can either contain a single radius, as many radii as
+`curveTags`, or twice as many as `curveTags` (in which case different radii are
+provided for the begin and end points of the curves). Return the filleted
+entities in `outDimTags`. Remove the original volume if `removeVolume` is set.
 
 Return `outDimTags`.
 """
-function fillet(volumeTags, curveTags, radius, removeVolume = true)
+function fillet(volumeTags, curveTags, radii, removeVolume = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccFillet, gmsh.lib), Void,
-          (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, volumeTags), length(volumeTags), convert(Vector{Cint}, curveTags), length(curveTags), radius, api_outDimTags_, api_outDimTags_n_, removeVolume, ierr)
+          (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, volumeTags), length(volumeTags), convert(Vector{Cint}, curveTags), length(curveTags), radii, length(radii), api_outDimTags_, api_outDimTags_n_, removeVolume, ierr)
     ierr[] != 0 && error("gmshModelOccFillet returned non-zero error code: $(ierr[])")
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+
+"""
+    gmsh.model.occ.chamfer(volumeTags, curveTags, surfaceTags, distances, removeVolume = true)
+
+Chamfer the volumes `volumeTags` on the curves `curveTags` with distances
+`distances` measured on surfaces `surfaceTags`. The `distances` vector can
+either contain a single distance, as many distances as `curveTags` and
+`surfaceTags`, or twice as many as `curveTags` and `surfaceTags` (in which case
+the first in each pair is measured on the corresponding surface in
+`surfaceTags`, the other on the other adjacent surface). Return the chamfered
+entities in `outDimTags`. Remove the original volume if `removeVolume` is set.
+
+Return `outDimTags`.
+"""
+function chamfer(volumeTags, curveTags, surfaceTags, distances, removeVolume = true)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccChamfer, gmsh.lib), Void,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, volumeTags), length(volumeTags), convert(Vector{Cint}, curveTags), length(curveTags), convert(Vector{Cint}, surfaceTags), length(surfaceTags), distances, length(distances), api_outDimTags_, api_outDimTags_n_, removeVolume, ierr)
+    ierr[] != 0 && error("gmshModelOccChamfer returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
@@ -3039,6 +3138,30 @@ function importShapes(fileName, highestDimOnly = true, format = "")
           (Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cchar}, Ptr{Cint}),
           fileName, api_outDimTags_, api_outDimTags_n_, highestDimOnly, format, ierr)
     ierr[] != 0 && error("gmshModelOccImportShapes returned non-zero error code: $(ierr[])")
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+
+"""
+    gmsh.model.occ.importShapesNativePointer(shape, highestDimOnly = true)
+
+Imports an OpenCASCADE `shape` by providing a pointer to a native OpenCASCADE
+`TopoDS_Shape` object (passed as a pointer to void). The imported entities are
+returned in `outDimTags`. If the optional argument `highestDimOnly` is set, only
+import the highest dimensional entities in `shape`. Warning: this function is
+unsafe, as providing an invalid pointer will lead to undefined behavior.
+
+Return `outDimTags`.
+"""
+function importShapesNativePointer(shape, highestDimOnly = true)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccImportShapesNativePointer, gmsh.lib), Void,
+          (Ptr{Void}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          shape, api_outDimTags_, api_outDimTags_n_, highestDimOnly, ierr)
+    ierr[] != 0 && error("gmshModelOccImportShapesNativePointer returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
@@ -3498,5 +3621,50 @@ function run(name = "", command = "")
 end
 
 end # end of module onelab
+
+"""
+    module gmsh.logger
+
+Message logger functions
+"""
+module logger
+
+import ..gmsh
+
+"""
+    gmsh.logger.start()
+
+Start logging messages in `log`.
+
+Return `log`.
+"""
+function start()
+    api_log_ = Ref{Ptr{Ptr{Cchar}}}()
+    api_log_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshLoggerStart, gmsh.lib), Void,
+          (Ptr{Ptr{Cchar}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_log_, api_log_n_, ierr)
+    ierr[] != 0 && error("gmshLoggerStart returned non-zero error code: $(ierr[])")
+    tmp_api_log_ = unsafe_wrap(Array, api_log_[], api_log_n_[], true)
+    log = [unsafe_string(tmp_api_log_[i]) for i in 1:length(tmp_api_log_) ]
+    return log
+end
+
+"""
+    gmsh.logger.stop()
+
+Stop logging messages.
+"""
+function stop()
+    ierr = Ref{Cint}()
+    ccall((:gmshLoggerStop, gmsh.lib), Void,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshLoggerStop returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+end # end of module logger
 
 end # end of module gmsh

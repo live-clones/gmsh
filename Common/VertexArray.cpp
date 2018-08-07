@@ -158,12 +158,7 @@ class AlphaElementLessThan {
       cg2[1] += e2.v[3 * i + 1];
       cg2[2] += e2.v[3 * i + 2];
     }
-    double d1, d2;
-    prosca(eye, cg1, &d1);
-    prosca(eye, cg2, &d2);
-    if(d1 < d2)
-      return true;
-    return false;
+    return prosca(eye, cg1) < prosca(eye, cg2);
   }
 };
 

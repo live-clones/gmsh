@@ -425,10 +425,10 @@ features, and many aspects of the interface could be enhanced
 Gmsh's scripting language is quite limited, providing only very crude
 loop controls and user-defined macros, with no local variables. For more
 complex workflows, or for integrating Gmsh as a library directly in
-other software tools, a application programming interface is
-available. This allows to directly access Gmsh features from C++, C,
-Python or Julia. The C interface makes it relatively easy to build
-interfaces to additional languages (e.g. Javascript, Java or Go).
+other software tools, an application programming interface is available
+(@pxref{Gmsh API}). This allows to directly access Gmsh features from
+C++, C, Python or Julia. The C interface makes it relatively easy to
+build interfaces to additional languages (e.g. Javascript, Java or Go).
 @end itemize
 
 If you have the skills and some free time, feel free to join the
@@ -2198,10 +2198,20 @@ Creates ruled surfaces through the given curve loops or
 wires. @code{Ruled ThruSections} is only available with the OpenCASCADE
 kernel.
 
-@item Fillet @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression} @}
-Fillets volumes (first list) on some edges (second list), using the
-provided radius. @code{Fillet} is only available with the OpenCASCADE
-kernel.
+@item Fillet @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression-list} @}
+Fillets volumes (first list) on some curves (second list), using the
+provided radii (third list). The radius list can either contain a single
+radius, as many radii as curves, or twice as many as curves (in which
+case different radii are provided for the begin and end points of the
+curves). @code{Fillet} is only available with the OpenCASCADE kernel.
+
+@item Chamfer @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression-list} @}
+Chamfer volumes (first list) on some curves (second list), using the
+provided distance (fourth list) measured on the given surfaces (third
+list). The distance list can either contain a single distance, as many
+distances as curves, or twice as many as curves (in which case the first
+in each pair is measured on the given corresponding
+surface). @code{Chamfer} is only available with the OpenCASCADE kernel.
 @end ftable
 
 @noindent with
@@ -2999,12 +3009,17 @@ Force mesh of the surface on the left-hand side (slave, with boundary
 edges specified between braces) to match the mesh of the surface on the
 right-hand side (master, with boundary edges specified between braces).
 
-@item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Affine | Rotate | Translate @{ @var{expression-list} @} ;
+@item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Affine | Translate @{ @var{expression-list} @} ;
 Force mesh of curves or surfaces on the left-hand side (slaves) to match
-the mesh of the curves on the right-hand side (masters), using prescribed
-geometrical transformations. @code{Affine} takes a 4 x 4 affine
-transform matrix given by row; @code{Rotate} and @code{Translate} are
-specified as in @ref{Transformations}.
+the mesh of the curves on the right-hand side (masters), using
+prescribed geometrical transformations. @code{Affine} takes a 4 x 4 (or
+4 x 3) affine transformation matrix given by row; @code{Translate} takes
+the 3 components of the translation as in @ref{Transformations}.
+
+@item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Rotate @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} ;
+Force mesh of curves or surfaces on the left-hand side (slaves) to match
+the mesh of the curves on the right-hand side (masters), using
+a rotation specified as in @ref{Transformations}.
 
 @item Coherence Mesh;
 Removes all duplicate mesh nodes.
@@ -5187,6 +5202,17 @@ repository. All branches are tested; make sure that all tests pass and
 that your code does not produce any warning before submitting merge
 requests.
 @item
+Follow the style used in the existing code when adding something new:
+indent using 2 spaces (never use tabs!), put 1 space after commas, put
+opening braces for functions on a separate line, opening braces for
+loops and tests on the same line, etc. You can use the
+@code{clang-format} tool to apply these rules automatically (the rules
+are defined in the
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/.clang-format,.clang-format}
+file.)
+@item
+Always use the @code{Msg::} class to print information or errors
+@item
 Use memory checking tools to detect memory leaks and other nasty memory
 problems. For example, you can use
 @itemize @bullet
@@ -5213,14 +5239,6 @@ Memprof
 @item
 @dots{}
 @end itemize
-@item
-Always use the @code{Msg::} class to print information or errors
-@item
-Indent your files (2 spaces) and convert all tabs to spaces.
-@item
-Follow the style used in the existing code when adding something new
-(spaces after commas, opening braces for functions on a separate line,
-opening braces for loops and tests on the same line, etc.).
 @end enumerate
 
 @c -------------------------------------------------------------------------
@@ -5657,7 +5675,7 @@ Use `Tools->Plugins->Cut Plane'.
 @item Can I save an isosurface to a file?
 
 Yes: first run `Tools->Plugins->Cut Map' to extract the isosurface,
-then use `View->Save As' to save the new view.
+then use `View->Export' to save the new view.
 
 @item Can Gmsh generate isovolumes?
 

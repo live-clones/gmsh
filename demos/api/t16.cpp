@@ -1,5 +1,6 @@
 // This file reimplements gmsh/tutorial/t16.geo in C++.
 
+#include <iostream>
 #include <gmsh.h>
 
 namespace model = gmsh::model;
@@ -11,6 +12,9 @@ int main(int argc, char **argv)
   gmsh::option::setNumber("General.Terminal", 1);
 
   model::add("t16");
+
+  std::vector<std::string> log;
+  gmsh::logger::start(log);
 
   std::vector<std::pair<int, int> > ov;
   std::vector<std::vector<std::pair<int, int> > > ovv;
@@ -47,6 +51,9 @@ int main(int argc, char **argv)
   model::mesh::generate(3);
 
   gmsh::write("t16.msh");
+
+  gmsh::logger::stop();
+  std::cout << "Logger has recorded " << log.size() << " lines" << std::endl;
 
   gmsh::finalize();
   return 0;

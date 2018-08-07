@@ -6,7 +6,7 @@
 #ifndef _BACKGROUND_MESH_H_
 #define _BACKGROUND_MESH_H_
 
-#include <math.h>
+#include <cmath>
 #include <vector>
 #include <list>
 #include "simpleFunction.h"

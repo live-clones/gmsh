@@ -35,7 +35,7 @@
 
 #include "gl2ps.h"
 
-#include <math.h>
+#include <cmath>
 #include <string.h>
 #include <sys/types.h>
 #include <stdarg.h>

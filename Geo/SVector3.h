@@ -10,7 +10,6 @@
 #include <string>
 #include <stdio.h>
 #include "GmshMessage.h"
-#include <iostream>
 
 // concrete class for vector of size 3
 class SVector3 {
@@ -26,11 +25,11 @@ class SVector3 {
   SVector3(double v) : P(v, v, v) {}
   SVector3(const double *array) : P(array) {}
   SVector3(const SVector3& v) : P(v.P) {}
-  inline double x(void) const { return P.x(); }
-  inline double y(void) const { return P.y(); }
-  inline double z(void) const { return P.z(); }
-  inline double norm() const { return sqrt(P[0] * P[0] + P[1] * P[1] + P[2] * P[2]); }
-  inline double normSq() const{ return (P[0] * P[0] + P[1] * P[1] + P[2] * P[2]); }
+  double x(void) const { return P.x(); }
+  double y(void) const { return P.y(); }
+  double z(void) const { return P.z(); }
+  double norm() const { return std::sqrt(this->normSq()); }
+  double normSq() const{ return P[0] * P[0] + P[1] * P[1] + P[2] * P[2]; }
   // Beware that " w = v.normalize() " produces the vector
   // w = (v.norm(), v.norm(), v.norm()), which is NOT a unit vector!
   // Use " w = v.unit() " to affect to "w" the unit vector parallel to "v".

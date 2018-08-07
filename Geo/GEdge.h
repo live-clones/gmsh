@@ -44,6 +44,7 @@ public:
 
 public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
+  GEdge(GModel *model, int tag);
   virtual ~GEdge();
 
   // delete mesh data
@@ -61,7 +62,6 @@ public:
     else if(orientation < 0)
       v1 = f;
   }
-
 
   // specify mesh master with transformation, deduce edgeCounterparts
   void setMeshMaster(GEdge *master, const std::vector<double> &);

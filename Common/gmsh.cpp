@@ -150,6 +150,43 @@ GMSH_API void gmsh::clear()
   throw 1;
 }
 
+class apiMsg : public GmshMessage{
+ private:
+  std::vector<std::string> &_log;
+ public:
+  apiMsg(std::vector<std::string> &log) : _log(log) {}
+  virtual void operator()(std::string level, std::string message)
+  {
+    _log.push_back(level + ": " + message);
+  }
+};
+
+GMSH_API void gmsh::logger::start(std::vector<std::string> &log)
+{
+  if(!_isInitialized()){ throw -1; }
+  GmshMessage *msg = Msg::GetCallback();
+  if(msg){
+    Msg::Warning("Logger already started - ignoring");
+  }
+  else{
+    msg = new apiMsg(log);
+    Msg::SetCallback(msg);
+  }
+}
+
+GMSH_API void gmsh::logger::stop()
+{
+  if(!_isInitialized()){ throw -1; }
+  GmshMessage *msg = Msg::GetCallback();
+  if(msg){
+    delete msg;
+    Msg::SetCallback(0);
+  }
+  else{
+    Msg::Warning("Logger not started - ignoring");
+  }
+}
+
 // gmsh::option
 
 GMSH_API void gmsh::option::setNumber(const std::string &name,
@@ -472,40 +509,127 @@ GMSH_API void gmsh::model::getType(const int dim,
   entityType = ge->getTypeString();
 }
 
-GMSH_API void gmsh::model::getNormals(const int tag,
-                                      const std::vector<double> &parametricCoord,
-                                      std::vector<double> &normals)
+GMSH_API void gmsh::model::getParent(const int dim,
+                                     const int tag,
+                                     int &parentDim,
+                                     int &parentTag)
 {
   if(!_isInitialized()){ throw -1; }
-  GFace *gf = GModel::current()->getFaceByTag(tag);
-  if(!gf){
-    Msg::Error("%s does not exist", _getEntityName(2, tag).c_str());
+  parentDim = -1;
+  parentTag = -1;
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge){
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
-  normals.clear();
-  if(parametricCoord.size() < 2) return;
-  for(unsigned int i = 0; i < parametricCoord.size(); i += 2){
-    SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
-    SVector3 n = gf->normal(param);
-    normals.push_back(n.x());
-    normals.push_back(n.y());
-    normals.push_back(n.z());
+  GEntity *parent = ge->getParentEntity();
+  if(parent){
+    parentDim = parent->dim();
+    parentDim = parent->tag();
   }
 }
 
-GMSH_API void gmsh::model::getCurvatures(const int tag,
-                                         const std::vector<double> &parametricCoord,
-                                         std::vector<double> &curvatures)
+GMSH_API void gmsh::model::getValue(const int dim,
+                                    const int tag,
+                                    const std::vector<double> &parametricCoord,
+                                    std::vector<double> &points)
 {
   if(!_isInitialized()){ throw -1; }
-  GEdge *ge = GModel::current()->getEdgeByTag(tag);
-  if(!ge){
-    Msg::Error("%s does not exist", _getEntityName(1, tag).c_str());
+  points.clear();
+  GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
+  if(!entity){
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
+  if(dim == 0){
+    points.push_back(static_cast<GVertex *>(entity)->x());
+    points.push_back(static_cast<GVertex *>(entity)->y());
+    points.push_back(static_cast<GVertex *>(entity)->z());
+  }
+  else if(dim == 1){
+    GEdge *ge = static_cast<GEdge *>(entity);
+    for(unsigned int i = 0; i < parametricCoord.size(); i++){
+      GPoint gp = ge->point(parametricCoord[i]);
+      points.push_back(gp.x());
+      points.push_back(gp.y());
+      points.push_back(gp.z());
+    }
+  }
+  else if(dim == 2){
+    if(parametricCoord.size() < 2) return;
+    GFace *gf = static_cast<GFace *>(entity);
+    for(unsigned int i = 0; i < parametricCoord.size(); i += 2){
+      SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
+      GPoint gp = gf->point(param);
+      points.push_back(gp.x());
+      points.push_back(gp.y());
+      points.push_back(gp.z());
+    }
+  }
+}
+
+GMSH_API void gmsh::model::getDerivative(const int dim,
+                                         const int tag,
+                                         const std::vector<double> &parametricCoord,
+                                         std::vector<double> &deriv)
+{
+  if(!_isInitialized()){ throw -1; }
+  deriv.clear();
+  GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
+  if(!entity){
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
+  }
+  if(dim == 1){
+    GEdge *ge = static_cast<GEdge *>(entity);
+    for(unsigned int i = 0; i < parametricCoord.size(); i++){
+      SVector3 d = ge->firstDer(parametricCoord[i]);
+      deriv.push_back(d.x());
+      deriv.push_back(d.y());
+      deriv.push_back(d.z());
+    }
+  }
+  else if(dim == 2){
+    if(parametricCoord.size() < 2) return;
+    GFace *gf = static_cast<GFace *>(entity);
+    for(unsigned int i = 0; i < parametricCoord.size(); i += 2){
+      SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
+      Pair<SVector3, SVector3> d = gf->firstDer(param);
+      deriv.push_back(d.left().x());
+      deriv.push_back(d.left().y());
+      deriv.push_back(d.left().z());
+      deriv.push_back(d.right().x());
+      deriv.push_back(d.right().y());
+      deriv.push_back(d.right().z());
+    }
+  }
+}
+
+GMSH_API void gmsh::model::getCurvature(const int dim,
+                                        const int tag,
+                                        const std::vector<double> &parametricCoord,
+                                        std::vector<double> &curvatures)
+{
+  if(!_isInitialized()){ throw -1; }
   curvatures.clear();
-  for(unsigned int i = 0; i < parametricCoord.size(); i++)
-    curvatures.push_back(ge->curvature(parametricCoord[i]));
+  GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
+  if(!entity){
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
+  }
+  if(dim == 1){
+    GEdge *ge = static_cast<GEdge *>(entity);
+    for(unsigned int i = 0; i < parametricCoord.size(); i++)
+      curvatures.push_back(ge->curvature(parametricCoord[i]));
+  }
+  else if(dim == 2){
+    if(parametricCoord.size() < 2) return;
+    GFace *gf = static_cast<GFace *>(entity);
+    for(unsigned int i = 0; i < parametricCoord.size(); i += 2){
+      SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
+      curvatures.push_back(gf->curvatureMax(param));
+    }
+  }
 }
 
 GMSH_API void gmsh::model::getPrincipalCurvatures(const int tag,
@@ -539,6 +663,27 @@ GMSH_API void gmsh::model::getPrincipalCurvatures(const int tag,
     directionsMin.push_back(dmin.x());
     directionsMin.push_back(dmin.y());
     directionsMin.push_back(dmin.z());
+  }
+}
+
+GMSH_API void gmsh::model::getNormal(const int tag,
+                                     const std::vector<double> &parametricCoord,
+                                     std::vector<double> &normals)
+{
+  if(!_isInitialized()){ throw -1; }
+  GFace *gf = GModel::current()->getFaceByTag(tag);
+  if(!gf){
+    Msg::Error("%s does not exist", _getEntityName(2, tag).c_str());
+    throw 2;
+  }
+  normals.clear();
+  if(parametricCoord.size() < 2) return;
+  for(unsigned int i = 0; i < parametricCoord.size(); i += 2){
+    SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
+    SVector3 n = gf->normal(param);
+    normals.push_back(n.x());
+    normals.push_back(n.y());
+    normals.push_back(n.z());
   }
 }
 
@@ -2988,7 +3133,7 @@ GMSH_API void gmsh::model::occ::addPipe(const vectorpair &dimTags,
 
 GMSH_API void gmsh::model::occ::fillet(const std::vector<int> &volumeTags,
                                        const std::vector<int> &curveTags,
-                                       const double radius,
+                                       const std::vector<double> &radii,
                                        vectorpair &outDimTags,
                                        const bool removeVolume)
 {
@@ -2996,7 +3141,23 @@ GMSH_API void gmsh::model::occ::fillet(const std::vector<int> &volumeTags,
   _createOcc();
   outDimTags.clear();
   if(!GModel::current()->getOCCInternals()->fillet
-     (volumeTags, curveTags, radius, outDimTags, removeVolume)){
+     (volumeTags, curveTags, radii, outDimTags, removeVolume)){
+    throw 1;
+  }
+}
+
+GMSH_API void gmsh::model::occ::chamfer(const std::vector<int> &volumeTags,
+                                        const std::vector<int> &curveTags,
+                                        const std::vector<int> &surfaceTags,
+                                        const std::vector<double> &distances,
+                                        vectorpair &outDimTags,
+                                        const bool removeVolume)
+{
+  if(!_isInitialized()){ throw -1; }
+  _createOcc();
+  outDimTags.clear();
+  if(!GModel::current()->getOCCInternals()->chamfer
+     (volumeTags, curveTags, surfaceTags, distances, outDimTags, removeVolume)){
     throw 1;
   }
 }
@@ -3177,23 +3338,23 @@ GMSH_API void gmsh::model::occ::importShapes(const std::string &fileName,
   }
 }
 
-// GMSH_API void gmsh::model::occ::importShapesNativePointer(const void *shape,
-//                                                          vectorpair &outDimTags,
-//                                                          const bool highestDimOnly)
-// {
-//   if(!_isInitialized()){ throw -1; }
-//   _createOcc();
-//   outDimTags.clear();
-// #if defined(HAVE_OCC)
-//   if(!GModel::current()->getOCCInternals()->importShapes
-//      (static_cast<TopoDS_Shape*>(shape), outDimTags, highestDimOnly)){
-//     throw 1;
-//   }
-// #else
-//   Msg::Error("Gmsh requires OpenCASCADE to import native shape");
-//   throw -1;
-// #endif
-// }
+GMSH_API void gmsh::model::occ::importShapesNativePointer(const void *shape,
+                                                          vectorpair &outDimTags,
+                                                          const bool highestDimOnly)
+{
+  if(!_isInitialized()){ throw -1; }
+  _createOcc();
+  outDimTags.clear();
+#if defined(HAVE_OCC)
+  if(!GModel::current()->getOCCInternals()->importShapes
+     (static_cast<const TopoDS_Shape*>(shape), highestDimOnly, outDimTags)){
+    throw 1;
+  }
+#else
+  Msg::Error("Gmsh requires OpenCASCADE to import native shape");
+  throw -1;
+#endif
+}
 
 GMSH_API void gmsh::model::occ::setMeshSize(const vectorpair &dimTags,
                                             const double size)

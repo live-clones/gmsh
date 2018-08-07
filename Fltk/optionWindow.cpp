@@ -24,6 +24,7 @@ typedef unsigned long intptr_t;
 #include "graphicWindow.h"
 #include "openglWindow.h"
 #include "paletteWindow.h"
+#include "manipWindow.h"
 #include "extraDialogs.h"
 #include "drawContext.h"
 #include "Options.h"
@@ -232,6 +233,11 @@ static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
     opt_general_rotation_center0(0, GMSH_SET|GMSH_GUI, pc.x());
     opt_general_rotation_center1(0, GMSH_SET|GMSH_GUI, pc.y());
     opt_general_rotation_center2(0, GMSH_SET|GMSH_GUI, pc.z());
+
+    drawContext *ctx =
+        FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+    ctx->recenterForRotationCenterChange(pc);
+    FlGui::instance()->manip->update();
   }
   CTX::instance()->pickElements = 0;
   CTX::instance()->mesh.changed = ENT_ALL;
@@ -257,11 +263,25 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
     const char *name = (const char*)data;
     if(!strcmp(name, "rotation_center_coord")){
       CTX::instance()->drawRotationCenter = 1;
+      SPoint3 p(o->general.value[8]->value(),
+                o->general.value[9]->value(),
+                o->general.value[10]->value());
+      drawContext *ctx =
+          FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+      ctx->recenterForRotationCenterChange(p);
+      FlGui::instance()->manip->update();
     }
     else if(!strcmp(name, "rotation_center")){
       // pre-fill with cg
       for(int i = 0; i < 3; i++)
         o->general.value[8 + i]->value(CTX::instance()->cg[i]);
+      SPoint3 p(CTX::instance()->cg[0],
+                CTX::instance()->cg[1],
+                CTX::instance()->cg[2]);
+      drawContext *ctx =
+          FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+      ctx->recenterForRotationCenterChange(p);
+      FlGui::instance()->manip->update();
     }
     else if(!strcmp(name, "light_value")){
       double x, y, z;

@@ -13,7 +13,7 @@
 // By design, the Gmsh C++ API is purely functional, and only uses elementary
 // types from the standard library. See `demos/api' for examples.
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(_USE_MATH_DEFINES)
 #define _USE_MATH_DEFINES
 #endif
 
@@ -48,9 +48,10 @@ namespace gmsh {
 namespace gmsh { // Top-level functions
 
   // Initialize Gmsh. This must be called before any call to the other functions in
-  // the API. If `argc' and `argv' are provided, they will be handled in the same
-  // way as the command line arguments in the Gmsh app. If `readConfigFiles' is
-  // set, read system Gmsh configuration files (gmshrc and gmsh-options).
+  // the API. If `argc' and `argv' (or just `argv' in Python or Julia) are
+  // provided, they will be handled in the same way as the command line arguments
+  // in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration
+  // files (gmshrc and gmsh-options).
   GMSH_API void initialize(int argc = 0, char ** argv = 0,
                            const bool readConfigFiles = true);
 
@@ -209,29 +210,63 @@ namespace gmsh { // Top-level functions
                           const int tag,
                           std::string & entityType);
 
-    // Get the normal to the surface with tag `tag' at the parametric coordinates
-    // `parametricCoord'. `parametricCoord' are given by pair of u and v
-    // coordinates, concatenated. `normals' are returned as triplets of x, y and z
-    // components, concatenated.
-    GMSH_API void getNormals(const int tag,
-                             const std::vector<double> & parametricCoord,
-                             std::vector<double> & normals);
+    // In a partitioned model, get the parent of the entity of dimension `dim' and
+    // tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and
+    // `parentTag' are set to -1 if the entity has no parent.
+    GMSH_API void getParent(const int dim,
+                            const int tag,
+                            int & parentDim,
+                            int & parentTag);
 
-    // Get the curvature of the curve with tag `tag' at the parametric coordinates
-    // `parametricCoord'.
-    GMSH_API void getCurvatures(const int tag,
+    // Evaluate the parametrization of the entity of dimension `dim' and tag `tag'
+    // at the parametric coordinates `parametricCoord' and return triplets of x, y,
+    // z coordinates in `points'. Only valid for `dim' equal to 0, 1 (with
+    // `parametricCoord' containing parametric coordinates on the curve) or 2 (with
+    // `parametricCoord' containing pairs of u, v parametric coordinates on the
+    // surface),
+    GMSH_API void getValue(const int dim,
+                           const int tag,
+                           const std::vector<double> & parametricCoord,
+                           std::vector<double> & points);
+
+    // Evaluate the derivative of the parametrization of the entity of dimension
+    // `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only
+    // valid for `dim' equal to 1 (with `parametricCoord' containing parametric
+    // coordinates on the curve) or 2 (with `parametricCoord' containing pairs of
+    // u, v parametric coordinates on the surface).
+    GMSH_API void getDerivative(const int dim,
+                                const int tag,
                                 const std::vector<double> & parametricCoord,
-                                std::vector<double> & curvatures);
+                                std::vector<double> & derivatives);
 
-    // Get the principal curvatures of the surface with tag `tag' at the parametric
-    // coordinates `parametricCoord', as well as their respective directions.
-    // `parametricCoord' are given by pair of u and v coordinates, concatenated.
+    // Evaluate the (maximum) curvature of the entity of dimension `dim' and tag
+    // `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim'
+    // equal to 1 (with `parametricCoord' containing parametric coordinates on the
+    // curve) or 2 (with `parametricCoord' containing pairs of u, v parametric
+    // coordinates on the surface).
+    GMSH_API void getCurvature(const int dim,
+                               const int tag,
+                               const std::vector<double> & parametricCoord,
+                               std::vector<double> & curvatures);
+
+    // Evaluate the principal curvatures of the surface with tag `tag' at the
+    // parametric coordinates `parametricCoord', as well as their respective
+    // directions. `parametricCoord' are given by pair of u and v coordinates,
+    // concatenated.
     GMSH_API void getPrincipalCurvatures(const int tag,
                                          const std::vector<double> & parametricCoord,
                                          std::vector<double> & curvatureMax,
                                          std::vector<double> & curvatureMin,
                                          std::vector<double> & directionMax,
                                          std::vector<double> & directionMin);
+
+    // Get the normal to the surface with tag `tag' at the parametric coordinates
+    // `parametricCoord'. `parametricCoord' are given by pair of u and v
+    // coordinates, concatenated. `normals' are returned as triplets of x, y and z
+    // components, concatenated.
+    GMSH_API void getNormal(const int tag,
+                            const std::vector<double> & parametricCoord,
+                            std::vector<double> & normals);
 
     namespace mesh { // Per-model meshing functions
 
@@ -1021,11 +1056,9 @@ namespace gmsh { // Top-level functions
                            const bool checkClosed = false);
 
       // Add a curve loop (a closed wire) formed by the curves `curveTags'.
-      // `curveTags' should contain (signed) tags of curves forming a closed loop:
-      // a negative tag signifies that the underlying curve is considered with
-      // reversed orientation. If `tag' is positive, set the tag explicitly;
-      // otherwise a new tag is selected automatically. Return the tag of the curve
-      // loop.
+      // `curveTags' should contain tags of curves forming a closed loop. If `tag'
+      // is positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. Return the tag of the curve loop.
       GMSH_API int addCurveLoop(const std::vector<int> & curveTags,
                                 const int tag = -1);
 
@@ -1226,14 +1259,32 @@ namespace gmsh { // Top-level functions
                             const int wireTag,
                             gmsh::vectorpair & outDimTags);
 
-      // Fillet the volumes `volumeTags' on the curves `curveTags' with radius
-      // `radius'. Return the filleted entities in `outDimTags'. Remove the
-      // original volume if `removeVolume' is set.
+      // Fillet the volumes `volumeTags' on the curves `curveTags' with radii
+      // `radii'. The `radii' vector can either contain a single radius, as many
+      // radii as `curveTags', or twice as many as `curveTags' (in which case
+      // different radii are provided for the begin and end points of the curves).
+      // Return the filleted entities in `outDimTags'. Remove the original volume
+      // if `removeVolume' is set.
       GMSH_API void fillet(const std::vector<int> & volumeTags,
                            const std::vector<int> & curveTags,
-                           const double radius,
+                           const std::vector<double> & radii,
                            gmsh::vectorpair & outDimTags,
                            const bool removeVolume = true);
+
+      // Chamfer the volumes `volumeTags' on the curves `curveTags' with distances
+      // `distances' measured on surfaces `surfaceTags'. The `distances' vector can
+      // either contain a single distance, as many distances as `curveTags' and
+      // `surfaceTags', or twice as many as `curveTags' and `surfaceTags' (in which
+      // case the first in each pair is measured on the corresponding surface in
+      // `surfaceTags', the other on the other adjacent surface). Return the
+      // chamfered entities in `outDimTags'. Remove the original volume if
+      // `removeVolume' is set.
+      GMSH_API void chamfer(const std::vector<int> & volumeTags,
+                            const std::vector<int> & curveTags,
+                            const std::vector<int> & surfaceTags,
+                            const std::vector<double> & distances,
+                            gmsh::vectorpair & outDimTags,
+                            const bool removeVolume = true);
 
       // Compute the boolean union (the fusion) of the entities `objectDimTags' and
       // `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is
@@ -1348,6 +1399,16 @@ namespace gmsh { // Top-level functions
                                  gmsh::vectorpair & outDimTags,
                                  const bool highestDimOnly = true,
                                  const std::string & format = "");
+
+      // Imports an OpenCASCADE `shape' by providing a pointer to a native
+      // OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The
+      // imported entities are returned in `outDimTags'. If the optional argument
+      // `highestDimOnly' is set, only import the highest dimensional entities in
+      // `shape'. Warning: this function is unsafe, as providing an invalid pointer
+      // will lead to undefined behavior.
+      GMSH_API void importShapesNativePointer(const void * shape,
+                                              gmsh::vectorpair & outDimTags,
+                                              const bool highestDimOnly = true);
 
       // Set a mesh size constraint on the geometrical entities `dimTags'.
       // Currently only entities of dimension 0 (points) are handled.
@@ -1520,6 +1581,16 @@ namespace gmsh { // Top-level functions
                       const std::string & command = "");
 
   } // namespace onelab
+
+  namespace logger { // Message logger functions
+
+    // Start logging messages in `log'.
+    GMSH_API void start(std::vector<std::string> & log);
+
+    // Stop logging messages.
+    GMSH_API void stop();
+
+  } // namespace logger
 
 } // namespace gmsh
 

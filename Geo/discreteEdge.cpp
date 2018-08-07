@@ -25,6 +25,14 @@ discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   CreateReversedCurve(c);
 }
 
+discreteEdge::discreteEdge(GModel *model, int num)
+: GEdge(model, num)
+{
+  Curve *c = CreateCurve(num, MSH_SEGM_DISCRETE, 0, 0, 0, -1, -1, 0., 1.);
+  Tree_Add(model->getGEOInternals()->Curves, &c);
+  CreateReversedCurve(c);
+}
+
 discreteEdge::~discreteEdge()
 {
   for (unsigned int i=0 ; i<discrete_lines.size(); i++)delete discrete_lines[i];

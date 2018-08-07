@@ -12,9 +12,9 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModelIO_GEO.h"
+#include "Geo.h" // for Shape, NEWPOINT(), etc.
 #include "Parser.h"
 #include "Gmsh.tab.hpp"
-#include "Geo.h" // for NEWPOINT(), etc.
 
 void   parsestring(char endchar);
 char  *strsave(char *ptr);
@@ -148,6 +148,7 @@ Call                    return tCall;
 Catenary                return tCatenary;
 CatmullRom		return tSpline;
 Ceil                    return tCeil;
+Chamfer                 return tChamfer;
 Characteristic          return tCharacteristic;
 Circle                  return tCircle;
 CodeName                return tCodeName;
@@ -262,6 +263,7 @@ OnelabRun               return tOnelabRun;
 Order			return tNurbsOrder;
 
 Parametric		return tParametric;
+Parent                  return tParent;
 Periodic                return tPeriodic;
 Physical                return tPhysical;
 Pi                      return tPi;

@@ -360,16 +360,16 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
           switch (_orientation) {
           case MAP:
             gradSimplex(x, y, z, scalarValues, gr);
-            prosca(gr, normal, &_invert);
+            _invert = prosca(gr, normal);
             break;
           case PLANE:
-            prosca(normal, _ref, &_invert);
+            _invert = prosca(normal, _ref);
             break;
           case SPHERE:
             gr[0] = xp[0] - _ref[0];
             gr[1] = yp[0] - _ref[1];
             gr[2] = zp[0] - _ref[2];
-            prosca(gr, normal, &_invert);
+            _invert = prosca(gr, normal);
           case NONE:
           default:
             break;

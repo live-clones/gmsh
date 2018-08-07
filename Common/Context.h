@@ -37,6 +37,7 @@ struct contextMeshOptions {
   int NewtonConvergenceTestXYZ;
   int ignorePeriodicity, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
+  double angleToleranceFacetOverlap;
   // mesh IO
   int fileFormat;
   double mshFileVersion, scalingFactor;
@@ -50,6 +51,7 @@ struct contextMeshOptions {
   int partitionCreatePhysicals, partitionSplitMeshFiles, partitionSaveTopologyFile;
   int partitionTriWeight, partitionQuaWeight, partitionTetWeight, partitionHexWeight;
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
+  int partitionOldStyleMsh2;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
   // recombination
   int doRecombinationTest, recombinationTestStart;

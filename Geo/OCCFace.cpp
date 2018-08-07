@@ -20,6 +20,7 @@
 #include <BOPTools_AlgoTools.hxx>
 #include <BOPTools_AlgoTools2D.hxx>
 #include <BRepBndLib.hxx>
+#include <BRepClass_FaceClassifier.hxx>
 #include <BRepLProp_SLProps.hxx>
 #include <BRep_Builder.hxx>
 #include <Bnd_Box.hxx>
@@ -50,9 +51,9 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   if(model()->getOCCInternals())
     model()->getOCCInternals()->bind(s, num);
   // TEST
-  //    if (tag() == 167){
-  //      writeBREP("s167.brep");
-  //    }
+      if (tag() == 10){
+        writeBREP("s10.brep");
+      }
 }
 
 OCCFace::~OCCFace()
@@ -437,12 +438,9 @@ bool OCCFace::isSphere(double &radius, SPoint3 &center) const
   }
 }
 
-
-// Function containsparam should
-
-
 bool OCCFace::containsParam(const SPoint2 &pt)
 {
+#if 0
   if(!buildSTLTriangulation(false)){
     Msg::Info("Inacurate computation in OCCFace::containsParam");
     return GFace::containsParam(pt);
@@ -461,6 +459,13 @@ bool OCCFace::containsParam(const SPoint2 &pt)
       return true;
   }
   return false;
+#else
+  const Standard_Real tolerance = BRep_Tool::Tolerance(s);
+  BRepClass_FaceClassifier faceClassifier;
+  faceClassifier.Perform(s, gp_Pnt2d{pt.x(), pt.y()}, tolerance);
+  const TopAbs_State state = faceClassifier.State();
+  return (state == TopAbs_IN || state == TopAbs_ON);
+#endif
 }
 
 void OCCFace::writeBREP(const char *filename)

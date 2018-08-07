@@ -96,7 +96,7 @@ int MPyramid::getNumFacesRep(bool curved)
 #if defined(HAVE_VISUDEV)
   if (CTX::instance()->heavyVisu) {
     if (CTX::instance()->mesh.numSubEdges == 1) return 8;
-    return 6 * gmsh_SQU(CTX::instance()->mesh.numSubEdges);
+    return 6 * std::pow(CTX::instance()->mesh.numSubEdges, 2);
   }
 #endif
   return 6;
@@ -106,7 +106,7 @@ int MPyramidN::getNumFacesRep(bool curved)
 {
   // FIXME: remove !getIsAssimilatedSerendipity() when serendip are implemented
   return (curved && !getIsAssimilatedSerendipity()) ?
-         6 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+         6 * std::pow(CTX::instance()->mesh.numSubEdges, 2) :
          MPyramid::getNumFacesRep(curved);
 }
 

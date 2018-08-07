@@ -50,7 +50,7 @@ public:
   virtual std::list<GRegion *> regions() const;
 
   // get the edges that this vertex bounds
-  virtual std::vector<GEdge *> edges() const { return l_edges; }
+  virtual std::vector<GEdge *> const &edges() const { return l_edges; }
 
   // faces that bound this entity or that this entity bounds.
   virtual std::vector<GFace *> faces() const;

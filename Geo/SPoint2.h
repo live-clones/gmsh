@@ -6,7 +6,7 @@
 #ifndef _SPOINT2_H_
 #define _SPOINT2_H_
 
-#include <math.h>
+#include <cmath>
 
 // A point in 2-space
 class SPoint2 {
@@ -85,7 +85,7 @@ inline SPoint2 SPoint2::operator*(double mult)const
 inline double SPoint2::distance(const SPoint2 &p)const
 {
   double x = P[0] - p.P[0], y = P[1] - p.P[1];
-  return sqrt(x * x + y * y);
+  return std::sqrt(x * x + y * y);
 }
 
 #endif

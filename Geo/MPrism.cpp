@@ -441,7 +441,7 @@ int MPrism::getNumFacesRep(bool curved)
 #if defined(HAVE_VISUDEV)
   if (CTX::instance()->heavyVisu) {
     if (CTX::instance()->mesh.numSubEdges == 1) return 14;
-    return 8 * gmsh_SQU(CTX::instance()->mesh.numSubEdges);
+    return 8 * std::pow(CTX::instance()->mesh.numSubEdges, 2);
   }
   if (CTX::instance()->heavyVisu) return 14;
 #endif
@@ -450,19 +450,19 @@ int MPrism::getNumFacesRep(bool curved)
 
 int MPrism15::getNumFacesRep(bool curved)
 {
-  return curved ? 8 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+  return curved ? 8 * std::pow(CTX::instance()->mesh.numSubEdges, 2) :
          MPrism::getNumFacesRep(curved);
 }
 
 int MPrism18::getNumFacesRep(bool curved)
 {
-  return curved ? 8 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+  return curved ? 8 * std::pow(CTX::instance()->mesh.numSubEdges, 2) :
          MPrism::getNumFacesRep(curved);
 }
 
 int MPrismN::getNumFacesRep(bool curved)
 {
-  return curved ? 8 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+  return curved ? 8 * std::pow(CTX::instance()->mesh.numSubEdges, 2) :
          MPrism::getNumFacesRep(curved);
 }
 

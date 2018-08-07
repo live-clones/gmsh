@@ -206,6 +206,9 @@ public:
   // spatial dimension of the entity
   virtual int dim() const { return -1; }
 
+  // returns the parent entity for partitioned entities
+  virtual GEntity *getParentEntity() { return 0; }
+
   // regions that bound this entity or that this entity bounds.
   virtual std::list<GRegion *> regions() const
   {
@@ -216,7 +219,11 @@ public:
   virtual std::vector<GFace *> faces() const { return std::vector<GFace *>(); }
 
   // edges that bound this entity or that this entity bounds.
-  virtual std::vector<GEdge *> edges() const { return std::vector<GEdge *>(); }
+  virtual std::vector<GEdge *> const &edges() const
+  {
+    static std::vector<GEdge *> i;
+    return i;
+  }
 
   // vertices that bound this entity.
   virtual std::vector<GVertex *> vertices() const

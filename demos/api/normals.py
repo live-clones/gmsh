@@ -23,9 +23,9 @@ for e in ent:
     tags, coord, param = gmsh.model.mesh.getNodes(2, surf, True)
     # get surface normal on all nodes, i.e. including on the geometrical
     # singularities (edges/points)
-    normals = gmsh.model.getNormals(surf, param)
+    normals = gmsh.model.getNormal(surf, param)
     # get surface curvature
-    curvMax, curvMin, _, _ = gmsh.model.getPrincipalCurvatures(surf, param)
+    curv = gmsh.model.getCurvature(2, surf, param)
     for i in range(0,len(coord),3):
         nn.append(coord[i])
         nn.append(coord[i+1])
@@ -36,7 +36,7 @@ for e in ent:
         cc.append(coord[i])
         cc.append(coord[i+1])
         cc.append(coord[i+2])
-        cc.append(curvMax[i/3])
+        cc.append(curv[i/3])
 
 t = gmsh.view.add("normals")
 gmsh.view.addListData(t, "VP", len(nn)/6, nn)

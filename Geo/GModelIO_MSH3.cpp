@@ -132,7 +132,7 @@ void readMSHPeriodicNodes(FILE *fp, GModel *gm) // also used in MSH2
 
     bool completePer = s && m;
 
-    char token[6];
+    char token[7];
     fpos_t pos;
     fgetpos(fp, &pos);
     if(fscanf(fp, "%s", token) != 1) return;
@@ -472,7 +472,7 @@ int GModel::_readMSH3(const std::string &name)
 
 static void writeMSHPhysicals(FILE *fp, GEntity *ge)
 {
-  std::vector<int> phys = ge->getPhysicalEntities();
+  std::vector<int> phys = ge->physicals;
   fprintf(fp, "%d ", (int)phys.size());
   for(std::vector<int>::iterator itp = phys.begin(); itp != phys.end(); itp++)
     fprintf(fp, "%d ", *itp);
@@ -541,15 +541,15 @@ void writeMSHEntities(FILE *fp, GModel *gm)  // also used in MSH2
 
 static int getNumElementsMSH(GEntity *ge, bool saveAll, int saveSinglePartition)
 {
-  if(!saveAll && ge->physicals.empty()) return 0;
-
   int n = 0;
-  if(saveSinglePartition <= 0)
-    n = ge->getNumMeshElements();
-  else
-    for(unsigned int i = 0; i < ge->getNumMeshElements(); i++)
-      if(ge->getMeshElement(i)->getPartition() == saveSinglePartition)
-        n++;
+  if(saveAll || ge->physicals.size()){
+    if(saveSinglePartition <= 0)
+      n = ge->getNumMeshElements();
+    else
+      for(unsigned int i = 0; i < ge->getNumMeshElements(); i++)
+        if(ge->getMeshElement(i)->getPartition() == saveSinglePartition)
+          n++;
+  }
   return n;
 }
 
@@ -574,12 +574,12 @@ template<class T>
 static void writeElementsMSH(FILE *fp, GModel *model, GEntity *ge, std::vector<T*> &ele,
                              bool saveAll, int saveSinglePartition, bool binary)
 {
-  if(!saveAll && ge->physicals.empty()) return;
-
-  for(unsigned int i = 0; i < ele.size(); i++){
-    if(saveSinglePartition && ele[i]->getPartition() != saveSinglePartition)
-      continue;
-    writeElementMSH(fp, model, ele[i], binary, ge->tag());
+  if(saveAll || ge->physicals.size()){
+    for(unsigned int i = 0; i < ele.size(); i++){
+      if(saveSinglePartition && ele[i]->getPartition() != saveSinglePartition)
+        continue;
+      writeElementMSH(fp, model, ele[i], binary, ge->tag());
+    }
   }
 }
 

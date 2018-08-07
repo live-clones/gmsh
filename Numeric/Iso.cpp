@@ -49,7 +49,7 @@ int IsoLine(double *X, double *Y, double *Z, double *Val, double V,
 
 // Compute an iso-line inside a triangle
 
-int IsoTriangle(double *X, double *Y, double *Z, double *Val, double V, 
+int IsoTriangle(double *X, double *Y, double *Z, double *Val, double V,
                 double *Xp, double *Yp, double *Zp)
 {
   if(Val[0] == Val[1] && Val[0] == Val[2]) return 0;
@@ -67,7 +67,7 @@ int IsoTriangle(double *X, double *Y, double *Z, double *Val, double V,
     InterpolateIso(X, Y, Z, Val, V, 1, 2, &Xp[nb], &Yp[nb], &Zp[nb]);
     nb++;
   }
-  
+
   if(nb == 2) return 2;
   return 0;
 }
@@ -159,10 +159,7 @@ int IsoSimplex(double *X, double *Y, double *Z, double *Val, double V,
   double g[3];
   gradSimplex(X, Y, Z, Val, g);
 
-  double gdotn;
-  prosca(g, n, &gdotn);
-
-  if(gdotn > 0.) {
+  if(prosca(g, n) > 0.0) {
     double Xpi[6], Ypi[6], Zpi[6];
     for(int i = 0; i < nb; i++) {
       Xpi[i] = Xp[i];
@@ -187,7 +184,7 @@ int IsoSimplex(double *X, double *Y, double *Z, double *Val, double V,
 // Compute the line between the two iso-points V1 and V2 in a line
 
 int CutLine(double *X, double *Y, double *Z, double *Val,
-            double V1, double V2, 
+            double V1, double V2,
             double *Xp2, double *Yp2, double *Zp2, double *Vp2)
 {
   int io[2];
@@ -241,7 +238,7 @@ int CutLine(double *X, double *Y, double *Z, double *Val,
 // triangle
 
 int CutTriangle(double *X, double *Y, double *Z, double *Val,
-                double V1, double V2, 
+                double V1, double V2,
                 double *Xp2, double *Yp2, double *Zp2, double *Vp2)
 {
   // fill io so that it contains an indexing of the nodes such that
@@ -348,7 +345,7 @@ int CutTriangle(double *X, double *Y, double *Z, double *Val,
   int Np2 = 1;
 
   for(int i = 1; i < Np; i++) {
-    if((Xp[i] != Xp2[Np2 - 1]) || (Yp[i] != Yp2[Np2 - 1]) || 
+    if((Xp[i] != Xp2[Np2 - 1]) || (Yp[i] != Yp2[Np2 - 1]) ||
        (Zp[i] != Zp2[Np2 - 1])){
       Vp2[Np2] = Vp[i];
       Xp2[Np2] = Xp[i];
@@ -358,7 +355,7 @@ int CutTriangle(double *X, double *Y, double *Z, double *Val,
     }
   }
 
-  if(Xp2[0] == Xp2[Np2 - 1] && Yp2[0] == Yp2[Np2 - 1] && 
+  if(Xp2[0] == Xp2[Np2 - 1] && Yp2[0] == Yp2[Np2 - 1] &&
      Zp2[0] == Zp2[Np2 - 1]) {
     Np2--;
   }
@@ -372,9 +369,8 @@ int CutTriangle(double *X, double *Y, double *Z, double *Val,
   double out2[3] = {Xp2[2] - Xp2[0], Yp2[2] - Yp2[0], Zp2[2] - Zp2[0]};
   double outn[3];
   prodve(out1, out2, outn);
-  double res;
-  prosca(inn, outn, &res);
-  if(res < 0){
+
+  if(prosca(inn, outn) < 0.0){
     for(int i = 0; i < Np2; i++){
       Vp[i] = Vp2[Np2 - i - 1];
       Xp[i] = Xp2[Np2 - i - 1];

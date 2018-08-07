@@ -44,7 +44,7 @@
 // define this to use the old initial delaunay
 #define OLD_CODE_DELAUNAY 1
 
-void copyMesh(GEdge*,GEdge*,int);
+void copyMesh(GEdge*, GEdge*, int);
 
 void derivativeP2 (double u, double v, double dfdu[6], double dfdv[6]){
   /*  const double sf[6][6] = { { 1, -3, -3,  4,  2,  2},
@@ -350,39 +350,42 @@ static void copyMesh(GFace *source, GFace *target)
 
   if(s_vtcs.size() != t_vtcs.size()) {
     Msg::Info("Periodicity imposed on topologically incompatible surfaces"
-              "(%d vs %d bounding vertices)",s_vtcs.size(),t_vtcs.size());
+              "(%d vs %d bounding vertices)", s_vtcs.size(), t_vtcs.size());
   }
 
-  std::set<GVertex*> checkVtcs(s_vtcs.begin(),s_vtcs.end());
+  std::set<GVertex*> checkVtcs(s_vtcs.begin(), s_vtcs.end());
 
-  for(std::vector<GVertex*>::const_iterator tvIter=t_vtcs.begin();tvIter!=t_vtcs.end();++tvIter) {
+  for(std::vector<GVertex*>::const_iterator tvIter = t_vtcs.begin();
+      tvIter != t_vtcs.end(); ++tvIter) {
 
-    GVertex* gvt = *tvIter;
-    std::map<GVertex*,GVertex*>::iterator gvsIter = target->vertexCounterparts.find(gvt);
+    GVertex *gvt = *tvIter;
+    std::map<GVertex*, GVertex*>::iterator gvsIter = target->vertexCounterparts.find(gvt);
 
     if(gvsIter == target->vertexCounterparts.end()) {
-      Msg::Info("Error during periodic meshing of surface %d with surface %d:"
-                "vertex %d has no periodic counterpart",
-                target->tag(),source->tag(),gvt->tag());
+      Msg::Error("Periodic meshing of surface %d with surface %d: "
+                 "point %d has no periodic counterpart",
+                 target->tag(), source->tag(), gvt->tag());
     }
+    else{
+      GVertex *gvs = gvsIter->second;
+      if(checkVtcs.find(gvs) == checkVtcs.end()) {
+        if(gvs)
+          Msg::Error("Periodic meshing of surface %d with surface %d: "
+                     "point %d has periodic counterpart %d outside of source surface",
+                     target->tag(), source->tag(), gvt->tag(), gvs->tag());
 
-    GVertex* gvs = gvsIter->second;
-    if(checkVtcs.find(gvs) == checkVtcs.end()) {
-      if(gvs)
-        Msg::Info("Error during periodic meshing of surface %d with surface %d:"
-                  "vertex %d has periodic counterpart %d outside of source surface",
-                  target->tag(),source->tag(),gvt->tag(),gvs->tag());
-
-      else
-        Msg::Info("Error during periodic meshing of surface %d with surface %d:"
-                  "vertex %d has no periodic counterpart",
-                  target->tag(),source->tag(),gvt->tag());
+        else
+          Msg::Error("Periodic meshing of surface %d with surface %d: "
+                     "point %d has no periodic counterpart",
+                     target->tag(), source->tag(), gvt->tag());
+      }
+      if(gvs){
+        MVertex *vs = gvs->mesh_vertices[0];
+        MVertex *vt = gvt->mesh_vertices[0];
+        vs2vt[vs] = vt;
+        target->correspondingVertices[vt] = vs;
+      }
     }
-
-    MVertex* vs = gvs->mesh_vertices[0];
-    MVertex* vt = gvt->mesh_vertices[0];
-    vs2vt[vs] = vt;
-    target->correspondingVertices[vt] = vs;
   }
 
   // add corresponding edge nodes assuming edges were correctly meshed already
@@ -394,41 +397,39 @@ static void copyMesh(GFace *source, GFace *target)
   checkEdges.insert(s_edges.begin(),s_edges.end());
 
   for(std::vector<GEdge*>::iterator te_iter = t_edges.begin();
-       te_iter != t_edges.end(); ++te_iter) {
+      te_iter != t_edges.end(); ++te_iter) {
 
     GEdge* get = *te_iter;
 
-    std::map<GEdge*,std::pair<GEdge*,int> >::iterator gesIter =
+    std::map<GEdge*, std::pair<GEdge*, int> >::iterator gesIter =
       target->edgeCounterparts.find(get);
     if(gesIter == target->edgeCounterparts.end()) {
-      Msg::Info("Error during periodic meshing of surface %d with surface %d:"
-                "edge %d has no periodic counterpart",
-                target->tag(),source->tag(),get->tag());
+      Msg::Error("Periodic meshing of surface %d with surface %d: "
+                 "curve %d has no periodic counterpart",
+                 target->tag(), source->tag(), get->tag());
     }
-
-    GEdge* ges = gesIter->second.first;
-    if(checkEdges.find(ges) == checkEdges.end()) {
-      Msg::Info("Error during periodic meshing of surface %d with surface %d:"
-                "edge %d has periodic counterpart %d outside of get surface",
-                target->tag(),source->tag(),get->tag(),ges->tag());
-    }
-
-    if(get->mesh_vertices.size() != ges->mesh_vertices.size()) {
-      Msg::Info("Error during periodic meshing of surface %d with surface %d:"
-                "edge %d has %d vertices, whereas correspondant %d has %d",
-                target->tag(),source->tag(),
-                get->tag(),get->mesh_vertices.size(),
-                ges->tag(),ges->mesh_vertices.size());
-    }
-
-    int orientation = gesIter->second.second;
-    int is = orientation == 1 ? 0 : get->mesh_vertices.size()-1;
-
-    for(unsigned it=0;it<get->mesh_vertices.size();it++,is+=orientation) {
-      MVertex* vs = ges->mesh_vertices[is];
-      MVertex* vt = get->mesh_vertices[it];
-      vs2vt[vs] = vt;
-      target->correspondingVertices[vt] = vs;
+    else{
+      GEdge* ges = gesIter->second.first;
+      if(checkEdges.find(ges) == checkEdges.end()) {
+        Msg::Error("Periodic meshing of surface %d with surface %d: "
+                   "curve %d has periodic counterpart %d outside of get surface",
+                   target->tag(), source->tag(), get->tag(), ges->tag());
+      }
+      if(get->mesh_vertices.size() != ges->mesh_vertices.size()) {
+        Msg::Error("Periodic meshing of surface %d with surface %d: "
+                   "curve %d has %d vertices, whereas correspondant %d has %d",
+                   target->tag(), source->tag(),
+                   get->tag(), get->mesh_vertices.size(),
+                   ges->tag(), ges->mesh_vertices.size());
+      }
+      int orientation = gesIter->second.second;
+      int is = orientation == 1 ? 0 : get->mesh_vertices.size()-1;
+      for(unsigned it=0;it<get->mesh_vertices.size();it++,is+=orientation) {
+        MVertex* vs = ges->mesh_vertices[is];
+        MVertex* vt = get->mesh_vertices[it];
+        vs2vt[vs] = vt;
+        target->correspondingVertices[vt] = vs;
+      }
     }
   }
 
@@ -505,18 +506,6 @@ void fourthPoint(double *p1, double *p2, double *p3, double *p4)
   p4[2] = c[2] + R * vz[2];
 }
 
-static bool noSeam(GFace *gf)
-{
-  std::vector<GEdge*> const& edges = gf->edges();
-  std::vector<GEdge*>::const_iterator it = edges.begin();
-  while(it != edges.end()){
-    GEdge *ge = *it ;
-    bool seam = ge->isSeam(gf);
-    if(seam) return false;
-    ++it;
-  }
-  return true;
-}
 
 static void remeshUnrecoveredEdges(std::map<MVertex*, BDS_Point*> &recoverMapInv,
                                    std::set<EdgeToRecover> &edgesNotRecovered,
@@ -613,9 +602,6 @@ static void remeshUnrecoveredEdges(std::map<MVertex*, BDS_Point*> &recoverMapInv
 
 static bool algoDelaunay2D(GFace *gf)
 {
-  // FIXME
-  //  if(!noSeam(gf))
-  //    return false;
 
   if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
      gf->getMeshingAlgo() == ALGO_2D_BAMG ||
@@ -2655,7 +2641,7 @@ void deMeshGFace::operator()(GFace *gf)
 }
 
 // for debugging, change value from -1 to -100;
-int debugSurface = -1; //-100;
+int debugSurface = -100; //-100;
 
 void meshGFace::operator()(GFace *gf, bool print)
 {
@@ -2725,17 +2711,22 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   quadMeshRemoveHalfOfOneDMesh halfmesh(gf);
 
-  if((gf->getNativeType() != GEntity::AcisModel ||
-       (!gf->periodic(0) && !gf->periodic(1))) &&
-      (noSeam(gf) || gf->getNativeType() == GEntity::GmshModel ||
-       gf->edgeLoops.empty())){
-    meshGenerator(gf, 0, repairSelfIntersecting1dMesh, onlyInitialMesh,
-                  debugSurface >= 0 || debugSurface == -100);
+  bool singularEdges = false;
+  std::vector<GEdge*>::const_iterator ite = gf->edges().begin();
+  while(ite != gf->edges().end()){
+    if((*ite)->isSeam(gf)) singularEdges= true;
+    if((*ite)->isMeshDegenerated())singularEdges = true;
+    ite++;
   }
-  else {
+  
+  if (gf->periodic(0) || gf->periodic(1) || singularEdges){
     if(!meshGeneratorPeriodic
        (gf, debugSurface >= 0 || debugSurface == -100))
       Msg::Error("Impossible to mesh periodic face %d", gf->tag());
+  }
+  else {
+    meshGenerator(gf, 0, repairSelfIntersecting1dMesh, onlyInitialMesh,
+                  debugSurface >= 0 || debugSurface == -100);
   }
 
   Msg::Debug("Type %d %d triangles generated, %d internal vertices",

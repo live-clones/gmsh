@@ -5,7 +5,7 @@
 //
 // Contributed by Paul-Emile Bernard
 
-#include <math.h>
+#include <cmath>
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "GEdgeLoop.h"

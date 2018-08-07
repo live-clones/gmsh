@@ -745,6 +745,10 @@ public:
   int writeINP(const std::string &name, bool saveAll = false,
                bool saveGroupsOfNodes = false, double scalingFactor = 1.0);
 
+  // LSDYNA
+  int writeKEY(const std::string &name, int saveAll = 0,
+               int saveGroupsOfNodes = 0, double scalingFactor = 1.0);
+
   // CELUM
   int writeCELUM(const std::string &name, bool saveAll = false,
                  double scalingFactor = 1.0);

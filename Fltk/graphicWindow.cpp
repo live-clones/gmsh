@@ -295,6 +295,8 @@ static int _save_diff(const char *name){ return genericMeshFileDialog
     (name, "Diffpack Options", FORMAT_DIFF, true, false); }
 static int _save_inp(const char *name){ return unvinpFileDialog
     (name, "Abaqus INP Options", FORMAT_INP); }
+static int _save_key(const char *name){ return keyFileDialog
+    (name, "LSDYNA KEY Options", FORMAT_KEY); }
 static int _save_celum(const char *name){ return genericMeshFileDialog
     (name, "CELUM Options", FORMAT_CELUM, false, false); }
 static int _save_su2(const char *name){ return genericMeshFileDialog
@@ -376,6 +378,7 @@ static int _save_auto(const char *name)
   case FORMAT_BDF  : return _save_bdf(name);
   case FORMAT_DIFF : return _save_diff(name);
   case FORMAT_INP  : return _save_inp(name);
+  case FORMAT_KEY  : return _save_key(name);
   case FORMAT_CELUM: return _save_celum(name);
   case FORMAT_SU2  : return _save_su2(name);
   case FORMAT_P3D  : return _save_p3d(name);
@@ -420,6 +423,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
 #endif
     {"Mesh - Gmsh MSH" TT "*.msh", _save_msh},
     {"Mesh - Abaqus INP" TT "*.inp", _save_inp},
+    {"Mesh - LSDYNA KEY" TT "*.key", _save_key},
     {"Mesh - CELUM" TT "*.celum", _save_celum},
 #if defined(HAVE_LIBCGNS)
     {"Mesh - CGNS (Experimental)" TT "*.cgns", _save_cgns},
@@ -1844,7 +1848,7 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
     if(ib == 'q')
       break;
-    if(ib == 'e'){
+    if(ib == 'e' && edge_to_split){
       split_edge(edge_to_split->tag(), List1, GModel::current()->getFileName());
       break;
     }

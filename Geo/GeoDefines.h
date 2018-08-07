@@ -6,6 +6,12 @@
 #ifndef _GEO_DEFINES_H_
 #define _GEO_DEFINES_H_
 
+class Shape{
+ public:
+  int Type;
+  int Num;
+};
+
 // type/100 gives (dimension+1)
 #define MSH_POINT              100
 #define MSH_POINT_BND_LAYER    101

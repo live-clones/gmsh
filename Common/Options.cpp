@@ -5826,6 +5826,13 @@ double opt_mesh_partition_create_ghost_cells(OPT_ARGS_NUM)
   return CTX::instance()->mesh.partitionCreateGhostCells;
 }
 
+double opt_mesh_partition_old_style_msh2(OPT_ARGS_NUM)
+{
+  if (action & GMSH_SET)
+    CTX::instance()->mesh.partitionOldStyleMsh2 = val;
+  return CTX::instance()->mesh.partitionOldStyleMsh2;
+}
+
 double opt_mesh_binary(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -6293,7 +6300,7 @@ double opt_mesh_draw_skin_only(OPT_ARGS_NUM)
 double opt_mesh_save_all(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.saveAll = val ? 1 : 0;
+    CTX::instance()->mesh.saveAll = (int)val;
   return CTX::instance()->mesh.saveAll;
 }
 
@@ -6321,7 +6328,7 @@ double opt_mesh_save_topology(OPT_ARGS_NUM)
 double opt_mesh_save_groups_of_nodes(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.saveGroupsOfNodes = val ? 1 : 0;
+    CTX::instance()->mesh.saveGroupsOfNodes = (int)val;
   return CTX::instance()->mesh.saveGroupsOfNodes;
 }
 
@@ -6522,6 +6529,16 @@ double opt_mesh_max_num_threads_3d(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->mesh.maxNumThreads3D = (int) val;
   return CTX::instance()->mesh.maxNumThreads3D;
+}
+
+double opt_mesh_angle_tolerance_facet_overlap(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    if(!(action & GMSH_SET_DEFAULT) && val != CTX::instance()->mesh.angleToleranceFacetOverlap)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.angleToleranceFacetOverlap = val;
+  }
+  return CTX::instance()->mesh.angleToleranceFacetOverlap;
 }
 
 double opt_solver_listen(OPT_ARGS_NUM)

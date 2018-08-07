@@ -18,8 +18,8 @@ public:
                 const std::vector<unsigned int> &partitions)
     : discreteEdge(model, num, _v0, _v1), _partitions(partitions),
       _parentEntity(NULL) {}
-  partitionEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
-    : discreteEdge(model, num, _v0, _v1), _partitions(), _parentEntity(NULL) {}
+  partitionEdge(GModel *model, int num, const std::vector<unsigned int> &partitions)
+    : discreteEdge(model, num), _partitions(partitions), _parentEntity(NULL) {}
   virtual ~partitionEdge() {}
   virtual GeomType geomType() const { return PartitionCurve; }
   virtual void setParentEntity(GEntity* e) { _parentEntity = e; }

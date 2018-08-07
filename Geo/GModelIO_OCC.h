@@ -133,6 +133,14 @@ class OCC_Internals {
                 std::vector<std::pair<int, int> > &outDimTags,
                 ExtrudeParams *e = 0);
 
+  // apply fillet-like operations
+  bool _fillet(int mode, const std::vector<int> &volumeTags,
+               const std::vector<int> &curveTags,
+               const std::vector<int> &surfaceTags,
+               const std::vector<double> &param,
+               std::vector<std::pair<int, int> > &outDimTags,
+               bool removeVolume);
+
   // set extruded mesh attributes
   void _setExtrudedMeshAttributes(const TopoDS_Compound &c, BRepSweep_Prism *p,
                                   BRepSweep_Revol *r, ExtrudeParams *e,
@@ -235,9 +243,19 @@ class OCC_Internals {
                std::vector<std::pair<int, int> > &outDimTags);
 
   // fillet
-  bool fillet(const std::vector<int> &volumeTags, const std::vector<int> &curveTags,
-              double radius, std::vector<std::pair<int, int> > &outDimTags,
+  bool fillet(const std::vector<int> &volumeTags,
+              const std::vector<int> &curveTags,
+              const std::vector<double> &radii,
+              std::vector<std::pair<int, int> > &outDimTags,
               bool removeVolume);
+
+  // chamfer
+  bool chamfer(const std::vector<int> &volumeTags,
+               const std::vector<int> &curveTags,
+               const std::vector<int> &surfaceTags,
+               const std::vector<double> &distances,
+               std::vector<std::pair<int, int> > &outDimTags,
+               bool removeVolume);
 
   // apply boolean operator
   bool booleanOperator(int tag, BooleanOperator op,
@@ -512,11 +530,22 @@ public:
   {
     return _error("add pipe");
   }
-  bool fillet(const std::vector<int> &volumeTags, const std::vector<int> &curveTags,
-              double radius, std::vector<std::pair<int, int> > &outDimTags,
+  bool fillet(const std::vector<int> &volumeTags,
+              const std::vector<int> &curveTags,
+              const std::vector<double> &radii,
+              std::vector<std::pair<int, int> > &outDimTags,
               bool removeVolume)
   {
     return _error("create fillet");
+  }
+  bool chamfer(const std::vector<int> &volumeTags,
+               const std::vector<int> &curveTags,
+               const std::vector<int> &surfaceTags,
+               const std::vector<double> &distances,
+               std::vector<std::pair<int, int> > &outDimTags,
+               bool removeVolume)
+  {
+    return _error("create chamfer");
   }
   bool booleanOperator(int tag, BooleanOperator op,
                        const std::vector<std::pair<int, int> > &objectDimTags,

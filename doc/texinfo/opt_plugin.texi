@@ -11,35 +11,35 @@ The ICN measure is related to the condition number of the stiffness matrix.@*
 @*
 Parameters:@*
 @*
-- Jacobian determinant = @{0, 1@}@*
+- JacobianDeterminant = @{0, 1@}@*
 @*
-- IGE measure = @{0, 1@}@*
+- IGEMeasure = @{0, 1@}@*
 @*
-- ICN measure = @{0, 1@}@*
+- ICNMeasure = @{0, 1@}@*
 @*
-- Hiding threshold = [0, 1]: Hides all element for which min(mu) is strictly greater than the threshold, where mu is the ICN if ICN measure == 1, otherwise mu is the IGE it IGE measure == 1, otherwise mu is the Jacobian determinant.@*
+- HidingThreshold = [0, 1]: Hides all element for which min(mu) is strictly greater than the threshold, where mu is the ICN if ICN measure == 1, otherwise mu is the IGE it IGE measure == 1, otherwise mu is the Jacobian determinant.@*
 If threshold == 0, hides all elements except invalid.@*
 @*
-- Draw PView = @{0, 1@}: Creates a PView of min(J)/max(J), min(IGE) and/or min(ICN) according to what is asked. If 'Recompute' = 1, new PViews are created.@*
+- DrawPView = @{0, 1@}: Creates a PView of min(J)/max(J), min(IGE) and/or min(ICN) according to what is asked. If 'Recompute' = 1, new PViews are created.@*
 @*
 - Recompute = @{0,1@}: Should be 1 if the mesh has changed.@*
 @*
-- Dimension = @{-1, 1, 2, 3, 4@}: If == -1, analyse element of the greater dimension. If == 4, analyse 2D and 3D elements.
+- DimensionOfElements = @{-1, 1, 2, 3, 4@}: If == -1, analyse element of the greater dimension. If == 4, analyse 2D and 3D elements.
 Numeric options:
 @table @code
-@item Jacobian determinant
-Default value: @code{1}
-@item IGE measure
-Default value: @code{1}
-@item ICN measure
-Default value: @code{1}
-@item Hiding threshold
+@item JacobianDeterminant
+Default value: @code{0}
+@item IGEMeasure
+Default value: @code{0}
+@item ICNMeasure
+Default value: @code{0}
+@item HidingThreshold
 Default value: @code{9}
-@item Draw PView
+@item DrawPView
 Default value: @code{0}
 @item Recompute
 Default value: @code{0}
-@item Dimension of elements
+@item DimensionOfElements
 Default value: @code{-1}
 @end table
 
@@ -1276,6 +1276,18 @@ Default value: @code{-1}
 @item View 6
 Default value: @code{-1}
 @item View 7
+Default value: @code{-1}
+@end table
+
+@item Plugin(Tetrahedralize)
+Plugin(Tetrahedralize) tetrahedralizes the points in the view `View'.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
+Plugin(Tetrahedralize) creates one new view.
+Numeric options:
+@table @code
+@item View
 Default value: @code{-1}
 @end table
 

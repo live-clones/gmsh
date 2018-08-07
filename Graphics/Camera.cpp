@@ -8,7 +8,7 @@
 #include <string>
 #include <iostream>
 #include <stdio.h>
-#include <math.h>
+#include <cmath>
 #include <algorithm>
 #include "Camera.h"
 #include "GmshGlobal.h"

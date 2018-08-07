@@ -36,6 +36,7 @@
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepBuilderAPI_GTransform.hxx>
 #include <BRepCheck_Analyzer.hxx>
+#include <BRepFilletAPI_MakeChamfer.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <BRepGProp.hxx>
 #include <BRepLib.hxx>
@@ -1048,7 +1049,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       // General BSpline curve, polynomial or rational, with explicit degree,
       // weights, knots and multiplicities
       if(degree < 0){
-        Msg::Error("BSpline degree (%d) should be > 0", degree);
+        Msg::Error("BSpline degree (%d) should be >= 0", degree);
         return false;
       }
       if(weights.size() != pointTags.size()){
@@ -1176,11 +1177,17 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
                                const std::vector<double> &knots,
                                const std::vector<int> &multiplicities)
 {
+  if(pointTags.size() < 2){
+    Msg::Error("BSpline curve requires at least 2 control points");
+    return false;
+  }
   int d = degree;
   std::vector<double> w(weights), k(knots);
   std::vector<int> m(multiplicities);
   // degree 3 if not specified:
   if(d <= 0) d = 3;
+  // But degree nPts-1 if nPts is 2 or 3:
+  if(d > static_cast<int>(pointTags.size()) - 1) d = pointTags.size() - 1;
   // automatic default weights if not provided:
   if(w.empty()) w.resize(pointTags.size(), 1);
   // automatic default knots and multiplicities if not provided:
@@ -1248,7 +1255,12 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
 
 bool OCC_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags)
 {
-  return addWire(tag, curveTags, true);
+  std::vector<int> tags(curveTags);
+  // all edge tags > 0 for OCC : to improve compatibility between GEO and OCC
+  // factories, allow negative tags - and simply ignore the sign here
+  for(unsigned int i = 0; i < tags.size(); i++)
+    tags[i] = std::abs(tags[i]);
+  return addWire(tag, tags, true);
 }
 
 static bool makeRectangle(TopoDS_Face &result, double x, double y, double z,
@@ -2264,10 +2276,12 @@ bool OCC_Internals::addPipe(const std::vector<std::pair<int, int> > &inDimTags,
                   outDimTags);
 }
 
-bool OCC_Internals::fillet(const std::vector<int> &volumeTags,
-                           const std::vector<int> &curveTags, double radius,
-                           std::vector<std::pair<int, int> > &outDimTags,
-                           bool removeVolume)
+bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
+                            const std::vector<int> &curveTags,
+                            const std::vector<int> &surfaceTags,
+                            const std::vector<double> &param,
+                            std::vector<std::pair<int, int> > &outDimTags,
+                            bool removeVolume)
 {
   std::vector<TopoDS_Edge> edges;
   for(unsigned int i = 0; i < curveTags.size(); i++){
@@ -2276,6 +2290,19 @@ bool OCC_Internals::fillet(const std::vector<int> &volumeTags,
       return false;
     }
     edges.push_back(TopoDS::Edge(_tagEdge.Find(curveTags[i])));
+  }
+
+  std::vector<TopoDS_Face> faces;
+  for(unsigned int i = 0; i < surfaceTags.size(); i++){
+    if(!_tagFace.IsBound(surfaceTags[i])){
+      Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[i]);
+      return false;
+    }
+    faces.push_back(TopoDS::Face(_tagFace.Find(surfaceTags[i])));
+  }
+  if(mode && edges.size() != faces.size()){
+    Msg::Error("Different number of curves and surfaces for chamfer");
+    return false;
   }
 
   // build a single compound shape
@@ -2299,17 +2326,40 @@ bool OCC_Internals::fillet(const std::vector<int> &volumeTags,
   }
   TopoDS_Shape result;
   try{
-    BRepFilletAPI_MakeFillet f(c);
-    for(unsigned int i = 0; i < edges.size(); i++)
-      f.Add(edges[i]);
-    for(int i = 1; i <= f.NbContours(); i++)
-      f.SetRadius(radius, i, 1);
-    f.Build();
-    if(!f.IsDone()) {
-      Msg::Error("Could not compute fillet");
-      return false;
+    if(mode == 0){ // fillet
+      BRepFilletAPI_MakeFillet f(c);
+      for(unsigned int i = 0; i < edges.size(); i++){
+        if(param.size() == 1)
+          f.Add(param[0], edges[i]);
+        else if(param.size() == edges.size())
+          f.Add(param[i], edges[i]);
+        else if(param.size() == 2 * edges.size())
+          f.Add(param[2 * i], param[2 * i + 1], edges[i]);
+      }
+      f.Build();
+      if(!f.IsDone()) {
+        Msg::Error("Could not compute fillet");
+        return false;
+      }
+      result = f.Shape();
     }
-    result = f.Shape();
+    else{ // chamfer
+      BRepFilletAPI_MakeChamfer f(c);
+      for(unsigned int i = 0; i < edges.size(); i++){
+        if(param.size() == 1)
+          f.Add(param[0], param[0], edges[i], faces[i]);
+        else if(param.size() == edges.size())
+          f.Add(param[i], param[i], edges[i], faces[i]);
+        else if(param.size() == 2 * edges.size())
+          f.Add(param[2 * i], param[2 * i + 1], edges[i], faces[i]);
+      }
+      f.Build();
+      if(!f.IsDone()) {
+        Msg::Error("Could not compute chamfer");
+        return false;
+      }
+      result = f.Shape();
+    }
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -2317,11 +2367,32 @@ bool OCC_Internals::fillet(const std::vector<int> &volumeTags,
   }
 
   if(result.IsNull()){
-    Msg::Error("Fillet produces empty shape");
+    Msg::Error("%s produces empty shape", mode ? "Chamfer" : "Fillet");
     return false;
   }
   _multiBind(result, -1, outDimTags, true, true);
   return true;
+}
+
+
+bool OCC_Internals::fillet(const std::vector<int> &volumeTags,
+                           const std::vector<int> &curveTags,
+                           const std::vector<double> &radii,
+                           std::vector<std::pair<int, int> > &outDimTags,
+                           bool removeVolume)
+{
+  std::vector<int> dummy;
+  return _fillet(0, volumeTags, curveTags, dummy, radii, outDimTags, removeVolume);
+}
+
+bool OCC_Internals::chamfer(const std::vector<int> &volumeTags,
+                            const std::vector<int> &curveTags,
+                            const std::vector<int> &surfaceTags,
+                            const std::vector<double> &distances,
+                            std::vector<std::pair<int, int> > &outDimTags,
+                            bool removeVolume)
+{
+  return _fillet(1, volumeTags, curveTags, surfaceTags, distances, outDimTags, removeVolume);
 }
 
 static void _filterTags(std::vector<std::pair<int, int> > &outDimTags, int minDim)
@@ -3016,6 +3087,7 @@ bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnl
 bool OCC_Internals::importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
                                  std::vector<std::pair<int, int> > &outDimTags)
 {
+  if(!shape) return false;
   _multiBind(*shape, -1, outDimTags, highestDimOnly, true);
   return true;
 }
