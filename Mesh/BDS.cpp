@@ -26,7 +26,7 @@ double _COS_N ( BDS_Point *_p1, BDS_Point *_p2, BDS_Point *_p3 , GFace *gf){
   SVector3 N3 = gf->normal (SPoint2(_p3->u,_p3->v));
   SVector3 N = N1+N2+N3;
   N.normalize();
-  return N.x()*n[0]+N.y()*n[1]+N.z()*n[2];  
+  return N.x()*n[0]+N.y()*n[1]+N.z()*n[2];
 }
 
 
@@ -112,7 +112,7 @@ void outputScalarField(std::vector<BDS_Face*> &t, const char *iii, int param, GF
 		  pts[2]->u, pts[0]->v, 0.0,
 		  pts[1]->u, pts[0]->v, 0.0,
 		  //		  v,v,v,v);
-		  (double)pts[1]->iD, (double)pts[2]->iD, (double)pts[0]->iD, (double)pts[0]->iD);	  
+		  (double)pts[1]->iD, (double)pts[2]->iD, (double)pts[0]->iD, (double)pts[0]->iD);
 	else if (pts[1]->degenerated)
 	  fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
 		  pts[2]->u, pts[2]->v, 0.0,
@@ -120,7 +120,7 @@ void outputScalarField(std::vector<BDS_Face*> &t, const char *iii, int param, GF
 		  pts[0]->u, pts[1]->v, 0.0,
 		  pts[2]->u, pts[1]->v, 0.0,
 		  //v,v,v,v);
-		  (double)pts[2]->iD, (double)pts[0]->iD, (double)pts[1]->iD, (double)pts[1]->iD);	  
+		  (double)pts[2]->iD, (double)pts[0]->iD, (double)pts[1]->iD, (double)pts[1]->iD);
 	else if (pts[2]->degenerated)
 	  fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
 		  pts[0]->u, pts[0]->v, 0.0,
@@ -128,7 +128,7 @@ void outputScalarField(std::vector<BDS_Face*> &t, const char *iii, int param, GF
 		  pts[1]->u, pts[2]->v, 0.0,
 		  pts[0]->u, pts[2]->v, 0.0,
 		  //v,v,v,v);
-		  (double)pts[0]->iD, (double)pts[1]->iD, (double)pts[2]->iD, (double)pts[2]->iD);	  
+		  (double)pts[0]->iD, (double)pts[1]->iD, (double)pts[2]->iD, (double)pts[2]->iD);
 	else{
 	    fprintf(f, "ST(%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E){%g,%g,%g};\n",
 		    pts[0]->u, pts[0]->v, 0.0,
@@ -136,7 +136,7 @@ void outputScalarField(std::vector<BDS_Face*> &t, const char *iii, int param, GF
 		    pts[2]->u, pts[2]->v, 0.0,
 		    //		    v,v,v);
 		    (double)pts[0]->iD, (double)pts[1]->iD, (double)pts[2]->iD);
-	      
+
 	}
       }
     }
@@ -187,7 +187,7 @@ double surface_triangle_param(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3)
 
   double c;
   if (p1->degenerated+p2->degenerated+p3->degenerated > 1)
-    c = 0;//vector_triangle_parametric(p1, p2, p3, c);    
+    c = 0;//vector_triangle_parametric(p1, p2, p3, c);
   else if (p1->degenerated){
     double du = fabs(p3->u - p2->u);
     c = 2*fabs (0.5*(p3->v+p2->v) - p1->v) * du;
@@ -400,7 +400,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
     // printf("%d %d\n",intersected.size(),ix);
 
     //    printf("%d intersected\n",intersected.size());
-    
+
     if(!intersected.size() || ix > 100000) {
       BDS_Edge *eee = find_edge(num1, num2);
       if(!eee) {
@@ -569,7 +569,7 @@ void BDS_Edge::oppositeof(BDS_Point *oface[2]) const
 {
 
   // FIXME !!!!!!!!!!!!
-  
+
   oface[0] = oface[1] = 0;
   if(faces(0)) {
     BDS_Point *pts[4];
@@ -696,7 +696,7 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
   BDS_Point *op[2];
   BDS_Point *p1 = e->p1;
   BDS_Point *p2 = e->p2;
-  
+
   e->oppositeof(op);
 
   //  if (p1->iD == 11 && p2->iD == 37)
@@ -795,16 +795,16 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
 
 bool BDS_SwapEdgeTestRecover::operator()(BDS_Point *_p1, BDS_Point *_p2,
                                          BDS_Point *_q1, BDS_Point *_q2) const
-{  
+{
 
   double p1[2] = {_p1->u, _p1->v};
   double p2[2] = {_p2->u, _p2->v};
   double op1[2] = {_q1->u, _q1->v};
   double op2[2] = {_q2->u, _q2->v};
-  
+
   double ori_t1 = robustPredicates::orient2d(op1, p1, op2);
   double ori_t2 = robustPredicates::orient2d(op1, op2, p2);
-  
+
   return (ori_t1 * ori_t2 > 0); // the quadrangle was strictly convex !
 }
 
@@ -828,7 +828,7 @@ bool BDS_SwapEdgeTestRecover::operator()(BDS_Point *_p1, BDS_Point *_p2,
 bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
                                          BDS_Point *_q1, BDS_Point *_q2) const
 {
-  
+
   if(!testSmallTriangles) return true;
   double s1 = fabs(surface_triangle_param(_p1, _p2, _q1));
   double s2 = fabs(surface_triangle_param(_p1, _p2, _q2));
@@ -839,23 +839,23 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
   }
   if(s3 < .02 * (s1 + s2) || s4 < .02 * (s1 + s2))
     return false;
-  
-  /*  
+
+  /*
   if(!testSmallTriangles) {
     double p1[2] = {_p1->u, _p1->v};
     double p2[2] = {_p2->u, _p2->v};
     double op1[2] = {_q1->u, _q1->v};
     double op2[2] = {_q2->u, _q2->v};
-    
+
     double ori_t1 = robustPredicates::orient2d(op1, p1, op2);
     double ori_t2 = robustPredicates::orient2d(op1, op2, p2);
-    
+
     // printf("%d %d %d %d %g
     // %g\n",_p1->iD,_p2->iD,_q1->iD,_q2->iD,ori_t1,ori_t2);
-    
+
     return (ori_t1 * ori_t2 > 0); // the quadrangle was strictly convex !
   }
-  
+
   double s1 = std::abs(surface_triangle_param(_p1, _p2, _q1));
   double s2 = std::abs(surface_triangle_param(_p1, _p2, _q2));
   double s3 = std::abs(surface_triangle_param(_p1, _q1, _q2));
@@ -863,7 +863,7 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
   if(std::abs(s1 + s2 - s3 - s4) > 1.e-12 * (s1 + s2)) return false;
   if(s3 < .02 * (s1 + s2) || s4 < .02 * (s1 + s2)) return false;
   */
-  
+
   return true;
 }
 /*
@@ -923,13 +923,13 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
   double const minb = std::min(qb1, qb2);
 
   //  printf("%g %g -> %g %g\n",qa1,qa2,qb1,qb2);
-  
+
   // if(cosnq < .3 && cosonq > .5 && minb > .1)
   //   printf("mina = %g minb = %g cos %g %g\n",mina,minb,cosnq,cosonq);
   //  if(cosnq < 0.3 && cosonq > 0.5 && minb > 0.1) return true;
 
   return minb > mina;
-  
+
 }
 
 
@@ -953,7 +953,7 @@ bool BDS_SwapEdgeTestNormals::operator () (BDS_Point *_p1, BDS_Point *_p2, BDS_P
                                            BDS_Point *_op1, BDS_Point *_op2, BDS_Point *_op3,
                                            BDS_Point *_oq1, BDS_Point *_oq2, BDS_Point *_oq3) const
 {
-  
+
   double qa1 = qmTriangle::gamma(_p1, _p2, _p3);
   double qa2 = qmTriangle::gamma(_q1, _q2, _q3);
   double qb1 = qmTriangle::gamma(_op1, _op2, _op3);
@@ -963,20 +963,20 @@ bool BDS_SwapEdgeTestNormals::operator () (BDS_Point *_p1, BDS_Point *_p2, BDS_P
   double minb = std::min(qb1,qb2);
 
   if(minb > 5*mina) return true;
-  
+
   double OLD = std::min(_ori*qa1*_COS_N ( _p1, _p2, _p3 , gf),
 			_ori*qa2*_COS_N ( _q1, _q2, _q3 , gf));
-  
+
   double NEW = std::min(_ori*qb1*_COS_N ( _op1, _op2, _op3 , gf),
 			_ori*qb2*_COS_N ( _oq1, _oq2, _oq3 , gf));
 
-  
+
   //  printf("%g %g\n",OLD, NEW);
-  
+
   if (OLD < 0.2 && OLD < NEW)
     return true;
   return false;
-  
+
 }
 
 bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest, bool force)
@@ -999,7 +999,7 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest, bool forc
 
   BDS_Point *p1 = e->p1;
   BDS_Point *p2 = e->p2;
-  
+
   if(e->deleted)
     return false;
 
@@ -1008,28 +1008,28 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest, bool forc
 
   if(e->g && e->g->classif_degree == 1) return false;
 
-  const int CHECK1 = 41, CHECK2 = 86;
-  
-  
+  const int CHECK1 = -1, CHECK2 = -1;
+
+
   BDS_Point *op[2];
   BDS_Point *pts1[4];
   BDS_Point *pts2[4];
   e->computeNeighborhood(pts1, pts2, op);
   //  if (op[0] == op[1])return false;
-  
+
   if (p1->iD == CHECK1 && p2->iD == CHECK2){
     printf("--------------  e %d %d --> %d %d\n",p1->iD,p2->iD, op[0]->iD, op[1]->iD);
     printf("--------------  %d %d %d\n",pts1[0]->iD,pts1[1]->iD,pts1[2]->iD);
     printf("--------------  %d %d %d\n",pts2[0]->iD,pts2[1]->iD,pts2[2]->iD);
   }
-  
-  
+
+
   if (! force &&
       !p1->config_modified &&
       !p2->config_modified &&
       !op[0]->config_modified &&
-      !op[1]->config_modified )return false;  
-  
+      !op[1]->config_modified )return false;
+
   // AVOID CREATING POINTS WITH 2 NEIGHBORING TRIANGLES
   //  std::vector<BDS_Face*> f1 = p1->getTriangles();
   //  std::vector<BDS_Face*> f2 = p2->getTriangles();
@@ -1037,10 +1037,10 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest, bool forc
   //  if (p2->g && p2->g->classif_degree == 2 && p2->edges.size() <= 4)return false;
   //  if (p1->g && p1->g->classif_degree == 1 && p1->edges.size() <= 3)return false;
   //  if (p2->g && p2->g->classif_degree == 1 && p2->edges.size() <= 3)return false;
-  //      || p2->edges.size() == 4)return false; 
+  //      || p2->edges.size() == 4)return false;
   if (p1->iD == CHECK1 && p2->iD == CHECK2)
     printf("topology OK \n");
-  
+
   BDS_GeomEntity *g1 = 0, *g2 = 0, *ge = e->g;
 
   // compute the orientation of the face
@@ -1070,7 +1070,7 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest, bool forc
   if (p1->iD == CHECK1 && p2->iD == CHECK2)
     printf("TEST2 OK\n");
 
-  
+
 
   BDS_Edge *p1_op1 = find_edge(p1, op[0], e->faces(0));
   BDS_Edge *op1_p2 = find_edge(op[0], p2, e->faces(0));
@@ -1226,19 +1226,19 @@ static bool test_move_point_parametric_triangle(BDS_Point *p, double u,
 
            C------B
          /  \    / \
-        /    \  /    \ 
+        /    \  /    \
        /      \/      \
        x-------A-------D
         \      /\     /
-          \  /    \ /          
-            x-------x      
+          \  /    \ /
+            x-------x
  */
 
 
 
 bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
 {
-  
+
   if(!force &&  e->numfaces() != 2)
     return false;
   if(!force &&  p->g && p->g->classif_degree == 0)
@@ -1259,11 +1259,11 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
     if (!force &&  oface[0]->g && oface[0]->g->classif_degree == 1 && oface[0]->edges.size() <= 3)return false;
     if (!force &&  oface[1]->g && oface[1]->g->classif_degree == 1 && oface[1]->edges.size() <= 3)return false;
   }
-  
+
   std::vector<BDS_Face*> t = p->getTriangles();
   BDS_Point *o = e->othervertex(p);
 
-  
+
   BDS_Point *pt[3][1024];
   BDS_GeomEntity *gs[1024];
   int ept[2][1024];
@@ -1278,7 +1278,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
       BDS_Point *pts[4];
       t->getNodes(pts);
       double sold = std::abs(surface_triangle_param(pts[0], pts[1], pts[2]));
-      area_old += sold; 
+      area_old += sold;
 
       if(t->e1 != e && t->e2 != e && t->e3 != e) {
         gs[nt] = t->g;
@@ -1290,7 +1290,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
 	  //	  printf("argh\n");
 	  return false;
 	}
-	area_new += snew; 	
+	area_new += snew;
         ++nt;
       }
       ++it;
@@ -1299,7 +1299,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
   if (!force &&  nt == 2) return false;
 
   if (!force &&  fabs(area_old - area_new)  > 1.e-12 * (area_old + area_new))return false;
-  
+
   {
     std::vector<BDS_Face *>::iterator it = t.begin();
     while(it != t.end()) {
@@ -1535,7 +1535,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
   }
 
   if (p->iD == CHECK)printf("point %d connected to ",CHECK);
-  
+
   double XX=0,YY=0,ZZ=0;
   double U = 0;
   double V = 0;
@@ -1554,11 +1554,11 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
     Msg::Debug("Hidden bug ... I should have deleted a point but I still do not know why it segfault when I do it :-) ");
     return false;
   }
-  
+
   while(eit != itede) {
     BDS_Edge  *e = *eit;
     BDS_Point *n = e->othervertex(p);
-    double NU = n->degenerated ? p->u : n->u;    
+    double NU = n->degenerated ? p->u : n->u;
     if (p->iD == CHECK)printf("%d ",n->iD);
     double du = sqrt((NU-oldU)*(NU-oldU)+(n->v-oldV)*(n->v-oldV));
     if (du == 0){
@@ -1585,8 +1585,8 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
   XX/= (sTot);
   YY/= (sTot);
   ZZ/= (sTot);
-  
-  
+
+
   GPoint gp;
 
   /**  if (gf->geomType() == GEntity::DiscreteSurface){
@@ -1600,7 +1600,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
        }
        else*/
   gp = gf->point(U , V );
-  
+
   if (!gp.succeeded()){
     return false;
   }
@@ -1619,7 +1619,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
 
   // simple strategy has failed to reduce energy
   if (p->iD == CHECK)
-    printf("SIMPLE CENTROID SCHEME %g %g\n",ENERGY_NEW,ENERGY);  
+    printf("SIMPLE CENTROID SCHEME %g %g\n",ENERGY_NEW,ENERGY);
 
   if (ENERGY_NEW > ENERGY/* || hard*/){
     double uv[2] = {U,V};
@@ -1639,7 +1639,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
       ++eit;
     }
     if (p->iD == CHECK)
-      printf("PROJECTION : %g %g\n",ENERGY_NEW,ENERGY);  
+      printf("PROJECTION : %g %g\n",ENERGY_NEW,ENERGY);
     if (ENERGY_NEW > ENERGY){
       Msg::Debug("Impossible to move vertex %d using simple strategies... leaving it there",p->iD);
       return false;
@@ -1684,8 +1684,8 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
   //  if (p->edges.size() == 3)printf("3 -> %22.15E\n",fabs(s2-s1));
   if(fabs(s2-s1) > 1.e-12 * (s2 + s1)) {
     //    if (p->iD == CHECK)
-    //    printf("PARAMETRIC TRIANGLES OVERLAP %22.15E!!\n",fabs(s2-s1));  
-    //    else 
+    //    printf("PARAMETRIC TRIANGLES OVERLAP %22.15E!!\n",fabs(s2-s1));
+    //    else
     return false;
   }
   if (newWorst < oldWorst) return false;
@@ -1696,7 +1696,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
   //  }
   //  if (NEW < 0)return false;
 
-  
+
   p->u = U;
   p->v = V;
   p->lc() = LC;
@@ -1716,7 +1716,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
 
 bool BDS_Mesh::smooth_point_parametric(BDS_Point *const point, GFace *const gf)
 {
- 
+
   if(!point->config_modified) return false;
 
   if(point->g && point->g->classif_degree <= 1) return false;
