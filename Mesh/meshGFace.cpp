@@ -123,8 +123,8 @@ bool pointInsideParametricDomain (std::vector<SPoint2> &bnd, SPoint2 &p, SPoint2
 
 void trueBoundary(const char *iii, GFace *gf, std::vector<SPoint2> &bnd)
 {
-  FILE* view_t = Fopen(iii,"w");
-  fprintf(view_t,"View \"True Boundary\"{\n");
+  //  FILE* view_t = Fopen(iii,"w");
+  //  fprintf(view_t,"View \"True Boundary\"{\n");
   std::vector<GEdge *> edg = gf->edges();
 
   std::set<GEdge*> edges (edg.begin(), edg.end());
@@ -141,16 +141,16 @@ void trueBoundary(const char *iii, GFace *gf, std::vector<SPoint2> &bnd)
 	double xi = r.low() + (r.high() - r.low()) * t;
 	p[k] = ge->reparamOnFace(gf, xi, i);      
 	if (k > 0){
-	  fprintf(view_t,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p[k-1].x(),p[k-1].y(),0.0,
-		  p[k].x(),p[k].y(),0.0);
+	  //	  fprintf(view_t,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p[k-1].x(),p[k-1].y(),0.0,
+	  //		  p[k].x(),p[k].y(),0.0);
 	  bnd.push_back(p[k-1]);
 	  bnd.push_back(p[k]);
 	}
       }
     }
   }
-  fprintf(view_t,"};\n");
-  fclose(view_t);
+  //  fprintf(view_t,"};\n");
+  //  fclose(view_t);
 }
 
 
@@ -1902,8 +1902,9 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
 
 static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 {
+  
   std::map<BDS_Point*, MVertex*, PointLessThan> recoverMap;
-
+  
   char name[245];
   sprintf(name, "trueBoundary%d.pos", gf->tag());
   std::vector<SPoint2> true_boundary;
@@ -2641,7 +2642,7 @@ void deMeshGFace::operator()(GFace *gf)
 }
 
 // for debugging, change value from -1 to -100;
-int debugSurface = -100; //-100;
+int debugSurface = -1; //-100;
 
 void meshGFace::operator()(GFace *gf, bool print)
 {
@@ -2719,7 +2720,7 @@ void meshGFace::operator()(GFace *gf, bool print)
     ite++;
   }
   
-  if (gf->periodic(0) || gf->periodic(1) || singularEdges){
+  if (gf->getNativeType() != GEntity::GmshModel && (gf->periodic(0) || gf->periodic(1) || singularEdges)){
     if(!meshGeneratorPeriodic
        (gf, debugSurface >= 0 || debugSurface == -100))
       Msg::Error("Impossible to mesh periodic face %d", gf->tag());

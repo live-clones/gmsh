@@ -358,6 +358,21 @@ public:
   virtual ~BDS_SwapEdgeTest() {}
 };
 
+class BDS_SwapEdgeTestRecover : public BDS_SwapEdgeTest {
+public:
+  BDS_SwapEdgeTestRecover()
+  {
+  }
+  virtual bool operator()(BDS_Point *p1, BDS_Point *p2, BDS_Point *q1,
+                          BDS_Point *q2) const;
+  virtual bool operator()(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3,
+                          BDS_Point *q1, BDS_Point *q2, BDS_Point *q3,
+                          BDS_Point *op1, BDS_Point *op2, BDS_Point *op3,
+                          BDS_Point *oq1, BDS_Point *oq2, BDS_Point *oq3) const;
+  virtual ~BDS_SwapEdgeTestRecover() {}
+};
+
+
 class BDS_SwapEdgeTestQuality : public BDS_SwapEdgeTest {
   bool testQuality, testSmallTriangles;
 
