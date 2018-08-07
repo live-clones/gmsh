@@ -91,7 +91,7 @@ void outputScalarField(std::vector<BDS_Face*> &t, const char *iii, int param, GF
     BDS_Point *pts[4];
     if(!(*tit)->deleted) {
       (*tit)->getNodes(pts);
-      double v = BDS_Face_Validity (gf, *tit);
+      //double v = BDS_Face_Validity (gf, *tit);
       if(!param && gf){
 	if (pts[0]->degenerated+pts[1]->degenerated+pts[2]->degenerated < 2)
 	  {
@@ -1653,7 +1653,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
   double s1 = 0, s2 = 0;
 
   double newWorst = 1.0, oldWorst = 1.0;
-  double OLD = 1, NEW = 1;
+  //double OLD = 1, NEW = 1;
   std::vector<BDS_Face*>::const_iterator it = ts.begin();
   while(it != ts.end()) {
     BDS_Face *t = *it;
