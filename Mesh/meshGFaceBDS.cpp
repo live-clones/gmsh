@@ -227,11 +227,11 @@ static int edgeSwapTest(GFace *gf, BDS_Edge *e)
   else  return -1;
 }
 
-static void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap, int FINALIZE = 0)
+static void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap, int FINALIZE = 0, double orientation = 1.0)
 {
   //  return;
   BDS_SwapEdgeTest *qual;
-  if (FINALIZE && gf->getNativeType() != GEntity::GmshModel)  qual = new BDS_SwapEdgeTestNormals(gf);
+  if (FINALIZE && gf->getNativeType() != GEntity::GmshModel)  qual = new BDS_SwapEdgeTestNormals(gf, orientation);
   else qual = new BDS_SwapEdgeTestQuality (true,true);
   //    qual = new BDS_SwapEdgeTestQuality (true,true);
   typedef std::vector<BDS_Edge *>::size_type size_type;
@@ -762,6 +762,15 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   int ITER = 0;
   int bad = 0;
   int invalid = 0;
+
+  for (size_t i=0;i<m.triangles.size();i++){
+    BDS_Point *pts[4];
+    m.triangles[i]->getNodes(pts);
+    double val = BDS_Face_Validity (gf, m.triangles[i]);
+    invalid += val < 0 ? 1 : 0;
+  }
+  double orientation = invalid > m.triangles.size()/2 ? -1.0 : 1.0;
+    
   while (ITER++ <10){
     //    printf("START\n");
     bad = 0;
@@ -779,7 +788,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
       BDS_Point *pts[4];
       m.triangles[i]->getNodes(pts);
       //      if (pts[0]->degenerated + pts[1]->degenerated + pts[2]->degenerated < 2){
-      double val = BDS_Face_Validity (gf, m.triangles[i]);
+      double val = orientation * BDS_Face_Validity (gf, m.triangles[i]);
       if (val <= 0.2){
 	if (!m.triangles[i]->deleted && val <= 0)invalid++;
 	pts[0]->config_modified = true;
@@ -793,7 +802,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     if (bad != 0){
       int nb_swap = 0;
       int nb_smooth = 0;
-      swapEdgePass ( gf, m, nb_swap, 1);
+      swapEdgePass ( gf, m, nb_swap, 1, orientation);
       smoothVertexPass(gf, m, nb_smooth, true);
       if ((nb_swap == 0 &&  nb_smooth == 0) || ITER == 10){
 	if (invalid && !computeNodalSizeField)Msg::Warning("Meshing surface %d : %d elements remain invalid\n", gf->tag(),invalid);

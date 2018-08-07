@@ -21,9 +21,9 @@ double _COS_N ( BDS_Point *_p1, BDS_Point *_p2, BDS_Point *_p3 , GFace *gf){
 
   double n[3];
   normal_triangle(_p1, _p2, _p3, n);
-  SVector3 N1 = -gf->normal (SPoint2(_p1->u,_p1->v));
-  SVector3 N2 = -gf->normal (SPoint2(_p2->u,_p2->v));
-  SVector3 N3 = -gf->normal (SPoint2(_p3->u,_p3->v));
+  SVector3 N1 = gf->normal (SPoint2(_p1->u,_p1->v));
+  SVector3 N2 = gf->normal (SPoint2(_p2->u,_p2->v));
+  SVector3 N3 = gf->normal (SPoint2(_p3->u,_p3->v));
   SVector3 N = N1+N2+N3;
   N.normalize();
   return N.x()*n[0]+N.y()*n[1]+N.z()*n[2];  
@@ -935,11 +935,11 @@ bool BDS_SwapEdgeTestNormals::operator () (BDS_Point *_p1, BDS_Point *_p2, BDS_P
 
   if(minb > 5*mina) return true;
   
-  double OLD = std::min(qa1*_COS_N ( _p1, _p2, _p3 , gf),
-			qa2*_COS_N ( _q1, _q2, _q3 , gf));
+  double OLD = std::min(_ori*qa1*_COS_N ( _p1, _p2, _p3 , gf),
+			_ori*qa2*_COS_N ( _q1, _q2, _q3 , gf));
   
-  double NEW = std::min(qb1*_COS_N ( _op1, _op2, _op3 , gf),
-			qb2*_COS_N ( _oq1, _oq2, _oq3 , gf));
+  double NEW = std::min(_ori*qb1*_COS_N ( _op1, _op2, _op3 , gf),
+			_ori*qb2*_COS_N ( _oq1, _oq2, _oq3 , gf));
 
   
   //  printf("%g %g\n",OLD, NEW);

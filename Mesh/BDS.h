@@ -379,8 +379,9 @@ public:
 class BDS_SwapEdgeTestNormals : public BDS_SwapEdgeTest
 {
   GFace *gf;
+  double _ori;
  public:
- BDS_SwapEdgeTestNormals(GFace *_gf): gf(_gf) {} 
+ BDS_SwapEdgeTestNormals(GFace *_gf, double ori): gf(_gf), _ori(ori) {} 
   virtual bool operator() (BDS_Point *p1, BDS_Point *p2,
                            BDS_Point *q1, BDS_Point *q2) const;
   virtual bool operator() (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3,
