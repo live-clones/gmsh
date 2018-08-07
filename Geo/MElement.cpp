@@ -478,7 +478,7 @@ void MElement::getNode(int num, double &u, double &v, double &w) const
   const fullMatrix<double> &refpnts = nb->getReferenceNodes();
   u = refpnts(num, 0);
   v = getDim() > 1 ? refpnts(num, 1) : 0;
-  v = getDim() > 2 ? refpnts(num, 2) : 0;
+  w = getDim() > 2 ? refpnts(num, 2) : 0;
 }
 
 void MElement::getShapeFunctions(double u, double v, double w, double s[], int o) const

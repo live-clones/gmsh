@@ -55,31 +55,41 @@ class onelabGmshServer : public GmshServer{
       if(_client->getPid() < 0 || (_client->getExecutable().empty() &&
                                    !CTX::instance()->solver.listen))
         return 1; // process has been killed or we stopped listening
-      // check if there is data (call select with a zero timeout to
-      // return immediately, i.e., do polling)
-      int ret = Select(0, 0, socket);
-      if(ret == 0){ // nothing available
-        if(timeout < 0){
-          // if asked, refresh the onelab GUI, but no more than every 1/4th of
-          // a second
-          static double lastRefresh = 0.;
-          if(start - lastRefresh > 0.25){
-            std::vector<onelab::string> ps;
-            onelab::server::instance()->get(ps, "Gmsh/Action");
-            if(ps.size() && ps[0].getValue() == "refresh"){
-              ps[0].setVisible(false);
-              ps[0].setValue("");
-              onelab::server::instance()->set(ps[0]);
+      int ret = 0;
 #if defined(HAVE_FLTK)
-              if(FlGui::available()) onelab_cb(0, (void*)"refresh");
+      if(FlGui::available()){
+        // if GUI available, check if there is data and return immediately (we
+        // will wait for GUI events later - see below)
+        ret = Select(0, 0, socket);
+      }
+      else{
+        ret = Select(0, waitint * 1e6, socket);
+      }
+#else
+      ret = Select(0, waitint * 1e6, socket);
 #endif
-            }
-            lastRefresh = start;
-          }
-        }
-        // wait at most waitint seconds and respond to FLTK events
+      if(ret == 0){ // nothing available
 #if defined(HAVE_FLTK)
-        if(FlGui::available()) FlGui::instance()->wait(waitint);
+        if(FlGui::available()){
+          if(timeout < 0){
+            // if asked, refresh the onelab GUI, but no more than every 1/4th of a
+            // second
+            static double lastRefresh = 0.;
+            if(start - lastRefresh > 0.25){
+              std::vector<onelab::string> ps;
+              onelab::server::instance()->get(ps, "Gmsh/Action");
+              if(ps.size() && ps[0].getValue() == "refresh"){
+                ps[0].setVisible(false);
+                ps[0].setValue("");
+                onelab::server::instance()->set(ps[0]);
+                if(FlGui::available()) onelab_cb(0, (void*)"refresh");
+              }
+              lastRefresh = start;
+            }
+          }
+          // wait at most waitint seconds and respond to FLTK events
+          FlGui::instance()->wait(waitint);
+        }
 #endif
         // return to caller (we will be back here soon again)
 	if(timeout < 0) return 3;

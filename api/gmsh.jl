@@ -25,9 +25,10 @@ const lib = joinpath(libdir, is_windows() ? "gmsh-3.0" : "libgmsh")
     gmsh.initialize(argv = Vector{String}(), readConfigFiles = true)
 
 Initialize Gmsh. This must be called before any call to the other functions in
-the API. If `argc` and `argv` are provided, they will be handled in the same way
-as the command line arguments in the Gmsh app. If `readConfigFiles` is set, read
-system Gmsh configuration files (gmshrc and gmsh-options).
+the API. If `argc` and `argv` (or just `argv` in Python or Julia) are provided,
+they will be handled in the same way as the command line arguments in the Gmsh
+app. If `readConfigFiles` is set, read system Gmsh configuration files (gmshrc
+and gmsh-options).
 """
 function initialize(argv = Vector{String}(), readConfigFiles = true)
     ierr = Ref{Cint}()

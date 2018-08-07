@@ -271,10 +271,12 @@ static void copyMesh(GFace *source, GFace *target)
                      "point %d has no periodic counterpart",
                      target->tag(), source->tag(), gvt->tag());
       }
-      MVertex *vs = gvs->mesh_vertices[0];
-      MVertex *vt = gvt->mesh_vertices[0];
-      vs2vt[vs] = vt;
-      target->correspondingVertices[vt] = vs;
+      if(gvs){
+        MVertex *vs = gvs->mesh_vertices[0];
+        MVertex *vt = gvt->mesh_vertices[0];
+        vs2vt[vs] = vt;
+        target->correspondingVertices[vt] = vs;
+      }
     }
   }
 

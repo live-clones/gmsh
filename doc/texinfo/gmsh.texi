@@ -425,10 +425,10 @@ features, and many aspects of the interface could be enhanced
 Gmsh's scripting language is quite limited, providing only very crude
 loop controls and user-defined macros, with no local variables. For more
 complex workflows, or for integrating Gmsh as a library directly in
-other software tools, a application programming interface is
-available. This allows to directly access Gmsh features from C++, C,
-Python or Julia. The C interface makes it relatively easy to build
-interfaces to additional languages (e.g. Javascript, Java or Go).
+other software tools, an application programming interface is available
+(@pxref{Gmsh API}). This allows to directly access Gmsh features from
+C++, C, Python or Julia. The C interface makes it relatively easy to
+build interfaces to additional languages (e.g. Javascript, Java or Go).
 @end itemize
 
 If you have the skills and some free time, feel free to join the
@@ -5202,6 +5202,17 @@ repository. All branches are tested; make sure that all tests pass and
 that your code does not produce any warning before submitting merge
 requests.
 @item
+Follow the style used in the existing code when adding something new:
+indent using 2 spaces (never use tabs!), put 1 space after commas, put
+opening braces for functions on a separate line, opening braces for
+loops and tests on the same line, etc. You can use the
+@code{clang-format} tool to apply these rules automatically (the rules
+are defined in the
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/.clang-format,.clang-format}
+file.)
+@item
+Always use the @code{Msg::} class to print information or errors
+@item
 Use memory checking tools to detect memory leaks and other nasty memory
 problems. For example, you can use
 @itemize @bullet
@@ -5228,14 +5239,6 @@ Memprof
 @item
 @dots{}
 @end itemize
-@item
-Always use the @code{Msg::} class to print information or errors
-@item
-Indent your files (2 spaces) and convert all tabs to spaces.
-@item
-Follow the style used in the existing code when adding something new
-(spaces after commas, opening braces for functions on a separate line,
-opening braces for loops and tests on the same line, etc.).
 @end enumerate
 
 @c -------------------------------------------------------------------------
@@ -5672,7 +5675,7 @@ Use `Tools->Plugins->Cut Plane'.
 @item Can I save an isosurface to a file?
 
 Yes: first run `Tools->Plugins->Cut Map' to extract the isosurface,
-then use `View->Save As' to save the new view.
+then use `View->Export' to save the new view.
 
 @item Can Gmsh generate isovolumes?
 

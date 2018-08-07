@@ -170,7 +170,7 @@ static void view_save_cb(Fl_Widget *w, void *data)
 
   PView *view = PView::list[(intptr_t)data];
  test:
-  if(fileChooser(FILE_CHOOSER_CREATE, "Save As", formats,
+  if(fileChooser(FILE_CHOOSER_CREATE, "Export", formats,
                  view->getData()->getFileName().c_str())){
     std::string name = fileChooserGetName(1);
     if(CTX::instance()->confirmOverwrite) {
@@ -354,7 +354,7 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
 
   _popup->add("Apply As Background Mesh", 0,
               (Fl_Callback *) view_applybgmesh_cb, (void *)(intptr_t)num, 0);
-  _popup->add("Save As...", 0,
+  _popup->add("Export...", 0,
               (Fl_Callback *) view_save_cb, (void *)(intptr_t)num, 0);
 
   end(); // close the group

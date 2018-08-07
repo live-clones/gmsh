@@ -13,7 +13,7 @@
 // By design, the Gmsh C++ API is purely functional, and only uses elementary
 // types from the standard library. See `demos/api' for examples.
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(_USE_MATH_DEFINES)
 #define _USE_MATH_DEFINES
 #endif
 
@@ -48,9 +48,10 @@ namespace gmsh {
 namespace gmsh { // Top-level functions
 
   // Initialize Gmsh. This must be called before any call to the other functions in
-  // the API. If `argc' and `argv' are provided, they will be handled in the same
-  // way as the command line arguments in the Gmsh app. If `readConfigFiles' is
-  // set, read system Gmsh configuration files (gmshrc and gmsh-options).
+  // the API. If `argc' and `argv' (or just `argv' in Python or Julia) are
+  // provided, they will be handled in the same way as the command line arguments
+  // in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration
+  // files (gmshrc and gmsh-options).
   GMSH_API void initialize(int argc = 0, char ** argv = 0,
                            const bool readConfigFiles = true);
 

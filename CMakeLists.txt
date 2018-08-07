@@ -30,7 +30,7 @@ IF("${isSystemDir}" STREQUAL "-1")
 ENDIF("${isSystemDir}" STREQUAL "-1")
 # end KHModif
 
-# do not warn about non-definition of WIN32 on cygwin
+# do not warn about non-definition of WIN32 on Cygwin
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
 # if CMAKE_BUILD_TYPE is specified use it; otherwise set the default
@@ -199,8 +199,20 @@ set(GMSH_PACKAGER "${PACKAGER}")
 if(APPLE)
   set(GMSH_OS "MacOSX")
 elseif(CYGWIN)
-  set(GMSH_OS "Windows")
-  add_definitions(-DWIN32) # recent mingw compiler doesn't define it
+  # detect if we use the MinGW compilers on Cygwin - if we do, handle the build
+  # as a pure Windows build
+  if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR
+     CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpmachine
+                    OUTPUT_VARIABLE CXX_COMPILER_MACHINE
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(CXX_COMPILER_MACHINE MATCHES "mingw")
+      set(GMSH_OS "Windows")
+      set(WIN32 1)
+      add_definitions(-DWIN32)
+    endif(CXX_COMPILER_MACHINE MATCHES "mingw")
+  endif(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR
+        CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 else(APPLE)
   set(GMSH_OS "${CMAKE_SYSTEM_NAME}")
 endif(APPLE)
@@ -1175,12 +1187,12 @@ if(ENABLE_OCC)
       if(HAVE_64BIT_SIZE_T)
         add_definitions(-D_OCC64)
       endif(HAVE_64BIT_SIZE_T)
-      if(CYGWIN)
+      if(WIN32 OR CYGWIN)
 	list(APPEND EXTERNAL_LIBRARIES "winspool")
         add_definitions(-DOCC_CONVERT_SIGNALS)
       elseif(MSVC)
 	add_definitions(-DWNT)
-      endif(CYGWIN)
+      endif(WIN32 OR CYGWIN)
     endif(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
   endif(OCC_VERSION AND OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
 
@@ -1519,6 +1531,8 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
                         ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
   if(WIN32 OR CYGWIN)
     set_target_properties(shared PROPERTIES PREFIX "")
+    set_target_properties(shared PROPERTIES IMPORT_PREFIX "")
+    set_target_properties(shared PROPERTIES IMPORT_SUFFIX ".lib")
     set_target_properties(shared PROPERTIES COMPILE_FLAGS -DGMSH_DLL_EXPORT)
   endif(WIN32 OR CYGWIN)
   target_link_libraries(shared ${LINK_LIBRARIES})
@@ -1650,7 +1664,7 @@ macro(unix2dos VARNAME)
     if(CYGWIN)
       string(REGEX REPLACE "\n" "\r\n" F1 "${F0}")
       file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/unix2dos/${N} "${F1}")
-    else(CYGWIN) # if not in cygwin, cmake adds '\r's automatically
+    else(CYGWIN) # if not in Cygwin, cmake adds '\r's automatically
       file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/unix2dos/${N} "${F0}")
     endif(CYGWIN)
     list(APPEND UNIX2DOS_FILES ${CMAKE_CURRENT_BINARY_DIR}/unix2dos/${N})
@@ -1927,8 +1941,8 @@ if(NOT DISABLE_GMSH_TESTS)
        tutorial/*.geo demos/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
        benchmarks/occ/*.geo)
   foreach(TESTFILE ${TESTFILES})
-    # use relative path for cygwin/mingw (the pure win exe built with the mingw
-    # compilers does not understand a full cygwin-style path)
+    # use relative path for Cygwin/MinGW (the pure win exe built with the MinGW
+    # compilers does not understand a full Cygwin-style path)
     FILE(RELATIVE_PATH TEST ${CMAKE_CURRENT_BINARY_DIR} ${TESTFILE})
     if(HAVE_OCC OR NOT ${TEST} MATCHES "boolean" OR NOT ${TEST} MATCHES "occ")
       add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)

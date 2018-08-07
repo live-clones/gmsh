@@ -94,7 +94,7 @@ def ivectorint(name, value=None, python_value=None, julia_value=None):
     a.cwrap_pre = ("int *" + api_name + "; size_t " + api_name_n + "; " +
                    "vector2ptr(" + name + ", &" + api_name + ", &" + api_name_n + ");\n")
     a.cwrap_arg = api_name + ", " + api_name_n
-    a.cwrap_post = "gmshFree(" + api_name + ");\n"
+    a.cwrap_post = ns + "Free(" + api_name + ");\n"
     a.python_pre = api_name + ", " + api_name_n + " = _ivectorint(" + name + ")"
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cint}, Csize_t"
@@ -115,7 +115,7 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     a.cwrap_pre = ("double *" + api_name + "; size_t " + api_name_n + "; " +
                    "vector2ptr(" + name + ", &" + api_name + ", &" + api_name_n + ");\n")
     a.cwrap_arg = api_name + ", " + api_name_n
-    a.cwrap_post = "gmshFree(" + api_name + ");\n"
+    a.cwrap_post = ns + "Free(" + api_name + ");\n"
     a.python_pre = api_name + ", " + api_name_n + " = _ivectordouble(" + name + ")"
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cdouble}, Csize_t"
@@ -126,10 +126,10 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
     if julia_value == "[]":
         julia_value = "Tuple{Cint,Cint}[]"
     a = arg(name, value, python_value, julia_value,
-            "const gmsh::vectorpair &", "const int *", False)
+            "const " + ns + "::vectorpair &", "const int *", False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
-    a.c_pre = ("    gmsh::vectorpair " + api_name + "(" + name + "_n/2);\n" +
+    a.c_pre = ("    " + ns + "::vectorpair " + api_name + "(" + name + "_n/2);\n" +
                "    for(size_t i = 0; i < " + name + "_n/2; ++i){\n" +
                "      " + api_name + "[i].first = " + name + "[i * 2 + 0];\n" +
                "      " + api_name + "[i].second = " + name + "[i * 2 + 1];\n" +
@@ -140,7 +140,7 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
                    "vectorpair2intptr(" + name + ", &" + api_name + ", &" +
                    api_name_n + ");\n")
     a.cwrap_arg = api_name + ", " + api_name_n
-    a.cwrap_post = "gmshFree(" + api_name + ");\n"
+    a.cwrap_post = ns + "Free(" + api_name + ");\n"
     a.python_pre = api_name + ", " + api_name_n + " = _ivectorpair(" + name + ")"
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cint}, Csize_t"
@@ -169,8 +169,8 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
                    api_name + ", &" + api_name_n + ", &" + api_name_nn + ");\n")
     a.cwrap_arg = "(const int **)" + api_name + ", " + api_name_n + ", " + api_name_nn
     a.cwrap_post = ("for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +
-                    "gmshFree(" + api_name + "[i]); } " +
-                    "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n")
+                    ns + "Free(" + api_name + "[i]); } " +
+                    ns + "Free(" + api_name + "); " + ns + "Free(" + api_name_n + ");\n")
     a.python_pre = (api_name + ", " + api_name_n + ", " +
                     api_name_nn + " = _ivectorvectorint(" + name + ")")
     a.python_arg = api_name + ", " + api_name_n + ", " + api_name_nn
@@ -203,8 +203,8 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
                    api_name_n + ", &" + api_name_nn + ");\n")
     a.cwrap_arg = "(const double **)" + api_name + ", " + api_name_n + ", " + api_name_nn
     a.cwrap_post = ("for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +
-                    "gmshFree(" + api_name + "[i]); } " +
-                    "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n")
+                    ns + "Free(" + api_name + "[i]); } " +
+                    ns + "Free(" + api_name + "); " + ns + "Free(" + api_name_n + ");\n")
     a.python_pre = (api_name + ", " + api_name_n + ", " + api_name_nn +
                     " = _ivectorvectordouble(" + name + ")")
     a.python_arg = api_name + ", " + api_name_n + ", " + api_name_nn
@@ -261,7 +261,7 @@ def ostring(name, value=None, python_value=None, julia_value=None):
     a.cwrap_pre = "char *" + api_name + ";\n"
     a.cwrap_arg = "&" + api_name
     a.cwrap_post = (name + " = std::string(" + api_name + "); " +
-                    "gmshFree(" + api_name + ");\n")
+                    ns + "Free(" + api_name + ");\n")
     a.python_pre = api_name + " = c_char_p()"
     a.python_arg = "byref(" + api_name + ")"
     a.python_return = "_ostring(" + api_name + ")"
@@ -283,7 +283,7 @@ def ovectorint(name, value=None, python_value=None, julia_value=None):
     a.cwrap_pre = "int *" + api_name + "; size_t " + api_name_n + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
     a.cwrap_post = (name + ".assign(" + api_name + ", " + api_name + " + " +
-                    api_name_n + "); gmshFree(" + api_name + ");\n")
+                    api_name_n + "); " + ns + "Free(" + api_name + ");\n")
     a.python_pre = api_name + ", " + api_name_n + " = POINTER(c_int)(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectorint(" + api_name + ", " + api_name_n + ".value)"
@@ -307,7 +307,7 @@ def ovectordouble(name, value=None, python_value=None, julia_value=None):
     a.cwrap_pre = "double *" + api_name + "; size_t " + api_name_n + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
     a.cwrap_post = (name + ".assign(" + api_name + ", " + api_name + " + " +
-                    api_name_n + "); " + "gmshFree(" + api_name + ");\n")
+                    api_name_n + "); " + ns + "Free(" + api_name + ");\n")
     a.python_pre = api_name + ", " + api_name_n + " = POINTER(c_double)(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectordouble(" + api_name + ", " + api_name_n + ".value)"
@@ -334,8 +334,8 @@ def ovectorstring(name, value=None, python_value=None, julia_value=None):
     a.cwrap_post = (name + ".resize(" + api_name_n + "); " +
                     "for(size_t i = 0; i < " + api_name_n + "; ++i){ " +
                     name + "[i] = std::string(" + api_name + "[i]); " +
-                    "gmshFree(" + api_name + "[i]); } " +
-                    "gmshFree(" + api_name + ");\n")
+                    ns + "Free(" + api_name + "[i]); } " +
+                    ns + "Free(" + api_name + ");\n")
     a.python_pre = api_name + ", " + api_name_n + " = POINTER(POINTER(c_char))(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectorstring(" + api_name + ", " + api_name_n + ".value)"
@@ -351,10 +351,10 @@ def ovectorstring(name, value=None, python_value=None, julia_value=None):
 
 def ovectorpair(name, value=None, python_value=None, julia_value=None):
     a = arg(name, value, python_value, julia_value,
-            "gmsh::vectorpair &", "int **", True)
+            ns + "::vectorpair &", "int **", True)
     api_name = "api_" + name + "_"
     api_name_n = api_name + "n_"
-    a.c_pre = "    gmsh::vectorpair " + api_name + ";\n"
+    a.c_pre = "    " + ns + "::vectorpair " + api_name + ";\n"
     a.c_arg = api_name
     a.c_post = "    vectorpair2intptr(" + api_name + ", " + name + ", " + name + "_n);\n"
     a.c = "int ** " + name + ", size_t * " + name + "_n"
@@ -364,7 +364,7 @@ def ovectorpair(name, value=None, python_value=None, julia_value=None):
                     "for(size_t i = 0; i < " + api_name_n + " / 2; ++i){ " +
                     name + "[i].first = " + api_name + "[i * 2 + 0]; " +
                     name + "[i].second = " + api_name + "[i * 2 + 1]; } " +
-                    "gmshFree(" + api_name + ");\n")
+                    ns + "Free(" + api_name + ");\n")
     a.python_pre = api_name + ", " + api_name_n + " = POINTER(c_int)(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectorpair(" + api_name + ", " + api_name_n + ".value)"
@@ -394,8 +394,8 @@ def ovectorvectorint(name, value=None, python_value=None, julia_value=None):
     a.cwrap_post = (name + ".resize(" + api_name_nn + "); " +
                     "for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +
                     name + "[i].assign(" + api_name + "[i], " + api_name + "[i] + " +
-                    api_name_n + "[i]); gmshFree(" + api_name + "[i]); } " +
-                    "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n")
+                    api_name_n + "[i]); " + ns + "Free(" + api_name + "[i]); } " +
+                    ns + "Free(" + api_name + "); " + ns + "Free(" + api_name_n + ");\n")
     a.python_pre = (api_name + ", " + api_name_n + ", " + api_name_nn +
                     " = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()")
     a.python_arg = ("byref(" + api_name + "), byref(" + api_name_n + "), byref(" +
@@ -433,8 +433,8 @@ def ovectorvectordouble(name, value=None, python_value=None, julia_value=None):
     a.cwrap_post = (name + ".resize(" + api_name_nn + "); " +
                     "for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +
                     name + "[i].assign(" + api_name + "[i], " + api_name + "[i] + " +
-                    api_name_n + "[i]); gmshFree(" + api_name + "[i]); } " +
-                    "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n")
+                    api_name_n + "[i]); " + ns + "Free(" + api_name + "[i]); } " +
+                    ns + "Free(" + api_name + "); " + ns + "Free(" + api_name_n + ");\n")
     a.python_pre = (api_name + ", " + api_name_n + ", " + api_name_nn +
                     " = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()")
     a.python_arg = ("byref(" + api_name + "), byref(" + api_name_n + "), byref(" +
@@ -457,11 +457,11 @@ def ovectorvectordouble(name, value=None, python_value=None, julia_value=None):
 
 def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
     a = arg(name, value, python_value, julia_value,
-            "std::vector<gmsh::vectorpair> &", "int **", True)
+            "std::vector<" + ns + "::vectorpair> &", "int **", True)
     api_name = "api_" + name + "_"
     api_name_n = api_name + "n_"
     api_name_nn = api_name + "nn_"
-    a.c_pre = "    std::vector<gmsh::vectorpair >" + api_name + ";\n"
+    a.c_pre = "    std::vector<" + ns + "::vectorpair >" + api_name + ";\n"
     a.c_arg = api_name
     a.c_post = ("    vectorvectorpair2intptrptr(" + api_name + ", " + name +
                 ", " + name + "_n, " + name + "_nn);\n")
@@ -474,8 +474,8 @@ def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
                     "for(size_t j = 0; j < " + api_name_n + "[i] / 2; ++j){ " +
                     name + "[i][j].first = " + api_name + "[i][j * 2 + 0]; " +
                     name + "[i][j].second = " + api_name + "[i][j * 2 + 1]; } " +
-                    "gmshFree(" + api_name + "[i]); } " +
-                    "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n")
+                    ns + "Free(" + api_name + "[i]); } " +
+                    ns + "Free(" + api_name + "); " + ns + "Free(" + api_name_n + ");\n")
     a.python_pre = (api_name + ", " + api_name_n + ", " + api_name_nn +
                     " = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()")
     a.python_arg = ("byref(" + api_name + "), byref(" + api_name_n + "), byref(" +
@@ -538,22 +538,22 @@ class Module:
         return module
 
 
-cpp_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+cpp_header="""// {0}
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// bugs and problems to the public mailing list <{1}>.
 
-#ifndef _GMSH_H_
-#define _GMSH_H_
+#ifndef _{2}_H_
+#define _{2}_H_
 
-// This file defines the Gmsh C++ API (v{0}).
+// This file defines the {3} C++ API (v{4}).
 //
 // Do not edit it directly: it is automatically generated by `api/gen.py'.
 //
-// By design, the Gmsh C++ API is purely functional, and only uses elementary
+// By design, the {3} C++ API is purely functional, and only uses elementary
 // types from the standard library. See `demos/api' for examples.
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(_USE_MATH_DEFINES)
 #define _USE_MATH_DEFINES
 #endif
 
@@ -562,21 +562,21 @@ cpp_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 #include <string>
 #include <utility>
 
-#define GMSH_API_VERSION "{0}"
+#define {2}_API_VERSION "{4}"
 
-#if defined(GMSH_DLL)
-#if defined(GMSH_DLL_EXPORT)
-#define GMSH_API __declspec(dllexport)
+#if defined({2}_DLL)
+#if defined({2}_DLL_EXPORT)
+#define {2}_API __declspec(dllexport)
 #else
-#define GMSH_API __declspec(dllimport)
+#define {2}_API __declspec(dllimport)
 #endif
 #else
-#define GMSH_API
+#define {2}_API
 #endif
 
-namespace gmsh {{
+namespace {5} {{
 
-  // A geometrical entity in the Gmsh API is represented by two integers: its
+  // A geometrical entity in the {3} API is represented by two integers: its
   // dimension (dim = 0, 1, 2 or 3) and its tag (its unique, strictly positive
   // identifier). When dealing with multiple geometrical entities of possibly
   // different dimensions, the entities are packed as a vector of (dim, tag)
@@ -591,114 +591,114 @@ cpp_footer="""#endif
 """
 
 c_header="""/*
- * Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+ * {0}
  *
  * See the LICENSE.txt file for license information. Please report all
- * bugs and problems to the public mailing list <gmsh@onelab.info>.
+ * bugs and problems to the public mailing list <{1}>.
  */
 
-#ifndef _GMSHC_H_
-#define _GMSHC_H_
+#ifndef _{2}C_H_
+#define _{2}C_H_
 
 /*
- * This file defines the Gmsh C API (v{0}).
+ * This file defines the {3} C API (v{4}).
  *
  * Do not edit it directly: it is automatically generated by `api/gen.py'.
  *
- * By design, the Gmsh C API is purely functional, and only uses elementary
+ * By design, the {3} C API is purely functional, and only uses elementary
  * types. See `demos/api' for examples.
  */
 
 #include <stddef.h>
 
-#define GMSH_API_VERSION "{0}"
+#define {2}_API_VERSION "{4}"
 
-#if defined(GMSH_DLL)
-#if defined(GMSH_DLL_EXPORT)
-#define GMSH_API __declspec(dllexport)
+#if defined({2}_DLL)
+#if defined({2}_DLL_EXPORT)
+#define {2}_API __declspec(dllexport)
 #else
-#define GMSH_API __declspec(dllimport)
+#define {2}_API __declspec(dllimport)
 #endif
 #else
-#define GMSH_API
+#define {2}_API
 #endif
 
-GMSH_API void gmshFree(void *p);
-GMSH_API void *gmshMalloc(size_t n);
+{2}_API void {5}Free(void *p);
+{2}_API void *{5}Malloc(size_t n);
 """
 
 c_footer="""
 #endif
 """
 
-c_cpp_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+c_cpp_header="""// {0}
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// bugs and problems to the public mailing list <{1}>.
 
 #include <string.h>
 #include <stdlib.h>
-#include "gmsh.h"
+#include "{2}.h"
 
-extern \"C\" {
-  #include "gmshc.h"
-}
+extern \"C\" {{
+  #include "{2}c.h"
+}}
 
-GMSH_API void *gmshMalloc(size_t n)
-{
+{3}_API void *{2}Malloc(size_t n)
+{{
   return malloc(n);
-}
+}}
 
-GMSH_API void gmshFree(void *p)
-{
+{3}_API void {2}Free(void *p)
+{{
   if(p) free(p);
-}
+}}
 """
 
 c_cpp_utils="""
 void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
-{
-  *p = (char**)gmshMalloc(sizeof(char*) * v.size());
-  for(size_t i = 0; i < v.size(); ++i){
+{{
+  *p = (char**){0}Malloc(sizeof(char*) * v.size());
+  for(size_t i = 0; i < v.size(); ++i){{
     (*p)[i] = strdup(v[i].c_str());
-  }
+  }}
   *size = v.size();
-}
+}}
 
-void vectorvectorpair2intptrptr(const std::vector<gmsh::vectorpair > &v, int ***p, size_t **size, size_t *sizeSize)
-{
-  *p = (int**)gmshMalloc(sizeof(int*) * v.size());
-  *size = (size_t*)gmshMalloc(sizeof(size_t) * v.size());
+void vectorvectorpair2intptrptr(const std::vector<{0}::vectorpair > &v, int ***p, size_t **size, size_t *sizeSize)
+{{
+  *p = (int**){0}Malloc(sizeof(int*) * v.size());
+  *size = (size_t*){0}Malloc(sizeof(size_t) * v.size());
   for(size_t i = 0; i < v.size(); ++i)
     vectorpair2intptr(v[i], &(*p)[i], &((*size)[i]));
   *sizeSize = v.size();
-}
+}}
 """
 
-cwrap_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+cwrap_header="""// {0}
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// bugs and problems to the public mailing list <{1}>.
 
-#ifndef _GMSH_H_
-#define _GMSH_H_
+#ifndef _{2}_H_
+#define _{2}_H_
 
-// This file redefines the Gmsh C++ API in terms of the C API (v{0}).
+// This file redefines the {3} C++ API in terms of the C API (v{4}).
 //
-// This is provided as a convenience for users of the binary Gmsh SDK whose C++
+// This is provided as a convenience for users of the binary {3} SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
-// the SDK (and who can thus not directly use the C++ API defined in `gmsh.h').
+// the SDK (and who can thus not directly use the C++ API defined in `{5}.h').
 //
-// To use this header file in your C++ code, simply rename it as `gmsh.h'.
+// To use this header file in your C++ code, simply rename it as `{5}.h'.
 //
 // Note that using this header file will lead to (slightly) reduced performance
-// compared to using the native Gmsh C++ API from the original `gmsh.h', as it
+// compared to using the native {3} C++ API from the original `{5}.h', as it
 // entails additional data copies between this C++ wrapper, the C API and the
 // native C++ code.
 //
 // Do not edit this file directly: it is automatically generated by `api/gen.py'.
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(_USE_MATH_DEFINES)
 #define _USE_MATH_DEFINES
 #endif
 
@@ -708,12 +708,12 @@ cwrap_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 #include <utility>
 
 extern \"C\" {{
-  #include "gmshc.h"
+  #include "{5}c.h"
 }}
 
-namespace gmsh {{
+namespace {5} {{
 
-  // A geometrical entity in the Gmsh API is represented by two integers: its
+  // A geometrical entity in the {3} API is represented by two integers: its
   // dimension (dim = 0, 1, 2 or 3) and its tag (its unique, strictly positive
   // identifier). When dealing with multiple geometrical entities of possibly
   // different dimensions, the entities are packed as a vector of (dim, tag)
@@ -727,48 +727,48 @@ namespace gmsh {{
 cwrap_utils="""
 template<typename t>
 void vector2ptr(const std::vector<t> &v, t **p, size_t *size)
-{
-  *p = (t*)gmshMalloc(sizeof(t) * v.size());
-  for(size_t i = 0; i < v.size(); ++i){
+{{
+  *p = (t*){0}Malloc(sizeof(t) * v.size());
+  for(size_t i = 0; i < v.size(); ++i){{
     (*p)[i] = v[i];
-  }
+  }}
   *size = v.size();
-}
+}}
 
-void vectorpair2intptr(const gmsh::vectorpair &v, int **p, size_t *size)
-{
-  *p = (int*)gmshMalloc(sizeof(int) * v.size() * 2);
-  for(size_t i = 0; i < v.size(); ++i){
+void vectorpair2intptr(const {0}::vectorpair &v, int **p, size_t *size)
+{{
+  *p = (int*){0}Malloc(sizeof(int) * v.size() * 2);
+  for(size_t i = 0; i < v.size(); ++i){{
     (*p)[i * 2 + 0] = v[i].first;
     (*p)[i * 2 + 1] = v[i].second;
-  }
+  }}
   *size = v.size() * 2;
-}
+}}
 
 template<typename t>
 void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t **size, size_t *sizeSize)
-{
-  *p = (t**)gmshMalloc(sizeof(t*) * v.size());
-  *size = (size_t*)gmshMalloc(sizeof(size_t) * v.size());
+{{
+  *p = (t**){0}Malloc(sizeof(t*) * v.size());
+  *size = (size_t*){0}Malloc(sizeof(size_t) * v.size());
   for(size_t i = 0; i < v.size(); ++i)
     vector2ptr(v[i], &((*p)[i]), &((*size)[i]));
   *sizeSize = v.size();
-}
+}}
 """
 
 cwrap_footer="""#endif
 """
 
-python_header = """# Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+python_header = """# {0}
 #
 # See the LICENSE.txt file for license information. Please report all
-# bugs and problems to the public mailing list <gmsh@onelab.info>.
+# bugs and problems to the public mailing list <{1}>.
 
-# This file defines the Gmsh Python API (v{0}).
+# This file defines the {2} Python API (v{3}).
 #
 # Do not edit it directly: it is automatically generated by `api/gen.py'.
 #
-# By design, the Gmsh Python API is purely functional, and only uses elementary
+# By design, the {2} Python API is purely functional, and only uses elementary
 # types (as well as `numpy' arrays if `numpy' is avaiable). See `demos/api' for
 # examples.
 
@@ -778,16 +778,16 @@ import os
 import platform
 from math import pi
 
-GMSH_API_VERSION = "{0}"
+{4}_API_VERSION = "{3}"
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == 'Windows':
-    lib = CDLL(os.path.join(libdir, "gmsh-{0}.dll"))
+    lib = CDLL(os.path.join(libdir, "{5}-{3}.dll"))
 elif platform.system() == 'Darwin':
-    lib = CDLL(os.path.join(libdir, "libgmsh.dylib"))
+    lib = CDLL(os.path.join(libdir, "lib{5}.dylib"))
 else:
-    lib = CDLL(os.path.join(libdir, "libgmsh.so"))
+    lib = CDLL(os.path.join(libdir, "lib{5}.so"))
 
 use_numpy = False
 try:
@@ -802,57 +802,57 @@ except:
 
 def _ostring(s):
     sp = s.value.decode("utf-8")
-    lib.gmshFree(s)
+    lib.{5}Free(s)
     return sp
 
 def _ovectorpair(ptr, size):
     if use_numpy:
         v = numpy.ctypeslib.as_array(ptr, (size//2, 2))
-        weakreffinalize(v, lib.gmshFree, ptr)
+        weakreffinalize(v, lib.{5}Free, ptr)
     else:
         v = list((ptr[i * 2], ptr[i * 2 + 1]) for i in range(size//2))
-        lib.gmshFree(ptr)
+        lib.{5}Free(ptr)
     return v
 
 def _ovectorint(ptr, size):
     if use_numpy:
         v = numpy.ctypeslib.as_array(ptr, (size, ))
-        weakreffinalize(v, lib.gmshFree, ptr)
+        weakreffinalize(v, lib.{5}Free, ptr)
     else:
         v = list(ptr[i] for i in range(size))
-        lib.gmshFree(ptr)
+        lib.{5}Free(ptr)
     return v
 
 def _ovectordouble(ptr, size):
     if use_numpy:
         v = numpy.ctypeslib.as_array(ptr, (size, ))
-        weakreffinalize(v, lib.gmshFree, ptr)
+        weakreffinalize(v, lib.{5}Free, ptr)
     else:
         v = list(ptr[i] for i in range(size))
-        lib.gmshFree(ptr)
+        lib.{5}Free(ptr)
     return v
 
 def _ovectorstring(ptr, size):
     v = list(_ostring(cast(ptr[i], c_char_p)) for i in range(size))
-    lib.gmshFree(ptr)
+    lib.{5}Free(ptr)
     return v
 
 def _ovectorvectorint(ptr, size, n):
     v = [_ovectorint(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
-    lib.gmshFree(size)
-    lib.gmshFree(ptr)
+    lib.{5}Free(size)
+    lib.{5}Free(ptr)
     return v
 
 def _ovectorvectordouble(ptr, size, n):
     v = [_ovectordouble(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
-    lib.gmshFree(size)
-    lib.gmshFree(ptr)
+    lib.{5}Free(size)
+    lib.{5}Free(ptr)
     return v
 
 def _ovectorvectorpair(ptr, size, n):
     v = [_ovectorpair(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
-    lib.gmshFree(size)
-    lib.gmshFree(ptr)
+    lib.{5}Free(size)
+    lib.{5}Free(ptr)
     return v
 
 def _ivectorint(o):
@@ -902,23 +902,30 @@ def _iargcargv(o):
 
 """
 
-julia_header = """# Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+julia_header = """# {0}
 #
 # See the LICENSE.txt file for license information. Please report all
-# bugs and problems to the public mailing list <gmsh@onelab.info>.
+# bugs and problems to the public mailing list <{1}>.
 
-# This file defines the Gmsh Julia API (v{0}).
+# This file defines the {2} Julia API (v{3}).
 #
 # Do not edit it directly: it is automatically generated by `api/gen.py'.
 #
-# By design, the Gmsh Julia API is purely functional, and only uses elementary
+# By design, the {2} Julia API is purely functional, and only uses elementary
 # types. See `demos/api' for examples.
 """
 
 class API:
 
-    def __init__(self, version):
-        self.api_version = version
+    def __init__(self, version, namespace="gmsh", code="Gmsh",
+                 copyright="Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle",
+                 email="gmsh@onelab.info"):
+        self.version = version
+        global ns
+        ns = namespace
+        self.code = code
+        self.copyright = copyright
+        self.email = email
         self.modules = []
 
     def add_module(self, name, doc):
@@ -934,7 +941,7 @@ class API:
                 f.write(indent + "// " + ("\n" + indent + "// ").join(
                     textwrap.wrap(doc, 80-len(indent))) + "\n")
                 rt = rtype.rcpp_type if rtype else "void"
-                fnameapi = indent + "GMSH_API " + rt + " " + name + "(";
+                fnameapi = indent + ns.upper() + "_API " + rt + " " + name + "(";
                 f.write(fnameapi)
                 if args:
                     f.write((",\n" + ' ' * len(fnameapi)).join(a.cpp for a in args))
@@ -942,8 +949,9 @@ class API:
             for m in module.submodules:
                 write_module(m, indent)
             f.write(indent[:-2] + "} // namespace " + module.name + "\n\n")
-        with open("gmsh.h", "w") as f:
-            f.write(cpp_header.format(self.api_version))
+        with open(ns + ".h", "w") as f:
+            f.write(cpp_header.format(self.copyright, self.email, ns.upper(),
+                                      self.code, self.version, ns))
             for m in self.modules:
                 write_module(m, "")
             f.write(cpp_footer)
@@ -958,17 +966,17 @@ class API:
             fcwrap.write(indent + "namespace " + module.name + " { // " + module.doc + "\n\n")
             indent += "  "
             for rtype, name, args, doc, special in module.fs:
-                # gmshc.h
+                # *c.h
                 fname = c_namespace + name[0].upper() + name[1:]
                 f.write("\n/* " + "\n * ".join(textwrap.wrap(doc, 75)) + " */\n")
-                fnameapi = "GMSH_API " + (rtype.rc_type if rtype else "void") + " " + fname + "("
+                fnameapi = ns.upper() + "_API " + (rtype.rc_type if rtype else "void") + " " + fname + "("
                 f.write(fnameapi
                         + (",\n" + ' ' * len(fnameapi)).join(
                             list((a.c for a in args + (oint("ierr"), ))))
                         + ");\n")
                 if special != 'rawc':
-                    # gmshc.cpp
-                    fc.write("GMSH_API " + (rtype.rc_type if rtype else "void"))
+                    # *c.cpp
+                    fc.write(ns.upper() + "_API " + (rtype.rc_type if rtype else "void"))
                     fc.write(" " + fname + "(" +
                              ", ".join(list((a.c for a in args + (oint("ierr"), )))) +
                              ")\n{\n")
@@ -989,11 +997,11 @@ class API:
                     if rtype:
                         fc.write("  return result_api_;\n");
                     fc.write("}\n\n")
-                # gmsh.h_cwrap
+                # *.h_cwrap
                 fcwrap.write(indent + "// " + ("\n" + indent + "// ").join
                              (textwrap.wrap(doc, 80-len(indent))) + "\n")
                 rt = rtype.rcpp_type if rtype else "void"
-                fnameapi = indent + "GMSH_API " + rt + " " + name + "(";
+                fnameapi = indent + ns.upper() + "_API " + rt + " " + name + "(";
                 fcwrap.write(fnameapi)
                 if args:
                     fcwrap.write((",\n" + ' ' * len(fnameapi)).join(a.cpp for a in args))
@@ -1019,17 +1027,21 @@ class API:
             for m in module.submodules:
                 write_module(m, c_namespace, cpp_namespace, indent)
             fcwrap.write(indent[:-2] + "} // namespace " + module.name + "\n\n")
-        with open("gmshc.h", "w") as f:
-            with open("gmshc.cpp", "w") as fc:
-                with open("gmsh.h_cwrap", "w") as fcwrap:
-                    f.write(c_header.format(self.api_version))
-                    fc.write(c_cpp_header)
-                    fc.write(cwrap_utils)
-                    fc.write(c_cpp_utils)
+        with open(ns + "c.h", "w") as f:
+            with open(ns + "c.cpp", "w") as fc:
+                with open(ns + ".h_cwrap", "w") as fcwrap:
+                    f.write(c_header.format(self.copyright, self.email, ns.upper(),
+                                            self.code, self.version, ns))
+                    fc.write(c_cpp_header.format(self.copyright, self.email, ns,
+                                                 ns.upper()))
+                    fc.write(cwrap_utils.format(ns))
+                    fc.write(c_cpp_utils.format(ns))
                     fc.write("\n")
-                    fcwrap.write(cwrap_header.format(self.api_version))
-                    fcwrap.write("namespace gmsh {\n")
-                    s = string.split(cwrap_utils, '\n')
+                    fcwrap.write(cwrap_header.format(self.copyright, self.email,
+                                                     ns.upper(), self.code,
+                                                     self.version, ns))
+                    fcwrap.write("namespace " + ns + " {\n")
+                    s = string.split(cwrap_utils.format(ns), '\n')
                     for line in s:
                         fcwrap.write("  " + line + "\n")
                     fcwrap.write("}\n\n")
@@ -1046,7 +1058,7 @@ class API:
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write("\n")
-            if modulepath != "gmsh":
+            if modulepath != ns:
                 f.write(indent + "@staticmethod\n")
             f.write(indent + "def " + name + "("
                    + ", ".join((parg(a) for a in iargs))
@@ -1095,8 +1107,9 @@ class API:
                 f.write(indentm + ("\n" + indentm).join(textwrap.wrap(module.doc, 75)) + "\n")
                 f.write(indentm + '"""\n')
                 write_module(f, module, modulepath, indentm)
-        with open("gmsh.py", "w") as f:
-            f.write(python_header.format(self.api_version))
+        with open(ns + ".py", "w") as f:
+            f.write(python_header.format(self.copyright, self.email, self.code, self.version,
+                                         ns.upper(), ns))
             for module in self.modules:
                 write_module(f, module, "", "")
 
@@ -1125,7 +1138,7 @@ class API:
             f.write("api__result__ = " if rtype is oint else "")
             c_name = c_mpath + name[0].upper() + name[1:]
             f.write("ccall((:" + c_name + ", " +
-                    ("" if c_mpath == "gmsh" else "gmsh.") + "lib), " +
+                    ("" if c_mpath == ns else ns + ".") + "lib), " +
                     ("Void" if rtype is None else rtype.rjulia_type) + ",\n" +
                     " " * 10 + "(" + ", ".join(
                         (tuple(a.julia_ctype for a in args) + ("Ptr{Cint}",))) +
@@ -1151,12 +1164,12 @@ class API:
             f.write('"""\n')
             f.write("module " + m.name + "\n\n")
             if level == 1:
-                f.write('const GMSH_API_VERSION = "' + self.api_version + '"\n')
+                f.write('const ' + ns.upper() + '_API_VERSION = "' + self.version + '"\n')
                 f.write('const libdir = dirname(@__FILE__)\n')
-                f.write('const lib = joinpath(libdir, is_windows() ? "gmsh-' + self.api_version +
-                        '" : "libgmsh")\n')
+                f.write('const lib = joinpath(libdir, is_windows() ? "' + ns + '-' + self.version +
+                        '" : "lib' + ns + '")\n')
             else:
-                f.write("import " + ("." * level) + "gmsh\n")
+                f.write("import " + ("." * level) + ns + "\n")
             if c_mpath:
                 c_mpath += m.name[0].upper() + m.name[1:]
                 jl_mpath += m.name + "."
@@ -1168,8 +1181,9 @@ class API:
             for module in m.submodules:
                 write_module(f, module, c_mpath, jl_mpath, level + 1)
             f.write("\nend # end of module " + m.name + "\n")
-        with open("gmsh.jl", "w") as f:
-            f.write(julia_header.format(self.api_version))
+        with open(ns + ".jl", "w") as f:
+            f.write(julia_header.format(self.copyright, self.email, self.code,
+                                        self.version,))
             for module in self.modules:
                 write_module(f, module, "", "", 1)
 

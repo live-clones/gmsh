@@ -43,7 +43,7 @@ api = API(version)
 
 gmsh = api.add_module('gmsh','Top-level functions')
 
-doc = '''Initialize Gmsh. This must be called before any call to the other functions in the API. If `argc' and `argv' are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration files (gmshrc and gmsh-options).'''
+doc = '''Initialize Gmsh. This must be called before any call to the other functions in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration files (gmshrc and gmsh-options).'''
 gmsh.add('initialize',doc,None,argcargv(),ibool('readConfigFiles','true','True'))
 
 doc = '''Finalize Gmsh. This must be called when you are done using the Gmsh API.'''
