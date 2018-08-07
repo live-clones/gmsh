@@ -317,7 +317,7 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_options_save(0, GMSH_SET, o->general.butt[9]->value());
   opt_general_expert_mode(0, GMSH_SET, o->general.butt[10]->value());
 #if defined(HAVE_VISUDEV)
-  opt_general_heavy_visualization(0, GMSH_SET, o->general.butt[22]->value());
+  opt_general_heavy_visualization(0, GMSH_SET, o->general.butt[23]->value());
 #endif
 
   if(opt_general_gui_color_scheme(0, GMSH_GET, 0) != o->general.butt[21]->value()){
@@ -1497,10 +1497,10 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[9]->callback(general_options_ok_cb);
 
 #if defined(HAVE_VISUDEV)
-      general.butt[22] = new Fl_Check_Button
+      general.butt[23] = new Fl_Check_Button
         (L + 2 * WB, 2 * WB + 8 * BH, BW/2-WB, BH, "Enable heavy visualization capabilities");
-      general.butt[22]->type(FL_TOGGLE_BUTTON);
-      general.butt[22]->callback(general_options_ok_cb);
+      general.butt[23]->type(FL_TOGGLE_BUTTON);
+      general.butt[23]->callback(general_options_ok_cb);
 #endif
 
       Fl_Button *b1 = new Fl_Button

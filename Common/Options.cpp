@@ -3639,7 +3639,7 @@ double opt_general_heavy_visualization(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->general.butt[22]->value
+    FlGui::instance()->options->general.butt[23]->value
         (CTX::instance()->heavyVisu);
 #endif
   return CTX::instance()->heavyVisu;
