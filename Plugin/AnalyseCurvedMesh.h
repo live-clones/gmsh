@@ -44,9 +44,9 @@ private :
   // Pointwise data
   int _numElementToScan;
   bool _pwJac, _pwIGE, _pwICN;
-  std::map<int, std::vector<double>> _dataPViewJac;
-  std::map<int, std::vector<double>> _dataPViewIGE;
-  std::map<int, std::vector<double>> _dataPViewICN;
+  std::map<int, std::vector<double> > _dataPViewJac;
+  std::map<int, std::vector<double> > _dataPViewIGE;
+  std::map<int, std::vector<double> > _dataPViewICN;
   int _type2tag[20] = {0};
   int _viewOrder = 0;
 #endif

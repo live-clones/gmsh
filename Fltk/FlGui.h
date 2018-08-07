@@ -107,7 +107,7 @@ class FlGui{
   // navigation). This is necessary since FLTK 1.1.
   int testArrowShortcuts();
   // set the title of the graphic windows
-  void setGraphicTitle(std::string title);
+  void setGraphicTitle(const std::string &title);
   // update the GUI when views get modified, added or deleted
   void updateViews(bool numberOfViewsHasChanged, bool deleteWidgets);
   // update the GUI when fields change

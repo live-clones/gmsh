@@ -82,7 +82,7 @@ static ExtrudeParams extr;
 static gmshSurface *myGmshSurface = 0;
 static int statusImbricatedTests[MAX_RECUR_TESTS];
 static int ImbricatedLoop = 0, ImbricatedTest = 0;
-static gmshfpos_t yyposImbricatedLoopsTab[MAX_RECUR_LOOPS];
+static fpos_t yyposImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static int yylinenoImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
 static std::string LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
@@ -3194,7 +3194,7 @@ Command :
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
-	MergeFile(tmp, true);
+        MergeFile(tmp, true);
       }
       else if(!strcmp($1, "NonBlockingSystemCall")){
 	SystemCall($2);
@@ -3488,7 +3488,7 @@ Loop :
       LoopControlVariablesTab[ImbricatedLoop][1] = $5;
       LoopControlVariablesTab[ImbricatedLoop][2] = 1.0;
       LoopControlVariablesNameTab[ImbricatedLoop] = "";
-      gmshgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      fgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       if($3 > $5)
 	skip("For", "EndFor");
@@ -3505,7 +3505,7 @@ Loop :
       LoopControlVariablesTab[ImbricatedLoop][1] = $5;
       LoopControlVariablesTab[ImbricatedLoop][2] = $7;
       LoopControlVariablesNameTab[ImbricatedLoop] = "";
-      gmshgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      fgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       if(($7 > 0. && $3 > $5) || ($7 < 0. && $3 < $5))
 	skip("For", "EndFor");
@@ -3526,7 +3526,7 @@ Loop :
       s.list = false;
       s.value.resize(1);
       s.value[0] = $5;
-      gmshgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      fgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       if($5 > $7)
 	skip("For", "EndFor");
@@ -3548,7 +3548,7 @@ Loop :
       s.list = false;
       s.value.resize(1);
       s.value[0] = $5;
-      gmshgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      fgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       if(($9 > 0. && $5 > $7) || ($9 < 0. && $5 < $7))
 	skip("For", "EndFor");
@@ -3588,7 +3588,7 @@ Loop :
 	double x0 = LoopControlVariablesTab[ImbricatedLoop - 1][0];
 	double x1 = LoopControlVariablesTab[ImbricatedLoop - 1][1];
         if((step > 0. && x0 <= x1) || (step < 0. && x0 >= x1)){
-	  gmshsetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop - 1]);
+	  fsetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop - 1]);
 	  gmsh_yylineno = yylinenoImbricatedLoopsTab[ImbricatedLoop - 1];
 	}
 	else

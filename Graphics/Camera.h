@@ -22,7 +22,7 @@ public:
 
 double length(XYZ &p);
 void normalize(XYZ &p);
-void rotate(Quaternion omega,XYZ axe) ;
+void rotate(const Quaternion &omega, XYZ axe);
 XYZ operator* (const double &a,const XYZ &T);
 XYZ operator+ (const XYZ &L,const XYZ &R);
 XYZ operator- (const XYZ &L,const XYZ &R);

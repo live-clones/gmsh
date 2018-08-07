@@ -15,8 +15,8 @@
 static double max_surf_curvature(const GEdge *ge, double u)
 {
   double val = 0;
-  std::list<GFace *> faces = ge->faces();
-  std::list<GFace *>::iterator it = faces.begin();
+  std::vector<GFace *> faces = ge->faces();
+  std::vector<GFace *>::iterator it = faces.begin();
   while(it != faces.end()){
     SPoint2 par = ge->reparamOnFace((*it), u, 1);
     double cc = (*it)->curvature(par);
@@ -29,8 +29,8 @@ static double max_surf_curvature(const GEdge *ge, double u)
 static double max_edge_curvature(const GVertex *gv)
 {
   double val = 0;
-  std::list<GEdge*> l_edges = gv->edges();
-  for (std::list<GEdge*>::const_iterator ite = l_edges.begin();
+  std::vector<GEdge*> const& l_edges = gv->edges();
+  for (std::vector<GEdge*>::const_iterator ite = l_edges.begin();
        ite != l_edges.end(); ++ite){
     GEdge *_myGEdge = *ite;
     Range<double> range = _myGEdge->parBounds(0);
@@ -88,8 +88,8 @@ SMetric3 max_edge_curvature_metric(const GEdge *ge, double u)
 static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u, bool iso_surf)
 {
   SMetric3 mesh_size(1.e-12);
-  std::list<GFace *> faces = ge->faces();
-  std::list<GFace *>::iterator it = faces.begin();
+  std::vector<GFace *> faces = ge->faces();
+  std::vector<GFace *>::iterator it = faces.begin();
   // we choose the metric eigenvectors to be the ones
   // related to the edge ...
   SMetric3 curvMetric = max_edge_curvature_metric(ge, u);
@@ -289,19 +289,19 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
 
 bool Extend1dMeshIn2dSurfaces()
 {
-  return CTX::instance()->mesh.lcExtendFromBoundary ? true : false;
+  return CTX::instance()->mesh.lcExtendFromBoundary;
 }
 
 bool Extend2dMeshIn3dVolumes()
 {
-  return CTX::instance()->mesh.lcExtendFromBoundary ? true : false;
+  return CTX::instance()->mesh.lcExtendFromBoundary;
 }
 
 SMetric3 max_edge_curvature_metric(const GVertex *gv)
 {
   SMetric3 val (1.e-12);
-  std::list<GEdge*> l_edges = gv->edges();
-  for (std::list<GEdge*>::const_iterator ite = l_edges.begin();
+  std::vector<GEdge*> const& l_edges = gv->edges();
+  for (std::vector<GEdge*>::const_iterator ite = l_edges.begin();
        ite != l_edges.end(); ++ite){
     GEdge *_myGEdge = *ite;
     Range<double> range = _myGEdge->parBounds(0);
@@ -335,11 +335,11 @@ SMetric3 metric_based_on_surface_curvature(const GFace *gf, double u, double v,
   if (gf->geomType() == GEntity::Plane)return SMetric3(1.e-12);
   double cmax, cmin;
   SVector3 dirMax,dirMin;
-  cmax = gf->curvatures(SPoint2(u, v),&dirMax, &dirMin, &cmax,&cmin);
-  if (cmin == 0)cmin =1.e-12;
-  if (cmax == 0)cmax =1.e-12;
-  double lambda1 =  ((2 * M_PI) /( fabs(cmin) *  CTX::instance()->mesh.minCircPoints ) );
-  double lambda2 =  ((2 * M_PI) /( fabs(cmax) *  CTX::instance()->mesh.minCircPoints ) );
+  cmax = gf->curvatures(SPoint2(u, v), dirMax, dirMin, cmax, cmin);
+  if (cmin == 0) cmin =1.e-12;
+  if (cmax == 0) cmax =1.e-12;
+  double lambda1 = ((2 * M_PI) /( fabs(cmin) *  CTX::instance()->mesh.minCircPoints ) );
+  double lambda2 = ((2 * M_PI) /( fabs(cmax) *  CTX::instance()->mesh.minCircPoints ) );
   SVector3 Z = crossprod(dirMax,dirMin);
   if (surface_isotropic)  lambda2 = lambda1 = std::min(lambda2,lambda1);
   dirMin.normalize();

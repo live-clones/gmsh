@@ -35,7 +35,7 @@ const nodalBasis* BasisFactory::getNodalBasis(int tag)
   else if (tag == MSH_TET_MINI)
     F = new miniBasisTet();
   else {
-    int parentType = ElementType::ParentTypeFromTag(tag);
+    int parentType = ElementType::getParentType(tag);
     switch(parentType) {
       case(TYPE_PNT):
       case(TYPE_LIN):
@@ -84,7 +84,7 @@ const JacobianBasis* BasisFactory::getJacobianBasis(FuncSpaceData fsd)
 
 const JacobianBasis* BasisFactory::getJacobianBasis(int tag, int order)
 {
-  const int type = ElementType::ParentTypeFromTag(tag);
+  const int type = ElementType::getParentType(tag);
   if (type != TYPE_PYR)
     return getJacobianBasis(FuncSpaceData(true, tag, order));
   else
@@ -93,12 +93,12 @@ const JacobianBasis* BasisFactory::getJacobianBasis(int tag, int order)
 
 const JacobianBasis* BasisFactory::getJacobianBasis(int tag)
 {
-  const int order = JacobianBasis::jacobianOrder(tag);
-  const int type = ElementType::ParentTypeFromTag(tag);
+  const int jacOrder = JacobianBasis::jacobianOrder(tag);
+  const int type = ElementType::getParentType(tag);
   if (type != TYPE_PYR)
-    return getJacobianBasis(FuncSpaceData(true, tag, order));
+    return getJacobianBasis(FuncSpaceData(true, tag, jacOrder));
   else
-    return getJacobianBasis(FuncSpaceData(true, tag, false, order+2, order));
+    return getJacobianBasis(FuncSpaceData(true, tag, false, jacOrder+2, jacOrder));
 }
 
 const CondNumBasis* BasisFactory::getCondNumBasis(int tag, int cnOrder)
@@ -145,7 +145,7 @@ const bezierBasis* BasisFactory::getBezierBasis(FuncSpaceData fsd)
 
 const bezierBasis* BasisFactory::getBezierBasis(int parentTag, int order)
 {
-  int primaryTag = ElementType::getTag(parentTag, 1);
+  int primaryTag = ElementType::getType(parentTag, 1);
   return getBezierBasis(FuncSpaceData(true, primaryTag, order));
 }
 

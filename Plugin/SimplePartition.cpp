@@ -78,7 +78,7 @@ StringXString *GMSH_SimplePartitionPlugin::getOptionStr(int iopt)
 
 void GMSH_SimplePartitionPlugin::run()
 {
-#ifdef HAVE_METIS
+#if defined(HAVE_METIS) && defined(HAVE_MESH)
   int numSlices = (int)SimplePartitionOptions_Number[0].def;
   int direction = (int)SimplePartitionOptions_Number[1].def;
   int createTopology = (int)SimplePartitionOptions_Number[2].def;
@@ -112,7 +112,7 @@ void GMSH_SimplePartitionPlugin::run()
     for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
       MElement *e = ge->getMeshElement(j);
       SPoint3 point = e->barycenter();
-      for(unsigned int k = 0; k < numSlices; k++){
+      for(int k = 0; k < numSlices; k++){
         if(pp[k] < point[direction] && pp[k+1] >= point[direction]){
           elmToPartition.insert(std::pair<MElement*, unsigned int>(e, k+1));
           break;
@@ -131,6 +131,6 @@ void GMSH_SimplePartitionPlugin::run()
   PartitionUsingThisSplit(m, numSlices, elmToPartition);
 
 #else
-  Msg::Error("Gmsh must be compiled with METIS support to partition meshes");
+  Msg::Error("Gmsh must be compiled with Mesh and METIS support to partition meshes");
 #endif
 }

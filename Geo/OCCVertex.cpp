@@ -17,7 +17,8 @@
 #include <gp_Pnt.hxx>
 
 OCCVertex::OCCVertex(GModel *m, int num, TopoDS_Vertex v, double lc)
-  : GVertex(m, num, lc), _v(v)
+  : GVertex(m, num, lc)
+  , _v(v)
 {
   max_curvature = -1;
   gp_Pnt pnt = BRep_Tool::Pnt(_v);
@@ -49,8 +50,8 @@ void OCCVertex::setPosition(GPoint &p)
 double max_surf_curvature(const GVertex *gv, double x, double y, double z,
                           const GEdge *_myGEdge)
 {
-  std::list<GFace *> faces = _myGEdge->faces();
-  std::list<GFace *>::iterator it = faces.begin();
+  std::vector<GFace *> faces = _myGEdge->faces();
+  std::vector<GFace *>::iterator it = faces.begin();
   double curv = 1.e-22;
   while(it != faces.end()){
     SPoint2 par = gv->reparamOnFace((*it), 1);
@@ -64,7 +65,7 @@ double max_surf_curvature(const GVertex *gv, double x, double y, double z,
 double OCCVertex::max_curvature_of_surfaces() const
 {
   if(max_curvature < 0){
-    for(std::list<GEdge*>::const_iterator it = l_edges.begin();
+    for(std::vector<GEdge*>::const_iterator it = l_edges.begin();
         it != l_edges.end(); ++it){
       max_curvature = std::max(max_surf_curvature(this, x(), y(), z(), *it),
                                max_curvature);
@@ -77,9 +78,9 @@ double OCCVertex::max_curvature_of_surfaces() const
 
 SPoint2 OCCVertex::reparamOnFace(const GFace *gf, int dir) const
 {
-  std::list<GEdge*>::const_iterator it = l_edges.begin();
+  std::vector<GEdge*>::const_iterator it = l_edges.begin();
   while(it != l_edges.end()){
-    std::list<GEdge*> l = gf->edges();
+    std::vector<GEdge*> const& l = gf->edges();
     if(std::find(l.begin(), l.end(), *it) != l.end()){
       if((*it)->isSeam(gf)){
         const TopoDS_Face *s = (TopoDS_Face*)gf->getNativePtr();
@@ -96,7 +97,7 @@ SPoint2 OCCVertex::reparamOnFace(const GFace *gf, int dir) const
   }
   it = l_edges.begin();
   while(it != l_edges.end()){
-    std::list<GEdge*> l = gf->edges();
+    std::vector<GEdge*> const& l = gf->edges();
     if(std::find(l.begin(), l.end(), *it) != l.end()){
       if (gf->getNativeType() == GEntity::OpenCascadeModel){
 	const TopoDS_Face *s = (TopoDS_Face*)gf->getNativePtr();

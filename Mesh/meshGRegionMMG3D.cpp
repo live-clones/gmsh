@@ -67,10 +67,11 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
   }
   mmg->np = sol->np = allVertices.size();
 
-  std::list<GFace*> f = gr->faces();
+  std::vector<GFace*> f = gr->faces();
 
+  // TODO C++11 std::accumulate
   mmg->nt = 0;
-  for (std::list<GFace*>::iterator it = f.begin(); it != f.end() ; ++it){
+  for (std::vector<GFace*>::iterator it = f.begin(); it != f.end() ; ++it){
     mmg->nt += (*it)->triangles.size();
   }
 
@@ -89,7 +90,7 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
   sol->metold = (double*)calloc(sol->npmax+1,sol->offset*sizeof(double));
 
   std::map<MVertex*,std::pair<double,int> > LCS;
-  for (std::list<GFace*>::iterator it = f.begin(); it != f.end() ; ++it){
+  for (std::vector<GFace*>::iterator it = f.begin(); it != f.end() ; ++it){
     for (unsigned int i = 0; i < (*it)->triangles.size(); i++){
       MTriangle *t = (*it)->triangles[i];
       double L = t->maxEdge();
@@ -174,7 +175,7 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
   }
 
   k = 1;
-  for (std::list<GFace*>::iterator it = f.begin(); it != f.end() ; ++it){
+  for (std::vector<GFace*>::iterator it = f.begin(); it != f.end() ; ++it){
     for (unsigned int i = 0; i < (*it)->triangles.size(); i++){
       MMG_pTria ptriangle = &mmg->tria[k];
       ptriangle->v[0] = gmsh2mmg_num[(*it)->triangles[i]->getVertex(0)->getNum()];
@@ -191,11 +192,11 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
 static void updateSizes(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
                         std::map<int,MVertex*> &mmg2gmsh)
 {
-  std::list<GFace*> f = gr->faces();
+  std::vector<GFace*> f = gr->faces();
 
   std::map<MVertex*,std::pair<double,int> > LCS;
   //  if (CTX::instance()->mesh.lcExtendFromBoundary){
-    for (std::list<GFace*>::iterator it = f.begin(); it != f.end() ; ++it){
+    for (std::vector<GFace*>::iterator it = f.begin(); it != f.end() ; ++it){
       for (unsigned int i = 0; i < (*it)->triangles.size(); i++){
 	MTriangle *t = (*it)->triangles[i];
 	double L = t->maxEdge();

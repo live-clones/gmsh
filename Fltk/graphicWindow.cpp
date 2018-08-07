@@ -813,7 +813,7 @@ static void add_new_point_based_entity(const std::string &what, int pane)
   Msg::StatusGl("");
 }
 
-static void add_new_multiline(std::string type)
+static void add_new_multiline(const std::string &type)
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
@@ -1283,7 +1283,6 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
     opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
 
   std::vector<std::pair<int, int> > dimTags, dimTagsSaved;
-  std::vector<std::pair<int, int> >::iterator it;
   while(1) {
     std::string str;
     int type;
@@ -3624,7 +3623,7 @@ graphicWindow::~graphicWindow()
   }
 }
 
-void graphicWindow::setTitle(std::string str)
+void graphicWindow::setTitle(const std::string &str)
 {
   _win->copy_label(str.c_str());
 }

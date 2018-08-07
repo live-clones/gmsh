@@ -275,14 +275,12 @@ void PluginManager::registerDefaultPlugins()
                       ("AnalyseCurvedMesh", GMSH_RegisterAnalyseCurvedMeshPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("VoroMetal", GMSH_RegisterVoroMetalPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));
 #endif
 #if defined(HAVE_REVOROPT)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("CVTRemesh", GMSH_RegisterCVTRemeshPlugin()));
-#endif
-#if defined(HAVE_TETGEN)
-    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
-                      ("Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));
 #endif
 #if defined(HAVE_KBIPACK)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>

@@ -119,17 +119,28 @@ class VisPhysical : public Vis {
   char _visible;
   std::vector<GEntity*> _list;
  public:
-  VisPhysical(int tag, int dim, std::vector<GEntity*> list, std::string &name)
-    : Vis(name), _tag(tag), _dim(dim), _visible(1), _list(list)  {}
-  ~VisPhysical(){}
-  int getTag() const { return _tag; }
-  int getDim() const { return _dim; }
-  std::string getType() const
-  {
-    if(_dim == 0) return "Point";
-    else if(_dim == 1) return "Curve";
-    else if(_dim == 2) return "Surface";
-    else return "Volume";
+   VisPhysical(int tag, int dim, const std::vector<GEntity *> &list,
+               std::string &name)
+     : Vis(name)
+     , _tag(tag)
+     , _dim(dim)
+     , _visible(1)
+     , _list(list)
+   {
+   }
+   ~VisPhysical() {}
+   int getTag() const { return _tag; }
+   int getDim() const { return _dim; }
+   std::string getType() const
+   {
+     if(_dim == 0)
+       return "Point";
+     else if(_dim == 1)
+       return "Curve";
+     else if(_dim == 2)
+       return "Surface";
+     else
+       return "Volume";
   }
   char getVisibility() const { return _visible; }
   void setVisibility(char val, bool recursive=false, bool allmodels=false)
@@ -249,7 +260,7 @@ class VisibilityList { // singleton
       }
     }
     else if(type == MeshPartitions){
-      for(int part = 0; part < m->getNumPartitions(); part++)
+      for(unsigned int part = 0; part < m->getNumPartitions(); part++)
         _entities.push_back(new VisPartition(part + 1));
     }
     std::sort(_entities.begin(), _entities.end(), VisLessThan());
@@ -454,7 +465,7 @@ class listBrowser : public Fl_Browser{
     : Fl_Browser(x, y, w, h, c){}
 };
 
-static void _add_vertex(GVertex *gv, Fl_Tree *tree, std::string path)
+static void _add_vertex(GVertex *gv, Fl_Tree *tree, const std::string &path)
 {
   std::ostringstream vertex;
   vertex << path << "Point " << gv->tag() << "/";
@@ -465,7 +476,7 @@ static void _add_vertex(GVertex *gv, Fl_Tree *tree, std::string path)
   n->close();
 }
 
-static void _add_edge(GEdge *ge, Fl_Tree *tree, std::string path)
+static void _add_edge(GEdge *ge, Fl_Tree *tree, const std::string &path)
 {
   std::ostringstream edge;
   edge << path << "Curve " << ge->tag() << "/";
@@ -480,7 +491,7 @@ static void _add_edge(GEdge *ge, Fl_Tree *tree, std::string path)
     _add_vertex(ge->getEndVertex(), tree, edge.str());
 }
 
-static void _add_face(GFace *gf, Fl_Tree *tree, std::string path)
+static void _add_face(GFace *gf, Fl_Tree *tree, const std::string &path)
 {
   std::ostringstream face;
   face << path << "Surface " << gf->tag() << "/";
@@ -489,12 +500,12 @@ static void _add_face(GFace *gf, Fl_Tree *tree, std::string path)
   if(gf->getVisibility()) n->select(1);
   n->user_data((void*)gf);
   n->close();
-  std::list<GEdge*> edges = gf->edges();
-  for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++)
+  std::vector<GEdge*> const& edges = gf->edges();
+  for(std::vector<GEdge*>::const_iterator it = edges.begin(); it != edges.end(); it++)
     _add_edge(*it, tree, face.str());
 }
 
-static void _add_region(GRegion *gr, Fl_Tree *tree, std::string path)
+static void _add_region(GRegion *gr, Fl_Tree *tree, const std::string &path)
 {
   std::ostringstream region;
   region << path << "Volume " << gr->tag() << "/";
@@ -503,14 +514,14 @@ static void _add_region(GRegion *gr, Fl_Tree *tree, std::string path)
   if(gr->getVisibility()) n->select(1);
   n->user_data((void*)gr);
   n->close();
-  std::list<GFace*> faces = gr->faces();
-  for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++)
+  std::vector<GFace*> faces = gr->faces();
+  for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); it++)
     _add_face(*it, tree, region.str());
 }
 
-static void _add_physical_group(int dim, int num, std::vector<GEntity*> &ge,
+static void _add_physical_group(int dim, int num, std::vector<GEntity *> &ge,
                                 std::map<int, std::string> &oldLabels,
-                                Fl_Tree *tree, std::string path)
+                                Fl_Tree *tree, const std::string &path)
 {
   if(ge.empty()) return;
   std::string name = ge[0]->model()->getPhysicalName(dim, num);

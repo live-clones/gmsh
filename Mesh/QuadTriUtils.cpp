@@ -73,7 +73,7 @@ int IsInToroidalQuadToTri(GFace *face)
       GRegion *region = (*itreg);
 
       // does face belong to region and if so is it a structured extrusion?
-      std::list<GFace *> region_faces = std::list<GFace *>( region->faces() );
+      std::vector<GFace *> region_faces = region->faces();
       if( std::find( region_faces.begin(), region_faces.end(), root_face ) !=
 	    region_faces.end() && region->meshAttributes.extrude &&
 	  region->meshAttributes.extrude->mesh.ExtrudeMesh &&
@@ -194,8 +194,9 @@ void ReplaceBndQuadsInFace(GFace *face)
       int num_verts = face->quadrangles[i]->getNumVertices();
       bool on_edge = false;
 
+      verts.reserve(num_verts);
       for(int j = 0; j < num_verts; j++)
-	verts.push_back(face->quadrangles[i]->getVertex(j));
+        verts.push_back(face->quadrangles[i]->getVertex(j));
 
       for(int j = 0; j < num_verts; j++){
 	if(pos_src_edge.find(verts[j]->x(), verts[j]->y(), verts[j]->z())){
@@ -255,8 +256,8 @@ void QuadToTriInsertSourceEdgeVertices(GRegion *gr, MVertexRTree &pos_src_edge)
 
   GFace *source_face = gr->model()->getFaceByTag(std::abs(ep->geo.Source));
 
-  std::list<GEdge*> edges = source_face->edges();
-  std::list<GEdge*>::iterator ite = edges.begin();
+  std::vector<GEdge*> const& edges = source_face->edges();
+  std::vector<GEdge*>::const_iterator ite = edges.begin();
   for(ite = edges.begin(); ite != edges.end(); ite++){
     pos_src_edge.insert((*ite)->mesh_vertices);
     pos_src_edge.insert((*ite)->getBeginVertex()->mesh_vertices);
@@ -268,8 +269,8 @@ void QuadToTriInsertSourceEdgeVertices(GRegion *gr, MVertexRTree &pos_src_edge)
 // Added 2010-01-18
 void QuadToTriInsertFaceEdgeVertices(GFace *face, MVertexRTree &pos_edges)
 {
-  std::list<GEdge*> edges = face->edges();
-  std::list<GEdge*>::iterator ite = edges.begin();
+  std::vector<GEdge*> const& edges = face->edges();
+  std::vector<GEdge*>::const_iterator ite = edges.begin();
   while(ite != edges.end()){
     pos_edges.insert((*ite)->mesh_vertices);
     pos_edges.insert((*ite)->getBeginVertex()->mesh_vertices);
@@ -496,8 +497,9 @@ std::vector<double> QtFindVertsCentroid(std::vector<MVertex*> v)
 
 // Add a new vertex at the centroid of a vector of vertices (this goes into a region
 // Added 2010-02-06
-MVertex* QtMakeCentroidVertex(std::vector<MVertex*> v, std::vector<MVertex*> *target,
-                              GEntity *entity, MVertexRTree &pos)
+MVertex *QtMakeCentroidVertex(const std::vector<MVertex *> &v,
+                              std::vector<MVertex *> *target, GEntity *entity,
+                              MVertexRTree &pos)
 {
   int v_size = v.size();
   if( v_size != 6 && v_size != 8 && v_size != 3 && v_size != 4){
@@ -625,9 +627,8 @@ int GetNeighborRegionsOfFace(GFace *face, std::vector<GRegion *> &neighbors)
   // pedantic search
   std::set<GRegion *, GEntityLessThan>::iterator itreg;
   for( itreg = model->firstRegion(); itreg != model->lastRegion(); itreg++ ){
-    std::list<GFace *> reg_faces = (*itreg)->faces();
-    if( std::find( reg_faces.begin(), reg_faces.end(), face ) !=
-        reg_faces.end() ){
+    std::vector<GFace *> reg_faces = (*itreg)->faces();
+    if(std::find(reg_faces.begin(), reg_faces.end(), face) != reg_faces.end()){
       regions_count++;
       face->addRegion( (*itreg) );
       neighbors.push_back( (*itreg) );
@@ -671,9 +672,8 @@ int IsSurfaceALateralForRegion(GRegion *region, GFace *face)
     return 0;
 
   // of course, the face has to belong to the region!
-  std::list<GFace *> region_faces = std::list<GFace *>( region->faces() );
-  if( std::find( region_faces.begin(), region_faces.end(), face) ==
-      region_faces.end() )
+  std::vector<GFace *> region_faces = region->faces();
+  if(std::find( region_faces.begin(), region_faces.end(), face) == region_faces.end())
     return 0;
 
   // if this face is a COPIED_ENTITY with source = region source face, this is the top.  Exit.
@@ -691,9 +691,9 @@ int IsSurfaceALateralForRegion(GRegion *region, GFace *face)
  // THEN, IF they share an edge, extrude all of the source GVertex positions and
  // see if they are found in this face.  IF so, then it is a top and not a lateral.
 
-  std::list<GEdge*> region_source_edges = reg_source->edges();
-  std::list<GEdge*> face_edges = face->edges();
-  std::list<GEdge*>::iterator ite = face_edges.begin();
+  std::vector<GEdge*> region_source_edges = reg_source->edges();
+  std::vector<GEdge*> face_edges = face->edges();
+  std::vector<GEdge*>::iterator ite = face_edges.begin();
 
   bool edge_found = false;
   int common_count = 0;
@@ -714,12 +714,11 @@ int IsSurfaceALateralForRegion(GRegion *region, GFace *face)
   else if( reg_ep->geo.Type == ROTATE ||
            reg_ep->geo.Type == TRANSLATE_ROTATE ){
     // create lists of GVertex object for source face and present face
-    std::list<GVertex*> face_v, source_v;
-    face_v = face->vertices();
-    source_v = reg_source->vertices();
-    std::list<GVertex*>::iterator itvs;
-    double tol = 1.00e-12;
-    double eps = fabs( tol * CTX::instance()->lc );
+    std::vector<GVertex*> const& face_v = face->vertices();
+    std::vector<GVertex*> const& source_v = reg_source->vertices();
+    std::vector<GVertex*>::const_iterator itvs;
+    double const tol = 1.00e-12;
+    double const eps = std::abs( tol * CTX::instance()->lc );
     unsigned int j_top, k_top;
     j_top = reg_ep->mesh.NbLayer-1;
     k_top = reg_ep->mesh.NbElmLayer[j_top];
@@ -727,7 +726,7 @@ int IsSurfaceALateralForRegion(GRegion *region, GFace *face)
     for( itvs = source_v.begin(); itvs != source_v.end(); itvs++ ){
       double x1 = (*itvs)->x(), y1 = (*itvs)->y(), z1 = (*itvs)->z();
       reg_ep->Extrude( j_top, k_top, x1, y1, z1 );
-      std::list<GVertex*>::iterator itvf;
+      std::vector<GVertex*>::const_iterator itvf;
       bool found_one = false;
       for( itvf = face_v.begin(); itvf != face_v.end(); itvf++ ){
         double x2 = (*itvf)->x(), y2 = (*itvf)->y(), z2 = (*itvf)->z();
@@ -781,7 +780,7 @@ int IsSurfaceATopForRegion(GRegion *region, GFace *face)
     return 0;
 
   // of course, the face has to belong to the region!
-  std::list<GFace *> region_faces = std::list<GFace *>( region->faces() );
+  std::vector<GFace *> region_faces = region->faces();
   if( std::find( region_faces.begin(), region_faces.end(), face) ==
       region_faces.end() )
     return 0;

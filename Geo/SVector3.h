@@ -10,6 +10,7 @@
 #include <string>
 #include <stdio.h>
 #include "GmshMessage.h"
+#include <iostream>
 
 // concrete class for vector of size 3
 class SVector3 {
@@ -65,19 +66,17 @@ class SVector3 {
     P[0] *= v; P[1] *= v; P[2] *= v;
     return *this;
   }
+  SVector3 & operator = (const SVector3& a) {
+    P[0] = a[0]; P[1] = a[1]; P[2] = a[2];
+    return *this;
+  }
   SVector3 & operator = (double v)
   {
     P[0] = v; P[1] = v; P[2] = v;
     return *this;
   }
-  SVector3 & operator = (const SVector3& a)
-  {
-    P[0] = a[0]; P[1] = a[1]; P[2] = a[2];
-    return *this;
-  }
-  
   operator double *() { return P; }
-  void print(std::string name="") const
+  void print(const std::string &name = "") const
   {
     Msg::Info("Vector \'%s\':  %f  %f  %f", name.c_str(), P[0], P[1], P[2]);
   }
@@ -122,9 +121,18 @@ inline SVector3 crossprod(const SVector3 &a, const SVector3 &b)
                   -(a.x() * b.z() - b.x() * a.z()),
                   a.x() * b.y() - b.x() * a.y()); }
 
-inline double angle (const SVector3 &a, const SVector3 &b){
+inline double angle (const SVector3 &a, const SVector3 &b)
+{
   double cosTheta = dot(a,b);
   double sinTheta = norm(crossprod(a,b));
+  return atan2 (sinTheta,cosTheta);
+}
+
+inline double signedAngle(const SVector3 &a, const SVector3 &b,
+                          const SVector3 &n)
+{
+  double cosTheta = dot(a,b);
+  double sinTheta = dot(crossprod(a,b), n);
   return atan2 (sinTheta,cosTheta);
 }
 
@@ -141,8 +149,14 @@ inline SVector3 operator*(const SVector3 &v1, const SVector3 &v2)
 inline SVector3 operator+(const SVector3 &a,const SVector3 &b)
 { return SVector3(a[0] + b[0], a[1] + b[1], a[2] + b[2]); }
 
+inline SPoint3 operator+(const SPoint3 &a,const SVector3 &b)
+{ return SPoint3(a[0] + b[0], a[1] + b[1], a[2] + b[2]); }
+
 inline SVector3 operator-(const SVector3 &a,const SVector3 &b)
 { return SVector3(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
+
+inline SPoint3 operator-(const SPoint3 &a,const SVector3 &b)
+{ return SPoint3(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
 
 inline SVector3 operator-(const SVector3 &a)
 { return SVector3(-a[0], -a[1], -a[2]); }

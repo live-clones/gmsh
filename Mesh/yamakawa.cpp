@@ -480,9 +480,7 @@ namespace {
 
 } // anonymous namespace
 
-
-
-void export_gregion_mesh(GRegion *gr, string filename)
+void export_gregion_mesh(GRegion *gr, const string &filename)
 {
   // FIXME: use MElement::writeMSH
 
@@ -492,28 +490,28 @@ void export_gregion_mesh(GRegion *gr, string filename)
 
   for (vector<MTetrahedron*>::iterator it = gr->tetrahedra.begin();
     it != gr->tetrahedra.end(); it++) {
-    for (int i = 0; i < (*it)->getNumVertices(); i++) {
+    for (std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       vertices.insert(make_pair((*it)->getVertex(i), counterv));
       counterv++;
     }
   }
   for (vector<MHexahedron*>::iterator it = gr->hexahedra.begin();
     it != gr->hexahedra.end(); it++) {
-    for (int i = 0; i < (*it)->getNumVertices(); i++) {
+    for (std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       vertices.insert(make_pair((*it)->getVertex(i), counterv));
       counterv++;
     }
   }
   for (vector<MPrism*>::iterator it = gr->prisms.begin();
     it != gr->prisms.end(); it++) {
-    for (int i = 0; i < (*it)->getNumVertices(); i++) {
+    for (std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       vertices.insert(make_pair((*it)->getVertex(i), counterv));
       counterv++;
     }
   }
   for (vector<MPyramid*>::iterator it = gr->pyramids.begin();
     it != gr->pyramids.end(); it++) {
-    for (int i = 0; i < (*it)->getNumVertices(); i++) {
+    for (std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       vertices.insert(make_pair((*it)->getVertex(i), counterv));
       counterv++;
     }
@@ -537,7 +535,7 @@ void export_gregion_mesh(GRegion *gr, string filename)
   for (vector<MTetrahedron*>::iterator it = gr->tetrahedra.begin();
     it != gr->tetrahedra.end(); it++) {
     out << counter << " 4 2 0 26";
-    for (int i = 0; i < (*it)->getNumVertices(); i++) {
+    for (std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       MVertex *v = (*it)->getVertex(i);
       out << " " << vertices[v];
     }
@@ -547,7 +545,7 @@ void export_gregion_mesh(GRegion *gr, string filename)
   for (vector<MHexahedron*>::iterator it = gr->hexahedra.begin();
     it != gr->hexahedra.end(); it++) {
     out << counter << " 5 2 0 26";
-    for (int i = 0; i < (*it)->getNumVertices(); i++) {
+    for (std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       MVertex *v = (*it)->getVertex(i);
       out << " " << vertices[v];
     }
@@ -557,7 +555,7 @@ void export_gregion_mesh(GRegion *gr, string filename)
   for (vector<MPrism*>::iterator it = gr->prisms.begin();
     it != gr->prisms.end(); it++) {
     out << counter << " 6 2 0 26";
-    for (int i = 0; i < (*it)->getNumVertices(); i++) {
+    for (std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       MVertex *v = (*it)->getVertex(i);
       out << " " << vertices[v];
     }
@@ -567,7 +565,7 @@ void export_gregion_mesh(GRegion *gr, string filename)
   for (vector<MPyramid*>::iterator it = gr->pyramids.begin();
     it != gr->pyramids.end(); it++) {
     out << counter << " 7 2 0 26";
-    for (int i = 0; i < (*it)->getNumVertices(); i++) {
+    for (std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       MVertex *v = (*it)->getVertex(i);
       out << " " << vertices[v];
     }
@@ -1047,10 +1045,9 @@ void Recombinator::build_tuples() {
   tuples.clear();
   triangles.clear();
 
-  std::list<GFace*> faces;
-  faces = current_region->faces();
+  std::vector<GFace*> faces = current_region->faces();
 
-  for (std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++) {
+  for (std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); it++) {
     GFace* gf = *it;
 
     for (unsigned int i = 0; i < gf->getNumMeshElements(); i++) {
@@ -1095,8 +1092,8 @@ void Recombinator::create_quads_on_boundary() {
 }
 
 void Recombinator::delete_quad_triangles_in_boundary() const {
-  std::list<GFace*> faces = current_region->faces();
-  for (std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++) {
+  std::vector<GFace*> faces = current_region->faces();
+  for (std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); it++) {
     GFace* gf = *it;
     std::vector<MElement*> triangles_to_keep;
     triangles_to_keep.reserve(gf->triangles.size());
@@ -1895,14 +1892,12 @@ void Supplementary::build_tuples(GRegion* gr) {
   MVertex *a, *b, *c;
   MElement* element;
   GFace* gf;
-  std::list<GFace*> faces;
-  std::list<GFace*>::iterator it;
 
   tuples.clear();
   triangles.clear();
-  faces.clear();
 
-  faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator it;
 
   for (it = faces.begin(); it != faces.end(); it++)
   {
@@ -1928,9 +1923,7 @@ void Supplementary::create_quads_on_boundary(GRegion* gr) {
   MVertex *d, *e, *f;
   MElement* element;
   GFace* gf;
-  std::list<GFace*> faces;
   std::vector<MElement*> opt;
-  std::list<GFace*>::iterator it;
   element_set_itr it2;
 
   for (i = 0; i < gr->getNumMeshElements(); i++) {
@@ -1950,7 +1943,8 @@ void Supplementary::create_quads_on_boundary(GRegion* gr) {
     }
   }
 
-  faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator it;
 
   for (it = faces.begin(); it != faces.end(); it++)
   {
@@ -2316,7 +2310,9 @@ void Supplementary::find(MVertex* v1, MVertex* v2, const std::vector<MVertex*>& 
   }
 }
 
-void Supplementary::find(MVertex* getVertex, Prism prism, std::set<MElement*>& final) {
+void Supplementary::find(MVertex *getVertex, const Prism &prism,
+                         std::set<MElement *> &final)
+{
   bool flag1, flag2, flag3, flag4;
   MVertex *a, *b, *c, *d;
   Vertex2Elements::iterator it;
@@ -2426,7 +2422,8 @@ bool Supplementary::inclusion(MVertex* v1, MVertex* v2, MVertex* v3, const std::
   return ok;
 }
 
-bool Supplementary::inclusion(Facet facet) {
+bool Supplementary::inclusion(const Facet &facet)
+{
   bool flag;
   std::multiset<Facet>::iterator it;
 
@@ -2449,7 +2446,8 @@ bool Supplementary::inclusion(Facet facet) {
   return flag;
 }
 
-bool Supplementary::inclusion(Diagonal diagonal) {
+bool Supplementary::inclusion(const Diagonal &diagonal)
+{
   bool flag;
   std::multiset<Diagonal>::iterator it;
 
@@ -2472,7 +2470,8 @@ bool Supplementary::inclusion(Diagonal diagonal) {
   return flag;
 }
 
-bool Supplementary::duplicate(Diagonal diagonal) {
+bool Supplementary::duplicate(const Diagonal &diagonal)
+{
   bool flag;
   std::multiset<Diagonal>::iterator it;
 
@@ -2615,20 +2614,19 @@ bool Supplementary::faces_statuquo(Prism prism) {
 }
 
 bool Supplementary::faces_statuquo(MVertex* a, MVertex* b, MVertex* c, MVertex* d) {
-  bool ok;
+
   bool flag1, flag2;
   GFace *gf1, *gf2;
-  Tuple tuple1, tuple2;
   std::multiset<Tuple>::iterator it1;
   std::multiset<Tuple>::iterator it2;
 
-  ok = 1;
+  bool ok = 1;
 
   gf1 = NULL;
   gf2 = NULL;
 
-  tuple1 = Tuple(a, b, c);
-  tuple2 = Tuple(c, d, a);
+  Tuple tuple1(a, b, c);
+  Tuple tuple2(c, d, a);
 
   it1 = tuples.find(tuple1);
   it2 = tuples.find(tuple2);
@@ -2713,25 +2711,20 @@ bool Supplementary::faces_statuquo(MVertex* a, MVertex* b, MVertex* c, MVertex* 
 }
 
 void Supplementary::build_vertex_to_vertices(GRegion* gr) {
-  size_t i;
-  int j;
-  MElement* element;
-  MVertex *a, *b, *c, *d;
-  std::set<MVertex*> bin;
-  Vertex2Vertices::iterator it;
 
+  std::set<MVertex*> bin;
   vertex_to_vertices.clear();
 
-  for (i = 0; i < gr->getNumMeshElements(); i++) {
-    element = gr->getMeshElement(i);
+  for (GRegion::size_type i = 0; i < gr->getNumMeshElements(); i++) {
+    MElement* element = gr->getMeshElement(i);
     if (four(element)) {
-      for (j = 0; j < element->getNumVertices(); j++) {
-        a = element->getVertex(j);
-        b = element->getVertex((j + 1) % 4);
-        c = element->getVertex((j + 2) % 4);
-        d = element->getVertex((j + 3) % 4);
+      for (std::size_t j = 0; j < element->getNumVertices(); j++) {
+        MVertex *a = element->getVertex(j);
+        MVertex *b = element->getVertex((j + 1) % 4);
+        MVertex *c = element->getVertex((j + 2) % 4);
+        MVertex *d = element->getVertex((j + 3) % 4);
 
-        it = vertex_to_vertices.find(a);
+        Vertex2Vertices::iterator it = vertex_to_vertices.find(a);
         if (it != vertex_to_vertices.end()) {
           it->second.insert(b);
           it->second.insert(c);
@@ -2750,22 +2743,17 @@ void Supplementary::build_vertex_to_vertices(GRegion* gr) {
 }
 
 void Supplementary::build_vertex_to_tetrahedra(GRegion* gr) {
-  unsigned int i;
-  int j;
-  MElement* element;
-  MVertex* getVertex;
-  std::set<MElement*> bin;
-  Vertex2Elements::iterator it;
 
+  std::set<MElement*> bin;
   vertex_to_tetrahedra.clear();
 
-  for (i = 0; i < gr->getNumMeshElements(); i++) {
-    element = gr->getMeshElement(i);
+  for (GRegion::size_type i = 0; i < gr->getNumMeshElements(); i++) {
+    MElement* element = gr->getMeshElement(i);
     if (four(element)) {
-      for (j = 0; j < element->getNumVertices(); j++) {
-        getVertex = element->getVertex(j);
+      for (std::size_t j = 0; j < element->getNumVertices(); j++) {
+        MVertex* getVertex = element->getVertex(j);
 
-        it = vertex_to_tetrahedra.find(getVertex);
+        Vertex2Elements::iterator it = vertex_to_tetrahedra.find(getVertex);
         if (it != vertex_to_tetrahedra.end()) {
           it->second.insert(element);
         }
@@ -2802,7 +2790,8 @@ void Supplementary::build_hash_tableA(MVertex* a, MVertex* b, MVertex* c, MVerte
   build_hash_tableA(Facet(b, d, c));
 }
 
-void Supplementary::build_hash_tableA(Facet facet) {
+void Supplementary::build_hash_tableA(const Facet &facet)
+{
   bool flag;
   std::multiset<Facet>::iterator it;
 
@@ -2848,7 +2837,8 @@ void Supplementary::build_hash_tableB(MVertex* a, MVertex* b, MVertex* c, MVerte
   build_hash_tableB(Diagonal(b, d));
 }
 
-void Supplementary::build_hash_tableB(Diagonal diagonal) {
+void Supplementary::build_hash_tableB(const Diagonal &diagonal)
+{
   bool flag;
   std::multiset<Diagonal>::iterator it;
 
@@ -2895,7 +2885,8 @@ void Supplementary::build_hash_tableC(Prism prism) {
   build_hash_tableC(Diagonal(b, c));
 }
 
-void Supplementary::build_hash_tableC(Diagonal diagonal) {
+void Supplementary::build_hash_tableC(const Diagonal &diagonal)
+{
   bool flag;
   std::multiset<Diagonal>::iterator it;
 
@@ -3140,8 +3131,8 @@ void PostOp::removeElseAdd(std::set<Facet> &set, MVertex *a, MVertex *b, MVertex
 void PostOp::writeMSH(const char *filename, std::vector<MElement*> &elements)
 {
   std::set<MVertex*> vertices;
-  for (unsigned i = 0; i < elements.size(); ++i) {
-    for (int k = 0; k < elements[i]->getNumVertices(); ++k)
+  for (std::size_t i = 0; i < elements.size(); ++i) {
+    for (std::size_t k = 0; k < elements[i]->getNumVertices(); ++k)
       vertices.insert(elements[i]->getVertex(k));
   }
 
@@ -3163,9 +3154,9 @@ void PostOp::writeMSH(const char *filename, std::vector<MElement*> &elements)
 
   fprintf(f, "$Elements\n");
   fprintf(f, "%d\n", (int)elements.size());
-  for (unsigned int i = 0; i < elements.size(); ++i) {
+  for (std::size_t i = 0; i < elements.size(); ++i) {
     fprintf(f, "%d %d 0", elements[i]->getNum(), elements[i]->getTypeForMSH());
-    for (int k = 0; k < elements[i]->getNumVertices(); ++k)
+    for (std::size_t k = 0; k < elements[i]->getNumVertices(); ++k)
       fprintf(f, " %d", elements[i]->getVertex(k)->getIndex());
     fprintf(f, "\n");
   }
@@ -4419,7 +4410,7 @@ void PostOp::statistics(GRegion* gr) {
   printf("  percentage of prisms : %.2f\n", vol6*100.0 / vol);
   printf("  percentage of pyramids : %.2f\n", vol5*100.0 / vol);
   printf("  percentage of tetrahedra : %.2f\n", vol4*100.0 / vol);
-  printf("Total number of elements : %d\n", gr->getNumMeshElements());
+  printf("Total number of elements : %lu\n", gr->getNumMeshElements());
   printf("Total volume : %f\n", vol);
   printf("Misc : %d %d %d\n", estimate1, estimate2, iterations);
 }
@@ -4429,14 +4420,12 @@ void PostOp::build_tuples(GRegion* gr) {
   MVertex *a, *b, *c;
   MElement* element;
   GFace* gf;
-  std::list<GFace*> faces;
-  std::list<GFace*>::iterator it;
 
   tuples.clear();
   triangles.clear();
-  faces.clear();
 
-  faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator it;
 
   for (it = faces.begin(); it != faces.end(); it++)
   {
@@ -4461,9 +4450,7 @@ void PostOp::create_quads_on_boundary(GRegion* gr) {
   MVertex *a, *b, *c, *d;//,*e;
   MElement* element;
   GFace* gf;
-  std::list<GFace*> faces;
   std::vector<MElement*> opt;
-  std::list<GFace*>::iterator it;
   element_set_itr it2;
 
   for (i = 0; i < gr->getNumMeshElements(); i++) {
@@ -4480,7 +4467,8 @@ void PostOp::create_quads_on_boundary(GRegion* gr) {
     }
   }
 
-  faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator it;
 
   for (it = faces.begin(); it != faces.end(); it++)
   {
@@ -4684,14 +4672,11 @@ bool PostOp::different(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4) {
 }
 
 MVertex* PostOp::other(MElement* element, MVertex* v1, MVertex* v2) {
-  int i;
-  MVertex* getVertex;
-  MVertex* pointer;
 
-  pointer = 0;
+  MVertex* pointer = NULL;
 
-  for (i = 0; i < element->getNumVertices(); i++) {
-    getVertex = element->getVertex(i);
+  for (std::size_t i = 0; i < element->getNumVertices(); i++) {
+    MVertex* getVertex = element->getVertex(i);
     if (getVertex != v1 && getVertex != v2) {
       pointer = getVertex;
       break;
@@ -4702,14 +4687,11 @@ MVertex* PostOp::other(MElement* element, MVertex* v1, MVertex* v2) {
 }
 
 MVertex* PostOp::other(MElement* element, MVertex* v1, MVertex* v2, MVertex* v3) {
-  int i;
-  MVertex* getVertex;
-  MVertex* pointer;
 
-  pointer = 0;
+  MVertex* pointer = NULL;
 
-  for (i = 0; i < element->getNumVertices(); i++) {
-    getVertex = element->getVertex(i);
+  for (std::size_t i = 0; i < element->getNumVertices(); i++) {
+    MVertex* getVertex = element->getVertex(i);
     if (getVertex != v1 && getVertex != v2 && getVertex != v3) {
       pointer = getVertex;
       break;
@@ -4833,14 +4815,11 @@ MVertex* PostOp::findInTriFace(MVertex* in0, MVertex* in1, MVertex* out0, MVerte
 }
 
 MVertex* PostOp::find(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4, MElement* element) {
-  int i;
-  MVertex* getVertex;
-  MVertex* pointer;
 
-  pointer = 0;
+  MVertex* pointer = NULL;
 
-  for (i = 0; i < element->getNumVertices(); i++) {
-    getVertex = element->getVertex(i);
+  for (std::size_t i = 0; i < element->getNumVertices(); i++) {
+    MVertex* getVertex = element->getVertex(i);
     if (getVertex != v1 && getVertex != v2 && getVertex != v3 && getVertex != v4) {
       pointer = getVertex;
       break;
@@ -5045,15 +5024,13 @@ void PostOp::build_vertex_to_tetrahedra(GRegion* gr) {
 }
 
 void PostOp::build_vertex_to_tetrahedra(MElement* element) {
-  int i;
-  MVertex* getVertex;
+
   std::set<MElement*> bin;
-  Vertex2Elements::iterator it;
 
-  for (i = 0; i < element->getNumVertices(); i++) {
-    getVertex = element->getVertex(i);
+  for (std::size_t i = 0; i < element->getNumVertices(); i++) {
+    MVertex* getVertex = element->getVertex(i);
 
-    it = vertex_to_tetrahedra.find(getVertex);
+    Vertex2Elements::iterator it = vertex_to_tetrahedra.find(getVertex);
     if (it != vertex_to_tetrahedra.end()) {
       it->second.insert(element);
     }
@@ -5066,14 +5043,11 @@ void PostOp::build_vertex_to_tetrahedra(MElement* element) {
 }
 
 void PostOp::erase_vertex_to_tetrahedra(MElement* element) {
-  int i;
-  MVertex* getVertex;
-  Vertex2Elements::iterator it;
 
-  for (i = 0; i < element->getNumVertices(); i++) {
-    getVertex = element->getVertex(i);
+  for (std::size_t i = 0; i < element->getNumVertices(); i++) {
+    MVertex* getVertex = element->getVertex(i);
 
-    it = vertex_to_tetrahedra.find(getVertex);
+    Vertex2Elements::iterator it = vertex_to_tetrahedra.find(getVertex);
     if (it != vertex_to_tetrahedra.end()) {
       it->second.erase(element);
     }
@@ -5081,13 +5055,11 @@ void PostOp::erase_vertex_to_tetrahedra(MElement* element) {
 }
 
 void PostOp::build_vertex_to_pyramids(GRegion* gr) {
-  unsigned int i;
-  MElement* element;
 
   vertex_to_pyramids.clear();
 
-  for (i = 0; i < gr->getNumMeshElements(); i++) {
-    element = gr->getMeshElement(i);
+  for (GRegion::size_type i = 0; i < gr->getNumMeshElements(); i++) {
+    MElement* element = gr->getMeshElement(i);
     if (five(element)) {
       build_vertex_to_pyramids(element);
     }
@@ -5095,15 +5067,13 @@ void PostOp::build_vertex_to_pyramids(GRegion* gr) {
 }
 
 void PostOp::build_vertex_to_pyramids(MElement* element) {
-  int i;
-  MVertex* getVertex;
+
   std::set<MElement*> bin;
-  Vertex2Elements::iterator it;
 
-  for (i = 0; i < element->getNumVertices(); i++) {
-    getVertex = element->getVertex(i);
+  for (std::size_t i = 0; i < element->getNumVertices(); i++) {
+    MVertex* getVertex = element->getVertex(i);
 
-    it = vertex_to_pyramids.find(getVertex);
+    Vertex2Elements::iterator it = vertex_to_pyramids.find(getVertex);
     if (it != vertex_to_pyramids.end()) {
       it->second.insert(element);
     }
@@ -5116,14 +5086,11 @@ void PostOp::build_vertex_to_pyramids(MElement* element) {
 }
 
 void PostOp::erase_vertex_to_pyramids(MElement* element) {
-  int i;
-  MVertex* getVertex;
-  Vertex2Elements::iterator it;
 
-  for (i = 0; i < element->getNumVertices(); i++) {
-    getVertex = element->getVertex(i);
+  for (std::size_t i = 0; i < element->getNumVertices(); i++) {
+    MVertex* getVertex = element->getVertex(i);
 
-    it = vertex_to_pyramids.find(getVertex);
+    Vertex2Elements::iterator it = vertex_to_pyramids.find(getVertex);
     if (it != vertex_to_pyramids.end()) {
       it->second.erase(element);
     }
@@ -5132,13 +5099,11 @@ void PostOp::erase_vertex_to_pyramids(MElement* element) {
 
 
 void PostOp::build_vertex_to_hexPrism(GRegion* gr) {
-  unsigned int i;
-  MElement* element;
 
   vertex_to_hexPrism.clear();
 
-  for (i = 0; i < gr->getNumMeshElements(); i++) {
-    element = gr->getMeshElement(i);
+  for (GRegion::size_type i = 0; i < gr->getNumMeshElements(); i++) {
+    MElement* element = gr->getMeshElement(i);
     if (six(element) || eight(element)) {
       build_vertex_to_hexPrism(element);
     }
@@ -5146,15 +5111,13 @@ void PostOp::build_vertex_to_hexPrism(GRegion* gr) {
 }
 
 void PostOp::build_vertex_to_hexPrism(MElement* element) {
-  int i;
-  MVertex* getVertex;
+
   std::set<MElement*> bin;
-  Vertex2Elements::iterator it;
 
-  for (i = 0; i < element->getNumVertices(); i++) {
-    getVertex = element->getVertex(i);
+  for (std::size_t i = 0; i < element->getNumVertices(); i++) {
+    MVertex* getVertex = element->getVertex(i);
 
-    it = vertex_to_hexPrism.find(getVertex);
+    Vertex2Elements::iterator it = vertex_to_hexPrism.find(getVertex);
     if (it != vertex_to_hexPrism.end()) {
       it->second.insert(element);
     }
@@ -5167,14 +5130,11 @@ void PostOp::build_vertex_to_hexPrism(MElement* element) {
 }
 
 void PostOp::erase_vertex_to_hexPrism(MElement* element) {
-  int i;
-  MVertex* getVertex;
-  Vertex2Elements::iterator it;
 
-  for (i = 0; i < element->getNumVertices(); i++) {
-    getVertex = element->getVertex(i);
+  for (std::size_t i = 0; i < element->getNumVertices(); i++) {
+    MVertex* getVertex = element->getVertex(i);
 
-    it = vertex_to_hexPrism.find(getVertex);
+    Vertex2Elements::iterator it = vertex_to_hexPrism.find(getVertex);
     if (it != vertex_to_hexPrism.end()) {
       it->second.erase(element);
     }
@@ -5199,9 +5159,9 @@ bool PostOp::valid(MPyramid *pyr) {
         SVector3 vec2 = SVector3(V[(1 + iP) % 4]->x() - apex->x(), V[(1 + iP) % 4]->y() - apex->y(), V[(1 + iP) % 4]->z() - apex->z()).unit();
         SVector3 vec3 = SVector3(V[(2 + iP) % 4]->x() - apex->x(), V[(2 + iP) % 4]->y() - apex->y(), V[(2 + iP) % 4]->z() - apex->z()).unit();
         SVector3 crossVec1Vec2 = crossprod(vec1, vec2);
-        double angle = fabs(acos(dot(crossVec1Vec2, vec3)) * 180 / M_PI);
+        double angle = std::abs(std::acos(dot(crossVec1Vec2, vec3)) * 180 / M_PI);
         double minAngle = 30;
-        if (fabs(angle - 90) < minAngle) return false;
+        if (std::abs(angle - 90) < minAngle) return false;
       }
     }
   }
@@ -5373,7 +5333,7 @@ void clique_stop_criteria<T>::export_corresponding_mesh
   int countertets = 1;
   for (set<MElement*>::iterator it = hexs.begin(); it != hexs.end(); it++) {
     out << counter << " 5 2 0 26";
-    for (int i = 0; i < (*it)->getNumVertices(); i++) {
+    for (std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       MVertex *v = (*it)->getVertex(i);
       out << " " << vertices[v];
     }
@@ -5384,7 +5344,7 @@ void clique_stop_criteria<T>::export_corresponding_mesh
   for (set<MElement*>::iterator it = tets.begin(); it != tets.end(); it++) {
     out << counter << " 4 2 0 26";
     outtets << counter << " 4 2 0 26";
-    for (int i = 0; i < (*it)->getNumVertices(); i++) {
+    for (std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       MVertex *v = (*it)->getVertex(i);
       out << " " << vertices[v];
       outtets << " " << vertices[v];
@@ -6122,14 +6082,14 @@ void Recombinator_Graph::createBlossomInfo(GRegion *gr) {
   throw;
 
   // remove quads, create triangles, and store blossom information (triangles pairs)
-  std::list<GFace*> faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
   GFace *gf;
   MElement *element;
   PETriangle *t11, *t12, *t21, *t22;
 
   cout << "recover blossom info" << endl;
 
-  for (std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++) {
+  for (std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); it++) {
     gf = *it;
 
     std::vector<MQuadrangle*>::iterator it_quad = gf->quadrangles.begin();
@@ -6320,7 +6280,10 @@ PETriangle* Recombinator_Graph::get_triangle(MElement *element, int i, int j, in
   return t;
 }
 
-Recombinator_Graph::Recombinator_Graph(unsigned int _n, string filename) :max_nb_cliques(_n), graphfilename(filename) {
+Recombinator_Graph::Recombinator_Graph(unsigned int _n, const string &filename)
+  : max_nb_cliques(_n)
+  , graphfilename(filename)
+{
 }
 
 
@@ -6492,8 +6455,9 @@ void Recombinator_Graph::merge(GRegion* gr) {
   throw;
 }
 
-
-void Recombinator_Graph::export_tets(set<MElement*> &tetset, Hex* hex, string s) {
+void Recombinator_Graph::export_tets(set<MElement *> &tetset, Hex *hex,
+                                     const string &s)
+{
   stringstream ss;
   ss << s.c_str();
   ss << "hexptr_";
@@ -6524,8 +6488,8 @@ void Recombinator_Graph::export_tets(set<MElement*> &tetset, Hex* hex, string s)
   out.close();
 }
 
-
-void Recombinator_Graph::export_single_hex_tet(Hex* hex, string s) {
+void Recombinator_Graph::export_single_hex_tet(Hex *hex, const string &s)
+{
   stringstream ss;
   ss << s.c_str();
   ss << "hexptr_";
@@ -6556,15 +6520,15 @@ void Recombinator_Graph::export_single_hex_tet(Hex* hex, string s) {
   out.close();
 }
 
-
-void Recombinator_Graph::export_single_hex_all(Hex* hex, string s) {
+void Recombinator_Graph::export_single_hex_all(Hex *hex, const string &s)
+{
   export_single_hex(hex, s);
   export_single_hex_tet(hex, s);
   export_single_hex_faces(hex, s);
 }
 
-
-void Recombinator_Graph::export_single_hex(Hex* hex, string s) {
+void Recombinator_Graph::export_single_hex(Hex *hex, const string &s)
+{
   stringstream ss;
   ss << s.c_str();
   ss << "hexptr_";
@@ -6590,9 +6554,8 @@ void Recombinator_Graph::export_single_hex(Hex* hex, string s) {
   out.close();
 }
 
-
-
-void Recombinator_Graph::export_single_hex_faces(Hex* hex, string s) {
+void Recombinator_Graph::export_single_hex_faces(Hex *hex, const string &s)
+{
   stringstream ss;
   ss << s.c_str();
   ss << "hexptr_";

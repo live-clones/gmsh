@@ -46,6 +46,114 @@
 
 void copyMesh(GEdge*,GEdge*,int);
 
+void derivativeP2 (double u, double v, double dfdu[6], double dfdv[6]){
+  /*  const double sf[6][6] = { { 1, -3, -3,  4,  2,  2},
+                                { 0, -1,  0,  0,  2,  0},
+                                { 0,  0, -1,  0,  0,  2},
+                                { 0,  4,  0, -4, -4,  0},
+                                { 0,  0,  0,  4,  0,  0},
+                                { 0,  0,  4, -4,  0, -4} };
+  */  
+  dfdu[0] = -3 +   4*v   + 4*u;
+  dfdu[1] = -1           + 4*u;
+  dfdu[2] =  0                ;
+  dfdu[3] =  4    -4*v   - 8*u;
+  dfdu[4] =        4*v        ;
+  dfdu[5] =       -4*v ;
+
+  dfdv[0] = -3 +   4*u   + 4*v;
+  dfdv[1] =  0                ;
+  dfdv[2] = -1           + 4*v;
+  dfdv[3] =       -4*u        ;
+  dfdv[4] =        4*u        ;
+  dfdv[5] =  4    -4*u   - 8*v;
+}
+
+void jac_corners_p2 (double *xa, double *xb, double *xc, double *xab, double *xbc, double *xca, double J[6])
+{
+  double *x[6] = {xa, xb, xc, xab, xbc, xca};
+  double nodes[6][2] = { {0, 0}, {1, 0}, {0, 1}, {0.5, 0}, {0.5, 0.5}, {0, 0.5} };
+  for (int i=0; i<6; i++){
+    double u = nodes[i][0];
+    double v = nodes[i][1];
+    double dfdu[6],dfdv[6];
+    derivativeP2 (u, v, dfdu, dfdv);
+    double dxdu = 0, dxdv = 0, dydu=0, dydv=0;
+    for (int j=0; j<6; j++){
+      dxdu += x[j][0] * dfdu[j];
+      dxdv += x[j][0] * dfdv[j];
+      dydu += x[j][1] * dfdu[j];
+      dydv += x[j][1] * dfdv[j];
+    }
+    J[i] = dxdu * dydv - dydu * dxdv;      
+  }
+}
+double validity_p2triangle_formula (double *xa, double *xb, double *xc, double *xab, double *xbc, double *xca)
+{
+  //return 1;
+  //  return orient2d(xa,xb,xc);
+  //  double EPS = 1.e-3;
+  double J[6];
+  jac_corners_p2 (xa, xb, xc, xab, xbc, xca, J);
+  double bez[6] = {J[0], J[1], J[2], 2*J[3] - 0.5*(J[0]+J[1]), 2*J[4] - 0.5*(J[1]+J[2]), 2*J[5] - 0.5*(J[0]+J[2])};
+  double _MIN = 1.e22;
+  for (int i=0; i<6; i++)_MIN = bez[i] < _MIN ? bez[i] : _MIN;
+  return _MIN;
+}
+
+
+bool pointInsideParametricDomain (std::vector<SPoint2> &bnd, SPoint2 &p, SPoint2 &out, int &N){
+  int count = 0;
+  for (size_t i=0;i<bnd.size(); i+=2){
+    SPoint2 p1 = bnd[i];
+    SPoint2 p2 = bnd[i+1];
+    double a = robustPredicates::orient2d(p1,p2,p);
+    double b = robustPredicates::orient2d(p1,p2,out);
+    if (a*b < 0){
+      a = robustPredicates::orient2d(p,out,p1);
+      b = robustPredicates::orient2d(p,out,p2);
+      if (a*b < 0)count ++;
+    }
+  }
+  N = count;
+  if (count % 2 == 0)return false;
+  return true;
+}
+
+
+void trueBoundary(const char *iii, GFace *gf, std::vector<SPoint2> &bnd)
+{
+  FILE* view_t = Fopen(iii,"w");
+  fprintf(view_t,"View \"True Boundary\"{\n");
+  std::vector<GEdge *> edg = gf->edges();
+
+  std::set<GEdge*> edges (edg.begin(), edg.end());
+  
+  for (std::set<GEdge*>::iterator it = edges.begin() ; it != edges.end() ; ++it){
+    GEdge *ge = *it;
+    Range<double> r = ge->parBounds(0);
+    SPoint2 p[300];    
+    int NITER = ge->isSeam(gf) ? 2 : 1;
+    for (int i=0;i<NITER;i++){
+      int count = NITER == 2 ? 300 : 300;
+      for (int k=0;k<count;k++){
+	double t = (double)k/(count-1);
+	double xi = r.low() + (r.high() - r.low()) * t;
+	p[k] = ge->reparamOnFace(gf, xi, i);      
+	if (k > 0){
+	  fprintf(view_t,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p[k-1].x(),p[k-1].y(),0.0,
+		  p[k].x(),p[k].y(),0.0);
+	  bnd.push_back(p[k-1]);
+	  bnd.push_back(p[k]);
+	}
+      }
+    }
+  }
+  fprintf(view_t,"};\n");
+  fclose(view_t);
+}
+
+
 static void computeElementShapes(GFace *gf, double &worst, double &avg,
                                  double &best, int &nT, int &greaterThan)
 {
@@ -78,8 +186,8 @@ class quadMeshRemoveHalfOfOneDMesh
     if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
        CTX::instance()->mesh.algoRecombine == 2){
       // printf("GFace %d removing half of the points in the 1D mesh\n",gf->tag());
-      std::list<GEdge*> edges = gf->edges();
-      std::list<GEdge*>::iterator ite = edges.begin();
+      std::vector<GEdge*> const& edges = gf->edges();
+      std::vector<GEdge*>::const_iterator ite = edges.begin();
       while(ite != edges.end()){
         if(!(*ite)->isMeshDegenerated()){
           std::vector<MLine*> temp;
@@ -219,8 +327,8 @@ class quadMeshRemoveHalfOfOneDMesh
   }
   void restore()
   {
-    std::list<GEdge*> edges = _gf->edges();
-    std::list<GEdge*>::iterator ite = edges.begin();
+    std::vector<GEdge*> const& edges = _gf->edges();
+    std::vector<GEdge*>::const_iterator ite = edges.begin();
     while(ite != edges.end()){
       for(unsigned int i = 0; i < (*ite)->lines.size(); i++){
         delete (*ite)->lines[i];
@@ -237,18 +345,17 @@ static void copyMesh(GFace *source, GFace *target)
 
   // add principal vertex pairs
 
-  std::list<GVertex*> s_vtcs = source->vertices();
-  std::list<GVertex*> t_vtcs = target->vertices();
+  std::vector<GVertex*> const& s_vtcs = source->vertices();
+  std::vector<GVertex*> const& t_vtcs = target->vertices();
 
   if(s_vtcs.size() != t_vtcs.size()) {
     Msg::Info("Periodicity imposed on topologically incompatible surfaces"
               "(%d vs %d bounding vertices)",s_vtcs.size(),t_vtcs.size());
   }
 
-  std::set<GVertex*> checkVtcs;
-  checkVtcs.insert(s_vtcs.begin(),s_vtcs.end());
+  std::set<GVertex*> checkVtcs(s_vtcs.begin(),s_vtcs.end());
 
-  for(std::list<GVertex*>::iterator tvIter=t_vtcs.begin();tvIter!=t_vtcs.end();++tvIter) {
+  for(std::vector<GVertex*>::const_iterator tvIter=t_vtcs.begin();tvIter!=t_vtcs.end();++tvIter) {
 
     GVertex* gvt = *tvIter;
     std::map<GVertex*,GVertex*>::iterator gvsIter = target->vertexCounterparts.find(gvt);
@@ -280,13 +387,13 @@ static void copyMesh(GFace *source, GFace *target)
 
   // add corresponding edge nodes assuming edges were correctly meshed already
 
-  std::list<GEdge*> s_edges = source->edges();
-  std::list<GEdge*> t_edges = target->edges();
+  std::vector<GEdge*> s_edges = source->edges();
+  std::vector<GEdge*> t_edges = target->edges();
 
   std::set<GEdge*> checkEdges;
   checkEdges.insert(s_edges.begin(),s_edges.end());
 
-  for(std::list<GEdge*>::iterator te_iter = t_edges.begin();
+  for(std::vector<GEdge*>::iterator te_iter = t_edges.begin();
        te_iter != t_edges.end(); ++te_iter) {
 
     GEdge* get = *te_iter;
@@ -400,8 +507,8 @@ void fourthPoint(double *p1, double *p2, double *p3, double *p4)
 
 static bool noSeam(GFace *gf)
 {
-  std::list<GEdge*> edges = gf->edges();
-  std::list<GEdge*>::iterator it = edges.begin();
+  std::vector<GEdge*> const& edges = gf->edges();
+  std::vector<GEdge*>::const_iterator it = edges.begin();
   while(it != edges.end()){
     GEdge *ge = *it ;
     bool seam = ge->isSeam(gf);
@@ -420,9 +527,9 @@ static void remeshUnrecoveredEdges(std::map<MVertex*, BDS_Point*> &recoverMapInv
 
   std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
   for(; itr != edgesNotRecovered.end(); ++itr){
-    std::list<GFace*> l_faces = itr->ge->faces();
+    std::vector<GFace*> l_faces = itr->ge->faces();
     // un-mesh model faces adjacent to the model edge
-    for(std::list<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); ++it){
+    for(std::vector<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); ++it){
       if((*it)->triangles.size() || (*it)->quadrangles.size()){
         facesToRemesh.push_back(*it);
         dem(*it);
@@ -606,7 +713,7 @@ void BDS2GMSH(BDS_Mesh *m, GFace *gf,
     }
   }
   {
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       BDS_Face *t = *itt;
       if(!t->deleted){
@@ -656,10 +763,10 @@ static void modifyInitialMeshForBoundaryLayers(GFace *gf,
   std::set<MEdge,Less_Edge> bedges;
   std::set<MEdge,Less_Edge> removed;
 
-  std::list<GEdge*> edges = gf->edges();
-  std::list<GEdge*> embedded_edges = gf->embeddedEdges();
-  edges.insert(edges.begin(), embedded_edges.begin(),embedded_edges.end());
-  std::list<GEdge*>::iterator ite = edges.begin();
+  std::vector<GEdge*> edges = gf->edges();
+  std::vector<GEdge*> const& embedded_edges = gf->embeddedEdges();
+  edges.insert(edges.begin(), embedded_edges.begin(), embedded_edges.end());
+  std::vector<GEdge*>::iterator ite = edges.begin();
 
   FILE *ff2 = 0;
   if(debug) ff2 = Fopen("tato.pos","w");
@@ -806,7 +913,7 @@ static void modifyInitialMeshForBoundaryLayers(GFace *gf,
 
   discreteEdge ne(gf->model(), 444444,0,
                   (*edges.begin())->getEndVertex());
-  std::list<GEdge*> hop;
+  std::vector<GEdge*> hop;
   std::set<MEdge,Less_Edge>::iterator it =  bedges.begin();
 
   FILE *ff = 0;
@@ -868,7 +975,7 @@ static void directions_storage(GFace* gf)
   std::set<MVertex*> vertices;
   for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
     MElement* element = gf->getMeshElement(i);
-    for(int j = 0; j < element->getNumVertices(); j++){
+    for(std::size_t j = 0; j < element->getNumVertices(); j++){
       MVertex *vertex = element->getVertex(j);
       vertices.insert(vertex);
     }
@@ -905,19 +1012,18 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
                    bool repairSelfIntersecting1dMesh,
                    bool onlyInitialMesh,
                    bool debug,
-                   std::list<GEdge*> *replacement_edges)
+                   std::vector<GEdge*> *replacement_edges)
 {
   // onlyInitialMesh=true;
   BDS_GeomEntity CLASS_F(1, 2);
   BDS_GeomEntity CLASS_EXTERIOR(1, 3);
   std::map<BDS_Point*, MVertex*,PointLessThan> recoverMap;
   std::map<MVertex*, BDS_Point*> recoverMapInv;
-  std::list<GEdge*> edges = replacement_edges ? *replacement_edges : gf->edges();
-  std::list<int> dir = gf->edgeOrientations();
+  std::vector<GEdge*> edges = replacement_edges ? *replacement_edges : gf->edges();
 
   // build a set with all points of the boundaries
   std::set<MVertex*, MVertexLessThanNum> all_vertices, boundary;
-  std::list<GEdge*>::iterator ite = edges.begin();
+  std::vector<GEdge*>::const_iterator ite = edges.begin();
 
   FILE *fdeb = NULL;
   if(debug && RECUR_ITER == 0){
@@ -967,7 +1073,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     return false;
   }
 
-  std::list<GEdge*> emb_edges = gf->embeddedEdges();
+  std::vector<GEdge*> const& emb_edges = gf->embeddedEdges();
   ite = emb_edges.begin();
   while(ite != emb_edges.end()){
     if(!(*ite)->isMeshDegenerated()){
@@ -1158,9 +1264,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   if(debug && RECUR_ITER == 0){
     char name[245];
     sprintf(name, "surface%d-initial-real.pos", gf->tag());
-    outputScalarField(m->triangles, name, 0);
+    outputScalarField(m->triangles, name, 0,gf);
     sprintf(name, "surface%d-initial-param.pos", gf->tag());
-    outputScalarField(m->triangles, name, 1);
+    outputScalarField(m->triangles, name, 1,gf);
   }
 
   // Recover the boundary edges and compute characteristic lenghts using mesh
@@ -1254,7 +1360,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   // look for a triangle that has a negative node and recursively tag all
   // exterior triangles
   {
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       (*itt)->g = 0;
       ++itt;
@@ -1275,7 +1381,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   // now find an edge that has belongs to one of the exterior triangles
   {
-    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    std::vector<BDS_Edge*>::iterator ite = m->edges.begin();
     while(ite != m->edges.end()){
       BDS_Edge *e = *ite;
       if(e->g  && e->numfaces() == 2){
@@ -1290,7 +1396,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       }
       ++ite;
     }
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       if((*itt)->g == &CLASS_EXTERIOR) (*itt)->g = 0;
       ++itt;
@@ -1298,7 +1404,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
 
   {
-    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    std::vector<BDS_Edge*>::iterator ite = m->edges.begin();
     while(ite != m->edges.end()){
       BDS_Edge *e = *ite;
       if(e->g  && e->numfaces() == 2){
@@ -1353,7 +1459,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
 
   // delete useless stuff
-  std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+  std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
   while(itt != m->triangles.end()){
     BDS_Face *t = *itt;
     if(!t->g) m->del_face(t);
@@ -1362,7 +1468,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   m->cleanup();
 
   {
-    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    std::vector<BDS_Edge*>::iterator ite = m->edges.begin();
     while(ite != m->edges.end()){
       BDS_Edge *e = *ite;
       if(e->numfaces() == 0)
@@ -1387,13 +1493,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   if(debug){
     char name[245];
     sprintf(name, "surface%d-recovered-real.pos", gf->tag());
-    outputScalarField(m->triangles, name, 0);
+    outputScalarField(m->triangles, name, 0,gf);
     sprintf(name, "surface%d-recovered-param.pos", gf->tag());
-    outputScalarField(m->triangles, name, 1);
+    outputScalarField(m->triangles, name, 1,gf);
   }
 
   if(1){
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       BDS_Face *t = *itt;
       if(!t->deleted){
@@ -1503,10 +1609,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   if(debug){
     char name[256];
+    //    sprintf(name, "trueBoundary%d.pos", gf->tag());
+    //    std::vector<SPoint2> bnd;
+    //    trueBoundary(name, gf,bnd);
     sprintf(name, "real%d.pos", gf->tag());
     outputScalarField(m->triangles, name, 0, gf);
     sprintf(name, "param%d.pos", gf->tag());
-    outputScalarField(m->triangles, name,1);
+    outputScalarField(m->triangles, name,1,gf);
   }
 
   delete m;
@@ -1621,8 +1730,7 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
     it++;
   }
 
-  std::list<GEdgeSigned> unordered;
-  unordered.insert(unordered.begin(), gel.begin(), gel.end());
+  std::list<GEdgeSigned> unordered(gel.begin(), gel.end());
 
   GEdgeSigned found(0, 0);
   SPoint2 last_coord(0, 0);
@@ -1810,13 +1918,19 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 {
   std::map<BDS_Point*, MVertex*, PointLessThan> recoverMap;
 
+  char name[245];
+  sprintf(name, "trueBoundary%d.pos", gf->tag());
+  std::vector<SPoint2> true_boundary;
+  trueBoundary(name, gf, true_boundary);
+
+  
   Range<double> rangeU = gf->parBounds(0);
   Range<double> rangeV = gf->parBounds(1);
 
   double du = rangeU.high() - rangeU.low();
   double dv = rangeV.high() - rangeV.low();
 
-  const double LC2D = sqrt(du * du + dv * dv);
+  const double LC2D = std::sqrt(du * du + dv * dv);
 
   // Buid a BDS_Mesh structure that is convenient for doing the actual meshing
   // procedure
@@ -1856,10 +1970,6 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       edgeLoops_BDS.push_back(edgeLoop_BDS);
     }
   }
-
-
-
-
 
   if(nbPointsTotal < 3){
     Msg::Warning("Mesh Generation of Model Face %d Skipped: "
@@ -1907,8 +2017,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     int pNum = m->MAXPOINTNUMBER;
     nbPointsTotal +=  emb_vertx.size();
     {
-      std::list<GEdge*> emb_edges = gf->embeddedEdges();
-      std::list<GEdge*>::iterator ite =  emb_edges.begin();
+      std::vector<GEdge*> const& emb_edges = gf->embeddedEdges();
+      std::vector<GEdge*>::const_iterator ite =  emb_edges.begin();
       std::set<MVertex*> vs;
       while(ite != emb_edges.end()){
 	for(unsigned int i = 0; i< (*ite)->lines.size(); i++){
@@ -1949,8 +2059,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     }
     //    nbPointsTotal += count;
 
-    std::list<GEdge*> emb_edges = gf->embeddedEdges();
-    std::list<GEdge*>::iterator ite =  emb_edges.begin();
+    std::vector<GEdge*> const& emb_edges = gf->embeddedEdges();
+    std::vector<GEdge*>::const_iterator ite = emb_edges.begin();
     std::set<MVertex*> vs;
     std::map<MVertex *, BDS_Point *> facile;
     while(ite != emb_edges.end()){
@@ -2175,9 +2285,9 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   if(debug){
     char name[245];
     sprintf(name, "surface%d-initial-real.pos", gf->tag());
-    outputScalarField(m->triangles, name, 0);
+    outputScalarField(m->triangles, name, 0,gf);
     sprintf(name, "surface%d-initial-param.pos", gf->tag());
-    outputScalarField(m->triangles, name, 1);
+    outputScalarField(m->triangles, name, 1,gf);
   }
 
   bool _fatallyFailed;
@@ -2216,7 +2326,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   // look for a triangle that has a negative node and recursively tag all
   // exterior triangles
   {
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       (*itt)->g = 0;
       ++itt;
@@ -2237,22 +2347,22 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
   // now find an edge that has belongs to one of the exterior triangles
   {
-    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    std::vector<BDS_Edge*>::const_iterator ite = m->edges.begin();
     while(ite != m->edges.end()){
-      BDS_Edge *e = *ite;
-      if(e->g  && e->numfaces() == 2){
-        if(e->faces(0)->g == &CLASS_EXTERIOR){
-          recur_tag(e->faces(1), &CLASS_F);
+      BDS_Edge *edge = *ite;
+      if(edge->g  && edge->numfaces() == 2){
+        if(edge->faces(0)->g == &CLASS_EXTERIOR){
+          recur_tag(edge->faces(1), &CLASS_F);
           break;
         }
-        else if(e->faces(1)->g == &CLASS_EXTERIOR){
-          recur_tag(e->faces(0), &CLASS_F);
+        else if(edge->faces(1)->g == &CLASS_EXTERIOR){
+          recur_tag(edge->faces(0), &CLASS_F);
           break;
         }
       }
       ++ite;
     }
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       if((*itt)->g == &CLASS_EXTERIOR) (*itt)->g = 0;
       ++itt;
@@ -2261,7 +2371,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
   // delete useless stuff
   {
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       BDS_Face *t = *itt;
       if(!t->g){
@@ -2274,18 +2384,18 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   m->cleanup();
 
   {
-    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    std::vector<BDS_Edge*>::const_iterator ite = m->edges.begin();
     while(ite != m->edges.end()){
-      BDS_Edge *e = *ite;
-      if(e->numfaces() == 0)
-        m->del_edge(e);
+      BDS_Edge *edge = *ite;
+      if(edge->numfaces() == 0)
+        m->del_edge(edge);
       else{
-        if(!e->g)
-          e->g = &CLASS_F;
-        if(!e->p1->g || e->p1->g->classif_degree > e->g->classif_degree)
-          e->p1->g = e->g;
-        if(!e->p2->g || e->p2->g->classif_degree > e->g->classif_degree)
-          e->p2->g = e->g;
+        if(!edge->g)
+          edge->g = &CLASS_F;
+        if(!edge->p1->g || edge->p1->g->classif_degree > edge->g->classif_degree)
+          edge->p1->g = edge->g;
+        if(!edge->p2->g || edge->p2->g->classif_degree > edge->g->classif_degree)
+          edge->p2->g = edge->g;
       }
       ++ite;
     }
@@ -2299,43 +2409,51 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   if(debug){
     char name[245];
     sprintf(name, "surface%d-recovered-real.pos", gf->tag());
-    outputScalarField(m->triangles, name, 0);
+    outputScalarField(m->triangles, name, 0,gf);
     sprintf(name, "surface%d-recovered-param.pos", gf->tag());
-    outputScalarField(m->triangles, name, 1);
+    outputScalarField(m->triangles, name, 1,gf);
   }
 
 
   // start mesh generation for periodic face
-  optimizeMeshBDS(gf, *m, 2, &recoverMap); // fix periodic shit
-    if(debug){
-      char name[245];
-      sprintf(name, "surface%d-fixed-real.pos", gf->tag());
-      outputScalarField(m->triangles, name, 0);
-      sprintf(name, "surface%d-fixed-param.pos", gf->tag());
-      outputScalarField(m->triangles, name, 1);
-    }
 
   if(!algoDelaunay2D(gf)){
 
+    //    optimizeMeshBDS(gf, *m, 2, &recoverMap); // fix periodic shit
+    //    if(debug){
+    //      char name[245];
+    //      sprintf(name, "surface%d-fixed-real.pos", gf->tag());
+    //      outputScalarField(m->triangles, name, 0);
+    //      sprintf(name, "surface%d-fixed-param.pos", gf->tag());
+    //      outputScalarField(m->triangles, name, 1);
+    //    }
+
+    
   // need for a BGM for cross field
     //    if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
     //      printf("coucou here !!!\n");
     //      backgroundMesh::unset();
     //      buildBackGroundMesh(gf);
     //    }
-    refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true,NULL,&recoverMap);
-    //    if(debug){
-    //      char name[245];
-    //      sprintf(name, "surface%d-phase1-real.pos", gf->tag());
-    //      outputScalarField(m->triangles, name, 0);
-    //    }
+    modifyInitialMeshToRemoveDegeneracies(gf, *m,&recoverMap);
+
+    refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true,NULL,&recoverMap, &true_boundary);
+    if(debug){
+      char name[245];
+      sprintf(name, "surface%d-phase1-real.pos", gf->tag());
+      outputScalarField(m->triangles, name, 0, gf);
+      sprintf(name, "surface%d-phase1-param.pos", gf->tag());
+      outputScalarField(m->triangles, name, 1, gf);
+    }
     optimizeMeshBDS(gf, *m, 2);
-    //    if(debug){
-    //      char name[245];
-    //      sprintf(name, "surface%d-phase2-real.pos", gf->tag());
-    //      outputScalarField(m->triangles, name, 0);
-    //    }
-    refineMeshBDS(gf, *m, -CTX::instance()->mesh.refineSteps, false,NULL,&recoverMap);
+    if(debug){
+      char name[245];
+      sprintf(name, "surface%d-phase2-real.pos", gf->tag());
+      outputScalarField(m->triangles, name, 0, gf);
+      sprintf(name, "surface%d-phase2-param.pos", gf->tag());
+      outputScalarField(m->triangles, name, 1, gf);
+    }
+    refineMeshBDS(gf, *m, -CTX::instance()->mesh.refineSteps, false,NULL,&recoverMap, &true_boundary);
     //    if(debug){
     //      char name[245];
     //      sprintf(name, "surface%d-phase3-real.pos", gf->tag());
@@ -2360,7 +2478,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     if(debug){
       char name[245];
       sprintf(name, "surface%d-just-real.pos", gf->tag());
-      outputScalarField(m->triangles, name, 0);
+      outputScalarField(m->triangles, name, 0, gf);
     }
 
     // if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
@@ -2429,7 +2547,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
   std::map<MTriangle*, BDS_Face*> invert_map;
   {
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       BDS_Face *t = *itt;
       if(!t->deleted){
@@ -2461,7 +2579,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     sprintf(name, "surface%d-final-real.pos", gf->tag());
     outputScalarField(m->triangles, name, 0, gf);
     sprintf(name, "surface%d-final-param.pos", gf->tag());
-    outputScalarField(m->triangles, name, 1);
+    outputScalarField(m->triangles, name, 1, gf);
   }
 
   bool infty = false;
@@ -2484,7 +2602,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
   if(algoDelaunay2D(gf)){
     if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL)
-      bowyerWatsonFrontal(gf, &equivalence, &parametricCoordinates);
+      bowyerWatsonFrontal(gf, &equivalence, &parametricCoordinates, &true_boundary);
     else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD)
       bowyerWatsonFrontalLayers(gf,true, &equivalence, &parametricCoordinates);
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
@@ -2506,7 +2624,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
      sprintf(name, "real%d.pos", gf->tag());
      outputScalarField(m->triangles, name, 0, gf);
      sprintf(name, "param%d.pos", gf->tag());
-     outputScalarField(m->triangles, name,1);
+     outputScalarField(m->triangles, name,1, gf);
    }
 
 
@@ -2585,7 +2703,6 @@ void meshGFace::operator()(GFace *gf, bool print)
   case ALGO_2D_FRONTAL : algo = "Frontal"; break;
   case ALGO_2D_FRONTAL_QUAD : algo = "Frontal Quad"; break;
   case ALGO_2D_DELAUNAY : algo = "Delaunay"; break;
-  case ALGO_2D_MESHADAPT_OLD : algo = "MeshAdapt (old)"; break;
   case ALGO_2D_BAMG : algo = "Bamg"; break;
   case ALGO_2D_PACK_PRLGRMS : algo = "Square Packing"; break;
   case ALGO_2D_AUTO :
@@ -2633,8 +2750,9 @@ void meshGFace::operator()(GFace *gf, bool print)
 
 static bool getGFaceNormalFromVert(GFace *gf, MElement *el, SVector3 &nf)
 {
+  // TODO C++11 use std::find_if
   bool found = false;
-  for(int iElV = 0; iElV < el->getNumVertices(); iElV++) {
+  for(std::size_t iElV = 0; iElV < el->getNumVertices(); iElV++) {
     MVertex *v = el->getVertex(iElV);
     SPoint2 param;
     if(v->onWhat() == gf && v->getParameter(0, param[0]) &&
@@ -2651,7 +2769,7 @@ static bool getGFaceNormalFromBary(GFace *gf, MElement *el, SVector3 &nf)
 {
   SPoint2 param(0., 0.);
   bool ok = true;
-  for(int j = 0; j < el->getNumVertices(); j++) {
+  for(std::size_t j = 0; j < el->getNumVertices(); j++) {
     SPoint2 p;
     // FIXME: use inexact reparam because some vertices might not be exactly on
     // the surface after the 3D Delaunay
@@ -2660,7 +2778,7 @@ static bool getGFaceNormalFromBary(GFace *gf, MElement *el, SVector3 &nf)
     param += p;
   }
   if(ok) {
-    param *= 1. / el->getNumVertices();
+    param *= 1.0 / el->getNumVertices();
     nf = gf->normal(param);
   }
   return ok;

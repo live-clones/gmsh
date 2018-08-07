@@ -36,6 +36,13 @@ class arg:
 
 # input types
 
+def isize(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+          "const size_t", "const size_t", False)
+    a.python_arg = "c_size_t(" + name + ")"
+    a.julia_ctype = "Csize_t"
+    return a
+
 def ibool(name, value=None, python_value=None, julia_value=None):
     a = arg(name, value, python_value, julia_value,
             "const bool", "const int", False)
@@ -1094,12 +1101,12 @@ class API:
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write('\n"""\n    ')
-            f.write(jl_mpath + name + "(" + ", ".join(parg(a) for a in args) + ")\n\n")
+            f.write(jl_mpath + name + "(" + ", ".join(parg(a) for a in iargs) + ")\n\n")
             f.write("\n".join(textwrap.wrap(doc, 80)).replace("'", "`") + "\n")
             if rtype or oargs:
                 f.write("\nReturn " + ", ".join(
                     (["an " + rtype.rtexi_type] if rtype else[])
-                   + [("'" + a.name + "'") for a in oargs])
+                   + [("`" + a.name + "`") for a in oargs])
                + ".\n")
             f.write('"""\n')
             f.write("function " + name + "("
@@ -1111,7 +1118,7 @@ class API:
             f.write("api__result__ = " if rtype is oint else "")
             c_name = c_mpath + name[0].upper() + name[1:]
             f.write("ccall((:" + c_name + ", " +
-                    ("" if c_mpath == "gmsh" else "gmsh.") + "clib), " +
+                    ("" if c_mpath == "gmsh" else "gmsh.") + "lib), " +
                     ("Void" if rtype is None else rtype.rjulia_type) + ",\n" +
                     " " * 10 + "(" + ", ".join(
                         (tuple(a.julia_ctype for a in args) + ("Ptr{Cint}",))) +
@@ -1138,8 +1145,9 @@ class API:
             f.write("module " + m.name + "\n\n")
             if level == 1:
                 f.write('const GMSH_API_VERSION = "' + self.api_version + '"\n')
-                f.write('const clib = is_windows() ? "gmsh-' + self.api_version +
-                        '" : "libgmsh"\n')
+                f.write('const libdir = dirname(@__FILE__)\n')
+                f.write('const lib = joinpath(libdir, is_windows() ? "gmsh-' + self.api_version +
+                        '" : "libgmsh")\n')
             else:
                 f.write("import " + ("." * level) + "gmsh\n")
             if c_mpath:

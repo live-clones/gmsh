@@ -10,7 +10,6 @@
 #include <time.h>
 #include "GmshConfig.h"
 #include "Levy3D.h"
-#include "polynomialBasis.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "MElementOctree.h"
@@ -59,7 +58,7 @@ class Wrap{
   void set_offset(int);
   void set_initial_energy(double);
   void set_octree(MElementOctree*);
-  void set_bank(SPoint3,int);
+  void set_bank(const SPoint3 &, int);
   void set_movability(int,int);
   void resize(int);
 };
@@ -98,13 +97,16 @@ class LpCVT{
   SVector3 dF_dC1(VoronoiElement,int);
   SVector3 dF_dC2(VoronoiElement,int);
   SVector3 dF_dC3(VoronoiElement,int);
-  double f(SPoint3,SPoint3,Tensor,int);
-  double df_dx(SPoint3,SPoint3,Tensor,int);
-  double df_dy(SPoint3,SPoint3,Tensor,int);
-  double df_dz(SPoint3,SPoint3,Tensor,int);
-  SVector3 bisectors3(SVector3,SPoint3,SPoint3,SPoint3,SPoint3,SPoint3);
-  SVector3 bisectors2(SVector3,SPoint3,SPoint3,SPoint3,SPoint3,SVector3);
-  SVector3 bisectors1(SVector3,SPoint3,SPoint3,SPoint3,SVector3,SVector3);
+  double f(const SPoint3 &, const SPoint3 &, Tensor, int);
+  double df_dx(const SPoint3 &, const SPoint3 &, Tensor, int);
+  double df_dy(const SPoint3 &, const SPoint3 &, Tensor, int);
+  double df_dz(const SPoint3 &, const SPoint3 &, Tensor, int);
+  SVector3 bisectors3(const SVector3 &, const SPoint3 &, const SPoint3 &,
+                      const SPoint3 &, const SPoint3 &, const SPoint3 &);
+  SVector3 bisectors2(const SVector3 &, const SPoint3 &, const SPoint3 &,
+                      const SPoint3 &, const SPoint3 &, const SVector3 &);
+  SVector3 bisectors1(const SVector3 &, const SPoint3 &, const SPoint3 &,
+                      const SPoint3 &, const SVector3 &, const SVector3 &);
   void clear();
 };
 
@@ -250,9 +252,7 @@ double VoronoiVertex::get_h(){
   return h;
 }
 
-void VoronoiVertex::set_point(SPoint3 new_point){
-  point = new_point;
-}
+void VoronoiVertex::set_point(const SPoint3 &new_point) { point = new_point; }
 
 void VoronoiVertex::set_category(int new_category){
   category = new_category;
@@ -274,11 +274,13 @@ void VoronoiVertex::set_index4(int new_index4){
   index4 = new_index4;
 }
 
-void VoronoiVertex::set_normal1(SVector3 new_normal1){
+void VoronoiVertex::set_normal1(const SVector3 &new_normal1)
+{
   normal1 = new_normal1;
 }
 
-void VoronoiVertex::set_normal2(SVector3 new_normal2){
+void VoronoiVertex::set_normal2(const SVector3 &new_normal2)
+{
   normal2 = new_normal2;
 }
 
@@ -416,25 +418,15 @@ Tensor VoronoiElement::get_tensor(){
   return t;
 }
 
-void VoronoiElement::set_v1(VoronoiVertex new_v1){
-  v1 = new_v1;
-}
+void VoronoiElement::set_v1(const VoronoiVertex &new_v1) { v1 = new_v1; }
 
-void VoronoiElement::set_v2(VoronoiVertex new_v2){
-  v2 = new_v2;
-}
+void VoronoiElement::set_v2(const VoronoiVertex &new_v2) { v2 = new_v2; }
 
-void VoronoiElement::set_v3(VoronoiVertex new_v3){
-  v3 = new_v3;
-}
+void VoronoiElement::set_v3(const VoronoiVertex &new_v3) { v3 = new_v3; }
 
-void VoronoiElement::set_v4(VoronoiVertex new_v4){
-  v4 = new_v4;
-}
+void VoronoiElement::set_v4(const VoronoiVertex &new_v4) { v4 = new_v4; }
 
-void VoronoiElement::set_tensor(Tensor new_t){
-  t = new_t;
-}
+void VoronoiElement::set_tensor(const Tensor &new_t) { t = new_t; }
 
 double VoronoiElement::get_h(double u,double v,double w){
   double h1;
@@ -690,9 +682,7 @@ void Wrap::set_octree(MElementOctree* new_octree){
   octree = new_octree;
 }
 
-void Wrap::set_bank(SPoint3 point,int index){
-  bank[index] = point;
-}
+void Wrap::set_bank(const SPoint3 &point, int index) { bank[index] = point; }
 
 void Wrap::set_movability(int flag,int index){
   movability[index] = flag;
@@ -1209,7 +1199,8 @@ SVector3 LpCVT::dF_dC3(VoronoiElement element,int p){
   return SVector3(comp_x,comp_y,comp_z);
 }
 
-double LpCVT::f(SPoint3 p1,SPoint3 p2,Tensor t,int p){
+double LpCVT::f(const SPoint3 &p1, const SPoint3 &p2, Tensor t, int p)
+{
   double x1,y1,z1;
   double x2,y2,z2;
   double t11,t12,t13;
@@ -1240,7 +1231,8 @@ double LpCVT::f(SPoint3 p1,SPoint3 p2,Tensor t,int p){
   return val;
 }
 
-double LpCVT::df_dx(SPoint3 p1,SPoint3 p2,Tensor t,int p){
+double LpCVT::df_dx(const SPoint3 &p1, const SPoint3 &p2, Tensor t, int p)
+{
   double x1,y1,z1;
   double x2,y2,z2;
   double t11,t12,t13;
@@ -1271,7 +1263,8 @@ double LpCVT::df_dx(SPoint3 p1,SPoint3 p2,Tensor t,int p){
   return val;
 }
 
-double LpCVT::df_dy(SPoint3 p1,SPoint3 p2,Tensor t,int p){
+double LpCVT::df_dy(const SPoint3 &p1, const SPoint3 &p2, Tensor t, int p)
+{
   double x1,y1,z1;
   double x2,y2,z2;
   double t11,t12,t13;
@@ -1302,7 +1295,8 @@ double LpCVT::df_dy(SPoint3 p1,SPoint3 p2,Tensor t,int p){
   return val;
 }
 
-double LpCVT::df_dz(SPoint3 p1,SPoint3 p2,Tensor t,int p){
+double LpCVT::df_dz(const SPoint3 &p1, const SPoint3 &p2, Tensor t, int p)
+{
   double x1,y1,z1;
   double x2,y2,z2;
   double t11,t12,t13;
@@ -1333,7 +1327,10 @@ double LpCVT::df_dz(SPoint3 p1,SPoint3 p2,Tensor t,int p){
   return val;
 }
 
-SVector3 LpCVT::bisectors3(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SPoint3 x2,SPoint3 x3){
+SVector3 LpCVT::bisectors3(const SVector3 &dIdC, const SPoint3 &C,
+                           const SPoint3 &x0, const SPoint3 &x1,
+                           const SPoint3 &x2, const SPoint3 &x3)
+{
   double e;
   fullMatrix<double> A(3,3);
   fullMatrix<double> B(3,3);
@@ -1388,7 +1385,10 @@ SVector3 LpCVT::bisectors3(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SPoint3
   return SVector3(_val(0,0),_val(0,1),_val(0,2));
 }
 
-SVector3 LpCVT::bisectors2(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SPoint3 x2,SVector3 normal1){
+SVector3 LpCVT::bisectors2(const SVector3 &dIdC, const SPoint3 &C,
+                           const SPoint3 &x0, const SPoint3 &x1,
+                           const SPoint3 &x2, const SVector3 &normal1)
+{
   fullMatrix<double> A(3,3);
   fullMatrix<double> B(3,3);
   fullMatrix<double> M(3,3);
@@ -1427,7 +1427,10 @@ SVector3 LpCVT::bisectors2(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SPoint3
   return SVector3(_val(0,0),_val(0,1),_val(0,2));
 }
 
-SVector3 LpCVT::bisectors1(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SVector3 normal1,SVector3 normal2){
+SVector3 LpCVT::bisectors1(const SVector3 &dIdC, const SPoint3 &C,
+                           const SPoint3 &x0, const SPoint3 &x1,
+                           const SVector3 &normal1, const SVector3 &normal2)
+{
   fullMatrix<double> A(3,3);
   fullMatrix<double> B(3,3);
   fullMatrix<double> M(3,3);

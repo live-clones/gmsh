@@ -13,7 +13,7 @@ http://gmsh.info for additional examples.
 Building Gmsh from its source code requires a C++ compiler and CMake
 (http://cmake.org). Building the graphical user interface requires FLTK 1.3.2 or
 higher (http://fltk.org), configured with OpenGL support. Support for
-constructive solid geometry requires OpenCASCADE 6.9 or higher (version 7.1 is
+constructive solid geometry requires OpenCASCADE 6.9 or higher (version 7.2 is
 highly recommended; http://www.opencascade.com).
 
 

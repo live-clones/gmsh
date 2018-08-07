@@ -275,8 +275,8 @@ int MeshExtrudedSurface(GFace *gf,
 
   // build an rtree with all the vertices on the boundary of the face gf
   MVertexRTree pos(CTX::instance()->geom.tolerance * CTX::instance()->lc);
-  std::list<GEdge*> edges = gf->edges();
-  std::list<GEdge*>::iterator it = edges.begin();
+  std::vector<GEdge*> const& edges = gf->edges();
+  std::vector<GEdge*>::const_iterator it = edges.begin();
   while(it != edges.end()){
     pos.insert((*it)->mesh_vertices);
     pos.insert((*it)->getBeginVertex()->mesh_vertices);

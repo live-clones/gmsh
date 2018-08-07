@@ -57,7 +57,7 @@ Field::~Field()
     delete it->second;
 }
 
-FieldOption *Field::getOption(const std::string optionName)
+FieldOption *Field::getOption(const std::string &optionName)
 {
   std::map<std::string, FieldOption*>::iterator it = options.find(optionName);
   if (it == options.end()) {
@@ -82,7 +82,7 @@ Field *FieldManager::get(int id)
   return it->second;
 }
 
-Field *FieldManager::newField(int id, std::string type_name)
+Field *FieldManager::newField(int id, const std::string &type_name)
 {
   if(find(id) != end()) {
     Msg::Error("Field id %i is already defined", id);
@@ -2470,20 +2470,20 @@ void BoundaryLayerField::setupFor2d(int iF)
   // OR (better) CHANGE THE PHILOSOPHY
 
   GFace *gf = GModel::current()->getFaceByTag(iF);
-  std::list<GEdge*> ed = gf->edges();
-  std::list<GEdge*> embedded_edges = gf->embeddedEdges();
+  std::vector<GEdge*> ed = gf->edges();
+  std::vector<GEdge*> const& embedded_edges = gf->embeddedEdges();
   ed.insert(ed.begin(), embedded_edges.begin(), embedded_edges.end());
 
-  for (std::list<GEdge*>::iterator it = ed.begin(); it != ed.end() ; ++it){
+  for (std::vector<GEdge*>::iterator it = ed.begin(); it != ed.end() ; ++it){
     bool isIn = false;
     int iE = (*it)->tag();
     bool found = std::find(edges_id_saved.begin(), edges_id_saved.end(), iE) !=
       edges_id_saved.end();
     // this edge is a BL Edge
     if (found){
-      std::list<GFace*> fc = (*it)->faces();
+      std::vector<GFace*> fc = (*it)->faces();
       int numf = 0;
-      for(std::list<GFace*>::iterator it = fc.begin(); it != fc.end(); it++){
+      for(std::vector<GFace*>::iterator it = fc.begin(); it != fc.end(); it++){
         if((*it)->meshAttributes.extrude &&
            (*it)->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY){
           // ok
@@ -2640,7 +2640,7 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
       double cmin, cmax;
       SVector3 dirMax, dirMin;
       cmax = gf->curvatures(SPoint2(pp.first.u, pp.first.v),
-                            &dirMax, &dirMin, &cmax, &cmin);
+                            dirMax, dirMin, cmax, cmin);
       const double b = lc_t;
       const double h = lc_n;
       double oneOverD2_min = .5/(b * b) *

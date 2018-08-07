@@ -49,17 +49,15 @@ static void addExtrudeNormals(std::vector<T*> &elements, int invert,
     std::set<MVertex*> verts;
     for(unsigned int i = 0; i < elements.size(); i++){
       if(!ExtrudeParams::calcLayerScaleFactor[index]){
-	for(int j = 0; j < elements[i]->getNumVertices(); j++)
+	for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++)
           verts.insert(elements[i]->getVertex(j));
       }
       else{
 	std::vector<MVertex*> elem_verts;
-	double aveLength = 0.0;
 	elements[i]->getVertices(elem_verts);
-	if(skipScaleCalc)
-	  aveLength = 1.0;
-	else
-	  aveLength = GetAveEdgeLength(elem_verts);
+
+    double aveLength = skipScaleCalc ? 1.0 : GetAveEdgeLength(elem_verts);
+
 	for(unsigned int j = 0; j < elem_verts.size(); j++){
 	  verts.insert(elem_verts[j]);
 	  // if scaleLastLayer selection, but not doing gouraud, then still
@@ -91,7 +89,7 @@ static void addExtrudeNormals(std::vector<T*> &elements, int invert,
       if(invert) n *= -1.;
       double nn[3] = {n[0], n[1], n[2]};
       if(!ExtrudeParams::calcLayerScaleFactor[index]){
-	for(int k = 0; k < ele->getNumVertices(); k++){
+	for(std::size_t k = 0; k < ele->getNumVertices(); k++){
           MVertex *v = ele->getVertex(k);
           ExtrudeParams::normals[index]->add(v->x(), v->y(), v->z(), 3, nn);
         }
@@ -263,8 +261,8 @@ static unsigned int FixErasedExtrScaleFlags(GModel *m,
     if(!r_ep || !r_ep->mesh.ExtrudeMesh || r_ep->geo.Mode != EXTRUDED_ENTITY
         || !r_ep->mesh.ScaleLast )
       continue;
-    std::list<GFace *> reg_faces = (*itreg)->faces();
-    std::list<GFace *>::iterator itface;
+    std::vector<GFace *> reg_faces = (*itreg)->faces();
+    std::vector<GFace *>::iterator itface;
     for( itface = reg_faces.begin(); itface != reg_faces.end(); itface++ ){
       if( m->getFaceByTag( std::abs(r_ep->geo.Source) ) != (*itface) ){
 	ExtrudeParams *f_ep = (*itface)->meshAttributes.extrude;
@@ -285,8 +283,8 @@ static unsigned int FixErasedExtrScaleFlags(GModel *m,
     ExtrudeParams *f_ep = (*it)->meshAttributes.extrude;
     if(!f_ep || !f_ep->mesh.ExtrudeMesh || !f_ep->mesh.ScaleLast )
       continue;
-    std::list<GEdge *> f_edges = (*it)->edges();
-    std::list<GEdge *>::iterator itedge;
+    std::vector<GEdge *> f_edges = (*it)->edges();
+    std::vector<GEdge *>::iterator itedge;
     for(itedge = f_edges.begin(); itedge != f_edges.end(); itedge++){
       if(m->getEdgeByTag( std::abs(f_ep->geo.Source) ) != (*itedge)){
 	ExtrudeParams *e_ep = (*itedge)->meshAttributes.extrude;
@@ -373,9 +371,9 @@ int Mesh2DWithBoundaryLayers(GModel *m)
 	  faceSkipScaleCalc[from->tag()] = false;
 	  ExtrudeParams::calcLayerScaleFactor[ep->mesh.BoundaryLayerIndex] = true;
 	}
-        std::list<GEdge*> e = from->edges();
+        std::vector<GEdge*> const& e = from->edges();
         sourceEdges.insert(e.begin(), e.end());
-	for(std::list<GEdge*>::iterator ite = e.begin(); ite != e.end(); ite++){
+	for(std::vector<GEdge*>::const_iterator ite = e.begin(); ite != e.end(); ite++){
 	  if(edgeSkipScaleCalc.find( (*ite)->tag() ) == edgeSkipScaleCalc.end())
 	    edgeSkipScaleCalc[ (*ite)->tag() ] = true;  // a default
 	  if(ep->mesh.ScaleLast)
@@ -408,7 +406,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   Msg::Info("%d dependencies in mesh of source faces", sourceFacesDependencies.size());
   for(std::set<GFace*>::iterator it = sourceFacesDependencies.begin();
       it != sourceFacesDependencies.end(); it++){
-    std::list<GEdge*> e = (*it)->edges();
+    std::vector<GEdge*> const& e = (*it)->edges();
     sourceEdges.insert(e.begin(), e.end());
   }
 

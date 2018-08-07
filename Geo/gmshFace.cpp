@@ -6,8 +6,6 @@
 #include <stdlib.h>
 #include "GModel.h"
 #include "gmshFace.h"
-#include "meshGFace.h"
-#include "meshGEdge.h"
 #include "Geo.h"
 #include "GeoInterpolation.h"
 #include "Numeric.h"
@@ -17,6 +15,8 @@
 #include "VertexArray.h"
 
 #if defined(HAVE_MESH)
+#include "meshGFace.h"
+#include "meshGEdge.h"
 #include "Field.h"
 #endif
 
@@ -30,10 +30,10 @@ gmshFace::gmshFace(GModel *m, Surface *face)
 // a face is degenerate if
 bool gmshFace::degenerate(int dim) const
 {
-  std::list<GEdge*> eds = edges();
+  std::vector<GEdge*> const& eds = edges();
   int numNonDegenerate = 0;
   std::set<GEdge*> t;
-  for(std::list<GEdge*>::iterator it = eds.begin(); it != eds.end(); ++it){
+  for(std::vector<GEdge*>::const_iterator it = eds.begin(); it != eds.end(); ++it){
     GEdge *e = *it;
     GVertex *start = e->getBeginVertex();
     GVertex *next  = e->getEndVertex();
@@ -78,7 +78,9 @@ void gmshFace::resetNativePtr(Surface *face)
       Msg::Error("Unknown curve %d", j);
   }
 
-  std::list<GEdge*> l_wire;
+  std::vector<GEdge*> l_wire;
+  l_wire.reserve(eds.size());
+
   GVertex *first = 0;
   for(unsigned int i = 0; i < eds.size(); i++){
     GEdge *e = eds[i];
@@ -222,20 +224,20 @@ Pair<SVector3, SVector3> gmshFace::firstDer(const SPoint2 &param) const
 }
 
 void gmshFace::secondDer(const SPoint2 &param,
-                         SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
+                         SVector3 &dudu, SVector3 &dvdv, SVector3 &dudv) const
 {
   if(s->Typ == MSH_SURF_PLAN && !s->geometry){
-    *dudu = SVector3(0., 0., 0.);
-    *dvdv = SVector3(0., 0., 0.);
-    *dudv = SVector3(0., 0., 0.);
+    dudu = SVector3(0., 0., 0.);
+    dvdv = SVector3(0., 0., 0.);
+    dudv = SVector3(0., 0., 0.);
   }
   else{
     Vertex vuu = InterpolateSurface(s, param[0], param[1], 2, 1);
     Vertex vvv = InterpolateSurface(s, param[0], param[1], 2, 2);
     Vertex vuv = InterpolateSurface(s, param[0], param[1], 2, 3);
-    *dudu = SVector3(vuu.Pos.X,vuu.Pos.Y,vuu.Pos.Z);
-    *dvdv = SVector3(vvv.Pos.X,vvv.Pos.Y,vvv.Pos.Z);
-    *dudv = SVector3(vuv.Pos.X,vuv.Pos.Y,vuv.Pos.Z);
+    dudu = SVector3(vuu.Pos.X,vuu.Pos.Y,vuu.Pos.Z);
+    dvdv = SVector3(vvv.Pos.X,vvv.Pos.Y,vvv.Pos.Z);
+    dudv = SVector3(vuv.Pos.X,vuv.Pos.Y,vuv.Pos.Z);
   }
 }
 

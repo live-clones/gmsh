@@ -18,7 +18,7 @@ fourierFace::fourierFace(GModel *m, FM::TopoFace *face_, int tag,
   for (std::list<GEdge*>::iterator it = l_edges_.begin();
        it != l_edges_.end(); it++) {
     l_edges.push_back((*it));
-    l_dirs.push_back(1);   
+    l_dirs.push_back(1);
   }
   buildSTLTriangulation();
 }
@@ -57,7 +57,7 @@ SVector3 fourierFace::normal(const SPoint2 &param) const
 {
   double x,y,z;
   face->GetUnitNormal(param[0],param[1],x,y,z);
-  return SVector3(x, y, z); 
+  return SVector3(x, y, z);
 }
 
 GEntity::GeomType fourierFace::geomType() const
@@ -71,8 +71,8 @@ Pair<SVector3, SVector3> fourierFace::firstDer(const SPoint2 &param) const
   return Pair<SVector3, SVector3>();
 }
 
-void fourierFace::secondDer(const SPoint2 &param, 
-                            SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
+void fourierFace::secondDer(const SPoint2 &param,
+                            SVector3 &dudu, SVector3 &dvdv, SVector3 &dudv) const
 {
   Msg::Error("Computation of the second derivatives not implemented for fourier face");
 }

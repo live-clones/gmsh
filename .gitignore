@@ -10,3 +10,7 @@ contrib/Parasolid
 *.so
 *.so.*
 *#
+
+## CLion directories
+.idea
+cmake-build-*

@@ -61,7 +61,7 @@ class MPrism : public MElement {
   }
   ~MPrism(){}
   virtual int getDim() const { return 3; }
-  virtual int getNumVertices() const { return 6; }
+  virtual std::size_t getNumVertices() const { return 6; }
   virtual double getInnerRadius();
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual const MVertex *getVertex(int num)const{ return _v[num]; }
@@ -71,6 +71,10 @@ class MPrism : public MElement {
   {
     return MEdge(_v[edges_prism(num, 0)], _v[edges_prism(num, 1)]);
   }
+  virtual int numEdge2numVertex(int numEdge, int numVert) const
+  {
+    return edges_prism(numEdge, numVert);
+  }
   virtual int getNumEdgesRep(bool curved){ return 9; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
@@ -79,8 +83,8 @@ class MPrism : public MElement {
     _getEdgeVertices(num, v);
   }
   virtual int getNumFaces(){ return 5; }
-  virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
-  virtual MFace getFace(int num)
+  virtual bool getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
+  virtual MFace getFace(int num) const
   {
     if(num < 2)
       return MFace(_v[faces_prism(num, 0)],
@@ -237,7 +241,7 @@ class MPrism15 : public MPrism {
   }
   ~MPrism15(){}
   virtual int getPolynomialOrder() const { return 2; }
-  virtual int getNumVertices() const { return 15; }
+  virtual std::size_t getNumVertices() const { return 15; }
   virtual MVertex *getVertex(int num){ return num < 6 ? _v[num] : _vs[num - 6]; }
   virtual const MVertex *getVertex(int num) const { return num < 6 ? _v[num] : _vs[num - 6]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 6) _v[num] = v; else _vs[num - 6] = v; }
@@ -342,7 +346,7 @@ class MPrism18 : public MPrism {
   }
   ~MPrism18(){}
   virtual int getPolynomialOrder() const { return 2; }
-  virtual int getNumVertices() const { return 18; }
+  virtual std::size_t getNumVertices() const { return 18; }
   virtual MVertex *getVertex(int num){ return num < 6 ? _v[num] : _vs[num - 6]; }
   virtual const MVertex *getVertex(int num) const{ return num < 6 ? _v[num] : _vs[num - 6]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 6) _v[num] = v; else _vs[num - 6] = v; }
@@ -402,10 +406,10 @@ class MPrism18 : public MPrism {
  * MPrismN
  */
 
-typedef std::vector<int> indicesReversed;
+typedef std::vector<int> IndicesReversed;
 
 class MPrismN : public MPrism {
-  static std::map<int, indicesReversed> _order2indicesReversedPri;
+  static std::map<int, IndicesReversed> _order2indicesReversedPri;
 
  protected:
   std::vector<MVertex *> _vs;
@@ -425,7 +429,7 @@ class MPrismN : public MPrism {
   }
   ~MPrismN(){}
   virtual int getPolynomialOrder() const { return _order; }
-  virtual int getNumVertices() const { return 6+_vs.size(); }
+  virtual std::size_t getNumVertices() const { return 6+_vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 6 ? _v[num] : _vs[num-6]; }
   virtual const MVertex *getVertex(int num) const{ return num < 6 ? _v[num] : _vs[num - 6]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 6) _v[num] = v; else _vs[num - 6] = v; }

@@ -254,11 +254,10 @@ bool IsValidQuadToTriRegion(GRegion *region, bool *allNonGlobalSharedLaterals)
   bool foundTop = false, foundSource = false,
                   foundNoStruct = false, foundRoot = false;
 
-  std::list<GFace *> faces = region->faces();
-  std::list<GFace *>::iterator it = faces.begin();
+  std::vector<GFace *> faces = region->faces();
+  std::vector<GFace *>::iterator it = faces.begin();
 
   (*allNonGlobalSharedLaterals) = true;
-
 
   for( it = faces.begin(); it != faces.end(); it++ ){
     ExtrudeParams *face_tmp_ep = (*it)->meshAttributes.extrude;
@@ -2036,19 +2035,21 @@ static void addEdgesForQuadToTriFullHexa(GRegion *gr, MElement *elem, ExtrudePar
 // Generate face diagonals to subdivide hexahedra by BRUTE FORCE.  Not recommended for general use, but it
 // is required for some elements which have all vertices on an external region boundary.
 // Added 2010-01-29
-static void bruteForceEdgeQuadToTriHexa(GRegion *gr, MElement *elem,
-                                        int j, int k, std::vector<MVertex *> verts,
-                                        std::map<std::string, std::vector<int> > &face_types,
-                                        std::set<std::pair<MVertex*, MVertex*> > &edges_new,
-                                        std::set<std::pair<MVertex*, MVertex*> > &forbidden_new,
-                                        std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
-                                        std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges,
-                                        std::set<std::pair<MVertex*, MVertex*> > &lat_tri_diags,
-                                        std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
-                                        std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
-                                        std::vector<int> nfix1, std::vector<int> nfix2,
-                                        std::vector<int> nadj1, std::vector<int> nadj2,
-                                        std::vector<int> free_flag)
+static void bruteForceEdgeQuadToTriHexa(
+  GRegion *gr, MElement *elem, int j, int k, std::vector<MVertex *> verts,
+  std::map<std::string, std::vector<int> > &face_types,
+  std::set<std::pair<MVertex *, MVertex *> > &edges_new,
+  std::set<std::pair<MVertex *, MVertex *> > &forbidden_new,
+  std::set<std::pair<MVertex *, MVertex *> > &quadToTri_edges,
+  std::set<std::pair<MVertex *, MVertex *> > &forbidden_edges,
+  std::set<std::pair<MVertex *, MVertex *> > &lat_tri_diags,
+  std::map<MElement *, std::set<std::pair<unsigned int, unsigned int> > >
+    &problems_new,
+  std::map<MElement *, std::set<std::pair<unsigned int, unsigned int> > >
+    &problems,
+  const std::vector<int> &nfix1, const std::vector<int> &nfix2,
+  std::vector<int> nadj1, std::vector<int> nadj2,
+  const std::vector<int> &free_flag)
 {
 
   ExtrudeParams *ep = gr->meshAttributes.extrude;
@@ -2355,8 +2356,8 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
   bool foundSource = false, foundTop = false, foundRoot = false;
   GFace *reg_top = NULL;
   GFace *root_face = NULL;
-  std::list<GFace *> faces = gr->faces();
-  std::list<GFace *>::iterator it = faces.begin();
+  std::vector<GFace *> faces = gr->faces();
+  std::vector<GFace *>::iterator it = faces.begin();
 
   // top faces in toroidal quadtri need special treatment
   bool is_toroidal = IsInToroidalQuadToTri(reg_source);
@@ -2477,15 +2478,17 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
       // even if the original lateral for the region is replaced by another structured
       // surface.
       // (first find common edge between source and this lateral)
-      std::list<GEdge*> source_edges = reg_source->edges();
-      std::list<GEdge*> face_edges = (*it)->edges();
-      std::list<GEdge*>::iterator itse;
+      std::vector<GEdge*> const& source_edges = reg_source->edges();
+      std::vector<GEdge*> const& face_edges = (*it)->edges();
+      std::vector<GEdge*>::const_iterator itse;
       GEdge *common = NULL;
       int common_count = 0;
       for( itse = source_edges.begin(); itse != source_edges.end(); itse++ ){
         if( std::find( face_edges.begin(), face_edges.end(), (*itse) ) !=
             face_edges.end() ){
-          common = (*itse); common_count++; }
+          common = (*itse);
+          common_count++;
+        }
       }
       if( !common || common_count != 1 )
         Msg::Error("In QuadToTriGetRegionDiags(), lateral surface and "
@@ -3681,8 +3684,8 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
   bool is_toroidal = IsInToroidalQuadToTri(reg_source);
 
 
-  std::list<GFace *> reg_faces = gr->faces();
-  std::list<GFace *>::iterator itf = reg_faces.begin();
+  std::vector<GFace *> reg_faces = gr->faces();
+  std::vector<GFace *>::iterator itf = reg_faces.begin();
 
   // find top surface of extrusion and first root dependency of source
   GFace *reg_top = NULL;
@@ -3872,8 +3875,8 @@ static bool QuadToTriLateralRemesh(GRegion *gr, std::set<std::pair<MVertex*,MVer
 
   bool foundTop = false, foundRoot = false;
   GFace *reg_top = NULL;
-  std::list<GFace *> faces = gr->faces();
-  std::list<GFace *>::iterator it = faces.begin();
+  std::vector<GFace *> faces = gr->faces();
+  std::vector<GFace *>::iterator it = faces.begin();
 
   for( it = faces.begin(); it != faces.end(); it++ ){
     ExtrudeParams *face_tmp_ep = (*it)->meshAttributes.extrude;

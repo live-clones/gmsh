@@ -55,7 +55,7 @@ class MTriangle : public MElement {
   virtual double getInnerRadius();
   virtual double getOuterRadius();
   virtual double angleShapeMeasure();
-  virtual int getNumVertices() const { return 3; }
+  virtual std::size_t getNumVertices() const { return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual const MVertex *getVertex(int num) const { return _v[num]; }
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
@@ -72,19 +72,9 @@ class MTriangle : public MElement {
   {
     return MEdge(_v[edges_tri(num, 0)], _v[edges_tri(num, 1)]);
   }
-  virtual void getEdgeInfo (const MEdge & edge, int &ithEdge, int &sign) const
+  virtual int numEdge2numVertex(int numEdge, int numVert) const
   {
-    for (ithEdge = 0; ithEdge < 3; ithEdge++){
-      const MVertex *v0 = _v[edges_tri(ithEdge, 0)];
-      const MVertex *v1 = _v[edges_tri(ithEdge, 1)];
-      if (v0 == edge.getVertex(0) && v1 == edge.getVertex(1)){
-        sign = 1; return;
-      }
-      if (v1 == edge.getVertex(0) && v0 == edge.getVertex(1)){
-        sign = -1; return;
-      }
-    }
-    Msg::Error("Could not get edge information for triangle %d", getNum());
+    return edges_tri(numEdge, numVert);
   }
   virtual int getNumEdgesRep(bool curved){ return 3; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
@@ -94,10 +84,12 @@ class MTriangle : public MElement {
     _getEdgeVertices(num, v);
   }
   virtual int getNumFaces(){ return 1; }
-  virtual MFace getFace(int num)
+  virtual MFace getFace(int num) const
   {
     return MFace(_v[0], _v[1], _v[2]);
   }
+  virtual bool getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
+  virtual MFaceN getHighOrderFace(int num, int sign, int rot);
   virtual int getNumFacesRep(bool curved){ return 1; }
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
@@ -194,7 +186,7 @@ class MTriangle6 : public MTriangle {
   }
   ~MTriangle6(){}
   virtual int getPolynomialOrder() const { return 2; }
-  virtual int getNumVertices() const { return 6; }
+  virtual std::size_t getNumVertices() const { return 6; }
   virtual MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
   virtual const MVertex *getVertex(int num) const { return num < 3 ? _v[num] : _vs[num - 3]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 3) _v[num] = v; else _vs[num - 3] = v; }
@@ -213,6 +205,7 @@ class MTriangle6 : public MTriangle {
     MTriangle::_getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
+  virtual MFaceN getHighOrderFace(int num, int sign, int rot);
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
@@ -286,7 +279,7 @@ class MTriangleN : public MTriangle {
   }
   ~MTriangleN(){}
   virtual int getPolynomialOrder() const { return _order; }
-  virtual int getNumVertices() const { return 3 + _vs.size(); }
+  virtual std::size_t getNumVertices() const { return 3 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
   virtual const MVertex *getVertex(int num) const { return num < 3 ? _v[num] : _vs[num - 3]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 3) _v[num] = v; else _vs[num - 3] = v; }
@@ -310,6 +303,7 @@ class MTriangleN : public MTriangle {
     const int ie = (num + 1) * (_order - 1);
     for(int i = num * (_order-1); i != ie; ++i) v[j++] = _vs[i];
   }
+  virtual MFaceN getHighOrderFace(int num, int sign, int rot);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {

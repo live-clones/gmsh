@@ -65,7 +65,7 @@ class MPyramid : public MElement {
   }
   ~MPyramid(){}
   virtual int getDim() const { return 3; }
-  virtual int getNumVertices() const { return 5; }
+  virtual std::size_t getNumVertices() const { return 5; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual const MVertex *getVertex(int num) const{ return _v[num]; }
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
@@ -73,6 +73,10 @@ class MPyramid : public MElement {
   virtual MEdge getEdge(int num) const
   {
     return MEdge(_v[edges_pyramid(num, 0)], _v[edges_pyramid(num, 1)]);
+  }
+  virtual int numEdge2numVertex(int numEdge, int numVert) const
+  {
+    return edges_pyramid(numEdge, numVert);
   }
   virtual int getNumEdgesRep(bool curved){ return 8; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
@@ -88,7 +92,7 @@ class MPyramid : public MElement {
     _getEdgeVertices(num, v);
   }
   virtual int getNumFaces(){ return 5; }
-  virtual MFace getFace(int num)
+  virtual MFace getFace(int num) const
   {
     if(num < 4)
       return MFace(_v[faces_pyramid(num, 0)],
@@ -105,6 +109,7 @@ class MPyramid : public MElement {
     v.resize((num < 4) ? 3 : 4);
     _getFaceVertices(num, v);
   }
+  virtual bool getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
   virtual int getType() const { return TYPE_PYR; }
   virtual int getTypeForMSH() const { return MSH_PYR_5; }
   virtual int getTypeForVTK() const { return 14; }
@@ -222,14 +227,17 @@ class MPyramid : public MElement {
 
 //------------------------------------------------------------------------------
 
-typedef std::vector<int> indicesReversed;
+typedef std::vector<int> IndicesReversed;
 
 class MPyramidN : public MPyramid {
-  static std::map<int, indicesReversed> _order2indicesReversedPyr;
+  static std::map<int, IndicesReversed> _order2indicesReversedPyr;
 
  protected:
   std::vector<MVertex*> _vs;
   const char _order;
+
+  void _addHOEdgePoints(int num,std::vector<MVertex*>& v,bool fw=true) const;
+
  public:
   MPyramidN(MVertex* v0, MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4,
       const std::vector<MVertex*> &v, char order, int num=0, int part=0)
@@ -247,7 +255,7 @@ class MPyramidN : public MPyramid {
   }
   ~MPyramidN();
   virtual int getPolynomialOrder() const { return _order; }
-  virtual int getNumVertices() const { return 5 + _vs.size(); }
+  virtual std::size_t getNumVertices() const { return 5 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }
   virtual const MVertex *getVertex(int num) const { return num < 5 ? _v[num] : _vs[num - 5]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 5) _v[num] = v; else _vs[num - 5] = v; }
@@ -267,32 +275,8 @@ class MPyramidN : public MPyramid {
     const int ie = (num + 1) * (_order - 1);
     for(int i = num * (_order -1); i != ie; ++i) v[j++] = _vs[i];
   }
-  virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
-  {
-    if (getIsAssimilatedSerendipity()) {
-      num == 4 ? v.resize(4 * _order)
-               : v.resize(3 * _order);
-    }
-    else {
-      num == 4 ? v.resize((_order+1) * (_order+1))
-               : v.resize((_order+1) * (_order+2) / 2);
-    }
+  virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const;
 
-    // FIXME continue fix serendipity
-
-    int j = 3;
-    if (num == 4) {
-      j = 4;
-    }
-
-    MPyramid::_getFaceVertices(num, v);
-    //int count = num == 4 ? 3 : 2;
-
-    int nbVQ =  (_order-1)*(_order-1);
-    int nbVT = (_order - 1) * (_order - 2) / 2;
-    const int ie = (num == 4) ? 4*nbVT + nbVQ : (num+1)*nbVT;
-    for (int i = num*nbVT; i != ie; ++i) v[j++] = _vs[i];
-  }
   virtual int getNumVolumeVertices() const
   {
     if (getIsAssimilatedSerendipity())

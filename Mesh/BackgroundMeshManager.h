@@ -9,8 +9,6 @@
 #include <map>
 #include "BGMBase.h"
 
-using namespace std;
-
 class GEntity;
 class GFace;
 class GRegion;
@@ -24,7 +22,7 @@ public:
 private:
   static bool use_cross_field;
   static BGMBase *latest2Dbgm;
-  static map<GEntity*,BGMBase*> data;
+  static std::map<GEntity*,BGMBase*> data;
 };
 
 #endif

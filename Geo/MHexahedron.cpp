@@ -16,7 +16,7 @@
 #include "qualityMeasures.h"
 #endif
 
-std::map<int, indicesReversed> MHexahedronN::_order2indicesReversedHex;
+std::map<int, IndicesReversed> MHexahedronN::_order2indicesReversedHex;
 
 void MHexahedron::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                              SVector3 *n)
@@ -85,49 +85,13 @@ double MHexahedron::getInnerRadius()
   return innerRadius;
 }
 
-void MHexahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) const
+bool MHexahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) const
 {
   for (ithFace = 0; ithFace < 6; ithFace++){
-    MVertex *v0 = _v[faces_hexa(ithFace, 0)];
-    MVertex *v1 = _v[faces_hexa(ithFace, 1)];
-    MVertex *v2 = _v[faces_hexa(ithFace, 2)];
-    MVertex *v3 = _v[faces_hexa(ithFace, 3)];
-
-    if (v0 == face.getVertex(0) && v1 == face.getVertex(1) &&
-        v2 == face.getVertex(2) && v3 == face.getVertex(3)){
-      sign = 1; rot = 0; return;
-    }
-    if (v0 == face.getVertex(1) && v1 == face.getVertex(2) &&
-        v2 == face.getVertex(3) && v3 == face.getVertex(0)){
-      sign = 1; rot = 1; return;
-    }
-    if (v0 == face.getVertex(2) && v1 == face.getVertex(3) &&
-        v2 == face.getVertex(0) && v3 == face.getVertex(1)){
-      sign = 1; rot = 2; return;
-    }
-    if (v0 == face.getVertex(3) && v1 == face.getVertex(0) &&
-        v2 == face.getVertex(1) && v3 == face.getVertex(2)){
-      sign = 1; rot = 3; return;
-    }
-    // reverse
-    if (v0 == face.getVertex(0) && v1 == face.getVertex(3) &&
-        v2 == face.getVertex(2) && v3 == face.getVertex(1)){
-      sign = -1; rot = 0; return;
-    }
-    if (v0 == face.getVertex(3) && v1 == face.getVertex(2) &&
-        v2 == face.getVertex(1) && v3 == face.getVertex(0)){
-      sign = -1; rot = 1; return;
-    }
-    if (v0 == face.getVertex(2) && v1 == face.getVertex(1) &&
-        v2 == face.getVertex(0) && v3 == face.getVertex(3)){
-      sign = -1; rot = 2; return;
-    }
-    if (v0 == face.getVertex(1) && v1 == face.getVertex(0) &&
-        v2 == face.getVertex(3) && v3 == face.getVertex(2)){
-      sign = -1; rot = 3; return;
-    }
+    if (_getFaceInfo(getFace(ithFace), face, sign, rot)) return true;
   }
   Msg::Error("Could not get face information for hexahedron %d", getNum());
+  return false;
 }
 
 int MHexahedron::numCommonNodesInDualGraph(const MElement *const other) const
@@ -465,7 +429,7 @@ int MHexahedronN::getNumFacesRep(bool curved)
          MHexahedron::getNumFacesRep(curved);
 }
 
-void _getIndicesReversedHex(int order, indicesReversed &indices)
+void _getIndicesReversedHex(int order, IndicesReversed &indices)
 {
   fullMatrix<double> ref = gmshGenerateMonomialsHexahedron(order);
 
@@ -485,16 +449,16 @@ void _getIndicesReversedHex(int order, indicesReversed &indices)
 
 void MHexahedronN::reverse()
 {
-  std::map<int, indicesReversed>::iterator it;
+  std::map<int, IndicesReversed>::iterator it;
   it = _order2indicesReversedHex.find(_order);
   if (it == _order2indicesReversedHex.end()) {
-    indicesReversed indices;
+    IndicesReversed indices;
     _getIndicesReversedHex(_order, indices);
     _order2indicesReversedHex[_order] = indices;
     it = _order2indicesReversedHex.find(_order);
   }
 
-  indicesReversed &indices = it->second;
+  IndicesReversed &indices = it->second;
 
   // copy vertices
   std::vector<MVertex*> oldv(8 + _vs.size());
@@ -509,3 +473,24 @@ void MHexahedronN::reverse()
     _vs[i] = oldv[indices[8+i]];
   }
 }
+
+//void _getIndicesHighOrderFace(int order, int numFace, int sign, int rot,
+//                              IndicesHighOrderFace &indices)
+//{
+//  fullMatrix<double> ref = gmshGenerateMonomialsHexahedron(order);
+//
+// faceClosure ???
+//
+//  indices.resize(ref.size1());
+//  for (int i = 0; i < ref.size1(); ++i) {
+//    const double u = ref(i, 0);
+//    const double v = ref(i, 1);
+//    const double w = ref(i, 2);
+//    for (int j = 0; j < ref.size1(); ++j) {
+//      if (u == ref(j, 1) && v == ref(j, 0) && w == ref(j, 2)) {
+//        indices[i] = j;
+//        break;
+//      }
+//    }
+//  }
+//}

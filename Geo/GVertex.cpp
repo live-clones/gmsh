@@ -48,9 +48,9 @@ void GVertex::addEdge(GEdge *e)
     l_edges.push_back(e);
 }
 
-void GVertex::delEdge(GEdge *e)
+void GVertex::delEdge(GEdge *const e)
 {
-  std::list<GEdge*>::iterator it = std::find(l_edges.begin(), l_edges.end(), e);
+  std::vector<GEdge*>::iterator it = std::find(l_edges.begin(), l_edges.end(), e);
   if(it != l_edges.end()) l_edges.erase(it);
 }
 
@@ -86,9 +86,11 @@ void GVertex::writeGEO(FILE *fp, const std::string &meshSizeParameter)
             tag(), x(), y(), z());
 }
 
-unsigned int GVertex::getNumMeshElements() const
+unsigned int GVertex::getNumMeshElementsByType(const int familyType) const
 {
-  return points.size();
+  if(familyType == TYPE_PNT) return points.size();
+
+  return 0;
 }
 
 void GVertex::getNumMeshElements(unsigned *const c) const
@@ -103,9 +105,17 @@ MElement *GVertex::getMeshElement(unsigned int index) const
   return 0;
 }
 
+MElement *GVertex::getMeshElementByType(const int familyType, const unsigned int index) const
+{
+  if(familyType == TYPE_PNT) return points[index];
+
+  return 0;
+}
+
 bool GVertex::isOnSeam(const GFace *gf) const
 {
-  std::list<GEdge*>::const_iterator eIter = l_edges.begin();
+  // TODO C++11 std::find_if
+  std::vector<GEdge*>::const_iterator eIter = l_edges.begin();
   for (; eIter != l_edges.end(); eIter++) {
     if ( (*eIter)->isSeam(gf) ) return true;
   }
@@ -113,31 +123,33 @@ bool GVertex::isOnSeam(const GFace *gf) const
 }
 
 // faces that bound this entity or that this entity bounds.
-std::list<GFace*> GVertex::faces() const
+std::vector<GFace *> GVertex::faces() const
 {
-  std::list<GEdge*>::const_iterator it = l_edges.begin();
-  std::set<GFace*> _f;
-  for ( ; it != l_edges.end() ; ++it){
-    std::list<GFace*> temp = (*it)->faces();
-    _f.insert (temp.begin(), temp.end());
+  std::vector<GFace *> faces;
+
+  for(std::vector<GEdge *>::const_iterator it = l_edges.begin();
+      it != l_edges.end(); ++it) {
+    std::vector<GFace *> const& temp = (*it)->faces();
+    faces.insert(faces.end(), temp.begin(), temp.end());
   }
-  std::list<GFace*> ret;
-  ret.insert (ret.begin(), _f.begin(), _f.end());
-  return ret;
+  std::sort(faces.begin(), faces.end());
+  faces.erase(std::unique(faces.begin(), faces.end()), faces.end());
+
+  return faces;
 }
 
 // regions that bound this entity or that this entity bounds.
 std::list<GRegion*> GVertex::regions() const
 {
-  std::list<GFace*> _faces = faces();
-  std::list<GFace*>::const_iterator it = _faces.begin();
+  std::vector<GFace*> const _faces = faces();
+  std::vector<GFace*>::const_iterator it = _faces.begin();
   std::set<GRegion*> _r;
   for ( ; it != _faces.end() ; ++it){
     std::list<GRegion*> temp = (*it)->regions();
-    _r.insert (temp.begin(), temp.end());
+    _r.insert(temp.begin(), temp.end());
   }
   std::list<GRegion*> ret;
-  ret.insert (ret.begin(), _r.begin(), _r.end());
+  ret.insert(ret.begin(), _r.begin(), _r.end());
   return ret;
 }
 
@@ -175,4 +187,30 @@ void GVertex::removeElement(int type, MElement *e)
   default:
     Msg::Error("Trying to remove unsupported element in vertex");
   }
+}
+
+bool GVertex::reorder(const int elementType, const std::vector<int> &ordering)
+{
+  if(points.front()->getTypeForMSH() == elementType){
+    if(ordering.size() != points.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it){
+      if(*it < 0 || *it >= static_cast<int>(points.size())) return false;
+    }
+
+    std::vector<MPoint*> newPointsOrder(points.size());
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newPointsOrder[i] = points[ordering[i]];
+    }
+#if __cplusplus >= 201103L
+    points = std::move(newPointsOrder);
+#else
+    points = newPointsOrder;
+#endif
+
+    return true;
+  }
+
+  return false;
 }

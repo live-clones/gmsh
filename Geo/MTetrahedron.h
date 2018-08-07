@@ -58,7 +58,7 @@ class MTetrahedron : public MElement {
   }
   ~MTetrahedron(){}
   virtual int getDim() const { return 3; }
-  virtual int getNumVertices() const { return 4; }
+  virtual std::size_t getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual const MVertex *getVertex(int num) const { return _v[num]; }
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
@@ -66,6 +66,10 @@ class MTetrahedron : public MElement {
   virtual MEdge getEdge(int num) const
   {
     return MEdge(_v[edges_tetra(num, 0)], _v[edges_tetra(num, 1)]);
+  }
+  virtual int numEdge2numVertex(int numEdge, int numVert) const
+  {
+    return edges_tetra(numEdge, numVert);
   }
   virtual int getNumEdgesRep(bool curved){ return 6; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
@@ -75,13 +79,13 @@ class MTetrahedron : public MElement {
     _getEdgeVertices(num, v);
   }
   virtual int getNumFaces(){ return 4; }
-  virtual MFace getFace(int num)
+  virtual MFace getFace(int num) const
   {
     return MFace(_v[faces_tetra(num, 0)],
                  _v[faces_tetra(num, 1)],
                  _v[faces_tetra(num, 2)]);
   }
-  virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
+  virtual bool getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
   virtual int getNumFacesRep(bool curved){ return 4; }
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
@@ -222,7 +226,7 @@ class MTetrahedron10 : public MTetrahedron {
   }
   ~MTetrahedron10(){}
   virtual int getPolynomialOrder() const { return 2; }
-  virtual int getNumVertices() const { return 10; }
+  virtual std::size_t getNumVertices() const { return 10; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual const MVertex *getVertex(int num) const { return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 4) _v[num] = v; else _vs[num - 4] = v; }
@@ -310,10 +314,10 @@ class MTetrahedron10 : public MTetrahedron {
  *
  */
 
-typedef std::vector<int> indicesReversed;
+typedef std::vector<int> IndicesReversed;
 
 class MTetrahedronN : public MTetrahedron {
-  static std::map<int, indicesReversed> _order2indicesReversedTet;
+  static std::map<int, IndicesReversed> _order2indicesReversedTet;
 
  protected:
   std::vector<MVertex *> _vs;
@@ -333,7 +337,7 @@ class MTetrahedronN : public MTetrahedron {
   }
   ~MTetrahedronN(){}
   virtual int getPolynomialOrder() const { return _order; }
-  virtual int getNumVertices() const { return 4 + _vs.size(); }
+  virtual std::size_t getNumVertices() const { return 4 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual const MVertex *getVertex(int num) const{ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 4) _v[num] = v; else _vs[num - 4] = v; }

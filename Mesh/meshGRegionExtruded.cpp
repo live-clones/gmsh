@@ -145,8 +145,8 @@ static void extrudeMesh(GFace *from, GRegion *to, MVertexRTree &pos)
 
   // add all vertices on surface seams
   std::set<MVertex*> seam;
-  std::list<GEdge*> l_edges = from->edges();
-  for (std::list<GEdge*>::const_iterator it = l_edges.begin();
+  std::vector<GEdge*> const& l_edges = from->edges();
+  for (std::vector<GEdge*>::const_iterator it = l_edges.begin();
        it != l_edges.end(); ++it){
     if ((*it)->isSeam(from)){
       seam.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
@@ -214,14 +214,14 @@ static void extrudeMesh(GFace *from, GRegion *to, MVertexRTree &pos)
 static void insertAllVertices(GRegion *gr, MVertexRTree &pos)
 {
   pos.insert(gr->mesh_vertices);
-  std::list<GFace*> faces = gr->faces();
-  std::list<GFace*>::iterator itf = faces.begin();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator itf = faces.begin();
   while(itf != faces.end()){
     pos.insert((*itf)->mesh_vertices);
     std::vector<MVertex*> embedded = (*itf)->getEmbeddedMeshVertices();
     pos.insert(embedded);
-    std::list<GEdge*> edges = (*itf)->edges();
-    std::list<GEdge*>::iterator ite = edges.begin();
+    std::vector<GEdge*> const& edges = (*itf)->edges();
+    std::vector<GEdge*>::const_iterator ite = edges.begin();
     while(ite != edges.end()){
       pos.insert((*ite)->mesh_vertices);
       pos.insert((*ite)->getBeginVertex()->mesh_vertices);
@@ -518,8 +518,8 @@ int SubdivideExtrudedMesh(GModel *m)
     phase3(gr, pos, edges);
 
     // re-Extrude bounding surfaces using edges as constraint
-    std::list<GFace*> faces = gr->faces();
-    for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
+    std::vector<GFace*> faces = gr->faces();
+    for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
       ExtrudeParams *ep = (*it)->meshAttributes.extrude;
       if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY &&
         !ep->mesh.Recombine){

@@ -134,7 +134,7 @@ void BuildSwapPattern3(SwapPattern *sc)
    |            |
    |            |
    |            |
-   +------------+ 
+   +------------+
    3            2
 
 */
@@ -223,7 +223,7 @@ bool edgeSwap(std::vector<MTet4 *> &newTets,
   //static int edges[6][2] =    {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
   int permut[6] = {0,3,1,2,5,4};
   iLocalEdge = permut[iLocalEdge];
- 
+
   std::vector<MTet4*> cavity;
   std::vector<MTet4*> outside;
   std::vector<MVertex*> ring;
@@ -543,15 +543,11 @@ bool collapseVertex(std::vector<MTet4 *> &newTets,
   double volume_update = 0;
 
   double worstAfter = 1.0;
-  double newQuals[2000];
-  if (toUpdate.size() >= 2000){
-    Msg::Warning("Impossible to collapse vertex");
-    return false;
-  }
+  std::vector<double> newQuals(toUpdate.size());
   for (unsigned int i = 0; i < toUpdate.size(); i++){
     double vv;
     newQuals[i] = qmTetrahedron::qm(toUpdate[i]->tet(),cr,&vv);
-    worstAfter = std::min(worstAfter,newQuals[i]);
+    worstAfter = std::min(worstAfter, newQuals[i]);
     volume_update += vv;
   }
 
@@ -636,11 +632,7 @@ bool smoothVertex(MTet4 *t, int iVertex, const qmTetrahedron::Measures &cr)
   t->tet()->getVertex(iVertex)->y() = ycg;
   t->tet()->getVertex(iVertex)->z() = zcg;
   double worstAfter = 1.0;
-  double newQuals[2000];
-  if (cavity.size() >= 2000){
-    Msg::Warning("Impossible to smooth vertex");
-    return false;
-  }
+  std::vector<double> newQuals(cavity.size());
   for (unsigned int i = 0; i < cavity.size(); i++){
     double volume;
     newQuals[i] = qmTetrahedron::qm(cavity[i]->tet(),cr,&volume);
@@ -751,11 +743,7 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qmTetrahedron::Measures &
   t->tet()->getVertex(iVertex)->y() = xyzopti[1];
   t->tet()->getVertex(iVertex)->z() = xyzopti[2];
 
-  double newQuals[2000];
-  if(vd.ts.size() >= 2000){
-    Msg::Warning("Impossible to smooth vertex");
-    return false;
-  }
+  std::vector<double> newQuals(vd.ts.size());
   for(unsigned int i = 0; i < vd.ts.size(); i++){
     double volume;
     newQuals[i] = qmTetrahedron::qm(vd.ts[i]->tet(), cr, &volume);
@@ -776,4 +764,3 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qmTetrahedron::Measures &
     return true;
   }
 }
-

@@ -23,15 +23,12 @@ CorrespVertices::~CorrespVertices(){}
 void CorrespVertices::setStartPoint(MVertex* v){
   this->StartPoint = v;
 }
-void CorrespVertices::setEndPoint(SPoint3 p){
-  this->EndPoint = p;
-}
-void CorrespVertices::setStartNormal(SVector3 v){
+void CorrespVertices::setEndPoint(const SPoint3 &p) { this->EndPoint = p; }
+void CorrespVertices::setStartNormal(const SVector3 &v)
+{
   this->StartNormal = v;
 }
-void CorrespVertices::setEndNormal(SVector3 v){
-  this->EndNormal = v;
-}
+void CorrespVertices::setEndNormal(const SVector3 &v) { this->EndNormal = v; }
 void CorrespVertices::setEndTriangle(faceXtet f){
   this->EndTriangle = f;
 }
@@ -169,7 +166,7 @@ void ThinLayer::fillvecOfThinSheets(){
           MVertex* VToDo = (*CurrentSheet.begin());
           std::vector<MTetrahedron*> surroundingTet = VertexToTets[VToDo];
           for (unsigned int j = 0;j < surroundingTet.size();j++){
-            for (int k = 0;k < surroundingTet[j]->getNumVertices();k++){
+            for (std::size_t k = 0;k < surroundingTet[j]->getNumVertices();k++){
               MVertex* ToInsertTmp = surroundingTet[j]->getVertex(k);
               std::map<MVertex*,std::vector<CorrespVertices*> >::iterator it2 =
                 VertexToCorresp.find(ToInsertTmp);
@@ -413,7 +410,7 @@ SVector3 ThinLayer::computeInteriorNormal(MVertex* v)
   return InteriorNormal;
 }
 
-MTet4* ThinLayer::getTetFromPoint(MVertex* v, SVector3 InteriorNormal)
+MTet4 *ThinLayer::getTetFromPoint(MVertex *v, const SVector3 &InteriorNormal)
 {
   MTet4* TetToGet = 0;
   std::vector<MTetrahedron*> currentVecTet = VertexToTets[v];
@@ -451,7 +448,8 @@ MTet4* ThinLayer::getTetFromPoint(MVertex* v, SVector3 InteriorNormal)
   return TetToGet;
 }
 
-bool ThinLayer::IsPositivOrientation(SVector3 a, SVector3 b, SVector3 c)
+bool ThinLayer::IsPositivOrientation(const SVector3 &a, const SVector3 &b,
+                                     const SVector3 &c)
 {
   bool result = false;
   SPoint3 ProdVec(a.y() * b.z() - a.z() * b.y(),a.z() * b.x() -
@@ -463,8 +461,8 @@ bool ThinLayer::IsPositivOrientation(SVector3 a, SVector3 b, SVector3 c)
   return result;
 }
 
-void ThinLayer::FindNewPoint(SPoint3* CurrentPoint, int* CurrentTri,
-                             MTet4* CurrentTet, SVector3 InteriorNormal)
+void ThinLayer::FindNewPoint(SPoint3 *CurrentPoint, int *CurrentTri,
+                             MTet4 *CurrentTet, const SVector3 &InteriorNormal)
 {
   double distanceP2P = 0.0;
   double alphaMax = 0.0;

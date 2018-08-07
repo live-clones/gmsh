@@ -26,7 +26,10 @@
 #include "Numeric.h"
 #include "CondNumBasis.h"
 #include "Context.h"
+
+#if defined(HAVE_MESH)
 #include "qualityMeasuresJacobian.h"
+#endif
 
 #define SQU(a)      ((a)*(a))
 
@@ -35,7 +38,7 @@ double MElement::_isInsideTolerance = 1.e-6;
 MElement::MElement(int num, int part) : _visible(1)
 {
 #if defined(_OPENMP)
-  #pragma omp critical
+#pragma omp critical
 #endif
   {
     // we should make GModel a mandatory argument to the constructor
@@ -52,6 +55,19 @@ MElement::MElement(int num, int part) : _visible(1)
   }
 }
 
+void MElement::forceNum(int num)
+{
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+  {
+    GModel *m = GModel::current();
+    _num = num;
+    m->setMaxElementNumber(std::max(m->getMaxElementNumber(), _num));
+  }
+}
+
+
 void MElement::setTolerance(const double tol)
 {
   _isInsideTolerance = tol;
@@ -60,6 +76,47 @@ void MElement::setTolerance(const double tol)
 double MElement::getTolerance()
 {
   return _isInsideTolerance;
+}
+
+bool MElement::_getFaceInfo(const MFace &face, const MFace &other,
+                            int &sign, int &rot)
+{
+  // Looks how is 'other' compared to 'face'. We suppose that 'face'
+  // is the reference.
+  // Return false if they are different.
+  // In case sign = 1, then rot = 1 if 'other' is equal to 'face' rotated
+  // one time according to the right hand side.
+  // In case sign = -1, then rot = 0 if 'other' is equal to reversed 'face'.
+  // In case sign = -1, then rot = 1 if 'other' is equal to reversed 'face'
+  // rotated one time according to the right hand side.
+  int N = face.getNumVertices();
+
+  sign = 0;
+  rot = -1;
+
+  if (face.getNumVertices() != other.getNumVertices()) return false;
+
+  sign = 1;
+  for (rot = 0; rot < N; ++rot) {
+    int i;
+    for (i = 0; i < N; ++i) {
+      if (other.getVertex(i) != face.getVertex((i+rot)%N)) break;
+    }
+    if (i == N) return true;
+  }
+
+  sign = -1;
+  for (rot = 0; rot < N; ++rot) {
+    int i;
+    for (i = 0; i < N; ++i) {
+      if (other.getVertex(i) != face.getVertex((N+rot-i)%N)) break;
+    }
+    if (i == N) return true;
+  }
+
+  sign = 0;
+  rot = -1;
+  return false;
 }
 
 void MElement::_getEdgeRep(MVertex *v0, MVertex *v1,
@@ -109,6 +166,73 @@ char MElement::getVisibility() const
 {
   if(CTX::instance()->hideUnselected && _visible < 2) return false;
   return _visible;
+}
+
+MEdgeN MElement::getHighOrderEdge(int num, int sign)
+{
+  const int order = getPolynomialOrder();
+  std::vector<MVertex*> vertices((unsigned int) order + 1);
+  vertices[0] = getVertex(numEdge2numVertex(num, sign > 0 ? 0 : 1));
+  vertices[1] = getVertex(numEdge2numVertex(num, sign > 0 ? 1 : 0));
+  const int start = getNumPrimaryVertices() + num * (order - 1);
+  const int end = getNumPrimaryVertices() + (num + 1) * (order - 1);
+  int k = 1;
+  if (sign > 0) {
+    for (int i = start; i < end; ++i) {
+      vertices[++k] = getVertex(i);
+    }
+  }
+  else {
+    for (int i = end - 1; i >= start; --i) {
+      vertices[++k] = getVertex(i);
+    }
+  }
+  return MEdgeN(vertices);
+}
+
+bool MElement::getEdgeInfo(const MEdge &edge, int &ithEdge, int &sign) const
+{
+  for (ithEdge = 0; ithEdge < getNumEdges(); ithEdge++) {
+    const MVertex *v0 = getVertex(numEdge2numVertex(ithEdge, 0));
+    const MVertex *v1 = getVertex(numEdge2numVertex(ithEdge, 1));
+    if (v0 == edge.getVertex(0) && v1 == edge.getVertex(1)){
+      sign = 1; return true;
+    }
+    if (v1 == edge.getVertex(0) && v0 == edge.getVertex(1)){
+      sign = -1; return true;
+    }
+  }
+  Msg::Error("Could not get edge information for element %d", getNum());
+  return false;
+}
+
+MFaceN MElement::getHighOrderFace(int num, int sign, int rot)
+{
+  if (getDim() < 2 || getDim() > 3) {
+    Msg::Error("Wrong dimension for getHighOrderFace");
+    return MFaceN();
+  }
+
+  if (getDim() == 2) {
+    std::vector<MVertex *> vertices(getNumVertices());
+    getVertices(vertices);
+    return MFaceN(getType(), getPolynomialOrder(), vertices);
+  }
+
+  const nodalBasis *fs = getFunctionSpace();
+  int id = fs->getClosureId(num, sign, rot);
+  const std::vector<int> &closure = fs->getClosure(id);
+
+  std::vector<MVertex *> vertices(closure.size());
+  for (unsigned int i = 0; i < closure.size(); ++i) {
+    vertices[i] = getVertex(closure[i]);
+  }
+
+  static int type2numTriFaces[9] = {0, 0, 0, 1, 0, 4, 4, 2, 0};
+  int typeFace = TYPE_TRI;
+  if (num >= type2numTriFaces[getType()]) typeFace = TYPE_QUA;
+
+  return MFaceN(typeFace, getPolynomialOrder(), vertices);
 }
 
 double MElement::minEdge()
@@ -349,15 +473,12 @@ void MElement::signedInvGradErrorRange(double &minSIGE, double &maxSIGE)
 
 void MElement::getNode(int num, double &u, double &v, double &w) const
 {
-  // only for MElements that don't have a lookup table for this
-  // (currently only 1st order elements have)
-  double uvw[3];
-  const MVertex* ver = getVertex(num);
-  double xyz[3] = {ver->x(), ver->y(), ver->z()};
-  xyz2uvw(xyz, uvw);
-  u = uvw[0];
-  v = uvw[1];
-  w = uvw[2];
+  // Should we always do this instead of using lookup table for linear elements?
+  const nodalBasis *nb = getFunctionSpace();
+  const fullMatrix<double> &refpnts = nb->getReferenceNodes();
+  u = refpnts(num, 0);
+  v = getDim() > 1 ? refpnts(num, 1) : 0;
+  v = getDim() > 2 ? refpnts(num, 2) : 0;
 }
 
 void MElement::getShapeFunctions(double u, double v, double w, double s[], int o) const
@@ -424,6 +545,20 @@ SPoint3 MElement::barycenter(bool primary) const
   p[0] /= (double)n;
   p[1] /= (double)n;
   p[2] /= (double)n;
+  return p;
+}
+
+SPoint3 MElement::fastBarycenter(bool primary) const
+{
+  SPoint3 p(0., 0., 0.);
+  int n = primary ? getNumPrimaryVertices() : getNumVertices();
+  for(int i = 0; i < n; i++) {
+    const MVertex *v = getVertex(i);
+    p[0] += v->x();
+    p[1] += v->y();
+    p[2] += v->z();
+  }
+
   return p;
 }
 
@@ -509,7 +644,7 @@ std::string MElement::getInfoString(bool multline)
   if(multline) sstream << "\n";
 
   sstream << " Nodes:";
-  for(int i = 0; i < getNumVertices(); i++)
+  for(std::size_t i = 0; i < getNumVertices(); i++)
     sstream << " " << getVertex(i)->getNum();
   if(multline) sstream << "\n";
 
@@ -544,14 +679,15 @@ std::string MElement::getInfoString(bool multline)
 const nodalBasis* MElement::getFunctionSpace(int order, bool serendip) const
 {
   if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
-  int tag = ElementType::getTag(getType(), order, serendip);
-  return tag ? BasisFactory::getNodalBasis(tag) : NULL;
+  int type = ElementType::getType(getType(), order, serendip);
+  return type ? BasisFactory::getNodalBasis(type) : NULL;
 }
 
 const JacobianBasis* MElement::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-  return BasisFactory::getJacobianBasis(FuncSpaceData(this, order));
+  int tag = ElementType::getType(getType(), order);
+  return BasisFactory::getJacobianBasis(tag);
 }
 
 static double _computeDeterminantAndRegularize(const MElement *ele, double jac[3][3])
@@ -621,6 +757,82 @@ static double _computeDeterminantAndRegularize(const MElement *ele, double jac[3
   return dJ;
 }
 
+static double _computeDeterminantAndRegularize(const MElement *ele, double *jac)
+{
+  double dJ = 0;
+
+  /**
+   * 'jac' is a row-major order array :
+   *
+   *  |0 1 2|
+   *  |3 4 5|
+   *  |6 7 8|
+   *
+   */
+
+  switch (ele->getDim()) {
+
+    case 0:
+    {
+    dJ = 1.0;
+    jac[0] = jac[4] = jac[8] = 1.0;
+    jac[1] = jac[2] = jac[3] = 0.0;
+    jac[5] = jac[6] = jac[7] = 0.0;
+    break;
+    }
+    case 1:
+    {
+    dJ = sqrt(SQU(jac[0]) + SQU(jac[1]) + SQU(jac[2]));
+
+    // regularize matrix
+    double a[3], b[3], c[3];
+    a[0] = jac[0];
+    a[1] = jac[1];
+    a[2] = jac[2];
+    if((fabs(a[0]) >= fabs(a[1]) && fabs(a[0]) >= fabs(a[2])) ||
+       (fabs(a[1]) >= fabs(a[0]) && fabs(a[1]) >= fabs(a[2]))) {
+      b[0] = a[1]; b[1] = -a[0]; b[2] = 0.;
+    }
+    else {
+      b[0] = 0.; b[1] = a[2]; b[2] = -a[1];
+    }
+    norme(b);
+    prodve(a, b, c);
+    norme(c);
+    jac[3] = b[0]; jac[4] = b[1]; jac[5] = b[2];
+    jac[6] = c[0]; jac[7] = c[1]; jac[8] = c[2];
+    break;
+    }
+    case 2:
+    {
+    dJ = sqrt(SQU(jac[0] * jac[4] - jac[1] * jac[3]) +
+              SQU(jac[2] * jac[3] - jac[0] * jac[5]) +
+              SQU(jac[1] * jac[5] - jac[2] * jac[4]));
+
+    // regularize matrix
+    double a[3], b[3], c[3];
+    a[0] = jac[0];
+    a[1] = jac[1];
+    a[2] = jac[2];
+    b[0] = jac[3];
+    b[1] = jac[4];
+    b[2] = jac[5];
+    prodve(a, b, c);
+    norme(c);
+    jac[6] = c[0]; jac[7] = c[1]; jac[8] = c[2];
+    break;
+    }
+    case 3:
+    {
+    dJ = (jac[0] * jac[4] * jac[8] + jac[2] * jac[3] * jac[7] +
+          jac[1] * jac[5] * jac[6] - jac[2] * jac[4] * jac[6] -
+          jac[0] * jac[5] * jac[7] - jac[1] * jac[3] * jac[8]);
+    break;
+    }
+  }
+  return dJ;
+}
+
 double MElement::getJacobian(double u, double v, double w, double jac[3][3]) const
 {
   jac[0][0] = jac[0][1] = jac[0][2] = 0.;
@@ -648,7 +860,8 @@ double MElement::getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) co
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
 
-  for (int i = 0; i < getNumShapeFunctions(); i++) {
+  const int numShapeFunctions = getNumShapeFunctions();
+  for (int i = 0; i < numShapeFunctions; i++) {
     const MVertex *v = getShapeFunctionNode(i);
     for (int j = 0; j < gsf.size2(); j++) {
       jac[j][0] += v->x() * gsf(i, j);
@@ -665,13 +878,33 @@ double MElement::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
 
-  for (int i = 0; i < getNumShapeFunctions(); i++) {
+  const int numShapeFunctions = getNumVertices();
+  for (int i = 0; i < numShapeFunctions; i++) {
     const MVertex *v = getShapeFunctionNode(i);
     for (int j = 0; j < 3; j++) {
-      double mult = gsf[i][j];
+      const double mult = gsf[i][j];
       jac[j][0] += v->x() * mult;
       jac[j][1] += v->y() * mult;
       jac[j][2] += v->z() * mult;
+    }
+  }
+  return _computeDeterminantAndRegularize(this, jac);
+}
+
+double MElement::getJacobian(const std::vector<SVector3> &gsf, double *jac) const
+{
+  for(unsigned int i = 0; i < 9; i++){
+    jac[i] = 0.;
+  }
+
+  const int numShapeFunctions = getNumVertices();
+  for (int i = 0; i < numShapeFunctions; i++) {
+    const MVertex *v = getShapeFunctionNode(i);
+    for (int j = 0; j < 3; j++) {
+      const double mult = gsf[i][j];
+      jac[3*j+0] += v->x() * mult;
+      jac[3*j+1] += v->y() * mult;
+      jac[3*j+2] += v->z() * mult;
     }
   }
   return _computeDeterminantAndRegularize(this, jac);
@@ -785,6 +1018,22 @@ void MElement::pnt(double u, double v, double w, SPoint3 &p) const
   p = SPoint3(x, y, z);
 }
 
+void MElement::pnt(double u, double v, double w, double *p) const
+{
+  double x = 0., y = 0., z = 0.;
+  double sf[1256];
+  getShapeFunctions(u, v, w, sf);
+  for (int j = 0; j < getNumShapeFunctions(); j++) {
+    const MVertex *v = getShapeFunctionNode(j);
+    x += sf[j] * v->x();
+    y += sf[j] * v->y();
+    z += sf[j] * v->z();
+  }
+  p[0] = x;
+  p[1] = y;
+  p[2] = z;
+}
+
 void MElement::pnt(const std::vector<double> &sf, SPoint3 &p) const
 {
   double x = 0., y = 0., z = 0.;
@@ -859,12 +1108,15 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3]) const
     }
     double inv[3][3];
     inv3x3(jac, inv);
-    double un = uvw[0] + inv[0][0] * (xyz[0] - xn) +
-      inv[1][0] * (xyz[1] - yn) + inv[2][0] * (xyz[2] - zn);
-    double vn = uvw[1] + inv[0][1] * (xyz[0] - xn) +
-      inv[1][1] * (xyz[1] - yn) + inv[2][1] * (xyz[2] - zn);
-    double wn = uvw[2] + inv[0][2] * (xyz[0] - xn) +
-      inv[1][2] * (xyz[1] - yn) + inv[2][2] * (xyz[2] - zn);
+    double un = uvw[0] + inv[0][0] * (xyz[0] - xn)
+                       + inv[1][0] * (xyz[1] - yn)
+                       + inv[2][0] * (xyz[2] - zn);
+    double vn = uvw[1] + inv[0][1] * (xyz[0] - xn)
+                       + inv[1][1] * (xyz[1] - yn)
+                       + inv[2][1] * (xyz[2] - zn);
+    double wn = uvw[2] + inv[0][2] * (xyz[0] - xn)
+                       + inv[1][2] * (xyz[1] - yn)
+                       + inv[2][2] * (xyz[2] - zn);
     error = sqrt(SQU(un - uvw[0]) + SQU(vn - uvw[1]) + SQU(wn - uvw[2]));
     uvw[0] = un;
     uvw[1] = vn;
@@ -985,7 +1237,7 @@ double MElement::integrateCirc(double val[], int edge, int pOrder, int order)
   std::vector<MVertex*> v;
   getEdgeVertices(edge, v);
   MElementFactory f;
-  int type = ElementType::getTag(TYPE_LIN, getPolynomialOrder());
+  int type = ElementType::getType(TYPE_LIN, getPolynomialOrder());
   MElement* ee = f.create(type, v);
 
   double intv[3];
@@ -1016,15 +1268,15 @@ double MElement::integrateFlux(double val[], int face, int pOrder, int order)
     case TYPE_TET :
     case TYPE_QUA :
     case TYPE_HEX :
-      type = ElementType::getTag(getType(), getPolynomialOrder());
+      type = ElementType::getType(getType(), getPolynomialOrder());
       break;
     case TYPE_PYR :
-      if(face < 4) type = ElementType::getTag(TYPE_TRI, getPolynomialOrder());
-      else type = ElementType::getTag(TYPE_QUA, getPolynomialOrder());
+      if(face < 4) type = ElementType::getType(TYPE_TRI, getPolynomialOrder());
+      else type = ElementType::getType(TYPE_QUA, getPolynomialOrder());
       break;
     case TYPE_PRI :
-      if(face < 2) type = ElementType::getTag(TYPE_TRI, getPolynomialOrder());
-      else type = ElementType::getTag(TYPE_QUA, getPolynomialOrder());
+      if(face < 2) type = ElementType::getType(TYPE_TRI, getPolynomialOrder());
+      else type = ElementType::getType(TYPE_QUA, getPolynomialOrder());
       break;
     default: type = 0; break;
   }
@@ -1326,14 +1578,14 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
 void MElement::writePLY2(FILE *fp)
 {
   fprintf(fp, "3 ");
-  for(int i = 0; i < getNumVertices(); i++)
+  for(std::size_t i = 0; i < getNumVertices(); i++)
     fprintf(fp, " %d", getVertex(i)->getIndex() - 1);
   fprintf(fp, "\n");
 }
 
 void MElement::writeVRML(FILE *fp)
 {
-  for(int i = 0; i < getNumVertices(); i++)
+  for(std::size_t i = 0; i < getNumVertices(); i++)
     fprintf(fp, "%d,", getVertex(i)->getIndex() - 1);
   fprintf(fp, "-1,\n");
 }
@@ -1395,7 +1647,7 @@ void MElement::writeMATLAB(FILE *fp, int filetype, int elementary, int physical,
     {
       if(physical < 0) reverse();
 
-      for(int i = 0; i < getNumVertices(); i++)
+      for(std::size_t i = 0; i < getNumVertices(); i++)
 	fprintf(fp, " %d", getVertex(i)->getIndex());
       fprintf(fp, " %d\n", physical ? abs(physical) : elementary);
 
@@ -1439,7 +1691,7 @@ void MElement::writeMESH(FILE *fp, int elementTagType, int elementary,
 {
   if(physical < 0) reverse();
 
-  for(int i = 0; i < getNumVertices(); i++)
+  for(std::size_t i = 0; i < getNumVertices(); i++)
     if (getTypeForMSH() == MSH_TET_10 && i == 8)
       fprintf(fp, " %d", getVertex(9)->getIndex());
     else if (getTypeForMSH() == MSH_TET_10 && i == 9)
@@ -1456,8 +1708,8 @@ void MElement::writeNEU(FILE *fp, unsigned gambitType, int idAdjust, int phys)
 {
   if(phys < 0) reverse();
 
-  fprintf(fp, "%8d %2d %2d ", _num-idAdjust, gambitType, getNumVertices());
-  for(int i = 0; i < getNumVertices(); ++i) {
+  fprintf(fp, "%8d %2d %2lu ", _num-idAdjust, gambitType, getNumVertices());
+  for(std::size_t i = 0; i < getNumVertices(); ++i) {
     fprintf(fp, "%8d", getVertex(i)->getIndex());
   }
   fprintf(fp, "\n");
@@ -1563,7 +1815,7 @@ void MElement::writeINP(FILE *fp, int num)
 void MElement::writeSU2(FILE *fp, int num)
 {
   fprintf(fp, "%d ", getTypeForVTK());
-  for(int i = 0; i < getNumVertices(); i++)
+  for(std::size_t i = 0; i < getNumVertices(); i++)
     fprintf(fp, "%d ", getVertexVTK(i)->getIndex() - 1);
   if(num >= 0) fprintf(fp, "%d\n", num);
   else fprintf(fp, "\n");
@@ -1732,7 +1984,7 @@ MElement *MElement::copy(std::map<int, MVertex*> &vertexMap,
   int eType = getTypeForMSH();
   MElement *eParent = getParent();
   if(getNumChildren() == 0) {
-    for(int i = 0; i < getNumVertices(); i++) {
+    for(std::size_t i = 0; i < getNumVertices(); i++) {
       MVertex *v = getVertex(i);
       int numV = v->getNum(); //Index();
       if(vertexMap.count(numV))
@@ -1746,7 +1998,7 @@ MElement *MElement::copy(std::map<int, MVertex*> &vertexMap,
   }
   else {
     for(int i = 0; i < getNumChildren(); i++) {
-      for(int j = 0; j < getChild(i)->getNumVertices(); j++) {
+      for(std::size_t j = 0; j < getChild(i)->getNumVertices(); j++) {
         MVertex *v = getChild(i)->getVertex(j);
         int numV = v->getNum(); //Index();
         if(vertexMap.count(numV))
@@ -1954,7 +2206,7 @@ MElement *MElementFactory::create(int num, int type, const std::vector<int> &dat
     return 0;
   }
 
-  int part = 0;
+  unsigned int part = 0;
   int startPartitions = startVertices + numVertices;
 
  int parent = 0;
@@ -1976,8 +2228,9 @@ MElement *MElementFactory::create(int num, int type, const std::vector<int> &dat
 
   MElement *element = create(type, vertices, num, part, false, parent);
 
-  for(unsigned int j = 0; j < ghosts.size(); j++)
+  for(unsigned int j = 0; j < ghosts.size(); j++){
     //model->getGhostCells().insert(std::pair<MElement*, short>(element, ghosts[j]));
+  }
   if(part > model->getNumPartitions()) model->setNumPartitions(part);
 
   return element;
@@ -1986,11 +2239,11 @@ MElement *MElementFactory::create(int num, int type, const std::vector<int> &dat
 double MElement::skewness()
 {
   double minsk = 1.0;
-  for (int i=0;i<getNumFaces();i++){
+  for (int i = 0; i < getNumFaces(); i++){
     MFace f = getFace(i);
     if (f.getNumVertices() == 3){
-      //      MTriangle t (f.getVertex(0),f.getVertex(1),f.getVertex(2));
-      //      minsk = std::min(minsk, t.etaShapeMeasure ());
+      // MTriangle t (f.getVertex(0),f.getVertex(1),f.getVertex(2));
+      // minsk = std::min(minsk, t.etaShapeMeasure ());
     }
     else if (f.getNumVertices() == 4){
       MQuadrangle q (f.getVertex(0),f.getVertex(1),f.getVertex(2),f.getVertex(3));

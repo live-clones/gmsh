@@ -55,7 +55,7 @@ class MHexahedron : public MElement {
   }
   ~MHexahedron(){}
   virtual int getDim() const { return 3; }
-  virtual int getNumVertices() const { return 8; }
+  virtual std::size_t getNumVertices() const { return 8; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual const MVertex *getVertex(int num) const { return _v[num]; }
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
@@ -69,6 +69,10 @@ class MHexahedron : public MElement {
   {
     return MEdge(_v[edges_hexa(num, 0)], _v[edges_hexa(num, 1)]);
   }
+  virtual int numEdge2numVertex(int numEdge, int numVert) const
+  {
+    return edges_hexa(numEdge, numVert);
+  }
   virtual int getNumEdgesRep(bool curved){ return 12; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
@@ -77,7 +81,7 @@ class MHexahedron : public MElement {
     _getEdgeVertices(num, v);
   }
   virtual int getNumFaces(){ return 6; }
-  virtual MFace getFace(int num)
+  virtual MFace getFace(int num) const
   {
     return MFace(_v[faces_hexa(num, 0)],
                  _v[faces_hexa(num, 1)],
@@ -86,7 +90,7 @@ class MHexahedron : public MElement {
   }
   virtual double getInnerRadius();
   virtual double angleShapeMeasure();
-  virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
+  virtual bool getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
@@ -224,7 +228,7 @@ class MHexahedron20 : public MHexahedron {
   }
   ~MHexahedron20(){}
   virtual int getPolynomialOrder() const { return 2; }
-  virtual int getNumVertices() const { return 20; }
+  virtual std::size_t getNumVertices() const { return 20; }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual const MVertex *getVertex(int num) const { return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 8) _v[num] = v; else _vs[num - 8] = v; }
@@ -353,7 +357,7 @@ class MHexahedron27 : public MHexahedron {
   }
   ~MHexahedron27(){}
   virtual int getPolynomialOrder() const { return 2; }
-  virtual int getNumVertices() const { return 27; }
+  virtual std::size_t getNumVertices() const { return 27; }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual const MVertex *getVertex(int num) const { return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 8) _v[num] = v; else _vs[num - 8] = v; }
@@ -463,10 +467,13 @@ class MHexahedron27 : public MHexahedron {
  *
  */
 
-typedef std::vector<int> indicesReversed;
+typedef std::vector<int> IndicesReversed;
+//typedef std::vector<int> IndicesHighOrderFace;
+//typedef std::pair<std::pair<int,int>, std::pair<int,int> > TupleHighOrderFace;
 
 class MHexahedronN : public MHexahedron {
-  static std::map<int, indicesReversed> _order2indicesReversedHex;
+  static std::map<int, IndicesReversed> _order2indicesReversedHex;
+//  static std::map<TupleHighOrderFace, IndicesHighOrderFace> _tuple2indicesHighOrderFace;
 
  protected:
   const char _order;
@@ -487,7 +494,7 @@ class MHexahedronN : public MHexahedron {
   }
   ~MHexahedronN(){}
   virtual int getPolynomialOrder() const { return (int)_order; }
-  virtual int getNumVertices() const { return 8 + _vs.size(); }
+  virtual std::size_t getNumVertices() const { return 8 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual const MVertex *getVertex(int num) const { return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual void setVertex(int num,  MVertex *v){ if(num < 8) _v[num] = v; else _vs[num - 8] = v; }

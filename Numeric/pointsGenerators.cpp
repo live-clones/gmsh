@@ -1056,8 +1056,8 @@ fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij, int nk
       int i0 = iedge;
       int i1 = (iedge+1) % 4;
 
-      int u0 = (monomials(i1,0)-monomials(i0,0)) / nijBase;
-      int u1 = (monomials(i1,1)-monomials(i0,1)) / nijBase;
+      int u0 = static_cast<int>( (monomials(i1,0)-monomials(i0,0)) / nijBase );
+      int u1 = static_cast<int>( (monomials(i1,1)-monomials(i0,1)) / nijBase );
 
       for(int i = 1; i < nijBase; ++i, ++index){
         monomials(index, 0) = monomials(i0, 0) + i * u0;
@@ -1083,18 +1083,18 @@ fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij, int nk
         int i0 = 4 + iedge;
         int i1 = 4 + (iedge+1)%4;
 
-        int u0 = (monomials(i1,0)-monomials(i0,0)) / nijBase;
-        int u1 = (monomials(i1,1)-monomials(i0,1)) / nijBase;
+        int u0 = static_cast<int>( (monomials(i1,0)-monomials(i0,0)) / nijBase );
+        int u1 = static_cast<int>( (monomials(i1,1)-monomials(i0,1)) / nijBase );
 
-        for(int i = 1; i < nijBase; ++i, ++index){
+        for(int i = 1; i < nij; ++i, ++index){
           monomials(index, 0) = monomials(i0, 0) + i * u0;
           monomials(index, 1) = monomials(i0, 1) + i * u1;
           monomials(index, 2) = 0;
         }
       }
 
-      for(int i = 1; i < nijBase; ++i){
-        for(int j = 1; j < nijBase; ++j, ++index){
+      for(int i = 1; i < nij; ++i){
+        for(int j = 1; j < nij; ++j, ++index){
           monomials(index, 0) = i;
           monomials(index, 1) = j;
           monomials(index, 2) = 0;

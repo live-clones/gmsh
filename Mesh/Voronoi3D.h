@@ -20,5 +20,5 @@ class clip{
   double min(double,double);
   double max(double,double);
   int category(int,int,int,int);
-  void print_segment(SPoint3,SPoint3,std::ofstream&);
+  void print_segment(const SPoint3 &, const SPoint3 &, std::ofstream &);
 };

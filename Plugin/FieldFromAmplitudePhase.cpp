@@ -114,7 +114,7 @@ PView *GMSH_FieldFromAmplitudePhasePlugin::execute(PView *v)
   for(unsigned int ent = 0; ent < _entities.size(); ent++)
     for(unsigned int ele = 0; ele < _entities[ent]->getNumMeshElements(); ele++){
       MElement *e = _entities[ent]->getMeshElement(ele);
-      for(int nod = 0; nod < e->getNumVertices() ; nod++)
+      for(std::size_t nod = 0; nod < e->getNumVertices() ; nod++)
         ve.insert(e->getVertex(nod));
     }
 

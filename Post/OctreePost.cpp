@@ -403,13 +403,13 @@ static MElement *getElement(double P[3], GModel *m,
     double eps = CTX::instance()->geom.tolerance;
     std::vector<MElement*> elements = m->getMeshElementsByCoord(pt);
     for(unsigned int i = 0; i < elements.size(); i++){
-      if(qn == elements[i]->getNumVertices()){
+      if(qn == static_cast<int>(elements[i]->getNumVertices())){
         bool ok = true;
         for(int j = 0; j < qn; j++){
           MVertex *v = elements[i]->getVertex(j);
-          ok &= (fabs(v->x() - qx[j]) < eps &&
-                 fabs(v->y() - qy[j]) < eps &&
-                 fabs(v->z() - qz[j]) < eps);
+          ok &= (std::abs(v->x() - qx[j]) < eps &&
+                 std::abs(v->y() - qy[j]) < eps &&
+                 std::abs(v->z() - qz[j]) < eps);
         }
         if(ok) return elements[i];
       }
@@ -433,7 +433,7 @@ bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp,
   //  for (int i=0;i<3*9*3;i++)printf("%g ", X[i]);
   //  printf("\n");
 
-  
+
   elementFactory factory;
   element *e = factory.create(nbNod, dim, X, Y, Z);
   if(!e) return false;
@@ -482,10 +482,10 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
 
   std::vector<int> dataIndex(e->getNumVertices());
   if(_theViewDataGModel->getType() == PViewDataGModel::NodeData)
-    for(int i = 0; i < e->getNumVertices(); i++)
+    for(std::size_t i = 0; i < e->getNumVertices(); i++)
       dataIndex[i] = e->getVertex(i)->getNum();
   else
-    for(int i = 0; i < e->getNumVertices(); i++)
+    for(std::size_t i = 0; i < e->getNumVertices(); i++)
       dataIndex[i] = e->getNum();
 
   double U[3];
@@ -495,7 +495,7 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
   for(int step = 0; step < _theViewDataGModel->getNumTimeSteps(); step++){
     if(!_theViewDataGModel->hasTimeStep(step)) continue;
     if(timestep < 0 || step == timestep){
-      for(int nod = 0; nod < e->getNumVertices(); nod++){
+      for(std::size_t nod = 0; nod < e->getNumVertices(); nod++){
         for(int comp = 0; comp < nbComp; comp++)
           _theViewDataGModel->getValueByIndex(step, dataIndex[nod], nod, comp,
                                               nodeval[nod * nbComp + comp]);

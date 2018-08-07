@@ -144,7 +144,7 @@ void smooth_data::normalize()
   }
 }
 
-bool smooth_data::exportview(std::string filename)
+bool smooth_data::exportview(const std::string &filename)
 {
   FILE *fp = Fopen(filename.c_str(), "w");
   if(!fp) return false;

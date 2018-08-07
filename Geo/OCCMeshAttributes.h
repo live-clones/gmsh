@@ -31,14 +31,31 @@ class OCCMeshAttributes {
   OCCMeshAttributes()
     : _dim(-1), _meshSize(MAX_LC), _extrude(0), _sourceDim(-1) {}
   OCCMeshAttributes(int dim, TopoDS_Shape shape)
-    : _dim(dim), _shape(shape), _meshSize(MAX_LC), _extrude(0), _sourceDim(-1) {}
+    : _dim(dim)
+    , _shape(shape)
+    , _meshSize(MAX_LC)
+    , _extrude(0)
+    , _sourceDim(-1)
+  {
+  }
   OCCMeshAttributes(int dim, TopoDS_Shape shape, double size)
-    : _dim(dim), _shape(shape), _meshSize(size), _extrude(0),
-      _sourceDim(-1) {}
+    : _dim(dim)
+    , _shape(shape)
+    , _meshSize(size)
+    , _extrude(0)
+    , _sourceDim(-1)
+  {
+  }
   OCCMeshAttributes(int dim, TopoDS_Shape shape, ExtrudeParams *e,
-              int sourceDim, TopoDS_Shape sourceShape)
-    : _dim(dim), _shape(shape), _meshSize(MAX_LC), _extrude(e),
-      _sourceDim(sourceDim), _sourceShape(sourceShape) {}
+                    int sourceDim, TopoDS_Shape sourceShape)
+    : _dim(dim)
+    , _shape(shape)
+    , _meshSize(MAX_LC)
+    , _extrude(e)
+    , _sourceDim(sourceDim)
+    , _sourceShape(sourceShape)
+  {
+  }
   ~OCCMeshAttributes(){}
   int getDim(){ return _dim; }
   TopoDS_Shape getShape(){ return _shape; }
@@ -135,8 +152,9 @@ class OCCMeshAttributesRTree{
     double bmax[3] = {x + _tol, y + _tol, z + _tol};
     _rtree[v->getDim()]->Insert(bmin, bmax, v);
   }
-  void find(int dim, TopoDS_Shape shape, std::vector<OCCMeshAttributes*> &attr,
-            bool requireMeshSize, bool requireExtrudeParams, bool excludeSame)
+  void find(int dim, const TopoDS_Shape &shape,
+            std::vector<OCCMeshAttributes *> &attr, bool requireMeshSize,
+            bool requireExtrudeParams, bool excludeSame)
   {
     attr.clear();
     if(dim < 0 || dim > 3) return;

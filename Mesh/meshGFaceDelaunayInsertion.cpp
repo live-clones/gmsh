@@ -294,7 +294,7 @@ int inCircumCircleOsculatory(GFace *gf, MTriangle *base, const double *uv,   dou
   double pb [3] = {base->getVertex(1)->x(),base->getVertex(1)->y(),base->getVertex(1)->z()};
   double pc [3] = {base->getVertex(2)->x(),base->getVertex(2)->y(),base->getVertex(2)->z()};
   double pd [3] = {gp.x(),gp.y(),gp.z()};
-  double a1 = robustPredicates::orient3d(pa, pb, pc, c);    
+  double a1 = robustPredicates::orient3d(pa, pb, pc, c);
   double a2 = robustPredicates::orient3d(pa, pb, pc, pd);
   if (a1 < 0 )return a1*a2 < 0 ;
   return -1;
@@ -305,14 +305,14 @@ int inCircumCircleAniso(GFace *gf, MTriangle *base,
                         const double *uv, const double *metricb,
 			bidimMeshData & data)
 {
-  
+
   double r;
   SPoint3 c;
   if (gf->isSphere(r,c)){
     int res = inCircumCircleOsculatory(gf, base, uv, r, c);
     if (res >= 0)return res;
   }
-  
+
   double x[2], Radius2;
   double metric[3];
   if (!metricb){
@@ -357,7 +357,7 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, bidimMeshData * data, GF
       const double dx = base->getVertex(0)->x() - center[0];
       const double dy = base->getVertex(0)->y() - center[1];
       const double dz = base->getVertex(0)->z() - center[2];
-      circum_radius = sqrt(dx * dx + dy * dy + dz * dz);
+      circum_radius = std::sqrt(dx * dx + dy * dy + dz * dz);
       circum_radius /= lc;
     }
     else {
@@ -743,7 +743,7 @@ int insertVertexB (std::list<edgeXface> &shell,
   if (shell.size() != cavity.size() + 2) return -2;
 
   double EPS = verifyStarShapeness ? 1.e-12 : 1.e12;
-  
+
   std::list<MTri3*> new_cavity;
   std::vector<edgeXface> conn;
 
@@ -773,7 +773,7 @@ int insertVertexB (std::list<edgeXface> &shell,
       v0 = it->_v(1);
       v1 = it->_v(0);
     }
-    if (v1 == v || v0 == v ) printf("OH NOOOO\n"); 
+    if (v1 == v || v0 == v ) printf("OH NOOOO\n");
     MTriangle *t = new MTriangle(v0, v1, v) ;
     int index0 = data.getIndex (t->getVertex(0));
     int index1 = data.getIndex (t->getVertex(1));
@@ -798,14 +798,13 @@ int insertVertexB (std::list<edgeXface> &shell,
     SVector3 v0v1 (v1->x()-v0->x(),v1->y()-v0->y(),v1->z()-v0->z());
     SVector3 v0v  (v->x()-v0->x(),v->y()-v0->y(),v->z()-v0->z());
     SVector3 pv = crossprod(v0v1,v0v);
-    double d4 = sqrt(2.25)*pv.norm() / d3;
-    
+    double d4 = pv.norm() / d3;
     // avoid angles that are too obtuse
     double cosv = ((d1*d1+d2*d2-d3*d3)/(2.*d1*d2));
 
-    if ((d1 < LL * .45 || d2 < LL * .45 || /*d4 < LL * .3 ||*/ cosv < -.9999) && !force) {
+    if ((d1 < LL * .5 || d2 < LL * .5 || d4 < LL * .10 || cosv < -.9999) && !force) {
       onePointIsTooClose = true;
-      // printf("%12.5E %12.5E %12.5E %12.5E \n",d1,d2,LL,cosv);
+      //printf("%12.5E %12.5E %12.5E %12.5E \n",d1,d2,LL,cosv);
     }
 
     newTris[k++] = t4;
@@ -1092,7 +1091,7 @@ static bool insertAPoint(GFace *gf,
 	Msg::Debug("Point %g %g cannot be inserted because it is too close to another point)", center[0], center[1]);
       if (result == -5)
 	Msg::Debug("Point %g %g cannot be inserted because it is out of the parametric domain)", center[0], center[1]);
-      
+
       AllTris.erase(it);
       worst->forceRadius(-1);
       AllTris.insert(worst);
@@ -1395,31 +1394,29 @@ bool optimalPointFrontalB(GFace *gf,
     }
   }
 
-  if (gf->containsParam(SPoint2(newPoint[0], newPoint[1])))
-    return true;
-  return false;
+  return true;
 }
 
 void bowyerWatsonFrontal(GFace *gf,
 			 std::map<MVertex* , MVertex*>* equivalence,
-			 std::map<MVertex*, SPoint2> * parametricCoordinates)
+			 std::map<MVertex*, SPoint2> * parametricCoordinates,
+			 std::vector<SPoint2> *true_boundary)
 {
-  
+
   std::set<MTri3*,compareTri3Ptr> AllTris;
   std::set<MTri3*,compareTri3Ptr> ActiveTris;
   bidimMeshData DATA(equivalence,parametricCoordinates);
   bool testStarShapeness = true;
-  double r;
+  //  double r;
   SPoint3 c;
-  if (gf->isSphere(r,c)){
-    testStarShapeness = false;    
-  }
- 
-  
+  //  if (gf->isSphere(r,c)){
+  //    testStarShapeness = false;
+  //  }
+
   buildMeshGenerationDataStructures(gf, AllTris, DATA);
 
   // delaunise the initial mesh
-  int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
+  edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
   //  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
 
   int ITER = 0, active_edge;
@@ -1431,6 +1428,10 @@ void bowyerWatsonFrontal(GFace *gf,
     else if ((*it)->getRadius() < LIMIT_)break;
   }
 
+  Range<double> RU = gf->parBounds (0);
+  Range<double> RV = gf->parBounds (1);
+  SPoint2 FAR (2*RU.high(),2*RV.high());
+  
   // insert points
   int ITERATION = 0;
   while (1){
@@ -1444,7 +1445,7 @@ void bowyerWatsonFrontal(GFace *gf,
     //      sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
     //      _printTris (name, ActiveTris.begin(), ActiveTris.end(), &DATA);
     //    }
-    
+
     //    printf("%d active tris \n",ActiveTris.size());
     if (!ActiveTris.size())break;
     MTri3 *worst = (*ActiveTris.begin());
@@ -1459,11 +1460,15 @@ void bowyerWatsonFrontal(GFace *gf,
       //optimalPointFrontal (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
       if (optimalPointFrontalB (gf,worst,active_edge,DATA,newPoint,metric)){
 	//	printf("iteration %d passes first round\n",ITERATION);
-	insertAPoint(gf, AllTris.end(), newPoint, metric, DATA, AllTris, &ActiveTris, worst, NULL, testStarShapeness);
+	SPoint2 NP(newPoint[0],newPoint[1]);
+	int nnnn;
+	if (!true_boundary ||
+	    pointInsideParametricDomain (*true_boundary, NP, FAR, nnnn))	
+	  insertAPoint(gf, AllTris.end(), newPoint, metric, DATA, AllTris, &ActiveTris, worst, NULL, testStarShapeness);
       }
     }
   }
-  
+
   //  nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
   char name[245];
   sprintf(name,"delFrontal_GFace_%d.pos",gf->tag());
@@ -1841,10 +1846,10 @@ void bowyerWatsonParallelograms(GFace *gf,
   splitElementsInBoundaryLayerIfNeeded(gf);
 }
 
-void bowyerWatsonParallelogramsConstrained(GFace *gf,
-                                           std::set<MVertex*> constr_vertices,
-                                           std::map<MVertex* , MVertex*>* equivalence,
-                                           std::map<MVertex*, SPoint2> * parametricCoordinates)
+void bowyerWatsonParallelogramsConstrained(
+  GFace *gf, const std::set<MVertex *> &constr_vertices,
+  std::map<MVertex *, MVertex *> *equivalence,
+  std::map<MVertex *, SPoint2> *parametricCoordinates)
 {
   std::cout<<"   entered bowyerWatsonParallelogramsConstrained"<<std::endl;
   std::set<MTri3*,compareTri3Ptr> AllTris;

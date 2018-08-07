@@ -84,8 +84,8 @@ class Homology
   void _createCellComplex();
 
   // create and store a chain from homology solver result
-  void _createChain(std::map<Cell*, int, Less_Cell>& preChain,
-                    std::string name, bool co);
+  void _createChain(std::map<Cell *, int, Less_Cell> &preChain,
+                    const std::string &name, bool co);
 
   void _deleteChains(std::vector<int> dim=vecN0(4));
   void _deleteCochains(std::vector<int> dim=vecN0(4));
@@ -95,20 +95,20 @@ class Homology
  public:
 
   // Determine domain and relative subdomain of (co)homology computation
-  Homology(GModel* model,
-           std::vector<int> physicalDomain,
-	   std::vector<int> physicalSubdomain,
-           std::vector<int> physicalIm,
-           bool saveOrig=true,
-	   int combine=3, bool omit=true, bool smoothen=true,
-           int heuristic=1);
-  ~Homology();
+   Homology(GModel *model, const std::vector<int> &physicalDomain,
+            const std::vector<int> &physicalSubdomain,
+            const std::vector<int> &physicalIm, bool saveOrig = true,
+            int combine = 3, bool omit = true, bool smoothen = true,
+            int heuristic = 1);
+   ~Homology();
 
-  GModel* getModel() const { return _model; }
-  void setFileName(std::string fileName) { _fileName = fileName; }
+   GModel *getModel() const { return _model; }
+   void setFileName(const std::string &fileName) { _fileName = fileName; }
 
-  void getDomain(std::vector<int>& domain) const { domain = _domain; }
-  void getSubdomain(std::vector<int>& subdomain) const { subdomain = _subdomain; }
+   void getDomain(std::vector<int> &domain) const { domain = _domain; }
+   void getSubdomain(std::vector<int> &subdomain) const
+   {
+     subdomain = _subdomain; }
 
   // find the bases of (co)homology spaces
   // if dim is not provided,, find 0-,1-,2-,3-(co)homology spaces bases

@@ -14,7 +14,6 @@
 #cmakedefine HAVE_BLAS
 #cmakedefine HAVE_BLOSSOM
 #cmakedefine HAVE_CAIRO
-#cmakedefine HAVE_COMPRESSED_IO
 #cmakedefine HAVE_DLOPEN
 #cmakedefine HAVE_DINTEGRATION
 #cmakedefine HAVE_FLTK
@@ -66,7 +65,7 @@
 #cmakedefine HAVE_SLEPC
 #cmakedefine HAVE_SOLVER
 #cmakedefine HAVE_TAUCS
-#cmakedefine HAVE_TETGEN
+#cmakedefine HAVE_TETGENBR
 #cmakedefine HAVE_VISUDEV
 #cmakedefine HAVE_VOROPP
 #cmakedefine HAVE_ZIPPER

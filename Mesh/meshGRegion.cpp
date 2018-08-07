@@ -68,23 +68,23 @@ class splitQuadRecovery {
     double minQual     = 1;
     double minQualOpti = 1;
 
-    std::list<GFace*> faces = region->faces();
+    std::vector<GFace*> faces = region->faces();
 
     for (int iter=0; iter < niter+2;iter++){
-      for (std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it){
+      for (std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it){
 	for (std::multimap<GEntity*, std::pair<MVertex*,MFace> >::iterator it2 =
 	       _data.lower_bound(*it); it2 != _data.upper_bound(*it) ; ++it2){
 	  const MFace &f = it2->second.second;
 	  MVertex *v = it2->second.first;
 	  MPyramid p (f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3), v);
-	  minQual = std::min(minQual, fabs(p.minSICNShapeMeasure()));
+	  minQual = std::min(minQual, std::abs(p.minSICNShapeMeasure()));
 	  std::vector<MElement*> e = adj[v];
 	  e.push_back(&p);
 	  v->setEntity (region);
 	  double relax = std::min((double)(iter+1)/niter, 1.0);
 	  //	  printf("%g (%d) --> ",e.size(),p.minSICNShapeMeasure());
 	  _relocateVertexGolden( v, e, relax);
-	  minQualOpti = std::min(minQualOpti, fabs(p.minSICNShapeMeasure()));
+	  minQualOpti = std::min(minQualOpti, std::abs(p.minSICNShapeMeasure()));
 	  //	  printf("%g \n",p.minSICNShapeMeasure());
 	  v->setEntity (*it);
 	}
@@ -165,8 +165,8 @@ void getBoundingInfoAndSplitQuads(GRegion *gr,
   std::map<MFace, GEntity*, Less_Face> allBoundingFaces_temp;
 
   // Get all the faces that are on the boundary
-  std::list<GFace*> faces = gr->faces();
-  std::list<GFace*>::iterator it = faces.begin();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator it = faces.begin();
   while (it != faces.end()){
     GFace *gf = (*it);
     for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
@@ -224,488 +224,45 @@ void getBoundingInfoAndSplitQuads(GRegion *gr,
   }
 }
 
-#if defined(HAVE_TETGEN)
-
-#include "tetgen.h"
-
-void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numberedV,
-                          splitQuadRecovery &sqr)
-{
-  std::set<MVertex*> allBoundingVertices;
-  std::map<MFace,GEntity*,Less_Face> allBoundingFaces;
-  std::map<MEdge,GEntity*,Less_Edge> allBoundingEdges;
-
-  // embedded edges
-  {
-    std::list<GEdge*> embe = gr->embeddedEdges();
-    for (std::list<GEdge*>::iterator it = embe.begin(); it != embe.end(); ++it){
-      for (unsigned int i = 0; i < (*it)->lines.size(); i++){
-	MEdge me ((*it)->lines[i]->getVertex(0),(*it)->lines[i]->getVertex(1));
-	allBoundingEdges[me] = *it;
-	allBoundingVertices.insert((*it)->lines[i]->getVertex(0));
-	allBoundingVertices.insert((*it)->lines[i]->getVertex(1));
-      }
-    }
-  }
-
-  // embedded vertices
-  {
-    std::list<GVertex*> embv = gr->embeddedVertices();
-    for (std::list<GVertex*>::iterator it = embv.begin(); it != embv.end(); ++it){
-      for (unsigned int i = 0; i < (*it)->points.size(); i++){
-	allBoundingVertices.insert((*it)->points[i]->getVertex(0));
-      }
-    }
-  }
-
-  getBoundingInfoAndSplitQuads(gr, allBoundingFaces, allBoundingVertices, sqr);
-
-  // TEST
-  {
-    // std::vector<MVertex*>ALL;
-    // std::vector<MTetrahedron*> MESH;
-    // ALL.insert(ALL.begin(),allBoundingVertices.begin(),allBoundingVertices.end());
-    // delaunayMeshIn3D (ALL,MESH);
-    // exit(1);
-  }
-
-  in.mesh_dim = 3;
-  in.firstnumber = 1;
-  int nbvertices_filler = (old_algo_hexa()) ? Filler::get_nbr_new_vertices() :
-    Filler3D::get_nbr_new_vertices();
-  in.numberofpoints = allBoundingVertices.size() + nbvertices_filler +
-    LpSmoother::get_nbr_interior_vertices();
-  in.pointlist = new REAL[in.numberofpoints * 3];
-  in.pointmarkerlist = NULL;
-
-  //printf("nbvertices_filler =%d\n",nbvertices_filler);
-
-  std::set<MVertex*>::iterator itv = allBoundingVertices.begin();
-  int I = 1;
-  while(itv != allBoundingVertices.end()){
-    in.pointlist[(I - 1) * 3 + 0] = (*itv)->x();
-    in.pointlist[(I - 1) * 3 + 1] = (*itv)->y();
-    in.pointlist[(I - 1) * 3 + 2] = (*itv)->z();
-    (*itv)->setIndex(I++);
-    numberedV.push_back(*itv);
-    ++itv;
-  }
-
-  for(int i=0;i<nbvertices_filler;i++){
-    MVertex* v;
-    if (old_algo_hexa())
-      v = Filler::get_new_vertex(i);
-    else
-      v = Filler3D::get_new_vertex(i);
-    in.pointlist[(I - 1) * 3 + 0] = v->x();
-    in.pointlist[(I - 1) * 3 + 1] = v->y();
-    in.pointlist[(I - 1) * 3 + 2] = v->z();
-    I++;
-  }
-
-  for(int i=0;i<LpSmoother::get_nbr_interior_vertices();i++){
-    MVertex* v;
-    v = LpSmoother::get_interior_vertex(i);
-    in.pointlist[(I - 1) * 3 + 0] = v->x();
-    in.pointlist[(I - 1) * 3 + 1] = v->y();
-    in.pointlist[(I - 1) * 3 + 2] = v->z();
-    I++;
-  }
-
-
-  in.numberofedges = allBoundingEdges.size();
-  in.edgelist = new int[2*in.numberofedges];
-  in.edgemarkerlist = new int[in.numberofedges];
-
-  I = 0;
-  std::map<MEdge,GEntity*,Less_Edge>::iterator ite = allBoundingEdges.begin();
-  for (; ite != allBoundingEdges.end();++ite){
-    const MEdge &ed = ite->first;
-    in.edgelist[2*I]   = ed.getVertex(0)->getIndex();
-    in.edgelist[2*I+1] = ed.getVertex(1)->getIndex();
-    in.edgemarkerlist[I] = ite->second->tag();
-    ++I;
-  }
-
-  in.numberoffacets = allBoundingFaces.size();
-  in.facetlist = new tetgenio::facet[in.numberoffacets];
-  in.facetmarkerlist = new int[in.numberoffacets];
-
-  I = 0;
-  std::map<MFace,GEntity*,Less_Face>::iterator it = allBoundingFaces.begin();
-  for (; it != allBoundingFaces.end();++it){
-    const MFace &fac = it->first;
-    tetgenio::facet *f = &in.facetlist[I];
-    tetgenio::init(f);
-    f->numberofholes = 0;
-    f->numberofpolygons = 1;
-    f->polygonlist = new tetgenio::polygon[f->numberofpolygons];
-    tetgenio::polygon *p = &f->polygonlist[0];
-    tetgenio::init(p);
-    p->numberofvertices = 3;
-    p->vertexlist = new int[p->numberofvertices];
-    p->vertexlist[0] = fac.getVertex(0)->getIndex();
-    p->vertexlist[1] = fac.getVertex(1)->getIndex();
-    p->vertexlist[2] = fac.getVertex(2)->getIndex();
-    in.facetmarkerlist[I] = (it->second->dim() == 3) ? -it->second->tag() : it->second->tag();
-    ++I;
-  }
-}
-
-void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
-                        std::vector<MVertex*> &numberedV)
-{
-  // improvement has to be done here : tetgen splits some of the existing edges
-  // of the mesh. If those edges are classified on some model faces, new points
-  // SHOULD be classified on the model face and get the right set of parametric
-  // coordinates.
-
-  const int initialSize = (int)numberedV.size();
-
-  for(int i = numberedV.size(); i < out.numberofpoints; i++){
-    MVertex *v = new MVertex(out.pointlist[i * 3 + 0],
-                             out.pointlist[i * 3 + 1],
-                             out.pointlist[i * 3 + 2], gr);
-    gr->mesh_vertices.push_back(v);
-    numberedV.push_back(v);
-  }
-
-  Msg::Info("%d points %d edges and %d faces in the initial mesh",
-            out.numberofpoints, out.numberofedges, out.numberoftrifaces);
-
-  // Tetgen modifies both surface & edge mesh, so we need to re-create
-  // everything
-
-  gr->model()->destroyMeshCaches();
-  std::list<GFace*> faces = gr->faces();
-  for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
-    GFace *gf = (*it);
-    for(unsigned int i = 0; i < gf->triangles.size(); i++)
-      delete gf->triangles[i];
-    for(unsigned int i = 0; i < gf->quadrangles.size(); i++)
-      delete gf->quadrangles[i];
-    gf->triangles.clear();
-    gf->quadrangles.clear();
-    gf->deleteVertexArrays();
-  }
-
-  // TODO: re-create 1D mesh
-  /*for(int i = 0; i < out.numberofedges; i++){
-  MVertex *v[2];
-  v[0] = numberedV[out.edgelist[i * 2 + 0] - 1];
-  v[1] = numberedV[out.edgelist[i * 2 + 1] - 1];
-  //implement here the 1D mesh ...
-  }*/
-
-  bool needParam = (CTX::instance()->mesh.order > 1 &&
-                    CTX::instance()->mesh.secondOrderExperimental);
-  // re-create the triangular meshes FIXME: this can lead to hanging nodes for
-  // non manifold geometries (single surface connected to volume)
-  for(int i = 0; i < out.numberoftrifaces; i++){
-    // printf("%d %d %d\n",i,out.numberoftrifaces,needParam);
-
-    if (out.trifacemarkerlist[i] > 0) {
-      MVertex *v[3];
-      v[0] = numberedV[out.trifacelist[i * 3 + 0] - 1];
-      v[1] = numberedV[out.trifacelist[i * 3 + 1] - 1];
-      v[2] = numberedV[out.trifacelist[i * 3 + 2] - 1];
-      // do not recover prismatic faces !!!
-      GFace *gf = gr->model()->getFaceByTag(out.trifacemarkerlist[i]);
-
-      double guess[2] = {0, 0};
-      if (needParam) {
-        int Count = 0;
-        for(int j = 0; j < 3; j++){
-          if(!v[j]->onWhat()){
-            Msg::Error("Uncategorized vertex %d", v[j]->getNum());
-          }
-          else if(v[j]->onWhat()->dim() == 2){
-            double uu,vv;
-            v[j]->getParameter(0, uu);
-            v[j]->getParameter(1, vv);
-            guess[0] += uu;
-            guess[1] += vv;
-            Count++;
-          }
-          else if(v[j]->onWhat()->dim() == 1){
-            GEdge *ge = (GEdge*)v[j]->onWhat();
-            double UU;
-            v[j]->getParameter(0, UU);
-            SPoint2 param;
-            param = ge->reparamOnFace(gf, UU, 1);
-            guess[0] += param.x();
-            guess[1] += param.y();
-            Count++;
-          }
-          else if(v[j]->onWhat()->dim() == 0){
-            SPoint2 param;
-            GVertex *gv = (GVertex*)v[j]->onWhat();
-            param = gv->reparamOnFace(gf,1);
-            guess[0] += param.x();
-            guess[1] += param.y();
-            Count++;
-          }
-        }
-        if(Count != 0){
-          guess[0] /= Count;
-          guess[1] /= Count;
-        }
-      }
-
-      for(int j = 0; j < 3; j++){
-        if (out.trifacelist[i * 3 + j] - 1 >= initialSize){
-          //        if(v[j]->onWhat()->dim() == 3){
-          v[j]->onWhat()->mesh_vertices.erase
-            (std::find(v[j]->onWhat()->mesh_vertices.begin(),
-                       v[j]->onWhat()->mesh_vertices.end(),
-                       v[j]));
-          MVertex *v1b;
-          if(needParam){
-            // parametric coordinates should be set for the vertex !  (this is
-            // not 100 % safe yet, so we reserve that operation for high order
-            // meshes)
-            GPoint gp = gf->closestPoint(SPoint3(v[j]->x(), v[j]->y(), v[j]->z()), guess);
-            if(gp.g()){
-              v1b = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
-            }
-            else{
-              v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
-              Msg::Warning("The point was not projected back to the surface (%g %g %g)",
-                           v[j]->x(), v[j]->y(), v[j]->z());
-            }
-          }
-          else{
-            v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
-          }
-
-          gf->mesh_vertices.push_back(v1b);
-          numberedV[out.trifacelist[i * 3 + j] - 1] = v1b;
-          delete v[j];
-          v[j] = v1b;
-        }
-      }
-      // printf("new triangle %d %d %d\n", v[0]->onWhat()->dim(),
-      //        v[1]->onWhat()->dim(), v[2]->onWhat()->dim());
-      MTriangle *t = new MTriangle(v[0], v[1], v[2]);
-      gf->triangles.push_back(t);
-    } // do not do anything with prismatic faces
-  }
-
-  for(int i = 0; i < out.numberoftetrahedra; i++){
-    MVertex *v1 = numberedV[out.tetrahedronlist[i * 4 + 0] - 1];
-    MVertex *v2 = numberedV[out.tetrahedronlist[i * 4 + 1] - 1];
-    MVertex *v3 = numberedV[out.tetrahedronlist[i * 4 + 2] - 1];
-    MVertex *v4 = numberedV[out.tetrahedronlist[i * 4 + 3] - 1];
-    MTetrahedron *t = new  MTetrahedron(v1, v2, v3, v4);
-    gr->tetrahedra.push_back(t);
-  }
-}
-
-bool CreateAnEmptyVolumeMesh(GRegion *gr)
-{
-  //printf("creating an empty volume mesh\n");
-  splitQuadRecovery sqr;
-  tetgenio in, out;
-  std::vector<MVertex*> numberedV;
-  char opts[128];
-  buildTetgenStructure(gr, in, numberedV, sqr);
-  //printf("tetgen structure created\n");
-  sprintf(opts, "-Ype%sT%g",
-          (Msg::GetVerbosity() < 3) ? "Q" : (Msg::GetVerbosity() > 6) ? "V" : "",
-          CTX::instance()->mesh.toleranceInitialDelaunay);
-  try{
-    tetrahedralize(opts, &in, &out);
-  }
-  catch (int error){
-    Msg::Error("Self intersecting surface mesh");
-    return false;
-  }
-  //printf("creating an empty volume mesh done\n");
-  TransferTetgenMesh(gr, in, out, numberedV);
-  return true;
-}
-
-void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
+void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 {
   if(regions.empty()) return;
 
-  for(unsigned int i = 0; i < regions.size(); i++)
-    Msg::Info("Meshing volume %d (Delaunay)", regions[i]->tag());
+  if(CTX::instance()->mesh.algo3d != ALGO_3D_DELAUNAY &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_MMG3D) return;
 
-  // put all the faces in the region
   GRegion *gr = regions[0];
-  std::list<GFace*> faces = gr->faces();
-
-  std::set<GFace*> allFacesSet;
-  for(unsigned int i = 0; i < regions.size(); i++){
-    std::list<GFace*> f = regions[i]->faces();
-    allFacesSet.insert(f.begin(), f.end());
-    f = regions[i]->embeddedFaces();
-    allFacesSet.insert(f.begin(), f.end());
-  }
-  std::list<GFace*> allFaces;
-  for(std::set<GFace*>::iterator it = allFacesSet.begin(); it != allFacesSet.end(); it++){
-    allFaces.push_back(*it);
-  }
-  gr->set(allFaces);
-
-  // put all embedded edges in the same region
-  std::set<GEdge*> allEmbEdgesSet;
-  for(unsigned int i = 0; i < regions.size(); i++){
-    std::list<GEdge*> e = regions[i]->embeddedEdges();
-    allEmbEdgesSet.insert(e.begin(), e.end());
-  }
-  std::list<GEdge*> allEmbEdges;
-  allEmbEdges.insert(allEmbEdges.end(), allEmbEdgesSet.begin(), allEmbEdgesSet.end());
-  std::list<GEdge*> oldEmbEdges = gr->embeddedEdges();
-  gr->embeddedEdges() = allEmbEdges;
-
-  // put all embedded vertices in the same region
-  std::set<GVertex*> allEmbVerticesSet;
-  for(unsigned int i = 0; i < regions.size(); i++){
-    std::list<GVertex*> e = regions[i]->embeddedVertices();
-    allEmbVerticesSet.insert(e.begin(), e.end());
-  }
-  std::list<GVertex*> allEmbVertices;
-  allEmbVertices.insert(allEmbVertices.end(), allEmbVerticesSet.begin(),
-                        allEmbVerticesSet.end());
-  std::list<GVertex*> oldEmbVertices = gr->embeddedVertices();
-  gr->embeddedVertices() = allEmbVertices;
-
-  // mesh with tetgen, possibly changing the mesh on boundaries (leave
-  // this in block, so in/out are destroyed before we refine the mesh)
-  splitQuadRecovery sqr;
-  {
-    tetgenio in, out;
-    std::vector<MVertex*> numberedV;
-    char opts[128];
-    buildTetgenStructure(gr, in, numberedV, sqr);
-    sprintf(opts, "%sYpe%sT%g",
-            CTX::instance()->mesh.algo3d == ALGO_3D_RTREE ? "S0" : "",
-            (Msg::GetVerbosity() < 3) ? "Q" : (Msg::GetVerbosity() > 6) ? "V" : "",
-            CTX::instance()->mesh.toleranceInitialDelaunay);
-    try{
-      tetrahedralize(opts, &in, &out);
-    }
-    catch (int error){
-      Msg::Error("Self intersecting surface mesh, computing intersections "
-                 "(this could take a while)");
-      sprintf(opts, "dV");
-      try{
-        tetrahedralize(opts, &in, &out);
-        Msg::Info("%d intersecting faces have been saved into 'intersect.pos'",
-                  out.numberoftrifaces);
-        FILE *fp = Fopen("intersect.pos", "w");
-        if(fp){
-          fprintf(fp, "View \"intersections\" {\n");
-          for(int i = 0; i < out.numberoftrifaces; i++){
-            MVertex *v1 = numberedV[out.trifacelist[i * 3 + 0] - 1];
-            MVertex *v2 = numberedV[out.trifacelist[i * 3 + 1] - 1];
-            MVertex *v3 = numberedV[out.trifacelist[i * 3 + 2] - 1];
-            int surf = out.trifacemarkerlist[i];
-            fprintf(fp, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
-                    v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z(),
-                    v3->x(), v3->y(), v3->z(), surf, surf, surf);
-          }
-          fprintf(fp, "};\n");
-          fclose(fp);
-        }
-        else
-          Msg::Error("Could not open file 'intersect.pos'");
-      }
-      catch (int error2){
-        Msg::Error("Surface mesh is wrong, cannot do the 3D mesh");
-      }
-      gr->set(faces);
-      return;
-    }
-    TransferTetgenMesh(gr, in, out, numberedV);
-  }
-
-
-  // sort triangles in all model faces in order to be able to search in vectors
-  std::list<GFace*>::iterator itf =  allFaces.begin();
-  while(itf != allFaces.end()){
-    compareMTriangleLexicographic cmp;
-    std::sort((*itf)->triangles.begin(), (*itf)->triangles.end(), cmp);
-    ++itf;
-  }
-
-  // restore the initial set of faces and embedded edges/vertices
-  gr->set(faces);
-  gr->embeddedEdges() = oldEmbEdges;
-  gr->embeddedVertices() = oldEmbVertices;
-
-  // FIXME: this screws up refinement of standard meshes
-  //insertVerticesInRegion(gr,0,true);
-  //sqr.relocateVertices(gr,3);
-
-  // now do insertion of points
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL)
-    Msg::Error ("Frontal Layers Algo deprecated");
-  else if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_HEX)
-    Msg::Error ("Frontal Layers Algo deprecated");
-  else{
-    int nbvertices_filler = (old_algo_hexa()) ?
-      Filler::get_nbr_new_vertices() : Filler3D::get_nbr_new_vertices();
-    if(!nbvertices_filler && !LpSmoother::get_nbr_interior_vertices()){
-      insertVerticesInRegion(gr,2000000000,true);
-    }
-  }
-
-  // crete an initial mesh
-  if (sqr.buildPyramids (gr->model())){
-    RelocateVertices(regions, 3);
-  }
-}
-
-#else
-
-bool CreateAnEmptyVolumeMesh(GRegion *gr)
-{
-  Msg::Error("You should compile with TETGEN in order to create an empty volume mesh");
-  return false;
-}
-
-#endif
-
-static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
-{
-  GRegion *gr = regions[0];
-  std::list<GFace*> faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
   std::set<GFace*, GEntityLessThan> allFacesSet;
   for(unsigned int i = 0; i < regions.size(); i++){
-    std::list<GFace*> f = regions[i]->faces();
+    std::vector<GFace*> const& f = regions[i]->faces();
+    std::vector<GFace*> const& f_e = regions[i]->embeddedFaces();
+
     allFacesSet.insert(f.begin(), f.end());
-    f = regions[i]->embeddedFaces();
-    allFacesSet.insert(f.begin(), f.end());
+    allFacesSet.insert(f_e.begin(), f_e.end());
   }
-  std::list<GFace*> allFaces;
-  allFaces.insert(allFaces.end(), allFacesSet.begin(), allFacesSet.end());
+  std::vector<GFace*> allFaces(allFacesSet.begin(), allFacesSet.end());
   gr->set(allFaces);
 
   std::set<GEdge*> allEmbEdgesSet;
   for(unsigned int i = 0; i < regions.size(); i++){
-    std::list<GEdge*> e = regions[i]->embeddedEdges();
+    std::vector<GEdge*> const& e = regions[i]->embeddedEdges();
     allEmbEdgesSet.insert(e.begin(), e.end());
   }
-  std::list<GEdge*> allEmbEdges;
-  allEmbEdges.insert(allEmbEdges.end(), allEmbEdgesSet.begin(), allEmbEdgesSet.end());
-  std::list<GEdge*> oldEmbEdges = gr->embeddedEdges();
+  std::vector<GEdge*> allEmbEdges(allEmbEdgesSet.begin(), allEmbEdgesSet.end());
+  std::vector<GEdge*> oldEmbEdges = gr->embeddedEdges();
   gr->embeddedEdges() = allEmbEdges;
 
   std::set<GVertex*> allEmbVerticesSet;
   for(unsigned int i = 0; i < regions.size(); i++){
-    std::list<GVertex*> e = regions[i]->embeddedVertices();
+    std::vector<GVertex*> const& e = regions[i]->embeddedVertices();
     allEmbVerticesSet.insert(e.begin(), e.end());
   }
-  std::list<GVertex*> allEmbVertices;
-  allEmbVertices.insert(allEmbVertices.end(), allEmbVerticesSet.begin(),
-                        allEmbVerticesSet.end());
-  std::list<GVertex*> oldEmbVertices = gr->embeddedVertices();
+  std::vector<GVertex*> allEmbVertices(allEmbVerticesSet.begin(), allEmbVerticesSet.end());
+  std::vector<GVertex*> oldEmbVertices = gr->embeddedVertices();
   gr->embeddedVertices() = allEmbVertices;
 
-  meshGRegionBoundaryRecovery(gr);
+  bool success = meshGRegionBoundaryRecovery(gr);
   /*
     FILE *fp = Fopen("debug.pos", "w");
     if(fp){
@@ -718,10 +275,9 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
   */
 
   // sort triangles in all model faces in order to be able to search in vectors
-  std::list<GFace*>::iterator itf =  allFaces.begin();
+  std::vector<GFace*>::iterator itf = allFaces.begin();
   while(itf != allFaces.end()){
-    compareMTriangleLexicographic cmp;
-    std::sort((*itf)->triangles.begin(), (*itf)->triangles.end(), cmp);
+    std::sort((*itf)->triangles.begin(), (*itf)->triangles.end(), compareMTriangleLexicographic());
     ++itf;
   }
 
@@ -729,6 +285,8 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
   gr->set(faces);
   gr->embeddedEdges() = oldEmbEdges;
   gr->embeddedVertices() = oldEmbVertices;
+
+  if (!success) return;
 
   // now do insertion of points
 
@@ -753,24 +311,6 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
   }
 }
 
-void MeshDelaunayVolume(std::vector<GRegion*> &regions)
-{
-  if(regions.empty()) return;
-
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_DELAUNAY_NEW ||
-     CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D){
-    MeshDelaunayVolumeNewCode(regions);
-  }
-  else{
-#if defined(HAVE_TETGEN)
-    MeshDelaunayVolumeTetgen(regions);
-#else
-    Msg::Error("Old Delaunay algorithm requires Tetgen");
-#endif
-  }
-  return;
-}
-
 #if defined(HAVE_NETGEN)
 
 namespace nglib {
@@ -782,8 +322,8 @@ static void getAllBoundingVertices(GRegion *gr,
                                    std::set<MVertex*, MVertexLessThanNum>
                                    &allBoundingVertices)
 {
-  std::list<GFace*> faces = gr->faces();
-  std::list<GFace*>::iterator it = faces.begin();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator it = faces.begin();
 
   while (it != faces.end()){
     GFace *gf = (*it);
@@ -829,8 +369,8 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
       Ng_AddPoint(ngmesh, tmp);
     }
   }
-  std::list<GFace*> faces = gr->faces();
-  std::list<GFace*>::iterator it = faces.begin();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator it = faces.begin();
   while(it != faces.end()){
     GFace *gf = (*it);
     for(unsigned int i = 0; i< gf->triangles.size(); i++){
@@ -959,8 +499,8 @@ static void setRand(double r[6])
 
 void meshNormalsPointOutOfTheRegion(GRegion *gr)
 {
-  std::list<GFace*> faces = gr->faces();
-  std::list<GFace*>::iterator it = faces.begin();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator it = faces.begin();
 
   // perform intersection check in normalized coordinates
   SBoundingBox3d bbox = gr->bounds();
@@ -1001,7 +541,7 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
       N[1] += rrr[2] * v1[1] + rrr[3] * v2[1];
       N[2] += rrr[4] * v1[2] + rrr[5] * v2[2];
       norme(N);
-      std::list<GFace*>::iterator it_b = faces.begin();
+      std::vector<GFace*>::iterator it_b = faces.begin();
       while(it_b != faces.end()){
         GFace *gf_b = (*it_b);
         for(unsigned int i_b = 0; i_b < gf_b->triangles.size(); i_b++){
@@ -1071,11 +611,11 @@ void meshGRegion::operator() (GRegion *gr)
 
   if(MeshTransfiniteVolume(gr)) return;
 
-  std::list<GFace*> faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
 
   // sanity check for frontal algo
   if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL){
-    for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
+    for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
       if((*it)->quadrangles.size()){
         Msg::Error("Cannot use frontal 3D algorithm with quadrangles on boundary");
         return;
@@ -1156,7 +696,7 @@ bool buildFaceSearchStructure(GModel *model, fs_cont &search)
   std::set<GFace*> faces_to_consider;
   GModel::riter rit = model->firstRegion();
   while(rit != model->lastRegion()){
-    std::list <GFace *> _faces = (*rit)->faces();
+    std::vector<GFace *> _faces = (*rit)->faces();
     faces_to_consider.insert( _faces.begin(),_faces.end());
     rit++;
   }

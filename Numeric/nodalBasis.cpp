@@ -63,6 +63,28 @@ namespace ClosureGen {
     }
   }
 
+  void rotatePyr(int iFace, int iRot, int iSign, double uI, double vI,
+                 double &uO, double &vO, double &wO)
+  {
+    if(iSign < 0){
+      double tmp = uI;
+      uI = vI;
+      vI = tmp;
+    }
+    for(int i = 0; i < iRot; i++){
+      double tmp = uI;
+      uI = -vI;
+      vI = tmp;
+    }
+    switch(iFace){
+      case 0: uO =   uI; vO = vI-1; wO = vI; break;
+      case 1: uO = vI-1; vO =  -uI; wO = vI; break;
+      case 2: uO = 1-vI; vO =   uI; wO = vI; break;
+      case 3: uO =  -uI; vO = 1-vI; wO = vI; break;
+      case 4: uO =   vI; vO =   uI; wO =  0; break;
+    }
+  }
+
   void generate1dVertexClosure(nodalBasis::clCont &closure, int order)
   {
     closure.clear();
@@ -98,7 +120,7 @@ namespace ClosureGen {
   {
     closure.clear();
     closure.resize((order + 1) * (order + 2) / 2);
-    closure.type = ElementType::getTag(TYPE_TRI, order, false);
+    closure.type = ElementType::getType(TYPE_TRI, order, false);
 
     switch(order){
     case 0:
@@ -193,7 +215,7 @@ namespace ClosureGen {
       if(serendip) break;
     }
     for(int r = 0; r < nNod*2 ; r++){
-      closure[r].type = ElementType::getTag(TYPE_LIN, order);
+      closure[r].type = ElementType::getType(TYPE_LIN, order);
       closureRef[r] = 0;
     }
   }
@@ -350,7 +372,7 @@ namespace ClosureGen {
   {
     closure.clear();
     const nodalBasis &fsFace = *BasisFactory::getNodalBasis
-      (ElementType::getTag(TYPE_QUA, order, serendip));
+      (ElementType::getType(TYPE_QUA, order, serendip));
     for(int iRotate = 0; iRotate < 4; iRotate++){
       for(int iSign = 1; iSign >= -1; iSign -= 2){
         for(int iFace = 0; iFace < 6; iFace++){
@@ -467,7 +489,7 @@ namespace ClosureGen {
     closure.clear();
     bool isTriangle = iFace<2;
     if(isTriangle && iRotate > 2) return;
-    closure.type = ElementType::getTag(isTriangle ? TYPE_TRI : TYPE_QUA, order);
+    closure.type = ElementType::getType(isTriangle ? TYPE_TRI : TYPE_QUA, order);
 
     int nNodes = isTriangle ? (order+1)*(order+2)/2 : (order+1)*(order+1);
     closure.resize(nNodes);
@@ -613,6 +635,47 @@ namespace ClosureGen {
 
   }
 
+  void generateFaceClosurePyr(nodalBasis::clCont &closure, int order,
+                              bool serendip, const fullMatrix<double> &points)
+  {
+    closure.clear();
+    const int typeTri = ElementType::getType(TYPE_TRI, order, serendip);
+    const int typeQua = ElementType::getType(TYPE_QUA, order, serendip);
+    const nodalBasis *fsFaceTri = BasisFactory::getNodalBasis(typeTri);
+    const nodalBasis *fsFaceQua = BasisFactory::getNodalBasis(typeQua);
+
+    for(int iRotate = 0; iRotate < 4; iRotate++){
+      for(int iSign = 1; iSign >= -1; iSign -= 2){
+        for(int iFace = 0; iFace < 5; iFace++){
+          const nodalBasis *fsFace;
+          if (iFace < 4)
+            fsFace = fsFaceTri;
+          else
+            fsFace = fsFaceQua;
+          nodalBasis::closure cl;
+          cl.type = fsFace->type;
+          cl.resize(fsFace->points.size1());
+          for(unsigned int iNode = 0; iNode < cl.size(); ++iNode){
+            double u,v,w;
+            rotatePyr(iFace, iRotate, iSign, fsFace->points(iNode, 0),
+                      fsFace->points(iNode, 1), u, v, w);
+            cl[iNode] = 0;
+            double D = std::numeric_limits<double>::max();
+            for(int jNode = 0; jNode < points.size1(); ++jNode){
+              double d = pow2(points(jNode, 0) - u) + pow2(points(jNode, 1) - v) +
+                         pow2(points(jNode, 2) - w);
+              if(d < D){
+                cl[iNode] = jNode;
+                D = d;
+              }
+            }
+          }
+          closure.push_back(cl);
+        }
+      }
+    }
+  }
+
   void generate2dEdgeClosure(nodalBasis::clCont &closure, int order, int nNod = 3)
   {
     closure.clear();
@@ -626,7 +689,7 @@ namespace ClosureGen {
         closure[j].push_back(nNod + (order-1)*j + i);
         closure[nNod+j].push_back(nNod + (order-1)*(j+1) -i -1);
       }
-      closure[j].type = closure[nNod+j].type = ElementType::getTag(TYPE_LIN, order);
+      closure[j].type = closure[nNod+j].type = ElementType::getType(TYPE_LIN, order);
     }
   }
 
@@ -645,10 +708,10 @@ nodalBasis::nodalBasis(int tag)
 {
   using namespace ClosureGen;
   type = tag;
-  parentType = ElementType::ParentTypeFromTag(tag);
-  order = ElementType::OrderFromTag(tag);
-  serendip = ElementType::SerendipityFromTag(tag) > 1;
-  dimension = ElementType::DimensionFromTag(tag);
+  parentType = ElementType::getParentType(tag);
+  order = ElementType::getOrder(tag);
+  serendip = ElementType::getSerendipity(tag) > 1;
+  dimension = ElementType::getDimension(tag);
 
   switch(parentType){
   case TYPE_PNT :
@@ -722,6 +785,7 @@ nodalBasis::nodalBasis(int tag)
   case TYPE_PYR :
     numFaces = 5;
     points = gmshGeneratePointsPyramid(order, serendip);
+    generateFaceClosurePyr(closures, order, serendip, points);
     break;
   }
 }
@@ -742,4 +806,63 @@ void nodalBasis::getReferenceNodesForBezier(fullMatrix<double> &nodes) const
       gmshGeneratePoints(data, nodes);
     }
   }
+}
+
+bool nodalBasis::forwardTransformation(const fullMatrix<double>& nodes,
+                                       fullMatrix<double>& projection,
+                                       int elementType)  const {
+  
+  if (elementType != -1 && elementType != type) {
+    std::cout << "Incorrect element type " << std::endl;
+    return false;
+  }
+  if (nodes.size1() != points.size1()) return false;
+  
+  projection.resize(nodes.size1(),points.size1());
+  f(nodes,projection);
+  
+  projection.invertInPlace();
+  // projection.transposeInPlace();
+  return true;
+}
+
+
+bool nodalBasis::forwardRenumbering(const fullMatrix<double>& nodes,int* renum,
+                                    int elementType)  const {
+  
+  if (nodes.size1() != points.size1()) {
+    std::cout << "Non-matching node counts " 
+              << nodes.size1() << " vs " 
+              << points.size1() << std::endl;
+    return false;
+  }
+  
+  double tol = 1e-10;
+
+  fullMatrix<double> tfo;
+  if (!forwardTransformation(nodes,tfo, elementType)) {
+    std::cout << "Could not find forward transformation " << std::endl;
+    return false;
+  }
+
+  // tfo.print("Projection matrix","%1.f");
+  
+  for (int i=0;i<nodes.size1();i++) {
+    int idx = -1;
+    int nbOnes = 0;
+    int nbZeroes = 0;
+    for (int j=0;j<nodes.size1();j++) {
+      if (fabs(tfo(i,j)-1.0) < tol) {idx = j; nbOnes++;}
+      if (fabs(tfo(i,j))     < tol) {nbZeroes++;}
+    }
+    if (nbOnes   != 1            )     return false; 
+    if (nbZeroes != nodes.size1() - 1) return false;
+    renum[i] = idx;
+  }
+
+  // for (int i=0;i<nodes.size1();i++) {
+  //   std::cout << i << " -> " << renum[i] << std::endl;
+  // }
+
+  return renum;
 }

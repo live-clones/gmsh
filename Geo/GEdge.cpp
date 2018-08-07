@@ -46,16 +46,14 @@ void GEdge::deleteMesh(bool onlyDeleteElements)
   }
   for(unsigned int i = 0; i < lines.size(); i++) delete lines[i];
   lines.clear();
-  _normals.clear();
   deleteVertexArrays();
   model()->destroyMeshCaches();
 }
 
-void GEdge::setMeshMaster(GEdge* ge,int ori)
+void GEdge::setMeshMaster(GEdge* ge, int ori)
 {
-#if !defined(_MSC_VER)
-#warning missing:computation of affine transformation during setMeshMaster
-#endif
+  // FIXME: missing computation of affine transformation during setMeshMaster
+
   GEntity::setMeshMaster(ge);
   masterOrientation = ori > 0 ? 1 : -1;
 
@@ -73,7 +71,7 @@ void GEdge::setMeshMaster(GEdge* ge,int ori)
   }
 }
 
-void GEdge::setMeshMaster(GEdge* ge,const std::vector<double>& tfo)
+void GEdge::setMeshMaster(GEdge* ge, const std::vector<double> &tfo)
 {
   SPoint3 oriXYZ0 = ge->getBeginVertex()->xyz();
   SPoint3 oriXYZ1 = ge->getEndVertex()->xyz();
@@ -130,7 +128,7 @@ void GEdge::setMeshMaster(GEdge* ge,const std::vector<double>& tfo)
             this->getBeginVertex()->tag(),
             this->getEndVertex()->tag(),
             fwd ? d00.norm() : d01.norm(),
-            fwd ? d11.norm() : d10.norm(),tol);
+            fwd ? d11.norm() : d10.norm(), tol);
 }
 
 void GEdge::reverse()
@@ -142,18 +140,23 @@ void GEdge::reverse()
     (*line)->reverse();
 }
 
-unsigned int GEdge::getNumMeshElements() const
+unsigned int GEdge::getNumMeshElementsByType(const int familyType) const
 {
-  return lines.size();
+  if(familyType == TYPE_LIN) return lines.size();
+
+  return 0;
 }
+
+struct owns_parent
+{
+  // TODO C++11 use lambda instead
+  template <class T>
+  bool operator()(T const* const line) const {return line->ownsParent();}
+};
 
 unsigned int GEdge::getNumMeshParentElements()
 {
-  unsigned int n = 0;
-  for(unsigned int i = 0; i < lines.size(); i++)
-    if(lines[i]->ownsParent())
-      n++;
-  return n;
+  return std::count_if(lines.begin(), lines.end(), owns_parent());
 }
 
 void GEdge::getNumMeshElements(unsigned *const c) const
@@ -171,6 +174,13 @@ MElement *GEdge::getMeshElement(unsigned int index) const
 {
   if(index < lines.size())
     return lines[index];
+  return 0;
+}
+
+MElement *GEdge::getMeshElementByType(const int familyType, const unsigned int index) const
+{
+  if(familyType == TYPE_LIN) return lines[index];
+
   return 0;
 }
 
@@ -194,14 +204,15 @@ void GEdge::addFace(GFace *f)
 
 void GEdge::delFace(GFace *f)
 {
-  std::list<GFace*>::iterator it = std::find(l_faces.begin(), l_faces.end(), f);
+  std::vector<GFace*>::iterator it = std::find(l_faces.begin(), l_faces.end(), f);
   if(it != l_faces.end()) l_faces.erase(it);
 }
 
-SBoundingBox3d GEdge::bounds() const
+SBoundingBox3d GEdge::bounds(bool fast) const
 {
   SBoundingBox3d bbox;
-  if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve && geomType() != PartitionCurve){
+  if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve &&
+     geomType() != PartitionCurve){
     Range<double> tr = parBounds(0);
     const int N = 10;
     for(int i = 0; i < N; i++){
@@ -210,9 +221,10 @@ SBoundingBox3d GEdge::bounds() const
       bbox += SPoint3(p.x(), p.y(), p.z());
     }
   }
-  else{
-    for(unsigned int i = 0; i < getNumMeshElements(); i++)
-      for(unsigned int j = 0; j < getMeshElement(i)->getNumVertices(); j++)
+  else {
+    std::size_t ipp = std::max(getNumMeshElements() / 20, std::size_t(1));
+    for(size_type i = 0; i < getNumMeshElements(); i += ipp)
+      for(size_type j = 0; j < getMeshElement(i)->getNumVertices(); j++)
         bbox += getMeshElement(i)->getVertex(j)->point();
   }
   return bbox;
@@ -386,14 +398,8 @@ SPoint2 GEdge::reparamOnFace(const GFace *face, double epar,int dir) const
 
 double GEdge::curvature(double par) const
 {
-  SVector3 d1 = firstDer(par);
-  SVector3 d2 = secondDer(par);
-
-  double one_over_norm = 1. / norm(d1);
-
-  SVector3 cross_prod = crossprod(d1,d2);
-
-  return ( norm(cross_prod) * one_over_norm * one_over_norm * one_over_norm );
+  SVector3 const d1 = firstDer(par);
+  return norm(crossprod(d1, secondDer(par))) * std::pow(1.0 / norm(d1), 3);
 }
 
 double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
@@ -401,8 +407,8 @@ double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
   double *t = 0, *w = 0;
   gmshGaussLegendre1D(nbQuadPoints, &t, &w);
   double L = 0.0;
-  const double rapJ = (u1 - u0) * .5;
-  for (int i = 0; i < nbQuadPoints; i++){
+  const double rapJ = (u1 - u0) * 0.5;
+  for(int i = 0; i < nbQuadPoints; i++) {
     const double ui = u0 * 0.5 * (1. - t[i]) + u1 * 0.5 * (1. + t[i]);
     SVector3 der = firstDer(ui);
     const double d = norm(der);
@@ -413,14 +419,11 @@ double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
 
 /*
   consider a curve x(t) and a point y
-
   use a golden section algorithm that minimizes
-
   min_t \|x(t)-y\|
 */
-
-const double GOLDEN  = (1. + sqrt(5.)) / 2.;
-const double GOLDEN2 = 2 - GOLDEN;
+const double GOLDEN = (1.0 + std::sqrt(5.0)) / 2.0;
+const double GOLDEN2 = 2.0 - GOLDEN;
 
 // x1 and x3 are the current bounds; the minimum is between them.
 // x2 is the center point, which is closer to x1 than to x3
@@ -432,7 +435,7 @@ double goldenSectionSearch(const GEdge *ge, const SPoint3 &q, double x1,
   double x4 = x2 + GOLDEN2 * (x3 - x2);
 
   // Evaluate termination criterion
-  if (fabs(x3 - x1) < tau * (fabs(x2) + fabs(x4)))
+  if(std::abs(x3 - x1) < tau * (std::abs(x2) + std::abs(x4)))
     return (x3 + x1) / 2;
 
   const SVector3 dp4 = q - ge->position(x4);
@@ -441,15 +444,14 @@ double goldenSectionSearch(const GEdge *ge, const SPoint3 &q, double x1,
   const double d4 = dp4.norm();
   const double d2 = dp2.norm();
 
-  if (d4 < d2)
-    return goldenSectionSearch(ge, q, x2, x4, x3, tau);
-  else
-    return goldenSectionSearch(ge,q , x4, x2, x1, tau);
+  return d4 < d2 ? goldenSectionSearch(ge, q, x2, x4, x3, tau) :
+                   goldenSectionSearch(ge, q, x4, x2, x1, tau);
 }
 
 GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
 {
-  // printf("looking for closest point in curve %d to point %g %g\n",tag(),q.x(),q.y());
+  // printf("looking for closest point in curve %d to point %g
+  // %g\n",tag(),q.x(),q.y());
 
   const int nbSamples = 100;
 
@@ -460,12 +462,12 @@ GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
 
   double DMIN = 1.e22;
   double topt = tMin;
-  const double DT = (tMax - tMin) / (nbSamples - 1.) ;
-  for (int i = 0; i < nbSamples; i++){
+  const double DT = (tMax - tMin) / (nbSamples - 1.);
+  for(int i = 0; i < nbSamples; i++) {
     t = tMin + i * DT;
     const SVector3 dp = q - position(t);
     const double D = dp.norm();
-    if (D < DMIN) {
+    if(D < DMIN) {
       topt = t;
       DMIN = D;
     }
@@ -473,12 +475,12 @@ GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
 
   // printf("parameter %g as an initial guess (dist = %g)\n",topt,DMIN);
 
-  if (topt == tMin)
-    t = goldenSectionSearch (this, q, topt, topt + DT/2, topt + DT,  1.e-9);
-  else if (topt == tMax)
-    t = goldenSectionSearch (this, q, topt - DT, topt - DT/2 , topt, 1.e-9);
+  if(topt == tMin)
+    t = goldenSectionSearch(this, q, topt, topt + DT / 2, topt + DT, 1.e-9);
+  else if(topt == tMax)
+    t = goldenSectionSearch(this, q, topt - DT, topt - DT / 2, topt, 1.e-9);
   else
-    t = goldenSectionSearch (this, q, topt - DT, topt, topt + DT, 1.e-9);
+    t = goldenSectionSearch(this, q, topt - DT, topt, topt + DT, 1.e-9);
 
   const SVector3 dp = q - position(t);
   // const double D = dp.norm();
@@ -494,14 +496,50 @@ double GEdge::parFromPoint(const SPoint3 &P) const
   return t;
 }
 
+bool GEdge::refineProjection(const SVector3 &Q, double &u, int MaxIter,
+                             double relax, double tol, double &err) const
+{
+  double maxDist = tol * CTX::instance()->lc;
+
+  SVector3 P = position(u);
+  SVector3 dPQ = P - Q;
+
+  Range<double> uu = parBounds(0);
+  double uMin = uu.low();
+  double uMax = uu.high();
+  err = dPQ.norm();
+
+  int iter = 0;
+  while(iter++ < MaxIter && err > maxDist) {
+    SVector3 der = firstDer(u);
+    double du = dot(dPQ, der) / dot(der, der);
+
+    if(du < tol && dPQ.norm() > maxDist) du = 1;
+
+    // if (fabs(du) < tol) break;
+
+    double uNew = u - relax * du;
+    uNew = std::min(uMax, std::max(uMin, uNew));
+    P = position(uNew);
+
+    dPQ = P - Q;
+    err = dPQ.norm();
+    // err2 = fabs(uNew - u);
+    u = uNew;
+  }
+  return err <= maxDist;
+}
+
 bool GEdge::XYZToU(const double X, const double Y, const double Z,
-                   double &u, const double relax) const
+                   double &u, const double relax,bool first) const
 {
   const int MaxIter = 25;
-  const int NumInitGuess = 11;
+  const int NumInitGuess = 21;
 
-  double err;//, err2;
-  int iter;
+  std::map<double,double> errorVsParameter;
+
+  double err;
+  double tol = 1e-8;
 
   Range<double> uu = parBounds(0);
   double uMin = uu.low();
@@ -509,70 +547,58 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
 
   const SVector3 Q(X, Y, Z);
 
-  double init[NumInitGuess];
+  double uTry = uMin;
 
-  for (int i = 0; i < NumInitGuess; i++)
-    init[i] = uMin + (uMax - uMin) / (NumInitGuess - 1) * i;
-
-  for(int i = 0; i < NumInitGuess; i++){
-    u = init[i];
-    double uNew = u;
-    //err2 = 1.0;
-    iter = 1;
-
-    SVector3 P = position(u);
-    SVector3 dPQ = P - Q;
-    err = dPQ.norm();
-
-    if (err < 1.e-8 * CTX::instance()->lc) return true;
-
-    while(iter++ < MaxIter && err > 1e-8 * CTX::instance()->lc) {
-      SVector3 der = firstDer(u);
-      uNew = u - relax * dot(dPQ,der) / dot(der,der);
-      uNew = std::min(uMax,std::max(uMin,uNew));
-      P = position(uNew);
-
-      dPQ = P - Q;
-      err = dPQ.norm();
-      //err2 = fabs(uNew - u);
-      u = uNew;
+  for(int i = 0; i < NumInitGuess; i++) {
+    uTry = uMin + (uMax - uMin) / (NumInitGuess - 1) * i;
+    if(refineProjection(Q, uTry, MaxIter, relax, tol, err)) {
+      u = uTry;
+      return true;
     }
-
-    if (err < 1e-8 * CTX::instance()->lc) return true;
+    errorVsParameter[err] = uTry;
   }
 
-  if(relax > 1.e-2) {
-    // Msg::Info("point %g %g %g on edge %d : Relaxation factor = %g",
-    //           X, Y, Z, 0.75 * relax);
-    return XYZToU(X, Y, Z, u, 0.75 * relax);
+  if(relax > 1.e-1) {
+    if(XYZToU(X, Y, Z, uTry, 0.75 * relax, false)) {
+      u = uTry;
+      return true;
+    }
+    SVector3 P = position(uTry);
+    SVector3 dPQ = P - Q;
+    errorVsParameter[dPQ.norm()] = uTry;
   }
 
-  // Msg::Error("Could not converge reparametrisation of point (%e,%e,%e) on edge %d",
-  //            X, Y, Z, tag());
+  u = errorVsParameter.begin()->second;
+  if(first) {
+    Msg::Warning("Could not converge parametrisation of (%g,%g,%g) on edge %d, "
+                 "taking parameter with lowest error ",
+                 X, Y, Z, tag());
+  }
+
   return false;
 }
 
 // regions that bound this entity or that this entity bounds.
-std::list<GRegion*> GEdge::regions() const
+std::list<GRegion *> GEdge::regions() const
 {
-  std::list<GFace*> _faces = faces();
-  std::list<GFace*>::const_iterator it = _faces.begin();
-  std::set<GRegion*> _r;
-  for ( ; it != _faces.end() ; ++it){
-    std::list<GRegion*> temp = (*it)->regions();
-    _r.insert (temp.begin(), temp.end());
+  std::vector<GFace *> _faces = faces();
+  std::vector<GFace *>::const_iterator it = _faces.begin();
+  std::set<GRegion *> _r;
+  for(; it != _faces.end(); ++it) {
+    std::list<GRegion *> temp = (*it)->regions();
+    _r.insert(temp.begin(), temp.end());
   }
-  std::list<GRegion*> ret;
-  ret.insert (ret.begin(), _r.begin(), _r.end());
+  std::list<GRegion *> ret;
+  ret.insert(ret.begin(), _r.begin(), _r.end());
   return ret;
 }
 
 void GEdge::relocateMeshVertices()
 {
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++){
+  for(unsigned int i = 0; i < mesh_vertices.size(); i++) {
     MVertex *v = mesh_vertices[i];
     double u0 = 0;
-    if(v->getParameter(0, u0)){
+    if(v->getParameter(0, u0)) {
       GPoint p = point(u0);
       v->x() = p.x();
       v->y() = p.y();
@@ -583,11 +609,13 @@ void GEdge::relocateMeshVertices()
 
 SPoint3 GEdge::closestPoint(SPoint3 &p, double tolerance)
 {
-  if (!_cp || _cp->tol() != tolerance)    {
-    if(_cp)printf("coucou %12.15E %22.15E \n",tolerance,_cp->tol());
-    else printf("coucou %12.5E \n",tolerance);
-    if (_cp) delete _cp;
-    _cp = new closestPointFinder (this, tolerance);
+  if(!_cp || _cp->tol() != tolerance) {
+    if(_cp)
+      printf("coucou %12.15E %22.15E \n", tolerance, _cp->tol());
+    else
+      printf("coucou %12.5E \n", tolerance);
+    if(_cp) delete _cp;
+    _cp = new closestPointFinder(this, tolerance);
   }
   return (*_cp)(p);
 }
@@ -612,15 +640,14 @@ static double sqDistPointSegment(const SPoint3 &p, const SPoint3 &s0, const SPoi
 static void _discretize(double tol, GEdge * edge, std::vector<sortedPoint> &upts, int pos0)
 {
   const int pos1 = upts[pos0].next;
-  const SPoint3 & p0 = upts[pos0].p;
+  const SPoint3 &p0 = upts[pos0].p;
   const double t0 = upts[pos0].t;
-  const SPoint3 & p1 = upts[pos1].p;
+  const SPoint3 &p1 = upts[pos1].p;
   const double t1 = upts[pos1].t;
   const double tmid = 0.5 * (t0 + t1);
   const SPoint3 pmid(edge->position(tmid));
   const double d2 = sqDistPointSegment(pmid, p0, p1);
-  if (d2 < tol * tol)
-    return;
+  if(d2 < tol * tol) return;
   sortedPoint pnt = {pmid, tmid, pos1};
   upts.push_back(pnt);
   const int posmid = upts.size() - 1;
@@ -698,22 +725,53 @@ void GEdge::mesh(bool verbose)
 #if defined(HAVE_MESH)
   meshGEdge mesher;
   mesher(this);
-  if(_compound.size()){ // Some faces are meshed together
-    if(_compound[0] == this){ // I'm the one that makes the compound job
+  if(_compound.size()) { // Some faces are meshed together
+    if(_compound[0] == this) { // I'm the one that makes the compound job
       bool ok = true;
-      for(unsigned int i = 0; i < _compound.size(); i++){
-	GEdge *ge = (GEdge*)_compound[i];
-	ok &= (ge->meshStatistics.status == GEdge::DONE);
+      for(unsigned int i = 0; i < _compound.size(); i++) {
+        GEdge *ge = (GEdge *)_compound[i];
+        ok &= (ge->meshStatistics.status == GEdge::DONE);
       }
-      if(!ok){
-        meshStatistics.status = GEdge::PENDING;
-      }
-      else{
-	meshCompound(this);
+      if(!ok) { meshStatistics.status = GEdge::PENDING; }
+      else {
+        meshCompound(this);
         meshStatistics.status = GEdge::DONE;
-	return;
+        return;
       }
     }
   }
 #endif
+}
+
+bool GEdge::reorder(const int elementType, const std::vector<int> &ordering)
+{
+  if(lines.front()->getTypeForMSH() != elementType) { return false; }
+
+  if(ordering.size() != lines.size()) return false;
+
+  for(std::vector<int>::const_iterator it = ordering.begin();
+      it != ordering.end(); ++it) {
+    if(*it < 0 || *it >= static_cast<int>(lines.size())) return false;
+  }
+
+  std::vector<MLine *> newLinesOrder(lines.size());
+  for(unsigned int i = 0; i < ordering.size(); i++) {
+    newLinesOrder[i] = lines[ordering[i]];
+  }
+
+#if __cplusplus >= 201103L
+  lines = std::move(newLinesOrder);
+#else
+  lines = newLinesOrder;
+#endif
+
+  return true;
+}
+
+std::vector<GVertex*> GEdge::vertices() const
+{
+  std::vector<GVertex*> res;
+  if (getBeginVertex()) res.push_back(getBeginVertex());
+  if (getEndVertex())   res.push_back(getEndVertex());
+  return res;
 }

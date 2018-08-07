@@ -77,7 +77,11 @@ void surfacePointWithExclusionRegion::print (FILE *f, int i)
 
 }
 
-my_wrapper::my_wrapper (SPoint2 sp) : _tooclose (false), _p(sp) {}
+my_wrapper::my_wrapper(const SPoint2 &sp)
+  : _tooclose(false)
+  , _p(sp)
+{
+}
 
 bool rtree_callback(surfacePointWithExclusionRegion *neighbour,void* point)
 {

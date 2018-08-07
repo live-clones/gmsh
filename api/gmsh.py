@@ -413,8 +413,8 @@ class model:
     @staticmethod
     def getEntitiesForPhysicalGroup(dim, tag):
         """
-        Get the tags of all the (elementary) geometrical entities making up the
-        physical group of dimension `dim' and tag `tag'.
+        Get the tags of the geometrical entities making up the physical group of
+        dimension `dim' and tag `tag'.
 
         Return `tags'.
         """
@@ -430,6 +430,27 @@ class model:
                 "gmshModelGetEntitiesForPhysicalGroup returned non-zero error code: ",
                 ierr.value)
         return _ovectorint(api_tags_, api_tags_n_.value)
+
+    @staticmethod
+    def getPhysicalGroupsForEntity(dim, tag):
+        """
+        Get the tags of the physical groups (if any) to which the geometrical
+        entity of dimension `dim' and tag `tag' belongs.
+
+        Return `physicalTags'.
+        """
+        api_physicalTags_, api_physicalTags_n_ = POINTER(c_int)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetPhysicalGroupsForEntity(
+            c_int(dim),
+            c_int(tag),
+            byref(api_physicalTags_), byref(api_physicalTags_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetPhysicalGroupsForEntity returned non-zero error code: ",
+                ierr.value)
+        return _ovectorint(api_physicalTags_, api_physicalTags_n_.value)
 
     @staticmethod
     def addPhysicalGroup(dim, tags, tag=-1):
@@ -583,6 +604,22 @@ class model:
             api_zmax_.value)
 
     @staticmethod
+    def getDimension():
+        """
+        Get the geometrical dimension of the current model.
+
+        Return an integer.
+        """
+        ierr = c_int()
+        api__result__ = lib.gmshModelGetDimension(
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetDimension returned non-zero error code: ",
+                ierr.value)
+        return api__result__
+
+    @staticmethod
     def addDiscreteEntity(dim, tag=-1, boundary=[]):
         """
         Add a discrete geometrical entity (defined by a mesh) of dimension `dim' in
@@ -644,6 +681,86 @@ class model:
                 ierr.value)
         return _ostring(api_entityType_)
 
+    @staticmethod
+    def getNormals(tag, parametricCoord):
+        """
+        Get the normal to the surface with tag `tag' at the parametric coordinates
+        `parametricCoord'. `parametricCoord' are given by pair of u and v
+        coordinates, concatenated. `normals' are returned as triplets of x, y and z
+        components, concatenated.
+
+        Return `normals'.
+        """
+        api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+        api_normals_, api_normals_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetNormals(
+            c_int(tag),
+            api_parametricCoord_, api_parametricCoord_n_,
+            byref(api_normals_), byref(api_normals_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetNormals returned non-zero error code: ",
+                ierr.value)
+        return _ovectordouble(api_normals_, api_normals_n_.value)
+
+    @staticmethod
+    def getCurvatures(tag, parametricCoord):
+        """
+        Get the curvature of the curve with tag `tag' at the parametric coordinates
+        `parametricCoord'.
+
+        Return `curvatures'.
+        """
+        api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+        api_curvatures_, api_curvatures_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetCurvatures(
+            c_int(tag),
+            api_parametricCoord_, api_parametricCoord_n_,
+            byref(api_curvatures_), byref(api_curvatures_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetCurvatures returned non-zero error code: ",
+                ierr.value)
+        return _ovectordouble(api_curvatures_, api_curvatures_n_.value)
+
+    @staticmethod
+    def getPrincipalCurvatures(tag, parametricCoord):
+        """
+        Get the principal curvatures of the surface with tag `tag' at the
+        parametric coordinates `parametricCoord', as well as their respective
+        directions. `parametricCoord' are given by pair of u and v coordinates,
+        concatenated.
+
+        Return `curvatureMax', `curvatureMin', `directionMax', `directionMin'.
+        """
+        api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+        api_curvatureMax_, api_curvatureMax_n_ = POINTER(c_double)(), c_size_t()
+        api_curvatureMin_, api_curvatureMin_n_ = POINTER(c_double)(), c_size_t()
+        api_directionMax_, api_directionMax_n_ = POINTER(c_double)(), c_size_t()
+        api_directionMin_, api_directionMin_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetPrincipalCurvatures(
+            c_int(tag),
+            api_parametricCoord_, api_parametricCoord_n_,
+            byref(api_curvatureMax_), byref(api_curvatureMax_n_),
+            byref(api_curvatureMin_), byref(api_curvatureMin_n_),
+            byref(api_directionMax_), byref(api_directionMax_n_),
+            byref(api_directionMin_), byref(api_directionMin_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetPrincipalCurvatures returned non-zero error code: ",
+                ierr.value)
+        return (
+            _ovectordouble(api_curvatureMax_, api_curvatureMax_n_.value),
+            _ovectordouble(api_curvatureMin_, api_curvatureMin_n_.value),
+            _ovectordouble(api_directionMax_, api_directionMax_n_.value),
+            _ovectordouble(api_directionMin_, api_directionMin_n_.value))
+
 
     class mesh:
         """
@@ -662,58 +779,6 @@ class model:
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelMeshGenerate returned non-zero error code: ",
-                    ierr.value)
-
-        @staticmethod
-        def homology(domainTags=[], subdomainTags=[], dims=[]):
-            """
-            Compute a basis representation for homology spaces after a mesh has been
-            generated. The computation domain is given in a list of physical group tags
-            `domainTags'; if empty, the whole mesh is the domain. The computation
-            subdomain for relative homology computation is given in a list of physical
-            group tags `subdomainTags'; if empty, absolute homology is computed. The
-            dimensions homology bases to be computed are given in the list `dim'; if
-            empty, all bases are computed. Resulting basis representation chains are
-            stored as physical groups in the mesh.
-            """
-            api_domainTags_, api_domainTags_n_ = _ivectorint(domainTags)
-            api_subdomainTags_, api_subdomainTags_n_ = _ivectorint(subdomainTags)
-            api_dims_, api_dims_n_ = _ivectorint(dims)
-            ierr = c_int()
-            lib.gmshModelMeshHomology(
-                api_domainTags_, api_domainTags_n_,
-                api_subdomainTags_, api_subdomainTags_n_,
-                api_dims_, api_dims_n_,
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshHomology returned non-zero error code: ",
-                    ierr.value)
-
-        @staticmethod
-        def cohomology(domainTags=[], subdomainTags=[], dims=[]):
-            """
-            Compute a basis representation for cohomology spaces after a mesh has been
-            generated. The computation domain is given in a list of physical group tags
-            `domainTags'; if empty, the whole mesh is the domain. The computation
-            subdomain for relative cohomology computation is given in a list of
-            physical group tags `subdomainTags'; if empty, absolute cohomology is
-            computed. The dimensions homology bases to be computed are given in the
-            list `dim'; if empty, all bases are computed. Resulting basis
-            representation cochains are stored as physical groups in the mesh.
-            """
-            api_domainTags_, api_domainTags_n_ = _ivectorint(domainTags)
-            api_subdomainTags_, api_subdomainTags_n_ = _ivectorint(subdomainTags)
-            api_dims_, api_dims_n_ = _ivectorint(dims)
-            ierr = c_int()
-            lib.gmshModelMeshCohomology(
-                api_domainTags_, api_domainTags_n_,
-                api_subdomainTags_, api_subdomainTags_n_,
-                api_dims_, api_dims_n_,
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshCohomology returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -758,19 +823,6 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def removeDuplicateNodes():
-            """
-            Remove duplicate mesh nodes in the mesh of the current model.
-            """
-            ierr = c_int()
-            lib.gmshModelMeshRemoveDuplicateNodes(
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshRemoveDuplicateNodes returned non-zero error code: ",
-                    ierr.value)
-
-        @staticmethod
         def getLastEntityError():
             """
             Get the last entities (if any) where a meshing error occurred. Currently
@@ -792,8 +844,8 @@ class model:
         @staticmethod
         def getLastNodeError():
             """
-            Get the last mesh nodes (if any) where a meshing error occurred. Currently
-            only populated by the new 3D meshing algorithms.
+            Get the last nodes (if any) where a meshing error occurred. Currently only
+            populated by the new 3D meshing algorithms.
 
             Return `nodeTags'.
             """
@@ -809,16 +861,20 @@ class model:
             return _ovectorint(api_nodeTags_, api_nodeTags_n_.value)
 
         @staticmethod
-        def getNodes(dim=-1, tag=-1):
+        def getNodes(dim=-1, tag=-1, includeBoundary=False):
             """
-            Get the mesh nodes of the entity of dimension `dim' and `tag' tag. If `tag'
-            < 0, get the nodes for all entities of dimension `dim'. If `dim' and `tag'
-            are negative, get all the nodes in the mesh. `nodeTags' contains the node
-            tags (their unique, strictly positive identification numbers). `coord' is a
-            vector of length 3 times the length of `nodeTags' that contains the (x, y,
-            z) coordinates of the nodes, concatenated. If `dim' >= 0, `parametricCoord'
-            contains the parametric coordinates of the nodes, if available. The length
-            of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'.
+            Get the nodes classified on the entity of dimension `dim' and tag `tag'. If
+            `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and
+            `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the
+            node tags (their unique, strictly positive identification numbers). `coord'
+            is a vector of length 3 times the length of `nodeTags' that contains the
+            (x, y, z) coordinates of the nodes, concatenated. If `dim' >= 0,
+            `parametricCoord' contains the parametric coordinates u or (u, v) the
+            nodes, if available. The length of `parametricCoord' can be 0 or `dim'
+            times the length of `nodeTags'. If `includeBoundary' is set, also return
+            the nodes classified on the boundary of the entity (wich will be
+            reparametrized on the entity if `dim' >= 0 in order to compute their
+            parametric coordinates).
 
             Return `nodeTags', `coord', `parametricCoord'.
             """
@@ -832,6 +888,7 @@ class model:
                 byref(api_parametricCoord_), byref(api_parametricCoord_n_),
                 c_int(dim),
                 c_int(tag),
+                c_int(bool(includeBoundary)),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -843,20 +900,132 @@ class model:
                 _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
 
         @staticmethod
+        def getNode(nodeTag):
+            """
+            Get the coordinates and the parametric coordinates (if any) of the node
+            with tag `tag'. This is a sometimes useful but inefficient way of accessing
+            nodes, as it relies on a cache stored in the model. For large meshes all
+            the nodes in the model should be numbered in a continuous sequence of tags
+            from 1 to N to maintain reasonnable performance (in this case the internal
+            cache is based on a vector; otherwise it uses a map).
+
+            Return `coord', `parametricCoord'.
+            """
+            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
+            api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetNode(
+                c_int(nodeTag),
+                byref(api_coord_), byref(api_coord_n_),
+                byref(api_parametricCoord_), byref(api_parametricCoord_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetNode returned non-zero error code: ",
+                    ierr.value)
+            return (
+                _ovectordouble(api_coord_, api_coord_n_.value),
+                _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
+
+        @staticmethod
+        def rebuildNodeCache(onlyIfNecessary=True):
+            """
+            Rebuild the node cache.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRebuildNodeCache(
+                c_int(bool(onlyIfNecessary)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshRebuildNodeCache returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def getNodesForPhysicalGroup(dim, tag):
+            """
+            Get the nodes from all the elements belonging to the physical group of
+            dimension `dim' and tag `tag'. `nodeTags' contains the node tags; `coord'
+            is a vector of length 3 times the length of `nodeTags' that contains the
+            (x, y, z) coordinates of the nodes, concatenated.
+
+            Return `nodeTags', `coord'.
+            """
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
+            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetNodesForPhysicalGroup(
+                c_int(dim),
+                c_int(tag),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
+                byref(api_coord_), byref(api_coord_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetNodesForPhysicalGroup returned non-zero error code: ",
+                    ierr.value)
+            return (
+                _ovectorint(api_nodeTags_, api_nodeTags_n_.value),
+                _ovectordouble(api_coord_, api_coord_n_.value))
+
+        @staticmethod
+        def setNodes(dim, tag, nodeTags, coord, parametricCoord=[]):
+            """
+            Set the nodes classified on the geometrical entity of dimension `dim' and
+            tag `tag'. `nodeTags' contains the node tags (their unique, strictly
+            positive identification numbers). `coord' is a vector of length 3 times the
+            length of `nodeTags' that contains the (x, y, z) coordinates of the nodes,
+            concatenated. The optional `parametricCoord' vector contains the parametric
+            coordinates of the nodes, if any. The length of `parametricCoord' can be 0
+            or `dim' times the length of `nodeTags'.
+            """
+            api_nodeTags_, api_nodeTags_n_ = _ivectorint(nodeTags)
+            api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+            ierr = c_int()
+            lib.gmshModelMeshSetNodes(
+                c_int(dim),
+                c_int(tag),
+                api_nodeTags_, api_nodeTags_n_,
+                api_coord_, api_coord_n_,
+                api_parametricCoord_, api_parametricCoord_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshSetNodes returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def reclassifyNodes():
+            """
+            Reclassify all nodes on their associated geometrical entity, based on the
+            elements. Can be used when importing nodes in bulk (e.g. by associating
+            them all to a single volume), to reclassify them correctly on model
+            surfaces, curves, etc. after the elements have been set.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshReclassifyNodes(
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshReclassifyNodes returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def getElements(dim=-1, tag=-1):
             """
-            Get the mesh elements of the entity of dimension `dim' and `tag' tag. If
-            `tag' < 0, get the elements for all entities of dimension `dim'. If `dim'
-            and `tag' are negative, get all the elements in the mesh. `elementTypes'
-            contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
-            `getElementProperties' to obtain the properties for a given element type).
-            `elementTags' is a vector of the same length as `elementTypes'; each entry
-            is a vector containing the tags (unique, strictly positive identifiers) of
-            the elements of the corresponding type. `nodeTags' is also a vector of the
-            same length as `elementTypes'; each entry is a vector of length equal to
-            the number of elements of the given type times the number of nodes for this
-            type of element, that contains the node tags of all the elements of the
-            given type, concatenated.
+            Get the elements classified on the entity of dimension `dim' and tag `tag'.
+            If `tag' < 0, get the elements for all entities of dimension `dim'. If
+            `dim' and `tag' are negative, get all the elements in the mesh.
+            `elementTypes' contains the MSH types of the elements (e.g. `2' for 3-node
+            triangles: see `getElementProperties' to obtain the properties for a given
+            element type). `elementTags' is a vector of the same length as
+            `elementTypes'; each entry is a vector containing the tags (unique,
+            strictly positive identifiers) of the elements of the corresponding type.
+            `nodeTags' is also a vector of the same length as `elementTypes'; each
+            entry is a vector of length equal to the number of elements of the given
+            type times the number of nodes for this type of element, that contains the
+            node tags of all the elements of the given type, concatenated.
 
             Return `elementTypes', `elementTags', `nodeTags'.
             """
@@ -881,12 +1050,121 @@ class model:
                 _ovectorvectorint(api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_))
 
         @staticmethod
+        def getElement(elementTag):
+            """
+            Get the type and node tags of the element with tag `tag'. This is a
+            sometimes useful but inefficient way of accessing elements, as it relies on
+            a cache stored in the model. For large meshes all the elements in the model
+            should be numbered in a continuous sequence of tags from 1 to N to maintain
+            reasonnable performance (in this case the internal cache is based on a
+            vector; otherwise it uses a map).
+
+            Return `elementType', `nodeTags'.
+            """
+            api_elementType_ = c_int()
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElement(
+                c_int(elementTag),
+                byref(api_elementType_),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetElement returned non-zero error code: ",
+                    ierr.value)
+            return (
+                api_elementType_.value,
+                _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
+
+        @staticmethod
+        def getElementByCoordinates(x, y, z):
+            """
+            Get the tag, type and node tags of the element located at coordinates (`x',
+            `y', `z'). This is a sometimes useful but inefficient way of accessing
+            elements, as it relies on a search in a spatial octree.
+
+            Return `elementTag', `elementType', `nodeTags'.
+            """
+            api_elementTag_ = c_int()
+            api_elementType_ = c_int()
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementByCoordinates(
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                byref(api_elementTag_),
+                byref(api_elementType_),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetElementByCoordinates returned non-zero error code: ",
+                    ierr.value)
+            return (
+                api_elementTag_.value,
+                api_elementType_.value,
+                _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
+
+        @staticmethod
+        def setElements(dim, tag, elementTypes, elementTags, nodeTags):
+            """
+            Set the elements of the entity of dimension `dim' and tag `tag'. `types'
+            contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
+            the Gmsh reference manual). `elementTags' is a vector of the same length as
+            `types'; each entry is a vector containing the tags (unique, strictly
+            positive identifiers) of the elements of the corresponding type. `nodeTags'
+            is also a vector of the same length as `types'; each entry is a vector of
+            length equal to the number of elements of the give type times the number of
+            nodes per element, that contains the node tags of all the elements of the
+            given type, concatenated.
+            """
+            api_elementTypes_, api_elementTypes_n_ = _ivectorint(elementTypes)
+            api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = _ivectorvectorint(elementTags)
+            api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_ = _ivectorvectorint(nodeTags)
+            ierr = c_int()
+            lib.gmshModelMeshSetElements(
+                c_int(dim),
+                c_int(tag),
+                api_elementTypes_, api_elementTypes_n_,
+                api_elementTags_, api_elementTags_n_, api_elementTags_nn_,
+                api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshSetElements returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def getElementTypes(dim=-1, tag=-1):
+            """
+            Get the types of elements in the entity of dimension `dim' and tag `tag'.
+            If `tag' < 0, get the types for all entities of dimension `dim'. If `dim'
+            and `tag' are negative, get all the types in the mesh.
+
+            Return `elementTypes'.
+            """
+            api_elementTypes_, api_elementTypes_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementTypes(
+                byref(api_elementTypes_), byref(api_elementTypes_n_),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetElementTypes returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorint(api_elementTypes_, api_elementTypes_n_.value)
+
+        @staticmethod
         def getElementProperties(elementType):
             """
             Get the properties of an element of type `elementType': its name
             (`elementName'), dimension (`dim'), order (`order'), number of nodes
-            (`numNodes') and parametric coordinates of nodes (`parametricCoord' vector,
-            of length `dim' times `numNodes').
+            (`numNodes') and parametric node coordinates (`parametricCoord' vector, of
+            length `dim' times `numNodes').
 
             Return `elementName', `dim', `order', `numNodes', `parametricCoord'.
             """
@@ -916,78 +1194,16 @@ class model:
                 _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
 
         @staticmethod
-        def getIntegrationData(integrationType, functionSpaceType, dim=-1, tag=-1):
+        def getElementsByType(elementType, tag=-1, task=0, numTasks=1):
             """
-            Get the integration data for mesh elements of the entity of dimension `dim'
-            and `tag' tag. The data is returned by element type and by element, in the
-            same order as the data returned by `getElements'. `integrationType'
-            specifies the type of integration (e.g. "Gauss4") and `functionSpaceType'
-            specifies the function space (e.g. "IsoParametric"). `integrationPoints'
-            contains for each element type a vector (of length 4 times the number of
-            integration points) containing the parametric coordinates (u, v, w) and the
-            weight associated to the integration points. `integrationData' contains for
-            each element type a vector (of size 13 times the number of integration
-            points) containing the (x, y, z) coordinates of the integration point, the
-            determinant of the Jacobian and the 9 entries (by row) of the 3x3 Jacobian
-            matrix. If `functionSpaceType' is provided, `functionSpaceNumComponents'
-            return the number of components returned by the evaluation of a basis
-            function in the space and `functionSpaceData' contains for each element
-            type the evaluation of the basis functions at the integration points.
-
-            Return `integrationPoints', `integrationData', `functionSpaceNumComponents', `functionSpaceData'.
-            """
-            api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
-            api_integrationData_, api_integrationData_n_, api_integrationData_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
-            api_functionSpaceNumComponents_ = c_int()
-            api_functionSpaceData_, api_functionSpaceData_n_, api_functionSpaceData_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetIntegrationData(
-                c_char_p(integrationType.encode()),
-                c_char_p(functionSpaceType.encode()),
-                byref(api_integrationPoints_), byref(api_integrationPoints_n_), byref(api_integrationPoints_nn_),
-                byref(api_integrationData_), byref(api_integrationData_n_), byref(api_integrationData_nn_),
-                byref(api_functionSpaceNumComponents_),
-                byref(api_functionSpaceData_), byref(api_functionSpaceData_n_), byref(api_functionSpaceData_nn_),
-                c_int(dim),
-                c_int(tag),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetIntegrationData returned non-zero error code: ",
-                    ierr.value)
-            return (
-                _ovectorvectordouble(api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_),
-                _ovectorvectordouble(api_integrationData_, api_integrationData_n_, api_integrationData_nn_),
-                api_functionSpaceNumComponents_.value,
-                _ovectorvectordouble(api_functionSpaceData_, api_functionSpaceData_n_, api_functionSpaceData_nn_))
-
-        @staticmethod
-        def getElementTypes(dim=-1, tag=-1):
-            """
-            Get the types of mesh elements in the entity of dimension `dim' and `tag'
-            tag. If `tag' < 0, get the types for all entities of dimension `dim'. If
-            `dim' and `tag' are negative, get all the types in the mesh.
-
-            Return `elementTypes'.
-            """
-            api_elementTypes_, api_elementTypes_n_ = POINTER(c_int)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetElementTypes(
-                byref(api_elementTypes_), byref(api_elementTypes_n_),
-                c_int(dim),
-                c_int(tag),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetElementTypes returned non-zero error code: ",
-                    ierr.value)
-            return _ovectorint(api_elementTypes_, api_elementTypes_n_.value)
-
-        @staticmethod
-        def getElementsByType(elementType, dim=-1, tag=-1):
-            """
-            Get the mesh elements in the same way as `getElements', but for a single
-            `elementType'.
+            Get the elements of type `elementType' classified on the entity of of tag
+            `tag'. If `tag' < 0, get the elements for all entities. `elementTags' is a
+            vector containing the tags (unique, strictly positive identifiers) of the
+            elements of the corresponding type. `nodeTags' is a vector of length equal
+            to the number of elements of the given type times the number of nodes for
+            this type of element, that contains the node tags of all the elements of
+            the given type, concatenated. If `numTasks' > 1, only compute and return
+            the part of the data indexed by `task'.
 
             Return `elementTags', `nodeTags'.
             """
@@ -998,8 +1214,9 @@ class model:
                 c_int(elementType),
                 byref(api_elementTags_), byref(api_elementTags_n_),
                 byref(api_nodeTags_), byref(api_nodeTags_n_),
-                c_int(dim),
                 c_int(tag),
+                c_size_t(task),
+                c_size_t(numTasks),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -1010,166 +1227,201 @@ class model:
                 _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
 
         @staticmethod
-        def getIntegrationDataByType(elementType, integrationType, functionSpaceType, dim=-1, tag=-1):
+        def preallocateElementsByType(elementType, elementTag, nodeTag, tag=-1):
             """
-            Get the integration data for mesh elements in the same way as
-            `getIntegrationData', but for a single `elementType'.
+            Preallocate the data for `getElementsByType'. This is necessary only if
+            `getElementsByType' is called with `numTasks' > 1.
 
-            Return `integrationPoints', `integrationData', `functionSpaceNumComponents', `functionSpaceData'.
+            Return `elementTags', `nodeTags'.
+            """
+            api_elementTags_, api_elementTags_n_ = POINTER(c_int)(), c_size_t()
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshPreallocateElementsByType(
+                c_int(elementType),
+                c_int(bool(elementTag)),
+                c_int(bool(nodeTag)),
+                byref(api_elementTags_), byref(api_elementTags_n_),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshPreallocateElementsByType returned non-zero error code: ",
+                    ierr.value)
+            return (
+                _ovectorint(api_elementTags_, api_elementTags_n_.value),
+                _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
+
+        @staticmethod
+        def getJacobians(elementType, integrationType, tag=-1, task=0, numTasks=1):
+            """
+            Get the Jacobians of all the elements of type `elementType' classified on
+            the entity of dimension `dim' and tag `tag', at the integration points
+            required by the `integrationType' integration rule (e.g. "Gauss4"). Data is
+            returned by element, with elements in the same order as in `getElements'
+            and `getElementsByType'. `jacobians' contains for each element the 9
+            entries of a 3x3 Jacobian matrix (by row), for each integration point.
+            `determinants' contains for each element the determinant of the Jacobian
+            matrix for each integration point. `points' contains for each element the
+            (x, y, z) coordinates of the integration points. If `tag' < 0, get the
+            Jacobian data for all entities. If `numTasks' > 1, only compute and return
+            the part of the data indexed by `task'.
+
+            Return `jacobians', `determinants', `points'.
+            """
+            api_jacobians_, api_jacobians_n_ = POINTER(c_double)(), c_size_t()
+            api_determinants_, api_determinants_n_ = POINTER(c_double)(), c_size_t()
+            api_points_, api_points_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetJacobians(
+                c_int(elementType),
+                c_char_p(integrationType.encode()),
+                byref(api_jacobians_), byref(api_jacobians_n_),
+                byref(api_determinants_), byref(api_determinants_n_),
+                byref(api_points_), byref(api_points_n_),
+                c_int(tag),
+                c_size_t(task),
+                c_size_t(numTasks),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetJacobians returned non-zero error code: ",
+                    ierr.value)
+            return (
+                _ovectordouble(api_jacobians_, api_jacobians_n_.value),
+                _ovectordouble(api_determinants_, api_determinants_n_.value),
+                _ovectordouble(api_points_, api_points_n_.value))
+
+        @staticmethod
+        def preallocateJacobians(elementType, integrationType, jacobian, determinant, point, tag=-1):
+            """
+            Preallocate the data required by `getJacobians'. This is necessary only if
+            `getJacobians' is called with `numTasks' > 1.
+
+            Return `jacobians', `determinants', `points'.
+            """
+            api_jacobians_, api_jacobians_n_ = POINTER(c_double)(), c_size_t()
+            api_determinants_, api_determinants_n_ = POINTER(c_double)(), c_size_t()
+            api_points_, api_points_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshPreallocateJacobians(
+                c_int(elementType),
+                c_char_p(integrationType.encode()),
+                c_int(bool(jacobian)),
+                c_int(bool(determinant)),
+                c_int(bool(point)),
+                byref(api_jacobians_), byref(api_jacobians_n_),
+                byref(api_determinants_), byref(api_determinants_n_),
+                byref(api_points_), byref(api_points_n_),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshPreallocateJacobians returned non-zero error code: ",
+                    ierr.value)
+            return (
+                _ovectordouble(api_jacobians_, api_jacobians_n_.value),
+                _ovectordouble(api_determinants_, api_determinants_n_.value),
+                _ovectordouble(api_points_, api_points_n_.value))
+
+        @staticmethod
+        def getBasisFunctions(elementType, integrationType, functionSpaceType):
+            """
+            Get the basis functions of the element of type `elementType' for the given
+            `integrationType' integration rule (e.g. "Gauss4") and `functionSpaceType'
+            function space (e.g. "IsoParametric"). `integrationPoints' contains the
+            parametric coordinates (u, v, w) and the weight for each integeration
+            point, concatenated. `numComponents' returns the number of components of a
+            basis function. `basisFunctions' contains the evaluation of the basis
+            functions at the integration points.
+
+            Return `integrationPoints', `numComponents', `basisFunctions'.
             """
             api_integrationPoints_, api_integrationPoints_n_ = POINTER(c_double)(), c_size_t()
-            api_integrationData_, api_integrationData_n_ = POINTER(c_double)(), c_size_t()
-            api_functionSpaceNumComponents_ = c_int()
-            api_functionSpaceData_, api_functionSpaceData_n_ = POINTER(c_double)(), c_size_t()
+            api_numComponents_ = c_int()
+            api_basisFunctions_, api_basisFunctions_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetIntegrationDataByType(
+            lib.gmshModelMeshGetBasisFunctions(
                 c_int(elementType),
                 c_char_p(integrationType.encode()),
                 c_char_p(functionSpaceType.encode()),
                 byref(api_integrationPoints_), byref(api_integrationPoints_n_),
-                byref(api_integrationData_), byref(api_integrationData_n_),
-                byref(api_functionSpaceNumComponents_),
-                byref(api_functionSpaceData_), byref(api_functionSpaceData_n_),
-                c_int(dim),
-                c_int(tag),
+                byref(api_numComponents_),
+                byref(api_basisFunctions_), byref(api_basisFunctions_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetIntegrationDataByType returned non-zero error code: ",
+                    "gmshModelMeshGetBasisFunctions returned non-zero error code: ",
                     ierr.value)
             return (
                 _ovectordouble(api_integrationPoints_, api_integrationPoints_n_.value),
-                _ovectordouble(api_integrationData_, api_integrationData_n_.value),
-                api_functionSpaceNumComponents_.value,
-                _ovectordouble(api_functionSpaceData_, api_functionSpaceData_n_.value))
+                api_numComponents_.value,
+                _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value))
 
         @staticmethod
-        def setNodes(dim, tag, nodeTags, coord, parametricCoord=[]):
+        def precomputeBasisFunctions(elementType):
             """
-            Set the mesh nodes in the geometrical entity of dimension `dim' and tag
-            `tag'. `nodetags' contains the node tags (their unique, strictly positive
-            identification numbers). `coord' is a vector of length 3 times the length
-            of `nodeTags' that contains the (x, y, z) coordinates of the nodes,
-            concatenated. The optional `parametricCoord' vector contains the parametric
-            coordinates of the nodes, if any. The length of `parametricCoord' can be 0
-            or `dim' times the length of `nodeTags'.
+            Precomputes the basis functions corresponding to `elementType'.
             """
-            api_nodeTags_, api_nodeTags_n_ = _ivectorint(nodeTags)
-            api_coord_, api_coord_n_ = _ivectordouble(coord)
-            api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
             ierr = c_int()
-            lib.gmshModelMeshSetNodes(
-                c_int(dim),
+            lib.gmshModelMeshPrecomputeBasisFunctions(
+                c_int(elementType),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshPrecomputeBasisFunctions returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def getBarycenters(elementType, tag, fast, primary, task=0, numTasks=1):
+            """
+            Get the barycenters of all elements of type `elementType' classified on the
+            entity of tag `tag'. If `primary' is set, only the primary nodes of the
+            elements are taken into account for the barycenter calculation. If `fast'
+            is set, the function returns the sum of the primary node coordinates
+            (without normalizing by the number of nodes). If `numTasks' > 1, only
+            compute and return the part of the data indexed by `task'.
+
+            Return `barycenters'.
+            """
+            api_barycenters_, api_barycenters_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetBarycenters(
+                c_int(elementType),
                 c_int(tag),
-                api_nodeTags_, api_nodeTags_n_,
-                api_coord_, api_coord_n_,
-                api_parametricCoord_, api_parametricCoord_n_,
+                c_int(bool(fast)),
+                c_int(bool(primary)),
+                byref(api_barycenters_), byref(api_barycenters_n_),
+                c_size_t(task),
+                c_size_t(numTasks),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetNodes returned non-zero error code: ",
+                    "gmshModelMeshGetBarycenters returned non-zero error code: ",
                     ierr.value)
+            return _ovectordouble(api_barycenters_, api_barycenters_n_.value)
 
         @staticmethod
-        def setElements(dim, tag, elementTypes, elementTags, nodeTags):
+        def preallocateBarycenters(elementType, tag=-1):
             """
-            Set the mesh elements of the entity of dimension `dim' and `tag' tag.
-            `types' contains the MSH types of the elements (e.g. `2' for 3-node
-            triangles: see the Gmsh reference manual). `elementTags' is a vector of the
-            same length as `types'; each entry is a vector containing the tags (unique,
-            strictly positive identifiers) of the elements of the corresponding type.
-            `nodeTags' is also a vector of the same length as `types'; each entry is a
-            vector of length equal to the number of elements of the give type times the
-            number of nodes per element, that contains the node tags of all the
-            elements of the given type, concatenated.
+            Preallocate the data required by `getBarycenters'. This is necessary only
+            if `getBarycenters' is called with `numTasks' > 1.
+
+            Return `barycenters'.
             """
-            api_elementTypes_, api_elementTypes_n_ = _ivectorint(elementTypes)
-            api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = _ivectorvectorint(elementTags)
-            api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_ = _ivectorvectorint(nodeTags)
+            api_barycenters_, api_barycenters_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshSetElements(
-                c_int(dim),
+            lib.gmshModelMeshPreallocateBarycenters(
+                c_int(elementType),
+                byref(api_barycenters_), byref(api_barycenters_n_),
                 c_int(tag),
-                api_elementTypes_, api_elementTypes_n_,
-                api_elementTags_, api_elementTags_n_, api_elementTags_nn_,
-                api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_,
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetElements returned non-zero error code: ",
+                    "gmshModelMeshPreallocateBarycenters returned non-zero error code: ",
                     ierr.value)
-
-        @staticmethod
-        def reclassifyNodes():
-            """
-            Redistribute all mesh nodes on their associated geometrical entity, based
-            on the mesh elements. Can be used when importing mesh nodes in bulk (e.g.
-            by associating them all to a single volume), to reclassify them correctly
-            on model surfaces, curves, etc.
-            """
-            ierr = c_int()
-            lib.gmshModelMeshReclassifyNodes(
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshReclassifyNodes returned non-zero error code: ",
-                    ierr.value)
-
-        @staticmethod
-        def getNode(nodeTag):
-            """
-            Get the coordinates and the parametric coordinates (if any) of the mesh
-            node with tag `tag'. This is a useful by inefficient way of accessing mesh
-            node data, as it relies on a cache stored in the model. For large meshes
-            all the nodes in the model should be numbered in a continuous sequence of
-            tags from 1 to N to maintain reasonnable performance (in this case the
-            internal cache is based on a vector; otherwise it uses a map).
-
-            Return `coord', `parametricCoord'.
-            """
-            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
-            api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetNode(
-                c_int(nodeTag),
-                byref(api_coord_), byref(api_coord_n_),
-                byref(api_parametricCoord_), byref(api_parametricCoord_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetNode returned non-zero error code: ",
-                    ierr.value)
-            return (
-                _ovectordouble(api_coord_, api_coord_n_.value),
-                _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
-
-        @staticmethod
-        def getElement(elementTag):
-            """
-            Get the type and node tags of the mesh element with tag `tag'. This is a
-            useful but inefficient way of accessing mesh element data, as it relies on
-            a cache stored in the model. For large meshes all the elements in the model
-            should be numbered in a continuous sequence of tags from 1 to N to maintain
-            reasonnable performance (in this case the internal cache is based on a
-            vector; otherwise it uses a map).
-
-            Return `elementType', `nodeTags'.
-            """
-            api_elementType_ = c_int()
-            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetElement(
-                c_int(elementTag),
-                byref(api_elementType_),
-                byref(api_nodeTags_), byref(api_nodeTags_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetElement returned non-zero error code: ",
-                    ierr.value)
-            return (
-                api_elementType_.value,
-                _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
+            return _ovectordouble(api_barycenters_, api_barycenters_n_.value)
 
         @staticmethod
         def setSize(dimTags, size):
@@ -1192,9 +1444,9 @@ class model:
         def setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.):
             """
             Set a transfinite meshing constraint on the curve `tag', with `numNodes'
-            mesh nodes distributed according to `meshType' and `coef'. Currently
-            supported types are "Progression" (geometrical progression with power
-            `coef') and "Bump" (refinement toward both extremities of the curve).
+            nodes distributed according to `meshType' and `coef'. Currently supported
+            types are "Progression" (geometrical progression with power `coef') and
+            "Bump" (refinement toward both extremities of the curve).
             """
             ierr = c_int()
             lib.gmshModelMeshSetTransfiniteCurve(
@@ -1341,21 +1593,65 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setPeriodic(dim, tags, tagsMaster, affineTransformation):
+        def reorderElements(elementType, tag, ordering):
+            """
+            Reorder the elements of type `elementType' classified on the entity of tag
+            `tag' according to `ordering'.
+            """
+            api_ordering_, api_ordering_n_ = _ivectorint(ordering)
+            ierr = c_int()
+            lib.gmshModelMeshReorderElements(
+                c_int(elementType),
+                c_int(tag),
+                api_ordering_, api_ordering_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshReorderElements returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def renumberNodes():
+            """
+            Renumber the nodes tags in a contiunous sequence.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRenumberNodes(
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshRenumberNodes returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def renumberElements():
+            """
+            Renumber the elements tags in a contiunous sequence.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRenumberElements(
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshRenumberElements returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def setPeriodic(dim, tags, tagsSource, affineTransformation):
             """
             Set the meshes of the entities of dimension `dim' and tag `tags' as
-            periodic copies of the meshes of entities `tagsMaster', using the affine
+            periodic copies of the meshes of entities `tagsSource', using the affine
             transformation specified in `affineTransformation' (16 entries of a 4x4
             matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.
             """
             api_tags_, api_tags_n_ = _ivectorint(tags)
-            api_tagsMaster_, api_tagsMaster_n_ = _ivectorint(tagsMaster)
+            api_tagsSource_, api_tagsSource_n_ = _ivectorint(tagsSource)
             api_affineTransformation_, api_affineTransformation_n_ = _ivectordouble(affineTransformation)
             ierr = c_int()
             lib.gmshModelMeshSetPeriodic(
                 c_int(dim),
                 api_tags_, api_tags_n_,
-                api_tagsMaster_, api_tagsMaster_n_,
+                api_tagsSource_, api_tagsSource_n_,
                 api_affineTransformation_, api_affineTransformation_n_,
                 byref(ierr))
             if ierr.value != 0:
@@ -1390,6 +1686,71 @@ class model:
                 api_tagMaster_.value,
                 _ovectorpair(api_nodes_, api_nodes_n_.value),
                 _ovectordouble(api_affineTransform_, api_affineTransform_n_.value))
+
+        @staticmethod
+        def removeDuplicateNodes():
+            """
+            Remove duplicate nodes in the mesh of the current model.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRemoveDuplicateNodes(
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshRemoveDuplicateNodes returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def homology(domainTags=[], subdomainTags=[], dims=[]):
+            """
+            Compute a basis representation for homology spaces after a mesh has been
+            generated. The computation domain is given in a list of physical group tags
+            `domainTags'; if empty, the whole mesh is the domain. The computation
+            subdomain for relative homology computation is given in a list of physical
+            group tags `subdomainTags'; if empty, absolute homology is computed. The
+            dimensions homology bases to be computed are given in the list `dim'; if
+            empty, all bases are computed. Resulting basis representation chains are
+            stored as physical groups in the mesh.
+            """
+            api_domainTags_, api_domainTags_n_ = _ivectorint(domainTags)
+            api_subdomainTags_, api_subdomainTags_n_ = _ivectorint(subdomainTags)
+            api_dims_, api_dims_n_ = _ivectorint(dims)
+            ierr = c_int()
+            lib.gmshModelMeshHomology(
+                api_domainTags_, api_domainTags_n_,
+                api_subdomainTags_, api_subdomainTags_n_,
+                api_dims_, api_dims_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshHomology returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def cohomology(domainTags=[], subdomainTags=[], dims=[]):
+            """
+            Compute a basis representation for cohomology spaces after a mesh has been
+            generated. The computation domain is given in a list of physical group tags
+            `domainTags'; if empty, the whole mesh is the domain. The computation
+            subdomain for relative cohomology computation is given in a list of
+            physical group tags `subdomainTags'; if empty, absolute cohomology is
+            computed. The dimensions homology bases to be computed are given in the
+            list `dim'; if empty, all bases are computed. Resulting basis
+            representation cochains are stored as physical groups in the mesh.
+            """
+            api_domainTags_, api_domainTags_n_ = _ivectorint(domainTags)
+            api_subdomainTags_, api_subdomainTags_n_ = _ivectorint(subdomainTags)
+            api_dims_, api_dims_n_ = _ivectorint(dims)
+            ierr = c_int()
+            lib.gmshModelMeshCohomology(
+                api_domainTags_, api_domainTags_n_,
+                api_subdomainTags_, api_subdomainTags_n_,
+                api_dims_, api_dims_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshCohomology returned non-zero error code: ",
+                    ierr.value)
 
 
         class field:
@@ -1642,8 +2003,8 @@ class model:
         @staticmethod
         def addBSpline(pointTags, tag=-1):
             """
-            Adds a cubic b-spline curve with `pointTags' control points. If `tag' is
-            positive, sets the tag explicitly; otherwise a new tag is selected
+            Add a cubic b-spline curve with `pointTags' control points. If `tag' is
+            positive, set the tag explicitly; otherwise a new tag is selected
             automatically. Creates a periodic curve if the first and last points are
             the same. Return the tag of the b-spline curve.
 
@@ -2084,9 +2445,9 @@ class model:
             def setTransfiniteCurve(tag, nPoints, meshType="Progression", coef=1.):
                 """
                 Set a transfinite meshing constraint on the curve `tag', with `numNodes'
-                mesh nodes distributed according to `meshType' and `coef'. Currently
-                supported types are "Progression" (geometrical progression with power
-                `coef') and "Bump" (refinement toward both extreminties of the curve).
+                nodes distributed according to `meshType' and `coef'. Currently supported
+                types are "Progression" (geometrical progression with power `coef') and
+                "Bump" (refinement toward both extreminties of the curve).
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetTransfiniteCurve(
@@ -2754,7 +3115,7 @@ class model:
         def addTorus(x, y, z, r1, r2, tag=-1, angle=2*pi):
             """
             Add a torus, defined by its center (`x', `y', `z') and its 2 radii `r' and
-            `r2'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is
+            `r2'. If `tag' is positive, set the tag explicitly; otherwise a new tag is
             selected automatically. The optional argument `angle' defines the angular
             opening (from 0 to 2*Pi). Return the tag of the wedge.
 

@@ -10,7 +10,7 @@
 #include "BasisFactory.h"
 #include "pointsGenerators.h"
 
-std::map<int, indicesReversed> MPyramidN::_order2indicesReversedPyr;
+std::map<int, IndicesReversed> MPyramidN::_order2indicesReversedPyr;
 
 int MPyramid::getVolumeSign()
 {
@@ -34,6 +34,15 @@ void MPyramid::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts = getNGQPyrPts(pOrder);
   *pts = getGQPyrPts(pOrder);
+}
+
+bool MPyramid::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) const
+{
+  for (ithFace = 0; ithFace < 5; ++ithFace) {
+    if (_getFaceInfo(getFace(ithFace), face, sign, rot)) return true;
+  }
+  Msg::Error("Could not get face information for pyramid %d", getNum());
+  return false;
 }
 
 MPyramidN::~MPyramidN() {}
@@ -381,7 +390,7 @@ void MPyramidN::getFaceRep(bool curved, int num,
   else MPyramid::getFaceRep(false, num, x, y, z, n);
 }
 
-void _getIndicesReversedPyr(int order, indicesReversed &indices)
+void _getIndicesReversedPyr(int order, IndicesReversed &indices)
 {
   fullMatrix<double> ref = gmshGenerateMonomialsPyramid(order);
 
@@ -401,16 +410,16 @@ void _getIndicesReversedPyr(int order, indicesReversed &indices)
 
 void MPyramidN::reverse()
 {
-  std::map<int, indicesReversed>::iterator it;
+  std::map<int, IndicesReversed>::iterator it;
   it = _order2indicesReversedPyr.find(_order);
   if (it == _order2indicesReversedPyr.end()) {
-    indicesReversed indices;
+    IndicesReversed indices;
     _getIndicesReversedPyr(_order, indices);
     _order2indicesReversedPyr[_order] = indices;
     it = _order2indicesReversedPyr.find(_order);
   }
 
-  indicesReversed &indices = it->second;
+  IndicesReversed &indices = it->second;
 
   // copy vertices
   std::vector<MVertex*> oldv(5 + _vs.size());
@@ -423,5 +432,84 @@ void MPyramidN::reverse()
   }
   for (unsigned int i = 0; i < _vs.size(); ++i) {
     _vs[i] = oldv[indices[5+i]];
+  }
+}
+
+void MPyramidN::_addHOEdgePoints(int num,std::vector<MVertex*>& v,bool fwd) const
+{
+  int minVtx  =  num    * (_order-1);
+  int maxVtx  = (num+1) * (_order-1) - 1;
+
+  if (fwd) for (int i=minVtx;i<=maxVtx;i++) v.push_back(_vs[i]);
+  else     for (int i=maxVtx;i>=minVtx;i--) v.push_back(_vs[i]);
+}
+
+void MPyramidN::getFaceVertices(const int num, std::vector<MVertex*> &v) const
+{
+  bool complete = !getIsAssimilatedSerendipity();
+
+  int nbQ = (_order-1)*(_order-1);
+  int nbT = (_order-1)*(_order-2)/2;
+
+  int nb = ((num==4) ? 4:3) * _order;
+  if (complete) nb += (num==4) ? nbQ:nbT;
+
+  v.reserve(nb);
+
+  if(num < 4) {
+    v.push_back(_v[faces_pyramid(num, 0)]);
+    v.push_back(_v[faces_pyramid(num, 1)]);
+    v.push_back(_v[faces_pyramid(num, 2)]);
+  }
+  else {
+    v.push_back(_v[0]);
+    v.push_back(_v[3]);
+    v.push_back(_v[2]);
+    v.push_back(_v[1]);
+  }
+
+  switch (num) {
+  case 0: // 0 1 4
+    {
+      _addHOEdgePoints(0,v);
+      _addHOEdgePoints(4,v);
+      _addHOEdgePoints(2,v,false);
+      break;
+    }
+  case 1: // 3 0 4
+    {
+      _addHOEdgePoints(1,v,false);
+      _addHOEdgePoints(2,v);
+      _addHOEdgePoints(7,v,false);
+      break;
+    }
+  case 2: // 1 2 4
+    {
+      _addHOEdgePoints(3,v);
+      _addHOEdgePoints(6,v);
+      _addHOEdgePoints(4,v,false);
+      break;
+    }
+  case 3: // 2 3 4
+    {
+      _addHOEdgePoints(3,v);
+      _addHOEdgePoints(6,v);
+      _addHOEdgePoints(4,v,false);
+      break;
+    }
+  case 4: // 0 3 2 1
+    {
+      _addHOEdgePoints(1,v);
+      _addHOEdgePoints(5,v,false);
+      _addHOEdgePoints(3,v,false);
+      _addHOEdgePoints(1,v,false);
+      break;
+    }
+  }
+
+  if (complete) {
+    int start    = 8*(_order-1) + num*nbT;
+    int nbPoints = (num == 4) ? nbQ : nbT;
+    for (int i=start;i<start+nbPoints;i++) v.push_back(_vs[i]);
   }
 }

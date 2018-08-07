@@ -26,7 +26,6 @@
 #include "alglibmisc.h"
 #include "linalg.h"
 #include "optimization.h"
-#include "polynomialBasis.h"
 #include "MElementOctree.h"
 #include "GModel.h"
 #include "meshGFaceOptimize.h"
@@ -59,23 +58,23 @@ class voronoi_vertex{
   bool duplicate;
   double h;
  public :
-  voronoi_vertex(SPoint2);
-  voronoi_vertex();
-  ~voronoi_vertex();
-  SPoint2 get_point();
-  int get_index1();
-  int get_index2();
-  int get_index3();
-  SVector3 get_normal();
-  bool get_duplicate();
-  double get_h();
-  void set_point(SPoint2);
-  void set_index1(int);
-  void set_index2(int);
-  void set_index3(int);
-  void set_normal(SVector3);
-  void set_duplicate(bool);
-  void set_h(double);
+   voronoi_vertex(const SPoint2 &);
+   voronoi_vertex();
+   ~voronoi_vertex();
+   SPoint2 get_point();
+   int get_index1();
+   int get_index2();
+   int get_index3();
+   SVector3 get_normal();
+   bool get_duplicate();
+   double get_h();
+   void set_point(const SPoint2 &);
+   void set_index1(int);
+   void set_index2(int);
+   void set_index3(int);
+   void set_normal(const SVector3 &);
+   void set_duplicate(bool);
+   void set_h(double);
 };
 
 class voronoi_element{
@@ -87,22 +86,23 @@ class voronoi_element{
   double dh_dy;
   metric m;
  public :
-  voronoi_element(voronoi_vertex,voronoi_vertex,voronoi_vertex);
-  voronoi_element();
-  ~voronoi_element();
-  voronoi_vertex get_v1();
-  voronoi_vertex get_v2();
-  voronoi_vertex get_v3();
-  double get_h(double,double);
-  double get_dh_dx();
-  double get_dh_dy();
-  metric get_metric();
-  void set_v1(voronoi_vertex);
-  void set_v2(voronoi_vertex);
-  void set_v3(voronoi_vertex);
-  void set_metric(metric);
-  void deriv_h(int);
-  double get_quality();
+   voronoi_element(const voronoi_vertex &, const voronoi_vertex &,
+                   const voronoi_vertex &);
+   voronoi_element();
+   ~voronoi_element();
+   voronoi_vertex get_v1();
+   voronoi_vertex get_v2();
+   voronoi_vertex get_v3();
+   double get_h(double, double);
+   double get_dh_dx();
+   double get_dh_dy();
+   metric get_metric();
+   void set_v1(const voronoi_vertex &);
+   void set_v2(const voronoi_vertex &);
+   void set_v3(const voronoi_vertex &);
+   void set_metric(const metric &);
+   void deriv_h(int);
+   double get_quality();
 };
 
 class voronoi_cell{
@@ -113,7 +113,7 @@ class voronoi_cell{
   ~voronoi_cell();
   int get_number_vertices();
   voronoi_vertex get_vertex(int);
-  void add_vertex(voronoi_vertex);
+  void add_vertex(const voronoi_vertex &);
   void clear();
 };
 
@@ -191,18 +191,21 @@ class lpcvt{
  public :
   lpcvt();
   ~lpcvt();
-  double angle(SPoint2,SPoint2,SPoint2);
-  SVector3 normal(SPoint2,SPoint2);
-  SPoint2 mid(SPoint2,SPoint2);
-  bool same_side(SPoint2,SPoint2,SPoint2,SPoint2);
+  double angle(const SPoint2 &, const SPoint2 &, const SPoint2 &);
+  SVector3 normal(const SPoint2 &, const SPoint2 &);
+  SPoint2 mid(const SPoint2 &, const SPoint2 &);
+  bool same_side(const SPoint2 &, const SPoint2 &, const SPoint2 &,
+                 const SPoint2 &);
   bool interior(DocRecord&,GFace*,int);
-  bool interior(DocRecord&,segment,segment,double,SPoint2);
+  bool interior(DocRecord &, segment, segment, double, const SPoint2 &);
   bool invisible(DocRecord&,GFace*,int);
   bool real(DocRecord&,int,int,int);
-  double triangle_area(SPoint2,SPoint2,SPoint2);
-  bool sliver(SPoint2,SPoint2,SPoint2);
-  SPoint2 intersection(DocRecord&,segment,segment,SPoint2,SPoint2,bool&,SVector3&,segment&);
-  SPoint2 intersection(SPoint2,SPoint2,SPoint2,SPoint2,bool&);
+  double triangle_area(const SPoint2 &, const SPoint2 &, const SPoint2 &);
+  bool sliver(const SPoint2 &, const SPoint2 &, const SPoint2 &);
+  SPoint2 intersection(DocRecord &, segment, segment, const SPoint2 &,
+                       const SPoint2 &, bool &, SVector3 &, segment &);
+  SPoint2 intersection(const SPoint2 &, const SPoint2 &, const SPoint2 &,
+                       const SPoint2 &, bool &);
   SPoint2 convert(DocRecord&,int);
   SPoint2 circumcircle(DocRecord&,int,int,int);
   SPoint2 seed(DocRecord&,GFace*);
@@ -217,10 +220,10 @@ class lpcvt{
   void print_voronoi1();
   void print_voronoi2();
   void print_delaunay(DocRecord&);
-  void print_segment(SPoint2,SPoint2,std::ofstream&);
+  void print_segment(const SPoint2 &, const SPoint2 &, std::ofstream &);
 
   void compute_parameters(GFace*,int);
-  double get_ratio(GFace*,SPoint2);
+  double get_ratio(GFace *, const SPoint2 &);
   double compute_rho(double,int);
   void write(DocRecord&,GFace*,int);
   void eval(DocRecord&,std::vector<SVector3>&,double&,int);
@@ -230,14 +233,16 @@ class lpcvt{
   SVector3 simple(voronoi_element,int);
   SVector3 dF_dC1(voronoi_element,int);
   SVector3 dF_dC2(voronoi_element,int);
-  double f(SPoint2,SPoint2,metric,int);
-  double df_dx(SPoint2,SPoint2,metric,int);
-  double df_dy(SPoint2,SPoint2,metric,int);
-  double Tx(double,double,SPoint2,SPoint2,SPoint2);
-  double Ty(double,double,SPoint2,SPoint2,SPoint2);
-  double J(SPoint2,SPoint2,SPoint2);
-  SVector3 inner_dFdx0(SVector3,SPoint2,SPoint2,SPoint2,SPoint2);
-  SVector3 boundary_dFdx0(SVector3,SPoint2,SPoint2,SPoint2,SVector3);
+  double f(const SPoint2 &, const SPoint2 &, metric, int);
+  double df_dx(const SPoint2 &, const SPoint2 &, metric, int);
+  double df_dy(const SPoint2 &, const SPoint2 &, metric, int);
+  double Tx(double, double, const SPoint2 &, const SPoint2 &, const SPoint2 &);
+  double Ty(double, double, const SPoint2 &, const SPoint2 &, const SPoint2 &);
+  double J(const SPoint2 &, const SPoint2 &, const SPoint2 &);
+  SVector3 inner_dFdx0(const SVector3 &, const SPoint2 &, const SPoint2 &,
+                       const SPoint2 &, const SPoint2 &);
+  SVector3 boundary_dFdx0(const SVector3 &, const SPoint2 &, const SPoint2 &,
+                          const SPoint2 &, const SVector3 &);
 };
 
 bool domain_search(MElementOctree* octree,double x,double y)
@@ -420,7 +425,7 @@ void smoothing::optimize_face(GFace* gf)
   // get all the points of the face ...
   for (unsigned int i = 0; i < gf->getNumMeshElements(); i++){
     MElement *e = gf->getMeshElement(i);
-    for (int j = 0;j<e->getNumVertices(); j++){
+    for (std::size_t j = 0;j<e->getNumVertices(); j++){
       MVertex *v = e->getVertex(j);
       all.insert(v);
     }
@@ -618,7 +623,7 @@ lpcvt::lpcvt(){}
 
 lpcvt::~lpcvt(){}
 
-double lpcvt::angle(SPoint2 p1,SPoint2 p2,SPoint2 p3)
+double lpcvt::angle(const SPoint2 &p1, const SPoint2 &p2, const SPoint2 &p3)
 {
   double x1,x2;
   double y1,y2;
@@ -637,7 +642,7 @@ double lpcvt::angle(SPoint2 p1,SPoint2 p2,SPoint2 p3)
   return angle;
 }
 
-SVector3 lpcvt::normal(SPoint2 p1,SPoint2 p2)
+SVector3 lpcvt::normal(const SPoint2 &p1, const SPoint2 &p2)
 {
   double x;
   double y;
@@ -648,7 +653,7 @@ SVector3 lpcvt::normal(SPoint2 p1,SPoint2 p2)
   return val;
 }
 
-SPoint2 lpcvt::mid(SPoint2 p1,SPoint2 p2)
+SPoint2 lpcvt::mid(const SPoint2 &p1, const SPoint2 &p2)
 {
   double x;
   double y;
@@ -657,7 +662,8 @@ SPoint2 lpcvt::mid(SPoint2 p1,SPoint2 p2)
   return SPoint2(x,y);
 }
 
-bool lpcvt::same_side(SPoint2 p1,SPoint2 p2,SPoint2 p3,SPoint2 p4)
+bool lpcvt::same_side(const SPoint2 &p1, const SPoint2 &p2, const SPoint2 &p3,
+                      const SPoint2 &p4)
 {
   double x1,y1;
   double x2,y2;
@@ -691,7 +697,8 @@ bool lpcvt::interior(DocRecord& triangulator,GFace* gf,int index)
   else return 0;
 }
 
-bool lpcvt::interior(DocRecord& triangulator,segment s1,segment s2,double angle,SPoint2 p)
+bool lpcvt::interior(DocRecord &triangulator, segment s1, segment s2,
+                     double angle, const SPoint2 &p)
 {
   SPoint2 p1,p2,p3,p4;
   SPoint2 reference1,reference2;
@@ -734,7 +741,8 @@ bool lpcvt::real(DocRecord& triangulator,int index1,int index2,int index3)
   return triangulator.contain(index1,index2,index3);
 }
 
-double lpcvt::triangle_area(SPoint2 p1,SPoint2 p2,SPoint2 p3)
+double lpcvt::triangle_area(const SPoint2 &p1, const SPoint2 &p2,
+                            const SPoint2 &p3)
 {
   double area;
   double x1,y1;
@@ -747,7 +755,7 @@ double lpcvt::triangle_area(SPoint2 p1,SPoint2 p2,SPoint2 p3)
   return area;
 }
 
-bool lpcvt::sliver(SPoint2 p1,SPoint2 p2,SPoint2 p3)
+bool lpcvt::sliver(const SPoint2 &p1, const SPoint2 &p2, const SPoint2 &p3)
 {
   double area;
   double e;
@@ -757,8 +765,9 @@ bool lpcvt::sliver(SPoint2 p1,SPoint2 p2,SPoint2 p3)
   else return 0;
 }
 
-SPoint2 lpcvt::intersection(DocRecord& triangulator,segment s1,segment s2,
-                            SPoint2 p1,SPoint2 p2,bool &flag,SVector3& vec,segment& s)
+SPoint2 lpcvt::intersection(DocRecord &triangulator, segment s1, segment s2,
+                            const SPoint2 &p1, const SPoint2 &p2, bool &flag,
+                            SVector3 &vec, segment &s)
 {
   bool flag1;
   bool flag2;
@@ -794,7 +803,8 @@ SPoint2 lpcvt::intersection(DocRecord& triangulator,segment s1,segment s2,
   }
 }
 
-SPoint2 lpcvt::intersection(SPoint2 p1,SPoint2 p2,SPoint2 p3,SPoint2 p4,bool& flag)
+SPoint2 lpcvt::intersection(const SPoint2 &p1, const SPoint2 &p2,
+                            const SPoint2 &p3, const SPoint2 &p4, bool &flag)
 {
   double x1,y1;
   double x2,y2;
@@ -1322,7 +1332,8 @@ void lpcvt::print_delaunay(DocRecord& triangulator)
   file << "};\n";
 }
 
-void lpcvt::print_segment(SPoint2 p1,SPoint2 p2,std::ofstream& file)
+void lpcvt::print_segment(const SPoint2 &p1, const SPoint2 &p2,
+                          std::ofstream &file)
 {
   file << "SL (" << p1.x() << ", " << p1.y() << ", 0, "
   << p2.x() << ", " << p2.y() << ", 0){"
@@ -1371,7 +1382,7 @@ void lpcvt::compute_parameters(GFace* gf,int p)
   }
 }
 
-double lpcvt::get_ratio(GFace* gf,SPoint2 point)
+double lpcvt::get_ratio(GFace *gf, const SPoint2 &point)
 {
   double val;
   double uv[2];
@@ -1694,7 +1705,7 @@ SVector3 lpcvt::dF_dC2(voronoi_element element,int p)
   return SVector3(comp_x,comp_y,0.0);
 }
 
-double lpcvt::f(SPoint2 p1,SPoint2 p2,metric m,int p)
+double lpcvt::f(const SPoint2 &p1, const SPoint2 &p2, metric m, int p)
 {
   double x1;
   double y1;
@@ -1722,7 +1733,7 @@ double lpcvt::f(SPoint2 p1,SPoint2 p2,metric m,int p)
   return val;
 }
 
-double lpcvt::df_dx(SPoint2 p1,SPoint2 p2,metric m,int p)
+double lpcvt::df_dx(const SPoint2 &p1, const SPoint2 &p2, metric m, int p)
 {
   double x1;
   double y1;
@@ -1750,7 +1761,7 @@ double lpcvt::df_dx(SPoint2 p1,SPoint2 p2,metric m,int p)
   return val;
 }
 
-double lpcvt::df_dy(SPoint2 p1,SPoint2 p2,metric m,int p)
+double lpcvt::df_dy(const SPoint2 &p1, const SPoint2 &p2, metric m, int p)
 {
   double x1;
   double y1;
@@ -1778,28 +1789,32 @@ double lpcvt::df_dy(SPoint2 p1,SPoint2 p2,metric m,int p)
   return val;
 }
 
-double lpcvt::Tx(double u,double v,SPoint2 p1,SPoint2 p2,SPoint2 p3)
+double lpcvt::Tx(double u, double v, const SPoint2 &p1, const SPoint2 &p2,
+                 const SPoint2 &p3)
 {
   double val;
   val = (1.0-u-v)*p1.x() + u*p2.x() + v*p3.x();
   return val;
 }
 
-double lpcvt::Ty(double u,double v,SPoint2 p1,SPoint2 p2,SPoint2 p3)
+double lpcvt::Ty(double u, double v, const SPoint2 &p1, const SPoint2 &p2,
+                 const SPoint2 &p3)
 {
   double val;
   val = (1.0-u-v)*p1.y() + u*p2.y() + v*p3.y();
   return val;
 }
 
-double lpcvt::J(SPoint2 p1,SPoint2 p2,SPoint2 p3)
+double lpcvt::J(const SPoint2 &p1, const SPoint2 &p2, const SPoint2 &p3)
 {
   double val;
   val = (p2.x()-p1.x())*(p3.y()-p1.y()) - (p3.x()-p1.x())*(p2.y()-p1.y());
   return val;
 }
 
-SVector3 lpcvt::inner_dFdx0(SVector3 dFdC,SPoint2 C,SPoint2 x0,SPoint2 x1,SPoint2 x2)
+SVector3 lpcvt::inner_dFdx0(const SVector3 &dFdC, const SPoint2 &C,
+                            const SPoint2 &x0, const SPoint2 &x1,
+                            const SPoint2 &x2)
 {
   double det;
   double A[2][2];
@@ -1821,8 +1836,9 @@ SVector3 lpcvt::inner_dFdx0(SVector3 dFdC,SPoint2 C,SPoint2 x0,SPoint2 x1,SPoint
   return SVector3(dFdC.x()*M[0][0]+dFdC.y()*M[1][0],dFdC.x()*M[0][1]+dFdC.y()*M[1][1],0.0);
 }
 
-SVector3 lpcvt::boundary_dFdx0(SVector3 dFdC,SPoint2 C,SPoint2 x0,SPoint2 x1,
-                               SVector3 normal)
+SVector3 lpcvt::boundary_dFdx0(const SVector3 &dFdC, const SPoint2 &C,
+                               const SPoint2 &x0, const SPoint2 &x1,
+                               const SVector3 &normal)
 {
   fullMatrix<double> A(2,2);
   fullMatrix<double> B(2,2);
@@ -1897,7 +1913,7 @@ double metric::get_d()
   return d;
 }
 
-voronoi_vertex::voronoi_vertex(SPoint2 new_point)
+voronoi_vertex::voronoi_vertex(const SPoint2 &new_point)
 {
   point = new_point;
   index1 = -1;
@@ -1945,10 +1961,7 @@ double voronoi_vertex::get_h()
   return h;
 }
 
-void voronoi_vertex::set_point(SPoint2 new_point)
-{
-  point = new_point;
-}
+void voronoi_vertex::set_point(const SPoint2 &new_point) { point = new_point; }
 
 void voronoi_vertex::set_index1(int new_index1)
 {
@@ -1965,7 +1978,7 @@ void voronoi_vertex::set_index3(int new_index3)
   index3 = new_index3;
 }
 
-void voronoi_vertex::set_normal(SVector3 new_normal)
+void voronoi_vertex::set_normal(const SVector3 &new_normal)
 {
   normal = new_normal;
 }
@@ -1980,8 +1993,9 @@ void voronoi_vertex::set_h(double new_h)
   h = new_h;
 }
 
-voronoi_element::voronoi_element(voronoi_vertex new_v1,voronoi_vertex new_v2,
-                                 voronoi_vertex new_v3)
+voronoi_element::voronoi_element(const voronoi_vertex &new_v1,
+                                 const voronoi_vertex &new_v2,
+                                 const voronoi_vertex &new_v3)
 {
   v1 = new_v1;
   v2 = new_v2;
@@ -2036,25 +2050,13 @@ metric voronoi_element::get_metric()
   return m;
 }
 
-void voronoi_element::set_v1(voronoi_vertex new_v1)
-{
-  v1 = new_v1;
-}
+void voronoi_element::set_v1(const voronoi_vertex &new_v1) { v1 = new_v1; }
 
-void voronoi_element::set_v2(voronoi_vertex new_v2)
-{
-  v2 = new_v2;
-}
+void voronoi_element::set_v2(const voronoi_vertex &new_v2) { v2 = new_v2; }
 
-void voronoi_element::set_v3(voronoi_vertex new_v3)
-{
-  v3 = new_v3;
-}
+void voronoi_element::set_v3(const voronoi_vertex &new_v3) { v3 = new_v3; }
 
-void voronoi_element::set_metric(metric new_m)
-{
-  m = new_m;
-}
+void voronoi_element::set_metric(const metric &new_m) { m = new_m; }
 
 void voronoi_element::deriv_h(int p)
 {
@@ -2138,7 +2140,7 @@ voronoi_vertex voronoi_cell::get_vertex(int index)
   return vertices[index];
 }
 
-void voronoi_cell::add_vertex(voronoi_vertex vertex)
+void voronoi_cell::add_vertex(const voronoi_vertex &vertex)
 {
   vertices.push_back(vertex);
 }

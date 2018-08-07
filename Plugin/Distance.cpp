@@ -136,7 +136,7 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity*> _entities,
             nods.push_back(e->getVertex(i));
         else
           for(int i = 0; i < e->getNumChildren(); i++)
-            for(int j = 0; j < e->getChild(i)->getNumVertices(); j++)
+            for(std::size_t j = 0; j < e->getChild(i)->getNumVertices(); j++)
               nods.push_back(e->getChild(i)->getVertex(j));
 
         for (int nod = 0; nod < numNodes; nod++) out->push_back((nods[nod])->x());
@@ -372,7 +372,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
         existEntity = true;
         for (unsigned int i = 0; i < ge->getNumMeshElements(); ++i) {
           MElement *t = ge->getMeshElement(i);
-          for (int k=0; k<t->getNumVertices(); k++) {
+          for (std::size_t k=0; k<t->getNumVertices(); k++) {
             MVertex *v = t->getVertex(k);
             dofView->fixVertex(v, 0, 1, 0.);
             bbox += SPoint3(v->x(), v->y(), v->z());
@@ -394,7 +394,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
           for(unsigned int i = 0; i < ge->getNumMeshElements(); ++i) {
             MElement *t = ge->getMeshElement(i);
             allElems.push_back(t);
-            for (int k = 0; k < t->getNumVertices(); k++)
+            for (std::size_t k = 0; k < t->getNumVertices(); k++)
               dofView->numberVertex(t->getVertex(k), 0, 1);
           }
         }
@@ -460,7 +460,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
         for (unsigned int i=0; i<ge->getNumMeshElements(); ++i) {
           MElement *t = ge->getMeshElement(i);
           double vMean = 0.0;
-          for (int k = 0; k < t->getNumVertices(); k++) {
+          for (std::size_t k = 0; k < t->getNumVertices(); k++) {
             std::map<MVertex*, double>::iterator it = _distance_map.find(t->getVertex(k));
             vMean += it->second;
           }
@@ -479,7 +479,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     for (std::vector<MElement* >::iterator it = allElems.begin();
          it != allElems.end(); it++){
       MElement *t = *it;
-      for(int k = 0; k < t->getNumVertices(); k++)
+      for(std::size_t k = 0; k < t->getNumVertices(); k++)
         myAssembler.numberVertex(t->getVertex(k), 0, 1);
     }
 
@@ -535,7 +535,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
         nods.push_back(e->getVertex(i));
     else
       for(int i = 0; i < e->getNumChildren(); i++)
-        for(int j = 0; j < e->getChild(i)->getNumVertices(); j++)
+        for(std::size_t j = 0; j < e->getChild(i)->getNumVertices(); j++)
           nods.push_back(e->getChild(i)->getVertex(j));
 
     for(int nod = 0; nod < numNodes; nod++) out2->push_back((nods[nod])->x());

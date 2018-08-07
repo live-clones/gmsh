@@ -680,7 +680,7 @@ namespace onelabUtils {
     time_t now;
     time(&now);
     tm *t = localtime(&now);
-    char stamp[32];
+    char stamp[73];
     // stamp.size() is always 20
     sprintf(stamp, "_%04d-%02d-%02d_%02d-%02d-%02d", 1900 + t->tm_year,
             1 + t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);

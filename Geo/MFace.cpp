@@ -8,6 +8,9 @@
 #include "GmshConfig.h"
 #include "MFace.h"
 #include "Numeric.h"
+#include "ElementType.h"
+#include "nodalBasis.h"
+#include "BasisFactory.h"
 
 bool compare(const MVertex *const v0, const MVertex *const v1){ return v0->getNum() < v1->getNum(); }
 
@@ -50,7 +53,7 @@ MFace::MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3)
   sortVertices(_v, _si);
 }
 
-MFace::MFace(std::vector<MVertex*> v)
+MFace::MFace(const std::vector<MVertex*> &v)
 {
   for(unsigned int i = 0; i < v.size(); i++)
     _v.push_back(v[i]);
@@ -83,7 +86,7 @@ bool MFace::computeCorrespondence(const MFace &other,
   swap = false;
 
   if (*this == other) {
-    for (int i = 0; i < getNumVertices(); i++) {
+    for (std::size_t i = 0; i < getNumVertices(); i++) {
       if (_v[0] == other.getVertex(i)) {
         rotation = i;
         break;
@@ -94,4 +97,174 @@ bool MFace::computeCorrespondence(const MFace &other,
     return true;
   }
   return false;
+}
+
+MFaceN::MFaceN(int type, int order, const std::vector<MVertex*> &v)
+    : _type(type), _order(order)
+{
+  _v.resize(v.size());
+  for(unsigned int i = 0; i < v.size(); i++)
+    _v[i] = v[i];
+}
+
+MEdgeN MFaceN::getHighOrderEdge(int num, int sign) const
+{
+  int nCorner = getNumCorners();
+  std::vector<MVertex*> vertices((unsigned int)_order + 1);
+  if (sign == 1) {
+    vertices[0] = _v[num];
+    vertices[1] = _v[(num + 1) % nCorner];
+  }
+  else {
+    vertices[0] = _v[(num + 1) % nCorner];
+    vertices[1] = _v[num];
+  }
+  int start = nCorner + num * (_order - 1);
+  int end = nCorner + (num + 1) * (_order - 1);
+  int k = 1;
+  if (sign == 1) {
+    for (int i = start; i < end; ++i) vertices[++k] = _v[i];
+  }
+  else {
+    for (int i = end-1; i >= start; --i) vertices[++k] = _v[i];
+  }
+  return MEdgeN(vertices);
+}
+
+MFace MFaceN::getFace() const
+{
+  if (_type == TYPE_TRI)
+    return MFace(_v[0], _v[1], _v[2]);
+  else
+    return MFace(_v[0], _v[1], _v[2], _v[3]);
+}
+
+SPoint3 MFaceN::pnt(double u, double v) const
+{
+  int tag = ElementType::getType(_type, _order);
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+
+  double f[100];
+  fs->f(u, v, 0, f);
+
+  double x = 0, y = 0, z = 0;
+  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+    x += f[j] * _v[j]->x();
+    y += f[j] * _v[j]->y();
+    z += f[j] * _v[j]->z();
+  }
+  return SPoint3(x, y, z);
+}
+
+SVector3 MFaceN::tangent(double u, double v, int num) const
+{
+  if (num != 0 && num != 1) num = 0;
+
+  int tag = ElementType::getType(_type, _order);
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+
+  double sf[100][3];
+  fs->df(u, v, 0, sf);
+
+  double dx = 0, dy = 0, dz = 0;
+  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+    dx += sf[j][num] * _v[j]->x();
+    dy += sf[j][num] * _v[j]->y();
+    dz += sf[j][num] * _v[j]->z();
+  }
+  return SVector3(dx, dy, dz).unit();
+}
+
+SVector3 MFaceN::normal(double u, double v) const
+{
+  int tag = ElementType::getType(_type, _order);
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+
+  double sf[100][3];
+  fs->df(u, v, 0, sf);
+
+  double dx[2] = {0, 0}, dy[2] = {0, 0}, dz[2] = {0, 0};
+  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+    for (int k = 0; k < 1; ++k) {
+      dx[k] += sf[j][k] * _v[j]->x();
+      dy[k] += sf[j][k] * _v[j]->y();
+      dz[k] += sf[j][k] * _v[j]->z();
+    }
+  }
+
+  SVector3 t0 = SVector3(dx[0], dy[0], dz[0]);
+  SVector3 t1 = SVector3(dx[1], dy[1], dz[1]);
+
+  return crossprod(t0, t1).unit();
+}
+
+void MFaceN::frame(double u, double v,
+                   SVector3 &t0, SVector3 &t1, SVector3 &n) const
+{
+  int tag = ElementType::getType(_type, _order);
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+
+  double sf[100][3];
+  fs->df(u, v, 0, sf);
+
+  double dx[2] = {0, 0}, dy[2] = {0, 0}, dz[2] = {0, 0};
+  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+    for (int k = 0; k < 2; ++k) {
+      dx[k] += sf[j][k] * _v[j]->x();
+      dy[k] += sf[j][k] * _v[j]->y();
+      dz[k] += sf[j][k] * _v[j]->z();
+    }
+  }
+
+  t0 = SVector3(dx[0], dy[0], dz[0]).unit();
+  t1 = SVector3(dx[1], dy[1], dz[1]).unit();
+  n =  crossprod(t0, t1);
+}
+
+void MFaceN::frame(double u, double v, SPoint3 &p,
+                   SVector3 &t0, SVector3 &t1, SVector3 &n) const
+{
+  int tag = ElementType::getType(_type, _order);
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+
+  double f[100];
+  double sf[100][3];
+  fs->f(u, v, 0, f);
+  fs->df(u, v, 0, sf);
+
+  double x = 0, y = 0, z = 0;
+  double dx[2] = {0, 0}, dy[2] = {0, 0}, dz[2] = {0, 0};
+  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+    x += f[j] * _v[j]->x();
+    y += f[j] * _v[j]->y();
+    z += f[j] * _v[j]->z();
+    for (int k = 0; k < 2; ++k) {
+      dx[k] += sf[j][k] * _v[j]->x();
+      dy[k] += sf[j][k] * _v[j]->y();
+      dz[k] += sf[j][k] * _v[j]->z();
+    }
+  }
+
+  p = SPoint3(x, y, z);
+  t0 = SVector3(dx[0], dy[0], dz[0]).unit();
+  t1 = SVector3(dx[1], dy[1], dz[1]).unit();
+  n =  crossprod(t0, t1);
+}
+
+void MFaceN::repositionInnerVertices(const fullMatrix<double> *placement) const
+{
+  int nCorner = getNumCorners();
+  int start = nCorner + (_order - 1) * nCorner;
+  for (int i = start; i < (int)_v.size(); ++i) {
+    MVertex *v = _v[i];
+    v->x() = 0;
+    v->y() = 0;
+    v->z() = 0;
+    for (int j = 0; j < placement->size2(); ++j) {
+      const double coeff = (*placement)(i - start, j);
+      v->x() += coeff * _v[j]->x();
+      v->y() += coeff * _v[j]->y();
+      v->z() += coeff * _v[j]->z();
+    }
+  }
 }

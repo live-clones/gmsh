@@ -22,7 +22,7 @@ void computeMeshSizeFieldAccuracy(GFace *gf, BDS_Mesh &m, double &avg,
 void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT, 
                    const bool computeNodalSizeField,
                    std::map<MVertex*, BDS_Point*> *recoverMapInv=0,
-		   std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap=0);
+		   std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap=0, std::vector<SPoint2> *true_boundary=0);
 void optimizeMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT, 
 		     std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap=0);
 void delaunayizeBDS(GFace *gf, BDS_Mesh &m, int &nb_swap);
@@ -30,5 +30,7 @@ void collapseSmallEdges(GModel &gm);
 BDS_Mesh *gmsh2BDS(std::list<GFace*> &l);
 double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2);
 void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q);
+void modifyInitialMeshToRemoveDegeneracies(GFace *gf, BDS_Mesh &m, 
+					   std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap);
 
 #endif

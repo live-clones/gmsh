@@ -66,24 +66,23 @@ public:
                 const bool *serendip = NULL, bool elemIsSerendip = false);
 
   // Print
-  void print() const {
+  void print() const
+  {
     Msg::Info("FuncSpaceData: tag%d, order%d, nij%d, nk%d, pyr%d, serendip%d",
-        _tag, _spaceOrder, _nij, _nk, _pyramidalSpace, _serendipity);
+              _tag, _spaceOrder, _nij, _nk, _pyramidalSpace, _serendipity);
   }
 
   // Get methods
-  int elementTag() const {return _tag;}
-  int elementType() const {return ElementType::ParentTypeFromTag(_tag);}
-  int elementOrder() const {return ElementType::OrderFromTag(_tag);}
-  int dimension() const {return ElementType::DimensionFromTag(_tag);}
-  int spaceOrder() const {return _spaceOrder;}
-  int nij() const {return _nij;}
-  int nk() const {return _nk;}
-  bool elementIsOnlySerendipity() const {
-    return ElementType::SerendipityFromTag(_tag) > 1;
-  }
-  bool spaceIsSerendipity() const {return _serendipity;}
-  bool isPyramidalSpace() const {return _pyramidalSpace;}
+  int elementTag() const { return _tag; }
+  int elementType() const { return ElementType::getParentType(_tag); }
+  int elementOrder() const { return ElementType::getOrder(_tag); }
+  int dimension() const { return ElementType::getDimension(_tag); }
+  int spaceOrder() const { return _spaceOrder;}
+  int nij() const { return _nij; }
+  int nk() const { return _nk; }
+  bool elementIsOnlySerendipity() const { return ElementType::getSerendipity(_tag) > 1; }
+  bool spaceIsSerendipity() const { return _serendipity; }
+  bool isPyramidalSpace() const { return _pyramidalSpace; }
 
   void getOrderForBezier(int[3], int exponentZ = -1) const;
 

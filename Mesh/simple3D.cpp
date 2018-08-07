@@ -24,7 +24,6 @@
 
 #define k1 0.7 //k1*h is the minimal distance between two nodes
 #define k2 0.5 //k2*h is the minimal distance to the boundary
-#define sqrt3 1.73205081
 
 /*********definitions*********/
 
@@ -65,13 +64,13 @@ class Node{
   double min[3];
   double max[3];
   Node();
-  Node(SPoint3);
+  Node(const SPoint3 &);
   ~Node();
   void set_layer(int);
   void set_limit(int);
   void set_size(double);
-  void set_metric(Metric);
-  void set_point(SPoint3);
+  void set_metric(const Metric &);
+  void set_point(const SPoint3 &);
   int get_layer();
   int get_limit();
   double get_size();
@@ -98,7 +97,7 @@ class Wrapper{
 
 /*********functions*********/
 
-double infinity_distance(SPoint3 p1,SPoint3 p2,Metric m)
+double infinity_distance(const SPoint3 &p1, const SPoint3 &p2, Metric m)
 {
   double distance;
   double x1,y1,z1;
@@ -211,7 +210,8 @@ Node::Node(){
   limit = -1;
 }
 
-Node::Node(SPoint3 new_point){
+Node::Node(const SPoint3 &new_point)
+{
   point = new_point;
   limit = -1;
 }
@@ -230,13 +230,9 @@ void Node::set_size(double new_h){
   h = new_h;
 }
 
-void Node::set_metric(Metric new_m){
-  m = new_m;
-}
+void Node::set_metric(const Metric &new_m) { m = new_m; }
 
-void Node::set_point(SPoint3 new_point){
-  point = new_point;
-}
+void Node::set_point(const SPoint3 &new_point) { point = new_point; }
 
 int Node::get_layer(){
   return layer;
@@ -331,29 +327,21 @@ void Filler::treat_region(GRegion* gr)
     Frame_field::saveCrossField("cross1.pos",scale);
   }
 
-  unsigned int i;
-  int j;
   int count;
   int limit;
   bool ok2;
   double x,y,z;
   SPoint3 point;
   Node *node,*individual,*parent;
-  MVertex* vertex;
-  MElement* element;
+
   MElementOctree* octree;
   deMeshGRegion deleter;
   Wrapper wrapper;
   GFace* gf;
-  std::queue<Node*> fifo;
-  std::vector<Node*> spawns;
   std::vector<Node*> garbage;
   std::vector<MVertex*> boundary_vertices;
-  std::set<MVertex*> temp;
-  std::list<GFace*> faces;
-  std::map<MVertex*,int> limits;
   std::set<MVertex*>::iterator it;
-  std::list<GFace*>::iterator it2;
+  std::vector<GFace*>::iterator it2;
   std::map<MVertex*,int>::iterator it3;
   RTree<Node*,double,3,double> rtree;
 
@@ -364,19 +352,20 @@ void Filler::treat_region(GRegion* gr)
   octree = new MElementOctree(gr->model());
   garbage.clear();
   boundary_vertices.clear();
-  temp.clear();
   new_vertices.clear();
-  faces.clear();
-  limits.clear();
 
-  faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
+  std::map<MVertex*,int> limits;
+
+  std::set<MVertex*> temp;
+
   for(it2=faces.begin();it2!=faces.end();it2++){
     gf = *it2;
     limit = code(gf->tag());
-    for(i=0;i<gf->getNumMeshElements();i++){
-      element = gf->getMeshElement(i);
-      for(j=0;j<element->getNumVertices();j++){
-        vertex = element->getVertex(j);
+    for(GFace::size_type i=0;i<gf->getNumMeshElements();i++){
+      MElement* element = gf->getMeshElement(i);
+      for(std::size_t j=0;j<element->getNumVertices();j++){
+        MVertex* vertex = element->getVertex(j);
         temp.insert(vertex);
         limits.insert(std::pair<MVertex*,int>(vertex,limit));
       }
@@ -401,7 +390,9 @@ void Filler::treat_region(GRegion* gr)
     }
   }
 
-  for(i=0;i<boundary_vertices.size();i++){
+  std::queue<Node*> fifo;
+
+  for(std::size_t i=0;i<boundary_vertices.size();i++){
     x = boundary_vertices[i]->x();
     y = boundary_vertices[i]->y();
     z = boundary_vertices[i]->z();
@@ -427,16 +418,14 @@ void Filler::treat_region(GRegion* gr)
       continue;
     }
 
-    spawns.clear();
-    spawns.resize(6);
-
-    for(i=0;i<6;i++){
+    std::vector<Node*> spawns(6);
+    for(int i=0;i<6;i++){
       spawns[i] = new Node();
     }
 
     create_spawns(gr,octree,parent,spawns);
 
-    for(i=0;i<6;i++){
+    for(int i=0;i<6;i++){
       ok2 = 0;
       individual = spawns[i];
       point = individual->get_point();
@@ -458,8 +447,7 @@ void Filler::treat_region(GRegion* gr)
 	  if(wrapper.get_ok()){
 	    fifo.push(individual);
 	    rtree.Insert(individual->min,individual->max,individual);
-	    vertex = new MVertex(x,y,z,gr,0);
-	    new_vertices.push_back(vertex);
+	    new_vertices.push_back(new MVertex(x,y,z,gr,0));
 	    ok2 = 1;
 	    //print_segment(individual->get_point(),parent->get_point(),file);
 	  }
@@ -489,9 +477,9 @@ void Filler::treat_region(GRegion* gr)
 
   CTX::instance()->mesh.algo3d = option;
 
-  for(i=0;i<garbage.size();i++) delete garbage[i];
-  for(i=0;i<new_vertices.size();i++) delete new_vertices[i];
-  new_vertices.clear();
+  for(std::size_t i=0;i<garbage.size();i++) delete garbage[i];
+  for(std::size_t i=0;i<new_vertices.size();i++) delete new_vertices[i];
+
   delete octree;
   rtree.RemoveAll();
   Size_field::clear();
@@ -629,12 +617,12 @@ void Filler::compute_parameters(Node* node,GEntity* ge)
 
   node->set_size(h);
   node->set_metric(m);
-  node->min[0] = x - sqrt3*h;
-  node->min[1] = y - sqrt3*h;
-  node->min[2] = z - sqrt3*h;
-  node->max[0] = x + sqrt3*h;
-  node->max[1] = y + sqrt3*h;
-  node->max[2] = z + sqrt3*h;
+  node->min[0] = x - std::sqrt(3.0) * h;
+  node->min[1] = y - std::sqrt(3.0) * h;
+  node->min[2] = z - std::sqrt(3.0) * h;
+  node->max[0] = x + std::sqrt(3.0) * h;
+  node->max[1] = y + std::sqrt(3.0) * h;
+  node->max[2] = z + std::sqrt(3.0) * h;
 }
 
 void Filler::create_spawns(GEntity* ge,MElementOctree* octree,
@@ -697,8 +685,9 @@ void Filler::create_spawns(GEntity* ge,MElementOctree* octree,
   *spawns[5] = Node(SPoint3(x6,y6,z6));
 }
 
-double Filler::improvement(GEntity* ge,MElementOctree* octree,
-                           SPoint3 point,double h1,SVector3 direction)
+double Filler::improvement(GEntity *ge, MElementOctree *octree,
+                           const SPoint3 &point, double h1,
+                           const SVector3 &direction)
 {
   double x,y,z;
   double average;
@@ -758,7 +747,8 @@ MVertex* Filler::get_new_vertex(int i)
   return new_vertices[i];
 }
 
-void Filler::print_segment(SPoint3 p1,SPoint3 p2,std::ofstream& file)
+void Filler::print_segment(const SPoint3 &p1, const SPoint3 &p2,
+                           std::ofstream &file)
 {
   file << "SL ("
   << p1.x() << ", " << p1.y() << ", " << p1.z() << ", "

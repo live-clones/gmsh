@@ -42,16 +42,17 @@
 #include <BRepTools.hxx>
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
-: GFace(m, num), s(_s),_radius(-1)
+  : GFace(m, num)
+  , s(_s)
+  , _radius(-1)
 {
   setup();
   if(model()->getOCCInternals())
     model()->getOCCInternals()->bind(s, num);
   // TEST
-  if (tag() == 104){
-    writeBREP("s104.brep");
-  }
-
+  //    if (tag() == 167){
+  //      writeBREP("s167.brep");
+  //    }
 }
 
 OCCFace::~OCCFace()
@@ -70,7 +71,7 @@ void OCCFace::setup()
   for(exp2.Init(s.Oriented(TopAbs_FORWARD), TopAbs_WIRE); exp2.More(); exp2.Next()){
     TopoDS_Wire wire = TopoDS::Wire(exp2.Current());
     Msg::Debug("OCC Face %d - New Wire", tag());
-    std::list<GEdge*> l_wire;
+    std::vector<GEdge*> l_wire;
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
       GEdge *e = 0;
@@ -157,7 +158,7 @@ void OCCFace::setup()
   }
 }
 
-SBoundingBox3d OCCFace::bounds() const
+SBoundingBox3d OCCFace::bounds(bool fast) const
 {
   Bnd_Box b;
   try{
@@ -208,15 +209,15 @@ Pair<SVector3,SVector3> OCCFace::firstDer(const SPoint2 &param) const
 }
 
 void OCCFace::secondDer(const SPoint2 &param,
-                        SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
+                        SVector3 &dudu, SVector3 &dvdv, SVector3 &dudv) const
 {
   gp_Pnt pnt;
   gp_Vec du, dv, duu, dvv, duv;
   occface->D2(param.x(), param.y(), pnt, du, dv, duu, dvv, duv);
 
-  *dudu = SVector3(duu.X(), duu.Y(), duu.Z());
-  *dvdv = SVector3(dvv.X(), dvv.Y(), dvv.Z());
-  *dudv = SVector3(duv.X(), duv.Y(), duv.Z());
+  dudu = SVector3(duu.X(), duu.Y(), duu.Z());
+  dvdv = SVector3(dvv.X(), dvv.Y(), dvv.Z());
+  dudv = SVector3(duv.X(), duv.Y(), duv.Z());
 }
 
 GPoint OCCFace::point(double par1, double par2) const
@@ -331,35 +332,35 @@ double OCCFace::curvatureMax(const SPoint2 &param) const
 }
 
 double OCCFace::curvatures(const SPoint2 &param,
-                           SVector3 *dirMax,
-                           SVector3 *dirMin,
-                           double *curvMax,
-                           double *curvMin) const
+                           SVector3 &dirMax,
+                           SVector3 &dirMin,
+                           double &curvMax,
+                           double &curvMin) const
 {
   const double eps = 1.e-12;
   BRepAdaptor_Surface sf(s, Standard_True);
   BRepLProp_SLProps prop(sf, 2, eps);
-  prop.SetParameters (param.x(),param.y());
+  prop.SetParameters(param.x(), param.y());
 
   if (!prop.IsCurvatureDefined()){
     return -1.;
   }
 
-  *curvMax = prop.MaxCurvature();
-  *curvMin = prop.MinCurvature();
+  curvMax = prop.MaxCurvature();
+  curvMin = prop.MinCurvature();
 
   gp_Dir dMax = gp_Dir();
   gp_Dir dMin = gp_Dir();
-  prop.CurvatureDirections(dMax,dMin);
+  prop.CurvatureDirections(dMax, dMin);
 
-  (*dirMax)[0] = dMax.X();
-  (*dirMax)[1] = dMax.Y();
-  (*dirMax)[2] = dMax.Z();
-  (*dirMin)[0] = dMin.X();
-  (*dirMin)[1] = dMin.Y();
-  (*dirMin)[2] = dMin.Z();
+  dirMax[0] = dMax.X();
+  dirMax[1] = dMax.Y();
+  dirMax[2] = dMax.Z();
+  dirMin[0] = dMin.X();
+  dirMin[1] = dMin.Y();
+  dirMin[2] = dMin.Z();
 
-  return *curvMax;
+  return curvMax;
 }
 
 bool OCCFace::containsPoint(const SPoint3 &pt) const
@@ -372,8 +373,8 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
     double angle = 0.;
     double v[3] = {pt.x(), pt.y(), pt.z()};
 
-    std::list<int>::const_iterator ito = l_dirs.begin();
-    for(std::list<GEdge*>::const_iterator it = l_edges.begin(); it != l_edges.end(); it++){
+    std::vector<int>::const_iterator ito = l_dirs.begin();
+    for(std::vector<GEdge*>::const_iterator it = l_edges.begin(); it != l_edges.end(); it++){
       GEdge *c = *it;
       int ori = 1;
       if(ito != l_dirs.end()){
@@ -397,9 +398,7 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
       }
     }
     // we're inside if angle equals 2 * pi
-    if(fabs(angle) > 2 * M_PI - 0.5 && fabs(angle) < 2 * M_PI + 0.5)
-      return true;
-    return false;
+    return std::abs(angle) > 2 * M_PI - 0.5 && std::abs(angle) < 2 * M_PI + 0.5;
   }
   else
     Msg::Error("Not Done Yet ...");
@@ -439,7 +438,7 @@ bool OCCFace::isSphere(double &radius, SPoint3 &center) const
 }
 
 
-// Function containsparam should 
+// Function containsparam should
 
 
 bool OCCFace::containsParam(const SPoint2 &pt)
@@ -464,16 +463,13 @@ bool OCCFace::containsParam(const SPoint2 &pt)
   return false;
 }
 
-void OCCFace::writeBREP (const char *filename){
+void OCCFace::writeBREP(const char *filename)
+{
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
   b.Add(c, s);
   BRepTools::Write(c, filename);
 }
-
-
-
-
 
 #endif

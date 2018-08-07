@@ -3,26 +3,32 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
-#ifndef _ELEMENTTYPE_H_
-#define _ELEMENTTYPE_H_
+#ifndef _ELEMENT_TYPE_H_
+#define _ELEMENT_TYPE_H_
+
+#include <string>
 
 namespace ElementType
 {
-  // Give parent type, order & dimension corresponding to any element type.
-  int ParentTypeFromTag(int tag);
-  int OrderFromTag(int tag);
-  int DimensionFromTag(int tag);
+  // Give parent type, order & dimension corresponding to any element MSH type.
+  int getParentType(int type);
+  int getOrder(int type);
+  int getDimension(int type);
+
+  // Give the number of node corresponding to a msh type 'tag'.
+  int getNumVertices(int type);
 
   // Gives > 0 if element tag is in Serendipity Family.
   // Gives < 2 if element tag is in 'Normal' Family.
   // 1 is for element that is either Serendipity or not !
-  int SerendipityFromTag(int tag);
+  int getSerendipity(int type);
 
   // Give element tag from type, order & serendip
-  int getTag(int parentTag, int order, bool serendip = false);
+  int getType(int parentType, int order, bool serendip = false);
 
   // Give first order element tag
-  int getPrimaryTag(int tag);
+  int getPrimaryType(int type);
+  std::string nameOfParentType(int type);
 }
 
 #endif

@@ -104,8 +104,8 @@ PView *GMSH_FaultZonePlugin::execute(PView *view)
     return view;
   }
 
-  std::list<GEdge*> embeddedEdges = gFace->embeddedEdges();
-  std::list<GEdge*>::const_iterator itl;
+  std::vector<GEdge*> const& embeddedEdges = gFace->embeddedEdges();
+  std::vector<GEdge*>::const_iterator itl;
   for(itl = embeddedEdges.begin();itl != embeddedEdges.end(); ++itl)
     if ((*itl)->length() != 0) break;
   if (itl == embeddedEdges.end()){
@@ -179,12 +179,12 @@ PView *GMSH_FaultZonePlugin::execute(PView *view)
 //================================================================================
 void GMSH_FaultZoneMesher::RetriveFissuresInfos(GFace* gFace){
 
-  std::list< GEdge* > embeddedEdges = gFace->embeddedEdges();
-  std::list< GEdge* > edges = gFace->edges();
+  std::vector<GEdge*> const& embeddedEdges = gFace->embeddedEdges();
+  std::vector<GEdge*> const& edges = gFace->edges();
 
   // set with all the MVertex of the fissures
   std::set < MVertex* > allFissuresVertices;
-  for(std::list<GEdge*>::const_iterator itl = embeddedEdges.begin();
+  for(std::vector<GEdge*>::const_iterator itl = embeddedEdges.begin();
       itl != embeddedEdges.end(); ++itl){
     GEdge *gEdge = *itl;
     for (unsigned int i = 0; i < gEdge->getNumMeshVertices(); i++){
@@ -199,7 +199,7 @@ void GMSH_FaultZoneMesher::RetriveFissuresInfos(GFace* gFace){
   // fill _connectedElements
   for(unsigned int i = 0; i < gFace->getNumMeshElements(); i++){
     MElement *mElem = gFace->getMeshElement(i);
-    for (int j = 0; j < mElem->getNumVertices(); j++){
+    for (std::size_t j = 0; j < mElem->getNumVertices(); j++){
       MVertex *mVert = mElem->getVertex(j);
       std::set < MVertex* >::iterator its = allFissuresVertices.find( mVert );
       if (its != allFissuresVertices.end()){
@@ -210,11 +210,11 @@ void GMSH_FaultZoneMesher::RetriveFissuresInfos(GFace* gFace){
     }
   }
   // for the generatrices
-  for(std::list<GEdge*>::const_iterator itl = edges.begin();itl != edges.end(); ++itl){
+  for(std::vector<GEdge*>::const_iterator itl = edges.begin();itl != edges.end(); ++itl){
     GEdge *gEdge = *itl;
     for(unsigned int i = 0; i < gEdge->getNumMeshElements(); i++){
       MElement *mElem = gEdge->getMeshElement(i);
-      for (int j = 0; j < mElem->getNumVertices(); j++){
+      for (std::size_t j = 0; j < mElem->getNumVertices(); j++){
         MVertex *mVert = mElem->getVertex(j);
         std::set < MVertex* >::iterator its = allFissuresVertices.find( mVert );
         if (its != allFissuresVertices.end()){
@@ -224,7 +224,7 @@ void GMSH_FaultZoneMesher::RetriveFissuresInfos(GFace* gFace){
     }
   }
 
-  for(std::list<GEdge*>::const_iterator itl = embeddedEdges.begin();
+  for(std::vector<GEdge*>::const_iterator itl = embeddedEdges.begin();
       itl != embeddedEdges.end(); ++itl){
     GEdge *gEdge = *itl;
     if (gEdge->length() == 0)// nothing to do if there is no element
@@ -273,7 +273,7 @@ void GMSH_FaultZoneMesher::RetriveFissuresInfos(GFace* gFace){
       }
 
       _jointElements.insert(mElem);
-      for(int j = 0; j < mElem->getNumVertices(); j++){
+      for(std::size_t j = 0; j < mElem->getNumVertices(); j++){
         MVertex *mVert = mElem->getVertex(j);
         _fissureByHeavNode[mVert] = gEdge;
       }
@@ -544,9 +544,9 @@ std::vector < int > GMSH_FaultZoneMesher::HeavisideFunc(MVertex* mVert, SPoint3&
 void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace,
                                                std::string prefix){
 
-  std::list< GEdge * > embeddedEdges = gFace->embeddedEdges();
+  std::vector<GEdge*> const& embeddedEdges = gFace->embeddedEdges();
   std::map < int , int > discreteFaceEntityByEmbeddedEdgeEntity;
-  for(std::list<GEdge*>::const_iterator itl = embeddedEdges.begin();
+  for(std::vector<GEdge*>::const_iterator itl = embeddedEdges.begin();
       itl != embeddedEdges.end(); ++itl){
     GEdge *gEdge = *itl;
     if (gEdge->length() == 0)// nothing to do if there is no element
@@ -576,7 +576,7 @@ void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace,
                      "outgoing normal for its corresponding joint element",
                      mElem->getNum());
       // retriving MVertices to create the new MElement
-      for(int i = 0; i < mElem->getNumVertices(); i++){
+      for(std::size_t i = 0; i < mElem->getNumVertices(); i++){
         MVertex *mVert = mElem->getVertex(i);
 
         int j = (changeOri && i < 2) ? !i : i;

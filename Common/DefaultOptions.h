@@ -864,6 +864,10 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "MatchGeomAndMesh" , opt_geometry_match_geom_and_mesh, 0 ,
     "Matches geometries and meshes" },
+  { F|O, "MatchMeshScaleFactor" , opt_geometry_match_mesh_scale_factor, 1 ,
+    "Rescaling factor for the mesh to correspond to size of the geometry" },
+  { F|O, "MatchMeshTolerance", opt_geometry_match_mesh_tolerance, 1e-6,
+    "Tolerance for matching mesh and geometry"},
 
   { F|O, "Normals" , opt_geometry_normals , 0. ,
     "Display size of normal vectors (in pixels)" },
@@ -972,10 +976,11 @@ StringXNumber GeometryOptions_Number[] = {
 
 StringXNumber MeshOptions_Number[] = {
   { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_AUTO ,
-    "2D mesh algorithm (1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=BAMG, 8=DelQuad)" },
-  { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY_NEW ,
-    "3D mesh algorithm (1=Delaunay, 2=New Delaunay, 4=Frontal, 5=Frontal Delaunay, "
-    "6=Frontal Hex, 7=MMG3D, 9=R-tree)" },
+    "2D mesh algorithm (1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=BAMG, "
+    "8=DelQuad)" },
+  { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY ,
+    "3D mesh algorithm (1=Delaunay, 4=Frontal, 5=Frontal Delaunay, 6=Frontal Hex, "
+    "7=MMG3D, 9=R-tree)" },
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" },
   { F|O, "AnisoMax" , opt_mesh_aniso_max, 1.e33,
@@ -994,6 +999,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
    "Enable the creation of high-order mesh from CGNS structured meshes"
    "(1, 2, 4, 8, ...)" },
+  { F|O, "CgnsConstructTopology" , opt_mesh_cgns_construct_topology , 0. ,
+   "Reconstruct the model topology (BREP) after reading a CGNS file" },
   { F|O, "CharacteristicLengthExtendFromBoundary" ,
     opt_mesh_lc_extend_from_boundary, 1. ,
     "Extend computation of mesh element sizes from the boundaries into the surfaces/volumes" },

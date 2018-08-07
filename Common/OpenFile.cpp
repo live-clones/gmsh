@@ -12,7 +12,6 @@
 typedef unsigned long intptr_t;
 #endif
 #include "GmshMessage.h"
-#include "GmshIO.h"
 #include "GModelIO_GEO.h"
 #include "Options.h"
 #include "GModel.h"
@@ -23,7 +22,10 @@ typedef unsigned long intptr_t;
 #include "OS.h"
 #include "StringUtils.h"
 #include "GeomMeshMatcher.h"
+
+#if defined(HAVE_MESH)
 #include "Field.h"
+#endif
 
 #if defined(HAVE_POPPLER)
 #include "gmshPopplerWrapper.h"
@@ -158,7 +160,7 @@ void AddToTemporaryBoundingBox(double x, double y, double z)
   for(int i = 0; i < 3; i++) CTX::instance()->cg[i] = temp_bb.center()[i];
 }
 
-static std::vector<gmshFILE> openedFiles;
+static std::vector<FILE *> openedFiles;
 
 int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
 {
@@ -169,8 +171,8 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
 
   // add 'b' for pure Windows programs: opening in text mode messes up
   // fsetpos/fgetpos (used e.g. for user-defined functions)
-  gmshFILE fp;
-  if(!(fp = gmshopen(fileName.c_str(), "rb"))){
+  FILE *fp;
+  if(!(fp = Fopen(fileName.c_str(), "rb"))){
     if(warnIfMissing)
       Msg::Warning("Unable to open file '%s'", fileName.c_str());
     return 0;
@@ -184,7 +186,7 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
   //#endif
 
   std::string old_yyname = gmsh_yyname;
-  gmshFILE old_yyin = gmsh_yyin;
+  FILE *old_yyin = gmsh_yyin;
   int old_yyerrorstate = gmsh_yyerrorstate;
   int old_yylineno = gmsh_yylineno;
   int old_yyviewindex = gmsh_yyviewindex;
@@ -195,7 +197,7 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
   gmsh_yylineno = 1;
   gmsh_yyviewindex = 0;
 
-  while(!gmsheof(gmsh_yyin)){
+  while(!feof(gmsh_yyin)){
     gmsh_yyparse();
     if(gmsh_yyerrorstate > 20){
       if(gmsh_yyerrorstate != 999) // 999 is a volontary exit
@@ -207,7 +209,7 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
 
   if(close){
     gmsh_yyflush();
-    gmshclose(gmsh_yyin);
+    fclose(gmsh_yyin);
   }
   else{
     openedFiles.push_back(gmsh_yyin);
@@ -231,7 +233,8 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
 #endif
 }
 
-static bool doSystemUncompress(std::string fileName, std::string noExt)
+static bool doSystemUncompress(const std::string &fileName,
+                               const std::string &noExt)
 {
   std::ostringstream sstream;
   sstream << "File '"<< fileName << "' is in gzip format.\n\n"
@@ -291,7 +294,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
 {
   // added 'b' for pure Windows programs, since some of these files
   // contain binary data
-  gmshFILE fp = gmshopen(fileName.c_str(), "rb");
+  FILE *fp = Fopen(fileName.c_str(), "rb");
   if(!fp){
     if(warnIfMissing)
       Msg::Warning("Unable to open file '%s'", fileName.c_str());
@@ -299,8 +302,8 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
   }
 
   char header[256];
-  if(!gmshgets(header, sizeof(header), fp)){ gmshclose(fp); return 0; }
-  gmshclose(fp);
+  if(!fgets(header, sizeof(header), fp)){ fclose(fp); return 0; }
+  fclose(fp);
 
   Msg::StatusBar(true, "Reading '%s'...", fileName.c_str());
 
@@ -456,7 +459,20 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
   }
 #if defined(HAVE_LIBCGNS)
   else if(ext == ".cgns" || ext == ".CGNS"){
-    status = GModel::current()->readCGNS(fileName);
+    if(CTX::instance()->geom.matchGeomAndMesh && !GModel::current()->empty()) {
+      GModel* tmp2 = GModel::current();
+      GModel* tmp = new GModel();
+      tmp->readCGNS(fileName);
+      tmp->scaleMesh(CTX::instance()->geom.matchMeshScaleFactor);
+      status = GeomMeshMatcher::instance()->match(tmp2, tmp);
+      delete tmp;
+      GModel::setCurrent(tmp2);
+      tmp2->setVisibility(1);
+    }
+    else {
+      CTX::instance()->geom.matchMeshScaleFactor = 1;
+      status = GModel::current()->readCGNS(fileName);
+    }
   }
 #endif
 #if defined(HAVE_3M)
@@ -474,13 +490,16 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
         GModel* tmp2 = GModel::current();
         GModel* tmp = new GModel();
         tmp->readMSH(fileName);
+        tmp->scaleMesh(CTX::instance()->geom.matchMeshScaleFactor);
         status = GeomMeshMatcher::instance()->match(tmp2, tmp);
         delete tmp;
         GModel::setCurrent(tmp2);
         tmp2->setVisibility(1);
       }
-      else
+      else {
+        CTX::instance()->geom.matchMeshScaleFactor = 1;
         status = GModel::current()->readMSH(fileName);
+      }
 #if defined(HAVE_POST)
       if(status > 1) status = PView::readMSH(fileName);
 #endif
@@ -649,7 +668,7 @@ void ClearProject()
   // close the files that might have been left open by ParseFile
   if(openedFiles.size()){
     for(unsigned int i = 0; i < openedFiles.size(); i++)
-      gmshclose(openedFiles[i]);
+      fclose(openedFiles[i]);
     openedFiles.clear();
   }
   Msg::Info("Done clearing all models and views");
@@ -732,7 +751,7 @@ void OpenProject(const std::string &fileName)
   // close the files that might have been left open by ParseFile
   if(openedFiles.size()){
     for(unsigned int i = 0; i < openedFiles.size(); i++)
-      gmshclose(openedFiles[i]);
+      fclose(openedFiles[i]);
     openedFiles.clear();
   }
 

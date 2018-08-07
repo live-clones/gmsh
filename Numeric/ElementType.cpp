@@ -7,9 +7,9 @@
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 
-int ElementType::ParentTypeFromTag(int tag)
+int ElementType::getParentType(int mshtype)
 {
-  switch(tag) {
+  switch(mshtype) {
     case(MSH_PNT):
       return TYPE_PNT;
     case(MSH_LIN_2):    case(MSH_LIN_3):
@@ -97,14 +97,14 @@ int ElementType::ParentTypeFromTag(int tag)
       return TYPE_TRIH;
 
     default:
-      Msg::Error("Unknown element tag %i for parent type, returning -1.", tag);
+      Msg::Error("Unknown element MSH type %i for parent type, returning -1.", mshtype);
       return -1;
   }
 }
 
-int ElementType::OrderFromTag(int tag)
+int ElementType::getOrder(int mshtype)
 {
-  switch (tag) {
+  switch (mshtype) {
   case MSH_PNT     : return 0;
   case MSH_LIN_1   : return 0;
   case MSH_LIN_2   : return 1;
@@ -236,14 +236,14 @@ int ElementType::OrderFromTag(int tag)
   case MSH_TRIH_4 : return 1;
   case MSH_POLYH_ : return 1;
   default :
-    Msg::Warning("Unknown element tag %d, assuming order 1.",tag);
+    Msg::Warning("Unknown element MSH type %d, assuming order 1.", mshtype);
     return 1;
   }
 }
 
-int ElementType::DimensionFromTag(int tag)
+int ElementType::getDimension(int mshtype)
 {
-  switch(tag) {
+  switch(mshtype) {
     case(MSH_PNT):      case(MSH_PNT_SUB):
       return 0;
 
@@ -330,17 +330,159 @@ int ElementType::DimensionFromTag(int tag)
       return 3;
 
     default:
-      Msg::Error("Unknown element tag %i for dimension, returning -1.", tag);
+      Msg::Error("Unknown element MSH type %i for dimension, returning -1.", mshtype);
       return -1;
   }
+}
+
+// Give the number of node corresponding to a msh type.
+int ElementType::getNumVertices(int mshtype)
+{
+  switch (mshtype) {
+    case MSH_PNT     : return 1;
+    case MSH_LIN_1   : return 1;
+    case MSH_LIN_2   : return 2;
+    case MSH_LIN_3   : return 3;
+    case MSH_LIN_4   : return 4;
+    case MSH_LIN_5   : return 5;
+    case MSH_LIN_6   : return 6;
+    case MSH_LIN_7   : return 7;
+    case MSH_LIN_8   : return 8;
+    case MSH_LIN_9   : return 9;
+    case MSH_LIN_10  : return 10;
+    case MSH_LIN_11  : return 11;
+    case MSH_TRI_1   : return 1;
+    case MSH_TRI_3   : return 3;
+    case MSH_TRI_6   : return 6;
+    case MSH_TRI_10  : return 10;
+    case MSH_TRI_15  : return 15;
+    case MSH_TRI_21  : return 21;
+    case MSH_TRI_28  : return 28;
+    case MSH_TRI_36  : return 36;
+    case MSH_TRI_45  : return 45;
+    case MSH_TRI_55  : return 55;
+    case MSH_TRI_66  : return 66;
+    case MSH_TRI_9   : return 9;
+    case MSH_TRI_12  : return 12;
+    case MSH_TRI_15I : return 15;
+    case MSH_TRI_18  : return 18;
+    case MSH_TRI_21I : return 21;
+    case MSH_TRI_24  : return 24;
+    case MSH_TRI_27  : return 27;
+    case MSH_TRI_30  : return 30;
+    //case MSH_TRI_MINI  : return 0;
+    //case MSH_POLYG_  : return 0;
+    //case MSH_POLYG_B : return 0;
+    case MSH_TET_1   : return 1;
+    case MSH_TET_4   : return 4;
+    case MSH_TET_10  : return 10;
+    case MSH_TET_20  : return 20;
+    case MSH_TET_35  : return 35;
+    case MSH_TET_56  : return 56;
+    case MSH_TET_84  : return 84;
+    case MSH_TET_120 : return 120;
+    case MSH_TET_165 : return 165;
+    case MSH_TET_220 : return 220;
+    case MSH_TET_286 : return 286;
+    case MSH_TET_16  : return 16;
+    case MSH_TET_22  : return 22;
+    case MSH_TET_28  : return 28;
+    case MSH_TET_34  : return 34;
+    case MSH_TET_40  : return 40;
+    case MSH_TET_46  : return 46;
+    case MSH_TET_52  : return 52;
+    case MSH_TET_58  : return 58;
+    //case MSH_TET_MINI  : return 0;
+    case MSH_QUA_1   : return 1;
+    case MSH_QUA_4   : return 4;
+    case MSH_QUA_9   : return 9;
+    case MSH_QUA_16  : return 16;
+    case MSH_QUA_25  : return 25;
+    case MSH_QUA_36  : return 36;
+    case MSH_QUA_49  : return 49;
+    case MSH_QUA_64  : return 64;
+    case MSH_QUA_81  : return 81;
+    case MSH_QUA_100 : return 100;
+    case MSH_QUA_121 : return 121;
+    case MSH_QUA_8   : return 8;
+    case MSH_QUA_12  : return 12;
+    case MSH_QUA_16I : return 16;
+    case MSH_QUA_20  : return 20;
+    case MSH_QUA_24  : return 24;
+    case MSH_QUA_28  : return 28;
+    case MSH_QUA_32  : return 32;
+    case MSH_QUA_36I : return 36;
+    case MSH_QUA_40  : return 40;
+    case MSH_PRI_1   : return 1;
+    case MSH_PRI_6   : return 6;
+    case MSH_PRI_18  : return 18;
+    case MSH_PRI_40  : return 40;
+    case MSH_PRI_75  : return 75;
+    case MSH_PRI_126 : return 126;
+    case MSH_PRI_196 : return 196;
+    case MSH_PRI_288 : return 288;
+    case MSH_PRI_405 : return 405;
+    case MSH_PRI_550 : return 550;
+    case MSH_PRI_15  : return 15;
+    case MSH_PRI_24  : return 24;
+    case MSH_PRI_33  : return 33;
+    case MSH_PRI_42 : return 42;
+    case MSH_PRI_51 : return 51;
+    case MSH_PRI_60 : return 60;
+    case MSH_PRI_69 : return 69;
+    case MSH_PRI_78 : return 78;
+    case MSH_HEX_1   : return 1;
+    case MSH_HEX_8   : return 8;
+    case MSH_HEX_27  : return 27;
+    case MSH_HEX_64  : return 64;
+    case MSH_HEX_125 : return 125;
+    case MSH_HEX_216 : return 216;
+    case MSH_HEX_343 : return 343;
+    case MSH_HEX_512 : return 512;
+    case MSH_HEX_729 : return 729;
+    case MSH_HEX_1000: return 1000;
+    case MSH_HEX_20  : return 20;
+    case MSH_HEX_32  : return 32;
+    case MSH_HEX_44  : return 44;
+    case MSH_HEX_56 : return 56;
+    case MSH_HEX_68 : return 68;
+    case MSH_HEX_80 : return 80;
+    case MSH_HEX_92 : return 92;
+    case MSH_HEX_104 : return 104;
+    case MSH_PYR_1   : return 1;
+    case MSH_PYR_5   : return 5;
+    case MSH_PYR_14  : return 14;
+    case MSH_PYR_30  : return 30;
+    case MSH_PYR_55  : return 55;
+    case MSH_PYR_91  : return 91;
+    case MSH_PYR_140 : return 140;
+    case MSH_PYR_204 : return 204;
+    case MSH_PYR_285 : return 285;
+    case MSH_PYR_385 : return 385;
+    case MSH_PYR_13  : return 13;
+    case MSH_PYR_21  : return 21;
+    case MSH_PYR_29  : return 29;
+    case MSH_PYR_37  : return 37;
+    case MSH_PYR_45 : return 45;
+    case MSH_PYR_53 : return 53;
+    case MSH_PYR_61 : return 61;
+    case MSH_PYR_69 : return 69;
+    case MSH_TRIH_4 : return 4;
+    //case MSH_POLYH_ : return 0;
+    default :
+      Msg::Warning("Unknown element MSH type %d", mshtype);
+      return 0;
+  }
+
+  return 0;
 }
 
 // Gives > 0 if element tag is in Serendipity Family.
 // Gives < 2 if element tag is in 'Normal' Family.
 // 1 is for element that is either Serendipity or not !
-int ElementType::SerendipityFromTag(int tag)
+int ElementType::getSerendipity(int mshtype)
 {
-  switch (tag) {
+  switch (mshtype) {
   case MSH_PNT     : case MSH_LIN_1   :
   case MSH_LIN_2   : case MSH_LIN_3   :
   case MSH_LIN_4   : case MSH_LIN_5   :
@@ -438,14 +580,14 @@ int ElementType::SerendipityFromTag(int tag)
     return 2; // Only Serendipity
 
   default :
-    Msg::Warning("Unknown element tag %d, assuming not serendipity.",tag);
+    Msg::Warning("Unknown element MSH type %d, assuming not serendipity.", mshtype);
     return 0;
   }
 }
 
-int ElementType::getTag(int parentTag, int order, bool serendip)
+int ElementType::getType(int parentType, int order, bool serendip)
 {
-  switch (parentTag) {
+  switch (parentType) {
   case TYPE_PNT :
     return MSH_PNT;
   case TYPE_LIN :
@@ -461,7 +603,7 @@ int ElementType::getTag(int parentTag, int order, bool serendip)
     case 8 : return MSH_LIN_9;
     case 9 : return MSH_LIN_10;
     case 10: return MSH_LIN_11;
-    default : Msg::Error("line order %i unknown", order); return 0;
+    default : Msg::Error("Line order %i unknown", order); return 0;
     }
     break;
   case TYPE_TRI :
@@ -477,7 +619,7 @@ int ElementType::getTag(int parentTag, int order, bool serendip)
     case 8 : return serendip ? MSH_TRI_24 : MSH_TRI_45;
     case 9 : return serendip ? MSH_TRI_27 : MSH_TRI_55;
     case 10: return serendip ? MSH_TRI_30 : MSH_TRI_66;
-    default : Msg::Error("triangle order %i unknown", order); return 0;
+    default : Msg::Error("Triangle order %i unknown", order); return 0;
     }
     break;
   case TYPE_QUA :
@@ -493,7 +635,7 @@ int ElementType::getTag(int parentTag, int order, bool serendip)
     case 8 : return serendip ? MSH_QUA_32 : MSH_QUA_81;
     case 9 : return serendip ? MSH_QUA_36I: MSH_QUA_100;
     case 10: return serendip ? MSH_QUA_40 : MSH_QUA_121;
-    default : Msg::Error("quad order %i unknown", order); return 0;
+    default : Msg::Error("Quad order %i unknown", order); return 0;
     }
     break;
   case TYPE_TET :
@@ -509,7 +651,7 @@ int ElementType::getTag(int parentTag, int order, bool serendip)
     case 8 : return serendip ? MSH_TET_46: MSH_TET_165;
     case 9 : return serendip ? MSH_TET_52: MSH_TET_220;
     case 10: return serendip ? MSH_TET_58: MSH_TET_286;
-    default : Msg::Error("terahedron order %i unknown", order); return 0;
+    default : Msg::Error("Tetrahedron order %i unknown", order); return 0;
     }
     break;
   case TYPE_HEX :
@@ -539,7 +681,7 @@ int ElementType::getTag(int parentTag, int order, bool serendip)
     case 7 : return serendip ? MSH_PRI_60 : MSH_PRI_288;
     case 8 : return serendip ? MSH_PRI_69 : MSH_PRI_405;
     case 9 : return serendip ? MSH_PRI_78 : MSH_PRI_550;
-    default : Msg::Error("prism order %i unknown", order); return 0;
+    default : Msg::Error("Prism order %i unknown", order); return 0;
     }
     break;
   case TYPE_PYR :
@@ -554,16 +696,65 @@ int ElementType::getTag(int parentTag, int order, bool serendip)
     case 7: return serendip ? MSH_PYR_53 : MSH_PYR_204;
     case 8: return serendip ? MSH_PYR_61 : MSH_PYR_285;
     case 9: return serendip ? MSH_PYR_69 : MSH_PYR_385;
-    default : Msg::Error("pyramid order %i unknown", order); return 0;
+    default : Msg::Error("Pyramid order %i unknown", order); return 0;
     }
     break;
   case TYPE_TRIH :
     return MSH_TRIH_4;
-  default : Msg::Warning("unknown element type %i, returning 0", parentTag); return 0;
+  default :
+    Msg::Warning("Unknown element parent type %i, returning 0", parentType); return 0;
   }
 }
 
-int ElementType::getPrimaryTag(int tag)
+int ElementType::getPrimaryType(int mshtype)
 {
-  return getTag(ParentTypeFromTag(tag), 1);
+  return getType(getParentType(mshtype), 1);
+}
+
+std::string ElementType::nameOfParentType(int parentType) {
+
+  switch (parentType) {
+
+  case TYPE_PNT:
+    return std::string("point");
+    break;
+  case TYPE_LIN:
+    return std::string("line");
+    break;
+  case TYPE_TRI:
+    return std::string("triangle");
+    break;
+  case TYPE_QUA:
+    return std::string("quadrangle");
+    break;
+  case TYPE_TET:
+    return std::string("tetrahedron");
+    break;
+  case TYPE_PYR:
+    return std::string("pyramid");
+    break;
+  case TYPE_PRI:
+    return std::string("prism");
+    break;
+  case TYPE_HEX:
+    return std::string("hexahedron");
+    break;
+  case TYPE_POLYG:
+    return std::string("polygon");
+    break;
+  case TYPE_POLYH:
+    return std::string("polyhedron");
+    break;
+  case TYPE_XFEM:
+    return std::string("xfem");
+    break;
+  case TYPE_MINI:
+    return std::string("mini");
+    break;
+  case TYPE_TRIH:
+    return std::string("trihedron");
+    break;
+  }
+
+  return std::string("undefined");
 }

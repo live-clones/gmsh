@@ -242,7 +242,7 @@ void _relocateVertexGolden(MVertex *ver,
   int N = 0;
   for(unsigned int i = 0; i < lt.size(); i++){
     double XCG=0,YCG=0,ZCG=0;
-    for (int j=0;j<lt[i]->getNumVertices();j++){
+    for (std::size_t j=0;j<lt[i]->getNumVertices();j++){
       XCG += lt[i]->getVertex(j)->x();
       YCG += lt[i]->getVertex(j)->y();
       ZCG += lt[i]->getVertex(j)->z();
@@ -269,7 +269,7 @@ static double _relocateVertex2(GFace* gf, MVertex *ver,
   SPoint3 p1(0,0,0);
   int counter = 0;
   for(unsigned int i = 0; i < lt.size(); i++){
-    for (int j=0;j<lt[i]->getNumVertices();j++){
+    for (std::size_t j=0;j<lt[i]->getNumVertices();j++){
       MVertex* v = lt[i]->getVertex(j);
       p1 += SPoint3(v->x(),v->y(),v->z());
       counter++;
@@ -308,7 +308,7 @@ static double _relocateVertex(GFace* gf, MVertex *ver,
 
   int counter=0;
   for(unsigned int i = 0; i < lt.size(); i++){
-    for (int j=0;j<lt[i]->getNumVertices();j++){
+    for (std::size_t j=0;j<lt[i]->getNumVertices();j++){
       MVertex* v = lt[i]->getVertex(j);
       SPoint2 pp;
       reparamMeshVertexOnFace(v, gf, pp);

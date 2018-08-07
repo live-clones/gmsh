@@ -52,10 +52,10 @@ bool compute4neighbors (GFace *gf,   // the surface
 			SMetric3 &metricField, FILE *crossf = 0) // the mesh metric
 {
   // we assume that v is on surface gf
-  
+
   // get the parameter of the point on the surface
   reparamMeshVertexOnFace(v_center, gf, midpoint);
-  
+
   double L = backgroundMesh::current()->operator()(midpoint[0],midpoint[1],0.0);
   //  printf("L = %12.5E\n",L);
   metricField = SMetric3(1./(L*L));
@@ -178,7 +178,7 @@ bool compute4neighbors (GFace *gf,   // the surface
 		       (pp.z() - v_center->z())*(pp.z() - v_center->z()) );
       ERR[i] = 100*fabs(D-L)/(D+L);
     }
-    
+
     if (1 && goNonLinear){
       surfaceFunctorGFace ss (gf);                                        //
       SVector3 dirs[4] = {t1*(-1.0),t2*(-1.0),t1*(1.0),t2*(1.0)};                     //
@@ -241,7 +241,9 @@ double get_smoothness(MVertex *v, GFace *gf, const map<MVertex*,double> &vertice
 
   // recover element's vertices:
   vector<MVertex*> localvertices;
-  for (int ivert=0;ivert<elem->getNumVertices();ivert++){
+  localvertices.reserve(elem->getNumVertices());
+
+  for (std::size_t ivert=0;ivert<elem->getNumVertices();ivert++){
     MVertex *temp = elem->getVertex(ivert);
     localvertices.push_back(temp);
 //    cout << " made of vertex " << temp->x() << "," << temp->y() << "," << temp->z() << endl;
@@ -275,8 +277,8 @@ double get_smoothness(MVertex *v, GFace *gf, const map<MVertex*,double> &vertice
   return res;
 }
 
-
-void print_nodal_info_int(string filename, map<MVertex*, int> &mapp){
+void print_nodal_info_int(const string &filename, map<MVertex *, int> &mapp)
+{
   ofstream out(filename.c_str());
 
   out << "View \"\"{" << endl;
@@ -289,8 +291,9 @@ void print_nodal_info_int(string filename, map<MVertex*, int> &mapp){
   out.close();
 }
 
-
-void print_nodal_info_double(string filename, map<MVertex*, double> &mapp){
+void print_nodal_info_double(const string &filename,
+                             map<MVertex *, double> &mapp)
+{
   ofstream out(filename.c_str());
 
   out << "View \"\"{" << endl;
@@ -501,9 +504,9 @@ void packingOfParallelogramsSmoothness(GFace* gf,  std::vector<MVertex*> &packed
   multimap<MVertex*,MVertex*> vertex2vertex;
   for (std::vector<MElement*>::iterator it = backgroundMesh::current()->begin_triangles();it!=backgroundMesh::current()->end_triangles();it++){
     MElement *e = *it;
-    for (int i=0;i<e->getNumVertices();i++){
+    for (std::size_t i=0;i<e->getNumVertices();i++){
       MVertex *current = e->getVertex(i);
-      for (int j=0;j<e->getNumVertices();j++){
+      for (std::size_t j=0;j<e->getNumVertices();j++){
         if (i==j) continue;
         MVertex *neighbor = e->getVertex(j);
         vertex2vertex.insert(make_pair(current,neighbor));
@@ -591,7 +594,7 @@ void packingOfParallelogramsSmoothness(GFace* gf,  std::vector<MVertex*> &packed
   std::set<MVertex*> bnd_vertices;
   for(unsigned int i=0;i<gf->getNumMeshElements();i++){
     MElement* element = gf->getMeshElement(i);
-    for(int j=0;j<element->getNumVertices();j++){
+    for(std::size_t j=0;j<element->getNumVertices();j++){
       MVertex *vertex = element->getVertex(j);
       if (vertex->onWhat()->dim() < 2)bnd_vertices.insert(vertex);
     }
@@ -736,7 +739,7 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
   std::set<MVertex*> bnd_vertices;
   for(unsigned int i=0;i<gf->getNumMeshElements();i++){
     MElement* element = gf->getMeshElement(i);
-    for(int j=0;j<element->getNumVertices();j++){
+    for(std::size_t j=0;j<element->getNumVertices();j++){
       MVertex *vertex = element->getVertex(j);
       if (vertex->onWhat()->dim() < 2)bnd_vertices.insert(vertex);
     }
@@ -772,7 +775,7 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
 
   //  printf("initially : %d vertices in the domain\n",vertices.size());
 
-  
+
   while(!fifo.empty()){
     surfacePointWithExclusionRegion * parent = *fifo.begin();
     fifo.erase(fifo.begin());
@@ -826,7 +829,10 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
 
 // fills a surface with points in order to build a nice
 // quad mesh ------------
-void packingOfParallelogramsConstrained(GFace* gf, std::set<MVertex*> constr_vertices, std::vector<MVertex*> &packed, std::vector<SMetric3> &metrics){
+void packingOfParallelogramsConstrained(
+  GFace *gf, const std::set<MVertex *> &constr_vertices,
+  std::vector<MVertex *> &packed, std::vector<SMetric3> &metrics)
+{
   //PE MODIF
 //  packingOfParallelogramsSmoothness(gf,packed,metrics);
 //  return;

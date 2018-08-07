@@ -5,7 +5,9 @@
 
 set(SRC
   boundaryLayersData.cpp
+	affineTransformation.cpp
   closestPoint.cpp
+	closestVertex.cpp
   intersectCurveSurface.cpp
   GEntity.cpp STensor3.cpp
     GVertex.cpp GEdge.cpp GFace.cpp GRegion.cpp
@@ -44,6 +46,7 @@ set(SRC
   MZone.cpp MZoneBoundary.cpp
   Cell.cpp CellComplex.cpp ChainComplex.cpp Homology.cpp Chain.cpp
   MVertexBoundaryLayerData.cpp
+  CGNSFunctions.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

@@ -9,7 +9,6 @@
 #include "BasisFactory.h"
 #include "GaussLegendre1D.h"
 #include "Context.h"
-#include "qualityMeasures.h"
 #include "decasteljau.h"
 #include "bezierBasis.h"
 

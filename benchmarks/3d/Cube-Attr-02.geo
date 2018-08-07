@@ -11,9 +11,6 @@ Line Loop(5) = {2,3,4,1};
 Plane Surface(6) = {5};
 Extrude {0,0.0,1}{ Surface{6}; }
 
-Surface Loop(29) = {23,6,15,19,28,27};
-Volume(30) = {29};
-
 Point(55) = {0.3,0.3,0.3,1};
 
 Field[1] = Attractor;

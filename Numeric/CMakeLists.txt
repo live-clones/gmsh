@@ -12,15 +12,15 @@ set(SRC
   miniBasis.cpp
     nodalBasis.cpp
 	polynomialBasis.cpp
+	incompleteBasis.cpp
 	pyramidalBasis.cpp
 	BergotBasis.cpp
-	jacobiPolynomials.cpp
-	legendrePolynomials.cpp
+	orthogonalBasis.cpp
     bezierBasis.cpp
     JacobianBasis.cpp
     CondNumBasis.cpp
     pointsGenerators.cpp
-    InteriorNodePlacement.cpp
+    InnerVertexPlacement.cpp
   ElementType.cpp
   GaussIntegration.cpp
     GaussQuadratureLin.cpp

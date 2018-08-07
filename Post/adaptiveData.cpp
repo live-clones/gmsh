@@ -1837,7 +1837,7 @@ void VTKData::initVTKFile()
     }
     else {
       // Remove existing extension here to avoid duplicate
-      std::size_t found = vtkFileName.find_last_of(".");
+      std::size_t found = vtkFileName.find_last_of('.');
       // remove extension
       if(found != std::string::npos) vtkFileName = vtkFileName.substr(0, found);
       vtkDirName = vtkFileName;

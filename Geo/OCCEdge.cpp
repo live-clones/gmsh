@@ -37,7 +37,9 @@
 #include <BOPTools_AlgoTools.hxx>
 
 OCCEdge::OCCEdge(GModel *m, TopoDS_Edge edge, int num, GVertex *v1, GVertex *v2)
-  : GEdge(m, num, v1, v2), c(edge), trimmed(0)
+  : GEdge(m, num, v1, v2)
+  , c(edge)
+  , trimmed(0)
 {
   // force orientation of internal/external edges: otherwise reverse will not
   // produce the expected result
@@ -58,7 +60,7 @@ OCCEdge::~OCCEdge()
     model()->getOCCInternals()->unbind(c, tag()); // potentially slow
 }
 
-SBoundingBox3d OCCEdge::bounds() const
+SBoundingBox3d OCCEdge::bounds(bool fast) const
 {
   Bnd_Box b;
   try{
@@ -274,6 +276,10 @@ GEntity::GeomType OCCEdge::geomType() const
 int OCCEdge::minimumMeshSegments() const
 {
   int np;
+
+  // if it is a seam, then return 1
+  if (l_faces.size() == 1 && isSeam (l_faces[0]))return 1;
+  
   if(geomType() == Line)
     np = GEdge::minimumMeshSegments();
   else

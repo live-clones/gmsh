@@ -22,7 +22,7 @@
 
 using namespace std;
 
-extern void export_gregion_mesh(GRegion *gr, string filename);
+extern void export_gregion_mesh(GRegion *gr, const string &filename);
 
 class Hex {
  private:
@@ -197,7 +197,7 @@ class Diagonal{
     b = b2;
     compute_hash();
   }
-  bool same_vertices(Diagonal diagonal) const
+  bool same_vertices(const Diagonal &diagonal) const
   {
     bool c1 = (a == diagonal.get_a()) || (a == diagonal.get_b());
     bool c2 = (b == diagonal.get_a()) || (b == diagonal.get_b());
@@ -207,51 +207,73 @@ class Diagonal{
   bool operator<(const Diagonal& rhs) const { return hash<rhs.get_hash(); }
 };
 
-class Tuple{
- private:
-  MVertex *v1,*v2,*v3;
+class Tuple {
+private:
+  MVertex *vertex1, *vertex2, *vertex3;
   MElement *element;
   GFace *gf;
   unsigned long long hash;
- public:
-  Tuple() : v1(NULL), v2(NULL), v3(NULL), element(NULL), gf(NULL), hash(0.) {}
-  Tuple(MVertex* a, MVertex* b, MVertex* c, MElement* element2, GFace* gf2)
+
+public:
+  Tuple()
+    : vertex1(NULL)
+    , vertex2(NULL)
+    , vertex3(NULL)
+    , element(NULL)
+    , gf(NULL)
+    , hash(0)
   {
-    MVertex* tmp[3] = { a,b,c };
-    std::sort(tmp, tmp + 3);
-    v1 = tmp[0];
-    v2 = tmp[1];
-    v2 = tmp[2];
-    hash = a->getNum() + b->getNum() + c->getNum();
-    element = element2;
-    gf = gf2;
   }
-  Tuple(MVertex* a, MVertex* b, MVertex* c)
-    :element(NULL), gf(NULL)
+
+  Tuple(MVertex *const a, MVertex *const b, MVertex *const c,
+        MElement *const element2, GFace *const gf2)
+    : vertex1(NULL)
+    , vertex2(NULL)
+    , vertex3(NULL)
+    , element(element2)
+    , gf(gf2)
+    , hash(a->getNum() + b->getNum() + c->getNum())
   {
-    MVertex* tmp[3] = { a,b,c };
+    MVertex *tmp[3] = {a, b, c};
     std::sort(tmp, tmp + 3);
-    v1 = tmp[0];
-    v2 = tmp[1];
-    v2 = tmp[2];
-    hash = a->getNum() + b->getNum() + c->getNum();
+    vertex1 = tmp[0];
+    vertex2 = tmp[1];
+    vertex2 = tmp[2];
   }
-  ~Tuple() {};
-  MVertex* get_v1() const {return v1;}
-  MVertex* get_v2() const {return v2;}
-  MVertex* get_v3() const {return v3;}
-  MElement* get_element() const { return element; }
-  GFace* get_gf() const { return gf; }
-  bool same_vertices(const Tuple& rhs) const
+
+  Tuple(MVertex *const a, MVertex *const b, MVertex *const c)
+    : vertex1(NULL)
+    , vertex2(NULL)
+    , vertex3(NULL)
+    , element(NULL)
+    , gf(NULL)
+    , hash(a->getNum() + b->getNum() + c->getNum())
   {
-    if (v1 == rhs.get_v1() && v2 == rhs.get_v2() && v3 == rhs.get_v3()) {
-      return true;
-    } else {
-      return false;
-    }
+    MVertex *tmp[3] = {a, b, c};
+    std::sort(tmp, tmp + 3);
+    vertex1 = tmp[0];
+    vertex2 = tmp[1];
+    vertex2 = tmp[2];
+  }
+
+  ~Tuple() {}
+
+  MVertex *get_v1() const { return vertex1; }
+  MVertex *get_v2() const { return vertex2; }
+  MVertex *get_v3() const { return vertex3; }
+
+  MElement *get_element() const { return element; }
+
+  GFace *get_gf() const { return gf; }
+
+  bool same_vertices(const Tuple &rhs) const
+  {
+    return (vertex1 == rhs.get_v1() && vertex2 == rhs.get_v2() &&
+            vertex3 == rhs.get_v3());
   }
   unsigned long long get_hash() const { return hash; }
-  bool operator<(const Tuple& rhs) const { return hash< rhs.get_hash(); }
+
+  bool operator<(const Tuple &rhs) const { return hash < rhs.get_hash(); }
 };
 
 // Class in charge of answering connectivity requests on the input tetraedral
@@ -790,18 +812,19 @@ protected:
   // ------- exports --------
   // ---- seems that it won't export nothing since the
   // ---- data structures from which info is read seem to never be filled
-  void export_tets(set<MElement*> &tetset, Hex* hex, string s);
-  void export_single_hex_all(Hex* hex,string s);
-  void export_single_hex(Hex* hex,string s);
-  void export_single_hex_faces(Hex* hex,string s);
-  void export_single_hex_tet(Hex* hex,string s);
+  void export_tets(set<MElement *> &tetset, Hex *hex, const string &s);
+  void export_single_hex_all(Hex *hex, const string &s);
+  void export_single_hex(Hex *hex, const string &s);
+  void export_single_hex_faces(Hex *hex, const string &s);
+  void export_single_hex_tet(Hex *hex, const string &s);
   void export_all_hex(int &file,GRegion *gr);
   void export_hexmesh_so_far(int &file);
   void export_direct_neighbor_table(int max);
   void export_hex_init_degree(GRegion *gr, const std::map<Hex*,int> &init_degree, const vector<Hex*> &chosen_hex);
 
 public:
-  Recombinator_Graph(unsigned int max_nb_cliques, string filename=string());
+  Recombinator_Graph(unsigned int max_nb_cliques,
+                     const string &filename = string());
   virtual ~Recombinator_Graph();
   using Recombinator::execute;
   virtual void execute(GRegion*);
@@ -891,16 +914,16 @@ public:
   bool linked(MVertex*,MVertex*);
 
   void find(MVertex*,MVertex*,const std::vector<MVertex*>&,std::set<MVertex*>&);
-  void find(MVertex*,Prism,std::set<MElement*>&);
+  void find(MVertex *, const Prism &, std::set<MElement *> &);
 
   void intersection(const std::set<MVertex*>&,const std::set<MVertex*>&,const std::vector<MVertex*>&,std::set<MVertex*>&);
 
   bool inclusion(MVertex*,Prism);
   bool inclusion(MVertex*,MVertex*,MVertex*,MVertex*,MVertex*);
   bool inclusion(MVertex*,MVertex*,MVertex*,const std::set<MElement*>&);
-  bool inclusion(Facet);
-  bool inclusion(Diagonal);
-  bool duplicate(Diagonal);
+  bool inclusion(const Facet &);
+  bool inclusion(const Diagonal &);
+  bool duplicate(const Diagonal &);
 
   bool conformityA(Prism);
   bool conformityA(MVertex*,MVertex*,MVertex*,MVertex*);
@@ -915,12 +938,12 @@ public:
 
   void build_hash_tableA(Prism);
   void build_hash_tableA(MVertex*,MVertex*,MVertex*,MVertex*);
-  void build_hash_tableA(Facet);
+  void build_hash_tableA(const Facet &);
   void build_hash_tableB(Prism);
   void build_hash_tableB(MVertex*,MVertex*,MVertex*,MVertex*);
-  void build_hash_tableB(Diagonal);
+  void build_hash_tableB(const Diagonal &);
   void build_hash_tableC(Prism);
-  void build_hash_tableC(Diagonal);
+  void build_hash_tableC(const Diagonal &);
 
   double scaled_jacobian(MVertex*,MVertex*,MVertex*,MVertex*);
   double min_scaled_jacobian(Prism);

@@ -5,8 +5,11 @@
 
 #include "GmshConfig.h"
 #include "GModel.h"
-#include "meshGFaceOptimize.h"
 #include "ExtractEdges.h"
+
+#if defined(HAVE_MESH)
+#include "meshGFaceOptimize.h"
+#endif
 
 StringXNumber ExtractEdgesOptions_Number[] = {
   {GMSH_FULLRC, "Angle", NULL, 40.},

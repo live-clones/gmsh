@@ -41,12 +41,12 @@
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "Options.h"
-#include "meshGEdge.h"
-#include "meshGFace.h"
-#include "meshGRegion.h"
 #include "GModelCreateTopologyFromMesh.h"
 
 #if defined(HAVE_MESH)
+#include "meshGEdge.h"
+#include "meshGFace.h"
+#include "meshGRegion.h"
 #include "Field.h"
 #include "Generator.h"
 #include "meshGFaceOptimize.h"
@@ -66,14 +66,23 @@ static const float EDGE_ANGLE_THRESHOLD = 0.698132;
 std::vector<GModel*> GModel::list;
 int GModel::_current = -1;
 
-GModel::GModel(std::string name)
-  : _maxVertexNum(0), _maxElementNum(0),
-    _checkPointedMaxVertexNum(0), _checkPointedMaxElementNum(0),
-    _destroying(false),
-    _name(name), _visible(1), _elementOctree(0), _geo_internals(0),
-    _occ_internals(0), _acis_internals(0), _fm_internals(0),
-    _fields(0), _currentMeshEntity(0),
-    _numPartitions(0), normals(0)
+GModel::GModel(const std::string &name)
+  : _maxVertexNum(0)
+  , _maxElementNum(0)
+  , _checkPointedMaxVertexNum(0)
+  , _checkPointedMaxElementNum(0)
+  , _destroying(false)
+  , _name(name)
+  , _visible(1)
+  , _elementOctree(0)
+  , _geo_internals(0)
+  , _occ_internals(0)
+  , _acis_internals(0)
+  , _fm_internals(0)
+  , _fields(0)
+  , _currentMeshEntity(0)
+  , _numPartitions(0)
+  , normals(0)
 {
 
   // hide all other models
@@ -115,7 +124,7 @@ GModel::~GModel()
 #endif
 }
 
-void GModel::setFileName(std::string fileName)
+void GModel::setFileName(const std::string &fileName)
 {
   _fileName = fileName;
   _fileNames.insert(fileName);
@@ -345,15 +354,14 @@ void GModel::remove(GVertex *v)
 
 void GModel::remove(int dim, int tag, bool recursive)
 {
-  // we don't check dependencies when removing entities (we just erase them from
-  // the set), so we can go ahead with a brute force recursion
+  // TODO: we should also check dependencies in embedded entities
   if(dim == 3){
     GRegion *gr = getRegionByTag(tag);
     if(gr){
       remove(gr);
       if(recursive){
-        std::list<GFace*> f = gr->faces();
-        for(std::list<GFace*>::iterator it = f.begin(); it != f.end(); it++)
+        std::vector<GFace*> f = gr->faces();
+        for(std::vector<GFace*>::iterator it = f.begin(); it != f.end(); it++)
           remove(2, (*it)->tag(), recursive);
       }
     }
@@ -361,28 +369,58 @@ void GModel::remove(int dim, int tag, bool recursive)
   else if(dim == 2){
     GFace *gf = getFaceByTag(tag);
     if(gf){
-      remove(gf);
-      if(recursive){
-        std::list<GEdge*> e = gf->edges();
-        for(std::list<GEdge*>::iterator it = e.begin(); it != e.end(); it++)
-          remove(1, (*it)->tag(), recursive);
+      bool skip = false;
+      for(riter it = firstRegion(); it != lastRegion(); it++){
+        std::vector<GFace*> f = (*it)->faces();
+        if(std::find(f.begin(), f.end(), gf) != f.end()){
+          skip = true;
+          break;
+        }
+      }
+      if(!skip){
+        remove(gf);
+        if(recursive){
+          std::vector<GEdge*> const& e = gf->edges();
+          for(std::vector<GEdge*>::const_iterator it = e.begin(); it != e.end(); it++)
+            remove(1, (*it)->tag(), recursive);
+        }
       }
     }
   }
   else if(dim == 1){
     GEdge *ge = getEdgeByTag(tag);
     if(ge){
-      remove(ge);
-      if(recursive){
-        if(ge->getBeginVertex()) remove(ge->getBeginVertex());
-        if(ge->getEndVertex()) remove(ge->getEndVertex());
+      bool skip = false;
+      for(fiter it = firstFace(); it != lastFace(); it++){
+        std::vector<GEdge*> const& e = (*it)->edges();
+        if(std::find(e.begin(), e.end(), ge) != e.end()){
+          skip = true;
+          break;
+        }
+      }
+      if(!skip){
+        remove(ge);
+        if(recursive){
+          if(ge->getBeginVertex()) remove(0, ge->getBeginVertex()->tag());
+          if(ge->getEndVertex()) remove(0, ge->getEndVertex()->tag());
+        }
       }
     }
   }
   else if(dim == 0){
     GVertex *gv = getVertexByTag(tag);
     if(gv){
-      remove(gv);
+      bool skip = false;
+      for(eiter it = firstEdge(); it != lastEdge(); it++){
+        GEdge *ge = *it;
+        if(ge->getBeginVertex() == gv || ge->getEndVertex() == gv){
+          skip = true;
+          break;
+        }
+      }
+      if(!skip){
+        remove(gv);
+      }
     }
   }
 }
@@ -408,8 +446,8 @@ void GModel::snapVertices()
   double tol = CTX::instance()->geom.tolerance;
 
   while(vit != lastVertex()){
-    std::list<GEdge*> edges = (*vit)->edges();
-    for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
+    std::vector<GEdge*> const& edges = (*vit)->edges();
+    for(std::vector<GEdge*>::const_iterator it = edges.begin(); it != edges.end(); ++it){
       Range<double> parb = (*it)->parBounds(0);
       double t;
       if((*it)->getBeginVertex() == *vit){
@@ -461,8 +499,8 @@ void GModel::getEntities(std::vector<GEntity*> &entities, int dim) const
   }
 }
 
-void GModel::getEntitiesInBox(std::vector<GEntity*> &entities, SBoundingBox3d box,
-                              int dim) const
+void GModel::getEntitiesInBox(std::vector<GEntity *> &entities,
+                              const SBoundingBox3d &box, int dim) const
 {
   entities.clear();
   std::vector<GEntity*> all;
@@ -499,15 +537,15 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
       GRegion *gr = getRegionByTag(tag);
       if(gr){
         if(recursive){
-          std::list<GVertex*> vert(gr->vertices());
-          for(std::list<GVertex*>::iterator it = vert.begin(); it != vert.end(); it++)
+          std::vector<GVertex*> const& vert = gr->vertices();
+          for(std::vector<GVertex*>::const_iterator it = vert.begin(); it != vert.end(); it++)
             outDimTags.push_back(std::pair<int, int>(0, (*it)->tag()));
         }
         else{
-          std::list<GFace*> faces(gr->faces());
-          std::list<int> orientations(gr->faceOrientations());
-          std::list<int>::iterator ito = orientations.begin();
-          for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
+          std::vector<GFace*> faces(gr->faces());
+          std::vector<int> const& orientations = gr->faceOrientations();
+          std::vector<int>::const_iterator ito = orientations.begin();
+          for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
             int t = (*it)->tag();
             if(oriented && ito != orientations.end()){
               t *= *ito;
@@ -526,15 +564,15 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
       GFace *gf = getFaceByTag(tag);
       if(gf){
         if(recursive){
-          std::list<GVertex*> vert(gf->vertices());
-          for(std::list<GVertex*>::iterator it = vert.begin(); it != vert.end(); it++)
+          std::vector<GVertex*> const& vert = gf->vertices();
+          for(std::vector<GVertex*>::const_iterator it = vert.begin(); it != vert.end(); it++)
             outDimTags.push_back(std::pair<int, int>(0, (*it)->tag()));
         }
         else{
-          std::list<GEdge*> edges(gf->edges());
-          std::list<int> orientations(gf->edgeOrientations());
-          std::list<int>::iterator ito = orientations.begin();
-          for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
+          std::vector<GEdge*> const& edges = gf->edges();
+          std::vector<int> orientations(gf->edgeOrientations());
+          std::vector<int>::iterator ito = orientations.begin();
+          for(std::vector<GEdge*>::const_iterator it = edges.begin(); it != edges.end(); it++){
             int t = (*it)->tag();
             if(oriented && ito != orientations.end()){
               t *= *ito;
@@ -708,7 +746,7 @@ void GModel::getInnerPhysicalNamesIterators(std::vector<piter> &iterators)
     iterators[physIt->first.first] = physIt;
 }
 
-int GModel::setPhysicalName(std::string name, int dim, int number)
+int GModel::setPhysicalName(const std::string &name, int dim, int number)
 {
   // check if the name is already used
   int findPhy = getPhysicalNumber(dim, name);
@@ -721,7 +759,8 @@ int GModel::setPhysicalName(std::string name, int dim, int number)
   return number;
 }
 
-GModel::piter GModel::setPhysicalName(piter pos, std::string name, int dim, int number)
+GModel::piter GModel::setPhysicalName(piter pos, const std::string &name,
+                                      int dim, int number)
 {
   // if no number is given, find the next available one
   if(!number) number = getMaxPhysicalNumber(dim) + 1;
@@ -867,13 +906,14 @@ static void addToMap
   }
 }
 
-static void checkConformity
-  (std::multimap< MFace , MElement *, Less_Face> &faceToElement,
-   std::map< MElement *, std::vector < std::pair <MElement *, bool> > > &elToNeighbors,
-   MFace face, MElement *el)
+static void
+checkConformity(std::multimap<MFace, MElement *, Less_Face> &faceToElement,
+                std::map<MElement *, std::vector<std::pair<MElement *, bool> > >
+                  &elToNeighbors,
+                const MFace &face, MElement *el)
 {
   int connectivity = faceToElement.count(face);
-  if(ElementType::ParentTypeFromTag(el->getType()) == TYPE_TRIH){
+  if(ElementType::getParentType(el->getType()) == TYPE_TRIH){
     //Each face of a trihedron should exist twice (no face on the boundary)
     if(connectivity != 2)
       Msg::Error("Non conforming trihedron %i (nb connections for a face %i)",
@@ -882,9 +922,9 @@ static void checkConformity
   else{
     //A face can exist  twice (inside) or once (boundary)
     if(connectivity != 2){
-      for(int iV = 0; iV < face.getNumVertices(); iV++)
+      for(std::size_t iV = 0; iV < face.getNumVertices(); iV++)
         if(face.getVertex(iV)->onWhat()->dim() == 3 || connectivity != 1){
-          for(int jV = 0; jV < face.getNumVertices(); jV++)
+          for(std::size_t jV = 0; jV < face.getNumVertices(); jV++)
             Msg::Info("Vertex %i dim %i",face.getVertex(jV)->getNum(),
                       face.getVertex(iV)->onWhat()->dim());
           Msg::Error("Non conforming element %i (%i connection(s) for a face "
@@ -1167,7 +1207,7 @@ int GModel::getNumMeshVertices(int dim) const
   unsigned int n = 0;
   for(unsigned int i = 0; i < entities.size(); i++)
     if(entities[i]->dim() == dim || dim < 0)
-      n += entities[i]->mesh_vertices.size();
+      n += entities[i]->getNumMeshVertices();
   return n;
 }
 
@@ -1190,6 +1230,36 @@ int GModel::getNumMeshParentElements()
   for(unsigned int i = 0; i < entities.size(); i++)
     n += entities[i]->getNumMeshParentElements();
   return n;
+}
+
+void GModel::renumberMeshVertices()
+{
+  destroyMeshCaches();
+  setMaxVertexNumber(0);
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+  unsigned int n = 0;
+  for(unsigned int i = 0; i < entities.size(); i++){
+    GEntity *ge = entities[i];
+    for(unsigned int j = 0; j < ge->getNumMeshVertices(); j++){
+      ge->getMeshVertex(j)->forceNum(++n);
+    }
+  }
+}
+
+void GModel::renumberMeshElements()
+{
+  destroyMeshCaches();
+  setMaxElementNumber(0);
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+  unsigned int n = 0;
+  for(unsigned int i = 0; i < entities.size(); i++){
+    GEntity *ge = entities[i];
+    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
+      ge->getMeshElement(j)->forceNum(++n);
+    }
+  }
 }
 
 int GModel::getNumMeshElements(unsigned c[6])
@@ -1225,19 +1295,25 @@ std::vector<MElement*> GModel::getMeshElementsByCoord(SPoint3 &p, int dim, bool 
   return _elementOctree->findAll(p.x(), p.y(), p.z(), dim, strict);
 }
 
-MVertex *GModel::getMeshVertexByTag(int n)
+void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)
 {
-  if(_vertexVectorCache.empty() && _vertexMapCache.empty()){
-    Msg::Debug("Rebuilding mesh vertex cache");
+  if(!onlyIfNecessary || (_vertexVectorCache.empty() && _vertexMapCache.empty())){
     _vertexVectorCache.clear();
     _vertexMapCache.clear();
-    bool dense = (getNumMeshVertices() == _maxVertexNum);
+    bool dense = false;
+    if(_maxVertexNum == getNumMeshVertices()){
+      Msg::Debug("We have a dense vertex numbering in the cache");
+      dense = true;
+    }
+    else if(_maxVertexNum < 10 * getNumMeshVertices()){
+      Msg::Debug("We have a fairly dense vertex numbering - still using cache vector");
+      dense = true;
+    }
     std::vector<GEntity*> entities;
     getEntities(entities);
     if(dense){
-      Msg::Debug("Good: we have a dense vertex numbering in the cache");
       // numbering starts at 1
-      _vertexVectorCache.resize(_maxVertexNum + 1);
+      _vertexVectorCache.resize(_maxVertexNum + 1, (MVertex*)0);
       for(unsigned int i = 0; i < entities.size(); i++)
         for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
           _vertexVectorCache[entities[i]->mesh_vertices[j]->getNum()] =
@@ -1249,6 +1325,14 @@ MVertex *GModel::getMeshVertexByTag(int n)
           _vertexMapCache[entities[i]->mesh_vertices[j]->getNum()] =
             entities[i]->mesh_vertices[j];
     }
+  }
+}
+
+MVertex *GModel::getMeshVertexByTag(int n)
+{
+  if(_vertexVectorCache.empty() && _vertexMapCache.empty()){
+    Msg::Debug("Rebuilding mesh vertex cache");
+    rebuildMeshVertexCache();
   }
 
   if(n < (int)_vertexVectorCache.size())
@@ -1272,9 +1356,9 @@ void GModel::getMeshVerticesForPhysicalGroup(int dim, int num, std::vector<MVert
       sv.insert(g->mesh_vertices[0]);
     }
     else{
-      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+      for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++){
         MElement *e = entities[i]->getMeshElement(j);
-        for(int k = 0; k < e->getNumVertices(); k++)
+        for(std::size_t k = 0; k < e->getNumVertices(); k++)
           sv.insert(e->getVertex(k));
       }
     }
@@ -1288,13 +1372,20 @@ MElement *GModel::getMeshElementByTag(int n)
     Msg::Debug("Rebuilding mesh element cache");
     _elementVectorCache.clear();
     _elementMapCache.clear();
-    bool dense = (getNumMeshElements() == _maxElementNum);
+    bool dense = false;
+    if(_maxElementNum == getNumMeshElements()){
+      Msg::Debug("We have a dense element numbering in the cache");
+      dense = true;
+    }
+    else if(_maxElementNum < 10 * getNumMeshElements()){
+      Msg::Debug("We have a fairly dense element numbering - still using cache vector");
+      dense = true;
+    }
     std::vector<GEntity*> entities;
     getEntities(entities);
     if(dense){
-      Msg::Debug("Good: we have a dense element numbering in the cache");
       // numbering starts at 1
-      _elementVectorCache.resize(_maxElementNum + 1);
+      _elementVectorCache.resize(_maxElementNum + 1, (MElement*)0);
       for(unsigned int i = 0; i < entities.size(); i++)
         for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
           MElement *e = entities[i]->getMeshElement(j);
@@ -1382,15 +1473,15 @@ int GModel::indexMeshVertices(bool all, int singlePartition, bool renumber)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->setIndex(-1);
 
-  // tag all mesh vertices belonging to elements that need to be saved
-  // with 0, or with -2 if they need to be taken into account in the
-  // numbering but need not to be saved (because we save a single
-  // partition and they are not used in that partition)
+  // tag all mesh vertices belonging to elements that need to be saved with 0,
+  // or with -2 if they need to be taken into account in the numbering but need
+  // not to be saved (because we save a single partition and they are not used
+  // in that partition)
   for(unsigned int i = 0; i < entities.size(); i++){
     if(all || entities[i]->physicals.size()){
-      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+      for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++){
         MElement *e = entities[i]->getMeshElement(j);
-        for(int k = 0; k < e->getNumVertices(); k++){
+        for(std::size_t k = 0; k < e->getNumVertices(); k++){
           if(singlePartition <= 0 || e->getPartition() == singlePartition)
             e->getVertex(k)->setIndex(0);
           else if(e->getVertex(k)->getIndex() == -1)
@@ -1402,8 +1493,8 @@ int GModel::indexMeshVertices(bool all, int singlePartition, bool renumber)
 
   // renumber all the mesh vertices tagged with 0
   int numVertices = 0, index = 0;
-  for(unsigned int i = 0; i < entities.size(); i++){
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+  for(std::size_t i = 0; i < entities.size(); i++){
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++){
       MVertex *v = entities[i]->mesh_vertices[j];
       if(!v->getIndex()){
         index++;
@@ -1426,8 +1517,8 @@ void GModel::scaleMesh(double factor)
 {
   std::vector<GEntity*> entities;
   getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++){
       MVertex *v = entities[i]->mesh_vertices[j];
       v->x() *= factor;
       v->y() *= factor;
@@ -1576,15 +1667,16 @@ void GModel::_storeParentsInSubElements(std::map<int, std::vector<MElement*> > &
       it->second[i]->updateParent(this);
 }
 
-template<class T>
-static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &elements,
-                                                bool force=false)
+template <class T>
+static void _associateEntityWithElementVertices(GEntity *ge,
+                                                std::vector<T *> &elements,
+                                                bool force = false)
 {
-  for(unsigned int i = 0; i < elements.size(); i++){
-    for(int j = 0; j < elements[i]->getNumVertices(); j++){
+  for(unsigned int i = 0; i < elements.size(); i++) {
+    for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++) {
       if(force || !elements[i]->getVertex(j)->onWhat() ||
-          elements[i]->getVertex(j)->onWhat()->dim() > ge->dim())
-	elements[i]->getVertex(j)->setEntity(ge);
+         elements[i]->getVertex(j)->onWhat()->dim() > ge->dim())
+        elements[i]->getVertex(j)->setEntity(ge);
     }
   }
 }
@@ -1720,6 +1812,7 @@ void GModel::_storePhysicalTagsInEntities(int dim,
     case 2: ge = getFaceByTag(it->first); break;
     case 3: ge = getRegionByTag(it->first); break;
     }
+
     if(ge){
       std::map<int, std::string>::const_iterator it2 = it->second.begin();
       for(; it2 != it->second.end(); ++it2){
@@ -1910,13 +2003,13 @@ GModel *GModel::createGModel
         entityToElementsMap.begin(); it != entityToElementsMap.end();
       it++) {
     int entity = it->first;
-    for(unsigned int iE = 0; iE < it->second.size(); iE++) {
+    for(std::size_t iE = 0; iE < it->second.size(); iE++) {
       MElement* me = it->second[iE];
-      for(int iV = 0; iV < me->getNumVertices(); iV++) {
+      for(std::size_t iV = 0; iV < me->getNumVertices(); iV++) {
         vertexMap[me->getVertex(iV)->getNum()] = me->getVertex(iV);
       }
       std::vector<int> entityPhysicals = entityToPhysicalsMap[entity];
-      for(unsigned int i = 0; i < entityPhysicals.size(); i++) {
+      for(std::size_t i = 0; i < entityPhysicals.size(); i++) {
         physicals[me->getDim()][entity][entityPhysicals[i]] = "unnamed";
       }
     }
@@ -2044,14 +2137,14 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
     return 0;
   }
 
-  for(unsigned int i = 0; i < entities.size(); i++){
+  for(std::size_t i = 0; i < entities.size(); i++){
     GEntity* ge = entities[i];
     // clear list of vertices owned by entity
     ge->mesh_vertices.clear();
     // replace vertices in element
-    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++){
       MElement *e = ge->getMeshElement(j);
-      for(int k = 0; k < e->getNumVertices(); k++){
+      for(std::size_t k = 0; k < e->getNumVertices(); k++){
         std::map<MVertex*, MVertex*>::iterator it = duplicates.find(e->getVertex(k));
         if(it != duplicates.end())
           e->setVertex(k, it->second);
@@ -2293,7 +2386,8 @@ void GModel::alignPeriodicBoundaries()
         if(dynamic_cast<MTriangle*>   (srcElmt)) nbVtcs = 3;
         if(dynamic_cast<MQuadrangle*> (srcElmt)) nbVtcs = 4;
         std::vector<MVertex*> vtcs;
-        for(int iVtx = 0;iVtx < nbVtcs; iVtx++) {
+        vtcs.reserve(nbVtcs);
+        for(int iVtx = 0; iVtx < nbVtcs; iVtx++) {
           vtcs.push_back(srcElmt->getVertex(iVtx));
         }
         srcElmts[MFace(vtcs)] = srcElmt;
@@ -2710,7 +2804,7 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
   return cutGM;
 }
 
-void GModel::load(std::string fileName)
+void GModel::load(const std::string &fileName)
 {
   GModel *temp = GModel::current();
   GModel::setCurrent(this);
@@ -2718,7 +2812,7 @@ void GModel::load(std::string fileName)
   GModel::setCurrent(temp);
 }
 
-void GModel::save(std::string fileName)
+void GModel::save(const std::string &fileName)
 {
   GModel *temp = GModel::current();
   GModel::setCurrent(this);
@@ -2924,17 +3018,17 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
   // their faces by the new ones
 
   for(riter rit = firstRegion(); rit != lastRegion(); ++rit){
-    std::list<GFace *> _xfaces = (*rit)->faces();
+    std::vector<GFace *> _xfaces = (*rit)->faces();
     std::set<GFace *> _newFaces;
-    for(std::list<GFace *>::iterator itf = _xfaces.begin(); itf != _xfaces.end(); ++itf){
+    for(std::vector<GFace *>::iterator itf = _xfaces.begin(); itf != _xfaces.end(); ++itf){
+
       std::multimap<GFace*, GFace*>::iterator itLow = replacedBy.lower_bound(*itf);
       std::multimap<GFace*, GFace*>::iterator itUp = replacedBy.upper_bound(*itf);
+
       for(; itLow != itUp; ++itLow)
         _newFaces.insert(itLow->second);
     }
-    std::list<GFace *> _temp;
-    _temp.insert(_temp.begin(),_newFaces.begin(),_newFaces.end());
-    (*rit)->set(_temp);
+    (*rit)->set(std::vector<GFace *>(_newFaces.begin(),_newFaces.end()));
   }
 
   // color some lines

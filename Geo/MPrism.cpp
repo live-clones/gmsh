@@ -13,7 +13,7 @@
 #include "qualityMeasures.h"
 #endif
 
-std::map<int, indicesReversed> MPrismN::_order2indicesReversedPri;
+std::map<int, IndicesReversed> MPrismN::_order2indicesReversedPri;
 
 void MPrism::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                         SVector3 *n)
@@ -68,71 +68,13 @@ double MPrism::getInnerRadius()
   return std::min(radTri,radVert);
 }
 
-void MPrism::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) const
+bool MPrism::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) const
 {
   for (ithFace = 0; ithFace < 5; ithFace++){
-    MVertex *v0 = _v[faces_prism(ithFace, 0)];
-    MVertex *v1 = _v[faces_prism(ithFace, 1)];
-    MVertex *v2 = _v[faces_prism(ithFace, 2)];
-
-    if (face.getNumVertices()==3) {
-      if (v0 == face.getVertex(0) && v1 == face.getVertex(1) && v2 == face.getVertex(2)){
-        sign = 1; rot = 0; return;
-      }
-      if (v0 == face.getVertex(1) && v1 == face.getVertex(2) && v2 == face.getVertex(0)){
-        sign = 1; rot = 1; return;
-      }
-      if (v0 == face.getVertex(2) && v1 == face.getVertex(0) && v2 == face.getVertex(1)){
-        sign = 1; rot = 2; return;
-      }
-      if (v0 == face.getVertex(0) && v1 == face.getVertex(2) && v2 == face.getVertex(1)){
-        sign = -1; rot = 0; return;
-      }
-      if (v0 == face.getVertex(1) && v1 == face.getVertex(0) && v2 == face.getVertex(2)){
-        sign = -1; rot = 1; return;
-      }
-      if (v0 == face.getVertex(2) && v1 == face.getVertex(1) && v2 == face.getVertex(0)){
-        sign = -1; rot = 2; return;
-      }
-    }
-    else {
-      MVertex *v3 = _v[faces_prism(ithFace, 3)];
-      if (v0 == face.getVertex(0) && v1 == face.getVertex(1) &&
-          v2 == face.getVertex(2) && v3 == face.getVertex(3)){
-        sign = 1; rot = 0; return;
-      }
-      if (v0 == face.getVertex(1) && v1 == face.getVertex(2) &&
-          v2 == face.getVertex(3) && v3 == face.getVertex(0)){
-        sign = 1; rot = 1; return;
-      }
-      if (v0 == face.getVertex(2) && v1 == face.getVertex(3) &&
-          v2 == face.getVertex(0) && v3 == face.getVertex(1)){
-        sign = 1; rot = 2; return;
-      }
-      if (v0 == face.getVertex(3) && v1 == face.getVertex(0) &&
-          v2 == face.getVertex(1) && v3 == face.getVertex(2)){
-        sign = 1; rot = 3; return;
-      }
-      if (v0 == face.getVertex(0) && v1 == face.getVertex(3) &&
-          v2 == face.getVertex(2) && v3 == face.getVertex(1)){
-        sign = -1; rot = 0; return;
-      }
-      if (v0 == face.getVertex(1) && v1 == face.getVertex(0) &&
-          v2 == face.getVertex(3) && v3 == face.getVertex(2)){
-        sign = -1; rot = 1; return;
-      }
-      if (v0 == face.getVertex(2) && v1 == face.getVertex(1) &&
-          v2 == face.getVertex(0) && v3 == face.getVertex(3)){
-        sign = -1; rot = 2; return;
-      }
-      if (v0 == face.getVertex(3) && v1 == face.getVertex(2) &&
-          v2 == face.getVertex(1) && v3 == face.getVertex(0)){
-        sign = -1; rot = 3; return;
-      }
-    }
-
+    if (_getFaceInfo(getFace(ithFace), face, sign, rot)) return true;
   }
   Msg::Error("Could not get face information for prism %d", getNum());
+  return false;
 }
 
 int MPrism::numCommonNodesInDualGraph(const MElement *const other) const
@@ -607,7 +549,7 @@ double MPrism::gammaShapeMeasure()
 #endif
 }
 
-void _getIndicesReversedPri(int order, indicesReversed &indices)
+void _getIndicesReversedPri(int order, IndicesReversed &indices)
 {
   fullMatrix<double> ref = gmshGenerateMonomialsPrism(order);
 
@@ -627,16 +569,16 @@ void _getIndicesReversedPri(int order, indicesReversed &indices)
 
 void MPrismN::reverse()
 {
-  std::map<int, indicesReversed>::iterator it;
+  std::map<int, IndicesReversed>::iterator it;
   it = _order2indicesReversedPri.find(_order);
   if (it == _order2indicesReversedPri.end()) {
-    indicesReversed indices;
+    IndicesReversed indices;
     _getIndicesReversedPri(_order, indices);
     _order2indicesReversedPri[_order] = indices;
     it = _order2indicesReversedPri.find(_order);
   }
 
-  indicesReversed &indices = it->second;
+  IndicesReversed &indices = it->second;
 
   // copy vertices
   std::vector<MVertex*> oldv(6 + _vs.size());

@@ -29,7 +29,7 @@ class MPoint : public MElement {
   }
   ~MPoint(){}
   virtual int getDim() const { return 0; }
-  virtual int getNumVertices() const { return 1; }
+  virtual std::size_t getNumVertices() const { return 1; }
   virtual MVertex *getVertex(int num){ return _v[0]; }
   virtual const MVertex *getVertex(int num) const { return _v[0]; }
   virtual void setVertex(int num,  MVertex *v){ _v[0] = v; }
@@ -38,7 +38,7 @@ class MPoint : public MElement {
   virtual int getNumEdgesRep(bool curved){ return 0; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n){}
   virtual int getNumFaces(){ return 0; }
-  virtual MFace getFace(int num){ return MFace(); }
+  virtual MFace getFace(int num) const { return MFace(); }
   virtual int getNumFacesRep(bool curved){ return 0; }
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n){}
   virtual int getType() const { return TYPE_PNT; }

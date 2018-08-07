@@ -18,9 +18,12 @@
 #include "gmshFace.h"
 #include "gmshEdge.h"
 #include "gmshRegion.h"
-#include "Field.h"
 #include "Context.h"
 #include "Parser.h"
+
+#if defined(HAVE_MESH)
+#include "Field.h"
+#endif
 
 void GEO_Internals::_allocateAll()
 {
@@ -1163,28 +1166,31 @@ void GEO_Internals::synchronize(GModel *model)
   }
 
   // we might want to store physical groups directly in GModel; but this is OK
-  // for now. We always start from scratch in GModel, as physical groups are
-  // only stored in GEO internals anyway
-  model->removePhysicalGroups();
-  for(int i = 0; i < List_Nbr(PhysicalGroups); i++){
-    PhysicalGroup *p;
-    List_Read(PhysicalGroups, i, &p);
-    for(int j = 0; j < List_Nbr(p->Entities); j++){
-      int num;
-      List_Read(p->Entities, j, &num);
-      GEntity *ge = 0;
-      int tag = CTX::instance()->geom.orientedPhysicals ? abs(num) : num;
-      switch(p->Typ){
-      case MSH_PHYSICAL_POINT:   ge = model->getVertexByTag(tag); break;
-      case MSH_PHYSICAL_LINE:    ge = model->getEdgeByTag(tag); break;
-      case MSH_PHYSICAL_SURFACE: ge = model->getFaceByTag(tag); break;
-      case MSH_PHYSICAL_VOLUME:  ge = model->getRegionByTag(tag); break;
+  // for now. Note that we only sync physicals if there are some to sync, in
+  // order not to destroy groups that would have been stored directly in a
+  // GModel, e.g. by reading a mesh file
+  if(List_Nbr(PhysicalGroups)){
+    model->removePhysicalGroups();
+    for(int i = 0; i < List_Nbr(PhysicalGroups); i++){
+      PhysicalGroup *p;
+      List_Read(PhysicalGroups, i, &p);
+      for(int j = 0; j < List_Nbr(p->Entities); j++){
+        int num;
+        List_Read(p->Entities, j, &num);
+        GEntity *ge = 0;
+        int tag = CTX::instance()->geom.orientedPhysicals ? abs(num) : num;
+        switch(p->Typ){
+        case MSH_PHYSICAL_POINT:   ge = model->getVertexByTag(tag); break;
+        case MSH_PHYSICAL_LINE:    ge = model->getEdgeByTag(tag); break;
+        case MSH_PHYSICAL_SURFACE: ge = model->getFaceByTag(tag); break;
+        case MSH_PHYSICAL_VOLUME:  ge = model->getRegionByTag(tag); break;
+        }
+        int pnum = CTX::instance()->geom.orientedPhysicals ?
+          (gmsh_sign(num) * p->Num) : p->Num;
+        if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
+           ge->physicals.end())
+          ge->physicals.push_back(pnum);
       }
-      int pnum = CTX::instance()->geom.orientedPhysicals ?
-        (gmsh_sign(num) * p->Num) : p->Num;
-      if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
-         ge->physicals.end())
-        ge->physicals.push_back(pnum);
     }
   }
 
@@ -1286,6 +1292,8 @@ void GModel::_deleteGEOInternals()
   _geo_internals = 0;
 }
 
+#if defined(HAVE_MESH)
+
 class writeFieldOptionGEO {
  private :
   FILE *geo;
@@ -1316,6 +1324,8 @@ class writeFieldGEO {
           writeFieldOptionGEO(geo, it.second));
     }
 };
+
+#endif
 
 class writePhysicalGroupGEO {
   private :
@@ -1385,8 +1395,8 @@ static bool skipFace(GFace *gf)
 static bool skipEdge(GEdge *ge)
 {
   if(ge->physicals.size()) return false;
-  std::list<GFace*> faces(ge->faces());
-  for(std::list<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++){
+  std::vector<GFace*> faces(ge->faces());
+  for(std::vector<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++){
     if(!skipFace(*itf)) return false;
   }
   return true;
@@ -1395,8 +1405,8 @@ static bool skipEdge(GEdge *ge)
 static bool skipVertex(GVertex *gv)
 {
   if(gv->physicals.size()) return false;
-  std::list<GEdge*> edges(gv->edges());
-  for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++){
+  std::vector<GEdge*> const& edges = gv->edges();
+  for(std::vector<GEdge*>::const_iterator ite = edges.begin(); ite != edges.end(); ite++){
     if(!skipEdge(*ite)) return false;
   }
   return true;
@@ -1455,9 +1465,11 @@ int GModel::writeGEO(const std::string &name, bool printLabels, bool onlyPhysica
     std::for_each(groups[i].begin(), groups[i].end(),
         writePhysicalGroupGEO(fp, i, printLabels, labels, physicalNames));
 
+#if defined(HAVE_MESH)
   std::for_each(getFields()->begin(), getFields()->end(), writeFieldGEO(fp));
   if(getFields()->getBackgroundField() > 0)
     fprintf(fp, "Background Field = %i;\n", getFields()->getBackgroundField());
+#endif
 
   fclose(fp);
   return 1;
@@ -1510,11 +1522,11 @@ int GModel::exportDiscreteGEOInternals()
   for(fiter it = firstFace(); it != lastFace(); it++){
     if((*it)->geomType() == GEntity::DiscreteSurface){
       Surface *s = CreateSurface((*it)->tag(), MSH_SURF_DISCRETE);
-      std::list<GEdge*> edges = (*it)->edges();
+      std::vector<GEdge*> const& edges = (*it)->edges();
       s->Generatrices = List_Create(edges.size(), 1, sizeof(Curve *));
       List_T *curves = Tree2List(_geo_internals->Curves);
       Curve *c;
-      for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++){
+      for(std::vector<GEdge*>::const_iterator ite = edges.begin(); ite != edges.end(); ite++){
         for(int i = 0; i < List_Nbr(curves); i++) {
           List_Read(curves, i, &c);
           if (c->Num == (*ite)->tag()) {

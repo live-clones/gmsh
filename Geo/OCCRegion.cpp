@@ -23,15 +23,16 @@
 #include <BRepTools.hxx>
 
 OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num)
-  : GRegion(m, num), s(_s)
+  : GRegion(m, num)
+  , s(_s)
 {
   setup();
   if(model()->getOCCInternals())
     model()->getOCCInternals()->bind(s, num);
   //  if (tag() == 1){
-  char name[256];
-  sprintf(name,"v%d.brep",tag());
-  writeBREP(name);
+  //  char name[256];
+  //  sprintf(name,"v%d.brep",tag());
+  //  writeBREP(name);
 }
 
 OCCRegion::~OCCRegion()
@@ -45,7 +46,7 @@ void OCCRegion::setup()
   l_faces.clear();
   TopExp_Explorer exp2, exp3;
   for(exp2.Init(s, TopAbs_SHELL); exp2.More(); exp2.Next()){
-    TopoDS_Shape shell = exp2.Current();
+    const TopoDS_Shape &shell = exp2.Current();
     Msg::Debug("OCC Region %d - New Shell",tag());
     for(exp3.Init(shell, TopAbs_FACE); exp3.More(); exp3.Next()){
       TopoDS_Face face = TopoDS::Face(exp3.Current());
@@ -66,7 +67,7 @@ void OCCRegion::setup()
     }
   }
 
-  for (exp3.Init(s, TopAbs_EDGE); exp3.More(); exp3.Next()){
+  for (exp3.Init(s, TopAbs_EDGE, TopAbs_FACE); exp3.More(); exp3.Next()){
     TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
     GEdge *e = 0;
     if(model()->getOCCInternals())
@@ -82,7 +83,7 @@ void OCCRegion::setup()
     }
   }
 
-  for (exp3.Init(s, TopAbs_VERTEX); exp3.More(); exp3.Next()){
+  for (exp3.Init(s, TopAbs_VERTEX, TopAbs_FACE); exp3.More(); exp3.Next()){
     TopoDS_Vertex vertex = TopoDS::Vertex(exp3.Current());
     GVertex *v = 0;
     if(model()->getOCCInternals())
@@ -99,7 +100,7 @@ void OCCRegion::setup()
   Msg::Debug("OCC Region %d with %d faces", tag(), l_faces.size());
 }
 
-SBoundingBox3d OCCRegion::bounds() const
+SBoundingBox3d OCCRegion::bounds(bool fast) const
 {
   Bnd_Box b;
   try{

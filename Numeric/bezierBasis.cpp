@@ -8,7 +8,6 @@
 #include "bezierBasis.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
-#include "polynomialBasis.h"
 #include "pyramidalBasis.h"
 #include "pointsGenerators.h"
 #include "BasisFactory.h"
@@ -464,10 +463,10 @@ bezierBasis::~bezierBasis()
 
 void bezierBasis::f(double u, double v, double w, double *sf) const
 {
-  const int tag = ElementType::getTag(_data.elementType(), _data.spaceOrder());
+  const int tag = ElementType::getType(_data.elementType(), _data.spaceOrder());
   const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
   double p[1256];
-  // TODO: change (u,v,w)
+  // TODO Amaury: change (u,v,w)
   fs->f(u, v, w, p);
 
   for(int i = 0; i < matrixBez2Lag.size1(); i++){
@@ -491,24 +490,33 @@ void bezierBasis::generateBezierPoints(fullMatrix<double> &points) const
 
 void bezierBasis::_FEpoints2BezPoints(fullMatrix<double> &points) const
 {
-  switch(_data.elementType()){
+  fullMatrix<double> tmp;
+  switch(_data.elementType()) {
   case TYPE_TRI:
   case TYPE_TET:
     break;
 
+  case TYPE_LIN:
+    tmp.setAsProxy(points, 0, 1);
+    tmp.add(1);
+    tmp.scale(.5);
+    break;
+
   case TYPE_QUA:
+    tmp.setAsProxy(points, 0, 2);
+    tmp.add(1);
+    tmp.scale(.5);
+    break;
+
   case TYPE_HEX:
     points.add(1);
     points.scale(.5);
     break;
 
   case TYPE_PRI:
-    {
-      fullMatrix<double> tmp;
-      tmp.setAsProxy(points, 2, 1);
-      tmp.add(1);
-      tmp.scale(.5);
-    }
+    tmp.setAsProxy(points, 2, 1);
+    tmp.add(1);
+    tmp.scale(.5);
     break;
 
   case TYPE_PYR:

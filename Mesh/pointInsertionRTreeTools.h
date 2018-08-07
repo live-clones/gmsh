@@ -56,7 +56,7 @@ class my_wrapper {
 public:
   bool _tooclose;
   SPoint2 _p;
-  my_wrapper (SPoint2 sp);
+  my_wrapper(const SPoint2 &sp);
 };
 
 struct smoothness_point_pair{

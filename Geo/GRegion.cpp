@@ -26,7 +26,7 @@ GRegion::GRegion(GModel *model, int tag)
 
 GRegion::~GRegion()
 {
-  std::list<GFace*>::iterator it = l_faces.begin();
+  std::vector<GFace*>::iterator it = l_faces.begin();
   while(it != l_faces.end()){
     (*it)->delRegion(this);
     ++it;
@@ -57,10 +57,22 @@ void GRegion::deleteMesh(bool onlyDeleteElements)
   model()->destroyMeshCaches();
 }
 
-unsigned int GRegion::getNumMeshElements() const
+GRegion::size_type GRegion::getNumMeshElements() const
 {
   return tetrahedra.size() + hexahedra.size() + prisms.size() + pyramids.size() +
     trihedra.size() + polyhedra.size();
+}
+
+unsigned int GRegion::getNumMeshElementsByType(const int familyType) const
+{
+  if(familyType == TYPE_TET) return tetrahedra.size();
+  else if(familyType == TYPE_HEX) return hexahedra.size();
+  else if(familyType == TYPE_PRI) return prisms.size();
+  else if(familyType == TYPE_PYR) return pyramids.size();
+  else if(familyType == TYPE_TRIH) return trihedra.size();
+  else if(familyType == TYPE_POLYH) return polyhedra.size();
+
+  return 0;
 }
 
 unsigned int GRegion::getNumMeshParentElements()
@@ -130,6 +142,18 @@ MElement *GRegion::getMeshElement(unsigned int index) const
   return 0;
 }
 
+MElement *GRegion::getMeshElementByType(const int familyType, const unsigned int index) const
+{
+  if(familyType == TYPE_TET) return tetrahedra[index];
+  else if(familyType == TYPE_HEX) return hexahedra[index];
+  else if(familyType == TYPE_PRI) return prisms[index];
+  else if(familyType == TYPE_PYR) return pyramids[index];
+  else if(familyType == TYPE_TRIH) return trihedra[index];
+  else if(familyType == TYPE_POLYH) return polyhedra[index];
+
+  return 0;
+}
+
 void GRegion::resetMeshAttributes()
 {
   meshAttributes.recombine3D = 0;
@@ -138,16 +162,18 @@ void GRegion::resetMeshAttributes()
   meshAttributes.QuadTri = NO_QUADTRI;
 }
 
-SBoundingBox3d GRegion::bounds() const
+SBoundingBox3d GRegion::bounds(bool fast) const
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteVolume && geomType() != PartitionVolume){
-    std::list<GFace*>::const_iterator it = l_faces.begin();
+    std::vector<GFace*>::const_iterator it = l_faces.begin();
     for(; it != l_faces.end(); it++)
-      res += (*it)->bounds();
+      res += (*it)->bounds(fast);
   }
   else{
-    for(unsigned int i = 0; i < getNumMeshElements(); i++)
+    int ipp = getNumMeshElements() / 20;
+    if(ipp < 1) ipp = 1;
+    for(unsigned int i = 0; i < getNumMeshElements(); i += ipp)
       for(unsigned int j = 0; j < getMeshElement(i)->getNumVertices(); j++)
         res += getMeshElement(i)->getVertex(j)->point();
   }
@@ -158,8 +184,8 @@ SOrientedBoundingBox GRegion::getOBB()
 {
   if (!_obb) {
     std::vector<SPoint3> vertices;
-    std::list<GFace*> b_faces = faces();
-    for (std::list<GFace*>::iterator b_face = b_faces.begin();
+    std::vector<GFace*> b_faces = faces();
+    for (std::vector<GFace*>::iterator b_face = b_faces.begin();
          b_face != b_faces.end(); b_face++) {
       if((*b_face)->getNumMeshVertices() > 0) {
         int N = (*b_face)->getNumMeshVertices();
@@ -167,8 +193,8 @@ SOrientedBoundingBox GRegion::getOBB()
           MVertex* mv = (*b_face)->getMeshVertex(i);
           vertices.push_back(mv->point());
         }
-        std::list<GEdge*> eds = (*b_face)->edges();
-        for(std::list<GEdge*>::iterator ed = eds.begin(); ed != eds.end(); ed++) {
+        std::vector<GEdge*> eds = (*b_face)->edges();
+        for(std::vector<GEdge*>::iterator ed = eds.begin(); ed != eds.end(); ed++) {
           int N2 = (*ed)->getNumMeshVertices();
           for (int i = 0; i < N2; i++) {
             MVertex* mv = (*ed)->getMeshVertex(i);
@@ -190,8 +216,8 @@ SOrientedBoundingBox GRegion::getOBB()
       }
       else {
         int N = 10;
-        std::list<GEdge*> b_edges = (*b_face)->edges();
-        for (std::list<GEdge*>::iterator b_edge = b_edges.begin();
+        std::vector<GEdge*> b_edges = (*b_face)->edges();
+        for (std::vector<GEdge*>::iterator b_edge = b_edges.begin();
              b_edge != b_edges.end(); b_edge++) {
           Range<double> tr = (*b_edge)->parBounds(0);
           for (int j = 0; j < N; j++) {
@@ -212,7 +238,7 @@ void GRegion::setVisibility(char val, bool recursive)
 {
   GEntity::setVisibility(val);
   if(recursive){
-    std::list<GFace*>::iterator it = l_faces.begin();
+    std::vector<GFace*>::iterator it = l_faces.begin();
     while(it != l_faces.end()){
       (*it)->setVisibility(val, recursive);
       ++it;
@@ -224,7 +250,7 @@ void GRegion::setColor(unsigned int val, bool recursive)
 {
   GEntity::setColor(val);
   if(recursive){
-    std::list<GFace*>::iterator it = l_faces.begin();
+    std::vector<GFace*>::iterator it = l_faces.begin();
     while(it != l_faces.end()){
       (*it)->setColor(val, recursive);
       ++it;
@@ -234,7 +260,8 @@ void GRegion::setColor(unsigned int val, bool recursive)
 
 int GRegion::delFace(GFace* face)
 {
-  std::list<GFace*>::iterator it;
+  // TODO C++11 fix the UB if deleting at it == .end()
+  std::vector<GFace*>::iterator it;
   int pos = 0;
   for(it = l_faces.begin(); it != l_faces.end(); ++it){
     if(*it == face) break;
@@ -242,9 +269,8 @@ int GRegion::delFace(GFace* face)
   }
   l_faces.erase(it);
 
-  std::list<int>::iterator itOri;
-  int posOri = 0;
-  int orientation = 0;
+  std::vector<int>::iterator itOri;
+  int posOri = 0, orientation = 0;
   for(itOri = l_dirs.begin(); itOri != l_dirs.end(); ++itOri){
     if(posOri == pos){
       orientation = *itOri;
@@ -262,7 +288,7 @@ std::string GRegion::getAdditionalInfoString(bool multline)
   std::ostringstream sstream;
   if(l_faces.size()){
     sstream << "Boundary surfaces: ";
-    for(std::list<GFace*>::iterator it = l_faces.begin();
+    for(std::vector<GFace*>::iterator it = l_faces.begin();
         it != l_faces.end(); ++it){
       if(it != l_faces.begin()) sstream << ", ";
       sstream << (*it)->tag();
@@ -272,7 +298,7 @@ std::string GRegion::getAdditionalInfoString(bool multline)
   }
   if(embedded_faces.size()){
     sstream << "Embedded surfaces: ";
-    for(std::list<GFace*>::iterator it = embedded_faces.begin();
+    for(std::vector<GFace*>::iterator it = embedded_faces.begin();
         it != embedded_faces.end(); ++it){
       if(it != embedded_faces.begin()) sstream << ", ";
       sstream << (*it)->tag();
@@ -282,7 +308,7 @@ std::string GRegion::getAdditionalInfoString(bool multline)
   }
   if(embedded_edges.size()){
     sstream << "Embedded curves: ";
-    for(std::list<GEdge*>::iterator it = embedded_edges.begin();
+    for(std::vector<GEdge*>::iterator it = embedded_edges.begin();
         it != embedded_edges.end(); ++it){
       if(it != embedded_edges.begin()) sstream << ", ";
       sstream << (*it)->tag();
@@ -292,7 +318,7 @@ std::string GRegion::getAdditionalInfoString(bool multline)
   }
   if(embedded_vertices.size()){
     sstream << "Embedded points: ";
-    for(std::list<GVertex*>::iterator it = embedded_vertices.begin();
+    for(std::vector<GVertex*>::iterator it = embedded_vertices.begin();
         it != embedded_vertices.end(); ++it){
       if(it != embedded_vertices.begin()) sstream << ", ";
       sstream << (*it)->tag();
@@ -320,7 +346,7 @@ void GRegion::writeGEO(FILE *fp)
 
   if(l_faces.size()){
     fprintf(fp, "Surface Loop(%d) = ", tag());
-    for(std::list<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); it++) {
+    for(std::vector<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); it++) {
       if(it != l_faces.begin())
         fprintf(fp, ", %d", (*it)->tag());
       else
@@ -330,15 +356,15 @@ void GRegion::writeGEO(FILE *fp)
     fprintf(fp, "Volume(%d) = {%d};\n", tag(), tag());
   }
 
-  for(std::list<GFace*>::iterator it = embedded_faces.begin();
+  for(std::vector<GFace*>::iterator it = embedded_faces.begin();
       it != embedded_faces.end(); it++)
     fprintf(fp, "Surface {%d} In Volume {%d};\n", (*it)->tag(), tag());
 
-  for(std::list<GEdge*>::iterator it = embedded_edges.begin();
+  for(std::vector<GEdge*>::iterator it = embedded_edges.begin();
       it != embedded_edges.end(); it++)
     fprintf(fp, "Line {%d} In Volume {%d};\n", (*it)->tag(), tag());
 
-  for(std::list<GVertex*>::iterator it = embedded_vertices.begin();
+  for(std::vector<GVertex*>::iterator it = embedded_vertices.begin();
       it != embedded_vertices.end(); it++)
     fprintf(fp, "Point {%d} In Volume {%d};\n", (*it)->tag(), tag());
 
@@ -359,15 +385,14 @@ void GRegion::writeGEO(FILE *fp)
   }
 }
 
-std::list<GEdge*> GRegion::edges() const
+std::vector<GEdge*> GRegion::edges() const
 {
-  std::list<GEdge*> e;
-  std::list<GFace*>::const_iterator it = l_faces.begin();
+  // TODO C++11 clean this up
+  std::vector<GEdge*> e;
+  std::vector<GFace*>::const_iterator it = l_faces.begin();
   while(it != l_faces.end()){
-    std::list<GEdge*> e2;
-
-    e2 = (*it)->edges();
-    std::list<GEdge*>::const_iterator it2 = e2.begin();
+    std::vector<GEdge*> e2 = (*it)->edges();
+    std::vector<GEdge*>::const_iterator it2 = e2.begin();
     while (it2 != e2.end()){
       GEdge *edge = *it2;
       if(std::find(e.begin(), e.end(), edge) == e.end())
@@ -381,10 +406,9 @@ std::list<GEdge*> GRegion::edges() const
 
 bool GRegion::edgeConnected(GRegion *r) const
 {
-  std::list<GEdge*> e = edges();
-  std::list<GEdge*> e2 = r->edges();
+  std::vector<GEdge*> e = edges(), e2 = r->edges();
 
-  std::list<GEdge*>::const_iterator it = e.begin();
+  std::vector<GEdge*>::const_iterator it = e.begin();
   while(it != e.end()){
     if(std::find(e2.begin(), e2.end(), *it) != e2.end())
       return true;
@@ -396,8 +420,8 @@ bool GRegion::edgeConnected(GRegion *r) const
 double GRegion::computeSolidProperties(std::vector<double> cg,
                                        std::vector<double> inertia)
 {
-  std::list<GFace*>::iterator it = l_faces.begin();
-  std::list<int>::iterator itdir = l_dirs.begin();
+  std::vector<GFace*>::iterator it = l_faces.begin();
+  std::vector<int>::iterator itdir = l_dirs.begin();
   double volumex = 0;
   double volumey = 0;
   double volumez = 0;
@@ -475,17 +499,15 @@ double GRegion::computeSolidProperties(std::vector<double> cg,
   return volume;
 }
 
-std::list<GVertex*> GRegion::vertices() const
+std::vector<GVertex*> GRegion::vertices() const
 {
   std::set<GVertex*> v;
-  for (std::list<GFace*>::const_iterator it = l_faces.begin(); it != l_faces.end() ; ++it){
-    const GFace *gf = *it;
-    std::list<GVertex*> vs = gf->vertices();
+  for (std::vector<GFace*>::const_iterator it = l_faces.begin(); it != l_faces.end() ; ++it){
+    GFace const* const gf = *it;
+    std::vector<GVertex*>  const& vs = gf->vertices();
     v.insert(vs.begin(), vs.end());
   }
-  std::list<GVertex*> res;
-  res.insert(res.begin(), v.begin(), v.end());
-  return res;
+  return std::vector<GVertex*>(v.begin(), v.end());
 }
 
 void GRegion::addElement(int type, MElement *e)
@@ -564,6 +586,135 @@ void GRegion::removeElement(int type, MElement *e)
   }
 }
 
+bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
+{
+  if(tetrahedra.front()->getTypeForMSH() == elementType){
+    if(ordering.size() != tetrahedra.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin(); it != ordering.end(); ++it){
+      if(*it < 0 || *it >= static_cast<int>(tetrahedra.size())) return false;
+    }
+
+    std::vector<MTetrahedron*> newTetrahedraOrder(tetrahedra.size());
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newTetrahedraOrder[i] = tetrahedra[ordering[i]];
+    }
+#if __cplusplus >= 201103L
+    tetrahedra = std::move(newTetrahedraOrder);
+#else
+    tetrahedra = newTetrahedraOrder;
+#endif
+
+    return true;
+  }
+
+  if(hexahedra.front()->getTypeForMSH() == elementType){
+    if(ordering.size() != hexahedra.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin(); it != ordering.end(); ++it){
+      if(*it < 0 || *it >= static_cast<int>(hexahedra.size())) return false;
+    }
+
+    std::vector<MHexahedron*> newHexahedraOrder(hexahedra.size());
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newHexahedraOrder[i] = hexahedra[ordering[i]];
+    }
+#if __cplusplus >= 201103L
+    hexahedra = std::move(newHexahedraOrder);
+#else
+    hexahedra = newHexahedraOrder;
+#endif
+
+    return true;
+  }
+
+  if(prisms.front()->getTypeForMSH() == elementType){
+    if(ordering.size() != prisms.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it){
+      if(*it < 0 || *it >= static_cast<int>(prisms.size())) return false;
+    }
+
+    std::vector<MPrism*> newPrismsOrder(prisms.size());
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newPrismsOrder[i] = prisms[ordering[i]];
+    }
+#if __cplusplus >= 201103L
+    prisms = std::move(newPrismsOrder);
+#else
+    prisms = newPrismsOrder;
+#endif
+
+    return true;
+  }
+
+  if(pyramids.front()->getTypeForMSH() == elementType){
+    if(ordering.size() != pyramids.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it){
+      if(*it < 0 || *it >= static_cast<int>(pyramids.size())) return false;
+    }
+
+    std::vector<MPyramid*> newPyramidsOrder(pyramids.size());
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newPyramidsOrder[i] = pyramids[ordering[i]];
+    }
+#if __cplusplus >= 201103L
+    pyramids = std::move(newPyramidsOrder);
+#else
+    pyramids = newPyramidsOrder;
+#endif
+
+    return true;
+  }
+
+  if(polyhedra.front()->getTypeForMSH() == elementType){
+    if(ordering.size() != polyhedra.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it){
+      if(*it < 0 || *it >= static_cast<int>(polyhedra.size())) return false;
+    }
+
+    std::vector<MPolyhedron*> newPolyhedraOrder(polyhedra.size());
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newPolyhedraOrder[i] = polyhedra[ordering[i]];
+    }
+#if __cplusplus >= 201103L
+    polyhedra = std::move(newPolyhedraOrder);
+#else
+    polyhedra = newPolyhedraOrder;
+#endif
+
+    return true;
+  }
+
+  if(trihedra.front()->getTypeForMSH() == elementType){
+    if(ordering.size() != trihedra.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it){
+      if(*it < 0 || *it >= static_cast<int>(trihedra.size())) return false;
+    }
+
+    std::vector<MTrihedron*> newTrihedraOrder(trihedra.size());
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newTrihedraOrder[i] = trihedra[ordering[i]];
+    }
+#if __cplusplus >= 201103L
+    trihedra = std::move(newTrihedraOrder);
+#else
+    trihedra = newTrihedraOrder;
+#endif
+
+    return true;
+  }
+
+  return false;
+}
+
 static void setRand(double r[6])
 {
   for(int i = 0; i < 6; i++)
@@ -599,7 +750,6 @@ static int intersectLineTriangle(double X[3], double Y[3], double Z[3] ,
   if(!sys3x3_with_tol(mat, b, res, &det)){
     return 0;
   }
-  //  printf("coucou %g %g %g\n",res[0],res[1],res[2]);
   if(res[0] >= eps_prec && res[0] <= 1.0 - eps_prec &&
      res[1] >= eps_prec && res[1] <= 1.0 - eps_prec &&
      1 - res[0] - res[1] >= eps_prec && 1 - res[0] - res[1] <= 1.0 - eps_prec){
@@ -613,7 +763,6 @@ static int intersectLineTriangle(double X[3], double Y[3], double Z[3] ,
     return 0;
   }
   else{
-    //printf("non robust stuff\n");
     // the intersection is not robust, try another triangle
     return -10000;
   }
@@ -631,8 +780,8 @@ bool GRegion::setOutwardOrientationMeshConstraint()
   double rrr[6];
   setRand(rrr);
 
-  std::list<GFace*> f = faces();
-  std::list<GFace*>::iterator it = f.begin();
+  std::vector<GFace*> f = faces();
+  std::vector<GFace*>::iterator it = f.begin();
   while(it != f.end()){
     GFace *gf = (*it);
     gf->buildSTLTriangulation();
@@ -667,7 +816,7 @@ bool GRegion::setOutwardOrientationMeshConstraint()
       N[1] += rrr[2] * v1[1] + rrr[3] * v2[1];
       N[2] += rrr[4] * v1[2] + rrr[5] * v2[2];
       norme(N);
-      std::list<GFace*>::iterator it_b = f.begin();
+      std::vector<GFace*>::iterator it_b = f.begin();
       while(it_b != f.end()){
         GFace *gf_b = (*it_b);
         gf_b->buildSTLTriangulation();
@@ -687,15 +836,15 @@ bool GRegion::setOutwardOrientationMeshConstraint()
             Y_b[j] /= scaling;
             Z_b[j] /= scaling;
           }
-          if(!(fabs(X[0] - X_b[0]) < 1e-12 &&
-               fabs(X[1] - X_b[1]) < 1e-12 &&
-               fabs(X[2] - X_b[2]) < 1e-12 &&
-               fabs(Y[0] - Y_b[0]) < 1e-12 &&
-               fabs(Y[1] - Y_b[1]) < 1e-12 &&
-               fabs(Y[2] - Y_b[2]) < 1e-12 &&
-               fabs(Z[0] - Z_b[0]) < 1e-12 &&
-               fabs(Z[1] - Z_b[1]) < 1e-12 &&
-               fabs(Z[2] - Z_b[2]) < 1e-12)){
+          if(!(std::abs(X[0] - X_b[0]) < 1e-12 &&
+               std::abs(X[1] - X_b[1]) < 1e-12 &&
+               std::abs(X[2] - X_b[2]) < 1e-12 &&
+               std::abs(Y[0] - Y_b[0]) < 1e-12 &&
+               std::abs(Y[1] - Y_b[1]) < 1e-12 &&
+               std::abs(Y[2] - Y_b[2]) < 1e-12 &&
+               std::abs(Z[0] - Z_b[0]) < 1e-12 &&
+               std::abs(Z[1] - Z_b[1]) < 1e-12 &&
+               std::abs(Z[2] - Z_b[2]) < 1e-12)){
             int inters = intersectLineTriangle(X_b, Y_b, Z_b, P, N, 1.e-9);
             nb_intersect += inters;
           }

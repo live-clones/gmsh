@@ -45,7 +45,7 @@ void findTransfiniteCorners(GFace *gf, std::vector<MVertex*> &corners)
   }
   else{
     // try to find the corners automatically
-    std::list<GEdge*> fedges = gf->edges();
+    std::vector<GEdge*> fedges = gf->edges();
     GEdgeLoop el(fedges);
     for(GEdgeLoop::iter it = el.begin(); it != el.end(); it++)
       corners.push_back(it->getBeginVertex()->mesh_vertices[0]);
@@ -53,7 +53,7 @@ void findTransfiniteCorners(GFace *gf, std::vector<MVertex*> &corners)
     // try reaaally hard for 3-sided faces
     if(corners.size() == 3){
       GEdge *first = 0, *last = 0;
-      for(std::list<GEdge*>::iterator it = fedges.begin(); it != fedges.end(); it++){
+      for(std::vector<GEdge*>::iterator it = fedges.begin(); it != fedges.end(); it++){
         if(((*it)->getBeginVertex()->mesh_vertices[0] == corners[0] &&
             (*it)->getEndVertex()->mesh_vertices[0] == corners[1]) ||
            ((*it)->getBeginVertex()->mesh_vertices[0] == corners[1] &&
@@ -83,10 +83,10 @@ void findTransfiniteCorners(GFace *gf, std::vector<MVertex*> &corners)
 static void computeEdgeLoops(const GFace *gf, std::vector<MVertex*> &all_mvertices,
                              std::vector<int> &indices)
 {
-  std::list<GEdge*> edges = gf->edges();
-  std::list<int> ori = gf->orientations();
-  std::list<GEdge*>::iterator it = edges.begin();
-  std::list<int>::iterator ito = ori.begin();
+  std::vector<GEdge*> const& edges = gf->edges();
+  std::vector<int> ori = gf->orientations();
+  std::vector<GEdge*>::const_iterator it = edges.begin();
+  std::vector<int>::iterator ito = ori.begin();
 
   indices.push_back(0);
   GVertex *start = ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();

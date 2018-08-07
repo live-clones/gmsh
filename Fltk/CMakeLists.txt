@@ -26,7 +26,7 @@ set(SRC
     projectionEditor.cpp
     classificationEditor.cpp
     partitionDialog.cpp
-    inputValue.cpp inputRegion.cpp
+    inputValue.cpp
     viewButton.cpp solverButton.cpp
     Navigator.cpp
     onelabGroup.cpp
