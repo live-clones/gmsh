@@ -15,8 +15,8 @@ typedef enum {
   FILE_CHOOSER_DIRECTORY
 } FILE_CHOOSER_TYPE;
 
-int fileChooser(FILE_CHOOSER_TYPE type, const char *message,
-                const char *pat, const char *fname=NULL);
+int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *pat,
+                const char *fname = NULL);
 std::string fileChooserGetName(int num);
 int fileChooserGetFilter();
 void fileChooserGetPosition(int *x, int *y);
@@ -24,7 +24,8 @@ void fileChooserGetPosition(int *x, int *y);
 int mpegFileDialog(const char *filename);
 int gifFileDialog(const char *filename);
 int geoFileDialog(const char *filename);
-int genericBitmapFileDialog(const char *filename, const char *title, int format);
+int genericBitmapFileDialog(const char *filename, const char *title,
+                            int format);
 int pgfBitmapFileDialog(const char *filename, const char *title, int format);
 int genericMeshFileDialog(const char *filename, const char *title, int format,
                           bool binary_support, bool element_tag_support);

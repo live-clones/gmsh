@@ -25,13 +25,13 @@
 #define NUM_FONTS 15
 extern Fl_Menu_Item menu_font_names[];
 
-class optionWindow{
- public:
+class optionWindow {
+public:
   Fl_Window *win;
   Fl_Multi_Browser *browser;
   Fl_Return_Button *redraw;
 
-  struct{
+  struct {
     Fl_Group *group;
 #if defined(HAVE_VISUDEV)
     Fl_Check_Button *butt[23];
@@ -46,14 +46,14 @@ class optionWindow{
     Fl_Button *gamepadconfig;
     spherePositionWidget *sphere;
   } general;
-  struct{
+  struct {
     Fl_Group *group;
     Fl_Check_Button *butt[20];
     Fl_Value_Input *value[25];
     Fl_Button *color[50];
     Fl_Choice *choice[20];
   } geo;
-  struct{
+  struct {
     Fl_Group *group;
     Fl_Check_Button *butt[50];
     Fl_Return_Button *retbutt[50];
@@ -63,19 +63,19 @@ class optionWindow{
     Fl_Choice *choice[20];
     Fl_Menu_Button *menu;
   } mesh;
-  struct{
+  struct {
     Fl_Group *group;
     Fl_Check_Button *butt[20];
     Fl_Value_Input *value[20];
     Fl_Input *input[20];
   } solver;
-  struct{
+  struct {
     Fl_Group *group;
     Fl_Check_Button *butt[20];
     Fl_Value_Input *value[20];
     Fl_Choice *choice[20];
   } post;
-  struct{
+  struct {
     int index;
     Fl_Group *group, *range;
     Fl_Check_Button *butt[100];
@@ -90,11 +90,11 @@ class optionWindow{
     Fl_Menu_Button *menu[2];
   } view;
 
- public:
-  optionWindow(int deltaFontSize=0);
-  gamepadWindow* gmpdoption ;
-  void showGroup(int num, bool showWindow=true,
-                 bool allowMultipleSelections=false);
+public:
+  optionWindow(int deltaFontSize = 0);
+  gamepadWindow *gmpdoption;
+  void showGroup(int num, bool showWindow = true,
+                 bool allowMultipleSelections = false);
   void resetBrowser();
   void resetExternalViewList();
   void updateViewGroup(int index);

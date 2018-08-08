@@ -10,19 +10,19 @@
 
 #include "drawContextFltk.h"
 
-
 class drawContextFltkStringTexture : public drawContextFltk {
   class queueString;
   queueString *_queue;
   int _currentFontId;
   int _currentFontSize;
- public:
+
+public:
   drawContextFltkStringTexture();
   ~drawContextFltkStringTexture();
   void flushString();
   void drawString(const char *str);
   void setFont(int fontid, int fontsize);
-  std::string getName(){ return "StringTexture"; }
+  std::string getName() { return "StringTexture"; }
 };
 
 #endif

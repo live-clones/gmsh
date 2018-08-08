@@ -16,14 +16,14 @@
 
 class viewButton;
 
-class onelabGroup : public Fl_Group{
- private:
+class onelabGroup : public Fl_Group {
+private:
   Fl_Tree *_tree;
   Fl_Button *_butt[2];
   Fl_Menu_Button *_gear;
   int _gearOptionsStart, _gearOptionsEnd;
-  std::vector<Fl_Widget*> _treeWidgets;
-  std::vector<char*> _treeStrings;
+  std::vector<Fl_Widget *> _treeWidgets;
+  std::vector<char *> _treeStrings;
   bool _stop;
   double _baseWidth, _indent;
   int _minWindowWidth, _minWindowHeight;
@@ -41,19 +41,20 @@ class onelabGroup : public Fl_Group{
   void _addViewMenu(int num);
   std::set<std::string> _getClosedGmshMenus();
   void _addGmshMenus();
- public:
-  onelabGroup(int x, int y, int w, int h, const char *l=0);
+
+public:
+  onelabGroup(int x, int y, int w, int h, const char *l = 0);
   void updateGearMenu();
   void rebuildSolverList();
   void rebuildTree(bool deleteWidgets);
-  void enableTreeWidgetResize(bool value){ _enableTreeWidgetResize = value; }
-  void redrawTree(){ _tree->redraw(); }
+  void enableTreeWidgetResize(bool value) { _enableTreeWidgetResize = value; }
+  void redrawTree() { _tree->redraw(); }
   void openTreeItem(const std::string &name);
   void setButtonVisibility();
   void setButtonMode(const std::string &butt0, const std::string &butt1);
   bool isBusy();
-  int getMinWindowWidth(){ return _minWindowWidth; }
-  int getMinWindowHeight(){ return _minWindowHeight; }
+  int getMinWindowWidth() { return _minWindowWidth; }
+  int getMinWindowHeight() { return _minWindowHeight; }
   std::string getPath(Fl_Tree_Item *item);
   void insertInManuallyClosed(const std::string &path)
   {
@@ -73,8 +74,8 @@ class onelabGroup : public Fl_Group{
                  const std::string &hostName, int index);
   void removeSolver(const std::string &name);
   void checkForErrors(const std::string &client);
-  bool stop(){ return _stop; }
-  void stop(bool val){ _stop = val; }
+  bool stop() { return _stop; }
+  void stop(bool val) { _stop = val; }
 };
 
 void solver_cb(Fl_Widget *w, void *data);

@@ -43,28 +43,27 @@ static const char *help_link(Fl_Widget *w, const char *uri)
   return 0;
 }
 
-struct opt_data{
+struct opt_data {
   std::string category;
   int index;
   std::string name;
 };
 
-static void interactive_cb(Fl_Widget* w, void* data)
+static void interactive_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  inputValueFloat *v = (inputValueFloat*)w;
-  opt_data *d = (opt_data*)data;
+  inputValueFloat *v = (inputValueFloat *)w;
+  opt_data *d = (opt_data *)data;
   double val = v->value();
-  NumberOption(GMSH_SET|GMSH_GUI, d->category.c_str(), d->index,
+  NumberOption(GMSH_SET | GMSH_GUI, d->category.c_str(), d->index,
                d->name.c_str(), val);
   drawContext::global()->draw();
 }
 
 double numberOrStringOptionChooser(const std::string &category, int index,
                                    const std::string &name, bool isNumber,
-                                   const std::string &title,
-                                   bool isInteractive, double minimum,
-                                   double maximum, double step)
+                                   const std::string &title, bool isInteractive,
+                                   double minimum, double maximum, double step)
 {
   double valn = 0.;
   std::string vals = "";
@@ -82,10 +81,10 @@ double numberOrStringOptionChooser(const std::string &category, int index,
   win->hotspot(win);
   inputValueFloat *number = 0;
   Fl_Input *string = 0;
-  if(isNumber){
+  if(isNumber) {
     number = new inputValueFloat(WB, WB, width - 2 * WB, BH);
     number->value(valn);
-    if(isInteractive){
+    if(isInteractive) {
       static opt_data d;
       d.category = category;
       d.index = index;
@@ -93,61 +92,60 @@ double numberOrStringOptionChooser(const std::string &category, int index,
       number->minimum(minimum);
       number->maximum(maximum);
       number->step(step, 1);
-      number->callback(interactive_cb, (void*)&d);
+      number->callback(interactive_cb, (void *)&d);
       number->when(FL_WHEN_RELEASE);
     }
   }
-  else{
+  else {
     string = new Fl_Input(WB, WB, width - 2 * WB, BH);
     string->value(vals.c_str());
   }
-  Fl_Button *ok = new Fl_Return_Button
-    (width - nn * BB - nn * WB, 2 * WB + BH, BB, BH, "OK");
-  Fl_Button *def = new Fl_Button
-    (width - (nn - 1) * BB - (nn - 1) * WB, 2 * WB + BH, BB, BH, "Default");
+  Fl_Button *ok =
+    new Fl_Return_Button(width - nn * BB - nn * WB, 2 * WB + BH, BB, BH, "OK");
+  Fl_Button *def = new Fl_Button(width - (nn - 1) * BB - (nn - 1) * WB,
+                                 2 * WB + BH, BB, BH, "Default");
   Fl_Button *cancel = 0;
   if(!isInteractive)
-    cancel = new Fl_Button
-      (width - BB - WB, 2 * WB + BH, BB, BH, "Cancel");
+    cancel = new Fl_Button(width - BB - WB, 2 * WB + BH, BB, BH, "Cancel");
   win->end();
   win->show();
   if(number) number->take_focus();
   if(string) string->take_focus();
   bool done = false;
-  while(win->shown()){
+  while(win->shown()) {
     if(done) break;
     Fl::wait();
-    for (;;) {
-      Fl_Widget* o = Fl::readqueue();
-      if (!o) break;
-      if (o == win || o == cancel) {
+    for(;;) {
+      Fl_Widget *o = Fl::readqueue();
+      if(!o) break;
+      if(o == win || o == cancel) {
         done = true;
         break;
       }
-      if(o == ok){
-        if(isNumber){
+      if(o == ok) {
+        if(isNumber) {
           valn = number->value();
-          NumberOption(GMSH_SET|GMSH_GUI, category.c_str(), index,
+          NumberOption(GMSH_SET | GMSH_GUI, category.c_str(), index,
                        name.c_str(), valn);
         }
-        else{
+        else {
           vals = string->value();
-          StringOption(GMSH_SET|GMSH_GUI, category.c_str(), index,
+          StringOption(GMSH_SET | GMSH_GUI, category.c_str(), index,
                        name.c_str(), vals);
         }
         done = true;
         break;
       }
-      if(o == def){
-        if(isNumber){
-          NumberOption(GMSH_GET_DEFAULT, category.c_str(), index,
-                       name.c_str(), valn);
+      if(o == def) {
+        if(isNumber) {
+          NumberOption(GMSH_GET_DEFAULT, category.c_str(), index, name.c_str(),
+                       valn);
           number->value(valn);
           if(isInteractive) number->do_callback();
         }
-        else{
-          StringOption(GMSH_GET_DEFAULT, category.c_str(), index,
-                       name.c_str(), vals);
+        else {
+          StringOption(GMSH_GET_DEFAULT, category.c_str(), index, name.c_str(),
+                       vals);
           string->value(vals.c_str());
         }
         break;
@@ -156,7 +154,7 @@ double numberOrStringOptionChooser(const std::string &category, int index,
   }
   delete win;
 
-  if(isNumber){
+  if(isNumber) {
     NumberOption(GMSH_GET, category.c_str(), index, name.c_str(), valn);
     return valn;
   }
@@ -172,9 +170,10 @@ static void colorOptionChooser(const std::string &category, int index,
   uchar r = CTX::instance()->unpackRed(col);
   uchar g = CTX::instance()->unpackGreen(col);
   uchar b = CTX::instance()->unpackBlue(col);
-  if(fl_color_chooser("Color Chooser", r, g, b, 1)){
+  if(fl_color_chooser("Color Chooser", r, g, b, 1)) {
     col = CTX::instance()->packColor(r, g, b, 255);
-    ColorOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(), col);
+    ColorOption(GMSH_SET | GMSH_GUI, category.c_str(), index, name.c_str(),
+                col);
   }
 }
 
@@ -184,7 +183,7 @@ static void editOption(const std::string &type, const std::string &cat,
   std::string category = cat;
   int index = 0;
   std::string::size_type p1 = cat.find('['), p2 = cat.find(']');
-  if(p1 != std::string::npos && p2 != std::string::npos){
+  if(p1 != std::string::npos && p2 != std::string::npos) {
     category = cat.substr(0, p1);
     std::string num = cat.substr(p1 + 1, p2 - p1 - 1);
     index = atoi(num.c_str());
@@ -200,27 +199,29 @@ static void editOption(const std::string &type, const std::string &cat,
 
 static void browser_cb(Fl_Widget *w, void *data)
 {
-  if(Fl::event_clicks()){
+  if(Fl::event_clicks()) {
     // edit value
     for(int i = 1; i <= FlGui::instance()->help->browser->size(); i++) {
       if(FlGui::instance()->help->browser->selected(i)) {
         const char *text = FlGui::instance()->help->browser->text(i);
-        const char *data = (const char*)FlGui::instance()->help->browser->data(i);
-        if(data){
+        const char *data =
+          (const char *)FlGui::instance()->help->browser->data(i);
+        if(data) {
           std::string option(text), type(data), c1, c2;
           std::string::size_type p1 = std::string::npos, p2 = p1;
           p1 = option.find_first_of('.');
-          if(p1 != std::string::npos){
+          if(p1 != std::string::npos) {
             c1 = option.substr(0, p1);
             p2 = option.find_first_of(' ', p1);
-            if(p2 != std::string::npos)
-              c2 = option.substr(p1 + 1, p2 - p1 - 1);
+            if(p2 != std::string::npos) c2 = option.substr(p1 + 1, p2 - p1 - 1);
           }
-          if(type == "color"){
-            if(c2.size() > 6) c2 = c2.substr(6);
-            else c2 = "";
+          if(type == "color") {
+            if(c2.size() > 6)
+              c2 = c2.substr(6);
+            else
+              c2 = "";
           }
-          if(c1.size() && c2.size()){
+          if(c1.size() && c2.size()) {
             editOption(type, c1, c2);
             int top = FlGui::instance()->help->browser->topline();
             help_options_cb(0, 0);
@@ -233,7 +234,7 @@ static void browser_cb(Fl_Widget *w, void *data)
       }
     }
   }
-  else{
+  else {
     // copy to clipboard
     std::string buff;
     for(int i = 1; i <= FlGui::instance()->help->browser->size(); i++) {
@@ -266,19 +267,22 @@ void help_options_cb(Fl_Widget *w, void *data)
 
   int top = FlGui::instance()->help->browser->topline();
   FlGui::instance()->help->browser->clear();
-  for(unsigned int i = 0; i < s0.size(); i++){
+  for(unsigned int i = 0; i < s0.size(); i++) {
     std::string::size_type sep = s0[i].rfind('\0');
     void *d = 0;
-    if(sep != std::string::npos){
+    if(sep != std::string::npos) {
       std::string tmp = s0[i].substr(sep + 1);
-      if(tmp == "number") d = (void*)"number";
-      else if(tmp == "string") d = (void*)"string";
-      else if(tmp == "color") d = (void*)"color";
+      if(tmp == "number")
+        d = (void *)"number";
+      else if(tmp == "string")
+        d = (void *)"string";
+      else if(tmp == "color")
+        d = (void *)"color";
     }
-    if(search.empty()){
+    if(search.empty()) {
       FlGui::instance()->help->browser->add(s0[i].c_str(), d);
     }
-    else{
+    else {
       std::string tmp(s0[i]);
       std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
       if(tmp.find(search) != std::string::npos)
@@ -294,8 +298,9 @@ helpWindow::helpWindow()
     int width = 28 * FL_NORMAL_SIZE;
     int height = 19 * BH;
 
-    about = new paletteWindow
-      (width, height, CTX::instance()->nonModalWindows ? true : false, "About Gmsh");
+    about = new paletteWindow(width, height,
+                              CTX::instance()->nonModalWindows ? true : false,
+                              "About Gmsh");
     about->box(GMSH_WINDOW_BOX);
 
     Fl_Help_View *o = new Fl_Help_View(0, 0, width, height);
@@ -303,46 +308,47 @@ helpWindow::helpWindow()
     o->textsize(FL_NORMAL_SIZE);
     o->box(FL_FLAT_BOX);
     std::ostringstream sstream;
-    sstream << "<center><h3>Gmsh</h3><br>version " << GetGmshVersion()
-            << "<p>Copyright (C) 1997-2018"
-            << "<br>Christophe Geuzaine and Jean-Francois Remacle"
-            << "<p><a href=\"http://gmsh.info/doc/CREDITS.txt\">Credits</a> "
-            << "and <a href=\"http://gmsh.info/doc/LICENSE.txt\">licensing "
-            << "information</a>"
-            << "<p>Please send all questions and bug reports to the public mailing list "
-            << "<a href=\"mailto:gmsh@onelab.info\">gmsh@onelab.info</a></center>"
-            << "<ul>"
-            << "<li><i>Build OS:</i> " << GetGmshBuildOS()
-            << "<li><i>Build date:</i> " << GetGmshBuildDate()
-            << "<li><i>Build host:</i> " << GetGmshBuildHost()
-            << "<li><i>Build options:</i>" << GetGmshBuildOptions()
-            << "<li><i>FLTK version:</i> "
-            << FL_MAJOR_VERSION << "." << FL_MINOR_VERSION << "." << FL_PATCH_VERSION
+    sstream
+      << "<center><h3>Gmsh</h3><br>version " << GetGmshVersion()
+      << "<p>Copyright (C) 1997-2018"
+      << "<br>Christophe Geuzaine and Jean-Francois Remacle"
+      << "<p><a href=\"http://gmsh.info/doc/CREDITS.txt\">Credits</a> "
+      << "and <a href=\"http://gmsh.info/doc/LICENSE.txt\">licensing "
+      << "information</a>"
+      << "<p>Please send all questions and bug reports to the public mailing "
+         "list "
+      << "<a href=\"mailto:gmsh@onelab.info\">gmsh@onelab.info</a></center>"
+      << "<ul>"
+      << "<li><i>Build OS:</i> " << GetGmshBuildOS()
+      << "<li><i>Build date:</i> " << GetGmshBuildDate()
+      << "<li><i>Build host:</i> " << GetGmshBuildHost()
+      << "<li><i>Build options:</i>" << GetGmshBuildOptions()
+      << "<li><i>FLTK version:</i> " << FL_MAJOR_VERSION << "."
+      << FL_MINOR_VERSION << "." << FL_PATCH_VERSION
 #if defined(HAVE_PETSC)
-            << "<li><i>PETSc version:</i> " << PETSC_VERSION_MAJOR << "."
-            << PETSC_VERSION_MINOR << "." << PETSC_VERSION_SUBMINOR
+      << "<li><i>PETSc version:</i> " << PETSC_VERSION_MAJOR << "."
+      << PETSC_VERSION_MINOR << "." << PETSC_VERSION_SUBMINOR
 #if defined(PETSC_USE_COMPLEX)
-            << " (complex arithmetic)"
+      << " (complex arithmetic)"
 #else
-            << " (real arithmetic)"
+      << " (real arithmetic)"
 #endif
 #endif
 #if defined(HAVE_OCC)
-            << "<li><i>OCC version:</i> " << OCC_VERSION_MAJOR << "."
-            << OCC_VERSION_MINOR << "." << OCC_VERSION_MAINTENANCE
+      << "<li><i>OCC version:</i> " << OCC_VERSION_MAJOR << "."
+      << OCC_VERSION_MINOR << "." << OCC_VERSION_MAINTENANCE
 #endif
 #if defined(HAVE_MED)
-            << "<li><i>MED version:</i> " << MED_NUM_MAJEUR << "."
-            << MED_NUM_MINEUR << "." << MED_NUM_RELEASE
+      << "<li><i>MED version:</i> " << MED_NUM_MAJEUR << "." << MED_NUM_MINEUR
+      << "." << MED_NUM_RELEASE
 #endif
-            << "<li><i>Packaged by:</i> " << GetGmshPackager()
-            << "</ul>"
-            << "<center>Visit <a href=\"http://gmsh.info\">http://gmsh.info</a> "
-            << "for more information</center>";
+      << "<li><i>Packaged by:</i> " << GetGmshPackager() << "</ul>"
+      << "<center>Visit <a href=\"http://gmsh.info\">http://gmsh.info</a> "
+      << "for more information</center>";
     o->value(sstream.str().c_str());
     o->link(help_link);
-    about->position(Fl::x() + Fl::w()/2 - width / 2,
-                    Fl::y() + Fl::h()/2 - height / 2);
+    about->position(Fl::x() + Fl::w() / 2 - width / 2,
+                    Fl::y() + Fl::h() / 2 - height / 2);
     about->end();
   }
 
@@ -350,9 +356,9 @@ helpWindow::helpWindow()
     int width = 40 * FL_NORMAL_SIZE;
     int height = 18 * BH;
 
-    basic = new paletteWindow
-      (width, height, CTX::instance()->nonModalWindows ? true : false,
-       "Keyboard and Mouse Usage");
+    basic = new paletteWindow(width, height,
+                              CTX::instance()->nonModalWindows ? true : false,
+                              "Keyboard and Mouse Usage");
     basic->box(GMSH_WINDOW_BOX);
 
     Fl_Help_View *o = new Fl_Help_View(0, 0, width, height);
@@ -364,9 +370,11 @@ helpWindow::helpWindow()
     s += "<h3>Keyboard Shortcuts</h3>";
     s += "<table border=1>";
     {
-      std::vector<std::pair<std::string, std::string> > s0 = GetShortcutsUsage();
+      std::vector<std::pair<std::string, std::string> > s0 =
+        GetShortcutsUsage();
       for(unsigned int i = 0; i < s0.size(); i++)
-        s += "<tr><td>" + s0[i].first + "</td><td>" + s0[i].second + "</td></tr>";
+        s +=
+          "<tr><td>" + s0[i].first + "</td><td>" + s0[i].second + "</td></tr>";
     }
     s += "</table>";
 
@@ -375,13 +383,13 @@ helpWindow::helpWindow()
     {
       std::vector<std::pair<std::string, std::string> > s0 = GetMouseUsage();
       for(unsigned int i = 0; i < s0.size(); i++)
-        s += "<tr><td>" + s0[i].first + "</td><td>" + s0[i].second + "</td></tr>";
+        s +=
+          "<tr><td>" + s0[i].first + "</td><td>" + s0[i].second + "</td></tr>";
     }
     s += "</table>";
     s += "For a 2 button mouse, Middle button = Shift+Left button.<p>";
     s += "For a 1 button mouse, Middle button = Shift+Left button, "
          "Right button = Alt+Left button.";
-
 
     s += "<h3>Command Line Switches</h3>";
     s += "<table border=1>";
@@ -389,7 +397,8 @@ helpWindow::helpWindow()
       std::vector<std::pair<std::string, std::string> > s0 = GetUsage();
       for(unsigned int i = 0; i < s0.size(); i++)
         if(s0[i].first.size() && s0[i].second.size())
-          s += "<tr><td>" + s0[i].first + "</td><td>" + s0[i].second + "</td></tr>";
+          s += "<tr><td>" + s0[i].first + "</td><td>" + s0[i].second +
+               "</td></tr>";
         else if(s0[i].first.size() && s0[i].second.empty())
           s += "</table>" + s0[i].first + "<table border=1>";
     }
@@ -398,8 +407,8 @@ helpWindow::helpWindow()
     o->value(s.c_str());
 
     basic->resizable(o);
-    basic->position(Fl::x() + Fl::w()/2 - width / 2,
-                    Fl::y() + Fl::h()/2 - height / 2);
+    basic->position(Fl::x() + Fl::w() / 2 - width / 2,
+                    Fl::y() + Fl::h() / 2 - height / 2);
     basic->end();
   }
 
@@ -407,35 +416,34 @@ helpWindow::helpWindow()
     int width = 40 * FL_NORMAL_SIZE;
     int height = 18 * BH;
 
-    options = new paletteWindow
-      (width, height, CTX::instance()->nonModalWindows ? true : false,
-       "Current Options and Workspace");
+    options = new paletteWindow(width, height,
+                                CTX::instance()->nonModalWindows ? true : false,
+                                "Current Options and Workspace");
     options->box(GMSH_WINDOW_BOX);
 
     int BW = (width - 4 * WB) / 3;
 
-    modified = new Fl_Check_Button
-      (WB, WB, BW, BH, "Only show modified");
+    modified = new Fl_Check_Button(WB, WB, BW, BH, "Only show modified");
     modified->type(FL_TOGGLE_BUTTON);
     modified->callback(help_options_cb);
     modified->tooltip("Show only values different from defaults");
 
-    showhelp = new Fl_Check_Button
-      (2 * WB + BW, WB, BW, BH, "Show help");
+    showhelp = new Fl_Check_Button(2 * WB + BW, WB, BW, BH, "Show help");
     showhelp->type(FL_TOGGLE_BUTTON);
     showhelp->callback(help_options_cb);
     showhelp->tooltip("Show help strings");
 
-    Fl_Group* o = new Fl_Group(3 * WB + 2 * BW, WB, BW, BH);
+    Fl_Group *o = new Fl_Group(3 * WB + 2 * BW, WB, BW, BH);
     o->tooltip("Filter values");
     o->box(FL_DOWN_BOX);
     o->color(FL_BACKGROUND2_COLOR);
-    search = new Fl_Input
-      (3 * WB + 2 * BW + BH, WB + 2, BW - BH - 2, BH - 4, "@gmsh_search");
+    search = new Fl_Input(3 * WB + 2 * BW + BH, WB + 2, BW - BH - 2, BH - 4,
+                          "@gmsh_search");
     search->box(FL_FLAT_BOX);
     search->callback(help_options_cb);
     search->when(FL_WHEN_CHANGED);
-    //search->take_focus(); cannot call this here - it triggers show() on Linux in fltk 1.3.3
+    // search->take_focus(); cannot call this here - it triggers show() on Linux
+    // in fltk 1.3.3
     o->resizable(search);
     o->end();
 
@@ -446,24 +454,24 @@ helpWindow::helpWindow()
     browser->type(FL_MULTI_BROWSER);
     browser->callback(browser_cb);
     browser->tooltip("Double-click to edit value");
-    browser->scrollbar_size(std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
+    browser->scrollbar_size(
+      std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
 
     {
-      Fl_Group* g = new Fl_Group(0, height - BH - WB, width, BH);
-      Fl_Group* g2 = new Fl_Group(0, height - BH - WB, BB, BH);
+      Fl_Group *g = new Fl_Group(0, height - BH - WB, width, BH);
+      Fl_Group *g2 = new Fl_Group(0, height - BH - WB, BB, BH);
       g->resizable(g2);
       g2->end();
-      Fl_Return_Button *o = new Fl_Return_Button
-        (width - BB - WB, height - BH - WB, BB, BH, "Update");
+      Fl_Return_Button *o = new Fl_Return_Button(
+        width - BB - WB, height - BH - WB, BB, BH, "Update");
       o->callback(help_options_cb);
       g->end();
     }
 
     options->resizable(browser);
-    options->position(Fl::x() + Fl::w()/2 - width / 2,
-                      Fl::y() + Fl::h()/2 - height / 2);
+    options->position(Fl::x() + Fl::w() / 2 - width / 2,
+                      Fl::y() + Fl::h() / 2 - height / 2);
     options->size_range(width, height);
     options->end();
   }
-
 }
