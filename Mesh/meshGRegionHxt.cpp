@@ -108,7 +108,7 @@ static HXTStatus _meshGRegionHxt(GRegion *gr)
 
 int meshGRegionHxt(GRegion *gr)
 {
-  HXTStatus status = _meshGRegionHXT(gr);
+  HXTStatus status = _meshGRegionHxt(gr);
   if(status == HXT_STATUS_OK) return 0;
   return 1;
 }
