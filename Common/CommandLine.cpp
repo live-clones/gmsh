@@ -1020,6 +1020,8 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
             CTX::instance()->mesh.algo2d = ALGO_2D_BAMG;
           else if(!strncmp(argv[i], "del3d", 5) || !strncmp(argv[i], "gmsh3d", 6))
             CTX::instance()->mesh.algo3d = ALGO_3D_DELAUNAY;
+          else if(!strncmp(argv[i], "hxt", 3) )
+            CTX::instance()->mesh.algo3d = ALGO_3D_HXT;
           else if(!strncmp(argv[i], "front3d", 7) || !strncmp(argv[i], "netgen", 6))
             CTX::instance()->mesh.algo3d = ALGO_3D_FRONTAL;
           else if(!strncmp(argv[i], "mmg3d", 5))

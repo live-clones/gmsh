@@ -155,12 +155,12 @@ HXTStatus hxtMeanValuesCompute(HXTMeanValues *meanValues){
     // gather local edge index
     for(int it=0; it<2; it++){
       if(tri[it]==(uint64_t)-1)
-	break;      
+        break;      
       for(int k=0; k<3; k++){
-	if(edges->tri2edg[3*tri[it]+k]==ie){
-	  ik[it] = k;
-	  break;
-	}
+        if(edges->tri2edg[3*tri[it]+k]==ie){
+          ik[it] = k;
+          break;
+        }
       }
     }
 
@@ -170,32 +170,32 @@ HXTStatus hxtMeanValuesCompute(HXTMeanValues *meanValues){
       uint32_t v1 = edges->node[2*ie+(1-ij)];      
 
       if (flag[v0]==1){//boundary nodes/conditons
-	HXT_CHECK(hxtLinearSystemSetMatrixRowIdentity(sys,v0,0));
-	HXT_CHECK(hxtLinearSystemSetRhsEntry(sys,Urhs, v0,0, uv[2*v0+0]));
-	HXT_CHECK(hxtLinearSystemSetRhsEntry(sys,Vrhs, v0,0, uv[2*v0+1]));
+        HXT_CHECK(hxtLinearSystemSetMatrixRowIdentity(sys,v0,0));
+        HXT_CHECK(hxtLinearSystemSetRhsEntry(sys,Urhs, v0,0, uv[2*v0+0]));
+        HXT_CHECK(hxtLinearSystemSetRhsEntry(sys,Vrhs, v0,0, uv[2*v0+1]));
       }      
-      else {// inner node	
-	double e[3] = {mesh->vertices.coord[4*v1+0]-mesh->vertices.coord[4*v0+0],mesh->vertices.coord[4*v1+1]-mesh->vertices.coord[4*v0+1],mesh->vertices.coord[4*v1+2]-mesh->vertices.coord[4*v0+2]};
-	double ne = sqrt(e[0]*e[0]+e[1]*e[1]+e[2]*e[2]);
-	
-	uint32_t vLeft = mesh->triangles.node[3*tri[0] + (ik[0]+2)%3];
-	double a[3] = {mesh->vertices.coord[4*vLeft+0]-mesh->vertices.coord[4*v0+0],mesh->vertices.coord[4*vLeft+1]-mesh->vertices.coord[4*v0+1],mesh->vertices.coord[4*vLeft+2]-mesh->vertices.coord[4*v0+2]};
-	double na = sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2]);      
-	double thetaL = acos((a[0]*e[0]+a[1]*e[1]+a[2]*e[2])/(na*ne));
+      else {// inner node       
+        double e[3] = {mesh->vertices.coord[4*v1+0]-mesh->vertices.coord[4*v0+0],mesh->vertices.coord[4*v1+1]-mesh->vertices.coord[4*v0+1],mesh->vertices.coord[4*v1+2]-mesh->vertices.coord[4*v0+2]};
+        double ne = sqrt(e[0]*e[0]+e[1]*e[1]+e[2]*e[2]);
+        
+        uint32_t vLeft = mesh->triangles.node[3*tri[0] + (ik[0]+2)%3];
+        double a[3] = {mesh->vertices.coord[4*vLeft+0]-mesh->vertices.coord[4*v0+0],mesh->vertices.coord[4*vLeft+1]-mesh->vertices.coord[4*v0+1],mesh->vertices.coord[4*vLeft+2]-mesh->vertices.coord[4*v0+2]};
+        double na = sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2]);      
+        double thetaL = acos((a[0]*e[0]+a[1]*e[1]+a[2]*e[2])/(na*ne));
 
-	double thetaR=0.;
-	if(tri[1]==(uint64_t)-1)
-	  thetaR=0.;
-	else{
-	  uint32_t vRight = mesh->triangles.node[3*tri[1] + (ik[1]+2)%3];	
-	  double b[3] = {mesh->vertices.coord[4*vRight+0]-mesh->vertices.coord[4*v0+0],mesh->vertices.coord[4*vRight+1]-mesh->vertices.coord[4*v0+1],mesh->vertices.coord[4*vRight+2]-mesh->vertices.coord[4*v0+2]};
-	  double nb = sqrt(b[0]*b[0]+b[1]*b[1]+b[2]*b[2]);
-	  thetaR = acos((b[0]*e[0]+b[1]*e[1]+b[2]*e[2])/(nb*ne));
-	}
-	
-	double c = (tan(.5*thetaL)+tan(.5*thetaR))/ne;
-	HXT_CHECK(hxtLinearSystemAddMatrixEntry(sys, v0, 0, v1, 0, -c));
-	HXT_CHECK(hxtLinearSystemAddMatrixEntry(sys, v0, 0, v0, 0, c));         
+        double thetaR=0.;
+        if(tri[1]==(uint64_t)-1)
+          thetaR=0.;
+        else{
+          uint32_t vRight = mesh->triangles.node[3*tri[1] + (ik[1]+2)%3];       
+          double b[3] = {mesh->vertices.coord[4*vRight+0]-mesh->vertices.coord[4*v0+0],mesh->vertices.coord[4*vRight+1]-mesh->vertices.coord[4*v0+1],mesh->vertices.coord[4*vRight+2]-mesh->vertices.coord[4*v0+2]};
+          double nb = sqrt(b[0]*b[0]+b[1]*b[1]+b[2]*b[2]);
+          thetaR = acos((b[0]*e[0]+b[1]*e[1]+b[2]*e[2])/(nb*ne));
+        }
+        
+        double c = (tan(.5*thetaL)+tan(.5*thetaR))/ne;
+        HXT_CHECK(hxtLinearSystemAddMatrixEntry(sys, v0, 0, v1, 0, -c));
+        HXT_CHECK(hxtLinearSystemAddMatrixEntry(sys, v0, 0, v0, 0, c));         
       }
     }
   }// end for int ie
@@ -224,7 +224,7 @@ HXTStatus hxtMeanValuesCompute(HXTMeanValues *meanValues){
       HXT_CHECK(hxtLinearSystemAddMatrixEntry(sys, edges->node[2*edges_ll[j]+0], 0, edges->node[2*edges_ll[j]+1], 0, -tan(.5*(M_PI-theta)/2)/le ));
       HXT_CHECK(hxtLinearSystemAddMatrixEntry(sys, edges->node[2*edges_ll[j]+1], 0, edges->node[2*edges_ll[j]+1], 0, tan(.5*(M_PI-theta)/2)/le ));
       HXT_CHECK(hxtLinearSystemAddMatrixEntry(sys, edges->node[2*edges_ll[j]+1], 0, edges->node[2*edges_ll[j]+0], 0, -tan(.5*(M_PI-theta)/2)/le ));
-	
+        
       c[j] = tan(.5*(M_PI-theta)/2)/radius;
       d[j] = tan(.5*(theta))/radius;
     }
@@ -243,7 +243,7 @@ HXTStatus hxtMeanValuesCompute(HXTMeanValues *meanValues){
     }
       
     for(int j=0; j<n; j++){
-	
+        
       uint32_t v = edges->node[2*edges_ll[j]+0];
 
       HXT_CHECK(hxtLinearSystemAddMatrixEntry(sys, v, 0, v, 0, c[j]));
@@ -281,22 +281,60 @@ HXTStatus hxtMeanValueAspectRatio(HXTMeanValues *meanValues, int *aspectRatio)
 {
 
   if(meanValues->aspectRatio<0){    
+    *aspectRatio = 1;
+    HXTMesh *mesh = meanValues->initialEdges->edg2mesh;
+   
 
+    double grad[3][2] = {{-1./2.,-sqrt(3)/6.},{1./2.,-sqrt(3)/6.},{0.,sqrt(3)/3.}};
+    
+    uint64_t nTri = mesh->triangles.num;
+    double *uv = meanValues->uv;
+    for(uint64_t it=0; it<nTri; it++){
+
+      uint32_t *nodes = mesh->triangles.node + 3*it;
+      
+      
+      double jac[2][2] = {{0.,0.},{0.,0.}};
+      for(int i=0; i<3; i++){
+
+                
+        jac[0][0] += uv[2*nodes[i]+0]*grad[i][0];// dx dxi
+        jac[0][1] += uv[2*nodes[i]+0]*grad[i][1];// dx deta
+        jac[1][0] += uv[2*nodes[i]+1]*grad[i][0];// dy dxi
+        jac[1][1] += uv[2*nodes[i]+1]*grad[i][1];// dy deta
+      }
+
+      double det = jac[0][0]*jac[1][1]-jac[1][0]*jac[0][1];
+      double frob = 0.;
+      for(int i =0; i<2; i++)
+        for(int j=0; j<2; j++)
+          frob += jac[i][j]*jac[i][j];
+      
+      double quality = 2*det/frob;
+      if(quality<.1){
+        printf("wrong aspect ratio !!!!!!! D-: \t %f\n",quality);
+        *aspectRatio = 0;
+        break;
+      }
+      
+    }
+    /*
     *aspectRatio = 1;
     
     uint32_t numEdges = meanValues->initialEdges->numEdges;
     double *uv = meanValues->uv;
     uint32_t *nodes = meanValues->initialEdges->node;
     for(uint32_t i=0; i<numEdges; i++){
-      
-      double du = uv[2*nodes[2*i+1]+0] - uv[2*nodes[2*i+0]+0];
-      double dv = uv[2*nodes[2*i+1]+1] - uv[2*nodes[2*i+0]+1];
-
-      if(sqrt(du*du+dv*dv) < 1e-4){
-	*aspectRatio = 0;
-	break;
-      }
-    }      
+    
+    double du = uv[2*nodes[2*i+1]+0] - uv[2*nodes[2*i+0]+0];
+    double dv = uv[2*nodes[2*i+1]+1] - uv[2*nodes[2*i+0]+1];
+    
+    if(sqrt(du*du+dv*dv) < 1e-4){
+        *aspectRatio = 0;
+        break;
+        }
+        }
+    */      
   }
   else
     *aspectRatio = meanValues->aspectRatio;
@@ -329,7 +367,7 @@ HXTStatus hxtMeanValuesGetData(HXTMeanValues *mv, uint64_t **global,uint32_t **g
     global_[ie] = mv->initialEdges->global[ie];
     if(gn!=NULL)
       for(int kk=0; kk<3; kk++)
-	gn_[3*ie+kk] = mv->initialEdges->edg2mesh->triangles.node[3*ie+kk];  
+        gn_[3*ie+kk] = mv->initialEdges->edg2mesh->triangles.node[3*ie+kk];  
     
   }
   

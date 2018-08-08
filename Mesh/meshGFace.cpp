@@ -1962,7 +1962,7 @@ static bool buildConsecutiveListOfVertices(
   return true;
 }
 
-static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
+static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh, bool debug = true)
 {
   if(CTX::instance()->debugSurface > 0 &&
      gf->tag() != CTX::instance()->debugSurface) {
@@ -2380,6 +2380,9 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       e->g = &CLASS_E;
   }
 
+
+  //  std::vector<EdgeToRecover> edgesNotRecovered;
+
   for(unsigned int i = 0; i < edgeLoops_BDS.size(); i++) {
     std::vector<BDS_Point *> &edgeLoop_BDS = edgeLoops_BDS[i];
     for(unsigned int j = 0; j < edgeLoop_BDS.size(); j++) {
@@ -2387,6 +2390,9 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
         edgeLoop_BDS[j]->iD, edgeLoop_BDS[(j + 1) % edgeLoop_BDS.size()]->iD,
         _fatallyFailed);
       if(!e) {
+	//	edgesNotRecovered.push_back(EdgeToRecover(edgeLoop_BDS[j]->iD,
+	//						  edgeLoop_BDS[(j + 1) % edgeLoop_BDS.size()]->iD));
+	
         Msg::Error("Impossible to recover the edge %d %d", edgeLoop_BDS[j]->iD,
                    edgeLoop_BDS[(j + 1) % edgeLoop_BDS.size()]->iD);
         gf->meshStatistics.status = GFace::FAILED;
@@ -2843,7 +2849,7 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   if(gf->getNativeType() != GEntity::GmshModel &&
      (gf->periodic(0) || gf->periodic(1) || singularEdges)) {
-    if(!meshGeneratorPeriodic(gf, debugSurface >= 0 || debugSurface == -100))
+    if(!meshGeneratorPeriodic(gf, repairSelfIntersecting1dMesh, debugSurface >= 0 || debugSurface == -100))
       Msg::Error("Impossible to mesh periodic face %d", gf->tag());
   }
   else {

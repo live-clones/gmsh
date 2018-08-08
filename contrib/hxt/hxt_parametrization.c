@@ -167,7 +167,7 @@ static HXTStatus hxtLongestEdgeBisection(HXTEdges *edges,int nrefinements)
             break;
           }
         }
-        do{	  
+        do{       
           HXT_CHECK(hxtLongestEdge(e,ti,&ei,ej));
           tj = e->edg2tri[2*ei+0]==ti ? e->edg2tri[2*ei+1] : e->edg2tri[2*ei+0];
           HXT_CHECK(hxtLongestEdge(e,tj,&ej,ei));
@@ -275,7 +275,7 @@ static HXTStatus hxtLongestEdgeBisection(HXTEdges *edges,int nrefinements)
               t_[1] = ttj;    
 
           }
-        }//end for	
+        }//end for      
         e->numEdges +=3;
         if(e->numEdges > maxEdg){
           maxEdg *= 2;
@@ -285,7 +285,7 @@ static HXTStatus hxtLongestEdgeBisection(HXTEdges *edges,int nrefinements)
         }
         e->node[2*ei+1] = m->vertices.num-1;
         e->edg2tri[2*ei+0] = ti;
-        e->edg2tri[2*ei+1] = ttj;	
+        e->edg2tri[2*ei+1] = ttj;       
         e->node[2*e0+0] = m->vertices.num-1;
         e->node[2*e0+1] = nj;
         e->edg2tri[2*e0+0] = tti;
@@ -346,12 +346,12 @@ static HXTStatus hxtPartitioning(HXTEdges *edges,int *part, int nPartitions,HXTV
     uint64_t ce = 0;
     for(uint64_t ie=0; ie<mesh->triangles.num; ie++){      
       if(part[ie]==p){
-	for(int jv=0; jv<3; jv++){
-	  uint32_t current = mesh->triangles.node[3*ie+jv];
-	  if(flagVertices[current] == (uint32_t)-1)
-	    flagVertices[current] = cv++;	  
-	}
-	ce++;
+        for(int jv=0; jv<3; jv++){
+          uint32_t current = mesh->triangles.node[3*ie+jv];
+          if(flagVertices[current] == (uint32_t)-1)
+            flagVertices[current] = cv++;         
+        }
+        ce++;
       }
     }    
     /*
@@ -365,12 +365,12 @@ static HXTStatus hxtPartitioning(HXTEdges *edges,int *part, int nPartitions,HXTV
       uint32_t current = flagVertices[iv];
       if(current==(uint32_t)-1);
       else{
-	msh->vertices.coord[4*current+0] = mesh->vertices.coord[4*iv+0];
-	msh->vertices.coord[4*current+1] = mesh->vertices.coord[4*iv+1];
-	msh->vertices.coord[4*current+2] = mesh->vertices.coord[4*iv+2];
-	msh->vertices.coord[4*current+3] = mesh->vertices.coord[4*iv+3];	
+        msh->vertices.coord[4*current+0] = mesh->vertices.coord[4*iv+0];
+        msh->vertices.coord[4*current+1] = mesh->vertices.coord[4*iv+1];
+        msh->vertices.coord[4*current+2] = mesh->vertices.coord[4*iv+2];
+        msh->vertices.coord[4*current+3] = mesh->vertices.coord[4*iv+3];        
       }
-    }	
+    }   
 
     msh->triangles.num = ce;
     //<
@@ -382,25 +382,18 @@ static HXTStatus hxtPartitioning(HXTEdges *edges,int *part, int nPartitions,HXTV
     ce = 0;
     for(uint64_t ie=0; ie<mesh->triangles.num; ie++){
       if(part[ie]==p){
-	global[ce] = edges->global[ie];
-	msh->triangles.colors[ce] = mesh->triangles.colors[ie];
-	for(int jv=0; jv<3; jv++){
-	  uint32_t current = flagVertices[mesh->triangles.node[3*ie+jv]];
-	  msh->triangles.node[3*ce+jv] = current;
-	}
-	ce++;
+        global[ce] = edges->global[ie];
+        msh->triangles.colors[ce] = mesh->triangles.colors[ie];
+        for(int jv=0; jv<3; jv++){
+          uint32_t current = flagVertices[mesh->triangles.node[3*ie+jv]];
+          msh->triangles.node[3*ce+jv] = current;
+        }
+        ce++;
       }
     }
-    /*
-    char name[16];
-    sprintf(name,"havealook%d.msh",p);
-    hxtMeshWriteGmsh(msh,name);
-    */
     HXTEdges* edg = NULL;
     HXT_CHECK(hxtEdgesCreate(msh,&edg));
-    //<    
     edg->global = global;
-    //>
     HXT_CHECK(hxtVectorPushBack(partitions,edg));
   }
 
@@ -439,63 +432,59 @@ static HXTStatus hxtCheckConnectivity(HXTEdges *e,HXTVector *partitions)
       uint64_t current = queue[iq];
       uint32_t *ed = &e->tri2edg[3*current];
       for(int j=0; j<3; j++){
-	if (e->edg2tri[2*ed[j]+1] == (uint64_t) -1)
-	  continue;
-	uint64_t next = e->edg2tri[2*ed[j]] == current ? e->edg2tri[2*ed[j]+1] : e->edg2tri[2*ed[j]];
-	if (flag[next] == -1){
-	  queue[last]= next;
-	  last++;
-	  idx[iq+1]++;
-	  flag[next] = (int) count;
-	}	
+        if (e->edg2tri[2*ed[j]+1] == (uint64_t) -1)
+          continue;
+        uint64_t next = e->edg2tri[2*ed[j]] == current ? e->edg2tri[2*ed[j]+1] : e->edg2tri[2*ed[j]];
+        if (flag[next] == -1){
+          queue[last]= next;
+          last++;
+          idx[iq+1]++;
+          flag[next] = (int) count;
+        }       
       }      
     }
     count++;
     goOn = 0;
     for(uint64_t i=0; i<m->triangles.num; i++)
       if (flag[i]== -1){
-	goOn=1;
-	iq=last;
-	queue[last] = i;
-	last++;
-	flag[i] = count;	
-	break;
+        goOn=1;
+        iq=last;
+        queue[last] = i;
+        last++;
+        flag[i] = count;        
+        break;
       }
   }
 
-  //if(partitions!=NULL)
-    printf("HXT_INFO \t There is/are %d connected part(s).\n",count);
+  printf("HXT_INFO \t There is/are %d connected part(s).\n",count);
 
   for(uint64_t i=0; i<m->triangles.num; i++){
     uint32_t *refVert = &m->triangles.node[3*queue[i]];
-    //printf("REFERENCE triangle %lu (%u %u %u)\n",queue[i],refVert[0],refVert[1],refVert[2]);
     for(uint64_t j=idx[i]+flag[queue[i]]; j<idx[i+1]+flag[queue[i]]; j++){
       
       int cond = 0; 
       uint32_t *checkVert = &m->triangles.node[3*queue[j]];
-      //printf("\t check tri %lu (%u %u %u)\n",queue[j],checkVert[0],checkVert[1],checkVert[2]);
       for(int ii=0; ii<3; ii++){
-	for(int jj=0; jj<3; jj++){
-	  //printf("%u->%u vs %u<-%u\n",refVert[ii],refVert[(ii+1)%3],checkVert[(jj+1)%3],checkVert[jj]);
-	  if(refVert[ii]==checkVert[(jj+1)%3] && refVert[(ii+1)%3]==checkVert[jj]){
-	    cond = 1;
-	    break;
-	  }
-	}
-	if(cond==1)
-	  break;
+        for(int jj=0; jj<3; jj++){
+          if(refVert[ii]==checkVert[(jj+1)%3] && refVert[(ii+1)%3]==checkVert[jj]){
+            cond = 1;
+            break;
+          }
+        }
+        if(cond==1)
+          break;
       }//end for ii
-      if(cond==0){	
-	printf("Unconsistent orientation \t %lu (%u %u %u) ; (%u %u)-(%u %u)-(%u %u) [%d] ~ %lu (%u %u %u) ; (%u %u)-(%u %u)-(%u %u) [%d].\n",queue[i],refVert[0],refVert[1],refVert[2],e->node[2*e->tri2edg[3*queue[i]+0]+0],e->node[2*e->tri2edg[3*queue[i]+0]+1],e->node[2*e->tri2edg[3*queue[i]+1]+0],e->node[2*e->tri2edg[3*queue[i]+1]+1],e->node[2*e->tri2edg[3*queue[i]+2]+0],e->node[2*e->tri2edg[3*queue[i]+2]+1],flag[queue[i]],queue[j],checkVert[0],checkVert[1],checkVert[2],e->node[2*e->tri2edg[3*queue[j]+0]+0],e->node[2*e->tri2edg[3*queue[j]+0]+1],e->node[2*e->tri2edg[3*queue[j]+1]+0],e->node[2*e->tri2edg[3*queue[j]+1]+1],e->node[2*e->tri2edg[3*queue[j]+2]+0],e->node[2*e->tri2edg[3*queue[j]+2]+1],flag[queue[j]]);
-	uint64_t temp = m->triangles.node[3*queue[j]+0];
-	m->triangles.node[3*queue[j]+0] = m->triangles.node[3*queue[j]+1];
-	m->triangles.node[3*queue[j]+1] = temp;
-	uint32_t te = e->tri2edg[3*queue[j]+1];
-	e->tri2edg[3*queue[j]+1] = e->tri2edg[3*queue[j]+2];
-	e->tri2edg[3*queue[j]+2] = te;
+      if(cond==0){      
+        printf("Unconsistent orientation \t %lu (%u %u %u) ; (%u %u)-(%u %u)-(%u %u) [%d] ~ %lu (%u %u %u) ; (%u %u)-(%u %u)-(%u %u) [%d].\n",queue[i],refVert[0],refVert[1],refVert[2],e->node[2*e->tri2edg[3*queue[i]+0]+0],e->node[2*e->tri2edg[3*queue[i]+0]+1],e->node[2*e->tri2edg[3*queue[i]+1]+0],e->node[2*e->tri2edg[3*queue[i]+1]+1],e->node[2*e->tri2edg[3*queue[i]+2]+0],e->node[2*e->tri2edg[3*queue[i]+2]+1],flag[queue[i]],queue[j],checkVert[0],checkVert[1],checkVert[2],e->node[2*e->tri2edg[3*queue[j]+0]+0],e->node[2*e->tri2edg[3*queue[j]+0]+1],e->node[2*e->tri2edg[3*queue[j]+1]+0],e->node[2*e->tri2edg[3*queue[j]+1]+1],e->node[2*e->tri2edg[3*queue[j]+2]+0],e->node[2*e->tri2edg[3*queue[j]+2]+1],flag[queue[j]]);
+        uint64_t temp = m->triangles.node[3*queue[j]+0];
+        m->triangles.node[3*queue[j]+0] = m->triangles.node[3*queue[j]+1];
+        m->triangles.node[3*queue[j]+1] = temp;
+        uint32_t te = e->tri2edg[3*queue[j]+1];
+        e->tri2edg[3*queue[j]+1] = e->tri2edg[3*queue[j]+2];
+        e->tri2edg[3*queue[j]+2] = te;
 
-	printf("Consistent (?) orientation \t %lu (%u %u %u) ; (%u %u)-(%u %u)-(%u %u) [%d] ~ %lu (%u %u %u) ; (%u %u)-(%u %u)-(%u %u) [%d].\n",queue[i],refVert[0],refVert[1],refVert[2],e->node[2*e->tri2edg[3*queue[i]+0]+0],e->node[2*e->tri2edg[3*queue[i]+0]+1],e->node[2*e->tri2edg[3*queue[i]+1]+0],e->node[2*e->tri2edg[3*queue[i]+1]+1],e->node[2*e->tri2edg[3*queue[i]+2]+0],e->node[2*e->tri2edg[3*queue[i]+2]+1],flag[queue[i]],queue[j],checkVert[0],checkVert[1],checkVert[2],e->node[2*e->tri2edg[3*queue[j]+0]+0],e->node[2*e->tri2edg[3*queue[j]+0]+1],e->node[2*e->tri2edg[3*queue[j]+1]+0],e->node[2*e->tri2edg[3*queue[j]+1]+1],e->node[2*e->tri2edg[3*queue[j]+2]+0],e->node[2*e->tri2edg[3*queue[j]+2]+1],flag[queue[j]]);
-	
+        printf("Consistent (?) orientation \t %lu (%u %u %u) ; (%u %u)-(%u %u)-(%u %u) [%d] ~ %lu (%u %u %u) ; (%u %u)-(%u %u)-(%u %u) [%d].\n",queue[i],refVert[0],refVert[1],refVert[2],e->node[2*e->tri2edg[3*queue[i]+0]+0],e->node[2*e->tri2edg[3*queue[i]+0]+1],e->node[2*e->tri2edg[3*queue[i]+1]+0],e->node[2*e->tri2edg[3*queue[i]+1]+1],e->node[2*e->tri2edg[3*queue[i]+2]+0],e->node[2*e->tri2edg[3*queue[i]+2]+1],flag[queue[i]],queue[j],checkVert[0],checkVert[1],checkVert[2],e->node[2*e->tri2edg[3*queue[j]+0]+0],e->node[2*e->tri2edg[3*queue[j]+0]+1],e->node[2*e->tri2edg[3*queue[j]+1]+0],e->node[2*e->tri2edg[3*queue[j]+1]+1],e->node[2*e->tri2edg[3*queue[j]+2]+0],e->node[2*e->tri2edg[3*queue[j]+2]+1],flag[queue[j]]);
+        
       }//end if cond==0
     }//end for j 
   }//end for i
@@ -537,11 +526,11 @@ static HXTStatus hxtSplitEdges(HXTEdges *edges,int nPartitions,HXTVector *partit
     for(int j=0; j<3; j++){      
       uint64_t *local = &edg2tri[2*current[j]];
       if(local[1]==(uint64_t)-1)
-	continue;
-      else{		
-	nbh[idx[i]+temp] = i == (int) local[0] ? (int) local[1] : (int) local[0];
-	weights[idx[i]+temp] = (int) (hxtEdgesLength(edges,current[j])+1);
-	temp++;
+        continue;
+      else{             
+        nbh[idx[i]+temp] = i == (int) local[0] ? (int) local[1] : (int) local[0];
+        weights[idx[i]+temp] = (int) (hxtEdgesLength(edges,current[j])+1);
+        temp++;
       }
     }
     
@@ -663,10 +652,7 @@ HXTStatus hxtParametrizationCreate(HXTMesh *mesh, int nrefinements, HXTParametri
     HXTMeanValues *param;
     HXTEdges *current = (HXTEdges *)(toparam->ptr[i]);
     HXT_CHECK(hxtMeanValuesCreate(current,&param));
-    //printf("creation (%d/%d): ok\n",i,toparam->last);    
     HXT_CHECK(hxtMeanValuesCompute(param));        
-    //printf("%d \t ntottri = %ld\n",i,param0->edges->edg2mesh->triangles.num);
-    //printf("computation: ok\n");
     int ar;
     HXT_CHECK(hxtMeanValueAspectRatio(param,&ar));
     
@@ -678,20 +664,10 @@ HXTStatus hxtParametrizationCreate(HXTMesh *mesh, int nrefinements, HXTParametri
   hxtVectorFree(&toparam);
   
   param0->n = atlas->last+1;
-  //printf("n=%d\n",param0->n);
   HXT_CHECK(hxtMalloc(&param0->maps,param0->n*sizeof(HXTMeanValues*)));
-  for(int i=0; i<param0->n; i++){    
+  for(int i=0; i<param0->n; i++)    
     param0->maps[i] = (HXTMeanValues *) atlas->ptr[i];
-    /*
-    char str0[64];
-    sprintf(str0, "param_%d.msh",i);
-    HXT_CHECK(hxtMeanValuesWrite(param0->maps[i],str0));
-    char str1[64];
-    sprintf(str1, "paramMesh_%d.msh",i);
-    HXT_CHECK(hxtMeanValuesWriteParamMesh(param0->maps[i],str1));
-    printf("writing (%d/%d): ok\n",i,param0->n-1);
-    */
-  }
+  
   HXT_CHECK(hxtVectorFree(&atlas));
   return HXT_STATUS_OK;
 }
@@ -749,8 +725,8 @@ HXTStatus hxtParametrizationCompute(HXTParametrization *parametrization, int **_
     
     for(int ie=0; ie<ne; ie++){
       for(int kk=0; kk<3; kk++){
-	int gvn = (int) parametrization->edges->edg2mesh->triangles.node[3*global[ie]+kk];
-	nodes[nNodes[c]+gn[3*ie+kk]] = gvn;
+        int gvn = (int) parametrization->edges->edg2mesh->triangles.node[3*global[ie]+kk];
+        nodes[nNodes[c]+gn[3*ie+kk]] = gvn;
       }
     }
 
