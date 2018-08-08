@@ -242,7 +242,8 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   if(regions.empty()) return;
 
   if(CTX::instance()->mesh.algo3d != ALGO_3D_DELAUNAY &&
-     CTX::instance()->mesh.algo3d != ALGO_3D_MMG3D)
+     CTX::instance()->mesh.algo3d != ALGO_3D_MMG3D &&
+     CTX::instance()->mesh.algo3d != ALGO_3D_HXT)
     return;
 
   GRegion *gr = regions[0];
@@ -278,6 +279,14 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   std::vector<GVertex *> oldEmbVertices = gr->embeddedVertices();
   gr->embeddedVertices() = allEmbVertices;
 
+
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT) {
+    if (meshGRegionHxt (gr) != 0){
+      Msg::Error ("HXT 3D mesh failed");
+    }
+    return;
+  }
+
   bool success = meshGRegionBoundaryRecovery(gr);
   /*
     FILE *fp = Fopen("debug.pos", "w");
@@ -307,12 +316,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
 
   // now do insertion of points
 
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT) {
-    if (meshGRegionHxt (gr) != 0){
-      Msg::Error ("HXT 3D mesh failed");
-    }
-  }
-  else if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D) {
+if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D) {
     refineMeshMMG(gr);
   }
   else if(CTX::instance()->mesh.oldRefinement) {
