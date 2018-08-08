@@ -106,6 +106,8 @@ class CTX {
   ~CTX();
   static CTX *instance();
  public:
+  // for debug purposes only, i.e. JF and CG personal use
+  int debugSurface;
   // files on the command line and various file names
   std::vector<std::string> files;
   std::string bgmFileName, outputFileName, defaultFileName, tmpFileName;

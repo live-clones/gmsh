@@ -50,10 +50,8 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   setup();
   if(model()->getOCCInternals())
     model()->getOCCInternals()->bind(s, num);
-  // TEST
-      if (tag() == 10){
-        writeBREP("s10.brep");
-      }
+
+  // if(tag() == 10) writeBREP("s10.brep");
 }
 
 OCCFace::~OCCFace()

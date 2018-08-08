@@ -25,8 +25,7 @@ class meshGFace {
 
 public:
   meshGFace(bool r = true)
-    : repairSelfIntersecting1dMesh(r)
-    , onlyInitialMesh(false)
+    : repairSelfIntersecting1dMesh(r), onlyInitialMesh(false)
   {
   }
   void operator()(GFace *, bool print = true);
@@ -61,7 +60,9 @@ bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge *> &edges);
 bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
                    bool onlyInitialMesh, bool debug = true,
                    std::vector<GEdge *> *replacement_edges = 0);
-bool pointInsideParametricDomain (std::vector<SPoint2> &bnd, SPoint2 &p, SPoint2 &out, int &N);
-double validity_p2triangle_formula (double *xa, double *xb, double *xc, double *xab, double *xbc, double *xca);
+bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
+                                 SPoint2 &out, int &N);
+double validity_p2triangle_formula(double *xa, double *xb, double *xc,
+                                   double *xab, double *xbc, double *xca);
 
 #endif

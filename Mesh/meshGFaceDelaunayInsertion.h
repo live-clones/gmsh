@@ -65,8 +65,7 @@ struct bidimMeshData {
   }
   bidimMeshData(std::map<MVertex *, MVertex *> *e = 0,
                 std::map<MVertex *, SPoint2> *p = 0)
-    : equivalence(e)
-    , parametricCoordinates(p)
+    : equivalence(e), parametricCoordinates(p)
   {
   }
 };
@@ -153,21 +152,22 @@ public:
   }
 };
 
-void connectTriangles(std::list<MTri3*> &);
-void connectTriangles(std::vector<MTri3*> &);
-void connectTriangles(std::set<MTri3*, compareTri3Ptr> &AllTris);
-void bowyerWatson(GFace *gf, int MAXPNT= 1000000000,
-		  std::map<MVertex*, MVertex*>* equivalence= 0,
-		  std::map<MVertex*, SPoint2> * parametricCoordinates = 0);
-void bowyerWatsonFrontal(GFace *gf,
-                         std::map<MVertex*, MVertex*>* equivalence= 0,
-                         std::map<MVertex*, SPoint2> * parametricCoordinates = 0, std::vector<SPoint2> *true_boundary = 0);
-void bowyerWatsonFrontalLayers(GFace *gf, bool quad,
-                               std::map<MVertex*, MVertex*>* equivalence= 0,
-                               std::map<MVertex*, SPoint2> * parametricCoordinates = 0);
-void bowyerWatsonParallelograms(GFace *gf,
-                                std::map<MVertex*, MVertex*>* equivalence= 0,
-                                std::map<MVertex*, SPoint2> * parametricCoordinates = 0);
+void connectTriangles(std::list<MTri3 *> &);
+void connectTriangles(std::vector<MTri3 *> &);
+void connectTriangles(std::set<MTri3 *, compareTri3Ptr> &AllTris);
+void bowyerWatson(GFace *gf, int MAXPNT = 1000000000,
+                  std::map<MVertex *, MVertex *> *equivalence = 0,
+                  std::map<MVertex *, SPoint2> *parametricCoordinates = 0);
+void bowyerWatsonFrontal(
+  GFace *gf, std::map<MVertex *, MVertex *> *equivalence = 0,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = 0,
+  std::vector<SPoint2> *true_boundary = 0);
+void bowyerWatsonFrontalLayers(
+  GFace *gf, bool quad, std::map<MVertex *, MVertex *> *equivalence = 0,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = 0);
+void bowyerWatsonParallelograms(
+  GFace *gf, std::map<MVertex *, MVertex *> *equivalence = 0,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = 0);
 void bowyerWatsonParallelogramsConstrained(
   GFace *gf, const std::set<MVertex *> &constr_vertices,
   std::map<MVertex *, MVertex *> *equivalence = 0,
@@ -186,10 +186,7 @@ struct edgeXface {
   MTri3 *t1;
   int i1;
   int ori;
-  edgeXface(MTri3 *_t, int iFac)
-    : t1(_t)
-    , i1(iFac)
-    , ori(1)
+  edgeXface(MTri3 *_t, int iFac) : t1(_t), i1(iFac), ori(1)
   {
     v[0] = t1->tri()->getVertex(iFac == 0 ? 2 : iFac - 1);
     v[1] = t1->tri()->getVertex(iFac);

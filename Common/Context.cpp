@@ -14,7 +14,7 @@
 #include <FL/Fl.H>
 #endif
 
-CTX::CTX() : gamepad(0)
+CTX::CTX() : gamepad(0), debugSurface(-1)
 {
   // initialize everything that has no default value in DefaultOptions.h
   short int word = 0x0001;

@@ -585,6 +585,10 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
           if(exitOnError) Msg::Exit(1);
         }
       }
+      else if(!strcmp(argv[i] + 1, "debugSurface")) {
+	i++;
+        CTX::instance()->debugSurface = atoi(argv[i++]);
+      }
       else if(!strcmp(argv[i] + 1, "ho_max")) {
         i++;
         if(argv[i])
