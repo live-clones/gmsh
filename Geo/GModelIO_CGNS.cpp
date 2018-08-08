@@ -331,13 +331,6 @@ createElementMSH(GModel *m, int num, int typeMSH, int reg, int part,
   default: Msg::Error("Wrong type of element"); return NULL;
   }
 
-  /*
-    int dim = e->getDim();
-    if(physical && (!physicals[dim].count(reg) ||
-    !physicals[dim][reg].count(physical))) physicals[dim][reg][physical] =
-    "unnamed";
-  */
-  // if(part) m->getMeshPartitions().insert(part);
   return e;
 }
 
@@ -1261,7 +1254,7 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
   // --- global containers and indices for points and elements
 
   std::map<int, std::vector<MElement *> > eltMap[10];
-  std::vector<MVertex *> vertices;
+  std::vector<MVertex *> newVertices;
 
   // --- keep connectivity information
 
@@ -1358,7 +1351,7 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
   for(int zoneIndex = 1; zoneIndex <= nbZones; zoneIndex++) {
     // --- using an offset to translate zone local numbering to global numbering
 
-    int vtxOffset = vertices.size();
+    int vtxOffset = newVertices.size();
 
     // --- check that this is an unstructured zone
     //     we can later add ijk here to allow for mixed meshes
@@ -1401,7 +1394,7 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
     }
 
     char zoneFamilyName[maxLenCGNS];
-    int zoneFamilyIndex;
+    //int zoneFamilyIndex;
 
     int ierr = cg_famname_read(zoneFamilyName);
 
@@ -1414,18 +1407,17 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
     if(ierr == CG_OK) {
       Msg::Info("Zone %i has family name %s", zoneIndex, zoneFamilyName);
       map<string, int>::iterator fIter = family.find(zoneFamilyName);
-      if(fIter != family.end())
-        zoneFamilyIndex = fIter->second;
-      else
+      // if(fIter != family.end()) zoneFamilyIndex = fIter->second;
+      if (fIter == family.end())
         Msg::Error("%s (%i) : Error reading CGNS file %s : "
-                   "cannot find CGNS family in available list",
+                      "cannot find CGNS family in available list",
                    __FILE__, __LINE__, fileName.c_str());
     }
 
     // --- read coordinates and create vertices
 
     addCGNSPoints(fileName, fileIndex, baseIndex, zoneIndex, nbPoints, meshDim,
-                  scale, NULL, vtxIndex, vertices);
+                  scale, NULL, vtxIndex, newVertices);
 
     Msg::Info("Read %i points", nbPoints);
 
@@ -1519,7 +1511,7 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
 
         for(int iVtx = 0; iVtx < eltSize; iVtx++) {
           int num = vtxOffset + pElt[renum[iVtx]] - 1;
-          vtcs.push_back(vertices[num]);
+          vtcs.push_back(newVertices[num]);
         }
 
         int topoIndex = zoneIndex;
@@ -1574,7 +1566,7 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
   }
 
   _associateEntityWithMeshVertices();
-  _storeVerticesInEntities(vertices);
+  _storeVerticesInEntities(newVertices);
 
   // add physical entities corresponding to the bc and zones
 
@@ -2158,7 +2150,6 @@ int GModel::_readCGNSStructured(const std::string &name)
     }
 
     removeDuplicateMeshVertices(1e-8);
-    // createTopologyFromMesh();
 
     if(cg_close(index_file)) {
       Msg::Error("Couldn't close the file !");
