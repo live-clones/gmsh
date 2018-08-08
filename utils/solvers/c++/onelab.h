@@ -358,10 +358,10 @@ namespace onelab {
         for(std::map<std::string, std::string>::const_iterator it =
               _attributes.begin();
             it != _attributes.end(); it++) {
-          if(it != _attributes.begin()) sstream << ", ";
+        if(it != _attributes.begin()) sstream << ", ";
           sstream << "\"" << sanitizeJSON(it->first) << "\":\""
                   << sanitizeJSON(it->second) << "\"";
-        }
+      }
         sstream << " }";
       }
       if(getClients().size()) {
@@ -369,7 +369,7 @@ namespace onelab {
         for(std::map<std::string, int>::const_iterator it =
               getClients().begin();
             it != getClients().end(); it++) {
-          if(it != getClients().begin()) sstream << ", ";
+        if(it != getClients().begin()) sstream << ", ";
           sstream << "\"" << sanitizeJSON(it->first) << "\":" << it->second;
         }
         sstream << " }";
@@ -597,9 +597,9 @@ namespace onelab {
       if(_choices.size()) {
         sstream << ", \"choices\":[ ";
         for(unsigned int i = 0; i < _choices.size(); i++) {
-          if(i) sstream << ", ";
-          sstream << _choices[i];
-        }
+        if(i) sstream << ", ";
+        sstream << _choices[i];
+      }
         sstream << " ]";
       }
       if(_valueLabels.size()) {
@@ -607,7 +607,7 @@ namespace onelab {
         for(std::map<double, std::string>::const_iterator it =
               _valueLabels.begin();
             it != _valueLabels.end(); it++) {
-          if(it != _valueLabels.begin()) sstream << ", ";
+        if(it != _valueLabels.begin()) sstream << ", ";
           sstream << "\"" << sanitizeJSON(it->second) << "\":" << it->first;
         }
         sstream << " }";
@@ -776,7 +776,7 @@ namespace onelab {
       if(_choices.size()) {
         sstream << ", \"choices\":[ ";
         for(unsigned int i = 0; i < _choices.size(); i++) {
-          if(i) sstream << ", ";
+        if(i) sstream << ", ";
           sstream << "\"" << sanitizeJSON(_choices[i]) << "\"";
         }
         sstream << " ]";
@@ -1078,8 +1078,8 @@ namespace onelab {
         if(client.empty() || (*it)->hasClient(client)) {
           if((*it)->getAttribute("NotInDb") != "True") {
             json += "    " + (*it)->toJSON();
-          }
-        }
+	}
+      }
       }
       json += "\n  ] }\n}\n";
       return true;

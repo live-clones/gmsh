@@ -167,7 +167,7 @@ static void view_save_cb(Fl_Widget *w, void *data)
     "*.txt" NN;
 
   PView *view = PView::list[(intptr_t)data];
-test:
+ test:
   if(fileChooser(FILE_CHOOSER_CREATE, "Export", formats,
                  view->getData()->getFileName().c_str())) {
     std::string name = fileChooserGetName(1);

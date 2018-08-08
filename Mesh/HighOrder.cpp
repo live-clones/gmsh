@@ -1254,14 +1254,14 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
 
       Msg::Info(
         "Constructing high order periodicity for edge connection %d - %d",
-        tgt->tag(), src->tag());
+                tgt->tag(), src->tag());
 
       std::map<MEdge, MLine *, Less_Edge> srcEdges;
       for(unsigned int i = 0; i < src->getNumMeshElements(); i++) {
         MLine *srcLine = dynamic_cast<MLine *>(src->getMeshElement(i));
         if(!srcLine) {
           Msg::Error("Master element %d is not an edge",
-                     src->getMeshElement(i)->getNum());
+                                 src->getMeshElement(i)->getNum());
           return;
         }
         srcEdges[MEdge(srcLine->getVertex(0), srcLine->getVertex(1))] = srcLine;
@@ -1272,7 +1272,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
         MVertex *vtcs[2];
         if(!tgtLine) {
           Msg::Error("Slave element %d is not an edge",
-                     tgt->getMeshElement(i)->getNum());
+                            tgt->getMeshElement(i)->getNum());
           return;
         }
         for(int iVtx = 0; iVtx < 2; iVtx++) {
