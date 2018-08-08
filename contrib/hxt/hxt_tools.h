@@ -46,7 +46,7 @@ ___
 |  int arrayLength = ...;
 |  int *array;
 |  HXT_CHECK( hxtMalloc(&array, sizeof(int)*arrayLength) );
-|  
+|
 |  array[0] = ...;
 |  [...]
 |  array[arrayLength-1] = ...;
@@ -96,6 +96,15 @@ static inline HXTStatus hxtRealloc(void* ptrToPtr, size_t size)
   *p = newptr;
   return HXT_STATUS_OK;
 }
+
+// FIXME Gmsh: aligned routines do not seem to work on 32 bit machines
+#include <stdint.h>
+#if UINTPTR_MAX == 0xffffffff
+static inline HXTStatus hxtGetAlignedBlockSize(void* ptrToPtr, size_t* size){ *size = 0; return HXT_STATUS_OK; }
+static inline HXTStatus hxtAlignedMalloc(void* ptrToPtr, size_t size){ return hxtMalloc(ptrToPtr, size); }
+static inline HXTStatus hxtAlignedFree(void* ptrToPtr){ return hxtFree(ptrToPtr); }
+static inline HXTStatus hxtAlignedRealloc(void* ptrToPtr, size_t size){ return hxtRealloc(ptrToPtr, size); }
+#else
 
 
 /*********************************************************
@@ -172,7 +181,7 @@ static inline HXTStatus hxtAlignedRealloc(void* ptrToPtr, size_t size)
     HXT_CHECK(hxtAlignedFree(ptrToPtr));
     return HXT_STATUS_OK;
   }
-  
+
   size_t old_size;
   HXT_CHECK( hxtGetAlignedBlockSize(ptrToPtr, &old_size) );
 
@@ -190,13 +199,15 @@ static inline HXTStatus hxtAlignedRealloc(void* ptrToPtr, size_t size)
   return HXT_STATUS_OK;
 }
 
+#endif // FIXME Gmsh
+
 /*********************************************************
   A way to call rand with a seed to get a reproducible
   result.
   For example, we do not call srand() each time we
   call a reproducible Delaunay, else if someone was calling
   rand(); Delaunay(); rand(); ...
-  he would always get the same result. We use 
+  he would always get the same result. We use
   hxtReproducibleRand() instead
 
   !!!! 1st seed must absolutely be 1 !!!!

@@ -2392,7 +2392,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh, 
       if(!e) {
 	//	edgesNotRecovered.push_back(EdgeToRecover(edgeLoop_BDS[j]->iD,
 	//						  edgeLoop_BDS[(j + 1) % edgeLoop_BDS.size()]->iD));
-	
+
         Msg::Error("Impossible to recover the edge %d %d", edgeLoop_BDS[j]->iD,
                    edgeLoop_BDS[(j + 1) % edgeLoop_BDS.size()]->iD);
         gf->meshStatistics.status = GFace::FAILED;
@@ -2762,13 +2762,13 @@ static double TRIANGLE_VALIDITY(GFace *gf, MTriangle *t)
 
 static bool isMeshValid(GFace *gf)
 {
-  int invalid = 0;
+  size_t invalid = 0;
   for(size_t i = 0; i < gf->triangles.size(); i++) {
     double v = TRIANGLE_VALIDITY(gf, gf->triangles[i]);
     if(v < 0) invalid++;
   }
   if(invalid == 0 || invalid == gf->triangles.size()) return true;
-  //  printf("%d %d %d\n",gf->tag(),gf->triangles.size(),invalid);
+
   return false;
 }
 
