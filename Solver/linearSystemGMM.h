@@ -15,33 +15,31 @@
 #if defined(HAVE_GMM)
 #include <gmm.h>
 
-template <class scalar>
-class linearSystemGmm : public linearSystem<scalar> {
- protected:
-  std::vector<scalar> *_x; // the nonLinearSystemGmm has to access to this vector
+template <class scalar> class linearSystemGmm : public linearSystem<scalar> {
+protected:
+  std::vector<scalar>
+    *_x; // the nonLinearSystemGmm has to access to this vector
   std::vector<scalar> *_b; // idem
   gmm::row_matrix<gmm::wsvector<scalar> > *_a;
- private:
+
+private:
   double _prec;
   int _noisy, _gmres;
- public:
-  linearSystemGmm()
-    : _x(0), _b(0), _a(0), _prec(1.e-8), _noisy(0), _gmres(0) {}
+
+public:
+  linearSystemGmm() : _x(0), _b(0), _a(0), _prec(1.e-8), _noisy(0), _gmres(0) {}
   virtual bool isAllocated() const { return _a != 0; }
   virtual void allocate(int nbRows)
   {
     clear();
-    _a = new gmm::row_matrix< gmm::wsvector<scalar> >(nbRows, nbRows);
+    _a = new gmm::row_matrix<gmm::wsvector<scalar> >(nbRows, nbRows);
     _b = new std::vector<scalar>(nbRows);
     _x = new std::vector<scalar>(nbRows);
   }
-  virtual ~linearSystemGmm()
-  {
-    clear();
-  }
+  virtual ~linearSystemGmm() { clear(); }
   virtual void clear()
   {
-    if (_a){
+    if(_a) {
       delete _a;
       delete _b;
       delete _x;
@@ -49,11 +47,11 @@ class linearSystemGmm : public linearSystem<scalar> {
     _a = 0;
   }
 
-  virtual void  addToMatrix(int row, int col, const scalar &val)
+  virtual void addToMatrix(int row, int col, const scalar &val)
   {
     if(val != 0.0) (*_a)(row, col) += val;
   }
-  virtual void getFromMatrix (int row, int col, scalar &val) const
+  virtual void getFromMatrix(int row, int col, scalar &val) const
   {
     val = (*_a)(row, col);
   }
@@ -73,14 +71,8 @@ class linearSystemGmm : public linearSystem<scalar> {
     if(val != 0.0) (*_x)[row] += val;
   }
 
-  virtual void getFromSolution(int row, scalar &val) const
-  {
-    val = (*_x)[row];
-  }
-  virtual void zeroMatrix()
-  {
-    gmm::clear(*_a);
-  }
+  virtual void getFromSolution(int row, scalar &val) const { val = (*_x)[row]; }
+  virtual void zeroMatrix() { gmm::clear(*_a); }
   virtual void zeroRightHandSide()
   {
     for(unsigned int i = 0; i < _b->size(); i++) (*_b)[i] = 0.;
@@ -90,31 +82,36 @@ class linearSystemGmm : public linearSystem<scalar> {
     for(unsigned int i = 0; i < _x->size(); i++) (*_x)[i] = 0.;
   }
 
-  virtual double normInfRightHandSide() const {
+  virtual double normInfRightHandSide() const
+  {
     double nor = 0.;
     double temp;
-    for(unsigned int i=0;i<_b->size();i++){
+    for(unsigned int i = 0; i < _b->size(); i++) {
       temp = abs((*_b)[i]); // this is valid also for complex
-      //if(temp<0) temp = -temp;
-      if(nor<temp) nor=temp;
+      // if(temp<0) temp = -temp;
+      if(nor < temp) nor = temp;
     }
     return nor;
   }
 
-  void setPrec(double p){ _prec = p; }
-  void setNoisy(int n){ _noisy = n; }
-  void setGmres(int n){ _gmres = n; }
+  void setPrec(double p) { _prec = p; }
+  void setNoisy(int n) { _noisy = n; }
+  void setGmres(int n) { _gmres = n; }
   virtual int systemSolve()
   {
 #if defined(HAVE_MUMPS)
     gmm::MUMPS_solve(*_a, *_x, *_b);
 #else
-    //gmm::ilutp_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 25, 0.);
-    gmm::ildltt_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 30, 1.e-10);
+    // gmm::ilutp_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 25,
+    // 0.);
+    gmm::ildltt_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 30,
+                                                                    1.e-10);
     gmm::iteration iter(_prec);
     iter.set_noisy(_noisy);
-    if(_gmres) gmm::gmres(*_a, *_x, *_b, P, 100, iter);
-    else gmm::cg(*_a, *_x, *_b, P, iter);
+    if(_gmres)
+      gmm::gmres(*_a, *_x, *_b, P, 100, iter);
+    else
+      gmm::cg(*_a, *_x, *_b, P, iter);
 #endif
     return 1;
   }
@@ -122,9 +119,8 @@ class linearSystemGmm : public linearSystem<scalar> {
 
 #else
 
-template <class scalar>
-class linearSystemGmm : public linearSystem<scalar> {
- public :
+template <class scalar> class linearSystemGmm : public linearSystem<scalar> {
+public:
   linearSystemGmm()
   {
     Msg::Error("Gmm++ is not available in this version of Gmsh");
@@ -142,10 +138,10 @@ class linearSystemGmm : public linearSystem<scalar> {
   virtual void zeroSolution() {}
   virtual int systemSolve() { return 0; }
   virtual double normInfRightHandSide() const { return 0.; }
-  void setPrec(double p){}
-  virtual void clear(){}
-  void setNoisy(int n){}
-  void setGmres(int n){}
+  void setPrec(double p) {}
+  virtual void clear() {}
+  void setNoisy(int n) {}
+  void setGmres(int n) {}
 };
 
 #endif

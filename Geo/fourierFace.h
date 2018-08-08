@@ -17,19 +17,22 @@
 #include "FM_TopoFace.h"
 
 class fourierFace : public GFace {
- protected:
+protected:
   FM::TopoFace *face;
- public:
-  fourierFace(GModel *m, FM::TopoFace *face_, int tag, std::list<GEdge*> l_edges_);
+
+public:
+  fourierFace(GModel *m, FM::TopoFace *face_, int tag,
+              std::list<GEdge *> l_edges_);
   virtual ~fourierFace() {}
   Range<double> parBounds(int i) const;
   virtual GPoint point(double par1, double par2) const;
-  virtual SPoint2 parFromPoint(const SPoint3 &p, bool onSurface=true) const;
+  virtual SPoint2 parFromPoint(const SPoint3 &p, bool onSurface = true) const;
   virtual bool containsParam(const SPoint2 &pt) const;
   virtual SVector3 normal(const SPoint2 &param) const;
   virtual GEntity::GeomType geomType() const;
-  virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const;
-  virtual void secondDer(const SPoint2 &, SVector3 &, SVector3 &, SVector3 &) const;
+  virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
+  virtual void secondDer(const SPoint2 &, SVector3 &, SVector3 &,
+                         SVector3 &) const;
   ModelType getNativeType() const { return FourierModel; }
   void *getNativePtr() const { return face; }
 };

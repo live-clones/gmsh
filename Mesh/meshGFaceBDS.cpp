@@ -354,7 +354,7 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
 
   for (std::set<BDS_Point *, PointLessThan>::iterator it = m.points.begin() ; it != m.points.end() ; ++it){
     BDS_Point *p = *it;
-    if (!p->_periodicCounterpart && p->g->classif_degree == 2){
+    if (!p->_periodicCounterpart && (p->g && p->g->classif_degree == 2)){
       for (size_t i = 0 ; i < p->edges.size(); i++){
 	BDS_Point *p1 = p->edges[i]->p1 == p ? p->edges[i]->p2 : p->edges[i]->p1;
 	for (size_t j = 0 ; j < i; j++){      
@@ -846,10 +846,10 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     }
     double orientation = invalid > (int)m.triangles.size() / 2 ? -1.0 : 1.0;
 
-    printf("NOW FIXING BAD ELEMENTS\n");
+    //    printf("NOW FIXING BAD ELEMENTS\n");
     
     while(1) {
-      printf("ITERATION %d\n",ITER);
+      //      printf("ITERATION %d\n",ITER);
       bad = 0;
       invalid = 0;
       for(size_t i = 0; i < m.triangles.size(); i++) {

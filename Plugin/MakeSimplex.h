@@ -8,15 +8,13 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterMakeSimplexPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterMakeSimplexPlugin();
 }
 
-class GMSH_MakeSimplexPlugin : public GMSH_PostPlugin
-{
+class GMSH_MakeSimplexPlugin : public GMSH_PostPlugin {
 public:
-  GMSH_MakeSimplexPlugin(){}
+  GMSH_MakeSimplexPlugin() {}
   std::string getName() const { return "MakeSimplex"; }
   std::string getShortHelp() const
   {
@@ -24,12 +22,12 @@ public:
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 
-class MakeSimplex{
- private:
+class MakeSimplex {
+private:
   // how many nodes in the element to decompose
   int _numNodes;
   // how many field components
@@ -37,19 +35,18 @@ class MakeSimplex{
   // how many time steps
   int _numTimeSteps;
   // create a simplex
-  void reorder(int map[4], int n,
-               double *x, double *y, double *z, double *val,
+  void reorder(int map[4], int n, double *x, double *y, double *z, double *val,
                double *xn, double *yn, double *zn, double *valn);
- public:
+
+public:
   // default constructor
-  MakeSimplex(int numNodes, int numComponents, int numTimeSteps=1);
+  MakeSimplex(int numNodes, int numComponents, int numTimeSteps = 1);
   // the number of simplices into which the element is decomposed
   int numSimplices();
   // the number of nodes of the simplex
   int numSimplexNodes();
   // returns the i-th simplex in the decomposition
-  void decompose(int num, 
-                 double *x, double *y, double *z, double *val,
+  void decompose(int num, double *x, double *y, double *z, double *val,
                  double *xn, double *yn, double *zn, double *valn);
 };
 

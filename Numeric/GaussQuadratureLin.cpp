@@ -6,7 +6,7 @@
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 
-IntPt * GQL[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+IntPt *GQL[20] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 IntPt *getGQLPts(int order)
 {
@@ -14,15 +14,15 @@ IntPt *getGQLPts(int order)
   // (order + 1) / 2 *ROUNDED UP*
   int n = (order + 1) / (double)2 + 0.5;
   int index = n;
-  if(index >= (int)(sizeof(GQL) / sizeof(IntPt*))){
+  if(index >= (int)(sizeof(GQL) / sizeof(IntPt *))) {
     Msg::Error("Increase size of GQL in gauss quadrature line");
     index = 0;
   }
   if(!GQL[index]) {
-    double *pt,*wt;
-    gmshGaussLegendre1D(n,&pt,&wt);
+    double *pt, *wt;
+    gmshGaussLegendre1D(n, &pt, &wt);
     GQL[index] = new IntPt[n];
-    for(int i=0; i < n; i++) {
+    for(int i = 0; i < n; i++) {
       GQL[index][i].pt[0] = pt[i];
       GQL[index][i].pt[1] = 0.0;
       GQL[index][i].pt[2] = 0.0;
@@ -32,7 +32,4 @@ IntPt *getGQLPts(int order)
   return GQL[index];
 }
 
-int getNGQLPts(int order)
-{
-  return (order + 1) / (double)2 + 0.5;
-}
+int getNGQLPts(int order) { return (order + 1) / (double)2 + 0.5; }

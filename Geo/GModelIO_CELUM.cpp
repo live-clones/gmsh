@@ -8,7 +8,7 @@
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 
-class CelumInfo{
+class CelumInfo {
 public:
   SVector3 normal, dirMax, dirMin;
   double curvMax, curvMin;
@@ -19,14 +19,14 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
 {
   std::string namef = name + "_f";
   FILE *fpf = Fopen(namef.c_str(), "w");
-  if(!fpf){
+  if(!fpf) {
     Msg::Error("Unable to open file '%s'", namef.c_str());
     return 0;
   }
 
   std::string names = name + "_s";
   FILE *fps = Fopen(names.c_str(), "w");
-  if(!fps){
+  if(!fps) {
     Msg::Error("Unable to open file '%s'", names.c_str());
     fclose(fpf);
     return 0;
@@ -37,14 +37,13 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
   // count faces and vertices; the CELUM format duplicates vertices on the
   // boundary of CAD patches
   int numf = 0, nums = 0;
-  for(fiter it = firstFace(); it != lastFace(); it++){
+  for(fiter it = firstFace(); it != lastFace(); it++) {
     GFace *f = *it;
     if(!saveAll && f->physicals.empty()) continue;
     numf += f->triangles.size();
-    std::set<MVertex*> vset;
-    for(unsigned int i = 0; i < f->triangles.size(); i++){
-      for(int j = 0; j < 3; j++)
-        vset.insert(f->triangles[i]->getVertex(j));
+    std::set<MVertex *> vset;
+    for(unsigned int i = 0; i < f->triangles.size(); i++) {
+      for(int j = 0; j < 3; j++) vset.insert(f->triangles[i]->getVertex(j));
     }
     nums += vset.size();
   }
@@ -79,16 +78,16 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
   */
   fprintf(fpf, "%d\n\n", numf);
   fprintf(fps, "%d %g\n\n", nums, 1.0);
-  for(fiter it = firstFace(); it != lastFace(); it++){
+  for(fiter it = firstFace(); it != lastFace(); it++) {
     GFace *f = *it;
     if(!saveAll && f->physicals.empty()) continue;
-    std::vector<MVertex*> vvec;
-    std::map<MVertex*, CelumInfo> vmap;
-    for(unsigned int i = 0; i < f->triangles.size(); i++){
+    std::vector<MVertex *> vvec;
+    std::map<MVertex *, CelumInfo> vmap;
+    for(unsigned int i = 0; i < f->triangles.size(); i++) {
       fprintf(fpf, "%d \"face %d\"", idf++, f->tag());
-      for(int j = 0; j < 3; j++){
+      for(int j = 0; j < 3; j++) {
         MVertex *v = f->triangles[i]->getVertex(j);
-        if(!vmap.count(v)){
+        if(!vmap.count(v)) {
           v->setIndex(ids++);
           SPoint2 param;
           bool ok = reparamMeshVertexOnFace(v, f, param);
@@ -97,8 +96,8 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
                          v->getNum(), f->tag());
           CelumInfo info;
           info.normal = f->normal(param);
-          f->curvatures(param, info.dirMax, info.dirMin,
-                        info.curvMax, info.curvMin);
+          f->curvatures(param, info.dirMax, info.dirMin, info.curvMax,
+                        info.curvMin);
           vmap[v] = info;
           vvec.push_back(v);
         }
@@ -106,15 +105,16 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
       }
       fprintf(fpf, "\n\n");
     }
-    for(unsigned int i = 0; i < vvec.size(); i++){
+    for(unsigned int i = 0; i < vvec.size(); i++) {
       MVertex *v = vvec[i];
       std::map<MVertex *, CelumInfo>::iterator it = vmap.find(v);
       fprintf(fps, "%d %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n\n",
-              it->first->getIndex(), it->first->x(), it->first->y(), it->first->z(),
-              it->second.normal.x(), it->second.normal.y(),
+              it->first->getIndex(), it->first->x(), it->first->y(),
+              it->first->z(), it->second.normal.x(), it->second.normal.y(),
               it->second.normal.z(), it->second.curvMin, it->second.curvMax,
-              it->second.dirMin.x(), it->second.dirMin.y(), it->second.dirMin.z(),
-              it->second.dirMax.x(), it->second.dirMax.y(), it->second.dirMax.z());
+              it->second.dirMin.x(), it->second.dirMin.y(),
+              it->second.dirMin.z(), it->second.dirMax.x(),
+              it->second.dirMax.y(), it->second.dirMax.z());
     }
   }
 

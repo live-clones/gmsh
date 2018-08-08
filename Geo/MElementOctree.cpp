@@ -61,13 +61,17 @@ void MElementBB(void *a, double *min, double *max)
 
 static void MElementCentroid(void *a, double *x)
 {
-  MElement *e = (MElement*)a;
+  MElement *e = (MElement *)a;
   MVertex *v = e->getVertex(0);
   int n = e->getNumVertices();
-  x[0] = v->x(); x[1] = v->y(); x[2] = v->z();
+  x[0] = v->x();
+  x[1] = v->y();
+  x[2] = v->z();
   for(int i = 1; i < n; i++) {
     v = e->getVertex(i);
-    x[0] += v->x(); x[1] += v->y(); x[2] += v->z();
+    x[0] += v->x();
+    x[1] += v->y();
+    x[2] += v->z();
   }
   double oc = 1. / (double)n;
   x[0] *= oc;
@@ -77,7 +81,7 @@ static void MElementCentroid(void *a, double *x)
 
 int MElementInEle(void *a, double *x)
 {
-  MElement *e = (MElement*)a;
+  MElement *e = (MElement *)a;
   double uvw[3];
   e->xyz2uvw(x, uvw);
   return e->isInside(uvw[0], uvw[1], uvw[2]) ? 1 : 0;
@@ -92,39 +96,38 @@ MElementOctree::MElementOctree(GModel *m) : _gm(m)
   bbmin -= bbeps;
   bbmax += bbeps;
   double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
-  double size[3] = {bbmax.x() - bbmin.x(),
-                    bbmax.y() - bbmin.y(),
+  double size[3] = {bbmax.x() - bbmin.x(), bbmax.y() - bbmin.y(),
                     bbmax.z() - bbmin.z()};
   const int maxElePerBucket = 100; // memory vs. speed trade-off
-  _octree = Octree_Create(maxElePerBucket, min, size,
-                          MElementBB, MElementCentroid, MElementInEle);
-  std::vector<GEntity*> entities;
+  _octree = Octree_Create(maxElePerBucket, min, size, MElementBB,
+                          MElementCentroid, MElementInEle);
+  std::vector<GEntity *> entities;
   m->getEntities(entities);
   // do not add Gvertex non-associated to any GEdge
-  for(unsigned int i = 0; i < entities.size(); i++){
-      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-	if (entities[i]->dim() == 0){
-	  GVertex *gv = dynamic_cast<GVertex*>(entities[i]);
-	  if (gv && gv->edges().size() > 0){
-	    Octree_Insert(entities[i]->getMeshElement(j), _octree);
-	  }
-	}
-	else
-	  Octree_Insert(entities[i]->getMeshElement(j), _octree);
+  for(unsigned int i = 0; i < entities.size(); i++) {
+    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
+      if(entities[i]->dim() == 0) {
+        GVertex *gv = dynamic_cast<GVertex *>(entities[i]);
+        if(gv && gv->edges().size() > 0) {
+          Octree_Insert(entities[i]->getMeshElement(j), _octree);
+        }
+      }
+      else
+        Octree_Insert(entities[i]->getMeshElement(j), _octree);
     }
   }
-  //exit(1);
+  // exit(1);
   Octree_Arrange(_octree);
 }
 
-MElementOctree::MElementOctree(const std::vector<MElement*> &v) : _gm(0), _elems(v)
+MElementOctree::MElementOctree(const std::vector<MElement *> &v)
+  : _gm(0), _elems(v)
 {
   SBoundingBox3d bb;
-  for (std::size_t i = 0; i < v.size(); i++){
-    for(std::size_t j = 0; j < v[i]->getNumVertices(); j++){
-      //if (!_gm) _gm = v[i]->getVertex(j)->onWhat()->model();
-      bb += SPoint3(v[i]->getVertex(j)->x(),
-                    v[i]->getVertex(j)->y(),
+  for(std::size_t i = 0; i < v.size(); i++) {
+    for(std::size_t j = 0; j < v[i]->getNumVertices(); j++) {
+      // if (!_gm) _gm = v[i]->getVertex(j)->onWhat()->model();
+      bb += SPoint3(v[i]->getVertex(j)->x(), v[i]->getVertex(j)->y(),
                     v[i]->getVertex(j)->z());
     }
   }
@@ -134,23 +137,16 @@ MElementOctree::MElementOctree(const std::vector<MElement*> &v) : _gm(0), _elems
   bbmin -= bbeps;
   bbmax += bbeps;
   double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
-  double size[3] = {bbmax.x() - bbmin.x(),
-                    bbmax.y() - bbmin.y(),
+  double size[3] = {bbmax.x() - bbmin.x(), bbmax.y() - bbmin.y(),
                     bbmax.z() - bbmin.z()};
   const int maxElePerBucket = 100; // memory vs. speed trade-off
-  _octree = Octree_Create(maxElePerBucket, min, size,
-                          MElementBB, MElementCentroid, MElementInEle);
-  for (unsigned int i = 0; i < v.size(); i++)
-    Octree_Insert(v[i], _octree);
+  _octree = Octree_Create(maxElePerBucket, min, size, MElementBB,
+                          MElementCentroid, MElementInEle);
+  for(unsigned int i = 0; i < v.size(); i++) Octree_Insert(v[i], _octree);
   Octree_Arrange(_octree);
 }
 
-
-MElementOctree::~MElementOctree()
-{
-  Octree_Delete(_octree);
-}
-
+MElementOctree::~MElementOctree() { Octree_Delete(_octree); }
 
 std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
                                                 int dim, bool strict)
@@ -159,26 +155,26 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
   double tolIncr = 10.;
 
   double P[3] = {x, y, z};
-  std::vector<void*> v;
-  std::vector<MElement*> e;
-  Octree_SearchAll(P, _octree,&v);
-  for (std::vector<void*>::iterator it = v.begin(); it != v.end(); ++it) {
-    MElement *el = (MElement*) *it;
-    if (dim == -1 || el->getDim() == dim)e.push_back(el);
+  std::vector<void *> v;
+  std::vector<MElement *> e;
+  Octree_SearchAll(P, _octree, &v);
+  for(std::vector<void *>::iterator it = v.begin(); it != v.end(); ++it) {
+    MElement *el = (MElement *)*it;
+    if(dim == -1 || el->getDim() == dim) e.push_back(el);
   }
-  if (e.empty() && !strict && _gm) {
+  if(e.empty() && !strict && _gm) {
     double initialTol = MElement::getTolerance();
     double tol = initialTol;
-    while (tol < maxTol){
+    while(tol < maxTol) {
       tol *= tolIncr;
       MElement::setTolerance(tol);
-      std::vector<GEntity*> entities;
+      std::vector<GEntity *> entities;
       _gm->getEntities(entities);
-      for(unsigned int i = 0; i < entities.size(); i++){
-        for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-          MElement* el = entities[i]->getMeshElement(j);
-          if (dim == -1 ||  el->getDim() == dim){
-            if (MElementInEle(el, P)){
+      for(unsigned int i = 0; i < entities.size(); i++) {
+        for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
+          MElement *el = entities[i]->getMeshElement(j);
+          if(dim == -1 || el->getDim() == dim) {
+            if(MElementInEle(el, P)) {
               e.push_back(el);
             }
           }
@@ -191,16 +187,16 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
     }
     MElement::setTolerance(initialTol);
   }
-  else if (e.empty() && !strict && !_gm){
+  else if(e.empty() && !strict && !_gm) {
     double initialTol = MElement::getTolerance();
     double tol = initialTol;
-    while (tol < maxTol){
+    while(tol < maxTol) {
       tol *= tolIncr;
       MElement::setTolerance(tol);
-      for(unsigned int i = 0; i < _elems.size(); i++){
-        MElement* el = _elems[i];
-        if (dim == -1 ||  el->getDim() == dim){
-          if (MElementInEle(el, P)){
+      for(unsigned int i = 0; i < _elems.size(); i++) {
+        MElement *el = _elems[i];
+        if(dim == -1 || el->getDim() == dim) {
+          if(MElementInEle(el, P)) {
             e.push_back(el);
           }
         }
@@ -211,40 +207,40 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
       }
     }
     MElement::setTolerance(initialTol);
-    //Msg::Warning("Point %g %g %g not found",x,y,z);
+    // Msg::Warning("Point %g %g %g not found",x,y,z);
   }
   return e;
 }
 
-MElement *MElementOctree::find(double x, double y, double z, int dim, bool strict) const
+MElement *MElementOctree::find(double x, double y, double z, int dim,
+                               bool strict) const
 {
   double P[3] = {x, y, z};
-  MElement *e = (MElement*)Octree_Search(P, _octree);
-  if (e && (dim == -1 || e->getDim() == dim))
-    return e;
-  std::vector<void*> l;
-  if (e && e->getDim() != dim) {
+  MElement *e = (MElement *)Octree_Search(P, _octree);
+  if(e && (dim == -1 || e->getDim() == dim)) return e;
+  std::vector<void *> l;
+  if(e && e->getDim() != dim) {
     Octree_SearchAll(P, _octree, &l);
-    for (std::vector<void*>::iterator it = l.begin(); it != l.end(); it++) {
-      MElement *el = (MElement*) *it;
-      if (el->getDim() == dim) {
+    for(std::vector<void *>::iterator it = l.begin(); it != l.end(); it++) {
+      MElement *el = (MElement *)*it;
+      if(el->getDim() == dim) {
         return el;
       }
     }
   }
-  if (!strict && _gm) {
+  if(!strict && _gm) {
     double initialTol = MElement::getTolerance();
     double tol = initialTol;
-    while (tol < 1.){
+    while(tol < 1.) {
       tol *= 10;
       MElement::setTolerance(tol);
-      std::vector<GEntity*> entities;
+      std::vector<GEntity *> entities;
       _gm->getEntities(entities);
-      for(unsigned int i = 0; i < entities.size(); i++){
-        for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+      for(unsigned int i = 0; i < entities.size(); i++) {
+        for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
           e = entities[i]->getMeshElement(j);
-          if (dim == -1 ||  e->getDim() == dim){
-            if (MElementInEle(e, P)) {
+          if(dim == -1 || e->getDim() == dim) {
+            if(MElementInEle(e, P)) {
               MElement::setTolerance(initialTol);
               return e;
             }
@@ -253,18 +249,18 @@ MElement *MElementOctree::find(double x, double y, double z, int dim, bool stric
       }
     }
     MElement::setTolerance(initialTol);
-    //Msg::Warning("Point %g %g %g not found",x,y,z);
+    // Msg::Warning("Point %g %g %g not found",x,y,z);
   }
-  else if (!strict && !_gm){
+  else if(!strict && !_gm) {
     double initialTol = MElement::getTolerance();
     double tol = initialTol;
-    while (tol < 0.1){
+    while(tol < 0.1) {
       tol *= 10.0;
       MElement::setTolerance(tol);
-      for(unsigned int i = 0; i < _elems.size(); i++){
+      for(unsigned int i = 0; i < _elems.size(); i++) {
         e = _elems[i];
-        if (dim == -1 ||  e->getDim() == dim){
-          if (MElementInEle(e, P)){
+        if(dim == -1 || e->getDim() == dim) {
+          if(MElementInEle(e, P)) {
             MElement::setTolerance(initialTol);
             return e;
           }
@@ -272,7 +268,7 @@ MElement *MElementOctree::find(double x, double y, double z, int dim, bool stric
       }
     }
     MElement::setTolerance(initialTol);
-    //Msg::Warning("Point %g %g %g not found",x,y,z);
+    // Msg::Warning("Point %g %g %g not found",x,y,z);
   }
   return NULL;
 }

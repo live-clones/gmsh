@@ -131,8 +131,8 @@ bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
 
 void trueBoundary(const char *iii, GFace *gf, std::vector<SPoint2> &bnd)
 {
-    FILE* view_t = Fopen(iii,"w");
-    fprintf(view_t,"View \"True Boundary\"{\n");
+  //    FILE* view_t = Fopen(iii,"w");
+  //    fprintf(view_t,"View \"True Boundary\"{\n");
   std::vector<GEdge *> edg = gf->edges();
 
   std::set<GEdge *> edges(edg.begin(), edg.end());
@@ -149,16 +149,16 @@ void trueBoundary(const char *iii, GFace *gf, std::vector<SPoint2> &bnd)
         double xi = r.low() + (r.high() - r.low()) * t;
         p[k] = ge->reparamOnFace(gf, xi, i);
         if(k > 0) {
-          	  fprintf(view_t,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p[k-1].x(),p[k-1].y(),0.0,
-          		  p[k].x(),p[k].y(),0.0);
+	  //          	  fprintf(view_t,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p[k-1].x(),p[k-1].y(),0.0,
+	  //          		  p[k].x(),p[k].y(),0.0);
           bnd.push_back(p[k - 1]);
           bnd.push_back(p[k]);
         }
       }
     }
   }
-    fprintf(view_t,"};\n");
-    fclose(view_t);
+  //    fprintf(view_t,"};\n");
+  //    fclose(view_t);
 }
 
 static void computeElementShapes(GFace *gf, double &worst, double &avg,
@@ -2731,6 +2731,18 @@ void deMeshGFace::operator()(GFace *gf)
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;
   gf->correspondingVertices.clear();
 }
+
+/*
+static double TRIANGLE_VALIDITY(MTriangle *t)
+{
+}
+static bool isMeshValid (GFace *gf){
+  
+  for (size_t i=0;i<gf->triangles.size(); i++){
+  }
+
+}
+*/
 
 // for debugging, change value from -1 to -100;
 int debugSurface = -1; //-100;

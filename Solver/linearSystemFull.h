@@ -14,13 +14,13 @@
 #include <stdlib.h>
 #include <set>
 
-template <class scalar>
-class linearSystemFull : public linearSystem<scalar> {
- private:
+template <class scalar> class linearSystemFull : public linearSystem<scalar> {
+private:
   fullMatrix<scalar> *_a;
   fullVector<scalar> *_b, *_x;
- public :
-  linearSystemFull() : _a(0), _b(0), _x(0){}
+
+public:
+  linearSystemFull() : _a(0), _b(0), _x(0) {}
   virtual bool isAllocated() const { return _a != 0; }
   virtual void allocate(int nbRows)
   {
@@ -29,13 +29,10 @@ class linearSystemFull : public linearSystem<scalar> {
     _b = new fullVector<scalar>(nbRows);
     _x = new fullVector<scalar>(nbRows);
   }
-  virtual ~linearSystemFull()
-  {
-    clear();
-  }
+  virtual ~linearSystemFull() { clear(); }
   virtual void clear()
   {
-    if(_a){
+    if(_a) {
       delete _a;
       delete _b;
       delete _x;
@@ -50,7 +47,7 @@ class linearSystemFull : public linearSystem<scalar> {
   {
     val = (*_a)(row, col);
   }
-  virtual void addToRightHandSide(int row, const scalar &val, int ith=0)
+  virtual void addToRightHandSide(int row, const scalar &val, int ith = 0)
   {
     if(val != 0.0) (*_b)(row) += val;
   }
@@ -62,36 +59,24 @@ class linearSystemFull : public linearSystem<scalar> {
   {
     val = (*_b)(row);
   }
-  virtual void getFromSolution(int row, scalar &val) const
+  virtual void getFromSolution(int row, scalar &val) const { val = (*_x)(row); }
+  virtual void zeroMatrix() { _a->setAll(0.); }
+  virtual void zeroRightHandSide() { _b->setAll(0.); }
+  virtual void zeroSolution() { _x->setAll(0.); }
+  virtual double normInfRightHandSide() const
   {
-    val = (*_x)(row);
-  }
-  virtual void zeroMatrix()
-  {
-    _a->setAll(0.);
-  }
-  virtual void zeroRightHandSide()
-  {
-    _b->setAll(0.);
-  }
-  virtual void zeroSolution()
-  {
-    _x->setAll(0.);
-  }
-  virtual double normInfRightHandSide() const{
     double nor = 0.;
     double temp;
-    for(int i=0;i<_b->size();i++){
+    for(int i = 0; i < _b->size(); i++) {
       temp = (*_b)(i);
-      if(temp<0) temp = -temp;
-      if(nor<temp) nor=temp;
+      if(temp < 0) temp = -temp;
+      if(nor < temp) nor = temp;
     }
     return nor;
   }
   virtual int systemSolve()
   {
-    if (_b->size())
-      _a->luSolve(*_b, *_x);
+    if(_b->size()) _a->luSolve(*_b, *_x);
     //    _x->print("X in solve");
     return 1;
   }

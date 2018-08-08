@@ -8,23 +8,18 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterMinMaxPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterMinMaxPlugin();
 }
 
-class GMSH_MinMaxPlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_MinMaxPlugin(){}
+class GMSH_MinMaxPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_MinMaxPlugin() {}
   std::string getName() const { return "MinMax"; }
-  std::string getShortHelp() const
-  {
-    return "Get the min/max of a dataset";
-  }
+  std::string getShortHelp() const { return "Get the min/max of a dataset"; }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

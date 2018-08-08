@@ -16,11 +16,11 @@
 
 template class linearSystemPETSc<double>;
 
-
 #ifdef PETSC_USE_COMPLEX
 template class linearSystemPETSc<std::complex<double> >;
 
-// this specialization will cast to a double (take the real part) if "val" is a double wheras Petsc is built in complex mode.
+// this specialization will cast to a double (take the real part) if "val" is a
+// double wheras Petsc is built in complex mode.
 template <>
 void linearSystemPETSc<double>::getFromRightHandSide(int row, double &val) const
 {
@@ -31,7 +31,8 @@ void linearSystemPETSc<double>::getFromRightHandSide(int row, double &val) const
   val = s.real();
 }
 
-// this specialization will cast to a double (take the real part) if "val" is a double wheras Petsc is built in complex mode.
+// this specialization will cast to a double (take the real part) if "val" is a
+// double wheras Petsc is built in complex mode.
 template <>
 void linearSystemPETSc<double>::getFromSolution(int row, double &val) const
 {
@@ -43,97 +44,97 @@ void linearSystemPETSc<double>::getFromSolution(int row, double &val) const
 }
 #endif
 
-template<>
+template <>
 int linearSystemPETSc<fullMatrix<double> >::_getBlockSizeFromParameters() const
 {
-  if ( _parameters.find("blockSize") == _parameters.end())
-    Msg::Error ("'blockSize' parameters must be set for linearSystemPETScBlock");
-  int blockSize = strtol(_parameters.find("blockSize")->second.c_str(), NULL, 10);
+  if(_parameters.find("blockSize") == _parameters.end())
+    Msg::Error("'blockSize' parameters must be set for linearSystemPETScBlock");
+  int blockSize =
+    strtol(_parameters.find("blockSize")->second.c_str(), NULL, 10);
   return blockSize;
 }
 
-
-template<>
-void linearSystemPETSc<fullMatrix<double> >::addToMatrix(int row, int col,
-                                               const fullMatrix<double> &val)
+template <>
+void linearSystemPETSc<fullMatrix<double> >::addToMatrix(
+  int row, int col, const fullMatrix<double> &val)
 {
-  if (!_entriesPreAllocated)
-    preAllocateEntries();
+  if(!_entriesPreAllocated) preAllocateEntries();
   PetscInt i = row, j = col;
-  #ifdef PETSC_USE_COMPLEX
+#ifdef PETSC_USE_COMPLEX
   fullMatrix<std::complex<double> > modval(val.size1(), val.size2());
-  for (int ii = 0; ii < val.size1(); ii++) {
-    for (int jj = 0; jj < val.size1(); jj++) {
-      modval(ii, jj) = val (ii, jj);
+  for(int ii = 0; ii < val.size1(); ii++) {
+    for(int jj = 0; jj < val.size1(); jj++) {
+      modval(ii, jj) = val(ii, jj);
     }
   }
   MatSetValuesBlocked(_a, 1, &i, 1, &j, modval.getDataPtr(), ADD_VALUES);
-  #else
+#else
   MatSetValuesBlocked(_a, 1, &i, 1, &j, val.getDataPtr(), ADD_VALUES);
-  #endif
+#endif
 
   _valuesNotAssembled = true;
 }
 
-template<>
-void linearSystemPETSc<fullMatrix<double> >::addToRightHandSide(int row,
-								const fullMatrix<double> &val, int ith)
+template <>
+void linearSystemPETSc<fullMatrix<double> >::addToRightHandSide(
+  int row, const fullMatrix<double> &val, int ith)
 {
-  if (!_entriesPreAllocated)
-    preAllocateEntries();
+  if(!_entriesPreAllocated) preAllocateEntries();
   int blockSize;
   _try(MatGetBlockSize(_a, &blockSize));
-  for (int ii = 0; ii < blockSize; ii++) {
+  for(int ii = 0; ii < blockSize; ii++) {
     PetscInt i = row * blockSize + ii;
     PetscScalar v = val(ii, 0);
     VecSetValues(_b, 1, &i, &v, ADD_VALUES);
   }
 }
 
-template<>
-void linearSystemPETSc<fullMatrix<double > >::getFromRightHandSide(int row,
-                                                        fullMatrix<double> &val) const
+template <>
+void linearSystemPETSc<fullMatrix<double> >::getFromRightHandSide(
+  int row, fullMatrix<double> &val) const
 {
   int blockSize;
   _try(MatGetBlockSize(_a, &blockSize));
-  for (int i = 0; i < blockSize; i++) {
-    int ii = row*blockSize +i;
-    #ifdef PETSC_USE_COMPLEX
+  for(int i = 0; i < blockSize; i++) {
+    int ii = row * blockSize + i;
+#ifdef PETSC_USE_COMPLEX
     PetscScalar s;
-    VecGetValues ( _b, 1, &ii, &s);
-    val(i,0) = s.real();
-    #else
-    VecGetValues ( _b, 1, &ii, &val(i,0));
-    #endif
+    VecGetValues(_b, 1, &ii, &s);
+    val(i, 0) = s.real();
+#else
+    VecGetValues(_b, 1, &ii, &val(i, 0));
+#endif
   }
 }
 
-template<>
-void linearSystemPETSc<fullMatrix<double> >::addToSolution(int row, const fullMatrix<double> &val)
+template <>
+void linearSystemPETSc<fullMatrix<double> >::addToSolution(
+  int row, const fullMatrix<double> &val)
 {
   int blockSize;
   _try(MatGetBlockSize(_a, &blockSize));
-  for (int ii = 0; ii < blockSize; ii++) {
+  for(int ii = 0; ii < blockSize; ii++) {
     PetscInt i = row * blockSize + ii;
     PetscScalar v = val(ii, 0);
     VecSetValues(_x, 1, &i, &v, ADD_VALUES);
   }
 }
 
-template<>
-void linearSystemPETSc<fullMatrix<double> >::getFromSolution(int row, fullMatrix<double> &val) const
+template <>
+void linearSystemPETSc<fullMatrix<double> >::getFromSolution(
+  int row, fullMatrix<double> &val) const
 {
   int blockSize;
   _try(MatGetBlockSize(_a, &blockSize));
-  for (int i = 0; i < blockSize; i++) {
-    int ii = row*blockSize +i;
-    #ifdef PETSC_USE_COMPLEX
+  for(int i = 0; i < blockSize; i++) {
+    int ii = row * blockSize + i;
+#ifdef PETSC_USE_COMPLEX
     PetscScalar s;
-    VecGetValues ( _x, 1, &ii, &s);
-    val(i,0) = s.real();
-    #else
-    VecGetValues ( _x, 1, &ii, &val(i,0));
-    #endif
+    VecGetValues(_x, 1, &ii, &s);
+    val(i, 0) = s.real();
+#else
+    VecGetValues(_x, 1, &ii, &val(i, 0));
+#endif
   }
 }
 

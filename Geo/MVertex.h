@@ -132,10 +132,7 @@ public:
 
   MEdgeVertex(double x, double y, double z, GEntity *ge, double u, int num = 0,
               double lc = -1.0)
-    : MVertex(x, y, z, ge, num)
-    , _u(u)
-    , _lc(lc)
-    , bl_data(0)
+    : MVertex(x, y, z, ge, num), _u(u), _lc(lc), bl_data(0)
   {
   }
   virtual ~MEdgeVertex()
@@ -164,10 +161,7 @@ public:
 
   MFaceVertex(double x, double y, double z, GEntity *ge, double u, double v,
               int num = 0)
-    : MVertex(x, y, z, ge, num)
-    , _u(u)
-    , _v(v)
-    , bl_data(0)
+    : MVertex(x, y, z, ge, num), _u(u), _v(v), bl_data(0)
   {
   }
   virtual ~MFaceVertex()

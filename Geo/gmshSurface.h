@@ -16,24 +16,23 @@
 #include "SBoundingBox3d.h"
 #include "Numeric.h"
 
-class gmshSurface
-{
- protected:  
-  static std::map<int, gmshSurface*> allGmshSurfaces;
- public:
-  //there are points define in this surface parameterization
+class gmshSurface {
+protected:
+  static std::map<int, gmshSurface *> allGmshSurfaces;
+
+public:
+  // there are points define in this surface parameterization
   bool vertex_defined_on_surface;
-  virtual ~gmshSurface(){}
-  static void reset() 
+  virtual ~gmshSurface() {}
+  static void reset()
   {
-    std::map<int, gmshSurface*>::iterator it = allGmshSurfaces.begin();
-    for (; it != allGmshSurfaces.end(); ++it){
-      if(!it->second->vertex_defined_on_surface)
-        delete it->second;
+    std::map<int, gmshSurface *>::iterator it = allGmshSurfaces.begin();
+    for(; it != allGmshSurfaces.end(); ++it) {
+      if(!it->second->vertex_defined_on_surface) delete it->second;
     }
     allGmshSurfaces.clear();
   };
-  static gmshSurface* getSurface(int tag);
+  static gmshSurface *getSurface(int tag);
   virtual Range<double> parBounds(int i) const = 0;
   /// Underlying geometric representation of this entity.
   enum gmshSurfaceType {
@@ -53,31 +52,38 @@ class gmshSurface
   // Return the normal to the face at the given parameter location.
   virtual SVector3 normal(const SPoint2 &param) const;
   // Return the first derivate of the face at the parameter location.
-  virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param);
+  virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param);
   virtual double getMetricEigenvalue(const SPoint2 &);
 };
 
-class gmshSphere : public gmshSurface
-{
- private:
+class gmshSphere : public gmshSurface {
+private:
   double xc, yc, zc, r;
-  gmshSphere(double _x, double _y, double _z, double _r) : xc(_x), yc(_y), zc(_z), r(_r){}
- public:
-  static gmshSurface *NewSphere(int _iSphere, double _x, double _y, double _z, double _r);
-  virtual Range<double> parBounds(int i) const 
-  { 
-    if(i == 0) 
+  gmshSphere(double _x, double _y, double _z, double _r)
+    : xc(_x), yc(_y), zc(_z), r(_r)
+  {
+  }
+
+public:
+  static gmshSurface *NewSphere(int _iSphere, double _x, double _y, double _z,
+                                double _r);
+  virtual Range<double> parBounds(int i) const
+  {
+    if(i == 0)
       return Range<double>(0., 2 * M_PI);
     else
       return Range<double>(0., M_PI);
   }
-  virtual gmshSurface::gmshSurfaceType geomType() const { return gmshSurface::Sphere; }
+  virtual gmshSurface::gmshSurfaceType geomType() const
+  {
+    return gmshSurface::Sphere;
+  }
   using gmshSurface::point;
   virtual SPoint3 point(double par1, double par2) const;
   virtual SVector3 normal(const SPoint2 &param) const
   {
-    SPoint3  p1 = gmshSurface::point(param);
-    SPoint3  p2(xc, yc, zc);
+    SPoint3 p1 = gmshSurface::point(param);
+    SPoint3 p2(xc, yc, zc);
     SVector3 n(p1, p2);
     n.normalize();
     return n;
@@ -85,52 +91,56 @@ class gmshSphere : public gmshSurface
 };
 
 #include "stdio.h"
-class gmshPolarSphere : public gmshSurface
-{
- private:
+class gmshPolarSphere : public gmshSurface {
+private:
   double r;
   SPoint3 o;
   gmshPolarSphere(double x, double y, double z, double _r);
- public:
-  static gmshSurface *NewPolarSphere(int _iSphere, double _x, double _y, double _z, double _r);
-  virtual Range<double> parBounds(int i) const 
-  { 
+
+public:
+  static gmshSurface *NewPolarSphere(int _iSphere, double _x, double _y,
+                                     double _z, double _r);
+  virtual Range<double> parBounds(int i) const
+  {
     if(i == 0)
       return Range<double>(-M_PI, M_PI);
     else
       return Range<double>(-M_PI, M_PI);
   }
-  virtual gmshSurface::gmshSurfaceType geomType() const { return gmshSurface::PolarSphere; }
+  virtual gmshSurface::gmshSurfaceType geomType() const
+  {
+    return gmshSurface::PolarSphere;
+  }
   using gmshSurface::point;
   virtual SPoint3 point(double par1, double par2) const;
   virtual SVector3 normal(const SPoint2 &param) const
   {
-    SPoint3  p1 = gmshSurface::point(param);
+    SPoint3 p1 = gmshSurface::point(param);
     SVector3 n(p1, o);
     n.normalize();
     return n;
   }
-  virtual double getMetricEigenvalue ( const SPoint2 &p)
+  virtual double getMetricEigenvalue(const SPoint2 &p)
   {
-    double l = (4*r*r)/(4*r*r+p.x()*p.x()+p.y()*p.y());
-    return l*l;
+    double l = (4 * r * r) / (4 * r * r + p.x() * p.x() + p.y() * p.y());
+    return l * l;
   }
 };
 
 class mathEvaluator;
 
-class gmshParametricSurface : public gmshSurface
-{
- private:
+class gmshParametricSurface : public gmshSurface {
+private:
   mathEvaluator *_f;
-  gmshParametricSurface(char*, char*, char*);
+  gmshParametricSurface(char *, char *, char *);
   ~gmshParametricSurface();
- public:
-  static gmshSurface *NewParametricSurface(int iSurf, char*, char*, char*);
+
+public:
+  static gmshSurface *NewParametricSurface(int iSurf, char *, char *, char *);
   virtual Range<double> parBounds(int i) const;
-  virtual gmshSurface::gmshSurfaceType geomType() const 
-  { 
-    return gmshSurface::ParametricSurface; 
+  virtual gmshSurface::gmshSurfaceType geomType() const
+  {
+    return gmshSurface::ParametricSurface;
   }
   using gmshSurface::point;
   virtual SPoint3 point(double par1, double par2) const;

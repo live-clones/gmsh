@@ -9,7 +9,7 @@
 #include <string>
 #include <stdio.h>
 
-FILE *Fopen(const char* f, const char *mode);
+FILE *Fopen(const char *f, const char *mode);
 const char *GetEnvironmentVar(const char *var);
 void SetEnvironmentVar(const char *var, const char *val);
 double GetTimeInSeconds();
@@ -28,11 +28,11 @@ int StatFile(const std::string &fileName);
 int KillProcess(int pid);
 int CreateSingleDir(const std::string &dirName);
 void CreatePath(const std::string &fullPath);
-int SystemCall(const std::string &command, bool blocking=false);
+int SystemCall(const std::string &command, bool blocking = false);
 int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
-                  bool blocking=false);
+                  bool blocking = false);
 std::string GetCurrentWorkdir();
 void RedirectIOToConsole();
-void UnzipFile(const std::string &fileName, const std::string &prependDir="");
+void UnzipFile(const std::string &fileName, const std::string &prependDir = "");
 
 #endif

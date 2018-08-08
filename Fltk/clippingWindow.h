@@ -13,8 +13,8 @@
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Group.H>
 
-class clippingWindow{
- public:
+class clippingWindow {
+public:
   Fl_Window *win;
   Fl_Choice *choice;
   Fl_Multi_Browser *browser;
@@ -23,8 +23,9 @@ class clippingWindow{
   Fl_Check_Button *butt[3];
   Fl_Group *group[2];
   void fillBoxValuesFromPlaneValues();
- public:
-  clippingWindow(int deltaFontSize=0);
+
+public:
+  clippingWindow(int deltaFontSize = 0);
   void resetBrowser();
   void show();
 };

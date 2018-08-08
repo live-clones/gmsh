@@ -15,22 +15,21 @@ class GFace;
 class MVertex;
 class MElement;
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterFaultZonePlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterFaultZonePlugin();
 }
 
-class GMSH_FaultZonePlugin : public GMSH_PostPlugin{
- public:
-  GMSH_FaultZonePlugin(){}
+class GMSH_FaultZonePlugin : public GMSH_PostPlugin {
+public:
+  GMSH_FaultZonePlugin() {}
   std::string getName() const { return "FaultZone"; }
-  std::string getShortHelp() const{ return "FaultZone generator"; }
+  std::string getShortHelp() const { return "FaultZone generator"; }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);
+  StringXNumber *getOption(int iopt);
   int getNbOptionsStr() const;
   StringXString *getOptionStr(int iopt);
-  PView* execute(PView*);
+  PView *execute(PView *);
 };
 
 //=============================================================================
@@ -38,34 +37,36 @@ class GMSH_FaultZonePlugin : public GMSH_PostPlugin{
  * \brief This class creates joint elements over the embedded edges of a GFace
  */
 //=============================================================================
-class GMSH_FaultZoneMesher{
- public:
-  GMSH_FaultZoneMesher(){}
-  void RetriveFissuresInfos(GFace* gFace);
+class GMSH_FaultZoneMesher {
+public:
+  GMSH_FaultZoneMesher() {}
+  void RetriveFissuresInfos(GFace *gFace);
   void DuplicateNodes();
   void ComputeHeavisideFunction();
-  void CreateJointElements(GModel* gModel, GFace* gFace, const std::string prefix);
-  void ModifyElementsConnectivity(GFace* gFace);
+  void CreateJointElements(GModel *gModel, GFace *gFace,
+                           const std::string prefix);
+  void ModifyElementsConnectivity(GFace *gFace);
   void ModifyJointNodePosition(const double eps);
- private:
-  std::set < MElement* > _jointElements;
-  std::map < GEdge* , SVector3 > _vectNormByFissure;
-  std::map < MVertex* , GEdge* > _fissureByHeavNode;
-  std::map < MVertex* , std::vector < GEdge* > > _fissuresByJunctionNode;
-  std::map < MVertex* , std::vector < SVector3 > > _vectsTanByJunctionNode;
-  std::set < MElement* > _connectedElements;
-  typedef std::set<MElement*>::iterator elementsIt;
+
+private:
+  std::set<MElement *> _jointElements;
+  std::map<GEdge *, SVector3> _vectNormByFissure;
+  std::map<MVertex *, GEdge *> _fissureByHeavNode;
+  std::map<MVertex *, std::vector<GEdge *> > _fissuresByJunctionNode;
+  std::map<MVertex *, std::vector<SVector3> > _vectsTanByJunctionNode;
+  std::set<MElement *> _connectedElements;
+  typedef std::set<MElement *>::iterator elementsIt;
   static const SVector3 vectZ;
   static const double tolerance;
 
-  std::map < MVertex* , SVector3 > _vectsTanByTipNode;
-  std::map < MVertex*, MVertex* > _nodeByHeavNode;
-  std::map < MVertex*, MVertex* > _nodeJointByHeavOrJunctionNode;
-  std::map < MVertex*, std::vector < MVertex*> > _nodesByJunctionNode;
+  std::map<MVertex *, SVector3> _vectsTanByTipNode;
+  std::map<MVertex *, MVertex *> _nodeByHeavNode;
+  std::map<MVertex *, MVertex *> _nodeJointByHeavOrJunctionNode;
+  std::map<MVertex *, std::vector<MVertex *> > _nodesByJunctionNode;
 
-  std::map < MVertex*, std::vector <std::vector< int > > > _heavFuncByJunctionNode;
+  std::map<MVertex *, std::vector<std::vector<int> > > _heavFuncByJunctionNode;
 
-  std::vector < int > HeavisideFunc(MVertex* mVert, SPoint3& sPoint);
+  std::vector<int> HeavisideFunc(MVertex *mVert, SPoint3 &sPoint);
 
   static const int _numNodeHeavInf[3];
   static const int _numNodeHeavSup[3];
@@ -77,10 +78,12 @@ class GMSH_FaultZoneMesher{
  * \brief Compare two heaviside functions
  */
 //=============================================================================
-inline bool compareHeav(const std::vector< int > heav1, const std::vector< int > heav2){
+inline bool compareHeav(const std::vector<int> heav1,
+                        const std::vector<int> heav2)
+{
   assert(heav1.size() >= heav2.size());
-  for (unsigned int i=0; i< heav2.size(); i++){
-    if (heav1[i] != 0 && heav1[i] != heav2[i] && heav2[i] != 0){
+  for(unsigned int i = 0; i < heav2.size(); i++) {
+    if(heav1[i] != 0 && heav1[i] != heav2[i] && heav2[i] != 0) {
       return false;
     }
   }
@@ -92,12 +95,13 @@ inline bool compareHeav(const std::vector< int > heav1, const std::vector< int >
  * \brief Find the matching heaviside function heav, in the vector heavFunc
  */
 //=============================================================================
-inline int findMatchingHeav(const std::vector< std::vector < int > >& heavFunc,
-                            const std::vector< int >& heav){
-  unsigned int i=0;
-  for (; i < heavFunc.size();i++)
+inline int findMatchingHeav(const std::vector<std::vector<int> > &heavFunc,
+                            const std::vector<int> &heav)
+{
+  unsigned int i = 0;
+  for(; i < heavFunc.size(); i++)
     if(compareHeav(heavFunc[i], heav)) break;
-  assert(i<heavFunc.size());
+  assert(i < heavFunc.size());
   return i;
 }
 

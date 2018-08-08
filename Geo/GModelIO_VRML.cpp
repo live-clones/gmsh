@@ -16,20 +16,21 @@ static int skipUntil(FILE *fp, const char *key)
   char str[256], key_bracket[256];
   strcpy(key_bracket, key);
   strcat(key_bracket, "[");
-  while(fscanf(fp, "%s", str)){
-    if(!strcmp(str, key)){
-      while(!feof(fp) && fgetc(fp) != '['){}
+  while(fscanf(fp, "%s", str)) {
+    if(!strcmp(str, key)) {
+      while(!feof(fp) && fgetc(fp) != '[') {
+      }
       return 1;
     }
-    if(!strcmp(str, key_bracket)){
+    if(!strcmp(str, key_bracket)) {
       return 1;
     }
   }
   return 0;
 }
 
-static int readVerticesVRML(FILE *fp, std::vector<MVertex*> &vertexVector,
-                            std::vector<MVertex*> &allVertexVector)
+static int readVerticesVRML(FILE *fp, std::vector<MVertex *> &vertexVector,
+                            std::vector<MVertex *> &allVertexVector)
 {
   double x, y, z;
   if(fscanf(fp, "%lf %lf %lf", &x, &y, &z) != 3) return 0;
@@ -42,9 +43,10 @@ static int readVerticesVRML(FILE *fp, std::vector<MVertex*> &vertexVector,
   return 1;
 }
 
-static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int region,
-                            std::map<int, std::vector<MElement*> > elements[3],
-                            bool strips=false)
+static int readElementsVRML(FILE *fp, std::vector<MVertex *> &vertexVector,
+                            int region,
+                            std::map<int, std::vector<MElement *> > elements[3],
+                            bool strips = false)
 {
   int i;
   std::vector<int> idx;
@@ -63,14 +65,14 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
   else
     format = " %d";
 
-  while(fscanf(fp, format, &i) == 1){
-    if(i != -1){
+  while(fscanf(fp, format, &i) == 1) {
+    if(i != -1) {
       idx.push_back(i);
     }
-    else{
-      std::vector<MVertex*> vertices;
-      for(unsigned int j = 0; j < idx.size(); j++){
-        if(idx[j] < 0 || idx[j] > (int)(vertexVector.size() - 1)){
+    else {
+      std::vector<MVertex *> vertices;
+      for(unsigned int j = 0; j < idx.size(); j++) {
+        if(idx[j] < 0 || idx[j] > (int)(vertexVector.size() - 1)) {
           Msg::Error("Wrong vertex index %d", idx[j]);
           return 0;
         }
@@ -78,49 +80,50 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
           vertices.push_back(vertexVector[idx[j]]);
       }
       idx.clear();
-      if(vertices.size() < 2){
+      if(vertices.size() < 2) {
         Msg::Info("Skipping %d-vertex element", (int)vertices.size());
       }
-      else if(vertices.size() == 2){
+      else if(vertices.size() == 2) {
         elements[0][region].push_back(new MLine(vertices));
       }
-      else if(vertices.size() == 3){
+      else if(vertices.size() == 3) {
         elements[1][region].push_back(new MTriangle(vertices));
       }
-      else if(!strips && vertices.size() == 4){
+      else if(!strips && vertices.size() == 4) {
         elements[2][region].push_back(new MQuadrangle(vertices));
       }
-      else if(strips){ // triangle strip
-        for(unsigned int j = 2; j < vertices.size(); j++){
+      else if(strips) { // triangle strip
+        for(unsigned int j = 2; j < vertices.size(); j++) {
           if(j % 2)
-            elements[1][region].push_back
-              (new MTriangle(vertices[j], vertices[j - 1], vertices[j - 2]));
+            elements[1][region].push_back(
+              new MTriangle(vertices[j], vertices[j - 1], vertices[j - 2]));
           else
-            elements[1][region].push_back
-              (new MTriangle(vertices[j - 2], vertices[j - 1], vertices[j]));
+            elements[1][region].push_back(
+              new MTriangle(vertices[j - 2], vertices[j - 1], vertices[j]));
         }
       }
-      else{ // import polygon as triangle fan
-        for(unsigned int j = 2; j < vertices.size(); j++){
-          elements[1][region].push_back
-            (new MTriangle(vertices[0], vertices[j-1], vertices[j]));
+      else { // import polygon as triangle fan
+        for(unsigned int j = 2; j < vertices.size(); j++) {
+          elements[1][region].push_back(
+            new MTriangle(vertices[0], vertices[j - 1], vertices[j]));
         }
       }
     }
   }
-  if(idx.size()){
+  if(idx.size()) {
     Msg::Error("Prematured end of VRML file");
     return 0;
   }
   Msg::Info("%d elements", elements[0][region].size() +
-            elements[1][region].size() + elements[2][region].size());
+                             elements[1][region].size() +
+                             elements[2][region].size());
   return 1;
 }
 
 int GModel::readVRML(const std::string &name)
 {
   FILE *fp = Fopen(name.c_str(), "r");
-  if(!fp){
+  if(!fp) {
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
@@ -128,20 +131,20 @@ int GModel::readVRML(const std::string &name)
   // This is by NO means a complete VRML/Inventor parser (but it's
   // sufficient for reading simple Inventor files... which is all I
   // need)
-  std::vector<MVertex*> vertexVector, allVertexVector;
-  std::map<int, std::vector<MElement*> > elements[3];
+  std::vector<MVertex *> vertexVector, allVertexVector;
+  std::map<int, std::vector<MElement *> > elements[3];
   int region = getMaxElementaryNumber(-1);
   char buffer[256], str[256];
   while(!feof(fp)) {
     if(!fgets(buffer, sizeof(buffer), fp)) break;
-    if(buffer[0] != '#'){ // skip comments
+    if(buffer[0] != '#') { // skip comments
       sscanf(buffer, "%s", str);
-      if(!strcmp(str, "Coordinate3")){
+      if(!strcmp(str, "Coordinate3")) {
         vertexVector.clear();
         if(!skipUntil(fp, "point")) break;
         if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
       }
-      else if(!strcmp(str, "coord")){
+      else if(!strcmp(str, "coord")) {
         region++;
         vertexVector.clear();
         if(!skipUntil(fp, "point")) break;
@@ -149,7 +152,7 @@ int GModel::readVRML(const std::string &name)
         if(!skipUntil(fp, "coordIndex")) break;
         if(!readElementsVRML(fp, vertexVector, region, elements, true)) break;
       }
-      else if(!strcmp(str, "IndexedTriangleStripSet")){
+      else if(!strcmp(str, "IndexedTriangleStripSet")) {
         region++;
         vertexVector.clear();
         if(!skipUntil(fp, "vertex")) break;
@@ -157,20 +160,22 @@ int GModel::readVRML(const std::string &name)
         if(!skipUntil(fp, "coordIndex")) break;
         if(!readElementsVRML(fp, vertexVector, region, elements, true)) break;
       }
-      else if(!strcmp(str, "IndexedFaceSet") || !strcmp(str, "IndexedLineSet")){
+      else if(!strcmp(str, "IndexedFaceSet") ||
+              !strcmp(str, "IndexedLineSet")) {
         region++;
         if(!skipUntil(fp, "coordIndex")) break;
         if(!readElementsVRML(fp, vertexVector, region, elements)) break;
       }
-      else if(!strcmp(str, "DEF")){
+      else if(!strcmp(str, "DEF")) {
         char str1[256], str2[256];
         if(!sscanf(buffer, "%s %s %s", str1, str2, str)) break;
-        if(!strcmp(str, "Coordinate")){
+        if(!strcmp(str, "Coordinate")) {
           vertexVector.clear();
           if(!skipUntil(fp, "point")) break;
           if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
         }
-        else if(!strcmp(str, "IndexedFaceSet") || !strcmp(str, "IndexedLineSet")){
+        else if(!strcmp(str, "IndexedFaceSet") ||
+                !strcmp(str, "IndexedLineSet")) {
           region++;
           if(!skipUntil(fp, "coordIndex")) break;
           if(!readElementsVRML(fp, vertexVector, region, elements)) break;
@@ -188,10 +193,11 @@ int GModel::readVRML(const std::string &name)
   return 1;
 }
 
-int GModel::writeVRML(const std::string &name, bool saveAll, double scalingFactor)
+int GModel::writeVRML(const std::string &name, bool saveAll,
+                      double scalingFactor)
 {
   FILE *fp = Fopen(name.c_str(), "w");
-  if(!fp){
+  if(!fp) {
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
@@ -218,8 +224,8 @@ int GModel::writeVRML(const std::string &name, bool saveAll, double scalingFacto
   fprintf(fp, "  ]\n");
   fprintf(fp, "}\n");
 
-  for(eiter it = firstEdge(); it != lastEdge(); ++it){
-    if(saveAll || (*it)->physicals.size()){
+  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+    if(saveAll || (*it)->physicals.size()) {
       fprintf(fp, "DEF Curve%d IndexedLineSet {\n", (*it)->tag());
       fprintf(fp, "  coordIndex [\n");
       for(unsigned int i = 0; i < (*it)->lines.size(); i++)
@@ -229,8 +235,8 @@ int GModel::writeVRML(const std::string &name, bool saveAll, double scalingFacto
     }
   }
 
-  for(fiter it = firstFace(); it != lastFace(); ++it){
-    if(saveAll || (*it)->physicals.size()){
+  for(fiter it = firstFace(); it != lastFace(); ++it) {
+    if(saveAll || (*it)->physicals.size()) {
       fprintf(fp, "DEF Surface%d IndexedFaceSet {\n", (*it)->tag());
       fprintf(fp, "  coordIndex [\n");
       for(unsigned int i = 0; i < (*it)->triangles.size(); i++)

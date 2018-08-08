@@ -16,7 +16,7 @@
 int GModel::readSTL(const std::string &name, double tolerance)
 {
   FILE *fp = Fopen(name.c_str(), "rb");
-  if(!fp){
+  if(!fp) {
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
@@ -27,22 +27,23 @@ int GModel::readSTL(const std::string &name, double tolerance)
 
   // "solid", or binary data header
   char buffer[256];
-  if(!fgets(buffer, sizeof(buffer), fp)){ fclose(fp); return 0; }
+  if(!fgets(buffer, sizeof(buffer), fp)) {
+    fclose(fp);
+    return 0;
+  }
 
   bool binary = strncmp(buffer, "solid", 5) && strncmp(buffer, "SOLID", 5);
 
   // ASCII STL
-  if(!binary){
+  if(!binary) {
     points.resize(1);
     while(!feof(fp)) {
       // "facet normal x y z" or "endsolid"
       if(!fgets(buffer, sizeof(buffer), fp)) break;
-      if(!strncmp(buffer, "endsolid", 8) ||
-         !strncmp(buffer, "ENDSOLID", 8)){
+      if(!strncmp(buffer, "endsolid", 8) || !strncmp(buffer, "ENDSOLID", 8)) {
         // "solid"
         if(!fgets(buffer, sizeof(buffer), fp)) break;
-        if(!strncmp(buffer, "solid", 5) ||
-           !strncmp(buffer, "SOLID", 5)){
+        if(!strncmp(buffer, "solid", 5) || !strncmp(buffer, "SOLID", 5)) {
           points.resize(points.size() + 1);
           // "facet normal x y z"
           if(!fgets(buffer, sizeof(buffer), fp)) break;
@@ -51,7 +52,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
       // "outer loop"
       if(!fgets(buffer, sizeof(buffer), fp)) break;
       // "vertex x y z"
-      for(int i = 0; i < 3; i++){
+      for(int i = 0; i < 3; i++) {
         if(!fgets(buffer, sizeof(buffer), fp)) break;
         char s1[256];
         double x, y, z;
@@ -65,12 +66,12 @@ int GModel::readSTL(const std::string &name, double tolerance)
       // "endfacet"
       if(!fgets(buffer, sizeof(buffer), fp)) break;
     }
-   }
+  }
 
   // check if we could parse something
   bool empty = true;
-  for(unsigned int i = 0; i < points.size(); i++){
-    if(points[i].size()){
+  for(unsigned int i = 0; i < points.size(); i++) {
+    if(points[i].size()) {
       empty = false;
       break;
     }
@@ -79,7 +80,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
 
   // binary STL (we also try to read in binary mode if the header told
   // us the format was ASCII but we could not read any vertices)
-  if(binary || empty){
+  if(binary || empty) {
     if(binary)
       Msg::Info("Mesh is in binary format");
     else
@@ -91,39 +92,39 @@ int GModel::readSTL(const std::string &name, double tolerance)
       unsigned int nfacets = 0;
       size_t ret = fread(&nfacets, sizeof(unsigned int), 1, fp);
       bool swap = false;
-      if(nfacets > 100000000){
+      if(nfacets > 100000000) {
         Msg::Info("Swapping bytes from binary file");
         swap = true;
-        SwapBytes((char*)&nfacets, sizeof(unsigned int), 1);
+        SwapBytes((char *)&nfacets, sizeof(unsigned int), 1);
       }
-      if(ret && nfacets){
+      if(ret && nfacets) {
         points.resize(points.size() + 1);
         char *data = new char[nfacets * 50 * sizeof(char)];
         ret = fread(data, sizeof(char), nfacets * 50, fp);
-        if(ret == nfacets * 50){
+        if(ret == nfacets * 50) {
           for(unsigned int i = 0; i < nfacets; i++) {
             float *xyz = (float *)&data[i * 50 * sizeof(char)];
-            if(swap) SwapBytes((char*)xyz, sizeof(float), 12);
-            for(int j = 0; j < 3; j++){
+            if(swap) SwapBytes((char *)xyz, sizeof(float), 12);
+            for(int j = 0; j < 3; j++) {
               SPoint3 p(xyz[3 + 3 * j], xyz[3 + 3 * j + 1], xyz[3 + 3 * j + 2]);
               points.back().push_back(p);
               bbox += p;
             }
           }
         }
-        delete [] data;
+        delete[] data;
       }
     }
   }
 
-  std::vector<GFace*> faces;
-  for(unsigned int i = 0; i < points.size(); i++){
-    if(points[i].empty()){
+  std::vector<GFace *> faces;
+  for(unsigned int i = 0; i < points.size(); i++) {
+    if(points[i].empty()) {
       Msg::Error("No facets found in STL file for solid %d", i);
       fclose(fp);
       return 0;
     }
-    if(points[i].size() % 3){
+    if(points[i].size() % 3) {
       Msg::Error("Wrong number of points (%d) in STL file for solid %d",
                  points[i].size(), i);
       fclose(fp);
@@ -138,20 +139,20 @@ int GModel::readSTL(const std::string &name, double tolerance)
 
   // create triangles using unique vertices
   double eps = norm(SVector3(bbox.max(), bbox.min())) * tolerance;
-  std::vector<MVertex*> vertices;
+  std::vector<MVertex *> vertices;
   for(unsigned int i = 0; i < points.size(); i++)
     for(unsigned int j = 0; j < points[i].size(); j++)
-      vertices.push_back(new MVertex(points[i][j].x(), points[i][j].y(),
-                                     points[i][j].z()));
+      vertices.push_back(
+        new MVertex(points[i][j].x(), points[i][j].y(), points[i][j].z()));
   MVertexRTree pos(eps);
   pos.insert(vertices);
 
   std::set<MFace, Less_Face> unique;
   int nbDuplic = 0;
-  for(unsigned int i = 0; i < points.size(); i ++){
-    for(unsigned int j = 0; j < points[i].size(); j += 3){
+  for(unsigned int i = 0; i < points.size(); i++) {
+    for(unsigned int j = 0; j < points[i].size(); j += 3) {
       MVertex *v[3];
-      for(int k = 0; k < 3; k++){
+      for(int k = 0; k < 3; k++) {
         double x = points[i][j + k].x();
         double y = points[i][j + k].y();
         double z = points[i][j + k].z();
@@ -161,23 +162,22 @@ int GModel::readSTL(const std::string &name, double tolerance)
       // reads. It would be better to provide an API to detect/remove duplicate
       // elements
       MFace mf(v[0], v[1], v[2]);
-      if (unique.find(mf) == unique.end()){
-	faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
-	unique.insert(mf);
+      if(unique.find(mf) == unique.end()) {
+        faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+        unique.insert(mf);
       }
-      else{
-	nbDuplic++;
+      else {
+        nbDuplic++;
       }
     }
   }
-  if(nbDuplic)
-    Msg::Warning("%d duplicate triangles in STL file", nbDuplic);
+  if(nbDuplic) Msg::Warning("%d duplicate triangles in STL file", nbDuplic);
 
   _associateEntityWithMeshVertices();
 
   _storeVerticesInEntities(vertices); // will delete unused vertices
 
-  _createGeometryOfDiscreteEntities() ;
+  _createGeometryOfDiscreteEntities();
 
   fclose(fp);
   return 1;
@@ -187,7 +187,7 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
                      double scalingFactor)
 {
   FILE *fp = Fopen(name.c_str(), binary ? "wb" : "w");
-  if(!fp){
+  if(!fp) {
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
@@ -196,25 +196,25 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
 
   bool useGeoSTL = false;
   unsigned int nfacets = 0;
-  for(fiter it = firstFace(); it != lastFace(); ++it){
-    if(saveAll || (*it)->physicals.size()){
+  for(fiter it = firstFace(); it != lastFace(); ++it) {
+    if(saveAll || (*it)->physicals.size()) {
       nfacets += (*it)->triangles.size() + 2 * (*it)->quadrangles.size();
     }
   }
-  if(!nfacets){ // use CAD STL if there is no mesh
+  if(!nfacets) { // use CAD STL if there is no mesh
     useGeoSTL = true;
-    for(fiter it = firstFace(); it != lastFace(); ++it){
+    for(fiter it = firstFace(); it != lastFace(); ++it) {
       (*it)->buildSTLTriangulation();
-      if(saveAll || (*it)->physicals.size()){
+      if(saveAll || (*it)->physicals.size()) {
         nfacets += (*it)->stl_triangles.size() / 3;
       }
     }
   }
 
-  if(!binary){
+  if(!binary) {
     fprintf(fp, "solid Created by Gmsh\n");
   }
-  else{
+  else {
     char header[80];
     strncpy(header, "Created by Gmsh", 80);
     fwrite(header, sizeof(char), 80, fp);
@@ -222,9 +222,9 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
   }
 
   for(fiter it = firstFace(); it != lastFace(); ++it) {
-    if(saveAll || (*it)->physicals.size()){
-      if(useGeoSTL && (*it)->stl_vertices_uv.size()){
-        for (unsigned int i = 0; i < (*it)->stl_triangles.size(); i += 3){
+    if(saveAll || (*it)->physicals.size()) {
+      if(useGeoSTL && (*it)->stl_vertices_uv.size()) {
+        for(unsigned int i = 0; i < (*it)->stl_triangles.size(); i += 3) {
           SPoint2 &p1((*it)->stl_vertices_uv[(*it)->stl_triangles[i]]);
           SPoint2 &p2((*it)->stl_vertices_uv[(*it)->stl_triangles[i + 1]]);
           SPoint2 &p3((*it)->stl_vertices_uv[(*it)->stl_triangles[i + 2]]);
@@ -235,25 +235,24 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
           double y[3] = {gp1.y(), gp2.y(), gp3.y()};
           double z[3] = {gp1.z(), gp2.z(), gp3.z()};
           double n[3];
-          normal3points(x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], n);
-          if(!binary){
+          normal3points(x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2],
+                        n);
+          if(!binary) {
             fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
             fprintf(fp, "  outer loop\n");
             for(int j = 0; j < 3; j++)
-              fprintf(fp, "    vertex %g %g %g\n",
-                      x[j] * scalingFactor,
-                      y[j] * scalingFactor,
-                      z[j] * scalingFactor);
+              fprintf(fp, "    vertex %g %g %g\n", x[j] * scalingFactor,
+                      y[j] * scalingFactor, z[j] * scalingFactor);
             fprintf(fp, "  endloop\n");
             fprintf(fp, "endfacet\n");
           }
-          else{
+          else {
             char data[50];
-            float *coords = (float*)data;
+            float *coords = (float *)data;
             coords[0] = (float)n[0];
             coords[1] = (float)n[1];
             coords[2] = (float)n[2];
-            for(int j = 0; j < 3; j++){
+            for(int j = 0; j < 3; j++) {
               coords[3 + 3 * j] = (float)(x[j] * scalingFactor);
               coords[3 + 3 * j + 1] = (float)(y[j] * scalingFactor);
               coords[3 + 3 * j + 2] = (float)(z[j] * scalingFactor);
@@ -263,7 +262,7 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
           }
         }
       }
-      else{
+      else {
         for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
           (*it)->triangles[i]->writeSTL(fp, binary, scalingFactor);
         for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
@@ -272,8 +271,7 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
     }
   }
 
-  if(!binary)
-    fprintf(fp, "endsolid Created by Gmsh\n");
+  if(!binary) fprintf(fp, "endsolid Created by Gmsh\n");
 
   fclose(fp);
   return 1;

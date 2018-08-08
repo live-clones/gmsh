@@ -17,7 +17,7 @@ class GamePad;
 
 struct contextMeshOptions {
   // mesh algorithms
-  int optimize,  optimizeNetgen, smoothCrossField, refineSteps;
+  int optimize, optimizeNetgen, smoothCrossField, refineSteps;
   double lcFactor, randFactor, randFactor3d, lcIntegrationPrecision;
   double optimizeThreshold, normals, tangents, explode, angleSmoothNormals;
   double allowSwapEdgeAngle;
@@ -32,8 +32,8 @@ struct contextMeshOptions {
   int meshOnlyVisible, minCircPoints, minCurvPoints;
   int hoOptimize, hoNLayers, hoOptPrimSurfMesh;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
-  std::map<int,int> algo2dPerFace;
-  std::map<int,int> curvatureControlPerFace;
+  std::map<int, int> algo2dPerFace;
+  std::map<int, int> curvatureControlPerFace;
   int NewtonConvergenceTestXYZ;
   int ignorePeriodicity, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
@@ -48,8 +48,10 @@ struct contextMeshOptions {
   int preserveNumberingMsh2;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;
-  int partitionCreatePhysicals, partitionSplitMeshFiles, partitionSaveTopologyFile;
-  int partitionTriWeight, partitionQuaWeight, partitionTetWeight, partitionHexWeight;
+  int partitionCreatePhysicals, partitionSplitMeshFiles,
+    partitionSaveTopologyFile;
+  int partitionTriWeight, partitionQuaWeight, partitionTetWeight,
+    partitionHexWeight;
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
   int partitionOldStyleMsh2;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
@@ -99,9 +101,10 @@ struct contextGeometryOptions {
 
 // The interface-independent context.
 class CTX {
- private:
+private:
   static CTX *_instance;
- public:
+
+public:
   CTX();
   ~CTX();
   static CTX *instance();
@@ -122,7 +125,7 @@ class CTX {
   // create mesh statistics report (0: do nothing, 1: create, 2: append)
   int createAppendMeshStatReport;
   // should we launch a solver at startup?
-  int launchSolverAtStartup ;
+  int launchSolverAtStartup;
   // save session/option file on exit?
   int sessionSave, optionsSave;
   // ask confirmation when overwriting files?
@@ -144,8 +147,10 @@ class CTX {
   // show tootips in the GUI?
   int tooltips;
   // position and size of various windows in the GUI
-  int glPosition[2], glSize[2], msgSize, menuPosition[2], menuSize[2], detachedMenu;
-  int optPosition[2], visPosition[2], hotPosition[2], clipPosition[2], manipPosition[2];
+  int glPosition[2], glSize[2], msgSize, menuPosition[2], menuSize[2],
+    detachedMenu;
+  int optPosition[2], visPosition[2], hotPosition[2], clipPosition[2],
+    manipPosition[2];
   int statPosition[2], ctxPosition[2];
   int pluginPosition[2], pluginSize[2], fieldPosition[2], fieldSize[2];
   int fileChooserPosition[2], extraPosition[2], extraSize[2];
@@ -153,9 +158,9 @@ class CTX {
   int systemMenuBar;
   // use high-resolution opengl graphics (retina Macs)
   int highResolutionGraphics;
-  // batch mode (-4: lua session, -3: server daemon, -2: check coherence, -1: write
-  // geo, 0: full gfx, 1: 1D mesh, 2: 2D mesh, 3: 3D mesh, 4: adapt
-  // mesh, 5: refine mesh, 6: reclassify mesh)
+  // batch mode (-4: lua session, -3: server daemon, -2: check coherence, -1:
+  // write geo, 0: full gfx, 1: 1D mesh, 2: 2D mesh, 3: 3D mesh, 4: adapt mesh,
+  // 5: refine mesh, 6: reclassify mesh)
   int batch;
   // batch operations to apply after meshing (1: partition mesh)
   int batchAfterMesh;
@@ -185,13 +190,13 @@ class CTX {
   double min[3], max[3];
   // "center of mass" of the current geometry, used for graphics only
   double cg[3];
- // characteristic length for the whole problem (never used in mesh
+  // characteristic length for the whole problem (never used in mesh
   // generation ->only for geo/post)
   double lc;
   // double buffer/antialias/stereo graphics?
-  int db, antialiasing, stereo, camera ;
+  int db, antialiasing, stereo, camera;
   bool fileread;
-  double eye_sep_ratio,focallength_ratio,camera_aperture;
+  double eye_sep_ratio, focallength_ratio, camera_aperture;
   // orthogonal projection?
   int ortho;
   // draw the bounding boxes and the rot center?
@@ -267,7 +272,7 @@ class CTX {
   contextMeshOptions mesh;
   CGNSOptions cgnsOptions;
   // post processing options
-  struct{
+  struct {
     int draw, link, horizontalScales;
     int smooth, animCycle, animStep, combineTime, combineRemoveOrig;
     int fileFormat, plugins, forceNodeData, forceElementData;
@@ -276,9 +281,9 @@ class CTX {
     std::string doubleClickedGraphPointCommand;
     double doubleClickedGraphPointX, doubleClickedGraphPointY;
     int doubleClickedView;
-  }post;
+  } post;
   // solver options
-  struct{
+  struct {
     int plugins, listen;
     double timeout;
     std::string socketName, pythonInterpreter, octaveInterpreter;
@@ -287,9 +292,9 @@ class CTX {
     int autoSaveDatabase, autoLoadDatabase;
     int autoArchiveOutputFiles, autoMesh, autoMergeFile;
     int autoShowViews, autoShowLastStep, autoCheck, showInvisibleParameters;
-  }solver;
+  } solver;
   // print options
-  struct{
+  struct {
     int fileFormat, epsQuality, epsCompress, epsPS3Shading;
     int epsOcclusionCulling, epsBestRoot;
     double epsLineWidthFactor, epsPointSizeFactor;
@@ -306,15 +311,15 @@ class CTX {
     double x3dPrecision, x3dTransparency;
   } print;
   // color options
-  struct{
+  struct {
     unsigned int bg, bgGrad, fg, text, axes, smallAxes;
     unsigned int ambientLight[6], diffuseLight[6], specularLight[6];
-    struct{
+    struct {
       unsigned int point, curve, surface, volume;
       unsigned int selection, highlight[3], projection;
       unsigned int tangents, normals;
     } geom;
-    struct{
+    struct {
       unsigned int node, nodeSup, line, triangle, quadrangle;
       unsigned int tetrahedron, hexahedron, prism, pyramid, trihedron;
       unsigned int carousel[20];

@@ -16,31 +16,31 @@ class Cell;
 
 class Less_Cell {
 public:
-  bool operator()(const Cell* c1, const Cell* c2) const;
+  bool operator()(const Cell *c1, const Cell *c2) const;
 };
 
 // Class to save cell boundary orientation information
 class BdInfo {
- private:
+private:
   signed char _ori[2];
 
- public:
-  BdInfo(int ori) { _ori[0] = ori; _ori[1] = 0; }
+public:
+  BdInfo(int ori)
+  {
+    _ori[0] = ori;
+    _ori[1] = 0;
+  }
 
   int get() const { return _ori[0]; }
   void reset() { _ori[0] = _ori[1]; }
   void init() { _ori[1] = _ori[0]; }
   void set(int ori) { _ori[0] = ori; }
   int geto() const { return _ori[1]; }
-
 };
-
 
 // Class representing an elementary cell of a cell complex.
 class Cell {
-
- protected:
-
+protected:
   static int _globalNum;
 
   int _num;
@@ -52,29 +52,27 @@ class Cell {
   bool _immune;
 
   // list of cells on the boundary and on the coboundary of this cell
-  std::map<Cell*, BdInfo, Less_Cell> _bd;
-  std::map<Cell*, BdInfo, Less_Cell> _cbd;
+  std::map<Cell *, BdInfo, Less_Cell> _bd;
+  std::map<Cell *, BdInfo, Less_Cell> _cbd;
 
   Cell() {}
 
- private:
-
+private:
   char _dim;
-  std::vector<MVertex*> _v;
+  std::vector<MVertex *> _v;
   // sorted vertices of this cell (used for ordering of the cells)
   std::vector<char> _si;
 
   inline bool _sortVertexIndices();
 
- public:
+public:
+  static std::pair<Cell *, bool> createCell(MElement *element, int domain);
+  static std::pair<Cell *, bool> createCell(Cell *parent, int i);
 
-  static std::pair<Cell*, bool> createCell(MElement* element, int domain);
-  static std::pair<Cell*, bool> createCell(Cell* parent, int i);
+  Cell(MElement *element, int domain);
+  Cell(Cell *parent, int i);
 
-  Cell(MElement* element, int domain);
-  Cell(Cell* parent, int i);
-
-  virtual ~Cell(){}
+  virtual ~Cell() {}
 
   int getDomain() const { return _domain; }
   void setDomain(int domain) { _domain = domain; }
@@ -83,7 +81,7 @@ class Cell {
   int getTypeMSH() const;
   virtual int getDim() const { return _dim; }
   bool inSubdomain() const { return _domain ? true : false; }
-  void getMeshVertices(std::vector<MVertex*>& v) const { v = _v; }
+  void getMeshVertices(std::vector<MVertex *> &v) const { v = _v; }
 
   void setImmune(bool immune) { _immune = immune; };
   bool getImmune() const { return _immune; };
@@ -91,11 +89,11 @@ class Cell {
   int getNumSortedVertices() const { return _si.size(); }
   inline int getSortedVertex(int vertex) const;
   int getNumVertices() const { return _v.size(); }
-  MVertex* getMeshVertex(int vertex) const { return _v.at(vertex); }
+  MVertex *getMeshVertex(int vertex) const { return _v.at(vertex); }
 
-  void findBdElement(int i, std::vector<MVertex*>& vertices) const;
+  void findBdElement(int i, std::vector<MVertex *> &vertices) const;
   int getNumBdElements() const;
-  int findBdCellOrientation(Cell* cell, int i) const;
+  int findBdCellOrientation(Cell *cell, int i) const;
 
   void increaseGlobalNum() { _globalNum++; }
 
@@ -107,37 +105,38 @@ class Cell {
   virtual bool hasVertex(int vertex) const;
 
   // (co)boundary cell iterator
-  typedef std::map<Cell*, BdInfo, Less_Cell>::iterator biter;
+  typedef std::map<Cell *, BdInfo, Less_Cell>::iterator biter;
 
   // iterators to (first/last (co)boundary cells of this cell
   // (orig: to original (co)boundary cells of this cell)
-  biter firstBoundary(bool orig=false);
+  biter firstBoundary(bool orig = false);
   biter lastBoundary();
-  biter firstCoboundary(bool orig=false);
+  biter firstCoboundary(bool orig = false);
   biter lastCoboundary();
 
-  int getBoundarySize(bool orig=false);
-  int getCoboundarySize(bool orig=false);
+  int getBoundarySize(bool orig = false);
+  int getCoboundarySize(bool orig = false);
 
   // get the (orig: original) cell boundary
-  void getBoundary(std::map<Cell*, short int, Less_Cell>& boundary,
-                   bool orig=false);
-  void getCoboundary(std::map<Cell*, short int, Less_Cell>& coboundary,
-                     bool orig=false);
+  void getBoundary(std::map<Cell *, short int, Less_Cell> &boundary,
+                   bool orig = false);
+  void getCoboundary(std::map<Cell *, short int, Less_Cell> &coboundary,
+                     bool orig = false);
 
   // add (co)boundary cell
   // (other: reciprocally also add this cell from the other cell's (co)boundary)
-  void addBoundaryCell(int orientation, Cell* cell, bool other);
-  void addCoboundaryCell(int orientation, Cell* cell, bool other);
+  void addBoundaryCell(int orientation, Cell *cell, bool other);
+  void addCoboundaryCell(int orientation, Cell *cell, bool other);
 
   // remove (co)boundary cell
-  // (other: reciprocally also revove this cell from the other cell's (co)boundary)
-  void removeBoundaryCell(Cell* cell, bool other);
-  void removeCoboundaryCell(Cell* cell, bool other);
+  // (other: reciprocally also revove this cell from the other cell's
+  // (co)boundary)
+  void removeBoundaryCell(Cell *cell, bool other);
+  void removeCoboundaryCell(Cell *cell, bool other);
 
   // true if has given cell on (orig: original) (co)boundary
-  bool hasBoundary(Cell* cell, bool orig=false);
-  bool hasCoboundary(Cell* cell, bool orig=false);
+  bool hasBoundary(Cell *cell, bool orig = false);
+  bool hasCoboundary(Cell *cell, bool orig = false);
 
   // print cell debug info
   virtual void printCell();
@@ -147,42 +146,40 @@ class Cell {
   // tools for combined cells
   bool isCombined() const { return _combined; }
 
-  typedef std::map<Cell*, int, Less_Cell>::iterator citer;
-  virtual void getCells(std::map<Cell*, int, Less_Cell>& cells) {
+  typedef std::map<Cell *, int, Less_Cell>::iterator citer;
+  virtual void getCells(std::map<Cell *, int, Less_Cell> &cells)
+  {
     cells.clear();
     cells[this] = 1;
   }
   virtual int getNumCells() const { return 1; }
 
-  bool operator==(const Cell& c2) const {
+  bool operator==(const Cell &c2) const
+  {
     return (this->getNum() == c2.getNum());
   }
-
 };
 
-
 // A cell that is a combination of cells of same dimension
-class CombinedCell : public Cell{
-
- private:
+class CombinedCell : public Cell {
+private:
   // list of cells this cell is a combination of
-  std::map< Cell*, int, Less_Cell > _cells;
+  std::map<Cell *, int, Less_Cell> _cells;
 
- public:
-
-  CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co=false);
-  CombinedCell(std::vector<Cell*>& cells);
+public:
+  CombinedCell(Cell *c1, Cell *c2, bool orMatch, bool co = false);
+  CombinedCell(std::vector<Cell *> &cells);
   ~CombinedCell() {}
 
   int getDim() const { return _cells.begin()->first->getDim(); }
-  void getCells(std::map< Cell*, int, Less_Cell >& cells) { cells = _cells; }
-  int getNumCells() const {return _cells.size();}
+  void getCells(std::map<Cell *, int, Less_Cell> &cells) { cells = _cells; }
+  int getNumCells() const { return _cells.size(); }
   bool hasVertex(int vertex) const;
 
-  bool operator==(const Cell& c2) const {
+  bool operator==(const Cell &c2) const
+  {
     return (this->getNum() == c2.getNum());
   }
 };
-
 
 #endif

@@ -12,13 +12,14 @@ class gmshSurface;
 class List_T;
 class Tree_T;
 
-class GEO_Internals{
- public:
+class GEO_Internals {
+public:
   // this will become private
   Tree_T *Points, *Curves, *EdgeLoops, *Surfaces, *SurfaceLoops, *Volumes;
   Tree_T *DelPoints, *DelCurves, *DelSurfaces, *DelVolumes;
   List_T *PhysicalGroups, *DelPhysicalGroups;
- private:
+
+private:
   std::multimap<int, std::vector<int> > _meshCompounds;
   int _maxPointNum, _maxLineNum, _maxLineLoopNum, _maxSurfaceNum;
   int _maxSurfaceLoopNum, _maxVolumeNum, _maxPhysicalNum;
@@ -26,19 +27,22 @@ class GEO_Internals{
   void _freeAll();
   bool _changed;
   bool _transform(int mode, const std::vector<std::pair<int, int> > &dimTags,
-                  double x, double y, double z,
-                  double dx, double dy, double dz,
+                  double x, double y, double z, double dx, double dy, double dz,
                   double a, double b, double c, double d);
   bool _extrude(int mode, const std::vector<std::pair<int, int> > &inDimTags,
-                double x, double y, double z,
-                double dx, double dy, double dz,
+                double x, double y, double z, double dx, double dy, double dz,
                 double ax, double ay, double az, double angle,
                 std::vector<std::pair<int, int> > &outDimTags,
                 ExtrudeParams *e = 0);
- public:
-  GEO_Internals(){ _allocateAll(); }
-  ~GEO_Internals(){ _freeAll(); }
-  void destroy(){ _freeAll(); _allocateAll(); }
+
+public:
+  GEO_Internals() { _allocateAll(); }
+  ~GEO_Internals() { _freeAll(); }
+  void destroy()
+  {
+    _freeAll();
+    _allocateAll();
+  }
 
   // have the internals changed since the last synchronisation?
   bool getChanged() const { return _changed; }
@@ -56,7 +60,8 @@ class GEO_Internals{
   bool addCircleArc(int &tag, int startTag, int centerTag, int endTag,
                     double nx = 0., double ny = 0., double nz = 0.);
   bool addEllipseArc(int &tag, int startTag, int centerTag, int majorTag,
-                     int endTag, double nx = 0., double ny = 0., double nz = 0.);
+                     int endTag, double nx = 0., double ny = 0.,
+                     double nz = 0.);
   bool addSpline(int &tag, const std::vector<int> &pointTags);
   bool addBezier(int &tag, const std::vector<int> &pointTags);
   bool addBSpline(int &tag, const std::vector<int> &pointTags,
@@ -70,19 +75,17 @@ class GEO_Internals{
   bool addVolume(int &tag, const std::vector<int> &shellTags);
 
   // extrude and revolve
-  bool extrude(const std::vector<std::pair<int, int> > &inDimTags,
-               double dx, double dy, double dz,
+  bool extrude(const std::vector<std::pair<int, int> > &inDimTags, double dx,
+               double dy, double dz,
                std::vector<std::pair<int, int> > &outDimTags,
                ExtrudeParams *e = 0);
-  bool revolve(const std::vector<std::pair<int, int> > &inDimTags,
-               double x, double y, double z,
-               double ax, double ay, double az, double angle,
-               std::vector<std::pair<int, int> > &outDimTags,
+  bool revolve(const std::vector<std::pair<int, int> > &inDimTags, double x,
+               double y, double z, double ax, double ay, double az,
+               double angle, std::vector<std::pair<int, int> > &outDimTags,
                ExtrudeParams *e = 0);
-  bool twist(const std::vector<std::pair<int, int> > &inDimTags,
-             double x, double y, double z,
-             double dx, double dy, double dz,
-             double ax, double ay, double az, double angle,
+  bool twist(const std::vector<std::pair<int, int> > &inDimTags, double x,
+             double y, double z, double dx, double dy, double dz, double ax,
+             double ay, double az, double angle,
              std::vector<std::pair<int, int> > &outDimTags,
              ExtrudeParams *e = 0);
   bool boundaryLayer(const std::vector<std::pair<int, int> > &inDimTags,
@@ -90,16 +93,15 @@ class GEO_Internals{
                      ExtrudeParams *e = 0);
 
   // apply transformations
-  bool translate(const std::vector<std::pair<int, int> > &dimTags,
-                 double dx, double dy, double dz);
-  bool rotate(const std::vector<std::pair<int, int> > &dimTags,
-              double x, double y, double z, double ax, double ay, double az,
+  bool translate(const std::vector<std::pair<int, int> > &dimTags, double dx,
+                 double dy, double dz);
+  bool rotate(const std::vector<std::pair<int, int> > &dimTags, double x,
+              double y, double z, double ax, double ay, double az,
               double angle);
-  bool dilate(const std::vector<std::pair<int, int> > &dimTags,
-              double x, double y, double z,
-              double a, double b, double c);
-  bool symmetry(const std::vector<std::pair<int, int> > &dimTags,
-                double a, double b, double c, double d);
+  bool dilate(const std::vector<std::pair<int, int> > &dimTags, double x,
+              double y, double z, double a, double b, double c);
+  bool symmetry(const std::vector<std::pair<int, int> > &dimTags, double a,
+                double b, double c, double d);
 
   // split entities
   bool splitCurve(int tag, const std::vector<int> &pointTags,
@@ -111,11 +113,13 @@ class GEO_Internals{
   bool copy(const std::vector<std::pair<int, int> > &inDimTags,
             std::vector<std::pair<int, int> > &outDimTags);
   bool remove(int dim, int tag, bool recursive = false);
-  bool remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive = false);
+  bool remove(const std::vector<std::pair<int, int> > &dimTags,
+              bool recursive = false);
 
   // manipulate physical groups
   void resetPhysicalGroups();
-  bool modifyPhysicalGroup(int dim, int tag, int op, const std::vector<int> &tags);
+  bool modifyPhysicalGroup(int dim, int tag, int op,
+                           const std::vector<int> &tags);
   int getMaxPhysicalTag() const { return _maxPhysicalNum; }
   void setMaxPhysicalTag(int val) { _maxPhysicalNum = val; }
 

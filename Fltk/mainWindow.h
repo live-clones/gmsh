@@ -12,23 +12,23 @@
 
 // Derive the main window from Fl_Window (it shows up faster that way)
 class mainWindow : public Fl_Window {
- public:
-  mainWindow(int w, int h, bool nonModal, const char *l=0)
+public:
+  mainWindow(int w, int h, bool nonModal, const char *l = 0)
     : Fl_Window(w, h, l)
   {
     if(nonModal) set_non_modal();
   }
   virtual int handle(int event)
   {
-    switch (event) {
+    switch(event) {
     case FL_SHORTCUT:
     case FL_KEYBOARD:
 #if defined(__APPLE__)
-      if(Fl::test_shortcut(FL_META+'w')){
+      if(Fl::test_shortcut(FL_META + 'w')) {
 #elif defined(WIN32)
-      if(Fl::test_shortcut(FL_ALT+FL_F+4)){
+      if(Fl::test_shortcut(FL_ALT + FL_F + 4)) {
 #else
-      if(Fl::test_shortcut(FL_CTRL+'w')){
+      if(Fl::test_shortcut(FL_CTRL + 'w')) {
 #endif
         if(fl_choice("Do you really want to quit?", "Cancel", "Quit", 0))
           do_callback();
@@ -38,7 +38,7 @@ class mainWindow : public Fl_Window {
     }
     return Fl_Window::handle(event);
   }
-  virtual void resize(int X,int Y,int W,int H)
+  virtual void resize(int X, int Y, int W, int H)
   {
     Fl_Window::resize(X, Y, W, H);
   }

@@ -12,11 +12,11 @@
 #if defined(HAVE_FOURIER_MODEL)
 
 fourierFace::fourierFace(GModel *m, FM::TopoFace *face_, int tag,
-                         std::list<GEdge*> l_edges_)
-  : GFace(m,tag), face(face_)
+                         std::list<GEdge *> l_edges_)
+  : GFace(m, tag), face(face_)
 {
-  for (std::list<GEdge*>::iterator it = l_edges_.begin();
-       it != l_edges_.end(); it++) {
+  for(std::list<GEdge *>::iterator it = l_edges_.begin(); it != l_edges_.end();
+      it++) {
     l_edges.push_back((*it));
     l_dirs.push_back(1);
   }
@@ -25,22 +25,24 @@ fourierFace::fourierFace(GModel *m, FM::TopoFace *face_, int tag,
 
 Range<double> fourierFace::parBounds(int i) const
 {
-  return Range<double>(0.,1.);
+  return Range<double>(0., 1.);
 }
 
 GPoint fourierFace::point(double par1, double par2) const
 {
-  double pp[2] = {par1,par2};
-  double x,y,z;
-  face->F(par1,par2,x,y,z);
+  double pp[2] = {par1, par2};
+  double x, y, z;
+  face->F(par1, par2, x, y, z);
   return GPoint(x, y, z, this, pp);
 }
 
 SPoint2 fourierFace::parFromPoint(const SPoint3 &p, bool onSurface) const
 {
   double u, v, x, y, z;
-  x = p.x(); y = p.y(); z = p.z();
-  face->Inverse(x,y,z,u,v);
+  x = p.x();
+  y = p.y();
+  z = p.z();
+  face->Inverse(x, y, z, u, v);
 
   return SPoint2(u, v);
 }
@@ -55,14 +57,14 @@ bool fourierFace::containsParam(const SPoint2 &pt) const
 
 SVector3 fourierFace::normal(const SPoint2 &param) const
 {
-  double x,y,z;
-  face->GetUnitNormal(param[0],param[1],x,y,z);
+  double x, y, z;
+  face->GetUnitNormal(param[0], param[1], x, y, z);
   return SVector3(x, y, z);
 }
 
 GEntity::GeomType fourierFace::geomType() const
 {
-  return  GEntity::ParametricSurface;
+  return GEntity::ParametricSurface;
 }
 
 Pair<SVector3, SVector3> fourierFace::firstDer(const SPoint2 &param) const
@@ -71,10 +73,11 @@ Pair<SVector3, SVector3> fourierFace::firstDer(const SPoint2 &param) const
   return Pair<SVector3, SVector3>();
 }
 
-void fourierFace::secondDer(const SPoint2 &param,
-                            SVector3 &dudu, SVector3 &dvdv, SVector3 &dudv) const
+void fourierFace::secondDer(const SPoint2 &param, SVector3 &dudu,
+                            SVector3 &dvdv, SVector3 &dudv) const
 {
-  Msg::Error("Computation of the second derivatives not implemented for fourier face");
+  Msg::Error(
+    "Computation of the second derivatives not implemented for fourier face");
 }
 
 #endif

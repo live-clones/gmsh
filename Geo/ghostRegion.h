@@ -16,18 +16,21 @@
 #include "MElementCut.h"
 
 class ghostRegion : public discreteRegion {
- private:
+private:
   unsigned int _partitions;
-  std::map<MElement*, unsigned int> _ghostCells;
+  std::map<MElement *, unsigned int> _ghostCells;
   bool _saveMesh;
   bool _haveMesh;
- public:
+
+public:
   ghostRegion(GModel *model, const int num, const unsigned int partitions)
-  : discreteRegion(model, num), _partitions(partitions), _ghostCells(),
-    _saveMesh(false), _haveMesh(false) {}
+    : discreteRegion(model, num), _partitions(partitions), _ghostCells(),
+      _saveMesh(false), _haveMesh(false)
+  {
+  }
   virtual ~ghostRegion()
   {
-    if(!_haveMesh){
+    if(!_haveMesh) {
       tetrahedra.clear();
       hexahedra.clear();
       prisms.clear();
@@ -38,65 +41,78 @@ class ghostRegion : public discreteRegion {
     }
   }
   virtual GeomType geomType() const { return GhostVolume; }
-  virtual void setPartition(const unsigned int partitions) { _partitions = partitions; }
+  virtual void setPartition(const unsigned int partitions)
+  {
+    _partitions = partitions;
+  }
   virtual unsigned int getPartition() const { return _partitions; }
   bool saveMesh() const { return _saveMesh; }
   void saveMesh(bool saveMesh) { _saveMesh = saveMesh; }
   bool haveMesh() const { return _haveMesh; }
   void haveMesh(bool haveMesh) { _haveMesh = haveMesh; }
-  virtual std::map<MElement*, unsigned int> &getGhostCells() { return _ghostCells; }
-  
+  virtual std::map<MElement *, unsigned int> &getGhostCells()
+  {
+    return _ghostCells;
+  }
+
   void addTetrahedron(MTetrahedron *t, unsigned int onWhichPartition)
   {
     GRegion::addTetrahedron(t);
-    _ghostCells.insert(std::pair<MElement*, unsigned int>(t,onWhichPartition));
-    model()->addGhostCells(t,onWhichPartition);
+    _ghostCells.insert(
+      std::pair<MElement *, unsigned int>(t, onWhichPartition));
+    model()->addGhostCells(t, onWhichPartition);
   }
   void addHexahedron(MHexahedron *h, unsigned int onWhichPartition)
   {
     GRegion::addHexahedron(h);
-    _ghostCells.insert(std::pair<MElement*, unsigned int>(h,onWhichPartition));
-    model()->addGhostCells(h,onWhichPartition);
+    _ghostCells.insert(
+      std::pair<MElement *, unsigned int>(h, onWhichPartition));
+    model()->addGhostCells(h, onWhichPartition);
   }
   void addPrism(MPrism *p, unsigned int onWhichPartition)
   {
     GRegion::addPrism(p);
-    _ghostCells.insert(std::pair<MElement*, unsigned int>(p,onWhichPartition));
-    model()->addGhostCells(p,onWhichPartition);
+    _ghostCells.insert(
+      std::pair<MElement *, unsigned int>(p, onWhichPartition));
+    model()->addGhostCells(p, onWhichPartition);
   }
   void addPyramid(MPyramid *p, unsigned int onWhichPartition)
   {
     GRegion::addPyramid(p);
-    _ghostCells.insert(std::pair<MElement*, unsigned int>(p,onWhichPartition));
-    model()->addGhostCells(p,onWhichPartition);
+    _ghostCells.insert(
+      std::pair<MElement *, unsigned int>(p, onWhichPartition));
+    model()->addGhostCells(p, onWhichPartition);
   }
   void addPolyhedron(MPolyhedron *p, unsigned int onWhichPartition)
   {
     GRegion::addPolyhedron(p);
-    _ghostCells.insert(std::pair<MElement*, unsigned int>(p,onWhichPartition));
-    model()->addGhostCells(p,onWhichPartition);
+    _ghostCells.insert(
+      std::pair<MElement *, unsigned int>(p, onWhichPartition));
+    model()->addGhostCells(p, onWhichPartition);
   }
   void addTrihedron(MTrihedron *t, unsigned int onWhichPartition)
   {
     GRegion::addTrihedron(t);
-    _ghostCells.insert(std::pair<MElement*, unsigned int>(t,onWhichPartition));
-    model()->addGhostCells(t,onWhichPartition);
+    _ghostCells.insert(
+      std::pair<MElement *, unsigned int>(t, onWhichPartition));
+    model()->addGhostCells(t, onWhichPartition);
   }
   void addElement(int type, MElement *e, unsigned int onWhichPartition)
   {
     GRegion::addElement(type, e);
-    _ghostCells.insert(std::pair<MElement*, unsigned int>(e,onWhichPartition));
-    model()->addGhostCells(e,onWhichPartition);
+    _ghostCells.insert(
+      std::pair<MElement *, unsigned int>(e, onWhichPartition));
+    model()->addGhostCells(e, onWhichPartition);
   }
-  
+
   // To make the hidden function visible in ghostRegion
-  using discreteRegion::addTetrahedron;
+  using discreteRegion::addElement;
   using discreteRegion::addHexahedron;
+  using discreteRegion::addPolyhedron;
   using discreteRegion::addPrism;
   using discreteRegion::addPyramid;
-  using discreteRegion::addPolyhedron;
+  using discreteRegion::addTetrahedron;
   using discreteRegion::addTrihedron;
-  using discreteRegion::addElement;
 };
 
 #endif

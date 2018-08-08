@@ -9,7 +9,7 @@
 
 #if defined(HAVE_LIBCGNS)
 
-#define DEBUG_FaceT 0       // NBN: toggle reporting of face insertions
+#define DEBUG_FaceT 0 // NBN: toggle reporting of face insertions
 
 #include <iostream> // DBG
 #include <limits> // ?
@@ -19,11 +19,7 @@
 
 //--Types at local scope
 
-enum {
-  NormalSourceGeometry = 1,
-  NormalSourceElement = 2
-};
-
+enum { NormalSourceGeometry = 1, NormalSourceElement = 2 };
 
 /*******************************************************************************
  *
@@ -38,15 +34,11 @@ enum {
  *
  ******************************************************************************/
 
-class BCPatchIndex
-{
-  struct PatchData
-  {
+class BCPatchIndex {
+  struct PatchData {
     int index;
     std::vector<int> eTagVec;
-    PatchData(int eTag1)
-      : index(eTag1), eTagVec(1, eTag1)
-    { }
+    PatchData(int eTag1) : index(eTag1), eTagVec(1, eTag1) {}
   };
 
   typedef std::list<PatchData> PatchDataList;
@@ -72,11 +64,8 @@ class BCPatchIndex
     return insPatch.first;
   }
 
- public:
-
-  BCPatchIndex()
-    : sharedPatch(false)
-  { }
+public:
+  BCPatchIndex() : sharedPatch(false) {}
 
   // Add an entity tag
   void add(const int eTag) { _add(eTag); }
@@ -106,19 +95,18 @@ class BCPatchIndex
   // Once all entity tags have been added, generate patch indices
   void generatePatchIndices()
   {
-//     if(sharedPatch) {  // Don't renumber if not shared to preserve entity
-//                        // numbers.  Mostly useful for debugging.
-      int c = 0;
-      for(PatchDataListIt pDIt = patchData.begin(); pDIt != patchData.end();
-          ++pDIt) pDIt->index = c++;
-//     }
+    //     if(sharedPatch) {  // Don't renumber if not shared to preserve entity
+    //                        // numbers.  Mostly useful for debugging.
+    int c = 0;
+    for(PatchDataListIt pDIt = patchData.begin(); pDIt != patchData.end();
+        ++pDIt)
+      pDIt->index = c++;
+    //     }
   }
 
   // Get the patch index for an entity (generate patch indices first)
   int getIndex(const int eTag) { return patch[eTag]->index; }
-
 };
-
 
 /*******************************************************************************
  *
@@ -171,13 +159,12 @@ class BCPatchIndex
  ******************************************************************************/
 
 template <unsigned DIM, typename FaceT>
-void updateBoVec
-(const int normalSource, const MVertex *const vertex, const int zoneIndex,
- const int vertIndex,
- const CCon::FaceVector<typename MZoneBoundary<DIM>::template
- GlobalVertexData<FaceT>::FaceDataB> &faces, ZoneBoVec &zoneBoVec,
- BCPatchIndex &patch, bool &warnNormFromElem);
-
+void updateBoVec(const int normalSource, const MVertex *const vertex,
+                 const int zoneIndex, const int vertIndex,
+                 const CCon::FaceVector<typename MZoneBoundary<
+                   DIM>::template GlobalVertexData<FaceT>::FaceDataB> &faces,
+                 ZoneBoVec &zoneBoVec, BCPatchIndex &patch,
+                 bool &warnNormFromElem);
 
 /*******************************************************************************
  *
@@ -186,7 +173,6 @@ void updateBoVec
  ******************************************************************************/
 
 //--"Contained" routines
-
 
 /*==============================================================================
  *
@@ -213,28 +199,29 @@ void updateBoVec
  *
  *============================================================================*/
 
-int edge_normal
-(const MVertex *const vertex, const int zoneIndex, const GEdge *const gEdge,
- const CCon::FaceVector<MZoneBoundary<2>::GlobalVertexData<MEdge>::FaceDataB>
- &faces, SVector3 &boNormal, const int onlyFace = -1)
+int edge_normal(
+  const MVertex *const vertex, const int zoneIndex, const GEdge *const gEdge,
+  const CCon::FaceVector<MZoneBoundary<2>::GlobalVertexData<MEdge>::FaceDataB>
+    &faces,
+  SVector3 &boNormal, const int onlyFace = -1)
 {
-
-  double par=0.0;
+  double par = 0.0;
   // Note: const_cast used to match MVertex.cpp interface
-  if(!reparamMeshVertexOnEdge(const_cast<MVertex*>(vertex), gEdge, par)) return 1;
+  if(!reparamMeshVertexOnEdge(const_cast<MVertex *>(vertex), gEdge, par))
+    return 1;
 
   const SVector3 tangent(gEdge->firstDer(par));
-                                        // Tangent to the boundary face
-  SPoint3 interior(0., 0., 0.);         // An interior point
-  SVector3 meshPlaneNormal(0.);         // This normal is perpendicular to the
-                                        // plane of the mesh
+  // Tangent to the boundary face
+  SPoint3 interior(0., 0., 0.); // An interior point
+  SVector3 meshPlaneNormal(0.); // This normal is perpendicular to the
+                                // plane of the mesh
 
   // The interior point and mesh plane normal are computed from all elements in
   // the zone.
   int cFace = 0;
   int iFace = 0;
   int nFace = faces.size();
-  if ( onlyFace >= 0 ) {
+  if(onlyFace >= 0) {
     iFace = onlyFace;
     nFace = onlyFace + 1;
   }
@@ -255,12 +242,9 @@ int edge_normal
   boNormal.normalize();
   // Direction vector from vertex to interior (inwards).  The normal should
   // point in the same direction.
-  if(dot(boNormal, SVector3(vertex->point(), interior)) < 0.)
-    boNormal.negate();
+  if(dot(boNormal, SVector3(vertex->point(), interior)) < 0.) boNormal.negate();
   return 0;
-
 }
-
 
 /*==============================================================================
  *
@@ -269,13 +253,13 @@ int edge_normal
  *============================================================================*/
 
 template <>
-void updateBoVec<2, MEdge>
-(const int normalSource, const MVertex *const vertex, const int zoneIndex,
- const int vertIndex,
- const CCon::FaceVector<MZoneBoundary<2>::GlobalVertexData<MEdge>::FaceDataB>
- &faces, ZoneBoVec &zoneBoVec, BCPatchIndex &patch, bool &warnNormFromElem)
+void updateBoVec<2, MEdge>(
+  const int normalSource, const MVertex *const vertex, const int zoneIndex,
+  const int vertIndex,
+  const CCon::FaceVector<MZoneBoundary<2>::GlobalVertexData<MEdge>::FaceDataB>
+    &faces,
+  ZoneBoVec &zoneBoVec, BCPatchIndex &patch, bool &warnNormFromElem)
 {
-
   GEntity *ent;
   if(normalSource == NormalSourceElement) goto getNormalFromElements;
   ent = vertex->onWhat();
@@ -287,25 +271,25 @@ void updateBoVec<2, MEdge>
     switch(ent->dim()) {
     case 0:
 
-/*--------------------------------------------------------------------*
- * In this case, there are possibly two GEdges from this zone
- * connected to the vertex.  If the angle between the two edges is
- * significant, the BC patch will be split and this vertex will be
- * written in both patches with different normals.  If the angle is
- * small, or only one GEdge belongs to this zone, then the vertex will
- * only be written to one patch.
- *--------------------------------------------------------------------*/
+      /*--------------------------------------------------------------------*
+       * In this case, there are possibly two GEdges from this zone
+       * connected to the vertex.  If the angle between the two edges is
+       * significant, the BC patch will be split and this vertex will be
+       * written in both patches with different normals.  If the angle is
+       * small, or only one GEdge belongs to this zone, then the vertex will
+       * only be written to one patch.
+       *--------------------------------------------------------------------*/
 
       {
         // Get the edge entities that are connected to the vertex
-        std::vector<GEdge*> gEdgeList = ent->edges();
+        std::vector<GEdge *> gEdgeList = ent->edges();
         // Find edge entities that are connected to elements in the zone
-        std::vector<std::pair<GEdge*, int> > useGEdge;
+        std::vector<std::pair<GEdge *, int> > useGEdge;
         const int nFace = faces.size();
         for(int iFace = 0; iFace != nFace; ++iFace) {
           if(zoneIndex == faces[iFace].zoneIndex) {
-            MEdge mEdge = faces[iFace].parentElement->getEdge
-                (faces[iFace].parentFace);
+            MEdge mEdge =
+              faces[iFace].parentElement->getEdge(faces[iFace].parentFace);
             // Get the other vertex on the mesh edge.
             MVertex *vertex2 = mEdge.getMinVertex();
             if(vertex2 == vertex) vertex2 = mEdge.getMaxVertex();
@@ -314,85 +298,75 @@ void updateBoVec<2, MEdge>
             // edge entities that will be used to determine the normal
             GEntity *const ent2 = vertex2->onWhat();
             if(ent2->dim() == 1) {
-              useGEdge.push_back(std::pair<GEdge*, int>
-                                 (static_cast<GEdge*>(ent2), iFace));
+              useGEdge.push_back(
+                std::pair<GEdge *, int>(static_cast<GEdge *>(ent2), iFace));
             }
           }
         }
 
-//--'useGEdge' now contains the edge entities that will be used to determine
-//--the normals
+        //--'useGEdge' now contains the edge entities that will be used to
+        //determine
+        //--the normals
 
         switch(useGEdge.size()) {
-
         case 0:
-//           goto getNormalFromElements;
+          //           goto getNormalFromElements;
           // We probably don't want BC data if none of the faces attatched to
           // this vertex and in this zone are on the boundary.
           break;
 
-        case 1:
-          {
-            const GEdge *const gEdge =
-              static_cast<const GEdge*>(useGEdge[0].first);
-            SVector3 boNormal;
-            if(edge_normal(vertex, zoneIndex, gEdge, faces, boNormal))
-               goto getNormalFromElements;
-            zoneBoVec.push_back(VertexBoundary(zoneIndex, gEdge->tag(),
-                                               boNormal,
-                                               const_cast<MVertex*>(vertex),
-                                               vertIndex));
-            patch.add(gEdge->tag());
+        case 1: {
+          const GEdge *const gEdge =
+            static_cast<const GEdge *>(useGEdge[0].first);
+          SVector3 boNormal;
+          if(edge_normal(vertex, zoneIndex, gEdge, faces, boNormal))
+            goto getNormalFromElements;
+          zoneBoVec.push_back(VertexBoundary(zoneIndex, gEdge->tag(), boNormal,
+                                             const_cast<MVertex *>(vertex),
+                                             vertIndex));
+          patch.add(gEdge->tag());
+        } break;
+
+        case 2: {
+          // Get the first normal
+          const GEdge *const gEdge1 =
+            static_cast<const GEdge *>(useGEdge[0].first);
+          SVector3 boNormal1;
+          if(edge_normal(vertex, zoneIndex, gEdge1, faces, boNormal1,
+                         useGEdge[0].second))
+            goto getNormalFromElements;
+
+          // Get the second normal
+          const GEdge *const gEdge2 =
+            static_cast<const GEdge *>(useGEdge[1].first);
+          SVector3 boNormal2;
+          if(edge_normal(vertex, zoneIndex, gEdge2, faces, boNormal2,
+                         useGEdge[1].second))
+            goto getNormalFromElements;
+
+          if(dot(boNormal1, boNormal2) < 0.98) {
+            //--Write 2 separate patches
+
+            zoneBoVec.push_back(
+              VertexBoundary(zoneIndex, gEdge1->tag(), boNormal1,
+                             const_cast<MVertex *>(vertex), vertIndex));
+            patch.add(gEdge1->tag());
+            zoneBoVec.push_back(
+              VertexBoundary(zoneIndex, gEdge2->tag(), boNormal2,
+                             const_cast<MVertex *>(vertex), vertIndex));
+            patch.add(gEdge2->tag());
           }
-          break;
+          else {
+            //--Write one patch
 
-        case 2:
-          {
-            // Get the first normal
-            const GEdge *const gEdge1 =
-              static_cast<const GEdge*>(useGEdge[0].first);
-            SVector3 boNormal1;
-            if(edge_normal(vertex, zoneIndex, gEdge1, faces, boNormal1,
-                           useGEdge[0].second))
-              goto getNormalFromElements;
-
-            // Get the second normal
-            const GEdge *const gEdge2 =
-              static_cast<const GEdge*>(useGEdge[1].first);
-            SVector3 boNormal2;
-            if(edge_normal(vertex, zoneIndex, gEdge2, faces, boNormal2,
-                           useGEdge[1].second))
-              goto getNormalFromElements;
-
-            if(dot(boNormal1, boNormal2) < 0.98) {
-
-//--Write 2 separate patches
-
-              zoneBoVec.push_back(VertexBoundary(zoneIndex, gEdge1->tag(),
-                                                 boNormal1,
-                                                 const_cast<MVertex*>(vertex),
-                                                 vertIndex));
-              patch.add(gEdge1->tag());
-              zoneBoVec.push_back(VertexBoundary(zoneIndex, gEdge2->tag(),
-                                                 boNormal2,
-                                                 const_cast<MVertex*>(vertex),
-                                                 vertIndex));
-              patch.add(gEdge2->tag());
-            }
-            else {
-
-//--Write one patch
-
-              boNormal1 += boNormal2;
-              boNormal1 *= 0.5;
-              zoneBoVec.push_back(VertexBoundary(zoneIndex, gEdge1->tag(),
-                                                 boNormal1,
-                                                 const_cast<MVertex*>(vertex),
-                                                 vertIndex));
-              patch.addPair(gEdge1->tag(), gEdge2->tag());
-            }
+            boNormal1 += boNormal2;
+            boNormal1 *= 0.5;
+            zoneBoVec.push_back(
+              VertexBoundary(zoneIndex, gEdge1->tag(), boNormal1,
+                             const_cast<MVertex *>(vertex), vertIndex));
+            patch.addPair(gEdge1->tag(), gEdge2->tag());
           }
-          break;
+        } break;
 
         default:
           Msg::Error("Internal error based on 2-D boundary assumptions (file "
@@ -404,34 +378,33 @@ void updateBoVec<2, MEdge>
       break;
     case 1:
 
-/*--------------------------------------------------------------------*
- * The vertex exists on an edge and belongs to only 1 BC patch.
- *--------------------------------------------------------------------*/
+      /*--------------------------------------------------------------------*
+       * The vertex exists on an edge and belongs to only 1 BC patch.
+       *--------------------------------------------------------------------*/
 
       {
         SVector3 boNormal;
-        if(edge_normal(vertex, zoneIndex, static_cast<const GEdge*>(ent), faces,
-                       boNormal))
+        if(edge_normal(vertex, zoneIndex, static_cast<const GEdge *>(ent),
+                       faces, boNormal))
           goto getNormalFromElements;
         zoneBoVec.push_back(VertexBoundary(zoneIndex, ent->tag(), boNormal,
-                                           const_cast<MVertex*>(vertex),
+                                           const_cast<MVertex *>(vertex),
                                            vertIndex));
         patch.add(ent->tag());
       }
       break;
 
-    default:
-      goto getNormalFromElements;
+    default: goto getNormalFromElements;
     }
   }
   return;
 
- getNormalFromElements: ;
+getNormalFromElements:;
 
-/*--------------------------------------------------------------------*
- * Geometry information cannot be used - generate normals from the
- * elements
- *--------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------*
+   * Geometry information cannot be used - generate normals from the
+   * elements
+   *--------------------------------------------------------------------*/
 
   {
     if(warnNormFromElem && normalSource == 1) {
@@ -441,13 +414,13 @@ void updateBoVec<2, MEdge>
     }
     // The mesh plane normal is computed from all elements attached to the
     // vertex
-    SVector3 meshPlaneNormal(0.);       // This normal is perpendicular to the
-                                        // plane of the mesh
+    SVector3 meshPlaneNormal(0.); // This normal is perpendicular to the
+                                  // plane of the mesh
     const int nFace = faces.size();
     for(int iFace = 0; iFace != nFace; ++iFace) {
       if(faces[iFace].zoneIndex == zoneIndex) {
-      // Make sure all the planes go in the same direction
-      //**Required?
+        // Make sure all the planes go in the same direction
+        //**Required?
         SVector3 mpnt = faces[iFace].parentElement->getFace(0).normal();
         if(dot(mpnt, meshPlaneNormal) < 0.) mpnt.negate();
         meshPlaneNormal += mpnt;
@@ -460,8 +433,10 @@ void updateBoVec<2, MEdge>
     SVector3 boNormal(0.);
     for(int iFace = 0; iFace != nFace; ++iFace) {
       if(faces[iFace].zoneIndex == zoneIndex) {
-        const SVector3 tangent = faces[iFace].parentElement->getEdge
-          (faces[iFace].parentFace).tangent();
+        const SVector3 tangent =
+          faces[iFace]
+            .parentElement->getEdge(faces[iFace].parentFace)
+            .tangent();
         // Normal to the boundary (unknown direction)
         SVector3 bnt = crossprod(tangent, meshPlaneNormal);
         // Inwards normal
@@ -472,13 +447,11 @@ void updateBoVec<2, MEdge>
       }
     }
     boNormal.normalize();
-    zoneBoVec.push_back(VertexBoundary(zoneIndex, 0, boNormal,
-                                       const_cast<MVertex*>(vertex),
-                                       vertIndex));
+    zoneBoVec.push_back(VertexBoundary(
+      zoneIndex, 0, boNormal, const_cast<MVertex *>(vertex), vertIndex));
     patch.add(0);
   }
 }
-
 
 /*******************************************************************************
  *
@@ -499,13 +472,13 @@ void updateBoVec<2, MEdge>
  ******************************************************************************/
 
 template <>
-void updateBoVec<3, MFace>
-(const int normalSource, const MVertex *const vertex, const int zoneIndex,
- const int vertIndex,
- const CCon::FaceVector<MZoneBoundary<3>::GlobalVertexData<MFace>::FaceDataB>
- &faces, ZoneBoVec &zoneBoVec, BCPatchIndex &patch, bool &warnNormFromElem)
+void updateBoVec<3, MFace>(
+  const int normalSource, const MVertex *const vertex, const int zoneIndex,
+  const int vertIndex,
+  const CCon::FaceVector<MZoneBoundary<3>::GlobalVertexData<MFace>::FaceDataB>
+    &faces,
+  ZoneBoVec &zoneBoVec, BCPatchIndex &patch, bool &warnNormFromElem)
 {
-
   GEntity *ent;
   if(normalSource == NormalSourceElement) goto getNormalFromElements;
   ent = vertex->onWhat();
@@ -518,60 +491,57 @@ void updateBoVec<3, MFace>
     case 0:
     case 1:
 
-/*--------------------------------------------------------------------*
- * In this case, there are possibly multiple GFaces from this zone
- * connected to the vertex.  One patch for each GFace will be written.
- *--------------------------------------------------------------------*/
+      /*--------------------------------------------------------------------*
+       * In this case, there are possibly multiple GFaces from this zone
+       * connected to the vertex.  One patch for each GFace will be written.
+       *--------------------------------------------------------------------*/
 
       {
+        //--Get a list of face entities connected to 'ent'
 
-//--Get a list of face entities connected to 'ent'
-
-        std::list<GFace*> gFaceList;
+        std::list<GFace *> gFaceList;
         switch(ent->dim()) {
-        case 0:
-          {
-            std::vector<GEdge*> gEdgeList = ent->edges();
-            std::list<GFace*> gFaceList;
-            for(std::vector<GEdge*>::const_iterator gEIt = gEdgeList.begin();
-                gEIt != gEdgeList.end(); ++gEIt) {
-              std::vector<GFace*> alist = (*gEIt)->faces();
-              gFaceList.insert(gFaceList.end(), alist.begin(), alist.end());
-            }
-            // Remove duplicates
-            gFaceList.sort();
-            gFaceList.unique();
+        case 0: {
+          std::vector<GEdge *> gEdgeList = ent->edges();
+          std::list<GFace *> gFaceList;
+          for(std::vector<GEdge *>::const_iterator gEIt = gEdgeList.begin();
+              gEIt != gEdgeList.end(); ++gEIt) {
+            std::vector<GFace *> alist = (*gEIt)->faces();
+            gFaceList.insert(gFaceList.end(), alist.begin(), alist.end());
           }
-          break;
-        case 1:
-          {
-            std::vector<GFace*> fac = ent->faces();
-            gFaceList.insert(gFaceList.end(), fac.begin(), fac.end());
-          }
-          break;
+          // Remove duplicates
+          gFaceList.sort();
+          gFaceList.unique();
+        } break;
+        case 1: {
+          std::vector<GFace *> fac = ent->faces();
+          gFaceList.insert(gFaceList.end(), fac.begin(), fac.end());
+        } break;
         }
 
-//--Get a list of face entities connected to the 'vertex' that are also in the
-//--zone
+        //--Get a list of face entities connected to the 'vertex' that are also
+        //in the
+        //--zone
 
-        std::list<const GFace*> useGFace;
-        std::vector<GEdge*> gEdgeList;
+        std::list<const GFace *> useGFace;
+        std::vector<GEdge *> gEdgeList;
         const int nFace = faces.size();
         for(int iFace = 0; iFace != nFace; ++iFace) {
           if(zoneIndex == faces[iFace].zoneIndex) {
             bool matchedFace = false;
-            MFace mFace = faces[iFace].parentElement->getFace
-              (faces[iFace].parentFace);
+            MFace mFace =
+              faces[iFace].parentElement->getFace(faces[iFace].parentFace);
             const int nVOnF = mFace.getNumVertices();
-            int vertexOnF;              // The index of 'vertex' in the face
+            int vertexOnF; // The index of 'vertex' in the face
             for(int iVOnF = 0; iVOnF != nVOnF; ++iVOnF) {
               const MVertex *const vertex2 = mFace.getVertex(iVOnF);
-              if(vertex == vertex2) vertexOnF = iVOnF;
+              if(vertex == vertex2)
+                vertexOnF = iVOnF;
               else {
                 const GEntity *const ent2 = vertex2->onWhat();
                 if(ent2->dim() == 2) {
                   matchedFace = true;
-                  useGFace.push_back(static_cast<const GFace*>(ent2));
+                  useGFace.push_back(static_cast<const GFace *>(ent2));
                   break;
                 }
               }
@@ -606,13 +576,13 @@ void updateBoVec<3, MFace>
               const GEntity *const ent3 = vertex3->onWhat();
               if(ent2->dim() == 1 && ent3->dim() == 1) {
                 // Which GFace is bounded by edges ent2 and ent3?
-                for(std::list<GFace*>::const_iterator gFIt = gFaceList.begin();
+                for(std::list<GFace *>::const_iterator gFIt = gFaceList.begin();
                     gFIt != gFaceList.end(); ++gFIt) {
                   gEdgeList = (*gFIt)->edges();
-                  if((std::find(gEdgeList.begin(), gEdgeList.end(), ent2)
-                      != gEdgeList.end()) &&
-                     (std::find(gEdgeList.begin(), gEdgeList.end(), ent3)
-                      != gEdgeList.end())) {
+                  if((std::find(gEdgeList.begin(), gEdgeList.end(), ent2) !=
+                      gEdgeList.end()) &&
+                     (std::find(gEdgeList.begin(), gEdgeList.end(), ent3) !=
+                      gEdgeList.end())) {
                     // Edges ent2 and ent3 bound this face
                     useGFace.push_back(*gFIt);
                     break;
@@ -621,36 +591,39 @@ void updateBoVec<3, MFace>
               }
               else if(ent->dim() == 1 && (ent2->dim() + ent3->dim() == 1)) {
                 const GEntity *entCmp;
-                if(ent2->dim() == 1) entCmp = ent2;
-                else entCmp = ent3;
+                if(ent2->dim() == 1)
+                  entCmp = ent2;
+                else
+                  entCmp = ent3;
                 // Which GFace is bounded by entCmp
-                for(std::list<GFace*>::const_iterator gFIt = gFaceList.begin();
+                for(std::list<GFace *>::const_iterator gFIt = gFaceList.begin();
                     gFIt != gFaceList.end(); ++gFIt) {
                   gEdgeList = (*gFIt)->edges();
-                  if(std::find(gEdgeList.begin(), gEdgeList.end(), entCmp)
-                     != gEdgeList.end()) {
+                  if(std::find(gEdgeList.begin(), gEdgeList.end(), entCmp) !=
+                     gEdgeList.end()) {
                     // Edge entCmp and the original edge bound this face
                     useGFace.push_back(*gFIt);
                     break;
                   }
                 }
               }
-            }  // Stupid triangles
-          }  // End if face in zone
-        }  // End loop over faces
+            } // Stupid triangles
+          } // End if face in zone
+        } // End loop over faces
         // Duplicates are a possibility, remove
         useGFace.sort();
         useGFace.unique();
 
-//--'useGFace' now contains the face entities that connect to vertex.  A BC
-//--patch will be written for each of them.
+        //--'useGFace' now contains the face entities that connect to vertex.  A
+        //BC
+        //--patch will be written for each of them.
 
-        for(std::list<const GFace*>::const_iterator gFIt = useGFace.begin();
+        for(std::list<const GFace *>::const_iterator gFIt = useGFace.begin();
             gFIt != useGFace.end(); ++gFIt) {
-
           SPoint2 par;
-          if(!reparamMeshVertexOnFace(const_cast<MVertex*>(vertex), *gFIt, par))
-            goto getNormalFromElements;  // :P  After all that!
+          if(!reparamMeshVertexOnFace(const_cast<MVertex *>(vertex), *gFIt,
+                                      par))
+            goto getNormalFromElements; // :P  After all that!
 
           SVector3 boNormal = (*gFIt)->normal(par);
           SPoint3 interior(0., 0., 0.);
@@ -666,29 +639,28 @@ void updateBoVec<3, MFace>
           if(dot(boNormal, SVector3(vertex->point(), interior)) < 0.)
             boNormal.negate();
 
-          zoneBoVec.push_back(VertexBoundary(zoneIndex, (*gFIt)->tag(),
-                                             boNormal,
-                                             const_cast<MVertex*>(vertex),
-                                             vertIndex));
+          zoneBoVec.push_back(
+            VertexBoundary(zoneIndex, (*gFIt)->tag(), boNormal,
+                           const_cast<MVertex *>(vertex), vertIndex));
           patch.add((*gFIt)->tag());
         }
       }
       break;
     case 2:
 
-/*--------------------------------------------------------------------*
- * The vertex exists on a face and belongs to only 1 BC patch.
- *--------------------------------------------------------------------*/
+      /*--------------------------------------------------------------------*
+       * The vertex exists on a face and belongs to only 1 BC patch.
+       *--------------------------------------------------------------------*/
 
       {
-        const GFace *const gFace = static_cast<const GFace*>(ent);
+        const GFace *const gFace = static_cast<const GFace *>(ent);
         SPoint2 par;
-        if(!reparamMeshVertexOnFace(const_cast<MVertex*>(vertex), gFace, par))
+        if(!reparamMeshVertexOnFace(const_cast<MVertex *>(vertex), gFace, par))
           goto getNormalFromElements;
 
-        SVector3 boNormal = static_cast<const GFace*>(ent)->normal(par);
+        SVector3 boNormal = static_cast<const GFace *>(ent)->normal(par);
         SPoint3 interior(0., 0., 0.);
-          int cFace = 0;
+        int cFace = 0;
         const int nFace = faces.size();
         for(int iFace = 0; iFace != nFace; ++iFace) {
           if(faces[iFace].zoneIndex == zoneIndex) {
@@ -701,23 +673,22 @@ void updateBoVec<3, MFace>
           boNormal.negate();
 
         zoneBoVec.push_back(VertexBoundary(zoneIndex, gFace->tag(), boNormal,
-                                           const_cast<MVertex*>(vertex),
+                                           const_cast<MVertex *>(vertex),
                                            vertIndex));
         patch.add(gFace->tag());
       }
       break;
-    default:
-      goto getNormalFromElements;
+    default: goto getNormalFromElements;
     }
   }
   return;
 
- getNormalFromElements: ;
+getNormalFromElements:;
 
-/*--------------------------------------------------------------------*
- * Geometry information cannot be used - generate normals from the
- * elements
- *--------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------*
+   * Geometry information cannot be used - generate normals from the
+   * elements
+   *--------------------------------------------------------------------*/
 
   {
     if(warnNormFromElem && normalSource == 1) {
@@ -734,8 +705,8 @@ void updateBoVec<3, MFace>
     for(int iFace = 0; iFace != nFace; ++iFace) {
       if(faces[iFace].zoneIndex == zoneIndex) {
         // Normal to the boundary (unknown direction)
-        SVector3 bnt = faces[iFace].parentElement->getFace
-          (faces[iFace].parentFace).normal();
+        SVector3 bnt =
+          faces[iFace].parentElement->getFace(faces[iFace].parentFace).normal();
         // Inwards normal
         const SVector3 inwards(vertex->point(),
                                faces[iFace].parentElement->barycenter());
@@ -744,21 +715,17 @@ void updateBoVec<3, MFace>
       }
     }
     boNormal.normalize();
-    zoneBoVec.push_back(VertexBoundary(zoneIndex, 0, boNormal,
-                                       const_cast<MVertex*>(vertex),
-                                       vertIndex));
+    zoneBoVec.push_back(VertexBoundary(
+      zoneIndex, 0, boNormal, const_cast<MVertex *>(vertex), vertIndex));
     patch.add(0);
   }
-
 }
-
 
 /*******************************************************************************
  *
  * Routines from class MZoneBoundary
  *
  ******************************************************************************/
-
 
 /*==============================================================================
  *
@@ -784,49 +751,48 @@ void updateBoVec<3, MFace>
  *============================================================================*/
 
 template <unsigned DIM>
-int MZoneBoundary<DIM>::interiorBoundaryVertices
-(const int newZoneIndex, const MZone<DIM> &mZone, ZoneConnMap &zoneConnMap)
+int MZoneBoundary<DIM>::interiorBoundaryVertices(const int newZoneIndex,
+                                                 const MZone<DIM> &mZone,
+                                                 ZoneConnMap &zoneConnMap)
 {
-
   if(mZone.boVertMap.size() == 0) return 1;
   zoneConnMap.clear();
 
   // Loop over all the boundary vertices in 'mZone'
   for(typename MZone<DIM>::BoVertexMap::const_iterator vMapIt =
-        mZone.boVertMap.begin(); vMapIt != mZone.boVertMap.end(); ++vMapIt) {
+        mZone.boVertMap.begin();
+      vMapIt != mZone.boVertMap.end(); ++vMapIt) {
+    //--Find or insert this vertex into the global map
 
-//--Find or insert this vertex into the global map
-
-//     bool debug = false;
-//     if(vMapIt->first->x() == 1. && vMapIt->first->y() == 0.) {
-//       std::cout << "Working with vertex(1, 0): " << vMapIt->first
-//                 << " for zone " << newZoneIndex << std::endl;
-//       debug = true;
-//     }
+    //     bool debug = false;
+    //     if(vMapIt->first->x() == 1. && vMapIt->first->y() == 0.) {
+    //       std::cout << "Working with vertex(1, 0): " << vMapIt->first
+    //                 << " for zone " << newZoneIndex << std::endl;
+    //       debug = true;
+    //     }
     std::pair<typename GlobalBoVertexMap::iterator, bool> insGblBoVertMap =
-      globalBoVertMap.insert(std::pair<const MVertex*, GlobalVertexData<FaceT> >
-                             (vMapIt->first, GlobalVertexData<FaceT>()));
+      globalBoVertMap.insert(
+        std::pair<const MVertex *, GlobalVertexData<FaceT> >(
+          vMapIt->first, GlobalVertexData<FaceT>()));
     GlobalVertexData<FaceT> &globalVertData = insGblBoVertMap.first->second;
-                                        // Ref. to the global boundary vertex
-                                        // data
+    // Ref. to the global boundary vertex
+    // data
     const ZoneVertexData<typename MZone<DIM>::BoFaceMap::const_iterator>
-      &zoneVertData = vMapIt->second;   // Ref. to boundary vertex data for a
-                                        // zone
+      &zoneVertData = vMapIt->second; // Ref. to boundary vertex data for a
+                                      // zone
     if(insGblBoVertMap.second) {
-
-//--A new vertex was inserted
+      //--A new vertex was inserted
 
       // Copy faces
       const int nFace = zoneVertData.faces.size();
       for(int iFace = 0; iFace != nFace; ++iFace) {
-
-#if (0)
+#if(0)
         // NBN: changing the member object for a pointer means
         // we need to do the following in two steps (see below)
 
-        globalVertData.faces.push_back
-          (typename GlobalVertexData<FaceT>::FaceDataB
-           (newZoneIndex, zoneVertData.faces[iFace]));
+        globalVertData.faces.push_back(
+          typename GlobalVertexData<FaceT>::FaceDataB(
+            newZoneIndex, zoneVertData.faces[iFace]));
 
 #else
         // Using FaceAllocator<T> with face2Pool, the std constructors
@@ -842,88 +808,86 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices
         // See adjusted version of MZoneBoundary::clear();
 
         // Step 1: append new FaceDataB<> object
-        typename GlobalVertexData<FaceT>::FaceDataB& tFDB =
-          globalVertData.faces.push_back
-              (typename GlobalVertexData<FaceT>::FaceDataB
-              (newZoneIndex, zoneVertData.faces[iFace]) );
+        typename GlobalVertexData<FaceT>::FaceDataB &tFDB =
+          globalVertData.faces.push_back(
+            typename GlobalVertexData<FaceT>::FaceDataB(
+              newZoneIndex, zoneVertData.faces[iFace]));
 
         // Step 2: construct its internal face object
         tFDB.face = new FaceT(zoneVertData.faces[iFace]->first);
 
-      #if (DEBUG_FaceT)
-        if (! tFDB.face) {
-          Msg::Info("MZoneBoundary<DIM>::interiorBoundaryVertices, failed to alloc face object");
-        } else {
-          int nv = tFDB.face->getNumVertices();
-          Msg::Info("interiorBoundaryVertices: allocated FaceT object %5d with %d verts", ++iCount, nv);
+#if(DEBUG_FaceT)
+        if(!tFDB.face) {
+          Msg::Info("MZoneBoundary<DIM>::interiorBoundaryVertices, failed to "
+                    "alloc face object");
         }
-      #endif
-
+        else {
+          int nv = tFDB.face->getNumVertices();
+          Msg::Info("interiorBoundaryVertices: allocated FaceT object %5d with "
+                    "%d verts",
+                    ++iCount, nv);
+        }
+#endif
 
 #endif
       }
 
       // Copy information about the vertex in the zone
-      globalVertData.zoneData.push_back
-        (typename GlobalVertexData<FaceT>::ZoneData
-         (zoneVertData.index, newZoneIndex));
+      globalVertData.zoneData.push_back(
+        typename GlobalVertexData<FaceT>::ZoneData(zoneVertData.index,
+                                                   newZoneIndex));
     }
     else {
-
-//--This vertex already exists and zone connectivity must be determined
+      //--This vertex already exists and zone connectivity must be determined
 
       // Add to the zone connectivity
       const int nPrevZone = globalVertData.zoneData.size();
       for(int iPrevZone = 0; iPrevZone != nPrevZone; ++iPrevZone) {
-        ZoneConnectivity &zoneConn =
-          zoneConnMap[ZonePair(globalVertData.zoneData[iPrevZone].zoneIndex,
-                               newZoneIndex)];
-        zoneConn.vertexPairVec.push_back
-          (ZoneConnectivity::VertexPair
-           // const_cast okay, no changes to keys in 'globalBoVertMap'
-           (const_cast<MVertex*>(insGblBoVertMap.first->first),
-            globalVertData.zoneData[iPrevZone].zoneIndex,
-            newZoneIndex,
-            globalVertData.zoneData[iPrevZone].vertexIndex,
-            zoneVertData.index));
+        ZoneConnectivity &zoneConn = zoneConnMap[ZonePair(
+          globalVertData.zoneData[iPrevZone].zoneIndex, newZoneIndex)];
+        zoneConn.vertexPairVec.push_back(
+          ZoneConnectivity::VertexPair
+          // const_cast okay, no changes to keys in 'globalBoVertMap'
+          (const_cast<MVertex *>(insGblBoVertMap.first->first),
+           globalVertData.zoneData[iPrevZone].zoneIndex, newZoneIndex,
+           globalVertData.zoneData[iPrevZone].vertexIndex, zoneVertData.index));
       }
 
       // Update the list of faces attached to this vertex
       unsigned nGFace = globalVertData.faces.size();
-                                        // This is the number of faces searched
-                                        // from 'globalVertData'.  It will only
-                                        // decrease if the size() is less.
-                                        // Since a FaceVector swaps the last
-                                        // element into the erased index, this
-                                        // implies that if new faces are added,
-                                        // then old ones deleted, some of the
-                                        // faces from zoneVertData may also be
-                                        // searched.  This is okay since they
-                                        // are all unique.
+      // This is the number of faces searched
+      // from 'globalVertData'.  It will only
+      // decrease if the size() is less.
+      // Since a FaceVector swaps the last
+      // element into the erased index, this
+      // implies that if new faces are added,
+      // then old ones deleted, some of the
+      // faces from zoneVertData may also be
+      // searched.  This is okay since they
+      // are all unique.
       const typename MZone<DIM>::BoFaceMap::const_iterator *zFace =
         &zoneVertData.faces[0];
       for(int nZFace = zoneVertData.faces.size(); nZFace--;) {
         bool foundMatch = false;
-        for(unsigned int iGFace = 0; iGFace != nGFace; ++iGFace)
-        {
+        for(unsigned int iGFace = 0; iGFace != nGFace; ++iGFace) {
           // NBN: face is now a pointer, so need to de-reference
-        //if((*zFace)->first ==  globalVertData.faces[iGFace].face )
-            if(globalVertData.faces[iGFace].face){
-                if((*zFace)->first == *(globalVertData.faces[iGFace].face)) {
-                    foundMatch = true;
-                    // Faces match - delete from 'globalVertData'.
-                    globalVertData.faces.erase(iGFace);
-                    // Erasing from the FaceVector swaps the last element into this
-                    // index.  We only decrease nGFace if the size is less.
-                    nGFace = std::min(globalVertData.faces.size(), nGFace);
-                    break;
-                }
+          // if((*zFace)->first ==  globalVertData.faces[iGFace].face )
+          if(globalVertData.faces[iGFace].face) {
+            if((*zFace)->first == *(globalVertData.faces[iGFace].face)) {
+              foundMatch = true;
+              // Faces match - delete from 'globalVertData'.
+              globalVertData.faces.erase(iGFace);
+              // Erasing from the FaceVector swaps the last element into this
+              // index.  We only decrease nGFace if the size is less.
+              nGFace = std::min(globalVertData.faces.size(), nGFace);
+              break;
             }
+          }
         }
         if(!foundMatch) {
           // New face - add to 'globalVertData'
-          globalVertData.faces.push_back
-            (typename GlobalVertexData<FaceT>::FaceDataB(newZoneIndex, *zFace));
+          globalVertData.faces.push_back(
+            typename GlobalVertexData<FaceT>::FaceDataB(newZoneIndex, *zFace));
         }
         ++zFace;
       }
@@ -935,17 +899,15 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices
       }
       else {
         // Update the list of zones attached to this vertex
-        globalVertData.zoneData.push_back
-          (typename GlobalVertexData<FaceT>::ZoneData
-           (zoneVertData.index, newZoneIndex));
+        globalVertData.zoneData.push_back(
+          typename GlobalVertexData<FaceT>::ZoneData(zoneVertData.index,
+                                                     newZoneIndex));
       }
     }
-  }  // End loop over boundary vertices
+  } // End loop over boundary vertices
 
   return 0;
-
 }
-
 
 /*==============================================================================
  *
@@ -979,32 +941,32 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices
  ******************************************************************************/
 
 template <unsigned DIM>
-int MZoneBoundary<DIM>::exteriorBoundaryVertices
-(const int normalSource, ZoneBoVec &zoneBoVec)
+int MZoneBoundary<DIM>::exteriorBoundaryVertices(const int normalSource,
+                                                 ZoneBoVec &zoneBoVec)
 {
-
   if(globalBoVertMap.size() == 0) return 1;
 
   zoneBoVec.clear();
-  zoneBoVec.reserve(3*globalBoVertMap.size()/2);
+  zoneBoVec.reserve(3 * globalBoVertMap.size() / 2);
 
-  BCPatchIndex patch;                   // Provides a BC patch index for each
-                                        // entity
-  bool warnNormFromElem = true;         // A warning that normals were
-                                        // determined from elements.  This
-                                        // warning is only give once (after
-                                        // which the flag is set to false)
+  BCPatchIndex patch; // Provides a BC patch index for each
+                      // entity
+  bool warnNormFromElem = true; // A warning that normals were
+                                // determined from elements.  This
+                                // warning is only give once (after
+                                // which the flag is set to false)
 
   const typename GlobalBoVertexMap::const_iterator vMapEnd =
     globalBoVertMap.end();
   for(typename GlobalBoVertexMap::const_iterator vMapIt =
-        globalBoVertMap.begin(); vMapIt != vMapEnd; ++vMapIt) {
+        globalBoVertMap.begin();
+      vMapIt != vMapEnd; ++vMapIt) {
     const int nZone = vMapIt->second.zoneData.size();
     for(int iZone = 0; iZone != nZone; ++iZone) {
       const typename GlobalVertexData<FaceT>::ZoneData &zoneData =
         vMapIt->second.zoneData[iZone]; // Ref. to data stored for this zone
 
-//--Try to find an outwards normal for this vertex
+      //--Try to find an outwards normal for this vertex
 
       if(normalSource) {
         updateBoVec<DIM, FaceT>(normalSource, vMapIt->first, zoneData.zoneIndex,
@@ -1014,7 +976,7 @@ int MZoneBoundary<DIM>::exteriorBoundaryVertices
       else {
         // Keys to 'globalBoVertMap' will not change so const_cast is okay.
         zoneBoVec.push_back(VertexBoundary(zoneData.zoneIndex, 0, SVector3(0.),
-                                           const_cast<MVertex*>(vMapIt->first),
+                                           const_cast<MVertex *>(vMapIt->first),
                                            zoneData.vertexIndex));
       }
     }
@@ -1034,9 +996,7 @@ int MZoneBoundary<DIM>::exteriorBoundaryVertices
   }
 
   return 0;
-
 }
-
 
 /*******************************************************************************
  *
@@ -1048,30 +1008,25 @@ int MZoneBoundary<DIM>::exteriorBoundaryVertices
  *
  ******************************************************************************/
 
-template<>
-template<>
+template <>
+template <>
 MZoneBoundary<2>::GlobalVertexData<MEdge>::FaceDataB::FaceDataB()
-  :
-  //face(0, 0),         // NBN: replaced this MEdge object
-    face(NULL),         // NBN: with a pointer to MEdge
-    parentElement(0),   // NBN: also, init members
-    parentFace(0),
-    faceIndex(0),
-    zoneIndex(0)
-{ }
+  : // face(0, 0),         // NBN: replaced this MEdge object
+    face(NULL), // NBN: with a pointer to MEdge
+    parentElement(0), // NBN: also, init members
+    parentFace(0), faceIndex(0), zoneIndex(0)
+{
+}
 
-template<>
-template<>
+template <>
+template <>
 MZoneBoundary<3>::GlobalVertexData<MFace>::FaceDataB::FaceDataB()
-   :
-  //face(0, 0, 0),      // NBN: replaced this MFace object
-    face(NULL),         // NBN: with a pointer to MFace
-    parentElement(0),   // NBN: also, init members
-    parentFace(0),
-    faceIndex(0),
-    zoneIndex(0)
-{ }
-
+  : // face(0, 0, 0),      // NBN: replaced this MFace object
+    face(NULL), // NBN: with a pointer to MFace
+    parentElement(0), // NBN: also, init members
+    parentFace(0), faceIndex(0), zoneIndex(0)
+{
+}
 
 /*******************************************************************************
  *

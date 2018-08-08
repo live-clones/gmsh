@@ -10,27 +10,26 @@
 
 // compute affine transformation from rotation/translation
 
-bool computeAffineTransformation(const double* rc, // rotation center
-                                   const double* ra, // rotation angle
-                                   const double* tr, // translation
-                                   std::vector<double>& tfo // transformation
-                                   );
+bool computeAffineTransformation(const double *rc, // rotation center
+                                 const double *ra, // rotation angle
+                                 const double *tr, // translation
+                                 std::vector<double> &tfo // transformation
+);
 // compute affine transfomration from rotation/translation
 
-bool computeAffineTransformation(const float* rc, // rotation center
-                                   const float* ra, // rotation angle
-                                   const float* tr, // translation
-                                   std::vector<double>& tfo // transformation
-                                   );
+bool computeAffineTransformation(const float *rc, // rotation center
+                                 const float *ra, // rotation angle
+                                 const float *tr, // translation
+                                 std::vector<double> &tfo // transformation
+);
 
 // invert affine transformation
 
-bool invertAffineTransformation(const std::vector<double>& tfo,
-                                  std::vector<double>& newTfo);
+bool invertAffineTransformation(const std::vector<double> &tfo,
+                                std::vector<double> &newTfo);
 
-// initialize transformation with unitary one 
+// initialize transformation with unitary one
 
-bool setUnitAffineTransformation(std::vector<double>& tfo);
-
+bool setUnitAffineTransformation(std::vector<double> &tfo);
 
 #endif

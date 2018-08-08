@@ -15,11 +15,12 @@
 
 #include "mathex.h"
 
-class mathEvaluator{
- private:
-  std::vector<smlib::mathex*> _expressions;
+class mathEvaluator {
+private:
+  std::vector<smlib::mathex *> _expressions;
   std::vector<double> _variables;
- public:
+
+public:
   // initialize one or more expressions depending on zero or more
   // variables. If an error occurs the vector of expressions is
   // cleared.
@@ -33,8 +34,8 @@ class mathEvaluator{
 
 #else
 
-class mathEvaluator{
- public:
+class mathEvaluator {
+public:
   mathEvaluator(std::vector<std::string> &expressions,
                 const std::vector<std::string> &variables)
   {
@@ -42,7 +43,7 @@ class mathEvaluator{
                "expressions");
     expressions.clear();
   }
-  ~mathEvaluator(){}
+  ~mathEvaluator() {}
   bool eval(const std::vector<double> &values, std::vector<double> &res)
   {
     return false;

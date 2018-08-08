@@ -11,7 +11,7 @@
 #include "ColorTable.h"
 
 class colorbarWindow : public Fl_Window {
- private:
+private:
   int font_height, marker_height, wedge_height;
   const char *label;
   double minval, maxval; // min and max data values
@@ -35,8 +35,9 @@ class colorbarWindow : public Fl_Window {
   void redraw_range(int a, int b);
   // redraw the marker and the text
   void redraw_marker();
- public:
-  colorbarWindow(int x, int y, int w, int h, const char *l=0);
+
+public:
+  colorbarWindow(int x, int y, int w, int h, const char *l = 0);
   void draw();
   int handle(int);
   void update(const char *name, double min, double max, GmshColorTable *ct,
