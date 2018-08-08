@@ -37,7 +37,7 @@ struct IPT {
     : _x1(x1), _x2(x2), _x3(x3), _x4(x4), _x5(0.0){};
 };
 
-////int C_COUNT = 0;
+// int C_COUNT = 0;
 
 // double _C1, _C2, _C3, _C4;
 static double GMSHSIZE(const SPoint3 &p, Field *f, double lc_nodal)

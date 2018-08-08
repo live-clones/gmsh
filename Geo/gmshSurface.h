@@ -34,7 +34,7 @@ public:
   };
   static gmshSurface *getSurface(int tag);
   virtual Range<double> parBounds(int i) const = 0;
-  /// Underlying geometric representation of this entity.
+  // Underlying geometric representation of this entity.
   enum gmshSurfaceType {
     Plane,
     Nurbs,

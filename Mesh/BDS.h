@@ -140,12 +140,8 @@ public:
   BDS_GeomEntity *g;
   std::vector<BDS_Edge *> edges;
 
-  // just a transition
   double &lcBGM() { return _lcBGM; }
-
-  /// \return Point characteristic length
   double &lc() { return _lcPTS; }
-  /// \return Point characteristic length
   double const &lc() const { return _lcPTS; }
 
   bool operator<(const BDS_Point &other) const { return iD < other.iD; }

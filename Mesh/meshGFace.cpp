@@ -131,8 +131,8 @@ bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
 
 void trueBoundary(const char *iii, GFace *gf, std::vector<SPoint2> &bnd)
 {
-  /// FILE* view_t = Fopen(iii,"w");
-  //      fprintf(view_t,"View \"True Boundary\"{\n");
+  // FILE* view_t = Fopen(iii,"w");
+  // fprintf(view_t,"View \"True Boundary\"{\n");
   std::vector<GEdge *> edg = gf->edges();
 
   std::set<GEdge *> edges(edg.begin(), edg.end());
@@ -149,16 +149,16 @@ void trueBoundary(const char *iii, GFace *gf, std::vector<SPoint2> &bnd)
         double xi = r.low() + (r.high() - r.low()) * t;
         p[k] = ge->reparamOnFace(gf, xi, i);
         if(k > 0) {
-          //	            	  fprintf(view_t,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p[k-1].x(),p[k-1].y(),0.0,
-          //	            		  p[k].x(),p[k].y(),0.0);
+          // fprintf(view_t,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p[k-1].x(),p[k-1].y(),0.0,
+          //         p[k].x(),p[k].y(),0.0);
           bnd.push_back(p[k - 1]);
           bnd.push_back(p[k]);
         }
       }
     }
   }
-  //      fprintf(view_t,"};\n");
-  //      fclose(view_t);
+  // fprintf(view_t,"};\n");
+  // fclose(view_t);
 }
 
 static void computeElementShapes(GFace *gf, double &worst, double &avg,
@@ -192,8 +192,6 @@ public:
     // only do it if a recombination has to be done
     if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
        CTX::instance()->mesh.algoRecombine == 2) {
-      // printf("GFace %d removing half of the points in the 1D
-      // mesh\n",gf->tag());
       std::vector<GEdge *> const &edges = gf->edges();
       std::vector<GEdge *>::const_iterator ite = edges.begin();
       while(ite != edges.end()) {
@@ -216,8 +214,6 @@ public:
             _middle[MEdge(v1, v3)] = v2;
           }
           _backup[*ite] = (*ite)->lines;
-          // printf("line %d goes from %d to %d\n",
-          //        (*ite)->tag(), (*ite)->lines.size()-1, temp.size()-1);
           (*ite)->lines = temp;
         }
         ++ite;
@@ -319,8 +315,6 @@ public:
       delete _gf->quadrangles[i];
     }
     _gf->quadrangles = qnew;
-    // printf("%d triangles %d
-    // quads\n",_gf->triangles.size(),_gf->quadrangles.size());
   }
   void finish()
   {
@@ -865,7 +859,6 @@ static void modifyInitialMeshForBoundaryLayers(
       const BoundaryLayerData &c1 = _columns->getColumn(v, i);
       const BoundaryLayerData &c2 = _columns->getColumn(v, i + 1);
       int N = std::min(c1._column.size(), c2._column.size());
-      //      printf("%d %d\n",c1._column.size(),c2._column.size());
       std::vector<MElement *> myCol;
       for(int l = 0; l < N; ++l) {
         MVertex *v11, *v12, *v21, *v22;
@@ -1202,7 +1195,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
                   (double)RAND_MAX;
       double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
                   (double)RAND_MAX;
-      //      printf("%22.15E %22.15E \n",XX,YY);
       doc.points[i].where.h = points[i]->u + XX;
       doc.points[i].where.v = points[i]->v + YY;
       doc.points[i].data = points[i];
@@ -1598,8 +1590,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
                                gf->meshStatistics.smallest_edge_length,
                                gf->meshStatistics.nbEdge,
                                gf->meshStatistics.nbGoodLength);
-  printf("=== Efficiency index is tau=%g\n",
-  gf->meshStatistics.efficiency_index);
   */
 
   gf->meshStatistics.status = GFace::DONE;
@@ -1653,9 +1643,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 
   if(debug) {
     char name[256];
-    //    sprintf(name, "trueBoundary%d.pos", gf->tag());
-    //    std::vector<SPoint2> bnd;
-    //    trueBoundary(name, gf,bnd);
+    // sprintf(name, "trueBoundary%d.pos", gf->tag());
+    // std::vector<SPoint2> bnd;
+    // trueBoundary(name, gf,bnd);
     sprintf(name, "real%d.pos", gf->tag());
     outputScalarField(m->triangles, name, 0, gf);
     sprintf(name, "param%d.pos", gf->tag());
@@ -1962,7 +1952,8 @@ static bool buildConsecutiveListOfVertices(
   return true;
 }
 
-static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh, bool debug = true)
+static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
+                                  bool debug = true)
 {
   if(CTX::instance()->debugSurface > 0 &&
      gf->tag() != CTX::instance()->debugSurface) {
@@ -2034,7 +2025,6 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh, 
       if(it2 != INV.end()) {
         it->first->_periodicCounterpart = it2->second;
         it2->second->_periodicCounterpart = it->first;
-        //	printf("%d --> %d\n", it2->second->iD,it->first->iD);
       }
       INV[it->second] = it->first;
     }
@@ -2071,7 +2061,6 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh, 
   {
     int count = 0;
 
-    /////////////////////////////////////////////////////////////////
     // Embedded Vertices
     // add embedded vertices
     std::list<GVertex *> emb_vertx = gf->embeddedVertices();
@@ -2115,7 +2104,6 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh, 
       pp->g = m->get_geom(-(*itvx)->tag(), 0);
       pp->lcBGM() = BGM_MeshSize(*itvx, 0, 0, v->x(), v->y(), v->z());
       pp->lc() = pp->lcBGM();
-      //      printf("%g\n",pp->lc());
       recoverMap[pp] = v;
       double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
                   (double)RAND_MAX;
@@ -2128,7 +2116,6 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh, 
       count++;
       ++itvx;
     }
-    //    nbPointsTotal += count;
 
     std::vector<GEdge *> const &emb_edges = gf->embeddedEdges();
     std::vector<GEdge *>::const_iterator ite = emb_edges.begin();
@@ -2199,7 +2186,6 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh, 
               pp->lcBGM() = BGM_MeshSize(*ite, uu, 0, v->x(), v->y(), v->z());
             }
             pp->lc() = pp->lcBGM();
-            //      printf("%g\n",pp->lc());
             recoverMap[pp] = v;
             facile[v] = pp;
             double XX = CTX::instance()->mesh.randFactor * LC2D *
@@ -2223,8 +2209,6 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh, 
       ++ite;
     }
 
-    /////////////////////////////////////////////////////////////////
-
     for(unsigned int i = 0; i < edgeLoops_BDS.size(); i++) {
       std::vector<BDS_Point *> &edgeLoop_BDS = edgeLoops_BDS[i];
       for(unsigned int j = 0; j < edgeLoop_BDS.size(); j++) {
@@ -2246,7 +2230,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh, 
     // vertices
 
     if(du / dv < 1200 && dv / du < 1200) {
-      // FIX A BUG HERE IF THE SIZE OF THE BOX IS ZERO
+      // Fix a bug here if the size of the box is zero
       bbox.makeCube();
     }
 
@@ -2298,8 +2282,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh, 
   }
 #else
   {
-    /// FIXME FOR PERIODIC : some MVertices should be duplicated...
-    /// Still to be done...
+    // FIXME for periodic: some MVertices should be duplicated... Still to be
+    // done
     std::vector<MVertex *> v;
     std::map<MVertex *, BDS_Point *> recoverMapInv;
     for(unsigned int i = 0; i < edgeLoops_BDS.size(); i++) {
@@ -2311,7 +2295,6 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh, 
       }
     }
 
-    //    printf("coucou2 %d verices\n",v.size());
     std::map<MVertex *, SPoint3> pos;
     for(unsigned int i = 0; i < v.size(); i++) {
       MVertex *v0 = v[i];
@@ -2552,7 +2535,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh, 
                                  gf->meshStatistics.longest_edge_length,
                                  gf->meshStatistics.smallest_edge_length,
                                  gf->meshStatistics.nbEdge,
-                                 gf->meshStatistics.nbGoodLength);*/
+                                 gf->meshStatistics.nbGoodLength); */
     gf->meshStatistics.status = GFace::DONE;
 
     if(debug) {

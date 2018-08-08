@@ -205,12 +205,12 @@ void filterColumns(std::vector<MElement *> &elem,
         c[i]->reverse();
       toKeep.push_back(c[i]);
     }
-    //    for (unsigned int i=MAX;i<c.size();i++){
-    /// FIXME !!!
-    //      delete c[i];
-    //    }
+    // for (unsigned int i=MAX;i<c.size();i++){
+    // FIXME !!!
+    //   delete c[i];
+    // }
   }
-  //  printf("%d --> %d\n", (int)elem.size(), (int)toKeep.size());
+  // printf("%d --> %d\n", (int)elem.size(), (int)toKeep.size());
   elem = toKeep;
 }
 

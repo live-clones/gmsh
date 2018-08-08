@@ -297,8 +297,6 @@ bool edges_sort(std::pair<double, BDS_Edge *> a,
 
 static bool middlePoint(GFace *gf, BDS_Edge *e, double &u, double &v)
 {
-  // try that
-
   double u1 = e->p1->u;
   double u2 = e->p2->u;
   double v1 = e->p1->v;
@@ -324,12 +322,10 @@ static bool middlePoint(GFace *gf, BDS_Edge *e, double &u, double &v)
                           (Z - Z2) * (Z - Z2));
     // 1 ------ p -- 2
     if(l1 > 1.2 * l2) {
-      //      printf("1 %g 2 %g \n",l1,l2);
       u2 = u;
       v2 = v;
     }
     else if(l2 > 1.2 * l1) {
-      //      printf("1 %g 2 %g \n",l1,l2);
       u1 = u;
       v1 = v;
     }
@@ -363,10 +359,6 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
             p->edges[j]->p1 == p ? p->edges[j]->p2 : p->edges[j]->p1;
           if(!p1->degenerated && !p2->degenerated && p1->_periodicCounterpart &&
              p1->_periodicCounterpart == p2) {
-            //	    printf("splitting %d %d\n",
-            //p->edges[i]->p1->iD,p->edges[i]->p2->iD);
-            //	    printf("splitting %d %d\n",
-            //p->edges[j]->p1->iD,p->edges[j]->p2->iD);
             edges.push_back(std::make_pair(-10.0, p->edges[i]));
             edges.push_back(std::make_pair(-10.0, p->edges[j]));
           }
@@ -410,11 +402,11 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
         int N;
         if(!pointInsideParametricDomain(*true_boundary, pp, out, N)) {
           inside = false;
-          //	  printf("%d %d %g %g\n",e->p1->iD,e->p2->iD,U1,U2);
-          //	  printf("%g %g OUTSIDE ??\n",pp.x(),pp.y());
-          //	  FILE *f = fopen("TOTO.pos","a");
-          //	  fprintf(f,"SP(%g,%g,0){%d};\n",pp.x(),pp.y(),N);
-          //	  fclose(f);
+          // printf("%d %d %g %g\n",e->p1->iD,e->p2->iD,U1,U2);
+          // printf("%g %g OUTSIDE ??\n",pp.x(),pp.y());
+          // FILE *f = fopen("TOTO.pos","a");
+          // fprintf(f,"SP(%g,%g,0){%d};\n",pp.x(),pp.y(),N);
+          // fclose(f);
         }
       }
       if(inside && gpp.succeeded()) {
@@ -491,7 +483,7 @@ double getMaxLcWhenCollapsingEdge(GFace *gf, BDS_Mesh &m, BDS_Edge *e,
     double dz = center.z() - o->Z;
     double ps = dx*norm[0]+dy*norm[1]+dz*norm[2];
     if (ps < 0){
-      //      printf("FLIIIP\n");
+      // printf("FLIIIP\n");
       return true;
     }
     ++it;
@@ -499,6 +491,7 @@ double getMaxLcWhenCollapsingEdge(GFace *gf, BDS_Mesh &m, BDS_Edge *e,
   return false;
 }
 */
+
 void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
                       int &nb_collaps)
 {
@@ -578,7 +571,7 @@ void CHECK_STRANGE(const char *c, BDS_Mesh &m)
       }
     }
   }
-  if (strange)printf("strange(%s) = %d\n",c,strange);
+  if (strange) printf("strange(%s) = %d\n",c,strange);
 
   return;
   for (size_t int i=0;i<m.triangles.size();++i){
@@ -701,7 +694,6 @@ void modifyInitialMeshToRemoveDegeneracies(
   std::set<MVertex *, MVertexLessThanNum> degenerated;
   std::vector<BDS_Edge *> degenerated_edges;
   getDegeneratedVertices(m, recoverMap, degenerated, degenerated_edges);
-  //  printf("%d degenerated vertices\n",degenerated.size());
   for(std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
         recoverMap->begin();
       it != recoverMap->end(); ++it) {
@@ -785,20 +777,20 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     double maxE = MAXE_;
     double minE = MINE_;
     double t1 = Cpu();
-    //    outputScalarField(m.triangles, "0.pos", 1, gf);
+    // outputScalarField(m.triangles, "0.pos", 1, gf);
     splitEdgePass(gf, m, maxE, nb_split, true_boundary);
-    //    outputScalarField(m.triangles, "a.pos", 1, gf);
+    // outputScalarField(m.triangles, "a.pos", 1, gf);
     CHECK_STRANGE("split", m);
 
     double t2 = Cpu();
     swapEdgePass(gf, m, nb_swap);
     CHECK_STRANGE("swap", m);
-    //    outputScalarField(m.triangles, "b.pos", 1, gf);
+    // outputScalarField(m.triangles, "b.pos", 1, gf);
 
     double t3 = Cpu();
     collapseEdgePass(gf, m, minE, MAXNP, nb_collaps);
     CHECK_STRANGE("collapse", m);
-    //    outputScalarField(m.triangles, "c.pos", 1, gf);
+    // outputScalarField(m.triangles, "c.pos", 1, gf);
     double t4 = Cpu();
     swapEdgePass(gf, m, nb_swap);
     CHECK_STRANGE("swap", m);
@@ -809,10 +801,10 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     swapEdgePass(gf, m, nb_swap);
     CHECK_STRANGE("swap", m);
     double t7 = Cpu();
-    //    char name[256]; sprintf(name,"iter%d.pos",IT);
-    //    outputScalarField(m.triangles, name, 1, gf);
-    //    getchar();
-    //    }
+    // char name[256]; sprintf(name,"iter%d.pos",IT);
+    // outputScalarField(m.triangles, name, 1, gf);
+    // getchar();
+
     // clean up the mesh
     t_spl += t2 - t1;
     t_sw += t3 - t2;
@@ -821,20 +813,21 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     t_col += t4 - t3;
     t_sm += t6 - t5;
     m.cleanup();
-    //            char nn[256];
-    //            sprintf(nn,"ITER%d.pos",IT);
-    //            outputScalarField(m.triangles, nn, 1, gf);
-    //    	getchar();
+    // char nn[256];
+    // sprintf(nn,"ITER%d.pos",IT);
+    // outputScalarField(m.triangles, nn, 1, gf);
+    // getchar();
 
     IT++;
     Msg::Debug(" iter %3d minL %8.3f/%8.3f maxL %8.3f/%8.3f : "
                "%6d splits, %6d swaps, %6d collapses, %6d moves",
                IT, minL, minE, maxL, maxE, nb_split, nb_swap, nb_collaps,
                nb_smooth);
-    //    getchar();
+    // getchar();
     if(nb_split == 0 && nb_collaps == 0) break;
   }
-  //  outputScalarField(m.triangles, "before.pos", 1, gf);
+
+  // outputScalarField(m.triangles, "before.pos", 1, gf);
 
   int ITER = 0;
   int bad = 0;
@@ -849,10 +842,10 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     }
     double orientation = invalid > (int)m.triangles.size() / 2 ? -1.0 : 1.0;
 
-    //    printf("NOW FIXING BAD ELEMENTS\n");
+    // printf("NOW FIXING BAD ELEMENTS\n");
 
     while(1) {
-      //      printf("ITERATION %d\n",ITER);
+      // printf("ITERATION %d\n",ITER);
       bad = 0;
       invalid = 0;
       for(size_t i = 0; i < m.triangles.size(); i++) {
@@ -867,8 +860,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
       for(size_t i = 0; i < m.triangles.size(); i++) {
         BDS_Point *pts[4];
         m.triangles[i]->getNodes(pts);
-        //      if (pts[0]->degenerated + pts[1]->degenerated +
-        //      pts[2]->degenerated < 2){
+        // if (pts[0]->degenerated + pts[1]->degenerated + pts[2]->degenerated < 2){
         double val = orientation * BDS_Face_Validity(gf, m.triangles[i]);
         if(val <= 0.2) {
           if(!m.triangles[i]->deleted && val <= 0) invalid++;
@@ -877,12 +869,11 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
           pts[2]->config_modified = true;
           bad++;
           if(val < 0) {
-            //	    printf("%d %d %d
-            //invalid\n",pts[0]->iD,pts[1]->iD,pts[2]->iD);
+            // printf("%d %d %d invalid\n",pts[0]->iD,pts[1]->iD,pts[2]->iD);
             invalid++;
           }
         }
-        //      }
+        // }
       }
       if(++ITER == 10) {
         if(invalid && !computeNodalSizeField)
@@ -893,13 +884,13 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
 
       if(bad != 0) {
         int nb_swap = 0;
-        //int nb_smooth = 0;
+        // int nb_smooth = 0;
         swapEdgePass(gf, m, nb_swap, 1, orientation);
-        //	smoothVertexPass(gf, m, nb_smooth, true);
+        // smoothVertexPass(gf, m, nb_smooth, true);
       }
       else {
-        //      Msg::Info("Meshing surface %d : all elements are oriented
-        //      properly\n", gf->tag());
+        // Msg::Info("Meshing surface %d : all elements are oriented
+        //            properly\n", gf->tag());
         break;
       }
     }
@@ -1039,7 +1030,6 @@ void invalidEdgesPeriodic(
     }
   }
   Msg::Debug("%d similar edges should be split", toSplit.size() - aa);
-  //  printf("%d splits\n",toSplit.size());
 }
 
 // consider p1 and p2, 2 vertices that are different in the parametric
