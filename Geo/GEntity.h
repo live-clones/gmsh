@@ -60,7 +60,7 @@ public: // these will become protected at some point
 
   // corresponding principal vertices
   std::map<GVertex *, GVertex *> vertexCounterparts;
-
+  
   // the physical entitites (if any) that contain this entity
   std::vector<int> physicals;
 

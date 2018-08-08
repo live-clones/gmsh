@@ -177,7 +177,7 @@ protected:
   void
   _storePhysicalTagsInEntities(int dim,
                                std::map<int, std::map<int, std::string> > &map);
-
+  
 public:
   // region, face, edge and vertex iterators
   typedef std::set<GRegion *, GEntityLessThan>::iterator riter;
