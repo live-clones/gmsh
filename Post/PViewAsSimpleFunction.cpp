@@ -7,12 +7,12 @@
 #include "PViewData.h"
 #include "PViewAsSimpleFunction.h"
 
-double PViewEvaluator::operator() (double x, double y, double z) const
+double PViewEvaluator::operator()(double x, double y, double z) const
 {
-  PViewData * pvd = _pv->getData();
+  PViewData *pvd = _pv->getData();
   double value;
   bool found = pvd->searchScalar(x, y, z, &value, _step);
   //  printf("found %d %g %g %g %g\n",found,x,y,value,x*x+y*y);
-  if (found) return value;
+  if(found) return value;
   return 1.e22;
 }

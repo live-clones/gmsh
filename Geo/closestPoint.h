@@ -15,8 +15,7 @@
 #include "SPoint3.h"
 
 class GEntity;
-class closestPointFinder
-{
+class closestPointFinder {
 #if defined(HAVE_ANN)
   ANNkd_tree *kdtree;
   ANNpointArray zeronodes;
@@ -24,11 +23,12 @@ class closestPointFinder
   ANNdistArray dist;
 #endif
   double _tolerance;
- public :
-  closestPointFinder (GEntity*, double);
-  ~closestPointFinder ();
-  SPoint3 operator () (const SPoint3 & p);
-  inline double tol() const {return _tolerance;}
+
+public:
+  closestPointFinder(GEntity *, double);
+  ~closestPointFinder();
+  SPoint3 operator()(const SPoint3 &p);
+  inline double tol() const { return _tolerance; }
 };
 
 #endif

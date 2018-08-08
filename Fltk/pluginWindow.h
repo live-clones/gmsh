@@ -13,15 +13,16 @@
 
 class GMSH_Plugin;
 
-class pluginWindow{
- public:
+class pluginWindow {
+public:
   Fl_Window *win;
   Fl_Hold_Browser *browser;
   Fl_Multi_Browser *view_browser;
   Fl_Check_Button *record;
   void _createDialogBox(GMSH_Plugin *p, int x, int y, int width, int height);
- public:
-  pluginWindow(int deltaFontSize=0);
+
+public:
+  pluginWindow(int deltaFontSize = 0);
   void show(int viewIndex);
   void resetViewBrowser();
 };

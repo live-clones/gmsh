@@ -14,20 +14,19 @@ StringXNumber NearestNeighborOptions_Number[] = {
   {GMSH_FULLRC, "View", NULL, -1.},
 };
 
-extern "C"
+extern "C" {
+GMSH_Plugin *GMSH_RegisterNearestNeighborPlugin()
 {
-  GMSH_Plugin *GMSH_RegisterNearestNeighborPlugin()
-  {
-    return new GMSH_NearestNeighborPlugin();
-  }
+  return new GMSH_NearestNeighborPlugin();
+}
 }
 
 std::string GMSH_NearestNeighborPlugin::getHelp() const
 {
   return "Plugin(NearestNeighbor) computes the distance from each "
-    "point in `View' to its nearest neighbor.\n\n"
-    "If `View' < 0, the plugin is run on the current view.\n\n"
-    "Plugin(NearestNeighbor) is executed in-place.";
+         "point in `View' to its nearest neighbor.\n\n"
+         "If `View' < 0, the plugin is run on the current view.\n\n"
+         "Plugin(NearestNeighbor) is executed in-place.";
 }
 
 int GMSH_NearestNeighborPlugin::getNbOptions() const
@@ -49,7 +48,7 @@ PView *GMSH_NearestNeighborPlugin::execute(PView *v)
   PViewData *data1 = v1->getData();
 
   int totpoints = data1->getNumPoints();
-  if(!totpoints){
+  if(!totpoints) {
     Msg::Error("View[%d] contains no points", iView);
     return 0;
   }
@@ -57,8 +56,8 @@ PView *GMSH_NearestNeighborPlugin::execute(PView *v)
 #if defined(HAVE_ANN)
   ANNpointArray zeronodes = annAllocPts(totpoints, 3);
   int k = 0, step = 0;
-  for(int ent = 0; ent < data1->getNumEntities(step); ent++){
-    for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
+  for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
+    for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
       if(data1->skipElement(step, ent, ele)) continue;
       int numNodes = data1->getNumNodes(step, ent, ele);
       if(numNodes != 1) continue;
@@ -72,8 +71,8 @@ PView *GMSH_NearestNeighborPlugin::execute(PView *v)
   ANNdistArray dist = new ANNdist[2];
 
   v1->setChanged(true);
-  for(int ent = 0; ent < data1->getNumEntities(step); ent++){
-    for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
+  for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
+    for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
       if(data1->skipElement(step, ent, ele)) continue;
       int numNodes = data1->getNumNodes(step, ent, ele);
       if(numNodes != 1) continue;
@@ -86,8 +85,8 @@ PView *GMSH_NearestNeighborPlugin::execute(PView *v)
 
   delete kdtree;
   annDeallocPts(zeronodes);
-  delete [] index;
-  delete [] dist;
+  delete[] index;
+  delete[] dist;
 #else
   Msg::Error("Nearest neighbor computation requires ANN");
 #endif

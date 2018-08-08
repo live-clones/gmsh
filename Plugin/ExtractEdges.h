@@ -8,15 +8,13 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterExtractEdgesPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterExtractEdgesPlugin();
 }
 
-class GMSH_ExtractEdgesPlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_ExtractEdgesPlugin(){}
+class GMSH_ExtractEdgesPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_ExtractEdgesPlugin() {}
   std::string getName() const { return "ExtractEdges"; }
   std::string getShortHelp() const
   {
@@ -24,7 +22,7 @@ class GMSH_ExtractEdgesPlugin : public GMSH_PostPlugin
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

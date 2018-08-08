@@ -20,8 +20,7 @@
 #include "Field.h"
 #endif
 
-gmshFace::gmshFace(GModel *m, Surface *face)
-  : GFace(m, face->Num)
+gmshFace::gmshFace(GModel *m, Surface *face) : GFace(m, face->Num)
 {
   resetNativePtr(face);
   resetMeshAttributes();
@@ -30,14 +29,15 @@ gmshFace::gmshFace(GModel *m, Surface *face)
 // a face is degenerate if
 bool gmshFace::degenerate(int dim) const
 {
-  std::vector<GEdge*> const& eds = edges();
+  std::vector<GEdge *> const &eds = edges();
   int numNonDegenerate = 0;
-  std::set<GEdge*> t;
-  for(std::vector<GEdge*>::const_iterator it = eds.begin(); it != eds.end(); ++it){
+  std::set<GEdge *> t;
+  for(std::vector<GEdge *>::const_iterator it = eds.begin(); it != eds.end();
+      ++it) {
     GEdge *e = *it;
     GVertex *start = e->getBeginVertex();
-    GVertex *next  = e->getEndVertex();
-    if (start != next && t.find(e) == t.end()){
+    GVertex *next = e->getEndVertex();
+    if(start != next && t.find(e) == t.end()) {
       numNonDegenerate++;
     }
     t.insert(e);
@@ -53,24 +53,24 @@ void gmshFace::resetNativePtr(Surface *face)
   l_dirs.clear();
   edgeLoops.clear();
 
-  std::vector<GEdge*> eds;
+  std::vector<GEdge *> eds;
   std::vector<int> nums;
-  for(int i = 0; i < List_Nbr(s->Generatrices); i++){
+  for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
     Curve *c;
     List_Read(s->Generatrices, i, &c);
     GEdge *e = model()->getEdgeByTag(abs(c->Num));
-    if(e){
+    if(e) {
       eds.push_back(e);
       nums.push_back(c->Num);
     }
     else
       Msg::Error("Unknown curve %d", c->Num);
   }
-  for(int i = 0; i < List_Nbr(s->GeneratricesByTag); i++){
+  for(int i = 0; i < List_Nbr(s->GeneratricesByTag); i++) {
     int j;
     List_Read(s->GeneratricesByTag, i, &j);
     GEdge *e = model()->getEdgeByTag(abs(j));
-    if(e){
+    if(e) {
       eds.push_back(e);
       nums.push_back(j);
     }
@@ -78,18 +78,18 @@ void gmshFace::resetNativePtr(Surface *face)
       Msg::Error("Unknown curve %d", j);
   }
 
-  std::vector<GEdge*> l_wire;
+  std::vector<GEdge *> l_wire;
   l_wire.reserve(eds.size());
 
   GVertex *first = 0;
-  for(unsigned int i = 0; i < eds.size(); i++){
+  for(unsigned int i = 0; i < eds.size(); i++) {
     GEdge *e = eds[i];
     int num = nums[i];
     GVertex *start = (num > 0) ? e->getBeginVertex() : e->getEndVertex();
-    GVertex *next  = (num > 0) ? e->getEndVertex() : e->getBeginVertex();
-    if (!first) first = start;
+    GVertex *next = (num > 0) ? e->getEndVertex() : e->getBeginVertex();
+    if(!first) first = start;
     l_wire.push_back(e);
-    if (next == first){
+    if(next == first) {
       edgeLoops.push_back(GEdgeLoop(l_wire));
       l_wire.clear();
       first = 0;
@@ -97,7 +97,7 @@ void gmshFace::resetNativePtr(Surface *face)
     l_edges.push_back(e);
     e->addFace(this);
     l_dirs.push_back((num > 0) ? 1 : -1);
-    if (List_Nbr(s->Generatrices) == 2){
+    if(List_Nbr(s->Generatrices) == 2) {
       e->meshAttributes.minimumMeshSegments =
         std::max(e->meshAttributes.minimumMeshSegments, 2);
     }
@@ -114,9 +114,9 @@ double gmshFace::getMetricEigenvalue(const SPoint2 &pt)
   return s->geometry->getMetricEigenvalue(pt);
 }
 
-void gmshFace::setModelEdges(std::list<GEdge*> &ed)
+void gmshFace::setModelEdges(std::list<GEdge *> &ed)
 {
-  for (std::list<GEdge*>::iterator it = ed.begin(); it != ed.end() ; ++it){
+  for(std::list<GEdge *>::iterator it = ed.begin(); it != ed.end(); ++it) {
     l_edges.push_back(*it);
     (*it)->addFace(this);
     l_dirs.push_back(1);
@@ -129,11 +129,11 @@ void gmshFace::resetMeshAttributes()
   meshAttributes.recombineAngle = s->RecombineAngle;
   meshAttributes.method = s->Method;
   meshAttributes.extrude = s->Extrude;
-  if(meshAttributes.method == MESH_TRANSFINITE){
+  if(meshAttributes.method == MESH_TRANSFINITE) {
     meshAttributes.transfiniteArrangement = s->Recombine_Dir;
     meshAttributes.transfiniteSmoothing = s->TransfiniteSmoothing;
     meshAttributes.corners.clear();
-    for(int i = 0; i < List_Nbr(s->TrsfPoints); i++){
+    for(int i = 0; i < List_Nbr(s->TrsfPoints); i++) {
       Vertex *corn;
       List_Read(s->TrsfPoints, i, &corn);
       GVertex *gv = model()->getVertexByTag(corn->Num);
@@ -146,21 +146,18 @@ void gmshFace::resetMeshAttributes()
   meshAttributes.reverseMesh = s->ReverseMesh;
 }
 
-Range<double> gmshFace::parBounds(int i) const
-{
-  return Range<double>(0, 1);
-}
+Range<double> gmshFace::parBounds(int i) const { return Range<double>(0, 1); }
 
 SVector3 gmshFace::normal(const SPoint2 &param) const
 {
-  if(s->Typ != MSH_SURF_PLAN){
+  if(s->Typ != MSH_SURF_PLAN) {
     Vertex vu = InterpolateSurface(s, param[0], param[1], 1, 1);
     Vertex vv = InterpolateSurface(s, param[0], param[1], 1, 2);
     Vertex n = vu % vv;
     n.norme();
     return SVector3(n.Pos.X, n.Pos.Y, n.Pos.Z);
   }
-  else{
+  else {
     // We cannot use InterpolateSurface() for plane surfaces since it
     // relies on the mean plane, which does not respect the
     // orientation
@@ -173,7 +170,7 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
     GPoint pt = point(param.x(), param.y());
     double v[3] = {pt.x(), pt.y(), pt.z()};
     int NP = 10, tries = 0;
-    while(1){
+    while(1) {
       tries++;
       double angle = 0.;
       for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
@@ -190,11 +187,12 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
           angle += angle_plan(v, v1, v2, n);
         }
       }
-      if(fabs(angle) < 0.5){ // we're outside
+      if(fabs(angle) < 0.5) { // we're outside
         NP *= 2;
-        Msg::Debug("Could not compute normal of surface %d - retrying with %d points",
-                   tag(), NP);
-        if(tries > 10){
+        Msg::Debug(
+          "Could not compute normal of surface %d - retrying with %d points",
+          tag(), NP);
+        if(tries > 10) {
           Msg::Warning("Could not orient normal of surface %d", tag());
           return SVector3(n[0], n[1], n[2]);
         }
@@ -209,13 +207,13 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
 
 Pair<SVector3, SVector3> gmshFace::firstDer(const SPoint2 &param) const
 {
-  if(s->Typ == MSH_SURF_PLAN && !s->geometry){
+  if(s->Typ == MSH_SURF_PLAN && !s->geometry) {
     double x, y, z, VX[3], VY[3];
     getMeanPlaneData(VX, VY, x, y, z);
     return Pair<SVector3, SVector3>(SVector3(VX[0], VX[1], VX[2]),
                                     SVector3(VY[0], VY[1], VY[2]));
   }
-  else{
+  else {
     Vertex vu = InterpolateSurface(s, param[0], param[1], 1, 1);
     Vertex vv = InterpolateSurface(s, param[0], param[1], 1, 2);
     return Pair<SVector3, SVector3>(SVector3(vu.Pos.X, vu.Pos.Y, vu.Pos.Z),
@@ -223,46 +221,47 @@ Pair<SVector3, SVector3> gmshFace::firstDer(const SPoint2 &param) const
   }
 }
 
-void gmshFace::secondDer(const SPoint2 &param,
-                         SVector3 &dudu, SVector3 &dvdv, SVector3 &dudv) const
+void gmshFace::secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
+                         SVector3 &dudv) const
 {
-  if(s->Typ == MSH_SURF_PLAN && !s->geometry){
+  if(s->Typ == MSH_SURF_PLAN && !s->geometry) {
     dudu = SVector3(0., 0., 0.);
     dvdv = SVector3(0., 0., 0.);
     dudv = SVector3(0., 0., 0.);
   }
-  else{
+  else {
     Vertex vuu = InterpolateSurface(s, param[0], param[1], 2, 1);
     Vertex vvv = InterpolateSurface(s, param[0], param[1], 2, 2);
     Vertex vuv = InterpolateSurface(s, param[0], param[1], 2, 3);
-    dudu = SVector3(vuu.Pos.X,vuu.Pos.Y,vuu.Pos.Z);
-    dvdv = SVector3(vvv.Pos.X,vvv.Pos.Y,vvv.Pos.Z);
-    dudv = SVector3(vuv.Pos.X,vuv.Pos.Y,vuv.Pos.Z);
+    dudu = SVector3(vuu.Pos.X, vuu.Pos.Y, vuu.Pos.Z);
+    dvdv = SVector3(vvv.Pos.X, vvv.Pos.Y, vvv.Pos.Z);
+    dudv = SVector3(vuv.Pos.X, vuv.Pos.Y, vuv.Pos.Z);
   }
 }
 
 GPoint gmshFace::point(double par1, double par2) const
 {
   double pp[2] = {par1, par2};
-  if(s->Typ == MSH_SURF_PLAN && !s->geometry){
+  if(s->Typ == MSH_SURF_PLAN && !s->geometry) {
     double x, y, z, VX[3], VY[3];
     getMeanPlaneData(VX, VY, x, y, z);
     return GPoint(x + VX[0] * par1 + VY[0] * par2,
                   y + VX[1] * par1 + VY[1] * par2,
                   z + VX[2] * par1 + VY[2] * par2, this, pp);
   }
-  else{
+  else {
     Vertex v = InterpolateSurface(s, par1, par2, 0, 0);
     return GPoint(v.Pos.X, v.Pos.Y, v.Pos.Z, this, pp);
   }
 }
 
-GPoint gmshFace::closestPoint(const SPoint3 & qp, const double initialGuess[2]) const
+GPoint gmshFace::closestPoint(const SPoint3 &qp,
+                              const double initialGuess[2]) const
 {
 #if defined(HAVE_BFGS)
   return GFace::closestPoint(qp, initialGuess);
 #endif
-  if (s->Typ == MSH_SURF_PLAN && !s->geometry){
+  if(s->Typ == MSH_SURF_PLAN && !s->geometry) {
     double XP = qp.x();
     double YP = qp.y();
     double ZP = qp.z();
@@ -272,16 +271,16 @@ GPoint gmshFace::closestPoint(const SPoint3 & qp, const double initialGuess[2]) 
     double MN[2][2];
     double B[3] = {XP - x, YP - y, ZP - z};
     double BN[2], UV[2];
-    for (int i = 0; i < 2; i++){
+    for(int i = 0; i < 2; i++) {
       BN[i] = 0;
-      for (int k = 0; k < 3; k++){
+      for(int k = 0; k < 3; k++) {
         BN[i] += B[k] * M[k][i];
       }
     }
-    for (int i = 0; i < 2; i++){
-      for (int j = 0; j < 2; j++){
+    for(int i = 0; i < 2; i++) {
+      for(int j = 0; j < 2; j++) {
         MN[i][j] = 0;
-        for (int k = 0; k < 3; k++){
+        for(int k = 0; k < 3; k++) {
           MN[i][j] += M[k][i] * M[k][j];
         }
       }
@@ -296,14 +295,13 @@ GPoint gmshFace::closestPoint(const SPoint3 & qp, const double initialGuess[2]) 
   v.Pos.Z = qp.z();
   double u[2] = {initialGuess[0], initialGuess[1]};
   bool result = ProjectPointOnSurface(s, v, u);
-  if (!result)
-    return GPoint(-1.e22, -1.e22, -1.e22, 0, u);
+  if(!result) return GPoint(-1.e22, -1.e22, -1.e22, 0, u);
   return GPoint(v.Pos.X, v.Pos.Y, v.Pos.Z, this, u);
 }
 
 SPoint2 gmshFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
 {
-  if(s->Typ == MSH_SURF_PLAN){
+  if(s->Typ == MSH_SURF_PLAN) {
     double x, y, z, VX[3], VY[3];
     getMeanPlaneData(VX, VY, x, y, z);
     double const vec[3] = {qp.x() - x, qp.y() - y, qp.z() - z};
@@ -311,34 +309,30 @@ SPoint2 gmshFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
     double const v = prosca(vec, VY);
     return SPoint2(u, v);
   }
-  else{
+  else {
     return GFace::parFromPoint(qp, onSurface);
   }
 }
 
 GEntity::GeomType gmshFace::geomType() const
 {
-  switch(s->Typ){
+  switch(s->Typ) {
   case MSH_SURF_PLAN:
     if(s->geometry)
       return ParametricSurface;
     else
       return Plane;
   case MSH_SURF_REGL:
-  case MSH_SURF_TRIC:
-    return RuledSurface;
-  case MSH_SURF_DISCRETE:
-    return DiscreteSurface;
-  case MSH_SURF_BND_LAYER:
-    return BoundaryLayerSurface;
-  default:
-    return Unknown;
+  case MSH_SURF_TRIC: return RuledSurface;
+  case MSH_SURF_DISCRETE: return DiscreteSurface;
+  case MSH_SURF_BND_LAYER: return BoundaryLayerSurface;
+  default: return Unknown;
   }
 }
 
 bool gmshFace::containsPoint(const SPoint3 &pt) const
 {
-  if(s->Typ == MSH_SURF_PLAN){
+  if(s->Typ == MSH_SURF_PLAN) {
     // OK to use the normal from the mean plane here: we compensate
     // for the (possibly wrong) orientation at the end
     double n[3] = {meanPlane.a, meanPlane.b, meanPlane.c};
@@ -378,28 +372,29 @@ bool gmshFace::buildSTLTriangulation(bool force)
   stl_triangles.clear();
 
 #if defined(HAVE_MESH)
-  if (!triangles.size()){
+  if(!triangles.size()) {
     // FIXME: mesh only this surface...
     model()->mesh(2);
   }
 #endif
 
-  std::map<MVertex*,int> _v;
+  std::map<MVertex *, int> _v;
   int COUNT = 0;
-  for (unsigned int j = 0; j < triangles.size(); j++){
-    for (int i = 0; i < 3; i++){
+  for(unsigned int j = 0; j < triangles.size(); j++) {
+    for(int i = 0; i < 3; i++) {
       MVertex *v = triangles[j]->getVertex(i);
-      std::map<MVertex*,int>::iterator it = _v.find(v);
-      if (it == _v.end()){
+      std::map<MVertex *, int>::iterator it = _v.find(v);
+      if(it == _v.end()) {
         _v[v] = COUNT;
         stl_triangles.push_back(COUNT);
         COUNT++;
       }
-      else stl_triangles.push_back(it->second);
+      else
+        stl_triangles.push_back(it->second);
     }
   }
-  std::map<MVertex*,int>::iterator itv = _v.begin();
-  for ( ; itv != _v.end() ; ++itv){
+  std::map<MVertex *, int>::iterator itv = _v.begin();
+  for(; itv != _v.end(); ++itv) {
     MVertex *v = itv->first;
     stl_vertices_xyz.push_back(SPoint3(v->x(), v->y(), v->z()));
     SPoint2 param;

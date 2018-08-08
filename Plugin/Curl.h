@@ -8,15 +8,13 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterCurlPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterCurlPlugin();
 }
 
-class GMSH_CurlPlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_CurlPlugin(){}
+class GMSH_CurlPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_CurlPlugin() {}
   std::string getName() const { return "Curl"; }
   std::string getShortHelp() const
   {
@@ -24,7 +22,7 @@ class GMSH_CurlPlugin : public GMSH_PostPlugin
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber *getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

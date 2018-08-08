@@ -15,7 +15,7 @@ struct Hash_Edge : public std::unary_function<MEdge, size_t> {
     const MVertex *v[2];
     v[0] = e.getMinVertex();
     v[1] = e.getMaxVertex();
-    return HashFNV1a<sizeof(MVertex*[2])>::eval(v);
+    return HashFNV1a<sizeof(MVertex * [2])>::eval(v);
   }
 };
 

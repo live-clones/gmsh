@@ -10,23 +10,22 @@
 #include <vector>
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterCutParametricPlugin ();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterCutParametricPlugin();
 }
 
-class GMSH_CutParametricPlugin : public GMSH_PostPlugin 
-{ 
- private:
+class GMSH_CutParametricPlugin : public GMSH_PostPlugin {
+private:
   static double callback(int num, int action, double value, double *opt,
                          double step, double min, double max);
-  static std::string callbackStr(int num, int action, std::string value, 
+  static std::string callbackStr(int num, int action, std::string value,
                                  std::string &opt);
   static int fillXYZ();
   static int recompute;
   static std::vector<double> x, y, z;
- public:
-  GMSH_CutParametricPlugin(){}
+
+public:
+  GMSH_CutParametricPlugin() {}
   std::string getName() const { return "CutParametric"; }
   std::string getShortHelp() const
   {
@@ -34,9 +33,9 @@ class GMSH_CutParametricPlugin : public GMSH_PostPlugin
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber *getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   int getNbOptionsStr() const;
-  StringXString *getOptionStr(int iopt);  
+  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 
   static double callbackMinU(int, int, double);

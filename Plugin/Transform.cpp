@@ -19,29 +19,27 @@ StringXNumber TransformOptions_Number[] = {
   {GMSH_FULLRC, "Ty", NULL, 0.}, // cannot use T2 (reserved token in parser)
   {GMSH_FULLRC, "Tz", NULL, 0.}, // cannot use T3 (reserved token in parser)
   {GMSH_FULLRC, "SwapOrientation", NULL, 0.},
-  {GMSH_FULLRC, "View", NULL, -1.}
-};
+  {GMSH_FULLRC, "View", NULL, -1.}};
 
-extern "C"
+extern "C" {
+GMSH_Plugin *GMSH_RegisterTransformPlugin()
 {
-  GMSH_Plugin *GMSH_RegisterTransformPlugin()
-  {
-    return new GMSH_TransformPlugin();
-  }
+  return new GMSH_TransformPlugin();
+}
 }
 
 std::string GMSH_TransformPlugin::getHelp() const
 {
   return "Plugin(Transform) transforms the homogeneous "
-    "node coordinates (x,y,z,1) of the elements in "
-    "the view `View' by the matrix\n\n"
-    "[`A11' `A12' `A13' `Tx']\n"
-    "[`A21' `A22' `A23' `Ty']\n"
-    "[`A31' `A32' `A33' `Tz'].\n\n"
-    "If `SwapOrientation' is set, the orientation of the "
-    "elements is reversed.\n\n"
-    "If `View' < 0, the plugin is run on the current view.\n\n"
-    "Plugin(Transform) is executed in-place.";
+         "node coordinates (x,y,z,1) of the elements in "
+         "the view `View' by the matrix\n\n"
+         "[`A11' `A12' `A13' `Tx']\n"
+         "[`A21' `A22' `A23' `Ty']\n"
+         "[`A31' `A32' `A33' `Tz'].\n\n"
+         "If `SwapOrientation' is set, the orientation of the "
+         "elements is reversed.\n\n"
+         "If `View' < 0, the plugin is run on the current view.\n\n"
+         "Plugin(Transform) is executed in-place.";
 }
 
 int GMSH_TransformPlugin::getNbOptions() const
@@ -80,11 +78,11 @@ PView *GMSH_TransformPlugin::execute(PView *v)
 
   PViewData *data1 = v1->getData();
 
-  if(data1->isNodeData()){
+  if(data1->isNodeData()) {
     // tag all the nodes with "0" (the default tag)
-    for(int step = 0; step < data1->getNumTimeSteps(); step++){
-      for(int ent = 0; ent < data1->getNumEntities(step); ent++){
-        for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
+    for(int step = 0; step < data1->getNumTimeSteps(); step++) {
+      for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
+        for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
           if(data1->skipElement(step, ent, ele)) continue;
           if(swap) data1->reverseElement(step, ent, ele);
           for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
@@ -95,11 +93,11 @@ PView *GMSH_TransformPlugin::execute(PView *v)
   }
 
   // transform all "0" nodes
-  for(int step = 0; step < data1->getNumTimeSteps(); step++){
-    for(int ent = 0; ent < data1->getNumEntities(step); ent++){
-      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
+  for(int step = 0; step < data1->getNumTimeSteps(); step++) {
+    for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
+      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
         if(data1->skipElement(step, ent, ele)) continue;
-        for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++){
+        for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++) {
           double x, y, z;
           int tag = data1->getNode(step, ent, ele, nod, x, y, z);
           if(data1->isNodeData() && tag) continue;

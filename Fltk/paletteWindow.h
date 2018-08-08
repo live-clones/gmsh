@@ -12,23 +12,23 @@
 // Derive special windows from Fl_Double_Window to correctly process
 // the OS-specific shorcuts (Esc & Cmd-w on Mac, Alt+F4 on Windows)
 class paletteWindow : public Fl_Double_Window {
- public:
-  paletteWindow(int w, int h, bool nonModal, const char *l=0)
+public:
+  paletteWindow(int w, int h, bool nonModal, const char *l = 0)
     : Fl_Double_Window(w, h, l)
   {
     if(nonModal) set_non_modal();
   }
   virtual int handle(int event)
   {
-    switch (event) {
+    switch(event) {
     case FL_SHORTCUT:
     case FL_KEYBOARD:
 #if defined(__APPLE__)
-      if(Fl::test_shortcut(FL_META+'w') || Fl::test_shortcut(FL_Escape)){
+      if(Fl::test_shortcut(FL_META + 'w') || Fl::test_shortcut(FL_Escape)) {
 #elif defined(WIN32)
-      if(Fl::test_shortcut(FL_ALT+FL_F+4) || Fl::test_shortcut(FL_Escape)){
+      if(Fl::test_shortcut(FL_ALT + FL_F + 4) || Fl::test_shortcut(FL_Escape)) {
 #else
-      if(Fl::test_shortcut(FL_CTRL+'w') || Fl::test_shortcut(FL_Escape)){
+      if(Fl::test_shortcut(FL_CTRL + 'w') || Fl::test_shortcut(FL_Escape)) {
 #endif
         do_callback();
         return 1;

@@ -8,15 +8,13 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterModifyComponentsPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterModifyComponentsPlugin();
 }
 
-class GMSH_ModifyComponentsPlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_ModifyComponentsPlugin(){}
+class GMSH_ModifyComponentsPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_ModifyComponentsPlugin() {}
   std::string getName() const { return "ModifyComponents"; }
   std::string getShortHelp() const
   {
@@ -24,9 +22,9 @@ class GMSH_ModifyComponentsPlugin : public GMSH_PostPlugin
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);
+  StringXNumber *getOption(int iopt);
   int getNbOptionsStr() const;
-  StringXString* getOptionStr(int iopt);
+  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 };
 

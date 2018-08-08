@@ -8,15 +8,13 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterCurvedBndDistPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterCurvedBndDistPlugin();
 }
 
-class GMSH_CurvedBndDistPlugin : public GMSH_PostPlugin
-{
- public :
-  GMSH_CurvedBndDistPlugin(){}
+class GMSH_CurvedBndDistPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_CurvedBndDistPlugin() {}
   std::string getName() const { return "CurvedBndDist"; }
   std::string getShortHelp() const
   {

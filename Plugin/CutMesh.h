@@ -8,24 +8,19 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterCutMeshPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterCutMeshPlugin();
 }
 
-class GMSH_CutMeshPlugin : public GMSH_MeshPlugin
-{
- public:
-  GMSH_CutMeshPlugin(){}
+class GMSH_CutMeshPlugin : public GMSH_MeshPlugin {
+public:
+  GMSH_CutMeshPlugin() {}
   std::string getName() const { return "CutMesh"; }
-  std::string getShortHelp() const
-  {
-    return "Cut mesh along a levelset";
-  }
+  std::string getShortHelp() const { return "Cut mesh along a levelset"; }
   std::string getHelp() const;
   std::string getAuthor() const { return "G. Bricteux"; }
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);
+  StringXNumber *getOption(int iopt);
   void run();
 };
 

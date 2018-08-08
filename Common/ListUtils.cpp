@@ -256,7 +256,9 @@ void List_Invert(List_T *a, List_T *b)
   if(!a || !b) return;
   int i, N;
   N = List_Nbr(a);
-  for(i = 0; i < N; i++) { List_Add(b, List_Pointer(a, N - i - 1)); }
+  for(i = 0; i < N; i++) {
+    List_Add(b, List_Pointer(a, N - i - 1));
+  }
 }
 
 void List_Reset(List_T *liste)
@@ -278,7 +280,9 @@ void List_Copy(List_T *a, List_T *b)
   if(!a || !b) return;
   int i, N;
   N = List_Nbr(a);
-  for(i = 0; i < N; i++) { List_Add(b, List_Pointer(a, i)); }
+  for(i = 0; i < N; i++) {
+    List_Add(b, List_Pointer(a, i));
+  }
 }
 
 void List_Remove(List_T *a, int i)

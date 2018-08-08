@@ -11,7 +11,8 @@
 #include "OctreeInternals.h"
 
 int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
-                            octantBucket **buckets_head, globalInfo **globalPara)
+                            octantBucket **buckets_head,
+                            globalInfo **globalPara)
 // Initialize the buckets
 // Given by user: orig and size -- information about the domain
 //                maxElem -- maximum number of elements per bucket
@@ -21,12 +22,11 @@ int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
 {
   int i, j, k, tmp1;
   int p = 1;
-  int initial_buckets_num;  // which is a number of 8^p form for integer p
+  int initial_buckets_num; // which is a number of 8^p form for integer p
   double tmp[3], error[3];
   octantBucket *buckets;
 
-  for (i = 0; i < 3; i++)
-    error[i]= _size[i]*0.01;
+  for(i = 0; i < 3; i++) error[i] = _size[i] * 0.01;
 
   initial_buckets_num = (int)pow(8., p); // it is actually 8
 
@@ -35,20 +35,20 @@ int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
   (*globalPara)->maxElements = _maxElem;
   (*globalPara)->ptrToPrevElement = NULL;
 
-  for (i = 0; i < 3; i++) {
+  for(i = 0; i < 3; i++) {
     (*globalPara)->origin[i] = _orig[i];
     (*globalPara)->size[i] = _size[i];
   }
 
   (*globalPara)->numBuckets = initial_buckets_num;
   *buckets_head = new octantBucket;
-  if (!(*buckets_head)) {
+  if(!(*buckets_head)) {
     Msg::Error("initializeOctantBuckets could not allocate enough space");
     return (0);
   } // if could not allocate buckets
 
   buckets = new octantBucket[8];
-  if (!buckets) {
+  if(!buckets) {
     Msg::Error("initializeOctantBuckets could not allocate enough space");
     return (0);
   }
@@ -58,12 +58,12 @@ int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
   (*buckets_head)->numElements = 0;
   (*buckets_head)->lhead = NULL;
   (*buckets_head)->precision = 0;
-  for (i = 0; i< 3; i++) {
-    (*buckets_head)->minPt[i] = _orig[i]-error[i];
-    (*buckets_head)->maxPt[i] = _size[i]+_orig[i]+error[i];
+  for(i = 0; i < 3; i++) {
+    (*buckets_head)->minPt[i] = _orig[i] - error[i];
+    (*buckets_head)->maxPt[i] = _size[i] + _orig[i] + error[i];
   }
 
-  for (i = 0; i < (*globalPara)->numBuckets; i++) {
+  for(i = 0; i < (*globalPara)->numBuckets; i++) {
     buckets[i].numElements = 0;
     buckets[i].lhead = NULL;
     buckets[i].next = NULL;
@@ -72,19 +72,25 @@ int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
   }
 
   tmp1 = (int)(pow(2., p));
-  for (i = 0; i < 3; i++) {
-    tmp[i] = (double)(_size[i]+2*error[i])/tmp1;
+  for(i = 0; i < 3; i++) {
+    tmp[i] = (double)(_size[i] + 2 * error[i]) / tmp1;
   }
 
-  for (k = 0; k < tmp1; k++) {
-    for (j = 0; j < tmp1; j++) {
-      for (i = 0; i < tmp1; i++) {
-        buckets[i+j*tmp1+k*tmp1*tmp1].minPt[0] = (*buckets_head)->minPt[0] + tmp[0]*i;
-        buckets[i+j*tmp1+k*tmp1*tmp1].minPt[1] = (*buckets_head)->minPt[1] + tmp[1]*j;
-        buckets[i+j*tmp1+k*tmp1*tmp1].minPt[2] = (*buckets_head)->minPt[2] + tmp[2]*k;
-        buckets[i+j*tmp1+k*tmp1*tmp1].maxPt[0] = (*buckets_head)->minPt[0] + tmp[0]*(i+1);
-        buckets[i+j*tmp1+k*tmp1*tmp1].maxPt[1] = (*buckets_head)->minPt[1] + tmp[1]*(j+1);
-        buckets[i+j*tmp1+k*tmp1*tmp1].maxPt[2] = (*buckets_head)->minPt[2] + tmp[2]*(k+1);
+  for(k = 0; k < tmp1; k++) {
+    for(j = 0; j < tmp1; j++) {
+      for(i = 0; i < tmp1; i++) {
+        buckets[i + j * tmp1 + k * tmp1 * tmp1].minPt[0] =
+          (*buckets_head)->minPt[0] + tmp[0] * i;
+        buckets[i + j * tmp1 + k * tmp1 * tmp1].minPt[1] =
+          (*buckets_head)->minPt[1] + tmp[1] * j;
+        buckets[i + j * tmp1 + k * tmp1 * tmp1].minPt[2] =
+          (*buckets_head)->minPt[2] + tmp[2] * k;
+        buckets[i + j * tmp1 + k * tmp1 * tmp1].maxPt[0] =
+          (*buckets_head)->minPt[0] + tmp[0] * (i + 1);
+        buckets[i + j * tmp1 + k * tmp1 * tmp1].maxPt[1] =
+          (*buckets_head)->minPt[1] + tmp[1] * (j + 1);
+        buckets[i + j * tmp1 + k * tmp1 * tmp1].maxPt[2] =
+          (*buckets_head)->minPt[2] + tmp[2] * (k + 1);
       }
     }
   }
@@ -102,9 +108,9 @@ int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
   return (1);
 }
 
-int addElement2Bucket(octantBucket *_bucket, void * _element,
-                      double *_minBB, double *_maxBB,
-                      double *_ele_centroid, globalInfo *_globalPara)
+int addElement2Bucket(octantBucket *_bucket, void *_element, double *_minBB,
+                      double *_maxBB, double *_ele_centroid,
+                      globalInfo *_globalPara)
 // Add another element to the octant bucket's list.
 // If the bucket contains too many elements after adding this element,
 // refine this bucket and reallocate the elements of this bucket
@@ -119,17 +125,17 @@ int addElement2Bucket(octantBucket *_bucket, void * _element,
   octantBucket *ptrBucket;
 
   // check for duplicates
-  if ( checkElementInBucket(_bucket, _element) == 1) return -1;
+  if(checkElementInBucket(_bucket, _element) == 1) return -1;
 
   // printf("\n addToBucket...\n");
   // ptr1 = (ELink) malloc(sizeof(Elem));
   ptr1 = new Elem;
   (_globalPara->listAllElements).push_back(_element);
 
-  ptr1-> next = _bucket->lhead;
-  ptr1-> region = _element;
+  ptr1->next = _bucket->lhead;
+  ptr1->region = _element;
 
-  for (i = 0; i < 3; i++) {
+  for(i = 0; i < 3; i++) {
     ptr1->minPt[i] = _minBB[i];
     ptr1->maxPt[i] = _maxBB[i];
     ptr1->centroid[i] = _ele_centroid[i];
@@ -149,10 +155,9 @@ int addElement2Bucket(octantBucket *_bucket, void * _element,
 
   // check whether the number of elements in the bucket > maxElements
   // if true, refine the bucket and reallocate the elements
-  while ( flag == 1) {
+  while(flag == 1) {
     flag = 0;
-    if (_bucket->numElements > _globalPara->maxElements) {
-
+    if(_bucket->numElements > _globalPara->maxElements) {
       // printf(" going to subdivide\n");
 
       subdivideOctantBucket(_bucket, _globalPara);
@@ -160,42 +165,41 @@ int addElement2Bucket(octantBucket *_bucket, void * _element,
       // printf("finish subdivede \n");
 
       ptr1 = _bucket->lhead;
-      while (ptr1 != NULL) {
+      while(ptr1 != NULL) {
         ptrBucket = findElementBucket(_bucket, ptr1->centroid);
         ptr2 = ptr1;
         ptr1 = ptr1->next;
-        if (ptrBucket == NULL){
+        if(ptrBucket == NULL) {
           Msg::Error("Wrong , ptrBucket = NULL. A bug here!");
           return 0;
         }
         ptr2->next = ptrBucket->lhead;
         ptrBucket->lhead = ptr2;
         (ptrBucket->numElements)++;
-        if (ptrBucket->numElements > _globalPara->maxElements) {
+        if(ptrBucket->numElements > _globalPara->maxElements) {
           flag = 1;
           _bucket->lhead = NULL;
           _bucket = ptrBucket;
         }
       }
-      if (flag == 0) _bucket->lhead = NULL;
+      if(flag == 0) _bucket->lhead = NULL;
     }
   }
   return 1;
 }
 
-int checkElementInBucket(octantBucket *_bucket, void* _element)
+int checkElementInBucket(octantBucket *_bucket, void *_element)
 // Given an elememt and an octant bucket, check if the element
 // exists in the bucket's element list. return 1 if already exits,
 // otherwise, return 0
 {
   ELink ptr;
-  for (ptr = _bucket->lhead; ptr != NULL; ptr = ptr->next) {
+  for(ptr = _bucket->lhead; ptr != NULL; ptr = ptr->next) {
     // changed ****, compare the objected pointed by the void *.
-    if (ptr->region == _element)    return 1;
+    if(ptr->region == _element) return 1;
   }
   return 0;
 }
-
 
 octantBucket *findElementBucket(octantBucket *_buckets_head, double *_pt)
 // Find the leaf bucket which contains the point _pt
@@ -209,27 +213,25 @@ octantBucket *findElementBucket(octantBucket *_buckets_head, double *_pt)
   octantBucket *prevbucket = NULL;
   octantBucket *tmpbucket = _buckets_head->next;
 
-  while (tmpbucket != NULL) {
-    for (i = 0; i < num; i ++) {
-      for (j = 0; j < 3; j++) {
-        if (tmpbucket[i].minPt[j] > _pt[j] ||
-            tmpbucket[i].maxPt[j] < _pt[j])
+  while(tmpbucket != NULL) {
+    for(i = 0; i < num; i++) {
+      for(j = 0; j < 3; j++) {
+        if(tmpbucket[i].minPt[j] > _pt[j] || tmpbucket[i].maxPt[j] < _pt[j])
           break;
       }
-      if (j == 3) {
-        prevbucket = tmpbucket+i;
+      if(j == 3) {
+        prevbucket = tmpbucket + i;
         tmpbucket = tmpbucket[i].next;
         break;
       }
     } // for loop i
-    if (i == num) {
+    if(i == num) {
       // Msg::Error("No bucket contains the given point!");
       return NULL;
     }
   } // for while loop
   return prevbucket;
 }
-
 
 int subdivideOctantBucket(octantBucket *_bucket, globalInfo *_globalPara)
 // To many elements are in this octant bucket, so try to refine
@@ -242,36 +244,42 @@ int subdivideOctantBucket(octantBucket *_bucket, globalInfo *_globalPara)
   _bucket->next = new octantBucket[8];
   // _bucket->next  = (octantBucket *) calloc(numBuck,sizeof(octantBucket));
 
-  if (!_bucket->next) {
+  if(!_bucket->next) {
     Msg::Error("subdivideOctantBucket could not allocate enough space");
     return 0;
   }
 
-  _globalPara->numBuckets +=8;
-  if (_bucket->precision == _globalPara->maxPrecision)
+  _globalPara->numBuckets += 8;
+  if(_bucket->precision == _globalPara->maxPrecision)
     _globalPara->maxPrecision++;
-  for (i = 0; i < numBuck; i++) {
+  for(i = 0; i < numBuck; i++) {
     (_bucket->next[i]).numElements = 0;
     (_bucket->next[i]).lhead = NULL;
     (_bucket->next[i]).next = NULL;
     (_bucket->next[i]).parent = _bucket;
-    (_bucket->next[i]).precision = _bucket->precision+1;
+    (_bucket->next[i]).precision = _bucket->precision + 1;
   }
 
   tmp1 = 2;
-  for (i = 0; i < 3; i++) {
-    tmp[i] = ((double)(_bucket->maxPt[i]-_bucket->minPt[i]))/tmp1;
+  for(i = 0; i < 3; i++) {
+    tmp[i] = ((double)(_bucket->maxPt[i] - _bucket->minPt[i])) / tmp1;
   }
 
-  for (k = 0; k < tmp1; k++) {
-    for (j = 0; j < tmp1; j++) {
-      for (i = 0; i < tmp1; i++) {
-        _bucket->next[i+j*tmp1+k*tmp1*tmp1].minPt[0] = _bucket->minPt[0] + tmp[0]*i;
-        _bucket->next[i+j*tmp1+k*tmp1*tmp1].minPt[1] = _bucket->minPt[1] + tmp[1]*j;
-        _bucket->next[i+j*tmp1+k*tmp1*tmp1].minPt[2] = _bucket->minPt[2] + tmp[2]*k;
-        _bucket->next[i+j*tmp1+k*tmp1*tmp1].maxPt[0] = _bucket->minPt[0] + tmp[0]*(i+1);
-        _bucket->next[i+j*tmp1+k*tmp1*tmp1].maxPt[1] = _bucket->minPt[1] + tmp[1]*(j+1);
-        _bucket->next[i+j*tmp1+k*tmp1*tmp1].maxPt[2] = _bucket->minPt[2] + tmp[2]*(k+1);
+  for(k = 0; k < tmp1; k++) {
+    for(j = 0; j < tmp1; j++) {
+      for(i = 0; i < tmp1; i++) {
+        _bucket->next[i + j * tmp1 + k * tmp1 * tmp1].minPt[0] =
+          _bucket->minPt[0] + tmp[0] * i;
+        _bucket->next[i + j * tmp1 + k * tmp1 * tmp1].minPt[1] =
+          _bucket->minPt[1] + tmp[1] * j;
+        _bucket->next[i + j * tmp1 + k * tmp1 * tmp1].minPt[2] =
+          _bucket->minPt[2] + tmp[2] * k;
+        _bucket->next[i + j * tmp1 + k * tmp1 * tmp1].maxPt[0] =
+          _bucket->minPt[0] + tmp[0] * (i + 1);
+        _bucket->next[i + j * tmp1 + k * tmp1 * tmp1].maxPt[1] =
+          _bucket->minPt[1] + tmp[1] * (j + 1);
+        _bucket->next[i + j * tmp1 + k * tmp1 * tmp1].maxPt[2] =
+          _bucket->minPt[2] + tmp[2] * (k + 1);
       }
     }
   }
@@ -279,24 +287,24 @@ int subdivideOctantBucket(octantBucket *_bucket, globalInfo *_globalPara)
   return 1;
 }
 
-void *searchElement(octantBucket *_buckets_head, double *_pt, globalInfo *_globalPara,
-                    BBFunction BBElement, InEleFunction xyzInElement)
+void *searchElement(octantBucket *_buckets_head, double *_pt,
+                    globalInfo *_globalPara, BBFunction BBElement,
+                    InEleFunction xyzInElement)
 {
   int flag;
   octantBucket *ptrBucket;
   ELink ptr1;
-  std::vector<void*>::iterator iter;
-  void * ptrToEle = _globalPara->ptrToPrevElement;
+  std::vector<void *>::iterator iter;
+  void *ptrToEle = _globalPara->ptrToPrevElement;
 
-  if (ptrToEle) {
+  if(ptrToEle) {
     flag = xyzInElementBB(_pt, ptrToEle, BBElement);
-    if (flag == 1)
-      flag = xyzInElement(ptrToEle, _pt);
-    if (flag == 1) return ptrToEle;
+    if(flag == 1) flag = xyzInElement(ptrToEle, _pt);
+    if(flag == 1) return ptrToEle;
   }
 
   ptrBucket = findElementBucket(_buckets_head, _pt);
-  if (ptrBucket == NULL) {
+  if(ptrBucket == NULL) {
     // this is not an error
     Msg::Debug("The point is not in the domain");
     return NULL;
@@ -313,33 +321,32 @@ void *searchElement(octantBucket *_buckets_head, double *_pt, globalInfo *_globa
   }
 #endif
 
-  while (ptr1 != NULL){
+  while(ptr1 != NULL) {
     flag = xyzInElementBB(_pt, ptr1->region, BBElement);
-    if (flag == 1)
-      flag = xyzInElement(ptr1->region, _pt);
-    if (flag == 1) {
+    if(flag == 1) flag = xyzInElement(ptr1->region, _pt);
+    if(flag == 1) {
       _globalPara->ptrToPrevElement = ptr1->region;
       return ptr1->region;
     }
     ptr1 = ptr1->next;
   }
 
-  for (iter = (ptrBucket->listBB).begin();
-       iter != (ptrBucket->listBB).end(); iter++){
+  for(iter = (ptrBucket->listBB).begin(); iter != (ptrBucket->listBB).end();
+      iter++) {
     flag = xyzInElementBB(_pt, *iter, BBElement);
-    if (flag == 1)
-      flag = xyzInElement(*iter, _pt);
-    if (flag == 1) {
+    if(flag == 1) flag = xyzInElement(*iter, _pt);
+    if(flag == 1) {
       _globalPara->ptrToPrevElement = *iter;
       return *iter;
     }
   }
 
-  // printf("This point is not found in all elements! It is not in the domain \n");
+  // printf("This point is not found in all elements! It is not in the domain
+  // \n");
   return NULL;
 }
 
-int xyzInElementBB(double *_xyz, void * _region, BBFunction _BBElement)
+int xyzInElementBB(double *_xyz, void *_region, BBFunction _BBElement)
 // Check if xyz is in the region's bounding box, return 1 if true, 0 otherwise
 // BBElement is the function given by user to find the bounding box
 {
@@ -349,25 +356,25 @@ int xyzInElementBB(double *_xyz, void * _region, BBFunction _BBElement)
 
   (*_BBElement)(_region, minPt, maxPt);
 
-  for (i = 0; i < 3; i++) {
-    if (_xyz[i] > maxPt[i] || _xyz[i] < minPt[i]) return 0;
+  for(i = 0; i < 3; i++) {
+    if(_xyz[i] > maxPt[i] || _xyz[i] < minPt[i]) return 0;
   } // for ith direction
 
   return 1;
 }
 
-void insertOneBB(void* _region, double *_minPt, double *_maxPt, octantBucket *_bucket)
+void insertOneBB(void *_region, double *_minPt, double *_maxPt,
+                 octantBucket *_bucket)
 {
   int i;
   ELink ptr;
-  for (i = 0; i < 3; i++) {
-    if (_bucket->minPt[i] > _maxPt[i] || _bucket->maxPt[i] < _minPt[i])
-      return;
+  for(i = 0; i < 3; i++) {
+    if(_bucket->minPt[i] > _maxPt[i] || _bucket->maxPt[i] < _minPt[i]) return;
   }
-  if (_bucket->next == NULL) {
+  if(_bucket->next == NULL) {
     ptr = _bucket->lhead;
-    while (ptr != NULL) {
-      if (ptr->region == _region) return;
+    while(ptr != NULL) {
+      if(ptr->region == _region) return;
       ptr = ptr->next;
     }
 
@@ -376,21 +383,22 @@ void insertOneBB(void* _region, double *_minPt, double *_maxPt, octantBucket *_b
     return;
   }
 
-  for (i = 0; i < 8; i++)
-    insertOneBB(_region, _minPt, _maxPt, _bucket->next+i);
+  for(i = 0; i < 8; i++)
+    insertOneBB(_region, _minPt, _maxPt, _bucket->next + i);
   return;
 }
 
-void *searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_globalPara,
-                        BBFunction BBElement, InEleFunction xyzInElement,
-                        std::vector<void*> *_elements)
+void *searchAllElements(octantBucket *_buckets_head, double *_pt,
+                        globalInfo *_globalPara, BBFunction BBElement,
+                        InEleFunction xyzInElement,
+                        std::vector<void *> *_elements)
 {
   int flag, flag1;
   octantBucket *ptrBucket;
-  std::vector<void*>::iterator iter;
+  std::vector<void *>::iterator iter;
 
   ptrBucket = findElementBucket(_buckets_head, _pt);
-  if (ptrBucket == NULL) {
+  if(ptrBucket == NULL) {
     Msg::Debug("The point is not in the domain");
     return NULL;
   }
@@ -407,31 +415,29 @@ void *searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_g
 
   flag1 = 0;
   ELink ptr1 = ptrBucket->lhead;
-  while (ptr1 != NULL){
+  while(ptr1 != NULL) {
     flag = xyzInElementBB(_pt, ptr1->region, BBElement);
-    if (flag == 1)
-      flag = xyzInElement(ptr1->region, _pt);
-    if (flag == 1) {
+    if(flag == 1) flag = xyzInElement(ptr1->region, _pt);
+    if(flag == 1) {
       _elements->push_back(ptr1->region);
       flag1 = 1;
     }
     ptr1 = ptr1->next;
   }
 
-  for (iter = (ptrBucket->listBB).begin();
-       iter != (ptrBucket->listBB).end(); iter++){
+  for(iter = (ptrBucket->listBB).begin(); iter != (ptrBucket->listBB).end();
+      iter++) {
     flag = xyzInElementBB(_pt, *iter, BBElement);
-    if (flag == 1)
-      flag = xyzInElement(*iter, _pt);
-    if (flag == 1) {
+    if(flag == 1) flag = xyzInElement(*iter, _pt);
+    if(flag == 1) {
       _elements->push_back(*iter);
       flag1 = 1;
     }
   }
 
-  if (flag1)
-    return (void *)(_elements);
+  if(flag1) return (void *)(_elements);
 
-  // Msg::Warning("This point is not found in any element! It is not in the domain");
+  // Msg::Warning("This point is not found in any element! It is not in the
+  // domain");
   return NULL;
 }

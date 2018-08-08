@@ -17,16 +17,14 @@
 #include <gp_Pnt.hxx>
 
 OCCVertex::OCCVertex(GModel *m, int num, TopoDS_Vertex v, double lc)
-  : GVertex(m, num, lc)
-  , _v(v)
+  : GVertex(m, num, lc), _v(v)
 {
   max_curvature = -1;
   gp_Pnt pnt = BRep_Tool::Pnt(_v);
   _x = pnt.X();
   _y = pnt.Y();
   _z = pnt.Z();
-  if(model()->getOCCInternals())
-    model()->getOCCInternals()->bind(_v, num);
+  if(model()->getOCCInternals()) model()->getOCCInternals()->bind(_v, num);
 }
 
 OCCVertex::~OCCVertex()
@@ -40,7 +38,7 @@ void OCCVertex::setPosition(GPoint &p)
   _x = p.x();
   _y = p.y();
   _z = p.z();
-  if(mesh_vertices.size()){
+  if(mesh_vertices.size()) {
     mesh_vertices[0]->x() = p.x();
     mesh_vertices[0]->y() = p.y();
     mesh_vertices[0]->z() = p.z();
@@ -53,7 +51,7 @@ double max_surf_curvature(const GVertex *gv, double x, double y, double z,
   std::vector<GFace *> faces = _myGEdge->faces();
   std::vector<GFace *>::iterator it = faces.begin();
   double curv = 1.e-22;
-  while(it != faces.end()){
+  while(it != faces.end()) {
     SPoint2 par = gv->reparamOnFace((*it), 1);
     double cc = (*it)->curvatureDiv(par);
     if(cc > 0) curv = std::max(curv, cc);
@@ -64,11 +62,11 @@ double max_surf_curvature(const GVertex *gv, double x, double y, double z,
 
 double OCCVertex::max_curvature_of_surfaces() const
 {
-  if(max_curvature < 0){
-    for(std::vector<GEdge*>::const_iterator it = l_edges.begin();
-        it != l_edges.end(); ++it){
-      max_curvature = std::max(max_surf_curvature(this, x(), y(), z(), *it),
-                               max_curvature);
+  if(max_curvature < 0) {
+    for(std::vector<GEdge *>::const_iterator it = l_edges.begin();
+        it != l_edges.end(); ++it) {
+      max_curvature =
+        std::max(max_surf_curvature(this, x(), y(), z(), *it), max_curvature);
     }
     // printf("max curvature (%d) = %12.5E lc = %12.5E\n",tag(),
     //        max_curvature, prescribedMeshSizeAtVertex());
@@ -78,15 +76,16 @@ double OCCVertex::max_curvature_of_surfaces() const
 
 SPoint2 OCCVertex::reparamOnFace(const GFace *gf, int dir) const
 {
-  std::vector<GEdge*>::const_iterator it = l_edges.begin();
-  while(it != l_edges.end()){
-    std::vector<GEdge*> const& l = gf->edges();
-    if(std::find(l.begin(), l.end(), *it) != l.end()){
-      if((*it)->isSeam(gf)){
-        const TopoDS_Face *s = (TopoDS_Face*)gf->getNativePtr();
-        const TopoDS_Edge *c = (TopoDS_Edge*)(*it)->getNativePtr();
-        double s1,s0;
-        Handle(Geom2d_Curve) curve2d = BRep_Tool::CurveOnSurface(*c, *s, s0, s1);
+  std::vector<GEdge *>::const_iterator it = l_edges.begin();
+  while(it != l_edges.end()) {
+    std::vector<GEdge *> const &l = gf->edges();
+    if(std::find(l.begin(), l.end(), *it) != l.end()) {
+      if((*it)->isSeam(gf)) {
+        const TopoDS_Face *s = (TopoDS_Face *)gf->getNativePtr();
+        const TopoDS_Edge *c = (TopoDS_Edge *)(*it)->getNativePtr();
+        double s1, s0;
+        Handle(Geom2d_Curve) curve2d =
+          BRep_Tool::CurveOnSurface(*c, *s, s0, s1);
         if((*it)->getBeginVertex() == this)
           return (*it)->reparamOnFace(gf, s0, dir);
         else if((*it)->getEndVertex() == this)
@@ -96,24 +95,25 @@ SPoint2 OCCVertex::reparamOnFace(const GFace *gf, int dir) const
     ++it;
   }
   it = l_edges.begin();
-  while(it != l_edges.end()){
-    std::vector<GEdge*> const& l = gf->edges();
-    if(std::find(l.begin(), l.end(), *it) != l.end()){
-      if (gf->getNativeType() == GEntity::OpenCascadeModel){
-	const TopoDS_Face *s = (TopoDS_Face*)gf->getNativePtr();
-	const TopoDS_Edge *c = (TopoDS_Edge*)(*it)->getNativePtr();
-	double s1,s0;
-	Handle(Geom2d_Curve) curve2d = BRep_Tool::CurveOnSurface(*c, *s, s0, s1);
-	if((*it)->getBeginVertex() == this)
-	  return (*it)->reparamOnFace(gf, s0, dir);
-	else if((*it)->getEndVertex() == this)
-	  return (*it)->reparamOnFace(gf, s1, dir);
+  while(it != l_edges.end()) {
+    std::vector<GEdge *> const &l = gf->edges();
+    if(std::find(l.begin(), l.end(), *it) != l.end()) {
+      if(gf->getNativeType() == GEntity::OpenCascadeModel) {
+        const TopoDS_Face *s = (TopoDS_Face *)gf->getNativePtr();
+        const TopoDS_Edge *c = (TopoDS_Edge *)(*it)->getNativePtr();
+        double s1, s0;
+        Handle(Geom2d_Curve) curve2d =
+          BRep_Tool::CurveOnSurface(*c, *s, s0, s1);
+        if((*it)->getBeginVertex() == this)
+          return (*it)->reparamOnFace(gf, s0, dir);
+        else if((*it)->getEndVertex() == this)
+          return (*it)->reparamOnFace(gf, s1, dir);
       }
-      //if not OCCFace (OK for planar faces)
-      else{
-	const GPoint pt = point();
-	SPoint3 sp(pt.x(), pt.y(), pt.z());
-	gf->parFromPoint(sp);
+      // if not OCCFace (OK for planar faces)
+      else {
+        const GPoint pt = point();
+        SPoint3 sp(pt.x(), pt.y(), pt.z());
+        gf->parFromPoint(sp);
       }
     }
     ++it;

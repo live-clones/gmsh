@@ -20,9 +20,9 @@ class GRegion;
 class MElement;
 
 class openglWindow : public Fl_Gl_Window {
- private:
+private:
   static openglWindow *_lastHandled;
-  static void _setLastHandled(openglWindow*);
+  static void _setLastHandled(openglWindow *);
   bool _lock;
   bool _drawn;
   mousePosition _click, _curr, _prev;
@@ -32,42 +32,47 @@ class openglWindow : public Fl_Gl_Window {
   double _lassoXY[2];
   void _drawScreenMessage();
   void _drawBorder();
-  bool _select(int type, bool multiple, bool mesh, bool post, int x, int y, int w, int h,
-               std::vector<GVertex*> &vertices, std::vector<GEdge*> &edges,
-               std::vector<GFace*> &faces, std::vector<GRegion*> &regions,
-               std::vector<MElement*> &elements, std::vector<SPoint2> &points,
-               std::vector<PView*> &views);
- protected:
+  bool _select(int type, bool multiple, bool mesh, bool post, int x, int y,
+               int w, int h, std::vector<GVertex *> &vertices,
+               std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
+               std::vector<GRegion *> &regions,
+               std::vector<MElement *> &elements, std::vector<SPoint2> &points,
+               std::vector<PView *> &views);
+
+protected:
   void draw();
   int handle(int);
- public:
+
+public:
   int pixel_w();
   int pixel_h();
-  time_t rawtime,  prev_rawtime;
+  time_t rawtime, prev_rawtime;
   double response_frequency;
   int addPointMode;
   bool lassoMode, selectionMode;
-  int endSelection, undoSelection, invertSelection, quitSelection, changeSelection;
+  int endSelection, undoSelection, invertSelection, quitSelection,
+    changeSelection;
   std::string screenMessage[2];
   openglWindow(int x, int y, int w, int h);
   ~openglWindow();
-  drawContext *getDrawContext(){ return _ctx; }
-  char selectEntity(int type,
-                    std::vector<GVertex*> &vertices, std::vector<GEdge*> &edges,
-                    std::vector<GFace*> &faces, std::vector<GRegion*> &regions,
-                    std::vector<MElement*> &elements, std::vector<SPoint2> &points,
-                    std::vector<PView*> &views);
-  static openglWindow *getLastHandled(){ return _lastHandled; }
-  static void setLastHandled(openglWindow *w){ _lastHandled = w; }
+  drawContext *getDrawContext() { return _ctx; }
+  char selectEntity(int type, std::vector<GVertex *> &vertices,
+                    std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
+                    std::vector<GRegion *> &regions,
+                    std::vector<MElement *> &elements,
+                    std::vector<SPoint2> &points, std::vector<PView *> &views);
+  static openglWindow *getLastHandled() { return _lastHandled; }
+  static void setLastHandled(openglWindow *w) { _lastHandled = w; }
   void drawTooltip(const std::string &text);
   double frequency;
   void moveWithGamepad();
   Navigator *Nautilus;
   void setPoint(double x, double y, double z)
   {
-    _point[0] = x; _point[1] = y; _point[2] = z;
+    _point[0] = x;
+    _point[1] = y;
+    _point[2] = z;
   }
-
 };
 
 #endif

@@ -9,29 +9,29 @@
 
 #if defined(HAVE_FOURIER_MODEL)
 
-fourierEdge::fourierEdge(GModel *model, FM::TopoEdge* edge_, int tag,
-                         GVertex *v0, GVertex *v1) 
-  : GEdge(model, tag, v0, v1), edge(edge_) 
+fourierEdge::fourierEdge(GModel *model, FM::TopoEdge *edge_, int tag,
+                         GVertex *v0, GVertex *v1)
+  : GEdge(model, tag, v0, v1), edge(edge_)
 {
 }
 
 Range<double> fourierEdge::parBounds(int i) const
-{ 
-  return(Range<double>(0.,1.));
+{
+  return (Range<double>(0., 1.));
 }
 
-GPoint fourierEdge::point(double p) const 
+GPoint fourierEdge::point(double p) const
 {
   double x, y, z;
-  edge->F(p,x,y,z);
-  return GPoint(x,y,z);
+  edge->F(p, x, y, z);
+  return GPoint(x, y, z);
 }
 
 SVector3 fourierEdge::firstDer(double par) const
 {
-  double x,y,z;
-  edge->Dfdt(par,x,y,z);
-  return SVector3(x,y,z);
+  double x, y, z;
+  edge->Dfdt(par, x, y, z);
+  return SVector3(x, y, z);
 }
 
 int fourierEdge::minimumMeshSegments() const

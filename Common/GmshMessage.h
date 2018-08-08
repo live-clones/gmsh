@@ -14,19 +14,21 @@
 #include "GmshConfig.h"
 
 class GmshClient;
-namespace onelab{ class client; }
+namespace onelab {
+  class client;
+}
 
 // the external message handler
-class GmshMessage{
- public:
-  GmshMessage(){}
-  virtual ~GmshMessage(){}
-  virtual void operator()(std::string level, std::string message){}
+class GmshMessage {
+public:
+  GmshMessage() {}
+  virtual ~GmshMessage() {}
+  virtual void operator()(std::string level, std::string message) {}
 };
 
 // a class to manage messages
 class Msg {
- private:
+private:
   // current cpu number and total number of cpus
   static int _commRank, _commSize;
   // verbosity level (0: silent except fatal errors, 1: +errors, 2: +warnings,
@@ -61,7 +63,8 @@ class Msg {
   // log file
   static std::string _logFileName;
   static FILE *_logFile;
- public:
+
+public:
   Msg() {}
   static void Init(int argc, char **argv);
   static void Exit(int level);
@@ -111,11 +114,13 @@ class Msg {
   static double GetValue(const char *text, double defaultval);
   static std::string GetString(const char *text, const std::string &defaultval);
   static int GetAnswer(const char *question, int defaultval, const char *zero,
-                       const char *one, const char *two=0);
-  static void InitializeOnelab(const std::string &name, const std::string &sockname="");
+                       const char *one, const char *two = 0);
+  static void InitializeOnelab(const std::string &name,
+                               const std::string &sockname = "");
   static void SetExecutableName(const std::string &name);
   static std::string GetExecutableName();
-  static void LoadOnelabClient(const std::string &name, const std::string &sockName);
+  static void LoadOnelabClient(const std::string &name,
+                               const std::string &sockName);
   static int GetNumOnelabClients();
   static GmshClient *GetGmshClient();
 #if defined(HAVE_ONELAB)
@@ -143,28 +148,29 @@ class Msg {
                                     bool readOnly = false, bool visible = true);
   static void SetOnelabAction(const std::string &action);
   static std::string GetOnelabAction();
-  static void ExchangeOnelabParameter(const std::string &key,
-                                      std::vector<double> &val,
-                                      std::map<std::string, std::vector<double> > &fopt,
-                                      std::map<std::string, std::vector<std::string> > &copt);
-  static void ExchangeOnelabParameter(const std::string &key,
-                                      std::string &val,
-                                      std::map<std::string, std::vector<double> > &fopt,
-                                      std::map<std::string, std::vector<std::string> > &copt);
+  static void ExchangeOnelabParameter(
+    const std::string &key, std::vector<double> &val,
+    std::map<std::string, std::vector<double> > &fopt,
+    std::map<std::string, std::vector<std::string> > &copt);
+  static void ExchangeOnelabParameter(
+    const std::string &key, std::string &val,
+    std::map<std::string, std::vector<double> > &fopt,
+    std::map<std::string, std::vector<std::string> > &copt);
   static void UndefineOnelabParameter(const std::string &name);
-  static void RunOnelabClient(const std::string &name, const std::string &exe="");
-  static void SetOnelabChanged(int value, const std::string &client="Gmsh");
+  static void RunOnelabClient(const std::string &name,
+                              const std::string &exe = "");
+  static void SetOnelabChanged(int value, const std::string &client = "Gmsh");
   static void ImportPhysicalGroupsInOnelab();
 };
 
 // a class to print the progression and estimated remaining time
-class MsgProgressStatus
-{
+class MsgProgressStatus {
 private:
   int _totalElementToTreat, _currentI, _nextIToCheck;
   double _initialTime, _lastTime;
   int _lastPercentage;
   int _progressMeterStep;
+
 public:
   MsgProgressStatus(int numElementToTreat);
   ~MsgProgressStatus();

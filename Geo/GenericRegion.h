@@ -23,12 +23,13 @@ public:
   virtual GeomType geomType() const;
 
   ModelType getNativeType() const { return GenericModel; }
-  virtual int getNativeInt()const{return id;};
+  virtual int getNativeInt() const { return id; };
 
   // TODO: When using GRegion->l_dirs and l_faces, what is the convention for
   // l_dirs ? For now, assuming positive value for normals pointing inside the
   // region.
-  void addFace(GenericFace *ptr, int sign){
+  void addFace(GenericFace *ptr, int sign)
+  {
     l_dirs.push_back(sign);
     l_faces.push_back(ptr);
     ptr->addRegion(this);

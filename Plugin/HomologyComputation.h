@@ -13,15 +13,13 @@
 
 #if defined(HAVE_KBIPACK)
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterHomologyComputationPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterHomologyComputationPlugin();
 }
 
-class GMSH_HomologyComputationPlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_HomologyComputationPlugin(){}
+class GMSH_HomologyComputationPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_HomologyComputationPlugin() {}
   std::string getName() const { return "HomologyComputation"; }
   std::string getShortHelp() const
   {
@@ -34,7 +32,7 @@ class GMSH_HomologyComputationPlugin : public GMSH_PostPlugin
   int getNbOptionsStr() const;
   StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
-  bool parseStringOpt(int stringOpt, std::vector<int>& intList);
+  bool parseStringOpt(int stringOpt, std::vector<int> &intList);
 };
 
 #endif

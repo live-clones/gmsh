@@ -7,24 +7,18 @@
 #include "shapeFunctions.h"
 #include "GmshDefines.h"
 
-StringXNumber GradientOptions_Number[] = {
-  {GMSH_FULLRC, "View", NULL, -1.}
-};
+StringXNumber GradientOptions_Number[] = {{GMSH_FULLRC, "View", NULL, -1.}};
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterGradientPlugin()
-  {
-    return new GMSH_GradientPlugin();
-  }
+extern "C" {
+GMSH_Plugin *GMSH_RegisterGradientPlugin() { return new GMSH_GradientPlugin(); }
 }
 
 std::string GMSH_GradientPlugin::getHelp() const
 {
   return "Plugin(Gradient) computes the gradient of the "
-    "field in the view `View'.\n\n"
-    "If `View' < 0, the plugin is run on the current view.\n\n"
-    "Plugin(Gradient) creates one new view.";
+         "field in the view `View'.\n\n"
+         "If `View' < 0, the plugin is run on the current view.\n\n"
+         "Plugin(Gradient) creates one new view.";
 }
 
 int GMSH_GradientPlugin::getNbOptions() const
@@ -45,27 +39,30 @@ PView *GMSH_GradientPlugin::execute(PView *v)
   if(!v1) return v;
 
   PViewData *data1 = getPossiblyAdaptiveData(v1);
-  if(data1->hasMultipleMeshes()){
+  if(data1->hasMultipleMeshes()) {
     Msg::Error("Gradient plugin cannot be run on multi-mesh views");
     return v;
   }
 
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
-  int firstNonEmptyStep =  data1->getFirstNonEmptyTimeStep();
+  int firstNonEmptyStep = data1->getFirstNonEmptyTimeStep();
 
-  for(int ent = 0; ent < data1->getNumEntities(firstNonEmptyStep); ent++){
-    for(int ele = 0; ele < data1->getNumElements(firstNonEmptyStep, ent); ele++){
+  for(int ent = 0; ent < data1->getNumEntities(firstNonEmptyStep); ent++) {
+    for(int ele = 0; ele < data1->getNumElements(firstNonEmptyStep, ent);
+        ele++) {
       if(data1->skipElement(firstNonEmptyStep, ent, ele)) continue;
       int numComp = data1->getNumComponents(firstNonEmptyStep, ent, ele);
       if(numComp != 1 && numComp != 3) continue;
       int type = data1->getType(firstNonEmptyStep, ent, ele);
       int numNodes = data1->getNumNodes(firstNonEmptyStep, ent, ele);
-      std::vector<double> *out = data2->incrementList((numComp == 1) ? 3 : 9, type, numNodes);
+      std::vector<double> *out =
+        data2->incrementList((numComp == 1) ? 3 : 9, type, numNodes);
       if(!out) continue;
       double x[8], y[8], z[8], val[8 * 3];
       for(int nod = 0; nod < numNodes; nod++)
-        data1->getNode(firstNonEmptyStep, ent, ele, nod, x[nod], y[nod], z[nod]);
+        data1->getNode(firstNonEmptyStep, ent, ele, nod, x[nod], y[nod],
+                       z[nod]);
       int dim = data1->getDimension(firstNonEmptyStep, ent, ele);
       elementFactory factory;
       element *element = factory.create(numNodes, dim, x, y, z);
@@ -73,15 +70,16 @@ PView *GMSH_GradientPlugin::execute(PView *v)
       for(int nod = 0; nod < numNodes; nod++) out->push_back(x[nod]);
       for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]);
       for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]);
-      for(int step = 0; step < data1->getNumTimeSteps(); step++){
+      for(int step = 0; step < data1->getNumTimeSteps(); step++) {
         if(!data1->hasTimeStep(step)) continue;
         for(int nod = 0; nod < numNodes; nod++)
           for(int comp = 0; comp < numComp; comp++)
-            data1->getValue(step, ent, ele, nod, comp, val[numComp * nod + comp]);
-        for(int nod = 0; nod < numNodes; nod++){
+            data1->getValue(step, ent, ele, nod, comp,
+                            val[numComp * nod + comp]);
+        for(int nod = 0; nod < numNodes; nod++) {
           double u, v, w, f[3];
           element->getNode(nod, u, v, w);
-          for(int comp = 0; comp < numComp; comp++){
+          for(int comp = 0; comp < numComp; comp++) {
             element->interpolateGrad(val + comp, u, v, w, f, numComp);
             out->push_back(f[0]);
             out->push_back(f[1]);
@@ -93,7 +91,7 @@ PView *GMSH_GradientPlugin::execute(PView *v)
     }
   }
 
-  for(int i = 0; i < data1->getNumTimeSteps(); i++){
+  for(int i = 0; i < data1->getNumTimeSteps(); i++) {
     if(!data1->hasTimeStep(i)) continue;
     double time = data1->getTime(i);
     data2->Time.push_back(time);

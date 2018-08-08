@@ -11,25 +11,21 @@
 
 class simpleFunctionPython : public simpleFunction<double> {
   PyObject *_pycallback;
- public:
-  simpleFunctionPython(PyObject *callback):
-    _pycallback(callback)
+
+public:
+  simpleFunctionPython(PyObject *callback) : _pycallback(callback)
   {
     Py_INCREF(_pycallback);
   }
-  ~simpleFunctionPython()
-  {
-    Py_DECREF(_pycallback);
-  }
+  ~simpleFunctionPython() { Py_DECREF(_pycallback); }
   double operator()(double x, double y, double z) const
   {
     PyObject *pyargs = Py_BuildValue("(ddd)", x, y, z);
     PyObject *result = PyEval_CallObject(_pycallback, pyargs);
     double r = 0;
-    if (result) {
+    if(result) {
       int ok = PyArg_Parse(result, "d", &r);
-      if (ok == 0)
-        Msg::Error("The python function did not return a double.");
+      if(ok == 0) Msg::Error("The python function did not return a double.");
       Py_DECREF(result);
     }
     else {

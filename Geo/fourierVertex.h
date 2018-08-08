@@ -16,12 +16,15 @@
 #include "FM_TopoVertex.h"
 
 class fourierVertex : public GVertex {
- protected:
+protected:
   FM::TopoVertex *v;
- public:
-  fourierVertex(GModel *m, int num, FM::TopoVertex* _v) : GVertex(m, num), v(_v){}
+
+public:
+  fourierVertex(GModel *m, int num, FM::TopoVertex *_v) : GVertex(m, num), v(_v)
+  {
+  }
   virtual ~fourierVertex() {}
-  virtual GPoint point() const { return GPoint(x(),y(),z()); }
+  virtual GPoint point() const { return GPoint(x(), y(), z()); }
   virtual double x() const { return v->GetX(); }
   virtual double y() const { return v->GetY(); }
   virtual double z() const { return v->GetZ(); }

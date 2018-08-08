@@ -58,11 +58,15 @@ static Vertex InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
     T[0] = t * t * t;
   }
 
-  for(i = 0; i < 4; i++) { vec[i] = 0.0; }
+  for(i = 0; i < 4; i++) {
+    vec[i] = 0.0;
+  }
 
   // X
   for(i = 0; i < 4; i++) {
-    for(j = 0; j < 4; j++) { vec[i] += mat[i][j] * v[j]->Pos.X; }
+    for(j = 0; j < 4; j++) {
+      vec[i] += mat[i][j] * v[j]->Pos.X;
+    }
   }
 
   for(j = 0; j < 4; j++) {
@@ -72,7 +76,9 @@ static Vertex InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
 
   // Y
   for(i = 0; i < 4; i++) {
-    for(j = 0; j < 4; j++) { vec[i] += mat[i][j] * v[j]->Pos.Y; }
+    for(j = 0; j < 4; j++) {
+      vec[i] += mat[i][j] * v[j]->Pos.Y;
+    }
   }
 
   for(j = 0; j < 4; j++) {
@@ -82,7 +88,9 @@ static Vertex InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
 
   // Z
   for(i = 0; i < 4; i++) {
-    for(j = 0; j < 4; j++) { vec[i] += mat[i][j] * v[j]->Pos.Z; }
+    for(j = 0; j < 4; j++) {
+      vec[i] += mat[i][j] * v[j]->Pos.Z;
+    }
   }
   for(j = 0; j < 4; j++) {
     V.Pos.Z += T[j] * vec[j];
@@ -134,10 +142,14 @@ SPoint2 InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
   SPoint2 coord[4], p;
 
   for(i = 0; i < 4; i++) {
-    for(j = 0; j < 4; j++) { coord[i] += v[j]->pntOnGeometry * mat[i][j]; }
+    for(j = 0; j < 4; j++) {
+      coord[i] += v[j]->pntOnGeometry * mat[i][j];
+    }
   }
 
-  for(j = 0; j < 4; j++) { p += coord[j] * T[j]; }
+  for(j = 0; j < 4; j++) {
+    p += coord[j] * T[j];
+  }
   return p;
 }
 
@@ -578,7 +590,9 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
       List_Read(c->Control_Points, i, &v[1]);
       List_Read(c->Control_Points, i + 1, &v[2]);
       if(!i) {
-        if(c->beg == c->end) { List_Read(c->Control_Points, N - 2, &v[0]); }
+        if(c->beg == c->end) {
+          List_Read(c->Control_Points, N - 2, &v[0]);
+        }
         else {
           v[0] = &temp1;
           v[0]->Pos.X = 2. * v[1]->Pos.X - v[2]->Pos.X;
@@ -591,7 +605,9 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
         List_Read(c->Control_Points, i - 1, &v[0]);
       }
       if(i == N - 2) {
-        if(c->beg == c->end) { List_Read(c->Control_Points, 1, &v[3]); }
+        if(c->beg == c->end) {
+          List_Read(c->Control_Points, 1, &v[3]);
+        }
         else {
           v[3] = &temp2;
           v[3]->Pos.X = 2. * v[2]->Pos.X - v[1]->Pos.X;
@@ -840,7 +856,9 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
         isSphere = false;
       }
       else if(isSphere) {
-        if(!i) { List_Read(C[i]->Control_Points, 1, &O); }
+        if(!i) {
+          List_Read(C[i]->Control_Points, 1, &O);
+        }
         else {
           Vertex *tmp;
           List_Read(C[i]->Control_Points, 1, &tmp);
@@ -920,7 +938,9 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
       T = TransfiniteTriB(V[0], VB[0], V[1], VB[1], V[2], VB[2], *S[0], *S[1],
                           *S[2], u, v);
     }
-    if(isSphere) { TransfiniteSph(*S[0], *O, &T); }
+    if(isSphere) {
+      TransfiniteSph(*S[0], *O, &T);
+    }
   }
 
   return T;

@@ -26,31 +26,29 @@ StringXNumber ParticlesOptions_Number[] = {
   {GMSH_FULLRC, "Z2", GMSH_ParticlesPlugin::callbackZ2, 0.},
   {GMSH_FULLRC, "NumPointsU", GMSH_ParticlesPlugin::callbackU, 10},
   {GMSH_FULLRC, "NumPointsV", GMSH_ParticlesPlugin::callbackV, 1},
-  {GMSH_FULLRC, "A2", NULL, 1. },
-  {GMSH_FULLRC, "A1", NULL, 0. },
-  {GMSH_FULLRC, "A0", NULL, 0. },
+  {GMSH_FULLRC, "A2", NULL, 1.},
+  {GMSH_FULLRC, "A1", NULL, 0.},
+  {GMSH_FULLRC, "A0", NULL, 0.},
   {GMSH_FULLRC, "DT", NULL, .1},
   {GMSH_FULLRC, "MaxIter", NULL, 100},
   {GMSH_FULLRC, "TimeStep", NULL, 0},
-  {GMSH_FULLRC, "View", NULL, -1.}
-};
+  {GMSH_FULLRC, "View", NULL, -1.}};
 
-extern "C"
+extern "C" {
+GMSH_Plugin *GMSH_RegisterParticlesPlugin()
 {
-  GMSH_Plugin *GMSH_RegisterParticlesPlugin()
-  {
-    return new GMSH_ParticlesPlugin();
-  }
+  return new GMSH_ParticlesPlugin();
+}
 }
 
 void GMSH_ParticlesPlugin::draw(void *context)
 {
 #if defined(HAVE_OPENGL)
-  glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
-  drawContext *ctx = (drawContext*)context;
+  glColor4ubv((GLubyte *)&CTX::instance()->color.fg);
+  drawContext *ctx = (drawContext *)context;
   double p[3];
-  for(int i = 0; i < getNbU(); ++i){
-    for(int j = 0; j < getNbV(); ++j){
+  for(int i = 0; i < getNbU(); ++i) {
+    for(int j = 0; j < getNbV(); ++j) {
       getPoint(i, j, p);
       ctx->drawSphere(CTX::instance()->pointSize, p[0], p[1], p[2], 1);
     }
@@ -58,10 +56,11 @@ void GMSH_ParticlesPlugin::draw(void *context)
 #endif
 }
 
-double GMSH_ParticlesPlugin::callback(int num, int action, double value, double *opt,
-                                        double step, double min, double max)
+double GMSH_ParticlesPlugin::callback(int num, int action, double value,
+                                      double *opt, double step, double min,
+                                      double max)
 {
-  switch(action){ // configure the input field
+  switch(action) { // configure the input field
   case 1: return step;
   case 2: return min;
   case 3: return max;
@@ -75,99 +74,100 @@ double GMSH_ParticlesPlugin::callback(int num, int action, double value, double 
 double GMSH_ParticlesPlugin::callbackX0(int num, int action, double value)
 {
   return callback(num, action, value, &ParticlesOptions_Number[0].def,
-                  CTX::instance()->lc / 100., 
-                  -2 * CTX::instance()->lc, 2 * CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_ParticlesPlugin::callbackY0(int num, int action, double value)
 {
   return callback(num, action, value, &ParticlesOptions_Number[1].def,
-                  CTX::instance()->lc / 100., 
-                  -2 * CTX::instance()->lc, 2 * CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_ParticlesPlugin::callbackZ0(int num, int action, double value)
 {
   return callback(num, action, value, &ParticlesOptions_Number[2].def,
-                  CTX::instance()->lc / 100., 
-                  -2 * CTX::instance()->lc, 2 * CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_ParticlesPlugin::callbackX1(int num, int action, double value)
 {
   return callback(num, action, value, &ParticlesOptions_Number[3].def,
-                  CTX::instance()->lc / 100., 
-                  -2 * CTX::instance()->lc, 2 * CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_ParticlesPlugin::callbackY1(int num, int action, double value)
 {
   return callback(num, action, value, &ParticlesOptions_Number[4].def,
-                  CTX::instance()->lc / 100., 
-                  -2 * CTX::instance()->lc, 2 * CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_ParticlesPlugin::callbackZ1(int num, int action, double value)
 {
   return callback(num, action, value, &ParticlesOptions_Number[5].def,
-                  CTX::instance()->lc / 100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_ParticlesPlugin::callbackX2(int num, int action, double value)
 {
   return callback(num, action, value, &ParticlesOptions_Number[6].def,
-                  CTX::instance()->lc / 100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_ParticlesPlugin::callbackY2(int num, int action, double value)
 {
   return callback(num, action, value, &ParticlesOptions_Number[7].def,
-                  CTX::instance()->lc / 100., 
-                  -2 * CTX::instance()->lc, 2 * CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_ParticlesPlugin::callbackZ2(int num, int action, double value)
 {
   return callback(num, action, value, &ParticlesOptions_Number[8].def,
-                  CTX::instance()->lc / 100., 
-                  -2 * CTX::instance()->lc, 2 * CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_ParticlesPlugin::callbackU(int num, int action, double value)
 {
-  return callback(num, action, value, &ParticlesOptions_Number[9].def,
-                  1, 1, 100);
+  return callback(num, action, value, &ParticlesOptions_Number[9].def, 1, 1,
+                  100);
 }
 
 double GMSH_ParticlesPlugin::callbackV(int num, int action, double value)
 {
-  return callback(num, action, value, &ParticlesOptions_Number[10].def,
-                  1, 1, 100);
+  return callback(num, action, value, &ParticlesOptions_Number[10].def, 1, 1,
+                  100);
 }
 
 std::string GMSH_ParticlesPlugin::getHelp() const
 {
-  return 
-    "Plugin(Particles) computes the trajectory "
-    "of particules in the force field given by the "
-    "`TimeStep'-th time step of a vector view "
-    "`View'.\n\n"
-    "The plugin takes as input a grid defined by the "
-    "3 points (`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') "
-    "(axis of U) and (`X2',`Y2',`Z2') (axis of V).\n\n"
-    "The number of particles along U and V that are to "
-    "be transported is set with the options `NumPointsU' "
-    "and `NumPointsV'. The equation\n\n"
-    "A2 * d^2X(t)/dt^2 + A1 * dX(t)/dt + A0 * X(t) = F\n\n"
-    "is then solved with the initial conditions X(t=0) "
-    "chosen as the grid, dX/dt(t=0)=0, and with F "
-    "interpolated from the vector view.\n\n"
-    "Time stepping is done using a Newmark scheme with "
-    "step size `DT' and `MaxIter' maximum number of "
-    "iterations.\n\n"
-    "If `View' < 0, the plugin is run on the current view.\n\n"
-    "Plugin(Particles) creates one new view containing "
-    "multi-step vector points.";
+  return "Plugin(Particles) computes the trajectory "
+         "of particules in the force field given by the "
+         "`TimeStep'-th time step of a vector view "
+         "`View'.\n\n"
+         "The plugin takes as input a grid defined by the "
+         "3 points (`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') "
+         "(axis of U) and (`X2',`Y2',`Z2') (axis of V).\n\n"
+         "The number of particles along U and V that are to "
+         "be transported is set with the options `NumPointsU' "
+         "and `NumPointsV'. The equation\n\n"
+         "A2 * d^2X(t)/dt^2 + A1 * dX(t)/dt + A0 * X(t) = F\n\n"
+         "is then solved with the initial conditions X(t=0) "
+         "chosen as the grid, dX/dt(t=0)=0, and with F "
+         "interpolated from the vector view.\n\n"
+         "Time stepping is done using a Newmark scheme with "
+         "step size `DT' and `MaxIter' maximum number of "
+         "iterations.\n\n"
+         "If `View' < 0, the plugin is run on the current view.\n\n"
+         "Plugin(Particles) creates one new view containing "
+         "multi-step vector points.";
 }
 
 int GMSH_ParticlesPlugin::getNbOptions() const
@@ -194,15 +194,15 @@ void GMSH_ParticlesPlugin::getPoint(int iU, int iV, double *X)
 {
   double u = getNbU() > 1 ? (double)iU / (double)(getNbU() - 1.) : 0.;
   double v = getNbV() > 1 ? (double)iV / (double)(getNbV() - 1.) : 0.;
-  X[0] = ParticlesOptions_Number[0].def + 
-    u  * (ParticlesOptions_Number[3].def - ParticlesOptions_Number[0].def) +
-    v  * (ParticlesOptions_Number[6].def - ParticlesOptions_Number[0].def);
-  X[1] = ParticlesOptions_Number[1].def + 
-    u  * (ParticlesOptions_Number[4].def - ParticlesOptions_Number[1].def) +
-    v  * (ParticlesOptions_Number[7].def - ParticlesOptions_Number[1].def);
-  X[2] = ParticlesOptions_Number[2].def + 
-    u  * (ParticlesOptions_Number[5].def - ParticlesOptions_Number[2].def) +
-    v  * (ParticlesOptions_Number[8].def - ParticlesOptions_Number[2].def);
+  X[0] = ParticlesOptions_Number[0].def +
+         u * (ParticlesOptions_Number[3].def - ParticlesOptions_Number[0].def) +
+         v * (ParticlesOptions_Number[6].def - ParticlesOptions_Number[0].def);
+  X[1] = ParticlesOptions_Number[1].def +
+         u * (ParticlesOptions_Number[4].def - ParticlesOptions_Number[1].def) +
+         v * (ParticlesOptions_Number[7].def - ParticlesOptions_Number[1].def);
+  X[2] = ParticlesOptions_Number[2].def +
+         u * (ParticlesOptions_Number[5].def - ParticlesOptions_Number[2].def) +
+         v * (ParticlesOptions_Number[8].def - ParticlesOptions_Number[2].def);
 }
 
 PView *GMSH_ParticlesPlugin::execute(PView *v)
@@ -220,7 +220,7 @@ PView *GMSH_ParticlesPlugin::execute(PView *v)
   PViewData *data1 = getPossiblyAdaptiveData(v1);
 
   // sanity checks
-  if(timeStep > data1->getNumTimeSteps() - 1){
+  if(timeStep > data1->getNumTimeSteps() - 1) {
     Msg::Error("Invalid time step (%d) in view[%d]: using 0", v1->getIndex());
     timeStep = 0;
   }
@@ -235,17 +235,21 @@ PView *GMSH_ParticlesPlugin::execute(PView *v)
   // (A2 + gamma DT A1 + beta DT^2 A0) x^{n+1} =
   //   (2 A2 - (1 - 2 gamma) DT A1 - (0.5 + gamma - 2 beta) DT^2 A0) x^n +
   //   (-A2 - (gamma - 1) DT A1 - (0.5 - gamma + beta) DT^2 A0) x^{n-1} +
-  //   DT^2 (beta b^{n+1} + (0.5 + gamma - 2 beta) b^n + (0.5 - gamma + beta) b^{n-1})
+  //   DT^2 (beta b^{n+1} + (0.5 + gamma - 2 beta) b^n + (0.5 - gamma + beta)
+  //   b^{n-1})
   //
   // coefs for constant acceleration (unconditinonally stable)
-  const double gamma = 0.5, beta = 0.25; 
+  const double gamma = 0.5, beta = 0.25;
   double c1 = (A2 + gamma * DT * A1 + beta * DT * DT * A0);
-  double c2 = (2 * A2 - (1 - 2 * gamma) * DT * A1 - (0.5 + gamma - 2 * beta) * DT * DT * A0);
-  double c3 = (-A2 - (gamma - 1) * DT * A1 - (0.5 - gamma + beta) * DT * DT * A0);
-  double c4 = DT * DT * (beta + (0.5 + gamma - 2 * beta) + (0.5 - gamma + beta));
+  double c2 = (2 * A2 - (1 - 2 * gamma) * DT * A1 -
+               (0.5 + gamma - 2 * beta) * DT * DT * A0);
+  double c3 =
+    (-A2 - (gamma - 1) * DT * A1 - (0.5 - gamma + beta) * DT * DT * A0);
+  double c4 =
+    DT * DT * (beta + (0.5 + gamma - 2 * beta) + (0.5 - gamma + beta));
 
-  for(int i = 0; i < getNbU(); ++i){
-    for(int j = 0; j < getNbV(); ++j){
+  for(int i = 0; i < getNbU(); ++i) {
+    for(int j = 0; j < getNbV(); ++j) {
       double XINIT[3], X0[3], X1[3];
       getPoint(i, j, XINIT);
       getPoint(i, j, X0);
@@ -254,7 +258,7 @@ PView *GMSH_ParticlesPlugin::execute(PView *v)
       data2->VP.push_back(XINIT[0]);
       data2->VP.push_back(XINIT[1]);
       data2->VP.push_back(XINIT[2]);
-      for(int iter = 0; iter < maxIter; iter++){
+      for(int iter = 0; iter < maxIter; iter++) {
         double F[3], X[3];
         o1.searchVector(X1[0], X1[1], X1[2], F, timeStep);
         for(int k = 0; k < 3; k++)
@@ -262,10 +266,10 @@ PView *GMSH_ParticlesPlugin::execute(PView *v)
         data2->VP.push_back(X[0] - XINIT[0]);
         data2->VP.push_back(X[1] - XINIT[1]);
         data2->VP.push_back(X[2] - XINIT[2]);
-        for(int k = 0; k < 3; k++){
+        for(int k = 0; k < 3; k++) {
           X0[k] = X1[k];
           X1[k] = X[k];
-        }        
+        }
       }
     }
   }

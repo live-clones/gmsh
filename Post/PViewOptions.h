@@ -14,19 +14,9 @@ class mathEvaluator;
 
 // The display options of a post-processing view.
 class PViewOptions {
- public:
-  enum PlotType {
-    Plot3D = 1,
-    Plot2DSpace = 2,
-    Plot2DTime = 3,
-    Plot2D = 4
-  };
-  enum IntervalsType {
-    Iso = 1,
-    Continuous = 2,
-    Discrete = 3,
-    Numeric = 4
-  };
+public:
+  enum PlotType { Plot3D = 1, Plot2DSpace = 2, Plot2DTime = 3, Plot2D = 4 };
+  enum IntervalsType { Iso = 1, Continuous = 2, Discrete = 3, Numeric = 4 };
   enum VectorType {
     Segment = 1,
     Arrow = 2,
@@ -43,20 +33,9 @@ class PViewOptions {
     Ellipsoid = 6,
     Frame = 7
   };
-  enum GlyphLocation {
-    COG = 1,
-    Vertex = 2
-  };
-  enum RangeType {
-    Default = 1,
-    Custom = 2,
-    PerTimeStep = 3
-  };
-  enum ScaleType {
-    Linear = 1,
-    Logarithmic = 2,
-    DoubleLogarithmic = 3
-  };
+  enum GlyphLocation { COG = 1, Vertex = 2 };
+  enum RangeType { Default = 1, Custom = 2, PerTimeStep = 3 };
+  enum ScaleType { Linear = 1, Logarithmic = 2, DoubleLogarithmic = 3 };
 
   int type, autoPosition;
   double position[2], size[2];
@@ -83,7 +62,8 @@ class PViewOptions {
   double currentTime;
   int drawStrings;
   int drawPoints, drawLines, drawTriangles, drawQuadrangles, drawPolygons;
-  int drawTetrahedra, drawHexahedra, drawPrisms, drawPyramids, drawTrihedra, drawPolyhedra;
+  int drawTetrahedra, drawHexahedra, drawPrisms, drawPyramids, drawTrihedra,
+    drawPolyhedra;
   int drawScalars, drawVectors, drawTensors;
   int boundary, pointType, lineType, drawSkinOnly;
   double pointSize, lineWidth;
@@ -102,16 +82,18 @@ class PViewOptions {
   int sampling;
   std::string attributes, doubleClickedCommand, group;
   int closed;
-  struct{
+  struct {
     unsigned int point, line, triangle, quadrangle;
     unsigned int tetrahedron, hexahedron, prism, pyramid, trihedron;
     unsigned int tangents, normals;
     unsigned int text2d, text3d, axes, background2d;
   } color;
- private:
+
+private:
   // static reference that contains default values
   static PViewOptions *_reference;
- public:
+
+public:
   PViewOptions();
   ~PViewOptions();
   static PViewOptions *reference();
@@ -121,11 +103,11 @@ class PViewOptions {
   // return an integer in [0, numIso - 1] corresponding to the
   // floating point value val in [min, max]
   int getScaleIndex(double val, int numIso, double min, double max,
-                    bool forceLinear=false);
+                    bool forceLinear = false);
   // get color for val in [min, max] (only use numColors if > 0
   // instead of all available colors)
   unsigned int getColor(double val, double min, double max,
-                        bool forceLinear=false, int numColors=-1);
+                        bool forceLinear = false, int numColors = -1);
   // get i-th color amongst nb (i in [0, nb - 1])
   unsigned int getColor(int i, int nb);
   // create math evaluator for general raise option

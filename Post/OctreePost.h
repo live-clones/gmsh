@@ -13,9 +13,8 @@ class PViewData;
 class PViewDataList;
 class PViewDataGModel;
 
-class OctreePost
-{
- private:
+class OctreePost {
+private:
   Octree *_SPP, *_VPP, *_TPP; // _SP & co reserved by win32
   Octree *_SL, *_VL, *_TL;
   Octree *_ST, *_VT, *_TT;
@@ -27,12 +26,12 @@ class OctreePost
   PViewDataList *_theViewDataList;
   PViewDataGModel *_theViewDataGModel;
   void _create(PViewData *data);
-  bool _getValue(void *in, int dim, int nbNod, int nbComp,
-                 double P[3], int step, double *values,
+  bool _getValue(void *in, int dim, int nbNod, int nbComp, double P[3],
+                 int step, double *values, double *elementSize, bool grad);
+  bool _getValue(void *in, int nbComp, double P[3], int step, double *values,
                  double *elementSize, bool grad);
-  bool _getValue(void *in, int nbComp, double P[3], int step,
-                 double *values, double *elementSize, bool grad);
- public :
+
+public:
   OctreePost(PView *v);
   OctreePost(PViewData *data);
   ~OctreePost();
@@ -43,30 +42,27 @@ class OctreePost
   // qx/y/z are used to select which element is used to interpolate (if the
   // query returned more than one). If grad is true, return the component-wise
   // derivative (gradient) in xyz coordinates instead of the value.
-  bool searchScalar(double x, double y, double z, double *values,
-                    int step=-1, double *size=0,
-                    int qn=0, double *qx=0, double *qy=0, double *qz=0,
-                    bool grad=false);
+  bool searchScalar(double x, double y, double z, double *values, int step = -1,
+                    double *size = 0, int qn = 0, double *qx = 0,
+                    double *qy = 0, double *qz = 0, bool grad = false);
   bool searchScalarWithTol(double x, double y, double z, double *values,
-                           int step=-1, double *size=0, double tol=1.e-2,
-                           int qn=0, double *qx=0, double *qy=0, double *qz=0,
-                           bool grad=false);
-  bool searchVector(double x, double y, double z, double *values,
-                    int step=-1, double *size=0,
-                    int qn=0, double *qx=0, double *qy=0, double *qz=0,
-                    bool grad=false);
+                           int step = -1, double *size = 0, double tol = 1.e-2,
+                           int qn = 0, double *qx = 0, double *qy = 0,
+                           double *qz = 0, bool grad = false);
+  bool searchVector(double x, double y, double z, double *values, int step = -1,
+                    double *size = 0, int qn = 0, double *qx = 0,
+                    double *qy = 0, double *qz = 0, bool grad = false);
   bool searchVectorWithTol(double x, double y, double z, double *values,
-                           int step=-1, double *size=0, double tol=1.e-2,
-                           int qn=0, double *qx=0, double *qy=0, double *qz=0,
-                           bool grad=false);
-  bool searchTensor(double x, double y, double z, double *values,
-                    int step=-1, double *size=0,
-                    int qn=0, double *qx=0, double *qy=0, double *qz=0,
-                    bool grad=false);
+                           int step = -1, double *size = 0, double tol = 1.e-2,
+                           int qn = 0, double *qx = 0, double *qy = 0,
+                           double *qz = 0, bool grad = false);
+  bool searchTensor(double x, double y, double z, double *values, int step = -1,
+                    double *size = 0, int qn = 0, double *qx = 0,
+                    double *qy = 0, double *qz = 0, bool grad = false);
   bool searchTensorWithTol(double x, double y, double z, double *values,
-                           int step=-1, double *size=0, double tol=1.e-2,
-                           int qn=0, double *qx=0, double *qy=0, double *qz=0,
-                           bool grad=false);
+                           int step = -1, double *size = 0, double tol = 1.e-2,
+                           int qn = 0, double *qx = 0, double *qy = 0,
+                           double *qz = 0, bool grad = false);
 };
 
 #endif

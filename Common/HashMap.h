@@ -9,7 +9,7 @@
 //--Define custom hash map here.  It must have form <key, value, HashFunctor,
 //--EqualFunctor>
 
-#define HASH_MAP         __gnu_cxx::hash_map
+#define HASH_MAP __gnu_cxx::hash_map
 #include <ext/hash_map>
 
 #endif

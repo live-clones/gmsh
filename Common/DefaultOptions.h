@@ -1102,7 +1102,7 @@ StringXNumber MeshOptions_Number[] = {
     "Minimum number of points used to mesh a circle" },
   { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
     "Minimum number of points used to mesh a (non-straight) curve" },
-  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 2.2 ,
+  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.0 ,
     "Version of the MSH file format to use" },
   { F|O, "PartitionHexWeight" , opt_mesh_partition_hex_weight , 1 ,
     "Weight of hexahedral element for METIS load balancing" },

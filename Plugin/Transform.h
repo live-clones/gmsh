@@ -8,15 +8,13 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterTransformPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterTransformPlugin();
 }
 
-class GMSH_TransformPlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_TransformPlugin(){}
+class GMSH_TransformPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_TransformPlugin() {}
   std::string getName() const { return "Transform"; }
   std::string getShortHelp() const
   {
@@ -24,7 +22,7 @@ class GMSH_TransformPlugin : public GMSH_PostPlugin
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber *getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 
