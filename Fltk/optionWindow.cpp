@@ -283,6 +283,7 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_small_axes(0, GMSH_SET, o->general.butt[1]->value());
   opt_general_fast_redraw(0, GMSH_SET, o->general.butt[2]->value());
   opt_general_mouse_hover_meshes(0, GMSH_SET, o->general.butt[11]->value());
+  opt_general_mouse_invert_zoom(0, GMSH_SET, o->general.butt[22]->value());
   if(opt_general_double_buffer(0, GMSH_GET, 0) != o->general.butt[3]->value())
     opt_general_double_buffer(0, GMSH_SET, o->general.butt[3]->value());
   if(opt_general_antialiasing(0, GMSH_GET, 0) != o->general.butt[12]->value())
@@ -298,7 +299,7 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_options_save(0, GMSH_SET, o->general.butt[9]->value());
   opt_general_expert_mode(0, GMSH_SET, o->general.butt[10]->value());
 #if defined(HAVE_VISUDEV)
-  opt_general_heavy_visualization(0, GMSH_SET, o->general.butt[22]->value());
+  opt_general_heavy_visualization(0, GMSH_SET, o->general.butt[23]->value());
 #endif
 
   if(opt_general_gui_color_scheme(0, GMSH_GET, 0) !=
@@ -1318,81 +1319,81 @@ optionWindow::optionWindow(int deltaFontSize)
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
                                  height - 2 * WB - BH, "General");
 
-      general.butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW,
-                                             BH, "Enable expert mode");
-      general.butt[10]->type(FL_TOGGLE_BUTTON);
-      general.butt[10]->callback(general_options_ok_cb);
-
-      general.butt[21] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW,
+      general.butt[21] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW,
                                              BH, "Use dark interface");
       general.butt[21]->type(FL_TOGGLE_BUTTON);
       general.butt[21]->callback(general_options_ok_cb);
 
-      general.butt[13] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW,
+      general.butt[13] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW,
                                              BH, "Show tooltips");
       general.butt[13]->type(FL_TOGGLE_BUTTON);
       general.butt[13]->callback(general_options_ok_cb);
 
-      general.butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
+      general.butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
                                             "Show bounding boxes");
       general.butt[6]->tooltip("(Alt+b)");
       general.butt[6]->type(FL_TOGGLE_BUTTON);
       general.butt[6]->callback(general_options_ok_cb);
 
       general.butt[2] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
                             "Draw simplified model during user interaction");
       general.butt[2]->tooltip("(Alt+f)");
       general.butt[2]->type(FL_TOGGLE_BUTTON);
       general.butt[2]->callback(general_options_ok_cb, (void *)"fast_redraw");
 
       general.butt[11] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
                             "Enable mouse hover over meshes and views");
       general.butt[11]->type(FL_TOGGLE_BUTTON);
       general.butt[11]->callback(general_options_ok_cb);
 
-      general.butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH,
+      general.butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
                                             "Enable double buffering");
       general.butt[3]->type(FL_TOGGLE_BUTTON);
       general.butt[3]->callback(general_options_ok_cb);
 
-      general.butt[12] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW,
+      general.butt[12] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW,
                                              BH, "Enable antialiasing");
       general.butt[12]->type(FL_TOGGLE_BUTTON);
       general.butt[12]->callback(general_options_ok_cb);
 
       general.butt[5] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH,
                             "Use trackball rotation instead of Euler angles");
       general.butt[5]->type(FL_TOGGLE_BUTTON);
       general.butt[5]->callback(general_options_ok_cb);
 
       general.butt[15] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH,
                             "Rotate around pseudo center of mass");
       general.butt[15]->type(FL_TOGGLE_BUTTON);
       general.butt[15]->callback(general_options_ok_cb,
                                  (void *)"rotation_center");
 
       general.push[0] =
-        new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 11 * BH, BB, BH, "Select");
+        new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 10 * BH, BB, BH, "Select");
       general.push[0]->callback(general_options_rotation_center_select_cb);
 
       general.value[8] =
-        new Fl_Value_Input(L + 2 * WB, 2 * WB + 11 * BH, IW / 3, BH);
+        new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW / 3, BH);
       general.value[8]->callback(general_options_ok_cb,
                                  (void *)"rotation_center_coord");
       general.value[9] =
-        new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 11 * BH, IW / 3, BH);
+        new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 10 * BH, IW / 3, BH);
       general.value[9]->callback(general_options_ok_cb,
                                  (void *)"rotation_center_coord");
       general.value[10] =
-        new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 11 * BH, IW / 3,
+        new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 10 * BH, IW / 3,
                            BH, "Rotation center");
       general.value[10]->align(FL_ALIGN_RIGHT);
       general.value[10]->callback(general_options_ok_cb,
                                   (void *)"rotation_center_coord");
+
+      general.butt[22] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 11 * BH, BW, BH, "Invert mouse wheel zoom direction");
+      general.butt[22]->type(FL_TOGGLE_BUTTON);
+      general.butt[22]->callback(general_options_ok_cb);
 
       o->end();
     }
@@ -1444,18 +1445,23 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[9]->type(FL_TOGGLE_BUTTON);
       general.butt[9]->callback(general_options_ok_cb);
 
-#if defined(HAVE_VISUDEV)
-      general.butt[22] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW / 2 - WB, BH,
-                            "Enable heavy visualization capabilities");
-      general.butt[22]->type(FL_TOGGLE_BUTTON);
-      general.butt[22]->callback(general_options_ok_cb);
-#endif
-
       Fl_Button *b1 =
         new Fl_Button(L + width - 2 * WB - BW / 3, 2 * WB + 7 * BH, BW / 3, BH,
                       "Show file path");
       b1->callback(options_show_file_cb, (void *)"option");
+
+      general.butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW,
+                                             BH, "Enable expert mode");
+      general.butt[10]->type(FL_TOGGLE_BUTTON);
+      general.butt[10]->callback(general_options_ok_cb);
+
+#if defined(HAVE_VISUDEV)
+      general.butt[23] =
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW / 2 - WB, BH,
+                            "Enable heavy visualization capabilities");
+      general.butt[23]->type(FL_TOGGLE_BUTTON);
+      general.butt[23]->callback(general_options_ok_cb);
+#endif
 
       Fl_Button *b2 = new Fl_Button(L + 2 * WB, 2 * WB + 10 * BH, BW, BH,
                                     "Restore all options to default settings");

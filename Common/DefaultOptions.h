@@ -678,6 +678,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Enable mouse hover on meshes" },
   { F|O, "MouseSelection" , opt_general_mouse_selection , 1. ,
     "Enable mouse selection" },
+  { F|O, "MouseInvertZoom" , opt_general_mouse_invert_zoom , 0. ,
+    "Invert mouse wheel zoom direction" },
 
   { F|S, "NonModalWindows" , opt_general_non_modal_windows , 1. ,
     "Force all control windows to be on top of the graphic window "
