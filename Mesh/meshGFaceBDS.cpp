@@ -822,15 +822,17 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
 	}
 	//      }
       }
+      if (ITER == 10){
+	if (invalid && !computeNodalSizeField)Msg::Warning("Meshing surface %d : %d elements remain invalid\n", gf->tag(),invalid);
+	break;
+      }
+
+
       if (bad != 0){
 	int nb_swap = 0;
 	int nb_smooth = 0;
 	swapEdgePass ( gf, m, nb_swap, 1, orientation);
-	smoothVertexPass(gf, m, nb_smooth, true);
-	if ((nb_swap == 0 &&  nb_smooth == 0) || ITER == 10){
-	  if (invalid && !computeNodalSizeField)Msg::Warning("Meshing surface %d : %d elements remain invalid\n", gf->tag(),invalid);
-	  break;
-	}
+	//	smoothVertexPass(gf, m, nb_smooth, true);
       }
       else {
 	//      Msg::Info("Meshing surface %d : all elements are oriented properly\n", gf->tag());
