@@ -1,10 +1,7 @@
 #ifndef _HEXTREME_MESH_
 #define _HEXTREME_MESH_
 
-#define __STDC_LIMIT_MACROS // FIXME Gmsh: this is need so that stdint.h defines UINT_MAX & co
-
 #include "hxt_tools.h" // to have SIMD_ALIGN and stdint.h
-
 
 #define HXT_GHOST_VERTEX UINT32_MAX
 #define HXT_DELETED_COLOR (UINT16_MAX-1)
