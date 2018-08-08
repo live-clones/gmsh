@@ -79,7 +79,7 @@ static HXTStatus Gmsh2Hxt(GRegion *gr, HXTMesh *m,
   return HXT_STATUS_OK;
 }
 
-static HXTStatus meshGRegionHXT_(GRegion *gr)
+static HXTStatus _meshGRegionHxt(GRegion *gr)
 {
   int nthreads = CTX::instance()->mesh.maxNumThreads3D;
   int optimize = 1;
@@ -108,14 +108,14 @@ static HXTStatus meshGRegionHXT_(GRegion *gr)
 
 int meshGRegionHxt(GRegion *gr)
 {
-  HXTStatus status = meshGRegionHXT_(gr);
+  HXTStatus status = _meshGRegionHXT(gr);
   if(status == HXT_STATUS_OK) return 0;
   return 1;
 }
 
 #else
 
-int meshGRegionHXT(GRegion *gr)
+int meshGRegionHxt(GRegion *gr)
 {
   Msg::Error("Gmsh should be compile with Hxt to enable that option");
   return -1;
