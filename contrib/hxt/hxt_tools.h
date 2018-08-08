@@ -14,13 +14,7 @@ extern "C" {
 
 /* define SIMD ALIGNMENT */
 #ifndef SIMD_ALIGN
-#ifdef __AVX512F__
 #define SIMD_ALIGN 64
-#elif defined(__AVX2__)
-#define SIMD_ALIGN 32
-#else
-#define SIMD_ALIGN 16 /* we align to 16 anyway even if no sse */
-#endif
 #endif
 
 // declare alignement of pointer allocated on the stack or in a struct
@@ -52,7 +46,7 @@ ___
 |  int arrayLength = ...;
 |  int *array;
 |  HXT_CHECK( hxtMalloc(&array, sizeof(int)*arrayLength) );
-|
+|  
 |  array[0] = ...;
 |  [...]
 |  array[arrayLength-1] = ...;
@@ -104,15 +98,6 @@ static inline HXTStatus hxtRealloc(void* ptrToPtr, size_t size)
 }
 
 
-// FIXME Gmsh: aligned routines do not seem to work on 32 bit machines
-#include <stdint.h>
-#if UINTPTR_MAX == 0xffffffff
-static inline HXTStatus hxtGetAlignedBlockSize(void* ptrToPtr, size_t* size){ *size = 0; return HXT_STATUS_OK; }
-static inline HXTStatus hxtAlignedMalloc(void* ptrToPtr, size_t size){ return hxtMalloc(ptrToPtr, size); }
-static inline HXTStatus hxtAlignedFree(void* ptrToPtr){ return hxtFree(ptrToPtr); }
-static inline HXTStatus hxtAlignedRealloc(void* ptrToPtr, size_t size){ return hxtRealloc(ptrToPtr, size); }
-#else
-
 /*********************************************************
  * Hextreme aligned malloc implementation
  *********************************************************/
@@ -152,7 +137,7 @@ static inline HXTStatus hxtAlignedMalloc(void* ptrToPtr, size_t size)
   p2 = (char**)(((size_t)(pstart) + startOffset) & ~(SIMD_ALIGN - 1)); // only keep bits ge SIMD_ALIGN
   p2[-1] = pstart;
   p2[-2] = pstart + size;
-  p2[-3] = pstart + (size ^ 0xBF58476D1CE4E5B9ULL); // makes a verification possible
+  p2[-3] = (char*) ((size_t) pstart + (size ^ 0xBF58476D1CE4E5B9ULL)); // makes a verification possible
   *(void**)ptrToPtr = p2;
 
   return HXT_STATUS_OK;
@@ -187,15 +172,15 @@ static inline HXTStatus hxtAlignedRealloc(void* ptrToPtr, size_t size)
     HXT_CHECK(hxtAlignedFree(ptrToPtr));
     return HXT_STATUS_OK;
   }
-
+  
   size_t old_size;
   HXT_CHECK( hxtGetAlignedBlockSize(ptrToPtr, &old_size) );
 
   if(size>old_size || size+4096<old_size){ // we do not shrink block to gain less than 4096 bytes
     void* newptr = NULL;
     HXT_CHECK( hxtAlignedMalloc(&newptr, size));
-
-    memcpy(newptr, *(void**)ptrToPtr, size>old_size?old_size:size);
+    if(old_size)
+      memcpy(newptr, *(void**)ptrToPtr, size>old_size?old_size:size);
 
     HXT_CHECK( hxtAlignedFree(ptrToPtr) );
 
@@ -205,7 +190,22 @@ static inline HXTStatus hxtAlignedRealloc(void* ptrToPtr, size_t size)
   return HXT_STATUS_OK;
 }
 
-#endif // FIXME Gmsh
+/*********************************************************
+  A way to call rand with a seed to get a reproducible
+  result.
+  For example, we do not call srand() each time we
+  call a reproducible Delaunay, else if someone was calling
+  rand(); Delaunay(); rand(); ...
+  he would always get the same result. We use 
+  hxtReproducibleRand() instead
+
+  !!!! 1st seed must absolutely be 1 !!!!
+**********************************************************/
+static inline uint32_t hxtReproducibleLCG(uint32_t *seed)
+{
+  *seed = 69621*(*seed)%2147483647;
+  return *seed;
+}
 
 /*********************************************************
  * Matrix operations

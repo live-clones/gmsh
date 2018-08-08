@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "meshGRegion.h"
+#include "meshGRegionHxt.h"
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "boundaryLayersData.h"
@@ -306,7 +307,12 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
 
   // now do insertion of points
 
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D) {
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT) {
+    if (meshGRegionHxt (gr) != 0){
+      Msg::Error ("HXT 3D mesh failed");
+    }
+  }
+  else if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D) {
     refineMeshMMG(gr);
   }
   else if(CTX::instance()->mesh.oldRefinement) {

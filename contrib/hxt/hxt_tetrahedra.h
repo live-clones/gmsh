@@ -8,67 +8,102 @@ extern "C" {
 #include "hxt_mesh.h"
 #include "hxt_vertices.h"
 
-/* reserve place for tetrahedra assuming ntet tetrahedra will be added to the triangulation
- * it is efficient to give ntet = ~10 times the number of vertices to be added
- * as in average, the number of tetrahedra is ~6.5x greater than the number of vertices
+/**
+* \file tetrahedra.h Delaunay tetrahedrization
+* \author Célestin Marot
+*/
+
+/**
+ * \struct HXTDelaunayOptions
+ * 
+ * Options for the Delaunay functions hxtDelaunay() and hxtDelaunaySteadyVertices()
+ * 
+ *
  */
-HXTStatus hxtTetrahedraReserve(HXTMesh* mesh, uint64_t ntet);
+typedef struct {
+  HXTBbox* bbox;              /**< The bounding box for all vertices.
+                               *  - if bbox==NULL, the bbox is recomputed internally;
+                               *  - if bbox!=NULL, bbox must contain all vertices */
 
-/* verify the consistency of a tetrahedral mesh */
-HXTStatus hxtTetrahedraVerify(HXTMesh* mesh);
+  double* nodalSizes;         /**<
+                               *  - if nodalSize==NULL, doesn't restrict nodalSize;
+                               *  - if nodalSize!=NULL, nodalSize contains the minimum
+                               *  mesh size at each vertex.\n
+                               *  If the insertion of a vertex create an edge smaller than
+                               * the average nodalSize of its endpoints, the vertex is
+                               * not inserted
+                               *  \warning a segmentation fault will occur if a vertex
+                               * doesn't have a corresponding mesh size */
 
+  double minSizeStart;         /**< estimate of the minimum mesh size at the moment of the call. 
+                                * 0 if the mesh is empty or if the distribution is uniform
+                                * (the mesh size is then guessed with the number of point) */
+  double minSizeEnd;           /**< estimate of the minimum mesh size when all points are inserted in the Delaunay. 
+                                * 0 if the distribution is uniform
+                                * (the mesh size is then guessed with the number of point) */
 
+  uint32_t numVerticesInMesh; /**< The number of vertices in the mesh */
 
-typedef struct HXTDelaunayOptions_struct{
-  hxtBbox* bbox;              // if NULL, the bbox is recomputed internally
-                              // else it mush contain the bounding box of all vertices
+  int verbosity;              /**<
+                               *  - if verbosity<=0: don't print information.
+                               *  - if verbosity==1: print basic information on each pass
+                               *  - if verbosity>=2: print everything */
 
-  double* nodalSizes;         // if NULL, doesn't restrict nodalSize
-                              // else contains the minimum mesh size at each vertex
-                              // if the insertion of a vertex create an edge smaller than
-                              // the average nodalSize of its endpoints, the vertex is not inserted
+  int reproducible;           /**< If reproducible!=0, the Delaunay use a reproducible tetrahedra order
+                               * in order to be totally deterministic.
+                               * \warning this takes time !
+                               * It requires a total reordering of tetrahedra at the end to get a reproducible order\n
+                               * except if `delaunayThreads==1 || (delaunayThreads==0 && omp_get_max_threads()==1)`\n
+                               * in which case it is reproducible anyway */
 
-  uint32_t numVerticesInMesh; // the number of vertices in the mesh
-
-  int verbosity;              // verbosity=0: don't print information
-                              // verbosity=1: print basic information on each pass
-                              // verbosity=2: print everything
+  int delaunayThreads;        /**< number of threads for the delaunay insertion
+                               *  - if delaunayThreads==0, it will use omp_get_max_threads()
+                               *  - if delaunayThreads<0, it will uses omp_get_num_procs() */
 } HXTDelaunayOptions;
 
 
-/* insert only vertices of index nodeInfo[i].nodes (does not change ordering of vertices !)
+/**
+ * \brief Delaunay of a set of vertices that does not modify their order
+ * \details This perform the insertion of the vertices whose indices are
+ * given in nodeInfo (in the \ref hxtNodeInfo.node wtructure member)\n
+ * This function does not change the order of vertices in the mesh.\n
+ * \ref hxtNodeInfo.status will be modified by the function to tell
+ * if the vertex was successfully inserted or not.
+ *  - nodeInfo[i].status==HXT_STATUS_TRUE  if the vertex was successfully inserted.
+ *  - nodeInfo[i].status==HXT_STATUS_FALSE  if the vertex was not inserted.
+ *  - nodeInfo[i].status==HXT_STATUS_TRYAGAIN  if an error occured before the vertex could be inserted
  *
- * this function modifies
- *     mesh->tetrahedra.*
- *     mesh->vertices[*].dist
- *     hxtNodeInfo ordering will change
- *     hxtNodeInfo[*].index will change
- *     hxtNodeInfo[*].status = HXT_STATUS_TRUE  if the vertex was successfully inserted
- *     hxtNodeInfo[*].status = HXT_STATUS_FALSE if the vertex was not inserted
-                              (insertion would break the nodalSize or the vertex is already in the mesh)
- *     hxtNodeInfo[*].status = HXT_STATUS_TRYAGAIN if an error occured before the vertex could be inserted
+ * \warning
+ *  - the order of nodeInfo will change
+ *  - hxtNodeInfo[i].hilbertDist will change
+ *  - mesh->tetrahedra.* will change
+ *  - mesh->vertices.coord[4*i+3] will change
+ *
+ * \param mesh: a valid Delaunay mesh
+ * \param options: options to give to the Delaunay algorithm \ref HXTDelaunayOptions
+ * \param[in, out] nodeInfo: the indices of the vertices to insert in the tetrahedral mesh.
+ * \param nToInset: the number of element in nodeInfo, hence the number of vertices to insert.
  */
 HXTStatus hxtDelaunaySteadyVertices(HXTMesh* mesh, HXTDelaunayOptions* options, hxtNodeInfo* nodeInfo, uint64_t nToInsert);
 
 
-/* insert vertices from numVerticesInMesh to mesh->vertices.num
+/**
+ * \brief Delaunay of a set of vertices
+ * \details This perform the insertion of the vertices
+ * from numVerticesInMesh to mesh->vertices.num\n
  *
- * this function modifies
- *     mesh->tetrahedra.*
- *     mesh->vertices[*].dist
- *     mesh->vertices can be reordered
- *     vertices that could not be inserted are deleted from mesh->vertices !
- *              (their insertion would break the nodalSize or the vertex is a duplicate)
+ * \warning
+ *  - the order of mesh->vertices will change
+ *  - hxtNodeInfo[i].hilbertDist will change
+ *  - mesh->tetrahedra.* will change
+ *  - mesh->vertices.coord[4*i+3] will change
+ *  - vertices that could not be inserted are deleted from mesh->vertices !
  *
- * DO NOT USE THIS FUNCTION IF OTHER STUFF DEPENDS ON THE VERTICES TO INSERT
- *
- * However, this version is a little bit faster...
+ * \param mesh: a valid Delaunay mesh
+ * \param options: options to give to the Delaunay algorithm \ref HXTDelaunayOptions
  */
 HXTStatus hxtDelaunay(HXTMesh* mesh, HXTDelaunayOptions* options);
 
-
-/* remove tetrahedra whose color are HXT_DELETED_COLOR */
-HXTStatus hxtRemoveDeleted(HXTMesh* mesh);
 
 #ifdef __cplusplus
 }
