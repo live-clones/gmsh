@@ -2671,7 +2671,7 @@ template <unsigned DIM> struct ZoneTask {
   void change_status(const int _status)
   {
 #ifdef _OPENMP
-#pragma omp atomic
+    //#pragma omp atomic
 #endif
     status = _status;
   }
@@ -2695,10 +2695,13 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
 
   int threadsWorking = omp_get_num_threads();
   // Semaphore for working threads
-  // ** omp_lock_t threadWLock;
+#ifdef _OPENMP
+  omp_lock_t threadWLock;
+  omp_lock_t queueLock;
+#endif
+
   std::queue<ZoneTask<DIM> *> zoneQueue; // Queue for zones that have been
                                          // defined and are ready to be written
-  // ** omp_lock_t queueLock;
   // Next two are locked by an omp critical
   int globalZoneIndex = 0;
   PhysGroupMap::const_iterator globalPhysicalIt = group.begin();
