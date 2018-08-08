@@ -1,6 +1,8 @@
 #ifndef _HEXTREME_MESH_
 #define _HEXTREME_MESH_
 
+#define __STDC_LIMIT_MACROS // FIXME Gmsh: this is need so that stdint.h defines UINT_MAX & co
+
 #include "hxt_tools.h" // to have SIMD_ALIGN and stdint.h
 
 
@@ -41,7 +43,7 @@ struct hxtMeshStruct {
     uint64_t num;    // number of tetrahedra
     uint64_t size;   // reserved number of tetrahedra (size of the vector)
   } tetrahedra;
-  
+
   // hexahedra
   struct {
     uint32_t* node;  // aligned (size = hexahedra.size*8*sizeof(uint32_t))
@@ -63,7 +65,7 @@ struct hxtMeshStruct {
     uint64_t num;    // number of tetrahedra
     uint64_t size;   // reserved number of prisms (size of the vector)
   } prisms;
-  
+
   // pyramids
   struct {
     uint32_t* node;  // aligned (size = pyramids.size*5*sizeof(uint32_t))
@@ -78,7 +80,7 @@ struct hxtMeshStruct {
   // triangles // TODO: consider writing a array of structure...
   struct {
     uint32_t* node;
-    uint64_t* neigh; 
+    uint64_t* neigh;
     uint16_t* colors;
     uint64_t num;
     uint64_t size;
