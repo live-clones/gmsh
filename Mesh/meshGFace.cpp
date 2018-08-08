@@ -1807,8 +1807,6 @@ static bool buildConsecutiveListOfVertices(
         if(seam && seam_the_first) {
           coords = ((*it)._sign == 1) ? mesh1d_seam : mesh1d_seam_reversed;
           found = (*it);
-          Msg::Info(
-            "This test case would have failed in previous Gmsh versions ;-)");
         }
         else {
           coords = ((*it)._sign == 1) ? mesh1d : mesh1d_reversed;
