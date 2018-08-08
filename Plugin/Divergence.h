@@ -8,23 +8,21 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterDivergencePlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterDivergencePlugin();
 }
 
-class GMSH_DivergencePlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_DivergencePlugin(){}
+class GMSH_DivergencePlugin : public GMSH_PostPlugin {
+public:
+  GMSH_DivergencePlugin() {}
   std::string getName() const { return "Divergence"; }
-  std::string getShortHelp() const 
-  { 
+  std::string getShortHelp() const
+  {
     return "Compute the divergence of a vector view";
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber *getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

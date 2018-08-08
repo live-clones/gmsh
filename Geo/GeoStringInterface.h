@@ -26,19 +26,23 @@ void add_param(const std::string &par, const std::string &value,
                const std::string &label, const std::string &path,
                const std::string &fileName);
 void add_point(const std::string &fileName, const std::string &x,
-               const std::string &y, const std::string &z, const std::string &lc);
+               const std::string &y, const std::string &z,
+               const std::string &lc);
 void add_multline(const std::string &type, std::vector<int> &p,
                   const std::string &fileName);
 void add_circle_arc(int p1, int p2, int p3, const std::string &fileName);
-void add_ellipse_arc(int p1, int p2, int p3, int p4, const std::string &fileName);
+void add_ellipse_arc(int p1, int p2, int p3, int p4,
+                     const std::string &fileName);
 void add_field_option(int field_id, const std::string &option_name,
-                      const std::string &option_value, const std::string &fileName);
+                      const std::string &option_value,
+                      const std::string &fileName);
 void add_field(int field_id, const std::string &type_name,
                const std::string &fileName);
 void delete_field(int field_id, const std::string &fileName);
-void set_background_field(int field_id,const std::string &fileName);
+void set_background_field(int field_id, const std::string &fileName);
 void add_lineloop(List_T *list, const std::string &fileName, int *numloop);
-void add_surf(const std::string &type, List_T *list, const std::string &fileName);
+void add_surf(const std::string &type, List_T *list,
+              const std::string &fileName);
 void add_surfloop(List_T *list, const std::string &fileName, int *numvol);
 void add_vol(List_T *list, const std::string &fileName);
 void add_remove_physical(const std::string &fileName, const std::string &what,
@@ -47,59 +51,74 @@ void add_remove_physical(const std::string &fileName, const std::string &what,
 void add_compound(const std::string &fileName, const std::string &type,
                   const std::vector<int> &l);
 void add_circle(const std::string &fileName, const std::string &x,
-                const std::string &y, const std::string &z, const std::string &r,
-                const std::string &alpha1, const std::string &alpha2);
-void add_ellipse(const std::string &fileName, const std::string &x, const std::string &y,
-                 const std::string &z, const std::string &rx, const std::string &ry,
+                const std::string &y, const std::string &z,
+                const std::string &r, const std::string &alpha1,
+                const std::string &alpha2);
+void add_ellipse(const std::string &fileName, const std::string &x,
+                 const std::string &y, const std::string &z,
+                 const std::string &rx, const std::string &ry,
                  const std::string &alpha1, const std::string &alpha2);
-void add_disk(const std::string &fileName, const std::string &x, const std::string &y,
-              const std::string &z, const std::string &rx, const std::string &ry);
-void add_rectangle(const std::string &fileName, const std::string &x, const std::string &y,
-                   const std::string &z, const std::string &dx, const std::string &dy,
+void add_disk(const std::string &fileName, const std::string &x,
+              const std::string &y, const std::string &z, const std::string &rx,
+              const std::string &ry);
+void add_rectangle(const std::string &fileName, const std::string &x,
+                   const std::string &y, const std::string &z,
+                   const std::string &dx, const std::string &dy,
                    const std::string &roundedRadius);
 void add_sphere(const std::string &fileName, const std::string &x,
-                const std::string &y, const std::string &z, const std::string &r,
-                const std::string &alpha1, const std::string &alpha2,
-                const std::string &alpha3);
-void add_cylinder(const std::string &fileName, const std::string &x, const std::string &y,
-                  const std::string &z, const std::string &dx, const std::string &dy,
-                  const std::string &dz, const std::string &r, const std::string &alpha);
-void add_box(const std::string &fileName, const std::string &x, const std::string &y,
-             const std::string &z, const std::string &dx, const std::string &dy,
-             const std::string &dz);
-void add_torus(const std::string &fileName, const std::string &x, const std::string &y,
-               const std::string &z, const std::string &r1, const std::string &r2,
+                const std::string &y, const std::string &z,
+                const std::string &r, const std::string &alpha1,
+                const std::string &alpha2, const std::string &alpha3);
+void add_cylinder(const std::string &fileName, const std::string &x,
+                  const std::string &y, const std::string &z,
+                  const std::string &dx, const std::string &dy,
+                  const std::string &dz, const std::string &r,
+                  const std::string &alpha);
+void add_box(const std::string &fileName, const std::string &x,
+             const std::string &y, const std::string &z, const std::string &dx,
+             const std::string &dy, const std::string &dz);
+void add_torus(const std::string &fileName, const std::string &x,
+               const std::string &y, const std::string &z,
+               const std::string &r1, const std::string &r2,
                const std::string &alpha);
-void add_cone(const std::string &fileName, const std::string &x, const std::string &y,
-              const std::string &z, const std::string &dx, const std::string &dy,
-              const std::string &dz, const std::string &r1, const std::string &r2,
+void add_cone(const std::string &fileName, const std::string &x,
+              const std::string &y, const std::string &z, const std::string &dx,
+              const std::string &dy, const std::string &dz,
+              const std::string &r1, const std::string &r2,
               const std::string &alpha);
-void add_wedge(const std::string &fileName, const std::string &x, const std::string &y,
-               const std::string &z, const std::string &dx, const std::string &dy,
+void add_wedge(const std::string &fileName, const std::string &x,
+               const std::string &y, const std::string &z,
+               const std::string &dx, const std::string &dy,
                const std::string &dz, const std::string &ltx);
-void translate(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
-               const std::string &tx, const std::string &ty, const std::string &tz,
-               bool duplicata);
-void rotate(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
-            const std::string &ax, const std::string &ay, const std::string &az,
-            const std::string &px, const std::string &py, const std::string &pz,
+void translate(const std::string &fileName,
+               const std::vector<std::pair<int, int> > &l,
+               const std::string &tx, const std::string &ty,
+               const std::string &tz, bool duplicata);
+void rotate(const std::string &fileName,
+            const std::vector<std::pair<int, int> > &l, const std::string &ax,
+            const std::string &ay, const std::string &az, const std::string &px,
+            const std::string &py, const std::string &pz,
             const std::string &angle, bool duplicata);
-void dilate(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
-            const std::string &cx, const std::string &cy, const std::string &cz,
-            const std::string &sx, const std::string &sy, const std::string &sz,
-            bool duplicata);
-void symmetry(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
-              const std::string &sa, const std::string &sb, const std::string &sc,
+void dilate(const std::string &fileName,
+            const std::vector<std::pair<int, int> > &l, const std::string &cx,
+            const std::string &cy, const std::string &cz, const std::string &sx,
+            const std::string &sy, const std::string &sz, bool duplicata);
+void symmetry(const std::string &fileName,
+              const std::vector<std::pair<int, int> > &l, const std::string &sa,
+              const std::string &sb, const std::string &sc,
               const std::string &sd, bool duplicata);
-void extrude(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
-             const std::string &tx, const std::string &ty, const std::string &tz,
-             bool extrudeMesh, const std::string &layers, bool recombineMesh);
-void protude(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
-             const std::string &ax, const std::string &ay, const std::string &az,
-             const std::string &px, const std::string &py, const std::string &pz,
-             const std::string &angle, bool extrudeMesh, const std::string &layers,
-             bool recombineMesh);
-void add_pipe(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
+void extrude(const std::string &fileName,
+             const std::vector<std::pair<int, int> > &l, const std::string &tx,
+             const std::string &ty, const std::string &tz, bool extrudeMesh,
+             const std::string &layers, bool recombineMesh);
+void protude(const std::string &fileName,
+             const std::vector<std::pair<int, int> > &l, const std::string &ax,
+             const std::string &ay, const std::string &az,
+             const std::string &px, const std::string &py,
+             const std::string &pz, const std::string &angle, bool extrudeMesh,
+             const std::string &layers, bool recombineMesh);
+void add_pipe(const std::string &fileName,
+              const std::vector<std::pair<int, int> > &l,
               const std::vector<int> &l2);
 void split_edge(int edge_id, List_T *vertices, const std::string &fileName);
 void apply_boolean(const std::string &fileName, const std::string &op,

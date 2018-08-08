@@ -9,10 +9,10 @@
 //--FNV hashing parameters
 
 #if defined(HAVE_64BIT_SIZE_T)
-#define FNV_PRIME        1099511628211UL
+#define FNV_PRIME 1099511628211UL
 #define FNV_OFFSET_BASIS 14695981039346656037UL
 #else
-#define FNV_PRIME        16777619UL
+#define FNV_PRIME 16777619UL
 #define FNV_OFFSET_BASIS 2166136261UL
 #endif
 
@@ -20,9 +20,9 @@
 
 inline size_t hash_FNV1a(const void *const key, const int len)
 {
-  const unsigned char *p = static_cast<const unsigned char*>(key);
+  const unsigned char *p = static_cast<const unsigned char *>(key);
   size_t hash = FNV_OFFSET_BASIS;
-  for(int n = len; n--; ) hash = (hash^static_cast<size_t>(*p++))*FNV_PRIME;
+  for(int n = len; n--;) hash = (hash ^ static_cast<size_t>(*p++)) * FNV_PRIME;
   return hash;
 }
 
@@ -33,14 +33,15 @@ inline size_t hash_FNV1a(const void *const key, const int len)
 template <int N> struct Hash1FNV1a {
   static size_t eval(size_t hash, const unsigned char *p)
   {
-    return Hash1FNV1a<N-1>::eval((hash^static_cast<size_t>(*p))*FNV_PRIME, p+1);
+    return Hash1FNV1a<N - 1>::eval((hash ^ static_cast<size_t>(*p)) * FNV_PRIME,
+                                   p + 1);
   }
 };
 
 template <> struct Hash1FNV1a<1> {
   static size_t eval(size_t hash, const unsigned char *p)
   {
-    return (hash^static_cast<size_t>(*p))*FNV_PRIME;
+    return (hash ^ static_cast<size_t>(*p)) * FNV_PRIME;
   }
 };
 
@@ -49,7 +50,7 @@ template <int N> struct HashFNV1a {
   static size_t eval(const void *const key)
   {
     size_t hash = FNV_OFFSET_BASIS;
-    return Hash1FNV1a<N>::eval(hash, static_cast<const unsigned char*>(key));
+    return Hash1FNV1a<N>::eval(hash, static_cast<const unsigned char *>(key));
   }
 };
 

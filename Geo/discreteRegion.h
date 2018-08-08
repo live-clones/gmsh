@@ -11,7 +11,7 @@
 #include "MFace.h"
 
 class discreteRegion : public GRegion {
- public:
+public:
   discreteRegion(GModel *model, int num);
   virtual ~discreteRegion() {}
   virtual GeomType geomType() const { return DiscreteVolume; }

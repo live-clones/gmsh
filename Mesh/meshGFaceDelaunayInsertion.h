@@ -65,8 +65,7 @@ struct bidimMeshData {
   }
   bidimMeshData(std::map<MVertex *, MVertex *> *e = 0,
                 std::map<MVertex *, SPoint2> *p = 0)
-    : equivalence(e)
-    , parametricCoordinates(p)
+    : equivalence(e), parametricCoordinates(p)
   {
   }
 };
@@ -161,7 +160,8 @@ void bowyerWatson(GFace *gf, int MAXPNT = 1000000000,
                   std::map<MVertex *, SPoint2> *parametricCoordinates = 0);
 void bowyerWatsonFrontal(
   GFace *gf, std::map<MVertex *, MVertex *> *equivalence = 0,
-  std::map<MVertex *, SPoint2> *parametricCoordinates = 0);
+  std::map<MVertex *, SPoint2> *parametricCoordinates = 0,
+  std::vector<SPoint2> *true_boundary = 0);
 void bowyerWatsonFrontalLayers(
   GFace *gf, bool quad, std::map<MVertex *, MVertex *> *equivalence = 0,
   std::map<MVertex *, SPoint2> *parametricCoordinates = 0);
@@ -186,10 +186,7 @@ struct edgeXface {
   MTri3 *t1;
   int i1;
   int ori;
-  edgeXface(MTri3 *_t, int iFac)
-    : t1(_t)
-    , i1(iFac)
-    , ori(1)
+  edgeXface(MTri3 *_t, int iFac) : t1(_t), i1(iFac), ori(1)
   {
     v[0] = t1->tri()->getVertex(iFac == 0 ? 2 : iFac - 1);
     v[1] = t1->tri()->getVertex(iFac);

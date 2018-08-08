@@ -33,11 +33,7 @@ public:
   int classif_tag;
   int classif_degree;
 
-  BDS_GeomEntity(int a, int b)
-    : classif_tag(a)
-    , classif_degree(b)
-  {
-  }
+  BDS_GeomEntity(int a, int b) : classif_tag(a), classif_degree(b) {}
 
   ~BDS_GeomEntity() {}
 
@@ -123,9 +119,7 @@ public:
   }
   BDS_Vector(const BDS_Point &p2, const BDS_Point &p1);
   BDS_Vector(const double X = 0., const double Y = 0., const double Z = 0.)
-    : x(X)
-    , y(Y)
-    , z(Z)
+    : x(X), y(Y), z(Z)
   {
   }
   static double t;
@@ -140,7 +134,8 @@ class BDS_Point {
 public:
   double X, Y, Z;
   double u, v;
-  bool config_modified;
+  bool config_modified, degenerated;
+  BDS_Point *_periodicCounterpart;
   int iD;
   BDS_GeomEntity *g;
   std::vector<BDS_Edge *> edges;
@@ -159,20 +154,11 @@ public:
   {
     edges.erase(std::remove(edges.begin(), edges.end(), e), edges.end());
   }
-
   std::vector<BDS_Face *> getTriangles() const;
-
   BDS_Point(int id, double x = 0, double y = 0, double z = 0)
-    : _lcBGM(1.e22)
-    , _lcPTS(1.e22)
-    , X(x)
-    , Y(y)
-    , Z(z)
-    , u(0)
-    , v(0)
-    , config_modified(true)
-    , iD(id)
-    , g(0)
+    : _lcBGM(1.e22), _lcPTS(1.e22), X(x), Y(y), Z(z), u(0), v(0),
+      config_modified(true), degenerated(false), _periodicCounterpart(NULL),
+      iD(id), g(0)
   {
   }
 };
@@ -182,9 +168,7 @@ class BDS_Edge {
   std::vector<BDS_Face *> _faces;
 
 public:
-  BDS_Edge(BDS_Point *A, BDS_Point *B)
-    : deleted(false)
-    , g(0)
+  BDS_Edge(BDS_Point *A, BDS_Point *B) : deleted(false), g(0)
   {
     if(*A < *B) {
       p1 = A;
@@ -242,6 +226,8 @@ public:
                  _faces.end());
   }
   void oppositeof(BDS_Point *oface[2]) const;
+  void computeNeighborhood(BDS_Point *oface[2], BDS_Point *t1[4],
+                           BDS_Point *t2[4]) const;
   void update()
   {
     _length = std::sqrt((p1->X - p2->X) * (p1->X - p2->X) +
@@ -258,12 +244,7 @@ public:
 class BDS_Face {
 public:
   BDS_Face(BDS_Edge *A, BDS_Edge *B, BDS_Edge *C, BDS_Edge *D = 0)
-    : deleted(false)
-    , e1(A)
-    , e2(B)
-    , e3(C)
-    , e4(D)
-    , g(0)
+    : deleted(false), e1(A), e2(B), e3(C), e4(D), g(0)
   {
     e1->addface(this);
     e2->addface(this);
@@ -298,19 +279,19 @@ public:
                e->p2->iD);
     return 0;
   }
-  void getNodes(BDS_Point *n[4]) const
+  inline void getNodes(BDS_Point *_n[4]) const
   {
     if(!e4) {
-      n[0] = e1->commonvertex(e3);
-      n[1] = e1->commonvertex(e2);
-      n[2] = e2->commonvertex(e3);
-      n[3] = 0;
+      _n[0] = e1->commonvertex(e3);
+      _n[1] = e1->commonvertex(e2);
+      _n[2] = e2->commonvertex(e3);
+      _n[3] = 0;
     }
     else {
-      n[0] = e1->commonvertex(e4);
-      n[1] = e1->commonvertex(e2);
-      n[2] = e2->commonvertex(e3);
-      n[3] = e3->commonvertex(e4);
+      _n[0] = e1->commonvertex(e4);
+      _n[1] = e1->commonvertex(e2);
+      _n[2] = e2->commonvertex(e3);
+      _n[3] = e3->commonvertex(e4);
     }
   }
 
@@ -366,13 +347,24 @@ public:
   virtual ~BDS_SwapEdgeTest() {}
 };
 
+class BDS_SwapEdgeTestRecover : public BDS_SwapEdgeTest {
+public:
+  BDS_SwapEdgeTestRecover() {}
+  virtual bool operator()(BDS_Point *p1, BDS_Point *p2, BDS_Point *q1,
+                          BDS_Point *q2) const;
+  virtual bool operator()(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3,
+                          BDS_Point *q1, BDS_Point *q2, BDS_Point *q3,
+                          BDS_Point *op1, BDS_Point *op2, BDS_Point *op3,
+                          BDS_Point *oq1, BDS_Point *oq2, BDS_Point *oq3) const;
+  virtual ~BDS_SwapEdgeTestRecover() {}
+};
+
 class BDS_SwapEdgeTestQuality : public BDS_SwapEdgeTest {
   bool testQuality, testSmallTriangles;
 
 public:
   BDS_SwapEdgeTestQuality(bool a, bool b = true)
-    : testQuality(a)
-    , testSmallTriangles(b)
+    : testQuality(a), testSmallTriangles(b)
   {
   }
   virtual bool operator()(BDS_Point *p1, BDS_Point *p2, BDS_Point *q1,
@@ -384,11 +376,24 @@ public:
   virtual ~BDS_SwapEdgeTestQuality() {}
 };
 
+class BDS_SwapEdgeTestNormals : public BDS_SwapEdgeTest {
+  GFace *gf;
+  double _ori;
+
+public:
+  BDS_SwapEdgeTestNormals(GFace *_gf, double ori) : gf(_gf), _ori(ori) {}
+  virtual bool operator()(BDS_Point *p1, BDS_Point *p2, BDS_Point *q1,
+                          BDS_Point *q2) const;
+  virtual bool operator()(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3,
+                          BDS_Point *q1, BDS_Point *q2, BDS_Point *q3,
+                          BDS_Point *op1, BDS_Point *op2, BDS_Point *op3,
+                          BDS_Point *oq1, BDS_Point *oq2, BDS_Point *oq3) const;
+};
+
 struct EdgeToRecover {
   int p1, p2;
   GEdge *ge;
-  EdgeToRecover(int _p1, int _p2, GEdge *_ge)
-    : ge(_ge)
+  EdgeToRecover(int _p1, int _p2, GEdge *_ge) : ge(_ge)
   {
     if(_p1 < _p2) {
       p1 = _p1;
@@ -412,10 +417,7 @@ class BDS_Mesh {
 public:
   int MAXPOINTNUMBER;
   double Min[3], Max[3], LC;
-  BDS_Mesh(int _MAXX = 0)
-    : MAXPOINTNUMBER(_MAXX)
-  {
-  }
+  BDS_Mesh(int _MAXX = 0) : MAXPOINTNUMBER(_MAXX) {}
   virtual ~BDS_Mesh();
   BDS_Mesh(const BDS_Mesh &other);
   std::set<BDS_GeomEntity *, GeomLessThan> geom;
@@ -454,8 +456,9 @@ public:
   BDS_Edge *recover_edge_fast(BDS_Point *p1, BDS_Point *p2);
 
   /// Can invalidate the iterators for \p edge
-  bool swap_edge(BDS_Edge *, const BDS_SwapEdgeTest &theTest);
-  bool collapse_edge_parametric(BDS_Edge *, BDS_Point *);
+  bool swap_edge(BDS_Edge *, const BDS_SwapEdgeTest &theTest,
+                 bool force = false);
+  bool collapse_edge_parametric(BDS_Edge *, BDS_Point *, bool = false);
   bool smooth_point_parametric(BDS_Point *const p, GFace *const gf);
   bool smooth_point_centroid(BDS_Point *p, GFace *gf,
                              bool test_quality = false);
@@ -466,14 +469,11 @@ public:
 };
 
 void normal_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]);
-void swap_config(BDS_Edge *e, BDS_Point **p11, BDS_Point **p12, BDS_Point **p13,
-                 BDS_Point **p21, BDS_Point **p22, BDS_Point **p23,
-                 BDS_Point **p31, BDS_Point **p32, BDS_Point **p33,
-                 BDS_Point **p41, BDS_Point **p42, BDS_Point **p43);
-void outputScalarField(std::vector<BDS_Face *> t, const char *fn, int param,
+void outputScalarField(std::vector<BDS_Face *> &t, const char *fn, int param,
                        GFace *gf = 0);
 void recur_tag(BDS_Face *t, BDS_GeomEntity *g);
 int Intersect_Edges_2d(double x1, double y1, double x2, double y2, double x3,
                        double y3, double x4, double y4, double x[2]);
+double BDS_Face_Validity(GFace *gf, BDS_Face *f);
 
 #endif

@@ -16,35 +16,34 @@
 #include <FL/Fl_Menu_Button.H>
 
 class outputRange : public Fl_Group {
- private:
+private:
   Fl_Output *_output;
   Fl_Button *_graph_butt;
   Fl_Menu_Button *_graph_menu;
   std::string _graph_val;
-  void _set_graph_value(const std::string &val, bool update_menu=true)
+  void _set_graph_value(const std::string &val, bool update_menu = true)
   {
     _graph_val = val;
     _graph_val.resize(36, '0');
-    if(update_menu){
-      int index[36] = {1, 2, 3, 4,      7, 8, 9, 10,
-                       13, 14, 15, 16,  19, 20, 21, 22,
-                       25, 26, 27, 28,  31, 32, 33, 34,
-                       37, 38, 39, 40,  43, 44, 45, 46,
-                       49, 50, 51, 52};
-      for(int i = 0; i < 36; i++){
+    if(update_menu) {
+      int index[36] = {1,  2,  3,  4,  7,  8,  9,  10, 13, 14, 15, 16,
+                       19, 20, 21, 22, 25, 26, 27, 28, 31, 32, 33, 34,
+                       37, 38, 39, 40, 43, 44, 45, 46, 49, 50, 51, 52};
+      for(int i = 0; i < 36; i++) {
         if(_graph_val[i] != '0')
-          ((Fl_Menu_Item*)_graph_menu->menu())[index[i]].set();
+          ((Fl_Menu_Item *)_graph_menu->menu())[index[i]].set();
         else
-          ((Fl_Menu_Item*)_graph_menu->menu())[index[i]].clear();
+          ((Fl_Menu_Item *)_graph_menu->menu())[index[i]].clear();
       }
     }
     bool yellow = false;
-    for(int i = 0; i < 36; i++) if(_graph_val[i] != '0') yellow = true;
-    if(yellow){
+    for(int i = 0; i < 36; i++)
+      if(_graph_val[i] != '0') yellow = true;
+    if(yellow) {
       _graph_butt->value(1);
       _graph_butt->selection_color(FL_YELLOW);
     }
-    else{
+    else {
       _graph_butt->value(0);
       _graph_butt->selection_color(_graph_butt->color());
     }
@@ -52,15 +51,13 @@ class outputRange : public Fl_Group {
   }
   static void _graph_menu_cb(Fl_Widget *w, void *data)
   {
-    outputRange *b = (outputRange*)data;
+    outputRange *b = (outputRange *)data;
     std::string v;
     v.resize(36, '0');
-    int index[36] = {1, 2, 3, 4,      7, 8, 9, 10,
-                     13, 14, 15, 16,  19, 20, 21, 22,
-                     25, 26, 27, 28,  31, 32, 33, 34,
-                     37, 38, 39, 40,  43, 44, 45, 46,
-                     49, 50, 51, 52};
-    for(int i = 0; i < 36; i++){
+    int index[36] = {1,  2,  3,  4,  7,  8,  9,  10, 13, 14, 15, 16,
+                     19, 20, 21, 22, 25, 26, 27, 28, 31, 32, 33, 34,
+                     37, 38, 39, 40, 43, 44, 45, 46, 49, 50, 51, 52};
+    for(int i = 0; i < 36; i++) {
       // 1=iso, 2=continuous, 3=discrete, 4=numeric
       v[i] = b->_graph_menu->menu()[index[i]].value() ? '3' : '0';
     }
@@ -69,15 +66,16 @@ class outputRange : public Fl_Group {
   }
   static void _graph_menu_reset_cb(Fl_Widget *w, void *data)
   {
-    outputRange *b = (outputRange*)data;
+    outputRange *b = (outputRange *)data;
     std::string v;
     v.resize(36, '0');
     b->_set_graph_value(v.c_str());
     b->do_callback();
   }
- public:
-  outputRange(int x, int y, int w, int h, const char *l=0)
-    : Fl_Group(x,y,w,h,l)
+
+public:
+  outputRange(int x, int y, int w, int h, const char *l = 0)
+    : Fl_Group(x, y, w, h, l)
   {
     _graph_val.resize(36, '0');
 
@@ -103,12 +101,18 @@ class outputRange : public Fl_Group {
     _graph_menu->add("Top Right/Y ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
     _graph_menu->add("Bottom Left/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
     _graph_menu->add("Bottom Left/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Left/X ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Left/Y ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Right/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Right/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Right/X ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Right/Y ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
+    _graph_menu->add("Bottom Left/X ' ", 0, _graph_menu_cb, this,
+                     FL_MENU_TOGGLE);
+    _graph_menu->add("Bottom Left/Y ' ", 0, _graph_menu_cb, this,
+                     FL_MENU_TOGGLE);
+    _graph_menu->add("Bottom Right/X ", 0, _graph_menu_cb, this,
+                     FL_MENU_TOGGLE);
+    _graph_menu->add("Bottom Right/Y ", 0, _graph_menu_cb, this,
+                     FL_MENU_TOGGLE);
+    _graph_menu->add("Bottom Right/X ' ", 0, _graph_menu_cb, this,
+                     FL_MENU_TOGGLE);
+    _graph_menu->add("Bottom Right/Y ' ", 0, _graph_menu_cb, this,
+                     FL_MENU_TOGGLE);
     _graph_menu->add("Top/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
     _graph_menu->add("Top/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
     _graph_menu->add("Top/X ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
@@ -140,8 +144,8 @@ class outputRange : public Fl_Group {
     sprintf(tmp, "%g", val);
     _output->value(tmp);
   }
-  void graph(const std::string &val){ _set_graph_value(val); }
-  std::string graph(){ return _graph_val; }
+  void graph(const std::string &val) { _set_graph_value(val); }
+  std::string graph() { return _graph_val; }
   void color(int col)
   {
     _output->color(col);

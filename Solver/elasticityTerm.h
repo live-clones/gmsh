@@ -13,22 +13,22 @@
 #include "SElement.h"
 #include "fullMatrix.h"
 
-struct elasticityDataAtGaussPoint
-{
-  std::vector< fullMatrix<double> > gradSF;
-  std::vector<double> u,v,w,weight;
+struct elasticityDataAtGaussPoint {
+  std::vector<fullMatrix<double> > gradSF;
+  std::vector<double> u, v, w, weight;
 };
 
 class elasticityTerm : public femTerm<double> {
- protected:
+protected:
   double _E, _nu;
   int _iFieldR, _iFieldC;
   SVector3 _volumeForce;
-  mutable std::map<int,elasticityDataAtGaussPoint> _data;
-  void createData (MElement*) const;
- public:
-  void setFieldC(int i){_iFieldC = i;}
-  void setFieldR(int i){_iFieldR = i;}
+  mutable std::map<int, elasticityDataAtGaussPoint> _data;
+  void createData(MElement *) const;
+
+public:
+  void setFieldC(int i) { _iFieldC = i; }
+  void setFieldR(int i) { _iFieldR = i; }
   // element matrix size : 3 dofs per vertex
   virtual int sizeOfR(SElement *se) const
   {
@@ -56,11 +56,16 @@ class elasticityTerm : public femTerm<double> {
     return Dof(e->getShapeFunctionNode(ithLocalVertex)->getNum(),
                Dof::createTypeWithTwoInts(iCompC, _iFieldC));
   }
- public:
- elasticityTerm(GModel *gm, double E, double nu, int fieldr, int fieldc)
-   : femTerm<double>(gm), _E(E), _nu(nu), _iFieldR(fieldr),_iFieldC(fieldc) {}
- elasticityTerm(GModel *gm, double E, double nu, int fieldr)
-   : femTerm<double>(gm), _E(E), _nu(nu), _iFieldR(fieldr),_iFieldC(fieldr) {}
+
+public:
+  elasticityTerm(GModel *gm, double E, double nu, int fieldr, int fieldc)
+    : femTerm<double>(gm), _E(E), _nu(nu), _iFieldR(fieldr), _iFieldC(fieldc)
+  {
+  }
+  elasticityTerm(GModel *gm, double E, double nu, int fieldr)
+    : femTerm<double>(gm), _E(E), _nu(nu), _iFieldR(fieldr), _iFieldC(fieldr)
+  {
+  }
   void setVector(const SVector3 &f) { _volumeForce = f; }
   void elementMatrix(SElement *se, fullMatrix<double> &m) const;
   void elementVector(SElement *se, fullVector<double> &m) const;
@@ -81,27 +86,28 @@ class elasticityMixedTerm : public femTerm<double> {
 protected:
   double _E, _nu;
   mutable int _iField, _polyOrderN, _polyOrderM, _sizeN, _sizeM;
-  mutable polynomialBasis *_pN,*_pM;
-  void setPolynomialBasis (SElement *se) const{
-    _polyOrderN =  se->getMeshElement()->getPolynomialOrder();
-    _polyOrderM =  se->getMeshElement()->getPolynomialOrder();
-    _pN =  (polynomialBasis*)se->getMeshElement()->getFunctionSpace(_polyOrderN);
-    _pM =  (polynomialBasis*)se->getMeshElement()->getFunctionSpace(_polyOrderM);
+  mutable polynomialBasis *_pN, *_pM;
+  void setPolynomialBasis(SElement *se) const
+  {
+    _polyOrderN = se->getMeshElement()->getPolynomialOrder();
+    _polyOrderM = se->getMeshElement()->getPolynomialOrder();
+    _pN =
+      (polynomialBasis *)se->getMeshElement()->getFunctionSpace(_polyOrderN);
+    _pM =
+      (polynomialBasis *)se->getMeshElement()->getFunctionSpace(_polyOrderM);
     _sizeN = _pN->coefficients.size1();
     _sizeM = _pM->coefficients.size1();
   }
+
 public:
-  void setField(int i){_iField = i;}
+  void setField(int i) { _iField = i; }
   // element matrix size : 3 dofs per vertex
   virtual int sizeOfR(SElement *se) const
   {
     setPolynomialBasis(se);
     return 3 * _sizeN + 2 * _sizeM;
   }
-  virtual int sizeOfC(SElement *se) const
-  {
-    return sizeOfR(se);
-  }
+  virtual int sizeOfC(SElement *se) const { return sizeOfR(se); }
   // order dofs in the local matrix :
   // dx1, dx2 ... dxn, dy1, ..., dyn, dz1, ... dzn ,
   // p1,p2,...,pm, g1,g2,...,gm
@@ -111,7 +117,7 @@ public:
     MElement *e = se->getMeshElement();
     int iComp;
     int ithLocalVertex;
-    if (iRow < 3 * _sizeN){
+    if(iRow < 3 * _sizeN) {
       iComp = iRow / _sizeN;
       ithLocalVertex = iRow % _sizeN;
     }
@@ -125,15 +131,17 @@ public:
   }
   Dof getLocalDofC(SElement *se, int iCol) const
   {
-    return getLocalDofR(se,iCol);
+    return getLocalDofR(se, iCol);
   }
- public:
- elasticityMixedTerm(GModel *gm, double E, double nu, int field)
-   : femTerm<double>(gm), _E(E), _nu(nu), _iField(field) {}
+
+public:
+  elasticityMixedTerm(GModel *gm, double E, double nu, int field)
+    : femTerm<double>(gm), _E(E), _nu(nu), _iField(field)
+  {
+  }
   void elementMatrix(SElement *se, fullMatrix<double> &m) const;
   void elementVector(SElement *se, fullVector<double> &m) const {}
-  void setYoung (double E){_E = E;}
+  void setYoung(double E) { _E = E; }
 };
-
 
 #endif

@@ -8,17 +8,16 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterParticlesPlugin ();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterParticlesPlugin();
 }
 
-class GMSH_ParticlesPlugin : public GMSH_PostPlugin
-{
+class GMSH_ParticlesPlugin : public GMSH_PostPlugin {
   static double callback(int num, int action, double value, double *opt,
                          double step, double min, double max);
- public:
-  GMSH_ParticlesPlugin(){}
+
+public:
+  GMSH_ParticlesPlugin() {}
   std::string getName() const { return "Particles"; }
   std::string getShortHelp() const
   {

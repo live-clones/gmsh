@@ -14,7 +14,7 @@ class MElement;
 class bezierBasisRaiser;
 
 class bezierBasis {
- private :
+private:
   // the 'numLagCoeff' first exponents are related to 'real' values
   int _numLagCoeff;
   int _numDivisions, _dimSimplex;
@@ -24,7 +24,7 @@ class bezierBasis {
   friend class bezierBasisRaiser;
   fullMatrix<double> _exponents;
 
- public :
+public:
   fullMatrix<double> matrixLag2Bez;
   fullMatrix<double> matrixBez2Lag;
   fullMatrix<double> subDivisor;
@@ -34,21 +34,21 @@ class bezierBasis {
   ~bezierBasis();
 
   // get methods
-  inline int getDim() const {return _exponents.size2();}
-  inline int getType() const {return _data.elementType();}
-  inline int getOrder() const {return _data.spaceOrder();}
-  inline int getDimSimplex() const {return _dimSimplex;}
-  inline int getNumLagCoeff() const {return _numLagCoeff;}
-  inline int getNumDivision() const {return _numDivisions;}
-  inline int getNumSubNodes() const {return subDivisor.size1();}
-  inline FuncSpaceData getFuncSpaceData() const {return _data;}
-  bezierBasisRaiser* getRaiser() const;
+  inline int getDim() const { return _exponents.size2(); }
+  inline int getType() const { return _data.elementType(); }
+  inline int getOrder() const { return _data.spaceOrder(); }
+  inline int getDimSimplex() const { return _dimSimplex; }
+  inline int getNumLagCoeff() const { return _numLagCoeff; }
+  inline int getNumDivision() const { return _numDivisions; }
+  inline int getNumSubNodes() const { return subDivisor.size1(); }
+  inline FuncSpaceData getFuncSpaceData() const { return _data; }
+  bezierBasisRaiser *getRaiser() const;
 
   // Evaluate Bezier functions at the point (u, v, w)
   void f(double u, double v, double w, double *sf) const;
 
   // generate Bezier points
-  void generateBezierPoints(fullMatrix<double>&) const;
+  void generateBezierPoints(fullMatrix<double> &) const;
 
   // transform coeff Lagrange into Bezier coeff
   void lag2Bez(const fullMatrix<double> &lag, fullMatrix<double> &bez) const;
@@ -63,43 +63,46 @@ class bezierBasis {
   // coeffs(numCoeff, n) and uvw(N, dim)
   // => result(N, n)
   void interpolate(const fullMatrix<double> &coeffs,
-                   const fullMatrix<double> &uvw,
-                   fullMatrix<double> &result,
+                   const fullMatrix<double> &uvw, fullMatrix<double> &result,
                    bool bezCoord = false) const;
   void interpolate(const fullVector<double> &coeffs,
-                   const fullMatrix<double> &uvw,
-                   fullVector<double> &result,
-                   bool bezCoord = false) const {
+                   const fullMatrix<double> &uvw, fullVector<double> &result,
+                   bool bezCoord = false) const
+  {
     int size = uvw.size1();
     result.resize(size);
-    fullMatrix<double> c(const_cast<double*>(coeffs.getDataPtr()), size, 1);
-    fullMatrix<double> r(const_cast<double*>(result.getDataPtr()), size, 1);
+    fullMatrix<double> c(const_cast<double *>(coeffs.getDataPtr()), size, 1);
+    fullMatrix<double> r(const_cast<double *>(result.getDataPtr()), size, 1);
     interpolate(c, uvw, r, bezCoord);
   }
 
- private :
+private:
   void _construct();
   void _constructPyr();
-  void _FEpoints2BezPoints(fullMatrix<double>&) const;
+  void _FEpoints2BezPoints(fullMatrix<double> &) const;
 };
 
 class bezierBasisRaiser {
   // Let f, g, h be three function whose Bezier coefficients are given.
   // This class allows to compute the Bezier coefficients of f*g and f*g*h.
- private :
+private:
   class _Data {
     friend class bezierBasisRaiser;
-   private:
+
+  private:
     int i, j, k;
     double val;
-   public:
-    _Data(double vv, int ii, int jj = -1, int kk = -1) :
-      i(ii), j(jj), k(kk), val(vv) {}
+
+  public:
+    _Data(double vv, int ii, int jj = -1, int kk = -1)
+      : i(ii), j(jj), k(kk), val(vv)
+    {
+    }
   };
   std::vector<std::vector<_Data> > _raiser2, _raiser3;
   const bezierBasis *_bfs;
 
- public:
+public:
   bezierBasisRaiser(const bezierBasis *bezier) : _bfs(bezier)
   {
     _fillRaiserData();
@@ -119,7 +122,8 @@ class bezierBasisRaiser {
                     const fullMatrix<double> &coeffB,
                     const fullMatrix<double> &coeffC,
                     fullMatrix<double> &coeffCubic);
- private:
+
+private:
   void _fillRaiserData();
   void _fillRaiserDataPyr();
 };

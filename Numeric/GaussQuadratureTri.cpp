@@ -7,20 +7,17 @@
 #include "GaussLegendre1D.h"
 
 IntPt GQT1[1] = {
-  {{0.333333333333333, 0.333333333333333, 0.}, 0.500000000000000}
-};
+  {{0.333333333333333, 0.333333333333333, 0.}, 0.500000000000000}};
 IntPt GQT2[3] = {
   {{0.166666666666667, 0.166666666666667, 0.}, 0.166666666666667},
   {{0.666666666666667, 0.166666666666667, 0.}, 0.166666666666667},
-  {{0.166666666666667, 0.666666666666667, 0.}, 0.166666666666667}
-};
+  {{0.166666666666667, 0.666666666666667, 0.}, 0.166666666666667}};
 
 IntPt GQT3[4] = {
   {{0.333333333333333, 0.333333333333333, 0.}, -0.281250000000000},
   {{0.600000000000000, 0.200000000000000, 0.}, +0.260416666666667},
   {{0.200000000000000, 0.600000000000000, 0.}, +0.260416666666667},
-  {{0.200000000000000, 0.200000000000000, 0.}, +0.260416666666667}
-};
+  {{0.200000000000000, 0.200000000000000, 0.}, +0.260416666666667}};
 
 IntPt GQT4[6] = {
   {{0.816847572980459, 0.091576213509771, 0.}, 0.054975871827661},
@@ -28,8 +25,7 @@ IntPt GQT4[6] = {
   {{0.091576213509771, 0.091576213509771, 0.}, 0.054975871827661},
   {{0.108103018168070, 0.445948490915965, 0.}, 0.111690794839005},
   {{0.445948490915965, 0.108103018168070, 0.}, 0.111690794839005},
-  {{0.445948490915965, 0.445948490915965, 0.}, 0.111690794839005}
-};
+  {{0.445948490915965, 0.445948490915965, 0.}, 0.111690794839005}};
 
 IntPt GQT5[7] = {
   {{0.333333333333333, 0.333333333333333, 0.}, 0.112500000000000},
@@ -38,8 +34,7 @@ IntPt GQT5[7] = {
   {{0.101286507323456, 0.101286507323456, 0.}, 0.062969590272414},
   {{0.470142064105115, 0.059715871789770, 0.}, 0.066197076394253},
   {{0.059715871789770, 0.470142064105115, 0.}, 0.066197076394253},
-  {{0.470142064105115, 0.470142064105115, 0.}, 0.066197076394253}
-};
+  {{0.470142064105115, 0.470142064105115, 0.}, 0.066197076394253}};
 
 IntPt GQT6[12] = {
   {{0.873821971016996, 0.063089014491502, 0.}, 0.025422453185104},
@@ -53,8 +48,7 @@ IntPt GQT6[12] = {
   {{0.636502499121399, 0.053145049844816, 0.}, 0.041425537809187},
   {{0.310352451033785, 0.053145049844816, 0.}, 0.041425537809187},
   {{0.053145049844816, 0.310352451033785, 0.}, 0.041425537809187},
-  {{0.053145049844816, 0.636502499121399, 0.}, 0.041425537809187}
-};
+  {{0.053145049844816, 0.636502499121399, 0.}, 0.041425537809187}};
 
 IntPt GQT7[13] = {
   {{0.333333333333333, 0.333333333333333, 0.}, -0.074785022233841},
@@ -89,23 +83,20 @@ IntPt GQT8[16] = {
   {{0.263112829634638, 0.008394777409958, 0.}, 0.013615157087217},
   {{0.008394777409958, 0.263112829634638, 0.}, 0.013615157087217},
   {{0.263112829634638, 0.728492392955404, 0.}, 0.013615157087217},
-  {{0.728492392955404, 0.263112829634638, 0.}, 0.013615157087217}
-};
+  {{0.728492392955404, 0.263112829634638, 0.}, 0.013615157087217}};
 
-
-
-IntPt * GQT[9] = {GQT1,GQT1,GQT2,GQT3,GQT4,GQT5,GQT6,GQT7,GQT8};
-IntPt * GQTdegen[17] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-int GQTnPt[9] = {1,1,3,4,6,7,12,13,16};
+IntPt *GQT[9] = {GQT1, GQT1, GQT2, GQT3, GQT4, GQT5, GQT6, GQT7, GQT8};
+IntPt *GQTdegen[17] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int GQTnPt[9] = {1, 1, 3, 4, 6, 7, 12, 13, 16};
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 1 on the triangle */
 /* 'Higher-order Finite Elements', P.Solin, K.Segeth and I. Dolezel */
 
 IntPt triP1Solin[1] = {
-  {{0.333333333333333, 0.333333333333333, 0.}, 0.500000000000000}
-};
-// 0 negative weights, 0 points outside of the triangle,  total sum of the weights is 0.5
+  {{0.333333333333333, 0.333333333333333, 0.}, 0.500000000000000}};
+// 0 negative weights, 0 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 2 on the triangle */
@@ -114,9 +105,9 @@ IntPt triP1Solin[1] = {
 IntPt triP2Solin[3] = {
   {{0.166666666666667, 0.166666666666667, 0.}, 0.166666666666667},
   {{0.166666666666667, 0.666666666666667, 0.}, 0.166666666666667},
-  {{0.666666666666667, 0.166666666666667, 0.}, 0.166666666666667}
-};
-// 0 negative weights, 0 points outside of the triangle,  total sum of the weights is 0.5
+  {{0.666666666666667, 0.166666666666667, 0.}, 0.166666666666667}};
+// 0 negative weights, 0 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 3 on the triangle */
@@ -126,9 +117,9 @@ IntPt triP3Solin[4] = {
   {{0.333333333333333, 0.333333333333333, 0.}, -0.281250000000000},
   {{0.200000000000000, 0.200000000000000, 0.}, 0.260416666666667},
   {{0.200000000000000, 0.600000000000000, 0.}, 0.260416666666667},
-  {{0.600000000000000, 0.200000000000000, 0.}, 0.260416666666667}
-};
-// 1 negative weight, 0 points outside of the triangle,  total sum of the weights is 0.5
+  {{0.600000000000000, 0.200000000000000, 0.}, 0.260416666666667}};
+// 1 negative weight, 0 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 4 on the triangle */
@@ -140,9 +131,9 @@ IntPt triP4Solin[6] = {
   {{0.108103018168070, 0.445948490915965, 0.}, 0.111690794839005},
   {{0.091576213509771, 0.091576213509771, 0.}, 0.054975871827661},
   {{0.091576213509771, 0.816847572980459, 0.}, 0.054975871827661},
-  {{0.816847572980459, 0.091576213509771, 0.}, 0.054975871827661}
-};
-// 0 negative weights, 0 points outside of the triangle,  total sum of the weights is 0.5
+  {{0.816847572980459, 0.091576213509771, 0.}, 0.054975871827661}};
+// 0 negative weights, 0 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 5 on the triangle */
@@ -155,9 +146,9 @@ IntPt triP5Solin[7] = {
   {{0.059715871789770, 0.470142064105115, 0.}, 0.066197076394253},
   {{0.101286507323456, 0.101286507323456, 0.}, 0.062969590272414},
   {{0.101286507323456, 0.797426985353087, 0.}, 0.062969590272414},
-  {{0.797426985353087, 0.101286507323456, 0.}, 0.062969590272414}
-};
-// 0 negative weights, 0 points outside of the triangle,  total sum of the weights is 0.5
+  {{0.797426985353087, 0.101286507323456, 0.}, 0.062969590272414}};
+// 0 negative weights, 0 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 6 on the triangle */
@@ -175,9 +166,9 @@ IntPt triP6Solin[12] = {
   {{0.053145049844816, 0.310352451033785, 0.}, 0.041425537809187},
   {{0.310352451033785, 0.053145049844816, 0.}, 0.041425537809187},
   {{0.636502499121399, 0.310352451033785, 0.}, 0.041425537809187},
-  {{0.053145049844816, 0.636502499121399, 0.}, 0.041425537809187}
-};
-// 0 negative weights, 0 points outside of the triangle,  total sum of the weights is 0.5
+  {{0.053145049844816, 0.636502499121399, 0.}, 0.041425537809187}};
+// 0 negative weights, 0 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 7 on the triangle */
@@ -196,9 +187,9 @@ IntPt triP7Solin[13] = {
   {{0.048690315425316, 0.312865496004874, 0.}, 0.038556880445128},
   {{0.312865496004874, 0.048690315425316, 0.}, 0.038556880445128},
   {{0.638444188569810, 0.312865496004874, 0.}, 0.038556880445128},
-  {{0.048690315425316, 0.638444188569810, 0.}, 0.038556880445128}
-};
-// 1 negative weight, 0 points outside of the triangle,  total sum of the weights is 0.5
+  {{0.048690315425316, 0.638444188569810, 0.}, 0.038556880445128}};
+// 1 negative weight, 0 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 8 on the triangle */
@@ -220,9 +211,9 @@ IntPt triP8Solin[16] = {
   {{0.008394777409958, 0.263112829634638, 0.}, 0.013615157087217},
   {{0.263112829634638, 0.008394777409958, 0.}, 0.013615157087217},
   {{0.728492392955404, 0.263112829634638, 0.}, 0.013615157087217},
-  {{0.008394777409958, 0.728492392955404, 0.}, 0.013615157087217}
-};
-// 0 negative weights, 0 points outside of the triangle,  total sum of the weights is 0.5
+  {{0.008394777409958, 0.728492392955404, 0.}, 0.013615157087217}};
+// 0 negative weights, 0 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 9 on the triangle */
@@ -247,9 +238,9 @@ IntPt triP9Solin[19] = {
   {{0.0368384120547, 0.2219629891610, 0.}, 0.02164176968865},
   {{0.2219629891610, 0.0368384120547, 0.}, 0.02164176968865},
   {{0.7411985987840, 0.2219629891610, 0.}, 0.02164176968865},
-  {{0.0368384120547, 0.7411985987840, 0.}, 0.02164176968865}
-};
-// 0 negative weights, 0 points outside of the triangle,  total sum of the weights is 0.5
+  {{0.0368384120547, 0.7411985987840, 0.}, 0.02164176968865}};
+// 0 negative weights, 0 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 10 on the triangle */
@@ -280,9 +271,9 @@ IntPt triP10Solin[25] = {
   {{0.0095408154003, 0.0668032510122, 0.}, 0.00471083348185},
   {{0.0668032510122, 0.0095408154003, 0.}, 0.00471083348185},
   {{0.9236559335870, 0.0668032510122, 0.}, 0.00471083348185},
-  {{0.0095408154003, 0.9236559335870, 0.}, 0.00471083348185}
-};
-// 0 negative weights, 0 points outside of the triangle,  total sum of the weights is 0.5
+  {{0.0095408154003, 0.9236559335870, 0.}, 0.00471083348185}};
+// 0 negative weights, 0 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 11 on the triangle */
@@ -315,9 +306,9 @@ IntPt triP11Solin[27] = {
   {{+0.1714889803040, +0.0210220165362, 0.}, 0.01035382981955},
   {{+0.0210220165362, +0.1714889803040, 0.}, 0.01035382981955},
   {{+0.1714889803040, +0.8074890031600, 0.}, 0.01035382981955},
-  {{+0.8074890031600, +0.0210220165362, 0.}, 0.01035382981955}
-};
-// 0 negative weights, 3 points outside of the triangle,  total sum of the weights is 0.5
+  {{+0.8074890031600, +0.0210220165362, 0.}, 0.01035382981955}};
+// 0 negative weights, 3 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 12 on the triangle */
@@ -356,9 +347,9 @@ IntPt triP12Solin[33] = {
   {{0.0257340505483, 0.1162519159080, 0.}, 0.00865811555435},
   {{0.1162519159080, 0.0257340505483, 0.}, 0.00865811555435},
   {{0.8580140335440, 0.1162519159080, 0.}, 0.00865811555435},
-  {{0.0257340505483, 0.8580140335440, 0.}, 0.00865811555435}
-};
-// 0 negative weights, 0 points outside of the triangle,  total sum of the weights is 0.5
+  {{0.0257340505483, 0.8580140335440, 0.}, 0.00865811555435}};
+// 0 negative weights, 0 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 13 on the triangle */
@@ -401,9 +392,9 @@ IntPt triP13Solin[37] = {
   {{0.12635738549200, 0.02223307667410, 0.}, 0.007760893419500},
   {{0.02223307667410, 0.12635738549200, 0.}, 0.007760893419500},
   {{0.12635738549200, 0.85140953783400, 0.}, 0.007760893419500},
-  {{0.85140953783400, 0.02223307667410, 0.}, 0.007760893419500}
-};
-// 0 negative weights, 0 points outside of the triangle,  total sum of the weights is 0.5
+  {{0.85140953783400, 0.02223307667410, 0.}, 0.007760893419500}};
+// 0 negative weights, 0 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 14 on the triangle */
@@ -451,9 +442,9 @@ IntPt triP14Solin[42] = {
   {{0.11897449769700, 0.00126833093287, 0.}, 0.00250511441925},
   {{0.00126833093287, 0.11897449769700, 0.}, 0.00250511441925},
   {{0.11897449769700, 0.87975717137000, 0.}, 0.00250511441925},
-  {{0.87975717137000, 0.00126833093287, 0.}, 0.00250511441925}
-};
-// 0 negative weights, 0 points outside of the triangle,  total sum of the weights is 0.5
+  {{0.87975717137000, 0.00126833093287, 0.}, 0.00250511441925}};
+// 0 negative weights, 0 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 15 on the triangle */
@@ -507,9 +498,9 @@ IntPt triP15Solin[48] = {
   {{+0.1035756165760, +0.0124598093312, 0.}, 0.003836971315525},
   {{+0.0124598093312, +0.1035756165760, 0.}, 0.003836971315525},
   {{+0.1035756165760, +0.8839645740920, 0.}, 0.003836971315525},
-  {{+0.8839645740920, +0.0124598093312, 0.}, 0.003836971315525}
-};
-// 0 negative weights, 9 points outside of the triangle,  total sum of the weights is 0.5
+  {{+0.8839645740920, +0.0124598093312, 0.}, 0.003836971315525}};
+// 0 negative weights, 9 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 16 on the triangle */
@@ -567,9 +558,9 @@ IntPt triP16Solin[52] = {
   {{+0.08528361568270, +0.01431732023070, 0.}, 0.003425027273270},
   {{+0.01431732023070, +0.08528361568270, 0.}, 0.003425027273270},
   {{+0.08528361568270, +0.90039906408700, 0.}, 0.003425027273270},
-  {{+0.90039906408700, +0.01431732023070, 0.}, 0.003425027273270}
-};
-// 0 negative weights, 6 points outside of the triangle,  total sum of the weights is 0.5
+  {{+0.90039906408700, +0.01431732023070, 0.}, 0.003425027273270}};
+// 0 negative weights, 6 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 17 on the triangle */
@@ -636,9 +627,9 @@ IntPt triP17Solin[61] = {
   {{0.08071131367960, 0.01466318222480, 0.}, 0.003332816002085},
   {{0.01466318222480, 0.08071131367960, 0.}, 0.003332816002085},
   {{0.08071131367960, 0.90462550409600, 0.}, 0.003332816002085},
-  {{0.90462550409600, 0.01466318222480, 0.}, 0.003332816002085}
-};
-// 0 negative weights, 0 points outside of the triangle,  total sum of the weights is 0.5
+  {{0.90462550409600, 0.01466318222480, 0.}, 0.003332816002085}};
+// 0 negative weights, 0 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 18 on the triangle */
@@ -714,9 +705,9 @@ IntPt triP18Solin[70] = {
   {{+0.02087475528260, -0.03522201528790, 0.}, +2.3093830397e-05},
   {{-0.03522201528790, +0.02087475528260, 0.}, +2.3093830397e-05},
   {{+0.02087475528260, +1.01434726001000, 0.}, +2.3093830397e-05},
-  {{+1.01434726001000, -0.03522201528790, 0.}, +2.3093830397e-05}
-};
-// 3 negative weights, 6 points outside of the triangle,  total sum of the weights is 0.5
+  {{+1.01434726001000, -0.03522201528790, 0.}, +2.3093830397e-05}};
+// 3 negative weights, 6 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 19 on the triangle */
@@ -795,9 +786,9 @@ IntPt triP19Solin[73] = {
   {{0.06549462808290, 0.01016111929630, 0.}, 0.001899964427650},
   {{0.01016111929630, 0.06549462808290, 0.}, 0.001899964427650},
   {{0.06549462808290, 0.92434425262100, 0.}, 0.001899964427650},
-  {{0.92434425262100, 0.01016111929630, 0.}, 0.001899964427650}
-};
-// 0 negative weights, 0 points outside of the triangle,  total sum of the weights is 0.5
+  {{0.92434425262100, 0.01016111929630, 0.}, 0.001899964427650}};
+// 0 negative weights, 0 points outside of the triangle,  total sum of the
+// weights is 0.5
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 20 on the triangle */
@@ -882,79 +873,41 @@ IntPt triP20Solin[79] = {
   {{+0.0596961091490, +0.0105477192941, 0.}, +0.001786954692975},
   {{+0.0105477192941, +0.0596961091490, 0.}, +0.001786954692975},
   {{+0.0596961091490, +0.9297561715570, 0.}, +0.001786954692975},
-  {{+0.9297561715570, +0.0105477192941, 0.}, +0.001786954692975}
-};
-// 3 negative weights, 9 points outside of the triangle,  total sum of the weights is 0.5
+  {{+0.9297561715570, +0.0105477192941, 0.}, +0.001786954692975}};
+// 3 negative weights, 9 points outside of the triangle,  total sum of the
+// weights is 0.5
 
-IntPt * GQTSolin[21] = {
-  triP1Solin,
-  triP1Solin,
-  triP2Solin,
-  triP3Solin,
-  triP4Solin,
-  triP5Solin,
-  triP6Solin,
-  triP7Solin,
-  triP8Solin,
-  triP9Solin,
-  triP10Solin,
-  triP11Solin,
-  triP12Solin,
-  triP13Solin,
-  triP14Solin,
-  triP15Solin,
-  triP16Solin,
-  triP17Solin,
-  triP18Solin,
-  triP19Solin,
-  triP20Solin
-};
+IntPt *GQTSolin[21] = {
+  triP1Solin,  triP1Solin,  triP2Solin,  triP3Solin,  triP4Solin,  triP5Solin,
+  triP6Solin,  triP7Solin,  triP8Solin,  triP9Solin,  triP10Solin, triP11Solin,
+  triP12Solin, triP13Solin, triP14Solin, triP15Solin, triP16Solin, triP17Solin,
+  triP18Solin, triP19Solin, triP20Solin};
 
-int GQTnPtSolin[21] = {
-  1,
-  1,
-  3,
-  4,
-  6,
-  7,
-  12,
-  13,
-  16,
-  19,
-  25,
-  27,
-  33,
-  37,
-  42,
-  48,
-  52,
-  61,
-  70,
-  73,
-  79};
+int GQTnPtSolin[21] = {1,  1,  3,  4,  6,  7,  12, 13, 16, 19, 25,
+                       27, 33, 37, 42, 48, 52, 61, 70, 73, 79};
 
 IntPt *getGQTPts(int order);
 int getNGQTPts(int order);
 
 IntPt *getGQTPts(int order)
 {
-  if (order < 21) return GQTSolin[order];
-  int n = (order+3)/2;
-  int index = n-4;
-  if(index >= (int)(sizeof(GQTdegen) / sizeof(IntPt*))){
+  if(order < 21) return GQTSolin[order];
+  int n = (order + 3) / 2;
+  int index = n - 4;
+  if(index >= (int)(sizeof(GQTdegen) / sizeof(IntPt *))) {
     Msg::Error("Increase size of GQTdegen in gauss quadrature tri");
     index = 0;
   }
-  if(!GQTdegen[index]){
-    int npts = n*n;
+  if(!GQTdegen[index]) {
+    int npts = n * n;
     GQTdegen[index] = new IntPt[npts];
-    GaussLegendreTri(n,n,GQTdegen[index]);
+    GaussLegendreTri(n, n, GQTdegen[index]);
   }
   return GQTdegen[index];
 }
 
 int getNGQTPts(int order)
 {
-  if (order < 21) return GQTnPtSolin[order];
-  return ((order+3)/2)*((order+3)/2);
+  if(order < 21) return GQTnPtSolin[order];
+  return ((order + 3) / 2) * ((order + 3) / 2);
 }

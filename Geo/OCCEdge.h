@@ -21,7 +21,7 @@ class OCCFace;
 #include <BRep_Tool.hxx>
 
 class OCCEdge : public GEdge {
- protected:
+protected:
   TopoDS_Edge _replacement;
   TopoDS_Edge c;
   TopoDS_Edge c_rev;
@@ -29,7 +29,8 @@ class OCCEdge : public GEdge {
   Handle(Geom_Curve) curve;
   mutable Handle(Geom2d_Curve) curve2d;
   mutable GFace *trimmed;
- public:
+
+public:
   OCCEdge(GModel *model, TopoDS_Edge _e, int num, GVertex *v1, GVertex *v2);
   virtual ~OCCEdge();
   virtual SBoundingBox3d bounds(bool fast = false) const;
@@ -38,13 +39,13 @@ class OCCEdge : public GEdge {
   virtual bool degenerate(int) const { return BRep_Tool::Degenerated(c); }
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
-  virtual double curvature (double par) const;
+  virtual double curvature(double par) const;
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
   virtual GPoint closestPoint(const SPoint3 &queryPoint, double &param) const;
   ModelType getNativeType() const { return OpenCascadeModel; }
-  void * getNativePtr() const { return (void*)&c; }
-  virtual int minimumMeshSegments () const;
-  virtual int minimumDrawSegments () const;
+  void *getNativePtr() const { return (void *)&c; }
+  virtual int minimumMeshSegments() const;
+  virtual int minimumDrawSegments() const;
   bool is3D() const { return !curve.IsNull(); }
   void setTrimmed(OCCFace *);
   bool isSeam(const GFace *) const;

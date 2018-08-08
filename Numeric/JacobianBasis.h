@@ -12,18 +12,18 @@
 class bezierBasis;
 
 class GradientBasis {
- public:
+public:
   fullMatrix<double> gradShapeMatX, gradShapeMatY, gradShapeMatZ;
   fullMatrix<double> gradShapeIdealMatX, gradShapeIdealMatY, gradShapeIdealMatZ;
 
- private:
+private:
   const FuncSpaceData _data;
 
- public:
+public:
   GradientBasis(FuncSpaceData);
-  int getNumSamplingPoints() const {return gradShapeMatX.size1();}
-  int getNumMapNodes() const {return gradShapeMatX.size2();}
-  const bezierBasis* getBezier() const;
+  int getNumSamplingPoints() const { return gradShapeMatX.size1(); }
+  int getNumMapNodes() const { return gradShapeMatX.size2(); }
+  const bezierBasis *getBezier() const;
   void getGradientsFromNodes(const fullMatrix<double> &nodes,
                              fullMatrix<double> *dxyzdX,
                              fullMatrix<double> *dxyzdY,
@@ -40,22 +40,20 @@ class GradientBasis {
                            fullMatrix<double> &dxyzdY,
                            fullMatrix<double> &dxyzdZ) const
   {
-    GradientBasis::mapFromIdealElement(_data.elementType(),
-                                       dxyzdX, dxyzdY, dxyzdZ);
+    GradientBasis::mapFromIdealElement(_data.elementType(), dxyzdX, dxyzdY,
+                                       dxyzdZ);
   }
   void mapFromIdealElement(fullVector<double> &dxyzdX,
                            fullVector<double> &dxyzdY,
                            fullVector<double> &dxyzdZ) const
   {
-    GradientBasis::mapFromIdealElement(_data.elementType(),
-                                       dxyzdX, dxyzdY, dxyzdZ);
+    GradientBasis::mapFromIdealElement(_data.elementType(), dxyzdX, dxyzdY,
+                                       dxyzdZ);
   }
-  static void mapFromIdealElement(int type,
-                                  fullMatrix<double> &gSMatX,
+  static void mapFromIdealElement(int type, fullMatrix<double> &gSMatX,
                                   fullMatrix<double> &gSMatY,
                                   fullMatrix<double> &gSMatZ);
-  static void mapFromIdealElement(int type,
-                                  fullVector<double> &gSVecX,
+  static void mapFromIdealElement(int type, fullVector<double> &gSVecX,
                                   fullVector<double> &gSVecY,
                                   fullVector<double> &gSVecZ);
   static void mapFromIdealElement(int type, double jac[3][3]);
@@ -63,7 +61,7 @@ class GradientBasis {
 };
 
 class JacobianBasis {
- private:
+private:
   const GradientBasis *_gradBasis;
   const FuncSpaceData _data;
   const int _dim;
@@ -77,36 +75,37 @@ class JacobianBasis {
   int numMapNodes, numPrimMapNodes;
   int numJacNodesFast;
 
- public:
+public:
   JacobianBasis(FuncSpaceData);
 
   // Get methods
-  inline int getJacOrder() const {return _data.spaceOrder();}
-  inline int getNumJacNodes() const {return numJacNodes;}
-  inline int getNumJacNodesFast() const {return numJacNodesFast;}
-  inline int getNumMapNodes() const {return numMapNodes;}
-  inline int getNumPrimJacNodes() const {return numPrimJacNodes;}
-  inline int getNumPrimMapNodes() const {return numPrimMapNodes;}
-  const bezierBasis* getBezier() const;
+  inline int getJacOrder() const { return _data.spaceOrder(); }
+  inline int getNumJacNodes() const { return numJacNodes; }
+  inline int getNumJacNodesFast() const { return numJacNodesFast; }
+  inline int getNumMapNodes() const { return numMapNodes; }
+  inline int getNumPrimJacNodes() const { return numPrimJacNodes; }
+  inline int getNumPrimMapNodes() const { return numPrimMapNodes; }
+  const bezierBasis *getBezier() const;
 
   // Jacobian evaluation methods
   double getPrimNormals1D(const fullMatrix<double> &nodesXYZ,
                           fullMatrix<double> &result) const;
   double getPrimNormal2D(const fullMatrix<double> &nodesXYZ,
-                         fullMatrix<double> &result, bool ideal=false) const;
-  double getPrimJac3D(const fullMatrix<double> &nodesXYZ, bool ideal=false) const;
+                         fullMatrix<double> &result, bool ideal = false) const;
+  double getPrimJac3D(const fullMatrix<double> &nodesXYZ,
+                      bool ideal = false) const;
   inline void getSignedJacAndGradients(const fullMatrix<double> &nodesXYZ,
                                        const fullMatrix<double> &normals,
                                        fullMatrix<double> &JDJ) const
   {
-    getSignedJacAndGradientsGeneral(numJacNodes, _gradBasis->gradShapeMatX,
-                                    _gradBasis->gradShapeMatY,
-                                    _gradBasis->gradShapeMatZ,
-                                    nodesXYZ, normals, JDJ);
+    getSignedJacAndGradientsGeneral(
+      numJacNodes, _gradBasis->gradShapeMatX, _gradBasis->gradShapeMatY,
+      _gradBasis->gradShapeMatZ, nodesXYZ, normals, JDJ);
   }
   inline void getSignedJacAndGradientsFast(const fullMatrix<double> &nodesXYZ,
                                            const fullMatrix<double> &normals,
-                                           fullMatrix<double> &JDJ) const {
+                                           fullMatrix<double> &JDJ) const
+  {
     getSignedJacAndGradientsGeneral(numJacNodesFast, gradShapeMatXFast,
                                     gradShapeMatYFast, gradShapeMatZFast,
                                     nodesXYZ, normals, JDJ);
@@ -117,8 +116,8 @@ class JacobianBasis {
   {
     getSignedJacAndGradientsGeneral(numJacNodes, _gradBasis->gradShapeIdealMatX,
                                     _gradBasis->gradShapeIdealMatY,
-                                    _gradBasis->gradShapeIdealMatZ,
-                                    nodesXYZ, normals, JDJ);
+                                    _gradBasis->gradShapeIdealMatZ, nodesXYZ,
+                                    normals, JDJ);
   }
   void getMetricMinAndGradients(const fullMatrix<double> &nodesXYZ,
                                 const fullMatrix<double> &nodesXYZStraight,
@@ -129,8 +128,7 @@ class JacobianBasis {
                                 const fullMatrix<double> *normals = NULL) const
   {
     getJacobianGeneral(numJacNodes, _gradBasis->gradShapeMatX,
-                       _gradBasis->gradShapeMatY,
-                       _gradBasis->gradShapeMatZ,
+                       _gradBasis->gradShapeMatY, _gradBasis->gradShapeMatZ,
                        nodesXYZ, false, false, jacobian, normals);
   }
   inline void getSignedJacobian(const fullMatrix<double> &nodesX,
@@ -140,36 +138,34 @@ class JacobianBasis {
                                 const fullMatrix<double> *normals = NULL) const
   {
     getJacobianGeneral(numJacNodes, _gradBasis->gradShapeMatX,
-                       _gradBasis->gradShapeMatY,
-                       _gradBasis->gradShapeMatZ,
+                       _gradBasis->gradShapeMatY, _gradBasis->gradShapeMatZ,
                        nodesX, nodesY, nodesZ, false, false, jacobian, normals);
   }
-  inline void getSignedIdealJacobian(const fullMatrix<double> &nodesXYZ,
-                                     fullVector<double> &jacobian,
-                                     const fullMatrix<double> *normals = NULL) const
+  inline void
+  getSignedIdealJacobian(const fullMatrix<double> &nodesXYZ,
+                         fullVector<double> &jacobian,
+                         const fullMatrix<double> *normals = NULL) const
   {
     getJacobianGeneral(numJacNodes, _gradBasis->gradShapeIdealMatX,
                        _gradBasis->gradShapeIdealMatY,
-                       _gradBasis->gradShapeIdealMatZ,
-                       nodesXYZ, true, false, jacobian, normals);
+                       _gradBasis->gradShapeIdealMatZ, nodesXYZ, true, false,
+                       jacobian, normals);
   }
-  inline void getSignedIdealJacobian(const fullMatrix<double> &nodesX,
-                                     const fullMatrix<double> &nodesY,
-                                     const fullMatrix<double> &nodesZ,
-                                     fullMatrix<double> &jacobian,
-                                     const fullMatrix<double> *normals = NULL) const
+  inline void getSignedIdealJacobian(
+    const fullMatrix<double> &nodesX, const fullMatrix<double> &nodesY,
+    const fullMatrix<double> &nodesZ, fullMatrix<double> &jacobian,
+    const fullMatrix<double> *normals = NULL) const
   {
     getJacobianGeneral(numJacNodes, _gradBasis->gradShapeIdealMatX,
                        _gradBasis->gradShapeIdealMatY,
-                       _gradBasis->gradShapeIdealMatZ,
-                       nodesX, nodesY, nodesZ, true, false, jacobian, normals);
+                       _gradBasis->gradShapeIdealMatZ, nodesX, nodesY, nodesZ,
+                       true, false, jacobian, normals);
   }
   inline void getScaledJacobian(const fullMatrix<double> &nodesXYZ,
                                 fullVector<double> &jacobian) const
   {
     getJacobianGeneral(numJacNodes, _gradBasis->gradShapeMatX,
-                       _gradBasis->gradShapeMatY,
-                       _gradBasis->gradShapeMatZ,
+                       _gradBasis->gradShapeMatY, _gradBasis->gradShapeMatZ,
                        nodesXYZ, false, true, jacobian, NULL);
   }
   inline void getScaledJacobian(const fullMatrix<double> &nodesX,
@@ -178,25 +174,26 @@ class JacobianBasis {
                                 fullMatrix<double> &jacobian) const
   {
     getJacobianGeneral(numJacNodes, _gradBasis->gradShapeMatX,
-                       _gradBasis->gradShapeMatY,
-                       _gradBasis->gradShapeMatZ,
+                       _gradBasis->gradShapeMatY, _gradBasis->gradShapeMatZ,
                        nodesX, nodesY, nodesZ, false, true, jacobian, NULL);
   }
-  inline void getSignedJacobianFast(const fullMatrix<double> &nodesXYZ,
-                                    fullVector<double> &jacobian,
-                                    const fullMatrix<double> *normals = NULL) const
+  inline void
+  getSignedJacobianFast(const fullMatrix<double> &nodesXYZ,
+                        fullVector<double> &jacobian,
+                        const fullMatrix<double> *normals = NULL) const
   {
-    getJacobianGeneral(numJacNodesFast, gradShapeMatXFast,
-                       gradShapeMatYFast, gradShapeMatZFast,
-                       nodesXYZ, false, false, jacobian, normals);
+    getJacobianGeneral(numJacNodesFast, gradShapeMatXFast, gradShapeMatYFast,
+                       gradShapeMatZFast, nodesXYZ, false, false, jacobian,
+                       normals);
   }
-  inline void getScaledJacobianFast(const fullMatrix<double> &nodesXYZ,
-                                    fullVector<double> &jacobian,
-                                    const fullMatrix<double> *normals = NULL) const
+  inline void
+  getScaledJacobianFast(const fullMatrix<double> &nodesXYZ,
+                        fullVector<double> &jacobian,
+                        const fullMatrix<double> *normals = NULL) const
   {
-    getJacobianGeneral(numJacNodesFast, gradShapeMatXFast,
-                       gradShapeMatYFast, gradShapeMatZFast,
-                       nodesXYZ, false, true, jacobian, normals);
+    getJacobianGeneral(numJacNodesFast, gradShapeMatXFast, gradShapeMatYFast,
+                       gradShapeMatZFast, nodesXYZ, false, true, jacobian,
+                       normals);
   }
 
   void lag2Bez(const fullVector<double> &lag, fullVector<double> &bez) const;
@@ -204,35 +201,31 @@ class JacobianBasis {
   inline void primJac2Jac(const fullVector<double> &primJac,
                           fullVector<double> &jac) const
   {
-    matrixPrimJac2Jac.mult(primJac,jac);
+    matrixPrimJac2Jac.mult(primJac, jac);
   }
 
   // Research purpose (to be removed ?)
   void interpolate(const fullVector<double> &jacobian,
-                   const fullMatrix<double> &uvw,
-                   fullMatrix<double> &result, bool areBezier = false) const;
+                   const fullMatrix<double> &uvw, fullMatrix<double> &result,
+                   bool areBezier = false) const;
   static int jacobianOrder(int tag);
   static int jacobianOrder(int parentType, int order);
   static FuncSpaceData jacobianMatrixSpace(int type, int order);
 
- private :
-  void getJacobianGeneral(int nJacNodes,
-                          const fullMatrix<double> &gSMatX,
+private:
+  void getJacobianGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
                           const fullMatrix<double> &gSMatY,
                           const fullMatrix<double> &gSMatZ,
-                          const fullMatrix<double> &nodesXYZ,
-                          bool idealNorm, bool scaling,
-                          fullVector<double> &jacobian,
+                          const fullMatrix<double> &nodesXYZ, bool idealNorm,
+                          bool scaling, fullVector<double> &jacobian,
                           const fullMatrix<double> *normals) const;
-  void getJacobianGeneral(int nJacNodes,
-                          const fullMatrix<double> &gSMatX,
+  void getJacobianGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
                           const fullMatrix<double> &gSMatY,
                           const fullMatrix<double> &gSMatZ,
                           const fullMatrix<double> &nodesX,
                           const fullMatrix<double> &nodesY,
-                          const fullMatrix<double> &nodesZ,
-                          bool idealNorm, bool scaling,
-                          fullMatrix<double> &jacobian,
+                          const fullMatrix<double> &nodesZ, bool idealNorm,
+                          bool scaling, fullMatrix<double> &jacobian,
                           const fullMatrix<double> *normals) const;
   void getSignedJacAndGradientsGeneral(int nJacNodes,
                                        const fullMatrix<double> &gSMatX,

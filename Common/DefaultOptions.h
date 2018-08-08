@@ -678,6 +678,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Enable mouse hover on meshes" },
   { F|O, "MouseSelection" , opt_general_mouse_selection , 1. ,
     "Enable mouse selection" },
+  { F|O, "MouseInvertZoom" , opt_general_mouse_invert_zoom , 0. ,
+    "Invert mouse wheel zoom direction" },
 
   { F|S, "NonModalWindows" , opt_general_non_modal_windows , 1. ,
     "Force all control windows to be on top of the graphic window "
@@ -1100,7 +1102,7 @@ StringXNumber MeshOptions_Number[] = {
     "Minimum number of points used to mesh a circle" },
   { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
     "Minimum number of points used to mesh a (non-straight) curve" },
-  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 2.2 ,
+  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.0 ,
     "Version of the MSH file format to use" },
   { F|O, "PartitionHexWeight" , opt_mesh_partition_hex_weight , 1 ,
     "Weight of hexahedral element for METIS load balancing" },

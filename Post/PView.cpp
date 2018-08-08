@@ -15,15 +15,15 @@
 #include "GmshMessage.h"
 
 int PView::_globalTag = 0;
-std::vector<PView*> PView::list;
+std::vector<PView *> PView::list;
 
 void PView::_init(int tag)
 {
-  if(tag >= 0){
+  if(tag >= 0) {
     _tag = tag;
     _globalTag = std::max(_globalTag, _tag) + 1;
   }
-  else{
+  else {
     _tag = _globalTag++;
   }
 
@@ -33,8 +33,8 @@ void PView::_init(int tag)
   va_points = va_lines = va_triangles = va_vectors = va_ellipses = 0;
   normals = 0;
 
-  for(unsigned int i = 0; i < list.size(); i++){
-    if(list[i]->getTag() == _tag){
+  for(unsigned int i = 0; i < list.size(); i++) {
+    if(list[i]->getTag() == _tag) {
       // in normal operation this should not happen, but we allow it when
       // programmatically forcing view tags (e.g. when using the views from
       // within getdp's post-processing operations); this is dangerous, as it
@@ -72,10 +72,11 @@ PView::PView(PView *ref, bool copyOptions)
 {
   _init();
 
-  if(ref->getAliasOf() >= 0){ // alias of an alias
+  if(ref->getAliasOf() >= 0) { // alias of an alias
     PView *orig = getViewByTag(ref->getAliasOf());
-    if(orig) _aliasOf = orig->getTag();
-    else{
+    if(orig)
+      _aliasOf = orig->getTag();
+    else {
       Msg::Warning("Original view for alias does not exist anymore");
       _aliasOf = ref->getTag();
     }
@@ -109,8 +110,9 @@ PView::PView(const std::string &xname, const std::string &yname,
   _options->axesLabel[0] = xname;
 }
 
-PView::PView(const std::string &name, std::vector<double> &x, std::vector<double> &y,
-             std::vector<double> &z, std::vector<double> &v)
+PView::PView(const std::string &name, std::vector<double> &x,
+             std::vector<double> &y, std::vector<double> &z,
+             std::vector<double> &v)
 {
   _init();
   _data = new PViewDataList();
@@ -123,9 +125,9 @@ PView::PView(const std::string &name, std::vector<double> &x, std::vector<double
   _options->pointType = 1.;
 }
 
-PView::PView(const std::string &name, const std::string &type,
-             GModel *model, std::map<int, std::vector<double> > &data,
-             double time, int numComp, int tag)
+PView::PView(const std::string &name, const std::string &type, GModel *model,
+             std::map<int, std::vector<double> > &data, double time,
+             int numComp, int tag)
 {
   _init(tag);
   PViewDataGModel::DataType t;
@@ -137,7 +139,7 @@ PView::PView(const std::string &name, const std::string &type,
     t = PViewDataGModel::ElementNodeData;
   else if(type == "Beam")
     t = PViewDataGModel::BeamData;
-  else{
+  else {
     Msg::Error("Unknown type of view to create '%s'", type.c_str());
     return;
   }
@@ -152,12 +154,15 @@ PView::PView(const std::string &name, const std::string &type,
                             _options->targetError);
 }
 
-void PView::addStep(GModel *model, const std::map<int, std::vector<double> > &data,
+void PView::addStep(GModel *model,
+                    const std::map<int, std::vector<double> > &data,
                     double time, int numComp)
 {
-  PViewDataGModel *d = dynamic_cast<PViewDataGModel*>(_data);
-  if(d) d->addData(model, data, d->getNumTimeSteps(), time, 1, numComp);
-  else Msg::Error("Can only add step data to mesh-based datasets");
+  PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(_data);
+  if(d)
+    d->addData(model, data, d->getNumTimeSteps(), time, 1, numComp);
+  else
+    Msg::Error("Can only add step data to mesh-based datasets");
 }
 
 PView::~PView()
@@ -166,7 +171,7 @@ PView::~PView()
   if(normals) delete normals;
   if(_options) delete _options;
 
-  std::vector<PView*>::iterator it = std::find(list.begin(), list.end(), this);
+  std::vector<PView *>::iterator it = std::find(list.begin(), list.end(), this);
   if(it != list.end()) list.erase(it);
   for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
 
@@ -174,8 +179,7 @@ PView::~PView()
 
   // do not delete if another view is an alias of this one
   for(unsigned int i = 0; i < list.size(); i++)
-    if(list[i]->getAliasOf() == _tag)
-      return;
+    if(list[i]->getAliasOf() == _tag) return;
 
   // do not delete if this view is an alias and 1) if the original
   // still exists, or 2) if there are other aliases to the same view
@@ -188,23 +192,22 @@ PView::~PView()
   delete _data;
 }
 
-int PView::getGlobalTag()
-{
-  return _globalTag;
-}
+int PView::getGlobalTag() { return _globalTag; }
 
-void PView::setGlobalTag(int tag)
-{
-  _globalTag = tag;
-}
+void PView::setGlobalTag(int tag) { _globalTag = tag; }
 
 void PView::deleteVertexArrays()
 {
-  if(va_points) delete va_points; va_points = 0;
-  if(va_lines) delete va_lines; va_lines = 0;
-  if(va_triangles) delete va_triangles; va_triangles = 0;
-  if(va_vectors) delete va_vectors; va_vectors = 0;
-  if(va_ellipses) delete va_ellipses; va_ellipses = 0;
+  if(va_points) delete va_points;
+  va_points = 0;
+  if(va_lines) delete va_lines;
+  va_lines = 0;
+  if(va_triangles) delete va_triangles;
+  va_triangles = 0;
+  if(va_vectors) delete va_vectors;
+  va_vectors = 0;
+  if(va_ellipses) delete va_ellipses;
+  va_ellipses = 0;
 }
 
 void PView::setOptions(PViewOptions *val)
@@ -254,15 +257,15 @@ void PView::combine(bool time, int how, bool remove)
       else
         nd.name = "__vis__";
       unsigned int j = 0;
-      while(j < nds.size()){
-        if(nds[j].name == nd.name){
+      while(j < nds.size()) {
+        if(nds[j].name == nd.name) {
           nds[j].data.push_back(data);
           nds[j].indices.push_back(i);
           break;
         }
         j++;
       }
-      if(j == nds.size()){
+      if(j == nds.size()) {
         nd.data.push_back(data);
         nd.indices.push_back(i);
         nds.push_back(nd);
@@ -270,41 +273,41 @@ void PView::combine(bool time, int how, bool remove)
     }
   }
 
-  std::set<PView*> rm;
-  for(unsigned int i = 0; i < nds.size(); i++){
-    if(nds[i].data.size() > 1){ // there's potentially something to combine
+  std::set<PView *> rm;
+  for(unsigned int i = 0; i < nds.size(); i++) {
+    if(nds[i].data.size() > 1) { // there's potentially something to combine
       // sanity checks:
       bool allListBased = true, allModelBased = true;
-      for(unsigned int j = 0; j < nds[i].data.size(); j++){
-        PViewDataList *d1 = dynamic_cast<PViewDataList*>(nds[i].data[j]);
+      for(unsigned int j = 0; j < nds[i].data.size(); j++) {
+        PViewDataList *d1 = dynamic_cast<PViewDataList *>(nds[i].data[j]);
         if(!d1) allListBased = false;
-        PViewDataGModel *d2 = dynamic_cast<PViewDataGModel*>(nds[i].data[j]);
+        PViewDataGModel *d2 = dynamic_cast<PViewDataGModel *>(nds[i].data[j]);
         if(!d2) allModelBased = false;
       }
       PViewData *data = 0;
-      if(allListBased){
+      if(allListBased) {
         data = new PViewDataList();
       }
-      else if(allModelBased){
-        PViewDataGModel *d2 = dynamic_cast<PViewDataGModel*>(nds[i].data[0]);
+      else if(allModelBased) {
+        PViewDataGModel *d2 = dynamic_cast<PViewDataGModel *>(nds[i].data[0]);
         data = new PViewDataGModel(d2->getType());
       }
-      else{
+      else {
         Msg::Error("Cannot combine hybrid list/mesh-based datasets");
         continue;
       }
       PView *p = new PView(data);
       bool res = time ? data->combineTime(nds[i]) : data->combineSpace(nds[i]);
-      if(res){
+      if(res) {
         for(unsigned int j = 0; j < nds[i].indices.size(); j++)
           rm.insert(list[nds[i].indices[j]]);
         PViewOptions *opt = p->getOptions();
-        if(opt->adaptVisualizationGrid){
+        if(opt->adaptVisualizationGrid) {
           // the (empty) adaptive data created in PView() must be
           // recreated, since we added some data
           data->destroyAdaptiveData();
-          data->initAdaptiveData
-            (opt->timeStep, opt->maxRecursionLevel, opt->targetError);
+          data->initAdaptiveData(opt->timeStep, opt->maxRecursionLevel,
+                                 opt->targetError);
         }
       }
       else
@@ -312,7 +315,7 @@ void PView::combine(bool time, int how, bool remove)
     }
   }
   if(remove)
-    for(std::set<PView*>::iterator it = rm.begin(); it != rm.end(); it++)
+    for(std::set<PView *>::iterator it = rm.begin(); it != rm.end(); it++)
       delete *it;
 }
 
@@ -330,27 +333,30 @@ void PView::sortByName()
   for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
 }
 
-PView *PView::getViewByName(const std::string &name, int timeStep, int partition,
-                            const std::string &fileName)
+PView *PView::getViewByName(const std::string &name, int timeStep,
+                            int partition, const std::string &fileName)
 {
   // search views from most recently to least recently added
-  for(int i = list.size() - 1; i >= 0; i--){
+  for(int i = list.size() - 1; i >= 0; i--) {
     if(list[i]->getData()->getName() == name &&
        ((timeStep < 0 || !list[i]->getData()->hasTimeStep(timeStep)) ||
-        (partition < 0 || !list[i]->getData()->hasPartition(timeStep, partition))) &&
+        (partition < 0 ||
+         !list[i]->getData()->hasPartition(timeStep, partition))) &&
        (fileName.empty() || !list[i]->getData()->hasFileName(fileName)))
       return list[i];
   }
   return 0;
 }
 
-PView *PView::getViewByFileName(const std::string &fileName, int timeStep, int partition)
+PView *PView::getViewByFileName(const std::string &fileName, int timeStep,
+                                int partition)
 {
   // search views from most recently to least recently added
-  for(int i = list.size() - 1; i >= 0; i--){
+  for(int i = list.size() - 1; i >= 0; i--) {
     if(list[i]->getData()->getFileName() == fileName &&
        ((timeStep < 0 || !list[i]->getData()->hasTimeStep(timeStep)) ||
-        (partition < 0 || !list[i]->getData()->hasPartition(timeStep, partition))))
+        (partition < 0 ||
+         !list[i]->getData()->hasPartition(timeStep, partition))))
       return list[i];
   }
   return 0;
@@ -358,10 +364,11 @@ PView *PView::getViewByFileName(const std::string &fileName, int timeStep, int p
 
 PView *PView::getViewByTag(int tag, int timeStep, int partition)
 {
-  for(unsigned int i = 0; i < list.size(); i++){
+  for(unsigned int i = 0; i < list.size(); i++) {
     if(list[i]->getTag() == tag &&
        ((timeStep < 0 || !list[i]->getData()->hasTimeStep(timeStep)) ||
-        (partition < 0 || !list[i]->getData()->hasPartition(timeStep, partition))))
+        (partition < 0 ||
+         !list[i]->getData()->hasPartition(timeStep, partition))))
       return list[i];
   }
   return 0;

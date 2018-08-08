@@ -12,10 +12,11 @@
 // A class that encapsulates a linear system solver interface :
 // building a sparse matrix, solving a linear system
 class linearSystemBase {
-  protected:
+protected:
   std::map<std::string, std::string> _parameters;
-  public :
-  virtual ~linearSystemBase(){}
+
+public:
+  virtual ~linearSystemBase() {}
   virtual bool isAllocated() const = 0;
   virtual void allocate(int nbRows) = 0;
   virtual void preAllocateEntries(){};
@@ -27,18 +28,17 @@ class linearSystemBase {
   // x = A*b
   virtual int matMult() { return 0; }
 
-  void setParameter (std::string key, std::string value);
+  void setParameter(std::string key, std::string value);
   std::string getParameter(std::string key) const;
   virtual void insertInSparsityPattern(int _row, int _col){};
   virtual double normInfRightHandSide() const = 0;
-  virtual double normInfSolution() const {return 0;};
+  virtual double normInfSolution() const { return 0; };
 };
 
-template <class scalar>
-class linearSystem : public linearSystemBase {
- public :
-  linearSystem (){}
-  virtual ~linearSystem (){}
+template <class scalar> class linearSystem : public linearSystemBase {
+public:
+  linearSystem() {}
+  virtual ~linearSystem() {}
   virtual void addToMatrix(int _row, int _col, const scalar &val) = 0;
   virtual void getFromMatrix(int _row, int _col, scalar &val) const = 0;
   virtual void addToRightHandSide(int _row, const scalar &val, int ith = 0) = 0;

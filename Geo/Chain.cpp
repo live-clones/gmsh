@@ -34,55 +34,53 @@ std::string convertInt(int number)
   return stream.str();
 }
 
-std::map<GEntity*, std::set<MVertex*, MVertexLessThanNum>,
-         GEntityLessThan> ElemChain::_vertexCache;
+std::map<GEntity *, std::set<MVertex *, MVertexLessThanNum>, GEntityLessThan>
+  ElemChain::_vertexCache;
 
 inline void ElemChain::_sortVertexIndices()
 {
-  std::map<MVertex*, int, MVertexLessThanNum> si;
+  std::map<MVertex *, int, MVertexLessThanNum> si;
 
-  for(unsigned int i = 0; i < _v.size(); i++)
-    si[_v[i]] = i;
+  for(unsigned int i = 0; i < _v.size(); i++) si[_v[i]] = i;
 
-  std::map<MVertex*, int, MVertexLessThanNum>::iterator it;
-  for(it = si.begin(); it != si.end(); it++)
-    _si.push_back(it->second);
+  std::map<MVertex *, int, MVertexLessThanNum>::iterator it;
+  for(it = si.begin(); it != si.end(); it++) _si.push_back(it->second);
 }
 
-void findEntitiesInPhysicalGroups
-(GModel* m, const std::vector<int>& physicalGroups, std::vector<GEntity*>& entities)
+void findEntitiesInPhysicalGroups(GModel *m,
+                                  const std::vector<int> &physicalGroups,
+                                  std::vector<GEntity *> &entities)
 {
-  std::map<int, std::vector<GEntity*> > groups[4];
+  std::map<int, std::vector<GEntity *> > groups[4];
   m->getPhysicalGroups(groups);
-  std::map<int, std::vector<GEntity*> >::iterator it;
-  for(unsigned int i = 0; i < physicalGroups.size(); i++){
+  std::map<int, std::vector<GEntity *> >::iterator it;
+  for(unsigned int i = 0; i < physicalGroups.size(); i++) {
     bool found = false;
-    for(int j = 0; j < 4; j++){
+    for(int j = 0; j < 4; j++) {
       it = groups[j].find(physicalGroups.at(i));
-      if(it != groups[j].end()){
+      if(it != groups[j].end()) {
         found = true;
-        std::vector<GEntity*> physicalGroup = it->second;
-        for(unsigned int k = 0; k < physicalGroup.size(); k++){
+        std::vector<GEntity *> physicalGroup = it->second;
+        for(unsigned int k = 0; k < physicalGroup.size(); k++) {
           entities.push_back(physicalGroup.at(k));
         }
       }
     }
     if(!found) {
-      Msg::Error("Physical group %d does not exist",
-                 physicalGroups.at(i));
+      Msg::Error("Physical group %d does not exist", physicalGroups.at(i));
     }
   }
 }
 
-
-bool ElemChain::_equalVertices(const std::vector<MVertex*>& v2) const {
+bool ElemChain::_equalVertices(const std::vector<MVertex *> &v2) const
+{
   if(_v.size() != v2.size()) return false;
   for(unsigned int i = 0; i < _v.size(); i++)
     if(_v[i]->getNum() != v2[i]->getNum()) return false;
   return true;
 }
 
-ElemChain::ElemChain(MElement* e)
+ElemChain::ElemChain(MElement *e)
 {
   _dim = e->getDim();
   for(int i = 0; i < e->getNumPrimaryVertices(); i++)
@@ -90,7 +88,7 @@ ElemChain::ElemChain(MElement* e)
   _sortVertexIndices();
 }
 
-ElemChain::ElemChain(int dim, std::vector<MVertex*>& v) : _dim(dim), _v(v)
+ElemChain::ElemChain(int dim, std::vector<MVertex *> &v) : _dim(dim), _v(v)
 {
   _sortVertexIndices();
 }
@@ -102,17 +100,17 @@ inline int ElemChain::getSortedVertex(int i) const
 
 int ElemChain::getTypeMSH(int dim, int numVertices)
 {
-  switch (dim) {
+  switch(dim) {
   case 0: return MSH_PNT;
   case 1: return MSH_LIN_2;
   case 2:
-    switch (numVertices) {
+    switch(numVertices) {
     case 3: return MSH_TRI_3;
     case 4: return MSH_QUA_4;
     default: return 0;
     }
   case 3:
-    switch (numVertices) {
+    switch(numVertices) {
     case 4: return MSH_TET_4;
     case 5: return MSH_PYR_5;
     case 6: return MSH_PRI_6;
@@ -128,16 +126,16 @@ int ElemChain::getTypeMSH() const
   return ElemChain::getTypeMSH(_dim, this->getNumVertices());
 }
 
-MElement* ElemChain::createMeshElement() const
+MElement *ElemChain::createMeshElement() const
 {
   MElementFactory factory;
-  std::vector<MVertex*> v(_v);
+  std::vector<MVertex *> v(_v);
   return factory.create(this->getTypeMSH(), v);
 }
 
-int ElemChain::compareOrientation(const ElemChain& c2) const
+int ElemChain::compareOrientation(const ElemChain &c2) const
 {
-  std::vector<MVertex*> v2;
+  std::vector<MVertex *> v2;
   c2.getMeshVertices(v2);
 
   int perm = 1;
@@ -155,30 +153,32 @@ int ElemChain::compareOrientation(const ElemChain& c2) const
   return 0;
 }
 
-bool ElemChain::lessThan(const ElemChain& c2) const
+bool ElemChain::lessThan(const ElemChain &c2) const
 {
   if(this->getNumSortedVertices() != c2.getNumSortedVertices())
     return (this->getNumSortedVertices() < c2.getNumSortedVertices());
-  for(int i = 0; i < this->getNumSortedVertices(); i++){
-    if(this->getSortedVertex(i) < c2.getSortedVertex(i)) return true;
-    else if (this->getSortedVertex(i) > c2.getSortedVertex(i)) return false;
+  for(int i = 0; i < this->getNumSortedVertices(); i++) {
+    if(this->getSortedVertex(i) < c2.getSortedVertex(i))
+      return true;
+    else if(this->getSortedVertex(i) > c2.getSortedVertex(i))
+      return false;
   }
   return false;
 }
 
 int ElemChain::getNumBoundaries(int dim, int numVertices)
 {
-  switch (dim) {
+  switch(dim) {
   case 0: return 0;
   case 1: return 2;
   case 2:
-    switch (numVertices) {
+    switch(numVertices) {
     case 3: return 3;
     case 4: return 4;
     default: return 0;
     }
   case 3:
-    switch (numVertices) {
+    switch(numVertices) {
     case 4: return 4;
     case 5: return 5;
     case 6: return 5;
@@ -195,16 +195,14 @@ int ElemChain::getNumBoundaryElemChains() const
 }
 
 void ElemChain::getBoundaryVertices(int i, int dim, int numVertices,
-                                    const std::vector<MVertex*>& v,
-                                    std::vector<MVertex*>& vertices)
+                                    const std::vector<MVertex *> &v,
+                                    std::vector<MVertex *> &vertices)
 {
   vertices.clear();
-  switch (dim) {
-  case 1:
-    vertices.push_back(v[i]);
-    return;
+  switch(dim) {
+  case 1: vertices.push_back(v[i]); return;
   case 2:
-    switch (numVertices) {
+    switch(numVertices) {
     case 3:
       for(int j = 0; j < 2; j++)
         vertices.push_back(v[MTriangle::edges_tri(i, j)]);
@@ -216,7 +214,7 @@ void ElemChain::getBoundaryVertices(int i, int dim, int numVertices,
     default: return;
     }
   case 3:
-    switch (numVertices) {
+    switch(numVertices) {
     case 4:
       for(int j = 0; j < 3; j++)
         vertices.push_back(v[MTetrahedron::faces_tetra(i, j)]);
@@ -249,13 +247,12 @@ void ElemChain::getBoundaryVertices(int i, int dim, int numVertices,
 
 ElemChain ElemChain::getBoundaryElemChain(int i) const
 {
-  std::vector<MVertex*> vertices;
-  ElemChain::getBoundaryVertices(i, _dim, this->getNumVertices(),
-                                 _v, vertices);
-  return ElemChain(_dim-1, vertices);
+  std::vector<MVertex *> vertices;
+  ElemChain::getBoundaryVertices(i, _dim, this->getNumVertices(), _v, vertices);
+  return ElemChain(_dim - 1, vertices);
 }
 
-bool ElemChain::inEntity(GEntity* e) const
+bool ElemChain::inEntity(GEntity *e) const
 {
   if(_vertexCache[e].empty()) {
     for(unsigned int i = 0; i < e->getNumMeshElements(); i++)

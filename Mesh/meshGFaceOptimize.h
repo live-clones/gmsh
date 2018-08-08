@@ -117,8 +117,7 @@ struct RecombineTriangle {
   MVertex *n1, *n2, *n3, *n4;
 
   RecombineTriangle(const MEdge &me, MElement *_t1, MElement *_t2)
-    : t1(_t1)
-    , t2(_t2)
+    : t1(_t1), t2(_t2)
   {
     n1 = me.getVertex(0);
     n2 = me.getVertex(1);

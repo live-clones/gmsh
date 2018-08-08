@@ -23,29 +23,27 @@ class MVertex;
 // object for locating closest mesh (principal) vertex on the entity,
 // in/excluding the closure
 
-class closestVertexFinder
-{
+class closestVertexFinder {
 #if defined(HAVE_ANN)
   ANNkd_tree *kdtree;
   ANNpointArray vCoord;
   ANNidxArray index;
   ANNdistArray dist;
-  MVertex** vertex;
+  MVertex **vertex;
 #endif
 
   unsigned int nbVtcs;
 
-public :
-  closestVertexFinder (GEntity* ge,bool includeClosure);
-  ~closestVertexFinder ();
+public:
+  closestVertexFinder(GEntity *ge, bool includeClosure);
+  ~closestVertexFinder();
 
   // find closest vertex for given point
-  MVertex* operator() (const SPoint3& p);
+  MVertex *operator()(const SPoint3 &p);
   // find closest vertex for transformation of given point
-  MVertex* operator() (const SPoint3& p,const std::vector<double>& tfo);
+  MVertex *operator()(const SPoint3 &p, const std::vector<double> &tfo);
 
-  unsigned int getNbVtcs() const {return nbVtcs;}
-
+  unsigned int getNbVtcs() const { return nbVtcs; }
 };
 
 #endif

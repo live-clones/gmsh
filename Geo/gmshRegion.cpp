@@ -9,8 +9,7 @@
 #include "Geo.h"
 #include "GmshMessage.h"
 
-gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
-  : GRegion(m, volume->Num)
+gmshRegion::gmshRegion(GModel *m, ::Volume *volume) : GRegion(m, volume->Num)
 {
   resetNativePtr(volume);
   resetMeshAttributes();
@@ -21,13 +20,13 @@ void gmshRegion::resetNativePtr(::Volume *volume)
   v = volume;
   l_faces.clear();
   l_dirs.clear();
-  for(int i = 0; i < List_Nbr(v->Surfaces); i++){
+  for(int i = 0; i < List_Nbr(v->Surfaces); i++) {
     Surface *s;
     List_Read(v->Surfaces, i, &s);
     int ori;
     List_Read(v->SurfacesOrientations, i, &ori);
     GFace *f = model()->getFaceByTag(abs(s->Num));
-    if(f){
+    if(f) {
       l_faces.push_back(f);
       l_dirs.push_back(ori);
       f->addRegion(this);
@@ -35,11 +34,11 @@ void gmshRegion::resetNativePtr(::Volume *volume)
     else
       Msg::Error("Unknown surface %d", s->Num);
   }
-  for(int i = 0; i < List_Nbr(v->SurfacesByTag); i++){
+  for(int i = 0; i < List_Nbr(v->SurfacesByTag); i++) {
     int is;
     List_Read(v->SurfacesByTag, i, &is);
     GFace *f = model()->getFaceByTag(abs(is));
-    if(f){
+    if(f) {
       l_faces.push_back(f);
       l_dirs.push_back(gmsh_sign(is));
       f->addRegion(this);
@@ -55,9 +54,9 @@ void gmshRegion::resetMeshAttributes()
   meshAttributes.method = v->Method;
   meshAttributes.QuadTri = v->QuadTri;
   meshAttributes.extrude = v->Extrude;
-  if(meshAttributes.method == MESH_TRANSFINITE){
+  if(meshAttributes.method == MESH_TRANSFINITE) {
     meshAttributes.corners.clear();
-    for(int i = 0; i < List_Nbr(v->TrsfPoints); i++){
+    for(int i = 0; i < List_Nbr(v->TrsfPoints); i++) {
       Vertex *corn;
       List_Read(v->TrsfPoints, i, &corn);
       GVertex *gv = model()->getVertexByTag(corn->Num);
@@ -71,8 +70,8 @@ void gmshRegion::resetMeshAttributes()
 
 GEntity::GeomType gmshRegion::geomType() const
 {
-  switch (v->Typ){
-  case MSH_VOLUME_DISCRETE : return DiscreteVolume;
-  default : return Volume;
+  switch(v->Typ) {
+  case MSH_VOLUME_DISCRETE: return DiscreteVolume;
+  default: return Volume;
   }
 }

@@ -14,17 +14,19 @@
 #include <TopoDS_Solid.hxx>
 
 class OCCRegion : public GRegion {
- protected:
+protected:
   TopoDS_Solid s;
   void setup();
- public:
+
+public:
   OCCRegion(GModel *m, TopoDS_Solid s, int num);
   virtual ~OCCRegion();
   virtual SBoundingBox3d bounds(bool fast = false) const;
   virtual GeomType geomType() const;
   ModelType getNativeType() const { return OpenCascadeModel; }
-  void * getNativePtr() const { return (void*)&s; }
-  TopoDS_Solid getTopoDS_Shape() {return s;}
+  void *getNativePtr() const { return (void *)&s; }
+  TopoDS_Solid getTopoDS_Shape() { return s; }
+  void writeBREP(const char *filename);
 };
 
 #endif

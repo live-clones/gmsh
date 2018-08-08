@@ -8,25 +8,20 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterSimplePartitionPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterSimplePartitionPlugin();
 }
 
-class GMSH_SimplePartitionPlugin : public GMSH_MeshPlugin
-{
- public:
-  GMSH_SimplePartitionPlugin(){}
+class GMSH_SimplePartitionPlugin : public GMSH_MeshPlugin {
+public:
+  GMSH_SimplePartitionPlugin() {}
   std::string getName() const { return "SimplePartition"; }
-  std::string getShortHelp() const
-  {
-    return "Simple mesh partitioner";
-  }
+  std::string getShortHelp() const { return "Simple mesh partitioner"; }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);
+  StringXNumber *getOption(int iopt);
   int getNbOptionsStr() const;
-  StringXString* getOptionStr(int iopt);
+  StringXString *getOptionStr(int iopt);
   void run();
 };
 

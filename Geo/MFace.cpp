@@ -17,23 +17,28 @@ bool compare(const MVertex *const v0, const MVertex *const v1)
   return v0->getNum() < v1->getNum();
 }
 
-void sortVertices(const std::vector<MVertex*> &v, std::vector<char> &s)
+void sortVertices(const std::vector<MVertex *> &v, std::vector<char> &s)
 {
-  if (v.size() == 3){
+  if(v.size() == 3) {
     s.resize(3);
-    if (v[0]->getNum() < v[1]->getNum() &&
-	v[0]->getNum() < v[2]->getNum() ){
-      s[0] = 0; s[1] = 1; s[2] = 2;
+    if(v[0]->getNum() < v[1]->getNum() && v[0]->getNum() < v[2]->getNum()) {
+      s[0] = 0;
+      s[1] = 1;
+      s[2] = 2;
     }
-    else if (v[1]->getNum() < v[0]->getNum() &&
-	     v[1]->getNum() < v[2]->getNum() ){
-      s[0] = 1; s[1] = 0; s[2] = 2;
+    else if(v[1]->getNum() < v[0]->getNum() &&
+            v[1]->getNum() < v[2]->getNum()) {
+      s[0] = 1;
+      s[1] = 0;
+      s[2] = 2;
     }
     else {
-      s[0] = 2; s[1] = 0; s[2] = 1;
+      s[0] = 2;
+      s[1] = 0;
+      s[2] = 1;
     }
 
-    if (v[s[2]]->getNum() < v[s[1]]->getNum()){
+    if(v[s[2]]->getNum() < v[s[1]]->getNum()) {
       char temp = s[1];
       s[1] = s[2];
       s[2] = temp;
@@ -41,11 +46,12 @@ void sortVertices(const std::vector<MVertex*> &v, std::vector<char> &s)
     return;
   }
 
-  std::vector<MVertex*> sorted = v;
+  std::vector<MVertex *> sorted = v;
   std::sort(sorted.begin(), sorted.end(), compare);
   s.reserve(sorted.size());
   for(unsigned int i = 0; i < sorted.size(); i++)
-    s.push_back(std::distance(v.begin(), std::find(v.begin(), v.end(), sorted[i])));
+    s.push_back(
+      std::distance(v.begin(), std::find(v.begin(), v.end(), sorted[i])));
 }
 
 MFace::MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3)
@@ -58,11 +64,10 @@ MFace::MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3)
   sortVertices(_v, _si);
 }
 
-MFace::MFace(const std::vector<MVertex*> &v)
+MFace::MFace(const std::vector<MVertex *> &v)
 {
   _v.reserve(v.size());
-  for(unsigned int i = 0; i < v.size(); i++)
-    _v.push_back(v[i]);
+  for(unsigned int i = 0; i < v.size(); i++) _v.push_back(v[i]);
   sortVertices(_v, _si);
 }
 
@@ -70,7 +75,7 @@ double MFace::approximateArea() const
 {
   SPoint3 p0 = _v[0]->point(), p1 = _v[1]->point(), p2 = _v[2]->point();
   double a = triangle_area(p0, p1, p2);
-  if (_v.size() == 3) return a;
+  if(_v.size() == 3) return a;
   a += triangle_area(p0, p2, _v[3]->point());
   return a;
 }
@@ -78,46 +83,45 @@ double MFace::approximateArea() const
 SVector3 MFace::normal() const
 {
   double n[3];
-  normal3points(_v[0]->x(), _v[0]->y(), _v[0]->z(),
-                _v[1]->x(), _v[1]->y(), _v[1]->z(),
-                _v[2]->x(), _v[2]->y(), _v[2]->z(), n);
+  normal3points(_v[0]->x(), _v[0]->y(), _v[0]->z(), _v[1]->x(), _v[1]->y(),
+                _v[1]->z(), _v[2]->x(), _v[2]->y(), _v[2]->z(), n);
   return SVector3(n[0], n[1], n[2]);
 }
 
-bool MFace::computeCorrespondence(const MFace &other,
-                                  int &rotation,
+bool MFace::computeCorrespondence(const MFace &other, int &rotation,
                                   bool &swap) const
 {
   rotation = 0;
   swap = false;
 
-  if (*this == other) {
-    for (std::size_t i = 0; i < getNumVertices(); i++) {
-      if (_v[0] == other.getVertex(i)) {
+  if(*this == other) {
+    for(std::size_t i = 0; i < getNumVertices(); i++) {
+      if(_v[0] == other.getVertex(i)) {
         rotation = i;
         break;
       }
     }
-    if (_v[1] == other.getVertex((rotation + 1) % getNumVertices())) swap = false;
-    else swap = true;
+    if(_v[1] == other.getVertex((rotation + 1) % getNumVertices()))
+      swap = false;
+    else
+      swap = true;
     return true;
   }
   return false;
 }
 
-MFaceN::MFaceN(int type, int order, const std::vector<MVertex*> &v)
-    : _type(type), _order(order)
+MFaceN::MFaceN(int type, int order, const std::vector<MVertex *> &v)
+  : _type(type), _order(order)
 {
   _v.resize(v.size());
-  for(unsigned int i = 0; i < v.size(); i++)
-    _v[i] = v[i];
+  for(unsigned int i = 0; i < v.size(); i++) _v[i] = v[i];
 }
 
 MEdgeN MFaceN::getHighOrderEdge(int num, int sign) const
 {
   int nCorner = getNumCorners();
-  std::vector<MVertex*> vertices((unsigned int)_order + 1);
-  if (sign == 1) {
+  std::vector<MVertex *> vertices((unsigned int)_order + 1);
+  if(sign == 1) {
     vertices[0] = _v[num];
     vertices[1] = _v[(num + 1) % nCorner];
   }
@@ -128,18 +132,18 @@ MEdgeN MFaceN::getHighOrderEdge(int num, int sign) const
   int start = nCorner + num * (_order - 1);
   int end = nCorner + (num + 1) * (_order - 1);
   int k = 1;
-  if (sign == 1) {
-    for (int i = start; i < end; ++i) vertices[++k] = _v[i];
+  if(sign == 1) {
+    for(int i = start; i < end; ++i) vertices[++k] = _v[i];
   }
   else {
-    for (int i = end-1; i >= start; --i) vertices[++k] = _v[i];
+    for(int i = end - 1; i >= start; --i) vertices[++k] = _v[i];
   }
   return MEdgeN(vertices);
 }
 
 MFace MFaceN::getFace() const
 {
-  if (_type == TYPE_TRI)
+  if(_type == TYPE_TRI)
     return MFace(_v[0], _v[1], _v[2]);
   else
     return MFace(_v[0], _v[1], _v[2], _v[3]);
@@ -154,7 +158,7 @@ SPoint3 MFaceN::pnt(double u, double v) const
   fs->f(u, v, 0, f);
 
   double x = 0, y = 0, z = 0;
-  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+  for(int j = 0; j < fs->getNumShapeFunctions(); j++) {
     x += f[j] * _v[j]->x();
     y += f[j] * _v[j]->y();
     z += f[j] * _v[j]->z();
@@ -164,7 +168,7 @@ SPoint3 MFaceN::pnt(double u, double v) const
 
 SVector3 MFaceN::tangent(double u, double v, int num) const
 {
-  if (num != 0 && num != 1) num = 0;
+  if(num != 0 && num != 1) num = 0;
 
   int tag = ElementType::getType(_type, _order);
   const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
@@ -173,7 +177,7 @@ SVector3 MFaceN::tangent(double u, double v, int num) const
   fs->df(u, v, 0, sf);
 
   double dx = 0, dy = 0, dz = 0;
-  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+  for(int j = 0; j < fs->getNumShapeFunctions(); j++) {
     dx += sf[j][num] * _v[j]->x();
     dy += sf[j][num] * _v[j]->y();
     dz += sf[j][num] * _v[j]->z();
@@ -190,8 +194,8 @@ SVector3 MFaceN::normal(double u, double v) const
   fs->df(u, v, 0, sf);
 
   double dx[2] = {0, 0}, dy[2] = {0, 0}, dz[2] = {0, 0};
-  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
-    for (int k = 0; k < 1; ++k) {
+  for(int j = 0; j < fs->getNumShapeFunctions(); j++) {
+    for(int k = 0; k < 1; ++k) {
       dx[k] += sf[j][k] * _v[j]->x();
       dy[k] += sf[j][k] * _v[j]->y();
       dz[k] += sf[j][k] * _v[j]->z();
@@ -204,8 +208,8 @@ SVector3 MFaceN::normal(double u, double v) const
   return crossprod(t0, t1).unit();
 }
 
-void MFaceN::frame(double u, double v,
-                   SVector3 &t0, SVector3 &t1, SVector3 &n) const
+void MFaceN::frame(double u, double v, SVector3 &t0, SVector3 &t1,
+                   SVector3 &n) const
 {
   int tag = ElementType::getType(_type, _order);
   const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
@@ -214,8 +218,8 @@ void MFaceN::frame(double u, double v,
   fs->df(u, v, 0, sf);
 
   double dx[2] = {0, 0}, dy[2] = {0, 0}, dz[2] = {0, 0};
-  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
-    for (int k = 0; k < 2; ++k) {
+  for(int j = 0; j < fs->getNumShapeFunctions(); j++) {
+    for(int k = 0; k < 2; ++k) {
       dx[k] += sf[j][k] * _v[j]->x();
       dy[k] += sf[j][k] * _v[j]->y();
       dz[k] += sf[j][k] * _v[j]->z();
@@ -224,11 +228,11 @@ void MFaceN::frame(double u, double v,
 
   t0 = SVector3(dx[0], dy[0], dz[0]).unit();
   t1 = SVector3(dx[1], dy[1], dz[1]).unit();
-  n =  crossprod(t0, t1);
+  n = crossprod(t0, t1);
 }
 
-void MFaceN::frame(double u, double v, SPoint3 &p,
-                   SVector3 &t0, SVector3 &t1, SVector3 &n) const
+void MFaceN::frame(double u, double v, SPoint3 &p, SVector3 &t0, SVector3 &t1,
+                   SVector3 &n) const
 {
   int tag = ElementType::getType(_type, _order);
   const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
@@ -240,11 +244,11 @@ void MFaceN::frame(double u, double v, SPoint3 &p,
 
   double x = 0, y = 0, z = 0;
   double dx[2] = {0, 0}, dy[2] = {0, 0}, dz[2] = {0, 0};
-  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+  for(int j = 0; j < fs->getNumShapeFunctions(); j++) {
     x += f[j] * _v[j]->x();
     y += f[j] * _v[j]->y();
     z += f[j] * _v[j]->z();
-    for (int k = 0; k < 2; ++k) {
+    for(int k = 0; k < 2; ++k) {
       dx[k] += sf[j][k] * _v[j]->x();
       dy[k] += sf[j][k] * _v[j]->y();
       dz[k] += sf[j][k] * _v[j]->z();
@@ -254,19 +258,19 @@ void MFaceN::frame(double u, double v, SPoint3 &p,
   p = SPoint3(x, y, z);
   t0 = SVector3(dx[0], dy[0], dz[0]).unit();
   t1 = SVector3(dx[1], dy[1], dz[1]).unit();
-  n =  crossprod(t0, t1);
+  n = crossprod(t0, t1);
 }
 
 void MFaceN::repositionInnerVertices(const fullMatrix<double> *placement) const
 {
   int nCorner = getNumCorners();
   int start = nCorner + (_order - 1) * nCorner;
-  for (int i = start; i < (int)_v.size(); ++i) {
+  for(int i = start; i < (int)_v.size(); ++i) {
     MVertex *v = _v[i];
     v->x() = 0;
     v->y() = 0;
     v->z() = 0;
-    for (int j = 0; j < placement->size2(); ++j) {
+    for(int j = 0; j < placement->size2(); ++j) {
       const double coeff = (*placement)(i - start, j);
       v->x() += coeff * _v[j]->x();
       v->y() += coeff * _v[j]->y();

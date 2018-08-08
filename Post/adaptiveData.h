@@ -20,13 +20,13 @@
 #include "fullMatrix.h"
 
 #if defined(WIN32)
-  typedef unsigned __int8 uint8_t; // Valid for _MSC_VER >= 1300
-  typedef unsigned __int64 uint64_t;
-  #define PRIu8 "u"
-  #define PRIu64 "I64u"
+typedef unsigned __int8 uint8_t; // Valid for _MSC_VER >= 1300
+typedef unsigned __int64 uint64_t;
+#define PRIu8 "u"
+#define PRIu64 "I64u"
 #else
-  #define __STDC_FORMAT_MACROS
-  #include <inttypes.h>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 #endif
 
 typedef std::vector<int> vectInt;
@@ -36,8 +36,7 @@ class PViewDataList;
 class GMSH_PostPlugin;
 
 // For old compilers that do not support yet std::to_string()
-template <class T>
-std::string ToString(const T& val)
+template <class T> std::string ToString(const T &val)
 {
   std::stringstream stream;
   stream << val;
@@ -45,16 +44,17 @@ std::string ToString(const T& val)
 }
 
 class adaptiveVertex {
- public:
-  float  x, y, z;        //!< parametric coordinates
-  double X, Y, Z;        //!< cartesian coordinates
-  double val,valy,valz;  //!< maximal three values
-  double valyx,valyy,valyz;
-  double valzx,valzy,valzz;
- public:
+public:
+  float x, y, z; //!< parametric coordinates
+  double X, Y, Z; //!< cartesian coordinates
+  double val, valy, valz; //!< maximal three values
+  double valyx, valyy, valyz;
+  double valzx, valzy, valzz;
+
+public:
   static adaptiveVertex *add(double x, double y, double z,
                              std::set<adaptiveVertex> &allVertice);
-  bool operator < (const adaptiveVertex &other) const
+  bool operator<(const adaptiveVertex &other) const
   {
     if(other.x < x) return true;
     if(other.x > x) return false;
@@ -65,42 +65,32 @@ class adaptiveVertex {
   }
 };
 
-template <class T>
-class nodMap {
+template <class T> class nodMap {
 public:
   std::vector<int> mapping;
 
 public:
-  void cleanMapping()
-  {
-    mapping.clear();
-  }
-  ~nodMap()
-  {
-    cleanMapping();
-  }
-  int getSize() {return (int) mapping.size();}
+  void cleanMapping() { mapping.clear(); }
+  ~nodMap() { cleanMapping(); }
+  int getSize() { return (int)mapping.size(); }
 };
 
 class adaptivePoint {
- public:
+public:
   bool visible;
   adaptiveVertex *p[1];
   adaptivePoint *e[1];
-  static std::list<adaptivePoint*> all;
+  static std::list<adaptivePoint *> all;
   static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
- public:
-  adaptivePoint(adaptiveVertex *p1)
-    : visible(false)
+
+public:
+  adaptivePoint(adaptiveVertex *p1) : visible(false)
   {
     p[0] = p1;
     e[0] = 0;
   }
-  inline double V() const
-  {
-    return p[0]->val;
-  }
+  inline double V() const { return p[0]->val; }
   inline static void GSF(double u, double v, double w, fullVector<double> &sf)
   {
     sf(0) = 1;
@@ -112,25 +102,22 @@ class adaptivePoint {
 };
 
 class adaptiveLine {
- public:
+public:
   bool visible;
   adaptiveVertex *p[2];
   adaptiveLine *e[2];
-  static std::list<adaptiveLine*> all;
+  static std::list<adaptiveLine *> all;
   static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
- public:
-  adaptiveLine(adaptiveVertex *p1, adaptiveVertex *p2)
-    : visible(false)
+
+public:
+  adaptiveLine(adaptiveVertex *p1, adaptiveVertex *p2) : visible(false)
   {
     p[0] = p1;
     p[1] = p2;
     e[0] = e[1] = 0;
   }
-  inline double V() const
-  {
-    return (p[0]->val + p[1]->val) / 2.;
-  }
+  inline double V() const { return (p[0]->val + p[1]->val) / 2.; }
   inline static void GSF(double u, double v, double w, fullVector<double> &sf)
   {
     sf(0) = (1 - u) / 2.;
@@ -143,14 +130,15 @@ class adaptiveLine {
 };
 
 class adaptiveTriangle {
- public:
+public:
   bool visible;
   adaptiveVertex *p[3];
   adaptiveTriangle *e[4];
-  static std::list<adaptiveTriangle*> all;
+  static std::list<adaptiveTriangle *> all;
   static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
- public:
+
+public:
   adaptiveTriangle(adaptiveVertex *p1, adaptiveVertex *p2, adaptiveVertex *p3)
     : visible(false)
   {
@@ -159,10 +147,7 @@ class adaptiveTriangle {
     p[2] = p3;
     e[0] = e[1] = e[2] = e[3] = 0;
   }
-  inline double V() const
-  {
-    return (p[0]->val + p[1]->val + p[2]->val) / 3.;
-  }
+  inline double V() const { return (p[0]->val + p[1]->val + p[2]->val) / 3.; }
   inline static void GSF(double u, double v, double w, fullVector<double> &sf)
   {
     sf(0) = 1. - u - v;
@@ -176,16 +161,17 @@ class adaptiveTriangle {
 };
 
 class adaptiveQuadrangle {
- public:
+public:
   bool visible;
   adaptiveVertex *p[4];
   adaptiveQuadrangle *e[4];
-  static std::list<adaptiveQuadrangle*> all;
+  static std::list<adaptiveQuadrangle *> all;
   static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
- public:
-  adaptiveQuadrangle(adaptiveVertex *p1, adaptiveVertex *p2,
-                     adaptiveVertex *p3, adaptiveVertex *p4)
+
+public:
+  adaptiveQuadrangle(adaptiveVertex *p1, adaptiveVertex *p2, adaptiveVertex *p3,
+                     adaptiveVertex *p4)
     : visible(false)
   {
     p[0] = p1;
@@ -212,14 +198,15 @@ class adaptiveQuadrangle {
 };
 
 class adaptivePrism {
- public:
+public:
   bool visible;
   adaptiveVertex *p[6];
   adaptivePrism *e[8];
-  static std::list<adaptivePrism*> all;
+  static std::list<adaptivePrism *> all;
   static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
- public:
+
+public:
   adaptivePrism(adaptiveVertex *p1, adaptiveVertex *p2, adaptiveVertex *p3,
                 adaptiveVertex *p4, adaptiveVertex *p5, adaptiveVertex *p6)
     : visible(false)
@@ -230,21 +217,23 @@ class adaptivePrism {
     p[3] = p4;
     p[4] = p5;
     p[5] = p6;
-    e[0] = e[1] = e[2]  = e[3]  = NULL;
-    e[4] = e[5] = e[6]  = e[7]  = NULL;
+    e[0] = e[1] = e[2] = e[3] = NULL;
+    e[4] = e[5] = e[6] = e[7] = NULL;
   }
   inline double V() const
   {
-    return (p[0]->val + p[1]->val + p[2]->val + p[3]->val + p[4]->val + p[5]->val) / 6.;
+    return (p[0]->val + p[1]->val + p[2]->val + p[3]->val + p[4]->val +
+            p[5]->val) /
+           6.;
   }
   inline static void GSF(double u, double v, double w, fullVector<double> &sf)
   {
     sf(0) = (1. - u - v) * (1 - w) / 2;
-    sf(1) = u * (1-w)/2;
-    sf(2) = v*(1-w)/2;
-    sf(3) = (1. - u - v)*(1+w)/2;
-    sf(4) = u*(1+w)/2;
-    sf(5) = v*(1+w)/2;
+    sf(1) = u * (1 - w) / 2;
+    sf(2) = v * (1 - w) / 2;
+    sf(3) = (1. - u - v) * (1 + w) / 2;
+    sf(4) = u * (1 + w) / 2;
+    sf(5) = v * (1 + w) / 2;
   }
   static void create(int maxlevel);
   static void recurCreate(adaptivePrism *p, int maxlevel, int level);
@@ -253,14 +242,15 @@ class adaptivePrism {
 };
 
 class adaptiveTetrahedron {
- public:
+public:
   bool visible;
   adaptiveVertex *p[4];
   adaptiveTetrahedron *e[8];
-  static std::list<adaptiveTetrahedron*> all;
+  static std::list<adaptiveTetrahedron *> all;
   static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
- public:
+
+public:
   adaptiveTetrahedron(adaptiveVertex *p1, adaptiveVertex *p2,
                       adaptiveVertex *p3, adaptiveVertex *p4)
     : visible(false)
@@ -290,14 +280,15 @@ class adaptiveTetrahedron {
 };
 
 class adaptiveHexahedron {
- public:
+public:
   bool visible;
   adaptiveVertex *p[8];
   adaptiveHexahedron *e[8];
-  static std::list<adaptiveHexahedron*> all;
+  static std::list<adaptiveHexahedron *> all;
   static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
- public:
+
+public:
   adaptiveHexahedron(adaptiveVertex *p1, adaptiveVertex *p2, adaptiveVertex *p3,
                      adaptiveVertex *p4, adaptiveVertex *p5, adaptiveVertex *p6,
                      adaptiveVertex *p7, adaptiveVertex *p8)
@@ -316,8 +307,9 @@ class adaptiveHexahedron {
   }
   inline double V() const
   {
-    return (p[0]->val + p[1]->val + p[2]->val+ p[3]->val +
-            p[4]->val + p[5]->val + p[6]->val+ p[7]->val) / 8.;
+    return (p[0]->val + p[1]->val + p[2]->val + p[3]->val + p[4]->val +
+            p[5]->val + p[6]->val + p[7]->val) /
+           8.;
   }
   inline static void GSF(double u, double v, double w, fullVector<double> &sf)
   {
@@ -339,19 +331,17 @@ class adaptiveHexahedron {
 // modif koen.hillewaert@cenaero.be, 31/07/2014
 
 class adaptivePyramid {
- public:
+public:
   bool visible;
   adaptiveVertex *p[5];
   adaptivePyramid *e[10];
-  static std::list<adaptivePyramid*> all;
+  static std::list<adaptivePyramid *> all;
   static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
- public:
-  adaptivePyramid(adaptiveVertex *p1,
-                  adaptiveVertex *p2,
-                  adaptiveVertex *p3,
-                  adaptiveVertex *p4,
-                  adaptiveVertex *p5)
+
+public:
+  adaptivePyramid(adaptiveVertex *p1, adaptiveVertex *p2, adaptiveVertex *p3,
+                  adaptiveVertex *p4, adaptiveVertex *p5)
     : visible(false)
   {
     p[0] = p1;
@@ -359,7 +349,7 @@ class adaptivePyramid {
     p[2] = p3;
     p[3] = p4;
     p[4] = p5;
-    for (int i=0;i<10;i++) e[i] = NULL;
+    for(int i = 0; i < 10; i++) e[i] = NULL;
   }
   inline double V() const
   {
@@ -368,7 +358,7 @@ class adaptivePyramid {
   // barycentric coordinates ?
   inline static void GSF(double u, double v, double w, fullVector<double> &sf)
   {
-    double ww = 0.25 / std::max(1e-14,1.-w);
+    double ww = 0.25 / std::max(1e-14, 1. - w);
     sf(0) = (1 - u - w) * (1 - v - w) * ww;
     sf(1) = (1 + u - w) * (1 - v - w) * ww;
     sf(2) = (1 + u - w) * (1 + v - w) * ww;
@@ -382,23 +372,25 @@ class adaptivePyramid {
 };
 
 class PCoords {
- public:
+public:
   double c[3];
   PCoords(double x, double y, double z)
   {
-    c[0] = x; c[1] = y; c[2] = z;
+    c[0] = x;
+    c[1] = y;
+    c[2] = z;
   }
 };
 
-class PValues{
- public:
-  short int sizev; //acceptable values: 1 (scalar), 3 (vector), 9 (tensor)
+class PValues {
+public:
+  short int sizev; // acceptable values: 1 (scalar), 3 (vector), 9 (tensor)
   double *v;
-  PValues(const PValues& obj)
+  PValues(const PValues &obj)
   {
     sizev = obj.sizev;
     v = new double[sizev];
-    for(int i=0;i<sizev;i++) {
+    for(int i = 0; i < sizev; i++) {
       v[i] = obj.v[i];
     }
   }
@@ -406,7 +398,7 @@ class PValues{
   {
     sizev = size;
     v = new double[sizev];
-    for(int i=0;i<sizev;i++) {
+    for(int i = 0; i < sizev; i++) {
       v[i] = 0.0;
     }
   }
@@ -420,40 +412,47 @@ class PValues{
   {
     sizev = 3;
     v = new double[sizev];
-    v[0] = vx; v[1] = vy; v[2] = vz;
+    v[0] = vx;
+    v[1] = vy;
+    v[2] = vz;
   }
-  PValues(double vxx, double vxy, double vxz,
-          double vyx, double vyy, double vyz,
-          double vzx, double vzy, double vzz)
+  PValues(double vxx, double vxy, double vxz, double vyx, double vyy,
+          double vyz, double vzx, double vzy, double vzz)
   {
     sizev = 9;
     v = new double[sizev];
-    v[0] = vxx; v[1] = vxy; v[2] = vxz;
-    v[3] = vyx; v[4] = vyy; v[5] = vyz;
-    v[6] = vzx; v[7] = vzy; v[8] = vzz;
+    v[0] = vxx;
+    v[1] = vxy;
+    v[2] = vxz;
+    v[3] = vyx;
+    v[4] = vyy;
+    v[5] = vyz;
+    v[6] = vzx;
+    v[7] = vzy;
+    v[8] = vzz;
   }
-  ~PValues()
-  {
-    delete[] v;
-  }
-  void operator = (const PValues& obj)
+  ~PValues() { delete[] v; }
+  void operator=(const PValues &obj)
   {
     // Assume PValues object has already been generated
     // and v allocated when the operator = is called
     if(sizev != obj.sizev)
-      Msg::Error("In PValues overlodaing operator: size mistmatch %d %d",sizev);
-    for(int i=0;i<sizev;i++) {
+      Msg::Error("In PValues overlodaing operator: size mistmatch %d %d",
+                 sizev);
+    for(int i = 0; i < sizev; i++) {
       v[i] = obj.v[i];
     }
   }
 };
 
 class globalVTKData {
- public:
-  static std::vector<vectInt> vtkGlobalConnectivity; // conectivity (vector of vector)
+public:
+  static std::vector<vectInt>
+    vtkGlobalConnectivity; // conectivity (vector of vector)
   static std::vector<int> vtkGlobalCellType; // topology
   static std::vector<PCoords> vtkGlobalCoords; // coordinates
-  static std::vector<PValues> vtkGlobalValues; // nodal values (either scalar or vector)
+  static std::vector<PValues>
+    vtkGlobalValues; // nodal values (either scalar or vector)
   globalVTKData();
   static void clearGlobalConnectivity()
   {
@@ -486,14 +485,11 @@ class globalVTKData {
     clearGlobalCoords();
     clearGlobalValues();
   }
-  ~globalVTKData()
-  {
-    clearGlobalData();
-  }
+  ~globalVTKData() { clearGlobalData(); }
 };
 
 class VTKData {
- public:
+public:
   // Data container to write output files readable for ParaView
   // vtk legacy and vtu for now
   std::string vtkFieldName;
@@ -527,22 +523,22 @@ class VTKData {
   int vtkCountCoord;
   int vtkCountTotNodConnect;
   int vtkCountTotVal;
-  int vtkCountCellOffset; //used only for ascii output
-  int vtkCountCellType;  //used only for ascii output
+  int vtkCountCellOffset; // used only for ascii output
+  int vtkCountCellType; // used only for ascii output
 
   std::vector<vectInt> vtkLocalConnectivity; // conectivity (vector of vector)
   std::vector<int> vtkLocalCellType; // topology
   std::vector<PCoords> vtkLocalCoords; // coordinates
   std::vector<PValues> vtkLocalValues; // nodal values (either scalar or vector)
 
-
 public:
-  VTKData(std::string fieldName="unknown", int numComp = -1, int step = -1,
-          int level = -1, double tol=0.0, std::string filename="unknown",
+  VTKData(std::string fieldName = "unknown", int numComp = -1, int step = -1,
+          int level = -1, double tol = 0.0, std::string filename = "unknown",
           int useDefaultName = 1, int npart = -1, bool isBinary = true)
   {
     vtkIsBinary = isBinary; // choice: true, false
-    vtkFormat = std::string("vtu"); // choice: vtk (VTK legacy), vtu (XML appended)
+    vtkFormat =
+      std::string("vtu"); // choice: vtk (VTK legacy), vtu (XML appended)
 
     vtkFieldName = fieldName;
     vtkFileName = filename;
@@ -561,7 +557,7 @@ public:
     vtkCountCoord = 0;
     vtkCountTotNodConnect = 0;
     vtkCountTotVal = 0;
-    vtkCountCellOffset = 0; //used only for ascii output
+    vtkCountCellOffset = 0; // used only for ascii output
     vtkCountCellType = 0;
   }
   void clearLocalData()
@@ -575,15 +571,13 @@ public:
     vtkLocalCoords.clear();
     vtkLocalValues.clear();
   }
-  ~VTKData()
-  {
-    clearLocalData();
-  }
-  void incrementTotNod(int increment) { vtkCountTotNod+=increment; }
-  void incrementTotElm(int increment) { vtkCountTotElm+=increment; }
-  void incrementTotElmLev0(int increment) { vtkCountTotElmLev0+=increment; }
+  ~VTKData() { clearLocalData(); }
+  void incrementTotNod(int increment) { vtkCountTotNod += increment; }
+  void incrementTotElm(int increment) { vtkCountTotElm += increment; }
+  void incrementTotElmLev0(int increment) { vtkCountTotElmLev0 += increment; }
   bool isLittleEndian();
-  void SwapArrayByteOrder(void* array, int nbytes, int nItems); // used only for VTK
+  void SwapArrayByteOrder(void *array, int nbytes,
+                          int nItems); // used only for VTK
   int getPVCellType(int numEdges);
   // void writeParaViewData();
   void writeVTKElmData();
@@ -592,38 +586,40 @@ public:
   void setFileDistribution()
   {
     int tmpmod = vtkTotNumElmLev0 % vtkNpart;
-    minElmPerPart = (vtkTotNumElmLev0-tmpmod)/vtkNpart;
+    minElmPerPart = (vtkTotNumElmLev0 - tmpmod) / vtkNpart;
     numPartMinElm = vtkNpart - tmpmod;
 
-    if(tmpmod == 0 ) maxElmPerPart = minElmPerPart;
-    else maxElmPerPart = minElmPerPart+1;
+    if(tmpmod == 0)
+      maxElmPerPart = minElmPerPart;
+    else
+      maxElmPerPart = minElmPerPart + 1;
     numPartMaxElm = tmpmod;
-    assert(vtkTotNumElmLev0 == minElmPerPart*numPartMinElm+maxElmPerPart*numPartMaxElm);
+    assert(vtkTotNumElmLev0 ==
+           minElmPerPart * numPartMinElm + maxElmPerPart * numPartMaxElm);
   }
 };
 
-template <class T>
-class adaptiveElements {
- private:
+template <class T> class adaptiveElements {
+private:
   fullMatrix<double> *_coeffsVal, *_eexpsVal, *_interpolVal;
   fullMatrix<double> *_coeffsGeom, *_eexpsGeom, *_interpolGeom;
- public:
-  adaptiveElements(std::vector<fullMatrix<double>*> &interpolationMatrices);
+
+public:
+  adaptiveElements(std::vector<fullMatrix<double> *> &interpolationMatrices);
   ~adaptiveElements();
   // create the _interpolVal and _interpolGeom matrices at the given
   // refinement level
   void init(int level);
   // process the element data in coords/values and return the refined
   // elements in coords/values
-  void adapt(double tol, int numComp,
-             std::vector<PCoords> &coords, std::vector<PValues> &values,
-             double &minVal, double &maxVal, GMSH_PostPlugin *plug=0,
-             bool onlyComputeMinMax=false);
+  void adapt(double tol, int numComp, std::vector<PCoords> &coords,
+             std::vector<PValues> &values, double &minVal, double &maxVal,
+             GMSH_PostPlugin *plug = 0, bool onlyComputeMinMax = false);
   // adapt all the T-type elements in the input view and add the
   // refined elements in the output view (we will remove this when we
   // switch to true on-the-fly local refinement in drawPost())
   void addInView(double tol, int step, PViewData *in, PViewDataList *out,
-                 GMSH_PostPlugin *plug=0);
+                 GMSH_PostPlugin *plug = 0);
 
   // Routines for
   // - export of adapted views to pvtu file format for parallel visualization
@@ -631,13 +627,13 @@ class adaptiveElements {
   // - and/or generation of VTK data structure for ParaView plugin.
 
   // Clone of adapt for VTK output files
-  void adaptForVTK(double tol, int numComp,
-                   std::vector<PCoords> &coords, std::vector<PValues> &values,
-                   double &minVal, double &maxVal);
+  void adaptForVTK(double tol, int numComp, std::vector<PCoords> &coords,
+                   std::vector<PValues> &values, double &minVal,
+                   double &maxVal);
 
   // Clone of addInView for VTK output files
   void addInViewForVTK(int step, PViewData *in, VTKData &myVTKData,
-                       bool writeVtk=true, bool buildStaticData=false);
+                       bool writeVtk = true, bool buildStaticData = false);
 
   int countElmLev0(int step, PViewData *in);
 
@@ -648,7 +644,7 @@ class adaptiveElements {
 };
 
 class adaptiveData {
- private:
+private:
   int _step, _level;
   double _tol;
   PViewData *_inData;
@@ -677,12 +673,13 @@ class adaptiveData {
   // constructor.
   bool writeVTK;
 
- public:
+public:
   static double timerInit, timerAdapt;
-  adaptiveData(PViewData *data, bool outDataInit=true);
+  adaptiveData(PViewData *data, bool outDataInit = true);
   ~adaptiveData();
-  PViewData *getData(){ return (PViewData*)_outData; }
-  void changeResolution(int step, int level, double tol, GMSH_PostPlugin *plug=0);
+  PViewData *getData() { return (PViewData *)_outData; }
+  void changeResolution(int step, int level, double tol,
+                        GMSH_PostPlugin *plug = 0);
   int countTotElmLev0(int step, PViewData *in);
   void changeResolutionForVTK(int step, int level, double tol, int npart = 1,
                               bool isBinary = true,

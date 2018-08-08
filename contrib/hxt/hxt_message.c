@@ -32,13 +32,25 @@ const char*  hxtGetStatusString(HXTStatus status){
     case HXT_STATUS_POINTER_ERROR:
       return "wrong pointer given";
       break;
+    case HXT_STATUS_READ_ERROR:
+      return "read error";
+      break;
+    case HXT_STATUS_WRITE_ERROR:
+      return "write error";
+      break;
+    case HXT_STATUS_RANGE_ERROR:
+      return "number out of range";
+      break;
+    case HXT_STATUS_FORMAT_ERROR:
+      return "wrong format";
+      break;
     default:
       if(status<=HXT_STATUS_INTERNAL)
         return "internal error was not catched. This should not happen";
       else if(status<0)
         return "unknow error";
       else
-        return "positive return value";
+        return "positive return value (no error)";
       break;
   }
 }

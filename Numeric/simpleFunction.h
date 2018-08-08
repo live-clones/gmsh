@@ -9,65 +9,67 @@
 // FIXME: Numeric/ should not depend on Geo/
 class MElement;
 
-template <class scalar>
-class simpleFunction {
- protected:
+template <class scalar> class simpleFunction {
+protected:
   scalar _val;
   bool _hasDerivatives;
- public :
- simpleFunction(scalar val =0.0) : _val(val), _hasDerivatives(false){}
-  virtual ~simpleFunction(){}
-  virtual bool hasDerivatives() {return _hasDerivatives;};
-  virtual scalar operator () (double x, double y, double z) const { return _val; }
+
+public:
+  simpleFunction(scalar val = 0.0) : _val(val), _hasDerivatives(false) {}
+  virtual ~simpleFunction() {}
+  virtual bool hasDerivatives() { return _hasDerivatives; };
+  virtual scalar operator()(double x, double y, double z) const { return _val; }
   virtual void setElement(MElement *e) const {}
-  virtual void gradient (double x, double y, double z,
-			 scalar & dfdx, scalar & dfdy, scalar & dfdz) const
-  { dfdx = dfdy = dfdz = 0.0; }
-  virtual void hessian (double x, double y, double z,
-			scalar & dfdxx, scalar & dfdxy, scalar & dfdxz, 
-			scalar & dfdyx, scalar & dfdyy, scalar & dfdyz,
-			scalar & dfdzx, scalar & dfdzy, scalar & dfdzz	) const
-  { dfdxx = dfdxy = dfdxz = 0.0;
+  virtual void gradient(double x, double y, double z, scalar &dfdx,
+                        scalar &dfdy, scalar &dfdz) const
+  {
+    dfdx = dfdy = dfdz = 0.0;
+  }
+  virtual void hessian(double x, double y, double z, scalar &dfdxx,
+                       scalar &dfdxy, scalar &dfdxz, scalar &dfdyx,
+                       scalar &dfdyy, scalar &dfdyz, scalar &dfdzx,
+                       scalar &dfdzy, scalar &dfdzz) const
+  {
+    dfdxx = dfdxy = dfdxz = 0.0;
     dfdyx = dfdyy = dfdyz = 0.0;
-    dfdzx = dfdzy = dfdzz = 0.0; }
+    dfdzx = dfdzy = dfdzz = 0.0;
+  }
 };
 
 template <class scalar>
-class constantPerElement : public simpleFunction<scalar>
-{
-  std::map<MElement *,scalar> _data;
+class constantPerElement : public simpleFunction<scalar> {
+  std::map<MElement *, scalar> _data;
   mutable MElement *_e;
- public :
-  constantPerElement () : _e(0){}
-  void set(MElement *e, scalar v) {
-    _data[e] = v;
-  } 
-  void setElement(MElement *e) const { 
-    _e = e; }
-  virtual scalar operator () (double x, double y, double z) const 
-  { 
-    if (!_e)return 0.0;
-    typename std::map<MElement *,scalar>::const_iterator it = _data.find(_e);
-    if (it == _data.end())return 0.0;
+
+public:
+  constantPerElement() : _e(0) {}
+  void set(MElement *e, scalar v) { _data[e] = v; }
+  void setElement(MElement *e) const { _e = e; }
+  virtual scalar operator()(double x, double y, double z) const
+  {
+    if(!_e) return 0.0;
+    typename std::map<MElement *, scalar>::const_iterator it = _data.find(_e);
+    if(it == _data.end()) return 0.0;
     return it->second;
   }
 };
 
-
 template <class scalar>
-class simpleFunctionOnElement : public simpleFunction<scalar>
-{
+class simpleFunctionOnElement : public simpleFunction<scalar> {
   mutable MElement *_e;
- public :
-  simpleFunctionOnElement(scalar val=0) : simpleFunction<scalar>(val),_e(0) {}
-  virtual ~simpleFunctionOnElement(){}
-  void setElement(MElement *e) const { _e = e; }
-  MElement * getElement(void) const { return _e; }
-  MElement * getElement(double x, double y, double z) const
+
+public:
+  simpleFunctionOnElement(scalar val = 0) : simpleFunction<scalar>(val), _e(0)
   {
-    if (_e) return _e;
-    else
-    {// search
+  }
+  virtual ~simpleFunctionOnElement() {}
+  void setElement(MElement *e) const { _e = e; }
+  MElement *getElement(void) const { return _e; }
+  MElement *getElement(double x, double y, double z) const
+  {
+    if(_e)
+      return _e;
+    else { // search
     }
   }
 };

@@ -8,20 +8,16 @@
 
 #include "Levelset.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterIsosurfacePlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterIsosurfacePlugin();
 }
 
-class GMSH_IsosurfacePlugin : public GMSH_LevelsetPlugin
-{
+class GMSH_IsosurfacePlugin : public GMSH_LevelsetPlugin {
   double levelset(double x, double y, double z, double val) const;
- public:
-  GMSH_IsosurfacePlugin(){}
-  std::string getShortHelp() const
-  {
-    return "Extract a single isosurface";
-  }
+
+public:
+  GMSH_IsosurfacePlugin() {}
+  std::string getShortHelp() const { return "Extract a single isosurface"; }
   std::string getName() const { return "Isosurface"; }
   std::string getHelp() const;
   int getNbOptions() const;

@@ -11,51 +11,47 @@
 #include "GRegion.h"
 #include "BackgroundMesh3D.h"
 
-std::map<GEntity*,BGMBase*> BGMManager::data = std::map<GEntity*,BGMBase*>();
-BGMBase* BGMManager::latest2Dbgm = NULL;
+std::map<GEntity *, BGMBase *> BGMManager::data =
+  std::map<GEntity *, BGMBase *>();
+BGMBase *BGMManager::latest2Dbgm = NULL;
 bool BGMManager::use_cross_field = true;
 
 void BGMManager::set_use_cross_field(bool b)
 {
-  if (b && !BGMManager::use_cross_field){// need to change...
+  if(b && !BGMManager::use_cross_field) { // need to change...
     data.clear();
   }
   BGMManager::use_cross_field = b;
 }
 
-BGMBase* BGMManager::get(GRegion* gf)
+BGMBase *BGMManager::get(GRegion *gf)
 {
-  std::map<GEntity*,BGMBase*>::iterator itfind = data.find(gf);
-  if (itfind!=data.end()){
+  std::map<GEntity *, BGMBase *>::iterator itfind = data.find(gf);
+  if(itfind != data.end()) {
     return itfind->second;
   }
 
-  BGMBase *bgm = use_cross_field
-               ? new frameFieldBackgroundMesh3D(gf)
-               : new backgroundMesh3D(gf);
+  BGMBase *bgm = use_cross_field ? new frameFieldBackgroundMesh3D(gf) :
+                                   new backgroundMesh3D(gf);
 
   data.insert(std::make_pair(gf, bgm));
   return bgm;
 }
 
-BGMBase* BGMManager::get(GFace* gf)
+BGMBase *BGMManager::get(GFace *gf)
 {
-  std::map<GEntity*,BGMBase*>::iterator itfind = data.find(gf);
-  if (itfind!=data.end()){
+  std::map<GEntity *, BGMBase *>::iterator itfind = data.find(gf);
+  if(itfind != data.end()) {
     latest2Dbgm = itfind->second;
     return itfind->second;
   }
 
-  BGMBase *bgm = use_cross_field
-               ? new frameFieldBackgroundMesh2D(gf)
-               : new backgroundMesh2D(gf);
+  BGMBase *bgm = use_cross_field ? new frameFieldBackgroundMesh2D(gf) :
+                                   new backgroundMesh2D(gf);
 
   data.insert(std::make_pair(gf, bgm));
   latest2Dbgm = bgm;
   return bgm;
 }
 
-BGMBase* BGMManager::current2D()
-{
-  return latest2Dbgm;
-}
+BGMBase *BGMManager::current2D() { return latest2Dbgm; }
