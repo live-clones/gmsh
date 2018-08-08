@@ -2752,9 +2752,7 @@ static double TRIANGLE_VALIDITY(GFace *gf, MTriangle *t)
   SVector3 d2(t->getVertex(2)->x() - t->getVertex(0)->x(),
               t->getVertex(2)->y() - t->getVertex(0)->y(),
               t->getVertex(2)->z() - t->getVertex(0)->z());
-
   SVector3 c = crossprod(d1, d2);
-
   return dot(N, c);
 }
 
@@ -2864,15 +2862,18 @@ void meshGFace::operator()(GFace *gf, bool print)
     Msg::Warning("Surface %d consists of no elements", gf->tag());
   }
 
-  if(algoDelaunay2D(gf) && !isMeshValid(gf)) {
-    Msg::Warning(
-      "Delaunay based mesher failed on surface %d --> moving to meshadapt",
-      gf->tag());
+  // test validity for non-Gmsh models (currently we cannot reliably evaluate
+  // the normal on the boundary of surfaces with the Gmsh kernel)
+  if(gf->getNativeType() != GEntity::GmshModel &&
+     algoDelaunay2D(gf) && !isMeshValid(gf)) {
+    Msg::Warning("Delaunay-based mesher failed on surface %d -> moving to MeshAdapt",
+                 gf->tag());
     deMeshGFace killer;
     killer(gf);
     gf->setMeshingAlgo(1);
     (*this)(gf, print);
   }
+
 }
 
 static bool getGFaceNormalFromVert(GFace *gf, MElement *el, SVector3 &nf)
