@@ -256,7 +256,7 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
   GeomAPI_ProjectPointOnSurf proj(pnt, occface, umin, umax, vmin, vmax);
 
   if(!proj.NbPoints()) {
-    Msg::Warning("OCC Project Point on Surface FAIL");
+    Msg::Debug("OCC Project Point on Surface FAIL");
     GPoint gp(0, 0);
     gp.setNoSuccess();
     return gp;
