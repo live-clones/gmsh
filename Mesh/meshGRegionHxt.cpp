@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@onelab.info>.
+
 #include <map>
 #include <set>
 #include "GmshConfig.h"
@@ -16,16 +21,16 @@ extern "C" {
 #include "hxt_opt.h"
 }
 
-static HXTStatus Gmsh2Hxt (GRegion *gr, HXTMesh *m,
-		     std::map<MVertex *, int> &v2c,
-		     std::vector<MVertex *> &c2v){
-
+static HXTStatus Gmsh2Hxt(GRegion *gr, HXTMesh *m,
+                          std::map<MVertex *, int> &v2c,
+                          std::vector<MVertex *> &c2v)
+{
   std::set<MVertex *> all;
   std::vector<GFace *> faces = gr->faces();
 
   uint64_t ntri = 0;
-  
-  for (size_t j = 0 ; j<faces.size(); j++){
+
+  for(size_t j = 0; j < faces.size(); j++) {
     GFace *gf = faces[j];
     ntri += gf->triangles.size();
     for(size_t i = 0; i < gf->triangles.size(); i++) {
@@ -35,12 +40,10 @@ static HXTStatus Gmsh2Hxt (GRegion *gr, HXTMesh *m,
     }
   }
 
-  printf("%d vertices\n",all.size());
-  
   m->vertices.num = m->vertices.size = all.size();
   HXT_CHECK(
     hxtAlignedMalloc(&m->vertices.coord, 4 * m->vertices.num * sizeof(double)));
-  
+
   size_t count = 0;
   c2v.resize(all.size());
   for(std::set<MVertex *>::iterator it = all.begin(); it != all.end(); it++) {
@@ -60,7 +63,7 @@ static HXTStatus Gmsh2Hxt (GRegion *gr, HXTMesh *m,
                              (m->triangles.num) * sizeof(uint16_t)));
 
   uint64_t index = 0;
-  for (size_t j = 0 ; j<faces.size(); j++){
+  for(size_t j = 0; j < faces.size(); j++) {
     GFace *gf = faces[j];
     for(size_t i = 0; i < gf->triangles.size(); i++) {
       m->triangles.node[3 * index + 0] = v2c[gf->triangles[i]->getVertex(0)];
@@ -74,10 +77,9 @@ static HXTStatus Gmsh2Hxt (GRegion *gr, HXTMesh *m,
   m->lines.num = m->lines.size = 0;
 
   return HXT_STATUS_OK;
-
 }
 
-static HXTStatus meshGRegionHXT_ ( GRegion *gr )
+static HXTStatus meshGRegionHXT_(GRegion *gr)
 {
   int nthreads = CTX::instance()->mesh.maxNumThreads3D;
   int optimize = 1;
@@ -89,36 +91,33 @@ static HXTStatus meshGRegionHXT_ ( GRegion *gr )
   /*******************  ^ all argument were processed *********************/
   HXTMesh *mesh;
   HXTContext *context;
-  HXT_CHECK( hxtContextCreate(&context) );
-  HXT_CHECK( hxtMeshCreate(context, &mesh) );
+  HXT_CHECK(hxtContextCreate(&context));
+  HXT_CHECK(hxtMeshCreate(context, &mesh));
 
   std::map<MVertex *, int> v2c;
   std::vector<MVertex *> c2v;
   Gmsh2Hxt(gr, mesh, v2c, c2v);
 
-  HXT_CHECK( hxtTetMesh3d(mesh, nthreads, reproducible, verbosity, stat, refine, optimize, threshold, hxt_boundary_recovery) );
+  HXT_CHECK(hxtTetMesh3d(mesh, nthreads, reproducible, verbosity, stat, refine,
+                         optimize, threshold, hxt_boundary_recovery));
   HXT_CHECK(hxtMeshWriteGmsh(mesh, "hxt.msh"));
-  HXT_CHECK( hxtMeshDelete(&mesh) );
-  HXT_CHECK( hxtContextDelete(&context) );
+  HXT_CHECK(hxtMeshDelete(&mesh));
+  HXT_CHECK(hxtContextDelete(&context));
   return HXT_STATUS_OK;
 }
 
-
-int meshGRegionHxt ( GRegion *gr )
+int meshGRegionHxt(GRegion *gr)
 {
-  printf("HELLPPP\n");
-  HXTStatus status = meshGRegionHXT_ (gr);
-  if (status == HXT_STATUS_OK)return 0;
+  HXTStatus status = meshGRegionHXT_(gr);
+  if(status == HXT_STATUS_OK) return 0;
   return 1;
 }
 
-
 #else
 
-int meshGRegionHXT ( GRegion *gr )
+int meshGRegionHXT(GRegion *gr)
 {
-
-  Msg::Error ("Gmsh should be compile with Hxt to enable that option");
+  Msg::Error("Gmsh should be compile with Hxt to enable that option");
   return -1;
 }
 
