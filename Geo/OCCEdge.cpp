@@ -278,8 +278,8 @@ int OCCEdge::minimumMeshSegments() const
   int np;
 
   // if it is a seam, then return 1
-  if (l_faces.size() == 1 && isSeam (l_faces[0]))return 1;
-  
+  if(l_faces.size() == 1 && isSeam(l_faces[0])) return 1;
+
   if(geomType() == Line)
     np = GEdge::minimumMeshSegments();
   else
