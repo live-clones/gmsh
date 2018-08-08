@@ -1031,7 +1031,6 @@ bool edgeSwapDelProj(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4)
   SVector3 n1 = t1.getFace(0).normal();
   SVector3 n2 = t2.getFace(0).normal();
   if(dot(n1, n2) <= 0) {
-    //    printf("OLA !!!\n");
     return true;
   }
   return false;
