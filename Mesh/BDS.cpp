@@ -700,9 +700,9 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
   e->oppositeof(op);
 
   int CHECK1 = -1, CHECK2 = -1;
-  
-  if (p1->iD == CHECK1 && p2->iD == CHECK2)
-    printf("coucou %d %d %d %d\n",p1->iD,p2->iD,op[0]->iD,op[1]->iD);
+
+  if(p1->iD == CHECK1 && p2->iD == CHECK2)
+    printf("coucou %d %d %d %d\n", p1->iD, p2->iD, op[0]->iD, op[1]->iD);
 
   double ori0 = fabs(surface_triangle_param(p2, p1, op[0])) +
                 fabs(surface_triangle_param(p2, p1, op[1]));
@@ -718,8 +718,8 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
     //    return false;
   }
 
-  if (p1->iD == CHECK1 && p2->iD == CHECK2)
-    printf("coucou 2 %d %d %d %d\n",p1->iD,p2->iD,op[0]->iD,op[1]->iD);
+  if(p1->iD == CHECK1 && p2->iD == CHECK2)
+    printf("coucou 2 %d %d %d %d\n", p1->iD, p2->iD, op[0]->iD, op[1]->iD);
 
   BDS_Point *pts1[4];
   e->faces(0)->getNodes(pts1);
@@ -833,14 +833,17 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
 {
   if(!testSmallTriangles) return true;
 
- // AVOID CREATING POINTS WITH 2 NEIGHBORING TRIANGLES
+  // AVOID CREATING POINTS WITH 2 NEIGHBORING TRIANGLES
   //  std::vector<BDS_Face*> f1 = p1->getTriangles();
   //  std::vector<BDS_Face*> f2 = p2->getTriangles();
-  if (_p1->g && _p1->g->classif_degree == 2 && _p1->edges.size() <= 4)return false;
-  if (_p2->g && _p2->g->classif_degree == 2 && _p2->edges.size() <= 4)return false;
-  if (_p1->g && _p1->g->classif_degree < 2 && _p1->edges.size() <= 3)return false;
-  if (_p2->g && _p2->g->classif_degree < 2 && _p2->edges.size() <= 3)return false;
- 
+  if(_p1->g && _p1->g->classif_degree == 2 && _p1->edges.size() <= 4)
+    return false;
+  if(_p2->g && _p2->g->classif_degree == 2 && _p2->edges.size() <= 4)
+    return false;
+  if(_p1->g && _p1->g->classif_degree < 2 && _p1->edges.size() <= 3)
+    return false;
+  if(_p2->g && _p2->g->classif_degree < 2 && _p2->edges.size() <= 3)
+    return false;
 
   double s1 = fabs(surface_triangle_param(_p1, _p2, _q1));
   double s2 = fabs(surface_triangle_param(_p1, _p2, _q2));
@@ -944,11 +947,11 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
 bool BDS_SwapEdgeTestNormals::operator()(BDS_Point *_p1, BDS_Point *_p2,
                                          BDS_Point *_q1, BDS_Point *_q2) const
 {
-
-  //  if (_p1->g && _p1->g->classif_degree == 2 && _p1->edges.size() <= 4)return false;
-  //  if (_p2->g && _p2->g->classif_degree == 2 && _p2->edges.size() <= 4)return false;
-  //  if (_p1->g && _p1->g->classif_degree < 2 && _p1->edges.size() <= 3)return false;
-  //  if (_p2->g && _p2->g->classif_degree < 2 && _p2->edges.size() <= 3)return false;
+  //  if (_p1->g && _p1->g->classif_degree == 2 && _p1->edges.size() <= 4)return
+  //  false; if (_p2->g && _p2->g->classif_degree == 2 && _p2->edges.size() <=
+  //  4)return false; if (_p1->g && _p1->g->classif_degree < 2 &&
+  //  _p1->edges.size() <= 3)return false; if (_p2->g && _p2->g->classif_degree
+  //  < 2 && _p2->edges.size() <= 3)return false;
 
   double s1 = fabs(surface_triangle_param(_p1, _p2, _q1));
   double s2 = fabs(surface_triangle_param(_p1, _p2, _q2));
@@ -973,9 +976,8 @@ bool BDS_SwapEdgeTestNormals::operator()(BDS_Point *_p1, BDS_Point *_p2,
   double qb1 = qmTriangle::gamma(_op1, _op2, _op3);
   double qb2 = qmTriangle::gamma(_oq1, _oq2, _oq3);
 
-  double mina = std::min(qa1, qa2);
-  double minb = std::min(qb1, qb2);
-
+  //double mina = std::min(qa1, qa2);
+  //double minb = std::min(qb1, qb2);
   //  if(minb > 5 * mina) return true;
 
   double OLD = std::min(_ori * qa1 * _COS_N(_p1, _p2, _p3, gf),
@@ -1248,25 +1250,28 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
     if(e->g->classif_degree == 2 && p->g != e->g) return false;
   }
 
-  if (!force){
-    for (size_t i = 0 ; i < e->p1->edges.size(); i ++){
-      for (size_t j = 0 ; j < e->p2->edges.size(); j ++){
-	BDS_Point *p1 = e->p1->edges[i]->p1 == e->p1 ? e->p1->edges[i]->p2 : e->p1->edges[i]->p1;
-	BDS_Point *p2 = e->p2->edges[j]->p1 == e->p2 ? e->p2->edges[j]->p2 : e->p2->edges[j]->p1;
-	if (p1->_periodicCounterpart == p2)return false;
+  if(!force) {
+    for(size_t i = 0; i < e->p1->edges.size(); i++) {
+      for(size_t j = 0; j < e->p2->edges.size(); j++) {
+        BDS_Point *p1 = e->p1->edges[i]->p1 == e->p1 ? e->p1->edges[i]->p2 :
+                                                       e->p1->edges[i]->p1;
+        BDS_Point *p2 = e->p2->edges[j]->p1 == e->p2 ? e->p2->edges[j]->p2 :
+                                                       e->p2->edges[j]->p1;
+        if(p1->_periodicCounterpart == p2) return false;
       }
     }
   }
 
-  
   if(e->numfaces() == 2) {
     BDS_Point *oface[2];
     e->oppositeof(oface);
-    for (size_t i = 0; i < oface[0]->edges.size();i++){
-      if ( oface[0]->edges[i]->p1 == oface[0] &&
-	   oface[0]->edges[i]->p2 == oface[1] )return false; 
-      if ( oface[0]->edges[i]->p1 == oface[1] &&
-	   oface[0]->edges[i]->p2 == oface[0] )return false; 
+    for(size_t i = 0; i < oface[0]->edges.size(); i++) {
+      if(oface[0]->edges[i]->p1 == oface[0] &&
+         oface[0]->edges[i]->p2 == oface[1])
+        return false;
+      if(oface[0]->edges[i]->p1 == oface[1] &&
+         oface[0]->edges[i]->p2 == oface[0])
+        return false;
     }
     if(!force && oface[0]->g && oface[0]->g->classif_degree == 2 &&
        oface[0]->edges.size() <= 4)
@@ -1281,7 +1286,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
        oface[1]->edges.size() <= 3)
       return false;
   }
-  
+
   std::vector<BDS_Face *> t = p->getTriangles();
   BDS_Point *o = e->othervertex(p);
 

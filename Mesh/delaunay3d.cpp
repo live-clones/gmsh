@@ -56,9 +56,7 @@ struct HilbertSortB {
             double BoundingBoxXmin, double BoundingBoxXmax,
             double BoundingBoxYmin, double BoundingBoxYmax,
             double BoundingBoxZmin, double BoundingBoxZmax, int depth);
-  HilbertSortB(int m = 0, int l = 2)
-    : maxDepth(m)
-    , Limit(l)
+  HilbertSortB(int m = 0, int l = 2) : maxDepth(m), Limit(l)
   {
     ComputeGrayCode(3);
   }
@@ -106,7 +104,9 @@ void HilbertSortB::ComputeGrayCode(int n)
   mask = (n == 2) ? 3 : 7;
 
   // Generate the Gray code sequence.
-  for(i = 0; i < N; i++) { gc[i] = i ^ (i >> 1); }
+  for(i = 0; i < N; i++) {
+    gc[i] = i ^ (i >> 1);
+  }
 
   for(e = 0; e < N; e++) {
     for(d = 0; d < n; d++) {
@@ -131,7 +131,9 @@ void HilbertSortB::ComputeGrayCode(int n)
   for(i = 1; i < N; i++) {
     v = ~i; // Count the 0s.
     v = (v ^ (v - 1)) >> 1; // Set v's trailing 0s to 1s and zero rest
-    for(c = 0; v; c++) { v >>= 1; }
+    for(c = 0; v; c++) {
+      v >>= 1;
+    }
     tsb1mod3[i] = c % n;
   }
 }
@@ -151,7 +153,9 @@ int HilbertSortB::Split(Vert **vertices, int arraysize, int GrayCode0,
   axis = (GrayCode0 ^ GrayCode1) >> 1;
 
   // Calulate the split position along the axis.
-  if(axis == 0) { split = 0.5 * (BoundingBoxXmin + BoundingBoxXmax); }
+  if(axis == 0) {
+    split = 0.5 * (BoundingBoxXmin + BoundingBoxXmax);
+  }
   else if(axis == 1) {
     split = 0.5 * (BoundingBoxYmin + BoundingBoxYmax);
   }
@@ -261,7 +265,9 @@ void HilbertSortB::Sort(Vert **vertices, int arraysize, int e, int d,
   // Recursively sort the points in sub-boxes.
   for(w = 0; w < 8; w++) {
     if((p[w + 1] - p[w]) > Limit) {
-      if(w == 0) { e_w = 0; }
+      if(w == 0) {
+        e_w = 0;
+      }
       else {
         k = 2 * ((w - 1) / 2);
         e_w = k ^ (k >> 1);
@@ -269,7 +275,9 @@ void HilbertSortB::Sort(Vert **vertices, int arraysize, int e, int d,
       k = e_w;
       e_w = ((k << (d + 1)) & mask) | ((k >> (n - d - 1)) & mask);
       ei = e ^ e_w;
-      if(w == 0) { d_w = 0; }
+      if(w == 0) {
+        d_w = 0;
+      }
       else {
         d_w = ((w % 2) == 0) ? tsb1mod3[w - 1] : tsb1mod3[w];
       }
@@ -314,7 +322,9 @@ void computeAdjacencies(Tet *t, int iFace, connContainer &faceToTet)
 {
   conn c(t->getFace(iFace), iFace, t);
   connContainer::iterator it = std::find(faceToTet.begin(), faceToTet.end(), c);
-  if(it == faceToTet.end()) { faceToTet.push_back(c); }
+  if(it == faceToTet.end()) {
+    faceToTet.push_back(c);
+  }
   else {
     t->T[iFace] = it->t;
     it->t->T[it->i] = t;
@@ -598,7 +608,9 @@ static bool edgeSwap(Tet *tet, int iLocalEdge, tetContainer &T, int myThread)
 
   connContainer ctnr;
   for(unsigned int i = 0; i < outside.size(); i++) {
-    for(int j = 0; j < 4; j++) { computeAdjacencies(outside[i], j, ctnr); }
+    for(int j = 0; j < 4; j++) {
+      computeAdjacencies(outside[i], j, ctnr);
+    }
   }
 
   return true;
@@ -634,7 +646,9 @@ static bool relocateVertex(Vert *v, std::vector<Tet *> &cavity)
     volumeNew += volume;
   }
 
-  if(fabs(volumeNew - volumeOld) < 1.e-14 * volumeOld) { return true; }
+  if(fabs(volumeNew - volumeOld) < 1.e-14 * volumeOld) {
+    return true;
+  }
   v->x() = oldX, v->y() = oldY, v->z() = oldZ;
   return false;
 }
@@ -643,7 +657,9 @@ static bool relocateVertex(Vert *v, std::stack<Tet *> &_work,
                            std::vector<Tet *> &cavity)
 {
   cavity.clear();
-  if(buildVertexCavity(v, cavity, _work)) { return relocateVertex(v, cavity); }
+  if(buildVertexCavity(v, cavity, _work)) {
+    return relocateVertex(v, cavity);
+  }
   return false;
 }
 
@@ -713,7 +729,9 @@ static void starShapeness(Vert *v, connContainer &bndK,
     const double val = robustPredicates::orient3d(
       (double *)bndK[i].f.V[0], (double *)bndK[i].f.V[1],
       (double *)bndK[i].f.V[2], (double *)v);
-    if(val <= 0.0) { _negatives.push_back(i); }
+    if(val <= 0.0) {
+      _negatives.push_back(i);
+    }
   }
 }
 
@@ -725,7 +743,9 @@ static Tet *tetContainsV(Vert *v, cavityContainer &cavity)
       Face f = cavity[i]->getFace(j);
       const double val = robustPredicates::orient3d(
         (double *)f.V[0], (double *)f.V[1], (double *)f.V[2], (double *)v);
-      if(val >= 0) { count++; }
+      if(val >= 0) {
+        count++;
+      }
     }
     if(count == 4) return cavity[i];
   }
@@ -742,7 +762,9 @@ static void buildDelaunayBall(cavityContainer &cavity, connContainer &faceToTet)
       conn c(t->getFace(iFace), iFace, neigh);
       connContainer::iterator it =
         std::find(faceToTet.begin(), faceToTet.end(), c);
-      if(it == faceToTet.end()) { faceToTet.push_back(c); }
+      if(it == faceToTet.end()) {
+        faceToTet.push_back(c);
+      }
       else {
         faceToTet.erase(it);
       }
@@ -783,7 +805,9 @@ static Tet *tetInsideCavityWithFAce(Face &f, cavityContainer &cavity)
   for(unsigned int i = 0; i < cavity.size(); i++) {
     Tet *t = cavity[i];
     for(unsigned int iFace = 0; iFace < 4; iFace++) {
-      if(t->getFace(iFace) == f) { return t; }
+      if(t->getFace(iFace) == f) {
+        return t;
+      }
     }
   }
   return NULL;
@@ -818,7 +842,9 @@ static bool fixDelaunayCavity(Vert *v, cavityContainer &cavity,
       if(toRemove) {
         std::vector<Tet *>::iterator it =
           std::find(cavity.begin(), cavity.end(), toRemove);
-        if(it != cavity.end()) { cavity.erase(it); }
+        if(it != cavity.end()) {
+          cavity.erase(it);
+        }
         else {
           Msg::Error("Datastructure Broken in %s line %5d", __FILE__, __LINE__);
           break;
@@ -877,7 +903,9 @@ static void delaunayCavity2(Tet *tet, Tet *prevTet, Vert *v,
       }
     }
 
-    if(stack.empty()) { finished = true; }
+    if(stack.empty()) {
+      finished = true;
+    }
     else {
       const std::pair<std::pair<Tet *, Tet *>, std::pair<int, int> > &next =
         stack.top();
@@ -991,7 +1019,9 @@ void __print(const char *name, int thread, tetContainer &T, Vert *v)
 void print(std::vector<Vert *> &V, std::vector<Tet *> &T)
 {
   std::map<Vert *, int> nums;
-  for(unsigned int i = 0; i < V.size(); i++) { nums[V[i]] = i; }
+  for(unsigned int i = 0; i < V.size(); i++) {
+    nums[V[i]] = i;
+  }
   for(unsigned int i = 0; i < T.size(); i++) {
     printf("%p\n", T[i]);
     printf("%d %d %d %d\n", nums[T[i]->V[0]], nums[T[i]->V[1]],
@@ -1158,7 +1188,7 @@ void delaunayTrgl(const unsigned int numThreads,
 
     // Main loop
     for(unsigned int iPGlob = 0; iPGlob < maxLocSizeK; iPGlob++) {
-      // printf("%d vs %d\n",iPGlob,maxLocSizeK);
+    // printf("%d vs %d\n",iPGlob,maxLocSizeK);
 #if defined(_OPENMP)
 #pragma omp barrier
 #endif
@@ -1211,7 +1241,7 @@ void delaunayTrgl(const unsigned int numThreads,
         }
       }
 
-      // t3 += Cpu() - t1;
+        // t3 += Cpu() - t1;
 
 #if defined(_OPENMP)
 #pragma omp barrier
@@ -1374,7 +1404,9 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
 
   std::vector<int> indices;
   SortHilbert(S, indices);
-  if(!allocator.size(0)) { initialCube(S, box, allocator); }
+  if(!allocator.size(0)) {
+    initialCube(S, box, allocator);
+  }
 
   int nbBlocks = nptsatonce * numThreads;
   // int blockSize = (nbBlocks * (N / nbBlocks))/nbBlocks;

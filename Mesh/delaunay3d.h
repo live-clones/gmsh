@@ -9,9 +9,8 @@
 class MVertex;
 class MTetrahedron;
 
-void delaunayTriangulation(const int numThreads,
-                           const int nptsatonce,
-                           std::vector<MVertex*> &S,
-                           std::vector<MTetrahedron*> &T);
+void delaunayTriangulation(const int numThreads, const int nptsatonce,
+                           std::vector<MVertex *> &S,
+                           std::vector<MTetrahedron *> &T);
 
 #endif

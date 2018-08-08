@@ -27,39 +27,41 @@
 // Recursive function to generate all combinations of 4 indices between start
 // and end indices included
 // Jeanne - HEXTREME
-void combination_of_4( int combination[4], int start, int end, int index,
-  const std::vector<MVertex*>& vertices, std::vector<MTetrahedron*>& tets)
+void combination_of_4(int combination[4], int start, int end, int index,
+                      const std::vector<MVertex *> &vertices,
+                      std::vector<MTetrahedron *> &tets)
 {
-  if (index == 4 ) {
+  if(index == 4) {
     // Create the tet and get out
-    MVertex* v1 = vertices[combination[0]];
-    MVertex* v2 = vertices[combination[1]];
-    MVertex* v3 = vertices[combination[2]];
-    MVertex* v4 = vertices[combination[3]];
-    MTetrahedron* tet = new MTetrahedron(v1, v2, v3, v4);
+    MVertex *v1 = vertices[combination[0]];
+    MVertex *v2 = vertices[combination[1]];
+    MVertex *v3 = vertices[combination[2]];
+    MVertex *v4 = vertices[combination[3]];
+    MTetrahedron *tet = new MTetrahedron(v1, v2, v3, v4);
     tets.push_back(tet);
     return;
   }
-  for (int i = start; i <= end+1 -(4-index); i++) {
+  for(int i = start; i <= end + 1 - (4 - index); i++) {
     combination[index] = i;
-    combination_of_4(combination, i+1, end, index+1, vertices, tets);
+    combination_of_4(combination, i + 1, end, index + 1, vertices, tets);
   }
 }
 
 // Fill a region with all possible tets genereated from the
 // combination of points assigned to it
 // Jeanne - HEXTREME
-void create_all_possible_tets(GRegion* region, const std::vector<MVertex*>& vertices)
+void create_all_possible_tets(GRegion *region,
+                              const std::vector<MVertex *> &vertices)
 {
   unsigned int nb_points = vertices.size();
 
   int combinaison[4];
-  std::vector<MTetrahedron*> tets;
+  std::vector<MTetrahedron *> tets;
   combination_of_4(combinaison, 0, nb_points - 1, 0, vertices, tets);
   std::cout << " Number of tets created - all possible combinations - "
             << tets.size() << std::endl;
 
-  for (unsigned int i = 0; i < tets.size(); ++i) {
+  for(unsigned int i = 0; i < tets.size(); ++i) {
     region->addTetrahedron(tets[i]);
   }
 }
@@ -67,44 +69,45 @@ void create_all_possible_tets(GRegion* region, const std::vector<MVertex*>& vert
 // triangles are defining the boundary
 // internal points are allowed
 // This has been done for HEXTREME
-GRegion * createDiscreteRegionFromRawData(GModel *gm, fullMatrix<double> &pts,
-                                          fullMatrix<int> &triangles, bool all_tets)
+GRegion *createDiscreteRegionFromRawData(GModel *gm, fullMatrix<double> &pts,
+                                         fullMatrix<int> &triangles,
+                                         bool all_tets)
 {
   GRegion *gr = new discreteRegion(gm, gm->getMaxElementaryNumber(3) + 1);
   GFace *gf = new discreteFace(gm, gm->getMaxElementaryNumber(2) + 1);
   gm->add(gr);
   gm->add(gf);
-  std::vector<GFace*> faces;
+  std::vector<GFace *> faces;
   faces.push_back(gf);
   gr->set(faces);
   // get boundary nodes
   std::set<int> bnd;
   unsigned int nbTriangles = triangles.size1();
   unsigned int nbPts = pts.size1();
-  for (unsigned int i = 0; i < nbTriangles; i++) {
+  for(unsigned int i = 0; i < nbTriangles; i++) {
     bnd.insert(triangles(i, 0));
     bnd.insert(triangles(i, 1));
     bnd.insert(triangles(i, 2));
   }
   // create points
-  std::vector<MVertex*> vs(nbPts);
-  for (unsigned int i = 0; i < nbPts; i++) {
-    if (bnd.find(i) == bnd.end()){
-      MVertex *v = new MVertex(pts(i,0), pts(i,1), pts(i,2), gr);
+  std::vector<MVertex *> vs(nbPts);
+  for(unsigned int i = 0; i < nbPts; i++) {
+    if(bnd.find(i) == bnd.end()) {
+      MVertex *v = new MVertex(pts(i, 0), pts(i, 1), pts(i, 2), gr);
       gr->mesh_vertices.push_back(v);
       vs[i] = v;
     }
     else {
-      MVertex *v = new MFaceVertex(pts(i,0), pts(i,1), pts(i,2), gf, 0, 0);
+      MVertex *v = new MFaceVertex(pts(i, 0), pts(i, 1), pts(i, 2), gf, 0, 0);
       gf->mesh_vertices.push_back(v);
       vs[i] = v;
     }
   }
   // create triangles
-  for (unsigned int i = 0 ; i < nbTriangles; i++) {
-    int i0 = triangles(i,0);
-    int i1 = triangles(i,1);
-    int i2 = triangles(i,2);
+  for(unsigned int i = 0; i < nbTriangles; i++) {
+    int i0 = triangles(i, 0);
+    int i1 = triangles(i, 1);
+    int i2 = triangles(i, 2);
     MTriangle *t = new MTriangle(vs[i0], vs[i1], vs[i2]);
     gf->triangles.push_back(t);
   }
@@ -113,7 +116,7 @@ GRegion * createDiscreteRegionFromRawData(GModel *gm, fullMatrix<double> &pts,
   // tetrahedralization is done when recovering the boundary
 
   // create all tets
-  if (all_tets) {
+  if(all_tets) {
     create_all_possible_tets(gr, vs);
   }
 
@@ -125,12 +128,11 @@ GRegion *createTetrahedralMesh(GModel *gm, fullMatrix<double> &pts,
 {
   GRegion *gr = createDiscreteRegionFromRawData(gm, pts, triangles, all_tets);
 
-  if (!all_tets){
+  if(!all_tets) {
     try {
       meshGRegionBoundaryRecovery(gr);
-    }
-    catch (int err) {
-      if (err == 3) {
+    } catch(int err) {
+      if(err == 3) {
         Msg::Warning("Self-intersecting surface mesh: TODO!");
       }
       else {

@@ -10,11 +10,8 @@
 #include <vector>
 class Tet;
 class Vert;
-void delaunayRefinement (const int numThreads,
-			 const int nptsatonce,
-			 std::vector<Vert*> &S,
-			 std::vector<Tet*> &T,
-			 double (*f)(const SPoint3 &p, void *),
-			 void *data);
+void delaunayRefinement(const int numThreads, const int nptsatonce,
+                        std::vector<Vert *> &S, std::vector<Tet *> &T,
+                        double (*f)(const SPoint3 &p, void *), void *data);
 
 #endif

@@ -384,7 +384,9 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
      CTX::instance()->mesh.algoRecombine != 0) {
-    if(CTX::instance()->mesh.recombineAll) { forceOdd = true; }
+    if(CTX::instance()->mesh.recombineAll) {
+      forceOdd = true;
+    }
   }
 
   MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
@@ -411,7 +413,9 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
     }
     double lc = F_LcB()(ge, t);
     // double lc = v->getLc();
-    if(d < lc * .3) { lengths.push_back(std::make_pair(lc / d, v)); }
+    if(d < lc * .3) {
+      lengths.push_back(std::make_pair(lc / d, v));
+    }
     else
       v0 = v;
   }
@@ -438,7 +442,9 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
       std::vector<MVertex *>::iterator it = std::find(
         ge->mesh_vertices.begin(), ge->mesh_vertices.end(), lengths[i].second);
 
-      if(it != ge->mesh_vertices.end()) { ge->mesh_vertices.erase(it); }
+      if(it != ge->mesh_vertices.end()) {
+        ge->mesh_vertices.erase(it);
+      }
       delete lengths[i].second;
     }
   }
@@ -453,7 +459,9 @@ static void createPoints(GVertex *gv, GEdge *ge, BoundaryLayerField *blf,
   double LEdge = distance(ge->getBeginVertex()->mesh_vertices[0],
                           ge->getEndVertex()->mesh_vertices[0]);
   while(1) {
-    if(L > blf->thickness || L > LEdge * .4) { break; }
+    if(L > blf->thickness || L > LEdge * .4) {
+      break;
+    }
 
     SPoint3 p(gv->x() + dir.x() * L, gv->y() + dir.y() * L, 0.0);
     v.push_back(new MEdgeVertex(p.x(), p.y(), p.z(), ge, ge->parFromPoint(p), 0,

@@ -75,8 +75,8 @@ static bool setBLData(MElement *el)
     if(!isBL) return false;
   }
   // Mark high-order nodes as BL nodes (only works in 2D)
-  for(std::size_t i = el->getNumPrimaryVertices();
-      i < el->getNumVertices(); i++)
+  for(std::size_t i = el->getNumPrimaryVertices(); i < el->getNumVertices();
+      i++)
     setBLData(el->getVertex(i));
   return true;
 }
@@ -265,7 +265,9 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
         for(int j = 0; j < t->getNumFaces(); j++) {
           MFace face = t->getFace(j);
           faceContainer::iterator fIter = faceVertices.find(face);
-          if(fIter != faceVertices.end()) { newv.push_back(fIter->second[0]); }
+          if(fIter != faceVertices.end()) {
+            newv.push_back(fIter->second[0]);
+          }
           else {
             SPoint3 pc = face.barycenter();
             newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
@@ -307,7 +309,9 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
         for(int j = 0; j < 2; j++) {
           MFace face = p->getFace(j);
           faceContainer::iterator fIter = faceVertices.find(face);
-          if(fIter != faceVertices.end()) { newv.push_back(fIter->second[0]); }
+          if(fIter != faceVertices.end()) {
+            newv.push_back(fIter->second[0]);
+          }
           else {
             SPoint3 pc = face.barycenter();
             newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
@@ -680,7 +684,9 @@ static int schneiders_connect(int i, int j)
                 69, 67, 73,  71,  73, 96, 97, 3,  100, 101, 29, 103, 100,
                 4,  5,  100, 103, 86, 86, 30, 35, 0,   94};
 
-  if(i == 0) { return n0[j]; }
+  if(i == 0) {
+    return n0[j];
+  }
   else if(i == 1) {
     return n1[j];
   }
@@ -708,7 +714,7 @@ void subdivide_pyramid(MElement *element, GRegion *gr,
                        faceContainer &faceVertices,
                        std::vector<MHexahedron *> &dwarfs88)
 {
-  std::vector<MVertex *> v(105, (MVertex*)NULL);
+  std::vector<MVertex *> v(105, (MVertex *)NULL);
 
   v[29] = element->getVertex(0);
   v[27] = element->getVertex(1);

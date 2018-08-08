@@ -291,7 +291,9 @@ static double _relocateVertex(GFace *gf, MVertex *ver,
 
   SPoint2 p1(0, 0);
   SPoint2 p2;
-  if(ver->getParameter(0, p2[0])) { ver->getParameter(1, p2[1]); }
+  if(ver->getParameter(0, p2[0])) {
+    ver->getParameter(1, p2[1]);
+  }
   else {
     return _relocateVertex2(gf, ver, lt, tol);
   }

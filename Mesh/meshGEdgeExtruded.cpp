@@ -18,7 +18,7 @@ static void extrudeMesh(GVertex *from, GEdge *to)
     for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
       double x = v->x(), y = v->y(), z = v->z();
       ep->Extrude(j, k + 1, x, y, z);
-      if(j != ep->mesh.NbLayer - 1 || k != ep->mesh.NbElmLayer[j] - 1){
+      if(j != ep->mesh.NbLayer - 1 || k != ep->mesh.NbElmLayer[j] - 1) {
         Range<double> r = to->parBounds(0);
         double t = r.low() + ep->u(j, k + 1) * (r.high() - r.low());
         to->mesh_vertices.push_back(new MEdgeVertex(x, y, z, to, t));
@@ -37,7 +37,7 @@ static void copyMesh(GEdge *from, GEdge *to)
   double u_min = u_bounds.low();
   double u_max = u_bounds.high();
 
-  for(unsigned int i = 0; i < from->mesh_vertices.size(); i++){
+  for(unsigned int i = 0; i < from->mesh_vertices.size(); i++) {
     int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
     MVertex *v = from->mesh_vertices[index];
     double x = v->x(), y = v->y(), z = v->z();
@@ -54,8 +54,7 @@ int MeshExtrudedCurve(GEdge *ge)
 {
   ExtrudeParams *ep = ge->meshAttributes.extrude;
 
-  if(!ep || !ep->mesh.ExtrudeMesh)
-    return 0;
+  if(!ep || !ep->mesh.ExtrudeMesh) return 0;
 
   Msg::Info("Meshing curve %d (extruded)", ge->tag());
 
@@ -66,12 +65,12 @@ int MeshExtrudedCurve(GEdge *ge)
   else {
     GEdge *from = ge->model()->getEdgeByTag(std::abs(ep->geo.Source));
     // curve is a copy of another curve (the "top" of the extrusion)
-    if(!from){
+    if(!from) {
       Msg::Error("Unknown source curve %d for extrusion", ep->geo.Source);
       return 0;
     }
     else if(from->geomType() != GEntity::DiscreteCurve &&
-            from->meshStatistics.status != GEdge::DONE){
+            from->meshStatistics.status != GEdge::DONE) {
       // cannot mesh this edge yet: will do it later
       return 1;
     }
@@ -79,12 +78,13 @@ int MeshExtrudedCurve(GEdge *ge)
   }
 
   // create elements
-  for(unsigned int i = 0; i < ge->mesh_vertices.size() + 1; i++){
-    MVertex *v0 = (i == 0) ?
-      ge->getBeginVertex()->mesh_vertices[0] : ge->mesh_vertices[i - 1];
+  for(unsigned int i = 0; i < ge->mesh_vertices.size() + 1; i++) {
+    MVertex *v0 = (i == 0) ? ge->getBeginVertex()->mesh_vertices[0] :
+                             ge->mesh_vertices[i - 1];
     MVertex *v1 = (i == ge->mesh_vertices.size()) ?
-      ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
-    MLine* newElem = new MLine(v0, v1);
+                    ge->getEndVertex()->mesh_vertices[0] :
+                    ge->mesh_vertices[i];
+    MLine *newElem = new MLine(v0, v1);
     ge->lines.push_back(newElem);
   }
 

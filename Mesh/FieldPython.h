@@ -9,20 +9,13 @@
 #include "Field.h"
 #include "Python.h"
 
-class FieldPython : public Field
-{
+class FieldPython : public Field {
   PyObject *_callback;
 
- public:
-  const char *getName()
-  {
-    return "Python";
-  }
+public:
+  const char *getName() { return "Python"; }
 
-  std::string getDescription()
-  {
-    return "simple call to a python function";
-  }
+  std::string getDescription() { return "simple call to a python function"; }
 
   FieldPython(PyObject *cb, PyObject *arg = NULL)
   {
@@ -30,34 +23,34 @@ class FieldPython : public Field
     Py_INCREF(_callback);
   }
 
-  ~FieldPython()
-  {
-    Py_DECREF(_callback);
-  }
+  ~FieldPython() { Py_DECREF(_callback); }
 
-  double operator() (double x, double y, double z, GEntity *ge=0)
+  double operator()(double x, double y, double z, GEntity *ge = 0)
   {
-    PyObject *pyge = SWIG_NewPointerObj((void*) ge, SWIGTYPE_p_GEntity, 0);
-    PyObject *args = Py_BuildValue("(dddO)",  x, y, z, pyge);
+    PyObject *pyge = SWIG_NewPointerObj((void *)ge, SWIGTYPE_p_GEntity, 0);
+    PyObject *args = Py_BuildValue("(dddO)", x, y, z, pyge);
     PyObject *result = PyEval_CallObject(_callback, args);
     Py_DECREF(args);
-    if (result) {
+    if(result) {
       double r = PyFloat_AsDouble(result);
-      if (PyErr_Occurred()) {
+      if(PyErr_Occurred()) {
         PyErr_Print();
         PyErr_Clear();
-        Msg::Error("Result of python function of field %i cannot be interpreted as a float.", id);
+        Msg::Error("Result of python function of field %i cannot be "
+                   "interpreted as a float.",
+                   id);
         r = MAX_LC;
       }
       Py_DECREF(result);
       return r;
     }
     else {
-      if (PyErr_Occurred()) {
+      if(PyErr_Occurred()) {
         PyErr_Print();
         PyErr_Clear();
       }
-      Msg::Error("An error occurs while evaluating python function of field %i.", id);
+      Msg::Error(
+        "An error occurs while evaluating python function of field %i.", id);
       return MAX_LC;
     }
   }

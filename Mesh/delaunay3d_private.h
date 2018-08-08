@@ -45,9 +45,7 @@ public:
   inline double &lc() { return _lc; }
   inline operator double *() { return _x; }
   Vert(double X = 0, double Y = 0, double Z = 0, double lc = 0, int num = 0)
-    : _num(num)
-    , _t(NULL)
-    , _thread(0)
+    : _num(num), _t(NULL), _thread(0)
   {
     _x[0] = X;
     _x[1] = Y;
@@ -145,9 +143,7 @@ inline double orientationTestFast(Vert *va, Vert *vb, Vert *vc, Vert *vd)
 class Edge {
 public:
   Vert *first, *second;
-  Edge(Vert *v1, Vert *v2)
-    : first(std::min(v1, v2))
-    , second(std::max(v1, v2))
+  Edge(Vert *v1, Vert *v2) : first(std::min(v1, v2)), second(std::max(v1, v2))
   {
   }
   bool operator==(const Edge &e) const
@@ -195,7 +191,9 @@ public:
   {
     std::vector<Edge> &v = _hash[H(e)];
     for(unsigned int i = 0; i < v.size(); i++)
-      if(e == v[i]) { return false; }
+      if(e == v[i]) {
+        return false;
+      }
     v.push_back(e);
     _size++;
     return true;
@@ -245,8 +243,7 @@ struct Tet {
   CHECKTYPE _bitset[MAX_NUM_THREADS_];
   bool _modified;
   //  static int in_sphere_counter;
-  Tet()
-    : _modified(true)
+  Tet() : _modified(true)
   {
     V[0] = V[1] = V[2] = V[3] = NULL;
     T[0] = T[1] = T[2] = T[3] = NULL;
@@ -341,18 +338,8 @@ struct conn {
   Face f;
   int i;
   Tet *t;
-  conn()
-    : f(0, 0, 0)
-    , i(0)
-    , t(0)
-  {
-  }
-  conn(Face _f, int _i, Tet *_t)
-    : f(_f)
-    , i(_i)
-    , t(_t)
-  {
-  }
+  conn() : f(0, 0, 0), i(0), t(0) {}
+  conn(Face _f, int _i, Tet *_t) : f(_f), i(_i), t(_t) {}
   bool operator==(const conn &c) const { return f == c.f; }
   bool operator<(const conn &c) const { return f < c.f; }
 };
@@ -374,16 +361,16 @@ public:
     return _all[_array] + _offset;
   }
 
-  aBunchOfStuff(unsigned int s)
-    : _current(0)
-    , _nbAlloc(s)
+  aBunchOfStuff(unsigned int s) : _current(0), _nbAlloc(s)
   {
     _all.push_back(new T[_nbAlloc]);
   }
 
   ~aBunchOfStuff()
   {
-    for(unsigned int i = 0; i < _all.size(); i++) { delete[] _all[i]; }
+    for(unsigned int i = 0; i < _all.size(); i++) {
+      delete[] _all[i];
+    }
   }
 
   T *newStuff()

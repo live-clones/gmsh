@@ -37,8 +37,7 @@ extern "C" int perfect_match(int ncount, CCdatagroup *dat, int ecount,
 #endif
 
 edge_angle::edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2)
-  : v1(_v1)
-  , v2(_v2)
+  : v1(_v1), v2(_v2)
 {
   if(!t2)
     angle = 0;
@@ -199,7 +198,9 @@ void computeEquivalences(GFace *gf, bidimMeshData &data)
         v[j] = t->getVertex(j);
         std::map<MVertex *, MVertex *>::iterator it =
           data.equivalence->find(v[j]);
-        if(it != data.equivalence->end()) { v[j] = it->second; }
+        if(it != data.equivalence->end()) {
+          v[j] = it->second;
+        }
       }
       if(v[0] != v[1] && v[0] != v[2] && v[2] != v[1])
         newT.push_back(new MTriangle(v[0], v[1], v[2]));
@@ -255,7 +256,8 @@ bool computeEquivalentTriangles(GFace *gf,
 
   if(WTF.size()) {
     Msg::Info("%d triangles are equivalent", WTF.size());
-    for(unsigned int i = 0; i < WTF.size(); i++) {}
+    for(unsigned int i = 0; i < WTF.size(); i++) {
+    }
     return true;
   }
   return false;
@@ -472,7 +474,9 @@ int _removeThreeTrianglesNodes(GFace *gf)
       MTriangle *newt = new MTriangle(v1, v2, v3);
       n++;
       gf->triangles.push_back(newt);
-      for(int i = 0; i < 3; i++) { touched.insert(lt[i]); }
+      for(int i = 0; i < 3; i++) {
+        touched.insert(lt[i]);
+      }
     }
     it++;
   }
@@ -540,7 +544,9 @@ static int _removeTwoQuadsNodes(GFace *gf)
         MQuadrangle *q = new MQuadrangle(v1, v2, v3, v4);
         double s1 = 0; // surfaceFaceUV(q,gf);
         double s2 = 1; // surfaceFaceUV(q1,gf) + surfaceFaceUV(q2,gf);;
-        if(s1 > s2) { delete q; }
+        if(s1 > s2) {
+          delete q;
+        }
         else {
           touched.insert(q1);
           touched.insert(q2);
@@ -647,7 +653,9 @@ static bool _tryToCollapseThatVertex2(GFace *gf, std::vector<MElement *> &e1,
     for(unsigned int j = 0; j < e.size(); ++j) {
       if(e[j] != q) {
         for(int k = 0; k < 4; k++) {
-          if(e[j]->getVertex(k) == v2) { e[j]->setVertex(k, v1); }
+          if(e[j]->getVertex(k) == v2) {
+            e[j]->setVertex(k, v1);
+          }
         }
       }
     }
@@ -733,7 +741,9 @@ static bool _tryToCollapseThatVertex(GFace *gf, std::vector<MElement *> &e1,
     for(unsigned int j = 0; j < e.size(); ++j) {
       if(e[j] != q) {
         for(int k = 0; k < 4; k++) {
-          if(e[j]->getVertex(k) == v2) { e[j]->setVertex(k, v1); }
+          if(e[j]->getVertex(k) == v2) {
+            e[j]->setVertex(k, v1);
+          }
         }
       }
     }

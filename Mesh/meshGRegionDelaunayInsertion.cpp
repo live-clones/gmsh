@@ -76,9 +76,7 @@ struct edgeContainerB {
   size_t _size, _size_obj;
 
   edgeContainerB(unsigned int N = 1000000)
-    : _hash(N)
-    , _size(0)
-    , _size_obj(sizeof(MEdge))
+    : _hash(N), _size(0), _size_obj(sizeof(MEdge))
   {
   }
 
@@ -177,9 +175,7 @@ struct faceXtet {
   MTet4 *t1;
   int i1;
 
-  faceXtet(MTet4 *_t = 0, int iFac = 0)
-    : t1(_t)
-    , i1(iFac)
+  faceXtet(MTet4 *_t = 0, int iFac = 0) : t1(_t), i1(iFac)
   {
     unsorted[0] = v[0] = t1->tet()->getVertex(faces[iFac][0]);
     unsorted[1] = v[1] = t1->tet()->getVertex(faces[iFac][1]);
@@ -233,7 +229,9 @@ void connectTets_vector2_templ(size_t _size, ITER beg, ITER end,
   for(ITER IT = beg; IT != end; ++IT) {
     MTet4 *t = *IT;
     if(!t->isDeleted()) {
-      for(int j = 0; j < 4; j++) { conn.push_back(faceXtet(t, j)); }
+      for(int j = 0; j < 4; j++) {
+        conn.push_back(faceXtet(t, j));
+      }
     }
   }
   if(!conn.size()) return;
@@ -323,7 +321,9 @@ static void removeFromCavity(std::vector<faceXtet> &shell,
       if(opposite) {
         for(int j = 0; j < 4; j++) {
           faceXtet fxt3(opposite, j);
-          if(fxt3 == fxt2) { shell.push_back(fxt3); }
+          if(fxt3 == fxt2) {
+            shell.push_back(fxt3);
+          }
         }
       }
     }
@@ -381,7 +381,9 @@ int makeCavityStarShaped(std::vector<faceXtet> &shell,
       ++it) {
     faceXtet &fxt = *it;
     bool starShaped = fxt.visible(v);
-    if(!starShaped) { wrong.push_back(fxt); }
+    if(!starShaped) {
+      wrong.push_back(fxt);
+    }
   }
   if(wrong.empty()) return 0;
   // printf("cavity %p (shell size %d cavity size %d)is not star shaped "
@@ -419,12 +421,16 @@ void findCavity(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
 
   std::queue<MTet4 *> cavity_queue;
 
-  if(!cavity.empty()) { cavity_queue.push(cavity.back()); }
+  if(!cavity.empty()) {
+    cavity_queue.push(cavity.back());
+  }
 
   while(!cavity_queue.empty()) {
     for(int i = 0; i < 4; i++) {
       MTet4 *const neighbour = cavity_queue.front()->getNeigh(i);
-      if(!neighbour) { shell.push_back(faceXtet(cavity_queue.front(), i)); }
+      if(!neighbour) {
+        shell.push_back(faceXtet(cavity_queue.front(), i));
+      }
       else if(!neighbour->isDeleted()) {
         if(neighbour->inCircumSphere(v) &&
            (neighbour->onWhat() == cavity_queue.front()->onWhat())) {
@@ -784,7 +790,9 @@ void adaptMeshGRegion::operator()(GRegion *gr)
 
     // add all the new tets in the container
     for(unsigned int i = 0; i < newTets.size(); i++) {
-      if(!newTets[i]->isDeleted()) { allTets.push_back(newTets[i]); }
+      if(!newTets[i]->isDeleted()) {
+        allTets.push_back(newTets[i]);
+      }
       else {
         delete newTets[i]->tet();
         delete newTets[i];
@@ -975,11 +983,15 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     }
     //    printf("coucou\n");
 
-    if(!newTets.size()) { break; }
+    if(!newTets.size()) {
+      break;
+    }
 
     // add all the new tets in the container
     for(unsigned int i = 0; i < newTets.size(); i++) {
-      if(!newTets[i]->isDeleted()) { allTets.push_back(newTets[i]); }
+      if(!newTets[i]->isDeleted()) {
+        allTets.push_back(newTets[i]);
+      }
       else {
         delete newTets[i]->tet();
         delete newTets[i];

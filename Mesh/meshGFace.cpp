@@ -131,7 +131,7 @@ bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
 
 void trueBoundary(const char *iii, GFace *gf, std::vector<SPoint2> &bnd)
 {
-  ///FILE* view_t = Fopen(iii,"w");
+  /// FILE* view_t = Fopen(iii,"w");
   //      fprintf(view_t,"View \"True Boundary\"{\n");
   std::vector<GEdge *> edg = gf->edges();
 
@@ -149,8 +149,8 @@ void trueBoundary(const char *iii, GFace *gf, std::vector<SPoint2> &bnd)
         double xi = r.low() + (r.high() - r.low()) * t;
         p[k] = ge->reparamOnFace(gf, xi, i);
         if(k > 0) {
-	  //	            	  fprintf(view_t,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p[k-1].x(),p[k-1].y(),0.0,
-	  //	            		  p[k].x(),p[k].y(),0.0);
+          //	            	  fprintf(view_t,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p[k-1].x(),p[k-1].y(),0.0,
+          //	            		  p[k].x(),p[k].y(),0.0);
           bnd.push_back(p[k - 1]);
           bnd.push_back(p[k]);
         }
@@ -1044,11 +1044,12 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
                    bool onlyInitialMesh, bool debug,
                    std::vector<GEdge *> *replacement_edges)
 {
-  if (CTX::instance()->debugSurface > 0 && gf->tag() != CTX::instance()->debugSurface){
+  if(CTX::instance()->debugSurface > 0 &&
+     gf->tag() != CTX::instance()->debugSurface) {
     gf->meshStatistics.status = GFace::DONE;
     return true;
   }
-  if (CTX::instance()->debugSurface > 0) debug = true;
+  if(CTX::instance()->debugSurface > 0) debug = true;
 
   // onlyInitialMesh=true;
   BDS_GeomEntity CLASS_F(1, 2);
@@ -1965,11 +1966,12 @@ static bool buildConsecutiveListOfVertices(
 
 static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 {
-  if (CTX::instance()->debugSurface > 0 && gf->tag() != CTX::instance()->debugSurface){
+  if(CTX::instance()->debugSurface > 0 &&
+     gf->tag() != CTX::instance()->debugSurface) {
     gf->meshStatistics.status = GFace::DONE;
     return true;
   }
-  if (CTX::instance()->debugSurface > 0) debug = true;
+  if(CTX::instance()->debugSurface > 0) debug = true;
 
   std::map<BDS_Point *, MVertex *, PointLessThan> recoverMap;
 
@@ -2026,19 +2028,20 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   }
 
   {
-    std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it = recoverMap.begin();
-    std::map<MVertex *, BDS_Point *>INV;
-    for (; it != recoverMap.end() ; ++it){
-      std::map<MVertex *, BDS_Point *>::iterator it2 = INV.find (it->second);
-      if (it2 != INV.end()){
-	it->first-> _periodicCounterpart = it2->second;
-	it2->second-> _periodicCounterpart = it->first;
-	//	printf("%d --> %d\n", it2->second->iD,it->first->iD);
+    std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
+      recoverMap.begin();
+    std::map<MVertex *, BDS_Point *> INV;
+    for(; it != recoverMap.end(); ++it) {
+      std::map<MVertex *, BDS_Point *>::iterator it2 = INV.find(it->second);
+      if(it2 != INV.end()) {
+        it->first->_periodicCounterpart = it2->second;
+        it2->second->_periodicCounterpart = it->first;
+        //	printf("%d --> %d\n", it2->second->iD,it->first->iD);
       }
       INV[it->second] = it->first;
     }
   }
-  
+
   if(nbPointsTotal < 3) {
     Msg::Warning("Mesh Generation of Model Face %d Skipped: "
                  "Only %d Mesh Vertices on The Contours",
@@ -2732,44 +2735,40 @@ void deMeshGFace::operator()(GFace *gf)
   gf->correspondingVertices.clear();
 }
 
-
 static double TRIANGLE_VALIDITY(GFace *gf, MTriangle *t)
 {
-  SPoint2 p1,p2,p3;
-  reparamMeshVertexOnFace(t->getVertex(0),gf, p1);
-  reparamMeshVertexOnFace(t->getVertex(1),gf, p2);
-  reparamMeshVertexOnFace(t->getVertex(2),gf, p3);
+  SPoint2 p1, p2, p3;
+  reparamMeshVertexOnFace(t->getVertex(0), gf, p1);
+  reparamMeshVertexOnFace(t->getVertex(1), gf, p2);
+  reparamMeshVertexOnFace(t->getVertex(2), gf, p3);
   SVector3 N1 = gf->normal(p1);
   SVector3 N2 = gf->normal(p2);
   SVector3 N3 = gf->normal(p3);
   SVector3 N = N1 + N2 + N3;
   N.normalize();
   SVector3 d1(t->getVertex(1)->x() - t->getVertex(0)->x(),
-	      t->getVertex(1)->y() - t->getVertex(0)->y(),
-	      t->getVertex(1)->z() - t->getVertex(0)->z());
+              t->getVertex(1)->y() - t->getVertex(0)->y(),
+              t->getVertex(1)->z() - t->getVertex(0)->z());
   SVector3 d2(t->getVertex(2)->x() - t->getVertex(0)->x(),
-	      t->getVertex(2)->y() - t->getVertex(0)->y(),
-	      t->getVertex(2)->z() - t->getVertex(0)->z());
+              t->getVertex(2)->y() - t->getVertex(0)->y(),
+              t->getVertex(2)->z() - t->getVertex(0)->z());
 
-  SVector3 c = crossprod (d1,d2);
-  
-  return dot (N,c);
-   
+  SVector3 c = crossprod(d1, d2);
+
+  return dot(N, c);
 }
 
-static bool isMeshValid (GFace *gf){
+static bool isMeshValid(GFace *gf)
+{
   int invalid = 0;
-  for (size_t i=0;i<gf->triangles.size(); i++){
+  for(size_t i = 0; i < gf->triangles.size(); i++) {
     double v = TRIANGLE_VALIDITY(gf, gf->triangles[i]);
-    if (v < 0)invalid ++;
+    if(v < 0) invalid++;
   }
-  if (invalid == 0 || invalid == gf->triangles.size())return true;
+  if(invalid == 0 || invalid == gf->triangles.size()) return true;
   //  printf("%d %d %d\n",gf->tag(),gf->triangles.size(),invalid);
   return false;
-  
-  
 }
-
 
 // for debugging, change value from -1 to -100;
 int debugSurface = -1; //-100;
@@ -2865,14 +2864,15 @@ void meshGFace::operator()(GFace *gf, bool print)
     Msg::Warning("Surface %d consists of no elements", gf->tag());
   }
 
-  if (algoDelaunay2D(gf) && !isMeshValid (gf)){
-    Msg::Warning ("Delaunay based mesher failed on surface %d --> moving to meshadapt",gf->tag());
+  if(algoDelaunay2D(gf) && !isMeshValid(gf)) {
+    Msg::Warning(
+      "Delaunay based mesher failed on surface %d --> moving to meshadapt",
+      gf->tag());
     deMeshGFace killer;
-    killer (gf);
-    gf->setMeshingAlgo (1);
-    (*this)(gf,print);
+    killer(gf);
+    gf->setMeshingAlgo(1);
+    (*this)(gf, print);
   }
-
 }
 
 static bool getGFaceNormalFromVert(GFace *gf, MElement *el, SVector3 &nf)
