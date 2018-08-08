@@ -140,6 +140,8 @@ codes in the contrib/ directory, each governed by their own license:
 
 * contrib/gmm copyright (C) 2002-2008 Yves Renard;
 
+* contrib/hxt - Copyright (C) 2017-2018 - Universite catholique de Louvain.
+
 * contrib/kbipack copyright (C) 2005 Saku Suuriniemi;
 
 * contrib/MathEx based in part on the work of the SSCILIB Library, copyright (C)
