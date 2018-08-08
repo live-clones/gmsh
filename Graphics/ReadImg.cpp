@@ -19,17 +19,17 @@
 
 // from an image, we create a post-procession view
 
-static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads=1,
-                               int resizex=0, int resizey=0)
+static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads = 1,
+                               int resizex = 0, int resizey = 0)
 {
   img_init.desaturate(); // convert to grayscale
 
   // resize if necessary
   Fl_RGB_Image *img;
   if(!resizex || !resizey)
-    img = (Fl_RGB_Image*)img_init.copy();
+    img = (Fl_RGB_Image *)img_init.copy();
   else
-    img = (Fl_RGB_Image*)img_init.copy(resizex, resizey);
+    img = (Fl_RGB_Image *)img_init.copy(resizex, resizey);
 
   const unsigned char *data = img->array;
   int height = img->h();
@@ -52,31 +52,55 @@ static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads=1,
     for(int j = 0; j < width - 1; j++) {
       double x = j;
       double x1 = j + 1;
-      double val1 = (double)a[j * dim]/255.;
-      double val2 = (double)a1[j * dim]/255.;
-      double val3 = (double)a1[(j + 1) * dim]/255.;
-      double val4 = (double)a[(j + 1) * dim]/255.;
-      if(quads){ // generate quads
-        d->SQ.push_back(x); d->SQ.push_back(x);
-        d->SQ.push_back(x1); d->SQ.push_back(x1);
-        d->SQ.push_back(y); d->SQ.push_back(y1);
-        d->SQ.push_back(y1); d->SQ.push_back(y);
-        d->SQ.push_back(z); d->SQ.push_back(z);
-        d->SQ.push_back(z); d->SQ.push_back(z);
-        d->SQ.push_back(val1); d->SQ.push_back(val2);
-        d->SQ.push_back(val3); d->SQ.push_back(val4);
+      double val1 = (double)a[j * dim] / 255.;
+      double val2 = (double)a1[j * dim] / 255.;
+      double val3 = (double)a1[(j + 1) * dim] / 255.;
+      double val4 = (double)a[(j + 1) * dim] / 255.;
+      if(quads) { // generate quads
+        d->SQ.push_back(x);
+        d->SQ.push_back(x);
+        d->SQ.push_back(x1);
+        d->SQ.push_back(x1);
+        d->SQ.push_back(y);
+        d->SQ.push_back(y1);
+        d->SQ.push_back(y1);
+        d->SQ.push_back(y);
+        d->SQ.push_back(z);
+        d->SQ.push_back(z);
+        d->SQ.push_back(z);
+        d->SQ.push_back(z);
+        d->SQ.push_back(val1);
+        d->SQ.push_back(val2);
+        d->SQ.push_back(val3);
+        d->SQ.push_back(val4);
         d->NbSQ++;
       }
-      else{ // generate triangles
-        d->ST.push_back(x); d->ST.push_back(x); d->ST.push_back(x1);
-        d->ST.push_back(y); d->ST.push_back(y1); d->ST.push_back(y1);
-        d->ST.push_back(z); d->ST.push_back(z); d->ST.push_back(z);
-        d->ST.push_back(val1); d->ST.push_back(val2); d->ST.push_back(val3);
+      else { // generate triangles
+        d->ST.push_back(x);
+        d->ST.push_back(x);
+        d->ST.push_back(x1);
+        d->ST.push_back(y);
+        d->ST.push_back(y1);
+        d->ST.push_back(y1);
+        d->ST.push_back(z);
+        d->ST.push_back(z);
+        d->ST.push_back(z);
+        d->ST.push_back(val1);
+        d->ST.push_back(val2);
+        d->ST.push_back(val3);
         d->NbST++;
-        d->ST.push_back(x); d->ST.push_back(x1); d->ST.push_back(x1);
-        d->ST.push_back(y); d->ST.push_back(y1); d->ST.push_back(y);
-        d->ST.push_back(z); d->ST.push_back(z); d->ST.push_back(z);
-        d->ST.push_back(val1); d->ST.push_back(val3); d->ST.push_back(val4);
+        d->ST.push_back(x);
+        d->ST.push_back(x1);
+        d->ST.push_back(x1);
+        d->ST.push_back(y);
+        d->ST.push_back(y1);
+        d->ST.push_back(y);
+        d->ST.push_back(z);
+        d->ST.push_back(z);
+        d->ST.push_back(z);
+        d->ST.push_back(val1);
+        d->ST.push_back(val3);
+        d->ST.push_back(val4);
         d->NbST++;
       }
     }
@@ -92,9 +116,8 @@ static int EndPos(const char *name, PViewData *d)
   strcpy(name_pos, name);
   strcat(name_pos, ".pos");
   int i;
-  for(i = strlen(name) - 1; i >= 0; i--){
-    if(name[i] == '/' || name[i] == '\\')
-      break;
+  for(i = strlen(name) - 1; i >= 0; i--) {
+    if(name[i] == '/' || name[i] == '\\') break;
   }
   if(i <= 0)
     strcpy(title, name);
@@ -102,11 +125,11 @@ static int EndPos(const char *name, PViewData *d)
     strcpy(title, &name[i + 1]);
   d->setName(title);
   d->setFileName(name_pos);
-  if(d->finalize()){
+  if(d->finalize()) {
     new PView(d);
     return 1;
   }
-  else{
+  else {
     delete d;
     return 0;
   }
@@ -138,9 +161,9 @@ int read_bmp(const std::string &fileName)
 
 #else
 
-int read_pnm(std::string fileName){ return 0; }
-int read_jpeg(std::string fileName){ return 0; }
-int read_png(std::string fileName){ return 0; }
-int read_bmp(std::string fileName){ return 0; }
+int read_pnm(std::string fileName) { return 0; }
+int read_jpeg(std::string fileName) { return 0; }
+int read_png(std::string fileName) { return 0; }
+int read_bmp(std::string fileName) { return 0; }
 
 #endif

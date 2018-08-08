@@ -9,8 +9,7 @@
 #if defined(HAVE_ACIS)
 #include <point.hxx>
 
-ACISVertex::ACISVertex(GModel *m, int num, VERTEX *v)
-  : GVertex(m, num), _v(v)
+ACISVertex::ACISVertex(GModel *m, int num, VERTEX *v) : GVertex(m, num), _v(v)
 {
   APOINT *p = _v->geometry();
   const SPAposition &pos = p->coords();
@@ -24,7 +23,7 @@ void ACISVertex::setPosition(GPoint &p)
   _x = p.x();
   _y = p.y();
   _z = p.z();
-  if(mesh_vertices.size()){
+  if(mesh_vertices.size()) {
     mesh_vertices[0]->x() = p.x();
     mesh_vertices[0]->y() = p.y();
     mesh_vertices[0]->z() = p.z();
@@ -33,18 +32,19 @@ void ACISVertex::setPosition(GPoint &p)
 
 SPoint2 ACISVertex::reparamOnFace(const GFace *gf, int dir) const
 {
-  // FIXME there is definitively a fastest way to do it and this is wring for seams!
-  return gf->parFromPoint(SPoint3(x(),y(),z()));
+  // FIXME there is definitively a fastest way to do it and this is wring for
+  // seams!
+  return gf->parFromPoint(SPoint3(x(), y(), z()));
 }
 
-GVertex *getACISVertexByNativePtr(GModel *model, VERTEX* toFind)
+GVertex *getACISVertexByNativePtr(GModel *model, VERTEX *toFind)
 {
-  GModel::viter it =model->firstVertex();
-  for (; it != model->lastVertex(); it++){
-    ACISVertex *av = dynamic_cast<ACISVertex*>(*it);
-    if (av){
-      if (toFind == av->getVERTEX()){
-	return *it;
+  GModel::viter it = model->firstVertex();
+  for(; it != model->lastVertex(); it++) {
+    ACISVertex *av = dynamic_cast<ACISVertex *>(*it);
+    if(av) {
+      if(toFind == av->getVERTEX()) {
+        return *it;
       }
     }
   }

@@ -32,9 +32,9 @@
 #include "MallocUtils.h"
 #include "gl2yuv.h"
 
-void create_yuv(FILE * outfile, PixelBuffer *buffer)
+void create_yuv(FILE *outfile, PixelBuffer *buffer)
 {
-  if(buffer->getFormat() != GL_RGB || buffer->getType() != GL_UNSIGNED_BYTE){
+  if(buffer->getFormat() != GL_RGB || buffer->getType() != GL_UNSIGNED_BYTE) {
     Msg::Error("YUV only implemented for GL_RGB and GL_UNSIGNED_BYTE");
     return;
   }
@@ -108,51 +108,42 @@ void create_yuv(FILE * outfile, PixelBuffer *buffer)
     dcr = orig_cr[y / 2];
     dcb = orig_cb[y / 2];
 
-    for(x = 0; x < width; x += 2, dy0 += 2, dy1 += 2, dcr++,
-        dcb++, src0 += 6, src1 += 6) {
-      *dy0 = (unsigned char)(mult299[*src0] +
-                             mult587[src0[1]] + mult114[src0[2]]);
+    for(x = 0; x < width;
+        x += 2, dy0 += 2, dy1 += 2, dcr++, dcb++, src0 += 6, src1 += 6) {
+      *dy0 =
+        (unsigned char)(mult299[*src0] + mult587[src0[1]] + mult114[src0[2]]);
 
-      *dy1 = (unsigned char)(mult299[*src1] +
-                             mult587[src1[1]] + mult114[src1[2]]);
+      *dy1 =
+        (unsigned char)(mult299[*src1] + mult587[src1[1]] + mult114[src1[2]]);
 
-      dy0[1] = (unsigned char)(mult299[src0[3]] +
-                               mult587[src0[4]] + mult114[src0[5]]);
+      dy0[1] =
+        (unsigned char)(mult299[src0[3]] + mult587[src0[4]] + mult114[src0[5]]);
 
-      dy1[1] = (unsigned char)(mult299[src1[3]] +
-                               mult587[src1[4]] + mult114[src1[5]]);
+      dy1[1] =
+        (unsigned char)(mult299[src1[3]] + mult587[src1[4]] + mult114[src1[5]]);
 
-      *dcb = (unsigned char)((mult16874[*src0] +
-                              mult33126[src0[1]] +
-                              mult5[src0[2]] +
-                              mult16874[*src1] +
-                              mult33126[src1[1]] +
-                              mult5[src1[2]] +
-                              mult16874[src0[3]] +
-                              mult33126[src0[4]] +
-                              mult5[src0[5]] +
-                              mult16874[src1[3]] +
-                              mult33126[src1[4]] +
-                              mult5[src1[5]]) / cdivisor) + 128;
+      *dcb = (unsigned char)((mult16874[*src0] + mult33126[src0[1]] +
+                              mult5[src0[2]] + mult16874[*src1] +
+                              mult33126[src1[1]] + mult5[src1[2]] +
+                              mult16874[src0[3]] + mult33126[src0[4]] +
+                              mult5[src0[5]] + mult16874[src1[3]] +
+                              mult33126[src1[4]] + mult5[src1[5]]) /
+                             cdivisor) +
+             128;
 
-      *dcr = (unsigned char)((mult5[*src0] +
-                              mult41869[src0[1]] +
-                              mult08131[src0[2]] +
-                              mult5[*src1] +
-                              mult41869[src1[1]] +
-                              mult08131[src1[2]] +
-                              mult5[src0[3]] +
-                              mult41869[src0[4]] +
-                              mult08131[src0[5]] +
-                              mult5[src1[3]] +
-                              mult41869[src1[4]] +
-                              mult08131[src1[5]]) / cdivisor) + 128;
+      *dcr = (unsigned char)((mult5[*src0] + mult41869[src0[1]] +
+                              mult08131[src0[2]] + mult5[*src1] +
+                              mult41869[src1[1]] + mult08131[src1[2]] +
+                              mult5[src0[3]] + mult41869[src0[4]] +
+                              mult08131[src0[5]] + mult5[src1[3]] +
+                              mult41869[src1[4]] + mult08131[src1[5]]) /
+                             cdivisor) +
+             128;
     }
   }
 
   // Y
-  for(y = height - 1; y >= 0; y--)
-    fwrite(orig_y[y], 1, width, outfile);
+  for(y = height - 1; y >= 0; y--) fwrite(orig_y[y], 1, width, outfile);
 
   // U
   for(y = height / 2 - 1; y >= 0; y--)
@@ -162,16 +153,12 @@ void create_yuv(FILE * outfile, PixelBuffer *buffer)
   for(y = height / 2 - 1; y >= 0; y--)
     fwrite(orig_cr[y], 1, width / 2, outfile);
 
-  for(y = 0; y < height; y++)
-    Free(orig_y[y]);
+  for(y = 0; y < height; y++) Free(orig_y[y]);
   Free(orig_y);
 
-  for(y = 0; y < height / 2; y++)
-    Free(orig_cr[y]);
+  for(y = 0; y < height / 2; y++) Free(orig_cr[y]);
   Free(orig_cr);
 
-  for(y = 0; y < height / 2; y++)
-    Free(orig_cb[y]);
+  for(y = 0; y < height / 2; y++) Free(orig_cb[y]);
   Free(orig_cb);
-
 }

@@ -7,13 +7,14 @@
 #include "OS.h"
 #include "MTriangle.h"
 
-int GModel::writeMAIL(const std::string &name, bool saveAll, double scalingFactor)
+int GModel::writeMAIL(const std::string &name, bool saveAll,
+                      double scalingFactor)
 {
   // CEA triangulation (.mail format) for Eric Darrigrand. Note that
   // we currently don't save the edges of the triangulation (the last
   // part of the file).
   FILE *fp = Fopen(name.c_str(), "w");
-  if(!fp){
+  if(!fp) {
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
@@ -27,19 +28,19 @@ int GModel::writeMAIL(const std::string &name, bool saveAll, double scalingFacto
 
   fprintf(fp, " %d %d\n", numVertices, numTriangles);
 
-  std::vector<GEntity*> entities;
+  std::vector<GEntity *> entities;
   getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++){
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+  for(unsigned int i = 0; i < entities.size(); i++) {
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) {
       MVertex *v = entities[i]->mesh_vertices[j];
       fprintf(fp, " %19.10E %19.10E %19.10E\n", v->x() * scalingFactor,
               v->y() * scalingFactor, v->z() * scalingFactor);
     }
   }
 
-  for(fiter it = firstFace(); it != lastFace(); ++it){
-    if(saveAll || (*it)->physicals.size()){
-      for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
+  for(fiter it = firstFace(); it != lastFace(); ++it) {
+    if(saveAll || (*it)->physicals.size()) {
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
         MTriangle *t = (*it)->triangles[i];
         fprintf(fp, " %d %d %d\n", t->getVertex(0)->getIndex(),
                 t->getVertex(1)->getIndex(), t->getVertex(2)->getIndex());
@@ -48,10 +49,10 @@ int GModel::writeMAIL(const std::string &name, bool saveAll, double scalingFacto
   }
 
   // TODO write edges (with signs)
-  for(fiter it = firstFace(); it != lastFace(); ++it){
-    if(saveAll || (*it)->physicals.size()){
-      for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
-        //MTriangle *t = (*it)->triangles[i];
+  for(fiter it = firstFace(); it != lastFace(); ++it) {
+    if(saveAll || (*it)->physicals.size()) {
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
+        // MTriangle *t = (*it)->triangles[i];
         fprintf(fp, " %d %d %d\n", 0, 0, 0);
       }
     }

@@ -10,13 +10,9 @@
 #ifndef _MATERIALLAW_H_
 #define _MATERIALLAW_H_
 
-class Material
-{
- public:
+class Material {
+public:
   virtual ~Material() {}
-
 };
-
-
 
 #endif //_MATERIALLAW_H_

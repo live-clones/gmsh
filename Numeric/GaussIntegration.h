@@ -8,19 +8,19 @@
 
 #include "fullMatrix.h"
 
-struct IntPt{
+struct IntPt {
   double pt[3];
   double weight;
 };
 
 int GaussLegendreTri(int n1, int n2, IntPt *pts);
-int GaussLegendreTet(int n1, int n2, int n3, IntPt *pts); 
+int GaussLegendreTet(int n1, int n2, int n3, IntPt *pts);
 
-int getNGQLPts (int order);
-IntPt *getGQLPts (int order);
+int getNGQLPts(int order);
+IntPt *getGQLPts(int order);
 
 int getNGQTPts(int order);
-IntPt *getGQTPts (int order);
+IntPt *getGQTPts(int order);
 
 int getNGQQPts(int order);
 IntPt *getGQQPts(int order);
@@ -38,7 +38,7 @@ int getNGQHPts(int order);
 IntPt *getGQHPts(int order);
 
 class gaussIntegration {
-  public:
+public:
   static void get(int elementType, int order, fullMatrix<double> &pts,
                   fullVector<double> &weights);
   static void getTriangle(int order, fullMatrix<double> &pts,
@@ -49,12 +49,12 @@ class gaussIntegration {
                       fullVector<double> &weights);
   static void getTetrahedron(int order, fullMatrix<double> &pts,
                              fullVector<double> &weights);
-  static void getHexahedron(int order, fullMatrix<double> &pts, 
+  static void getHexahedron(int order, fullMatrix<double> &pts,
                             fullVector<double> &weights);
   static void getPrism(int order, fullMatrix<double> &pts,
                        fullVector<double> &weights);
   static void getPyramid(int order, fullMatrix<double> &pts,
-                       fullVector<double> &weights);
+                         fullVector<double> &weights);
 };
 
 #endif

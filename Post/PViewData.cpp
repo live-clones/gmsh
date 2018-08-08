@@ -11,8 +11,7 @@
 
 std::map<std::string, interpolationMatrices> PViewData::_interpolationSchemes;
 
-PViewData::PViewData()
-  : _dirty(true), _fileIndex(0), _octree(0), _adaptive(0)
+PViewData::PViewData() : _dirty(true), _fileIndex(0), _octree(0), _adaptive(0)
 {
 }
 
@@ -21,12 +20,12 @@ PViewData::~PViewData()
   if(_adaptive) delete _adaptive;
   for(interpolationMatrices::iterator it = _interpolation.begin();
       it != _interpolation.end(); it++)
-    for(unsigned int i = 0; i < it->second.size(); i++)
-      delete it->second[i];
+    for(unsigned int i = 0; i < it->second.size(); i++) delete it->second[i];
   if(_octree) delete _octree;
 }
 
-bool PViewData::finalize(bool computeMinMax, const std::string &interpolationScheme)
+bool PViewData::finalize(bool computeMinMax,
+                         const std::string &interpolationScheme)
 {
   _dirty = false;
   return true;
@@ -34,8 +33,9 @@ bool PViewData::finalize(bool computeMinMax, const std::string &interpolationSch
 
 void PViewData::initAdaptiveData(int step, int level, double tol)
 {
-  if(!_adaptive){
-    Msg::Info("Initializing adaptive data %p interp size=%d", this, _interpolation.size());
+  if(!_adaptive) {
+    Msg::Info("Initializing adaptive data %p interp size=%d", this,
+              _interpolation.size());
     _adaptive = new adaptiveData(this);
     _adaptive->changeResolution(step, level, tol);
   }
@@ -43,35 +43,35 @@ void PViewData::initAdaptiveData(int step, int level, double tol)
 
 void PViewData::initAdaptiveDataLight(int step, int level, double tol)
 {
-  if(!_adaptive){
-    Msg::Info("Initializing adaptive data %p interp size=%d", this, _interpolation.size());
+  if(!_adaptive) {
+    Msg::Info("Initializing adaptive data %p interp size=%d", this,
+              _interpolation.size());
     // _outData in adaptive.h is only used for visualization of adapted views in
     // the GMSH GUI.  In some cases (export of adapted views under pvtu format,
     // use of GMSH as external lib), this object is not needed so avoid its
     // allocation in order to limit memory consumption
     bool outDataInit = false;
-    _adaptive = new adaptiveData(this,outDataInit);
+    _adaptive = new adaptiveData(this, outDataInit);
   }
 }
 
-void PViewData::saveAdaptedViewForVTK(const std::string &guifileName, int useDefaultName,
-                                      int step, int level, double tol, int npart,
-                                      bool isBinary)
+void PViewData::saveAdaptedViewForVTK(const std::string &guifileName,
+                                      int useDefaultName, int step, int level,
+                                      double tol, int npart, bool isBinary)
 {
   if(_adaptive) {
     // _adaptiveData has already been allocated from the adaptive view panel of
     // the GUI for instance.
-    _adaptive->changeResolutionForVTK(step, level, tol, npart, isBinary, guifileName,
-                                      useDefaultName);
+    _adaptive->changeResolutionForVTK(step, level, tol, npart, isBinary,
+                                      guifileName, useDefaultName);
   }
   else {
     initAdaptiveDataLight(step, level, tol);
-    _adaptive->changeResolutionForVTK(step, level, tol, npart, isBinary, guifileName,
-                                      useDefaultName);
+    _adaptive->changeResolutionForVTK(step, level, tol, npart, isBinary,
+                                      guifileName, useDefaultName);
     destroyAdaptiveData();
   }
 }
-
 
 void PViewData::destroyAdaptiveData()
 {
@@ -95,9 +95,9 @@ void PViewData::getScalarValue(int step, int ent, int ele, int nod, double &val,
                                int forceNumComponents, int componentMap[9])
 {
   int numComp = getNumComponents(step, ent, ele);
-  if(forceNumComponents && componentMap){
+  if(forceNumComponents && componentMap) {
     std::vector<double> d(forceNumComponents);
-    for(int i = 0; i < forceNumComponents; i++){
+    for(int i = 0; i < forceNumComponents; i++) {
       int comp = componentMap[i];
       if(comp >= 0 && comp < numComp)
         getValue(step, ent, ele, nod, comp, d[i]);
@@ -106,10 +106,10 @@ void PViewData::getScalarValue(int step, int ent, int ele, int nod, double &val,
     }
     val = ComputeScalarRep(forceNumComponents, &d[0]);
   }
-  else if(numComp == 1){
+  else if(numComp == 1) {
     getValue(step, ent, ele, nod, 0, val);
   }
-  else{
+  else {
     std::vector<double> d(numComp);
     for(int comp = 0; comp < numComp; comp++)
       getValue(step, ent, ele, nod, comp, d[comp]);
@@ -117,12 +117,14 @@ void PViewData::getScalarValue(int step, int ent, int ele, int nod, double &val,
   }
 }
 
-void PViewData::setNode(int step, int ent, int ele, int nod, double x, double y, double z)
+void PViewData::setNode(int step, int ent, int ele, int nod, double x, double y,
+                        double z)
 {
   Msg::Error("Cannot change node coordinates in this view");
 }
 
-void PViewData::setValue(int step, int ent, int ele, int nod, int comp, double val)
+void PViewData::setValue(int step, int ent, int ele, int nod, int comp,
+                         double val)
 {
   Msg::Error("Cannot change field value in this view");
 }
@@ -167,9 +169,10 @@ void PViewData::setInterpolationMatrices(int type,
   _interpolation[type].push_back(new fullMatrix<double>(expGeo));
 }
 
-int PViewData::getInterpolationMatrices(int type, std::vector<fullMatrix<double>*> &p)
+int PViewData::getInterpolationMatrices(int type,
+                                        std::vector<fullMatrix<double> *> &p)
 {
-  if(_interpolation.count(type)){
+  if(_interpolation.count(type)) {
     p = _interpolation[type];
     return p.size();
   }
@@ -191,8 +194,9 @@ void PViewData::deleteInterpolationMatrices(int type)
 
 void PViewData::removeInterpolationScheme(const std::string &name)
 {
-  std::map<std::string, interpolationMatrices>::iterator it = _interpolationSchemes.find(name);
-  if(it != _interpolationSchemes.end()){
+  std::map<std::string, interpolationMatrices>::iterator it =
+    _interpolationSchemes.find(name);
+  if(it != _interpolationSchemes.end()) {
     for(interpolationMatrices::iterator it2 = it->second.begin();
         it2 != it->second.end(); it2++)
       for(unsigned int i = 0; i < it2->second.size(); i++)
@@ -203,17 +207,19 @@ void PViewData::removeInterpolationScheme(const std::string &name)
 
 void PViewData::removeAllInterpolationSchemes()
 {
-  std::map<std::string, interpolationMatrices>::iterator it = _interpolationSchemes.begin();
-  for(;it!=_interpolationSchemes.end();it++)
+  std::map<std::string, interpolationMatrices>::iterator it =
+    _interpolationSchemes.begin();
+  for(; it != _interpolationSchemes.end(); it++)
     for(interpolationMatrices::iterator it2 = it->second.begin();
         it2 != it->second.end(); it2++)
-        for(unsigned int i = 0; i < it2->second.size(); i++)
-          delete it2->second[i];
+      for(unsigned int i = 0; i < it2->second.size(); i++)
+        delete it2->second[i];
   _interpolationSchemes.clear();
   std::map<std::string, interpolationMatrices>().swap(_interpolationSchemes);
 }
 
-void PViewData::addMatrixToInterpolationScheme(const std::string &name, int type,
+void PViewData::addMatrixToInterpolationScheme(const std::string &name,
+                                               int type,
                                                fullMatrix<double> &mat)
 {
   _interpolationSchemes[name][type].push_back(new fullMatrix<double>(mat));
@@ -223,7 +229,6 @@ int PViewData::getSizeInterpolationScheme()
 {
   return _interpolationSchemes.size();
 }
-
 
 void PViewData::smooth()
 {
@@ -243,55 +248,58 @@ bool PViewData::combineSpace(nameData &nd)
 }
 
 bool PViewData::searchScalar(double x, double y, double z, double *values,
-                             int step, double *size, int qn,
-                             double *qx, double *qy, double *qz, bool grad)
+                             int step, double *size, int qn, double *qx,
+                             double *qy, double *qz, bool grad)
 {
   if(!_octree) _octree = new OctreePost(this);
-  return _octree->searchScalar(x, y, z, values, step, size,
-                               qn, qx, qy, qz, grad);
+  return _octree->searchScalar(x, y, z, values, step, size, qn, qx, qy, qz,
+                               grad);
 }
 
-bool PViewData::searchScalarWithTol(double x, double y, double z, double *values,
-                                    int step, double *size, double tol, int qn,
-                                    double *qx, double *qy, double *qz, bool grad)
+bool PViewData::searchScalarWithTol(double x, double y, double z,
+                                    double *values, int step, double *size,
+                                    double tol, int qn, double *qx, double *qy,
+                                    double *qz, bool grad)
 {
   if(!_octree) _octree = new OctreePost(this);
-  return _octree->searchScalarWithTol(x, y, z, values, step, size, tol,
-                                      qn, qx, qy, qz, grad);
+  return _octree->searchScalarWithTol(x, y, z, values, step, size, tol, qn, qx,
+                                      qy, qz, grad);
 }
 
 bool PViewData::searchVector(double x, double y, double z, double *values,
-                             int step, double *size, int qn,
-                             double *qx, double *qy, double *qz, bool grad)
+                             int step, double *size, int qn, double *qx,
+                             double *qy, double *qz, bool grad)
 {
   if(!_octree) _octree = new OctreePost(this);
-  return _octree->searchVector(x, y, z, values, step, size,
-                               qn, qx, qy, qz, grad);
+  return _octree->searchVector(x, y, z, values, step, size, qn, qx, qy, qz,
+                               grad);
 }
 
-bool PViewData::searchVectorWithTol(double x, double y, double z, double *values,
-                                    int step, double *size, double tol, int qn,
-                                    double *qx, double *qy, double *qz, bool grad)
+bool PViewData::searchVectorWithTol(double x, double y, double z,
+                                    double *values, int step, double *size,
+                                    double tol, int qn, double *qx, double *qy,
+                                    double *qz, bool grad)
 {
   if(!_octree) _octree = new OctreePost(this);
-  return _octree->searchVectorWithTol(x, y, z, values, step, size, tol,
-                                      qn, qx, qy, qz, grad);
+  return _octree->searchVectorWithTol(x, y, z, values, step, size, tol, qn, qx,
+                                      qy, qz, grad);
 }
 
 bool PViewData::searchTensor(double x, double y, double z, double *values,
-                             int step, double *size, int qn,
-                             double *qx, double *qy, double *qz, bool grad)
+                             int step, double *size, int qn, double *qx,
+                             double *qy, double *qz, bool grad)
 {
   if(!_octree) _octree = new OctreePost(this);
-  return _octree->searchTensor(x, y, z, values, step, size,
-                               qn, qx, qy, qz, grad);
+  return _octree->searchTensor(x, y, z, values, step, size, qn, qx, qy, qz,
+                               grad);
 }
 
-bool PViewData::searchTensorWithTol(double x, double y, double z, double *values,
-                                    int step, double *size, double tol, int qn,
-                                    double *qx, double *qy, double *qz, bool grad)
+bool PViewData::searchTensorWithTol(double x, double y, double z,
+                                    double *values, int step, double *size,
+                                    double tol, int qn, double *qx, double *qy,
+                                    double *qz, bool grad)
 {
   if(!_octree) _octree = new OctreePost(this);
-  return _octree->searchTensorWithTol(x, y, z, values, step, size, tol,
-                                      qn, qx, qy, qz, grad);
+  return _octree->searchTensorWithTol(x, y, z, values, step, size, tol, qn, qx,
+                                      qy, qz, grad);
 }

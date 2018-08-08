@@ -22,13 +22,15 @@ class GenericVertex : public GVertex {
 protected:
   int id;
   double _x, _y, _z;
+
 public:
   // callbacks typedef
-  typedef bool (*ptrfunction_int_vector)(int, std::vector<double>&);
-  typedef bool (*ptrfunction_int_doubleptr_voidptr)(int, double*, void*);
+  typedef bool (*ptrfunction_int_vector)(int, std::vector<double> &);
+  typedef bool (*ptrfunction_int_doubleptr_voidptr)(int, double *, void *);
 
   GenericVertex(GModel *m, int num, int _native_id);
-  GenericVertex(GModel *m, int num, int _native_id, const std::vector<double> &vec);
+  GenericVertex(GModel *m, int num, int _native_id,
+                const std::vector<double> &vec);
   virtual ~GenericVertex();
 
   virtual GPoint point() const { return GPoint(x(), y(), z()); }
@@ -40,11 +42,14 @@ public:
   virtual SPoint2 reparamOnFace(const GFace *gf, int) const;
 
   ModelType getNativeType() const { return GenericModel; }
-  virtual int getNativeInt()const{return id;};
+  virtual int getNativeInt() const { return id; };
 
   // sets the callbacks
-  static void setVertexXYZ(ptrfunction_int_vector fct){VertexXYZ = fct;};
-  static void setVertexMeshSize(ptrfunction_int_doubleptr_voidptr fct){VertexMeshSize = fct;};
+  static void setVertexXYZ(ptrfunction_int_vector fct) { VertexXYZ = fct; };
+  static void setVertexMeshSize(ptrfunction_int_doubleptr_voidptr fct)
+  {
+    VertexMeshSize = fct;
+  };
 
   // meshing-related methods:
   virtual void setPrescribedMeshSizeAtVertex(double l)
@@ -55,7 +60,7 @@ public:
   {
     double size;
     void *chose = NULL;
-    if (!VertexMeshSize(id,&size,chose)){
+    if(!VertexMeshSize(id, &size, chose)) {
       Msg::Error("GenericVertex::ERROR from callback VertexMeshSize");
       return CTX::instance()->lc;
     }

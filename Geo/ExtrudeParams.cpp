@@ -7,7 +7,7 @@
 #include "Geo.h"
 #include "ExtrudeParams.h"
 
-smooth_data* ExtrudeParams::normals[2] = {0, 0};
+smooth_data *ExtrudeParams::normals[2] = {0, 0};
 std::vector<SPoint3> ExtrudeParams::normalsCoherence;
 
 // Scale last layer size locally If one section of the boundary layer index = 0
@@ -41,10 +41,9 @@ ExtrudeParams::ExtrudeParams(int ModeEx)
   mesh.BoundaryLayerIndex = 0;
 }
 
-void ExtrudeParams::fill(int type,
-                         double T0, double T1, double T2,
-                         double A0, double A1, double A2,
-                         double X0, double X1, double X2, double angle)
+void ExtrudeParams::fill(int type, double T0, double T1, double T2, double A0,
+                         double A1, double A2, double X0, double X1, double X2,
+                         double angle)
 {
   geo.trans[0] = T0;
   geo.trans[1] = T1;
@@ -59,26 +58,27 @@ void ExtrudeParams::fill(int type,
   geo.Type = type;
 }
 
-void ExtrudeParams::Extrude(int iLayer, int iElemLayer,
-                            double &x, double &y, double &z)
+void ExtrudeParams::Extrude(int iLayer, int iElemLayer, double &x, double &y,
+                            double &z)
 {
   double t = u(iLayer, iElemLayer);
   // This definitely relies on fixing lateral boundary extruded surfaces if
   // mesh.ScaleLast is changed by ReplaceDuplicates.  This is done in
   // BoundaryLayers.cpp right now.
-  if(geo.Type == BOUNDARY_LAYER && iLayer == mesh.NbLayer-1 &&
+  if(geo.Type == BOUNDARY_LAYER && iLayer == mesh.NbLayer - 1 &&
      mesh.BoundaryLayerIndex >= 0 && mesh.BoundaryLayerIndex <= 1 &&
      calcLayerScaleFactor[mesh.BoundaryLayerIndex] &&
-     normals[mesh.BoundaryLayerIndex]){
+     normals[mesh.BoundaryLayerIndex]) {
     double scale = 1.0;
     normals[mesh.BoundaryLayerIndex]->get_scale(x, y, z, &scale);
-    if(fabs(scale-1.0) <= xyzv::eps)
+    if(fabs(scale - 1.0) <= xyzv::eps)
       scale = 1.0;
-    else{
+    else {
       if(mesh.NbLayer <= 1)
-	t = t * scale;
+        t = t * scale;
       else
-        t = (t-mesh.hLayer[mesh.NbLayer-2])*scale + mesh.hLayer[mesh.NbLayer-2];
+        t = (t - mesh.hLayer[mesh.NbLayer - 2]) * scale +
+            mesh.hLayer[mesh.NbLayer - 2];
     }
   }
 
@@ -98,7 +98,7 @@ void ExtrudeParams::Extrude(double t, double &x, double &y, double &z)
   double dx, dy, dz, angle;
   double n[3] = {0., 0., 0.};
 
-  switch (geo.Type) {
+  switch(geo.Type) {
   case TRANSLATE:
     dx = geo.trans[0] * t;
     dy = geo.trans[1] * t;
@@ -133,9 +133,7 @@ void ExtrudeParams::Extrude(double t, double &x, double &y, double &z)
     y += n[1] * t;
     z += n[2] * t;
     break;
-  default:
-    Msg::Error("Unknown extrusion type");
-    break;
+  default: Msg::Error("Unknown extrusion type"); break;
   }
 }
 

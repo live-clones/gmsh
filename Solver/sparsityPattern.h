@@ -15,13 +15,13 @@ class sparsityPattern {
   int **_rowsj;
   int _nRows, _nRowsAlloc;
 
- public :
-  void insertEntry (int i, int j);
-  const int* getRow (int line, int &size) const;
+public:
+  void insertEntry(int i, int j);
+  const int *getRow(int line, int &size) const;
   void clear();
-  sparsityPattern ();
+  sparsityPattern();
   ~sparsityPattern();
-  inline int getNbRows() {return _nRows;}
+  inline int getNbRows() { return _nRows; }
 };
 
 #endif

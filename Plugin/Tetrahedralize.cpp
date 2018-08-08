@@ -14,23 +14,21 @@
 #endif
 
 StringXNumber TetrahedralizeOptions_Number[] = {
-  {GMSH_FULLRC, "View", NULL, -1.}
-};
+  {GMSH_FULLRC, "View", NULL, -1.}};
 
-extern "C"
+extern "C" {
+GMSH_Plugin *GMSH_RegisterTetrahedralizePlugin()
 {
-  GMSH_Plugin *GMSH_RegisterTetrahedralizePlugin()
-  {
-    return new GMSH_TetrahedralizePlugin();
-  }
+  return new GMSH_TetrahedralizePlugin();
+}
 }
 
 std::string GMSH_TetrahedralizePlugin::getHelp() const
 {
   return "Plugin(Tetrahedralize) tetrahedralizes the points in "
-    "the view `View'.\n\n"
-    "If `View' < 0, the plugin is run on the current view.\n\n"
-    "Plugin(Tetrahedralize) creates one new view.";
+         "the view `View'.\n\n"
+         "If `View' < 0, the plugin is run on the current view.\n\n"
+         "Plugin(Tetrahedralize) creates one new view.";
 }
 
 int GMSH_TetrahedralizePlugin::getNbOptions() const
@@ -46,10 +44,9 @@ StringXNumber *GMSH_TetrahedralizePlugin::getOption(int iopt)
 #if defined(HAVE_MESH)
 
 class PointData : public MVertex {
- public:
+public:
   std::vector<double> val;
-  PointData(double x, double y, double z, int numVal)
-    : MVertex(x, y, z)
+  PointData(double x, double y, double z, int numVal) : MVertex(x, y, z)
   {
     val.resize(numVal);
   }
@@ -63,16 +60,16 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
   if(!v1) return v;
   PViewData *data1 = v1->getData();
 
-  if(data1->hasMultipleMeshes()){
+  if(data1->hasMultipleMeshes()) {
     Msg::Error("Tetrahedralize plugin cannot be applied to multi-mesh views");
     return v1;
   }
 
   // create list of points with associated data
-  std::vector<MVertex*> points;
+  std::vector<MVertex *> points;
   int numSteps = data1->getNumTimeSteps();
-  for(int ent = 0; ent < data1->getNumEntities(0); ent++){
-    for(int ele = 0; ele < data1->getNumElements(0, ent); ele++){
+  for(int ent = 0; ent < data1->getNumEntities(0); ent++) {
+    for(int ele = 0; ele < data1->getNumElements(0, ent); ele++) {
       if(data1->skipElement(0, ent, ele)) continue;
       if(data1->getNumNodes(0, ent, ele) != 1) continue;
       int numComp = data1->getNumComponents(0, ent, ele);
@@ -81,50 +78,57 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
       PointData *p = new PointData(x, y, z, numComp * numSteps);
       for(int step = 0; step < numSteps; step++)
         for(int comp = 0; comp < numComp; comp++)
-          data1->getValue(step, ent, ele, 0, comp, p->val[numComp * step + comp]);
+          data1->getValue(step, ent, ele, 0, comp,
+                          p->val[numComp * step + comp]);
       points.push_back(p);
     }
   }
 
-  if(points.size() < 4){
+  if(points.size() < 4) {
     Msg::Error("Need at least 4 points to tetrahedralize");
     for(unsigned int i = 0; i < points.size(); i++) delete points[i];
     return v1;
   }
 
-  std::vector<MTetrahedron*> tets;
+  std::vector<MTetrahedron *> tets;
   delaunayMeshIn3D(points, tets);
 
   // create output
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
-  for(unsigned int i = 0; i < tets.size(); i++){
+  for(unsigned int i = 0; i < tets.size(); i++) {
     PointData *p[4];
-    p[0] = (PointData*)tets[i]->getVertex(0);
-    p[1] = (PointData*)tets[i]->getVertex(1);
-    p[2] = (PointData*)tets[i]->getVertex(2);
-    p[3] = (PointData*)tets[i]->getVertex(3);
+    p[0] = (PointData *)tets[i]->getVertex(0);
+    p[1] = (PointData *)tets[i]->getVertex(1);
+    p[2] = (PointData *)tets[i]->getVertex(2);
+    p[3] = (PointData *)tets[i]->getVertex(3);
     int numComp = 0;
     std::vector<double> *vec = 0;
     if((int)p[0]->val.size() == 9 * numSteps &&
        (int)p[1]->val.size() == 9 * numSteps &&
        (int)p[2]->val.size() == 9 * numSteps &&
-       (int)p[3]->val.size() == 9 * numSteps){
-      numComp = 9; data2->NbTS++; vec = &data2->TS;
+       (int)p[3]->val.size() == 9 * numSteps) {
+      numComp = 9;
+      data2->NbTS++;
+      vec = &data2->TS;
     }
     else if((int)p[0]->val.size() == 3 * numSteps &&
             (int)p[1]->val.size() == 3 * numSteps &&
             (int)p[2]->val.size() == 3 * numSteps &&
-            (int)p[3]->val.size() == 3 * numSteps){
-      numComp = 3; data2->NbVS++; vec = &data2->VS;
+            (int)p[3]->val.size() == 3 * numSteps) {
+      numComp = 3;
+      data2->NbVS++;
+      vec = &data2->VS;
     }
     else if((int)p[0]->val.size() == numSteps &&
             (int)p[1]->val.size() == numSteps &&
             (int)p[2]->val.size() == numSteps &&
-            (int)p[3]->val.size() == numSteps){
-      numComp = 1; data2->NbSS++; vec = &data2->SS;
+            (int)p[3]->val.size() == numSteps) {
+      numComp = 1;
+      data2->NbSS++;
+      vec = &data2->SS;
     }
-    else{
+    else {
       Msg::Warning("Bad data in tetrahedralization");
       continue;
     }

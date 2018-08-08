@@ -8,15 +8,13 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterScal2VecPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterScal2VecPlugin();
 }
 
-class GMSH_Scal2VecPlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_Scal2VecPlugin(){}
+class GMSH_Scal2VecPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_Scal2VecPlugin() {}
   std::string getName() const { return "Scal2Vec"; }
   std::string getShortHelp() const
   {
@@ -26,7 +24,7 @@ class GMSH_Scal2VecPlugin : public GMSH_PostPlugin
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);
   int getNbOptionsStr() const;
-  StringXString* getOptionStr(int iopt);
+  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 };
 

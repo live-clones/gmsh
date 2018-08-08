@@ -8,15 +8,13 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterMathEvalPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterMathEvalPlugin();
 }
 
-class GMSH_MathEvalPlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_MathEvalPlugin(){}
+class GMSH_MathEvalPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_MathEvalPlugin() {}
   std::string getName() const { return "MathEval"; }
   std::string getShortHelp() const
   {
@@ -24,9 +22,9 @@ class GMSH_MathEvalPlugin : public GMSH_PostPlugin
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   int getNbOptionsStr() const;
-  StringXString* getOptionStr(int iopt);  
+  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 };
 

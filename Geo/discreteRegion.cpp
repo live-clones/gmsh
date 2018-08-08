@@ -23,13 +23,14 @@ discreteRegion::discreteRegion(GModel *model, int num) : GRegion(model, num)
 
 void discreteRegion::setBoundFaces(const std::set<int> &tagFaces)
 {
-  for (std::set<int>::const_iterator it = tagFaces.begin() ; it != tagFaces.end();++it){
+  for(std::set<int>::const_iterator it = tagFaces.begin(); it != tagFaces.end();
+      ++it) {
     GFace *face = model()->getFaceByTag(*it);
-    if(face){
+    if(face) {
       l_faces.push_back(face);
       face->addRegion(this);
     }
-    else{
+    else {
       Msg::Error("Unknown model face %d", *it);
     }
   }
@@ -38,48 +39,52 @@ void discreteRegion::setBoundFaces(const std::set<int> &tagFaces)
 void discreteRegion::setBoundFaces(const std::vector<int> &tagFaces,
                                    const std::vector<int> &signFaces)
 {
-  if(tagFaces.size() != signFaces.size()){
+  if(tagFaces.size() != signFaces.size()) {
     Msg::Error("Wrong number of face signs in setBoundFaces");
     std::set<int> tags;
     tags.insert(tagFaces.begin(), tagFaces.end());
     setBoundFaces(tags);
   }
-  for (unsigned int i = 0; i != tagFaces.size(); i++){
+  for(unsigned int i = 0; i != tagFaces.size(); i++) {
     GFace *face = model()->getFaceByTag(tagFaces[i]);
-    if(face){
+    if(face) {
       l_faces.push_back(face);
       face->addRegion(this);
       l_dirs.push_back(signFaces[i]);
     }
-    else{
+    else {
       Msg::Error("Unknown model face %d", tagFaces[i]);
     }
   }
 }
 
-void discreteRegion::findFaces(std::map<MFace, std::vector<int>, Less_Face> &map_faces)
+void discreteRegion::findFaces(
+  std::map<MFace, std::vector<int>, Less_Face> &map_faces)
 {
   std::set<MFace, Less_Face> bound_faces;
-  for (unsigned int elem = 0; elem  < getNumMeshElements() ; elem++) {
+  for(unsigned int elem = 0; elem < getNumMeshElements(); elem++) {
     MElement *e = getMeshElement(elem);
-    for (int iFace = 0; iFace < e->getNumFaces(); iFace++) {
-      MFace tmp_face =  e->getFace(iFace);
-      std::set<MFace, Less_Face >::iterator itset = bound_faces.find(tmp_face);
-      if (itset == bound_faces.end())   bound_faces.insert(tmp_face);
-      else bound_faces.erase(itset);
+    for(int iFace = 0; iFace < e->getNumFaces(); iFace++) {
+      MFace tmp_face = e->getFace(iFace);
+      std::set<MFace, Less_Face>::iterator itset = bound_faces.find(tmp_face);
+      if(itset == bound_faces.end())
+        bound_faces.insert(tmp_face);
+      else
+        bound_faces.erase(itset);
     }
   }
 
   // for the boundary faces, associate the tag of the discrete face
-  for (std::set<MFace, Less_Face>::iterator itv = bound_faces.begin();
-       itv != bound_faces.end(); ++itv){
-    std::map<MFace, std::vector<int>, Less_Face >::iterator itmap = map_faces.find(*itv);
-    if (itmap == map_faces.end()){
+  for(std::set<MFace, Less_Face>::iterator itv = bound_faces.begin();
+      itv != bound_faces.end(); ++itv) {
+    std::map<MFace, std::vector<int>, Less_Face>::iterator itmap =
+      map_faces.find(*itv);
+    if(itmap == map_faces.end()) {
       std::vector<int> tagRegions;
       tagRegions.push_back(tag());
       map_faces.insert(std::make_pair(*itv, tagRegions));
     }
-    else{
+    else {
       std::vector<int> tagRegions = itmap->second;
       tagRegions.push_back(tag());
       itmap->second = tagRegions;
@@ -92,25 +97,29 @@ void discreteRegion::remesh()
 #if defined(HAVE_MESH)
 
   bool classify = false;
-  if(CTX::instance()->mesh.oldRefinement){
+  if(CTX::instance()->mesh.oldRefinement) {
     insertVerticesInRegion(this, 2000000000, classify);
   }
-  else{
+  else {
     insertVerticesInRegion(this, 0, classify);
-    void edgeBasedRefinement(const int numThreads, const int nptsatonce, GRegion *gr);
+    void edgeBasedRefinement(const int numThreads, const int nptsatonce,
+                             GRegion *gr);
     edgeBasedRefinement(1, 1, this);
   }
 
   // not functional yet: need boundaries
   for(int i = 0; i < std::max(CTX::instance()->mesh.optimize,
-                              CTX::instance()->mesh.optimizeNetgen); i++){
-    if(CTX::instance()->mesh.optimize >= i){
+                              CTX::instance()->mesh.optimizeNetgen);
+      i++) {
+    if(CTX::instance()->mesh.optimize >= i) {
       printf("optimizing!\n");
-      optimizeMeshGRegionGmsh opt; opt(this, true);
+      optimizeMeshGRegionGmsh opt;
+      opt(this, true);
     }
-    if(CTX::instance()->mesh.optimizeNetgen >= i){
+    if(CTX::instance()->mesh.optimizeNetgen >= i) {
       printf("optimizing netgen!\n");
-      optimizeMeshGRegionNetgen opt; opt(this, true);
+      optimizeMeshGRegionNetgen opt;
+      opt(this, true);
     }
   }
 

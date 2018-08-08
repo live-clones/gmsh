@@ -41,12 +41,7 @@ public:
   int boundaryLayerIndex;
   Vertex(double X = 0., double Y = 0., double Z = 0., double l = 1.,
          double W = 1.)
-    : Num(0)
-    , lc(l)
-    , u(0.)
-    , w(W)
-    , geometry(0)
-    , boundaryLayerIndex(0)
+    : Num(0), lc(l), u(0.), w(W), geometry(0), boundaryLayerIndex(0)
   {
     Typ = MSH_POINT;
     Pos.X = X;

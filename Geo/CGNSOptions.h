@@ -10,34 +10,30 @@
 
 #include <string>
 
-class CGNSOptions
-{
- public:
-  enum CGNSLocationType {
-    LocVertex = 0,
-    LocFace = 1
-  };
+class CGNSOptions {
+public:
+  enum CGNSLocationType { LocVertex = 0, LocFace = 1 };
 
   std::string baseName;
   std::string zoneName;
   std::string interfaceName;
   std::string patchName;
-  int gridConnectivityLocation;         // Location of connectivity(values
-                                        // CGNSLocationType)
-  int bocoLocation;                     // Location of BC (values
-                                        // CGNSLocationType)
-  int normalSource;                     // Source for BC normal data
-                                        // 0 - do not write normals
-                                        // 1 - geometry
-                                        // 2 - elements
-  int vectorDim;                        // Number of dimensions in a vector
-                                        // (only relevant for a 2D mesh)
+  int gridConnectivityLocation; // Location of connectivity(values
+                                // CGNSLocationType)
+  int bocoLocation; // Location of BC (values
+                    // CGNSLocationType)
+  int normalSource; // Source for BC normal data
+                    // 0 - do not write normals
+                    // 1 - geometry
+                    // 2 - elements
+  int vectorDim; // Number of dimensions in a vector
+                 // (only relevant for a 2D mesh)
   bool writeBC;
-  bool writeUserDef;                    // T - write user-defined elements for
-                                        //     element types unsupported by CGNS
+  bool writeUserDef; // T - write user-defined elements for
+                     //     element types unsupported by CGNS
 
-  CGNSOptions(){ setDefaults(); }
-  ~CGNSOptions(){}
+  CGNSOptions() { setDefaults(); }
+  ~CGNSOptions() {}
   void setDefaults()
   {
     baseName = "Base_1";

@@ -8,15 +8,13 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterModulusPhasePlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterModulusPhasePlugin();
 }
 
-class GMSH_ModulusPhasePlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_ModulusPhasePlugin(){}
+class GMSH_ModulusPhasePlugin : public GMSH_PostPlugin {
+public:
+  GMSH_ModulusPhasePlugin() {}
   std::string getName() const { return "ModulusPhase"; }
   std::string getShortHelp() const
   {
@@ -24,7 +22,7 @@ class GMSH_ModulusPhasePlugin : public GMSH_PostPlugin
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber *getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

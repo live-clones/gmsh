@@ -8,15 +8,13 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterBubblesPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterBubblesPlugin();
 }
 
-class GMSH_BubblesPlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_BubblesPlugin(){}
+class GMSH_BubblesPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_BubblesPlugin() {}
   std::string getName() const { return "Bubbles"; }
   std::string getShortHelp() const
   {
@@ -26,7 +24,7 @@ class GMSH_BubblesPlugin : public GMSH_PostPlugin
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);
   int getNbOptionsStr() const;
-  StringXString* getOptionStr(int iopt);  
+  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 };
 

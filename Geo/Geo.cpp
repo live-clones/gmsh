@@ -287,7 +287,9 @@ void EndCurve(Curve *c)
     double n[3];
     prodve(dir12, dir32, n);
     bool isValid = true;
-    if(norm3(n) < 1.e-15) { isValid = false; }
+    if(norm3(n) < 1.e-15) {
+      isValid = false;
+    }
     else {
       norme(n);
       if((fabs(n[0]) < 1.e-5 && fabs(n[1]) < 1.e-5 && fabs(n[2]) < 1.e-5)) {
@@ -652,7 +654,9 @@ static Vertex *FindPoint(int inum, Tree_T *t)
   Vertex C, *pc;
   pc = &C;
   pc->Num = inum;
-  if(Tree_Query(t, &pc)) { return pc; }
+  if(Tree_Query(t, &pc)) {
+    return pc;
+  }
   return NULL;
 }
 
@@ -666,7 +670,9 @@ static Curve *FindCurve(int inum, Tree_T *t)
   Curve C, *pc;
   pc = &C;
   pc->Num = inum;
-  if(Tree_Query(t, &pc)) { return pc; }
+  if(Tree_Query(t, &pc)) {
+    return pc;
+  }
   return NULL;
 }
 
@@ -680,7 +686,9 @@ static Surface *FindSurface(int inum, Tree_T *t)
   Surface S, *ps;
   ps = &S;
   ps->Num = inum;
-  if(Tree_Query(t, &ps)) { return ps; }
+  if(Tree_Query(t, &ps)) {
+    return ps;
+  }
   return NULL;
 }
 
@@ -1157,7 +1165,9 @@ int RecognizeSurfaceLoop(List_T *liste, int *loop)
 static void SetTranslationMatrix(double matrix[4][4], double T[3])
 {
   for(int i = 0; i < 4; i++) {
-    for(int j = 0; j < 4; j++) { matrix[i][j] = (i == j) ? 1.0 : 0.0; }
+    for(int j = 0; j < 4; j++) {
+      matrix[i][j] = (i == j) ? 1.0 : 0.0;
+    }
   }
   for(int i = 0; i < 3; i++) matrix[i][3] = T[i];
 }
@@ -1289,7 +1299,9 @@ static void vecmat4x4(double mat[4][4], double vec[4], double res[4])
 {
   for(int i = 0; i < 4; i++) {
     res[i] = 0.0;
-    for(int j = 0; j < 4; j++) { res[i] += mat[i][j] * vec[j]; }
+    for(int j = 0; j < 4; j++) {
+      res[i] += mat[i][j] * vec[j];
+    }
   }
 }
 
@@ -1705,7 +1717,9 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
     Tree_Add(GModel::current()->getGEOInternals()->DelPoints, &V);
     delete unused[i];
   }
-  for(unsigned int i = 0; i < used.size(); i++) { delete used[i]; }
+  for(unsigned int i = 0; i < used.size(); i++) {
+    delete used[i];
+  }
   int end = Tree_Nbr(GModel::current()->getGEOInternals()->Points);
   Msg::Info("Done new Coherence (removed %d additional points)", start - end);
 }
@@ -2581,7 +2595,9 @@ int ExtrudeCurve(int type, int ic, double T0, double T1, double T2, double A0,
   revpc = FindCurve(-ic);
   *ps = NULL;
 
-  if(!pc || !revpc) { return 0; }
+  if(!pc || !revpc) {
+    return 0;
+  }
 
   if(!pc->beg || !pc->end) {
     Msg::Error("Cannot extrude curve with no begin/end points");
@@ -2678,7 +2694,9 @@ int ExtrudeCurve(int type, int ic, double T0, double T1, double T2, double A0,
   ExtrudePoint(type, pc->end->Num, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha,
                &CurveEnd, &ReverseEnd, 0, e);
 
-  if(!CurveBeg && !CurveEnd) { return pc->Num; }
+  if(!CurveBeg && !CurveEnd) {
+    return pc->Num;
+  }
 
   // FIXME: if we extrude by rotation a (non-straight) curve defined by 2 end
   // points, with a rotation axis going through the end points, the resulting
@@ -3428,7 +3446,9 @@ void SetSurfaceGeneratrices(Surface *s, List_T *loops)
       for(unsigned int j = 0; j < fromModel.size(); j++) {
         ic = fromModel[j];
         GEdge *ge = GModel::current()->getEdgeByTag(abs(ic));
-        if(ge) { List_Add(s->GeneratricesByTag, &ic); }
+        if(ge) {
+          List_Add(s->GeneratricesByTag, &ic);
+        }
         else {
           Msg::Error("Unknown curve %d", ic);
           return;
@@ -3466,7 +3486,9 @@ void SetVolumeSurfaces(Volume *v, List_T *loops)
         }
         else {
           GFace *gf = GModel::current()->getFaceByTag(abs(is));
-          if(gf) { List_Add(v->SurfacesByTag, &is); }
+          if(gf) {
+            List_Add(v->SurfacesByTag, &is);
+          }
           else {
             Msg::Error("Unknown surface %d", is);
             return;

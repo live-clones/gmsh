@@ -8,11 +8,12 @@
 #include "gmshSurface.h"
 #include "mathEvaluator.h"
 
-std::map<int,gmshSurface*> gmshSurface::allGmshSurfaces;
+std::map<int, gmshSurface *> gmshSurface::allGmshSurfaces;
 
 SPoint2 gmshSurface::parFromPoint(double x, double y, double z)
 {
-  Msg::Error("Parametric coordinate computation not implemented for this type of surface");
+  Msg::Error("Parametric coordinate computation not implemented for this type "
+             "of surface");
   return SPoint2();
 }
 
@@ -34,12 +35,13 @@ double gmshSurface::getMetricEigenvalue(const SPoint2 &)
   return 0;
 }
 
-gmshSurface *gmshSphere::NewSphere(int iSphere, double x, double y, double z, double r)
+gmshSurface *gmshSphere::NewSphere(int iSphere, double x, double y, double z,
+                                   double r)
 {
   gmshSphere *sph = new gmshSphere(x, y, z, r);
 
-  if(allGmshSurfaces.find(iSphere) != allGmshSurfaces.end()){
-    Msg::Error("gmshSurface %d already exists",iSphere);
+  if(allGmshSurfaces.find(iSphere) != allGmshSurfaces.end()) {
+    Msg::Error("gmshSurface %d already exists", iSphere);
   }
 
   allGmshSurfaces[iSphere] = sph;
@@ -48,9 +50,9 @@ gmshSurface *gmshSphere::NewSphere(int iSphere, double x, double y, double z, do
 
 gmshSurface *gmshSurface::getSurface(int iSurface)
 {
-  std::map<int, gmshSurface*>::iterator it = allGmshSurfaces.find(iSurface);
-  if(it == allGmshSurfaces.end()){
-    Msg::Error("gmshSurface %d does not exist",iSurface);
+  std::map<int, gmshSurface *>::iterator it = allGmshSurfaces.find(iSurface);
+  if(it == allGmshSurfaces.end()) {
+    Msg::Error("gmshSurface %d does not exist", iSurface);
     return 0;
   }
   return it->second;
@@ -58,19 +60,19 @@ gmshSurface *gmshSurface::getSurface(int iSurface)
 
 SPoint3 gmshSphere::point(double par1, double par2) const
 {
-  par2 += M_PI*.5;
+  par2 += M_PI * .5;
   const double x = xc + r * sin(par2) * cos(par1);
   const double y = yc + r * sin(par2) * sin(par1);
   const double z = zc - r * cos(par2);
   return SPoint3(x, y, z);
 }
 
-gmshSurface *gmshPolarSphere::NewPolarSphere(int iSphere, double x, double y, double z,
-                                             double r)
+gmshSurface *gmshPolarSphere::NewPolarSphere(int iSphere, double x, double y,
+                                             double z, double r)
 {
   gmshPolarSphere *sph = new gmshPolarSphere(x, y, z, r);
 
-  if(allGmshSurfaces.find(iSphere) != allGmshSurfaces.end()){
+  if(allGmshSurfaces.find(iSphere) != allGmshSurfaces.end()) {
     Msg::Error("gmshSurface %d already exists", iSphere);
   }
 
@@ -78,17 +80,19 @@ gmshSurface *gmshPolarSphere::NewPolarSphere(int iSphere, double x, double y, do
   return sph;
 }
 
-gmshPolarSphere::gmshPolarSphere(double x, double y, double z, double _r) : r(_r), o(x,y,z)
+gmshPolarSphere::gmshPolarSphere(double x, double y, double z, double _r)
+  : r(_r), o(x, y, z)
 {
 }
 
 SPoint3 gmshPolarSphere::point(double u, double v) const
 {
-  //stereographic projection from the south pole, origin of the axis
-  //at the center of the sphere
-  //u=-x/(r+z) v=-y/(r+z)
-  double rp2 = u*u+v*v;
-  SPoint3 p(-2*r*u/(1+rp2),-2*r*v/(1+rp2),r*(1-rp2)/(1+rp2));
+  // stereographic projection from the south pole, origin of the axis
+  // at the center of the sphere
+  // u=-x/(r+z) v=-y/(r+z)
+  double rp2 = u * u + v * v;
+  SPoint3 p(-2 * r * u / (1 + rp2), -2 * r * v / (1 + rp2),
+            r * (1 - rp2) / (1 + rp2));
   p += o;
   return p;
 }
@@ -98,8 +102,8 @@ gmshSurface *gmshParametricSurface::NewParametricSurface(int iSurf, char *valX,
 {
   gmshParametricSurface *sph = new gmshParametricSurface(valX, valY, valZ);
 
-  if(allGmshSurfaces.find(iSurf) != allGmshSurfaces.end()){
-    Msg::Error("gmshSurface %d already exists",iSurf);
+  if(allGmshSurfaces.find(iSurf) != allGmshSurfaces.end()) {
+    Msg::Error("gmshSurface %d already exists", iSurf);
   }
   allGmshSurfaces[iSurf] = sph;
   return sph;
@@ -114,7 +118,7 @@ gmshParametricSurface::gmshParametricSurface(char *valX, char *valY, char *valZ)
   variables[0] = "u";
   variables[1] = "v";
   _f = new mathEvaluator(expressions, variables);
-  if(expressions.empty()){
+  if(expressions.empty()) {
     delete _f;
     _f = 0;
   }
@@ -127,7 +131,7 @@ gmshParametricSurface::~gmshParametricSurface()
 
 SPoint3 gmshParametricSurface::point(double par1, double par2) const
 {
-  if(_f){
+  if(_f) {
     std::vector<double> values(2), res(3);
     values[0] = par1;
     values[1] = par2;

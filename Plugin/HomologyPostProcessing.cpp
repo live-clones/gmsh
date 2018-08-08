@@ -18,8 +18,7 @@
 #if defined(HAVE_KBIPACK)
 
 StringXNumber HomologyPostProcessingOptions_Number[] = {
-  {GMSH_FULLRC, "ApplyBoundaryOperatorToResults", NULL, 0}
-};
+  {GMSH_FULLRC, "ApplyBoundaryOperatorToResults", NULL, 0}};
 
 StringXString HomologyPostProcessingOptions_String[] = {
   {GMSH_FULLRC, "TransformationMatrix", NULL, "1, 0; 0, 1"},
@@ -30,36 +29,44 @@ StringXString HomologyPostProcessingOptions_String[] = {
   {GMSH_FULLRC, "NameForResultChains", NULL, "c"},
 };
 
-extern "C"
+extern "C" {
+GMSH_Plugin *GMSH_RegisterHomologyPostProcessingPlugin()
 {
-  GMSH_Plugin *GMSH_RegisterHomologyPostProcessingPlugin()
-  {
-    return new GMSH_HomologyPostProcessingPlugin();
-  }
+  return new GMSH_HomologyPostProcessingPlugin();
+}
 }
 
 std::string GMSH_HomologyPostProcessingPlugin::getHelp() const
 {
   return "Plugin(HomologyPostProcessing) operates on representative "
-    "basis chains of homology and cohomology spaces. Functionality:\n\n"
+         "basis chains of homology and cohomology spaces. Functionality:\n\n"
 
-    "1. (co)homology basis transformation:\n "
-    "'TransformationMatrix': Integer matrix of the transformation.\n "
-    "'PhysicalGroupsOfOperatedChains': (Co)chains of a (co)homology space basis to be transformed.\n "
-    "Results a new (co)chain basis that is an integer cobination of the given basis. \n\n"
+         "1. (co)homology basis transformation:\n "
+         "'TransformationMatrix': Integer matrix of the transformation.\n "
+         "'PhysicalGroupsOfOperatedChains': (Co)chains of a (co)homology space "
+         "basis to be transformed.\n "
+         "Results a new (co)chain basis that is an integer cobination of the "
+         "given basis. \n\n"
 
-    "2. Make basis representations of a homology space and a cohomology space "
-    "compatible: \n"
-    "'PhysicalGroupsOfOperatedChains': Chains of a homology space basis.\n"
-    "'PhysicalGroupsOfOperatedChains2': Cochains of a cohomology space basis.\n"
-    "Results a new basis for the homology space such that the incidence matrix of the new basis and the basis of the cohomology space is the identity matrix.\n\n"
+         "2. Make basis representations of a homology space and a cohomology "
+         "space "
+         "compatible: \n"
+         "'PhysicalGroupsOfOperatedChains': Chains of a homology space basis.\n"
+         "'PhysicalGroupsOfOperatedChains2': Cochains of a cohomology space "
+         "basis.\n"
+         "Results a new basis for the homology space such that the incidence "
+         "matrix of the new basis and the basis of the cohomology space is the "
+         "identity matrix.\n\n"
 
-    "Options:\n"
-    "'PhysicalGroupsToTraceResults': Trace the resulting (co)chains to the given physical groups.\n"
-    "'PhysicalGroupsToProjectResults': Project the resulting (co)chains to the complement of the given physical groups.\n"
-    "'NameForResultChains': Post-processing view name prefix for the results.\n"
-    "'ApplyBoundaryOperatorToResults': Apply boundary operator to the resulting chains.\n";
-
+         "Options:\n"
+         "'PhysicalGroupsToTraceResults': Trace the resulting (co)chains to "
+         "the given physical groups.\n"
+         "'PhysicalGroupsToProjectResults': Project the resulting (co)chains "
+         "to the complement of the given physical groups.\n"
+         "'NameForResultChains': Post-processing view name prefix for the "
+         "results.\n"
+         "'ApplyBoundaryOperatorToResults': Apply boundary operator to the "
+         "resulting chains.\n";
 }
 
 int GMSH_HomologyPostProcessingPlugin::getNbOptions() const
@@ -82,8 +89,8 @@ StringXString *GMSH_HomologyPostProcessingPlugin::getOptionStr(int iopt)
   return &HomologyPostProcessingOptions_String[iopt];
 }
 
-bool GMSH_HomologyPostProcessingPlugin::parseStringOpt
-(int stringOpt, std::vector<int>& intList)
+bool GMSH_HomologyPostProcessingPlugin::parseStringOpt(
+  int stringOpt, std::vector<int> &intList)
 {
   std::string list = HomologyPostProcessingOptions_String[stringOpt].def;
   intList.clear();
@@ -91,9 +98,9 @@ bool GMSH_HomologyPostProcessingPlugin::parseStringOpt
   int n;
   char a;
   std::istringstream ss(list);
-  while(ss >> n){
+  while(ss >> n) {
     intList.push_back(n);
-    if(ss >> a){
+    if(ss >> a) {
       if(a != ',') {
         Msg::Error("Unexpected character \'%c\' while parsing \'%s\'", a,
                    HomologyPostProcessingOptions_String[stringOpt].str);
@@ -104,35 +111,32 @@ bool GMSH_HomologyPostProcessingPlugin::parseStringOpt
   return true;
 }
 
-int GMSH_HomologyPostProcessingPlugin::detIntegerMatrix
-(std::vector<int>& matrix)
+int GMSH_HomologyPostProcessingPlugin::detIntegerMatrix(
+  std::vector<int> &matrix)
 {
   int n = sqrt((double)matrix.size());
-  fullMatrix<double> m(n,n);
+  fullMatrix<double> m(n, n);
   for(int i = 0; i < n; i++)
-    for(int j = 0; j < n; j++)
-      m(i,j) = matrix.at(i*n+j);
+    for(int j = 0; j < n; j++) m(i, j) = matrix.at(i * n + j);
 
   return m.determinant();
 }
 
-bool GMSH_HomologyPostProcessingPlugin::invertIntegerMatrix
-(std::vector<int>& matrix)
+bool GMSH_HomologyPostProcessingPlugin::invertIntegerMatrix(
+  std::vector<int> &matrix)
 {
   int n = sqrt((double)matrix.size());
-  fullMatrix<double> m(n,n);
+  fullMatrix<double> m(n, n);
   for(int i = 0; i < n; i++)
-    for(int j = 0; j < n; j++)
-      m(i,j) = matrix.at(i*n+j);
+    for(int j = 0; j < n; j++) m(i, j) = matrix.at(i * n + j);
 
-  if(!m.invertInPlace()){
+  if(!m.invertInPlace()) {
     Msg::Error("Matrix is not unimodular");
     return false;
   }
 
   for(int i = 0; i < n; i++)
-    for(int j = 0; j < n; j++)
-      matrix.at(i*n+j) = m(i,j);
+    for(int j = 0; j < n; j++) matrix.at(i * n + j) = m(i, j);
   return true;
 }
 
@@ -146,7 +150,7 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   std::string projectString = HomologyPostProcessingOptions_String[4].def;
   int bd = (int)HomologyPostProcessingOptions_Number[0].def;
 
-  GModel* m = GModel::current();
+  GModel *m = GModel::current();
 
   int n;
   char a;
@@ -155,10 +159,10 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   std::vector<int> matrix;
   if(matrixString != "I") {
     std::istringstream ss(matrixString);
-    while(ss >> n){
+    while(ss >> n) {
       matrix.push_back(n);
       col++;
-      if(ss >> a){
+      if(ss >> a) {
         if(a != ',' && a != ';') {
           Msg::Error("Unexpected character \'%c\' while parsing \'%s\'", a,
                      HomologyPostProcessingOptions_String[0].str);
@@ -183,10 +187,11 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
 
   int rows = 0;
   if(!matrix.empty()) {
-    rows = matrix.size()/cols;
+    rows = matrix.size() / cols;
     if((int)matrix.size() % cols != 0) {
-      Msg::Error("Number of matrix rows and columns aren't compatible (residual: %d)",
-                 (int)matrix.size() % cols);
+      Msg::Error(
+        "Number of matrix rows and columns aren't compatible (residual: %d)",
+        (int)matrix.size() % cols);
       return 0;
     }
   }
@@ -196,18 +201,18 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   std::vector<int> basisPhysicals2;
   if(!parseStringOpt(2, basisPhysicals2)) return 0;
 
-  if(matrixString != "I" &&
-     (int)basisPhysicals.size() != cols &&
+  if(matrixString != "I" && (int)basisPhysicals.size() != cols &&
      basisPhysicals2.empty()) {
-    Msg::Error("Number of matrix columns and operated chains must match (%d != %d)", cols, basisPhysicals.size());
+    Msg::Error(
+      "Number of matrix columns and operated chains must match (%d != %d)",
+      cols, basisPhysicals.size());
     return 0;
   }
   else if(matrixString == "I") {
     cols = basisPhysicals.size();
     rows = cols;
-    matrix = std::vector<int>(cols*cols, 0);
-    for(int i = 0; i < cols; i++)
-      matrix.at(i*cols+i) = 1;
+    matrix = std::vector<int>(cols * cols, 0);
+    for(int i = 0; i < cols; i++) matrix.at(i * cols + i) = 1;
   }
 
   if(!basisPhysicals2.empty() &&
@@ -223,7 +228,7 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   if(!parseStringOpt(4, projectPhysicals)) return 0;
 
   std::vector<Chain<int> > curBasis;
-  for(unsigned int i = 0; i < basisPhysicals.size(); i++){
+  for(unsigned int i = 0; i < basisPhysicals.size(); i++) {
     curBasis.push_back(Chain<int>(m, basisPhysicals.at(i)));
   }
   if(curBasis.empty()) {
@@ -233,17 +238,17 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   int dim = curBasis.at(0).getDim();
 
   std::vector<Chain<int> > curBasis2;
-  for(unsigned int i = 0; i < basisPhysicals2.size(); i++){
+  for(unsigned int i = 0; i < basisPhysicals2.size(); i++) {
     curBasis2.push_back(Chain<int>(m, basisPhysicals2.at(i)));
   }
 
   if(!curBasis2.empty()) {
     rows = curBasis2.size();
     cols = curBasis.size();
-    matrix = std::vector<int>(rows*cols, 0);
+    matrix = std::vector<int>(rows * cols, 0);
     for(int i = 0; i < rows; i++)
       for(int j = 0; j < cols; j++)
-        matrix.at(i*cols+j) = incidence(curBasis2.at(i), curBasis.at(j));
+        matrix.at(i * cols + j) = incidence(curBasis2.at(i), curBasis.at(j));
   }
 
   if(!curBasis2.empty())
@@ -252,11 +257,12 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
     Msg::Debug("Transformation matrix: ");
   for(int i = 0; i < rows; i++)
     for(int j = 0; j < cols; j++)
-      Msg::Debug("(%d, %d) = %d", i, j, matrix.at(i*cols+j));
+      Msg::Debug("(%d, %d) = %d", i, j, matrix.at(i * cols + j));
 
   std::vector<Chain<int> > newBasis(rows, Chain<int>());
   if(!curBasis2.empty()) {
-    Msg::Info("Computing new basis %d-chains such that the incidence matrix of %d-chain bases %s and %s is the indentity matrix",
+    Msg::Info("Computing new basis %d-chains such that the incidence matrix of "
+              "%d-chain bases %s and %s is the indentity matrix",
               dim, dim, opString1.c_str(), opString2.c_str());
     int det = detIntegerMatrix(matrix);
     if(det != 1 && det != -1)
@@ -264,7 +270,8 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
     if(!invertIntegerMatrix(matrix)) return 0;
     for(int i = 0; i < rows; i++)
       for(int j = 0; j < cols; j++)
-        newBasis.at(i) += matrix.at(i*cols+j)*curBasis2.at(j); }
+        newBasis.at(i) += matrix.at(i * cols + j) * curBasis2.at(j);
+  }
   else {
     Msg::Info("Applying transformation matrix [%s] to %d-chains %s",
               matrixString.c_str(), dim, opString1.c_str());
@@ -275,8 +282,7 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
     }
     for(int i = 0; i < rows; i++)
       for(int j = 0; j < cols; j++)
-        newBasis.at(i) += matrix.at(i*cols+j)*curBasis.at(j);
-
+        newBasis.at(i) += matrix.at(i * cols + j) * curBasis.at(j);
   }
 
   if(bd) {
@@ -286,23 +292,24 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   }
 
   if(!tracePhysicals.empty()) {
-    Msg::Info("Taking trace of result %d-chains to domain %s",
-              dim, traceString.c_str());
+    Msg::Info("Taking trace of result %d-chains to domain %s", dim,
+              traceString.c_str());
     for(unsigned int i = 0; i < newBasis.size(); i++)
       newBasis.at(i) = newBasis.at(i).getTrace(m, tracePhysicals);
   }
   if(!projectPhysicals.empty()) {
-    Msg::Info("Taking projection of result %d-chains to the complement of the domain %s", dim, projectString.c_str());
+    Msg::Info("Taking projection of result %d-chains to the complement of the "
+              "domain %s",
+              dim, projectString.c_str());
     for(unsigned int i = 0; i < newBasis.size(); i++)
       newBasis.at(i) = newBasis.at(i).getProject(m, projectPhysicals);
   }
   if(!tracePhysicals.empty() || !projectPhysicals.empty())
     ElemChain::clearVertexCache();
 
-
   for(unsigned int i = 0; i < newBasis.size(); i++) {
     std::string dims = convertInt(newBasis.at(i).getDim());
-    std::string nums = convertInt(i+1);
+    std::string nums = convertInt(i + 1);
     newBasis.at(i).setName("C" + dims + " " + cname + nums);
     newBasis.at(i).addToModel(m);
   }
