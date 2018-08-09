@@ -268,7 +268,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
               fclose(fp);
               return false;
             }
-            int num = v->getIndex();
+            int num = version >= 3.0 ? v->getNum() : v->getIndex();
             if(binary) {
               fwrite(&num, sizeof(int), 1, fp);
               fwrite(_steps[step]->getData(i), sizeof(double), numComp, fp);
