@@ -557,7 +557,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
             }
           }
           vertex =
-            new MEdgeVertex(xyz[0], xyz[1], xyz[2], entity, u, -1.0, nodeTag);
+            new MEdgeVertex(xyz[0], xyz[1], xyz[2], entity, u, nodeTag);
           break;
         case 2:
           if(binary) {
