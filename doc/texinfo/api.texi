@@ -4,10 +4,10 @@
 @ftable @code
 @item initialize
 Initialize Gmsh. This must be called before any call to the other functions in
-the API. If @code{argc} and @code{argv} are provided, they will be handled in
-the same way as the command line arguments in the Gmsh app. If
-@code{readConfigFiles} is set, read system Gmsh configuration files (gmshrc and
-gmsh-options).
+the API. If @code{argc} and @code{argv} (or just @code{argv} in Python or Julia)
+are provided, they will be handled in the same way as the command line arguments
+in the Gmsh app. If @code{readConfigFiles} is set, read system Gmsh
+configuration files (gmshrc and gmsh-options).
 
 @table @asis
 @item Input:

@@ -3096,10 +3096,12 @@ void status_options_cb(Fl_Widget *w, void *data)
     if(opt_mesh_volumes_edges(0, GMSH_GET, 0)) menu[a + 18].set(); else menu[a + 18].clear();
     if(opt_mesh_volumes_faces(0, GMSH_GET, 0)) menu[a + 19].set(); else menu[a + 19].clear();
     if(PView::list.empty()){
+      // if there are no post-processing view, hide all entries below the mesh options...
       menu[a + 23].flags = 0;
       for(int i = 24; i < 42; i++) menu[a + i].hide();
     }
     else{
+      // otherwise add a divider and show the post-pro view entries
       menu[a + 23].flags = FL_MENU_DIVIDER;
       for(int i = 24; i < 42; i++) menu[a + i].show();
       menu[a + 24].clear();
@@ -3110,6 +3112,7 @@ void status_options_cb(Fl_Widget *w, void *data)
         }
       }
     }
+    // popup the menu
     static Fl_Menu_Item *picked = &menu[a + 21];
     picked = (Fl_Menu_Item*)menu->popup(Fl::event_x(), Fl::event_y(), 0,
                                         (picked && picked->visible()) ? picked :

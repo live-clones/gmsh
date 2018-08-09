@@ -376,7 +376,7 @@ bool PView::write(const std::string &fileName, int format, bool append)
     else if(ext == ".stl")
       ret = _data->writeSTL(fileName);
     else if(ext == ".msh")
-      ret = _data->writeMSH(fileName, CTX::instance()->mesh.mshFileVersion,
+      ret = _data->writeMSH(fileName, 2.2,
                             CTX::instance()->mesh.binary,
                             CTX::instance()->post.saveMesh, append, 0,
                             CTX::instance()->post.saveInterpolationMatrices,

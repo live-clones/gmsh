@@ -6,7 +6,7 @@
 #ifndef _GMSH_H_
 #define _GMSH_H_
 
-// This file redefines the Gmsh C++ API in terms of the C API (v3.0).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.0).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
