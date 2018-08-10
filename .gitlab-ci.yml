@@ -358,7 +358,7 @@ doc_official_snapshot:
     - /usr/local/bin/cmake ${EXTRA_OPTION} ..
     - make doc
     - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
-    - ssh -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa geuzaine@gmsh.info cd .wwwgmsh/dev && tar zxvf ../doc.tgz
+    - ssh -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa geuzaine@gmsh.info 'cd .wwwgmsh/dev && tar zxvf ../doc.tgz'
   tags:
     - linux64
     - official
@@ -376,7 +376,7 @@ doc_official_release:
     - /usr/local/bin/cmake ${EXTRA_OPTION} ..
     - make doc
     - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
-    - ssh -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa geuzaine@gmsh.info cd .wwwgmsh && tar zxvf doc.tgz
+    - ssh -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa geuzaine@gmsh.info 'cd .wwwgmsh && tar zxvf doc.tgz'
   tags:
     - linux64
     - official
