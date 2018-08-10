@@ -349,7 +349,7 @@ source_official_release:
 # Official documentation (master branch only)
 # ----------------------------------------------
 
-doc_official_snapshot
+doc_official_snapshot:
   only:
     - master@gmsh/gmsh
   script:
