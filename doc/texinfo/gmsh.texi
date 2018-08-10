@@ -3568,26 +3568,26 @@ underlying mesh, and can therefore be easier to use in some
 cases.)
 
 @menu
-* MSH4 file format::
+* MSH file format (version 4)::
 * Node ordering::
 * Legacy formats::
 @end menu
 
 @c -------------------------------------------------------------------------
-@c MSH4 file format
+@c MSH file format (version 4)
 @c -------------------------------------------------------------------------
 
-@node MSH4 file format, Node ordering, File formats, File formats
-@section MSH4 file format
+@node MSH file format (version 4), Node ordering, File formats, File formats
+@section MSH file format (version 4)
 
 @cindex Mesh, file format
 @cindex File format, mesh
 @cindex MSH4 file
 
-The MSH4 file format contains one mandatory section giving information
-about the file (@code{$MeshFormat}), followed by several sections
-defining the physical group names (@code{$PhysicalName}, optional), the
-entities (@code{$Entities}), the partitioned entities
+The MSH file format (version 4) contains one mandatory section giving
+information about the file (@code{$MeshFormat}), followed by several
+sections defining the physical group names (@code{$PhysicalName},
+optional), the entities (@code{$Entities}), the partitioned entities
 (@code{$PartitionedEntities}, optional), nodes (@code{$Nodes}), elements
 (@code{$Elements}), periodicity relations (@code{$Periodic}, optional),
 ghost elements (@code{$GhostElements}, optional) and post-processing
@@ -3613,12 +3613,12 @@ can be put into separate files (e.g. one file per time step).  Nodes are
 assumed to be defined before elements.
 
 @example
-$MeshFormat // same as MSH2
+$MeshFormat // same as MSH version 2
   version(double) binary(int) size(unsigned long)
   <swapping bit for binary format>
 $EndMeshFormat
 
-<$PhysicalNames> // same as MSH2
+<$PhysicalNames> // same as MSH version 2
   numPhysicalNames(int)
   dimension(int) tag(int) name(127 characters max)
   ...
@@ -3704,7 +3704,7 @@ $Elements
   ...
 $EndElements
 
-<$Periodic> // same as in MSH2 and MSH3
+<$Periodic> // same as in MSH version 2
   numPeriodicLinks(int)
   slaveDim(int) slaveTag(int) masterTag(int)
     < Affine values[...](double) >
@@ -3854,14 +3854,15 @@ with the edges, 54 with the faces, 27 in the volume)
 @end table
 See below for the ordering of the nodes.
 
-The post-processing sections are identical to the ones in the MSH2 file
-format (see below).
+The post-processing sections are identical to the ones in the version 2
+file format (see below). These sections will be reworked in a future
+minor revision of the version 4 format (e.g. version 4.1 or 4.2).
 
 @c -------------------------------------------------------------------------
 @c Node ordering
 @c -------------------------------------------------------------------------
 
-@node Node ordering, Legacy formats, MSH4 file format, File formats
+@node Node ordering, Legacy formats, MSH file format (version 4), File formats
 @section Node ordering
 
 @cindex Nodes, ordering
@@ -4063,8 +4064,8 @@ you do not use them in new applications.
 @subsection MSH file format version 2
 
 The MSH file format version 2 is Gmsh's previous native mesh file
-format, now superseded by the format described in @ref{MSH4 file
-format}. It is defined as follows:
+format, now superseded by the format described in @ref{MSH file format
+(version 4)}. It is defined as follows:
 
 The format is defined as follows:
 
@@ -4179,8 +4180,8 @@ is the number (index) of the @var{n}-th element in the mesh;
 ordered sequence.
 
 @item @var{elm-type}
-defines the geometrical type of the @var{n}-th element: see @ref{MSH4
-file format}.
+defines the geometrical type of the @var{n}-th element: see @ref{MSH
+file format (version 4)}.
 
 @item @var{number-of-tags}
 gives the number of integer tags that follow for the @var{n}-th
@@ -4397,8 +4398,8 @@ for(i = 0; i < number_of_triangles; i++)@{
 @subsection MSH file format version 1
 
 The MSH file format version 1 is Gmsh's original native mesh file
-format, now superseded by the format described in @ref{MSH4 file
-format}. It is defined as follows:
+format, now superseded by the format described in @ref{MSH file
+format (version 4)}. It is defined as follows:
 
 @example
 $NOD
@@ -4520,7 +4521,7 @@ element. The ordering of the nodes is given in @ref{Node ordering}.
 @subsection POS ASCII file format (Legacy)
 
 The POS ASCII file is Gmsh's old native post-processing format, now
-superseded by the format described in @ref{MSH4 file format}. It is
+superseded by the format described in @ref{MSH file format (version 4)}. It is
 defined as follows:
 
 @example
