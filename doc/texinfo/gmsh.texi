@@ -222,9 +222,9 @@ instructions are prescribed either interactively using the graphical
 user interface (GUI) or in text files using Gmsh's own scripting
 language.  Interactive actions generate language bits in the input
 files, and vice versa. This makes it possible to automate all
-treatments, using loops, conditionals and external system calls. (A
+treatments, using loops, conditionals and external system calls. A
 programming API is also available, for integrating Gmsh as a library in
-your own C++, C, Python or Julia code: @ref{Gmsh API}.) A brief
+your own C++, C, Python or Julia code: see @ref{Gmsh API}. A brief
 description of the four modules is given hereafter.
 
 @menu
@@ -5483,19 +5483,15 @@ a list or tree browser, by tag, interactively, or per window).
 
 @item Can I edit STEP/IGES/BRep models?
 
-Not yet. At the moment you can only change mesh element sizes, define
-volumes and physical groups, or delete entities. The easiest way to do
-this is to merge the model in a @file{.geo} file using @code{Merge
-"file.step";} and add the relevant scripting command after that. We plan
-to add more advanced editing features in the future (to delete entities,
-to create ``mixed'' surfaces and volumes, to export in @file{.geo}
-format, etc.).
+Yes. With the OpenCASCADE kernel (@code{SetFactory("OpenCASCADE");), 
+load the file (@code{Merge "file.step";} or @code{ShapeFromFile("file.step")})
+and add the relevant scripting commands after that to delete parts,
+create new parts or appy boolean operators.
 
 @item How can I build modular geometries?
 
-Define common geometrical objects and options in separate files,
-reusable in all your problem definition structures. Then Include the
-files in your main project file.
+Define common geometrical objects and options in separate files or using
+@code{Macro}, reusable in all your problem definition structures.
 @end enumerate
 
 @c -------------------------------------------------------------------------
@@ -5572,11 +5568,10 @@ algorithm with smoothing (e.g., with @code{Mesh.Smoothing = 10}).
 
 @item Does Gmsh support curved elements?
 
-Yes, Gmsh can generate both 1st order and 2nd order elements. To
-generate second order elements, click on `High order' in the mesh
-menu after the mesh is completed. To always generate 2nd order
-elements, select `Generate second order elements' in the mesh option
-panel. From the command line, you can also use @code{-order 2}.
+Yes, just choose the appropriate order in the mesh menu after the mesh is 
+completed. High order optimization tools are in development and also available
+in the mesh menu. You can select the order on the command line with e.g. 
+@code{-order 2}.
 
 @item Can I import an existing surface mesh in Gmsh and use it to build a 3D mesh?
 
@@ -5626,11 +5621,8 @@ the number of elements vs. the quality measure.
 
 @item Why don't the node and/or elememt numbers on the screen match the numbers in the mesh file?
 
-Gmsh reindexes the mesh nodes and elements so that they are
-numbered in a continuous sequence in the output files. The numbers
-displayed on screen after mesh generation thus usually differ from the
-ones saved in the mesh files. To check the actual numbers saved in the
-output file just load the mesh file back using `File->Open'.
+This was a feature of the legacy version 1 and version 2 MSH file formats. 
+The MSH format version 4 does not renumber nodes and elements by default.
 @end enumerate
 
 @c -------------------------------------------------------------------------
