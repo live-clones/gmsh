@@ -356,3 +356,39 @@ source_official_release:
     - official
   only:
     - /^gmsh_.*$/
+
+# ----------------------------------------------
+# Official documentation (master branch only)
+# ----------------------------------------------
+
+.doc_official: &doc_official
+  only:
+    - master@gmsh/gmsh
+  script:
+    - mkdir build_doc
+    - cd build_doc
+    - /usr/local/bin/cmake ${EXTRA_OPTION} ..
+    - make doc
+    - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
+
+doc_official_snapshot:
+  <<: *doc_official
+  script:
+    - ssh -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa cd .wwwgmsh/dev && tar zxvf ../doc.tgz
+  tags:
+    - linux64
+    - official
+  except:
+    - tags
+
+doc_official_release:
+  variables:
+    EXTRA_OPTION: "-DGMSH_RELEASE=1"
+  <<: *doc_official
+  script:
+    - ssh -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa cd .wwwgmsh && tar zxvf doc.tgz
+  tags:
+    - linux64
+    - official
+  only:
+    - /^gmsh_.*$/
