@@ -47,6 +47,12 @@ RUN cd gmsh_mini_lib && mkdir lib && cd lib && cmake -DDEFAULT=0 -DENABLE_PARSER
 RUN apt-get install -y libhdf5-dev
 RUN apt-get install -y libcgns-dev
 
+# -----------------------
+# Latex and texinfo
+# -----------------------
+
+RUN apt-get install -y texlive texinfo
+
 VOLUME ["/etc/gitlab-runner"]
 RUN useradd -ms /bin/bash validator
 USER validator

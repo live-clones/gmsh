@@ -285,12 +285,12 @@ windows32-sdk_official_release:
     - if [[ $PKG == *".dmg"* ]]; then scp ace@ace36.montefiore.ulg.ac.be:/tmp/${PKG} .; fi
     - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/MacOSX/${PKG/\.tar\.gz/\.tgz}
     - /usr/local/bin/ctest -D Experimental -j 2 --output-on-failure
-
-macos64_official_snapshot:
-  <<: *macos_official
   tags:
     - macos64
     - official
+
+macos64_official_snapshot:
+  <<: *macos_official
   except:
     - tags
 
@@ -298,9 +298,6 @@ macos64_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *macos_official
-  tags:
-    - macos64
-    - official
   only:
     - /^gmsh_.*$/
 
@@ -308,9 +305,6 @@ macos64-sdk_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *macos_official
-  tags:
-    - macos64
-    - official
   except:
     - tags
 
@@ -318,9 +312,6 @@ macos64-sdk_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *macos_official
-  tags:
-    - macos64
-    - official
   only:
     - /^gmsh_.*$/
 
@@ -338,12 +329,12 @@ macos64-sdk_official_release:
     - make package_source
     - PKG=`ls gmsh-*.tar*`
     - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/src/${PKG/\.tar\.gz/\.tgz}
-
-source_official_snapshot:
-  <<: *source_official
   tags:
     - linux64
     - official
+
+source_official_snapshot:
+  <<: *source_official
   except:
     - tags
 
@@ -351,9 +342,6 @@ source_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *source_official
-  tags:
-    - linux64
-    - official
   only:
     - /^gmsh_.*$/
 
@@ -364,6 +352,9 @@ source_official_release:
 .doc_official: &doc_official
   only:
     - master@gmsh/gmsh
+  tags:
+    - linux64
+    - official
   script:
     - mkdir build_doc
     - cd build_doc
@@ -373,11 +364,7 @@ source_official_release:
 
 doc_official_snapshot:
   <<: *doc_official
-  script:
-    - ssh -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa cd .wwwgmsh/dev && tar zxvf ../doc.tgz
-  tags:
-    - linux64
-    - official
+    - ssh -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa geuzaine@gmsh.info cd .wwwgmsh/dev && tar zxvf ../doc.tgz
   except:
     - tags
 
@@ -385,10 +372,6 @@ doc_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *doc_official
-  script:
-    - ssh -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa cd .wwwgmsh && tar zxvf doc.tgz
-  tags:
-    - linux64
-    - official
+    - ssh -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa geuzaine@gmsh.info cd .wwwgmsh && tar zxvf doc.tgz
   only:
     - /^gmsh_.*$/
