@@ -400,7 +400,7 @@ Evaluate the parametrization of the entity of dimension @code{dim} and tag
 triplets of x, y, z coordinates in @code{points}. Only valid for @code{dim}
 equal to 0, 1 (with @code{parametricCoord} containing parametric coordinates on
 the curve) or 2 (with @code{parametricCoord} containing pairs of u, v parametric
-coordinates on the surface),
+coordinates on the surface, concatenated),
 
 @table @asis
 @item Input:
@@ -417,7 +417,7 @@ Evaluate the derivative of the parametrization of the entity of dimension
 @code{parametricCoord}. Only valid for @code{dim} equal to 1 (with
 @code{parametricCoord} containing parametric coordinates on the curve) or 2
 (with @code{parametricCoord} containing pairs of u, v parametric coordinates on
-the surface).
+the surface, concatenated).
 
 @table @asis
 @item Input:
@@ -433,7 +433,7 @@ Evaluate the (maximum) curvature of the entity of dimension @code{dim} and tag
 @code{tag} at the parametric coordinates @code{parametricCoord}. Only valid for
 @code{dim} equal to 1 (with @code{parametricCoord} containing parametric
 coordinates on the curve) or 2 (with @code{parametricCoord} containing pairs of
-u, v parametric coordinates on the surface).
+u, v parametric coordinates on the surface, concatenated).
 
 @table @asis
 @item Input:

@@ -560,7 +560,7 @@ the parametric coordinates `parametricCoord` and return triplets of x, y, z
 coordinates in `points`. Only valid for `dim` equal to 0, 1 (with
 `parametricCoord` containing parametric coordinates on the curve) or 2 (with
 `parametricCoord` containing pairs of u, v parametric coordinates on the
-surface),
+surface, concatenated),
 
 Return `points`.
 """
@@ -583,7 +583,7 @@ Evaluate the derivative of the parametrization of the entity of dimension `dim`
 and tag `tag` at the parametric coordinates `parametricCoord`. Only valid for
 `dim` equal to 1 (with `parametricCoord` containing parametric coordinates on
 the curve) or 2 (with `parametricCoord` containing pairs of u, v parametric
-coordinates on the surface).
+coordinates on the surface, concatenated).
 
 Return `derivatives`.
 """
@@ -606,7 +606,7 @@ Evaluate the (maximum) curvature of the entity of dimension `dim` and tag `tag`
 at the parametric coordinates `parametricCoord`. Only valid for `dim` equal to 1
 (with `parametricCoord` containing parametric coordinates on the curve) or 2
 (with `parametricCoord` containing pairs of u, v parametric coordinates on the
-surface).
+surface, concatenated).
 
 Return `curvatures`.
 """

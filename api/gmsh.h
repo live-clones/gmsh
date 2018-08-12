@@ -223,7 +223,7 @@ namespace gmsh { // Top-level functions
     // z coordinates in `points'. Only valid for `dim' equal to 0, 1 (with
     // `parametricCoord' containing parametric coordinates on the curve) or 2 (with
     // `parametricCoord' containing pairs of u, v parametric coordinates on the
-    // surface),
+    // surface, concatenated),
     GMSH_API void getValue(const int dim,
                            const int tag,
                            const std::vector<double> & parametricCoord,
@@ -233,7 +233,7 @@ namespace gmsh { // Top-level functions
     // `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only
     // valid for `dim' equal to 1 (with `parametricCoord' containing parametric
     // coordinates on the curve) or 2 (with `parametricCoord' containing pairs of
-    // u, v parametric coordinates on the surface).
+    // u, v parametric coordinates on the surface, concatenated).
     GMSH_API void getDerivative(const int dim,
                                 const int tag,
                                 const std::vector<double> & parametricCoord,
@@ -243,7 +243,7 @@ namespace gmsh { // Top-level functions
     // `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim'
     // equal to 1 (with `parametricCoord' containing parametric coordinates on the
     // curve) or 2 (with `parametricCoord' containing pairs of u, v parametric
-    // coordinates on the surface).
+    // coordinates on the surface, concatenated).
     GMSH_API void getCurvature(const int dim,
                                const int tag,
                                const std::vector<double> & parametricCoord,

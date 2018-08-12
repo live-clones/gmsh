@@ -230,7 +230,7 @@ GMSH_API void gmshModelGetParent(const int dim,
  * y, z coordinates in `points'. Only valid for `dim' equal to 0, 1 (with
  * `parametricCoord' containing parametric coordinates on the curve) or 2
  * (with `parametricCoord' containing pairs of u, v parametric coordinates on
- * the surface), */
+ * the surface, concatenated), */
 GMSH_API void gmshModelGetValue(const int dim,
                                 const int tag,
                                 double * parametricCoord, size_t parametricCoord_n,
@@ -241,7 +241,7 @@ GMSH_API void gmshModelGetValue(const int dim,
  * `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only
  * valid for `dim' equal to 1 (with `parametricCoord' containing parametric
  * coordinates on the curve) or 2 (with `parametricCoord' containing pairs of
- * u, v parametric coordinates on the surface). */
+ * u, v parametric coordinates on the surface, concatenated). */
 GMSH_API void gmshModelGetDerivative(const int dim,
                                      const int tag,
                                      double * parametricCoord, size_t parametricCoord_n,
@@ -252,7 +252,7 @@ GMSH_API void gmshModelGetDerivative(const int dim,
  * `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim'
  * equal to 1 (with `parametricCoord' containing parametric coordinates on the
  * curve) or 2 (with `parametricCoord' containing pairs of u, v parametric
- * coordinates on the surface). */
+ * coordinates on the surface, concatenated). */
 GMSH_API void gmshModelGetCurvature(const int dim,
                                     const int tag,
                                     double * parametricCoord, size_t parametricCoord_n,
