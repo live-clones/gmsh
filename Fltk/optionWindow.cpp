@@ -190,9 +190,9 @@ static void general_options_color_scheme_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
+void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
 {
-  Msg::StatusGl("Select entity or element\n[Press 'q' to abort]");
+  Msg::StatusGl("Select geometrical entity, mesh element or post-processing view\n[Press 'q' to abort]");
 
   CTX::instance()->pickElements = 1;
   CTX::instance()->mesh.changed = ENT_ALL;
@@ -212,10 +212,12 @@ static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
       pc = FlGui::instance()->selectedFaces[0]->bounds().center();
     else if(FlGui::instance()->selectedRegions.size())
       pc = FlGui::instance()->selectedRegions[0]->bounds().center();
+    else if(FlGui::instance()->selectedViews.size() &&
+            FlGui::instance()->selectedViews[0]->getData())
+      pc = FlGui::instance()->selectedViews[0]->getData()->getBoundingBox().center();
     opt_general_rotation_center0(0, GMSH_SET | GMSH_GUI, pc.x());
     opt_general_rotation_center1(0, GMSH_SET | GMSH_GUI, pc.y());
     opt_general_rotation_center2(0, GMSH_SET | GMSH_GUI, pc.z());
-
     drawContext *ctx =
       FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
     ctx->recenterForRotationCenterChange(pc);
@@ -228,7 +230,7 @@ static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
   Msg::StatusGl("");
 }
 
-static void general_options_ok_cb(Fl_Widget *w, void *data)
+void general_options_ok_cb(Fl_Widget *w, void *data)
 {
   optionWindow *o = FlGui::instance()->options;
   o->activate((const char *)data);

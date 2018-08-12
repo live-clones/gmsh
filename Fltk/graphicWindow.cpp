@@ -2770,6 +2770,11 @@ void quick_access_cb(Fl_Widget *w, void *data)
     status_xyz1p_cb(0, (void *)"1:1");
     status_xyz1p_cb(0, (void *)"z");
   }
+  else if(what == "select_center"){
+    opt_general_rotation_center_cg(0, GMSH_SET | GMSH_GUI, 0);
+    general_options_ok_cb(0, (void *)"rotation_center");
+    general_options_rotation_center_select_cb(0, 0);
+  }
   else if(what == "axes"){
     opt_general_axes(0, GMSH_SET|GMSH_GUI,
                      opt_general_axes(0, GMSH_GET, 0) ? 0 : 3);
@@ -3018,7 +3023,8 @@ void status_options_cb(Fl_Widget *w, void *data)
   }
   else if(what == "quick_access"){ // quick access menu
     static Fl_Menu_Item menu[] = {
-      { "Reset viewport", 0, quick_access_cb, (void*)"reset_viewport",
+      { "Reset viewport", 0, quick_access_cb, (void*)"reset_viewport" },
+      { "Select rotation center", 0, quick_access_cb, (void*)"select_center",
         FL_MENU_DIVIDER },
       { "Axes", FL_ALT + 'a', quick_access_cb, (void*)"axes",
         FL_MENU_TOGGLE },
@@ -3085,38 +3091,38 @@ void status_options_cb(Fl_Widget *w, void *data)
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0) && opt_view_axes(i, GMSH_GET, 0))
         menu[a + 0].set();
-    if(opt_geometry_points(0, GMSH_GET, 0)) menu[a + 7].set(); else menu[a + 7].clear();
-    if(opt_geometry_curves(0, GMSH_GET, 0)) menu[a + 8].set(); else menu[a + 8].clear();
-    if(opt_geometry_surfaces(0, GMSH_GET, 0)) menu[a + 9].set(); else menu[a + 9].clear();
-    if(opt_geometry_volumes(0, GMSH_GET, 0)) menu[a + 10].set(); else menu[a + 10].clear();
-    if(opt_mesh_points(0, GMSH_GET, 0)) menu[a + 14].set(); else menu[a + 14].clear();
-    if(opt_mesh_lines(0, GMSH_GET, 0)) menu[a + 15].set(); else menu[a + 15].clear();
-    if(opt_mesh_surfaces_edges(0, GMSH_GET, 0)) menu[a + 16].set(); else menu[a + 16].clear();
-    if(opt_mesh_surfaces_faces(0, GMSH_GET, 0)) menu[a + 17].set(); else menu[a + 17].clear();
-    if(opt_mesh_volumes_edges(0, GMSH_GET, 0)) menu[a + 18].set(); else menu[a + 18].clear();
-    if(opt_mesh_volumes_faces(0, GMSH_GET, 0)) menu[a + 19].set(); else menu[a + 19].clear();
+    if(opt_geometry_points(0, GMSH_GET, 0)) menu[a + 8].set(); else menu[a + 8].clear();
+    if(opt_geometry_curves(0, GMSH_GET, 0)) menu[a + 9].set(); else menu[a + 9].clear();
+    if(opt_geometry_surfaces(0, GMSH_GET, 0)) menu[a + 10].set(); else menu[a + 10].clear();
+    if(opt_geometry_volumes(0, GMSH_GET, 0)) menu[a + 11].set(); else menu[a + 11].clear();
+    if(opt_mesh_points(0, GMSH_GET, 0)) menu[a + 15].set(); else menu[a + 15].clear();
+    if(opt_mesh_lines(0, GMSH_GET, 0)) menu[a + 16].set(); else menu[a + 16].clear();
+    if(opt_mesh_surfaces_edges(0, GMSH_GET, 0)) menu[a + 17].set(); else menu[a + 17].clear();
+    if(opt_mesh_surfaces_faces(0, GMSH_GET, 0)) menu[a + 18].set(); else menu[a + 18].clear();
+    if(opt_mesh_volumes_edges(0, GMSH_GET, 0)) menu[a + 19].set(); else menu[a + 19].clear();
+    if(opt_mesh_volumes_faces(0, GMSH_GET, 0)) menu[a + 20].set(); else menu[a + 20].clear();
     if(PView::list.empty()){
       // if there are no post-processing view, hide all entries below the mesh options...
-      menu[a + 23].flags = 0;
-      for(int i = 24; i < 42; i++) menu[a + i].hide();
+      menu[a + 24].flags = 0;
+      for(int i = 25; i < 43; i++) menu[a + i].hide();
     }
     else{
       // otherwise add a divider and show the post-pro view entries
-      menu[a + 23].flags = FL_MENU_DIVIDER;
-      for(int i = 24; i < 42; i++) menu[a + i].show();
-      menu[a + 24].clear();
+      menu[a + 24].flags = FL_MENU_DIVIDER;
+      for(int i = 25; i < 43; i++) menu[a + i].show();
+      menu[a + 25].clear();
       for(unsigned int i = 0; i < PView::list.size(); i++){
         if(opt_view_visible(i, GMSH_GET, 0) && opt_view_show_element(i, GMSH_GET, 0)){
-          menu[a + 24].set();
+          menu[a + 25].set();
           break;
         }
       }
     }
     // popup the menu
-    static Fl_Menu_Item *picked = &menu[a + 21];
+    static Fl_Menu_Item *picked = &menu[a + 22]; // toggle mesh display - the default
     picked = (Fl_Menu_Item*)menu->popup(Fl::event_x(), Fl::event_y(), 0,
                                         (picked && picked->visible()) ? picked :
-                                        &menu[a + 21], 0);
+                                        &menu[a + 22], 0);
     if(picked && picked->callback()) picked->do_callback(0, picked->user_data());
     drawContext::global()->draw();
   }
