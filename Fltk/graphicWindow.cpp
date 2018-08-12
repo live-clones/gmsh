@@ -2922,6 +2922,16 @@ void quick_access_cb(Fl_Widget *w, void *data)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_displacement_factor(i, GMSH_SET|GMSH_GUI, val);
   }
+  else if(what == "view_glyph_barycenter"){
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_glyph_location(i, GMSH_SET|GMSH_GUI, 1);
+  }
+  else if(what == "view_glyph_node"){
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_glyph_location(i, GMSH_SET|GMSH_GUI, 2);
+  }
   else if(what == "view_range_default"){
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
@@ -3040,7 +3050,7 @@ void status_options_cb(Fl_Widget *w, void *data)
          { "Curves", FL_ALT + 'l', quick_access_cb, (void*)"geometry_curves",
            FL_MENU_TOGGLE },
          { "Surfaces ", FL_ALT + 's', quick_access_cb, (void*)"geometry_surfaces",
-         FL_MENU_TOGGLE },
+           FL_MENU_TOGGLE },
          { "Volumes", FL_ALT + 'v', quick_access_cb, (void*)"geometry_volumes",
            FL_MENU_TOGGLE },
          { 0 },
@@ -3073,56 +3083,59 @@ void status_options_cb(Fl_Widget *w, void *data)
          { "Filled iso-values", 0, quick_access_cb, (void*)"view_filled"},
          { "Numeric values", 0, quick_access_cb, (void*)"view_numeric"},
          { 0 },
+      { "View range", 0, 0, 0, FL_SUBMENU },
+         { "Default", 0, quick_access_cb, (void*)"view_range_default"},
+         { "Per time step", 0, quick_access_cb, (void*)"view_range_per_step"},
+         { 0 },
       { "View vector display", 0, 0, 0, FL_SUBMENU },
          { "Line", 0, quick_access_cb, (void*)"view_line"},
          { "3D arrow", 0, quick_access_cb, (void*)"view_3d_arrow"},
          { "Displacement", 0, quick_access_cb, (void*)"view_displacement"},
          { 0 },
-      { "View range", 0, 0, 0, FL_SUBMENU },
-         { "Default", 0, quick_access_cb, (void*)"view_range_default"},
-         { "Per time step", 0, quick_access_cb, (void*)"view_range_per_step"},
+      { "View glyph location", 0, 0, 0, FL_SUBMENU },
+         { "Barycenter", 0, quick_access_cb, (void*)"view_glyph_barycenter"},
+         { "Node", 0, quick_access_cb, (void*)"view_glyph_node"},
          { 0 },
-      { "All view options...", 0, quick_access_cb, (void*)"view",
-        0, 0, FL_ITALIC },
+      { "All view options...", 0, quick_access_cb, (void*)"view", 0, 0, FL_ITALIC },
       { 0 }
     };
-    int a = 1;
-    if(opt_general_axes(0, GMSH_GET, 0)) menu[a + 0].set(); else menu[a + 0].clear();
+    const int gen = 2, geo = 8, msh = 15, pos = 26, end = 48;
+    if(opt_general_axes(0, GMSH_GET, 0)) menu[gen + 0].set(); else menu[gen + 0].clear();
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0) && opt_view_axes(i, GMSH_GET, 0))
-        menu[a + 0].set();
-    if(opt_geometry_points(0, GMSH_GET, 0)) menu[a + 8].set(); else menu[a + 8].clear();
-    if(opt_geometry_curves(0, GMSH_GET, 0)) menu[a + 9].set(); else menu[a + 9].clear();
-    if(opt_geometry_surfaces(0, GMSH_GET, 0)) menu[a + 10].set(); else menu[a + 10].clear();
-    if(opt_geometry_volumes(0, GMSH_GET, 0)) menu[a + 11].set(); else menu[a + 11].clear();
-    if(opt_mesh_points(0, GMSH_GET, 0)) menu[a + 15].set(); else menu[a + 15].clear();
-    if(opt_mesh_lines(0, GMSH_GET, 0)) menu[a + 16].set(); else menu[a + 16].clear();
-    if(opt_mesh_surfaces_edges(0, GMSH_GET, 0)) menu[a + 17].set(); else menu[a + 17].clear();
-    if(opt_mesh_surfaces_faces(0, GMSH_GET, 0)) menu[a + 18].set(); else menu[a + 18].clear();
-    if(opt_mesh_volumes_edges(0, GMSH_GET, 0)) menu[a + 19].set(); else menu[a + 19].clear();
-    if(opt_mesh_volumes_faces(0, GMSH_GET, 0)) menu[a + 20].set(); else menu[a + 20].clear();
+        menu[gen + 0].set();
+    if(opt_geometry_points(0, GMSH_GET, 0)) menu[geo + 1].set(); else menu[geo + 1].clear();
+    if(opt_geometry_curves(0, GMSH_GET, 0)) menu[geo + 2].set(); else menu[geo + 2].clear();
+    if(opt_geometry_surfaces(0, GMSH_GET, 0)) menu[geo + 3].set(); else menu[geo + 3].clear();
+    if(opt_geometry_volumes(0, GMSH_GET, 0)) menu[geo + 4].set(); else menu[geo + 4].clear();
+    if(opt_mesh_points(0, GMSH_GET, 0)) menu[msh + 1].set(); else menu[msh + 1].clear();
+    if(opt_mesh_lines(0, GMSH_GET, 0)) menu[msh + 2].set(); else menu[msh + 2].clear();
+    if(opt_mesh_surfaces_edges(0, GMSH_GET, 0)) menu[msh + 3].set(); else menu[msh + 3].clear();
+    if(opt_mesh_surfaces_faces(0, GMSH_GET, 0)) menu[msh + 4].set(); else menu[msh + 4].clear();
+    if(opt_mesh_volumes_edges(0, GMSH_GET, 0)) menu[msh + 5].set(); else menu[msh + 5].clear();
+    if(opt_mesh_volumes_faces(0, GMSH_GET, 0)) menu[msh + 6].set(); else menu[msh + 6].clear();
     if(PView::list.empty()){
       // if there are no post-processing view, hide all entries below the mesh options...
-      menu[a + 24].flags = 0;
-      for(int i = 25; i < 43; i++) menu[a + i].hide();
+      menu[pos - 1].flags = 0;
+      for(int i = pos; i <= end; i++) menu[i].hide();
     }
     else{
       // otherwise add a divider and show the post-pro view entries
-      menu[a + 24].flags = FL_MENU_DIVIDER;
-      for(int i = 25; i < 43; i++) menu[a + i].show();
-      menu[a + 25].clear();
+      menu[pos - 1].flags = FL_MENU_DIVIDER;
+      for(int i = pos; i <= end; i++) menu[i].show();
+      menu[pos].clear();
       for(unsigned int i = 0; i < PView::list.size(); i++){
         if(opt_view_visible(i, GMSH_GET, 0) && opt_view_show_element(i, GMSH_GET, 0)){
-          menu[a + 25].set();
+          menu[pos].set();
           break;
         }
       }
     }
     // popup the menu
-    static Fl_Menu_Item *picked = &menu[a + 22]; // toggle mesh display - the default
+    static Fl_Menu_Item *picked = &menu[msh + 8]; // toggle mesh display - the default
     picked = (Fl_Menu_Item*)menu->popup(Fl::event_x(), Fl::event_y(), 0,
                                         (picked && picked->visible()) ? picked :
-                                        &menu[a + 22], 0);
+                                        &menu[msh + 8], 0);
     if(picked && picked->callback()) picked->do_callback(0, picked->user_data());
     drawContext::global()->draw();
   }
