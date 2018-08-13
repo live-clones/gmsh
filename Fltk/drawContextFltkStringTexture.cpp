@@ -14,7 +14,7 @@
 #endif
 
 class drawContextFltkStringTexture::queueString {
- public :
+public:
   typedef struct {
     std::string text;
     GLfloat x, y, z;
@@ -24,11 +24,11 @@ class drawContextFltkStringTexture::queueString {
     int height;
   } element;
 
- private:
+private:
   std::vector<element> _elements;
   int _totalWidth, _maxHeight;
 
- public:
+public:
   queueString()
   {
     _totalWidth = 0;
@@ -36,8 +36,7 @@ class drawContextFltkStringTexture::queueString {
   }
   void append(const element &elem)
   {
-    if (_totalWidth + elem.width > 1000)
-      flush();
+    if(_totalWidth + elem.width > 1000) flush();
     _elements.push_back(elem);
     _totalWidth += elem.width;
     _maxHeight = std::max(_maxHeight, elem.height);
@@ -45,7 +44,7 @@ class drawContextFltkStringTexture::queueString {
   void flush()
   {
     if(_elements.empty()) return;
-    //1000 should be _totalWidth but it does not work
+    // 1000 should be _totalWidth but it does not work
     int w = 1000, h = _maxHeight;
     Fl_Offscreen offscreen = fl_create_offscreen(w, h);
     fl_begin_offscreen(offscreen);
@@ -53,25 +52,26 @@ class drawContextFltkStringTexture::queueString {
     fl_rectf(0, 0, w, h);
     fl_color(255, 255, 255);
     int pos = 0;
-    for(std::vector<element>::iterator it = _elements.begin(); it != _elements.end();  ++it) {
+    for(std::vector<element>::iterator it = _elements.begin();
+        it != _elements.end(); ++it) {
       fl_font(it->fontId, it->fontSize);
       fl_draw(it->text.c_str(), pos, it->height - fl_descent());
       pos += it->width;
     }
     uchar *data = fl_read_image(NULL, 0, 0, w, h);
-    for (int i = 0; i < w * h; ++i) {
+    for(int i = 0; i < w * h; ++i) {
       data[i] = data[i * 3];
     }
     fl_end_offscreen();
     fl_delete_offscreen(offscreen);
 
-    //setup matrices
+    // setup matrices
     GLint matrixMode;
     GLuint textureId;
     glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
-    glLoadIdentity ();
+    glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
@@ -81,10 +81,10 @@ class drawContextFltkStringTexture::queueString {
     // The size of the QUAD needs to be changed, too.
     float winw = Fl_Window::current()->w();
     float winh = Fl_Window::current()->h();
-    glScalef(2.0f / winw, 2.0f /  winh, 1.0f);
+    glScalef(2.0f / winw, 2.0f / winh, 1.0f);
     glTranslatef(-winw / 2.0f, -winh / 2.0f, 0.0f);
 
-    //write the texture on screen
+    // write the texture on screen
     glEnable(GL_TEXTURE_RECTANGLE_ARB);
     glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_COLOR_BUFFER_BIT);
     glDisable(GL_LIGHTING);
@@ -93,19 +93,20 @@ class drawContextFltkStringTexture::queueString {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glGenTextures(1, &textureId);
     glBindTexture(GL_TEXTURE_RECTANGLE_ARB, textureId);
-    glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_ALPHA, w, h, 0,
-                 GL_ALPHA, GL_UNSIGNED_BYTE, data);
-    //glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_SRC0_ALPHA);
-    //printf("error %i %s\n", __LINE__, gluErrorString(glGetError()));
+    glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_ALPHA, w, h, 0, GL_ALPHA,
+                 GL_UNSIGNED_BYTE, data);
+    // glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_SRC0_ALPHA);
+    // printf("error %i %s\n", __LINE__, gluErrorString(glGetError()));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     pos = 0;
-    for(std::vector<element>::iterator it = _elements.begin(); it != _elements.end();  ++it) {
+    for(std::vector<element>::iterator it = _elements.begin();
+        it != _elements.end(); ++it) {
       glTranslatef(it->x, it->y, it->z);
       glColor4f(it->r, it->g, it->b, it->alpha);
       int Lx = it->width;
       int Ly = it->height;
-      glBegin (GL_QUADS);
+      glBegin(GL_QUADS);
       glTexCoord2f(pos, 0);
       glVertex2f(0.0f, Ly);
       glTexCoord2f(pos + Lx, 0);
@@ -124,36 +125,40 @@ class drawContextFltkStringTexture::queueString {
 
     // reset original matrices
     glPopMatrix(); // GL_MODELVIEW
-    glMatrixMode (GL_PROJECTION);
+    glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(matrixMode);
     _elements.clear();
     _maxHeight = 0;
     _totalWidth = 0;
-    delete []data;
+    delete[] data;
   }
 };
 
-void drawContextFltkStringTexture::flushString()
-{
-  _queue->flush();
-}
+void drawContextFltkStringTexture::flushString() { _queue->flush(); }
 
-//ensure the surface is large enough
+// ensure the surface is large enough
 void drawContextFltkStringTexture::drawString(const char *str)
 {
   GLfloat pos[4], color[4];
   glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
   glGetFloatv(GL_CURRENT_COLOR, color);
-  queueString::element elem = {str, pos[0], pos[1], pos[2], color[0], color[1], color[2], color[3],
-    _currentFontSize, _currentFontId, (int)getStringWidth(str) + 1, getStringHeight()};
+  queueString::element elem = {str,
+                               pos[0],
+                               pos[1],
+                               pos[2],
+                               color[0],
+                               color[1],
+                               color[2],
+                               color[3],
+                               _currentFontSize,
+                               _currentFontId,
+                               (int)getStringWidth(str) + 1,
+                               getStringHeight()};
   _queue->append(elem);
 }
 
-drawContextFltkStringTexture::~drawContextFltkStringTexture()
-{
-  delete _queue;
-}
+drawContextFltkStringTexture::~drawContextFltkStringTexture() { delete _queue; }
 
 drawContextFltkStringTexture::drawContextFltkStringTexture()
 {

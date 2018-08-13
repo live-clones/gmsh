@@ -11,28 +11,21 @@
 #include "GModel.h"
 #include "MElement.h"
 
-StringXNumber NewViewOptions_Number[] = {
-  {GMSH_FULLRC, "NumComp", NULL, 1.},
-  {GMSH_FULLRC, "ViewTag", NULL, -1.}
-};
+StringXNumber NewViewOptions_Number[] = {{GMSH_FULLRC, "NumComp", NULL, 1.},
+                                         {GMSH_FULLRC, "ViewTag", NULL, -1.}};
 
 StringXString NewViewOptions_String[] = {
-  {GMSH_FULLRC, "Type", NULL, "NodeData"}
-};
+  {GMSH_FULLRC, "Type", NULL, "NodeData"}};
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterNewViewPlugin()
-  {
-    return new GMSH_NewViewPlugin();
-  }
+extern "C" {
+GMSH_Plugin *GMSH_RegisterNewViewPlugin() { return new GMSH_NewViewPlugin(); }
 }
 
 std::string GMSH_NewViewPlugin::getHelp() const
 {
   return "Plugin(NewView) creates a new model-based view from the "
-    "current mesh, with `NumComp' field components.\n\n"
-    "If `ViewTag' is positive, force that tag for the created view.";
+         "current mesh, with `NumComp' field components.\n\n"
+         "If `ViewTag' is positive, force that tag for the created view.";
 }
 
 int GMSH_NewViewPlugin::getNbOptions() const
@@ -55,34 +48,34 @@ StringXString *GMSH_NewViewPlugin::getOptionStr(int iopt)
   return &NewViewOptions_String[iopt];
 }
 
-PView *GMSH_NewViewPlugin::execute(PView * v)
+PView *GMSH_NewViewPlugin::execute(PView *v)
 {
   int numComp = (int)NewViewOptions_Number[0].def;
   int tag = (int)NewViewOptions_Number[1].def;
   std::string type = NewViewOptions_String[0].def;
 
-  if(GModel::current()->getMeshStatus() < 1){
+  if(GModel::current()->getMeshStatus() < 1) {
     Msg::Error("No mesh available to create the view: please mesh your model!");
-    return v ;
+    return v;
   }
-  if(numComp < 1){
+  if(numComp < 1) {
     Msg::Error("Bad number of components for Plugin(NewView)");
     return v;
   }
-  if(type != "NodeData"){
+  if(type != "NodeData") {
     Msg::Error("Unknown data type for Plugin(NewView)");
     return v;
   }
   std::map<int, std::vector<double> > d;
-  std::vector<GEntity*> entities;
+  std::vector<GEntity *> entities;
   GModel::current()->getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++){
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+  for(unsigned int i = 0; i < entities.size(); i++) {
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) {
       MVertex *ve = entities[i]->mesh_vertices[j];
       d[ve->getNum()].resize(numComp);
     }
   }
 
   PView *vn = new PView("New view", "NodeData", GModel::current(), d, tag);
-  return vn ;
+  return vn;
 }

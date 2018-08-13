@@ -22,13 +22,12 @@ class MPrism;
 class MHexahedron;
 class MElement;
 
-
-class qmTriangle
-{
+class qmTriangle {
 public:
   static double gamma(MTriangle *f);
   static double gamma(BDS_Face *f);
-  static double gamma(const BDS_Point *p1, const BDS_Point *p2, const BDS_Point *p3);
+  static double gamma(const BDS_Point *p1, const BDS_Point *p2,
+                      const BDS_Point *p3);
   static double gamma(const MVertex *v1, const MVertex *v2, const MVertex *v3);
   static double gamma(const double *d1, const double *d2, const double *d3);
   static double gamma(const double &x1, const double &y1, const double &z1,
@@ -41,14 +40,13 @@ public:
   static inline int numNCJVal() { return 3; }
   static void NCJ(const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2,
                   const SVector3 &normal, std::vector<double> &NCJ);
-  static void NCJAndGradients(const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2,
-                              const SVector3 &normal,
-                              std::vector<double> &NCJ, std::vector<double> &dNCJ);
+  static void NCJAndGradients(const SPoint3 &p0, const SPoint3 &p1,
+                              const SPoint3 &p2, const SVector3 &normal,
+                              std::vector<double> &NCJ,
+                              std::vector<double> &dNCJ);
 };
 
-
-class qmQuadrangle
-{
+class qmQuadrangle {
 public:
   static double gamma(MQuadrangle *el) { return eta(el); }
   static double eta(MQuadrangle *el);
@@ -57,21 +55,22 @@ public:
   static void NCJRange(const MQuadrangle *e, double &valMin, double &valMax);
   static inline int numNCJVal() { return 4; }
   static void NCJ(const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2,
-                  const SPoint3 &p3, const SVector3 &normal, std::vector<double> &ncj);
-  static void NCJAndGradients(const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2,
-                              const SPoint3 &p3, const SVector3 &normal,
-                              std::vector<double> &NCJ, std::vector<double> &dNCJ);
+                  const SPoint3 &p3, const SVector3 &normal,
+                  std::vector<double> &ncj);
+  static void NCJAndGradients(const SPoint3 &p0, const SPoint3 &p1,
+                              const SPoint3 &p2, const SPoint3 &p3,
+                              const SVector3 &normal, std::vector<double> &NCJ,
+                              std::vector<double> &dNCJ);
 };
 
-
-class qmTetrahedron
-{
+class qmTetrahedron {
 public:
-  enum Measures {QMTET_GAMMA, QMTET_ETA, QMTET_ONE, QMTET_COND};
+  enum Measures { QMTET_GAMMA, QMTET_ETA, QMTET_ONE, QMTET_COND };
   static double qm(MTetrahedron *t, const Measures &cr, double *volume = 0);
-  static double qm(const BDS_Point *p1, const BDS_Point *p2, const BDS_Point *p3);
+  static double qm(const BDS_Point *p1, const BDS_Point *p2,
+                   const BDS_Point *p3);
   static double qm(const MVertex *v1, const MVertex *v2, const MVertex *v3,
-      const MVertex *v4, const Measures &cr, double *volume = 0);
+                   const MVertex *v4, const Measures &cr, double *volume = 0);
   static double qm(const double &x1, const double &y1, const double &z1,
                    const double &x2, const double &y2, const double &z2,
                    const double &x3, const double &y3, const double &z3,
@@ -93,46 +92,45 @@ public:
                      const double &x4, const double &y4, const double &z4,
                      double *volume = 0);
   static double minNCJ(const MTetrahedron *e);
-//  static void NCJRange(const MTetrahedron *e, double &valMin, double &valMax);
+  //  static void NCJRange(const MTetrahedron *e, double &valMin, double
+  //  &valMax);
   static inline int numNCJVal() { return 4; }
-//  static void NCJ(const double &x0, const double &y0, const double &z0,
-//                  const double &x1, const double &y1, const double &z1,
-//                  const double &x2, const double &y2, const double &z2,
-//                  const double &x3, const double &y3, const double &z3,
-//                  fullVector<double> &ncj);
-//  static void NCJAndGradients(const double &x0, const double &y0, const double &z0,
-//                              const double &x1, const double &y1, const double &z1,
-//                              const double &x2, const double &y2, const double &z2,
-//                              const double &x3, const double &y3, const double &z3,
-//                              fullMatrix<double> &ncj);
+  //  static void NCJ(const double &x0, const double &y0, const double &z0,
+  //                  const double &x1, const double &y1, const double &z1,
+  //                  const double &x2, const double &y2, const double &z2,
+  //                  const double &x3, const double &y3, const double &z3,
+  //                  fullVector<double> &ncj);
+  //  static void NCJAndGradients(const double &x0, const double &y0, const
+  //  double &z0,
+  //                              const double &x1, const double &y1, const
+  //                              double &z1, const double &x2, const double
+  //                              &y2, const double &z2, const double &x3, const
+  //                              double &y3, const double &z3,
+  //                              fullMatrix<double> &ncj);
 };
 
-
-class qmPrism
-{
+class qmPrism {
 public:
   static double minNCJ(const MPrism *el);
   static inline int numNCJVal() { return 6; }
-//  static void NCJ(const double &x0, const double &y0, const double &z0,
-//                  const double &x1, const double &y1, const double &z1,
-//                  const double &x2, const double &y2, const double &z2,
-//                  const double &x3, const double &y3, const double &z3,
-//                  const double &x4, const double &y4, const double &z4,
-//                  fullVector<double> &ncj);
+  //  static void NCJ(const double &x0, const double &y0, const double &z0,
+  //                  const double &x1, const double &y1, const double &z1,
+  //                  const double &x2, const double &y2, const double &z2,
+  //                  const double &x3, const double &y3, const double &z3,
+  //                  const double &x4, const double &y4, const double &z4,
+  //                  fullVector<double> &ncj);
 };
 
-
-class qmHexahedron
-{
+class qmHexahedron {
 public:
   static double angles(MHexahedron *el);
   static inline int numNCJVal() { return 8; }
-//  static void NCJ(const double &x0, const double &y0, const double &z0,
-//                  const double &x1, const double &y1, const double &z1,
-//                  const double &x2, const double &y2, const double &z2,
-//                  const double &x3, const double &y3, const double &z3,
-//                  const double &x4, const double &y4, const double &z4,
-//                  fullVector<double> &ncj);
+  //  static void NCJ(const double &x0, const double &y0, const double &z0,
+  //                  const double &x1, const double &y1, const double &z1,
+  //                  const double &x2, const double &y2, const double &z2,
+  //                  const double &x3, const double &y3, const double &z3,
+  //                  const double &x4, const double &y4, const double &z4,
+  //                  fullVector<double> &ncj);
 };
 
 #endif

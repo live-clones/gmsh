@@ -106,7 +106,7 @@ public:
 
   // edges that bound the face
   int delEdge(GEdge *edge);
-  virtual std::vector<GEdge *> edges() const { return l_edges; }
+  virtual std::vector<GEdge *> const &edges() const { return l_edges; }
   void set(const std::vector<GEdge *> &f) { l_edges = f; }
   void setOrientations(const std::vector<int> &f) { l_dirs = f; }
   void setEdge(GEdge *const f, int const orientation)
@@ -184,7 +184,7 @@ public:
   virtual void getMetricEigenVectors(const SPoint2 &param, double eigVal[2],
                                      double eigVec[4]) const;
 
-  // return the parmater location on the face given a point in space
+  // return the parameter location on the face given a point in space
   // that is on the face
   virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true) const;
 

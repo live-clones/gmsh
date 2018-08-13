@@ -8,23 +8,21 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterCutGridPlugin ();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterCutGridPlugin();
 }
 
-class GMSH_CutGridPlugin : public GMSH_PostPlugin
-{
+class GMSH_CutGridPlugin : public GMSH_PostPlugin {
   static double callback(int num, int action, double value, double *opt,
                          double step, double min, double max);
-  void addInView(int numsteps, int connect, int nbcomp, 
-                 double ***pnts, double ***vals, 
-                 std::vector<double> &P, int *nP, 
-                 std::vector<double> &L, int *nL, 
-                 std::vector<double> &Q, int *nQ);
-  PView *GenerateView (PView *v, int connectPoints);
- public:
-  GMSH_CutGridPlugin(){}
+  void addInView(int numsteps, int connect, int nbcomp, double ***pnts,
+                 double ***vals, std::vector<double> &P, int *nP,
+                 std::vector<double> &L, int *nL, std::vector<double> &Q,
+                 int *nQ);
+  PView *GenerateView(PView *v, int connectPoints);
+
+public:
+  GMSH_CutGridPlugin() {}
   std::string getName() const { return "CutGrid"; }
   std::string getShortHelp() const
   {
@@ -32,12 +30,12 @@ class GMSH_CutGridPlugin : public GMSH_PostPlugin
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber *getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 
-  static int getNbU ();
-  static int getNbV ();
-  static void getPoint(int iU, int iV, double *X );
+  static int getNbU();
+  static int getNbV();
+  static void getPoint(int iU, int iV, double *X);
 
   static double callbackX0(int, int, double);
   static double callbackY0(int, int, double);

@@ -8,17 +8,16 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterStreamLinesPlugin ();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterStreamLinesPlugin();
 }
 
-class GMSH_StreamLinesPlugin : public GMSH_PostPlugin
-{
+class GMSH_StreamLinesPlugin : public GMSH_PostPlugin {
   static double callback(int num, int action, double value, double *opt,
                          double step, double min, double max);
- public:
-  GMSH_StreamLinesPlugin(){}
+
+public:
+  GMSH_StreamLinesPlugin() {}
   std::string getName() const { return "StreamLines"; }
   std::string getShortHelp() const
   {

@@ -9,13 +9,14 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Value_Input.H>
 
-class manipWindow{
- public:
+class manipWindow {
+public:
   Fl_Window *win;
   Fl_Value_Input *value[9];
- public:
+
+public:
   manipWindow(int deltaFontSize);
-  void update(bool force=false);
+  void update(bool force = false);
   void show();
 };
 

@@ -13,16 +13,17 @@ class GEntity;
 class GFace;
 class GRegion;
 
-class BGMManager{
+class BGMManager {
 public:
-  static BGMBase* get(GFace *gf);
-  static BGMBase* get(GRegion *gf);
-  static BGMBase* current2D();
+  static BGMBase *get(GFace *gf);
+  static BGMBase *get(GRegion *gf);
+  static BGMBase *current2D();
   static void set_use_cross_field(bool b);
+
 private:
   static bool use_cross_field;
   static BGMBase *latest2Dbgm;
-  static std::map<GEntity*,BGMBase*> data;
+  static std::map<GEntity *, BGMBase *> data;
 };
 
 #endif

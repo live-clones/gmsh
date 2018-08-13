@@ -8,25 +8,24 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterSummationPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterSummationPlugin();
 }
 
-class GMSH_SummationPlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_SummationPlugin(){}
+class GMSH_SummationPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_SummationPlugin() {}
   std::string getName() const { return "Summation"; }
   std::string getShortHelp() const
   {
-    return "Create a view by summing different views (TimeStep per TimeStep and Component by Component)";
+    return "Create a view by summing different views (TimeStep per TimeStep "
+           "and Component by Component)";
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   int getNbOptionsStr() const;
-  StringXString* getOptionStr(int iopt);  
+  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 };
 

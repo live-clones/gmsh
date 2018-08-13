@@ -9,7 +9,7 @@
 #include <vector>
 #include "SPoint3.h"
 
-double discreteFrechetDistance (const std::vector<SPoint3> &P,
-				const std::vector<SPoint3> &Q);
+double discreteFrechetDistance(const std::vector<SPoint3> &P,
+                               const std::vector<SPoint3> &Q);
 
 #endif

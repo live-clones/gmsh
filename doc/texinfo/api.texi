@@ -4,10 +4,10 @@
 @ftable @code
 @item initialize
 Initialize Gmsh. This must be called before any call to the other functions in
-the API. If @code{argc} and @code{argv} are provided, they will be handled in
-the same way as the command line arguments in the Gmsh app. If
-@code{readConfigFiles} is set, read system Gmsh configuration files (gmshrc and
-gmsh-options).
+the API. If @code{argc} and @code{argv} (or just @code{argv} in Python or Julia)
+are provided, they will be handled in the same way as the command line arguments
+in the Gmsh app. If @code{readConfigFiles} is set, read system Gmsh
+configuration files (gmshrc and gmsh-options).
 
 @table @asis
 @item Input:
@@ -1841,10 +1841,9 @@ integer
 
 @item addCurveLoop
 Add a curve loop (a closed wire) formed by the curves @code{curveTags}.
-@code{curveTags} should contain (signed) tags of curves forming a closed loop: a
-negative tag signifies that the underlying curve is considered with reversed
-orientation. If @code{tag} is positive, set the tag explicitly; otherwise a new
-tag is selected automatically. Return the tag of the curve loop.
+@code{curveTags} should contain tags of curves forming a closed loop. If
+@code{tag} is positive, set the tag explicitly; otherwise a new tag is selected
+automatically. Return the tag of the curve loop.
 
 @table @asis
 @item Input:
@@ -2124,13 +2123,35 @@ Add a pipe by extruding the entities @code{dimTags} along the wire
 @end table
 
 @item fillet
-Fillet the volumes @code{volumeTags} on the curves @code{curveTags} with radius
-@code{radius}. Return the filleted entities in @code{outDimTags}. Remove the
+Fillet the volumes @code{volumeTags} on the curves @code{curveTags} with radii
+@code{radii}. The @code{radii} vector can either contain a single radius, as
+many radii as @code{curveTags}, or twice as many as @code{curveTags} (in which
+case different radii are provided for the begin and end points of the curves).
+Return the filleted entities in @code{outDimTags}. Remove the original volume if
+@code{removeVolume} is set.
+
+@table @asis
+@item Input:
+@code{volumeTags}, @code{curveTags}, @code{radii}, @code{removeVolume}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item chamfer
+Chamfer the volumes @code{volumeTags} on the curves @code{curveTags} with
+distances @code{distances} measured on surfaces @code{surfaceTags}. The
+@code{distances} vector can either contain a single distance, as many distances
+as @code{curveTags} and @code{surfaceTags}, or twice as many as @code{curveTags}
+and @code{surfaceTags} (in which case the first in each pair is measured on the
+corresponding surface in @code{surfaceTags}, the other on the other adjacent
+surface). Return the chamfered entities in @code{outDimTags}. Remove the
 original volume if @code{removeVolume} is set.
 
 @table @asis
 @item Input:
-@code{volumeTags}, @code{curveTags}, @code{radius}, @code{removeVolume}
+@code{volumeTags}, @code{curveTags}, @code{surfaceTags}, @code{distances}, @code{removeVolume}
 @item Output:
 @code{outDimTags}
 @item Return:
@@ -2306,6 +2327,23 @@ the file (currently "brep", "step" or "iges").
 @table @asis
 @item Input:
 @code{fileName}, @code{highestDimOnly}, @code{format}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item importShapesNativePointer
+Imports an OpenCASCADE @code{shape} by providing a pointer to a native
+OpenCASCADE @code{TopoDS_Shape} object (passed as a pointer to void). The
+imported entities are returned in @code{outDimTags}. If the optional argument
+@code{highestDimOnly} is set, only import the highest dimensional entities in
+@code{shape}. Warning: this function is unsafe, as providing an invalid pointer
+will lead to undefined behavior.
+
+@table @asis
+@item Input:
+@code{shape}, @code{highestDimOnly}
 @item Output:
 @code{outDimTags}
 @item Return:
@@ -2633,6 +2671,34 @@ might be linked to the processed input files.
 @table @asis
 @item Input:
 @code{name}, @code{command}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@end ftable
+
+@heading Module @code{/gmsh/logger}
+@ftable @code
+@item start
+Start logging messages in @code{log}.
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{log}
+@item Return:
+-
+@end table
+
+@item stop
+Stop logging messages.
+
+@table @asis
+@item Input:
+-
 @item Output:
 -
 @item Return:

@@ -15,7 +15,7 @@
 
 // TODO Amaury: Create sparseMatrix?
 
-fullMatrix<double>* getInnerVertexPlacement(int type, int order);
+fullMatrix<double> *getInnerVertexPlacement(int type, int order);
 
 fullMatrix<double> gmshGenerateInnerVertexPlacementTriangle(int order);
 fullMatrix<double> gmshGenerateInnerVertexPlacementQuadrangle(int order);
@@ -24,10 +24,14 @@ fullMatrix<double> gmshGenerateInnerVertexPlacementHexahedron(int order);
 fullMatrix<double> gmshGenerateInnerVertexPlacementPrism(int order);
 fullMatrix<double> gmshGenerateInnerVertexPlacementPyramid(int order);
 
-fullMatrix<double> gmshGenerateInnerVertexPlacementTriangleLinear(int order, int dir);
+fullMatrix<double> gmshGenerateInnerVertexPlacementTriangleLinear(int order,
+                                                                  int dir);
 fullMatrix<double> gmshGenerateInnerVertexPlacementQuadrangleLinear(int order);
-fullMatrix<double> gmshGenerateInnerVertexPlacementTetrahedronLinear(int order, int dir);
-fullMatrix<double> gmshGenerateInnerVertexPlacementHexahedronLinear(int order, int dir);
-fullMatrix<double> gmshGenerateInnerVertexPlacementPrismLinear(int order, int dir);
+fullMatrix<double> gmshGenerateInnerVertexPlacementTetrahedronLinear(int order,
+                                                                     int dir);
+fullMatrix<double> gmshGenerateInnerVertexPlacementHexahedronLinear(int order,
+                                                                    int dir);
+fullMatrix<double> gmshGenerateInnerVertexPlacementPrismLinear(int order,
+                                                               int dir);
 
-#endif //GMSH_INTERIORVERTEXPLACEMENT_H
+#endif // GMSH_INTERIORVERTEXPLACEMENT_H

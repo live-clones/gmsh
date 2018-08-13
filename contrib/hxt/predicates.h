@@ -31,6 +31,17 @@ double orient3d(
   const double* const __restrict__ pc,
   const double* const __restrict__ pd);
 
+double incircle(
+  const double* const __restrict__ pa,
+  const double* const __restrict__ pb,
+  const double* const __restrict__ pc,
+  const double* const __restrict__ pd);
+
+double orient2d(
+  const double* const __restrict__ pa,
+  const double* const __restrict__ pb,
+  const double* const __restrict__ pc);
+
 int grow_expansion(
   int elen, const double *e, double b, double *h);
 

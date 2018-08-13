@@ -63,7 +63,6 @@ public:
       v1 = f;
   }
 
-
   // specify mesh master with transformation, deduce edgeCounterparts
   void setMeshMaster(GEdge *master, const std::vector<double> &);
 

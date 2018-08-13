@@ -9,27 +9,26 @@
 #include <string>
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterAnnotatePlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterAnnotatePlugin();
 }
 
-class GMSH_AnnotatePlugin : public GMSH_PostPlugin
-{
- private:
+class GMSH_AnnotatePlugin : public GMSH_PostPlugin {
+private:
   static double callback(int num, int action, double value, double *opt,
                          double step, double min, double max);
   static std::string callbackStr(int num, int action, std::string value,
                                  std::string &opt);
- public:
-  GMSH_AnnotatePlugin(){}
+
+public:
+  GMSH_AnnotatePlugin() {}
   std::string getName() const { return "Annotate"; }
   std::string getShortHelp() const { return "Add a text annotation"; }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber *getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   int getNbOptionsStr() const;
-  StringXString *getOptionStr(int iopt);  
+  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 
   static double callbackX(int, int, double);

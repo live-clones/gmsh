@@ -8,15 +8,13 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterEigenvectorsPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterEigenvectorsPlugin();
 }
 
-class GMSH_EigenvectorsPlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_EigenvectorsPlugin(){}
+class GMSH_EigenvectorsPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_EigenvectorsPlugin() {}
   std::string getName() const { return "Eigenvectors"; }
   std::string getShortHelp() const
   {
@@ -24,7 +22,7 @@ class GMSH_EigenvectorsPlugin : public GMSH_PostPlugin
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber *getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

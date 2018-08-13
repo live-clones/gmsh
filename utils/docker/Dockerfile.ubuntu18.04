@@ -1,0 +1,59 @@
+FROM ubuntu:18.04
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && apt-get install -y git cmake python curl g++ gfortran libfltk1.3-dev libfreetype6-dev libgl1-mesa-dev liblapack-dev libxi-dev libxmu-dev mesa-common-dev tcl-dev tk-dev
+
+# -----------------------
+# OpenCASCADE
+# -----------------------
+
+RUN curl -L -o occ73.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=snapshot;h=refs/tags/V7_3_0;sf=tgz"
+RUN tar xf occ73.tgz
+RUN cd occt-V7_3_0 && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 .. && cat CMakeCache.txt && make -j8
+RUN cd occt-V7_3_0/build && make install
+ENV LD_LIBRARY_PATH /usr/local/lib:$LD_LIBRARY_PATH
+
+# -----------------------
+# PETSc
+# -----------------------
+
+RUN curl -O http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.9.3.tar.gz
+RUN tar zxf petsc-3.9.3.tar.gz
+ENV PETSC_DIR ${PWD}/petsc-3.9.3
+ENV PETSC_ARCH real_mumps_seq
+RUN cd ${PETSC_DIR} && ./configure --with-clanguage=cxx --with-debugging=0 --with-mpi=0 --with-mpiuni-fortran-binding=0 --download-mumps=yes --with-mumps-serial --with-shared-libraries=0 --with-x=0 --with-ssl=0 --with-scalar-type=real && make
+
+# -----------------------
+# SLEPc
+# -----------------------
+
+RUN curl -O http://slepc.upv.es/download/distrib/slepc-3.9.2.tar.gz
+RUN tar zxf slepc-3.9.2.tar.gz
+ENV SLEPC_DIR ${PWD}/slepc-3.9.2
+RUN cd ${SLEPC_DIR} && ./configure && make
+
+# -----------------------
+# Minimal Gmsh library
+# -----------------------
+
+RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git gmsh_mini_lib
+RUN cd gmsh_mini_lib && mkdir lib && cd lib && cmake -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_BUILD_LIB=1 -DENABLE_PRIVATE_API=1 .. && make -j8 lib && make install/fast
+
+# -----------------------
+# HDF5 and CGNS
+# -----------------------
+
+RUN apt-get install -y libhdf5-dev
+RUN apt-get install -y libcgns-dev
+
+# -----------------------
+# Latex and texinfo
+# -----------------------
+
+RUN apt-get install -y texlive texinfo
+
+VOLUME ["/etc/gitlab-runner"]
+RUN useradd -ms /bin/bash validator
+USER validator
+WORKDIR /home/validator

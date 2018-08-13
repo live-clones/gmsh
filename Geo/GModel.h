@@ -177,7 +177,7 @@ protected:
   void
   _storePhysicalTagsInEntities(int dim,
                                std::map<int, std::map<int, std::string> > &map);
-
+  
 public:
   // region, face, edge and vertex iterators
   typedef std::set<GRegion *, GEntityLessThan>::iterator riter;
@@ -744,6 +744,10 @@ public:
   // Abaqus
   int writeINP(const std::string &name, bool saveAll = false,
                bool saveGroupsOfNodes = false, double scalingFactor = 1.0);
+
+  // LSDYNA
+  int writeKEY(const std::string &name, int saveAll = 0,
+               int saveGroupsOfNodes = 0, double scalingFactor = 1.0);
 
   // CELUM
   int writeCELUM(const std::string &name, bool saveAll = false,

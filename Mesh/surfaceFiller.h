@@ -14,8 +14,11 @@
 class GFace;
 class MVertex;
 
-void packingOfParallelogramsSmoothness(GFace* gf, std::vector<MVertex*> &packed, std::vector<SMetric3> &metrics );
-void packingOfParallelograms(GFace* gf, std::vector<MVertex*> &packed, std::vector<SMetric3> &metrics );
+void packingOfParallelogramsSmoothness(GFace *gf,
+                                       std::vector<MVertex *> &packed,
+                                       std::vector<SMetric3> &metrics);
+void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
+                             std::vector<SMetric3> &metrics);
 void packingOfParallelogramsConstrained(
   GFace *gf, const std::set<MVertex *> &constr_vertices,
   std::vector<MVertex *> &packed, std::vector<SMetric3> &metrics);

@@ -38,17 +38,18 @@
 
 int arrowEditor(const char *title, double &a, double &b, double &c)
 {
-  struct _editor{
+  struct _editor {
     Fl_Window *window;
     Fl_Value_Slider *sa, *sb, *sc;
     Fl_Button *apply, *cancel;
   };
   static _editor *editor = 0;
 
-  if(!editor){
+  if(!editor) {
     editor = new _editor;
-    editor->window = new paletteWindow
-      (2 * BB + 3 * WB, 4 * BH + 3 * WB, CTX::instance()->nonModalWindows ? true : false);
+    editor->window =
+      new paletteWindow(2 * BB + 3 * WB, 4 * BH + 3 * WB,
+                        CTX::instance()->nonModalWindows ? true : false);
     editor->sa = new Fl_Value_Slider(WB, WB, BB, BH, "Head radius");
     editor->sa->type(FL_HOR_SLIDER);
     editor->sa->align(FL_ALIGN_RIGHT);
@@ -59,7 +60,8 @@ int arrowEditor(const char *title, double &a, double &b, double &c)
     editor->sc->type(FL_HOR_SLIDER);
     editor->sc->align(FL_ALIGN_RIGHT);
     editor->apply = new Fl_Return_Button(WB, 2 * WB + 3 * BH, BB, BH, "Apply");
-    editor->cancel = new Fl_Button(2 * WB + BB, 2 * WB + 3 * BH, BB, BH, "Cancel");
+    editor->cancel =
+      new Fl_Button(2 * WB + BB, 2 * WB + 3 * BH, BB, BH, "Cancel");
     editor->window->end();
     editor->window->hotspot(editor->window);
   }
@@ -70,18 +72,18 @@ int arrowEditor(const char *title, double &a, double &b, double &c)
   editor->sc->value(c);
   editor->window->show();
 
-  while(editor->window->shown()){
+  while(editor->window->shown()) {
     Fl::wait();
-    for (;;) {
-      Fl_Widget* o = Fl::readqueue();
-      if (!o) break;
-      if (o == editor->apply) {
+    for(;;) {
+      Fl_Widget *o = Fl::readqueue();
+      if(!o) break;
+      if(o == editor->apply) {
         a = editor->sa->value();
         b = editor->sb->value();
         c = editor->sc->value();
         return 1;
       }
-      if (o == editor->window || o == editor->cancel){
+      if(o == editor->window || o == editor->cancel) {
         editor->window->hide();
         return 0;
       }
@@ -95,15 +97,17 @@ int arrowEditor(const char *title, double &a, double &b, double &c)
 class historyBrowser : public Fl_Hold_Browser {
   int handle(int event)
   {
-    switch (event) {
+    switch(event) {
     case FL_SHORTCUT:
     case FL_KEYBOARD:
-      if(Fl::test_shortcut(FL_Delete) || Fl::test_shortcut(FL_BackSpace)){
+      if(Fl::test_shortcut(FL_Delete) || Fl::test_shortcut(FL_BackSpace)) {
         int i = value();
-        if(i){
+        if(i) {
           remove(i);
-          if(i <= size()) select(i);
-          else if(i > 1) select(i - 1);
+          if(i <= size())
+            select(i);
+          else if(i > 1)
+            select(i - 1);
         }
         return 1;
       }
@@ -111,24 +115,29 @@ class historyBrowser : public Fl_Hold_Browser {
     }
     return Fl_Hold_Browser::handle(event);
   };
- public:
-  historyBrowser(int x, int y, int w, int h, const char *l=0)
-    : Fl_Hold_Browser(x, y, w, h, l) {}
+
+public:
+  historyBrowser(int x, int y, int w, int h, const char *l = 0)
+    : Fl_Hold_Browser(x, y, w, h, l)
+  {
+  }
 };
 
-class historyChooser{
- private:
+class historyChooser {
+private:
   std::string _prefix, _label, _commandLabel, _defaultCommand, _okLabel;
- public:
+
+public:
   Fl_Double_Window *window;
   Fl_Input *input;
   historyBrowser *browser;
   Fl_Return_Button *ok;
   Fl_Button *cancel;
- public:
+
+public:
   historyChooser(const std::string &prefix, const std::string &label,
-                 const std::string &commandLabel, const std::string &defaultCommand,
-                 const std::string &okLabel)
+                 const std::string &commandLabel,
+                 const std::string &defaultCommand, const std::string &okLabel)
     : _prefix(prefix), _label(label), _commandLabel(commandLabel),
       _defaultCommand(defaultCommand), _okLabel(okLabel)
   {
@@ -137,23 +146,22 @@ class historyChooser{
     window->set_modal();
     window->label(_label.c_str());
     Fl_Box *b1 = new Fl_Box(WB, WB, w, BH, _commandLabel.c_str());
-    b1->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
+    b1->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
     input = new Fl_Input(WB, WB + BH, w - 2 * WB, BH);
     Fl_Box *b2 = new Fl_Box(WB, 2 * WB + 2 * BH, w, BH, "History:");
-    b2->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
-    browser = new historyBrowser
-      (WB, 2 * WB + 3 * BH, w - 2 * WB, h - 4 * BH - 4 * WB);
-    cancel = new Fl_Button
-      (w - WB - BB, h - WB - BH, BB, BH, "Cancel");
-    ok = new Fl_Return_Button
-      (w - 2 * WB - 2 * BB, h - WB - BH, BB, BH, _okLabel.c_str());
+    b2->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
+    browser =
+      new historyBrowser(WB, 2 * WB + 3 * BH, w - 2 * WB, h - 4 * BH - 4 * WB);
+    cancel = new Fl_Button(w - WB - BB, h - WB - BH, BB, BH, "Cancel");
+    ok = new Fl_Return_Button(w - 2 * WB - 2 * BB, h - WB - BH, BB, BH,
+                              _okLabel.c_str());
     Fl_Box *b3 = new Fl_Box(WB, h - WB - BB, WB, WB);
     b3->hide();
     window->resizable(b3);
   }
   void save(Fl_Preferences &prefs)
   {
-    for(int i = 0; i < 100; i++){
+    for(int i = 0; i < 100; i++) {
       char name[256];
       sprintf(name, "%s%02d", _prefix.c_str(), i);
       if(i < browser->size())
@@ -177,16 +185,16 @@ class historyChooser{
     window->resize(x, y, w, h);
     int old = browser->value();
     browser->clear();
-    for (int i = 0; i < 100; i++) {
+    for(int i = 0; i < 100; i++) {
       char name[256], value[1024];
       sprintf(name, "%s%02d", _prefix.c_str(), i);
-      if(prefs.entryExists(name)){
+      if(prefs.entryExists(name)) {
         prefs.get(name, value, "", sizeof(value));
         browser->add(value);
       }
     }
     int n = browser->size();
-    if(n){
+    if(n) {
       if(old > 0 && old <= n)
         input->value(browser->text(old));
       else
@@ -195,16 +203,16 @@ class historyChooser{
     else
       input->value(_defaultCommand.c_str());
     window->show();
-    while(window->shown()){
+    while(window->shown()) {
       Fl::wait();
-      for (;;) {
-        Fl_Widget* o = Fl::readqueue();
-        if (!o) break;
-        if (o == ok) {
-          if(strlen(input->value())){
+      for(;;) {
+        Fl_Widget *o = Fl::readqueue();
+        if(!o) break;
+        if(o == ok) {
+          if(strlen(input->value())) {
             // insert choosen value at the top of the history
-            for(int i = 0; i < browser->size(); i++){
-              if(!strcmp(input->value(), browser->text(i + 1))){
+            for(int i = 0; i < browser->size(); i++) {
+              if(!strcmp(input->value(), browser->text(i + 1))) {
                 browser->remove(i + 1);
                 break;
               }
@@ -215,7 +223,7 @@ class historyChooser{
           window->hide();
           return input->value();
         }
-        if (o == window || o == cancel){
+        if(o == window || o == cancel) {
           save(prefs);
           window->hide();
           return "";
@@ -227,7 +235,7 @@ class historyChooser{
 };
 
 static historyChooser *_connectionChooser = 0;
-static void connection_select_cb(Fl_Widget* w, void *data)
+static void connection_select_cb(Fl_Widget *w, void *data)
 {
   int i = _connectionChooser->browser->value();
   if(i) _connectionChooser->input->value(_connectionChooser->browser->text(i));
@@ -235,17 +243,17 @@ static void connection_select_cb(Fl_Widget* w, void *data)
 
 std::string connectionChooser()
 {
-  if(!_connectionChooser){
-    _connectionChooser = new historyChooser
-      ("connection", "Remote Start", "Command:", "./gmsh ../tutorial/view3.pos",
-       "Run");
+  if(!_connectionChooser) {
+    _connectionChooser =
+      new historyChooser("connection", "Remote Start",
+                         "Command:", "./gmsh ../tutorial/view3.pos", "Run");
     _connectionChooser->browser->callback(connection_select_cb);
   }
   return _connectionChooser->run();
 }
 
 static historyChooser *_patternChooser = 0;
-static void pattern_select_cb(Fl_Widget* w, void *data)
+static void pattern_select_cb(Fl_Widget *w, void *data)
 {
   int i = _patternChooser->browser->value();
   if(i) _patternChooser->input->value(_patternChooser->browser->text(i));
@@ -253,23 +261,24 @@ static void pattern_select_cb(Fl_Widget* w, void *data)
 
 std::string patternChooser()
 {
-  if(!_patternChooser){
-    _patternChooser = new historyChooser
-      ("pattern", "Watch Pattern", "Pattern:", "output/*.msh", "Watch");
+  if(!_patternChooser) {
+    _patternChooser = new historyChooser("pattern", "Watch Pattern",
+                                         "Pattern:", "output/*.msh", "Watch");
     _patternChooser->browser->callback(pattern_select_cb);
   }
   return _patternChooser->run();
 }
 
-
 class cgnsImportDialog {
- private:
+private:
   std::string _prefix, _label, _commandLabel, _defaultCommand, _okLabel;
- public:
+
+public:
   Fl_Double_Window *window;
   Fl_Return_Button *ok;
   Fl_Input_Choice *input_choice;
- public:
+
+public:
   cgnsImportDialog()
   {
     _prefix = "cgns";
@@ -278,7 +287,8 @@ class cgnsImportDialog {
     window->set_modal();
     window->label("CGNS import");
 
-    input_choice = new Fl_Input_Choice(WB + 2 * BB, WB, 1*BB, BH, "Import mesh as order");
+    input_choice =
+      new Fl_Input_Choice(WB + 2 * BB, WB, 1 * BB, BH, "Import mesh as order");
 
     ok = new Fl_Return_Button(w - WB - BB, h - WB - BH, BB, BH, "Import");
   }
@@ -303,34 +313,34 @@ class cgnsImportDialog {
     int order_max = CTX::instance()->mesh.cgnsImportOrder;
     int order = 1;
     input_choice->clear();
-    char text[5];
-    while (order < 5 && order <= order_max && order_max < 10 && order_max > 0) {
-      sprintf(text, "%i", order);
+    char text[128];
+    while(order < 5 && order <= order_max && order_max < 10 && order_max > 0) {
+      sprintf(text, "%d", order);
       input_choice->add(text);
-      order*=2;
+      order *= 2;
     }
     input_choice->value(0);
 
     window->show();
-    while(window->shown()){
+    while(window->shown()) {
       Fl::wait();
-      for (;;) {
-        Fl_Widget* o = Fl::readqueue();
-        if (!o) break;
-        if (o == ok) {
-	  const char* str = input_choice->value();
-	  int order = 1;
-	  if (strcmp("2", str) == 0)
-	    order = 2;
-	  else if (strcmp("4", str) == 0)
-	    order = 4;
-	  //else if (strcmp("8", str) == 0)
-	  //  order = 8;
+      for(;;) {
+        Fl_Widget *o = Fl::readqueue();
+        if(!o) break;
+        if(o == ok) {
+          const char *str = input_choice->value();
+          int order = 1;
+          if(strcmp("2", str) == 0)
+            order = 2;
+          else if(strcmp("4", str) == 0)
+            order = 4;
+          // else if (strcmp("8", str) == 0)
+          //  order = 8;
           save(prefs);
           window->hide();
           return order;
         }
-        if (o == window){
+        if(o == window) {
           save(prefs);
           window->hide();
           return 1;
@@ -341,8 +351,7 @@ class cgnsImportDialog {
   }
 };
 
-
-static cgnsImportDialog* _cgnsImport = 0;
+static cgnsImportDialog *_cgnsImport = 0;
 /*static void pattern_select_cb(Fl_Widget* w, void *data)
 {
   _cgnsImport->input_choice->value("1");
@@ -350,7 +359,7 @@ static cgnsImportDialog* _cgnsImport = 0;
 */
 int cgnsImport()
 {
-  if (!_cgnsImport) {
+  if(!_cgnsImport) {
     _cgnsImport = new cgnsImportDialog();
   }
   return _cgnsImport->run();

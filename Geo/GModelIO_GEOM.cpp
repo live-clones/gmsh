@@ -7,11 +7,11 @@
 #include "OS.h"
 #include "MTriangle.h"
 
-static bool getMeshVertices(int num, int *indices, std::vector<MVertex*> &vec,
-                            std::vector<MVertex*> &vertices)
+static bool getMeshVertices(int num, int *indices, std::vector<MVertex *> &vec,
+                            std::vector<MVertex *> &vertices)
 {
-  for(int i = 0; i < num; i++){
-    if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)){
+  for(int i = 0; i < num; i++) {
+    if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)) {
       Msg::Error("Wrong vertex index %d", indices[i]);
       return false;
     }
@@ -26,18 +26,18 @@ int GModel::readGEOM(const std::string &name)
   // this is a format (from geomview?) that Bruno Levy's Graphite code
   // can write
   FILE *fp = Fopen(name.c_str(), "r");
-  if(!fp){
+  if(!fp) {
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
   int numNodes, numElements, dummy;
-  if(fscanf(fp, "%d %d %d", &numNodes, &numElements, &dummy) != 3){
+  if(fscanf(fp, "%d %d %d", &numNodes, &numElements, &dummy) != 3) {
     fclose(fp);
     return 0;
   }
 
-  if(!numNodes || !numElements){
+  if(!numNodes || !numElements) {
     Msg::Warning("No vertices or elements found");
     fclose(fp);
     return 0;
@@ -45,8 +45,8 @@ int GModel::readGEOM(const std::string &name)
 
   Msg::Info("%d vertices, %d elements", numNodes, numElements);
 
-  std::vector<MVertex*> vertexVector;
-  std::map<int, std::vector<MElement*> > elements[1];
+  std::vector<MVertex *> vertexVector;
+  std::map<int, std::vector<MElement *> > elements[1];
 
   vertexVector.resize(numNodes);
   for(int i = 0; i < numNodes; i++) {
@@ -58,19 +58,15 @@ int GModel::readGEOM(const std::string &name)
   for(int i = 0; i < numElements; i++) {
     int N, n[3];
     if(fscanf(fp, "%d", &N) != 1) break;
-    switch(N){
-    case 3:
-      {
-        if(fscanf(fp, "%d %d %d", &n[0], &n[1], &n[2]) != 3) break;
-        for(int i = 0; i < 3; i++) n[i]--;
-        std::vector<MVertex*> vertices;
-        if(!getMeshVertices(3, n, vertexVector, vertices)) break;
-        elements[0][1].push_back(new MTriangle(vertices));
-      }
-      break;
-    default:
-      Msg::Error("Unknown element type in .geom reader");
-      break;
+    switch(N) {
+    case 3: {
+      if(fscanf(fp, "%d %d %d", &n[0], &n[1], &n[2]) != 3) break;
+      for(int i = 0; i < 3; i++) n[i]--;
+      std::vector<MVertex *> vertices;
+      if(!getMeshVertices(3, n, vertexVector, vertices)) break;
+      elements[0][1].push_back(new MTriangle(vertices));
+    } break;
+    default: Msg::Error("Unknown element type in .geom reader"); break;
     }
   }
 

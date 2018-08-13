@@ -8,23 +8,18 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterSkinPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterSkinPlugin();
 }
 
-class GMSH_SkinPlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_SkinPlugin(){}
+class GMSH_SkinPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_SkinPlugin() {}
   std::string getName() const { return "Skin"; }
-  std::string getShortHelp() const
-  {
-    return "Extract boundary of a view";
-  }
+  std::string getShortHelp() const { return "Extract boundary of a view"; }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber *getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

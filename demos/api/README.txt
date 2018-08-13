@@ -34,13 +34,24 @@ then run e.g.
 
    julia share/doc/gmsh/demos/api/t1.jl
 
-To run the C++ examples, compile them e.g. with
+To run the C++ examples, compile them (here with GCC) as follows:
 
    g++ -o t1 -Iinclude share/doc/gmsh/demos/api/t1.cpp -Llib -lgmsh
 
 then run
 
    ./t1
+
+If your compiler has a different ABI than the compiler used to generate the
+binary SDK (see the top-level README.txt file in the SDK for additional
+information), you should use the "gmsh.h_cwrap" header instead of "gmsh.h".  For
+example, to compile a C++ example with Microsoft Visual Studio 2017 in the
+Visual Studio shell:
+
+C:\gmsh-git-Windows64-sdk> ren include\gmsh.h_cwrap gmsh.h
+C:\gmsh-git-Windows64-sdk> cl /Iinclude share\doc\gmsh\demos\api\simple.cpp lib\gmsh.lib
+C:\gmsh-git-Windows64-sdk> cd lib
+C:\gmsh-git-Windows64-sdk\lib> ..\simple.exe
 
 Using the Gmsh source code
 --------------------------

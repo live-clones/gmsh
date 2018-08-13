@@ -10,31 +10,32 @@
 IntPt *getGQPriPts(int order);
 int getNGQPriPts(int order);
 
-IntPt * GQP[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+IntPt *GQP[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 IntPt *getGQPriPts(int order)
 {
-  int nLin = (order+3)/2;
+  int nLin = (order + 3) / 2;
   int nTri = getNGQTPts(order);
-  int n = nLin*nTri;
+  int n = nLin * nTri;
   int index = order;
-  if (index >= (int)(sizeof(GQP) / sizeof(IntPt*))){
+  if(index >= (int)(sizeof(GQP) / sizeof(IntPt *))) {
     Msg::Error("Increase size of GQP in gauss quadrature prism");
     index = 0;
   }
-  if(!GQP[index]){
-    double *linPt,*linWt;
+  if(!GQP[index]) {
+    double *linPt, *linWt;
     IntPt *triPts = getGQTPts(order);
-    gmshGaussLegendre1D(nLin,&linPt,&linWt);
+    gmshGaussLegendre1D(nLin, &linPt, &linWt);
     GQP[index] = new IntPt[n];
     int l = 0;
-    for(int i=0; i < nTri; i++) {
-      for(int j=0; j < nLin; j++) {
+    for(int i = 0; i < nTri; i++) {
+      for(int j = 0; j < nLin; j++) {
         GQP[index][l].pt[0] = triPts[i].pt[0];
         GQP[index][l].pt[1] = triPts[i].pt[1];
         GQP[index][l].pt[2] = linPt[j];
-        GQP[index][l++].weight = triPts[i].weight*linWt[j];
+        GQP[index][l++].weight = triPts[i].weight * linWt[j];
       }
     }
   }
@@ -43,13 +44,13 @@ IntPt *getGQPriPts(int order)
 
 int getNGQPriPts(int order)
 {
-  int nLin = (order+3)/2;
+  int nLin = (order + 3) / 2;
   int nTri = getNGQTPts(order);
   return nLin * nTri;
 
-//   if(order == 3)return 8;
-//   if(order == 2)return 8;
-//   if(order < 2)
-//     return GQPnPt[order];
-//   return ((order+3)/2)*((order+3)/2)*((order+3)/2);
+  //   if(order == 3)return 8;
+  //   if(order == 2)return 8;
+  //   if(order < 2)
+  //     return GQPnPt[order];
+  //   return ((order+3)/2)*((order+3)/2)*((order+3)/2);
 }

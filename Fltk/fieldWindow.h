@@ -19,13 +19,14 @@
 
 class Field;
 
-class fieldWindow{
- private:
+class fieldWindow {
+private:
   int _deltaFontSize;
- public:
+
+public:
   Fl_Window *win;
   Fl_Hold_Browser *browser;
-  std::list<Fl_Widget*> options_widget;
+  std::list<Fl_Widget *> options_widget;
   Fl_Scroll *options_scroll;
   Fl_Group *editor_group;
   Fl_Box *title, *empty_message;
@@ -34,8 +35,9 @@ class fieldWindow{
   Fl_Help_View *help_display;
   Fl_Button *delete_btn;
   int selected_id;
- public:
-  fieldWindow(int deltaFontSize=0);
+
+public:
+  fieldWindow(int deltaFontSize = 0);
   void loadFieldViewList();
   void loadFieldList();
   void saveFieldOptions();

@@ -14,12 +14,13 @@
 
 class GFace;
 
-class smoothing{
+class smoothing {
   int ITER_MAX;
   int NORM;
- public :
-  smoothing(int,int);
-  void optimize_face(GFace*);
+
+public:
+  smoothing(int, int);
+  void optimize_face(GFace *);
   void optimize_model();
 };
 

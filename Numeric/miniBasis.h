@@ -11,12 +11,12 @@
 // and mini have closure so...
 
 class miniBasisTri : public polynomialBasis {
-  public:
-    miniBasisTri();
+public:
+  miniBasisTri();
 };
 class miniBasisTet : public polynomialBasis {
-  public:
-    miniBasisTet();
+public:
+  miniBasisTet();
 };
 
 #endif

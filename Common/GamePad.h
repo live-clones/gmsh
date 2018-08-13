@@ -25,7 +25,7 @@
 #endif
 
 class GamePad {
- public:
+public:
   bool active;
   bool toggle_status[GP_BUTTONS];
   bool event_read;
@@ -39,7 +39,8 @@ class GamePad {
   void affiche();
   int button_map[10];
   int axe_map[8];
- private:
+
+private:
   char name[256];
 #if defined(WIN32)
   int gamepad_fd;

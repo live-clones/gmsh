@@ -31,11 +31,13 @@ static void view_toggle_cb(Fl_Widget *w, void *data)
 {
   int num = (intptr_t)data;
   viewButton *but = FlGui::instance()->onelab->getViewButton(num);
-  if(but){
-    if(Fl::event_state(FL_SHIFT)){
-      for(unsigned int i = 0; i < PView::list.size(); i++){
-        if((int)i != num) opt_view_visible(i, GMSH_SET | GMSH_GUI, 0);
-        else opt_view_visible(i, GMSH_SET | GMSH_GUI, 1);
+  if(but) {
+    if(Fl::event_state(FL_SHIFT)) {
+      for(unsigned int i = 0; i < PView::list.size(); i++) {
+        if((int)i != num)
+          opt_view_visible(i, GMSH_SET | GMSH_GUI, 0);
+        else
+          opt_view_visible(i, GMSH_SET | GMSH_GUI, 1);
       }
     }
     else
@@ -46,11 +48,12 @@ static void view_toggle_cb(Fl_Widget *w, void *data)
 
 static void view_reload(int index)
 {
-  if(index >= 0 && index < (int)PView::list.size()){
+  if(index >= 0 && index < (int)PView::list.size()) {
     PView *p = PView::list[index];
 
-    if(StatFile(p->getData()->getFileName())){
-      Msg::Error("File '%s' does not exist", p->getData()->getFileName().c_str());
+    if(StatFile(p->getData()->getFileName())) {
+      Msg::Error("File '%s' does not exist",
+                 p->getData()->getFileName().c_str());
       return;
     }
 
@@ -59,7 +62,7 @@ static void view_reload(int index)
     // FIXME: use fileIndex
     MergeFile(p->getData()->getFileName());
 
-    if((int)PView::list.size() > n){ // we loaded a new view
+    if((int)PView::list.size() > n) { // we loaded a new view
       // delete old data and replace with new
       delete p->getData();
       p->setData(PView::list.back()->getData());
@@ -83,16 +86,14 @@ static void view_reload_cb(Fl_Widget *w, void *data)
 
 static void view_reload_all_cb(Fl_Widget *w, void *data)
 {
-  for(unsigned int i = 0; i < PView::list.size(); i++)
-    view_reload(i);
+  for(unsigned int i = 0; i < PView::list.size(); i++) view_reload(i);
   drawContext::global()->draw();
 }
 
 static void view_reload_visible_cb(Fl_Widget *w, void *data)
 {
   for(unsigned int i = 0; i < PView::list.size(); i++)
-    if(opt_view_visible(i, GMSH_GET, 0))
-      view_reload(i);
+    if(opt_view_visible(i, GMSH_GET, 0)) view_reload(i);
   drawContext::global()->draw();
 }
 
@@ -116,23 +117,23 @@ static void view_remove_all_cb(Fl_Widget *w, void *data)
 {
   if(PView::list.empty()) return;
   int mode = (intptr_t)data;
-  if(mode == -1){ // remove all
+  if(mode == -1) { // remove all
     if(PView::list.empty()) return;
     while(PView::list.size()) delete PView::list[0];
   }
-  else if(mode == -2){ // remove all visible
+  else if(mode == -2) { // remove all visible
     for(int i = PView::list.size() - 1; i >= 0; i--)
       if(opt_view_visible(i, GMSH_GET, 0)) delete PView::list[i];
   }
-  else if(mode == -3){ // remove all invisible
+  else if(mode == -3) { // remove all invisible
     for(int i = PView::list.size() - 1; i >= 0; i--)
       if(!opt_view_visible(i, GMSH_GET, 0)) delete PView::list[i];
   }
-  else if(mode == -4){ // remove all empty
+  else if(mode == -4) { // remove all empty
     for(int i = PView::list.size() - 1; i >= 0; i--)
       if(PView::list[i]->getData()->empty()) delete PView::list[i];
   }
-  else if(mode >=0 && mode < (int)PView::list.size()){ // remove by name
+  else if(mode >= 0 && mode < (int)PView::list.size()) { // remove by name
     std::string name = PView::list[mode]->getData()->getName();
     for(int i = PView::list.size() - 1; i >= 0; i--)
       if(PView::list[i]->getData()->getName() == name) delete PView::list[i];
@@ -150,28 +151,25 @@ static void view_remove_cb(Fl_Widget *w, void *data)
 }
 
 #if defined(HAVE_NATIVE_FILE_CHOOSER)
-#  define TT "\t"
-#  define NN "\n"
+#define TT "\t"
+#define NN "\n"
 #else
-#  define TT " ("
-#  define NN ")\t"
+#define TT " ("
+#define NN ")\t"
 #endif
 
 static void view_save_cb(Fl_Widget *w, void *data)
 {
   static const char *formats =
-    "Gmsh Parsed" TT "*.pos" NN
-    "Gmsh Mesh-based" TT "*.pos" NN
-    "Gmsh Legacy ASCII" TT "*.pos" NN
-    "Gmsh Legacy Binary" TT "*.pos" NN
-    "MED" TT "*.rmed" NN
-    "STL Surface" TT "*.stl" NN
-    "Generic TXT" TT "*.txt" NN;
+    "Gmsh Parsed" TT "*.pos" NN "Gmsh Mesh-based" TT "*.pos" NN
+    "Gmsh Legacy ASCII" TT "*.pos" NN "Gmsh Legacy Binary" TT "*.pos" NN
+    "MED" TT "*.rmed" NN "STL Surface" TT "*.stl" NN "Generic TXT" TT
+    "*.txt" NN;
 
   PView *view = PView::list[(intptr_t)data];
  test:
-  if(fileChooser(FILE_CHOOSER_CREATE, "Save As", formats,
-                 view->getData()->getFileName().c_str())){
+  if(fileChooser(FILE_CHOOSER_CREATE, "Export", formats,
+                 view->getData()->getFileName().c_str())) {
     std::string name = fileChooserGetName(1);
     if(CTX::instance()->confirmOverwrite) {
       if(!StatFile(name))
@@ -180,7 +178,7 @@ static void view_save_cb(Fl_Widget *w, void *data)
           goto test;
     }
     int format = 0;
-    switch(fileChooserGetFilter()){
+    switch(fileChooserGetFilter()) {
     case 0: format = 2; break;
     case 1: format = 5; break;
     case 2: format = 0; break;
@@ -253,23 +251,25 @@ static void view_all_visible_cb(Fl_Widget *w, void *data)
   if(mode >= 0) name = PView::list[mode]->getData()->getName();
   for(unsigned int i = 0; i < PView::list.size(); i++)
     opt_view_visible(i, GMSH_SET | GMSH_GUI,
-                     (mode == -1) ? 1 :
-                     (mode == -2) ? 0 :
-                     (mode == -3) ? !opt_view_visible(i, GMSH_GET, 0) :
-                     (name == PView::list[i]->getData()->getName()) ? 1 :
-                     0);
+                     (mode == -1) ?
+                       1 :
+                       (mode == -2) ?
+                       0 :
+                       (mode == -3) ?
+                       !opt_view_visible(i, GMSH_GET, 0) :
+                       (name == PView::list[i]->getData()->getName()) ? 1 : 0);
   drawContext::global()->draw();
 }
 
 static void view_applybgmesh_cb(Fl_Widget *w, void *data)
 {
-  int index =  (intptr_t)data;
+  int index = (intptr_t)data;
   if(index >= 0 && index < (int)PView::list.size())
     GModel::current()->getFields()->setBackgroundMesh(index);
 }
 
 viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
-  : Fl_Group(x,y,w,h)
+  : Fl_Group(x, y, w, h)
 {
   int popw = FL_NORMAL_SIZE + 2;
 
@@ -298,64 +298,69 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   _popup = new Fl_Menu_Button(x + w - popw, y, popw, h);
   _popup->type(Fl_Menu_Button::POPUP123);
 
-  _popup->add("Options", 'o',
-              (Fl_Callback *) view_options_cb, (void *)(intptr_t)num, 0);
-  _popup->add("_Plugins", 'p',
-              (Fl_Callback *) plugin_cb, (void *)(intptr_t)num, 0);
+  _popup->add("Options", 'o', (Fl_Callback *)view_options_cb,
+              (void *)(intptr_t)num, 0);
+  _popup->add("_Plugins", 'p', (Fl_Callback *)plugin_cb, (void *)(intptr_t)num,
+              0);
 
-  _popup->add("Reload", 'r',
-              (Fl_Callback *) view_reload_cb, (void *)(intptr_t)num, 0);
-  _popup->add("Reload Views/All", 0,
-              (Fl_Callback *) view_reload_all_cb, (void *)(intptr_t)num, 0);
-  _popup->add("Reload Views/Visible", 0,
-              (Fl_Callback *) view_reload_visible_cb, (void *)(intptr_t)num, 0);
-  _popup->add("_Create Alias", 0,
-              (Fl_Callback *) view_alias_with_options_cb, (void *)(intptr_t)num, 0);
+  _popup->add("Reload", 'r', (Fl_Callback *)view_reload_cb,
+              (void *)(intptr_t)num, 0);
+  _popup->add("Reload Views/All", 0, (Fl_Callback *)view_reload_all_cb,
+              (void *)(intptr_t)num, 0);
+  _popup->add("Reload Views/Visible", 0, (Fl_Callback *)view_reload_visible_cb,
+              (void *)(intptr_t)num, 0);
+  _popup->add("_Create Alias", 0, (Fl_Callback *)view_alias_with_options_cb,
+              (void *)(intptr_t)num, 0);
 
-  _popup->add("Remove", FL_Delete,
-              (Fl_Callback *) view_remove_cb, (void *)(intptr_t)num, 0);
-  _popup->add("_Remove Views/All", 0,
-              (Fl_Callback *) view_remove_all_cb, (void *)-1, 0);
-  _popup->add("Remove Views/Visible", 0,
-              (Fl_Callback *) view_remove_all_cb, (void *)-2, 0);
-  _popup->add("Remove Views/Invisible", 0,
-              (Fl_Callback *) view_remove_all_cb, (void *)-3, 0);
-  _popup->add("Remove Views/Other", 0,
-              (Fl_Callback *) view_remove_other_cb, (void *)(intptr_t)num, 0);
-  _popup->add("Remove Views/Empty", 0,
-              (Fl_Callback *) view_remove_all_cb, (void *)-4, 0);
+  _popup->add("Remove", FL_Delete, (Fl_Callback *)view_remove_cb,
+              (void *)(intptr_t)num, 0);
+  _popup->add("_Remove Views/All", 0, (Fl_Callback *)view_remove_all_cb,
+              (void *)-1, 0);
+  _popup->add("Remove Views/Visible", 0, (Fl_Callback *)view_remove_all_cb,
+              (void *)-2, 0);
+  _popup->add("Remove Views/Invisible", 0, (Fl_Callback *)view_remove_all_cb,
+              (void *)-3, 0);
+  _popup->add("Remove Views/Other", 0, (Fl_Callback *)view_remove_other_cb,
+              (void *)(intptr_t)num, 0);
+  _popup->add("Remove Views/Empty", 0, (Fl_Callback *)view_remove_all_cb,
+              (void *)-4, 0);
   _popup->add("Remove Views/With Same Name", 0,
-              (Fl_Callback *) view_remove_all_cb, (void *)(intptr_t)num, 0);
+              (Fl_Callback *)view_remove_all_cb, (void *)(intptr_t)num, 0);
 
-  _popup->add("Sort By Name", 0,
-              (Fl_Callback *) view_sort_cb, (void *)0, 0);
-  _popup->add("Set Visibility/All On", 0,
-              (Fl_Callback *) view_all_visible_cb, (void *)-1, 0);
-  _popup->add("Set Visibility/All Off", 0,
-              (Fl_Callback *) view_all_visible_cb, (void *)-2, 0);
-  _popup->add("Set Visibility/Invert", 0,
-              (Fl_Callback *) view_all_visible_cb, (void *)-3, 0);
+  _popup->add("Sort By Name", 0, (Fl_Callback *)view_sort_cb, (void *)0, 0);
+  _popup->add("Set Visibility/All On", 0, (Fl_Callback *)view_all_visible_cb,
+              (void *)-1, 0);
+  _popup->add("Set Visibility/All Off", 0, (Fl_Callback *)view_all_visible_cb,
+              (void *)-2, 0);
+  _popup->add("Set Visibility/Invert", 0, (Fl_Callback *)view_all_visible_cb,
+              (void *)-3, 0);
   _popup->add("Set Visibility/Same Name On", 0,
-              (Fl_Callback *) view_all_visible_cb, (void *)(intptr_t)num, 0);
+              (Fl_Callback *)view_all_visible_cb, (void *)(intptr_t)num, 0);
 
   _popup->add("Combine Elements/From All Views", 0,
-              (Fl_Callback *) view_combine_space_all_cb, (void *)(intptr_t)num, 0);
+              (Fl_Callback *)view_combine_space_all_cb, (void *)(intptr_t)num,
+              0);
   _popup->add("Combine Elements/From Visible Views", 0,
-              (Fl_Callback *) view_combine_space_visible_cb, (void *)(intptr_t)num, 0);
+              (Fl_Callback *)view_combine_space_visible_cb,
+              (void *)(intptr_t)num, 0);
   _popup->add("Combine Elements/From All Views With Same Name", 0,
-              (Fl_Callback *) view_combine_space_by_name_cb, (void *)(intptr_t)num, 0);
+              (Fl_Callback *)view_combine_space_by_name_cb,
+              (void *)(intptr_t)num, 0);
 
   _popup->add("_Combine Time Steps/From All Views", 0,
-              (Fl_Callback *) view_combine_time_all_cb, (void *)(intptr_t)num, 0);
+              (Fl_Callback *)view_combine_time_all_cb, (void *)(intptr_t)num,
+              0);
   _popup->add("Combine Time Steps/From Visible Views", 0,
-              (Fl_Callback *) view_combine_time_visible_cb, (void *)(intptr_t)num, 0);
+              (Fl_Callback *)view_combine_time_visible_cb,
+              (void *)(intptr_t)num, 0);
   _popup->add("Combine Time Steps/From All Views With Same Name", 0,
-              (Fl_Callback *) view_combine_time_by_name_cb, (void *)(intptr_t)num, 0);
+              (Fl_Callback *)view_combine_time_by_name_cb,
+              (void *)(intptr_t)num, 0);
 
-  _popup->add("Apply As Background Mesh", 0,
-              (Fl_Callback *) view_applybgmesh_cb, (void *)(intptr_t)num, 0);
-  _popup->add("Save As...", 0,
-              (Fl_Callback *) view_save_cb, (void *)(intptr_t)num, 0);
+  _popup->add("Apply As Background Mesh", 0, (Fl_Callback *)view_applybgmesh_cb,
+              (void *)(intptr_t)num, 0);
+  _popup->add("Export...", 0, (Fl_Callback *)view_save_cb,
+              (void *)(intptr_t)num, 0);
 
   end(); // close the group
   resizable(_toggle);

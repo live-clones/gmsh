@@ -16,8 +16,7 @@ void create_jpeg(FILE *outfile, PixelBuffer *buffer, int quality, int smoothing)
 
 #else
 
-extern "C"
-{
+extern "C" {
 #include <jpeglib.h>
 #include <jerror.h>
 }
@@ -26,14 +25,14 @@ static void my_output_message(j_common_ptr cinfo)
 {
   char buffer[JMSG_LENGTH_MAX];
 
-  (*cinfo->err->format_message) (cinfo, buffer);
+  (*cinfo->err->format_message)(cinfo, buffer);
 
   Msg::Debug("%s", buffer);
 }
 
 void create_jpeg(FILE *outfile, PixelBuffer *buffer, int quality, int smoothing)
 {
-  if(buffer->getFormat() != GL_RGB || buffer->getType() != GL_UNSIGNED_BYTE){
+  if(buffer->getFormat() != GL_RGB || buffer->getType() != GL_UNSIGNED_BYTE) {
     Msg::Error("JPEG only implemented for GL_RGB and GL_UNSIGNED_BYTE");
     return;
   }
@@ -55,8 +54,8 @@ void create_jpeg(FILE *outfile, PixelBuffer *buffer, int quality, int smoothing)
   cinfo.smoothing_factor = smoothing;
   jpeg_start_compress(&cinfo, TRUE);
 
-  unsigned char *pixels = (unsigned char*)buffer->getPixels();
-  JSAMPROW row_pointer[1]; 
+  unsigned char *pixels = (unsigned char *)buffer->getPixels();
+  JSAMPROW row_pointer[1];
   int row_stride = cinfo.image_width * cinfo.input_components;
   int i = cinfo.image_height - 1;
   while(i >= 0) {

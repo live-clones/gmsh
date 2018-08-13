@@ -14,11 +14,12 @@
 #include "MHexahedron.h"
 #include "Context.h"
 
-static bool getMeshVertices(GModel *m, int num, int *n, std::vector<MVertex*> &vec)
+static bool getMeshVertices(GModel *m, int num, int *n,
+                            std::vector<MVertex *> &vec)
 {
-  for(int i = 0; i < num; i++){
+  for(int i = 0; i < num; i++) {
     MVertex *v = m->getMeshVertexByTag(n[i]);
-    if(!v){
+    if(!v) {
       Msg::Error("Wrong vertex number %d", n[i]);
       return false;
     }
@@ -31,38 +32,42 @@ static bool getMeshVertices(GModel *m, int num, int *n, std::vector<MVertex*> &v
 int GModel::readACTRAN(const std::string &name)
 {
   FILE *fp = Fopen(name.c_str(), "r");
-  if(!fp){
+  if(!fp) {
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
   char buffer[256];
-  if(!fgets(buffer, sizeof(buffer), fp)){ fclose(fp); return 0; }
+  if(!fgets(buffer, sizeof(buffer), fp)) {
+    fclose(fp);
+    return 0;
+  }
 
-  if(strncmp(buffer, "BEGIN ACTRAN", 12)){
+  if(strncmp(buffer, "BEGIN ACTRAN", 12)) {
     Msg::Error("Did not find ACTRAN header");
-    fclose(fp); return 0;
+    fclose(fp);
+    return 0;
   }
 
   _vertexMapCache.clear();
-  std::map<int, std::vector<MElement*> > elements[3];
+  std::map<int, std::vector<MElement *> > elements[3];
   int nbv = 0, nbe = 0, dim = 0;
 
   while(!feof(fp)) {
     if(!fgets(buffer, 256, fp)) break;
     char str[256], str2[256];
     sscanf(buffer, "%s %s", str, str2);
-    if(!strcmp(str, "BEGIN") && !strcmp(str2, "MESH")){
+    if(!strcmp(str, "BEGIN") && !strcmp(str2, "MESH")) {
       if(!fgets(buffer, sizeof(buffer), fp)) break;
       sscanf(buffer, "%d %d %d", &nbv, &nbe, &dim);
       if(dim == 3 || dim == 2)
         Msg::Info("ACTRAN mesh dimension %d", dim);
-      else{
+      else {
         Msg::Error("Cannot read ACTRAN mesh of dimension %d", dim);
         break;
       }
     }
-    else if(!strcmp(str, "BEGIN") && !strcmp(str2, "NODE")){
+    else if(!strcmp(str, "BEGIN") && !strcmp(str2, "NODE")) {
       Msg::Info("%d vertices", nbv);
       for(int i = 0; i < nbv; i++) {
         if(!fgets(buffer, sizeof(buffer), fp)) break;
@@ -75,32 +80,31 @@ int GModel::readACTRAN(const std::string &name)
         _vertexMapCache[num] = new MVertex(x, y, z, 0, num);
       }
     }
-    else if(!strcmp(str, "BEGIN") && !strcmp(str2, "ELEMENT")){
+    else if(!strcmp(str, "BEGIN") && !strcmp(str2, "ELEMENT")) {
       Msg::Info("%d elements", nbe);
       for(int i = 0; i < nbe; i++) {
         if(!fgets(buffer, sizeof(buffer), fp)) break;
         int num, type, reg, n[8];
         sscanf(buffer, "%d %d %d", &num, &type, &reg);
-        std::vector<MVertex*> vertices;
-        if(type == 2){
-          sscanf(buffer, "%d %d %d %d %d", &num, &type, &reg,
-                 &n[0], &n[1]);
+        std::vector<MVertex *> vertices;
+        if(type == 2) {
+          sscanf(buffer, "%d %d %d %d %d", &num, &type, &reg, &n[0], &n[1]);
           if(!getMeshVertices(this, 2, n, vertices)) break;
           elements[0][reg].push_back(new MLine(vertices, num));
         }
-        else if(type == 4){
-          sscanf(buffer, "%d %d %d %d %d %d", &num, &type, &reg,
-                 &n[0], &n[1], &n[2]);
+        else if(type == 4) {
+          sscanf(buffer, "%d %d %d %d %d %d", &num, &type, &reg, &n[0], &n[1],
+                 &n[2]);
           if(!getMeshVertices(this, 3, n, vertices)) break;
           elements[0][reg].push_back(new MTriangle(vertices, num));
         }
-        else if(type == 8){
-          sscanf(buffer, "%d %d %d %d %d %d %d", &num, &type, &reg,
-                 &n[0], &n[1], &n[2], &n[3]);
+        else if(type == 8) {
+          sscanf(buffer, "%d %d %d %d %d %d %d", &num, &type, &reg, &n[0],
+                 &n[1], &n[2], &n[3]);
           if(!getMeshVertices(this, 4, n, vertices)) break;
           elements[1][reg].push_back(new MTetrahedron(vertices, num));
         }
-        else{
+        else {
           Msg::Error("Unknown type %d for element %d", type, num);
         }
       }

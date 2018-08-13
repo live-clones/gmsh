@@ -3033,6 +3033,18 @@ double opt_general_mouse_hover_meshes(OPT_ARGS_NUM)
   return CTX::instance()->mouseHoverMeshes;
 }
 
+double opt_general_mouse_invert_zoom(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mouseInvertZoom = (int)val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.butt[22]->value
+      (CTX::instance()->mouseInvertZoom);
+#endif
+  return CTX::instance()->mouseInvertZoom;
+}
+
 double opt_general_fast_redraw(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -3639,7 +3651,7 @@ double opt_general_heavy_visualization(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->general.butt[22]->value
+    FlGui::instance()->options->general.butt[23]->value
         (CTX::instance()->heavyVisu);
 #endif
   return CTX::instance()->heavyVisu;
@@ -5826,6 +5838,13 @@ double opt_mesh_partition_create_ghost_cells(OPT_ARGS_NUM)
   return CTX::instance()->mesh.partitionCreateGhostCells;
 }
 
+double opt_mesh_partition_old_style_msh2(OPT_ARGS_NUM)
+{
+  if (action & GMSH_SET)
+    CTX::instance()->mesh.partitionOldStyleMsh2 = val;
+  return CTX::instance()->mesh.partitionOldStyleMsh2;
+}
+
 double opt_mesh_binary(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -6293,7 +6312,7 @@ double opt_mesh_draw_skin_only(OPT_ARGS_NUM)
 double opt_mesh_save_all(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.saveAll = val ? 1 : 0;
+    CTX::instance()->mesh.saveAll = (int)val;
   return CTX::instance()->mesh.saveAll;
 }
 
@@ -6321,7 +6340,7 @@ double opt_mesh_save_topology(OPT_ARGS_NUM)
 double opt_mesh_save_groups_of_nodes(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.saveGroupsOfNodes = val ? 1 : 0;
+    CTX::instance()->mesh.saveGroupsOfNodes = (int)val;
   return CTX::instance()->mesh.saveGroupsOfNodes;
 }
 

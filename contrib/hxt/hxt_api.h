@@ -29,12 +29,17 @@ typedef enum
   HXT_STATUS_OUT_OF_MEMORY         = -4,
   HXT_STATUS_FILE_CANNOT_BE_OPENED = -5,
   HXT_STATUS_POINTER_ERROR         = -6,
+  HXT_STATUS_READ_ERROR            = -7,
+  HXT_STATUS_WRITE_ERROR           = -8,
+  HXT_STATUS_RANGE_ERROR           = -9,
+  HXT_STATUS_FORMAT_ERROR          = -10,
 
 
   // INTERNAL Errors (<= HXT_STATUS_INTERNAL) => HXT_CHECK does not give trace message but returns... should be catched internally !
   HXT_STATUS_INTERNAL              = -1024,
-  HXT_STATUS_SKIP                  = -1025,
-  HXT_STATUS_TRYAGAIN              = -1026
+  HXT_STATUS_CONFLICT              = -1025,
+  HXT_STATUS_SKIP                  = -1026,
+  HXT_STATUS_TRYAGAIN              = -1027
 
 
 }HXTStatus;

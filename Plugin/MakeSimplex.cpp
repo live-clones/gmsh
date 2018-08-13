@@ -5,25 +5,22 @@
 
 #include "MakeSimplex.h"
 
-StringXNumber MakeSimplexOptions_Number[] = {
-  {GMSH_FULLRC, "View", NULL, -1.}
-};
+StringXNumber MakeSimplexOptions_Number[] = {{GMSH_FULLRC, "View", NULL, -1.}};
 
-extern "C"
+extern "C" {
+GMSH_Plugin *GMSH_RegisterMakeSimplexPlugin()
 {
-  GMSH_Plugin *GMSH_RegisterMakeSimplexPlugin()
-  {
-    return new GMSH_MakeSimplexPlugin();
-  }
+  return new GMSH_MakeSimplexPlugin();
+}
 }
 
 std::string GMSH_MakeSimplexPlugin::getHelp() const
 {
   return "Plugin(MakeSimplex) decomposes all non-simplectic "
-    "elements (quadrangles, prisms, hexahedra, pyramids) in the "
-    "view `View' into simplices (triangles, tetrahedra).\n\n"
-    "If `View' < 0, the plugin is run on the current view.\n\n"
-    "Plugin(MakeSimplex) is executed in-place.";
+         "elements (quadrangles, prisms, hexahedra, pyramids) in the "
+         "view `View' into simplices (triangles, tetrahedra).\n\n"
+         "If `View' < 0, the plugin is run on the current view.\n\n"
+         "Plugin(MakeSimplex) is executed in-place.";
 }
 
 int GMSH_MakeSimplexPlugin::getNbOptions() const
@@ -40,33 +37,31 @@ static void decomposeList(PViewDataList *data, int nbNod, int nbComp,
                           std::vector<double> &listIn, int *nbIn,
                           std::vector<double> &listOut, int *nbOut)
 {
-  if(!(*nbIn))  return;
+  if(!(*nbIn)) return;
 
   double xNew[4], yNew[4], zNew[4];
   double *valNew = new double[data->getNumTimeSteps() * nbComp * nbNod];
   MakeSimplex dec(nbNod, nbComp, data->getNumTimeSteps());
 
   int nb = listIn.size() / (*nbIn);
-  for(unsigned int i = 0; i < listIn.size(); i += nb){
+  for(unsigned int i = 0; i < listIn.size(); i += nb) {
     double *x = &listIn[i];
     double *y = &listIn[i + nbNod];
     double *z = &listIn[i + 2 * nbNod];
     double *val = &listIn[i + 3 * nbNod];
-    for(int j = 0; j < dec.numSimplices(); j++){
+    for(int j = 0; j < dec.numSimplices(); j++) {
       dec.decompose(j, x, y, z, val, xNew, yNew, zNew, valNew);
-      for(int k = 0; k < dec.numSimplexNodes(); k++)
-        listOut.push_back(xNew[k]);
-      for(int k = 0; k < dec.numSimplexNodes(); k++)
-        listOut.push_back(yNew[k]);
-      for(int k = 0; k < dec.numSimplexNodes(); k++)
-        listOut.push_back(zNew[k]);
-      for(int k = 0; k < dec.numSimplexNodes() * data->getNumTimeSteps() * nbComp; k++)
+      for(int k = 0; k < dec.numSimplexNodes(); k++) listOut.push_back(xNew[k]);
+      for(int k = 0; k < dec.numSimplexNodes(); k++) listOut.push_back(yNew[k]);
+      for(int k = 0; k < dec.numSimplexNodes(); k++) listOut.push_back(zNew[k]);
+      for(int k = 0;
+          k < dec.numSimplexNodes() * data->getNumTimeSteps() * nbComp; k++)
         listOut.push_back(valNew[k]);
       (*nbOut)++;
     }
   }
 
-  delete [] valNew;
+  delete[] valNew;
 
   listIn.clear();
   *nbIn = 0;
@@ -111,7 +106,8 @@ PView *GMSH_MakeSimplexPlugin::execute(PView *v)
 // Utility class
 
 MakeSimplex::MakeSimplex(int numNodes, int numComponents, int numTimeSteps)
-  : _numNodes(numNodes), _numComponents(numComponents), _numTimeSteps(numTimeSteps)
+  : _numNodes(numNodes), _numComponents(numComponents),
+    _numTimeSteps(numTimeSteps)
 {
   ;
 }
@@ -119,10 +115,14 @@ MakeSimplex::MakeSimplex(int numNodes, int numComponents, int numTimeSteps)
 int MakeSimplex::numSimplices()
 {
   switch(_numNodes) {
-  case 4: return 2; // quad -> 2 tris
-  case 5: return 2; // pyramid -> 2 tets
-  case 6: return 3; // prism -> 3 tets
-  case 8: return 6; // hexa -> 6 tets
+  case 4:
+    return 2; // quad -> 2 tris
+  case 5:
+    return 2; // pyramid -> 2 tets
+  case 6:
+    return 3; // prism -> 3 tets
+  case 8:
+    return 6; // hexa -> 6 tets
   }
   return 0;
 }
@@ -135,9 +135,9 @@ int MakeSimplex::numSimplexNodes()
     return 4; // all others -> tets
 }
 
-void MakeSimplex::reorder(int map[4], int n,
-                          double *x, double *y, double *z, double *val,
-                          double *xn, double *yn, double *zn, double *valn)
+void MakeSimplex::reorder(int map[4], int n, double *x, double *y, double *z,
+                          double *val, double *xn, double *yn, double *zn,
+                          double *valn)
 {
   for(int i = 0; i < n; i++) {
     xn[i] = x[map[i]];
@@ -149,29 +149,30 @@ void MakeSimplex::reorder(int map[4], int n,
   for(int ts = 0; ts < _numTimeSteps; ts++)
     for(int i = 0; i < n; i++) {
       for(int j = 0; j < _numComponents; j++)
-        valn[ts*n*_numComponents + i*_numComponents + j] =
-          val[ts*_numNodes*_numComponents + map2[i]*_numComponents + j];
-  }
+        valn[ts * n * _numComponents + i * _numComponents + j] =
+          val[ts * _numNodes * _numComponents + map2[i] * _numComponents + j];
+    }
 }
 
-void MakeSimplex::decompose(int num,
-                            double *x, double *y, double *z, double *val,
-                            double *xn, double *yn, double *zn, double *valn)
+void MakeSimplex::decompose(int num, double *x, double *y, double *z,
+                            double *val, double *xn, double *yn, double *zn,
+                            double *valn)
 {
-  int quadTri[2][4] = {{0,1,2,-1}, {0,2,3,-1}};
-  int hexaTet[6][4] = {{0,1,3,7}, {0,4,1,7}, {1,4,5,7}, {1,2,3,7}, {1,6,2,7}, {1,5,6,7}};
-  int prisTet[3][4] = {{0,1,2,4}, {0,2,4,5}, {0,3,4,5}};
-  int pyraTet[2][4] = {{0,1,3,4}, {1,2,3,4}};
+  int quadTri[2][4] = {{0, 1, 2, -1}, {0, 2, 3, -1}};
+  int hexaTet[6][4] = {{0, 1, 3, 7}, {0, 4, 1, 7}, {1, 4, 5, 7},
+                       {1, 2, 3, 7}, {1, 6, 2, 7}, {1, 5, 6, 7}};
+  int prisTet[3][4] = {{0, 1, 2, 4}, {0, 2, 4, 5}, {0, 3, 4, 5}};
+  int pyraTet[2][4] = {{0, 1, 3, 4}, {1, 2, 3, 4}};
 
-  if(num < 0 || num > numSimplices()-1) {
+  if(num < 0 || num > numSimplices() - 1) {
     Msg::Error("Invalid decomposition");
     num = 0;
   }
 
   switch(_numNodes) {
-  case 4: reorder(quadTri[num], 3, x, y, z, val, xn, yn, zn, valn); break ;
-  case 8: reorder(hexaTet[num], 4, x, y, z, val, xn, yn, zn, valn); break ;
-  case 6: reorder(prisTet[num], 4, x, y, z, val, xn, yn, zn, valn); break ;
-  case 5: reorder(pyraTet[num], 4, x, y, z, val, xn, yn, zn, valn); break ;
+  case 4: reorder(quadTri[num], 3, x, y, z, val, xn, yn, zn, valn); break;
+  case 8: reorder(hexaTet[num], 4, x, y, z, val, xn, yn, zn, valn); break;
+  case 6: reorder(prisTet[num], 4, x, y, z, val, xn, yn, zn, valn); break;
+  case 5: reorder(pyraTet[num], 4, x, y, z, val, xn, yn, zn, valn); break;
   }
 }

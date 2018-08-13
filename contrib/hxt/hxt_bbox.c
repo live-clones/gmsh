@@ -1,9 +1,9 @@
 #include "hxt_bbox.h"
 
 // /* create a new bounding box */
-// HXTStatus hxtBboxCreate(hxtBbox** bboxP){
+// HXTStatus hxtBboxCreate(HXTBbox** bboxP){
 //         HXT_CHECK(
-//                 hxtMalloc((void **) bboxP, sizeof(hxtBbox)) );
+//                 hxtMalloc((void **) bboxP, sizeof(HXTBbox)) );
 
 //         unsigned i;
 //         for (i=0; i<3; i++)
@@ -16,7 +16,7 @@
 // }
 
 
-// HXTStatus hxtBboxDelete(hxtBbox** bboxP){
+// HXTStatus hxtBboxDelete(HXTBbox** bboxP){
 //         HXT_CHECK(
 //                 hxtFree((void **) bboxP) );
 
@@ -25,7 +25,7 @@
 
 
 /* update the bounding box with one new vertex */
-HXTStatus hxtBboxAddOne(hxtBbox* bbox, double* coord){
+HXTStatus hxtBboxAddOne(HXTBbox* bbox, double* coord){
         unsigned i;
         for (i=0; i<3; i++)
         {
@@ -41,7 +41,7 @@ HXTStatus hxtBboxAddOne(hxtBbox* bbox, double* coord){
 
 
 /* update the bounding box with an array of n vertices at once (far quicker) */
-HXTStatus hxtBboxAdd(hxtBbox* bbox, double* coord, const uint32_t n){
+HXTStatus hxtBboxAdd(HXTBbox* bbox, double* coord, const uint32_t n){
 
         #pragma omp parallel
         {
@@ -51,19 +51,19 @@ HXTStatus hxtBboxAdd(hxtBbox* bbox, double* coord, const uint32_t n){
                 #pragma omp for nowait
                 for (uint32_t i=0; i<n; i++)
                 {
-                        if(coord[4*i  ]<min[0])
-                                min[0]=coord[4*i  ];
-                        if(coord[4*i+1]<min[1])
-                                min[1]=coord[4*i+1];
-                        if(coord[4*i+2]<min[2])
-                                min[2]=coord[4*i+2];
+                        if(coord[(size_t) 4*i  ]<min[0])
+                                min[0]=coord[(size_t) 4*i  ];
+                        if(coord[(size_t) 4*i+1]<min[1])
+                                min[1]=coord[(size_t) 4*i+1];
+                        if(coord[(size_t) 4*i+2]<min[2])
+                                min[2]=coord[(size_t) 4*i+2];
 
-                        if(coord[4*i  ]>max[0])
-                                max[0]=coord[4*i  ];
-                        if(coord[4*i+1]>max[1])
-                                max[1]=coord[4*i+1];
-                        if(coord[4*i+2]>max[2])
-                                max[2]=coord[4*i+2];
+                        if(coord[(size_t) 4*i  ]>max[0])
+                                max[0]=coord[(size_t) 4*i  ];
+                        if(coord[(size_t) 4*i+1]>max[1])
+                                max[1]=coord[(size_t) 4*i+1];
+                        if(coord[(size_t) 4*i+2]>max[2])
+                                max[2]=coord[(size_t) 4*i+2];
                 }
 
                 #pragma omp critical

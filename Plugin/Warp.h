@@ -8,15 +8,13 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterWarpPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterWarpPlugin();
 }
 
-class GMSH_WarpPlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_WarpPlugin(){}
+class GMSH_WarpPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_WarpPlugin() {}
   std::string getName() const { return "Warp"; }
   std::string getShortHelp() const
   {
@@ -24,7 +22,7 @@ class GMSH_WarpPlugin : public GMSH_PostPlugin
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber *getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

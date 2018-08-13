@@ -22,15 +22,28 @@
 # `demos/api' contains C++, C, Python and Julia versions of several of the
 # `.geo' tutorials from `tutorials'.
 
+import os
 from GenApi import *
 
-api = API('3.0')
+dirname = os.path.dirname(os.path.realpath(__file__))
+
+with open(os.path.join(dirname, '..', 'CMakeLists.txt'), 'rt') as f:
+    contents = f.read()
+    start = contents.find('GMSH_MAJOR_VERSION') + 18
+    end = contents.find(')', start)
+    major = int(contents[start:end])
+    start = contents.find('GMSH_MINOR_VERSION') + 18
+    end = contents.find(')', start)
+    minor = int(contents[start:end])
+
+version = str(major) + '.' + str(minor)
+api = API(version)
 
 ################################################################################
 
 gmsh = api.add_module('gmsh','Top-level functions')
 
-doc = '''Initialize Gmsh. This must be called before any call to the other functions in the API. If `argc' and `argv' are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration files (gmshrc and gmsh-options).'''
+doc = '''Initialize Gmsh. This must be called before any call to the other functions in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration files (gmshrc and gmsh-options).'''
 gmsh.add('initialize',doc,None,argcargv(),ibool('readConfigFiles','true','True'))
 
 doc = '''Finalize Gmsh. This must be called when you are done using the Gmsh API.'''
@@ -430,7 +443,7 @@ occ.add('addBezier',doc,oint,ivectorint('pointTags'),iint('tag','-1'))
 doc = '''Add a wire (open or closed) formed by the curves `curveTags'. `curveTags' should contain (signed) tags: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the wire.'''
 occ.add('addWire',doc,oint,ivectorint('curveTags'),iint('tag','-1'),ibool('checkClosed','false','False'))
 
-doc = '''Add a curve loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain (signed) tags of curves forming a closed loop: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the curve loop.'''
+doc = '''Add a curve loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain tags of curves forming a closed loop. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the curve loop.'''
 occ.add('addCurveLoop',doc,oint,ivectorint('curveTags'),iint('tag','-1'))
 
 doc = '''Add a rectangle with lower left corner at (`x', `y', `z') and upper right corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Round the corners if `roundedRadius' is nonzero. Return the tag of the rectangle.'''
@@ -484,8 +497,18 @@ occ.add('revolve',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idou
 doc = '''Add a pipe by extruding the entities `dimTags' along the wire `wireTag'. Return the pipe in `outDimTags'.'''
 occ.add('addPipe',doc,None,ivectorpair('dimTags'),iint('wireTag'),ovectorpair('outDimTags'))
 
-doc = '''Fillet the volumes `volumeTags' on the curves `curveTags' with radius `radius'. Return the filleted entities in `outDimTags'. Remove the original volume if `removeVolume' is set.'''
-occ.add('fillet',doc,None,ivectorint('volumeTags'),ivectorint('curveTags'),idouble('radius'),ovectorpair('outDimTags'),ibool('removeVolume','true','True'))
+doc = '''Fillet the volumes `volumeTags' on the curves `curveTags' with radii `radii'. The `radii' vector can either contain a single radius, as many radii as `curveTags', or twice as many as `curveTags' (in which case different radii are provided for the begin and end points of the curves). Return the filleted entities in `outDimTags'. Remove the original volume if `removeVolume' is set.'''
+occ.add('fillet',doc,None,ivectorint('volumeTags'),ivectorint('curveTags'),ivectordouble('radii'),ovectorpair('outDimTags'),ibool('removeVolume','true','True'))
+
+doc = '''Chamfer the volumes `volumeTags' on the curves `curveTags' with distances
+`distances' measured on surfaces `surfaceTags'. The `distances' vector can
+either contain a single distance, as many distances as `curveTags' and
+`surfaceTags', or twice as many as `curveTags' and `surfaceTags' (in which case
+the first in each pair is measured on the corresponding surface in
+`surfaceTags', the other on the other adjacent surface). Return the chamfered
+entities in `outDimTags'. Remove the original volume if `removeVolume' is
+set.'''
+occ.add('chamfer',doc,None,ivectorint('volumeTags'),ivectorint('curveTags'),ivectorint('surfaceTags'),ivectordouble('distances'),ovectorpair('outDimTags'),ibool('removeVolume','true','True'))
 
 doc = '''Compute the boolean union (the fusion) of the entities `objectDimTags' and `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (ony valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('fuse',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
@@ -523,8 +546,8 @@ occ.add('removeAllDuplicates',doc,None)
 doc = '''Import BREP, STEP or IGES shapes from the file `fileName'. The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in the file. The optional argument `format' can be used to force the format of the file (currently "brep", "step" or "iges").'''
 occ.add('importShapes',doc,None,istring('fileName'),ovectorpair('outDimTags'),ibool('highestDimOnly','true','True'),istring('format','""'))
 
-#doc = '''Imports native OpenCASCADE shapes by providing a raw pointer to a TopoDS_Shape. The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in the file.'''
-#occ.add('importShapesNativePointer',doc,None,voidstar('shape'),ovectorpair('outDimTags'),ibool('highestDimOnly','true','True'))
+doc = '''Imports an OpenCASCADE `shape' by providing a pointer to a native OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in `shape'. Warning: this function is unsafe, as providing an invalid pointer will lead to undefined behavior.'''
+occ.add('importShapesNativePointer',doc,None,ivoidstar('shape'),ovectorpair('outDimTags'),ibool('highestDimOnly','true','True'))
 
 doc = '''Set a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 occ.add('setMeshSize',doc,None,ivectorpair('dimTags'),idouble('size'))
@@ -611,6 +634,16 @@ onelab.add('set',doc,None,istring('data'),istring('format', '"json"'))
 
 doc = '''Run a ONELAB client. If `name' is provided, create a new ONELAB client with name `name' and executes `command'. If not, try to run a client that might be linked to the processed input files.'''
 onelab.add('run',doc,None,istring('name', '""'),istring('command', '""'))
+
+################################################################################
+
+onelab = gmsh.add_module('logger','Message logger functions')
+
+doc = '''Start logging messages in `log'.'''
+onelab.add('start',doc,None,ovectorstring('log'))
+
+doc = '''Stop logging messages.'''
+onelab.add('stop',doc,None)
 
 ################################################################################
 

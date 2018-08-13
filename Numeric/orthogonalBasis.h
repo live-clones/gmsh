@@ -29,19 +29,18 @@ namespace LegendrePolynomials {
   void f(int n, double u, double *val);
   void fc(int n, double u, double *val);
   void df(int n, double u, double *val);
-}
+} // namespace LegendrePolynomials
 
 namespace JacobiPolynomials {
   void f(int n, double alpha, double beta, double u, double *val);
   void df(int n, double alpha, double beta, double u, double *val);
 
-  inline double Pochhammer(double x,int n)
+  inline double Pochhammer(double x, int n)
   {
     double result = 1;
-    for (int i = 0; i < n; i++) result *= x + i;
+    for(int i = 0; i < n; i++) result *= x + i;
     return result;
   }
-}
+} // namespace JacobiPolynomials
 
-
-#endif //GMSH_ORTHOGONALBASIS_H
+#endif // GMSH_ORTHOGONALBASIS_H

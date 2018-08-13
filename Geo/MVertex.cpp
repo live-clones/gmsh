@@ -4,7 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <string.h>
-#include <math.h>
+#include <cmath>
 #include "MVertex.h"
 #include "GModel.h"
 #include "GVertex.h"
@@ -20,16 +20,11 @@ double angle3Vertices(const MVertex *p1, const MVertex *p2, const MVertex *p3)
   SVector3 c = crossprod(a, b);
   double sinA = c.norm();
   double cosA = dot(a, b);
-  return atan2(sinA, cosA);
+  return std::atan2(sinA, cosA);
 }
 
 MVertex::MVertex(double x, double y, double z, GEntity *ge, int num)
-  : _visible(1)
-  , _order(1)
-  , _x(x)
-  , _y(y)
-  , _z(z)
-  , _ge(ge)
+  : _visible(1), _order(1), _x(x), _y(y), _z(z), _ge(ge)
 {
 #if defined(_OPENMP)
 #pragma omp critical
@@ -415,6 +410,14 @@ void MVertex::writeBDF(FILE *fp, int format, double scalingFactor)
 }
 
 void MVertex::writeINP(FILE *fp, double scalingFactor)
+{
+  if(_index < 0) return; // negative index vertices are never saved
+
+  fprintf(fp, "%d, %.14g, %.14g, %.14g\n", _index, x() * scalingFactor,
+          y() * scalingFactor, z() * scalingFactor);
+}
+
+void MVertex::writeKEY(FILE *fp, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 

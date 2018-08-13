@@ -8,5 +8,3 @@
 //
 
 #include "filters.h"
-
-

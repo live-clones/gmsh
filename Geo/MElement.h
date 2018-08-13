@@ -136,6 +136,9 @@ public:
   // get the vertex using INP ordering
   virtual MVertex *getVertexINP(int num) { return getVertex(num); }
 
+  // get the vertex using KEY ordering
+  virtual MVertex *getVertexKEY(int num) { return getVertex(num); }
+
   // get the number of vertices associated with edges, faces and volumes
   // (nonzero only for higher order elements, polygons or polyhedra)
   virtual int getNumEdgeVertices() const { return 0; }
@@ -458,6 +461,7 @@ public:
   virtual void writeDIFF(FILE *fp, int num, bool binary = false,
                          int physical_property = 1);
   virtual void writeINP(FILE *fp, int num);
+  virtual void writeKEY(FILE *fp, int pid, int num);
   virtual void writeSU2(FILE *fp, int num);
 
   // info for specific IO formats (returning 0 means that the element is not
@@ -470,6 +474,7 @@ public:
   virtual const char *getStringForBDF() const { return 0; }
   virtual const char *getStringForDIFF() const { return 0; }
   virtual const char *getStringForINP() const { return 0; }
+  virtual const char *getStringForKEY() const { return 0; }
 
   // return the number of vertices, as well as the element name if 'name' != 0
   static unsigned int getInfoMSH(const int typeMSH,

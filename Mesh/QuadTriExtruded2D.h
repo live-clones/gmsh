@@ -50,7 +50,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "MQuadrangle.h"
 #include "Numeric.h"
 #include <map>
-#include <math.h>
+#include <cmath>
 #include "QuadTriUtils.h"
 
 // The function that tests whether a 2D surface is a lateral of a valid
@@ -60,7 +60,8 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 // determins whether the surface should be meshed with triangles or quadrangles:
 // tri_quad_values: 0 = no override, 1 = mesh as quads, 2 = mesh as triangles.
 // Added 2010-12-09.
-int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag, bool *detectQuadToTriLateral);
+int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag,
+                            bool *detectQuadToTriLateral);
 
 // The function that tests whether a surface is a QuadToTri top surface and
 // whether there are conflicts. If surface is not a top for a valid QuadToTri
@@ -68,7 +69,6 @@ int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag, bool *detectQuadToT
 // RemoveDuplicateSurfaces() makes this DIFFICULT. Also, the type of QuadToTri
 // interface is placed into the pointer argument quadToTri. .  Added 2010-12-09.
 int IsValidQuadToTriTop(GFace *face, int *quadToTri, bool *detectQuadToTriTop);
-
 
 // This function meshes the top surface of a QuadToTri extrusion.  It returns 0
 // if it is given a non-quadToTri extrusion or if it fails.  Args: 'GFace *to'

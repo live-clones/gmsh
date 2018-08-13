@@ -19,25 +19,29 @@ class MVertex;
 
 extern bool old_algo_hexa();
 
-class Filler2D{
- public:
+class Filler2D {
+public:
   Filler2D();
   ~Filler2D();
-  void pointInsertion2D(GFace* gf, std::vector<MVertex*> &packed, std::vector<SMetric3> &metrics );
- private:
-  static double time_bgm_and_smoothing,time_insertion;
+  void pointInsertion2D(GFace *gf, std::vector<MVertex *> &packed,
+                        std::vector<SMetric3> &metrics);
+
+private:
+  static double time_bgm_and_smoothing, time_insertion;
 };
 
-class Filler3D{
- private:
-  static std::vector<MVertex*> new_vertices;// these are used in meshGRegion.cpp using static !!!
-  static double time_smoothing,time_insert_points, time_meshing;
- public:
+class Filler3D {
+private:
+  static std::vector<MVertex *>
+    new_vertices; // these are used in meshGRegion.cpp using static !!!
+  static double time_smoothing, time_insert_points, time_meshing;
+
+public:
   Filler3D();
   ~Filler3D();
-  virtual bool treat_region(GRegion*);
+  virtual bool treat_region(GRegion *);
   static int get_nbr_new_vertices();
-  static MVertex* get_new_vertex(int);
+  static MVertex *get_new_vertex(int);
 };
 
 #endif

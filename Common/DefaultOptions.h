@@ -678,6 +678,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Enable mouse hover on meshes" },
   { F|O, "MouseSelection" , opt_general_mouse_selection , 1. ,
     "Enable mouse selection" },
+  { F|O, "MouseInvertZoom" , opt_general_mouse_invert_zoom , 0. ,
+    "Invert mouse wheel zoom direction" },
 
   { F|S, "NonModalWindows" , opt_general_non_modal_windows , 1. ,
     "Force all control windows to be on top of the graphic window "
@@ -1100,7 +1102,7 @@ StringXNumber MeshOptions_Number[] = {
     "Minimum number of points used to mesh a circle" },
   { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
     "Minimum number of points used to mesh a (non-straight) curve" },
-  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 2.2 ,
+  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.0 ,
     "Version of the MSH file format to use" },
   { F|O, "PartitionHexWeight" , opt_mesh_partition_hex_weight , 1 ,
     "Weight of hexahedral element for METIS load balancing" },
@@ -1126,6 +1128,10 @@ StringXNumber MeshOptions_Number[] = {
     "Write one file for each mesh partition" },
   { F|O, "PartitionTopologyFile" , opt_mesh_partition_save_topology_file , 0 ,
     "Write a .pro file with the partition topology" },
+  { F|O, "PartitionOldStyleMsh2" , opt_mesh_partition_old_style_msh2 , 1 ,
+    "Write partitioned meshes in MSH2 format using old style (i.e. by not "
+    "referencing new partitioned entities, except on partition boundaries), "
+    "for backward compatibility" },
 
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. ,
     "Number of hexahedra in the current mesh (read-only)" },
@@ -1759,7 +1765,7 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "PostSICN" , opt_print_pos_SICN , 0. ,
     "Save SICN (signed inverse condition number) quality measure in mesh "
     "statistics exported as post-processing views" },
-  { F|O, "PostSICN" , opt_print_pos_SIGE , 0. ,
+  { F|O, "PostSIGE" , opt_print_pos_SIGE , 0. ,
     "Save SIGE (signed inverse gradient error) quality measure in mesh "
     "statistics exported as post-processing views" },
   { F|O, "PostDisto" , opt_print_pos_disto , 0. ,

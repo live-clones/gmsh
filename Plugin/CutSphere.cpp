@@ -20,15 +20,13 @@ StringXNumber CutSphereOptions_Number[] = {
   {GMSH_FULLRC, "ExtractVolume", GMSH_CutSpherePlugin::callbackVol, 0.},
   {GMSH_FULLRC, "RecurLevel", GMSH_CutSpherePlugin::callbackRecur, 4},
   {GMSH_FULLRC, "TargetError", GMSH_CutSpherePlugin::callbackTarget, 0.},
-  {GMSH_FULLRC, "View", NULL, -1.}
-};
+  {GMSH_FULLRC, "View", NULL, -1.}};
 
-extern "C"
+extern "C" {
+GMSH_Plugin *GMSH_RegisterCutSpherePlugin()
 {
-  GMSH_Plugin *GMSH_RegisterCutSpherePlugin()
-  {
-    return new GMSH_CutSpherePlugin();
-  }
+  return new GMSH_CutSpherePlugin();
+}
 }
 
 void GMSH_CutSpherePlugin::draw(void *context)
@@ -37,21 +35,21 @@ void GMSH_CutSpherePlugin::draw(void *context)
   GLint mode[2];
   glGetIntegerv(GL_POLYGON_MODE, mode);
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
+  glColor4ubv((GLubyte *)&CTX::instance()->color.fg);
   glLineWidth((float)CTX::instance()->lineWidth);
-  drawContext *ctx = (drawContext*)context;
-  ctx->drawSphere(CutSphereOptions_Number[3].def,
-                  CutSphereOptions_Number[0].def,
-                  CutSphereOptions_Number[1].def,
-                  CutSphereOptions_Number[2].def, 40, 40, 1);
+  drawContext *ctx = (drawContext *)context;
+  ctx->drawSphere(
+    CutSphereOptions_Number[3].def, CutSphereOptions_Number[0].def,
+    CutSphereOptions_Number[1].def, CutSphereOptions_Number[2].def, 40, 40, 1);
   glPolygonMode(GL_FRONT_AND_BACK, mode[1]);
 #endif
 }
 
-double GMSH_CutSpherePlugin::callback(int num, int action, double value, double *opt,
-                                      double step, double min, double max)
+double GMSH_CutSpherePlugin::callback(int num, int action, double value,
+                                      double *opt, double step, double min,
+                                      double max)
 {
-  switch(action){ // configure the input field
+  switch(action) { // configure the input field
   case 1: return step;
   case 2: return min;
   case 3: return max;
@@ -65,7 +63,7 @@ double GMSH_CutSpherePlugin::callback(int num, int action, double value, double 
 double GMSH_CutSpherePlugin::callbackX(int num, int action, double value)
 {
   return callback(num, action, value, &CutSphereOptions_Number[0].def,
-                  CTX::instance()->lc / 100., - 2 * CTX::instance()->lc,
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
                   2 * CTX::instance()->lc);
 }
 
@@ -91,31 +89,31 @@ double GMSH_CutSpherePlugin::callbackR(int num, int action, double value)
 
 double GMSH_CutSpherePlugin::callbackVol(int num, int action, double value)
 {
-  return callback(num, action, value, &CutSphereOptions_Number[4].def,
-                  1., -1., 1.);
+  return callback(num, action, value, &CutSphereOptions_Number[4].def, 1., -1.,
+                  1.);
 }
 
 double GMSH_CutSpherePlugin::callbackRecur(int num, int action, double value)
 {
-  return callback(num, action, value, &CutSphereOptions_Number[5].def,
-                  1, 0, 10);
+  return callback(num, action, value, &CutSphereOptions_Number[5].def, 1, 0,
+                  10);
 }
 
 double GMSH_CutSpherePlugin::callbackTarget(int num, int action, double value)
 {
-  return callback(num, action, value, &CutSphereOptions_Number[6].def,
-                  0.01, 0., 1.);
+  return callback(num, action, value, &CutSphereOptions_Number[6].def, 0.01, 0.,
+                  1.);
 }
 
 std::string GMSH_CutSpherePlugin::getHelp() const
 {
   return "Plugin(CutSphere) cuts the view `View' with the "
-    "sphere (X-`Xc')^2 + (Y-`Yc')^2 + (Z-`Zc')^2 = `R'^2.\n\n"
-    "If `ExtractVolume' is nonzero, the plugin extracts "
-    "the elements inside (if `ExtractVolume' < 0) or "
-    "outside (if `ExtractVolume' > 0) the sphere.\n\n"
-    "If `View' < 0, the plugin is run on the current view.\n\n"
-    "Plugin(CutSphere) creates one new view.";
+         "sphere (X-`Xc')^2 + (Y-`Yc')^2 + (Z-`Zc')^2 = `R'^2.\n\n"
+         "If `ExtractVolume' is nonzero, the plugin extracts "
+         "the elements inside (if `ExtractVolume' < 0) or "
+         "outside (if `ExtractVolume' > 0) the sphere.\n\n"
+         "If `View' < 0, the plugin is run on the current view.\n\n"
+         "Plugin(CutSphere) creates one new view.";
 }
 
 int GMSH_CutSpherePlugin::getNbOptions() const

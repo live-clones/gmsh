@@ -5,7 +5,7 @@
 
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
-# do not warn about non-definition of WIN32 on cygwin
+# do not warn about non-definition of WIN32 on Cygwin
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
 # if CMAKE_BUILD_TYPE is specified use it; otherwise set the default
@@ -45,6 +45,7 @@ opt(CGNS "Enable CGNS mesh import" ${DEFAULT})
 opt(CAIRO "Enable Cairo to render fonts (experimental)" ${DEFAULT})
 opt(CXX11 "Enable C++11" ${DEFAULT})
 opt(C99 "Enable C99" ${DEFAULT})
+opt(PROFILE "Enable profiling compiler flags" OFF)
 opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT})
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
 opt(FOURIER_MODEL "Enable Fourier geometrical models (experimental)" OFF)
@@ -84,6 +85,7 @@ opt(PRIVATE_API "Enable private API" OFF)
 opt(REVOROPT "Enable Revoropt (used for CVT remeshing)" OFF)
 opt(SLEPC "Enable SLEPc eigensolvers (required for conformal compounds)" ${DEFAULT})
 opt(SOLVER "Enable built-in finite element solvers (required for compounds)" ${DEFAULT})
+opt(SYSTEM_CONTRIB "Use system versions of contrib libraries, when possible" OFF)
 opt(TCMALLOC "Enable libtcmalloc, a fast malloc implementation but that does not release memory" OFF)
 opt(VISUDEV "Enable additional visualization capabilities for development purpose" OFF)
 opt(VOROPP "Enable voro++ (for hex meshing, experimental)" ${DEFAULT})
@@ -91,9 +93,9 @@ opt(WRAP_JAVA "Enable generation of Java wrappers for private API" OFF)
 opt(WRAP_PYTHON "Enable generation of Python wrappers for private API" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
-set(GMSH_MAJOR_VERSION 3)
+set(GMSH_MAJOR_VERSION 4)
 set(GMSH_MINOR_VERSION 0)
-set(GMSH_PATCH_VERSION 7)
+set(GMSH_PATCH_VERSION 0)
 set(GMSH_EXTRA_VERSION "")
 
 if(NOT GMSH_RELEASE)
@@ -120,10 +122,10 @@ set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap)
 if(ENABLE_PRIVATE_API)
   message(WARNING "The private API is unsupported and undocumented. It is meant "
           "for expert Gmsh developers, not for regular Gmsh users, who should rely "
-          "on the stable public API (gmsh.h) instead. If you are packaging Gmsh "
-          "for redistribution (e.g. for a Linux distro), please DO NOT distribute the "
-          "private API (i.e. all the internal header files), and ship the stable "
-          "public API instead (i.e. gmsh.h).")
+          "on the stable public API (gmsh/api) instead. If you are repackaging Gmsh, "
+          "e.g. for a Linux distribution, please DO NOT distribute the private API "
+          "(i.e. all the internal headers) and ship the stable public API instead "
+          "(i.e. only the headers and modules in gmsh/api).")
   file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Geo/*.h Mesh/*.h Solver/*.h
     Post/*.h Graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
     contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
@@ -172,8 +174,20 @@ set(GMSH_PACKAGER "${PACKAGER}")
 if(APPLE)
   set(GMSH_OS "MacOSX")
 elseif(CYGWIN)
-  set(GMSH_OS "Windows")
-  add_definitions(-DWIN32) # recent mingw compiler doesn't define it
+  # detect if we use the MinGW compilers on Cygwin - if we do, handle the build
+  # as a pure Windows build
+  if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR
+     CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpmachine
+                    OUTPUT_VARIABLE CXX_COMPILER_MACHINE
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(CXX_COMPILER_MACHINE MATCHES "mingw")
+      set(GMSH_OS "Windows")
+      set(WIN32 1)
+      add_definitions(-DWIN32)
+    endif(CXX_COMPILER_MACHINE MATCHES "mingw")
+  endif(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR
+        CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 else(APPLE)
   set(GMSH_OS "${CMAKE_SYSTEM_NAME}")
 endif(APPLE)
@@ -216,6 +230,34 @@ endif(NOT ENABLE_BUILD_SHARED)
 if(ENABLE_BUILD_DYNAMIC)
   set(GMSH_OS "${GMSH_OS}-sdk")
 endif(ENABLE_BUILD_DYNAMIC)
+
+if(APPLE)
+  # FIXME: change this once we understand rpaths - the options below do not work
+  set(CMAKE_MACOSX_RPATH 0)
+else(APPLE)
+  # make sure that dynamic libraries can be found when installing/ displacing the
+  # binaries: from https://gitlab.kitware.com/cmake/community/wikis/doc/cmake/
+  # RPATH-handling:
+
+  # use, i.e. don't skip the full RPATH for the build tree
+  set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+
+  # when building, don't use the install RPATH already (but later on when
+  # installing)
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+
+  # add the automatically determined parts of the RPATH which point to
+  # directories outside the build tree to the install RPATH
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+  # the RPATH to be used when installing, but only if it's not a system directory
+  list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib"
+       isSystemDir)
+  if("${isSystemDir}" STREQUAL "-1")
+     set(CMAKE_INSTALL_RPATH "\\\$ORIGIN/../lib")
+  endif("${isSystemDir}" STREQUAL "-1")
+endif(APPLE)
 
 if(MSVC)
   # remove annoying warning about bool/int cast performance
@@ -264,6 +306,15 @@ if(ENABLE_C99)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
   endif(STDC99)
 endif(ENABLE_C99)
+
+if(ENABLE_PROFILE)
+    # Using the perf set of profiling tools doesn't work without the frame
+    # pointer and a common optimisation is to remove it
+    check_cxx_compiler_flag("-fno-omit-frame-pointer" FNOFP)
+    if(FNOFP)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")
+    endif(FNOFP)
+endif(ENABLE_PROFILE)
 
 macro(append_gmsh_src DIRNAME FILES)
   foreach(FILE ${FILES})
@@ -548,6 +599,17 @@ if(ENABLE_FLTK)
       endif(FLTK_PNG)
     endif(FLTK_FOUND)
   endif(NOT HAVE_FLTK)
+  # workaround for Fedora/Suse messing up fltk-config (see issue #417)
+  if(HAVE_FLTK AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    string(REGEX MATCH "X11" FLTK_X11 ${FLTK_LIBRARIES})
+    if(NOT FLTK_X11)
+      find_package(X11)
+      if(X11_FOUND)
+        list(APPEND EXTERNAL_INCLUDES ${X11_INCLUDE_DIR})
+        list(APPEND EXTERNAL_LIBRARIES ${X11_LIBRARIES})
+      endif(X11_FOUND)
+    endif(NOT FLTK_X11)
+  endif(HAVE_FLTK AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif(ENABLE_FLTK)
 
 if(ENABLE_NATIVE_FILE_CHOOSER)
@@ -647,14 +709,14 @@ if(HAVE_MESH OR HAVE_PLUGINS)
   if(ENABLE_ANN)
     find_library(ANN_LIB ann PATH_SUFFIXES lib)
     find_path(ANN_INC "ANN.h" PATH_SUFFIXES src include ANN)
-    if(ANN_LIB AND ANN_INC)
+    if(ENABLE_SYSTEM_CONTRIB AND ANN_LIB AND ANN_INC)
+      message(STATUS "Using system version of ANN")
       list(APPEND EXTERNAL_LIBRARIES ${ANN_LIB})
       list(APPEND EXTERNAL_INCLUDES ${ANN_INC})
-    else(ANN_LIB AND ANN_INC)
-      message(STATUS "System ANN not found: using contrib/ANN instead")
+    else(ENABLE_SYSTEM_CONTRIB AND ANN_LIB AND ANN_INC)
       add_subdirectory(contrib/ANN)
       include_directories(contrib/ANN/include)
-    endif(ANN_LIB AND ANN_INC)
+    endif(ENABLE_SYSTEM_CONTRIB AND ANN_LIB AND ANN_INC)
     set_config_option(HAVE_ANN "Ann")
   endif(ENABLE_ANN)
 endif(HAVE_MESH OR HAVE_PLUGINS)
@@ -743,16 +805,16 @@ if(HAVE_MESH OR HAVE_SOLVER)
   if(ENABLE_METIS)
     find_library(METIS_LIB metis PATH_SUFFIXES lib)
     find_path(METIS_INC "metis.h" PATH_SUFFIXES include)
-    if(METIS_LIB AND METIS_INC)
+    if(ENABLE_SYSTEM_CONTRIB AND METIS_LIB AND METIS_INC)
+       message(STATUS "Using system version of METIS")
        list(APPEND EXTERNAL_LIBRARIES ${METIS_LIB})
        list(APPEND EXTERNAL_INCLUDES ${METIS_INC})
-    else(METIS_LIB AND METIS_INC)
-       message(STATUS "System METIS not found: using contrib/metis instead")
+    else(ENABLE_SYSTEM_CONTRIB AND METIS_LIB AND METIS_INC)
        add_definitions(-DUSE_GKREGEX)
        add_subdirectory(contrib/metis)
        include_directories(contrib/metis/include contrib/metis/libmetis
                            contrib/metis/GKlib)
-    endif(METIS_LIB AND METIS_INC)
+    endif(ENABLE_SYSTEM_CONTRIB AND METIS_LIB AND METIS_INC)
     set_config_option(HAVE_METIS "Metis")
   endif(ENABLE_METIS)
 endif(HAVE_MESH OR HAVE_SOLVER)
@@ -765,14 +827,14 @@ if(HAVE_MESH)
   if(ENABLE_VOROPP)
     find_library(VOROPP_LIB voro++ PATH_SUFFIXES lib)
     find_path(VOROPP_INC "voro++.hh" PATH_SUFFIXES include)
-    if(VOROPP_LIB AND VOROPP_INC)
+    if(ENABLE_SYSTEM_CONTRIB AND VOROPP_LIB AND VOROPP_INC)
+      message(STATUS "Using system version of voro++")
       list(APPEND EXTERNAL_LIBRARIES ${VOROPP_LIB})
       list(APPEND EXTERNAL_INCLUDES ${VOROPP_INC})
-    else(VOROPP_LIB AND VOROPP_INC)
-      message(STATUS "System voro++ not found: using contrib/voro++ instead")
+    else(ENABLE_SYSTEM_CONTRIB AND VOROPP_LIB AND VOROPP_INC)
       add_subdirectory(contrib/voro++)
       include_directories(contrib/voro++/src)
-    endif(VOROPP_LIB AND VOROPP_INC)
+    endif(ENABLE_SYSTEM_CONTRIB AND VOROPP_LIB AND VOROPP_INC)
     set_config_option(HAVE_VOROPP "Voro++")
   endif(ENABLE_VOROPP)
 
@@ -800,14 +862,14 @@ if(HAVE_MESH)
   if(ENABLE_MMG3D)
     find_library(MMG3D_LIB mmg3dlib4.0 PATH_SUFFIXES lib)
     find_path(MMG3D_INC "libmmg3d.h" PATH_SUFFIXES src include)
-    if(MMG3D_LIB AND MMG3D_INC)
+    if(ENABLE_SYSTEM_CONTRIB AND MMG3D_LIB AND MMG3D_INC)
+       message(STATUS "Using system version of MMG3D")
        list(APPEND EXTERNAL_LIBRARIES ${MMG3D_LIB})
        list(APPEND EXTERNAL_INCLUDES ${MMG3D_INC})
-    else(MMG3D_LIB AND MMG3D_INC)
-       message(STATUS "System MMG3D not found: using contrib/mmg3d instead")
+    else(ENABLE_SYSTEM_CONTRIB AND MMG3D_LIB AND MMG3D_INC)
        add_subdirectory(contrib/mmg3d)
        include_directories(contrib/mmg3d/build/sources)
-    endif(MMG3D_LIB AND MMG3D_INC)
+    endif(ENABLE_SYSTEM_CONTRIB AND MMG3D_LIB AND MMG3D_INC)
     set_config_option(HAVE_MMG3D "Mmg3d")
   endif(ENABLE_MMG3D)
 endif(HAVE_MESH)
@@ -864,12 +926,12 @@ endif(ENABLE_MED OR ENABLE_CGNS)
 if(HAVE_SOLVER)
   if(ENABLE_GMM)
     find_path(GMM_INC "gmm.h" PATH_SUFFIXES src include include/gmm)
-    if(GMM_INC)
+    if(ENABLE_SYSTEM_CONTRIB AND GMM_INC)
+      message(STATUS "Using system version of GMM")
       list(APPEND EXTERNAL_INCLUDES ${GMM_INC})
-    else(GMM_INC)
-      message(STATUS "System GMM not found: using contrib/gmm instead")
+    else(ENABLE_SYSTEM_CONTRIB AND GMM_INC)
       include_directories(contrib/gmm)
-    endif(GMM_INC)
+    endif(ENABLE_SYSTEM_CONTRIB AND GMM_INC)
     set_config_option(HAVE_GMM "Gmm")
   endif(ENABLE_GMM)
 
@@ -1128,12 +1190,12 @@ if(ENABLE_OCC)
       if(HAVE_64BIT_SIZE_T)
         add_definitions(-D_OCC64)
       endif(HAVE_64BIT_SIZE_T)
-      if(CYGWIN)
+      if(WIN32 OR CYGWIN)
 	list(APPEND EXTERNAL_LIBRARIES "winspool")
         add_definitions(-DOCC_CONVERT_SIGNALS)
       elseif(MSVC)
 	add_definitions(-DWNT)
-      endif(CYGWIN)
+      endif(WIN32 OR CYGWIN)
     endif(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
   endif(OCC_VERSION AND OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
 
@@ -1457,10 +1519,6 @@ endif(ENABLE_BUILD_LIB)
 
 # shared library target
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
-  if(APPLE)
-    # FIXME: change this once we understand rpaths
-    set(CMAKE_MACOSX_RPATH 0)
-  endif(APPLE)
   if(WIN32 OR CYGWIN)
     add_definitions(-DGMSH_DLL)
   endif(WIN32 OR CYGWIN)
@@ -1472,6 +1530,8 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
                         ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
   if(WIN32 OR CYGWIN)
     set_target_properties(shared PROPERTIES PREFIX "")
+    set_target_properties(shared PROPERTIES IMPORT_PREFIX "")
+    set_target_properties(shared PROPERTIES IMPORT_SUFFIX ".lib")
     set_target_properties(shared PROPERTIES COMPILE_FLAGS -DGMSH_DLL_EXPORT)
   endif(WIN32 OR CYGWIN)
   target_link_libraries(shared ${LINK_LIBRARIES})
@@ -1603,7 +1663,7 @@ macro(unix2dos VARNAME)
     if(CYGWIN)
       string(REGEX REPLACE "\n" "\r\n" F1 "${F0}")
       file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/unix2dos/${N} "${F1}")
-    else(CYGWIN) # if not in cygwin, cmake adds '\r's automatically
+    else(CYGWIN) # if not in Cygwin, cmake adds '\r's automatically
       file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/unix2dos/${N} "${F0}")
     endif(CYGWIN)
     list(APPEND UNIX2DOS_FILES ${CMAKE_CURRENT_BINARY_DIR}/unix2dos/${N})
@@ -1880,8 +1940,8 @@ if(NOT DISABLE_GMSH_TESTS)
        tutorial/*.geo demos/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
        benchmarks/occ/*.geo)
   foreach(TESTFILE ${TESTFILES})
-    # use relative path for cygwin/mingw (the pure win exe built with the mingw
-    # compilers does not understand a full cygwin-style path)
+    # use relative path for Cygwin/MinGW (the pure win exe built with the MinGW
+    # compilers does not understand a full Cygwin-style path)
     FILE(RELATIVE_PATH TEST ${CMAKE_CURRENT_BINARY_DIR} ${TESTFILE})
     if(HAVE_OCC OR NOT ${TEST} MATCHES "boolean" OR NOT ${TEST} MATCHES "occ")
       add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)

@@ -34,24 +34,29 @@ double PViewOptions::getScaleValue(int iso, int numIso, double min, double max)
 {
   if(numIso == 1) return (min + max) / 2.;
 
-  if(scaleType == Linear){
+  if(scaleType == Linear) {
     // treat min/max separately to avoid numerical errors (important
     // not to miss first/last discrete iso on piece-wise constant
     // datasets)
-    if(iso == 0) return min;
-    else if(iso == numIso - 1) return max;
-    else return min + iso * (max - min) / (numIso - 1.);
+    if(iso == 0)
+      return min;
+    else if(iso == numIso - 1)
+      return max;
+    else
+      return min + iso * (max - min) / (numIso - 1.);
   }
-  else if(scaleType == Logarithmic){
+  else if(scaleType == Logarithmic) {
     // should translate scale instead, with smallest val an option!
     if(min <= 0.) return 0;
-    return pow(10., log10(min) + iso * (log10(max) - log10(min)) / (numIso - 1.));
+    return pow(10.,
+               log10(min) + iso * (log10(max) - log10(min)) / (numIso - 1.));
   }
-  else if(scaleType == DoubleLogarithmic){
+  else if(scaleType == DoubleLogarithmic) {
     if(min <= 0.) return 0;
     double iso2 = iso / 2.;
     double numIso2 = numIso / 2.;
-    return pow(10., log10(min) + iso2 * (log10(max) - log10(min)) / (numIso2 - 1.));
+    return pow(10.,
+               log10(min) + iso2 * (log10(max) - log10(min)) / (numIso2 - 1.));
   }
   return 0.;
 }
@@ -61,17 +66,19 @@ int PViewOptions::getScaleIndex(double val, int numIso, double min, double max,
 {
   if(min == max) return numIso / 2;
 
-  if(forceLinear || scaleType == Linear){
+  if(forceLinear || scaleType == Linear) {
     return (int)((val - min) * (numIso - 1) / (max - min));
   }
-  else if(scaleType == Logarithmic){
+  else if(scaleType == Logarithmic) {
     if(min <= 0.) return 0;
-    return (int)((log10(val) - log10(min)) * (numIso - 1) / (log10(max) - log10(min)));
+    return (int)((log10(val) - log10(min)) * (numIso - 1) /
+                 (log10(max) - log10(min)));
   }
-  else if(scaleType == DoubleLogarithmic){
+  else if(scaleType == DoubleLogarithmic) {
     // FIXME
     if(min <= 0.) return 0;
-    return (int)((log10(val) - log10(min)) * (numIso - 1) / (log10(max) - log10(min)));
+    return (int)((log10(val) - log10(min)) * (numIso - 1) /
+                 (log10(max) - log10(min)));
   }
   return 0;
 }
@@ -81,13 +88,15 @@ unsigned int PViewOptions::getColor(double val, double min, double max,
 {
   if(colorTable.size == 1) return colorTable.table[0];
 
-  if(numColors <= 0){ // use full colormap
+  if(numColors <= 0) { // use full colormap
     int index = getScaleIndex(val, colorTable.size, min, max, forceLinear);
-    if(index < 0) index = 0;
-    else if(index > colorTable.size - 1) index = colorTable.size - 1;
+    if(index < 0)
+      index = 0;
+    else if(index > colorTable.size - 1)
+      index = colorTable.size - 1;
     return colorTable.table[index];
   }
-  else{
+  else {
     // the maximum should belong to the last interval: so use
     // numColors + 1 and correct afterwards
     int index = getScaleIndex(val, numColors + 1, min, max, forceLinear);
@@ -98,18 +107,20 @@ unsigned int PViewOptions::getColor(double val, double min, double max,
 
 unsigned int PViewOptions::getColor(int i, int nb)
 {
-  int index = (nb == 1) ? colorTable.size / 2 :
-    (int)(i / (double)(nb - 1) * (colorTable.size - 1) + 0.5);
-  if(index < 0) index = 0;
-  else if(index > colorTable.size - 1) index = colorTable.size - 1;
+  int index = (nb == 1) ?
+                colorTable.size / 2 :
+                (int)(i / (double)(nb - 1) * (colorTable.size - 1) + 0.5);
+  if(index < 0)
+    index = 0;
+  else if(index > colorTable.size - 1)
+    index = colorTable.size - 1;
   return colorTable.table[index];
 }
 
 void PViewOptions::createGeneralRaise()
 {
-  const char *names[] =
-    { "x", "y", "z", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8",
-      "s", "t"};
+  const char *names[] = {"x",  "y",  "z",  "v0", "v1", "v2", "v3",
+                         "v4", "v5", "v6", "v7", "v8", "s",  "t"};
   unsigned int numVariables = sizeof(names) / sizeof(names[0]);
   std::vector<std::string> expressions(3), variables(numVariables);
   expressions[0] = genRaiseX;
@@ -119,7 +130,7 @@ void PViewOptions::createGeneralRaise()
 
   if(genRaiseEvaluator) delete genRaiseEvaluator;
   genRaiseEvaluator = new mathEvaluator(expressions, variables);
-  if(expressions.empty()){
+  if(expressions.empty()) {
     delete genRaiseEvaluator;
     genRaiseEvaluator = 0;
   }
@@ -127,7 +138,7 @@ void PViewOptions::createGeneralRaise()
 
 bool PViewOptions::skipElement(int type)
 {
-  switch(type){
+  switch(type) {
   case TYPE_PNT: return !drawPoints;
   case TYPE_LIN: return !drawLines;
   case TYPE_TRI: return !drawTriangles;

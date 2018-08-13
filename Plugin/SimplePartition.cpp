@@ -28,7 +28,7 @@
 #endif
 
 int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
-                            hashmap<MElement*, unsigned int> &elmToPartition);
+                            hashmap<MElement *, unsigned int> &elmToPartition);
 
 StringXNumber SimplePartitionOptions_Number[] = {
   {GMSH_FULLRC, "NumSlices", NULL, 4.},
@@ -37,23 +37,21 @@ StringXNumber SimplePartitionOptions_Number[] = {
 };
 
 StringXString SimplePartitionOptions_String[] = {
-  {GMSH_FULLRC, "Mapping", NULL, "t"}
-};
+  {GMSH_FULLRC, "Mapping", NULL, "t"}};
 
-extern "C"
+extern "C" {
+GMSH_Plugin *GMSH_RegisterSimplePartitionPlugin()
 {
-  GMSH_Plugin *GMSH_RegisterSimplePartitionPlugin()
-  {
-    return new GMSH_SimplePartitionPlugin();
-  }
+  return new GMSH_SimplePartitionPlugin();
+}
 }
 
 std::string GMSH_SimplePartitionPlugin::getHelp() const
 {
   return "Plugin(SimplePartition) partitions the current mesh into "
-    "`NumSlices' slices, along the X-, Y- or Z-axis depending on "
-    "the value of `Direction' (0,1,2). The plugin creates partition "
-    "topology if `CreateTopology' is set.";
+         "`NumSlices' slices, along the X-, Y- or Z-axis depending on "
+         "the value of `Direction' (0,1,2). The plugin creates partition "
+         "topology if `CreateTopology' is set.";
 }
 
 int GMSH_SimplePartitionPlugin::getNbOptions() const
@@ -99,27 +97,27 @@ void GMSH_SimplePartitionPlugin::run()
   mathEvaluator f(expr, variables);
   if(expr.empty()) return;
   std::vector<double> values(1), res(1);
-  for(int p = 0; p <= numSlices; p++){
+  for(int p = 0; p <= numSlices; p++) {
     double t = values[0] = (double)p / (double)numSlices;
     if(f.eval(values, res)) t = res[0];
     pp[p] = pmin + t * (pmax - pmin);
   }
-  std::vector<GEntity*> entities;
+  std::vector<GEntity *> entities;
   m->getEntities(entities);
-  hashmap<MElement*, unsigned int> elmToPartition;
-  for(unsigned int i = 0; i < entities.size(); i++){
+  hashmap<MElement *, unsigned int> elmToPartition;
+  for(unsigned int i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
-    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
+    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       SPoint3 point = e->barycenter();
-      for(int k = 0; k < numSlices; k++){
-        if(pp[k] < point[direction] && pp[k+1] >= point[direction]){
-          elmToPartition.insert(std::pair<MElement*, unsigned int>(e, k+1));
+      for(int k = 0; k < numSlices; k++) {
+        if(pp[k] < point[direction] && pp[k + 1] >= point[direction]) {
+          elmToPartition.insert(std::pair<MElement *, unsigned int>(e, k + 1));
           break;
         }
 
-        if(pp[0] == point[direction]){
-          elmToPartition.insert(std::pair<MElement*, unsigned int>(e, 0+1));
+        if(pp[0] == point[direction]) {
+          elmToPartition.insert(std::pair<MElement *, unsigned int>(e, 0 + 1));
           break;
         }
       }
@@ -131,6 +129,7 @@ void GMSH_SimplePartitionPlugin::run()
   PartitionUsingThisSplit(m, numSlices, elmToPartition);
 
 #else
-  Msg::Error("Gmsh must be compiled with Mesh and METIS support to partition meshes");
+  Msg::Error(
+    "Gmsh must be compiled with Mesh and METIS support to partition meshes");
 #endif
 }

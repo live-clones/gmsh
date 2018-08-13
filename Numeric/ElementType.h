@@ -8,8 +8,7 @@
 
 #include <string>
 
-namespace ElementType
-{
+namespace ElementType {
   // Give parent type, order & dimension corresponding to any element MSH type.
   int getParentType(int type);
   int getOrder(int type);
@@ -29,6 +28,6 @@ namespace ElementType
   // Give first order element tag
   int getPrimaryType(int type);
   std::string nameOfParentType(int type);
-}
+} // namespace ElementType
 
 #endif

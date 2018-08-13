@@ -7,39 +7,34 @@
 #include "Numeric.h"
 
 StringXNumber SphericalRaiseOptions_Number[] = {
-  {GMSH_FULLRC, "Xc", NULL, 0.},
-  {GMSH_FULLRC, "Yc", NULL, 0.},
-  {GMSH_FULLRC, "Zc", NULL, 0.},
-  {GMSH_FULLRC, "Raise", NULL, 1.},
-  {GMSH_FULLRC, "Offset", NULL, 0.},
-  {GMSH_FULLRC, "TimeStep", NULL, 0.},
-  {GMSH_FULLRC, "View", NULL, -1.}
-};
+  {GMSH_FULLRC, "Xc", NULL, 0.},     {GMSH_FULLRC, "Yc", NULL, 0.},
+  {GMSH_FULLRC, "Zc", NULL, 0.},     {GMSH_FULLRC, "Raise", NULL, 1.},
+  {GMSH_FULLRC, "Offset", NULL, 0.}, {GMSH_FULLRC, "TimeStep", NULL, 0.},
+  {GMSH_FULLRC, "View", NULL, -1.}};
 
-extern "C"
+extern "C" {
+GMSH_Plugin *GMSH_RegisterSphericalRaisePlugin()
 {
-  GMSH_Plugin *GMSH_RegisterSphericalRaisePlugin()
-  {
-    return new GMSH_SphericalRaisePlugin();
-  }
+  return new GMSH_SphericalRaisePlugin();
+}
 }
 
 std::string GMSH_SphericalRaisePlugin::getHelp() const
 {
   return "Plugin(SphericalRaise) transforms the "
-    "coordinates of the elements in the view "
-    "`View' using the values associated with the "
-    "`TimeStep'-th time step.\n\n"
-    "Instead of elevating the nodes along the X, Y "
-    "and Z axes as with the View[`View'].RaiseX, "
-    "View[`View'].RaiseY and View[`View'].RaiseZ "
-    "options, the raise is applied along the radius "
-    "of a sphere centered at (`Xc', `Yc', `Zc').\n\n"
-    "To produce a standard radiation pattern, set "
-    "`Offset' to minus the radius of the sphere the "
-    "original data lives on.\n\n"
-    "If `View' < 0, the plugin is run on the current view.\n\n"
-    "Plugin(SphericalRaise) is executed in-place.";
+         "coordinates of the elements in the view "
+         "`View' using the values associated with the "
+         "`TimeStep'-th time step.\n\n"
+         "Instead of elevating the nodes along the X, Y "
+         "and Z axes as with the View[`View'].RaiseX, "
+         "View[`View'].RaiseY and View[`View'].RaiseZ "
+         "options, the raise is applied along the radius "
+         "of a sphere centered at (`Xc', `Yc', `Zc').\n\n"
+         "To produce a standard radiation pattern, set "
+         "`Offset' to minus the radius of the sphere the "
+         "original data lives on.\n\n"
+         "If `View' < 0, the plugin is run on the current view.\n\n"
+         "Plugin(SphericalRaise) is executed in-place.";
 }
 
 int GMSH_SphericalRaisePlugin::getNbOptions() const
@@ -69,16 +64,16 @@ PView *GMSH_SphericalRaisePlugin::execute(PView *v)
   PViewData *data1 = v1->getData();
 
   // sanity checks
-  if(timeStep < 0 || timeStep > data1->getNumTimeSteps() - 1){
+  if(timeStep < 0 || timeStep > data1->getNumTimeSteps() - 1) {
     Msg::Error("Invalid TimeStep (%d) in view", timeStep);
     return v;
   }
 
-  if(data1->isNodeData()){
+  if(data1->isNodeData()) {
     // tag all the nodes with "0" (the default tag)
-    for(int step = 0; step < data1->getNumTimeSteps(); step++){
-      for(int ent = 0; ent < data1->getNumEntities(step); ent++){
-        for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
+    for(int step = 0; step < data1->getNumTimeSteps(); step++) {
+      for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
+        for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
           if(data1->skipElement(step, ent, ele)) continue;
           for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
             data1->tagNode(step, ent, ele, nod, 0);
@@ -88,11 +83,11 @@ PView *GMSH_SphericalRaisePlugin::execute(PView *v)
   }
 
   // transform all "0" nodes
-  for(int step = 0; step < data1->getNumTimeSteps(); step++){
-    for(int ent = 0; ent < data1->getNumEntities(step); ent++){
-      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
+  for(int step = 0; step < data1->getNumTimeSteps(); step++) {
+    for(int ent = 0; ent < data1->getNumEntities(step); ent++) {
+      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
         if(data1->skipElement(step, ent, ele)) continue;
-        for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++){
+        for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++) {
           double x, y, z;
           int tag = data1->getNode(step, ent, ele, nod, x, y, z);
           if(data1->isNodeData() && tag) continue;

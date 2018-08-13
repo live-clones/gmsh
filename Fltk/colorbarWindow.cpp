@@ -43,8 +43,7 @@ int colorbarWindow::index_to_x(int index)
 {
   int x;
   x = (int)(index * (double)w() / (double)(ct->size - 1));
-  if(x >= w())
-    x = w() - 1;
+  if(x >= w()) x = w() - 1;
   return x;
 }
 
@@ -78,10 +77,8 @@ void colorbarWindow::redraw_range(int a, int b)
   int intensity = 0;
   double H, S, V;
 
-  if(a < 0)
-    a = 0;
-  if(b >= ct->size)
-    b = ct->size - 1;
+  if(a < 0) a = 0;
+  if(b >= ct->size) b = ct->size - 1;
 
   // calculate region to update
   x1 = index_to_x(a);
@@ -94,10 +91,8 @@ void colorbarWindow::redraw_range(int a, int b)
   fl_rectf(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
 
   // redraw region of entries in interval [a,b]
-  if(a > 0)
-    a--;
-  if(b < ct->size - 1)
-    b++;
+  if(a > 0) a--;
+  if(b < ct->size - 1) b++;
 
   // draw red or hue levels
   for(i = a; i <= b; i++) {
@@ -284,18 +279,17 @@ void colorbarWindow::draw()
   label_y = h() - 5;
   marker_y = label_y - marker_height - font_height;
   wedge_y = marker_y - wedge_height;
-  color_bg = fl_color_cube(CTX::instance()->unpackRed(CTX::instance()->color.bg) *
-                           FL_NUM_RED / 256,
-                           CTX::instance()->unpackGreen(CTX::instance()->color.bg) *
-                           FL_NUM_GREEN / 256,
-                           CTX::instance()->unpackBlue(CTX::instance()->color.bg) *
-                           FL_NUM_BLUE / 256);
+  color_bg = fl_color_cube(
+    CTX::instance()->unpackRed(CTX::instance()->color.bg) * FL_NUM_RED / 256,
+    CTX::instance()->unpackGreen(CTX::instance()->color.bg) * FL_NUM_GREEN /
+      256,
+    CTX::instance()->unpackBlue(CTX::instance()->color.bg) * FL_NUM_BLUE / 256);
   redraw_range(0, ct->size - 1);
   redraw_marker();
 }
 
 void colorbarWindow::update(const char *name, double min, double max,
-                             GmshColorTable *table, bool *changed)
+                            GmshColorTable *table, bool *changed)
 {
   label = name;
   ct = table;
@@ -316,18 +310,15 @@ int colorbarWindow::handle(int event)
   modify = 0;
   compute = 0;
 
-  switch (event) {
-
+  switch(event) {
   case FL_FOCUS: // accept focus events when asked
-  case FL_UNFOCUS:
-    return 1;
+  case FL_UNFOCUS: return 1;
 
   case FL_ENTER:
     take_focus(); // force keyboard focus as soon as the mouse enters
     return 1;
 
-  case FL_LEAVE:
-    return 1;
+  case FL_LEAVE: return 1;
 
   case FL_SHORTCUT:
   case FL_KEYBOARD:
@@ -473,28 +464,24 @@ int colorbarWindow::handle(int event)
     }
     else if(Fl::test_shortcut('b')) {
       ct->dpar[COLORTABLE_BETA] += 0.05;
-      if(ct->dpar[COLORTABLE_BETA] > 1.0)
-        ct->dpar[COLORTABLE_BETA] = 1.0;
+      if(ct->dpar[COLORTABLE_BETA] > 1.0) ct->dpar[COLORTABLE_BETA] = 1.0;
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_CTRL + 'b') ||
             Fl::test_shortcut(FL_META + 'b')) {
       ct->dpar[COLORTABLE_BETA] -= 0.05;
-      if(ct->dpar[COLORTABLE_BETA] < -1.0)
-        ct->dpar[COLORTABLE_BETA] = -1.0;
+      if(ct->dpar[COLORTABLE_BETA] < -1.0) ct->dpar[COLORTABLE_BETA] = -1.0;
       compute = 1;
     }
     else if(Fl::test_shortcut('a')) {
       ct->dpar[COLORTABLE_ALPHA] -= 0.05;
-      if(ct->dpar[COLORTABLE_ALPHA] < 0.0)
-        ct->dpar[COLORTABLE_ALPHA] = 0.0;
+      if(ct->dpar[COLORTABLE_ALPHA] < 0.0) ct->dpar[COLORTABLE_ALPHA] = 0.0;
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_CTRL + 'a') ||
             Fl::test_shortcut(FL_META + 'a')) {
       ct->dpar[COLORTABLE_ALPHA] += 0.05;
-      if(ct->dpar[COLORTABLE_ALPHA] > 1.0)
-        ct->dpar[COLORTABLE_ALPHA] = 1.0;
+      if(ct->dpar[COLORTABLE_ALPHA] > 1.0) ct->dpar[COLORTABLE_ALPHA] = 1.0;
       compute = 1;
     }
     else if(Fl::test_shortcut('p')) {
@@ -565,8 +552,7 @@ int colorbarWindow::handle(int event)
     // determine which curve to modify
     if(Fl::event_state(FL_CTRL) || Fl::event_state(FL_META))
       p4 = 1;
-    else if(ibut == 1 && !Fl::event_state(FL_SHIFT)
-            && !Fl::event_state(FL_ALT))
+    else if(ibut == 1 && !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT))
       p1 = 1;
     else if(ibut == 2 || (ibut == 1 && Fl::event_state(FL_SHIFT)))
       p2 = 1;
@@ -597,7 +583,6 @@ int colorbarWindow::handle(int event)
   default:
     // don't know what to do with the event: passing it to parent
     return Fl_Window::handle(event);
-
   }
 
   // Modify one or more of the color curves

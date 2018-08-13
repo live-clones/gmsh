@@ -20,10 +20,13 @@ void gmshGeneratePoints(FuncSpaceData, fullMatrix<double> &);
 fullMatrix<double> gmshGeneratePointsLine(int order);
 
 fullMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip = false);
-fullMatrix<double> gmshGeneratePointsQuadrangle(int order, bool serendip = false);
+fullMatrix<double> gmshGeneratePointsQuadrangle(int order,
+                                                bool serendip = false);
 
-fullMatrix<double> gmshGeneratePointsTetrahedron(int order, bool serendip = false);
-fullMatrix<double> gmshGeneratePointsHexahedron(int order, bool serendip = false);
+fullMatrix<double> gmshGeneratePointsTetrahedron(int order,
+                                                 bool serendip = false);
+fullMatrix<double> gmshGeneratePointsHexahedron(int order,
+                                                bool serendip = false);
 fullMatrix<double> gmshGeneratePointsPrism(int order, bool serendip = false);
 
 fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip = false);
@@ -36,16 +39,19 @@ void gmshGenerateMonomials(FuncSpaceData, fullMatrix<double> &);
 
 fullMatrix<double> gmshGenerateMonomialsLine(int order, bool serendip = false);
 
-fullMatrix<double> gmshGenerateMonomialsTriangle(int order, bool serendip = false);
-fullMatrix<double> gmshGenerateMonomialsQuadrangle(int order, bool
-                                                   forSerendipPoints = false);
+fullMatrix<double> gmshGenerateMonomialsTriangle(int order,
+                                                 bool serendip = false);
+fullMatrix<double>
+gmshGenerateMonomialsQuadrangle(int order, bool forSerendipPoints = false);
 fullMatrix<double> gmshGenerateMonomialsQuadSerendipity(int order);
 
-fullMatrix<double> gmshGenerateMonomialsTetrahedron(int order, bool serendip = false);
-fullMatrix<double> gmshGenerateMonomialsHexahedron(int order,
-                                                   bool forSerendipPoints = false);
+fullMatrix<double> gmshGenerateMonomialsTetrahedron(int order,
+                                                    bool serendip = false);
+fullMatrix<double>
+gmshGenerateMonomialsHexahedron(int order, bool forSerendipPoints = false);
 fullMatrix<double> gmshGenerateMonomialsHexaSerendipity(int order);
-fullMatrix<double> gmshGenerateMonomialsPrism(int order, bool forSerendipPoints = false);
+fullMatrix<double> gmshGenerateMonomialsPrism(int order,
+                                              bool forSerendipPoints = false);
 fullMatrix<double> gmshGenerateMonomialsPrismSerendipity(int order);
 
 // Generate monomials of pyramidal nodal space {X^i Y^j Z^k | i,j <= k, k <=
@@ -59,7 +65,8 @@ fullMatrix<double> gmshGenerateMonomialsPyramidSerendipity(int order);
 //   generate monomials of space {X^i Y^j Z^k | i,j <= k+'nij', k <= 'nk'},
 // else if 'pyr' == false,
 //   generate monomials of space {X^i Y^j Z^k | i,j <= 'nij', k <= 'nk'}
-fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij, int nk,
-                                                       bool forSerendipPoints = false);
+fullMatrix<double>
+gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij, int nk,
+                                    bool forSerendipPoints = false);
 
 #endif

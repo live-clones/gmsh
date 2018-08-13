@@ -23,9 +23,8 @@
 class PluginDialogBox;
 class Vertex;
 
-class GMSH_Plugin
-{
- public :
+class GMSH_Plugin {
+public:
   // 4 kinds of plugins
   typedef enum {
     GMSH_CAD_PLUGIN,
@@ -41,7 +40,7 @@ class GMSH_Plugin
   void *hlib;
 
   GMSH_Plugin() : dialogBox(0), hlib(0) {}
-  virtual ~GMSH_Plugin(){}
+  virtual ~GMSH_Plugin() {}
 
   // return plugin type, name and info
   virtual GMSH_PLUGIN_TYPE getType() const = 0;
@@ -49,7 +48,10 @@ class GMSH_Plugin
   virtual std::string getShortHelp() const = 0;
   virtual std::string getHelp() const = 0;
   virtual std::string getAuthor() const { return "C. Geuzaine, J.-F. Remacle"; }
-  virtual std::string getCopyright() const { return "C. Geuzaine, J.-F. Remacle"; }
+  virtual std::string getCopyright() const
+  {
+    return "C. Geuzaine, J.-F. Remacle";
+  }
 
   // when an error is thrown by the plugin, the plugin manager will
   // show the message and hopefully continue
@@ -72,18 +74,20 @@ class GMSH_Plugin
   // dynamic pointer to a drawing function
   static void setDrawFunction(void (*fct)(void *));
 #ifndef SWIG
-  static void (*draw)(void*);
+  static void (*draw)(void *);
 #endif
 };
 
 // The base class for post-processing plugins. The user can either
 // modify or duplicate a post-processing view
-class GMSH_PostPlugin : public GMSH_Plugin
-{
- public:
-  inline GMSH_PLUGIN_TYPE getType() const { return GMSH_Plugin::GMSH_POST_PLUGIN; }
+class GMSH_PostPlugin : public GMSH_Plugin {
+public:
+  inline GMSH_PLUGIN_TYPE getType() const
+  {
+    return GMSH_Plugin::GMSH_POST_PLUGIN;
+  }
   // run the plugin
-  virtual void run(){ execute(0); }
+  virtual void run() { execute(0); }
   // if the returned pointer is the same as the argument, then the
   // view is simply modified, else, a new view is added in the view
   // list
@@ -95,7 +99,7 @@ class GMSH_PostPlugin : public GMSH_Plugin
   // list)
   virtual PView *getView(int index, PView *view);
   // get the data in list format
-  virtual PViewDataList *getDataList(PView *view, bool showError=true);
+  virtual PViewDataList *getDataList(PView *view, bool showError = true);
   // get the the adapted data (i.e. linear, on refined mesh) if
   // available, otherwise get the original data
   virtual PViewData *getPossiblyAdaptiveData(PView *view);
@@ -107,10 +111,12 @@ class GMSH_PostPlugin : public GMSH_Plugin
 // associate some properties to physical entities, so that we can
 // interface gmsh with a solver (ABAQUS...), i.e., create the input
 // file for the solver
-class GMSH_SolverPlugin : public GMSH_Plugin
-{
- public:
-  inline GMSH_PLUGIN_TYPE getType() const { return GMSH_Plugin::GMSH_SOLVER_PLUGIN; }
+class GMSH_SolverPlugin : public GMSH_Plugin {
+public:
+  inline GMSH_PLUGIN_TYPE getType() const
+  {
+    return GMSH_Plugin::GMSH_SOLVER_PLUGIN;
+  }
   virtual void run() {}
   // popup dialog box
   virtual void popupPropertiesForPhysicalEntity(int dim) = 0;
@@ -123,12 +129,17 @@ class GMSH_SolverPlugin : public GMSH_Plugin
   // enhance graphics for a giver geo point
   virtual bool GL_enhancePoint(Vertex *v) { return false; }
   // enhance graphics for a giver geo line
-  virtual bool GL_enhanceLine(int CurveId, Vertex *v1, Vertex *v2) { return false; }
+  virtual bool GL_enhanceLine(int CurveId, Vertex *v1, Vertex *v2)
+  {
+    return false;
+  }
 };
 
-class GMSH_MeshPlugin : public GMSH_Plugin
-{
-  inline GMSH_PLUGIN_TYPE getType() const { return GMSH_Plugin::GMSH_MESH_PLUGIN; }
+class GMSH_MeshPlugin : public GMSH_Plugin {
+  inline GMSH_PLUGIN_TYPE getType() const
+  {
+    return GMSH_Plugin::GMSH_MESH_PLUGIN;
+  }
   virtual void run() {}
 };
 

@@ -8,21 +8,21 @@
 #include <vector>
 #include "Octree.h"
 
-Octree* Octree_Create(int maxElements, double origin[3], double size[3],   
-                      void  (*BB)(void *, double*, double*),
-                      void  (*Centroid)(void *, double *),
-                      int   (*InEle)(void *, double *))
+Octree *Octree_Create(int maxElements, double origin[3], double size[3],
+                      void (*BB)(void *, double *, double *),
+                      void (*Centroid)(void *, double *),
+                      int (*InEle)(void *, double *))
 {
   Octree *myOctree = new Octree;
-  initializeOctantBuckets(origin, size, maxElements,
-                          &(myOctree->root), &(myOctree->info));       
+  initializeOctantBuckets(origin, size, maxElements, &(myOctree->root),
+                          &(myOctree->info));
   myOctree->function_BB = BB;
   myOctree->function_centroid = Centroid;
   myOctree->function_inElement = InEle;
   return myOctree;
 }
 
-void free_buckets(octantBucket * bucket)
+void free_buckets(octantBucket *bucket)
 {
   int i, numBuck = 8;
   ELink ptr1, ptr2;
@@ -34,13 +34,12 @@ void free_buckets(octantBucket * bucket)
       ptr1 = ptr1->next;
       delete ptr2;
     }
-    bucket->listBB.clear(); 
+    bucket->listBB.clear();
     return;
   }
 
-  for(i = numBuck-1; i >= 0; i--) 
-    free_buckets((bucket->next)+i);         
-  delete []bucket->next;
+  for(i = numBuck - 1; i >= 0; i--) free_buckets((bucket->next) + i);
+  delete[] bucket->next;
   return;
 }
 
@@ -62,35 +61,33 @@ void Octree_Insert(void *element, Octree *myOctree)
   (*(myOctree->function_centroid))(element, centroid);
   bucket = findElementBucket(myOctree->root, centroid);
   if(bucket)
-    addElement2Bucket(bucket, element, minBB, maxBB,
-                      centroid, myOctree->info);  
+    addElement2Bucket(bucket, element, minBB, maxBB, centroid, myOctree->info);
 }
 
 void Octree_Arrange(Octree *myOctree)
 {
   if(!myOctree) return;
-  //std::list<void *>::iterator iter;
+  // std::list<void *>::iterator iter;
   std::vector<void *>::iterator iter;
   double minPt[3], maxPt[3];
-  for(iter = myOctree->info->listAllElements.begin(); iter!= 
-      myOctree->info->listAllElements.end(); iter++) {
+  for(iter = myOctree->info->listAllElements.begin();
+      iter != myOctree->info->listAllElements.end(); iter++) {
     (*(myOctree->function_BB))(*iter, minPt, maxPt);
     insertOneBB(*iter, minPt, maxPt, myOctree->root);
   }
   myOctree->info->listAllElements.clear();
-}   
+}
 
 void *Octree_Search(double *pt, Octree *myOctree)
 {
   if(!myOctree) return 0;
-  return searchElement(myOctree->root, pt, myOctree->info, 
+  return searchElement(myOctree->root, pt, myOctree->info,
                        myOctree->function_BB, myOctree->function_inElement);
 }
 
-void Octree_SearchAll(double *pt, Octree *myOctree, std::vector<void*> *output)
+void Octree_SearchAll(double *pt, Octree *myOctree, std::vector<void *> *output)
 {
   if(!myOctree) return;
   searchAllElements(myOctree->root, pt, myOctree->info, myOctree->function_BB,
-                    myOctree->function_inElement, output);      
+                    myOctree->function_inElement, output);
 }
-

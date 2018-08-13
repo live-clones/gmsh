@@ -11,9 +11,10 @@
 class Volume;
 
 class gmshRegion : public GRegion {
- protected:
+protected:
   ::Volume *v;
- public:
+
+public:
   gmshRegion(GModel *m, ::Volume *_v);
   virtual ~gmshRegion() {}
   virtual GeomType geomType() const;

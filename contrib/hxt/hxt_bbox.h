@@ -12,15 +12,15 @@ extern "C" {
 typedef struct hxtBboxStruct{
     double hxtDeclareAligned min[3];
     double hxtDeclareAligned max[3];
-} hxtBbox;
+} HXTBbox;
 
 // /* create a new bounding box */
-// HXTStatus hxtBboxCreate(hxtBbox** bboxP);
+// HXTStatus hxtBboxCreate(HXTBbox** bboxP);
 
 // /* delete a bounding box */
-// HXTStatus hxtBboxDelete(hxtBbox** bboxP);
+// HXTStatus hxtBboxDelete(HXTBbox** bboxP);
 
-static inline void hxtBboxInit(hxtBbox* bbox){
+static inline void hxtBboxInit(HXTBbox* bbox){
   bbox->min[0] = DBL_MAX;
   bbox->min[1] = DBL_MAX;
   bbox->min[2] = DBL_MAX;
@@ -30,10 +30,10 @@ static inline void hxtBboxInit(hxtBbox* bbox){
 }
 
 /* update the bounding box with one new vertex */
-HXTStatus hxtBboxAddOne(hxtBbox* bbox, double* coord);
+HXTStatus hxtBboxAddOne(HXTBbox* bbox, double* coord);
 
 /* update the bounding box with an array of n vertices at once (far quicker) */
-HXTStatus hxtBboxAdd(hxtBbox* bbox, double* coord, uint32_t n);
+HXTStatus hxtBboxAdd(HXTBbox* bbox, double* coord, uint32_t n);
 
 #ifdef __cplusplus
 }

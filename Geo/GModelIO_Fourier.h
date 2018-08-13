@@ -15,24 +15,24 @@
 #include "FM_Reader.h"
 
 class FM_Internals {
- private:
-  std::vector<FM::Reader*> reader;
+private:
+  std::vector<FM::Reader *> reader;
 
- public:
+public:
   FM_Internals() {}
   ~FM_Internals() {}
 
   void loadFM();
-  void loadFM(const char* filename);
-  void makeGFace(FM::Patch* patch, GModel* model);
-  void buildGModel(FM::Reader* reater, GModel* model);
+  void loadFM(const char *filename);
+  void makeGFace(FM::Patch *patch, GModel *model);
+  void buildGModel(FM::Reader *reater, GModel *model);
 
-  FM::Reader* getReader(int tag) 
-  { 
+  FM::Reader *getReader(int tag)
+  {
     if(tag < (int)reader.size()) return reader[tag];
   }
   int getSize() { return reader.size(); }
-  FM::Reader* current() { return reader[reader.size() - 1]; }
+  FM::Reader *current() { return reader[reader.size() - 1]; }
 };
 
 #endif

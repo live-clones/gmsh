@@ -7,30 +7,25 @@
 #include "GModel.h"
 #include "gmshLevelset.h"
 
+StringXNumber CutMeshOptions_Number[] = {{GMSH_FULLRC, "View", NULL, -1.},
+                                         {GMSH_FULLRC, "Split", NULL, 0.},
+                                         {GMSH_FULLRC, "SaveTri", NULL, 0.}};
 
-StringXNumber CutMeshOptions_Number[] = {
-  {GMSH_FULLRC, "View", NULL, -1.},
-  {GMSH_FULLRC, "Split", NULL, 0.},
-  {GMSH_FULLRC, "SaveTri", NULL, 0.}
-};
-
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterCutMeshPlugin() {
-    return new GMSH_CutMeshPlugin();
-  }
+extern "C" {
+GMSH_Plugin *GMSH_RegisterCutMeshPlugin() { return new GMSH_CutMeshPlugin(); }
 }
 
 std::string GMSH_CutMeshPlugin::getHelp() const
 {
   return "Plugin(CutMesh) cuts the mesh of the current GModel with "
-    "the zero value of the levelset defined with the view 'View'."
-    "Sub-elements are created in the new model (polygons in 2D and "
-    "polyhedra in 3D) and border elements are created on the zero-levelset.\n\n"
-    "If `Split' is nonzero, the plugin splits the mesh"
-    "along the edges of the cut elements in the positive side.\n\n"
-    "If 'SaveTri' is nonzero, the sub-elements are saved as simplices.\n\n"
-    "Plugin(CutMesh) creates one new GModel.";
+         "the zero value of the levelset defined with the view 'View'."
+         "Sub-elements are created in the new model (polygons in 2D and "
+         "polyhedra in 3D) and border elements are created on the "
+         "zero-levelset.\n\n"
+         "If `Split' is nonzero, the plugin splits the mesh"
+         "along the edges of the cut elements in the positive side.\n\n"
+         "If 'SaveTri' is nonzero, the sub-elements are saved as simplices.\n\n"
+         "Plugin(CutMesh) creates one new GModel.";
 }
 
 int GMSH_CutMeshPlugin::getNbOptions() const
@@ -46,8 +41,7 @@ StringXNumber *GMSH_CutMeshPlugin::getOption(int iopt)
 void GMSH_CutMeshPlugin::run()
 {
   int iView = (int)CutMeshOptions_Number[0].def;
-  if(iView < 0)
-    iView = PView::list.size() - 1;
+  if(iView < 0) iView = PView::list.size() - 1;
 
   gLevelsetPostView *gLs = new gLevelsetPostView(iView);
 
@@ -57,4 +51,3 @@ void GMSH_CutMeshPlugin::run()
   GModel *cgm = gm->buildCutGModel(gLs, !split, saveTri);
   cgm->setVisibility(1);
 }
-

@@ -10,15 +10,15 @@
 
 class VoronoiElement;
 
-class clip{
- public:
+class clip {
+public:
   clip();
   ~clip();
   void execute();
-  void execute(GRegion*);
-  void execute(std::vector<SPoint3>&,std::vector<VoronoiElement>&);
-  double min(double,double);
-  double max(double,double);
-  int category(int,int,int,int);
+  void execute(GRegion *);
+  void execute(std::vector<SPoint3> &, std::vector<VoronoiElement> &);
+  double min(double, double);
+  double max(double, double);
+  int category(int, int, int, int);
   void print_segment(const SPoint3 &, const SPoint3 &, std::ofstream &);
 };

@@ -33,7 +33,7 @@
 #endif
 
 // TODO C++11 remove macro
-#define SQU(a)      ((a)*(a))
+#define SQU(a) ((a) * (a))
 
 GFace::GFace(GModel *model, int tag)
   : GEntity(model, tag), r1(0), r2(0), va_geom_triangles(0)
@@ -44,24 +44,24 @@ GFace::GFace(GModel *model, int tag)
 
 GFace::~GFace()
 {
-  std::vector<GEdge*>::iterator it = l_edges.begin();
-  while (it != l_edges.end()){
+  std::vector<GEdge *>::iterator it = l_edges.begin();
+  while(it != l_edges.end()) {
     (*it)->delFace(this);
     ++it;
   }
 
-  if(va_geom_triangles)
-    delete va_geom_triangles;
+  if(va_geom_triangles) delete va_geom_triangles;
 
   deleteMesh();
 }
 
 int GFace::getCurvatureControlParameter() const
 {
-  std::map<int,int>::iterator it =
+  std::map<int, int>::iterator it =
     CTX::instance()->mesh.curvatureControlPerFace.find(tag());
   return it == CTX::instance()->mesh.curvatureControlPerFace.end() ?
-    CTX::instance()->mesh.minCircPoints : it->second ;
+           CTX::instance()->mesh.minCircPoints :
+           it->second;
 }
 
 void GFace::setCurvatureControlParameter(int n)
@@ -71,9 +71,11 @@ void GFace::setCurvatureControlParameter(int n)
 
 int GFace::getMeshingAlgo() const
 {
-  std::map<int,int>::iterator it = CTX::instance()->mesh.algo2dPerFace.find(tag());
+  std::map<int, int>::iterator it =
+    CTX::instance()->mesh.algo2dPerFace.find(tag());
   return it == CTX::instance()->mesh.algo2dPerFace.end() ?
-    CTX::instance()->mesh.algo2d : it->second ;
+           CTX::instance()->mesh.algo2d :
+           it->second;
 }
 
 void GFace::setMeshingAlgo(int algo)
@@ -84,11 +86,12 @@ void GFace::setMeshingAlgo(int algo)
 void GFace::delFreeEdge(GEdge *edge)
 {
   // delete the edge from the edge list and the orientation list
-  std::vector<GEdge*>::iterator ite = l_edges.begin();
+  std::vector<GEdge *>::iterator ite = l_edges.begin();
   std::vector<int>::iterator itd = l_dirs.begin();
-  while(ite != l_edges.end()){
-    if(edge == *ite){
-      Msg::Debug("Erasing edge %d from edge list in face %d", edge->tag(), tag());
+  while(ite != l_edges.end()) {
+    if(edge == *ite) {
+      Msg::Debug("Erasing edge %d from edge list in face %d", edge->tag(),
+                 tag());
       l_edges.erase(ite);
       if(itd != l_dirs.end()) l_dirs.erase(itd);
       break;
@@ -99,10 +102,11 @@ void GFace::delFreeEdge(GEdge *edge)
 
   // delete the edge from the edge loops
   for(std::list<GEdgeLoop>::iterator it = edgeLoops.begin();
-      it != edgeLoops.end(); it++){
-    for(GEdgeLoop::iter it2 = it->begin(); it2 != it->end(); it2++){
-      if(edge == it2->ge){
-        Msg::Debug("Erasing edge %d from edge loop in face %d", edge->tag(), tag());
+      it != edgeLoops.end(); it++) {
+    for(GEdgeLoop::iter it2 = it->begin(); it2 != it->end(); it2++) {
+      if(edge == it2->ge) {
+        Msg::Debug("Erasing edge %d from edge loop in face %d", edge->tag(),
+                   tag());
         it->erase(it2);
         break;
       }
@@ -110,13 +114,13 @@ void GFace::delFreeEdge(GEdge *edge)
   }
 }
 
-int GFace::delEdge(GEdge* edge)
+int GFace::delEdge(GEdge *edge)
 {
   // BUG If the iterator is equal to end() then the erase will be ill-formed
   // TODO C++11 fix this UB
-  std::vector<GEdge*>::iterator it;
+  std::vector<GEdge *>::iterator it;
   int pos = 0;
-  for(it = l_edges.begin(); it != l_edges.end(); ++it){
+  for(it = l_edges.begin(); it != l_edges.end(); ++it) {
     if(*it == edge) break;
     pos++;
   }
@@ -124,8 +128,8 @@ int GFace::delEdge(GEdge* edge)
 
   std::vector<int>::iterator itOri;
   int posOri = 0, orientation = 0;
-  for(itOri = l_dirs.begin(); itOri != l_dirs.end(); ++itOri){
-    if(posOri == pos){
+  for(itOri = l_dirs.begin(); itOri != l_dirs.end(); ++itOri) {
+    if(posOri == pos) {
       orientation = *itOri;
       break;
     }
@@ -138,8 +142,9 @@ int GFace::delEdge(GEdge* edge)
 
 void GFace::deleteMesh(bool onlyDeleteElements)
 {
-  if(!onlyDeleteElements){
-    for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
+  if(!onlyDeleteElements) {
+    for(unsigned int i = 0; i < mesh_vertices.size(); i++)
+      delete mesh_vertices[i];
     mesh_vertices.clear();
     transfinite_vertices.clear();
   }
@@ -160,9 +165,12 @@ std::size_t GFace::getNumMeshElements() const
 
 unsigned int GFace::getNumMeshElementsByType(const int familyType) const
 {
-  if(familyType == TYPE_TRI) return triangles.size();
-  else if(familyType == TYPE_QUA) return quadrangles.size();
-  else if(familyType == TYPE_POLYG) return polygons.size();
+  if(familyType == TYPE_TRI)
+    return triangles.size();
+  else if(familyType == TYPE_QUA)
+    return quadrangles.size();
+  else if(familyType == TYPE_POLYG)
+    return polygons.size();
 
   return 0;
 }
@@ -171,8 +179,7 @@ unsigned int GFace::getNumMeshParentElements()
 {
   unsigned int n = 0;
   for(unsigned int i = 0; i < polygons.size(); i++)
-    if(polygons[i]->ownsParent())
-      n++;
+    if(polygons[i]->ownsParent()) n++;
   return n;
 }
 
@@ -210,11 +217,15 @@ MElement *GFace::getMeshElement(unsigned int index) const
   return 0;
 }
 
-MElement *GFace::getMeshElementByType(const int familyType, const unsigned int index) const
+MElement *GFace::getMeshElementByType(const int familyType,
+                                      const unsigned int index) const
 {
-  if(familyType == TYPE_TRI) return triangles[index];
-  else if(familyType == TYPE_QUA) return quadrangles[index];
-  else if(familyType == TYPE_POLYG) return polygons[index];
+  if(familyType == TYPE_TRI)
+    return triangles[index];
+  else if(familyType == TYPE_QUA)
+    return quadrangles[index];
+  else if(familyType == TYPE_POLYG)
+    return polygons[index];
 
   return 0;
 }
@@ -234,13 +245,12 @@ void GFace::resetMeshAttributes()
 SBoundingBox3d GFace::bounds(bool fast) const
 {
   SBoundingBox3d res;
-  if(geomType() != DiscreteSurface && geomType() != PartitionSurface){
+  if(geomType() != DiscreteSurface && geomType() != PartitionSurface) {
     // TODO C++11 std::accumulate
-    std::vector<GEdge*>::const_iterator it = l_edges.begin();
-    for(; it != l_edges.end(); it++)
-      res += (*it)->bounds(fast);
+    std::vector<GEdge *>::const_iterator it = l_edges.begin();
+    for(; it != l_edges.end(); it++) res += (*it)->bounds(fast);
   }
-  else{
+  else {
     int ipp = getNumMeshElements() / 20;
     if(ipp < 1) ipp = 1;
     for(unsigned int i = 0; i < getNumMeshElements(); i += ipp)
@@ -252,27 +262,26 @@ SBoundingBox3d GFace::bounds(bool fast) const
 
 SOrientedBoundingBox GFace::getOBB()
 {
-  if (!_obb) {
+  if(!_obb) {
     std::vector<SPoint3> vertices;
     if(getNumMeshVertices() > 0) {
       int N = getNumMeshVertices();
-      for (int i = 0; i < N; i++) {
-        MVertex* mv = getMeshVertex(i);
+      for(int i = 0; i < N; i++) {
+        MVertex *mv = getMeshVertex(i);
         vertices.push_back(mv->point());
       }
-      std::vector<GEdge*> const& eds = edges();
-      for(std::vector<GEdge*>::const_iterator ed = eds.begin(); ed != eds.end(); ed++) {
+      std::vector<GEdge *> const &eds = edges();
+      for(std::vector<GEdge *>::const_iterator ed = eds.begin();
+          ed != eds.end(); ed++) {
         int N2 = (*ed)->getNumMeshVertices();
-        for (int i = 0; i < N2; i++) {
-          MVertex* mv = (*ed)->getMeshVertex(i);
+        for(int i = 0; i < N2; i++) {
+          MVertex *mv = (*ed)->getMeshVertex(i);
           vertices.push_back(mv->point());
         }
         // Don't forget to add the first and last vertices...
-        SPoint3 pt1((*ed)->getBeginVertex()->x(),
-                    (*ed)->getBeginVertex()->y(),
+        SPoint3 pt1((*ed)->getBeginVertex()->x(), (*ed)->getBeginVertex()->y(),
                     (*ed)->getBeginVertex()->z());
-        SPoint3 pt2((*ed)->getEndVertex()->x(),
-                    (*ed)->getEndVertex()->y(),
+        SPoint3 pt2((*ed)->getEndVertex()->x(), (*ed)->getEndVertex()->y(),
                     (*ed)->getEndVertex()->z());
         vertices.push_back(pt1);
         vertices.push_back(pt2);
@@ -284,13 +293,14 @@ SOrientedBoundingBox GFace::getOBB()
     else {
       // Fallback, if we can't make a STL triangulation of the surface, use its
       // edges..
-      std::vector<GEdge*> const& b_edges = edges();
+      std::vector<GEdge *> const &b_edges = edges();
       int N = 10;
-      for (std::vector<GEdge*>::const_iterator b_edge = b_edges.begin();
-           b_edge != b_edges.end(); b_edge++) {
+      for(std::vector<GEdge *>::const_iterator b_edge = b_edges.begin();
+          b_edge != b_edges.end(); b_edge++) {
         Range<double> tr = (*b_edge)->parBounds(0);
-        for (int j = 0; j < N; j++) {
-          double t = tr.low() + (double)j / (double)(N - 1) * (tr.high() - tr.low());
+        for(int j = 0; j < N; j++) {
+          double t =
+            tr.low() + (double)j / (double)(N - 1) * (tr.high() - tr.low());
           GPoint p = (*b_edge)->point(t);
           SPoint3 pt(p.x(), p.y(), p.z());
           vertices.push_back(pt);
@@ -302,11 +312,11 @@ SOrientedBoundingBox GFace::getOBB()
   return SOrientedBoundingBox(_obb);
 }
 
-std::vector<MVertex*> GFace::getEmbeddedMeshVertices() const
+std::vector<MVertex *> GFace::getEmbeddedMeshVertices() const
 {
-  std::set<MVertex*> tmp;
+  std::set<MVertex *> tmp;
   for(std::vector<GEdge *>::const_iterator it = embedded_edges.begin();
-      it != embedded_edges.end(); it++){
+      it != embedded_edges.end(); it++) {
     tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
     if((*it)->getBeginVertex())
       tmp.insert((*it)->getBeginVertex()->mesh_vertices.begin(),
@@ -316,31 +326,32 @@ std::vector<MVertex*> GFace::getEmbeddedMeshVertices() const
                  (*it)->getEndVertex()->mesh_vertices.end());
   }
   for(std::list<GVertex *>::const_iterator it = embedded_vertices.begin();
-      it != embedded_vertices.end(); it++){
+      it != embedded_vertices.end(); it++) {
     tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
   }
-  return std::vector<MVertex*>(tmp.begin(), tmp.end());
+  return std::vector<MVertex *>(tmp.begin(), tmp.end());
 }
 
-std::vector<GVertex*> GFace::vertices() const
+std::vector<GVertex *> GFace::vertices() const
 {
-  std::set<GVertex*> v;
-  for(std::vector<GEdge*>::const_iterator it = l_edges.begin();
-      it != l_edges.end(); ++it){
+  std::set<GVertex *> v;
+  for(std::vector<GEdge *>::const_iterator it = l_edges.begin();
+      it != l_edges.end(); ++it) {
     GVertex *const v1 = (*it)->getBeginVertex();
     if(v1) v.insert(v1);
 
     GVertex *const v2 = (*it)->getEndVertex();
     if(v2) v.insert(v2);
   }
-  return std::vector<GVertex*>(v.begin(), v.end());
+  return std::vector<GVertex *>(v.begin(), v.end());
 }
 
 void GFace::setVisibility(char val, bool recursive)
 {
   GEntity::setVisibility(val);
-  if(recursive){
-    for (std::vector<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it)
+  if(recursive) {
+    for(std::vector<GEdge *>::iterator it = l_edges.begin();
+        it != l_edges.end(); ++it)
       (*it)->setVisibility(val, recursive);
   }
 }
@@ -348,8 +359,9 @@ void GFace::setVisibility(char val, bool recursive)
 void GFace::setColor(unsigned int val, bool recursive)
 {
   GEntity::setColor(val);
-  if(recursive){
-    for (std::vector<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it)
+  if(recursive) {
+    for(std::vector<GEdge *>::iterator it = l_edges.begin();
+        it != l_edges.end(); ++it)
       (*it)->setColor(val, recursive);
   }
 }
@@ -357,59 +369,64 @@ void GFace::setColor(unsigned int val, bool recursive)
 std::string GFace::getAdditionalInfoString(bool multline)
 {
   std::ostringstream sstream;
-  if(l_edges.size() > 20){
-    sstream << "Boundary curves: " << l_edges.front()->tag()
-            << ", ...," << l_edges.back()->tag();
-    if(multline) sstream << "\n";
-    else sstream << " ";
+  if(l_edges.size() > 20) {
+    sstream << "Boundary curves: " << l_edges.front()->tag() << ", ...,"
+            << l_edges.back()->tag();
+    if(multline)
+      sstream << "\n";
+    else
+      sstream << " ";
   }
-  else if(l_edges.size()){
+  else if(l_edges.size()) {
     sstream << "Boundary curves: ";
-    for(std::vector<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it){
+    for(std::vector<GEdge *>::iterator it = l_edges.begin();
+        it != l_edges.end(); ++it) {
       if(it != l_edges.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
-    if(multline) sstream << "\n";
-    else sstream << " ";
+    if(multline)
+      sstream << "\n";
+    else
+      sstream << " ";
   }
 
-  if(embedded_edges.size()){
+  if(embedded_edges.size()) {
     sstream << "Embedded curves: ";
-    for(std::vector<GEdge*>::iterator it = embedded_edges.begin();
-        it != embedded_edges.end(); ++it){
+    for(std::vector<GEdge *>::iterator it = embedded_edges.begin();
+        it != embedded_edges.end(); ++it) {
       if(it != embedded_edges.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
-    if(multline) sstream << "\n";
-    else sstream << " ";
+    if(multline)
+      sstream << "\n";
+    else
+      sstream << " ";
   }
 
-  if(embedded_vertices.size()){
+  if(embedded_vertices.size()) {
     sstream << "Embedded points: ";
-    for(std::list<GVertex*>::iterator it = embedded_vertices.begin();
-        it != embedded_vertices.end(); ++it){
+    for(std::list<GVertex *>::iterator it = embedded_vertices.begin();
+        it != embedded_vertices.end(); ++it) {
       if(it != embedded_vertices.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
-    if(multline) sstream << "\n";
-    else sstream << " ";
+    if(multline)
+      sstream << "\n";
+    else
+      sstream << " ";
   }
 
   if(meshAttributes.recombine || meshAttributes.method == MESH_TRANSFINITE ||
-     meshAttributes.extrude || meshAttributes.reverseMesh){
+     meshAttributes.extrude || meshAttributes.reverseMesh) {
     sstream << "Mesh attributes:";
-    if(meshAttributes.recombine)
-      sstream << " recombined";
-    if(meshAttributes.method == MESH_TRANSFINITE)
-      sstream << " transfinite";
-    if(meshAttributes.extrude)
-      sstream << " extruded";
-    if(meshAttributes.reverseMesh)
-      sstream << " reverse";
+    if(meshAttributes.recombine) sstream << " recombined";
+    if(meshAttributes.method == MESH_TRANSFINITE) sstream << " transfinite";
+    if(meshAttributes.extrude) sstream << " extruded";
+    if(meshAttributes.reverseMesh) sstream << " reverse";
   }
   std::string str = sstream.str();
-  if(str.size() && (str[str.size()-1] == '\n' || str[str.size()-1] == ' '))
-     str.resize(str.size() - 1);
+  if(str.size() && (str[str.size() - 1] == '\n' || str[str.size() - 1] == ' '))
+    str.resize(str.size() - 1);
   return str;
 }
 
@@ -417,46 +434,48 @@ void GFace::writeGEO(FILE *fp)
 {
   if(geomType() == DiscreteSurface) return;
 
-  std::vector<GEdge*> const& edg = edges();
-  std::vector<int> const& dir = orientations();
-  if(edg.size() && dir.size() == edg.size()){
+  std::vector<GEdge *> const &edg = edges();
+  std::vector<int> const &dir = orientations();
+  if(edg.size() && dir.size() == edg.size()) {
     std::vector<int> num, ori;
-    for(std::vector<GEdge*>::const_iterator it = edg.begin(); it != edg.end(); it++)
+    for(std::vector<GEdge *>::const_iterator it = edg.begin(); it != edg.end();
+        it++)
       num.push_back((*it)->tag());
-    for(std::vector<int>::const_iterator it = dir.begin(); it != dir.end(); it++)
+    for(std::vector<int>::const_iterator it = dir.begin(); it != dir.end();
+        it++)
       ori.push_back((*it) > 0 ? 1 : -1);
     fprintf(fp, "Line Loop(%d) = ", tag());
-    for(unsigned int i = 0; i < num.size(); i++){
+    for(unsigned int i = 0; i < num.size(); i++) {
       if(i)
         fprintf(fp, ", %d", num[i] * ori[i]);
       else
         fprintf(fp, "{%d", num[i] * ori[i]);
     }
     fprintf(fp, "};\n");
-    if(geomType() == GEntity::Plane){
+    if(geomType() == GEntity::Plane) {
       fprintf(fp, "Plane Surface(%d) = {%d};\n", tag(), tag());
     }
-    else if(edg.size() == 3 || edg.size() == 4){
+    else if(edg.size() == 3 || edg.size() == 4) {
       fprintf(fp, "Surface(%d) = {%d};\n", tag(), tag());
     }
-    else{
+    else {
       Msg::Error("Skipping surface %d in export", tag());
     }
   }
 
-  for(std::vector<GEdge*>::iterator it = embedded_edges.begin();
+  for(std::vector<GEdge *>::iterator it = embedded_edges.begin();
       it != embedded_edges.end(); it++)
     fprintf(fp, "Line {%d} In Surface {%d};\n", (*it)->tag(), tag());
 
-  for(std::list<GVertex*>::iterator it = embedded_vertices.begin();
+  for(std::list<GVertex *>::iterator it = embedded_vertices.begin();
       it != embedded_vertices.end(); it++)
     fprintf(fp, "Point {%d} In Surface {%d};\n", (*it)->tag(), tag());
 
-  if(meshAttributes.method == MESH_TRANSFINITE){
+  if(meshAttributes.method == MESH_TRANSFINITE) {
     fprintf(fp, "Transfinite Surface {%d}", tag());
-    if(meshAttributes.corners.size()){
+    if(meshAttributes.corners.size()) {
       fprintf(fp, " = {");
-      for(unsigned int i = 0; i < meshAttributes.corners.size(); i++){
+      for(unsigned int i = 0; i < meshAttributes.corners.size(); i++) {
         if(i) fprintf(fp, ",");
         fprintf(fp, "%d", meshAttributes.corners[i]->tag());
       }
@@ -465,11 +484,9 @@ void GFace::writeGEO(FILE *fp)
     fprintf(fp, ";\n");
   }
 
-  if(meshAttributes.recombine)
-    fprintf(fp, "Recombine Surface {%d};\n", tag());
+  if(meshAttributes.recombine) fprintf(fp, "Recombine Surface {%d};\n", tag());
 
-  if(meshAttributes.reverseMesh)
-    fprintf(fp, "Reverse Surface {%d};\n", tag());
+  if(meshAttributes.reverseMesh) fprintf(fp, "Reverse Surface {%d};\n", tag());
 }
 
 void GFace::computeMeanPlane()
@@ -483,11 +500,12 @@ void GFace::computeMeanPlane()
     // and GFace::relocateMeshVertices(): after perturbation of the boundary, we
     // want a parametrization of the surface that is "close" to the original
     // one. If this fails, we fallback to the classical (SVD-based) algorithm.
-    std::vector<GEdge*> const& edg = edges();
-    for(std::vector<GEdge*>::const_iterator ite = edg.begin(); ite != edg.end(); ite++){
+    std::vector<GEdge *> const &edg = edges();
+    for(std::vector<GEdge *>::const_iterator ite = edg.begin();
+        ite != edg.end(); ite++) {
       const GEdge *e = *ite;
       if(e->geomType() == GEntity::DiscreteCurve ||
-         e->geomType() == GEntity::BoundaryLayerCurve){
+         e->geomType() == GEntity::BoundaryLayerCurve) {
         pts.clear();
         break;
       }
@@ -499,23 +517,28 @@ void GFace::computeMeanPlane()
     }
     bool ok = false;
     double res[4] = {0., 0., 0., 0.}, xm = 0., ym = 0., zm = 0.;
-    if(pts.size() >= 3){
+    if(pts.size() >= 3) {
       SVector3 d01(pts[0], pts[1]);
-      for(unsigned int i = 2; i < pts.size(); i++){
+      for(unsigned int i = 2; i < pts.size(); i++) {
         SVector3 d0i(pts[0], pts[i]);
         SVector3 n = crossprod(d01, d0i);
         // if too small, the points are almost colinear; tolerance is relatively
         // high so that we don't accept points on plane surfaces defined by
         // lines that are not exactly co-planar
-        if(norm(n) > sqrt(CTX::instance()->geom.tolerance) * CTX::instance()->lc){
-          res[0] = n.x(); res[1] = n.y(); res[2] = n.z();
-          xm = pts[0].x(); ym = pts[0].y(); zm = pts[0].z();
+        if(norm(n) >
+           sqrt(CTX::instance()->geom.tolerance) * CTX::instance()->lc) {
+          res[0] = n.x();
+          res[1] = n.y();
+          res[2] = n.z();
+          xm = pts[0].x();
+          ym = pts[0].y();
+          zm = pts[0].z();
           ok = true;
           break;
         }
       }
     }
-    if(ok){
+    if(ok) {
       double ex[3], t1[3], t2[3];
       ex[0] = ex[1] = ex[2] = 0.0;
       if(res[0] == 0.)
@@ -534,29 +557,31 @@ void GFace::computeMeanPlane()
     }
   }
 
-  std::vector<GVertex*> const& verts = vertices();
-  std::vector<GVertex*>::const_iterator itv = verts.begin();
-  for(; itv != verts.end(); itv++){
+  std::vector<GVertex *> const &verts = vertices();
+  std::vector<GVertex *>::const_iterator itv = verts.begin();
+  for(; itv != verts.end(); itv++) {
     const GVertex *v = *itv;
     pts.push_back(SPoint3(v->x(), v->y(), v->z()));
   }
 
   bool colinear = (pts.size() < 3);
-  if(pts.size() > 2){
+  if(pts.size() > 2) {
     SVector3 d01(pts[0], pts[1]), d02(pts[0], pts[2]);
     if(norm(crossprod(d01, d02)) < 1e-12) colinear = true;
   }
 
-  if(colinear){
-    Msg::Debug("Adding edge points (%d) to compute mean plane of face %d", pts.size(), tag());
-    std::vector<GEdge*> const& edg = edges();
-    for(std::vector<GEdge*>::const_iterator ite = edg.begin(); ite != edg.end(); ite++){
+  if(colinear) {
+    Msg::Debug("Adding edge points (%d) to compute mean plane of face %d",
+               pts.size(), tag());
+    std::vector<GEdge *> const &edg = edges();
+    for(std::vector<GEdge *>::const_iterator ite = edg.begin();
+        ite != edg.end(); ite++) {
       const GEdge *e = *ite;
-      if(e->mesh_vertices.size() > 1){
+      if(e->mesh_vertices.size() > 1) {
         for(unsigned int i = 0; i < e->mesh_vertices.size(); i++)
           pts.push_back(e->mesh_vertices[i]->point());
       }
-      else{
+      else {
         Range<double> b = e->parBounds(0);
         GPoint p1 = e->point(b.low() + 0.333 * (b.high() - b.low()));
         pts.push_back(SPoint3(p1.x(), p1.y(), p1.z()));
@@ -569,7 +594,7 @@ void GFace::computeMeanPlane()
   computeMeanPlane(pts);
 }
 
-void GFace::computeMeanPlane(const std::vector<MVertex*> &points)
+void GFace::computeMeanPlane(const std::vector<MVertex *> &points)
 {
   std::vector<SPoint3> pts;
   for(unsigned int i = 0; i < points.size(); i++)
@@ -617,7 +642,8 @@ void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
   int min;
   if(std::abs(svd[0]) < std::abs(svd[1]) && std::abs(svd[0]) < std::abs(svd[2]))
     min = 0;
-  else if(std::abs(svd[1]) < std::abs(svd[0]) && std::abs(svd[1]) < std::abs(svd[2]))
+  else if(std::abs(svd[1]) < std::abs(svd[0]) &&
+          std::abs(svd[1]) < std::abs(svd[2]))
     min = 1;
   else
     min = 2;
@@ -683,38 +709,36 @@ end:
 
   Msg::Debug("Surface: %d", tag());
   Msg::Debug("SVD    : %g,%g,%g (min=%d)", svd[0], svd[1], svd[2], min);
-  Msg::Debug("Plane  : (%g x + %g y + %g z = %g)",
-             meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
-  Msg::Debug("Normal : (%g , %g , %g )",
-             meanPlane.a, meanPlane.b, meanPlane.c);
+  Msg::Debug("Plane  : (%g x + %g y + %g z = %g)", meanPlane.a, meanPlane.b,
+             meanPlane.c, meanPlane.d);
+  Msg::Debug("Normal : (%g , %g , %g )", meanPlane.a, meanPlane.b, meanPlane.c);
   Msg::Debug("t1     : (%g , %g , %g )", t1[0], t1[1], t1[2]);
   Msg::Debug("t2     : (%g , %g , %g )", t2[0], t2[1], t2[2]);
-  Msg::Debug("pt     : (%g , %g , %g )",
-             meanPlane.x, meanPlane.y, meanPlane.z);
+  Msg::Debug("pt     : (%g , %g , %g )", meanPlane.x, meanPlane.y, meanPlane.z);
 
-  //check coherence for plane surfaces
+  // check coherence for plane surfaces
   if(geomType() == Plane) {
     SBoundingBox3d bb = bounds();
     double lc = norm(SVector3(bb.max(), bb.min()));
-    std::vector<GVertex*> const& verts = vertices();
-    std::vector<GVertex*>::const_iterator itv = verts.begin();
-    for(; itv != verts.end(); itv++){
+    std::vector<GVertex *> const &verts = vertices();
+    std::vector<GVertex *>::const_iterator itv = verts.begin();
+    for(; itv != verts.end(); itv++) {
       const GVertex *v = *itv;
       double const d = meanPlane.a * v->x() + meanPlane.b * v->y() +
-        meanPlane.c * v->z() - meanPlane.d;
+                       meanPlane.c * v->z() - meanPlane.d;
       if(std::abs(d) > lc * 1.e-3) {
-        Msg::Debug("Plane surface %d (%gx+%gy+%gz=%g) is not plane!",
-                   tag(), meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
-        Msg::Debug("Control point %d = (%g,%g,%g), val=%g",
-                   v->tag(), v->x(), v->y(), v->z(), d);
+        Msg::Debug("Plane surface %d (%gx+%gy+%gz=%g) is not plane!", tag(),
+                   meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
+        Msg::Debug("Control point %d = (%g,%g,%g), val=%g", v->tag(), v->x(),
+                   v->y(), v->z(), d);
         break;
       }
     }
   }
 }
 
-void GFace::getMeanPlaneData(double VX[3], double VY[3],
-                             double &x, double &y, double &z) const
+void GFace::getMeanPlaneData(double VX[3], double VY[3], double &x, double &y,
+                             double &z) const
 {
   VX[0] = meanPlane.plan[0][0];
   VX[1] = meanPlane.plan[0][1];
@@ -730,16 +754,15 @@ void GFace::getMeanPlaneData(double VX[3], double VY[3],
 void GFace::getMeanPlaneData(double plan[3][3]) const
 {
   for(int i = 0; i < 3; i++)
-    for(int j = 0; j < 3; j++)
-      plan[i][j] = meanPlane.plan[i][j];
+    for(int j = 0; j < 3; j++) plan[i][j] = meanPlane.plan[i][j];
 }
 
-void GFace::computeMeshSizeFieldAccuracy(double &avg,double &max_e, double &min_e,
-					 int &nE, int &GS)
+void GFace::computeMeshSizeFieldAccuracy(double &avg, double &max_e,
+                                         double &min_e, int &nE, int &GS)
 {
 #if defined(HAVE_MESH)
   std::set<MEdge, Less_Edge> es;
-  for(unsigned int i = 0; i < getNumMeshElements(); i++){
+  for(unsigned int i = 0; i < getNumMeshElements(); i++) {
     MElement *e = getMeshElement(i);
     for(int j = 0; j < e->getNumEdges(); j++) es.insert(e->getEdge(j));
   }
@@ -751,21 +774,21 @@ void GFace::computeMeshSizeFieldAccuracy(double &avg,double &max_e, double &min_
   GS = 0;
   double oneoversqr2 = 1. / sqrt(2.);
   double sqr2 = sqrt(2.);
-  for (std::set<MEdge, Less_Edge>::const_iterator it = es.begin();
-       it != es.end(); ++it){
-    double u1,v1,u2,v2;
-    MVertex *vert1 =  it->getVertex(0);
+  for(std::set<MEdge, Less_Edge>::const_iterator it = es.begin();
+      it != es.end(); ++it) {
+    double u1, v1, u2, v2;
+    MVertex *vert1 = it->getVertex(0);
     vert1->getParameter(0, u1);
     vert1->getParameter(1, v1);
-    MVertex *vert2 =  it->getVertex(1);
+    MVertex *vert2 = it->getVertex(1);
     vert2->getParameter(0, u2);
     vert2->getParameter(1, v2);
     double l1 = BGM_MeshSize(this, u1, v1, vert1->x(), vert1->y(), vert1->z());
     double l2 = BGM_MeshSize(this, u2, v2, vert2->x(), vert2->y(), vert2->z());
-    double correctLC = 0.5*(l1+l2);
-    double lone = it->length()/correctLC;
-    if (lone > oneoversqr2 && lone < sqr2) GS++;
-    avg += lone >1 ? (1. / lone) - 1. : lone - 1.;
+    double correctLC = 0.5 * (l1 + l2);
+    double lone = it->length() / correctLC;
+    if(lone > oneoversqr2 && lone < sqr2) GS++;
+    avg += lone > 1 ? (1. / lone) - 1. : lone - 1.;
     max_e = std::max(max_e, lone);
     min_e = std::min(min_e, lone);
   }
@@ -774,8 +797,7 @@ void GFace::computeMeshSizeFieldAccuracy(double &avg,double &max_e, double &min_
 
 double GFace::curvatureDiv(const SPoint2 &param) const
 {
-
-  if (geomType() == Plane) return 0;
+  if(geomType() == Plane) return 0;
 
   // X=X(u,v) Y=Y(u,v) Z=Z(u,v)
   // curv = div n = dnx/dx + dny/dy + dnz/dz
@@ -796,20 +818,20 @@ double GFace::curvatureDiv(const SPoint2 &param) const
 
   SVector3 n1, n2, n3, n4;
   if(param.x() - eps < 0.0) {
-    n1 = normal(SPoint2(param.x(),       param.y()));
+    n1 = normal(SPoint2(param.x(), param.y()));
     n2 = normal(SPoint2(param.x() + eps, param.y()));
   }
   else {
     n1 = normal(SPoint2(param.x() - eps, param.y()));
-    n2 = normal(SPoint2(param.x(),       param.y()));
+    n2 = normal(SPoint2(param.x(), param.y()));
   }
   if(param.y() - eps < 0.0) {
-    n3 = normal(SPoint2(param.x(), param.y()      ));
+    n3 = normal(SPoint2(param.x(), param.y()));
     n4 = normal(SPoint2(param.x(), param.y() + eps));
   }
   else {
     n3 = normal(SPoint2(param.x(), param.y() - eps));
-    n4 = normal(SPoint2(param.x(), param.y()      ));
+    n4 = normal(SPoint2(param.x(), param.y()));
   }
 
   SVector3 dndu = 100000 * (n2 - n1);
@@ -828,7 +850,7 @@ double GFace::curvatureDiv(const SPoint2 &param) const
 
 double GFace::curvatureMax(const SPoint2 &param) const
 {
-  if (geomType() == Plane) return 0.;
+  if(geomType() == Plane) return 0.;
 
   double eigVal[2], eigVec[8];
   getMetricEigenVectors(param, eigVal, eigVec);
@@ -836,12 +858,13 @@ double GFace::curvatureMax(const SPoint2 &param) const
   return fabs(eigVal[1]);
 }
 
-double GFace::curvatures(const SPoint2 &param, SVector3 &dirMax, SVector3 &dirMin,
-                         double &curvMax, double &curvMin) const
+double GFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
+                         SVector3 &dirMin, double &curvMax,
+                         double &curvMin) const
 {
   Pair<SVector3, SVector3> D1 = firstDer(param);
 
-  if(geomType() == Plane){
+  if(geomType() == Plane) {
     dirMax = D1.first();
     dirMin = D1.second();
     curvMax = 0.;
@@ -849,7 +872,7 @@ double GFace::curvatures(const SPoint2 &param, SVector3 &dirMax, SVector3 &dirMi
     return 0.;
   }
 
-  if(geomType() == Sphere){
+  if(geomType() == Sphere) {
     dirMax = D1.first();
     dirMin = D1.second();
     curvMax = curvatureDiv(param);
@@ -875,17 +898,17 @@ double GFace::getMetricEigenvalue(const SPoint2 &)
   return 0.;
 }
 
-// eigen values are absolute values and sorted from min to max of absolute values
-// eigen vectors are the corresponding COLUMNS of eigVec
-void GFace::getMetricEigenVectors(const SPoint2 &param,
-                                  double eigVal[2], double eigVec[4]) const
+// eigen values are absolute values and sorted from min to max of absolute
+// values eigen vectors are the corresponding COLUMNS of eigVec
+void GFace::getMetricEigenVectors(const SPoint2 &param, double eigVal[2],
+                                  double eigVec[4]) const
 {
-
   // first derivatives
-  Pair<SVector3,SVector3> D1 = firstDer(param);
+  Pair<SVector3, SVector3> D1 = firstDer(param);
   SVector3 du = D1.first();
   SVector3 dv = D1.second();
-  SVector3 nor = crossprod(du, dv); nor.normalize();
+  SVector3 nor = crossprod(du, dv);
+  nor.normalize();
 
   // second derivatives
   SVector3 dudu = SVector3();
@@ -897,17 +920,18 @@ void GFace::getMetricEigenVectors(const SPoint2 &param,
   double form1[2][2];
   form1[0][0] = normSq(du);
   form1[1][1] = normSq(dv);
-  form1[0][1] = form1[1][0] = dot(du,dv);
+  form1[0][1] = form1[1][0] = dot(du, dv);
 
   // second form
   double form2[2][2];
-  form2[0][0] = dot(nor,dudu);
-  form2[1][1] = dot(nor,dvdv);
-  form2[0][1] = form2[1][0] = dot(nor,dudv);
+  form2[0][0] = dot(nor, dudu);
+  form2[1][1] = dot(nor, dvdv);
+  form2[0][1] = form2[1][0] = dot(nor, dudv);
 
   // inverse of first form
   double inv_form1[2][2];
-  double inv_det_form1 = 1. / (form1[0][0] * form1[1][1] - form1[1][0] * form1[0][1]);
+  double inv_det_form1 =
+    1. / (form1[0][0] * form1[1][1] - form1[1][0] * form1[0][1]);
   inv_form1[0][0] = inv_det_form1 * form1[1][1];
   inv_form1[1][1] = inv_det_form1 * form1[0][0];
   inv_form1[1][0] = inv_form1[0][1] = -1 * inv_det_form1 * form1[0][1];
@@ -922,7 +946,7 @@ void GFace::getMetricEigenVectors(const SPoint2 &param,
   // eigen values and vectors of N
   fullMatrix<double> vl(2, 2), vr(2, 2);
   fullVector<double> dr(2), di(2);
-  if(N.eig(dr, di, vl, vr, true)){
+  if(N.eig(dr, di, vl, vr, true)) {
     eigVal[0] = fabs(dr(0));
     eigVal[1] = fabs(dr(1));
     eigVec[0] = vr(0, 0);
@@ -930,14 +954,14 @@ void GFace::getMetricEigenVectors(const SPoint2 &param,
     eigVec[1] = vr(0, 1);
     eigVec[3] = vr(1, 1);
   }
-  else{
+  else {
     Msg::Error("Problem in eigen vectors computation");
     Msg::Error(" N = [ %f %f ]", N(0, 0), N(0, 1));
     Msg::Error("     [ %f %f ]", N(1, 0), N(1, 1));
     for(int i = 0; i < 2; i++) eigVal[i] = 0.;
     for(int i = 0; i < 4; i++) eigVec[i] = 0.;
   }
-  if (fabs(di(0)) > 1.e-12 || fabs(di(1)) > 1.e-12) {
+  if(fabs(di(0)) > 1.e-12 || fabs(di(1)) > 1.e-12) {
     Msg::Error("Found imaginary eigenvalues");
   }
 }
@@ -964,15 +988,14 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
   vmin = rv.low();
   vmax = rv.high();
 
-  const double tol = Precision * (SQU(umax - umin) + SQU(vmax-vmin));
+  const double tol = Precision * (SQU(umax - umin) + SQU(vmax - vmin));
   for(int i = 0; i < NumInitGuess; i++) {
     initu[i] = umin + initu[i] * (umax - umin);
     initv[i] = vmin + initv[i] * (vmax - vmin);
   }
 
-  for(int i = 0; i < NumInitGuess; i++){
-    for(int j = 0; j < NumInitGuess; j++){
-
+  for(int i = 0; i < NumInitGuess; i++) {
+    for(int j = 0; j < NumInitGuess; j++) {
       U = initu[i];
       V = initv[j];
       err = 1.0;
@@ -980,7 +1003,7 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
 
       GPoint P = point(U, V);
       err2 = sqrt(SQU(X - P.x()) + SQU(Y - P.y()) + SQU(Z - P.z()));
-      if (err2 < 1.e-8 * CTX::instance()->lc) return;
+      if(err2 < 1.e-8 * CTX::instance()->lc) return;
 
       while(err > tol && iter < MaxIter) {
         P = point(U, V);
@@ -996,16 +1019,15 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
         mat[2][2] = 0.;
         invert_singular_matrix3x3(mat, jac);
 
-        Unew = U + relax *
-          (jac[0][0] * (X - P.x()) + jac[1][0] * (Y - P.y()) +
-           jac[2][0] * (Z - P.z()));
-        Vnew = V + relax *
-          (jac[0][1] * (X - P.x()) + jac[1][1] * (Y - P.y()) +
-           jac[2][1] * (Z - P.z()));
+        Unew = U + relax * (jac[0][0] * (X - P.x()) + jac[1][0] * (Y - P.y()) +
+                            jac[2][0] * (Z - P.z()));
+        Vnew = V + relax * (jac[0][1] * (X - P.x()) + jac[1][1] * (Y - P.y()) +
+                            jac[2][1] * (Z - P.z()));
 
         // don't remove this test: it is important
-        if((Unew > umax+tol || Unew < umin-tol) &&
-           (Vnew > vmax+tol || Vnew < vmin-tol)) break;
+        if((Unew > umax + tol || Unew < umin - tol) &&
+           (Vnew > vmax + tol || Vnew < vmin - tol))
+          break;
 
         err = SQU(Unew - U) + SQU(Vnew - V);
         err2 = sqrt(SQU(X - P.x()) + SQU(Y - P.y()) + SQU(Z - P.z()));
@@ -1015,25 +1037,22 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
         V = Vnew;
       }
 
-      if(iter < MaxIter && err <= tol &&
-         Unew <= umax && Vnew <= vmax &&
-         Unew >= umin && Vnew >= vmin){
-
-        if (onSurface && err2 > 1.e-4 * CTX::instance()->lc &&
-            !CTX::instance()->mesh.NewtonConvergenceTestXYZ){
+      if(iter < MaxIter && err <= tol && Unew <= umax && Vnew <= vmax &&
+         Unew >= umin && Vnew >= vmin) {
+        if(onSurface && err2 > 1.e-4 * CTX::instance()->lc &&
+           !CTX::instance()->mesh.NewtonConvergenceTestXYZ) {
           Msg::Warning("Converged for i=%d j=%d (err=%g iter=%d) BUT "
                        "xyz error = %g in point (%e,%e,%e) on surface %d",
                        i, j, err, iter, err2, X, Y, Z, tag());
         }
 
         if(onSurface && err2 > 1.e-4 * CTX::instance()->lc &&
-           CTX::instance()->mesh.NewtonConvergenceTestXYZ){
+           CTX::instance()->mesh.NewtonConvergenceTestXYZ) {
           // not converged in XYZ coordinates
         }
-        else{
+        else {
           return;
         }
-
       }
     }
   }
@@ -1057,47 +1076,55 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p, bool onSurface) const
 
 #if defined(HAVE_BFGS)
 
-class data_wrapper{
- private:
-  const GFace* gf;
+class data_wrapper {
+private:
+  const GFace *gf;
   SPoint3 point;
- public:
-  data_wrapper() { gf = NULL; point = SPoint3(); }
+
+public:
+  data_wrapper()
+  {
+    gf = NULL;
+    point = SPoint3();
+  }
   ~data_wrapper() {}
-  const GFace* get_face() { return gf; }
-  void set_face(const GFace* face) { gf = face; }
+  const GFace *get_face() { return gf; }
+  void set_face(const GFace *face) { gf = face; }
   SPoint3 get_point() { return point; }
   void set_point(const SPoint3 &_point) { point = SPoint3(_point); }
 };
 
 // Callback function for BFGS
-void bfgs_callback(const alglib::real_1d_array& x, double& func,
-                   alglib::real_1d_array& grad, void* ptr)
+void bfgs_callback(const alglib::real_1d_array &x, double &func,
+                   alglib::real_1d_array &grad, void *ptr)
 {
-  data_wrapper* w = static_cast<data_wrapper*>(ptr);
+  data_wrapper *w = static_cast<data_wrapper *>(ptr);
   SPoint3 p = w->get_point();
-  const GFace* gf = w->get_face();
+  const GFace *gf = w->get_face();
 
   // Value of the objective
   GPoint pnt = gf->point(x[0], x[1]);
-  func = 0.5 *
-    ( p.x() - pnt.x() ) * ( p.x() - pnt.x() ) +
-    ( p.y() - pnt.y() ) * ( p.y() - pnt.y() ) +
-    ( p.z() - pnt.z() ) * ( p.z() - pnt.z() ) ;
-  //printf("func : %f\n", func);
+  func = 0.5 * (p.x() - pnt.x()) * (p.x() - pnt.x()) +
+         (p.y() - pnt.y()) * (p.y() - pnt.y()) +
+         (p.z() - pnt.z()) * (p.z() - pnt.z());
+  // printf("func : %f\n", func);
 
   // Value of the gradient
   Pair<SVector3, SVector3> der = gf->firstDer(SPoint2(x[0], x[1]));
-  grad[0] = -(p.x() - pnt.x()) * der.left().x()  - (p.y() - pnt.y()) * der.left().y()
-    - (p.z() - pnt.z()) * der.left().z();
-  grad[1] = -(p.x() - pnt.x()) * der.right().x() - (p.y() - pnt.y()) * der.right().y()
-    - (p.z() - pnt.z()) * der.right().z();
+  grad[0] = -(p.x() - pnt.x()) * der.left().x() -
+            (p.y() - pnt.y()) * der.left().y() -
+            (p.z() - pnt.z()) * der.left().z();
+  grad[1] = -(p.x() - pnt.x()) * der.right().x() -
+            (p.y() - pnt.y()) * der.right().y() -
+            (p.z() - pnt.z()) * der.right().z();
   //  printf("func %22.15E Gradients %22.15E %22.15E der %g %g %g\n",
-  //         func, grad[0], grad[1],der.left().x(),der.left().y(),der.left().z());
+  //         func, grad[0],
+  //         grad[1],der.left().x(),der.left().y(),der.left().z());
 }
 #endif
 
-GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[2]) const
+GPoint GFace::closestPoint(const SPoint3 &queryPoint,
+                           const double initialGuess[2]) const
 {
 #if defined(HAVE_BFGS)
   // Test initial guess
@@ -1111,15 +1138,15 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
   const double nGuesses = 10.;
   const Range<double> uu = parBounds(0);
   const Range<double> vv = parBounds(1);
-  const double ru = uu.high()-uu.low(), rv = vv.high()-vv.low();
-  const double epsU = 1e-5*ru, epsV = 1e-5*rv;
-  const double du = ru/nGuesses, dv = rv/nGuesses;
+  const double ru = uu.high() - uu.low(), rv = vv.high() - vv.low();
+  const double epsU = 1e-5 * ru, epsV = 1e-5 * rv;
+  const double du = ru / nGuesses, dv = rv / nGuesses;
   for(double u = uu.low(); u <= uu.high() + epsU; u += du) {
     for(double v = vv.low(); v <= vv.high() + epsV; v += dv) {
       GPoint pnt = point(u, v);
       SPoint3 spnt(pnt.x(), pnt.y(), pnt.z());
       double dist = queryPoint.distance(spnt);
-      if (dist < min_dist) {
+      if(dist < min_dist) {
         min_dist = dist;
         min_u = u;
         min_v = v;
@@ -1175,7 +1202,7 @@ bool GFace::containsParam(const SPoint2 &pt)
 
 SVector3 GFace::normal(const SPoint2 &param) const
 {
-  Pair<SVector3,SVector3> der = firstDer(param);
+  Pair<SVector3, SVector3> der = firstDer(param);
   SVector3 n = crossprod(der.first(), der.second());
   n.normalize();
   return n;
@@ -1183,8 +1210,8 @@ SVector3 GFace::normal(const SPoint2 &param) const
 
 bool GFace::buildRepresentationCross(bool force)
 {
-  if(cross[0].size()){
-    if(force){
+  if(cross[0].size()) {
+    if(force) {
       cross[0].clear();
       cross[0].clear();
     }
@@ -1195,17 +1222,18 @@ bool GFace::buildRepresentationCross(bool force)
   Range<double> ubounds = parBounds(0);
   Range<double> vbounds = parBounds(1);
   // try to compute something better for Gmsh surfaces
-  if(getNativeType() == GmshModel && geomType() == Plane){
+  if(getNativeType() == GmshModel && geomType() == Plane) {
     SBoundingBox3d bb;
-    std::vector<GEdge*> ed = edges();
-    for(std::vector<GEdge*>::const_iterator it = ed.begin(); it != ed.end(); it++){
+    std::vector<GEdge *> ed = edges();
+    for(std::vector<GEdge *>::const_iterator it = ed.begin(); it != ed.end();
+        it++) {
       GEdge *ge = *it;
       if(ge->geomType() != DiscreteCurve &&
-         ge->geomType() != BoundaryLayerCurve){
+         ge->geomType() != BoundaryLayerCurve) {
         Range<double> t_bounds = ge->parBounds(0);
         const int N = 5;
         double t0 = t_bounds.low(), dt = t_bounds.high() - t_bounds.low();
-        for(int i = 0; i < N; i++){
+        for(int i = 0; i < N; i++) {
           double t = t0 + dt / (double)(N - 1) * i;
           GPoint p = ge->point(t);
           SPoint2 uv = parFromPoint(SPoint3(p.x(), p.y(), p.z()));
@@ -1213,7 +1241,7 @@ bool GFace::buildRepresentationCross(bool force)
         }
       }
     }
-    if(!bb.empty()){
+    if(!bb.empty()) {
       ubounds = Range<double>(bb.min().x(), bb.max().x());
       vbounds = Range<double>(bb.min().y(), bb.max().y());
     }
@@ -1223,7 +1251,7 @@ bool GFace::buildRepresentationCross(bool force)
   if(CTX::instance()->geom.oldRuledSurface) tri = false;
   double c = tri ? 0.75 : 0.5;
   double uav = c * (ubounds.high() + ubounds.low());
-  double vav = (1-c) * (vbounds.high() + vbounds.low());
+  double vav = (1 - c) * (vbounds.high() + vbounds.low());
   double u2 = 0.5 * (ubounds.high() + ubounds.low());
   double v2 = 0.5 * (vbounds.high() + vbounds.low());
   double ud = (ubounds.high() - ubounds.low());
@@ -1234,13 +1262,13 @@ bool GFace::buildRepresentationCross(bool force)
     for(int i = 0; i < N; i++) {
       double t = (double)i / (double)(N - 1);
       SPoint2 uv;
-      if(!dir){
+      if(!dir) {
         if(tri)
           uv.setPosition(u2 + u2 * t, vbounds.low() + v2 * t);
         else
           uv.setPosition(ubounds.low() + ud * t, vav);
       }
-      else{
+      else {
         if(tri)
           uv.setPosition(u2 + u2 * t, v2 - v2 * t);
         else
@@ -1248,18 +1276,20 @@ bool GFace::buildRepresentationCross(bool force)
       }
       GPoint p = point(uv);
       SPoint3 pt(p.x(), p.y(), p.z());
-      bool inside = (geomType() == Plane) ? containsPoint(pt) : containsParam(uv);
-      if(inside){
+      bool inside =
+        (geomType() == Plane) ? containsPoint(pt) : containsParam(uv);
+      if(inside) {
         cross[dir].back().push_back(pt);
       }
-      else{
-        if(cross[dir].back().size()) cross[dir].push_back(std::vector<SPoint3>());
+      else {
+        if(cross[dir].back().size())
+          cross[dir].push_back(std::vector<SPoint3>());
       }
     }
   }
   // if we couldn't determine a cross, add a dummy one so that we won't try
   // again unless we force the recomputation
-  if(cross[0].empty()){
+  if(cross[0].empty()) {
     cross[0].push_back(std::vector<SPoint3>());
     return false;
   }
@@ -1274,14 +1304,14 @@ bool GFace::buildSTLTriangulation(bool force)
   stl_triangles.clear();
 
   // Build a simple triangulation for surfaces which we know are not trimmed
-  if(geomType() == ParametricSurface || geomType() == ProjectionFace){
+  if(geomType() == ParametricSurface || geomType() == ProjectionFace) {
     const int nu = 64, nv = 64;
     Range<double> ubounds = parBounds(0);
     Range<double> vbounds = parBounds(1);
     double umin = ubounds.low(), umax = ubounds.high();
     double vmin = vbounds.low(), vmax = vbounds.high();
-    for(int i = 0; i < nu; i++){
-      for(int j = 0; j < nv; j++){
+    for(int i = 0; i < nu; i++) {
+      for(int j = 0; j < nv; j++) {
         double u = umin + (double)i / (double)(nu - 1) * (umax - umin);
         double v = vmin + (double)j / (double)(nv - 1) * (vmax - vmin);
         stl_vertices_uv.push_back(SPoint2(u, v));
@@ -1289,8 +1319,8 @@ bool GFace::buildSTLTriangulation(bool force)
         stl_vertices_xyz.push_back(SPoint3(gp.x(), gp.y(), gp.z()));
       }
     }
-    for(int i = 0; i < nu - 1; i++){
-      for(int j = 0; j < nv - 1; j++){
+    for(int i = 0; i < nu - 1; i++) {
+      for(int j = 0; j < nv - 1; j++) {
         stl_triangles.push_back(i * nv + j);
         stl_triangles.push_back((i + 1) * nv + j);
         stl_triangles.push_back((i + 1) * nv + j + 1);
@@ -1307,7 +1337,7 @@ bool GFace::buildSTLTriangulation(bool force)
 
 bool GFace::fillVertexArray(bool force)
 {
-  if(va_geom_triangles){
+  if(va_geom_triangles) {
     if(force)
       delete va_geom_triangles;
     else
@@ -1321,8 +1351,8 @@ bool GFace::fillVertexArray(bool force)
   unsigned int c = CTX::instance()->color.geom.surface;
   unsigned int col[4] = {c, c, c, c};
   if(stl_vertices_xyz.size() &&
-     (stl_vertices_xyz.size() == stl_normals.size())){
-    for (unsigned int i = 0; i < stl_triangles.size(); i += 3){
+     (stl_vertices_xyz.size() == stl_normals.size())) {
+    for(unsigned int i = 0; i < stl_triangles.size(); i += 3) {
       SPoint3 &p1(stl_vertices_xyz[stl_triangles[i]]);
       SPoint3 &p2(stl_vertices_xyz[stl_triangles[i + 1]]);
       SPoint3 &p3(stl_vertices_xyz[stl_triangles[i + 2]]);
@@ -1335,8 +1365,8 @@ bool GFace::fillVertexArray(bool force)
       va_geom_triangles->add(x, y, z, n, col);
     }
   }
-  else if(stl_vertices_uv.size()){
-    for (unsigned int i = 0; i < stl_triangles.size(); i += 3){
+  else if(stl_vertices_uv.size()) {
+    for(unsigned int i = 0; i < stl_triangles.size(); i += 3) {
       SPoint2 &p1(stl_vertices_uv[stl_triangles[i]]);
       SPoint2 &p2(stl_vertices_uv[stl_triangles[i + 1]]);
       SPoint2 &p3(stl_vertices_uv[stl_triangles[i + 2]]);
@@ -1357,28 +1387,29 @@ bool GFace::fillVertexArray(bool force)
 int GFace::genusGeom() const
 {
   int nSeams = 0;
-  std::set<GEdge*> single_seams;
-  for (std::vector<GEdge*>::const_iterator it = l_edges.begin();
-       it != l_edges.end(); ++it){
-    if ((*it)->isSeam(this)){
+  std::set<GEdge *> single_seams;
+  for(std::vector<GEdge *>::const_iterator it = l_edges.begin();
+      it != l_edges.end(); ++it) {
+    if((*it)->isSeam(this)) {
       nSeams++;
-      std::set<GEdge*>::iterator it2 = single_seams.find(*it);
-      if (it2 != single_seams.end()) single_seams.erase(it2);
-      else single_seams.insert(*it);
+      std::set<GEdge *>::iterator it2 = single_seams.find(*it);
+      if(it2 != single_seams.end())
+        single_seams.erase(it2);
+      else
+        single_seams.insert(*it);
     }
   }
   return nSeams - single_seams.size();
 }
 
-bool GFace::fillPointCloud(double maxDist,
-			   std::vector<SPoint3> *points,
-			   std::vector<SPoint2> *uvpoints,
+bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
+                           std::vector<SPoint2> *uvpoints,
                            std::vector<SVector3> *normals)
 {
   if(!points) return false;
 
-  if(buildSTLTriangulation() && stl_vertices_uv.size()){
-    for(unsigned int i = 0; i < stl_triangles.size(); i += 3){
+  if(buildSTLTriangulation() && stl_vertices_uv.size()) {
+    for(unsigned int i = 0; i < stl_triangles.size(); i += 3) {
       SPoint2 &p0(stl_vertices_uv[stl_triangles[i]]);
       SPoint2 &p1(stl_vertices_uv[stl_triangles[i + 1]]);
       SPoint2 &p2(stl_vertices_uv[stl_triangles[i + 2]]);
@@ -1386,33 +1417,33 @@ bool GFace::fillPointCloud(double maxDist,
       GPoint gp1 = point(p1);
       GPoint gp2 = point(p2);
       double maxEdge = std::max(gp0.distance(gp1),
-				std::max(gp1.distance(gp2), gp2.distance(gp0)));
+                                std::max(gp1.distance(gp2), gp2.distance(gp0)));
       int N = (int)(maxEdge / maxDist);
-      for(double u = 0.; u < 1.; u += 1. / N){
-	for(double v = 0.; v < 1 - u; v += 1. / N){
-	  SPoint2 p = p0 * (1. - u - v) + p1 * u + p2 * v;
-	  GPoint gp(point(p));
-	  points->push_back(SPoint3(gp.x(), gp.y(), gp.z()));
-	  if(uvpoints) uvpoints->push_back(p);
-	  if(normals) normals->push_back(normal(p));
-	}
+      for(double u = 0.; u < 1.; u += 1. / N) {
+        for(double v = 0.; v < 1 - u; v += 1. / N) {
+          SPoint2 p = p0 * (1. - u - v) + p1 * u + p2 * v;
+          GPoint gp(point(p));
+          points->push_back(SPoint3(gp.x(), gp.y(), gp.z()));
+          if(uvpoints) uvpoints->push_back(p);
+          if(normals) normals->push_back(normal(p));
+        }
       }
     }
   }
   else {
-    int N = 1000;//(int)(maxDX / maxDist);
+    int N = 1000; //(int)(maxDX / maxDist);
     Range<double> b1 = parBounds(0);
     Range<double> b2 = parBounds(1);
     for(int i = 0; i < N; i++) {
       for(int j = 0; j < N; j++) {
-	double u = (double)i / (N - 1);
-	double v = (double)j / (N - 1);
-	double t1 = b1.low() + u * (b1.high() - b1.low());
-	double t2 = b2.low() + v * (b2.high() - b2.low());
-	GPoint gp = point(t1, t2);
-	points->push_back(SPoint3(gp.x(), gp.y(), gp.z()));
-	if(uvpoints) uvpoints->push_back(SPoint2(t1, t2));
-	if(normals) normals->push_back(normal(SPoint2(t1, t2)));
+        double u = (double)i / (N - 1);
+        double v = (double)j / (N - 1);
+        double t1 = b1.low() + u * (b1.high() - b1.low());
+        double t2 = b2.low() + v * (b2.high() - b2.low());
+        GPoint gp = point(t1, t2);
+        points->push_back(SPoint3(gp.x(), gp.y(), gp.z()));
+        if(uvpoints) uvpoints->push_back(SPoint2(t1, t2));
+        if(normals) normals->push_back(normal(SPoint2(t1, t2)));
       }
     }
   }
@@ -1421,25 +1452,25 @@ bool GFace::fillPointCloud(double maxDist,
 
 #if defined(HAVE_MESH)
 
-static void meshCompound(GFace* gf, bool verbose)
+static void meshCompound(GFace *gf, bool verbose)
 {
   discreteFace *df = new discreteFace(gf->model(), gf->tag() + 100000);
 
-  std::vector< GFace* > triangles_tag;
-  std::vector< SPoint2 > triangles_uv;
+  std::vector<GFace *> triangles_tag;
+  std::vector<SPoint2> triangles_uv;
 
-  for (unsigned int i = 0; i < gf->_compound.size(); i++){
-    GFace *c = (GFace*)gf->_compound[i];
+  for(unsigned int i = 0; i < gf->_compound.size(); i++) {
+    GFace *c = (GFace *)gf->_compound[i];
     df->triangles.insert(df->triangles.end(), c->triangles.begin(),
-			 c->triangles.end());
+                         c->triangles.end());
     df->mesh_vertices.insert(df->mesh_vertices.end(), c->mesh_vertices.begin(),
-			     c->mesh_vertices.end());
-    for (unsigned int j=0;j<c->triangles.size();j++){
+                             c->mesh_vertices.end());
+    for(unsigned int j = 0; j < c->triangles.size(); j++) {
       triangles_tag.push_back(c);
-      for (int k = 0; k < 3; k++){
-	SPoint2 param;
-	reparamMeshVertexOnFace(c->triangles[j]->getVertex(k), c, param);
-	triangles_uv.push_back(param);
+      for(int k = 0; k < 3; k++) {
+        SPoint2 param;
+        reparamMeshVertexOnFace(c->triangles[j]->getVertex(k), c, param);
+        triangles_uv.push_back(param);
       }
     }
     c->triangles.clear();
@@ -1449,26 +1480,26 @@ static void meshCompound(GFace* gf, bool verbose)
   df->createGeometry();
   df->mesh(verbose);
 
-  for (GFace::size_type i = 0; i < df->mesh_vertices.size(); i++){
-    double u,v;
+  for(GFace::size_type i = 0; i < df->mesh_vertices.size(); i++) {
+    double u, v;
     df->mesh_vertices[i]->getParameter(0, u);
     df->mesh_vertices[i]->getParameter(1, v);
-    double U,V;
+    double U, V;
     int position = df->trianglePosition(u, v, U, V);
     if(position != -1) {
       triangles_tag[position]->mesh_vertices.push_back(df->mesh_vertices[i]);
       df->mesh_vertices[i]->setEntity(triangles_tag[position]);
-      if (0 && triangles_tag[position]->geomType() != GEntity::DiscreteSurface){
-	SPoint2 p0 = triangles_uv[3*position + 0];
-	SPoint2 p1 = triangles_uv[3*position + 1];
-	SPoint2 p2 = triangles_uv[3*position + 2];
-	SPoint2 p = p0 *(1-U-V) + p1 * U + p2 * V;
-	GPoint gp = triangles_tag[position]->point(p);
-	df->mesh_vertices[i]->setParameter(0,p.x());
-	df->mesh_vertices[i]->setParameter(1,p.y());
-	df->mesh_vertices[i]->x() = gp.x();
-	df->mesh_vertices[i]->y() = gp.y();
-	df->mesh_vertices[i]->z() = gp.z();
+      if(0 && triangles_tag[position]->geomType() != GEntity::DiscreteSurface) {
+        SPoint2 p0 = triangles_uv[3 * position + 0];
+        SPoint2 p1 = triangles_uv[3 * position + 1];
+        SPoint2 p2 = triangles_uv[3 * position + 2];
+        SPoint2 p = p0 * (1 - U - V) + p1 * U + p2 * V;
+        GPoint gp = triangles_tag[position]->point(p);
+        df->mesh_vertices[i]->setParameter(0, p.x());
+        df->mesh_vertices[i]->setParameter(1, p.y());
+        df->mesh_vertices[i]->x() = gp.x();
+        df->mesh_vertices[i]->y() = gp.y();
+        df->mesh_vertices[i]->z() = gp.z();
       }
     }
     else {
@@ -1477,15 +1508,16 @@ static void meshCompound(GFace* gf, bool verbose)
     }
   }
 
-  for (GFace::size_type i = 0; i < df->triangles.size(); i++){
+  for(GFace::size_type i = 0; i < df->triangles.size(); i++) {
     MTriangle *t = df->triangles[i];
-    if (t->getVertex(0)->onWhat()->dim() == 2)
-      ((GFace*)t->getVertex(0)->onWhat())->triangles.push_back(t);
-    else if (t->getVertex(1)->onWhat()->dim() == 2)
-      ((GFace*)t->getVertex(1)->onWhat())->triangles.push_back(t);
-    else if (t->getVertex(2)->onWhat()->dim() == 2)
-      ((GFace*)t->getVertex(2)->onWhat())->triangles.push_back(t);
-    else gf->triangles.push_back(t); // FIXME could be better!
+    if(t->getVertex(0)->onWhat()->dim() == 2)
+      ((GFace *)t->getVertex(0)->onWhat())->triangles.push_back(t);
+    else if(t->getVertex(1)->onWhat()->dim() == 2)
+      ((GFace *)t->getVertex(1)->onWhat())->triangles.push_back(t);
+    else if(t->getVertex(2)->onWhat()->dim() == 2)
+      ((GFace *)t->getVertex(2)->onWhat())->triangles.push_back(t);
+    else
+      gf->triangles.push_back(t); // FIXME could be better!
   }
   // gf->triangles = df->triangles;
   df->triangles.clear();
@@ -1499,20 +1531,20 @@ void GFace::mesh(bool verbose)
 #if defined(HAVE_MESH)
   meshGFace mesher;
   mesher(this, verbose);
-  if(_compound.size()){ // Some faces are meshed together
-    if(_compound[0] == this){ // I'm the one that makes the compound job
+  if(_compound.size()) { // Some faces are meshed together
+    if(_compound[0] == this) { // I'm the one that makes the compound job
       bool ok = true;
-      for(unsigned int i = 0; i < _compound.size(); i++){
-	GFace *gf = (GFace*)_compound[i];
-	ok &= (gf->meshStatistics.status == GFace::DONE);
+      for(unsigned int i = 0; i < _compound.size(); i++) {
+        GFace *gf = (GFace *)_compound[i];
+        ok &= (gf->meshStatistics.status == GFace::DONE);
       }
-      if(!ok){
+      if(!ok) {
         meshStatistics.status = GFace::PENDING;
       }
-      else{
-	meshCompound(this, verbose);
+      else {
+        meshCompound(this, verbose);
         meshStatistics.status = GFace::DONE;
-	return;
+        return;
       }
     }
   }
@@ -1522,24 +1554,24 @@ void GFace::mesh(bool verbose)
 void GFace::lloyd(int nbiter, int infn)
 {
 #if defined(HAVE_MESH) && defined(HAVE_BFGS)
-  smoothing s = smoothing(nbiter,infn);
+  smoothing s = smoothing(nbiter, infn);
   s.optimize_face(this);
 #endif
 }
 
-void GFace::replaceEdges(std::vector<GEdge*> &new_edges)
+void GFace::replaceEdges(std::vector<GEdge *> &new_edges)
 {
-  std::vector<GEdge*>::iterator it  = l_edges.begin();
-  std::vector<GEdge*>::iterator it2 = new_edges.begin();
+  std::vector<GEdge *>::iterator it = l_edges.begin();
+  std::vector<GEdge *>::iterator it2 = new_edges.begin();
   std::vector<int>::iterator it3 = l_dirs.begin();
 
   std::vector<int> newdirs;
   newdirs.reserve(l_edges.size());
 
-  for ( ; it != l_edges.end(); ++it, ++it2, ++it3){
+  for(; it != l_edges.end(); ++it, ++it2, ++it3) {
     (*it)->delFace(this);
     (*it2)->addFace(this);
-    if ((*it2)->getBeginVertex() == (*it)->getBeginVertex())
+    if((*it2)->getBeginVertex() == (*it)->getBeginVertex())
       newdirs.push_back(*it3);
     else
       newdirs.push_back(-(*it3));
@@ -1550,28 +1582,24 @@ void GFace::replaceEdges(std::vector<GEdge*> &new_edges)
 
 void GFace::moveToValidRange(SPoint2 &pt) const
 {
-  for(int i = 0; i < 2; i++){
-    if(periodic(i)){
+  for(int i = 0; i < 2; i++) {
+    if(periodic(i)) {
       Range<double> range = parBounds(i);
-      double tol = 1e-6*(range.high()-range.low());
-      if(pt[i] < range.low()-tol)
-	pt[i] += period(i);
-      if(pt[i] > range.high()+tol)
-	pt[i] -= period(i);
-      if(pt[i] < range.low())
-	pt[i] = range.low();
-      if(pt[i] > range.high())
-	pt[i] = range.high();
+      double tol = 1e-6 * (range.high() - range.low());
+      if(pt[i] < range.low() - tol) pt[i] += period(i);
+      if(pt[i] > range.high() + tol) pt[i] -= period(i);
+      if(pt[i] < range.low()) pt[i] = range.low();
+      if(pt[i] > range.high()) pt[i] = range.high();
     }
   }
 }
 
 void GFace::relocateMeshVertices()
 {
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++){
+  for(unsigned int i = 0; i < mesh_vertices.size(); i++) {
     MVertex *v = mesh_vertices[i];
     double u0 = 0., u1 = 0.;
-    if(v->getParameter(0, u0) && v->getParameter(1, u1)){
+    if(v->getParameter(0, u0) && v->getParameter(1, u1)) {
       GPoint p = point(u0, u1);
       v->x() = p.x();
       v->y() = p.y();
@@ -1580,112 +1608,114 @@ void GFace::relocateMeshVertices()
   }
 }
 
-void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
+void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
 {
-  std::vector<GEdge*>::const_iterator eIter;
-  std::list<GVertex*>::iterator vIter;
+  std::vector<GEdge *>::const_iterator eIter;
+  std::list<GVertex *>::iterator vIter;
 
   Msg::Info("Setting mesh master using transformation ");
 
-  // list all vertices and construct vertex to edge correspondence for local edge
+  // list all vertices and construct vertex to edge correspondence for local
+  // edge
 
-  std::set<GVertex*> l_vertices;
-  std::map<std::pair<GVertex*,GVertex*>,GEdge* > l_vtxToEdge;
+  std::set<GVertex *> l_vertices;
+  std::map<std::pair<GVertex *, GVertex *>, GEdge *> l_vtxToEdge;
 
-  for (eIter=l_edges.begin();eIter!=l_edges.end(); ++eIter) {
-    GVertex* v0 = (*eIter)->getBeginVertex();
-    GVertex* v1 = (*eIter)->getEndVertex();
+  for(eIter = l_edges.begin(); eIter != l_edges.end(); ++eIter) {
+    GVertex *v0 = (*eIter)->getBeginVertex();
+    GVertex *v1 = (*eIter)->getEndVertex();
     l_vertices.insert(v0);
     l_vertices.insert(v1);
-    l_vtxToEdge[std::make_pair(v0,v1)] = (*eIter);
+    l_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
   }
 
-  for (eIter = embedded_edges.begin(); eIter != embedded_edges.end(); ++eIter) {
-    GVertex* v0 = (*eIter)->getBeginVertex();
-    GVertex* v1 = (*eIter)->getEndVertex();
+  for(eIter = embedded_edges.begin(); eIter != embedded_edges.end(); ++eIter) {
+    GVertex *v0 = (*eIter)->getBeginVertex();
+    GVertex *v1 = (*eIter)->getEndVertex();
     l_vertices.insert(v0);
     l_vertices.insert(v1);
-    l_vtxToEdge[std::make_pair(v0,v1)] = (*eIter);
+    l_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
   }
 
-  l_vertices.insert(embedded_vertices.begin(),embedded_vertices.end());
+  l_vertices.insert(embedded_vertices.begin(), embedded_vertices.end());
 
   // list all vertices and vertex to edge correspondence for remote edge
 
-  std::vector<GEdge*> const& m_edges = master->edges();
-  std::set<GVertex*> m_vertices;
-  std::map<std::pair<GVertex*,GVertex*>,GEdge* > m_vtxToEdge;
-  for (eIter=m_edges.begin();eIter!=m_edges.end(); ++eIter) {
-    GVertex* v0 = (*eIter)->getBeginVertex();
-    GVertex* v1 = (*eIter)->getEndVertex();
+  std::vector<GEdge *> const &m_edges = master->edges();
+  std::set<GVertex *> m_vertices;
+  std::map<std::pair<GVertex *, GVertex *>, GEdge *> m_vtxToEdge;
+  for(eIter = m_edges.begin(); eIter != m_edges.end(); ++eIter) {
+    GVertex *v0 = (*eIter)->getBeginVertex();
+    GVertex *v1 = (*eIter)->getEndVertex();
     m_vertices.insert(v0);
     m_vertices.insert(v1);
-    m_vtxToEdge[std::make_pair(v0,v1)] = (*eIter);
+    m_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
   }
 
-  std::vector<GEdge*> const& m_embedded_edges = master->embeddedEdges();
+  std::vector<GEdge *> const &m_embedded_edges = master->embeddedEdges();
 
-  for (eIter = m_embedded_edges.begin(); eIter != m_embedded_edges.end(); eIter++) {
-    GVertex* v0 = (*eIter)->getBeginVertex();
-    GVertex* v1 = (*eIter)->getEndVertex();
+  for(eIter = m_embedded_edges.begin(); eIter != m_embedded_edges.end();
+      eIter++) {
+    GVertex *v0 = (*eIter)->getBeginVertex();
+    GVertex *v1 = (*eIter)->getEndVertex();
     m_vertices.insert(v0);
     m_vertices.insert(v1);
-    m_vtxToEdge[std::make_pair(v0,v1)] = (*eIter);
+    m_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
   }
 
-  std::list<GVertex*> m_embedded_vertices = master->embeddedVertices();
+  std::list<GVertex *> m_embedded_vertices = master->embeddedVertices();
   m_vertices.insert(m_embedded_vertices.begin(), m_embedded_vertices.end());
 
   // check topological correspondence
 
-  if (l_vertices.size() != m_vertices.size()) {
-    Msg::Error("Periodic connection specified between topologically "
-               "incompatible surfaces %d and %d (that have %d vs %d model vertices)",
-               master->tag(),tag(),l_vertices.size(),m_vertices.size());
+  if(l_vertices.size() != m_vertices.size()) {
+    Msg::Error(
+      "Periodic connection specified between topologically "
+      "incompatible surfaces %d and %d (that have %d vs %d model vertices)",
+      master->tag(), tag(), l_vertices.size(), m_vertices.size());
     return;
   }
 
-  if (l_vtxToEdge.size() != m_vtxToEdge.size()) {
-    Msg::Error("Periodic connection specified between topologically "
-               "incompatible surfaces %d and %d (that have %d vs %d model edges)",
-               master->tag(),tag(),l_vtxToEdge.size(),m_vtxToEdge.size());
+  if(l_vtxToEdge.size() != m_vtxToEdge.size()) {
+    Msg::Error(
+      "Periodic connection specified between topologically "
+      "incompatible surfaces %d and %d (that have %d vs %d model edges)",
+      master->tag(), tag(), l_vtxToEdge.size(), m_vtxToEdge.size());
     return;
   }
 
   // compute corresponding vertices
 
-  std::map<GVertex*,GVertex*> gVertexCounterparts;
+  std::map<GVertex *, GVertex *> gVertexCounterparts;
 
-  std::set<GVertex*>::iterator mvIter;
-  for (mvIter=m_vertices.begin();mvIter!=m_vertices.end(); ++mvIter) {
+  std::set<GVertex *>::iterator mvIter;
+  for(mvIter = m_vertices.begin(); mvIter != m_vertices.end(); ++mvIter) {
+    GVertex *m_vertex = *mvIter;
 
-    GVertex* m_vertex = *mvIter;
-
-    SPoint3 xyzOri((*mvIter)->x(),(*mvIter)->y(),(*mvIter)->z());
-    SPoint3 xyzTfo(0,0,0);
+    SPoint3 xyzOri((*mvIter)->x(), (*mvIter)->y(), (*mvIter)->z());
+    SPoint3 xyzTfo(0, 0, 0);
 
     int idx = 0;
-    for (int i=0;i<3;i++) {
-      for (int j=0;j<3;j++) xyzTfo[i] += xyzOri[j] * tfo[idx++];
+    for(int i = 0; i < 3; i++) {
+      for(int j = 0; j < 3; j++) xyzTfo[i] += xyzOri[j] * tfo[idx++];
       xyzTfo[i] += tfo[idx++];
     }
 
-    GVertex* l_vertex = NULL;
+    GVertex *l_vertex = NULL;
 
     double dist_min = 1.e22;
-    std::set<GVertex*>::iterator lvIter = l_vertices.begin();
-    for (;lvIter!=l_vertices.end(); ++lvIter) {
-
-      SPoint3 xyz((*lvIter)->x(),(*lvIter)->y(),(*lvIter)->z());
+    std::set<GVertex *>::iterator lvIter = l_vertices.begin();
+    for(; lvIter != l_vertices.end(); ++lvIter) {
+      SPoint3 xyz((*lvIter)->x(), (*lvIter)->y(), (*lvIter)->z());
       SVector3 dist = xyz - xyzTfo;
-      dist_min = std::min(dist_min,dist.norm());
-      if (dist.norm() < CTX::instance()->geom.tolerance * CTX::instance()->lc) {
+      dist_min = std::min(dist_min, dist.norm());
+      if(dist.norm() < CTX::instance()->geom.tolerance * CTX::instance()->lc) {
         l_vertex = *lvIter;
         break;
       }
     }
 
-    if (l_vertex==NULL) {
+    if(l_vertex == NULL) {
       Msg::Error("Was not able to find corresponding node %d "
                  "for periodic connection of surface %d to %d "
                  "(min distance is %g with a tolerance of %g)",
@@ -1696,56 +1726,55 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
     gVertexCounterparts[l_vertex] = m_vertex;
   }
 
-  if (gVertexCounterparts.size() != m_vertices.size()) {
+  if(gVertexCounterparts.size() != m_vertices.size()) {
     Msg::Error("Could not find all node correspondances "
                "for the periodic connection from surface %d to %d",
-               master->tag(),tag());
+               master->tag(), tag());
     return;
   }
 
   // construct edge correspondence and update the edge masters
 
-  std::map<GEdge*,std::pair<GEdge*,int> > gEdgeCounterparts;
+  std::map<GEdge *, std::pair<GEdge *, int> > gEdgeCounterparts;
 
-  std::map<std::pair<GVertex*,GVertex*>,GEdge*>::iterator lv2eIter;
-  for (lv2eIter=l_vtxToEdge.begin();lv2eIter!=l_vtxToEdge.end();lv2eIter++) {
+  std::map<std::pair<GVertex *, GVertex *>, GEdge *>::iterator lv2eIter;
+  for(lv2eIter = l_vtxToEdge.begin(); lv2eIter != l_vtxToEdge.end();
+      lv2eIter++) {
+    std::pair<GVertex *, GVertex *> lPair = lv2eIter->first;
+    GEdge *localEdge = lv2eIter->second;
 
-    std::pair<GVertex*,GVertex*> lPair = lv2eIter->first;
-    GEdge* localEdge = lv2eIter->second;
-
-    std::pair<GVertex*,GVertex*> mPair(gVertexCounterparts[lPair.first],
-                                       gVertexCounterparts[lPair.second]);
+    std::pair<GVertex *, GVertex *> mPair(gVertexCounterparts[lPair.first],
+                                          gVertexCounterparts[lPair.second]);
     int sign = 1;
-    std::map<std::pair<GVertex*,GVertex*>,GEdge*>::iterator mv2eIter = m_vtxToEdge.find(mPair);
-    if (mv2eIter == m_vtxToEdge.end()) {
+    std::map<std::pair<GVertex *, GVertex *>, GEdge *>::iterator mv2eIter =
+      m_vtxToEdge.find(mPair);
+    if(mv2eIter == m_vtxToEdge.end()) {
       sign *= -1;
-      std::pair<GVertex*,GVertex*> backward(mPair.second,mPair.first);
+      std::pair<GVertex *, GVertex *> backward(mPair.second, mPair.first);
       mv2eIter = m_vtxToEdge.find(backward);
     }
 
-    if (mv2eIter == m_vtxToEdge.end()) {
+    if(mv2eIter == m_vtxToEdge.end()) {
       Msg::Error("Could not find periodic copy of edge %d-%d "
                  "(corresponding to vertices %d %d) in face %d",
-                 lPair.first->tag(),lPair.second->tag(),
-                 mPair.first->tag(),mPair.second->tag(),
-                 master->tag());
+                 lPair.first->tag(), lPair.second->tag(), mPair.first->tag(),
+                 mPair.second->tag(), master->tag());
       return;
     }
-    GEdge* masterEdge = mv2eIter->second;
+    GEdge *masterEdge = mv2eIter->second;
 
-    if (masterEdge->meshMaster() != localEdge) {
-      localEdge->setMeshMaster(masterEdge,tfo);
-      Msg::Info("Setting edge master %d - %d",
-                localEdge->tag(),
+    if(masterEdge->meshMaster() != localEdge) {
+      localEdge->setMeshMaster(masterEdge, tfo);
+      Msg::Info("Setting edge master %d - %d", localEdge->tag(),
                 masterEdge->tag());
     }
-    gEdgeCounterparts[localEdge] = std::make_pair(masterEdge,sign);
+    gEdgeCounterparts[localEdge] = std::make_pair(masterEdge, sign);
   }
 
   // complete the information at the edge level
   edgeCounterparts = gEdgeCounterparts;
   vertexCounterparts = gVertexCounterparts;
-  GEntity::setMeshMaster(master,tfo);
+  GEntity::setMeshMaster(master, tfo);
 }
 
 inline double myAngle(const SVector3 &a, const SVector3 &b, const SVector3 &d)
@@ -1760,14 +1789,12 @@ struct myPlane {
   SVector3 n;
   double a;
   // nx x + ny y + nz z + a = 0
-  myPlane(const SPoint3 &_p, const SVector3 &_n)
-    : p(_p)
-    , n(_n)
+  myPlane(const SPoint3 &_p, const SVector3 &_n) : p(_p), n(_n)
   {
     n.normalize();
-    a = -(n.x()*p.x()+n.y()*p.y()+n.z()*p.z());
+    a = -(n.x() * p.x() + n.y() * p.y() + n.z() * p.z());
   }
-  double eval (double x, double y, double z)
+  double eval(double x, double y, double z)
   {
     return n.x() * x + n.y() * y + n.z() * z + a;
   }
@@ -1776,11 +1803,11 @@ struct myPlane {
 struct myLine {
   SPoint3 p;
   SVector3 t;
-  myLine() : p(0,0,0) , t (0,0,1) {}
+  myLine() : p(0, 0, 0), t(0, 0, 1) {}
   myLine(myPlane &p1, myPlane &p2)
   {
     t = crossprod(p1.n, p2.n);
-    if (t.norm() == 0.0){
+    if(t.norm() == 0.0) {
       Msg::Error("parallel planes do not intersect");
     }
     else
@@ -1788,55 +1815,58 @@ struct myLine {
     // find a point, assume z = 0
     double a[2][2] = {{p1.n.x(), p1.n.y()}, {p2.n.x(), p2.n.y()}};
     double b[2] = {-p1.a, -p2.a}, x[2];
-    if (!sys2x2(a, b, x)){
+    if(!sys2x2(a, b, x)) {
       // assume x = 0
       double az[2][2] = {{p1.n.y(), p1.n.z()}, {p2.n.y(), p2.n.z()}};
       double bz[2] = {-p1.a, -p2.a};
-      if (!sys2x2(az, bz, x)){
-	// assume y = 0
-	double ay[2][2] = {{p1.n.x(), p1.n.z()}, {p2.n.x(), p2.n.z()}};
-	double by[2] = {-p1.a, -p2.a};
-	if (!sys2x2(ay,by,x)){
-	  Msg::Error("parallel planes do not intersect");
-	}
-	else {
-	  p = SPoint3(x[0], 0., x[1]);
-	}
+      if(!sys2x2(az, bz, x)) {
+        // assume y = 0
+        double ay[2][2] = {{p1.n.x(), p1.n.z()}, {p2.n.x(), p2.n.z()}};
+        double by[2] = {-p1.a, -p2.a};
+        if(!sys2x2(ay, by, x)) {
+          Msg::Error("parallel planes do not intersect");
+        }
+        else {
+          p = SPoint3(x[0], 0., x[1]);
+        }
       }
-      else{
-	p = SPoint3(0., x[0], x[1]);
+      else {
+        p = SPoint3(0., x[0], x[1]);
       }
     }
-    else{
+    else {
       p = SPoint3(x[0], x[1], 0.);
     }
   }
-  SPoint3 orthogonalProjection (SPoint3 &a)
+  SPoint3 orthogonalProjection(SPoint3 &a)
   {
     // (x - a) * t = 0 -->
     // x = p + u t --> (p + ut - a) * t = 0 --> u = (a-p) * t
     const double u = dot(a - p, t);
-    return SPoint3(p.x() + t.x() * u,p.y() + t.y() * u,p.z() + t.z() * u);
+    return SPoint3(p.x() + t.x() * u, p.y() + t.y() * u, p.z() + t.z() * u);
   }
 };
 
-void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies)
+void GFace::setMeshMaster(GFace *master, const std::map<int, int> &edgeCopies)
 {
-  std::map<GVertex*,GVertex*> vs2vt;
+  std::map<GVertex *, GVertex *> vs2vt;
 
-  for (std::vector<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it){
+  for(std::vector<GEdge *>::iterator it = l_edges.begin(); it != l_edges.end();
+      ++it) {
     // slave edge
-    GEdge* le = *it;
+    GEdge *le = *it;
 
     int sign = 1;
-    std::map<int,int>::const_iterator adnksd = edgeCopies.find(le->tag());
+    std::map<int, int>::const_iterator adnksd = edgeCopies.find(le->tag());
     int source_e;
-    if (adnksd != edgeCopies.end()) source_e = adnksd->second;
-    else{
+    if(adnksd != edgeCopies.end())
+      source_e = adnksd->second;
+    else {
       sign = -1;
       adnksd = edgeCopies.find(-(*it)->tag());
-      if(adnksd != edgeCopies.end()) source_e = adnksd->second;
-      else{
+      if(adnksd != edgeCopies.end())
+        source_e = adnksd->second;
+      else {
         Msg::Error("Could not find edge counterpart %d in slave surface %d",
                    (*it)->tag(), master->tag());
         return;
@@ -1846,13 +1876,13 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies)
     // master edge
     GEdge *me = master->model()->getEdgeByTag(abs(source_e));
 
-    if (source_e * sign > 0){
+    if(source_e * sign > 0) {
       vs2vt[me->getBeginVertex()] = le->getBeginVertex();
-      vs2vt[me->getEndVertex()]   = le->getEndVertex();
+      vs2vt[me->getEndVertex()] = le->getEndVertex();
     }
     else {
       vs2vt[me->getBeginVertex()] = le->getEndVertex();
-      vs2vt[me->getEndVertex()]   = le->getBeginVertex();
+      vs2vt[me->getEndVertex()] = le->getBeginVertex();
     }
   }
 
@@ -1862,44 +1892,44 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies)
   SVector3 DX;
 
   int count = 0;
-  for (std::map<GVertex*, GVertex*>::iterator it = vs2vt.begin();
-       it != vs2vt.end() ; ++it){
+  for(std::map<GVertex *, GVertex *>::iterator it = vs2vt.begin();
+      it != vs2vt.end(); ++it) {
     GVertex *vs = it->first;
     GVertex *vt = it->second;
-    if (count == 0)
-      DX = SVector3(vt->x()-vs->x(),vt->y()-vs->y(),vt->z()-vs->z());
+    if(count == 0)
+      DX = SVector3(vt->x() - vs->x(), vt->y() - vs->y(), vt->z() - vs->z());
     else {
-      SVector3 DX2(vt->x()-vs->x(),vt->y()-vs->y(),vt->z()-vs->z());
+      SVector3 DX2(vt->x() - vs->x(), vt->y() - vs->y(), vt->z() - vs->z());
       SVector3 DDX(DX2 - DX);
-      if (DDX.norm() > DX.norm() * 1.e-5) translation = false;
+      if(DDX.norm() > DX.norm() * 1.e-5) translation = false;
     }
-    count ++;
+    count++;
   }
 
   std::vector<double> tfo(16);
 
-  if (translation) {
-    Msg::Info("Periodic mesh translation found between %d and %d: dx = (%g,%g,%g)",
-              tag(),master->tag(),DX.x(), DX.y(), DX.z());
+  if(translation) {
+    Msg::Info(
+      "Periodic mesh translation found between %d and %d: dx = (%g,%g,%g)",
+      tag(), master->tag(), DX.x(), DX.y(), DX.z());
 
-    for (size_t i=0;i<16;i++) tfo[i] = 0;
-    for (size_t i=0;i<4;i++)  tfo[i*4+i] = 1;
-    tfo[3]  = DX.x();
-    tfo[7]  = DX.y();
+    for(size_t i = 0; i < 16; i++) tfo[i] = 0;
+    for(size_t i = 0; i < 4; i++) tfo[i * 4 + i] = 1;
+    tfo[3] = DX.x();
+    tfo[7] = DX.y();
     tfo[11] = DX.z();
   }
 
   else {
-
     bool rotation = false;
     myLine LINE;
-    double ANGLE=0;
+    double ANGLE = 0;
 
     count = 0;
     rotation = true;
     std::vector<SPoint3> mps, mpt;
-    for (std::map<GVertex*, GVertex*>::iterator it = vs2vt.begin();
-         it != vs2vt.end() ; ++it){
+    for(std::map<GVertex *, GVertex *>::iterator it = vs2vt.begin();
+        it != vs2vt.end(); ++it) {
       GVertex *vs = it->first;
       GVertex *vt = it->second;
       mps.push_back(SPoint3(vs->x(), vs->y(), vs->z()));
@@ -1909,18 +1939,18 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies)
     computeMeanPlaneSimple(mps, mean_source);
     computeMeanPlaneSimple(mpt, mean_target);
 
-    myPlane PLANE_SOURCE(SPoint3(mean_source.x,mean_source.y,mean_source.z),
-                         SVector3(mean_source.a,mean_source.b,mean_source.c));
-    myPlane PLANE_TARGET(SPoint3(mean_target.x,mean_target.y,mean_target.z),
-                         SVector3(mean_target.a,mean_target.b,mean_target.c));
+    myPlane PLANE_SOURCE(SPoint3(mean_source.x, mean_source.y, mean_source.z),
+                         SVector3(mean_source.a, mean_source.b, mean_source.c));
+    myPlane PLANE_TARGET(SPoint3(mean_target.x, mean_target.y, mean_target.z),
+                         SVector3(mean_target.a, mean_target.b, mean_target.c));
 
     LINE = myLine(PLANE_SOURCE, PLANE_TARGET);
 
     // LINE is the axis of rotation
     // let us compute the angle of rotation
     count = 0;
-    for (std::map<GVertex*, GVertex*>::iterator it = vs2vt.begin();
-         it != vs2vt.end(); ++it){
+    for(std::map<GVertex *, GVertex *>::iterator it = vs2vt.begin();
+        it != vs2vt.end(); ++it) {
       GVertex *vs = it->first;
       GVertex *vt = it->second;
       // project both points on the axis: that should be the same point !
@@ -1930,18 +1960,18 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies)
       SPoint3 p_pt = LINE.orthogonalProjection(pt);
       SVector3 dist1 = ps - pt;
       SVector3 dist2 = p_ps - p_pt;
-      if (dist1.norm() > CTX::instance()->geom.tolerance){
-        if (dist2.norm() > 1.e-8 * dist1.norm()){
+      if(dist1.norm() > CTX::instance()->geom.tolerance) {
+        if(dist2.norm() > 1.e-8 * dist1.norm()) {
           rotation = false;
         }
         SVector3 t1 = ps - p_ps;
         SVector3 t2 = pt - p_pt;
-        if (t1.norm() > 1.e-8 * dist1.norm()){
-          if (count == 0)
+        if(t1.norm() > 1.e-8 * dist1.norm()) {
+          if(count == 0)
             ANGLE = myAngle(t1, t2, LINE.t);
           else {
             double ANGLE2 = myAngle(t1, t2, LINE.t);
-            if (fabs (ANGLE2 - ANGLE) > 1.e-8){
+            if(fabs(ANGLE2 - ANGLE) > 1.e-8) {
               rotation = false;
             }
           }
@@ -1950,34 +1980,35 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies)
       }
     }
 
-    if (rotation){
-      Msg::Info("Periodic mesh rotation found: axis (%g,%g,%g) point (%g %g %g) angle %g",
-                LINE.t.x(), LINE.t.y(), LINE.t.z(), LINE.p.x(), LINE.p.y(), LINE.p.z(),
-                ANGLE * 180 / M_PI);
+    if(rotation) {
+      Msg::Info("Periodic mesh rotation found: axis (%g,%g,%g) point (%g %g "
+                "%g) angle %g",
+                LINE.t.x(), LINE.t.y(), LINE.t.z(), LINE.p.x(), LINE.p.y(),
+                LINE.p.z(), ANGLE * 180 / M_PI);
 
       double ux = LINE.t.x();
       double uy = LINE.t.y();
       double uz = LINE.t.z();
 
-      tfo[0*4+0] = cos (ANGLE) + ux*ux*(1.-cos(ANGLE));
-      tfo[0*4+1] = ux*uy*(1.-cos(ANGLE)) - uz * sin(ANGLE);
-      tfo[0*4+2] = ux*uz*(1.-cos(ANGLE)) + uy * sin(ANGLE);
+      tfo[0 * 4 + 0] = cos(ANGLE) + ux * ux * (1. - cos(ANGLE));
+      tfo[0 * 4 + 1] = ux * uy * (1. - cos(ANGLE)) - uz * sin(ANGLE);
+      tfo[0 * 4 + 2] = ux * uz * (1. - cos(ANGLE)) + uy * sin(ANGLE);
 
-      tfo[1*4+0] = ux*uy*(1.-cos(ANGLE)) + uz * sin(ANGLE);
-      tfo[1*4+1] = cos (ANGLE) + uy*uy*(1.-cos(ANGLE));
-      tfo[1*4+2] = uy*uz*(1.-cos(ANGLE)) - ux * sin(ANGLE);
+      tfo[1 * 4 + 0] = ux * uy * (1. - cos(ANGLE)) + uz * sin(ANGLE);
+      tfo[1 * 4 + 1] = cos(ANGLE) + uy * uy * (1. - cos(ANGLE));
+      tfo[1 * 4 + 2] = uy * uz * (1. - cos(ANGLE)) - ux * sin(ANGLE);
 
-      tfo[2*4+0] = ux*uz*(1.-cos(ANGLE)) - uy * sin(ANGLE);
-      tfo[2*4+1] = uy*uz*(1.-cos(ANGLE)) + ux * sin(ANGLE);
-      tfo[2*4+2] = cos (ANGLE) + uz*uz*(1.-cos(ANGLE));
+      tfo[2 * 4 + 0] = ux * uz * (1. - cos(ANGLE)) - uy * sin(ANGLE);
+      tfo[2 * 4 + 1] = uy * uz * (1. - cos(ANGLE)) + ux * sin(ANGLE);
+      tfo[2 * 4 + 2] = cos(ANGLE) + uz * uz * (1. - cos(ANGLE));
 
-      double origin[3] = {LINE.p.x(),LINE.p.y(),LINE.p.z()};
+      double origin[3] = {LINE.p.x(), LINE.p.y(), LINE.p.z()};
 
-      for (int i=0;i<3;i++) tfo[i*4+3] =  origin[i];
-      for (int i=0;i<3;i++) for (int j=0;j<3;j++) tfo[i*4+3] -= tfo[i*4+j] * origin[j];
-      for (int i=0;i<3;i++) tfo[12+i] = 0;
+      for(int i = 0; i < 3; i++) tfo[i * 4 + 3] = origin[i];
+      for(int i = 0; i < 3; i++)
+        for(int j = 0; j < 3; j++) tfo[i * 4 + 3] -= tfo[i * 4 + j] * origin[j];
+      for(int i = 0; i < 3; i++) tfo[12 + i] = 0;
       tfo[15] = 1;
-
     }
     else {
       Msg::Error("Only rotations or translations can currently be computed "
@@ -1995,62 +2026,49 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies)
 
 void GFace::addElement(int type, MElement *e)
 {
-  switch (type){
-  case TYPE_TRI:
-    addTriangle(reinterpret_cast<MTriangle*>(e));
-    break;
-  case TYPE_QUA:
-    addQuadrangle(reinterpret_cast<MQuadrangle*>(e));
-    break;
-  case TYPE_POLYG:
-    addPolygon(reinterpret_cast<MPolygon*>(e));
-    break;
-  default:
-    Msg::Error("Trying to add unsupported element in face");
+  switch(type) {
+  case TYPE_TRI: addTriangle(reinterpret_cast<MTriangle *>(e)); break;
+  case TYPE_QUA: addQuadrangle(reinterpret_cast<MQuadrangle *>(e)); break;
+  case TYPE_POLYG: addPolygon(reinterpret_cast<MPolygon *>(e)); break;
+  default: Msg::Error("Trying to add unsupported element in face");
   }
 }
 
 void GFace::removeElement(int type, MElement *e)
 {
-  switch (type){
-  case TYPE_TRI:
-    {
-      std::vector<MTriangle*>::iterator it = std::find
-        (triangles.begin(), triangles.end(), reinterpret_cast<MTriangle*>(e));
-      if(it != triangles.end()) triangles.erase(it);
-    }
-    break;
-  case TYPE_QUA:
-    {
-      std::vector<MQuadrangle*>::iterator it = std::find
-        (quadrangles.begin(), quadrangles.end(), reinterpret_cast<MQuadrangle*>(e));
-      if(it != quadrangles.end()) quadrangles.erase(it);
-    }
-    break;
-  case TYPE_POLYG:
-    {
-      std::vector<MPolygon*>::iterator it = std::find
-        (polygons.begin(), polygons.end(), reinterpret_cast<MPolygon*>(e));
-      if(it != polygons.end()) polygons.erase(it);
-    }
-    break;
-  default:
-    Msg::Error("Trying to remove unsupported element in face");
+  switch(type) {
+  case TYPE_TRI: {
+    std::vector<MTriangle *>::iterator it = std::find(
+      triangles.begin(), triangles.end(), reinterpret_cast<MTriangle *>(e));
+    if(it != triangles.end()) triangles.erase(it);
+  } break;
+  case TYPE_QUA: {
+    std::vector<MQuadrangle *>::iterator it =
+      std::find(quadrangles.begin(), quadrangles.end(),
+                reinterpret_cast<MQuadrangle *>(e));
+    if(it != quadrangles.end()) quadrangles.erase(it);
+  } break;
+  case TYPE_POLYG: {
+    std::vector<MPolygon *>::iterator it = std::find(
+      polygons.begin(), polygons.end(), reinterpret_cast<MPolygon *>(e));
+    if(it != polygons.end()) polygons.erase(it);
+  } break;
+  default: Msg::Error("Trying to remove unsupported element in face");
   }
 }
 
 bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
 {
-  if(triangles.front()->getTypeForMSH() == elementType){
+  if(triangles.front()->getTypeForMSH() == elementType) {
     if(ordering.size() != triangles.size()) return false;
 
     for(std::vector<int>::const_iterator it = ordering.begin();
-        it != ordering.end(); ++it){
+        it != ordering.end(); ++it) {
       if(*it < 0 || *it >= static_cast<int>(triangles.size())) return false;
     }
 
-    std::vector<MTriangle*> newTrianglesOrder(triangles.size());
-    for(unsigned int i = 0; i < ordering.size(); i++){
+    std::vector<MTriangle *> newTrianglesOrder(triangles.size());
+    for(unsigned int i = 0; i < ordering.size(); i++) {
       newTrianglesOrder[i] = triangles[ordering[i]];
     }
 #if __cplusplus >= 201103L
@@ -2062,16 +2080,16 @@ bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
     return true;
   }
 
-  if(quadrangles.front()->getTypeForMSH() == elementType){
+  if(quadrangles.front()->getTypeForMSH() == elementType) {
     if(ordering.size() != quadrangles.size()) return false;
 
     for(std::vector<int>::const_iterator it = ordering.begin();
-        it != ordering.end(); ++it){
+        it != ordering.end(); ++it) {
       if(*it < 0 || *it >= static_cast<int>(quadrangles.size())) return false;
     }
 
-    std::vector<MQuadrangle*> newQuadranglesOrder(quadrangles.size());
-    for(unsigned int i = 0; i < ordering.size(); i++){
+    std::vector<MQuadrangle *> newQuadranglesOrder(quadrangles.size());
+    for(unsigned int i = 0; i < ordering.size(); i++) {
       newQuadranglesOrder[i] = quadrangles[ordering[i]];
     }
 #if __cplusplus >= 201103L
@@ -2083,16 +2101,16 @@ bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
     return true;
   }
 
-  if(polygons.front()->getTypeForMSH() == elementType){
+  if(polygons.front()->getTypeForMSH() == elementType) {
     if(ordering.size() != polygons.size()) return false;
 
     for(std::vector<int>::const_iterator it = ordering.begin();
-        it != ordering.end(); ++it){
+        it != ordering.end(); ++it) {
       if(*it < 0 || *it >= static_cast<int>(polygons.size())) return false;
     }
 
-    std::vector<MPolygon*> newPolygonsOrder(polygons.size());
-    for(unsigned int i = 0; i < ordering.size(); i++){
+    std::vector<MPolygon *> newPolygonsOrder(polygons.size());
+    for(unsigned int i = 0; i < ordering.size(); i++) {
       newPolygonsOrder[i] = polygons[ordering[i]];
     }
 #if __cplusplus >= 201103L
@@ -2109,11 +2127,10 @@ bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
 
 void GFace::alignElementsWithMaster()
 {
-  GEntity* master = meshMaster();
+  GEntity *master = meshMaster();
 
-  if (master != this) {
-
-    std::set<MFace,Less_Face> srcFaces;
+  if(master != this) {
+    std::set<MFace, Less_Face> srcFaces;
 
     for(std::size_t i = 0; i < master->getNumMeshElements(); i++) {
       MElement *face = master->getMeshElement(i);
@@ -2125,46 +2142,40 @@ void GFace::alignElementsWithMaster()
       srcFaces.insert(MFace(vtcs));
     }
 
-    for (std::size_t i=0;i<getNumMeshElements();i++) {
+    for(std::size_t i = 0; i < getNumMeshElements(); i++) {
+      MElement *face = getMeshElement(i);
+      std::vector<MVertex *> vtcs;
+      for(std::size_t j = 0; j < face->getNumVertices(); j++) {
+        MVertex *tv = face->getVertex(j);
 
-      MElement* face = getMeshElement(i);
-      std::vector<MVertex*> vtcs;
-      for (std::size_t j=0;j<face->getNumVertices();j++) {
-        MVertex* tv = face->getVertex(j);
-
-        std::map<MVertex*,MVertex*>::iterator cIter = correspondingVertices.find(tv);
-        if (cIter != correspondingVertices.end())
-          vtcs.push_back(cIter->second);
+        std::map<MVertex *, MVertex *>::iterator cIter =
+          correspondingVertices.find(tv);
+        if(cIter != correspondingVertices.end()) vtcs.push_back(cIter->second);
       }
 
       MFace mf(vtcs);
 
-      std::set<MFace,Less_Face>::iterator sIter = srcFaces.find(mf);
+      std::set<MFace, Less_Face>::iterator sIter = srcFaces.find(mf);
 
-      if (sIter == srcFaces.end()) continue;
+      if(sIter == srcFaces.end()) continue;
 
       MFace of = *sIter;
 
       int orientation;
       bool swap;
-      mf.computeCorrespondence(of,orientation,swap);
+      mf.computeCorrespondence(of, orientation, swap);
 
-      switch (face->getNumVertices()) {
-
-      case 3:
-        {
-          MTriangle* tri = dynamic_cast<MTriangle*>(face);
-          if (tri)
-            tri->reorient(orientation,swap);
-          break;
-        }
-      case 4:
-        {
-          MQuadrangle* qua = dynamic_cast<MQuadrangle*>(face);
-          if (qua)
-            qua->reorient(orientation,swap);
-          break;
-        }
+      switch(face->getNumVertices()) {
+      case 3: {
+        MTriangle *tri = dynamic_cast<MTriangle *>(face);
+        if(tri) tri->reorient(orientation, swap);
+        break;
+      }
+      case 4: {
+        MQuadrangle *qua = dynamic_cast<MQuadrangle *>(face);
+        if(qua) qua->reorient(orientation, swap);
+        break;
+      }
       }
     }
   }

@@ -10,33 +10,32 @@
 #include <vector>
 class MElement;
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterAnalyseCurvedMeshPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterAnalyseCurvedMeshPlugin();
 }
 
-class data_elementMinMax
-{
+class data_elementMinMax {
 private:
   MElement *_el;
   double _minJac, _maxJac, _minIGE, _minICN;
+
 public:
-  data_elementMinMax(MElement *e,
-                     double minJ = 2, double maxJ = 0,
+  data_elementMinMax(MElement *e, double minJ = 2, double maxJ = 0,
                      double minIGE = -1, double minICN = -1)
-      : _el(e), _minJac(minJ), _maxJac(maxJ), _minIGE(minIGE), _minICN(minICN) {}
+    : _el(e), _minJac(minJ), _maxJac(maxJ), _minIGE(minIGE), _minICN(minICN)
+  {
+  }
   void setMinS(double r) { _minIGE = r; }
   void setMinI(double r) { _minICN = r; }
-  MElement* element() { return _el; }
+  MElement *element() { return _el; }
   double minJ() { return _minJac; }
   double maxJ() { return _maxJac; }
   double minS() { return _minIGE; }
   double minI() { return _minICN; }
 };
 
-class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin
-{
-private :
+class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin {
+private:
   GModel *_m;
   double _threshold;
 
@@ -57,18 +56,18 @@ private :
 
   std::vector<data_elementMinMax> _data;
 
-public :
+public:
   GMSH_AnalyseCurvedMeshPlugin()
   {
     _m = NULL;
     _threshold = -1;
-    for (int i = 0; i < 3; ++i) {
+    for(int i = 0; i < 3; ++i) {
       _computedJac[i] = false;
       _computedIGE[i] = false;
       _computedICN[i] = false;
       _PViewJac[i] = false;
       _PViewIGE[i] = false;
-      _PViewICN [i] = false;
+      _PViewICN[i] = false;
     }
   }
   std::string getName() const { return "AnalyseCurvedMesh"; }
@@ -79,10 +78,10 @@ public :
   std::string getHelp() const;
   std::string getAuthor() const { return "Amaury Johnen"; }
   int getNbOptions() const;
-  StringXNumber* getOption(int);
-  PView* execute(PView *);
+  StringXNumber *getOption(int);
+  PView *execute(PView *);
 
-private :
+private:
   void _computeMinMaxJandValidity(int dim);
   void _computeMinIGE(int dim);
   void _computeMinICN(int dim);
@@ -92,7 +91,8 @@ private :
   void _printStatICN();
 
 #if defined(HAVE_VISUDEV)
-  void _computePointwiseQuantities(MElement *, const fullMatrix<double> *normals);
+  void _computePointwiseQuantities(MElement *,
+                                   const fullMatrix<double> *normals);
   void _createPViewPointwise();
   void _setInterpolationMatrices(PView *);
 #endif

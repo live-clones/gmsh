@@ -14,15 +14,13 @@
 
 #if defined(HAVE_KBIPACK)
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterHomologyPostProcessingPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterHomologyPostProcessingPlugin();
 }
 
-class GMSH_HomologyPostProcessingPlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_HomologyPostProcessingPlugin(){}
+class GMSH_HomologyPostProcessingPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_HomologyPostProcessingPlugin() {}
   std::string getName() const { return "HomologyPostProcessing"; }
   std::string getShortHelp() const
   {
@@ -35,9 +33,9 @@ class GMSH_HomologyPostProcessingPlugin : public GMSH_PostPlugin
   int getNbOptionsStr() const;
   StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
-  bool parseStringOpt(int stringOpt, std::vector<int>& intList);
-  bool invertIntegerMatrix(std::vector<int>& matrix);
-  int detIntegerMatrix(std::vector<int>& matrix);
+  bool parseStringOpt(int stringOpt, std::vector<int> &intList);
+  bool invertIntegerMatrix(std::vector<int> &matrix);
+  int detIntegerMatrix(std::vector<int> &matrix);
 };
 
 #endif

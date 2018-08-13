@@ -27,9 +27,9 @@ wrappers), Maxime Graulich (iOS/Android port), Francois Henrotte (onelab
 metamodels), Sebastian Eiser (PGF output), Alexis Salzman (compressed IO), Hang
 Si (TetGen/BR boundary recovery code), Fernando Lorenzo (Tochnog support), Larry
 Price (Gambit export), Anthony Royer (new partitioning code, MSH4 format), Darcy
-Beurle (code cleanup and performance improvements). See comments in the sources
-for more information. If we forgot to list your contributions please send us an
-email!
+Beurle (code cleanup and performance improvements), Zhidong Han (LSDYNA
+output). See comments in the sources for more information. If we forgot to list
+your contributions please send us an email!
 
 Thanks to the following folks who have contributed by providing fresh ideas on
 theoretical or programming topics, who have sent patches, requests for changes
@@ -47,7 +47,7 @@ Hackbarth, Peter Wainwright, Jiri Hnidek, Thierry Thomas, Konstantinos Poulios,
 Laurent Van Miegroet, Shahrokh Ghavamian, Geordie McBain, Jose Paulo Moitinho de
 Almeida, Guillaume Demesy, Wendy Merks-Swolfs, Cosmin Stefan Deaconu, Nigel
 Nunn, Serban Georgescu, Julien Troufflard, Michele Mocciola, Matthijs Sypkens
-Smit, Sauli Ruuska, Romain Boman, Fredrik Ekre.
+Smit, Sauli Ruuska, Romain Boman, Fredrik Ekre, Mark Burton.
 
 Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
 and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
@@ -139,6 +139,8 @@ codes in the contrib/ directory, each governed by their own license:
   David Mount;
 
 * contrib/gmm copyright (C) 2002-2008 Yves Renard;
+
+* contrib/hxt - Copyright (C) 2017-2018 - Universite catholique de Louvain.
 
 * contrib/kbipack copyright (C) 2005 Saku Suuriniemi;
 

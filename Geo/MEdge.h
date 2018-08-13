@@ -16,7 +16,7 @@ private:
   char _si[2]; // sorted indices
 
 public:
-    typedef std::vector<int>::size_type size_type;
+  typedef std::vector<int>::size_type size_type;
 
 public:
   MEdge()

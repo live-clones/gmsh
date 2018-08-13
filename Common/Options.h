@@ -9,21 +9,21 @@
 #include <string>
 #include "ColorTable.h"
 
-#define GMSH_SET         (1<<0)
-#define GMSH_GET         (1<<1)
-#define GMSH_GUI         (1<<2)
-#define GMSH_SET_DEFAULT (1<<3)
-#define GMSH_GET_DEFAULT (1<<4)
+#define GMSH_SET (1 << 0)
+#define GMSH_GET (1 << 1)
+#define GMSH_GUI (1 << 2)
+#define GMSH_SET_DEFAULT (1 << 3)
+#define GMSH_GET_DEFAULT (1 << 4)
 
-#define GMSH_SESSIONRC (1<<0)
-#define GMSH_OPTIONSRC (1<<1)
-#define GMSH_FULLRC    (1<<2)
+#define GMSH_SESSIONRC (1 << 0)
+#define GMSH_OPTIONSRC (1 << 1)
+#define GMSH_FULLRC (1 << 2)
 
 // action is a combination of GMSH_SET, GMSH_GET, GMSH_GUI
 
-#define OPT_ARGS_STR   int num, int action, std::string val
-#define OPT_ARGS_NUM   int num, int action, double val
-#define OPT_ARGS_COL   int num, int action, unsigned int val
+#define OPT_ARGS_STR int num, int action, std::string val
+#define OPT_ARGS_NUM int num, int action, double val
+#define OPT_ARGS_COL int num, int action, unsigned int val
 
 // STRINGS
 
@@ -237,6 +237,7 @@ double opt_general_confirm_overwrite(OPT_ARGS_NUM);
 double opt_general_orthographic(OPT_ARGS_NUM);
 double opt_general_mouse_selection(OPT_ARGS_NUM);
 double opt_general_mouse_hover_meshes(OPT_ARGS_NUM);
+double opt_general_mouse_invert_zoom(OPT_ARGS_NUM);
 double opt_general_draw_bounding_box(OPT_ARGS_NUM);
 double opt_general_draw_oriented_bounding_box(OPT_ARGS_NUM);
 double opt_general_fast_redraw(OPT_ARGS_NUM);
@@ -489,6 +490,7 @@ double opt_mesh_partition_tri_weight(OPT_ARGS_NUM);
 double opt_mesh_partition_create_topology(OPT_ARGS_NUM);
 double opt_mesh_partition_create_physicals(OPT_ARGS_NUM);
 double opt_mesh_partition_create_ghost_cells(OPT_ARGS_NUM);
+double opt_mesh_partition_old_style_msh2(OPT_ARGS_NUM);
 double opt_mesh_binary(OPT_ARGS_NUM);
 double opt_mesh_smooth_cross_field(OPT_ARGS_NUM);
 double opt_mesh_bdf_field_format(OPT_ARGS_NUM);
@@ -822,8 +824,8 @@ unsigned int opt_view_color_background2d(OPT_ARGS_COL);
 // Data structures and global functions
 
 typedef struct {
-  const char *str ;
-  int int1, int2, int3, int4 ;
+  const char *str;
+  int int1, int2, int3, int4;
 } StringX4Int;
 
 typedef struct {
@@ -838,7 +840,7 @@ typedef struct {
   int level;
   const char *str;
   double (*function)(int num, int action, double val);
-  double def ;
+  double def;
   const char *help;
 } StringXNumber;
 
@@ -857,15 +859,15 @@ void InitOptions(int num);
 void InitOptionsGUI(int num);
 void ReInitOptions(int num);
 void PrintOptions(int num, int level, int diff, int help, const char *filename,
-                  std::vector<std::string> *vec=0);
+                  std::vector<std::string> *vec = 0);
 void PrintOptionsDoc();
 
-bool StringOption(int action, const char *category, int num,
-                  const char *name, std::string &val, bool warnIfUnknown=true);
-bool NumberOption(int action, const char *category, int num,
-                  const char *name, double &val, bool warnIfUnknown=true);
-bool ColorOption(int action, const char *category, int num,
-                 const char *name, unsigned int &val, bool warnIfUnknown=true);
+bool StringOption(int action, const char *category, int num, const char *name,
+                  std::string &val, bool warnIfUnknown = true);
+bool NumberOption(int action, const char *category, int num, const char *name,
+                  double &val, bool warnIfUnknown = true);
+bool ColorOption(int action, const char *category, int num, const char *name,
+                 unsigned int &val, bool warnIfUnknown = true);
 
 GmshColorTable *GetColorTable(int num);
 int GetColorForString(int alpha, const char *string, int *FlagError);
