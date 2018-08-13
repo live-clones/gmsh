@@ -12,16 +12,15 @@
 class GMSH_Plugin;
 class GMSH_SolverPlugin;
 
-class PluginManager
-{
- private:
-  PluginManager(){}
+class PluginManager {
+private:
+  PluginManager() {}
   static PluginManager *_instance;
-  std::map<std::string, GMSH_Plugin*> allPlugins;
+  std::map<std::string, GMSH_Plugin *> allPlugins;
 
- public :
+public:
   virtual ~PluginManager();
-  
+
   // register all the plugins that are in $(GMSHPLUGINSHOME). (Note
   // that loading a .so is not what is usually called a 'plugin': we
   // should call the plugins 'modules'... A plugin is an executable,
@@ -36,14 +35,20 @@ class PluginManager
   void uninstallPlugin(std::string pluginName){};
 
   // Set an option to a value in plugin named pluginName
-  void setPluginOption(std::string pluginName, std::string option, 
+  void setPluginOption(std::string pluginName, std::string option,
                        double value);
-  void setPluginOption(std::string pluginName, std::string option, 
+  void setPluginOption(std::string pluginName, std::string option,
                        std::string value);
 
   // Iterator on plugins
-  std::map<std::string, GMSH_Plugin*>::iterator begin(){ return allPlugins.begin(); }
-  std::map<std::string, GMSH_Plugin*>::iterator end(){ return allPlugins.end(); }
+  std::map<std::string, GMSH_Plugin *>::iterator begin()
+  {
+    return allPlugins.begin();
+  }
+  std::map<std::string, GMSH_Plugin *>::iterator end()
+  {
+    return allPlugins.end();
+  }
 
   // Find a plugin named pluginName
   GMSH_Plugin *find(std::string pluginName);

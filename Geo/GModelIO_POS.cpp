@@ -10,11 +10,11 @@
 
 int GModel::writePOS(const std::string &name, bool printElementary,
                      bool printElementNumber, bool printSICN, bool printSIGE,
-                     bool printGamma, bool printDisto,
-                     bool saveAll, double scalingFactor)
+                     bool printGamma, bool printDisto, bool saveAll,
+                     double scalingFactor)
 {
   FILE *fp = Fopen(name.c_str(), "w");
-  if(!fp){
+  if(!fp) {
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
@@ -38,49 +38,69 @@ int GModel::writePOS(const std::string &name, bool printElementary,
 
   bool first = true;
   std::string names;
-  if(printElementary){
-    if(first) first = false; else names += ",";
+  if(printElementary) {
+    if(first)
+      first = false;
+    else
+      names += ",";
     names += "\"Elementary Entity\"";
   }
-  if(printElementNumber){
-    if(first) first = false; else names += ",";
+  if(printElementNumber) {
+    if(first)
+      first = false;
+    else
+      names += ",";
     names += "\"Element Number\"";
   }
-  if(printSICN){
-    if(first) first = false; else names += ",";
+  if(printSICN) {
+    if(first)
+      first = false;
+    else
+      names += ",";
     names += "\"SICN\"";
   }
-  if(printSIGE){
-    if(first) first = false; else names += ",";
+  if(printSIGE) {
+    if(first)
+      first = false;
+    else
+      names += ",";
     names += "\"SIGE\"";
   }
-  if(printGamma){
-    if(first) first = false; else names += ",";
+  if(printGamma) {
+    if(first)
+      first = false;
+    else
+      names += ",";
     names += "\"Gamma\"";
   }
-  if(printDisto){
-    if(first) first = false; else names += ",";
+  if(printDisto) {
+    if(first)
+      first = false;
+    else
+      names += ",";
     names += "\"Disto\"";
   }
 
-  if(names.empty()){ fclose(fp); return 0; }
+  if(names.empty()) {
+    fclose(fp);
+    return 0;
+  }
 
   if(noPhysicalGroups()) saveAll = true;
 
   fprintf(fp, "View \"Statistics\" {\n");
-  fprintf(fp, "T2(1.e5,30,%d){%s};\n", (1<<16)|(4<<8), names.c_str());
+  fprintf(fp, "T2(1.e5,30,%d){%s};\n", (1 << 16) | (4 << 8), names.c_str());
 
-  std::vector<GEntity*> entities;
+  std::vector<GEntity *> entities;
   getEntities(entities);
   for(unsigned int i = 0; i < entities.size(); i++)
     if(saveAll || entities[i]->physicals.size())
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
-        entities[i]->getMeshElement(j)->writePOS
-          (fp, printElementary, printElementNumber, printSICN, printSIGE,
-           printGamma, printDisto, scalingFactor, entities[i]->tag());
+        entities[i]->getMeshElement(j)->writePOS(
+          fp, printElementary, printElementNumber, printSICN, printSIGE,
+          printGamma, printDisto, scalingFactor, entities[i]->tag());
   fprintf(fp, "};\n");
 
   fclose(fp);
   return 1;
 }
-

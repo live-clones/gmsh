@@ -11,10 +11,10 @@
 class Curve;
 
 class gmshEdge : public GEdge {
- protected:
+protected:
   Curve *c;
 
- public:
+public:
   gmshEdge(GModel *model, Curve *edge, GVertex *v1, GVertex *v2);
   virtual ~gmshEdge() {}
   virtual Range<double> parBounds(int i) const;
@@ -30,7 +30,8 @@ class gmshEdge : public GEdge {
   virtual void resetMeshAttributes();
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
   virtual void writeGEO(FILE *fp);
-  void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts);
+  void discretize(double tol, std::vector<SPoint3> &dpts,
+                  std::vector<double> &ts);
   virtual bool degenerate(int dim) const;
   void resetNativePtr(Curve *edge, GVertex *v1, GVertex *v2);
 };

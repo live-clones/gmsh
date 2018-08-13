@@ -2,6 +2,7 @@
 #define HEXTREME_LAPLACE_H
 
 #include "hxt_mesh.h"
+
 HXTStatus hxtLaplace(HXTMesh *mesh);
 
 #endif

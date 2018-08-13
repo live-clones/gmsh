@@ -8,15 +8,13 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterGradientPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterGradientPlugin();
 }
 
-class GMSH_GradientPlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_GradientPlugin(){}
+class GMSH_GradientPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_GradientPlugin() {}
   std::string getName() const { return "Gradient"; }
   std::string getShortHelp() const
   {
@@ -24,7 +22,7 @@ class GMSH_GradientPlugin : public GMSH_PostPlugin
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber *getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

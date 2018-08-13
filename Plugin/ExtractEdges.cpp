@@ -5,27 +5,29 @@
 
 #include "GmshConfig.h"
 #include "GModel.h"
-#include "meshGFaceOptimize.h"
 #include "ExtractEdges.h"
+
+#if defined(HAVE_MESH)
+#include "meshGFaceOptimize.h"
+#endif
 
 StringXNumber ExtractEdgesOptions_Number[] = {
   {GMSH_FULLRC, "Angle", NULL, 40.},
   {GMSH_FULLRC, "IncludeBoundary", NULL, 1.},
 };
 
-extern "C"
+extern "C" {
+GMSH_Plugin *GMSH_RegisterExtractEdgesPlugin()
 {
-  GMSH_Plugin *GMSH_RegisterExtractEdgesPlugin()
-  {
-    return new GMSH_ExtractEdgesPlugin();
-  }
+  return new GMSH_ExtractEdgesPlugin();
+}
 }
 
 std::string GMSH_ExtractEdgesPlugin::getHelp() const
 {
   return "Plugin(ExtractEdges) extracts sharp edges "
-    "from a triangular mesh.\n\n"
-    "Plugin(ExtractEdges) creates one new view.";
+         "from a triangular mesh.\n\n"
+         "Plugin(ExtractEdges) creates one new view.";
 }
 
 int GMSH_ExtractEdgesPlugin::getNbOptions() const
@@ -55,13 +57,13 @@ static void add_edge(edge_angle &ea, PViewDataList *data)
 
 PView *GMSH_ExtractEdgesPlugin::execute(PView *v)
 {
-  std::vector<MTriangle*> elements;
+  std::vector<MTriangle *> elements;
   for(GModel::fiter it = GModel::current()->firstFace();
       it != GModel::current()->lastFace(); ++it)
     elements.insert(elements.end(), (*it)->triangles.begin(),
                     (*it)->triangles.end());
 
-  if(elements.empty()){
+  if(elements.empty()) {
     Msg::Error("No triangles in mesh to extract edges from");
     return 0;
   }
@@ -75,13 +77,13 @@ PView *GMSH_ExtractEdgesPlugin::execute(PView *v)
   buildListOfEdgeAngle(adj, edges_detected, edges_lonly);
 
   double threshold = ExtractEdgesOptions_Number[0].def / 180. * M_PI;
-  for(unsigned int i = 0; i < edges_detected.size(); i++){
+  for(unsigned int i = 0; i < edges_detected.size(); i++) {
     if(edges_detected[i].angle <= threshold) break;
     add_edge(edges_detected[i], data2);
   }
 
-  if(ExtractEdgesOptions_Number[1].def){
-    for(unsigned int i = 0; i < edges_lonly.size(); i++){
+  if(ExtractEdgesOptions_Number[1].def) {
+    for(unsigned int i = 0; i < edges_lonly.size(); i++) {
       add_edge(edges_lonly[i], data2);
     }
   }

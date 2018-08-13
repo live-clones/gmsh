@@ -24,7 +24,8 @@ namespace onelabUtils {
   bool getFirstComputationFlag();
   void setFirstComputationFlag(bool val);
   bool haveSolverToRun();
-  double updateNumber(onelab::number &x, onelab::number &y, const bool readOnlyRange=false);
+  double updateNumber(onelab::number &x, onelab::number &y,
+                      const bool readOnlyRange = false);
   std::string updateString(onelab::string &x, onelab::string &y);
   void initializeLoops();
   bool incrementLoops();
@@ -35,6 +36,6 @@ namespace onelabUtils {
   void archiveSolutionFiles(const std::string &fileName);
   void loadDb(const std::string &name);
   void resetDb(bool runGmshClient);
-}
+} // namespace onelabUtils
 
 #endif

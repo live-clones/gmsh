@@ -8,15 +8,13 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterCVTRemeshPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterCVTRemeshPlugin();
 }
 
-class GMSH_CVTRemeshPlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_CVTRemeshPlugin(){}
+class GMSH_CVTRemeshPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_CVTRemeshPlugin() {}
   std::string getName() const { return "CVTRemesh"; }
   std::string getShortHelp() const
   {
@@ -24,7 +22,7 @@ class GMSH_CVTRemeshPlugin : public GMSH_PostPlugin
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

@@ -15,7 +15,7 @@
 // The container for list-based datasets (for which all elements are
 // discontinuous).
 class PViewDataList : public PViewData {
- public:
+public:
   // FIXME: all these members will be made private once the plugins
   // have been rewritten
   int NbTimeStep;
@@ -51,55 +51,63 @@ class PViewDataList : public PViewData {
   std::vector<int> polyNumNodes[2];
   std::vector<int> polyAgNumNodes[2];
   int polyTotNumNodes[2];
- private:
+
+private:
   int _index[33];
   int _lastElement, _lastDimension;
-  int _lastNumNodes, _lastNumComponents, _lastNumValues, _lastNumEdges, _lastType;
+  int _lastNumNodes, _lastNumComponents, _lastNumValues, _lastNumEdges,
+    _lastType;
   double *_lastXYZ, *_lastVal;
   bool _isAdapted;
   void _stat(std::vector<double> &D, std::vector<char> &C, int nb);
-  void _stat(std::vector<double> &list, int nbcomp, int nbelm, int nbnod, int type);
+  void _stat(std::vector<double> &list, int nbcomp, int nbelm, int nbnod,
+             int type);
   void _setLast(int ele);
   void _setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg, int type,
                 std::vector<double> &list, int nblist);
-  void _getString(int dim, int i, int timestep, std::string &str,
-                  double &x, double &y, double &z, double &style);
-  int _getRawData(int idxtype, std::vector<double> **l, int **ne, int *nc, int *nn);
- public:
-  PViewDataList(bool isAdapted=false);
-  ~PViewDataList(){}
-  bool isAdapted(){ return _isAdapted; }
-  bool finalize(bool computeMinMax=true, const std::string &interpolationScheme="");
-  int getNumTimeSteps(){ return NbTimeStep; }
+  void _getString(int dim, int i, int timestep, std::string &str, double &x,
+                  double &y, double &z, double &style);
+  int _getRawData(int idxtype, std::vector<double> **l, int **ne, int *nc,
+                  int *nn);
+
+public:
+  PViewDataList(bool isAdapted = false);
+  ~PViewDataList() {}
+  bool isAdapted() { return _isAdapted; }
+  bool finalize(bool computeMinMax = true,
+                const std::string &interpolationScheme = "");
+  int getNumTimeSteps() { return NbTimeStep; }
   double getTime(int step);
-  double getMin(int step=-1, bool onlyVisible=false, int forceNumComponents=0,
-                int componentMap[9]=0);
-  double getMax(int step=-1, bool onlyVisible=false, int forceNumComponents=0,
-                int componentMap[9]=0);
-  void setMin(double min) {Min = min;}
-  void setMax(double max) {Max = max;}
-  SBoundingBox3d getBoundingBox(int step=-1){ return BBox; }
-  void setBoundingBox(SBoundingBox3d& box) {BBox = box;}
-  int getNumScalars(int step=-1);
-  int getNumVectors(int step=-1);
-  int getNumTensors(int step=-1);
-  int getNumPoints(int step=-1){ return NbSP + NbVP + NbTP; }
-  int getNumLines(int step=-1){ return NbSL + NbVL + NbTL; }
-  int getNumTriangles(int step=-1){ return NbST + NbVT + NbTT; }
-  int getNumQuadrangles(int step=-1){ return NbSQ + NbVQ + NbTQ; }
-  int getNumPolygons(int step=-1){ return NbSG + NbVG + NbTG; }
-  int getNumTetrahedra(int step=-1){ return NbSS + NbVS + NbTS; }
-  int getNumHexahedra(int step=-1){ return NbSH + NbVH + NbTH; }
-  int getNumPrisms(int step=-1){ return NbSI + NbVI + NbTI; }
-  int getNumPyramids(int step=-1){ return NbSY + NbVY + NbTY; }
-  int getNumTrihedra(int step=-1){ return NbSR + NbVR + NbTR; }
-  int getNumPolyhedra(int step=-1){ return NbSD + NbVD + NbTD; }
-  int getNumEntities(int step=-1){ return 1; }
-  int getNumElements(int step=-1, int ent=-1);
+  double getMin(int step = -1, bool onlyVisible = false,
+                int forceNumComponents = 0, int componentMap[9] = 0);
+  double getMax(int step = -1, bool onlyVisible = false,
+                int forceNumComponents = 0, int componentMap[9] = 0);
+  void setMin(double min) { Min = min; }
+  void setMax(double max) { Max = max; }
+  SBoundingBox3d getBoundingBox(int step = -1) { return BBox; }
+  void setBoundingBox(SBoundingBox3d &box) { BBox = box; }
+  int getNumScalars(int step = -1);
+  int getNumVectors(int step = -1);
+  int getNumTensors(int step = -1);
+  int getNumPoints(int step = -1) { return NbSP + NbVP + NbTP; }
+  int getNumLines(int step = -1) { return NbSL + NbVL + NbTL; }
+  int getNumTriangles(int step = -1) { return NbST + NbVT + NbTT; }
+  int getNumQuadrangles(int step = -1) { return NbSQ + NbVQ + NbTQ; }
+  int getNumPolygons(int step = -1) { return NbSG + NbVG + NbTG; }
+  int getNumTetrahedra(int step = -1) { return NbSS + NbVS + NbTS; }
+  int getNumHexahedra(int step = -1) { return NbSH + NbVH + NbTH; }
+  int getNumPrisms(int step = -1) { return NbSI + NbVI + NbTI; }
+  int getNumPyramids(int step = -1) { return NbSY + NbVY + NbTY; }
+  int getNumTrihedra(int step = -1) { return NbSR + NbVR + NbTR; }
+  int getNumPolyhedra(int step = -1) { return NbSD + NbVD + NbTD; }
+  int getNumEntities(int step = -1) { return 1; }
+  int getNumElements(int step = -1, int ent = -1);
   int getDimension(int step, int ent, int ele);
   int getNumNodes(int step, int ent, int ele);
-  int getNode(int step, int ent, int ele, int nod, double &x, double &y, double &z);
-  void setNode(int step, int ent, int ele, int nod, double x, double y, double z);
+  int getNode(int step, int ent, int ele, int nod, double &x, double &y,
+              double &z);
+  void setNode(int step, int ent, int ele, int nod, double x, double y,
+               double z);
   int getNumComponents(int step, int ent, int ele);
   int getNumValues(int step, int ent, int ele);
   void getValue(int step, int ent, int ele, int idx, double &val);
@@ -107,20 +115,20 @@ class PViewDataList : public PViewData {
   void setValue(int step, int ent, int ele, int nod, int comp, double val);
   int getNumEdges(int step, int ent, int ele);
   int getType(int step, int ent, int ele);
-  int getNumStrings2D(){ return NbT2; }
-  int getNumStrings3D(){ return NbT3; }
-  void getString2D(int i, int step, std::string &str,
-                   double &x, double &y, double &style);
-  void getString3D(int i, int step, std::string &str,
-                   double &x, double &y, double &z, double &style);
+  int getNumStrings2D() { return NbT2; }
+  int getNumStrings3D() { return NbT3; }
+  void getString2D(int i, int step, std::string &str, double &x, double &y,
+                   double &style);
+  void getString3D(int i, int step, std::string &str, double &x, double &y,
+                   double &z, double &style);
   void reverseElement(int step, int ent, int ele);
   void smooth();
   bool combineTime(nameData &nd);
   bool combineSpace(nameData &nd);
   void setXY(std::vector<double> &x, std::vector<double> &y);
-  void setXYZV(std::vector<double> &x, std::vector<double> &y, std::vector<double> &z,
-               std::vector<double> &v);
-  bool isListBased(){ return true; }
+  void setXYZV(std::vector<double> &x, std::vector<double> &y,
+               std::vector<double> &z, std::vector<double> &v);
+  bool isListBased() { return true; }
   double getMemoryInMb();
 
   // specific to list-based data sets
@@ -129,15 +137,18 @@ class PViewDataList : public PViewData {
 
   // I/O routines
   bool readPOS(FILE *fp, double version, bool binary);
-  bool writePOS(const std::string &fileName, bool binary=false, bool parsed=true,
-                bool append=false);
-  virtual bool writeMSH(const std::string &fileName, double version=2.2, bool binary=false,
-                        bool savemesh=true, bool multipleView=false,
-                        int partitionNum=0, bool saveInterpolationMatrices=true,
-                        bool forceNodeData=false, bool forceElementData=false);
+  bool writePOS(const std::string &fileName, bool binary = false,
+                bool parsed = true, bool append = false);
+  virtual bool writeMSH(const std::string &fileName, double version = 2.2,
+                        bool binary = false, bool savemesh = true,
+                        bool multipleView = false, int partitionNum = 0,
+                        bool saveInterpolationMatrices = true,
+                        bool forceNodeData = false,
+                        bool forceElementData = false);
   virtual void importLists(int N[24], std::vector<double> *V[24]);
   virtual void getListPointers(int N[24], std::vector<double> *V[24]);
-  void importList(int index, int n, const std::vector<double> &v, bool finalize);
+  void importList(int index, int n, const std::vector<double> &v,
+                  bool finalize);
 };
 
 #endif

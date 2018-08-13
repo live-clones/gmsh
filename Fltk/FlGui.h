@@ -11,13 +11,13 @@
 #include "SPoint2.h"
 
 #define GMSH_WINDOW_BOX FL_FLAT_BOX
-#define GMSH_SIMPLE_RIGHT_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE+1)
-#define GMSH_SIMPLE_TOP_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE+2)
+#define GMSH_SIMPLE_RIGHT_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 1)
+#define GMSH_SIMPLE_TOP_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 2)
 
-#define IW (10 * FL_NORMAL_SIZE)    // input field width
-#define BB (7 * FL_NORMAL_SIZE)     // width of a button with internal label
+#define IW (10 * FL_NORMAL_SIZE) // input field width
+#define BB (7 * FL_NORMAL_SIZE) // width of a button with internal label
 #define BH (2 * FL_NORMAL_SIZE + 1) // button height
-#define WB (5)                      // window border
+#define WB (5) // window border
 
 class graphicWindow;
 class openglWindow;
@@ -45,22 +45,24 @@ class GRegion;
 class MElement;
 class PView;
 
-class FlGui{
- private:
+class FlGui {
+private:
   static FlGui *_instance;
   static std::string _openedThroughMacFinder;
   static bool _finishedProcessingCommandLine;
   std::string _lastStatus;
- public:
-  std::vector<GVertex*> selectedVertices;
-  std::vector<GEdge*> selectedEdges;
-  std::vector<GFace*> selectedFaces;
-  std::vector<GRegion*> selectedRegions;
-  std::vector<MElement*> selectedElements;
+
+public:
+  std::vector<GVertex *> selectedVertices;
+  std::vector<GEdge *> selectedEdges;
+  std::vector<GFace *> selectedFaces;
+  std::vector<GRegion *> selectedRegions;
+  std::vector<MElement *> selectedElements;
   std::vector<SPoint2> selectedPoints;
-  std::vector<PView*> selectedViews;
- public:
-  std::vector<graphicWindow*> graph;
+  std::vector<PView *> selectedViews;
+
+public:
+  std::vector<graphicWindow *> graph;
   optionWindow *options;
   onelabWindow *onelab2;
   fieldWindow *fields;
@@ -77,11 +79,12 @@ class FlGui{
   helpWindow *help;
   onelabGroup *onelab;
   openglWindow *fullscreen;
- public:
+
+public:
   FlGui(int argc, char **argv);
-  ~FlGui(){}
+  ~FlGui() {}
   // return the single static instance of the GUI
-  static FlGui *instance(int argc=0, char **argv=0);
+  static FlGui *instance(int argc = 0, char **argv = 0);
   // check if the GUI is available
   static bool available();
   // run the GUI until there's no window left
@@ -107,7 +110,7 @@ class FlGui{
   // navigation). This is necessary since FLTK 1.1.
   int testArrowShortcuts();
   // set the title of the graphic windows
-  void setGraphicTitle(std::string title);
+  void setGraphicTitle(const std::string &title);
   // update the GUI when views get modified, added or deleted
   void updateViews(bool numberOfViewsHasChanged, bool deleteWidgets);
   // update the GUI when fields change
@@ -125,9 +128,9 @@ class FlGui{
   // select an entity in the most recent graphic window
   char selectEntity(int type);
   // display status message
-  void setStatus(const std::string &msg, bool opengl=false);
+  void setStatus(const std::string &msg, bool opengl = false);
   // redisplay last status message
-  void setLastStatus(int col=-1);
+  void setLastStatus(int col = -1);
   // display status message and update progress bar
   void setProgress(const std::string &msg, double val, double min, double max);
   // create the window for physical context dependant definitions

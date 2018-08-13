@@ -1,166 +1,227 @@
-#include <math.h>
-#include <time.h>
-#include "hxt_bbox.h"
-#include "hxt_tools.h"
-#include "hxt_mesh_size.h"
+// #include "hxt_mesh_size.h"
 #include "hxt_tetrahedra.h"
-#include "hxt_vertices.h"
+// #include "hxt_vertices.h"
 #include "hxt_mesh3d.h"
 #include "predicates.h"
+#include "hxt_tetFlag.h"
 
-#ifdef HXT_MICROSOFT
-#define _CRT_RAND_S 
-#include <stdlib.h> 
-double drand48() {
-  double a;
-  rand_s(&a);
-  return a;
-}
-#endif
-
-static inline void sort3ints(uint32_t *i){
-  uint32_t no1 = i[0];
-  uint32_t no2 = i[1];
-  uint32_t no3 = i[2];
-
-  if (no1>no2) {   
-    i[1]=no1;    
-    i[0]=no2;   
-  } else {
-    i[1]=no2;  
-    i[0]=no1;  
-  } 
-  if (i[1]>no3) { 
-    i[2]=i[1];    
-    if(i[0]>no3){         
-      i[1]=i[0];                
-      i[0]=no3;
-    }else {
-      i[1]=no3;      
-    }         
-  }else i[2]=no3;
-  //printf("%u %u %u\n",i[0],i[1],i[2]);
-}
+// #if defined(_MSC_VER)
+// #define _CRT_RAND_S 
+// #include <stdlib.h> 
+// double drand48() {
+//   double a;
+//   rand_s(&a);
+//   return a;
+// }
+// #endif
 
 
-static inline int facecmp(const void *p0, const void *p1)
-{ 
-  uint32_t *f0 = (uint32_t*)p0;
-  uint32_t *f1 = (uint32_t*)p1;
+
+HXTStatus hxtComputeMeshSizeFromTrianglesAndLines(HXTMesh* mesh, HXTDelaunayOptions* delOptions) {
+
+  HXT_CHECK(hxtAlignedMalloc(&delOptions->nodalSizes,mesh->vertices.num*sizeof(double))); 
   
-  if (f0[0] != f1[0]) return f0[0] - f1[0];
-  if (f0[1] != f1[1]) return f0[1] - f1[1];
-  return f0[2] - f1[2];
-}
-
-HXTStatus hxtCreateFaceSearchStructure(HXTMesh* mesh, uint32_t **pfaces){
-  uint32_t *tfaces;
-  
-  HXT_CHECK(hxtMalloc(&tfaces,3*mesh->triangles.num*sizeof(uint32_t)));
-  memcpy (tfaces, mesh->triangles.node, 3*mesh->triangles.num*sizeof(uint32_t));    
-  
-#pragma omp parallel for
-  for (uint32_t i = 0; i<mesh->triangles.num; i++)sort3ints(&tfaces[3*i]);
-  
-  // CELESTIN FIXME : SHOULD USE YOUR PARALLEL SORT
-  qsort(tfaces,mesh->triangles.num,3*sizeof(uint32_t),facecmp);
-  *pfaces = tfaces;
-  return HXT_STATUS_OK;  
-}
-
-HXTStatus hxtComputeMeshSizeFromMesh (HXTMesh* mesh, double **psizes){
-
-  double *sizes;
-  HXT_CHECK(hxtMalloc(&sizes,mesh->vertices.num*sizeof(double))); 
-  
-#pragma omp parallel for
-  for (uint32_t i = 0; i<mesh->tetrahedra.num; i++){
-    for (uint32_t j = 0; j<4; j++){  
-      uint32_t n1 = mesh->tetrahedra.node[4*i+j];      
-      if (n1 != HXT_GHOST_VERTEX)
-        sizes[n1] = 1.e22;
-    }
+  #pragma omp parallel for
+  for (uint32_t i = 0; i<mesh->vertices.num; i++){
+    delOptions->nodalSizes[i] = DBL_MAX;
   }
 
-
-#pragma omp parallel for
-  for (uint32_t i = 0; i<mesh->tetrahedra.num; i++){
-    for (uint32_t j = 0; j<4; j++){  
-      uint32_t n1 = mesh->tetrahedra.node[4*i+(j+0)%4];
-      uint32_t n2 = mesh->tetrahedra.node[4*i+(j+1)%4];
-      if (n1 != HXT_GHOST_VERTEX && n2 != HXT_GHOST_VERTEX){
-        double *X1 = mesh->vertices.coord + 4*n1;
-        double *X2 = mesh->vertices.coord + 4*n2;
-        double l = sqrt ((X1[0]-X2[0])*(X1[0]-X2[0])+
-                         (X1[1]-X2[1])*(X1[1]-X2[1])+
-                         (X1[2]-X2[2])*(X1[2]-X2[2]));
-        sizes [n1] = l < sizes [n1] ? l : sizes [n1];
-        sizes [n2] = l < sizes [n2] ? l : sizes [n2];
+  // only do for triangles
+  // we do not take into account hereafter delOptions->nodalSizes = to DBL_MAX
+  // could be changed in another fashion
+  for (uint32_t i = 0; i<mesh->triangles.num; i++){
+    for (uint32_t j = 0; j<3; j++){  
+      for (uint32_t k = j+1; k<3; k++){  
+        uint32_t n1 = mesh->triangles.node[3*i+j];
+        uint32_t n2 = mesh->triangles.node[3*i+k];
+        if (n1 != HXT_GHOST_VERTEX && n2 != HXT_GHOST_VERTEX){
+          double *X1 = mesh->vertices.coord + (size_t) 4*n1;
+          double *X2 = mesh->vertices.coord + (size_t) 4*n2;
+          double l = sqrt ((X1[0]-X2[0])*(X1[0]-X2[0])+
+                           (X1[1]-X2[1])*(X1[1]-X2[1])+
+                           (X1[2]-X2[2])*(X1[2]-X2[2]));
+          if(l<delOptions->nodalSizes[n1]) delOptions->nodalSizes[n1] = l;
+          if(l<delOptions->nodalSizes[n2]) delOptions->nodalSizes[n2] = l;
+        }
       }
     }
   }
-  *psizes = sizes;
+
+  for (uint32_t i = 0; i<mesh->lines.num; i++){
+      uint32_t n1 = mesh->lines.node[2*i+0];
+      uint32_t n2 = mesh->lines.node[2*i+1];
+      if (n1 != HXT_GHOST_VERTEX && n2 != HXT_GHOST_VERTEX){
+        double *X1 = mesh->vertices.coord + (size_t) 4*n1;
+        double *X2 = mesh->vertices.coord + (size_t) 4*n2;
+        double l = sqrt ((X1[0]-X2[0])*(X1[0]-X2[0])+
+                         (X1[1]-X2[1])*(X1[1]-X2[1])+
+                         (X1[2]-X2[2])*(X1[2]-X2[2]));
+        if(l<delOptions->nodalSizes[n1]) delOptions->nodalSizes[n1] = l;
+        if(l<delOptions->nodalSizes[n2]) delOptions->nodalSizes[n2] = l;
+    }
+  }
   return HXT_STATUS_OK;    
 }
 
-// TODO: use a sort on the index only and then put everything into order...
-HXTStatus hxtEmptyMesh(HXTMesh* mesh){
+HXTStatus hxtComputeMeshSizeFromMesh (HXTMesh* mesh, HXTDelaunayOptions* delOptions) {
+
+  HXT_CHECK(hxtAlignedMalloc(&delOptions->nodalSizes,mesh->vertices.num*sizeof(double))); 
+  
+  #pragma omp parallel for
+  for (uint32_t i = 0; i<mesh->vertices.num; i++){
+    delOptions->nodalSizes[i] = DBL_MAX;
+  }
+
+  // only do for triangles
+  // we do not take into account hereafter delOptions->nodalSizes = to DBL_MAX
+  // could be changed in another fashion
+  for (uint32_t i = 0; i<mesh->tetrahedra.num; i++){
+    for (uint32_t j = 0; j<4; j++){  
+      for (uint32_t k = j+1; k<4; k++){  
+        uint32_t n1 = mesh->tetrahedra.node[4*i+j];
+        uint32_t n2 = mesh->tetrahedra.node[4*i+k];
+        if (n1 != HXT_GHOST_VERTEX && n2 != HXT_GHOST_VERTEX){
+          double *X1 = mesh->vertices.coord + (size_t) 4*n1;
+          double *X2 = mesh->vertices.coord + (size_t) 4*n2;
+          double l = sqrt ((X1[0]-X2[0])*(X1[0]-X2[0])+
+               (X1[1]-X2[1])*(X1[1]-X2[1])+
+               (X1[2]-X2[2])*(X1[2]-X2[2]));
+          if(l<delOptions->nodalSizes[n1]) delOptions->nodalSizes[n1] = l;
+          if(l<delOptions->nodalSizes[n2]) delOptions->nodalSizes[n2] = l;
+        }
+      }
+    }
+  }
+  return HXT_STATUS_OK;    
+}
+
+
+
+
+HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions){
 // we assume that the input is a surface mesh
   if (mesh->tetrahedra.num)  
     return HXT_ERROR_MSG(HXT_STATUS_FAILED, "The input mesh should only contain triangles");
   if (mesh->triangles.num == 0)  
     return HXT_ERROR_MSG(HXT_STATUS_FAILED, "The input mesh should contain triangles");
 
-  hxtNodeInfo* nodeInfo;
+  double minDist2 = DBL_MAX;
+  #pragma omp parallel for reduction(min:minDist2)
+  for (uint64_t i=0; i<mesh->triangles.num; i++){
+    uint32_t* node = mesh->triangles.node + 3*i;
+    for (int j=0; j<3; j++) {
+      double* n1 = mesh->vertices.coord + (size_t) 4*node[j];
+      double* n2 = mesh->vertices.coord + (size_t) 4*node[(j+1)%3];
 
+      double dist2 = (n1[0]-n2[0])*(n1[0]-n2[0])
+                   + (n1[1]-n2[1])*(n1[1]-n2[1])
+                   + (n1[2]-n2[2])*(n1[2]-n2[2]);
+
+      if(dist2<minDist2)
+        minDist2 = dist2;
+    }
+  }
+
+  double minSize = sqrt(minDist2);
+
+  hxtNodeInfo* nodeInfo;
   HXT_CHECK( hxtAlignedMalloc(&nodeInfo, sizeof(hxtNodeInfo)*mesh->vertices.num) );
 
   #pragma omp parallel for simd aligned(nodeInfo:SIMD_ALIGN)
   for (uint32_t i=0; i<mesh->vertices.num; i++) {
     nodeInfo[i].node = i;
+    nodeInfo[i].status = HXT_STATUS_TRYAGAIN;
   }
 
-  HXT_CHECK( hxtDelaunaySteadyVertices(mesh, NULL, nodeInfo, mesh->vertices.num) );
+  delOptions->minSizeStart = 0.0;
+  delOptions->minSizeEnd = minSize;
+  HXT_CHECK( hxtDelaunaySteadyVertices(mesh, delOptions, nodeInfo, mesh->vertices.num) );
+  delOptions->minSizeStart = minSize;
+  delOptions->minSizeEnd = minSize;
+  delOptions->numVerticesInMesh = mesh->vertices.num;
+
+#ifdef DEBUG
+  #pragma omp parallel for simd aligned(nodeInfo:SIMD_ALIGN)
+  for (uint32_t i=0; i<mesh->vertices.num; i++) {
+    if(nodeInfo[i].status!=HXT_STATUS_TRUE){
+      HXT_WARNING("vertex %u of the empty mesh was not inserted\n", nodeInfo[i].node);
+    }
+  }
+#endif
 
   HXT_CHECK( hxtAlignedFree(&nodeInfo) );
   
   return HXT_STATUS_OK;
-  
 }
 
 
-HXTStatus hxtVerifyBoundary(HXTMesh* mesh, uint32_t *missing) {
 
-  uint32_t ft [4][3] = {{0,1,2},{0,1,3},{0,2,3},{1,2,3}};
-  
-  uint16_t *flags;
-  HXT_CHECK(hxtMalloc(&flags,mesh->triangles.num*sizeof(uint16_t))); 
-#pragma omp parallel for
-  for (uint32_t i = 0; i<mesh->triangles.num; i++)flags[i] = 0;
 
-  uint32_t *tfaces;
-  HXT_CHECK(hxtCreateFaceSearchStructure(mesh, &tfaces));   
-  
-#pragma omp parallel for
-  for (uint64_t i=0; i<mesh->tetrahedra.num; i++){
-    uint32_t *v = &mesh->tetrahedra.node[4*i];
-    for (uint32_t j=0; j<4;j++){
-      uint32_t facet[3] = {v[ft[j][0]],v[ft[j][1]],v[ft[j][2]]};
-      sort3ints (facet);
-      uint32_t* found = (uint32_t*)bsearch (facet, tfaces, mesh->triangles.num, 3*sizeof(uint32_t), facecmp);
-      if (found) {
-        uint32_t facetId = (found - tfaces)/3;
-        flags[facetId] = 1;
+
+/***************************************************
+ *      Coloring the mesh                          *
+ ***************************************************/
+HXTStatus hxtColorMesh(HXTMesh* mesh, uint16_t *nbColors) {
+  uint64_t *stack;
+  HXT_CHECK(hxtMalloc(&stack,mesh->tetrahedra.num*sizeof(uint64_t))); 
+  // now that tetrahedra are flaged, we can proceed to colorize the mesh
+  memset(mesh->tetrahedra.colors, 0, mesh->tetrahedra.size*sizeof(uint16_t));
+
+  uint16_t color = 1;
+  uint16_t colorOut = 0;
+
+  while (1){
+    uint64_t stackSize = 0;
+    uint64_t first = UINT64_MAX;
+
+    for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
+      if(mesh->tetrahedra.colors[i]==0){
+        first = i;
+        break;
       }
+    }
+
+    if(first==UINT64_MAX)
+      break;
+
+    stack[stackSize++] = first;
+    mesh->tetrahedra.colors[first] = color;
+
+    for (uint64_t i=0; i<stackSize; i++) {
+      uint64_t t = stack[i];
+
+      if (mesh->tetrahedra.node[4*t+3] == HXT_GHOST_VERTEX)
+        colorOut = color;
+
+      for (unsigned j=0; j<4; j++) {
+        if(mesh->tetrahedra.neigh[4*t+j]!=HXT_NO_ADJACENT && isFacetConstrained(mesh, 4*t+j)==0){ // the facet is not a boundary facet
+          uint64_t neigh = mesh->tetrahedra.neigh[4*t+j]/4;
+          if(mesh->tetrahedra.colors[neigh]==0){
+            stack[stackSize++] = neigh;
+            mesh->tetrahedra.colors[neigh] = color;
+          }
+        }
+      }
+    }
+    color++;
+  }
+  *nbColors = color-1; // -1 because we began at one AND the colorout is counted...
+
+  HXT_CHECK( hxtFree(&stack) );
+
+  #pragma omp parallel for
+  for (int i=0;i<mesh->tetrahedra.num;i++){
+    if (mesh->tetrahedra.colors[i] == colorOut){
+      mesh->tetrahedra.colors[i] = UINT16_MAX;
+    }
+    else if(mesh->tetrahedra.colors[i] > colorOut){
+      mesh->tetrahedra.colors[i]--;
     }
   }
 
-  *missing=0;
-  for (uint32_t i = 0; i<mesh->triangles.num; i++)*missing += 1 - flags[i];
-  HXT_CHECK(hxtFree(&tfaces)); 
-  HXT_CHECK(hxtFree(&flags)); 
   return HXT_STATUS_OK;
 }
+
 
 // refine 
 
@@ -243,143 +304,139 @@ double hxtTetCircumcenter(double a[3], double b[3], double c[3], double d[3],
 }
 
 
-/// Starts from an empty 3D mesh and color the different regions 
-/// assume that neighbors are computed
-HXTStatus hxtColorMesh(HXTMesh* mesh, uint32_t *nbColors) { // TODO: why is nbColors unused ??
-  // compute the face search structure
-  uint32_t *tfaces;
-  HXT_CHECK(hxtCreateFaceSearchStructure(mesh, &tfaces));   
+HXTStatus hxtRefineTetrahedraOneStep(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HXTMeshSize* sizeField, int *nbAdd, int iter)
+{
+  double *newVertices;
+  uint32_t *numCreated;
+  int maxThreads = omp_get_max_threads();
+  HXT_CHECK( hxtAlignedMalloc(&newVertices, sizeof(double)*4*mesh->tetrahedra.num) );
+  HXT_CHECK( hxtMalloc(&numCreated, maxThreads*sizeof(uint32_t)) );
+
   
-  // TODO: check this out
-#pragma omp parallel for
-  for (uint64_t i = 0; i<mesh->tetrahedra.num; i++)
-    mesh->tetrahedra.colors[i] = 0 ;//mesh->tetrahedra.node[4*i+3]!=HXT_GHOST_VERTEX ? 0 : UINT16_MAX;
+  // TODO: creating multiple vertices per tetrahedron
+  uint32_t add = 0;
+  HXTStatus status = HXT_STATUS_OK;
+  #pragma omp parallel reduction(+:add)
+  {
+    int threadID = omp_get_thread_num();
+    uint32_t localAdd = 0;
 
-  uint16_t color = 1;
-  uint16_t colorOut = 0;
-
-  uint64_t *stack;
-  HXT_CHECK(hxtMalloc(&stack,mesh->tetrahedra.num*sizeof(uint64_t))); 
-  while (1){
-    uint64_t stackSize = 0;
-    uint64_t first;
-
-    for ( first = 0; first<mesh->tetrahedra.num; first++)if (mesh->tetrahedra.colors[first] == 0) break;    
     
-    if (first == mesh->tetrahedra.num) break;
-    stack[stackSize++] = first;
-    int count = 1;
-    while (stackSize){
-      stackSize --;
-      uint64_t t = stack[stackSize];
-      mesh->tetrahedra.colors[t] = color;
-      if (mesh->tetrahedra.node[4*t+3] == HXT_GHOST_VERTEX)
-        colorOut = color;
-      for (uint16_t i = 0; i< 4;i++){
-        uint64_t neigh = mesh->tetrahedra.neigh[4*t+i]/4;
-        if (!mesh->tetrahedra.colors[neigh]){
-          uint32_t* const Node = mesh->tetrahedra.node + 4*t;
-          uint32_t facet [3] = {Node[(i+1)%4], Node[(i+2)%4], Node[(i+3)%4]};
-          sort3ints(facet);
-          uint32_t* found = (uint32_t*)bsearch (facet, tfaces, mesh->triangles.num, 3*sizeof(uint32_t), facecmp);
-          if (!found){
-            stack[stackSize++] = neigh;
-            count ++;
+    #pragma omp for schedule(static)
+    for (uint64_t i=0; i<mesh->tetrahedra.num; i++)
+    {
+      newVertices[(size_t) 4*i+3] = -1.0;
+      if (mesh->tetrahedra.colors[i] != UINT16_MAX && isTetProcessed(mesh, i)==0){
+        double *a = mesh->vertices.coord + (size_t) 4*mesh->tetrahedra.node[4*i+0];
+        double *b = mesh->vertices.coord + (size_t) 4*mesh->tetrahedra.node[4*i+1];
+        double *c = mesh->vertices.coord + (size_t) 4*mesh->tetrahedra.node[4*i+2];
+        double *d = mesh->vertices.coord + (size_t) 4*mesh->tetrahedra.node[4*i+3];
+        double circumcenter [3];
+        double u,v,w;
+        hxtTetCircumcenter(a,b,c,d, circumcenter, &u, &v, &w);
+        double circumradius2 = (a[0]-circumcenter[0])*(a[0]-circumcenter[0])+
+                               (a[1]-circumcenter[1])*(a[1]-circumcenter[1])+
+                               (a[2]-circumcenter[2])*(a[2]-circumcenter[2]);
+        // all new edges will have a length equal to circumradius2
+        double meshSize;
+        //        HXTStatus status = hxtMeshSizeEvaluate ( sizeField, circumcenter, &meshSize);
+
+        double SIZES[4];
+        double AVG = 0;
+        int NN = 0;
+        for (int j=0;j<4;j++){
+          SIZES[j] = delOptions->nodalSizes[mesh->tetrahedra.node[4*i+j]];
+          if (SIZES[j] != DBL_MAX){
+            NN++;
+            AVG += SIZES[j];
           }
+        }
+        if (NN != 4){
+          AVG /= NN;
+          for (int j=0;j<4;j++){
+            if (SIZES[j] == DBL_MAX){
+              // delOptions->nodalSizes[mesh->tetrahedra.node[4*i+j]] = AVG;
+              SIZES[j] = AVG;
+            }
+          }
+        }
+  
+        meshSize = SIZES[0] * (1-u-v-w) + SIZES[1] * u + SIZES[2] * v + SIZES[3] * w;
+  
+        if (u > 0 && v > 0 && w > 0 && 1.-u-v-w > 0 && meshSize * meshSize * .49 < circumradius2) {
+          //    printf("%llu %g\n",i,sqrt(circumradius2),meshSize);
+          newVertices[(size_t) 4*i  ] = circumcenter[0];
+          newVertices[(size_t) 4*i+1] = circumcenter[1];
+          newVertices[(size_t) 4*i+2] = circumcenter[2];
+          newVertices[(size_t) 4*i+3] = meshSize;
+          localAdd++;
+        }
+
+        markTetAsProcessed(mesh, i); // we do not need to refine that tetrahedra anymore
+      }
+    }
+
+    numCreated[threadID] = localAdd;
+
+    #pragma omp barrier
+    #pragma omp single
+    {
+      int nthreads = omp_get_num_threads();
+      add = 0;
+      for (int i=0; i<nthreads; i++) {
+        uint32_t tsum = add + numCreated[i];
+        numCreated[i] = add;
+        add = tsum;
+      }
+
+      if(mesh->vertices.num + add>mesh->vertices.size){
+        status=hxtAlignedRealloc(&mesh->vertices.coord, sizeof(double)*4*(mesh->vertices.num + add));
+        if(status==HXT_STATUS_OK){
+          status=hxtAlignedRealloc(&delOptions->nodalSizes, (mesh->vertices.num + add)*sizeof(double));
+          mesh->vertices.size = mesh->vertices.num + add;
         }
       }
     }
-    color++;
-  }
-  for (int i=0;i<mesh->tetrahedra.num;i++)if (mesh->tetrahedra.colors[i] == colorOut) mesh->tetrahedra.colors[i] = UINT16_MAX;
-  HXT_CHECK(hxtFree(&stack)); 
-  HXT_CHECK(hxtFree(&tfaces)); 
-  return HXT_STATUS_OK;
-}
 
+    localAdd = numCreated[threadID] + mesh->vertices.num;
 
-HXTStatus hxtRefineTetrahedraOneStep(HXTMesh* mesh, HXTMeshSize* sizeField, int *nbAdd, double **nodalSizes, int iter) {
-
-  double *newSizes;
-  double *newVertices;
-  HXT_CHECK(hxtMalloc(&newVertices, 4*mesh->tetrahedra.num*sizeof(double))); 
-  HXT_CHECK(hxtMalloc(&newSizes,mesh->tetrahedra.num*sizeof(double))); 
-#pragma omp parallel for
-  for (uint64_t i=0; i<mesh->tetrahedra.num; i++)
-    newVertices[4*i+3] = 0.0;
-  
-  // TODO: not creating point stupidly
-  uint32_t add = 0;
-#pragma omp parallel for reduction (+:add)
-  for (uint64_t i=0; i<mesh->tetrahedra.num; i++){
-    uint16_t myColor = mesh->tetrahedra.colors[i];
-    if (myColor != UINT16_MAX){
-      double *a = mesh->vertices.coord + 4*mesh->tetrahedra.node[4*i+0];
-      double *b = mesh->vertices.coord + 4*mesh->tetrahedra.node[4*i+1];
-      double *c = mesh->vertices.coord + 4*mesh->tetrahedra.node[4*i+2];
-      double *d = mesh->vertices.coord + 4*mesh->tetrahedra.node[4*i+3];
-      double circumcenter [3];
-      double u,v,w;
-      hxtTetCircumcenter(a,b,c,d, circumcenter, &u, &v, &w);
-      double circumradius = sqrt((a[0]-circumcenter[0])*(a[0]-circumcenter[0])+
-                                 (a[1]-circumcenter[1])*(a[1]-circumcenter[1])+
-                                 (a[2]-circumcenter[2])*(a[2]-circumcenter[2]));
-      // all new edges will have a length equal to circumradius
-      double meshSize;
-      //        HXTStatus status = hxtMeshSizeEvaluate ( sizeField, circumcenter, &meshSize);
-      meshSize =
-        (*nodalSizes)[mesh->tetrahedra.node[4*i+0]] * (1-u-v-w) +
-        (*nodalSizes)[mesh->tetrahedra.node[4*i+1]] * u +
-        (*nodalSizes)[mesh->tetrahedra.node[4*i+2]] * v +
-        (*nodalSizes)[mesh->tetrahedra.node[4*i+3]] * w;
-      //        printf("%g %g %g %g\n",u,v,w,meshSize);
-      // if mesh size  is significantly smaller than circumradius
-      if (u > 0 && v > 0 && w > 0 && 1.-u-v-w > 0 && meshSize *.8 < circumradius) {
-        //            printf("%llu %g\n",i,circumradius);
-        newVertices[4*i  ] = circumcenter[0];
-        newVertices[4*i+1] = circumcenter[1];
-        newVertices[4*i+2] = circumcenter[2];
-        newVertices[4*i+3] = 1.0;
-        newSizes[i] = meshSize;
-        add++;
+    if(status==HXT_STATUS_OK){
+      #pragma omp for schedule(static)
+      for (uint64_t i=0; i<mesh->tetrahedra.num; i++){
+        if ( newVertices [4*i+3]!=-1.0 ) {
+          mesh->vertices.coord[ (size_t) 4*localAdd   ] = newVertices [(size_t) 4*i  ];
+          mesh->vertices.coord[ (size_t) 4*localAdd+1 ] = newVertices [(size_t) 4*i+1];
+          mesh->vertices.coord[ (size_t) 4*localAdd+2 ] = newVertices [(size_t) 4*i+2];
+          delOptions->nodalSizes[localAdd] = newVertices [4*i+3];
+          localAdd++;
+        }
       }
     }
-  }  
-
-  if (mesh->vertices.num + add >= mesh->vertices.size){
-    HXT_CHECK(hxtRealloc(&mesh->vertices.coord,4*(mesh->vertices.num + add)*sizeof(double))); 
-    HXT_CHECK(hxtRealloc(nodalSizes,(mesh->vertices.num + add)*sizeof(double))); 
-    mesh->vertices.size = mesh->vertices.num + add;
   }
 
-  add = 0;
-// #pragma omp parallel for
-  for (uint64_t i=0; i<mesh->tetrahedra.num; i++){
-    if ( newVertices [4*i+3]!=0.0 ) {
-      mesh->vertices.coord[ 4*mesh->vertices.num   ] = newVertices [4*i  ];
-      mesh->vertices.coord[ 4*mesh->vertices.num+1 ] = newVertices [4*i+1];
-      mesh->vertices.coord[ 4*mesh->vertices.num+2 ] = newVertices [4*i+2];
-      (*nodalSizes) [ mesh->vertices.num ] = newSizes[i];
-      mesh->vertices.num++;
-      add++;
-    }
+  if(status!=HXT_STATUS_OK){
+    HXT_TRACE(status);
+    return status;
   }
+
+  mesh->vertices.num += add;
+
+
+  HXT_CHECK( hxtFree(&numCreated) );
+  HXT_CHECK(hxtAlignedFree(&newVertices));
   
-  HXT_CHECK(hxtDelaunay(mesh, NULL));
+  HXT_CHECK(hxtDelaunay(mesh, delOptions));
 
-  HXT_CHECK(hxtFree(&newVertices));
-  HXT_CHECK(hxtFree(&newSizes));
-  *nbAdd = add;
+  *nbAdd = mesh->vertices.num - delOptions->numVerticesInMesh;
+  delOptions->numVerticesInMesh = mesh->vertices.num;
   return HXT_STATUS_OK;
 }
 
-HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTMeshSize* sizeField, double **nodalSizes) {
+HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HXTMeshSize* sizeField) {
   int iter = 0;
-  while(iter++ < 20){
+  while(iter++ < 40){
     int nbAdd=0;
-    clock_t t1 = clock();
-    HXT_CHECK(hxtRefineTetrahedraOneStep(mesh, sizeField, &nbAdd, nodalSizes, iter));
-    HXT_INFO("ITERATION %3d -- %3f seconds\n",iter,(double)(clock()-t1)/CLOCKS_PER_SEC); 
+    HXT_CHECK(hxtRefineTetrahedraOneStep(mesh, delOptions, sizeField, &nbAdd, iter));
     //    uint32_t nb;
     //    HXT_CHECK(hxtColorMesh(mesh,&nb));
     if (nbAdd == 0) break;

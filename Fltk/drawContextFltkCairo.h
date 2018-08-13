@@ -23,17 +23,18 @@ class drawContextFltkCairo : public drawContextFltk {
   cairo_t *_cr;
   int _currentFontId;
   int _currentFontSize;
- public:
+
+public:
   void draw();
   drawContextFltkCairo();
   ~drawContextFltkCairo();
   double getStringWidth(const char *str);
-  //int getStringHeight();
-  //int getStringDescent();
+  // int getStringHeight();
+  // int getStringDescent();
   void flushString();
   void drawString(const char *str);
   void setFont(int fontid, int fontsize);
-  std::string getName(){ return "Cairo"; }
+  std::string getName() { return "Cairo"; }
 };
 
 #endif

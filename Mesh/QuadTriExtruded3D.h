@@ -33,7 +33,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 ********************************************************************************/
 
-#if !defined( _QTEXTR3D_H_ )
+#if !defined(_QTEXTR3D_H_)
 #define _QTEXTR3D_H_
 
 #include "GEntity.h"
@@ -56,7 +56,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "MHexahedron.h"
 #include "Numeric.h"
 #include <map>
-#include <math.h>
+#include <cmath>
 #include "QuadTriUtils.h"
 
 // Determines whether the region is a valid QuadToTri region.  Performs some
@@ -71,8 +71,8 @@ int meshQuadToTriRegion(GRegion *gr, MVertexRTree &pos);
 // The function that is called from meshGRegionExtruded.cpp to mesh QuadToTri
 // regions that are adjacent to subdivided regions, after the global Subdivide
 // command is called.  Added 04/08/11.
-int meshQuadToTriRegionAfterGlobalSubdivide(GRegion *gr,
-                                            std::set<std::pair<MVertex*, MVertex*> > *edges,
-                                            MVertexRTree &pos);
+int meshQuadToTriRegionAfterGlobalSubdivide(
+  GRegion *gr, std::set<std::pair<MVertex *, MVertex *> > *edges,
+  MVertexRTree &pos);
 
 #endif

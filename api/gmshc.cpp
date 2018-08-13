@@ -266,6 +266,19 @@ GMSH_API void gmshModelGetEntitiesForPhysicalGroup(const int dim, const int tag,
   }
 }
 
+GMSH_API void gmshModelGetPhysicalGroupsForEntity(const int dim, const int tag, int ** physicalTags, size_t * physicalTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_physicalTags_;
+    gmsh::model::getPhysicalGroupsForEntity(dim, tag, api_physicalTags_);
+    vector2ptr(api_physicalTags_, physicalTags, physicalTags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API int gmshModelAddPhysicalGroup(const int dim, int * tags, size_t tags_n, const int tag, int * ierr)
 {
   int result_api_;
@@ -402,27 +415,52 @@ GMSH_API void gmshModelGetType(const int dim, const int tag, char ** entityType,
   }
 }
 
-GMSH_API void gmshModelGetNormals(const int tag, double * parametricCoord, size_t parametricCoord_n, double ** normals, size_t * normals_n, int * ierr)
+GMSH_API void gmshModelGetParent(const int dim, const int tag, int * parentDim, int * parentTag, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
-    std::vector<double> api_normals_;
-    gmsh::model::getNormals(tag, api_parametricCoord_, api_normals_);
-    vector2ptr(api_normals_, normals, normals_n);
+    gmsh::model::getParent(dim, tag, *parentDim, *parentTag);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
   }
 }
 
-GMSH_API void gmshModelGetCurvatures(const int tag, double * parametricCoord, size_t parametricCoord_n, double ** curvatures, size_t * curvatures_n, int * ierr)
+GMSH_API void gmshModelGetValue(const int dim, const int tag, double * parametricCoord, size_t parametricCoord_n, double ** points, size_t * points_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
+    std::vector<double> api_points_;
+    gmsh::model::getValue(dim, tag, api_parametricCoord_, api_points_);
+    vector2ptr(api_points_, points, points_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelGetDerivative(const int dim, const int tag, double * parametricCoord, size_t parametricCoord_n, double ** derivatives, size_t * derivatives_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
+    std::vector<double> api_derivatives_;
+    gmsh::model::getDerivative(dim, tag, api_parametricCoord_, api_derivatives_);
+    vector2ptr(api_derivatives_, derivatives, derivatives_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelGetCurvature(const int dim, const int tag, double * parametricCoord, size_t parametricCoord_n, double ** curvatures, size_t * curvatures_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
     std::vector<double> api_curvatures_;
-    gmsh::model::getCurvatures(tag, api_parametricCoord_, api_curvatures_);
+    gmsh::model::getCurvature(dim, tag, api_parametricCoord_, api_curvatures_);
     vector2ptr(api_curvatures_, curvatures, curvatures_n);
   }
   catch(int api_ierr_){
@@ -444,6 +482,20 @@ GMSH_API void gmshModelGetPrincipalCurvatures(const int tag, double * parametric
     vector2ptr(api_curvatureMin_, curvatureMin, curvatureMin_n);
     vector2ptr(api_directionMax_, directionMax, directionMax_n);
     vector2ptr(api_directionMin_, directionMin, directionMin_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelGetNormal(const int tag, double * parametricCoord, size_t parametricCoord_n, double ** normals, size_t * normals_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
+    std::vector<double> api_normals_;
+    gmsh::model::getNormal(tag, api_parametricCoord_, api_normals_);
+    vector2ptr(api_normals_, normals, normals_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -557,6 +609,21 @@ GMSH_API void gmshModelMeshRebuildNodeCache(const int onlyIfNecessary, int * ier
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::rebuildNodeCache(onlyIfNecessary);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshGetNodesForPhysicalGroup(const int dim, const int tag, int ** nodeTags, size_t * nodeTags_n, double ** coord, size_t * coord_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_nodeTags_;
+    std::vector<double> api_coord_;
+    gmsh::model::mesh::getNodesForPhysicalGroup(dim, tag, api_nodeTags_, api_coord_);
+    vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
+    vector2ptr(api_coord_, coord, coord_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -1906,14 +1973,32 @@ GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n, const int wir
   }
 }
 
-GMSH_API void gmshModelOccFillet(int * volumeTags, size_t volumeTags_n, int * curveTags, size_t curveTags_n, const double radius, int ** outDimTags, size_t * outDimTags_n, const int removeVolume, int * ierr)
+GMSH_API void gmshModelOccFillet(int * volumeTags, size_t volumeTags_n, int * curveTags, size_t curveTags_n, double * radii, size_t radii_n, int ** outDimTags, size_t * outDimTags_n, const int removeVolume, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_volumeTags_(volumeTags, volumeTags + volumeTags_n);
     std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
+    std::vector<double> api_radii_(radii, radii + radii_n);
     gmsh::vectorpair api_outDimTags_;
-    gmsh::model::occ::fillet(api_volumeTags_, api_curveTags_, radius, api_outDimTags_, removeVolume);
+    gmsh::model::occ::fillet(api_volumeTags_, api_curveTags_, api_radii_, api_outDimTags_, removeVolume);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelOccChamfer(int * volumeTags, size_t volumeTags_n, int * curveTags, size_t curveTags_n, int * surfaceTags, size_t surfaceTags_n, double * distances, size_t distances_n, int ** outDimTags, size_t * outDimTags_n, const int removeVolume, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_volumeTags_(volumeTags, volumeTags + volumeTags_n);
+    std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
+    std::vector<int> api_surfaceTags_(surfaceTags, surfaceTags + surfaceTags_n);
+    std::vector<double> api_distances_(distances, distances + distances_n);
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::occ::chamfer(api_volumeTags_, api_curveTags_, api_surfaceTags_, api_distances_, api_outDimTags_, removeVolume);
     vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
   }
   catch(int api_ierr_){
@@ -2136,6 +2221,19 @@ GMSH_API void gmshModelOccImportShapes(const char * fileName, int ** outDimTags,
   try {
     gmsh::vectorpair api_outDimTags_;
     gmsh::model::occ::importShapes(fileName, api_outDimTags_, highestDimOnly, format);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelOccImportShapesNativePointer(const void * shape, int ** outDimTags, size_t * outDimTags_n, const int highestDimOnly, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::occ::importShapesNativePointer(shape, api_outDimTags_, highestDimOnly);
     vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
   }
   catch(int api_ierr_){
@@ -2397,6 +2495,30 @@ GMSH_API void gmshOnelabRun(const char * name, const char * command, int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::onelab::run(name, command);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshLoggerStart(char *** log, size_t * log_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::string> api_log_;
+    gmsh::logger::start(api_log_);
+    vectorstring2charptrptr(api_log_, log, log_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshLoggerStop(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::logger::stop();
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

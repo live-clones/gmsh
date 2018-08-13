@@ -8,82 +8,36 @@
 
 #include <FL/Fl_Pixmap.H>
 
-#define TREE_ICON_RIGHT(col)\
-  "11 11 2 1",\
-  ". c None",\
-  col,\
-  "...@.......",\
-  "...@@......",\
-  "...@@@.....",\
-  "...@@@@....",\
-  "...@@@@@...",\
-  "...@@@@@@..",\
-  "...@@@@@...",\
-  "...@@@@....",\
-  "...@@@.....",\
-  "...@@......",\
-  "...@......."
+#define TREE_ICON_RIGHT(col)                                                   \
+  "11 11 2 1", ". c None", col, "...@.......", "...@@......", "...@@@.....",   \
+    "...@@@@....", "...@@@@@...", "...@@@@@@..", "...@@@@@...", "...@@@@....", \
+    "...@@@.....", "...@@......", "...@......."
 
-#define TREE_ICON_DOWN(col)\
-  "11 11 2 1",\
-  ".  c None",\
-  col,\
-  "...........",\
-  "...........",\
-  "...........",\
-  "@@@@@@@@@@@",\
-  ".@@@@@@@@@.",\
-  "..@@@@@@@..",\
-  "...@@@@@...",\
-  "....@@@....",\
-  ".....@.....",\
-  "...........",\
-  "..........."
+#define TREE_ICON_DOWN(col)                                                    \
+  "11 11 2 1", ".  c None", col, "...........", "...........", "...........",  \
+    "@@@@@@@@@@@", ".@@@@@@@@@.", "..@@@@@@@..", "...@@@@@...", "....@@@....", \
+    ".....@.....", "...........", "..........."
 
-#define TREE_ICON_PLUS(col)\
-  "11 11 3 1",\
-  col,\
-  "# c #323232",\
-  "@ c #000000",\
-  "###########",\
-  "#.........#",\
-  "#.........#",\
-  "#....@....#",\
-  "#....@....#",\
-  "#..@@@@@..#",\
-  "#....@....#",\
-  "#....@....#",\
-  "#.........#",\
-  "#.........#",\
-  "###########"
+#define TREE_ICON_PLUS(col)                                                    \
+  "11 11 3 1", col, "# c #323232", "@ c #000000", "###########",               \
+    "#.........#", "#.........#", "#....@....#", "#....@....#", "#..@@@@@..#", \
+    "#....@....#", "#....@....#", "#.........#", "#.........#", "###########"
 
-#define TREE_ICON_MINUS(col)\
-  "11 11 3 1",\
-  col,\
-  "#	c #323232",\
-  "@	c #000000",\
-  "###########",\
-  "#.........#",\
-  "#.........#",\
-  "#.........#",\
-  "#.........#",\
-  "#..@@@@@..#",\
-  "#.........#",\
-  "#.........#",\
-  "#.........#",\
-  "#.........#",\
-  "###########"
+#define TREE_ICON_MINUS(col)                                                   \
+  "11 11 3 1", col, "#	c #323232", "@	c #000000", "###########",         \
+    "#.........#", "#.........#", "#.........#", "#.........#", "#..@@@@@..#", \
+    "#.........#", "#.........#", "#.........#", "#.........#", "###########"
 
 #if defined(__APPLE__)
-static const char * const open_xpm_light[] = {TREE_ICON_RIGHT("@ c #222222")};
-static const char * const close_xpm_light[] = {TREE_ICON_DOWN("@ c #222222")};
-static const char * const open_xpm_dark[] = {TREE_ICON_RIGHT("@ c #444444")};
-static const char * const close_xpm_dark[] = {TREE_ICON_DOWN("@ c #444444")};
+static const char *const open_xpm_light[] = {TREE_ICON_RIGHT("@ c #222222")};
+static const char *const close_xpm_light[] = {TREE_ICON_DOWN("@ c #222222")};
+static const char *const open_xpm_dark[] = {TREE_ICON_RIGHT("@ c #444444")};
+static const char *const close_xpm_dark[] = {TREE_ICON_DOWN("@ c #444444")};
 #else
-static const char * const open_xpm_light[] = {TREE_ICON_PLUS(". c #fefefe")};
-static const char * const close_xpm_light[] = {TREE_ICON_MINUS(". c #fefefe")};
-static const char * const open_xpm_dark[] = {TREE_ICON_PLUS(". c #bbbbbb")};
-static const char * const close_xpm_dark[] = {TREE_ICON_MINUS(". c #bbbbbb")};
+static const char *const open_xpm_light[] = {TREE_ICON_PLUS(". c #fefefe")};
+static const char *const close_xpm_light[] = {TREE_ICON_MINUS(". c #fefefe")};
+static const char *const open_xpm_dark[] = {TREE_ICON_PLUS(". c #bbbbbb")};
+static const char *const close_xpm_dark[] = {TREE_ICON_MINUS(". c #bbbbbb")};
 #endif
 
 static Fl_Pixmap open_pixmap_light(open_xpm_light);

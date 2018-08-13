@@ -73,7 +73,7 @@ void FlGui::wait(double time)
 void FlGui::lock()
 {
 #if defined(_OPENMP)
-  if(Msg::GetThreadNum() > 0){
+  if(Msg::GetThreadNum() > 0) {
     Fl::lock();
   }
 #endif
@@ -82,9 +82,9 @@ void FlGui::lock()
 void FlGui::unlock()
 {
 #if defined(_OPENMP)
-  if(Msg::GetThreadNum() > 0){
+  if(Msg::GetThreadNum() > 0) {
     Fl::unlock();
-    //Fl::awake();
+    // Fl::awake();
   }
 #endif
 }
@@ -117,46 +117,82 @@ static int globalShortcut(int event)
 
 static void simple_right_box_draw(int x, int y, int w, int h, Fl_Color c)
 {
-  fl_color(c); fl_rectf(x, y, w, h);
-  fl_color(FL_DARK2); fl_line(x + w - 1, y, x + w - 1, y + h);
+  fl_color(c);
+  fl_rectf(x, y, w, h);
+  fl_color(FL_DARK2);
+  fl_line(x + w - 1, y, x + w - 1, y + h);
 }
 
 static void simple_top_box_draw(int x, int y, int w, int h, Fl_Color c)
 {
-  fl_color(c); fl_rectf(x, y, w, h);
-  fl_color(FL_DARK2); fl_line(x, y, x + w, y);
+  fl_color(c);
+  fl_rectf(x, y, w, h);
+  fl_color(FL_DARK2);
+  fl_line(x, y, x + w, y);
 }
 
 // Icons for the satus bar
-#define vv(x,y) fl_vertex(x,y)
+#define vv(x, y) fl_vertex(x, y)
 #define bl fl_begin_loop()
 #define el fl_end_loop()
 
 static void gmsh_play(Fl_Color c)
 {
   fl_color(c);
-  bl; vv(-0.3,0.8); vv(0.5,0.0); vv(-0.3,-0.8); el;
+  bl;
+  vv(-0.3, 0.8);
+  vv(0.5, 0.0);
+  vv(-0.3, -0.8);
+  el;
 }
 
 static void gmsh_pause(Fl_Color c)
 {
   fl_color(c);
-  bl; vv(-0.8,-0.8); vv(-0.3,-0.8); vv(-0.3,0.8); vv(-0.8,0.8); el;
-  bl; vv(0.0,-0.8); vv(0.5,-0.8); vv(0.5,0.8); vv(0.0,0.8); el;
+  bl;
+  vv(-0.8, -0.8);
+  vv(-0.3, -0.8);
+  vv(-0.3, 0.8);
+  vv(-0.8, 0.8);
+  el;
+  bl;
+  vv(0.0, -0.8);
+  vv(0.5, -0.8);
+  vv(0.5, 0.8);
+  vv(0.0, 0.8);
+  el;
 }
 
 static void gmsh_rewind(Fl_Color c)
 {
   fl_color(c);
-  bl; vv(-0.8,-0.8); vv(-0.3,-0.8); vv(-0.3,0.8); vv(-0.8,0.8); el;
-  bl; vv(-0.3,0.0); vv(0.5,-0.8); vv(0.5,0.8); el;
+  bl;
+  vv(-0.8, -0.8);
+  vv(-0.3, -0.8);
+  vv(-0.3, 0.8);
+  vv(-0.8, 0.8);
+  el;
+  bl;
+  vv(-0.3, 0.0);
+  vv(0.5, -0.8);
+  vv(0.5, 0.8);
+  el;
 }
 
 static void gmsh_forward(Fl_Color c)
 {
   fl_color(c);
-  bl; vv(0.0,0.8); vv(0.8,0.0); vv(0.0,-0.8); el;
-  bl; vv(-0.8,0.8); vv(-0.3,0.8); vv(-0.3,-0.8); vv(-0.8,-0.8); el;
+  bl;
+  vv(0.0, 0.8);
+  vv(0.8, 0.0);
+  vv(0.0, -0.8);
+  el;
+  bl;
+  vv(-0.8, 0.8);
+  vv(-0.3, 0.8);
+  vv(-0.3, -0.8);
+  vv(-0.8, -0.8);
+  el;
 }
 
 static void gmsh_back(Fl_Color c)
@@ -168,17 +204,35 @@ static void gmsh_back(Fl_Color c)
 static void gmsh_rotate(Fl_Color c)
 {
   fl_color(c);
-  fl_begin_line(); fl_arc(0.0, -0.1, 0.7, 0.0, 270.0); fl_end_line();
-  fl_begin_polygon(); vv(0.5,0.6); vv(-0.1,0.9); vv(-0.1,0.3); fl_end_polygon();
+  fl_begin_line();
+  fl_arc(0.0, -0.1, 0.7, 0.0, 270.0);
+  fl_end_line();
+  fl_begin_polygon();
+  vv(0.5, 0.6);
+  vv(-0.1, 0.9);
+  vv(-0.1, 0.3);
+  fl_end_polygon();
 }
 
 static void gmsh_models(Fl_Color c)
 {
   fl_color(c);
-  bl; vv(-0.8,-0.7); vv(0.8,-0.7); el;
-  bl; vv(-0.8,-0.2); vv(0.8,-0.2); el;
-  bl; vv(-0.8,0.3); vv(0.8,0.3); el;
-  bl; vv(-0.8,0.8); vv(0.8,0.8); el;
+  bl;
+  vv(-0.8, -0.7);
+  vv(0.8, -0.7);
+  el;
+  bl;
+  vv(-0.8, -0.2);
+  vv(0.8, -0.2);
+  el;
+  bl;
+  vv(-0.8, 0.3);
+  vv(0.8, 0.3);
+  el;
+  bl;
+  vv(-0.8, 0.8);
+  vv(0.8, 0.8);
+  el;
 }
 
 static void gmsh_gear(Fl_Color c)
@@ -196,7 +250,7 @@ static void gmsh_gear(Fl_Color c)
   fl_circle(0, 0, 0.5);
   fl_end_line();
   fl_line_style(FL_SOLID);
-  for(int i = 0; i < 8; i++){
+  for(int i = 0; i < 8; i++) {
     fl_rotate(45);
     fl_begin_polygon();
     fl_vertex(h1, -w);
@@ -210,8 +264,17 @@ static void gmsh_gear(Fl_Color c)
 static void gmsh_graph(Fl_Color c)
 {
   fl_color(c);
-  fl_begin_line(); vv(-0.8,-0.8); vv(-0.8,0.8); vv(0.8,0.8); fl_end_line();
-  fl_begin_line(); vv(-0.8,0.3); vv(-0.2,-0.2); vv(0.3,0.1); vv(0.8,-0.4); fl_end_line();
+  fl_begin_line();
+  vv(-0.8, -0.8);
+  vv(-0.8, 0.8);
+  vv(0.8, 0.8);
+  fl_end_line();
+  fl_begin_line();
+  vv(-0.8, 0.3);
+  vv(-0.2, -0.2);
+  vv(0.3, 0.1);
+  vv(0.8, -0.4);
+  fl_end_line();
 }
 
 static void gmsh_search(Fl_Color col)
@@ -219,10 +282,15 @@ static void gmsh_search(Fl_Color col)
   double e = 0.5;
   fl_color(col);
   fl_begin_polygon();
-  vv(.6-e, .33); vv(1.2-e, .93); vv(.93-e, 1.2); vv(.33-e, .6);
+  vv(.6 - e, .33);
+  vv(1.2 - e, .93);
+  vv(.93 - e, 1.2);
+  vv(.33 - e, .6);
   fl_end_polygon();
   fl_line_style(FL_SOLID, 2);
-  fl_begin_loop(); fl_circle(0-e, 0, .6); fl_end_loop();
+  fl_begin_loop();
+  fl_circle(0 - e, 0, .6);
+  fl_end_loop();
   fl_line_style(FL_SOLID);
 }
 
@@ -230,15 +298,24 @@ static void gmsh_colormap(Fl_Color col)
 {
   fl_color(FL_RED);
   fl_begin_polygon();
-  vv(-0.8,-0.8); vv(-0.3,-0.8); vv(-0.3,0.8); vv(-0.8,0.8);
+  vv(-0.8, -0.8);
+  vv(-0.3, -0.8);
+  vv(-0.3, 0.8);
+  vv(-0.8, 0.8);
   fl_end_polygon();
   fl_color(FL_GREEN);
   fl_begin_polygon();
-  vv(-0.3,-0.8); vv(0.2,-0.8); vv(0.2,0.8); vv(-0.3,0.8);
+  vv(-0.3, -0.8);
+  vv(0.2, -0.8);
+  vv(0.2, 0.8);
+  vv(-0.3, 0.8);
   fl_end_polygon();
   fl_color(FL_BLUE);
   fl_begin_polygon();
-  vv(0.2,-0.8); vv(0.7,-0.8); vv(0.7,0.8); vv(0.2,0.8);
+  vv(0.2, -0.8);
+  vv(0.7, -0.8);
+  vv(0.7, 0.8);
+  vv(0.2, 0.8);
   fl_end_polygon();
 }
 
@@ -249,11 +326,11 @@ static void gmsh_colormap(Fl_Color col)
 // question presence of gamepad every 3. seconds
 static void gamepad_handler(void *data)
 {
-  if (CTX::instance()->gamepad && CTX::instance()->gamepad->active) {
+  if(CTX::instance()->gamepad && CTX::instance()->gamepad->active) {
     CTX::instance()->gamepad->read_event();
     Fl::add_timeout(CTX::instance()->gamepad->frequency, gamepad_handler, data);
   }
-  else{
+  else {
     Fl::add_timeout(.5, gamepad_handler, data);
   }
 }
@@ -265,12 +342,12 @@ static void error_handler(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  if(!strcmp(str, "Insufficient GL support")){ // this should be fatal
+  if(!strcmp(str, "Insufficient GL support")) { // this should be fatal
     CTX::instance()->terminal = 1;
     Msg::Error("%s (FLTK internal error)", str);
     Msg::Fatal("Your system does not seem to support OpenGL - aborting");
   }
-  else{
+  else {
     Msg::Error("%s (FLTK internal error)", str);
   }
 }
@@ -292,23 +369,23 @@ void FlGui::applyColorScheme()
   int N = 4 + FL_NUM_GRAY;
   static std::vector<unsigned char> r(N, 0), g(N, 0), b(N, 0);
 
-  if(first){
+  if(first) {
     // store default (OS-dependent) interface colors:
     Fl::get_system_colors();
     Fl::get_color(FL_BACKGROUND_COLOR, r[0], g[0], b[0]);
     Fl::get_color(FL_BACKGROUND2_COLOR, r[1], g[1], b[1]);
     Fl::get_color(FL_FOREGROUND_COLOR, r[2], g[2], b[2]);
     Fl::get_color(FL_SELECTION_COLOR, r[3], g[3], b[3]);
-    for (int i = 0; i < FL_NUM_GRAY; i++) {
+    for(int i = 0; i < FL_NUM_GRAY; i++) {
       Fl::get_color(fl_gray_ramp(i), r[4 + i], g[4 + i], b[4 + i]);
     }
   }
 
-  if(CTX::instance()->guiColorScheme == 1){ // dark mode
+  if(CTX::instance()->guiColorScheme == 1) { // dark mode
     Fl::set_color(FL_BACKGROUND_COLOR, 50, 50, 50);
     Fl::set_color(FL_BACKGROUND2_COLOR, 120, 120, 120);
     Fl::set_color(FL_FOREGROUND_COLOR, 240, 240, 240);
-    for (int i = 0; i < FL_NUM_GRAY; i++) {
+    for(int i = 0; i < FL_NUM_GRAY; i++) {
       double min = 0., max = 135.;
       int d = (int)(min + i * (max - min) / (FL_NUM_GRAY - 1.));
       Fl::set_color(fl_gray_ramp(i), d, d, d);
@@ -317,13 +394,13 @@ void FlGui::applyColorScheme()
     Fl::set_color(FL_SELECTION_COLOR, 200, 200, 200);
     if(available()) updateViews(true, true);
   }
-  else if(!first && available() && CTX::instance()->guiColorScheme == 0){
+  else if(!first && available() && CTX::instance()->guiColorScheme == 0) {
     // retore default colors (only if not calling the routine from the
     // constructor)
     Fl::set_color(FL_BACKGROUND_COLOR, r[0], g[0], b[0]);
     Fl::set_color(FL_BACKGROUND2_COLOR, r[1], g[1], b[1]);
     Fl::set_color(FL_FOREGROUND_COLOR, r[2], g[2], b[2]);
-    for (int i = 0; i < FL_NUM_GRAY; i++) {
+    for(int i = 0; i < FL_NUM_GRAY; i++) {
       Fl::set_color(fl_gray_ramp(i), r[4 + i], g[4 + i], b[4 + i]);
     }
     Fl::reload_scheme();
@@ -364,15 +441,13 @@ FlGui::FlGui(int argc, char **argv)
   Fl::set_boxtype(GMSH_SIMPLE_TOP_BOX, simple_top_box_draw, 0, 1, 0, 1);
 
   // add gamepad handler
-  if(CTX::instance()->gamepad)
-    Fl::add_timeout(5.,gamepad_handler, (void*)0);
+  if(CTX::instance()->gamepad) Fl::add_timeout(5., gamepad_handler, (void *)0);
 
   // add global shortcuts
   Fl::add_handler(globalShortcut);
 
   // make sure a global drawing context is setup
-  if(!drawContext::global())
-    drawContext::setGlobal(new drawContextFltk);
+  if(!drawContext::global()) drawContext::setGlobal(new drawContextFltk);
 
   // set default font size
   FL_NORMAL_SIZE = drawContext::global()->getFontSize();
@@ -384,9 +459,9 @@ FlGui::FlGui(int argc, char **argv)
   Fl_Tooltip::delay(0.5);
 
   // use retina resolution if available
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION >= 4)
+#if(FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION >= 4)
   Fl::use_high_res_GL(CTX::instance()->highResolutionGraphics);
-#elif (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
+#elif(FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
   Fl::use_high_res_GL(CTX::instance()->highResolutionGraphics);
 #endif
 
@@ -421,11 +496,12 @@ FlGui::FlGui(int argc, char **argv)
   // create main graphic window (note that we create all the windows even if
   // some are not displayed, since the shortcuts should be valid even for hidden
   // windows, and we don't want to test for widget existence every time)
-  graph.push_back(new graphicWindow(true, CTX::instance()->numTiles,
-                                    CTX::instance()->detachedMenu ? true : false));
+  graph.push_back(
+    new graphicWindow(true, CTX::instance()->numTiles,
+                      CTX::instance()->detachedMenu ? true : false));
 #if defined(WIN32)
-  graph[0]->getWindow()->icon
-    ((const void*)LoadIcon(fl_display, MAKEINTRESOURCE(IDI_ICON)));
+  graph[0]->getWindow()->icon(
+    (const void *)LoadIcon(fl_display, MAKEINTRESOURCE(IDI_ICON)));
 #elif defined(__APPLE__)
   // nothing to do here
 #else
@@ -442,12 +518,11 @@ FlGui::FlGui(int argc, char **argv)
     \x08\x00\xff\x1f\x08\x00\xff\x1f\x04\x40\xfd\x3f\
     \x04\xa8\xea\x3f\x02\x55\x55\x7f\xa2\xaa\xaa\x7a\
     \xff\xff\xff\xff\x00\x00\x00\x00";
-  graph[0]->getWindow()->icon
-    ((const char*)XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
-                                        gmsh32x32, 32, 32));
+  graph[0]->getWindow()->icon((const char *)XCreateBitmapFromData(
+    fl_display, DefaultRootWindow(fl_display), gmsh32x32, 32, 32));
 #endif
 
-  graph[0]->getWindow()->show(argc >0 ? 1 : 0, argv);
+  graph[0]->getWindow()->show(argc > 0 ? 1 : 0, argv);
   if(graph[0]->getMenuWindow()) graph[0]->getMenuWindow()->show();
 
   // re-apply color scheme (necessary for some reason to get the selection color
@@ -462,12 +537,11 @@ FlGui::FlGui(int argc, char **argv)
   onelab = graph.back()->getMenu();
 
   // create additional graphic windows
-  for(int i = 1; i < CTX::instance()->numWindows; i++){
+  for(int i = 1; i < CTX::instance()->numWindows; i++) {
     graphicWindow *g = new graphicWindow(false, CTX::instance()->numTiles);
-    g->getWindow()->resize(graph.back()->getWindow()->x() + 10,
-                           graph.back()->getWindow()->y() + 10,
-                           graph.back()->getWindow()->w(),
-                           graph.back()->getWindow()->h());
+    g->getWindow()->resize(
+      graph.back()->getWindow()->x() + 10, graph.back()->getWindow()->y() + 10,
+      graph.back()->getWindow()->w(), graph.back()->getWindow()->h());
     g->getWindow()->show();
     graph.push_back(g);
   }
@@ -484,7 +558,7 @@ FlGui::FlGui(int argc, char **argv)
   fullscreen->mode(mode);
   fullscreen->end();
   fullscreen->fullscreen();
-#if !defined (__APPLE__)
+#if !defined(__APPLE__)
   fullscreen->icon(graph[0]->getWindow()->icon());
 #endif
 
@@ -497,7 +571,8 @@ FlGui::FlGui(int argc, char **argv)
   highordertools = new highOrderToolsWindow(CTX::instance()->deltaFontSize);
   clipping = new clippingWindow(CTX::instance()->deltaFontSize);
   manip = new manipWindow(CTX::instance()->deltaFontSize);
-  elementaryContext = new elementaryContextWindow(CTX::instance()->deltaFontSize);
+  elementaryContext =
+    new elementaryContextWindow(CTX::instance()->deltaFontSize);
   transformContext = new transformContextWindow(CTX::instance()->deltaFontSize);
   physicalContext = new physicalContextWindow(CTX::instance()->deltaFontSize);
   meshContext = new meshContextWindow(CTX::instance()->deltaFontSize);
@@ -511,24 +586,19 @@ FlGui::FlGui(int argc, char **argv)
     for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
       graph[i]->gl[j]->redraw();
 
-  if(CTX::instance()->showOptionsOnStartup)
-    options->win->show();
-  if(CTX::instance()->showMessagesOnStartup)
-    graph[0]->showMessages();
+  if(CTX::instance()->showOptionsOnStartup) options->win->show();
+  if(CTX::instance()->showMessagesOnStartup) graph[0]->showMessages();
 }
 
 FlGui *FlGui::_instance = 0;
 std::string FlGui::_openedThroughMacFinder = "";
 bool FlGui::_finishedProcessingCommandLine = false;
 
-bool FlGui::available()
-{
-  return _instance != 0;
-}
+bool FlGui::available() { return _instance != 0; }
 
 FlGui *FlGui::instance(int argc, char **argv)
 {
-  if(!_instance){
+  if(!_instance) {
     _instance = new FlGui(argc, argv);
     // set all options in the new GUI
     InitOptionsGUI(0);
@@ -591,12 +661,14 @@ int FlGui::testGlobalShortcuts(int event)
     mesh_3d_cb(0, 0);
     status = 1;
   }
-  else if(Fl::test_shortcut(FL_CTRL + 'q') || Fl::test_shortcut(FL_META + 'q')){
+  else if(Fl::test_shortcut(FL_CTRL + 'q') ||
+          Fl::test_shortcut(FL_META + 'q')) {
     // only necessary when using the system menu bar, but hey, it cannot hurt...
     file_quit_cb(0, 0);
     status = 1;
   }
-  else if(Fl::test_shortcut(FL_CTRL + 't') || Fl::test_shortcut(FL_META + 't')){
+  else if(Fl::test_shortcut(FL_CTRL + 't') ||
+          Fl::test_shortcut(FL_META + 't')) {
     show_hide_menu_cb(0, 0);
     status = 1;
   }
@@ -685,29 +757,29 @@ int FlGui::testGlobalShortcuts(int event)
           Fl::test_shortcut(FL_SHIFT + FL_Escape) ||
           Fl::test_shortcut(FL_CTRL + FL_Escape) ||
           Fl::test_shortcut(FL_ALT + FL_Escape)) {
-    if(fullscreen->shown()){
-      window_cb(0, (void*)"fullscreen");
+    if(fullscreen->shown()) {
+      window_cb(0, (void *)"fullscreen");
       status = 1;
     }
-    else{
+    else {
       bool lasso = false;
       for(unsigned int i = 0; i < graph.size(); i++)
         for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
           if(graph[i]->gl[j]->lassoMode) lasso = true;
-      if(lasso){
+      if(lasso) {
         for(unsigned int i = 0; i < graph.size(); i++)
           for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
             graph[i]->gl[j]->lassoMode = false;
         status = 2;
       }
-      else{
+      else {
         status_options_cb(0, (void *)"S");
         status = 1;
       }
     }
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'a')) {
-    window_cb(0, (void*)"front");
+    window_cb(0, (void *)"front");
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'o')) {
@@ -731,12 +803,13 @@ int FlGui::testGlobalShortcuts(int event)
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'w')) {
-    view_options_cb(0, (void*)-1);
+    view_options_cb(0, (void *)-1);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'u')) {
-    if(PView::list.size()){
-      if(options->view.index >= 0 && options->view.index < (int)PView::list.size())
+    if(PView::list.size()) {
+      if(options->view.index >= 0 &&
+         options->view.index < (int)PView::list.size())
         plugins->show(options->view.index);
       else
         plugins->show(0);
@@ -744,43 +817,41 @@ int FlGui::testGlobalShortcuts(int event)
     status = 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'f')) {
-    opt_general_fast_redraw
-      (0, GMSH_SET | GMSH_GUI, !opt_general_fast_redraw(0, GMSH_GET, 0));
+    opt_general_fast_redraw(0, GMSH_SET | GMSH_GUI,
+                            !opt_general_fast_redraw(0, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'b')) {
-    opt_general_draw_bounding_box
-      (0, GMSH_SET | GMSH_GUI, !opt_general_draw_bounding_box(0, GMSH_GET, 0));
+    opt_general_draw_bounding_box(
+      0, GMSH_SET | GMSH_GUI, !opt_general_draw_bounding_box(0, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'i')) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_show_scale
-          (i, GMSH_SET | GMSH_GUI, !opt_view_show_scale(i, GMSH_GET, 0));
+        opt_view_show_scale(i, GMSH_SET | GMSH_GUI,
+                            !opt_view_show_scale(i, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'c')) {
-    opt_general_color_scheme
-      (0, GMSH_SET | GMSH_GUI, opt_general_color_scheme(0, GMSH_GET, 0) + 1);
+    opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
+                             opt_general_color_scheme(0, GMSH_GET, 0) + 1);
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'c')) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_colormap_number
-          (i, GMSH_SET | GMSH_GUI, opt_view_colormap_number(i, GMSH_GET, 0) + 1);
+        opt_view_colormap_number(i, GMSH_SET | GMSH_GUI,
+                                 opt_view_colormap_number(i, GMSH_GET, 0) + 1);
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'w')) {
-    opt_geometry_light
-      (0, GMSH_SET | GMSH_GUI, !opt_geometry_light(0, GMSH_GET, 0));
-    opt_mesh_light
-      (0, GMSH_SET | GMSH_GUI, !opt_mesh_light(0, GMSH_GET, 0));
+    opt_geometry_light(0, GMSH_SET | GMSH_GUI,
+                       !opt_geometry_light(0, GMSH_GET, 0));
+    opt_mesh_light(0, GMSH_SET | GMSH_GUI, !opt_mesh_light(0, GMSH_GET, 0));
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_light
-          (i, GMSH_SET | GMSH_GUI, !opt_view_light(i, GMSH_GET, 0));
+        opt_view_light(i, GMSH_SET | GMSH_GUI, !opt_view_light(i, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'x') ||
@@ -803,36 +874,37 @@ int FlGui::testGlobalShortcuts(int event)
     status = 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'a')) {
-    opt_general_axes
-      (0, GMSH_SET | GMSH_GUI, opt_general_axes(0, GMSH_GET, 0) + 1);
+    opt_general_axes(0, GMSH_SET | GMSH_GUI,
+                     opt_general_axes(0, GMSH_GET, 0) + 1);
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_axes(i, GMSH_SET | GMSH_GUI, opt_view_axes(i, GMSH_GET, 0) + 1);
+        opt_view_axes(i, GMSH_SET | GMSH_GUI,
+                      opt_view_axes(i, GMSH_GET, 0) + 1);
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'a')) {
-    opt_general_small_axes
-      (0, GMSH_SET | GMSH_GUI, !opt_general_small_axes(0, GMSH_GET, 0));
+    opt_general_small_axes(0, GMSH_SET | GMSH_GUI,
+                           !opt_general_small_axes(0, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'p')) {
-    opt_geometry_points
-      (0, GMSH_SET | GMSH_GUI, !opt_geometry_points(0, GMSH_GET, 0));
+    opt_geometry_points(0, GMSH_SET | GMSH_GUI,
+                        !opt_geometry_points(0, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'l')) {
-    opt_geometry_curves
-      (0, GMSH_SET | GMSH_GUI, !opt_geometry_curves(0, GMSH_GET, 0));
+    opt_geometry_curves(0, GMSH_SET | GMSH_GUI,
+                        !opt_geometry_curves(0, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 's')) {
-    opt_geometry_surfaces
-      (0, GMSH_SET | GMSH_GUI, !opt_geometry_surfaces(0, GMSH_GET, 0));
+    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI,
+                          !opt_geometry_surfaces(0, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'v')) {
-    opt_geometry_volumes
-      (0, GMSH_SET | GMSH_GUI, !opt_geometry_volumes(0, GMSH_GET, 0));
+    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI,
+                         !opt_geometry_volumes(0, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'p')) {
@@ -840,33 +912,32 @@ int FlGui::testGlobalShortcuts(int event)
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'l')) {
-    opt_mesh_lines
-      (0, GMSH_SET | GMSH_GUI, !opt_mesh_lines(0, GMSH_GET, 0));
+    opt_mesh_lines(0, GMSH_SET | GMSH_GUI, !opt_mesh_lines(0, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 's')) {
-    opt_mesh_surfaces_edges
-      (0, GMSH_SET | GMSH_GUI, !opt_mesh_surfaces_edges(0, GMSH_GET, 0));
+    opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI,
+                            !opt_mesh_surfaces_edges(0, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'v')) {
-    opt_mesh_volumes_edges
-      (0, GMSH_SET | GMSH_GUI, !opt_mesh_volumes_edges(0, GMSH_GET, 0));
+    opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI,
+                           !opt_mesh_volumes_edges(0, GMSH_GET, 0));
     status = 2;
   }
-  else if(Fl::test_shortcut(FL_ALT + 'd')){
-    opt_geometry_surface_type
-      (0, GMSH_SET | GMSH_GUI, opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
+  else if(Fl::test_shortcut(FL_ALT + 'd')) {
+    opt_geometry_surface_type(0, GMSH_SET | GMSH_GUI,
+                              opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'd')) {
-    opt_mesh_surfaces_faces
-      (0, GMSH_SET | GMSH_GUI, !opt_mesh_surfaces_faces(0, GMSH_GET, 0));
+    opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI,
+                            !opt_mesh_surfaces_faces(0, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'b')) {
-    opt_mesh_volumes_faces
-      (0, GMSH_SET | GMSH_GUI, !opt_mesh_volumes_faces(0, GMSH_GET, 0));
+    opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI,
+                           !opt_mesh_volumes_faces(0, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'm')) {
@@ -875,7 +946,7 @@ int FlGui::testGlobalShortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_ALT + 't')) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0)){
+      if(opt_view_visible(i, GMSH_GET, 0)) {
         int t = opt_view_intervals_type(i, GMSH_GET, 0) + 1;
         if(t == 4) t = 1; // skip numeric display
         opt_view_intervals_type(i, GMSH_SET | GMSH_GUI, t);
@@ -885,30 +956,30 @@ int FlGui::testGlobalShortcuts(int event)
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 't')) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_intervals_type
-          (i, GMSH_SET | GMSH_GUI, opt_view_intervals_type(i, GMSH_GET, 0) + 1);
+        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI,
+                                opt_view_intervals_type(i, GMSH_GET, 0) + 1);
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'r')) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_range_type
-          (i, GMSH_SET | GMSH_GUI, opt_view_range_type(i, GMSH_GET, 0) + 1);
+        opt_view_range_type(i, GMSH_SET | GMSH_GUI,
+                            opt_view_range_type(i, GMSH_GET, 0) + 1);
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'n')) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_draw_strings
-          (i, GMSH_SET | GMSH_GUI, !opt_view_draw_strings(i, GMSH_GET, 0));
+        opt_view_draw_strings(i, GMSH_SET | GMSH_GUI,
+                              !opt_view_draw_strings(i, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'e') ||
           Fl::test_shortcut(FL_ALT + FL_SHIFT + 'e')) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_show_element
-          (i, GMSH_SET | GMSH_GUI, !opt_view_show_element(i, GMSH_GET, 0));
+        opt_view_show_element(i, GMSH_SET | GMSH_GUI,
+                              !opt_view_show_element(i, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'h')) {
@@ -922,7 +993,7 @@ int FlGui::testGlobalShortcuts(int event)
     status = 1;
   }
 
-  if(status == 2){
+  if(status == 2) {
     drawContext::global()->draw();
     return 1;
   }
@@ -967,9 +1038,9 @@ int FlGui::testArrowShortcuts()
   return 0;
 }
 
-void FlGui::setGraphicTitle(std::string title)
+void FlGui::setGraphicTitle(const std::string &title)
 {
-  for(unsigned int i = 0; i < graph.size(); i++){
+  for(unsigned int i = 0; i < graph.size(); i++) {
     std::ostringstream sstream;
     if(title.empty())
       sstream << "Gmsh";
@@ -983,9 +1054,8 @@ void FlGui::setGraphicTitle(std::string title)
 
 void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
 {
-  for(unsigned int i = 0; i < graph.size(); i++)
-    graph[i]->checkAnimButtons();
-  if(numberOfViewsHasChanged){
+  for(unsigned int i = 0; i < graph.size(); i++) graph[i]->checkAnimButtons();
+  if(numberOfViewsHasChanged) {
     if(onelab) onelab->rebuildTree(deleteWidgets);
     options->resetBrowser();
     options->resetExternalViewList();
@@ -1002,10 +1072,8 @@ void FlGui::updateFields()
 
 void FlGui::resetVisibility()
 {
-  if(visibility->win->shown())
-    visibility_cb(NULL, NULL);
-  if(help->options->shown())
-    help_options_cb(NULL, NULL);
+  if(visibility->win->shown()) visibility_cb(NULL, NULL);
+  if(help->options->shown()) help_options_cb(NULL, NULL);
 }
 
 openglWindow *FlGui::getCurrentOpenglWindow()
@@ -1019,9 +1087,8 @@ openglWindow *FlGui::getCurrentOpenglWindow()
 void FlGui::splitCurrentOpenglWindow(char how)
 {
   openglWindow *g = getCurrentOpenglWindow();
-  for(unsigned int i = 0; i < graph.size(); i++){
-    if(graph[i]->split(g, how))
-      break;
+  for(unsigned int i = 0; i < graph.size(); i++) {
+    if(graph[i]->split(g, how)) break;
   }
 }
 
@@ -1035,13 +1102,14 @@ void FlGui::copyCurrentOpenglWindowToClipboard()
   width -= width % 4;
 
   // get pixels
-  PixelBuffer *buffer = new PixelBuffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
+  PixelBuffer *buffer =
+    new PixelBuffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
   buffer->fill(0);
-  unsigned char *pixels = (unsigned char*)buffer->getPixels();
+  unsigned char *pixels = (unsigned char *)buffer->getPixels();
 
   // swap R and B since Windows bitmap format is BGR
   int nBytes = 3 * width * height;
-  for(int i = 0; i < nBytes; i += 3){
+  for(int i = 0; i < nBytes; i += 3) {
     unsigned char tmp = pixels[i];
     pixels[i] = pixels[i + 2];
     pixels[i + 2] = tmp;
@@ -1062,8 +1130,9 @@ void FlGui::copyCurrentOpenglWindowToClipboard()
   header.biClrImportant = 0;
 
   // generate handle
-  HANDLE handle = (HANDLE)::GlobalAlloc(GHND, sizeof(BITMAPINFOHEADER) + nBytes);
-  if(handle != NULL){
+  HANDLE handle =
+    (HANDLE)::GlobalAlloc(GHND, sizeof(BITMAPINFOHEADER) + nBytes);
+  if(handle != NULL) {
     // lock handle
     char *pData = (char *)::GlobalLock((HGLOBAL)handle);
     // copy header and data
@@ -1084,42 +1153,44 @@ void FlGui::copyCurrentOpenglWindowToClipboard()
 
 char FlGui::selectEntity(int type)
 {
-  return getCurrentOpenglWindow()->selectEntity
-    (type, selectedVertices, selectedEdges, selectedFaces, selectedRegions,
-     selectedElements, selectedPoints, selectedViews);
+  return getCurrentOpenglWindow()->selectEntity(
+    type, selectedVertices, selectedEdges, selectedFaces, selectedRegions,
+    selectedElements, selectedPoints, selectedViews);
 }
 
 void FlGui::setStatus(const std::string &msg, bool opengl)
 {
-  if(!opengl){
+  if(!opengl) {
     _lastStatus = msg;
     static char buff[1024];
     std::string tmp = std::string(" ") + msg;
     int ne = Msg::GetErrorCount(), nw = Msg::GetWarningCount();
-    if((ne || nw) && graph[0]->getMessageHeight() < FL_NORMAL_SIZE){
+    if((ne || nw) && graph[0]->getMessageHeight() < FL_NORMAL_SIZE) {
       tmp += "  -  ";
-      char n[128]; sprintf(n, "%d", ne ? ne : nw);
+      char n[128];
+      sprintf(n, "%d", ne ? ne : nw);
       tmp += n;
-      tmp += (ne > 1) ? " Errors" : ne ? " Error" : (nw > 1) ? " Warnings" : " Warning";
+      tmp += (ne > 1) ? " Errors" :
+                        ne ? " Error" : (nw > 1) ? " Warnings" : " Warning";
       tmp += " : Click to show messages [ ... ";
       tmp += (ne ? Msg::GetFirstError() : Msg::GetFirstWarning());
       tmp += " ... ]";
     }
     strncpy(buff, tmp.c_str(), sizeof(buff) - 1);
     buff[sizeof(buff) - 1] = '\0';
-    for(unsigned int i = 0; i < graph.size(); i++){
+    for(unsigned int i = 0; i < graph.size(); i++) {
       graph[i]->getProgress()->label(buff);
       graph[i]->getProgress()->redraw();
     }
   }
-  else{
+  else {
     openglWindow *gl = getCurrentOpenglWindow();
     int n = msg.size();
     int i = 0;
-    while(i < n) if(msg[i++] == '\n') break;
+    while(i < n)
+      if(msg[i++] == '\n') break;
     gl->screenMessage[0] = msg;
-    if(i)
-      gl->screenMessage[0].resize(i - 1);
+    if(i) gl->screenMessage[0].resize(i - 1);
     if(i < n)
       gl->screenMessage[1] = msg.substr(i);
     else
@@ -1130,14 +1201,14 @@ void FlGui::setStatus(const std::string &msg, bool opengl)
 
 void FlGui::setLastStatus(int col)
 {
-  for(unsigned int i = 0; i < graph.size(); i++){
-    if(col >= 0 && graph[0]->getMessageHeight() < FL_NORMAL_SIZE){
+  for(unsigned int i = 0; i < graph.size(); i++) {
+    if(col >= 0 && graph[0]->getMessageHeight() < FL_NORMAL_SIZE) {
       if(CTX::instance()->guiColorScheme) // dark
         graph[i]->getProgress()->color(col);
       else
         graph[i]->getProgress()->labelcolor(col);
     }
-    else{
+    else {
       graph[i]->getProgress()->color(FL_BACKGROUND_COLOR);
       graph[i]->getProgress()->labelcolor(FL_FOREGROUND_COLOR);
     }
@@ -1145,9 +1216,10 @@ void FlGui::setLastStatus(int col)
   setStatus(_lastStatus);
 }
 
-void FlGui::setProgress(const std::string &msg, double val, double min, double max)
+void FlGui::setProgress(const std::string &msg, double val, double min,
+                        double max)
 {
-  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++){
+  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++) {
     if(FlGui::instance()->graph[i]->getProgress()->value() != val)
       FlGui::instance()->graph[i]->getProgress()->value(val);
     if(FlGui::instance()->graph[i]->getProgress()->minimum() != min)
@@ -1165,9 +1237,10 @@ void FlGui::storeCurrentWindowsInfo()
   CTX::instance()->glSize[0] = graph[0]->getGlWidth();
   CTX::instance()->glSize[1] = graph[0]->getGlHeight();
   CTX::instance()->msgSize = graph[0]->getMessageHeight() ?
-    graph[0]->getMessageHeight() : CTX::instance()->msgSize;
+                               graph[0]->getMessageHeight() :
+                               CTX::instance()->msgSize;
   CTX::instance()->menuSize[0] = graph[0]->getMenuWidth();
-  if(graph[0]->isMenuDetached()){
+  if(graph[0]->isMenuDetached()) {
     CTX::instance()->detachedMenu = 1;
     CTX::instance()->menuSize[1] = graph[0]->getMenuHeight();
     CTX::instance()->menuPosition[0] = graph[0]->getMenuPositionX();
@@ -1213,18 +1286,15 @@ void FlGui::callForSolverPlugin(int dim)
 
 // Callbacks
 
-void redraw_cb(Fl_Widget *w, void *data)
-{
-  drawContext::global()->draw();
-}
+void redraw_cb(Fl_Widget *w, void *data) { drawContext::global()->draw(); }
 
 void window_cb(Fl_Widget *w, void *data)
 {
   static int oldx = 0, oldy = 0, oldw = 0, oldh = 0, zoom = 0, fullscreen = 0;
 
-  std::string str((const char*)data);
+  std::string str((const char *)data);
 
-  if(str == "minimize"){
+  if(str == "minimize") {
     for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
       if(FlGui::instance()->graph[i]->getWindow()->shown())
         FlGui::instance()->graph[i]->getWindow()->iconize();
@@ -1245,52 +1315,53 @@ void window_cb(Fl_Widget *w, void *data)
     if(FlGui::instance()->stats->win->shown())
       FlGui::instance()->stats->win->iconize();
   }
-  else if(str == "zoom"){
-    if(!zoom){
+  else if(str == "zoom") {
+    if(!zoom) {
       oldx = FlGui::instance()->graph[0]->getWindow()->x();
       oldy = FlGui::instance()->graph[0]->getWindow()->y();
       oldw = FlGui::instance()->graph[0]->getWindow()->w();
       oldh = FlGui::instance()->graph[0]->getWindow()->h();
-      FlGui::instance()->graph[0]->getWindow()->resize(Fl::x(), Fl::y(), Fl::w(), Fl::h());
+      FlGui::instance()->graph[0]->getWindow()->resize(Fl::x(), Fl::y(),
+                                                       Fl::w(), Fl::h());
       zoom = 1;
     }
-    else{
+    else {
       FlGui::instance()->graph[0]->getWindow()->resize(oldx, oldy, oldw, oldh);
       zoom = 0;
     }
   }
-  else if(str == "fullscreen"){
-    if(!fullscreen){
-      int x,y,w,h;
+  else if(str == "fullscreen") {
+    if(!fullscreen) {
+      int x, y, w, h;
       Fl::screen_xywh(x, y, w, h);
       FlGui::instance()->fullscreen->resize(x, y, w, h);
       FlGui::instance()->fullscreen->valid(0);
       FlGui::instance()->fullscreen->show();
-      while (!FlGui::instance()->fullscreen->valid()) FlGui::wait();
-      FlGui::instance()->fullscreen->getDrawContext()->copyViewAttributes
-        (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
+      while(!FlGui::instance()->fullscreen->valid()) FlGui::wait();
+      FlGui::instance()->fullscreen->getDrawContext()->copyViewAttributes(
+        FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
       openglWindow::setLastHandled(FlGui::instance()->fullscreen);
       for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->getWindow()->hide();
       drawContext::global()->draw();
       fullscreen = 1;
     }
-    else{
+    else {
       for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->gl[0]->valid(0);
       for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->getWindow()->show();
       for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
         while(!FlGui::instance()->graph[i]->gl[0]->valid()) FlGui::wait();
-      FlGui::instance()->graph[0]->gl[0]->getDrawContext()->copyViewAttributes
-        (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
+      FlGui::instance()->graph[0]->gl[0]->getDrawContext()->copyViewAttributes(
+        FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
       openglWindow::setLastHandled(FlGui::instance()->graph[0]->gl[0]);
       FlGui::instance()->fullscreen->hide();
       drawContext::global()->draw();
       fullscreen = 0;
     }
   }
-  else if(str == "front"){
+  else if(str == "front") {
     // the order is important!
     for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
       FlGui::instance()->graph[i]->getWindow()->show();
@@ -1323,7 +1394,7 @@ void window_cb(Fl_Widget *w, void *data)
 
 void FlGui::addMessage(const char *msg)
 {
-  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++){
+  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++) {
     FlGui::instance()->graph[i]->addMessage(msg);
   }
 }

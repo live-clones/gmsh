@@ -222,9 +222,9 @@ instructions are prescribed either interactively using the graphical
 user interface (GUI) or in text files using Gmsh's own scripting
 language.  Interactive actions generate language bits in the input
 files, and vice versa. This makes it possible to automate all
-treatments, using loops, conditionals and external system calls. (A
+treatments, using loops, conditionals and external system calls. A
 programming API is also available, for integrating Gmsh as a library in
-your own C++, C, Python or Julia code: @ref{Gmsh API}.) A brief
+your own C++, C, Python or Julia code: see @ref{Gmsh API}. A brief
 description of the four modules is given hereafter.
 
 @menu
@@ -425,10 +425,10 @@ features, and many aspects of the interface could be enhanced
 Gmsh's scripting language is quite limited, providing only very crude
 loop controls and user-defined macros, with no local variables. For more
 complex workflows, or for integrating Gmsh as a library directly in
-other software tools, a application programming interface is
-available. This allows to directly access Gmsh features from C++, C,
-Python or Julia. The C interface makes it relatively easy to build
-interfaces to additional languages (e.g. Javascript, Java or Go).
+other software tools, an application programming interface is available
+(@pxref{Gmsh API}). This allows to directly access Gmsh features from
+C++, C, Python or Julia. The C interface makes it relatively easy to
+build interfaces to additional languages (e.g. Javascript, Java or Go).
 @end itemize
 
 If you have the skills and some free time, feel free to join the
@@ -2198,10 +2198,20 @@ Creates ruled surfaces through the given curve loops or
 wires. @code{Ruled ThruSections} is only available with the OpenCASCADE
 kernel.
 
-@item Fillet @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression} @}
-Fillets volumes (first list) on some edges (second list), using the
-provided radius. @code{Fillet} is only available with the OpenCASCADE
-kernel.
+@item Fillet @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression-list} @}
+Fillets volumes (first list) on some curves (second list), using the
+provided radii (third list). The radius list can either contain a single
+radius, as many radii as curves, or twice as many as curves (in which
+case different radii are provided for the begin and end points of the
+curves). @code{Fillet} is only available with the OpenCASCADE kernel.
+
+@item Chamfer @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression-list} @}
+Chamfer volumes (first list) on some curves (second list), using the
+provided distance (fourth list) measured on the given surfaces (third
+list). The distance list can either contain a single distance, as many
+distances as curves, or twice as many as curves (in which case the first
+in each pair is measured on the given corresponding
+surface). @code{Chamfer} is only available with the OpenCASCADE kernel.
 @end ftable
 
 @noindent with
@@ -2999,12 +3009,17 @@ Force mesh of the surface on the left-hand side (slave, with boundary
 edges specified between braces) to match the mesh of the surface on the
 right-hand side (master, with boundary edges specified between braces).
 
-@item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Affine | Rotate | Translate @{ @var{expression-list} @} ;
+@item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Affine | Translate @{ @var{expression-list} @} ;
 Force mesh of curves or surfaces on the left-hand side (slaves) to match
-the mesh of the curves on the right-hand side (masters), using prescribed
-geometrical transformations. @code{Affine} takes a 4 x 4 affine
-transform matrix given by row; @code{Rotate} and @code{Translate} are
-specified as in @ref{Transformations}.
+the mesh of the curves on the right-hand side (masters), using
+prescribed geometrical transformations. @code{Affine} takes a 4 x 4 (or
+4 x 3) affine transformation matrix given by row; @code{Translate} takes
+the 3 components of the translation as in @ref{Transformations}.
+
+@item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Rotate @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} ;
+Force mesh of curves or surfaces on the left-hand side (slaves) to match
+the mesh of the curves on the right-hand side (masters), using
+a rotation specified as in @ref{Transformations}.
 
 @item Coherence Mesh;
 Removes all duplicate mesh nodes.
@@ -3553,26 +3568,26 @@ underlying mesh, and can therefore be easier to use in some
 cases.)
 
 @menu
-* MSH4 file format::
+* MSH file format (version 4)::
 * Node ordering::
 * Legacy formats::
 @end menu
 
 @c -------------------------------------------------------------------------
-@c MSH4 file format
+@c MSH file format (version 4)
 @c -------------------------------------------------------------------------
 
-@node MSH4 file format, Node ordering, File formats, File formats
-@section MSH4 file format
+@node MSH file format (version 4), Node ordering, File formats, File formats
+@section MSH file format (version 4)
 
 @cindex Mesh, file format
 @cindex File format, mesh
 @cindex MSH4 file
 
-The MSH4 file format contains one mandatory section giving information
-about the file (@code{$MeshFormat}), followed by several sections
-defining the physical group names (@code{$PhysicalName}, optional), the
-entities (@code{$Entities}), the partitioned entities
+The MSH file format (version 4) contains one mandatory section giving
+information about the file (@code{$MeshFormat}), followed by several
+sections defining the physical group names (@code{$PhysicalName},
+optional), the entities (@code{$Entities}), the partitioned entities
 (@code{$PartitionedEntities}, optional), nodes (@code{$Nodes}), elements
 (@code{$Elements}), periodicity relations (@code{$Periodic}, optional),
 ghost elements (@code{$GhostElements}, optional) and post-processing
@@ -3598,12 +3613,12 @@ can be put into separate files (e.g. one file per time step).  Nodes are
 assumed to be defined before elements.
 
 @example
-$MeshFormat // same as MSH2
+$MeshFormat // same as MSH version 2
   version(double) binary(int) size(unsigned long)
   <swapping bit for binary format>
 $EndMeshFormat
 
-<$PhysicalNames> // same as MSH2
+<$PhysicalNames> // same as MSH version 2
   numPhysicalNames(int)
   dimension(int) tag(int) name(127 characters max)
   ...
@@ -3689,7 +3704,7 @@ $Elements
   ...
 $EndElements
 
-<$Periodic> // same as in MSH2 and MSH3
+<$Periodic> // same as in MSH version 2
   numPeriodicLinks(int)
   slaveDim(int) slaveTag(int) masterTag(int)
     < Affine values[...](double) >
@@ -3839,14 +3854,15 @@ with the edges, 54 with the faces, 27 in the volume)
 @end table
 See below for the ordering of the nodes.
 
-The post-processing sections are identical to the ones in the MSH2 file
-format (see below).
+The post-processing sections are identical to the ones in the version 2
+file format (see below). These sections will be reworked in a future
+minor revision of the version 4 format (e.g. version 4.1 or 4.2).
 
 @c -------------------------------------------------------------------------
 @c Node ordering
 @c -------------------------------------------------------------------------
 
-@node Node ordering, Legacy formats, MSH4 file format, File formats
+@node Node ordering, Legacy formats, MSH file format (version 4), File formats
 @section Node ordering
 
 @cindex Nodes, ordering
@@ -4048,8 +4064,8 @@ you do not use them in new applications.
 @subsection MSH file format version 2
 
 The MSH file format version 2 is Gmsh's previous native mesh file
-format, now superseded by the format described in @ref{MSH4 file
-format}. It is defined as follows:
+format, now superseded by the format described in @ref{MSH file format
+(version 4)}. It is defined as follows:
 
 The format is defined as follows:
 
@@ -4164,8 +4180,8 @@ is the number (index) of the @var{n}-th element in the mesh;
 ordered sequence.
 
 @item @var{elm-type}
-defines the geometrical type of the @var{n}-th element: see @ref{MSH4
-file format}.
+defines the geometrical type of the @var{n}-th element: see @ref{MSH
+file format (version 4)}.
 
 @item @var{number-of-tags}
 gives the number of integer tags that follow for the @var{n}-th
@@ -4382,8 +4398,8 @@ for(i = 0; i < number_of_triangles; i++)@{
 @subsection MSH file format version 1
 
 The MSH file format version 1 is Gmsh's original native mesh file
-format, now superseded by the format described in @ref{MSH4 file
-format}. It is defined as follows:
+format, now superseded by the format described in @ref{MSH file
+format (version 4)}. It is defined as follows:
 
 @example
 $NOD
@@ -4505,7 +4521,7 @@ element. The ordering of the nodes is given in @ref{Node ordering}.
 @subsection POS ASCII file format (Legacy)
 
 The POS ASCII file is Gmsh's old native post-processing format, now
-superseded by the format described in @ref{MSH4 file format}. It is
+superseded by the format described in @ref{MSH file format (version 4)}. It is
 defined as follows:
 
 @example
@@ -5187,6 +5203,17 @@ repository. All branches are tested; make sure that all tests pass and
 that your code does not produce any warning before submitting merge
 requests.
 @item
+Follow the style used in the existing code when adding something new:
+indent using 2 spaces (never use tabs!), put 1 space after commas, put
+opening braces for functions on a separate line, opening braces for
+loops and tests on the same line, etc. You can use the
+@code{clang-format} tool to apply these rules automatically (the rules
+are defined in the
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/.clang-format,.clang-format}
+file.)
+@item
+Always use the @code{Msg::} class to print information or errors
+@item
 Use memory checking tools to detect memory leaks and other nasty memory
 problems. For example, you can use
 @itemize @bullet
@@ -5213,14 +5240,6 @@ Memprof
 @item
 @dots{}
 @end itemize
-@item
-Always use the @code{Msg::} class to print information or errors
-@item
-Indent your files (2 spaces) and convert all tabs to spaces.
-@item
-Follow the style used in the existing code when adding something new
-(spaces after commas, opening braces for functions on a separate line,
-opening braces for loops and tests on the same line, etc.).
 @end enumerate
 
 @c -------------------------------------------------------------------------
@@ -5464,19 +5483,15 @@ a list or tree browser, by tag, interactively, or per window).
 
 @item Can I edit STEP/IGES/BRep models?
 
-Not yet. At the moment you can only change mesh element sizes, define
-volumes and physical groups, or delete entities. The easiest way to do
-this is to merge the model in a @file{.geo} file using @code{Merge
-"file.step";} and add the relevant scripting command after that. We plan
-to add more advanced editing features in the future (to delete entities,
-to create ``mixed'' surfaces and volumes, to export in @file{.geo}
-format, etc.).
+Yes. With the OpenCASCADE kernel (@code{SetFactory("OpenCASCADE");}),
+load the file (@code{Merge "file.step";} or @code{ShapeFromFile("file.step")})
+and add the relevant scripting commands after that to delete parts,
+create new parts or appy boolean operators.
 
 @item How can I build modular geometries?
 
-Define common geometrical objects and options in separate files,
-reusable in all your problem definition structures. Then Include the
-files in your main project file.
+Define common geometrical objects and options in separate files or using
+@code{Macro}, reusable in all your problem definition structures.
 @end enumerate
 
 @c -------------------------------------------------------------------------
@@ -5553,11 +5568,10 @@ algorithm with smoothing (e.g., with @code{Mesh.Smoothing = 10}).
 
 @item Does Gmsh support curved elements?
 
-Yes, Gmsh can generate both 1st order and 2nd order elements. To
-generate second order elements, click on `High order' in the mesh
-menu after the mesh is completed. To always generate 2nd order
-elements, select `Generate second order elements' in the mesh option
-panel. From the command line, you can also use @code{-order 2}.
+Yes, just choose the appropriate order in the mesh menu after the mesh is
+completed. High order optimization tools are in development and also available
+in the mesh menu. You can select the order on the command line with e.g.
+@code{-order 2}.
 
 @item Can I import an existing surface mesh in Gmsh and use it to build a 3D mesh?
 
@@ -5607,11 +5621,8 @@ the number of elements vs. the quality measure.
 
 @item Why don't the node and/or elememt numbers on the screen match the numbers in the mesh file?
 
-Gmsh reindexes the mesh nodes and elements so that they are
-numbered in a continuous sequence in the output files. The numbers
-displayed on screen after mesh generation thus usually differ from the
-ones saved in the mesh files. To check the actual numbers saved in the
-output file just load the mesh file back using `File->Open'.
+This was a feature of the legacy version 1 and version 2 MSH file formats.
+The MSH format version 4 does not renumber nodes and elements by default.
 @end enumerate
 
 @c -------------------------------------------------------------------------
@@ -5657,7 +5668,7 @@ Use `Tools->Plugins->Cut Plane'.
 @item Can I save an isosurface to a file?
 
 Yes: first run `Tools->Plugins->Cut Map' to extract the isosurface,
-then use `View->Save As' to save the new view.
+then use `View->Export' to save the new view.
 
 @item Can Gmsh generate isovolumes?
 

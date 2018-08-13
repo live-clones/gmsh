@@ -25,10 +25,19 @@ discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   CreateReversedCurve(c);
 }
 
+discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
+{
+  Curve *c = CreateCurve(num, MSH_SEGM_DISCRETE, 0, 0, 0, -1, -1, 0., 1.);
+  Tree_Add(model->getGEOInternals()->Curves, &c);
+  CreateReversedCurve(c);
+}
+
 discreteEdge::~discreteEdge()
 {
-  for (unsigned int i=0 ; i<discrete_lines.size(); i++)delete discrete_lines[i];
-  for (unsigned int i=0 ; i<discrete_vertices.size(); i++)delete discrete_vertices[i];
+  for(unsigned int i = 0; i < discrete_lines.size(); i++)
+    delete discrete_lines[i];
+  for(unsigned int i = 0; i < discrete_vertices.size(); i++)
+    delete discrete_vertices[i];
   discrete_lines.clear();
   discrete_vertices.clear();
 }
@@ -37,53 +46,56 @@ void discreteEdge::orderMLines()
 {
   size_t ss = lines.size();
   std::vector<MEdge> ed;
-  std::vector<std::vector<MVertex*> >vs;
-  for (unsigned int i = 0; i < lines.size(); i++) {
-    ed.push_back(MEdge(lines[i]->getVertex(0),lines[i]->getVertex(1)));
+  std::vector<std::vector<MVertex *> > vs;
+  for(unsigned int i = 0; i < lines.size(); i++) {
+    ed.push_back(MEdge(lines[i]->getVertex(0), lines[i]->getVertex(1)));
     delete lines[i];
   }
   lines.clear();
 
-  if (!SortEdgeConsecutive (ed,vs))
-    Msg::Warning ("Discrete edge segments cannot be ordered");
+  if(!SortEdgeConsecutive(ed, vs))
+    Msg::Warning("Discrete edge segments cannot be ordered");
 
-  if (vs.size() != 1)
-    Msg::Warning ("Discrete Edge %d is mutiply connected",tag());
+  if(vs.size() != 1)
+    Msg::Warning("Discrete Edge %d is mutiply connected", tag());
 
   unsigned int START = 0;
-  for ( ; START < vs[0].size(); START++) if (vs[0][START]->onWhat()->dim() == 0) break;
+  for(; START < vs[0].size(); START++)
+    if(vs[0][START]->onWhat()->dim() == 0) break;
 
-  if (START == vs[0].size())
-    Msg::Warning ("Discrete Edge %d topology is wrong",tag());
+  if(START == vs[0].size())
+    Msg::Warning("Discrete Edge %d topology is wrong", tag());
 
   unsigned int i = START;
-  while (lines.size() != ss){
-    if (vs[0][i% vs[0].size()] != vs[0][(i+1)% vs[0].size()])
-      lines.push_back(new MLine(vs[0][i% vs[0].size()],vs[0][(i+1)% vs[0].size()]));
+  while(lines.size() != ss) {
+    if(vs[0][i % vs[0].size()] != vs[0][(i + 1) % vs[0].size()])
+      lines.push_back(
+        new MLine(vs[0][i % vs[0].size()], vs[0][(i + 1) % vs[0].size()]));
     i++;
   }
 
   mesh_vertices.clear();
-  for (unsigned int i = 0; i < lines.size()-1; ++i){
+  for(unsigned int i = 0; i < lines.size() - 1; ++i) {
     MVertex *v11 = lines[i]->getVertex(1);
     mesh_vertices.push_back(v11);
   }
-  GVertex *g0 = static_cast<GVertex*>(lines[0]->getVertex(0)->onWhat());
-  if (!g0)Msg::Error ("Compound Edge with non consecutive lines");
-  GVertex *g1 = static_cast<GVertex*>(lines[lines.size()-1]->getVertex(1)->onWhat());
-  if (!g1)Msg::Error ("Compound Edge with non consecutive lines");
-  setBeginVertex (g0);
-  setEndVertex (g1);
+  GVertex *g0 = static_cast<GVertex *>(lines[0]->getVertex(0)->onWhat());
+  if(!g0) Msg::Error("Compound Edge with non consecutive lines");
+  GVertex *g1 =
+    static_cast<GVertex *>(lines[lines.size() - 1]->getVertex(1)->onWhat());
+  if(!g1) Msg::Error("Compound Edge with non consecutive lines");
+  setBeginVertex(g0);
+  setEndVertex(g1);
 }
 
 bool discreteEdge::getLocalParameter(const double &t, int &iLine,
                                      double &tLoc) const
 {
-  for (iLine = 0; iLine < (int)discrete_lines.size(); iLine++){
+  for(iLine = 0; iLine < (int)discrete_lines.size(); iLine++) {
     double tmin = _pars[iLine];
-    double tmax = _pars[iLine+1];
-    if (t >= tmin && t <= tmax){
-      tLoc = (t-tmin)/(tmax-tmin);
+    double tmax = _pars[iLine + 1];
+    if(t >= tmin && t <= tmax) {
+      tLoc = (t - tmin) / (tmax - tmin);
       return true;
     }
   }
@@ -102,16 +114,15 @@ GPoint discreteEdge::point(double par) const
   MVertex *vE = discrete_lines[iEdge]->getVertex(1);
   if(!vB || !vE) return GPoint();
 
-  //linear Lagrange mesh
-  x = vB->x() + tLoc * (vE->x()- vB->x());
-  y = vB->y() + tLoc * (vE->y()- vB->y());
-  z = vB->z() + tLoc * (vE->z()- vB->z());
-  return GPoint(x,y,z,this,par);
+  // linear Lagrange mesh
+  x = vB->x() + tLoc * (vE->x() - vB->x());
+  y = vB->y() + tLoc * (vE->y() - vB->y());
+  z = vB->z() + tLoc * (vE->z() - vB->z());
+  return GPoint(x, y, z, this, par);
 }
 
 SVector3 discreteEdge::firstDer(double par) const
 {
-
   double tLoc;
   int iEdge;
 
@@ -122,11 +133,10 @@ SVector3 discreteEdge::firstDer(double par) const
 
   if(!vB || !vE) return SVector3();
 
-
   double dx, dy, dz;
-  dx = (vE->x() - vB->x());// / dt;
-  dy = (vE->y() - vB->y());// / dt;
-  dz = (vE->z() - vB->z());// / dt;
+  dx = (vE->x() - vB->x()); // / dt;
+  dy = (vE->y() - vB->y()); // / dt;
+  dz = (vE->z() - vB->z()); // / dt;
 
   SVector3 der(dx, dy, dz);
   return der;
@@ -145,40 +155,38 @@ Range<double> discreteEdge::parBounds(int i) const
 
 void discreteEdge::createGeometry()
 {
-  if (discrete_lines.empty()){
-
+  if(discrete_lines.empty()) {
     orderMLines();
 
     bool reverse = lines[0]->getVertex(0) == getEndVertex()->mesh_vertices[0];
 
-    std::map<MVertex*,MVertex*> old2new;
+    std::map<MVertex *, MVertex *> old2new;
 
-    for (unsigned int i = 0; i < lines.size(); i++){
-      for (unsigned int j = 0; j < 2; j++){
-	MVertex *v = lines[i]->getVertex(j);
-	if (old2new.find(v) == old2new.end()){
-	  MVertex *vnew = new MVertex(v->x(), v->y(),v->z(), this);
-	  old2new[v] = vnew;
-	}
+    for(unsigned int i = 0; i < lines.size(); i++) {
+      for(unsigned int j = 0; j < 2; j++) {
+        MVertex *v = lines[i]->getVertex(j);
+        if(old2new.find(v) == old2new.end()) {
+          MVertex *vnew = new MVertex(v->x(), v->y(), v->z(), this);
+          old2new[v] = vnew;
+        }
       }
     }
 
-    std::vector<MLine*> _temp;
+    std::vector<MLine *> _temp;
     discrete_lines.resize(lines.size());
-    for (unsigned int i = 0; i < lines.size(); i++){
+    for(unsigned int i = 0; i < lines.size(); i++) {
       MVertex *v0 = lines[i]->getVertex(0);
       MVertex *v1 = lines[i]->getVertex(1);
       MVertex *v00 = old2new[v0];
       MVertex *v01 = old2new[v1];
-      if (reverse)
-	discrete_lines[lines.size() - i - 1] = new MLine(v01,v00);
+      if(reverse)
+        discrete_lines[lines.size() - i - 1] = new MLine(v01, v00);
       else
-	discrete_lines[i] = new MLine(v00,v01);
-
+        discrete_lines[i] = new MLine(v00, v01);
     }
     // compute parameters and recompute the vertices
     _pars.push_back(0.0);
-    for (unsigned int i = 1; i < discrete_lines.size(); i++){
+    for(unsigned int i = 1; i < discrete_lines.size(); i++) {
       _pars.push_back((double)i);
       MVertex *newv = discrete_lines[i]->getVertex(0);
       discrete_vertices.push_back(newv);
@@ -192,7 +200,7 @@ void discreteEdge::createGeometry()
 void discreteEdge::mesh(bool verbose)
 {
 #if defined(HAVE_MESH)
-  if (discrete_lines.empty()) return;
+  if(discrete_lines.empty()) return;
   meshGEdge mesher;
   mesher(this);
 #endif
@@ -200,7 +208,7 @@ void discreteEdge::mesh(bool verbose)
 
 void discreteEdge::writeGEO(FILE *fp)
 {
-  if (getBeginVertex() && getEndVertex())
+  if(getBeginVertex() && getEndVertex())
     fprintf(fp, "Discrete Line(%d) = {%d,%d};\n", tag(),
             getBeginVertex()->tag(), getEndVertex()->tag());
 }

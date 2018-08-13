@@ -15,8 +15,8 @@
 #include "GRegion.h"
 #include "MElementOctree.h"
 
-class VoronoiVertex{
- private:
+class VoronoiVertex {
+private:
   SPoint3 point;
   int category;
   int index1;
@@ -26,7 +26,8 @@ class VoronoiVertex{
   SVector3 normal1;
   SVector3 normal2;
   double h;
- public:
+
+public:
   VoronoiVertex();
   ~VoronoiVertex();
   SPoint3 get_point();
@@ -38,21 +39,22 @@ class VoronoiVertex{
   SVector3 get_normal1();
   SVector3 get_normal2();
   double get_h();
-  void set_point(SPoint3);
+  void set_point(const SPoint3 &);
   void set_category(int);
   void set_index1(int);
   void set_index2(int);
   void set_index3(int);
   void set_index4(int);
-  void set_normal1(SVector3);
-  void set_normal2(SVector3);
+  void set_normal1(const SVector3 &);
+  void set_normal2(const SVector3 &);
   void set_h(double);
 };
 
-class Tensor{
- private:
-  double t11,t21,t31,t12,t22,t32,t13,t23,t33;
- public:
+class Tensor {
+private:
+  double t11, t21, t31, t12, t22, t32, t13, t23, t33;
+
+public:
   Tensor();
   ~Tensor();
   void set_t11(double);
@@ -75,8 +77,8 @@ class Tensor{
   double get_t33();
 };
 
-class VoronoiElement{
- private:
+class VoronoiElement {
+private:
   VoronoiVertex v1;
   VoronoiVertex v2;
   VoronoiVertex v3;
@@ -86,7 +88,8 @@ class VoronoiElement{
   double dh_dy;
   double dh_dz;
   Tensor t;
- public:
+
+public:
   VoronoiElement();
   ~VoronoiElement();
   VoronoiVertex get_v1();
@@ -98,31 +101,32 @@ class VoronoiElement{
   double get_dh_dy();
   double get_dh_dz();
   Tensor get_tensor();
-  void set_v1(VoronoiVertex);
-  void set_v2(VoronoiVertex);
-  void set_v3(VoronoiVertex);
-  void set_v4(VoronoiVertex);
-  void set_tensor(Tensor);
-  double get_h(double,double,double);
+  void set_v1(const VoronoiVertex &);
+  void set_v2(const VoronoiVertex &);
+  void set_v3(const VoronoiVertex &);
+  void set_v4(const VoronoiVertex &);
+  void set_tensor(const Tensor &);
+  double get_h(double, double, double);
   void deriv_h();
   void compute_jacobian();
-  double T(double,double,double,double,double,double,double);
+  double T(double, double, double, double, double, double, double);
   void swap();
   double get_quality();
 };
 
-class LpSmoother{
- private:
+class LpSmoother {
+private:
   int max_iter;
   int norm;
-  static std::vector<MVertex*> interior_vertices;
- public:
-  LpSmoother(int,int);
+  static std::vector<MVertex *> interior_vertices;
+
+public:
+  LpSmoother(int, int);
   ~LpSmoother();
   void improve_model();
-  void improve_region(GRegion*);
+  void improve_region(GRegion *);
   static int get_nbr_interior_vertices();
-  static MVertex* get_interior_vertex(int);
+  static MVertex *get_interior_vertex(int);
 };
 
 #endif

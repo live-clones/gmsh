@@ -3,8 +3,8 @@
 
 HXTStatus hxtNewtonRaphson(HXTLinearSystem *nrSys, double *solution, int size, int maxiter, double tol, HXTNonLinearSolverCallbackF *fcb, HXTNonLinearSolverCallbackDF *dfcb, void *data) {
   double *delta, *rhs;
-  HXT_CHECK(hxtMalloc(&delta,size*sizeof(double)));
-  HXT_CHECK(hxtMalloc(&rhs,size*sizeof(double))); 
+  HXT_CHECK(hxtAlignedMalloc(&delta,size*sizeof(double)));
+  HXT_CHECK(hxtAlignedMalloc(&rhs,size*sizeof(double))); 
   for(int n=0; n<maxiter; n++){
     HXT_CHECK(hxtLinearSystemZeroMatrix(nrSys));
     HXT_CHECK(fcb(data,solution,nrSys,rhs));
@@ -20,8 +20,8 @@ HXTStatus hxtNewtonRaphson(HXTLinearSystem *nrSys, double *solution, int size, i
     if(nrNorm<tol)
       break;
   }
-  HXT_CHECK(hxtFree(&delta));
-  HXT_CHECK(hxtFree(&rhs));
+  HXT_CHECK(hxtAlignedFree(&delta));
+  HXT_CHECK(hxtAlignedFree(&rhs));
   return HXT_STATUS_OK;
 }
 

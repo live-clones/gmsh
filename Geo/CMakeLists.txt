@@ -5,7 +5,9 @@
 
 set(SRC
   boundaryLayersData.cpp
+	affineTransformation.cpp
   closestPoint.cpp
+	closestVertex.cpp
   intersectCurveSurface.cpp
   GEntity.cpp STensor3.cpp
     GVertex.cpp GEdge.cpp GFace.cpp GRegion.cpp
@@ -25,7 +27,7 @@ set(SRC
       GModelIO_VTK.cpp GModelIO_CGNS.cpp GModelIO_MED.cpp GModelIO_MESH.cpp
       GModelIO_STL.cpp  GModelIO_TOCHNOG.cpp GModelIO_PLY.cpp GModelIO_VRML.cpp
       GModelIO_UNV.cpp GModelIO_BDF.cpp GModelIO_IR3.cpp GModelIO_DIFF.cpp
-      GModelIO_GEOM.cpp GModelIO_INP.cpp GModelIO_MAIL.cpp GModelIO_P3D.cpp
+      GModelIO_GEOM.cpp GModelIO_INP.cpp GModelIO_KEY.cpp GModelIO_MAIL.cpp GModelIO_P3D.cpp
       GModelIO_CELUM.cpp GModelIO_NEU.cpp GModelIO_ACTRAN.cpp GModelIO_SU2.cpp
       GModelIO_SAMCEF.cpp GModelIO_MATLAB.cpp GModelIO_POS.cpp
   ExtrudeParams.cpp
@@ -44,6 +46,7 @@ set(SRC
   MZone.cpp MZoneBoundary.cpp
   Cell.cpp CellComplex.cpp ChainComplex.cpp Homology.cpp Chain.cpp
   MVertexBoundaryLayerData.cpp
+  CGNSFunctions.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

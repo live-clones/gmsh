@@ -678,6 +678,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Enable mouse hover on meshes" },
   { F|O, "MouseSelection" , opt_general_mouse_selection , 1. ,
     "Enable mouse selection" },
+  { F|O, "MouseInvertZoom" , opt_general_mouse_invert_zoom , 0. ,
+    "Invert mouse wheel zoom direction" },
 
   { F|S, "NonModalWindows" , opt_general_non_modal_windows , 1. ,
     "Force all control windows to be on top of the graphic window "
@@ -864,6 +866,10 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "MatchGeomAndMesh" , opt_geometry_match_geom_and_mesh, 0 ,
     "Matches geometries and meshes" },
+  { F|O, "MatchMeshScaleFactor" , opt_geometry_match_mesh_scale_factor, 1 ,
+    "Rescaling factor for the mesh to correspond to size of the geometry" },
+  { F|O, "MatchMeshTolerance", opt_geometry_match_mesh_tolerance, 1e-6,
+    "Tolerance for matching mesh and geometry"},
 
   { F|O, "Normals" , opt_geometry_normals , 0. ,
     "Display size of normal vectors (in pixels)" },
@@ -979,6 +985,9 @@ StringXNumber MeshOptions_Number[] = {
     "7=MMG3D, 9=R-tree)" },
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" },
+  { F|O, "AngleToleranceFacetOverlap" , opt_mesh_angle_tolerance_facet_overlap , 0.1,
+    "Consider connected facets as overlapping when the dihedral angle between the facets is "
+    "smaller than the user's defined tolerance" },
   { F|O, "AnisoMax" , opt_mesh_aniso_max, 1.e33,
     "Maximum anisotropy of the mesh" },
   { F|O, "AllowSwapAngle" , opt_mesh_allow_swap_edge_angle , 10.0 ,
@@ -995,6 +1004,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
    "Enable the creation of high-order mesh from CGNS structured meshes"
    "(1, 2, 4, 8, ...)" },
+  { F|O, "CgnsConstructTopology" , opt_mesh_cgns_construct_topology , 0. ,
+   "Reconstruct the model topology (BREP) after reading a CGNS file" },
   { F|O, "CharacteristicLengthExtendFromBoundary" ,
     opt_mesh_lc_extend_from_boundary, 1. ,
     "Extend computation of mesh element sizes from the boundaries into the surfaces/volumes" },
@@ -1091,7 +1102,7 @@ StringXNumber MeshOptions_Number[] = {
     "Minimum number of points used to mesh a circle" },
   { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
     "Minimum number of points used to mesh a (non-straight) curve" },
-  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 2.2 ,
+  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.0 ,
     "Version of the MSH file format to use" },
   { F|O, "PartitionHexWeight" , opt_mesh_partition_hex_weight , 1 ,
     "Weight of hexahedral element for METIS load balancing" },
@@ -1109,14 +1120,18 @@ StringXNumber MeshOptions_Number[] = {
     "Weight of triangle element for METIS load balancing" },
   { F|O, "PartitionCreateTopology" , opt_mesh_partition_create_topology , 1 ,
     "Create boundary representation of partitions" },
-  { F|O, "PartitionCreatePhysicals" , opt_mesh_partition_create_physicals , 0 ,
-    "Create physical groups for partitions" },
+  { F|O, "PartitionCreatePhysicals" , opt_mesh_partition_create_physicals , 1 ,
+    "Create physical groups for partitions, based on existing physical groups" },
   { F|O, "PartitionCreateGhostCells" , opt_mesh_partition_create_ghost_cells , 0 ,
     "Create partition ghost cells" },
   { F|O, "PartitionSplitMeshFiles" , opt_mesh_partition_split_mesh_files , 0 ,
     "Write one file for each mesh partition" },
   { F|O, "PartitionTopologyFile" , opt_mesh_partition_save_topology_file , 0 ,
     "Write a .pro file with the partition topology" },
+  { F|O, "PartitionOldStyleMsh2" , opt_mesh_partition_old_style_msh2 , 1 ,
+    "Write partitioned meshes in MSH2 format using old style (i.e. by not "
+    "referencing new partitioned entities, except on partition boundaries), "
+    "for backward compatibility" },
 
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. ,
     "Number of hexahedra in the current mesh (read-only)" },
@@ -1750,7 +1765,7 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "PostSICN" , opt_print_pos_SICN , 0. ,
     "Save SICN (signed inverse condition number) quality measure in mesh "
     "statistics exported as post-processing views" },
-  { F|O, "PostSICN" , opt_print_pos_SIGE , 0. ,
+  { F|O, "PostSIGE" , opt_print_pos_SIGE , 0. ,
     "Save SIGE (signed inverse gradient error) quality measure in mesh "
     "statistics exported as post-processing views" },
   { F|O, "PostDisto" , opt_print_pos_disto , 0. ,

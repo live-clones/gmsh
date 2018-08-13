@@ -10,7 +10,7 @@
 #include "GmshDefines.h"
 
 class nodalBasis {
- public:
+public:
   int type, parentType, order, dimension, numFaces;
   bool serendip;
   fullMatrix<double> points;
@@ -19,25 +19,35 @@ class nodalBasis {
   nodalBasis(int tag);
   virtual ~nodalBasis() {}
   virtual int getNumShapeFunctions() const = 0;
-  void getReferenceNodes(fullMatrix<double> &nodes) const
-  {
-    nodes = points;
-  }
-  const fullMatrix<double>& getReferenceNodes() const
-  {
-    return points;
-  }
+  void getReferenceNodes(fullMatrix<double> &nodes) const { nodes = points; }
+  const fullMatrix<double> &getReferenceNodes() const { return points; }
+
+  // compute the matrix that projects the provided points on the current control
+  // points
+  bool forwardTransformation(const fullMatrix<double> &otherPoints,
+                             fullMatrix<double> &projection,
+                             int elementType = -1) const;
+
+  // compute the renumbering vector to map the provided points on the current
+  // control points
+  bool forwardRenumbering(const fullMatrix<double> &otherPoints, int *renum,
+                          int elemenType = -1) const;
+
   void getReferenceNodesForBezier(fullMatrix<double> &nodes) const;
 
   // Basis functions & gradients evaluation
   virtual void f(double u, double v, double w, double *sf) const = 0;
-  virtual void f(const fullMatrix<double> &coord, fullMatrix<double> &sf) const = 0;
+  virtual void f(const fullMatrix<double> &coord,
+                 fullMatrix<double> &sf) const = 0;
   virtual void df(double u, double v, double w, double grads[][3]) const = 0;
-  virtual void df(const fullMatrix<double> &coord, fullMatrix<double> &dfm) const = 0;
-  virtual void ddf(double u, double v, double w, double grads[][3][3]) const {
+  virtual void df(const fullMatrix<double> &coord,
+                  fullMatrix<double> &dfm) const = 0;
+  virtual void ddf(double u, double v, double w, double grads[][3][3]) const
+  {
     Msg::Error("ddf not implemented for this basis");
   }
-  virtual void dddf(double u, double v, double w, double grads[][3][3][3]) const {
+  virtual void dddf(double u, double v, double w, double grads[][3][3][3]) const
+  {
     Msg::Error("dddf not implemented for this basis");
   }
 
@@ -49,7 +59,7 @@ class nodalBasis {
   // considered face becomes the closureRef[i]-th face (the first triangle or
   // the first quad face)
   class closure : public std::vector<int> {
-    public:
+  public:
     int type;
   };
   typedef std::vector<closure> clCont;
@@ -76,7 +86,8 @@ inline int nodalBasis::getClosureId(int iFace, int iSign, int iRot) const
   return iFace + numFaces * (iSign == 1 ? 0 : 1) + 2 * numFaces * iRot;
 }
 
-inline void nodalBasis::breakClosureId(int i, int &iFace, int &iSign, int &iRot) const
+inline void nodalBasis::breakClosureId(int i, int &iFace, int &iSign,
+                                       int &iRot) const
 {
   iFace = i % numFaces;
   i = (i - iFace) / numFaces;

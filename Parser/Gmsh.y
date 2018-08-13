@@ -129,6 +129,7 @@ void getAllPhysicalTags(int dim, List_T *in);
 void getElementaryTagsForPhysicalGroups(int dim, List_T *in, List_T *out);
 void getElementaryTagsInBoundingBox(int dim, double x1, double y1, double z1,
                                     double x2, double y2, double z2, List_T *out);
+void getParentTags(int dim, List_T *in, List_T *out);
 void getBoundingBox(int dim, int tag, List_T *out);
 void setVisibility(int dim, int visible, bool recursive);
 void setVisibility(const std::vector<std::pair<int, int> > &dimTags, int visible,
@@ -196,8 +197,8 @@ struct doubleXstring{
 %token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk tWire tGeoEntity
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
-%token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet
-%token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic
+%token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet tChamfer
+%token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic tParent
 %token tUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
@@ -1806,8 +1807,6 @@ Shape :
       std::vector<int> tags; ListOfDouble2Vector($7, tags);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        for(unsigned int i = 0; i < tags.size(); i++)
-          tags[i] = std::abs(tags[i]); // all edge tags > 0 for OCC
         r = GModel::current()->getOCCInternals()->addLineLoop(num, tags);
       }
       else{
@@ -2539,6 +2538,24 @@ ListOfShapes :
         List_Add($$, &s);
       }
     }
+  | ListOfShapes tParent GeoEntity '{' RecursiveListOfDouble '}' tEND
+    {
+      List_T *tmp = List_Create(10, 10, sizeof(double));
+      getParentTags($3, $5, tmp);
+      for(int i = 0; i < List_Nbr(tmp); i++){
+	double d;
+	List_Read(tmp, i, &d);
+ 	Shape s;
+	s.Num = (int)d; // FIXME
+        switch ($3) {
+        case 0: s.Type = MSH_POINT    ; break;
+        case 1: s.Type = MSH_SEGM_LINE; break;
+        case 2: s.Type = MSH_SURF_PLAN; break; // we don't care about the actual type
+        case 3: s.Type = MSH_VOLUME   ; break;
+        }
+        List_Add($$, &s);
+      }
+    }
   | ListOfShapes GeoEntity '{' tDOTS '}' tEND
     {
       List_T *tmp = List_Create(10, 10, sizeof(double));
@@ -3194,7 +3211,7 @@ Command :
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
-	MergeFile(tmp, true);
+        MergeFile(tmp, true);
       }
       else if(!strcmp($1, "NonBlockingSystemCall")){
 	SystemCall($2);
@@ -3901,17 +3918,19 @@ Extrude :
       if(!r) yymsg(0, "Could not add ruled thrusections");
       List_Delete($3);
     }
-  | tFillet '{' RecursiveListOfDouble '}' '{' RecursiveListOfDouble '}' '{' FExpr '}'
+  | tFillet '{' RecursiveListOfDouble '}' '{' RecursiveListOfDouble '}'
+            '{' RecursiveListOfDouble '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        double radius = $9;
         std::vector<int> regions, edges;
         ListOfDouble2Vector($3, regions); ListOfDouble2Vector($6, edges);
+        std::vector<double> radii;
+        ListOfDouble2Vector($9, radii);
         std::vector<std::pair<int, int> > outDimTags;
         r = GModel::current()->getOCCInternals()->fillet
-          (regions, edges, radius, outDimTags, true);
+          (regions, edges, radii, outDimTags, true);
         VectorOfPairs2ListOfShapes(outDimTags, $$);
       }
       else{
@@ -3920,6 +3939,32 @@ Extrude :
       if(!r) yymsg(0, "Could not fillet shapes");
       List_Delete($3);
       List_Delete($6);
+      List_Delete($9);
+    }
+  | tChamfer '{' RecursiveListOfDouble '}' '{' RecursiveListOfDouble '}'
+             '{' RecursiveListOfDouble '}' '{' RecursiveListOfDouble '}'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      bool r = true;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> regions, edges, surfaces;
+        ListOfDouble2Vector($3, regions); ListOfDouble2Vector($6, edges);
+        ListOfDouble2Vector($9, surfaces);
+        std::vector<double> distances;
+        ListOfDouble2Vector($12, distances);
+        std::vector<std::pair<int, int> > outDimTags;
+        r = GModel::current()->getOCCInternals()->chamfer
+          (regions, edges, surfaces, distances, outDimTags, true);
+        VectorOfPairs2ListOfShapes(outDimTags, $$);
+      }
+      else{
+        yymsg(0, "Chamfer only available with OpenCASCADE geometry kernel");
+      }
+      if(!r) yymsg(0, "Could not chamfer shapes");
+      List_Delete($3);
+      List_Delete($6);
+      List_Delete($9);
+      List_Delete($12);
     }
 ;
 
@@ -5543,6 +5588,12 @@ FExpr_Multi :
         List_Delete($3);
       }
     }
+  | tParent GeoEntity ListOfDouble
+    {
+      $$ = List_Create(10, 10, sizeof(double));
+      getParentTags($2, $3, $$);
+      List_Delete($3);
+    }
    | GeoEntity tIn tBoundingBox
       '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
@@ -6844,6 +6895,28 @@ void getElementaryTagsInBoundingBox(int dim, double x1, double y1, double z1,
   for(unsigned int i = 0; i < entities.size(); i++){
     double d = entities[i]->tag();
     List_Add(out, &d);
+  }
+}
+
+void getParentTags(int dim, List_T *in, List_T *out)
+{
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  if(GModel::current()->getGEOInternals()->getChanged())
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+
+  for(int i = 0; i < List_Nbr(in); i++){
+    double num;
+    List_Read(in, i, &num);
+    GEntity *ge = GModel::current()->getEntityByTag(dim, (int)num);
+    if(ge){
+      GEntity *parent = ge->getParentEntity();
+      if(parent){
+        double tag = parent->tag();
+        List_Add(out, &tag);
+      }
+    }
   }
 }
 

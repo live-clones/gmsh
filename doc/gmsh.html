@@ -6,7 +6,7 @@
 <title>Gmsh: a three-dimensional finite element mesh generator with
 built-in pre- and post-processing facilities</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> 
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="keywords" content="free, finite elements, mesh generator, fem,
 unstructured grids, delaunay, discontinuous galerkin, triangulation,
 automatic, maillages, mailleur 3D, mesh adaptation, postprocessing,
@@ -60,12 +60,12 @@ CAO, OpenGL, GL2PS, Gmesh">
   | <a href="#Screenshots">Screenshots</a>
   | <a href="#Links">Links</a>
   | <a href="#References">References</a>
-  | <!-- div class="fb-like" data-href="https://www.facebook.com/OnelabModels" 
-         data-layout="button_count" data-action="like" data-show-faces="false" 
+  | <!-- div class="fb-like" data-href="https://www.facebook.com/OnelabModels"
+         data-layout="button_count" data-action="like" data-show-faces="false"
          data-share="false"></div -->
     <a href="https://www.facebook.com/OnelabModels"><img class="social"
        src="http://gmsh.info/gallery/facebook.png" alt="facebook"></a>
-  | <!-- a href="https://twitter.com/OnelabModels" class="twitter-follow-button" 
+  | <!-- a href="https://twitter.com/OnelabModels" class="twitter-follow-button"
          data-show-count="false" data-size="small" data-show-screen-name="false">Follow
          @OnelabModels</a -->
     <a href="https://www.twitter.com/OnelabModels"><img class="social"
@@ -88,9 +88,9 @@ See the screencasts for a <a href="screencasts/">quick tour of Gmsh's graphical
 user interface</a>, or the reference manual for a more thorough
 <a href="doc/texinfo/gmsh.html#Overview">overview of Gmsh's capabilities</a> and
 some <a href="doc/texinfo/gmsh.html#Frequently-asked-questions">frequently asked
-questions</a>. The source code contains many examples written using both the 
+questions</a>. The source code contains many examples written using both the
 <a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial">built-in</a>
-<a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean">scripting</a> 
+<a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean">scripting</a>
 language and the
 <a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api">C++, C,
 Python or Julia API</a>.
@@ -105,58 +105,52 @@ Public License (GPL)</a>:
 <ul>
   <li>
     <div class="highlight">
-      Latest stable release (version 3.0.6, November 5 2017):
+      Current stable release (version 4.0.0, ?? August 2018):
       <ul>
-        <li>Download the Gmsh application
-          for <a href="bin/Windows/gmsh-3.0.6-Windows64.zip">Windows</a>
-          (<a href="bin/Windows/gmsh-3.0.6-Windows32.zip">32 bit</a>),
-          <a href="bin/Linux/gmsh-3.0.6-Linux64.tgz">Linux</a>
-          <!-- (<a href="bin/Linux/gmsh-3.0.6-Linux32.tgz">32 bit)</a>) --> or
-          <a href="bin/MacOSX/gmsh-3.0.6-MacOSX.dmg">MacOS</a>
-        <li>Download the Gmsh <a href="src/gmsh-3.0.6-source.tgz">source
-            code</a>
-          <!-- li>Download the Software Development Kit (SDK) for
-               <a href="bin/Windows/gmsh-4.0.0-Windows64-sdk.zip">Windows</a>
-               (<a href="bin/Windows/gmsh-4.0.0-Windows32-sdk.zip">32 bit</a>),
-               <a href="bin/Linux/gmsh-4.0.0-Linux64-sdk.tgz">Linux</a>
-               (<a href="bin/Linux/gmsh-4.0.0-Linux32-sdk.tgz">32 bit</a>) or
-               <a href="bin/MacOSX/gmsh-4.0.0-MacOSX-sdk.tgz">MacOS</a> -->
+        <li>Download Gmsh for
+          <a href="bin/Windows/gmsh-4.0.0-Windows64.zip">Windows 64-bit</a>,
+          <a href="bin/Windows/gmsh-4.0.0-Windows32.zip">Windows 32-bit</a>,
+          <a href="bin/Linux/gmsh-4.0.0-Linux64.tgz">Linux 64-bit</a>,
+          <a href="bin/Linux/gmsh-4.0.0-Linux32.tgz">Linux 32-bit</a> or
+          <a href="bin/MacOSX/gmsh-4.0.0-MacOSX.dmg">MacOS</a>
+        <li>Download the <a href="src/gmsh-4.0.0-source.tgz">source code</a>
+        <li>Download the Software Development Kit (SDK) for
+          <a href="bin/Windows/gmsh-4.0.0-Windows64-sdk.zip">Windows 64-bit</a>,
+          <a href="bin/Windows/gmsh-4.0.0-Windows32-sdk.zip">Windows 32-bit</a>,
+          <a href="bin/Linux/gmsh-4.0.0-Linux64-sdk.tgz">Linux 64-bit</a>,
+          <a href="bin/Linux/gmsh-4.0.0-Linux32-sdk.tgz">Linux 32-bit</a> or
+          <a href="bin/MacOSX/gmsh-4.0.0-MacOSX-sdk.tgz">MacOS</a>
       </ul>
     </div>
     <p>
       <em>Make sure to read
-        the <a href="doc/texinfo/gmsh.html#Tutorial">tutorials</a>
-        before sending questions or bug reports. Many
-        <a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean">other
-          examples</a> are also available.
-        <!-- See the <a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api">C++,
-             C, Python and Julia</a> examples on how to use the Gmsh API to develop your
-             own applications using the SDK. -->
-      </em>
+        the <a href="doc/texinfo/gmsh.html#Tutorial">tutorials</a> before
+        sending questions or bug reports. See
+        the <a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api">C++,
+        C, Python and Julia</a> examples on how to use the Gmsh API to develop
+        your own applications using the SDK.</em>
     </p>
   <li>Development version:
     <ul>
-      <li>Download the latest automatic application snapshot for
-        <a href="bin/Windows/gmsh-git-Windows64.zip">Windows</a>
-        (<a href="bin/Windows/gmsh-git-Windows32.zip">32 bit</a>),
-        <a href="bin/Linux/gmsh-git-Linux64.tgz">Linux</a>
-        (<a href="bin/Linux/gmsh-git-Linux32.tgz">32 bit</a>) or
+      <li>Download the latest automatic Gmsh snapshot for
+        <a href="bin/Windows/gmsh-git-Windows64.zip">Windows 64-bit</a>,
+        <a href="bin/Windows/gmsh-git-Windows32.zip">Windows 32-bit</a>,
+        <a href="bin/Linux/gmsh-git-Linux64.tgz">Linux 64-bit</a>,
+        <a href="bin/Linux/gmsh-git-Linux32.tgz">Linux 32-bit</a> or
         <a href="bin/MacOSX/gmsh-git-MacOSX.dmg">MacOS</a>
       <li>Download the latest automatic <a href="src/gmsh-git-source.tgz">source
         code</a> snapshot
-      <li>Download the latest automatic Software Development Kit (SDK) snapshot for
-        <a href="bin/Windows/gmsh-git-Windows64-sdk.zip">Windows</a>
-        (<a href="bin/Windows/gmsh-git-Windows32-sdk.zip">32 bit</a>),
-        <a href="bin/Linux/gmsh-git-Linux64-sdk.tgz">Linux</a>
-        (<a href="bin/Linux/gmsh-git-Linux32-sdk.tgz">32 bit</a>) or
+      <li>Read the latest automatic <a href="dev/doc/texinfo/gmsh.html">reference manual</a> snapshot
+      <li>Download the latest automatic SDK snapshot for
+        <a href="bin/Windows/gmsh-git-Windows64-sdk.zip">Windows 64-bit</a>,
+        <a href="bin/Windows/gmsh-git-Windows32-sdk.zip">Windows 32-bit</a>,
+        <a href="bin/Linux/gmsh-git-Linux64-sdk.tgz">Linux 64-bit</a>,
+        <a href="bin/Linux/gmsh-git-Linux32-sdk.tgz">Linux 32-bit</a> or
         <a href="bin/MacOSX/gmsh-git-MacOSX-sdk.tgz">MacOS</a>
       <li>Access the Git repository: '<code>git clone
           <a href="https://gitlab.onelab.info/gmsh/gmsh.git">https://gitlab.onelab.info/gmsh/gmsh.git</a></code>'
     </ul>
     <p>
-      <em>See the <a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api">C++,
-          C, Python and Julia</a> examples on how to use the Gmsh API to develop your
-        own applications using the SDK.</em>
     </p>
   <li>All versions: <a href="bin/">binaries</a>
     and <a href="src/">sources</a>
@@ -189,7 +183,7 @@ algorithms</a>.
 <h2><a name="Documentation"></a>Documentation</h2>
 
 <ul>
-  <li><a href="doc/texinfo/gmsh.html">Reference manual</a> 
+  <li><a href="doc/texinfo/gmsh.html">Gmsh reference manual</a>
       (also available in
       <a href="doc/texinfo/gmsh.pdf">PDF</a> and in
       <a href="doc/texinfo/gmsh.txt">plain text</a>)
@@ -293,7 +287,7 @@ directly</a> for more information.
     external solvers, as for example the open source finite
     solver <a href="http://getdp.info">GetDP</a>.
   <li>Gmsh and GetDP are bundled in the ONELAB app for
-    <a href="https://itunes.apple.com/us/app/onelab/id845930897">iPhone, iPad</a> and 
+    <a href="https://itunes.apple.com/us/app/onelab/id845930897">iPhone, iPad</a> and
     <a href="https://play.google.com/store/apps/details?id=org.geuz.onelab">Android</a>
     devices.
   <li>We organized the <a href="http://tetrahedron.montefiore.ulg.ac.be">fifth
@@ -378,7 +372,7 @@ directly</a> for more information.
     <li>J. Lambrechts, R. Comblen, V. Legat, C. Geuzaine and
       J.-F. Remacle. <em><a href="doc/preprints/gmsh_ocean_preprint.pdf">Multiscale
        mesh generation on the sphere</a></em>. Ocean
-      Dynamics, 58, pp. 461-473, 2008. 
+      Dynamics, 58, pp. 461-473, 2008.
   </ul>
   Biomedical meshing
   <ul class="small">

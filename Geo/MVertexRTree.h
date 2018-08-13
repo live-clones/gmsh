@@ -13,20 +13,21 @@
 
 // Stores MVertex pointers in an R-Tree so we can query unique vertices by their
 // coordinates, up to a prescribed tolerance.
-class MVertexRTree{
- private:
-  RTree<MVertex*, double, 3, double> *_rtree;
+class MVertexRTree {
+private:
+  RTree<MVertex *, double, 3, double> *_rtree;
   double _tol;
   static bool rtree_callback(MVertex *v, void *ctx)
   {
-    MVertex **out = static_cast<MVertex**>(ctx);
+    MVertex **out = static_cast<MVertex **>(ctx);
     *out = v;
     return false; // we're done searching
   }
- public:
+
+public:
   MVertexRTree(double tolerance = 1.e-8)
   {
-    _rtree = new RTree<MVertex*, double, 3, double>();
+    _rtree = new RTree<MVertex *, double, 3, double>();
     _tol = tolerance;
   }
   ~MVertexRTree()
@@ -34,32 +35,32 @@ class MVertexRTree{
     _rtree->RemoveAll();
     delete _rtree;
   }
-  MVertex *insert(MVertex *v, bool warnIfExists=false,
-                  std::set<MVertex*> *duplicates=0)
+  MVertex *insert(MVertex *v, bool warnIfExists = false,
+                  std::set<MVertex *> *duplicates = 0)
   {
     MVertex *out;
     double _min[3] = {v->x() - _tol, v->y() - _tol, v->z() - _tol};
     double _max[3] = {v->x() + _tol, v->y() + _tol, v->z() + _tol};
-    if(!_rtree->Search(_min, _max, rtree_callback, &out)){
+    if(!_rtree->Search(_min, _max, rtree_callback, &out)) {
       _rtree->Insert(_min, _max, v);
       return 0;
     }
-    else{
-      if(duplicates){
+    else {
+      if(duplicates) {
         duplicates->insert(out);
         duplicates->insert(v);
       }
-      if(warnIfExists){
+      if(warnIfExists) {
         Msg::Warning("Vertex %d (%.16g, %.16g, %.16g) already exists in the "
                      "mesh with tolerance %g: Vertex %d (%.16g, %.16g, %.16g)",
-                     v->getNum(), v->x(), v->y(), v->z(), _tol,
-                     out->getNum(), out->x(), out->y(), out->z());
+                     v->getNum(), v->x(), v->y(), v->z(), _tol, out->getNum(),
+                     out->x(), out->y(), out->z());
       }
       return out;
     }
   }
-  int insert(std::vector<MVertex*> &v, bool warnIfExists=false,
-             std::set<MVertex*> *duplicates=0)
+  int insert(std::vector<MVertex *> &v, bool warnIfExists = false,
+             std::set<MVertex *> *duplicates = 0)
   {
     int num = 0;
     for(unsigned int i = 0; i < v.size(); i++)
@@ -71,14 +72,10 @@ class MVertexRTree{
     MVertex *out;
     double _min[3] = {x - _tol, y - _tol, z - _tol};
     double _max[3] = {x + _tol, y + _tol, z + _tol};
-    if(_rtree->Search(_min, _max, rtree_callback, &out))
-      return out;
+    if(_rtree->Search(_min, _max, rtree_callback, &out)) return out;
     return 0;
   }
-  unsigned int size()
-  {
-    return _rtree->Count();
-  }
+  unsigned int size() { return _rtree->Count(); }
 };
 
 #endif

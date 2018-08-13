@@ -18,15 +18,15 @@
 int dimension;
 
 template <class T>
-static void writeElementsTOCHNOG(FILE *fp, GEntity *ge, std::vector<T*> &elements,
-                                 bool saveAll)
+static void writeElementsTOCHNOG(FILE *fp, GEntity *ge,
+                                 std::vector<T *> &elements, bool saveAll)
 {
-  if(elements.size() && (saveAll || ge->physicals.size())){
+  if(elements.size() && (saveAll || ge->physicals.size())) {
     const char *typ = elements[0]->getStringForTOCHNOG();
-    if(typ){
-      //const char *str = (ge->dim() == 3) ? " 3 " : (ge->dim() == 2) ?
+    if(typ) {
+      // const char *str = (ge->dim() == 3) ? " 3 " : (ge->dim() == 2) ?
       //  " 2 " : (ge->dim() == 1) ? " 1 " : "Point";
-      //fprintf(fp, "( 'number_of_space_dimensions   %s)\n", str);
+      // fprintf(fp, "( 'number_of_space_dimensions   %s)\n", str);
       for(unsigned int i = 0; i < elements.size(); i++)
         elements[i]->writeTOCHNOG(fp, elements[i]->getNum());
     }
@@ -36,10 +36,12 @@ static void writeElementsTOCHNOG(FILE *fp, GEntity *ge, std::vector<T*> &element
 static std::string physicalName(GModel *m, int dim, int num)
 {
   std::string name = m->getPhysicalName(dim, num);
-  if(name.empty()){
+  if(name.empty()) {
     char tmp[256];
-    sprintf(tmp, "%s%d", (dim == 3) ? "PhysicalVolume" :
-            (dim == 2) ? "PhysicalSurface" : "PhysicalLine", num);
+    sprintf(tmp, "%s%d",
+            (dim == 3) ? "PhysicalVolume" :
+                         (dim == 2) ? "PhysicalSurface" : "PhysicalLine",
+            num);
     name = tmp;
   }
   for(unsigned int i = 0; i < name.size(); i++)
@@ -47,29 +49,29 @@ static std::string physicalName(GModel *m, int dim, int num)
   return name;
 }
 
-int GModel::writeTOCHNOG(const std::string &name, bool saveAll, bool saveGroupsOfNodes,
-                         double scalingFactor)
+int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
+                         bool saveGroupsOfNodes, double scalingFactor)
 {
   FILE *fp = Fopen(name.c_str(), "w");
-  if(!fp){
+  if(!fp) {
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
   fprintf(fp, "(----Tochnog Input File Created by Gmsh Version 2.13.1 ----)\n");
   fprintf(fp, " \n");
-  fprintf(fp,  "(**EDIT OR MODIFY THE ENTRIES BELOW AS REQUIRED**)\n"
-          "echo  -yes \n"
-          "number of space dimensions (add number here) \n"
-          "derivatives \n"
-          "materi_velocity \n"
-          "materi_displacement \n"
-          "materi_strain_total  \n"
-          "materi_stress  \n"
-          "condif_temperature \n"
-          "number_of_integration_points (add number here) \n"
-          "end_initia \n"
-          "options_element_dof -yes  \n");
+  fprintf(fp, "(**EDIT OR MODIFY THE ENTRIES BELOW AS REQUIRED**)\n"
+              "echo  -yes \n"
+              "number of space dimensions (add number here) \n"
+              "derivatives \n"
+              "materi_velocity \n"
+              "materi_displacement \n"
+              "materi_strain_total  \n"
+              "materi_stress  \n"
+              "condif_temperature \n"
+              "number_of_integration_points (add number here) \n"
+              "end_initia \n"
+              "options_element_dof -yes  \n");
   fprintf(fp, "\n");
 
   // Nodes
@@ -80,7 +82,7 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll, bool saveGroupsO
   if(noPhysicalGroups()) saveAll = true;
 
   indexMeshVertices(saveAll);
-  std::vector<GEntity*> entities;
+  std::vector<GEntity *> entities;
   getEntities(entities);
 
   for(unsigned int i = 0; i < entities.size(); i++)
@@ -91,24 +93,24 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll, bool saveGroupsO
   // Elements
   fprintf(fp, "(++++++++++++++ E L E M E N T S ++++++++++++++)\n");
   fprintf(fp, "\n");
-  for(viter it = firstVertex(); it != lastVertex(); ++it){
+  for(viter it = firstVertex(); it != lastVertex(); ++it) {
     writeElementsTOCHNOG(fp, *it, (*it)->points, saveAll);
   }
 
-  if (dim ==3) {
-    for(riter it = firstRegion(); it != lastRegion(); ++it){
+  if(dim == 3) {
+    for(riter it = firstRegion(); it != lastRegion(); ++it) {
       writeElementsTOCHNOG(fp, *it, (*it)->tetrahedra, saveAll);
       writeElementsTOCHNOG(fp, *it, (*it)->hexahedra, saveAll);
     }
   }
-  else if (dim ==2) {
-    for(fiter it = firstFace(); it != lastFace(); ++it){
+  else if(dim == 2) {
+    for(fiter it = firstFace(); it != lastFace(); ++it) {
       writeElementsTOCHNOG(fp, *it, (*it)->triangles, saveAll);
       writeElementsTOCHNOG(fp, *it, (*it)->quadrangles, saveAll);
     }
   }
-  else if (dim ==1) {
-    for(eiter it = firstEdge(); it != lastEdge(); ++it){
+  else if(dim == 1) {
+    for(eiter it = firstEdge(); it != lastEdge(); ++it) {
       writeElementsTOCHNOG(fp, *it, (*it)->lines, saveAll);
     }
   }
@@ -117,32 +119,45 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll, bool saveGroupsO
 
   // Elements
 
-  std::map<int, std::vector<GEntity*> > groups[4];
+  std::map<int, std::vector<GEntity *> > groups[4];
   getPhysicalGroups(groups);
-  fprintf(fp, "( +------------+---------Physical Groups Section----------+------------+\n");
+  fprintf(fp, "( +------------+---------Physical Groups "
+              "Section----------+------------+\n");
   fprintf(fp, "\n");
-  fprintf(fp, "- In Tochnog use Physical Groups to define 'element_group' entities to  -\n");
-  fprintf(fp, "- identify materials, and groups of nodes to apply boundary conditions -)\n");
+  fprintf(fp, "- In Tochnog use Physical Groups to define 'element_group' "
+              "entities to  -\n");
+  fprintf(fp, "- identify materials, and groups of nodes to apply boundary "
+              "conditions -)\n");
   fprintf(fp, "\n");
-  fprintf(fp, "(- For example, groups of ELEMENTS chosen using gmsh 'physical groups' can be used as follows)\n");
-  fprintf(fp, "(- element_group  -ra INSERT HERE GROUP OF ELEMENTS SAVED WITH GMSH -ra  Material number)\n");
+  fprintf(fp, "(- For example, groups of ELEMENTS chosen using gmsh 'physical "
+              "groups' can be used as follows)\n");
+  fprintf(fp, "(- element_group  -ra INSERT HERE GROUP OF ELEMENTS SAVED WITH "
+              "GMSH -ra  Material number)\n");
   fprintf(fp, "\n");
-  fprintf(fp, "(- For example, groups of nodes chosen using gmsh 'physical groups' can be used as follows)\n");
-  fprintf(fp, "(- bounda_unknown 0  -ra INSERT HERE GROUP OF NODES SAVED WITH GMSH -ra   -velx -vely )\n");
-  fprintf(fp, "(- bounda_time 0      0.000      0.000 1000000.000      0.000 )\n");
+  fprintf(fp, "(- For example, groups of nodes chosen using gmsh 'physical "
+              "groups' can be used as follows)\n");
+  fprintf(fp, "(- bounda_unknown 0  -ra INSERT HERE GROUP OF NODES SAVED WITH "
+              "GMSH -ra   -velx -vely )\n");
+  fprintf(fp,
+          "(- bounda_time 0      0.000      0.000 1000000.000      0.000 )\n");
   fprintf(fp, "\n");
-  fprintf(fp, "( +------------+---------Physical Groups Section----------+------------+\n");
+  fprintf(fp, "( +------------+---------Physical Groups "
+              "Section----------+------------+\n");
 
   // Save elements sets for each physical group
-  for(int dim = 1; dim <= 3; dim++){
-    for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
-        it != groups[dim].end(); it++){
+  for(int dim = 1; dim <= 3; dim++) {
+    for(std::map<int, std::vector<GEntity *> >::iterator it =
+          groups[dim].begin();
+        it != groups[dim].end(); it++) {
       std::vector<GEntity *> &entities = it->second;
       fprintf(fp, "\n");
-      fprintf(fp, "(Element sets ===> 'element_group' to identify DIFFERENT MATERIALS =%s)\n", physicalName(this, dim, it->first).c_str());
+      fprintf(fp,
+              "(Element sets ===> 'element_group' to identify DIFFERENT "
+              "MATERIALS =%s)\n",
+              physicalName(this, dim, it->first).c_str());
       int n = 0;
-      for(unsigned int i = 0; i < entities.size(); i++){
-        for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+      for(unsigned int i = 0; i < entities.size(); i++) {
+        for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
           MElement *e = entities[i]->getMeshElement(j);
           if(n && !(n % 10)) fprintf(fp, "\n");
           fprintf(fp, "%d ", e->getNum());
@@ -154,24 +169,29 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll, bool saveGroupsO
   }
 
   // Save node sets for each physical group
-  if(saveGroupsOfNodes){
-    for(int dim = 1; dim <= 3; dim++){
-      for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
-          it != groups[dim].end(); it++){
-        std::set<MVertex*> nodes;
+  if(saveGroupsOfNodes) {
+    for(int dim = 1; dim <= 3; dim++) {
+      for(std::map<int, std::vector<GEntity *> >::iterator it =
+            groups[dim].begin();
+          it != groups[dim].end(); it++) {
+        std::set<MVertex *> nodes;
         std::vector<GEntity *> &entities = it->second;
-        for(unsigned int i = 0; i < entities.size(); i++){
-          for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+        for(unsigned int i = 0; i < entities.size(); i++) {
+          for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
             MElement *e = entities[i]->getMeshElement(j);
-            for (int k = 0; k < e->getNumVertices(); k++)
+            for(std::size_t k = 0; k < e->getNumVertices(); k++)
               nodes.insert(e->getVertex(k));
           }
         }
         fprintf(fp, "\n");
-        fprintf(fp, "(Node sets ===> Used to set BOUNDARY CONDITIONS in Tochnog =%s)\n", physicalName(this, dim, it->first).c_str());
+        fprintf(
+          fp,
+          "(Node sets ===> Used to set BOUNDARY CONDITIONS in Tochnog =%s)\n",
+          physicalName(this, dim, it->first).c_str());
         fprintf(fp, "\n");
         int n = 0;
-        for(std::set<MVertex*>::iterator it2 = nodes.begin(); it2 != nodes.end(); it2++){
+        for(std::set<MVertex *>::iterator it2 = nodes.begin();
+            it2 != nodes.end(); it2++) {
           if(n && !(n % 10)) fprintf(fp, "\n");
           fprintf(fp, "%d ", (*it2)->getIndex());
           n++;

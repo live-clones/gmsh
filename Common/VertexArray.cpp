@@ -158,12 +158,7 @@ class AlphaElementLessThan {
       cg2[1] += e2.v[3 * i + 1];
       cg2[2] += e2.v[3 * i + 2];
     }
-    double d1, d2;
-    prosca(eye, cg1, &d1);
-    prosca(eye, cg2, &d2);
-    if(d1 < d2)
-      return true;
-    return false;
+    return prosca(eye, cg1) < prosca(eye, cg2);
   }
 };
 
@@ -227,8 +222,9 @@ double VertexArray::getMemoryInMb()
   return (double)bytes / 1024. / 1024.;
 }
 
-char *VertexArray::toChar(int num, std::string name, int type, double min, double max,
-                          int numsteps, double time, SBoundingBox3d bbox, int &len)
+char *VertexArray::toChar(int num, const std::string &name, int type,
+                          double min, double max, int numsteps, double time,
+                          const SBoundingBox3d &bbox, int &len)
 {
   int vn = _vertices.size(), nn = _normals.size(), cn = _colors.size();
   int vs = vn * sizeof(float),

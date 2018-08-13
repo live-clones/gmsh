@@ -3,6 +3,11 @@
 #include "hxt_vertices.h"
 #include "hxt_sort.h"
 
+/**
+* \file hxt_vertices.c see header hxt_vertices.h.
+* \author Célestin Marot
+*/
+
 /* create a nextbefore macro
  * for a strictly positive value, round to previous double value */
 #if (defined (__STD_VERSION__) && (__STD_VERSION__ >= 199901L)) // nextafter only from C99
@@ -33,12 +38,10 @@
  *
  *                           multiple of 11: 0 11 22 33 44 55 66
  * from this, we get that it's better to use 0 9  21 33 42 54 63 bit
- * corresponding to a nbr of iteration of    0 3  7  11 14 18 21
- *
- * note that 2 */
+ * corresponding to a nbr of iteration of    0 3  7  11 14 18 21 */
 uint32_t hxtAdvisedHilbertBits(const uint32_t n)
 {
-  uint32_t nlog2 = u32_log2(n*n*n)/2; // if we have n points, we want approximately n^1.5 possible hilbert coordinates
+  uint32_t nlog2 = u32_log2(n)*3/2; // if we have n points, we want approximately n^1.5 possible hilbert coordinates
 
   if(n < HXT_SORT_SEQUENTIAL_LIMIT){
      return (nlog2+7)/8*8/3*3;
@@ -48,20 +51,39 @@ uint32_t hxtAdvisedHilbertBits(const uint32_t n)
   }
 }
 
-#define ALPHA_FACTOR
 
 // we want a minimum of 16 blocks per partitions^2
 // we also want to have at least 16 blocks per vertex to sort
-uint32_t hxtAdvancedHilbertBits(const uint32_t nInitial, const uint32_t nToSort, const uint32_t nPartitions, const uint32_t maxPartitions){
-  uint32_t nlog2 = u32_log2((nToSort+nInitial/64)*nPartitions*SIMD_ALIGN/64*maxPartitions/128);
+uint32_t hxtAdvancedHilbertBits(HXTBbox* bbox, double sizeStart, double sizeEnd, uint32_t numStart, uint32_t numEnd, uint32_t numInMesh, uint32_t numToSort, uint32_t nthreads){
+    uint32_t logNthreads = u32_log2(nthreads+1);
+    double k1 = 0.065*(logNthreads+2); // how much the number of iteration depends on the mesh size
+    const double k2 = 0.38;   // how much the number of iteration depends on the number of point to sort
+    uint32_t num = numInMesh + numToSort/2;
 
-  if(nToSort < HXT_SORT_SEQUENTIAL_LIMIT){
-     return ((nlog2+7)/8*8)/3*3;
-  }
-  else{
-     return MIN(63,((nlog2+10)/11*11)/3*3);
-  }
-  return nlog2;
+    if(sizeEnd==0.0){    // we have to guess the mesh size
+      // k1 *= (2./3.);  // minimum mesh size in uniform distribution
+      k1 *= (1./3.);     // grid-like
+    }
+    else{
+      double meanBBoxSize = ((bbox->max[0] - bbox->min[0])
+                           + (bbox->max[1] - bbox->min[1])
+                           + (bbox->max[2] - bbox->min[2]))/3.0;
+
+      double k1End = (double) u64_log2((uint64_t) (meanBBoxSize/sizeEnd))/u32_log2(numEnd);
+
+      if(sizeStart==0.0){
+        k1 *= k1End;
+      }
+      else{
+        double alpha = (double) (num - numStart)/(numEnd-numStart + .1);
+        double k1Start = (double) u64_log2((uint64_t) (meanBBoxSize/sizeStart))/u32_log2(numStart);
+
+        k1 *= (1-alpha)*k1Start + alpha*k1End;
+      }
+    }
+
+    num = u32_log2(num)*k1 + u32_log2(numToSort)*k2;
+    return MIN(21, num)*3;
 }
 
 /*================================= compute the hilberts distance ===========================================
@@ -69,35 +91,44 @@ uint32_t hxtAdvancedHilbertBits(const uint32_t nInitial, const uint32_t nToSort,
  * This part is for computing the hilbert coordinates of the vertices (X,Y,Z)
  * shift[i] must be between 0 and 1
  */
-HXTStatus hxtVerticesHilbertDist(hxtBbox* bbox, hxtVertex* vertices, const uint32_t n, uint32_t* nbits, const double* shift)
+HXTStatus hxtVerticesHilbertDist(HXTBbox* bbox, HXTVertex* vertices, const uint32_t n, uint32_t* nbits, const double* shift)
 {
 HXT_ASSERT(vertices!=NULL);
 HXT_ASSERT(bbox!=NULL);
+HXT_ASSERT(nbits!=NULL);
 HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
         bbox->min[1]<bbox->max[1] ||
         bbox->min[2]<bbox->max[2],"wrong bounding box");
-
-  uint32_t level;
-  if(nbits==NULL || *nbits==0){
-    *nbits = hxtAdvisedHilbertBits(n);
-    level = (*nbits + 2)/3;
-    *nbits = level*3;
+  
+  if(*nbits>63){
+    *nbits = 63;
   }
-  else if(*nbits>63){
-    level = 21;
-    *nbits = level*3;
+  else if(*nbits==0) {
+    #pragma omp parallel for simd
+    for (uint32_t i=0; i<n; i++)
+      vertices[i].padding.hilbertDist = 0;
+
+    return HXT_STATUS_OK;
   }
   else{
-    level = (*nbits + 2)/3;
-    *nbits = level*3;
+    *nbits = (*nbits+2)/3*3;
   }
 
+  const uint32_t level = *nbits/3;
   const double defaultShift[3] = {0.5,0.5,0.5};
 
   if(shift==NULL)
     shift=defaultShift;
 
 /* this was a beautifull check of the parameters... */
+
+  // if(level==0){
+  //   #pragma omp parallel for
+  //   for (uint32_t i=0; i<n; i++)
+  //     vertices[i].padding.hilbertDist = 0;
+
+  //   return HXT_STATUS_OK;
+  // }
 
   double hxtDeclareAligned div1[3];
   double hxtDeclareAligned div2[3];
@@ -118,8 +149,6 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
 
     mean[j] = bbox->min[j] + shift[j]*diff;
   }
-
-
 
 
   // const uint32_t invGCTable[8] = {0,1,3,2,7,6,4,5};
@@ -246,30 +275,30 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
 }
 
 
-static inline uint64_t getVertexDist64(hxtVertex* const __restrict__  v, const void* user_data)
+static inline uint64_t getVertexDist64(HXTVertex* const __restrict__  v, const void* user_data)
 {
   return v->padding.hilbertDist;
 }
 
-static HXTStatus hxtVerticesSort64(hxtVertex* const __restrict__  vertices, const uint32_t n, const uint64_t distMax)
+static HXTStatus hxtVerticesSort64(HXTVertex* const __restrict__  vertices, const uint32_t n, const uint64_t distMax)
 {
-  HXTSORT64_UNIFORM(hxtVertex, vertices, n, distMax, getVertexDist64, NULL);
+  HXTSORT64_UNIFORM(HXTVertex, vertices, n, distMax, getVertexDist64, NULL);
   return HXT_STATUS_OK;
 }
 
-static inline uint32_t getVertexDist32(hxtVertex* const __restrict__  v, const void* user_data)
+static inline uint32_t getVertexDist32(HXTVertex* const __restrict__  v, const void* user_data)
 {
   return v->padding.hilbertDist;
 }
 
 // TODO: test if it's really worth it to have a 32 bit version
-static HXTStatus hxtVerticesSort32(hxtVertex* const __restrict__  vertices, const uint32_t n, const uint32_t distMax){
-  HXTSORT32_UNIFORM(hxtVertex, vertices, n, distMax, getVertexDist32, NULL);
+static HXTStatus hxtVerticesSort32(HXTVertex* const __restrict__  vertices, const uint32_t n, const uint32_t distMax){
+  HXTSORT32_UNIFORM(HXTVertex, vertices, n, distMax, getVertexDist32, NULL);
   return HXT_STATUS_OK;
 }
 
 
-HXTStatus hxtVerticesSort(hxtVertex* const __restrict__  vertices, const uint32_t n, uint32_t nbits)
+HXTStatus hxtVerticesSort(HXTVertex* const __restrict__  vertices, const uint32_t n, uint32_t nbits)
 {
   HXT_ASSERT(vertices!=NULL);
   if(nbits>64){
@@ -347,7 +376,7 @@ static inline uint32_t fastHash(uint32_t x) {
 }
 
 /* for the non-static function, use a 22 bit key and a sort with two pass so we don't need to copy */
-HXTStatus hxtVerticesShuffle(hxtVertex* const __restrict__ vertices, const uint32_t n){
+HXTStatus hxtVerticesShuffle(HXTVertex* const __restrict__ vertices, const uint32_t n){
   #pragma omp parallel for simd
   for (uint32_t i=0; i<n; i++){
     vertices[i].padding.hilbertDist = fastHash(i);

@@ -16,8 +16,8 @@
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Output.H>
 
-class highOrderToolsWindow{
- public:
+class highOrderToolsWindow {
+public:
   bool CAD, complete;
   int meshOrder;
   Fl_Window *win;
@@ -26,8 +26,9 @@ class highOrderToolsWindow{
   Fl_Value_Input *value[20];
   Fl_Choice *choice[20];
   Fl_Button *push[20];
- public:
-  highOrderToolsWindow(int deltaFontSize=0);
+
+public:
+  highOrderToolsWindow(int deltaFontSize = 0);
   void show(bool redrawOnly);
 };
 

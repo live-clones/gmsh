@@ -21,12 +21,6 @@ class gmsh_yysymbol{
   gmsh_yysymbol() : list(false) {}
 };
 
-class Shape{
- public:
-  int Type;
-  int Num;
-};
-
 struct TwoChar { char *char1, *char2; };
 
 // classes for Struct

@@ -105,13 +105,9 @@ int GmshSetMessageHandler(GmshMessage *callback)
   return 1;
 }
 
-GmshMessage *GmshGetMessageHandler()
-{
-  return Msg::GetCallback();
-}
+GmshMessage *GmshGetMessageHandler() { return Msg::GetCallback(); }
 
-int GmshSetBoundingBox(double xmin, double xmax,
-                       double ymin, double ymax,
+int GmshSetBoundingBox(double xmin, double xmax, double ymin, double ymax,
                        double zmin, double zmax)
 {
   SetBoundingBox(xmin, xmax, ymin, ymax, zmin, zmax);
@@ -121,43 +117,43 @@ int GmshSetBoundingBox(double xmin, double xmax,
 int GmshSetOption(const std::string &category, const std::string &name,
                   std::string value, int index)
 {
-  return StringOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(),
-                      value, false);
+  return StringOption(GMSH_SET | GMSH_GUI, category.c_str(), index,
+                      name.c_str(), value, false);
 }
 
 int GmshSetOption(const std::string &category, const std::string &name,
                   double value, int index)
 {
-  return NumberOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(),
-                      value, false);
+  return NumberOption(GMSH_SET | GMSH_GUI, category.c_str(), index,
+                      name.c_str(), value, false);
 }
 
 int GmshSetOption(const std::string &category, const std::string &name,
                   unsigned int value, int index)
 {
-  return ColorOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(),
+  return ColorOption(GMSH_SET | GMSH_GUI, category.c_str(), index, name.c_str(),
                      value, false);
 }
 
 void GmshSetStringOption(const std::string &category, const std::string &name,
                          std::string value, int index)
 {
-  StringOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(),
+  StringOption(GMSH_SET | GMSH_GUI, category.c_str(), index, name.c_str(),
                value, false);
 }
 
 void GmshSetNumberOption(const std::string &category, const std::string &name,
                          double value, int index)
 {
-  NumberOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(),
+  NumberOption(GMSH_SET | GMSH_GUI, category.c_str(), index, name.c_str(),
                value, false);
 }
 
 void GmshSetColorOption(const std::string &category, const std::string &name,
                         unsigned int value, int index)
 {
-  ColorOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(),
-              value, false);
+  ColorOption(GMSH_SET | GMSH_GUI, category.c_str(), index, name.c_str(), value,
+              false);
 }
 
 int GmshGetOption(const std::string &category, const std::string &name,
@@ -181,8 +177,8 @@ int GmshGetOption(const std::string &category, const std::string &name,
                      false);
 }
 
-std::string GmshGetStringOption(const std::string &category, const std::string &name,
-                                int index)
+std::string GmshGetStringOption(const std::string &category,
+                                const std::string &name, int index)
 {
   std::string value;
   StringOption(GMSH_GET, category.c_str(), index, name.c_str(), value, false);
@@ -197,8 +193,8 @@ double GmshGetNumberOption(const std::string &category, const std::string &name,
   return value;
 }
 
-unsigned int GmshGetColorOption(const std::string &category, const std::string &name,
-                       int index)
+unsigned int GmshGetColorOption(const std::string &category,
+                                const std::string &name, int index)
 {
   unsigned int value;
   ColorOption(GMSH_GET, category.c_str(), index, name.c_str(), value, false);
@@ -231,8 +227,9 @@ int GmshMergeFile(const std::string &fileName)
 
 int GmshMergePostProcessingFile(const std::string &fileName)
 {
-  return MergePostProcessingFile(fileName, CTX::instance()->solver.autoShowViews,
-                                 CTX::instance()->solver.autoShowLastStep, true);
+  return MergePostProcessingFile(
+    fileName, CTX::instance()->solver.autoShowViews,
+    CTX::instance()->solver.autoShowLastStep, true);
 }
 
 int GmshWriteFile(const std::string &fileName)
@@ -245,16 +242,16 @@ int GmshFinalize()
 {
 #if defined(HAVE_POST)
   // Delete all PViewData stored in static list of PView class
-  while(PView::list.size()>0) delete PView::list[PView::list.size()-1];
-  std::vector<PView*>().swap(PView::list);
+  while(PView::list.size() > 0) delete PView::list[PView::list.size() - 1];
+  std::vector<PView *>().swap(PView::list);
 
   // Delete static _interpolationSchemes of PViewData class
   PViewData::removeAllInterpolationSchemes();
 #endif
 
   // Delete all Gmodels
-  while(GModel::list.size()>0) delete GModel::list[GModel::list.size()-1];
-  std::vector<GModel*>().swap(GModel::list);
+  while(GModel::list.size() > 0) delete GModel::list[GModel::list.size() - 1];
+  std::vector<GModel *>().swap(GModel::list);
 
   return 1;
 }
@@ -262,14 +259,14 @@ int GmshFinalize()
 int GmshBatch()
 {
   Msg::Info("Running '%s' [Gmsh %s, %d node%s, max. %d thread%s]",
-            Msg::GetCommandLineArgs().c_str(), GMSH_VERSION,
-            Msg::GetCommSize(), Msg::GetCommSize() > 1 ? "s" : "",
-            Msg::GetMaxThreads(), Msg::GetMaxThreads() > 1 ? "s" : "");
+            Msg::GetCommandLineArgs().c_str(), GMSH_VERSION, Msg::GetCommSize(),
+            Msg::GetCommSize() > 1 ? "s" : "", Msg::GetMaxThreads(),
+            Msg::GetMaxThreads() > 1 ? "s" : "");
   Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
 
   OpenProject(GModel::current()->getFileName());
   bool open = false;
-  for(unsigned int i = 0; i < CTX::instance()->files.size(); i++){
+  for(unsigned int i = 0; i < CTX::instance()->files.size(); i++) {
     if(i == 0 && CTX::instance()->files[0][0] != '-') continue;
     if(CTX::instance()->files[i] == "-new")
       new GModel();
@@ -293,24 +290,23 @@ int GmshBatch()
   }
 #endif
 
-  if(CTX::instance()->batch == -3){
+  if(CTX::instance()->batch == -3) {
     GmshRemote();
   }
-  else if(CTX::instance()->batch == -2){
+  else if(CTX::instance()->batch == -2) {
     GModel::current()->checkMeshCoherence(CTX::instance()->geom.tolerance);
 #if defined(HAVE_PARSER)
     std::vector<std::string> s;
     PrintParserSymbols(0, s);
-    for(unsigned int i = 0; i < s.size(); i++)
-      Msg::Direct("%s", s[i].c_str());
+    for(unsigned int i = 0; i < s.size(); i++) Msg::Direct("%s", s[i].c_str());
 #endif
   }
-  else if(CTX::instance()->batch == -1){
+  else if(CTX::instance()->batch == -1) {
     CreateOutputFile(CTX::instance()->outputFileName,
                      CTX::instance()->outputFileName.empty() ? FORMAT_GEO :
-                     FORMAT_AUTO);
+                                                               FORMAT_AUTO);
   }
-  else if(CTX::instance()->batch > 0){
+  else if(CTX::instance()->batch > 0) {
 #if defined(HAVE_MESH)
     if(CTX::instance()->batch < 4)
       GModel::current()->mesh(CTX::instance()->batch);
@@ -320,6 +316,8 @@ int GmshBatch()
       RefineMesh(GModel::current(), CTX::instance()->mesh.secondOrderLinear);
     else if(CTX::instance()->batch == 6)
       GModel::current()->classifyAllFaces();
+    else if(CTX::instance()->batch == 7)
+      BarycentricRefineMesh(GModel::current());
 #endif
   }
 
@@ -327,9 +325,9 @@ int GmshBatch()
      CTX::instance()->mesh.numPartitions > 1)
     GModel::current()->partitionMesh(CTX::instance()->mesh.numPartitions);
 
-  if(CTX::instance()->batch > 0 || CTX::instance()->batchAfterMesh){
+  if(CTX::instance()->batch > 0 || CTX::instance()->batchAfterMesh) {
     std::string name = CTX::instance()->outputFileName;
-    if(name.empty()){
+    if(name.empty()) {
       if(CTX::instance()->mesh.fileFormat == FORMAT_AUTO)
         name = GetDefaultFileName(FORMAT_MSH);
       else
@@ -338,7 +336,7 @@ int GmshBatch()
     CreateOutputFile(name, CTX::instance()->mesh.fileFormat);
   }
 
-  // launch solver (if requested)
+    // launch solver (if requested)
 #if defined(HAVE_ONELAB)
   onelabUtils::runClient();
 #endif
@@ -362,15 +360,15 @@ int GmshFLTK(int argc, char **argv)
   FlGui::instance()->check();
 
   if(FlGui::getOpenedThroughMacFinder().size() &&
-     CTX::instance()->files.empty()){
+     CTX::instance()->files.empty()) {
     OpenProject(FlGui::getOpenedThroughMacFinder());
   }
-  else{
+  else {
     OpenProject(GModel::current()->getFileName());
     bool open = false;
-    for(unsigned int i = 0; i < CTX::instance()->files.size(); i++){
+    for(unsigned int i = 0; i < CTX::instance()->files.size(); i++) {
       if(i == 0 && CTX::instance()->files[0][0] != '-') continue;
-      if(CTX::instance()->files[i] == "-new"){
+      if(CTX::instance()->files[i] == "-new") {
         GModel::current()->setVisibility(0);
         new GModel();
       }
@@ -387,13 +385,13 @@ int GmshFLTK(int argc, char **argv)
 
   FlGui::instance()->setFinishedProcessingCommandLine();
 
-  if(CTX::instance()->post.combineTime){
+  if(CTX::instance()->post.combineTime) {
     PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
     FlGui::instance()->updateViews(true, true);
   }
 
   // init first context
-  switch (CTX::instance()->initialContext) {
+  switch(CTX::instance()->initialContext) {
   case 1: FlGui::instance()->openModule("Geometry"); break;
   case 2: FlGui::instance()->openModule("Mesh"); break;
   case 3: FlGui::instance()->openModule("Solver"); break;
@@ -413,13 +411,13 @@ int GmshFLTK(int argc, char **argv)
   }
 
   // listen to external solvers
-  if(CTX::instance()->solver.listen){
+  if(CTX::instance()->solver.listen) {
     gmshLocalNetworkClient *c = new gmshLocalNetworkClient("Listen", "");
     c->run();
   }
 
   // launch solver (if requested) and fill onelab tree
-  solver_cb(0, (void*)(intptr_t)CTX::instance()->launchSolverAtStartup);
+  solver_cb(0, (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
 
   // loop
   return FlGui::instance()->run();
@@ -431,7 +429,7 @@ int GmshFLTK(int argc, char **argv)
 
 GMSH_API int GmshMainBatch(int argc, char **argv)
 {
-  if(argc < 2){
+  if(argc < 2) {
     CTX::instance()->terminal = 1;
     PrintUsage(argv[0]);
     exit(0);
@@ -457,7 +455,7 @@ GMSH_API int GmshMainFLTK(int argc, char **argv)
 
   // Hack to generate automatic documentation (before getting
   // user-defined options)
-  if(argc == 2 && std::string(argv[1]) == "-doc"){
+  if(argc == 2 && std::string(argv[1]) == "-doc") {
     InitOptions(0);
 #if defined(HAVE_PLUGINS)
     PluginManager::instance()->registerDefaultPlugins();
@@ -473,7 +471,7 @@ GMSH_API int GmshMainFLTK(int argc, char **argv)
   if(CTX::instance()->batch) {
     if(!Msg::GetGmshClient()) CTX::instance()->terminal = 1;
     GmshBatch();
-    //GmshFinalize();
+    // GmshFinalize();
     Msg::Exit(0);
   }
 

@@ -50,7 +50,7 @@ static void ElementsSelectedMode(classificationEditor *e)
 
 static void update_edges_cb(Fl_Widget *w, void *data)
 {
-  classificationEditor *e = (classificationEditor*)data;
+  classificationEditor *e = (classificationEditor *)data;
 
   if(!e->selected) return;
 
@@ -59,21 +59,22 @@ static void update_edges_cb(Fl_Widget *w, void *data)
   e->selected->lines.clear();
 
   double threshold = e->inputs[CLASS_VALUE_ANGLE]->value() / 180. * M_PI;
-  for(unsigned int i = 0; i < e->edges_detected.size(); i++){
+  for(unsigned int i = 0; i < e->edges_detected.size(); i++) {
     edge_angle ea = e->edges_detected[i];
     if(ea.angle <= threshold) break;
     e->selected->lines.push_back(new MLine(ea.v1, ea.v2));
   }
 
-  if(e->toggles[CLASS_TOGGLE_BOUNDARY]->value()){
-    for(unsigned int i = 0 ; i < e->edges_lonly.size(); i++){
+  if(e->toggles[CLASS_TOGGLE_BOUNDARY]->value()) {
+    for(unsigned int i = 0; i < e->edges_lonly.size(); i++) {
       edge_angle ea = e->edges_lonly[i];
       e->selected->lines.push_back(new MLine(ea.v1, ea.v2));
     }
   }
 
-  Msg::Info("Edges: %d inside, %d boundary, %d selected", (int)e->edges_detected.size(),
-            (int)e->edges_lonly.size(), (int)e->selected->lines.size());
+  Msg::Info("Edges: %d inside, %d boundary, %d selected",
+            (int)e->edges_detected.size(), (int)e->edges_lonly.size(),
+            (int)e->selected->lines.size());
 
   CTX::instance()->mesh.changed = ENT_ALL;
   drawContext::global()->draw();
@@ -81,26 +82,27 @@ static void update_edges_cb(Fl_Widget *w, void *data)
 
 static void select_elements_cb(Fl_Widget *w, void *data)
 {
-  classificationEditor *e = (classificationEditor*)data;
+  classificationEditor *e = (classificationEditor *)data;
   bool all = (w == e->buttons[CLASS_BUTTON_SELECT_ALL_ELEMENTS]);
 
   // allocate discrete edge to hold the selected mesh segments
-  if(!e->selected){
-    e->selected = new discreteEdge
-      (GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
+  if(!e->selected) {
+    e->selected =
+      new discreteEdge(GModel::current(),
+                       GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
     GModel::current()->add(e->selected);
   }
 
-  if(all){
+  if(all) {
     for(GModel::fiter it = GModel::current()->firstFace();
-        it != GModel::current()->lastFace(); ++it){
+        it != GModel::current()->lastFace(); ++it) {
       e->elements.insert(e->elements.end(), (*it)->triangles.begin(),
                          (*it)->triangles.end());
       e->elements.insert(e->elements.end(), (*it)->quadrangles.begin(),
                          (*it)->quadrangles.end());
     }
   }
-  else{
+  else {
     CTX::instance()->pickElements = 1;
     while(1) {
       CTX::instance()->mesh.changed = ENT_ALL;
@@ -110,19 +112,22 @@ static void select_elements_cb(Fl_Widget *w, void *data)
 
       char ib = FlGui::instance()->selectEntity(ENT_ALL);
       if(ib == 'l') {
-        for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++){
+        for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size();
+            i++) {
           MElement *me = FlGui::instance()->selectedElements[i];
-          if(me->getDim() == 2 && me->getVisibility() != 2){
+          if(me->getDim() == 2 && me->getVisibility() != 2) {
             me->setVisibility(2);
             e->elements.push_back(me);
           }
         }
       }
       if(ib == 'r') {
-        for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++){
+        for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size();
+            i++) {
           MElement *me = FlGui::instance()->selectedElements[i];
           if(me->getVisibility() == 2)
-            e->elements.erase(std::find(e->elements.begin(), e->elements.end(), me));
+            e->elements.erase(
+              std::find(e->elements.begin(), e->elements.end(), me));
           me->setVisibility(1);
         }
       }
@@ -156,17 +161,17 @@ static void hide_cb(Fl_Widget *w, void *data)
 
 static void show_only_edges_cb(Fl_Widget *w, void *data)
 {
-  classificationEditor *e = (classificationEditor*)data;
+  classificationEditor *e = (classificationEditor *)data;
   static int old_sf = (int)opt_mesh_surfaces_faces(0, GMSH_GET, 0.);
   static int old_se = (int)opt_mesh_surfaces_edges(0, GMSH_GET, 0.);
-  if(e->toggles[CLASS_TOGGLE_SHOW_ONLY_EDGES]->value()){
+  if(e->toggles[CLASS_TOGGLE_SHOW_ONLY_EDGES]->value()) {
     opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 1.);
     old_sf = (int)opt_mesh_surfaces_faces(0, GMSH_GET, 0.);
     old_se = (int)opt_mesh_surfaces_edges(0, GMSH_GET, 0.);
     opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI, 0.);
     opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, 0.);
   }
-  else{
+  else {
     opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI, old_sf);
     opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, old_se);
   }
@@ -175,12 +180,12 @@ static void show_only_edges_cb(Fl_Widget *w, void *data)
 
 static void delete_edge_cb(Fl_Widget *w, void *data)
 {
-  classificationEditor *e = (classificationEditor*)data;
+  classificationEditor *e = (classificationEditor *)data;
 
   if(!e->selected) return;
 
   CTX::instance()->pickElements = 1;
-  std::vector<MLine*> ele;
+  std::vector<MLine *> ele;
 
   while(1) {
     CTX::instance()->mesh.changed = ENT_ALL;
@@ -191,16 +196,18 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
 
     char ib = FlGui::instance()->selectEntity(ENT_ALL);
     if(ib == 'l') {
-      for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++){
+      for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size();
+          i++) {
         MElement *me = FlGui::instance()->selectedElements[i];
-        if(me->getType() == TYPE_LIN && me->getVisibility() != 2){
+        if(me->getType() == TYPE_LIN && me->getVisibility() != 2) {
           me->setVisibility(2);
-          ele.push_back((MLine*)me);
+          ele.push_back((MLine *)me);
         }
       }
     }
     if(ib == 'r') {
-      for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++){
+      for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size();
+          i++) {
         MElement *me = FlGui::instance()->selectedElements[i];
         if(me->getVisibility() == 2)
           ele.erase(std::find(ele.begin(), ele.end(), me));
@@ -221,10 +228,11 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
   std::sort(ele.begin(), ele.end());
 
   // look in all selected edges if a deleted one is present and delete it
-  std::vector<MLine*> temp = e->selected->lines;
+  std::vector<MLine *> temp = e->selected->lines;
   e->selected->lines.clear();
-  for(unsigned int i = 0; i < temp.size(); i++){
-    std::vector<MLine*>::iterator it = std::find(ele.begin(), ele.end(), temp[i]);
+  for(unsigned int i = 0; i < temp.size(); i++) {
+    std::vector<MLine *>::iterator it =
+      std::find(ele.begin(), ele.end(), temp[i]);
     if(it != ele.end())
       delete temp[i];
     else
@@ -242,7 +250,7 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
 
 static void reset_selection_cb(Fl_Widget *w, void *data)
 {
-  classificationEditor *e = (classificationEditor*)data;
+  classificationEditor *e = (classificationEditor *)data;
   if(!e->selected) return;
   for(unsigned int i = 0; i < e->selected->lines.size(); i++)
     delete e->selected->lines[i];
@@ -255,17 +263,17 @@ static void reset_selection_cb(Fl_Widget *w, void *data)
 
 static void select_surfaces_cb(Fl_Widget *w, void *data)
 {
-  classificationEditor *e = (classificationEditor*)data;
+  classificationEditor *e = (classificationEditor *)data;
 
   bool all = (w == e->buttons[CLASS_BUTTON_SELECT_ALL_SURFACES]);
 
-  if(all){
+  if(all) {
     for(GModel::fiter it = GModel::current()->firstFace();
         it != GModel::current()->lastFace(); ++it)
       e->faces.insert(*it);
   }
-  else{
-    std::vector<GFace*> temp;
+  else {
+    std::vector<GFace *> temp;
     opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
     while(1) {
       CTX::instance()->mesh.changed = ENT_ALL;
@@ -274,15 +282,15 @@ static void select_surfaces_cb(Fl_Widget *w, void *data)
                     "[Press 'e' to end selection or 'q' to abort]");
       char ib = FlGui::instance()->selectEntity(ENT_SURFACE);
       if(ib == 'l') {
-        for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
+        for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size();
+            i++) {
           FlGui::instance()->selectedFaces[i]->setSelection(1);
           temp.push_back(FlGui::instance()->selectedFaces[i]);
         }
       }
       if(ib == 'e') { // store the list of gfaces
         GModel::current()->setSelection(0);
-        for(unsigned int i = 0; i < temp.size(); i++)
-          e->faces.insert(temp[i]);
+        for(unsigned int i = 0; i < temp.size(); i++) e->faces.insert(temp[i]);
         break;
       }
       if(ib == 'q') { // do nothing
@@ -292,8 +300,7 @@ static void select_surfaces_cb(Fl_Widget *w, void *data)
     }
   }
 
-  if(e->faces.size())
-    e->buttons[CLASS_BUTTON_CLASSIFY]->activate();
+  if(e->faces.size()) e->buttons[CLASS_BUTTON_CLASSIFY]->activate();
 
   CTX::instance()->mesh.changed = ENT_ALL;
   drawContext::global()->draw();
@@ -302,12 +309,12 @@ static void select_surfaces_cb(Fl_Widget *w, void *data)
 
 static void classify_cb(Fl_Widget *w, void *data)
 {
-  classificationEditor *e = (classificationEditor*)data;
+  classificationEditor *e = (classificationEditor *)data;
 
   GModel::current()->classifyFaces(e->faces);
 
   // remove selected, but do not delete its elements
-  if(e->selected){
+  if(e->selected) {
     GModel::current()->remove(e->selected);
     e->selected->lines.clear();
     delete e->selected;
@@ -327,29 +334,32 @@ classificationEditor::classificationEditor() : selected(0)
   int BBB = (int)(1.4 * BB);
   const int width = (int)(3.15 * BBB), height = (int)(9.5 * BH);
 
-  window = new paletteWindow
-    (width, height, CTX::instance()->nonModalWindows ? true : false, "Reclassify 2D");
+  window = new paletteWindow(width, height,
+                             CTX::instance()->nonModalWindows ? true : false,
+                             "Reclassify 2D");
   window->box(GMSH_WINDOW_BOX);
 
   int x = WB, y = WB;
   {
-    Fl_Box *b = new Fl_Box
-      (x, y, width, BH, "1. Select mesh elements on which to perform edge detection");
+    Fl_Box *b =
+      new Fl_Box(x, y, width, BH,
+                 "1. Select mesh elements on which to perform edge detection");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
     x += WB;
     y += BH;
-    buttons[CLASS_BUTTON_SELECT_ELEMENTS] = new Fl_Button
-      (x, y, BBB, BH, "Select elements");
+    buttons[CLASS_BUTTON_SELECT_ELEMENTS] =
+      new Fl_Button(x, y, BBB, BH, "Select elements");
     buttons[CLASS_BUTTON_SELECT_ELEMENTS]->callback(select_elements_cb, this);
 
-    buttons[CLASS_BUTTON_SELECT_ALL_ELEMENTS] = new Fl_Button
-      (x + BBB + WB, y, (int)(0.5 * BBB) - WB, BH, "All");
-    buttons[CLASS_BUTTON_SELECT_ALL_ELEMENTS]->callback(select_elements_cb, this);
+    buttons[CLASS_BUTTON_SELECT_ALL_ELEMENTS] =
+      new Fl_Button(x + BBB + WB, y, (int)(0.5 * BBB) - WB, BH, "All");
+    buttons[CLASS_BUTTON_SELECT_ALL_ELEMENTS]->callback(select_elements_cb,
+                                                        this);
 
-    toggles[CLASS_TOGGLE_HIDE] = new Fl_Check_Button
-      ((int)(x + 1.5 * BBB + WB), y, (int)(width - 1.5 * BBB - x - 2 * WB), BH,
-       "Hide unselected elements");
+    toggles[CLASS_TOGGLE_HIDE] = new Fl_Check_Button(
+      (int)(x + 1.5 * BBB + WB), y, (int)(width - 1.5 * BBB - x - 2 * WB), BH,
+      "Hide unselected elements");
     toggles[CLASS_TOGGLE_HIDE]->type(FL_TOGGLE_BUTTON);
     toggles[CLASS_TOGGLE_HIDE]->callback(hide_cb, this);
 
@@ -357,20 +367,19 @@ classificationEditor::classificationEditor() : selected(0)
   }
   {
     y += BH / 2;
-    Fl_Box* b = new Fl_Box(x, y + BH - WB, width - 2 * WB, 2);
+    Fl_Box *b = new Fl_Box(x, y + BH - WB, width - 2 * WB, 2);
     b->box(FL_ENGRAVED_FRAME);
     b->labeltype(FL_NO_LABEL);
   }
   {
     y += BH;
-    Fl_Box *b = new Fl_Box
-      (x, y, width, BH, "2. Fine-tune edge selection");
+    Fl_Box *b = new Fl_Box(x, y, width, BH, "2. Fine-tune edge selection");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
     x += WB;
     y += BH;
-    inputs[CLASS_VALUE_ANGLE] = new Fl_Value_Input
-      (x, y, 2 * BBB / 3, BH, "Threshold angle");
+    inputs[CLASS_VALUE_ANGLE] =
+      new Fl_Value_Input(x, y, 2 * BBB / 3, BH, "Threshold angle");
     inputs[CLASS_VALUE_ANGLE]->value(40);
     inputs[CLASS_VALUE_ANGLE]->maximum(180);
     inputs[CLASS_VALUE_ANGLE]->minimum(0);
@@ -379,26 +388,26 @@ classificationEditor::classificationEditor() : selected(0)
     inputs[CLASS_VALUE_ANGLE]->when(FL_WHEN_RELEASE);
     inputs[CLASS_VALUE_ANGLE]->callback(update_edges_cb, this);
 
-    toggles[CLASS_TOGGLE_SHOW_ONLY_EDGES] = new Fl_Check_Button
-      ((int)(x + 1.5 * BBB + WB), y, (int)(width - x - 1.5 * BBB - 2 * WB), BH,
-       "Show only edges");
+    toggles[CLASS_TOGGLE_SHOW_ONLY_EDGES] = new Fl_Check_Button(
+      (int)(x + 1.5 * BBB + WB), y, (int)(width - x - 1.5 * BBB - 2 * WB), BH,
+      "Show only edges");
     toggles[CLASS_TOGGLE_SHOW_ONLY_EDGES]->type(FL_TOGGLE_BUTTON);
     toggles[CLASS_TOGGLE_SHOW_ONLY_EDGES]->callback(show_only_edges_cb, this);
 
     y += BH;
-    toggles[CLASS_TOGGLE_BOUNDARY] = new Fl_Check_Button
-      (x, y, width - x - 2 * WB, BH, "Include edges on boundary (closure)");
+    toggles[CLASS_TOGGLE_BOUNDARY] = new Fl_Check_Button(
+      x, y, width - x - 2 * WB, BH, "Include edges on boundary (closure)");
     toggles[CLASS_TOGGLE_BOUNDARY]->type(FL_TOGGLE_BUTTON);
     toggles[CLASS_TOGGLE_BOUNDARY]->callback(update_edges_cb, this);
 
     y += BH;
-    buttons[CLASS_BUTTON_DELETE_FROM_SELECTION] = new Fl_Button
-      (x, y, (int)(1.5 * BBB), BH, "Delete edges from selection");
+    buttons[CLASS_BUTTON_DELETE_FROM_SELECTION] =
+      new Fl_Button(x, y, (int)(1.5 * BBB), BH, "Delete edges from selection");
     buttons[CLASS_BUTTON_DELETE_FROM_SELECTION]->callback(delete_edge_cb, this);
     buttons[CLASS_BUTTON_DELETE_FROM_SELECTION]->deactivate();
 
-    buttons[CLASS_BUTTON_RESET_SELECTION] = new Fl_Button
-      (x + (int)(1.5 * BBB + WB), y, BBB, BH, "Reset selection");
+    buttons[CLASS_BUTTON_RESET_SELECTION] =
+      new Fl_Button(x + (int)(1.5 * BBB + WB), y, BBB, BH, "Reset selection");
     buttons[CLASS_BUTTON_RESET_SELECTION]->callback(reset_selection_cb, this);
     buttons[CLASS_BUTTON_RESET_SELECTION]->deactivate();
 
@@ -406,29 +415,30 @@ classificationEditor::classificationEditor() : selected(0)
   }
   {
     y += BH / 2;
-    Fl_Box* b = new Fl_Box(x, y + BH - WB, width - 2 * WB, 2);
+    Fl_Box *b = new Fl_Box(x, y + BH - WB, width - 2 * WB, 2);
     b->box(FL_ENGRAVED_FRAME);
     b->labeltype(FL_NO_LABEL);
   }
   {
     y += BH;
-    Fl_Box *b = new Fl_Box
-      (x, y, width, BH, "3. Reclassify surfaces using selected edges");
+    Fl_Box *b = new Fl_Box(x, y, width, BH,
+                           "3. Reclassify surfaces using selected edges");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
     x += WB;
     y += BH;
 
-    buttons[CLASS_BUTTON_SELECT_SURFACES] = new Fl_Button
-      (x, y, BBB, BH, "Select surfaces");
+    buttons[CLASS_BUTTON_SELECT_SURFACES] =
+      new Fl_Button(x, y, BBB, BH, "Select surfaces");
     buttons[CLASS_BUTTON_SELECT_SURFACES]->callback(select_surfaces_cb, this);
 
-    buttons[CLASS_BUTTON_SELECT_ALL_SURFACES] = new Fl_Button
-      (x + BBB + WB, y, (int)(0.5 * BBB) - WB, BH, "All");
-    buttons[CLASS_BUTTON_SELECT_ALL_SURFACES]->callback(select_surfaces_cb, this);
+    buttons[CLASS_BUTTON_SELECT_ALL_SURFACES] =
+      new Fl_Button(x + BBB + WB, y, (int)(0.5 * BBB) - WB, BH, "All");
+    buttons[CLASS_BUTTON_SELECT_ALL_SURFACES]->callback(select_surfaces_cb,
+                                                        this);
 
-    buttons[CLASS_BUTTON_CLASSIFY] = new Fl_Return_Button
-      ((int)(x + 1.5 * BBB + WB), y, BBB, BH, "Reclassify");
+    buttons[CLASS_BUTTON_CLASSIFY] =
+      new Fl_Return_Button((int)(x + 1.5 * BBB + WB), y, BBB, BH, "Reclassify");
     buttons[CLASS_BUTTON_CLASSIFY]->callback(classify_cb, this);
     buttons[CLASS_BUTTON_CLASSIFY]->deactivate();
 
@@ -441,7 +451,7 @@ classificationEditor::classificationEditor() : selected(0)
   NoElementsSelectedMode(this);
 }
 
-void mesh_classify_cb(Fl_Widget* w, void* data)
+void mesh_classify_cb(Fl_Widget *w, void *data)
 {
   // create the (static) editor
   static classificationEditor *editor = 0;

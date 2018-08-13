@@ -79,6 +79,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  GetKnownFileFormats(true) + ")"));
   s.push_back(mp("-bin", "Create binary files when possible"));
   s.push_back(mp("-refine", "Perform uniform mesh refinement, then exit"));
+  s.push_back(mp("-barycentric_refine", "Perform barycentric mesh refinement, then exit"));
   s.push_back(mp("-reclassify", "Reclassify mesh, then exit"));
   s.push_back(mp("-part int", "Partition after batch mesh generation"));
   s.push_back(mp("-part_weight tri|quad|tet|hex|pri|pyr|trih int",
@@ -404,6 +405,10 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         CTX::instance()->batch = 6;
         i++;
       }
+      else if(!strcmp(argv[i] + 1, "barycentric_refine")) {
+        CTX::instance()->batch = 7;
+        i++;
+      }
       else if(!strcmp(argv[i] + 1, "part")) {
         i++;
         if(argv[i]){
@@ -579,6 +584,10 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
           Msg::Error("Missing number");
           if(exitOnError) Msg::Exit(1);
         }
+      }
+      else if(!strcmp(argv[i] + 1, "debugSurface")) {
+	i++;
+        CTX::instance()->debugSurface = atoi(argv[i++]);
       }
       else if(!strcmp(argv[i] + 1, "ho_max")) {
         i++;
@@ -1011,6 +1020,8 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
             CTX::instance()->mesh.algo2d = ALGO_2D_BAMG;
           else if(!strncmp(argv[i], "del3d", 5) || !strncmp(argv[i], "gmsh3d", 6))
             CTX::instance()->mesh.algo3d = ALGO_3D_DELAUNAY;
+          else if(!strncmp(argv[i], "hxt", 3) )
+            CTX::instance()->mesh.algo3d = ALGO_3D_HXT;
           else if(!strncmp(argv[i], "front3d", 7) || !strncmp(argv[i], "netgen", 6))
             CTX::instance()->mesh.algo3d = ALGO_3D_FRONTAL;
           else if(!strncmp(argv[i], "mmg3d", 5))

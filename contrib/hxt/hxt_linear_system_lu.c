@@ -114,24 +114,34 @@ typedef hxtDeclareAligned double alignedDouble;
 // y[from:to] += a*x[from:to]
 // y and x must be 256-bit aligned
 // memory should be allocated in consequence
-static void rowAxpy(double a, alignedDouble *__restrict__ x, alignedDouble *__restrict__ y, int from, int to)
+static void rowAxpy(double a, double *__restrict__ px, double *__restrict__ py, int from, int to)
 {
+  // Can't use the aligned attribute on function arguments.
+  hxtDeclareAligned double * __restrict__ x = px;
+  hxtDeclareAligned double * __restrict__ y = py;
+
   int i = from;
-  int pfrom = (from+3)&(~3);
+  int pfrom = (from+7)&(~7);
   if (pfrom > to)
     pfrom = to;
   for (; i < pfrom; ++i)
     y[i] += a*x[i];
   for (; i+15 < to; i+=16) {
-    alignedDouble * __restrict__ X = x + i;
-    alignedDouble * __restrict__ Y = y + i;
+    hxtDeclareAligned double * __restrict__ X = x + i;
+    hxtDeclareAligned double * __restrict__ Y = y + i;
     for (int j = 0; j < 16; ++j){
       Y[j] += a * X[j];
     }
   }
+  for (; i+7 < to; i+=8) {
+    hxtDeclareAligned double * __restrict__ X = x + i;
+    hxtDeclareAligned double * __restrict__ Y = y + i;
+    for (int j = 0; j < 8; ++j)
+      Y[j] += a * X[j];
+  }
   for (; i+3 < to; i+=4) {
-    alignedDouble * __restrict__ X = x + i;
-    alignedDouble * __restrict__ Y = y + i;
+    double * __restrict__ X = x + i;
+    double * __restrict__ Y = y + i;
     for (int j = 0; j < 4; ++j)
       Y[j] += a * X[j];
   }
@@ -144,35 +154,40 @@ static int imin(int a, int b) {
   return a < b ? a : b;
 }
 
-static double rowReduction(alignedDouble *__restrict__ x, alignedDouble *__restrict__ y, int from, int to)
+static double rowReduction(double *__restrict__ px, double *__restrict__ py, int from, int to)
 {
-  int i = from;
   double r = 0;
-  int pfrom = (from+3)&(~3);
+  hxtDeclareAligned double * __restrict__ x = px;
+  hxtDeclareAligned double * __restrict__ y = py;
+
+  int i = from;
+  int pfrom = (from+7)&(~7);
   for (; i < imin(pfrom, to); ++i)
     r += x[i] * y[i];
-  double R[4];
-  for (; i+3 < to; i+=4) {
-    alignedDouble * __restrict__ X = x + i;
-    alignedDouble * __restrict__ Y = y + i;
-    for (int j = 0; j < 4; ++j)
+  double R[8];
+  for (; i+7 < to; i+=8) {
+    hxtDeclareAligned double * __restrict__ X = x + i;
+    hxtDeclareAligned double * __restrict__ Y = y + i;
+    for (int j = 0; j < 8; ++j)
       R[j] = X[j]*Y[j];
-    r += R[0]+R[1]+R[2]+R[3];
+    r += R[0]+R[1]+R[2]+R[3]+R[4]+R[5]+R[6]+R[7];
   }
   for (; i < to; ++i)
     r += x[i] * y[i];
   return r;
 }
 
-static void rowZero(alignedDouble *__restrict__ x, int from, int to)
+static void rowZero(double *__restrict__ px, int from, int to)
 {
+  hxtDeclareAligned double * __restrict__ x = px;
+
   int i = from;
-  int pfrom = (from+3)&(~3);
+  int pfrom = (from+7)&(~7);
   for (; i < imin(pfrom, to); ++i)
     x[i] = 0;
-  for (; i+3 < to; i+=4) {
-    alignedDouble * __restrict__ X = x + i;
-    for (int j = 0; j < 4; ++j)
+  for (; i+7 < to; i+=8) {
+    hxtDeclareAligned double * __restrict__ X = x + i;
+    for (int j = 0; j < 8; ++j)
       X[j] = 0;
   }
   for (; i < to; ++i)

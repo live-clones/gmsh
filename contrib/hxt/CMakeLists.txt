@@ -8,15 +8,32 @@ set(SRC
   hxt_context.c
   hxt_curvature.c
   hxt_edge.c
+  hxt_laplace.c
   hxt_linear_system.c
   hxt_linear_system_lu.c
-  hxt_message.c
-  hxt_option.c
-  hxt_parametrization.c
-  hxt_mean_values.c
-  hxt_tools.c
+  hxt_linear_system_petsc.c
   hxt_mesh.c
+  hxt_message.c
+  hxt_non_linear_solver.c
+  hxt_option.c
+  hxt_opt.c
+  hxt_sort.c
+  hxt_tools.c
+  predicates.c
+  hxt_mesh3d.c
+  hxt_mesh3d_main.c
+  hxt_mesh_size.c
+  hxt_tetOpti.c
+  hxt_tetrahedra.c
+  hxt_tetRepair.c
+  hxt_tetUtils.c
+  hxt_tetFlag.c
+  hxt_tetPostpro.c
+  hxt_tet_aspect_ratio.c
   hxt_vertices.c
+  hxt_parametrization.c
+  hxt_mean_values.c 
+  hxt_boundary_recovery.cxx
 )
 
 file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

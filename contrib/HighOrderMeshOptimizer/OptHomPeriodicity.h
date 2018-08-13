@@ -35,8 +35,9 @@
 
 class GEntity;
 class GFace;
-class MVertex;
 class GPoint;
+
+#include "MVertex.h"
 
 class OptHomPeriodicity {
 private:
@@ -51,8 +52,8 @@ public:
 private:
   void _relocateMasterVertices();
   void _copyBackMasterVertices();
-
-  static GPoint _transform(MVertex*, GEntity*, const std::vector<double>&);
+  
+  static SPoint3 _transform(MVertex*, const std::vector<double>&);
   static std::vector<double> _inverse(const std::vector<double>&);
 };
 

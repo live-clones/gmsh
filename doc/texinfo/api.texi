@@ -4,10 +4,10 @@
 @ftable @code
 @item initialize
 Initialize Gmsh. This must be called before any call to the other functions in
-the API. If @code{argc} and @code{argv} are provided, they will be handled in
-the same way as the command line arguments in the Gmsh app. If
-@code{readConfigFiles} is set, read system Gmsh configuration files (gmshrc and
-gmsh-options).
+the API. If @code{argc} and @code{argv} (or just @code{argv} in Python or Julia)
+are provided, they will be handled in the same way as the command line arguments
+in the Gmsh app. If @code{readConfigFiles} is set, read system Gmsh
+configuration files (gmshrc and gmsh-options).
 
 @table @asis
 @item Input:
@@ -217,14 +217,27 @@ only the entities of the specified dimension (e.g. physical points if @code{dim}
 @end table
 
 @item getEntitiesForPhysicalGroup
-Get the tags of all the (elementary) geometrical entities making up the physical
-group of dimension @code{dim} and tag @code{tag}.
+Get the tags of the geometrical entities making up the physical group of
+dimension @code{dim} and tag @code{tag}.
 
 @table @asis
 @item Input:
 @code{dim}, @code{tag}
 @item Output:
 @code{tags}
+@item Return:
+-
+@end table
+
+@item getPhysicalGroupsForEntity
+Get the tags of the physical groups (if any) to which the geometrical entity of
+dimension @code{dim} and tag @code{tag} belongs.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{physicalTags}
 @item Return:
 -
 @end table
@@ -367,7 +380,86 @@ Get the type of the entity of dimension @code{dim} and tag @code{tag}.
 -
 @end table
 
-@item getNormals
+@item getParent
+In a partitioned model, get the parent of the entity of dimension @code{dim} and
+tag @code{tag}, i.e. from which the entity is a part of, if any.
+@code{parentDim} and @code{parentTag} are set to -1 if the entity has no parent.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{parentDim}, @code{parentTag}
+@item Return:
+-
+@end table
+
+@item getValue
+Evaluate the parametrization of the entity of dimension @code{dim} and tag
+@code{tag} at the parametric coordinates @code{parametricCoord} and return
+triplets of x, y, z coordinates in @code{points}. Only valid for @code{dim}
+equal to 0, 1 (with @code{parametricCoord} containing parametric coordinates on
+the curve) or 2 (with @code{parametricCoord} containing pairs of u, v parametric
+coordinates on the surface),
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{parametricCoord}
+@item Output:
+@code{points}
+@item Return:
+-
+@end table
+
+@item getDerivative
+Evaluate the derivative of the parametrization of the entity of dimension
+@code{dim} and tag @code{tag} at the parametric coordinates
+@code{parametricCoord}. Only valid for @code{dim} equal to 1 (with
+@code{parametricCoord} containing parametric coordinates on the curve) or 2
+(with @code{parametricCoord} containing pairs of u, v parametric coordinates on
+the surface).
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{parametricCoord}
+@item Output:
+@code{derivatives}
+@item Return:
+-
+@end table
+
+@item getCurvature
+Evaluate the (maximum) curvature of the entity of dimension @code{dim} and tag
+@code{tag} at the parametric coordinates @code{parametricCoord}. Only valid for
+@code{dim} equal to 1 (with @code{parametricCoord} containing parametric
+coordinates on the curve) or 2 (with @code{parametricCoord} containing pairs of
+u, v parametric coordinates on the surface).
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{parametricCoord}
+@item Output:
+@code{curvatures}
+@item Return:
+-
+@end table
+
+@item getPrincipalCurvatures
+Evaluate the principal curvatures of the surface with tag @code{tag} at the
+parametric coordinates @code{parametricCoord}, as well as their respective
+directions. @code{parametricCoord} are given by pair of u and v coordinates,
+concatenated.
+
+@table @asis
+@item Input:
+@code{tag}, @code{parametricCoord}
+@item Output:
+@code{curvatureMax}, @code{curvatureMin}, @code{directionMax}, @code{directionMin}
+@item Return:
+-
+@end table
+
+@item getNormal
 Get the normal to the surface with tag @code{tag} at the parametric coordinates
 @code{parametricCoord}. @code{parametricCoord} are given by pair of u and v
 coordinates, concatenated. @code{normals} are returned as triplets of x, y and z
@@ -378,34 +470,6 @@ components, concatenated.
 @code{tag}, @code{parametricCoord}
 @item Output:
 @code{normals}
-@item Return:
--
-@end table
-
-@item getCurvatures
-Get the curvature of the curve with tag @code{tag} at the parametric coordinates
-@code{parametricCoord}.
-
-@table @asis
-@item Input:
-@code{tag}, @code{parametricCoord}
-@item Output:
-@code{curvatures}
-@item Return:
--
-@end table
-
-@item getPrincipalCurvatures
-Get the principal curvatures of the surface with tag @code{tag} at the
-parametric coordinates @code{parametricCoord}, as well as their respective
-directions. @code{parametricCoord} are given by pair of u and v coordinates,
-concatenated.
-
-@table @asis
-@item Input:
-@code{tag}, @code{parametricCoord}
-@item Output:
-@code{curvatureMax}, @code{curvatureMin}, @code{directionMax}, @code{directionMin}
 @item Return:
 -
 @end table
@@ -496,7 +560,7 @@ mesh. @code{nodeTags} contains the node tags (their unique, strictly positive
 identification numbers). @code{coord} is a vector of length 3 times the length
 of @code{nodeTags} that contains the (x, y, z) coordinates of the nodes,
 concatenated. If @code{dim} >= 0, @code{parametricCoord} contains the parametric
-coordinates u and/or v of the nodes, if available. The length of
+coordinates u or (u, v) the nodes, if available. The length of
 @code{parametricCoord} can be 0 or @code{dim} times the length of
 @code{nodeTags}. If @code{includeBoundary} is set, also return the nodes
 classified on the boundary of the entity (wich will be reparametrized on the
@@ -536,6 +600,21 @@ Rebuild the node cache.
 @code{onlyIfNecessary}
 @item Output:
 -
+@item Return:
+-
+@end table
+
+@item getNodesForPhysicalGroup
+Get the nodes from all the elements belonging to the physical group of dimension
+@code{dim} and tag @code{tag}. @code{nodeTags} contains the node tags;
+@code{coord} is a vector of length 3 times the length of @code{nodeTags} that
+contains the (x, y, z) coordinates of the nodes, concatenated.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{nodeTags}, @code{coord}
 @item Return:
 -
 @end table
@@ -1762,10 +1841,9 @@ integer
 
 @item addCurveLoop
 Add a curve loop (a closed wire) formed by the curves @code{curveTags}.
-@code{curveTags} should contain (signed) tags of curves forming a closed loop: a
-negative tag signifies that the underlying curve is considered with reversed
-orientation. If @code{tag} is positive, set the tag explicitly; otherwise a new
-tag is selected automatically. Return the tag of the curve loop.
+@code{curveTags} should contain tags of curves forming a closed loop. If
+@code{tag} is positive, set the tag explicitly; otherwise a new tag is selected
+automatically. Return the tag of the curve loop.
 
 @table @asis
 @item Input:
@@ -2045,13 +2123,35 @@ Add a pipe by extruding the entities @code{dimTags} along the wire
 @end table
 
 @item fillet
-Fillet the volumes @code{volumeTags} on the curves @code{curveTags} with radius
-@code{radius}. Return the filleted entities in @code{outDimTags}. Remove the
+Fillet the volumes @code{volumeTags} on the curves @code{curveTags} with radii
+@code{radii}. The @code{radii} vector can either contain a single radius, as
+many radii as @code{curveTags}, or twice as many as @code{curveTags} (in which
+case different radii are provided for the begin and end points of the curves).
+Return the filleted entities in @code{outDimTags}. Remove the original volume if
+@code{removeVolume} is set.
+
+@table @asis
+@item Input:
+@code{volumeTags}, @code{curveTags}, @code{radii}, @code{removeVolume}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item chamfer
+Chamfer the volumes @code{volumeTags} on the curves @code{curveTags} with
+distances @code{distances} measured on surfaces @code{surfaceTags}. The
+@code{distances} vector can either contain a single distance, as many distances
+as @code{curveTags} and @code{surfaceTags}, or twice as many as @code{curveTags}
+and @code{surfaceTags} (in which case the first in each pair is measured on the
+corresponding surface in @code{surfaceTags}, the other on the other adjacent
+surface). Return the chamfered entities in @code{outDimTags}. Remove the
 original volume if @code{removeVolume} is set.
 
 @table @asis
 @item Input:
-@code{volumeTags}, @code{curveTags}, @code{radius}, @code{removeVolume}
+@code{volumeTags}, @code{curveTags}, @code{surfaceTags}, @code{distances}, @code{removeVolume}
 @item Output:
 @code{outDimTags}
 @item Return:
@@ -2227,6 +2327,23 @@ the file (currently "brep", "step" or "iges").
 @table @asis
 @item Input:
 @code{fileName}, @code{highestDimOnly}, @code{format}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item importShapesNativePointer
+Imports an OpenCASCADE @code{shape} by providing a pointer to a native
+OpenCASCADE @code{TopoDS_Shape} object (passed as a pointer to void). The
+imported entities are returned in @code{outDimTags}. If the optional argument
+@code{highestDimOnly} is set, only import the highest dimensional entities in
+@code{shape}. Warning: this function is unsafe, as providing an invalid pointer
+will lead to undefined behavior.
+
+@table @asis
+@item Input:
+@code{shape}, @code{highestDimOnly}
 @item Output:
 @code{outDimTags}
 @item Return:
@@ -2554,6 +2671,34 @@ might be linked to the processed input files.
 @table @asis
 @item Input:
 @code{name}, @code{command}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@end ftable
+
+@heading Module @code{/gmsh/logger}
+@ftable @code
+@item start
+Start logging messages in @code{log}.
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{log}
+@item Return:
+-
+@end table
+
+@item stop
+Stop logging messages.
+
+@table @asis
+@item Input:
+-
 @item Output:
 -
 @item Return:

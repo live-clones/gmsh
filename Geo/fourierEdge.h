@@ -17,18 +17,20 @@
 #include "FM_TopoFace.h"
 
 class fourierEdge : public GEdge {
- protected:
+protected:
   FM::TopoEdge *edge;
   int edgeNum;
- public:
-  fourierEdge(GModel *model, FM::TopoEdge *edge_, int tag, GVertex *v0, GVertex *v1);
+
+public:
+  fourierEdge(GModel *model, FM::TopoEdge *edge_, int tag, GVertex *v0,
+              GVertex *v1);
   virtual ~fourierEdge() {}
   virtual Range<double> parBounds(int i) const;
   virtual GeomType geomType() const { return ParametricCurve; }
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
-  virtual int minimumMeshSegments () const;
-  virtual int minimumDrawSegments () const;
+  virtual int minimumMeshSegments() const;
+  virtual int minimumDrawSegments() const;
   ModelType getNativeType() const { return FourierModel; }
 };
 

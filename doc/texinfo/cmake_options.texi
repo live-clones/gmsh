@@ -25,13 +25,15 @@ Enable Android NDK library target (experimental) (default: OFF)
 @item ENABLE_BUILD_IOS
 Enable iOS library target (experimental) (default: OFF)
 @item ENABLE_CGNS
-Enable CGNS mesh export (experimental) (default: OFF)
+Enable CGNS mesh import (default: ON)
 @item ENABLE_CAIRO
 Enable Cairo to render fonts (experimental) (default: ON)
 @item ENABLE_CXX11
 Enable C++11 (default: ON)
 @item ENABLE_C99
 Enable C99 (default: ON)
+@item ENABLE_PROFILE
+Enable profiling compiler flags (default: OFF)
 @item ENABLE_DINTEGRATION
 Enable discrete integration (needed for levelsets) (default: ON)
 @item ENABLE_FLTK
@@ -110,6 +112,8 @@ Enable Revoropt (used for CVT remeshing) (default: OFF)
 Enable SLEPc eigensolvers (required for conformal compounds) (default: ON)
 @item ENABLE_SOLVER
 Enable built-in finite element solvers (required for compounds) (default: ON)
+@item ENABLE_SYSTEM_CONTRIB
+Use system versions of contrib libraries, when possible (default: OFF)
 @item ENABLE_TCMALLOC
 Enable libtcmalloc, a fast malloc implementation but that does not release memory (default: OFF)
 @item ENABLE_VISUDEV

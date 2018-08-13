@@ -5,24 +5,18 @@
 
 #include "Smooth.h"
 
-StringXNumber SmoothOptions_Number[] = {
-  {GMSH_FULLRC, "View", NULL, -1.}
-};
+StringXNumber SmoothOptions_Number[] = {{GMSH_FULLRC, "View", NULL, -1.}};
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterSmoothPlugin()
-  {
-    return new GMSH_SmoothPlugin();
-  }
+extern "C" {
+GMSH_Plugin *GMSH_RegisterSmoothPlugin() { return new GMSH_SmoothPlugin(); }
 }
 
 std::string GMSH_SmoothPlugin::getHelp() const
 {
   return "Plugin(Smooth) averages the values at the nodes "
-    "of the view `View'.\n\n"
-    "If `View' < 0, the plugin is run on the current view.\n\n"
-    "Plugin(Smooth) is executed in-place.";
+         "of the view `View'.\n\n"
+         "If `View' < 0, the plugin is run on the current view.\n\n"
+         "Plugin(Smooth) is executed in-place.";
 }
 
 int GMSH_SmoothPlugin::getNbOptions() const

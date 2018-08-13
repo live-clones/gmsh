@@ -166,7 +166,7 @@ Save SICN (signed inverse condition number) quality measure in mesh statistics e
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Print.PostSICN
+@item Print.PostSIGE
 Save SIGE (signed inverse gradient error) quality measure in mesh statistics exported as post-processing views@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}

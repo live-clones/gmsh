@@ -6,7 +6,7 @@
 #ifndef _BACKGROUND_MESH_H_
 #define _BACKGROUND_MESH_H_
 
-#include <math.h>
+#include <cmath>
 #include <vector>
 #include <list>
 #include "simpleFunction.h"
@@ -23,80 +23,98 @@ class GEdge;
 class MElement;
 class MVertex;
 
-struct crossField2d
-{
+struct crossField2d {
   double _angle;
-  static void normalizeAngle (double &angle) {
-    if (angle < 0)
-      while ( angle <  0 ) angle += (M_PI * .5);
-    else if (angle >= M_PI * .5)
-      while ( angle >= M_PI * .5 ) angle -= (M_PI * .5);
+  static void normalizeAngle(double &angle)
+  {
+    if(angle < 0)
+      while(angle < 0) angle += (M_PI * .5);
+    else if(angle >= M_PI * .5)
+      while(angle >= M_PI * .5) angle -= (M_PI * .5);
   }
-  crossField2d (MVertex*, GEdge*);
-  crossField2d (double a) : _angle(a){}
-  crossField2d & operator += ( const crossField2d & );
+  crossField2d(MVertex *, GEdge *);
+  crossField2d(double a) : _angle(a) {}
+  crossField2d &operator+=(const crossField2d &);
 };
 
-
-class backgroundMesh : public simpleFunction<double>
-{
+class backgroundMesh : public simpleFunction<double> {
   MElementOctree *_octree;
-  std::vector<MVertex*> _vertices;
-  std::vector<MElement*> _triangles;
-  std::map<MVertex*,double> _sizes;
-  std::map<MVertex*,MVertex*> _3Dto2D;
-  std::map<MVertex*,MVertex*> _2Dto3D;
-  std::map<MVertex*,double> _distance;
-  std::map<MVertex*,double> _angles;
-  static backgroundMesh * _current;
+  std::vector<MVertex *> _vertices;
+  std::vector<MElement *> _triangles;
+  std::map<MVertex *, double> _sizes;
+  std::map<MVertex *, MVertex *> _3Dto2D;
+  std::map<MVertex *, MVertex *> _2Dto3D;
+  std::map<MVertex *, double> _distance;
+  std::map<MVertex *, double> _angles;
+  static backgroundMesh *_current;
   backgroundMesh(GFace *, bool dist = false);
   ~backgroundMesh();
 #if defined(HAVE_ANN)
-   mutable ANNkd_tree *uv_kdtree;
-   mutable ANNpointArray nodes;
-   ANNidxArray index;
-   ANNdistArray dist;
-   mutable ANNpointArray angle_nodes;
-   mutable ANNkd_tree *angle_kdtree;
-   std::vector<double> _cos,_sin;
+  mutable ANNkd_tree *uv_kdtree;
+  mutable ANNpointArray nodes;
+  ANNidxArray index;
+  ANNdistArray dist;
+  mutable ANNpointArray angle_nodes;
+  mutable ANNkd_tree *angle_kdtree;
+  std::vector<double> _cos, _sin;
 #endif
- public:
+public:
   static void set(GFace *);
   static void setCrossFieldsByDistance(GFace *);
   static void unset();
-  static backgroundMesh *current () { return _current; }
+  static backgroundMesh *current() { return _current; }
   void propagate1dMesh(GFace *);
   void propagateCrossField(GFace *, simpleFunction<double> *);
   void propagateCrossFieldHJ(GFace *);
   void propagateCrossField(GFace *);
   void propagateCrossFieldByDistance(GFace *);
   void updateSizes(GFace *);
-  double operator () (double u, double v, double w) const; // returns mesh size
-  bool inDomain (double u, double v, double w) const; // returns true if in domain
-  double getAngle(double u, double v, double w) const ;
-  double getSmoothness(double u, double v, double w)  ;
-  double getSmoothness(MElement*) ;
+  double operator()(double u, double v, double w) const; // returns mesh size
+  bool inDomain(double u, double v,
+                double w) const; // returns true if in domain
+  double getAngle(double u, double v, double w) const;
+  double getSmoothness(double u, double v, double w);
+  double getSmoothness(MElement *);
   void print(const std::string &filename, GFace *gf,
-	     const std::map<MVertex*, double>&, int smooth = 0) ;
+             const std::map<MVertex *, double> &, int smooth = 0);
   void print(const std::string &filename, GFace *gf, int choice = 0)
   {
     switch(choice) {
-    case 0 : print(filename, gf, _sizes); return;
-    case 2 : print(filename, gf, _sizes, 1); return;
-    default : print(filename, gf, _angles); return;
+    case 0: print(filename, gf, _sizes); return;
+    case 2: print(filename, gf, _sizes, 1); return;
+    default: print(filename, gf, _angles); return;
     }
   }
-  MElementOctree* get_octree();
-  MElement *getMeshElementByCoord(double u, double v, double w, bool strict=true);
-  int getNumMeshElements()const{return _triangles.size();}
-  std::vector<MVertex*>::iterator begin_vertices(){return _vertices.begin();}
-  std::vector<MVertex*>::iterator end_vertices(){return _vertices.end();}
-  std::vector<MVertex*>::const_iterator begin_vertices()const{return _vertices.begin();}
-  std::vector<MVertex*>::const_iterator end_vertices()const{return _vertices.end();}
-  std::vector<MElement*>::iterator begin_triangles(){return _triangles.begin();}
-  std::vector<MElement*>::iterator end_triangles(){return _triangles.end();}
-  std::vector<MElement*>::const_iterator begin_triangles()const{return _triangles.begin();}
-  std::vector<MElement*>::const_iterator end_triangles()const{return _triangles.end();}
+  MElementOctree *get_octree();
+  MElement *getMeshElementByCoord(double u, double v, double w,
+                                  bool strict = true);
+  int getNumMeshElements() const { return _triangles.size(); }
+  std::vector<MVertex *>::iterator begin_vertices()
+  {
+    return _vertices.begin();
+  }
+  std::vector<MVertex *>::iterator end_vertices() { return _vertices.end(); }
+  std::vector<MVertex *>::const_iterator begin_vertices() const
+  {
+    return _vertices.begin();
+  }
+  std::vector<MVertex *>::const_iterator end_vertices() const
+  {
+    return _vertices.end();
+  }
+  std::vector<MElement *>::iterator begin_triangles()
+  {
+    return _triangles.begin();
+  }
+  std::vector<MElement *>::iterator end_triangles() { return _triangles.end(); }
+  std::vector<MElement *>::const_iterator begin_triangles() const
+  {
+    return _triangles.begin();
+  }
+  std::vector<MElement *>::const_iterator end_triangles() const
+  {
+    return _triangles.end();
+  }
 };
 
 #endif

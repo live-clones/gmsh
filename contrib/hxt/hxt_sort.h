@@ -22,6 +22,24 @@ Author: Célestin Marot (celestin.marot@uclouvain.be)                        */
 
 #include "hxt_tools.h"
 
+// sorting function already defined
+typedef struct{
+  uint64_t v[2];
+}HXTGroup2;
+
+typedef struct{
+  uint64_t v[3];
+}HXTGroup3;
+
+HXTStatus group1_sort(uint64_t* val, const uint64_t n, const uint64_t max);
+
+HXTStatus group2_sort_v0(HXTGroup2* pair, const uint64_t n, const uint64_t max);
+HXTStatus group2_sort_v1(HXTGroup2* pair, const uint64_t n, const uint64_t max);
+
+HXTStatus group3_sort_v0(HXTGroup3* triplet, const uint64_t n, const uint64_t max);
+HXTStatus group3_sort_v1(HXTGroup3* triplet, const uint64_t n, const uint64_t max);
+HXTStatus group3_sort_v2(HXTGroup3* triplet, const uint64_t n, const uint64_t max);
+
 
 /* convert from other types to uint32_t CONSERVING ORDER FOR ALL VALUES ! */
 

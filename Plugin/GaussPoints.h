@@ -8,24 +8,18 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterGaussPointsPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterGaussPointsPlugin();
 }
 
-
-class GMSH_GaussPointsPlugin : public GMSH_PostPlugin
-{
- public:
-  GMSH_GaussPointsPlugin(){}
+class GMSH_GaussPointsPlugin : public GMSH_PostPlugin {
+public:
+  GMSH_GaussPointsPlugin() {}
   std::string getName() const { return "GaussPoints"; }
-  std::string getShortHelp() const
-  {
-    return "Gauss points";
-  }
+  std::string getShortHelp() const { return "Gauss points"; }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);
+  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };
 

@@ -5,17 +5,16 @@
 
 #include "Numeric.h"
 
-static void affect(double *xi, double *yi, double *zi, int i,
-                   double *xp, double *yp, double *zp, int j)
+static void affect(double *xi, double *yi, double *zi, int i, double *xp,
+                   double *yp, double *zp, int j)
 {
   xi[i] = xp[j];
   yi[i] = yp[j];
   zi[i] = zp[j];
 }
 
-double InterpolateIso(double *X, double *Y, double *Z,
-                      double *Val, double V, int I1, int I2,
-                      double *XI, double *YI, double *ZI)
+double InterpolateIso(double *X, double *Y, double *Z, double *Val, double V,
+                      int I1, int I2, double *XI, double *YI, double *ZI)
 {
   if(Val[I1] == Val[I2]) {
     *XI = X[I1];
@@ -34,11 +33,10 @@ double InterpolateIso(double *X, double *Y, double *Z,
 
 // Compute an iso-point in a line
 
-int IsoLine(double *X, double *Y, double *Z, double *Val, double V,
-            double *Xp, double *Yp, double *Zp)
+int IsoLine(double *X, double *Y, double *Z, double *Val, double V, double *Xp,
+            double *Yp, double *Zp)
 {
-  if(Val[0] == Val[1])
-    return 0;
+  if(Val[0] == Val[1]) return 0;
 
   if((Val[0] >= V && Val[1] <= V) || (Val[1] >= V && Val[0] <= V)) {
     InterpolateIso(X, Y, Z, Val, V, 0, 1, Xp, Yp, Zp);
@@ -49,7 +47,7 @@ int IsoLine(double *X, double *Y, double *Z, double *Val, double V,
 
 // Compute an iso-line inside a triangle
 
-int IsoTriangle(double *X, double *Y, double *Z, double *Val, double V, 
+int IsoTriangle(double *X, double *Y, double *Z, double *Val, double V,
                 double *Xp, double *Yp, double *Zp)
 {
   if(Val[0] == Val[1] && Val[0] == Val[2]) return 0;
@@ -67,7 +65,7 @@ int IsoTriangle(double *X, double *Y, double *Z, double *Val, double V,
     InterpolateIso(X, Y, Z, Val, V, 1, 2, &Xp[nb], &Yp[nb], &Zp[nb]);
     nb++;
   }
-  
+
   if(nb == 2) return 2;
   return 0;
 }
@@ -77,8 +75,7 @@ int IsoTriangle(double *X, double *Y, double *Z, double *Val, double V,
 int IsoSimplex(double *X, double *Y, double *Z, double *Val, double V,
                double *Xp, double *Yp, double *Zp, double n[3])
 {
-  if(Val[0] == Val[1] && Val[0] == Val[2] && Val[0] == Val[3])
-    return 0;
+  if(Val[0] == Val[1] && Val[0] == Val[2] && Val[0] == Val[3]) return 0;
 
   int nb = 0;
   if((Val[0] >= V && Val[1] <= V) || (Val[1] >= V && Val[0] <= V)) {
@@ -116,8 +113,7 @@ int IsoSimplex(double *X, double *Y, double *Z, double *Val, double V,
     int ni = 1;
     for(int j = 1; j < nb; j++) {
       for(int i = 0; i < ni; i++) {
-        if(fabs(Xp[j] - xi[i]) < 1.e-12 &&
-           fabs(Yp[j] - yi[i]) < 1.e-12 &&
+        if(fabs(Xp[j] - xi[i]) < 1.e-12 && fabs(Yp[j] - yi[i]) < 1.e-12 &&
            fabs(Zp[j] - zi[i]) < 1.e-12) {
           break;
         }
@@ -127,13 +123,11 @@ int IsoSimplex(double *X, double *Y, double *Z, double *Val, double V,
         }
       }
     }
-    for(int i = 0; i < ni; i++)
-      affect(Xp, Yp, Zp, i, xi, yi, zi, i);
+    for(int i = 0; i < ni; i++) affect(Xp, Yp, Zp, i, xi, yi, zi, i);
     nb = ni;
   }
 
-  if(nb < 3 || nb > 4)
-    return 0;
+  if(nb < 3 || nb > 4) return 0;
 
   // 3 possible quads at this point: (0,2,5,3), (0,1,5,4) or
   // (1,2,4,3), so simply invert the 2 last vertices for having the
@@ -159,10 +153,7 @@ int IsoSimplex(double *X, double *Y, double *Z, double *Val, double V,
   double g[3];
   gradSimplex(X, Y, Z, Val, g);
 
-  double gdotn;
-  prosca(g, n, &gdotn);
-
-  if(gdotn > 0.) {
+  if(prosca(g, n) > 0.0) {
     double Xpi[6], Ypi[6], Zpi[6];
     for(int i = 0; i < nb; i++) {
       Xpi[i] = Xp[i];
@@ -186,8 +177,7 @@ int IsoSimplex(double *X, double *Y, double *Z, double *Val, double V,
 
 // Compute the line between the two iso-points V1 and V2 in a line
 
-int CutLine(double *X, double *Y, double *Z, double *Val,
-            double V1, double V2, 
+int CutLine(double *X, double *Y, double *Z, double *Val, double V1, double V2,
             double *Xp2, double *Yp2, double *Zp2, double *Vp2)
 {
   int io[2];
@@ -240,9 +230,8 @@ int CutLine(double *X, double *Y, double *Z, double *Val,
 // Compute the polygon between the two iso-lines V1 and V2 in a
 // triangle
 
-int CutTriangle(double *X, double *Y, double *Z, double *Val,
-                double V1, double V2, 
-                double *Xp2, double *Yp2, double *Zp2, double *Vp2)
+int CutTriangle(double *X, double *Y, double *Z, double *Val, double V1,
+                double V2, double *Xp2, double *Yp2, double *Zp2, double *Vp2)
 {
   // fill io so that it contains an indexing of the nodes such that
   // Val[io[i]] > Val[io[j]] if i > j
@@ -348,8 +337,8 @@ int CutTriangle(double *X, double *Y, double *Z, double *Val,
   int Np2 = 1;
 
   for(int i = 1; i < Np; i++) {
-    if((Xp[i] != Xp2[Np2 - 1]) || (Yp[i] != Yp2[Np2 - 1]) || 
-       (Zp[i] != Zp2[Np2 - 1])){
+    if((Xp[i] != Xp2[Np2 - 1]) || (Yp[i] != Yp2[Np2 - 1]) ||
+       (Zp[i] != Zp2[Np2 - 1])) {
       Vp2[Np2] = Vp[i];
       Xp2[Np2] = Xp[i];
       Yp2[Np2] = Yp[i];
@@ -358,7 +347,7 @@ int CutTriangle(double *X, double *Y, double *Z, double *Val,
     }
   }
 
-  if(Xp2[0] == Xp2[Np2 - 1] && Yp2[0] == Yp2[Np2 - 1] && 
+  if(Xp2[0] == Xp2[Np2 - 1] && Yp2[0] == Yp2[Np2 - 1] &&
      Zp2[0] == Zp2[Np2 - 1]) {
     Np2--;
   }
@@ -372,16 +361,15 @@ int CutTriangle(double *X, double *Y, double *Z, double *Val,
   double out2[3] = {Xp2[2] - Xp2[0], Yp2[2] - Yp2[0], Zp2[2] - Zp2[0]};
   double outn[3];
   prodve(out1, out2, outn);
-  double res;
-  prosca(inn, outn, &res);
-  if(res < 0){
-    for(int i = 0; i < Np2; i++){
+
+  if(prosca(inn, outn) < 0.0) {
+    for(int i = 0; i < Np2; i++) {
       Vp[i] = Vp2[Np2 - i - 1];
       Xp[i] = Xp2[Np2 - i - 1];
       Yp[i] = Yp2[Np2 - i - 1];
       Zp[i] = Zp2[Np2 - i - 1];
     }
-    for(int i = 0; i < Np2; i++){
+    for(int i = 0; i < Np2; i++) {
       Vp2[i] = Vp[i];
       Xp2[i] = Xp[i];
       Yp2[i] = Yp[i];

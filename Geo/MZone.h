@@ -30,14 +30,11 @@
 #include "HashMap.h"
 #endif
 
-
 /*==============================================================================
  * Forward declarations
  *============================================================================*/
 
-template <unsigned DIM>
-class MZoneBoundary;
-
+template <unsigned DIM> class MZoneBoundary;
 
 /*==============================================================================
  * Required types
@@ -45,26 +42,22 @@ class MZoneBoundary;
 
 //--Record of unique elements
 
-struct ElemData
-{
+struct ElemData {
   MElement *element;
   int index;
-  ElemData(MElement *const _element)
-    : element(_element), index(0)
-  { }
+  ElemData(MElement *const _element) : element(_element), index(0) {}
 };
 
 typedef std::vector<ElemData> ElementVec;
 
 //--Record of unique vertices
 
-typedef std::map<MVertex*, int, std::less<MVertex*> > VertexMap;
+typedef std::map<MVertex *, int, std::less<MVertex *> > VertexMap;
 
 //--Data for each face.  Ultimately, only faces on the boundary of the zone are
 //--stored.  Value type for 'BoFaceMap'.
 
-struct FaceData
-{
+struct FaceData {
   MElement *parentElement;
   int parentFace;
   int parentElementIndex;
@@ -72,16 +65,15 @@ struct FaceData
   FaceData(MElement *const _parentElement, const int _parentFace,
            const int _parentElementIndex)
     : parentElement(_parentElement), parentFace(_parentFace),
-    parentElementIndex(_parentElementIndex), faceIndex(0)
-  { }
+      parentElementIndex(_parentElementIndex), faceIndex(0)
+  {
+  }
 };
 
 //--Provides information and boundary faces connected to a vertex.  Value type
 //--for 'BoVertexMap'
 
-template <typename BFMapIt>
-struct ZoneVertexData
-{
+template <typename BFMapIt> struct ZoneVertexData {
   CCon::FaceVector<BFMapIt> faces; // Vector optimized for storing faces
   int index;
 };
@@ -90,21 +82,15 @@ struct ZoneVertexData
  * User I/O
  *--------------------------------------------------------------------*/
 
-struct ElementConnectivity
-{
+struct ElementConnectivity {
   std::vector<int> connectivity;
   int numElem;
   int numBoElem;
   int iConn;
   // Constructor
-  ElementConnectivity()
-    : numElem(0), numBoElem(0), iConn(0)
-  { }
+  ElementConnectivity() : numElem(0), numBoElem(0), iConn(0) {}
   // Member functions
-  void add_to_connectivity(const int i)
-  {
-    connectivity[iConn++] = i;
-  }
+  void add_to_connectivity(const int i) { connectivity[iConn++] = i; }
   void clear()
   {
     connectivity.clear();
@@ -120,23 +106,19 @@ typedef std::vector<ElementConnectivity> ElementConnectivityVec;
 
 //--Output type for vertices in the zone
 
-typedef std::vector<MVertex*> VertexVec;
-
+typedef std::vector<MVertex *> VertexVec;
 
 /*==============================================================================
  * Traits classes - that return information about a type
  *============================================================================*/
 
 template <typename FaceT> struct LFaceTr;
-template <> struct LFaceTr<MEdge> 
-{
+template <> struct LFaceTr<MEdge> {
   typedef std::map<MEdge, FaceData, Less_Edge> BoFaceMap;
 };
-template <> struct LFaceTr<MFace> 
-{
+template <> struct LFaceTr<MFace> {
   typedef std::map<MFace, FaceData, Less_Face> BoFaceMap;
 };
-
 
 /*******************************************************************************
  *
@@ -160,64 +142,54 @@ template <> struct LFaceTr<MFace>
  *
  ******************************************************************************/
 
-template <unsigned DIM>
-class MZone
-{
+template <unsigned DIM> class MZone {
+  /*==============================================================================
+   * Internal types
+   *============================================================================*/
 
-
-/*==============================================================================
- * Internal types
- *============================================================================*/
-
- public:
+public:
   typedef typename DimTr<DIM>::FaceT FaceT;
   typedef typename LFaceTr<FaceT>::BoFaceMap BoFaceMap;
-  typedef typename std::map<const MVertex*,
-    ZoneVertexData<typename BoFaceMap::const_iterator>,
-    std::less<const MVertex*> > BoVertexMap;
+  typedef typename std::map<const MVertex *,
+                            ZoneVertexData<typename BoFaceMap::const_iterator>,
+                            std::less<const MVertex *> >
+    BoVertexMap;
 
+  /*==============================================================================
+   * Member functions
+   *============================================================================*/
 
-/*==============================================================================
- * Member functions
- *============================================================================*/
+public:
+  //--Default constructor.
 
- public:
+  MZone() : numBoVert(0) { elemVec.reserve(8192); }
 
-//--Default constructor.
+  /*--------------------------------------------------------------------*
+   * Elements added from entities.
+   * Note: It is much easier to keep these in the .cpp file but that
+   *   requries explicit instantiations for each Ent and EntIter.
+   *   Currently, instantiations only exist for containers of type:
+   *     vector
+   *   More can be added as required at the end of MZone.cpp
+   *--------------------------------------------------------------------*/
 
-  MZone()
-    : numBoVert(0)
-  {
-    elemVec.reserve(8192);
-  }
-
-/*--------------------------------------------------------------------*
- * Elements added from entities.
- * Note: It is much easier to keep these in the .cpp file but that
- *   requries explicit instantiations for each Ent and EntIter.
- *   Currently, instantiations only exist for containers of type:
- *     vector
- *   More can be added as required at the end of MZone.cpp
- *--------------------------------------------------------------------*/
-
-//--Add all elements in a container of entities.  The specific type of entity
-//--is not known and must be specified as parameter 'Ent'.
+  //--Add all elements in a container of entities.  The specific type of entity
+  //--is not known and must be specified as parameter 'Ent'.
 
   template <typename EntIter>
   void add_elements_in_entities(EntIter begin, EntIter end,
                                 const int partition = -1);
 
-//--Add elements in a single entity.
+  //--Add elements in a single entity.
 
   template <typename EntPtr>
   void add_elements_in_entity(EntPtr entity, const int partition = -1);
-  
 
-/*--------------------------------------------------------------------*
- * Reset the database
- *--------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------*
+   * Reset the database
+   *--------------------------------------------------------------------*/
 
-  void clear() 
+  void clear()
   {
     elemVec.clear();
     vertMap.clear();
@@ -230,17 +202,17 @@ class MZone
     numBoVert = 0;
   }
 
-/*--------------------------------------------------------------------*
- * Process/query the zone - only after all elements have been added!
- *--------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------*
+   * Process/query the zone - only after all elements have been added!
+   *--------------------------------------------------------------------*/
 
-//--Compute the zone data
+  //--Compute the zone data
 
   int zoneData();
 
-//--Total number of elements
+  //--Total number of elements
 
-  int totalElements() const 
+  int totalElements() const
   {
     int numElem = 0;
     for(int iElemType = 0; iElemType != MSH_NUM_TYPE; ++iElemType)
@@ -248,7 +220,7 @@ class MZone
     return numElem;
   }
 
-//--Number of element types
+  //--Number of element types
 
   int numElementTypes() const
   {
@@ -257,8 +229,8 @@ class MZone
       if(zoneElemConn[iElemType].numElem > 0) ++numElemType;
     return numElemType;
   }
-  
-//--Memory management
+
+  //--Memory management
 
   static void preInit()
   {
@@ -269,35 +241,31 @@ class MZone
     CCon::FaceVector<typename BoFaceMap::const_iterator>::release_memory();
   }
 
-/*==============================================================================
- * Member data
- *============================================================================*/
+  /*==============================================================================
+   * Member data
+   *============================================================================*/
 
- private:
+private:
+  //--Data members
 
-//--Data members
+  ElementVec elemVec; // Set of unique elements
+  VertexMap vertMap; // Set of unique vertices and associated
+                     // numbers in the zone
+  BoFaceMap boFaceMap; // Map of boundary faces
+  BoVertexMap boVertMap; // Map of boundary vertices
 
-  ElementVec elemVec;                   // Set of unique elements
-  VertexMap vertMap;                    // Set of unique vertices and associated
-                                        // numbers in the zone
-  BoFaceMap boFaceMap;                  // Map of boundary faces
-  BoVertexMap boVertMap;                // Map of boundary vertices
-
- public:
-
+public:
   // I/O
   VertexVec zoneVertVec;
   ElementConnectivity zoneElemConn[MSH_NUM_TYPE];
-                                        // Connectivity for each type of element
+  // Connectivity for each type of element
   int numBoVert;
 
-
-/*==============================================================================
- * Friends
- *============================================================================*/
+  /*==============================================================================
+   * Friends
+   *============================================================================*/
 
   friend class MZoneBoundary<DIM>;
-
 };
 
 #endif

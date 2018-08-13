@@ -23,8 +23,8 @@ class openglWindow;
 class onelabGroup;
 class messageBrowser;
 
-class graphicWindow{
- private:
+class graphicWindow {
+private:
   bool _autoScrollMessages;
 #if defined(__APPLE__)
   Fl_Sys_Menu_Bar *_sysbar;
@@ -39,23 +39,25 @@ class graphicWindow{
   Fl_Progress *_label;
   int _minWidth, _minHeight;
   std::vector<std::string> _messages;
+
 public:
-  std::vector<openglWindow*> gl;
- public:
-  graphicWindow(bool main=true, int numTiles=1, bool detachedMenu=false);
+  std::vector<openglWindow *> gl;
+
+public:
+  graphicWindow(bool main = true, int numTiles = 1, bool detachedMenu = false);
   ~graphicWindow();
-  Fl_Window *getWindow(){ return _win; }
-  Fl_Window *getMenuWindow(){ return _menuwin; }
-  onelabGroup *getMenu(){ return _onelab; }
-  Fl_Progress *getProgress(){ return _label; }
-  Fl_Button *getSelectionButton(){ return _butt[9]; }
-  messageBrowser *getMessageBrowser(){ return _browser; }
-  std::vector<std::string> &getMessages(){ return _messages; }
-  int getMinWidth(){ return _minWidth; }
-  int getMinHeight(){ return _minHeight; }
-  void setAutoScroll(bool val){ _autoScrollMessages = val; }
-  bool getAutoScroll(){ return _autoScrollMessages; }
-  void setTitle(std::string str);
+  Fl_Window *getWindow() { return _win; }
+  Fl_Window *getMenuWindow() { return _menuwin; }
+  onelabGroup *getMenu() { return _onelab; }
+  Fl_Progress *getProgress() { return _label; }
+  Fl_Button *getSelectionButton() { return _butt[9]; }
+  messageBrowser *getMessageBrowser() { return _browser; }
+  std::vector<std::string> &getMessages() { return _messages; }
+  int getMinWidth() { return _minWidth; }
+  int getMinHeight() { return _minHeight; }
+  void setAutoScroll(bool val) { _autoScrollMessages = val; }
+  bool getAutoScroll() { return _autoScrollMessages; }
+  void setTitle(const std::string &str);
   void setStereo(bool st);
   int getGlWidth();
   void setGlWidth(int w);
@@ -72,7 +74,7 @@ public:
   void detachMenu();
   void attachMenu();
   void attachDetachMenu();
-  bool isMenuDetached(){ return _menuwin ? true : false; }
+  bool isMenuDetached() { return _menuwin ? true : false; }
   bool split(openglWindow *g, char how);
   void setAnimButtons(int mode);
   void checkAnimButtons();
@@ -106,7 +108,7 @@ void mesh_3d_cb(Fl_Widget *w, void *data);
 void help_about_cb(Fl_Widget *w, void *data);
 void status_xyz1p_cb(Fl_Widget *w, void *data);
 void status_options_cb(Fl_Widget *w, void *data);
-void status_play_manual(int time, int incr, bool redraw=true);
+void status_play_manual(int time, int incr, bool redraw = true);
 void quick_access_cb(Fl_Widget *w, void *data);
 void show_hide_message_cb(Fl_Widget *w, void *data);
 void show_hide_menu_cb(Fl_Widget *w, void *data);

@@ -25,6 +25,8 @@ Select output mesh format (auto, msh1, msh2, msh3, msh4, msh, unv, vtk, wrl, mai
 Create binary files when possible
 @item -refine
 Perform uniform mesh refinement, then exit
+@item -barycentric_refine
+Perform barycentric mesh refinement, then exit
 @item -reclassify
 Reclassify mesh, then exit
 @item -part int

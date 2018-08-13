@@ -14,8 +14,8 @@ void decasteljau(double tol, const SPoint3 &p0, const SPoint3 &p1,
                  const SPoint3 &p2, std::vector<SPoint3> &pts,
                  std::vector<double> &ts);
 void decasteljau(double tol, const SPoint3 &p0, const SPoint3 &p1,
-                 const SPoint3 &p2, const SPoint3 &p3, std::vector<SPoint3> &pts,
-                 std::vector<double> &ts);
+                 const SPoint3 &p2, const SPoint3 &p3,
+                 std::vector<SPoint3> &pts, std::vector<double> &ts);
 void decasteljau(double tol, const std::vector<SPoint3> &controlPoints,
                  std::vector<SPoint3> &pts, std::vector<double> &ts);
 

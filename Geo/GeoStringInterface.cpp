@@ -25,8 +25,8 @@
 
 void add_infile(const std::string &text, const std::string &fileNameOrEmpty)
 {
-  std::string fileName = fileNameOrEmpty;
-  if(fileName.empty()){
+  const std::string &fileName = fileNameOrEmpty;
+  if(fileName.empty()) {
     std::string base = (getenv("PWD") ? "" : CTX::instance()->homeDir);
     GModel::current()->setFileName(base + CTX::instance()->defaultFileName);
     GModel::current()->setName("");
@@ -37,7 +37,7 @@ void add_infile(const std::string &text, const std::string &fileNameOrEmpty)
   std::string noExt = split[0] + split[1], ext = split[2];
 #if defined(HAVE_COMPRESSED_IO) && defined(HAVE_LIBZ)
   bool compressed = false;
-  if(ext == ".gz"){
+  if(ext == ".gz") {
     ext = SplitFileName(noExt)[2];
     compressed = true;
   }
@@ -45,24 +45,29 @@ void add_infile(const std::string &text, const std::string &fileNameOrEmpty)
   // make sure we don't add stuff in a non-geo file
   static bool proceed = false;
   if(!CTX::instance()->expertMode && !proceed) {
-    if(ext.size() && ext != ".geo" && ext != ".GEO" ){
+    if(ext.size() && ext != ".geo" && ext != ".GEO") {
       std::ostringstream sstream;
-      sstream <<
-        "A scripting command is going to be appended to a non-`.geo' file. Are\n"
-        "you sure you want to proceed?\n\n"
-        "You probably want to create a new `.geo' file containing the command\n"
-        "`Merge \"" << split[1] + split[2] << "\";' and use that file instead.\n\n"
-        "(To disable this warning in the future, select `Enable expert mode'\n"
-        "in the option dialog.)";
-      int ret = Msg::GetAnswer(sstream.str().c_str(), 2, "Cancel", "Proceed as is",
-                               "Create new `.geo' file");
-      if(ret == 2){
+      sstream << "A scripting command is going to be appended to a non-`.geo' "
+                 "file. Are\n"
+                 "you sure you want to proceed?\n\n"
+                 "You probably want to create a new `.geo' file containing the "
+                 "command\n"
+                 "`Merge \""
+              << split[1] + split[2]
+              << "\";' and use that file instead.\n\n"
+                 "(To disable this warning in the future, select `Enable "
+                 "expert mode'\n"
+                 "in the option dialog.)";
+      int ret = Msg::GetAnswer(sstream.str().c_str(), 2, "Cancel",
+                               "Proceed as is", "Create new `.geo' file");
+      if(ret == 2) {
         std::string newFileName = split[0] + split[1] + ".geo";
         if(CTX::instance()->confirmOverwrite) {
-          if(!StatFile(newFileName)){
+          if(!StatFile(newFileName)) {
             std::ostringstream sstream;
-            sstream << "File '" << newFileName << "' already exists.\n\n"
-              "Do you want to replace it?";
+            sstream << "File '" << newFileName
+                    << "' already exists.\n\n"
+                       "Do you want to replace it?";
             if(!Msg::GetAnswer(sstream.str().c_str(), 0, "Cancel", "Replace"))
               return;
           }
@@ -72,7 +77,8 @@ void add_infile(const std::string &text, const std::string &fileNameOrEmpty)
           Msg::Error("Unable to open file '%s'", newFileName.c_str());
           return;
         }
-        fprintf(fp, "Merge \"%s\";\n%s\n", (split[1] + split[2]).c_str(), text.c_str());
+        fprintf(fp, "Merge \"%s\";\n%s\n", (split[1] + split[2]).c_str(),
+                text.c_str());
         fclose(fp);
         OpenProject(newFileName);
         return;
@@ -85,7 +91,8 @@ void add_infile(const std::string &text, const std::string &fileNameOrEmpty)
   }
 
 #if defined(HAVE_PARSER)
-  std::string tmpFileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
+  std::string tmpFileName =
+    CTX::instance()->homeDir + CTX::instance()->tmpFileName;
   FILE *gmsh_yyin_old = gmsh_yyin;
   FILE *tmp_file;
   if(!(tmp_file = Fopen(tmpFileName.c_str(), "w"))) {
@@ -119,16 +126,16 @@ void add_infile(const std::string &text, const std::string &fileNameOrEmpty)
 #endif
 
   // mark Gmsh data as changed in onelab
-  if(text.find("Physical") != std::string::npos){
+  if(text.find("Physical") != std::string::npos) {
     // re-import the physical groups in onelab, and only ask to re-save the mesh
     Msg::ImportPhysicalGroupsInOnelab();
     Msg::SetOnelabChanged(1);
   }
-  else if(text.find("Characteristic") != std::string::npos){
+  else if(text.find("Characteristic") != std::string::npos) {
     // only ask to remesh and re-save
     Msg::SetOnelabChanged(2);
   }
-  else{
+  else {
     // ask to reload the geometry, remesh and re-save
     Msg::SetOnelabChanged(3);
   }
@@ -137,7 +144,7 @@ void add_infile(const std::string &text, const std::string &fileNameOrEmpty)
 static std::string list2String(List_T *list)
 {
   std::ostringstream sstream;
-  for(int i = 0; i < List_Nbr(list); i++){
+  for(int i = 0; i < List_Nbr(list); i++) {
     int num;
     List_Read(list, i, &num);
     if(i) sstream << ", ";
@@ -149,7 +156,7 @@ static std::string list2String(List_T *list)
 static std::string vector2String(const std::vector<int> &v)
 {
   std::ostringstream sstream;
-  for(unsigned int i = 0; i < v.size(); i++){
+  for(unsigned int i = 0; i < v.size(); i++) {
     if(i) sstream << ", ";
     sstream << v[i];
   }
@@ -159,8 +166,8 @@ static std::string vector2String(const std::vector<int> &v)
 static std::string dimTags2String(const std::vector<std::pair<int, int> > &l)
 {
   std::ostringstream sstream;
-  for(unsigned int i = 0; i < l.size(); i++){
-    switch(l[i].first){
+  for(unsigned int i = 0; i < l.size(); i++) {
+    switch(l[i].first) {
     case 0: sstream << "Point{" << l[i].second << "}; "; break;
     case 1: sstream << "Curve{" << l[i].second << "}; "; break;
     case 2: sstream << "Surface{" << l[i].second << "}; "; break;
@@ -173,7 +180,8 @@ static std::string dimTags2String(const std::vector<std::pair<int, int> > &l)
 static void check_occ(std::ostringstream &sstream)
 {
 #if defined(HAVE_PARSER)
-  if(gmsh_yyfactory != "OpenCASCADE") sstream << "SetFactory(\"OpenCASCADE\");\n";
+  if(gmsh_yyfactory != "OpenCASCADE")
+    sstream << "SetFactory(\"OpenCASCADE\");\n";
 #endif
 }
 
@@ -181,7 +189,8 @@ void add_charlength(const std::string &fileName, const std::vector<int> &l,
                     const std::string &lc)
 {
   std::ostringstream sstream;
-  sstream << "Characteristic Length {" << vector2String(l) << "} = " << lc << ";";
+  sstream << "Characteristic Length {" << vector2String(l) << "} = " << lc
+          << ";";
   add_infile(sstream.str(), fileName);
 }
 
@@ -198,7 +207,7 @@ void add_trsfline(std::vector<int> &l, const std::string &fileName,
 {
   std::ostringstream sstream;
   sstream << "Transfinite Curve {";
-  for(unsigned int i = 0; i < l.size(); i++){
+  for(unsigned int i = 0; i < l.size(); i++) {
     if(i) sstream << ", ";
     sstream << l[i];
   }
@@ -213,7 +222,7 @@ void add_trsfsurf(std::vector<int> &l, const std::string &fileName,
 {
   std::ostringstream sstream;
   sstream << "Transfinite Surface {" << l[0] << "}";
-  if(l.size() > 1){
+  if(l.size() > 1) {
     sstream << " = {";
     for(unsigned int i = 1; i < l.size(); i++) {
       if(i > 1) sstream << ", ";
@@ -221,8 +230,7 @@ void add_trsfsurf(std::vector<int> &l, const std::string &fileName,
     }
     sstream << "}";
   }
-  if(dir != "Left")
-    sstream << " " << dir;
+  if(dir != "Left") sstream << " " << dir;
   sstream << ";";
   add_infile(sstream.str(), fileName);
 }
@@ -244,8 +252,10 @@ void add_embedded(const std::string &fileName, const std::string &what,
 {
   std::ostringstream sstream;
   sstream << what << "{" << vector2String(l) << "} In ";
-  if(dim == 2) sstream << "Surface{";
-  else sstream << "Volume{";
+  if(dim == 2)
+    sstream << "Surface{";
+  else
+    sstream << "Volume{";
   sstream << tag << "};";
   add_infile(sstream.str(), fileName);
 }
@@ -269,8 +279,9 @@ void add_param(const std::string &par, const std::string &value,
   add_infile(sstream.str(), fileName);
 }
 
-void add_point(const std::string &fileName, const std::string &x, const std::string &y,
-               const std::string &z, const std::string &lc)
+void add_point(const std::string &fileName, const std::string &x,
+               const std::string &y, const std::string &z,
+               const std::string &lc)
 {
   std::ostringstream sstream;
   sstream << "Point(" << GModel::current()->getMaxElementaryNumber(0) + 1
@@ -281,7 +292,8 @@ void add_point(const std::string &fileName, const std::string &x, const std::str
 }
 
 void add_field_option(int field_id, const std::string &option_name,
-                      const std::string &option_value, const std::string &fileName)
+                      const std::string &option_value,
+                      const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Field[" << field_id << "]." << option_name << " = "
@@ -289,7 +301,8 @@ void add_field_option(int field_id, const std::string &option_name,
   add_infile(sstream.str(), fileName);
 }
 
-void add_field(int field_id, const std::string &type_name, const std::string &fileName)
+void add_field(int field_id, const std::string &type_name,
+               const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Field[" << field_id << "] = " << type_name << ";";
@@ -332,12 +345,12 @@ void add_circle_arc(int p1, int p2, int p3, const std::string &fileName)
   add_infile(sstream.str(), fileName);
 }
 
-void add_ellipse_arc(int p1, int p2, int p3, int p4, const std::string &fileName)
+void add_ellipse_arc(int p1, int p2, int p3, int p4,
+                     const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Ellipse(" << GModel::current()->getMaxElementaryNumber(1) + 1
-          << ") = {" << p1 << ", " << p2 << ", "
-          << p3 << ", " << p4 << "};";
+          << ") = {" << p1 << ", " << p2 << ", " << p3 << ", " << p4 << "};";
   add_infile(sstream.str(), fileName);
 }
 
@@ -346,14 +359,15 @@ void add_lineloop(List_T *list, const std::string &fileName, int *numloop)
   if(RecognizeLineLoop(list, numloop)) return;
   *numloop = GModel::current()->getGEOInternals()->getMaxTag(-1) + 1;
   if(GModel::current()->getOCCInternals())
-    *numloop = std::max
-      (*numloop, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
+    *numloop = std::max(
+      *numloop, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
   std::ostringstream sstream;
   sstream << "Curve Loop(" << *numloop << ") = {" << list2String(list) << "};";
   add_infile(sstream.str(), fileName);
 }
 
-void add_surf(const std::string &type, List_T *list, const std::string &fileName)
+void add_surf(const std::string &type, List_T *list,
+              const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << type << "(" << GModel::current()->getMaxElementaryNumber(2) + 1
@@ -366,10 +380,11 @@ void add_surfloop(List_T *list, const std::string &fileName, int *numloop)
   if(RecognizeSurfaceLoop(list, numloop)) return;
   *numloop = GModel::current()->getGEOInternals()->getMaxTag(-2) + 1;
   if(GModel::current()->getOCCInternals())
-    *numloop = std::max
-      (*numloop, GModel::current()->getOCCInternals()->getMaxTag(-2) + 1);
+    *numloop = std::max(
+      *numloop, GModel::current()->getOCCInternals()->getMaxTag(-2) + 1);
   std::ostringstream sstream;
-  sstream << "Surface Loop(" << *numloop << ") = {" << list2String(list) << "};";
+  sstream << "Surface Loop(" << *numloop << ") = {" << list2String(list)
+          << "};";
   add_infile(sstream.str(), fileName);
 }
 
@@ -387,14 +402,15 @@ void add_remove_physical(const std::string &fileName, const std::string &what,
 {
   std::ostringstream sstream;
   sstream << "Physical " << what << "(";
-  if(name.size()){
+  if(name.size()) {
     sstream << "\"" << name << "\"";
-    if(forceTag)
-      sstream << ", " << forceTag;
+    if(forceTag) sstream << ", " << forceTag;
   }
-  else{
-    sstream << (forceTag ? forceTag :
-                GModel::current()->getGEOInternals()->getMaxPhysicalTag() + 1);
+  else {
+    sstream << (forceTag ?
+                  forceTag :
+                  GModel::current()->getGEOInternals()->getMaxPhysicalTag() +
+                    1);
   }
   sstream << ") ";
   if(mode == "Remove")
@@ -410,157 +426,157 @@ void add_compound(const std::string &fileName, const std::string &type,
 {
   std::ostringstream sstream;
   if(SplitFileName(fileName)[2] != ".geo") sstream << "CreateTopology;\n";
-  if (type == "Surface"){
+  if(type == "Surface") {
     sstream << "Compound " << type << "("
             << GModel::current()->getMaxElementaryNumber(2) + 1 << ") = {"
-	    << vector2String(l) << "};";
+            << vector2String(l) << "};";
   }
-  else if (type == "Curve"){
+  else if(type == "Curve") {
     sstream << "Compound " << type << "("
             << GModel::current()->getMaxElementaryNumber(1) + 1 << ") = {"
-	    << vector2String(l) << "};";
+            << vector2String(l) << "};";
   }
-  else{
+  else {
     sstream << "Compound " << type << "("
             << GModel::current()->getMaxElementaryNumber(3) + 1 << ") = {"
-	    << vector2String(l) << "};";
+            << vector2String(l) << "};";
   }
   add_infile(sstream.str(), fileName);
 }
 
-void add_circle(const std::string &fileName, const std::string &x, const std::string &y,
-                const std::string &z, const std::string &r, const std::string &alpha1,
+void add_circle(const std::string &fileName, const std::string &x,
+                const std::string &y, const std::string &z,
+                const std::string &r, const std::string &alpha1,
                 const std::string &alpha2)
 {
   std::ostringstream sstream;
   check_occ(sstream);
   sstream << "Circle(" << GModel::current()->getMaxElementaryNumber(1) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << r;
-  if(alpha1.size())
-    sstream << ", " << alpha1;
-  if(alpha1.size() && alpha2.size())
-    sstream << ", " << alpha2;
+  if(alpha1.size()) sstream << ", " << alpha1;
+  if(alpha1.size() && alpha2.size()) sstream << ", " << alpha2;
   sstream << "};";
   add_infile(sstream.str(), fileName);
 }
 
-void add_ellipse(const std::string &fileName, const std::string &x, const std::string &y,
-                 const std::string &z, const std::string &rx, const std::string &ry,
+void add_ellipse(const std::string &fileName, const std::string &x,
+                 const std::string &y, const std::string &z,
+                 const std::string &rx, const std::string &ry,
                  const std::string &alpha1, const std::string &alpha2)
 {
   std::ostringstream sstream;
   check_occ(sstream);
   sstream << "Ellipse(" << GModel::current()->getMaxElementaryNumber(1) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << rx << ", " << ry;
-  if(alpha1.size())
-    sstream << ", " << alpha1;
-  if(alpha1.size() && alpha2.size())
-    sstream << ", " << alpha2;
+  if(alpha1.size()) sstream << ", " << alpha1;
+  if(alpha1.size() && alpha2.size()) sstream << ", " << alpha2;
   sstream << "};";
   add_infile(sstream.str(), fileName);
 }
 
-void add_disk(const std::string &fileName, const std::string &x, const std::string &y,
-                const std::string &z, const std::string &rx, const std::string &ry)
+void add_disk(const std::string &fileName, const std::string &x,
+              const std::string &y, const std::string &z, const std::string &rx,
+              const std::string &ry)
 {
   std::ostringstream sstream;
   check_occ(sstream);
   sstream << "Disk(" << GModel::current()->getMaxElementaryNumber(2) + 1
-          << ") = {" << x << ", " << y << ", " << z << ", " << rx << ", " << ry << "};";
+          << ") = {" << x << ", " << y << ", " << z << ", " << rx << ", " << ry
+          << "};";
   add_infile(sstream.str(), fileName);
 }
 
-void add_rectangle(const std::string &fileName, const std::string &x, const std::string &y,
-                   const std::string &z, const std::string &dx, const std::string &dy,
+void add_rectangle(const std::string &fileName, const std::string &x,
+                   const std::string &y, const std::string &z,
+                   const std::string &dx, const std::string &dy,
                    const std::string &roundedRadius)
 {
   std::ostringstream sstream;
   check_occ(sstream);
   sstream << "Rectangle(" << GModel::current()->getMaxElementaryNumber(2) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy;
-  if(roundedRadius.size())
-    sstream << ", " << roundedRadius;
+  if(roundedRadius.size()) sstream << ", " << roundedRadius;
   sstream << "};";
   add_infile(sstream.str(), fileName);
 }
 
-void add_sphere(const std::string &fileName, const std::string &x, const std::string &y,
-                const std::string &z, const std::string &r, const std::string &alpha1,
+void add_sphere(const std::string &fileName, const std::string &x,
+                const std::string &y, const std::string &z,
+                const std::string &r, const std::string &alpha1,
                 const std::string &alpha2, const std::string &alpha3)
 {
   std::ostringstream sstream;
   check_occ(sstream);
   sstream << "Sphere(" << GModel::current()->getMaxElementaryNumber(3) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << r;
-  if(alpha1.size())
-    sstream << ", " << alpha1;
-  if(alpha1.size() && alpha2.size())
-    sstream << ", " << alpha2;
-  if(alpha1.size() && alpha2.size() && alpha3.size())
-    sstream << ", " << alpha3;
+  if(alpha1.size()) sstream << ", " << alpha1;
+  if(alpha1.size() && alpha2.size()) sstream << ", " << alpha2;
+  if(alpha1.size() && alpha2.size() && alpha3.size()) sstream << ", " << alpha3;
   sstream << "};";
   add_infile(sstream.str(), fileName);
 }
 
-void add_cylinder(const std::string &fileName, const std::string &x, const std::string &y,
-                  const std::string &z, const std::string &dx, const std::string &dy,
-                  const std::string &dz, const std::string &r, const std::string &alpha)
+void add_cylinder(const std::string &fileName, const std::string &x,
+                  const std::string &y, const std::string &z,
+                  const std::string &dx, const std::string &dy,
+                  const std::string &dz, const std::string &r,
+                  const std::string &alpha)
 {
   std::ostringstream sstream;
   check_occ(sstream);
   sstream << "Cylinder(" << GModel::current()->getMaxElementaryNumber(3) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy
           << ", " << dz << ", " << r;
-  if(alpha.size())
-    sstream << ", " << alpha;
+  if(alpha.size()) sstream << ", " << alpha;
   sstream << "};";
   add_infile(sstream.str(), fileName);
 }
 
-void add_box(const std::string &fileName, const std::string &x, const std::string &y,
-             const std::string &z, const std::string &dx, const std::string &dy,
-             const std::string &dz)
+void add_box(const std::string &fileName, const std::string &x,
+             const std::string &y, const std::string &z, const std::string &dx,
+             const std::string &dy, const std::string &dz)
 {
   std::ostringstream sstream;
   check_occ(sstream);
   sstream << "Box(" << GModel::current()->getMaxElementaryNumber(3) + 1
-          << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", "
-          << dy << ", " << dz << "};";
+          << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy
+          << ", " << dz << "};";
   add_infile(sstream.str(), fileName);
 }
 
-void add_torus(const std::string &fileName, const std::string &x, const std::string &y,
-               const std::string &z, const std::string &r1, const std::string &r2,
+void add_torus(const std::string &fileName, const std::string &x,
+               const std::string &y, const std::string &z,
+               const std::string &r1, const std::string &r2,
                const std::string &alpha)
 {
   std::ostringstream sstream;
   check_occ(sstream);
   sstream << "Torus(" << GModel::current()->getMaxElementaryNumber(3) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << r1 << ", " << r2;
-  if(alpha.size())
-    sstream << ", " << alpha;
+  if(alpha.size()) sstream << ", " << alpha;
   sstream << "};";
   add_infile(sstream.str(), fileName);
 }
 
-void add_cone(const std::string &fileName, const std::string &x, const std::string &y,
-              const std::string &z, const std::string &dx, const std::string &dy,
-              const std::string &dz, const std::string &r1, const std::string &r2,
+void add_cone(const std::string &fileName, const std::string &x,
+              const std::string &y, const std::string &z, const std::string &dx,
+              const std::string &dy, const std::string &dz,
+              const std::string &r1, const std::string &r2,
               const std::string &alpha)
 {
   std::ostringstream sstream;
   check_occ(sstream);
   sstream << "Cone(" << GModel::current()->getMaxElementaryNumber(3) + 1
-          << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", "
-          << dy << ", " << dz << ", " << r1 << ", " << r2;
-  if(alpha.size())
-    sstream << ", " << alpha;
+          << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy
+          << ", " << dz << ", " << r1 << ", " << r2;
+  if(alpha.size()) sstream << ", " << alpha;
   sstream << "};";
   add_infile(sstream.str(), fileName);
 }
 
-void add_wedge(const std::string &fileName, const std::string &x, const std::string &y,
-               const std::string &z, const std::string &dx, const std::string &dy,
+void add_wedge(const std::string &fileName, const std::string &x,
+               const std::string &y, const std::string &z,
+               const std::string &dx, const std::string &dy,
                const std::string &dz, const std::string &ltx)
 {
   std::ostringstream sstream;
@@ -571,9 +587,10 @@ void add_wedge(const std::string &fileName, const std::string &x, const std::str
   add_infile(sstream.str(), fileName);
 }
 
-void translate(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
-               const std::string &tx, const std::string &ty, const std::string &tz,
-               bool duplicata)
+void translate(const std::string &fileName,
+               const std::vector<std::pair<int, int> > &l,
+               const std::string &tx, const std::string &ty,
+               const std::string &tz, bool duplicata)
 {
   std::ostringstream sstream;
   sstream << "Translate {" << tx << ", " << ty << ", " << tz << "} {\n  ";
@@ -584,14 +601,15 @@ void translate(const std::string &fileName, const std::vector<std::pair<int, int
   add_infile(sstream.str(), fileName);
 }
 
-void rotate(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
-            const std::string &ax, const std::string &ay, const std::string &az,
-            const std::string &px, const std::string &py, const std::string &pz,
+void rotate(const std::string &fileName,
+            const std::vector<std::pair<int, int> > &l, const std::string &ax,
+            const std::string &ay, const std::string &az, const std::string &px,
+            const std::string &py, const std::string &pz,
             const std::string &angle, bool duplicata)
 {
   std::ostringstream sstream;
-  sstream << "Rotate {{" << ax << ", " << ay << ", " << az << "}, {"
-          << px << ", " << py << ", " << pz << "}, " << angle << "} {\n  ";
+  sstream << "Rotate {{" << ax << ", " << ay << ", " << az << "}, {" << px
+          << ", " << py << ", " << pz << "}, " << angle << "} {\n  ";
   if(duplicata) sstream << "Duplicata { ";
   sstream << dimTags2String(l);
   if(duplicata) sstream << "}";
@@ -599,14 +617,14 @@ void rotate(const std::string &fileName, const std::vector<std::pair<int, int> >
   add_infile(sstream.str(), fileName);
 }
 
-void dilate(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
-            const std::string &cx, const std::string &cy, const std::string &cz,
-            const std::string &sx, const std::string &sy, const std::string &sz,
-            bool duplicata)
+void dilate(const std::string &fileName,
+            const std::vector<std::pair<int, int> > &l, const std::string &cx,
+            const std::string &cy, const std::string &cz, const std::string &sx,
+            const std::string &sy, const std::string &sz, bool duplicata)
 {
   std::ostringstream sstream;
-  sstream << "Dilate {{" << cx << ", " << cy << ", " << cz << "}, {"
-          << sx << ", " << sy << ", " << sz << "}} {\n  ";
+  sstream << "Dilate {{" << cx << ", " << cy << ", " << cz << "}, {" << sx
+          << ", " << sy << ", " << sz << "}} {\n  ";
   if(duplicata) sstream << "Duplicata { ";
   sstream << dimTags2String(l);
   if(duplicata) sstream << "}";
@@ -614,12 +632,14 @@ void dilate(const std::string &fileName, const std::vector<std::pair<int, int> >
   add_infile(sstream.str(), fileName);
 }
 
-void symmetry(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
-              const std::string &sa, const std::string &sb, const std::string &sc,
+void symmetry(const std::string &fileName,
+              const std::vector<std::pair<int, int> > &l, const std::string &sa,
+              const std::string &sb, const std::string &sc,
               const std::string &sd, bool duplicata)
 {
   std::ostringstream sstream;
-  sstream << "Symmetry {" << sa << ", " << sb << ", " << sc << ", " << sd << "} {\n  ";
+  sstream << "Symmetry {" << sa << ", " << sb << ", " << sc << ", " << sd
+          << "} {\n  ";
   if(duplicata) sstream << "Duplicata { ";
   sstream << dimTags2String(l);
   if(duplicata) sstream << "}";
@@ -627,14 +647,15 @@ void symmetry(const std::string &fileName, const std::vector<std::pair<int, int>
   add_infile(sstream.str(), fileName);
 }
 
-void extrude(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
-             const std::string &tx, const std::string &ty, const std::string &tz,
-             bool extrudeMesh, const std::string &layers, bool recombineMesh)
+void extrude(const std::string &fileName,
+             const std::vector<std::pair<int, int> > &l, const std::string &tx,
+             const std::string &ty, const std::string &tz, bool extrudeMesh,
+             const std::string &layers, bool recombineMesh)
 {
   std::ostringstream sstream;
   sstream << "Extrude {" << tx << ", " << ty << ", " << tz << "} {\n  "
           << dimTags2String(l);
-  if(extrudeMesh){
+  if(extrudeMesh) {
     sstream << "Layers{" << layers << "}; ";
     if(recombineMesh) sstream << "Recombine;";
   }
@@ -642,17 +663,18 @@ void extrude(const std::string &fileName, const std::vector<std::pair<int, int> 
   add_infile(sstream.str(), fileName);
 }
 
-void protude(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
-             const std::string &ax, const std::string &ay, const std::string &az,
-             const std::string &px, const std::string &py, const std::string &pz,
-             const std::string &angle, bool extrudeMesh, const std::string &layers,
-             bool recombineMesh)
+void protude(const std::string &fileName,
+             const std::vector<std::pair<int, int> > &l, const std::string &ax,
+             const std::string &ay, const std::string &az,
+             const std::string &px, const std::string &py,
+             const std::string &pz, const std::string &angle, bool extrudeMesh,
+             const std::string &layers, bool recombineMesh)
 {
   std::ostringstream sstream;
-  sstream << "Extrude {{" << ax << ", " << ay << ", " << az << "}, {"
-          << px << ", " << py << ", " << pz << "}, " << angle << "} {\n  "
+  sstream << "Extrude {{" << ax << ", " << ay << ", " << az << "}, {" << px
+          << ", " << py << ", " << pz << "}, " << angle << "} {\n  "
           << dimTags2String(l);
-  if(extrudeMesh){
+  if(extrudeMesh) {
     sstream << "Layers{" << layers << "}; ";
     if(recombineMesh) sstream << "Recombine;";
   }
@@ -660,23 +682,27 @@ void protude(const std::string &fileName, const std::vector<std::pair<int, int> 
   add_infile(sstream.str(), fileName);
 }
 
-void add_pipe(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
+void add_pipe(const std::string &fileName,
+              const std::vector<std::pair<int, int> > &l,
               const std::vector<int> &l2)
 {
   std::ostringstream sstream;
   check_occ(sstream);
   int wire = GModel::current()->getGEOInternals()->getMaxTag(-1) + 1;
   if(GModel::current()->getOCCInternals())
-    wire = std::max(wire, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
+    wire =
+      std::max(wire, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
   sstream << "Wire(" << wire << ") = {" << vector2String(l2) << "};\n";
-  sstream << "Extrude { " << dimTags2String(l) << "} Using Wire {" << wire << "}\n";
+  sstream << "Extrude { " << dimTags2String(l) << "} Using Wire {" << wire
+          << "}\n";
   add_infile(sstream.str(), fileName);
 }
 
 void split_edge(int edge_id, List_T *vertices, const std::string &fileName)
 {
   std::ostringstream sstream;
-  sstream << "Split Curve(" << edge_id << ") {" << list2String(vertices) << "};";
+  sstream << "Split Curve(" << edge_id << ") {" << list2String(vertices)
+          << "};";
   add_infile(sstream.str(), fileName);
 }
 
@@ -700,8 +726,8 @@ void apply_fillet(const std::string &fileName, const std::vector<int> &regions,
 {
   std::ostringstream sstream;
   check_occ(sstream);
-  sstream << "Fillet{" << vector2String(regions) << "}{"
-          << vector2String(edges) << "}{" << radius << "}";
+  sstream << "Fillet{" << vector2String(regions) << "}{" << vector2String(edges)
+          << "}{" << radius << "}";
   add_infile(sstream.str(), fileName);
 }
 

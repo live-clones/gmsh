@@ -25,8 +25,3 @@ Line Loop(33) = {30,31,32,29};
 Plane Surface(34) = {33};
 Extrude {0,0,-1} { Surface {34}; }
 Coherence;
-Surface Loop(57) = {56,43,34,47,51,55};
-Volume(58) = {57};
-
-Surface Loop(58) = {28,15,6,19,23,27};
-Volume(59) = {58};

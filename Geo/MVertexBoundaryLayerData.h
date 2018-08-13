@@ -16,18 +16,18 @@ class MVertex;
 // direction, in order.
 
 class MVertexBoundaryLayerData {
- private:
-  std::vector<std::vector<MVertex*> > children;
+private:
+  std::vector<std::vector<MVertex *> > children;
 
- public:
+public:
   MVertexBoundaryLayerData(){};
   ~MVertexBoundaryLayerData(){};
 
-  std::vector<MVertex*>* getChildren(int i);
+  std::vector<MVertex *> *getChildren(int i);
   int getNumChildren(int i);
 
   int getNumChildrenFamilies();
-  void addChildrenFamily(std::vector<MVertex*> family);
+  void addChildrenFamily(const std::vector<MVertex *> &family);
 };
 
 #endif

@@ -5,9 +5,9 @@
 
 #include "MVertexBoundaryLayerData.h"
 
-std::vector<MVertex*>* MVertexBoundaryLayerData::getChildren(int i)
+std::vector<MVertex *> *MVertexBoundaryLayerData::getChildren(int i)
 {
-  if (i < (int)this->children.size() && i >= 0) {
+  if(i < (int)this->children.size() && i >= 0) {
     return &(children[i]);
   }
   else {
@@ -17,7 +17,7 @@ std::vector<MVertex*>* MVertexBoundaryLayerData::getChildren(int i)
 
 int MVertexBoundaryLayerData::getNumChildren(int i)
 {
-  if (i < (int)this->children.size() && i >= 0) {
+  if(i < (int)this->children.size() && i >= 0) {
     return (int)this->children[i].size();
   }
   else {
@@ -30,7 +30,8 @@ int MVertexBoundaryLayerData::getNumChildrenFamilies()
   return (int)this->children.size();
 }
 
-void MVertexBoundaryLayerData::addChildrenFamily(std::vector<MVertex*> family)
+void MVertexBoundaryLayerData::addChildrenFamily(
+  const std::vector<MVertex *> &family)
 {
   this->children.push_back(family);
 }

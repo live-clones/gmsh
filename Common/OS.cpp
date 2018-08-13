@@ -62,126 +62,156 @@
 
 // Unicode utility routines borrowed from FLTK
 
-static unsigned int utf8decode(const char* p, const char* end, int* len)
+static unsigned int utf8decode(const char *p, const char *end, int *len)
 {
   static unsigned short cp1252[32] = {
     0x20ac, 0x0081, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021,
     0x02c6, 0x2030, 0x0160, 0x2039, 0x0152, 0x008d, 0x017d, 0x008f,
     0x0090, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014,
-    0x02dc, 0x2122, 0x0161, 0x203a, 0x0153, 0x009d, 0x017e, 0x0178
-  };
-  unsigned char c = *(unsigned char*)p;
-  if (c < 0x80) {
-    if (len) *len = 1;
+    0x02dc, 0x2122, 0x0161, 0x203a, 0x0153, 0x009d, 0x017e, 0x0178};
+  unsigned char c = *(unsigned char *)p;
+  if(c < 0x80) {
+    if(len) *len = 1;
     return c;
-  } else if (c < 0xa0) {
-    if (len) *len = 1;
-    return cp1252[c-0x80];
-  } else if (c < 0xc2) {
+  }
+  else if(c < 0xa0) {
+    if(len) *len = 1;
+    return cp1252[c - 0x80];
+  }
+  else if(c < 0xc2) {
     goto FAIL;
   }
-  if ( (end && p+1 >= end) || (p[1]&0xc0) != 0x80) goto FAIL;
-  if (c < 0xe0) {
-    if (len) *len = 2;
-    return
-      ((p[0] & 0x1f) << 6) +
-      ((p[1] & 0x3f));
-  } else if (c == 0xe0) {
-    if (((unsigned char*)p)[1] < 0xa0) goto FAIL;
+  if((end && p + 1 >= end) || (p[1] & 0xc0) != 0x80) goto FAIL;
+  if(c < 0xe0) {
+    if(len) *len = 2;
+    return ((p[0] & 0x1f) << 6) + ((p[1] & 0x3f));
+  }
+  else if(c == 0xe0) {
+    if(((unsigned char *)p)[1] < 0xa0) goto FAIL;
     goto UTF8_3;
-  } else if (c < 0xf0) {
+  }
+  else if(c < 0xf0) {
   UTF8_3:
-    if ( (end && p+2 >= end) || (p[2]&0xc0) != 0x80) goto FAIL;
-    if (len) *len = 3;
-    return
-      ((p[0] & 0x0f) << 12) +
-      ((p[1] & 0x3f) << 6) +
-      ((p[2] & 0x3f));
-  } else if (c == 0xf0) {
-    if (((unsigned char*)p)[1] < 0x90) goto FAIL;
+    if((end && p + 2 >= end) || (p[2] & 0xc0) != 0x80) goto FAIL;
+    if(len) *len = 3;
+    return ((p[0] & 0x0f) << 12) + ((p[1] & 0x3f) << 6) + ((p[2] & 0x3f));
+  }
+  else if(c == 0xf0) {
+    if(((unsigned char *)p)[1] < 0x90) goto FAIL;
     goto UTF8_4;
-  } else if (c < 0xf4) {
+  }
+  else if(c < 0xf4) {
   UTF8_4:
-    if ( (end && p+3 >= end) || (p[2]&0xc0) != 0x80 || (p[3]&0xc0) != 0x80) goto FAIL;
-    if (len) *len = 4;
-    return
-      ((p[0] & 0x07) << 18) +
-      ((p[1] & 0x3f) << 12) +
-      ((p[2] & 0x3f) << 6) +
-      ((p[3] & 0x3f));
-  } else if (c == 0xf4) {
-    if (((unsigned char*)p)[1] > 0x8f) goto FAIL; // after 0x10ffff
+    if((end && p + 3 >= end) || (p[2] & 0xc0) != 0x80 || (p[3] & 0xc0) != 0x80)
+      goto FAIL;
+    if(len) *len = 4;
+    return ((p[0] & 0x07) << 18) + ((p[1] & 0x3f) << 12) +
+           ((p[2] & 0x3f) << 6) + ((p[3] & 0x3f));
+  }
+  else if(c == 0xf4) {
+    if(((unsigned char *)p)[1] > 0x8f) goto FAIL; // after 0x10ffff
     goto UTF8_4;
-  } else {
+  }
+  else {
   FAIL:
-    if (len) *len = 1;
+    if(len) *len = 1;
     return c;
   }
 }
 
-static unsigned int utf8toUtf16(const char* src, unsigned int srclen,
-                                unsigned short* dst, unsigned int dstlen)
+static unsigned int utf8toUtf16(const char *src, unsigned int srclen,
+                                unsigned short *dst, unsigned int dstlen)
 {
-  const char* p = src;
-  const char* e = src+srclen;
+  const char *p = src;
+  const char *e = src + srclen;
   unsigned int count = 0;
-  if (dstlen) for (;;) {
-    if (p >= e) {dst[count] = 0; return count;}
-    if (!(*p & 0x80)) { // ascii
-      dst[count] = *p++;
-    } else {
-      int len; unsigned int ucs = utf8decode(p,e,&len);
-      p += len;
-      if (ucs < 0x10000) {
-	dst[count] = ucs;
-      } else {
-	// make a surrogate pair:
-	if (count+2 >= dstlen) {dst[count] = 0; count += 2; break;}
-	dst[count] = (((ucs-0x10000u)>>10)&0x3ff) | 0xd800;
-	dst[++count] = (ucs&0x3ff) | 0xdc00;
+  if(dstlen)
+    for(;;) {
+      if(p >= e) {
+        dst[count] = 0;
+        return count;
+      }
+      if(!(*p & 0x80)) { // ascii
+        dst[count] = *p++;
+      }
+      else {
+        int len;
+        unsigned int ucs = utf8decode(p, e, &len);
+        p += len;
+        if(ucs < 0x10000) {
+          dst[count] = ucs;
+        }
+        else {
+          // make a surrogate pair:
+          if(count + 2 >= dstlen) {
+            dst[count] = 0;
+            count += 2;
+            break;
+          }
+          dst[count] = (((ucs - 0x10000u) >> 10) & 0x3ff) | 0xd800;
+          dst[++count] = (ucs & 0x3ff) | 0xdc00;
+        }
+      }
+      if(++count == dstlen) {
+        dst[count - 1] = 0;
+        break;
       }
     }
-    if (++count == dstlen) {dst[count-1] = 0; break;}
-  }
   // we filled dst, measure the rest:
-  while (p < e) {
-    if (!(*p & 0x80)) p++;
+  while(p < e) {
+    if(!(*p & 0x80))
+      p++;
     else {
-      int len; unsigned int ucs = utf8decode(p,e,&len);
+      int len;
+      unsigned int ucs = utf8decode(p, e, &len);
       p += len;
-      if (ucs >= 0x10000) ++count;
+      if(ucs >= 0x10000) ++count;
     }
     ++count;
   }
   return count;
 }
 
-static unsigned int utf8FromUtf16(char* dst, unsigned int dstlen,
-                                  const wchar_t* src, unsigned int srclen)
+static unsigned int utf8FromUtf16(char *dst, unsigned int dstlen,
+                                  const wchar_t *src, unsigned int srclen)
 {
   unsigned int i = 0;
   unsigned int count = 0;
-  if (dstlen) {
-    for (;;) {
+  if(dstlen) {
+    for(;;) {
       unsigned int ucs;
-      if (i >= srclen) {dst[count] = 0; return count;}
-      ucs = src[i++];
-      if (ucs < 0x80U) {
-        dst[count++] = ucs;
-        if (count >= dstlen) {dst[count-1] = 0; break;}
+      if(i >= srclen) {
+        dst[count] = 0;
+        return count;
       }
-      else if (ucs < 0x800U) { /* 2 bytes */
-        if (count+2 >= dstlen) {dst[count] = 0; count += 2; break;}
+      ucs = src[i++];
+      if(ucs < 0x80U) {
+        dst[count++] = ucs;
+        if(count >= dstlen) {
+          dst[count - 1] = 0;
+          break;
+        }
+      }
+      else if(ucs < 0x800U) { /* 2 bytes */
+        if(count + 2 >= dstlen) {
+          dst[count] = 0;
+          count += 2;
+          break;
+        }
         dst[count++] = 0xc0 | (ucs >> 6);
         dst[count++] = 0x80 | (ucs & 0x3F);
       }
-      else if (ucs >= 0xd800 && ucs <= 0xdbff && i < srclen &&
-	       src[i] >= 0xdc00 && src[i] <= 0xdfff) {
+      else if(ucs >= 0xd800 && ucs <= 0xdbff && i < srclen &&
+              src[i] >= 0xdc00 && src[i] <= 0xdfff) {
         /* surrogate pair */
         unsigned int ucs2 = src[i++];
-        ucs = 0x10000U + ((ucs&0x3ff)<<10) + (ucs2&0x3ff);
+        ucs = 0x10000U + ((ucs & 0x3ff) << 10) + (ucs2 & 0x3ff);
         /* all surrogate pairs turn into 4-byte utf8 */
-        if (count+4 >= dstlen) {dst[count] = 0; count += 4; break;}
+        if(count + 4 >= dstlen) {
+          dst[count] = 0;
+          count += 4;
+          break;
+        }
         dst[count++] = 0xf0 | (ucs >> 18);
         dst[count++] = 0x80 | ((ucs >> 12) & 0x3F);
         dst[count++] = 0x80 | ((ucs >> 6) & 0x3F);
@@ -189,7 +219,11 @@ static unsigned int utf8FromUtf16(char* dst, unsigned int dstlen,
       }
       else {
         /* all others are 3 bytes: */
-        if (count+3 >= dstlen) {dst[count] = 0; count += 3; break;}
+        if(count + 3 >= dstlen) {
+          dst[count] = 0;
+          count += 3;
+          break;
+        }
         dst[count++] = 0xe0 | (ucs >> 12);
         dst[count++] = 0x80 | ((ucs >> 6) & 0x3F);
         dst[count++] = 0x80 | (ucs & 0x3F);
@@ -197,16 +231,16 @@ static unsigned int utf8FromUtf16(char* dst, unsigned int dstlen,
     }
   }
   /* we filled dst, measure the rest: */
-  while (i < srclen) {
+  while(i < srclen) {
     unsigned int ucs = src[i++];
-    if (ucs < 0x80U) {
+    if(ucs < 0x80U) {
       count++;
     }
-    else if (ucs < 0x800U) { /* 2 bytes */
+    else if(ucs < 0x800U) { /* 2 bytes */
       count += 2;
     }
-    else if (ucs >= 0xd800 && ucs <= 0xdbff && i < srclen-1 &&
-             src[i+1] >= 0xdc00 && src[i+1] <= 0xdfff) {
+    else if(ucs >= 0xd800 && ucs <= 0xdbff && i < srclen - 1 &&
+            src[i + 1] >= 0xdc00 && src[i + 1] <= 0xdfff) {
       /* surrogate pair */
       ++i;
       count += 4;
@@ -227,9 +261,9 @@ static void setwbuf(int i, const char *f)
   // (through wchar_t), so we need to convert.
   if(i < 0 || i > 2) return;
   size_t l = strlen(f);
-  unsigned int wn = utf8toUtf16(f, (unsigned int) l, NULL, 0) + 1;
-  wbuf[i] = (wchar_t*)realloc(wbuf[i], sizeof(wchar_t)*wn);
-  wn = utf8toUtf16(f, (unsigned) l, (unsigned short *)wbuf[i], wn);
+  unsigned int wn = utf8toUtf16(f, (unsigned int)l, NULL, 0) + 1;
+  wbuf[i] = (wchar_t *)realloc(wbuf[i], sizeof(wchar_t) * wn);
+  wn = utf8toUtf16(f, (unsigned)l, (unsigned short *)wbuf[i], wn);
   wbuf[i][wn] = 0;
 }
 
@@ -237,7 +271,7 @@ static void setwbuf(int i, const char *f)
 
 FILE *Fopen(const char *f, const char *mode)
 {
-#if defined (WIN32) && !defined(__CYGWIN__)
+#if defined(WIN32) && !defined(__CYGWIN__)
   setwbuf(0, f);
   setwbuf(1, mode);
   return _wfopen(wbuf[0], wbuf[1]);
@@ -277,8 +311,8 @@ double GetTimeInSeconds()
 #if defined(WIN32) && !defined(__CYGWIN__)
   FILETIME ft;
   GetSystemTimeAsFileTime(&ft);
-  double t =  1.e-7 * 4294967296. * (double)ft.dwHighDateTime +
-              1.e-7 * (double)ft.dwLowDateTime;
+  double t = 1.e-7 * 4294967296. * (double)ft.dwHighDateTime +
+             1.e-7 * (double)ft.dwLowDateTime;
   return t;
 #else
   struct timeval tp;
@@ -301,7 +335,7 @@ static void GetResources(double *s, long *mem)
 {
 #if defined(WIN32) && !defined(__CYGWIN__)
   FILETIME creation, exit, kernel, user;
-  if(GetProcessTimes(GetCurrentProcess(), &creation, &exit, &kernel, &user)){
+  if(GetProcessTimes(GetCurrentProcess(), &creation, &exit, &kernel, &user)) {
     *s = 1.e-7 * 4294967296. * (double)user.dwHighDateTime +
          1.e-7 * (double)user.dwLowDateTime;
   }
@@ -322,7 +356,7 @@ static void GetResources(double *s, long *mem)
 
 void CheckResources()
 {
-#if !defined (WIN32) || defined(__CYGWIN__)
+#if !defined(WIN32) || defined(__CYGWIN__)
   static struct rlimit r;
 
   getrlimit(RLIMIT_STACK, &r);
@@ -330,8 +364,9 @@ void CheckResources()
   // Try to get at least 16 MB of stack. Running with too small a stack
   // can cause crashes in the recursive calls (e.g. for tet
   // classification in 3D Delaunay)
-  if(r.rlim_cur < 16 * 1024 * 1024){
-    Msg::Info("Increasing process stack size (%d kB < 16 MB)", r.rlim_cur / 1024);
+  if(r.rlim_cur < 16 * 1024 * 1024) {
+    Msg::Info("Increasing process stack size (%d kB < 16 MB)",
+              r.rlim_cur / 1024);
     r.rlim_cur = r.rlim_max;
     setrlimit(RLIMIT_STACK, &r);
   }
@@ -357,19 +392,19 @@ double TotalRam()
   int name[] = {CTL_HW, HW_MEMSIZE};
   int64_t value;
   size_t len = sizeof(value);
-  if(sysctl(name, 2, &value, &len, NULL, 0) != -1)
-    ram = value / (1024 * 1024);
-#elif defined (WIN32)
+  if(sysctl(name, 2, &value, &len, NULL, 0) != -1) ram = value / (1024 * 1024);
+#elif defined(WIN32)
   MEMORYSTATUSEX status;
   status.dwLength = sizeof(status);
   GlobalMemoryStatusEx(&status);
-  ram = status.ullTotalPhys  / ((double)1024 * 1024);
+  ram = status.ullTotalPhys / ((double)1024 * 1024);
 #elif defined(BUILD_ANDROID)
   ram = 1024;
 #elif defined(__linux__)
   struct sysinfo infos;
   if(sysinfo(&infos) != -1)
-    ram = infos.totalram * (unsigned long)infos.mem_unit / ((double)1024 * 1024);
+    ram =
+      infos.totalram * (unsigned long)infos.mem_unit / ((double)1024 * 1024);
 #endif
   return ram;
 }
@@ -377,7 +412,7 @@ double TotalRam()
 double TimeOfDay()
 {
 #if defined(WIN32) && !defined(__CYGWIN__)
-  struct _timeb  localTime;
+  struct _timeb localTime;
   _ftime(&localTime);
   return localTime.time + 1.e-3 * localTime.millitm;
 #else
@@ -410,7 +445,7 @@ std::string GetExecutableFileName()
 #if defined(WIN32) && !defined(__CYGWIN__)
   wchar_t src[MAX_PATH];
   unsigned long size = GetModuleFileNameW(NULL, src, MAX_PATH);
-  if(size){
+  if(size) {
     char dst[MAX_PATH];
     utf8FromUtf16(dst, MAX_PATH, src, size);
     name = std::string(dst);
@@ -418,16 +453,16 @@ std::string GetExecutableFileName()
 #elif defined(__APPLE__)
   char path[PATH_MAX];
   uint32_t size = sizeof(path);
-  if(_NSGetExecutablePath(path, &size) == 0){
+  if(_NSGetExecutablePath(path, &size) == 0) {
     char real[PATH_MAX];
-    if(realpath(path, real)){
+    if(realpath(path, real)) {
       name = std::string(real);
     }
   }
 #elif defined(__linux__)
   char path[4096];
   int n = readlink("/proc/self/exe", path, sizeof(path));
-  if(n > 0 && n < (int)sizeof(path)){
+  if(n > 0 && n < (int)sizeof(path)) {
     path[n] = '\0';
     name = std::string(path);
   }
@@ -441,15 +476,14 @@ std::string GetAbsolutePath(const std::string &fileName)
   setwbuf(0, fileName.c_str());
   wchar_t path[MAX_PATH];
   unsigned long size = GetFullPathNameW(wbuf[0], MAX_PATH, path, NULL);
-  if(size){
+  if(size) {
     char dst[MAX_PATH];
     utf8FromUtf16(dst, MAX_PATH, path, size);
     return std::string(dst);
   }
 #else
   char path[4096];
-  if(realpath(fileName.c_str(), path))
-    return path;
+  if(realpath(fileName.c_str(), path)) return path;
 #endif
   return fileName;
 }
@@ -502,7 +536,7 @@ void CreatePath(const std::string &fullPath)
   std::string dirname = std::string(fullPath, 0, lastp);
   size_t cur = 0;
   while(cur != std::string::npos) {
-    cur = dirname.find("/", cur + 1);
+    cur = dirname.find('/', cur + 1);
     CreateSingleDir(dirname.substr(0, cur));
   }
 }
@@ -511,13 +545,12 @@ int KillProcess(int pid)
 {
 #if defined(WIN32) && !defined(__CYGWIN__)
   HANDLE hProc = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
-  if(!TerminateProcess(hProc, 0)){
+  if(!TerminateProcess(hProc, 0)) {
     CloseHandle(hProc);
     return 0;
   }
 #else
-  if(kill(pid, 9))
-    return 0;
+  if(kill(pid, 9)) return 0;
 #endif
   return 1;
 }
@@ -531,22 +564,22 @@ int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
   bool isOctave = (split[2] == ".m" || split[2] == ".M");
   bool isExe = (split[2] == ".exe" || split[2] == ".EXE");
 
-  if(isPython || isOctave || isExe){
-    if(StatFile(exe)){
+  if(isPython || isOctave || isExe) {
+    if(StatFile(exe)) {
       Msg::Error("Unable to open file '%s'", exe.c_str());
       return 1;
     }
   }
 
   std::string command;
-  if(exe.size()){
+  if(exe.size()) {
     command.append("\"" + exe + "\""); // allows exe with white space
     if(argsOrCommand.size()) command.append(" ");
   }
   command.append(argsOrCommand);
 
 #if defined(WIN32) && !defined(__CYGWIN__)
-  if(isPython || isOctave){
+  if(isPython || isOctave) {
     Msg::Info("Shell opening '%s' with arguments '%s'", exe.c_str(),
               argsOrCommand.c_str());
     setwbuf(0, "open");
@@ -554,51 +587,52 @@ int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
     setwbuf(2, argsOrCommand.c_str());
     ShellExecuteW(NULL, wbuf[0], wbuf[1], wbuf[2], NULL, 0);
   }
-  else{
+  else {
     STARTUPINFOW suInfo;
     PROCESS_INFORMATION prInfo;
     memset(&suInfo, 0, sizeof(suInfo));
     suInfo.cb = sizeof(suInfo);
     Msg::Info("Calling '%s'", command.c_str());
     setwbuf(0, command.c_str());
-    if(blocking){
-      CreateProcessW(NULL, wbuf[0], NULL, NULL, FALSE,
-		    NORMAL_PRIORITY_CLASS, NULL, NULL,
-		    &suInfo, &prInfo);
+    if(blocking) {
+      CreateProcessW(NULL, wbuf[0], NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS,
+                     NULL, NULL, &suInfo, &prInfo);
       // wait until child process exits.
       WaitForSingleObject(prInfo.hProcess, INFINITE);
       // close process and thread handles.
       CloseHandle(prInfo.hProcess);
       CloseHandle(prInfo.hThread);
     }
-    else{
+    else {
       // DETACHED_PROCESS removes the console (useful if the program to launch
       // is a console-mode exe)
       CreateProcessW(NULL, wbuf[0], NULL, NULL, FALSE,
-		    NORMAL_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL,
-		    &suInfo, &prInfo);
+                     NORMAL_PRIORITY_CLASS | DETACHED_PROCESS, NULL, NULL,
+                     &suInfo, &prInfo);
     }
   }
 #elif(BUILD_IOS)
   Msg::Warning("SystemCall is not supported on iOS");
 #else
   std::string cmd(command);
-  if(isPython || isOctave || isExe){
-    if(access(exe.c_str(), X_OK)){
-      if(isPython){
+  if(isPython || isOctave || isExe) {
+    if(access(exe.c_str(), X_OK)) {
+      if(isPython) {
         Msg::Info("Script '%s' is not executable: running with `%s'",
-		  exe.c_str(), CTX::instance()->solver.pythonInterpreter.c_str());
+                  exe.c_str(),
+                  CTX::instance()->solver.pythonInterpreter.c_str());
         cmd = CTX::instance()->solver.pythonInterpreter + " " + cmd;
       }
-      else if(isOctave){
+      else if(isOctave) {
         Msg::Info("Script '%s' is not executable: running with `%s'",
-		  exe.c_str(), CTX::instance()->solver.octaveInterpreter.c_str());
+                  exe.c_str(),
+                  CTX::instance()->solver.octaveInterpreter.c_str());
         cmd = CTX::instance()->solver.octaveInterpreter + " " + cmd;
       }
       else
         Msg::Warning("File '%s' is not executable", exe.c_str());
     }
-    else if(split[0].empty()){
+    else if(split[0].empty()) {
       // workaround if pwd is not in PATH
       cmd = "./" + cmd;
     }
@@ -652,11 +686,11 @@ void RedirectIOToConsole()
   // redirect unbuffered stdout, stdin and stderr to the console
   {
     intptr_t lStdHandle = (intptr_t)GetStdHandle(STD_OUTPUT_HANDLE);
-    if(lStdHandle != (intptr_t)INVALID_HANDLE_VALUE){
+    if(lStdHandle != (intptr_t)INVALID_HANDLE_VALUE) {
       int hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
-      if(hConHandle >= 0){
+      if(hConHandle >= 0) {
         FILE *fp = _fdopen(hConHandle, "w");
-        if(fp){
+        if(fp) {
           *stdout = *fp;
           setvbuf(stdout, NULL, _IONBF, 0);
         }
@@ -665,11 +699,11 @@ void RedirectIOToConsole()
   }
   {
     intptr_t lStdHandle = (intptr_t)GetStdHandle(STD_INPUT_HANDLE);
-    if(lStdHandle != (intptr_t)INVALID_HANDLE_VALUE){
+    if(lStdHandle != (intptr_t)INVALID_HANDLE_VALUE) {
       int hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
-      if(hConHandle >= 0){
+      if(hConHandle >= 0) {
         FILE *fp = _fdopen(hConHandle, "r");
-        if(fp){
+        if(fp) {
           *stdin = *fp;
           setvbuf(stdin, NULL, _IONBF, 0);
         }
@@ -678,11 +712,11 @@ void RedirectIOToConsole()
   }
   {
     intptr_t lStdHandle = (intptr_t)GetStdHandle(STD_ERROR_HANDLE);
-    if(lStdHandle != (intptr_t)INVALID_HANDLE_VALUE){
+    if(lStdHandle != (intptr_t)INVALID_HANDLE_VALUE) {
       int hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
-      if(hConHandle >= 0){
+      if(hConHandle >= 0) {
         FILE *fp = _fdopen(hConHandle, "w");
-        if(fp){
+        if(fp) {
           *stderr = *fp;
           setvbuf(stderr, NULL, _IONBF, 0);
         }
@@ -699,27 +733,27 @@ void UnzipFile(const std::string &fileName, const std::string &prependDir)
 {
 #if defined(HAVE_ZIPPER)
   std::string dir = prependDir;
-  if(dir.size() && dir[dir.size()-1] != '/' && dir[dir.size()-1] != '\\')
+  if(dir.size() && dir[dir.size() - 1] != '/' && dir[dir.size() - 1] != '\\')
     dir.push_back('/');
 
   ziputils::unzipper zipFile;
   zipFile.open(fileName.c_str());
   std::vector<std::string> dirnames = zipFile.getFolders();
-  for (std::vector<std::string>::const_iterator it = dirnames.begin();
-       it != dirnames.end(); it++){
+  for(std::vector<std::string>::const_iterator it = dirnames.begin();
+      it != dirnames.end(); it++) {
     std::string folder = dir + *it;
     Msg::Info("Creating folder `%s'", folder.c_str());
     CreatePath(folder);
   }
   std::vector<std::string> filenames = zipFile.getFilenames();
-  for (std::vector<std::string>::const_iterator it = filenames.begin();
-       it != filenames.end(); it++){
+  for(std::vector<std::string>::const_iterator it = filenames.begin();
+      it != filenames.end(); it++) {
     zipFile.openEntry(it->c_str());
     std::string name = dir + *it;
     Msg::Info("Extracting file `%s'", name.c_str());
     std::ofstream ofs;
     ofs.open(name.c_str());
-    if(ofs.is_open()){
+    if(ofs.is_open()) {
       zipFile >> ofs;
       ofs.close();
     }

@@ -16,16 +16,13 @@
  * Forward declarations
  *============================================================================*/
 
-template <unsigned DIM>
-struct ParseEntity;
-
+template <unsigned DIM> struct ParseEntity;
 
 /*******************************************************************************
  *
  * Routines from class MZone
  *
  ******************************************************************************/
-
 
 /*==============================================================================
  *
@@ -53,18 +50,15 @@ struct ParseEntity;
 
 template <unsigned DIM>
 template <typename EntIter>
-void MZone<DIM>::add_elements_in_entities
-(EntIter begin, EntIter end, const int partition)
+void MZone<DIM>::add_elements_in_entities(EntIter begin, EntIter end,
+                                          const int partition)
 {
-
   // Find the neighbours of each vertex, edge, and face
   for(EntIter itEnt = begin; itEnt != end; ++itEnt) {
     ParseEntity<DIM>::eval(*itEnt, boFaceMap, elemVec, vertMap, zoneElemConn,
                            partition);
   }
-
 }
-
 
 /*==============================================================================
  *
@@ -94,16 +88,12 @@ void MZone<DIM>::add_elements_in_entities
 
 template <unsigned DIM>
 template <typename EntPtr>
-void MZone<DIM>::add_elements_in_entity
-(EntPtr entity, const int partition)
+void MZone<DIM>::add_elements_in_entity(EntPtr entity, const int partition)
 {
-
   // Find the neighbours of each vertex, edge, and face
   ParseEntity<DIM>::eval(entity, boFaceMap, elemVec, vertMap, zoneElemConn,
                          partition);
-
 }
-
 
 /*==============================================================================
  *
@@ -119,26 +109,24 @@ void MZone<DIM>::add_elements_in_entity
  *
  *============================================================================*/
 
-template <unsigned DIM>
-int MZone<DIM>::zoneData()
+template <unsigned DIM> int MZone<DIM>::zoneData()
 {
-
   if(elemVec.size() == 0) return 1;
 
   // Resize output arrays
   zoneVertVec.resize(vertMap.size());
 
-//--Label boundary vertices and start building output vector of vertices.
-//--Also record boundary faces that contain a boundary vertex.
+  //--Label boundary vertices and start building output vector of vertices.
+  //--Also record boundary faces that contain a boundary vertex.
 
-  std::vector<MVertex*> faceVertices;
+  std::vector<MVertex *> faceVertices;
   unsigned cVert = 0;
   for(typename BoFaceMap::iterator fMapIt = boFaceMap.begin();
       fMapIt != boFaceMap.end(); ++fMapIt) {
     // Get all the vertices on the face
-    DimTr<DIM>::getAllFaceVertices
-      (elemVec[fMapIt->second.parentElementIndex].element,
-       fMapIt->second.parentFace, faceVertices);
+    DimTr<DIM>::getAllFaceVertices(
+      elemVec[fMapIt->second.parentElementIndex].element,
+      fMapIt->second.parentFace, faceVertices);
     const int nVert = faceVertices.size();
     for(int iVert = 0; iVert != nVert; ++iVert) {
       int &index = vertMap[faceVertices[iVert]];
@@ -157,33 +145,32 @@ int MZone<DIM>::zoneData()
   }
   numBoVert = cVert;
 
-//--Label interior vertices and complete output vector of vertices
+  //--Label interior vertices and complete output vector of vertices
 
   const VertexMap::iterator vMapEnd = vertMap.end();
-  for(VertexMap::iterator vMapIt = vertMap.begin();
-      vMapIt != vMapEnd; ++vMapIt) {
-    if(vMapIt->second == 0) {  // Vertex in zone interior
+  for(VertexMap::iterator vMapIt = vertMap.begin(); vMapIt != vMapEnd;
+      ++vMapIt) {
+    if(vMapIt->second == 0) { // Vertex in zone interior
       zoneVertVec[cVert] = vMapIt->first;
       vMapIt->second = ++cVert;
     }
   }
 
-//--Initialize the connectivity array for the various types of elements.  Note
-//--that 'iElemType' is MSH_TYPE-1.
+  //--Initialize the connectivity array for the various types of elements.  Note
+  //--that 'iElemType' is MSH_TYPE-1.
 
-  int numUsedElemType = 0;
   for(int iElemType = 0; iElemType != MSH_NUM_TYPE; ++iElemType) {
     if(zoneElemConn[iElemType].numElem > 0) {
-      zoneElemConn[iElemType].connectivity.resize
-        (zoneElemConn[iElemType].numElem*MElement::getInfoMSH(iElemType+1));
+      zoneElemConn[iElemType].connectivity.resize(
+        zoneElemConn[iElemType].numElem * MElement::getInfoMSH(iElemType + 1));
       // Members numBoElem, and iConn should be set to zero via the constructor
       // or a clear
     }
   }
 
-//--The elements are added to the connectivity in two loops.  The first loop
-//--looks for boundary elements.  The second loop adds the remaining interior
-//--elements.
+  //--The elements are added to the connectivity in two loops.  The first loop
+  //--looks for boundary elements.  The second loop adds the remaining interior
+  //--elements.
 
   unsigned cElem = 1;
   const ElementVec::const_iterator eVecEnd = elemVec.end();
@@ -203,16 +190,17 @@ int MZone<DIM>::zoneData()
         // Load connectivity for this element type
         const int nVert = eVecIt->element->getNumVertices();
         for(int iVert = 0; iVert != nVert; ++iVert) {
-          zoneElemConn[iElemType].add_to_connectivity
-            (vertMap[eVecIt->element->getVertex(iVert)]);
+          zoneElemConn[iElemType].add_to_connectivity(
+            vertMap[eVecIt->element->getVertex(iVert)]);
         }
         break;
       }
     }
   }
 
-//--Now loop through all elements again and do same thing for all elements with
-//--index set to 0
+  //--Now loop through all elements again and do same thing for all elements
+  //with
+  //--index set to 0
 
   for(ElementVec::iterator eVecIt = elemVec.begin(); eVecIt != eVecEnd;
       ++eVecIt) {
@@ -224,26 +212,24 @@ int MZone<DIM>::zoneData()
       // Load connectivity for this element type
       const int nVert = eVecIt->element->getNumVertices();
       for(int iVert = 0; iVert != nVert; ++iVert) {
-        zoneElemConn[iElemType].add_to_connectivity
-          (vertMap[eVecIt->element->getVertex(iVert)]);
+        zoneElemConn[iElemType].add_to_connectivity(
+          vertMap[eVecIt->element->getVertex(iVert)]);
       }
     }
   }
 
-//**If we are going to write the boundary element faces, we need to update
-//**.parentElementIndex from "index in elemVec" to "elemVec[iParent].index.
-//**This is the index of the parent element local to the zone.
+  //**If we are going to write the boundary element faces, we need to update
+  //**.parentElementIndex from "index in elemVec" to "elemVec[iParent].index.
+  //**This is the index of the parent element local to the zone.
 
-//--Clean-up for containers that are no longer required.  Only 'boVertMap' is
-//--still required but 'boFaceMap' is also retained because it contains the
-//--faces referenced by 'boVertMap'.
+  //--Clean-up for containers that are no longer required.  Only 'boVertMap' is
+  //--still required but 'boFaceMap' is also retained because it contains the
+  //--faces referenced by 'boVertMap'.
 
   elemVec.clear();
   vertMap.clear();
   return 0;
-
 }
-
 
 /*******************************************************************************
  *
@@ -256,21 +242,20 @@ int MZone<DIM>::zoneData()
  *
  ******************************************************************************/
 
-template <unsigned DIM>
-struct ParseEntity
-{
-  typedef typename DimTr<DIM>::FaceT FaceT;  // The type/dimension of face
+template <unsigned DIM> struct ParseEntity {
+  typedef typename DimTr<DIM>::FaceT FaceT; // The type/dimension of face
   typedef typename LFaceTr<FaceT>::BoFaceMap BoFaceMap; // The corresponding map
 
-  static void eval(const GEntity *const entity,
-                   BoFaceMap &boFaceMap,
-                   ElementVec &elemVec,
-                   VertexMap &vertMap,
-                   ElementConnectivity *zoneElemConn,
-                   const int partition)
+  static void eval(const GEntity *const entity, BoFaceMap &boFaceMap,
+                   ElementVec &elemVec, VertexMap &vertMap,
+                   ElementConnectivity *zoneElemConn, const int partition)
   {
     unsigned numElem[6];
-    numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0; numElem[4] = 0;
+    numElem[0] = 0;
+    numElem[1] = 0;
+    numElem[2] = 0;
+    numElem[3] = 0;
+    numElem[4] = 0;
     numElem[5] = 0;
     entity->getNumMeshElements(numElem);
     // Loop over all types of elements
@@ -288,16 +273,15 @@ struct ParseEntity
           // Unique list of vertices
           const int nVert = element[iElem]->getNumVertices();
           for(int iVert = 0; iVert != nVert; ++iVert)
-            vertMap[element[iElem]->getVertex(iVert)] = 0;  // Unlabelled
+            vertMap[element[iElem]->getVertex(iVert)] = 0; // Unlabelled
           // Maintain list of (base element) faces with only one bounding
           // element.
           const int nFace = DimTr<DIM>::getNumFace(element[iElem]);
           for(int iFace = 0; iFace != nFace; ++iFace) {
             FaceT face = DimTr<DIM>::getFace(element[iElem], iFace);
             std::pair<typename BoFaceMap::iterator, bool> insBoFaceMap =
-              boFaceMap.insert(std::pair<FaceT, FaceData>
-                               (face, FaceData(element[iElem], iFace,
-                                               eVecIndex)));
+              boFaceMap.insert(std::pair<FaceT, FaceData>(
+                face, FaceData(element[iElem], iFace, eVecIndex)));
             if(!insBoFaceMap.second) {
               // The face already exists and is therefore bounded on both sides
               // by elements.  Not a boundary face so delete.
@@ -309,7 +293,6 @@ struct ParseEntity
     }
   }
 };
-
 
 /*******************************************************************************
  *
@@ -326,25 +309,23 @@ template class MZone<3>;
 //--container of entities
 
 // Vector container
-template void MZone<2>::add_elements_in_entities
-<std::vector<GEntity*>::const_iterator>
-(std::vector<GEntity*>::const_iterator begin,
- std::vector<GEntity*>::const_iterator end, const int partition);
+template void
+MZone<2>::add_elements_in_entities<std::vector<GEntity *>::const_iterator>(
+  std::vector<GEntity *>::const_iterator begin,
+  std::vector<GEntity *>::const_iterator end, const int partition);
 
-template void MZone<3>::add_elements_in_entities
-<std::vector<GEntity*>::const_iterator>
-(std::vector<GEntity*>::const_iterator begin,
- std::vector<GEntity*>::const_iterator end, const int partition);
+template void
+MZone<3>::add_elements_in_entities<std::vector<GEntity *>::const_iterator>(
+  std::vector<GEntity *>::const_iterator begin,
+  std::vector<GEntity *>::const_iterator end, const int partition);
 
 //--Explicit instantiations of the routines for adding elements from a single
 //--entity
 
-template void MZone<2>::add_elements_in_entity
-<GFace*>
-(GFace* entity, const int partition);
+template void MZone<2>::add_elements_in_entity<GFace *>(GFace *entity,
+                                                        const int partition);
 
-template void MZone<3>::add_elements_in_entity
-<GRegion*>
-(GRegion* entity, const int partition);
+template void MZone<3>::add_elements_in_entity<GRegion *>(GRegion *entity,
+                                                          const int partition);
 
 #endif

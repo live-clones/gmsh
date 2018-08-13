@@ -195,9 +195,9 @@ MElement *getFaceInBndElements(const MFace &f, std::vector<GFace*> const& gFaces
 }
 
 
-MElement *getEdgeInBndElements(const MEdge &e, std::list<GEdge*> gEdges)
+MElement *getEdgeInBndElements(const MEdge &e, std::vector<GEdge*> const& gEdges)
 {
-  for (std::list<GEdge*>::iterator itGE = gEdges.begin(); itGE != gEdges.end(); itGE++) {
+  for (std::vector<GEdge*>::const_iterator itGE = gEdges.begin(); itGE != gEdges.end(); itGE++) {
     std::vector<MLine*> &lines = (*itGE)->lines;
     for (int iEl=0; iEl<lines.size(); iEl++)
       if (lines[iEl]->getEdge(0) == e) return lines[iEl];
@@ -209,7 +209,7 @@ MElement *getEdgeInBndElements(const MEdge &e, std::list<GEdge*> gEdges)
 void calcBndInfo(GEntity *entity, elElMap &el2BndEl, elEntMap &bndEl2Ent)
 {
   typedef std::vector<GFace*> GFaceList;
-  typedef std::list<GEdge*> GEdgeList;
+  typedef std::vector<GEdge*> GEdgeList;
 
   if (entity->dim() == 3) {                                                               // 3D
 

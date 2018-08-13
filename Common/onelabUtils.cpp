@@ -40,7 +40,7 @@ namespace onelabUtils {
     std::string name(c->getName());
     std::vector<onelab::number> n;
     c->get(n, name + "/Use command line");
-    if(n.size() && n[0].getValue()){
+    if(n.size() && n[0].getValue()) {
       std::vector<onelab::string> ps;
       c->get(ps, name + "/Action");
       std::string action = (ps.empty() ? "" : ps[0].getValue());
@@ -52,20 +52,22 @@ namespace onelabUtils {
       std::string computeCommand = (ps.empty() ? "" : ps[0].getValue());
       if(modelName.size()) args.push_back(" \"" + modelName + "\"");
       if(action == "check")
-        args.push_back(" " + checkCommand) ;
+        args.push_back(" " + checkCommand);
       else if(action == "compute")
         args.push_back(" " + computeCommand);
       // Propagate -setnumber/-setnumber gmsh option to the client. (Is this a
       // good idea?)
       std::ostringstream sstream;
       sstream.precision(16);
-      std::map<std::string, std::vector<double> > cln(Msg::GetCommandLineNumbers());
-      for(std::map<std::string, std::vector<double> >::iterator it = cln.begin();
-          it != cln.end(); it++){
-        if(it->second.size() == 1){
+      std::map<std::string, std::vector<double> > cln(
+        Msg::GetCommandLineNumbers());
+      for(std::map<std::string, std::vector<double> >::iterator it =
+            cln.begin();
+          it != cln.end(); it++) {
+        if(it->second.size() == 1) {
           sstream << " -setnumber " << it->first << " " << it->second[0];
         }
-        else{
+        else {
           sstream << " -setlistofnumbers " << it->first;
           for(unsigned int i = 0; i < it->second.size(); i++)
             sstream << " " << it->second[i];
@@ -85,12 +87,12 @@ namespace onelabUtils {
     std::string name;
     std::vector<onelab::string> ps;
     c->get(ps, "Gmsh/MshFileName");
-    if(ps.size()){
+    if(ps.size()) {
       name = ps[0].getValue();
     }
-    else{
+    else {
       name = CTX::instance()->outputFileName;
-      if(name.empty()){
+      if(name.empty()) {
         if(CTX::instance()->mesh.fileFormat == FORMAT_AUTO)
           name = GetDefaultFileName(FORMAT_MSH);
         else
@@ -117,10 +119,10 @@ namespace onelabUtils {
     std::string geo = GModel::current()->getFileName();
     std::vector<onelab::number> n;
     c->get(n, c->getName() + "/Guess model name");
-    if(n.size() && n[0].getValue()){
+    if(n.size() && n[0].getValue()) {
       std::vector<onelab::string> ps;
       c->get(ps, c->getName() + "/Model name");
-      if(ps.empty()){
+      if(ps.empty()) {
         std::vector<std::string> split = SplitFileName(geo);
         std::string ext = "";
         onelab::server::instance()->get(ps, c->getName() + "/File extension");
@@ -132,7 +134,7 @@ namespace onelabUtils {
         c->set(o);
         geo += std::string(" - ") + name;
       }
-      else{
+      else {
         geo += std::string(" - ") + ps[0].getValue();
       }
     }
@@ -144,30 +146,29 @@ namespace onelabUtils {
     bool changed = false;
     std::vector<onelab::number> numbers;
     onelab::server::instance()->get(numbers);
-    for(unsigned int i = 0; i < numbers.size(); i++){
-
-      if(numbers[i].getAttribute("Loop") == level){
-        if(numbers[i].getChoices().size() > 1){
-	  numbers[i].setIndex(0);
+    for(unsigned int i = 0; i < numbers.size(); i++) {
+      if(numbers[i].getAttribute("Loop") == level) {
+        if(numbers[i].getChoices().size() > 1) {
+          numbers[i].setIndex(0);
           numbers[i].setValue(numbers[i].getChoices()[0]);
           onelab::server::instance()->set(numbers[i]);
           changed = true;
         }
-        else if(numbers[i].getStep() > 0){
-          if(numbers[i].getMin() != -onelab::parameter::maxNumber()){
+        else if(numbers[i].getStep() > 0) {
+          if(numbers[i].getMin() != -onelab::parameter::maxNumber()) {
             numbers[i].setValue(numbers[i].getMin());
-	    numbers[i].setIndex(0); // indicates we are in a loop
-	    std::vector<double> choices;
-	    numbers[0].setChoices(choices);
+            numbers[i].setIndex(0); // indicates we are in a loop
+            std::vector<double> choices;
+            numbers[0].setChoices(choices);
             onelab::server::instance()->set(numbers[i]);
             changed = true;
           }
         }
-        else if(numbers[i].getStep() < 0){
-          if(numbers[i].getMax() != onelab::parameter::maxNumber()){
-	    numbers[i].setIndex(0); // indicates we are in a loop
-	    std::vector<double> choices;
-	    numbers[0].setChoices(choices);
+        else if(numbers[i].getStep() < 0) {
+          if(numbers[i].getMax() != onelab::parameter::maxNumber()) {
+            numbers[i].setIndex(0); // indicates we are in a loop
+            std::vector<double> choices;
+            numbers[0].setChoices(choices);
             numbers[i].setValue(numbers[i].getMax());
             onelab::server::instance()->set(numbers[i]);
             changed = true;
@@ -187,50 +188,50 @@ namespace onelabUtils {
     bool recompute = false, loop = false;
     std::vector<onelab::number> numbers;
     onelab::server::instance()->get(numbers);
-    for(unsigned int i = 0; i < numbers.size(); i++){
-      if(numbers[i].getAttribute("Loop") == level){
+    for(unsigned int i = 0; i < numbers.size(); i++) {
+      if(numbers[i].getAttribute("Loop") == level) {
         loop = true;
 
-        if(numbers[i].getChoices().size() > 1){
-	  int j = numbers[i].getIndex() + 1;
-	  if((j >= 0) && (j < (int) numbers[i].getChoices().size())){
-	    numbers[i].setValue(numbers[i].getChoices()[j]);
-	    numbers[i].setIndex(j);
-	    onelab::server::instance()->set(numbers[i]);
+        if(numbers[i].getChoices().size() > 1) {
+          int j = numbers[i].getIndex() + 1;
+          if((j >= 0) && (j < (int)numbers[i].getChoices().size())) {
+            numbers[i].setValue(numbers[i].getChoices()[j]);
+            numbers[i].setIndex(j);
+            onelab::server::instance()->set(numbers[i]);
             Msg::Info("Recomputing with %dth choice %s=%g", j,
-		      numbers[i].getName().c_str(), numbers[i].getValue());
-	    recompute = true;
-	  }
-	}
-        else if(numbers[i].getStep() > 0){
-	  int j = numbers[i].getIndex() + 1;
-	  double val = numbers[i].getValue() + numbers[i].getStep();
-          if(numbers[i].getMax() != onelab::parameter::maxNumber() &&
-             val <= numbers[i].getMax() * (1 + eps)){
-            numbers[i].setValue(val);
-	    numbers[i].setIndex(j);
-            onelab::server::instance()->set(numbers[i]);
-            Msg::Info("Recomputing with new step %s=%g",
                       numbers[i].getName().c_str(), numbers[i].getValue());
             recompute = true;
           }
-	  else
-	    numbers[i].setIndex(numbers[i].getMax());// FIXME makes sense?
         }
-        else if(numbers[i].getStep() < 0){
-	  int j = numbers[i].getIndex() + 1;
-	  double val = numbers[i].getValue() + numbers[i].getStep();
-          if(numbers[i].getMin() != -onelab::parameter::maxNumber() &&
-             val >= numbers[i].getMin() * (1 - eps)){
+        else if(numbers[i].getStep() > 0) {
+          int j = numbers[i].getIndex() + 1;
+          double val = numbers[i].getValue() + numbers[i].getStep();
+          if(numbers[i].getMax() != onelab::parameter::maxNumber() &&
+             val <= numbers[i].getMax() * (1 + eps)) {
             numbers[i].setValue(val);
-	    numbers[i].setIndex(j);
+            numbers[i].setIndex(j);
             onelab::server::instance()->set(numbers[i]);
             Msg::Info("Recomputing with new step %s=%g",
                       numbers[i].getName().c_str(), numbers[i].getValue());
             recompute = true;
           }
-	  else
-	    numbers[i].setIndex(numbers[i].getMin()); // FIXME makes sense?
+          else
+            numbers[i].setIndex(numbers[i].getMax()); // FIXME makes sense?
+        }
+        else if(numbers[i].getStep() < 0) {
+          int j = numbers[i].getIndex() + 1;
+          double val = numbers[i].getValue() + numbers[i].getStep();
+          if(numbers[i].getMin() != -onelab::parameter::maxNumber() &&
+             val >= numbers[i].getMin() * (1 - eps)) {
+            numbers[i].setValue(val);
+            numbers[i].setIndex(j);
+            onelab::server::instance()->set(numbers[i]);
+            Msg::Info("Recomputing with new step %s=%g",
+                      numbers[i].getName().c_str(), numbers[i].getValue());
+            recompute = true;
+          }
+          else
+            numbers[i].setIndex(numbers[i].getMin()); // FIXME makes sense?
         }
       }
     }
@@ -245,17 +246,19 @@ namespace onelabUtils {
   {
     const double eps = 1.e-15; // for roundoff
     std::vector<double> v;
-    if(p.getChoices().size()){
+    if(p.getChoices().size()) {
       v = p.getChoices();
     }
     else if(p.getMin() != -onelab::parameter::maxNumber() &&
-            p.getMax() != onelab::parameter::maxNumber()){
-      if(p.getStep() > 0){
-        for(double d = p.getMin(); d <= p.getMax() * (1 + eps); d += p.getStep())
+            p.getMax() != onelab::parameter::maxNumber()) {
+      if(p.getStep() > 0) {
+        for(double d = p.getMin(); d <= p.getMax() * (1 + eps);
+            d += p.getStep())
           v.push_back(d);
       }
-      else if(p.getStep() < 0){
-        for(double d = p.getMin(); d <= p.getMax() * (1 + eps); d -= p.getStep())
+      else if(p.getStep() < 0) {
+        for(double d = p.getMin(); d <= p.getMax() * (1 + eps);
+            d -= p.getStep())
           v.push_back(d);
       }
     }
@@ -268,8 +271,8 @@ namespace onelabUtils {
 #if defined(HAVE_POST)
     PView *view = 0;
 
-    for(unsigned int i = 0; i < PView::list.size(); i++){
-      if(PView::list[i]->getData()->getFileName() == "ONELAB" + graphNum){
+    for(unsigned int i = 0; i < PView::list.size(); i++) {
+      if(PView::list[i]->getData()->getFileName() == "ONELAB" + graphNum) {
         view = PView::list[i];
         break;
       }
@@ -281,36 +284,36 @@ namespace onelabUtils {
     int graphType = 3;
     std::vector<onelab::number> numbers;
     onelab::server::instance()->get(numbers);
-    for(unsigned int i = 0; i < numbers.size(); i++){
+    for(unsigned int i = 0; i < numbers.size(); i++) {
       std::string v = numbers[i].getAttribute("Graph");
       v.resize(36, '0');
-      if(v[2 * num] != '0'){
+      if(v[2 * num] != '0') {
         x = getRange(numbers[i]);
         xName = numbers[i].getShortName();
       }
-      if(v[2 * num + 1] != '0'){
+      if(v[2 * num + 1] != '0') {
         y = getRange(numbers[i]);
         yName = numbers[i].getShortName();
         char t = v[2 * num + 1];
-        graphType = (t == '1') ? 1 : (t == '2') ? 2 : (t == '3') ? 3 :
-          (t == '4') ? 4 : 3;
+        graphType =
+          (t == '1') ? 1 : (t == '2') ? 2 : (t == '3') ? 3 : (t == '4') ? 4 : 3;
       }
     }
-    if(x.empty()){
+    if(x.empty()) {
       xName.clear();
       for(unsigned int i = 0; i < y.size(); i++) x.push_back(i);
     }
-    if(x.size() && y.size()){
+    if(x.size() && y.size()) {
       if(x.size() != y.size())
         Msg::Info("X-Y data series have different length (%d != %d)",
                   (int)x.size(), (int)y.size());
-      if(view){
+      if(view) {
         view->getData()->setXY(x, y);
         view->getData()->setName(yName);
         view->getOptions()->axesLabel[0] = xName;
         view->setChanged(true);
       }
-      else{
+      else {
         view = new PView(xName, yName, x, y);
         view->getData()->setFileName("ONELAB" + graphNum);
         view->getOptions()->intervalsType = graphType;
@@ -318,7 +321,7 @@ namespace onelabUtils {
       }
       changed = true;
     }
-    else if(view){
+    else if(view) {
       delete view;
       changed = true;
     }
@@ -327,8 +330,8 @@ namespace onelabUtils {
   }
 
   static bool _firstComputation = true;
-  void setFirstComputationFlag(bool val){ _firstComputation = val; }
-  bool getFirstComputationFlag(){ return _firstComputation; }
+  void setFirstComputationFlag(bool val) { _firstComputation = val; }
+  bool getFirstComputationFlag() { return _firstComputation; }
   bool runGmshClient(const std::string &action, int meshAuto)
   {
     bool redraw = false;
@@ -350,59 +353,60 @@ namespace onelabUtils {
     //    = 2: mesh and save mesh (e.g. if char length changed)
     //    > 2: reload geometry, mesh and save mesh (other things have changed)
 
-    if(meshAuto < 0){ // the geometry creates the mesh
+    if(meshAuto < 0) { // the geometry creates the mesh
       meshAuto = 0;
       if(changed) changed = 3;
     }
 
     Msg::SetOnelabAction(action);
 
-    if(action == "initialize"){
+    if(action == "initialize") {
       // nothing to do
     }
-    else if(action == "reset"){
+    else if(action == "reset") {
       setFirstComputationFlag(false);
       // nothing more to do: "check" will be called right afterwards
     }
-    else if(action == "check_always"){
+    else if(action == "check_always") {
       redraw = true;
       OpenProject(GModel::current()->getFileName());
       onelab::server::instance()->thresholdChanged(2, "Gmsh");
     }
-    else if(action == "check"){
-      if(changed > 2){
+    else if(action == "check") {
+      if(changed > 2) {
         redraw = true;
         OpenProject(GModel::current()->getFileName());
         onelab::server::instance()->thresholdChanged(2, "Gmsh");
       }
     }
-    else if(action == "compute"){
-      if(changed){
+    else if(action == "compute") {
+      if(changed) {
         redraw = true;
-        if(changed > 2){
+        if(changed > 2) {
           OpenProject(GModel::current()->getFileName());
         }
-        if(getFirstComputationFlag() && !StatFile(mshFileName) && meshAuto != 2){
+        if(getFirstComputationFlag() && !StatFile(mshFileName) &&
+           meshAuto != 2) {
           Msg::Info("Skipping mesh generation: assuming '%s' is up-to-date "
                     "(use Solver.AutoMesh=2 to force mesh generation)",
                     mshFileName.c_str());
         }
-        else if(!GModel::current()->empty() && meshAuto){
+        else if(!GModel::current()->empty() && meshAuto) {
           if(changed > 1 || StatFile(mshFileName) ||
-             (!StatFile(mshFileName) &&
-              GModel::current()->getMeshStatus() < GModel::current()->getDim())){
+             (!StatFile(mshFileName) && GModel::current()->getMeshStatus() <
+                                          GModel::current()->getDim())) {
             GModel::current()->deleteMesh();
             GModel::current()->mesh(3);
           }
           CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
         }
       }
-      else if(StatFile(mshFileName)){
+      else if(StatFile(mshFileName)) {
         // mesh+save if the mesh file does not exist
-        if(meshAuto){
+        if(meshAuto) {
           redraw = true;
           if(changed > 1 ||
-             GModel::current()->getMeshStatus() < GModel::current()->getDim()){
+             GModel::current()->getMeshStatus() < GModel::current()->getDim()) {
             GModel::current()->deleteMesh();
             GModel::current()->mesh(3);
           }
@@ -420,41 +424,41 @@ namespace onelabUtils {
 
   void runClient(const std::string &name, const std::string &command)
   {
-    if(name.size()){
+    if(name.size()) {
       // try to run as a subclient of Gmsh; or if not as a new client
       onelab::remoteNetworkClient *c =
-        dynamic_cast<onelab::remoteNetworkClient*>(Msg::GetOnelabClient());
-      if(c){
+        dynamic_cast<onelab::remoteNetworkClient *>(Msg::GetOnelabClient());
+      if(c) {
         c->runSubClient(name, command);
       }
-      else{
+      else {
         gmshLocalNetworkClient client(name, command, "", true);
         client.run();
       }
     }
-    else{
+    else {
       // try to run a client that might have been selected previously, e.g. by
       // opening a file with known client extension (like ".pro")
       int num = CTX::instance()->launchSolverAtStartup;
       std::string name, exe, host;
-      if(num == -1){
+      if(num == -1) {
         // no client to run
         return;
       }
-      else if(num == -2){
+      else if(num == -2) {
         // just run local Gmsh client
       }
-      else if(num >= 0){
+      else if(num >= 0) {
         // run local Gmsh client + solver num
         name = opt_solver_name(num, GMSH_GET, "");
         exe = opt_solver_executable(num, GMSH_GET, "");
         host = opt_solver_remote_login(num, GMSH_GET, "");
-        if(exe.empty()){
+        if(exe.empty()) {
           Msg::Error("Solver executable name not provided");
           return;
         }
       }
-      else{
+      else {
         Msg::Error("Unknown client to run in batch mode (%d)", num);
         return;
       }
@@ -466,30 +470,32 @@ namespace onelabUtils {
       // create client
       onelab::localNetworkClient *c = 0;
       onelab::string o;
-      if(name.size()){
+      if(name.size()) {
         c = new gmshLocalNetworkClient(name, exe, host);
         c->setIndex(num);
         o = c->getName() + "/Action";
       }
 
       // initialize
-      onelabUtils::runGmshClient("initialize", CTX::instance()->solver.autoMesh);
-      if(c){
+      onelabUtils::runGmshClient("initialize",
+                                 CTX::instance()->solver.autoMesh);
+      if(c) {
         o.setValue("initialize");
         onelab::server::instance()->set(o);
         c->run();
       }
 
       // load db
-      if(CTX::instance()->solver.autoLoadDatabase){
-        std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+      if(CTX::instance()->solver.autoLoadDatabase) {
+        std::vector<std::string> split =
+          SplitFileName(GModel::current()->getFileName());
         std::string db = split[0] + split[1] + ".db";
         if(!StatFile(db)) loadDb(db);
       }
 
       // check
       onelabUtils::runGmshClient("check", CTX::instance()->solver.autoMesh);
-      if(c){
+      if(c) {
         onelabUtils::guessModelName(c);
         o.setValue("check");
         onelab::server::instance()->set(o);
@@ -498,9 +504,9 @@ namespace onelabUtils {
 
       // compute
       initializeLoops();
-      do{
+      do {
         onelabUtils::runGmshClient("compute", CTX::instance()->solver.autoMesh);
-        if(c){
+        if(c) {
           onelabUtils::guessModelName(c);
           o.setValue("compute");
           onelab::server::instance()->set(o);
@@ -510,10 +516,12 @@ namespace onelabUtils {
       } while(incrementLoops());
 
       if(CTX::instance()->solver.autoSaveDatabase ||
-         CTX::instance()->solver.autoArchiveOutputFiles){
-        std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+         CTX::instance()->solver.autoArchiveOutputFiles) {
+        std::vector<std::string> split =
+          SplitFileName(GModel::current()->getFileName());
         std::string db = split[0] + split[1] + ".db";
-        if(CTX::instance()->solver.autoArchiveOutputFiles) archiveOutputFiles(db);
+        if(CTX::instance()->solver.autoArchiveOutputFiles)
+          archiveOutputFiles(db);
         if(CTX::instance()->solver.autoSaveDatabase) saveDb(db);
       }
     }
@@ -521,12 +529,13 @@ namespace onelabUtils {
 
   // update x using y, giving priority to any settings in x that can be set in
   // the GUI. The value of x is only changed if y is read-only.
-  double updateNumber(onelab::number &x, onelab::number &y, const bool readOnlyRange)
+  double updateNumber(onelab::number &x, onelab::number &y,
+                      const bool readOnlyRange)
   {
     bool noRange = true, noChoices = true, noLoop = true;
     bool noGraph = true, noClosed = true;
 
-    if(y.getReadOnly()){
+    if(y.getReadOnly()) {
       x.setValue(y.getValue());
       x.setReadOnly(true);
     }
@@ -535,45 +544,45 @@ namespace onelabUtils {
     // keep track of these attributes, which can be changed server-side (unless,
     // for the range/choices, when explicitely setting these attributes as
     // ReadOnly)
-    if(!readOnlyRange){
+    if(!readOnlyRange) {
       if(x.getMin() != -onelab::parameter::maxNumber() ||
-	 x.getMax() != onelab::parameter::maxNumber() ||
-	 x.getStep() != 0.) noRange = false;
+         x.getMax() != onelab::parameter::maxNumber() || x.getStep() != 0.)
+        noRange = false;
       if(x.getChoices().size()) noChoices = false;
     }
     if(x.getAttribute("Loop").size()) noLoop = false;
     if(x.getAttribute("Graph").size()) noGraph = false;
     if(x.getAttribute("Closed").size()) noClosed = false;
 
-    if(noRange){
+    if(noRange) {
       bool noRangeEither = true;
       if(y.getMin() != -onelab::parameter::maxNumber() ||
-	 y.getMax() != onelab::parameter::maxNumber() ||
-	 y.getStep() != 0.) noRangeEither = false;
-      if(!noRangeEither){
-	x.setMin(y.getMin());
-	x.setMax(y.getMax());
+         y.getMax() != onelab::parameter::maxNumber() || y.getStep() != 0.)
+        noRangeEither = false;
+      if(!noRangeEither) {
+        x.setMin(y.getMin());
+        x.setMax(y.getMax());
       }
-      else{
-	// if no range/min/max/step info is provided, try to compute a reasonnable
-	// range and step (this makes the GUI much nicer to use)
-	bool isInteger = (floor(val) == val);
-	double fact = isInteger ? 5. : 20.;
-	if(val > 0){
-	  x.setMin(val / fact);
-	  x.setMax(val * fact);
-	  x.setStep((x.getMax() - x.getMin()) / 100.);
-	}
-	else if(val < 0){
-	  x.setMin(val * fact);
-	  x.setMax(val / fact);
-	  x.setStep((x.getMax() - x.getMin()) / 100.);
-	}
-	if(val && isInteger){
-	  x.setMin((int)x.getMin());
-	  x.setMax((int)x.getMax());
-	  x.setStep((int)x.getStep());
-	}
+      else {
+        // if no range/min/max/step info is provided, try to compute a
+        // reasonnable range and step (this makes the GUI much nicer to use)
+        bool isInteger = (floor(val) == val);
+        double fact = isInteger ? 5. : 20.;
+        if(val > 0) {
+          x.setMin(val / fact);
+          x.setMax(val * fact);
+          x.setStep((x.getMax() - x.getMin()) / 100.);
+        }
+        else if(val < 0) {
+          x.setMin(val * fact);
+          x.setMax(val / fact);
+          x.setStep((x.getMax() - x.getMin()) / 100.);
+        }
+        if(val && isInteger) {
+          x.setMin((int)x.getMin());
+          x.setMax((int)x.getMax());
+          x.setStep((int)x.getStep());
+        }
       }
     }
     if(noChoices) {
@@ -582,20 +591,19 @@ namespace onelabUtils {
     }
     if(noLoop) x.setAttribute("Loop", y.getAttribute("Loop"));
     if(noGraph) x.setAttribute("Graph", y.getAttribute("Graph"));
-    if(noClosed) x.setAttribute("Closed",  y.getAttribute("Closed"));
+    if(noClosed) x.setAttribute("Closed", y.getAttribute("Closed"));
     return val;
   }
 
   bool haveSolverToRun()
   {
     for(onelab::server::citer it = onelab::server::instance()->firstClient();
-	it != onelab::server::instance()->lastClient(); it++){
+        it != onelab::server::instance()->lastClient(); it++) {
       onelab::client *c = *it;
-      if(c->getName() != "Gmsh" &&
-	 c->getName() != "Listen" &&
-	 c->getName() != "GmshRemote" &&
+      if(c->getName() != "Gmsh" && c->getName() != "Listen" &&
+         c->getName() != "GmshRemote" &&
          c->getName().find("NoAutoRun") == std::string::npos)
-	return true;
+        return true;
     }
     return false;
   }
@@ -606,7 +614,7 @@ namespace onelabUtils {
   {
     bool noChoices = true, noClosed = true, noMultipleSelection = true;
 
-    if(y.getReadOnly()){
+    if(y.getReadOnly()) {
       x.setValue(y.getValue());
       x.setReadOnly(true);
     }
@@ -617,7 +625,7 @@ namespace onelabUtils {
     if(x.getAttribute("Closed").size()) noClosed = false;
     if(x.getAttribute("MultipleSelection").size()) noMultipleSelection = false;
 
-    //if(copt.count("Kind")) ps[0].setKind(copt["Kind"][0]);
+    // if(copt.count("Kind")) ps[0].setKind(copt["Kind"][0]);
     if(noChoices) x.setChoices(y.getChoices());
     if(noClosed) x.setAttribute("Closed", y.getAttribute("Closed"));
     if(noMultipleSelection)
@@ -641,12 +649,15 @@ namespace onelabUtils {
   bool incrementLoops()
   {
     bool ret = false;
-    if(onelabUtils::incrementLoop("3"))      ret = true;
-    else if(onelabUtils::incrementLoop("2")) ret = true;
-    else if(onelabUtils::incrementLoop("1")) ret = true;
+    if(onelabUtils::incrementLoop("3"))
+      ret = true;
+    else if(onelabUtils::incrementLoop("2"))
+      ret = true;
+    else if(onelabUtils::incrementLoop("1"))
+      ret = true;
 
-    //Define ONELAB parameter indicating whether or not in a loop
-    onelab::number n("0Metamodel/Loop",ret?1:0);
+    // Define ONELAB parameter indicating whether or not in a loop
+    onelab::number n("0Metamodel/Loop", ret ? 1 : 0);
     n.setVisible(false);
     onelab::server::instance()->set(n);
 
@@ -660,14 +671,14 @@ namespace onelabUtils {
   void updateGraphs()
   {
     bool redraw = false;
-    for(int i = 0; i < 18; i++){
+    for(int i = 0; i < 18; i++) {
       std::ostringstream tmp;
       tmp << i;
       bool ret = onelabUtils::updateGraph(tmp.str());
       redraw = redraw || ret;
     }
-    if(redraw){
-      // don't delete the widgets, as this is called in widget callbacks
+    if(redraw) {
+    // don't delete the widgets, as this is called in widget callbacks
 #if defined(HAVE_FLTK)
       FlGui::instance()->updateViews(true, false);
       drawContext::global()->draw();
@@ -680,7 +691,7 @@ namespace onelabUtils {
     time_t now;
     time(&now);
     tm *t = localtime(&now);
-    char stamp[32];
+    char stamp[73];
     // stamp.size() is always 20
     sprintf(stamp, "_%04d-%02d-%02d_%02d-%02d-%02d", 1900 + t->tm_year,
             1 + t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
@@ -690,7 +701,7 @@ namespace onelabUtils {
   void saveDb(const std::string &fileName)
   {
     FILE *fp = Fopen(fileName.c_str(), "wb");
-    if(fp){
+    if(fp) {
       Msg::StatusBar(true, "Saving database '%s'...", fileName.c_str());
       onelab::server::instance()->toFile(fp);
       fclose(fp);
@@ -714,7 +725,7 @@ namespace onelabUtils {
   {
     std::string stamp;
     std::vector<onelab::string> ps;
-    onelab::server::instance()->get(ps,"0Metamodel/9Tag");
+    onelab::server::instance()->get(ps, "0Metamodel/9Tag");
     if(ps.size() && ps[0].getValue().size())
       stamp.assign(timeStamp() + "_" + ps[0].getValue());
     else
@@ -723,16 +734,16 @@ namespace onelabUtils {
     // add time stamp in all output files in the db, and rename them on disk
     std::vector<onelab::string> strings;
     onelab::server::instance()->get(strings);
-    for(unsigned int i = 0; i < strings.size(); i++){
-      if(strings[i].getName().find("9Output files") != std::string::npos){
+    for(unsigned int i = 0; i < strings.size(); i++) {
+      if(strings[i].getName().find("9Output files") != std::string::npos) {
         std::vector<std::string> names = strings[i].getChoices();
         names.push_back(strings[i].getValue());
-        for(unsigned int j = 0; j < names.size(); j++){
+        for(unsigned int j = 0; j < names.size(); j++) {
           std::vector<std::string> split = SplitFileName(names[j]);
           int n = split[1].size();
           // if name is not already stamped
-          if(n < 18 || split[1][n-3] != '-' || split[1][n-6] != '-' ||
-             split[1][n-9] != '_'){
+          if(n < 18 || split[1][n - 3] != '-' || split[1][n - 6] != '-' ||
+             split[1][n - 9] != '_') {
             std::string old = names[j];
             CreateSingleDir(split[0] + "archive/");
             names[j] = split[0] + "archive/" + split[1] + stamp + split[2];
@@ -765,16 +776,16 @@ namespace onelabUtils {
     std::vector<std::string> split = SplitFileName(fileName);
     std::string dir = split[0] + "archive/";
     std::string tag = split[1];
-    if (!tag.compare(0,6,"onelab"))
+    if(!tag.compare(0, 6, "onelab"))
       tag.assign(tag.substr(6)); // cut off 'onelab' if present
 
     // add tag to all solution files in the db, and rename them on disk
     std::vector<onelab::string> strings;
-    onelab::server::instance()->get(strings,"0Metamodel/9Solution files");
-    if(strings.size()){
+    onelab::server::instance()->get(strings, "0Metamodel/9Solution files");
+    if(strings.size()) {
       std::vector<std::string> names = strings[0].getChoices();
-      if(names.size()){
-        for(unsigned int j = 0; j < names.size(); j++){
+      if(names.size()) {
+        for(unsigned int j = 0; j < names.size(); j++) {
           std::vector<std::string> split = SplitFileName(names[j]);
           std::string old = names[j];
           CreateSingleDir(dir);
@@ -796,7 +807,7 @@ namespace onelabUtils {
   {
     Msg::StatusBar(true, "Loading database '%s'...", name.c_str());
     FILE *fp = Fopen(name.c_str(), "rb");
-    if(fp){
+    if(fp) {
       onelab::server::instance()->fromFile(fp);
       fclose(fp);
       Msg::StatusBar(true, "Done loading database '%s'", name.c_str());
@@ -814,11 +825,11 @@ namespace onelabUtils {
     std::vector<onelab::string> allStrings, persistentStrings;
     onelab::server::instance()->get(allNumbers);
     onelab::server::instance()->get(allStrings);
-    for(unsigned int i = 0; i < allNumbers.size(); i++){
+    for(unsigned int i = 0; i < allNumbers.size(); i++) {
       if(allNumbers[i].getAttribute("Persistent") == "1")
         persistentNumbers.push_back(allNumbers[i]);
     }
-    for(unsigned int i = 0; i < allStrings.size(); i++){
+    for(unsigned int i = 0; i < allStrings.size(); i++) {
       if(allStrings[i].getAttribute("Persistent") == "1")
         persistentStrings.push_back(allStrings[i]);
     }
@@ -828,15 +839,15 @@ namespace onelabUtils {
 
     // run Gmsh client for non-python metamodels
     if(runGmshClient && onelab::server::instance()->findClient("Gmsh") !=
-       onelab::server::instance()->lastClient())
+                          onelab::server::instance()->lastClient())
       onelabUtils::runGmshClient("reset", CTX::instance()->solver.autoMesh);
 
-    for(unsigned int i = 0; i < persistentNumbers.size(); i++){
+    for(unsigned int i = 0; i < persistentNumbers.size(); i++) {
       Msg::Debug("Restoring persistent parameter %s",
                  persistentNumbers[i].getName().c_str());
       onelab::server::instance()->set(persistentNumbers[i]);
     }
-    for(unsigned int i = 0; i < persistentStrings.size(); i++){
+    for(unsigned int i = 0; i < persistentStrings.size(); i++) {
       Msg::Debug("Restoring persistent parameter %s",
                  persistentStrings[i].getName().c_str());
       onelab::server::instance()->set(persistentStrings[i]);
@@ -846,6 +857,6 @@ namespace onelabUtils {
     onelab::server::instance()->setChanged(3);
   }
 
-}
+} // namespace onelabUtils
 
 #endif

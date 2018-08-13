@@ -16,12 +16,15 @@
 #include "Numeric.h"
 
 class diagBCTerm : public femTerm<double> {
- protected:
+protected:
   const simpleFunction<double> *_k;
   const int _iField;
- public:
+
+public:
   diagBCTerm(GModel *gm, int iField, simpleFunction<double> *k)
-    : femTerm<double>(gm), _k(k), _iField(iField) {}
+    : femTerm<double>(gm), _k(k), _iField(iField)
+  {
+  }
   virtual int sizeOfR(SElement *se) const
   {
     return se->getMeshElement()->getNumShapeFunctions();
@@ -41,14 +44,16 @@ class diagBCTerm : public femTerm<double> {
     MElement *e = se->getMeshElement();
     m.setAll(0.);
     const int nbSF = e->getNumShapeFunctions();
-    for (int j = 0; j < nbSF; j++){
-      for (int k = 0; k < nbSF; k++) {
+    for(int j = 0; j < nbSF; j++) {
+      for(int k = 0; k < nbSF; k++) {
         m(j, k) = 0.0;
         m(k, j) = 0.0;
       }
       MVertex *v = e->getShapeFunctionNode(j);
-      if( v->onWhat()->dim() < 2 ) m(j, j) = 1.0;
-      else m(j, j) = 0.0;
+      if(v->onWhat()->dim() < 2)
+        m(j, j) = 1.0;
+      else
+        m(j, j) = 0.0;
     }
   }
 };

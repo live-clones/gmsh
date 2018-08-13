@@ -35,49 +35,34 @@ _VERSION = '1.3'
 def path(dirname, inp):
   # dirname is a directory, can be empty
   # inp is an optional file or subdirectory name
-  # returns the path to 'inp' in the same directory as 'ref' 
+  # returns the path to 'inp' in the same directory as 'ref'
   if dirname:
     dirname = os.path.dirname(dirname + os.sep)
-  if not inp: 
+  if not inp:
     return dirname
   if inp[0] == '/' or inp[0] == '\\' or (len(inp) > 2 and inp[1] == '\:'):
     return inp # do nothing, inp is an absolute path
   if inp[0] == '.' :
     inp = inp[2:] # cut off heading './' or '.\'
-  if dirname: 
+  if dirname:
     return dirname + os.sep + inp # append inp to the path of the reference file
   else:
     return inp
 
-# TODO: in ONELAB 1.2, the values for both string and numbers can be lists;
-# stringFakeList and floatFakeList should be changed to actual lists, and the
-# API should be expanded to handle these lists. Unfortunately current Python
-# ONELAB models usually directly use "value=val" assignments when creating
-# parameters; brutally changing value to a list would mean changing all the
-# existing models.
-#
-# 14/07/2017: last idea would be:
-# 1) add a member ('values', ('list', 'float'), []) with an empty initial value
-# 2) add a test
-#     - in tochar to send value if values is empty, and values otherwise
-#     - in fromchar to fill value if the received string when parsing 'value'
-#       is of size 1, or fill values if the received string when parsing 'value'
-#       AND skip the other member parsing
-
 class _parameter() :
   _membersbase = [
     ('name', 'string'), ('label', 'string', ''), ('help', 'string', ''),
-    ('changedValue', 'int', 31), ('visible', 'int', 1), ('readOnly', 'int', 0), 
+    ('changedValue', 'int', 31), ('visible', 'int', 1), ('readOnly', 'int', 0),
     ('attributes', ('dict', 'string', 'string'), {}),
     ('clients', ('dict', 'string', 'int'), {})
   ]
   _members = {
     'string' : _membersbase + [
-      ('value', 'stringFakeList', ''), ('kind', 'string', 'generic'), 
+      ('values', ('list', 'string'), ['']), ('kind', 'string', 'generic'),
       ('choices', ('list', 'string'), [])
     ],
     'number' : _membersbase + [
-      ('value', 'floatFakeList', 0.),
+      ('values', ('list', 'float'), [0.]),
       ('min', 'float', -sys.float_info.max), ('max', 'float', sys.float_info.max),
       ('step', 'float', 0.), ('index', 'int', -1), ('choices', ('list', 'float'), []),
       ('labels', ('dict', 'float', 'string'), {})
@@ -92,15 +77,9 @@ class _parameter() :
   def tochar(self) :
     def tocharitem(l, t, v) :
       if t == 'string' : l.append(v)
-      elif t == 'stringFakeList' :
-        l.append('1')
-        l.append(v)
       elif t =='int': l.append(str(v))
       elif t == 'float' : l.append('%.16g' % v)
-      elif t == 'floatFakeList' :
-        l.append('1')
-        l.append('%.16g' % v)
-      elif t[0] == 'list' : 
+      elif t[0] == 'list' :
         l.append(str(len(v)))
         for i in v : tocharitem(l, t[1], i)
       elif t[0] == 'dict' :
@@ -116,18 +95,8 @@ class _parameter() :
   def fromchar(self, msg) :
     def fromcharitem(l, t) :
       if t == 'string' : return l.pop()
-      elif t == 'stringFakeList' :
-        val = ''
-        for i in range(int(l.pop())):
-          val = l.pop()
-        return val
       elif t =='int': return int(l.pop())
       elif t == 'float' : return float(l.pop())
-      elif t == 'floatFakeList' :
-        val = 0.
-        for i in range(int(l.pop())):
-          val = float(l.pop())
-        return val
       elif t[0] == 'list' : return [fromcharitem(l, t[1]) for i in range(int(l.pop()))]
       elif t[0] == 'dict' : return dict([(fromcharitem(l, t[1]),fromcharitem(l, t[2]))
                                        for i in range(int(l.pop()))])
@@ -210,44 +179,53 @@ class client :
 
   def _defineParameter(self, p) :
     if not self.socket :
-      return p.value
+      return p.values
     self._send(self._GMSH_PARAMETER_QUERY, p.tochar())
-    (t, msg) = self._receive() 
+    (t, msg) = self._receive()
     if t == self._GMSH_PARAMETER :
       self._send(self._GMSH_PARAMETER_UPDATE, p.tochar())
-      return p.fromchar(msg).value
+      return p.fromchar(msg).values
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
       self._send(self._GMSH_PARAMETER, p.tochar())
-      return p.value
-        
+      return p.values
+
   def _getParameter(self, param, warn_if_not_found=True) :
     if not self.socket :
       return
     self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
-    (t, msg) = self._receive() 
+    (t, msg) = self._receive()
     if t == self._GMSH_PARAMETER :
       param.fromchar(msg)
     elif t == self._GMSH_PARAMETER_NOT_FOUND and warn_if_not_found :
       print ('Unknown parameter %s' %(param.name))
 
   def defineNumber(self, name, **param):
+    if 'value' in param :
+      param["values"] = [param["value"]]
+      del param["value"]
     if 'labels' in param :
       param["choices"] = param["labels"].keys()
     p = _parameter('number', name=name, **param)
-    value = self._defineParameter(p)
-    return value
+    values = self._defineParameter(p)
+    return values[0] if len(values) else 0
 
   def defineString(self, name, **param):
+    if 'value' in param :
+      param["values"] = [param["value"]]
+      del param["value"]
     p = _parameter('string', name=name, **param)
-    value = self._defineParameter(p)
-    return value
-  
+    values = self._defineParameter(p)
+    return values[0] if len(values) else ''
+
   def setNumber(self, name, **param):
     if not self.socket :
       return
+    if 'value' in param :
+      param["values"] = [param["value"]]
+      del param["value"]
     p = _parameter('number', name=name)
     self._send(self._GMSH_PARAMETER_QUERY, p.tochar())
-    (t, msg) = self._receive() 
+    (t, msg) = self._receive()
     if t == self._GMSH_PARAMETER :
       p.fromchar(msg).modify(**param)
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
@@ -257,9 +235,12 @@ class client :
   def setString(self, name, **param):
     if not self.socket :
       return
+    if 'value' in param :
+      param["values"] = [param["value"]]
+      del param["value"]
     p = _parameter('string', name=name)
     self._send(self._GMSH_PARAMETER_QUERY, p.tochar())
-    (t, msg) = self._receive() 
+    (t, msg) = self._receive()
     if t == self._GMSH_PARAMETER : #modify an existing parameter
       p.fromchar(msg).modify(**param)
     elif t == self._GMSH_PARAMETER_NOT_FOUND : #create a new parameter
@@ -276,17 +257,17 @@ class client :
       return
     p = _parameter('number', name=name)
     self._send(self._GMSH_PARAMETER_QUERY, p.tochar())
-    (t, msg) = self._receive() 
+    (t, msg) = self._receive()
     if t == self._GMSH_PARAMETER :
       if len(val) : # add new choices
-        p.fromchar(msg).value = val[0]
+        p.fromchar(msg).values = val
         p.choices.extend(val)
       else : # reset choices list
         p.fromchar(msg).choices = ()
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
       print ('Unknown parameter %s' %(param.name))
     self._send(self._GMSH_PARAMETER, p.tochar())
-    
+
   def resetNumberChoices(self, name):
     self._setNumberChoices(name,[])
 
@@ -296,12 +277,22 @@ class client :
   def getNumber(self, name, warn_if_not_found=True):
     param = _parameter('number', name=name)
     self._getParameter(param, warn_if_not_found)
-    return param.value
+    return param.values[0] if len(param.values) else 0
+
+  def getNumbers(self, name, warn_if_not_found=True):
+    param = _parameter('number', name=name)
+    self._getParameter(param, warn_if_not_found)
+    return param.values
 
   def getString(self, name, warn_if_not_found=True):
     param = _parameter('string', name=name)
     self._getParameter(param, warn_if_not_found)
-    return param.value
+    return param.values[0] if len(param.values) else ''
+
+  def getStrings(self, name, warn_if_not_found=True):
+    param = _parameter('string', name=name)
+    self._getParameter(param, warn_if_not_found)
+    return param.values
 
   def getNumberChoices(self, name, warn_if_not_found=True):
     param = _parameter('number', name=name)
@@ -318,13 +309,13 @@ class client :
       return
     param = _parameter('number', name=name)
     self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
-    (t, msg) = self._receive() 
+    (t, msg) = self._receive()
     if t == self._GMSH_PARAMETER :
       print (msg.replace('\0','|'))
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
       param = _parameter('string', name=name)
       self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
-      (t, msg) = self._receive() 
+      (t, msg) = self._receive()
       if t == self._GMSH_PARAMETER :
         print (msg.replace('\0','|'))
       elif t == self._GMSH_PARAMETER_NOT_FOUND :
@@ -334,17 +325,17 @@ class client :
     if not self.socket :
       return
     self._send(self._GMSH_PARSE_STRING, command)
-    
+
   def mergeFile(self, filename) :
     if not self.socket or not filename :
       return
     self._send(self._GMSH_MERGE_FILE, filename)
-        
+
   def openProject(self, filename) :
     if not self.socket or not filename :
       return
     self._send(self._GMSH_OPEN_PROJECT, filename)
-    
+
   def sendInfo(self, msg) :
     if not self.socket :
       print (msg)
@@ -368,12 +359,12 @@ class client :
       return
     msg = [name, filename]
     self._send(self._GMSH_OLPARSE, '\0'.join(msg))
-    (t, msg) = self._receive() 
+    (t, msg) = self._receive()
     if t == self._GMSH_OLPARSE :
       if msg == "true" :
           return True
     return False
-  
+
   def isChanged(self, name) :
     if not self.socket :
       return
@@ -395,7 +386,7 @@ class client :
     if not self.socket :
       return
     while self._numSubClients > 0:
-      (t, msg) = self._receive() 
+      (t, msg) = self._receive()
       if t == self._GMSH_STOP :
         self._numSubClients -= 1
 
@@ -413,7 +404,7 @@ class client :
   def runSubClient(self, name, command, arguments=''):
     self.runNonBlockingSubClient(name, command, arguments)
     self.waitOnSubClients() # makes the subclient blocking
-    if self.action == 'compute': 
+    if self.action == 'compute':
       self.setChanged(name, False)
 
   def run(self, name, command, arguments=''):
@@ -431,16 +422,15 @@ class client :
         self.addr = sys.argv[i + 2]
         self._createSocket()
         self._send(self._GMSH_START, str(os.getpid()))
-    self.action = "compute" # default (subclients have no client.Action defined)
     self.action = self.getString(self.name + '/Action', False)
-    self.setNumber('IsPyMetamodel',value=1,visible=0)
+    self.setNumber('IsPyMetamodel',values=[1],visible=0)
     self.loop = self.getNumber('0Metamodel/Loop', warn_if_not_found=False)
     self.batch = self.getNumber('0Metamodel/Batch', warn_if_not_found=False)
     self.sendInfo("Performing OneLab '" + self.action + "'")
-    if self.action == "initialize": 
+    if self.action == "initialize":
       self.finalize()
       exit(0)
-      
+
   def finalize(self):
     # code aster python interpreter does not call the destructor at exit, it is
     # necessary to call finalize() epxlicitely
@@ -449,7 +439,7 @@ class client :
       self._send(self._GMSH_STOP, 'Goodbye!')
       self.socket.close()
       self.socket = None
-    
+
   def __del__(self):
     self.finalize()
 
@@ -490,7 +480,7 @@ class client :
             call.terminate()
             self._send(self._GMSH_WARNING, 'client killed')
             sys.exit(1)
-      
+
     result = call.wait()
     if result == 0 :
       self._send(self._GMSH_INFO, 'done \"' + ' '.join(argv) + '\"')
@@ -499,10 +489,10 @@ class client :
     else :
       self._send(self._GMSH_ERROR, 'error \"' + ' '.join(argv) + '\"')
       sys.exit(1)
-  
+
   def copy(self, here, there):
     os.system('cp '+ here + ' ' + there)
-    
+
   def upload(self, here, there, remote='') :
     if not here or not there :
       return
@@ -510,7 +500,7 @@ class client :
       argv=['rsync','-e','ssh','-auv', here, remote + ':' + there]
     else :
       argv=['cp','-f', here, there]
-  
+
     call = subprocess.Popen(argv, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     result = call.wait()
     if result == 0 :
@@ -542,7 +532,7 @@ class client :
   def checkFile(self, p) :
     if not self.fileExists(p):
       self.sendError('path error: %s' %(p))
-      exit(0) 
+      exit(0)
     return True
 
   def checkPath(self, inp='') :
@@ -551,8 +541,8 @@ class client :
     return p
 
   def solutionFiles(self, client, list) :
-    self.defineNumber('0Metamodel/9Use restored solution', value=0, choices=[0,1])
-    self.defineString('0Metamodel/9Tag', value='')
+    self.defineNumber('0Metamodel/9Use restored solution', values=[0], choices=[0,1])
+    self.defineString('0Metamodel/9Tag', values=[''])
     if list :
       if self.getNumber('0Metamodel/9Use restored solution') :
         solFiles = self.getStringChoices('0Metamodel/9Solution files')
@@ -560,7 +550,7 @@ class client :
           self.checkFile(i)
       else :
         solFiles = list
-        self.setString('0Metamodel/9Solution files', value=solFiles[0],
+        self.setString('0Metamodel/9Solution files', values=[solFiles[0]],
                        choices=solFiles, readOnly=1)
         for i in solFiles:
           if not self.fileExists(i) :
@@ -586,14 +576,14 @@ class client :
       return True if self.isChanged(client) else False
 
   def useRestoredSolution(self) :
-    return self.getNumber('0Metamodel/9Use restored solution') 
+    return self.getNumber('0Metamodel/9Use restored solution')
 
   def setRestoredSolution(self, val) :
-    self.setNumber('0Metamodel/9Use restored solution', value=val)
+    self.setNumber('0Metamodel/9Use restored solution', values=[val])
 
   def outputFiles(self, list) :
     if list :
-      self.setString('0Metamodel/9Output files', value=list[0],
+      self.setString('0Metamodel/9Output files', values=[list[0]],
                      choices=list, visible=1)
 
 # tool to extract the (i, j)th element in an array file
