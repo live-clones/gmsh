@@ -721,17 +721,21 @@ double qmTetrahedron::gamma(const double &x1, const double &y1,
   double s3 = fabs(triangle_area(p0, p1, p3));
   double s4 = fabs(triangle_area(p1, p2, p3));
 
-  double la = std::sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1));
-  double lb = std::sqrt((x3-x1)*(x3-x1) + (y3-y1)*(y3-y1) + (z3-z1)*(z3-z1));
-  double lc = std::sqrt((x4-x1)*(x4-x1) + (y4-y1)*(y4-y1) + (z4-z1)*(z4-z1));
-  double lA = std::sqrt((x4-x3)*(x4-x3) + (y4-y3)*(y4-y3) + (z4-z3)*(z4-z3));
-  double lB = std::sqrt((x4-x2)*(x4-x2) + (y4-y2)*(y4-y2) + (z4-z2)*(z4-z2));
-  double lC = std::sqrt((x3-x2)*(x3-x2) + (y3-y2)*(y3-y2) + (z3-z2)*(z3-z2));
+  double la = (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1);
+  double lb = (x3-x1)*(x3-x1) + (y3-y1)*(y3-y1) + (z3-z1)*(z3-z1);
+  double lc = (x4-x1)*(x4-x1) + (y4-y1)*(y4-y1) + (z4-z1)*(z4-z1);
+  double lA = (x4-x3)*(x4-x3) + (y4-y3)*(y4-y3) + (z4-z3)*(z4-z3);
+  double lB = (x4-x2)*(x4-x2) + (y4-y2)*(y4-y2) + (z4-z2)*(z4-z2);
+  double lC = (x3-x2)*(x3-x2) + (y3-y2)*(y3-y2) + (z3-z2)*(z3-z2);
 
-  double invR = 24 * *volume / std::sqrt(  ( la*lA + lb*lB + lc*lC)
-                                         * ( la*lA + lb*lB - lc*lC)
-                                         * ( la*lA - lb*lB + lc*lC)
-                                         * (-la*lA + lb*lB + lc*lC));
+  double lalA = std::sqrt(la*lA);
+  double lblB = std::sqrt(lb*lB);
+  double lclC = std::sqrt(lc*lC);
+
+  double invR = 24 * *volume / std::sqrt(  ( lalA + lblB + lclC)
+                                         * ( lalA + lblB - lclC)
+                                         * ( lalA - lblB + lclC)
+                                         * (-lalA + lblB + lclC));
 
   double rho = 3 * 3 * *volume / (s1+s2+s3+s4);
 
