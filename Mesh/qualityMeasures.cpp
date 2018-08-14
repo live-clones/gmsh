@@ -707,6 +707,46 @@ double qmTetrahedron::gamma(const double &x1, const double &y1,
                             const double &z3, const double &x4,
                             const double &y4, const double &z4, double *volume)
 {
+#if 1
+  // quality = rho / R = 3 * inradius / circumradius
+  double p0[3] = {x1, y1, z1};
+  double p1[3] = {x2, y2, z2};
+  double p2[3] = {x3, y3, z3};
+  double p3[3] = {x4, y4, z4};
+
+  *volume = fabs(robustPredicates::orient3d(p0, p1, p2, p3)) / 6.0;
+
+  double s1 = fabs(triangle_area(p0, p1, p2));
+  double s2 = fabs(triangle_area(p0, p2, p3));
+  double s3 = fabs(triangle_area(p0, p1, p3));
+  double s4 = fabs(triangle_area(p1, p2, p3));
+
+  double la = std::sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1));
+  double lb = std::sqrt((x3-x1)*(x3-x1) + (y3-y1)*(y3-y1) + (z3-z1)*(z3-z1));
+  double lc = std::sqrt((x4-x1)*(x4-x1) + (y4-y1)*(y4-y1) + (z4-z1)*(z4-z1));
+  double lA = std::sqrt((x4-x3)*(x4-x3) + (y4-y3)*(y4-y3) + (z4-z3)*(z4-z3));
+  double lB = std::sqrt((x4-x2)*(x4-x2) + (y4-y2)*(y4-y2) + (z4-z2)*(z4-z2));
+  double lC = std::sqrt((x3-x2)*(x3-x2) + (y3-y2)*(y3-y2) + (z3-z2)*(z3-z2));
+
+  double invR = 24 * *volume / std::sqrt(  ( la*lA + lb*lB + lc*lC)
+                                         * ( la*lA + lb*lB - lc*lC)
+                                         * ( la*lA - lb*lB + lc*lC)
+                                         * (-la*lA + lb*lB + lc*lC));
+
+  double rho = 3 * 3 * *volume / (s1+s2+s3+s4);
+
+  std::cout << "length " << la << " " << lb << " " << lc << " " << lA << " " << lB << " " << lC << std::endl;
+
+  std::cout << "q " << rho  << " " << invR << " ";
+  std::cout << ( la*lA + lb*lB + lc*lC) << " ";
+  std::cout << ( la*lA + lb*lB - lc*lC) << " ";
+  std::cout << ( la*lA - lb*lB + lc*lC) << " ";
+  std::cout << (-la*lA + lb*lB + lc*lC) << " ";
+  std::cout << std::endl;
+  std::cout << std::endl;
+
+  return rho * invR;
+#else
   double p0[3] = {x1, y1, z1};
   double p1[3] = {x2, y2, z2};
   double p2[3] = {x3, y3, z3};
@@ -746,6 +786,7 @@ double qmTetrahedron::gamma(const double &x1, const double &y1,
   l = std::max(
     l, ((x3 - x4) * (x3 - x4) + (y3 - y4) * (y3 - y4) + (z3 - z4) * (z3 - z4)));
   return sqrt(24. / l) * rhoin;
+#endif
 }
 
 double qmTetrahedron::cond(const double &x1, const double &y1, const double &z1,
