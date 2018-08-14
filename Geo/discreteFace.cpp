@@ -372,6 +372,8 @@ void discreteFace::secondDer(const SPoint2 &param, SVector3 &dudu,
 
 void discreteFace::createGeometry()
 {
+  if(_parametrizations.size()) return;
+
   checkAndFixOrientation();
 #ifdef HAVE_HXT
   HXTStatus s = reparametrize_through_hxt();

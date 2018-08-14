@@ -11,6 +11,10 @@
 // elementary geometrical entity per compound.
 
 // Compute parametrization of discrete surfaces read from mesh file
+//
+// Note that this global behavior will probably be modified in the future, so
+// that the parametrizations are only computed when they are needed (we could
+// use the "Compound" commands for this, albeit the name is ill-fitted)
 General.MeshDiscrete = 1;
 
 // Let's merge the mesh that we would like to remesh. This mesh was reclassified
@@ -18,14 +22,7 @@ General.MeshDiscrete = 1;
 // in Gmsh, so that we could split it along sharp geometrical features.
 Merge "t13_data.msh";
 
-// We can now define a compound curve (resp. surface) for each discrete curve
-// (resp. surface) in the model
 ss[] = Surface {:};
-
-// FIXME: does not do anything yet (because the underlying surfaces are
-// discrete):
-Compound Surface{ss[]};
-
 Surface Loop(1) = {ss[]};
 Volume(1) = {1};
 

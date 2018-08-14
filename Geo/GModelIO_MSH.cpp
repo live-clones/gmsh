@@ -49,17 +49,17 @@ int GModel::readMSH(const std::string &name)
         fclose(fp);
         return 0;
       }
-      if(version < 3.0) {
+      if(version < 5.0) {
         fclose(fp);
-        return _readMSH2(name);
-      }
-      else if(version < 4.0) {
-        fclose(fp);
-        return _readMSH3(name);
-      }
-      else if(version < 5.0) {
-        fclose(fp);
-        return _readMSH4(name);
+        int status =
+          (version < 3.0) ? _readMSH2(name) :
+          (version < 4.0) ? _readMSH3(name) :
+          _readMSH4(name);
+        // this is a noop except if CTX::instance()->meshDiscrete is set
+        // TODO: this should probably be applied per-entity, only when needed
+        // and not in bulk
+        _createGeometryOfDiscreteEntities();
+        return status;
       }
       else {
         Msg::Error("Unknown MSH file version %g", version);
