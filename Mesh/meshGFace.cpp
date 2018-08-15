@@ -2720,6 +2720,7 @@ void deMeshGFace::operator()(GFace *gf)
   gf->meshStatistics.status = GFace::PENDING;
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;
   gf->correspondingVertices.clear();
+  gf->correspondingHOPoints.clear();
 }
 
 static double TRIANGLE_VALIDITY(GFace *gf, MTriangle *t)

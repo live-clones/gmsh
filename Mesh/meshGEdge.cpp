@@ -347,6 +347,7 @@ void deMeshGEdge::operator()(GEdge *ge)
   ge->deleteMesh();
   ge->meshStatistics.status = GEdge::PENDING;
   ge->correspondingVertices.clear();
+  ge->correspondingHOPoints.clear();
 }
 
 /*
