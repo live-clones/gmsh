@@ -1730,7 +1730,7 @@ static void _associateEntityWithElementVertices(GEntity *ge,
   }
 }
 
-void GModel::_createGeometryOfDiscreteEntities(bool force)
+void GModel::createGeometryOfDiscreteEntities(bool force)
 {
   if(CTX::instance()->meshDiscrete) {
     createTopologyFromMeshNew();

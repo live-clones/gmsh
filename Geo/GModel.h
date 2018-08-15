@@ -161,9 +161,6 @@ protected:
   // store the parent's pointer back into MSubElements (replacing numeric id)
   void _storeParentsInSubElements(std::map<int, std::vector<MElement *> > &map);
 
-  // Discrete Entities have to have their mesh moved to a geometry container
-  void _createGeometryOfDiscreteEntities(bool force = false);
-
   // loop over all vertices connected to elements and associate
   // geometrical entity
   void _associateEntityWithMeshVertices();
@@ -177,7 +174,7 @@ protected:
   void
   _storePhysicalTagsInEntities(int dim,
                                std::map<int, std::map<int, std::string> > &map);
-  
+
 public:
   // region, face, edge and vertex iterators
   typedef std::set<GRegion *, GEntityLessThan>::iterator riter;
@@ -527,6 +524,11 @@ public:
 
   // remove duplicate mesh vertices
   int removeDuplicateMeshVertices(double tolerance);
+
+  // Move the mesh of discrete entities to a geometry container and compute a
+  // parametrization; this is currently a noop if Mesh.MeshDiscrete is not set
+  // (will probably change in a future release)
+  void createGeometryOfDiscreteEntities(bool force = false);
 
   // create topology from mesh
   void createTopologyFromMeshNew();

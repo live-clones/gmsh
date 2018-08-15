@@ -556,6 +556,11 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
                 GModel::current()->getMaxElementaryNumber(3)));
 
   if(setBoundingBox) SetBoundingBox();
+
+  // This will eventually be made less global, with the reparametrization done
+  // on-demand for each entity
+  GModel::current()->createGeometryOfDiscreteEntities();
+
   CTX::instance()->geom.draw = 1;
   CTX::instance()->mesh.changed = ENT_ALL;
 
