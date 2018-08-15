@@ -38,21 +38,21 @@ Point(2115) = {-16.83E-3*Sin(348.48*Pi/180),-0.31532+16.83E-3*Cos(348.48*Pi/180)
 
 //3ème étape : création du contour circulaire à 1 mm du tube pour encastrement imparfait
 
-//Point 2116  
+//Point 2116
 Translate {-5.65e-3*0.144,4.033e-3*0.144,0} {Duplicata {Point{1314};} }
-//Point 2117 
+//Point 2117
 Translate {-6.017e-3*0.144,3.463e-3*0.144,0} {Duplicata {Point{1310};} }
-//Point 2118  
+//Point 2118
 Translate {-4.033e-3*0.144,-5.65e-3*0.144,0} {Duplicata {Point{1320};} }
-//Point 2119 
+//Point 2119
 Translate {-3.463e-3*0.144,-6.017e-3*0.144,0} {Duplicata {Point{1316};} }
-//Point 2120  
+//Point 2120
 Translate {5.65e-3*0.144,-4.033e-3*0.144,0} {Duplicata {Point{1326};} }
-//Point 2121 
+//Point 2121
 Translate {-6.017e-3*-0.144,3.463e-3*-0.144,0} {Duplicata {Point{1322};} }
-//Point 2122  
+//Point 2122
 Translate {-4.033e-3*-0.144,-5.65e-3*-0.144,0} {Duplicata {Point{1308};} }
-//Point 2123 
+//Point 2123
 Translate {3.463e-3*0.144,6.017e-3*0.144,0} {Duplicata {Point{1328};} }
 
 
@@ -93,18 +93,18 @@ Transfinite Line {2025:2032} = 2;
 
 //Création du maillage pour Encastrement Imparfait (périmètre de 1mm autour du tube)
 Line Loop(2037) = {2031,2036,2030,1316};
-Ruled Surface(2038) = {2037};
+Surface(2038) = {2037};
 Line Loop(2039) = {2025,2035,-2032,1324};
-Ruled Surface(2040) = {2039};
+Surface(2040) = {2039};
 Line Loop(2041) = {2027,2034,-2026,1332};
-Ruled Surface(2042) = {2041};
+Surface(2042) = {2041};
 Line Loop(2043) = {-2029,2033,2028,1340};
-Ruled Surface(2044) = {2043};
+Surface(2044) = {2043};
 
 //Création du maillage du reste de la PE
 Line Loop(2045) = {-2014,-2020,2013,2034,-2012,-2019,2011,2035,-2010,-2018,2009,2036,-2016,-2017,2015,2033};
 Line Loop(2047) = {2007,2008,2005,2006};
-Ruled Surface(2048) = {2047,2045};
+Surface(2048) = {2047,2045};
 Recombine Surface (2048)  ;
 
 
@@ -167,21 +167,21 @@ Point(5115) = {-16.83E-3*Sin(348.48*Pi/180),0.31532+16.83E-3*Cos(348.48*Pi/180),
 
 //3ème étape : création du contour circulaire à 1 mm du tube pour encastrement imparfait
 
-//Point 5116  
+//Point 5116
 Translate {-5.65e-3*0.144,4.033e-3*0.144,0} {Duplicata {Point{1435};} }
-//Point 5117 
+//Point 5117
 Translate {-6.017e-3*0.144,3.463e-3*0.144,0} {Duplicata {Point{1434};} }
-//Point 5118  
+//Point 5118
 Translate {-4.033e-3*0.144,-5.65e-3*0.144,0} {Duplicata {Point{1438};} }
-//Point 5119 
+//Point 5119
 Translate {-3.463e-3*0.144,-6.017e-3*0.144,0} {Duplicata {Point{1437};} }
-//Point 5120  
+//Point 5120
 Translate {5.65e-3*0.144,-4.033e-3*0.144,0} {Duplicata {Point{1441};} }
-//Point 5121 
+//Point 5121
 Translate {-6.017e-3*-0.144,3.463e-3*-0.144,0} {Duplicata {Point{1440};} }
-//Point 5122  
+//Point 5122
 Translate {-4.033e-3*-0.144,-5.65e-3*-0.144,0} {Duplicata {Point{1432};} }
-//Point 5123 
+//Point 5123
 Translate {3.463e-3*0.144,6.017e-3*0.144,0} {Duplicata {Point{1443};} }
 
 
@@ -223,18 +223,18 @@ Transfinite Line {5021:5028} = 2 ;
 
 //Création du maillage pour Encastrement Imparfait (périmètre de 1mm autour du tube)
 Line Loop(5037) = {-1460,-5027,5032,5028};
-Ruled Surface(5038) = {5037};
+Surface(5038) = {5037};
 Line Loop(5039) = {-5022,-5029,5021,1448};
-Ruled Surface(5040) = {5039};
+Surface(5040) = {5039};
 Line Loop(5041) = {-5024,-5030,5023,1452};
-Ruled Surface(5042) = {5041};
+Surface(5042) = {5041};
 Line Loop(5043) = {-1456,-5025,5031,5026};
-Ruled Surface(5044) = {5043};
+Surface(5044) = {5043};
 
 //Création du maillage du reste de la PE
 Line Loop(5045) = {5005,5006,5007,5008};
 Line Loop(5047) = {-5020,5033,5013,5029,-5014,5034,5015,5030,-5016,5035,5017,5031,-5018,5036,5019,5032};
-Ruled Surface(5048) = {5045,5047};
+Surface(5048) = {5045,5047};
 
 //a=newp;
 //Translate{0,0,-9}{Point{1:a};}
@@ -266,4 +266,3 @@ Physical Surface (4105) = {1459} ;
 Physical Surface (4106) = {1463} ;
 //définition du groupe pour affectation matériau dans zone 1mm
 Physical Volume (4107) = {10000:10003} ;
-

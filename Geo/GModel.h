@@ -525,10 +525,10 @@ public:
   // remove duplicate mesh vertices
   int removeDuplicateMeshVertices(double tolerance);
 
-  // Move the mesh of discrete entities to a geometry container and compute a
-  // parametrization; this is currently a noop if Mesh.MeshDiscrete is not set
-  // (will probably change in a future release)
-  void createGeometryOfDiscreteEntities(bool force = false);
+  // create a topology from the mesh if necessary, move the mesh of discrete
+  // entities to a geometry container, compute a parametrization for the
+  // discrete entities
+  void createGeometryOfDiscreteEntities();
 
   // create topology from mesh
   void createTopologyFromMeshNew();

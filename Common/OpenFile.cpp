@@ -193,10 +193,6 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
   Msg::AddOnelabStringChoice("Gmsh/}Input files", "file", fileName, true, true,
                              Msg::GetNumOnelabClients() > 1);
 
-  //#if defined(HAVE_FLTK) && defined(HAVE_POST)
-  // int numViewsBefore = PView::list.size();
-  //#endif
-
   std::string old_yyname = gmsh_yyname;
   FILE *old_yyin = gmsh_yyin;
   int old_yyerrorstate = gmsh_yyerrorstate;
@@ -235,9 +231,6 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
 
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
   if(FlGui::available()) {
-    // this is not enough if the script creates and deletes views
-    // FlGui::instance()->updateViews(numViewsBefore != (int)PView::list.size(),
-    // false);
     FlGui::instance()->updateViews(true, false);
   }
 #endif
@@ -341,16 +334,11 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
 #endif
   }
 
-  // force reading msh file even if wrong extension if the header
-  // matches
-  // if(!strncmp(header, "$MeshFormat", 11)) ext = "";
-
   CTX::instance()->geom.draw = 0; // don't try to draw the model while reading
 
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
   int numViewsBefore = PView::list.size();
 #endif
-
   int status = 0;
 
 #if defined(HAVE_ONELAB)
@@ -384,9 +372,12 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
     GModel::current()->setName(SplitFileName(fileName)[1]);
   }
 
+  bool mesh = false;
+
   if(ext == ".stl" || ext == ".STL") {
     status =
       GModel::current()->readSTL(fileName, CTX::instance()->geom.tolerance);
+    mesh = true;
   }
   else if(ext == ".brep" || ext == ".rle" || ext == ".brp" || ext == ".BRP") {
     status = GModel::current()->readOCCBREP(fileName);
@@ -402,29 +393,36 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
   }
   else if(ext == ".unv" || ext == ".UNV") {
     status = GModel::current()->readUNV(fileName);
+    mesh = true;
   }
   else if(ext == ".vtk" || ext == ".VTK") {
     status = GModel::current()->readVTK(fileName, CTX::instance()->bigEndian);
+    mesh = true;
   }
   else if(ext == ".wrl" || ext == ".WRL" || ext == ".vrml" || ext == ".VRML" ||
           ext == ".iv" || ext == ".IV") {
     status = GModel::current()->readVRML(fileName);
+    mesh = true;
   }
   else if(ext == ".mesh" || ext == ".MESH") {
     status = GModel::current()->readMESH(fileName);
+    mesh = true;
   }
   else if(ext == ".diff" || ext == ".DIFF") {
     status = GModel::current()->readDIFF(fileName);
+    mesh = true;
   }
   else if(ext == ".med" || ext == ".MED" || ext == ".mmed" || ext == ".MMED" ||
           ext == ".rmed" || ext == ".RMED") {
     status = GModel::readMED(fileName);
+    mesh = true;
 #if defined(HAVE_POST)
     if(status > 1) status = PView::readMED(fileName);
 #endif
   }
   else if(ext == ".bdf" || ext == ".BDF" || ext == ".nas" || ext == ".NAS") {
     status = GModel::current()->readBDF(fileName);
+    mesh = true;
   }
   else if(ext == ".dat" || ext == ".DAT") {
     if(!strncmp(header, "BEGIN ACTRAN", 12))
@@ -434,9 +432,11 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
       status = GModel::current()->readSAMCEF(fileName);
     else
       status = GModel::current()->readBDF(fileName);
+    mesh = true;
   }
   else if(ext == ".p3d" || ext == ".P3D") {
     status = GModel::current()->readP3D(fileName);
+    mesh = true;
   }
   else if(ext == ".fm" || ext == ".FM") {
     status = GModel::current()->readFourier(fileName);
@@ -462,12 +462,15 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
 #endif
   else if(ext == ".ply2" || ext == ".PLY2") {
     status = GModel::current()->readPLY2(fileName);
+    mesh = true;
   }
   else if(ext == ".ply" || ext == ".PLY") {
     status = GModel::current()->readPLY(fileName);
+    mesh = true;
   }
   else if(ext == ".geom" || ext == ".GEOM") {
     status = GModel::current()->readGEOM(fileName);
+    mesh = true;
   }
 #if defined(HAVE_LIBCGNS)
   else if(ext == ".cgns" || ext == ".CGNS") {
@@ -485,6 +488,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
       CTX::instance()->geom.matchMeshScaleFactor = 1;
       status = GModel::current()->readCGNS(fileName);
     }
+    mesh = true;
   }
 #endif
 #if defined(HAVE_3M)
@@ -514,21 +518,9 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
         CTX::instance()->geom.matchMeshScaleFactor = 1;
         status = GModel::current()->readMSH(fileName);
       }
+      mesh = true;
 #if defined(HAVE_POST)
       if(status > 1) status = PView::readMSH(fileName);
-#endif
-#if defined(HAVE_MESH)
-        /*
-        This was introduced in r6039 by Koen to snap high order vertices on the
-        geometry. But it introduces subtle bugs when reading high-order
-        post-processing views ; we should have an explicit command to do this,
-        and not modify the mesh without warning just by reading a file --CG.
-
-        if(CTX::instance()->mesh.order > 1)
-          SetOrderN(GModel::current(), CTX::instance()->mesh.order,
-                    CTX::instance()->mesh.secondOrderLinear,
-                    CTX::instance()->mesh.secondOrderIncomplete);
-        */
 #endif
     }
 #if defined(HAVE_POST)
@@ -557,9 +549,10 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
 
   if(setBoundingBox) SetBoundingBox();
 
-  // This will eventually be made less global, with the reparametrization done
-  // on-demand for each entity
-  GModel::current()->createGeometryOfDiscreteEntities();
+  // this should be made less global, creating the topology and the
+  // parametrizations only when actually needed
+  if(mesh && CTX::instance()->meshDiscrete)
+    GModel::current()->createGeometryOfDiscreteEntities();
 
   CTX::instance()->geom.draw = 1;
   CTX::instance()->mesh.changed = ENT_ALL;
