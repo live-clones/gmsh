@@ -372,10 +372,9 @@ void discreteFace::secondDer(const SPoint2 &param, SVector3 &dudu,
 
 void discreteFace::createGeometry()
 {
-  if(_parametrizations.size()) return;
-
-  checkAndFixOrientation();
 #ifdef HAVE_HXT
+  if(_parametrizations.size()) return;
+  checkAndFixOrientation();
   HXTStatus s = reparametrize_through_hxt();
   if(s != HXT_STATUS_OK) {
     Msg::Error("Impossible to create the geometry of discrete surface %d",
