@@ -1530,7 +1530,7 @@ end
 
 Create a boundary representation from the mesh if the model does not have one
 (e.g. when imported from mesh file formats with no BRep representation of the
-underlying model).
+underlying model). Warning: this is an experimental feature.
 """
 function createTopology()
     ierr = Ref{Cint}()
@@ -1546,7 +1546,7 @@ end
 
 Create a parametrization for curves and surfaces that do not have one (i.e.
 discrete curves and surfaces represented solely by meshes, without an underlying
-CAD description).
+CAD description). Warning: this is an experimental feature.
 """
 function createGeometry()
     ierr = Ref{Cint}()

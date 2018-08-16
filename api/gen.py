@@ -280,10 +280,10 @@ mesh.add('getPeriodicNodes',doc,None,iint('dim'),iint('tag'),oint('tagMaster'),o
 doc = '''Remove duplicate nodes in the mesh of the current model.'''
 mesh.add('removeDuplicateNodes',doc,None)
 
-doc = '''Create a boundary representation from the mesh if the model does not have one (e.g. when imported from mesh file formats with no BRep representation of the underlying model).'''
+doc = '''Create a boundary representation from the mesh if the model does not have one (e.g. when imported from mesh file formats with no BRep representation of the underlying model). Warning: this is an experimental feature.'''
 mesh.add('createTopology',doc,None)
 
-doc = '''Create a parametrization for curves and surfaces that do not have one (i.e. discrete curves and surfaces represented solely by meshes, without an underlying CAD description).'''
+doc = '''Create a parametrization for curves and surfaces that do not have one (i.e. discrete curves and surfaces represented solely by meshes, without an underlying CAD description). Warning: this is an experimental feature.'''
 mesh.add('createGeometry',doc,None)
 
 doc = '''Compute a basis representation for homology spaces after a mesh has been generated. The computation domain is given in a list of physical group tags `domainTags'; if empty, the whole mesh is the domain. The computation subdomain for relative homology computation is given in a list of physical group tags `subdomainTags'; if empty, absolute homology is computed. The dimensions homology bases to be computed are given in the list `dim'; if empty, all bases are computed. Resulting basis representation chains are stored as physical groups in the mesh.'''

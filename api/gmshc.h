@@ -660,12 +660,12 @@ GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr);
 
 /* Create a boundary representation from the mesh if the model does not have
  * one (e.g. when imported from mesh file formats with no BRep representation
- * of the underlying model). */
+ * of the underlying model). Warning: this is an experimental feature. */
 GMSH_API void gmshModelMeshCreateTopology(int * ierr);
 
 /* Create a parametrization for curves and surfaces that do not have one (i.e.
  * discrete curves and surfaces represented solely by meshes, without an
- * underlying CAD description). */
+ * underlying CAD description). Warning: this is an experimental feature. */
 GMSH_API void gmshModelMeshCreateGeometry(int * ierr);
 
 /* Compute a basis representation for homology spaces after a mesh has been

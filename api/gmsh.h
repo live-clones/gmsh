@@ -616,12 +616,12 @@ namespace gmsh { // Top-level functions
 
       // Create a boundary representation from the mesh if the model does not have
       // one (e.g. when imported from mesh file formats with no BRep representation
-      // of the underlying model).
+      // of the underlying model). Warning: this is an experimental feature.
       GMSH_API void createTopology();
 
       // Create a parametrization for curves and surfaces that do not have one
       // (i.e. discrete curves and surfaces represented solely by meshes, without
-      // an underlying CAD description).
+      // an underlying CAD description). Warning: this is an experimental feature.
       GMSH_API void createGeometry();
 
       // Compute a basis representation for homology spaces after a mesh has been

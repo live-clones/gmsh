@@ -1096,7 +1096,7 @@ Remove duplicate nodes in the mesh of the current model.
 @item createTopology
 Create a boundary representation from the mesh if the model does not have one
 (e.g. when imported from mesh file formats with no BRep representation of the
-underlying model).
+underlying model). Warning: this is an experimental feature.
 
 @table @asis
 @item Input:
@@ -1110,7 +1110,7 @@ underlying model).
 @item createGeometry
 Create a parametrization for curves and surfaces that do not have one (i.e.
 discrete curves and surfaces represented solely by meshes, without an underlying
-CAD description).
+CAD description). Warning: this is an experimental feature.
 
 @table @asis
 @item Input:
