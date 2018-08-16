@@ -1784,7 +1784,37 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def homology(domainTags=[], subdomainTags=[], dims=[]):
+        def createTopology():
+            """
+            Create a boundary representation from the mesh if the model does not have
+            one (e.g. when imported from mesh file formats with no BRep representation
+            of the underlying model).
+            """
+            ierr = c_int()
+            lib.gmshModelMeshCreateTopology(
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshCreateTopology returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def createGeometry():
+            """
+            Create a parametrization for curves and surfaces that do not have one (i.e.
+            discrete curves and surfaces represented solely by meshes, without an
+            underlying CAD description).
+            """
+            ierr = c_int()
+            lib.gmshModelMeshCreateGeometry(
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshCreateGeometry returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def computeHomology(domainTags=[], subdomainTags=[], dims=[]):
             """
             Compute a basis representation for homology spaces after a mesh has been
             generated. The computation domain is given in a list of physical group tags
@@ -1799,18 +1829,18 @@ class model:
             api_subdomainTags_, api_subdomainTags_n_ = _ivectorint(subdomainTags)
             api_dims_, api_dims_n_ = _ivectorint(dims)
             ierr = c_int()
-            lib.gmshModelMeshHomology(
+            lib.gmshModelMeshComputeHomology(
                 api_domainTags_, api_domainTags_n_,
                 api_subdomainTags_, api_subdomainTags_n_,
                 api_dims_, api_dims_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshHomology returned non-zero error code: ",
+                    "gmshModelMeshComputeHomology returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def cohomology(domainTags=[], subdomainTags=[], dims=[]):
+        def computeCohomology(domainTags=[], subdomainTags=[], dims=[]):
             """
             Compute a basis representation for cohomology spaces after a mesh has been
             generated. The computation domain is given in a list of physical group tags
@@ -1825,14 +1855,14 @@ class model:
             api_subdomainTags_, api_subdomainTags_n_ = _ivectorint(subdomainTags)
             api_dims_, api_dims_n_ = _ivectorint(dims)
             ierr = c_int()
-            lib.gmshModelMeshCohomology(
+            lib.gmshModelMeshComputeCohomology(
                 api_domainTags_, api_domainTags_n_,
                 api_subdomainTags_, api_subdomainTags_n_,
                 api_dims_, api_dims_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshCohomology returned non-zero error code: ",
+                    "gmshModelMeshComputeCohomology returned non-zero error code: ",
                     ierr.value)
 
 
@@ -2415,14 +2445,14 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def symmetry(dimTags, a, b, c, d):
+        def symmetrize(dimTags, a, b, c, d):
             """
             Apply a symmetry transformation to the geometrical entities `dimTag', with
             respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
-            lib.gmshModelGeoSymmetry(
+            lib.gmshModelGeoSymmetrize(
                 api_dimTags_, api_dimTags_n_,
                 c_double(a),
                 c_double(b),
@@ -2431,7 +2461,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoSymmetry returned non-zero error code: ",
+                    "gmshModelGeoSymmetrize returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -3627,14 +3657,14 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def symmetry(dimTags, a, b, c, d):
+        def symmetrize(dimTags, a, b, c, d):
             """
             Apply a symmetry transformation to the geometrical entities `dimTag', with
             respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
-            lib.gmshModelOccSymmetry(
+            lib.gmshModelOccSymmetrize(
                 api_dimTags_, api_dimTags_n_,
                 c_double(a),
                 c_double(b),
@@ -3643,7 +3673,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccSymmetry returned non-zero error code: ",
+                    "gmshModelOccSymmetrize returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod

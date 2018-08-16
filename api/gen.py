@@ -280,11 +280,17 @@ mesh.add('getPeriodicNodes',doc,None,iint('dim'),iint('tag'),oint('tagMaster'),o
 doc = '''Remove duplicate nodes in the mesh of the current model.'''
 mesh.add('removeDuplicateNodes',doc,None)
 
+doc = '''Create a boundary representation from the mesh if the model does not have one (e.g. when imported from mesh file formats with no BRep representation of the underlying model).'''
+mesh.add('createTopology',doc,None)
+
+doc = '''Create a parametrization for curves and surfaces that do not have one (i.e. discrete curves and surfaces represented solely by meshes, without an underlying CAD description).'''
+mesh.add('createGeometry',doc,None)
+
 doc = '''Compute a basis representation for homology spaces after a mesh has been generated. The computation domain is given in a list of physical group tags `domainTags'; if empty, the whole mesh is the domain. The computation subdomain for relative homology computation is given in a list of physical group tags `subdomainTags'; if empty, absolute homology is computed. The dimensions homology bases to be computed are given in the list `dim'; if empty, all bases are computed. Resulting basis representation chains are stored as physical groups in the mesh.'''
-mesh.add('homology',doc,None,ivectorint('domainTags','std::vector<int>()',"[]","[]"),ivectorint('subdomainTags','std::vector<int>()',"[]","[]"),ivectorint('dims','std::vector<int>()',"[]","[]"))
+mesh.add('computeHomology',doc,None,ivectorint('domainTags','std::vector<int>()',"[]","[]"),ivectorint('subdomainTags','std::vector<int>()',"[]","[]"),ivectorint('dims','std::vector<int>()',"[]","[]"))
 
 doc = '''Compute a basis representation for cohomology spaces after a mesh has been generated. The computation domain is given in a list of physical group tags `domainTags'; if empty, the whole mesh is the domain. The computation subdomain for relative cohomology computation is given in a list of physical group tags `subdomainTags'; if empty, absolute cohomology is computed. The dimensions homology bases to be computed are given in the list `dim'; if empty, all bases are computed. Resulting basis representation cochains are stored as physical groups in the mesh.'''
-mesh.add('cohomology',doc,None,ivectorint('domainTags','std::vector<int>()',"[]","[]"),ivectorint('subdomainTags','std::vector<int>()',"[]","[]"),ivectorint('dims','std::vector<int>()',"[]","[]"))
+mesh.add('computeCohomology',doc,None,ivectorint('domainTags','std::vector<int>()',"[]","[]"),ivectorint('subdomainTags','std::vector<int>()',"[]","[]"),ivectorint('dims','std::vector<int>()',"[]","[]"))
 
 ################################################################################
 
@@ -370,7 +376,7 @@ doc = '''Scale the geometrical entities `dimTag' by factors `a', `b' and `c' alo
 geo.add('dilate',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('a'),idouble('b'),idouble('c'))
 
 doc = '''Apply a symmetry transformation to the geometrical entities `dimTag', with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
-geo.add('symmetry',doc,None,ivectorpair('dimTags'),idouble('a'),idouble('b'),idouble('c'),idouble('d'))
+geo.add('symmetrize',doc,None,ivectorpair('dimTags'),idouble('a'),idouble('b'),idouble('c'),idouble('d'))
 
 doc = '''Copy the entities `dimTags'; the new entities are returned in `outDimTags'.'''
 geo.add('copy',doc,None,ivectorpair('dimTags'),ovectorpair('outDimTags'))
@@ -532,7 +538,7 @@ doc = '''Scale the geometrical entities `dimTag' by factors `a', `b' and `c' alo
 occ.add('dilate',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('a'),idouble('b'),idouble('c'))
 
 doc = '''Apply a symmetry transformation to the geometrical entities `dimTag', with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
-occ.add('symmetry',doc,None,ivectorpair('dimTags'),idouble('a'),idouble('b'),idouble('c'),idouble('d'))
+occ.add('symmetrize',doc,None,ivectorpair('dimTags'),idouble('a'),idouble('b'),idouble('c'),idouble('d'))
 
 doc = '''Copy the entities `dimTags'; the new entities are returned in `outDimTags'.'''
 occ.add('copy',doc,None,ivectorpair('dimTags'),ovectorpair('outDimTags'))

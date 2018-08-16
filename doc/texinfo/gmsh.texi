@@ -3024,6 +3024,16 @@ a rotation specified as in @ref{Transformations}.
 @item Coherence Mesh;
 Removes all duplicate mesh nodes.
 
+@item CreateTopology;
+Creates a boundary representation from the mesh if the model does not
+have one (e.g. when imported from mesh file formats with no BRep
+representation of the underlying model).
+
+@item CreateGeometry;
+Creates a parametrization for curves and surfaces that do not have one
+(i.e. discrete curves and surfaces represented solely by meshes, without
+an underlying CAD description).
+
 @item SetPartition @var{expression} @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Sets the partition tag of the mesh elements in the entities in @var{expression-list} to @var{expression}.
 

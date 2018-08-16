@@ -1,5 +1,5 @@
-General.MeshDiscrete = 1;
 Merge "aorta2.stl";
+CreateGeometry;
 
 Merge "aortaRADIUS2.bgm";
 

@@ -1526,7 +1526,39 @@ function removeDuplicateNodes()
 end
 
 """
-    gmsh.model.mesh.homology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
+    gmsh.model.mesh.createTopology()
+
+Create a boundary representation from the mesh if the model does not have one
+(e.g. when imported from mesh file formats with no BRep representation of the
+underlying model).
+"""
+function createTopology()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshCreateTopology, gmsh.lib), Void,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelMeshCreateTopology returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.createGeometry()
+
+Create a parametrization for curves and surfaces that do not have one (i.e.
+discrete curves and surfaces represented solely by meshes, without an underlying
+CAD description).
+"""
+function createGeometry()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshCreateGeometry, gmsh.lib), Void,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelMeshCreateGeometry returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.computeHomology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
 
 Compute a basis representation for homology spaces after a mesh has been
 generated. The computation domain is given in a list of physical group tags
@@ -1537,17 +1569,17 @@ homology bases to be computed are given in the list `dim`; if empty, all bases
 are computed. Resulting basis representation chains are stored as physical
 groups in the mesh.
 """
-function homology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
+function computeHomology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshHomology, gmsh.lib), Void,
+    ccall((:gmshModelMeshComputeHomology, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
           convert(Vector{Cint}, domainTags), length(domainTags), convert(Vector{Cint}, subdomainTags), length(subdomainTags), convert(Vector{Cint}, dims), length(dims), ierr)
-    ierr[] != 0 && error("gmshModelMeshHomology returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshModelMeshComputeHomology returned non-zero error code: $(ierr[])")
     return nothing
 end
 
 """
-    gmsh.model.mesh.cohomology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
+    gmsh.model.mesh.computeCohomology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
 
 Compute a basis representation for cohomology spaces after a mesh has been
 generated. The computation domain is given in a list of physical group tags
@@ -1558,12 +1590,12 @@ homology bases to be computed are given in the list `dim`; if empty, all bases
 are computed. Resulting basis representation cochains are stored as physical
 groups in the mesh.
 """
-function cohomology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
+function computeCohomology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshCohomology, gmsh.lib), Void,
+    ccall((:gmshModelMeshComputeCohomology, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
           convert(Vector{Cint}, domainTags), length(domainTags), convert(Vector{Cint}, subdomainTags), length(subdomainTags), convert(Vector{Cint}, dims), length(dims), ierr)
-    ierr[] != 0 && error("gmshModelMeshCohomology returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshModelMeshComputeCohomology returned non-zero error code: $(ierr[])")
     return nothing
 end
 
@@ -2043,17 +2075,17 @@ function dilate(dimTags, x, y, z, a, b, c)
 end
 
 """
-    gmsh.model.geo.symmetry(dimTags, a, b, c, d)
+    gmsh.model.geo.symmetrize(dimTags, a, b, c, d)
 
 Apply a symmetry transformation to the geometrical entities `dimTag`, with
 respect to the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
 """
-function symmetry(dimTags, a, b, c, d)
+function symmetrize(dimTags, a, b, c, d)
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoSymmetry, gmsh.lib), Void,
+    ccall((:gmshModelGeoSymmetrize, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
           convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), a, b, c, d, ierr)
-    ierr[] != 0 && error("gmshModelGeoSymmetry returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshModelGeoSymmetrize returned non-zero error code: $(ierr[])")
     return nothing
 end
 
@@ -3054,17 +3086,17 @@ function dilate(dimTags, x, y, z, a, b, c)
 end
 
 """
-    gmsh.model.occ.symmetry(dimTags, a, b, c, d)
+    gmsh.model.occ.symmetrize(dimTags, a, b, c, d)
 
 Apply a symmetry transformation to the geometrical entities `dimTag`, with
 respect to the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
 """
-function symmetry(dimTags, a, b, c, d)
+function symmetrize(dimTags, a, b, c, d)
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccSymmetry, gmsh.lib), Void,
+    ccall((:gmshModelOccSymmetrize, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
           convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), a, b, c, d, ierr)
-    ierr[] != 0 && error("gmshModelOccSymmetry returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshModelOccSymmetrize returned non-zero error code: $(ierr[])")
     return nothing
 end
 

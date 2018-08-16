@@ -2633,7 +2633,6 @@ void GModel::makeDiscreteFacesSimplyConnected()
 
 void GModel::createTopologyFromMesh()
 {
-  removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
   makeDiscreteRegionsSimplyConnected();
   makeDiscreteFacesSimplyConnected();
   createTopologyFromMeshNew();

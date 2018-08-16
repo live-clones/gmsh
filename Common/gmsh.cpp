@@ -2242,9 +2242,26 @@ GMSH_API void gmsh::model::mesh::removeDuplicateNodes()
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
-GMSH_API void gmsh::model::mesh::homology(const std::vector<int> &domainTags,
-                                          const std::vector<int> &subdomainTags,
-                                          const std::vector<int> &dims)
+GMSH_API void gmsh::model::mesh::createTopology()
+{
+  if(!_isInitialized()) {
+    throw - 1;
+  }
+  GModel::current()->createTopologyFromMesh();
+}
+
+GMSH_API void gmsh::model::mesh::createGeometry()
+{
+  if(!_isInitialized()) {
+    throw - 1;
+  }
+  GModel::current()->createGeometryOfDiscreteEntities();
+}
+
+GMSH_API void
+gmsh::model::mesh::computeHomology(const std::vector<int> &domainTags,
+                                   const std::vector<int> &subdomainTags,
+                                   const std::vector<int> &dims)
 {
   if(!_isInitialized()) {
     throw - 1;
@@ -2254,9 +2271,9 @@ GMSH_API void gmsh::model::mesh::homology(const std::vector<int> &domainTags,
 }
 
 GMSH_API void
-gmsh::model::mesh::cohomology(const std::vector<int> &domainTags,
-                              const std::vector<int> &subdomainTags,
-                              const std::vector<int> &dims)
+gmsh::model::mesh::computeCohomology(const std::vector<int> &domainTags,
+                                     const std::vector<int> &subdomainTags,
+                                     const std::vector<int> &dims)
 {
   if(!_isInitialized()) {
     throw - 1;
@@ -2725,9 +2742,9 @@ GMSH_API void gmsh::model::geo::dilate(const vectorpair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::geo::symmetry(const vectorpair &dimTags,
-                                         const double a, const double b,
-                                         const double c, const double d)
+GMSH_API void gmsh::model::geo::symmetrize(const vectorpair &dimTags,
+                                           const double a, const double b,
+                                           const double c, const double d)
 {
   if(!_isInitialized()) {
     throw - 1;
@@ -3481,9 +3498,9 @@ GMSH_API void gmsh::model::occ::dilate(const vectorpair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::occ::symmetry(const vectorpair &dimTags,
-                                         const double a, const double b,
-                                         const double c, const double d)
+GMSH_API void gmsh::model::occ::symmetrize(const vectorpair &dimTags,
+                                           const double a, const double b,
+                                           const double c, const double d)
 {
   if(!_isInitialized()) {
     throw - 1;

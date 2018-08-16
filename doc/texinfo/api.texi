@@ -1093,7 +1093,35 @@ Remove duplicate nodes in the mesh of the current model.
 -
 @end table
 
-@item homology
+@item createTopology
+Create a boundary representation from the mesh if the model does not have one
+(e.g. when imported from mesh file formats with no BRep representation of the
+underlying model).
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item createGeometry
+Create a parametrization for curves and surfaces that do not have one (i.e.
+discrete curves and surfaces represented solely by meshes, without an underlying
+CAD description).
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item computeHomology
 Compute a basis representation for homology spaces after a mesh has been
 generated. The computation domain is given in a list of physical group tags
 @code{domainTags}; if empty, the whole mesh is the domain. The computation
@@ -1112,7 +1140,7 @@ as physical groups in the mesh.
 -
 @end table
 
-@item cohomology
+@item computeCohomology
 Compute a basis representation for cohomology spaces after a mesh has been
 generated. The computation domain is given in a list of physical group tags
 @code{domainTags}; if empty, the whole mesh is the domain. The computation
@@ -1506,7 +1534,7 @@ the center of the homothetic transformation.
 -
 @end table
 
-@item symmetry
+@item symmetrize
 Apply a symmetry transformation to the geometrical entities @code{dimTag}, with
 respect to the plane of equation @code{a} * x + @code{b} * y + @code{c} * z +
 @code{d} = 0.
@@ -2263,7 +2291,7 @@ the center of the homothetic transformation.
 -
 @end table
 
-@item symmetry
+@item symmetrize
 Apply a symmetry transformation to the geometrical entities @code{dimTag}, with
 respect to the plane of equation @code{a} * x + @code{b} * y + @code{c} * z +
 @code{d} = 0.
