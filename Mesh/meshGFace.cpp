@@ -1377,9 +1377,16 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 
     // delete the mesh
     delete m;
-    if(RECUR_ITER < 10 && facesToRemesh.size() == 0)
-      return meshGenerator(gf, RECUR_ITER + 1, repairSelfIntersecting1dMesh,
-                           onlyInitialMesh, debug, replacement_edges);
+    if (RECUR_ITER < 10){
+      bool result = true;
+      for (std::list<GFace*>::iterator it = facesToRemesh.begin(); it != facesToRemesh.end(); ++it){
+        result = result && meshGenerator(
+          *it, RECUR_ITER + 1, repairSelfIntersecting1dMesh, onlyInitialMesh, debug);
+      }
+
+      return result && meshGenerator(
+        gf, RECUR_ITER + 1, repairSelfIntersecting1dMesh, onlyInitialMesh, debug, replacement_edges);
+    }
     return false;
   }
 
