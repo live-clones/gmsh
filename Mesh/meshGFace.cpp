@@ -1905,8 +1905,13 @@ static bool buildConsecutiveListOfVertices(
               recoverMap.begin();
             it != recoverMap.end(); ++it) {
           if(it->second == here) {
-            pp = it->first;
-            break;
+            // Also check on 2D coordinates as the point might lie on the seam
+            SPoint2 param = coords[i];
+            SPoint2 paramPoint(it->first->u, it->first->v);
+            if (param.distance(paramPoint) <= tol){
+              pp = it->first;
+              break;
+            }
           }
         }
       }
