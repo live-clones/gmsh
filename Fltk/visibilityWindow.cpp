@@ -1244,7 +1244,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     browser_type =
       new Fl_Choice(2 * WB, height - 2 * BH - 3 * WB, (width - 3 * WB) / 2, BH);
     browser_type->menu(browser_type_table);
-    browser_type->value(2); // physicals
+    browser_type->value(GModel::current()->noPhysicalGroups() ? 1 : 2);
 
     Fl_Return_Button *b1 = new Fl_Return_Button(
       width - 1 * CC - 2 * WB, height - 2 * BH - 3 * WB, CC, BH, "Apply");
