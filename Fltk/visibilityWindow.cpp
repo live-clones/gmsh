@@ -1490,10 +1490,14 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 
 void visibilityWindow::show(bool redrawOnly)
 {
+  static bool first = true;
   if(win->shown() && redrawOnly)
     win->redraw();
   else{
-    browser_type->value(GModel::current()->noPhysicalGroups() ? 1 : 2);
+    if(first){
+      browser_type->value(GModel::current()->noPhysicalGroups() ? 1 : 2);
+      first = false;
+    }
     win->show();
   }
 }
