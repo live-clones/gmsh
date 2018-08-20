@@ -523,10 +523,8 @@ void fourthPoint(double *p1, double *p2, double *p3, double *p4)
 
 static void
 remeshUnrecoveredEdges(std::map<MVertex *, BDS_Point *> &recoverMapInv,
-                       std::set<EdgeToRecover> &edgesNotRecovered,
-                       std::list<GFace *> &facesToRemesh)
+                       std::set<EdgeToRecover> &edgesNotRecovered)
 {
-  facesToRemesh.clear();
   deMeshGFace dem;
 
   std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
@@ -536,7 +534,7 @@ remeshUnrecoveredEdges(std::map<MVertex *, BDS_Point *> &recoverMapInv,
     for(std::vector<GFace *>::iterator it = l_faces.begin();
         it != l_faces.end(); ++it) {
       if((*it)->triangles.size() || (*it)->quadrangles.size()) {
-        facesToRemesh.push_back(*it);
+        (*it)->meshStatistics.status = GFace::PENDING;
         dem(*it);
       }
     }
@@ -1355,9 +1353,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       gf->model()->writeMSH(name);
     }
 
-    std::list<GFace *> facesToRemesh;
     if(repairSelfIntersecting1dMesh)
-      remeshUnrecoveredEdges(recoverMapInv, edgesNotRecovered, facesToRemesh);
+      remeshUnrecoveredEdges(recoverMapInv, edgesNotRecovered);
     else {
       std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
       // int *_error = new int[3 * edgesNotRecovered.size()];
@@ -1378,13 +1375,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     // delete the mesh
     delete m;
     if (RECUR_ITER < 10){
-      bool result = true;
-      for (std::list<GFace*>::iterator it = facesToRemesh.begin(); it != facesToRemesh.end(); ++it){
-        result = result && meshGenerator(
-          *it, RECUR_ITER + 1, repairSelfIntersecting1dMesh, onlyInitialMesh, debug);
-      }
 
-      return result && meshGenerator(
+      return meshGenerator(
         gf, RECUR_ITER + 1, repairSelfIntersecting1dMesh, onlyInitialMesh, debug, replacement_edges);
     }
     return false;
