@@ -94,7 +94,7 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
     t = t->getNeigh(iFace);
     if(!t) return false;
     if(t->isDeleted()) {
-      Msg::Error("Weird!!");
+      Msg::Error("Weird!!!");
       return false;
     }
     if(t == cavity[0]) break;
