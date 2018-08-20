@@ -49,21 +49,18 @@ int GModel::readMSH(const std::string &name)
         fclose(fp);
         return 0;
       }
-      if(version < 3.0) {
-        fclose(fp);
+      fclose(fp);
+      if(version < 3.0){
         return _readMSH2(name);
       }
-      else if(version < 4.0) {
-        fclose(fp);
+      else if(version < 4.0){
         return _readMSH3(name);
       }
-      else if(version < 5.0) {
-        fclose(fp);
+      else if(version < 5.0){
         return _readMSH4(name);
       }
       else {
         Msg::Error("Unknown MSH file version %g", version);
-        fclose(fp);
         return 0;
       }
     }

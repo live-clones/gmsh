@@ -11,10 +11,10 @@ NormeK = Sqrt(Kx*Kx + Ky*Ky + Kz*Kz) ;
 
 Kx = Kx / NormeK ;
 Ky = Ky / NormeK ;
-Kz = Kz / NormeK ; 
+Kz = Kz / NormeK ;
 
 N = Sqrt( Kx*Kx + Ky*Ky);
- 
+
 If ( N == 0.)
 
   Ix = 1. ;
@@ -79,7 +79,7 @@ For i In {10:14}
 EndFor
 
 // Définition des densité de discrétisation
- 
+
 kR = 1.;
 kL = 0.99;
 
@@ -100,7 +100,7 @@ EndIf
 If ( lBoxInf >= (R/2.))
   lBoxInf = R/2. ;
 // Printf ("Cas 2 : lBoxInf >= R/2 ");
-EndIf   
+EndIf
 
 If ( ( lBoxInf >= (L/2.) ) && (  lBoxSup >= (L/2.) ) )
   lcBoxInf = kR *L/2.;
@@ -124,7 +124,7 @@ c3 = newreg; Circle(c3) = {p3,p0,p4};
 c4 = newreg; Circle(c4) = {p4,p0,p1};
 
 // Constuction du cercle supérieur
- 
+
 p10 = newp; Point(p10) = {x[10], y[10],  z[10],  lcBoxSup} ;
 p11 = newp; Point(p11) = {x[11], y[11],  z[11],  lBoxSup} ;
 p12 = newp; Point(p12) = {x[12], y[12],  z[12],  lBoxSup} ;
@@ -137,7 +137,7 @@ c13 = newreg; Circle(c13) = {p13,p10,p14};
 c14 = newreg; Circle(c14) = {p14,p10,p11};
 
 // Construction des génératrices
- 
+
 l1 = newreg; Line(l1) = {p1,p11};
 l2 = newreg; Line(l2) = {p2,p12};
 l3 = newreg; Line(l3) = {p3,p13};
@@ -145,20 +145,20 @@ l4 = newreg; Line(l4) = {p4,p14};
 
 // Constructions des contours
 
-// cercle supérieur 
+// cercle supérieur
 
-ll1 = newreg; Line Loop(ll1) = {c11,c12,c13,c14}; 
+ll1 = newreg; Line Loop(ll1) = {c11,c12,c13,c14};
 
 // Bords de la boite
 
-ll2 = newreg; Line Loop(ll2) = {c1,l2,-c11,-l1};  
-ll3 = newreg; Line Loop(ll3) = {c2,l3,-c12,-l2};  
-ll4 = newreg; Line Loop(ll4) = {c3,l4,-c13,-l3};  
-ll5 = newreg; Line Loop(ll5) = {c4,l1,-c14,-l4};  
+ll2 = newreg; Line Loop(ll2) = {c1,l2,-c11,-l1};
+ll3 = newreg; Line Loop(ll3) = {c2,l3,-c12,-l2};
+ll4 = newreg; Line Loop(ll4) = {c3,l4,-c13,-l3};
+ll5 = newreg; Line Loop(ll5) = {c4,l1,-c14,-l4};
 
 // cercle inférieur
 
-ll6 = newreg; Line Loop(ll6) = {c1,c2,c3,c4};  
+ll6 = newreg; Line Loop(ll6) = {c1,c2,c3,c4};
 
 
 // CONSTRUCTION DE L'ELECTRODE
@@ -200,7 +200,7 @@ For i In {30:34}
 EndFor
 
 // Définition des densités de discrétisation
- 
+
 kr = 1.;
 kl = 1.;
 
@@ -226,7 +226,7 @@ c23 = newreg; Circle(c23) = {p23,p0,p24};
 c24 = newreg; Circle(c24) = {p24,p0,p21};
 
 // Constuction du cercle supérieur
- 
+
 p30 = newp; Point(p30) = {x[30], y[30],  z[30],  lcElecSup} ;
 p31 = newp; Point(p31) = {x[31], y[31],  z[31],  lElecSup} ;
 p32 = newp; Point(p32) = {x[32], y[32],  z[32],  lElecSup} ;
@@ -239,7 +239,7 @@ c33 = newreg; Circle(c33) = {p33,p30,p34};
 c34 = newreg; Circle(c34) = {p34,p30,p31};
 
 // Construction des génératrices
- 
+
 l11 = newreg; Line(l11) = {p21,p31};
 l12 = newreg; Line(l12) = {p22,p32};
 l13 = newreg; Line(l13) = {p23,p33};
@@ -247,35 +247,35 @@ l14 = newreg; Line(l14) = {p24,p34};
 
 // Constructions des contours
 
-// cercle supérieur 
+// cercle supérieur
 
-ll21 = newreg; Line Loop(ll21) = {c31,c32,c33,c34}; 
+ll21 = newreg; Line Loop(ll21) = {c31,c32,c33,c34};
 
 // Bords de l'electrode
 
-ll22 = newreg; Line Loop(ll22) = {c21,l12,-c31,-l11};  
-ll23 = newreg; Line Loop(ll23) = {c22,l13,-c32,-l12};  
-ll24 = newreg; Line Loop(ll24) = {c23,l14,-c33,-l13};  
-ll25 = newreg; Line Loop(ll25) = {c24,l11,-c34,-l14};  
+ll22 = newreg; Line Loop(ll22) = {c21,l12,-c31,-l11};
+ll23 = newreg; Line Loop(ll23) = {c22,l13,-c32,-l12};
+ll24 = newreg; Line Loop(ll24) = {c23,l14,-c33,-l13};
+ll25 = newreg; Line Loop(ll25) = {c24,l11,-c34,-l14};
 
 // cercle inférieur
 
-ll26 = newreg; Line Loop(ll26) = {c21,c22,c23,c24}; 
- 
+ll26 = newreg; Line Loop(ll26) = {c21,c22,c23,c24};
+
 
 // CONSTRUCTION DES SURFACES DE ELECTRODE
 // --------------------------------------
 
-// Disque supérieur 
+// Disque supérieur
 
 ps1 = newreg;  Plane Surface(ps1) = {ll21};
 
 // Bords de l'electrode
 
-rs1 = newreg; Ruled Surface(rs1) = {ll22};
-rs2 = newreg; Ruled Surface(rs2) = {ll23};
-rs3 = newreg; Ruled Surface(rs3) = {ll24};
-rs4 = newreg; Ruled Surface(rs4) = {ll25};
+rs1 = newreg; Surface(rs1) = {ll22};
+rs2 = newreg; Surface(rs2) = {ll23};
+rs3 = newreg; Surface(rs3) = {ll24};
+rs4 = newreg; Surface(rs4) = {ll25};
 
 BordElect[t-1] = newreg ;
 Physical Surface(BordElect[t-1]) = { rs1, rs2, rs3, rs4, ps1};
@@ -283,16 +283,16 @@ Physical Surface(BordElect[t-1]) = { rs1, rs2, rs3, rs4, ps1};
 // CONSTRUCTION DES SURFACES DE LA BOITE
 // -------------------------------------
 
-// Disque supérieur 
+// Disque supérieur
 
 ps3 = newreg; Plane Surface(ps3) = {ll1};
 
 // Bords de l'electrode
 
-rs5 = newreg; Ruled Surface(rs5) = {ll2};
-rs6 = newreg; Ruled Surface(rs6) = {ll3};
-rs7 = newreg; Ruled Surface(rs7) = {ll4};
-rs8 = newreg; Ruled Surface(rs8) = {ll5};
+rs5 = newreg; Surface(rs5) = {ll2};
+rs6 = newreg; Surface(rs6) = {ll3};
+rs7 = newreg; Surface(rs7) = {ll4};
+rs8 = newreg; Surface(rs8) = {ll5};
 
 // Définition de la frontière électrode-boite
 
@@ -332,6 +332,3 @@ Line Loop (ContBaseBoiteElect[t-1]) = {c1,c2,c3,c4} ;
 // Transfinite Line {l11,l12,l13,l14} = dpEGen;
 
 Return
-
-
-

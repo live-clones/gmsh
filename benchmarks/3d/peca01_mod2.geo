@@ -18,9 +18,9 @@ Point( 2) = {22.5,   0.0,  0.0, mm};
 Point( 3) = {52.5,   0.0,  0.0, mm};
 Point( 4) = {75.0,   0.0,  0.0, mm};
 Point( 5) = { 0.0,   0.0,  6.0, mm};
-     
+
        c1 = 18.42121597166108;
-       c2 = 56.57878402833891; 
+       c2 = 56.57878402833891;
 Point( 6) = {  c1,   0.0,  6.0, mm};
 Point( 7) = {  c2,   0.0,  6.0, mm};
 Point( 8) = {75.0,   0.0,  6.0, mm};
@@ -31,7 +31,7 @@ Point(11) = { 5.25, 15.0, 0.0, mm}; // pontos base do furo r2
 Point(12) = {12.25, 15.0, 0.0, mm};
 Point(13) = { 8.75, 11.5, 0.0, mm};
 Point(14) = { 8.75, 18.5, 0.0, mm};
-Point(15) = { 5.25, 15.0, 6.0, mm}; 
+Point(15) = { 5.25, 15.0, 6.0, mm};
 Point(16) = {12.25, 15.0, 6.0, mm};
 Point(17) = { 8.75, 11.5, 6.0, mm};
 Point(18) = { 8.75, 18.5, 6.0, mm};
@@ -48,7 +48,7 @@ Point(26) = {66.25, 18.5, 6.0, mm};
 Translate{ 0.0, 30.0, 0.0} { Duplicata{ Point{1,2,3,4,5,6,7,8,9,10}; } }
 // gerando ate o ponto 36
 
-// pontos auxiliares - centro dos furos 
+// pontos auxiliares - centro dos furos
 Point(100) = {37.50,  0.0, 0.0, mm}; // centro r1 - face em y =  0
 Point(101) = {37.50, 30.0, 0.0, mm}; // centro r1 - face em y = 30
 Point(102) = { 8.75, 15.0, 0.0, mm}; // centro r2
@@ -59,7 +59,7 @@ Point(105) = {66.25, 15.0, 6.0, mm};
 // linhas *****************************
 
 Line(1) = { 1, 2};        // face em y = 0
-Circle(2) = { 2, 100, 9}; 
+Circle(2) = { 2, 100, 9};
 Circle(3) = { 9, 100, 3};
 Line(4) = {3, 4};
 Line(5) = {4, 8};
@@ -78,7 +78,7 @@ Circle(23) = {12,102,14};
 Circle(24) = {14,102,11};
 
 Translate{ 0.0, 0.0, 6.0} { Duplicata{ Line{21,22,23,24}; } }
-// linhas 25 a 28 
+// linhas 25 a 28
 
 Circle(29) = {19,103,21};
 Circle(30) = {21,103,20};
@@ -87,7 +87,7 @@ Circle(32) = {22,103,19};
 
 Translate{ 0.0, 0.0, 6.0} { Duplicata{ Line{29,30,31,32}; } }
 // linhas 33 a 36
- 
+
 // linhas especiais - considerar quando associar a normal a superficie
 Line(37) = {15,11}; // em r2
 Line(38) = {17,13};
@@ -104,35 +104,35 @@ Line(46) = {27, 1};
 Line(47) = {32, 6};
 Line(48) = {28, 2};
 
-Line(49) = {36,10}; // no centro da peça 
+Line(49) = {36,10}; // no centro da peça
 Line(50) = {35, 9};
 
 Line(51) = {33, 7}; // proximo a r3
 Line(52) = {29, 3};
 Line(53) = {34, 8};
-Line(54) = {30, 4};  
+Line(54) = {30, 4};
 
 // superficies **********************************
 
-// surperficies curvas 
+// surperficies curvas
 
 Line Loop(55) = {25,38,-21,-37}; // para furo r2
 Line Loop(56) = {26,39,-22,-38};
 Line Loop(57) = {27,40,-23,-39};
 Line Loop(58) = {28,37,-24,-40};
-Ruled Surface(59) = {55}; // superficie cont. r2 
-Ruled Surface(60) = {56}; // superficie cont. r2 
-Ruled Surface(61) = {57}; // superficie cont. r2 
-Ruled Surface(62) = {58}; // superficie cont. r2 
+Surface(59) = {55}; // superficie cont. r2
+Surface(60) = {56}; // superficie cont. r2
+Surface(61) = {57}; // superficie cont. r2
+Surface(62) = {58}; // superficie cont. r2
 
 Line Loop(60) = {33,42,-29,-41}; // para furo r3
 Line Loop(61) = {34,43,-30,-42};
 Line Loop(62) = {35,44,-31,-43};
 Line Loop(63) = {36,41,-32,-44};
-Ruled Surface(64) = {60}; // superficie cont. r3
-Ruled Surface(65) = {61}; // superficie cont. r3
-Ruled Surface(66) = {62}; // superficie cont. r3
-Ruled Surface(67) = {63}; // superficie cont. r3
+Surface(64) = {60}; // superficie cont. r3
+Surface(65) = {61}; // superficie cont. r3
+Surface(66) = {62}; // superficie cont. r3
+Surface(67) = {63}; // superficie cont. r3
 
 Line Loop(65) = {25,26,27,28}; // linha na superf. (z = 6) furo r2
 Line Loop(66) = {21,22,23,24}; // idem quando z = 0.
@@ -146,34 +146,34 @@ Line Loop(70) = {49,-7,-51,17}; // idem - proximo a r3
 Line Loop(71) = {12,50,-2,-48}; // para r1 (r = 15) proxim a r2
 Line Loop(72) = {13,52,-3,-50}; // idem - proximo a r3
 
-Ruled Surface(73) = {69}; // conjunto surf. em r = 20
-Ruled Surface(74) = {70}; 
+Surface(73) = {69}; // conjunto surf. em r = 20
+Surface(74) = {70};
 
-// caso se deseje a composição {69,70} gera a 
-// superficie curva exterior para o raio = 20 
+// caso se deseje a composição {69,70} gera a
+// superficie curva exterior para o raio = 20
 
-Ruled Surface(75) = {71}; // conjunto surf. em r = 15
-Ruled Surface(76) = {72};
+Surface(75) = {71}; // conjunto surf. em r = 15
+Surface(76) = {72};
 
 // superficies planas - sem furos.
 
 Line Loop(77) = {-45,-10,46,20};
-Plane Surface(78) = {77}; // prox r2 (x = 0) 
+Plane Surface(78) = {77}; // prox r2 (x = 0)
 
 Line Loop(79) =  {1,2,3,4,5,6,7,8,9,10};
 Plane Surface(80) = {79}; // plano em (y = 0)
 
 Line Loop(81) = {53,-5,-54,15};
 Plane Surface(82) = {81}; // plano em (x = 75)
- 
+
 Line Loop(83) = {-20,-19,-18,-17,-16,-15,-14,-13,-12,-11};
 Plane Surface(84) = {83}; // plano em (y = 30)
 
 // superficies planas - com furos
-// importante notar que nao ha a necessidade do vetor normal de 
-// orientação dos loops de linhas estarem direcionados para a 
+// importante notar que nao ha a necessidade do vetor normal de
+// orientação dos loops de linhas estarem direcionados para a
 // superficie em questao - um exemplo deste fato e o easymesh
-// para malhas bidimensionais. Portanto 
+// para malhas bidimensionais. Portanto
 
 Line Loop(85) = {45,-9,-47,19}; // superf em r2 (z=6)
 // a linha relacionada ao furo ja fora executada em line loop(65)
@@ -189,7 +189,7 @@ Line Loop(91) = {14,54,-4,-52}; // superf em r3 (z=0)
 Plane Surface(92) = {91,68};
 
 // aqui houve uma tentativa de execução de malha, para o caso 2d houve
-// uma falha ..., nao sei ao certo o que aconteceu,mas me parece que o 
+// uma falha ..., nao sei ao certo o que aconteceu,mas me parece que o
 // gmsh 1.54.1 nao segue executar malhas sobre superficies curvas ?!
 
 // relacao das superficies:
@@ -197,12 +197,12 @@ Plane Surface(92) = {91,68};
 //                          64 -- furo R3
 //         CURVAS        73,74 -- superficie com raio 20 mm
 //                       75,76 --    ...      .. raio 15 mm
-                         
+
 //                          78 -- plano em x = 0
 //         PLANAS           80 --    ...   y = 0
 //                          82 --    ...   x = 75
 //                          84 --    ...   y = 30
-                          
+
 //                          86 --    ...   z = 6 p/R2
 //                          88 --    ...   z = 0
 

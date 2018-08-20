@@ -641,8 +641,6 @@ int GModel::_readMSH2(const std::string &name)
   // store the physical tags
   for(int i = 0; i < 4; i++) _storePhysicalTagsInEntities(i, physicals[i]);
 
-  _createGeometryOfDiscreteEntities();
-
   // copying periodic information from the mesh
 
   if(!CTX::instance()->mesh.ignorePeriodicity) {

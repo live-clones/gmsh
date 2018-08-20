@@ -1041,28 +1041,50 @@ GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshHomology(int * domainTags, size_t domainTags_n, int * subdomainTags, size_t subdomainTags_n, int * dims, size_t dims_n, int * ierr)
+GMSH_API void gmshModelMeshCreateTopology(int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<int> api_domainTags_(domainTags, domainTags + domainTags_n);
-    std::vector<int> api_subdomainTags_(subdomainTags, subdomainTags + subdomainTags_n);
-    std::vector<int> api_dims_(dims, dims + dims_n);
-    gmsh::model::mesh::homology(api_domainTags_, api_subdomainTags_, api_dims_);
+    gmsh::model::mesh::createTopology();
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
   }
 }
 
-GMSH_API void gmshModelMeshCohomology(int * domainTags, size_t domainTags_n, int * subdomainTags, size_t subdomainTags_n, int * dims, size_t dims_n, int * ierr)
+GMSH_API void gmshModelMeshCreateGeometry(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::createGeometry();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshComputeHomology(int * domainTags, size_t domainTags_n, int * subdomainTags, size_t subdomainTags_n, int * dims, size_t dims_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_domainTags_(domainTags, domainTags + domainTags_n);
     std::vector<int> api_subdomainTags_(subdomainTags, subdomainTags + subdomainTags_n);
     std::vector<int> api_dims_(dims, dims + dims_n);
-    gmsh::model::mesh::cohomology(api_domainTags_, api_subdomainTags_, api_dims_);
+    gmsh::model::mesh::computeHomology(api_domainTags_, api_subdomainTags_, api_dims_);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshComputeCohomology(int * domainTags, size_t domainTags_n, int * subdomainTags, size_t subdomainTags_n, int * dims, size_t dims_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_domainTags_(domainTags, domainTags + domainTags_n);
+    std::vector<int> api_subdomainTags_(subdomainTags, subdomainTags + subdomainTags_n);
+    std::vector<int> api_dims_(dims, dims + dims_n);
+    gmsh::model::mesh::computeCohomology(api_domainTags_, api_subdomainTags_, api_dims_);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -1421,7 +1443,7 @@ GMSH_API void gmshModelGeoDilate(int * dimTags, size_t dimTags_n, const double x
   }
 }
 
-GMSH_API void gmshModelGeoSymmetry(int * dimTags, size_t dimTags_n, const double a, const double b, const double c, const double d, int * ierr)
+GMSH_API void gmshModelGeoSymmetrize(int * dimTags, size_t dimTags_n, const double a, const double b, const double c, const double d, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -1430,7 +1452,7 @@ GMSH_API void gmshModelGeoSymmetry(int * dimTags, size_t dimTags_n, const double
       api_dimTags_[i].first = dimTags[i * 2 + 0];
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
-    gmsh::model::geo::symmetry(api_dimTags_, a, b, c, d);
+    gmsh::model::geo::symmetrize(api_dimTags_, a, b, c, d);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -2154,7 +2176,7 @@ GMSH_API void gmshModelOccDilate(int * dimTags, size_t dimTags_n, const double x
   }
 }
 
-GMSH_API void gmshModelOccSymmetry(int * dimTags, size_t dimTags_n, const double a, const double b, const double c, const double d, int * ierr)
+GMSH_API void gmshModelOccSymmetrize(int * dimTags, size_t dimTags_n, const double a, const double b, const double c, const double d, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -2163,7 +2185,7 @@ GMSH_API void gmshModelOccSymmetry(int * dimTags, size_t dimTags_n, const double
       api_dimTags_[i].first = dimTags[i * 2 + 0];
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
-    gmsh::model::occ::symmetry(api_dimTags_, a, b, c, d);
+    gmsh::model::occ::symmetrize(api_dimTags_, a, b, c, d);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

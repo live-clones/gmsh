@@ -262,10 +262,10 @@ l10 = newreg; Line(l10) = { p62 , p72 } ;
 l11 = newreg; Line(l11) = { p63 , p73 } ;
 l12 = newreg; Line(l12) = { p64 , p74 } ;
 
-surf_lat9 = newreg; Line Loop(surf_lat9)   = { l9 , c71 , -l10 , -c61 } ; sl9[indice3]  = newreg; Ruled Surface(sl9[indice3])  = { surf_lat9  } ;
-surf_lat10 = newreg; Line Loop(surf_lat10) = { l10, c72 , -l11 , -c62 } ; sl10[indice3] = newreg; Ruled Surface(sl10[indice3]) = { surf_lat10 } ;
-surf_lat11 = newreg; Line Loop(surf_lat11) = { l11, c73 , -l12 , -c63 } ; sl11[indice3] = newreg; Ruled Surface(sl11[indice3]) = { surf_lat11 } ;
-surf_lat12 = newreg; Line Loop(surf_lat12) = { l12, c74 , -l9  , -c64 } ; sl12[indice3] = newreg; Ruled Surface(sl12[indice3]) = { surf_lat12 } ;
+surf_lat9 = newreg; Line Loop(surf_lat9)   = { l9 , c71 , -l10 , -c61 } ; sl9[indice3]  = newreg; Surface(sl9[indice3])  = { surf_lat9  } ;
+surf_lat10 = newreg; Line Loop(surf_lat10) = { l10, c72 , -l11 , -c62 } ; sl10[indice3] = newreg; Surface(sl10[indice3]) = { surf_lat10 } ;
+surf_lat11 = newreg; Line Loop(surf_lat11) = { l11, c73 , -l12 , -c63 } ; sl11[indice3] = newreg; Surface(sl11[indice3]) = { surf_lat11 } ;
+surf_lat12 = newreg; Line Loop(surf_lat12) = { l12, c74 , -l9  , -c64 } ; sl12[indice3] = newreg; Surface(sl12[indice3]) = { surf_lat12 } ;
 
 centre6=newp; Point(centre6) = { xc, yc, h1b+h2, lcar3 } ;
 
@@ -287,10 +287,10 @@ l14 = newreg; Line(l14) = { p72 , p82 } ;
 l15 = newreg; Line(l15) = { p73 , p83 } ;
 l16 = newreg; Line(l16) = { p74 , p84 } ;
 
-surf_lat13 = newreg; Line Loop(surf_lat13) = { l13, c81 , -l14 , -c71 } ; sl13[indice3] = newreg; Ruled Surface(sl13[indice3]) = { surf_lat13 } ;
-surf_lat14 = newreg; Line Loop(surf_lat14) = { l14, c82 , -l15 , -c72 } ; sl14[indice3] = newreg; Ruled Surface(sl14[indice3]) = { surf_lat14 } ;
-surf_lat15 = newreg; Line Loop(surf_lat15) = { l15, c83 , -l16 , -c73 } ; sl15[indice3] = newreg; Ruled Surface(sl15[indice3]) = { surf_lat15 } ;
-surf_lat16 = newreg; Line Loop(surf_lat16) = { l16, c84 , -l13 , -c74 } ; sl16[indice3] = newreg; Ruled Surface(sl16[indice3]) = { surf_lat16 } ;
+surf_lat13 = newreg; Line Loop(surf_lat13) = { l13, c81 , -l14 , -c71 } ; sl13[indice3] = newreg; Surface(sl13[indice3]) = { surf_lat13 } ;
+surf_lat14 = newreg; Line Loop(surf_lat14) = { l14, c82 , -l15 , -c72 } ; sl14[indice3] = newreg; Surface(sl14[indice3]) = { surf_lat14 } ;
+surf_lat15 = newreg; Line Loop(surf_lat15) = { l15, c83 , -l16 , -c73 } ; sl15[indice3] = newreg; Surface(sl15[indice3]) = { surf_lat15 } ;
+surf_lat16 = newreg; Line Loop(surf_lat16) = { l16, c84 , -l13 , -c74 } ; sl16[indice3] = newreg; Surface(sl16[indice3]) = { surf_lat16 } ;
 
 Return
 
@@ -609,20 +609,20 @@ l2b = newreg; Line(l2b) = { p12 , p12b } ;
 l3b = newreg; Line(l3b) = { p13 , p13b } ;
 l4b = newreg; Line(l4b) = { p14 , p14b } ;
 
-surf_lat1 = newreg; Line Loop(surf_lat1) = { l1, c31 , -l2 , -c21 } ; sl1 = newreg; Ruled Surface(sl1) = { surf_lat1 } ;
-surf_lat2 = newreg; Line Loop(surf_lat2) = { l2, c32 , -l3 , -c22 } ; sl2 = newreg; Ruled Surface(sl2) = { surf_lat2 } ;
-surf_lat3 = newreg; Line Loop(surf_lat3) = { l3, c33 , -l4 , -c23 } ; sl3 = newreg; Ruled Surface(sl3) = { surf_lat3 } ;
-surf_lat4 = newreg; Line Loop(surf_lat4) = { l4, c34 , -l1 , -c24 } ; sl4 = newreg; Ruled Surface(sl4) = { surf_lat4 } ;
+surf_lat1 = newreg; Line Loop(surf_lat1) = { l1, c31 , -l2 , -c21 } ; sl1 = newreg; Surface(sl1) = { surf_lat1 } ;
+surf_lat2 = newreg; Line Loop(surf_lat2) = { l2, c32 , -l3 , -c22 } ; sl2 = newreg; Surface(sl2) = { surf_lat2 } ;
+surf_lat3 = newreg; Line Loop(surf_lat3) = { l3, c33 , -l4 , -c23 } ; sl3 = newreg; Surface(sl3) = { surf_lat3 } ;
+surf_lat4 = newreg; Line Loop(surf_lat4) = { l4, c34 , -l1 , -c24 } ; sl4 = newreg; Surface(sl4) = { surf_lat4 } ;
 
-surf_lat1b = newreg; Line Loop(surf_lat1b) = { l1b, c11b , -l2b , -c11 } ; sl1b = newreg; Ruled Surface(sl1b) = { surf_lat1b } ;
-surf_lat2b = newreg; Line Loop(surf_lat2b) = { l2b, c12b , -l3b , -c12 } ; sl2b = newreg; Ruled Surface(sl2b) = { surf_lat2b } ;
-surf_lat3b = newreg; Line Loop(surf_lat3b) = { l3b, c13b , -l4b , -c13 } ; sl3b = newreg; Ruled Surface(sl3b) = { surf_lat3b } ;
-surf_lat4b = newreg; Line Loop(surf_lat4b) = { l4b, c14b , -l1b , -c14 } ; sl4b = newreg; Ruled Surface(sl4b) = { surf_lat4b } ;
+surf_lat1b = newreg; Line Loop(surf_lat1b) = { l1b, c11b , -l2b , -c11 } ; sl1b = newreg; Surface(sl1b) = { surf_lat1b } ;
+surf_lat2b = newreg; Line Loop(surf_lat2b) = { l2b, c12b , -l3b , -c12 } ; sl2b = newreg; Surface(sl2b) = { surf_lat2b } ;
+surf_lat3b = newreg; Line Loop(surf_lat3b) = { l3b, c13b , -l4b , -c13 } ; sl3b = newreg; Surface(sl3b) = { surf_lat3b } ;
+surf_lat4b = newreg; Line Loop(surf_lat4b) = { l4b, c14b , -l1b , -c14 } ; sl4b = newreg; Surface(sl4b) = { surf_lat4b } ;
 
-surf_lat5 = newreg; Line Loop(surf_lat5) = { l5, c51 , -l6 , -c41 } ; sl5 = newreg; Ruled Surface(sl5) = { surf_lat5 } ;
-surf_lat6 = newreg; Line Loop(surf_lat6) = { l6, c52 , -l7 , -c42 } ; sl6 = newreg; Ruled Surface(sl6) = { surf_lat6 } ;
-surf_lat7 = newreg; Line Loop(surf_lat7) = { l7, c53 , -l8 , -c43 } ; sl7 = newreg; Ruled Surface(sl7) = { surf_lat7 } ;
-surf_lat8 = newreg; Line Loop(surf_lat8) = { l8, c54 , -l5 , -c44 } ; sl8 = newreg; Ruled Surface(sl8) = { surf_lat8 } ;
+surf_lat5 = newreg; Line Loop(surf_lat5) = { l5, c51 , -l6 , -c41 } ; sl5 = newreg; Surface(sl5) = { surf_lat5 } ;
+surf_lat6 = newreg; Line Loop(surf_lat6) = { l6, c52 , -l7 , -c42 } ; sl6 = newreg; Surface(sl6) = { surf_lat6 } ;
+surf_lat7 = newreg; Line Loop(surf_lat7) = { l7, c53 , -l8 , -c43 } ; sl7 = newreg; Surface(sl7) = { surf_lat7 } ;
+surf_lat8 = newreg; Line Loop(surf_lat8) = { l8, c54 , -l5 , -c44 } ; sl8 = newreg; Surface(sl8) = { surf_lat8 } ;
 
 surf1 =newreg; Plane Surface(surf1)  = { virole2b , pompeb[], virole1 } ;
 surf3 =newreg; Plane Surface(surf3)  = { virole2h , pompeh[], bcch } ;

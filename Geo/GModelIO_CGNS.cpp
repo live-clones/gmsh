@@ -1594,8 +1594,6 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
 
   _storePhysicalTagsInEntities(meshDim, physicalZones);
 
-  //_createGeometryOfDiscreteEntities();
-
   return 1;
 }
 

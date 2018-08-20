@@ -1,5 +1,5 @@
-General.MeshDiscrete = 1;
 Merge "aorta2.stl";
+CreateGeometry;
 
 //Line Loop(60) = {1}; Plane Surface(61) = {60};
 //Line Loop(62) = {2}; Plane Surface(63) = {62};

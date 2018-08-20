@@ -2775,6 +2775,15 @@ void quick_access_cb(Fl_Widget *w, void *data)
     general_options_ok_cb(0, (void *)"rotation_center");
     general_options_rotation_center_select_cb(0, 0);
   }
+  else if(what == "split_hor"){
+    file_window_cb(0, (void*)"split_h");
+  }
+  else if(what == "split_ver"){
+    file_window_cb(0, (void*)"split_v");
+  }
+  else if(what == "unsplit"){
+    file_window_cb(0, (void*)"split_u");
+  }
   else if(what == "axes"){
     opt_general_axes(0, GMSH_SET|GMSH_GUI,
                      opt_general_axes(0, GMSH_GET, 0) ? 0 : 3);
@@ -3034,8 +3043,12 @@ void status_options_cb(Fl_Widget *w, void *data)
   else if(what == "quick_access"){ // quick access menu
     static Fl_Menu_Item menu[] = {
       { "Reset viewport", 0, quick_access_cb, (void*)"reset_viewport" },
-      { "Select rotation center", 0, quick_access_cb, (void*)"select_center",
-        FL_MENU_DIVIDER },
+      { "Select rotation center", 0, quick_access_cb, (void*)"select_center" },
+      { "Split window", 0, 0, 0, FL_SUBMENU | FL_MENU_DIVIDER },
+         { "Horizontally", 0, quick_access_cb, (void*)"split_hor"},
+         { "Vertically", 0, quick_access_cb, (void*)"split_ver"},
+         { "Unsplit", 0, quick_access_cb, (void*)"unsplit"},
+         { 0 },
       { "Axes", FL_ALT + 'a', quick_access_cb, (void*)"axes",
         FL_MENU_TOGGLE },
       { "Projection mode", 0, 0, 0, FL_SUBMENU },
@@ -3099,7 +3112,7 @@ void status_options_cb(Fl_Widget *w, void *data)
       { "All view options...", 0, quick_access_cb, (void*)"view", 0, 0, FL_ITALIC },
       { 0 }
     };
-    const int gen = 2, geo = 8, msh = 15, pos = 26, end = 48;
+    const int gen = 7, geo = 13, msh = 20, pos = 31, end = 53;
     if(opt_general_axes(0, GMSH_GET, 0)) menu[gen + 0].set(); else menu[gen + 0].clear();
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0) && opt_view_axes(i, GMSH_GET, 0))

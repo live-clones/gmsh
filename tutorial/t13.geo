@@ -2,31 +2,21 @@
  *
  *  Gmsh tutorial 13
  *
- *  Remeshing STL with compounds
+ *  Remeshing without an underlying CAD model
  *
  *********************************************************************/
 
-// Since compound geometrical compute a new parametrization, one can also use
-// them to remesh STL files, even if in this case there's usually only a single
-// elementary geometrical entity per compound.
-
-// Compute parametrization of discrete surfaces read from mesh file
-General.MeshDiscrete = 1;
-
-// Let's merge the mesh that we would like to remesh. This mesh was reclassified
+// Let's merge a mesh that we would like to remesh. This mesh was reclassified
 // ("colored") from an initial STL triangulation using the "Reclassify 2D" tool
 // in Gmsh, so that we could split it along sharp geometrical features.
 Merge "t13_data.msh";
 
-// We can now define a compound curve (resp. surface) for each discrete curve
-// (resp. surface) in the model
-ss[] = Surface {:};
+// Create a geometry for all the curves and surfaces in the mesh, by computing a
+// parametrization for each entity
+CreateGeometry;
 
-// FIXME: does not do anything yet (because the underlying surfaces are
-// discrete):
-Compound Surface{ss[]};
-
-Surface Loop(1) = {ss[]};
+// Create a volume as usual
+Surface Loop(1) = Surface{:};
 Volume(1) = {1};
 
 // element size imposed by a size field

@@ -287,6 +287,7 @@ static bool getEdgeVerticesOnGeo(GEdge *ge, MVertex *v0, MVertex *v1,
   }
   else
     Msg::Error("Cannot reparam a mesh Vertex in high order meshing");
+
   if(!reparamOK) return false;
 
   if(GLLquad) {
@@ -432,8 +433,7 @@ static void getEdgeVertices(GEdge *ge, MElement *ele,
   }
   else if(p.first != p.second) { // Vertices already exist and edge is not a
                                  // degenerated edge
-    Msg::Error(
-      "Edges from different entities share vertices: create a finer mesh");
+    Msg::Error("Edges from different entities share vertices: create a finer mesh");
   }
   ve.insert(ve.end(), veEdge.begin(), veEdge.end());
 }
@@ -1272,7 +1272,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
         MVertex *vtcs[2];
         if(!tgtLine) {
           Msg::Error("Slave element %d is not an edge",
-                            tgt->getMeshElement(i)->getNum());
+                     tgt->getMeshElement(i)->getNum());
           return;
         }
         for(int iVtx = 0; iVtx < 2; iVtx++) {
@@ -1282,6 +1282,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
             Msg::Error("Cannot find periodic counterpart of vertex %d"
                        " of edge %d on edge %d",
                        vtx->getNum(), tgt->tag(), src->tag());
+            return;
           }
           else
             vtcs[iVtx] = tIter->second;
@@ -1295,6 +1296,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
                      tgtLine->getVertex(0)->getNum(),
                      tgtLine->getVertex(1)->getNum(), tgt->tag(),
                      vtcs[0]->getNum(), vtcs[1]->getNum(), src->tag());
+          return;
         }
         else {
           MLine *srcLine = srcIter->second;
@@ -1343,8 +1345,6 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
 
       for(unsigned int i = 0; i < tgt->getNumMeshElements(); ++i) {
         MElement *tgtElmt = tgt->getMeshElement(i);
-        // Msg::Info("Checking element %d in face %d",i,tgt->tag());
-
         int nbVtcs = 0;
         if(dynamic_cast<MTriangle *>(tgtElmt)) nbVtcs = 3;
         if(dynamic_cast<MQuadrangle *>(tgtElmt)) nbVtcs = 4;
@@ -1357,13 +1357,10 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
             Msg::Error("Cannot find periodic counterpart of vertex %d"
                        " of surface %d on surface %d",
                        vtx->getNum(), tgt->tag(), src->tag());
+            return;
           }
           else
             vtcs.push_back(tIter->second);
-          // GEntity* ge = vtx->onWhat();
-          // if (ge->meshMaster() == ge) throw;
-          // std::map<MVertex*,MVertex*>& v2v = ge->correspondingVertices;
-          // vtcs.push_back(v2v[vtx]);
         }
 
         std::map<MFace, MElement *>::iterator srcIter =
@@ -1375,6 +1372,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
           Msg::Error("Cannot find periodic counterpart of face %s in face %d "
                      "connected to %d",
                      faceDef.str().c_str(), tgt->tag(), src->tag());
+          return;
         }
         else {
           MElement *srcElmt = srcIter->second;
