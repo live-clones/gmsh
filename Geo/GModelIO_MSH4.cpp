@@ -747,7 +747,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
       if(swap)
         SwapBytes((char *)data, sizeof(int), numElements * (nbrVertices + 1));
 
-      std::vector<MVertex *> vertices(nbrVertices + 1, (MVertex *)0);
+      std::vector<MVertex *> vertices(nbrVertices, (MVertex *)0);
       for(unsigned int j = 0; j < numElements * (nbrVertices + 1);
           j += (nbrVertices + 1)) {
         for(int k = 0; k < nbrVertices; k++) {
@@ -793,7 +793,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
           return 0;
         }
 
-        std::vector<MVertex *> vertices(nbrVertices + 1, (MVertex *)0);
+        std::vector<MVertex *> vertices(nbrVertices, (MVertex *)0);
 
         for(int k = 0; k < nbrVertices; k++) {
           int vertexTag = 0;
