@@ -708,6 +708,7 @@ double qmTetrahedron::gamma(const double &x1, const double &y1,
                             const double &y4, const double &z4, double *volume)
 {
   // quality = rho / R = 3 * inradius / circumradius
+
   double p0[3] = {x1, y1, z1};
   double p1[3] = {x2, y2, z2};
   double p2[3] = {x3, y3, z3};
@@ -715,10 +716,7 @@ double qmTetrahedron::gamma(const double &x1, const double &y1,
 
   *volume = fabs(robustPredicates::orient3d(p0, p1, p2, p3)) / 6.0;
 
-  double s1 = fabs(triangle_area(p0, p1, p2));
-  double s2 = fabs(triangle_area(p0, p2, p3));
-  double s3 = fabs(triangle_area(p0, p1, p3));
-  double s4 = fabs(triangle_area(p1, p2, p3));
+  if (*volume == 0) return 0;
 
   double la = (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1);
   double lb = (x3-x1)*(x3-x1) + (y3-y1)*(y3-y1) + (z3-z1)*(z3-z1);
@@ -731,14 +729,23 @@ double qmTetrahedron::gamma(const double &x1, const double &y1,
   double lblB = std::sqrt(lb*lB);
   double lclC = std::sqrt(lc*lC);
 
-  double invR = 24 * *volume / std::sqrt(  ( lalA + lblB + lclC)
-                                         * ( lalA + lblB - lclC)
-                                         * ( lalA - lblB + lclC)
-                                         * (-lalA + lblB + lclC));
+  double R = std::sqrt(  ( lalA + lblB + lclC)
+                       * ( lalA + lblB - lclC)
+                       * ( lalA - lblB + lclC)
+                       * (-lalA + lblB + lclC)) / 24 / *volume;
+
+  // This happens when the 4 points are (nearly) co-planar
+  // => R is actually undetermined but the quality is (close to) zero
+  if (R == .0) return 0;
+
+  double s1 = fabs(triangle_area(p0, p1, p2));
+  double s2 = fabs(triangle_area(p0, p2, p3));
+  double s3 = fabs(triangle_area(p0, p1, p3));
+  double s4 = fabs(triangle_area(p1, p2, p3));
 
   double rho = 3 * 3 * *volume / (s1+s2+s3+s4);
 
-  return rho * invR;
+  return rho / R;
 }
 
 double qmTetrahedron::cond(const double &x1, const double &y1, const double &z1,
