@@ -736,21 +736,7 @@ double qmTetrahedron::gamma(const double &x1, const double &y1,
 
   // This happens when the 4 points are (nearly) co-planar
   // => R is actually undetermined but the quality is (close to) zero
-  if (insideSqrt <= 0) {
-    std::cout << "" << p0[0] << " " << p0[1] << " " << p0[2] << std::endl;
-    std::cout << "" << p1[0] << " " << p1[1] << " " << p1[2] << std::endl;
-    std::cout << "" << p2[0] << " " << p2[1] << " " << p2[2] << std::endl;
-    std::cout << "" << p3[0] << " " << p3[1] << " " << p3[2] << std::endl;
-    double s1 = fabs(triangle_area(p0, p1, p2));
-    double s2 = fabs(triangle_area(p0, p2, p3));
-    double s3 = fabs(triangle_area(p0, p1, p3));
-    double s4 = fabs(triangle_area(p1, p2, p3));
-    std::cout << " " << s1 << " " << s2 << " " << s3 << " " << s4 << std::endl;
-    std::cout << " " << la << " " << lb << " " << lc << " " << lA << " " << lB << " " << lC << std::endl;
-    std::cout << " " << *volume << " " << 3 * 3 * *volume / (s1+s2+s3+s4) << std::endl;
-    std::cout << std::endl;
-    return 0;
-  }
+  if (insideSqrt <= 0) return 0;
 
   double R = std::sqrt(insideSqrt) / 24 / *volume;
 
