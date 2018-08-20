@@ -1396,7 +1396,7 @@ gmsh::model::mesh::getElementsByType(const int elementType,
                  "if numTasks > 1");
     haveElementTags = haveNodeTags = true;
     preallocateElementsByType(elementType, haveElementTags, haveNodeTags,
-                              elementTags, nodeTags);
+                              elementTags, nodeTags, tag);
   }
   if(haveElementTags && (elementTags.size() < numElements)) {
     Msg::Error("Wrong size of elementTags array (%d < %d)", elementTags.size(),
