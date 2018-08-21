@@ -2840,7 +2840,7 @@ void meshGFace::operator()(GFace *gf, bool print)
     if((*ite)->isSeam(gf)) singularEdges = true;
     if((*ite)->getBeginVertex() == (*ite)->getEndVertex()){
       if ((*ite)->geomType() == GEntity::Unknown){
-	singularEdges = true;
+	//	singularEdges = true;
       }
     }
     ite++;
