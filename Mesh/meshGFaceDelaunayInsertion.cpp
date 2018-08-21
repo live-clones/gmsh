@@ -1633,15 +1633,15 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   }
 
   //  nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
-   char name[245];
-   sprintf(name, "delFrontal_GFace_%d.pos", gf->tag());
-   _printTris(name, AllTris.begin(), AllTris.end(), &DATA);
-   sprintf(name, "delFrontal_GFace_NEW_%d.pos", gf->tag());
-   _printTris(name, AllTris.begin(), AllTris.end(), &DATA,NULL,&degenerated);
-   sprintf(name, "delFrontal_GFace_%d_Real.pos", gf->tag());
-   _printTris(name, AllTris.begin(), AllTris.end(), NULL);
-   sprintf(name, "delFrontal_GFace_%d_Real_Curved.pos", gf->tag());
-   _printTris(name, AllTris.begin(), AllTris.end(), &DATA,gf,&degenerated);
+  //   char name[245];
+  //   sprintf(name, "delFrontal_GFace_%d.pos", gf->tag());
+  //   _printTris(name, AllTris.begin(), AllTris.end(), &DATA);
+  //   sprintf(name, "delFrontal_GFace_NEW_%d.pos", gf->tag());
+  //   _printTris(name, AllTris.begin(), AllTris.end(), &DATA,NULL,&degenerated);
+  //   sprintf(name, "delFrontal_GFace_%d_Real.pos", gf->tag());
+  //   _printTris(name, AllTris.begin(), AllTris.end(), NULL);
+  //   sprintf(name, "delFrontal_GFace_%d_Real_Curved.pos", gf->tag());
+  //   _printTris(name, AllTris.begin(), AllTris.end(), &DATA,gf,&degenerated);
   // sprintf(name,"delFrontal_GFace_%d_Layer_Real%d.pos",gf->tag(),ITERATION);
   // _printTris (name, AllTris.begin(), AllTris.end(),NULL);
   // sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
