@@ -1391,7 +1391,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
   facePeriodicity.fixPeriodicity();
 #endif
 
-  Msg::Info("Finalized high order topology of periodic connections");
+  Msg::Debug("Finalized high order topology of periodic connections");
 }
 
 void SetOrder1(GModel *m, bool onlyVisible)
