@@ -699,8 +699,8 @@ namespace ClosureGen {
       }
     }
     else {
-      Msg::Error("FaceClosureFull not implemented for prisms of order %d",
-                 order);
+      Msg::Warning("FaceClosureFull not implemented for prisms of order %d",
+                   order);
     }
   }
 
@@ -744,6 +744,13 @@ namespace ClosureGen {
         }
       }
     }
+  }
+
+  void generateFaceClosurePyrFull(nodalBasis::clCont &closureFull,
+                                  std::vector<int> &closureRef, int order)
+  {
+    Msg::Warning("FaceClosureFull not implemented for pyramids of order %d",
+                 order);
   }
 
   void generate2dEdgeClosure(nodalBasis::clCont &closure, int order,
@@ -859,6 +866,7 @@ nodalBasis::nodalBasis(int tag)
     numFaces = 5;
     points = gmshGeneratePointsPyramid(order, serendip);
     generateFaceClosurePyr(closures, order, serendip, points);
+    generateFaceClosurePyrFull(fullClosures, closureRef, order);
     break;
   }
 }
@@ -941,4 +949,18 @@ bool nodalBasis::forwardRenumbering(const fullMatrix<double> &nodes, int *renum,
   // }
 
   return renum;
+}
+
+inline int nodalBasis::getClosureId(int iFace, int iSign, int iRot) const
+{
+  return iFace + numFaces * (iSign == 1 ? 0 : 1) + 2 * numFaces * iRot;
+}
+
+inline void nodalBasis::breakClosureId(int i, int &iFace, int &iSign,
+                                       int &iRot) const
+{
+  iFace = i % numFaces;
+  i = (i - iFace) / numFaces;
+  iSign = i % 2;
+  iRot = (i - iSign) / 2;
 }
