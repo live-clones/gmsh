@@ -38,16 +38,13 @@ public:
   hxt_reparam_surf() : oct(NULL) {}
   ~hxt_reparam_surf();
 };
-#else
-class discreteDiskFace;
-class triangulation;
 #endif
 
 class discreteFace : public GFace {
 private:
   void checkAndFixOrientation();
 
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT)
   int _current_parametrization;
   std::vector<hxt_reparam_surf> _parametrizations;
   std::vector<discreteEdge *> e_internals;

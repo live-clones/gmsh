@@ -352,19 +352,19 @@ Plane Surface(227) = {226};
 //+
 Line Loop(228) = {142, 126, -143, -138};
 //+
-Ruled Surface(229) = {228};
+Surface(229) = {228};
 //+
 Line Loop(230) = {143, 127, -144, -139};
 //+
-Ruled Surface(231) = {230};
+Surface(231) = {230};
 //+
 Line Loop(232) = {144, 128, -145, -140};
 //+
-Ruled Surface(233) = {232};
+Surface(233) = {232};
 //+
 Line Loop(234) = {141, 142, -129, -145};
 //+
-Ruled Surface(235) = {234};
+Surface(235) = {234};
 //+
 Line Loop(236) = {118, 119, 120, 121};
 //+
@@ -376,35 +376,35 @@ Plane Surface(239) = {238};
 //+
 Line Loop(240) = {119, 174, -123, -173};
 //+
-Ruled Surface(241) = {240};
+Surface(241) = {240};
 //+
 Line Loop(242) = {120, 175, -124, -174};
 //+
-Ruled Surface(243) = {242};
+Surface(243) = {242};
 //+
 Line Loop(244) = {121, 176, -125, -175};
 //+
-Ruled Surface(245) = {244};
+Surface(245) = {244};
 //+
 Line Loop(246) = {118, 173, -122, -176};
 //+
-Ruled Surface(247) = {246};
+Surface(247) = {246};
 //+
 Line Loop(248) = {171, 163, -172, -167};
 //+
-Ruled Surface(249) = {248};
+Surface(249) = {248};
 //+
 Line Loop(250) = {164, -169, -168, 172};
 //+
-Ruled Surface(251) = {250};
+Surface(251) = {250};
 //+
 Line Loop(252) = {161, -170, -165, 169};
 //+
-Ruled Surface(253) = {252};
+Surface(253) = {252};
 //+
 Line Loop(254) = {162, -171, -166, 170};
 //+
-Ruled Surface(255) = {254};
+Surface(255) = {254};
 //+
 Line Loop(256) = {163, 164, 161, 162};
 //+
@@ -533,51 +533,51 @@ Circle(l1+20) = {p1+12, p1+10,p1+ 11};
 //+
 Line Loop(327) = {322, -307, 316};
 //+
-Ruled Surface(328) = {327};
+Surface(328) = {327};
 //+
 Line Loop(329) = {319, -315, 307};
 //+
-Ruled Surface(330) = {329};
+Surface(330) = {329};
 //+
 Line Loop(331) = {320, -308, 315};
 //+
-Ruled Surface(332) = {331};
+Surface(332) = {331};
 //+
 Line Loop(333) = {321, -316, 308};
 //+
-Ruled Surface(334) = {333};
+Surface(334) = {333};
 //+
 Line Loop(335) = {309, -317, -323};
 //+
-Ruled Surface(336) = {335};
+Surface(336) = {335};
 //+
 Line Loop(337) = {317, 310, -324};
 //+
-Ruled Surface(338) = {337};
+Surface(338) = {337};
 //+
 Line Loop(339) = {325, -318, 310};
 //+
-Ruled Surface(340) = {339};
+Surface(340) = {339};
 //+
 Line Loop(341) = {326, 309, 318};
 //+
-Ruled Surface(342) = {341};
+Surface(342) = {341};
 //+
 Line Loop(343) = {314, -323, -311, 319};
 //+
-Ruled Surface(344) = {343};
+Surface(344) = {343};
 //+
 Line Loop(345) = {320, 312, -324, -314};
 //+
-Ruled Surface(346) = {345};
+Surface(346) = {345};
 //+
 Line Loop(347) = {321, 313, -325, -312};
 //+
-Ruled Surface(348) = {347};
+Surface(348) = {347};
 //+
 Line Loop(349) = {326, -311, -322, 313};
 //+
-Ruled Surface(350) = {349};
+Surface(350) = {349};
 //+
 Transfinite Line {311, 314, 308, 313, 312} = 21 Using Progression 1.0;
 Transfinite Line {310, 318} = 19 Using Progression 0.90;
@@ -797,13 +797,13 @@ Plane Surface(s1+30) = {s1+29};
 Line Loop(s1+31) = {line1+48, line1+42, -line1-55, -line1-58};
 Plane Surface(s1+32) = {s1+31};
 Line Loop(s1+33) = {line1+14, -line1-54, -line1-2, line1+49};
-Ruled Surface(s1+34) = {s1+33};
+Surface(s1+34) = {s1+33};
 Line Loop(s1+35) = {line1+15, -line1-47, -line1-3, line1+54};
-Ruled Surface(s1+36) = {s1+35};
+Surface(s1+36) = {s1+35};
 Line Loop(s1+37) = {line1+16, -line1-55, -line1-4, line1+47};
-Ruled Surface(s1+38) = {s1+37};
+Surface(s1+38) = {s1+37};
 Line Loop(s1+39) = {line1+13, -line1-49, -line1-1, line1+55};
-Ruled Surface(s1+40) = {s1+39};
+Surface(s1+40) = {s1+39};
 
 Transfinite Line {line1+48,line1+49,line1+47,line1+54,line1+55} = 25
             Using Progression 1.1;
@@ -842,13 +842,13 @@ Plane Surface(s1+46) = {s1+45};
 Line Loop(s1+47) = {line1+43, -line1-56, -line1-25, line1+55};
 Plane Surface(s1+48) = {s1+47};
 Line Loop(s1+49) = {line1+18, -line1-53, -line1-6, line1+50};
-Ruled Surface(s1+50) = {s1+49};
+Surface(s1+50) = {s1+49};
 Line Loop(s1+51) = {line1+19, -line1-46, -line1-7, line1+53};
-Ruled Surface(s1+52) = {s1+51};
+Surface(s1+52) = {s1+51};
 Line Loop(s1+53) = {line1+20, -line1-56, -line1-8, line1+46};
-Ruled Surface(s1+54) = {s1+53};
+Surface(s1+54) = {s1+53};
 Line Loop(s1+55) = {line1+17, -line1-50, -line1-5, line1+56};
-Ruled Surface(s1+56) = {s1+55};
+Surface(s1+56) = {s1+55};
 
 Transfinite Line {line1+53, line1+50, line1+56, line1+46} = 25
             Using Progression 1.1;
@@ -886,13 +886,13 @@ Plane Surface(s1+62) = {s1+61};
 Line Loop(s1+63) = {line1+44, -line1-57, -line1-26, line1+56};
 Plane Surface(s1+64) = {s1+63};
 Line Loop(s1+65) = {line1+22, -line1-52, -line1-10, line1+51};
-Ruled Surface(s1+66) = {s1+65};
+Surface(s1+66) = {s1+65};
 Line Loop(s1+67) = {line1+23, -line1-45, -line1-11, line1+52};
-Ruled Surface(s1+68) = {s1+67};
+Surface(s1+68) = {s1+67};
 Line Loop(s1+69) = {line1+24, -line1-57, -line1-12, line1+45};
-Ruled Surface(s1+70) = {s1+69};
+Surface(s1+70) = {s1+69};
 Line Loop(s1+71) = {line1+21, -line1-51, -line1-9, line1+57};
-Ruled Surface(s1+72) = {s1+71};
+Surface(s1+72) = {s1+71};
 
 Transfinite Line {line1+51, line1+52, line1+45, line1+57} = 25
             Using Progression 1.1;
@@ -914,19 +914,19 @@ Line(495) = {110, 62};
 //+
 Line Loop(496) = {367, 493, 141, -492};
 //+
-Ruled Surface(497) = {496};
+Surface(497) = {496};
 //+
 Line Loop(498) = {368, 494, 140, -493};
 //+
-Ruled Surface(499) = {498};
+Surface(499) = {498};
 //+
 Line Loop(500) = {369, 495, 139, -494};
 //+
-Ruled Surface(501) = {500};
+Surface(501) = {500};
 //+
 Line Loop(502) = {366, 492, 138, -495};
 //+
-Ruled Surface(503) = {502};
+Surface(503) = {502};
 //+
 Transfinite Line {492, 493, 494, 495} = 5 Using Progression 1.0;
 //+
@@ -977,5 +977,3 @@ Transfinite Line {122, 125, 124, 123} = 10 Using Progression 1;
 Transfinite Line {375, 374, 377, 376} = 17 Using Progression 1;
 //+
 Transfinite Line {379, 378, 381, 380} = 20 Using Progression 1;
-
-

@@ -605,7 +605,8 @@ static void setLcs(MTetrahedron *t,
   }
 }
 
-void completeTheSetOfFaces (GModel *model, std::set<GFace *> &faces_bound){
+static void completeTheSetOfFaces(GModel *model, std::set<GFace *> &faces_bound)
+{
   std::set<GFace*> toAdd;
   for (GModel::fiter it = model->firstFace(); it != model->lastFace();++it){
     if (faces_bound.find(*it) != faces_bound.end()){
@@ -618,7 +619,6 @@ void completeTheSetOfFaces (GModel *model, std::set<GFace *> &faces_bound){
     }
   }
   faces_bound.insert(toAdd.begin(),toAdd.end());
-
 }
 
 GRegion *getRegionFromBoundingFaces(GModel *model,

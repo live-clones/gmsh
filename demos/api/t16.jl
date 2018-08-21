@@ -18,6 +18,7 @@ x = 0; y = 0.75; z = 0; r = 0.09
 
 holes = []
 for t in 1:5
+    global x, z
     x += 0.166
     z += 0.166
     factory.addSphere(x,y,z,r, 3 + t)

@@ -222,9 +222,9 @@ instructions are prescribed either interactively using the graphical
 user interface (GUI) or in text files using Gmsh's own scripting
 language.  Interactive actions generate language bits in the input
 files, and vice versa. This makes it possible to automate all
-treatments, using loops, conditionals and external system calls. (A
+treatments, using loops, conditionals and external system calls. A
 programming API is also available, for integrating Gmsh as a library in
-your own C++, C, Python or Julia code: @ref{Gmsh API}.) A brief
+your own C++, C, Python or Julia code: see @ref{Gmsh API}. A brief
 description of the four modules is given hereafter.
 
 @menu
@@ -3024,6 +3024,16 @@ a rotation specified as in @ref{Transformations}.
 @item Coherence Mesh;
 Removes all duplicate mesh nodes.
 
+@item CreateTopology;
+Creates a boundary representation from the mesh if the model does not
+have one (e.g. when imported from mesh file formats with no BRep
+representation of the underlying model).
+
+@item CreateGeometry;
+Creates a parametrization for curves and surfaces that do not have one
+(i.e. discrete curves and surfaces represented solely by meshes, without
+an underlying CAD description).
+
 @item SetPartition @var{expression} @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Sets the partition tag of the mesh elements in the entities in @var{expression-list} to @var{expression}.
 
@@ -3568,26 +3578,26 @@ underlying mesh, and can therefore be easier to use in some
 cases.)
 
 @menu
-* MSH4 file format::
+* MSH file format (version 4)::
 * Node ordering::
 * Legacy formats::
 @end menu
 
 @c -------------------------------------------------------------------------
-@c MSH4 file format
+@c MSH file format (version 4)
 @c -------------------------------------------------------------------------
 
-@node MSH4 file format, Node ordering, File formats, File formats
-@section MSH4 file format
+@node MSH file format (version 4), Node ordering, File formats, File formats
+@section MSH file format (version 4)
 
 @cindex Mesh, file format
 @cindex File format, mesh
 @cindex MSH4 file
 
-The MSH4 file format contains one mandatory section giving information
-about the file (@code{$MeshFormat}), followed by several sections
-defining the physical group names (@code{$PhysicalName}, optional), the
-entities (@code{$Entities}), the partitioned entities
+The MSH file format (version 4) contains one mandatory section giving
+information about the file (@code{$MeshFormat}), followed by several
+sections defining the physical group names (@code{$PhysicalName},
+optional), the entities (@code{$Entities}), the partitioned entities
 (@code{$PartitionedEntities}, optional), nodes (@code{$Nodes}), elements
 (@code{$Elements}), periodicity relations (@code{$Periodic}, optional),
 ghost elements (@code{$GhostElements}, optional) and post-processing
@@ -3613,12 +3623,12 @@ can be put into separate files (e.g. one file per time step).  Nodes are
 assumed to be defined before elements.
 
 @example
-$MeshFormat // same as MSH2
+$MeshFormat // same as MSH version 2
   version(double) binary(int) size(unsigned long)
   <swapping bit for binary format>
 $EndMeshFormat
 
-<$PhysicalNames> // same as MSH2
+<$PhysicalNames> // same as MSH version 2
   numPhysicalNames(int)
   dimension(int) tag(int) name(127 characters max)
   ...
@@ -3704,7 +3714,7 @@ $Elements
   ...
 $EndElements
 
-<$Periodic> // same as in MSH2 and MSH3
+<$Periodic> // same as in MSH version 2
   numPeriodicLinks(int)
   slaveDim(int) slaveTag(int) masterTag(int)
     < Affine values[...](double) >
@@ -3854,14 +3864,15 @@ with the edges, 54 with the faces, 27 in the volume)
 @end table
 See below for the ordering of the nodes.
 
-The post-processing sections are identical to the ones in the MSH2 file
-format (see below).
+The post-processing sections are identical to the ones in the version 2
+file format (see below). These sections will be reworked in a future
+minor revision of the version 4 format (e.g. version 4.1 or 4.2).
 
 @c -------------------------------------------------------------------------
 @c Node ordering
 @c -------------------------------------------------------------------------
 
-@node Node ordering, Legacy formats, MSH4 file format, File formats
+@node Node ordering, Legacy formats, MSH file format (version 4), File formats
 @section Node ordering
 
 @cindex Nodes, ordering
@@ -4063,8 +4074,8 @@ you do not use them in new applications.
 @subsection MSH file format version 2
 
 The MSH file format version 2 is Gmsh's previous native mesh file
-format, now superseded by the format described in @ref{MSH4 file
-format}. It is defined as follows:
+format, now superseded by the format described in @ref{MSH file format
+(version 4)}. It is defined as follows:
 
 The format is defined as follows:
 
@@ -4179,8 +4190,8 @@ is the number (index) of the @var{n}-th element in the mesh;
 ordered sequence.
 
 @item @var{elm-type}
-defines the geometrical type of the @var{n}-th element: see @ref{MSH4
-file format}.
+defines the geometrical type of the @var{n}-th element: see @ref{MSH
+file format (version 4)}.
 
 @item @var{number-of-tags}
 gives the number of integer tags that follow for the @var{n}-th
@@ -4397,8 +4408,8 @@ for(i = 0; i < number_of_triangles; i++)@{
 @subsection MSH file format version 1
 
 The MSH file format version 1 is Gmsh's original native mesh file
-format, now superseded by the format described in @ref{MSH4 file
-format}. It is defined as follows:
+format, now superseded by the format described in @ref{MSH file
+format (version 4)}. It is defined as follows:
 
 @example
 $NOD
@@ -4520,7 +4531,7 @@ element. The ordering of the nodes is given in @ref{Node ordering}.
 @subsection POS ASCII file format (Legacy)
 
 The POS ASCII file is Gmsh's old native post-processing format, now
-superseded by the format described in @ref{MSH4 file format}. It is
+superseded by the format described in @ref{MSH file format (version 4)}. It is
 defined as follows:
 
 @example
@@ -5482,19 +5493,15 @@ a list or tree browser, by tag, interactively, or per window).
 
 @item Can I edit STEP/IGES/BRep models?
 
-Not yet. At the moment you can only change mesh element sizes, define
-volumes and physical groups, or delete entities. The easiest way to do
-this is to merge the model in a @file{.geo} file using @code{Merge
-"file.step";} and add the relevant scripting command after that. We plan
-to add more advanced editing features in the future (to delete entities,
-to create ``mixed'' surfaces and volumes, to export in @file{.geo}
-format, etc.).
+Yes. With the OpenCASCADE kernel (@code{SetFactory("OpenCASCADE");}),
+load the file (@code{Merge "file.step";} or @code{ShapeFromFile("file.step")})
+and add the relevant scripting commands after that to delete parts,
+create new parts or appy boolean operators.
 
 @item How can I build modular geometries?
 
-Define common geometrical objects and options in separate files,
-reusable in all your problem definition structures. Then Include the
-files in your main project file.
+Define common geometrical objects and options in separate files or using
+@code{Macro}, reusable in all your problem definition structures.
 @end enumerate
 
 @c -------------------------------------------------------------------------
@@ -5571,11 +5578,10 @@ algorithm with smoothing (e.g., with @code{Mesh.Smoothing = 10}).
 
 @item Does Gmsh support curved elements?
 
-Yes, Gmsh can generate both 1st order and 2nd order elements. To
-generate second order elements, click on `High order' in the mesh
-menu after the mesh is completed. To always generate 2nd order
-elements, select `Generate second order elements' in the mesh option
-panel. From the command line, you can also use @code{-order 2}.
+Yes, just choose the appropriate order in the mesh menu after the mesh is
+completed. High order optimization tools are in development and also available
+in the mesh menu. You can select the order on the command line with e.g.
+@code{-order 2}.
 
 @item Can I import an existing surface mesh in Gmsh and use it to build a 3D mesh?
 
@@ -5625,11 +5631,8 @@ the number of elements vs. the quality measure.
 
 @item Why don't the node and/or elememt numbers on the screen match the numbers in the mesh file?
 
-Gmsh reindexes the mesh nodes and elements so that they are
-numbered in a continuous sequence in the output files. The numbers
-displayed on screen after mesh generation thus usually differ from the
-ones saved in the mesh files. To check the actual numbers saved in the
-output file just load the mesh file back using `File->Open'.
+This was a feature of the legacy version 1 and version 2 MSH file formats.
+The MSH format version 4 does not renumber nodes and elements by default.
 @end enumerate
 
 @c -------------------------------------------------------------------------

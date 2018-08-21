@@ -57,9 +57,8 @@ void discreteFace::setBoundEdges(const std::vector<int> &tagEdges,
   }
 }
 
-  // split old GEdge's
+#if defined(HAVE_HXT)
 
-#ifdef HAVE_HXT
 static void splitDiscreteEdge(GEdge *de, MVertex *v, GVertex *gv, int &TAG)
 {
   GVertex *gv0 = de->getBeginVertex();
@@ -87,6 +86,7 @@ static void splitDiscreteEdge(GEdge *de, MVertex *v, GVertex *gv, int &TAG)
   de->model()->add(de_new[0]);
   de->model()->add(de_new[1]);
 }
+
 #endif
 
 void discreteFace::writeGEO(FILE *fp)
@@ -107,7 +107,7 @@ void discreteFace::writeGEO(FILE *fp)
 int discreteFace::trianglePosition(double par1, double par2, double &u,
                                    double &v) const
 {
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT)
   double xy[3] = {par1, par2, 0};
   double uv[3];
   const MElement *e =
@@ -126,7 +126,7 @@ int discreteFace::trianglePosition(double par1, double par2, double &u,
 
 GPoint discreteFace::point(double par1, double par2) const
 {
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT)
   double xy[3] = {par1, par2, 0};
   double uv[3];
   const MElement *e =
@@ -168,7 +168,8 @@ public:
   }
 };
 
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT)
+
 static SVector3 _NORMAL_(const MTriangle &t3d)
 {
   SVector3 v31(t3d.getVertex(2)->x() - t3d.getVertex(0)->x(),
@@ -182,6 +183,7 @@ static SVector3 _NORMAL_(const MTriangle &t3d)
   n.normalize();
   return n;
 }
+
 #endif
 
 bool discreteFace_rtree_callback(std::pair<MTriangle *, MTriangle *> *t,
@@ -214,7 +216,7 @@ bool discreteFace_rtree_callback(std::pair<MTriangle *, MTriangle *> *t,
 GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
                                   SVector3 *normal) const
 {
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT)
   dfWrapper wrapper(queryPoint);
   do {
     wrapper._distance = 1.e22;
@@ -261,7 +263,7 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
 GPoint discreteFace::closestPoint(const SPoint3 &queryPoint,
                                   const double initialGuess[2]) const
 {
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT)
   return closestPoint(queryPoint, 0.0001);
 #else
   Msg::Error("Cannot evaluate closest point on discrete face without HXT");
@@ -271,7 +273,7 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint,
 
 SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface) const
 {
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT)
   GPoint gp = closestPoint(p, 0.0001);
   return SPoint2(gp.u(), gp.v());
 #else
@@ -282,7 +284,7 @@ SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface) const
 
 SVector3 discreteFace::normal(const SPoint2 &param) const
 {
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT)
   MElement *e = _parametrizations[_current_parametrization].oct->find(
     param.x(), param.y(), 0.0);
   if(!e) {
@@ -312,7 +314,7 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 
 Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 {
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT)
   MElement *e = _parametrizations[_current_parametrization].oct->find(
     param.x(), param.y(), 0.0);
   if(!e) {
@@ -372,8 +374,9 @@ void discreteFace::secondDer(const SPoint2 &param, SVector3 &dudu,
 
 void discreteFace::createGeometry()
 {
+#if defined(HAVE_HXT)
+  if(_parametrizations.size()) return;
   checkAndFixOrientation();
-#ifdef HAVE_HXT
   HXTStatus s = reparametrize_through_hxt();
   if(s != HXT_STATUS_OK) {
     Msg::Error("Impossible to create the geometry of discrete surface %d",
@@ -472,7 +475,7 @@ void discreteFace::checkAndFixOrientation()
 
 void discreteFace::mesh(bool verbose)
 {
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT)
   if(_parametrizations.empty()) return;
 
   std::vector<MTriangle *> _t;
@@ -506,7 +509,8 @@ void discreteFace::mesh(bool verbose)
 #endif
 }
 
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT)
+
 HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm, std::map<MVertex *, int> &v2c,
                    std::vector<MVertex *> &c2v)
 {
@@ -553,10 +557,11 @@ HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm, std::map<MVertex *, int> &v2c,
   *pm = m;
   return HXT_STATUS_OK;
 }
+
 #endif
 
-#if 0
-// create a list of internal edges
+#if 0 // unused for now:
+
 static void eraseEdge(std::multimap<MVertex*,MVertex*> &conn, MVertex *v1, MVertex *v2)
 {
   std::multimap<MVertex*,MVertex*>::iterator it  = conn.lower_bound(v1);
@@ -568,9 +573,7 @@ static void eraseEdge(std::multimap<MVertex*,MVertex*> &conn, MVertex *v1, MVert
     if (it->second == v1){conn.erase(it);break;}
   }
 }
-#endif
 
-#if 0
 static void splitInternalEdges(std::vector<MEdge> &e, int ITH,
                                std::vector<std::vector<MVertex*> >&eds)
 {
@@ -662,6 +665,7 @@ static void splitInternalEdges(std::vector<MEdge> &e, int ITH,
   fprintf(f,"};\n");
   fclose(f);
 }
+
 #endif
 
 GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
@@ -669,7 +673,7 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
                                             const SVector3 &p, const double &R,
                                             double uv[2])
 {
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT)
   MTriangle *t2d =
     (MTriangle *)_parametrizations[_current_parametrization].oct->find(
       uv[0], uv[1], 0.0);
@@ -787,7 +791,7 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
   return pp;
 }
 
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT)
 
 static void existingEdges(GFace *gf, std::map<MEdge, GEdge *, Less_Edge> &edges)
 {
@@ -1046,7 +1050,7 @@ bool discreteFace::compute_topology_of_partition(
     }
   }
 
-    // EMBEDDED STUFF
+  // EMBEDDED STUFF
 #if 0
   for (size_t i = 0; i < _parametrizations.size(); i++){
     std::vector<std::vector<MVertex*> >eds;

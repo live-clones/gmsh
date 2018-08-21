@@ -1,8 +1,8 @@
-General.MeshDiscrete=1 ;
 
 // FIXME: re-add this once we have a good reparam
 
 //Merge "sphere.stl";
+//CreateGeometry;
 //out[] = Extrude{
 // Surface{1}; Layers{5, 0.1}; Recombine;
 //};

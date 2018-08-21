@@ -539,8 +539,6 @@ int GModel::_readMSH3(const std::string &name)
   else
     _storeVerticesInEntities(_vertexMapCache);
 
-  _createGeometryOfDiscreteEntities();
-
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
     _storeParentsInSubElements(elements[i]);
 

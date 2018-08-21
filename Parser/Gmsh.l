@@ -164,6 +164,7 @@ CopyOptions             return tCopyOptions;
 Cos                     return tCos;
 Cosh                    return tCosh;
 Cpu                     return tCpu;
+CreateGeometry          return tCreateGeometry;
 CreateTopology          return tCreateTopology;
 CurrentDir              return tCurrentDirectory;
 CurrentDirectory        return tCurrentDirectory;

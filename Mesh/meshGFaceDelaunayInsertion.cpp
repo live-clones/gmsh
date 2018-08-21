@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
+#include <limits>
 #include <set>
 #include <map>
 #include <algorithm>
@@ -858,12 +859,15 @@ int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
   // check that volume is conserved
   double newVolume = 0.0;
   double oldVolume = 0.0;
+  double newMinQuality = 2.0;
+  double oldMinQuality = 2.0;
 
   // TODO C++11 std::accumulate with lambda
   std::list<MTri3 *>::iterator ittet = cavity.begin();
   std::list<MTri3 *>::iterator ittete = cavity.end();
   while(ittet != ittete) {
     oldVolume += std::abs(getSurfUV((*ittet)->tri(), data));
+    oldMinQuality = std::min(oldMinQuality, (*ittet)->tri()->gammaShapeMeasure());
     ++ittet;
   }
 
@@ -876,6 +880,11 @@ int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
   std::list<edgeXface>::iterator it = shell.begin();
 
   bool onePointIsTooClose = false;
+  double lcMin = std::numeric_limits<double>::infinity();
+  double lcBGMMin = std::numeric_limits<double>::infinity();
+  int vIndex = data.getIndex(v);
+  double lcVertex = data.vSizes[vIndex];
+  double lcBGMVertex = data.vSizesBGM[vIndex];
   while(it != shell.end()) {
     MVertex *v0, *v1;
     if(it->ori > 0) {
@@ -898,6 +907,9 @@ int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
       ONE_THIRD * (data.vSizesBGM[index0] + data.vSizesBGM[index1] +
                    data.vSizesBGM[index2]);
     double LL = Extend1dMeshIn2dSurfaces() ? std::min(lc, lcBGM) : lcBGM;
+
+    lcMin = std::min(lcMin, std::min(data.vSizes[index0], data.vSizes[index1]));
+    lcBGMMin = std::min(lcBGMMin, std::min(data.vSizesBGM[index0], data.vSizesBGM[index1]));
 
     MTri3 *t4 = new MTri3(t, LL, 0, &data, gf);
 
@@ -936,11 +948,31 @@ int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
     if(ss < 1.e-25) ss = 1.e22;
 
     newVolume += ss;
+    newMinQuality = std::min(newMinQuality, t4->tri()->gammaShapeMeasure());
 
     ++it;
   }
 
-  if(std::abs(oldVolume - newVolume) < EPS * oldVolume && !onePointIsTooClose) {
+  double LLMin = Extend1dMeshIn2dSurfaces() ? std::min(lcMin, lcBGMMin) : lcBGMMin;
+  double LLVertex = Extend1dMeshIn2dSurfaces() ? std::min(lcVertex, lcBGMVertex) : lcBGMVertex;
+  bool refinementRequired = false;
+  if (LLVertex < 0.7 * LLMin)
+  {
+    refinementRequired = true;
+  }
+
+  // For adding a point we require that
+  // - the volume (or rather area) remains the same after addition of the point
+  // - the point is not too close to an edge
+  // - plus that at least one of following conditions is satisfied:
+  //   + the cavity contains more than 2 elements
+  //   + or, refinement is required
+  //   + or, the minimum quality improves
+  // With the latter conditions we ensure that a configuration of 2 elements(or 1) is
+  // generally accepted; We only add a point to it if sizing requires so or the quality is
+  // improved by it.Generally for squares and rectangles the quality will not be improved by adding a point.
+  if(std::abs(oldVolume - newVolume) < EPS * oldVolume && !onePointIsTooClose &&
+    (cavity.size() > 2 || refinementRequired || newMinQuality > oldMinQuality + 1e-8)) {
     connectTris(new_cavity.begin(), new_cavity.end(), conn);
     //    printf("%d %d\n",shell.size(),cavity.size());
     // 30 % of the time is spent here !!!
