@@ -377,6 +377,7 @@ doc_official_release:
     - make doc
     - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
     - ssh -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa geuzaine@gmsh.info 'cd .wwwgmsh && tar zxvf doc.tgz'
+    - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ../doc/gmsh.html geuzaine@gmsh.info:.wwwgmsh/
   tags:
     - linux64
     - official
