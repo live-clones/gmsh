@@ -2059,67 +2059,73 @@ void GFace::removeElement(int type, MElement *e)
 
 bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
 {
-  if(triangles.front()->getTypeForMSH() == elementType) {
-    if(ordering.size() != triangles.size()) return false;
+  if(triangles.size() != 0){
+    if(triangles.front()->getTypeForMSH() == elementType) {
+      if(ordering.size() != triangles.size()) return false;
 
-    for(std::vector<int>::const_iterator it = ordering.begin();
-        it != ordering.end(); ++it) {
-      if(*it < 0 || *it >= static_cast<int>(triangles.size())) return false;
-    }
+      for(std::vector<int>::const_iterator it = ordering.begin();
+          it != ordering.end(); ++it) {
+        if(*it < 0 || *it >= static_cast<int>(triangles.size())) return false;
+      }
 
-    std::vector<MTriangle *> newTrianglesOrder(triangles.size());
-    for(unsigned int i = 0; i < ordering.size(); i++) {
-      newTrianglesOrder[i] = triangles[ordering[i]];
-    }
+      std::vector<MTriangle *> newTrianglesOrder(triangles.size());
+      for(unsigned int i = 0; i < ordering.size(); i++) {
+        newTrianglesOrder[i] = triangles[ordering[i]];
+      }
 #if __cplusplus >= 201103L
-    triangles = std::move(newTrianglesOrder);
+      triangles = std::move(newTrianglesOrder);
 #else
-    triangles = newTrianglesOrder;
+      triangles = newTrianglesOrder;
 #endif
 
-    return true;
+      return true;
+    }
   }
 
-  if(quadrangles.front()->getTypeForMSH() == elementType) {
-    if(ordering.size() != quadrangles.size()) return false;
+  if(quadrangles.size() != 0){
+    if(quadrangles.front()->getTypeForMSH() == elementType) {
+      if(ordering.size() != quadrangles.size()) return false;
 
-    for(std::vector<int>::const_iterator it = ordering.begin();
-        it != ordering.end(); ++it) {
-      if(*it < 0 || *it >= static_cast<int>(quadrangles.size())) return false;
-    }
+      for(std::vector<int>::const_iterator it = ordering.begin();
+          it != ordering.end(); ++it) {
+        if(*it < 0 || *it >= static_cast<int>(quadrangles.size())) return false;
+      }
 
-    std::vector<MQuadrangle *> newQuadranglesOrder(quadrangles.size());
-    for(unsigned int i = 0; i < ordering.size(); i++) {
-      newQuadranglesOrder[i] = quadrangles[ordering[i]];
-    }
+      std::vector<MQuadrangle *> newQuadranglesOrder(quadrangles.size());
+      for(unsigned int i = 0; i < ordering.size(); i++) {
+        newQuadranglesOrder[i] = quadrangles[ordering[i]];
+      }
 #if __cplusplus >= 201103L
-    quadrangles = std::move(newQuadranglesOrder);
+      quadrangles = std::move(newQuadranglesOrder);
 #else
-    quadrangles = newQuadranglesOrder;
+      quadrangles = newQuadranglesOrder;
 #endif
 
-    return true;
+      return true;
+    }
   }
 
-  if(polygons.front()->getTypeForMSH() == elementType) {
-    if(ordering.size() != polygons.size()) return false;
+  if(polygons.size() != 0){
+    if(polygons.front()->getTypeForMSH() == elementType) {
+      if(ordering.size() != polygons.size()) return false;
 
-    for(std::vector<int>::const_iterator it = ordering.begin();
-        it != ordering.end(); ++it) {
-      if(*it < 0 || *it >= static_cast<int>(polygons.size())) return false;
-    }
+      for(std::vector<int>::const_iterator it = ordering.begin();
+          it != ordering.end(); ++it) {
+        if(*it < 0 || *it >= static_cast<int>(polygons.size())) return false;
+      }
 
-    std::vector<MPolygon *> newPolygonsOrder(polygons.size());
-    for(unsigned int i = 0; i < ordering.size(); i++) {
-      newPolygonsOrder[i] = polygons[ordering[i]];
-    }
+      std::vector<MPolygon *> newPolygonsOrder(polygons.size());
+      for(unsigned int i = 0; i < ordering.size(); i++) {
+        newPolygonsOrder[i] = polygons[ordering[i]];
+      }
 #if __cplusplus >= 201103L
-    polygons = std::move(newPolygonsOrder);
+      polygons = std::move(newPolygonsOrder);
 #else
-    polygons = newPolygonsOrder;
+      polygons = newPolygonsOrder;
 #endif
 
-    return true;
+      return true;
+    }
   }
 
   return false;

@@ -182,26 +182,29 @@ void GVertex::removeElement(int type, MElement *e)
 
 bool GVertex::reorder(const int elementType, const std::vector<int> &ordering)
 {
-  if(points.front()->getTypeForMSH() == elementType) {
-    if(ordering.size() != points.size()) return false;
+  if(points.size() != 0){
+    if(points.front()->getTypeForMSH() == elementType) {
+      if(ordering.size() != points.size()) return false;
 
-    for(std::vector<int>::const_iterator it = ordering.begin();
-        it != ordering.end(); ++it) {
-      if(*it < 0 || *it >= static_cast<int>(points.size())) return false;
-    }
+      for(std::vector<int>::const_iterator it = ordering.begin();
+          it != ordering.end(); ++it) {
+        if(*it < 0 || *it >= static_cast<int>(points.size())) return false;
+      }
 
-    std::vector<MPoint *> newPointsOrder(points.size());
-    for(unsigned int i = 0; i < ordering.size(); i++) {
-      newPointsOrder[i] = points[ordering[i]];
-    }
+      std::vector<MPoint *> newPointsOrder(points.size());
+      for(unsigned int i = 0; i < ordering.size(); i++) {
+        newPointsOrder[i] = points[ordering[i]];
+      }
 #if __cplusplus >= 201103L
-    points = std::move(newPointsOrder);
+      points = std::move(newPointsOrder);
 #else
-    points = newPointsOrder;
+      points = newPointsOrder;
 #endif
 
-    return true;
+      return true;
+    }
   }
 
   return false;
+  
 }

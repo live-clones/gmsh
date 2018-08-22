@@ -759,29 +759,33 @@ void GEdge::mesh(bool verbose)
 
 bool GEdge::reorder(const int elementType, const std::vector<int> &ordering)
 {
-  if(lines.front()->getTypeForMSH() != elementType) {
-    return false;
-  }
+  if(lines.size() != 0){
+    if(lines.front()->getTypeForMSH() != elementType) {
+      return false;
+    }
 
-  if(ordering.size() != lines.size()) return false;
+    if(ordering.size() != lines.size()) return false;
 
-  for(std::vector<int>::const_iterator it = ordering.begin();
-      it != ordering.end(); ++it) {
-    if(*it < 0 || *it >= static_cast<int>(lines.size())) return false;
-  }
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it) {
+      if(*it < 0 || *it >= static_cast<int>(lines.size())) return false;
+    }
 
-  std::vector<MLine *> newLinesOrder(lines.size());
-  for(unsigned int i = 0; i < ordering.size(); i++) {
-    newLinesOrder[i] = lines[ordering[i]];
-  }
+    std::vector<MLine *> newLinesOrder(lines.size());
+    for(unsigned int i = 0; i < ordering.size(); i++) {
+      newLinesOrder[i] = lines[ordering[i]];
+    }
 
 #if __cplusplus >= 201103L
-  lines = std::move(newLinesOrder);
+    lines = std::move(newLinesOrder);
 #else
-  lines = newLinesOrder;
+    lines = newLinesOrder;
 #endif
 
-  return true;
+    return true;
+  }
+  
+  return false;
 }
 
 std::vector<GVertex *> GEdge::vertices() const
