@@ -34,6 +34,24 @@ static int N_SEARCH;
 static double DT_INSERT_VERTEX;
 int MTri3::radiusNorm = 2;
 
+
+void getDegeneratedVertices (GFace *gf, std::set<GEntity*> & degenerated){
+
+  degenerated.clear();
+  const std::vector<GEdge *> &ed = gf->edges();
+  for (size_t i=0;i<ed.size();i++){
+    GEdge *e = ed[i];
+    if (e->getBeginVertex() == e->getEndVertex()){
+      if (e->geomType() == GEntity::Unknown){
+	degenerated.insert (e->getBeginVertex());
+	//	printf("Edge %d with type %d\n",e->tag(),e->geomType());
+      }
+    }
+  }
+
+}
+
+
 static inline bool intersection_segments_2(double *p1, double *p2, double *q1,
                                            double *q2)
 {
@@ -47,7 +65,7 @@ static inline bool intersection_segments_2(double *p1, double *p2, double *q1,
 }
 
 template <class ITERATOR>
-void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data)
+void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data, GFace *gf = NULL, std::set<GEntity*> *degenerated = NULL)
 {
   FILE *ff = Fopen(name, "w");
   if(!ff) {
@@ -55,33 +73,111 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data)
     return;
   }
   fprintf(ff, "View\"test\"{\n");
-  while(it != end) {
-    MTri3 *worst = *it;
-    if(!worst->isDeleted()) {
-      if(data)
-        fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n",
-                data->Us[data->getIndex((worst)->tri()->getVertex(0))],
-                data->Vs[data->getIndex((worst)->tri()->getVertex(0))], 0.0,
-                data->Us[data->getIndex((worst)->tri()->getVertex(1))],
-                data->Vs[data->getIndex((worst)->tri()->getVertex(1))], 0.0,
-                data->Us[data->getIndex((worst)->tri()->getVertex(2))],
-                data->Vs[data->getIndex((worst)->tri()->getVertex(2))], 0.0,
-                (worst)->tri()->getVertex(0)->getNum(),
-                (worst)->tri()->getVertex(1)->getNum(),
-                (worst)->tri()->getVertex(2)->getNum());
-      else
-        fprintf(
-          ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n",
-          (worst)->tri()->getVertex(0)->x(), (worst)->tri()->getVertex(0)->y(),
-          (worst)->tri()->getVertex(0)->z(), (worst)->tri()->getVertex(1)->x(),
-          (worst)->tri()->getVertex(1)->y(), (worst)->tri()->getVertex(1)->z(),
-          (worst)->tri()->getVertex(2)->x(), (worst)->tri()->getVertex(2)->y(),
-          (worst)->tri()->getVertex(2)->z(),
-          (worst)->tri()->getVertex(0)->getNum(),
-          (worst)->tri()->getVertex(1)->getNum(),
-          (worst)->tri()->getVertex(2)->getNum());
+
+  if (data && gf && degenerated){
+    const int N = 100;
+    while(it != end) {
+      MTri3 *worst = *it;
+      if(!worst->isDeleted()) {
+	for (int i=0;i<3;i++){
+	  int whatever =
+	    (degenerated -> find ( (worst)->tri()->getVertex(i)->onWhat() ) != degenerated->end())
+	    + (degenerated -> find ( (worst)->tri()->getVertex((i+1)%3)->onWhat() ) != degenerated->end());
+	  if (whatever == 1){
+	    double u1 = data->Us[data->getIndex((worst)->tri()->getVertex(i))];
+	    double u2 = data->Us[data->getIndex((worst)->tri()->getVertex((i+1)%3))];
+	    double v1 = data->Vs[data->getIndex((worst)->tri()->getVertex(i))];
+	    double v2 = data->Vs[data->getIndex((worst)->tri()->getVertex((i+1)%3))];
+	    GPoint p_prec;
+	    for (int j=0;j<N;j++){
+	      double t = (double) j / (N-1);
+	      double u = u1 + t * (u2-u1);
+	      double v = v1 + t * (v2-v1);
+	      GPoint p = gf->point(SPoint2(u,v));
+	      if (j){
+		fprintf(ff,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p_prec.x(),p_prec.y(),p_prec.z(),
+			p.x(),p.y(),p.z());
+	      }
+	      p_prec = p;
+	    }
+	  }
+	}
+      }
+      ++it;
     }
-    ++it;
+  }
+  else {
+    while(it != end) {
+      MTri3 *worst = *it;
+      if(!worst->isDeleted()) {
+	if(data)
+	  {
+	    double u1 = data->Us[data->getIndex((worst)->tri()->getVertex(0))];
+	    double v1 = data->Vs[data->getIndex((worst)->tri()->getVertex(0))];
+	    double u2 = data->Us[data->getIndex((worst)->tri()->getVertex(1))];
+	    double v2 = data->Vs[data->getIndex((worst)->tri()->getVertex(1))];
+	    double u3 = data->Us[data->getIndex((worst)->tri()->getVertex(2))];
+	    double v3 = data->Vs[data->getIndex((worst)->tri()->getVertex(2))];
+
+	    if (degenerated){
+	      bool deg[3];
+	      deg[0] = degenerated -> find ( (worst)->tri()->getVertex(0)->onWhat() ) != degenerated->end();
+	      deg[1] = degenerated -> find ( (worst)->tri()->getVertex(1)->onWhat() ) != degenerated->end();
+	      deg[2] = degenerated -> find ( (worst)->tri()->getVertex(2)->onWhat() ) != degenerated->end();
+	      if (deg[0] && !deg[1] && !deg[2]){
+		fprintf(ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d,%d};\n",
+			u3,v1,0.,u2,v1,0.,u2,v2,0.,u3,v3,0.,
+			(worst)->tri()->getVertex(0)->getNum(),
+			(worst)->tri()->getVertex(0)->getNum(),
+			(worst)->tri()->getVertex(1)->getNum(),
+			(worst)->tri()->getVertex(2)->getNum());		
+	      }
+	      else if (!deg[0] && deg[1] && !deg[2]){
+		fprintf(ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d,%d};\n",
+			u1,v2,0.,u3,v2,0.,u3,v3,0.,u1,v1,0.,
+			(worst)->tri()->getVertex(1)->getNum(),
+			(worst)->tri()->getVertex(1)->getNum(),
+			(worst)->tri()->getVertex(2)->getNum(),
+			(worst)->tri()->getVertex(0)->getNum());		
+	      }
+	      else if (!deg[0] && !deg[1] && deg[2]){
+		fprintf(ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d,%d};\n",
+			u2,v3,0.,u1,v3,0.,u1,v1,0.,u2,v2,0.,
+			(worst)->tri()->getVertex(2)->getNum(),
+			(worst)->tri()->getVertex(2)->getNum(),
+			(worst)->tri()->getVertex(0)->getNum(),
+			(worst)->tri()->getVertex(1)->getNum());		
+	      }
+	      else if (!deg[0] && !deg[1] && !deg[2]){
+		fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n",
+			u1,v1,0.,u2,v2,0.,u3,v3,0.,
+			(worst)->tri()->getVertex(0)->getNum(),
+			(worst)->tri()->getVertex(1)->getNum(),
+			(worst)->tri()->getVertex(2)->getNum());
+	      }
+	    }	    
+	    else {
+	      fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n",
+		      u1,v1,0.,u2,v2,0.,u3,v3,0.,
+		      (worst)->tri()->getVertex(0)->getNum(),
+		      (worst)->tri()->getVertex(1)->getNum(),
+		      (worst)->tri()->getVertex(2)->getNum());
+	    }
+	  }
+	else
+	  fprintf(
+		  ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n",
+		  (worst)->tri()->getVertex(0)->x(), (worst)->tri()->getVertex(0)->y(),
+		  (worst)->tri()->getVertex(0)->z(), (worst)->tri()->getVertex(1)->x(),
+		  (worst)->tri()->getVertex(1)->y(), (worst)->tri()->getVertex(1)->z(),
+		  (worst)->tri()->getVertex(2)->x(), (worst)->tri()->getVertex(2)->y(),
+		  (worst)->tri()->getVertex(2)->z(),
+		  (worst)->tri()->getVertex(0)->getNum(),
+		  (worst)->tri()->getVertex(1)->getNum(),
+		  (worst)->tri()->getVertex(2)->getNum());
+      }
+      ++it;
+    }
   }
   fprintf(ff, "};\n");
   fclose(ff);
@@ -1450,11 +1546,11 @@ bool optimalPointFrontalB(GFace *gf, MTri3 *worst, int active_edge,
   surfaceFunctorGFace ss(gf);
 
   if(intersectCurveSurface(cc, ss, uvt, d * 1.e-8)) {
-    if(gf->containsParam(SPoint2(uvt[0], uvt[1]))) {
+    ///    if(gf->containsParam(SPoint2(uvt[0], uvt[1]))) {
       newPoint[0] = uvt[0];
       newPoint[1] = uvt[1];
       return true;
-    }
+      ///    }
   }
 
   return true;
@@ -1473,7 +1569,10 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   //  if (gf->isSphere(r,c)){
   //    testStarShapeness = false;
   //  }
+  std::set<GEntity*> degenerated;
+  getDegeneratedVertices (gf,degenerated);
 
+  
   buildMeshGenerationDataStructures(gf, AllTris, DATA);
 
   // delaunise the initial mesh
@@ -1534,11 +1633,15 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   }
 
   //  nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
-  // char name[245];
-  // sprintf(name, "delFrontal_GFace_%d.pos", gf->tag());
-  // _printTris(name, AllTris.begin(), AllTris.end(), &DATA);
-  // sprintf(name, "delFrontal_GFace_%d_Real.pos", gf->tag());
-  // _printTris(name, AllTris.begin(), AllTris.end(), NULL);
+  //   char name[245];
+  //   sprintf(name, "delFrontal_GFace_%d.pos", gf->tag());
+  //   _printTris(name, AllTris.begin(), AllTris.end(), &DATA);
+  //   sprintf(name, "delFrontal_GFace_NEW_%d.pos", gf->tag());
+  //   _printTris(name, AllTris.begin(), AllTris.end(), &DATA,NULL,&degenerated);
+  //   sprintf(name, "delFrontal_GFace_%d_Real.pos", gf->tag());
+  //   _printTris(name, AllTris.begin(), AllTris.end(), NULL);
+  //   sprintf(name, "delFrontal_GFace_%d_Real_Curved.pos", gf->tag());
+  //   _printTris(name, AllTris.begin(), AllTris.end(), &DATA,gf,&degenerated);
   // sprintf(name,"delFrontal_GFace_%d_Layer_Real%d.pos",gf->tag(),ITERATION);
   // _printTris (name, AllTris.begin(), AllTris.end(),NULL);
   // sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);

@@ -129,12 +129,16 @@ bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
   return true;
 }
 
-void trueBoundary(const char *iii, GFace *gf, std::vector<SPoint2> &bnd)
+void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug)
 {
-  // FILE* view_t = Fopen(iii,"w");
-  // fprintf(view_t,"View \"True Boundary\"{\n");
+  FILE* view_t;
+  if (debug){
+    char name[245];
+    sprintf(name, "trueBoundary%d.pos", gf->tag());
+    view_t = Fopen(name,"w");
+    fprintf(view_t,"View \"True Boundary\"{\n");
+  }
   std::vector<GEdge *> edg = gf->edges();
-
   std::set<GEdge *> edges(edg.begin(), edg.end());
 
   for(std::set<GEdge *>::iterator it = edges.begin(); it != edges.end(); ++it) {
@@ -149,16 +153,20 @@ void trueBoundary(const char *iii, GFace *gf, std::vector<SPoint2> &bnd)
         double xi = r.low() + (r.high() - r.low()) * t;
         p[k] = ge->reparamOnFace(gf, xi, i);
         if(k > 0) {
-          // fprintf(view_t,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p[k-1].x(),p[k-1].y(),0.0,
-          //         p[k].x(),p[k].y(),0.0);
+          if (debug){
+	    fprintf(view_t,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p[k-1].x(),p[k-1].y(),0.0,
+		    p[k].x(),p[k].y(),0.0);
+	  }
           bnd.push_back(p[k - 1]);
           bnd.push_back(p[k]);
         }
       }
     }
   }
-  // fprintf(view_t,"};\n");
-  // fclose(view_t);
+  if (debug){
+   fprintf(view_t,"};\n");
+   fclose(view_t);
+  }
 }
 
 static void computeElementShapes(GFace *gf, double &worst, double &avg,
@@ -1968,10 +1976,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
 
   std::map<BDS_Point *, MVertex *, PointLessThan> recoverMap;
 
-  char name[245];
-  sprintf(name, "trueBoundary%d.pos", gf->tag());
   std::vector<SPoint2> true_boundary;
-  trueBoundary(name, gf, true_boundary);
+  trueBoundary(gf, true_boundary, debug);
 
   Range<double> rangeU = gf->parBounds(0);
   Range<double> rangeV = gf->parBounds(1);
@@ -2829,9 +2835,14 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   bool singularEdges = false;
   std::vector<GEdge *>::const_iterator ite = gf->edges().begin();
+
   while(ite != gf->edges().end()) {
     if((*ite)->isSeam(gf)) singularEdges = true;
-    if((*ite)->isMeshDegenerated()) singularEdges = true;
+    if((*ite)->getBeginVertex() == (*ite)->getEndVertex()){
+      if ((*ite)->geomType() == GEntity::Unknown){
+	//	singularEdges = true;
+      }
+    }
     ite++;
   }
 

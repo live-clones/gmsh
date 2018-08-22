@@ -425,22 +425,7 @@ void add_compound(const std::string &fileName, const std::string &type,
                   const std::vector<int> &l)
 {
   std::ostringstream sstream;
-  if(SplitFileName(fileName)[2] != ".geo") sstream << "CreateTopology;\n";
-  if(type == "Surface") {
-    sstream << "Compound " << type << "("
-            << GModel::current()->getMaxElementaryNumber(2) + 1 << ") = {"
-            << vector2String(l) << "};";
-  }
-  else if(type == "Curve") {
-    sstream << "Compound " << type << "("
-            << GModel::current()->getMaxElementaryNumber(1) + 1 << ") = {"
-            << vector2String(l) << "};";
-  }
-  else {
-    sstream << "Compound " << type << "("
-            << GModel::current()->getMaxElementaryNumber(3) + 1 << ") = {"
-            << vector2String(l) << "};";
-  }
+  sstream << "Compound " << type << " {" << vector2String(l) << "};";
   add_infile(sstream.str(), fileName);
 }
 

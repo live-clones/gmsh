@@ -4261,8 +4261,6 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Curve"} ,
   {"0Modules/Mesh/Define/Compound/Surface",
    (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Surface"} ,
-  {"0Modules/Mesh/Define/Compound/Volume",
-   (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Volume"} ,
   {"0Modules/Mesh/Define/Recombine",
    (Fl_Callback *)mesh_define_recombine_cb  } ,
   {"0Modules/Mesh/1D",
