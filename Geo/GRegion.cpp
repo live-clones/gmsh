@@ -588,130 +588,142 @@ void GRegion::removeElement(int type, MElement *e)
 
 bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
 {
-  if(tetrahedra.front()->getTypeForMSH() == elementType) {
-    if(ordering.size() != tetrahedra.size()) return false;
+  if(tetrahedra.size() != 0) {
+    if(tetrahedra.front()->getTypeForMSH() == elementType) {
+      if(ordering.size() != tetrahedra.size()) return false;
 
-    for(std::vector<int>::const_iterator it = ordering.begin();
-        it != ordering.end(); ++it) {
-      if(*it < 0 || *it >= static_cast<int>(tetrahedra.size())) return false;
-    }
+      for(std::vector<int>::const_iterator it = ordering.begin();
+          it != ordering.end(); ++it) {
+        if(*it < 0 || *it >= static_cast<int>(tetrahedra.size())) return false;
+      }
 
-    std::vector<MTetrahedron *> newTetrahedraOrder(tetrahedra.size());
-    for(unsigned int i = 0; i < ordering.size(); i++) {
-      newTetrahedraOrder[i] = tetrahedra[ordering[i]];
-    }
+      std::vector<MTetrahedron *> newTetrahedraOrder(tetrahedra.size());
+      for(unsigned int i = 0; i < ordering.size(); i++) {
+        newTetrahedraOrder[i] = tetrahedra[ordering[i]];
+      }
 #if __cplusplus >= 201103L
-    tetrahedra = std::move(newTetrahedraOrder);
+      tetrahedra = std::move(newTetrahedraOrder);
 #else
-    tetrahedra = newTetrahedraOrder;
+      tetrahedra = newTetrahedraOrder;
 #endif
 
-    return true;
+      return true;
+    }
   }
 
-  if(hexahedra.front()->getTypeForMSH() == elementType) {
-    if(ordering.size() != hexahedra.size()) return false;
+  if(hexahedra.size() != 0) {
+    if(hexahedra.front()->getTypeForMSH() == elementType) {
+      if(ordering.size() != hexahedra.size()) return false;
 
-    for(std::vector<int>::const_iterator it = ordering.begin();
-        it != ordering.end(); ++it) {
-      if(*it < 0 || *it >= static_cast<int>(hexahedra.size())) return false;
-    }
+      for(std::vector<int>::const_iterator it = ordering.begin();
+          it != ordering.end(); ++it) {
+        if(*it < 0 || *it >= static_cast<int>(hexahedra.size())) return false;
+      }
 
-    std::vector<MHexahedron *> newHexahedraOrder(hexahedra.size());
-    for(unsigned int i = 0; i < ordering.size(); i++) {
-      newHexahedraOrder[i] = hexahedra[ordering[i]];
-    }
+      std::vector<MHexahedron *> newHexahedraOrder(hexahedra.size());
+      for(unsigned int i = 0; i < ordering.size(); i++) {
+        newHexahedraOrder[i] = hexahedra[ordering[i]];
+      }
 #if __cplusplus >= 201103L
-    hexahedra = std::move(newHexahedraOrder);
+      hexahedra = std::move(newHexahedraOrder);
 #else
-    hexahedra = newHexahedraOrder;
+      hexahedra = newHexahedraOrder;
 #endif
 
-    return true;
+      return true;
+    }
   }
 
-  if(prisms.front()->getTypeForMSH() == elementType) {
-    if(ordering.size() != prisms.size()) return false;
+  if(prisms.size() != 0) {
+    if(prisms.front()->getTypeForMSH() == elementType) {
+      if(ordering.size() != prisms.size()) return false;
 
-    for(std::vector<int>::const_iterator it = ordering.begin();
-        it != ordering.end(); ++it) {
-      if(*it < 0 || *it >= static_cast<int>(prisms.size())) return false;
-    }
+      for(std::vector<int>::const_iterator it = ordering.begin();
+          it != ordering.end(); ++it) {
+        if(*it < 0 || *it >= static_cast<int>(prisms.size())) return false;
+      }
 
-    std::vector<MPrism *> newPrismsOrder(prisms.size());
-    for(unsigned int i = 0; i < ordering.size(); i++) {
-      newPrismsOrder[i] = prisms[ordering[i]];
-    }
+      std::vector<MPrism *> newPrismsOrder(prisms.size());
+      for(unsigned int i = 0; i < ordering.size(); i++) {
+        newPrismsOrder[i] = prisms[ordering[i]];
+      }
 #if __cplusplus >= 201103L
-    prisms = std::move(newPrismsOrder);
+      prisms = std::move(newPrismsOrder);
 #else
-    prisms = newPrismsOrder;
+      prisms = newPrismsOrder;
 #endif
 
-    return true;
+      return true;
+    }
   }
 
-  if(pyramids.front()->getTypeForMSH() == elementType) {
-    if(ordering.size() != pyramids.size()) return false;
+  if(pyramids.size() != 0) {
+    if(pyramids.front()->getTypeForMSH() == elementType) {
+      if(ordering.size() != pyramids.size()) return false;
 
-    for(std::vector<int>::const_iterator it = ordering.begin();
-        it != ordering.end(); ++it) {
-      if(*it < 0 || *it >= static_cast<int>(pyramids.size())) return false;
-    }
+      for(std::vector<int>::const_iterator it = ordering.begin();
+          it != ordering.end(); ++it) {
+        if(*it < 0 || *it >= static_cast<int>(pyramids.size())) return false;
+      }
 
-    std::vector<MPyramid *> newPyramidsOrder(pyramids.size());
-    for(unsigned int i = 0; i < ordering.size(); i++) {
-      newPyramidsOrder[i] = pyramids[ordering[i]];
-    }
+      std::vector<MPyramid *> newPyramidsOrder(pyramids.size());
+      for(unsigned int i = 0; i < ordering.size(); i++) {
+        newPyramidsOrder[i] = pyramids[ordering[i]];
+      }
 #if __cplusplus >= 201103L
-    pyramids = std::move(newPyramidsOrder);
+      pyramids = std::move(newPyramidsOrder);
 #else
-    pyramids = newPyramidsOrder;
+      pyramids = newPyramidsOrder;
 #endif
 
-    return true;
+      return true;
+    }
   }
 
-  if(polyhedra.front()->getTypeForMSH() == elementType) {
-    if(ordering.size() != polyhedra.size()) return false;
+  if(polyhedra.size() != 0) {
+    if(polyhedra.front()->getTypeForMSH() == elementType) {
+      if(ordering.size() != polyhedra.size()) return false;
 
-    for(std::vector<int>::const_iterator it = ordering.begin();
-        it != ordering.end(); ++it) {
-      if(*it < 0 || *it >= static_cast<int>(polyhedra.size())) return false;
-    }
+      for(std::vector<int>::const_iterator it = ordering.begin();
+          it != ordering.end(); ++it) {
+        if(*it < 0 || *it >= static_cast<int>(polyhedra.size())) return false;
+      }
 
-    std::vector<MPolyhedron *> newPolyhedraOrder(polyhedra.size());
-    for(unsigned int i = 0; i < ordering.size(); i++) {
-      newPolyhedraOrder[i] = polyhedra[ordering[i]];
-    }
+      std::vector<MPolyhedron *> newPolyhedraOrder(polyhedra.size());
+      for(unsigned int i = 0; i < ordering.size(); i++) {
+        newPolyhedraOrder[i] = polyhedra[ordering[i]];
+      }
 #if __cplusplus >= 201103L
-    polyhedra = std::move(newPolyhedraOrder);
+      polyhedra = std::move(newPolyhedraOrder);
 #else
-    polyhedra = newPolyhedraOrder;
+      polyhedra = newPolyhedraOrder;
 #endif
 
-    return true;
+      return true;
+    }
   }
 
-  if(trihedra.front()->getTypeForMSH() == elementType) {
-    if(ordering.size() != trihedra.size()) return false;
+  if(trihedra.size() != 0) {
+    if(trihedra.front()->getTypeForMSH() == elementType) {
+      if(ordering.size() != trihedra.size()) return false;
 
-    for(std::vector<int>::const_iterator it = ordering.begin();
-        it != ordering.end(); ++it) {
-      if(*it < 0 || *it >= static_cast<int>(trihedra.size())) return false;
-    }
+      for(std::vector<int>::const_iterator it = ordering.begin();
+          it != ordering.end(); ++it) {
+        if(*it < 0 || *it >= static_cast<int>(trihedra.size())) return false;
+      }
 
-    std::vector<MTrihedron *> newTrihedraOrder(trihedra.size());
-    for(unsigned int i = 0; i < ordering.size(); i++) {
-      newTrihedraOrder[i] = trihedra[ordering[i]];
-    }
+      std::vector<MTrihedron *> newTrihedraOrder(trihedra.size());
+      for(unsigned int i = 0; i < ordering.size(); i++) {
+        newTrihedraOrder[i] = trihedra[ordering[i]];
+      }
 #if __cplusplus >= 201103L
-    trihedra = std::move(newTrihedraOrder);
+      trihedra = std::move(newTrihedraOrder);
 #else
-    trihedra = newTrihedraOrder;
+      trihedra = newTrihedraOrder;
 #endif
 
-    return true;
+      return true;
+    }
   }
 
   return false;
@@ -750,9 +762,7 @@ static int intersectLineTriangle(double X[3], double Y[3], double Z[3],
   b[1] = P[1] - Y[0];
   b[2] = P[2] - Z[0];
 
-  if(!sys3x3_with_tol(mat, b, res, &det)) {
-    return 0;
-  }
+  if(!sys3x3_with_tol(mat, b, res, &det)) { return 0; }
   if(res[0] >= eps_prec && res[0] <= 1.0 - eps_prec && res[1] >= eps_prec &&
      res[1] <= 1.0 - eps_prec && 1 - res[0] - res[1] >= eps_prec &&
      1 - res[0] - res[1] <= 1.0 - eps_prec) {
@@ -860,9 +870,7 @@ bool GRegion::setOutwardOrientationMeshConstraint()
         break; // negative value means intersection is not "robust"
     }
 
-    if(nb_intersect < 0) {
-      setRand(rrr);
-    }
+    if(nb_intersect < 0) { setRand(rrr); }
     else {
       if(nb_intersect % 2 == 1) {
         // odd nb of intersections: the normal points inside the region
