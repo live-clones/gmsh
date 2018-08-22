@@ -588,7 +588,7 @@ void GRegion::removeElement(int type, MElement *e)
 
 bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
 {
-  if(tetrahedra.size() != 0){
+  if(tetrahedra.size() != 0) {
     if(tetrahedra.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != tetrahedra.size()) return false;
 
@@ -611,7 +611,7 @@ bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
     }
   }
 
-  if(hexahedra.size() != 0){
+  if(hexahedra.size() != 0) {
     if(hexahedra.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != hexahedra.size()) return false;
 
@@ -634,7 +634,7 @@ bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
     }
   }
 
-  if(prisms.size() != 0){
+  if(prisms.size() != 0) {
     if(prisms.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != prisms.size()) return false;
 
@@ -657,7 +657,7 @@ bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
     }
   }
 
-  if(pyramids.size() != 0){
+  if(pyramids.size() != 0) {
     if(pyramids.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != pyramids.size()) return false;
 
@@ -680,7 +680,7 @@ bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
     }
   }
 
-  if(polyhedra.size() != 0){
+  if(polyhedra.size() != 0) {
     if(polyhedra.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != polyhedra.size()) return false;
 
@@ -703,7 +703,7 @@ bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
     }
   }
 
-  if(trihedra.size() != 0){
+  if(trihedra.size() != 0) {
     if(trihedra.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != trihedra.size()) return false;
 
@@ -762,9 +762,7 @@ static int intersectLineTriangle(double X[3], double Y[3], double Z[3],
   b[1] = P[1] - Y[0];
   b[2] = P[2] - Z[0];
 
-  if(!sys3x3_with_tol(mat, b, res, &det)) {
-    return 0;
-  }
+  if(!sys3x3_with_tol(mat, b, res, &det)) { return 0; }
   if(res[0] >= eps_prec && res[0] <= 1.0 - eps_prec && res[1] >= eps_prec &&
      res[1] <= 1.0 - eps_prec && 1 - res[0] - res[1] >= eps_prec &&
      1 - res[0] - res[1] <= 1.0 - eps_prec) {
@@ -872,9 +870,7 @@ bool GRegion::setOutwardOrientationMeshConstraint()
         break; // negative value means intersection is not "robust"
     }
 
-    if(nb_intersect < 0) {
-      setRand(rrr);
-    }
+    if(nb_intersect < 0) { setRand(rrr); }
     else {
       if(nb_intersect % 2 == 1) {
         // odd nb of intersections: the normal points inside the region

@@ -1278,9 +1278,7 @@ bool GFace::buildRepresentationCross(bool force)
       SPoint3 pt(p.x(), p.y(), p.z());
       bool inside =
         (geomType() == Plane) ? containsPoint(pt) : containsParam(uv);
-      if(inside) {
-        cross[dir].back().push_back(pt);
-      }
+      if(inside) { cross[dir].back().push_back(pt); }
       else {
         if(cross[dir].back().size())
           cross[dir].push_back(std::vector<SPoint3>());
@@ -1538,9 +1536,7 @@ void GFace::mesh(bool verbose)
         GFace *gf = (GFace *)_compound[i];
         ok &= (gf->meshStatistics.status == GFace::DONE);
       }
-      if(!ok) {
-        meshStatistics.status = GFace::PENDING;
-      }
+      if(!ok) { meshStatistics.status = GFace::PENDING; }
       else {
         meshCompound(this, verbose);
         meshStatistics.status = GFace::DONE;
@@ -1807,9 +1803,7 @@ struct myLine {
   myLine(myPlane &p1, myPlane &p2)
   {
     t = crossprod(p1.n, p2.n);
-    if(t.norm() == 0.0) {
-      Msg::Error("parallel planes do not intersect");
-    }
+    if(t.norm() == 0.0) { Msg::Error("parallel planes do not intersect"); }
     else
       t.normalize();
     // find a point, assume z = 0
@@ -1961,9 +1955,7 @@ void GFace::setMeshMaster(GFace *master, const std::map<int, int> &edgeCopies)
       SVector3 dist1 = ps - pt;
       SVector3 dist2 = p_ps - p_pt;
       if(dist1.norm() > CTX::instance()->geom.tolerance) {
-        if(dist2.norm() > 1.e-8 * dist1.norm()) {
-          rotation = false;
-        }
+        if(dist2.norm() > 1.e-8 * dist1.norm()) { rotation = false; }
         SVector3 t1 = ps - p_ps;
         SVector3 t2 = pt - p_pt;
         if(t1.norm() > 1.e-8 * dist1.norm()) {
@@ -1971,9 +1963,7 @@ void GFace::setMeshMaster(GFace *master, const std::map<int, int> &edgeCopies)
             ANGLE = myAngle(t1, t2, LINE.t);
           else {
             double ANGLE2 = myAngle(t1, t2, LINE.t);
-            if(fabs(ANGLE2 - ANGLE) > 1.e-8) {
-              rotation = false;
-            }
+            if(fabs(ANGLE2 - ANGLE) > 1.e-8) { rotation = false; }
           }
           count++;
         }
@@ -2059,7 +2049,7 @@ void GFace::removeElement(int type, MElement *e)
 
 bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
 {
-  if(triangles.size() != 0){
+  if(triangles.size() != 0) {
     if(triangles.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != triangles.size()) return false;
 
@@ -2082,7 +2072,7 @@ bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
     }
   }
 
-  if(quadrangles.size() != 0){
+  if(quadrangles.size() != 0) {
     if(quadrangles.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != quadrangles.size()) return false;
 
@@ -2105,7 +2095,7 @@ bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
     }
   }
 
-  if(polygons.size() != 0){
+  if(polygons.size() != 0) {
     if(polygons.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != polygons.size()) return false;
 

@@ -744,9 +744,7 @@ void GEdge::mesh(bool verbose)
         GEdge *ge = (GEdge *)_compound[i];
         ok &= (ge->meshStatistics.status == GEdge::DONE);
       }
-      if(!ok) {
-        meshStatistics.status = GEdge::PENDING;
-      }
+      if(!ok) { meshStatistics.status = GEdge::PENDING; }
       else {
         meshCompound(this);
         meshStatistics.status = GEdge::DONE;
@@ -759,10 +757,8 @@ void GEdge::mesh(bool verbose)
 
 bool GEdge::reorder(const int elementType, const std::vector<int> &ordering)
 {
-  if(lines.size() != 0){
-    if(lines.front()->getTypeForMSH() != elementType) {
-      return false;
-    }
+  if(lines.size() != 0) {
+    if(lines.front()->getTypeForMSH() != elementType) { return false; }
 
     if(ordering.size() != lines.size()) return false;
 
@@ -784,7 +780,7 @@ bool GEdge::reorder(const int elementType, const std::vector<int> &ordering)
 
     return true;
   }
-  
+
   return false;
 }
 

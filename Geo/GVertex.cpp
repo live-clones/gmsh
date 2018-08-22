@@ -182,7 +182,7 @@ void GVertex::removeElement(int type, MElement *e)
 
 bool GVertex::reorder(const int elementType, const std::vector<int> &ordering)
 {
-  if(points.size() != 0){
+  if(points.size() != 0) {
     if(points.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != points.size()) return false;
 
@@ -206,5 +206,4 @@ bool GVertex::reorder(const int elementType, const std::vector<int> &ordering)
   }
 
   return false;
-  
 }
