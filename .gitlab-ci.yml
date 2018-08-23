@@ -6,26 +6,11 @@
 variables:
   EXTRA_OPTION: ""
 
-# -----------------------
-# Builds for all branches
-# -----------------------
+# ----------------------------------------------
+# Continuous integration builds for all branches
+# ----------------------------------------------
 
-linux64_docker_ci:
-  image: onelab/ubuntu16.04
-  script:
-    - mkdir build
-    - cd build
-    - export CXXFLAGS=-Werror
-    - cmake ${EXTRA_OPTION} ..
-    - make -j 4
-    - ctest -j 4 --output-on-failure
-  tags:
-    - linux64
-    - docker
-  except:
-    - tags
-
-linux64_docker_ci_new:
+linux64_ci:
   image: onelab/ubuntu18.04
   script:
     - mkdir build
@@ -39,7 +24,7 @@ linux64_docker_ci_new:
   except:
     - tags
 
-linux64_docker_cxx98_compat_ci:
+linux64_cxx98_compat_ci:
   image: onelab/ubuntu16.04
   script:
     - mkdir build
@@ -53,7 +38,7 @@ linux64_docker_cxx98_compat_ci:
   except:
     - tags
 
-linux64_docker_minimal_ci:
+linux64_minimal_ci:
   image: onelab/ubuntu18.04
   script:
     - mkdir build
