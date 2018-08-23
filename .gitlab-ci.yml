@@ -66,6 +66,8 @@ windows64_ci:
   tags:
     - windows64
     - shared
+  except:
+    - tags
 
 windows64_msvc_ci:
   script:
