@@ -950,17 +950,3 @@ bool nodalBasis::forwardRenumbering(const fullMatrix<double> &nodes, int *renum,
 
   return renum;
 }
-
-inline int nodalBasis::getClosureId(int iFace, int iSign, int iRot) const
-{
-  return iFace + numFaces * (iSign == 1 ? 0 : 1) + 2 * numFaces * iRot;
-}
-
-inline void nodalBasis::breakClosureId(int i, int &iFace, int &iSign,
-                                       int &iRot) const
-{
-  iFace = i % numFaces;
-  i = (i - iFace) / numFaces;
-  iSign = i % 2;
-  iRot = (i - iSign) / 2;
-}
