@@ -834,10 +834,10 @@ static int _getElementary(GEntity *ge)
 int GModel::_writeMSH2(const std::string &name, double version, bool binary,
                        bool saveAll, bool saveParametric, double scalingFactor,
                        int elementStartNum, int saveSinglePartition,
-                       bool multipleView, bool renumberVertices)
+                       bool append, bool renumberVertices)
 {
   FILE *fp;
-  if(multipleView)
+  if(append)
     fp = Fopen(name.c_str(), binary ? "ab" : "a");
   else
     fp = Fopen(name.c_str(), binary ? "wb" : "w");

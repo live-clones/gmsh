@@ -2439,9 +2439,14 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
 }
 
 int GModel::_writeMSH4(const std::string &name, double version, bool binary,
-                       bool saveAll, bool saveParametric, double scalingFactor)
+                       bool saveAll, bool saveParametric, double scalingFactor,
+                       bool append)
 {
-  FILE *fp = Fopen(name.c_str(), binary ? "wb" : "w");
+  FILE *fp = 0;
+  if(append)
+    fp = Fopen(name.c_str(), binary ? "ab" : "a");
+  else
+    fp = Fopen(name.c_str(), binary ? "wb" : "w");
 
   if(!fp) {
     Msg::Error("Unable to open file '%s'", name.c_str());
@@ -2744,7 +2749,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
     }
 
     tmp->_writeMSH4(sstream.str(), version, binary, saveAll, saveParametric,
-                    scalingFactor);
+                    scalingFactor, false);
     tmp->remove();
   }
   delete tmp;

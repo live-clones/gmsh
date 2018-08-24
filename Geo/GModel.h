@@ -54,7 +54,7 @@ private:
   int _writeMSH2(const std::string &name, double version, bool binary,
                  bool saveAll, bool saveParametric, double scalingFactor,
                  int elementStartNum, int saveSinglePartition,
-                 bool multipleView, bool renumberVertices);
+                 bool append, bool renumberVertices);
   int _writePartitionedMSH2(const std::string &baseName, bool binary,
                             bool saveAll, bool saveParametric,
                             double scalingFactor);
@@ -62,13 +62,14 @@ private:
   int _writeMSH3(const std::string &name, double version, bool binary,
                  bool saveAll, bool saveParametric, double scalingFactor,
                  int elementStartNum, int saveSinglePartition,
-                 bool multipleView);
+                 bool append);
   int _writePartitionedMSH3(const std::string &baseName, double version,
                             bool binary, bool saveAll, bool saveParametric,
                             double scalingFactor);
   int _readMSH4(const std::string &name);
   int _writeMSH4(const std::string &name, double version, bool binary,
-                 bool saveAll, bool saveParametric, double scalingFactor);
+                 bool saveAll, bool saveParametric, double scalingFactor,
+                 bool append);
   int _writePartitionedMSH4(const std::string &baseName, double version,
                             bool binary, bool saveAll, bool saveParametric,
                             double scalingFactor);
@@ -654,7 +655,7 @@ public:
                bool binary = false, bool saveAll = false,
                bool saveParametric = false, double scalingFactor = 1.0,
                int elementStartNum = 0, int saveSinglePartition = 0,
-               bool multipleView = false);
+               bool append = false);
   int writePartitionedMSH(const std::string &baseName, double version = 2.2,
                           bool binary = false, bool saveAll = false,
                           bool saveParametric = false,
