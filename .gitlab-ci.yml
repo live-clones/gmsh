@@ -24,20 +24,6 @@ linux64_ci:
   except:
     - tags
 
-linux64_cxx98_compat_ci:
-  image: onelab/ubuntu16.04
-  script:
-    - mkdir build
-    - cd build
-    - export CXXFLAGS=-std=c++98
-    - cmake -DENABLE_CXX11=0 -DENABLE_OCC=0 ${EXTRA_OPTION} ..
-    - make -j 4
-  tags:
-    - linux64
-    - docker
-  except:
-    - tags
-
 linux64_minimal_ci:
   image: onelab/ubuntu18.04
   script:
@@ -57,7 +43,21 @@ linux64_minimal_ci:
   except:
     - tags
 
-windows64_ci:
+linux64_cxx98_compat_ci:
+  image: onelab/ubuntu16.04
+  script:
+    - mkdir build
+    - cd build
+    - export CXXFLAGS=-std=c++98
+    - cmake -DENABLE_CXX11=0 -DENABLE_OCC=0 ${EXTRA_OPTION} ..
+    - make -j 4
+  tags:
+    - linux64
+    - docker
+  except:
+    - tags
+
+.windows64_ci:
   script:
     - md build
     - cd build
@@ -73,11 +73,11 @@ windows64_msvc_ci:
   script:
     - md build
     - cd build
-    - cmake -DENABLE_HXT=0 ${EXTRA_OPTION} ..
+    - cmake -DENABLE_BLAS_LAPACK=0 -DENABLE_HXT=0 ${EXTRA_OPTION} ..
     - msbuild package.vcxproj
   tags:
     - windows64
-    - official
+    - shared
   except:
     - tags
 
