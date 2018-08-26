@@ -339,9 +339,11 @@ namespace onelabUtils {
     onelab::server::citer it = onelab::server::instance()->findClient("Gmsh");
     if(it == onelab::server::instance()->lastClient()) return redraw;
 
-    // do nothing in case of a python metamodel
+    // do nothing in case of a metamodel
     std::vector<onelab::number> pn;
     onelab::server::instance()->get(pn, "IsPyMetamodel");
+    if(pn.size() && pn[0].getValue()) return redraw;
+    onelab::server::instance()->get(pn, "IsMetamodel");
     if(pn.size() && pn[0].getValue()) return redraw;
 
     onelab::client *c = *it;
@@ -825,9 +827,16 @@ namespace onelabUtils {
     std::vector<onelab::string> allStrings, persistentStrings;
     onelab::server::instance()->get(allNumbers);
     onelab::server::instance()->get(allStrings);
+    bool ismetamodel = false;
     for(unsigned int i = 0; i < allNumbers.size(); i++) {
       if(allNumbers[i].getAttribute("Persistent") == "1")
         persistentNumbers.push_back(allNumbers[i]);
+      // these 2 should always be persistent
+      if(allNumbers[i].getName() == "IsMetamodel" ||
+         allNumbers[i].getName() == "IsPyMetamodel"){
+        ismetamodel = allNumbers[i].getValue() ? true : false;
+        persistentNumbers.push_back(allNumbers[i]);
+      }
     }
     for(unsigned int i = 0; i < allStrings.size(); i++) {
       if(allStrings[i].getAttribute("Persistent") == "1")
@@ -837,10 +846,12 @@ namespace onelabUtils {
     // clear the db
     onelab::server::instance()->clear();
 
-    // run Gmsh client for non-python metamodels
-    if(runGmshClient && onelab::server::instance()->findClient("Gmsh") !=
-                          onelab::server::instance()->lastClient())
+    // run Gmsh client for non-metamodels (we need to check ismetamodel here
+    // since the db has been cleared and the check cannot work in
+    // runGmshClient!)
+    if(runGmshClient && !ismetamodel){
       onelabUtils::runGmshClient("reset", CTX::instance()->solver.autoMesh);
+    }
 
     for(unsigned int i = 0; i < persistentNumbers.size(); i++) {
       Msg::Debug("Restoring persistent parameter %s",

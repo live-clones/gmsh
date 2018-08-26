@@ -28,6 +28,10 @@ int main(int argc, char **argv)
 
   std::vector<onelab::string> strings;
 
+  // prevent automatic Gmsh model reload & meshing
+  onelab::number n("IsMetamodel", 1);
+  client->set(n);
+
   // try to get the string variable "My string" from the server
   client->get(strings, "My string");
   if(strings.size()){
