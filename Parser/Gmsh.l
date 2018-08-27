@@ -286,6 +286,8 @@ Recursive               return tRecursive;
 RefineMesh              return tRefineMesh;
 RelocateMesh            return tRelocateMesh;
 ReorientMesh            return tReorientMesh;
+RenumberMeshNodes       return tRenumberMeshNodes;
+RenumberMeshElements    return tRenumberMeshElements;
 Return                  return tReturn;
 ReverseMesh             return tReverseMesh;
 Reverse                 return tReverseMesh;

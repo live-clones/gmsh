@@ -588,10 +588,10 @@ namespace gmsh { // Top-level functions
                                     const int tag,
                                     const std::vector<int> & ordering);
 
-      // Renumber the nodes tags in a contiunous sequence.
+      // Renumber the node tags in a contiunous sequence.
       GMSH_API void renumberNodes();
 
-      // Renumber the elements tags in a contiunous sequence.
+      // Renumber the element tags in a contiunous sequence.
       GMSH_API void renumberElements();
 
       // Set the meshes of the entities of dimension `dim' and tag `tags' as

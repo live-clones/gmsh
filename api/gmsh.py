@@ -1696,7 +1696,7 @@ class model:
         @staticmethod
         def renumberNodes():
             """
-            Renumber the nodes tags in a contiunous sequence.
+            Renumber the node tags in a contiunous sequence.
             """
             ierr = c_int()
             lib.gmshModelMeshRenumberNodes(
@@ -1709,7 +1709,7 @@ class model:
         @staticmethod
         def renumberElements():
             """
-            Renumber the elements tags in a contiunous sequence.
+            Renumber the element tags in a contiunous sequence.
             """
             ierr = c_int()
             lib.gmshModelMeshRenumberElements(

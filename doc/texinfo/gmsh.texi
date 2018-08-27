@@ -3034,6 +3034,12 @@ Creates a parametrization for curves and surfaces that do not have one
 (i.e. discrete curves and surfaces represented solely by meshes, without
 an underlying CAD description).
 
+@item RenumberMeshNodes;
+Renumbers the node tags in the current mesh in a contiunous sequence.
+
+@item RenumberMeshElements;
+Renumbers the elements tags in the current mesh in a contiunous sequence.
+
 @item SetPartition @var{expression} @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Sets the partition tag of the mesh elements in the entities in @var{expression-list} to @var{expression}.
 

@@ -1444,7 +1444,7 @@ end
 """
     gmsh.model.mesh.renumberNodes()
 
-Renumber the nodes tags in a contiunous sequence.
+Renumber the node tags in a contiunous sequence.
 """
 function renumberNodes()
     ierr = Ref{Cint}()
@@ -1458,7 +1458,7 @@ end
 """
     gmsh.model.mesh.renumberElements()
 
-Renumber the elements tags in a contiunous sequence.
+Renumber the element tags in a contiunous sequence.
 """
 function renumberElements()
     ierr = Ref{Cint}()
