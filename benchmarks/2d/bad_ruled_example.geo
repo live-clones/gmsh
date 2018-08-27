@@ -8,7 +8,6 @@ Geometry.OldRuledSurface = 1; // old-style OK
 Geometry.Surfaces=1;
 Mesh.SurfaceFaces=1;
 Mesh.RecombinationAlgorithm = 0;
-Mesh.RemeshAlgorithm = 1;
 Mesh.Algorithm=6; // mesh algorithm
 Mesh.Algorithm3D=4; // mesh algorithm
 Geometry.AutoCoherence = 1;
@@ -64,5 +63,3 @@ Line Loop (newll) = {ellip2, botline2, -ellip3};
 loops[] += {newll-2, newll-1};
 Surface (news) = loops[0];
 Surface (news) = loops[1];
-
-
