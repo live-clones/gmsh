@@ -646,7 +646,8 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
         t = _vertexTag.Find(vertex);
         exists = true;
       }
-      t = getMaxTag(0) + 1;
+      else
+        t = getMaxTag(0) + 1;
     }
     else if(count) {
       Msg::Error("Cannot bind multiple points to single tag %d", t);
