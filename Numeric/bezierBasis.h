@@ -160,27 +160,30 @@ private:
 class bezierMemoryPool {
   // This class is to avoid multiple allocation / deallocation during
   // the subdivision algorithm.
+  // Two blocks of different size of memory may be used
 private:
   std::vector<double> _memory;
-  long _sizeBlocks[2];
-  long _sizeBothBlocks; // = sum of two values in _sizeBlocks
-  long _numUsedBlocks[2];
-  long _currentIndexOfSearch[2];
-  long _endOfSearch[2];
+  std::vector<double> _memory2;
+  int _sizeBlocks[2];
+  int _sizeBothBlocks; // = sum of two values in _sizeBlocks
+  int _numUsedBlocks[2];
+  unsigned int _currentIndexOfSearch[2];
+  unsigned int _endOfSearch[2];
   // if a reallocation is performed, the pointers must be updated, we need to
   // know which bezierCoeff have to be updated:
   std::vector<bezierCoeff*> _bezierCoeff[2];
 
 public:
-  bezierMemoryPool() {}
-  ~bezierMemoryPool() {freeMemory();}
+  bezierMemoryPool();
+  ~bezierMemoryPool() {}
 
   // before to be used, the size of the blocks has to be specified
   void setSizeBlocks(int size[2]);
 
-  double* reserveBlock(int num, bezierCoeff *bez); // gives a block of size _sizeBlocks[num]
+  double* giveBlock(int num, bezierCoeff *bez); // gives a block of size _sizeBlocks[num]
   void releaseBlock(double *block, bezierCoeff *bez);
   void freeMemory();
+  double* getTemporaryMemory(int size);
 
 private:
   void _checkEnoughMemory(int num);
@@ -199,6 +202,7 @@ class bezierCoeff : public fullMatrix<double> {
 //  static std::map<int, data1> _triangleSubV;
 
 private :
+  int _numBlockInPool;
   FuncSpaceData _funcSpaceData;
   const bezierBasis *_basis;
   static bezierMemoryPool *_pool;
@@ -209,31 +213,15 @@ private :
 
 public:
   bezierCoeff() {};
-  bezierCoeff(const bezierCoeff &other)
-      : fullMatrix<double>(other.size1(), other.size2(), false),
-        _funcSpaceData(other._funcSpaceData), _basis(other._basis) {};
-  bezierCoeff(FuncSpaceData data)
-      : fullMatrix<double>(BasisFactory::getBezierBasis(data)->getNumCoeff(),
-                           1, false),
-        _funcSpaceData(data), _basis(BasisFactory::getBezierBasis(data)) {};
-  bezierCoeff(FuncSpaceData data, fullMatrix<double> &lagCoeff)
-      : fullMatrix<double>(lagCoeff.size1(), lagCoeff.size2(), false),
-        _funcSpaceData(data), _basis(BasisFactory::getBezierBasis(data))
-  {
-    _basis->matrixLag2Bez2.mult(lagCoeff, *this);
-  };
-  bezierCoeff(FuncSpaceData data, fullVector<double> &lagCoeff)
-      : fullMatrix<double>(lagCoeff.size(), 1, false),
-        _funcSpaceData(data), _basis(BasisFactory::getBezierBasis(data))
-  {
-    fullMatrix<double> prox;
-    prox.setAsProxy(lagCoeff.getDataPtr(), lagCoeff.size(), 1);
-    _basis->matrixLag2Bez2.mult(prox, *this);
-  };
+//  bezierCoeff(const bezierCoeff &other, int num = -1);
+//  bezierCoeff(FuncSpaceData data);
+  bezierCoeff(FuncSpaceData data, fullVector<double> &lagCoeff, int num = -1);
+  bezierCoeff(FuncSpaceData data, fullMatrix<double> &lagCoeff, int num = -1);
+  ~bezierCoeff();
 
-  static void usePool();
-  static bezierMemoryPool* getPool();
+  static void usePool(int size[2]);
   static void releasePool();
+  void updateDataPtr(long diff);
 
   inline int getNumCoeff() {return _basis->getNumCoeff();}
   inline int getNumLagCoeff() {return _basis->getNumLagCoeff();}
