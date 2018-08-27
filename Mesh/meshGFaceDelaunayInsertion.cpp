@@ -1263,7 +1263,7 @@ static bool insertAPoint(GFace *gf,
 
         // Go over its neighbours to check whether they should become active
         for (size_t index = 0; index < 3; index++){
-          const auto pNeighbour = worst->getNeigh(index);
+          MTri3 *pNeighbour = worst->getNeigh(index);  // TODO C++11 use auto
           if (pNeighbour == 0) continue;
           int active_edge;
           if (isActive(pNeighbour, LIMIT_, active_edge) && pNeighbour->getRadius() > LIMIT_){
