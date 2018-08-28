@@ -130,7 +130,7 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data, GFac
 			(worst)->tri()->getVertex(0)->getNum(),
 			(worst)->tri()->getVertex(0)->getNum(),
 			(worst)->tri()->getVertex(1)->getNum(),
-			(worst)->tri()->getVertex(2)->getNum());		
+			(worst)->tri()->getVertex(2)->getNum());
 	      }
 	      else if (!deg[0] && deg[1] && !deg[2]){
 		fprintf(ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d,%d};\n",
@@ -138,7 +138,7 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data, GFac
 			(worst)->tri()->getVertex(1)->getNum(),
 			(worst)->tri()->getVertex(1)->getNum(),
 			(worst)->tri()->getVertex(2)->getNum(),
-			(worst)->tri()->getVertex(0)->getNum());		
+			(worst)->tri()->getVertex(0)->getNum());
 	      }
 	      else if (!deg[0] && !deg[1] && deg[2]){
 		fprintf(ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d,%d};\n",
@@ -146,7 +146,7 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data, GFac
 			(worst)->tri()->getVertex(2)->getNum(),
 			(worst)->tri()->getVertex(2)->getNum(),
 			(worst)->tri()->getVertex(0)->getNum(),
-			(worst)->tri()->getVertex(1)->getNum());		
+			(worst)->tri()->getVertex(1)->getNum());
 	      }
 	      else if (!deg[0] && !deg[1] && !deg[2]){
 		fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n",
@@ -155,7 +155,7 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data, GFac
 			(worst)->tri()->getVertex(1)->getNum(),
 			(worst)->tri()->getVertex(2)->getNum());
 	      }
-	    }	    
+	    }
 	    else {
 	      fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n",
 		      u1,v1,0.,u2,v2,0.,u3,v3,0.,
@@ -1255,20 +1255,23 @@ static bool insertAPoint(GFace *gf,
 
       AllTris.erase(it);
 
-      // As in case of result = -6 it might happen that inside we would like to refine the mesh,
-      // we should not force the radius to -1, but pretend that the radius is good enough (less than LIMIT_ but higher than 0).
+      // As in case of result = -6 it might happen that inside we would like to
+      // refine the mesh, we should not force the radius to -1, but pretend that
+      // the radius is good enough (less than LIMIT_ but higher than 0).
       if (result == -6){
-        Msg::Info("Forcing radius to %g\n", 0.5 * LIMIT_);
+        Msg::Debug("Forcing radius to %g", 0.5 * LIMIT_);
         worst->forceRadius(0.5 * LIMIT_);
-
-        // Go over its neighbours to check whether they should become active
-        for (size_t index = 0; index < 3; index++){
-          MTri3 *pNeighbour = worst->getNeigh(index);  // TODO C++11 use auto
-          if (pNeighbour == 0) continue;
-          int active_edge;
-          if (isActive(pNeighbour, LIMIT_, active_edge) && pNeighbour->getRadius() > LIMIT_){
-            if ((*ActiveTris).find(pNeighbour) == (*ActiveTris).end())
-              (*ActiveTris).insert(pNeighbour);
+        if(ActiveTris){
+          // Go over its neighbours to check whether they should become active
+          for (size_t index = 0; index < 3; index++){
+            MTri3 *pNeighbour = worst->getNeigh(index); // TODO C++11 use auto
+            if (pNeighbour == 0) continue;
+            int active_edge;
+            if(isActive(pNeighbour, LIMIT_, active_edge) &&
+               pNeighbour->getRadius() > LIMIT_){
+              if((*ActiveTris).find(pNeighbour) == (*ActiveTris).end())
+                (*ActiveTris).insert(pNeighbour);
+            }
           }
         }
       }
@@ -1597,7 +1600,7 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   std::set<GEntity*> degenerated;
   getDegeneratedVertices (gf,degenerated);
 
-  
+
   buildMeshGenerationDataStructures(gf, AllTris, DATA);
 
   // delaunise the initial mesh
