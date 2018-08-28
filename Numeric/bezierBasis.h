@@ -160,36 +160,32 @@ private:
 class bezierMemoryPool {
   // This class is to avoid multiple allocation / deallocation during
   // the subdivision algorithm.
-  // Two blocks of different size of memory may be used
 private:
   std::vector<double> _memory;
-  std::vector<double> _memory2;
-  int _sizeBlocks[2];
-  int _sizeBothBlocks; // = sum of two values in _sizeBlocks
-  int _numUsedBlocks[2];
-  unsigned int _currentIndexOfSearch[2];
-  unsigned int _endOfSearch[2];
+  int _sizeBlocks;
+  int _numUsedBlocks;
+  unsigned int _currentIndexOfSearch;
+  unsigned int _endOfSearch;
   // if a reallocation is performed, the pointers must be updated, we need to
   // know which bezierCoeff have to be updated:
-  std::vector<bezierCoeff*> _bezierCoeff[2];
+  std::vector<bezierCoeff*> _bezierCoeff;
 
 public:
   bezierMemoryPool();
   ~bezierMemoryPool() {}
 
   // before to be used, the size of the blocks has to be specified
-  void setSizeBlocks(int size[2]);
+  void setSizeBlocks(int size);
 
-  double* giveBlock(int num, bezierCoeff *bez); // gives a block of size _sizeBlocks[num]
+  double* giveBlock(bezierCoeff *bez); // gives a block of size _sizeBlocks[num]
   void releaseBlock(double *block, bezierCoeff *bez);
   void freeMemory();
-  double* getTemporaryMemory(int size);
 
 private:
-  void _checkEnoughMemory(int num);
+  void _checkEnoughMemory();
 };
 
-class bezierCoeff : public fullMatrix<double> {
+class bezierCoeff {
   // TODO: test if access would be faster if fullMatrix::operator(int r) was
   // implemented (for fullmatrix with only 1 column)
 //  typedef std::vector<std::pair<int, int> >  data1;
@@ -197,30 +193,32 @@ class bezierCoeff : public fullMatrix<double> {
 //  // map (type, order, num) -> (data1 or data2)
 //  static std::map<int, data1> _triangleSubU;
 //  static std::map<int, data1> _triangleSubV;
-//  static std::map<int, data1> _triangleSubV;
-//  static std::map<int, data1> _triangleSubV;
-//  static std::map<int, data1> _triangleSubV;
 
 private :
-  int _numBlockInPool;
+  int _numPool;
   FuncSpaceData _funcSpaceData;
   const bezierBasis *_basis;
-  static bezierMemoryPool *_pool;
-  // FIXME: not thread safe. We shoud use one pool per thread.
+  bool _own_data; // should data be freed on delete ?
+  int _r, _c; // size of the matrix
+  double *_data; // pointer on the first element
+
+  static bezierMemoryPool *_pool0;
+  static bezierMemoryPool *_pool1;
+  static fullMatrix<double> _sub;
+  // FIXME: not thread safe. We shoud use one pool and one _sub per thread.
   //        The best would be to give the pool to the constructor.
   //        (the pools should be created and deleted e.g. by the plugin
   //        AnalyseCurvedMesh)
 
 public:
   bezierCoeff() {};
-//  bezierCoeff(const bezierCoeff &other, int num = -1);
-//  bezierCoeff(FuncSpaceData data);
+  bezierCoeff(const bezierCoeff &other);
   bezierCoeff(FuncSpaceData data, fullVector<double> &lagCoeff, int num = -1);
   bezierCoeff(FuncSpaceData data, fullMatrix<double> &lagCoeff, int num = -1);
   ~bezierCoeff();
 
-  static void usePool(int size[2]);
-  static void releasePool();
+  static void usePools(int size0, int size1);
+  static void releasePools();
   void updateDataPtr(long diff);
 
   inline int getNumCoeff() {return _basis->getNumCoeff();}
@@ -233,22 +231,34 @@ public:
 
   void subdivide(std::vector<bezierCoeff> &subCoeff);
 
+  inline double operator() (int i, int j) const
+  {
+    return _data[i + _r*j];
+  }
+  inline double &operator() (int i, int j)
+  {
+    return _data[i + _r*j];
+  }
+
 private:
   static void _subdivide(fullMatrix<double> &coeff, int n, int start);
   static void _subdivide(fullMatrix<double> &coeff, int n, int start, int inc);
-  static void _subdivideTriangle(const fullMatrix<double> &coeff, int n,
+  static void _subdivideTriangle(bezierCoeff &coeff, int n,
                                  int start,
                                  std::vector<bezierCoeff> &subCoeff);
-  static void _subdivideTetrahedra(const fullMatrix<double> &coeff, int n,
+  static void _subdivideTetrahedra(bezierCoeff &coeff, int n,
                                    int start,
                                    std::vector<fullMatrix<double> > &subCoeff);
-  static void _copy(const fullMatrix<double> &from, int start, int num,
-                     fullMatrix<double> &to);
-  static void _copyQuad(const fullMatrix<double> &allSub, int starti, int startj,
-                        int n, fullMatrix<double> &sub);
+  static void _subdivideQuadrangle(const bezierCoeff &coeff, int n,
+                                   std::vector<bezierCoeff> &subCoeff);
+  static void _copy(const bezierCoeff &from, int start, int num,
+                    bezierCoeff &to);
+  static void _copyQuad(const fullMatrix<double> &allSub, int starti,
+                        int startj, int n, bezierCoeff &sub);
   inline static int _ij2Index(int i, int j, int n) {
     return i + j*n - j*(j-1)/2;
   }
+
 };
 
 #endif

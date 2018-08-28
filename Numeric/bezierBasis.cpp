@@ -1099,60 +1099,102 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
 }
 
 
-bezierMemoryPool *bezierCoeff::_pool = NULL;
+bezierMemoryPool *bezierCoeff::_pool0 = NULL;
+bezierMemoryPool *bezierCoeff::_pool1 = NULL;
+fullMatrix<double> bezierCoeff::_sub = fullMatrix<double>();
 
 bezierCoeff::bezierCoeff(FuncSpaceData data, fullMatrix<double> &lagCoeff,
                          int num)
-    : _numBlockInPool(num), _funcSpaceData(data),
+    : _numPool(num), _funcSpaceData(data),
       _basis(BasisFactory::getBezierBasis(data))
 {
-  if (_pool) {
-    _r = lagCoeff.size1();
-    _c = lagCoeff.size2();
-    _own_data = false;
-    _data = _pool->giveBlock(_numBlockInPool, this);
+  _r = lagCoeff.size1();
+  _c = lagCoeff.size2();
+  _own_data = false;
+  if (num == 0 && _pool0)
+    _data = _pool0->giveBlock(this);
+  else if (num == 1 && _pool1)
+    _data = _pool1->giveBlock(this);
+  else {
+    _own_data = true;
+    _data = new double[_r * _c];
   }
-  else
-    resize(lagCoeff.size1(), lagCoeff.size1(), false);
 
-  _basis->matrixLag2Bez2.mult(lagCoeff, *this);
+  fullMatrix<double> prox(_data, _r, _c);
+  _basis->matrixLag2Bez2.mult(lagCoeff, prox);
 }
 
 bezierCoeff::bezierCoeff(FuncSpaceData data, fullVector<double> &lagCoeff,
                          int num)
-    : _numBlockInPool(num), _funcSpaceData(data), _basis(BasisFactory::getBezierBasis(data))
+    : _numPool(num), _funcSpaceData(data), _basis(BasisFactory::getBezierBasis(data))
 {
-  if (_pool) {
-    _r = lagCoeff.size();
-    _c = 1;
-    _own_data = false;
-    _data = _pool->giveBlock(_numBlockInPool, this);
+  _r = lagCoeff.size();
+  _c = 1;
+  _own_data = false;
+  if (num == 0 && _pool0)
+    _data = _pool0->giveBlock(this);
+  else if (num == 1 && _pool1)
+    _data = _pool1->giveBlock(this);
+  else {
+    _own_data = true;
+    _data = new double[_r * _c];
   }
-  else
-    resize(lagCoeff.size(), 1, false);
 
-  fullMatrix<double> prox;
-  prox.setAsProxy(lagCoeff.getDataPtr(), lagCoeff.size(), 1);
-  _basis->matrixLag2Bez2.mult(prox, *this);
+  fullVector<double> prox(_data, _r);
+  _basis->matrixLag2Bez2.mult(lagCoeff, prox);
+}
+
+bezierCoeff::bezierCoeff(const bezierCoeff &other)
+{
+  _numPool = other._numPool;
+  _funcSpaceData = other._funcSpaceData;
+  _basis = other._basis;
+  _r = other._r;
+  _c = other._c;
+  _own_data = false;
+  if (_numPool == 0 && _pool0)
+    _data = _pool0->giveBlock(this);
+  else if (_numPool == 1 && _pool1)
+    _data = _pool1->giveBlock(this);
+  else {
+    _own_data = true;
+    _data = new double[_r * _c];
+  }
 }
 
 bezierCoeff::~bezierCoeff()
 {
-  if (!_own_data && _pool) {
-    _pool->releaseBlock(_data, this);
+  if (!_own_data) {
+    if (_numPool == 0 && _pool0)
+      _pool0->releaseBlock(_data, this);
+    else if (_numPool == 1 && _pool1)
+      _pool1->releaseBlock(_data, this);
+    else
+      Msg::Error("Not supposed to be here. destructor bezierCoeff");
+  }
+  else {
+    delete[] _data;
   }
 }
 
-void bezierCoeff::usePool(int size[2])
+void bezierCoeff::usePools(int size0, int size1)
 {
-  if (!_pool) _pool = new bezierMemoryPool();
-  _pool->setSizeBlocks(size);
+  if (size0) {
+    if (!_pool0) _pool0 = new bezierMemoryPool();
+    _pool0->setSizeBlocks(size0);
+  }
+  if (size1) {
+    if (!_pool1) _pool1 = new bezierMemoryPool();
+    _pool1->setSizeBlocks(size1);
+  }
 }
 
-void bezierCoeff::releasePool()
+void bezierCoeff::releasePools()
 {
-  delete _pool;
-  _pool = NULL;
+  delete _pool0;
+  delete _pool1;
+  _pool0 = NULL;
+  _pool1 = NULL;
 }
 
 void bezierCoeff::updateDataPtr(long diff)
@@ -1173,36 +1215,8 @@ void bezierCoeff::subdivide(std::vector<bezierCoeff> &subCoeff)
       _subdivideTriangle(*this, n, 0, subCoeff);
       return;
     case TYPE_QUA:
-    {
-      const int N = 2*n-1;
-      const int dim = size2();
-      fullMatrix<double> sub;
-      if (_pool)
-        sub.setData(_pool->getTemporaryMemory(N*N), N*N, 1);
-      else
-        sub.resize(N*N, 1, false);
-      for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < n; ++j) {
-          const int I1 = i + j*n;
-          const int I2 = (2*i) + (2*j)*N;
-          for (int k = 0; k < dim; ++k) {
-            sub(I2, k) = (*this)(I1, k);
-          }
-        }
-      }
-      for (int i = 0; i < N; i += 2) {
-        _subdivide(sub, n, i, N);
-      }
-      for (int j = 0; j < N; ++j) {
-        _subdivide(sub, n, j*N);
-      }
       subCoeff.resize(4, *this);
-      _copyQuad(sub,   0,   0, n, subCoeff[0]);
-      _copyQuad(sub, n-1,   0, n, subCoeff[1]);
-      _copyQuad(sub, n-1, n-1, n, subCoeff[2]);
-      _copyQuad(sub,   0, n-1, n, subCoeff[3]);
-      return;
-    }
+      _subdivideQuadrangle(*this, n, subCoeff);
   }
   // size all subcoeff (- coeff identical)
   // simplicial: same size and copy before subdividing
@@ -1238,14 +1252,14 @@ void bezierCoeff::_subdivide(fullMatrix<double> &coeff, int n, int start,
   }
 }
 
-void bezierCoeff::_subdivideTriangle(const fullMatrix<double> &coeff, int n,
+void bezierCoeff::_subdivideTriangle(bezierCoeff &coeff, int n,
                                      int start,
                                      std::vector<bezierCoeff> &vSubCoeff)
 {
-  const int dim = coeff.size2();
+  const int dim = coeff._c;
 
   // copy into first subdomain
-  fullMatrix<double> &sub = vSubCoeff[0];
+  bezierCoeff &sub = vSubCoeff[0];
   _copy(coeff, start, (n + 1) * n / 2, sub);
 
   // Subdivide in u direction
@@ -1274,9 +1288,8 @@ void bezierCoeff::_subdivideTriangle(const fullMatrix<double> &coeff, int n,
     }
   }
 
-  fullMatrix<double> &sub2 = vSubCoeff[1];
+  bezierCoeff &sub2 = vSubCoeff[1];
   _copy(sub, start, (n + 1) * n / 2, sub2);
-
   //
   // TODO: consider precompute vector<tuple<int, int, int>> for this
   for (int iter = 1; iter < n; ++iter) {
@@ -1292,7 +1305,7 @@ void bezierCoeff::_subdivideTriangle(const fullMatrix<double> &coeff, int n,
     }
   }
 
-  fullMatrix<double> &sub3 = vSubCoeff[2];
+  bezierCoeff &sub3 = vSubCoeff[2];
   _copy(sub3, start, (n + 1) * n / 2, sub2);
   for (int iter = 1; iter < n; ++iter) {
     for (int j = 0; j < n-iter; ++j) {
@@ -1307,7 +1320,7 @@ void bezierCoeff::_subdivideTriangle(const fullMatrix<double> &coeff, int n,
     }
   }
 
-  fullMatrix<double> &sub4 = vSubCoeff[3];
+  bezierCoeff &sub4 = vSubCoeff[3];
   _copy(sub4, start, (n + 1) * n / 2, sub2); // copy 2, not 3
   for (int iter = 1; iter < n; ++iter) {
     for (int j = n-1; j >= iter; --j) {
@@ -1323,10 +1336,38 @@ void bezierCoeff::_subdivideTriangle(const fullMatrix<double> &coeff, int n,
   }
 }
 
-void bezierCoeff::_copy(const fullMatrix<double> &from, int start, int num,
-                        fullMatrix<double> &to)
+void bezierCoeff::_subdivideQuadrangle(const bezierCoeff &coeff, int n,
+                                       std::vector<bezierCoeff> &subCoeff)
 {
-  const int dim = from.size2();
+  const int N = 2 * n - 1;
+  const int dim = coeff._c;
+  _sub.resize(N*N, 1, false);
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < n; ++j) {
+      const int I1 = i + j*n;
+      const int I2 = (2*i) + (2*j)*N;
+      for (int k = 0; k < dim; ++k) {
+        _sub(I2, k) = coeff(I1, k);
+      }
+    }
+  }
+  for (int i = 0; i < N; i += 2) {
+    _subdivide(_sub, n, i, N);
+  }
+  for (int j = 0; j < N; ++j) {
+    _subdivide(_sub, n, j*N);
+  }
+  _copyQuad(_sub,   0,   0, n, subCoeff[0]);
+  _copyQuad(_sub, n-1,   0, n, subCoeff[1]);
+  _copyQuad(_sub, n-1, n-1, n, subCoeff[2]);
+  _copyQuad(_sub,   0, n-1, n, subCoeff[3]);
+  return;
+}
+
+void bezierCoeff::_copy(const bezierCoeff &from, int start, int num,
+                        bezierCoeff &to)
+{
+  const int dim = from._c;
   for (int i = start; i < start + num; ++i) {
     for (int j = 0; j < dim; ++j) {
       to(i, j) = from(i, j);
@@ -1336,7 +1377,7 @@ void bezierCoeff::_copy(const fullMatrix<double> &from, int start, int num,
 
 void
 bezierCoeff::_copyQuad(const fullMatrix<double> &allSub, int starti, int startj,
-                       int n, fullMatrix<double> &sub)
+                       int n, bezierCoeff &sub)
 {
   const int dim = allSub.size2();
   const int N = 2*n-1;
@@ -1353,117 +1394,97 @@ bezierCoeff::_copyQuad(const fullMatrix<double> &allSub, int starti, int startj,
 
 bezierMemoryPool::bezierMemoryPool()
 {
-  _sizeBothBlocks = 0;
-  _sizeBlocks[0] = _sizeBlocks[1] = 0;
-  _numUsedBlocks[0] = _numUsedBlocks[1] = 0;
-  _currentIndexOfSearch[0] = _currentIndexOfSearch[1] = 0;
-  _endOfSearch[0] = _endOfSearch[1] = 0;
+  _sizeBlocks = 0;
+  _numUsedBlocks = 0;
+  _currentIndexOfSearch = 0;
+  _endOfSearch = 0;
 }
 
-void bezierMemoryPool::setSizeBlocks(int size[2])
+void bezierMemoryPool::setSizeBlocks(int size)
 {
-  if (_numUsedBlocks[0] || _numUsedBlocks[1]) {
+  if (_numUsedBlocks) {
     Msg::Error("Cannot change size of blocks if blocks are still being used!");
     return;
   }
-  _sizeBlocks[0] = size[0];
-  _sizeBlocks[1] = size[1];
-  _sizeBothBlocks = size[0] + size[1];
-  _endOfSearch[0] = 0;
-  _endOfSearch[1] = 0;
+  _sizeBlocks = size;
+  _endOfSearch = 0;
 }
 
-double* bezierMemoryPool::giveBlock(int num, bezierCoeff *bez)
+double* bezierMemoryPool::giveBlock(bezierCoeff *bez)
 {
-  if (num < 0 || num > 1) {
-    Msg::Error("'num' must be 0 or 1!");
-    return NULL;
-  }
+  _checkEnoughMemory();
 
-  _checkEnoughMemory(num);
-
-  if (_numUsedBlocks[num] == _endOfSearch[num]) {
-    int idx = _endOfSearch[num];
-    if (_bezierCoeff[num].size() == idx)
-      _bezierCoeff[num].push_back(bez);
-    else if (_bezierCoeff[num][idx]) {
+  if (_numUsedBlocks == _endOfSearch) {
+    int idx = _endOfSearch;
+    if (_bezierCoeff.size() == idx)
+      _bezierCoeff.push_back(bez);
+    else if (_bezierCoeff[idx]) {
       Msg::Error("this block is being used!?");
       return NULL;
     }
     else
-      _bezierCoeff[num][idx] = bez;
-    ++_numUsedBlocks[num];
-    ++_endOfSearch[num];
-    return &_memory.front() + _sizeBothBlocks * idx + num * _sizeBlocks[0];
+      _bezierCoeff[idx] = bez;
+    ++_numUsedBlocks;
+    ++_endOfSearch;
+    return &_memory.front() + _sizeBlocks * idx;
   }
 
-  for (int i = 0; i < _endOfSearch[num]; ++i) {
-    int idx = _currentIndexOfSearch[num];
-    ++_currentIndexOfSearch[num];
-    if (_currentIndexOfSearch[num] == _endOfSearch[num])
-      _currentIndexOfSearch[num] = 0;
-    if (!_bezierCoeff[num][idx]) {
-      _bezierCoeff[num][idx] = bez;
-      ++_numUsedBlocks[num];
-      return &_memory.front() + _sizeBothBlocks * idx + num * _sizeBlocks[0];
+  for (int i = 0; i < _endOfSearch; ++i) {
+    int idx = _currentIndexOfSearch;
+    ++_currentIndexOfSearch;
+    if (_currentIndexOfSearch == _endOfSearch)
+      _currentIndexOfSearch = 0;
+    if (!_bezierCoeff[idx]) {
+      _bezierCoeff[idx] = bez;
+      ++_numUsedBlocks;
+      return &_memory.front() + _sizeBlocks * idx;
     }
   }
 
   // We must never be here. If yes, this means that
-  // _numUsedBlocks[num] < _endOfSearch[num]
-  // and _bezierCoeff[num][i] for i < _endOfSearch[num] are all different from
+  // _numUsedBlocks < _endOfSearch
+  // and _bezierCoeff[i] for i < _endOfSearch are all different from
   // NULL which should never happens.
   Msg::Error("Wrong state of bezierMemoryPool. "
-             "_bezierCoeff[num][i] not correct?");
+             "_bezierCoeff[i] not correct?");
   return NULL;
 }
 
 void bezierMemoryPool::releaseBlock(double *block, bezierCoeff *bez)
 {
   long diff = block - &_memory.front();
-  int num;
-  if (diff % _sizeBothBlocks) num = 1;
-  else num = 0;
-  int idx = diff / _sizeBothBlocks;
-  if (_bezierCoeff[num][idx] == bez)
-    Msg::Info("It's a good guess!");
-  else
-    Msg::Info("Did not work :'( ");
-  _bezierCoeff[num][idx] = NULL;
-  if (idx == _endOfSearch[num]-1) {
-    do {--_endOfSearch[num];}
-    while (_endOfSearch[num] && _bezierCoeff[num][_endOfSearch[num]-1]);
-    if (_currentIndexOfSearch[num] >= _endOfSearch[num])
-      _currentIndexOfSearch[num] = 0;
+  int idx = diff / _sizeBlocks;
+//  if (_bezierCoeff[idx] == bez)
+//    Msg::Info("It's a good guess!");
+//  else
+//    Msg::Info("Did not work :'( ");
+  _bezierCoeff[idx] = NULL;
+  if (idx == _endOfSearch-1) {
+    do {--_endOfSearch;}
+    while (_endOfSearch && !_bezierCoeff[_endOfSearch-1]);
+    if (_currentIndexOfSearch >= _endOfSearch)
+      _currentIndexOfSearch = 0;
   }
-  --_numUsedBlocks[num];
+  --_numUsedBlocks;
 }
 
 void bezierMemoryPool::freeMemory()
 {
-  if (_numUsedBlocks[0] || _numUsedBlocks[1]) {
+  if (_numUsedBlocks) {
     Msg::Error("I cannot free memory if some is still in use!");
     return;
   }
   // force deallocation:
-  std::vector<double> dummy, dummy2;
+  std::vector<double> dummy;
   _memory.swap(dummy);
-  _memory2.swap(dummy2);
 }
 
-double* bezierMemoryPool::getTemporaryMemory(int size)
+void bezierMemoryPool::_checkEnoughMemory()
 {
-  if (_memory2.capacity() < size)
-    _memory2.reserve(size);
-  return &_memory2.front();
-}
-
-void bezierMemoryPool::_checkEnoughMemory(int num)
-{
-  if (_numUsedBlocks[num] < _memory.size() / _sizeBothBlocks) return;
+  if (_numUsedBlocks < _memory.size() / _sizeBlocks) return;
 
   double *pointer = &_memory.front();
-  _memory.resize(_memory.size() + _sizeBothBlocks);
+  _memory.resize(_memory.size() + _sizeBlocks);
 
   if (pointer == &_memory.front()) return;
 
@@ -1471,10 +1492,7 @@ void bezierMemoryPool::_checkEnoughMemory(int num)
   // then we need to update pointers
 
   long diff = &_memory.front() - pointer;
-  for (unsigned int i = 0; i < _bezierCoeff[0].size(); ++i) {
-    if (_bezierCoeff[0][i]) _bezierCoeff[0][i]->updateDataPtr(diff);
-  }
-  for (unsigned int i = 0; i < _bezierCoeff[1].size(); ++i) {
-    if (_bezierCoeff[1][i]) _bezierCoeff[1][i]->updateDataPtr(diff);
+  for (unsigned int i = 0; i < _bezierCoeff.size(); ++i) {
+    if (_bezierCoeff[i]) _bezierCoeff[i]->updateDataPtr(diff);
   }
 }
