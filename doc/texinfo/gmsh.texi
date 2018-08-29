@@ -3677,7 +3677,7 @@ $EndEntities
 <$PartitionedEntities>
   numPartitions(int)
   numGhostEntities(int)
-  ghostTag(int) ghostPart(int)
+  ghostEntityTag(int) partition(int)
   ...
   numPoints(unsigned long) numCurves(unsigned long)
     numSurfaces(unsigned long) numVolumes(unsigned long)
@@ -3740,7 +3740,7 @@ $EndElements
 
 <$GhostElements>
   numGhostElement(int)
-  elementTag(int) partition(int) GhostCellOwner(int) GhostCellOwnerPartition(int) ...
+  elementTag(int) partition(int) numGhostEntities(int) ghostEntityTag(int) ...
 <$EndGhostElements>
 
 <$NodeData>
