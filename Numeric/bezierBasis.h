@@ -212,7 +212,7 @@ private :
 
 public:
   bezierCoeff() {};
-  bezierCoeff(const bezierCoeff &other);
+  bezierCoeff(const bezierCoeff &other, bool swap = false);
   bezierCoeff(FuncSpaceData data, fullVector<double> &lagCoeff, int num = -1);
   bezierCoeff(FuncSpaceData data, fullMatrix<double> &lagCoeff, int num = -1);
   ~bezierCoeff();

@@ -1144,36 +1144,45 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, fullVector<double> &lagCoeff,
   _basis->matrixLag2Bez2.mult(lagCoeff, prox);
 }
 
-bezierCoeff::bezierCoeff(const bezierCoeff &other)
+bezierCoeff::bezierCoeff(const bezierCoeff &other, bool swap)
 {
   _numPool = other._numPool;
   _funcSpaceData = other._funcSpaceData;
   _basis = other._basis;
   _r = other._r;
   _c = other._c;
-  _own_data = false;
-  if (_numPool == 0 && _pool0)
-    _data = _pool0->giveBlock(this);
-  else if (_numPool == 1 && _pool1)
-    _data = _pool1->giveBlock(this);
+  if (swap) {
+    _own_data = other._own_data;
+    _data = other._data;
+    const_cast<bezierCoeff&>(other)._own_data = false;
+    const_cast<bezierCoeff&>(other)._numPool = -1;
+  }
   else {
-    _own_data = true;
-    _data = new double[_r * _c];
+    _own_data = false;
+    if (_numPool == 0 && _pool0)
+      _data = _pool0->giveBlock(this);
+    else if (_numPool == 1 && _pool1)
+      _data = _pool1->giveBlock(this);
+    else {
+      _own_data = true;
+      _data = new double[_r * _c];
+    }
   }
 }
 
 bezierCoeff::~bezierCoeff()
 {
-  if (!_own_data) {
+  if (_own_data)
+    delete[] _data;
+  else {
+    if (_numPool == -1)
+      return;
     if (_numPool == 0 && _pool0)
       _pool0->releaseBlock(_data, this);
     else if (_numPool == 1 && _pool1)
       _pool1->releaseBlock(_data, this);
     else
       Msg::Error("Not supposed to be here. destructor bezierCoeff");
-  }
-  else {
-    delete[] _data;
   }
 }
 
