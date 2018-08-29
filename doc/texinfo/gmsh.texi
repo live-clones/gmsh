@@ -5643,10 +5643,6 @@ SIGE ~ signed inverse error on the gradient of FE solution
 For the exact definitions, see Geo/MElement.cpp. The graphs plot the
 the number of elements vs. the quality measure.
 
-@item Why don't the node and/or elememt numbers on the screen match the numbers in the mesh file?
-
-This was a feature of the legacy version 1 and version 2 MSH file formats.
-The MSH format version 4 does not renumber nodes and elements by default.
 @end enumerate
 
 @c -------------------------------------------------------------------------
