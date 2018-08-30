@@ -8,9 +8,11 @@
 
 #include <vector>
 #include "fullMatrix.h"
+#include "bezierBasis.h"
 
 class GradientBasis;
-class bezierBasis;
+//class bezierBasis;
+//class bezierCoeff;
 class MElement;
 
 namespace jacobianBasedQuality {
@@ -35,6 +37,8 @@ namespace jacobianBasedQuality {
   protected:
     double _minL, _maxL; // Extremum of Jac at corners
     double _minB, _maxB; // Extremum of bezier coefficients
+    double _minL2, _maxL2; //Extremum of Jac at corners
+    double _minB2, _maxB2; //Extremum of bezier coefficients
     const int _depth;
 
   public:
@@ -48,6 +52,10 @@ namespace jacobianBasedQuality {
     inline double maxL() const { return _maxL; }
     inline double minB() const { return _minB; }
     inline double maxB() const { return _maxB; }
+    inline double minL2() const { return _minL2; }
+    inline double maxL2() const { return _maxL2; }
+    inline double minB2() const { return _minB2; }
+    inline double maxB2() const { return _maxB2; }
     inline int depth() const { return _depth; }
 
     virtual bool boundsOk(double minL, double maxL) const = 0;
@@ -66,9 +74,11 @@ namespace jacobianBasedQuality {
   private:
     const fullVector<double> _coeffs;
     const bezierBasis *_bfs;
+    const bezierCoeff _coeffs2;
 
   public:
-    _coefDataJac(fullVector<double> &v, const bezierBasis *bfs, int depth);
+    _coefDataJac(fullVector<double> &v, const bezierBasis *bfs, int depth,
+                  const bezierCoeff *coeffs2 = NULL);
     ~_coefDataJac() {}
 
     bool boundsOk(double minL, double maxL) const;

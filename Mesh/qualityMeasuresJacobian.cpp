@@ -187,20 +187,51 @@ namespace jacobianBasedQuality {
     jfs->getSignedJacobian(nodesXYZ, coeffLag, normals);
     jfs->lag2Bez(coeffLag, coeffBez);
 
-    std::vector<_coefData *> domains;
-    domains.push_back(new _coefDataJac(coeffBez, jfs->getBezier(), 0));
+  std::vector<_coefData*> domains;
+  bezierCoeff *bez = new bezierCoeff(FuncSpaceData(el, jfs->getJacOrder()), coeffLag, 0);
+  domains.push_back(new _coefDataJac(coeffBez, jfs->getBezier(), 0, bez));
+
+//  int N = 5e5;
+//  double time = Cpu();
+
+//  for (int i = 0; i < N; ++i) {
+//    fullVector<double> subCoeff;
+//    jfs->getBezier()->subdivideBezCoeff(coeffBez, subCoeff);
+//  }
+//  double tm1 = Cpu() - time;
+//  std::cout << "time old " << tm1 << " (" << tm1/N << ")" << std::endl;
+
+//  time = Cpu();
+//  bezierCoeff::usePools(coeffLag.size(), 0);
+//  bezierCoeff bez(FuncSpaceData(el, jfs->getJacOrder()), coeffLag, 0);
+//  for (int i = 0; i < N; ++i) {
+//    std::vector<bezierCoeff> vec;
+//    bez.subdivide(vec);
+//  }
+//  double tm2 = Cpu() - time;
+//  std::cout << "time new " << tm2 << " (" << tm2/N << ")" << std::endl;
 
     _subdivideDomains(domains);
 
-    min = domains[0]->minB();
-    max = domains[0]->maxB();
-    delete domains[0];
-    for(std::size_t i = 1; i < domains.size(); ++i) {
-      min = std::min(min, domains[i]->minB());
-      max = std::max(max, domains[i]->maxB());
-      delete domains[i];
-    }
+  double min2 = domains[0]->minB2();
+  double max2 = domains[0]->maxB2();
+  double minL2 = domains[0]->minL2();
+  double maxL2 = domains[0]->maxL2();
+  min = domains[0]->minB();
+  max = domains[0]->maxB();
+  delete domains[0];
+  for (std::size_t i = 1; i < domains.size(); ++i) {
+    min = std::min(min, domains[i]->minB());
+    max = std::max(max, domains[i]->maxB());
+    min2 = std::min(min2, domains[i]->minB2());
+    max2 = std::max(max2, domains[i]->maxB2());
+    minL2 = std::min(minL2, domains[i]->minL2());
+    maxL2 = std::max(maxL2, domains[i]->maxL2());
+    delete domains[i];
   }
+//  std::cout << "" << min << " [" << min2 << "," << minL2 << "] " << max << " [" << maxL2 << "," << max2 << "] " << std::endl;
+  delete bez;
+}
 
   double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk,
                        const fullMatrix<double> *normals)
@@ -596,12 +627,14 @@ namespace jacobianBasedQuality {
   }
 
   // Jacobian determinant (for validity of all elements)
-  _coefDataJac::_coefDataJac(fullVector<double> &v, const bezierBasis *bfs,
-                               int depth)
-    : _coefData(depth), _coeffs(v.getDataPtr(), v.size()), _bfs(bfs)
+  _coefDataJac::_coefDataJac(fullVector<double> &v,
+                               const bezierBasis *bfs,
+                               int depth,
+                               const bezierCoeff *coeffs2)
+      : _coefData(depth), _coeffs(v.getDataPtr(), v.size()), _bfs(bfs), _coeffs2(*coeffs2, true)
   {
-    if(!v.getOwnData()) {
-      Msg::Error("Cannot create an instance of _coefDataJac from a "
+    if (!v.getOwnData()) {
+      Msg::Fatal("Cannot create an instance of _CoeffDataJac from a "
                  "fullVector that does not own its data.");
       return;
     }
@@ -609,19 +642,29 @@ namespace jacobianBasedQuality {
     // copy data that are not used outside of this object.
     // It remains to swap ownership:
     v.setOwnData(false);
-    const_cast<fullVector<double> &>(_coeffs).setOwnData(true);
+    const_cast<fullVector<double>&>(_coeffs).setOwnData(true);
 
     _minL = _maxL = v(0);
     int i = 1;
-    for(; i < bfs->getNumLagCoeff(); i++) {
+    for (; i < bfs->getNumLagCoeff(); i++) {
       _minL = std::min(_minL, v(i));
       _maxL = std::max(_maxL, v(i));
     }
     _minB = _minL;
     _maxB = _maxL;
-    for(; i < v.size(); i++) {
+    for (; i < v.size(); i++) {
       _minB = std::min(_minB, v(i));
       _maxB = std::max(_maxB, v(i));
+    }
+    _minL2 = _maxL2 = _coeffs2.getLagCoeff(0);
+    for (int i = 1; i < _coeffs2.getNumLagCoeff(); i++) {
+      _minL2 = std::min(_minL2, _coeffs2.getLagCoeff(i));
+      _maxL2 = std::max(_maxL2, _coeffs2.getLagCoeff(i));
+    }
+    _minB2 = _maxB2 = _coeffs2(0);
+    for (; i < v.size(); i++) {
+      _minB2 = std::min(_minB2, _coeffs2(i));
+      _maxB2 = std::max(_maxB2, _coeffs2(i));
     }
   }
 
