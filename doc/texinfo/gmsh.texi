@@ -3740,7 +3740,7 @@ $EndElements
 
 <$GhostElements>
   numGhostElement(int)
-  elementTag(int) partition(int) numGhostEntities(int) ghostEntityTag(int) ...
+  elementTag(int) partition(int) numGhostPartitions(int) ghostPartition(int) ...
 <$EndGhostElements>
 
 <$NodeData>
