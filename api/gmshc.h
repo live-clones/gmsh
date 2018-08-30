@@ -230,7 +230,7 @@ GMSH_API void gmshModelGetParent(const int dim,
  * y, z coordinates in `points'. Only valid for `dim' equal to 0, 1 (with
  * `parametricCoord' containing parametric coordinates on the curve) or 2
  * (with `parametricCoord' containing pairs of u, v parametric coordinates on
- * the surface), */
+ * the surface, concatenated), */
 GMSH_API void gmshModelGetValue(const int dim,
                                 const int tag,
                                 double * parametricCoord, size_t parametricCoord_n,
@@ -241,7 +241,7 @@ GMSH_API void gmshModelGetValue(const int dim,
  * `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only
  * valid for `dim' equal to 1 (with `parametricCoord' containing parametric
  * coordinates on the curve) or 2 (with `parametricCoord' containing pairs of
- * u, v parametric coordinates on the surface). */
+ * u, v parametric coordinates on the surface, concatenated). */
 GMSH_API void gmshModelGetDerivative(const int dim,
                                      const int tag,
                                      double * parametricCoord, size_t parametricCoord_n,
@@ -252,7 +252,7 @@ GMSH_API void gmshModelGetDerivative(const int dim,
  * `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim'
  * equal to 1 (with `parametricCoord' containing parametric coordinates on the
  * curve) or 2 (with `parametricCoord' containing pairs of u, v parametric
- * coordinates on the surface). */
+ * coordinates on the surface, concatenated). */
 GMSH_API void gmshModelGetCurvature(const int dim,
                                     const int tag,
                                     double * parametricCoord, size_t parametricCoord_n,
@@ -630,10 +630,10 @@ GMSH_API void gmshModelMeshReorderElements(const int elementType,
                                            int * ordering, size_t ordering_n,
                                            int * ierr);
 
-/* Renumber the nodes tags in a contiunous sequence. */
+/* Renumber the node tags in a contiunous sequence. */
 GMSH_API void gmshModelMeshRenumberNodes(int * ierr);
 
-/* Renumber the elements tags in a contiunous sequence. */
+/* Renumber the element tags in a contiunous sequence. */
 GMSH_API void gmshModelMeshRenumberElements(int * ierr);
 
 /* Set the meshes of the entities of dimension `dim' and tag `tags' as
@@ -658,6 +658,16 @@ GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim,
 /* Remove duplicate nodes in the mesh of the current model. */
 GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr);
 
+/* Create a boundary representation from the mesh if the model does not have
+ * one (e.g. when imported from mesh file formats with no BRep representation
+ * of the underlying model). Warning: this is an experimental feature. */
+GMSH_API void gmshModelMeshCreateTopology(int * ierr);
+
+/* Create a parametrization for curves and surfaces that do not have one (i.e.
+ * discrete curves and surfaces represented solely by meshes, without an
+ * underlying CAD description). Warning: this is an experimental feature. */
+GMSH_API void gmshModelMeshCreateGeometry(int * ierr);
+
 /* Compute a basis representation for homology spaces after a mesh has been
  * generated. The computation domain is given in a list of physical group tags
  * `domainTags'; if empty, the whole mesh is the domain. The computation
@@ -666,10 +676,10 @@ GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr);
  * dimensions homology bases to be computed are given in the list `dim'; if
  * empty, all bases are computed. Resulting basis representation chains are
  * stored as physical groups in the mesh. */
-GMSH_API void gmshModelMeshHomology(int * domainTags, size_t domainTags_n,
-                                    int * subdomainTags, size_t subdomainTags_n,
-                                    int * dims, size_t dims_n,
-                                    int * ierr);
+GMSH_API void gmshModelMeshComputeHomology(int * domainTags, size_t domainTags_n,
+                                           int * subdomainTags, size_t subdomainTags_n,
+                                           int * dims, size_t dims_n,
+                                           int * ierr);
 
 /* Compute a basis representation for cohomology spaces after a mesh has been
  * generated. The computation domain is given in a list of physical group tags
@@ -679,10 +689,10 @@ GMSH_API void gmshModelMeshHomology(int * domainTags, size_t domainTags_n,
  * computed. The dimensions homology bases to be computed are given in the
  * list `dim'; if empty, all bases are computed. Resulting basis
  * representation cochains are stored as physical groups in the mesh. */
-GMSH_API void gmshModelMeshCohomology(int * domainTags, size_t domainTags_n,
-                                      int * subdomainTags, size_t subdomainTags_n,
-                                      int * dims, size_t dims_n,
-                                      int * ierr);
+GMSH_API void gmshModelMeshComputeCohomology(int * domainTags, size_t domainTags_n,
+                                             int * subdomainTags, size_t subdomainTags_n,
+                                             int * dims, size_t dims_n,
+                                             int * ierr);
 
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explcitly; otherwise a new tag is assigned automatically. Return
@@ -931,12 +941,12 @@ GMSH_API void gmshModelGeoDilate(int * dimTags, size_t dimTags_n,
 
 /* Apply a symmetry transformation to the geometrical entities `dimTag', with
  * respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0. */
-GMSH_API void gmshModelGeoSymmetry(int * dimTags, size_t dimTags_n,
-                                   const double a,
-                                   const double b,
-                                   const double c,
-                                   const double d,
-                                   int * ierr);
+GMSH_API void gmshModelGeoSymmetrize(int * dimTags, size_t dimTags_n,
+                                     const double a,
+                                     const double b,
+                                     const double c,
+                                     const double d,
+                                     int * ierr);
 
 /* Copy the entities `dimTags'; the new entities are returned in `outDimTags'. */
 GMSH_API void gmshModelGeoCopy(int * dimTags, size_t dimTags_n,
@@ -1468,12 +1478,12 @@ GMSH_API void gmshModelOccDilate(int * dimTags, size_t dimTags_n,
 
 /* Apply a symmetry transformation to the geometrical entities `dimTag', with
  * respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0. */
-GMSH_API void gmshModelOccSymmetry(int * dimTags, size_t dimTags_n,
-                                   const double a,
-                                   const double b,
-                                   const double c,
-                                   const double d,
-                                   int * ierr);
+GMSH_API void gmshModelOccSymmetrize(int * dimTags, size_t dimTags_n,
+                                     const double a,
+                                     const double b,
+                                     const double c,
+                                     const double d,
+                                     int * ierr);
 
 /* Copy the entities `dimTags'; the new entities are returned in `outDimTags'. */
 GMSH_API void gmshModelOccCopy(int * dimTags, size_t dimTags_n,

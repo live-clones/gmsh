@@ -223,7 +223,7 @@ namespace gmsh { // Top-level functions
     // z coordinates in `points'. Only valid for `dim' equal to 0, 1 (with
     // `parametricCoord' containing parametric coordinates on the curve) or 2 (with
     // `parametricCoord' containing pairs of u, v parametric coordinates on the
-    // surface),
+    // surface, concatenated),
     GMSH_API void getValue(const int dim,
                            const int tag,
                            const std::vector<double> & parametricCoord,
@@ -233,7 +233,7 @@ namespace gmsh { // Top-level functions
     // `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only
     // valid for `dim' equal to 1 (with `parametricCoord' containing parametric
     // coordinates on the curve) or 2 (with `parametricCoord' containing pairs of
-    // u, v parametric coordinates on the surface).
+    // u, v parametric coordinates on the surface, concatenated).
     GMSH_API void getDerivative(const int dim,
                                 const int tag,
                                 const std::vector<double> & parametricCoord,
@@ -243,7 +243,7 @@ namespace gmsh { // Top-level functions
     // `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim'
     // equal to 1 (with `parametricCoord' containing parametric coordinates on the
     // curve) or 2 (with `parametricCoord' containing pairs of u, v parametric
-    // coordinates on the surface).
+    // coordinates on the surface, concatenated).
     GMSH_API void getCurvature(const int dim,
                                const int tag,
                                const std::vector<double> & parametricCoord,
@@ -588,10 +588,10 @@ namespace gmsh { // Top-level functions
                                     const int tag,
                                     const std::vector<int> & ordering);
 
-      // Renumber the nodes tags in a contiunous sequence.
+      // Renumber the node tags in a contiunous sequence.
       GMSH_API void renumberNodes();
 
-      // Renumber the elements tags in a contiunous sequence.
+      // Renumber the element tags in a contiunous sequence.
       GMSH_API void renumberElements();
 
       // Set the meshes of the entities of dimension `dim' and tag `tags' as
@@ -614,6 +614,16 @@ namespace gmsh { // Top-level functions
       // Remove duplicate nodes in the mesh of the current model.
       GMSH_API void removeDuplicateNodes();
 
+      // Create a boundary representation from the mesh if the model does not have
+      // one (e.g. when imported from mesh file formats with no BRep representation
+      // of the underlying model). Warning: this is an experimental feature.
+      GMSH_API void createTopology();
+
+      // Create a parametrization for curves and surfaces that do not have one
+      // (i.e. discrete curves and surfaces represented solely by meshes, without
+      // an underlying CAD description). Warning: this is an experimental feature.
+      GMSH_API void createGeometry();
+
       // Compute a basis representation for homology spaces after a mesh has been
       // generated. The computation domain is given in a list of physical group
       // tags `domainTags'; if empty, the whole mesh is the domain. The computation
@@ -622,9 +632,9 @@ namespace gmsh { // Top-level functions
       // dimensions homology bases to be computed are given in the list `dim'; if
       // empty, all bases are computed. Resulting basis representation chains are
       // stored as physical groups in the mesh.
-      GMSH_API void homology(const std::vector<int> & domainTags = std::vector<int>(),
-                             const std::vector<int> & subdomainTags = std::vector<int>(),
-                             const std::vector<int> & dims = std::vector<int>());
+      GMSH_API void computeHomology(const std::vector<int> & domainTags = std::vector<int>(),
+                                    const std::vector<int> & subdomainTags = std::vector<int>(),
+                                    const std::vector<int> & dims = std::vector<int>());
 
       // Compute a basis representation for cohomology spaces after a mesh has been
       // generated. The computation domain is given in a list of physical group
@@ -634,9 +644,9 @@ namespace gmsh { // Top-level functions
       // computed. The dimensions homology bases to be computed are given in the
       // list `dim'; if empty, all bases are computed. Resulting basis
       // representation cochains are stored as physical groups in the mesh.
-      GMSH_API void cohomology(const std::vector<int> & domainTags = std::vector<int>(),
-                               const std::vector<int> & subdomainTags = std::vector<int>(),
-                               const std::vector<int> & dims = std::vector<int>());
+      GMSH_API void computeCohomology(const std::vector<int> & domainTags = std::vector<int>(),
+                                      const std::vector<int> & subdomainTags = std::vector<int>(),
+                                      const std::vector<int> & dims = std::vector<int>());
 
       namespace field { // Per-model mesh size field functions
 
@@ -869,11 +879,11 @@ namespace gmsh { // Top-level functions
 
       // Apply a symmetry transformation to the geometrical entities `dimTag', with
       // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
-      GMSH_API void symmetry(const gmsh::vectorpair & dimTags,
-                             const double a,
-                             const double b,
-                             const double c,
-                             const double d);
+      GMSH_API void symmetrize(const gmsh::vectorpair & dimTags,
+                               const double a,
+                               const double b,
+                               const double c,
+                               const double d);
 
       // Copy the entities `dimTags'; the new entities are returned in
       // `outDimTags'.
@@ -1369,11 +1379,11 @@ namespace gmsh { // Top-level functions
 
       // Apply a symmetry transformation to the geometrical entities `dimTag', with
       // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
-      GMSH_API void symmetry(const gmsh::vectorpair & dimTags,
-                             const double a,
-                             const double b,
-                             const double c,
-                             const double d);
+      GMSH_API void symmetrize(const gmsh::vectorpair & dimTags,
+                               const double a,
+                               const double b,
+                               const double c,
+                               const double d);
 
       // Copy the entities `dimTags'; the new entities are returned in
       // `outDimTags'.

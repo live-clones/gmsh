@@ -646,7 +646,8 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
         t = _vertexTag.Find(vertex);
         exists = true;
       }
-      t = getMaxTag(0) + 1;
+      else
+        t = getMaxTag(0) + 1;
     }
     else if(count) {
       Msg::Error("Cannot bind multiple points to single tag %d", t);
@@ -1265,8 +1266,8 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
 bool OCC_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags)
 {
   std::vector<int> tags(curveTags);
-  // all edge tags > 0 for OCC : to improve compatibility between GEO and OCC
-  // factories, allow negative tags - and simply ignore the sign here
+  // all curve tags are > 0 for OCC : to improve compatibility between GEO and
+  // OCC factories, allow negative tags - and simply ignore the sign here
   for(unsigned int i = 0; i < tags.size(); i++) tags[i] = std::abs(tags[i]);
   return addWire(tag, tags, true);
 }
@@ -1431,11 +1432,14 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 
   std::vector<TopoDS_Wire> wires;
   for(unsigned int i = 0; i < wireTags.size(); i++) {
-    if(!_tagWire.IsBound(wireTags[i])) {
-      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTags[i]);
+    // all wire tags are > 0 for OCC : to improve compatibility between GEO and
+    // OCC factories, allow negative tags - and simply ignore the sign here
+    int wireTag = std::abs(wireTags[i]);
+    if(!_tagWire.IsBound(wireTag)) {
+      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
       return false;
     }
-    TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTags[i]));
+    TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
     wires.push_back(wire);
   }
 

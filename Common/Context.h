@@ -27,7 +27,7 @@ struct contextMeshOptions {
   int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
   int nbSmoothing, algo2d, algo3d, algoSubdivide, oldRefinement;
   int algoRecombine, recombineAll, recombine3DAll, recombine3DLevel;
-  int recombine3DConformity, flexibleTransfinite, remeshParam, remeshAlgo;
+  int recombine3DConformity, flexibleTransfinite;
   int order, secondOrderLinear, secondOrderIncomplete, secondOrderExperimental;
   int meshOnlyVisible, minCircPoints, minCurvPoints;
   int hoOptimize, hoNLayers, hoOptPrimSurfMesh;
@@ -38,6 +38,7 @@ struct contextMeshOptions {
   int ignorePeriodicity, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   double angleToleranceFacetOverlap;
+  int renumber;
   // mesh IO
   int fileFormat;
   double mshFileVersion, scalingFactor;

@@ -49,21 +49,18 @@ int GModel::readMSH(const std::string &name)
         fclose(fp);
         return 0;
       }
-      if(version < 3.0) {
-        fclose(fp);
+      fclose(fp);
+      if(version < 3.0){
         return _readMSH2(name);
       }
-      else if(version < 4.0) {
-        fclose(fp);
+      else if(version < 4.0){
         return _readMSH3(name);
       }
-      else if(version < 5.0) {
-        fclose(fp);
+      else if(version < 5.0){
         return _readMSH4(name);
       }
       else {
         Msg::Error("Unknown MSH file version %g", version);
-        fclose(fp);
         return 0;
       }
     }
@@ -81,7 +78,7 @@ int GModel::readMSH(const std::string &name)
 int GModel::writeMSH(const std::string &name, double version, bool binary,
                      bool saveAll, bool saveParametric, double scalingFactor,
                      int elementStartNum, int saveSinglePartition,
-                     bool multipleView)
+                     bool append)
 {
   if(version < 4.0 && getNumPartitions() > 0) {
     Msg::Warning("Saving a partitioned mesh in a format older than 4.0 may "
@@ -91,16 +88,16 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   if(version < 3.0) {
     return _writeMSH2(name, version, binary, saveAll, saveParametric,
                       scalingFactor, elementStartNum, saveSinglePartition,
-                      multipleView, true);
+                      append, true);
   }
   else if(version < 4.0) {
     return _writeMSH3(name, version, binary, saveAll, saveParametric,
                       scalingFactor, elementStartNum, saveSinglePartition,
-                      multipleView);
+                      append);
   }
   else if(version < 5.0) {
     return _writeMSH4(name, version, binary, saveAll, saveParametric,
-                      scalingFactor);
+                      scalingFactor, append);
   }
 
   Msg::Error("Unknown MSH file version %g", version);

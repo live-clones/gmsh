@@ -673,8 +673,6 @@ void createTopologyFromMesh3D(GModel *gm, int &num)
   }
 }
 
-// -----------------------------------------------------------------------------
-
 void GModel::createTopologyFromMeshNew()
 {
   const int dim = getDim();
@@ -682,11 +680,11 @@ void GModel::createTopologyFromMeshNew()
   double t1 = Cpu();
 
   if(topoExists(this)) {
-    Msg::Info("Topology exists: createTopoFromMeshNew is a noop");
+    Msg::Info("Topology exists: no need to create one from mesh");
     return;
   }
 
-  Msg::Info("createTopologyFromMeshNew --> creating a topology from the mesh");
+  Msg::Info("Creating topology from mesh...");
   int numF = 0, numE = 0, numV = 0;
   if(dim >= 3)
     createTopologyFromMesh3D(this, numF);
@@ -710,5 +708,5 @@ void GModel::createTopologyFromMeshNew()
   _storeVerticesInEntities(cc);
 
   double t2 = Cpu();
-  Msg::Info("createTopologyFromMeshNew done in %3.f sec.)", t2 - t1);
+  Msg::Info("Done creating topology from mesh (%g s)", t2 - t1);
 }

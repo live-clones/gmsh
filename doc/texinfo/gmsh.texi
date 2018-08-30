@@ -3024,6 +3024,22 @@ a rotation specified as in @ref{Transformations}.
 @item Coherence Mesh;
 Removes all duplicate mesh nodes.
 
+@item CreateTopology;
+Creates a boundary representation from the mesh if the model does not
+have one (e.g. when imported from mesh file formats with no BRep
+representation of the underlying model).
+
+@item CreateGeometry;
+Creates a parametrization for curves and surfaces that do not have one
+(i.e. discrete curves and surfaces represented solely by meshes, without
+an underlying CAD description).
+
+@item RenumberMeshNodes;
+Renumbers the node tags in the current mesh in a contiunous sequence.
+
+@item RenumberMeshElements;
+Renumbers the elements tags in the current mesh in a contiunous sequence.
+
 @item SetPartition @var{expression} @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Sets the partition tag of the mesh elements in the entities in @var{expression-list} to @var{expression}.
 
@@ -3612,15 +3628,21 @@ Sections can be repeated in the same file, and post-processing sections
 can be put into separate files (e.g. one file per time step).  Nodes are
 assumed to be defined before elements.
 
+In binary mode (@code{Mesh.Binary=1} or @code{-bin} on the command
+line), all the numerical values (integer and floating point) not marked
+as ASCII in what follows are written in binary form. Note that the
+binary mode will evolve in a future minor revision of the format to
+allow for 64-bit node and element tags.
+
 @example
 $MeshFormat // same as MSH version 2
-  version(double) binary(int) size(unsigned long)
-  <swapping bit for binary format>
+  version(ASCII double) file-type(ASCII int; 1 for binary mode) data-size(ASCII int)
+  <int with value one; only in binary mode, to detect endianness>
 $EndMeshFormat
 
 <$PhysicalNames> // same as MSH version 2
-  numPhysicalNames(int)
-  dimension(int) tag(int) name(127 characters max)
+  numPhysicalNames(ASCII int)
+  dimension(ASCII int) tag(ASCII int) name(127 characters max)
   ...
 <$EndPhysicalNames>
 
@@ -3630,76 +3652,78 @@ $Entities
   // points
   tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
     boxMaxX(double) boxMaxY(double) boxMaxZ(double)
-    numPhysicals(unsigned long) phyisicalTag[...](int)
+    numPhysicals(unsigned long) physicalTag(int) ...
   ...
   // curves
   tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
      boxMaxX(double) boxMaxY(double) boxMaxZ(double)
-     numPhysicals(unsigned long) physicalTag[...](int)
-     numBREPVert(unsigned long) tagBREPVert[...](int)
+     numPhysicals(unsigned long) physicalTag(int) ...
+     numBoundingPoints(unsigned long) tagPoint(int) ...
   ...
   // surfaces
   tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
     boxMaxX(double) boxMaxY(double) boxMaxZ(double)
-    numPhysicals(unsigned long) physicalTag[...](int)
-    numBREPCurve(unsigned long) tagBREPCurve[...](int)
+    numPhysicals(unsigned long) physicalTag(int) ...
+    numBoundingCurves(unsigned long) tagCurve(int) ...
   ...
   // volumes
   tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
     boxMaxX(double) boxMaxY(double) boxMaxZ(double)
-    numPhysicals(unsigned long) physicalTag[...](int)
-    numBREPSurfaces(unsigned long) tagBREPSurfaces[...](int)
+    numPhysicals(unsigned long) physicalTag(int) ...
+    numBoundngSurfaces(unsigned long) tagSurfaces(int) ...
   ...
 $EndEntities
 
 <$PartitionedEntities>
   numPartitions(int)
   numGhostEntities(int)
-  ghostTag(int) ghostPart(int)
+  ghostEntityTag(int) partition(int)
   ...
   numPoints(unsigned long) numCurves(unsigned long)
     numSurfaces(unsigned long) numVolumes(unsigned long)
   // points
-  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag[...](int)
+  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag(int) ...
     boxMinX(double) boxMinY(double) boxMinZ(double)
     boxMaxX(double) boxMaxY(double) boxMaxZ(double)
-    numPhyiscals(unsigned long) physicalTag[...](int)
+    numPhysicals(unsigned long) physicalTag(int) ...
   ...
   // curves
-  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag[...](int)
+  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag(int) ...
     boxMinX(double) boxMinY(double) boxMinZ(double)
     boxMaxX(double) boxMaxY(double) boxMaxZ(double)
-    numPhysicals(unsigned long) physicalTag[...](int)
-    numBREPVert(unsigned long) tagBREPVert[...](int)
+    numPhysicals(unsigned long) physicalTag(int) ...
+    numBoundingPoints(unsigned long) tagPoint(int) ...
   ...
   // surfaces
-  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag[...](int)
+  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag(int) ...
     boxMinX(double) boxMinY(double) boxMinZ(double)
     boxMaxX(double) boxMaxY(double) boxMaxZ(double)
-    numPhysicals(unsigned long) physicalTag[...](int)
-    numBREPCurve(unsigned long) tagBREPCurve[...](int)
+    numPhysicals(unsigned long) physicalTag(int) ...
+    numBoundingCurves(unsigned long) tagCurve(int) ...
   ...
   // volumes
-  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag[...](int)
+  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag(int) ...
     boxMinX(double) boxMinY(double) boxMinZ(double)
     boxMaxX(double) boxMaxY(double) boxMaxZ(double)
-    numPhysicals(unsigned long) physicalTag[...](int)
-    numBREPSurfaces(unsigned long) tagBREPSurfaces[...](int)
+    numPhysicals(unsigned long) physicalTag(int) ...
+    numBoundingSurfaces(unsigned long) tagSurfaces(int) ...
   ...
 <$EndPartitionedEntities>
 
 $Nodes
   numEntityBlocks(unsigned long) numNodes(unsigned long)
-  tagEntity(int) dimEntity(int) typeNode(int) numNodes(unsigned long)
+  tagEntity(int) dimEntity(int) parametric(int; ) numNodes(unsigned long)
     tag(int) x(double) y(double) z(double)
+       <u(double; if parametric and on curve or surface)>
+       <v(double; if parametric and on surface)>
     ...
   ...
 $EndNodes
 
 $Elements
   numEntityBlocks(unsigned long) numElements(unsigned long)
-  tagEntity(int) dimEntity(int) typeEle(int) numElements(unsigned long)
-    tag(int) numVert[...](int)
+  tagEntity(int) dimEntity(int) typeEle(int; see below) numElements(unsigned long)
+    tag(int) numVert(int) ...
     ...
   ...
 $EndElements
@@ -3707,7 +3731,7 @@ $EndElements
 <$Periodic> // same as in MSH version 2
   numPeriodicLinks(int)
   slaveDim(int) slaveTag(int) masterTag(int)
-    < Affine values[...](double) >
+    < Affine value(double) ... >
     correspondingVertexSize(unsigned long)
       numVert(int) numVert(int)
       ...
@@ -3716,45 +3740,45 @@ $EndElements
 
 <$GhostElements>
   numGhostElement(int)
-  elementTag(int) partition(int) GhostCellOwner(int) GhostCellOwnerPartition(int) ...
+  elementTag(int) partition(int) numGhostEntities(int) ghostEntityTag(int) ...
 <$EndGhostElements>
 
 <$NodeData>
-  numStringTags(int)
+  numStringTags(ASCII int)
   stringTag(string) ...
-  numRealTags(int)
-  realTag(double) ...
-  numIntegerTags(int)
-  integerTag(int) ...
+  numRealTags(ASCII int)
+  realTag(ASCII double) ...
+  numIntegerTags(ASCII int)
+  integerTag(ASCII int) ...
   nodeNumber(int) value(double) ...
 <$EndNodeData>
 
 <$ElementData>
-  numStringTags(int)
+  numStringTags(ASCII int)
   stringTag(string) ...
-  numRealTags(int)
-  realTag(double) ...
-  numIntegerTags(int)
-  integerTag(int) ...
+  numRealTags(ASCII int)
+  realTag(ASCII double) ...
+  numIntegerTags(ASCII int)
+  integerTag(ASCII int) ...
   elementNumber(int) value(double) ...
 <$EndElementData>
 
 <$ElementNodeData>
-  numStringTags(int)
+  numStringTags(ASCII int)
   stringTag(string) ...
-  numRealTags(int)
-  realTag(double) ...
-  numIntegerTags(int)
-  integerTag(int) ...
+  numRealTags(ASCII int)
+  realTag(ASCII double) ...
+  numIntegerTags(ASCII int)
+  integerTag(ASCII int) ...
   elementNumber(int) numNodesPerElement(int) value(double) ...
 <$EndElementNodeData>
 
 <$InterpolationScheme>
   name(string)
-  numElementTopologies(int)
+  numElementTopologies(ASCII int)
   elementTopology
-  numInterpolationMatrices(int)
-  numRows(int) numColumns(int) value(double) ...
+  numInterpolationMatrices(ASCII int)
+  numRows(ASCII int) numColumns(ASCII int) value(ASCII double) ...
 <$EndInterpolationScheme>
 @end example
 
@@ -5619,10 +5643,6 @@ SIGE ~ signed inverse error on the gradient of FE solution
 For the exact definitions, see Geo/MElement.cpp. The graphs plot the
 the number of elements vs. the quality measure.
 
-@item Why don't the node and/or elememt numbers on the screen match the numbers in the mesh file?
-
-This was a feature of the legacy version 1 and version 2 MSH file formats.
-The MSH format version 4 does not renumber nodes and elements by default.
 @end enumerate
 
 @c -------------------------------------------------------------------------

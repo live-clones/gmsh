@@ -6,26 +6,11 @@
 variables:
   EXTRA_OPTION: ""
 
-# -----------------------
-# Builds for all branches
-# -----------------------
+# ----------------------------------------------
+# Continuous integration builds for all branches
+# ----------------------------------------------
 
-linux64_docker_ci:
-  image: onelab/ubuntu16.04
-  script:
-    - mkdir build
-    - cd build
-    - export CXXFLAGS=-Werror
-    - cmake ${EXTRA_OPTION} ..
-    - make -j 4
-    - ctest -j 4 --output-on-failure
-  tags:
-    - linux64
-    - docker
-  except:
-    - tags
-
-linux64_docker_ci_new:
+linux64_ci:
   image: onelab/ubuntu18.04
   script:
     - mkdir build
@@ -39,21 +24,7 @@ linux64_docker_ci_new:
   except:
     - tags
 
-linux64_docker_cxx98_compat_ci:
-  image: onelab/ubuntu16.04
-  script:
-    - mkdir build
-    - cd build
-    - export CXXFLAGS=-std=c++98
-    - cmake -DENABLE_CXX11=0 -DENABLE_OCC=0 ${EXTRA_OPTION} ..
-    - make -j 4
-  tags:
-    - linux64
-    - docker
-  except:
-    - tags
-
-linux64_docker_minimal_ci:
+linux64_minimal_ci:
   image: onelab/ubuntu18.04
   script:
     - mkdir build
@@ -72,15 +43,41 @@ linux64_docker_minimal_ci:
   except:
     - tags
 
+linux64_cxx98_compat_ci:
+  image: onelab/ubuntu16.04
+  script:
+    - mkdir build
+    - cd build
+    - export CXXFLAGS=-std=c++98
+    - cmake -DENABLE_CXX11=0 -DENABLE_OCC=0 ${EXTRA_OPTION} ..
+    - make -j 4
+  tags:
+    - linux64
+    - docker
+  except:
+    - tags
+
+windows64_ci:
+  script:
+    - md build
+    - cd build
+    - bash -c "/usr/bin/cmake -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/home/Administrateur/petsc -DSLEPC_DIR=/home/Administrateur/slepc -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} .."
+    - bash -c "/usr/bin/make -j 8"
+  tags:
+    - windows64
+    - shared
+  except:
+    - tags
+
 windows64_msvc_ci:
   script:
     - md build
     - cd build
-    - cmake -DENABLE_HXT=0 ${EXTRA_OPTION} ..
+    - cmake -DENABLE_BLAS_LAPACK=0 -DENABLE_HXT=0 ${EXTRA_OPTION} ..
     - msbuild package.vcxproj
   tags:
     - windows64
-    - official
+    - shared
   except:
     - tags
 
@@ -377,6 +374,7 @@ doc_official_release:
     - make doc
     - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
     - ssh -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa geuzaine@gmsh.info 'cd .wwwgmsh && tar zxvf doc.tgz'
+    - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ../doc/gmsh.html geuzaine@gmsh.info:.wwwgmsh/
   tags:
     - linux64
     - official

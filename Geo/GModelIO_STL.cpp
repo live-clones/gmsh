@@ -177,8 +177,6 @@ int GModel::readSTL(const std::string &name, double tolerance)
 
   _storeVerticesInEntities(vertices); // will delete unused vertices
 
-  _createGeometryOfDiscreteEntities();
-
   fclose(fp);
   return 1;
 }

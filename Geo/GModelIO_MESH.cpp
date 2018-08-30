@@ -233,7 +233,6 @@ int GModel::readMESH(const std::string &name)
     _storeElementsInEntities(elements[i]);
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertexVector);
-  _createGeometryOfDiscreteEntities();
 
   fclose(fp);
   return 1;

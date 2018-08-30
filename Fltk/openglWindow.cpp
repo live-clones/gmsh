@@ -839,7 +839,7 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
         selectionMode = false;
         return 'c';
       }
-      else if(_select(_selection, multi, true, false, _trySelectionXYWH[0],
+      else if(_select(_selection, multi, true, true, _trySelectionXYWH[0],
                       _trySelectionXYWH[1], _trySelectionXYWH[2],
                       _trySelectionXYWH[3], vertices, edges, faces, regions,
                       elements, points, views)) {

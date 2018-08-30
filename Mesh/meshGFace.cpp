@@ -129,12 +129,16 @@ bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
   return true;
 }
 
-void trueBoundary(const char *iii, GFace *gf, std::vector<SPoint2> &bnd)
+void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug)
 {
-  // FILE* view_t = Fopen(iii,"w");
-  // fprintf(view_t,"View \"True Boundary\"{\n");
+  FILE* view_t;
+  if (debug){
+    char name[245];
+    sprintf(name, "trueBoundary%d.pos", gf->tag());
+    view_t = Fopen(name,"w");
+    fprintf(view_t,"View \"True Boundary\"{\n");
+  }
   std::vector<GEdge *> edg = gf->edges();
-
   std::set<GEdge *> edges(edg.begin(), edg.end());
 
   for(std::set<GEdge *>::iterator it = edges.begin(); it != edges.end(); ++it) {
@@ -149,16 +153,20 @@ void trueBoundary(const char *iii, GFace *gf, std::vector<SPoint2> &bnd)
         double xi = r.low() + (r.high() - r.low()) * t;
         p[k] = ge->reparamOnFace(gf, xi, i);
         if(k > 0) {
-          // fprintf(view_t,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p[k-1].x(),p[k-1].y(),0.0,
-          //         p[k].x(),p[k].y(),0.0);
+          if (debug){
+	    fprintf(view_t,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p[k-1].x(),p[k-1].y(),0.0,
+		    p[k].x(),p[k].y(),0.0);
+	  }
           bnd.push_back(p[k - 1]);
           bnd.push_back(p[k]);
         }
       }
     }
   }
-  // fprintf(view_t,"};\n");
-  // fclose(view_t);
+  if (debug){
+   fprintf(view_t,"};\n");
+   fclose(view_t);
+  }
 }
 
 static void computeElementShapes(GFace *gf, double &worst, double &avg,
@@ -523,10 +531,8 @@ void fourthPoint(double *p1, double *p2, double *p3, double *p4)
 
 static void
 remeshUnrecoveredEdges(std::map<MVertex *, BDS_Point *> &recoverMapInv,
-                       std::set<EdgeToRecover> &edgesNotRecovered,
-                       std::list<GFace *> &facesToRemesh)
+                       std::set<EdgeToRecover> &edgesNotRecovered)
 {
-  facesToRemesh.clear();
   deMeshGFace dem;
 
   std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
@@ -536,7 +542,7 @@ remeshUnrecoveredEdges(std::map<MVertex *, BDS_Point *> &recoverMapInv,
     for(std::vector<GFace *>::iterator it = l_faces.begin();
         it != l_faces.end(); ++it) {
       if((*it)->triangles.size() || (*it)->quadrangles.size()) {
-        facesToRemesh.push_back(*it);
+        (*it)->meshStatistics.status = GFace::PENDING;
         dem(*it);
       }
     }
@@ -710,47 +716,6 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
   }
 
   return true;
-}
-
-void BDS2GMSH(BDS_Mesh *m, GFace *gf,
-              std::map<BDS_Point *, MVertex *, PointLessThan> &recoverMap)
-{
-  {
-    std::set<BDS_Point *, PointLessThan>::iterator itp = m->points.begin();
-    while(itp != m->points.end()) {
-      BDS_Point *p = *itp;
-      if(recoverMap.find(p) == recoverMap.end()) {
-        MVertex *v = new MFaceVertex(p->X, p->Y, p->Z, gf, p->u, p->v);
-        recoverMap[p] = v;
-        gf->mesh_vertices.push_back(v);
-      }
-      ++itp;
-    }
-  }
-  {
-    std::vector<BDS_Face *>::iterator itt = m->triangles.begin();
-    while(itt != m->triangles.end()) {
-      BDS_Face *t = *itt;
-      if(!t->deleted) {
-        BDS_Point *n[4];
-        t->getNodes(n);
-        MVertex *v1 = recoverMap[n[0]];
-        MVertex *v2 = recoverMap[n[1]];
-        MVertex *v3 = recoverMap[n[2]];
-        if(!n[3]) {
-          // when a singular point is present, degenerated triangles may be
-          // created, for example on a sphere that contains one pole
-          if(v1 != v2 && v1 != v3 && v2 != v3)
-            gf->triangles.push_back(new MTriangle(v1, v2, v3));
-        }
-        else {
-          MVertex *v4 = recoverMap[n[3]];
-          gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
-        }
-      }
-      ++itt;
-    }
-  }
 }
 
 static void addOrRemove(MVertex *v1, MVertex *v2,
@@ -1029,6 +994,40 @@ static void directions_storage(GFace *gf)
   }
 
   backgroundMesh::unset();
+}
+
+static void BDS2GMSH(BDS_Mesh *m, GFace *gf,
+                     std::map<BDS_Point *, MVertex *, PointLessThan> &recoverMap)
+{
+  std::vector<BDS_Face *>::iterator itt = m->triangles.begin();
+  while(itt != m->triangles.end()) {
+    BDS_Face *t = *itt;
+    if(!t->deleted) {
+      BDS_Point *n[4];
+      t->getNodes(n);
+      MVertex *v[4] = {0, 0, 0, 0};
+      for(int i = 0; i < 4; i++){
+        if(!n[i]) continue;
+        if(recoverMap.find(n[i]) == recoverMap.end()) {
+          v[i] = new MFaceVertex(n[i]->X, n[i]->Y, n[i]->Z, gf, n[i]->u, n[i]->v);
+          recoverMap[n[i]] = v[i];
+          gf->mesh_vertices.push_back(v[i]);
+        }
+        else
+          v[i] = recoverMap[n[i]];
+      }
+      if(!v[3]) {
+        // when a singular point is present, degenerated triangles may be
+        // created, for example on a sphere that contains one pole
+        if(v[0] != v[1] && v[0] != v[2] && v[1] != v[2])
+          gf->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+      }
+      else {
+        gf->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[2], v[3]));
+      }
+    }
+    ++itt;
+  }
 }
 
 struct HasSmallerDistanceCompare
@@ -1416,9 +1415,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       gf->model()->writeMSH(name);
     }
 
-    std::list<GFace *> facesToRemesh;
     if(repairSelfIntersecting1dMesh)
-      remeshUnrecoveredEdges(recoverMapInv, edgesNotRecovered, facesToRemesh);
+      remeshUnrecoveredEdges(recoverMapInv, edgesNotRecovered);
     else {
       std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
       // int *_error = new int[3 * edgesNotRecovered.size()];
@@ -1438,9 +1436,11 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 
     // delete the mesh
     delete m;
-    if(RECUR_ITER < 10 && facesToRemesh.size() == 0)
-      return meshGenerator(gf, RECUR_ITER + 1, repairSelfIntersecting1dMesh,
-                           onlyInitialMesh, debug, replacement_edges);
+    if (RECUR_ITER < 10){
+
+      return meshGenerator(
+        gf, RECUR_ITER + 1, repairSelfIntersecting1dMesh, onlyInitialMesh, debug, replacement_edges);
+    }
     return false;
   }
 
@@ -1966,8 +1966,13 @@ static bool buildConsecutiveListOfVertices(
               recoverMap.begin();
             it != recoverMap.end(); ++it) {
           if(it->second == here) {
-            pp = it->first;
-            break;
+            // Also check on 2D coordinates as the point might lie on the seam
+            SPoint2 param = coords[i];
+            SPoint2 paramPoint(it->first->u, it->first->v);
+            if (param.distance(paramPoint) <= tol){
+              pp = it->first;
+              break;
+            }
           }
         }
       }
@@ -2025,10 +2030,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
 
   std::map<BDS_Point *, MVertex *, PointLessThan> recoverMap;
 
-  char name[245];
-  sprintf(name, "trueBoundary%d.pos", gf->tag());
   std::vector<SPoint2> true_boundary;
-  trueBoundary(name, gf, true_boundary);
+  trueBoundary(gf, true_boundary, debug);
 
   Range<double> rangeU = gf->parBounds(0);
   Range<double> rangeV = gf->parBounds(1);
@@ -2658,47 +2661,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
   // equivalence.size());
 
   // fill the small gmsh structures
-  {
-    std::set<BDS_Point *, PointLessThan>::iterator itp = m->points.begin();
-    while(itp != m->points.end()) {
-      BDS_Point *p = *itp;
-      if(recoverMap.find(p) == recoverMap.end()) {
-        MVertex *v = new MFaceVertex(p->X, p->Y, p->Z, gf, p->u, p->v);
-        recoverMap[p] = v;
-        gf->mesh_vertices.push_back(v);
-      }
-      ++itp;
-    }
-  }
-
-  std::map<MTriangle *, BDS_Face *> invert_map;
-  {
-    std::vector<BDS_Face *>::iterator itt = m->triangles.begin();
-    while(itt != m->triangles.end()) {
-      BDS_Face *t = *itt;
-      if(!t->deleted) {
-        BDS_Point *n[4];
-        t->getNodes(n);
-        MVertex *v1 = recoverMap[n[0]];
-        MVertex *v2 = recoverMap[n[1]];
-        MVertex *v3 = recoverMap[n[2]];
-        if(!n[3]) {
-          // when a singular point is present, degenerated triangles may be
-          // created, for example on a sphere that contains one pole
-          if(v1 != v2 && v1 != v3 && v2 != v3) {
-            // we are in the periodic case. if we aim at using delaunay mesh
-            // generation in thoses cases, we should double some of the vertices
-            gf->triangles.push_back(new MTriangle(v1, v2, v3));
-          }
-        }
-        else {
-          MVertex *v4 = recoverMap[n[3]];
-          gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
-        }
-      }
-      ++itt;
-    }
-  }
+  BDS2GMSH(m, gf, recoverMap);
 
   if(debug) {
     char name[245];
@@ -2781,6 +2744,7 @@ void deMeshGFace::operator()(GFace *gf)
   gf->meshStatistics.status = GFace::PENDING;
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;
   gf->correspondingVertices.clear();
+  gf->correspondingHOPoints.clear();
 }
 
 static double TRIANGLE_VALIDITY(GFace *gf, MTriangle *t)
@@ -2886,9 +2850,14 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   bool singularEdges = false;
   std::vector<GEdge *>::const_iterator ite = gf->edges().begin();
+
   while(ite != gf->edges().end()) {
     if((*ite)->isSeam(gf)) singularEdges = true;
-    if((*ite)->isMeshDegenerated()) singularEdges = true;
+    if((*ite)->getBeginVertex() == (*ite)->getEndVertex()){
+      if ((*ite)->geomType() == GEntity::Unknown){
+	//	singularEdges = true;
+      }
+    }
     ite++;
   }
 

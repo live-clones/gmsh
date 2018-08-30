@@ -48,7 +48,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   setup();
   if(model()->getOCCInternals()) model()->getOCCInternals()->bind(s, num);
 
-  // if(tag() == 10) writeBREP("s10.brep");
+  //  if(tag() == 820) writeBREP("s820.brep");
 }
 
 OCCFace::~OCCFace()
@@ -80,6 +80,7 @@ void OCCFace::setup()
       else if(edge.Orientation() == TopAbs_INTERNAL) {
         Msg::Debug("Adding embedded edge %d in face %d", e->tag(), tag());
         embedded_edges.push_back(e);
+        e->addFace(this);
         OCCEdge *occe = (OCCEdge *)e;
         occe->setTrimmed(this);
       }

@@ -39,7 +39,7 @@ factory.addLine(6,2, 13);  factory.addLine(2,1, 14)
 factory.addLine(1,3, 15);  factory.addLine(3,7, 16)
 factory.addLine(7,2, 17);  factory.addLine(3,4, 18)
 factory.addLine(5,1, 19);  factory.addLine(7,8, 20)
-factory.addLine(6,14, 21); 
+factory.addLine(6,14, 21);
 
 factory.addCurveLoop([-11,-19,-15,-18], 22)
 factory.addPlaneSurface([22], 23)
@@ -87,7 +87,7 @@ function cheeseHole(x, y, z, r, lc, shells)
     c10 = factory.addCircleArc(p3,p1,p4)
     c11 = factory.addCircleArc(p4,p1,p6)
     c12 = factory.addCircleArc(p6,p1,p7)
-    
+
     l1 = factory.addCurveLoop([c5,c10,c4])
     l2 = factory.addCurveLoop([c9,-c5,c1])
     l3 = factory.addCurveLoop([c12,-c8,-c1])
@@ -96,7 +96,7 @@ function cheeseHole(x, y, z, r, lc, shells)
     l6 = factory.addCurveLoop([-c11,-c3,c7])
     l7 = factory.addCurveLoop([-c2,-c7,-c12])
     l8 = factory.addCurveLoop([-c6,-c9,c2])
-    
+
     s1 = factory.addSurfaceFilling([l1])
     s2 = factory.addSurfaceFilling([l2])
     s3 = factory.addSurfaceFilling([l3])
@@ -105,15 +105,17 @@ function cheeseHole(x, y, z, r, lc, shells)
     s6 = factory.addSurfaceFilling([l6])
     s7 = factory.addSurfaceFilling([l7])
     s8 = factory.addSurfaceFilling([l8])
-    
+
     sl = factory.addSurfaceLoop([s1, s2, s3, s4, s5, s6, s7, s8])
     v = factory.addVolume([sl])
     push!(shells, sl)
     return v
 end
 
-x = 0; y = 0.75; z = 0; r = 0.09
+x = 0
+y = 0.75; z = 0; r = 0.09
 for t in 1:5
+    global x, z
     x += 0.166
     z += 0.166
     v = cheeseHole(x, y, z, r, lcar3, shells)
@@ -121,7 +123,7 @@ for t in 1:5
 end
 
 factory.addVolume(shells, 186);
-      
+
 model.addPhysicalGroup(3, [186], 10);
 factory.synchronize()
 gmsh.fltk.run()

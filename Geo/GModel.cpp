@@ -1730,29 +1730,24 @@ static void _associateEntityWithElementVertices(GEntity *ge,
   }
 }
 
-void GModel::_createGeometryOfDiscreteEntities(bool force)
+void GModel::createGeometryOfDiscreteEntities()
 {
-  if(CTX::instance()->meshDiscrete) {
-    createTopologyFromMeshNew();
-    exportDiscreteGEOInternals();
-  }
-  //  return;
-  if(CTX::instance()->meshDiscrete) {
-    Msg::Info("Creating the geometry of discrete surfaces");
-    for(fiter it = firstFace(); it != lastFace(); ++it) {
-      if((*it)->geomType() == GEntity::DiscreteSurface) {
-        discreteFace *df = dynamic_cast<discreteFace *>(*it);
-        if(df) df->createGeometry();
-      }
+  createTopologyFromMeshNew();
+  exportDiscreteGEOInternals();
+
+  Msg::Info("Creating the geometry of discrete surfaces");
+  for(fiter it = firstFace(); it != lastFace(); ++it) {
+    if((*it)->geomType() == GEntity::DiscreteSurface) {
+      discreteFace *df = dynamic_cast<discreteFace *>(*it);
+      if(df) df->createGeometry();
     }
   }
-  if(force || CTX::instance()->meshDiscrete) {
-    Msg::Info("Creating the geometry of discrete curves");
-    for(eiter it = firstEdge(); it != lastEdge(); ++it) {
-      if((*it)->geomType() == GEntity::DiscreteCurve) {
-        discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
-        if(de) de->createGeometry();
-      }
+
+  Msg::Info("Creating the geometry of discrete curves");
+  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+    if((*it)->geomType() == GEntity::DiscreteCurve) {
+      discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
+      if(de) de->createGeometry();
     }
   }
 }
@@ -2522,7 +2517,7 @@ void GModel::alignPeriodicBoundaries()
 
 void GModel::makeDiscreteRegionsSimplyConnected()
 {
-  Msg::Debug("Making discrete regions simply connected...");
+  Msg::Info("Making discrete regions simply connected...");
 
   std::vector<discreteRegion *> discRegions;
   for(riter it = firstRegion(); it != lastRegion(); it++)
@@ -2577,12 +2572,12 @@ void GModel::makeDiscreteRegionsSimplyConnected()
     }
   }
 
-  Msg::Debug("Done making discrete regions simply connected");
+  Msg::Info("Done making discrete regions simply connected");
 }
 
 void GModel::makeDiscreteFacesSimplyConnected()
 {
-  Msg::Debug("Making discrete faces simply connected...");
+  Msg::Info("Making discrete faces simply connected...");
 
   std::vector<discreteFace *> discFaces;
   for(fiter it = firstFace(); it != lastFace(); it++)
@@ -2633,20 +2628,15 @@ void GModel::makeDiscreteFacesSimplyConnected()
     }
   }
 
-  Msg::Debug("Done making discrete faces simply connected");
+  Msg::Info("Done making discrete faces simply connected");
 }
 
 void GModel::createTopologyFromMesh()
 {
-  Msg::StatusBar(true, "Creating topology from mesh...");
-  double t1 = Cpu();
-  removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
   makeDiscreteRegionsSimplyConnected();
   makeDiscreteFacesSimplyConnected();
   createTopologyFromMeshNew();
   exportDiscreteGEOInternals();
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done creating topology from mesh (%g s)", t2 - t1);
 }
 
 static void
@@ -2888,7 +2878,7 @@ int GModel::readGEO(const std::string &name)
   if(GModel::current()->getOCCInternals())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
   GModel::current()->getGEOInternals()->synchronize(GModel::current());
-  return true;
+  return 1;
 }
 
 void GModel::setPhysicalNumToEntitiesInBox(int EntityDimension,

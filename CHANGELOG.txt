@@ -1,13 +1,16 @@
-4.0.0: new C++, C, Python and Julia API; new MSH4 format; new mesh partitioning
-code based on Metis 5; new 3D tetrahedralization algorithm as default; new
-compound entities workflow for remeshing (as meshing constraints); added support
-for general b-splines, fillets and chamfers with OpenCASCADE kernel; improved
-meshing of surfaces with singular parametrizations (spheres, etc.); uniformized
-entity naming conventions (line/curve, vertex/node, etc.); generalized handling
-of "all" entities in geo file (using {:} notation); added support for creating
-LSDYNA mesh files; removed old CAD creation factory (GModelFactory), old
-reparametrization code (G{Edge, Face, Region}Compound) and old partitionning
-code (Metis 4 and Chaco); various cleanups, bug fixes and enhancements.
+4.0.1: renumber mesh nodes/elements by default; small bug fixes.
+
+4.0.0 (August 22, 2018): new C++, C, Python and Julia API; new MSH4 format; new
+mesh partitioning code based on Metis 5; new 3D tetrahedralization algorithm as
+default; new workflow for remeshing (compound entities as meshing constraints,
+CreateGeometry for mesh reparametrization); added support for general b-splines,
+fillets and chamfers with OpenCASCADE kernel; improved meshing of surfaces with
+singular parametrizations (spheres, etc.); uniformized entity naming conventions
+(line/curve, vertex/node, etc.); generalized handling of "all" entities in geo
+file (using {:} notation); added support for creating LSDYNA mesh files; removed
+old CAD creation factory (GModelFactory), old reparametrization code (G{Edge,
+Face, Region}Compound) and old partitionning code (Metis 4 and Chaco); various
+cleanups, bug fixes and enhancements.
 
 3.0.6 (November 5, 2017): improved meshing of spheres; improved handling of mesh
 size constraints with OpenCASCADE kernel; implemented "Coherence" for

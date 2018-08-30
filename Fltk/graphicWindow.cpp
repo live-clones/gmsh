@@ -2770,6 +2770,20 @@ void quick_access_cb(Fl_Widget *w, void *data)
     status_xyz1p_cb(0, (void *)"1:1");
     status_xyz1p_cb(0, (void *)"z");
   }
+  else if(what == "select_center"){
+    opt_general_rotation_center_cg(0, GMSH_SET | GMSH_GUI, 0);
+    general_options_ok_cb(0, (void *)"rotation_center");
+    general_options_rotation_center_select_cb(0, 0);
+  }
+  else if(what == "split_hor"){
+    file_window_cb(0, (void*)"split_h");
+  }
+  else if(what == "split_ver"){
+    file_window_cb(0, (void*)"split_v");
+  }
+  else if(what == "unsplit"){
+    file_window_cb(0, (void*)"split_u");
+  }
   else if(what == "axes"){
     opt_general_axes(0, GMSH_SET|GMSH_GUI,
                      opt_general_axes(0, GMSH_GET, 0) ? 0 : 3);
@@ -2917,6 +2931,16 @@ void quick_access_cb(Fl_Widget *w, void *data)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_displacement_factor(i, GMSH_SET|GMSH_GUI, val);
   }
+  else if(what == "view_glyph_barycenter"){
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_glyph_location(i, GMSH_SET|GMSH_GUI, 1);
+  }
+  else if(what == "view_glyph_node"){
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_glyph_location(i, GMSH_SET|GMSH_GUI, 2);
+  }
   else if(what == "view_range_default"){
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
@@ -3018,8 +3042,13 @@ void status_options_cb(Fl_Widget *w, void *data)
   }
   else if(what == "quick_access"){ // quick access menu
     static Fl_Menu_Item menu[] = {
-      { "Reset viewport", 0, quick_access_cb, (void*)"reset_viewport",
-        FL_MENU_DIVIDER },
+      { "Reset viewport", 0, quick_access_cb, (void*)"reset_viewport" },
+      { "Select rotation center", 0, quick_access_cb, (void*)"select_center" },
+      { "Split window", 0, 0, 0, FL_SUBMENU | FL_MENU_DIVIDER },
+         { "Horizontally", 0, quick_access_cb, (void*)"split_hor"},
+         { "Vertically", 0, quick_access_cb, (void*)"split_ver"},
+         { "Unsplit", 0, quick_access_cb, (void*)"unsplit"},
+         { 0 },
       { "Axes", FL_ALT + 'a', quick_access_cb, (void*)"axes",
         FL_MENU_TOGGLE },
       { "Projection mode", 0, 0, 0, FL_SUBMENU },
@@ -3034,7 +3063,7 @@ void status_options_cb(Fl_Widget *w, void *data)
          { "Curves", FL_ALT + 'l', quick_access_cb, (void*)"geometry_curves",
            FL_MENU_TOGGLE },
          { "Surfaces ", FL_ALT + 's', quick_access_cb, (void*)"geometry_surfaces",
-         FL_MENU_TOGGLE },
+           FL_MENU_TOGGLE },
          { "Volumes", FL_ALT + 'v', quick_access_cb, (void*)"geometry_volumes",
            FL_MENU_TOGGLE },
          { 0 },
@@ -3067,56 +3096,59 @@ void status_options_cb(Fl_Widget *w, void *data)
          { "Filled iso-values", 0, quick_access_cb, (void*)"view_filled"},
          { "Numeric values", 0, quick_access_cb, (void*)"view_numeric"},
          { 0 },
+      { "View range", 0, 0, 0, FL_SUBMENU },
+         { "Default", 0, quick_access_cb, (void*)"view_range_default"},
+         { "Per time step", 0, quick_access_cb, (void*)"view_range_per_step"},
+         { 0 },
       { "View vector display", 0, 0, 0, FL_SUBMENU },
          { "Line", 0, quick_access_cb, (void*)"view_line"},
          { "3D arrow", 0, quick_access_cb, (void*)"view_3d_arrow"},
          { "Displacement", 0, quick_access_cb, (void*)"view_displacement"},
          { 0 },
-      { "View range", 0, 0, 0, FL_SUBMENU },
-         { "Default", 0, quick_access_cb, (void*)"view_range_default"},
-         { "Per time step", 0, quick_access_cb, (void*)"view_range_per_step"},
+      { "View glyph location", 0, 0, 0, FL_SUBMENU },
+         { "Barycenter", 0, quick_access_cb, (void*)"view_glyph_barycenter"},
+         { "Node", 0, quick_access_cb, (void*)"view_glyph_node"},
          { 0 },
-      { "All view options...", 0, quick_access_cb, (void*)"view",
-        0, 0, FL_ITALIC },
+      { "All view options...", 0, quick_access_cb, (void*)"view", 0, 0, FL_ITALIC },
       { 0 }
     };
-    int a = 1;
-    if(opt_general_axes(0, GMSH_GET, 0)) menu[a + 0].set(); else menu[a + 0].clear();
+    const int gen = 7, geo = 13, msh = 20, pos = 31, end = 53;
+    if(opt_general_axes(0, GMSH_GET, 0)) menu[gen + 0].set(); else menu[gen + 0].clear();
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0) && opt_view_axes(i, GMSH_GET, 0))
-        menu[a + 0].set();
-    if(opt_geometry_points(0, GMSH_GET, 0)) menu[a + 7].set(); else menu[a + 7].clear();
-    if(opt_geometry_curves(0, GMSH_GET, 0)) menu[a + 8].set(); else menu[a + 8].clear();
-    if(opt_geometry_surfaces(0, GMSH_GET, 0)) menu[a + 9].set(); else menu[a + 9].clear();
-    if(opt_geometry_volumes(0, GMSH_GET, 0)) menu[a + 10].set(); else menu[a + 10].clear();
-    if(opt_mesh_points(0, GMSH_GET, 0)) menu[a + 14].set(); else menu[a + 14].clear();
-    if(opt_mesh_lines(0, GMSH_GET, 0)) menu[a + 15].set(); else menu[a + 15].clear();
-    if(opt_mesh_surfaces_edges(0, GMSH_GET, 0)) menu[a + 16].set(); else menu[a + 16].clear();
-    if(opt_mesh_surfaces_faces(0, GMSH_GET, 0)) menu[a + 17].set(); else menu[a + 17].clear();
-    if(opt_mesh_volumes_edges(0, GMSH_GET, 0)) menu[a + 18].set(); else menu[a + 18].clear();
-    if(opt_mesh_volumes_faces(0, GMSH_GET, 0)) menu[a + 19].set(); else menu[a + 19].clear();
+        menu[gen + 0].set();
+    if(opt_geometry_points(0, GMSH_GET, 0)) menu[geo + 1].set(); else menu[geo + 1].clear();
+    if(opt_geometry_curves(0, GMSH_GET, 0)) menu[geo + 2].set(); else menu[geo + 2].clear();
+    if(opt_geometry_surfaces(0, GMSH_GET, 0)) menu[geo + 3].set(); else menu[geo + 3].clear();
+    if(opt_geometry_volumes(0, GMSH_GET, 0)) menu[geo + 4].set(); else menu[geo + 4].clear();
+    if(opt_mesh_points(0, GMSH_GET, 0)) menu[msh + 1].set(); else menu[msh + 1].clear();
+    if(opt_mesh_lines(0, GMSH_GET, 0)) menu[msh + 2].set(); else menu[msh + 2].clear();
+    if(opt_mesh_surfaces_edges(0, GMSH_GET, 0)) menu[msh + 3].set(); else menu[msh + 3].clear();
+    if(opt_mesh_surfaces_faces(0, GMSH_GET, 0)) menu[msh + 4].set(); else menu[msh + 4].clear();
+    if(opt_mesh_volumes_edges(0, GMSH_GET, 0)) menu[msh + 5].set(); else menu[msh + 5].clear();
+    if(opt_mesh_volumes_faces(0, GMSH_GET, 0)) menu[msh + 6].set(); else menu[msh + 6].clear();
     if(PView::list.empty()){
       // if there are no post-processing view, hide all entries below the mesh options...
-      menu[a + 23].flags = 0;
-      for(int i = 24; i < 42; i++) menu[a + i].hide();
+      menu[pos - 1].flags = 0;
+      for(int i = pos; i <= end; i++) menu[i].hide();
     }
     else{
       // otherwise add a divider and show the post-pro view entries
-      menu[a + 23].flags = FL_MENU_DIVIDER;
-      for(int i = 24; i < 42; i++) menu[a + i].show();
-      menu[a + 24].clear();
+      menu[pos - 1].flags = FL_MENU_DIVIDER;
+      for(int i = pos; i <= end; i++) menu[i].show();
+      menu[pos].clear();
       for(unsigned int i = 0; i < PView::list.size(); i++){
         if(opt_view_visible(i, GMSH_GET, 0) && opt_view_show_element(i, GMSH_GET, 0)){
-          menu[a + 24].set();
+          menu[pos].set();
           break;
         }
       }
     }
     // popup the menu
-    static Fl_Menu_Item *picked = &menu[a + 21];
+    static Fl_Menu_Item *picked = &menu[msh + 8]; // toggle mesh display - the default
     picked = (Fl_Menu_Item*)menu->popup(Fl::event_x(), Fl::event_y(), 0,
                                         (picked && picked->visible()) ? picked :
-                                        &menu[a + 21], 0);
+                                        &menu[msh + 8], 0);
     if(picked && picked->callback()) picked->do_callback(0, picked->user_data());
     drawContext::global()->draw();
   }
@@ -4229,8 +4261,6 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Curve"} ,
   {"0Modules/Mesh/Define/Compound/Surface",
    (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Surface"} ,
-  {"0Modules/Mesh/Define/Compound/Volume",
-   (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Volume"} ,
   {"0Modules/Mesh/Define/Recombine",
    (Fl_Callback *)mesh_define_recombine_cb  } ,
   {"0Modules/Mesh/1D",

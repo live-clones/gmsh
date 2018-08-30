@@ -189,7 +189,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   do { // enter loop
 
-    // run Gmsh client for non-python metamodels
+    // run Gmsh client for non-metamodels
     if(onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh))
       drawContext::global()->draw();
 

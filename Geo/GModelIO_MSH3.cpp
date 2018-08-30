@@ -539,8 +539,6 @@ int GModel::_readMSH3(const std::string &name)
   else
     _storeVerticesInEntities(_vertexMapCache);
 
-  _createGeometryOfDiscreteEntities();
-
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
     _storeParentsInSubElements(elements[i]);
 
@@ -706,7 +704,7 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
 int GModel::_writeMSH3(const std::string &name, double version, bool binary,
                        bool saveAll, bool saveParametric, double scalingFactor,
                        int elementStartNum, int saveSinglePartition,
-                       bool multipleView)
+                       bool append)
 {
   if(version < 3. || version >= 4.) {
     Msg::Error("Wrong MSH file version %g for MSH3 writer", version);
@@ -714,7 +712,7 @@ int GModel::_writeMSH3(const std::string &name, double version, bool binary,
   }
 
   FILE *fp;
-  if(multipleView)
+  if(append)
     fp = Fopen(name.c_str(), binary ? "ab" : "a");
   else
     fp = Fopen(name.c_str(), binary ? "wb" : "w");

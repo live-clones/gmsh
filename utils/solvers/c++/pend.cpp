@@ -96,6 +96,10 @@ int main(int argc, char **argv)
   c->get(ns, name + "/Action");
   if(ns.size()) action = ns[0].getValue();
 
+  // prevent automatic Gmsh model reload & meshing
+  onelab::number n("IsMetamodel", 1);
+  c->set(n);
+
   std::string path(argv[0]);
   int islash = (int)path.find_last_of("/\\");
   if(islash > 0)

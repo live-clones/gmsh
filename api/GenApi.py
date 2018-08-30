@@ -77,7 +77,7 @@ def ivoidstar(name, value=None, python_value=None, julia_value=None):
     a = arg(name, value, python_value, julia_value,
             "const void *", "const void *", False)
     a.python_arg = "c_void_p(" + name + ")"
-    a.julia_ctype = "Ptr{Void}"
+    a.julia_ctype = "Ptr{Nothing}"
     return a
 
 def ivectorint(name, value=None, python_value=None, julia_value=None):
@@ -292,7 +292,7 @@ def ovectorint(name, value=None, python_value=None, julia_value=None):
                    api_name_n + " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[], " +
-                    api_name_n + "[], true)")
+                    api_name_n + "[], own=true)")
     return a
 
 def ovectordouble(name, value=None, python_value=None, julia_value=None):
@@ -316,7 +316,7 @@ def ovectordouble(name, value=None, python_value=None, julia_value=None):
                    api_name_n + " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[], " +
-                    api_name_n + "[], true)")
+                    api_name_n + "[], own=true)")
     return a
 
 def ovectorstring(name, value=None, python_value=None, julia_value=None):
@@ -344,7 +344,7 @@ def ovectorstring(name, value=None, python_value=None, julia_value=None):
                    api_name_n + " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[], " +
-                    api_name_n + "[], true)\n    " +
+                    api_name_n + "[], own=true)\n    " +
                     name + " = [unsafe_string(tmp_" + api_name + "[i]) for i in 1:length(tmp_" +
                     api_name + ") ]")
     return a
@@ -373,7 +373,7 @@ def ovectorpair(name, value=None, python_value=None, julia_value=None):
                    api_name_n + " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[], " +
-                    api_name_n + "[], true)\n    " +
+                    api_name_n + "[], own=true)\n    " +
                     name + " = [ (tmp_" + api_name + "[i], tmp_" + api_name + "[i+1]) " +
                     "for i in 1:2:length(tmp_" + api_name + ") ]")
     return a
@@ -408,11 +408,11 @@ def ovectorvectorint(name, value=None, python_value=None, julia_value=None):
                    api_name_nn + " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[], " +
-                    api_name_nn + "[], true)\n    " +
+                    api_name_nn + "[], own=true)\n    " +
                     "tmp_" + api_name_n + " = unsafe_wrap(Array, " + api_name_n + "[], " +
-                    api_name_nn + "[], true)\n    " +
+                    api_name_nn + "[], own=true)\n    " +
                     name + " = [ unsafe_wrap(Array, tmp_" + api_name + "[i], " +
-                    "tmp_" + api_name_n + "[i], true) for i in 1:" +
+                    "tmp_" + api_name_n + "[i], own=true) for i in 1:" +
                     api_name_nn + "[] ]")
     return a
 
@@ -447,11 +447,11 @@ def ovectorvectordouble(name, value=None, python_value=None, julia_value=None):
                    api_name_nn + " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[], " +
-                    api_name_nn + "[], true)\n    " +
+                    api_name_nn + "[], own=true)\n    " +
                     "tmp_" + api_name_n + " = unsafe_wrap(Array, " + api_name_n + "[], " +
-                    api_name_nn + "[], true)\n    " +
+                    api_name_nn + "[], own=true)\n    " +
                     name + " = [ unsafe_wrap(Array, tmp_" + api_name + "[i], " +
-                    "tmp_" + api_name_n + "[i], true) for i in 1:" +
+                    "tmp_" + api_name_n + "[i], own=true) for i in 1:" +
                     api_name_nn + "[] ]")
     return a
 
@@ -488,14 +488,14 @@ def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
                    api_name_nn + " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[], " +
-                    api_name_nn + "[], true)\n    " +
+                    api_name_nn + "[], own=true)\n    " +
                     "tmp_" + api_name_n + " = unsafe_wrap(Array, " + api_name_n + "[], " +
-                    api_name_nn + "[], true)\n    " +
+                    api_name_nn + "[], own=true)\n    " +
                     name + " = Vector{Tuple{Cint,Cint}}[]\n    " +
                     "resize!(" + name + ", " + api_name_nn + "[])\n    " +
                     "for i in 1:" + api_name_nn + "[]\n    " +
                     "    tmp = unsafe_wrap(Array, tmp_" + api_name + "[i], tmp_" +
-                    api_name_n + "[i], true)\n    " +
+                    api_name_n + "[i], own=true)\n    " +
                     "    " + name + "[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]\n    " +
                     "end")
     return a
@@ -1139,7 +1139,7 @@ class API:
             c_name = c_mpath + name[0].upper() + name[1:]
             f.write("ccall((:" + c_name + ", " +
                     ("" if c_mpath == ns else ns + ".") + "lib), " +
-                    ("Void" if rtype is None else rtype.rjulia_type) + ",\n" +
+                    ("Nothing" if rtype is None else rtype.rjulia_type) + ",\n" +
                     " " * 10 + "(" + ", ".join(
                         (tuple(a.julia_ctype for a in args) + ("Ptr{Cint}",))) +
                     ("," if not len(args) else "") + "),\n" +
@@ -1166,7 +1166,7 @@ class API:
             if level == 1:
                 f.write('const ' + ns.upper() + '_API_VERSION = "' + self.version + '"\n')
                 f.write('const libdir = dirname(@__FILE__)\n')
-                f.write('const lib = joinpath(libdir, is_windows() ? "' + ns + '-' + self.version +
+                f.write('const lib = joinpath(libdir, Sys.iswindows() ? "' + ns + '-' + self.version +
                         '" : "lib' + ns + '")\n')
             else:
                 f.write("import " + ("." * level) + ns + "\n")

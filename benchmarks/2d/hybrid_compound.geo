@@ -1,6 +1,6 @@
-General.MeshDiscrete = 1;
 
 Merge "hybrid_part.msh";
+CreateGeometry;
 
 lc = 1e-2;
 Point(1) = {0, 0, 0, lc};

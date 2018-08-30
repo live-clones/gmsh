@@ -189,7 +189,7 @@ struct doubleXstring{
 %token tSyncModel tNewModel
 %token tOnelabAction tOnelabRun tCodeName
 %token tCpu tMemory tTotalMemory
-%token tCreateTopology
+%token tCreateTopology tCreateGeometry tRenumberMeshNodes tRenumberMeshElements
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tDefineNumber tDefineStruct tNameStruct tDimNameSpace tAppend
 %token tDefineString tSetNumber tSetTag tSetString
@@ -3409,6 +3409,18 @@ Command :
    | tCreateTopology tEND
     {
       GModel::current()->createTopologyFromMesh();
+    }
+   | tCreateGeometry tEND
+    {
+      GModel::current()->createGeometryOfDiscreteEntities();
+    }
+   | tRenumberMeshNodes tEND
+    {
+      GModel::current()->renumberMeshVertices();
+    }
+   | tRenumberMeshElements tEND
+    {
+      GModel::current()->renumberMeshElements();
     }
    | tRefineMesh tEND
     {

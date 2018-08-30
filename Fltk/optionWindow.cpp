@@ -47,47 +47,65 @@ extern StringXColor ViewOptions_Color[];
 extern StringXColor PrintOptions_Color[];
 
 static Fl_Menu_Item menu_point_display[] = {
-  {"Color dot", 0, 0, 0}, {"3D sphere", 0, 0, 0}, {0}};
+  {"Color dot", 0, 0, 0},
+  {"3D sphere", 0, 0, 0},
+  {0}
+};
 
-static Fl_Menu_Item menu_point_display_post[] = {{"Color dot", 0, 0, 0},
-                                                 {"3D sphere", 0, 0, 0},
-                                                 {"Scaled dot", 0, 0, 0},
-                                                 {"Scaled sphere", 0, 0, 0},
-                                                 {0}};
+static Fl_Menu_Item menu_point_display_post[] = {
+  {"Color dot", 0, 0, 0},
+  {"3D sphere", 0, 0, 0},
+  {"Scaled dot", 0, 0, 0},
+  {"Scaled sphere", 0, 0, 0},
+  {0}
+};
 
 static Fl_Menu_Item menu_line_display[] = {
-  {"Color segment", 0, 0, 0}, {"3D cylinder", 0, 0, 0}, {0}};
+  {"Color segment", 0, 0, 0},
+  {"3D cylinder", 0, 0, 0},
+  {0}
+};
 
-static Fl_Menu_Item menu_line_display_post[] = {{"Color segment", 0, 0, 0},
-                                                {"3D cylinder", 0, 0, 0},
-                                                {"Tapered cylinder", 0, 0, 0},
-                                                {0}};
+static Fl_Menu_Item menu_line_display_post[] = {
+  {"Color segment", 0, 0, 0},
+  {"3D cylinder", 0, 0, 0},
+  {"Tapered cylinder", 0, 0, 0},
+  {0}
+};
 
 static Fl_Menu_Item menu_surface_display[] = {
-  {"Cross", 0, 0, 0}, {"Wireframe", 0, 0, 0}, {"Solid", 0, 0, 0}, {0}};
+  {"Cross", 0, 0, 0},
+  {"Wireframe", 0, 0, 0},
+  {"Solid", 0, 0, 0},
+  {0}
+};
 
-static Fl_Menu_Item menu_axes_mode[] = {{"None", 0, 0, 0},
-                                        {"Simple axes", 0, 0, 0},
-                                        {"Box", 0, 0, 0},
-                                        {"Full grid", 0, 0, 0},
-                                        {"Open grid", 0, 0, 0},
-                                        {"Ruler", 0, 0, 0},
-                                        {0}};
+static Fl_Menu_Item menu_axes_mode[] = {
+  {"None", 0, 0, 0},
+  {"Simple axes", 0, 0, 0},
+  {"Box", 0, 0, 0},
+  {"Full grid", 0, 0, 0},
+  {"Open grid", 0, 0, 0},
+  {"Ruler", 0, 0, 0},
+  {0}
+};
 
-static Fl_Menu_Item menu_position[] = {{"Manual", 0, 0, 0},
-                                       {"Automatic", 0, 0, 0},
-                                       {"Top left", 0, 0, 0},
-                                       {"Top right", 0, 0, 0},
-                                       {"Bottom left", 0, 0, 0},
-                                       {"Bottom right", 0, 0, 0},
-                                       {"Top", 0, 0, 0},
-                                       {"Bottom", 0, 0, 0},
-                                       {"Left", 0, 0, 0},
-                                       {"Right", 0, 0, 0},
-                                       {"Full", 0, 0, 0},
-                                       {"Top third", 0, 0, 0},
-                                       {"In model coordinates", 0, 0, 0},
-                                       {0}};
+static Fl_Menu_Item menu_position[] = {
+  {"Manual", 0, 0, 0},
+  {"Automatic", 0, 0, 0},
+  {"Top left", 0, 0, 0},
+  {"Top right", 0, 0, 0},
+  {"Bottom left", 0, 0, 0},
+  {"Bottom right", 0, 0, 0},
+  {"Top", 0, 0, 0},
+  {"Bottom", 0, 0, 0},
+  {"Left", 0, 0, 0},
+  {"Right", 0, 0, 0},
+  {"Full", 0, 0, 0},
+  {"Top third", 0, 0, 0},
+  {"In model coordinates", 0, 0, 0},
+  {0}
+};
 
 Fl_Menu_Item menu_font_names[] = {
   {"Times-Roman", 0, 0, (void *)FL_TIMES},
@@ -105,7 +123,8 @@ Fl_Menu_Item menu_font_names[] = {
   {"Symbol", 0, 0, (void *)FL_SYMBOL},
   {"ZapfDingbats", 0, 0, (void *)FL_ZAPF_DINGBATS},
   {"Screen", 0, 0, (void *)FL_SCREEN},
-  {0}};
+  {0}
+};
 
 static void color_cb(Fl_Widget *w, void *data)
 {
@@ -190,9 +209,10 @@ static void general_options_color_scheme_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
+void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
 {
-  Msg::StatusGl("Select entity or element\n[Press 'q' to abort]");
+  Msg::StatusGl("Select geometrical entity, mesh element or post-processing view\n"
+                "[Press 'q' to abort]");
 
   CTX::instance()->pickElements = 1;
   CTX::instance()->mesh.changed = ENT_ALL;
@@ -212,10 +232,12 @@ static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
       pc = FlGui::instance()->selectedFaces[0]->bounds().center();
     else if(FlGui::instance()->selectedRegions.size())
       pc = FlGui::instance()->selectedRegions[0]->bounds().center();
+    else if(FlGui::instance()->selectedViews.size() &&
+            FlGui::instance()->selectedViews[0]->getData())
+      pc = FlGui::instance()->selectedViews[0]->getData()->getBoundingBox().center();
     opt_general_rotation_center0(0, GMSH_SET | GMSH_GUI, pc.x());
     opt_general_rotation_center1(0, GMSH_SET | GMSH_GUI, pc.y());
     opt_general_rotation_center2(0, GMSH_SET | GMSH_GUI, pc.z());
-
     drawContext *ctx =
       FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
     ctx->recenterForRotationCenterChange(pc);
@@ -228,7 +250,7 @@ static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
   Msg::StatusGl("");
 }
 
-static void general_options_ok_cb(Fl_Widget *w, void *data)
+void general_options_ok_cb(Fl_Widget *w, void *data)
 {
   optionWindow *o = FlGui::instance()->options;
   o->activate((const char *)data);
@@ -555,8 +577,6 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                                                         ALGO_3D_DELAUNAY);
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
-  opt_mesh_remesh_algo(0, GMSH_SET, o->mesh.choice[8]->value());
-  opt_mesh_remesh_param(0, GMSH_SET, o->mesh.choice[9]->value());
   opt_mesh_color_carousel(0, GMSH_SET, o->mesh.choice[4]->value());
   opt_mesh_quality_type(0, GMSH_SET, o->mesh.choice[6]->value());
   opt_mesh_label_type(0, GMSH_SET, o->mesh.choice[7]->value());
@@ -1590,7 +1610,10 @@ optionWindow::optionWindow(int deltaFontSize)
       o->hide();
 
       static Fl_Menu_Item menu_projection[] = {
-        {"Orthographic", 0, 0, 0}, {"Perspective", 0, 0, 0}, {0}};
+        {"Orthographic", 0, 0, 0},
+        {"Perspective", 0, 0, 0},
+        {0}
+      };
       general.choice[2] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Projection mode");
       general.choice[2]->menu(menu_projection);
@@ -1652,11 +1675,13 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[7]->align(FL_ALIGN_RIGHT);
       general.value[7]->callback(general_options_ok_cb);
 
-      static Fl_Menu_Item menu_genvectype[] = {{"Line", 0, 0, 0},
-                                               {"Arrow", 0, 0, 0},
-                                               {"Pyramid", 0, 0, 0},
-                                               {"3D arrow", 0, 0, 0},
-                                               {0}};
+      static Fl_Menu_Item menu_genvectype[] = {
+        {"Line", 0, 0, 0},
+        {"Arrow", 0, 0, 0},
+        {"Pyramid", 0, 0, 0},
+        {"3D arrow", 0, 0, 0},
+        {0}
+      };
       general.choice[0] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Vector display");
       general.choice[0]->menu(menu_genvectype);
@@ -1667,15 +1692,16 @@ optionWindow::optionWindow(int deltaFontSize)
                                    "Edit arrow");
       b->callback(general_arrow_param_cb);
 
-      static Fl_Menu_Item menu_font_engine[] = {{"Native", 0, 0, 0},
-                                                {"Cairo", 0, 0, 0
+      static Fl_Menu_Item menu_font_engine[] = {
+        {"Native", 0, 0, 0},
+        {"Cairo", 0, 0, 0
 #if !defined(HAVE_CAIRO)
-                                                 ,
-                                                 FL_MENU_INACTIVE
+         , FL_MENU_INACTIVE
 #endif
-                                                },
-                                                {"StringTexture", 0, 0, 0},
-                                                {0}};
+        },
+        {"StringTexture", 0, 0, 0},
+        {0}
+      };
       general.choice[7] = new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH,
                                         "Font rendering engine");
       general.choice[7]->menu(menu_font_engine);
@@ -1763,11 +1789,13 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[0]->align(FL_ALIGN_RIGHT);
       general.value[0]->callback(general_options_ok_cb);
 
-      static Fl_Menu_Item menu_color_scheme[] = {{"Dark", 0, 0, 0},
-                                                 {"Light", 0, 0, 0},
-                                                 {"Grayscale", 0, 0, 0},
-                                                 {"Reverse", 0, 0, 0},
-                                                 {0}};
+      static Fl_Menu_Item menu_color_scheme[] = {
+        {"Dark", 0, 0, 0},
+        {"Light", 0, 0, 0},
+        {"Grayscale", 0, 0, 0},
+        {"Reverse", 0, 0, 0},
+        {0}
+      };
 
       general.choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH,
                                         "Predefined color scheme");
@@ -1776,11 +1804,13 @@ optionWindow::optionWindow(int deltaFontSize)
       general.choice[3]->tooltip("(Alt+c)");
       general.choice[3]->callback(general_options_color_scheme_cb);
 
-      static Fl_Menu_Item menu_bg_grad[] = {{"None", 0, 0, 0},
-                                            {"Vertical", 0, 0, 0},
-                                            {"Horizontal", 0, 0, 0},
-                                            {"Radial", 0, 0, 0},
-                                            {0}};
+      static Fl_Menu_Item menu_bg_grad[] = {
+        {"None", 0, 0, 0},
+        {"Vertical", 0, 0, 0},
+        {"Horizontal", 0, 0, 0},
+        {"Radial", 0, 0, 0},
+        {0}
+      };
 
       general.choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
                                         "Background gradient");
@@ -1997,10 +2027,12 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[7]->type(FL_TOGGLE_BUTTON);
       geo.butt[7]->callback(geometry_options_ok_cb);
 
-      static Fl_Menu_Item menu_label_type[] = {{"Description", 0, 0, 0},
-                                               {"Elementary tags", 0, 0, 0},
-                                               {"Physical tags", 0, 0, 0},
-                                               {0}};
+      static Fl_Menu_Item menu_label_type[] = {
+        {"Description", 0, 0, 0},
+        {"Elementary tags", 0, 0, 0},
+        {"Physical tags", 0, 0, 0},
+        {0}
+      };
       geo.choice[4] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Label type");
       geo.choice[4]->menu(menu_label_type);
@@ -2033,7 +2065,10 @@ optionWindow::optionWindow(int deltaFontSize)
       o->hide();
 
       static Fl_Menu_Item menu_transform[] = {
-        {"None", 0, 0, 0}, {"Scaling", 0, 0, 0}, {0}};
+        {"None", 0, 0, 0},
+        {"Scaling", 0, 0, 0},
+        {0}
+      };
       geo.choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH,
                                     "Main window transform");
       geo.choice[3]->menu(menu_transform);
@@ -2198,7 +2233,8 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Frontal", 0, 0, 0},
         {"Delaunay for quads (experimental)", 0, 0, 0},
         {"Packing of parallelograms (experimental)", 0, 0, 0},
-        {0}};
+        {0}
+      };
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Delaunay", 0, 0, 0},
         {"Frontal", 0, 0, 0},
@@ -2206,20 +2242,19 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Frontal Hex (experimental)", 0, 0, 0},
         {"MMG3D (experimental)", 0, 0, 0},
         {"R-tree (experimental)", 0, 0, 0},
-        {0}};
+        {0}
+      };
       static Fl_Menu_Item menu_recombination_algo[] = {
-        {"Standard", 0, 0, 0}, {"Blossom", 0, 0, 0}, {0}};
+        {"Standard", 0, 0, 0},
+        {"Blossom", 0, 0, 0},
+        {0}
+      };
       static Fl_Menu_Item menu_subdivision_algo[] = {
-        {"None", 0, 0, 0}, {"All Quads", 0, 0, 0}, {"All Hexas", 0, 0, 0}, {0}};
-      static Fl_Menu_Item menu_remeshing_algo[] = {
-        {"No split", 0, 0, 0},
-        {"Automatic", 0, 0, 0},
-        {"Automatic only with Metis", 0, 0, 0},
-        {0}};
-      static Fl_Menu_Item menu_remeshing_param[] = {{"Harmonic", 0, 0, 0},
-                                                    {"Conformal", 0, 0, 0},
-                                                    {"Rbf Harmonic", 0, 0, 0},
-                                                    {0}};
+        {"None", 0, 0, 0},
+        {"All Quads", 0, 0, 0},
+        {"All Hexas", 0, 0, 0},
+        {0}
+      };
 
       mesh.choice[2] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "2D algorithm");
@@ -2250,19 +2285,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.choice[5]->align(FL_ALIGN_RIGHT);
       mesh.choice[5]->callback(mesh_options_ok_cb);
 
-      mesh.choice[8] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH,
-                                     "Remeshing algorithm");
-      mesh.choice[8]->menu(menu_remeshing_algo);
-      mesh.choice[8]->align(FL_ALIGN_RIGHT);
-      mesh.choice[8]->callback(mesh_options_ok_cb);
-
-      mesh.choice[9] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH,
-                                     "Remeshing parametrization");
-      mesh.choice[9]->menu(menu_remeshing_param);
-      mesh.choice[9]->align(FL_ALIGN_RIGHT);
-      mesh.choice[9]->callback(mesh_options_ok_cb);
-
-      mesh.value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH,
+      mesh.value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH,
                                          "Smoothing steps");
       mesh.value[0]->minimum(0);
       mesh.value[0]->maximum(100);
@@ -2270,7 +2293,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[0]->align(FL_ALIGN_RIGHT);
       mesh.value[0]->callback(mesh_options_ok_cb);
 
-      mesh.value[2] = new inputValueFloat(L + 2 * WB, 2 * WB + 9 * BH, IW, BH,
+      mesh.value[2] = new inputValueFloat(L + 2 * WB, 2 * WB + 7 * BH, IW, BH,
                                           "Element size factor");
       mesh.value[2]->minimum(0.001);
       mesh.value[2]->maximum(1000);
@@ -2279,16 +2302,16 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[2]->callback(mesh_options_ok_cb);
 
       mesh.value[25] =
-        new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH);
+        new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW / 2, BH);
       mesh.value[25]->align(FL_ALIGN_RIGHT);
       mesh.value[25]->callback(mesh_options_ok_cb);
 
-      mesh.value[26] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 10 * BH,
+      mesh.value[26] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 8 * BH,
                                           IW / 2, BH, "Min/Max element size");
       mesh.value[26]->align(FL_ALIGN_RIGHT);
       mesh.value[26]->callback(mesh_options_ok_cb);
 
-      mesh.value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 11 * BH, IW / 3,
+      mesh.value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 3,
                                          BH, "Element order");
       mesh.value[3]->minimum(1);
       mesh.value[3]->maximum(2);
@@ -2297,7 +2320,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[3]->callback(mesh_options_ok_cb);
 
       mesh.butt[4] =
-        new Fl_Check_Button(L + 2 * WB + 1.25 * IW, 2 * WB + 11 * BH, BW, BH,
+        new Fl_Check_Button(L + 2 * WB + 1.25 * IW, 2 * WB + 9 * BH, BW, BH,
                             "Use incomplete elements");
       mesh.butt[4]->type(FL_TOGGLE_BUTTON);
       mesh.butt[4]->callback(mesh_options_ok_cb);
@@ -2417,9 +2440,13 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[15]->callback(mesh_options_ok_cb);
 
       static Fl_Menu_Item menu_label_type[] = {
-        {"Number", 0, 0, 0},       {"Elementary tag", 0, 0, 0},
-        {"Physical tag", 0, 0, 0}, {"Mesh partition", 0, 0, 0},
-        {"Coordinates", 0, 0, 0},  {0}};
+        {"Number", 0, 0, 0},
+        {"Elementary tag", 0, 0, 0},
+        {"Physical tag", 0, 0, 0},
+        {"Mesh partition", 0, 0, 0},
+        {"Coordinates", 0, 0, 0},
+        {0}
+      };
       mesh.choice[7] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Label type");
       mesh.choice[7]->menu(menu_label_type);
@@ -2444,7 +2471,8 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Prisms", 0, 0, 0, FL_MENU_TOGGLE},
         {"Pyramids", 0, 0, 0, FL_MENU_TOGGLE},
         {"Trihedra", 0, 0, 0, FL_MENU_TOGGLE},
-        {0}};
+        {0}
+      };
 
       mesh.menu =
         new Fl_Menu_Button(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Elements");
@@ -2469,11 +2497,13 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[5]->when(FL_WHEN_RELEASE);
       mesh.value[5]->callback(mesh_options_ok_cb);
 
-      static Fl_Menu_Item menu_quality_type[] = {{"SICN", 0, 0, 0},
-                                                 {"SIGE", 0, 0, 0},
-                                                 {"Gamma", 0, 0, 0},
-                                                 {"Disto", 0, 0, 0},
-                                                 {0}};
+      static Fl_Menu_Item menu_quality_type[] = {
+        {"SICN", 0, 0, 0},
+        {"SIGE", 0, 0, 0},
+        {"Gamma", 0, 0, 0},
+        {"Disto", 0, 0, 0},
+        {0}
+      };
       mesh.choice[6] = new Fl_Choice(L + 2 * WB + IW / 2, 2 * WB + 9 * BH,
                                      IW / 2, BH, "Quality range");
       mesh.choice[6]->menu(menu_quality_type);
@@ -2574,7 +2604,8 @@ optionWindow::optionWindow(int deltaFontSize)
         {"No", 0, 0, 0},
         {"Surface", 0, 0, 0},
         {"Volume and surface", 0, 0, 0},
-        {0}};
+        {0}
+      };
       mesh.choice[10] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Edge lighting");
       mesh.choice[10]->menu(menu_mesh_light_lines);
@@ -2605,7 +2636,8 @@ optionWindow::optionWindow(int deltaFontSize)
         {"By elementary entity", 0, 0, 0},
         {"By physical group", 0, 0, 0},
         {"By mesh partition", 0, 0, 0},
-        {0}};
+        {0}
+      };
       mesh.choice[4] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Coloring mode");
       mesh.choice[4]->menu(menu_mesh_color);
@@ -2685,7 +2717,8 @@ optionWindow::optionWindow(int deltaFontSize)
       static Fl_Menu_Item menu_links[] = {
         {"Apply next changes to selected views", 0, 0, 0},
         {"Force same options for selected views", 0, 0, 0},
-        {0}};
+        {0}
+      };
 
       post.choice[0] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "View links");
@@ -2742,11 +2775,13 @@ optionWindow::optionWindow(int deltaFontSize)
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
                                  height - 2 * WB - BH, "General");
 
-      static Fl_Menu_Item menu_plot_type[] = {{"3D", 0, 0, 0},
-                                              {"2D space", 0, 0, 0},
-                                              {"2D time", 0, 0, 0},
-                                              {"2D", 0, 0, 0},
-                                              {0}};
+      static Fl_Menu_Item menu_plot_type[] = {
+        {"3D", 0, 0, 0},
+        {"2D space", 0, 0, 0},
+        {"2D time", 0, 0, 0},
+        {"2D", 0, 0, 0},
+        {0}
+      };
       view.choice[13] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Plot type");
       view.choice[13]->menu(menu_plot_type);
@@ -2794,11 +2829,13 @@ optionWindow::optionWindow(int deltaFontSize)
       view.input[1]->align(FL_ALIGN_RIGHT);
       view.input[1]->callback(view_options_ok_cb);
 
-      static Fl_Menu_Item menu_iso[] = {{"Iso-values", 0, 0, 0},
-                                        {"Continuous map", 0, 0, 0},
-                                        {"Filled iso-values", 0, 0, 0},
-                                        {"Numeric values", 0, 0, 0},
-                                        {0}};
+      static Fl_Menu_Item menu_iso[] = {
+        {"Iso-values", 0, 0, 0},
+        {"Continuous map", 0, 0, 0},
+        {"Filled iso-values", 0, 0, 0},
+        {"Numeric values", 0, 0, 0},
+        {0}
+      };
       view.choice[0] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Intervals type");
       view.choice[0]->menu(menu_iso);
@@ -2806,10 +2843,12 @@ optionWindow::optionWindow(int deltaFontSize)
       view.choice[0]->tooltip("(Alt+t)");
       view.choice[0]->callback(view_options_ok_cb);
 
-      static Fl_Menu_Item menu_scale[] = {{"Linear", 0, 0, 0},
-                                          {"Logarithmic", 0, 0, 0},
-                                          {"Double logarithmic", 0, 0, 0},
-                                          {0}};
+      static Fl_Menu_Item menu_scale[] = {
+        {"Linear", 0, 0, 0},
+        {"Logarithmic", 0, 0, 0},
+        {"Double logarithmic", 0, 0, 0},
+        {0}
+      };
       view.choice[1] = new Fl_Choice(L + width - (int)(0.85 * IW) - 2 * WB,
                                      2 * WB + 5 * BH, (int)(0.85 * IW), BH);
       view.choice[1]->menu(menu_scale);
@@ -2817,7 +2856,11 @@ optionWindow::optionWindow(int deltaFontSize)
       view.choice[1]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_range[] = {
-        {"Default", 0, 0, 0}, {"Custom", 0, 0, 0}, {"Per step", 0, 0, 0}, {0}};
+        {"Default", 0, 0, 0},
+        {"Custom", 0, 0, 0},
+        {"Per step", 0, 0, 0},
+        {0}
+      };
       view.choice[7] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Range mode");
       view.choice[7]->menu(menu_range);
@@ -3021,15 +3064,17 @@ optionWindow::optionWindow(int deltaFontSize)
       view.butt[4]->type(FL_TOGGLE_BUTTON);
       view.butt[4]->callback(view_options_ok_cb);
 
-      static Fl_Menu_Item time_display[] = {{"None", 0, 0, 0},
-                                            {"Time series", 0, 0, 0},
-                                            {"Harmonic data", 0, 0, 0},
-                                            {"Automatic", 0, 0, 0},
-                                            {"Step data", 0, 0, 0},
-                                            {"Multi-step data", 0, 0, 0},
-                                            {"Real eigenvalues", 0, 0, 0},
-                                            {"Complex eigenvalues", 0, 0, 0},
-                                            {0}};
+      static Fl_Menu_Item time_display[] = {
+        {"None", 0, 0, 0},
+        {"Time series", 0, 0, 0},
+        {"Harmonic data", 0, 0, 0},
+        {"Automatic", 0, 0, 0},
+        {"Step data", 0, 0, 0},
+        {"Multi-step data", 0, 0, 0},
+        {"Real eigenvalues", 0, 0, 0},
+        {"Complex eigenvalues", 0, 0, 0},
+        {0}
+      };
       view.choice[12] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Time display");
       view.choice[12]->menu(time_display);
@@ -3062,7 +3107,8 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Hexahedra", 0, 0, 0, FL_MENU_TOGGLE},
         {"Prisms", 0, 0, 0, FL_MENU_TOGGLE},
         {"Pyramids", 0, 0, 0, FL_MENU_TOGGLE},
-        {0}};
+        {0}
+      };
 
       view.menu[1] =
         new Fl_Menu_Button(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Elements");
@@ -3078,11 +3124,13 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[6]->when(FL_WHEN_RELEASE);
       view.value[6]->callback(view_options_ok_cb);
 
-      static Fl_Menu_Item menu_boundary[] = {{"None", 0, 0, 0},
-                                             {"Dimension - 1", 0, 0, 0},
-                                             {"Dimension - 2", 0, 0, 0},
-                                             {"Dimension - 3", 0, 0, 0},
-                                             {0}};
+      static Fl_Menu_Item menu_boundary[] = {
+        {"None", 0, 0, 0},
+        {"Dimension - 1", 0, 0, 0},
+        {"Dimension - 2", 0, 0, 0},
+        {"Dimension - 3", 0, 0, 0},
+        {0}
+      };
       view.choice[9] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH,
                                      "Element boundary mode");
       view.choice[9]->menu(menu_boundary);
@@ -3111,7 +3159,8 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Scalar", 0, 0, 0, FL_MENU_TOGGLE},
         {"Vector", 0, 0, 0, FL_MENU_TOGGLE},
         {"Tensor", 0, 0, 0, FL_MENU_TOGGLE},
-        {0}};
+        {0}
+      };
 
       view.menu[0] =
         new Fl_Menu_Button(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Fields");
@@ -3123,7 +3172,8 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Force Scalar", 0, 0, 0},
         {"Force Vector", 0, 0, 0},
         {"Force Tensor", 0, 0, 0},
-        {0}};
+        {0}
+      };
       view.choice[14] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH);
       view.choice[14]->menu(menu_force_field_type);
       view.choice[14]->align(FL_ALIGN_RIGHT);
@@ -3289,13 +3339,15 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[62]->callback(view_options_ok_cb);
 
       {
-        static Fl_Menu_Item menu_vectype[] = {{"Line", 0, 0, 0},
-                                              {"Arrow", 0, 0, 0},
-                                              {"Pyramid", 0, 0, 0},
-                                              {"3D arrow", 0, 0, 0},
-                                              {"Displacement", 0, 0, 0},
-                                              {"Comet", 0, 0, 0},
-                                              {0}};
+        static Fl_Menu_Item menu_vectype[] = {
+          {"Line", 0, 0, 0},
+          {"Arrow", 0, 0, 0},
+          {"Pyramid", 0, 0, 0},
+          {"3D arrow", 0, 0, 0},
+          {"Displacement", 0, 0, 0},
+          {"Comet", 0, 0, 0},
+          {0}
+        };
         view.choice[2] =
           new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Vector display");
         view.choice[2]->menu(menu_vectype);
@@ -3334,30 +3386,37 @@ optionWindow::optionWindow(int deltaFontSize)
       }
 
       static Fl_Menu_Item menu_glyph_loc[] = {
-        {"Barycenter", 0, 0, 0}, {"Node", 0, 0, 0}, {0}};
+        {"Barycenter", 0, 0, 0},
+        {"Node", 0, 0, 0},
+        {0}
+      };
       view.choice[3] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Glyph location");
       view.choice[3]->menu(menu_glyph_loc);
       view.choice[3]->align(FL_ALIGN_RIGHT);
       view.choice[3]->callback(view_options_ok_cb);
 
-      static Fl_Menu_Item menu_glyph_center[] = {{"Left-aligned", 0, 0, 0},
-                                                 {"Centered", 0, 0, 0},
-                                                 {"Right-aligned", 0, 0, 0},
-                                                 {0}};
+      static Fl_Menu_Item menu_glyph_center[] = {
+        {"Left-aligned", 0, 0, 0},
+        {"Centered", 0, 0, 0},
+        {"Right-aligned", 0, 0, 0},
+        {0}
+      };
       view.choice[15] = new Fl_Choice(L + width - (int)(0.85 * IW) - 2 * WB,
                                       2 * WB + 10 * BH, (int)(0.85 * IW), BH);
       view.choice[15]->menu(menu_glyph_center);
       view.choice[15]->callback(view_options_ok_cb);
 
-      static Fl_Menu_Item menu_tensor[] = {{"Von-Mises", 0, 0, 0},
-                                           {"Maximum eigen value", 0, 0, 0},
-                                           {"Minimum eigen value", 0, 0, 0},
-                                           {"Eigen vectors", 0, 0, 0},
-                                           {"Ellipse (2d)", 0, 0, 0},
-                                           {"Ellipsoid", 0, 0, 0},
-                                           {"Frame", 0, 0, 0},
-                                           {0}};
+      static Fl_Menu_Item menu_tensor[] = {
+        {"Von-Mises", 0, 0, 0},
+        {"Maximum eigen value", 0, 0, 0},
+        {"Minimum eigen value", 0, 0, 0},
+        {"Eigen vectors", 0, 0, 0},
+        {"Ellipse (2d)", 0, 0, 0},
+        {"Ellipsoid", 0, 0, 0},
+        {"Frame", 0, 0, 0},
+        {0}
+      };
       view.choice[4] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tensor display");
       view.choice[4]->menu(menu_tensor);

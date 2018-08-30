@@ -747,7 +747,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
       if(swap)
         SwapBytes((char *)data, sizeof(int), numElements * (nbrVertices + 1));
 
-      std::vector<MVertex *> vertices(nbrVertices + 1, (MVertex *)0);
+      std::vector<MVertex *> vertices(nbrVertices, (MVertex *)0);
       for(unsigned int j = 0; j < numElements * (nbrVertices + 1);
           j += (nbrVertices + 1)) {
         for(int k = 0; k < nbrVertices; k++) {
@@ -793,7 +793,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
           return 0;
         }
 
-        std::vector<MVertex *> vertices(nbrVertices + 1, (MVertex *)0);
+        std::vector<MVertex *> vertices(nbrVertices, (MVertex *)0);
 
         for(int k = 0; k < nbrVertices; k++) {
           int vertexTag = 0;
@@ -2439,9 +2439,14 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
 }
 
 int GModel::_writeMSH4(const std::string &name, double version, bool binary,
-                       bool saveAll, bool saveParametric, double scalingFactor)
+                       bool saveAll, bool saveParametric, double scalingFactor,
+                       bool append)
 {
-  FILE *fp = Fopen(name.c_str(), binary ? "wb" : "w");
+  FILE *fp = 0;
+  if(append)
+    fp = Fopen(name.c_str(), binary ? "ab" : "a");
+  else
+    fp = Fopen(name.c_str(), binary ? "wb" : "w");
 
   if(!fp) {
     Msg::Error("Unable to open file '%s'", name.c_str());
@@ -2744,7 +2749,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
     }
 
     tmp->_writeMSH4(sstream.str(), version, binary, saveAll, saveParametric,
-                    scalingFactor);
+                    scalingFactor, false);
     tmp->remove();
   }
   delete tmp;

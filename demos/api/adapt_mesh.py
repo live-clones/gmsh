@@ -8,7 +8,7 @@ def triangle_max_edge(x):
     b = np.sum((x[:,0,:]-x[:,2,:])**2,1)**0.5
     c = np.sum((x[:,1,:]-x[:,2,:])**2,1)**0.5
     return np.maximum(a,np.maximum(b,c))
-        
+
 
 class Mesh:
 
@@ -76,18 +76,18 @@ mesh = Mesh()
 # compute and visualize the interpolation error
 f_nod, err_ele = compute_interpolation_error(mesh.vxyz, mesh.triangles, my_function)
 f_view = gmsh.view.add("nodal function")
-gmsh.view.addModelData(f_view, 0, "square", "NodeData", 
+gmsh.view.addModelData(f_view, 0, "square", "NodeData",
                        mesh.vtags, f_nod[:,None])
 if dumpfiles: gmsh.view.write(f_view, "f.pos")
 err_view = gmsh.view.add("element-wise error")
-gmsh.view.addModelData(err_view, 0, "square", "ElementData", 
+gmsh.view.addModelData(err_view, 0, "square", "ElementData",
                        mesh.triangles_tags, err_ele[:,None])
 if dumpfiles: gmsh.view.write(err_view, "err.pos")
 
 # compute and visualize the remeshing size field
 sf_ele = compute_size_field(mesh.vxyz,mesh.triangles, err_ele, N)
 sf_view = gmsh.view.add("mesh size field")
-gmsh.view.addModelData(sf_view, 0, "square", "ElementData", 
+gmsh.view.addModelData(sf_view, 0, "square", "ElementData",
                        mesh.triangles_tags, sf_ele[:,None])
 if dumpfiles: gmsh.view.write(sf_view, "sf.pos")
 
@@ -97,7 +97,7 @@ gmsh.model.add("square2")
 gmsh.model.occ.addRectangle(0, 0, 0, 1, 1)
 gmsh.model.occ.synchronize()
 
-# mesh the new gmsh.model using the size field 
+# mesh the new gmsh.model using the size field
 bg_field = gmsh.model.mesh.field.add("PostView");
 gmsh.model.mesh.field.setNumber(bg_field, "ViewTag", sf_view);
 gmsh.model.mesh.field.setAsBackgroundMesh(bg_field);
@@ -108,11 +108,11 @@ mesh2 = Mesh()
 # compute and visualize the interpolation error on the adapted mesh
 f2_nod, err2_ele = compute_interpolation_error(mesh2.vxyz,mesh2.triangles, my_function)
 f2_view = gmsh.view.add("nodal function on adapted mesh")
-gmsh.view.addModelData(f2_view, 0, "square2", "NodeData", 
+gmsh.view.addModelData(f2_view, 0, "square2", "NodeData",
                        mesh2.vtags, f2_nod[:,None])
 if dumpfiles: gmsh.view.write(f2_view, "f2.pos")
 err2_view = gmsh.view.add("element-wise error on adapated mesh")
-gmsh.view.addModelData(err2_view, 0, "square2", "ElementData", 
+gmsh.view.addModelData(err2_view, 0, "square2", "ElementData",
                        mesh2.triangles_tags, err2_ele[:,None])
 if dumpfiles: gmsh.view.write(err2_view, "err2.pos")
 
