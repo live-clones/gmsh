@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
+#include <limits>
 #include <sstream>
 #include <stdlib.h>
 #include <map>
@@ -1901,16 +1902,20 @@ static bool buildConsecutiveListOfVertices(
       BDS_Point *pp = 0;
       if(ge->dim() == 0) {
         // Point might already be part of other loop
-        for(std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
-              recoverMap.begin();
-            it != recoverMap.end(); ++it) {
-          if(it->second == here) {
+        // Point might already be part of other loop
+        double smallestDistance = std::numeric_limits<double>::infinity();
+        for(std::map<BDS_Point*, MVertex*, PointLessThan>::iterator it = recoverMap.begin();
+             it != recoverMap.end(); ++it){
+          if(it->second == here){
+            //// Plaxis modification ////
             // Also check on 2D coordinates as the point might lie on the seam
             SPoint2 param = coords[i];
             SPoint2 paramPoint(it->first->u, it->first->v);
-            if (param.distance(paramPoint) <= tol){
+            const double distance = param.distance(paramPoint);
+            if (distance < smallestDistance){
+              smallestDistance = distance;
               pp = it->first;
-              break;
+              if (distance < tol) break;
             }
           }
         }
