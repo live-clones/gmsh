@@ -609,6 +609,7 @@ void bezierBasis::_construct()
     return;
   }
 
+  int k;
   std::vector<fullMatrix<double> > subPoints;
   int order = _data.spaceOrder();
 
@@ -629,12 +630,32 @@ void bezierBasis::_construct()
     _numLagCoeff = order ? 3 : 1;
     _dimSimplex = 2;
     _exponents = gmshGenerateMonomialsTriangle(order);
+    _exponents2.resize((order + 1) * (order + 2) / 2, 2);
+    k = 0;
+    for (int j = 0; j < order+1; ++j) {
+      for (int i = 0; i < order+1-j; ++i) {
+        _exponents2(k, 0) = i;
+        _exponents2(k, 1) = j;
+        ++k;
+      }
+    }
     subPoints = generateSubPointsTriangle(order);
     break;
   case TYPE_QUA:
     _numLagCoeff = order ? 4 : 1;
     _dimSimplex = 0;
     _exponents = gmshGenerateMonomialsQuadrangle(order);
+    _exponents2.resize((order + 1) * (order + 1), 2);
+    k = 0;
+    for (int j = 0; j < order+1; ++j) {
+      for (int i = 0; i < order+1; ++i) {
+        _exponents2(k, 0) = i;
+        _exponents2(k, 1) = j;
+        ++k;
+      }
+    }
+//      _exponents.print("_exponents");
+//      _exponents2.print("_exponents2");
     subPoints = generateSubPointsQuad(order);
     break;
   case TYPE_TET:
@@ -667,8 +688,16 @@ void bezierBasis::_construct()
   matrixBez2Lag =
     generateBez2LagMatrix(_exponents, bezierPoints, order, _dimSimplex);
   matrixBez2Lag.invert(matrixLag2Bez);
+  matrixBez2Lag2 = generateBez2LagMatrix(_exponents2, bezierPoints, order,
+                                         _dimSimplex);
+  matrixBez2Lag2.invert(matrixLag2Bez2);
   subDivisor = generateSubDivisor(_exponents, subPoints, matrixLag2Bez, order,
                                   _dimSimplex);
+
+//  matrixBez2Lag.print("matrixBez2Lag");
+//  matrixBez2Lag2.print("matrixBez2Lag2");
+//  matrixLag2Bez.print("matrixLag2Bez");
+//  matrixLag2Bez2.print("matrixLag2Bez2");
 }
 
 void bezierBasis::_constructPyr()
