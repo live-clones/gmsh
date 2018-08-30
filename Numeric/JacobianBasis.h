@@ -21,6 +21,8 @@ private:
 
 public:
   GradientBasis(FuncSpaceData);
+
+  inline int getPolynomialOrder() const { return _data.spaceOrder(); }
   int getNumSamplingPoints() const { return gradShapeMatX.size1(); }
   int getNumMapNodes() const { return gradShapeMatX.size2(); }
   const bezierBasis *getBezier() const;
