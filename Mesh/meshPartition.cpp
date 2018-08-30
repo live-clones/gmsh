@@ -2251,8 +2251,7 @@ int PartitionMesh(GModel *const model)
   double t2 = Cpu();
   Msg::StatusBar(true, "Done partitioning mesh (%g s)", t2 - t1);
 
-  if(CTX::instance()->mesh.partitionCreateTopology &&
-     !CTX::instance()->mesh.partitionOldStyleMsh2) {
+  if(CTX::instance()->mesh.partitionCreateTopology) {
     Msg::StatusBar(true, "Creating partition topology...");
     std::vector<std::set<MElement *> > boundaryElements =
       graph.getBoundaryElements();

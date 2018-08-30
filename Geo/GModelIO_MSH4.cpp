@@ -2394,8 +2394,8 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
     for(std::map<MElement *, unsigned int>::iterator it = ghostElements.begin();
         it != ghostElements.end(); ++it) {
       if(ghostCells[it->first].size() == 0)
-        ghostCells[it->first].push_back(partition);
-      ghostCells[it->first].push_back(it->second);
+        ghostCells[it->first].push_back(it->second);
+      ghostCells[it->first].push_back(partition);
     }
   }
 
