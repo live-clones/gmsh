@@ -221,30 +221,45 @@ public:
   static void releasePools();
   void updateDataPtr(long diff);
 
-  inline int getNumCoeff() {return _basis->getNumCoeff();}
-  inline int getNumLagCoeff() {return _basis->getNumLagCoeff();}
-//  inline double getLagCoeff(int i) {
-//    switch (_funcSpaceData.elementType()) {
-//
-//    }
-//  }
-
-  void subdivide(std::vector<bezierCoeff> &subCoeff);
-
-  inline double operator() (int i, int j) const
-  {
-    return _data[i + _r*j];
+  inline int getNumCoeff() const {return _r;}
+  inline int getNumColumns() const {return _c;}
+  inline int getNumLagCoeff() const {return _basis->getNumLagCoeff();}
+  inline int getIdxLagCoeff(int i) const {
+    const int order = _funcSpaceData.spaceOrder();
+    switch (_funcSpaceData.elementType()) {
+      case TYPE_TRI:
+        switch (i) {
+          case 0: return 0;
+          case 1: return order;
+          case 2: return _r-1;
+        }
+      case TYPE_QUA:
+        switch (i) {
+          case 0: return 0;
+          case 1: return order;
+          case 2: return _r-order;
+          case 3: return _r-1;
+        }
+      default: return 0;
+    }
   }
-  inline double &operator() (int i, int j)
-  {
-    return _data[i + _r*j];
+  inline double getLagCoeff(int i) const {
+    return _data[getIdxLagCoeff(i)];
   }
+  inline double* getDataPtr() {return _data;}
+
+  void subdivide(std::vector<bezierCoeff> &subCoeff) const;
+
+  inline double operator() (int i) const {return _data[i];}
+  inline double operator() (int i, int j) const {return _data[i + _r*j];}
+
+  inline double &operator() (int i) {return _data[i];}
+  inline double &operator() (int i, int j) {return _data[i + _r*j];}
 
 private:
   static void _subdivide(fullMatrix<double> &coeff, int n, int start);
   static void _subdivide(fullMatrix<double> &coeff, int n, int start, int inc);
-  static void _subdivideTriangle(bezierCoeff &coeff, int n,
-                                 int start,
+  static void _subdivideTriangle(const bezierCoeff &coeff, int n, int start,
                                  std::vector<bezierCoeff> &subCoeff);
   static void _subdivideTetrahedra(bezierCoeff &coeff, int n,
                                    int start,

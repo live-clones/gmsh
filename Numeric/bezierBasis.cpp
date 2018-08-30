@@ -1214,7 +1214,7 @@ void bezierCoeff::updateDataPtr(long diff)
     _data += diff;
 }
 
-void bezierCoeff::subdivide(std::vector<bezierCoeff> &subCoeff)
+void bezierCoeff::subdivide(std::vector<bezierCoeff> &subCoeff) const
 {
   int n = _funcSpaceData.spaceOrder()+1;
 
@@ -1261,7 +1261,7 @@ void bezierCoeff::_subdivide(fullMatrix<double> &coeff, int n, int start,
   }
 }
 
-void bezierCoeff::_subdivideTriangle(bezierCoeff &coeff, int n,
+void bezierCoeff::_subdivideTriangle(const bezierCoeff &coeff, int n,
                                      int start,
                                      std::vector<bezierCoeff> &vSubCoeff)
 {
