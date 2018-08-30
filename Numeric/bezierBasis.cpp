@@ -15,24 +15,56 @@
 
 namespace {
 
-  // Sub Control Points
-  std::vector<fullMatrix<double> > generateSubPointsLine(int order)
+  // Exponents
+
+  fullMatrix<double> generateExponents(int type, int order)
   {
-    std::vector<fullMatrix<double> > subPoints(2);
+    fullMatrix<double> exp;
+    int k;
+    switch (type) {
+      case TYPE_TRI:
+        exp.resize((order + 1) * (order + 1), 2);
+        k = 0;
+        for (int j = 0; j < order+1; ++j) {
+          for (int i = 0; i < order+1-j; ++i) {
+            exp(k, 0) = i;
+            exp(k, 1) = j;
+            ++k;
+          }
+        }
+        break;
+      case TYPE_QUA:
+        exp.resize((order + 1) * (order + 1), 2);
+        k = 0;
+        for (int j = 0; j < order+1; ++j) {
+          for (int i = 0; i < order+1; ++i) {
+            exp(k, 0) = i;
+            exp(k, 1) = j;
+            ++k;
+          }
+        }
+        break;
+    }
+  }
+
+  // Sub Control Points
+  std::vector< fullMatrix<double> > generateSubPointsLine(int order)
+  {
+    std::vector< fullMatrix<double> > subPoints(2);
     subPoints[0] = gmshGenerateMonomialsLine(order);
-    subPoints[0].scale(.5 / order);
+    subPoints[0].scale(.5/order);
 
     subPoints[1].copy(subPoints[0]);
     subPoints[1].add(.5);
     return subPoints;
   }
 
-  std::vector<fullMatrix<double> > generateSubPointsTriangle(int order)
+  std::vector< fullMatrix<double> > generateSubPointsTriangle(int order)
   {
-    std::vector<fullMatrix<double> > subPoints(4);
+    std::vector< fullMatrix<double> > subPoints(4);
     fullMatrix<double> prox;
     subPoints[0] = gmshGenerateMonomialsTriangle(order);
-    subPoints[0].scale(.5 / order);
+    subPoints[0].scale(.5/order);
 
     subPoints[1].copy(subPoints[0]);
     prox.setAsProxy(subPoints[1], 0, 1);
@@ -48,12 +80,12 @@ namespace {
     return subPoints;
   }
 
-  std::vector<fullMatrix<double> > generateSubPointsQuad(int order)
+  std::vector< fullMatrix<double> > generateSubPointsQuad(int order)
   {
-    std::vector<fullMatrix<double> > subPoints(4);
+    std::vector< fullMatrix<double> > subPoints(4);
     fullMatrix<double> prox;
     subPoints[0] = gmshGenerateMonomialsQuadrangle(order);
-    subPoints[0].scale(.5 / order);
+    subPoints[0].scale(.5/order);
 
     subPoints[1].copy(subPoints[0]);
     prox.setAsProxy(subPoints[1], 0, 1);
@@ -69,13 +101,13 @@ namespace {
     return subPoints;
   }
 
-  std::vector<fullMatrix<double> > generateSubPointsTetrahedron(int order)
+  std::vector< fullMatrix<double> > generateSubPointsTetrahedron(int order)
   {
-    std::vector<fullMatrix<double> > subPoints(8);
+    std::vector< fullMatrix<double> > subPoints(8);
     fullMatrix<double> prox1;
     fullMatrix<double> prox2;
     subPoints[0] = gmshGenerateMonomialsTetrahedron(order);
-    subPoints[0].scale(.5 / order);
+    subPoints[0].scale(.5/order);
 
     subPoints[1].copy(subPoints[0]);
     prox1.setAsProxy(subPoints[1], 0, 1);
@@ -137,13 +169,13 @@ namespace {
     return subPoints;
   }
 
-  std::vector<fullMatrix<double> > generateSubPointsPrism(int order)
+  std::vector< fullMatrix<double> > generateSubPointsPrism(int order)
   {
-    std::vector<fullMatrix<double> > subPoints(8);
+    std::vector< fullMatrix<double> > subPoints(8);
     fullMatrix<double> prox;
 
     subPoints[0] = gmshGenerateMonomialsPrism(order);
-    subPoints[0].scale(.5 / order);
+    subPoints[0].scale(.5/order);
 
     subPoints[1].copy(subPoints[0]);
     prox.setAsProxy(subPoints[1], 0, 1);
@@ -177,13 +209,13 @@ namespace {
     return subPoints;
   }
 
-  std::vector<fullMatrix<double> > generateSubPointsHex(int order)
+  std::vector< fullMatrix<double> > generateSubPointsHex(int order)
   {
-    std::vector<fullMatrix<double> > subPoints(8);
+    std::vector< fullMatrix<double> > subPoints(8);
     fullMatrix<double> prox;
 
     subPoints[0] = gmshGenerateMonomialsHexahedron(order);
-    subPoints[0].scale(.5 / order);
+    subPoints[0].scale(.5/order);
 
     subPoints[1].copy(subPoints[0]);
     prox.setAsProxy(subPoints[1], 0, 1);
@@ -216,14 +248,14 @@ namespace {
     return subPoints;
   }
 
-  std::vector<fullMatrix<double> > generateSubPointsPyr(int nij, int nk)
+  std::vector< fullMatrix<double> > generateSubPointsPyr(int nij, int nk)
   {
-    if(nk == 0) {
-      std::vector<fullMatrix<double> > subPoints(4);
+    if(nk == 0){
+      std::vector< fullMatrix<double> > subPoints(4);
       fullMatrix<double> prox;
 
       subPoints[0] = gmshGenerateMonomialsPyramidGeneral(false, nij, nk);
-      subPoints[0].scale(.5 / nij);
+      subPoints[0].scale(.5/nij);
 
       subPoints[1].copy(subPoints[0]);
       prox.setAsProxy(subPoints[1], 0, 1);
@@ -240,14 +272,14 @@ namespace {
       return subPoints;
     }
     else {
-      std::vector<fullMatrix<double> > subPoints(8);
+      std::vector< fullMatrix<double> > subPoints(8);
       fullMatrix<double> ref, prox;
 
       subPoints[0] = gmshGenerateMonomialsPyramidGeneral(false, nij, nk);
       prox.setAsProxy(subPoints[0], 2, 1);
       prox.scale(-1);
       prox.add(nk);
-      subPoints[0].scale(.5 / std::max(nij, nk));
+      subPoints[0].scale(.5/std::max(nij,nk));
 
       subPoints[1].copy(subPoints[0]);
       prox.setAsProxy(subPoints[1], 0, 1);
@@ -277,7 +309,7 @@ namespace {
       prox.setAsProxy(subPoints[7], 2, 1);
       prox.add(.5);
 
-      for(int i = 0; i < 8; ++i) {
+      for(int i = 0; i < 8; ++i){
         prox.setAsProxy(subPoints[i], 2, 1);
         prox.scale(-1);
         prox.add(1);
@@ -290,28 +322,30 @@ namespace {
   // Matrices generation
   int nChoosek(int n, int k)
   {
-    if(n < k || k < 0) {
+    if(n < k || k < 0){
       Msg::Error("Wrong argument for combination. (%d, %d)", n, k);
       return 1;
     }
 
-    if(k > n / 2) k = n - k;
-    if(k == 1) return n;
-    if(k == 0) return 1;
+    if(k > n/2) k = n-k;
+    if(k == 1)
+      return n;
+    if(k == 0)
+      return 1;
 
     int c = 1;
     for(int i = 1; i <= k; i++, n--) (c *= n) /= i;
     return c;
   }
 
-  fullMatrix<double> generateBez2LagMatrix(const fullMatrix<double> &exponent,
-                                           const fullMatrix<double> &point,
-                                           int order, int dimSimplex)
+  fullMatrix<double> generateBez2LagMatrix
+      (const fullMatrix<double> &exponent, const fullMatrix<double> &point,
+       int order, int dimSimplex)
   {
-    if(exponent.size1() != point.size1() || exponent.size2() != point.size2()) {
+    if(exponent.size1() != point.size1() || exponent.size2() != point.size2()){
       Msg::Error("Wrong sizes for bez2lag matrix generation %d %d -- %d %d",
-                 exponent.size1(), point.size1(), exponent.size2(),
-                 point.size2());
+                 exponent.size1(),point.size1(),
+                 exponent.size2(),point.size2());
       return fullMatrix<double>(1, 1);
     }
 
@@ -319,25 +353,25 @@ namespace {
     int dim = exponent.size2();
 
     fullMatrix<double> bez2Lag(ndofs, ndofs);
-    for(int i = 0; i < ndofs; i++) {
-      for(int j = 0; j < ndofs; j++) {
+    for(int i = 0; i < ndofs; i++){
+      for(int j = 0; j < ndofs; j++){
         double dd = 1.;
         {
           double pointCompl = 1.;
           int exponentCompl = order;
-          for(int k = 0; k < dimSimplex; k++) {
-            dd *= nChoosek(exponentCompl, (int)exponent(i, k)) *
-                  pow(point(j, k), exponent(i, k));
+          for(int k = 0; k < dimSimplex; k++){
+            dd *= nChoosek(exponentCompl, (int) exponent(i, k))
+                  * pow(point(j, k), exponent(i, k));
             pointCompl -= point(j, k);
-            exponentCompl -= (int)exponent(i, k);
+            exponentCompl -= (int) exponent(i, k);
           }
           dd *= pow(pointCompl, exponentCompl);
         }
 
         for(int k = dimSimplex; k < dim; k++)
-          dd *= nChoosek(order, (int)exponent(i, k)) *
-                pow(point(j, k), exponent(i, k)) *
-                pow(1. - point(j, k), order - exponent(i, k));
+          dd *= nChoosek(order, (int) exponent(i, k))
+                * pow(point(j, k), exponent(i, k))
+                * pow(1. - point(j, k), order - exponent(i, k));
 
         bez2Lag(j, i) = dd;
       }
@@ -345,16 +379,15 @@ namespace {
     return bez2Lag;
   }
 
-  fullMatrix<double>
-  generateBez2LagMatrixPyramid(const fullMatrix<double> &exponent,
-                               const fullMatrix<double> &point, bool pyr,
-                               int nij, int nk)
+  fullMatrix<double> generateBez2LagMatrixPyramid
+      (const fullMatrix<double> &exponent, const fullMatrix<double> &point,
+       bool pyr, int nij, int nk)
   {
     if(exponent.size1() != point.size1() || exponent.size2() != point.size2() ||
-       exponent.size2() != 3) {
-      Msg::Error(
-        "Wrong sizes for pyramid's bez2lag matrix generation %d %d -- %d %d",
-        exponent.size1(), point.size1(), exponent.size2(), point.size2());
+       exponent.size2() != 3){
+      Msg::Error("Wrong sizes for pyramid's bez2lag matrix generation %d %d -- %d %d",
+                 exponent.size1(), point.size1(),
+                 exponent.size2(), point.size2());
       return fullMatrix<double>(1, 1);
     }
 
@@ -362,33 +395,33 @@ namespace {
 
     int n01 = nij;
     fullMatrix<double> bez2Lag(ndofs, ndofs);
-    for(int i = 0; i < ndofs; i++) {
-      for(int j = 0; j < ndofs; j++) {
+    for(int i = 0; i < ndofs; i++){
+      for(int j = 0; j < ndofs; j++){
         if(pyr) n01 = exponent(j, 2) + nij;
         bez2Lag(i, j) =
-          nChoosek(n01, exponent(j, 0)) * nChoosek(n01, exponent(j, 1)) *
-          nChoosek(nk, exponent(j, 2)) * pow_int(point(i, 0), exponent(j, 0)) *
-          pow_int(point(i, 1), exponent(j, 1)) *
-          pow_int(point(i, 2), exponent(j, 2)) *
-          pow_int(1. - point(i, 0), n01 - exponent(j, 0)) *
-          pow_int(1. - point(i, 1), n01 - exponent(j, 1)) *
-          pow_int(1. - point(i, 2), nk - exponent(j, 2));
+            nChoosek(n01, exponent(j, 0))
+            * nChoosek(n01, exponent(j, 1))
+            * nChoosek(nk , exponent(j, 2))
+            * pow_int(point(i, 0), exponent(j, 0))
+            * pow_int(point(i, 1), exponent(j, 1))
+            * pow_int(point(i, 2), exponent(j, 2))
+            * pow_int(1. - point(i, 0), n01 - exponent(j, 0))
+            * pow_int(1. - point(i, 1), n01 - exponent(j, 1))
+            * pow_int(1. - point(i, 2), nk  - exponent(j, 2));
       }
     }
     return bez2Lag;
   }
 
-  fullMatrix<double>
-  generateSubDivisor(const fullMatrix<double> &exponents,
-                     const std::vector<fullMatrix<double> > &subPoints,
-                     const fullMatrix<double> &lag2Bez, int order,
-                     int dimSimplex)
+  fullMatrix<double> generateSubDivisor
+      (const fullMatrix<double> &exponents,
+       const std::vector< fullMatrix<double> > &subPoints,
+       const fullMatrix<double> &lag2Bez, int order, int dimSimplex)
   {
-    if(exponents.size1() != lag2Bez.size1() ||
-       exponents.size1() != lag2Bez.size2()) {
+    if(exponents.size1() != lag2Bez.size1() || exponents.size1() != lag2Bez.size2()){
       Msg::Error("Wrong sizes for Bezier Divisor %d %d -- %d %d",
-                 exponents.size1(), lag2Bez.size1(), exponents.size1(),
-                 lag2Bez.size2());
+                 exponents.size1(), lag2Bez.size1(),
+                 exponents.size1(), lag2Bez.size2());
       return fullMatrix<double>(1, 1);
     }
 
@@ -398,26 +431,24 @@ namespace {
     fullMatrix<double> intermediate2(nbPts, nbPts);
     fullMatrix<double> subDivisor(nbSubPts, nbPts);
 
-    for(std::size_t i = 0; i < subPoints.size(); i++) {
+    for(std::size_t i = 0; i < subPoints.size(); i++){
       fullMatrix<double> intermediate1 =
-        generateBez2LagMatrix(exponents, subPoints[i], order, dimSimplex);
+          generateBez2LagMatrix(exponents, subPoints[i], order, dimSimplex);
       lag2Bez.mult(intermediate1, intermediate2);
-      subDivisor.copy(intermediate2, 0, nbPts, 0, nbPts, i * nbPts, 0);
+      subDivisor.copy(intermediate2, 0, nbPts, 0, nbPts, i*nbPts, 0);
     }
     return subDivisor;
   }
 
-  fullMatrix<double>
-  generateSubDivisorPyramid(const fullMatrix<double> &exponents,
-                            const std::vector<fullMatrix<double> > &subPoints,
-                            const fullMatrix<double> &lag2Bez, bool pyr,
-                            int nij, int nk)
+  fullMatrix<double> generateSubDivisorPyramid
+      (const fullMatrix<double> &exponents,
+       const std::vector< fullMatrix<double> > &subPoints,
+       const fullMatrix<double> &lag2Bez, bool pyr, int nij, int nk)
   {
-    if(exponents.size1() != lag2Bez.size1() ||
-       exponents.size1() != lag2Bez.size2()) {
+    if(exponents.size1() != lag2Bez.size1() || exponents.size1() != lag2Bez.size2()){
       Msg::Error("Wrong sizes for Bezier Divisor %d %d -- %d %d",
-                 exponents.size1(), lag2Bez.size1(), exponents.size1(),
-                 lag2Bez.size2());
+                 exponents.size1(), lag2Bez.size1(),
+                 exponents.size1(), lag2Bez.size2());
       return fullMatrix<double>(1, 1);
     }
 
@@ -427,11 +458,12 @@ namespace {
     fullMatrix<double> intermediate2(nbPts, nbPts);
     fullMatrix<double> subDivisor(nbSubPts, nbPts);
 
-    for(std::size_t i = 0; i < subPoints.size(); i++) {
+    for(std::size_t i = 0; i < subPoints.size(); i++){
       fullMatrix<double> intermediate1 =
-        generateBez2LagMatrixPyramid(exponents, subPoints[i], pyr, nij, nk);
+          generateBez2LagMatrixPyramid(exponents, subPoints[i],
+                                       pyr, nij, nk);
       lag2Bez.mult(intermediate1, intermediate2);
-      subDivisor.copy(intermediate2, 0, nbPts, 0, nbPts, i * nbPts, 0);
+      subDivisor.copy(intermediate2, 0, nbPts, 0, nbPts, i*nbPts, 0);
     }
     return subDivisor;
   }
@@ -439,14 +471,14 @@ namespace {
   void double2int(const fullMatrix<double> &matDouble, fullMatrix<int> &matInt)
   {
     matInt.resize(matDouble.size1(), matDouble.size2());
-    for(int i = 0; i < matDouble.size1(); ++i) {
-      for(int j = 0; j < matDouble.size2(); ++j) {
+    for(int i = 0; i < matDouble.size1(); ++i){
+      for(int j = 0; j < matDouble.size2(); ++j){
         matInt(i, j) = static_cast<int>(matDouble(i, j) + .5);
       }
     }
   }
 
-} // namespace
+}
 
 bezierBasis::bezierBasis(FuncSpaceData data) : _data(data), _raiser(NULL)
 {
@@ -456,7 +488,10 @@ bezierBasis::bezierBasis(FuncSpaceData data) : _data(data), _raiser(NULL)
     _construct();
 }
 
-bezierBasis::~bezierBasis() { delete _raiser; }
+bezierBasis::~bezierBasis()
+{
+  delete _raiser;
+}
 
 void bezierBasis::f(double u, double v, double w, double *sf) const
 {
@@ -466,9 +501,9 @@ void bezierBasis::f(double u, double v, double w, double *sf) const
   // TODO Amaury: change (u,v,w)
   fs->f(u, v, w, p);
 
-  for(int i = 0; i < matrixBez2Lag.size1(); i++) {
+  for(int i = 0; i < matrixBez2Lag.size1(); i++){
     sf[i] = 0.0;
-    for(int j = 0; j < matrixBez2Lag.size2(); j++) {
+    for(int j = 0; j < matrixBez2Lag.size2(); j++){
       sf[i] += matrixBez2Lag(j, i) * p[j];
     }
   }
@@ -477,11 +512,11 @@ void bezierBasis::f(double u, double v, double w, double *sf) const
 void bezierBasis::generateBezierPoints(fullMatrix<double> &points) const
 {
   gmshGenerateMonomials(_data, points);
-  points.scale(1. / _data.spaceOrder());
-  if(_data.elementType() == TYPE_PYR && _data.nk() < _data.spaceOrder()) {
+  points.scale(1./_data.spaceOrder());
+  if(_data.elementType() == TYPE_PYR && _data.nk() < _data.spaceOrder()){
     fullMatrix<double> prox;
     prox.setAsProxy(points, 2, 1);
-    prox.add(1 - static_cast<double>(_data.nk()) / _data.spaceOrder());
+    prox.add(1-static_cast<double>(_data.nk())/_data.spaceOrder());
   }
 }
 
@@ -489,51 +524,52 @@ void bezierBasis::_fePoints2BezPoints(fullMatrix<double> &points) const
 {
   fullMatrix<double> tmp;
   switch(_data.elementType()) {
-  case TYPE_TRI:
-  case TYPE_TET: break;
+    case TYPE_TRI:
+    case TYPE_TET:
+      break;
 
-  case TYPE_LIN:
-    tmp.setAsProxy(points, 0, 1);
-    tmp.add(1);
-    tmp.scale(.5);
-    break;
+    case TYPE_LIN:
+      tmp.setAsProxy(points, 0, 1);
+      tmp.add(1);
+      tmp.scale(.5);
+      break;
 
-  case TYPE_QUA:
-    tmp.setAsProxy(points, 0, 2);
-    tmp.add(1);
-    tmp.scale(.5);
-    break;
+    case TYPE_QUA:
+      tmp.setAsProxy(points, 0, 2);
+      tmp.add(1);
+      tmp.scale(.5);
+      break;
 
-  case TYPE_HEX:
-    points.add(1);
-    points.scale(.5);
-    break;
+    case TYPE_HEX:
+      points.add(1);
+      points.scale(.5);
+      break;
 
-  case TYPE_PRI:
-    tmp.setAsProxy(points, 2, 1);
-    tmp.add(1);
-    tmp.scale(.5);
-    break;
+    case TYPE_PRI:
+      tmp.setAsProxy(points, 2, 1);
+      tmp.add(1);
+      tmp.scale(.5);
+      break;
 
-  case TYPE_PYR:
-    for(int i = 0; i < points.size1(); ++i) {
-      points(i, 2) = 1. - points(i, 2);
-      points(i, 0) = .5 * (1 + points(i, 0) / points(i, 2));
-      points(i, 1) = .5 * (1 + points(i, 1) / points(i, 2));
-    }
-    break;
+    case TYPE_PYR:
+      for(int i = 0; i < points.size1(); ++i){
+        points(i, 2) = 1. - points(i, 2);
+        points(i, 0) = .5 * (1 + points(i, 0) / points(i, 2));
+        points(i, 1) = .5 * (1 + points(i, 1) / points(i, 2));
+      }
+      break;
 
-  default:
-    Msg::Error("_fePoints2BezPoints not implemented for "
-               "type of element %d",
-               _data.elementType());
-    return;
+    default:
+      Msg::Error("_fePoints2BezPoints not implemented for "
+                 "type of element %d", _data.elementType());
+      return;
   }
 }
 
 void bezierBasis::interpolate(const fullMatrix<double> &coeffs,
                               const fullMatrix<double> &uvw,
-                              fullMatrix<double> &result, bool bezCoord) const
+                              fullMatrix<double> &result,
+                              bool bezCoord) const
 {
   if(result.size1() != uvw.size1() || result.size2() != coeffs.size2())
     result.resize(uvw.size1(), coeffs.size2());
@@ -545,27 +581,28 @@ void bezierBasis::interpolate(const fullMatrix<double> &coeffs,
   const int dim = _exponents.size2();
   int order[3];
 
-  for(int m = 0; m < uvw.size1(); ++m) {
+  for(int m = 0; m < uvw.size1(); ++m){
     for(int n = 0; n < coeffs.size2(); ++n) result(m, n) = 0;
-    for(int i = 0; i < numCoeff; i++) {
-      _data.getOrderForBezier(order, _exponents(i, dim - 1));
+    for(int i = 0; i < numCoeff; i++){
+      _data.getOrderForBezier(order, _exponents(i, dim-1));
       double dd = 1;
       double pointCompl = 1.;
       int exponentCompl = order[0];
-      for(int k = 0; k < _dimSimplex; k++) {
-        dd *= nChoosek(exponentCompl, (int)_exponents(i, k)) *
-              pow(bezuvw(m, k), _exponents(i, k));
+      for(int k = 0; k < _dimSimplex; k++){
+        dd *= nChoosek(exponentCompl, (int) _exponents(i, k))
+              * pow(bezuvw(m, k), _exponents(i, k));
         pointCompl -= bezuvw(m, k);
-        exponentCompl -= (int)_exponents(i, k);
+        exponentCompl -= (int) _exponents(i, k);
       }
       dd *= pow_int(pointCompl, exponentCompl);
 
-      for(int k = _dimSimplex; k < dim; k++) {
-        dd *= nChoosek(order[k], (int)_exponents(i, k)) *
-              pow_int(bezuvw(m, k), _exponents(i, k)) *
-              pow_int(1. - bezuvw(m, k), order[k] - _exponents(i, k));
+      for(int k = _dimSimplex; k < dim; k++){
+        dd *= nChoosek(order[k], (int) _exponents(i, k))
+              * pow_int(bezuvw(m, k), _exponents(i, k))
+              * pow_int(1. - bezuvw(m, k), order[k] - _exponents(i, k));
       }
-      for(int n = 0; n < coeffs.size2(); ++n) result(m, n) += coeffs(i, n) * dd;
+      for(int n = 0; n < coeffs.size2(); ++n)
+        result(m, n) += coeffs(i, n) * dd;
     }
   }
 }
@@ -573,11 +610,11 @@ void bezierBasis::interpolate(const fullMatrix<double> &coeffs,
 void bezierBasis::lag2Bez(const fullMatrix<double> &lag,
                           fullMatrix<double> &bez) const
 {
-  if(lag.size1() != matrixLag2Bez.size1()) {
+  if(lag.size1() != matrixLag2Bez.size1()){
     Msg::Error("matrix not the right size in lag2Bez function %d vs %d",
                lag.size1(), matrixLag2Bez.size1());
   }
-  if(bez.size1() != lag.size1() || bez.size2() != lag.size2()) {
+  if(bez.size1() != lag.size1() || bez.size2() != lag.size2()){
     bez.resize(lag.size1(), lag.size2());
   }
   matrixLag2Bez.mult(lag, bez);
@@ -586,8 +623,8 @@ void bezierBasis::lag2Bez(const fullMatrix<double> &lag,
 void bezierBasis::subdivideBezCoeff(const fullMatrix<double> &coeff,
                                     fullMatrix<double> &subCoeff) const
 {
-  if(subCoeff.size1() != subDivisor.size1() ||
-     subCoeff.size2() != coeff.size2()) {
+  if(subCoeff.size1() != subDivisor.size1()
+     || subCoeff.size2() != coeff.size2()  ){
     subCoeff.resize(subDivisor.size1(), coeff.size2());
   }
   subDivisor.mult(coeff, subCoeff);
@@ -596,7 +633,7 @@ void bezierBasis::subdivideBezCoeff(const fullMatrix<double> &coeff,
 void bezierBasis::subdivideBezCoeff(const fullVector<double> &coeff,
                                     fullVector<double> &subCoeff) const
 {
-  if(subCoeff.size() != subDivisor.size1()) {
+  if(subCoeff.size() != subDivisor.size1()){
     subCoeff.resize(subDivisor.size1());
   }
   subDivisor.mult(coeff, subCoeff);
@@ -604,95 +641,73 @@ void bezierBasis::subdivideBezCoeff(const fullVector<double> &coeff,
 
 void bezierBasis::_construct()
 {
-  if(_data.elementType() == TYPE_PYR) {
+  if(_data.elementType() == TYPE_PYR){
     Msg::Error("This bezierBasis constructor is not for pyramids!");
     return;
   }
 
   int k;
-  std::vector<fullMatrix<double> > subPoints;
+  std::vector< fullMatrix<double> > subPoints;
   int order = _data.spaceOrder();
 
-  switch(_data.elementType()) {
-  case TYPE_PNT:
-    _numLagCoeff = 1;
-    _dimSimplex = 0;
-    _exponents = gmshGenerateMonomialsLine(0);
-    subPoints.push_back(gmshGeneratePointsLine(0));
-    break;
-  case TYPE_LIN:
-    _numLagCoeff = order ? 2 : 1;
-    _dimSimplex = 0;
-    _exponents = gmshGenerateMonomialsLine(order);
-    subPoints = generateSubPointsLine(order);
-    break;
-  case TYPE_TRI:
-    _numLagCoeff = order ? 3 : 1;
-    _dimSimplex = 2;
-    _exponents = gmshGenerateMonomialsTriangle(order);
-    _exponents2.resize((order + 1) * (order + 2) / 2, 2);
-    k = 0;
-    for (int j = 0; j < order+1; ++j) {
-      for (int i = 0; i < order+1-j; ++i) {
-        _exponents2(k, 0) = i;
-        _exponents2(k, 1) = j;
-        ++k;
-      }
-    }
-    subPoints = generateSubPointsTriangle(order);
-    break;
-  case TYPE_QUA:
-    _numLagCoeff = order ? 4 : 1;
-    _dimSimplex = 0;
-    _exponents = gmshGenerateMonomialsQuadrangle(order);
-    _exponents2.resize((order + 1) * (order + 1), 2);
-    k = 0;
-    for (int j = 0; j < order+1; ++j) {
-      for (int i = 0; i < order+1; ++i) {
-        _exponents2(k, 0) = i;
-        _exponents2(k, 1) = j;
-        ++k;
-      }
-    }
-//      _exponents.print("_exponents");
-//      _exponents2.print("_exponents2");
-    subPoints = generateSubPointsQuad(order);
-    break;
-  case TYPE_TET:
-    _numLagCoeff = order ? 4 : 1;
-    _dimSimplex = 3;
-    _exponents = gmshGenerateMonomialsTetrahedron(order);
-    subPoints = generateSubPointsTetrahedron(order);
-    break;
-  case TYPE_PRI:
-    _numLagCoeff = order ? 6 : 1;
-    _dimSimplex = 2;
-    _exponents = gmshGenerateMonomialsPrism(order);
-    subPoints = generateSubPointsPrism(order);
-    break;
-  case TYPE_HEX:
-    _numLagCoeff = order ? 8 : 1;
-    _dimSimplex = 0;
-    _exponents = gmshGenerateMonomialsHexahedron(order);
-    subPoints = generateSubPointsHex(order);
-    break;
-  default:
-    Msg::Error("Unknown function space for parentType %d", _data.elementType());
-    return;
+  switch(_data.elementType()){
+    case TYPE_PNT :
+      _numLagCoeff = 1;
+      _dimSimplex = 0;
+      _exponents = gmshGenerateMonomialsLine(0);
+      subPoints.push_back(gmshGeneratePointsLine(0));
+      break;
+    case TYPE_LIN :
+      _numLagCoeff = order ? 2 : 1;
+      _dimSimplex = 0;
+      _exponents = gmshGenerateMonomialsLine(order);
+      subPoints = generateSubPointsLine(order);
+      break;
+    case TYPE_TRI :
+      _numLagCoeff = order ? 3 : 1;
+      _dimSimplex = 2;
+      _exponents = gmshGenerateMonomialsTriangle(order);
+      subPoints = generateSubPointsTriangle(order);
+      break;
+    case TYPE_QUA :
+      _numLagCoeff = order ? 4 : 1;
+      _dimSimplex = 0;
+      _exponents = gmshGenerateMonomialsQuadrangle(order);
+      subPoints = generateSubPointsQuad(order);
+      break;
+    case TYPE_TET :
+      _numLagCoeff = order ? 4 : 1;
+      _dimSimplex = 3;
+      _exponents = gmshGenerateMonomialsTetrahedron(order);
+      subPoints = generateSubPointsTetrahedron(order);
+      break;
+    case TYPE_PRI :
+      _numLagCoeff = order ? 6 : 1;
+      _dimSimplex = 2;
+      _exponents = gmshGenerateMonomialsPrism(order);
+      subPoints = generateSubPointsPrism(order);
+      break;
+    case TYPE_HEX :
+      _numLagCoeff = order ? 8 : 1;
+      _dimSimplex = 0;
+      _exponents = gmshGenerateMonomialsHexahedron(order);
+      subPoints = generateSubPointsHex(order);
+      break;
+    default :
+      Msg::Error("Unknown function space for parentType %d", _data.elementType());
+      return;
   }
+  _exponents2 = generateExponents(_data.elementType(), order);
   _numDivisions = static_cast<int>(subPoints.size());
 
   fullMatrix<double> bezierPoints = _exponents;
-  if(order) bezierPoints.scale(1. / order);
+  if(order) bezierPoints.scale(1./order);
 
-  matrixBez2Lag =
-    generateBez2LagMatrix(_exponents, bezierPoints, order, _dimSimplex);
+  matrixBez2Lag = generateBez2LagMatrix(_exponents, bezierPoints, order, _dimSimplex);
   matrixBez2Lag.invert(matrixLag2Bez);
-  matrixBez2Lag2 = generateBez2LagMatrix(_exponents2, bezierPoints, order,
-                                         _dimSimplex);
+  matrixBez2Lag2 = generateBez2LagMatrix(_exponents2, bezierPoints, order, _dimSimplex);
   matrixBez2Lag2.invert(matrixLag2Bez2);
-  subDivisor = generateSubDivisor(_exponents, subPoints, matrixLag2Bez, order,
-                                  _dimSimplex);
+  subDivisor = generateSubDivisor(_exponents, subPoints, matrixLag2Bez, order, _dimSimplex);
 
 //  matrixBez2Lag.print("matrixBez2Lag");
 //  matrixBez2Lag2.print("matrixBez2Lag2");
@@ -702,7 +717,7 @@ void bezierBasis::_construct()
 
 void bezierBasis::_constructPyr()
 {
-  if(_data.elementType() != TYPE_PYR) {
+  if(_data.elementType() != TYPE_PYR){
     Msg::Error("This bezierBasis constructor is for pyramids!");
   }
 
@@ -715,14 +730,14 @@ void bezierBasis::_constructPyr()
 
   fullMatrix<double> bezierPoints;
   generateBezierPoints(bezierPoints);
-  matrixBez2Lag =
-    generateBez2LagMatrixPyramid(_exponents, bezierPoints, pyr, nij, nk);
+  matrixBez2Lag = generateBez2LagMatrixPyramid(_exponents, bezierPoints,
+                                               pyr, nij, nk);
   matrixBez2Lag.invert(matrixLag2Bez);
-  if(pyr) {
+  if(pyr){
     _numDivisions = 0;
   }
   else {
-    std::vector<fullMatrix<double> > subPoints;
+    std::vector< fullMatrix<double> > subPoints;
     subPoints = generateSubPointsPyr(nij, nk);
     _numDivisions = static_cast<int>(subPoints.size());
     subDivisor = generateSubDivisorPyramid(_exponents, subPoints, matrixLag2Bez,
@@ -730,15 +745,15 @@ void bezierBasis::_constructPyr()
   }
 }
 
-bezierBasisRaiser *bezierBasis::getRaiser() const
+bezierBasisRaiser* bezierBasis::getRaiser() const
 {
-  if(!_raiser) {
-    const_cast<bezierBasis *>(this)->_raiser = new bezierBasisRaiser(this);
+  if(!_raiser){
+    const_cast<bezierBasis*>(this)->_raiser = new bezierBasisRaiser(this);
   }
   return _raiser;
 }
 
-// const bezierBasis* bezierBasisRaiser::getRaisedBezierBasis(int raised) const
+//const bezierBasis* bezierBasisRaiser::getRaisedBezierBasis(int raised) const
 //{
 //  if(raised != 2 && raised != 3){
 //    Msg::Error("Why would you want other than 2 or 3?");
@@ -756,15 +771,18 @@ bezierBasisRaiser *bezierBasis::getRaiser() const
 
 void bezierBasisRaiser::_fillRaiserData()
 {
-  if(_bfs->getType() == TYPE_PYR) {
+  if(_bfs->getType() == TYPE_PYR){
     _fillRaiserDataPyr();
     return;
   }
 
   fullMatrix<int> exp;
+  fullMatrix<int> expNew;
   {
     const fullMatrix<double> &expD = _bfs->_exponents;
+    const fullMatrix<double> &expDNew = _bfs->_exponents2;
     double2int(expD, exp);
+    double2int(expDNew, expNew);
   }
   int order = _bfs->getOrder();
   int ncoeff = exp.size1();
@@ -775,86 +793,148 @@ void bezierBasisRaiser::_fillRaiserData()
   // of the indices (i, j) or (i, j, k), we fill only the raiser data for
   // i <= j <= k (and adapt the value to take into account the multiplicity).
 
-  // Construction of raiser 2
-  fullMatrix<int> exp2;
-  {
-    fullMatrix<double> expD2;
-    FuncSpaceData dataRaiser2(_bfs->_data, 2 * order);
-    gmshGenerateMonomials(dataRaiser2, expD2);
-    double2int(expD2, exp2);
-    _raiser2.resize(exp2.size1());
-  }
-
   std::map<int, int> hashToInd2;
-  for(int i = 0; i < exp2.size1(); ++i) {
-    int hash = 0;
-    for(int l = 0; l < dim; l++) {
-      hash += exp2(i, l) * pow_int(2 * order + 1, l);
+  std::map<int, int> hashToInd2New;
+  {
+    // Construction of raiser 2
+    fullMatrix<int> exp2;
+    fullMatrix<int> exp2New;
+    {
+      fullMatrix<double> expD2;
+      FuncSpaceData dataRaiser2(_bfs->_data, 2*order);
+      gmshGenerateMonomials(dataRaiser2, expD2);
+      double2int(expD2, exp2);
+      _raiser2.resize(exp2.size1());
+      fullMatrix<double> expD2New = generateExponents(_bfs->_data.elementType(), 2*order);
+      double2int(expD2New, exp2New);
+      _raiser2New.resize(exp2New.size1());
     }
-    hashToInd2[hash] = i;
+
+//    std::map<int, int> hashToInd2;
+    for(int i = 0; i < exp2.size1(); ++i){
+      int hash = 0;
+      for(int l = 0; l < dim; l++){
+        hash += static_cast<int>(exp2(i, l) * pow_int(2*order+1, l));
+      }
+      hashToInd2[hash] = i;
+    }
+//    std::map<int, int> hashToInd2New;
+    for(int i = 0; i < exp2New.size1(); ++i){
+      int hash = 0;
+      for(int l = 0; l < dim; l++){
+        hash += static_cast<int>(exp2New(i, l) * pow_int(2*order+1, l));
+      }
+      hashToInd2New[hash] = i;
+    }
   }
 
-  for(int i = 0; i < ncoeff; i++) {
-    for(int j = i; j < ncoeff; j++) {
+  for(int i = 0; i < ncoeff; i++){
+    for(int j = i; j < ncoeff; j++){
       double num = 1, den = 1;
       {
         int compl1 = order;
         int compl2 = order;
-        int compltot = 2 * order;
-        for(int l = 0; l < dimSimplex; l++) {
-          num *= nChoosek(compl1, exp(i, l)) * nChoosek(compl2, exp(j, l));
+        int compltot = 2*order;
+        for(int l = 0; l < dimSimplex; l++){
+          num *= nChoosek(compl1, exp(i, l)) *
+                 nChoosek(compl2, exp(j, l));
           den *= nChoosek(compltot, exp(i, l) + exp(j, l));
           compl1 -= exp(i, l);
           compl2 -= exp(j, l);
           compltot -= exp(i, l) + exp(j, l);
         }
-        for(int l = dimSimplex; l < dim; l++) {
-          num *= nChoosek(order, exp(i, l)) * nChoosek(order, exp(j, l));
-          den *= nChoosek(2 * order, exp(i, l) + exp(j, l));
+        for(int l = dimSimplex; l < dim; l++){
+          num *= nChoosek(order, exp(i, l)) *
+                 nChoosek(order, exp(j, l));
+          den *= nChoosek(2*order, exp(i, l) + exp(j, l));
+        }
+      }
+      double numNew = 1, denNew = 1;
+      {
+        int compl1 = order;
+        int compl2 = order;
+        int compltot = 2*order;
+        for(int l = 0; l < dimSimplex; l++){
+          numNew *= nChoosek(compl1, expNew(i, l)) *
+                    nChoosek(compl2, expNew(j, l));
+          denNew *= nChoosek(compltot, expNew(i, l) + expNew(j, l));
+          compl1 -= expNew(i, l);
+          compl2 -= expNew(j, l);
+          compltot -= expNew(i, l) + expNew(j, l);
+        }
+        for(int l = dimSimplex; l < dim; l++){
+          numNew *= nChoosek(order, expNew(i, l)) *
+                    nChoosek(order, expNew(j, l));
+          denNew *= nChoosek(2*order, expNew(i, l) + expNew(j, l));
         }
       }
 
       // taking into account the multiplicity (reminder: i <= j)
       if(i < j) num *= 2;
+      if(i < j) numNew *= 2;
 
       int hash = 0;
-      for(int l = 0; l < dim; l++) {
-        hash += (exp(i, l) + exp(j, l)) * pow_int(2 * order + 1, l);
+      for(int l = 0; l < dim; l++){
+        hash += static_cast<int>((exp(i, l)+exp(j, l)) * pow_int(2*order+1, l));
       }
-      _raiser2[hashToInd2[hash]].push_back(_data(num / den, i, j));
+      _raiser2[hashToInd2[hash]].push_back(_data(num/den, i, j));
+
+      int hashNew = 0;
+      for(int l = 0; l < dim; l++){
+        hashNew += static_cast<int>((expNew(i, l)+expNew(j, l)) * pow_int(2*order+1, l));
+      }
+      _raiser2New[hashToInd2New[hashNew]].push_back(_data(numNew/denNew, i, j));
     }
   }
 
   // Construction of raiser 3
-  fullMatrix<int> exp3;
-  {
-    fullMatrix<double> expD3;
-    FuncSpaceData dataRaiser3(_bfs->_data, 3 * order);
-    gmshGenerateMonomials(dataRaiser3, expD3);
-    double2int(expD3, exp3);
-    _raiser3.resize(exp3.size1());
-  }
-
   std::map<int, int> hashToInd3;
-  for(int i = 0; i < exp3.size1(); ++i) {
-    int hash = 0;
-    for(int l = 0; l < dim; l++) {
-      hash += exp3(i, l) * pow_int(3 * order + 1, l);
+  std::map<int, int> hashToInd3New;
+  {
+    fullMatrix<int> exp3;
+    fullMatrix<int> exp3New;
+    {
+      fullMatrix<double> expD3;
+      FuncSpaceData dataRaiser3(_bfs->_data, 3*order);
+      gmshGenerateMonomials(dataRaiser3, expD3);
+      double2int(expD3, exp3);
+      _raiser3.resize(exp3.size1());
+      fullMatrix<double> expD3New = generateExponents(_bfs->_data.elementType(), 3*order);
+      double2int(expD3New, exp3New);
+      _raiser3New.resize(exp3New.size1());
     }
-    hashToInd3[hash] = i;
+
+
+//    std::map<int, int> hashToInd3;
+    for(int i = 0; i < exp3.size1(); ++i){
+      int hash = 0;
+      for(int l = 0; l < dim; l++){
+        hash += static_cast<int>(exp3(i, l) * pow_int(3*order+1, l));
+      }
+      hashToInd3[hash] = i;
+    }
+//    std::map<int, int> hashToInd3New;
+    for(int i = 0; i < exp3New.size1(); ++i){
+      int hash = 0;
+      for(int l = 0; l < dim; l++){
+        hash += static_cast<int>(exp3New(i, l) * pow_int(3*order+1, l));
+      }
+      hashToInd3New[hash] = i;
+    }
   }
 
-  for(int i = 0; i < ncoeff; i++) {
-    for(int j = i; j < ncoeff; j++) {
-      for(int k = j; k < ncoeff; ++k) {
+  for(int i = 0; i < ncoeff; i++){
+    for(int j = i; j < ncoeff; j++){
+      for(int k = j; k < ncoeff; ++k){
         double num = 1, den = 1;
         {
           int compl1 = order;
           int compl2 = order;
           int compl3 = order;
-          int compltot = 3 * order;
-          for(int l = 0; l < dimSimplex; l++) {
-            num *= nChoosek(compl1, exp(i, l)) * nChoosek(compl2, exp(j, l)) *
+          int compltot = 3*order;
+          for(int l = 0; l < dimSimplex; l++){
+            num *= nChoosek(compl1, exp(i, l)) *
+                   nChoosek(compl2, exp(j, l)) *
                    nChoosek(compl3, exp(k, l));
             den *= nChoosek(compltot, exp(i, l) + exp(j, l) + exp(k, l));
             compl1 -= exp(i, l);
@@ -862,25 +942,54 @@ void bezierBasisRaiser::_fillRaiserData()
             compl3 -= exp(k, l);
             compltot -= exp(i, l) + exp(j, l) + exp(k, l);
           }
-          for(int l = dimSimplex; l < dim; l++) {
-            num *= nChoosek(order, exp(i, l)) * nChoosek(order, exp(j, l)) *
+          for(int l = dimSimplex; l < dim; l++){
+            num *= nChoosek(order, exp(i, l)) *
+                   nChoosek(order, exp(j, l)) *
                    nChoosek(order, exp(k, l));
-            den *= nChoosek(3 * order, exp(i, l) + exp(j, l) + exp(k, l));
+            den *= nChoosek(3*order, exp(i, l) + exp(j, l) + exp(k, l));
+          }
+        }
+
+        double numNew = 1, denNew = 1;
+        {
+          int compl1 = order;
+          int compl2 = order;
+          int compl3 = order;
+          int compltot = 3*order;
+          for(int l = 0; l < dimSimplex; l++){
+            numNew *= nChoosek(compl1, expNew(i, l)) *
+                      nChoosek(compl2, expNew(j, l)) *
+                      nChoosek(compl3, expNew(k, l));
+            denNew *= nChoosek(compltot, expNew(i, l) + expNew(j, l) + expNew(k, l));
+            compl1 -= expNew(i, l);
+            compl2 -= expNew(j, l);
+            compl3 -= expNew(k, l);
+            compltot -= expNew(i, l) + expNew(j, l) + expNew(k, l);
+          }
+          for(int l = dimSimplex; l < dim; l++){
+            numNew *= nChoosek(order, expNew(i, l)) *
+                      nChoosek(order, expNew(j, l)) *
+                      nChoosek(order, expNew(k, l));
+            denNew *= nChoosek(3*order, expNew(i, l) + expNew(j, l) + expNew(k, l));
           }
         }
 
         // taking into account the multiplicity (Reminder: i <= j <= k)
-        if(i < j && j < k)
-          num *= 6;
-        else if(i < j || j < k)
-          num *= 3;
+        if(i < j && j < k) num *= 6;
+        else if(i < j || j < k) num *= 3;
+        if(i < j && j < k) numNew *= 6;
+        else if(i < j || j < k) numNew *= 3;
 
         int hash = 0;
-        for(int l = 0; l < dim; l++) {
-          hash +=
-            (exp(i, l) + exp(j, l) + exp(k, l)) * pow_int(3 * order + 1, l);
+        for(int l = 0; l < dim; l++){
+          hash += static_cast<int>((exp(i, l)+exp(j, l)+exp(k, l)) * pow_int(3*order+1, l));
         }
-        _raiser3[hashToInd3[hash]].push_back(_data(num / den, i, j, k));
+        _raiser3[hashToInd3[hash]].push_back(_data(num/den, i, j, k));
+        int hashNew = 0;
+        for(int l = 0; l < dim; l++){
+          hashNew += static_cast<int>((expNew(i, l)+expNew(j, l)+expNew(k, l)) * pow_int(3*order+1, l));
+        }
+        _raiser3New[hashToInd3New[hashNew]].push_back(_data(numNew/denNew, i, j, k));
       }
     }
   }
@@ -889,11 +998,11 @@ void bezierBasisRaiser::_fillRaiserData()
 void bezierBasisRaiser::_fillRaiserDataPyr()
 {
   FuncSpaceData fsdata = _bfs->getFuncSpaceData();
-  if(fsdata.elementType() != TYPE_PYR) {
+  if(fsdata.elementType() != TYPE_PYR){
     _fillRaiserData();
     return;
   }
-  if(fsdata.isPyramidalSpace()) {
+  if(fsdata.isPyramidalSpace()){
     Msg::Error("Bezier raiser not implemented for pyramidal space");
     return;
   }
@@ -915,37 +1024,38 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
   fullMatrix<int> exp2;
   {
     fullMatrix<double> expD2;
-    FuncSpaceData dataRaiser2(_bfs->_data, 2 * order[0], 2 * order[2]);
+    FuncSpaceData dataRaiser2(_bfs->_data, 2*order[0], 2*order[2]);
     gmshGenerateMonomials(dataRaiser2, expD2);
     double2int(expD2, exp2);
     _raiser2.resize(exp2.size1());
   }
 
   std::map<int, int> hashToInd2;
-  for(int i = 0; i < exp2.size1(); ++i) {
+  for(int i = 0; i < exp2.size1(); ++i){
     int hash = 0;
-    for(int l = 0; l < 3; l++) {
-      hash += exp2(i, l) * pow_int(2 * orderHash + 1, l);
+    for(int l = 0; l < 3; l++){
+      hash += exp2(i, l) * pow_int(2*orderHash+1, l);
     }
     hashToInd2[hash] = i;
   }
 
-  for(int i = 0; i < ncoeff; i++) {
-    for(int j = i; j < ncoeff; j++) {
+  for(int i = 0; i < ncoeff; i++){
+    for(int j = i; j < ncoeff; j++){
       double num = 1, den = 1;
-      for(int l = 0; l < 3; l++) {
-        num *= nChoosek(order[l], exp(i, l)) * nChoosek(order[l], exp(j, l));
-        den *= nChoosek(2 * order[l], exp(i, l) + exp(j, l));
+      for(int l = 0; l < 3; l++){
+        num *= nChoosek(order[l], exp(i, l))
+               * nChoosek(order[l], exp(j, l));
+        den *= nChoosek(2*order[l], exp(i, l) + exp(j, l));
       }
 
       // taking into account the multiplicity (reminder: i <= j)
       if(i < j) num *= 2;
 
       int hash = 0;
-      for(int l = 0; l < 3; l++) {
-        hash += (exp(i, l) + exp(j, l)) * pow_int(2 * orderHash + 1, l);
+      for(int l = 0; l < 3; l++){
+        hash += (exp(i, l)+exp(j, l)) * pow_int(2*orderHash+1, l);
       }
-      _raiser2[hashToInd2[hash]].push_back(_data(num / den, i, j));
+      _raiser2[hashToInd2[hash]].push_back(_data(num/den, i, j));
     }
   }
 
@@ -953,43 +1063,41 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
   fullMatrix<int> exp3;
   {
     fullMatrix<double> expD3;
-    FuncSpaceData dataRaiser3(_bfs->_data, 3 * order[0], 3 * order[2]);
+    FuncSpaceData dataRaiser3(_bfs->_data, 3*order[0], 3*order[2]);
     gmshGenerateMonomials(dataRaiser3, expD3);
     double2int(expD3, exp3);
     _raiser3.resize(exp3.size1());
   }
 
   std::map<int, int> hashToInd3;
-  for(int i = 0; i < exp3.size1(); ++i) {
+  for(int i = 0; i < exp3.size1(); ++i){
     int hash = 0;
-    for(int l = 0; l < 3; l++) {
-      hash += exp3(i, l) * pow_int(3 * orderHash + 1, l);
+    for(int l = 0; l < 3; l++){
+      hash += exp3(i, l) * pow_int(3*orderHash+1, l);
     }
     hashToInd3[hash] = i;
   }
 
-  for(int i = 0; i < ncoeff; i++) {
-    for(int j = i; j < ncoeff; j++) {
-      for(int k = j; k < ncoeff; ++k) {
+  for(int i = 0; i < ncoeff; i++){
+    for(int j = i; j < ncoeff; j++){
+      for(int k = j; k < ncoeff; ++k){
         double num = 1, den = 1;
-        for(int l = 0; l < 3; l++) {
-          num *= nChoosek(order[l], exp(i, l)) * nChoosek(order[l], exp(j, l)) *
-                 nChoosek(order[l], exp(k, l));
-          den *= nChoosek(3 * order[l], exp(i, l) + exp(j, l) + exp(k, l));
+        for(int l = 0; l < 3; l++){
+          num *= nChoosek(order[l], exp(i, l))
+                 * nChoosek(order[l], exp(j, l))
+                 * nChoosek(order[l], exp(k, l));
+          den *= nChoosek(3*order[l], exp(i, l) + exp(j, l) + exp(k, l));
         }
 
         // taking into account the multiplicity (Reminder: i <= j <= k)
-        if(i < j && j < k)
-          num *= 6;
-        else if(i < j || j < k)
-          num *= 3;
+        if(i < j && j < k) num *= 6;
+        else if(i < j || j < k) num *= 3;
 
         int hash = 0;
-        for(int l = 0; l < 3; l++) {
-          hash +=
-            (exp(i, l) + exp(j, l) + exp(k, l)) * pow_int(3 * orderHash + 1, l);
+        for(int l = 0; l < 3; l++){
+          hash += (exp(i, l)+exp(j, l)+exp(k, l)) * pow_int(3*orderHash+1, l);
         }
-        _raiser3[hashToInd3[hash]].push_back(_data(num / den, i, j, k));
+        _raiser3[hashToInd3[hash]].push_back(_data(num/den, i, j, k));
       }
     }
   }
@@ -1001,20 +1109,45 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
 {
   coeffSquare.resize(_raiser2.size(), true);
 
-  if(&coeffA == &coeffB) {
-    for(std::size_t ind = 0; ind < _raiser2.size(); ++ind) {
-      for(std::size_t l = 0; l < _raiser2[ind].size(); ++l) {
+  if(&coeffA == &coeffB){
+    for(std::size_t ind = 0; ind < _raiser2.size(); ++ind){
+      for(std::size_t l = 0; l < _raiser2[ind].size(); ++l){
         _data &d = _raiser2[ind][l];
         coeffSquare(ind) += d.val * coeffA(d.i) * coeffB(d.j);
       }
     }
   }
   else {
-    for(std::size_t ind = 0; ind < _raiser2.size(); ++ind) {
-      for(std::size_t l = 0; l < _raiser2[ind].size(); ++l) {
+    for(std::size_t ind = 0; ind < _raiser2.size(); ++ind){
+      for(std::size_t l = 0; l < _raiser2[ind].size(); ++l){
         _data &d = _raiser2[ind][l];
-        coeffSquare(ind) +=
-          d.val / 2 * (coeffA(d.i) * coeffB(d.j) + coeffA(d.j) * coeffB(d.i));
+        coeffSquare(ind) += d.val/2 * (coeffA(d.i) * coeffB(d.j) +
+                                       coeffA(d.j) * coeffB(d.i));
+      }
+    }
+  }
+}
+
+void bezierBasisRaiser::computeCoeff2(const fullVector<double> &coeffA,
+                                      const fullVector<double> &coeffB,
+                                      fullVector<double> &coeffSquare)
+{
+  coeffSquare.resize(_raiser2New.size(), true);
+
+  if(&coeffA == &coeffB){
+    for(std::size_t ind = 0; ind < _raiser2New.size(); ++ind){
+      for(std::size_t l = 0; l < _raiser2New[ind].size(); ++l){
+        _data &d = _raiser2New[ind][l];
+        coeffSquare(ind) += d.val * coeffA(d.i) * coeffB(d.j);
+      }
+    }
+  }
+  else {
+    for(std::size_t ind = 0; ind < _raiser2New.size(); ++ind){
+      for(std::size_t l = 0; l < _raiser2New[ind].size(); ++l){
+        _data &d = _raiser2New[ind][l];
+        coeffSquare(ind) += d.val/2 * (coeffA(d.i) * coeffB(d.j) +
+                                       coeffA(d.j) * coeffB(d.i));
       }
     }
   }
@@ -1027,32 +1160,63 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
 {
   coeffCubic.resize(_raiser3.size(), true);
 
-  if(&coeffA == &coeffB && &coeffB == &coeffC) {
-    for(std::size_t ind = 0; ind < _raiser3.size(); ++ind) {
-      for(std::size_t l = 0; l < _raiser3[ind].size(); ++l) {
+  if(&coeffA == &coeffB && &coeffB == &coeffC){
+    for(std::size_t ind = 0; ind < _raiser3.size(); ++ind){
+      for(std::size_t l = 0; l < _raiser3[ind].size(); ++l){
         _data &d = _raiser3[ind][l];
         coeffCubic(ind) += d.val * coeffA(d.i) * coeffB(d.j) * coeffC(d.k);
       }
     }
   }
-  else if(&coeffA != &coeffB && &coeffB != &coeffC) {
-    for(std::size_t ind = 0; ind < _raiser3.size(); ++ind) {
-      for(std::size_t l = 0; l < _raiser3[ind].size(); ++l) {
+  else if(&coeffA != &coeffB && &coeffB != &coeffC){
+    for(std::size_t ind = 0; ind < _raiser3.size(); ++ind){
+      for(std::size_t l = 0; l < _raiser3[ind].size(); ++l){
         _data &d = _raiser3[ind][l];
-        coeffCubic(ind) += d.val / 6 *
-                           (coeffA(d.i) * coeffB(d.j) * coeffC(d.k) +
-                            coeffA(d.i) * coeffB(d.k) * coeffC(d.j) +
-                            coeffA(d.j) * coeffB(d.i) * coeffC(d.k) +
-                            coeffA(d.j) * coeffB(d.k) * coeffC(d.i) +
-                            coeffA(d.k) * coeffB(d.i) * coeffC(d.j) +
-                            coeffA(d.k) * coeffB(d.j) * coeffC(d.i));
+        coeffCubic(ind) += d.val/6 * (coeffA(d.i) * coeffB(d.j) * coeffC(d.k) +
+                                      coeffA(d.i) * coeffB(d.k) * coeffC(d.j) +
+                                      coeffA(d.j) * coeffB(d.i) * coeffC(d.k) +
+                                      coeffA(d.j) * coeffB(d.k) * coeffC(d.i) +
+                                      coeffA(d.k) * coeffB(d.i) * coeffC(d.j) +
+                                      coeffA(d.k) * coeffB(d.j) * coeffC(d.i));
       }
     }
   }
   else
-    Msg::Error(
-      "bezierBasisRaiser::computeCoeff not implemented for A == B != C "
-      "or A != B == C");
+    Msg::Error("bezierBasisRaiser::computeCoeff not implemented for A == B != C "
+               "or A != B == C");
+}
+
+void bezierBasisRaiser::computeCoeff2(const fullVector<double> &coeffA,
+                                      const fullVector<double> &coeffB,
+                                      const fullVector<double> &coeffC,
+                                      fullVector<double> &coeffCubic)
+{
+  coeffCubic.resize(_raiser3New.size(), true);
+
+  if(&coeffA == &coeffB && &coeffB == &coeffC){
+    for(std::size_t ind = 0; ind < _raiser3New.size(); ++ind){
+      for(std::size_t l = 0; l < _raiser3New[ind].size(); ++l){
+        _data &d = _raiser3New[ind][l];
+        coeffCubic(ind) += d.val * coeffA(d.i) * coeffB(d.j) * coeffC(d.k);
+      }
+    }
+  }
+  else if(&coeffA != &coeffB && &coeffB != &coeffC){
+    for(std::size_t ind = 0; ind < _raiser3New.size(); ++ind){
+      for(std::size_t l = 0; l < _raiser3New[ind].size(); ++l){
+        _data &d = _raiser3New[ind][l];
+        coeffCubic(ind) += d.val/6 * (coeffA(d.i) * coeffB(d.j) * coeffC(d.k) +
+                                      coeffA(d.i) * coeffB(d.k) * coeffC(d.j) +
+                                      coeffA(d.j) * coeffB(d.i) * coeffC(d.k) +
+                                      coeffA(d.j) * coeffB(d.k) * coeffC(d.i) +
+                                      coeffA(d.k) * coeffB(d.i) * coeffC(d.j) +
+                                      coeffA(d.k) * coeffB(d.j) * coeffC(d.i));
+      }
+    }
+  }
+  else
+    Msg::Error("bezierBasisRaiser::computeCoeff not implemented for A == B != C "
+               "or A != B == C");
 }
 
 void bezierBasisRaiser::computeCoeff(const fullMatrix<double> &coeffA,
@@ -1061,26 +1225,26 @@ void bezierBasisRaiser::computeCoeff(const fullMatrix<double> &coeffA,
 {
   coeffSquare.resize(_raiser2.size(), coeffA.size2(), true);
 
-  if(&coeffA == &coeffB) {
-    for(std::size_t ind = 0; ind < _raiser2.size(); ++ind) {
-      for(std::size_t l = 0; l < _raiser2[ind].size(); ++l) {
+  if(&coeffA == &coeffB){
+    for(std::size_t ind = 0; ind < _raiser2.size(); ++ind){
+      for(std::size_t l = 0; l < _raiser2[ind].size(); ++l){
         _data &d = _raiser2[ind][l];
-        for(int ind2 = 0; ind2 < coeffA.size2(); ++ind2) {
-          coeffSquare(ind, ind2) +=
-            d.val * coeffA(d.i, ind2) * coeffB(d.j, ind2);
+        for(int ind2 = 0; ind2 < coeffA.size2(); ++ind2){
+          coeffSquare(ind, ind2) += d.val * coeffA(d.i, ind2)
+                                    * coeffB(d.j, ind2);
         }
       }
     }
   }
   else {
-    for(std::size_t ind = 0; ind < _raiser2.size(); ++ind) {
-      for(std::size_t l = 0; l < _raiser2[ind].size(); ++l) {
+    for(std::size_t ind = 0; ind < _raiser2.size(); ++ind){
+      for(std::size_t l = 0; l < _raiser2[ind].size(); ++l){
         _data &d = _raiser2[ind][l];
-        double val = d.val / 2;
-        for(int ind2 = 0; ind2 < coeffA.size2(); ++ind2) {
-          coeffSquare(ind, ind2) +=
-            val * (coeffA(d.i, ind2) * coeffB(d.j, ind2) +
-                   coeffA(d.j, ind2) * coeffB(d.i, ind2));
+        double val = d.val/2;
+        for(int ind2 = 0; ind2 < coeffA.size2(); ++ind2){
+          coeffSquare(ind, ind2) += val *
+                                    (coeffA(d.i, ind2) * coeffB(d.j, ind2) +
+                                     coeffA(d.j, ind2) * coeffB(d.i, ind2));
         }
       }
     }
@@ -1094,33 +1258,33 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
 {
   coeffCubic.resize(_raiser3.size(), coeffB.size2(), true);
 
-  if(&coeffB == &coeffC) {
-    for(std::size_t ind = 0; ind < _raiser3.size(); ++ind) {
-      for(std::size_t l = 0; l < _raiser3[ind].size(); ++l) {
+  if(&coeffB == &coeffC){
+    for(std::size_t ind = 0; ind < _raiser3.size(); ++ind){
+      for(std::size_t l = 0; l < _raiser3[ind].size(); ++l){
         _data &d = _raiser3[ind][l];
-        double val = d.val / 3;
-        for(int ind2 = 0; ind2 < coeffB.size2(); ++ind2) {
-          coeffCubic(ind, ind2) +=
-            val * (coeffA(d.i) * coeffB(d.j, ind2) * coeffC(d.k, ind2) +
-                   coeffA(d.j) * coeffB(d.i, ind2) * coeffC(d.k, ind2) +
-                   coeffA(d.k) * coeffB(d.i, ind2) * coeffC(d.j, ind2));
+        double val = d.val/3;
+        for(int ind2 = 0; ind2 < coeffB.size2(); ++ind2){
+          coeffCubic(ind, ind2) += val *
+                                   (coeffA(d.i) * coeffB(d.j, ind2) * coeffC(d.k, ind2) +
+                                    coeffA(d.j) * coeffB(d.i, ind2) * coeffC(d.k, ind2) +
+                                    coeffA(d.k) * coeffB(d.i, ind2) * coeffC(d.j, ind2));
         }
       }
     }
   }
   else {
-    for(std::size_t ind = 0; ind < _raiser3.size(); ++ind) {
-      for(std::size_t l = 0; l < _raiser3[ind].size(); ++l) {
+    for(std::size_t ind = 0; ind < _raiser3.size(); ++ind){
+      for(std::size_t l = 0; l < _raiser3[ind].size(); ++l){
         _data &d = _raiser3[ind][l];
-        double val = d.val / 6;
-        for(int ind2 = 0; ind2 < coeffB.size2(); ++ind2) {
-          coeffCubic(ind, ind2) +=
-            val * (coeffA(d.i) * coeffB(d.j, ind2) * coeffC(d.k, ind2) +
-                   coeffA(d.i) * coeffB(d.k, ind2) * coeffC(d.j, ind2) +
-                   coeffA(d.j) * coeffB(d.i, ind2) * coeffC(d.k, ind2) +
-                   coeffA(d.j) * coeffB(d.k, ind2) * coeffC(d.i, ind2) +
-                   coeffA(d.k) * coeffB(d.i, ind2) * coeffC(d.j, ind2) +
-                   coeffA(d.k) * coeffB(d.j, ind2) * coeffC(d.i, ind2));
+        double val = d.val/6;
+        for(int ind2 = 0; ind2 < coeffB.size2(); ++ind2){
+          coeffCubic(ind, ind2) += val *
+                                   (coeffA(d.i) * coeffB(d.j, ind2) * coeffC(d.k, ind2) +
+                                    coeffA(d.i) * coeffB(d.k, ind2) * coeffC(d.j, ind2) +
+                                    coeffA(d.j) * coeffB(d.i, ind2) * coeffC(d.k, ind2) +
+                                    coeffA(d.j) * coeffB(d.k, ind2) * coeffC(d.i, ind2) +
+                                    coeffA(d.k) * coeffB(d.i, ind2) * coeffC(d.j, ind2) +
+                                    coeffA(d.k) * coeffB(d.j, ind2) * coeffC(d.i, ind2));
         }
       }
     }

@@ -108,6 +108,7 @@ private:
     }
   };
   std::vector<std::vector<_data> > _raiser2, _raiser3;
+  std::vector<std::vector<_data> > _raiser2New, _raiser3New;
   const bezierBasis *_bfs;
 
 public:
@@ -119,10 +120,17 @@ public:
   void computeCoeff(const fullVector<double> &coeffA,
                     const fullVector<double> &coeffB,
                     fullVector<double> &coeffSquare);
+  void computeCoeff2(const fullVector<double> &coeffA,
+                    const fullVector<double> &coeffB,
+                    fullVector<double> &coeffSquare);
   void computeCoeff(const fullMatrix<double> &coeffA,
                     const fullMatrix<double> &coeffB,
                     fullMatrix<double> &coeffSquare);
   void computeCoeff(const fullVector<double> &coeffA,
+                    const fullVector<double> &coeffB,
+                    const fullVector<double> &coeffC,
+                    fullVector<double> &coeffCubic);
+  void computeCoeff2(const fullVector<double> &coeffA,
                     const fullVector<double> &coeffB,
                     const fullVector<double> &coeffC,
                     fullVector<double> &coeffCubic);
