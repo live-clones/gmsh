@@ -38,6 +38,7 @@ struct contextMeshOptions {
   int ignorePeriodicity, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   double angleToleranceFacetOverlap;
+  int renumber;
   // mesh IO
   int fileFormat;
   double mshFileVersion, scalingFactor;

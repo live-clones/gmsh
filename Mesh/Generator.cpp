@@ -1138,6 +1138,11 @@ void GenerateMesh(GModel *m, int ask)
 #endif
   }
 
+  if(CTX::instance()->mesh.renumber){
+    m->renumberMeshVertices();
+    m->renumberMeshElements();
+  }
+
   Msg::Info("%d vertices %d elements", m->getNumMeshVertices(),
             m->getNumMeshElements());
 

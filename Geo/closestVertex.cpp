@@ -9,10 +9,9 @@
 #include "GFace.h"
 #include <vector>
 
-closestVertexFinder ::closestVertexFinder(GEntity *ge, bool closure) : nbVtcs(0)
+closestVertexFinder::closestVertexFinder(GEntity *ge, bool closure) : nbVtcs(0)
 {
 #if defined(HAVE_ANN)
-
   std::set<MVertex *> vtcs;
   ge->addVerticesInSet(vtcs, closure);
 
@@ -34,11 +33,11 @@ closestVertexFinder ::closestVertexFinder(GEntity *ge, bool closure) : nbVtcs(0)
   }
   kdtree = new ANNkd_tree(vCoord, nbVtcs, 3);
 #else
-  Msg::Fatal("Gmsh should be compiled using ANN");
+  Msg::Warning("Gmsh must be compiled with ANN support for finding closest vertices");
 #endif
 }
 
-closestVertexFinder ::~closestVertexFinder()
+closestVertexFinder::~closestVertexFinder()
 {
 #if defined(HAVE_ANN)
   if(nbVtcs) {

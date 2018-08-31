@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
+#include <limits>
 #include <sstream>
 #include <stdlib.h>
 #include <map>
@@ -718,47 +719,6 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
   return true;
 }
 
-void BDS2GMSH(BDS_Mesh *m, GFace *gf,
-              std::map<BDS_Point *, MVertex *, PointLessThan> &recoverMap)
-{
-  {
-    std::set<BDS_Point *, PointLessThan>::iterator itp = m->points.begin();
-    while(itp != m->points.end()) {
-      BDS_Point *p = *itp;
-      if(recoverMap.find(p) == recoverMap.end()) {
-        MVertex *v = new MFaceVertex(p->X, p->Y, p->Z, gf, p->u, p->v);
-        recoverMap[p] = v;
-        gf->mesh_vertices.push_back(v);
-      }
-      ++itp;
-    }
-  }
-  {
-    std::vector<BDS_Face *>::iterator itt = m->triangles.begin();
-    while(itt != m->triangles.end()) {
-      BDS_Face *t = *itt;
-      if(!t->deleted) {
-        BDS_Point *n[4];
-        t->getNodes(n);
-        MVertex *v1 = recoverMap[n[0]];
-        MVertex *v2 = recoverMap[n[1]];
-        MVertex *v3 = recoverMap[n[2]];
-        if(!n[3]) {
-          // when a singular point is present, degenerated triangles may be
-          // created, for example on a sphere that contains one pole
-          if(v1 != v2 && v1 != v3 && v2 != v3)
-            gf->triangles.push_back(new MTriangle(v1, v2, v3));
-        }
-        else {
-          MVertex *v4 = recoverMap[n[3]];
-          gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
-        }
-      }
-      ++itt;
-    }
-  }
-}
-
 static void addOrRemove(MVertex *v1, MVertex *v2,
                         std::set<MEdge, Less_Edge> &bedges,
                         std::set<MEdge, Less_Edge> &removed)
@@ -1035,6 +995,40 @@ static void directions_storage(GFace *gf)
   }
 
   backgroundMesh::unset();
+}
+
+static void BDS2GMSH(BDS_Mesh *m, GFace *gf,
+                     std::map<BDS_Point *, MVertex *, PointLessThan> &recoverMap)
+{
+  std::vector<BDS_Face *>::iterator itt = m->triangles.begin();
+  while(itt != m->triangles.end()) {
+    BDS_Face *t = *itt;
+    if(!t->deleted) {
+      BDS_Point *n[4];
+      t->getNodes(n);
+      MVertex *v[4] = {0, 0, 0, 0};
+      for(int i = 0; i < 4; i++){
+        if(!n[i]) continue;
+        if(recoverMap.find(n[i]) == recoverMap.end()) {
+          v[i] = new MFaceVertex(n[i]->X, n[i]->Y, n[i]->Z, gf, n[i]->u, n[i]->v);
+          recoverMap[n[i]] = v[i];
+          gf->mesh_vertices.push_back(v[i]);
+        }
+        else
+          v[i] = recoverMap[n[i]];
+      }
+      if(!v[3]) {
+        // when a singular point is present, degenerated triangles may be
+        // created, for example on a sphere that contains one pole
+        if(v[0] != v[1] && v[0] != v[2] && v[1] != v[2])
+          gf->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+      }
+      else {
+        gf->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[2], v[3]));
+      }
+    }
+    ++itt;
+  }
 }
 
 // Builds An initial triangular mesh that respects the boundaries of
@@ -1908,16 +1902,20 @@ static bool buildConsecutiveListOfVertices(
       BDS_Point *pp = 0;
       if(ge->dim() == 0) {
         // Point might already be part of other loop
-        for(std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
-              recoverMap.begin();
-            it != recoverMap.end(); ++it) {
-          if(it->second == here) {
+        // Point might already be part of other loop
+        double smallestDistance = std::numeric_limits<double>::infinity();
+        for(std::map<BDS_Point*, MVertex*, PointLessThan>::iterator it = recoverMap.begin();
+             it != recoverMap.end(); ++it){
+          if(it->second == here){
+            //// Plaxis modification ////
             // Also check on 2D coordinates as the point might lie on the seam
             SPoint2 param = coords[i];
             SPoint2 paramPoint(it->first->u, it->first->v);
-            if (param.distance(paramPoint) <= tol){
+            const double distance = param.distance(paramPoint);
+            if (distance < smallestDistance){
+              smallestDistance = distance;
               pp = it->first;
-              break;
+              if (distance < tol) break;
             }
           }
         }
@@ -2607,47 +2605,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
   // equivalence.size());
 
   // fill the small gmsh structures
-  {
-    std::set<BDS_Point *, PointLessThan>::iterator itp = m->points.begin();
-    while(itp != m->points.end()) {
-      BDS_Point *p = *itp;
-      if(recoverMap.find(p) == recoverMap.end()) {
-        MVertex *v = new MFaceVertex(p->X, p->Y, p->Z, gf, p->u, p->v);
-        recoverMap[p] = v;
-        gf->mesh_vertices.push_back(v);
-      }
-      ++itp;
-    }
-  }
-
-  std::map<MTriangle *, BDS_Face *> invert_map;
-  {
-    std::vector<BDS_Face *>::iterator itt = m->triangles.begin();
-    while(itt != m->triangles.end()) {
-      BDS_Face *t = *itt;
-      if(!t->deleted) {
-        BDS_Point *n[4];
-        t->getNodes(n);
-        MVertex *v1 = recoverMap[n[0]];
-        MVertex *v2 = recoverMap[n[1]];
-        MVertex *v3 = recoverMap[n[2]];
-        if(!n[3]) {
-          // when a singular point is present, degenerated triangles may be
-          // created, for example on a sphere that contains one pole
-          if(v1 != v2 && v1 != v3 && v2 != v3) {
-            // we are in the periodic case. if we aim at using delaunay mesh
-            // generation in thoses cases, we should double some of the vertices
-            gf->triangles.push_back(new MTriangle(v1, v2, v3));
-          }
-        }
-        else {
-          MVertex *v4 = recoverMap[n[3]];
-          gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
-        }
-      }
-      ++itt;
-    }
-  }
+  BDS2GMSH(m, gf, recoverMap);
 
   if(debug) {
     char name[245];

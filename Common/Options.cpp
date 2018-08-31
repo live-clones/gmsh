@@ -5022,6 +5022,13 @@ double opt_mesh_refine_steps(OPT_ARGS_NUM)
   return CTX::instance()->mesh.refineSteps;
 }
 
+double opt_mesh_renumber(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.renumber = (int)val;
+  return CTX::instance()->mesh.renumber;
+}
+
 double opt_mesh_normals(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

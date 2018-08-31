@@ -1230,9 +1230,11 @@ StringXNumber MeshOptions_Number[] = {
     "No greedy (global) strategies" },
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" },
+  { F|O, "Renumber" , opt_mesh_renumber , 1 ,
+    "Renumber nodes and elements in a continuous sequence after mesh generation" },
 
   { F,   "SaveAll" , opt_mesh_save_all , 0. ,
-    "Ignore Physical definitions and save all elements" },
+    "Save all elements, even if they don't belong to physical groups" },
   { F|O, "SaveElementTagType" , opt_mesh_save_element_tag_type , 1. ,
     "Type of the element tag saved in mesh formats that don't support saving "
     "physical or partition ids (1=elementary, 2=physical, 3=partition)" },
