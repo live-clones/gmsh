@@ -11,8 +11,8 @@
 #include "bezierBasis.h"
 
 class GradientBasis;
-//class bezierBasis;
-//class bezierCoeff;
+// class bezierBasis;
+// class bezierCoeff;
 class MElement;
 
 namespace jacobianBasedQuality {
@@ -37,8 +37,8 @@ namespace jacobianBasedQuality {
   protected:
     double _minL, _maxL; // Extremum of Jac at corners
     double _minB, _maxB; // Extremum of bezier coefficients
-    double _minL2, _maxL2; //Extremum of Jac at corners
-    double _minB2, _maxB2; //Extremum of bezier coefficients
+    double _minL2, _maxL2; // Extremum of Jac at corners
+    double _minB2, _maxB2; // Extremum of bezier coefficients
     const int _depth;
 
   public:
@@ -105,8 +105,17 @@ namespace jacobianBasedQuality {
     ~_coefDataIGE() {}
 
     bool boundsOk(double minL, double maxL) const;
+<<<<<<< HEAD
     void getSubCoeff(std::vector<_coefData *> &) const;
     void deleteBezierCoeff() { delete _coeffDet2; delete _coeffMat2; }
+=======
+    void getSubCoeff(std::vector<_CoeffData *> &) const;
+    void deleteBezierCoeff()
+    {
+      delete _coeffDet2;
+      delete _coeffMat2;
+    }
+>>>>>>> clang-format
     int getNumMeasure() const { return 2; } // fordebug
 
   private:

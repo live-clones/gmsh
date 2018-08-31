@@ -121,8 +121,8 @@ public:
                     const fullVector<double> &coeffB,
                     fullVector<double> &coeffSquare);
   void computeCoeff2(const fullVector<double> &coeffA,
-                    const fullVector<double> &coeffB,
-                    fullVector<double> &coeffSquare);
+                     const fullVector<double> &coeffB,
+                     fullVector<double> &coeffSquare);
   void computeCoeff(const fullMatrix<double> &coeffA,
                     const fullMatrix<double> &coeffB,
                     fullMatrix<double> &coeffSquare);
@@ -131,9 +131,9 @@ public:
                     const fullVector<double> &coeffC,
                     fullVector<double> &coeffCubic);
   void computeCoeff2(const fullVector<double> &coeffA,
-                    const fullVector<double> &coeffB,
-                    const fullVector<double> &coeffC,
-                    fullVector<double> &coeffCubic);
+                     const fullVector<double> &coeffB,
+                     const fullVector<double> &coeffC,
+                     fullVector<double> &coeffCubic);
   void computeCoeff(const fullVector<double> &coeffA,
                     const fullMatrix<double> &coeffB,
                     const fullMatrix<double> &coeffC,
@@ -144,7 +144,7 @@ private:
   void _fillRaiserDataPyr();
 };
 
-//class bezierCoeffSubdivisor {
+// class bezierCoeffSubdivisor {
 //  // Two type of operation are perform for subdividing simplices:
 //  // 1) [ coeff(I) + coeff(Ib) ] / 2     :> coeff(I)
 //  // 2) coeff(Ia) + coeff(Ib) - coeff(I) :> coeff(I)
@@ -157,7 +157,7 @@ private:
 //    data2 return2;
 //  };
 //
-//private:
+// private:
 //  // mapTri (order) -> list (data1 or data2)
 //
 //
@@ -179,7 +179,7 @@ private:
   unsigned int _endOfSearch;
   // if a reallocation is performed, the pointers must be updated, we need to
   // know which bezierCoeff have to be updated:
-  std::vector<bezierCoeff*> _bezierCoeff;
+  std::vector<bezierCoeff *> _bezierCoeff;
 
 public:
   bezierMemoryPool();
@@ -188,7 +188,7 @@ public:
   // before to be used, the size of the blocks has to be specified
   void setSizeBlocks(int size);
 
-  double* giveBlock(bezierCoeff *bez); // gives a block of size _sizeBlocks[num]
+  double *giveBlock(bezierCoeff *bez); // gives a block of size _sizeBlocks[num]
   void releaseBlock(double *block, bezierCoeff *bez);
   void freeMemory();
 
@@ -199,13 +199,13 @@ private:
 class bezierCoeff {
   // TODO: test if access would be faster if fullMatrix::operator(int r) was
   // implemented (for fullmatrix with only 1 column)
-//  typedef std::vector<std::pair<int, int> >  data1;
-//  typedef std::vector<std::pair<int, std::pair<int, int> > >  data2;
-//  // map (type, order, num) -> (data1 or data2)
-//  static std::map<int, data1> _triangleSubU;
-//  static std::map<int, data1> _triangleSubV;
+  //  typedef std::vector<std::pair<int, int> >  data1;
+  //  typedef std::vector<std::pair<int, std::pair<int, int> > >  data2;
+  //  // map (type, order, num) -> (data1 or data2)
+  //  static std::map<int, data1> _triangleSubU;
+  //  static std::map<int, data1> _triangleSubV;
 
-private :
+private:
   int _numPool;
   FuncSpaceData _funcSpaceData;
   const bezierBasis *_basis;
@@ -222,7 +222,7 @@ private :
   //        AnalyseCurvedMesh)
 
 public:
-  bezierCoeff() {};
+  bezierCoeff(){};
   bezierCoeff(const bezierCoeff &other, bool swap = false);
   bezierCoeff(FuncSpaceData data, fullVector<double> &lagCoeff, int num = -1);
   bezierCoeff(FuncSpaceData data, fullMatrix<double> &lagCoeff, int num = -1);
@@ -232,59 +232,57 @@ public:
   static void releasePools();
   void updateDataPtr(long diff);
 
-  inline int getNumCoeff() const {return _r;}
-  inline int getNumColumns() const {return _c;}
-  inline int getNumLagCoeff() const {return _basis->getNumLagCoeff();}
-  inline int getIdxLagCoeff(int i) const {
+  inline int getNumCoeff() const { return _r; }
+  inline int getNumColumns() const { return _c; }
+  inline int getNumLagCoeff() const { return _basis->getNumLagCoeff(); }
+  inline int getIdxLagCoeff(int i) const
+  {
     const int order = _funcSpaceData.spaceOrder();
-    switch (_funcSpaceData.elementType()) {
-      case TYPE_TRI:
-        switch (i) {
-          case 0: return 0;
-          case 1: return order;
-          case 2: return _r-1;
-        }
-      case TYPE_QUA:
-        switch (i) {
-          case 0: return 0;
-          case 1: return order;
-          case 2: return _r-order;
-          case 3: return _r-1;
-        }
-      default: return 0;
+    switch(_funcSpaceData.elementType()) {
+    case TYPE_TRI:
+      switch(i) {
+      case 0: return 0;
+      case 1: return order;
+      case 2: return _r - 1;
+      }
+    case TYPE_QUA:
+      switch(i) {
+      case 0: return 0;
+      case 1: return order;
+      case 2: return _r - order;
+      case 3: return _r - 1;
+      }
+    default: return 0;
     }
   }
-  inline double getLagCoeff(int i) const {
-    return _data[getIdxLagCoeff(i)];
-  }
-  inline double* getDataPtr() {return _data;}
+  inline double getLagCoeff(int i) const { return _data[getIdxLagCoeff(i)]; }
+  inline double *getDataPtr() { return _data; }
 
-  void subdivide(std::vector<bezierCoeff*> &subCoeff) const;
+  void subdivide(std::vector<bezierCoeff *> &subCoeff) const;
 
-  inline double operator() (int i) const {return _data[i];}
-  inline double operator() (int i, int j) const {return _data[i + _r*j];}
+  inline double operator()(int i) const { return _data[i]; }
+  inline double operator()(int i, int j) const { return _data[i + _r * j]; }
 
-  inline double &operator() (int i) {return _data[i];}
-  inline double &operator() (int i, int j) {return _data[i + _r*j];}
+  inline double &operator()(int i) { return _data[i]; }
+  inline double &operator()(int i, int j) { return _data[i + _r * j]; }
 
 private:
   static void _subdivide(fullMatrix<double> &coeff, int n, int start);
   static void _subdivide(fullMatrix<double> &coeff, int n, int start, int inc);
   static void _subdivideTriangle(const bezierCoeff &coeff, int n, int start,
-                                 std::vector<bezierCoeff*> &subCoeff);
-  static void _subdivideTetrahedra(bezierCoeff &coeff, int n,
-                                   int start,
+                                 std::vector<bezierCoeff *> &subCoeff);
+  static void _subdivideTetrahedra(bezierCoeff &coeff, int n, int start,
                                    std::vector<fullMatrix<double> > &subCoeff);
   static void _subdivideQuadrangle(const bezierCoeff &coeff, int n,
-                                   std::vector<bezierCoeff*> &subCoeff);
+                                   std::vector<bezierCoeff *> &subCoeff);
   static void _copy(const bezierCoeff &from, int start, int num,
                     bezierCoeff &to);
   static void _copyQuad(const fullMatrix<double> &allSub, int starti,
                         int startj, int n, bezierCoeff &sub);
-  inline static int _ij2Index(int i, int j, int n) {
-    return i + j*n - j*(j-1)/2;
+  inline static int _ij2Index(int i, int j, int n)
+  {
+    return i + j * n - j * (j - 1) / 2;
   }
-
 };
 
 #endif
