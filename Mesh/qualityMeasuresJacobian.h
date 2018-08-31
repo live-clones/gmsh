@@ -110,8 +110,10 @@ namespace jacobianBasedQuality {
     int getNumMeasure() const { return 2; } // fordebug
 
   private:
-    void _computeAtCorner(double &min, double &max) const;
+    void _computeAtCorner(double &min, double &max, double &min2,
+                          double &max2) const;
     double _computeLowerBound() const;
+    double _computeLowerBound2() const;
   };
 
   class _coefDataICN : public _coefData {

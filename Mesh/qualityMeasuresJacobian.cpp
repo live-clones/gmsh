@@ -101,6 +101,92 @@ static inline void _computeCoeffLengthVectors(const fullMatrix<double> &mat,
     }
   }
 }
+static inline void computeCoeffLengthVectorsCorner_(const bezierCoeff &mat,
+                                                    fullMatrix<double> &coeff,
+                                                    int type, int numCorner)
+{
+  const int &sz1 = numCorner;
+
+  switch(type) {
+  case TYPE_QUA: coeff.resize(sz1, 2); break;
+  case TYPE_TRI: coeff.resize(sz1, 3); break;
+  case TYPE_HEX: coeff.resize(sz1, 3); break;
+  case TYPE_PRI: coeff.resize(sz1, 4); break;
+  case TYPE_TET: coeff.resize(sz1, 6); break;
+  case TYPE_PYR: coeff.resize(sz1, 6); break;
+  default:
+    Msg::Error("Unkown type for IGE computation");
+    coeff.resize(0, 0);
+    return;
+  }
+
+  if(type != TYPE_PYR) {
+    for(int i = 0; i < sz1; i++) {
+      int k = mat.getIdxLagCoeff(i);
+      coeff(i, 0) = std::sqrt(pow_int(mat(k, 0), 2) + pow_int(mat(k, 1), 2) +
+                              pow_int(mat(k, 2), 2));
+      coeff(i, 1) = std::sqrt(pow_int(mat(k, 3), 2) + pow_int(mat(k, 4), 2) +
+                              pow_int(mat(k, 5), 2));
+    }
+    if(type == TYPE_TRI) {
+      for(int i = 0; i < sz1; i++) {
+        int k = mat.getIdxLagCoeff(i);
+        coeff(i, 2) = std::sqrt(pow_int(mat(k, 3) - mat(k, 0), 2) +
+                                pow_int(mat(k, 4) - mat(k, 1), 2) +
+                                pow_int(mat(k, 5) - mat(k, 2), 2));
+      }
+    }
+    else if(type != TYPE_QUA) { // if 3D
+      for(int i = 0; i < sz1; i++) {
+        int k = mat.getIdxLagCoeff(i);
+        coeff(i, 2) = std::sqrt(pow_int(mat(k, 6), 2) + pow_int(mat(k, 7), 2) +
+                                pow_int(mat(k, 8), 2));
+      }
+    }
+    if(type == TYPE_TET || type == TYPE_PRI) {
+      for(int i = 0; i < sz1; i++) {
+        int k = mat.getIdxLagCoeff(i);
+        coeff(i, 3) = std::sqrt(pow_int(mat(k, 3) - mat(k, 0), 2) +
+                                pow_int(mat(k, 4) - mat(k, 1), 2) +
+                                pow_int(mat(k, 5) - mat(k, 2), 2));
+      }
+    }
+    if(type == TYPE_TET) {
+      for(int i = 0; i < sz1; i++) {
+        int k = mat.getIdxLagCoeff(i);
+        coeff(i, 4) = std::sqrt(pow_int(mat(k, 6) - mat(k, 0), 2) +
+                                pow_int(mat(k, 7) - mat(k, 1), 2) +
+                                pow_int(mat(k, 8) - mat(k, 2), 2));
+        coeff(i, 5) = std::sqrt(pow_int(mat(k, 6) - mat(k, 3), 2) +
+                                pow_int(mat(k, 7) - mat(k, 4), 2) +
+                                pow_int(mat(k, 8) - mat(k, 5), 2));
+      }
+    }
+  }
+  else {
+    for(int i = 0; i < sz1; i++) {
+      int k = mat.getIdxLagCoeff(i);
+      coeff(i, 0) =
+        std::sqrt(pow_int(2 * mat(k, 0), 2) + pow_int(2 * mat(k, 1), 2) +
+                  pow_int(2 * mat(k, 2), 2));
+      coeff(i, 1) =
+        std::sqrt(pow_int(2 * mat(k, 3), 2) + pow_int(2 * mat(k, 4), 2) +
+                  pow_int(2 * mat(k, 5), 2));
+      coeff(i, 2) = std::sqrt(pow_int(mat(k, 6) + mat(k, 0) + mat(k, 3), 2) +
+                              pow_int(mat(k, 7) + mat(k, 1) + mat(k, 4), 2) +
+                              pow_int(mat(k, 8) + mat(k, 2) + mat(k, 5), 2));
+      coeff(i, 3) = std::sqrt(pow_int(mat(k, 6) - mat(k, 0) + mat(k, 3), 2) +
+                              pow_int(mat(k, 7) - mat(k, 1) + mat(k, 4), 2) +
+                              pow_int(mat(k, 8) - mat(k, 2) + mat(k, 5), 2));
+      coeff(i, 4) = std::sqrt(pow_int(mat(k, 6) - mat(k, 0) - mat(k, 3), 2) +
+                              pow_int(mat(k, 7) - mat(k, 1) - mat(k, 4), 2) +
+                              pow_int(mat(k, 8) - mat(k, 2) - mat(k, 5), 2));
+      coeff(i, 5) = std::sqrt(pow_int(mat(k, 6) + mat(k, 0) - mat(k, 3), 2) +
+                              pow_int(mat(k, 7) + mat(k, 1) - mat(k, 4), 2) +
+                              pow_int(mat(k, 8) + mat(k, 2) - mat(k, 5), 2));
+    }
+  }
+}
 
 static inline void computeIGE_(const fullVector<double> &det,
                                const fullMatrix<double> &v,
@@ -293,30 +379,33 @@ namespace jacobianBasedQuality {
     jacBasis = BasisFactory::getJacobianBasis(jacDetSpace);
 
     fullVector<double> coeffDetBez;
+    fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
     {
-      fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
       jacBasis->getSignedJacobian(nodesXYZ, coeffDetLag, normals);
+      if(isReversed) coeffDetLag.scale(-1);
 
       coeffDetBez.resize(jacBasis->getNumJacNodes());
       jacBasis->lag2Bez(coeffDetLag, coeffDetBez);
-
-      if(isReversed) coeffDetBez.scale(-1);
     }
 
     fullMatrix<double> coeffMatBez;
+    fullMatrix<double> coeffMatLag(gradBasis->getNumSamplingPoints(), 9);
     {
-      fullMatrix<double> coeffMatLag(gradBasis->getNumSamplingPoints(), 9);
+      int dim = el->getDim();
       gradBasis->getAllGradientsFromNodes(nodesXYZ, coeffMatLag);
+      if(dim == 2) coeffMatLag.resize(coeffMatLag.size1(), 6, false);
 
-      coeffMatBez.resize(gradBasis->getNumSamplingPoints(), 9);
+      coeffMatBez.resize(gradBasis->getNumSamplingPoints(), dim == 2 ? 6 : 9);
       gradBasis->lag2Bez(coeffMatLag, coeffMatBez);
-      if(el->getDim() == 2) coeffMatBez.resize(coeffMatBez.size1(), 6, false);
     }
 
+    bezierCoeff::usePools(coeffDetLag.size(), coeffMatLag.size1() * coeffMatLag.size2());
     std::vector<_coefData *> domains;
+    bezierCoeff *bezDet = new bezierCoeff(FuncSpaceData(el, jacBasis->getJacOrder()), coeffDetLag, 0);
+    bezierCoeff *bezMat = new bezierCoeff(FuncSpaceData(el, gradBasis->getPolynomialOrder()), coeffMatLag, 1);
     domains.push_back(
       new _coefDataIGE(coeffDetBez, coeffMatBez, jacBasis->getBezier(),
-                       gradBasis->getBezier(), 0, el->getType()));
+                        gradBasis->getBezier(), 0, el->getType(), bezDet, bezMat));
 
     _subdivideDomains(domains);
     //  if (domains.size()/7 > 500) {//fordebug
@@ -635,7 +724,7 @@ namespace jacobianBasedQuality {
       : _coefData(depth), _coeffs(v.getDataPtr(), v.size()), _bfs(bfs), _coeffs2(coeffs2)
   {
     if (!v.getOwnData()) {
-      Msg::Fatal("Cannot create an instance of _CoeffDataJac from a "
+      Msg::Fatal("Cannot create an instance of _coefDataJac from a "
                  "fullVector that does not own its data.");
       return;
     }
@@ -717,13 +806,15 @@ namespace jacobianBasedQuality {
     const_cast<fullVector<double> &>(_coeffsJacDet).setOwnData(true);
     const_cast<fullMatrix<double> &>(_coeffsJacMat).setOwnData(true);
 
-    _computeAtCorner(_minL, _maxL);
+    _computeAtCorner(_minL, _maxL, _minL2, _maxL2);
 
     _minB = 0;
     if(boundsOk(_minL, _maxL))
       return;
-    else
+    else {
       _minB = _computeLowerBound();
+      _minB2 = _computeLowerBound2();
+    }
     // computation of _maxB not implemented for now
   }
 
@@ -759,7 +850,8 @@ namespace jacobianBasedQuality {
     }
   }
 
-  void _coefDataIGE::_computeAtCorner(double &min, double &max) const
+  void _coefDataIGE::_computeAtCorner(double &min, double &max, double &min2,
+                                       double &max2) const
   {
     fullMatrix<double> v;
     _computeCoeffLengthVectors(_coeffsJacMat, v, _type,
@@ -773,6 +865,22 @@ namespace jacobianBasedQuality {
     for(int i = 0; i < ige.size(); ++i) {
       min = std::min(min, ige(i));
       max = std::max(max, ige(i));
+    }
+
+    fullMatrix<double> v2;
+    computeCoeffLengthVectorsCorner_(*_coeffMat2, v2, _type,
+                                     _bfsDet->getNumLagCoeff());
+    fullVector<double> ige2;
+    const fullVector<double> d2(
+      const_cast<bezierCoeff*>(_coeffDet2)->getDataPtr(),
+      _coeffDet2->getNumCoeff());
+    computeIGE_(d2, v2, ige2, _type);
+
+    min2 = std::numeric_limits<double>::infinity();
+    max2 = -min2;
+    for(int i = 0; i < ige2.size(); ++i) {
+      min2 = std::min(min2, ige2(i));
+      max2 = std::max(max2, ige2(i));
     }
   }
 
@@ -883,6 +991,125 @@ namespace jacobianBasedQuality {
       bezierBasisRaiser *raiserBis = _bfsDet->getRaiser();
       raiserBis->computeCoeff(coeffNum1, _coeffsJacDet, coeffNumerator);
       raiserBis->computeCoeff(coeffDen1, coeffDen2, coeffDenominator);
+
+      result = _computeBoundRational(coeffNumerator, coeffDenominator, true);
+      return cPyr * result / 8;
+    }
+
+    default: Msg::Info("Unknown type for IGE (%d)", _type); return -1;
+    }
+  }
+
+  double _coefDataIGE::_computeLowerBound2() const
+  {
+    // Speedup: If one coeff _coeffsJacDet is negative, without bounding
+    // J^2/(a^2+b^2), we would get with certainty a negative lower bound.
+    // Returning 0.
+    for(int i = 0; i < _coeffsJacDet.size(); ++i) {
+      if(_coeffsJacDet(i) < 0) {
+        return 0;
+      }
+    }
+
+    fullMatrix<double> v;
+    const fullMatrix<double> m(
+      _coeffMat2->getNumCoeff(), _coeffMat2->getNumColumns(),
+      const_cast<bezierCoeff*>(_coeffMat2)->getDataPtr());
+    _computeCoeffLengthVectors(m, v, _type);
+
+    fullVector<double> prox[6];
+    for(int i = 0; i < v.size2(); ++i) {
+      prox[i].setAsProxy(v, i);
+    }
+
+    bezierBasisRaiser *raiser = _bfsMat->getRaiser();
+    fullVector<double> coeffDenominator;
+    double result = 0;
+
+    switch(_type) {
+    case TYPE_QUA:
+      raiser->computeCoeff2(prox[0], prox[1], coeffDenominator);
+      return _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
+
+    case TYPE_TRI:
+      raiser->computeCoeff2(prox[0], prox[1], coeffDenominator);
+      result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
+      raiser->computeCoeff2(prox[0], prox[2], coeffDenominator);
+      result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
+      raiser->computeCoeff2(prox[1], prox[2], coeffDenominator);
+      result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
+      return cTri * result / 3;
+
+    case TYPE_HEX:
+      raiser->computeCoeff2(prox[0], prox[1], prox[2], coeffDenominator);
+      return _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
+
+    case TYPE_PRI:
+      raiser->computeCoeff2(prox[0], prox[1], prox[2], coeffDenominator);
+      result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
+      raiser->computeCoeff2(prox[0], prox[3], prox[2], coeffDenominator);
+      result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
+      raiser->computeCoeff2(prox[1], prox[3], prox[2], coeffDenominator);
+      result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
+      return cTri * result / 3;
+
+    case TYPE_TET: {
+      fullVector<double> thirdTerm, coeffNum1, tmp;
+      thirdTerm = prox[1];
+      thirdTerm.axpy(prox[2]);
+      thirdTerm.axpy(prox[3]);
+      thirdTerm.axpy(prox[4]);
+      raiser->computeCoeff2(prox[0], prox[5], thirdTerm, coeffNum1);
+      thirdTerm = prox[0];
+      thirdTerm.axpy(prox[2]);
+      thirdTerm.axpy(prox[3]);
+      thirdTerm.axpy(prox[5]);
+      raiser->computeCoeff2(prox[1], prox[4], thirdTerm, tmp);
+      coeffNum1.axpy(tmp);
+      thirdTerm = prox[0];
+      thirdTerm.axpy(prox[1]);
+      thirdTerm.axpy(prox[4]);
+      thirdTerm.axpy(prox[5]);
+      raiser->computeCoeff2(prox[2], prox[3], thirdTerm, tmp);
+      coeffNum1.axpy(tmp);
+
+      fullVector<double> coeffDen1, coeffDen2;
+      raiser->computeCoeff2(prox[0], prox[1], prox[2], coeffDen1);
+      raiser->computeCoeff2(prox[3], prox[4], prox[5], coeffDen2);
+
+      fullVector<double> &coeffNumerator = tmp;
+      bezierBasisRaiser *raiserBis = _bfsDet->getRaiser();
+      raiserBis->computeCoeff2(coeffNum1, _coeffsJacDet, coeffNumerator);
+      raiserBis->computeCoeff2(coeffDen1, coeffDen2, coeffDenominator);
+
+      result = _computeBoundRational(coeffNumerator, coeffDenominator, true);
+      return cTet * result / 12;
+    }
+
+    case TYPE_PYR: {
+      fullVector<double> thirdTerm, coeffNum1, tmp;
+      thirdTerm = prox[2];
+      thirdTerm.axpy(prox[3]);
+      thirdTerm.axpy(prox[4]);
+      thirdTerm.axpy(prox[5]);
+      raiser->computeCoeff2(prox[0], prox[1], thirdTerm, coeffNum1);
+      thirdTerm = prox[4];
+      thirdTerm.axpy(prox[5]);
+      raiser->computeCoeff2(prox[2], prox[3], thirdTerm, tmp);
+      coeffNum1.axpy(tmp);
+      thirdTerm = prox[2];
+      thirdTerm.axpy(prox[3]);
+      raiser->computeCoeff2(prox[4], prox[5], thirdTerm, tmp);
+      coeffNum1.axpy(tmp);
+
+      fullVector<double> coeffDen1, coeffDen2;
+      raiser->computeCoeff2(prox[0], prox[1], prox[2], coeffDen1);
+      raiser->computeCoeff2(prox[3], prox[4], prox[5], coeffDen2);
+
+      fullVector<double> &coeffNumerator = tmp;
+      bezierBasisRaiser *raiserBis = _bfsDet->getRaiser();
+      raiserBis->computeCoeff2(coeffNum1, _coeffsJacDet, coeffNumerator);
+      raiserBis->computeCoeff2(coeffDen1, coeffDen2, coeffDenominator);
 
       result = _computeBoundRational(coeffNumerator, coeffDenominator, true);
       return cPyr * result / 8;
@@ -1073,12 +1300,20 @@ namespace jacobianBasedQuality {
   {
     double minB = domains[0]->minB();
     double minL = domains[0]->minL();
+    double minB2 = domains[0]->minB2();
+    double minL2 = domains[0]->minL2();
+    domains[0]->deleteBezierCoeff();
     delete domains[0];
     for(std::size_t i = 1; i < domains.size(); ++i) {
       minB = std::min(minB, domains[i]->minB());
       minL = std::min(minL, domains[i]->minL());
+      minB2 = std::min(minB2, domains[i]->minB2());
+      minL2 = std::min(minL2, domains[i]->minL2());
+      domains[i]->deleteBezierCoeff();
       delete domains[i];
     }
+    std::cout << "minIGE: " << minB << " vs " << minB2 << " " << minL << " vs "
+              << minL2 << std::endl;
     double fact = .5 * (minB + minL);
     return fact * minL + (1 - fact) * minB;
   }
