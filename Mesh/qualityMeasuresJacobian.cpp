@@ -187,6 +187,7 @@ namespace jacobianBasedQuality {
     jfs->getSignedJacobian(nodesXYZ, coeffLag, normals);
     jfs->lag2Bez(coeffLag, coeffBez);
 
+  bezierCoeff::usePools(coeffLag.size(), 0);
   std::vector<_coefData*> domains;
   bezierCoeff *bez = new bezierCoeff(FuncSpaceData(el, jfs->getJacOrder()), coeffLag, 0);
   domains.push_back(new _coefDataJac(coeffBez, jfs->getBezier(), 0, bez));
@@ -202,7 +203,6 @@ namespace jacobianBasedQuality {
 //  std::cout << "time old " << tm1 << " (" << tm1/N << ")" << std::endl;
 
 //  time = Cpu();
-//  bezierCoeff::usePools(coeffLag.size(), 0);
 //  bezierCoeff bez(FuncSpaceData(el, jfs->getJacOrder()), coeffLag, 0);
 //  for (int i = 0; i < N; ++i) {
 //    std::vector<bezierCoeff> vec;
@@ -219,6 +219,7 @@ namespace jacobianBasedQuality {
   double maxL2 = domains[0]->maxL2();
   min = domains[0]->minB();
   max = domains[0]->maxB();
+  domains[0]->deleteBezierCoeff();
   delete domains[0];
   for (std::size_t i = 1; i < domains.size(); ++i) {
     min = std::min(min, domains[i]->minB());
@@ -227,10 +228,10 @@ namespace jacobianBasedQuality {
     max2 = std::max(max2, domains[i]->maxB2());
     minL2 = std::min(minL2, domains[i]->minL2());
     maxL2 = std::max(maxL2, domains[i]->maxL2());
+    domains[i]->deleteBezierCoeff();
     delete domains[i];
   }
 //  std::cout << "" << min << " [" << min2 << "," << minL2 << "] " << max << " [" << maxL2 << "," << max2 << "] " << std::endl;
-  delete bez;
 }
 
   double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk,
@@ -631,7 +632,7 @@ namespace jacobianBasedQuality {
                                const bezierBasis *bfs,
                                int depth,
                                const bezierCoeff *coeffs2)
-      : _coefData(depth), _coeffs(v.getDataPtr(), v.size()), _bfs(bfs), _coeffs2(*coeffs2, true)
+      : _coefData(depth), _coeffs(v.getDataPtr(), v.size()), _bfs(bfs), _coeffs2(coeffs2)
   {
     if (!v.getOwnData()) {
       Msg::Fatal("Cannot create an instance of _CoeffDataJac from a "
@@ -656,15 +657,15 @@ namespace jacobianBasedQuality {
       _minB = std::min(_minB, v(i));
       _maxB = std::max(_maxB, v(i));
     }
-    _minL2 = _maxL2 = _coeffs2.getLagCoeff(0);
-    for (int i = 1; i < _coeffs2.getNumLagCoeff(); i++) {
-      _minL2 = std::min(_minL2, _coeffs2.getLagCoeff(i));
-      _maxL2 = std::max(_maxL2, _coeffs2.getLagCoeff(i));
+    _minL2 = _maxL2 = _coeffs2->getLagCoeff(0);
+    for (int i = 1; i < _coeffs2->getNumLagCoeff(); i++) {
+      _minL2 = std::min(_minL2, _coeffs2->getLagCoeff(i));
+      _maxL2 = std::max(_maxL2, _coeffs2->getLagCoeff(i));
     }
-    _minB2 = _maxB2 = _coeffs2(0);
+    _minB2 = _maxB2 = (*_coeffs2)(0);
     for (; i < v.size(); i++) {
-      _minB2 = std::min(_minB2, _coeffs2(i));
-      _maxB2 = std::max(_maxB2, _coeffs2(i));
+      _minB2 = std::min(_minB2, (*_coeffs2)(i));
+      _maxB2 = std::max(_maxB2, (*_coeffs2)(i));
     }
   }
 
@@ -681,22 +682,27 @@ namespace jacobianBasedQuality {
     fullVector<double> subCoeff;
     _bfs->subdivideBezCoeff(_coeffs, subCoeff);
 
+    std::vector<bezierCoeff *> sub;
+    _coeffs2->subdivide(sub);
+
     int sz = _coeffs.size();
     for(int i = 0; i < _bfs->getNumDivision(); i++) {
       fullVector<double> coeff(sz);
       coeff.copy(subCoeff, i * sz, sz, 0);
-      _coefDataJac *newData = new _coefDataJac(coeff, _bfs, _depth + 1);
+      _coefDataJac *newData = new _coefDataJac(coeff, _bfs, _depth + 1, sub[i]);
       v.push_back(newData);
     }
   }
 
   // IGE measure (Inverse Gradient Error)
   _coefDataIGE::_coefDataIGE(fullVector<double> &det, fullMatrix<double> &mat,
-                             const bezierBasis *bfsDet,
-                             const bezierBasis *bfsMat, int depth, int type)
+                               const bezierBasis *bfsDet,
+                               const bezierBasis *bfsMat, int depth, int type,
+                               const bezierCoeff *det2, const bezierCoeff *mat2)
     : _coefData(depth), _coeffsJacDet(det.getDataPtr(), det.size()),
       _coeffsJacMat(mat.getDataPtr(), mat.size1(), mat.size2()),
-      _bfsDet(bfsDet), _bfsMat(bfsMat), _type(type)
+      _bfsDet(bfsDet), _bfsMat(bfsMat), _type(type), _coeffDet2(det2),
+      _coeffMat2(mat2)
   {
     if(!det.getOwnData() || !mat.getOwnData()) {
       Msg::Error("Cannot create an instance of _coefDataIGE from a "
@@ -774,7 +780,7 @@ namespace jacobianBasedQuality {
   {
     // Speedup: If one coeff _coeffsJacDet is negative, without bounding
     // J^2/(a^2+b^2), we would get with certainty a negative lower bound.
-    // For now, returning 0.
+    // Returning 0.
     for(int i = 0; i < _coeffsJacDet.size(); ++i) {
       if(_coeffsJacDet(i) < 0) {
         return 0;
@@ -1030,6 +1036,7 @@ namespace jacobianBasedQuality {
       pop_heap(domains.begin(), domains.end(), Comp());
       domains.pop_back();
       cd->getSubCoeff(subs);
+      cd->deleteBezierCoeff();
       delete cd;
 
       for(std::size_t i = 0; i < subs.size(); i++) {

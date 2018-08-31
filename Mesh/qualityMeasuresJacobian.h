@@ -60,6 +60,7 @@ namespace jacobianBasedQuality {
 
     virtual bool boundsOk(double minL, double maxL) const = 0;
     virtual void getSubCoeff(std::vector<_coefData *> &) const = 0;
+    virtual void deleteBezierCoeff() = 0;
     virtual int getNumMeasure() const { return 0; } // fordebug
   };
 
@@ -74,7 +75,7 @@ namespace jacobianBasedQuality {
   private:
     const fullVector<double> _coeffs;
     const bezierBasis *_bfs;
-    const bezierCoeff _coeffs2;
+    const bezierCoeff *_coeffs2;
 
   public:
     _coefDataJac(fullVector<double> &v, const bezierBasis *bfs, int depth,
@@ -83,6 +84,7 @@ namespace jacobianBasedQuality {
 
     bool boundsOk(double minL, double maxL) const;
     void getSubCoeff(std::vector<_coefData *> &) const;
+    void deleteBezierCoeff() { delete _coeffs2; }
     int getNumMeasure() const { return 1; } // fordebug
   };
 
@@ -90,17 +92,21 @@ namespace jacobianBasedQuality {
   private:
     const fullVector<double> _coeffsJacDet;
     const fullMatrix<double> _coeffsJacMat;
+    const bezierCoeff *_coeffDet2;
+    const bezierCoeff *_coeffMat2;
     const bezierBasis *_bfsDet, *_bfsMat;
     const int _type;
 
   public:
     _coefDataIGE(fullVector<double> &det, fullMatrix<double> &mat,
                   const bezierBasis *bfsDet, const bezierBasis *bfsMat,
-                  int depth, int type);
+                  int depth, int type, const bezierCoeff *det2 = NULL,
+                  const bezierCoeff *mat2 = NULL);
     ~_coefDataIGE() {}
 
     bool boundsOk(double minL, double maxL) const;
     void getSubCoeff(std::vector<_coefData *> &) const;
+    void deleteBezierCoeff() { delete _coeffDet2; delete _coeffMat2; }
     int getNumMeasure() const { return 2; } // fordebug
 
   private:
@@ -122,6 +128,7 @@ namespace jacobianBasedQuality {
 
     bool boundsOk(double minL, double maxL) const;
     void getSubCoeff(std::vector<_coefData *> &) const;
+    void deleteBezierCoeff() {} // delete _coeffDet2; delete _coeffMat2;}
     int getNumMeasure() const { return 4; } // fordebug
 
   private:

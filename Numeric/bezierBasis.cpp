@@ -32,7 +32,7 @@ namespace {
             ++k;
           }
         }
-        break;
+        return exp;
       case TYPE_QUA:
         exp.resize((order + 1) * (order + 1), 2);
         k = 0;
@@ -43,8 +43,9 @@ namespace {
             ++k;
           }
         }
-        break;
+        return exp;
     }
+    return fullMatrix<double>();
   }
 
   // Sub Control Points
@@ -646,7 +647,6 @@ void bezierBasis::_construct()
     return;
   }
 
-  int k;
   std::vector< fullMatrix<double> > subPoints;
   int order = _data.spaceOrder();
 
@@ -1407,17 +1407,23 @@ void bezierCoeff::updateDataPtr(long diff)
     _data += diff;
 }
 
-void bezierCoeff::subdivide(std::vector<bezierCoeff> &subCoeff) const
+void bezierCoeff::subdivide(std::vector<bezierCoeff*> &subCoeff) const
 {
+  if (subCoeff.size()) {
+    Msg::Warning("expected empty vector of bezierCoeff");
+    subCoeff.clear();
+  }
   int n = _funcSpaceData.spaceOrder()+1;
 
   switch(_funcSpaceData.elementType()) {
     case TYPE_TRI:
-      subCoeff.resize(4, *this);
+      for(int i = 0; i < 4; ++i)
+        subCoeff.push_back(new bezierCoeff(*this));
       _subdivideTriangle(*this, n, 0, subCoeff);
       return;
     case TYPE_QUA:
-      subCoeff.resize(4, *this);
+      for(int i = 0; i < 4; ++i)
+        subCoeff.push_back(new bezierCoeff(*this));
       _subdivideQuadrangle(*this, n, subCoeff);
   }
   // size all subcoeff (- coeff identical)
@@ -1456,12 +1462,12 @@ void bezierCoeff::_subdivide(fullMatrix<double> &coeff, int n, int start,
 
 void bezierCoeff::_subdivideTriangle(const bezierCoeff &coeff, int n,
                                      int start,
-                                     std::vector<bezierCoeff> &vSubCoeff)
+                                     std::vector<bezierCoeff*> &vSubCoeff)
 {
   const int dim = coeff._c;
 
   // copy into first subdomain
-  bezierCoeff &sub = vSubCoeff[0];
+  bezierCoeff &sub = *vSubCoeff[0];
   _copy(coeff, start, (n + 1) * n / 2, sub);
 
   // Subdivide in u direction
@@ -1490,7 +1496,7 @@ void bezierCoeff::_subdivideTriangle(const bezierCoeff &coeff, int n,
     }
   }
 
-  bezierCoeff &sub2 = vSubCoeff[1];
+  bezierCoeff &sub2 = *vSubCoeff[1];
   _copy(sub, start, (n + 1) * n / 2, sub2);
   //
   // TODO: consider precompute vector<tuple<int, int, int>> for this
@@ -1507,7 +1513,7 @@ void bezierCoeff::_subdivideTriangle(const bezierCoeff &coeff, int n,
     }
   }
 
-  bezierCoeff &sub3 = vSubCoeff[2];
+  bezierCoeff &sub3 = *vSubCoeff[2];
   _copy(sub3, start, (n + 1) * n / 2, sub2);
   for (int iter = 1; iter < n; ++iter) {
     for (int j = 0; j < n-iter; ++j) {
@@ -1522,7 +1528,7 @@ void bezierCoeff::_subdivideTriangle(const bezierCoeff &coeff, int n,
     }
   }
 
-  bezierCoeff &sub4 = vSubCoeff[3];
+  bezierCoeff &sub4 = *vSubCoeff[3];
   _copy(sub4, start, (n + 1) * n / 2, sub2); // copy 2, not 3
   for (int iter = 1; iter < n; ++iter) {
     for (int j = n-1; j >= iter; --j) {
@@ -1539,7 +1545,7 @@ void bezierCoeff::_subdivideTriangle(const bezierCoeff &coeff, int n,
 }
 
 void bezierCoeff::_subdivideQuadrangle(const bezierCoeff &coeff, int n,
-                                       std::vector<bezierCoeff> &subCoeff)
+                                       std::vector<bezierCoeff*> &subCoeff)
 {
   const int N = 2 * n - 1;
   const int dim = coeff._c;
@@ -1559,10 +1565,10 @@ void bezierCoeff::_subdivideQuadrangle(const bezierCoeff &coeff, int n,
   for (int j = 0; j < N; ++j) {
     _subdivide(_sub, n, j*N);
   }
-  _copyQuad(_sub,   0,   0, n, subCoeff[0]);
-  _copyQuad(_sub, n-1,   0, n, subCoeff[1]);
-  _copyQuad(_sub, n-1, n-1, n, subCoeff[2]);
-  _copyQuad(_sub,   0, n-1, n, subCoeff[3]);
+  _copyQuad(_sub,   0,   0, n, *subCoeff[0]);
+  _copyQuad(_sub, n-1,   0, n, *subCoeff[1]);
+  _copyQuad(_sub, n-1, n-1, n, *subCoeff[2]);
+  _copyQuad(_sub,   0, n-1, n, *subCoeff[3]);
   return;
 }
 
@@ -1647,7 +1653,7 @@ double* bezierMemoryPool::giveBlock(bezierCoeff *bez)
   // _numUsedBlocks < _endOfSearch
   // and _bezierCoeff[i] for i < _endOfSearch are all different from
   // NULL which should never happens.
-  Msg::Error("Wrong state of bezierMemoryPool. "
+  Msg::Error("Wrong state of bezierMemoryPool."
              "_bezierCoeff[i] not correct?");
   return NULL;
 }
@@ -1664,6 +1670,7 @@ void bezierMemoryPool::releaseBlock(double *block, bezierCoeff *bez)
   if (idx == _endOfSearch-1) {
     do {--_endOfSearch;}
     while (_endOfSearch && !_bezierCoeff[_endOfSearch-1]);
+    _bezierCoeff.resize(_endOfSearch);
     if (_currentIndexOfSearch >= _endOfSearch)
       _currentIndexOfSearch = 0;
   }

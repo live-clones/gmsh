@@ -259,7 +259,7 @@ public:
   }
   inline double* getDataPtr() {return _data;}
 
-  void subdivide(std::vector<bezierCoeff> &subCoeff) const;
+  void subdivide(std::vector<bezierCoeff*> &subCoeff) const;
 
   inline double operator() (int i) const {return _data[i];}
   inline double operator() (int i, int j) const {return _data[i + _r*j];}
@@ -271,12 +271,12 @@ private:
   static void _subdivide(fullMatrix<double> &coeff, int n, int start);
   static void _subdivide(fullMatrix<double> &coeff, int n, int start, int inc);
   static void _subdivideTriangle(const bezierCoeff &coeff, int n, int start,
-                                 std::vector<bezierCoeff> &subCoeff);
+                                 std::vector<bezierCoeff*> &subCoeff);
   static void _subdivideTetrahedra(bezierCoeff &coeff, int n,
                                    int start,
                                    std::vector<fullMatrix<double> > &subCoeff);
   static void _subdivideQuadrangle(const bezierCoeff &coeff, int n,
-                                   std::vector<bezierCoeff> &subCoeff);
+                                   std::vector<bezierCoeff*> &subCoeff);
   static void _copy(const bezierCoeff &from, int start, int num,
                     bezierCoeff &to);
   static void _copyQuad(const fullMatrix<double> &allSub, int starti,
