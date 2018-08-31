@@ -612,7 +612,7 @@ public:
   void init(int level);
   // process the element data in coords/values and return the refined
   // elements in coords/values
-  void adapt(double tol, int numComp, std::vector<PCoords> &coords,
+  bool adapt(double tol, int numComp, std::vector<PCoords> &coords,
              std::vector<PValues> &values, double &minVal, double &maxVal,
              GMSH_PostPlugin *plug = 0, bool onlyComputeMinMax = false);
   // adapt all the T-type elements in the input view and add the

@@ -1211,7 +1211,7 @@ template <> void adaptiveElements<adaptivePyramid>::init(int level)
 }
 
 template <class T>
-void adaptiveElements<T>::adapt(double tol, int numComp,
+bool adaptiveElements<T>::adapt(double tol, int numComp,
                                 std::vector<PCoords> &coords,
                                 std::vector<PValues> &values, double &minVal,
                                 double &maxVal, GMSH_PostPlugin *plug,
@@ -1220,15 +1220,16 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
   int numVertices = T::allVertices.size();
 
   if(!numVertices) {
-    Msg::Error("No adapted vertices to interpolate");
-    return;
+    Msg::Warning("No adapted vertices to interpolate");
+    return false;
   }
 
   int numVals = _coeffsVal ? _coeffsVal->size1() : T::numNodes;
+
   if(numVals != (int)values.size()) {
-    Msg::Error("Wrong number of values in adaptation %d != %i", numVals,
-               values.size());
-    return;
+    Msg::Warning("Wrong number of values in adaptation %d != %i", numVals,
+                 values.size());
+    return false;
   }
 
 #ifdef TIMER
@@ -1252,7 +1253,7 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
   }
   default: {
     Msg::Error("Can only adapt scalar, vector or tensor data");
-    return;
+    return false;
   }
   }
 
@@ -1264,7 +1265,7 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
     minVal = std::min(minVal, res(i));
     maxVal = std::max(maxVal, res(i));
   }
-  if(onlyComputeMinMax) return;
+  if(onlyComputeMinMax) return true;
 
   fullMatrix<double> *resxyz = 0;
   if(numComp == 3 || numComp == 9) {
@@ -1283,7 +1284,7 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
     Msg::Error("Wrong number of nodes in adaptation %d != %i", numNodes,
                coords.size());
     if(resxyz) delete resxyz;
-    return;
+    return false;
   }
 
   fullMatrix<double> xyz(numNodes, 3), XYZ(numVertices, 3);
@@ -1296,7 +1297,7 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
 
 #ifdef TIMER
   adaptiveData::timerAdapt += GetTimeInSeconds() - t1;
-  return;
+  return true;
 #endif
 
   int i = 0;
@@ -1360,6 +1361,8 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
       }
     }
   }
+
+  return true;
 }
 
 template <class T>
@@ -1485,18 +1488,19 @@ void adaptiveElements<T>::addInView(double tol, int step, PViewData *in,
         break;
       }
       }
-      adapt(tol, numComp, coords, values, out->Min, out->Max, plug);
-      *outNb += coords.size() / T::numNodes;
-      for(unsigned int i = 0; i < coords.size() / T::numNodes; i++) {
-        for(int k = 0; k < T::numNodes; ++k)
-          outList->push_back(coords[T::numNodes * i + k].c[0]);
-        for(int k = 0; k < T::numNodes; ++k)
-          outList->push_back(coords[T::numNodes * i + k].c[1]);
-        for(int k = 0; k < T::numNodes; ++k)
-          outList->push_back(coords[T::numNodes * i + k].c[2]);
-        for(int k = 0; k < T::numNodes; ++k)
-          for(int l = 0; l < numComp; ++l)
-            outList->push_back(values[T::numNodes * i + k].v[l]);
+      if(adapt(tol, numComp, coords, values, out->Min, out->Max, plug)){
+        *outNb += coords.size() / T::numNodes;
+        for(unsigned int i = 0; i < coords.size() / T::numNodes; i++) {
+          for(int k = 0; k < T::numNodes; ++k)
+            outList->push_back(coords[T::numNodes * i + k].c[0]);
+          for(int k = 0; k < T::numNodes; ++k)
+            outList->push_back(coords[T::numNodes * i + k].c[1]);
+          for(int k = 0; k < T::numNodes; ++k)
+            outList->push_back(coords[T::numNodes * i + k].c[2]);
+          for(int k = 0; k < T::numNodes; ++k)
+            for(int l = 0; l < numComp; ++l)
+              outList->push_back(values[T::numNodes * i + k].v[l]);
+        }
       }
     }
   }
@@ -2573,8 +2577,7 @@ void adaptiveElements<T>::addInViewForVTK(int step, PViewData *in,
         // Loop over
         //  - all refined elements if refinement level > 0
         //  - single initial element when refinement box is checked for the
-        //  first
-        //    time (ref level =0)
+        //  first time (ref level =0)
 
         // local connectivity for the considered sub triangle
         vectInt vtkElmConnectivity;
