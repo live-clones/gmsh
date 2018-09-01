@@ -3150,7 +3150,7 @@ The client-server API for the solver interface is defined in the
 header. See
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/solvers/c++/solver.cpp,utils/solvers/c++/solver.cpp}
 for a simple example on how to use the ONELAB programming interface. See
-the sources of GetDP (@url{http://getdp.info} for a more comprehensive
+the sources of GetDP (@url{http://getdp.info}) for a more comprehensive
 example.
 
 @menu
