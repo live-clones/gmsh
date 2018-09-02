@@ -33,10 +33,9 @@ namespace nglib
         // ignore these messages
       }
       else{
-        if(!strncmp(txt, "ERROR", 5))
-          Msg::Error(txt);
-        else
-          Msg::Info(txt);
+        if(!strncmp(txt, "ERROR", 5)) { Msg::Error(txt); }
+        else if(!strncmp(txt, "WARNING", 7)) { Msg::Warning(txt); }
+        else { Msg::Info(txt); }
       }
       index = 0;
       return 0;
