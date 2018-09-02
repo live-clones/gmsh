@@ -47,7 +47,7 @@ Hackbarth, Peter Wainwright, Jiri Hnidek, Thierry Thomas, Konstantinos Poulios,
 Laurent Van Miegroet, Shahrokh Ghavamian, Geordie McBain, Jose Paulo Moitinho de
 Almeida, Guillaume Demesy, Wendy Merks-Swolfs, Cosmin Stefan Deaconu, Nigel
 Nunn, Serban Georgescu, Julien Troufflard, Michele Mocciola, Matthijs Sypkens
-Smit, Sauli Ruuska, Romain Boman, Fredrik Ekre, Mark Burton.
+Smit, Sauli Ruuska, Romain Boman, Fredrik Ekre, Mark Burton, Max Orok.
 
 Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
 and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
