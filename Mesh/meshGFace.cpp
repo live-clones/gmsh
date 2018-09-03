@@ -1907,7 +1907,6 @@ static bool buildConsecutiveListOfVertices(
         for(std::map<BDS_Point*, MVertex*, PointLessThan>::iterator it = recoverMap.begin();
              it != recoverMap.end(); ++it){
           if(it->second == here){
-            //// Plaxis modification ////
             // Also check on 2D coordinates as the point might lie on the seam
             SPoint2 param = coords[i];
             SPoint2 paramPoint(it->first->u, it->first->v);
