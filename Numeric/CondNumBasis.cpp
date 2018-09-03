@@ -54,7 +54,7 @@ namespace {
     const double S = 2. * (S2 + S5 + S12) + 4. * (S7 - S8 + S9 - S10) +
                      8. * (S3 + S6) + S1 + S4 + S11 + S13;
     const double N = dxdXSq + dxdYSq + dydXSq + dydYSq + dzdXSq + dzdYSq;
-    const double sqrtS = (S > 0.0) ? sqrt(S) : 0.0; //// Plaxis modification
+    const double sqrtS = (S > 0.0) ? sqrt(S) : 0.0;
     const double sigma1Sq = 0.5 * (N + sqrtS), sigma2Sq = 0.5 * (N - sqrtS);
     const double iCN = 2. * sqrt(sigma1Sq * sigma2Sq) / (sigma1Sq + sigma2Sq);
     if(sign) {
