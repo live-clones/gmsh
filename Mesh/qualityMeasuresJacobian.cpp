@@ -122,7 +122,7 @@ static inline void computeCoeffLengthVectorsCorner_(const bezierCoeff &mat,
 
   if(type != TYPE_PYR) {
     for(int i = 0; i < sz1; i++) {
-      int k = mat.getIdxLagCoeff(i);
+      int k = mat.getIdxCornerCoeff(i);
       coeff(i, 0) = std::sqrt(pow_int(mat(k, 0), 2) + pow_int(mat(k, 1), 2) +
                               pow_int(mat(k, 2), 2));
       coeff(i, 1) = std::sqrt(pow_int(mat(k, 3), 2) + pow_int(mat(k, 4), 2) +
@@ -130,7 +130,7 @@ static inline void computeCoeffLengthVectorsCorner_(const bezierCoeff &mat,
     }
     if(type == TYPE_TRI) {
       for(int i = 0; i < sz1; i++) {
-        int k = mat.getIdxLagCoeff(i);
+        int k = mat.getIdxCornerCoeff(i);
         coeff(i, 2) = std::sqrt(pow_int(mat(k, 3) - mat(k, 0), 2) +
                                 pow_int(mat(k, 4) - mat(k, 1), 2) +
                                 pow_int(mat(k, 5) - mat(k, 2), 2));
@@ -138,14 +138,14 @@ static inline void computeCoeffLengthVectorsCorner_(const bezierCoeff &mat,
     }
     else if(type != TYPE_QUA) { // if 3D
       for(int i = 0; i < sz1; i++) {
-        int k = mat.getIdxLagCoeff(i);
+        int k = mat.getIdxCornerCoeff(i);
         coeff(i, 2) = std::sqrt(pow_int(mat(k, 6), 2) + pow_int(mat(k, 7), 2) +
                                 pow_int(mat(k, 8), 2));
       }
     }
     if(type == TYPE_TET || type == TYPE_PRI) {
       for(int i = 0; i < sz1; i++) {
-        int k = mat.getIdxLagCoeff(i);
+        int k = mat.getIdxCornerCoeff(i);
         coeff(i, 3) = std::sqrt(pow_int(mat(k, 3) - mat(k, 0), 2) +
                                 pow_int(mat(k, 4) - mat(k, 1), 2) +
                                 pow_int(mat(k, 5) - mat(k, 2), 2));
@@ -153,7 +153,7 @@ static inline void computeCoeffLengthVectorsCorner_(const bezierCoeff &mat,
     }
     if(type == TYPE_TET) {
       for(int i = 0; i < sz1; i++) {
-        int k = mat.getIdxLagCoeff(i);
+        int k = mat.getIdxCornerCoeff(i);
         coeff(i, 4) = std::sqrt(pow_int(mat(k, 6) - mat(k, 0), 2) +
                                 pow_int(mat(k, 7) - mat(k, 1), 2) +
                                 pow_int(mat(k, 8) - mat(k, 2), 2));
@@ -165,7 +165,7 @@ static inline void computeCoeffLengthVectorsCorner_(const bezierCoeff &mat,
   }
   else {
     for(int i = 0; i < sz1; i++) {
-      int k = mat.getIdxLagCoeff(i);
+      int k = mat.getIdxCornerCoeff(i);
       coeff(i, 0) =
         std::sqrt(pow_int(2 * mat(k, 0), 2) + pow_int(2 * mat(k, 1), 2) +
                   pow_int(2 * mat(k, 2), 2));
@@ -750,10 +750,10 @@ namespace jacobianBasedQuality {
       _minB = std::min(_minB, v(i));
       _maxB = std::max(_maxB, v(i));
     }
-    _minL2 = _maxL2 = _coeffs2->getLagCoeff(0);
-    for(int i = 1; i < _coeffs2->getNumLagCoeff(); i++) {
-      _minL2 = std::min(_minL2, _coeffs2->getLagCoeff(i));
-      _maxL2 = std::max(_maxL2, _coeffs2->getLagCoeff(i));
+    _minL2 = _maxL2 = _coeffs2->getCornerCoeff(0);
+    for(int i = 1; i < _coeffs2->getNumCornerCoeff(); i++) {
+      _minL2 = std::min(_minL2, _coeffs2->getCornerCoeff(i));
+      _maxL2 = std::max(_maxL2, _coeffs2->getCornerCoeff(i));
     }
     _minB2 = _maxB2 = (*_coeffs2)(0);
     for(; i < v.size(); i++) {

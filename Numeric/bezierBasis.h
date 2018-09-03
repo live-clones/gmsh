@@ -234,8 +234,8 @@ public:
 
   inline int getNumCoeff() const { return _r; }
   inline int getNumColumns() const { return _c; }
-  inline int getNumLagCoeff() const { return _basis->getNumLagCoeff(); }
-  inline int getIdxLagCoeff(int i) const
+  inline int getNumCornerCoeff() const { return _basis->getNumLagCoeff(); }
+  inline int getIdxCornerCoeff(int i) const
   {
     const int order = _funcSpaceData.spaceOrder();
     switch(_funcSpaceData.elementType()) {
@@ -255,7 +255,16 @@ public:
     default: return 0;
     }
   }
-  inline double getLagCoeff(int i) const { return _data[getIdxLagCoeff(i)]; }
+  inline double getCornerCoeff(int k) const
+  {
+    return _data[getIdxCornerCoeff(k)];
+  }
+  inline double getCornerCoeff(int k, int j) const
+  {
+    return _data[getIdxCornerCoeff(k) + _r * j];
+  }
+  //  double getCornerCoeff(fullVector<double> &v) const { return
+  //  _data[getIdxCornerCoeff(i)]; }
   inline double *getDataPtr() { return _data; }
 
   void subdivide(std::vector<bezierCoeff *> &subCoeff) const;
