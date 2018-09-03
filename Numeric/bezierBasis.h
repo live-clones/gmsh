@@ -249,8 +249,8 @@ public:
       switch(i) {
       case 0: return 0;
       case 1: return order;
-      case 2: return _r - order;
-      case 3: return _r - 1;
+      case 2: return _r - 1;
+      case 3: return _r - 1 - order;
       }
     default: return 0;
     }

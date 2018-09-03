@@ -1435,6 +1435,7 @@ void bezierCoeff::subdivide(std::vector<bezierCoeff *> &subCoeff) const
   case TYPE_QUA:
     for(int i = 0; i < 4; ++i) subCoeff.push_back(new bezierCoeff(*this));
     _subdivideQuadrangle(*this, n, subCoeff);
+    return;
   }
   // size all subcoeff (- coeff identical)
   // simplicial: same size and copy before subdividing
@@ -1558,7 +1559,7 @@ void bezierCoeff::_subdivideQuadrangle(const bezierCoeff &coeff, int n,
 {
   const int N = 2 * n - 1;
   const int dim = coeff._c;
-  _sub.resize(N * N, 1, false);
+  _sub.resize(N * N, dim, false);
   for(int i = 0; i < n; ++i) {
     for(int j = 0; j < n; ++j) {
       const int I1 = i + j * n;
@@ -1622,6 +1623,7 @@ void bezierMemoryPool::setSizeBlocks(int size)
     Msg::Error("Cannot change size of blocks if blocks are still being used!");
     return;
   }
+  _currentIndexOfSearch = 0;
   _sizeBlocks = size;
   _endOfSearch = 0;
 }
