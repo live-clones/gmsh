@@ -676,6 +676,74 @@ function getNormal(tag, parametricCoord)
 end
 
 """
+    gmsh.model.setVisibility(dimTags, value, recursive = false)
+
+Set the visibility of the geometrical entities `dimTags` to `value`. Apply the
+visibility setting recursively if `recursive` is true.
+"""
+function setVisibility(dimTags, value, recursive = false)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelSetVisibility, gmsh.lib), Nothing,
+          (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), value, recursive, ierr)
+    ierr[] != 0 && error("gmshModelSetVisibility returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.getVisibility(dim, tag)
+
+Get the visibility of the geometrical entity of dimension `dim` and tag `tag`.
+
+Return `value`.
+"""
+function getVisibility(dim, tag)
+    api_value_ = Ref{Cint}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetVisibility, gmsh.lib), Nothing,
+          (Cint, Cint, Ptr{Cint}, Ptr{Cint}),
+          dim, tag, api_value_, ierr)
+    ierr[] != 0 && error("gmshModelGetVisibility returned non-zero error code: $(ierr[])")
+    return api_value_[]
+end
+
+"""
+    gmsh.model.setColor(dimTags, r, g, b, a = 0, recursive = false)
+
+Set the color of the geometrical entities `dimTags` to the RGBA value (`r`, `g`,
+`b`, `a`), where `r`, `g`, `b` and `a` should be integers between 0 and 255.
+Apply the color setting recursively if `recursive` is true.
+"""
+function setColor(dimTags, r, g, b, a = 0, recursive = false)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelSetColor, gmsh.lib), Nothing,
+          (Ptr{Cint}, Csize_t, Cint, Cint, Cint, Cint, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), r, g, b, a, recursive, ierr)
+    ierr[] != 0 && error("gmshModelSetColor returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.getColor(dim, tag)
+
+Get the color of the geometrical entity of dimension `dim` and tag `tag`.
+
+Return `r`, `g`, `b`, `a`.
+"""
+function getColor(dim, tag)
+    api_r_ = Ref{Cint}()
+    api_g_ = Ref{Cint}()
+    api_b_ = Ref{Cint}()
+    api_a_ = Ref{Cint}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetColor, gmsh.lib), Nothing,
+          (Cint, Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}),
+          dim, tag, api_r_, api_g_, api_b_, api_a_, ierr)
+    ierr[] != 0 && error("gmshModelGetColor returned non-zero error code: $(ierr[])")
+    return api_r_[], api_g_[], api_b_[], api_a_[]
+end
+
+"""
     module gmsh.model.mesh
 
 Per-model meshing functions

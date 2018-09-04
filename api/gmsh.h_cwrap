@@ -529,6 +529,60 @@ namespace gmsh { // Top-level functions
       normals.assign(api_normals_, api_normals_ + api_normals_n_); gmshFree(api_normals_);
     }
 
+    // Set the visibility of the geometrical entities `dimTags' to `value'. Apply
+    // the visibility setting recursively if `recursive' is true.
+    GMSH_API void setVisibility(const gmsh::vectorpair & dimTags,
+                                const int value,
+                                const bool recursive = false)
+    {
+      int ierr = 0;
+      int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+      gmshModelSetVisibility(api_dimTags_, api_dimTags_n_, value, (int)recursive, &ierr);
+      if(ierr) throw ierr;
+      gmshFree(api_dimTags_);
+    }
+
+    // Get the visibility of the geometrical entity of dimension `dim' and tag
+    // `tag'.
+    GMSH_API void getVisibility(const int dim,
+                                const int tag,
+                                int & value)
+    {
+      int ierr = 0;
+      gmshModelGetVisibility(dim, tag, &value, &ierr);
+      if(ierr) throw ierr;
+    }
+
+    // Set the color of the geometrical entities `dimTags' to the RGBA value (`r',
+    // `g', `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and
+    // 255. Apply the color setting recursively if `recursive' is true.
+    GMSH_API void setColor(const gmsh::vectorpair & dimTags,
+                           const int r,
+                           const int g,
+                           const int b,
+                           const int a = 0,
+                           const bool recursive = false)
+    {
+      int ierr = 0;
+      int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+      gmshModelSetColor(api_dimTags_, api_dimTags_n_, r, g, b, a, (int)recursive, &ierr);
+      if(ierr) throw ierr;
+      gmshFree(api_dimTags_);
+    }
+
+    // Get the color of the geometrical entity of dimension `dim' and tag `tag'.
+    GMSH_API void getColor(const int dim,
+                           const int tag,
+                           int & r,
+                           int & g,
+                           int & b,
+                           int & a)
+    {
+      int ierr = 0;
+      gmshModelGetColor(dim, tag, &r, &g, &b, &a, &ierr);
+      if(ierr) throw ierr;
+    }
+
     namespace mesh { // Per-model meshing functions
 
       // Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or

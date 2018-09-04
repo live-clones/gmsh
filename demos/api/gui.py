@@ -27,6 +27,11 @@ factory.cut([(3, 3)], [(3, 7)], 8)
 factory.synchronize();
 # ...end of copy
 
+# hide volume
+model.setVisibility(model.getEntities(3),0)
+# color all surfaces gold
+model.setColor(model.getEntities(2),249,166,2)
+
 # this would be equivalent to gmsh.fltk.run():
 #
 # gmsh.graphics.draw();

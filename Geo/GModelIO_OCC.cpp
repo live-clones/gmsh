@@ -2995,11 +2995,14 @@ bool OCC_Internals::importShapes(const std::string &fileName,
                                  const std::string &format)
 {
   std::vector<std::string> split = SplitFileName(fileName);
+
+  TCollection_AsciiString occfile(fileName.c_str());
+
   TopoDS_Shape result;
   try {
     if(format == "brep" || split[2] == ".brep" || split[2] == ".BREP") {
       BRep_Builder aBuilder;
-      BRepTools::Read(result, fileName.c_str(), aBuilder);
+      BRepTools::Read(result, occfile.ToCString(), aBuilder);
     }
     else if(format == "step" || split[2] == ".step" || split[2] == ".stp" ||
             split[2] == ".STEP" || split[2] == ".STP") {
@@ -3018,7 +3021,7 @@ bool OCC_Internals::importShapes(const std::string &fileName,
       dummy_app->NewDocument("STEP-XCAF", step_doc);
       STEPCAFControl_Reader reader;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
-      if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone) {
+      if(reader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
       }
@@ -3061,7 +3064,7 @@ bool OCC_Internals::importShapes(const std::string &fileName,
 #else
       STEPControl_Reader reader;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
-      if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone) {
+      if(reader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
       }
@@ -3074,7 +3077,7 @@ bool OCC_Internals::importShapes(const std::string &fileName,
             split[2] == ".IGES" || split[2] == ".IGS") {
       IGESControl_Reader reader;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
-      if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone) {
+      if(reader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
       }
@@ -3137,16 +3140,18 @@ bool OCC_Internals::exportShapes(const std::string &fileName,
 
   std::vector<std::string> split = SplitFileName(fileName);
 
+  TCollection_AsciiString occfile(fileName.c_str());
+
   try {
     if(format == "brep" || split[2] == ".brep" || split[2] == ".BREP") {
-      BRepTools::Write(c, fileName.c_str());
+      BRepTools::Write(c, occfile.ToCString());
     }
     else if(format == "step" || split[2] == ".step" || split[2] == ".stp" ||
             split[2] == ".STEP" || split[2] == ".STP") {
       STEPControl_Writer writer;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
       if(writer.Transfer(c, STEPControl_AsIs) == IFSelect_RetDone) {
-        if(writer.Write(fileName.c_str()) != IFSelect_RetDone) {
+        if(writer.Write(occfile.ToCString()) != IFSelect_RetDone) {
           Msg::Error("Could not create file '%s'", fileName.c_str());
           return false;
         }
