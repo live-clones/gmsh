@@ -16,8 +16,8 @@ linux64_ci:
     - mkdir build
     - cd build
     - cmake ${EXTRA_OPTION} ..
-    - make -j 4
-    - ctest -j 4 --output-on-failure
+    - make -j 8
+    - ctest -j 8 --output-on-failure
   tags:
     - linux64
     - docker
@@ -30,13 +30,13 @@ linux64_minimal_ci:
     - mkdir build
     - cd build
     - cmake -DDEFAULT=0 ${EXTRA_OPTION} ..
-    - make -j 4
+    - make -j 8
     - cmake -DENABLE_PARSER=1 ..
-    - make -j 4
+    - make -j 8
     - cmake -DENABLE_POST=1 ..
-    - make -j 4
+    - make -j 8
     - cmake -DENABLE_MESH=1 ..
-    - make -j 4
+    - make -j 8
   tags:
     - linux64
     - docker
@@ -50,7 +50,7 @@ linux64_cxx98_compat_ci:
     - cd build
     - export CXXFLAGS=-std=c++98
     - cmake -DENABLE_CXX11=0 -DENABLE_OCC=0 ${EXTRA_OPTION} ..
-    - make -j 4
+    - make -j 8
   tags:
     - linux64
     - docker
