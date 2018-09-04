@@ -680,6 +680,10 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
   int num = 0;
   for(unsigned int i = 0; i < unique.size(); i++) unique[i]->setIndex(++num);
 
+  if(version > 2.2)
+    Msg::Warning("Mesh-based export of list-based datasets not available with "
+                 "MSH %g: using MSH 2.2", version);
+
   fprintf(fp, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
 
   if(saveMesh) {
@@ -695,9 +699,6 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
     fprintf(fp, "$Elements\n");
     fprintf(fp, "%d\n", (int)elements.size());
     for(unsigned int i = 0; i < elements.size(); i++) {
-      if(version > 2.2)
-        Msg::Warning("Unable to write file in version '%g': using version 2.2",
-                     version);
       elements[i]->writeMSH2(fp, 2.2, false, i + 1);
     }
     fprintf(fp, "$EndElements\n");
