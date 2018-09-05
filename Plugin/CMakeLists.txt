@@ -35,6 +35,7 @@ set(SRC
   SimplePartition.cpp Crack.cpp ThinLayerFixMesh.cpp
   FaultZone.cpp
   MeshSubEntities.cpp
+  MeshVolume.cpp
   CVTRemesh.cpp
   ShowNeighborElements.cpp
   GaussPoints.cpp
