@@ -21,7 +21,9 @@ extern "C"{
 std::string GMSH_MeshVolumePlugin::getHelp() const{
   return "Plugin(MeshVolume) computes the volume of the mesh. "
     "Only the elements tagged with the physical given in 'Physical' "
-    "and with the dimension given in 'Dimension' are taken into account.";
+    "and with the dimension given in 'Dimension' are taken into account. "
+    "If 'Physical' is equal to -1, "
+    "the entire mesh (of the given dimension) is considered.";
 }
 
 int GMSH_MeshVolumePlugin::getNbOptions() const{
@@ -33,28 +35,42 @@ StringXNumber *GMSH_MeshVolumePlugin::getOption(int iopt){
 }
 
 void GMSH_MeshVolumePlugin::run(){
-  // Get input data
+  // Get input data //
+  ////////////////////
   int physical = (int)MeshVolumeOptions_Number[0].def;
   int dim      = (int)MeshVolumeOptions_Number[1].def;
 
-  // Get groups of the given dimension
+  // Current GModel //
+  ////////////////////
   GModel* model = GModel::current();
-  std::map<int, std::vector<GEntity*> > groups;
-  model->getPhysicalGroups(dim, groups);
 
-  // Get entities of the given physical tag
-  std::vector<GEntity*> entities = groups[physical];
+  // Entities //
+  //////////////
+  std::vector<GEntity*> entities;
+  // If we take all the entities, regardless of the physical tag
+  if(physical == -1){
+    model->getEntities(entities, dim);
+  }
+  // If we want only the entities of a given physical tag
+  else{
+    std::map<int, std::vector<GEntity*> > groups;
+    model->getPhysicalGroups(dim, groups); // Physcial map (per dimension)
+    entities = groups[physical];           // Requested entities
+  }
+  // Check
   if(entities.empty()){
     Msg::Error("Physical group %d (dimension %d) is empty", physical, dim);
     return;
   }
 
-  // Iterate on elements and compute the volume
+  // Iterate on elements and compute the volume //
+  ////////////////////////////////////////////////
   double vol = 0;
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
       vol += entities[i]->getMeshElement(j)->getVolume();
 
-  // Display volume as a message
+  // Display volume as a message //
+  /////////////////////////////////
   Msg::Info("Mesh volume (physical %d | dimension %d): %g", vol, physical, dim);
 }
