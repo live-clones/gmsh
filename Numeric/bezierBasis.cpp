@@ -23,7 +23,7 @@ namespace {
     int k;
     switch(type) {
     case TYPE_TRI:
-      exp.resize((order + 1) * (order + 1), 2);
+      exp.resize((order + 1) * (order + 2) / 2, 2);
       k = 0;
       for(int j = 0; j < order + 1; ++j) {
         for(int i = 0; i < order + 1 - j; ++i) {
