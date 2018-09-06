@@ -922,14 +922,18 @@ int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
     double d1 = distance(v0, v);
     double d2 = distance(v1, v);
     double d3 = distance(v0, v1);
-    SVector3 v0v1(v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z());
-    SVector3 v0v(v->x() - v0->x(), v->y() - v0->y(), v->z() - v0->z());
-    SVector3 pv = crossprod(v0v1, v0v);
-    double d4 = pv.norm() / d3;
+    double d4 = 1.e22;
     // avoid angles that are too obtuse
     double cosv = ((d1 * d1 + d2 * d2 - d3 * d3) / (2. * d1 * d2));
 
-    if((d1 < LL * .5 || d2 < LL * .5 || d4 < LL * .10 || cosv < -.9999) &&
+    if (v1->onWhat()->dim() != 2 && v1->onWhat()->dim() != 2){
+      SVector3 v0v1(v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z());
+      SVector3 v0v(v->x() - v0->x(), v->y() - v0->y(), v->z() - v0->z());
+      SVector3 pv = crossprod(v0v1, v0v);
+	d4=pv.norm() / d3;
+    }
+    
+    if((d1 < LL * .5 || d2 < LL * .5 || d4 < LL * .4 || cosv < -.9999) &&
        !force) {
       onePointIsTooClose = true;
       //      printf("%12.5E %12.5E %12.5E %12.5E \n",d1,d2,LL,cosv);
