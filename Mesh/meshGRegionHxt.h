@@ -8,6 +8,6 @@
 
 class GRegion;
 
-int meshGRegionHxt(GRegion *gr);
+int meshGRegionHxt(std::vector<GRegion *> &regions);
 
 #endif

@@ -241,9 +241,15 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
 {
   if(regions.empty()) return;
 
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT) {
+    if (meshGRegionHxt (regions) != 0){
+      Msg::Error ("HXT 3D mesh failed");
+    }
+    return;
+  }
+  
   if(CTX::instance()->mesh.algo3d != ALGO_3D_DELAUNAY &&
-     CTX::instance()->mesh.algo3d != ALGO_3D_MMG3D &&
-     CTX::instance()->mesh.algo3d != ALGO_3D_HXT)
+     CTX::instance()->mesh.algo3d != ALGO_3D_MMG3D)
     return;
 
   GRegion *gr = regions[0];
@@ -278,14 +284,6 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
                                         allEmbVerticesSet.end());
   std::vector<GVertex *> oldEmbVertices = gr->embeddedVertices();
   gr->embeddedVertices() = allEmbVertices;
-
-
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT) {
-    if (meshGRegionHxt (gr) != 0){
-      Msg::Error ("HXT 3D mesh failed");
-    }
-    return;
-  }
 
   bool success = meshGRegionBoundaryRecovery(gr);
   /*

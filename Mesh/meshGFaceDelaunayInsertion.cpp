@@ -882,9 +882,9 @@ int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
   bool onePointIsTooClose = false;
   double lcMin = std::numeric_limits<double>::infinity();
   double lcBGMMin = std::numeric_limits<double>::infinity();
-  int vIndex = data.getIndex(v);
-  double lcVertex = data.vSizes[vIndex];
-  double lcBGMVertex = data.vSizesBGM[vIndex];
+  //  int vIndex = data.getIndex(v);
+  //  double lcVertex = data.vSizes[vIndex];
+  //  double lcBGMVertex = data.vSizesBGM[vIndex];
   while(it != shell.end()) {
     MVertex *v0, *v1;
     if(it->ori > 0) {
@@ -932,7 +932,7 @@ int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
     if((d1 < LL * .5 || d2 < LL * .5 || d4 < LL * .10 || cosv < -.9999) &&
        !force) {
       onePointIsTooClose = true;
-      // printf("%12.5E %12.5E %12.5E %12.5E \n",d1,d2,LL,cosv);
+      //      printf("%12.5E %12.5E %12.5E %12.5E \n",d1,d2,LL,cosv);
     }
 
     newTris[k++] = t4;
@@ -953,13 +953,13 @@ int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
     ++it;
   }
 
-  double LLMin = Extend1dMeshIn2dSurfaces() ? std::min(lcMin, lcBGMMin) : lcBGMMin;
-  double LLVertex = Extend1dMeshIn2dSurfaces() ? std::min(lcVertex, lcBGMVertex) : lcBGMVertex;
-  bool refinementRequired = false;
-  if (LLVertex < 0.7 * LLMin)
-  {
-    refinementRequired = true;
-  }
+  //  double LLMin = Extend1dMeshIn2dSurfaces() ? std::min(lcMin, lcBGMMin) : lcBGMMin;
+  //  double LLVertex = Extend1dMeshIn2dSurfaces() ? std::min(lcVertex, lcBGMVertex) : lcBGMVertex;
+  //  bool refinementRequired = false;
+  //  if (LLVertex < 0.7 * LLMin)
+  //  {
+  //    refinementRequired = true;
+  //  }
 
   // For adding a point we require that
   // - the volume (or rather area) remains the same after addition of the point
@@ -971,8 +971,9 @@ int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
   // With the latter conditions we ensure that a configuration of 2 elements(or 1) is
   // generally accepted; We only add a point to it if sizing requires so or the quality is
   // improved by it.Generally for squares and rectangles the quality will not be improved by adding a point.
-  if(std::abs(oldVolume - newVolume) < EPS * oldVolume && !onePointIsTooClose &&
-    (cavity.size() > 2 || refinementRequired || newMinQuality > oldMinQuality + 1e-8)) {
+  if(std::abs(oldVolume - newVolume) < EPS * oldVolume && !onePointIsTooClose){
+    //    &&
+    //     (cavity.size() > 1 || refinementRequired || newMinQuality > oldMinQuality + 1e-8)) {
     connectTris(new_cavity.begin(), new_cavity.end(), conn);
     //    printf("%d %d\n",shell.size(),cavity.size());
     // 30 % of the time is spent here !!!
