@@ -1021,3 +1021,55 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
 }
 
 #endif
+
+
+void PViewDataGModel::sendToServer(const std::string &name)
+{
+  if(_steps.empty()) return;
+
+  if(_type != NodeData) {
+    Msg::Error("sendToServer currently only implemented for nodal datasets");
+    return;
+  }
+
+  int numEnt = 0, numComp = 0;
+  for(unsigned int step = 0; step < _steps.size(); step++) {
+    int nc = _steps[step]->getNumComponents();
+    int ne = 0;
+    for(int i = 0; i < _steps[step]->getNumData(); i++)
+      if(_steps[step]->getData(i)) ne++;
+    if(!step){
+      numEnt = ne;
+      numComp = nc;
+    }
+    else{
+      if(ne != numEnt || nc != numComp){
+        Msg::Error("Can not send heterogeneous view to server");
+        return;
+      }
+    }
+  }
+
+  std::vector<double> exp;
+  exp.push_back(numEnt);
+
+  for(int i = 0; i < _steps[0]->getNumData(); i++) {
+    if(_steps[0]->getData(i)) {
+      MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
+      if(!v) {
+        Msg::Error("Unknown vertex %d in data", i);
+        return;
+      }
+      int num = v->getNum();
+      exp.push_back(num);
+      for(int step = 0; step < _steps.size(); step++){
+        for(int k = 0; k < numComp; k++){
+          double data = _steps[step]->getData(i)[k];
+          exp.push_back(data);
+        }
+      }
+    }
+  }
+
+  Msg::SetOnelabNumber(name, exp);
+}

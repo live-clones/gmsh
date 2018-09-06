@@ -3258,17 +3258,25 @@ Command :
   | String__Index String__Index '[' FExpr ']' StringExprVar tEND
     {
 #if defined(HAVE_POST)
-      if(!strcmp($1, "Save") && !strcmp($2, "View")){
+      if(!strcmp($2, "View")){
 	int index = (int)$4;
 	if(index >= 0 && index < (int)PView::list.size()){
-          std::string tmp = FixRelativePath(gmsh_yyname, $6);
-	  PView::list[index]->write(tmp, CTX::instance()->post.fileFormat);
+          if(!strcmp($1, "Save")){
+            std::string tmp = FixRelativePath(gmsh_yyname, $6);
+            PView::list[index]->write(tmp, CTX::instance()->post.fileFormat);
+          }
+          else if(!strcmp($1, "SendToServer")){
+            PView::list[index]->sendToServer($6);
+          }
+          else{
+            yymsg(0, "Unknown operation '%s' on view %d", $1, index);
+          }
 	}
 	else
 	  yymsg(0, "Unknown view %d", index);
       }
       else
-	yymsg(0, "Unknown command '%s'", $1);
+	yymsg(0, "Unknown command '%s %s'", $1, $2);
 #endif
       Free($1); Free($2); Free($6);
     }

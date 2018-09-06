@@ -966,6 +966,7 @@ void Msg::SetOnelabNumber(const std::string &name, double val, bool visible,
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
+    // FIXME: why is there a get() here??
     std::vector<onelab::number> numbers;
     _onelabClient->get(numbers, name);
     if(numbers.empty()){
@@ -982,12 +983,25 @@ void Msg::SetOnelabNumber(const std::string &name, double val, bool visible,
 #endif
 }
 
+void Msg::SetOnelabNumber(const std::string &name, const std::vector<double> &val,
+                          bool visible)
+{
+#if defined(HAVE_ONELAB)
+  if(_onelabClient){
+    onelab::number n(name, val);
+    n.setVisible(visible);
+    _onelabClient->set(n);
+  }
+#endif
+}
+
 void Msg::SetOnelabString(const std::string &name, const std::string &val,
                           bool visible, bool persistent, bool readOnly,
                           int changedValue, const std::string &kind)
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
+    // FIXME: why is there a get() here??
     std::vector<onelab::string> strings;
     _onelabClient->get(strings, name);
     if(strings.empty()){

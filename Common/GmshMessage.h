@@ -131,6 +131,8 @@ public:
   static void SetOnelabNumber(const std::string &name, double val,
                               bool visible = true, bool persistent = false,
                               bool readOnly = false, int changedValue = 3);
+  static void SetOnelabNumber(const std::string &name, const std::vector<double> &val,
+                              bool visible = true);
   static void SetOnelabString(const std::string &name, const std::string &val,
                               bool visible = true, bool persistent = false,
                               bool readOnly = false, int changedValue = 3,

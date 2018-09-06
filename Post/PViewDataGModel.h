@@ -282,6 +282,7 @@ public:
     if(step >= 0 && step < (int)_steps.size()) return _steps[step];
     return 0;
   }
+  void sendToServer(const std::string &name);
 };
 
 #endif
