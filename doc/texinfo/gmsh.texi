@@ -5520,7 +5520,6 @@ create new parts or appy boolean operators.
 
 Define common geometrical objects and options in separate files or using
 @code{Macro}, reusable in all your problem definition structures.
-@end enumerate
 
 @item Some files take much more time to load with Gmsh 4 compared to Gmsh 3: what's happening?
 
