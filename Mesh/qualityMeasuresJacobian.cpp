@@ -262,11 +262,11 @@ namespace jacobianBasedQuality {
     for(int j = 0; j < orderDet + 1; ++j) {
       for(int i = 0; i < orderDet + 1; ++i) {
         int I = 0;
-        while (I < expDet.size1() && (   expDet(I, 0) - .5 >= i
-                                      || expDet(I, 0) + .5 <= i
-                                      || expDet(I, 1) - .5 >= j
-                                      || expDet(I, 1) + .5 <= j)) ++I;
-        if (I == expDet.size1()) {
+        while(I < expDet.size1() &&
+              (expDet(I, 0) - .5 >= i || expDet(I, 0) + .5 <= i ||
+               expDet(I, 1) - .5 >= j || expDet(I, 1) + .5 <= j))
+          ++I;
+        if(I == expDet.size1()) {
           Msg::Error("ARRAGRGRAG");
         }
         detNewOrdered(I) = (*detNew)(k);
@@ -282,11 +282,11 @@ namespace jacobianBasedQuality {
     for(int j = 0; j < orderMat + 1; ++j) {
       for(int i = 0; i < orderMat + 1; ++i) {
         int I = 0;
-        while (I < expMat.size1() && (   expMat(I, 0) - .5 >= i
-                                      || expMat(I, 0) + .5 <= i
-                                      || expMat(I, 1) - .5 >= j
-                                      || expMat(I, 1) + .5 <= j)) ++I;
-        if (I == expMat.size1()) {
+        while(I < expMat.size1() &&
+              (expMat(I, 0) - .5 >= i || expMat(I, 0) + .5 <= i ||
+               expMat(I, 1) - .5 >= j || expMat(I, 1) + .5 <= j))
+          ++I;
+        if(I == expMat.size1()) {
           Msg::Error("ARRAGRGRAG");
         }
         for(int l = 0; l < dim; ++l) {
@@ -313,7 +313,7 @@ namespace jacobianBasedQuality {
     double sumAbsDiffDet = 0;
     double maxAbsDiffDet = 0;
     for(int i = 0; i < detOld.size(); ++i) {
-      double d = std::abs(detOld(i)-detNewOrdered(i));
+      double d = std::abs(detOld(i) - detNewOrdered(i));
       sumAbsDiffDet += d;
       maxAbsDiffDet = std::max(maxAbsDiffDet, d);
     }
@@ -322,7 +322,7 @@ namespace jacobianBasedQuality {
     double maxAbsDiffMat = 0;
     for(int i = 0; i < matOld.size1(); ++i) {
       for(int j = 0; j < dim; ++j) {
-        double d = std::abs(matOld(i, j)-matNewOrdered(i, j));
+        double d = std::abs(matOld(i, j) - matNewOrdered(i, j));
         sumAbsDiffMat += d;
         maxAbsDiffMat = std::max(maxAbsDiffMat, d);
       }
@@ -340,10 +340,11 @@ namespace jacobianBasedQuality {
     detFromMatNew.print("detFromMatNew");
     detOld.print("detOld");
     detNewOrdered.print("detNewOrdered");
-//    matOld.print("matOld");
-//    matNewOrdered.print("matNewOrdered");
+    //    matOld.print("matOld");
+    //    matNewOrdered.print("matNewOrdered");
 
-    std::cout << "sum: " << sumAbsDiffDet << " " << sumAbsDiffMat << " max: " << maxAbsDiffDet << " " << maxAbsDiffMat << std::endl;
+    std::cout << "sum: " << sumAbsDiffDet << " " << sumAbsDiffMat
+              << " max: " << maxAbsDiffDet << " " << maxAbsDiffMat << std::endl;
   }
 
   void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
@@ -419,34 +420,34 @@ namespace jacobianBasedQuality {
   double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk,
                        const fullMatrix<double> *normals)
   {
-//    int oorder = 2;
-//    FuncSpaceData jjacDetSpace;
-//    const bool sserendipFalse = false;
-//    jjacDetSpace = FuncSpaceData(el, oorder, &sserendipFalse);
-//    const bezierBasis *bezBasis = BasisFactory::getBezierBasis(jjacDetSpace);
-//    fullVector<double> coeffDetBez((oorder+1)*(oorder+1));
-//    coeffDetBez(0) = 1;
-//    fullVector<double> coeffDetLag((oorder+1)*(oorder+1));
-//    bezBasis->matrixBez2Lag.mult(coeffDetBez, coeffDetLag);
-//    bezierCoeff *bezDet = new bezierCoeff(FuncSpaceData(el, oorder), coeffDetLag, 0);
-////    for(int i = 0; i < bezDet->getNumCoeff(); ++i) {
-////      for(int j = 0; j < bezDet->getNumCoeff(); ++j) {
-////        (*bezDet)(i,j) = 0;
-////      }
-////    }
-////    (*bezDet)(0,0) = 1;
-////    (*bezDet)(oorder,0) = 1;
-////    (*bezDet)(oorder*oorder+oorder,0) = 1;
-////    (*bezDet)(oorder*oorder+2*oorder,0) = 1;
-//    std::vector<bezierCoeff*> v;
-//    bezDet->subdivide(v);
-//
-//    for(int i = 0; i < 4; ++i) {
-//      fullVector<double> a(v[i]->getDataPtr(), v[i]->getNumCoeff());
-//      a.print();
-//    }
-//    return 1;
-
+    //    int oorder = 2;
+    //    FuncSpaceData jjacDetSpace;
+    //    const bool sserendipFalse = false;
+    //    jjacDetSpace = FuncSpaceData(el, oorder, &sserendipFalse);
+    //    const bezierBasis *bezBasis =
+    //    BasisFactory::getBezierBasis(jjacDetSpace); fullVector<double>
+    //    coeffDetBez((oorder+1)*(oorder+1)); coeffDetBez(0) = 1;
+    //    fullVector<double> coeffDetLag((oorder+1)*(oorder+1));
+    //    bezBasis->matrixBez2Lag.mult(coeffDetBez, coeffDetLag);
+    //    bezierCoeff *bezDet = new bezierCoeff(FuncSpaceData(el, oorder),
+    //    coeffDetLag, 0);
+    ////    for(int i = 0; i < bezDet->getNumCoeff(); ++i) {
+    ////      for(int j = 0; j < bezDet->getNumCoeff(); ++j) {
+    ////        (*bezDet)(i,j) = 0;
+    ////      }
+    ////    }
+    ////    (*bezDet)(0,0) = 1;
+    ////    (*bezDet)(oorder,0) = 1;
+    ////    (*bezDet)(oorder*oorder+oorder,0) = 1;
+    ////    (*bezDet)(oorder*oorder+2*oorder,0) = 1;
+    //    std::vector<bezierCoeff*> v;
+    //    bezDet->subdivide(v);
+    //
+    //    for(int i = 0; i < 4; ++i) {
+    //      fullVector<double> a(v[i]->getDataPtr(), v[i]->getNumCoeff());
+    //      a.print();
+    //    }
+    //    return 1;
 
     bool isReversed = false;
     if(!knownValid) {
@@ -511,7 +512,7 @@ namespace jacobianBasedQuality {
 
       coeffDetBez.resize(jacBasis->getNumJacNodes());
       jacBasis->lag2Bez(coeffDetLag, coeffDetBez);
-//      jacBasis->getBezier()->matrixLag2Bez.print("matrixLag2Bez");
+      //      jacBasis->getBezier()->matrixLag2Bez.print("matrixLag2Bez");
     }
 
     coeffDetLag.print("coeffDetLag");
@@ -528,10 +529,9 @@ namespace jacobianBasedQuality {
     fullVector<double> diffNew(coeffDetLag);
     diffOld.axpy(coeffDetLagOld, -1);
     diffNew.axpy(coeffDetLagNew, -1);
-//    diffOld.print("diffOld");
-//    diffNew.print("diffNew");
+    //    diffOld.print("diffOld");
+    //    diffNew.print("diffNew");
     fullMatrix<double> coeffMatBez;
-
 
     fullMatrix<double> coeffMatLag(gradBasis->getNumSamplingPoints(), 9);
     {
@@ -543,8 +543,8 @@ namespace jacobianBasedQuality {
       gradBasis->lag2Bez(coeffMatLag, coeffMatBez);
     }
 
-//    coeffDetLag.print("coeffDetLag");
-//    coeffMatLag.print("coeffMatLag");
+    //    coeffDetLag.print("coeffDetLag");
+    //    coeffMatLag.print("coeffMatLag");
 
     bezierCoeff::usePools(coeffDetLag.size(),
                           coeffMatLag.size1() * coeffMatLag.size2());
@@ -1029,10 +1029,10 @@ namespace jacobianBasedQuality {
         m(i, j) = _coeffsJacMat(i, j);
       }
     }
-//    _coeffsJacDet.print("_coeffsJacDet");
-//    m.print("m");
-//    det.print("det");
-//    v.print("v");
+    //    _coeffsJacDet.print("_coeffsJacDet");
+    //    m.print("m");
+    //    det.print("det");
+    //    v.print("v");
     ige.print("ige");
 
     fullMatrix<double> v2,
@@ -1054,10 +1054,10 @@ namespace jacobianBasedQuality {
       det2(k) = (*_coeffDet2)(k);
     }
 
-//    det2.print("_coeffDet2");
-//    m2.print("m2");
-//    d2.print("d2");
-//    v2.print("v2");
+    //    det2.print("_coeffDet2");
+    //    m2.print("m2");
+    //    d2.print("d2");
+    //    v2.print("v2");
     ige2.print("ige2");
     std::cout << std::endl;
 

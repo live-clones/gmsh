@@ -138,8 +138,8 @@ void fullMatrix<double>::mult(const fullMatrix<double> &b,
   int LDA = _r, LDB = b.size1(), LDC = c.size1();
   double alpha = 1., beta = 0.;
   F77NAME(dgemm)
-      ("N", "N", &M, &N, &K, &alpha, _data, &LDA, b._data, &LDB, &beta, c._data,
-       &LDC);
+  ("N", "N", &M, &N, &K, &alpha, _data, &LDA, b._data, &LDB, &beta, c._data,
+   &LDC);
 }
 
 template <>
@@ -159,8 +159,7 @@ void fullMatrix<long double>::mult(const fullVector<long double> &b,
 {
   c.setAll(0);
   for(int i = 0; i < _r; i++)
-    for(int j = 0; j < _c; j++)
-      c._data[i] += (*this)(i, j) * b(j);
+    for(int j = 0; j < _c; j++) c._data[i] += (*this)(i, j) * b(j);
 }
 
 template <>

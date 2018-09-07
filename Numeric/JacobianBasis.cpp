@@ -189,7 +189,7 @@ void GradientBasis::getAllGradientsFromNodes(const fullMatrix<double> &nodes,
   fullMatrix<double> prox;
   prox.setAsProxy(dxyzdXYZ, 0, 3);
   gradShapeMatX.mult(nodes, prox);
-//  gradShapeMatX.print("gradShapeMatX", "%22.15E");
+  //  gradShapeMatX.print("gradShapeMatX", "%22.15E");
 
   prox.setAsProxy(dxyzdXYZ, 3, 3);
   gradShapeMatY.mult(nodes, prox);

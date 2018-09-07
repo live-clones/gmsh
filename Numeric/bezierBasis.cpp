@@ -489,15 +489,15 @@ namespace {
 
   void generateOneDMatrixLag2Bez(int order, fullMatrix<double> &c)
   {
-    c.resize(order+1, order+1, true);
+    c.resize(order + 1, order + 1, true);
 
-    fullVector<double> x(order+1);
+    fullVector<double> x(order + 1);
     for(int i = 0; i <= order; ++i) {
       int ii = i == 0 ? 0 : i == 1 ? order : i - 1;
       x(i) = static_cast<double>(ii) / order;
     }
-    fullVector<double> w(order+1);
-    fullVector<double> f(order+1);
+    fullVector<double> w(order + 1);
+    fullVector<double> f(order + 1);
 
     for(int i = 0; i <= order; ++i) {
       f.setAll(0);
@@ -507,14 +507,15 @@ namespace {
       c(0, i) = f(0);
       for(int s = 1; s <= order; ++s) {
         for(int k = order; k >= s; --k) {
-          f(k) = (f(k) - f(k-1)) / (x(k) - x(k-s));
+          f(k) = (f(k) - f(k - 1)) / (x(k) - x(k - s));
         }
         for(int k = s; k >= 1; --k) {
           const double kk = static_cast<double>(k);
-          w(k) = kk/s * w(k-1) * (1 - x(s-1)) - (1-kk/s) * w(k) * x(s-1);
-          c(k, i) = kk/s * c(k-1, i) + (1-kk/s) * c(k, i) + f(s) * w(k);
+          w(k) =
+            kk / s * w(k - 1) * (1 - x(s - 1)) - (1 - kk / s) * w(k) * x(s - 1);
+          c(k, i) = kk / s * c(k - 1, i) + (1 - kk / s) * c(k, i) + f(s) * w(k);
         }
-        w(0) = -w(0) * x(s-1);
+        w(0) = -w(0) * x(s - 1);
         c(0, i) = c(0, i) + f(s) * w(0);
       }
     }
@@ -522,37 +523,38 @@ namespace {
 
   template <typename D>
   void convertLag2Bez(const fullMatrix<double> &lag, int order, int start,
-                      int inc, const fullVector<D> &x,
-                      fullMatrix<double> &bez)
+                      int inc, const fullVector<D> &x, fullMatrix<double> &bez)
   {
     const int nColumns = lag.size2();
-    fullMatrix<D> f(order+1, nColumns);
+    fullMatrix<D> f(order + 1, nColumns);
     for(int i = start, n = 0; n <= order; i += inc, ++n) {
       for(int j = 0; j < nColumns; ++j) {
         f(n, j) = lag(i, j);
       }
     }
-    fullVector<D> w(order+1);
+    fullVector<D> w(order + 1);
     w.setAll(0);
     w(0) = 1;
-    fullMatrix<D> c(order+1, nColumns);
+    fullMatrix<D> c(order + 1, nColumns);
     for(int j = 0; j < nColumns; ++j) {
       c(0, j) = f(0, j);
     }
     for(int s = 1; s <= order; ++s) {
       for(int k = order; k >= s; --k) {
         for(int j = 0; j < nColumns; ++j) {
-          f(k, j) = (f(k, j) - f(k-1, j)) / (x(k) - x(k-s));
+          f(k, j) = (f(k, j) - f(k - 1, j)) / (x(k) - x(k - s));
         }
       }
       for(int k = s; k >= 1; --k) {
         const D kk = static_cast<D>(k);
-        w(k) = kk/s * w(k-1) * (1 - x(s-1)) - (1-kk/s) * w(k) * x(s-1);
+        w(k) =
+          kk / s * w(k - 1) * (1 - x(s - 1)) - (1 - kk / s) * w(k) * x(s - 1);
         for(int j = 0; j < nColumns; ++j) {
-          c(k, j) = kk/s * c(k-1, j) + (1-kk/s) * c(k, j) + f(s, j) * w(k);
+          c(k, j) =
+            kk / s * c(k - 1, j) + (1 - kk / s) * c(k, j) + f(s, j) * w(k);
         }
       }
-      w(0) = -w(0) * x(s-1);
+      w(0) = -w(0) * x(s - 1);
       for(int j = 0; j < nColumns; ++j) {
         c(0, j) = c(0, j) + f(s, j) * w(0);
       }
@@ -575,12 +577,12 @@ namespace {
     int I = 0;
     double m = x(0);
     for(int i = 1; i < n; ++i) {
-      if (std::abs(x(i)) > m) {
+      if(std::abs(x(i)) > m) {
         I = i;
         m = std::abs(x(i));
       }
     }
-    if (I != 0) {
+    if(I != 0) {
       double temp1 = x(0);
       x(0) = x(I);
       x(I) = temp1;
@@ -592,23 +594,23 @@ namespace {
     fullVector<double> p(n);
     p.setAll(1);
     for(int k = 1; k < n - 1; ++k) {
-//      p.print("pbef");
+      //      p.print("pbef");
       for(int i = k; i < n; ++i) {
-        p(i) = p(i) * (x(i) - x(k-1));
+        p(i) = p(i) * (x(i) - x(k - 1));
       }
-//      x.print("x");
-//      p.print("p");
-//      permutation.print("permutation");
-//      std::cout << std::endl;
+      //      x.print("x");
+      //      p.print("p");
+      //      permutation.print("permutation");
+      //      std::cout << std::endl;
       int II = k;
       double mm = p(k);
-      for(int i = k+1; i < n; ++i) {
-        if (std::abs(p(i)) > mm) {
+      for(int i = k + 1; i < n; ++i) {
+        if(std::abs(p(i)) > mm) {
           II = i;
           mm = std::abs(p(i));
         }
       }
-      if (II != k) {
+      if(II != k) {
         double temp1 = x(k);
         x(k) = x(II);
         x(II) = temp1;
@@ -850,87 +852,100 @@ void bezierBasis::_construct()
   subDivisor = generateSubDivisor(_exponents, subPoints, matrixLag2Bez, order,
                                   _dimSimplex);
 
-  if (_data.elementType() == TYPE_QUA) {
+  if(_data.elementType() == TYPE_QUA) {
     fullMatrix<double> oneDPoints = gmshGenerateMonomialsLine(order);
     if(order) oneDPoints.scale(1. / order);
     fullMatrix<double> oneDExponents = generateExponents(TYPE_LIN, order);
     fullMatrix<double> oneDMatrixBez2Lag =
-        generateBez2LagMatrix(oneDExponents, oneDPoints, order, 0);
+      generateBez2LagMatrix(oneDExponents, oneDPoints, order, 0);
     fullMatrix<double> oneDMatrixLag2Bez;
     oneDMatrixBez2Lag.invert(oneDMatrixLag2Bez);
     fullMatrix<double> b(oneDMatrixLag2Bez);
-    b.reshape(1, oneDMatrixLag2Bez.size1()*oneDMatrixLag2Bez.size2());
+    b.reshape(1, oneDMatrixLag2Bez.size1() * oneDMatrixLag2Bez.size2());
     b.print("oneDMatrixLag2Bez");
     matrixLag2Bez3.resize(matrixLag2Bez2.size1(), matrixLag2Bez2.size2());
     matrixLag2Bez4.resize(matrixLag2Bez2.size1(), matrixLag2Bez2.size2());
-//    _exponents.print("_exponents");
+    //    _exponents.print("_exponents");
 
     fullMatrix<double> oneDMatrixLag2Bez4;
     generateOneDMatrixLag2Bez(order, oneDMatrixLag2Bez4);
 
-//    oneDMatrixLag2Bez.print("oneDMatrixLag2Bez");
-//    oneDMatrixLag2Bez4.print("oneDMatrixLag2Bez4");
+    //    oneDMatrixLag2Bez.print("oneDMatrixLag2Bez");
+    //    oneDMatrixLag2Bez4.print("oneDMatrixLag2Bez4");
 
-
-    for (int i = 0; i <= order; ++i) {
-      for (int j = 0; j <= order; ++j) {
-        int I = i + (order+1) * j;
-//        std::cout << std::endl;
-        for (int k = 0; k <= order; ++k) {
-          for (int l = 0; l <= order; ++l) {
+    for(int i = 0; i <= order; ++i) {
+      for(int j = 0; j <= order; ++j) {
+        int I = i + (order + 1) * j;
+        //        std::cout << std::endl;
+        for(int k = 0; k <= order; ++k) {
+          for(int l = 0; l <= order; ++l) {
             int K = 0;
-            while (K < _exponents.size1() &&
-                   (   _exponents(K, 0) - .5 >= k
-                    || _exponents(K, 0) + .5 <= k
-                    || _exponents(K, 1) - .5 >= l
-                    || _exponents(K, 1) + .5 <= l)) ++K;
-            if (K == _exponents.size1()) {
+            while(K < _exponents.size1() &&
+                  (_exponents(K, 0) - .5 >= k || _exponents(K, 0) + .5 <= k ||
+                   _exponents(K, 1) - .5 >= l || _exponents(K, 1) + .5 <= l))
+              ++K;
+            if(K == _exponents.size1()) {
               Msg::Error("ARRAGRGRAG");
             }
-//            int K = k + (order+1) * l;
-//            std::cout << " " << k << " " << l << " " << _exponents(K, 0) << " " << _exponents(K, 1) << std::endl;
-//            std::cout << "K " << K << " (" << k << ", " << l << ") => " << oneDMatrixLag2Bez(i, k) << " * " << oneDMatrixLag2Bez(j, l) << " = " << oneDMatrixLag2Bez(i, k) * oneDMatrixLag2Bez(j, l) << std::endl;
+            //            int K = k + (order+1) * l;
+            //            std::cout << " " << k << " " << l << " " <<
+            //            _exponents(K, 0) << " " << _exponents(K, 1) <<
+            //            std::endl; std::cout << "K " << K << " (" << k << ", "
+            //            << l << ") => " << oneDMatrixLag2Bez(i, k) << " * " <<
+            //            oneDMatrixLag2Bez(j, l) << " = " <<
+            //            oneDMatrixLag2Bez(i, k) * oneDMatrixLag2Bez(j, l) <<
+            //            std::endl;
             int kk = k;
-            if (kk == order) kk = 1;
-            else if (kk != 0) ++kk;
+            if(kk == order)
+              kk = 1;
+            else if(kk != 0)
+              ++kk;
             int ll = l;
-            if (ll == order) ll = 1;
-            else if (ll != 0) ++ll;
-            matrixLag2Bez3(I, K) = oneDMatrixLag2Bez(i, kk) * oneDMatrixLag2Bez(j, ll);
-            matrixLag2Bez4(I, K) = oneDMatrixLag2Bez4(i, kk) * oneDMatrixLag2Bez4(j, ll);
+            if(ll == order)
+              ll = 1;
+            else if(ll != 0)
+              ++ll;
+            matrixLag2Bez3(I, K) =
+              oneDMatrixLag2Bez(i, kk) * oneDMatrixLag2Bez(j, ll);
+            matrixLag2Bez4(I, K) =
+              oneDMatrixLag2Bez4(i, kk) * oneDMatrixLag2Bez4(j, ll);
           }
         }
       }
     }
 
-//    fullMatrix<double> diffM(matrixLag2Bez2);
-//    diffM.axpy(matrixLag2Bez3, -1);
+    //    fullMatrix<double> diffM(matrixLag2Bez2);
+    //    diffM.axpy(matrixLag2Bez3, -1);
 
-//    matrixLag2Bez2.print("matrixLag2Bez2");
-//    matrixLag2Bez3.print("matrixLag2Bez3");
-//    diffM.print("diff");
-//    matrixLag2Bez.print("matrixLag2Bez");
+    //    matrixLag2Bez2.print("matrixLag2Bez2");
+    //    matrixLag2Bez3.print("matrixLag2Bez3");
+    //    diffM.print("diff");
+    //    matrixLag2Bez.print("matrixLag2Bez");
 
-//    fullMatrix<double> a(matrixLag2Bez3);
-//    a.reshape(1, 400*400);
-//    a.print("matrixLag2Bez3");
+    //    fullMatrix<double> a(matrixLag2Bez3);
+    //    a.reshape(1, 400*400);
+    //    a.print("matrixLag2Bez3");
 
     double diff = 0;
     double relError = 0;
     double sum = 0;
     double sumAbs = 0;
-    for (int i = 0; i < matrixLag2Bez2.size1(); ++i) {
-      for (int j = 0; j < matrixLag2Bez2.size2(); ++j) {
-        diff = std::max(diff, std::abs(matrixLag2Bez2(i,j) - matrixLag2Bez3(i,j)));
-        double a = std::abs(matrixLag2Bez2(i,j));
-        double b = std::abs(matrixLag2Bez3(i,j));
-        if (a+b == 0) continue;
-        relError = std::max(relError, std::abs(matrixLag2Bez2(i,j) - matrixLag2Bez3(i,j)) / std::max(a,b));
-        sum += matrixLag2Bez3(i,j);
-        sumAbs += std::abs(matrixLag2Bez3(i,j));
+    for(int i = 0; i < matrixLag2Bez2.size1(); ++i) {
+      for(int j = 0; j < matrixLag2Bez2.size2(); ++j) {
+        diff =
+          std::max(diff, std::abs(matrixLag2Bez2(i, j) - matrixLag2Bez3(i, j)));
+        double a = std::abs(matrixLag2Bez2(i, j));
+        double b = std::abs(matrixLag2Bez3(i, j));
+        if(a + b == 0) continue;
+        relError = std::max(
+          relError, std::abs(matrixLag2Bez2(i, j) - matrixLag2Bez3(i, j)) /
+                      std::max(a, b));
+        sum += matrixLag2Bez3(i, j);
+        sumAbs += std::abs(matrixLag2Bez3(i, j));
       }
     }
-    std::cout << "DIFF: " << diff << " " << relError << " SUM: " << sum << " " << sumAbs << std::endl;
+    std::cout << "DIFF: " << diff << " " << relError << " SUM: " << sum << " "
+              << sumAbs << std::endl;
   }
 
   //  matrixBez2Lag.print("matrixBez2Lag");
@@ -1554,32 +1569,32 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullMatrix<double> &lagCoeff,
   fullMatrix<double> prox(_data, _r, _c);
   _basis->matrixLag2Bez4.mult(lagCoeff, prox);
 
-//  int m = _basis->matrixLag2Bez4.size1();
-//  int n = _basis->matrixLag2Bez4.size2();
-//  fullMatrix<long double> matrixLag2Bez4Long(m, n);
-//  for(int i = 0; i < m; ++i) {
-//    for(int j = 0; j < n; ++j) {
-//      matrixLag2Bez4Long(i, j) = _basis->matrixLag2Bez4(i, j);
-//    }
-//  }
-//
-//  m = lagCoeff.size1();
-//  n = lagCoeff.size2();
-//  fullMatrix<long double> lagCoeffLong(m, n);
-//  for(int i = 0; i < m; ++i) {
-//    for(int j = 0; j < n; ++j) {
-//      lagCoeffLong(i, j) = lagCoeff(i, j);
-//    }
-//  }
-//
-//  fullMatrix<long double> res(m, n);
-//  matrixLag2Bez4Long.mult(lagCoeffLong, res);
-//
-//  for(int i = 0; i < m; ++i) {
-//    for(int j = 0; j < n; ++j) {
-//      (*this)(i, j) = static_cast<double>(res(i, j));
-//    }
-//  }
+  //  int m = _basis->matrixLag2Bez4.size1();
+  //  int n = _basis->matrixLag2Bez4.size2();
+  //  fullMatrix<long double> matrixLag2Bez4Long(m, n);
+  //  for(int i = 0; i < m; ++i) {
+  //    for(int j = 0; j < n; ++j) {
+  //      matrixLag2Bez4Long(i, j) = _basis->matrixLag2Bez4(i, j);
+  //    }
+  //  }
+  //
+  //  m = lagCoeff.size1();
+  //  n = lagCoeff.size2();
+  //  fullMatrix<long double> lagCoeffLong(m, n);
+  //  for(int i = 0; i < m; ++i) {
+  //    for(int j = 0; j < n; ++j) {
+  //      lagCoeffLong(i, j) = lagCoeff(i, j);
+  //    }
+  //  }
+  //
+  //  fullMatrix<long double> res(m, n);
+  //  matrixLag2Bez4Long.mult(lagCoeffLong, res);
+  //
+  //  for(int i = 0; i < m; ++i) {
+  //    for(int j = 0; j < n; ++j) {
+  //      (*this)(i, j) = static_cast<double>(res(i, j));
+  //    }
+  //  }
 }
 
 bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
@@ -1600,7 +1615,7 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
   }
 
   fullVector<double> prox(_data, _r);
-//  _basis->matrixLag2Bez2.print("_basis->matrixLag2Bez2");
+  //  _basis->matrixLag2Bez2.print("_basis->matrixLag2Bez2");
   _basis->matrixLag2Bez4.mult(lagCoeff, prox);
 
   int sz = lagCoeff.size();
@@ -1610,12 +1625,13 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
   for(int j = 0; j < order + 1; ++j) {
     for(int i = 0; i < order + 1; ++i) {
       int K = 0;
-      while (K < _basis->_exponents.size1() &&
-             (   _basis->_exponents(K, 0) - .5 >= i
-                 || _basis->_exponents(K, 0) + .5 <= i
-                 || _basis->_exponents(K, 1) - .5 >= j
-                 || _basis->_exponents(K, 1) + .5 <= j)) ++K;
-      if (K == _basis->_exponents.size1()) {
+      while(K < _basis->_exponents.size1() &&
+            (_basis->_exponents(K, 0) - .5 >= i ||
+             _basis->_exponents(K, 0) + .5 <= i ||
+             _basis->_exponents(K, 1) - .5 >= j ||
+             _basis->_exponents(K, 1) + .5 <= j))
+        ++K;
+      if(K == _basis->_exponents.size1()) {
         Msg::Error("ARRAGRGRAG");
       }
       lagCoeffOrdered(k, 0) = lagCoeff(K);
@@ -1624,23 +1640,24 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
   }
 
   fullMatrix<double> prox2(_data, _r, 1);
-  fullVector<double> x(order+1);
+  fullVector<double> x(order + 1);
   for(int i = 0; i <= order; ++i) {
-    x(i) = static_cast<double>(i)/order;
+    x(i) = static_cast<double>(i) / order;
   }
 
-  if (true) { // Permutate
+  if(true) { // Permutate
     fullVector<int> permutation;
     lejaOrder(x, permutation);
     fullMatrix<double> lagCoeffOrdered2(sz, 1);
     lagCoeffOrdered2.setAll(.12345678);
     x.print("x");
     permutation.print("permutation");
-    for(int i = 0; i < order+1; ++i) {
+    for(int i = 0; i < order + 1; ++i) {
       int I = permutation(i);
-      for(int j = 0; j < order+1; ++j) {
+      for(int j = 0; j < order + 1; ++j) {
         int J = permutation(j);
-        lagCoeffOrdered2(i + j * (order+1), 0) = lagCoeffOrdered(I + J * (order+1), 0);
+        lagCoeffOrdered2(i + j * (order + 1), 0) =
+          lagCoeffOrdered(I + J * (order + 1), 0);
       }
     }
 
@@ -1648,51 +1665,51 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
     lagCoeffOrdered2.print("lagCoeffOrdered2");
     prox2.print("prox2");
 
-    for(int k = 0; k < order+1; ++k) {
-      convertLag2Bez<double>(lagCoeffOrdered2, order, k, order+1, x, prox2);
+    for(int k = 0; k < order + 1; ++k) {
+      convertLag2Bez<double>(lagCoeffOrdered2, order, k, order + 1, x, prox2);
     }
     prox2.print("prox2");
     lagCoeffOrdered2.print("lagCoeffOrdered2");
     lagCoeffOrdered2 = prox2;
     lagCoeffOrdered2.print("lagCoeffOrdered2");
-    for(int k = 0; k < order+1; ++k) {
-      convertLag2Bez<double>(lagCoeffOrdered2, order, k*(order+1), 1, x, prox2);
+    for(int k = 0; k < order + 1; ++k) {
+      convertLag2Bez<double>(lagCoeffOrdered2, order, k * (order + 1), 1, x,
+                             prox2);
     }
     prox2.print("prox2");
   }
   else {
-    for(int k = 0; k < order+1; ++k) {
-      convertLag2Bez<double>(lagCoeffOrdered, order, k, order+1, x, prox2);
+    for(int k = 0; k < order + 1; ++k) {
+      convertLag2Bez<double>(lagCoeffOrdered, order, k, order + 1, x, prox2);
     }
     lagCoeffOrdered = prox2;
-    for(int k = 0; k < order+1; ++k) {
-      convertLag2Bez<double>(lagCoeffOrdered, order, k*(order+1), 1, x, prox2);
+    for(int k = 0; k < order + 1; ++k) {
+      convertLag2Bez<double>(lagCoeffOrdered, order, k * (order + 1), 1, x,
+                             prox2);
     }
   }
 
-
-
-//  int m = _basis->matrixLag2Bez4.size1();
-//  int n = _basis->matrixLag2Bez4.size2();
-//  fullMatrix<long double> matrixLag2Bez4Long(m, n);
-//  for(int i = 0; i < m; ++i) {
-//    for(int j = 0; j < n; ++j) {
-//      matrixLag2Bez4Long(i, j) = _basis->matrixLag2Bez4(i, j);
-//    }
-//  }
-//
-//  int sz = lagCoeff.size();
-//  fullVector<long double> lagCoeffLong(sz);
-//  for(int i = 0; i < sz; ++i) {
-//    lagCoeffLong(i) = lagCoeff(i);
-//  }
-//
-//  fullVector<long double> res(sz);
-//  matrixLag2Bez4Long.mult(lagCoeffLong, res);
-//
-//  for(int i = 0; i < m; ++i) {
-//    (*this)(i) = static_cast<double>(res(i));
-//  }
+  //  int m = _basis->matrixLag2Bez4.size1();
+  //  int n = _basis->matrixLag2Bez4.size2();
+  //  fullMatrix<long double> matrixLag2Bez4Long(m, n);
+  //  for(int i = 0; i < m; ++i) {
+  //    for(int j = 0; j < n; ++j) {
+  //      matrixLag2Bez4Long(i, j) = _basis->matrixLag2Bez4(i, j);
+  //    }
+  //  }
+  //
+  //  int sz = lagCoeff.size();
+  //  fullVector<long double> lagCoeffLong(sz);
+  //  for(int i = 0; i < sz; ++i) {
+  //    lagCoeffLong(i) = lagCoeff(i);
+  //  }
+  //
+  //  fullVector<long double> res(sz);
+  //  matrixLag2Bez4Long.mult(lagCoeffLong, res);
+  //
+  //  for(int i = 0; i < m; ++i) {
+  //    (*this)(i) = static_cast<double>(res(i));
+  //  }
 }
 
 bezierCoeff::bezierCoeff(const bezierCoeff &other, bool swap)
@@ -1914,15 +1931,15 @@ void bezierCoeff::_subdivideQuadrangle(const bezierCoeff &coeff, int n,
       }
     }
   }
-//  _sub.reshape(N, N*dim);
-//  _sub.print("_sub");
-//  _sub.reshape(N*N, dim);
+  //  _sub.reshape(N, N*dim);
+  //  _sub.print("_sub");
+  //  _sub.reshape(N*N, dim);
   for(int i = 0; i < N; i += 2) {
     _subdivide(_sub, n, i, N);
   }
-//  _sub.reshape(N, N*dim);
-//  _sub.print("_sub");
-//  _sub.reshape(N*N, dim);
+  //  _sub.reshape(N, N*dim);
+  //  _sub.print("_sub");
+  //  _sub.reshape(N*N, dim);
   for(int j = 0; j < N; ++j) {
     _subdivide(_sub, n, j * N);
   }
@@ -1930,8 +1947,8 @@ void bezierCoeff::_subdivideQuadrangle(const bezierCoeff &coeff, int n,
   _copyQuad(_sub, n - 1, 0, n, *subCoeff[1]);
   _copyQuad(_sub, 0, n - 1, n, *subCoeff[2]);
   _copyQuad(_sub, n - 1, n - 1, n, *subCoeff[3]);
-//  _sub.reshape(N, N);
-//  _sub.print("_sub");
+  //  _sub.reshape(N, N);
+  //  _sub.print("_sub");
   return;
 }
 

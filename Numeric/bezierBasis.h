@@ -30,7 +30,6 @@ private:
   fullMatrix<double> _exponents2;
 
 public:
-
   fullMatrix<double> _exponents;
 
   fullMatrix<double> matrixLag2Bez;
@@ -229,8 +228,10 @@ private:
 public:
   bezierCoeff(){};
   bezierCoeff(const bezierCoeff &other, bool swap = false);
-  bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff, int num = -1);
-  bezierCoeff(FuncSpaceData data, const fullMatrix<double> &lagCoeff, int num = -1);
+  bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
+              int num = -1);
+  bezierCoeff(FuncSpaceData data, const fullMatrix<double> &lagCoeff,
+              int num = -1);
   ~bezierCoeff();
 
   static void usePools(int size0, int size1);
@@ -272,7 +273,7 @@ public:
   //  double getCornerCoeff(fullVector<double> &v) const { return
   //  _data[getIdxCornerCoeff(i)]; }
   inline double *getDataPtr() { return _data; }
-  inline const bezierBasis* getBezierBasis() const { return _basis; }
+  inline const bezierBasis *getBezierBasis() const { return _basis; }
 
   void subdivide(std::vector<bezierCoeff *> &subCoeff) const;
 
