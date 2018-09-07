@@ -594,14 +594,9 @@ namespace {
     fullVector<double> p(n);
     p.setAll(1);
     for(int k = 1; k < n - 1; ++k) {
-      //      p.print("pbef");
       for(int i = k; i < n; ++i) {
         p(i) = p(i) * (x(i) - x(k - 1));
       }
-      //      x.print("x");
-      //      p.print("p");
-      //      permutation.print("permutation");
-      //      std::cout << std::endl;
       int II = k;
       double mm = p(k);
       for(int i = k + 1; i < n; ++i) {
@@ -865,13 +860,9 @@ void bezierBasis::_construct()
     b.print("oneDMatrixLag2Bez");
     matrixLag2Bez3.resize(matrixLag2Bez2.size1(), matrixLag2Bez2.size2());
     matrixLag2Bez4.resize(matrixLag2Bez2.size1(), matrixLag2Bez2.size2());
-    //    _exponents.print("_exponents");
 
     fullMatrix<double> oneDMatrixLag2Bez4;
     generateOneDMatrixLag2Bez(order, oneDMatrixLag2Bez4);
-
-    //    oneDMatrixLag2Bez.print("oneDMatrixLag2Bez");
-    //    oneDMatrixLag2Bez4.print("oneDMatrixLag2Bez4");
 
     for(int i = 0; i <= order; ++i) {
       for(int j = 0; j <= order; ++j) {
@@ -887,14 +878,6 @@ void bezierBasis::_construct()
             if(K == _exponents.size1()) {
               Msg::Error("ARRAGRGRAG");
             }
-            //            int K = k + (order+1) * l;
-            //            std::cout << " " << k << " " << l << " " <<
-            //            _exponents(K, 0) << " " << _exponents(K, 1) <<
-            //            std::endl; std::cout << "K " << K << " (" << k << ", "
-            //            << l << ") => " << oneDMatrixLag2Bez(i, k) << " * " <<
-            //            oneDMatrixLag2Bez(j, l) << " = " <<
-            //            oneDMatrixLag2Bez(i, k) * oneDMatrixLag2Bez(j, l) <<
-            //            std::endl;
             int kk = k;
             if(kk == order)
               kk = 1;
@@ -913,39 +896,6 @@ void bezierBasis::_construct()
         }
       }
     }
-
-    //    fullMatrix<double> diffM(matrixLag2Bez2);
-    //    diffM.axpy(matrixLag2Bez3, -1);
-
-    //    matrixLag2Bez2.print("matrixLag2Bez2");
-    //    matrixLag2Bez3.print("matrixLag2Bez3");
-    //    diffM.print("diff");
-    //    matrixLag2Bez.print("matrixLag2Bez");
-
-    //    fullMatrix<double> a(matrixLag2Bez3);
-    //    a.reshape(1, 400*400);
-    //    a.print("matrixLag2Bez3");
-
-    double diff = 0;
-    double relError = 0;
-    double sum = 0;
-    double sumAbs = 0;
-    for(int i = 0; i < matrixLag2Bez2.size1(); ++i) {
-      for(int j = 0; j < matrixLag2Bez2.size2(); ++j) {
-        diff =
-          std::max(diff, std::abs(matrixLag2Bez2(i, j) - matrixLag2Bez3(i, j)));
-        double a = std::abs(matrixLag2Bez2(i, j));
-        double b = std::abs(matrixLag2Bez3(i, j));
-        if(a + b == 0) continue;
-        relError = std::max(
-          relError, std::abs(matrixLag2Bez2(i, j) - matrixLag2Bez3(i, j)) /
-                      std::max(a, b));
-        sum += matrixLag2Bez3(i, j);
-        sumAbs += std::abs(matrixLag2Bez3(i, j));
-      }
-    }
-    std::cout << "DIFF: " << diff << " " << relError << " SUM: " << sum << " "
-              << sumAbs << std::endl;
   }
 
   //  matrixBez2Lag.print("matrixBez2Lag");
@@ -1568,33 +1518,6 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullMatrix<double> &lagCoeff,
 
   fullMatrix<double> prox(_data, _r, _c);
   _basis->matrixLag2Bez4.mult(lagCoeff, prox);
-
-  //  int m = _basis->matrixLag2Bez4.size1();
-  //  int n = _basis->matrixLag2Bez4.size2();
-  //  fullMatrix<long double> matrixLag2Bez4Long(m, n);
-  //  for(int i = 0; i < m; ++i) {
-  //    for(int j = 0; j < n; ++j) {
-  //      matrixLag2Bez4Long(i, j) = _basis->matrixLag2Bez4(i, j);
-  //    }
-  //  }
-  //
-  //  m = lagCoeff.size1();
-  //  n = lagCoeff.size2();
-  //  fullMatrix<long double> lagCoeffLong(m, n);
-  //  for(int i = 0; i < m; ++i) {
-  //    for(int j = 0; j < n; ++j) {
-  //      lagCoeffLong(i, j) = lagCoeff(i, j);
-  //    }
-  //  }
-  //
-  //  fullMatrix<long double> res(m, n);
-  //  matrixLag2Bez4Long.mult(lagCoeffLong, res);
-  //
-  //  for(int i = 0; i < m; ++i) {
-  //    for(int j = 0; j < n; ++j) {
-  //      (*this)(i, j) = static_cast<double>(res(i, j));
-  //    }
-  //  }
 }
 
 bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
@@ -1615,7 +1538,6 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
   }
 
   fullVector<double> prox(_data, _r);
-  //  _basis->matrixLag2Bez2.print("_basis->matrixLag2Bez2");
   _basis->matrixLag2Bez4.mult(lagCoeff, prox);
 
   int sz = lagCoeff.size();
@@ -1688,28 +1610,6 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
                              prox2);
     }
   }
-
-  //  int m = _basis->matrixLag2Bez4.size1();
-  //  int n = _basis->matrixLag2Bez4.size2();
-  //  fullMatrix<long double> matrixLag2Bez4Long(m, n);
-  //  for(int i = 0; i < m; ++i) {
-  //    for(int j = 0; j < n; ++j) {
-  //      matrixLag2Bez4Long(i, j) = _basis->matrixLag2Bez4(i, j);
-  //    }
-  //  }
-  //
-  //  int sz = lagCoeff.size();
-  //  fullVector<long double> lagCoeffLong(sz);
-  //  for(int i = 0; i < sz; ++i) {
-  //    lagCoeffLong(i) = lagCoeff(i);
-  //  }
-  //
-  //  fullVector<long double> res(sz);
-  //  matrixLag2Bez4Long.mult(lagCoeffLong, res);
-  //
-  //  for(int i = 0; i < m; ++i) {
-  //    (*this)(i) = static_cast<double>(res(i));
-  //  }
 }
 
 bezierCoeff::bezierCoeff(const bezierCoeff &other, bool swap)
@@ -1931,15 +1831,9 @@ void bezierCoeff::_subdivideQuadrangle(const bezierCoeff &coeff, int n,
       }
     }
   }
-  //  _sub.reshape(N, N*dim);
-  //  _sub.print("_sub");
-  //  _sub.reshape(N*N, dim);
   for(int i = 0; i < N; i += 2) {
     _subdivide(_sub, n, i, N);
   }
-  //  _sub.reshape(N, N*dim);
-  //  _sub.print("_sub");
-  //  _sub.reshape(N*N, dim);
   for(int j = 0; j < N; ++j) {
     _subdivide(_sub, n, j * N);
   }
@@ -1947,8 +1841,6 @@ void bezierCoeff::_subdivideQuadrangle(const bezierCoeff &coeff, int n,
   _copyQuad(_sub, n - 1, 0, n, *subCoeff[1]);
   _copyQuad(_sub, 0, n - 1, n, *subCoeff[2]);
   _copyQuad(_sub, n - 1, n - 1, n, *subCoeff[3]);
-  //  _sub.reshape(N, N);
-  //  _sub.print("_sub");
   return;
 }
 
