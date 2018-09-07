@@ -1189,12 +1189,12 @@ int GModel::_readMSH4(const std::string &name)
           fclose(fp);
           return 0;
         }
-        char name[128];
+        char name[256];
         if(!fgets(name, sizeof(name), fp)) {
           fclose(fp);
           return 0;
         }
-        std::string physicalName = ExtractDoubleQuotedString(name, 128);
+        std::string physicalName = ExtractDoubleQuotedString(name, 256);
         if(physicalName.size())
           iterators[dim] =
             setPhysicalName(iterators[dim], physicalName, dim, tag);
