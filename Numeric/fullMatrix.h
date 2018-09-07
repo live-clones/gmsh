@@ -6,6 +6,8 @@
 #ifndef FULL_MATRIX_H
 #define FULL_MATRIX_H
 
+#define _DEBUG
+
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include <cmath>
@@ -351,13 +353,7 @@ public:
 
      This string starts by name.
   */
-  void print(const char *name = "") const
-  {
-    printf("double %s[%d]=\n", name, size());
-    printf("{  ");
-    for(int I = 0; I < size(); I++) { printf("%12.5E ", (*this)(I)); }
-    printf("};\n");
-  }
+  void print(const std::string name = "", const std::string format = "") const;
 
   /**
      @param f A pointer to a FILE stream.

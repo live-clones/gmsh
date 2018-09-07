@@ -138,8 +138,29 @@ void fullMatrix<double>::mult(const fullMatrix<double> &b,
   int LDA = _r, LDB = b.size1(), LDC = c.size1();
   double alpha = 1., beta = 0.;
   F77NAME(dgemm)
-  ("N", "N", &M, &N, &K, &alpha, _data, &LDA, b._data, &LDB, &beta, c._data,
-   &LDC);
+      ("N", "N", &M, &N, &K, &alpha, _data, &LDA, b._data, &LDB, &beta, c._data,
+       &LDC);
+}
+
+template <>
+void fullMatrix<long double>::mult(const fullMatrix<long double> &b,
+                                   fullMatrix<long double> &c) const
+{
+  c.setAll(0);
+  for(int i = 0; i < _r; i++)
+    for(int j = 0; j < b.size2(); j++)
+      for(int k = 0; k < _c; k++)
+        c._data[i + _r * j] += (*this)(i, k) * b(k, j);
+}
+
+template <>
+void fullMatrix<long double>::mult(const fullVector<long double> &b,
+                                   fullVector<long double> &c) const
+{
+  c.setAll(0);
+  for(int i = 0; i < _r; i++)
+    for(int j = 0; j < _c; j++)
+      c._data[i] += (*this)(i, j) * b(j);
 }
 
 template <>
@@ -604,7 +625,7 @@ template <>
 void fullMatrix<double>::print(const std::string &name,
                                const std::string &format) const
 {
-  std::string rformat = (format == "") ? "%12.5E " : format;
+  std::string rformat = (format == "") ? "%15.8E " : format;
   int ni = size1();
   int nj = size2();
   printf("double %s [ %d ][ %d ]= { \n", name.c_str(), ni, nj);
@@ -640,6 +661,32 @@ void fullMatrix<int>::print(const std::string &name,
       printf("},\n");
     else
       printf("}\n");
+  }
+  printf("};\n");
+}
+
+template <>
+void fullVector<double>::print(const std::string name,
+                               const std::string format) const
+{
+  std::string rformat = (format == "") ? "%15.8E " : format;
+  printf("double %s[%d]=\n", name.c_str(), size());
+  printf("{  ");
+  for(int I = 0; I < size(); I++) {
+    printf(rformat.c_str(), (*this)(I));
+  }
+  printf("};\n");
+}
+
+template <>
+void fullVector<int>::print(const std::string name,
+                            const std::string format) const
+{
+  std::string rformat = (format == "") ? "%12d " : format;
+  printf("double %s[%d]=\n", name.c_str(), size());
+  printf("{  ");
+  for(int I = 0; I < size(); I++) {
+    printf(rformat.c_str(), (*this)(I));
   }
   printf("};\n");
 }
