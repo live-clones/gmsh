@@ -1521,16 +1521,12 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     add_definitions(-DGMSH_DLL)
   endif(WIN32 OR CYGWIN)
   add_library(shared SHARED ${GMSH_SRC})
-  set_target_properties(shared PROPERTIES OUTPUT_NAME gmsh)
-  set_target_properties(shared PROPERTIES VERSION
-                        ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION})
-  set_target_properties(shared PROPERTIES SOVERSION
-                        ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
+  set_target_properties(shared PROPERTIES OUTPUT_NAME gmsh
+     VERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}
+     SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
   if(WIN32 OR CYGWIN)
-    set_target_properties(shared PROPERTIES PREFIX "")
-    set_target_properties(shared PROPERTIES IMPORT_PREFIX "")
-    set_target_properties(shared PROPERTIES IMPORT_SUFFIX ".lib")
-    set_target_properties(shared PROPERTIES COMPILE_FLAGS -DGMSH_DLL_EXPORT)
+    set_target_properties(shared PROPERTIES PREFIX "" IMPORT_PREFIX ""
+      IMPORT_SUFFIX ".lib" COMPILE_FLAGS -DGMSH_DLL_EXPORT)
   endif(WIN32 OR CYGWIN)
   target_link_libraries(shared ${LINK_LIBRARIES})
   if(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)

@@ -34,9 +34,8 @@ static int N_SEARCH;
 static double DT_INSERT_VERTEX;
 int MTri3::radiusNorm = 2;
 
-
-void getDegeneratedVertices (GFace *gf, std::set<GEntity*> & degenerated){
-
+void getDegeneratedVertices (GFace *gf, std::set<GEntity*> & degenerated)
+{
   degenerated.clear();
   const std::vector<GEdge *> &ed = gf->edges();
   for (size_t i=0;i<ed.size();i++){
@@ -44,13 +43,10 @@ void getDegeneratedVertices (GFace *gf, std::set<GEntity*> & degenerated){
     if (e->getBeginVertex() == e->getEndVertex()){
       if (e->geomType() == GEntity::Unknown){
 	degenerated.insert (e->getBeginVertex());
-	//	printf("Edge %d with type %d\n",e->tag(),e->geomType());
       }
     }
   }
-
 }
-
 
 static inline bool intersection_segments_2(double *p1, double *p2, double *q1,
                                            double *q2)
@@ -65,7 +61,8 @@ static inline bool intersection_segments_2(double *p1, double *p2, double *q1,
 }
 
 template <class ITERATOR>
-void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data, GFace *gf = NULL, std::set<GEntity*> *degenerated = NULL)
+void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data,
+                GFace *gf = NULL, std::set<GEntity*> *degenerated = NULL)
 {
   FILE *ff = Fopen(name, "w");
   if(!ff) {
@@ -81,8 +78,10 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data, GFac
       if(!worst->isDeleted()) {
 	for (int i=0;i<3;i++){
 	  int whatever =
-	    (degenerated -> find ( (worst)->tri()->getVertex(i)->onWhat() ) != degenerated->end())
-	    + (degenerated -> find ( (worst)->tri()->getVertex((i+1)%3)->onWhat() ) != degenerated->end());
+	    (degenerated -> find ( (worst)->tri()->getVertex(i)->onWhat() ) !=
+             degenerated->end())
+	    + (degenerated -> find ( (worst)->tri()->getVertex((i+1)%3)->onWhat() ) !=
+               degenerated->end());
 	  if (whatever == 1){
 	    double u1 = data->Us[data->getIndex((worst)->tri()->getVertex(i))];
 	    double u2 = data->Us[data->getIndex((worst)->tri()->getVertex((i+1)%3))];
@@ -110,63 +109,64 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data, GFac
     while(it != end) {
       MTri3 *worst = *it;
       if(!worst->isDeleted()) {
-	if(data)
-	  {
-	    double u1 = data->Us[data->getIndex((worst)->tri()->getVertex(0))];
-	    double v1 = data->Vs[data->getIndex((worst)->tri()->getVertex(0))];
-	    double u2 = data->Us[data->getIndex((worst)->tri()->getVertex(1))];
-	    double v2 = data->Vs[data->getIndex((worst)->tri()->getVertex(1))];
-	    double u3 = data->Us[data->getIndex((worst)->tri()->getVertex(2))];
-	    double v3 = data->Vs[data->getIndex((worst)->tri()->getVertex(2))];
+	if(data) {
+          double u1 = data->Us[data->getIndex((worst)->tri()->getVertex(0))];
+          double v1 = data->Vs[data->getIndex((worst)->tri()->getVertex(0))];
+          double u2 = data->Us[data->getIndex((worst)->tri()->getVertex(1))];
+          double v2 = data->Vs[data->getIndex((worst)->tri()->getVertex(1))];
+          double u3 = data->Us[data->getIndex((worst)->tri()->getVertex(2))];
+          double v3 = data->Vs[data->getIndex((worst)->tri()->getVertex(2))];
 
-	    if (degenerated){
-	      bool deg[3];
-	      deg[0] = degenerated -> find ( (worst)->tri()->getVertex(0)->onWhat() ) != degenerated->end();
-	      deg[1] = degenerated -> find ( (worst)->tri()->getVertex(1)->onWhat() ) != degenerated->end();
-	      deg[2] = degenerated -> find ( (worst)->tri()->getVertex(2)->onWhat() ) != degenerated->end();
-	      if (deg[0] && !deg[1] && !deg[2]){
-		fprintf(ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d,%d};\n",
-			u3,v1,0.,u2,v1,0.,u2,v2,0.,u3,v3,0.,
-			(worst)->tri()->getVertex(0)->getNum(),
-			(worst)->tri()->getVertex(0)->getNum(),
-			(worst)->tri()->getVertex(1)->getNum(),
-			(worst)->tri()->getVertex(2)->getNum());		
-	      }
-	      else if (!deg[0] && deg[1] && !deg[2]){
-		fprintf(ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d,%d};\n",
-			u1,v2,0.,u3,v2,0.,u3,v3,0.,u1,v1,0.,
-			(worst)->tri()->getVertex(1)->getNum(),
-			(worst)->tri()->getVertex(1)->getNum(),
-			(worst)->tri()->getVertex(2)->getNum(),
-			(worst)->tri()->getVertex(0)->getNum());		
-	      }
-	      else if (!deg[0] && !deg[1] && deg[2]){
-		fprintf(ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d,%d};\n",
-			u2,v3,0.,u1,v3,0.,u1,v1,0.,u2,v2,0.,
-			(worst)->tri()->getVertex(2)->getNum(),
-			(worst)->tri()->getVertex(2)->getNum(),
-			(worst)->tri()->getVertex(0)->getNum(),
-			(worst)->tri()->getVertex(1)->getNum());		
-	      }
-	      else if (!deg[0] && !deg[1] && !deg[2]){
-		fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n",
-			u1,v1,0.,u2,v2,0.,u3,v3,0.,
-			(worst)->tri()->getVertex(0)->getNum(),
-			(worst)->tri()->getVertex(1)->getNum(),
-			(worst)->tri()->getVertex(2)->getNum());
-	      }
-	    }	    
-	    else {
-	      fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n",
-		      u1,v1,0.,u2,v2,0.,u3,v3,0.,
-		      (worst)->tri()->getVertex(0)->getNum(),
-		      (worst)->tri()->getVertex(1)->getNum(),
-		      (worst)->tri()->getVertex(2)->getNum());
-	    }
-	  }
+          if (degenerated){
+            bool deg[3];
+            deg[0] = degenerated -> find ( (worst)->tri()->getVertex(0)->onWhat() ) !=
+              degenerated->end();
+            deg[1] = degenerated -> find ( (worst)->tri()->getVertex(1)->onWhat() ) !=
+              degenerated->end();
+            deg[2] = degenerated -> find ( (worst)->tri()->getVertex(2)->onWhat() ) !=
+              degenerated->end();
+            if (deg[0] && !deg[1] && !deg[2]){
+              fprintf(ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d,%d};\n",
+                      u3,v1,0.,u2,v1,0.,u2,v2,0.,u3,v3,0.,
+                      (worst)->tri()->getVertex(0)->getNum(),
+                      (worst)->tri()->getVertex(0)->getNum(),
+                      (worst)->tri()->getVertex(1)->getNum(),
+                      (worst)->tri()->getVertex(2)->getNum());
+            }
+            else if (!deg[0] && deg[1] && !deg[2]){
+              fprintf(ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d,%d};\n",
+                      u1,v2,0.,u3,v2,0.,u3,v3,0.,u1,v1,0.,
+                      (worst)->tri()->getVertex(1)->getNum(),
+                      (worst)->tri()->getVertex(1)->getNum(),
+                      (worst)->tri()->getVertex(2)->getNum(),
+                      (worst)->tri()->getVertex(0)->getNum());
+            }
+            else if (!deg[0] && !deg[1] && deg[2]){
+              fprintf(ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d,%d};\n",
+                      u2,v3,0.,u1,v3,0.,u1,v1,0.,u2,v2,0.,
+                      (worst)->tri()->getVertex(2)->getNum(),
+                      (worst)->tri()->getVertex(2)->getNum(),
+                      (worst)->tri()->getVertex(0)->getNum(),
+                      (worst)->tri()->getVertex(1)->getNum());
+            }
+            else if (!deg[0] && !deg[1] && !deg[2]){
+              fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n",
+                      u1,v1,0.,u2,v2,0.,u3,v3,0.,
+                      (worst)->tri()->getVertex(0)->getNum(),
+                      (worst)->tri()->getVertex(1)->getNum(),
+                      (worst)->tri()->getVertex(2)->getNum());
+            }
+          }
+          else {
+            fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n",
+                    u1,v1,0.,u2,v2,0.,u3,v3,0.,
+                    (worst)->tri()->getVertex(0)->getNum(),
+                    (worst)->tri()->getVertex(1)->getNum(),
+                    (worst)->tri()->getVertex(2)->getNum());
+          }
+        }
 	else
-	  fprintf(
-		  ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n",
+	  fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n",
 		  (worst)->tri()->getVertex(0)->x(), (worst)->tri()->getVertex(0)->y(),
 		  (worst)->tri()->getVertex(0)->z(), (worst)->tri()->getVertex(1)->x(),
 		  (worst)->tri()->getVertex(1)->y(), (worst)->tri()->getVertex(1)->z(),
@@ -932,7 +932,7 @@ int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
       SVector3 pv = crossprod(v0v1, v0v);
 	d4=pv.norm() / d3;
     }
-    
+
     if((d1 < LL * .5 || d2 < LL * .5 || d4 < LL * .4 || cosv < -.9999) &&
        !force) {
       onePointIsTooClose = true;
@@ -1575,9 +1575,8 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   //    testStarShapeness = false;
   //  }
   std::set<GEntity*> degenerated;
-  getDegeneratedVertices (gf,degenerated);
+  getDegeneratedVertices (gf, degenerated);
 
-  
   buildMeshGenerationDataStructures(gf, AllTris, DATA);
 
   // delaunise the initial mesh
