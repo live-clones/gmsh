@@ -63,6 +63,7 @@
 #include "NewView.h"
 #include "FaultZone.h"
 #include "MeshSubEntities.h"
+#include "MeshVolume.h"
 #include "CVTRemesh.h"
 #include "ShowNeighborElements.h"
 #include "GaussPoints.h"
@@ -267,6 +268,8 @@ void PluginManager::registerDefaultPlugins()
       "ShowNeighborElements", GMSH_RegisterShowNeighborElementsPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "MeshSubEntities", GMSH_RegisterMeshSubEntitiesPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
+      "MeshVolume", GMSH_RegisterMeshVolumePlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "GaussPoints", GMSH_RegisterGaussPointsPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(

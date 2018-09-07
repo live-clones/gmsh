@@ -268,6 +268,36 @@ namespace gmsh { // Top-level functions
                             const std::vector<double> & parametricCoord,
                             std::vector<double> & normals);
 
+    // Set the visibility of the geometrical entities `dimTags' to `value'. Apply
+    // the visibility setting recursively if `recursive' is true.
+    GMSH_API void setVisibility(const gmsh::vectorpair & dimTags,
+                                const int value,
+                                const bool recursive = false);
+
+    // Get the visibility of the geometrical entity of dimension `dim' and tag
+    // `tag'.
+    GMSH_API void getVisibility(const int dim,
+                                const int tag,
+                                int & value);
+
+    // Set the color of the geometrical entities `dimTags' to the RGBA value (`r',
+    // `g', `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and
+    // 255. Apply the color setting recursively if `recursive' is true.
+    GMSH_API void setColor(const gmsh::vectorpair & dimTags,
+                           const int r,
+                           const int g,
+                           const int b,
+                           const int a = 0,
+                           const bool recursive = false);
+
+    // Get the color of the geometrical entity of dimension `dim' and tag `tag'.
+    GMSH_API void getColor(const int dim,
+                           const int tag,
+                           int & r,
+                           int & g,
+                           int & b,
+                           int & a);
+
     namespace mesh { // Per-model meshing functions
 
       // Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or

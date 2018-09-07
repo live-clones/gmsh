@@ -1580,6 +1580,17 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
     myFactory.Free(worst);
     allTets.erase(allTets.begin());
   }
+
+  std::set<MVertex*> allverts;
+  for(size_t i = 0; i < gr->tetrahedra.size(); i++){
+    for(int j = 0; j < 4; j++){
+      if(gr->tetrahedra[i]->getVertex(j)->onWhat() == gr)
+        allverts.insert(gr->tetrahedra[i]->getVertex(j));
+    }
+  }
+  // FIXME: should delete unused vertices
+  gr->mesh_vertices.clear();
+  gr->mesh_vertices.insert(gr->mesh_vertices.end(), allverts.begin(), allverts.end());
 }
 
 // do a 3D delaunay mesh assuming a set of vertices

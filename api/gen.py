@@ -153,6 +153,18 @@ model.add('getPrincipalCurvatures',doc,None,iint('tag'),ivectordouble('parametri
 doc = '''Get the normal to the surface with tag `tag' at the parametric coordinates `parametricCoord'. `parametricCoord' are given by pair of u and v coordinates, concatenated. `normals' are returned as triplets of x, y and z components, concatenated.'''
 model.add('getNormal',doc,None,iint('tag'),ivectordouble('parametricCoord'),ovectordouble('normals'))
 
+doc = '''Set the visibility of the geometrical entities `dimTags' to `value'. Apply the visibility setting recursively if `recursive' is true.'''
+model.add('setVisibility',doc,None,ivectorpair('dimTags'),iint('value'),ibool('recursive','false','False'))
+
+doc = '''Get the visibility of the geometrical entity of dimension `dim' and tag `tag'.'''
+model.add('getVisibility',doc,None,iint('dim'),iint('tag'),oint('value'))
+
+doc = '''Set the color of the geometrical entities `dimTags' to the RGBA value (`r', `g', `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and 255. Apply the color setting recursively if `recursive' is true.'''
+model.add('setColor',doc,None,ivectorpair('dimTags'),iint('r'),iint('g'),iint('b'),iint('a','0'),ibool('recursive','false','False'))
+
+doc = '''Get the color of the geometrical entity of dimension `dim' and tag `tag'.'''
+model.add('getColor',doc,None,iint('dim'),iint('tag'),oint('r'),oint('g'),oint('b'),oint('a'))
+
 ################################################################################
 
 mesh = model.add_module('mesh','Per-model meshing functions')

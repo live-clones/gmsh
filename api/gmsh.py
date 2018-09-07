@@ -844,6 +844,97 @@ class model:
                 ierr.value)
         return _ovectordouble(api_normals_, api_normals_n_.value)
 
+    @staticmethod
+    def setVisibility(dimTags, value, recursive=False):
+        """
+        Set the visibility of the geometrical entities `dimTags' to `value'. Apply
+        the visibility setting recursively if `recursive' is true.
+        """
+        api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+        ierr = c_int()
+        lib.gmshModelSetVisibility(
+            api_dimTags_, api_dimTags_n_,
+            c_int(value),
+            c_int(bool(recursive)),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelSetVisibility returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
+    def getVisibility(dim, tag):
+        """
+        Get the visibility of the geometrical entity of dimension `dim' and tag
+        `tag'.
+
+        Return `value'.
+        """
+        api_value_ = c_int()
+        ierr = c_int()
+        lib.gmshModelGetVisibility(
+            c_int(dim),
+            c_int(tag),
+            byref(api_value_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetVisibility returned non-zero error code: ",
+                ierr.value)
+        return api_value_.value
+
+    @staticmethod
+    def setColor(dimTags, r, g, b, a=0, recursive=False):
+        """
+        Set the color of the geometrical entities `dimTags' to the RGBA value (`r',
+        `g', `b', `a'), where `r', `g', `b' and `a' should be integers between 0
+        and 255. Apply the color setting recursively if `recursive' is true.
+        """
+        api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+        ierr = c_int()
+        lib.gmshModelSetColor(
+            api_dimTags_, api_dimTags_n_,
+            c_int(r),
+            c_int(g),
+            c_int(b),
+            c_int(a),
+            c_int(bool(recursive)),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelSetColor returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
+    def getColor(dim, tag):
+        """
+        Get the color of the geometrical entity of dimension `dim' and tag `tag'.
+
+        Return `r', `g', `b', `a'.
+        """
+        api_r_ = c_int()
+        api_g_ = c_int()
+        api_b_ = c_int()
+        api_a_ = c_int()
+        ierr = c_int()
+        lib.gmshModelGetColor(
+            c_int(dim),
+            c_int(tag),
+            byref(api_r_),
+            byref(api_g_),
+            byref(api_b_),
+            byref(api_a_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetColor returned non-zero error code: ",
+                ierr.value)
+        return (
+            api_r_.value,
+            api_g_.value,
+            api_b_.value,
+            api_a_.value)
+
 
     class mesh:
         """

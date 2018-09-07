@@ -99,16 +99,16 @@ struct hxtMeshStruct {
     uint64_t size;
   } lines;
   struct {
-    uint16_t numVolumes;
-    uint16_t *numSurfacesPerVolume;
-    uint16_t *surfacesPerVolume;
-    uint16_t numSurfaces;
-    uint16_t *numCurvesPerSurface;
-    uint16_t *curvesPerSurface;
-    uint16_t numCurves;
-    uint16_t *endPointsOfCurves;
-    uint16_t numPoints;
-    uint16_t *points;
+    uint32_t numVolumes;
+    uint32_t *numSurfacesPerVolume;
+    uint32_t *surfacesPerVolume;
+    uint32_t numSurfaces;
+    uint32_t *numCurvesPerSurface;
+    uint32_t *curvesPerSurface;
+    uint32_t numCurves;
+    uint32_t *endPointsOfCurves;
+    uint32_t numPoints;
+    uint32_t *points;
   } brep;
 };
 

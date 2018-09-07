@@ -409,3 +409,9 @@ bool PView::writeAdapt(const std::string &guifileName, int useDefaultName,
                                adaptLev, adaptErr, npart, isBinary);
   return true;
 }
+
+void PView::sendToServer(const std::string &name)
+{
+  Msg::Info("Sending View[%d] to ONELAB as parameter '%s'", _index, name.c_str());
+  _data->sendToServer(name);
+}

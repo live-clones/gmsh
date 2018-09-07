@@ -16,8 +16,8 @@ linux64_ci:
     - mkdir build
     - cd build
     - cmake ${EXTRA_OPTION} ..
-    - make -j 4
-    - ctest -j 4 --output-on-failure
+    - make -j 8
+    - ctest -j 8 --output-on-failure
   tags:
     - linux64
     - docker
@@ -30,13 +30,13 @@ linux64_minimal_ci:
     - mkdir build
     - cd build
     - cmake -DDEFAULT=0 ${EXTRA_OPTION} ..
-    - make -j 4
+    - make -j 8
     - cmake -DENABLE_PARSER=1 ..
-    - make -j 4
+    - make -j 8
     - cmake -DENABLE_POST=1 ..
-    - make -j 4
+    - make -j 8
     - cmake -DENABLE_MESH=1 ..
-    - make -j 4
+    - make -j 8
   tags:
     - linux64
     - docker
@@ -50,7 +50,7 @@ linux64_cxx98_compat_ci:
     - cd build
     - export CXXFLAGS=-std=c++98
     - cmake -DENABLE_CXX11=0 -DENABLE_OCC=0 ${EXTRA_OPTION} ..
-    - make -j 4
+    - make -j 8
   tags:
     - linux64
     - docker
@@ -275,7 +275,7 @@ windows32-sdk_official_release:
   script:
     - mkdir build
     - cd build
-    - /usr/local/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DCMAKE_C_COMPILER=/opt/local/bin/clang-mp-3.9 -DCMAKE_CXX_COMPILER=/opt/local/bin/clang++-mp-3.9 -DENABLE_CAIRO=0 -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc -DSLEPC_DIR=/Users/geuzaine/src/slepc -DBLAS_LAPACK_LIBRARIES=/usr/local/lib/libopenblas.a -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} ..
+    - /usr/local/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DCMAKE_C_COMPILER=/opt/local/bin/clang-mp-3.9 -DCMAKE_CXX_COMPILER=/opt/local/bin/clang++-mp-3.9 -DENABLE_CAIRO=0 -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc -DSLEPC_DIR=/Users/geuzaine/src/slepc -DBLAS_LAPACK_LIBRARIES=/usr/local/lib/libopenblas.a -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_GMP=0 ${EXTRA_OPTION} ..
     - make package -j 2
     - PKG=`ls gmsh-*.[dt][ma][gr]*`
     - if [[ $PKG == *".dmg"* ]]; then scp ${PKG} ace@ace36.montefiore.ulg.ac.be:/tmp; fi

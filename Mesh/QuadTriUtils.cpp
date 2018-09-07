@@ -377,12 +377,17 @@ CategorizedSourceElements::CategorizedSourceElements(GRegion *gr)
       }
 
       // Place element vector indices into appropriate set
-      if(!bnd_count)
-        (!t) ? internal_tri.insert(i) : internal_quad.insert(i);
-      else if(bnd_count == 1 || bnd_count == 2 || (bnd_count == 3 && t))
-        (!t) ? other_bnd_tri.insert(i) : other_bnd_quad.insert(i);
+      if(!bnd_count) {
+        if (!t) internal_tri.insert(i);
+        else internal_quad.insert(i);
+      }
+      else if(bnd_count == 1 || bnd_count == 2 || (bnd_count == 3 && t)) {
+        if (!t) other_bnd_tri.insert(i);
+        else other_bnd_quad.insert(i);
+      }
       else if((bnd_count == 3 && !t) || bnd_count == 4) {
-        (!t) ? three_bnd_pt_tri.insert(i) : four_bnd_pt_quad.insert(i);
+        if (!t) three_bnd_pt_tri.insert(i);
+        else four_bnd_pt_quad.insert(i);
       }
 
       // if a one boundary point quad, record it in one_pt_quads set

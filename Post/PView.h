@@ -134,6 +134,9 @@ public:
   // IO write routine
   bool write(const std::string &fileName, int format, bool append = false);
 
+  // send to ONELAB server
+  void sendToServer(const std::string &name);
+
   // Routines for export of adapted views to pvtu file format for parallel
   // visualization with paraview
   bool writeAdapt(const std::string &fileName, int useDefaultName,

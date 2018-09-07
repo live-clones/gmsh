@@ -280,6 +280,40 @@ GMSH_API void gmshModelGetNormal(const int tag,
                                  double ** normals, size_t * normals_n,
                                  int * ierr);
 
+/* Set the visibility of the geometrical entities `dimTags' to `value'. Apply
+ * the visibility setting recursively if `recursive' is true. */
+GMSH_API void gmshModelSetVisibility(int * dimTags, size_t dimTags_n,
+                                     const int value,
+                                     const int recursive,
+                                     int * ierr);
+
+/* Get the visibility of the geometrical entity of dimension `dim' and tag
+ * `tag'. */
+GMSH_API void gmshModelGetVisibility(const int dim,
+                                     const int tag,
+                                     int * value,
+                                     int * ierr);
+
+/* Set the color of the geometrical entities `dimTags' to the RGBA value (`r',
+ * `g', `b', `a'), where `r', `g', `b' and `a' should be integers between 0
+ * and 255. Apply the color setting recursively if `recursive' is true. */
+GMSH_API void gmshModelSetColor(int * dimTags, size_t dimTags_n,
+                                const int r,
+                                const int g,
+                                const int b,
+                                const int a,
+                                const int recursive,
+                                int * ierr);
+
+/* Get the color of the geometrical entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelGetColor(const int dim,
+                                const int tag,
+                                int * r,
+                                int * g,
+                                int * b,
+                                int * a,
+                                int * ierr);
+
 /* Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3). */
 GMSH_API void gmshModelMeshGenerate(const int dim,
                                     int * ierr);

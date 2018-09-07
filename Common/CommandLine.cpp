@@ -87,7 +87,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-part_split", "Save mesh partitions in separate files"));
   s.push_back(mp("-part_[no_]topo", "Create the partition topology"));
   s.push_back(mp("-part_[no_]ghosts", "Create ghost cells"));
-  s.push_back(mp("-part_[no_]physicals", "Create phsyical groups for partitions"));
+  s.push_back(mp("-part_[no_]physicals", "Create physical groups for partitions"));
   s.push_back(mp("-part_topo_pro", "Save the partition topology .pro file"));
   s.push_back(mp("-preserve_numbering_msh2", "Preserve element numbering in MSH2 format"));
   s.push_back(mp("-save_all", "Save all elements (discard physical group definitions)"));

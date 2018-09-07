@@ -21,13 +21,48 @@ extern "C" {
 #include "hxt_opt.h"
 }
 
-static HXTStatus Gmsh2Hxt(GRegion *gr, HXTMesh *m,
+
+// This is a list of regions that are simply connected
+
+static HXTStatus getAllFacesOfAllRegions (std::vector<GRegion *> &regions, HXTMesh *m, std::vector<GFace *> &allFaces){
+  std::set<GFace *, GEntityLessThan> allFacesSet;
+  m->brep.numVolumes = regions.size();
+  HXT_CHECK(
+    hxtAlignedMalloc(&m->brep.numSurfacesPerVolume, m->brep.numVolumes
+		     * sizeof(uint32_t)));
+  uint32_t to_alloc = 0;
+  for(unsigned int i = 0; i < regions.size(); i++) {
+    std::vector<GFace *> const &f = regions[i]->faces();
+    std::vector<GFace *> const &f_e = regions[i]->embeddedFaces();
+    m->brep.numSurfacesPerVolume[i] = f.size() + f_e.size();
+    to_alloc += m->brep.numSurfacesPerVolume[i];
+    allFacesSet.insert(f.begin(), f.end());
+    allFacesSet.insert(f_e.begin(), f_e.end());
+  }
+  allFaces.insert (allFaces.begin(), allFacesSet.begin(), allFacesSet.end());
+  HXT_CHECK(hxtAlignedMalloc(&m->brep.surfacesPerVolume, to_alloc* sizeof(uint32_t)));
+  
+  uint32_t counter = 0;
+  for(unsigned int i = 0; i < regions.size(); i++) {
+    std::vector<GFace *> const &f = regions[i]->faces();
+    std::vector<GFace *> const &f_e = regions[i]->embeddedFaces();
+    for (size_t j=0;j<f.size();j++)m->brep.surfacesPerVolume[counter++]=f[i]->tag();
+    for (size_t j=0;j<f_e.size();j++)m->brep.surfacesPerVolume[counter++]=f_e[i]->tag();
+  }
+  return HXT_STATUS_OK;
+}
+				    
+
+
+static HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
                           std::map<MVertex *, int> &v2c,
                           std::vector<MVertex *> &c2v)
 {
   std::set<MVertex *> all;
-  std::vector<GFace *> faces = gr->faces();
-
+  std::vector<GFace *> faces;
+  
+  HXT_CHECK(getAllFacesOfAllRegions (regions, m, faces));
+  
   uint64_t ntri = 0;
 
   for(size_t j = 0; j < faces.size(); j++) {
@@ -79,7 +114,7 @@ static HXTStatus Gmsh2Hxt(GRegion *gr, HXTMesh *m,
   return HXT_STATUS_OK;
 }
 
-static HXTStatus _meshGRegionHxt(GRegion *gr)
+static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 {
   int nthreads = CTX::instance()->mesh.maxNumThreads3D;
   int optimize = 1;
@@ -96,7 +131,7 @@ static HXTStatus _meshGRegionHxt(GRegion *gr)
 
   std::map<MVertex *, int> v2c;
   std::vector<MVertex *> c2v;
-  Gmsh2Hxt(gr, mesh, v2c, c2v);
+  Gmsh2Hxt(regions, mesh, v2c, c2v);
 
   HXT_CHECK(hxtTetMesh3d(mesh, nthreads, reproducible, verbosity, stat, refine,
                          optimize, threshold, hxt_boundary_recovery));
@@ -106,16 +141,16 @@ static HXTStatus _meshGRegionHxt(GRegion *gr)
   return HXT_STATUS_OK;
 }
 
-int meshGRegionHxt(GRegion *gr)
+int meshGRegionHxt(std::vector<GRegion *> &regions)
 {
-  HXTStatus status = _meshGRegionHxt(gr);
+  HXTStatus status = _meshGRegionHxt(regions);
   if(status == HXT_STATUS_OK) return 0;
   return 1;
 }
 
 #else
 
-int meshGRegionHxt(GRegion *gr)
+int meshGRegionHxt(std::vector<GRegion *> &regions)
 {
   Msg::Error("Gmsh should be compile with Hxt to enable that option");
   return -1;

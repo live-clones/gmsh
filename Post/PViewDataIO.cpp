@@ -283,3 +283,8 @@ void PViewData::getListPointers(int N[24], std::vector<double> *V[24])
 {
   Msg::Error("getListPointers not avalailable for this view data type");
 }
+
+void PViewData::sendToServer(const std::string &name)
+{
+  Msg::Error("sendToServer not avalailable for this view data type");
+}

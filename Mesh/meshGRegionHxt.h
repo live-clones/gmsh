@@ -6,8 +6,10 @@
 #ifndef _MESH_GREGION_HXT_
 #define _MESH_GREGION_HXT_
 
+#include <vector>
+
 class GRegion;
 
-int meshGRegionHxt(GRegion *gr);
+int meshGRegionHxt(std::vector<GRegion *> &regions);
 
 #endif

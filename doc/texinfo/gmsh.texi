@@ -3150,7 +3150,7 @@ The client-server API for the solver interface is defined in the
 header. See
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/solvers/c++/solver.cpp,utils/solvers/c++/solver.cpp}
 for a simple example on how to use the ONELAB programming interface. See
-the sources of GetDP (@url{http://getdp.info} for a more comprehensive
+the sources of GetDP (@url{http://getdp.info}) for a more comprehensive
 example.
 
 @menu
@@ -3334,9 +3334,13 @@ Sets an option for a given plugin. See @ref{Post-processing plugins}, for a
 list of default plugins and @ref{t9.geo}, for some examples.
 
 @item Save View[@var{expression}] @var{char-expression};
-Saves the the @var{expression}-th post-processing view in a file named
+Saves the @var{expression}-th post-processing view in a file named
 @var{char-expression}. If the path in @var{char-expression} is not absolute,
 @var{char-expression} is appended to the path of the current file.
+
+@item SendToServer View[@var{expression}] @var{char-expression};
+Sends the @var{expression}-th post-processing view to the ONELAB server,
+with parameter name @var{char-expression}.
 
 @item View "@var{string}" @{ @var{string} < ( @var{expression-list} ) > @{ @var{expression-list} @}; @dots{} @};
 Creates a new post-processing view, named @code{"@var{string}"}.  This
@@ -5516,6 +5520,18 @@ create new parts or appy boolean operators.
 
 Define common geometrical objects and options in separate files or using
 @code{Macro}, reusable in all your problem definition structures.
+
+@item Some files take much more time to load with Gmsh 4 compared to Gmsh 3: what's happening?
+
+In Gmsh 4, some operations (@code{Color}, @code{Show}, @code{Hide},
+@code{BoundingBox}, @code{Boundary}, @code{PointsOf}, @code{Periodic},
+@code{In} embedding constraints, ..) are now applied directly on the
+internal Gmsh model, instead of being handled at the level of the CAD
+kernel. This implies a synchronization between the CAD kernel and the
+Gmsh model. To minimize the number of synchronizations (which can become
+costly for large models), you should always create your geometry first;
+and use these commands once the geometry has been created.
+
 @end enumerate
 
 @c -------------------------------------------------------------------------
