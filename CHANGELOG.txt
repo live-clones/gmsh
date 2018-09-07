@@ -1,5 +1,5 @@
-4.0.1 (September 7, 2018): renumber mesh nodes/elements by default; small bug
-fixes.
+4.0.1 (September 7, 2018): renumber mesh nodes/elements by default; new
+SendToServer command for nodal views; small bug fixes.
 
 4.0.0 (August 22, 2018): new C++, C, Python and Julia API; new MSH4 format; new
 mesh partitioning code based on Metis 5; new 3D tetrahedralization algorithm as
