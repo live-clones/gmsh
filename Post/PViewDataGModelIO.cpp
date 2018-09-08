@@ -1071,5 +1071,5 @@ void PViewDataGModel::sendToServer(const std::string &name)
     }
   }
 
-  Msg::SetOnelabNumber(name, exp);
+  Msg::SetOnelabNumber(name, exp, false);
 }
