@@ -855,9 +855,9 @@ void bezierBasis::_construct()
       generateBez2LagMatrix(oneDExponents, oneDPoints, order, 0);
     fullMatrix<double> oneDMatrixLag2Bez;
     oneDMatrixBez2Lag.invert(oneDMatrixLag2Bez);
-    fullMatrix<double> b(oneDMatrixLag2Bez);
-    b.reshape(1, oneDMatrixLag2Bez.size1() * oneDMatrixLag2Bez.size2());
-    b.print("oneDMatrixLag2Bez");
+//    fullMatrix<double> b(oneDMatrixLag2Bez);
+//    b.reshape(1, oneDMatrixLag2Bez.size1() * oneDMatrixLag2Bez.size2());
+//    b.print("oneDMatrixLag2Bez");
     matrixLag2Bez3.resize(matrixLag2Bez2.size1(), matrixLag2Bez2.size2());
     matrixLag2Bez4.resize(matrixLag2Bez2.size1(), matrixLag2Bez2.size2());
 
@@ -1581,6 +1581,7 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
     for(int k = 0; k < order + 1; ++k) {
       convertLag2Bez<double>(lagCoeffOrdered2, order, k, order + 1, x, prox2);
     }
+    lagCoeffOrdered2 = prox2;
     for(int k = 0; k < order + 1; ++k) {
       convertLag2Bez<double>(lagCoeffOrdered2, order, k * (order + 1), 1, x,
                              prox2);
