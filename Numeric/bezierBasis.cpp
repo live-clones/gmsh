@@ -1543,17 +1543,15 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
   int sz = lagCoeff.size();
   int order = data.spaceOrder();
   fullMatrix<double> lagCoeffOrdered(sz, 1);
+  const fullMatrix<double> &exp = _basis->getCoeffOrdering();
   int k = 0;
   for(int j = 0; j < order + 1; ++j) {
     for(int i = 0; i < order + 1; ++i) {
       int K = 0;
-      while(K < _basis->_exponents.size1() &&
-            (_basis->_exponents(K, 0) - .5 >= i ||
-             _basis->_exponents(K, 0) + .5 <= i ||
-             _basis->_exponents(K, 1) - .5 >= j ||
-             _basis->_exponents(K, 1) + .5 <= j))
+      while(K < exp.size1() && (exp(K, 0) - .5 >= i || exp(K, 0) + .5 <= i ||
+                                exp(K, 1) - .5 >= j || exp(K, 1) + .5 <= j))
         ++K;
-      if(K == _basis->_exponents.size1()) {
+      if(K == exp.size1()) {
         Msg::Error("ARRAGRGRAG");
       }
       lagCoeffOrdered(k, 0) = lagCoeff(K);
@@ -1571,9 +1569,6 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
     fullVector<int> permutation;
     lejaOrder(x, permutation);
     fullMatrix<double> lagCoeffOrdered2(sz, 1);
-    lagCoeffOrdered2.setAll(.12345678);
-    x.print("x");
-    permutation.print("permutation");
     for(int i = 0; i < order + 1; ++i) {
       int I = permutation(i);
       for(int j = 0; j < order + 1; ++j) {
@@ -1583,22 +1578,13 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
       }
     }
 
-    lagCoeffOrdered.print("lagCoeffOrdered");
-    lagCoeffOrdered2.print("lagCoeffOrdered2");
-    prox2.print("prox2");
-
     for(int k = 0; k < order + 1; ++k) {
       convertLag2Bez<double>(lagCoeffOrdered2, order, k, order + 1, x, prox2);
     }
-    prox2.print("prox2");
-    lagCoeffOrdered2.print("lagCoeffOrdered2");
-    lagCoeffOrdered2 = prox2;
-    lagCoeffOrdered2.print("lagCoeffOrdered2");
     for(int k = 0; k < order + 1; ++k) {
       convertLag2Bez<double>(lagCoeffOrdered2, order, k * (order + 1), 1, x,
                              prox2);
     }
-    prox2.print("prox2");
   }
   else {
     for(int k = 0; k < order + 1; ++k) {

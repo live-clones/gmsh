@@ -26,12 +26,10 @@ private:
   bezierBasisRaiser *_raiser;
 
   friend class bezierBasisRaiser;
-
+  fullMatrix<double> _exponents;
   fullMatrix<double> _exponents2;
 
 public:
-  fullMatrix<double> _exponents;
-
   fullMatrix<double> matrixLag2Bez;
   fullMatrix<double> matrixBez2Lag;
   fullMatrix<double> matrixLag2Bez2;
@@ -55,6 +53,9 @@ public:
   inline int getNumSubNodes() const { return subDivisor.size1(); }
   inline FuncSpaceData getFuncSpaceData() const { return _data; }
   bezierBasisRaiser *getRaiser() const;
+
+  // The exponent matrix gives the ordering of the coefficients
+  inline const fullMatrix<double>& getCoeffOrdering() const { return _exponents; }
 
   // Evaluate Bezier functions at the point (u, v, w)
   void f(double u, double v, double w, double *sf) const;
