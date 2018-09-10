@@ -248,6 +248,22 @@ public:
   }
 
   /**
+     @param scalar A pointer to an array of scalar;
+     @param r The number of rows.
+
+     This fullVector becomes a proxy of the array.
+
+     Previous data are lost.
+  */
+  void setAsProxy(scalar *data, int r)
+  {
+    if(_own_data && _data) delete[] _data;
+    _own_data = false;
+    _r = r;
+    _data = data;
+  }
+
+  /**
      @param s A scalar.
 
      Multiplies all the data of this fullVector by s.

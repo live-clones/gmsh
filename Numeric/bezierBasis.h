@@ -276,6 +276,15 @@ public:
   inline double *getDataPtr() { return _data; }
   inline const bezierBasis *getBezierBasis() const { return _basis; }
 
+  inline void setMatrixAsProxy(fullMatrix<double> &m) const
+  {
+    m.setAsProxy(_data, _r, _c);
+  }
+  inline void setVectorAsProxy(fullVector<double> &v) const
+  {
+    v.setAsProxy(_data, _r);
+  }
+
   void subdivide(std::vector<bezierCoeff *> &subCoeff) const;
 
   inline double operator()(int i) const { return _data[i]; }
