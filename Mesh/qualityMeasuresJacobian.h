@@ -26,6 +26,7 @@ namespace jacobianBasedQuality {
                        bool reversedOk = false,
                        const fullMatrix<double> *normals = NULL);
   void sampleIGEMeasure(MElement *el, int order, double &min, double &max);
+  void sampleICNMeasure(MElement *el, int order, double &min, double &max);
   void sampleJacobian(MElement *el, int order, fullVector<double> &jac,
                       const fullMatrix<double> *normals = NULL);
   void sampleIGEMeasure(MElement *el, int order, fullVector<double> &ige);
@@ -124,12 +125,16 @@ namespace jacobianBasedQuality {
   private:
     const fullVector<double> _coeffsJacDet;
     const fullMatrix<double> _coeffsJacMat;
+    const bezierCoeff *_coeffDet2;
+    const bezierCoeff *_coeffMat2;
     const bezierBasis *_bfsDet, *_bfsMat;
+    const int _dim;
 
   public:
     _coefDataICN(fullVector<double> &det, fullMatrix<double> &metric,
                   const bezierBasis *bfsDet, const bezierBasis *bfsMet,
-                  int depth);
+                  int depth, int dim, const bezierCoeff *det2 = NULL,
+                  const bezierCoeff *mat2 = NULL);
     ~_coefDataICN() {}
 
     bool boundsOk(double minL, double maxL) const;
@@ -138,8 +143,10 @@ namespace jacobianBasedQuality {
     int getNumMeasure() const { return 4; } // fordebug
 
   private:
-    void _computeAtCorner(double &min, double &max) const;
+    void _computeAtCorner(double &min, double &max, double &min2,
+                          double &max2) const;
     double _computeLowerBound() const;
+    double _computeLowerBound2() const;
   };
 
   double _computeBoundRational(const fullVector<double> &numerator,

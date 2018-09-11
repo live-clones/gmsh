@@ -1668,6 +1668,27 @@ void bezierCoeff::updateDataPtr(long diff)
     _data += diff;
 }
 
+void bezierCoeff::getCornerCoeffs(fullVector<double> &v) const
+{
+  const int n = getNumCornerCoeff();
+  v.resize(n);
+  for(int i = 0; i < n; ++i) {
+    v(i) = getCornerCoeff(i);
+  }
+}
+
+void bezierCoeff::getCornerCoeffs(fullMatrix<double> &m) const
+{
+  const int n = getNumCornerCoeff();
+  m.resize(n, _c);
+  for(int i = 0; i < n; ++i) {
+    const int k = getIdxCornerCoeff(i);
+    for(int j = 0; j < _c; ++j) {
+      m(i, j) = _data[k + _r * j];
+    }
+  }
+}
+
 void bezierCoeff::subdivide(std::vector<bezierCoeff *> &subCoeff) const
 {
   if(subCoeff.size()) {

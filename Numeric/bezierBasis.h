@@ -271,8 +271,8 @@ public:
   {
     return _data[getIdxCornerCoeff(k) + _r * j];
   }
-  //  double getCornerCoeff(fullVector<double> &v) const { return
-  //  _data[getIdxCornerCoeff(i)]; }
+  void getCornerCoeffs(fullVector<double> &) const;
+  void getCornerCoeffs(fullMatrix<double> &) const;
   inline double *getDataPtr() { return _data; }
   inline const bezierBasis *getBezierBasis() const { return _basis; }
 
