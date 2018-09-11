@@ -101,92 +101,6 @@ static inline void _computeCoeffLengthVectors(const fullMatrix<double> &mat,
     }
   }
 }
-static inline void computeCoeffLengthVectorsCorner_(const bezierCoeff &mat,
-                                                    fullMatrix<double> &coeff,
-                                                    int type, int numCorner)
-{
-  const int &sz1 = numCorner;
-
-  switch(type) {
-  case TYPE_QUA: coeff.resize(sz1, 2); break;
-  case TYPE_TRI: coeff.resize(sz1, 3); break;
-  case TYPE_HEX: coeff.resize(sz1, 3); break;
-  case TYPE_PRI: coeff.resize(sz1, 4); break;
-  case TYPE_TET: coeff.resize(sz1, 6); break;
-  case TYPE_PYR: coeff.resize(sz1, 6); break;
-  default:
-    Msg::Error("Unkown type for IGE computation");
-    coeff.resize(0, 0);
-    return;
-  }
-
-  if(type != TYPE_PYR) {
-    for(int i = 0; i < sz1; i++) {
-      int k = mat.getIdxCornerCoeff(i);
-      coeff(i, 0) = std::sqrt(pow_int(mat(k, 0), 2) + pow_int(mat(k, 1), 2) +
-                              pow_int(mat(k, 2), 2));
-      coeff(i, 1) = std::sqrt(pow_int(mat(k, 3), 2) + pow_int(mat(k, 4), 2) +
-                              pow_int(mat(k, 5), 2));
-    }
-    if(type == TYPE_TRI) {
-      for(int i = 0; i < sz1; i++) {
-        int k = mat.getIdxCornerCoeff(i);
-        coeff(i, 2) = std::sqrt(pow_int(mat(k, 3) - mat(k, 0), 2) +
-                                pow_int(mat(k, 4) - mat(k, 1), 2) +
-                                pow_int(mat(k, 5) - mat(k, 2), 2));
-      }
-    }
-    else if(type != TYPE_QUA) { // if 3D
-      for(int i = 0; i < sz1; i++) {
-        int k = mat.getIdxCornerCoeff(i);
-        coeff(i, 2) = std::sqrt(pow_int(mat(k, 6), 2) + pow_int(mat(k, 7), 2) +
-                                pow_int(mat(k, 8), 2));
-      }
-    }
-    if(type == TYPE_TET || type == TYPE_PRI) {
-      for(int i = 0; i < sz1; i++) {
-        int k = mat.getIdxCornerCoeff(i);
-        coeff(i, 3) = std::sqrt(pow_int(mat(k, 3) - mat(k, 0), 2) +
-                                pow_int(mat(k, 4) - mat(k, 1), 2) +
-                                pow_int(mat(k, 5) - mat(k, 2), 2));
-      }
-    }
-    if(type == TYPE_TET) {
-      for(int i = 0; i < sz1; i++) {
-        int k = mat.getIdxCornerCoeff(i);
-        coeff(i, 4) = std::sqrt(pow_int(mat(k, 6) - mat(k, 0), 2) +
-                                pow_int(mat(k, 7) - mat(k, 1), 2) +
-                                pow_int(mat(k, 8) - mat(k, 2), 2));
-        coeff(i, 5) = std::sqrt(pow_int(mat(k, 6) - mat(k, 3), 2) +
-                                pow_int(mat(k, 7) - mat(k, 4), 2) +
-                                pow_int(mat(k, 8) - mat(k, 5), 2));
-      }
-    }
-  }
-  else {
-    for(int i = 0; i < sz1; i++) {
-      int k = mat.getIdxCornerCoeff(i);
-      coeff(i, 0) =
-        std::sqrt(pow_int(2 * mat(k, 0), 2) + pow_int(2 * mat(k, 1), 2) +
-                  pow_int(2 * mat(k, 2), 2));
-      coeff(i, 1) =
-        std::sqrt(pow_int(2 * mat(k, 3), 2) + pow_int(2 * mat(k, 4), 2) +
-                  pow_int(2 * mat(k, 5), 2));
-      coeff(i, 2) = std::sqrt(pow_int(mat(k, 6) + mat(k, 0) + mat(k, 3), 2) +
-                              pow_int(mat(k, 7) + mat(k, 1) + mat(k, 4), 2) +
-                              pow_int(mat(k, 8) + mat(k, 2) + mat(k, 5), 2));
-      coeff(i, 3) = std::sqrt(pow_int(mat(k, 6) - mat(k, 0) + mat(k, 3), 2) +
-                              pow_int(mat(k, 7) - mat(k, 1) + mat(k, 4), 2) +
-                              pow_int(mat(k, 8) - mat(k, 2) + mat(k, 5), 2));
-      coeff(i, 4) = std::sqrt(pow_int(mat(k, 6) - mat(k, 0) - mat(k, 3), 2) +
-                              pow_int(mat(k, 7) - mat(k, 1) - mat(k, 4), 2) +
-                              pow_int(mat(k, 8) - mat(k, 2) - mat(k, 5), 2));
-      coeff(i, 5) = std::sqrt(pow_int(mat(k, 6) + mat(k, 0) - mat(k, 3), 2) +
-                              pow_int(mat(k, 7) + mat(k, 1) - mat(k, 4), 2) +
-                              pow_int(mat(k, 8) + mat(k, 2) - mat(k, 5), 2));
-    }
-  }
-}
 
 static inline void computeIGE_(const fullVector<double> &det,
                                const fullMatrix<double> &v,
@@ -1066,18 +980,15 @@ namespace jacobianBasedQuality {
     //    v.print("v");
     //    ige.print("ige");
 
-    fullMatrix<double> v2, m2(_coeffMat2->getNumCornerCoeff(), _coeffMat2->getNumColumns());
-    computeCoeffLengthVectorsCorner_(*_coeffMat2, v2, _type,
-                                     _bfsDet->getNumLagCoeff());
-    fullVector<double> ige2;
-    fullVector<double> d2(_coeffDet2->getNumCornerCoeff());
-    for(int i = 0; i < _coeffDet2->getNumCornerCoeff(); ++i) {
-      d2(i) = _coeffDet2->getCornerCoeff(i);
-      //      for(int j = 0; j < _coeffMat2->getNumColumns(); ++j) {
-      //        m2(i, j) = _coeffMat2->getCornerCoeff(i, j);
-      //      }
-    }
-    computeIGE_(d2, v2, ige2, _type);
+    //
+    fullVector<double> det, ige2;
+    fullMatrix<double> mat;
+    _coeffDet2->getCornerCoeffs(det);
+    _coeffMat2->getCornerCoeffs(mat);
+
+    fullMatrix<double> v2;
+    computeCoeffLengthVectors_(mat, v2, _type);
+    computeIGE_(det, v2, ige2, _type);
 
     //    fullVector<double> det2(_coeffDet2->getNumCoeff());
     //    for(int k = 0; k < det2.size(); ++k) {
@@ -1085,8 +996,8 @@ namespace jacobianBasedQuality {
     //    }
 
     //    det2.print("_coeffDet2");
-    //    d2.print("d2");
-    //    m2.print("m2");
+    //    det.print("det");
+    //    mat.print("mat");
     //    v2.print("v2");
     //    ige2.print("ige2");
     //    std::cout << std::endl;
