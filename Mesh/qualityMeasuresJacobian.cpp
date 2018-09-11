@@ -21,9 +21,9 @@ static const double cTri = 2 / std::sqrt(3);
 static const double cTet = std::sqrt(2);
 static const double cPyr = 4 * std::sqrt(2);
 
-static inline void _computeCoeffLengthVectors(const fullMatrix<double> &mat,
-                                              fullMatrix<double> &coeff,
-                                              int type, int numCoeff = -1)
+static void _computeCoeffLengthVectors(const fullMatrix<double> &mat,
+                                       fullMatrix<double> &coeff,
+                                       int type, int numCoeff = -1)
 {
   int sz1 = numCoeff > -1 ? numCoeff : mat.size1();
 
@@ -102,9 +102,9 @@ static inline void _computeCoeffLengthVectors(const fullMatrix<double> &mat,
   }
 }
 
-static inline void computeIGE_(const fullVector<double> &det,
-                               const fullMatrix<double> &v,
-                               fullVector<double> &ige, int type)
+static void _computeIGE(const fullVector<double> &det,
+                        const fullMatrix<double> &v,
+                        fullVector<double> &ige, int type)
 {
   int sz = std::min(det.size(), v.size1());
   ige.resize(sz);
@@ -164,9 +164,9 @@ static inline void computeIGE_(const fullVector<double> &det,
   }
 }
 
-static inline void computeICN_(const fullVector<double> &det,
-                               const fullMatrix<double> &grad,
-                               fullVector<double> &icn, int dim)
+static void _computeICN(const fullVector<double> &det,
+                        const fullMatrix<double> &grad,
+                        fullVector<double> &icn, int dim)
 {
   int sz = std::min(det.size(), grad.size1());
   icn.resize(sz);
@@ -180,6 +180,67 @@ static inline void computeICN_(const fullVector<double> &det,
       icn(i) = 2 * det(i) / p;
     else // 3D
       icn(i) = 3 * std::pow(det(i), 2 / 3.) / p;
+  }
+}
+
+static void _getQualityFunctionSpace(MElement *el,
+                                     FuncSpaceData &fsGrad,
+                                     FuncSpaceData &fsDet,
+                                     int orderSamplingPoints = 0)
+{
+  const int type = el->getType();
+  const bool serendipFalse = false;
+
+  if (orderSamplingPoints < 1) { // For computing bounds
+    const int order = el->getPolynomialOrder();
+    const int jacOrder = order * el->getDim();
+
+    switch(type) {
+    case TYPE_TRI:
+      fsGrad = FuncSpaceData(el, order - 1, &serendipFalse);
+      fsDet = FuncSpaceData(el, jacOrder - 2, &serendipFalse);
+      break;
+    case TYPE_TET:
+      fsGrad = FuncSpaceData(el, order - 1, &serendipFalse);
+      fsDet = FuncSpaceData(el, jacOrder - 3, &serendipFalse);
+      break;
+    case TYPE_QUA:
+    case TYPE_HEX:
+    case TYPE_PRI:
+      fsGrad = FuncSpaceData(el, order, &serendipFalse);
+      fsDet = FuncSpaceData(el, jacOrder, &serendipFalse);
+      break;
+    case TYPE_PYR:
+      fsGrad = FuncSpaceData(el, false, order, order - 1, &serendipFalse);
+      fsDet =
+        FuncSpaceData(el, false, jacOrder, jacOrder - 3, &serendipFalse);
+      break;
+    default:
+      Msg::Error("Quality measure not implemented for type of element %d",
+                 el->getType());
+      fsGrad = FuncSpaceData();
+      fsDet = FuncSpaceData();
+    }
+  }
+  else {
+    const int type = el->getType();
+    switch(type) {
+    case TYPE_TRI:
+    case TYPE_TET:
+    case TYPE_QUA:
+    case TYPE_HEX:
+    case TYPE_PRI:
+      fsGrad = FuncSpaceData(el, orderSamplingPoints, &serendipFalse);
+      fsDet = FuncSpaceData(el, orderSamplingPoints, &serendipFalse);
+      break;
+    case TYPE_PYR:
+      fsGrad = FuncSpaceData(el, true, 1, orderSamplingPoints - 1, &serendipFalse);
+      fsDet = FuncSpaceData(el, true, 1, orderSamplingPoints - 1, &serendipFalse);
+      break;
+    default:
+      Msg::Error("IGE not implemented for type of element %d", el->getType());
+      return;
+    }
   }
 }
 
@@ -372,43 +433,10 @@ namespace jacobianBasedQuality {
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
     el->getNodesCoord(nodesXYZ);
 
-    const JacobianBasis *jacBasis;
-    const GradientBasis *gradBasis;
-
-    const int type = el->getType();
-    const int order = el->getPolynomialOrder();
-    const int jacOrder = order * el->getDim();
-    const bool serendipFalse = false;
-
     FuncSpaceData jacMatSpace, jacDetSpace;
-
-    switch(type) {
-    case TYPE_TRI:
-      jacMatSpace = FuncSpaceData(el, order - 1, &serendipFalse);
-      jacDetSpace = FuncSpaceData(el, jacOrder - 2, &serendipFalse);
-      break;
-    case TYPE_TET:
-      jacMatSpace = FuncSpaceData(el, order - 1, &serendipFalse);
-      jacDetSpace = FuncSpaceData(el, jacOrder - 3, &serendipFalse);
-      break;
-    case TYPE_QUA:
-    case TYPE_HEX:
-    case TYPE_PRI:
-      jacMatSpace = FuncSpaceData(el, order, &serendipFalse);
-      jacDetSpace = FuncSpaceData(el, jacOrder, &serendipFalse);
-      break;
-    case TYPE_PYR:
-      jacMatSpace = FuncSpaceData(el, false, order, order - 1, &serendipFalse);
-      jacDetSpace =
-        FuncSpaceData(el, false, jacOrder, jacOrder - 3, &serendipFalse);
-      break;
-    default:
-      Msg::Error("IGE measure not implemented for type of element %d",
-                 el->getType());
-      return -1;
-    }
-    gradBasis = BasisFactory::getGradientBasis(jacMatSpace);
-    jacBasis = BasisFactory::getJacobianBasis(jacDetSpace);
+    _getQualityFunctionSpace(el, jacMatSpace, jacDetSpace);
+    const JacobianBasis *jacBasis = BasisFactory::getJacobianBasis(jacDetSpace);
+    const GradientBasis *gradBasis = BasisFactory::getGradientBasis(jacMatSpace);
 
     fullVector<double> coeffDetBez;
     fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
@@ -474,42 +502,11 @@ namespace jacobianBasedQuality {
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
     el->getNodesCoord(nodesXYZ);
 
-    const JacobianBasis *jacBasis;
-    const GradientBasis *gradBasis;
-
-    const int type = el->getType();
-    const int order = el->getPolynomialOrder();
-    const int jacOrder = order * el->getDim();
-    const bool serendipFalse = false;
 
     FuncSpaceData jacMatSpace, jacDetSpace;
-
-    switch(type) {
-    case TYPE_TRI:
-      jacMatSpace = FuncSpaceData(el, order - 1, &serendipFalse);
-      jacDetSpace = FuncSpaceData(el, jacOrder - 2, &serendipFalse);
-      break;
-    case TYPE_TET:
-      jacMatSpace = FuncSpaceData(el, order - 1, &serendipFalse);
-      jacDetSpace = FuncSpaceData(el, jacOrder - 3, &serendipFalse);
-      break;
-    case TYPE_QUA:
-    case TYPE_HEX:
-    case TYPE_PRI:
-      jacMatSpace = FuncSpaceData(el, order, &serendipFalse);
-      jacDetSpace = FuncSpaceData(el, jacOrder, &serendipFalse);
-      break;
-    case TYPE_PYR:
-      jacMatSpace = FuncSpaceData(el, false, order, order - 1, &serendipFalse);
-      jacDetSpace =
-        FuncSpaceData(el, false, jacOrder, jacOrder - 3, &serendipFalse);
-      break;
-    default:
-      Msg::Error("ICN not implemented for type of element %d", el->getType());
-      return -1;
-    }
-    gradBasis = BasisFactory::getGradientBasis(jacMatSpace);
-    jacBasis = BasisFactory::getJacobianBasis(jacDetSpace);
+    _getQualityFunctionSpace(el, jacMatSpace, jacDetSpace);
+    const JacobianBasis *jacBasis = BasisFactory::getJacobianBasis(jacDetSpace);
+    const GradientBasis *gradBasis = BasisFactory::getGradientBasis(jacMatSpace);
 
     fullVector<double> coeffDetBez;
     fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
@@ -599,30 +596,10 @@ namespace jacobianBasedQuality {
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
     el->getNodesCoord(nodesXYZ);
 
-    const bool serendipFalse = false;
     FuncSpaceData jacMatSpace, jacDetSpace;
+    _getQualityFunctionSpace(el, jacMatSpace, jacDetSpace, deg);
 
-    const int type = el->getType();
-    switch(type) {
-    case TYPE_TRI:
-    case TYPE_TET:
-    case TYPE_QUA:
-    case TYPE_HEX:
-    case TYPE_PRI:
-      jacMatSpace = FuncSpaceData(el, deg, &serendipFalse);
-      jacDetSpace = FuncSpaceData(el, deg, &serendipFalse);
-      break;
-    case TYPE_PYR:
-      jacMatSpace = FuncSpaceData(el, true, 1, deg - 1, &serendipFalse);
-      jacDetSpace = FuncSpaceData(el, true, 1, deg - 1, &serendipFalse);
-      break;
-    default:
-      Msg::Error("IGE not implemented for type of element %d", el->getType());
-      return;
-    }
-
-    const GradientBasis *gradBasis =
-      BasisFactory::getGradientBasis(jacMatSpace);
+    const GradientBasis *gradBasis = BasisFactory::getGradientBasis(jacMatSpace);
     const JacobianBasis *jacBasis = BasisFactory::getJacobianBasis(jacDetSpace);
 
     fullVector<double> determinant(jacBasis->getNumJacNodes());
@@ -633,8 +610,9 @@ namespace jacobianBasedQuality {
     if(el->getDim() == 2) gradients.resize(gradients.size1(), 6, false);
 
     fullMatrix<double> v;
+    const int type = el->getType();
     _computeCoeffLengthVectors(gradients, v, type);
-    computeIGE_(determinant, v, ige, type);
+    _computeIGE(determinant, v, ige, type);
   }
 
   void sampleICNMeasure(MElement *el, int deg, fullVector<double> &icn)
@@ -642,27 +620,8 @@ namespace jacobianBasedQuality {
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
     el->getNodesCoord(nodesXYZ);
 
-    const bool serendipFalse = false;
     FuncSpaceData jacMatSpace, jacDetSpace;
-
-    const int type = el->getType();
-    switch(type) {
-    case TYPE_TRI:
-    case TYPE_TET:
-    case TYPE_QUA:
-    case TYPE_HEX:
-    case TYPE_PRI:
-      jacMatSpace = FuncSpaceData(el, deg, &serendipFalse);
-      jacDetSpace = FuncSpaceData(el, deg, &serendipFalse);
-      break;
-    case TYPE_PYR:
-      jacMatSpace = FuncSpaceData(el, true, 1, deg - 1, &serendipFalse);
-      jacDetSpace = FuncSpaceData(el, true, 1, deg - 1, &serendipFalse);
-      break;
-    default:
-      Msg::Error("IGE not implemented for type of element %d", el->getType());
-      return;
-    }
+    _getQualityFunctionSpace(el, jacMatSpace, jacDetSpace, deg);
 
     const GradientBasis *gradBasis = BasisFactory::getGradientBasis(jacMatSpace);
     const JacobianBasis *jacBasis = BasisFactory::getJacobianBasis(jacDetSpace);
@@ -673,7 +632,7 @@ namespace jacobianBasedQuality {
     fullMatrix<double> gradients(gradBasis->getNumSamplingPoints(), 9);
     gradBasis->getAllGradientsFromNodes(nodesXYZ, gradients);
 
-    computeICN_(determinant, gradients, icn, el->getDim());
+    _computeICN(determinant, gradients, icn, el->getDim());
   }
 
   // Virtual class _coefData
@@ -761,8 +720,8 @@ namespace jacobianBasedQuality {
                                const bezierCoeff *det2, const bezierCoeff *mat2)
     : _coefData(depth), _coeffsJacDet(det.getDataPtr(), det.size()),
       _coeffsJacMat(mat.getDataPtr(), mat.size1(), mat.size2()),
-      _bfsDet(bfsDet), _bfsMat(bfsMat), _type(type), _coeffDet2(det2),
-      _coeffMat2(mat2)
+      _bfsDet(bfsDet), _bfsMat(bfsMat), _coeffDet2(det2), _coeffMat2(mat2),
+      _type(type)
   {
     if(!det.getOwnData() || !mat.getOwnData()) {
       Msg::Error("Cannot create an instance of _coefDataIGE from a "
@@ -836,7 +795,7 @@ namespace jacobianBasedQuality {
                                _bfsDet->getNumLagCoeff());
 
     fullVector<double> ige;
-    computeIGE_(_coeffsJacDet, v, ige, _type);
+    _computeIGE(_coeffsJacDet, v, ige, _type);
 
     min = std::numeric_limits<double>::infinity();
     max = -min;
@@ -862,8 +821,8 @@ namespace jacobianBasedQuality {
     _coeffMat2->getCornerCoeffs(mat);
 
     fullMatrix<double> v2;
-    computeCoeffLengthVectors_(mat, v2, _type);
-    computeIGE_(det, v2, ige2, _type);
+    _computeCoeffLengthVectors(mat, v2, _type);
+    _computeIGE(det, v2, ige2, _type);
 
     //    fullVector<double> det2(_coeffDet2->getNumCoeff());
     //    for(int k = 0; k < det2.size(); ++k) {
@@ -1129,8 +1088,8 @@ namespace jacobianBasedQuality {
                                const bezierCoeff *det2, const bezierCoeff *mat2)
     : _coefData(depth), _coeffsJacDet(det.getDataPtr(), det.size()),
       _coeffsJacMat(mat.getDataPtr(), mat.size1(), mat.size2()),
-      _bfsDet(bfsDet), _bfsMat(bfsMat), _dim(dim), _coeffDet2(det2),
-      _coeffMat2(mat2)
+      _bfsDet(bfsDet), _bfsMat(bfsMat), _coeffDet2(det2), _coeffMat2(mat2),
+      _dim(dim)
   {
     if(!det.getOwnData() || !mat.getOwnData()) {
       Msg::Error("Cannot create an instance of _coefDataIGE from a "
@@ -1218,7 +1177,7 @@ namespace jacobianBasedQuality {
     fullMatrix<double> mat;
     _coeffDet2->getCornerCoeffs(det);
     _coeffMat2->getCornerCoeffs(mat);
-    computeICN_(det, mat, icn, _dim);
+    _computeICN(det, mat, icn, _dim);
 
     min2 = std::numeric_limits<double>::infinity();
     max2 = -min;
