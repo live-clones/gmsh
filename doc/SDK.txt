@@ -31,7 +31,9 @@ Notes:
     Interface (ABI) as the compiler used to build this SDK.
 
     For example, the Linux SDK is currently compiled with GCC 4. You would need
-    to specify "-D_GLIBCXX_USE_CXX11_ABI=0" if you use GCC 5 or newer.
+    to specify "-D_GLIBCXX_USE_CXX11_ABI=0" if you use GCC 5 or newer. On Linux,
+    where the Gmsh library depends on the dynamic libgfortran library , you
+    would also need to install the libgfortran3 package.
 
   * If your C++ compiler does not provide the same ABI as the C++ compiler used
     to build the SDK and if there are no compatibility flags available, you can
