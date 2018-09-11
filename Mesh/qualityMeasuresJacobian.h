@@ -31,8 +31,6 @@ namespace jacobianBasedQuality {
                       const fullMatrix<double> *normals = NULL);
   void sampleIGEMeasure(MElement *el, int order, fullVector<double> &ige);
   void sampleICNMeasure(MElement *el, int order, fullVector<double> &icn);
-  double minSampledICNMeasure(MElement *el, int order); // fordebug
-  double minSampledIGEMeasure(MElement *el, int order); // fordebug
 
   class _coefData {
   protected:
