@@ -501,10 +501,8 @@ namespace jacobianBasedQuality {
     bezierCoeff::usePools(coeffDetLag.size(),
                           coeffMatLag.size1() * coeffMatLag.size2());
     std::vector<_coefData *> domains;
-    bezierCoeff *bezDet = new bezierCoeff(
-      FuncSpaceData(el, jacBasis->getJacOrder()), coeffDetLag, 0);
-    bezierCoeff *bezMat = new bezierCoeff(
-      FuncSpaceData(el, gradBasis->getPolynomialOrder()), coeffMatLag, 1);
+    bezierCoeff *bezDet = new bezierCoeff(jacDetSpace, coeffDetLag, 0);
+    bezierCoeff *bezMat = new bezierCoeff(jacMatSpace, coeffMatLag, 1);
     domains.push_back(new _coefDataIGE(
       coeffDetBez, coeffMatBez, jacBasis->getBezier(), gradBasis->getBezier(),
       0, el->getType(), bezDet, bezMat));
@@ -515,6 +513,10 @@ namespace jacobianBasedQuality {
     //        domains.size()/7, el->getNum(), el->getType(),
     //        el->getTypeForMSH());
     //  }
+
+    double mmin, mmax;
+    sampleIGEMeasure(el, 10, mmin, mmax);
+    std::cout << "sampled: " << mmin << " " << mmax << std::endl;
 
     return _getMinAndDeleteDomains(domains);
   }
@@ -810,12 +812,12 @@ namespace jacobianBasedQuality {
   // Virtual class _coefData
   bool _lessMinB::operator()(_coefData *cd1, _coefData *cd2) const
   {
-    return cd1->minB() > cd2->minB();
+    return cd1->minB2() > cd2->minB2();
   }
 
   bool _lessMaxB::operator()(_coefData *cd1, _coefData *cd2) const
   {
-    return cd1->maxB() < cd2->maxB();
+    return cd1->maxB2() < cd2->maxB2();
   }
 
   // Jacobian determinant (for validity of all elements)
@@ -911,6 +913,7 @@ namespace jacobianBasedQuality {
     _computeAtCorner(_minL, _maxL, _minL2, _maxL2);
 
     _minB = 0;
+    _minB2 = 0;
     if(boundsOk(_minL, _maxL))
       return;
     else {
@@ -924,8 +927,8 @@ namespace jacobianBasedQuality {
   {
     static const double tolmin = 1e-3;
     static const double tolmax = 1e-2;
-    const double tol = tolmin + (tolmax - tolmin) * std::max(_minB, .0);
-    return minL - _minB < tol;
+    const double tol = tolmin + (tolmax - tolmin) * std::max(_minB2, .0);
+    return minL - _minB2 < tol;
   }
 
   void _coefDataIGE::getSubCoeff(std::vector<_coefData *> &v) const
@@ -1385,8 +1388,8 @@ namespace jacobianBasedQuality {
       delete cd;
 
       for(std::size_t i = 0; i < subs.size(); i++) {
-        minL = std::min(minL, subs[i]->minL());
-        maxL = std::max(maxL, subs[i]->maxL());
+        minL = std::min(minL, subs[i]->minL2());
+        maxL = std::max(maxL, subs[i]->maxL2());
         domains.push_back(subs[i]);
         push_heap(domains.begin(), domains.end(), Comp());
       }
@@ -1403,11 +1406,11 @@ namespace jacobianBasedQuality {
       Msg::Warning("empty vector in Bezier subdivision, nothing to do");
       return;
     }
-    double minL = domains[0]->minL();
-    double maxL = domains[0]->maxL();
+    double minL = domains[0]->minL2();
+    double maxL = domains[0]->maxL2();
     for(std::size_t i = 1; i < domains.size(); ++i) {
-      minL = std::min(minL, domains[i]->minL());
-      maxL = std::max(maxL, domains[i]->maxL());
+      minL = std::min(minL, domains[i]->minL2());
+      maxL = std::max(maxL, domains[i]->maxL2());
     }
 
     _subdivideDomainsMinOrMax<_lessMinB>(domains, minL, maxL);
