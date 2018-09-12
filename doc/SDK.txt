@@ -31,9 +31,7 @@ Notes:
     Interface (ABI) as the compiler used to build this SDK.
 
     For example, the Linux SDK is currently compiled with GCC 4. You would need
-    to specify "-D_GLIBCXX_USE_CXX11_ABI=0" if you use GCC 5 or newer. On Linux,
-    where the Gmsh library depends on the dynamic libgfortran library , you
-    would also need to install the libgfortran3 package.
+    to specify "-D_GLIBCXX_USE_CXX11_ABI=0" if you use GCC 5 or newer.
 
   * If your C++ compiler does not provide the same ABI as the C++ compiler used
     to build the SDK and if there are no compatibility flags available, you can
@@ -51,3 +49,8 @@ Notes:
     C:\gmsh-git-Windows64-sdk> cl /Iinclude share\doc\gmsh\demos\api\simple.cpp lib\gmsh.lib
     C:\gmsh-git-Windows64-sdk> cd lib
     C:\gmsh-git-Windows64-sdk\lib> ..\simple.exe
+
+  * The shared Gmsh library references several other shared system libraries. On
+    Linux for example, it depends on libgfortran.so.3: you will need to install
+    this library (search your package manager for it) if your Linux distribution
+    does not provide it by default, or if it comes with a different version.
