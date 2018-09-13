@@ -245,6 +245,7 @@ public:
   inline int getNumCornerCoeff() const { return _basis->getNumLagCoeff(); }
   inline int getIdxCornerCoeff(int i) const
   {
+    //TODO: other types
     const int order = _funcSpaceData.spaceOrder();
     switch(_funcSpaceData.elementType()) {
     case TYPE_TRI:

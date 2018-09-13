@@ -20,40 +20,99 @@ namespace {
   fullMatrix<double> generateExponents(int type, int order)
   {
     fullMatrix<double> exp;
-    int k;
+    int idx;
     switch(type) {
     case TYPE_LIN:
       exp.resize(order + 1, 1);
-      k = 0;
+      idx = 0;
       for(int i = 0; i < order + 1; ++i) {
-        exp(k, 0) = i;
-        ++k;
+        exp(idx, 0) = i;
+        ++idx;
       }
       return exp;
     case TYPE_TRI:
       exp.resize((order + 1) * (order + 2) / 2, 2);
-      k = 0;
+      idx = 0;
       for(int j = 0; j < order + 1; ++j) {
         for(int i = 0; i < order + 1 - j; ++i) {
-          exp(k, 0) = i;
-          exp(k, 1) = j;
-          ++k;
+          exp(idx, 0) = i;
+          exp(idx, 1) = j;
+          ++idx;
         }
       }
       return exp;
     case TYPE_QUA:
       exp.resize((order + 1) * (order + 1), 2);
-      k = 0;
+      idx = 0;
       for(int j = 0; j < order + 1; ++j) {
         for(int i = 0; i < order + 1; ++i) {
-          exp(k, 0) = i;
-          exp(k, 1) = j;
-          ++k;
+          exp(idx, 0) = i;
+          exp(idx, 1) = j;
+          ++idx;
+        }
+      }
+      return exp;
+    case TYPE_TET:
+      exp.resize((order + 1) * (order + 2) * (order + 3) / 6, 3);
+      idx = 0;
+      for(int k = 0; k < order + 1; ++k) {
+        for(int j = 0; j < order + 1 - k; ++j) {
+          for(int i = 0; i < order + 1 - j - k; ++i) {
+            exp(idx, 0) = i;
+            exp(idx, 1) = j;
+            exp(idx, 2) = k;
+            ++idx;
+          }
+        }
+      }
+      return exp;
+    case TYPE_PRI:
+      exp.resize((order + 1) * (order + 1) * (order + 2) / 2, 3);
+      idx = 0;
+      for(int k = 0; k < order + 1; ++k) {
+        for(int j = 0; j < order + 1; ++j) {
+          for(int i = 0; i < order + 1 - j; ++i) {
+            exp(idx, 0) = i;
+            exp(idx, 1) = j;
+            exp(idx, 2) = k;
+            ++idx;
+          }
+        }
+      }
+      return exp;
+    case TYPE_HEX:
+      exp.resize((order + 1) * (order + 1) * (order + 1), 3);
+      idx = 0;
+      for(int k = 0; k < order + 1; ++k) {
+        for(int j = 0; j < order + 1; ++j) {
+          for(int i = 0; i < order + 1; ++i) {
+            exp(idx, 0) = i;
+            exp(idx, 1) = j;
+            exp(idx, 2) = k;
+            ++idx;
+          }
         }
       }
       return exp;
     }
     return fullMatrix<double>();
+  }
+
+  fullMatrix<double> generateExponentsPyramid(int nij, int nk)
+  {
+    fullMatrix<double> exp((nij + 1) * (nij + 1) * (nk + 1), 3);
+    int idx = 0;
+    for(int k = 0; k < nk + 1; ++k) {
+      for(int j = 0; j < nij + 1; ++j) {
+        for(int i = 0; i < nij + 1; ++i) {
+          exp(idx, 0) = i;
+          exp(idx, 1) = j;
+          exp(idx, 2) = k;
+          ++idx;
+        }
+      }
+    }
+    return exp;
   }
 
   // Sub Control Points
@@ -917,6 +976,12 @@ void bezierBasis::_constructPyr()
   _dimSimplex = 0;
   gmshGenerateMonomials(_data, _exponents);
 
+  // If pyr == true, we cannot subdivide => we don't care about the order
+  if (pyr)
+    gmshGenerateMonomials(_data, _exponents2);
+  else
+    _exponents2 = generateExponentsPyramid(nij, nk);
+
   fullMatrix<double> bezierPoints;
   generateBezierPoints(bezierPoints);
   matrixBez2Lag =
@@ -1518,6 +1583,7 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullMatrix<double> &lagCoeff,
 
   fullMatrix<double> prox(_data, _r, _c);
   _basis->matrixLag2Bez4.mult(lagCoeff, prox);
+  //TODO: new algo to convert
 }
 
 bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
@@ -1537,8 +1603,8 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
     _data = new double[_r * _c];
   }
 
-  fullVector<double> prox(_data, _r);
-  _basis->matrixLag2Bez4.mult(lagCoeff, prox);
+//  fullVector<double> prox(_data, _r);
+//  _basis->matrixLag2Bez4.mult(lagCoeff, prox);
 
   int sz = lagCoeff.size();
   int order = data.spaceOrder();
@@ -1559,6 +1625,8 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
     }
   }
 
+
+  //TODO: do a function
   fullMatrix<double> prox2(_data, _r, 1);
   fullVector<double> x(order + 1);
   for(int i = 0; i <= order; ++i) {

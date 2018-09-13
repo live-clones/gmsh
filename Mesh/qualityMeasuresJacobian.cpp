@@ -775,7 +775,7 @@ namespace jacobianBasedQuality {
     int szM1 = _coeffsJacMat.size1();
     int szM2 = _coeffsJacMat.size2();
     for(int i = 0; i < _bfsDet->getNumDivision(); i++) {
-      std::cout << "subdiv " << i << std::endl;
+//      std::cout << "subdiv " << i << std::endl;
       fullVector<double> coeffD(szD);
       fullMatrix<double> coeffM(szM1, szM2);
       coeffD.copy(subCoeffD, i * szD, szD, 0);
