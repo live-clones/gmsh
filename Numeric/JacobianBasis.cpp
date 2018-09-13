@@ -154,10 +154,11 @@ GradientBasis::GradientBasis(FuncSpaceData data) : _data(data)
   gradShapeMatY.resize(numSampPnts, numMapNodes);
   gradShapeMatZ.resize(numSampPnts, numMapNodes);
   for(int i = 0; i < numSampPnts; i++) {
+    const int I = numSampPnts - 1 - i;
     for(int j = 0; j < numMapNodes; j++) {
-      gradShapeMatX(i, j) = allDPsi(3 * i + 0, j);
-      gradShapeMatY(i, j) = allDPsi(3 * i + 1, j);
-      gradShapeMatZ(i, j) = allDPsi(3 * i + 2, j);
+      gradShapeMatX(I, j) = allDPsi(3 * i + 0, j);
+      gradShapeMatY(I, j) = allDPsi(3 * i + 1, j);
+      gradShapeMatZ(I, j) = allDPsi(3 * i + 2, j);
     }
   }
 
