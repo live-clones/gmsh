@@ -45,12 +45,8 @@ def _ostring(s):
     return sp
 
 def _ovectorpair(ptr, size):
-    if use_numpy:
-        v = numpy.ctypeslib.as_array(ptr, (size//2, 2))
-        weakreffinalize(v, lib.gmshFree, ptr)
-    else:
-        v = list((ptr[i * 2], ptr[i * 2 + 1]) for i in range(size//2))
-        lib.gmshFree(ptr)
+    v = list((ptr[i * 2], ptr[i * 2 + 1]) for i in range(size//2))
+    lib.gmshFree(ptr)
     return v
 
 def _ovectorint(ptr, size):
