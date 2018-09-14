@@ -41,7 +41,7 @@ struct contextMeshOptions {
   int renumber;
   // mesh IO
   int fileFormat;
-  double mshFileVersion, scalingFactor;
+  double mshFileVersion, medFileMinorVersion, scalingFactor;
   int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;

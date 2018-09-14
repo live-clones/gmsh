@@ -3716,7 +3716,7 @@ $EndEntities
 
 $Nodes
   numEntityBlocks(unsigned long) numNodes(unsigned long)
-  tagEntity(int) dimEntity(int) parametric(int; ) numNodes(unsigned long)
+  tagEntity(int) dimEntity(int) parametric(int; see below) numNodes(unsigned long)
     tag(int) x(double) y(double) z(double)
        <u(double; if parametric and on curve or surface)>
        <v(double; if parametric and on surface)>

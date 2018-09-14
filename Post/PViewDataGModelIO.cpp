@@ -11,6 +11,7 @@
 #include "Numeric.h"
 #include "StringUtils.h"
 #include "OS.h"
+#include "Context.h"
 
 bool PViewDataGModel::addData(GModel *model,
                               const std::map<int, std::vector<double> > &data,
@@ -904,7 +905,18 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
   std::string meshName(model->getName());
   std::string fieldName(getName());
 
+#if(MED_MAJOR_NUM == 3)
+  med_int major = MED_MAJOR_NUM, minor = MED_MINOR_NUM, release = MED_RELEASE_NUM;
+  if(CTX::instance()->mesh.medFileMinorVersion >= 0){
+    minor = (int)CTX::instance()->mesh.medFileMinorVersion;
+    Msg::Info("Forcing MED file version to %d.%d", major, minor);
+  }
+  med_idt fid = MEDfileVersionOpen((char *)fileName.c_str(), MED_ACC_RDEXT,
+                                   major, minor, release);
+#else
   med_idt fid = MEDouvrir((char *)fileName.c_str(), MED_LECTURE_AJOUT);
+#endif
+
   if(fid < 0) {
     Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
