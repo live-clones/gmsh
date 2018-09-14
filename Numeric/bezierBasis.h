@@ -37,6 +37,7 @@ public:
   fullMatrix<double> matrixLag2Bez3;
   fullMatrix<double> matrixLag2Bez4;
   fullMatrix<double> subDivisor;
+  fullVector<double> order1dPoints;
 
   // Constructors
   bezierBasis(FuncSpaceData data);
@@ -311,6 +312,7 @@ private:
   {
     return i + j * n - j * (j - 1) / 2;
   }
+  void _computeCoefficients(const double *lagCoeffData);
 };
 
 #endif

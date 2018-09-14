@@ -1127,6 +1127,15 @@ fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij,
 
 // Ordered points and monomials
 
+void gmshGenerateOrderedPointsLine(int order, fullVector<double> &points)
+{
+  points.resize(order + 1);
+  for(int i = 0; i < order + 1; ++i) {
+    points(i) = (i * 2 - order) / static_cast<double>(order);
+  }
+  return;
+}
+
 void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points)
 {
   gmshGenerateOrderedMonomials(data, points);

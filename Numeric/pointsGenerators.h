@@ -71,6 +71,8 @@ gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij, int nk,
 
 // Ordered points and monomials
 
+void gmshGenerateOrderedPointsLine(int order, fullVector<double>&);
+
 void gmshGenerateOrderedPoints(FuncSpaceData, fullMatrix<double> &);
 
 void gmshGenerateOrderedMonomials(FuncSpaceData, fullMatrix<double> &);

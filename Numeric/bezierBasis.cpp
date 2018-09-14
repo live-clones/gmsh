@@ -625,6 +625,15 @@ namespace {
     }
   }
 
+  void convertLag2Bez(const fullMatrix<double> &lag, int order,
+                      const fullVector<double> &x, fullMatrix<double> &bez,
+                      int start = -1, int inc = -1)
+  {
+    if (start < 0) start = 0;
+    if (inc < 1) inc = 1;
+    convertLag2Bez<double>(lag, order, start, inc, x, bez);
+  }
+
   void lejaOrder(fullVector<double> &x, fullVector<int> &permutation)
   {
     int n = x.size();
@@ -961,6 +970,8 @@ void bezierBasis::_construct()
   //  matrixBez2Lag2.print("matrixBez2Lag2");
   //  matrixLag2Bez.print("matrixLag2Bez");
   //  matrixLag2Bez2.print("matrixLag2Bez2");
+
+  gmshGenerateOrderedPointsLine(order, order1dPoints);
 }
 
 void bezierBasis::_constructPyr()
@@ -1581,48 +1592,7 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullMatrix<double> &lagCoeff,
     _data = new double[_r * _c];
   }
 
-//  fullMatrix<double> prox(_data, _r, _c);
-//  _basis->matrixLag2Bez4.mult(lagCoeff, prox);
-//  //TODO: new algo to convert
-
-  int order = data.spaceOrder();
-
-
-  //TODO: do a function
-  fullMatrix<double> prox2(_data, _r, _c);
-  fullVector<double> x(order + 1);
-  for(int i = 0; i <= order; ++i) {
-    x(i) = static_cast<double>(i) / order;
-  }
-
-  if(false) { // Permutate
-    fullVector<int> permutation;
-    lejaOrder(x, permutation);
-    fullMatrix<double> lagCoeffOrdered2(_r, _c);
-    for(int i = 0; i < order + 1; ++i) {
-      int I = permutation(i);
-      for(int j = 0; j < order + 1; ++j) {
-        int J = permutation(j);
-        lagCoeffOrdered2(i + j * (order + 1), 0) = lagCoeff(I + J * (order + 1), 0);
-      }
-    }
-
-    for(int k = 0; k < order + 1; ++k) {
-      convertLag2Bez<double>(lagCoeffOrdered2, order, k, order + 1, x, prox2);
-    }
-    for(int k = 0; k < order + 1; ++k) {
-      convertLag2Bez<double>(prox2, order, k * (order + 1), 1, x,
-                             prox2);
-    }
-  }
-  else {
-    for(int k = 0; k < order + 1; ++k) {
-      convertLag2Bez<double>(lagCoeff, order, k, order + 1, x, prox2);
-    }
-    for(int k = 0; k < order + 1; ++k) {
-      convertLag2Bez<double>(prox2, order, k * (order + 1), 1, x, prox2);
-    }
-  }
+  _computeCoefficients(lagCoeff.getDataPtr());
 }
 
 bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
@@ -1642,67 +1612,7 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
     _data = new double[_r * _c];
   }
 
-//  fullVector<double> prox(_data, _r);
-//  _basis->matrixLag2Bez4.mult(lagCoeff, prox);
-
-  int order = data.spaceOrder();
-  fullMatrix<double> lagCoeffOrdered;
-  lagCoeffOrdered.setAsProxy(const_cast<fullVector<double>&>(lagCoeff).getDataPtr(), _r, _c);
-//  fullMatrix<double> lagCoeffOrdered(_r, 1);
-//  const fullMatrix<double> &exp = _basis->getCoeffOrdering();
-//  int k = 0;
-//  for(int j = 0; j < order + 1; ++j) {
-//    for(int i = 0; i < order + 1; ++i) {
-//      int K = 0;
-//      while(K < exp.size1() && (exp(K, 0) - .5 >= i || exp(K, 0) + .5 <= i ||
-//                                exp(K, 1) - .5 >= j || exp(K, 1) + .5 <= j))
-//        ++K;
-//      if(K == exp.size1()) {
-//        Msg::Error("ARRAGRGRAG");
-//      }
-//      lagCoeffOrdered(k, 0) = lagCoeff(K);
-//      ++k;
-//    }
-//  }
-
-
-  //TODO: do a function
-  fullMatrix<double> prox2(_data, _r, _c);
-  fullVector<double> x(order + 1);
-  for(int i = 0; i <= order; ++i) {
-    x(i) = static_cast<double>(i) / order;
-  }
-
-  if(false) { // Permutate
-    fullVector<int> permutation;
-    lejaOrder(x, permutation);
-    fullMatrix<double> lagCoeffOrdered2(_r, _c);
-    for(int i = 0; i < order + 1; ++i) {
-      int I = permutation(i);
-      for(int j = 0; j < order + 1; ++j) {
-        int J = permutation(j);
-        lagCoeffOrdered2(i + j * (order + 1), 0) =
-          lagCoeffOrdered(I + J * (order + 1), 0);
-      }
-    }
-
-    for(int k = 0; k < order + 1; ++k) {
-      convertLag2Bez<double>(lagCoeffOrdered2, order, k, order + 1, x, prox2);
-    }
-    for(int k = 0; k < order + 1; ++k) {
-      convertLag2Bez<double>(prox2, order, k * (order + 1), 1, x,
-                             prox2);
-    }
-  }
-  else {
-    for(int k = 0; k < order + 1; ++k) {
-      convertLag2Bez<double>(lagCoeffOrdered, order, k, order + 1, x, prox2);
-    }
-    for(int k = 0; k < order + 1; ++k) {
-      convertLag2Bez<double>(prox2, order, k * (order + 1), 1, x,
-                             prox2);
-    }
-  }
+  _computeCoefficients(lagCoeff.getDataPtr());
 }
 
 bezierCoeff::bezierCoeff(const bezierCoeff &other, bool swap)
@@ -1743,6 +1653,43 @@ bezierCoeff::~bezierCoeff()
       _pool1->releaseBlock(_data, this);
     else
       Msg::Error("Not supposed to be here. destructor bezierCoeff");
+  }
+}
+
+void bezierCoeff::_computeCoefficients(const double *lagCoeffData)
+{
+  // FIXME: Use Leja order? (if yes, change gmshGenerateOrderedPoints)
+  const int type = _funcSpaceData.elementType();
+  const int order = _funcSpaceData.spaceOrder();
+  const int npt = order + 1;
+  const fullMatrix<double> lag(const_cast<double*>(lagCoeffData), _r, _c);
+  const fullVector<double> &x = _basis->order1dPoints;
+  fullMatrix<double> bez(_data, _r, _c);
+
+  switch(type) {
+  case TYPE_LIN:
+    convertLag2Bez(lag, order, x, bez);
+    return;
+  case TYPE_QUA:
+    for(int i = 0; i < npt; ++i) {
+      convertLag2Bez(lag, order, x, bez, i, npt);
+    }
+    for(int j = 0; j < npt; ++j) {
+      convertLag2Bez(bez, order, x, bez, j * npt, 1);
+    }
+    return;
+  case TYPE_HEX:
+    for(int ij = 0; ij < npt * npt; ++ij) {
+      convertLag2Bez(lag, order, x, bez, ij, npt * npt);
+    }
+    for(int i = 0; i < npt; ++i) {
+      for(int k = 0; k < npt; ++k) {
+        convertLag2Bez(bez, order, x, bez, i + k * npt * npt, npt);
+      }
+    }
+    for(int jk = 0; jk < npt * npt; ++jk) {
+      convertLag2Bez(bez, order, x, bez, jk * npt, 1);
+    }
   }
 }
 
