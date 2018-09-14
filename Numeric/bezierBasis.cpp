@@ -1581,9 +1581,48 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullMatrix<double> &lagCoeff,
     _data = new double[_r * _c];
   }
 
-  fullMatrix<double> prox(_data, _r, _c);
-  _basis->matrixLag2Bez4.mult(lagCoeff, prox);
-  //TODO: new algo to convert
+//  fullMatrix<double> prox(_data, _r, _c);
+//  _basis->matrixLag2Bez4.mult(lagCoeff, prox);
+//  //TODO: new algo to convert
+
+  int order = data.spaceOrder();
+
+
+  //TODO: do a function
+  fullMatrix<double> prox2(_data, _r, _c);
+  fullVector<double> x(order + 1);
+  for(int i = 0; i <= order; ++i) {
+    x(i) = static_cast<double>(i) / order;
+  }
+
+  if(false) { // Permutate
+    fullVector<int> permutation;
+    lejaOrder(x, permutation);
+    fullMatrix<double> lagCoeffOrdered2(_r, _c);
+    for(int i = 0; i < order + 1; ++i) {
+      int I = permutation(i);
+      for(int j = 0; j < order + 1; ++j) {
+        int J = permutation(j);
+        lagCoeffOrdered2(i + j * (order + 1), 0) = lagCoeff(I + J * (order + 1), 0);
+      }
+    }
+
+    for(int k = 0; k < order + 1; ++k) {
+      convertLag2Bez<double>(lagCoeffOrdered2, order, k, order + 1, x, prox2);
+    }
+    for(int k = 0; k < order + 1; ++k) {
+      convertLag2Bez<double>(prox2, order, k * (order + 1), 1, x,
+                             prox2);
+    }
+  }
+  else {
+    for(int k = 0; k < order + 1; ++k) {
+      convertLag2Bez<double>(lagCoeff, order, k, order + 1, x, prox2);
+    }
+    for(int k = 0; k < order + 1; ++k) {
+      convertLag2Bez<double>(prox2, order, k * (order + 1), 1, x, prox2);
+    }
+  }
 }
 
 bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
@@ -1606,37 +1645,38 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
 //  fullVector<double> prox(_data, _r);
 //  _basis->matrixLag2Bez4.mult(lagCoeff, prox);
 
-  int sz = lagCoeff.size();
   int order = data.spaceOrder();
-  fullMatrix<double> lagCoeffOrdered(sz, 1);
-  const fullMatrix<double> &exp = _basis->getCoeffOrdering();
-  int k = 0;
-  for(int j = 0; j < order + 1; ++j) {
-    for(int i = 0; i < order + 1; ++i) {
-      int K = 0;
-      while(K < exp.size1() && (exp(K, 0) - .5 >= i || exp(K, 0) + .5 <= i ||
-                                exp(K, 1) - .5 >= j || exp(K, 1) + .5 <= j))
-        ++K;
-      if(K == exp.size1()) {
-        Msg::Error("ARRAGRGRAG");
-      }
-      lagCoeffOrdered(k, 0) = lagCoeff(K);
-      ++k;
-    }
-  }
+  fullMatrix<double> lagCoeffOrdered;
+  lagCoeffOrdered.setAsProxy(const_cast<fullVector<double>&>(lagCoeff).getDataPtr(), _r, _c);
+//  fullMatrix<double> lagCoeffOrdered(_r, 1);
+//  const fullMatrix<double> &exp = _basis->getCoeffOrdering();
+//  int k = 0;
+//  for(int j = 0; j < order + 1; ++j) {
+//    for(int i = 0; i < order + 1; ++i) {
+//      int K = 0;
+//      while(K < exp.size1() && (exp(K, 0) - .5 >= i || exp(K, 0) + .5 <= i ||
+//                                exp(K, 1) - .5 >= j || exp(K, 1) + .5 <= j))
+//        ++K;
+//      if(K == exp.size1()) {
+//        Msg::Error("ARRAGRGRAG");
+//      }
+//      lagCoeffOrdered(k, 0) = lagCoeff(K);
+//      ++k;
+//    }
+//  }
 
 
   //TODO: do a function
-  fullMatrix<double> prox2(_data, _r, 1);
+  fullMatrix<double> prox2(_data, _r, _c);
   fullVector<double> x(order + 1);
   for(int i = 0; i <= order; ++i) {
     x(i) = static_cast<double>(i) / order;
   }
 
-  if(true) { // Permutate
+  if(false) { // Permutate
     fullVector<int> permutation;
     lejaOrder(x, permutation);
-    fullMatrix<double> lagCoeffOrdered2(sz, 1);
+    fullMatrix<double> lagCoeffOrdered2(_r, _c);
     for(int i = 0; i < order + 1; ++i) {
       int I = permutation(i);
       for(int j = 0; j < order + 1; ++j) {
@@ -1649,9 +1689,8 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
     for(int k = 0; k < order + 1; ++k) {
       convertLag2Bez<double>(lagCoeffOrdered2, order, k, order + 1, x, prox2);
     }
-    lagCoeffOrdered2 = prox2;
     for(int k = 0; k < order + 1; ++k) {
-      convertLag2Bez<double>(lagCoeffOrdered2, order, k * (order + 1), 1, x,
+      convertLag2Bez<double>(prox2, order, k * (order + 1), 1, x,
                              prox2);
     }
   }
@@ -1659,9 +1698,8 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
     for(int k = 0; k < order + 1; ++k) {
       convertLag2Bez<double>(lagCoeffOrdered, order, k, order + 1, x, prox2);
     }
-    lagCoeffOrdered = prox2;
     for(int k = 0; k < order + 1; ++k) {
-      convertLag2Bez<double>(lagCoeffOrdered, order, k * (order + 1), 1, x,
+      convertLag2Bez<double>(prox2, order, k * (order + 1), 1, x,
                              prox2);
     }
   }

@@ -391,8 +391,14 @@ namespace jacobianBasedQuality {
 
     _subdivideDomains(domains);
 
+    double mmin, mmax;
+    sampleJacobianDeterminant(el, 10, mmin, mmax, normals);
+    std::cout << "sampled: " << mmin << " " << mmax << std::endl;
+
     double min2 = domains[0]->minB2();
     double max2 = domains[0]->maxB2();
+    double minL = domains[0]->minL();
+    double maxL = domains[0]->maxL();
     double minL2 = domains[0]->minL2();
     double maxL2 = domains[0]->maxL2();
     min = domains[0]->minB();
@@ -404,13 +410,22 @@ namespace jacobianBasedQuality {
       max = std::max(max, domains[i]->maxB());
       min2 = std::min(min2, domains[i]->minB2());
       max2 = std::max(max2, domains[i]->maxB2());
+      minL = std::min(minL, domains[i]->minL());
+      maxL = std::min(maxL, domains[i]->maxL());
       minL2 = std::min(minL2, domains[i]->minL2());
       maxL2 = std::max(maxL2, domains[i]->maxL2());
       domains[i]->deleteBezierCoeff();
       delete domains[i];
     }
+    std::cout << "size domains " << domains.size() << std::endl;
+    std::cout << "minMeasure: " << min << " vs " << min2 << " + " << minL
+              << " vs " << minL2 << std::endl;
+    std::cout << "maxMeasure: " << max << " vs " << max2 << " + " << maxL
+              << " vs " << maxL2 << std::endl;
     //  std::cout << "" << min << " [" << min2 << "," << minL2 << "] " << max <<
     //  " [" << maxL2 << "," << max2 << "] " << std::endl;
+    min = min2;
+    max = max2;
   }
 
   double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk,
@@ -552,6 +567,21 @@ namespace jacobianBasedQuality {
     return _getMinAndDeleteDomains(domains);
   }
 
+  void sampleJacobianDeterminant(MElement *el, int deg, double &min,
+                                 double &max,
+                                 const fullMatrix<double> *normals)
+  {
+    fullVector<double> jac;
+    sampleJacobianDeterminant(el, deg, jac, normals);
+
+    min = std::numeric_limits<double>::infinity();
+    max = -min;
+    for(int i = 0; i < jac.size(); ++i) {
+      min = std::min(min, jac(i));
+      max = std::max(max, jac(i));
+    }
+  }
+
   void sampleIGEMeasure(MElement *el, int deg, double &min, double &max)
   {
     fullVector<double> ige;
@@ -578,8 +608,8 @@ namespace jacobianBasedQuality {
     }
   }
 
-  void sampleJacobian(MElement *el, int deg, fullVector<double> &jac,
-                      const fullMatrix<double> *normals)
+  void sampleJacobianDeterminant(MElement *el, int deg, fullVector<double> &jac,
+                                 const fullMatrix<double> *normals)
   {
     FuncSpaceData sampleSpace = FuncSpaceData(el, deg);
     const JacobianBasis *jacBasis = BasisFactory::getJacobianBasis(sampleSpace);

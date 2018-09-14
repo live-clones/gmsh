@@ -141,7 +141,7 @@ namespace {
 GradientBasis::GradientBasis(FuncSpaceData data) : _data(data)
 {
   fullMatrix<double> samplingPoints;
-  gmshGeneratePoints(data, samplingPoints);
+  gmshGenerateOrderedPoints(data, samplingPoints);
   const int numSampPnts = samplingPoints.size1();
 
   // Store shape function gradients of mapping at Jacobian nodes
@@ -154,11 +154,10 @@ GradientBasis::GradientBasis(FuncSpaceData data) : _data(data)
   gradShapeMatY.resize(numSampPnts, numMapNodes);
   gradShapeMatZ.resize(numSampPnts, numMapNodes);
   for(int i = 0; i < numSampPnts; i++) {
-    const int I = numSampPnts - 1 - i;
     for(int j = 0; j < numMapNodes; j++) {
-      gradShapeMatX(I, j) = allDPsi(3 * i + 0, j);
-      gradShapeMatY(I, j) = allDPsi(3 * i + 1, j);
-      gradShapeMatZ(I, j) = allDPsi(3 * i + 2, j);
+      gradShapeMatX(i, j) = allDPsi(3 * i + 0, j);
+      gradShapeMatY(i, j) = allDPsi(3 * i + 1, j);
+      gradShapeMatZ(i, j) = allDPsi(3 * i + 2, j);
     }
   }
 

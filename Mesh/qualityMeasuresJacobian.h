@@ -25,10 +25,14 @@ namespace jacobianBasedQuality {
   double minICNMeasure(MElement *el, bool knownValid = false,
                        bool reversedOk = false,
                        const fullMatrix<double> *normals = NULL);
+  void sampleJacobianDeterminant(MElement *el, int order, double &min,
+                                 double &max,
+                                 const fullMatrix<double> *normals = NULL);
   void sampleIGEMeasure(MElement *el, int order, double &min, double &max);
   void sampleICNMeasure(MElement *el, int order, double &min, double &max);
-  void sampleJacobian(MElement *el, int order, fullVector<double> &jac,
-                      const fullMatrix<double> *normals = NULL);
+  void sampleJacobianDeterminant(MElement *el, int order,
+                                 fullVector<double> &jac,
+                                 const fullMatrix<double> *normals = NULL);
   void sampleIGEMeasure(MElement *el, int order, fullVector<double> &ige);
   void sampleICNMeasure(MElement *el, int order, fullVector<double> &icn);
 

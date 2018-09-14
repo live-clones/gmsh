@@ -1124,3 +1124,160 @@ fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij,
 
   return monomials;
 }
+
+// Ordered points and monomials
+
+void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points)
+{
+  gmshGenerateOrderedMonomials(data, points);
+
+  const int type = data.elementType();
+  const int order = data.spaceOrder();
+  if(type != TYPE_PYR && order == 0) return;
+
+  switch(type) {
+  case TYPE_PNT: return;
+  case TYPE_LIN:
+  case TYPE_QUA:
+  case TYPE_HEX:
+    points.scale(2. / order);
+    points.add(-1.);
+    return;
+  case TYPE_TRI:
+  case TYPE_TET:
+    points.scale(1. / order);
+    return;
+  case TYPE_PRI:
+  {
+    fullMatrix<double> tmp;
+    tmp.setAsProxy(points, 0, 2);
+    tmp.scale(1. / order);
+    tmp.setAsProxy(points, 2, 1);
+    tmp.scale(2. / order);
+    tmp.add(-1.);
+    return;
+  }
+  case TYPE_PYR: {
+    if(points.size1() == 1) return;
+    const int nij = data.nij();
+    const int nk = data.nk();
+    const int div = std::max(nij, nk);
+    for(int i = 0; i < points.size1(); ++i) {
+      points(i, 2) = points(i, 2) / div;
+      const double scale = 1. - points(i, 2);
+      points(i, 0) = scale * (-1 + points(i, 0) * 2. / div);
+      points(i, 1) = scale * (-1 + points(i, 1) * 2. / div);
+    }
+    return;
+  }
+  default:
+    return;
+  }
+}
+
+void gmshGenerateOrderedMonomials(FuncSpaceData data, fullMatrix<double> &monomials)
+{
+  if(data.spaceIsSerendipity())
+    Msg::Warning("Ordered monomials for serendipity elements not implemented");
+
+  int idx, order = data.spaceOrder();
+
+  switch(data.elementType()) {
+  case TYPE_LIN:
+    monomials.resize(order + 1, 1);
+    idx = 0;
+    for(int i = 0; i < order + 1; ++i) {
+      monomials(idx, 0) = i;
+      ++idx;
+    }
+    return;
+  case TYPE_TRI:
+    monomials.resize((order + 1) * (order + 2) / 2, 2);
+    idx = 0;
+    for(int j = 0; j < order + 1; ++j) {
+      for(int i = 0; i < order + 1 - j; ++i) {
+        monomials(idx, 0) = i;
+        monomials(idx, 1) = j;
+        ++idx;
+      }
+    }
+    return;
+  case TYPE_QUA:
+    monomials.resize((order + 1) * (order + 1), 2);
+    idx = 0;
+    for(int j = 0; j < order + 1; ++j) {
+      for(int i = 0; i < order + 1; ++i) {
+        monomials(idx, 0) = i;
+        monomials(idx, 1) = j;
+        ++idx;
+      }
+    }
+    return;
+  case TYPE_TET:
+    monomials.resize((order + 1) * (order + 2) * (order + 3) / 6, 3);
+    idx = 0;
+    for(int k = 0; k < order + 1; ++k) {
+      for(int j = 0; j < order + 1 - k; ++j) {
+        for(int i = 0; i < order + 1 - j - k; ++i) {
+          monomials(idx, 0) = i;
+          monomials(idx, 1) = j;
+          monomials(idx, 2) = k;
+          ++idx;
+        }
+      }
+    }
+    return;
+  case TYPE_PRI:
+    monomials.resize((order + 1) * (order + 1) * (order + 2) / 2, 3);
+    idx = 0;
+    for(int k = 0; k < order + 1; ++k) {
+      for(int j = 0; j < order + 1; ++j) {
+        for(int i = 0; i < order + 1 - j; ++i) {
+          monomials(idx, 0) = i;
+          monomials(idx, 1) = j;
+          monomials(idx, 2) = k;
+          ++idx;
+        }
+      }
+    }
+    return;
+  case TYPE_HEX:
+    monomials.resize((order + 1) * (order + 1) * (order + 1), 3);
+    idx = 0;
+    for(int k = 0; k < order + 1; ++k) {
+      for(int j = 0; j < order + 1; ++j) {
+        for(int i = 0; i < order + 1; ++i) {
+          monomials(idx, 0) = i;
+          monomials(idx, 1) = j;
+          monomials(idx, 2) = k;
+          ++idx;
+        }
+      }
+    }
+    return;
+  case TYPE_PYR: {
+    if(data.isPyramidalSpace())
+      Msg::Warning("Ordered monomials for pyramids is tensorial space");
+    const int nij = data.nij();
+    const int nk = data.nk();
+    monomials.resize((nij + 1) * (nij + 1) * (nk + 1), 3);
+    int idx = 0;
+    for(int k = 0; k < nk + 1; ++k) {
+      for(int j = 0; j < nij + 1; ++j) {
+        for(int i = 0; i < nij + 1; ++i) {
+          monomials(idx, 0) = i;
+          monomials(idx, 1) = j;
+          monomials(idx, 2) = k;
+          ++idx;
+        }
+      }
+    }
+    return;
+  }
+  default:
+    Msg::Error("Unknown element type for ordered monomials: %d", data.elementType());
+    monomials.resize(1,1);
+    return;
+  }
+}
+

@@ -69,4 +69,10 @@ fullMatrix<double>
 gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij, int nk,
                                     bool forSerendipPoints = false);
 
+// Ordered points and monomials
+
+void gmshGenerateOrderedPoints(FuncSpaceData, fullMatrix<double> &);
+
+void gmshGenerateOrderedMonomials(FuncSpaceData, fullMatrix<double> &);
+
 #endif
