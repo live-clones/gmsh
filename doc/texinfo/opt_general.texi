@@ -158,7 +158,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"3.0.7-git-4294b937e"}@*
+Default value: @code{"4.0.2-git-a93cf0f13"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
@@ -899,6 +899,11 @@ Saved in: @code{General.OptionsFileName}
 @item General.MouseSelection
 Enable mouse selection@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.MouseInvertZoom
+Invert mouse wheel zoom direction@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.NonModalWindows

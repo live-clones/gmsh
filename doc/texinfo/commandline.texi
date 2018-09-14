@@ -20,7 +20,7 @@ Save mesh, then exit
 @item -o file
 Specify output file name
 @item -format string
-Select output mesh format (auto, msh1, msh2, msh3, msh4, msh, unv, vtk, wrl, mail, stl, p3d, mesh, bdf, cgns, med, diff, ir3, inp, ply2, celum, su2, x3d, dat, neu, m)
+Select output mesh format (auto, msh1, msh2, msh3, msh4, msh, unv, vtk, wrl, mail, stl, p3d, mesh, bdf, cgns, med, diff, ir3, inp, ply2, celum, su2, x3d, dat, neu, m, key)
 @item -bin
 Create binary files when possible
 @item -refine
@@ -40,7 +40,7 @@ Create the partition topology
 @item -part_[no_]ghosts
 Create ghost cells
 @item -part_[no_]physicals
-Create phsyical groups for partitions
+Create physical groups for partitions
 @item -part_topo_pro
 Save the partition topology .pro file
 @item -preserve_numbering_msh2

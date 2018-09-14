@@ -783,6 +783,16 @@ Default value: @code{0}
 Default value: @code{2000}
 @end table
 
+@item Plugin(MeshVolume)
+Plugin(MeshVolume) computes the volume of the mesh. Only the elements tagged with the physical given in 'Physical' and with the dimension given in 'Dimension' are taken into account. If 'Physical' is equal to -1, the entire mesh (of the given dimension) is considered.
+Numeric options:
+@table @code
+@item Physical
+Default value: @code{-1}
+@item Dimension
+Default value: @code{3}
+@end table
+
 @item Plugin(MinMax)
 Plugin(MinMax) computes the min/max of a view.@*
 @*
