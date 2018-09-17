@@ -1666,17 +1666,22 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffData)
   const fullVector<double> &x = _basis->order1dPoints;
   fullMatrix<double> bez(_data, _r, _c);
 
+  // For simplicial elements, do as before for now
+  // FIXME: for prisms, we should do a mix of triangle + convertLag2Bez()
+
   switch(type) {
+  case TYPE_TRI:
+  case TYPE_TET:
+  case TYPE_PYR:
+  case TYPE_PRI:
+    _basis->matrixLag2Bez2.mult(lag, bez);
+    return;
   case TYPE_LIN:
     convertLag2Bez(lag, order, x, bez);
     return;
   case TYPE_QUA:
-    for(int i = 0; i < npt; ++i) {
-      convertLag2Bez(lag, order, x, bez, i, npt);
-    }
-    for(int j = 0; j < npt; ++j) {
-      convertLag2Bez(bez, order, x, bez, j * npt, 1);
-    }
+    for(int i = 0; i < npt; ++i) convertLag2Bez(lag, order, x, bez, i, npt);
+    for(int j = 0; j < npt; ++j) convertLag2Bez(bez, order, x, bez, j * npt, 1);
     return;
   case TYPE_HEX:
     for(int ij = 0; ij < npt * npt; ++ij) {
@@ -1690,6 +1695,7 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffData)
     for(int jk = 0; jk < npt * npt; ++jk) {
       convertLag2Bez(bez, order, x, bez, jk * npt, 1);
     }
+    return;
   }
 }
 
@@ -1750,6 +1756,7 @@ void bezierCoeff::subdivide(std::vector<bezierCoeff *> &subCoeff) const
   }
   int n = _funcSpaceData.spaceOrder() + 1;
 
+  // TODO: other types
   switch(_funcSpaceData.elementType()) {
   case TYPE_TRI:
     for(int i = 0; i < 4; ++i) subCoeff.push_back(new bezierCoeff(*this));
@@ -1758,6 +1765,10 @@ void bezierCoeff::subdivide(std::vector<bezierCoeff *> &subCoeff) const
   case TYPE_QUA:
     for(int i = 0; i < 4; ++i) subCoeff.push_back(new bezierCoeff(*this));
     _subdivideQuadrangle(*this, n, subCoeff);
+    return;
+  case TYPE_HEX:
+    for(int i = 0; i < 8; ++i) subCoeff.push_back(new bezierCoeff(*this));
+    _subdivideHexahedron(*this, n, subCoeff);
     return;
   }
   // size all subcoeff (- coeff identical)
@@ -1905,6 +1916,49 @@ void bezierCoeff::_subdivideQuadrangle(const bezierCoeff &coeff, int n,
   return;
 }
 
+void bezierCoeff::_subdivideHexahedron(const bezierCoeff &coeff, int n,
+                                       std::vector<bezierCoeff *> &subCoeff)
+{
+  const int N = 2 * n - 1;
+  const int dim = coeff._c;
+  _sub.resize(N * N * N, dim, false);
+  for(int i = 0; i < n; ++i) {
+    for(int j = 0; j < n; ++j) {
+      for(int k = 0; k < n; ++k) {
+        const int I1 = i + j * n + k * n * n;
+        const int I2 = (2 * i) + (2 * j) * N + (2 * k) * N * N;
+        for(int k = 0; k < dim; ++k) {
+          _sub(I2, k) = coeff(I1, k);
+        }
+      }
+    }
+  }
+  for(int i = 0; i < N; i += 2) {
+    for(int j = 0; j < N; j += 2) {
+      _subdivide(_sub, n, i + j * N, N * N);
+    }
+  }
+  for(int i = 0; i < N; i += 2) {
+    for(int k = 0; k < N; ++k) {
+      _subdivide(_sub, n, i + k * N * N, N);
+    }
+  }
+  for(int j = 0; j < N; ++j) {
+    for(int k = 0; k < N; ++k) {
+      _subdivide(_sub, n, j * N + k * N * N);
+    }
+  }
+  _copyHex(_sub, 0, 0, 0, n, *subCoeff[0]);
+  _copyHex(_sub, n - 1, 0, 0, n, *subCoeff[0]);
+  _copyHex(_sub, 0, n - 1, 0, n, *subCoeff[0]);
+  _copyHex(_sub, n - 1, n - 1, 0, n, *subCoeff[0]);
+  _copyHex(_sub, 0, 0, n - 1, n, *subCoeff[0]);
+  _copyHex(_sub, n - 1, 0, n - 1, n, *subCoeff[0]);
+  _copyHex(_sub, 0, n - 1, n - 1, n, *subCoeff[0]);
+  _copyHex(_sub, n - 1, n - 1, n - 1, n, *subCoeff[0]);
+  return;
+}
+
 void bezierCoeff::_copy(const bezierCoeff &from, int start, int num,
                         bezierCoeff &to)
 {
@@ -1927,6 +1981,24 @@ void bezierCoeff::_copyQuad(const fullMatrix<double> &allSub, int starti,
       const int I2 = (starti + i) + (startj + j) * N;
       for(int K = 0; K < dim; ++K) {
         sub(I1, K) = allSub(I2, K);
+      }
+    }
+  }
+}
+
+void bezierCoeff::_copyHex(const fullMatrix<double> &allSub, int starti,
+                           int startj, int startk, int n, bezierCoeff &sub)
+{
+  const int dim = allSub.size2();
+  const int N = 2 * n - 1;
+  for(int i = 0; i < n; ++i) {
+    for(int j = 0; j < n; ++j) {
+      for(int k = 0; k < n; ++k) {
+        const int I1 = i + j * n + k * n * n;
+        const int I2 = (starti + i) + (startj + j) * N + (startk + k) * N * N;
+        for(int K = 0; K < dim; ++K) {
+          sub(I1, K) = allSub(I2, K);
+        }
       }
     }
   }

@@ -304,10 +304,14 @@ private:
                                    std::vector<fullMatrix<double> > &subCoeff);
   static void _subdivideQuadrangle(const bezierCoeff &coeff, int n,
                                    std::vector<bezierCoeff *> &subCoeff);
+  static void _subdivideHexahedron(const bezierCoeff &coeff, int n,
+                                   std::vector<bezierCoeff *> &subCoeff);
   static void _copy(const bezierCoeff &from, int start, int num,
                     bezierCoeff &to);
   static void _copyQuad(const fullMatrix<double> &allSub, int starti,
                         int startj, int n, bezierCoeff &sub);
+  static void _copyHex(const fullMatrix<double> &allSub, int starti,
+                       int startj, int startk, int n, bezierCoeff &sub);
   inline static int _ij2Index(int i, int j, int n)
   {
     return i + j * n - j * (j - 1) / 2;
