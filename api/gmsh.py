@@ -707,11 +707,12 @@ class model:
     def getValue(dim, tag, parametricCoord):
         """
         Evaluate the parametrization of the entity of dimension `dim' and tag `tag'
-        at the parametric coordinates `parametricCoord' and return triplets of x,
-        y, z coordinates in `points'. Only valid for `dim' equal to 0, 1 (with
-        `parametricCoord' containing parametric coordinates on the curve) or 2
-        (with `parametricCoord' containing pairs of u, v parametric coordinates on
-        the surface, concatenated),
+        at the parametric coordinates `parametricCoord'. Only valid for `dim' equal
+        to 0 (with empty `parametricCoord'), 1 (with `parametricCoord' containing
+        parametric coordinates on the curve) or 2 (with `parametricCoord'
+        containing pairs of u, v parametric coordinates on the surface,
+        concatenated: [p1u, p1v, p2u, ...]). Return triplets of x, y, z coordinates
+        in `points', concatenated: [p1x, p1y, p1z, p2x, ...].
 
         Return `points'.
         """
@@ -737,7 +738,11 @@ class model:
         `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only
         valid for `dim' equal to 1 (with `parametricCoord' containing parametric
         coordinates on the curve) or 2 (with `parametricCoord' containing pairs of
-        u, v parametric coordinates on the surface, concatenated).
+        u, v parametric coordinates on the surface, concatenated: [p1u, p1v, p2u,
+        ...]). For `dim' equal to 1 return the x, y, z components of the derivative
+        with respect to u [d1ux, d1uy, d1uz, d2ux, ...]; for `dim' equal to 2
+        return the x, y, z components of the derivate with respect to u and v:
+        [d1ux, d1uy, d1uz, d1vx, d1vy, d1vz, d2ux, ...].
 
         Return `derivatives'.
         """
@@ -763,7 +768,7 @@ class model:
         `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim'
         equal to 1 (with `parametricCoord' containing parametric coordinates on the
         curve) or 2 (with `parametricCoord' containing pairs of u, v parametric
-        coordinates on the surface, concatenated).
+        coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]).
 
         Return `curvatures'.
         """
@@ -788,7 +793,7 @@ class model:
         Evaluate the principal curvatures of the surface with tag `tag' at the
         parametric coordinates `parametricCoord', as well as their respective
         directions. `parametricCoord' are given by pair of u and v coordinates,
-        concatenated.
+        concatenated: [p1u, p1v, p2u, ...].
 
         Return `curvatureMax', `curvatureMin', `directionMax', `directionMin'.
         """
@@ -820,9 +825,9 @@ class model:
     def getNormal(tag, parametricCoord):
         """
         Get the normal to the surface with tag `tag' at the parametric coordinates
-        `parametricCoord'. `parametricCoord' are given by pair of u and v
-        coordinates, concatenated. `normals' are returned as triplets of x, y and z
-        components, concatenated.
+        `parametricCoord'. `parametricCoord' are given by pairs of u and v
+        coordinates, concatenated: [p1u, p1v, p2u, ...]. `normals' are returned as
+        triplets of x, y, z components, concatenated: [n1x, n1y, n1z, n2x, ...].
 
         Return `normals'.
         """
@@ -1037,14 +1042,14 @@ class model:
             `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and
             `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the
             node tags (their unique, strictly positive identification numbers). `coord'
-            is a vector of length 3 times the length of `nodeTags' that contains the
-            (x, y, z) coordinates of the nodes, concatenated. If `dim' >= 0,
-            `parametricCoord' contains the parametric coordinates u or (u, v) the
-            nodes, if available. The length of `parametricCoord' can be 0 or `dim'
-            times the length of `nodeTags'. If `includeBoundary' is set, also return
-            the nodes classified on the boundary of the entity (wich will be
-            reparametrized on the entity if `dim' >= 0 in order to compute their
-            parametric coordinates).
+            is a vector of length 3 times the length of `nodeTags' that contains the x,
+            y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. If
+            `dim' >= 0, `parametricCoord' contains the parametric coordinates ([u1, u2,
+            ...] or [u1, v1, u2, ...]) of the nodes, if available. The length of
+            `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If
+            `includeBoundary' is set, also return the nodes classified on the boundary
+            of the entity (wich will be reparametrized on the entity if `dim' >= 0 in
+            order to compute their parametric coordinates).
 
             Return `nodeTags', `coord', `parametricCoord'.
             """
@@ -1116,8 +1121,8 @@ class model:
             """
             Get the nodes from all the elements belonging to the physical group of
             dimension `dim' and tag `tag'. `nodeTags' contains the node tags; `coord'
-            is a vector of length 3 times the length of `nodeTags' that contains the
-            (x, y, z) coordinates of the nodes, concatenated.
+            is a vector of length 3 times the length of `nodeTags' that contains the x,
+            y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...].
 
             Return `nodeTags', `coord'.
             """
@@ -1144,10 +1149,10 @@ class model:
             Set the nodes classified on the geometrical entity of dimension `dim' and
             tag `tag'. `nodeTags' contains the node tags (their unique, strictly
             positive identification numbers). `coord' is a vector of length 3 times the
-            length of `nodeTags' that contains the (x, y, z) coordinates of the nodes,
-            concatenated. The optional `parametricCoord' vector contains the parametric
-            coordinates of the nodes, if any. The length of `parametricCoord' can be 0
-            or `dim' times the length of `nodeTags'.
+            length of `nodeTags' that contains the x, y, z coordinates of the nodes,
+            concatenated: : [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord'
+            vector contains the parametric coordinates of the nodes, if any. The length
+            of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'.
             """
             api_nodeTags_, api_nodeTags_n_ = _ivectorint(nodeTags)
             api_coord_, api_coord_n_ = _ivectordouble(coord)
@@ -1194,8 +1199,9 @@ class model:
             strictly positive identifiers) of the elements of the corresponding type.
             `nodeTags' is also a vector of the same length as `elementTypes'; each
             entry is a vector of length equal to the number of elements of the given
-            type times the number of nodes for this type of element, that contains the
-            node tags of all the elements of the given type, concatenated.
+            type times the number N of nodes for this type of element, that contains
+            the node tags of all the elements of the given type, concatenated: [e1n1,
+            e1n2, ..., e1nN, e2n1, ...].
 
             Return `elementTypes', `elementTags', `nodeTags'.
             """
@@ -1286,9 +1292,9 @@ class model:
             `types'; each entry is a vector containing the tags (unique, strictly
             positive identifiers) of the elements of the corresponding type. `nodeTags'
             is also a vector of the same length as `types'; each entry is a vector of
-            length equal to the number of elements of the give type times the number of
-            nodes per element, that contains the node tags of all the elements of the
-            given type, concatenated.
+            length equal to the number of elements of the given type times the number N
+            of nodes per element, that contains the node tags of all the elements of
+            the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
             """
             api_elementTypes_, api_elementTypes_n_ = _ivectorint(elementTypes)
             api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = _ivectorvectorint(elementTags)
@@ -1370,10 +1376,11 @@ class model:
             `tag'. If `tag' < 0, get the elements for all entities. `elementTags' is a
             vector containing the tags (unique, strictly positive identifiers) of the
             elements of the corresponding type. `nodeTags' is a vector of length equal
-            to the number of elements of the given type times the number of nodes for
+            to the number of elements of the given type times the number N of nodes for
             this type of element, that contains the node tags of all the elements of
-            the given type, concatenated. If `numTasks' > 1, only compute and return
-            the part of the data indexed by `task'.
+            the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If
+            `numTasks' > 1, only compute and return the part of the data indexed by
+            `task'.
 
             Return `elementTags', `nodeTags'.
             """
@@ -1427,16 +1434,18 @@ class model:
         def getJacobians(elementType, integrationType, tag=-1, task=0, numTasks=1):
             """
             Get the Jacobians of all the elements of type `elementType' classified on
-            the entity of dimension `dim' and tag `tag', at the integration points
+            the entity of dimension `dim' and tag `tag', at the G integration points
             required by the `integrationType' integration rule (e.g. "Gauss4"). Data is
             returned by element, with elements in the same order as in `getElements'
             and `getElementsByType'. `jacobians' contains for each element the 9
-            entries of a 3x3 Jacobian matrix (by row), for each integration point.
-            `determinants' contains for each element the determinant of the Jacobian
-            matrix for each integration point. `points' contains for each element the
-            (x, y, z) coordinates of the integration points. If `tag' < 0, get the
-            Jacobian data for all entities. If `numTasks' > 1, only compute and return
-            the part of the data indexed by `task'.
+            entries of a 3x3 Jacobian matrix (by row), for each integration point:
+            [e1g1Jxx, e1g1Jxy, e1g1Jxz, ... e1g1Jzz, e1g2Jxx, ..., e1gGJzz, e2g1Jxx,
+            ...]. `determinants' contains for each element the determinant of the
+            Jacobian matrix for each integration point: [e1g1, e1g2, ... e1gG, e2g1,
+            ...]. `points' contains for each element the x, y, z coordinates of the
+            integration points. If `tag' < 0, get the Jacobian data for all entities.
+            If `numTasks' > 1, only compute and return the part of the data indexed by
+            `task'.
 
             Return `jacobians', `determinants', `points'.
             """
@@ -1501,10 +1510,11 @@ class model:
             Get the basis functions of the element of type `elementType' for the given
             `integrationType' integration rule (e.g. "Gauss4") and `functionSpaceType'
             function space (e.g. "IsoParametric"). `integrationPoints' contains the
-            parametric coordinates (u, v, w) and the weight for each integeration
-            point, concatenated. `numComponents' returns the number of components of a
-            basis function. `basisFunctions' contains the evaluation of the basis
-            functions at the integration points.
+            parametric coordinates u, v, w and the weight q for each integeration
+            point, concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. `numComponents'
+            returns the number C of components of a basis function. `basisFunctions'
+            contains the evaluation of the basis functions at the integration points:
+            [g1f1, ..., g1fC, g2f1, ...].
 
             Return `integrationPoints', `numComponents', `basisFunctions'.
             """
@@ -2079,10 +2089,10 @@ class model:
         def addPoint(x, y, z, meshSize=0., tag=-1):
             """
             Add a geometrical point in the internal GEO CAD representation, at
-            coordinates (x, y, z). If `meshSize' is > 0, add a meshing constraint at
-            that point. If `tag' is positive, set the tag explicitly; otherwise a new
-            tag is selected automatically. Return the tag of the point. (Note that the
-            point will be added in the current model only after `synchronize' is
+            coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint
+            at that point. If `tag' is positive, set the tag explicitly; otherwise a
+            new tag is selected automatically. Return the tag of the point. (Note that
+            the point will be added in the current model only after `synchronize' is
             called. This behavior holds for all the entities added in the geo module.)
 
             Return an integer.
@@ -2767,10 +2777,10 @@ class model:
         def addPoint(x, y, z, meshSize=0., tag=-1):
             """
             Add a geometrical point in the internal OpenCASCADE CAD representation, at
-            coordinates (x, y, z). If `meshSize' is > 0, add a meshing constraint at
-            that point. If `tag' is positive, set the tag explicitly; otherwise a new
-            tag is selected automatically. Return the tag of the point. (Note that the
-            point will be added in the current model only after `synchronize' is
+            coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint
+            at that point. If `tag' is positive, set the tag explicitly; otherwise a
+            new tag is selected automatically. Return the tag of the point. (Note that
+            the point will be added in the current model only after `synchronize' is
             called. This behavior holds for all the entities added in the occ module.)
 
             Return an integer.
