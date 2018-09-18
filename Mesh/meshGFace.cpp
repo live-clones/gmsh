@@ -2405,6 +2405,12 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
     itt = m->triangles.begin();
     while(itt != m->triangles.end()) {
       BDS_Face *t = *itt;
+      if (t->deleted){
+        // If triangle is deleted, it won't have the correct neighbours
+        // to tag recursively
+        ++itt;
+        continue;
+      }
       BDS_Point *n[4];
       t->getNodes(n);
       if(n[0]->iD < 0 || n[1]->iD < 0 || n[2]->iD < 0) {
