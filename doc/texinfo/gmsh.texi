@@ -3640,7 +3640,8 @@ allow for 64-bit node and element tags.
 
 @example
 $MeshFormat // same as MSH version 2
-  version(ASCII double) file-type(ASCII int; 1 for binary mode) data-size(ASCII int)
+  version(ASCII double; currently 4.0) file-type(ASCII int; 1 for binary mode)
+    data-size(ASCII int; currently unused)
   <int with value one; only in binary mode, to detect endianness>
 $EndMeshFormat
 
