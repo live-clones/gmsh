@@ -1766,10 +1766,18 @@ void bezierCoeff::subdivide(std::vector<bezierCoeff *> &subCoeff) const
     for(int i = 0; i < 4; ++i) subCoeff.push_back(new bezierCoeff(*this));
     _subdivideQuadrangle(*this, n, subCoeff);
     return;
+  case TYPE_TET:
+    for(int i = 0; i < 8; ++i) subCoeff.push_back(new bezierCoeff(*this));
+    _subdivideTetrahedron(*this, n, subCoeff);
+    return;
   case TYPE_HEX:
     for(int i = 0; i < 8; ++i) subCoeff.push_back(new bezierCoeff(*this));
     _subdivideHexahedron(*this, n, subCoeff);
     return;
+//  case TYPE_PRI:
+//    for(int i = 0; i < 8; ++i) subCoeff.push_back(new bezierCoeff(*this));
+//    _subdividePrism(*this, n, subCoeff);
+//    return;
   }
   // size all subcoeff (- coeff identical)
   // simplicial: same size and copy before subdividing
@@ -1810,9 +1818,13 @@ void bezierCoeff::_subdivideTriangle(const bezierCoeff &coeff, int n, int start,
 {
   const int dim = coeff._c;
 
+  bezierCoeff &sub1 = *vSubCoeff[0];
+  bezierCoeff &sub2 = *vSubCoeff[1];
+  bezierCoeff &sub3 = *vSubCoeff[2];
+  bezierCoeff &sub4 = *vSubCoeff[3];
+
   // copy into first subdomain
-  bezierCoeff &sub = *vSubCoeff[0];
-  _copy(coeff, start, (n + 1) * n / 2, sub);
+  _copy(coeff, start, (n + 1) * n / 2, sub1);
 
   // Subdivide in u direction
   // TODO: consider precompute vector<pair<int, int>> for this
@@ -1822,7 +1834,7 @@ void bezierCoeff::_subdivideTriangle(const bezierCoeff &coeff, int n, int start,
         const int I = start + _ij2Index(i, j, n);
         const int Im = start + _ij2Index(i - 1, j, n);
         for(int K = 0; K < dim; ++K) {
-          sub(I, K) = .5 * (sub(Im, K) + sub(I, K));
+          sub1(I, K) = .5 * (sub1(Im, K) + sub1(I, K));
         }
       }
     }
@@ -1834,31 +1846,29 @@ void bezierCoeff::_subdivideTriangle(const bezierCoeff &coeff, int n, int start,
         const int I = start + _ij2Index(i, j, n);
         const int Im = start + _ij2Index(i, j - 1, n);
         for(int K = 0; K < dim; ++K) {
-          sub(I, K) = .5 * (sub(Im, K) + sub(I, K));
+          sub1(I, K) = .5 * (sub1(Im, K) + sub1(I, K));
         }
       }
     }
   }
 
-  bezierCoeff &sub2 = *vSubCoeff[1];
-  _copy(sub, start, (n + 1) * n / 2, sub2);
+  _copy(sub1, start, (n + 1) * n / 2, sub2);
   //
   // TODO: consider precompute vector<tuple<int, int, int>> for this
   for(int iter = 1; iter < n; ++iter) {
     for(int j = 0; j < n - iter; ++j) {
-      for(int i = 0; i < n - 1 - j; ++i) {
+      for(int i = 0; i < n - iter - j; ++i) {
         const int I = start + _ij2Index(i, j, n);
         const int Ia = start + _ij2Index(i + 1, j, n);
         const int Ib = start + _ij2Index(i, j + 1, n);
         for(int K = 0; K < dim; ++K) {
-          sub(I, K) = sub(Ia, K) + sub(Ib, K) - sub(I, K);
+          sub2(I, K) = sub2(Ia, K) + sub2(Ib, K) - sub2(I, K);
         }
       }
     }
   }
 
-  bezierCoeff &sub3 = *vSubCoeff[2];
-  _copy(sub3, start, (n + 1) * n / 2, sub2);
+  _copy(sub2, start, (n + 1) * n / 2, sub3);
   for(int iter = 1; iter < n; ++iter) {
     for(int j = 0; j < n - iter; ++j) {
       for(int i = n - 1 - j; i >= iter; --i) {
@@ -1866,14 +1876,13 @@ void bezierCoeff::_subdivideTriangle(const bezierCoeff &coeff, int n, int start,
         const int Ia = start + _ij2Index(i - 1, j, n);
         const int Ib = start + _ij2Index(i - 1, j + 1, n);
         for(int K = 0; K < dim; ++K) {
-          sub(I, K) = sub(Ia, K) + sub(Ib, K) - sub(I, K);
+          sub3(I, K) = sub3(Ia, K) + sub3(Ib, K) - sub3(I, K);
         }
       }
     }
   }
 
-  bezierCoeff &sub4 = *vSubCoeff[3];
-  _copy(sub4, start, (n + 1) * n / 2, sub2); // copy 2, not 3
+  _copy(sub2, start, (n + 1) * n / 2, sub4); // copy 2, not 3
   for(int iter = 1; iter < n; ++iter) {
     for(int j = n - 1; j >= iter; --j) {
       for(int i = 0; i < n - j; ++i) {
@@ -1881,11 +1890,174 @@ void bezierCoeff::_subdivideTriangle(const bezierCoeff &coeff, int n, int start,
         const int Ia = start + _ij2Index(i, j - 1, n);
         const int Ib = start + _ij2Index(i + 1, j - 1, n);
         for(int K = 0; K < dim; ++K) {
-          sub(I, K) = sub(Ia, K) + sub(Ib, K) - sub(I, K);
+          sub4(I, K) = sub4(Ia, K) + sub4(Ib, K) - sub4(I, K);
         }
       }
     }
   }
+}
+
+void bezierCoeff::_subdivideTet(_SubdivisionTet which, int n,
+                                bezierCoeff &coeff)
+{
+  // TODO: consider precompute vector<pair<int, int>> for subdiv
+  //       consider precompute vector<pair<int, int, int>> for n_crosse_e
+
+  const int dim = coeff.getNumColumns();
+  switch (which) {
+  case subdivU:
+    for(int iter = 1; iter < n; ++iter) {
+      for(int k = 0; k < n - iter; ++k) {
+        for(int j = 0; j < n - iter - k; ++j) {
+          for(int i = n - 1 - j - k; i >= iter; --i) {
+            const int I = _ijk2Index(i, j, k, n);
+            const int Im = _ijk2Index(i - 1, j, k, n);
+            for(int K = 0; K < dim; ++K) {
+              coeff(I, K) = .5 * (coeff(Im, K) + coeff(I, K));
+            }
+          }
+        }
+      }
+    }
+    return;
+  case subdivV:
+    for(int iter = 1; iter < n; ++iter) {
+      for(int k = 0; k < n - iter; ++k) {
+        for(int j = n - 1 - k; j >= iter; --j) {
+          for(int i = 0; i < n - j - k; ++i) {
+            const int I = _ijk2Index(i, j, k, n);
+            const int Im = _ijk2Index(i, j - 1, k, n);
+            for(int K = 0; K < dim; ++K) {
+              coeff(I, K) = .5 * (coeff(Im, K) + coeff(I, K));
+            }
+          }
+        }
+      }
+    }
+    return;
+  case subdivW:
+    for(int iter = 1; iter < n; ++iter) {
+      for(int k = n - 1; k >= iter; --k) {
+        for(int j = 0; j < n - k; ++j) {
+          for(int i = 0; i < n - j - k; ++i) {
+            const int I = _ijk2Index(i, j, k, n);
+            const int Im = _ijk2Index(i, j, k - 1, n);
+            for(int K = 0; K < dim; ++K) {
+              coeff(I, K) = .5 * (coeff(Im, K) + coeff(I, K));
+            }
+          }
+        }
+      }
+    }
+    return;
+    // TODO: consider precompute vector<tuple<int, int, int>> for this
+  case node0CrossEdge12:
+    for(int iter = 1; iter < n; ++iter) {
+      for(int k = 0; k < n - iter; ++k) {
+        for(int j = 0; j < n - iter - k; ++j) {
+          for(int i = 0; i < n - iter - j - k; ++i) {
+            const int I = _ijk2Index(i, j, k, n);
+            const int Ia = _ijk2Index(i + 1, j, k, n);
+            const int Ib = _ijk2Index(i, j + 1, k, n);
+            for(int K = 0; K < dim; ++K) {
+              coeff(I, K) = coeff(Ia, K) + coeff(Ib, K) - coeff(I, K);
+            }
+          }
+        }
+      }
+    }
+    return;
+  case node3CrossEdge12:
+    for(int iter = 1; iter < n; ++iter) {
+      for(int k = n - 1; k >= iter; --k) {
+        for(int j = 0; j < n - k; ++j) {
+          for(int i = 0; i < n - j - k; ++i) {
+            const int I = _ijk2Index(i, j, k, n);
+            const int Ia = _ijk2Index(i + 1, j, k - 1, n);
+            const int Ib = _ijk2Index(i, j + 1, k - 1, n);
+            for(int K = 0; K < dim; ++K) {
+              coeff(I, K) = coeff(Ia, K) + coeff(Ib, K) - coeff(I, K);
+            }
+          }
+        }
+      }
+    }
+    return;
+  case node1CrossEdge03:
+    for(int iter = 1; iter < n; ++iter) {
+      for(int k = 0; k < n - iter; ++k) {
+        for(int j = 0; j < n - iter - k; ++j) {
+          for(int i = n - 1 - j - k; i >= iter; --i) {
+            const int I = _ijk2Index(i, j, k, n);
+            const int Ia = _ijk2Index(i - 1, j, k, n);
+            const int Ib = _ijk2Index(i - 1, j, k + 1, n);
+            for(int K = 0; K < dim; ++K) {
+              coeff(I, K) = coeff(Ia, K) + coeff(Ib, K) - coeff(I, K);
+            }
+          }
+        }
+      }
+    }
+    return;
+  case node2CrossEdge03:
+    for(int iter = 1; iter < n; ++iter) {
+      for(int k = 0; k < n - iter; ++k) {
+        for(int j = n - 1 - k; j >= iter; --j) {
+          for(int i = 0; i < n - j - k; ++i) {
+            const int I = _ijk2Index(i, j, k, n);
+            const int Ia = _ijk2Index(i, j - 1, k, n);
+            const int Ib = _ijk2Index(i, j - 1, k + 1, n);
+            for(int K = 0; K < dim; ++K) {
+              coeff(I, K) = coeff(Ia, K) + coeff(Ib, K) - coeff(I, K);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+void bezierCoeff::_subdivideTetrahedron(const bezierCoeff &coeff, int n,
+                                        std::vector<bezierCoeff *> &vSubCoeff)
+{
+  const int dim = coeff._c;
+  const int N = (n + 2) * (n + 1) * n / 6;
+
+  bezierCoeff &sub1 = *vSubCoeff[0];
+  bezierCoeff &sub2 = *vSubCoeff[1];
+  bezierCoeff &sub3 = *vSubCoeff[2];
+  bezierCoeff &sub4 = *vSubCoeff[3];
+  bezierCoeff &sub5 = *vSubCoeff[4];
+  bezierCoeff &sub6 = *vSubCoeff[5];
+  bezierCoeff &sub7 = *vSubCoeff[6];
+  bezierCoeff &sub8 = *vSubCoeff[7];
+
+  // Corner (0,0,0)
+  _copy(coeff, 0, N, sub1);
+  _subdivideTet(subdivU, n, sub1);
+  _subdivideTet(subdivV, n, sub1);
+  _subdivideTet(subdivW, n, sub1);
+
+  // Compute 4 middle ones
+  _copy(sub1, 0, N, sub2);
+  _subdivideTet(node0CrossEdge12, n, sub2);
+
+  _copy(sub2, 0, N, sub3);
+  _copy(sub2, 0, N, sub4);
+  _subdivideTet(node1CrossEdge03, n, sub3);
+  _subdivideTet(node2CrossEdge03, n, sub4);
+
+  _copy(sub4, 0, N, sub5);
+  _subdivideTet(node1CrossEdge03, n, sub5);
+
+  // 3 remaining corners
+  _copy(sub3, 0, N, sub6);
+  _copy(sub4, 0, N, sub7);
+  _copy(sub5, 0, N, sub8);
+  _subdivideTet(node3CrossEdge12, n, sub6);
+  _subdivideTet(node3CrossEdge12, n, sub7);
+  _subdivideTet(node0CrossEdge12, n, sub8);
+  // node 3 cross edge 1-2
 }
 
 void bezierCoeff::_subdivideQuadrangle(const bezierCoeff &coeff, int n,

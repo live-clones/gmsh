@@ -296,12 +296,18 @@ public:
   inline double &operator()(int i, int j) { return _data[i + _r * j]; }
 
 private:
+  enum _SubdivisionTet {
+    subdivU, subdivV, subdivW, node0CrossEdge12,
+    node3CrossEdge12, node1CrossEdge03, node2CrossEdge03
+  };
+  static void _subdivideTet(_SubdivisionTet which, int n, bezierCoeff &coeff);
+
   static void _subdivide(fullMatrix<double> &coeff, int n, int start);
   static void _subdivide(fullMatrix<double> &coeff, int n, int start, int inc);
   static void _subdivideTriangle(const bezierCoeff &coeff, int n, int start,
                                  std::vector<bezierCoeff *> &subCoeff);
-  static void _subdivideTetrahedra(bezierCoeff &coeff, int n, int start,
-                                   std::vector<fullMatrix<double> > &subCoeff);
+  static void _subdivideTetrahedron(const bezierCoeff &coeff, int n,
+                                    std::vector<bezierCoeff *> &vSubCoeff);
   static void _subdivideQuadrangle(const bezierCoeff &coeff, int n,
                                    std::vector<bezierCoeff *> &subCoeff);
   static void _subdivideHexahedron(const bezierCoeff &coeff, int n,
@@ -315,6 +321,14 @@ private:
   inline static int _ij2Index(int i, int j, int n)
   {
     return i + j * n - j * (j - 1) / 2;
+  }
+  inline static int _ijk2Index(int i, int j, int k, int n)
+  {
+    // the whole tet - the top tet + current triangle
+    return (n + 2) * (n + 1) * n / 6
+           - (n-k + 2) * (n-k + 1) * (n-k) / 6
+           + j * (n-k) - j * (j - 1) / 2
+           + i;
   }
   void _computeCoefficients(const double *lagCoeffData);
 };
