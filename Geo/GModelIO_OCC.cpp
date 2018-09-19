@@ -1502,9 +1502,8 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
     std::size_t i = 0;
     for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()) {
       TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
-      if(i <
-         surfaceTags
-           .size()) { // associated face constraint (does not seem to work...)
+      if(i < surfaceTags.size()) {
+        // associated face constraint (does not seem to work...)
         if(!_tagFace.IsBound(surfaceTags[i])) {
           Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[i]);
           return false;
@@ -1542,6 +1541,7 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
     result = BRepBuilderAPI_MakeFace(s, wire);
     ShapeFix_Face fix(result);
     fix.Perform();
+    fix.FixOrientation(); // and I don't understand why this is necessary
     result = fix.Face();
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
