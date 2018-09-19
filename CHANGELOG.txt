@@ -1,4 +1,5 @@
-4.0.2: added support for creating MED files with specific MED (minor) version.
+4.0.2: added support for creating MED files with specific MED (minor) version;
+small bug fixes.
 
 4.0.1 (September 7, 2018): renumber mesh nodes/elements by default; new
 SendToServer command for nodal views; added color and visibility handling in
