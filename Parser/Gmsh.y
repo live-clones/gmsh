@@ -1331,7 +1331,7 @@ DefineConstants :
       CharParameterOptionsOrNone '}'
     {
       std::string key($3), val($6);
-      if(!gmsh_yysymbols.count(key)){
+      if(!gmsh_yystringsymbols.count(key)){
         Msg::ExchangeOnelabParameter(key, val, floatOptions, charOptions);
         gmsh_yystringsymbols[key] = std::vector<std::string>(1, val);
       }

@@ -7876,7 +7876,7 @@ yyreduce:
 #line 1332 "Gmsh.y"
     {
       std::string key((yyvsp[(3) - (9)].c)), val((yyvsp[(6) - (9)].c));
-      if(!gmsh_yysymbols.count(key)){
+      if(!gmsh_yystringsymbols.count(key)){
         Msg::ExchangeOnelabParameter(key, val, floatOptions, charOptions);
         gmsh_yystringsymbols[key] = std::vector<std::string>(1, val);
       }
