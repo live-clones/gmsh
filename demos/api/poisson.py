@@ -7,6 +7,10 @@ import sys
 # This scripts solves the 2D Poisson equation '-\Delta u = f' with homogeneous
 # boundary conditions using the finite element method.
 
+# Simply run the script with
+# $ python demos/api/poisson.py
+# with usual gmsh line arguments, e.g., -clscale 0.5 -order 2
+
 INTEGRATION = 'Gauss2'
 DEBUG = 0
 RECOMBINE = 0
