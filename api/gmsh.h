@@ -372,7 +372,7 @@ namespace gmsh { // Top-level functions
       // tag `tag'. `nodeTags' contains the node tags (their unique, strictly
       // positive identification numbers). `coord' is a vector of length 3 times
       // the length of `nodeTags' that contains the x, y, z coordinates of the
-      // nodes, concatenated: : [n1x, n1y, n1z, n2x, ...]. The optional
+      // nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. The optional
       // `parametricCoord' vector contains the parametric coordinates of the nodes,
       // if any. The length of `parametricCoord' can be 0 or `dim' times the length
       // of `nodeTags'.

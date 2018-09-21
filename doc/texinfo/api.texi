@@ -685,7 +685,7 @@ Set the nodes classified on the geometrical entity of dimension @code{dim} and
 tag @code{tag}. @code{nodeTags} contains the node tags (their unique, strictly
 positive identification numbers). @code{coord} is a vector of length 3 times the
 length of @code{nodeTags} that contains the x, y, z coordinates of the nodes,
-concatenated: : [n1x, n1y, n1z, n2x, ...]. The optional @code{parametricCoord}
+concatenated: [n1x, n1y, n1z, n2x, ...]. The optional @code{parametricCoord}
 vector contains the parametric coordinates of the nodes, if any. The length of
 @code{parametricCoord} can be 0 or @code{dim} times the length of
 @code{nodeTags}.
