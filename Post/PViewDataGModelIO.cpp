@@ -905,7 +905,8 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
   std::string meshName(model->getName());
   std::string fieldName(getName());
 
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM == 3) && (MED_MINOR_NUM >= 3)
+  // MEDfileVersionOpen actually appeared in MED 3.2.1
   med_int major = MED_MAJOR_NUM, minor = MED_MINOR_NUM, release = MED_RELEASE_NUM;
   if(CTX::instance()->mesh.medFileMinorVersion >= 0){
     minor = (int)CTX::instance()->mesh.medFileMinorVersion;
