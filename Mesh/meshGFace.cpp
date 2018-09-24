@@ -2490,6 +2490,13 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
     sprintf(name, "surface%d-recovered-param.pos", gf->tag());
     outputScalarField(m->triangles, name, 1, gf);
   }
+  
+  {
+    // Call this function to untangle elements in Cartesian space
+    int nb_swap;
+    Msg::Debug("Delaunizing the initial mesh");
+    delaunayizeBDS(gf, *m, nb_swap);
+  }
 
   // start mesh generation for periodic face
 

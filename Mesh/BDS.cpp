@@ -1076,6 +1076,10 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest,
 
   if(!theTest(p1, p2, op[0], op[1])) return false;
 
+  // Check if new edge op[0] - op[1] is not on a seam or degenerated
+  if (op[0]->degenerated && op[1]->degenerated) return false;
+  if (op[0]->_periodicCounterpart && op[1]->_periodicCounterpart) return false;
+
   if(p1->iD == CHECK1 && p2->iD == CHECK2) printf("TEST2 OK\n");
 
   BDS_Edge *p1_op1 = find_edge(p1, op[0], e->faces(0));
