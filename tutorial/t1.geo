@@ -53,7 +53,7 @@ Plane Surface(1) = {1} ;
 
 // At this level, Gmsh knows everything to display the rectangular surface 6 and
 // to mesh it. An optional step is needed if we want to group elementary
-// geometrical entities in more meaningful groups, e.g. to define some
+// geometrical entities into more meaningful groups, e.g. to define some
 // mathematical ("domain", "boundary"), functional ("left wing", "fuselage") or
 // material ("steel", "carbon") properties.
 //
@@ -63,22 +63,22 @@ Plane Surface(1) = {1} ;
 // whether they belong to physical groups or not, set "Mesh.SaveAll=1;", or
 // specify "-save_all" on the command line.)
 //
-// Here we define physical curve that groups the left, bottom and right lines in
-// a single group (with prescribed tag 5); and a physical surface with name "My
-// surface" (with an automatic tag):
+// Here we define a physical curve that groups the left, bottom and right lines
+// in a single group (with prescribed tag 5); and a physical surface with name
+// "My surface" (with an automatic tag) containg the geometrical surface 1:
 
 Physical Curve(5) = {1, 2, 4} ;
 Physical Surface("My surface") = {1} ;
 
-// Starting with Gmsh 3.0, models can also be built using constructive solid
-// geometry. Instead of the built-in geometry kernel, you need to use the
-// OpenCASCADE kernel:
+// Note that starting with Gmsh 3.0, models can be built using different
+// geometry kernels than the default "built-in" kernel. By specifying
 //
 //   SetFactory("OpenCASCADE");
 //
-// In addition to the "bottom-up" geometry commands, you can then also use
-// "top-down" commands, like e.g.
+// any subsequent command in the .geo file would be handled by the OpenCASCADE
+// geometry kernel instead of the built-in kernel. A rectangular surface could
+// then simply be created with
 //
 //   Rectangle(2) = {.2, 0, 0, 0.1, 0.3};
 //
-// See tutorial/t16.geo for an example, and demos/boolean for more.
+// See tutorial/t16.geo for a complete example, and demos/boolean for more.
