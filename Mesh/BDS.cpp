@@ -925,7 +925,7 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
                                          BDS_Point *_oq2, BDS_Point *_oq3) const
 {
   // Check if new edge is not on a seam or degenerated
-  BDS_Point *p1, *p2;
+  BDS_Point *p1 = 0, *p2 = 0;
   if (_op1 != _oq1 && _op1 != _oq2 && _op1 != _oq3){
     p1 = _op2;
     p2 = _op3;
