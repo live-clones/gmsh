@@ -225,8 +225,11 @@ if RECOMBINE:
     model.mesh.setRecombine(2,2)
     model.mesh.setRecombine(2,3)
     model.mesh.setRecombine(2,4)
+
 model.mesh.generate(2)
-gmsh.write('poisson.msh')
+
+if DEBUG:
+    gmsh.write('poisson.msh')
 
 fem_solve()
 
