@@ -37,7 +37,7 @@ protected:
   GRegion *r1, *r2;
   mean_plane meanPlane;
   std::vector<GEdge *> embedded_edges;
-  std::list<GVertex *> embedded_vertices;
+  std::set<GVertex *> embedded_vertices;
 
   BoundaryLayerColumns _columns;
 
@@ -94,7 +94,7 @@ public:
   }
 
   // add embedded vertices/edges
-  void addEmbeddedVertex(GVertex *v) { embedded_vertices.push_back(v); }
+  void addEmbeddedVertex(GVertex *v) { embedded_vertices.insert(v); }
   void addEmbeddedEdge(GEdge *e) { embedded_edges.push_back(e); }
 
   // delete the edge from the face (the edge is supposed to be a free
@@ -129,7 +129,7 @@ public:
   virtual std::vector<GEdge *> embeddedEdges() const { return embedded_edges; }
 
   // edges that are embedded in the face
-  virtual std::list<GVertex *> embeddedVertices() const
+  virtual std::set<GVertex *> embeddedVertices() const
   {
     return embedded_vertices;
   }
