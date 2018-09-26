@@ -926,7 +926,7 @@ int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
     // avoid angles that are too obtuse
     double cosv = ((d1 * d1 + d2 * d2 - d3 * d3) / (2. * d1 * d2));
 
-    if (v1->onWhat()->dim() != 2 && v1->onWhat()->dim() != 2){
+    if (v0->onWhat()->dim() != 2 && v1->onWhat()->dim() != 2){
       SVector3 v0v1(v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z());
       SVector3 v0v(v->x() - v0->x(), v->y() - v0->y(), v->z() - v0->z());
       SVector3 pv = crossprod(v0v1, v0v);
