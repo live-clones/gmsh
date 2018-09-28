@@ -60,7 +60,7 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
   else if(qmh == QMH_SIGE_XY) {
     for(int i = 0; i < 100; i++) {
       x.push_back((double)(2 * i - 99) / 99);
-      y.push_back(FlGui::instance()->stats->quality[3][i]);
+      y.push_back(FlGui::instance()->stats->quality[2][i]);
     }
     new PView("SIGE", "# Elements", x, y);
   }
