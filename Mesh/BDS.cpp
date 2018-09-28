@@ -924,6 +924,29 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
                                          BDS_Point *_op3, BDS_Point *_oq1,
                                          BDS_Point *_oq2, BDS_Point *_oq3) const
 {
+  // Check if new edge is not on a seam or degenerated
+  BDS_Point *p1 = 0, *p2 = 0;
+  if (_op1 != _oq1 && _op1 != _oq2 && _op1 != _oq3){
+    p1 = _op2;
+    p2 = _op3;
+  }
+  else if (_op2 != _oq1 && _op2 != _oq2 && _op2 != _oq3){
+    p1 = _op1;
+    p2 = _op3;
+  }
+  else if (_op3 != _oq1 && _op3 != _oq2 && _op3 != _oq3){
+    p1 = _op1;
+    p2 = _op2;
+  }
+  else {
+    Msg::Warning("Unable to detect the new edge in BDS_SwapEdgeTestQuality\n");
+  }
+
+  if (p1 && p2){
+    if (p1->degenerated && p2->degenerated) return false;
+    if (p1->_periodicCounterpart && p2->_periodicCounterpart) return false;
+  }
+
   if(!testQuality) return true;
 
   double qa1 = qmTriangle::gamma(_p1, _p2, _p3);
@@ -1075,10 +1098,6 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest,
   }
 
   if(!theTest(p1, p2, op[0], op[1])) return false;
-
-  // Check if new edge op[0] - op[1] is not on a seam or degenerated
-  if (op[0]->degenerated && op[1]->degenerated) return false;
-  if (op[0]->_periodicCounterpart && op[1]->_periodicCounterpart) return false;
 
   if(p1->iD == CHECK1 && p2->iD == CHECK2) printf("TEST2 OK\n");
 

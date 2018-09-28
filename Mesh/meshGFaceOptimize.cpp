@@ -124,8 +124,8 @@ void buildMeshGenerationDataStructures(
 
   // take care of embedded vertices
   {
-    std::list<GVertex *> emb_vertx = gf->embeddedVertices();
-    std::list<GVertex *>::iterator itvx = emb_vertx.begin();
+    std::set<GVertex *> emb_vertx = gf->embeddedVertices();
+    std::set<GVertex *>::iterator itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()) {
       if((*itvx)->mesh_vertices.size()) {
         MVertex *v = *((*itvx)->mesh_vertices.begin());
