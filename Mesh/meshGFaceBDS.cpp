@@ -723,8 +723,8 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   // classify correctly the embedded vertices use a negative model
   // face number to avoid mesh motion
   if(recoverMapInv) {
-    std::list<GVertex *> emb_vertx = gf->embeddedVertices();
-    std::list<GVertex *>::iterator itvx = emb_vertx.begin();
+    std::set<GVertex *> emb_vertx = gf->embeddedVertices();
+    std::set<GVertex *>::iterator itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()) {
       MVertex *v = *((*itvx)->mesh_vertices.begin());
       std::map<MVertex *, BDS_Point *>::iterator itp = recoverMapInv->find(v);

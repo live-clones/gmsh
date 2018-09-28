@@ -325,7 +325,7 @@ std::vector<MVertex *> GFace::getEmbeddedMeshVertices() const
       tmp.insert((*it)->getEndVertex()->mesh_vertices.begin(),
                  (*it)->getEndVertex()->mesh_vertices.end());
   }
-  for(std::list<GVertex *>::const_iterator it = embedded_vertices.begin();
+  for(std::set<GVertex *>::const_iterator it = embedded_vertices.begin();
       it != embedded_vertices.end(); it++) {
     tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
   }
@@ -405,7 +405,7 @@ std::string GFace::getAdditionalInfoString(bool multline)
 
   if(embedded_vertices.size()) {
     sstream << "Embedded points: ";
-    for(std::list<GVertex *>::iterator it = embedded_vertices.begin();
+    for(std::set<GVertex *>::iterator it = embedded_vertices.begin();
         it != embedded_vertices.end(); ++it) {
       if(it != embedded_vertices.begin()) sstream << ", ";
       sstream << (*it)->tag();
@@ -467,7 +467,7 @@ void GFace::writeGEO(FILE *fp)
       it != embedded_edges.end(); it++)
     fprintf(fp, "Line {%d} In Surface {%d};\n", (*it)->tag(), tag());
 
-  for(std::list<GVertex *>::iterator it = embedded_vertices.begin();
+  for(std::set<GVertex *>::iterator it = embedded_vertices.begin();
       it != embedded_vertices.end(); it++)
     fprintf(fp, "Point {%d} In Surface {%d};\n", (*it)->tag(), tag());
 
@@ -1659,7 +1659,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     m_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
   }
 
-  std::list<GVertex *> m_embedded_vertices = master->embeddedVertices();
+  std::set<GVertex *> m_embedded_vertices = master->embeddedVertices();
   m_vertices.insert(m_embedded_vertices.begin(), m_embedded_vertices.end());
 
   // check topological correspondence
