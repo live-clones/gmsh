@@ -1065,7 +1065,10 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   }
 
   while(ite != edges.end()) {
-    if((*ite)->isSeam(gf)) return false;
+    if((*ite)->isSeam(gf)) {
+      if(fdeb != NULL) fclose(fdeb);
+      return false;
+    }
     if(!(*ite)->isMeshDegenerated()) {
       for(unsigned int i = 0; i < (*ite)->lines.size(); i++) {
         MVertex *v1 = (*ite)->lines[i]->getVertex(0);
