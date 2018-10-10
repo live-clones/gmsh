@@ -547,6 +547,21 @@ GMSH_API void gmsh::model::removeEntities(const vectorpair &dimTags,
   GModel::current()->remove(dimTags, recursive);
 }
 
+GMSH_API void gmsh::model::removePhysicalGroups(const vectorpair &dimTags)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  if(dimTags.empty()){
+    GModel::current()->removePhysicalGroups();
+  }
+  else{
+    // TODO: rewrite the unerlying code: it's slow
+    for(unsigned int i = 0; i < dimTags.size(); i++)
+      GModel::current()->removePhysicalGroup(dimTags[i].first, dimTags[i].second);
+  }
+}
+
 GMSH_API void gmsh::model::getType(const int dim, const int tag,
                                    std::string &entityType)
 {

@@ -658,6 +658,22 @@ class model:
                 ierr.value)
 
     @staticmethod
+    def removePhysicalGroups(dimTags=[]):
+        """
+        Remove the physical groups `dimTags' of the current model. If `dimTags' is
+        empty, remove all groups.
+        """
+        api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+        ierr = c_int()
+        lib.gmshModelRemovePhysicalGroups(
+            api_dimTags_, api_dimTags_n_,
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelRemovePhysicalGroups returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
     def getType(dim, tag):
         """
         Get the type of the entity of dimension `dim' and tag `tag'.

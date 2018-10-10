@@ -515,6 +515,21 @@ function removeEntities(dimTags, recursive = false)
 end
 
 """
+    gmsh.model.removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
+
+Remove the physical groups `dimTags` of the current model. If `dimTags` is
+empty, remove all groups.
+"""
+function removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
+    ierr = Ref{Cint}()
+    ccall((:gmshModelRemovePhysicalGroups, gmsh.lib), Nothing,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}),
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), ierr)
+    ierr[] != 0 && error("gmshModelRemovePhysicalGroups returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.getType(dim, tag)
 
 Get the type of the entity of dimension `dim` and tag `tag`.

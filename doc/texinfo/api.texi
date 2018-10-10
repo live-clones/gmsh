@@ -368,6 +368,19 @@ true, remove all the entities on their boundaries, down to dimension 0.
 -
 @end table
 
+@item removePhysicalGroups
+Remove the physical groups @code{dimTags} of the current model. If
+@code{dimTags} is empty, remove all groups.
+
+@table @asis
+@item Input:
+@code{dimTags}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item getType
 Get the type of the entity of dimension @code{dim} and tag @code{tag}.
 

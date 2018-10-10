@@ -712,20 +712,23 @@ void GModel::removePhysicalGroups()
   getEntities(entities);
   for(unsigned int i = 0; i < entities.size(); i++)
     entities[i]->physicals.clear();
+  physicalNames.clear();
 }
 
-void GModel::removePhysicalGroup(int dim, int num)
+void GModel::removePhysicalGroup(int dim, int tag)
 {
+  // FIXME: this is very inefficient - needs to be rewriten (and we should
+  // generalize the function by taking a list of dim, tag pairs)
   std::vector<GEntity *> entities;
   getEntities(entities, dim);
   for(unsigned int i = 0; i < entities.size(); i++) {
     std::vector<int> p;
     for(unsigned int j = 0; j < entities[i]->physicals.size(); j++)
-      if(entities[i]->physicals[j] != num)
+      if(entities[i]->physicals[j] != tag)
         p.push_back(entities[i]->physicals[j]);
     entities[i]->physicals = p;
   }
-  physicalNames.erase(std::pair<int, int>(dim, num));
+  physicalNames.erase(std::pair<int, int>(dim, tag));
 }
 
 int GModel::getMaxPhysicalNumber(int dim)
@@ -2243,6 +2246,22 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   Msg::StatusBar(true, "Done removing duplicate mesh vertices");
   return num;
 }
+
+/*
+struct ElementSort{
+  MElement *ele;
+  std::vector<int> sortedVertexNum;
+};
+
+struct Less_ElementSort{
+  return a->sortedVertexNum < b->sortedVertexNum;
+};
+
+int GModel::removeDuplicateMeshElements()
+{
+
+}
+*/
 
 static void recurConnectMElementsByMFace(
   const MFace &f, std::multimap<MFace, MElement *, Less_Face> &e2f,
