@@ -2371,7 +2371,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
   }
 
 
-  //  std::vector<EdgeToRecover> edgesNotRecovered;
+  std::vector<EdgeToRecover> edgesNotRecovered;
 
   for(unsigned int i = 0; i < edgeLoops_BDS.size(); i++) {
     std::vector<BDS_Point *> &edgeLoop_BDS = edgeLoops_BDS[i];
@@ -2380,6 +2380,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
         edgeLoop_BDS[j]->iD, edgeLoop_BDS[(j + 1) % edgeLoop_BDS.size()]->iD,
         _fatallyFailed);
       if(!e) {
+
 	//	edgesNotRecovered.push_back(EdgeToRecover(edgeLoop_BDS[j]->iD,
 	//						  edgeLoop_BDS[(j + 1) % edgeLoop_BDS.size()]->iD));
 
@@ -2394,6 +2395,13 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
     }
   }
 
+  if(edgesNotRecovered.size()) {
+    if(repairSelfIntersecting1dMesh){
+    }
+  }
+
+
+  
   // look for a triangle that has a negative node and recursively tag all
   // exterior triangles
   {

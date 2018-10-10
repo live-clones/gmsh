@@ -699,10 +699,10 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
 
   e->oppositeof(op);
 
-  int CHECK1 = -1, CHECK2 = -1;
+  int CHECK1 = -1, CHECK2 = 32;
 
   if(p1->iD == CHECK1 && p2->iD == CHECK2)
-    printf("coucou %d %d %d %d\n", p1->iD, p2->iD, op[0]->iD, op[1]->iD);
+    printf("splitting edge %d %d opp %d %d new %d\n", p1->iD, p2->iD, op[0]->iD, op[1]->iD,mid->iD);
 
   double ori0 = fabs(surface_triangle_param(p2, p1, op[0])) +
                 fabs(surface_triangle_param(p2, p1, op[1]));
@@ -1374,7 +1374,8 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
 
 bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
 {
- //  printf("coucou\n");
+  //  return true;
+  //  printf("coucou\n");
  //  if(!p->config_modified) return false;
  if(p->g && p->g->classif_degree <= 1) return false;
  if(p->g && p->g->classif_tag < 0) {
@@ -1575,8 +1576,8 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
   eit = p->edges.begin();
 
   if(eit == itede) {
-    Msg::Debug("Hidden bug ... I should have deleted a point but I still do "
-               "not know why it segfault when I do it :-) ");
+    //    Msg::Debug("Hidden bug ... I should have deleted a point but I still do "
+    //               "not know why it segfault when I do it :-) ");
     return false;
   }
 
