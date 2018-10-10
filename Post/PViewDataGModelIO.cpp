@@ -11,6 +11,7 @@
 #include "Numeric.h"
 #include "StringUtils.h"
 #include "OS.h"
+#include "Context.h"
 
 bool PViewDataGModel::addData(GModel *model,
                               const std::map<int, std::vector<double> > &data,
@@ -904,7 +905,19 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
   std::string meshName(model->getName());
   std::string fieldName(getName());
 
+#if(MED_MAJOR_NUM == 3) && (MED_MINOR_NUM >= 3)
+  // MEDfileVersionOpen actually appeared in MED 3.2.1
+  med_int major = MED_MAJOR_NUM, minor = MED_MINOR_NUM, release = MED_RELEASE_NUM;
+  if(CTX::instance()->mesh.medFileMinorVersion >= 0){
+    minor = (int)CTX::instance()->mesh.medFileMinorVersion;
+    Msg::Info("Forcing MED file version to %d.%d", major, minor);
+  }
+  med_idt fid = MEDfileVersionOpen((char *)fileName.c_str(), MED_ACC_RDEXT,
+                                   major, minor, release);
+#else
   med_idt fid = MEDouvrir((char *)fileName.c_str(), MED_LECTURE_AJOUT);
+#endif
+
   if(fid < 0) {
     Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
@@ -1021,3 +1034,55 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
 }
 
 #endif
+
+
+void PViewDataGModel::sendToServer(const std::string &name)
+{
+  if(_steps.empty()) return;
+
+  if(_type != NodeData) {
+    Msg::Error("sendToServer currently only implemented for nodal datasets");
+    return;
+  }
+
+  int numEnt = 0, numComp = 0;
+  for(unsigned int step = 0; step < _steps.size(); step++) {
+    int nc = _steps[step]->getNumComponents();
+    int ne = 0;
+    for(int i = 0; i < _steps[step]->getNumData(); i++)
+      if(_steps[step]->getData(i)) ne++;
+    if(!step){
+      numEnt = ne;
+      numComp = nc;
+    }
+    else{
+      if(ne != numEnt || nc != numComp){
+        Msg::Error("Can not send heterogeneous view to server");
+        return;
+      }
+    }
+  }
+
+  std::vector<double> exp;
+  exp.push_back(numEnt);
+
+  for(int i = 0; i < _steps[0]->getNumData(); i++) {
+    if(_steps[0]->getData(i)) {
+      MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
+      if(!v) {
+        Msg::Error("Unknown vertex %d in data", i);
+        return;
+      }
+      int num = v->getNum();
+      exp.push_back(num);
+      for(int step = 0; step < _steps.size(); step++){
+        for(int k = 0; k < numComp; k++){
+          double data = _steps[step]->getData(i)[k];
+          exp.push_back(data);
+        }
+      }
+    }
+  }
+
+  Msg::SetOnelabNumber(name, exp, false);
+}

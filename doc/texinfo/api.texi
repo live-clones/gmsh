@@ -396,11 +396,12 @@ tag @code{tag}, i.e. from which the entity is a part of, if any.
 
 @item getValue
 Evaluate the parametrization of the entity of dimension @code{dim} and tag
-@code{tag} at the parametric coordinates @code{parametricCoord} and return
-triplets of x, y, z coordinates in @code{points}. Only valid for @code{dim}
-equal to 0, 1 (with @code{parametricCoord} containing parametric coordinates on
-the curve) or 2 (with @code{parametricCoord} containing pairs of u, v parametric
-coordinates on the surface, concatenated),
+@code{tag} at the parametric coordinates @code{parametricCoord}. Only valid for
+@code{dim} equal to 0 (with empty @code{parametricCoord}), 1 (with
+@code{parametricCoord} containing parametric coordinates on the curve) or 2
+(with @code{parametricCoord} containing pairs of u, v parametric coordinates on
+the surface, concatenated: [p1u, p1v, p2u, ...]). Return triplets of x, y, z
+coordinates in @code{points}, concatenated: [p1x, p1y, p1z, p2x, ...].
 
 @table @asis
 @item Input:
@@ -417,7 +418,11 @@ Evaluate the derivative of the parametrization of the entity of dimension
 @code{parametricCoord}. Only valid for @code{dim} equal to 1 (with
 @code{parametricCoord} containing parametric coordinates on the curve) or 2
 (with @code{parametricCoord} containing pairs of u, v parametric coordinates on
-the surface, concatenated).
+the surface, concatenated: [p1u, p1v, p2u, ...]). For @code{dim} equal to 1
+return the x, y, z components of the derivative with respect to u [d1ux, d1uy,
+d1uz, d2ux, ...]; for @code{dim} equal to 2 return the x, y, z components of the
+derivate with respect to u and v: [d1ux, d1uy, d1uz, d1vx, d1vy, d1vz, d2ux,
+...].
 
 @table @asis
 @item Input:
@@ -433,7 +438,7 @@ Evaluate the (maximum) curvature of the entity of dimension @code{dim} and tag
 @code{tag} at the parametric coordinates @code{parametricCoord}. Only valid for
 @code{dim} equal to 1 (with @code{parametricCoord} containing parametric
 coordinates on the curve) or 2 (with @code{parametricCoord} containing pairs of
-u, v parametric coordinates on the surface, concatenated).
+u, v parametric coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]).
 
 @table @asis
 @item Input:
@@ -448,7 +453,7 @@ u, v parametric coordinates on the surface, concatenated).
 Evaluate the principal curvatures of the surface with tag @code{tag} at the
 parametric coordinates @code{parametricCoord}, as well as their respective
 directions. @code{parametricCoord} are given by pair of u and v coordinates,
-concatenated.
+concatenated: [p1u, p1v, p2u, ...].
 
 @table @asis
 @item Input:
@@ -461,9 +466,9 @@ concatenated.
 
 @item getNormal
 Get the normal to the surface with tag @code{tag} at the parametric coordinates
-@code{parametricCoord}. @code{parametricCoord} are given by pair of u and v
-coordinates, concatenated. @code{normals} are returned as triplets of x, y and z
-components, concatenated.
+@code{parametricCoord}. @code{parametricCoord} are given by pairs of u and v
+coordinates, concatenated: [p1u, p1v, p2u, ...]. @code{normals} are returned as
+triplets of x, y, z components, concatenated: [n1x, n1y, n1z, n2x, ...].
 
 @table @asis
 @item Input:
@@ -612,9 +617,10 @@ Get the nodes classified on the entity of dimension @code{dim} and tag
 @code{dim}. If @code{dim} and @code{tag} are negative, get all the nodes in the
 mesh. @code{nodeTags} contains the node tags (their unique, strictly positive
 identification numbers). @code{coord} is a vector of length 3 times the length
-of @code{nodeTags} that contains the (x, y, z) coordinates of the nodes,
-concatenated. If @code{dim} >= 0, @code{parametricCoord} contains the parametric
-coordinates u or (u, v) the nodes, if available. The length of
+of @code{nodeTags} that contains the x, y, z coordinates of the nodes,
+concatenated: [n1x, n1y, n1z, n2x, ...]. If @code{dim} >= 0,
+@code{parametricCoord} contains the parametric coordinates ([u1, u2, ...] or
+[u1, v1, u2, ...]) of the nodes, if available. The length of
 @code{parametricCoord} can be 0 or @code{dim} times the length of
 @code{nodeTags}. If @code{includeBoundary} is set, also return the nodes
 classified on the boundary of the entity (wich will be reparametrized on the
@@ -662,7 +668,8 @@ Rebuild the node cache.
 Get the nodes from all the elements belonging to the physical group of dimension
 @code{dim} and tag @code{tag}. @code{nodeTags} contains the node tags;
 @code{coord} is a vector of length 3 times the length of @code{nodeTags} that
-contains the (x, y, z) coordinates of the nodes, concatenated.
+contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z,
+n2x, ...].
 
 @table @asis
 @item Input:
@@ -677,10 +684,11 @@ contains the (x, y, z) coordinates of the nodes, concatenated.
 Set the nodes classified on the geometrical entity of dimension @code{dim} and
 tag @code{tag}. @code{nodeTags} contains the node tags (their unique, strictly
 positive identification numbers). @code{coord} is a vector of length 3 times the
-length of @code{nodeTags} that contains the (x, y, z) coordinates of the nodes,
-concatenated. The optional @code{parametricCoord} vector contains the parametric
-coordinates of the nodes, if any. The length of @code{parametricCoord} can be 0
-or @code{dim} times the length of @code{nodeTags}.
+length of @code{nodeTags} that contains the x, y, z coordinates of the nodes,
+concatenated: [n1x, n1y, n1z, n2x, ...]. The optional @code{parametricCoord}
+vector contains the parametric coordinates of the nodes, if any. The length of
+@code{parametricCoord} can be 0 or @code{dim} times the length of
+@code{nodeTags}.
 
 @table @asis
 @item Input:
@@ -717,8 +725,9 @@ length as @code{elementTypes}; each entry is a vector containing the tags
 (unique, strictly positive identifiers) of the elements of the corresponding
 type. @code{nodeTags} is also a vector of the same length as
 @code{elementTypes}; each entry is a vector of length equal to the number of
-elements of the given type times the number of nodes for this type of element,
-that contains the node tags of all the elements of the given type, concatenated.
+elements of the given type times the number N of nodes for this type of element,
+that contains the node tags of all the elements of the given type, concatenated:
+[e1n1, e1n2, ..., e1nN, e2n1, ...].
 
 @table @asis
 @item Input:
@@ -767,9 +776,9 @@ triangles: see the Gmsh reference manual). @code{elementTags} is a vector of the
 same length as @code{types}; each entry is a vector containing the tags (unique,
 strictly positive identifiers) of the elements of the corresponding type.
 @code{nodeTags} is also a vector of the same length as @code{types}; each entry
-is a vector of length equal to the number of elements of the give type times the
-number of nodes per element, that contains the node tags of all the elements of
-the given type, concatenated.
+is a vector of length equal to the number of elements of the given type times
+the number N of nodes per element, that contains the node tags of all the
+elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
 
 @table @asis
 @item Input:
@@ -816,9 +825,10 @@ Get the elements of type @code{elementType} classified on the entity of of tag
 @code{elementTags} is a vector containing the tags (unique, strictly positive
 identifiers) of the elements of the corresponding type. @code{nodeTags} is a
 vector of length equal to the number of elements of the given type times the
-number of nodes for this type of element, that contains the node tags of all the
-elements of the given type, concatenated. If @code{numTasks} > 1, only compute
-and return the part of the data indexed by @code{task}.
+number N of nodes for this type of element, that contains the node tags of all
+the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1,
+...]. If @code{numTasks} > 1, only compute and return the part of the data
+indexed by @code{task}.
 
 @table @asis
 @item Input:
@@ -844,16 +854,18 @@ Preallocate the data for @code{getElementsByType}. This is necessary only if
 
 @item getJacobians
 Get the Jacobians of all the elements of type @code{elementType} classified on
-the entity of dimension @code{dim} and tag @code{tag}, at the integration points
-required by the @code{integrationType} integration rule (e.g. "Gauss4"). Data is
-returned by element, with elements in the same order as in @code{getElements}
-and @code{getElementsByType}. @code{jacobians} contains for each element the 9
-entries of a 3x3 Jacobian matrix (by row), for each integration point.
-@code{determinants} contains for each element the determinant of the Jacobian
-matrix for each integration point. @code{points} contains for each element the
-(x, y, z) coordinates of the integration points. If @code{tag} < 0, get the
-Jacobian data for all entities. If @code{numTasks} > 1, only compute and return
-the part of the data indexed by @code{task}.
+the entity of dimension @code{dim} and tag @code{tag}, at the G integration
+points required by the @code{integrationType} integration rule (e.g. "Gauss4").
+Data is returned by element, with elements in the same order as in
+@code{getElements} and @code{getElementsByType}. @code{jacobians} contains for
+each element the 9 entries of a 3x3 Jacobian matrix (by row), for each
+integration point: [e1g1Jxx, e1g1Jxy, e1g1Jxz, ... e1g1Jzz, e1g2Jxx, ...,
+e1gGJzz, e2g1Jxx, ...]. @code{determinants} contains for each element the
+determinant of the Jacobian matrix for each integration point: [e1g1, e1g2, ...
+e1gG, e2g1, ...]. @code{points} contains for each element the x, y, z
+coordinates of the integration points. If @code{tag} < 0, get the Jacobian data
+for all entities. If @code{numTasks} > 1, only compute and return the part of
+the data indexed by @code{task}.
 
 @table @asis
 @item Input:
@@ -881,10 +893,11 @@ Preallocate the data required by @code{getJacobians}. This is necessary only if
 Get the basis functions of the element of type @code{elementType} for the given
 @code{integrationType} integration rule (e.g. "Gauss4") and
 @code{functionSpaceType} function space (e.g. "IsoParametric").
-@code{integrationPoints} contains the parametric coordinates (u, v, w) and the
-weight for each integeration point, concatenated. @code{numComponents} returns
-the number of components of a basis function. @code{basisFunctions} contains the
-evaluation of the basis functions at the integration points.
+@code{integrationPoints} contains the parametric coordinates u, v, w and the
+weight q for each integeration point, concatenated: [g1u, g1v, g1w, g1q, g2u,
+...]. @code{numComponents} returns the number C of components of a basis
+function. @code{basisFunctions} contains the evaluation of the basis functions
+at the integration points: [g1f1, ..., g1fC, g2f1, ...].
 
 @table @asis
 @item Input:
@@ -1311,11 +1324,12 @@ Set the field @code{tag} as a boundary layer size field.
 @ftable @code
 @item addPoint
 Add a geometrical point in the internal GEO CAD representation, at coordinates
-(x, y, z). If @code{meshSize} is > 0, add a meshing constraint at that point. If
-@code{tag} is positive, set the tag explicitly; otherwise a new tag is selected
-automatically. Return the tag of the point. (Note that the point will be added
-in the current model only after @code{synchronize} is called. This behavior
-holds for all the entities added in the geo module.)
+(@code{x}, @code{y}, @code{z}). If @code{meshSize} is > 0, add a meshing
+constraint at that point. If @code{tag} is positive, set the tag explicitly;
+otherwise a new tag is selected automatically. Return the tag of the point.
+(Note that the point will be added in the current model only after
+@code{synchronize} is called. This behavior holds for all the entities added in
+the geo module.)
 
 @table @asis
 @item Input:
@@ -1769,11 +1783,12 @@ false, the mesh is left as-is.
 @ftable @code
 @item addPoint
 Add a geometrical point in the internal OpenCASCADE CAD representation, at
-coordinates (x, y, z). If @code{meshSize} is > 0, add a meshing constraint at
-that point. If @code{tag} is positive, set the tag explicitly; otherwise a new
-tag is selected automatically. Return the tag of the point. (Note that the point
-will be added in the current model only after @code{synchronize} is called. This
-behavior holds for all the entities added in the occ module.)
+coordinates (@code{x}, @code{y}, @code{z}). If @code{meshSize} is > 0, add a
+meshing constraint at that point. If @code{tag} is positive, set the tag
+explicitly; otherwise a new tag is selected automatically. Return the tag of the
+point. (Note that the point will be added in the current model only after
+@code{synchronize} is called. This behavior holds for all the entities added in
+the occ module.)
 
 @table @asis
 @item Input:

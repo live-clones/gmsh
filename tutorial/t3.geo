@@ -49,8 +49,8 @@ out[] = Extrude { {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , angle * Pi / 180 } {
 // the "top" of the extruded surface (in out[0]), the newly created volume (in
 // out[1]) and the ids of the lateral surfaces (in out[2], out[3], ...)
 
-// We can then define a new physical volume to save all the tetrahedra with a
-// common region number (101):
+// We can then define a new physical volume (with tag 101) to group all the
+// elementary volumes:
 
 Physical Volume(101) = {1, 2, out[1]};
 

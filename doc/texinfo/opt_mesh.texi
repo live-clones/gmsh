@@ -263,7 +263,12 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFileVersion
 Version of the MSH file format to use@*
-Default value: @code{2.2}@*
+Default value: @code{4}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MedFileMinorVersion
+Minor version of the MED file format to use (-1=use minor version of the MED library)@*
+Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionHexWeight
@@ -324,6 +329,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.PartitionTopologyFile
 Write a .pro file with the partition topology@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionOldStyleMsh2
+Write partitioned meshes in MSH2 format using old style (i.e. by not referencing new partitioned entities, except on partition boundaries), for backward compatibility@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NbHexahedra
@@ -526,23 +536,18 @@ No greedy (global) strategies@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.RemeshAlgorithm
-Remeshing algorithm (0=no split, 1=automatic, 2=automatic only with metis)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.RemeshParametrization
-Remeshing using discrete parametrization (0=harmonic_circle, 1=conformal_spectral, 2=rbf, 3=harmonic_plane, 4=convex_circle, 5=convex_plane, 6=harmonic square, 7=conformal_fe@*
-Default value: @code{4}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.RefineSteps
 Number of refinement steps in the MeshAdapt-based 2D algorithms@*
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Renumber
+Renumber nodes and elements in a continuous sequence after mesh generation@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.SaveAll
-Ignore Physical definitions and save all elements@*
+Save all elements, even if they don't belong to physical groups@*
 Default value: @code{0}@*
 Saved in: @code{-}
 

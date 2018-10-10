@@ -67,6 +67,14 @@ void drawContext::load(std::string filename)
   // output messages on console
   GmshSetOption("General", "Terminal", 1.0);
 
+  // FIXME: force mesh output in version 2, as with version 4 GetDP reads the
+  // file through Gmsh. Since in the mobile app GetDP lives in the same memory
+  // space as Gmsh, this creates a new (discrete) model, which the app now uses
+  // instead of the full CAD model. We should better handle MSH4 reads in GetDP,
+  // e.g. create a temp model for MSH4 read if GetDP is compiled in the same
+  // memory space as Gmsh... or not :-)
+  GmshSetOption("Mesh", "MshFileVersion", 2.2);
+
   // open the file with Gmsh
   GmshOpenProject(filename);
 

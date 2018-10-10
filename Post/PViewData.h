@@ -331,6 +331,7 @@ public:
   virtual bool fromVector(const std::vector<std::vector<double> > &vec);
   virtual void importLists(int N[24], std::vector<double> *V[24]);
   virtual void getListPointers(int N[24], std::vector<double> *V[24]);
+  virtual void sendToServer(const std::string &name);
 };
 
 class nameData {

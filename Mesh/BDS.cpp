@@ -924,6 +924,29 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
                                          BDS_Point *_op3, BDS_Point *_oq1,
                                          BDS_Point *_oq2, BDS_Point *_oq3) const
 {
+  // Check if new edge is not on a seam or degenerated
+  BDS_Point *p1 = 0, *p2 = 0;
+  if (_op1 != _oq1 && _op1 != _oq2 && _op1 != _oq3){
+    p1 = _op2;
+    p2 = _op3;
+  }
+  else if (_op2 != _oq1 && _op2 != _oq2 && _op2 != _oq3){
+    p1 = _op1;
+    p2 = _op3;
+  }
+  else if (_op3 != _oq1 && _op3 != _oq2 && _op3 != _oq3){
+    p1 = _op1;
+    p2 = _op2;
+  }
+  else {
+    Msg::Warning("Unable to detect the new edge in BDS_SwapEdgeTestQuality\n");
+  }
+
+  if (p1 && p2){
+    if (p1->degenerated && p2->degenerated) return false;
+    if (p1->_periodicCounterpart && p2->_periodicCounterpart) return false;
+  }
+
   if(!testQuality) return true;
 
   double qa1 = qmTriangle::gamma(_p1, _p2, _p3);

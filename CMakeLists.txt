@@ -95,7 +95,7 @@ opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
 set(GMSH_MINOR_VERSION 0)
-set(GMSH_PATCH_VERSION 1)
+set(GMSH_PATCH_VERSION 2)
 set(GMSH_EXTRA_VERSION "")
 
 if(NOT GMSH_RELEASE)
@@ -274,12 +274,14 @@ if(MSVC)
       set(${VAR} "${${VAR}} /MP")
     endif(NOT ${VAR} MATCHES "/MP")
   endforeach(VAR)
-  if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
-    # automatically export .def file with all symbols (requires CMake 3.4);
-    # depending on the compiling options this might lead to more than 64k export
-    # symbols; just trim the .def file to keep the ones you need
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-  endif(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
+  if(ENABLE_PRIVATE_API)
+    if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
+      # automatically export .def file with all symbols (requires CMake 3.4);
+      # depending on the compiling options this might lead to more than 64k export
+      # symbols; just trim the .def file to keep the ones you need
+      set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+    endif(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
+  endif(ENABLE_PRIVATE_API)
 endif(MSVC)
 
 if(ENABLE_OPENMP)
@@ -1462,20 +1464,23 @@ else(HAVE_FLTK)
   set(LINK_LIBRARIES ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
 endif(HAVE_FLTK)
 
+# try to use static gfortran on static builds (cannot do this on dynamic builds
+# as e.g. Debian compiles libgfortran.a without -fPIC: sigh...)
+if(NOT ENABLE_BUILD_DYNAMIC AND NOT ENABLE_BUILD_SHARED)
+  find_library(GFORTRAN_STATIC libgfortran.a)
+  if(GFORTRAN_STATIC)
+    set(CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES)
+    message(STATUS "Using static libgfortran")
+    foreach(STR ${LINK_LIBRARIES})
+      string(REPLACE "-lgfortran" ${GFORTRAN_STATIC} STR2 ${STR})
+      list(APPEND LINK_LIBRARIES2 ${STR2})
+    endforeach(STR)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES2})
+  endif(GFORTRAN_STATIC)
+endif(NOT ENABLE_BUILD_DYNAMIC AND NOT ENABLE_BUILD_SHARED)
+
 # Linux-specific linking
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  # try to use static gfortran on static Linux builds
-  if(NOT ENABLE_BUILD_DYNAMIC AND NOT ENABLE_BUILD_SHARED)
-    find_library(GFORTRAN_STATIC libgfortran.a)
-    if(GFORTRAN_STATIC)
-      message(STATUS "Using static libgfortran")
-      foreach(STR ${LINK_LIBRARIES})
-        string(REPLACE "-lgfortran" ${GFORTRAN_STATIC} STR2 ${STR})
-        list(APPEND LINK_LIBRARIES2 ${STR2})
-      endforeach(STR)
-      set(LINK_LIBRARIES ${LINK_LIBRARIES2})
-    endif(GFORTRAN_STATIC)
-  endif(NOT ENABLE_BUILD_DYNAMIC AND NOT ENABLE_BUILD_SHARED)
   if(HAVE_OCC)
     find_library(RT_LIB rt)
     if(RT_LIB)
@@ -1517,20 +1522,13 @@ endif(ENABLE_BUILD_LIB)
 
 # shared library target
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
-  if(WIN32 OR CYGWIN)
-    add_definitions(-DGMSH_DLL)
-  endif(WIN32 OR CYGWIN)
   add_library(shared SHARED ${GMSH_SRC})
-  set_target_properties(shared PROPERTIES OUTPUT_NAME gmsh)
-  set_target_properties(shared PROPERTIES VERSION
-                        ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION})
-  set_target_properties(shared PROPERTIES SOVERSION
-                        ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
+  set_target_properties(shared PROPERTIES OUTPUT_NAME gmsh
+     VERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}
+     SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
   if(WIN32 OR CYGWIN)
-    set_target_properties(shared PROPERTIES PREFIX "")
-    set_target_properties(shared PROPERTIES IMPORT_PREFIX "")
-    set_target_properties(shared PROPERTIES IMPORT_SUFFIX ".lib")
-    set_target_properties(shared PROPERTIES COMPILE_FLAGS -DGMSH_DLL_EXPORT)
+    set_target_properties(shared PROPERTIES PREFIX "" IMPORT_PREFIX ""
+      IMPORT_SUFFIX ".lib" COMPILE_FLAGS "-DGMSH_DLL -DGMSH_DLL_EXPORT")
   endif(WIN32 OR CYGWIN)
   target_link_libraries(shared ${LINK_LIBRARIES})
   if(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)

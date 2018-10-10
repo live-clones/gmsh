@@ -386,7 +386,7 @@ template <> bool fullMatrix<double>::invert(fullMatrix<double> &result) const
   if(info == 0)
     return true;
   else if(info > 0)
-    Msg::Error("U(%d,%d)=0 in matrix inversion", info, info);
+    Msg::Warning("U(%d,%d)=0 in matrix inversion", info, info);
   else
     Msg::Error("Wrong %d-th argument in matrix inversion", -info);
   return false;
@@ -409,7 +409,7 @@ template <> bool fullMatrix<double>::invertInPlace()
 
   if(info == 0) return true;
   if(info > 0)
-    Msg::Error("U(%d,%d)=0 in matrix in place inversion", info, info);
+    Msg::Warning("U(%d,%d)=0 in matrix in place inversion", info, info);
   else
     Msg::Error("Wrong %d-th argument in matrix inversion", -info);
   return false;

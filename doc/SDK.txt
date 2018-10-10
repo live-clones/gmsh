@@ -49,3 +49,8 @@ Notes:
     C:\gmsh-git-Windows64-sdk> cl /Iinclude share\doc\gmsh\demos\api\simple.cpp lib\gmsh.lib
     C:\gmsh-git-Windows64-sdk> cd lib
     C:\gmsh-git-Windows64-sdk\lib> ..\simple.exe
+
+  * The shared Gmsh library references several other shared system libraries. On
+    Linux for example, it depends on libgfortran.so.3: you will need to install
+    this library (search your package manager for it) if your Linux distribution
+    does not provide it by default, or if it comes with a different version.

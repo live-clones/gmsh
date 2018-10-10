@@ -1520,7 +1520,7 @@ Returns the next available surface loop tag.
 @item newreg
 Returns the next available region tag. That is, @code{newreg} returns
 the maximum of @code{newp}, @code{newl}, @code{news}, @code{newv},
-@code{newll}, @code{newsl} and all physical entity tags@footnote{For
+@code{newll}, @code{newsl} and all physical group tags@footnote{For
 compatibility purposes, the behavior of @code{newl}, @code{news},
 @code{newv} and @code{newreg} can be modified with the
 @code{Geometry.OldNewReg} option (@pxref{Geometry options list}).}.
@@ -1820,13 +1820,13 @@ references them. Zero or negative tags are reserved by the system for
 special uses: do not use them in your scripts.
 
 Groups of elementary geometrical entities can also be defined and are
-called ``physical'' entities. These physical entities cannot be modified
+called ``physical'' groups. These physical groups cannot be modified
 by geometry commands: their only purpose is to assemble elementary
 entities into larger groups so that they can be referred to by the mesh
 module as single entities. As is the case with elementary entities, each
 physical point, physical curve, physical surface or physical volume must
 be assigned a unique tag. See @ref{Mesh module}, for more information
-about how physical entities affect the way meshes are saved.
+about how physical groups affect the way meshes are saved.
 
 @menu
 * Geometry commands::
@@ -2124,14 +2124,13 @@ the OpenCASCADE kernel.
 
 @item Physical Volume ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+|->= @{ @var{expression-list} @};
 Creates a physical volume. The @var{expression} inside the parentheses
-is the physical volume's tag; the
-@var{expression-list} on the right hand side should contain the
-tags of all the elementary volumes that need to be
-grouped inside the physical volume. If a @var{char-expression} is given
-instead instead of @var{expression} inside the parentheses, a string
-label is associated with the physical tag, which can
-be either provided explicitly (after the comma) or not (in which case a
-unique tag is automatically created).
+is the physical volume's tag; the @var{expression-list} on the right
+hand side should contain the tags of all the elementary volumes that
+need to be grouped inside the physical volume. If a
+@var{char-expression} is given instead instead of @var{expression}
+inside the parentheses, a string label is associated with the physical
+tag, which can be either provided explicitly (after the comma) or not
+(in which case a unique tag is automatically created).
 
 @end ftable
 
@@ -2498,7 +2497,7 @@ algorithm can be quite poor.
 
 @menu
 * Choosing the right unstructured algorithm::
-* Elementary vs physical entities::
+* Elementary entities vs physical groups::
 * Mesh commands::
 * Mesh options::
 @end menu
@@ -2507,7 +2506,7 @@ algorithm can be quite poor.
 @c Choosing the right unstructured algorithm
 @c -------------------------------------------------------------------------
 
-@node Choosing the right unstructured algorithm, Elementary vs physical entities, Mesh module, Mesh module
+@node Choosing the right unstructured algorithm, Elementary entities vs physical groups, Mesh module, Mesh module
 @section Choosing the right unstructured algorithm
 
 Gmsh currently provides a choice between three 2D unstructured
@@ -2594,63 +2593,34 @@ produced by both algorithms is comparable. If element quality is
 important the mesh optimizer(s) should be applied.
 
 @c -------------------------------------------------------------------------
-@c Elementary vs. physical entities
+@c Elementary entities vs. physical groups
 @c -------------------------------------------------------------------------
 
-@node Elementary vs physical entities, Mesh commands, Choosing the right unstructured algorithm, Mesh module
-@section Elementary vs. physical entities
+@node Elementary entities vs physical groups, Mesh commands, Choosing the right unstructured algorithm, Mesh module
+@section Elementary entities vs. physical groups
 
-If only elementary geometrical entities are defined (or if the
-@code{Mesh.SaveAll} option is set; see @ref{Mesh options list}), the
-grid produced by the mesh module will be saved ``as is''. That is, all
-the elements in the grid will be saved using the tag
-of the elementary entities they discretize as their elementary region
-tag (and 0 as their physical region tag@footnote{This behaviour
-was introduced in Gmsh 2.0. In older versions, both the elementary and
-the physical region tags would be set to the tag of
-the elementary region.}; @ref{File formats}). This can sometimes be
-inconvenient:
+It is usually convenient to combine geometrical entities into more
+meaningful groups, e.g. to define some mathematical (``domain'',
+``boundary with Neumann condition''), functional (``left wing'',
+``fuselage'') or material (``steel'', ``carbon'') properties.  Such
+grouping is done in Gmsh's geometry module (@pxref{Geometry module})
+through ``physical groups''.
 
-@itemize @bullet
-@item
-mesh elements cannot be duplicated;
-@item
-the orientation of the mesh elements (the ordering of their nodes) is
-determined  by the orientation of their ``parent'' elementary
-entities;
-@item
-elements belonging to different elementary entities cannot be linked as
-being part of a larger group having a physical or mathematical meaning (like
-`Left wing', `Metallic part', `Dirichlet boundary condition', @dots{}).
-@end itemize
+By default in the MSH file format (@pxref{File formats}), if physical
+groups are defined, the output mesh only contains those elements that
+belong to at least one physical group. (Other file formats each treat
+physical groups in slightly different ways, depending on their
+capability to define groups.)
 
-To remedy these problems, the geometry module (@pxref{Geometry module})
-introduces the notion of ``physical'' entities (also called ``physical
-groups''). The purpose of physical entities is to assemble elementary
-entities into larger, possibly overlapping groups, and to control the
-orientation of the elements in these groups when they are save into a
-mesh file. The introduction of physical entities in large models usually
-greatly facilitates the manipulation of the model (e.g., using
-`Tools->Visibility' in the GUI) and the interfacing with external
-solvers.
-
-In the MSH file format (@pxref{File formats}), if physical entities are
-defined, the output mesh only contains those elements that belong to
-physical entities. Other file formats each treat physical entities in
-slightly different ways, depending on their capability to define groups.
-
-Note that in some mesh file formats Gmsh reindexes the mesh nodes and
-elements so that they are numbered in a continuous sequence in the
-output files. Note that the numbers displayed on screen after mesh
-generation can thus differ from the ones saved in the mesh files,
-depending on the format. To check the actual numbers saved in the output
-file just load the file back using `File->Open'.
+To save all mesh element wether or not physical groups are defined, use
+ the @code{Mesh.SaveAll} option (@pxref{Mesh options list}) or specify
+ @code{-save_all} on the command line.
 
 @c -------------------------------------------------------------------------
 @c Mesh commands
 @c -------------------------------------------------------------------------
 
-@node Mesh commands, Mesh options, Elementary vs physical entities, Mesh module
+@node Mesh commands, Mesh options, Elementary entities vs physical groups, Mesh module
 @section Mesh commands
 
 @cindex Mesh commands
@@ -3334,9 +3304,13 @@ Sets an option for a given plugin. See @ref{Post-processing plugins}, for a
 list of default plugins and @ref{t9.geo}, for some examples.
 
 @item Save View[@var{expression}] @var{char-expression};
-Saves the the @var{expression}-th post-processing view in a file named
+Saves the @var{expression}-th post-processing view in a file named
 @var{char-expression}. If the path in @var{char-expression} is not absolute,
 @var{char-expression} is appended to the path of the current file.
+
+@item SendToServer View[@var{expression}] @var{char-expression};
+Sends the @var{expression}-th post-processing view to the ONELAB server,
+with parameter name @var{char-expression}.
 
 @item View "@var{string}" @{ @var{string} < ( @var{expression-list} ) > @{ @var{expression-list} @}; @dots{} @};
 Creates a new post-processing view, named @code{"@var{string}"}.  This
@@ -3636,7 +3610,8 @@ allow for 64-bit node and element tags.
 
 @example
 $MeshFormat // same as MSH version 2
-  version(ASCII double) file-type(ASCII int; 1 for binary mode) data-size(ASCII int)
+  version(ASCII double; currently 4.0) file-type(ASCII int; 1 for binary mode)
+    data-size(ASCII int; currently unused)
   <int with value one; only in binary mode, to detect endianness>
 $EndMeshFormat
 
@@ -3712,7 +3687,7 @@ $EndEntities
 
 $Nodes
   numEntityBlocks(unsigned long) numNodes(unsigned long)
-  tagEntity(int) dimEntity(int) parametric(int; ) numNodes(unsigned long)
+  tagEntity(int) dimEntity(int) parametric(int; see below) numNodes(unsigned long)
     tag(int) x(double) y(double) z(double)
        <u(double; if parametric and on curve or surface)>
        <v(double; if parametric and on surface)>
@@ -5516,6 +5491,18 @@ create new parts or appy boolean operators.
 
 Define common geometrical objects and options in separate files or using
 @code{Macro}, reusable in all your problem definition structures.
+
+@item Some files take much more time to load with Gmsh 4 compared to Gmsh 3: what's happening?
+
+In Gmsh 4, some operations (@code{Color}, @code{Show}, @code{Hide},
+@code{BoundingBox}, @code{Boundary}, @code{PointsOf}, @code{Periodic},
+@code{In} embedding constraints, ..) are now applied directly on the
+internal Gmsh model, instead of being handled at the level of the CAD
+kernel. This implies a synchronization between the CAD kernel and the
+Gmsh model. To minimize the number of synchronizations (which can become
+costly for large models), you should always create your geometry first;
+and use these commands once the geometry has been created.
+
 @end enumerate
 
 @c -------------------------------------------------------------------------
@@ -5548,10 +5535,10 @@ system and and the full geometry.
 
 @item How can I only save tetrahedral elements (not triangles and lines)?
 
-If physical entities are defined, the output mesh only contains those
-elements that belong to physical entities. So to save only 3D elements,
-simply define one (or more) physical volume(s) and don't define any
-physical surfaces or curves.
+By default, if physical groups are defined, the output mesh only
+contains those elements that belong to physical entities. So to save
+only 3D elements, simply define one (or more) physical volume(s) and
+don't define any physical surfaces, physical curves or physical points.
 
 @item My 2D meshes of IGES files present gaps between surfaces
 
@@ -5610,7 +5597,7 @@ boundary conditions or material properties---this is a job best left to
 the solver. Instead, Gmsh provides a simple mechanism to tag groups of
 elements, and it is up to the solver to interpret these tags as boundary
 conditions, materials, etc. Associating tags with elements in Gmsh is
-done by defining Physical entities (Physical Points, Physical Curves,
+done by defining physical groups (Physical Points, Physical Curves,
 Physical Surfaces and Physical Volumes). See the reference manual as
 well as the tutorials (in particular @ref{t1.geo}) for a detailed
 description and some examples.

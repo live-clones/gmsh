@@ -50,6 +50,7 @@ static bool readMSH4Physicals(GModel *const model, FILE *fp,
 
     int *phyTags = new int[numPhy];
     if(fread(phyTags, sizeof(int), numPhy, fp) != numPhy) {
+      delete[] phyTags;
       return false;
     }
     if(swap) SwapBytes((char *)phyTags, sizeof(int), numPhy);
@@ -97,6 +98,7 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
 
     int *brepTags = new int[numBrep];
     if(fread(brepTags, sizeof(int), numBrep, fp) != numBrep) {
+      delete[] brepTags;
       return false;
     }
     if(swap) SwapBytes((char *)brepTags, sizeof(int), numBrep);
@@ -295,6 +297,7 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
       if(ghostSize) {
         ghostTags = new int[2 * ghostSize];
         if(fread(ghostTags, sizeof(int), 2 * ghostSize, fp) != 2 * ghostSize) {
+          delete[] ghostTags;
           return false;
         }
         if(swap) SwapBytes((char *)ghostTags, sizeof(int), 2 * ghostSize);
@@ -312,6 +315,7 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
         ghostTags = new int[2 * ghostSize];
         for(unsigned int i = 0; i < 2 * ghostSize; i += 2) {
           if(fscanf(fp, "%d %d", &ghostTags[i], &ghostTags[i + 1]) != 2) {
+            delete[] ghostTags;
             return false;
           }
         }
@@ -339,6 +343,10 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
       } break;
       default: break;
       }
+    }
+    
+    if(ghostTags != 0){
+      delete[] ghostTags;
     }
   }
 
@@ -477,6 +485,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
     if(binary) {
       int data[3];
       if(fread(data, sizeof(int), 3, fp) != 3) {
+        delete [] vertexCache;
         return 0;
       }
       if(swap) SwapBytes((char *)data, sizeof(int), 3);
@@ -486,6 +495,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
 
       unsigned long dataLong;
       if(fread(&dataLong, sizeof(unsigned long), 1, fp) != 1) {
+        delete [] vertexCache;
         return 0;
       }
       if(swap) SwapBytes((char *)&dataLong, sizeof(unsigned long), 1);
@@ -494,6 +504,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
     else {
       if(fscanf(fp, "%d %d %d %lu", &entityTag, &entityDim, &parametric,
                 &numNodes) != 4) {
+        delete [] vertexCache;
         return 0;
       }
     }
@@ -501,6 +512,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
     GEntity *entity = model->getEntityByTag(entityDim, entityTag);
     if(!entity) {
       Msg::Error("Unknown entity %d of dimension %d", entityTag, entityDim);
+      delete [] vertexCache;
       return 0;
     }
 
@@ -516,11 +528,13 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         case 0:
           if(binary) {
             if(fread(&nodeTag, sizeof(int), 1, fp) != 1) {
+              delete [] vertexCache;
               return 0;
             }
             if(swap) SwapBytes((char *)&nodeTag, sizeof(int), 1);
 
             if(fread(xyz, sizeof(double), 3, fp) != 3) {
+              delete [] vertexCache;
               return 0;
             }
             if(swap) SwapBytes((char *)xyz, sizeof(double), 3);
@@ -528,6 +542,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
           else {
             if(fscanf(fp, "%d %lf %lf %lf", &nodeTag, &xyz[0], &xyz[1],
                       &xyz[2]) != 4) {
+              delete [] vertexCache;
               return 0;
             }
           }
@@ -536,16 +551,19 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         case 1:
           if(binary) {
             if(fread(&nodeTag, sizeof(int), 1, fp) != 1) {
+              delete [] vertexCache;
               return 0;
             }
             if(swap) SwapBytes((char *)&nodeTag, sizeof(int), 1);
 
             if(fread(xyz, sizeof(double), 3, fp) != 3) {
+              delete [] vertexCache;
               return 0;
             }
             if(swap) SwapBytes((char *)xyz, sizeof(double), 3);
 
             if(fread(&u, sizeof(double), 1, fp) != 1) {
+              delete [] vertexCache;
               return 0;
             }
             if(swap) SwapBytes((char *)&u, sizeof(double), 1);
@@ -553,6 +571,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
           else {
             if(fscanf(fp, "%d %lf %lf %lf %lf", &nodeTag, &xyz[0], &xyz[1],
                       &xyz[2], &u) != 5) {
+              delete [] vertexCache;
               return 0;
             }
           }
@@ -562,17 +581,20 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         case 2:
           if(binary) {
             if(fread(&nodeTag, sizeof(int), 1, fp) != 1) {
+              delete [] vertexCache;
               return 0;
             }
             if(swap) SwapBytes((char *)&nodeTag, sizeof(int), 1);
 
             if(fread(xyz, sizeof(double), 3, fp) != 3) {
+              delete [] vertexCache;
               return 0;
             }
             if(swap) SwapBytes((char *)xyz, sizeof(double), 3);
 
             double uv[2];
             if(fread(uv, sizeof(double), 2, fp) != 2) {
+              delete [] vertexCache;
               return 0;
             }
             if(swap) SwapBytes((char *)uv, sizeof(double), 2);
@@ -583,6 +605,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
           else {
             if(fscanf(fp, "%d %lf %lf %lf %lf %lf", &nodeTag, &xyz[0], &xyz[1],
                       &xyz[2], &u, &v) != 6) {
+              delete [] vertexCache;
               return 0;
             }
           }
@@ -592,11 +615,13 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         case 3:
           if(binary) {
             if(fread(&nodeTag, sizeof(int), 1, fp) != 1) {
+              delete [] vertexCache;
               return 0;
             }
             if(swap) SwapBytes((char *)&nodeTag, sizeof(int), 1);
 
             if(fread(xyz, sizeof(double), 3, fp) != 3) {
+              delete [] vertexCache;
               return 0;
             }
             if(swap) SwapBytes((char *)xyz, sizeof(double), 3);
@@ -604,22 +629,25 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
           else {
             if(fscanf(fp, "%d %lf %lf %lf", &nodeTag, &xyz[0], &xyz[1],
                       &xyz[2]) != 4) {
+              delete [] vertexCache;
               return 0;
             }
           }
           vertex = new MVertex(xyz[0], xyz[1], xyz[2], entity, nodeTag);
           break;
-        default: return 0; break;
+        default: delete[]vertexCache; return 0; break;
         }
       }
       else {
         if(binary) {
           if(fread(&nodeTag, sizeof(int), 1, fp) != 1) {
+            delete [] vertexCache;
             return 0;
           }
           if(swap) SwapBytes((char *)&nodeTag, sizeof(int), 1);
 
           if(fread(xyz, sizeof(double), 3, fp) != 3) {
+            delete [] vertexCache;
             return 0;
           }
           if(swap) SwapBytes((char *)xyz, sizeof(double), 3);
@@ -627,6 +655,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         else {
           if(fscanf(fp, "%d %lf %lf %lf", &nodeTag, &xyz[0], &xyz[1],
                     &xyz[2]) != 4) {
+            delete [] vertexCache;
             return 0;
           }
         }
@@ -700,6 +729,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
     if(binary) {
       int data[3];
       if(fread(data, sizeof(int), 3, fp) != 3) {
+        delete[] elementCache;
         return 0;
       }
       if(swap) SwapBytes((char *)data, sizeof(int), 3);
@@ -710,6 +740,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
 
       unsigned long dataLong;
       if(fread(&dataLong, sizeof(unsigned long), 1, fp) != 1) {
+        delete[] elementCache;
         return 0;
       }
       if(swap) SwapBytes((char *)&dataLong, sizeof(unsigned long), 1);
@@ -718,6 +749,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
     else {
       if(fscanf(fp, "%d %d %d %lu", &entityTag, &entityDim, &elmType,
                 &numElements) != 4) {
+        delete[] elementCache;
         return 0;
       }
     }
@@ -725,6 +757,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
     GEntity *entity = model->getEntityByTag(entityDim, entityTag);
     if(!entity) {
       Msg::Error("Unknown entity %d of dimension %d", entityTag, entityDim);
+      delete[] elementCache;
       return 0;
     }
     if(entity->geomType() == GEntity::GhostCurve) {
@@ -742,6 +775,8 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
       int *data = new int[numElements * (nbrVertices + 1)];
       if(fread(data, sizeof(int), numElements * (nbrVertices + 1), fp) !=
          numElements * (nbrVertices + 1)) {
+        delete[] elementCache;
+        delete[] data;
         return 0;
       }
       if(swap)
@@ -755,6 +790,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
           if(!vertices[k]) {
             Msg::Error("Unknown vertex %d in element %d", data[j + k + 1],
                        data[j]);
+            delete[] elementCache;
             return 0;
           }
         }
@@ -787,9 +823,11 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
       for(unsigned int j = 0; j < numElements; j++) {
         int elmTag = 0;
         if(fscanf(fp, "%d", &elmTag) != 1) {
+          delete[] elementCache;
           return 0;
         }
         if(!fgets(str, sizeof(str), fp)) {
+          delete[] elementCache;
           return 0;
         }
 
@@ -799,11 +837,13 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
           int vertexTag = 0;
           if(k != nbrVertices - 1) {
             if(sscanf(str, "%d %[0-9- ]", &vertexTag, str) != 2) {
+              delete[] elementCache;
               return 0;
             }
           }
           else {
             if(sscanf(str, "%d", &vertexTag) != 1) {
+              delete[] elementCache;
               return 0;
             }
           }
@@ -811,6 +851,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
           vertices[k] = model->getMeshVertexByTag(vertexTag);
           if(!vertices[k]) {
             Msg::Error("Unknown vertex %d in element %d", vertexTag, elmTag);
+            delete[] elementCache;
             return 0;
           }
         }
@@ -1189,12 +1230,12 @@ int GModel::_readMSH4(const std::string &name)
           fclose(fp);
           return 0;
         }
-        char name[128];
+        char name[256];
         if(!fgets(name, sizeof(name), fp)) {
           fclose(fp);
           return 0;
         }
-        std::string physicalName = ExtractDoubleQuotedString(name, 128);
+        std::string physicalName = ExtractDoubleQuotedString(name, 256);
         if(physicalName.size())
           iterators[dim] =
             setPhysicalName(iterators[dim], physicalName, dim, tag);

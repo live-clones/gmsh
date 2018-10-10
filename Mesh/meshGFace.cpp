@@ -1065,7 +1065,10 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   }
 
   while(ite != edges.end()) {
-    if((*ite)->isSeam(gf)) return false;
+    if((*ite)->isSeam(gf)) {
+      if(fdeb != NULL) fclose(fdeb);
+      return false;
+    }
     if(!(*ite)->isMeshDegenerated()) {
       for(unsigned int i = 0; i < (*ite)->lines.size(); i++) {
         MVertex *v1 = (*ite)->lines[i]->getVertex(0);
@@ -1122,8 +1125,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   }
 
   // add embedded vertices
-  std::list<GVertex *> emb_vertx = gf->embeddedVertices();
-  std::list<GVertex *>::iterator itvx = emb_vertx.begin();
+  std::set<GVertex *> emb_vertx = gf->embeddedVertices();
+  std::set<GVertex *>::iterator itvx = emb_vertx.begin();
   while(itvx != emb_vertx.end()) {
     all_vertices.insert((*itvx)->mesh_vertices.begin(),
                         (*itvx)->mesh_vertices.end());
@@ -2070,8 +2073,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
 
     // Embedded Vertices
     // add embedded vertices
-    std::list<GVertex *> emb_vertx = gf->embeddedVertices();
-    std::list<GVertex *>::iterator itvx = emb_vertx.begin();
+    std::set<GVertex *> emb_vertx = gf->embeddedVertices();
+    std::set<GVertex *>::iterator itvx = emb_vertx.begin();
 
     std::map<MVertex *, std::set<BDS_Point *> > invertedRecoverMap;
     for(std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
@@ -2413,6 +2416,12 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
     itt = m->triangles.begin();
     while(itt != m->triangles.end()) {
       BDS_Face *t = *itt;
+      if (t->deleted){
+        // If triangle is deleted, it won't have the correct neighbours
+        // to tag recursively
+        ++itt;
+        continue;
+      }
       BDS_Point *n[4];
       t->getNodes(n);
       if(n[0]->iD < 0 || n[1]->iD < 0 || n[2]->iD < 0) {
@@ -2491,6 +2500,13 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
     outputScalarField(m->triangles, name, 0, gf);
     sprintf(name, "surface%d-recovered-param.pos", gf->tag());
     outputScalarField(m->triangles, name, 1, gf);
+  }
+  
+  {
+    // Call this function to untangle elements in Cartesian space
+    int nb_swap;
+    Msg::Debug("Delaunizing the initial mesh");
+    delaunayizeBDS(gf, *m, nb_swap);
   }
 
   // start mesh generation for periodic face

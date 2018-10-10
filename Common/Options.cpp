@@ -5761,6 +5761,13 @@ double opt_mesh_msh_file_version(OPT_ARGS_NUM)
   return CTX::instance()->mesh.mshFileVersion;
 }
 
+double opt_mesh_med_file_minor_version(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.medFileMinorVersion = val;
+  return CTX::instance()->mesh.medFileMinorVersion;
+}
+
 double opt_mesh_partition_split_mesh_files(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

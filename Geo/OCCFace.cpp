@@ -143,7 +143,7 @@ void OCCFace::setup()
     }
     else if(vertex.Orientation() == TopAbs_INTERNAL) {
       Msg::Debug("Adding embedded vertex %d in face %d", v->tag(), tag());
-      embedded_vertices.push_back(v);
+      embedded_vertices.insert(v);
     }
   }
 

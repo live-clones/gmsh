@@ -1,4 +1,9 @@
-4.0.1: renumber mesh nodes/elements by default; small bug fixes.
+4.0.2 (September 26, 2018): added support for creating MED files with specific
+MED (minor) version; small bug fixes.
+
+4.0.1 (September 7, 2018): renumber mesh nodes/elements by default; new
+SendToServer command for nodal views; added color and visibility handling in
+API; small bug fixes.
 
 4.0.0 (August 22, 2018): new C++, C, Python and Julia API; new MSH4 format; new
 mesh partitioning code based on Metis 5; new 3D tetrahedralization algorithm as

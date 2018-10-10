@@ -110,9 +110,9 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
       v.push_back(current);
       std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator it =
         c.find(current);
-      c.erase(it);
       MVertex *v1 = it->second.first;
       MVertex *v2 = it->second.second;
+      c.erase(it);
       MVertex *temp = current;
       if(v1 == prev)
         current = v2;
