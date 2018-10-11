@@ -1,3 +1,5 @@
+4.0.3: bug fixes.
+
 4.0.2 (September 26, 2018): added support for creating MED files with specific
 MED (minor) version; small bug fixes.
 
