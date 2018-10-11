@@ -525,7 +525,7 @@ FlGui::FlGui(int argc, char **argv)
   graph[0]->getWindow()->show(argc > 0 ? 1 : 0, argv);
   if(graph[0]->getMenuWindow()) graph[0]->getMenuWindow()->show();
 
-#if 1
+#if 0
   // FIXME temporary hack for macOS Mojave: resize GL window to get it to
   // display
   graph[0]->getWindow()->resize(graph[0]->getWindow()->x(),
