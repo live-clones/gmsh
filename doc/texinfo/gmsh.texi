@@ -5485,7 +5485,7 @@ a list or tree browser, by tag, interactively, or per window).
 Yes. With the OpenCASCADE kernel (@code{SetFactory("OpenCASCADE");}),
 load the file (@code{Merge "file.step";} or @code{ShapeFromFile("file.step")})
 and add the relevant scripting commands after that to delete parts,
-create new parts or appy boolean operators.
+create new parts or apply boolean operators.
 
 @item How can I build modular geometries?
 
@@ -5629,6 +5629,14 @@ SIGE ~ signed inverse error on the gradient of FE solution
 
 For the exact definitions, see Geo/MElement.cpp. The graphs plot the
 the number of elements vs. the quality measure.
+
+@item How can I make a mesh file with a different version number? 
+
+You can use `File->Export' to specify the version number. In the export 
+window, enter your `filename.msh' and then pick the version in the
+dropdown menu. You can also set this in the options menu using the
+`Mesh.MshFileVersion' option. In a script, you can add the line 
+`Mesh.MshFileVersion = X.x;' for any version number `X.x'. 
 
 @end enumerate
 
