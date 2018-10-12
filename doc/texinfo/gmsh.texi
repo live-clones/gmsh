@@ -5483,7 +5483,7 @@ a list or tree browser, by tag, interactively, or per window).
 @item Can I edit STEP/IGES/BRep models?
 
 Yes. With the OpenCASCADE kernel (@code{SetFactory("OpenCASCADE");}),
-load the file (@code{Merge "file.step";} or @code{ShapeFromFile("file.step")})
+load the file (@code{Merge "file.step";} or @code{ShapeFromFile("file.step");})
 and add the relevant scripting commands after that to delete parts,
 create new parts or apply boolean operators.
 
@@ -5621,11 +5621,11 @@ fields.
 
 They measure the quality of the tetrahedra in a mesh:
 
-SICN ~ signed inverse condition number
+SICN = signed inverse condition number
 
-Gamma ~ inscribed_radius / circumscribed_radius
+Gamma = inscribed_radius / circumscribed_radius
 
-SIGE ~ signed inverse error on the gradient of FE solution
+SIGE = signed inverse error on the gradient of FE solution
 
 For the exact definitions, see Geo/MElement.cpp. The graphs plot the
 the number of elements vs. the quality measure.
@@ -5635,8 +5635,8 @@ the number of elements vs. the quality measure.
 You can use `File->Export' to specify the version number. In the export 
 window, enter your `filename.msh' and then pick the version in the
 dropdown menu. You can also set this in the options menu using the
-`Mesh.MshFileVersion' option. In a script, you can add the line 
-`Mesh.MshFileVersion = X.x;' for any version number `X.x'. 
+@code{Mesh.MshFileVersion} option. In a script, you can add the line 
+@code{Mesh.MshFileVersion = X.x;} for any version number `X.x'. 
 
 @end enumerate
 
