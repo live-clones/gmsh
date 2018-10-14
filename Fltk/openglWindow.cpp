@@ -93,6 +93,16 @@ openglWindow::~openglWindow()
   if(Nautilus) delete Nautilus;
 }
 
+void openglWindow::show()
+{
+  Fl_Gl_Window::show();
+#if defined(__APPLE__) && (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_14)
+  Msg::Info("OpenGL hack for macOS 10.14: see http://www.fltk.org/str.php?L3496");
+  resize(x(), y(), w()+1, h());
+  resize(x(), y(), w()-1, h());
+#endif
+}
+
 void openglWindow::_drawScreenMessage()
 {
   if(screenMessage[0].empty() && screenMessage[1].empty()) return;
