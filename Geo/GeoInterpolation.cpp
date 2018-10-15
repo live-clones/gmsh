@@ -10,7 +10,7 @@
 #include "Numeric.h"
 #include "Context.h"
 
-static double const fd_eps = 1.0e-8;
+static double const fd_eps = 1.0e-5;
 
 static void InterpolateCatmullRom(Vertex *v[4], double t, Vertex &V)
 {
