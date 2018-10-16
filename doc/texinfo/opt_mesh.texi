@@ -272,37 +272,37 @@ Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionHexWeight
-Weight of hexahedral element for METIS load balancing@*
+Weight of hexahedral element for METIS load balancing (if -1:  partition weights are set to 1 for elements having the same dimension as the geometry, otherwise there are set to 0)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionPrismWeight
-Weight of prismatic element (wedge) for METIS load balancing@*
+Weight of prismatic element (wedge) for METIS load balancing (if -1:  partition weights are set to 1 for elements having the same dimension as the geometry, otherwise there are set to 0)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionPyramidWeight
-Weight of pyramidal element for METIS load balancing@*
+Weight of pyramidal element for METIS load balancing (if -1:  partition weights are set to 1 for elements having the same dimension as the geometry, otherwise there are set to 0)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionTrihedronWeight
-Weight of trihedron element for METIS load balancing@*
+Weight of trihedron element for METIS load balancing (if -1:  partition weights are set to 1 for elements having the same dimension as the geometry, otherwise there are set to 0)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionQuadWeight
-Weight of quadrangle for METIS load balancing@*
+Weight of quadrangle for METIS load balancing (if -1:  partition weights are set to 1 for elements having the same dimension as the geometry, otherwise there are set to 0)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionTetWeight
-Weight of tetrahedral element for METIS load balancing@*
+Weight of tetrahedral element for METIS load balancing (if -1:  partition weights are set to 1 for elements having the same dimension as the geometry, otherwise there are set to 0)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionTriWeight
-Weight of triangle element for METIS load balancing@*
+Weight of triangle element for METIS load balancing (if -1:  partition weights are set to 1 for elements having the same dimension as the geometry, otherwise there are set to 0)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
