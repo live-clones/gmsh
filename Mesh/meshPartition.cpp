@@ -146,12 +146,6 @@ public:
           _vwgt[i] = 1;
           continue;
         }
-        if(CTX::instance()->mesh.partitionTriWeight == -1 ||
-           CTX::instance()->mesh.partitionQuaWeight == -1 ||
-           CTX::instance()->mesh.partitionTetWeight == -1 ||
-           CTX::instance()->mesh.partitionPyrWeight == -1 ||
-           CTX::instance()->mesh.partitionPriWeight == -1 ||
-           CTX::instance()->mesh.partitionHexWeight == -1)
           
         switch(_element[i]->getType()) {
         case TYPE_TRI: _vwgt[i] = CTX::instance()->mesh.partitionTriWeight; break;
