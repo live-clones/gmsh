@@ -5483,9 +5483,9 @@ a list or tree browser, by tag, interactively, or per window).
 @item Can I edit STEP/IGES/BRep models?
 
 Yes. With the OpenCASCADE kernel (@code{SetFactory("OpenCASCADE");}),
-load the file (@code{Merge "file.step";} or @code{ShapeFromFile("file.step")})
+load the file (@code{Merge "file.step";} or @code{ShapeFromFile("file.step");})
 and add the relevant scripting commands after that to delete parts,
-create new parts or appy boolean operators.
+create new parts or apply boolean operators.
 
 @item How can I build modular geometries?
 
@@ -5516,8 +5516,8 @@ and use these commands once the geometry has been created.
 @item What should I do when the 2D unstructured algorithm fails?
 
 Verify that the curves in the model do not self-intersect. If
-`Mesh.RandomFactor*size(triangle)/size(model)' approaches machine
-accuracy, increase Mesh.RandomFactor.
+`@code{Mesh.RandomFactor} * size of triangle / size of model' approaches
+machine accuracy, increase @code{Mesh.RandomFactor}.
 
 If everything fails file a bug report with the version of your operating
 system and the full geometry.
@@ -5621,15 +5621,39 @@ fields.
 
 They measure the quality of the tetrahedra in a mesh:
 
-SICN ~ signed inverse condition number
+@itemize
+@item
+SICN: signed inverse condition number
+@item
+Gamma: inscribed radius / circumscribed radius
+@item
+SIGE: signed inverse error on the gradient of FE solution
+@end itemize
 
-Gamma ~ inscribed_radius / circumscribed_radius
+For the exact definitions, see
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MElement.cpp,Geo/MElement.cpp}. The
+graphs plot the the number of elements vs. the quality measure.
 
-SIGE ~ signed inverse error on the gradient of FE solution
+@item How can I save a mesh file with a given (e.g. older) MSH file format version?
 
-For the exact definitions, see Geo/MElement.cpp. The graphs plot the
-the number of elements vs. the quality measure.
+@itemize
+@item
+In the GUI: open `File->Export', enter your @file{filename.msh} and then
+pick the version in the dropdown menu.
+@item
+On the command line: use the @code{-format} option (e.g. @code{gmsh
+file.geo -format msh2 -2}).
+@item
+In a @code{.geo} script: add the line @code{Mesh.MshFileVersion = x.y;}
+for any version number @code{x.y}. You can also save this in your
+default options.
+@item
+In the API: @code{gmsh::option::setNumber("Mesh.MshFileVersion", x.y)}.
+@end itemize
 
+As an alternative method, you can also not specify the format
+explicitely, and just choose a filename with the @code{.msh2} or
+@code{.msh4} extension.
 @end enumerate
 
 @c -------------------------------------------------------------------------

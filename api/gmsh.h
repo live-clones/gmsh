@@ -205,6 +205,10 @@ namespace gmsh { // Top-level functions
     GMSH_API void removeEntities(const gmsh::vectorpair & dimTags,
                                  const bool recursive = false);
 
+    // Remove the physical groups `dimTags' of the current model. If `dimTags' is
+    // empty, remove all groups.
+    GMSH_API void removePhysicalGroups(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
+
     // Get the type of the entity of dimension `dim' and tag `tag'.
     GMSH_API void getType(const int dim,
                           const int tag,

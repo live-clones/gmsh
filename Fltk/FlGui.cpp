@@ -525,15 +525,6 @@ FlGui::FlGui(int argc, char **argv)
   graph[0]->getWindow()->show(argc > 0 ? 1 : 0, argv);
   if(graph[0]->getMenuWindow()) graph[0]->getMenuWindow()->show();
 
-#if 0
-  // FIXME temporary hack for macOS Mojave: resize GL window to get it to
-  // display
-  graph[0]->getWindow()->resize(graph[0]->getWindow()->x(),
-                                graph[0]->getWindow()->y(),
-                                graph[0]->getWindow()->w()+1,
-                                graph[0]->getWindow()->h());
-#endif
-
   // re-apply color scheme (necessary for some reason to get the selection color
   // right)
   applyColorScheme();

@@ -210,6 +210,11 @@ GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n,
                                       const int recursive,
                                       int * ierr);
 
+/* Remove the physical groups `dimTags' of the current model. If `dimTags' is
+ * empty, remove all groups. */
+GMSH_API void gmshModelRemovePhysicalGroups(int * dimTags, size_t dimTags_n,
+                                            int * ierr);
+
 /* Get the type of the entity of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelGetType(const int dim,
                                const int tag,

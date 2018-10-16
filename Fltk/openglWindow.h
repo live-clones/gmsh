@@ -55,6 +55,7 @@ public:
   std::string screenMessage[2];
   openglWindow(int x, int y, int w, int h);
   ~openglWindow();
+  void show();
   drawContext *getDrawContext() { return _ctx; }
   char selectEntity(int type, std::vector<GVertex *> &vertices,
                     std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
