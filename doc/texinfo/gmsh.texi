@@ -946,7 +946,7 @@ List of expressions are also widely used, and are defined as:
   @var{extrude} |
   @var{boolean} |
   Point|Curve|Surface|Volume In BoundingBox @{ @var{expression-list} @} |
-  BoundingBox Point|Curve|Surface|Volume @{ @var{expression} @}
+  BoundingBox Point|Curve|Surface|Volume @{ @var{expression-list} @}
   Point @{ @var{expression} @} |
   Physical Point|Curve|Surface|Volume @{ @var{expression-list} @} |
   <Physical> Point|Curve|Surface|Volume @{ : @} |
