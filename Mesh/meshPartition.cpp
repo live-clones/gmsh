@@ -118,7 +118,8 @@ public:
   }
   void fillDefaultWeights()
   {
-    if(CTX::instance()->mesh.partitionTriWeight == 1 &&
+    if(CTX::instance()->mesh.partitionLinWeight == 1 &&
+       CTX::instance()->mesh.partitionTriWeight == 1 &&
        CTX::instance()->mesh.partitionQuaWeight == 1 &&
        CTX::instance()->mesh.partitionTetWeight == 1 &&
        CTX::instance()->mesh.partitionPyrWeight == 1 &&
@@ -127,16 +128,19 @@ public:
       return;
 
     _vwgt = new unsigned int[_ne];
-    if(CTX::instance()->mesh.partitionTriWeight == -1 ||
-         CTX::instance()->mesh.partitionQuaWeight == -1 ||
-         CTX::instance()->mesh.partitionTetWeight == -1 ||
-         CTX::instance()->mesh.partitionPyrWeight == -1 ||
-         CTX::instance()->mesh.partitionPriWeight == -1 ||
-         CTX::instance()->mesh.partitionHexWeight == -1) {
+    if(CTX::instance()->mesh.partitionLinWeight == -1 ||
+       CTX::instance()->mesh.partitionTriWeight == -1 ||
+       CTX::instance()->mesh.partitionQuaWeight == -1 ||
+       CTX::instance()->mesh.partitionTetWeight == -1 ||
+       CTX::instance()->mesh.partitionPyrWeight == -1 ||
+       CTX::instance()->mesh.partitionPriWeight == -1 ||
+       CTX::instance()->mesh.partitionHexWeight == -1) {
       for(unsigned int i = 0; i < _ne; i++) {
         if(!_element[i]) {
+          _vwgt[i] = 1;
+        }
+        else{
           _vwgt[i] = (_element[i]->getDim() == _dim ? 1 : 0);
-          continue;
         }
       }
     }
@@ -144,17 +148,18 @@ public:
       for(unsigned int i = 0; i < _ne; i++) {
         if(!_element[i]) {
           _vwgt[i] = 1;
-          continue;
         }
-          
-        switch(_element[i]->getType()) {
-        case TYPE_TRI: _vwgt[i] = CTX::instance()->mesh.partitionTriWeight; break;
-        case TYPE_QUA: _vwgt[i] = CTX::instance()->mesh.partitionQuaWeight; break;
-        case TYPE_TET: _vwgt[i] = CTX::instance()->mesh.partitionTetWeight; break;
-        case TYPE_PYR: _vwgt[i] = CTX::instance()->mesh.partitionPyrWeight; break;
-        case TYPE_PRI: _vwgt[i] = CTX::instance()->mesh.partitionPriWeight; break;
-        case TYPE_HEX: _vwgt[i] = CTX::instance()->mesh.partitionHexWeight; break;
-        default: _vwgt[i] = 1; break;
+        else{
+          switch(_element[i]->getType()) {
+          case TYPE_LIN: _vwgt[i] = CTX::instance()->mesh.partitionLinWeight; break;
+          case TYPE_TRI: _vwgt[i] = CTX::instance()->mesh.partitionTriWeight; break;
+          case TYPE_QUA: _vwgt[i] = CTX::instance()->mesh.partitionQuaWeight; break;
+          case TYPE_TET: _vwgt[i] = CTX::instance()->mesh.partitionTetWeight; break;
+          case TYPE_PYR: _vwgt[i] = CTX::instance()->mesh.partitionPyrWeight; break;
+          case TYPE_PRI: _vwgt[i] = CTX::instance()->mesh.partitionPriWeight; break;
+          case TYPE_HEX: _vwgt[i] = CTX::instance()->mesh.partitionHexWeight; break;
+          default: _vwgt[i] = 1; break;
+          }
         }
       }
     }
