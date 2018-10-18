@@ -130,7 +130,7 @@ void getElementaryTagsForPhysicalGroups(int dim, List_T *in, List_T *out);
 void getElementaryTagsInBoundingBox(int dim, double x1, double y1, double z1,
                                     double x2, double y2, double z2, List_T *out);
 void getParentTags(int dim, List_T *in, List_T *out);
-void getBoundingBox(int dim, int tag, List_T *out);
+void getBoundingBox(int dim, List_T *in, List_T *out);
 void setVisibility(int dim, int visible, bool recursive);
 void setVisibility(const std::vector<std::pair<int, int> > &dimTags, int visible,
                    bool recursive);
@@ -5620,10 +5620,11 @@ FExpr_Multi :
       $$ = List_Create(10, 10, sizeof(double));
       getElementaryTagsInBoundingBox($1, $5, $7, $9, $11, $13, $15, $$);
     }
-   | tBoundingBox GeoEntity '{' FExpr '}'
+   | tBoundingBox GeoEntity '{' RecursiveListOfDouble '}'
     {
       $$ = List_Create(10, 10, sizeof(double));
-      getBoundingBox($2, (int)$4, $$);
+      getBoundingBox($2, $4, $$);
+      List_Delete($4);
     }
   | Transform
     {
@@ -6940,7 +6941,7 @@ void getParentTags(int dim, List_T *in, List_T *out)
   }
 }
 
-void getBoundingBox(int dim, int tag, List_T *out)
+void getBoundingBox(int dim, List_T *in, List_T *out)
 {
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
@@ -6948,9 +6949,13 @@ void getBoundingBox(int dim, int tag, List_T *out)
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
-  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   SBoundingBox3d box;
-  if(ge) box = ge->bounds();
+  for(int i = 0; i < List_Nbr(in); i++){
+    double num;
+    List_Read(in, i, &num);
+    GEntity *ge = GModel::current()->getEntityByTag(dim, (int)num);
+    if(ge) box += ge->bounds();
+  }
   if(!box.empty()){
     double b[6] = {box.min().x(), box.min().y(), box.min().z(),
                    box.max().x(), box.max().y(), box.max().z()};

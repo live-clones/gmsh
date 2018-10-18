@@ -2,12 +2,12 @@
 
 @ftable @code
 @item Mesh.Algorithm
-2D mesh algorithm (1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=BAMG, 8=DelQuad)@*
+2D mesh algorithm (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal, 7: BAMG, 8: DelQuad)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm3D
-3D mesh algorithm (1=Delaunay, 4=Frontal, 5=Frontal Delaunay, 6=Frontal Hex, 7=MMG3D, 9=R-tree)@*
+3D mesh algorithm (1: Delaunay, 4: Frontal, 5: Frontal Delaunay, 6: Frontal Hex, 7: MMG3D, 9: R-tree)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -32,7 +32,7 @@ Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.BdfFieldFormat
-Field format for Nastran BDF files (0=free, 1=small, 2=large)@*
+Field format for Nastran BDF files (0: free, 1: small, 2: large)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -92,7 +92,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.ColorCarousel
-Mesh coloring (0=by element type, 1=by elementary entity, 2=by physical entity, 3=by partition)@*
+Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical entity, 3: by partition)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -112,7 +112,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ElementOrder
-Element order (1=linear elements, N (<6) = elements of higher order)@*
+Element order (1: linear elements, N (<6): elements of higher order)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -132,7 +132,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Format
-Mesh output format (1=msh, 2=unv, 10=auto, 16=vtk, 19=vrml, 21=mail, 26=pos stat, 27=stl, 28=p3d, 30=mesh, 31=bdf, 32=cgns, 33=med, 34=diff, 38=ir3, 39=inp, 40=ply2, 41=celum, 42=su2, 47=tochnog, 49=neu, 50=matlab)@*
+Mesh output format (1: msh, 2: unv, 10: auto, 16: vtk, 19: vrml, 21: mail, 26: pos stat, 27: stl, 28: p3d, 30: mesh, 31: bdf, 32: cgns, 33: med, 34: diff, 38: ir3, 39: inp, 40: ply2, 41: celum, 42: su2, 47: tochnog, 49: neu, 50: matlab)@*
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -177,7 +177,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LabelType
-Type of element label (0=element number, 1=elementary entity number, 2=physical entity number, 3=partition number, 4=coordinates)@*
+Type of element label (0: element number, 1: elementary entity number, 2: physical entity number, 3: partition number, 4: coordinates)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -192,7 +192,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LightLines
-Enable lighting for mesh edges (0=no, 1=surfaces, 2=surfaces+volumes@*
+Enable lighting for mesh edges (0: no, 1: surfaces, 2: surfaces+volumes@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -237,17 +237,17 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisAlgorithm
-METIS partitioning algorithm (1=Recursive, 2=K-way)@*
+METIS partitioning algorithm (1: Recursive, 2: K-way)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisEdgeMatching
-METIS edge matching type (1=Random, 2=Sorted Heavy-Edge)@*
+METIS edge matching type (1: Random, 2: Sorted Heavy-Edge)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisRefinementAlgorithm
-METIS algorithm for k-way refinement (1=FM-based cut, 2=Greedy, 3=Two-sided node FM, 4=One-sided node FM)@*
+METIS algorithm for k-way refinement (1: FM-based cut, 2: Greedy, 3: Two-sided node FM, 4: One-sided node FM)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -267,43 +267,48 @@ Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MedFileMinorVersion
-Minor version of the MED file format to use (-1=use minor version of the MED library)@*
+Minor version of the MED file format to use (-1: use minor version of the MED library)@*
 Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionHexWeight
-Weight of hexahedral element for METIS load balancing (if -1:  partition weights are set to 1 for elements having the same dimension as the geometry, otherwise there are set to 0)@*
-Default value: @code{1}@*
+Weight of hexahedral element for METIS load balancing (-1: automatic)@*
+Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionLineWeight
+Weight of line element for METIS load balancing (-1: automatic)@*
+Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionPrismWeight
-Weight of prismatic element (wedge) for METIS load balancing (if -1:  partition weights are set to 1 for elements having the same dimension as the geometry, otherwise there are set to 0)@*
-Default value: @code{1}@*
+Weight of prismatic element (wedge) for METIS load balancing (-1: automatic)@*
+Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionPyramidWeight
-Weight of pyramidal element for METIS load balancing (if -1:  partition weights are set to 1 for elements having the same dimension as the geometry, otherwise there are set to 0)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PartitionTrihedronWeight
-Weight of trihedron element for METIS load balancing (if -1:  partition weights are set to 1 for elements having the same dimension as the geometry, otherwise there are set to 0)@*
-Default value: @code{0}@*
+Weight of pyramidal element for METIS load balancing (-1: automatic)@*
+Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionQuadWeight
-Weight of quadrangle for METIS load balancing (if -1:  partition weights are set to 1 for elements having the same dimension as the geometry, otherwise there are set to 0)@*
-Default value: @code{1}@*
+Weight of quadrangle for METIS load balancing (-1: automatic)@*
+Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionTrihedronWeight
+Weight of trihedron element for METIS load balancing (-1: automatic)@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionTetWeight
-Weight of tetrahedral element for METIS load balancing (if -1:  partition weights are set to 1 for elements having the same dimension as the geometry, otherwise there are set to 0)@*
-Default value: @code{1}@*
+Weight of tetrahedral element for METIS load balancing (-1: automatic)@*
+Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionTriWeight
-Weight of triangle element for METIS load balancing (if -1:  partition weights are set to 1 for elements having the same dimension as the geometry, otherwise there are set to 0)@*
-Default value: @code{1}@*
+Weight of triangle element for METIS load balancing (-1: automatic)@*
+Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionCreateTopology
@@ -462,7 +467,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.QualityType
-Type of quality measure (0=SICN~signed inverse condition number, 1=SIGE~signed inverse gradient error, 2=gamma~vol/sum_face/max_edge, 3=Disto~minJ/maxJ@*
+Type of quality measure (0: SICN~signed inverse condition number, 1: SIGE~signed inverse gradient error, 2: gamma~vol/sum_face/max_edge, 3: Disto~minJ/maxJ@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -497,7 +502,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombinationAlgorithm
-Mesh recombination algorithm (0=standard, 1=blossom)@*
+Mesh recombination algorithm (0: standard, 1: blossom)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -552,7 +557,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.SaveElementTagType
-Type of the element tag saved in mesh formats that don't support saving physical or partition ids (1=elementary, 2=physical, 3=partition)@*
+Type of the element tag saved in mesh formats that don't support saving physical or partition ids (1: elementary, 2: physical, 3: partition)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -612,7 +617,7 @@ Default value: @code{1.8}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SubdivisionAlgorithm
-Mesh subdivision algorithm (0=none, 1=all quadrangles, 2=all hexahedra)@*
+Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -682,7 +687,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ZoneDefinition
-Method for defining a zone (0=single zone, 1=by partition, 2=by physical)@*
+Method for defining a zone (0: single zone, 1: by partition, 2: by physical)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

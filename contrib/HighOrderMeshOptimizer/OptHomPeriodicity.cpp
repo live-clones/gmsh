@@ -67,6 +67,8 @@ void OptHomPeriodicity::_relocateMasterVertices()
       {
         GFace *master = dynamic_cast<GFace*>(it->first);
         GFace *slave = dynamic_cast<GFace*>(it->second);
+        if(slave->affineTransform.size() < 16) break;
+
         std::vector<double> tfo = _inverse(slave->affineTransform);
 
         Msg::Info("Relocating vertices of master face %i using slave %i",
@@ -111,9 +113,11 @@ void OptHomPeriodicity::_relocateMasterVertices()
           if (i > 0) ++it;
           GEntity *slave = it->second;
 
-
           GEdge* me = dynamic_cast<GEdge*>(master);
           GEdge* se = dynamic_cast<GEdge*>(slave);
+          if(slave->affineTransform.size() < 16) break;
+
+          std::vector<double> tfo = _inverse(slave->affineTransform);
 
           Msg::Info("Relocating %d main and %d high order vertices for %d points "
                     "of master edge %i (%i-%i) using slave %i (%i-%i)",
@@ -123,7 +127,6 @@ void OptHomPeriodicity::_relocateMasterVertices()
                     me->tag(),me->getBeginVertex()->tag(),me->getEndVertex()->tag(),
                     se->tag(),se->getBeginVertex()->tag(),se->getEndVertex()->tag());
 
-          std::vector<double> tfo = _inverse(slave->affineTransform);
           std::map<MVertex*, MVertex*>::iterator vit;
 
           std::map<MVertex*, MVertex*> &vertS2M = slave->correspondingVertices;
@@ -187,6 +190,8 @@ void OptHomPeriodicity::_copyBackMasterVertices()
                   master->tag(),slave->tag());
 
         const std::vector<double>& tfo = slave->affineTransform;
+        if(tfo.size() < 16) break;
+
         std::map<MVertex*, MVertex*>::iterator vit;
 
         std::map<MVertex*, MVertex*> &vertS2M = slave->correspondingVertices;
@@ -228,6 +233,8 @@ void OptHomPeriodicity::_copyBackMasterVertices()
                   master->tag(),slave->tag());
 
         const std::vector<double> tfo = slave->affineTransform;
+        if(tfo.size() < 16) break;
+
         std::map<MVertex*, MVertex*>::iterator vit;
 
         std::map<MVertex*, MVertex*> &vertS2M = slave->correspondingVertices;
@@ -285,15 +292,18 @@ SPoint3 OptHomPeriodicity::_transform(MVertex *vsource,
 
 std::vector<double> OptHomPeriodicity::_inverse(const std::vector<double> &tfo)
 {
+  std::vector<double> result(16, 0.);
+  if(tfo.size() < 16){
+    Msg::Error("Wrong size of affine transformation matrix");
+    return result;
+  }
   // Note that the last row of tfo must be (0 0 0 1)...
-  std::vector<double> result(16);
   fullMatrix<double> mat(4, 4), inv;
   int idx = 0;
   for(int i = 0; i < 4; i++)
     for(int j = 0; j < 4; j++)
       mat(i, j) = tfo[idx++];
   mat.invert(inv);
-
   idx = 0;
   for(int i = 0; i < 4; i++)
     for(int j = 0; j < 4; j++)

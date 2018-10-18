@@ -87,12 +87,12 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Print.EpsQuality
-PostScript/PDF quality (0=bitmap, 1=vector (simple sort), 2=vector (accurate sort), 3=vector (unsorted)@*
+PostScript/PDF quality (0: bitmap, 1: vector (simple sort), 2: vector (accurate sort), 3: vector (unsorted)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Print.Format
-File format (10=automatic)@*
+File format (10: automatic)@*
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 

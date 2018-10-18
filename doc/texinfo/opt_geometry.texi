@@ -67,7 +67,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LabelType
-Type of entity label (0=description, 1=elementary number, 2=physical number)@*
+Type of entity label (0: description, 1: elementary number, 2: physical number)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -272,7 +272,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.SurfaceType
-Surface display type (0=cross, 1=wireframe, 2=solid)@*
+Surface display type (0: cross, 1: wireframe, 2: solid)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -292,7 +292,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Transform
-Transform model display coordinates (0=no, 1=scale)@*
+Transform model display coordinates (0: no, 1: scale)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
