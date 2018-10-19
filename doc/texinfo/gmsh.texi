@@ -858,7 +858,7 @@ parsing of the script file:
   StringToName(@var{char-expression}) | S2N(@var{char-expression}) |
   GetNumber(@var{char-expression} <,@var{expression}>) |
   GetValue("@var{string}", @var{expression}) |
-  DefineNumber(@var{expression}, @var{onelab-options}) |
+  DefineNumber(@var{expression}, @var{onelab-options})
 @end example
 
 Such @w{@var{expression}s} are used in most of Gmsh's scripting
