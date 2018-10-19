@@ -462,6 +462,12 @@ void skip(const char *skip, const char *until)
         else if(c_next ==  '/') skipline();
         else unput(c_next);
       }
+      if(chars[0] == '"'){
+        parsestring('"');
+      }
+      if(chars[0] == '\''){
+        parsestring('\'');
+      }
       if(!c_previous || !is_alpha(c_previous)){
         if(chars[0] == until[0]) break;
         if(skip && chars[0] == skip[0]) break;
