@@ -1,3 +1,5 @@
+4.0.4 (October 19, 2018): fix physical names regression in 4.0.3.
+
 4.0.3 (October 18, 2018): bug fixes.
 
 4.0.2 (September 26, 2018): added support for creating MED files with specific
