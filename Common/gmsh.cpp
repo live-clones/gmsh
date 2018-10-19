@@ -566,6 +566,8 @@ GMSH_API void gmsh::model::removePhysicalGroups(const vectorpair &dimTags)
   }
 }
 
+// FIXME: add a "removePhysicalName" function
+
 GMSH_API void gmsh::model::getType(const int dim, const int tag,
                                    std::string &entityType)
 {
