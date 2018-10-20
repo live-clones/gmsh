@@ -712,7 +712,11 @@ void GModel::removePhysicalGroups()
   getEntities(entities);
   for(unsigned int i = 0; i < entities.size(); i++)
     entities[i]->physicals.clear();
-  physicalNames.clear();
+
+  // we cannot remove the names here, as removePhysicalGroups() is used in
+  // GModelIO_GEO for the synchronization. We need to add an explicit cleanup of
+  // physical names + move all physical defintions directly in GModel.
+  //physicalNames.clear();
 }
 
 void GModel::removePhysicalGroup(int dim, int tag)
