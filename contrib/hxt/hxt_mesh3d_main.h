@@ -4,7 +4,9 @@
 #include "hxt_mesh.h"
 
 HXTStatus hxtTetMesh3d(HXTMesh* mesh,
-                      int nthreads,
+                      int defaulThreads,
+                      int DelaunayThreads,
+                      int optimizationThreads,
                       int reproducible,
                       int verbosity,
                       int displayStat,

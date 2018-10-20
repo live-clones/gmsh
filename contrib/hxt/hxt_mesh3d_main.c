@@ -1,19 +1,28 @@
 #include "hxt_mesh3d.h"
-#include "hxt_tetrahedra.h"
+#include "hxt_tetDelaunay.h"
 #include "hxt_tetRepair.h"
 #include "hxt_tetUtils.h"
 #include "hxt_tetFlag.h"
+#include "hxt_tetColor.h"
 #include "hxt_tetOpti.h"
 
+
 HXTStatus hxtTetMesh3d(HXTMesh* mesh,
-                      int nthreads,
+                      int defaulThreads,
+                      int DelaunayThreads,
+                      int optimizationThreads,
                       int reproducible,
                       int verbosity,
                       int displayStat,
-                      int refine,  // refine if !=0
-                      int optimize,// optimize quality if !=0
+                      int refine,
+                      int optimize,
                       double qualityThreshold,
                       HXTStatus (*bnd_recovery)(HXTMesh* mesh)) {
+
+  if(defaulThreads>0) {
+    omp_set_num_threads(defaulThreads);
+  }
+
   double t[8]={0};
   t[0] = omp_get_wtime();
 
@@ -21,7 +30,7 @@ HXTStatus hxtTetMesh3d(HXTMesh* mesh,
   hxtBboxInit(&bbox);
   HXT_CHECK( hxtBboxAdd(&bbox, mesh->vertices.coord, mesh->vertices.num) );
 
-  HXTDelaunayOptions delOptions = {&bbox, NULL, 0.0, 0.0, 0, verbosity, reproducible, nthreads};
+  HXTDelaunayOptions delOptions = {&bbox, NULL, 0.0, 0.0, 0, verbosity, reproducible, DelaunayThreads};
   uint32_t numVerticesConstrained = mesh->vertices.num;
   
   HXT_INFO_COND(verbosity>0, "Creating an empty mesh with %u vertices", numVerticesConstrained);
@@ -29,22 +38,38 @@ HXTStatus hxtTetMesh3d(HXTMesh* mesh,
 
   t[1] = omp_get_wtime();
 
-  uint64_t nbMissingFacets, nbMissingEdges=0;
+  uint64_t nbMissingTriangles, nbLinesNotInTriangles, nbMissingLines=0;
   uint16_t nbColors;
-  HXT_CHECK( hxtConstrainTriangles(mesh, &nbMissingFacets) );
-  if(nbMissingFacets==0) // TODO: differentiating missing triangles and missing edges ??
-    HXT_CHECK( hxtConstrainEdgesNotInTriangles(mesh, &nbMissingEdges) );
+  uint64_t* tri2TetMap = NULL;
+  uint64_t* lines2TriMap = NULL;
+  uint64_t* lines2TetMap = NULL;
+
+  HXT_CHECK( hxtAlignedMalloc(&tri2TetMap, mesh->triangles.num*sizeof(uint64_t)) );
+  HXT_CHECK( hxtAlignedMalloc(&lines2TriMap, mesh->lines.num*sizeof(uint64_t)) );
+  
+  HXT_CHECK( hxtGetTri2TetMap(mesh, tri2TetMap, &nbMissingTriangles) );
+  HXT_CHECK( hxtGetLines2TriMap(mesh, lines2TriMap, &nbLinesNotInTriangles) );
+
+  if(nbLinesNotInTriangles!=0) {
+    HXT_CHECK( hxtAlignedMalloc(&lines2TetMap, mesh->lines.num*sizeof(uint64_t)) );
+    if(nbMissingTriangles==0) {
+      HXT_CHECK( hxtGetLines2TetMap(mesh, lines2TetMap, &nbMissingLines) );
+    }
+  }
+
 
   t[2] = omp_get_wtime();
 
-  if (nbMissingFacets != 0 || nbMissingEdges!=0){
+  if (nbMissingTriangles!=0 || nbMissingLines!=0){
     if(bnd_recovery==NULL)
       return HXT_ERROR_MSG(HXT_STATUS_ERROR,
         "there are missing features but no boundary recovery function is given");
-    if(nbMissingFacets)
-      HXT_INFO("Recovering %lu missing facet(s)", nbMissingFacets);
-    else if(nbMissingEdges)
-      HXT_INFO("Recovering %lu missing edge(s)", nbMissingEdges);
+
+    if(nbMissingTriangles)
+      HXT_INFO("Recovering %lu missing facet(s)", nbMissingTriangles);
+    else if(nbMissingLines)
+      HXT_INFO("Recovering %lu missing edge(s)", nbMissingLines);
+
     HXT_CHECK(bnd_recovery(mesh));
 
     if(delOptions.numVerticesInMesh < mesh->vertices.num) {
@@ -54,112 +79,61 @@ HXTStatus hxtTetMesh3d(HXTMesh* mesh,
 
     t[3] = omp_get_wtime();
 
-    memset(mesh->tetrahedra.flag, 0, mesh->tetrahedra.num*sizeof(uint16_t));
-    HXT_CHECK(hxtTetOrientNodes(mesh));
-    HXT_CHECK(hxtTetAdjacencies(mesh));
-    HXT_CHECK(hxtAddGhosts(mesh));
-    // HXT_CHECK( hxtTetVerify(mesh) );
-
-    HXT_CHECK( hxtConstrainTriangles(mesh, &nbMissingFacets) );
-    if(nbMissingFacets!=0)
+    HXT_CHECK( hxtGetTri2TetMap(mesh, tri2TetMap, &nbMissingTriangles) );
+    if(nbMissingTriangles!=0)
       return HXT_ERROR_MSG( HXT_STATUS_ERROR,
         "%d boundary face%s still missing (after recovery step).",
-        nbMissingFacets, (nbMissingFacets>1)?"s are":" is" );
+        nbMissingTriangles, (nbMissingTriangles>1)?"s are":" is" );
 
-    HXT_CHECK( hxtConstrainEdgesNotInTriangles(mesh, &nbMissingEdges) );
-    if(nbMissingEdges!=0)
+    if(nbLinesNotInTriangles!=0)
+      HXT_CHECK( hxtGetLines2TetMap(mesh, lines2TetMap, &nbMissingLines) );
+
+    if(nbMissingLines!=0)
       return HXT_ERROR_MSG( HXT_STATUS_ERROR,
         "%d constrained edge%s still missing (after recovery step).",
-        nbMissingEdges, (nbMissingEdges>1)?"s are":" is" );
+        nbMissingLines, (nbMissingLines>1)?"s are":" is" );
   }
 
-  HXT_CHECK(hxtColorMesh(mesh, &nbColors));
+  HXT_CHECK( hxtConstrainTriangles(mesh, tri2TetMap) );
+  
+  if(nbLinesNotInTriangles!=0)
+    HXT_CHECK( hxtConstrainLinesNotInTriangles(mesh, lines2TetMap, lines2TriMap) );
 
-#ifdef DEBUG
-  HXT_CHECK( hxtTetVerify(mesh) );
+  HXT_CHECK( hxtColorMesh(mesh, &nbColors) );
+ 
+  HXT_CHECK( hxtMapColorsToBrep(mesh, nbColors, tri2TetMap) );
 
-  memset(mesh->tetrahedra.flag, 0, mesh->tetrahedra.num*sizeof(uint16_t));
-  HXT_CHECK( hxtConstrainTriangles(mesh, &nbMissingFacets) );
-  if(nbMissingFacets!=0)
-    return HXT_ERROR_MSG( HXT_STATUS_ERROR,
-      "%d boundary face%s still missing (after refine).",
-      nbMissingFacets, (nbMissingFacets>1)?"s are":" is" );
-
-  HXT_CHECK( hxtConstrainEdgesNotInTriangles(mesh, &nbMissingEdges) );
-  if(nbMissingEdges!=0)
-    return HXT_ERROR_MSG( HXT_STATUS_ERROR,
-      "%d constrained edge%s still missing (after refine).",
-      nbMissingEdges, (nbMissingEdges>1)?"s are":" is" );
-#endif
+  HXT_CHECK( hxtAlignedFree(&tri2TetMap) );
+  HXT_CHECK( hxtAlignedFree(&lines2TetMap) );
+  HXT_CHECK( hxtAlignedFree(&lines2TriMap) );
 
   t[4] = omp_get_wtime();
 
   if(refine){
     // HXT_CHECK(hxtComputeMeshSizeFromMesh(mesh, &delOptions));
-    HXT_CHECK(hxtComputeMeshSizeFromTrianglesAndLines(mesh, &delOptions));
-
-    // // triangulate only one color
-    // if(color>=0) {
-    //   #pragma omp parallel for simd
-    //   for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
-    //     if(mesh->tetrahedra.colors[i]!=theColor){
-    //       markTetAsProcessed(mesh,i) = 1;
-    //     }
-    //   }
-    // }
-
+    HXT_CHECK(hxtCreateNodalsizeFromTrianglesAndLines(mesh, &delOptions));
     
+    if(nbColors!=mesh->brep.numVolumes) {
+      HXT_CHECK( setFlagsToProcessOnlyVolumesInBrep(mesh) );
+    }
+
     HXTMeshSize *meshSize = NULL;
     // HXT_CHECK(hxtMeshSizeCreate (context,&meshSize));
     // HXT_CHECK(hxtMeshSizeCompute (meshSize, bbox.min, bbox.max, mySize, NULL));
     //    printf("time from empty mesh to first insertion: %f second\n", omp_get_wtime() - time);
     HXT_CHECK(hxtRefineTetrahedra(mesh, &delOptions, meshSize));
     // HXT_CHECK(hxtMeshSizeDelete (&meshSize));
-    HXT_CHECK(hxtAlignedFree(&delOptions.nodalSizes));
+    HXT_CHECK( hxtDestroyNodalsize(&delOptions) );
     // #endif
   }
 
   t[5] = omp_get_wtime();
 
-#ifdef DEBUG
-  HXT_CHECK( hxtTetVerify(mesh) );
-
-  memset(mesh->tetrahedra.flag, 0, mesh->tetrahedra.num*sizeof(uint16_t));
-  HXT_CHECK( hxtConstrainTriangles(mesh, &nbMissingFacets) );
-  if(nbMissingFacets!=0)
-    return HXT_ERROR_MSG( HXT_STATUS_ERROR,
-      "%d boundary face%s still missing (after refine).",
-      nbMissingFacets, (nbMissingFacets>1)?"s are":" is" );
-
-  HXT_CHECK( hxtConstrainEdgesNotInTriangles(mesh, &nbMissingEdges) );
-  if(nbMissingEdges!=0)
-    return HXT_ERROR_MSG( HXT_STATUS_ERROR,
-      "%d constrained edge%s still missing (after refine).",
-      nbMissingEdges, (nbMissingEdges>1)?"s are":" is" );
-#endif
 
   if(optimize)
-    HXT_CHECK( hxtOptimizeTetrahedra(mesh, &bbox, delOptions.minSizeEnd, qualityThreshold, numVerticesConstrained) );
+    HXT_CHECK( hxtOptimizeTetrahedra(mesh, &bbox, optimizationThreads, delOptions.minSizeEnd, qualityThreshold, numVerticesConstrained) );
 
   t[6] = omp_get_wtime();
-
-
-#ifdef DEBUG
-  HXT_CHECK( hxtTetVerify(mesh) );
-
-  memset(mesh->tetrahedra.flag, 0, mesh->tetrahedra.num*sizeof(uint16_t));
-  HXT_CHECK( hxtConstrainTriangles(mesh, &nbMissingFacets) );
-  if(nbMissingFacets!=0)
-    return HXT_ERROR_MSG( HXT_STATUS_ERROR,
-      "%d boundary face%s still missing (after refine).",
-      nbMissingFacets, (nbMissingFacets>1)?"s are":" is" );
-
-  HXT_CHECK( hxtConstrainEdgesNotInTriangles(mesh, &nbMissingEdges) );
-  if(nbMissingEdges!=0)
-    return HXT_ERROR_MSG( HXT_STATUS_ERROR,
-      "%d constrained edge%s still missing (after refine).",
-      nbMissingEdges, (nbMissingEdges>1)?"s are":" is" );
-#endif
 
   
   if(displayStat){

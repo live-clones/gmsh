@@ -160,6 +160,17 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
     double vy = vertices[i].coord[1];
     double vz = vertices[i].coord[2];
 
+    if(vx<bbox->min[0] || vx>bbox->max[0] ||
+       vy<bbox->min[1] || vy>bbox->max[1] ||
+       vz<bbox->min[2] || vz>bbox->max[2]) {
+      /* if a tetrahedron contain a vertex that is outside the bounding box,
+         it will not be refined and will never be in any cavity.
+         The vertices outside the bounding box get the value UINT64_MAX as hilbert index
+      */
+      vertices[i].padding.hilbertDist = UINT64_MAX;
+      continue;
+    }
+
     if(vx < mean[0]){
       vx = vx*div1[0]+min1[0];
     }
@@ -189,16 +200,7 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
 
     uint64_t bits;
 
-// #ifdef DEBUG
-    // if(coord[0]>nmax || coord[1]>nmax || coord[2]>nmax)
-    //   printf("coordinate out of bbox\n");
-
-    // if((coord[0]<nmax/2 && vertices[i].coord[0] > mean[0]) || (coord[1]<nmax/2 && vertices[i].coord[1] > mean[1]) || (coord[2]<nmax/2 && vertices[i].coord[2] > mean[2])){
-    //   printf("coordinate on the wrong size of bbox\n");
-    // }
-// #endif
-
-    // this part is for Moore's curve... comment it to get hilbert curve :-)
+    #if 1 // this part is for Moore's curve...
     {
       uint32_t s = 1U<<(level-1);
       uint32_t rx = (x & s) != 0;
@@ -224,6 +226,7 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
       SWAP(x,z);
       SWAP(x,y);
     }
+    #endif
 
     for (int j = level-2; j>=0; j--) {
       uint32_t s = 1U<<j;
@@ -275,8 +278,9 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
 }
 
 
-static inline uint64_t getVertexDist64(HXTVertex* const __restrict__  v, const void* user_data)
+static inline uint64_t getVertexDist64(HXTVertex* const __restrict__  v, const void* userData)
 {
+  HXT_UNUSED(userData);
   return v->padding.hilbertDist;
 }
 
@@ -286,8 +290,9 @@ static HXTStatus hxtVerticesSort64(HXTVertex* const __restrict__  vertices, cons
   return HXT_STATUS_OK;
 }
 
-static inline uint32_t getVertexDist32(HXTVertex* const __restrict__  v, const void* user_data)
+static inline uint32_t getVertexDist32(HXTVertex* const __restrict__  v, const void* userData)
 {
+  HXT_UNUSED(userData);
   return v->padding.hilbertDist;
 }
 
@@ -319,8 +324,9 @@ HXTStatus hxtVerticesSort(HXTVertex* const __restrict__  vertices, const uint32_
   return HXT_STATUS_OK;
 }
 
-static inline uint64_t getNodeInfoDist64(hxtNodeInfo*  const __restrict__ nodeInfo, const void* user_data)
+static inline uint64_t getNodeInfoDist64(hxtNodeInfo*  const __restrict__ nodeInfo, const void* userData)
 {
+  HXT_UNUSED(userData);
   return nodeInfo->hilbertDist;
 }
 
@@ -330,8 +336,9 @@ static HXTStatus hxtNodeInfoSort64(hxtNodeInfo*  const __restrict__ array, const
   return HXT_STATUS_OK;
 }
 
-static inline uint32_t getNodeInfoDist32(hxtNodeInfo*  const __restrict__ nodeInfo, const void* user_data)
+static inline uint32_t getNodeInfoDist32(hxtNodeInfo*  const __restrict__ nodeInfo, const void* userData)
 {
+  HXT_UNUSED(userData);
   return nodeInfo->hilbertDist;
 }
 

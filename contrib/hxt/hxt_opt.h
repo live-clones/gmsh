@@ -143,7 +143,7 @@ HXTStatus hxtGetOptionHelp(char message[16384],
                            const char* additionalInfo);
 
 // use the HXT_PARSE_COMMAND_LINE macro instead
-HXTStatus hxtParseOptions(const int argc, const char* argv[]);
+HXTStatus hxtParseOptions(const int argc, char* argv[]);
 
 // This macro should be placed in the main, after all options are added !
 #define HXT_PARSE_COMMAND_LINE(argc, argv, programName, programDescription, additionalInfo)   \

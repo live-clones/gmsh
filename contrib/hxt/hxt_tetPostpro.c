@@ -1,5 +1,4 @@
 #include "predicates.h"
-#include "hxt_tetrahedra.h"
 #include "hxt_tetPostpro.h"
 #include "hxt_tetFlag.h"
 #include "hxt_tetUtils.h"
@@ -21,7 +20,7 @@ HXTStatus hxtTetPlaneIntersection(HXTMesh* mesh, double* p0, double* p1, double*
   #pragma omp parallel for
   for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
     if(mesh->tetrahedra.node[4*i+3] == HXT_GHOST_VERTEX) {
-      markTetAsDeleted(mesh, i);
+      setDeletedFlag(mesh, i);
     }
     else {
       double firstOrient = mesh->vertices.coord[4*mesh->tetrahedra.node[4*i]+3];
@@ -34,7 +33,7 @@ HXTStatus hxtTetPlaneIntersection(HXTMesh* mesh, double* p0, double* p1, double*
       }
 
       if(firstOrient!=0.0)
-        markTetAsDeleted(mesh, i);
+        setDeletedFlag(mesh, i);
     }
   }
 
@@ -52,12 +51,12 @@ HXTStatus hxtTetPlaneOrient(HXTMesh* mesh, double* p0, double* p1, double* p2){
   #pragma omp parallel for
   for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
     if(mesh->tetrahedra.node[4*i+3] == HXT_GHOST_VERTEX) {
-      markTetAsDeleted(mesh, i);
+      setDeletedFlag(mesh, i);
     }
     else {
       for (int j=0; j<4; j++) {
         if(mesh->vertices.coord[4*mesh->tetrahedra.node[4*i+j]+3]<0.0){
-          markTetAsDeleted(mesh, i);
+          setDeletedFlag(mesh, i);
           break;
         }
       }

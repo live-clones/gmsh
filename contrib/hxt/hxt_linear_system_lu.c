@@ -294,7 +294,7 @@ HXTStatus hxtLinearSystemLUCreate(HXTLinearSystemLU **pSystem, int nElements, in
   }
   free(nodeRowStart);
   free(nodeRowEnd);
-  system->M = malloc(sizeof(double)*totalSize); // FIXME Gmsh instead of _mm_malloc
+  system->M = _mm_malloc(sizeof(double)*totalSize, PADDING*8);
   system->rows = malloc(sizeof(double*)*system->n);
   for (int i = 0; i < totalSize; ++i)
     system->M[i] = 0;
@@ -306,7 +306,7 @@ HXTStatus hxtLinearSystemLUCreate(HXTLinearSystemLU **pSystem, int nElements, in
     totalSize += system->rowEnd[i]-system->rowStart[i]+(paddedStart-start);
     system->rows[i] = system->M + paddedStart;
   }
-  system->x = malloc(sizeof(double)*system->n); // FIXME Gmsh instead of _mm_malloc
+  system->x = _mm_malloc(sizeof(double)*system->n, PADDING*8);
   return HXT_STATUS_OK;
 }
 
@@ -399,7 +399,7 @@ HXTStatus hxtLinearSystemLUAddMatrixEntry(HXTLinearSystemLU *system, int node0, 
     HXT_ERROR_MSG(HXT_STATUS_FAILED, "node %i or %i not in the domain", node0, node1);
   int row0 = system->nodeMap[node0]*system->nFields + field0;
   int col1 = system->nodeMap[node1]*system->nFields + field1;
-
+  
   system->rows[row0][col1] += v;
   return HXT_STATUS_OK;
 }
@@ -418,7 +418,7 @@ HXTStatus hxtLinearSystemLUSolve(HXTLinearSystemLU *system, double *rhs, double 
     LUPDecompose(system);
     system->flaglu=1;
   }
-
+  
   LUPSolve(system, rhs);
   for (int i = 0; i < system->nNodes; ++i){
     int ii = system->nodeMap[i];

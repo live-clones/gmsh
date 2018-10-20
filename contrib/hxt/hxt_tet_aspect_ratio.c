@@ -67,23 +67,23 @@ double hxtTetAspectFastRatio (double a[3],  double b[3], double c[3], double d[3
     ad[i] = d[i] - a[i]; // AD
   }
  
-  double adxac0 = ad[1]*ac[2] - ad[2]*ac[1];
-  double abxad0 = ab[1]*ad[2] - ab[2]*ad[1];
-  double acxab0 = ac[1]*ab[2] - ac[2]*ab[1];
-  double volume6 = ab[0]*adxac0 + ac[0]*abxad0 + ad[0]*acxab0;
+  double acxad0 = ac[1]*ad[2] - ac[2]*ad[1];
+  double adxab0 = ad[1]*ab[2] - ad[2]*ab[1];
+  double abxac0 = ab[1]*ac[2] - ab[2]*ac[1];
+  double volume6 = ab[0]*acxad0 + ac[0]*adxab0 + ad[0]*abxac0;
  
    // abort as early as possible
   if(volume6<=0.0)
     return 0.0;
  
-  double adxac1 = ad[2]*ac[0] - ad[0]*ac[2];
-  double adxac2 = ad[0]*ac[1] - ad[1]*ac[0];
+  double acxad1 = ac[2]*ad[0] - ac[0]*ad[2];
+  double acxad2 = ac[0]*ad[1] - ac[1]*ad[0];
  
-  double abxad1 = ab[2]*ad[0] - ab[0]*ad[2];
-  double abxad2 = ab[0]*ad[1] - ab[1]*ad[0];
+  double adxab1 = ad[2]*ab[0] - ad[0]*ab[2];
+  double adxab2 = ad[0]*ab[1] - ad[1]*ab[0];
  
-  double acxab1 = ac[2]*ab[0] - ac[0]*ab[2];
-  double acxab2 = ac[0]*ab[1] - ac[1]*ab[0];
+  double abxac1 = ab[2]*ac[0] - ab[0]*ac[2];
+  double abxac2 = ab[0]*ac[1] - ab[1]*ac[0];
 
   for (int i=0; i<3; i++) {
     db[i] = b[i] - d[i]; // DB = B-D = AB-AD
@@ -91,14 +91,14 @@ double hxtTetAspectFastRatio (double a[3],  double b[3], double c[3], double d[3
     cd[i] = d[i] - c[i]; // CD = D-c = AD-AC
   }
  
-  double cdxbc0 = cd[1]*bc[2] - cd[2]*bc[1]; // = adxac0+acxab0+abxad0;
-  double cdxbc1 = cd[2]*bc[0] - cd[0]*bc[2]; // = adxac1+acxab1+abxad1;
-  double cdxbc2 = cd[0]*bc[1] - cd[1]*bc[0]; // = adxac2+acxab2+abxad2;
+  double bcxcd0 = bc[1]*cd[2] - bc[2]*cd[1]; // = acxad0+abxac0+adxab0;
+  double bcxcd1 = bc[2]*cd[0] - bc[0]*cd[2]; // = acxad1+abxac1+adxab1;
+  double bcxcd2 = bc[0]*cd[1] - bc[1]*cd[0]; // = acxad2+abxac2+adxab2;
 
-  double areaSum = sqrt(adxac0*adxac0 + adxac1*adxac1 + adxac2*adxac2)
-                 + sqrt(abxad0*abxad0 + abxad1*abxad1 + abxad2*abxad2)
-                 + sqrt(acxab0*acxab0 + acxab1*acxab1 + acxab2*acxab2)
-                 + sqrt(cdxbc0*cdxbc0 + cdxbc1*cdxbc1 + cdxbc2*cdxbc2);
+  double areaSum = sqrt(acxad0*acxad0 + acxad1*acxad1 + acxad2*acxad2)
+                 + sqrt(adxab0*adxab0 + adxab1*adxab1 + adxab2*adxab2)
+                 + sqrt(abxac0*abxac0 + abxac1*abxac1 + abxac2*abxac2)
+                 + sqrt(bcxcd0*bcxcd0 + bcxcd1*bcxcd1 + bcxcd2*bcxcd2);
 
   double l = ab[0]*ab[0] + ab[1]*ab[1] + ab[2]*ab[2]; // |AB|²
   double l2 = ac[0]*ac[0] + ac[1]*ac[1] + ac[2]*ac[2]; // |AC|²

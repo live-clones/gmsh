@@ -35,6 +35,9 @@ HXTStatus hxtBboxAddOne(HXTBbox* bbox, double* coord);
 /* update the bounding box with an array of n vertices at once (far quicker) */
 HXTStatus hxtBboxAdd(HXTBbox* bbox, double* coord, uint32_t n);
 
+/* merge two bbox  (result can be a pointer to bbox1 or bbox2) */
+HXTStatus hxtBboxMerge(HXTBbox* bbox1, HXTBbox* bbox2, HXTBbox* bboxResult);
+
 #ifdef __cplusplus
 }
 #endif

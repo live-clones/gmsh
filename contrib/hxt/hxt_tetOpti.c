@@ -25,13 +25,13 @@ An oriented edge {up,down} is described by its 'in' and 'out' facets:
        v_up
        |\`-_
        | \  `-_ 
-       |  \    `-_                out_facet
+       |  \    `-_                in_facet
        |   \      `-_              |
        |    \   up   `-_          /
        |     \  facet   `-_   <--'
 our    |      \            `-_
-edge   | in    \              `-_
------> | facet  \v_in___________`>v_out
+edge   | out   \              `-_
+-----> | facet  \v_out__________`>v_in
        |        /               _-'
        |       /             _-'
        |      /  down     _-'
@@ -43,10 +43,10 @@ edge   | in    \              `-_
        |/-'
       v_down
         
-    _-'
+    _->
    /
    \    we scan tetrahedra in a counterclockwise order when viewed from up
-    `-__->
+    `-__-'
 
 
  We keep the numbering of facets and the orientation of tetrahedra as before so:
@@ -67,7 +67,7 @@ in_f=0 out_f=1 up_f=2 down_f=3    in_f=0 out_f=2 up_f=3 down_f=1     in_f=0 out_
        |  \    `-_                      |  \    `-_                      |  \    `-_           
        |   \      `-_                   |   \      `-_                   |   \      `-_        
        |    \        `-_                |    \        `-_                |    \        `-_     
-       |     \v_1_______`>v_0           |     \v_2_______`>v_0           |     \v_3_______`>v_0
+       |     \v_0_______`>v_1           |     \v_0_______`>v_2           |     \v_0_______`>v_3
        |     /         _-'              |     /         _-'              |     /         _-'   
        |    /       _-'                 |    /       _-'                 |    /       _-'      
        |   /     _-'                    |   /     _-'                    |   /     _-'         
@@ -84,7 +84,7 @@ in_f=1 out_f=2 up_f=0 down_f=3    in_f=1 out_f=0 up_f=3 down_f=2     in_f=1 out_
        |  \    `-_                      |  \    `-_                      |  \    `-_           
        |   \      `-_                   |   \      `-_                   |   \      `-_        
        |    \        `-_                |    \        `-_                |    \        `-_     
-       |     \v_2_______`>v_1           |     \v_0_______`>v_1           |     \v_3_______`>v_1
+       |     \v_1_______`>v_2           |     \v_1_______`>v_0           |     \v_1_______`>v_3
        |     /         _-'              |     /         _-'              |     /         _-'   
        |    /       _-'                 |    /       _-'                 |    /       _-'      
        |   /     _-'                    |   /     _-'                    |   /     _-'         
@@ -101,7 +101,7 @@ in_f=2 out_f=3 up_f=0 down_f=1    in_f=2 out_f=0 up_f=1 down_f=3     in_f=2 out_
        |  \    `-_                      |  \    `-_                      |  \    `-_           
        |   \      `-_                   |   \      `-_                   |   \      `-_        
        |    \        `-_                |    \        `-_                |    \        `-_     
-       |     \v_3_______`>v_2           |     \v_0_______`>v_2           |     \v_1_______`>v_2
+       |     \v_3_______`>v_2           |     \v_2_______`>v_0           |     \v_2_______`>v_1
        |     /         _-'              |     /         _-'              |     /         _-'   
        |    /       _-'                 |    /       _-'                 |    /       _-'      
        |   /     _-'                    |   /     _-'                    |   /     _-'         
@@ -118,7 +118,7 @@ in_f=3 out_f=1 up_f=0 down_f=2    in_f=3 out_f=0 up_f=2 down_f=1     in_f=3 out_
        |  \    `-_                      |  \    `-_                      |  \    `-_           
        |   \      `-_                   |   \      `-_                   |   \      `-_        
        |    \        `-_                |    \        `-_                |    \        `-_     
-       |     \v_1_______`>v_3           |     \v_0_______`>v_3           |     \v_2_______`>v_3
+       |     \v_2_______`>v_1           |     \v_3_______`>v_0           |     \v_3_______`>v_2
        |     /         _-'              |     /         _-'              |     /         _-'   
        |    /       _-'                 |    /       _-'                 |    /       _-'      
        |   /     _-'                    |   /     _-'                    |   /     _-'         
@@ -147,12 +147,12 @@ const int _UP_FACET[4][4] = {{NV, 2, 3, 1},
  */
 
 typedef struct {
-  const unsigned char (*triangles)[3];              /* triangles array                                     */
-  const uint64_t *triangle_in_triangul;   /* in which triangulation is the triangles (bit array) */
-  const unsigned char (*triangulations)[5];         /* triangulation array                                 */
-  const signed char (*triangul_neigh)[20];        /* array to find adjacencies back                      */
-  const int num_triangles;                /* number of different triangles                       */
-  const int num_triangulations ;          /* number of different triangulations                  */
+  const unsigned char (*triangles)[3];      /* triangles array                                     */
+  const uint64_t *triangle_in_triangul;     /* in which triangulation is the triangles (bit array) */
+  const unsigned char (*triangulations)[5]; /* triangulation array                                 */
+  const signed char (*triangul_neigh)[20];  /* array to find adjacencies back                      */
+  const unsigned num_triangles;             /* number of different triangles                       */
+  const unsigned num_triangulations ;       /* number of different triangulations                  */
   // const int num_triangles_per_triangulation; /* simply the number of nodes +2...              */
 } SwapPattern ;
 
@@ -297,7 +297,7 @@ const signed char triangul_neigh7[][20] = {
 
 
 SwapPattern patterns[8] = {
-  {},{},{},
+  {0},{0},{0},
   {
     // pattern with 3 points around edge  | 3 tetra in, 2 tetra out
     .triangles = triangles3,
@@ -459,7 +459,7 @@ static inline HXTStatus createNewDeleted(HXTMesh* mesh, ThreadShared* shared, Th
   for (uint64_t i=0; i<needed; i++){
     local->deleted.tetID[local->deleted.num+i] = ntet+i;
     shared->quality2.values[ntet+i] = DBL_MAX;
-    // markTetAsDeleted(mesh, ntet+i);
+    // setDeletedFlag(mesh, ntet+i);
     // printf("adding tet %lu to deleted[%lu]\n", ntet+i, local->deleted.num+i);
   }
 
@@ -481,7 +481,7 @@ static HXTStatus threadShared_update(HXTMesh* mesh, ThreadShared* shared) {
     badTetsCount[threadID] = 0;
 
     #pragma omp for schedule(static)
-    for (int i=0; i<mesh->tetrahedra.num; i++) {
+    for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
       if(mesh->tetrahedra.colors[i]!=UINT16_MAX && shared->quality2.values[i]<shared->quality2.threshold)
         badTetsCount[threadID]++;
     }
@@ -685,152 +685,152 @@ static HXTStatus threadLocals_destroy(ThreadLocal** local, int nthreads) {
 }
 
 
-static HXTStatus flip2_3(HXTMesh* mesh, ThreadShared* shared, ThreadLocal* local,
-                         const uint64_t tet_0, uint16_t color, unsigned out_facet_0)
-{
-  if(isFacetConstrained(mesh, 4*tet_0 + out_facet_0) || mesh->tetrahedra.neigh[4*tet_0 + out_facet_0]==HXT_NO_ADJACENT)
-    return HXT_STATUS_INTERNAL;
+// static HXTStatus flip2_3(HXTMesh* mesh, ThreadShared* shared, ThreadLocal* local,
+//                          const uint64_t tet_0, uint16_t color, unsigned out_facet_0)
+// {
+//   if(getFacetConstraint(mesh, tet_0, out_facet_0) || mesh->tetrahedra.neigh[4*tet_0 + out_facet_0]==HXT_NO_ADJACENT)
+//     return HXT_STATUS_INTERNAL;
 
-  uint64_t neigh = mesh->tetrahedra.neigh[4*tet_0 + out_facet_0];
+//   uint64_t neigh = mesh->tetrahedra.neigh[4*tet_0 + out_facet_0];
   
 
-  uint64_t tet_1 = neigh/4;
+//   uint64_t tet_1 = neigh/4;
 
-  HXT_ASSERT(tet_1<mesh->tetrahedra.num);
-  HXT_ASSERT(tet_1!=tet_0);
-  HXT_ASSERT(mesh->tetrahedra.neigh[neigh]==4*tet_0 + out_facet_0);
-  unsigned in_facet_1 = neigh%4;
+//   HXT_ASSERT(tet_1<mesh->tetrahedra.num);
+//   HXT_ASSERT(tet_1!=tet_0);
+//   HXT_ASSERT(mesh->tetrahedra.neigh[neigh]==4*tet_0 + out_facet_0);
+//   unsigned in_facet_1 = neigh%4;
 
-  { // check for conflict with other threads'partition
-    const uint64_t startDist = local->partition.startDist;
-    const uint64_t rel = local->partition.endDist - startDist;
-    HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
-    if(vertexOutOfPartition(vertices, mesh->tetrahedra.node[4*tet_1 + 0], rel, startDist) +
-       vertexOutOfPartition(vertices, mesh->tetrahedra.node[4*tet_1 + 1], rel, startDist) +
-       vertexOutOfPartition(vertices, mesh->tetrahedra.node[4*tet_1 + 2], rel, startDist) +
-       vertexOutOfPartition(vertices, mesh->tetrahedra.node[4*tet_1 + 3], rel, startDist) > 1)
-       return HXT_STATUS_CONFLICT;
-   }
+//   { // check for conflict with other threads'partition
+//     const uint64_t startDist = local->partition.startDist;
+//     const uint64_t rel = local->partition.endDist - startDist;
+//     HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
+//     if(vertexOutOfPartition(vertices, mesh->tetrahedra.node[4*tet_1 + 0], rel, startDist) +
+//        vertexOutOfPartition(vertices, mesh->tetrahedra.node[4*tet_1 + 1], rel, startDist) +
+//        vertexOutOfPartition(vertices, mesh->tetrahedra.node[4*tet_1 + 2], rel, startDist) +
+//        vertexOutOfPartition(vertices, mesh->tetrahedra.node[4*tet_1 + 3], rel, startDist) > 1)
+//        return HXT_STATUS_CONFLICT;
+//    }
 
-  double worst_qual = shared->quality2.values[tet_0];
+//   double worst_qual = shared->quality2.values[tet_0];
 
-  if(shared->quality2.values[tet_1]<worst_qual)
-    worst_qual = shared->quality2.values[tet_1];
+//   if(shared->quality2.values[tet_1]<worst_qual)
+//     worst_qual = shared->quality2.values[tet_1];
 
-  local->cavity.v_up = mesh->tetrahedra.node[4*tet_0 + out_facet_0];
-  local->cavity.v_down = mesh->tetrahedra.node[4*tet_1 + in_facet_1];
+//   local->cavity.v_up = mesh->tetrahedra.node[4*tet_0 + out_facet_0];
+//   local->cavity.v_down = mesh->tetrahedra.node[4*tet_1 + in_facet_1];
 
-  // choose a reference facet in the tet_0
-  unsigned in_facet_0 = (out_facet_0+1)%4;
+//   // choose a reference facet in the tet_0
+//   unsigned in_facet_0 = (out_facet_0+1)%4;
 
-  // adding vertices of the annulus:
-  local->cavity.annulus[0] = mesh->tetrahedra.node[4*tet_0 + UP_VERTEX(in_facet_0, out_facet_0)];
-  local->cavity.annulus[1] = mesh->tetrahedra.node[4*tet_0 + DOWN_VERTEX(in_facet_0, out_facet_0)];
-  local->cavity.annulus[2] = mesh->tetrahedra.node[4*tet_0 + OUT_VERTEX(in_facet_0, out_facet_0)];
+//   // adding vertices of the annulus:
+//   local->cavity.annulus[0] = mesh->tetrahedra.node[4*tet_0 + UP_VERTEX(in_facet_0, out_facet_0)];
+//   local->cavity.annulus[1] = mesh->tetrahedra.node[4*tet_0 + DOWN_VERTEX(in_facet_0, out_facet_0)];
+//   local->cavity.annulus[2] = mesh->tetrahedra.node[4*tet_0 + OUT_VERTEX(in_facet_0, out_facet_0)];
 
-  local->cavity.neigh_up[0] = mesh->tetrahedra.neigh[4*tet_0 + in_facet_0];
-  local->cavity.neigh_up[1] = mesh->tetrahedra.neigh[4*tet_0 + DOWN_FACET(in_facet_0, out_facet_0)];
-  local->cavity.neigh_up[2] = mesh->tetrahedra.neigh[4*tet_0 + UP_FACET(in_facet_0, out_facet_0)];
+//   local->cavity.neigh_up[0] = mesh->tetrahedra.neigh[4*tet_0 + in_facet_0];
+//   local->cavity.neigh_up[1] = mesh->tetrahedra.neigh[4*tet_0 + DOWN_FACET(in_facet_0, out_facet_0)];
+//   local->cavity.neigh_up[2] = mesh->tetrahedra.neigh[4*tet_0 + UP_FACET(in_facet_0, out_facet_0)];
 
-  uint32_t v = local->cavity.annulus[2];
+//   uint32_t v = local->cavity.annulus[2];
 
-  // find one of the vertex in the tet_1
-  uint32_t* nodes = mesh->tetrahedra.node + 4*tet_1;
+//   // find one of the vertex in the tet_1
+//   uint32_t* nodes = mesh->tetrahedra.node + 4*tet_1;
 
-  unsigned out_facet_1;
-  for (out_facet_1=0; out_facet_1<4; out_facet_1++)
-      if(nodes[out_facet_1]==v)
-        break;
+//   unsigned out_facet_1;
+//   for (out_facet_1=0; out_facet_1<4; out_facet_1++)
+//       if(nodes[out_facet_1]==v)
+//         break;
 
-  // HXT_ASSERT(out_facet_1!=4);
-  // HXT_ASSERT(out_facet_1!=in_facet_1);
-  // HXT_ASSERT((isEdgeConstrainedSafe(mesh, tet_0, in_facet_0, out_facet_0)!=0)==(isEdgeConstrainedSafe(mesh, tet_1, in_facet_1, out_facet_1)!=0));
-  // HXT_ASSERT((isEdgeConstrainedSafe(mesh, tet_0, in_facet_0, out_facet_0)!=0)==(isEdgeConstrainedSafe(mesh, tet_1, in_facet_1, out_facet_1)!=0));
-  // HXT_ASSERT((isEdgeConstrainedSafe(mesh, tet_0, DOWN_FACET(in_facet_0, out_facet_0), out_facet_0)!=0)
-  //          ==(isEdgeConstrainedSafe(mesh, tet_1, DOWN_FACET(in_facet_1, out_facet_1), in_facet_1)!=0));
-  // HXT_ASSERT((isEdgeConstrainedSafe(mesh, tet_0, UP_FACET(in_facet_0, out_facet_0), out_facet_0)!=0)
-  //          ==(isEdgeConstrainedSafe(mesh, tet_1, UP_FACET(in_facet_1, out_facet_1), in_facet_1)!=0));
-  // HXT_ASSERT((isFacetConstrained(mesh, 4*tet_0 + out_facet_0)!=0)==(isFacetConstrained(mesh, 4*tet_1 + in_facet_1)!=0));
-  // if(mesh->tetrahedra.neigh[neigh]!=4*tet_0+out_facet_0)
-  //   return HXT_ERROR_MSG(HXT_STATUS_ERROR, "mesh->tetrahedra.neigh[%lu]==%lu instead of %lu",neigh,mesh->tetrahedra.neigh[neigh],4*tet_0+out_facet_0);
+//   // HXT_ASSERT(out_facet_1!=4);
+//   // HXT_ASSERT(out_facet_1!=in_facet_1);
+//   // HXT_ASSERT((isEdgeConstrainedSafe(mesh, tet_0, in_facet_0, out_facet_0)!=0)==(isEdgeConstrainedSafe(mesh, tet_1, in_facet_1, out_facet_1)!=0));
+//   // HXT_ASSERT((isEdgeConstrainedSafe(mesh, tet_0, in_facet_0, out_facet_0)!=0)==(isEdgeConstrainedSafe(mesh, tet_1, in_facet_1, out_facet_1)!=0));
+//   // HXT_ASSERT((isEdgeConstrainedSafe(mesh, tet_0, DOWN_FACET(in_facet_0, out_facet_0), out_facet_0)!=0)
+//   //          ==(isEdgeConstrainedSafe(mesh, tet_1, DOWN_FACET(in_facet_1, out_facet_1), in_facet_1)!=0));
+//   // HXT_ASSERT((isEdgeConstrainedSafe(mesh, tet_0, UP_FACET(in_facet_0, out_facet_0), out_facet_0)!=0)
+//   //          ==(isEdgeConstrainedSafe(mesh, tet_1, UP_FACET(in_facet_1, out_facet_1), in_facet_1)!=0));
+//   // HXT_ASSERT((getFacetConstraint(mesh, tet_0, out_facet_0)!=0)==(getFacetConstraint(mesh, tet_1, in_facet_1)!=0));
+//   // if(mesh->tetrahedra.neigh[neigh]!=4*tet_0+out_facet_0)
+//   //   return HXT_ERROR_MSG(HXT_STATUS_ERROR, "mesh->tetrahedra.neigh[%lu]==%lu instead of %lu",neigh,mesh->tetrahedra.neigh[neigh],4*tet_0+out_facet_0);
 
-  local->cavity.neigh_down[0] = mesh->tetrahedra.neigh[4*tet_1 + out_facet_1];
-  local->cavity.neigh_down[1] = mesh->tetrahedra.neigh[4*tet_1 + DOWN_FACET(in_facet_1, out_facet_1)];
-  local->cavity.neigh_down[2] = mesh->tetrahedra.neigh[4*tet_1 + UP_FACET(in_facet_1, out_facet_1)];
+//   local->cavity.neigh_down[0] = mesh->tetrahedra.neigh[4*tet_1 + out_facet_1];
+//   local->cavity.neigh_down[1] = mesh->tetrahedra.neigh[4*tet_1 + DOWN_FACET(in_facet_1, out_facet_1)];
+//   local->cavity.neigh_down[2] = mesh->tetrahedra.neigh[4*tet_1 + UP_FACET(in_facet_1, out_facet_1)];
 
-  local->cavity.flag[0] = ((isFacetConstrained(mesh, 4*tet_0 + in_facet_0)!=0)<<12) +
-                          ((isFacetConstrained(mesh, 4*tet_1 + out_facet_1)!=0)<<8) +
-                          ((isEdgeConstrainedSafe(mesh, tet_1, out_facet_1, DOWN_FACET(in_facet_1, out_facet_1))!=0)<<2) +
-                          ((isEdgeConstrainedSafe(mesh, tet_0, in_facet_0, DOWN_FACET(in_facet_0, out_facet_0))!=0)<<3) +
-                          ((isEdgeConstrainedSafe(mesh, tet_1, out_facet_1, UP_FACET(in_facet_1, out_facet_1))!=0)<<6) +
-                          ((isEdgeConstrainedSafe(mesh, tet_0, in_facet_0, UP_FACET(in_facet_0, out_facet_0))!=0)<<7) +
-                          ((isEdgeConstrainedSafe(mesh, tet_0, in_facet_0, out_facet_0)!=0)<<11);
+//   local->cavity.flag[0] = ((getFacetConstraint(mesh, tet_0, in_facet_0)!=0)<<12) +
+//                           ((getFacetConstraint(mesh, tet_1, out_facet_1)!=0)<<8) +
+//                           ((isEdgeConstrainedSafe(mesh, tet_1, out_facet_1, DOWN_FACET(in_facet_1, out_facet_1))!=0)<<2) +
+//                           ((isEdgeConstrainedSafe(mesh, tet_0, in_facet_0, DOWN_FACET(in_facet_0, out_facet_0))!=0)<<3) +
+//                           ((isEdgeConstrainedSafe(mesh, tet_1, out_facet_1, UP_FACET(in_facet_1, out_facet_1))!=0)<<6) +
+//                           ((isEdgeConstrainedSafe(mesh, tet_0, in_facet_0, UP_FACET(in_facet_0, out_facet_0))!=0)<<7) +
+//                           ((isEdgeConstrainedSafe(mesh, tet_0, in_facet_0, out_facet_0)!=0)<<11);
 
-  local->cavity.flag[1] = ((isFacetConstrained(mesh, 4*tet_0 + DOWN_FACET(in_facet_0, out_facet_0))!=0)<<12) +
-                          ((isFacetConstrained(mesh, 4*tet_1 + DOWN_FACET(in_facet_1, out_facet_1))!=0)<<8) +
-                          ((isEdgeConstrainedSafe(mesh, tet_1, DOWN_FACET(in_facet_1, out_facet_1), UP_FACET(in_facet_1, out_facet_1))!=0)<<2) +
-                          ((isEdgeConstrainedSafe(mesh, tet_0, DOWN_FACET(in_facet_0, out_facet_0), UP_FACET(in_facet_0, out_facet_0))!=0)<<3) +
-                          ((isEdgeConstrainedSafe(mesh, tet_1, DOWN_FACET(in_facet_1, out_facet_1), out_facet_1)!=0)<<6) +
-                          ((isEdgeConstrainedSafe(mesh, tet_0, DOWN_FACET(in_facet_0, out_facet_0), in_facet_0)!=0)<<7) +
-                          ((isEdgeConstrainedSafe(mesh, tet_0, DOWN_FACET(in_facet_0, out_facet_0), out_facet_0)!=0)<<11);
+//   local->cavity.flag[1] = ((getFacetConstraint(mesh, tet_0, DOWN_FACET(in_facet_0, out_facet_0))!=0)<<12) +
+//                           ((getFacetConstraint(mesh, tet_1, DOWN_FACET(in_facet_1, out_facet_1))!=0)<<8) +
+//                           ((isEdgeConstrainedSafe(mesh, tet_1, DOWN_FACET(in_facet_1, out_facet_1), UP_FACET(in_facet_1, out_facet_1))!=0)<<2) +
+//                           ((isEdgeConstrainedSafe(mesh, tet_0, DOWN_FACET(in_facet_0, out_facet_0), UP_FACET(in_facet_0, out_facet_0))!=0)<<3) +
+//                           ((isEdgeConstrainedSafe(mesh, tet_1, DOWN_FACET(in_facet_1, out_facet_1), out_facet_1)!=0)<<6) +
+//                           ((isEdgeConstrainedSafe(mesh, tet_0, DOWN_FACET(in_facet_0, out_facet_0), in_facet_0)!=0)<<7) +
+//                           ((isEdgeConstrainedSafe(mesh, tet_0, DOWN_FACET(in_facet_0, out_facet_0), out_facet_0)!=0)<<11);
 
-  local->cavity.flag[2] = ((isFacetConstrained(mesh, 4*tet_0 + UP_FACET(in_facet_0, out_facet_0))!=0)<<12) +
-                          ((isFacetConstrained(mesh, 4*tet_1 + UP_FACET(in_facet_1, out_facet_1))!=0)<<8) +
-                          ((isEdgeConstrainedSafe(mesh, tet_1, UP_FACET(in_facet_1, out_facet_1), out_facet_1)!=0)<<2) +
-                          ((isEdgeConstrainedSafe(mesh, tet_0, UP_FACET(in_facet_0, out_facet_0), in_facet_0)!=0)<<3) +
-                          ((isEdgeConstrainedSafe(mesh, tet_1, UP_FACET(in_facet_1, out_facet_1), DOWN_FACET(in_facet_1, out_facet_1))!=0)<<6) +
-                          ((isEdgeConstrainedSafe(mesh, tet_0, UP_FACET(in_facet_0, out_facet_0), DOWN_FACET(in_facet_0, out_facet_0))!=0)<<7) +
-                          ((isEdgeConstrainedSafe(mesh, tet_0, UP_FACET(in_facet_0, out_facet_0), out_facet_0)!=0)<<11);
+//   local->cavity.flag[2] = ((getFacetConstraint(mesh, tet_0, UP_FACET(in_facet_0, out_facet_0))!=0)<<12) +
+//                           ((getFacetConstraint(mesh, tet_1, UP_FACET(in_facet_1, out_facet_1))!=0)<<8) +
+//                           ((isEdgeConstrainedSafe(mesh, tet_1, UP_FACET(in_facet_1, out_facet_1), out_facet_1)!=0)<<2) +
+//                           ((isEdgeConstrainedSafe(mesh, tet_0, UP_FACET(in_facet_0, out_facet_0), in_facet_0)!=0)<<3) +
+//                           ((isEdgeConstrainedSafe(mesh, tet_1, UP_FACET(in_facet_1, out_facet_1), DOWN_FACET(in_facet_1, out_facet_1))!=0)<<6) +
+//                           ((isEdgeConstrainedSafe(mesh, tet_0, UP_FACET(in_facet_0, out_facet_0), DOWN_FACET(in_facet_0, out_facet_0))!=0)<<7) +
+//                           ((isEdgeConstrainedSafe(mesh, tet_0, UP_FACET(in_facet_0, out_facet_0), out_facet_0)!=0)<<11);
 
-  // now we have everything... we just need to test if the quality of tetrahedra would be good
-  double qual[3];
-  for (int i=0; i<3; i++) {
-    qual[i] = tetQuality2(mesh, local->cavity.annulus[i], local->cavity.annulus[(i+1)%3], local->cavity.v_up, local->cavity.v_down);
-    if(qual[i]<worst_qual){
-      return HXT_STATUS_INTERNAL;
-    }
-  }
+//   // now we have everything... we just need to test if the quality of tetrahedra would be good
+//   double qual[3];
+//   for (int i=0; i<3; i++) {
+//     qual[i] = tetQuality2(mesh, local->cavity.annulus[i], local->cavity.annulus[(i+1)%3], local->cavity.v_up, local->cavity.v_down);
+//     if(qual[i]<worst_qual){
+//       return HXT_STATUS_INTERNAL;
+//     }
+//   }
 
-  if(local->deleted.num<1)
-    HXT_CHECK( createNewDeleted(mesh, shared, local) );
+//   if(local->deleted.num<1)
+//     HXT_CHECK( createNewDeleted(mesh, shared, local) );
 
-  local->deleted.num--;
-  uint64_t newTet[3] = {tet_0, tet_1, local->deleted.tetID[local->deleted.num]};
+//   local->deleted.num--;
+//   uint64_t newTet[3] = {tet_0, tet_1, local->deleted.tetID[local->deleted.num]};
 
-  for (unsigned i=0; i<3; i++) {
-    uint64_t curTet = newTet[i];
-    mesh->tetrahedra.node[4*curTet + 0] = local->cavity.annulus[i];
-    mesh->tetrahedra.node[4*curTet + 1] = local->cavity.annulus[(i+1)%3];
-    mesh->tetrahedra.node[4*curTet + 2] = local->cavity.v_up;
-    mesh->tetrahedra.node[4*curTet + 3] = local->cavity.v_down;
+//   for (unsigned i=0; i<3; i++) {
+//     uint64_t curTet = newTet[i];
+//     mesh->tetrahedra.node[4*curTet + 0] = local->cavity.annulus[i];
+//     mesh->tetrahedra.node[4*curTet + 1] = local->cavity.annulus[(i+1)%3];
+//     mesh->tetrahedra.node[4*curTet + 2] = local->cavity.v_up;
+//     mesh->tetrahedra.node[4*curTet + 3] = local->cavity.v_down;
 
-    mesh->tetrahedra.neigh[4*curTet + 0] = 4*newTet[(i+1)%3] + 1;
-    // mesh->tetrahedra.neigh[4*curTet + 1] = 4*newTet[(i+4)%3] + 0;
-    mesh->tetrahedra.neigh[4*newTet[(i+1)%3] + 1] = 4*curTet + 0;
+//     mesh->tetrahedra.neigh[4*curTet + 0] = 4*newTet[(i+1)%3] + 1;
+//     // mesh->tetrahedra.neigh[4*curTet + 1] = 4*newTet[(i+4)%3] + 0;
+//     mesh->tetrahedra.neigh[4*newTet[(i+1)%3] + 1] = 4*curTet + 0;
 
-    mesh->tetrahedra.neigh[4*curTet + 2] = local->cavity.neigh_down[i];
-    if( local->cavity.neigh_down[i]!=HXT_NO_ADJACENT)
-      mesh->tetrahedra.neigh[local->cavity.neigh_down[i]] = 4*curTet + 2;
+//     mesh->tetrahedra.neigh[4*curTet + 2] = local->cavity.neigh_down[i];
+//     if( local->cavity.neigh_down[i]!=HXT_NO_ADJACENT)
+//       mesh->tetrahedra.neigh[local->cavity.neigh_down[i]] = 4*curTet + 2;
 
-    mesh->tetrahedra.neigh[4*curTet + 3] = local->cavity.neigh_up[i];
-    if( local->cavity.neigh_up[i]!=HXT_NO_ADJACENT)
-      mesh->tetrahedra.neigh[local->cavity.neigh_up[i]] = 4*curTet + 3;
+//     mesh->tetrahedra.neigh[4*curTet + 3] = local->cavity.neigh_up[i];
+//     if( local->cavity.neigh_up[i]!=HXT_NO_ADJACENT)
+//       mesh->tetrahedra.neigh[local->cavity.neigh_up[i]] = 4*curTet + 3;
 
-    mesh->tetrahedra.colors[curTet] = color;
+//     mesh->tetrahedra.colors[curTet] = color;
 
-    // TODO: verify flags are well done
-    mesh->tetrahedra.flag[curTet] = local->cavity.flag[i];
-    shared->quality2.values[curTet] = qual[i];
-  }
+//     // TODO: verify flags are well done
+//     mesh->tetrahedra.flag[curTet] = local->cavity.flag[i];
+//     shared->quality2.values[curTet] = qual[i];
+//   }
 
-  return HXT_STATUS_OK;
-  // return HXT_STATUS_INTERNAL;
-}
+//   return HXT_STATUS_OK;
+//   // return HXT_STATUS_INTERNAL;
+// }
 
 
 static inline HXTStatus buildEdgeCavity(HXTMesh* mesh, ThreadLocal* local,
-                                        const uint64_t badTet, uint16_t color,
-                                        int in_facet, int out_facet)
+                                        const uint64_t badTet,
+                                        unsigned in_facet, unsigned out_facet)
 {
   const uint64_t startDist = local->partition.startDist;
   const uint64_t rel = local->partition.endDist - startDist;
@@ -840,7 +840,7 @@ static inline HXTStatus buildEdgeCavity(HXTMesh* mesh, ThreadLocal* local,
   uint64_t curTet = badTet;
   local->cavity.num = 0;
 
-  if(isEdgeConstrainedSafe(mesh, badTet, in_facet, out_facet))
+  if(getEdgeConstraint(mesh, badTet, getEdgeFromFacets(in_facet, out_facet)))
     return HXT_STATUS_INTERNAL;
 
   local->cavity.v_up = mesh->tetrahedra.node[4*badTet + UP_VERTEX(in_facet, out_facet)];
@@ -854,23 +854,34 @@ static inline HXTStatus buildEdgeCavity(HXTMesh* mesh, ThreadLocal* local,
     // add the current tetrahedra
     local->deleted.tetID[local->deleted.num + local->cavity.num] = curTet;
 
-    // add the neighbor up and down
-    local->cavity.neigh_up[local->cavity.num] = mesh->tetrahedra.neigh[4*curTet + UP_FACET(in_facet, out_facet)];
-    local->cavity.neigh_down[local->cavity.num] = mesh->tetrahedra.neigh[4*curTet + DOWN_FACET(in_facet, out_facet)];
+    {
+      unsigned up_facet = UP_FACET(in_facet, out_facet);
+      unsigned down_facet = DOWN_FACET(in_facet, out_facet);
 
-    // TODO: just store one flag for up and down. the one of the default tetrahedron
-    local->cavity.flag[local->cavity.num] = (isFacetConstrained(mesh, 4*curTet + UP_FACET(in_facet, out_facet))!=0) +
-                                            ((isEdgeConstrainedSafe(mesh, curTet, UP_FACET(in_facet, out_facet), out_facet)!=0)<<1) +
-                                            ((isEdgeConstrainedSafe(mesh, curTet, UP_FACET(in_facet, out_facet), DOWN_FACET(in_facet, out_facet))!=0)<<2) +
-                                            ((isEdgeConstrainedSafe(mesh, curTet, UP_FACET(in_facet, out_facet), in_facet)!=0)<<3) +
-                                            ((isFacetConstrained(mesh, 4*curTet + DOWN_FACET(in_facet, out_facet))!=0)<<4) +
-                                            ((isEdgeConstrainedSafe(mesh, curTet, DOWN_FACET(in_facet, out_facet), out_facet)!=0)<<5) +
-                                            ((isEdgeConstrainedSafe(mesh, curTet, DOWN_FACET(in_facet, out_facet), in_facet)!=0)<<6) +
-                                            ((isEdgeConstrainedSafe(mesh, curTet, UP_FACET(in_facet, out_facet), DOWN_FACET(in_facet, out_facet))!=0)<<7);
+      // add the neighbor up and down
+      local->cavity.neigh_up[local->cavity.num] = mesh->tetrahedra.neigh[4*curTet + up_facet];
+      local->cavity.neigh_down[local->cavity.num] = mesh->tetrahedra.neigh[4*curTet + down_facet];
 
+      int upDownEdge = getEdgeFromFacets(up_facet, down_facet);
+      int upOutEdge = getEdgeFromFacets(up_facet, out_facet);
+      int upInEdge = getEdgeFromFacets(up_facet, in_facet);
+      int downOutEdge = getEdgeFromFacets(down_facet, out_facet);
+      int downInEdge = getEdgeFromFacets(down_facet, in_facet);
+
+
+      // TODO: just store one flag for up and down. the one of the default tetrahedron
+      local->cavity.flag[local->cavity.num] = (getFacetConstraint(mesh, curTet, up_facet)!=0) +
+                                              ((getEdgeConstraint(mesh, curTet, upOutEdge)!=0)<<1) +
+                                              ((getEdgeConstraint(mesh, curTet, upDownEdge)!=0)<<2) +
+                                              ((getEdgeConstraint(mesh, curTet, upInEdge)!=0)<<3) +
+                                              ((getFacetConstraint(mesh, curTet, down_facet)!=0)<<4) +
+                                              ((getEdgeConstraint(mesh, curTet, downOutEdge)!=0)<<5) +
+                                              ((getEdgeConstraint(mesh, curTet, downInEdge)!=0)<<6) +
+                                              ((getEdgeConstraint(mesh, curTet, upDownEdge)!=0)<<7);
+    }
     // add the annulus vertex
-    uint32_t oldV = mesh->tetrahedra.node[4*curTet + IN_VERTEX(in_facet, out_facet)];
-    uint32_t newV = mesh->tetrahedra.node[4*curTet + OUT_VERTEX(in_facet, out_facet)];
+    uint32_t oldV = mesh->tetrahedra.node[4*curTet + out_facet];
+    uint32_t newV = mesh->tetrahedra.node[4*curTet + in_facet];
 
     local->cavity.annulus[local->cavity.num] = oldV;
     local->cavity.num++;
@@ -878,7 +889,7 @@ static inline HXTStatus buildEdgeCavity(HXTMesh* mesh, ThreadLocal* local,
     // go into the neighbor through out_facet
     uint64_t neigh = mesh->tetrahedra.neigh[4*curTet + out_facet];
     if(neigh == HXT_NO_ADJACENT
-      || (isFacetConstrained(mesh, neigh)!=0)
+      || (getFacetConstraint(mesh, neigh/4, neigh%4)!=0)
       || local->cavity.num>=HXT_MAX_CAVITY_SIZE) {
       return HXT_STATUS_INTERNAL;
     }
@@ -905,9 +916,9 @@ static inline HXTStatus buildEdgeCavity(HXTMesh* mesh, ThreadLocal* local,
 
 static HXTStatus edgeSwap(HXTMesh *mesh, ThreadShared* shared, ThreadLocal* local,
                              const uint64_t badTet, const uint16_t color,
-                             int in_facet, int out_facet)
+                             unsigned in_facet, unsigned out_facet)
 {
-  HXT_CHECK( buildEdgeCavity(mesh, local, badTet, color, in_facet, out_facet) );
+  HXT_CHECK( buildEdgeCavity(mesh, local, badTet, in_facet, out_facet) );
 
   // find worst quality2 tet of the cavity
   double worst = DBL_MAX;
@@ -919,7 +930,7 @@ static HXTStatus edgeSwap(HXTMesh *mesh, ThreadShared* shared, ThreadLocal* loca
   }
 
   const SwapPattern* patt = &patterns[local->cavity.num];
-  const int num_triangle_per_triangul = local->cavity.num-2;
+  const unsigned num_triangle_per_triangul = local->cavity.num-2;
   uint32_t* annulus = local->cavity.annulus;
 
   // calculate qualities of all possible tetrahedra
@@ -927,7 +938,7 @@ static HXTStatus edgeSwap(HXTMesh *mesh, ThreadShared* shared, ThreadLocal* loca
   double hxtDeclareAligned qual_up[35];
   double hxtDeclareAligned qual_down[35];
   uint64_t mask = 0;
-  for (int i=0; i<patt->num_triangles; i++) {
+  for (unsigned i=0; i<patt->num_triangles; i++) {
     uint32_t p0 = annulus[patt->triangles[i][0]];
     uint32_t p1 = annulus[patt->triangles[i][1]];
     uint32_t p2 = annulus[patt->triangles[i][2]];
@@ -944,12 +955,12 @@ static HXTStatus edgeSwap(HXTMesh *mesh, ThreadShared* shared, ThreadLocal* loca
   // find the best triangulation
   int best_triangulation = -1;
   double best_worst = 0;
-  for (int i=0; i<patt->num_triangulations; i++) {
+  for (unsigned i=0; i<patt->num_triangulations; i++) {
     if((mask & (UINT64_C(1)<<i))==0) {
       double cur_worst = DBL_MAX;
       // this mean that no triangle in the triangulation
       //   is worst than the current worst tetrahedron
-      for (int j=0; j<num_triangle_per_triangul; j++) {
+      for (unsigned j=0; j<num_triangle_per_triangul; j++) {
         double q_u = qual_up[patt->triangulations[i][j]];
         double q_d = qual_down[patt->triangulations[i][j]];
         if(q_u<best_worst || q_d<best_worst){
@@ -978,7 +989,7 @@ static HXTStatus edgeSwap(HXTMesh *mesh, ThreadShared* shared, ThreadLocal* loca
   // mark new deleted tet as deleted
   for (uint64_t i=0; i<local->cavity.num; i++) {
     shared->quality2.values[local->deleted.tetID[local->deleted.num+i]] = DBL_MAX; // deleted tets have good quality2
-    // markTetAsDeleted(mesh, local->deleted.tetID[local->deleted.num+i]);
+    // setDeletedFlag(mesh, local->deleted.tetID[local->deleted.num+i]);
   }
   local->deleted.num += local->cavity.num;
 
@@ -990,7 +1001,7 @@ static HXTStatus edgeSwap(HXTMesh *mesh, ThreadShared* shared, ThreadLocal* loca
   uint64_t start = local->deleted.num - 2*num_triangle_per_triangul;
 
   // make the swap
-  for (int i=0; i<num_triangle_per_triangul; i++) {
+  for (unsigned i=0; i<num_triangle_per_triangul; i++) {
     uint32_t tri = patt->triangulations[best_triangulation][i];
     uint32_t p0 = annulus[patt->triangles[tri][0]];
     uint32_t p1 = annulus[patt->triangles[tri][1]];
@@ -1025,7 +1036,10 @@ static HXTStatus edgeSwap(HXTMesh *mesh, ThreadShared* shared, ThreadLocal* loca
         neigh[0] = local->cavity.neigh_up[-n0-1];
 
         //  (down=2, in=3, out=1, up=0)
-        mesh->tetrahedra.flag[newTet_up] |= local->cavity.flag[-n0-1] & 0xF;
+        mesh->tetrahedra.flag[newTet_up] |= (local->cavity.flag[-n0-1]&1)<<8 |// face (bit 0) is the up_facet => 0  (bit 8)
+                                            (local->cavity.flag[-n0-1]&2)>>1 |// first edge (bit 1) was between up_facet and out_facet => 0-1  (bit 0)
+                                            (local->cavity.flag[-n0-1]&4)>>1 |// second edge (bit 2) was between up_facet and down_facet => 0-2 (bit 1)
+                                            (local->cavity.flag[-n0-1]&8)>>1; // third edge (bit 3) was between up_facet and in_facet => 0-3    (bit 2)
 
         if(neigh[0]!=HXT_NO_ADJACENT)
           mesh->tetrahedra.neigh[neigh[0]] = 4*newTet_up + 0;
@@ -1037,10 +1051,10 @@ static HXTStatus edgeSwap(HXTMesh *mesh, ThreadShared* shared, ThreadLocal* loca
         neigh[1] = local->cavity.neigh_up[-n1-1];
 
         //  (down=2, in=0, out=3, up=1)
-        mesh->tetrahedra.flag[newTet_up] |= (local->cavity.flag[-n1-1]&5)<<4 |  // face (bit 0) is the up_facet => 1*4  (bit 4)
-                                            (local->cavity.flag[-n1-1]&2)<<6 |  // first edge (bit 1) was between up_facet and out_facet => 1-3   (bit 7)
-                                            // (local->cavity.flag[-n1-1]&4)<<4 |  // second edge (bit 2) was between up_facet and down_facet => 1-2 (bit 6)
-                                            (local->cavity.flag[-n1-1]&8)>>2;   // third edge (bit 3) was between up_facet and in_facet => 0-1    (bit 1)
+        mesh->tetrahedra.flag[newTet_up] |= (local->cavity.flag[-n1-1]&1)<<9 |// face (bit 0) is the up_facet => 1  (bit 9)
+                                            (local->cavity.flag[-n1-1]&2)<<3 |// first edge (bit 1) was between up_facet and out_facet => 1-3   (bit 4)
+                                            (local->cavity.flag[-n1-1]&4)<<1 |// second edge (bit 2) was between up_facet and down_facet => 1-2 (bit 3)
+                                            (local->cavity.flag[-n1-1]&8)>>3; // third edge (bit 3) was between up_facet and in_facet => 0-1    (bit 0)
 
         if(neigh[1]!=HXT_NO_ADJACENT)
           mesh->tetrahedra.neigh[neigh[1]] = 4*newTet_up + 1;
@@ -1053,10 +1067,10 @@ static HXTStatus edgeSwap(HXTMesh *mesh, ThreadShared* shared, ThreadLocal* loca
         neigh[3] = local->cavity.neigh_up[-n2-1];
 
         //  (down=2, in=1, out=0, up=3)
-        mesh->tetrahedra.flag[newTet_up] |= (local->cavity.flag[-n2-1]&1)<<12 |  // face (bit 0) is the up_facet => 3*4  (bit 12)
-                                            (local->cavity.flag[-n2-1]&2)<<2 |  // first edge (bit 1) was between up_facet and out_facet => 0-3   (bit 3)
-                                            (local->cavity.flag[-n2-1]&4)<<9 |  // second edge (bit 2) was between up_facet and down_facet => 2-3 (bit 11)
-                                            (local->cavity.flag[-n2-1]&8)<<4;   // third edge (bit 3) was between up_facet and in_facet => 1-3    (bit 7)
+        mesh->tetrahedra.flag[newTet_up] |= (local->cavity.flag[-n2-1]&1)<<11 |// face (bit 0) is the up_facet => 3  (bit 11)
+                                            (local->cavity.flag[-n2-1]&2)<<1  |// first edge (bit 1) was between up_facet and out_facet => 0-3   (bit 2)
+                                            (local->cavity.flag[-n2-1]&4)<<3  |// second edge (bit 2) was between up_facet and down_facet => 2-3 (bit 5)
+                                            (local->cavity.flag[-n2-1]&8)<<1;  // third edge (bit 3) was between up_facet and in_facet => 1-3    (bit 4)
 
         if(neigh[3]!=HXT_NO_ADJACENT)
           mesh->tetrahedra.neigh[neigh[3]] = 4*newTet_up + 3;
@@ -1084,7 +1098,10 @@ static HXTStatus edgeSwap(HXTMesh *mesh, ThreadShared* shared, ThreadLocal* loca
         neigh[0] = local->cavity.neigh_down[-n0-1];
 
         //  (down=0, in=2, out=1, up=3)
-        mesh->tetrahedra.flag[newTet_down] |= (local->cavity.flag[-n0-1] & 0xF0)>>4;
+        mesh->tetrahedra.flag[newTet_down] |= (local->cavity.flag[-n0-1]&16)<<4 |// face (bit 4) is the down_facet => 0  (bit 8)
+                                              (local->cavity.flag[-n0-1]&32)>>5 |// first edge (bit 5) was between down_facet and out_facet => 0-1   (bit 0)
+                                              (local->cavity.flag[-n0-1]&64)>>5 |// second edge (bit 6) was between down_facet and in_facet => 0-2   (bit 1)
+                                              (local->cavity.flag[-n0-1]&128)>>5;// third edge (bit 7) was between down_facet and up_facet => 0-3    (bit 2)
 
         if(neigh[0]!=HXT_NO_ADJACENT)
           mesh->tetrahedra.neigh[neigh[0]] = 4*newTet_down + 0;
@@ -1096,10 +1113,10 @@ static HXTStatus edgeSwap(HXTMesh *mesh, ThreadShared* shared, ThreadLocal* loca
         neigh[1] = local->cavity.neigh_down[-n1-1];
 
         //  (down=1, in=0, out=2, up=3)
-        mesh->tetrahedra.flag[newTet_down] |= (local->cavity.flag[-n1-1]&0x90) |  // face (bit 4) is the down_facet => 1*4  (bit 4)
-                                              (local->cavity.flag[-n1-1]&32)<<1 |  // first edge (bit 5) was between down_facet and out_facet => 1-2   (bit 6)
-                                              (local->cavity.flag[-n1-1]&64)>>5;  // second edge (bit 6) was between down_facet and in_facet => 0-1   (bit 1)
-                                              //(local->cavity.flag[-n1-1]&128);   // third edge (bit 7) was between down_facet and up_facet => 1-3    (bit 7)
+        mesh->tetrahedra.flag[newTet_down] |= (local->cavity.flag[-n1-1]&16)<<5 |// face (bit 4) is the down_facet => 1  (bit 9)
+                                              (local->cavity.flag[-n1-1]&32)>>2 |// first edge (bit 5) was between down_facet and out_facet => 1-2   (bit 3)
+                                              (local->cavity.flag[-n1-1]&64)>>6 |// second edge (bit 6) was between down_facet and in_facet => 0-1   (bit 0)
+                                              (local->cavity.flag[-n1-1]&128)>>3;// third edge (bit 7) was between down_facet and up_facet => 1-3    (bit 4)
 
         if(neigh[1]!=HXT_NO_ADJACENT)
           mesh->tetrahedra.neigh[neigh[1]] = 4*newTet_down + 1;
@@ -1111,10 +1128,10 @@ static HXTStatus edgeSwap(HXTMesh *mesh, ThreadShared* shared, ThreadLocal* loca
         neigh[2] = local->cavity.neigh_down[-n2-1];
 
         //  (down=2, in=1, out=0, up=3)
-        mesh->tetrahedra.flag[newTet_down] |= (local->cavity.flag[-n2-1]&0x90)<<4 |  // face (bit 4) is the down_facet => 2*4  (bit 8)
-                                              (local->cavity.flag[-n2-1]&32)>>3 |  // first edge (bit 5) was between down_facet and out_facet => 0-2   (bit 2)
-                                              (local->cavity.flag[-n2-1]&64);  // second edge (bit 6) was between down_facet and in_facet => 1-2   (bit 6)
-                                              //(local->cavity.flag[-n2-1]&128)<<4;   // third edge (bit 7) was between down_facet and up_facet => 2-3    (bit 11)
+        mesh->tetrahedra.flag[newTet_down] |= (local->cavity.flag[-n2-1]&16)<<6 |// face (bit 4) is the down_facet => 2*4  (bit 10)
+                                              (local->cavity.flag[-n2-1]&32)>>4 |// first edge (bit 5) was between down_facet and out_facet => 0-2   (bit 1)
+                                              (local->cavity.flag[-n2-1]&64)>>3 |// second edge (bit 6) was between down_facet and in_facet => 1-2   (bit 3)
+                                              (local->cavity.flag[-n2-1]&128)>>2;// third edge (bit 7) was between down_facet and up_facet => 2-3    (bit 5)
 
         if(neigh[2]!=HXT_NO_ADJACENT)
           mesh->tetrahedra.neigh[neigh[2]] = 4*newTet_down + 2;
@@ -1130,11 +1147,11 @@ static HXTStatus edgeSwap(HXTMesh *mesh, ThreadShared* shared, ThreadLocal* loca
 
 
 static inline HXTStatus buildVertexCavity(HXTMesh* mesh, ThreadLocal* local,
-                                          uint64_t curFace,
+                                          uint64_t startFace,
                                           const uint32_t numVerticesConstrained) {
   const uint64_t startDist = local->partition.startDist;
   const uint64_t rel = local->partition.endDist - startDist;
-  const uint32_t vertex = mesh->tetrahedra.node[curFace];
+  const uint32_t vertex = mesh->tetrahedra.node[startFace];
   HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
 
   // the vertex we are moving should be in the partition or we don't even try...
@@ -1142,8 +1159,8 @@ static inline HXTStatus buildVertexCavity(HXTMesh* mesh, ThreadLocal* local,
     return HXT_STATUS_INTERNAL;
 
   HXT_CHECK( reserveNewDeleted(local, 4) );
-  local->deleted.tetID[local->deleted.num++] = curFace;
-  markTetAsDeleted(mesh, curFace/4);
+  local->deleted.tetID[local->deleted.num++] = startFace;
+  setDeletedFlag(mesh, startFace/4);
 
   for (uint64_t start=local->deleted.num-1; start<local->deleted.num; start++) {
     HXT_CHECK( reserveNewDeleted(local, 3) );
@@ -1162,14 +1179,14 @@ static inline HXTStatus buildVertexCavity(HXTMesh* mesh, ThreadLocal* local,
       if(neigh==HXT_NO_ADJACENT)
         return HXT_STATUS_INTERNAL;
 
-      if(isTetDeleted(mesh, neighTet))
+      if(getDeletedFlag(mesh, neighTet))
         continue;
 
-      if(isFacetConstrained(mesh, 4*curTet+f))
+      if(getFacetConstraint(mesh, curTet, f))
         return HXT_STATUS_INTERNAL;
 
-      for(int k=0; k<4; k++){
-        if(k!=f && isEdgeConstrainedSafe(mesh, curTet, f, k))
+      for(unsigned k=0; k<4; k++){
+        if(k!=f && getEdgeConstraint(mesh, curTet, getEdgeFromFacets(f, k)))
           return HXT_STATUS_INTERNAL;
       }
 
@@ -1190,7 +1207,7 @@ static inline HXTStatus buildVertexCavity(HXTMesh* mesh, ThreadLocal* local,
       else
         local->deleted.tetID[local->deleted.num++] = 4*neighTet + (neighF+3)%4;
 
-      markTetAsDeleted(mesh, neighTet);
+      setDeletedFlag(mesh, neighTet);
     }
   }
 
@@ -1324,7 +1341,7 @@ static HXTStatus smoothing(HXTMesh *mesh,
   }
 
   for (uint64_t i=prevNumDeleted; i<local->deleted.num; i++) {
-    unmarkTetAsDeleted(mesh, local->deleted.tetID[i]/4);
+    unsetDeletedFlag(mesh, local->deleted.tetID[i]/4);
   }
 
   if(status==HXT_STATUS_INTERNAL || status==HXT_STATUS_CONFLICT){
@@ -1370,16 +1387,21 @@ static HXTStatus smoothing(HXTMesh *mesh,
 
 HXTStatus hxtOptimizeTetrahedra(HXTMesh *mesh,
                                 HXTBbox* bbox,
+                                int maxThreads,
                                 double minSize,
                                 double qualityThreshold,
                                 uint32_t numVerticesConstrained){
   ThreadLocal* locals = NULL;
   ThreadShared* shared = NULL;
   volatile HXTStatus globalStatus = HXT_STATUS_OK;
-  const int maxThreads = omp_get_max_threads();
   uint32_t seed = 1;
   uint32_t nbits = 0;
   int changePartitions = 1;
+
+  if(maxThreads<0)
+    maxThreads = omp_get_num_procs();
+  else if(maxThreads==0)
+    maxThreads = omp_get_max_threads();
 
   HXT_CHECK( threadShared_create(mesh, qualityThreshold, &shared) );
   HXT_CHECK( threadLocals_create(&locals, maxThreads) );
@@ -1433,16 +1455,16 @@ HXTStatus hxtOptimizeTetrahedra(HXTMesh *mesh,
         /*** sort the neighbor by their qualities **/
 
         double hxtDeclareAligned qual[4];
-        for (int i=0; i<4; i++) {
-          if(neighs[i]==HXT_NO_ADJACENT ||
-            mesh->tetrahedra.colors[neighs[i]/4]!=color) {
-            qual[i]=DBL_MAX;
+        for (int j=0; j<4; j++) {
+          if(neighs[j]==HXT_NO_ADJACENT ||
+            mesh->tetrahedra.colors[neighs[j]/4]!=color) {
+            qual[j]=DBL_MAX;
           }
           else
-            qual[i] = shared->quality2.values[neighs[i]/4];
+            qual[j] = shared->quality2.values[neighs[j]/4];
         }
 
-        int hxtDeclareAligned order[4] = {0,1,2,3};
+        unsigned hxtDeclareAligned order[4] = {0,1,2,3};
 
         // sort first pair
         if(qual[order[1]] < qual[order[0]])
@@ -1561,9 +1583,9 @@ HXTStatus hxtOptimizeTetrahedra(HXTMesh *mesh,
   } while(nConflict!=0 || nSwaps!=0);
 
   for (int threadID=0; threadID<maxThreads; threadID++) {
-    for (int i=0; i<locals[threadID].deleted.num; i++) {
+    for (uint64_t i=0; i<locals[threadID].deleted.num; i++) {
       uint64_t delTet = locals[threadID].deleted.tetID[i];
-      markTetAsDeleted(mesh, delTet);
+      setDeletedFlag(mesh, delTet);
       for (int j=0; j<4; j++)
         mesh->tetrahedra.neigh[4*delTet+j] = HXT_NO_ADJACENT;
     }

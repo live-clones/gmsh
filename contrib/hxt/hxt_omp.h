@@ -4,12 +4,13 @@
 #include <omp.h>
 #else
 #include <time.h>
-static inline int omp_get_max_threads()  {return 1;}
-static inline int omp_get_thread_num()  {return 0;}
-static inline int omp_get_num_threads() {return 1;}
-static inline int omp_get_num_procs() {return 1;}
-static inline int omp_get_thread_limit() {return 1;}
-static inline double omp_get_wtime() {
+static inline int omp_get_max_threads(void)  {return 1;}
+static inline int omp_get_thread_num(void)  {return 0;}
+static inline int omp_get_num_threads(void) {return 1;}
+static inline int omp_get_num_procs(void) {return 1;}
+static inline int omp_get_thread_limit(void) {return 1;}
+static inline void omp_set_num_threads(int n) { ; }
+static inline double omp_get_wtime(void) {
   clock_t t = clock();
   return (double)t/CLOCKS_PER_SEC;
 }

@@ -229,30 +229,16 @@ HXTStatus hxtLinearSystemPETScAddRhsEntry(HXTLinearSystemPETSc *system, double *
 
 HXTStatus hxtLinearSystemPETScSolve(HXTLinearSystemPETSc *system, double *rhs, double *solution){
   Vec b;
-  Vec x;
   HXT_PETSC_CHECK(VecCreateSeqWithArray(PETSC_COMM_SELF, 1, system->nDofs, rhs, &b));
-  HXT_PETSC_CHECK(VecCreateSeqWithArray(PETSC_COMM_SELF, 1, system->nDofs, solution, &x));
-  double normTest=0.0;
-  for (int iv = 0; iv < system->nDofs; ++iv){
-      normTest+=solution[iv]*solution[iv];
-  }
-  /* printf("IN PETSC norm vect sol : %g ; nofs : %i\n",normTest,system->nDofs);     */
   if(system->assemblyNeeded) {
     HXT_PETSC_CHECK(MatAssemblyBegin(system->a, MAT_FINAL_ASSEMBLY));
     HXT_PETSC_CHECK(MatAssemblyEnd(system->a, MAT_FINAL_ASSEMBLY));
     system->assemblyNeeded = 0;
   }
   HXT_PETSC_CHECK(KSPSetOperators(system->ksp, system->a, system->a));
-  /* HXT_PETSC_CHECK(KSPSolve(system->ksp, b, system->x)); */
-  KSPSetInitialGuessNonzero(system->ksp,PETSC_TRUE);
-  PetscBool flag[1];
-  KSPGetInitialGuessNonzero(system->ksp,flag);
-  /* printf("IN PETSC initialguessnonzero : %i\n",flag[0]); */
-  HXT_PETSC_CHECK(KSPSolve(system->ksp, b, x));
+  HXT_PETSC_CHECK(KSPSolve(system->ksp, b, system->x));
   HXT_PETSC_CHECK(VecDestroy(&b));
-  HXT_CHECK(hxtLinearSystemPETScMapFromVec(system, x, solution));
-  HXT_PETSC_CHECK(VecDestroy(&x));
-  /* HXT_CHECK(hxtLinearSystemPETScMapFromVec(system, system->x, solution)); */
+  HXT_CHECK(hxtLinearSystemPETScMapFromVec(system, system->x, solution));
   return HXT_STATUS_OK;
 }
 

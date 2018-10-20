@@ -3,8 +3,8 @@
 
 #include "hxt_tools.h" // to have SIMD_ALIGN and stdint.h
 
+
 #define HXT_GHOST_VERTEX UINT32_MAX
-#define HXT_DELETED_COLOR (UINT16_MAX-1)
 
 #define HXT_NO_ADJACENT UINT64_MAX
 
@@ -34,18 +34,18 @@ struct hxtMeshStruct {
   struct {
     uint32_t* node;  // aligned (size = tetrahedra.size*4*sizeof(uint32_t))
     uint64_t* neigh; // aligned (size = tetrahedra.size*4*sizeof(uint64_t))
-    char* neighType;
+    uint8_t* neighType;
     uint16_t* colors;
     uint16_t* flag;
     uint64_t num;    // number of tetrahedra
     uint64_t size;   // reserved number of tetrahedra (size of the vector)
   } tetrahedra;
-
+  
   // hexahedra
   struct {
     uint32_t* node;  // aligned (size = hexahedra.size*8*sizeof(uint32_t))
     uint64_t* neigh; // aligned (size = hexahedra.size*6*sizeof(uint64_t))
-    char* neighType;
+    uint8_t* neighType;
     uint16_t* colors;
     uint16_t* flag;
     uint64_t num;    // number of tetrahedra
@@ -56,18 +56,18 @@ struct hxtMeshStruct {
   struct {
     uint32_t* node;  // aligned (size = prisms.size*6*sizeof(uint32_t))
     uint64_t* neigh; // aligned (size = prisms.size*5*sizeof(uint64_t))
-    char* neighType;
+    uint8_t* neighType;
     uint16_t* colors;
     uint16_t* flag;
     uint64_t num;    // number of tetrahedra
     uint64_t size;   // reserved number of prisms (size of the vector)
   } prisms;
-
+  
   // pyramids
   struct {
     uint32_t* node;  // aligned (size = pyramids.size*5*sizeof(uint32_t))
     uint64_t* neigh; // aligned (size = pyramids.size*5*sizeof(uint64_t))
-    char* neighType;
+    uint8_t* neighType;
     uint16_t* colors;
     uint16_t* flag;
     uint64_t num;    // number of tetrahedra
@@ -77,7 +77,7 @@ struct hxtMeshStruct {
   // triangles // TODO: consider writing a array of structure...
   struct {
     uint32_t* node;
-    uint64_t* neigh;
+    uint64_t* neigh; 
     uint16_t* colors;
     uint64_t num;
     uint64_t size;
@@ -98,17 +98,19 @@ struct hxtMeshStruct {
     uint64_t num;
     uint64_t size;
   } lines;
+
+  // boundary representation
   struct {
-    uint32_t numVolumes;
-    uint32_t *numSurfacesPerVolume;
-    uint32_t *surfacesPerVolume;
-    uint32_t numSurfaces;
-    uint32_t *numCurvesPerSurface;
-    uint32_t *curvesPerSurface;
-    uint32_t numCurves;
-    uint32_t *endPointsOfCurves;
-    uint32_t numPoints;
-    uint32_t *points;
+    uint16_t numVolumes;
+    uint16_t *numSurfacesPerVolume;
+    uint16_t *surfacesPerVolume;
+    uint16_t numSurfaces;
+    uint16_t *numCurvesPerSurface;
+    uint16_t *curvesPerSurface;
+    uint16_t numCurves;
+    uint16_t *endPointsOfCurves;
+    uint16_t numPoints;
+    uint16_t *points;
   } brep;
 };
 

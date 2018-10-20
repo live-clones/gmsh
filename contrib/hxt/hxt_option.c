@@ -85,7 +85,7 @@ HXTStatus hxtOptProgDelete(HXTOptProgram* program){
 static int searchLongOption(HXTOptProgram* program,
 			                const char* string)
 {
-	for (int i=0; i<program->opt_length; i++) {
+	for (size_t i=0; i<program->opt_length; i++) {
 		if(program->opts[i]->longs!=NULL &&
 		   strcmp(program->opts[i]->longs, string)==0) {
 			return i;
@@ -102,7 +102,7 @@ static int searchLongOption(HXTOptProgram* program,
 static int searchShortOption(HXTOptProgram* program,
                              char c)
 {
-	for (int i=0; i<program->opt_length; i++) {
+	for (size_t i=0; i<program->opt_length; i++) {
 		if(program->opts[i]->shorts!=NULL &&
 		   strchr(program->opts[i]->shorts, c)!=NULL) {
 			return i;
@@ -217,6 +217,7 @@ static HXTStatus doOption(HXTOpt* opt,
 					return HXT_ERROR_MSG(HXT_STATUS_RANGE_ERROR,
 					       "cannot convert argument \"%s\" of option \"%s\" to %s (value was negative)",
 					       arg, optName, getArgTypeName(opt->argType));
+			/* fallthrough */
 			case ARG_FLOAT:
 			{
 				float f32 = real;
@@ -377,7 +378,7 @@ HXTStatus hxtOptProgParse(HXTOptProgram* program,
 		*optind = i+1;
 	}
 
-	for (int i=0; i<program->opt_length; i++) {
+	for (size_t i=0; i<program->opt_length; i++) {
 		HXTOpt* opt = program->opts[i];
 		if(opt->argRequirement==ARG_NON_NULL_REQUIRED &&
 			 ((opt->argType>-4 && opt->integer==0) ||
@@ -493,7 +494,7 @@ HXTStatus hxtOptProgGetHelp(HXTOptProgram* program, char text[16384])
 	MY_SPRINTF("%.*s\n", char_printed>64?63:char_printed-1,
    "---------------------------------------------------------------");
 
-	for (int i=0; i<program->opt_length; i++) {
+	for (size_t i=0; i<program->opt_length; i++) {
 		printOptionLine(program->opts[i], text, offset);
 	}
 
