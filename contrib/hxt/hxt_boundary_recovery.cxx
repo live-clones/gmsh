@@ -1,3 +1,4 @@
+#include <limits.h>
 extern "C" {
 #include "hxt_mesh.h"
 #include "predicates.h"
