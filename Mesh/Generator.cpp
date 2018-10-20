@@ -542,7 +542,7 @@ FindConnectedRegions(const std::vector<GRegion *> &del,
     connected.push_back(temp2);
     delaunay = temp1;
   }
-  Msg::Info("Delaunay Meshing %d volumes with %d connected components",
+  Msg::Info("3D Meshing %d volumes with %d connected components",
             nbVolumes, connected.size());
 }
 
@@ -1094,7 +1094,7 @@ void GenerateMesh(GModel *m, int ask)
     std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
 
   // Optimize quality of 3D tet mesh
-  if(m->getMeshStatus() == 3) {
+  if(m->getMeshStatus() == 3 && CTX::instance()->mesh.algo3d != ALGO_3D_HXT) {
     for(int i = 0; i < std::max(CTX::instance()->mesh.optimize,
                                 CTX::instance()->mesh.optimizeNetgen);
         i++) {

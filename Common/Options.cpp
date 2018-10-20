@@ -6089,6 +6089,9 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
     switch (CTX::instance()->mesh.algo3d) {
+    case ALGO_3D_HXT:
+      FlGui::instance()->options->mesh.choice[3]->value(6);
+      break;
     case ALGO_3D_RTREE:
       FlGui::instance()->options->mesh.choice[3]->value(5);
       break;

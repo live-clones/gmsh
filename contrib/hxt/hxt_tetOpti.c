@@ -1607,7 +1607,7 @@ HXTStatus hxtOptimizeTetrahedra(HXTMesh *mesh,
       min = fmin(sqrt(shared->quality2.values[i]*24.0), min);
   }
 
-  printf("mean quality: %f | min quality: %f\n", mean, min);
+  //  printf("mean quality: %f | min quality: %f\n", mean, min);
 
   HXT_CHECK( threadLocals_destroy(&locals, maxThreads) );
   HXT_CHECK( threadShared_destroy(&shared) );

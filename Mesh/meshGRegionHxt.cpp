@@ -25,6 +25,11 @@ extern "C" {
 
 // This is a list of regions that are simply connected
 
+HXTStatus hxtGmshMsgCallback(HXTMessage* msg){
+  return HXT_STATUS_OK;
+}
+
+
 static HXTStatus getAllFacesOfAllRegions (std::vector<GRegion *> &regions, HXTMesh *m, std::vector<GFace *> &allFaces){
   std::set<GFace *, GEntityLessThan> allFacesSet;
   if (m){
@@ -301,7 +306,9 @@ static HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
 
 static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 {
-  int nthreads = CTX::instance()->mesh.maxNumThreads3D;
+  HXT_CHECK(hxtSetMessageCallback (hxtGmshMsgCallback));
+	    
+  //  int nthreads = CTX::instance()->mesh.maxNumThreads3D;
   int optimize = 1;
   int refine = 1;
   int stat = 0;
@@ -317,11 +324,10 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
   std::map<MVertex *, int> v2c;
   std::vector<MVertex *> c2v;
   Gmsh2Hxt(regions, mesh, v2c, c2v);
-  
+
+  //  Msg::Info("Entering hxtTetMesh3d using %d threads",nthreads);
   HXT_CHECK(hxtTetMesh3d(mesh,
-			 nthreads,
-			 nthreads,
-			 nthreads,
+			 0,0,0,
 			 reproducible,
 			 verbosity,
 			 stat,
