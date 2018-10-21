@@ -1398,6 +1398,18 @@ if(NOOPT OR ENABLE_BUILD_IOS)
   set_compile_flags(NOOPT_SRC "-O0")
 endif(NOOPT OR ENABLE_BUILD_IOS)
 
+# do not use arithmetic contraction in predicates.cpp
+# if("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
+#   set_source_files_properties(Numeric/robustPredicates.cpp PROPERTIES
+#     COMPILE_FLAGS "/fp:strict")
+# elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+#   set_source_files_properties(Numeric/robustPredicates.cpp PROPERTIES
+#     COMPILE_FLAGS "-fno-unsafe-math-optimizations -ffp-contract=off")
+# elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel")
+#   set_source_files_properties(Numeric/robustPredicates.cpp PROPERTIES
+#     COMPILE_FLAGS "-fp-model strict")
+# endif()
+
 # enable Revoropt and set compile flags for the corresponding plugin
 if(ENABLE_REVOROPT)
   find_path(EIGEN3_INC "eigen3/Eigen/Dense")

@@ -36,6 +36,7 @@ extern "C" {
 #define HXT_UNUSED(x) (void)(x)  // portable way to avoid warning about unused variable
 
 
+
 /*********************************************************
  * Hextreme malloc implementation
  *********************************************************/
@@ -48,7 +49,7 @@ ___
 |  int arrayLength = ...;
 |  int *array;
 |  HXT_CHECK( hxtMalloc(&array, sizeof(int)*arrayLength) );
-|  
+|
 |  array[0] = ...;
 |  [...]
 |  array[arrayLength-1] = ...;
@@ -100,7 +101,29 @@ static inline HXTStatus hxtRealloc(void* ptrToPtr, size_t size)
 }
 
 
-#if defined ( HAVE_MSDN_ALIGNED_MALLOC ) // microsoft implementation
+// FIXME Gmsh: aligned routines do not seem to work on 32 bit machines
+#include <stdint.h>
+
+#if UINTPTR_MAX == 0xffffffff
+
+static inline HXTStatus hxtGetAlignedBlockSize(void* ptrToPtr, size_t* size){
+  *size = 0; return HXT_STATUS_OK;
+}
+
+static inline HXTStatus hxtAlignedMalloc(void* ptrToPtr, size_t size){
+  return hxtMalloc(ptrToPtr, size);
+}
+
+static inline HXTStatus hxtAlignedFree(void* ptrToPtr){
+  return hxtFree(ptrToPtr);
+}
+
+static inline HXTStatus hxtAlignedRealloc(void* ptrToPtr, size_t size){
+  return hxtRealloc(ptrToPtr, size);
+}
+
+#elif defined ( HAVE_MSDN_ALIGNED_MALLOC ) // microsoft implementation
+
 #include <malloc.h>
 #include <errno.h>
 
@@ -206,7 +229,7 @@ static inline HXTStatus hxtAlignedRealloc(void* ptrToPtr, size_t size)
     HXT_CHECK(hxtAlignedFree(ptrToPtr));
     return HXT_STATUS_OK;
   }
-  
+
   size_t old_size;
   HXT_CHECK( hxtGetAlignedBlockSize(ptrToPtr, &old_size) );
 
@@ -232,7 +255,7 @@ static inline HXTStatus hxtAlignedRealloc(void* ptrToPtr, size_t size)
   For example, we do not call srand() each time we
   call a reproducible Delaunay, else if someone was calling
   rand(); Delaunay(); rand(); ...
-  he would always get the same result. We use 
+  he would always get the same result. We use
   hxtReproducibleRand() instead
 
   !!!! 1st seed must absolutely be 1 !!!!
@@ -264,7 +287,7 @@ HXTStatus hxtInv4x4ColumnMajor(double mat[16], double inv[16], double *det);
  * Operations on linear Tet
  *********************************************************/
 HXTStatus hxtJacobianLinTet(double *x , double *y, double *z , double mat[3][3]);
-  
+
 #ifndef M_PI
   #define M_PI 3.14159265358979323846264338327950
 #endif // !M_PI
