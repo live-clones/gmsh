@@ -1,3 +1,4 @@
+#define __STDC_LIMIT_MACROS // FIXME Gmsh (for UINT_MAX & co in C++ code)
 #include <limits.h>
 extern "C" {
 #include "hxt_mesh.h"
@@ -118,10 +119,10 @@ int tetgenmesh::reconstructmesh(void *p){
   initializepools();
 
   //  printf("we have %u vertices\n", mesh->vertices.num);
-  
+
   {
     point pointloop;
-    REAL x, y, z;    
+    REAL x, y, z;
     // Read the points.
     for (uint32_t i = 0; i < mesh->vertices.num; i++) {
       makepoint(&pointloop, UNUSEDVERTEX);
@@ -161,12 +162,12 @@ int tetgenmesh::reconstructmesh(void *p){
   }
 
   point *idx2verlist;
-  
+
   // Create a map from indices to vertices.
   //  printf("we create a map from indices to vertices\n");
   makeindex2pointmap(idx2verlist);
 
-  
+
   {
     hullsize = 0;
 
@@ -208,7 +209,7 @@ int tetgenmesh::reconstructmesh(void *p){
         uint64_t neigh = mesh->tetrahedra.neigh[4*i + tf1.ver];
         uint64_t n = neigh/4;
         int iface2 = neigh%4;
-        
+
         triface tf2 = ts[n];
 
         // the face of the neighbor tetrahedra that is the same
@@ -231,8 +232,8 @@ int tetgenmesh::reconstructmesh(void *p){
       tetrahedron tptr = encode(tetloop);
       for (tetloop.ver = 0; tetloop.ver < 4; tetloop.ver++) {
         // Create the point-to-tet map.
-        setpoint2tet((point) (tetloop.tet[4 + tetloop.ver]), tptr); 
-  
+        setpoint2tet((point) (tetloop.tet[4 + tetloop.ver]), tptr);
+
         // Clean the temporary used space.
         tetloop.tet[8 + tetloop.ver] = NULL;
       }
@@ -245,7 +246,7 @@ int tetgenmesh::reconstructmesh(void *p){
     face newseg;
     point p[4];
     int idx;
-    
+
     for (uint64_t i=0;i<mesh->triangles.num;i++){
       for (uint64_t j = 0; j < 3; j++) {
         p[j] = idx2verlist[mesh->triangles.node[3*i+j]];
@@ -253,7 +254,7 @@ int tetgenmesh::reconstructmesh(void *p){
           setpointtype(p[j], FACETVERTEX);
         }
       }
-      
+
       // Create an initial triangulation.
       makeshellface(subfaces, &newsh);
       setshvertices(newsh, p[0], p[1], p[2]);
@@ -271,17 +272,17 @@ int tetgenmesh::reconstructmesh(void *p){
     } // i
 
     unifysegments();
-    
-    
+
+
     face* shperverlist;
     int* idx2shlist;
     face searchsh, neighsh;
     face segloop, checkseg;
     point checkpt;
-    
+
     // Construct a map from points to subfaces.
     makepoint2submap(subfaces, idx2shlist, shperverlist);
-    
+
     // Process the set of PSC edges.
     // Remeber that all segments have default marker '-1'.
     //    int COUNTER = 0;
@@ -297,7 +298,7 @@ int tetgenmesh::reconstructmesh(void *p){
           // This is a potential problem in surface mesh.
           continue; // Skip this edge.
         }
-        
+
         // Find a face contains the edge p[0], p[1].
         newseg.sh = NULL;
         searchsh.sh = NULL;
@@ -361,7 +362,7 @@ int tetgenmesh::reconstructmesh(void *p){
         }
         setshellmark(newseg, mesh->lines.colors[i]);
       } // i
-      
+
       delete [] shperverlist;
       delete [] idx2shlist;
       insegments = subsegs->items;
@@ -370,7 +371,7 @@ int tetgenmesh::reconstructmesh(void *p){
 
   delete [] idx2verlist;
   clock_t t = clock();
-  recoverboundary(t);  
+  recoverboundary(t);
   //  printf("Carve Holes\n");
   //  carveholes();
   if (subvertstack->objects > 0l) {
@@ -390,7 +391,7 @@ int tetgenmesh::reconstructmesh(void *p){
     // Write mesh into to HXT.
     point p[4];
     std::set<int> /*l_faces, */l_edges;
-    
+
     if (points->items > mesh->vertices.num) {
       mesh->vertices.num = points->items;
       if(mesh->vertices.num > mesh->vertices.size) {
@@ -399,7 +400,7 @@ int tetgenmesh::reconstructmesh(void *p){
                                     4*mesh->vertices.num*sizeof( double )) );
         mesh->vertices.size = mesh->vertices.num;
       }
-            
+
       face parentseg, parentsh, spinsh;
       point pointloop;
       // Create newly added mesh vertices.
@@ -449,10 +450,10 @@ int tetgenmesh::reconstructmesh(void *p){
       if (reconstructingTriangularMeshIsRequired) {
         // restore 2D mesh ...
         HXT_CHECK( hxtAlignedFree(&(mesh->triangles.node)));
-        HXT_CHECK( hxtAlignedFree(&(mesh->triangles.colors)));      
+        HXT_CHECK( hxtAlignedFree(&(mesh->triangles.colors)));
         HXT_INFO("deleting %u triangles",mesh->triangles.num);
         mesh->triangles.num = 0; // firstindex; // in->firstnumber;
-        {    
+        {
           face subloop;
           subloop.shver = 0;
           subfaces->traversalinit();
@@ -493,10 +494,10 @@ int tetgenmesh::reconstructmesh(void *p){
         }
       }
     }
-    
+
     // TODO: maybe fill a vector with triface and use that to convert in parallel ?
     int elementnumber = 0; // firstindex; // in->firstnumber;
-    {    
+    {
       // number tets
       triface tetloop;
       tetrahedrons->traversalinit();
@@ -510,10 +511,10 @@ int tetgenmesh::reconstructmesh(void *p){
 
     if(elementnumber!=tetrahedrons->items)
       return HXT_ERROR_MSG(HXT_STATUS_ERROR, "This can not happen...");
-    
+
     {
       // move data to HXT
-      triface tetloop;    
+      triface tetloop;
       tetrahedrons->traversalinit();
       tetloop.tet = alltetrahedrontraverse();
 
@@ -536,8 +537,8 @@ int tetgenmesh::reconstructmesh(void *p){
 
         mesh->tetrahedra.size = mesh->tetrahedra.num;
       }
-      
-      
+
+
       int counter = 0;
       while (tetloop.tet != (tetrahedron *) NULL) {
         tetloop.ver = 11;
@@ -562,7 +563,7 @@ int tetgenmesh::reconstructmesh(void *p){
           else {
             mesh->tetrahedra.node[4*counter+k] = pointmark(p[k]);
             if (mesh->tetrahedra.node[4*counter+k] >= mesh->vertices.num)
-              return HXT_ERROR_MSG(HXT_STATUS_ERROR, "ERROR : index %u out of range (%u)\n", 
+              return HXT_ERROR_MSG(HXT_STATUS_ERROR, "ERROR : index %u out of range (%u)\n",
                                    mesh->tetrahedra.node[4*counter+k], mesh->vertices.num);
           }
 
