@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2012 C. Geuzaine, F. Henrotte
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include <string>
 

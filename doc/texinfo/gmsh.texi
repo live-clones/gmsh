@@ -2,7 +2,7 @@
 @c Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file for license information. Please report all
-@c bugs and problems to the public mailing list <gmsh@onelab.info>.
+@c issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 @c
 @c =========================================================================
 @c
@@ -449,14 +449,12 @@ developers}) to remedy the aforementioned (and all other) shortcomings!
 @cindex Authors, e-mail
 @cindex E-mail, authors
 
-If you think you have found a bug in Gmsh, you can report it by email to
-the public Gmsh mailing list at @email{gmsh@@onelab.info}, or file it
-directly into the @url{https://gitlab.onelab.info/gmsh/gmsh/issues,bug
-tracking database}. Please send as precise a description of the problem
-as you can, including sample input files that produce the bug. Don't
-forget to mention both the version of Gmsh and the version of your
-operation system (@pxref{Command-line options} to see how to get this
-information).
+If you think you have found a bug in Gmsh, please file an issue on
+@url{https://gitlab.onelab.info/gmsh/gmsh/issues}. Please provided as
+precise a description of the problem as you can, including sample input
+files that produce the bug. Don't forget to mention both the version of
+Gmsh and the version of your operation system (@pxref{Command-line
+options} to see how to get this information).
 
 See @ref{Frequently asked questions}, and the
 @url{https://gitlab.onelab.info/gmsh/gmsh/issues,bug tracking system} to

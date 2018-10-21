@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include <sstream>
 #include <algorithm>
@@ -315,9 +315,9 @@ helpWindow::helpWindow()
       << "<p><a href=\"http://gmsh.info/doc/CREDITS.txt\">Credits</a> "
       << "and <a href=\"http://gmsh.info/doc/LICENSE.txt\">licensing "
       << "information</a>"
-      << "<p>Please send all questions and bug reports to the public mailing "
-         "list "
-      << "<a href=\"mailto:gmsh@onelab.info\">gmsh@onelab.info</a></center>"
+      << "<p>Please report all issues on "
+      << "<a href=\"https://gitlab.onelab.info/gmsh/gmsh/issues\">"
+      << "https://gitlab.onelab.info/gmsh/gmsh/issues</a></center>"
       << "<ul>"
       << "<li><i>Build OS:</i> " << GetGmshBuildOS()
       << "<li><i>Build date:</i> " << GetGmshBuildDate()

@@ -1,7 +1,7 @@
 # Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
-# bugs and problems to the public mailing list <gmsh@onelab.info>.
+# issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 # Contributor(s):
 #   Jonathan Lambrechts
@@ -541,7 +541,7 @@ class Module:
 cpp_header="""// {0}
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <{1}>.
+// issues on {1}
 
 #ifndef _{2}_H_
 #define _{2}_H_
@@ -594,7 +594,7 @@ c_header="""/*
  * {0}
  *
  * See the LICENSE.txt file for license information. Please report all
- * bugs and problems to the public mailing list <{1}>.
+ * issues on {1}
  */
 
 #ifndef _{2}C_H_
@@ -634,7 +634,7 @@ c_footer="""
 c_cpp_header="""// {0}
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <{1}>.
+// issues on {1}
 
 #include <string.h>
 #include <stdlib.h>
@@ -678,7 +678,7 @@ void vectorvectorpair2intptrptr(const std::vector<{0}::vectorpair > &v, int ***p
 cwrap_header="""// {0}
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <{1}>.
+// issues on {1}
 
 #ifndef _{2}_H_
 #define _{2}_H_
@@ -762,7 +762,7 @@ cwrap_footer="""#endif
 python_header = """# {0}
 #
 # See the LICENSE.txt file for license information. Please report all
-# bugs and problems to the public mailing list <{1}>.
+# issues on {1}
 
 # This file defines the {2} Python API (v{3}).
 #
@@ -901,7 +901,7 @@ def _iargcargv(o):
 julia_header = """# {0}
 #
 # See the LICENSE.txt file for license information. Please report all
-# bugs and problems to the public mailing list <{1}>.
+# issues on {1}
 
 # This file defines the {2} Julia API (v{3}).
 #
@@ -915,13 +915,13 @@ class API:
 
     def __init__(self, version, namespace="gmsh", code="Gmsh",
                  copyright="Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle",
-                 email="gmsh@onelab.info"):
+                 issues="https://gitlab.onelab.info/gmsh/gmsh/issues"):
         self.version = version
         global ns
         ns = namespace
         self.code = code
         self.copyright = copyright
-        self.email = email
+        self.issues = issues
         self.modules = []
 
     def add_module(self, name, doc):
@@ -946,7 +946,7 @@ class API:
                 write_module(m, indent)
             f.write(indent[:-2] + "} // namespace " + module.name + "\n\n")
         with open(ns + ".h", "w") as f:
-            f.write(cpp_header.format(self.copyright, self.email, ns.upper(),
+            f.write(cpp_header.format(self.copyright, self.issues, ns.upper(),
                                       self.code, self.version, ns))
             for m in self.modules:
                 write_module(m, "")
@@ -1026,14 +1026,14 @@ class API:
         with open(ns + "c.h", "w") as f:
             with open(ns + "c.cpp", "w") as fc:
                 with open(ns + ".h_cwrap", "w") as fcwrap:
-                    f.write(c_header.format(self.copyright, self.email, ns.upper(),
+                    f.write(c_header.format(self.copyright, self.issues, ns.upper(),
                                             self.code, self.version, ns))
-                    fc.write(c_cpp_header.format(self.copyright, self.email, ns,
+                    fc.write(c_cpp_header.format(self.copyright, self.issues, ns,
                                                  ns.upper()))
                     fc.write(cwrap_utils.format(ns))
                     fc.write(c_cpp_utils.format(ns))
                     fc.write("\n")
-                    fcwrap.write(cwrap_header.format(self.copyright, self.email,
+                    fcwrap.write(cwrap_header.format(self.copyright, self.issues,
                                                      ns.upper(), self.code,
                                                      self.version, ns))
                     fcwrap.write("namespace " + ns + " {\n")
@@ -1104,7 +1104,7 @@ class API:
                 f.write(indentm + '"""\n')
                 write_module(f, module, modulepath, indentm)
         with open(ns + ".py", "w") as f:
-            f.write(python_header.format(self.copyright, self.email, self.code, self.version,
+            f.write(python_header.format(self.copyright, self.issues, self.code, self.version,
                                          ns.upper(), ns))
             for module in self.modules:
                 write_module(f, module, "", "")
@@ -1178,7 +1178,7 @@ class API:
                 write_module(f, module, c_mpath, jl_mpath, level + 1)
             f.write("\nend # end of module " + m.name + "\n")
         with open(ns + ".jl", "w") as f:
-            f.write(julia_header.format(self.copyright, self.email, self.code,
+            f.write(julia_header.format(self.copyright, self.issues, self.code,
                                         self.version,))
             for module in self.modules:
                 write_module(f, module, "", "", 1)

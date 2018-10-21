@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include <string>
 #include <string.h>
@@ -1161,7 +1161,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
 #endif
         fprintf(stderr, "Packaged by      : %s\n", GMSH_PACKAGER);
         fprintf(stderr, "Web site         : http://gmsh.info\n");
-        fprintf(stderr, "Mailing list     : gmsh@onelab.info\n");
+        fprintf(stderr, "Issue tracker    : https://gitlab.onelab.info/gmsh/gmsh/issues\n");
         Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "help") || !strcmp(argv[i] + 1, "-help")) {

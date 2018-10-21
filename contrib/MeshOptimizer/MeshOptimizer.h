@@ -22,9 +22,6 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 //
-// Please report all bugs and problems to the public mailing list
-// <gmsh@onelab.info>.
-//
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
 #ifndef _MESHOPTIMIZER_H_

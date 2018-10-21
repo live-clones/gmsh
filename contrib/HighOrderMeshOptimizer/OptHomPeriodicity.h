@@ -22,9 +22,6 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 //
-// Please report all bugs and problems to the public mailing list
-// <gmsh@onelab.info>.
-//
 // Contributors: Amaury Johnen
 
 #ifndef _OPTHOMPERIODICITY_H_
@@ -52,7 +49,7 @@ public:
 private:
   void _relocateMasterVertices();
   void _copyBackMasterVertices();
-  
+
   static SPoint3 _transform(MVertex*, const std::vector<double>&);
   static std::vector<double> _inverse(const std::vector<double>&);
 };

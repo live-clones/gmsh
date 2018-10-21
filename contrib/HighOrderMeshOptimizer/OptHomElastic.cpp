@@ -21,9 +21,6 @@
 // WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
-//
-// Please report all bugs and problems to the public mailing list
-// <gmsh@onelab.info>.
 
 #include "OptHomElastic.h"
 #include "GModel.h"
