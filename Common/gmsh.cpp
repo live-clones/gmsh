@@ -503,7 +503,7 @@ GMSH_API int gmsh::model::addDiscreteEntity(const int dim, const int tag,
   }
   int outTag = tag;
   if(outTag < 0) {
-    outTag = GModel::current()->getMaxElementaryNumber(dim);
+    outTag = GModel::current()->getMaxElementaryNumber(dim)+1;
   }
   GEntity *e = GModel::current()->getEntityByTag(dim, outTag);
   if(e) {
