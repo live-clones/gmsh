@@ -40,7 +40,7 @@ public:
                           SVector3 *n)
   {
   }
-  virtual int getNumFaces() { return 0; }
+  virtual int getNumFaces() const { return 0; }
   virtual MFace getFace(int num) const { return MFace(); }
   virtual int getNumFacesRep(bool curved) { return 0; }
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,

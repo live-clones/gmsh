@@ -87,7 +87,7 @@ public:
     v.resize(2);
     _getEdgeVertices(num, v);
   }
-  virtual int getNumFaces() { return 1; }
+  virtual int getNumFaces() const { return 1; }
   virtual MFace getFace(int num) const { return MFace(_v[0], _v[1], _v[2]); }
   virtual bool getFaceInfo(const MFace &face, int &ithFace, int &sign,
                            int &rot) const;

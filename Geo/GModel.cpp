@@ -3361,3 +3361,82 @@ void GModel::computeHomology()
   Msg::Error("Homology computation requires KBIPACK");
 #endif
 }
+
+
+int GModel::partitionStatistics(std::map<int,std::vector<int> >& eltPerPart,
+																 std::map<int,std::vector<int> >& intPerPart,
+																 std::map<int,std::vector<int> >& bndPerPart) const {
+	
+	int dim = -1;
+	if (regions.size())       dim = 3;
+	else if (faces.size())    dim = 2;
+	else if (edges.size())    dim = 1;
+	else if (vertices.size()) dim = 0;
+
+	for (int iTyp=0;iTyp<MSH_NUM_PARENTTYPE;iTyp++) {
+		int d = ElementType::dimensionOfParentType(iTyp);
+		if (d==dim) eltPerPart[iTyp].resize(_numPartitions,0);
+		if (d==dim-1) {
+			intPerPart[iTyp].resize(_numPartitions,0);
+			bndPerPart[iTyp].resize(_numPartitions,0);
+		}
+	}
+	
+	switch (dim) {
+	case 3:
+		{
+			typedef std::map<MFace,std::pair<int,int>,Less_Face> FaceToParts;
+			FaceToParts faceToParts;
+			
+			std::pair<int,int> init(-1,-1);
+			
+			GModel::const_riter rIt;
+			for (rIt=regions.begin();rIt!=regions.end();rIt++) {
+				const GRegion* region = *rIt;
+				
+				for (unsigned iElt=0;iElt<region->getNumMeshElements();iElt++) {
+					const MElement* elt = region->getMeshElement(iElt);
+					if (elt->getDim() == 3) {
+						int part = elt->getPartition();
+						int type = elt->getType();
+						eltPerPart[type][part-1]++;
+						
+						for (int iF=0;iF<elt->getNumFaces();iF++) {
+							MFace f = elt->getFace(iF);
+							FaceToParts::iterator fIt = faceToParts.find(f);
+							if (fIt == faceToParts.end()) {
+								std::pair<FaceToParts::iterator,bool>
+									result = faceToParts.insert(std::make_pair(f,init));
+								fIt = result.first;
+							}
+
+							std::pair<int,int>& parts = fIt->second;
+							if (parts.first == -1)       parts.first  = part;
+							else if (parts.second == -1) parts.second = part;
+						}
+					}
+				}
+			}
+			
+			FaceToParts::iterator fIt;
+			for (fIt=faceToParts.begin();fIt!=faceToParts.end();fIt++) {
+
+				int type = fIt->first.getNumVertices() == 3 ? TYPE_TRI : TYPE_QUA;
+				int part1 = fIt->second.first;
+				int part2 = fIt->second.second;
+				
+				if (part2 == -1) bndPerPart[type][part1-1]++;
+				else {intPerPart[type][part1-1]++; intPerPart[type][part2-1]++;}
+			}
+			break;
+		}
+	default:
+		std::cout << "have not covered dimension " << dim << " yet " << std::endl;
+		return -1;
+		break;
+		// case 2:
+		// case 1:
+		// case 0:
+	}
+	return _numPartitions;
+}

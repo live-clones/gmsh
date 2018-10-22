@@ -84,7 +84,7 @@ public:
     v.resize(2);
     _getEdgeVertices(num, v);
   }
-  virtual int getNumFaces() { return 4; }
+  virtual int getNumFaces() const { return 4; }
   virtual MFace getFace(int num) const
   {
     return MFace(_v[faces_tetra(num, 0)], _v[faces_tetra(num, 1)],

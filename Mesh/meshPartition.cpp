@@ -2233,6 +2233,40 @@ static void AssignPhysicalName(GModel *model)
   }
 }
 
+// write partition balance
+void writePartitionBalance(const std::map<int,std::vector<int> >& eltCount,
+													 const std::string& category) {
+	
+	std::map<int,std::vector<int> >::const_iterator eIter;
+	for (eIter=eltCount.begin();eIter!=eltCount.end();++eIter) {
+
+		int type = eIter->first;
+    const std::vector<int>& count = eIter->second;
+		
+    int minCount = std::numeric_limits<int>::max();
+    int maxCount = 0;
+    int totCount = 0;
+		
+		std::vector<int>::const_iterator cIter;
+		
+		for (cIter=count.begin();cIter!=count.end();cIter++) {
+      minCount = std::min(*cIter,minCount);
+      maxCount = std::max(*cIter,maxCount);
+      totCount += *cIter;
+    }
+    if (totCount > 0) {
+      Msg::StatusBar(true,"Distribution of %i %s %s: "
+										 "%i(min) %i(max) %g(avg), overhead %g \%",
+                     (int) totCount,
+										 ElementType::nameOfParentType(type).c_str(),
+										 category.c_str(),
+                     (int) minCount,(int) maxCount,
+                     (double) totCount/count.size(),
+										 ((double) (count.size()*maxCount - totCount))/ totCount*100.);
+    }
+  }
+}
+
 // Partition a mesh into n parts. Returns: 0 = success, 1 = error
 int PartitionMesh(GModel *const model)
 {
@@ -2245,7 +2279,12 @@ int PartitionMesh(GModel *const model)
   if(MakeGraph(model, graph, -1)) return 1;
   graph.nparts(CTX::instance()->mesh.numPartitions);
   if(PartitionGraph(graph)) return 1;
-
+	
+	std::map<int,std::vector<int> > eltCount;
+  for (int i=0;i<MSH_NUM_PARENTTYPE;i++) {
+    eltCount[i].resize(CTX::instance()->mesh.numPartitions,0);
+  }
+	
   // Assign partitions to elements
   hashmap<MElement *, unsigned int> elmToPartition;
   for(unsigned int i = 0; i < graph.ne(); i++) {
@@ -2255,6 +2294,7 @@ int PartitionMesh(GModel *const model)
           graph.element(i), graph.partition(i) + 1));
         // Should be removed
         graph.element(i)->setPartition(graph.partition(i) + 1);
+				eltCount[graph.element(i)->getType()][graph.partition(i)]++;
       }
       else {
         elmToPartition.insert(
@@ -2272,6 +2312,20 @@ int PartitionMesh(GModel *const model)
   double t2 = Cpu();
   Msg::StatusBar(true, "Done partitioning mesh (%g s)", t2 - t1);
 
+  // ** KH -- statistics
+	
+	std::map<int,std::vector<int> > eltPerPart;
+	std::map<int,std::vector<int> > intPerPart;
+	std::map<int,std::vector<int> > bndPerPart;
+
+	model->partitionStatistics(eltPerPart,intPerPart,bndPerPart);
+	
+	writePartitionBalance(eltPerPart,std::string("elements"));
+	writePartitionBalance(intPerPart,std::string("interfaces"));
+	writePartitionBalance(bndPerPart,std::string("boundaries"));
+
+	// --- finished
+	
   if(CTX::instance()->mesh.partitionCreateTopology) {
     Msg::StatusBar(true, "Creating partition topology...");
     std::vector<std::set<MElement *> > boundaryElements =

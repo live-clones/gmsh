@@ -660,7 +660,11 @@ public:
                           bool binary = false, bool saveAll = false,
                           bool saveParametric = false,
                           double scalingFactor = 1.0);
-
+	
+	int partitionStatistics(std::map<int,std::vector<int> >& eltPerPart,
+													std::map<int,std::vector<int> >& intPerPart,
+													std::map<int,std::vector<int> >& bndPerPart) const;
+	
   // Iridium file format
   int writeIR3(const std::string &name, int elementTagType, bool saveAll,
                double scalingFactor);

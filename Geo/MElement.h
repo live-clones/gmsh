@@ -177,7 +177,7 @@ public:
                           SVector3 *n) = 0;
 
   // get the faces
-  virtual int getNumFaces() = 0;
+  virtual int getNumFaces() const = 0;
   virtual MFace getFace(int num) const = 0;
   virtual MFaceN getHighOrderFace(int num, int sign, int rot);
   virtual MFaceN getHighOrderFace(const MFace &face)

@@ -908,3 +908,23 @@ std::string ElementType::nameOfParentType(int parentType)
 
   return std::string("undefined");
 }
+
+int ElementType::dimensionOfParentType(int parentType)
+{
+  switch(parentType) {
+  case TYPE_PNT:   return  0; break;
+  case TYPE_LIN:   return  1; break;
+  case TYPE_TRI: 
+  case TYPE_POLYG:
+	case TYPE_TRIH:
+  case TYPE_QUA:   return  2; break;
+  case TYPE_TET: 
+  case TYPE_PYR: 
+  case TYPE_PRI: 
+  case TYPE_HEX:
+  case TYPE_POLYH: return  3; break;
+  case TYPE_XFEM: 
+  case TYPE_MINI:  return -1; break;
+  }
+  return -1;
+}

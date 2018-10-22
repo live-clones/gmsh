@@ -26,6 +26,7 @@ public:
   MFace() {}
   MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3 = 0);
   MFace(const std::vector<MVertex *> &v);
+	~MFace() {};
   std::size_t getNumVertices() const { return _v.size(); }
   MVertex *getVertex(const int i) const { return _v[i]; }
   MVertex *getSortedVertex(const int i) const { return _v[int(_si[i])]; }

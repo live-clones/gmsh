@@ -28,6 +28,7 @@ namespace ElementType {
   // Give first order element tag
   int getPrimaryType(int type);
   std::string nameOfParentType(int type);
+	int dimensionOfParentType(int type);
 } // namespace ElementType
 
 #endif
