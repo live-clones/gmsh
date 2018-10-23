@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #ifndef _DEFAULT_OPTIONS_H_
 #define _DEFAULT_OPTIONS_H_
@@ -357,7 +357,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "ArrowStemRadius" , opt_general_arrow_stem_radius , 0.02 ,
     "Relative radius of arrow stem" },
   { F|O, "Axes" , opt_general_axes , 0. ,
-    "Axes (0=none, 1=simple axes, 2=box, 3=full grid, 4=open grid, 5=ruler)" },
+    "Axes (0: none, 1: simple axes, 2: box, 3: full grid, 4: open grid, 5: ruler)" },
   { F|O, "AxesMikado" , opt_general_axes_mikado , 0. ,
     "Mikado axes style" },
   { F|O, "AxesAutoPosition" , opt_general_axes_auto_position , 1. ,
@@ -396,7 +396,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Minimum Z-axis forced value" },
 
   { F|O, "BackgroundGradient" , opt_general_background_gradient , 1. ,
-    "Draw background gradient (0=none, 1=vertical, 2=horizontal, 3=radial)" },
+    "Draw background gradient (0: none, 1: vertical, 2: horizontal, 3: radial)" },
   { F|O, "BackgroundImage3D" , opt_general_background_image_3d , 0 ,
     "Create background image in the 3D model (units = model units) or as "
     "2D background (units = pixels)" },
@@ -490,7 +490,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "ClipWholeElements" , opt_general_clip_whole_elements , 0. ,
     "Clip whole elements" },
   { F|S, "ColorScheme", opt_general_color_scheme , 1. ,
-    "Default color scheme for graphics (0=dark, 1=light, 2=grayscale, 3=reverse)" },
+    "Default color scheme for graphics (0: dark, 1: light, 2: grayscale, 3: reverse)" },
   { F|O, "ConfirmOverwrite" , opt_general_confirm_overwrite, 1. ,
     "Ask confirmation before overwriting files?" },
   { F|S, "ContextPositionX" , opt_general_context_position0 , 650. ,
@@ -570,8 +570,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Point size factor when using high-resolution OpenGL graphics" },
 
   { F|O, "InitialModule", opt_general_initial_context, 0. ,
-    "Module launched on startup (0=automatic, 1=geometry, 2=mesh, 3=solver, "
-    "4=post-processing) " },
+    "Module launched on startup (0: automatic, 1: geometry, 2: mesh, 3: solver, "
+    "4: post-processing) " },
 
   { F|O, "Light0" , opt_general_light0 , 1. ,
     "Enable light source 0" },
@@ -696,7 +696,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "OptionsPositionY" , opt_general_option_position1 , 150. ,
     "Vertical position (in pixels) of the upper left corner of the option window" },
   { F|O, "Orthographic" , opt_general_orthographic , 1. ,
-    "Orthographic projection mode (0=perspective projection)" },
+    "Orthographic projection mode (0: perspective projection)" },
 
   { F|S, "PluginPositionX" , opt_general_plugin_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the plugin "
@@ -809,7 +809,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "VectorType" , opt_general_vector_type , 4 ,
     "Default vector display type (for normals, etc.)" },
   { F|O, "Verbosity" , opt_general_verbosity , 5. ,
-    "Level of information printed during processing (0=no information)" },
+    "Level of information printed during processing (0: no information)" },
   { F|S, "VisibilityPositionX" , opt_general_visibility_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the visibility "
     "window" },
@@ -847,7 +847,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Highlight orphan entities (lines connected to a single surface, etc.)?" },
 
   { F|O, "LabelType" , opt_geometry_label_type , 0. ,
-    "Type of entity label (0=description, 1=elementary number, 2=physical number)" },
+    "Type of entity label (0: description, 1: elementary number, 2: physical number)" },
   { F|O, "Light" , opt_geometry_light , 1. ,
     "Enable lighting for the geometry" },
   { F|O, "LightTwoSide" , opt_geometry_light_two_side , 1. ,
@@ -939,7 +939,7 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "SurfaceNumbers" , opt_geometry_surfaces_num , 0. ,
     "Display surface numbers?" },
   { F|O, "SurfaceType" , opt_geometry_surface_type , 0. ,
-    "Surface display type (0=cross, 1=wireframe, 2=solid)" },
+    "Surface display type (0: cross, 1: wireframe, 2: solid)" },
 
   { F|O, "Tangents" , opt_geometry_tangents , 0. ,
     "Display size of tangent vectors (in pixels)" },
@@ -948,7 +948,7 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "ToleranceBoolean" , opt_geometry_tolerance_boolean, 0. ,
     "Geometrical tolerance for boolean operations" },
   { F,   "Transform" , opt_geometry_transform , 0. ,
-    "Transform model display coordinates (0=no, 1=scale)" },
+    "Transform model display coordinates (0: no, 1: scale)" },
   { F,   "TransformXX" , opt_geometry_transform00 , 1. ,
     "Element (1,1) of the 3x3 model display transformation matrix" },
   { F,   "TransformXY" , opt_geometry_transform01 , 0. ,
@@ -978,11 +978,11 @@ StringXNumber GeometryOptions_Number[] = {
 
 StringXNumber MeshOptions_Number[] = {
   { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_AUTO ,
-    "2D mesh algorithm (1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=BAMG, "
-    "8=DelQuad)" },
+    "2D mesh algorithm (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal, 7: BAMG, "
+    "8: DelQuad)" },
   { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY ,
-    "3D mesh algorithm (1=Delaunay, 4=Frontal, 5=Frontal Delaunay, 6=Frontal Hex, "
-    "7=MMG3D, 9=R-tree)" },
+    "3D mesh algorithm (1: Delaunay, 4: Frontal, 5: Frontal Delaunay, 6: Frontal Hex, "
+    "7: MMG3D, 9: R-tree)" },
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" },
   { F|O, "AngleToleranceFacetOverlap" , opt_mesh_angle_tolerance_facet_overlap , 0.1,
@@ -995,7 +995,7 @@ StringXNumber MeshOptions_Number[] = {
     "an edge swap" },
 
   { F|O, "BdfFieldFormat" , opt_mesh_bdf_field_format , 1. ,
-    "Field format for Nastran BDF files (0=free, 1=small, 2=large)" },
+    "Field format for Nastran BDF files (0: free, 1: small, 2: large)" },
   { F|O, "Binary" , opt_mesh_binary , 0. ,
     "Write mesh files in binary format (if possible)" },
   { F|O, "BoundaryLayerFanPoints" , opt_mesh_boundary_layer_fan_points, 5. ,
@@ -1022,8 +1022,8 @@ StringXNumber MeshOptions_Number[] = {
   { F,   "Clip" , opt_mesh_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
-    "Mesh coloring (0=by element type, 1=by elementary entity, 2=by physical "
-    "entity, 3=by partition)" },
+    "Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical "
+    "entity, 3: by partition)" },
   { F,   "CpuTime" , opt_mesh_cpu_time , 0. ,
     "CPU time (in seconds) for the generation of the current mesh (read-only)" },
 
@@ -1034,7 +1034,7 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "ElementOrder" , opt_mesh_order , 1. ,
     // "Order" is a reserved token in the parser
-    "Element order (1=linear elements, N (<6) = elements of higher order)" },
+    "Element order (1: linear elements, N (<6): elements of higher order)" },
   { F|O, "Explode" , opt_mesh_explode , 1.0 ,
     "Element shrinking factor (between 0 and 1)" },
 
@@ -1044,9 +1044,9 @@ StringXNumber MeshOptions_Number[] = {
     "Force inverse surface mapping algorithm (Newton-Raphson) to converge in real "
     "coordinates (experimental)" },
   { F|O, "Format" , opt_mesh_file_format , FORMAT_AUTO ,
-    "Mesh output format (1=msh, 2=unv, 10=auto, 16=vtk, 19=vrml, 21=mail, 26=pos stat, "
-    "27=stl, 28=p3d, 30=mesh, 31=bdf, 32=cgns, 33=med, 34=diff, 38=ir3, 39=inp, 40=ply2, "
-    "41=celum, 42=su2, 47=tochnog, 49=neu, 50=matlab)" },
+    "Mesh output format (1: msh, 2: unv, 10: auto, 16: vtk, 19: vrml, 21: mail, "
+    "26: pos stat, 27: stl, 28: p3d, 30: mesh, 31: bdf, 32: cgns, 33: med, 34: diff, "
+    "38: ir3, 39: inp, 40: ply2, 41: celum, 42: su2, 47: tochnog, 49: neu, 50: matlab)" },
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. ,
     "Display mesh hexahedra?" },
   { F|0, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,
@@ -1066,14 +1066,14 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "LabelSampling" , opt_mesh_label_sampling , 1. ,
     "Label sampling rate (display one label every `LabelSampling' elements)" },
   { F|O, "LabelType" , opt_mesh_label_type , 0. ,
-    "Type of element label (0=element number, 1=elementary entity number, "
-    "2=physical entity number, 3=partition number, 4=coordinates)" },
+    "Type of element label (0: element number, 1: elementary entity number, "
+    "2: physical entity number, 3: partition number, 4: coordinates)" },
   { F|O, "LcIntegrationPrecision" , opt_mesh_lc_integration_precision, 1.e-9 ,
     "Accuracy of evaluation of the LC field for 1D mesh generation" },
   { F|O, "Light" , opt_mesh_light , 1. ,
     "Enable lighting for the mesh" },
   { F|O, "LightLines" , opt_mesh_light_lines , 2. ,
-    "Enable lighting for mesh edges (0=no, 1=surfaces, 2=surfaces+volumes" },
+    "Enable lighting for mesh edges (0: no, 1: surfaces, 2: surfaces+volumes" },
   { F|O, "LightTwoSide" , opt_mesh_light_two_side , 1. ,
     "Light both sides of surfaces (leads to slower rendering)" },
   { F|O, "Lines" , opt_mesh_lines , 0. ,
@@ -1092,12 +1092,12 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
     "Mesh only visible entities (experimental: use with caution!)" },
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
-    "METIS partitioning algorithm (1=Recursive, 2=K-way)" },
+    "METIS partitioning algorithm (1: Recursive, 2: K-way)" },
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 2. ,
-    "METIS edge matching type (1=Random, 2=Sorted Heavy-Edge)" },
+    "METIS edge matching type (1: Random, 2: Sorted Heavy-Edge)" },
   { F|O, "MetisRefinementAlgorithm" , opt_mesh_partition_metis_refinement_algorithm, 2. ,
-    "METIS algorithm for k-way refinement (1=FM-based cut, 2=Greedy, "
-    "3=Two-sided node FM, 4=One-sided node FM)" },
+    "METIS algorithm for k-way refinement (1: FM-based cut, 2: Greedy, "
+    "3: Two-sided node FM, 4: One-sided node FM)" },
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
     "Minimum number of points used to mesh a circle" },
   { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
@@ -1105,21 +1105,23 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.0 ,
     "Version of the MSH file format to use" },
   { F|O, "MedFileMinorVersion" , opt_mesh_med_file_minor_version , -1. ,
-    "Minor version of the MED file format to use (-1=use minor version of the MED library)" },
-  { F|O, "PartitionHexWeight" , opt_mesh_partition_hex_weight , 1 ,
-    "Weight of hexahedral element for METIS load balancing" },
-  { F|O, "PartitionPrismWeight" , opt_mesh_partition_pri_weight , 1 ,
-    "Weight of prismatic element (wedge) for METIS load balancing" },
-  { F|O, "PartitionPyramidWeight" , opt_mesh_partition_pyr_weight , 1 ,
-    "Weight of pyramidal element for METIS load balancing" },
+    "Minor version of the MED file format to use (-1: use minor version of the MED library)" },
+  { F|O, "PartitionHexWeight" , opt_mesh_partition_hex_weight , -1 ,
+    "Weight of hexahedral element for METIS load balancing (-1: automatic)" },
+  { F|O, "PartitionLineWeight" , opt_mesh_partition_line_weight , -1 ,
+    "Weight of line element for METIS load balancing (-1: automatic)" },
+  { F|O, "PartitionPrismWeight" , opt_mesh_partition_pri_weight , -1 ,
+    "Weight of prismatic element (wedge) for METIS load balancing (-1: automatic)" },
+  { F|O, "PartitionPyramidWeight" , opt_mesh_partition_pyr_weight , -1 ,
+    "Weight of pyramidal element for METIS load balancing (-1: automatic)" },
+  { F|O, "PartitionQuadWeight" , opt_mesh_partition_qua_weight , -1 ,
+    "Weight of quadrangle for METIS load balancing (-1: automatic)" },
   { F|O, "PartitionTrihedronWeight" , opt_mesh_partition_trih_weight , 0 ,
-    "Weight of trihedron element for METIS load balancing" },
-  { F|O, "PartitionQuadWeight" , opt_mesh_partition_qua_weight , 1 ,
-    "Weight of quadrangle for METIS load balancing" },
-  { F|O, "PartitionTetWeight" , opt_mesh_partition_tet_weight , 1 ,
-    "Weight of tetrahedral element for METIS load balancing" },
-  { F|O, "PartitionTriWeight" , opt_mesh_partition_tri_weight , 1 ,
-    "Weight of triangle element for METIS load balancing" },
+    "Weight of trihedron element for METIS load balancing (-1: automatic)" },
+  { F|O, "PartitionTetWeight" , opt_mesh_partition_tet_weight , -1 ,
+    "Weight of tetrahedral element for METIS load balancing (-1: automatic)" },
+  { F|O, "PartitionTriWeight" , opt_mesh_partition_tri_weight , -1 ,
+    "Weight of triangle element for METIS load balancing (-1: automatic)" },
   { F|O, "PartitionCreateTopology" , opt_mesh_partition_create_topology , 1 ,
     "Create boundary representation of partitions" },
   { F|O, "PartitionCreatePhysicals" , opt_mesh_partition_create_physicals , 1 ,
@@ -1190,9 +1192,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "QualitySup" , opt_mesh_quality_sup , 0.0 ,
     "Only display elements whose quality measure is smaller than QualitySup" },
   { F|O, "QualityType" , opt_mesh_quality_type , 2. ,
-    "Type of quality measure (0=SICN~signed inverse condition number, "
-    "1=SIGE~signed inverse gradient error, 2=gamma~vol/sum_face/max_edge, "
-    "3=Disto~minJ/maxJ"},
+    "Type of quality measure (0: SICN~signed inverse condition number, "
+    "1: SIGE~signed inverse gradient error, 2: gamma~vol/sum_face/max_edge, "
+    "3: Disto~minJ/maxJ"},
 
   { F|O, "RadiusInf" , opt_mesh_radius_inf , 0.0 ,
     "Only display elements whose longest edge is greater than RadiusInf" },
@@ -1214,7 +1216,7 @@ StringXNumber MeshOptions_Number[] = {
 #else
   { F|O, "RecombinationAlgorithm" , opt_mesh_algo_recombine , 0 ,
 #endif
-    "Mesh recombination algorithm (0=standard, 1=blossom)" },
+    "Mesh recombination algorithm (0: standard, 1: blossom)" },
   { F|O, "RecombineAll" , opt_mesh_recombine_all , 0 ,
     "Apply recombination algorithm to all surfaces, ignoring per-surface spec" },
   { F|O, "Recombine3DAll" , opt_mesh_recombine3d_all , 0 ,
@@ -1239,7 +1241,7 @@ StringXNumber MeshOptions_Number[] = {
     "Save all elements, even if they don't belong to physical groups" },
   { F|O, "SaveElementTagType" , opt_mesh_save_element_tag_type , 1. ,
     "Type of the element tag saved in mesh formats that don't support saving "
-    "physical or partition ids (1=elementary, 2=physical, 3=partition)" },
+    "physical or partition ids (1: elementary, 2: physical, 3: partition)" },
   { F|O, "SaveTopology" , opt_mesh_save_topology, 0. ,
     "Save model topology in MSH2 output files (this is always saved in MSH3)" },
   { F|O, "SaveParametric" , opt_mesh_save_parametric , 0. ,
@@ -1264,7 +1266,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,
     "Ratio between mesh sizes at nodes of a same edge (used in BAMG)" },
   { F|O, "SubdivisionAlgorithm" , opt_mesh_algo_subdivide , 0 ,
-    "Mesh subdivision algorithm (0=none, 1=all quadrangles, 2=all hexahedra)" },
+    "Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra)" },
   { F|O, "SurfaceEdges" , opt_mesh_surfaces_edges , 1. ,
     "Display edges of surface mesh?" },
   { F|O, "SurfaceFaces" , opt_mesh_surfaces_faces , 0. ,
@@ -1296,7 +1298,7 @@ StringXNumber MeshOptions_Number[] = {
     "Display the voronoi diagram" },
 
   { F|O, "ZoneDefinition" , opt_mesh_zone_definition , 0. ,
-    "Method for defining a zone (0=single zone, 1=by partition, 2=by physical)" },
+    "Method for defining a zone (0: single zone, 1: by partition, 2: by physical)" },
 
   { 0, 0 , 0 , 0. , 0 }
 } ;
@@ -1359,9 +1361,9 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "ForceNodeData" , opt_post_force_node_data , 0. ,
     "Try to force saving datasets as NodeData" },
   { F|O, "Format" , opt_post_file_format , 10. ,
-    "Default file format for post-processing views (0=ASCII view, 1=binary "
-    "view, 2=parsed view, 3=STL triangulation, 4=raw text, 5=Gmsh mesh, 6=MED file, "
-    "10=automatic)" },
+    "Default file format for post-processing views (0: ASCII view, 1: binary "
+    "view, 2: parsed view, 3: STL triangulation, 4: raw text, 5: Gmsh mesh, 6: MED file, "
+    "10: automatic)" },
 
   { F, "GraphPointX" , opt_post_double_clicked_graph_point_x , 0. ,
     "Synonym for `DoubleClickedGraphPointX'" },
@@ -1372,8 +1374,8 @@ StringXNumber PostProcessingOptions_Number[] = {
     "Display value scales horizontally" },
 
   { F|O, "Link" , opt_post_link , 0. ,
-    "Post-processing view links (0=apply next option changes to selected views, "
-    "1=force same options for all selected views)" },
+    "Post-processing view links (0: apply next option changes to selected views, "
+    "1: force same options for all selected views)" },
 
   { F,   "NbViews" , opt_post_nb_views , 0. ,
     "Current number of views merged (read-only)" },
@@ -1393,7 +1395,7 @@ StringXNumber PostProcessingOptions_Number[] = {
 
 StringXNumber ViewOptions_Number[] = {
   { F|O, "AbscissaRangeType" , opt_view_abscissa_range_type , 1 ,
-    "Ascissa scale range type (1=default, 2=custom)" },
+    "Ascissa scale range type (1: default, 2: custom)" },
   { F|O, "AdaptVisualizationGrid" , opt_view_adapt_visualization_grid , 0. ,
     "Use adaptive visualization grid (for high-order elements)?" },
   { F|O, "AngleSmoothNormals" , opt_view_angle_smooth_normals , 30.0 ,
@@ -1407,7 +1409,7 @@ StringXNumber ViewOptions_Number[] = {
     "3: top right, 4: bottom left, 5: bottom right, 6: top, 7: bottom, 8: left, 9: right, "
     "10: full, 11: top third, 12: in model coordinates)" },
   { F|O, "Axes" , opt_view_axes , 0 ,
-    "Axes (0=none, 1=simple axes, 2=box, 3=full grid, 4=open grid, 5=ruler)" },
+    "Axes (0: none, 1: simple axes, 2: box, 3: full grid, 4: open grid, 5: ruler)" },
   { F|O, "AxesMikado" , opt_view_axes_mikado , 0. ,
     "Mikado axes style" },
   { F|O, "AxesAutoPosition" , opt_view_axes_auto_position , 1. ,
@@ -1432,11 +1434,11 @@ StringXNumber ViewOptions_Number[] = {
     "Number of tics on the Z-axis" },
 
   { F|O, "Boundary" , opt_view_boundary , 0. ,
-    "Draw the `N minus b'-dimensional boundary of the element (N=element "
-    "dimension, b=option value)" },
+    "Draw the `N minus b'-dimensional boundary of the element (N: element "
+    "dimension, b: option value)" },
 
   { F|O, "CenterGlyphs" , opt_view_center_glyphs , 0,
-    "Center glyphs (arrows, numbers, etc.)? (0=left, 1=centered, 2=right)" },
+    "Center glyphs (arrows, numbers, etc.)? (0: left, 1: centered, 2: right)" },
   { F,   "Clip" , opt_view_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
   { F|O, "Closed" , opt_view_closed , 0,
@@ -1524,7 +1526,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "Explode" , opt_view_explode , 1. ,
     "Element shrinking factor (between 0 and 1)" },
   { F|O, "ExternalView" , opt_view_external_view , -1. ,
-    "Index of the view used to color vector fields (-1=self)" },
+    "Index of the view used to color vector fields (-1: self)" },
 
   { F|O, "FakeTransparency" , opt_view_fake_transparency , 0. ,
     "Use fake transparency (cheaper than the real thing, but incorrect)" },
@@ -1534,15 +1536,15 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "GeneralizedRaiseFactor" , opt_view_gen_raise_factor , 1. ,
     "Generalized raise amplification factor" },
   { F|O, "GeneralizedRaiseView" , opt_view_gen_raise_view , -1. ,
-    "Index of the view used for generalized raise (-1=self)" },
+    "Index of the view used for generalized raise (-1: self)" },
   { F|O, "GlyphLocation" , opt_view_glyph_location , 1,
-    "Glyph (arrow, number, etc.) location (1=center of gravity, 2=node)" },
+    "Glyph (arrow, number, etc.) location (1: center of gravity, 2: node)" },
 
   { F|O, "Height" , opt_view_size1 , 200. ,
     "Height (in pixels) of the scale or 2D plot" },
 
   { F|O, "IntervalsType" , opt_view_intervals_type , 2 ,
-    "Type of interval display (1=iso, 2=continuous, 3=discrete, 4=numeric)" },
+    "Type of interval display (1: iso, 2: continuous, 3: discrete, 4: numeric)" },
 
   { F|O, "Light" , opt_view_light , 1. ,
     "Enable lighting for the view" },
@@ -1613,21 +1615,21 @@ StringXNumber ViewOptions_Number[] = {
   { F,   "RaiseZ" , opt_view_raise2 , 0. ,
     "Elevation of the view along Z-axis (in model coordinates)" },
   { F|O, "RangeType" , opt_view_range_type , 1 ,
-    "Value scale range type (1=default, 2=custom, 3=per time step)" },
+    "Value scale range type (1: default, 2: custom, 3: per time step)" },
 
   { F|O, "Sampling" , opt_view_sampling , 1. ,
     "Element sampling rate (draw one out every `Sampling' elements)" },
   { F|O, "SaturateValues" , opt_view_saturate_values , 0. ,
-    "Saturate the view values to custom min and max (1=true, 0=false)" },
+    "Saturate the view values to custom min and max (1: true, 0: false)" },
   { F|O, "ScaleType" , opt_view_scale_type , 1 ,
-    "Value scale type (1=linear, 2=logarithmic, 3=double logarithmic)" },
+    "Value scale type (1: linear, 2: logarithmic, 3: double logarithmic)" },
   { F|O, "ShowElement" , opt_view_show_element , 0. ,
     "Show element boundaries?" },
   { F|O, "ShowScale" , opt_view_show_scale , 1. ,
     "Show value scale?" },
   { F|O, "ShowTime" , opt_view_show_time , 3. ,
-    "Time display mode (0=none, 1=time series, 2=harmonic data, 3=automatic, "
-    "4=step data, 5=multi-step data, 6=real eigenvalues, 7=complex eigenvalues)" },
+    "Time display mode (0: none, 1: time series, 2: harmonic data, 3: automatic, "
+    "4: step data, 5: multi-step data, 6: real eigenvalues, 7: complex eigenvalues)" },
   { F|O, "SmoothNormals" , opt_view_smooth_normals , 0. ,
     "Smooth the normals?" },
   { F|O, "Stipple" , opt_view_use_stipple , 0. ,
@@ -1663,14 +1665,14 @@ StringXNumber ViewOptions_Number[] = {
   { F,   "TransformZZ" , opt_view_transform22 , 1. ,
     "Element (3,3) of the 3x3 coordinate transformation matrix" },
   { F,   "Type" , opt_view_type , 1 ,
-    "Type of plot (1=3D, 2=2D space, 3=2D time, 4=2D)" },
+    "Type of plot (1: 3D, 2: 2D space, 3: 2D time, 4: 2D)" },
 
   { F|O, "UseGeneralizedRaise" , opt_view_use_gen_raise , 0 ,
     "Use generalized raise?" },
 
   { F|O, "VectorType" , opt_view_vector_type , 4 ,
-    "Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, "
-    "5=displacement, 6=comet)" },
+    "Vector display type (1: segment, 2: arrow, 3: pyramid, 4: 3D arrow, "
+    "5: displacement, 6: comet)" },
   { F,   "Visible" , opt_view_visible , 1. ,
     "Is the view visible?" },
 
@@ -1722,11 +1724,11 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "EpsPS3Shading" , opt_print_eps_ps3shading , 0. ,
     "Enable PostScript Level 3 shading" },
   { F|O, "EpsQuality" , opt_print_eps_quality , 1. ,
-    "PostScript/PDF quality (0=bitmap, 1=vector (simple sort), 2=vector "
-    "(accurate sort), 3=vector (unsorted)" },
+    "PostScript/PDF quality (0: bitmap, 1: vector (simple sort), 2: vector "
+    "(accurate sort), 3: vector (unsorted)" },
 
   { F|O, "Format" , opt_print_file_format , FORMAT_AUTO ,
-    "File format (10=automatic)" },
+    "File format (10: automatic)" },
 
   { F|O, "GeoLabels" , opt_print_geo_labels , 1. ,
     "Save labels in unrolled Gmsh geometries" },

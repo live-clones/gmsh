@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
@@ -488,6 +488,7 @@ double opt_mesh_partition_trih_weight(OPT_ARGS_NUM);
 double opt_mesh_partition_qua_weight(OPT_ARGS_NUM);
 double opt_mesh_partition_tet_weight(OPT_ARGS_NUM);
 double opt_mesh_partition_tri_weight(OPT_ARGS_NUM);
+double opt_mesh_partition_line_weight(OPT_ARGS_NUM);
 double opt_mesh_partition_create_topology(OPT_ARGS_NUM);
 double opt_mesh_partition_create_physicals(OPT_ARGS_NUM);
 double opt_mesh_partition_create_ghost_cells(OPT_ARGS_NUM);

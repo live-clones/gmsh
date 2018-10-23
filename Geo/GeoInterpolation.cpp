@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include "GmshMessage.h"
 #include "Geo.h"
@@ -428,6 +428,8 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
                             derivee);
   }
 
+  const double eps = (c->Typ == MSH_SEGM_LINE) ? 1e-5 : fd_eps;
+
   Vertex V;
 
   if(derivee == 1) {
@@ -443,8 +445,8 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
       V.u = u;
       break;
     default:
-      double eps1 = (u < fd_eps) ? 0.0 : fd_eps;
-      double eps2 = (u > 1 - fd_eps) ? 0.0 : fd_eps;
+      const double eps1 = (u < eps) ? 0.0 : eps;
+      const double eps2 = (u > 1 - eps) ? 0.0 : eps;
       Vertex D[2];
       D[0] = InterpolateCurve(c, u - eps1, 0);
       D[1] = InterpolateCurve(c, u + eps2, 0);
@@ -470,8 +472,8 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
       V.u = u;
       break;
     default:
-      double const eps1 = (u < fd_eps) ? 0.0 : fd_eps;
-      double const eps2 = (u > 1 - fd_eps) ? 0.0 : fd_eps;
+      double const eps1 = (u < eps) ? 0.0 : eps;
+      double const eps2 = (u > 1 - eps) ? 0.0 : eps;
       Vertex D[2];
       D[0] = InterpolateCurve(c, u - eps1, 1);
       D[1] = InterpolateCurve(c, u + eps2, 1);

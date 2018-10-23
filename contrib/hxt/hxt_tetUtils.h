@@ -41,18 +41,6 @@ static inline HXTStatus hxtTetrahedraDoubleSize(HXTMesh* mesh) {
  */
 HXTStatus hxtRemoveDeleted(HXTMesh* mesh);
 
-/** Removes ghost tetrahedra */
-HXTStatus hxtRemoveGhosts(HXTMesh* mesh);
-
-/** Adds ghost tetrahedra to adjoin tet. whose neighbors are HXT_NO_ADJACENT.\n
- * THIS FUNCTION SUPPOSE 2 THINGS:
- *  - there are no ghost tetrahedra
- *  - face with 1 tetrahedra (neigh[face]==HXT_NO_ADJACENT) are all on the convex hull
- *
- * this function will not work properly in any other cases...
- */
-HXTStatus hxtAddGhosts(HXTMesh* mesh);
-
 
 #ifdef __cplusplus
 }

@@ -22,9 +22,6 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 //
-// Please report all bugs and problems to the public mailing list
-// <gmsh@onelab.info>.
-//
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
 #include <iostream>
@@ -164,13 +161,13 @@ void mvprintList(int row, int maxSize, std::list<char*> listStr, int colorScheme
   for (std::list<char*>::iterator it=listStr.begin(); it != listStr.end(); it++){
     if (i >= abs(maxSize)) break;
     if (colorScheme==1){
-      if (*it == listStr.back())      
+      if (*it == listStr.back())
         attron(COLOR_PAIR(2));
       else
         attron(COLOR_PAIR(1));
     }
     if (colorScheme==2){
-      if (i%2==0)      
+      if (i%2==0)
         attron(COLOR_PAIR(1));
     }
     mvprintLeft(row + maxSize/abs(maxSize)*i, *it);
@@ -181,7 +178,7 @@ void mvprintList(int row, int maxSize, std::list<char*> listStr, int colorScheme
         attroff(COLOR_PAIR(1));
     }
     if (colorScheme==2){
-      if (i%2==0)      
+      if (i%2==0)
         attroff(COLOR_PAIR(1));
     }
     i++;

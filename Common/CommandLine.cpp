@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include <string>
 #include <string.h>
@@ -94,7 +94,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-save_parametric", "Save nodes with their parametric coordinates"));
   s.push_back(mp("-save_topology", "Save model topology"));
   s.push_back(mp("-algo string", "Select mesh algorithm (meshadapt, del2d, front2d, "
-                 "delquad, del3d, front3d, mmg3d, pack)"));
+                 "delquad, del3d, front3d, mmg3d, pack, hxt)"));
   s.push_back(mp("-smooth int", "Set number of mesh smoothing steps"));
   s.push_back(mp("-order int", "Set mesh order (1, ..., 5)"));
   s.push_back(mp("-optimize[_netgen]", "Optimize quality of tetrahedral elements"));
@@ -1161,7 +1161,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
 #endif
         fprintf(stderr, "Packaged by      : %s\n", GMSH_PACKAGER);
         fprintf(stderr, "Web site         : http://gmsh.info\n");
-        fprintf(stderr, "Mailing list     : gmsh@onelab.info\n");
+        fprintf(stderr, "Issue tracker    : https://gitlab.onelab.info/gmsh/gmsh/issues\n");
         Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "help") || !strcmp(argv[i] + 1, "-help")) {
@@ -1188,8 +1188,9 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       }
       else if(!strcmp(argv[i] + 1, "nt")) {
         i++;
-        if(argv[i])
+        if(argv[i]){
           opt_general_num_threads(0, GMSH_SET, atoi(argv[i++]));
+	}
         else{
           Msg::Error("Missing number");
           if(exitOnError) Msg::Exit(1);

@@ -1,6 +1,46 @@
 #include "hxt_api.h"
 #include "hxt_tools.h"
 
+HXTStatus hxtNorm2V3(double v[3], double* norm2){
+  *norm2 = sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+  return HXT_STATUS_OK;
+}
+
+HXTStatus hxtNormalizeV3(double v[3]){
+  double norm=0.0;
+  hxtNorm2V3(v,&norm);
+  v[0] /= norm;
+  v[1] /= norm;
+  v[2] /= norm;
+  return HXT_STATUS_OK;
+}
+
+HXTStatus hxtCrossProductV3(double a[3], double b[3], double res[3]){
+  res[0] = a[1]*b[2] - a[2]*b[1];
+  res[1] = a[2]*b[0] - a[0]*b[2];
+  res[2] = a[0]*b[1] - a[1]*b[0];
+  return HXT_STATUS_OK;
+}
+
+HXTStatus hxtDet2x2(double mat[2][2], double* det){
+  *det = mat[0][0]*mat[1][1]-mat[0][1]*mat[1][0];
+  return HXT_STATUS_OK;
+}
+
+HXTStatus hxtInv2x2(double mat[2][2], double inv[2][2], double *det){
+  hxtDet2x2(mat,det);
+  if(*det) {
+    const double ud = 1. / *det;
+    inv[0][0] =  mat[1][1] * ud;
+    inv[0][1] = -mat[0][1] * ud;
+    inv[1][0] = -mat[1][0] * ud;
+    inv[1][1] =  mat[0][0] * ud;
+  } else {
+    return HXT_STATUS_ERROR;
+  }
+  return HXT_STATUS_OK;
+}
+
 HXTStatus hxtDet3x3(double mat[3][3], double *det)
 {
   *det = (mat[0][0] * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1]) -
@@ -68,3 +108,15 @@ HXTStatus hxtInv4x4ColumnMajor(double m[16], double invOut[16], double *det)
   return HXT_STATUS_OK;
 }
 
+HXTStatus hxtJacobianLinTet(double *x , double *y, double *z , double mat[3][3]){
+  mat[0][0] = x[1] - x[0];
+  mat[0][1] = x[2] - x[0];
+  mat[0][2] = x[3] - x[0];
+  mat[1][0] = y[1] - y[0];
+  mat[1][1] = y[2] - y[0];
+  mat[1][2] = y[3] - y[0];
+  mat[2][0] = z[1] - z[0];
+  mat[2][1] = z[2] - z[0];
+  mat[2][2] = z[3] - z[0];  
+  return HXT_STATUS_OK;
+}

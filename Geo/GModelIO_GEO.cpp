@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include <sstream>
 #include <stdlib.h>
@@ -1219,33 +1219,33 @@ void GEO_Internals::synchronize(GModel *model)
     List_Delete(volumes);
   }
 
-  // we might want to store physical groups directly in GModel; but this is OK
-  // for now. Note that we only sync physicals if there are some to sync, in
-  // order not to destroy groups that would have been stored directly in a
-  // GModel, e.g. by reading a mesh file
-  if(List_Nbr(PhysicalGroups)) {
+  // delete all physical groups before sync only if there is no mesh (if there
+  // is a mesh, it could have been loaded from a file with physical groups - we
+  // don't want to remove those)
+  if(!model->getNumMeshElements())
     model->removePhysicalGroups();
-    for(int i = 0; i < List_Nbr(PhysicalGroups); i++) {
-      PhysicalGroup *p;
-      List_Read(PhysicalGroups, i, &p);
-      for(int j = 0; j < List_Nbr(p->Entities); j++) {
-        int num;
-        List_Read(p->Entities, j, &num);
-        GEntity *ge = 0;
-        int tag = CTX::instance()->geom.orientedPhysicals ? abs(num) : num;
-        switch(p->Typ) {
-        case MSH_PHYSICAL_POINT: ge = model->getVertexByTag(tag); break;
-        case MSH_PHYSICAL_LINE: ge = model->getEdgeByTag(tag); break;
-        case MSH_PHYSICAL_SURFACE: ge = model->getFaceByTag(tag); break;
-        case MSH_PHYSICAL_VOLUME: ge = model->getRegionByTag(tag); break;
-        }
-        int pnum = CTX::instance()->geom.orientedPhysicals ?
-                     (gmsh_sign(num) * p->Num) :
-                     p->Num;
-        if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
-                   ge->physicals.end())
-          ge->physicals.push_back(pnum);
+  // we might want to store physical groups directly in GModel; but I guess this
+  // is OK for now:
+  for(int i = 0; i < List_Nbr(PhysicalGroups); i++) {
+    PhysicalGroup *p;
+    List_Read(PhysicalGroups, i, &p);
+    for(int j = 0; j < List_Nbr(p->Entities); j++) {
+      int num;
+      List_Read(p->Entities, j, &num);
+      GEntity *ge = 0;
+      int tag = CTX::instance()->geom.orientedPhysicals ? abs(num) : num;
+      switch(p->Typ) {
+      case MSH_PHYSICAL_POINT: ge = model->getVertexByTag(tag); break;
+      case MSH_PHYSICAL_LINE: ge = model->getEdgeByTag(tag); break;
+      case MSH_PHYSICAL_SURFACE: ge = model->getFaceByTag(tag); break;
+      case MSH_PHYSICAL_VOLUME: ge = model->getRegionByTag(tag); break;
       }
+      int pnum = CTX::instance()->geom.orientedPhysicals ?
+        (gmsh_sign(num) * p->Num) :
+        p->Num;
+      if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
+         ge->physicals.end())
+        ge->physicals.push_back(pnum);
     }
   }
 

@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
@@ -52,7 +52,7 @@ struct contextMeshOptions {
   int partitionCreatePhysicals, partitionSplitMeshFiles,
     partitionSaveTopologyFile;
   int partitionTriWeight, partitionQuaWeight, partitionTetWeight,
-    partitionHexWeight;
+    partitionHexWeight, partitionLinWeight;
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
   int partitionOldStyleMsh2;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;

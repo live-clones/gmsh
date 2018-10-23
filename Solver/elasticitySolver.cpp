@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include <string.h>
 #include "GmshConfig.h"
@@ -433,7 +433,12 @@ void elasticitySolver::addDirichletBC(int dim, int entityId, int component,
   case 0: diri.onWhat = BoundaryCondition::ON_VERTEX; break;
   case 1: diri.onWhat = BoundaryCondition::ON_EDGE; break;
   case 2: diri.onWhat = BoundaryCondition::ON_FACE; break;
-  default: return;
+  default:
+    {
+      delete diri.g;
+      delete diri._f;
+      return;
+    }
   }
   allDirichlet.push_back(diri);
 }
@@ -457,7 +462,12 @@ void elasticitySolver::addNeumannBC(int dim, int entityId,
   case 0: neu.onWhat = BoundaryCondition::ON_VERTEX; break;
   case 1: neu.onWhat = BoundaryCondition::ON_EDGE; break;
   case 2: neu.onWhat = BoundaryCondition::ON_FACE; break;
-  default: return;
+  default:
+    {
+      delete neu.g;
+      delete neu._f;
+      return;
+    }
   }
   allNeumann.push_back(neu);
 }

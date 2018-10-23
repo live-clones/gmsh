@@ -22,9 +22,6 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 //
-// Please report all bugs and problems to the public mailing list
-// <gmsh@onelab.info>.
-//
 // Contributor(s): Thomas Toulorge, Jonathan Lambrechts
 
 #include <iostream>

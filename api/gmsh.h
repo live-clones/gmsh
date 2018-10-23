@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #ifndef _GMSH_H_
 #define _GMSH_H_
@@ -204,6 +204,10 @@ namespace gmsh { // Top-level functions
     // remove all the entities on their boundaries, down to dimension 0.
     GMSH_API void removeEntities(const gmsh::vectorpair & dimTags,
                                  const bool recursive = false);
+
+    // Remove the physical groups `dimTags' of the current model. If `dimTags' is
+    // empty, remove all groups.
+    GMSH_API void removePhysicalGroups(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
     // Get the type of the entity of dimension `dim' and tag `tag'.
     GMSH_API void getType(const int dim,

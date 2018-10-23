@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include <algorithm>
 #include "MEdge.h"
@@ -110,9 +110,9 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
       v.push_back(current);
       std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator it =
         c.find(current);
-      c.erase(it);
       MVertex *v1 = it->second.first;
       MVertex *v2 = it->second.second;
+      c.erase(it);
       MVertex *temp = current;
       if(v1 == prev)
         current = v2;

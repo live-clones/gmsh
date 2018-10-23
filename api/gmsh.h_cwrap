@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #ifndef _GMSH_H_
 #define _GMSH_H_
@@ -399,6 +399,17 @@ namespace gmsh { // Top-level functions
       int ierr = 0;
       int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
       gmshModelRemoveEntities(api_dimTags_, api_dimTags_n_, (int)recursive, &ierr);
+      if(ierr) throw ierr;
+      gmshFree(api_dimTags_);
+    }
+
+    // Remove the physical groups `dimTags' of the current model. If `dimTags' is
+    // empty, remove all groups.
+    GMSH_API void removePhysicalGroups(const gmsh::vectorpair & dimTags = gmsh::vectorpair())
+    {
+      int ierr = 0;
+      int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+      gmshModelRemovePhysicalGroups(api_dimTags_, api_dimTags_n_, &ierr);
       if(ierr) throw ierr;
       gmshFree(api_dimTags_);
     }

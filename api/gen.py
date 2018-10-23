@@ -1,7 +1,7 @@
 # Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
-# bugs and problems to the public mailing list <gmsh@onelab.info>.
+# issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 # This is the master definition file for the Gmsh API.
 #
@@ -131,6 +131,9 @@ model.add('addDiscreteEntity',doc,oint,iint('dim'),iint('tag','-1'),ivectorint('
 
 doc = '''Remove the entities `dimTags' of the current model. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
 model.add('removeEntities',doc,None,ivectorpair('dimTags'),ibool('recursive','false','False'))
+
+doc = '''Remove the physical groups `dimTags' of the current model. If `dimTags' is empty, remove all groups.'''
+model.add('removePhysicalGroups',doc,None,ivectorpair('dimTags','gmsh::vectorpair()',"[]","[]"))
 
 doc = '''Get the type of the entity of dimension `dim' and tag `tag'.'''
 model.add('getType',doc,None,iint('dim'),iint('tag'),ostring('entityType'))

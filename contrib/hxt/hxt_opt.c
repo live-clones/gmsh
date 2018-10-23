@@ -196,7 +196,7 @@ HXTStatus hxtAddOption(char shortName,
 #endif
 
 	if(shortName=='\0' && (longName==NULL || longName[0]=='\0') &&
-	   (valueType==HXT_FLAG || valueType==HXT_NO_FLAG) ) {
+	   (valueType==HXT_FLAG || valueType==HXT_NO_FLAG) && valuePtr!=NULL) {
 		return HXT_ERROR_MSG(HXT_STATUS_ERROR, "A flag must have an option name. Therefore, it can not be a trailing option");
 	}
 
@@ -527,7 +527,7 @@ static int getNextTrailingOption(int n) {
 }
 
 
-HXTStatus hxtParseOptions(const int argc, const char* argv[])
+HXTStatus hxtParseOptions(const int argc, char* argv[])
 {
 	int dashdash = 0;
 	int trailing = getNextTrailingOption(0);
@@ -783,7 +783,7 @@ HXTStatus hxtGetOptionHelp(char text[16384],
 	int offsetval = 0;
 	int* offset = &offsetval;
 	if(programName!=NULL) {
-		MY_SPRINTF("%s [OPTION] ...", programName);
+		MY_SPRINTF("Usage:  %s [OPTION]...", programName);
 		int n = getNextTrailingOption(0);
 		while(n!=-1 && optionList[n].valuePtr!=NULL) {
 			int n2 = getNextTrailingOption(n);

@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -48,7 +48,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   setup();
   if(model()->getOCCInternals()) model()->getOCCInternals()->bind(s, num);
 
-  //  if(tag() == 820) writeBREP("s820.brep");
+  //if(tag() == 11) writeBREP("s11.brep");
 }
 
 OCCFace::~OCCFace()
@@ -143,7 +143,7 @@ void OCCFace::setup()
     }
     else if(vertex.Orientation() == TopAbs_INTERNAL) {
       Msg::Debug("Adding embedded vertex %d in face %d", v->tag(), tag());
-      embedded_vertices.push_back(v);
+      embedded_vertices.insert(v);
     }
   }
 

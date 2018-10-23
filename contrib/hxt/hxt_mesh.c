@@ -77,6 +77,18 @@ HXTStatus  hxtMeshCreate ( HXTContext* ctx, HXTMesh** mesh) {
   (*mesh)->lines.num = 0;
   (*mesh)->lines.size = 0;
 
+  // boundary representation
+  (*mesh)->brep.numVolumes = 0;
+  (*mesh)->brep.numSurfacesPerVolume = NULL;
+  (*mesh)->brep.surfacesPerVolume = NULL;
+  (*mesh)->brep.numSurfaces = 0;
+  (*mesh)->brep.numCurvesPerSurface = NULL;
+  (*mesh)->brep.curvesPerSurface = NULL;
+  (*mesh)->brep.numCurves = 0;
+  (*mesh)->brep.endPointsOfCurves = NULL;
+  (*mesh)->brep.numPoints = 0;
+  (*mesh)->brep.points = NULL;
+
   return HXT_STATUS_OK;
 }
 
@@ -126,6 +138,14 @@ HXTStatus hxtMeshDelete ( HXTMesh** mesh) {
   // lines
   HXT_CHECK( hxtAlignedFree(&(*mesh)->lines.node) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->lines.colors) );
+
+  // boundary representation
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->brep.numSurfacesPerVolume) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->brep.surfacesPerVolume) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->brep.numCurvesPerSurface) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->brep.curvesPerSurface) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->brep.endPointsOfCurves) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->brep.points) );
 
 
   HXT_CHECK( hxtFree(mesh) );
@@ -450,7 +470,7 @@ HXTStatus  hxtMeshWriteGmsh  ( HXTMesh* mesh , const char *filename) {
     if(mesh->tetrahedra.node[i*4 + 3]!=UINT32_MAX){
       uint16_t myColor = mesh->tetrahedra.colors ? mesh->tetrahedra.colors[i] : 0;
       // color = UINT16_MAX --> outside the domain
-      if (myColor != UINT16_MAX)
+      //      if (myColor != UINT16_MAX)
         ++index;
     }
   }
@@ -498,7 +518,7 @@ HXTStatus  hxtMeshWriteGmsh  ( HXTMesh* mesh , const char *filename) {
     for (i=0; i<mesh->tetrahedra.num; i++){
       if(mesh->tetrahedra.node[i*4 + 3]!=UINT32_MAX){
         uint16_t myColor = mesh->tetrahedra.colors ? mesh->tetrahedra.colors[i] : 0;
-        if (myColor != UINT16_MAX)
+	//        if (myColor != UINT16_MAX)
           fprintf(file,"%lu %u 2 0 %u %u %u %u %u\n", ++index,TETID,
               myColor,
               mesh->tetrahedra.node[i*4]+1,

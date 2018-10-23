@@ -22,9 +22,6 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 //
-// Please report all bugs and problems to the public mailing list
-// <gmsh@onelab.info>.
-//
 // Contributor: Thomas Toulorge
 
 #ifndef _METAEL_H_
@@ -68,7 +65,7 @@ private:
     metaInfoType(int type, int order);
   };
   static std::map<int, metaInfoType> _metaInfo;
-  
+
   const metaInfoType &_mInfo;
   std::vector<MVertex*> _metaVert;
   MElement *_metaEl, *_metaEl0;

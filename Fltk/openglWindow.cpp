@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include <stdio.h>
 #include <string.h>
@@ -91,6 +91,21 @@ openglWindow::~openglWindow()
 {
   delete _ctx;
   if(Nautilus) delete Nautilus;
+}
+
+void openglWindow::show()
+{
+  Fl_Gl_Window::show();
+  /* You can uncomment this if you cannot use the very latest FLTK 1.4 version
+     patched for macOS mojave
+
+#if defined(__APPLE__) && (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_14)
+  Msg::Info("OpenGL hack for macOS 10.14: see http://www.fltk.org/str.php?L3496");
+  resize(x(), y(), w()+1, h());
+  resize(x(), y(), w()-1, h());
+#endif
+
+  */
 }
 
 void openglWindow::_drawScreenMessage()

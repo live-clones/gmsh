@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #ifndef _OPENGL_WINDOW_H_
 #define _OPENGL_WINDOW_H_
@@ -55,6 +55,7 @@ public:
   std::string screenMessage[2];
   openglWindow(int x, int y, int w, int h);
   ~openglWindow();
+  void show();
   drawContext *getDrawContext() { return _ctx; }
   char selectEntity(int type, std::vector<GVertex *> &vertices,
                     std::vector<GEdge *> &edges, std::vector<GFace *> &faces,

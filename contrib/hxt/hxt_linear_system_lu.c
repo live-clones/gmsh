@@ -294,7 +294,8 @@ HXTStatus hxtLinearSystemLUCreate(HXTLinearSystemLU **pSystem, int nElements, in
   }
   free(nodeRowStart);
   free(nodeRowEnd);
-  system->M = malloc(sizeof(double)*totalSize); // FIXME Gmsh instead of _mm_malloc
+  //system->M = _mm_malloc(sizeof(double)*totalSize, PADDING*8);
+  system->M = malloc(sizeof(double)*totalSize); // FIXME Gmsh
   system->rows = malloc(sizeof(double*)*system->n);
   for (int i = 0; i < totalSize; ++i)
     system->M[i] = 0;
@@ -306,7 +307,8 @@ HXTStatus hxtLinearSystemLUCreate(HXTLinearSystemLU **pSystem, int nElements, in
     totalSize += system->rowEnd[i]-system->rowStart[i]+(paddedStart-start);
     system->rows[i] = system->M + paddedStart;
   }
-  system->x = malloc(sizeof(double)*system->n); // FIXME Gmsh instead of _mm_malloc
+  //system->x = _mm_malloc(sizeof(double)*system->n, PADDING*8);
+  system->x = malloc(sizeof(double)*system->n); // FIXME Gmsh
   return HXT_STATUS_OK;
 }
 

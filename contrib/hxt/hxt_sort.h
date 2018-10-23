@@ -22,6 +22,10 @@ Author: Célestin Marot (celestin.marot@uclouvain.be)                        */
 
 #include "hxt_tools.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // sorting function already defined
 typedef struct{
   uint64_t v[2];
@@ -82,7 +86,7 @@ static inline unsigned u64_log2(uint64_t v) {
 
 #ifndef HXT_SORT_SEQUENTIAL_LIMIT
 // below this number, launching OpenMP threads is unnecessary
-#define HXT_SORT_SEQUENTIAL_LIMIT 131072
+#define HXT_SORT_SEQUENTIAL_LIMIT 32768
 #endif
 
 
@@ -92,7 +96,7 @@ do{                                                                             
   if(_copyNb<64){                                                                        \
     INSERTION_SORT32(HXTSORT_TYPE, ARRAY, _copyNb, GET_KEY, USER_DATA);                  \
   }                                                                                      \
-  else if(_copyNb < HXT_SORT_SEQUENTIAL_LIMIT){                                          \
+  else if(_copyNb < HXT_SORT_SEQUENTIAL_LIMIT || omp_get_max_threads()<=1){              \
     LSB32(HXTSORT_TYPE, ARRAY, _copyNb, MAX, GET_KEY, USER_DATA);                        \
   }                                                                                      \
   else {                                                                                 \
@@ -108,7 +112,7 @@ do{                                                                             
   if(_copyNb < 64){                                                                      \
     INSERTION_SORT64(HXTSORT_TYPE, ARRAY, _copyNb, GET_KEY, USER_DATA);                  \
   }                                                                                      \
-  else if(_copyNb < HXT_SORT_SEQUENTIAL_LIMIT) {                                         \
+  else if(_copyNb < HXT_SORT_SEQUENTIAL_LIMIT || omp_get_max_threads()<=1) {             \
     LSB64(HXTSORT_TYPE, ARRAY, _copyNb, _copyMax, GET_KEY, USER_DATA);                   \
   }                                                                                      \
   else {                                                                                 \
@@ -123,7 +127,7 @@ do{                                                                             
   if(_copyNb < 64) {                                                                     \
     INSERTION_SORT32(HXTSORT_TYPE, ARRAY, _copyNb, GET_KEY, USER_DATA);                  \
   }                                                                                      \
-  else if(_copyNb < HXT_SORT_SEQUENTIAL_LIMIT) {                                         \
+  else if(_copyNb < HXT_SORT_SEQUENTIAL_LIMIT || omp_get_max_threads()<=1) {             \
     LSB32(HXTSORT_TYPE, ARRAY, _copyNb, MAX, GET_KEY, USER_DATA);                        \
   }                                                                                      \
   else {                                                                                 \
@@ -139,7 +143,7 @@ do{                                                                             
   if(_copyNb < 64) {                                                                     \
     INSERTION_SORT64(HXTSORT_TYPE, ARRAY, _copyNb, GET_KEY, USER_DATA);                  \
   }                                                                                      \
-  else if(_copyNb < HXT_SORT_SEQUENTIAL_LIMIT) {                                         \
+  else if(_copyNb < HXT_SORT_SEQUENTIAL_LIMIT || omp_get_max_threads()<=1) {             \
     LSB64(HXTSORT_TYPE, ARRAY, _copyNb, _copyMax, GET_KEY, USER_DATA);                   \
   }                                                                                      \
   else if(_copyMax < UINT64_MAX/2048/SIMD_ALIGN) {                                       \
@@ -285,11 +289,12 @@ do{                                                                             
   uint ## BASE ## _t (*_getKey)(HXTSORT_TYPE*, const void*)=GET_KEY; /*verify prototype*/\
   if(0) {_getKey(_copyAr1, _userData);} /* this is just to suppress warning... */        \
                                                                                          \
-  int nthreads = omp_get_max_threads();                                                  \
+  int nthreads = _copyN/8192 + 1;                                                        \
+  nthreads = nthreads>omp_get_max_threads()?omp_get_max_threads():nthreads;              \
   uint64_t* h_all, *h_tot;                                                               \
   h_all = (uint64_t*) HXTSORT_MEMALIGN(2048*(nthreads+1)*sizeof(uint64_t));              \
                                                                                          \
-  _HXTSORT_PRAGMA(omp parallel)                                                          \
+  _HXTSORT_PRAGMA(omp parallel num_threads(nthreads))                                    \
   {                                                                                      \
     _HXTSORT_PRAGMA(omp single)                                                          \
     {                                                                                    \
@@ -388,11 +393,12 @@ do{                                                                             
   uint32_t (*_getKey)(HXTSORT_TYPE*, const void*) = GET_KEY; /* verify prototype */      \
   if(0) {_getKey(_copyAr1, _userData);} /* this is just to suppress warning... */        \
                                                                                          \
-  int nthreads = omp_get_max_threads();                                                  \
+  int nthreads = _copyN/8192 + 1;                                                        \
+  nthreads = nthreads>omp_get_max_threads()?omp_get_max_threads():nthreads;              \
   uint64_t* h_all, *h_tot;                                                               \
   HXT_CHECK( hxtAlignedMalloc(&h_all, (2048*(nthreads+1)+1)*sizeof(uint64_t)) );         \
                                                                                          \
-  _HXTSORT_PRAGMA(omp parallel)                                                          \
+  _HXTSORT_PRAGMA(omp parallel num_threads(nthreads))                                    \
   {                                                                                      \
     _HXTSORT_PRAGMA(omp single)                                                          \
     {                                                                                    \
@@ -511,11 +517,12 @@ do{                                                                             
   uint64_t (*_getKey)(HXTSORT_TYPE*, const void*) = GET_KEY; /* verify prototype */      \
   if(0) {_getKey(_copyAr1, _userData);} /* this is just to suppress warning... */        \
                                                                                          \
-  int nthreads = omp_get_max_threads();                                                  \
+  int nthreads = _copyN/8192 + 1;                                                        \
+  nthreads = nthreads>omp_get_max_threads()?omp_get_max_threads():nthreads;              \
   uint64_t* h_all, *h_tot;                                                               \
   HXT_CHECK( hxtAlignedMalloc(&h_all, (2048*(nthreads+1)+1)*sizeof(uint64_t)) );         \
                                                                                          \
-  _HXTSORT_PRAGMA(omp parallel)                                                          \
+  _HXTSORT_PRAGMA(omp parallel num_threads(nthreads))                                    \
   {                                                                                      \
     _HXTSORT_PRAGMA(omp single)                                                          \
     {                                                                                    \
@@ -623,11 +630,12 @@ do{                                                                             
   uint64_t (*_getKey)(HXTSORT_TYPE*, const void*) = GET_KEY; /* verify prototype */      \
   if(0) {_getKey(_copyAr1, _userData);} /* this is just to suppress warning... */        \
                                                                                          \
-  int nthreads = omp_get_max_threads();                                                  \
+  int nthreads = _copyN/8192 + 1;                                                        \
+  nthreads = nthreads>omp_get_max_threads()?omp_get_max_threads():nthreads;              \
   uint64_t* h_all, *h_tot;                                                               \
   HXT_CHECK( hxtAlignedMalloc(&h_all, (2048*(nthreads+1)+1)*sizeof(uint64_t)) );         \
                                                                                          \
-  _HXTSORT_PRAGMA(omp parallel)                                                          \
+  _HXTSORT_PRAGMA(omp parallel num_threads(nthreads))                                    \
   {                                                                                      \
     _HXTSORT_PRAGMA(omp single)                                                          \
     {                                                                                    \
@@ -710,5 +718,8 @@ do{                                                                             
   HXT_CHECK( hxtAlignedFree(&_copyAr2) );                                                \
 }while(0)
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

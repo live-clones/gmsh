@@ -1,5 +1,9 @@
-4.0.2: added support for creating MED files with specific MED (minor) version;
-small bug fixes.
+4.0.4 (October 19, 2018): fix physical names regression in 4.0.3.
+
+4.0.3 (October 18, 2018): bug fixes.
+
+4.0.2 (September 26, 2018): added support for creating MED files with specific
+MED (minor) version; small bug fixes.
 
 4.0.1 (September 7, 2018): renumber mesh nodes/elements by default; new
 SendToServer command for nodal views; added color and visibility handling in

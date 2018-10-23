@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include <stack>
 #include <cmath>
@@ -699,10 +699,10 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
 
   e->oppositeof(op);
 
-  int CHECK1 = -1, CHECK2 = -1;
+  int CHECK1 = -1, CHECK2 = 32;
 
   if(p1->iD == CHECK1 && p2->iD == CHECK2)
-    printf("coucou %d %d %d %d\n", p1->iD, p2->iD, op[0]->iD, op[1]->iD);
+    printf("splitting edge %d %d opp %d %d new %d\n", p1->iD, p2->iD, op[0]->iD, op[1]->iD,mid->iD);
 
   double ori0 = fabs(surface_triangle_param(p2, p1, op[0])) +
                 fabs(surface_triangle_param(p2, p1, op[1]));
@@ -924,6 +924,29 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
                                          BDS_Point *_op3, BDS_Point *_oq1,
                                          BDS_Point *_oq2, BDS_Point *_oq3) const
 {
+  // Check if new edge is not on a seam or degenerated
+  BDS_Point *p1 = 0, *p2 = 0;
+  if (_op1 != _oq1 && _op1 != _oq2 && _op1 != _oq3){
+    p1 = _op2;
+    p2 = _op3;
+  }
+  else if (_op2 != _oq1 && _op2 != _oq2 && _op2 != _oq3){
+    p1 = _op1;
+    p2 = _op3;
+  }
+  else if (_op3 != _oq1 && _op3 != _oq2 && _op3 != _oq3){
+    p1 = _op1;
+    p2 = _op2;
+  }
+  else {
+    Msg::Warning("Unable to detect the new edge in BDS_SwapEdgeTestQuality\n");
+  }
+
+  if (p1 && p2){
+    if (p1->degenerated && p2->degenerated) return false;
+    if (p1->_periodicCounterpart && p2->_periodicCounterpart) return false;
+  }
+
   if(!testQuality) return true;
 
   double qa1 = qmTriangle::gamma(_p1, _p2, _p3);
@@ -1374,7 +1397,8 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
 
 bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
 {
- //  printf("coucou\n");
+  //  return true;
+  //  printf("coucou\n");
  //  if(!p->config_modified) return false;
  if(p->g && p->g->classif_degree <= 1) return false;
  if(p->g && p->g->classif_tag < 0) {
@@ -1575,8 +1599,8 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
   eit = p->edges.begin();
 
   if(eit == itede) {
-    Msg::Debug("Hidden bug ... I should have deleted a point but I still do "
-               "not know why it segfault when I do it :-) ");
+    //    Msg::Debug("Hidden bug ... I should have deleted a point but I still do "
+    //               "not know why it segfault when I do it :-) ");
     return false;
   }
 

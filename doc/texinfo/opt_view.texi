@@ -127,7 +127,7 @@ Default value: @code{"1*0xFFFF"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AbscissaRangeType
-Ascissa scale range type (1=default, 2=custom)@*
+Ascissa scale range type (1: default, 2: custom)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -157,7 +157,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Axes
-Axes (0=none, 1=simple axes, 2=box, 3=full grid, 4=open grid, 5=ruler)@*
+Axes (0: none, 1: simple axes, 2: box, 3: full grid, 4: open grid, 5: ruler)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -217,12 +217,12 @@ Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Boundary
-Draw the `N minus b'-dimensional boundary of the element (N=element dimension, b=option value)@*
+Draw the `N minus b'-dimensional boundary of the element (N: element dimension, b: option value)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.CenterGlyphs
-Center glyphs (arrows, numbers, etc.)? (0=left, 1=centered, 2=right)@*
+Center glyphs (arrows, numbers, etc.)? (0: left, 1: centered, 2: right)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -427,7 +427,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ExternalView
-Index of the view used to color vector fields (-1=self)@*
+Index of the view used to color vector fields (-1: self)@*
 Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -447,12 +447,12 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.GeneralizedRaiseView
-Index of the view used for generalized raise (-1=self)@*
+Index of the view used for generalized raise (-1: self)@*
 Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.GlyphLocation
-Glyph (arrow, number, etc.) location (1=center of gravity, 2=node)@*
+Glyph (arrow, number, etc.) location (1: center of gravity, 2: node)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -462,7 +462,7 @@ Default value: @code{200}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.IntervalsType
-Type of interval display (1=iso, 2=continuous, 3=discrete, 4=numeric)@*
+Type of interval display (1: iso, 2: continuous, 3: discrete, 4: numeric)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -617,7 +617,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item View.RangeType
-Value scale range type (1=default, 2=custom, 3=per time step)@*
+Value scale range type (1: default, 2: custom, 3: per time step)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -627,12 +627,12 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.SaturateValues
-Saturate the view values to custom min and max (1=true, 0=false)@*
+Saturate the view values to custom min and max (1: true, 0: false)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ScaleType
-Value scale type (1=linear, 2=logarithmic, 3=double logarithmic)@*
+Value scale type (1: linear, 2: logarithmic, 3: double logarithmic)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -647,7 +647,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ShowTime
-Time display mode (0=none, 1=time series, 2=harmonic data, 3=automatic, 4=step data, 5=multi-step data, 6=real eigenvalues, 7=complex eigenvalues)@*
+Time display mode (0: none, 1: time series, 2: harmonic data, 3: automatic, 4: step data, 5: multi-step data, 6: real eigenvalues, 7: complex eigenvalues)@*
 Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -732,7 +732,7 @@ Default value: @code{1}@*
 Saved in: @code{-}
 
 @item View.Type
-Type of plot (1=3D, 2=2D space, 3=2D time, 4=2D)@*
+Type of plot (1: 3D, 2: 2D space, 3: 2D time, 4: 2D)@*
 Default value: @code{1}@*
 Saved in: @code{-}
 
@@ -742,7 +742,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.VectorType
-Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement, 6=comet)@*
+Vector display type (1: segment, 2: arrow, 3: pyramid, 4: 3D arrow, 5: displacement, 6: comet)@*
 Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include <sstream>
 #include "GmshConfig.h"
@@ -503,7 +503,7 @@ GMSH_API int gmsh::model::addDiscreteEntity(const int dim, const int tag,
   }
   int outTag = tag;
   if(outTag < 0) {
-    outTag = GModel::current()->getMaxElementaryNumber(dim);
+    outTag = GModel::current()->getMaxElementaryNumber(dim)+1;
   }
   GEntity *e = GModel::current()->getEntityByTag(dim, outTag);
   if(e) {
@@ -546,6 +546,27 @@ GMSH_API void gmsh::model::removeEntities(const vectorpair &dimTags,
   }
   GModel::current()->remove(dimTags, recursive);
 }
+
+GMSH_API void gmsh::model::removePhysicalGroups(const vectorpair &dimTags)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  if(dimTags.empty()){
+    GModel::current()->getGEOInternals()->resetPhysicalGroups();
+    GModel::current()->removePhysicalGroups();
+  }
+  else{
+    // FIXME:
+    // - move the physical code from GEO factory to GModel:
+    //    if a mesh is loaded the GEO sync will re-create the group in GModel...
+    // - rewrite the unerlying code: it's slow
+    for(unsigned int i = 0; i < dimTags.size(); i++)
+      GModel::current()->removePhysicalGroup(dimTags[i].first, dimTags[i].second);
+  }
+}
+
+// FIXME: add a "removePhysicalName" function
 
 GMSH_API void gmsh::model::getType(const int dim, const int tag,
                                    std::string &entityType)

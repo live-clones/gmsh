@@ -200,7 +200,7 @@ bool tetgenbehavior::parse_commandline(int argc, char **argv)
             k++;
           }
           workstring[k] = '\0';
-          brio_threshold = (int) strtol(workstring, (char **) &workstring, 0);
+          brio_threshold = (int) strtol(workstring, (char**) NULL, 0);
         }
         if ((argv[i][j + 1] == '/') || (argv[i][j + 1] == ',')) {
           j++;
@@ -229,7 +229,7 @@ bool tetgenbehavior::parse_commandline(int argc, char **argv)
               k++;
             }
             workstring[k] = '\0';
-            hilbert_limit = (int) strtol(workstring, (char **) &workstring, 0);
+            hilbert_limit = (int) strtol(workstring, (char **) NULL, 0);
           }
         }
         if ((argv[i][j + 1] == '/') || (argv[i][j + 1] == ',')) {
@@ -8473,7 +8473,11 @@ void tetgenmesh::randomsample(point searchpt,triface *searchtet)
 enum tetgenmesh::locateresult 
   tetgenmesh::locate(point searchpt, triface* searchtet, int chkencflag)
 {
+#ifndef NDEBUG
+  point torg=NULL, tdest=NULL, tapex=NULL, toppo;
+#else
   point torg, tdest, tapex, toppo;
+#endif
   enum {ORGMOVE, DESTMOVE, APEXMOVE} nextmove;
   REAL ori, oriorg, oridest, oriapex;
   enum locateresult loc = OUTSIDE;

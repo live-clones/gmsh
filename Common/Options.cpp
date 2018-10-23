@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include <string.h>
 #include <stdlib.h>
@@ -5831,6 +5831,13 @@ double opt_mesh_partition_tri_weight(OPT_ARGS_NUM)
   return CTX::instance()->mesh.partitionTriWeight;
 }
 
+double opt_mesh_partition_line_weight(OPT_ARGS_NUM)
+{
+  if (action & GMSH_SET)
+    CTX::instance()->mesh.partitionLinWeight = (int) val;
+  return CTX::instance()->mesh.partitionLinWeight;
+}
+
 double opt_mesh_partition_create_physicals(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
@@ -6082,6 +6089,9 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
     switch (CTX::instance()->mesh.algo3d) {
+    case ALGO_3D_HXT:
+      FlGui::instance()->options->mesh.choice[3]->value(6);
+      break;
     case ALGO_3D_RTREE:
       FlGui::instance()->options->mesh.choice[3]->value(5);
       break;

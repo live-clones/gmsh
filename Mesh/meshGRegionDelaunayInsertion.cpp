@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include <set>
 #include <map>
@@ -1356,8 +1356,19 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
                         // has been found
           Msg::Info("Found region %d", myGRegion->tag());
           for(std::list<MTet4 *>::iterator it2 = theRegion.begin();
-              it2 != theRegion.end(); ++it2)
+              it2 != theRegion.end(); ++it2){
             (*it2)->setOnWhat(myGRegion);
+
+            // Make sure that Steiner points will end up in the right region
+            std::vector<MVertex *> vertices;
+            (*it2)->tet()->getVertices(vertices);
+            for(std::vector<MVertex *>::iterator itv = vertices.begin(); itv != vertices.end(); ++itv){
+              if ((*itv)->onWhat() != NULL && (*itv)->onWhat()->dim() == 3 && (*itv)->onWhat() != myGRegion){
+                myGRegion->addMeshVertex((*itv));
+                (*itv)->setEntity(myGRegion);
+              }
+            }
+          }
         }
         else {
           // the tets are in the void

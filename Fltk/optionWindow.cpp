@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include "GmshConfig.h"
 #if !defined(HAVE_NO_STDINT_H)
@@ -573,8 +573,11 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                     ALGO_3D_FRONTAL_HEX :
                     (o->mesh.choice[3]->value() == 4) ?
                     ALGO_3D_MMG3D :
+                    (o->mesh.choice[3]->value() == 6) ?
+                    ALGO_3D_HXT :
                     (o->mesh.choice[3]->value() == 5) ? ALGO_3D_RTREE :
-                                                        ALGO_3D_DELAUNAY);
+                                                        ALGO_3D_DELAUNAY
+		  );
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
   opt_mesh_color_carousel(0, GMSH_SET, o->mesh.choice[4]->value());
@@ -2242,6 +2245,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Frontal Hex (experimental)", 0, 0, 0},
         {"MMG3D (experimental)", 0, 0, 0},
         {"R-tree (experimental)", 0, 0, 0},
+        {"HXT", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_recombination_algo[] = {

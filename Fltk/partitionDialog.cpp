@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 //
 // Contributor(s):
 //   Stephen Guzik
@@ -348,7 +348,7 @@ void partition_dialog()
       Fl_Value_Input *const o =
         new Fl_Value_Input(WB, y, 2 * BB / 3, BH, "Triangle");
       dlg.inputTriWeight = o;
-      o->minimum(1);
+      o->minimum(-1);
       o->maximum(std::numeric_limits<int>::max());
       o->step(1);
       o->align(FL_ALIGN_RIGHT);
@@ -357,7 +357,7 @@ void partition_dialog()
       Fl_Value_Input *const o = new Fl_Value_Input(
         2 * WB + (w / 3 - WB), y, 2 * BB / 3, BH, "Tetrahedron");
       dlg.inputTetWeight = o;
-      o->minimum(1);
+      o->minimum(-1);
       o->maximum(std::numeric_limits<int>::max());
       o->step(1);
       o->align(FL_ALIGN_RIGHT);
@@ -366,7 +366,7 @@ void partition_dialog()
       Fl_Value_Input *const o = new Fl_Value_Input(3 * WB + 2 * (w / 3 - WB), y,
                                                    2 * BB / 3, BH, "Prism");
       dlg.inputPriWeight = o;
-      o->minimum(1);
+      o->minimum(-1);
       o->maximum(std::numeric_limits<int>::max());
       o->step(1);
       o->align(FL_ALIGN_RIGHT);
@@ -377,7 +377,7 @@ void partition_dialog()
       Fl_Value_Input *const o =
         new Fl_Value_Input(WB, y, 2 * BB / 3, BH, "Quadrangle");
       dlg.inputQuaWeight = o;
-      o->minimum(1);
+      o->minimum(-1);
       o->maximum(std::numeric_limits<int>::max());
       o->step(1);
       o->align(FL_ALIGN_RIGHT);
@@ -386,7 +386,7 @@ void partition_dialog()
       Fl_Value_Input *const o = new Fl_Value_Input(
         2 * WB + (w / 3 - WB), y, 2 * BB / 3, BH, "Hexahedron");
       dlg.inputHexWeight = o;
-      o->minimum(1);
+      o->minimum(-1);
       o->maximum(std::numeric_limits<int>::max());
       o->step(1);
       o->align(FL_ALIGN_RIGHT);
@@ -395,7 +395,7 @@ void partition_dialog()
       Fl_Value_Input *const o = new Fl_Value_Input(3 * WB + 2 * (w / 3 - WB), y,
                                                    2 * BB / 3, BH, "Pyramid");
       dlg.inputPyrWeight = o;
-      o->minimum(1);
+      o->minimum(-1);
       o->maximum(std::numeric_limits<int>::max());
       o->step(1);
       o->align(FL_ALIGN_RIGHT);

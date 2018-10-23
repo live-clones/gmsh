@@ -1260,7 +1260,7 @@ public:
 
   // Comment: These three functions are implemented directly in:
   //   gmsh_wrk/Mesh/meshGRegionBoundaryRecovery.cpp
-  bool reconstructmesh(void *);
+  int reconstructmesh(void *);
   void outsurfacemesh(const char* mfilename);
   void outmesh2medit(const char* mfilename);
 
@@ -1501,6 +1501,7 @@ static selfint_event sevent;
 inline void terminatetetgen(tetgenmesh *m, int x)
 {
 #ifdef TETLIBRARY
+  (void) m; // parameter is unused (suppress warning)
   throw x;
 #else
   switch (x) {
@@ -1566,7 +1567,7 @@ inline void tetgenmesh::decode(tetrahedron ptr, triface& t) {
 
 inline void tetgenmesh::bond(triface& t1, triface& t2) {
   //  printf("%d %d %d\n",t1.ver,t2.ver,bondtbl[t1.ver][t2.ver]);
-  t1.tet[t1.ver & 3] = encode2(t2.tet, bondtbl[t1.ver][t2.ver]);
+  t1.tet[t1.ver & 3] = encode2(t2.tet, bondtbl[t1.ver][t2.ver]); // bondtbl[i][j] = (i/4*4 + j)%12
   t2.tet[t2.ver & 3] = encode2(t1.tet, bondtbl[t2.ver][t1.ver]);
 }
 

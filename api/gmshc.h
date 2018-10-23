@@ -2,7 +2,7 @@
  * Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
  *
  * See the LICENSE.txt file for license information. Please report all
- * bugs and problems to the public mailing list <gmsh@onelab.info>.
+ * issues on https://gitlab.onelab.info/gmsh/gmsh/issues
  */
 
 #ifndef _GMSHC_H_
@@ -209,6 +209,11 @@ GMSH_API int gmshModelAddDiscreteEntity(const int dim,
 GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n,
                                       const int recursive,
                                       int * ierr);
+
+/* Remove the physical groups `dimTags' of the current model. If `dimTags' is
+ * empty, remove all groups. */
+GMSH_API void gmshModelRemovePhysicalGroups(int * dimTags, size_t dimTags_n,
+                                            int * ierr);
 
 /* Get the type of the entity of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelGetType(const int dim,

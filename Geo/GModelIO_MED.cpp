@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include <string>
 #include "GmshConfig.h"
@@ -542,7 +542,8 @@ static void writeElementsMED(med_idt &fid, char *meshName,
 int GModel::writeMED(const std::string &name, bool saveAll,
                      double scalingFactor)
 {
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM == 3) && (MED_MINOR_NUM >= 3)
+  // MEDfileVersionOpen actually appeared in MED 3.2.1
   med_int major = MED_MAJOR_NUM, minor = MED_MINOR_NUM, release = MED_RELEASE_NUM;
   if(CTX::instance()->mesh.medFileMinorVersion >= 0){
     minor = (int)CTX::instance()->mesh.medFileMinorVersion;

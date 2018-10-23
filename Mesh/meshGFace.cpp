@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include <limits>
 #include <sstream>
@@ -1065,7 +1065,10 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   }
 
   while(ite != edges.end()) {
-    if((*ite)->isSeam(gf)) return false;
+    if((*ite)->isSeam(gf)) {
+      if(fdeb != NULL) fclose(fdeb);
+      return false;
+    }
     if(!(*ite)->isMeshDegenerated()) {
       for(unsigned int i = 0; i < (*ite)->lines.size(); i++) {
         MVertex *v1 = (*ite)->lines[i]->getVertex(0);
@@ -1122,8 +1125,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   }
 
   // add embedded vertices
-  std::list<GVertex *> emb_vertx = gf->embeddedVertices();
-  std::list<GVertex *>::iterator itvx = emb_vertx.begin();
+  std::set<GVertex *> emb_vertx = gf->embeddedVertices();
+  std::set<GVertex *>::iterator itvx = emb_vertx.begin();
   while(itvx != emb_vertx.end()) {
     all_vertices.insert((*itvx)->mesh_vertices.begin(),
                         (*itvx)->mesh_vertices.end());
@@ -2070,8 +2073,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
 
     // Embedded Vertices
     // add embedded vertices
-    std::list<GVertex *> emb_vertx = gf->embeddedVertices();
-    std::list<GVertex *>::iterator itvx = emb_vertx.begin();
+    std::set<GVertex *> emb_vertx = gf->embeddedVertices();
+    std::set<GVertex *>::iterator itvx = emb_vertx.begin();
 
     std::map<MVertex *, std::set<BDS_Point *> > invertedRecoverMap;
     for(std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
@@ -2371,7 +2374,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
   }
 
 
-  //  std::vector<EdgeToRecover> edgesNotRecovered;
+  std::vector<EdgeToRecover> edgesNotRecovered;
 
   for(unsigned int i = 0; i < edgeLoops_BDS.size(); i++) {
     std::vector<BDS_Point *> &edgeLoop_BDS = edgeLoops_BDS[i];
@@ -2380,6 +2383,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
         edgeLoop_BDS[j]->iD, edgeLoop_BDS[(j + 1) % edgeLoop_BDS.size()]->iD,
         _fatallyFailed);
       if(!e) {
+
 	//	edgesNotRecovered.push_back(EdgeToRecover(edgeLoop_BDS[j]->iD,
 	//						  edgeLoop_BDS[(j + 1) % edgeLoop_BDS.size()]->iD));
 
@@ -2394,6 +2398,13 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
     }
   }
 
+  if(edgesNotRecovered.size()) {
+    if(repairSelfIntersecting1dMesh){
+    }
+  }
+
+
+  
   // look for a triangle that has a negative node and recursively tag all
   // exterior triangles
   {
@@ -2489,6 +2500,13 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
     outputScalarField(m->triangles, name, 0, gf);
     sprintf(name, "surface%d-recovered-param.pos", gf->tag());
     outputScalarField(m->triangles, name, 1, gf);
+  }
+  
+  {
+    // Call this function to untangle elements in Cartesian space
+    int nb_swap;
+    Msg::Debug("Delaunizing the initial mesh");
+    delaunayizeBDS(gf, *m, nb_swap);
   }
 
   // start mesh generation for periodic face

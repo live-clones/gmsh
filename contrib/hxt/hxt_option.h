@@ -117,10 +117,11 @@ typedef struct HXTOptStruct{
   const char* const argName;
   const ARG_REQUIREMENT argRequirement;
   const int argType;
-  
-  int64_t     integer;
-  double      real;
-  const char* string;
+//  struct {
+    int64_t     integer;
+    double      real;
+    const char* string;
+//  }
 }HXTOpt;
 
 

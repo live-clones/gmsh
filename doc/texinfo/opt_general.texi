@@ -158,7 +158,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"4.0.2-git-a93cf0f13"}@*
+Default value: @code{"4.0.3-git-7e4030d42"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
@@ -192,7 +192,7 @@ Default value: @code{0.02}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Axes
-Axes (0=none, 1=simple axes, 2=box, 3=full grid, 4=open grid, 5=ruler)@*
+Axes (0: none, 1: simple axes, 2: box, 3: full grid, 4: open grid, 5: ruler)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -287,7 +287,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.BackgroundGradient
-Draw background gradient (0=none, 1=vertical, 2=horizontal, 3=radial)@*
+Draw background gradient (0: none, 1: vertical, 2: horizontal, 3: radial)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -497,7 +497,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.ColorScheme
-Default color scheme for graphics (0=dark, 1=light, 2=grayscale, 3=reverse)@*
+Default color scheme for graphics (0: dark, 1: light, 2: grayscale, 3: reverse)@*
 Default value: @code{1}@*
 Saved in: @code{General.SessionFileName}
 
@@ -657,7 +657,7 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.InitialModule
-Module launched on startup (0=automatic, 1=geometry, 2=mesh, 3=solver, 4=post-processing) @*
+Module launched on startup (0: automatic, 1: geometry, 2: mesh, 3: solver, 4: post-processing) @*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -932,7 +932,7 @@ Default value: @code{150}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.Orthographic
-Orthographic projection mode (0=perspective projection)@*
+Orthographic projection mode (0: perspective projection)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -1167,7 +1167,7 @@ Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Verbosity
-Level of information printed during processing (0=no information)@*
+Level of information printed during processing (0: no information)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 

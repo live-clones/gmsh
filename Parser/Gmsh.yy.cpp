@@ -1256,7 +1256,7 @@ char *gmsh_yytext;
 // Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 #include <algorithm>
 #include <stdio.h>
@@ -3990,6 +3990,12 @@ void skip(const char *skip, const char *until)
         if     (c_next ==  '*') skipcomments();
         else if(c_next ==  '/') skipline();
         else unput(c_next);
+      }
+      if(chars[0] == '"'){
+        parsestring('"');
+      }
+      if(chars[0] == '\''){
+        parsestring('\'');
       }
       if(!c_previous || !is_alpha(c_previous)){
         if(chars[0] == until[0]) break;

@@ -1,5 +1,5 @@
 // #include "hxt_mesh_size.h"
-#include "hxt_tetrahedra.h"
+#include "hxt_tetDelaunay.h"
 // #include "hxt_vertices.h"
 #include "hxt_mesh3d.h"
 #include "predicates.h"
@@ -17,7 +17,8 @@
 
 
 
-HXTStatus hxtComputeMeshSizeFromTrianglesAndLines(HXTMesh* mesh, HXTDelaunayOptions* delOptions) {
+HXTStatus hxtCreateNodalsizeFromTrianglesAndLines(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
+{
 
   HXT_CHECK(hxtAlignedMalloc(&delOptions->nodalSizes,mesh->vertices.num*sizeof(double))); 
   
@@ -63,7 +64,8 @@ HXTStatus hxtComputeMeshSizeFromTrianglesAndLines(HXTMesh* mesh, HXTDelaunayOpti
   return HXT_STATUS_OK;    
 }
 
-HXTStatus hxtComputeMeshSizeFromMesh (HXTMesh* mesh, HXTDelaunayOptions* delOptions) {
+HXTStatus hxtCreateNodalsizeFromMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
+{
 
   HXT_CHECK(hxtAlignedMalloc(&delOptions->nodalSizes,mesh->vertices.num*sizeof(double))); 
   
@@ -92,13 +94,20 @@ HXTStatus hxtComputeMeshSizeFromMesh (HXTMesh* mesh, HXTDelaunayOptions* delOpti
       }
     }
   }
-  return HXT_STATUS_OK;    
+  return HXT_STATUS_OK;
+}
+
+HXTStatus hxtDestroyNodalsize(HXTDelaunayOptions* delOptions)
+{
+  HXT_CHECK( hxtAlignedFree(&delOptions->nodalSizes) );
+  return HXT_STATUS_OK;
 }
 
 
 
 
-HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions){
+HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
+{
 // we assume that the input is a surface mesh
   if (mesh->tetrahedra.num)  
     return HXT_ERROR_MSG(HXT_STATUS_FAILED, "The input mesh should only contain triangles");
@@ -156,78 +165,12 @@ HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions){
 
 
 
-
-
-/***************************************************
- *      Coloring the mesh                          *
- ***************************************************/
-HXTStatus hxtColorMesh(HXTMesh* mesh, uint16_t *nbColors) {
-  uint64_t *stack;
-  HXT_CHECK(hxtMalloc(&stack,mesh->tetrahedra.num*sizeof(uint64_t))); 
-  // now that tetrahedra are flaged, we can proceed to colorize the mesh
-  memset(mesh->tetrahedra.colors, 0, mesh->tetrahedra.size*sizeof(uint16_t));
-
-  uint16_t color = 1;
-  uint16_t colorOut = 0;
-
-  while (1){
-    uint64_t stackSize = 0;
-    uint64_t first = UINT64_MAX;
-
-    for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
-      if(mesh->tetrahedra.colors[i]==0){
-        first = i;
-        break;
-      }
-    }
-
-    if(first==UINT64_MAX)
-      break;
-
-    stack[stackSize++] = first;
-    mesh->tetrahedra.colors[first] = color;
-
-    for (uint64_t i=0; i<stackSize; i++) {
-      uint64_t t = stack[i];
-
-      if (mesh->tetrahedra.node[4*t+3] == HXT_GHOST_VERTEX)
-        colorOut = color;
-
-      for (unsigned j=0; j<4; j++) {
-        if(mesh->tetrahedra.neigh[4*t+j]!=HXT_NO_ADJACENT && isFacetConstrained(mesh, 4*t+j)==0){ // the facet is not a boundary facet
-          uint64_t neigh = mesh->tetrahedra.neigh[4*t+j]/4;
-          if(mesh->tetrahedra.colors[neigh]==0){
-            stack[stackSize++] = neigh;
-            mesh->tetrahedra.colors[neigh] = color;
-          }
-        }
-      }
-    }
-    color++;
-  }
-  *nbColors = color-1; // -1 because we began at one AND the colorout is counted...
-
-  HXT_CHECK( hxtFree(&stack) );
-
-  #pragma omp parallel for
-  for (int i=0;i<mesh->tetrahedra.num;i++){
-    if (mesh->tetrahedra.colors[i] == colorOut){
-      mesh->tetrahedra.colors[i] = UINT16_MAX;
-    }
-    else if(mesh->tetrahedra.colors[i] > colorOut){
-      mesh->tetrahedra.colors[i]--;
-    }
-  }
-
-  return HXT_STATUS_OK;
-}
-
-
 // refine 
 
 
 double hxtTetCircumcenter(double a[3], double b[3], double c[3], double d[3],
-                            double circumcenter[3], double *xi, double *eta, double *zeta){
+                            double circumcenter[3], double *xi, double *eta, double *zeta)
+{
   double xba, yba, zba, xca, yca, zca, xda, yda, zda;
   double balength, calength, dalength;
   double xcrosscd, ycrosscd, zcrosscd;
@@ -326,7 +269,7 @@ HXTStatus hxtRefineTetrahedraOneStep(HXTMesh* mesh, HXTDelaunayOptions* delOptio
     for (uint64_t i=0; i<mesh->tetrahedra.num; i++)
     {
       newVertices[(size_t) 4*i+3] = -1.0;
-      if (mesh->tetrahedra.colors[i] != UINT16_MAX && isTetProcessed(mesh, i)==0){
+      if (mesh->tetrahedra.colors[i] != UINT16_MAX && getProcessedFlag(mesh, i)==0){
         double *a = mesh->vertices.coord + (size_t) 4*mesh->tetrahedra.node[4*i+0];
         double *b = mesh->vertices.coord + (size_t) 4*mesh->tetrahedra.node[4*i+1];
         double *c = mesh->vertices.coord + (size_t) 4*mesh->tetrahedra.node[4*i+2];
@@ -372,7 +315,7 @@ HXTStatus hxtRefineTetrahedraOneStep(HXTMesh* mesh, HXTDelaunayOptions* delOptio
           localAdd++;
         }
 
-        markTetAsProcessed(mesh, i); // we do not need to refine that tetrahedra anymore
+        setProcessedFlag(mesh, i); // we do not need to refine that tetrahedra anymore
       }
     }
 

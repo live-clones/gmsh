@@ -22,9 +22,6 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 //
-// Please report all bugs and problems to the public mailing list
-// <gmsh@onelab.info>.
-//
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
 #include "GmshMessage.h"
@@ -175,8 +172,8 @@ int Mesh::getFreeVertexStartIndex(MVertex* vert)
   if (itVert == _startPC4FV.end()) {
     //    Msg::Fatal("OptHOM Error : cannot find free vertex %d class %d %d (%d free vertices)",vert->getNum(),vert->onWhat()->tag(),vert->onWhat()->dim(),_freeVert.size());
     return -1;
-  }  
-  return itVert->second;    
+  }
+  return itVert->second;
 }
 
 
@@ -259,7 +256,7 @@ void Mesh::elInSize(std::vector<double> &s)
 }
 
 void Mesh::getGEntityPositions(std::vector<SPoint3> &xyz,
-			       std::vector<SPoint3> &uvw) 
+			       std::vector<SPoint3> &uvw)
 {
   xyz.resize(nVert());
   uvw.resize(nFV());

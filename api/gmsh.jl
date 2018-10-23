@@ -1,7 +1,7 @@
 # Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
-# bugs and problems to the public mailing list <gmsh@onelab.info>.
+# issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 # This file defines the Gmsh Julia API (v4.0).
 #
@@ -511,6 +511,21 @@ function removeEntities(dimTags, recursive = false)
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), recursive, ierr)
     ierr[] != 0 && error("gmshModelRemoveEntities returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
+
+Remove the physical groups `dimTags` of the current model. If `dimTags` is
+empty, remove all groups.
+"""
+function removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
+    ierr = Ref{Cint}()
+    ccall((:gmshModelRemovePhysicalGroups, gmsh.lib), Nothing,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}),
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), ierr)
+    ierr[] != 0 && error("gmshModelRemovePhysicalGroups returned non-zero error code: $(ierr[])")
     return nothing
 end
 

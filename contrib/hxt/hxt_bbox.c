@@ -82,3 +82,22 @@ HXTStatus hxtBboxAdd(HXTBbox* bbox, double* coord, const uint32_t n){
         return HXT_STATUS_OK;
 }
 
+
+HXTStatus hxtBboxMerge(HXTBbox* bbox1, HXTBbox* bbox2, HXTBbox* bboxResult)
+{
+      unsigned i;
+      for (i=0; i<3; i++)
+      {
+              if(bbox1->min[i]<bbox2->min[i])
+                      bboxResult->min[i] = bbox1->min[i];
+              else
+                      bboxResult->min[i] = bbox2->min[i];
+              if(bbox1->max[i]>bbox2->max[i])
+                      bboxResult->max[i] = bbox1->max[i];
+              else
+                      bboxResult->max[i] = bbox2->max[i];
+      }
+
+      return HXT_STATUS_OK;
+}
+

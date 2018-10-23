@@ -33,6 +33,9 @@ extern "C" {
 #define __assume_aligned(x,y)
 #endif
 
+#define HXT_UNUSED(x) (void)(x)  // portable way to avoid warning about unused variable
+
+
 
 /*********************************************************
  * Hextreme malloc implementation
@@ -97,19 +100,64 @@ static inline HXTStatus hxtRealloc(void* ptrToPtr, size_t size)
   return HXT_STATUS_OK;
 }
 
+
 // FIXME Gmsh: aligned routines do not seem to work on 32 bit machines
 #include <stdint.h>
+
 #if UINTPTR_MAX == 0xffffffff
-static inline HXTStatus hxtGetAlignedBlockSize(void* ptrToPtr, size_t* size){ *size = 0; return HXT_STATUS_OK; }
-static inline HXTStatus hxtAlignedMalloc(void* ptrToPtr, size_t size){ return hxtMalloc(ptrToPtr, size); }
-static inline HXTStatus hxtAlignedFree(void* ptrToPtr){ return hxtFree(ptrToPtr); }
-static inline HXTStatus hxtAlignedRealloc(void* ptrToPtr, size_t size){ return hxtRealloc(ptrToPtr, size); }
-#else
 
+static inline HXTStatus hxtGetAlignedBlockSize(void* ptrToPtr, size_t* size){
+  *size = 0; return HXT_STATUS_OK;
+}
 
-/*********************************************************
- * Hextreme aligned malloc implementation
- *********************************************************/
+static inline HXTStatus hxtAlignedMalloc(void* ptrToPtr, size_t size){
+  return hxtMalloc(ptrToPtr, size);
+}
+
+static inline HXTStatus hxtAlignedFree(void* ptrToPtr){
+  return hxtFree(ptrToPtr);
+}
+
+static inline HXTStatus hxtAlignedRealloc(void* ptrToPtr, size_t size){
+  return hxtRealloc(ptrToPtr, size);
+}
+
+#elif defined ( HAVE_MSDN_ALIGNED_MALLOC ) // microsoft implementation
+
+#include <malloc.h>
+#include <errno.h>
+
+static inline HXTStatus hxtAlignedMalloc(void* ptrToPtr, size_t size) {
+  void** p = (void**)ptrToPtr;
+  *p = _aligned_malloc(size, SIMD_ALIGN);
+  if ((*p == NULL && size!=0) || errno == ENOMEM)
+    return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
+  return HXT_STATUS_OK;
+}
+
+static inline HXTStatus hxtAlignedFree(void* ptrToPtr)
+{
+  void** p = (void**)ptrToPtr;
+  _aligned_free(*p);
+  *p = NULL;
+  return HXT_STATUS_OK;
+}
+
+static inline HXTStatus hxtAlignedRealloc(void* ptrToPtr, size_t size)
+{
+  void** p = (void**)ptrToPtr;
+  void* newptr = _aligned_realloc(*p, size, SIMD_ALIGN);
+  if ((newptr == NULL && *p != NULL && size != 0) || (size!=0 && errno == ENOMEM)) {
+    if (errno == ENOMEM)
+      HXT_INFO("it was errno");
+    return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
+  }
+  *p = newptr;
+  return HXT_STATUS_OK;
+}
+
+#else  // HEXTREME aligned malloc implementation
+
 static inline HXTStatus hxtGetAlignedBlockSize(void* ptrToPtr, size_t* size)
 {
   char** p2 = *(char***)(ptrToPtr);
@@ -199,7 +247,7 @@ static inline HXTStatus hxtAlignedRealloc(void* ptrToPtr, size_t size)
   return HXT_STATUS_OK;
 }
 
-#endif // FIXME Gmsh
+#endif // HEXTREME malloc implementation
 
 /*********************************************************
   A way to call rand with a seed to get a reproducible
@@ -219,12 +267,26 @@ static inline uint32_t hxtReproducibleLCG(uint32_t *seed)
 }
 
 /*********************************************************
+ * Operations on 3D vectors
+ *********************************************************/
+HXTStatus hxtNorm2V3(double v[3], double* norm2);
+HXTStatus hxtNormalizeV3(double v[3]);
+HXTStatus hxtCrossProductV3(double a[3], double b[3], double res[3]);
+
+/*********************************************************
  * Matrix operations
  *********************************************************/
+HXTStatus hxtDet2x2(double mat[2][2], double* det);
+HXTStatus hxtInv2x2(double mat[2][2], double inv[2][2], double *det);
 HXTStatus hxtDet3x3(double mat[3][3], double *det);
 HXTStatus hxtInv3x3(double mat[3][3], double inv[3][3], double *det);
 
 HXTStatus hxtInv4x4ColumnMajor(double mat[16], double inv[16], double *det);
+
+/*********************************************************
+ * Operations on linear Tet
+ *********************************************************/
+HXTStatus hxtJacobianLinTet(double *x , double *y, double *z , double mat[3][3]);
 
 #ifndef M_PI
   #define M_PI 3.14159265358979323846264338327950

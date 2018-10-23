@@ -22,9 +22,6 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 //
-// Please report all bugs and problems to the public mailing list
-// <gmsh@onelab.info>.
-//
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
 #ifndef _OPT_HOM_MESH_H_
@@ -141,7 +138,7 @@ private:
   {
     return indJB3DBase(_nNodEl[iEl],l,i,j,m);
   }
-public: 
+public:
   double approximationErr(int iEl, simpleFunction<double> &f)
   {
     return approximationError (f, _el[iEl]);

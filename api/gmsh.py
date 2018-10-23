@@ -1,7 +1,7 @@
 # Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
-# bugs and problems to the public mailing list <gmsh@onelab.info>.
+# issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 # This file defines the Gmsh Python API (v4.0).
 #
@@ -655,6 +655,22 @@ class model:
         if ierr.value != 0:
             raise ValueError(
                 "gmshModelRemoveEntities returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
+    def removePhysicalGroups(dimTags=[]):
+        """
+        Remove the physical groups `dimTags' of the current model. If `dimTags' is
+        empty, remove all groups.
+        """
+        api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+        ierr = c_int()
+        lib.gmshModelRemovePhysicalGroups(
+            api_dimTags_, api_dimTags_n_,
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelRemovePhysicalGroups returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod
