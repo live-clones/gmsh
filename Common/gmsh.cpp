@@ -2300,8 +2300,8 @@ gmsh::model::mesh::getPeriodicNodes(const int dim, const int tag,
     Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
-  if(ge->meshMaster() != ge) {
-    tagMaster = ge->meshMaster()->tag();
+  if(ge->getMeshMaster() != ge) {
+    tagMaster = ge->getMeshMaster()->tag();
     for(std::map<MVertex *, MVertex *>::iterator it =
           ge->correspondingVertices.begin();
         it != ge->correspondingVertices.end(); ++it)

@@ -290,8 +290,8 @@ public:
   }
   virtual std::vector<int> getPhysicalEntities() { return physicals; }
 
-  // returns the master entity (for mesh)
-  GEntity *meshMaster() const;
+  // handle the master entity for periodic meshes
+  GEntity *getMeshMaster() const { return _meshMaster; }
   void setMeshMaster(GEntity *);
   void setMeshMaster(GEntity *, const std::vector<double> &);
   void updateCorrespondingVertices();

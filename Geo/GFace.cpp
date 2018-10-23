@@ -1759,7 +1759,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     }
     GEdge *masterEdge = mv2eIter->second;
 
-    if(masterEdge->meshMaster() != localEdge) {
+    if(masterEdge->getMeshMaster() != localEdge) {
       localEdge->setMeshMaster(masterEdge, tfo);
       Msg::Info("Setting edge master %d - %d", localEdge->tag(),
                 masterEdge->tag());
@@ -2123,7 +2123,7 @@ bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
 
 void GFace::alignElementsWithMaster()
 {
-  GEntity *master = meshMaster();
+  GEntity *master = getMeshMaster();
 
   if(master != this) {
     std::set<MFace, Less_Face> srcFaces;

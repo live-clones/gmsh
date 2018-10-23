@@ -1245,7 +1245,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
 
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
     GEdge *tgt = *it;
-    GEdge *src = dynamic_cast<GEdge *>(tgt->meshMaster());
+    GEdge *src = dynamic_cast<GEdge *>(tgt->getMeshMaster());
 
     if(src != NULL && src != tgt) {
       std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
@@ -1318,7 +1318,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     GFace *tgt = *it;
-    GFace *src = dynamic_cast<GFace *>(tgt->meshMaster());
+    GFace *src = dynamic_cast<GFace *>(tgt->getMeshMaster());
     if(src != NULL && src != tgt) {
       Msg::Info(
         "Constructing high order periodicity for face connection %d - %d",
