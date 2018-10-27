@@ -319,7 +319,8 @@ public:
   } meshAttributes;
 
   int getMeshingAlgo() const;
-  void setMeshingAlgo(int);
+  void setMeshingAlgo(int) const;
+  void unsetMeshingAlgo() const;
   int getCurvatureControlParameter() const;
   void setCurvatureControlParameter(int);
   virtual double getMeshSize() const { return meshAttributes.meshSize; }
