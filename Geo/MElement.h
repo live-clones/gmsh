@@ -32,7 +32,7 @@ private:
   // renumbered)
   int _num;
   // the number of the mesh partition the element belongs to
-  short _partition;
+  int _partition;
   // a visibility flag
   char _visible;
 
@@ -88,7 +88,7 @@ public:
 
   // get/set the partition to which the element belongs
   virtual int getPartition() const { return _partition; }
-  virtual void setPartition(int num) { _partition = (short)num; }
+  virtual void setPartition(int num) { _partition = (int)num; }
 
   // get/set the visibility flag
   virtual char getVisibility() const;
@@ -430,11 +430,11 @@ public:
 
   // IO routines
   virtual void writeMSH(FILE *fp, bool binary = false, int elementary = 1,
-                        std::vector<short> *ghosts = 0);
+                        std::vector<int> *ghosts = 0);
   virtual void writeMSH2(FILE *fp, double version = 1.0, bool binary = false,
                          int num = 0, int elementary = 1, int physical = 1,
                          int parentNum = 0, int dom1Num = 0, int dom2Num = 0,
-                         std::vector<short> *ghosts = 0);
+                         std::vector<int> *ghosts = 0);
   virtual void writeMSH4(FILE *fp, bool binary = false);
   virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber,
                         bool printSICN, bool printSIGE, bool printGamma,

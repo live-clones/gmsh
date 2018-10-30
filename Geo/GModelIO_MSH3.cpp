@@ -635,11 +635,11 @@ static void writeElementMSH(FILE *fp, GModel *model, MElement *ele, bool binary,
                             int elementary)
 {
   if(model->getGhostCells().size()) {
-    std::vector<short> ghosts;
-    std::pair<std::multimap<MElement *, short>::iterator,
-              std::multimap<MElement *, short>::iterator>
+    std::vector<int> ghosts;
+    std::pair<std::multimap<MElement *, int>::iterator,
+              std::multimap<MElement *, int>::iterator>
       itp = model->getGhostCells().equal_range(ele);
-    for(std::multimap<MElement *, short>::iterator it = itp.first;
+    for(std::multimap<MElement *, int>::iterator it = itp.first;
         it != itp.second; it++)
       ghosts.push_back(it->second);
     ele->writeMSH(fp, binary, elementary, &ghosts);

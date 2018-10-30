@@ -96,7 +96,7 @@ protected:
   // ghost cell information (stores partitions for each element acting
   // as a ghost cell)
   // /!\ Use only for compatibility with mesh format msh2 and msh3
-  std::multimap<MElement *, short> _ghostCells;
+  std::multimap<MElement *, int> _ghostCells;
 
   // an octree for fast mesh element lookup
   MElementOctree *_elementOctree;
@@ -514,10 +514,10 @@ public:
   int writePartitionedTopology(std::string &name);
 
   // /!\ Use only for compatibility with mesh format msh2 and msh3
-  std::multimap<MElement *, short> &getGhostCells() { return _ghostCells; }
-  void addGhostCells(MElement *elm, short partition)
+  std::multimap<MElement *, int> &getGhostCells() { return _ghostCells; }
+  void addGhostCells(MElement *elm, int partition)
   {
-    _ghostCells.insert(std::pair<MElement *, short>(elm, partition));
+    _ghostCells.insert(std::pair<MElement *, int>(elm, partition));
   }
 
   // perform various coherence tests on the mesh

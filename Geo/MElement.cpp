@@ -51,7 +51,7 @@ MElement::MElement(int num, int part) : _visible(1)
       m->setMaxElementNumber(m->getMaxElementNumber() + 1);
       _num = m->getMaxElementNumber();
     }
-    _partition = (short)part;
+    _partition = (int)part;
   }
 }
 
@@ -1349,7 +1349,7 @@ double MElement::integrateFlux(double val[], int face, int pOrder, int order)
 }
 
 void MElement::writeMSH(FILE *fp, bool binary, int entity,
-                        std::vector<short> *ghosts)
+                        std::vector<int> *ghosts)
 {
   int num = getNum();
   int type = getTypeForMSH();
@@ -1392,7 +1392,7 @@ void MElement::writeMSH(FILE *fp, bool binary, int entity,
 
 void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
                          int elementary, int physical, int parentNum,
-                         int dom1Num, int dom2Num, std::vector<short> *ghosts)
+                         int dom1Num, int dom2Num, std::vector<int> *ghosts)
 {
   int type = getTypeForMSH();
 
@@ -2609,7 +2609,7 @@ MElement *MElementFactory::create(int num, int type,
     startPartitions += 1;
   }
 
-  std::vector<short> ghosts;
+  std::vector<int> ghosts;
   if((int)data.size() > startPartitions) {
     int numPartitions = data[startPartitions];
     if(numPartitions > 0 &&
@@ -2623,7 +2623,7 @@ MElement *MElementFactory::create(int num, int type,
   MElement *element = create(type, vertices, num, part, false, parent);
 
   for(unsigned int j = 0; j < ghosts.size(); j++) {
-    // model->getGhostCells().insert(std::pair<MElement*, short>(element,
+    // model->getGhostCells().insert(std::pair<MElement*, int>(element,
     // ghosts[j]));
   }
   if(part > model->getNumPartitions()) model->setNumPartitions(part);

@@ -338,7 +338,7 @@ int GModel::_readMSH2(const std::string &name)
           int num, type, physical = 0, elementary = 0, partition = 0,
                          parent = 0;
           int dom1 = 0, dom2 = 0, numVertices;
-          std::vector<short> ghosts;
+          std::vector<int> ghosts;
           if(version <= 1.0) {
             if(fscanf(fp, "%d %d %d %d %d", &num, &type, &physical, &elementary,
                       &numVertices) != 5) {
@@ -475,7 +475,7 @@ int GModel::_readMSH2(const std::string &name)
           elemreg[num] = elementary;
           elemphy[num] = physical;
           for(unsigned int j = 0; j < ghosts.size(); j++)
-            _ghostCells.insert(std::pair<MElement *, short>(e, ghosts[j]));
+            _ghostCells.insert(std::pair<MElement *, int>(e, ghosts[j]));
           if(numElements > 100000)
             Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
         }
@@ -560,7 +560,7 @@ int GModel::_readMSH2(const std::string &name)
             if(numPartitions > 1)
               for(int j = 0; j < numPartitions - 1; j++)
                 _ghostCells.insert(
-                  std::pair<MElement *, short>(e, -data[5 + j]));
+                  std::pair<MElement *, int>(e, -data[5 + j]));
             if(numElements > 100000)
               Msg::ProgressMeter(numElementsPartial + i + 1, numElements, true,
                                  "Reading elements");
@@ -680,12 +680,12 @@ static void writeElementMSH(FILE *fp, GModel *model, GEntity *ge, T *ele,
      && ge->getParentEntity()->dim() > ge->dim())
     return; // ignore partition boundaries
 
-  std::vector<short> ghosts;
+  std::vector<int> ghosts;
   if(model->getGhostCells().size()) {
-    std::pair<std::multimap<MElement *, short>::iterator,
-              std::multimap<MElement *, short>::iterator>
+    std::pair<std::multimap<MElement *, int>::iterator,
+              std::multimap<MElement *, int>::iterator>
       itp = model->getGhostCells().equal_range(ele);
-    for(std::multimap<MElement *, short>::iterator it = itp.first;
+    for(std::multimap<MElement *, int>::iterator it = itp.first;
         it != itp.second; it++)
       ghosts.push_back(it->second);
   }
@@ -1114,7 +1114,7 @@ int GModel::_writePartitionedMSH2(const std::string &baseName, bool binary,
     Msg::Info("Writing ghost cells in debug file 'ghosts.pos'");
     FILE *fp = Fopen("ghosts.pos", "w");
     fprintf(fp, "View \"ghosts\"{\n");
-    for(std::multimap<MElement*, short>::iterator it = _ghostCells.begin();
+    for(std::multimap<MElement*, int>::iterator it = _ghostCells.begin();
         it != _ghostCells.end(); it++)
       it->first->writePOS(fp, false, true, false, false, false, false);
     fprintf(fp, "};\n");
