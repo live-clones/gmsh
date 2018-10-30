@@ -140,9 +140,6 @@ void GEntity::setMeshMaster(GEntity *gMaster, const std::vector<double> &tfo)
   updateCorrespondingVertices();
 }
 
-// gets the entity from which the mesh will be copied
-GEntity *GEntity::meshMaster() const { return _meshMaster; }
-
 void GEntity::updateVertices(const std::map<MVertex *, MVertex *> &old2new)
 {
   // update the list of the vertices

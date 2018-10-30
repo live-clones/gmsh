@@ -2404,7 +2404,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
   }
 
 
-  
+
   // look for a triangle that has a negative node and recursively tag all
   // exterior triangles
   {
@@ -2501,7 +2501,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool repairSelfIntersecting1dMesh,
     sprintf(name, "surface%d-recovered-param.pos", gf->tag());
     outputScalarField(m->triangles, name, 1, gf);
   }
-  
+
   {
     // Call this function to untangle elements in Cartesian space
     int nb_swap;
@@ -2767,21 +2767,21 @@ void meshGFace::operator()(GFace *gf, bool print)
   // because meshGenerator never called
   if(MeshTransfiniteSurface(gf)) return;
   if(MeshExtrudedSurface(gf)) return;
-  if(gf->meshMaster() != gf) {
-    GFace *gff = dynamic_cast<GFace *>(gf->meshMaster());
+  if(gf->getMeshMaster() != gf) {
+    GFace *gff = dynamic_cast<GFace *>(gf->getMeshMaster());
     if(gff) {
       if(gff->meshStatistics.status != GFace::DONE) {
         gf->meshStatistics.status = GFace::PENDING;
         return;
       }
       Msg::Info("Meshing face %d (%s) as a copy of %d", gf->tag(),
-                gf->getTypeString().c_str(), gf->meshMaster()->tag());
+                gf->getTypeString().c_str(), gf->getMeshMaster()->tag());
       copyMesh(gff, gf);
       gf->meshStatistics.status = GFace::DONE;
       return;
     }
     else
-      Msg::Warning("Unknown mesh master face %d", gf->meshMaster()->tag());
+      Msg::Warning("Unknown mesh master face %d", gf->getMeshMaster()->tag());
   }
 
   const char *algo = "Unknown";
@@ -2856,6 +2856,7 @@ void meshGFace::operator()(GFace *gf, bool print)
     killer(gf);
     gf->setMeshingAlgo(1);
     (*this)(gf, print);
+    gf->unsetMeshingAlgo();
   }
 
 }

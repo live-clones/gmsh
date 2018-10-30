@@ -667,13 +667,13 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
 {
   int count = 0;
   for(unsigned int i = 0; i < entities.size(); i++)
-    if(entities[i]->meshMaster() != entities[i]) count++;
+    if(entities[i]->getMeshMaster() != entities[i]) count++;
   if(!count) return;
   fprintf(fp, "$Periodic\n");
   fprintf(fp, "%d\n", count);
   for(unsigned int i = 0; i < entities.size(); i++) {
     GEntity *g_slave = entities[i];
-    GEntity *g_master = g_slave->meshMaster();
+    GEntity *g_master = g_slave->getMeshMaster();
     if(g_slave != g_master) {
       fprintf(fp, "%d %d %d\n", g_slave->dim(), g_slave->tag(),
               g_master->tag());

@@ -556,11 +556,11 @@ void meshGEdge::operator()(GEdge *ge)
 
   if(MeshExtrudedCurve(ge)) return;
 
-  if(ge->meshMaster() != ge) {
-    GEdge *gef = dynamic_cast<GEdge *>(ge->meshMaster());
+  if(ge->getMeshMaster() != ge) {
+    GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());
     if(gef->meshStatistics.status == GEdge::PENDING) return;
     Msg::Info("Meshing curve %d (%s) as a copy of %d", ge->tag(),
-              ge->getTypeString().c_str(), ge->meshMaster()->tag());
+              ge->getTypeString().c_str(), ge->getMeshMaster()->tag());
     copyMesh(gef, ge, ge->masterOrientation);
     ge->meshStatistics.status = GEdge::DONE;
     return;

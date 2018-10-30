@@ -122,7 +122,7 @@ GeomMeshMatcher::matchVertices(GModel* m1, GModel *m2, bool& ok)
       num_matched_vertices++;
     }
   }
-  
+
   if(num_matched_vertices != num_total_vertices) ok = false;
   Msg::Info("Matched %i vertices out of %i.", num_matched_vertices,
             num_total_vertices);
@@ -162,12 +162,12 @@ GeomMeshMatcher::matchEdges(GModel* m1, GModel* m2,
         GVertex* v3 = e2->getBeginVertex();
         GVertex* v4 = e2->getEndVertex();
         if (v3 == v4) {
-          Msg::Debug("Found a loop (%i) in the mesh %i %i", 
+          Msg::Debug("Found a loop (%i) in the mesh %i %i",
                      e2->tag(), v3->tag(), v3->tag());
           common_edges.push_back(e2);
         }
       }
-    } 
+    }
     else {
       bool ok1 = false;
       bool ok2 = false;
@@ -211,11 +211,11 @@ GeomMeshMatcher::matchEdges(GModel* m1, GModel* m2,
                e1->tag(),
                choice->tag());
     coresp_e->push_back(Pair<GEdge*,GEdge*>(e1, choice));
-    
-    // --- copy topological information 
+
+    // --- copy topological information
     //choice->setTag(e1->tag());
     choice->physicals = e1->physicals;
-    
+
     num_matched_edges++;
   }
 
@@ -293,7 +293,7 @@ GeomMeshMatcher:: matchFaces(GModel* m1, GModel* m2,
     if (choice) {
       Msg::Debug("Faces %i (geom) and %i (mesh) match.",f1->tag(),choice->tag());
       coresp_f->push_back(Pair<GFace*,GFace*>(f1,choice));
-      // --- copy topological information 
+      // --- copy topological information
       choice->setTag(f1->tag());
       f1->physicals = choice->physicals;
       num_matched_faces++;
@@ -393,10 +393,10 @@ GeomMeshMatcher::matchRegions(GModel* m1, GModel* m2,
           }
         }
       coresp_r->push_back(Pair<GRegion*,GRegion*>((GRegion*) *entity1,choice));
-        
+
       choice->setTag(((GRegion*) *entity1)->tag());
       (*entity1)->physicals = choice->physicals;
-        
+
       num_matched_regions++;
       }
     }
@@ -570,7 +570,7 @@ int GeomMeshMatcher::forceTomatch(GModel *geom, GModel *mesh, const double TOL)
       MVertex *v2 = geom->getMeshVertexByTag((*it)->quadrangles[i]->getVertex(1)->getNum());
       MVertex *v3 = geom->getMeshVertexByTag((*it)->quadrangles[i]->getVertex(2)->getNum());
       MVertex *v4 = geom->getMeshVertexByTag((*it)->quadrangles[i]->getVertex(3)->getNum());
-      
+
       if (v1->onWhat()->dim() == 2)
         ((GFace*)v1->onWhat())->quadrangles.push_back(new MQuadrangle(v1,v2,v3,v4));
       else if (v2->onWhat()->dim() == 2)
@@ -600,7 +600,7 @@ static void copy_periodicity (std::vector<Pair<GEType*, GEType*> >& eCor,
 
   for (;srcIter!=eMap.end();++srcIter) {
     GEType* oldTgt = srcIter->first;
-    GEType* oldSrc = dynamic_cast<GEType*> (oldTgt->meshMaster());
+    GEType* oldSrc = dynamic_cast<GEType*> (oldTgt->getMeshMaster());
 
     if (oldSrc != NULL && oldSrc != oldTgt) {
 
@@ -675,7 +675,7 @@ static bool apply_periodicity (std::vector<Pair<GEType*, GEType*> >& eCor)
 
 
 
-static void copy_vertices (GVertex *to, GVertex *from, 
+static void copy_vertices (GVertex *to, GVertex *from,
                            std::map<MVertex*,MVertex*> &_mesh_to_geom){
 
   to->deleteMesh();
@@ -688,7 +688,7 @@ static void copy_vertices (GVertex *to, GVertex *from,
     }
   }
 }
-static void copy_vertices (GRegion *to, GRegion *from, 
+static void copy_vertices (GRegion *to, GRegion *from,
                            std::map<MVertex*,MVertex*> &_mesh_to_geom){
 
   to->deleteMesh();
@@ -701,7 +701,7 @@ static void copy_vertices (GRegion *to, GRegion *from,
     }
   }
 }
-static void copy_vertices (GEdge* to, GEdge* from, 
+static void copy_vertices (GEdge* to, GEdge* from,
                            std::map<MVertex*,MVertex*> &_mesh_to_geom){
   to->deleteMesh();
   if (!from){
@@ -723,7 +723,7 @@ static void copy_vertices (GEdge* to, GEdge* from,
   }
 }
 
-static void copy_vertices (GFace *to, GFace *from, 
+static void copy_vertices (GFace *to, GFace *from,
                            std::map<MVertex*,MVertex*> &_mesh_to_geom){
 
   for (unsigned int i=0;i<from->mesh_vertices.size();i++){
@@ -733,20 +733,20 @@ static void copy_vertices (GFace *to, GFace *from,
     double DDD = ( v_from->x() - gp.x()) * ( v_from->x() - gp.x()) +
       ( v_from->y() - gp.y()) * ( v_from->y() - gp.y()) +
       ( v_from->z() - gp.z()) * ( v_from->z() - gp.z()) ;
-    
+
     if (sqrt(DDD) > 1.e-1) Msg::Error("Impossible to match point: "
                                       "original point (%f,%f,%f),"
                                       "New point (%f,%f,%f)",
                                       v_from->x(), v_from->y(), v_from->z(),
                                       gp.x(), gp.y(), gp.z());
-    
+
     else if (sqrt(DDD) > 1.e-3) Msg::Warning("One mesh vertex (%f,%f,%f) of GFace %d \n"
                                              "is difficult to match : "
                                              "closest point (%f,%f,%f)",
                                              v_from->x(), v_from->y(), v_from->z(),
                                              to->tag(),gp.x(), gp.y(), gp.z());
-    
-    MFaceVertex *v_to = new MFaceVertex (v_from->x(),v_from->y(),v_from->z(), 
+
+    MFaceVertex *v_to = new MFaceVertex (v_from->x(),v_from->y(),v_from->z(),
                                          to, gp.u(),gp.v() );
     to->mesh_vertices.push_back(v_to);
     //SPoint2 param;
@@ -766,9 +766,9 @@ static void copy_elements (std::vector<ELEMENT*> &to,
     ELEMENT *e = from[i];
     std::vector<MVertex*> nodes;
     for(std::size_t j=0;j<e->getNumVertices();j++) {
-      
+
       std::map<MVertex*,MVertex*>::iterator vIter = _mesh_to_geom.find(e->getVertex(j));
-      
+
       if (vIter ==_mesh_to_geom.end()) {
         Msg::Error("Could not find match for vertex %i during element copy "
                    "while matching discrete to actual CAD",
@@ -804,7 +804,7 @@ void copy_elements (GModel *geom, GModel *mesh, std::map<MVertex*,MVertex*> &_me
                     std::vector<Pair<GEdge*  , GEdge*  > > *coresp_e,
                     std::vector<Pair<GFace*  , GFace*  > > *coresp_f,
                     std::vector<Pair<GRegion*, GRegion*> > *coresp_r){
-  
+
   // copy all elements
 
   for (unsigned int i=0;i<coresp_v->size();++i) {
@@ -845,7 +845,7 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
 
   GModel::setCurrent(geom);
   geom->setPhysicalNames(mesh->getPhysicalNames());
-  
+
   bool ok = true;
 
   std::vector<Pair<GVertex*,GVertex*> > *coresp_v(NULL);
@@ -897,6 +897,6 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
   if (ok) Msg::StatusBar(true,"Matched successfully mesh to CAD in %g s",Cpu()-t1);
   else    Msg::Error("Failed to match mesh to CAD, please check");
 
-  
+
   return ok ? 1:0;
 }

@@ -311,9 +311,9 @@ static void Mesh0D(GModel *m)
   }
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it) {
     GVertex *gv = *it;
-    if(gv->meshMaster() != gv) {
+    if(gv->getMeshMaster() != gv) {
       if(gv->correspondingVertices.empty()) {
-        GVertex *master = dynamic_cast<GVertex *>(gv->meshMaster());
+        GVertex *master = dynamic_cast<GVertex *>(gv->getMeshMaster());
         if(master)
           gv->correspondingVertices[gv->mesh_vertices[0]] =
             master->mesh_vertices[0];

@@ -299,6 +299,11 @@ class client :
     self._getParameter(param, warn_if_not_found)
     return param.choices
 
+  def getNumberRange(self, name, warn_if_not_found=True):
+    param = _parameter('number', name=name)
+    self._getParameter(param, warn_if_not_found)
+    return [param.values[0] if len(param.values) else 0, param.min, param.max]
+
   def show(self, name) :
     if not self.socket or not name:
       return

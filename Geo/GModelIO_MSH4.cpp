@@ -344,7 +344,7 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
       default: break;
       }
     }
-    
+
     if(ghostTags != 0){
       delete[] ghostTags;
     }
@@ -2336,7 +2336,7 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
   std::vector<GEntity *> entities;
   model->getEntities(entities);
   for(unsigned int i = 0; i < entities.size(); i++)
-    if(entities[i]->meshMaster() != entities[i]) count++;
+    if(entities[i]->getMeshMaster() != entities[i]) count++;
 
   if(!count) return;
 
@@ -2351,7 +2351,7 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
 
   for(unsigned int i = 0; i < entities.size(); i++) {
     GEntity *g_slave = entities[i];
-    GEntity *g_master = g_slave->meshMaster();
+    GEntity *g_master = g_slave->getMeshMaster();
 
     if(g_slave != g_master) {
       if(binary) {

@@ -503,7 +503,7 @@ GMSH_API int gmsh::model::addDiscreteEntity(const int dim, const int tag,
   }
   int outTag = tag;
   if(outTag < 0) {
-    outTag = GModel::current()->getMaxElementaryNumber(dim);
+    outTag = GModel::current()->getMaxElementaryNumber(dim)+1;
   }
   GEntity *e = GModel::current()->getEntityByTag(dim, outTag);
   if(e) {
@@ -2300,8 +2300,8 @@ gmsh::model::mesh::getPeriodicNodes(const int dim, const int tag,
     Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
-  if(ge->meshMaster() != ge) {
-    tagMaster = ge->meshMaster()->tag();
+  if(ge->getMeshMaster() != ge) {
+    tagMaster = ge->getMeshMaster()->tag();
     for(std::map<MVertex *, MVertex *>::iterator it =
           ge->correspondingVertices.begin();
         it != ge->correspondingVertices.end(); ++it)

@@ -37,7 +37,7 @@ OptHomPeriodicity::OptHomPeriodicity(std::vector<GEntity*> &entities)
     // MVertex on GVertex cannot move
     if (entities[i]->dim() == 0) continue;
 
-    GEntity *master = entities[i]->meshMaster();
+    GEntity *master = entities[i]->getMeshMaster();
     if (master != entities[i]) {
       _master2slave.insert(std::make_pair(master, entities[i]));
     }
