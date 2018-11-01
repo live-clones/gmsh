@@ -1948,6 +1948,7 @@ int genericViewFileDialog(const char *name, const char *title, int format)
 // Forward declarations of some callbacks
 void cgnsw_gc_location_cb(Fl_Widget *widget, void *data);
 void cgnsw_write_dummy_bc_cb(Fl_Widget *widget, void *data);
+void cgnsw_write_structured_mesh_cb(Fl_Widget *widget, void *data);
 void cgnsw_bc_location_cb(Fl_Widget *widget, void *data);
 void cgnsw_write_normals_cb(Fl_Widget *widget, void *data);
 void cgnsw_normal_source_cb(Fl_Widget *widget, void *data);
@@ -1968,6 +1969,7 @@ struct CGNSWriteDialog {
   Fl_Check_Button *checkButtonWriteNormals;
   Fl_Round_Button *roundButton0NormalGeo;
   Fl_Round_Button *roundButton1NormalElem;
+  Fl_Check_Button *checkButtonWriteStructuredMesh;
   Fl_Choice *choiceVecDim;
   Fl_Check_Button *checkButtonUnknownUserDef;
   const char *filename;
@@ -1984,9 +1986,10 @@ struct CGNSWriteDialog {
     CTX::instance()->cgnsOptions.writeBC = checkButtonWriteBC->value();
     CTX::instance()->cgnsOptions.bocoLocation = roundButton1BCatFace->value();
     CTX::instance()->cgnsOptions.normalSource =
-      (checkButtonWriteNormals->value()) ? roundButton1NormalElem->value() + 1 :
-                                           0;
+      (checkButtonWriteNormals->value()) ? roundButton1NormalElem->value() + 1 : 0;
     CTX::instance()->cgnsOptions.vectorDim = choiceVecDim->value() + 2;
+    CTX::instance()->cgnsOptions.structuredMesh = 
+	  (checkButtonWriteStructuredMesh->value()) ? 1 : 0;
     CTX::instance()->cgnsOptions.writeUserDef =
       checkButtonUnknownUserDef->value();
   }
@@ -2000,6 +2003,7 @@ struct CGNSWriteDialog {
     inputPatchName->value(CTX::instance()->cgnsOptions.patchName.c_str());
     checkButtonWriteBC->value(CTX::instance()->cgnsOptions.writeBC);
     checkButtonWriteNormals->value(CTX::instance()->cgnsOptions.normalSource);
+    checkButtonWriteStructuredMesh->value(CTX::instance()->cgnsOptions.structuredMesh);
     choiceVecDim->value(CTX::instance()->cgnsOptions.vectorDim - 2);
     checkButtonUnknownUserDef->value(CTX::instance()->cgnsOptions.writeUserDef);
 
@@ -2020,6 +2024,7 @@ struct CGNSWriteDialog {
                            roundButton0BCatVertex,
                          this);
     cgnsw_write_dummy_bc_cb(checkButtonWriteBC, this);
+    cgnsw_write_structured_mesh_cb(checkButtonWriteStructuredMesh, this);
   }
 };
 
@@ -2057,6 +2062,30 @@ void cgnsw_write_dummy_bc_cb(Fl_Widget *widget, void *data)
     dlg->roundButton1NormalElem->deactivate();
   }
 }
+
+  void cgnsw_write_structured_mesh_cb(Fl_Widget *widget, void *data)
+  {
+    CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog *>(data);
+    if(dlg->checkButtonWriteStructuredMesh->value()) {
+      dlg->checkButtonWriteBC->deactivate();
+      dlg->roundButton0BCatVertex->deactivate();
+      dlg->roundButton1BCatFace->deactivate();
+      dlg->checkButtonWriteNormals->deactivate();
+      dlg->roundButton0NormalGeo->deactivate();
+      dlg->roundButton1NormalElem->deactivate();
+    } else {
+      if(dlg->checkButtonWriteBC->value()) {
+      dlg->checkButtonWriteBC->activate();
+      dlg->roundButton0BCatVertex->activate();
+      dlg->checkButtonWriteNormals->activate();
+      if(dlg->checkButtonWriteNormals->value()) {
+        if(dlg->roundButton0BCatVertex->value())
+          dlg->roundButton0NormalGeo->activate();
+        dlg->roundButton1NormalElem->activate();
+      }
+          }
+    }
+  }
 
 void cgnsw_bc_location_cb(Fl_Widget *widget, void *data)
 {
@@ -2145,7 +2174,7 @@ int cgnsFileDialog(const char *filename)
   const int RBH = 3 * FL_NORMAL_SIZE / 2; // radio button height
   const int col1 = WB; // Start of left column
   const int col2 = 2 * WB + 2 * BB; // Start of right column
-  const int hcol1 = 5 * WB + 2 * RBH + 3 * BH;
+  const int hcol1 = 5 * WB + 2 * RBH + 4 * BH;
   // Height of left column
   const int hcol2 = 4 * WB + 4 * RBH + 2 * BH;
   // Height of right column
@@ -2303,6 +2332,13 @@ int cgnsFileDialog(const char *filename)
     g->end();
     g->show();
   }
+
+  // Structured or U-Structured Mesh option
+  dlg.checkButtonWriteStructuredMesh =                                      
+     new Fl_Check_Button(col1, yl, RBH, BH, "Write Structured Mesh");        
+  dlg.checkButtonWriteStructuredMesh->callback((Fl_Callback *)cgnsw_write_structured_mesh_cb, &dlg);
+  dlg.checkButtonWriteStructuredMesh->align(FL_ALIGN_RIGHT);                
+  yl += BH; 
 
   y = std::max(yl, yr);
   // User defined
