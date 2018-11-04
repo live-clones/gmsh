@@ -78,9 +78,14 @@ int GFace::getMeshingAlgo() const
            it->second;
 }
 
-void GFace::setMeshingAlgo(int algo)
+void GFace::setMeshingAlgo(int algo) const
 {
   CTX::instance()->mesh.algo2dPerFace[tag()] = algo;
+}
+
+void GFace::unsetMeshingAlgo() const
+{
+  CTX::instance()->mesh.algo2dPerFace.erase(tag());
 }
 
 void GFace::delFreeEdge(GEdge *edge)
