@@ -173,7 +173,7 @@ set(GMSH_PACKAGER "${PACKAGER}")
 
 if(APPLE)
   set(GMSH_OS "MacOSX")
-elseif(CYGWIN)
+elseif(CYGWIN OR MSYS)
   # detect if we use the MinGW compilers on Cygwin - if we do, handle the build
   # as a pure Windows build
   if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR
