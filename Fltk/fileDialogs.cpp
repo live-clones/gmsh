@@ -158,10 +158,8 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
 
   int ret = 0;
   switch(fc->show()) {
-  case -1:
-    break; // error
-  case 1:
-    break; // cancel
+  case -1: break; // error
+  case 1: break; // cancel
   default:
     if(fc->filename()) ret = fc->count();
     break;
@@ -685,9 +683,7 @@ int gifFileDialog(const char *name)
     dialog->b[6] =
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Composite all window tiles");
     y += BH;
-    for(int i = 0; i < 7; i++) {
-      dialog->b[i]->type(FL_TOGGLE_BUTTON);
-    }
+    for(int i = 0; i < 7; i++) { dialog->b[i]->type(FL_TOGGLE_BUTTON); }
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->end();
@@ -810,9 +806,7 @@ int gl2psFileDialog(const char *name, const char *title, int format)
     dialog->b[5] =
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print background");
     y += BH;
-    for(int i = 0; i < 6; i++) {
-      dialog->b[i]->type(FL_TOGGLE_BUTTON);
-    }
+    for(int i = 0; i < 6; i++) { dialog->b[i]->type(FL_TOGGLE_BUTTON); }
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->end();
@@ -995,8 +989,8 @@ int meshStatFileDialog(const char *name)
     dialog->window = new Fl_Double_Window(w, h, "POS Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
-    dialog->b[0] = new Fl_Check_Button(WB, y, 2 * BBB + WB, BH,
-                                       "Save all elements");
+    dialog->b[0] =
+      new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
     y += BH;
     dialog->b[1] =
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Print elementary tags");
@@ -1083,12 +1077,9 @@ int mshFileDialog(const char *name)
   static _mshFileDialog *dialog = NULL;
 
   static Fl_Menu_Item formatmenu[] = {
-    {"Version 1", 0, 0, 0},
-    {"Version 2 ASCII", 0, 0, 0},
-    {"Version 2 Binary", 0, 0, 0},
-    {"Version 4 ASCII", 0, 0, 0},
-    {"Version 4 Binary", 0, 0, 0},
-    {0}};
+    {"Version 1", 0, 0, 0},        {"Version 2 ASCII", 0, 0, 0},
+    {"Version 2 Binary", 0, 0, 0}, {"Version 4 ASCII", 0, 0, 0},
+    {"Version 4 Binary", 0, 0, 0}, {0}};
 
   int BBB = BB + 9; // labels too long
 
@@ -1103,8 +1094,8 @@ int mshFileDialog(const char *name)
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
     dialog->c->callback((Fl_Callback *)format_cb, dialog);
-    dialog->b[0] = new Fl_Check_Button(WB, y, 2 * BBB + WB, BH,
-                                       "Save all elements");
+    dialog->b[0] =
+      new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
     y += BH;
     dialog->b[0]->type(FL_TOGGLE_BUTTON);
     dialog->b[1] = new Fl_Check_Button(WB, y, 2 * BBB + WB, BH,
@@ -1152,12 +1143,10 @@ int mshFileDialog(const char *name)
           0, GMSH_SET | GMSH_GUI,
           (dialog->c->value() == 0) ?
             1.0 :
-            (dialog->c->value() == 1 || dialog->c->value() == 2) ?
-            2.2 : 4.0);
-        opt_mesh_binary(0, GMSH_SET | GMSH_GUI,
-                        (dialog->c->value() == 2 || dialog->c->value() == 4) ?
-                          1 :
-                          0);
+            (dialog->c->value() == 1 || dialog->c->value() == 2) ? 2.2 : 4.0);
+        opt_mesh_binary(
+          0, GMSH_SET | GMSH_GUI,
+          (dialog->c->value() == 2 || dialog->c->value() == 4) ? 1 : 0);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI,
                           dialog->b[0]->value() ? 1 : 0);
         opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI,
@@ -1213,8 +1202,8 @@ int unvinpFileDialog(const char *name, const char *title, int format)
     dialog->window = new Fl_Double_Window(w, h, title);
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
-    dialog->b[0] = new Fl_Check_Button(WB, y, 2 * BBB + WB, BH,
-                                       "Save all elements");
+    dialog->b[0] =
+      new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
     y += BH;
     dialog->b[0]->type(FL_TOGGLE_BUTTON);
     dialog->b[1] =
@@ -1392,8 +1381,8 @@ int bdfFileDialog(const char *name)
     y += BH;
     dialog->d->menu(tagmenu);
     dialog->d->align(FL_ALIGN_RIGHT);
-    dialog->b = new Fl_Check_Button(WB, y, 2 * BBB + WB, BH,
-                                    "Save all elements");
+    dialog->b =
+      new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
     y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
@@ -1469,8 +1458,8 @@ int genericMeshFileDialog(const char *name, const char *title, int format,
     y += BH;
     dialog->d->menu(tagmenu);
     dialog->d->align(FL_ALIGN_RIGHT);
-    dialog->b = new Fl_Check_Button(WB, y, 2 * BBB + WB, BH,
-                                    "Save all elements");
+    dialog->b =
+      new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
     y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
@@ -1523,9 +1512,7 @@ int genericMeshFileDialog(const char *name, const char *title, int format,
 static void _saveViews(const std::string &name, int which, int format,
                        bool canAppend)
 {
-  if(PView::list.empty()) {
-    Msg::Error("No views to save");
-  }
+  if(PView::list.empty()) { Msg::Error("No views to save"); }
   else if(which == 0) {
     int iview = FlGui::instance()->options->view.index;
     if(iview < 0 || iview >= (int)PView::list.size()) {
@@ -1538,9 +1525,7 @@ static void _saveViews(const std::string &name, int which, int format,
     int numVisible = 0;
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(PView::list[i]->getOptions()->visible) numVisible++;
-    if(!numVisible) {
-      Msg::Error("No visible view");
-    }
+    if(!numVisible) { Msg::Error("No visible view"); }
     else {
       bool first = true;
       for(unsigned int i = 0; i < PView::list.size(); i++) {
@@ -1642,9 +1627,7 @@ static void _saveAdaptedViews(const std::string &name, int useDefaultName,
                               int which, bool isBinary, int adaptLev,
                               double adaptErr, int npart, bool canAppend)
 {
-  if(PView::list.empty()) {
-    Msg::Error("No views to save");
-  }
+  if(PView::list.empty()) { Msg::Error("No views to save"); }
   else if(which == 0) {
     int iview = FlGui::instance()->options->view.index;
     if(iview < 0 || iview >= (int)PView::list.size()) {
@@ -1658,9 +1641,7 @@ static void _saveAdaptedViews(const std::string &name, int useDefaultName,
     int numVisible = 0;
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(PView::list[i]->getOptions()->visible) numVisible++;
-    if(!numVisible) {
-      Msg::Error("No visible view");
-    }
+    if(!numVisible) { Msg::Error("No visible view"); }
     else {
       bool first = true;
       for(unsigned int i = 0; i < PView::list.size(); i++) {
@@ -1986,10 +1967,11 @@ struct CGNSWriteDialog {
     CTX::instance()->cgnsOptions.writeBC = checkButtonWriteBC->value();
     CTX::instance()->cgnsOptions.bocoLocation = roundButton1BCatFace->value();
     CTX::instance()->cgnsOptions.normalSource =
-      (checkButtonWriteNormals->value()) ? roundButton1NormalElem->value() + 1 : 0;
+      (checkButtonWriteNormals->value()) ? roundButton1NormalElem->value() + 1 :
+                                           0;
     CTX::instance()->cgnsOptions.vectorDim = choiceVecDim->value() + 2;
-    CTX::instance()->cgnsOptions.structuredMesh = 
-	  (checkButtonWriteStructuredMesh->value()) ? 1 : 0;
+    CTX::instance()->cgnsOptions.structuredMesh =
+      (checkButtonWriteStructuredMesh->value()) ? 1 : 0;
     CTX::instance()->cgnsOptions.writeUserDef =
       checkButtonUnknownUserDef->value();
   }
@@ -2003,7 +1985,8 @@ struct CGNSWriteDialog {
     inputPatchName->value(CTX::instance()->cgnsOptions.patchName.c_str());
     checkButtonWriteBC->value(CTX::instance()->cgnsOptions.writeBC);
     checkButtonWriteNormals->value(CTX::instance()->cgnsOptions.normalSource);
-    checkButtonWriteStructuredMesh->value(CTX::instance()->cgnsOptions.structuredMesh);
+    checkButtonWriteStructuredMesh->value(
+      CTX::instance()->cgnsOptions.structuredMesh);
     choiceVecDim->value(CTX::instance()->cgnsOptions.vectorDim - 2);
     checkButtonUnknownUserDef->value(CTX::instance()->cgnsOptions.writeUserDef);
 
@@ -2063,18 +2046,19 @@ void cgnsw_write_dummy_bc_cb(Fl_Widget *widget, void *data)
   }
 }
 
-  void cgnsw_write_structured_mesh_cb(Fl_Widget *widget, void *data)
-  {
-    CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog *>(data);
-    if(dlg->checkButtonWriteStructuredMesh->value()) {
-      dlg->checkButtonWriteBC->deactivate();
-      dlg->roundButton0BCatVertex->deactivate();
-      dlg->roundButton1BCatFace->deactivate();
-      dlg->checkButtonWriteNormals->deactivate();
-      dlg->roundButton0NormalGeo->deactivate();
-      dlg->roundButton1NormalElem->deactivate();
-    } else {
-      if(dlg->checkButtonWriteBC->value()) {
+void cgnsw_write_structured_mesh_cb(Fl_Widget *widget, void *data)
+{
+  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog *>(data);
+  if(dlg->checkButtonWriteStructuredMesh->value()) {
+    dlg->checkButtonWriteBC->deactivate();
+    dlg->roundButton0BCatVertex->deactivate();
+    dlg->roundButton1BCatFace->deactivate();
+    dlg->checkButtonWriteNormals->deactivate();
+    dlg->roundButton0NormalGeo->deactivate();
+    dlg->roundButton1NormalElem->deactivate();
+  }
+  else {
+    if(dlg->checkButtonWriteBC->value()) {
       dlg->checkButtonWriteBC->activate();
       dlg->roundButton0BCatVertex->activate();
       dlg->checkButtonWriteNormals->activate();
@@ -2083,9 +2067,9 @@ void cgnsw_write_dummy_bc_cb(Fl_Widget *widget, void *data)
           dlg->roundButton0NormalGeo->activate();
         dlg->roundButton1NormalElem->activate();
       }
-          }
     }
   }
+}
 
 void cgnsw_bc_location_cb(Fl_Widget *widget, void *data)
 {
@@ -2334,11 +2318,12 @@ int cgnsFileDialog(const char *filename)
   }
 
   // Structured or U-Structured Mesh option
-  dlg.checkButtonWriteStructuredMesh =                                      
-     new Fl_Check_Button(col1, yl, RBH, BH, "Write Structured Mesh");        
-  dlg.checkButtonWriteStructuredMesh->callback((Fl_Callback *)cgnsw_write_structured_mesh_cb, &dlg);
-  dlg.checkButtonWriteStructuredMesh->align(FL_ALIGN_RIGHT);                
-  yl += BH; 
+  dlg.checkButtonWriteStructuredMesh =
+    new Fl_Check_Button(col1, yl, RBH, BH, "Write Structured Mesh");
+  dlg.checkButtonWriteStructuredMesh->callback(
+    (Fl_Callback *)cgnsw_write_structured_mesh_cb, &dlg);
+  dlg.checkButtonWriteStructuredMesh->align(FL_ALIGN_RIGHT);
+  yl += BH;
 
   y = std::max(yl, yr);
   // User defined

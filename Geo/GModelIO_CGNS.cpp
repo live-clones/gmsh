@@ -204,9 +204,7 @@ public:
   // Assignment
   CGNSNameStr &operator=(const CGNSNameStr &cgs)
   {
-    if(&cgs != this) {
-      std::strcpy(name, cgs.name);
-    }
+    if(&cgs != this) { std::strcpy(name, cgs.name); }
     return *this;
   }
   CGNSNameStr &operator=(const char *const cstr)
@@ -1394,7 +1392,7 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
     }
 
     char zoneFamilyName[maxLenCGNS];
-    //int zoneFamilyIndex;
+    // int zoneFamilyIndex;
 
     int ierr = cg_famname_read(zoneFamilyName);
 
@@ -1408,9 +1406,9 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
       Msg::Info("Zone %i has family name %s", zoneIndex, zoneFamilyName);
       map<string, int>::iterator fIter = family.find(zoneFamilyName);
       // if(fIter != family.end()) zoneFamilyIndex = fIter->second;
-      if (fIter == family.end())
+      if(fIter == family.end())
         Msg::Error("%s (%i) : Error reading CGNS file %s : "
-                      "cannot find CGNS family in available list",
+                   "cannot find CGNS family in available list",
                    __FILE__, __LINE__, fileName.c_str());
     }
 
@@ -2284,9 +2282,7 @@ void expand_name(std::string &s, const int index, const char *const name)
   // Look for and replace "&-&" sub-strings
   while(r1 != std::string::npos) {
     const std::string::size_type r2 = s.find('&', r1 + 1);
-    if(r2 == std::string::npos) {
-      s.replace(r1, s.length() - r1, "");
-    }
+    if(r2 == std::string::npos) { s.replace(r1, s.length() - r1, ""); }
     else {
       const int rn = r2 - r1 + 1;
       switch(s[r1 + 1]) {
@@ -2380,7 +2376,7 @@ int get_zone_definition(
       case 2: // Zone defined by physical
         partition = -1;
         //_zoneName = model.getPhysicalName(meshDim,
-        //globalPhysicalIt->first).c_str();
+        // globalPhysicalIt->first).c_str();
         zn = model.getPhysicalName(meshDim, globalPhysicalIt->first); // NBN:
         _zoneName = zn.c_str(); // NBN:
         physicalItBegin = globalPhysicalIt++;
@@ -2496,7 +2492,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
 
   {
     //--Master thread (primary task is to define boundary connections and
-    //perform
+    // perform
     //--I/O but can also process a zone if idle)
 
     if(omp_get_thread_num() == 0) {
@@ -2868,280 +2864,350 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
 }
 
 int sameVertex(GVertex *v1, GVertex *v2)
-/* This function determines whether given vertices v1 and v2 are at same location or not */
+/* This function determines whether given vertices v1 and v2 are at same
+ * location or not */
 {
-	SPoint3 v1_xyz = v1->xyz();
-	SPoint3 v2_xyz = v2->xyz();
+  SPoint3 v1_xyz = v1->xyz();
+  SPoint3 v2_xyz = v2->xyz();
 
-	double dx = abs(v1_xyz[0] - v2_xyz[0]);
-	double dy = abs(v1_xyz[1] - v2_xyz[1]);
-	double dz = abs(v1_xyz[2] - v2_xyz[2]);
+  double dx = abs(v1_xyz[0] - v2_xyz[0]);
+  double dy = abs(v1_xyz[1] - v2_xyz[1]);
+  double dz = abs(v1_xyz[2] - v2_xyz[2]);
 
-	if ((dx+dy+dz)<0.00001) return 1;
-	/* floating point error of 0.00001 is used here. 
-		if gmsh has any tolerance value change it to that */
+  if((dx + dy + dz) < 0.00001) return 1;
+  /* floating point error of 0.00001 is used here.
+      if gmsh has any tolerance value change it to that */
 
-	return 0;
+  return 0;
 }
 
 int sameVertex(GVertex *v1, MVertex *v2)
-/* This function determines whether given vertices v1 and v2 are at same location or not */
+/* This function determines whether given vertices v1 and v2 are at same
+ * location or not */
 {
-	SPoint3 v1_xyz = v1->xyz();
-	SPoint3 v2_xyz = v2->point();
+  SPoint3 v1_xyz = v1->xyz();
+  SPoint3 v2_xyz = v2->point();
 
-	double dx = abs(v1_xyz[0] - v2_xyz[0]);
-	double dy = abs(v1_xyz[1] - v2_xyz[1]);
-	double dz = abs(v1_xyz[2] - v2_xyz[2]);
+  double dx = abs(v1_xyz[0] - v2_xyz[0]);
+  double dy = abs(v1_xyz[1] - v2_xyz[1]);
+  double dz = abs(v1_xyz[2] - v2_xyz[2]);
 
-	if ((dx+dy+dz)<0.00001) return 1;
-	/* floating point error of 0.00001 is used here. 
-		if gmsh has any tolerance value change it to that */
+  if((dx + dy + dz) < 0.00001) return 1;
+  /* floating point error of 0.00001 is used here.
+      if gmsh has any tolerance value change it to that */
 
-	return 0;
+  return 0;
 }
 
 int sameVertex(MVertex *v1, MVertex *v2)
-/* This function determines whether given vertices v1 and v2 are at same location or not */
+/* This function determines whether given vertices v1 and v2 are at same
+ * location or not */
 {
-	SPoint3 v1_xyz = v1->point();
-	SPoint3 v2_xyz = v2->point();
+  SPoint3 v1_xyz = v1->point();
+  SPoint3 v2_xyz = v2->point();
 
-	double dx = abs(v1_xyz[0] - v2_xyz[0]);
-	double dy = abs(v1_xyz[1] - v2_xyz[1]);
-	double dz = abs(v1_xyz[2] - v2_xyz[2]);
+  double dx = abs(v1_xyz[0] - v2_xyz[0]);
+  double dy = abs(v1_xyz[1] - v2_xyz[1]);
+  double dz = abs(v1_xyz[2] - v2_xyz[2]);
 
-	if ((dx+dy+dz)<0.00001) return 1;
-	/* floating point error of 0.00001 is used here. 
-		if gmsh has any tolerance value change it to that */
+  if((dx + dy + dz) < 0.00001) return 1;
+  /* floating point error of 0.00001 is used here.
+      if gmsh has any tolerance value change it to that */
 
-	return 0;
+  return 0;
 }
 
 int sameEdge(GEdge *e1, GEdge *e2)
 /* This function determines whether given edges e1 and e2 are same or not */
 {
-	GVertex *vertex1_edge1, *vertex2_edge1;
-	vertex1_edge1 = e1->getBeginVertex();
-	vertex2_edge1 = e1->getEndVertex();
+  GVertex *vertex1_edge1, *vertex2_edge1;
+  vertex1_edge1 = e1->getBeginVertex();
+  vertex2_edge1 = e1->getEndVertex();
 
-	GVertex *vertex1_edge2, *vertex2_edge2;
-	vertex1_edge2 = e2->getBeginVertex();
-	vertex2_edge2 = e2->getEndVertex();
+  GVertex *vertex1_edge2, *vertex2_edge2;
+  vertex1_edge2 = e2->getBeginVertex();
+  vertex2_edge2 = e2->getEndVertex();
 
-	if ( ( (sameVertex(vertex1_edge1, vertex1_edge2)) || 
-		   (sameVertex(vertex1_edge1, vertex2_edge2)) )  && 
-	     ( (sameVertex(vertex2_edge1, vertex1_edge2)) || 
-		   (sameVertex(vertex2_edge1, vertex2_edge2)) )  )  return 1;
+  if(((sameVertex(vertex1_edge1, vertex1_edge2)) ||
+      (sameVertex(vertex1_edge1, vertex2_edge2))) &&
+     ((sameVertex(vertex2_edge1, vertex1_edge2)) ||
+      (sameVertex(vertex2_edge1, vertex2_edge2))))
+    return 1;
 
-	return 0;
+  return 0;
 }
 
 int sameFace(GFace *f1, GFace *f2)
 /* This function determines whether given faces f1 and f2 are same or not */
 {
-	std::vector<GEdge *> const &edges_face1 = f1->edges();
-	std::vector<GEdge *> const &edges_face2 = f2->edges();
+  std::vector<GEdge *> const &edges_face1 = f1->edges();
+  std::vector<GEdge *> const &edges_face2 = f2->edges();
 
-	if(edges_face1.size() != edges_face2.size()) return 0;
+  if(edges_face1.size() != edges_face2.size()) return 0;
 
-	unsigned int count = 0;
-	for(unsigned int i1 = 0; i1 < edges_face1.size(); ++i1) {
-	  for(unsigned int i2 = 0; i2 < edges_face2.size(); ++i2) {
-		  if(sameEdge(edges_face1[i1], edges_face2[i2])) {count += 1;}
-	  }
-	}
-	if(count == edges_face1.size()) { return 1; }
+  unsigned int count = 0;
+  for(unsigned int i1 = 0; i1 < edges_face1.size(); ++i1) {
+    for(unsigned int i2 = 0; i2 < edges_face2.size(); ++i2) {
+      if(sameEdge(edges_face1[i1], edges_face2[i2])) { count += 1; }
+    }
+  }
+  if(count == edges_face1.size()) { return 1; }
 
-	return 0;
+  return 0;
 }
 
-int sameFace(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8)
-/* Checks whether Face formed by vertices v1, v2, v3, v4 is same as the face formed by vertices v5, v6, v7, v8 */
+int sameFace(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, MVertex *v5,
+             MVertex *v6, MVertex *v7, MVertex *v8)
+/* Checks whether Face formed by vertices v1, v2, v3, v4 is same as the face
+ * formed by vertices v5, v6, v7, v8 */
 {
-	if( (sameVertex(v1,v5) || sameVertex(v1,v6) || sameVertex(v1,v7) || sameVertex(v1,v8) ) &&
-	    (sameVertex(v2,v5) || sameVertex(v2,v6) || sameVertex(v2,v7) || sameVertex(v2,v8) ) &&
-	    (sameVertex(v3,v5) || sameVertex(v3,v6) || sameVertex(v3,v7) || sameVertex(v3,v8) ) &&
-	    (sameVertex(v4,v5) || sameVertex(v4,v6) || sameVertex(v4,v7) || sameVertex(v4,v8) ) ) 
-			{return 1;} else {return 0;}
+  if((sameVertex(v1, v5) || sameVertex(v1, v6) || sameVertex(v1, v7) ||
+      sameVertex(v1, v8)) &&
+     (sameVertex(v2, v5) || sameVertex(v2, v6) || sameVertex(v2, v7) ||
+      sameVertex(v2, v8)) &&
+     (sameVertex(v3, v5) || sameVertex(v3, v6) || sameVertex(v3, v7) ||
+      sameVertex(v3, v8)) &&
+     (sameVertex(v4, v5) || sameVertex(v4, v6) || sameVertex(v4, v7) ||
+      sameVertex(v4, v8))) {
+    return 1;
+  }
+  else {
+    return 0;
+  }
 }
 
 void faceOrientationTransfinite(GFace *f, double *Face_Orientation)
-/* This subroutine returns i,j,k components of unit normal of the given face f */
+/* This subroutine returns i,j,k components of unit normal of the given face f
+ */
 {
-    MVertex *v0 = f->transfinite_vertices[0][0];
-    MVertex *v1 = f->transfinite_vertices[1][0];
-    MVertex *v2 = f->transfinite_vertices[0][1];
+  MVertex *v0 = f->transfinite_vertices[0][0];
+  MVertex *v1 = f->transfinite_vertices[1][0];
+  MVertex *v2 = f->transfinite_vertices[0][1];
 
-	SPoint3 v0_xyz = v0->point();
-	SPoint3 v1_xyz = v1->point();
-	SPoint3 v2_xyz = v2->point();
+  SPoint3 v0_xyz = v0->point();
+  SPoint3 v1_xyz = v1->point();
+  SPoint3 v2_xyz = v2->point();
 
-	double  vec1x = v1_xyz[0] - v0_xyz[0];
-	double  vec1y = v1_xyz[1] - v0_xyz[1];
-	double  vec1z = v1_xyz[2] - v0_xyz[2];
+  double vec1x = v1_xyz[0] - v0_xyz[0];
+  double vec1y = v1_xyz[1] - v0_xyz[1];
+  double vec1z = v1_xyz[2] - v0_xyz[2];
 
-	double  vec2x = v2_xyz[0] - v0_xyz[0];
-	double  vec2y = v2_xyz[1] - v0_xyz[1];
-	double  vec2z = v2_xyz[2] - v0_xyz[2];
+  double vec2x = v2_xyz[0] - v0_xyz[0];
+  double vec2y = v2_xyz[1] - v0_xyz[1];
+  double vec2z = v2_xyz[2] - v0_xyz[2];
 
-	*(Face_Orientation+0) = vec1y * vec2z - vec1z * vec2y ;
-	*(Face_Orientation+1) = vec1z * vec2x - vec1x * vec2z ;
-	*(Face_Orientation+2) = vec1x * vec2y - vec1y * vec2x ;
+  *(Face_Orientation + 0) = vec1y * vec2z - vec1z * vec2y;
+  *(Face_Orientation + 1) = vec1z * vec2x - vec1x * vec2z;
+  *(Face_Orientation + 2) = vec1x * vec2y - vec1y * vec2x;
 
-	double  detVecOri = sqrt( ((*(Face_Orientation+0))*(*(Face_Orientation+0)))+   \
-			                  ((*(Face_Orientation+1))*(*(Face_Orientation+1)))+   \
-		                      ((*(Face_Orientation+2))*(*(Face_Orientation+2))) ) ;
+  double detVecOri =
+    sqrt(((*(Face_Orientation + 0)) * (*(Face_Orientation + 0))) +
+         ((*(Face_Orientation + 1)) * (*(Face_Orientation + 1))) +
+         ((*(Face_Orientation + 2)) * (*(Face_Orientation + 2))));
 
-	*(Face_Orientation+0) = *(Face_Orientation+0)/detVecOri ;
-	*(Face_Orientation+1) = *(Face_Orientation+1)/detVecOri ;
-	*(Face_Orientation+2) = *(Face_Orientation+2)/detVecOri ;
+  *(Face_Orientation + 0) = *(Face_Orientation + 0) / detVecOri;
+  *(Face_Orientation + 1) = *(Face_Orientation + 1) / detVecOri;
+  *(Face_Orientation + 2) = *(Face_Orientation + 2) / detVecOri;
 
-	return;
+  return;
 }
 
 int volumeOrientationTransfinite(GRegion *gr)
-/* If the volume mesh is in Right-Hand orientation this function returns 1 otherwise -1 */
+/* If the volume mesh is in Right-Hand orientation this function returns 1
+ * otherwise -1 */
 {
-    MVertex *v0 = gr->transfinite_vertices[0][0][0];
-    MVertex *v1 = gr->transfinite_vertices[1][0][0];
-    MVertex *v2 = gr->transfinite_vertices[0][1][0];
-    MVertex *v3 = gr->transfinite_vertices[0][0][1];
+  MVertex *v0 = gr->transfinite_vertices[0][0][0];
+  MVertex *v1 = gr->transfinite_vertices[1][0][0];
+  MVertex *v2 = gr->transfinite_vertices[0][1][0];
+  MVertex *v3 = gr->transfinite_vertices[0][0][1];
 
-	SPoint3 v0_xyz = v0->point();
-	SPoint3 v1_xyz = v1->point();
-	SPoint3 v2_xyz = v2->point();
-	SPoint3 v3_xyz = v3->point();
+  SPoint3 v0_xyz = v0->point();
+  SPoint3 v1_xyz = v1->point();
+  SPoint3 v2_xyz = v2->point();
+  SPoint3 v3_xyz = v3->point();
 
-	double  vec1x = v1_xyz[0] - v0_xyz[0];
-	double  vec1y = v1_xyz[1] - v0_xyz[1];
-	double  vec1z = v1_xyz[2] - v0_xyz[2];
+  double vec1x = v1_xyz[0] - v0_xyz[0];
+  double vec1y = v1_xyz[1] - v0_xyz[1];
+  double vec1z = v1_xyz[2] - v0_xyz[2];
 
-	double  vec2x = v2_xyz[0] - v0_xyz[0];
-	double  vec2y = v2_xyz[1] - v0_xyz[1];
-	double  vec2z = v2_xyz[2] - v0_xyz[2];
+  double vec2x = v2_xyz[0] - v0_xyz[0];
+  double vec2y = v2_xyz[1] - v0_xyz[1];
+  double vec2z = v2_xyz[2] - v0_xyz[2];
 
-	double  vec3x = v3_xyz[0] - v0_xyz[0];
-	double  vec3y = v3_xyz[1] - v0_xyz[1];
-	double  vec3z = v3_xyz[2] - v0_xyz[2];
+  double vec3x = v3_xyz[0] - v0_xyz[0];
+  double vec3y = v3_xyz[1] - v0_xyz[1];
+  double vec3z = v3_xyz[2] - v0_xyz[2];
 
-	double detVec3 = sqrt(vec3x*vec3x + vec3y*vec3y + vec3z*vec3z);
-	vec3x = vec3x/detVec3;
-	vec3y = vec3y/detVec3;
-	vec3z = vec3z/detVec3;
+  double detVec3 = sqrt(vec3x * vec3x + vec3y * vec3y + vec3z * vec3z);
+  vec3x = vec3x / detVec3;
+  vec3y = vec3y / detVec3;
+  vec3z = vec3z / detVec3;
 
-	double vecRHrulex = vec1y * vec2z - vec1z * vec2y ;
-	double vecRHruley = vec1z * vec2x - vec1x * vec2z ;
-	double vecRHrulez = vec1x * vec2y - vec1y * vec2x ;
+  double vecRHrulex = vec1y * vec2z - vec1z * vec2y;
+  double vecRHruley = vec1z * vec2x - vec1x * vec2z;
+  double vecRHrulez = vec1x * vec2y - vec1y * vec2x;
 
-	double  detVecRHrule = sqrt(vecRHrulex*vecRHrulex + vecRHruley*vecRHruley + vecRHrulez*vecRHrulez);
-    vecRHrulex = vecRHrulex/detVecRHrule;
-    vecRHruley = vecRHruley/detVecRHrule;
-    vecRHrulez = vecRHrulez/detVecRHrule;
+  double detVecRHrule = sqrt(vecRHrulex * vecRHrulex + vecRHruley * vecRHruley +
+                             vecRHrulez * vecRHrulez);
+  vecRHrulex = vecRHrulex / detVecRHrule;
+  vecRHruley = vecRHruley / detVecRHrule;
+  vecRHrulez = vecRHrulez / detVecRHrule;
 
-	double vecOrix = vec3x - vecRHrulex;
-	double vecOriy = vec3y - vecRHruley;
-	double vecOriz = vec3z - vecRHrulez;
+  double vecOrix = vec3x - vecRHrulex;
+  double vecOriy = vec3y - vecRHruley;
+  double vecOriz = vec3z - vecRHrulez;
 
-	double vecOri = sqrt(vecOrix*vecOrix + vecOriy*vecOriy + vecOriz*vecOriz);
+  double vecOri =
+    sqrt(vecOrix * vecOrix + vecOriy * vecOriy + vecOriz * vecOriz);
 
-	if(vecOri<0.05){return 1;} else {return -1;}
-
+  if(vecOri < 0.05) { return 1; }
+  else {
+    return -1;
+  }
 }
 
-void findCornerIndexStructMesh2D(GFace *f, GVertex *v, int &i_index, int &j_index)
+void findCornerIndexStructMesh2D(GFace *f, GVertex *v, int &i_index,
+                                 int &j_index)
 /* This function computes i,j index (for 2D) of a corner vertex v in face f */
 {
-	std::vector<GVertex *> vf = f->vertices();
+  std::vector<GVertex *> vf = f->vertices();
 
-	for(unsigned int i = 0; i<4; ++i) {
-		GVertex *vi = vf[i];
-		SPoint3 vp = vi->xyz();
-	}
+  for(unsigned int i = 0; i < 4; ++i) {
+    GVertex *vi = vf[i];
+    SPoint3 vp = vi->xyz();
+  }
 
-	if(vf.size() != 4) {Msg::Warning( "Error obtaining vertices of face. Number of vertices != 4 ");}
+  if(vf.size() != 4) {
+    Msg::Warning("Error obtaining vertices of face. Number of vertices != 4 ");
+  }
 
-	int imax = f->transfinite_vertices.size();
-	int jmax = f->transfinite_vertices[0].size();
+  int imax = f->transfinite_vertices.size();
+  int jmax = f->transfinite_vertices[0].size();
 
-    MVertex *v1 = f->transfinite_vertices[0][0];
-    MVertex *v2 = f->transfinite_vertices[imax-1][0];
-    MVertex *v3 = f->transfinite_vertices[imax-1][jmax-1];
-    MVertex *v4 = f->transfinite_vertices[0][jmax-1];
+  MVertex *v1 = f->transfinite_vertices[0][0];
+  MVertex *v2 = f->transfinite_vertices[imax - 1][0];
+  MVertex *v3 = f->transfinite_vertices[imax - 1][jmax - 1];
+  MVertex *v4 = f->transfinite_vertices[0][jmax - 1];
 
-	for(unsigned int i = 0; i<vf.size(); ++i) {
-	    GVertex *vf2 = vf[i];
-		if( sameVertex(vf2,v1) && sameVertex(vf2,v) ) { i_index = 1;     j_index = 1;    return;}
-		if( sameVertex(vf2,v2) && sameVertex(vf2,v) ) { i_index = imax;  j_index = 1;    return;}
-		if( sameVertex(vf2,v3) && sameVertex(vf2,v) ) { i_index = imax;  j_index = jmax; return;}
-		if( sameVertex(vf2,v4) && sameVertex(vf2,v) ) { i_index = 1;     j_index = jmax; return;}
-	}
+  for(unsigned int i = 0; i < vf.size(); ++i) {
+    GVertex *vf2 = vf[i];
+    if(sameVertex(vf2, v1) && sameVertex(vf2, v)) {
+      i_index = 1;
+      j_index = 1;
+      return;
+    }
+    if(sameVertex(vf2, v2) && sameVertex(vf2, v)) {
+      i_index = imax;
+      j_index = 1;
+      return;
+    }
+    if(sameVertex(vf2, v3) && sameVertex(vf2, v)) {
+      i_index = imax;
+      j_index = jmax;
+      return;
+    }
+    if(sameVertex(vf2, v4) && sameVertex(vf2, v)) {
+      i_index = 1;
+      j_index = jmax;
+      return;
+    }
+  }
 
-	return;
+  return;
 }
 
-int isInterfaceFace(GModel *const model, MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3) 
-/* This function determines whether a face formed by four corner vertices v0,v1,v2,v3 is an interface-face between two regions or not 
-   This function makes use of a fact that a face is an interrior face if it is shared by two volumes */
+int isInterfaceFace(GModel *const model, MVertex *v0, MVertex *v1, MVertex *v2,
+                    MVertex *v3)
+/* This function determines whether a face formed by four corner vertices
+   v0,v1,v2,v3 is an interface-face between two regions or not This function
+   makes use of a fact that a face is an interrior face if it is shared by two
+   volumes */
 {
-	int countFace(0);
+  int countFace(0);
 
-	std::vector<GRegion *> regions;
-	for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it)
-		if((*it)->transfinite_vertices.size() &&
-			(*it)->transfinite_vertices[0].size() &&
-			(*it)->transfinite_vertices[0][0].size() ) {
-			regions.push_back(*it);
-		}
+  std::vector<GRegion *> regions;
+  for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it)
+    if((*it)->transfinite_vertices.size() &&
+       (*it)->transfinite_vertices[0].size() &&
+       (*it)->transfinite_vertices[0][0].size()) {
+      regions.push_back(*it);
+    }
 
-	for(unsigned int iRegion = 0; iRegion < regions.size(); iRegion++) {
-		GRegion *gr = regions[iRegion];
-		std::vector<GFace *> faces  = gr->faces();
-		if(faces.size() != 6) {Msg::Warning( "Error in Number of faces in Structured Mesh Region (!=6) ");}
+  for(unsigned int iRegion = 0; iRegion < regions.size(); iRegion++) {
+    GRegion *gr = regions[iRegion];
+    std::vector<GFace *> faces = gr->faces();
+    if(faces.size() != 6) {
+      Msg::Warning("Error in Number of faces in Structured Mesh Region (!=6) ");
+    }
 
-		for(unsigned int iFace = 0; iFace < faces.size(); iFace++) {
-			std::vector<GVertex *> vf = faces[iFace]->vertices();
-			if(vf.size() != 4) {Msg::Warning( "Error in Number of vertices in Structured Mesh Face (!=4) ");}
-			if( (sameVertex(vf[0],v0) || sameVertex(vf[0],v1) || sameVertex(vf[0],v2) || sameVertex(vf[0],v3) ) && 
-				(sameVertex(vf[1],v0) || sameVertex(vf[1],v1) || sameVertex(vf[1],v2) || sameVertex(vf[1],v3) ) &&
-				(sameVertex(vf[2],v0) || sameVertex(vf[2],v1) || sameVertex(vf[2],v2) || sameVertex(vf[2],v3) ) &&
-				(sameVertex(vf[3],v0) || sameVertex(vf[3],v1) || sameVertex(vf[3],v2) || sameVertex(vf[3],v3) ) )
-					countFace += 1;
-		}
-	}
-	if(countFace == 2) {return 1;} else {return 0;}
+    for(unsigned int iFace = 0; iFace < faces.size(); iFace++) {
+      std::vector<GVertex *> vf = faces[iFace]->vertices();
+      if(vf.size() != 4) {
+        Msg::Warning(
+          "Error in Number of vertices in Structured Mesh Face (!=4) ");
+      }
+      if((sameVertex(vf[0], v0) || sameVertex(vf[0], v1) ||
+          sameVertex(vf[0], v2) || sameVertex(vf[0], v3)) &&
+         (sameVertex(vf[1], v0) || sameVertex(vf[1], v1) ||
+          sameVertex(vf[1], v2) || sameVertex(vf[1], v3)) &&
+         (sameVertex(vf[2], v0) || sameVertex(vf[2], v1) ||
+          sameVertex(vf[2], v2) || sameVertex(vf[2], v3)) &&
+         (sameVertex(vf[3], v0) || sameVertex(vf[3], v1) ||
+          sameVertex(vf[3], v2) || sameVertex(vf[3], v3)))
+        countFace += 1;
+    }
+  }
+  if(countFace == 2) { return 1; }
+  else {
+    return 0;
+  }
 }
 
-int isInterfaceFace(GModel *const model, GVertex *v0, GVertex *v1, GVertex *v2, GVertex *v3) 
-/* This function determines whether a face formed by four corner vertices v0,v1,v2,v3 is an interface-face between two regions or not 
-   This function makes use of a fact that a face is an interrior face if it is shared by two volumes */
+int isInterfaceFace(GModel *const model, GVertex *v0, GVertex *v1, GVertex *v2,
+                    GVertex *v3)
+/* This function determines whether a face formed by four corner vertices
+   v0,v1,v2,v3 is an interface-face between two regions or not This function
+   makes use of a fact that a face is an interrior face if it is shared by two
+   volumes */
 {
-	int countFace(0);
+  int countFace(0);
 
-	std::vector<GRegion *> regions;
-	for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it)
-		if((*it)->transfinite_vertices.size() &&
-			(*it)->transfinite_vertices[0].size() &&
-			(*it)->transfinite_vertices[0][0].size() ) {
-			regions.push_back(*it);
-		}
+  std::vector<GRegion *> regions;
+  for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it)
+    if((*it)->transfinite_vertices.size() &&
+       (*it)->transfinite_vertices[0].size() &&
+       (*it)->transfinite_vertices[0][0].size()) {
+      regions.push_back(*it);
+    }
 
-	for(unsigned int iRegion = 0; iRegion < regions.size(); iRegion++) {
-		GRegion *gr = regions[iRegion];
-		std::vector<GFace *> faces  = gr->faces();
-		if(faces.size() != 6) {Msg::Warning( "Error in Number of faces in Structured Mesh Region (!=6) ");}
+  for(unsigned int iRegion = 0; iRegion < regions.size(); iRegion++) {
+    GRegion *gr = regions[iRegion];
+    std::vector<GFace *> faces = gr->faces();
+    if(faces.size() != 6) {
+      Msg::Warning("Error in Number of faces in Structured Mesh Region (!=6) ");
+    }
 
-		for(unsigned int iFace = 0; iFace < faces.size(); iFace++) {
-			std::vector<GVertex *> vf = faces[iFace]->vertices();
-			if(vf.size() != 4) {Msg::Warning( "Error in Number of vertices in Structured Mesh Face (!=4) ");}
-			if( (sameVertex(vf[0],v0) || sameVertex(vf[0],v1) || sameVertex(vf[0],v2) || sameVertex(vf[0],v3) ) && 
-				(sameVertex(vf[1],v0) || sameVertex(vf[1],v1) || sameVertex(vf[1],v2) || sameVertex(vf[1],v3) ) &&
-				(sameVertex(vf[2],v0) || sameVertex(vf[2],v1) || sameVertex(vf[2],v2) || sameVertex(vf[2],v3) ) &&
-				(sameVertex(vf[3],v0) || sameVertex(vf[3],v1) || sameVertex(vf[3],v2) || sameVertex(vf[3],v3) ) )
-					countFace += 1;
-		}
-	}
-	if(countFace == 2) {return 1;} else {return 0;}
+    for(unsigned int iFace = 0; iFace < faces.size(); iFace++) {
+      std::vector<GVertex *> vf = faces[iFace]->vertices();
+      if(vf.size() != 4) {
+        Msg::Warning(
+          "Error in Number of vertices in Structured Mesh Face (!=4) ");
+      }
+      if((sameVertex(vf[0], v0) || sameVertex(vf[0], v1) ||
+          sameVertex(vf[0], v2) || sameVertex(vf[0], v3)) &&
+         (sameVertex(vf[1], v0) || sameVertex(vf[1], v1) ||
+          sameVertex(vf[1], v2) || sameVertex(vf[1], v3)) &&
+         (sameVertex(vf[2], v0) || sameVertex(vf[2], v1) ||
+          sameVertex(vf[2], v2) || sameVertex(vf[2], v3)) &&
+         (sameVertex(vf[3], v0) || sameVertex(vf[3], v1) ||
+          sameVertex(vf[3], v2) || sameVertex(vf[3], v3)))
+        countFace += 1;
+    }
+  }
+  if(countFace == 2) { return 1; }
+  else {
+    return 0;
+  }
 }
 
 /*******************************************************************************
@@ -3179,13 +3245,14 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
 
   Msg::Warning("CGNS I/O is at an \"alpha\" software stage");
 
-// Start writing mesh if it is a Structured mesh
+  // Start writing mesh if it is a Structured mesh
   if(options.structuredMesh == 1) {
     Msg::Info("Writing Structured Mesh...............");
-/* This part (Structured CGNS file output) is written with the financial aid of 
-Indian Institute of Technology Hyderabad - BRNS sponsored project in 2018
-Under the guidance of Prof. Vinayak Eswaran <eswar@iith.ac.in>
-This may not be complete for special cases - for eg. periodic mesh info, if any, are not written.  */
+    /* This part (Structured CGNS file output) is written with the financial aid
+    of Indian Institute of Technology Hyderabad - BRNS sponsored project in 2018
+    Under the guidance of Prof. Vinayak Eswaran <eswar@iith.ac.in>
+    This may not be complete for special cases - for eg. periodic mesh info, if
+    any, are not written.  */
 
     std::set<GRegion *, GEntityLessThan> regions_set;
     std::set<GFace *, GEntityLessThan> faces_set;
@@ -3193,18 +3260,18 @@ This may not be complete for special cases - for eg. periodic mesh info, if any,
     std::set<GVertex *, GEntityLessThan> vertices_set;
 
     for(GModel::viter it = this->firstVertex(); it != this->lastVertex(); ++it)
-        vertices_set.insert(*it);
+      vertices_set.insert(*it);
     for(GModel::eiter it = this->firstEdge(); it != this->lastEdge(); ++it)
-        edges_set.insert(*it);
+      edges_set.insert(*it);
     for(GModel::fiter it = this->firstFace(); it != this->lastFace(); ++it)
-        faces_set.insert(*it);
+      faces_set.insert(*it);
     for(GModel::riter it = this->firstRegion(); it != this->lastRegion(); ++it)
-        regions_set.insert(*it);
+      regions_set.insert(*it);
 
-    //int numTotalRegions  = regions_set.size();
-    int numTotalFaces    = faces_set.size();
-    int numTotalEdges    = edges_set.size();
-    //int numTotalVertices = vertices_set.size();
+    // int numTotalRegions  = regions_set.size();
+    int numTotalFaces = faces_set.size();
+    int numTotalEdges = edges_set.size();
+    // int numTotalVertices = vertices_set.size();
 
     int numInterfaceFaces(0);
     int numInterfaceEdges(0);
@@ -3222,8 +3289,7 @@ This may not be complete for special cases - for eg. periodic mesh info, if any,
     std::vector<GFace *> faces;
     for(fiter it = firstFace(); it != lastFace(); ++it)
       if((*it)->transfinite_vertices.size() &&
-         (*it)->transfinite_vertices[0].size() )
-      {
+         (*it)->transfinite_vertices[0].size()) {
         meshDim = 2;
         faces.push_back(*it);
       }
@@ -3232,8 +3298,7 @@ This may not be complete for special cases - for eg. periodic mesh info, if any,
     for(GModel::riter it = this->firstRegion(); it != this->lastRegion(); ++it)
       if((*it)->transfinite_vertices.size() &&
          (*it)->transfinite_vertices[0].size() &&
-         (*it)->transfinite_vertices[0][0].size() ) 
-      {
+         (*it)->transfinite_vertices[0][0].size()) {
         meshDim = 3;
         regions.push_back(*it);
       }
@@ -3243,886 +3308,1281 @@ This may not be complete for special cases - for eg. periodic mesh info, if any,
       return 0;
     }
 
-/* 
- * Interface Face would be counted by the both regions that they are part of (3D).
- * Sum up the number of faces for each region and subtract total number of faces of the model
- * to get the number of interface faces
-*/
-    if (meshDim == 3) {
+    /*
+     * Interface Face would be counted by the both regions that they are part of
+     * (3D). Sum up the number of faces for each region and subtract total
+     * number of faces of the model to get the number of interface faces
+     */
+    if(meshDim == 3) {
       int numTotFaces(0);
       for(unsigned int i = 0; i < regions.size(); i++) {
-          std::vector<GFace *> const &faces = regions[i]->faces();
-          numTotFaces += faces.size();
+        std::vector<GFace *> const &faces = regions[i]->faces();
+        numTotFaces += faces.size();
       }
       numInterfaceFaces = numTotFaces - numTotalFaces;
     }
-/* 
- * Interface Edge would be counted by the both faces that they are part of (2D).
- * Sum up the number of edges for each face and subtract total number of edges of the model
- * to get the number of interface edges
-*/
-	if (meshDim == 2) {
+    /*
+     * Interface Edge would be counted by the both faces that they are part of
+     * (2D). Sum up the number of edges for each face and subtract total number
+     * of edges of the model to get the number of interface edges
+     */
+    if(meshDim == 2) {
       int numTotEdges(0);
       for(unsigned int i = 0; i < faces.size(); i++) {
-          std::vector<GEdge *> const &edges = faces[i]->edges();
-          numTotEdges += edges.size();
+        std::vector<GEdge *> const &edges = faces[i]->edges();
+        numTotEdges += edges.size();
       }
       numInterfaceEdges = numTotEdges - numTotalEdges;
     }
 
-// Checking Orientation of the mesh
-	if ((meshDim == 2) && (faces.size() > 1)) {
-      Msg::Warning( "Face Normals for the 2D mesh should be consistent - otherwise the mesh may not work.");
-      Msg::Warning( "Face normals for all the faces are listed below - if Face Normals are not consistent,");
-      Msg::Warning( "you may need to reverse the order of the vertices for 'Transfinite Surface' in your .geo file.");
-  	  for(unsigned int iFace = 0; iFace < faces.size(); iFace++) {
-    	GFace *gf = faces[iFace];
-    	double* Face_Orientation=NULL;
-    	Face_Orientation = new double[3];
-    	faceOrientationTransfinite(gf, &(*Face_Orientation));
-        Msg::Info( "iFace=  %i \t Orientation=  %f  \t %f  \t %f  ", iFace, *(Face_Orientation+0), *(Face_Orientation+1), *(Face_Orientation+2) );
-  	  }
-      Msg::Info( " ");
-	}
-	if ((meshDim == 3) && (regions.size() > 1)) {
-      Msg::Warning( "Volume mesh orientation for the 3D mesh should be consistent - otherwise the mesh may not work.");
-      Msg::Warning( "Volume mesh orientation for all the regions are listed below - if Volume mesh orientations are not consistent,");
-      Msg::Warning( "you may need to change the order of the vertices for 'Transfinite Volume' in your .geo file.");
-  	  for(unsigned int iRegion = 0; iRegion < regions.size(); iRegion++) {
-		GRegion *gr = regions[iRegion];
-		int volOri = volumeOrientationTransfinite(gr);
-        Msg::Info( "iRegion= %i \t Orientation=   %i", iRegion, volOri );
-	  }
-      Msg::Info( " ");
-	}
+    // Checking Orientation of the mesh
+    if((meshDim == 2) && (faces.size() > 1)) {
+      Msg::Warning("Face Normals for the 2D mesh should be consistent - "
+                   "otherwise the mesh may not work.");
+      Msg::Warning("Face normals for all the faces are listed below - if Face "
+                   "Normals are not consistent,");
+      Msg::Warning("you may need to reverse the order of the vertices for "
+                   "'Transfinite Surface' in your .geo file.");
+      for(unsigned int iFace = 0; iFace < faces.size(); iFace++) {
+        GFace *gf = faces[iFace];
+        double *Face_Orientation = NULL;
+        Face_Orientation = new double[3];
+        faceOrientationTransfinite(gf, &(*Face_Orientation));
+        Msg::Info("iFace=  %i \t Orientation=  %f  \t %f  \t %f  ", iFace,
+                  *(Face_Orientation + 0), *(Face_Orientation + 1),
+                  *(Face_Orientation + 2));
+      }
+      Msg::Info(" ");
+    }
+    if((meshDim == 3) && (regions.size() > 1)) {
+      Msg::Warning("Volume mesh orientation for the 3D mesh should be "
+                   "consistent - otherwise the mesh may not work.");
+      Msg::Warning("Volume mesh orientation for all the regions are listed "
+                   "below - if Volume mesh orientations are not consistent,");
+      Msg::Warning("you may need to change the order of the vertices for "
+                   "'Transfinite Volume' in your .geo file.");
+      for(unsigned int iRegion = 0; iRegion < regions.size(); iRegion++) {
+        GRegion *gr = regions[iRegion];
+        int volOri = volumeOrientationTransfinite(gr);
+        Msg::Info("iRegion= %i \t Orientation=   %i", iRegion, volOri);
+      }
+      Msg::Info(" ");
+    }
 
+    //--Open the file and get ready to write the zones
 
-//--Open the file and get ready to write the zones
-
-// dimension of the mesh
+    // dimension of the mesh
     int vectorDim = 2;
     if(options.vectorDim == 3) vectorDim = options.vectorDim;
-    if(vectorDim != 3) vectorDim = 2;	// it can be only 2 or 3 for 2D
+    if(vectorDim != 3) vectorDim = 2; // it can be only 2 or 3 for 2D
 
-// open the file
+    // open the file
     int cgIndexFile = 0;
     if(cg_open(name.c_str(), CG_MODE_WRITE, &cgIndexFile)) return cgnsErr();
 
-// write the base node
+    // write the base node
     int cgIndexBase = 0;
-    if(cg_base_write(cgIndexFile, options.baseName.c_str(), meshDim, vectorDim, &cgIndexBase))
-    	return cgnsErr();
+    if(cg_base_write(cgIndexFile, options.baseName.c_str(), meshDim, vectorDim,
+                     &cgIndexBase))
+      return cgnsErr();
 
-// write information about who generated the mesh
+    // write information about who generated the mesh
     if(cg_goto(cgIndexFile, cgIndexBase, "end")) return (cgnsErr());
     if(cg_descriptor_write("About", "Created by Gmsh")) return cgnsErr();
 
-// Write the zone node
+    // Write the zone node
     int cgIndexZone = 0;
     cgsize_t cgZoneSize[9] = {0};
 
-// for 2D Mesh
-    if (meshDim == 2) {
-        static int patchIndex(-1);
-        static int interfaceIndex(-1);
+    // for 2D Mesh
+    if(meshDim == 2) {
+      static int patchIndex(-1);
+      static int interfaceIndex(-1);
 
-        for(unsigned int iFace = 0; iFace < faces.size(); iFace++) {
-            GFace* gf = faces[iFace];
-            std::vector<GEdge *> const &edges = gf->edges();
-            if(edges.size() != 4) { Msg::Warning( "Error in Number of Edges in Structured Mesh Face (!=4) = %i",  iFace ); }
-
-            cgZoneSize[0] = gf->transfinite_vertices.size();            // imax     // Number of vertices
-            cgZoneSize[1] = gf->transfinite_vertices[0].size();         // jmax
-            cgZoneSize[2] = cgZoneSize[0] - 1;                          // Number of elements
-            cgZoneSize[3] = cgZoneSize[1] - 1;
-            cgZoneSize[4] = 0;
-            cgZoneSize[5] = 0;
-
-            int imax = cgZoneSize[0];
-            int jmax = cgZoneSize[1];
-            MVertex *v0 = gf->transfinite_vertices[0][0];
-            MVertex *v1 = gf->transfinite_vertices[imax-1][0];
-            MVertex *v2 = gf->transfinite_vertices[imax-1][jmax-1];
-            MVertex *v3 = gf->transfinite_vertices[0][jmax-1];
-
-            std::vector<double> dBuffer;
-            std::string zoneName = "Zone_&I%4&";
-            expand_name(zoneName, iFace, "Zone");
-
-            if(cg_zone_write(cgIndexFile, cgIndexBase, zoneName.c_str(), cgZoneSize,
-                           Structured, &cgIndexZone)) {
-                return cgnsErr();
-            }
-
-// Write the grid node
-            int cgIndexGrid = 0;
-            if(cg_grid_write(cgIndexFile, cgIndexBase, cgIndexZone, "GridCoordinates", &cgIndexGrid))
-                    return cgnsErr();
-
-// Write the grid coordinates
-            int cgIndexCoord = 0;
-            dBuffer.resize(cgZoneSize[0]*cgZoneSize[1]);
-
-// x-coordinates for this zone
-            for(unsigned int k = 0; k < gf->transfinite_vertices[0].size(); k++) {
-                for(unsigned int j = 0; j < gf->transfinite_vertices.size(); j++) {
-                    MVertex *v = gf->transfinite_vertices[j][k];
-                    dBuffer[cgZoneSize[0]*k+j] = v->x() * scalingFactor ;
-                }
-            }
-
-            if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                            "CoordinateX", &dBuffer[0], &cgIndexCoord))
-                    return cgnsErr();
-
-// y-coordinates for this zone
-            for(unsigned int k = 0; k < gf->transfinite_vertices[0].size(); k++) {
-                for(unsigned int j = 0; j < gf->transfinite_vertices.size(); j++) {
-                    MVertex *v = gf->transfinite_vertices[j][k];
-                    dBuffer[cgZoneSize[0]*k+j] = v->y() * scalingFactor ;
-                }
-            }
-
-            if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                            "CoordinateY", &dBuffer[0], &cgIndexCoord))
-                    return cgnsErr();
-
-// z-coordinates for this zone - writes only Z=0 value (even if the mesh is in different Z)
-            if(vectorDim == 3) {
-                for(unsigned int k = 0; k < gf->transfinite_vertices[0].size(); k++) {
-                    for(unsigned int j = 0; j < gf->transfinite_vertices.size(); j++) {
-                        //MVertex *v = gf->transfinite_vertices[j][k];
-                    	//dBuffer[cgZoneSize[0]*k+j] = v->z() * scalingFactor ;
-                        dBuffer[cgZoneSize[0]*k+j] = 0 ;
-                    }
-                }
-
-                if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                              "CoordinateZ", &dBuffer[0], &cgIndexCoord))
-                        return cgnsErr();
-            }
-
-// Writing Boundary Conditions
-            BCType_t BCType(BCWallViscous);     // Writes all boundary to BCWallViscous
-            PointSetType_t ptsettype(PointRange);
-            int numBCVert(2);
-            int cgIndexBoco(0);
-            int cgIndexConn(0);
-            int interfaceEdge(0);
-            int interfaceWritten(0);
-            int* Point_Range=NULL;
-            int* Point_Donor_Range=NULL;
-            int* Transform=NULL;
-            Point_Range       = new int[4];
-            Point_Donor_Range = new int[4];
-            Transform         = new int[2];
-
-            for(unsigned int iBc = 0; iBc < 4; ++iBc) {
-                interfaceEdge = 0;
-                interfaceWritten = 0;
-
-                patchIndex += 1;
-                std::string patchName = "Patch_&I%4&";
-                expand_name(patchName, patchIndex, "Patch");
-    
-                interfaceIndex += 1;
-                std::string interfaceName = "Interface_&I%4&";
-                expand_name(interfaceName, interfaceIndex, "Interface");
-
-                std::string adjoiningZoneName = "Zone_&I%4&";
-
-                std::vector<int> physical_num;                      //Family number
-                std::string physical_name;                          //Family name
-                MVertex *v1Tmp=NULL;
-                MVertex *v2Tmp=NULL;
-                if(iBc==0) {                    // Edge between v0-v1
-                    *(Point_Range+0) = 1;
-                    *(Point_Range+1) = 1;
-                    *(Point_Range+2) = imax;
-                    *(Point_Range+3) = 1;
-                    physical_num = gf->transfinite_vertices[static_cast<int>(imax/2)][0]->onWhat()->physicals;
-                    if(physical_num.size() > 0) { physical_name = this->getPhysicalName(1, physical_num[0]); }
-                    v1Tmp = v0 ;
-                    v2Tmp = v1 ;
-                } else if(iBc==1) {             // Edge between v1-v2
-                    *(Point_Range+0) = imax;
-                    *(Point_Range+1) = 1;
-                    *(Point_Range+2) = imax;
-                    *(Point_Range+3) = jmax;
-                    physical_num = gf->transfinite_vertices[imax-1][static_cast<int>(jmax/2)]->onWhat()->physicals;
-                    if(physical_num.size() > 0) { physical_name = this->getPhysicalName(1, physical_num[0]); }
-                    v1Tmp = v1 ;
-                    v2Tmp = v2 ;
-                } else if(iBc==2) {             // Edge between v3-v2
-                    *(Point_Range+0) = 1;
-                    *(Point_Range+1) = jmax;
-                    *(Point_Range+2) = imax;
-                    *(Point_Range+3) = jmax;
-                    physical_num = gf->transfinite_vertices[static_cast<int>(imax/2)][jmax-1]->onWhat()->physicals;
-                    if(physical_num.size() > 0) { physical_name = this->getPhysicalName(1, physical_num[0]); }
-                    v1Tmp = v3 ;
-                    v2Tmp = v2 ;
-                } else {                        // Edge between v0-v3
-                    *(Point_Range+0) = 1;
-                    *(Point_Range+1) = 1;
-                    *(Point_Range+2) = 1;
-                    *(Point_Range+3) = jmax;
-                    physical_num = gf->transfinite_vertices[0][static_cast<int>(jmax/2)]->onWhat()->physicals;
-                    if(physical_num.size() > 0) { physical_name = this->getPhysicalName(1, physical_num[0]); }
-                    v1Tmp = v0 ;
-                    v2Tmp = v3 ;
-                }
-
-                if(numInterfaceEdges>0) {           // Note: An Edge can have interface with only one more edge
-                  for(unsigned int jFace = 0; jFace < faces.size(); jFace++) {
-                   if(jFace != iFace) {
-                    interfaceEdge = 0;
-                    GFace *gf2 = faces[jFace];
-                    std::vector<GEdge *> const &edges_jface = gf2->edges();
-                    adjoiningZoneName = "Zone_&I%4&";
-                    expand_name(adjoiningZoneName, jFace, "Zone");
-
-                    if(edges_jface.size() != 4) { Msg::Warning( "Error in Number of Edges in Structured Mesh Face (!=4) = %i", jFace ); }
-
-                    int imax_jFace = gf2->transfinite_vertices.size();              // imax     // Number of vertices
-                    int jmax_jFace = gf2->transfinite_vertices[0].size();           // jmax
-
-                    MVertex *v0f2 = gf2->transfinite_vertices[0][0];
-                    MVertex *v1f2 = gf2->transfinite_vertices[imax_jFace-1][0];
-                    MVertex *v2f2 = gf2->transfinite_vertices[imax_jFace-1][jmax_jFace-1];
-                    MVertex *v3f2 = gf2->transfinite_vertices[0][jmax_jFace-1];
-
-                    if(sameVertex(v1Tmp, v0f2) && sameVertex(v2Tmp, v1f2) ) {           // Edge v0-v1
-                        interfaceEdge = 1;
-                        *(Point_Donor_Range+0) = 1;
-                        *(Point_Donor_Range+1) = 1;
-                        *(Point_Donor_Range+2) = imax_jFace;
-                        *(Point_Donor_Range+3) = 1;
-                    }
-                    if(sameVertex(v1Tmp, v1f2) && sameVertex(v2Tmp, v0f2) ) {
-                        interfaceEdge = 1;
-                        *(Point_Donor_Range+0) = imax_jFace;
-                        *(Point_Donor_Range+1) = 1;
-                        *(Point_Donor_Range+2) = 1;
-                        *(Point_Donor_Range+3) = 1;
-                    }
-                    if(sameVertex(v1Tmp, v1f2) && sameVertex(v2Tmp, v2f2) ) {           // Edge v1-v2
-                        interfaceEdge = 1;
-                        *(Point_Donor_Range+0) = imax_jFace;
-                        *(Point_Donor_Range+1) = 1;
-                        *(Point_Donor_Range+2) = imax_jFace;
-                        *(Point_Donor_Range+3) = jmax_jFace;
-                    }
-                    if(sameVertex(v1Tmp, v2f2) && sameVertex(v2Tmp, v1f2) ) {
-                        interfaceEdge = 1;
-                        *(Point_Donor_Range+0) = imax_jFace;
-                        *(Point_Donor_Range+1) = jmax_jFace;
-                        *(Point_Donor_Range+2) = imax_jFace;
-                        *(Point_Donor_Range+3) = 1;
-                    }
-                    if(sameVertex(v1Tmp, v3f2) && sameVertex(v2Tmp, v2f2) ) {           // Edge v3-v2
-                        interfaceEdge = 1;
-                        *(Point_Donor_Range+0) = 1;
-                        *(Point_Donor_Range+1) = jmax_jFace;
-                        *(Point_Donor_Range+2) = imax_jFace;
-                        *(Point_Donor_Range+3) = jmax_jFace;
-                    }
-                    if(sameVertex(v1Tmp, v2f2) && sameVertex(v2Tmp, v3f2) ) {
-                        interfaceEdge = 1;
-                        *(Point_Donor_Range+0) = imax_jFace;
-                        *(Point_Donor_Range+1) = jmax_jFace;
-                        *(Point_Donor_Range+2) = 1;
-                        *(Point_Donor_Range+3) = jmax_jFace;
-                    }
-                    if(sameVertex(v1Tmp, v0f2) && sameVertex(v2Tmp, v3f2) ) {           // Edge v0-v3
-                        interfaceEdge = 1;
-                        *(Point_Donor_Range+0) = 1;
-                        *(Point_Donor_Range+1) = 1;
-                        *(Point_Donor_Range+2) = 1;
-                        *(Point_Donor_Range+3) = jmax_jFace;
-                    }
-                    if(sameVertex(v1Tmp, v3f2) && sameVertex(v2Tmp, v0f2) ) {
-                        interfaceEdge = 1;
-                        *(Point_Donor_Range+0) = 1;
-                        *(Point_Donor_Range+1) = jmax_jFace;
-                        *(Point_Donor_Range+2) = 1;
-                        *(Point_Donor_Range+3) = 1;
-                    }
-
-// Grid Connectivity - Compute 'Transform Matrix'
-                    if(interfaceEdge == 1) {
-                        interfaceWritten = 1;
-
-                        int a1(0), a2(0), b1(0), b2(0);
-                        a1 = (*(Point_Donor_Range+2)) - (*Point_Donor_Range);
-                        a2 = (*(Point_Donor_Range+3)) - (*(Point_Donor_Range+1));
-                        b1 = (*(Point_Range+2)) - (*Point_Range);
-                        b2 = (*(Point_Range+3)) - (*(Point_Range+1));
-
-/* In the interface Face, if one index is varying, other should remain constant and hence one of a1, a2, b1, b2 should be zero (for 2D)
- *       (Index2 - Begin2) = T.(Index1 - Begin1) 
- *       (Index1 - Begin1) = Transpose[T].(Index2 - Begin2) */
-                        int x1(0),y1(0),x2(0),y2(0);
-                        if (b2 == 0){
-                            x1 = a1/b1; y1 = a2/b1;
-                            if(x1 == 0){
-                                y2 = 0;  if (y1<0) {x2 = 1;} else {x2 = -1;};
-                            } else if (y1 == 0) {
-                                x2 = 0;  if (x1>0) {y2 = 1;} else {y2 = -1;};
-                            }
-                        } else if (b1 == 0) {
-                            x2 = a1/b2; y2 = a2/b2;
-                            if(x2 == 0){
-                                y1 = 0;  if (y2>0) {x1 = 1;} else {x1 = -1;};
-                            } else if (y2 == 0) {
-                                x1 = 0;  if (x2<0) {y1 = 1;} else {y1 = -1;};
-                            }
-                        } else {
-                            Msg::Warning( "Error Finding Transform matrix for zone interface - Using default values [1 2] ");
-                            *Transform     = 1;
-                            *(Transform+1) = 2;
-                        }
-
-                        if (x1 ==  1) {*Transform     =  1;}
-                        if (x1 == -1) {*Transform     = -1;}
-                        if (x2 ==  1) {*(Transform+1) =  1;}
-                        if (x2 == -1) {*(Transform+1) = -1;}
-
-                        if (y1 ==  1) {*Transform     =  2;}
-                        if (y1 == -1) {*Transform     = -2;}
-                        if (y2 ==  1) {*(Transform+1) =  2;}
-                        if (y2 == -1) {*(Transform+1) = -2;}
-
-                        if(cg_1to1_write(cgIndexFile, cgIndexBase, cgIndexZone, interfaceName.c_str(),
-                                    adjoiningZoneName.c_str(), Point_Range,Point_Donor_Range,Transform,&cgIndexConn) ) {
-                                return cgnsErr();
-                        }
-                    }  // End interfaceEdge == 1
-                   }
-                  }
-                }  // End numInterfaceEdges>0
-
-                if( (interfaceEdge == 0) && (interfaceWritten == 0) ) {
-                    if(cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone, patchName.c_str(),
-                               BCType, ptsettype, numBCVert, Point_Range, &cgIndexBoco)) {
-                            return cgnsErr();
-                    }
-
-                    if(physical_name != "") {
-                        if(cg_goto(cgIndexFile, cgIndexBase, zoneName.c_str(), 0, "ZoneBC_t", 1, patchName.c_str(), 0, "end")) return cgnsErr();
-                        if(cg_famname_write(physical_name.c_str()) ) return cgnsErr();
-                    }
-                }
-
-            }   // End writing boco & interface for 2D mesh
+      for(unsigned int iFace = 0; iFace < faces.size(); iFace++) {
+        GFace *gf = faces[iFace];
+        std::vector<GEdge *> const &edges = gf->edges();
+        if(edges.size() != 4) {
+          Msg::Warning(
+            "Error in Number of Edges in Structured Mesh Face (!=4) = %i",
+            iFace);
         }
-    }   // End if meshDim == 2D
 
-// for 3D Mesh
-    if (meshDim == 3) {
-    	vectorDim = 3;
-        static int patchIndex(-1);
-        static int interfaceIndex(-1);
+        cgZoneSize[0] =
+          gf->transfinite_vertices.size(); // imax     // Number of vertices
+        cgZoneSize[1] = gf->transfinite_vertices[0].size(); // jmax
+        cgZoneSize[2] = cgZoneSize[0] - 1; // Number of elements
+        cgZoneSize[3] = cgZoneSize[1] - 1;
+        cgZoneSize[4] = 0;
+        cgZoneSize[5] = 0;
 
-		for(unsigned int iRegion = 0; iRegion < regions.size(); iRegion++) {
-    		GRegion *gr = regions[iRegion];
-    		std::vector<GFace *> faces  = gr->faces();
-    		if(faces.size() != 6) { Msg::Warning( "Error in Number of Faces in Structured Mesh (!=6) = %i", iRegion ); }
+        int imax = cgZoneSize[0];
+        int jmax = cgZoneSize[1];
+        MVertex *v0 = gf->transfinite_vertices[0][0];
+        MVertex *v1 = gf->transfinite_vertices[imax - 1][0];
+        MVertex *v2 = gf->transfinite_vertices[imax - 1][jmax - 1];
+        MVertex *v3 = gf->transfinite_vertices[0][jmax - 1];
 
-    		cgZoneSize[0] = gr->transfinite_vertices.size();          // imax     // Number of vertices
-    		cgZoneSize[1] = gr->transfinite_vertices[0].size();       // jmax
-    		cgZoneSize[2] = gr->transfinite_vertices[0][0].size();    // kmax
-    		cgZoneSize[3] = cgZoneSize[0] - 1 ;                       // Number of elements
-    		cgZoneSize[4] = cgZoneSize[1] - 1 ;
-    		cgZoneSize[5] = cgZoneSize[2] - 1 ;
-    		cgZoneSize[6] = 0 ;
-    		cgZoneSize[7] = 0 ;
-    		cgZoneSize[8] = 0 ;
+        std::vector<double> dBuffer;
+        std::string zoneName = "Zone_&I%4&";
+        expand_name(zoneName, iFace, "Zone");
 
-    		int imax = cgZoneSize[0];
-    		int jmax = cgZoneSize[1];
-    		int kmax = cgZoneSize[2];
+        if(cg_zone_write(cgIndexFile, cgIndexBase, zoneName.c_str(), cgZoneSize,
+                         Structured, &cgIndexZone)) {
+          return cgnsErr();
+        }
 
-    		MVertex *v0 = gr->transfinite_vertices[0][0][0];
-    		MVertex *v1 = gr->transfinite_vertices[imax-1][0][0];
-    		MVertex *v2 = gr->transfinite_vertices[imax-1][jmax-1][0];
-    		MVertex *v3 = gr->transfinite_vertices[0][jmax-1][0];
-    		MVertex *v4 = gr->transfinite_vertices[0][0][kmax-1];
-    		MVertex *v5 = gr->transfinite_vertices[imax-1][0][kmax-1];
-    		MVertex *v6 = gr->transfinite_vertices[imax-1][jmax-1][kmax-1];
-    		MVertex *v7 = gr->transfinite_vertices[0][jmax-1][kmax-1];
+        // Write the grid node
+        int cgIndexGrid = 0;
+        if(cg_grid_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                         "GridCoordinates", &cgIndexGrid))
+          return cgnsErr();
 
-    		std::vector<double> dBuffer;
-    		std::string zoneName = "Zone_&I%4&";
-    		expand_name(zoneName, iRegion, "Zone");
+        // Write the grid coordinates
+        int cgIndexCoord = 0;
+        dBuffer.resize(cgZoneSize[0] * cgZoneSize[1]);
 
-    		if(cg_zone_write(cgIndexFile, cgIndexBase, zoneName.c_str(), cgZoneSize,
-                           		Structured, &cgIndexZone)) {
-            		return cgnsErr();
-    		}
+        // x-coordinates for this zone
+        for(unsigned int k = 0; k < gf->transfinite_vertices[0].size(); k++) {
+          for(unsigned int j = 0; j < gf->transfinite_vertices.size(); j++) {
+            MVertex *v = gf->transfinite_vertices[j][k];
+            dBuffer[cgZoneSize[0] * k + j] = v->x() * scalingFactor;
+          }
+        }
 
-// Write the grid node
-    		int cgIndexGrid = 0;
-    		if(cg_grid_write(cgIndexFile, cgIndexBase, cgIndexZone, "GridCoordinates", &cgIndexGrid))
-            		return cgnsErr();
+        if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
+                          "CoordinateX", &dBuffer[0], &cgIndexCoord))
+          return cgnsErr();
 
-// Write the grid coordinates
-    		int cgIndexCoord = 0;
-    		dBuffer.resize(imax*jmax*kmax);
+        // y-coordinates for this zone
+        for(unsigned int k = 0; k < gf->transfinite_vertices[0].size(); k++) {
+          for(unsigned int j = 0; j < gf->transfinite_vertices.size(); j++) {
+            MVertex *v = gf->transfinite_vertices[j][k];
+            dBuffer[cgZoneSize[0] * k + j] = v->y() * scalingFactor;
+          }
+        }
 
-// x-coordinates for this zone
-    		for(unsigned int kk = 0; kk < gr->transfinite_vertices[0][0].size(); kk++) {
-      			for(unsigned int jj = 0; jj < gr->transfinite_vertices[0].size(); jj++) {
-        			for(unsigned int ii = 0; ii < gr->transfinite_vertices.size(); ii++) {
-          				MVertex *v = gr->transfinite_vertices[ii][jj][kk];
-          				dBuffer[imax*jmax*kk+imax*jj+ii] = v->x() * scalingFactor ;
-        			}
-      			}
-    		}
-          	if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                            "CoordinateX", &dBuffer[0], &cgIndexCoord))
-            		return cgnsErr();
+        if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
+                          "CoordinateY", &dBuffer[0], &cgIndexCoord))
+          return cgnsErr();
 
-// y-coordinates for this zone
-    		for(unsigned int kk = 0; kk < gr->transfinite_vertices[0][0].size(); kk++) {
-      			for(unsigned int jj = 0; jj < gr->transfinite_vertices[0].size(); jj++) {
-        			for(unsigned int ii = 0; ii < gr->transfinite_vertices.size(); ii++) {
-          				MVertex *v = gr->transfinite_vertices[ii][jj][kk];
-          				dBuffer[imax*jmax*kk+imax*jj+ii] = v->y() * scalingFactor ;
-        			}
-      			}
-    		}
-          	if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                            "CoordinateY", &dBuffer[0], &cgIndexCoord))
-            		return cgnsErr();
+        // z-coordinates for this zone - writes only Z=0 value (even if the mesh
+        // is in different Z)
+        if(vectorDim == 3) {
+          for(unsigned int k = 0; k < gf->transfinite_vertices[0].size(); k++) {
+            for(unsigned int j = 0; j < gf->transfinite_vertices.size(); j++) {
+              // MVertex *v = gf->transfinite_vertices[j][k];
+              // dBuffer[cgZoneSize[0]*k+j] = v->z() * scalingFactor ;
+              dBuffer[cgZoneSize[0] * k + j] = 0;
+            }
+          }
 
-// z-coordinates for this zone
-    		for(unsigned int kk = 0; kk < gr->transfinite_vertices[0][0].size(); kk++) {
-      			for(unsigned int jj = 0; jj < gr->transfinite_vertices[0].size(); jj++) {
-        			for(unsigned int ii = 0; ii < gr->transfinite_vertices.size(); ii++) {
-          				MVertex *v = gr->transfinite_vertices[ii][jj][kk];
-          				dBuffer[imax*jmax*kk+imax*jj+ii] = v->z() * scalingFactor ;
-        			}
-      			}
-    		}
-            if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
+          if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
                             "CoordinateZ", &dBuffer[0], &cgIndexCoord))
-              		return cgnsErr();
-                                                                                                                                                     
-// Writing Boundary Conditions
-            BCType_t BCType(BCWallViscous);     // Writes all boundary to BCWallViscous
-			PointSetType_t ptsettype(PointRange);
-			int numBCVert(2);
-			int cgIndexBoco(0);
-			int cgIndexConn(0);
-			int interfaceFace(0);
-			int interfaceFaceWritten(0);
-			int* Point_Range=NULL;
-			int* Point_Donor_Range=NULL;
-			int* Transform=NULL;
-			Point_Range       = new int[6];
-			Point_Donor_Range = new int[6];
-			Transform         = new int[3];
+            return cgnsErr();
+        }
 
-  			for(unsigned int iBc = 0; iBc < 6; ++iBc) {
-    			interfaceFace = 0;
-    			interfaceFaceWritten = 0;
+        // Writing Boundary Conditions
+        BCType_t BCType(BCWallViscous); // Writes all boundary to BCWallViscous
+        PointSetType_t ptsettype(PointRange);
+        int numBCVert(2);
+        int cgIndexBoco(0);
+        int cgIndexConn(0);
+        int interfaceEdge(0);
+        int interfaceWritten(0);
+        int *Point_Range = NULL;
+        int *Point_Donor_Range = NULL;
+        int *Transform = NULL;
+        Point_Range = new int[4];
+        Point_Donor_Range = new int[4];
+        Transform = new int[2];
 
-    			patchIndex += 1;
-    			std::string patchName = "Patch_&I%4&";
-    			expand_name(patchName, patchIndex, "Patch");
+        for(unsigned int iBc = 0; iBc < 4; ++iBc) {
+          interfaceEdge = 0;
+          interfaceWritten = 0;
 
-    			interfaceIndex += 1;
-    			std::string interfaceName = "Interface_&I%4&";
-    			expand_name(interfaceName, interfaceIndex, "Interface");
+          patchIndex += 1;
+          std::string patchName = "Patch_&I%4&";
+          expand_name(patchName, patchIndex, "Patch");
 
-    			std::string adjoiningZoneName = "Zone_&I%4&";
+          interfaceIndex += 1;
+          std::string interfaceName = "Interface_&I%4&";
+          expand_name(interfaceName, interfaceIndex, "Interface");
 
-    			MVertex *v0Tmp=NULL;
-    			MVertex *v1Tmp=NULL;
-    			MVertex *v2Tmp=NULL;
-    			MVertex *v3Tmp=NULL;
+          std::string adjoiningZoneName = "Zone_&I%4&";
 
-    			std::vector<int> physical_num;                      //Family number
-    			std::string physical_name;                          //Family name
-    			if(iBc==0) {                    // i = imin face
-        			*(Point_Range+0) = 1;
-        			*(Point_Range+1) = 1;
-        			*(Point_Range+2) = 1;
-        			*(Point_Range+3) = 1;
-        			*(Point_Range+4) = jmax;
-        			*(Point_Range+5) = kmax;
-        			physical_num = gr->transfinite_vertices[0][static_cast<int>(jmax/2)][static_cast<int>(kmax/2)]->onWhat()->physicals;
-        			if(physical_num.size() > 0) { physical_name = this->getPhysicalName(2, physical_num[0]); }
-        			v0Tmp = v0 ;
-        			v1Tmp = v3 ;
-        			v2Tmp = v7 ;
-        			v3Tmp = v4 ;
-    			} else if(iBc==1) {             // i = imax face
-        			*(Point_Range+0) = imax;
-        			*(Point_Range+1) = 1;
-        			*(Point_Range+2) = 1;
-        			*(Point_Range+3) = imax;
-        			*(Point_Range+4) = jmax;
-        			*(Point_Range+5) = kmax;
-        			physical_num = gr->transfinite_vertices[imax-1][static_cast<int>(jmax/2)][static_cast<int>(kmax/2)]->onWhat()->physicals;
-        			if(physical_num.size() > 0) { physical_name = this->getPhysicalName(2, physical_num[0]); }
-        			v0Tmp = v1 ;
-        			v1Tmp = v2 ;
-        			v2Tmp = v6 ;
-        			v3Tmp = v5 ;
-    			} else if(iBc==2) {             // j = jmin face
-        			*(Point_Range+0) = 1;
-        			*(Point_Range+1) = 1;
-        			*(Point_Range+2) = 1;
-        			*(Point_Range+3) = imax;
-        			*(Point_Range+4) = 1;
-        			*(Point_Range+5) = kmax;
-        			physical_num = gr->transfinite_vertices[static_cast<int>(imax/2)][0][static_cast<int>(kmax/2)]->onWhat()->physicals;
-        			if(physical_num.size() > 0) { physical_name = this->getPhysicalName(2, physical_num[0]); }
-        			v0Tmp = v0 ;
-        			v1Tmp = v1 ;
-        			v2Tmp = v5 ;
-        			v3Tmp = v4 ;
-    			} else if(iBc==3) {             // j = jmax face
-        			*(Point_Range+0) = 1;
-        			*(Point_Range+1) = jmax;
-        			*(Point_Range+2) = 1;
-        			*(Point_Range+3) = imax;
-        			*(Point_Range+4) = jmax;
-        			*(Point_Range+5) = kmax;
-        			physical_num = gr->transfinite_vertices[static_cast<int>(imax/2)][jmax-1][static_cast<int>(kmax/2)]->onWhat()->physicals;
-        			if(physical_num.size() > 0) { physical_name = this->getPhysicalName(2, physical_num[0]); }
-        			v0Tmp = v3 ;
-        			v1Tmp = v2 ;
-        			v2Tmp = v6 ;
-        			v3Tmp = v7 ;
-    			} else if(iBc==4) {             // k = kmin face
-        			*(Point_Range+0) = 1;
-        			*(Point_Range+1) = 1;
-        			*(Point_Range+2) = 1;
-        			*(Point_Range+3) = imax;
-        			*(Point_Range+4) = jmax;
-        			*(Point_Range+5) = 1;
-        			physical_num = gr->transfinite_vertices[static_cast<int>(imax/2)][static_cast<int>(jmax/2)][0]->onWhat()->physicals;
-        			if(physical_num.size() > 0) { physical_name = this->getPhysicalName(2, physical_num[0]); }
-        			v0Tmp = v0 ;
-        			v1Tmp = v1 ;
-        			v2Tmp = v2 ;
-        			v3Tmp = v3 ;
-    			} else {                        // k = kmax face
-        			*(Point_Range+0) = 1;
-        			*(Point_Range+1) = 1;
-        			*(Point_Range+2) = kmax;
-        			*(Point_Range+3) = imax;
-        			*(Point_Range+4) = jmax;
-        			*(Point_Range+5) = kmax;
-        			physical_num = gr->transfinite_vertices[static_cast<int>(imax/2)][static_cast<int>(jmax/2)][kmax-1]->onWhat()->physicals;
-        			if(physical_num.size() > 0) { physical_name = this->getPhysicalName(2, physical_num[0]); }
-        			v0Tmp = v4 ;
-        			v1Tmp = v5 ;
-        			v2Tmp = v6 ;
-        			v3Tmp = v7 ;
-    			}
+          std::vector<int> physical_num; // Family number
+          std::string physical_name; // Family name
+          MVertex *v1Tmp = NULL;
+          MVertex *v2Tmp = NULL;
+          if(iBc == 0) { // Edge between v0-v1
+            *(Point_Range + 0) = 1;
+            *(Point_Range + 1) = 1;
+            *(Point_Range + 2) = imax;
+            *(Point_Range + 3) = 1;
+            physical_num =
+              gf->transfinite_vertices[static_cast<int>(imax / 2)][0]
+                ->onWhat()
+                ->physicals;
+            if(physical_num.size() > 0) {
+              physical_name = this->getPhysicalName(1, physical_num[0]);
+            }
+            v1Tmp = v0;
+            v2Tmp = v1;
+          }
+          else if(iBc == 1) { // Edge between v1-v2
+            *(Point_Range + 0) = imax;
+            *(Point_Range + 1) = 1;
+            *(Point_Range + 2) = imax;
+            *(Point_Range + 3) = jmax;
+            physical_num =
+              gf->transfinite_vertices[imax - 1][static_cast<int>(jmax / 2)]
+                ->onWhat()
+                ->physicals;
+            if(physical_num.size() > 0) {
+              physical_name = this->getPhysicalName(1, physical_num[0]);
+            }
+            v1Tmp = v1;
+            v2Tmp = v2;
+          }
+          else if(iBc == 2) { // Edge between v3-v2
+            *(Point_Range + 0) = 1;
+            *(Point_Range + 1) = jmax;
+            *(Point_Range + 2) = imax;
+            *(Point_Range + 3) = jmax;
+            physical_num =
+              gf->transfinite_vertices[static_cast<int>(imax / 2)][jmax - 1]
+                ->onWhat()
+                ->physicals;
+            if(physical_num.size() > 0) {
+              physical_name = this->getPhysicalName(1, physical_num[0]);
+            }
+            v1Tmp = v3;
+            v2Tmp = v2;
+          }
+          else { // Edge between v0-v3
+            *(Point_Range + 0) = 1;
+            *(Point_Range + 1) = 1;
+            *(Point_Range + 2) = 1;
+            *(Point_Range + 3) = jmax;
+            physical_num =
+              gf->transfinite_vertices[0][static_cast<int>(jmax / 2)]
+                ->onWhat()
+                ->physicals;
+            if(physical_num.size() > 0) {
+              physical_name = this->getPhysicalName(1, physical_num[0]);
+            }
+            v1Tmp = v0;
+            v2Tmp = v3;
+          }
 
-    			if(numInterfaceFaces>0) {           // Note: An Face can have interface with only one ore Face
-    			  if( isInterfaceFace(this, v0Tmp, v1Tmp, v2Tmp, v3Tmp) ) {
-        			for(unsigned int jRegion = 0; jRegion < regions.size(); jRegion++) {
-        			  if(jRegion != iRegion) {
-        			  interfaceFace = 0;
-        			  adjoiningZoneName = "Zone_&I%4&";
-        			  expand_name(adjoiningZoneName, jRegion, "Zone");
+          if(numInterfaceEdges >
+             0) { // Note: An Edge can have interface with only one more edge
+            for(unsigned int jFace = 0; jFace < faces.size(); jFace++) {
+              if(jFace != iFace) {
+                interfaceEdge = 0;
+                GFace *gf2 = faces[jFace];
+                std::vector<GEdge *> const &edges_jface = gf2->edges();
+                adjoiningZoneName = "Zone_&I%4&";
+                expand_name(adjoiningZoneName, jFace, "Zone");
 
-        			  GRegion *gr2 = regions[jRegion];
-        			  std::vector<GFace *> faces2  = gr2->faces();
-        			  if(faces2.size() != 6) { Msg::Warning( "Error in Number of Faces in Structured Mesh (!=6) = %i", jRegion ); }
+                if(edges_jface.size() != 4) {
+                  Msg::Warning("Error in Number of Edges in Structured Mesh "
+                               "Face (!=4) = %i",
+                               jFace);
+                }
 
-        			  int imax_Region2 = gr2->transfinite_vertices.size();
-        			  int jmax_Region2 = gr2->transfinite_vertices[0].size();
-        			  int kmax_Region2 = gr2->transfinite_vertices[0][0].size();
+                int imax_jFace = gf2->transfinite_vertices
+                                   .size(); // imax     // Number of vertices
+                int jmax_jFace = gf2->transfinite_vertices[0].size(); // jmax
 
-        			  MVertex *v0R2 = gr2->transfinite_vertices[0][0][0];
-        			  MVertex *v1R2 = gr2->transfinite_vertices[imax_Region2-1][0][0];
-        			  MVertex *v2R2 = gr2->transfinite_vertices[imax_Region2-1][jmax_Region2-1][0];
-        			  MVertex *v3R2 = gr2->transfinite_vertices[0][jmax_Region2-1][0];
-        			  MVertex *v4R2 = gr2->transfinite_vertices[0][0][kmax_Region2-1];
-        			  MVertex *v5R2 = gr2->transfinite_vertices[imax_Region2-1][0][kmax_Region2-1];
-        			  MVertex *v6R2 = gr2->transfinite_vertices[imax_Region2-1][jmax_Region2-1][kmax_Region2-1];
-        			  MVertex *v7R2 = gr2->transfinite_vertices[0][jmax_Region2-1][kmax_Region2-1];
+                MVertex *v0f2 = gf2->transfinite_vertices[0][0];
+                MVertex *v1f2 = gf2->transfinite_vertices[imax_jFace - 1][0];
+                MVertex *v2f2 =
+                  gf2->transfinite_vertices[imax_jFace - 1][jmax_jFace - 1];
+                MVertex *v3f2 = gf2->transfinite_vertices[0][jmax_jFace - 1];
 
-        			  if( isInterfaceFace(this, v0R2, v3R2, v7R2, v4R2) ) {                      // i = imin face
-            			  if(sameFace(v0Tmp, v1Tmp, v2Tmp, v3Tmp, v0R2, v3R2, v7R2, v4R2)) {
-            			  interfaceFace = 1;
-            			  *(Point_Donor_Range+0) = 1;
-            			  *(Point_Donor_Range+1) = 1;
-            			  *(Point_Donor_Range+2) = 1;
-            			  *(Point_Donor_Range+3) = 1;
-            			  *(Point_Donor_Range+4) = jmax_Region2;
-            			  *(Point_Donor_Range+5) = kmax_Region2;
-            			  }
-        			  }
-        			  if( isInterfaceFace(this, v1R2, v2R2, v6R2, v5R2) ) {              // i = imax face
-            			  if(sameFace(v0Tmp, v1Tmp, v2Tmp, v3Tmp, v1R2, v2R2, v6R2, v5R2)) {
-            			  interfaceFace = 1;
-            			  *(Point_Donor_Range+0) = imax_Region2;
-            			  *(Point_Donor_Range+1) = 1;
-            			  *(Point_Donor_Range+2) = 1;
-            			  *(Point_Donor_Range+3) = imax_Region2;
-            			  *(Point_Donor_Range+4) = jmax_Region2;
-            			  *(Point_Donor_Range+5) = kmax_Region2;
-            			  }
-        			  }
-        			  if( isInterfaceFace(this, v0R2, v1R2, v5R2, v4R2) ) {              // j = jmin face
-            			  if(sameFace(v0Tmp, v1Tmp, v2Tmp, v3Tmp, v0R2, v1R2, v5R2, v4R2)) {
-            			  interfaceFace = 1;
-            			  *(Point_Donor_Range+0) = 1;
-            			  *(Point_Donor_Range+1) = 1;
-            			  *(Point_Donor_Range+2) = 1;
-            			  *(Point_Donor_Range+3) = imax_Region2;
-            			  *(Point_Donor_Range+4) = 1;
-            			  *(Point_Donor_Range+5) = kmax_Region2;
-            			  }
-        			  }
-        			  if( isInterfaceFace(this, v3R2, v2R2, v6R2, v7R2) ) {              // j = jmax face
-            			  if(sameFace(v0Tmp, v1Tmp, v2Tmp, v3Tmp, v3R2, v2R2, v6R2, v7R2)) {
-            			  interfaceFace = 1;
-            			  *(Point_Donor_Range+0) = 1;
-            			  *(Point_Donor_Range+1) = jmax_Region2;
-            			  *(Point_Donor_Range+2) = 1;
-            			  *(Point_Donor_Range+3) = imax_Region2;
-            			  *(Point_Donor_Range+4) = jmax_Region2;
-            			  *(Point_Donor_Range+5) = kmax_Region2;
-            			  }
-        			  }
-        			  if( isInterfaceFace(this, v0R2, v1R2, v2R2, v3R2) ) {              // k = kmin face
-            			  if(sameFace(v0Tmp, v1Tmp, v2Tmp, v3Tmp, v0R2, v1R2, v2R2, v3R2)) {
-            			  interfaceFace = 1;
-            			  *(Point_Donor_Range+0) = 1;
-            			  *(Point_Donor_Range+1) = 1;
-            			  *(Point_Donor_Range+2) = 1;
-            			  *(Point_Donor_Range+3) = imax_Region2;
-            			  *(Point_Donor_Range+4) = jmax_Region2;
-            			  *(Point_Donor_Range+5) = 1;
-            			  }
-        			  }
-        			  if( isInterfaceFace(this, v4R2, v5R2, v6R2, v7R2) ) {              // k = kmax face
-            			  if(sameFace(v0Tmp, v1Tmp, v2Tmp, v3Tmp, v4R2, v5R2, v6R2, v7R2)) {
-            			  interfaceFace = 1;
-            			  *(Point_Donor_Range+0) = 1;
-            			  *(Point_Donor_Range+1) = 1;
-            			  *(Point_Donor_Range+2) = kmax_Region2;
-            			  *(Point_Donor_Range+3) = imax_Region2;
-            			  *(Point_Donor_Range+4) = jmax_Region2;
-            			  *(Point_Donor_Range+5) = kmax_Region2;
-            			  }
-        			  }
+                if(sameVertex(v1Tmp, v0f2) &&
+                   sameVertex(v2Tmp, v1f2)) { // Edge v0-v1
+                  interfaceEdge = 1;
+                  *(Point_Donor_Range + 0) = 1;
+                  *(Point_Donor_Range + 1) = 1;
+                  *(Point_Donor_Range + 2) = imax_jFace;
+                  *(Point_Donor_Range + 3) = 1;
+                }
+                if(sameVertex(v1Tmp, v1f2) && sameVertex(v2Tmp, v0f2)) {
+                  interfaceEdge = 1;
+                  *(Point_Donor_Range + 0) = imax_jFace;
+                  *(Point_Donor_Range + 1) = 1;
+                  *(Point_Donor_Range + 2) = 1;
+                  *(Point_Donor_Range + 3) = 1;
+                }
+                if(sameVertex(v1Tmp, v1f2) &&
+                   sameVertex(v2Tmp, v2f2)) { // Edge v1-v2
+                  interfaceEdge = 1;
+                  *(Point_Donor_Range + 0) = imax_jFace;
+                  *(Point_Donor_Range + 1) = 1;
+                  *(Point_Donor_Range + 2) = imax_jFace;
+                  *(Point_Donor_Range + 3) = jmax_jFace;
+                }
+                if(sameVertex(v1Tmp, v2f2) && sameVertex(v2Tmp, v1f2)) {
+                  interfaceEdge = 1;
+                  *(Point_Donor_Range + 0) = imax_jFace;
+                  *(Point_Donor_Range + 1) = jmax_jFace;
+                  *(Point_Donor_Range + 2) = imax_jFace;
+                  *(Point_Donor_Range + 3) = 1;
+                }
+                if(sameVertex(v1Tmp, v3f2) &&
+                   sameVertex(v2Tmp, v2f2)) { // Edge v3-v2
+                  interfaceEdge = 1;
+                  *(Point_Donor_Range + 0) = 1;
+                  *(Point_Donor_Range + 1) = jmax_jFace;
+                  *(Point_Donor_Range + 2) = imax_jFace;
+                  *(Point_Donor_Range + 3) = jmax_jFace;
+                }
+                if(sameVertex(v1Tmp, v2f2) && sameVertex(v2Tmp, v3f2)) {
+                  interfaceEdge = 1;
+                  *(Point_Donor_Range + 0) = imax_jFace;
+                  *(Point_Donor_Range + 1) = jmax_jFace;
+                  *(Point_Donor_Range + 2) = 1;
+                  *(Point_Donor_Range + 3) = jmax_jFace;
+                }
+                if(sameVertex(v1Tmp, v0f2) &&
+                   sameVertex(v2Tmp, v3f2)) { // Edge v0-v3
+                  interfaceEdge = 1;
+                  *(Point_Donor_Range + 0) = 1;
+                  *(Point_Donor_Range + 1) = 1;
+                  *(Point_Donor_Range + 2) = 1;
+                  *(Point_Donor_Range + 3) = jmax_jFace;
+                }
+                if(sameVertex(v1Tmp, v3f2) && sameVertex(v2Tmp, v0f2)) {
+                  interfaceEdge = 1;
+                  *(Point_Donor_Range + 0) = 1;
+                  *(Point_Donor_Range + 1) = jmax_jFace;
+                  *(Point_Donor_Range + 2) = 1;
+                  *(Point_Donor_Range + 3) = 1;
+                }
 
-// Grid Connectivity
-        			  if(interfaceFace == 1) {
-            			  interfaceFaceWritten = 1;
+                // Grid Connectivity - Compute 'Transform Matrix'
+                if(interfaceEdge == 1) {
+                  interfaceWritten = 1;
 
-            			  int a1(0), a2(0), a3(0), b1(0), b2(0), b3(0);
-            			  a1 = (*(Point_Donor_Range+3)) - (*(Point_Donor_Range+0));
-            			  a2 = (*(Point_Donor_Range+4)) - (*(Point_Donor_Range+1));
-            			  a3 = (*(Point_Donor_Range+5)) - (*(Point_Donor_Range+2));
-            			  b1 = (*(Point_Range+3)) - (*(Point_Range+0));
-            			  b2 = (*(Point_Range+4)) - (*(Point_Range+1));
-            			  b3 = (*(Point_Range+5)) - (*(Point_Range+2));
+                  int a1(0), a2(0), b1(0), b2(0);
+                  a1 = (*(Point_Donor_Range + 2)) - (*Point_Donor_Range);
+                  a2 = (*(Point_Donor_Range + 3)) - (*(Point_Donor_Range + 1));
+                  b1 = (*(Point_Range + 2)) - (*Point_Range);
+                  b2 = (*(Point_Range + 3)) - (*(Point_Range + 1));
 
-/* In the interface Face, if one index is varying, other should remain constant and hence one of a1, a2, b1, b2 should be zero (for 2D)
- *       (Index2 - Begin2) = T.(Index1 - Begin1) 
- *       (Index1 - Begin1) = Transpose[T].(Index2 - Begin2) 
-*/
+                  /* In the interface Face, if one index is varying, other
+                   * should remain constant and hence one of a1, a2, b1, b2
+                   * should be zero (for 2D) (Index2 - Begin2) = T.(Index1 -
+                   * Begin1)
+                   *       (Index1 - Begin1) = Transpose[T].(Index2 - Begin2) */
+                  int x1(0), y1(0), x2(0), y2(0);
+                  if(b2 == 0) {
+                    x1 = a1 / b1;
+                    y1 = a2 / b1;
+                    if(x1 == 0) {
+                      y2 = 0;
+                      if(y1 < 0) { x2 = 1; }
+                      else {
+                        x2 = -1;
+                      };
+                    }
+                    else if(y1 == 0) {
+                      x2 = 0;
+                      if(x1 > 0) { y2 = 1; }
+                      else {
+                        y2 = -1;
+                      };
+                    }
+                  }
+                  else if(b1 == 0) {
+                    x2 = a1 / b2;
+                    y2 = a2 / b2;
+                    if(x2 == 0) {
+                      y1 = 0;
+                      if(y2 > 0) { x1 = 1; }
+                      else {
+                        x1 = -1;
+                      };
+                    }
+                    else if(y2 == 0) {
+                      x1 = 0;
+                      if(x2 < 0) { y1 = 1; }
+                      else {
+                        y1 = -1;
+                      };
+                    }
+                  }
+                  else {
+                    Msg::Warning("Error Finding Transform matrix for zone "
+                                 "interface - Using default values [1 2] ");
+                    *Transform = 1;
+                    *(Transform + 1) = 2;
+                  }
 
-            			  int x1(0),y1(0),z1(0), x2(0),y2(0),z2(0), x3(0),y3(0),z3(0);
-            			  if( (b1 ==  a1) && (b1 != 0) ) {x1 =  1;}
-            			  if( (b1 == -a1) && (b1 != 0) ) {x1 = -1;}
-            			  if( (b1 ==  a2) && (b1 != 0) ) {x2 =  1;}
-            			  if( (b1 == -a2) && (b1 != 0) ) {x2 = -1;}
-            			  if( (b1 ==  a3) && (b1 != 0) ) {x3 =  1;}
-            			  if( (b1 == -a3) && (b1 != 0) ) {x3 = -1;}
+                  if(x1 == 1) { *Transform = 1; }
+                  if(x1 == -1) { *Transform = -1; }
+                  if(x2 == 1) { *(Transform + 1) = 1; }
+                  if(x2 == -1) { *(Transform + 1) = -1; }
 
-            			  if( (b2 ==  a1) && (b2 != 0) ) {y1 =  1;}
-            			  if( (b2 == -a1) && (b2 != 0) ) {y1 = -1;}
-            			  if( (b2 ==  a2) && (b2 != 0) ) {y2 =  1;}
-            			  if( (b2 == -a2) && (b2 != 0) ) {y2 = -1;}
-            			  if( (b2 ==  a3) && (b2 != 0) ) {y3 =  1;}
-            			  if( (b2 == -a3) && (b2 != 0) ) {y3 = -1;}
+                  if(y1 == 1) { *Transform = 2; }
+                  if(y1 == -1) { *Transform = -2; }
+                  if(y2 == 1) { *(Transform + 1) = 2; }
+                  if(y2 == -1) { *(Transform + 1) = -2; }
 
-            			  if( (b3 ==  a1) && (b3 != 0) ) {z1 =  1;}
-            			  if( (b3 == -a1) && (b3 != 0) ) {z1 = -1;}
-            			  if( (b3 ==  a2) && (b3 != 0) ) {z2 =  1;}
-            			  if( (b3 == -a2) && (b3 != 0) ) {z2 = -1;}
-            			  if( (b3 ==  a3) && (b3 != 0) ) {z3 =  1;}
-            			  if( (b3 == -a3) && (b3 != 0) ) {z3 = -1;}
+                  if(cg_1to1_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                                   interfaceName.c_str(),
+                                   adjoiningZoneName.c_str(), Point_Range,
+                                   Point_Donor_Range, Transform,
+                                   &cgIndexConn)) {
+                    return cgnsErr();
+                  }
+                } // End interfaceEdge == 1
+              }
+            }
+          } // End numInterfaceEdges>0
 
-            			  if( (b1 ==  a2) && (b1 ==  a3) && (a1 == 0) ) {
-                			  if( b2 == b1) {x2 = 0; x3 = 1; y2 = 1; y3 = 0;}
-                			  if( b3 == b1) {x2 = 1; x3 = 0; z2 = 0; z3 = 1;}
-            			  }
-            			  if( (b1 ==  a3) && (b1 ==  a1) && (a2 == 0) ) {
-                			  if( b2 == b1) {x1 = 1; x3 = 0; y1 = 0; y3 = 1;}
-                			  if( b3 == b1) {x1 = 1; x3 = 0; z1 = 0; z3 = 1;}
-            			  }
-            			  if( (b1 ==  a1) && (b1 ==  a2) && (a3 == 0) ) {
-                			  if( b2 == b1) {x1 = 1; x2 = 0; y1 = 0; y2 = 1;}
-                			  if( b3 == b1) {x1 = 1; x2 = 0; z1 = 0; z2 = 1;}
-            			  }
-            			  if( (b1 == -a2) && (b1 == -a3) && (a1 == 0) ) {
-                			  if( b2 == b1) {x2 = 0; x3 =-1; y2 =-1; y3 = 0;}
-                			  if( b3 == b1) {x2 =-1; x3 = 0; z2 = 0; z3 =-1;}
-            			  }
-            			  if( (b1 == -a3) && (b1 == -a1) && (a2 == 0) ) {
-                			  if( b2 == b1) {x1 =-1; x3 = 0; y1 = 0; y3 =-1;}
-                			  if( b3 == b1) {x1 =-1; x3 = 0; z1 = 0; z3 =-1;}
-            			  }
-            			  if( (b1 == -a1) && (b1 == -a2) && (a3 == 0) ) {
-                			  if( b2 == b1) {x1 =-1; x2 = 0; y1 = 0; y2 =-1;}
-                			  if( b3 == b1) {x1 =-1; x2 = 0; z1 = 0; z2 =-1;}
-            			  }
+          if((interfaceEdge == 0) && (interfaceWritten == 0)) {
+            if(cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                             patchName.c_str(), BCType, ptsettype, numBCVert,
+                             Point_Range, &cgIndexBoco)) {
+              return cgnsErr();
+            }
 
-            			  if( (b2 ==  a2) && (b2 ==  a3) && (a1 == 0) ) {
-                			  if( b1 == b2) {x2 = 1; x3 = 0; y2 = 0; y3 = 1;}
-                			  if( b3 == b2) {y2 = 1; y3 = 0; z2 = 0; z3 = 1;}
-            			  }
-            			  if( (b2 ==  a3) && (b2 ==  a1) && (a2 == 0) ) {
-                			  if( b1 == b2) {x1 = 1; x3 = 0; y1 = 0; y3 = 1;}
-                			  if( b3 == b2) {y1 = 1; y3 = 0; z1 = 0; z3 = 1;}
-            			  }
-            			  if( (b2 ==  a1) && (b2 ==  a2) && (a3 == 0) ) {
-                			  if( b1 == b2) {x1 = 1; x2 = 0; y1 = 0; y2 = 1;}
-                			  if( b3 == b2) {y1 = 1; y2 = 0; z1 = 0; z2 = 1;}
-            			  }
-            			  if( (b2 == -a2) && (b2 == -a3) && (a1 == 0) ) {
-                			  if( b1 == b2) {x2 =-1; x3 = 0; y2 = 0; y3 =-1;}
-                			  if( b3 == b2) {y2 =-1; y3 = 0; z2 = 0; z3 =-1;}
-            			  }
-            			  if( (b2 == -a3) && (b2 == -a1) && (a2 == 0) ) {
-                			  if( b1 == b2) {x1 =-1; x3 = 0; y1 = 0; y3 =-1;}
-                			  if( b3 == b2) {y1 =-1; y3 = 0; z1 = 0; z3 =-1;}
-            			  }
-            			  if( (b2 == -a1) && (b2 == -a2) && (a3 == 0) ) {
-                			  if( b1 == b2) {x1 =-1; x2 = 0; y1 = 0; y2 =-1;}
-                			  if( b3 == b2) {y1 =-1; y2 = 0; z1 = 0; z2 =-1;}
-            			  }
+            if(physical_name != "") {
+              if(cg_goto(cgIndexFile, cgIndexBase, zoneName.c_str(), 0,
+                         "ZoneBC_t", 1, patchName.c_str(), 0, "end"))
+                return cgnsErr();
+              if(cg_famname_write(physical_name.c_str())) return cgnsErr();
+            }
+          }
 
-            			  if( (b3 ==  a2) && (b3 ==  a3) && (a1 == 0) ) {
-                			  if( b1 == b3) {x2 = 1; x3 = 0; z2 = 0; z3 = 1;}
-                			  if( b2 == b3) {y2 = 1; y3 = 0; z2 = 0; z3 = 1;}
-            			  }
-            			  if( (b3 ==  a3) && (b3 ==  a1) && (a2 == 0) ) {
-                			  if( b1 == b3) {x1 = 1; x3 = 0; z1 = 0; z3 = 1;}
-                			  if( b2 == b3) {y1 = 1; y3 = 0; z1 = 0; z3 = 1;}
-            			  }
-            			  if( (b3 ==  a1) && (b3 ==  a2) && (a3 == 0) ) {
-                			  if( b1 == b3) {x1 = 1; x2 = 0; z1 = 0; z2 = 1;}
-                			  if( b2 == b3) {y1 = 1; y2 = 0; z1 = 0; z2 = 1;}
-            			  }
+        } // End writing boco & interface for 2D mesh
+      }
+    } // End if meshDim == 2D
 
+    // for 3D Mesh
+    if(meshDim == 3) {
+      vectorDim = 3;
+      static int patchIndex(-1);
+      static int interfaceIndex(-1);
 
-            			  if( (b1 == 0) && (a1 == 0) ) {
-                			  x1 =  1;
-                			  if( ( (*(Point_Range+0) == 1) && (*(Point_Donor_Range+0) == 1) ) ||
-                    			  ( (*(Point_Range+0) != 1) && (*(Point_Donor_Range+0) != 1) ) )  x1 = -1;
-            			  }
-            			  if( (b1 == 0) && (a2 == 0) ) {
-                			  x2 =  1;
-                			  if( ( (*(Point_Range+0) == 1) && (*(Point_Donor_Range+1) == 1) ) ||
-                    			  ( (*(Point_Range+0) != 1) && (*(Point_Donor_Range+1) != 1) ) )  x2 = -1;
-            			  }
-            			  if( (b1 == 0) && (a3 == 0) ) {
-                			  x3 =  1;
-                			  if( ( (*(Point_Range+0) == 1) && (*(Point_Donor_Range+2) == 1) ) ||
-                    			  ( (*(Point_Range+0) != 1) && (*(Point_Donor_Range+2) != 1) ) )  x3 = -1;
-            			  }
-            			  if( (b2 == 0) && (a1 == 0) ) {
-                			  y1 =  1;
-                			  if( ( (*(Point_Range+1) == 1) && (*(Point_Donor_Range+0) == 1) ) ||
-                    			  ( (*(Point_Range+1) != 1) && (*(Point_Donor_Range+0) != 1) ) )  y1 = -1;
-            			  }
-            			  if( (b2 == 0) && (a2 == 0) ) {
-                			  y2 =  1;
-                			  if( ( (*(Point_Range+1) == 1) && (*(Point_Donor_Range+1) == 1) ) ||
-                    			  ( (*(Point_Range+1) != 1) && (*(Point_Donor_Range+1) != 1) ) )  y2 = -1;
-            			  }
-            			  if( (b2 == 0) && (a3 == 0) ) {
-                			  y3 =  1;
-                			  if( ( (*(Point_Range+1) == 1) && (*(Point_Donor_Range+2) == 1) ) ||
-                    			  ( (*(Point_Range+1) != 1) && (*(Point_Donor_Range+2) != 1) ) )  y3 = -1;
-            			  }
-            			  if( (b3 == 0) && (a1 == 0) ) {
-                			  z1 =  1;
-                			  if( ( (*(Point_Range+2) == 1) && (*(Point_Donor_Range+0) == 1) ) ||
-                    			  ( (*(Point_Range+2) != 1) && (*(Point_Donor_Range+0) != 1) ) )  z1 = -1;
-            			  }
-            			  if( (b3 == 0) && (a2 == 0) ) {
-                			  z2 =  1;
-                			  if( ( (*(Point_Range+2) == 1) && (*(Point_Donor_Range+1) == 1) ) ||
-                    			  ( (*(Point_Range+2) != 1) && (*(Point_Donor_Range+1) != 1) ) )  z2 = -1;
-            			  }
-            			  if( (b3 == 0) && (a3 == 0) ) {
-                			  z3 =  1;
-                			  if( ( (*(Point_Range+2) == 1) && (*(Point_Donor_Range+2) == 1) ) ||
-                    			  ( (*(Point_Range+2) != 1) && (*(Point_Donor_Range+2) != 1) ) )  z3 = -1;
-            			  }
-			  
-            			  int det_A = x1*y2*z3+x2*y3*z1+x3*y1*z2-x1*y3*z2-x2*y1*z3-x3*y2*z1;
-            			  if( !( (det_A == 1) || (det_A == -1) ) ) {Msg::Warning( "Error in finding Transfor Matrix: Determinant != +/-1  (= %i)", det_A );}
+      for(unsigned int iRegion = 0; iRegion < regions.size(); iRegion++) {
+        GRegion *gr = regions[iRegion];
+        std::vector<GFace *> faces = gr->faces();
+        if(faces.size() != 6) {
+          Msg::Warning("Error in Number of Faces in Structured Mesh (!=6) = %i",
+                       iRegion);
+        }
 
-            			  if( (x1 ==  1) && (x2 ==  0) && (x3 ==  0) ) { *(Transform+0) =  1; }
-            			  if( (x1 == -1) && (x2 ==  0) && (x3 ==  0) ) { *(Transform+0) = -1; }
-            			  if( (x1 ==  0) && (x2 ==  1) && (x3 ==  0) ) { *(Transform+0) =  2; }
-            			  if( (x1 ==  0) && (x2 == -1) && (x3 ==  0) ) { *(Transform+0) = -2; }
-            			  if( (x1 ==  0) && (x2 ==  0) && (x3 ==  1) ) { *(Transform+0) =  3; }
-            			  if( (x1 ==  0) && (x2 ==  0) && (x3 == -1) ) { *(Transform+0) = -3; }
+        cgZoneSize[0] =
+          gr->transfinite_vertices.size(); // imax     // Number of vertices
+        cgZoneSize[1] = gr->transfinite_vertices[0].size(); // jmax
+        cgZoneSize[2] = gr->transfinite_vertices[0][0].size(); // kmax
+        cgZoneSize[3] = cgZoneSize[0] - 1; // Number of elements
+        cgZoneSize[4] = cgZoneSize[1] - 1;
+        cgZoneSize[5] = cgZoneSize[2] - 1;
+        cgZoneSize[6] = 0;
+        cgZoneSize[7] = 0;
+        cgZoneSize[8] = 0;
 
-            			  if( (y1 ==  1) && (y2 ==  0) && (y3 ==  0) ) { *(Transform+1) =  1; }
-            			  if( (y1 == -1) && (y2 ==  0) && (y3 ==  0) ) { *(Transform+1) = -1; }
-            			  if( (y1 ==  0) && (y2 ==  1) && (y3 ==  0) ) { *(Transform+1) =  2; }
-            			  if( (y1 ==  0) && (y2 == -1) && (y3 ==  0) ) { *(Transform+1) = -2; }
-            			  if( (y1 ==  0) && (y2 ==  0) && (y3 ==  1) ) { *(Transform+1) =  3; }
-            			  if( (y1 ==  0) && (y2 ==  0) && (y3 == -1) ) { *(Transform+1) = -3; }
+        int imax = cgZoneSize[0];
+        int jmax = cgZoneSize[1];
+        int kmax = cgZoneSize[2];
 
-            			  if( (z1 ==  1) && (z2 ==  0) && (z3 ==  0) ) { *(Transform+2) =  1; }
-            			  if( (z1 == -1) && (z2 ==  0) && (z3 ==  0) ) { *(Transform+2) = -1; }
-            			  if( (z1 ==  0) && (z2 ==  1) && (z3 ==  0) ) { *(Transform+2) =  2; }
-            			  if( (z1 ==  0) && (z2 == -1) && (z3 ==  0) ) { *(Transform+2) = -2; }
-            			  if( (z1 ==  0) && (z2 ==  0) && (z3 ==  1) ) { *(Transform+2) =  3; }
-            			  if( (z1 ==  0) && (z2 ==  0) && (z3 == -1) ) { *(Transform+2) = -3; }
+        MVertex *v0 = gr->transfinite_vertices[0][0][0];
+        MVertex *v1 = gr->transfinite_vertices[imax - 1][0][0];
+        MVertex *v2 = gr->transfinite_vertices[imax - 1][jmax - 1][0];
+        MVertex *v3 = gr->transfinite_vertices[0][jmax - 1][0];
+        MVertex *v4 = gr->transfinite_vertices[0][0][kmax - 1];
+        MVertex *v5 = gr->transfinite_vertices[imax - 1][0][kmax - 1];
+        MVertex *v6 = gr->transfinite_vertices[imax - 1][jmax - 1][kmax - 1];
+        MVertex *v7 = gr->transfinite_vertices[0][jmax - 1][kmax - 1];
 
-            			if(cg_1to1_write(cgIndexFile, cgIndexBase, cgIndexZone, interfaceName.c_str(),
-                        			adjoiningZoneName.c_str(), Point_Range,Point_Donor_Range,Transform,&cgIndexConn) ) {
-                				return cgnsErr();
-            			}
-        			  }	// End interfaceFace == 1
-        			  }
-        		    }
-    			  }
-    			}       // End numInterfaceFaces>0
+        std::vector<double> dBuffer;
+        std::string zoneName = "Zone_&I%4&";
+        expand_name(zoneName, iRegion, "Zone");
 
-    			if( (interfaceFace == 0) && (interfaceFaceWritten == 0) ) {
-        			if(cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone, patchName.c_str(),
-                               			BCType, ptsettype, numBCVert, Point_Range, &cgIndexBoco)) {
-                			return cgnsErr();
-        			}
-        			if(physical_name != "") {
-            			if(cg_goto(cgIndexFile, cgIndexBase, zoneName.c_str(), 0, "ZoneBC_t", 1, patchName.c_str(), 0, "end")) return cgnsErr();
-            			if(cg_famname_write(physical_name.c_str()) ) return cgnsErr();
-        			}
-				}
+        if(cg_zone_write(cgIndexFile, cgIndexBase, zoneName.c_str(), cgZoneSize,
+                         Structured, &cgIndexZone)) {
+          return cgnsErr();
+        }
 
-            }   // End writing boco & interface for 3D mesh
-		}
-    }   // End if meshDim == 3D
+        // Write the grid node
+        int cgIndexGrid = 0;
+        if(cg_grid_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                         "GridCoordinates", &cgIndexGrid))
+          return cgnsErr();
+
+        // Write the grid coordinates
+        int cgIndexCoord = 0;
+        dBuffer.resize(imax * jmax * kmax);
+
+        // x-coordinates for this zone
+        for(unsigned int kk = 0; kk < gr->transfinite_vertices[0][0].size();
+            kk++) {
+          for(unsigned int jj = 0; jj < gr->transfinite_vertices[0].size();
+              jj++) {
+            for(unsigned int ii = 0; ii < gr->transfinite_vertices.size();
+                ii++) {
+              MVertex *v = gr->transfinite_vertices[ii][jj][kk];
+              dBuffer[imax * jmax * kk + imax * jj + ii] =
+                v->x() * scalingFactor;
+            }
+          }
+        }
+        if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
+                          "CoordinateX", &dBuffer[0], &cgIndexCoord))
+          return cgnsErr();
+
+        // y-coordinates for this zone
+        for(unsigned int kk = 0; kk < gr->transfinite_vertices[0][0].size();
+            kk++) {
+          for(unsigned int jj = 0; jj < gr->transfinite_vertices[0].size();
+              jj++) {
+            for(unsigned int ii = 0; ii < gr->transfinite_vertices.size();
+                ii++) {
+              MVertex *v = gr->transfinite_vertices[ii][jj][kk];
+              dBuffer[imax * jmax * kk + imax * jj + ii] =
+                v->y() * scalingFactor;
+            }
+          }
+        }
+        if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
+                          "CoordinateY", &dBuffer[0], &cgIndexCoord))
+          return cgnsErr();
+
+        // z-coordinates for this zone
+        for(unsigned int kk = 0; kk < gr->transfinite_vertices[0][0].size();
+            kk++) {
+          for(unsigned int jj = 0; jj < gr->transfinite_vertices[0].size();
+              jj++) {
+            for(unsigned int ii = 0; ii < gr->transfinite_vertices.size();
+                ii++) {
+              MVertex *v = gr->transfinite_vertices[ii][jj][kk];
+              dBuffer[imax * jmax * kk + imax * jj + ii] =
+                v->z() * scalingFactor;
+            }
+          }
+        }
+        if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
+                          "CoordinateZ", &dBuffer[0], &cgIndexCoord))
+          return cgnsErr();
+
+        // Writing Boundary Conditions
+        BCType_t BCType(BCWallViscous); // Writes all boundary to BCWallViscous
+        PointSetType_t ptsettype(PointRange);
+        int numBCVert(2);
+        int cgIndexBoco(0);
+        int cgIndexConn(0);
+        int interfaceFace(0);
+        int interfaceFaceWritten(0);
+        int *Point_Range = NULL;
+        int *Point_Donor_Range = NULL;
+        int *Transform = NULL;
+        Point_Range = new int[6];
+        Point_Donor_Range = new int[6];
+        Transform = new int[3];
+
+        for(unsigned int iBc = 0; iBc < 6; ++iBc) {
+          interfaceFace = 0;
+          interfaceFaceWritten = 0;
+
+          patchIndex += 1;
+          std::string patchName = "Patch_&I%4&";
+          expand_name(patchName, patchIndex, "Patch");
+
+          interfaceIndex += 1;
+          std::string interfaceName = "Interface_&I%4&";
+          expand_name(interfaceName, interfaceIndex, "Interface");
+
+          std::string adjoiningZoneName = "Zone_&I%4&";
+
+          MVertex *v0Tmp = NULL;
+          MVertex *v1Tmp = NULL;
+          MVertex *v2Tmp = NULL;
+          MVertex *v3Tmp = NULL;
+
+          std::vector<int> physical_num; // Family number
+          std::string physical_name; // Family name
+          if(iBc == 0) { // i = imin face
+            *(Point_Range + 0) = 1;
+            *(Point_Range + 1) = 1;
+            *(Point_Range + 2) = 1;
+            *(Point_Range + 3) = 1;
+            *(Point_Range + 4) = jmax;
+            *(Point_Range + 5) = kmax;
+            physical_num =
+              gr->transfinite_vertices[0][static_cast<int>(jmax / 2)]
+                                      [static_cast<int>(kmax / 2)]
+                                        ->onWhat()
+                                        ->physicals;
+            if(physical_num.size() > 0) {
+              physical_name = this->getPhysicalName(2, physical_num[0]);
+            }
+            v0Tmp = v0;
+            v1Tmp = v3;
+            v2Tmp = v7;
+            v3Tmp = v4;
+          }
+          else if(iBc == 1) { // i = imax face
+            *(Point_Range + 0) = imax;
+            *(Point_Range + 1) = 1;
+            *(Point_Range + 2) = 1;
+            *(Point_Range + 3) = imax;
+            *(Point_Range + 4) = jmax;
+            *(Point_Range + 5) = kmax;
+            physical_num =
+              gr->transfinite_vertices[imax - 1][static_cast<int>(jmax / 2)]
+                                      [static_cast<int>(kmax / 2)]
+                                        ->onWhat()
+                                        ->physicals;
+            if(physical_num.size() > 0) {
+              physical_name = this->getPhysicalName(2, physical_num[0]);
+            }
+            v0Tmp = v1;
+            v1Tmp = v2;
+            v2Tmp = v6;
+            v3Tmp = v5;
+          }
+          else if(iBc == 2) { // j = jmin face
+            *(Point_Range + 0) = 1;
+            *(Point_Range + 1) = 1;
+            *(Point_Range + 2) = 1;
+            *(Point_Range + 3) = imax;
+            *(Point_Range + 4) = 1;
+            *(Point_Range + 5) = kmax;
+            physical_num =
+              gr->transfinite_vertices[static_cast<int>(imax / 2)][0]
+                                      [static_cast<int>(kmax / 2)]
+                                        ->onWhat()
+                                        ->physicals;
+            if(physical_num.size() > 0) {
+              physical_name = this->getPhysicalName(2, physical_num[0]);
+            }
+            v0Tmp = v0;
+            v1Tmp = v1;
+            v2Tmp = v5;
+            v3Tmp = v4;
+          }
+          else if(iBc == 3) { // j = jmax face
+            *(Point_Range + 0) = 1;
+            *(Point_Range + 1) = jmax;
+            *(Point_Range + 2) = 1;
+            *(Point_Range + 3) = imax;
+            *(Point_Range + 4) = jmax;
+            *(Point_Range + 5) = kmax;
+            physical_num =
+              gr->transfinite_vertices[static_cast<int>(imax / 2)][jmax - 1]
+                                      [static_cast<int>(kmax / 2)]
+                                        ->onWhat()
+                                        ->physicals;
+            if(physical_num.size() > 0) {
+              physical_name = this->getPhysicalName(2, physical_num[0]);
+            }
+            v0Tmp = v3;
+            v1Tmp = v2;
+            v2Tmp = v6;
+            v3Tmp = v7;
+          }
+          else if(iBc == 4) { // k = kmin face
+            *(Point_Range + 0) = 1;
+            *(Point_Range + 1) = 1;
+            *(Point_Range + 2) = 1;
+            *(Point_Range + 3) = imax;
+            *(Point_Range + 4) = jmax;
+            *(Point_Range + 5) = 1;
+            physical_num =
+              gr->transfinite_vertices[static_cast<int>(imax / 2)]
+                                      [static_cast<int>(jmax / 2)][0]
+                                        ->onWhat()
+                                        ->physicals;
+            if(physical_num.size() > 0) {
+              physical_name = this->getPhysicalName(2, physical_num[0]);
+            }
+            v0Tmp = v0;
+            v1Tmp = v1;
+            v2Tmp = v2;
+            v3Tmp = v3;
+          }
+          else { // k = kmax face
+            *(Point_Range + 0) = 1;
+            *(Point_Range + 1) = 1;
+            *(Point_Range + 2) = kmax;
+            *(Point_Range + 3) = imax;
+            *(Point_Range + 4) = jmax;
+            *(Point_Range + 5) = kmax;
+            physical_num =
+              gr->transfinite_vertices[static_cast<int>(imax / 2)]
+                                      [static_cast<int>(jmax / 2)][kmax - 1]
+                                        ->onWhat()
+                                        ->physicals;
+            if(physical_num.size() > 0) {
+              physical_name = this->getPhysicalName(2, physical_num[0]);
+            }
+            v0Tmp = v4;
+            v1Tmp = v5;
+            v2Tmp = v6;
+            v3Tmp = v7;
+          }
+
+          if(numInterfaceFaces >
+             0) { // Note: An Face can have interface with only one ore Face
+            if(isInterfaceFace(this, v0Tmp, v1Tmp, v2Tmp, v3Tmp)) {
+              for(unsigned int jRegion = 0; jRegion < regions.size();
+                  jRegion++) {
+                if(jRegion != iRegion) {
+                  interfaceFace = 0;
+                  adjoiningZoneName = "Zone_&I%4&";
+                  expand_name(adjoiningZoneName, jRegion, "Zone");
+
+                  GRegion *gr2 = regions[jRegion];
+                  std::vector<GFace *> faces2 = gr2->faces();
+                  if(faces2.size() != 6) {
+                    Msg::Warning(
+                      "Error in Number of Faces in Structured Mesh (!=6) = %i",
+                      jRegion);
+                  }
+
+                  int imax_Region2 = gr2->transfinite_vertices.size();
+                  int jmax_Region2 = gr2->transfinite_vertices[0].size();
+                  int kmax_Region2 = gr2->transfinite_vertices[0][0].size();
+
+                  MVertex *v0R2 = gr2->transfinite_vertices[0][0][0];
+                  MVertex *v1R2 =
+                    gr2->transfinite_vertices[imax_Region2 - 1][0][0];
+                  MVertex *v2R2 =
+                    gr2->transfinite_vertices[imax_Region2 - 1]
+                                             [jmax_Region2 - 1][0];
+                  MVertex *v3R2 =
+                    gr2->transfinite_vertices[0][jmax_Region2 - 1][0];
+                  MVertex *v4R2 =
+                    gr2->transfinite_vertices[0][0][kmax_Region2 - 1];
+                  MVertex *v5R2 = gr2->transfinite_vertices[imax_Region2 - 1][0]
+                                                           [kmax_Region2 - 1];
+                  MVertex *v6R2 =
+                    gr2
+                      ->transfinite_vertices[imax_Region2 - 1][jmax_Region2 - 1]
+                                            [kmax_Region2 - 1];
+                  MVertex *v7R2 = gr2->transfinite_vertices[0][jmax_Region2 - 1]
+                                                           [kmax_Region2 - 1];
+
+                  if(isInterfaceFace(this, v0R2, v3R2, v7R2,
+                                     v4R2)) { // i = imin face
+                    if(sameFace(v0Tmp, v1Tmp, v2Tmp, v3Tmp, v0R2, v3R2, v7R2,
+                                v4R2)) {
+                      interfaceFace = 1;
+                      *(Point_Donor_Range + 0) = 1;
+                      *(Point_Donor_Range + 1) = 1;
+                      *(Point_Donor_Range + 2) = 1;
+                      *(Point_Donor_Range + 3) = 1;
+                      *(Point_Donor_Range + 4) = jmax_Region2;
+                      *(Point_Donor_Range + 5) = kmax_Region2;
+                    }
+                  }
+                  if(isInterfaceFace(this, v1R2, v2R2, v6R2,
+                                     v5R2)) { // i = imax face
+                    if(sameFace(v0Tmp, v1Tmp, v2Tmp, v3Tmp, v1R2, v2R2, v6R2,
+                                v5R2)) {
+                      interfaceFace = 1;
+                      *(Point_Donor_Range + 0) = imax_Region2;
+                      *(Point_Donor_Range + 1) = 1;
+                      *(Point_Donor_Range + 2) = 1;
+                      *(Point_Donor_Range + 3) = imax_Region2;
+                      *(Point_Donor_Range + 4) = jmax_Region2;
+                      *(Point_Donor_Range + 5) = kmax_Region2;
+                    }
+                  }
+                  if(isInterfaceFace(this, v0R2, v1R2, v5R2,
+                                     v4R2)) { // j = jmin face
+                    if(sameFace(v0Tmp, v1Tmp, v2Tmp, v3Tmp, v0R2, v1R2, v5R2,
+                                v4R2)) {
+                      interfaceFace = 1;
+                      *(Point_Donor_Range + 0) = 1;
+                      *(Point_Donor_Range + 1) = 1;
+                      *(Point_Donor_Range + 2) = 1;
+                      *(Point_Donor_Range + 3) = imax_Region2;
+                      *(Point_Donor_Range + 4) = 1;
+                      *(Point_Donor_Range + 5) = kmax_Region2;
+                    }
+                  }
+                  if(isInterfaceFace(this, v3R2, v2R2, v6R2,
+                                     v7R2)) { // j = jmax face
+                    if(sameFace(v0Tmp, v1Tmp, v2Tmp, v3Tmp, v3R2, v2R2, v6R2,
+                                v7R2)) {
+                      interfaceFace = 1;
+                      *(Point_Donor_Range + 0) = 1;
+                      *(Point_Donor_Range + 1) = jmax_Region2;
+                      *(Point_Donor_Range + 2) = 1;
+                      *(Point_Donor_Range + 3) = imax_Region2;
+                      *(Point_Donor_Range + 4) = jmax_Region2;
+                      *(Point_Donor_Range + 5) = kmax_Region2;
+                    }
+                  }
+                  if(isInterfaceFace(this, v0R2, v1R2, v2R2,
+                                     v3R2)) { // k = kmin face
+                    if(sameFace(v0Tmp, v1Tmp, v2Tmp, v3Tmp, v0R2, v1R2, v2R2,
+                                v3R2)) {
+                      interfaceFace = 1;
+                      *(Point_Donor_Range + 0) = 1;
+                      *(Point_Donor_Range + 1) = 1;
+                      *(Point_Donor_Range + 2) = 1;
+                      *(Point_Donor_Range + 3) = imax_Region2;
+                      *(Point_Donor_Range + 4) = jmax_Region2;
+                      *(Point_Donor_Range + 5) = 1;
+                    }
+                  }
+                  if(isInterfaceFace(this, v4R2, v5R2, v6R2,
+                                     v7R2)) { // k = kmax face
+                    if(sameFace(v0Tmp, v1Tmp, v2Tmp, v3Tmp, v4R2, v5R2, v6R2,
+                                v7R2)) {
+                      interfaceFace = 1;
+                      *(Point_Donor_Range + 0) = 1;
+                      *(Point_Donor_Range + 1) = 1;
+                      *(Point_Donor_Range + 2) = kmax_Region2;
+                      *(Point_Donor_Range + 3) = imax_Region2;
+                      *(Point_Donor_Range + 4) = jmax_Region2;
+                      *(Point_Donor_Range + 5) = kmax_Region2;
+                    }
+                  }
+
+                  // Grid Connectivity
+                  if(interfaceFace == 1) {
+                    interfaceFaceWritten = 1;
+
+                    int a1(0), a2(0), a3(0), b1(0), b2(0), b3(0);
+                    a1 =
+                      (*(Point_Donor_Range + 3)) - (*(Point_Donor_Range + 0));
+                    a2 =
+                      (*(Point_Donor_Range + 4)) - (*(Point_Donor_Range + 1));
+                    a3 =
+                      (*(Point_Donor_Range + 5)) - (*(Point_Donor_Range + 2));
+                    b1 = (*(Point_Range + 3)) - (*(Point_Range + 0));
+                    b2 = (*(Point_Range + 4)) - (*(Point_Range + 1));
+                    b3 = (*(Point_Range + 5)) - (*(Point_Range + 2));
+
+                    /* In the interface Face, if one index is varying, other
+                     * should remain constant and hence one of a1, a2, b1, b2
+                     * should be zero (for 2D) (Index2 - Begin2) = T.(Index1 -
+                     * Begin1) (Index1 - Begin1) = Transpose[T].(Index2 -
+                     * Begin2)
+                     */
+
+                    int x1(0), y1(0), z1(0), x2(0), y2(0), z2(0), x3(0), y3(0),
+                      z3(0);
+                    if((b1 == a1) && (b1 != 0)) { x1 = 1; }
+                    if((b1 == -a1) && (b1 != 0)) { x1 = -1; }
+                    if((b1 == a2) && (b1 != 0)) { x2 = 1; }
+                    if((b1 == -a2) && (b1 != 0)) { x2 = -1; }
+                    if((b1 == a3) && (b1 != 0)) { x3 = 1; }
+                    if((b1 == -a3) && (b1 != 0)) { x3 = -1; }
+
+                    if((b2 == a1) && (b2 != 0)) { y1 = 1; }
+                    if((b2 == -a1) && (b2 != 0)) { y1 = -1; }
+                    if((b2 == a2) && (b2 != 0)) { y2 = 1; }
+                    if((b2 == -a2) && (b2 != 0)) { y2 = -1; }
+                    if((b2 == a3) && (b2 != 0)) { y3 = 1; }
+                    if((b2 == -a3) && (b2 != 0)) { y3 = -1; }
+
+                    if((b3 == a1) && (b3 != 0)) { z1 = 1; }
+                    if((b3 == -a1) && (b3 != 0)) { z1 = -1; }
+                    if((b3 == a2) && (b3 != 0)) { z2 = 1; }
+                    if((b3 == -a2) && (b3 != 0)) { z2 = -1; }
+                    if((b3 == a3) && (b3 != 0)) { z3 = 1; }
+                    if((b3 == -a3) && (b3 != 0)) { z3 = -1; }
+
+                    if((b1 == a2) && (b1 == a3) && (a1 == 0)) {
+                      if(b2 == b1) {
+                        x2 = 0;
+                        x3 = 1;
+                        y2 = 1;
+                        y3 = 0;
+                      }
+                      if(b3 == b1) {
+                        x2 = 1;
+                        x3 = 0;
+                        z2 = 0;
+                        z3 = 1;
+                      }
+                    }
+                    if((b1 == a3) && (b1 == a1) && (a2 == 0)) {
+                      if(b2 == b1) {
+                        x1 = 1;
+                        x3 = 0;
+                        y1 = 0;
+                        y3 = 1;
+                      }
+                      if(b3 == b1) {
+                        x1 = 1;
+                        x3 = 0;
+                        z1 = 0;
+                        z3 = 1;
+                      }
+                    }
+                    if((b1 == a1) && (b1 == a2) && (a3 == 0)) {
+                      if(b2 == b1) {
+                        x1 = 1;
+                        x2 = 0;
+                        y1 = 0;
+                        y2 = 1;
+                      }
+                      if(b3 == b1) {
+                        x1 = 1;
+                        x2 = 0;
+                        z1 = 0;
+                        z2 = 1;
+                      }
+                    }
+                    if((b1 == -a2) && (b1 == -a3) && (a1 == 0)) {
+                      if(b2 == b1) {
+                        x2 = 0;
+                        x3 = -1;
+                        y2 = -1;
+                        y3 = 0;
+                      }
+                      if(b3 == b1) {
+                        x2 = -1;
+                        x3 = 0;
+                        z2 = 0;
+                        z3 = -1;
+                      }
+                    }
+                    if((b1 == -a3) && (b1 == -a1) && (a2 == 0)) {
+                      if(b2 == b1) {
+                        x1 = -1;
+                        x3 = 0;
+                        y1 = 0;
+                        y3 = -1;
+                      }
+                      if(b3 == b1) {
+                        x1 = -1;
+                        x3 = 0;
+                        z1 = 0;
+                        z3 = -1;
+                      }
+                    }
+                    if((b1 == -a1) && (b1 == -a2) && (a3 == 0)) {
+                      if(b2 == b1) {
+                        x1 = -1;
+                        x2 = 0;
+                        y1 = 0;
+                        y2 = -1;
+                      }
+                      if(b3 == b1) {
+                        x1 = -1;
+                        x2 = 0;
+                        z1 = 0;
+                        z2 = -1;
+                      }
+                    }
+
+                    if((b2 == a2) && (b2 == a3) && (a1 == 0)) {
+                      if(b1 == b2) {
+                        x2 = 1;
+                        x3 = 0;
+                        y2 = 0;
+                        y3 = 1;
+                      }
+                      if(b3 == b2) {
+                        y2 = 1;
+                        y3 = 0;
+                        z2 = 0;
+                        z3 = 1;
+                      }
+                    }
+                    if((b2 == a3) && (b2 == a1) && (a2 == 0)) {
+                      if(b1 == b2) {
+                        x1 = 1;
+                        x3 = 0;
+                        y1 = 0;
+                        y3 = 1;
+                      }
+                      if(b3 == b2) {
+                        y1 = 1;
+                        y3 = 0;
+                        z1 = 0;
+                        z3 = 1;
+                      }
+                    }
+                    if((b2 == a1) && (b2 == a2) && (a3 == 0)) {
+                      if(b1 == b2) {
+                        x1 = 1;
+                        x2 = 0;
+                        y1 = 0;
+                        y2 = 1;
+                      }
+                      if(b3 == b2) {
+                        y1 = 1;
+                        y2 = 0;
+                        z1 = 0;
+                        z2 = 1;
+                      }
+                    }
+                    if((b2 == -a2) && (b2 == -a3) && (a1 == 0)) {
+                      if(b1 == b2) {
+                        x2 = -1;
+                        x3 = 0;
+                        y2 = 0;
+                        y3 = -1;
+                      }
+                      if(b3 == b2) {
+                        y2 = -1;
+                        y3 = 0;
+                        z2 = 0;
+                        z3 = -1;
+                      }
+                    }
+                    if((b2 == -a3) && (b2 == -a1) && (a2 == 0)) {
+                      if(b1 == b2) {
+                        x1 = -1;
+                        x3 = 0;
+                        y1 = 0;
+                        y3 = -1;
+                      }
+                      if(b3 == b2) {
+                        y1 = -1;
+                        y3 = 0;
+                        z1 = 0;
+                        z3 = -1;
+                      }
+                    }
+                    if((b2 == -a1) && (b2 == -a2) && (a3 == 0)) {
+                      if(b1 == b2) {
+                        x1 = -1;
+                        x2 = 0;
+                        y1 = 0;
+                        y2 = -1;
+                      }
+                      if(b3 == b2) {
+                        y1 = -1;
+                        y2 = 0;
+                        z1 = 0;
+                        z2 = -1;
+                      }
+                    }
+
+                    if((b3 == a2) && (b3 == a3) && (a1 == 0)) {
+                      if(b1 == b3) {
+                        x2 = 1;
+                        x3 = 0;
+                        z2 = 0;
+                        z3 = 1;
+                      }
+                      if(b2 == b3) {
+                        y2 = 1;
+                        y3 = 0;
+                        z2 = 0;
+                        z3 = 1;
+                      }
+                    }
+                    if((b3 == a3) && (b3 == a1) && (a2 == 0)) {
+                      if(b1 == b3) {
+                        x1 = 1;
+                        x3 = 0;
+                        z1 = 0;
+                        z3 = 1;
+                      }
+                      if(b2 == b3) {
+                        y1 = 1;
+                        y3 = 0;
+                        z1 = 0;
+                        z3 = 1;
+                      }
+                    }
+                    if((b3 == a1) && (b3 == a2) && (a3 == 0)) {
+                      if(b1 == b3) {
+                        x1 = 1;
+                        x2 = 0;
+                        z1 = 0;
+                        z2 = 1;
+                      }
+                      if(b2 == b3) {
+                        y1 = 1;
+                        y2 = 0;
+                        z1 = 0;
+                        z2 = 1;
+                      }
+                    }
+
+                    if((b1 == 0) && (a1 == 0)) {
+                      x1 = 1;
+                      if(((*(Point_Range + 0) == 1) &&
+                          (*(Point_Donor_Range + 0) == 1)) ||
+                         ((*(Point_Range + 0) != 1) &&
+                          (*(Point_Donor_Range + 0) != 1)))
+                        x1 = -1;
+                    }
+                    if((b1 == 0) && (a2 == 0)) {
+                      x2 = 1;
+                      if(((*(Point_Range + 0) == 1) &&
+                          (*(Point_Donor_Range + 1) == 1)) ||
+                         ((*(Point_Range + 0) != 1) &&
+                          (*(Point_Donor_Range + 1) != 1)))
+                        x2 = -1;
+                    }
+                    if((b1 == 0) && (a3 == 0)) {
+                      x3 = 1;
+                      if(((*(Point_Range + 0) == 1) &&
+                          (*(Point_Donor_Range + 2) == 1)) ||
+                         ((*(Point_Range + 0) != 1) &&
+                          (*(Point_Donor_Range + 2) != 1)))
+                        x3 = -1;
+                    }
+                    if((b2 == 0) && (a1 == 0)) {
+                      y1 = 1;
+                      if(((*(Point_Range + 1) == 1) &&
+                          (*(Point_Donor_Range + 0) == 1)) ||
+                         ((*(Point_Range + 1) != 1) &&
+                          (*(Point_Donor_Range + 0) != 1)))
+                        y1 = -1;
+                    }
+                    if((b2 == 0) && (a2 == 0)) {
+                      y2 = 1;
+                      if(((*(Point_Range + 1) == 1) &&
+                          (*(Point_Donor_Range + 1) == 1)) ||
+                         ((*(Point_Range + 1) != 1) &&
+                          (*(Point_Donor_Range + 1) != 1)))
+                        y2 = -1;
+                    }
+                    if((b2 == 0) && (a3 == 0)) {
+                      y3 = 1;
+                      if(((*(Point_Range + 1) == 1) &&
+                          (*(Point_Donor_Range + 2) == 1)) ||
+                         ((*(Point_Range + 1) != 1) &&
+                          (*(Point_Donor_Range + 2) != 1)))
+                        y3 = -1;
+                    }
+                    if((b3 == 0) && (a1 == 0)) {
+                      z1 = 1;
+                      if(((*(Point_Range + 2) == 1) &&
+                          (*(Point_Donor_Range + 0) == 1)) ||
+                         ((*(Point_Range + 2) != 1) &&
+                          (*(Point_Donor_Range + 0) != 1)))
+                        z1 = -1;
+                    }
+                    if((b3 == 0) && (a2 == 0)) {
+                      z2 = 1;
+                      if(((*(Point_Range + 2) == 1) &&
+                          (*(Point_Donor_Range + 1) == 1)) ||
+                         ((*(Point_Range + 2) != 1) &&
+                          (*(Point_Donor_Range + 1) != 1)))
+                        z2 = -1;
+                    }
+                    if((b3 == 0) && (a3 == 0)) {
+                      z3 = 1;
+                      if(((*(Point_Range + 2) == 1) &&
+                          (*(Point_Donor_Range + 2) == 1)) ||
+                         ((*(Point_Range + 2) != 1) &&
+                          (*(Point_Donor_Range + 2) != 1)))
+                        z3 = -1;
+                    }
+
+                    int det_A = x1 * y2 * z3 + x2 * y3 * z1 + x3 * y1 * z2 -
+                                x1 * y3 * z2 - x2 * y1 * z3 - x3 * y2 * z1;
+                    if(!((det_A == 1) || (det_A == -1))) {
+                      Msg::Warning("Error in finding Transfor Matrix: "
+                                   "Determinant != +/-1  (= %i)",
+                                   det_A);
+                    }
+
+                    if((x1 == 1) && (x2 == 0) && (x3 == 0)) {
+                      *(Transform + 0) = 1;
+                    }
+                    if((x1 == -1) && (x2 == 0) && (x3 == 0)) {
+                      *(Transform + 0) = -1;
+                    }
+                    if((x1 == 0) && (x2 == 1) && (x3 == 0)) {
+                      *(Transform + 0) = 2;
+                    }
+                    if((x1 == 0) && (x2 == -1) && (x3 == 0)) {
+                      *(Transform + 0) = -2;
+                    }
+                    if((x1 == 0) && (x2 == 0) && (x3 == 1)) {
+                      *(Transform + 0) = 3;
+                    }
+                    if((x1 == 0) && (x2 == 0) && (x3 == -1)) {
+                      *(Transform + 0) = -3;
+                    }
+
+                    if((y1 == 1) && (y2 == 0) && (y3 == 0)) {
+                      *(Transform + 1) = 1;
+                    }
+                    if((y1 == -1) && (y2 == 0) && (y3 == 0)) {
+                      *(Transform + 1) = -1;
+                    }
+                    if((y1 == 0) && (y2 == 1) && (y3 == 0)) {
+                      *(Transform + 1) = 2;
+                    }
+                    if((y1 == 0) && (y2 == -1) && (y3 == 0)) {
+                      *(Transform + 1) = -2;
+                    }
+                    if((y1 == 0) && (y2 == 0) && (y3 == 1)) {
+                      *(Transform + 1) = 3;
+                    }
+                    if((y1 == 0) && (y2 == 0) && (y3 == -1)) {
+                      *(Transform + 1) = -3;
+                    }
+
+                    if((z1 == 1) && (z2 == 0) && (z3 == 0)) {
+                      *(Transform + 2) = 1;
+                    }
+                    if((z1 == -1) && (z2 == 0) && (z3 == 0)) {
+                      *(Transform + 2) = -1;
+                    }
+                    if((z1 == 0) && (z2 == 1) && (z3 == 0)) {
+                      *(Transform + 2) = 2;
+                    }
+                    if((z1 == 0) && (z2 == -1) && (z3 == 0)) {
+                      *(Transform + 2) = -2;
+                    }
+                    if((z1 == 0) && (z2 == 0) && (z3 == 1)) {
+                      *(Transform + 2) = 3;
+                    }
+                    if((z1 == 0) && (z2 == 0) && (z3 == -1)) {
+                      *(Transform + 2) = -3;
+                    }
+
+                    if(cg_1to1_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                                     interfaceName.c_str(),
+                                     adjoiningZoneName.c_str(), Point_Range,
+                                     Point_Donor_Range, Transform,
+                                     &cgIndexConn)) {
+                      return cgnsErr();
+                    }
+                  } // End interfaceFace == 1
+                }
+              }
+            }
+          } // End numInterfaceFaces>0
+
+          if((interfaceFace == 0) && (interfaceFaceWritten == 0)) {
+            if(cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                             patchName.c_str(), BCType, ptsettype, numBCVert,
+                             Point_Range, &cgIndexBoco)) {
+              return cgnsErr();
+            }
+            if(physical_name != "") {
+              if(cg_goto(cgIndexFile, cgIndexBase, zoneName.c_str(), 0,
+                         "ZoneBC_t", 1, patchName.c_str(), 0, "end"))
+                return cgnsErr();
+              if(cg_famname_write(physical_name.c_str())) return cgnsErr();
+            }
+          }
+
+        } // End writing boco & interface for 3D mesh
+      }
+    } // End if meshDim == 3D
 
     return 0;
-  }  // End Writing Structured Mesh
+  } // End Writing Structured Mesh
 
   switch(zoneDefinition) {
   case 1: // By partition
 
     //--Group the elements of each partition into a dummy entity.  Pointers to
-    //the
+    // the
     //--entities are then made available in groups[DIM][0].
 
     {
@@ -4204,7 +4664,7 @@ This may not be complete for special cases - for eg. periodic mesh info, if any,
   }
 
   //--For a single zone, put all the entities for a dimension into
-  //groups[DIM][0]
+  // groups[DIM][0]
 
   if(zoneDefinition == 0) {
     numZone = 1;
