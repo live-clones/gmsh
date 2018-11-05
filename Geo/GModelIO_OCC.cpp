@@ -40,7 +40,6 @@
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <BRepGProp.hxx>
 #include <BRepLib.hxx>
-#include <BRepMesh_FastDiscret.hxx>
 #include <BRepOffsetAPI_MakeFilling.hxx>
 #include <BRepOffsetAPI_MakePipe.hxx>
 #include <BRepOffsetAPI_MakeThickSolid.hxx>
@@ -97,6 +96,12 @@
 
 #if OCC_VERSION_HEX < 0x060900
 #error "Gmsh requires OpenCASCADE >= 6.9"
+#endif
+
+#if OCC_VERSION_HEX > 0x070300
+#include <BRepMesh_IncrementalMesh.hxx>
+#else
+#include <BRepMesh_FastDiscret.hxx>
 #endif
 
 #if defined(HAVE_OCC_CAF)
@@ -3848,24 +3853,25 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
 {
   if(CTX::instance()->geom.occDisableSTL) return false;
 
-  //  printf("coucou\n");
 
+#if OCC_VERSION_HEX > 0x070300
+  BRepMesh_IncrementalMesh aMesher(s, 0.1, Standard_False, 0.35, Standard_True);
+#elif OCC_VERSION_HEX > 0x070000
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
-
-#if(OCC_VERSION_MAJOR >= 7)
-  double fact = 1;
   BRepMesh_FastDiscret::Parameters parameters;
-  parameters.Deflection = fact * 0.1;
-  parameters.Angle = fact * 0.35;
-  // parameters.InternalVerticesMode = Standard_False;
+  parameters.Deflection = 0.1;
+  parameters.Angle = 0.35;
   parameters.Relative = Standard_False;
   BRepMesh_FastDiscret aMesher(aBox, parameters);
+  aMesher.Perform(s);
 #else
+  Bnd_Box aBox;
+  BRepBndLib::Add(s, aBox);
   BRepMesh_FastDiscret aMesher(0.1, 0.35, aBox, Standard_False, Standard_False,
                                Standard_True, Standard_False);
-#endif
   aMesher.Perform(s);
+#endif
 
   TopLoc_Location loc;
   Handle(Poly_Triangulation) triangulation = BRep_Tool::Triangulation(s, loc);
