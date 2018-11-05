@@ -683,7 +683,7 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
   else if (p.SUCCESS == 0)
     Msg::Warning("All jacobians positive but not all in the range");
   else if (p.SUCCESS == -1)
-    Msg::Error("Still negative jacobians");
+    Msg::Warning("Still negative jacobians");
 
   double t2 = Cpu();
   p.CPU = t2-t1;
