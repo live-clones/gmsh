@@ -521,14 +521,10 @@ occ.add('addPipe',doc,None,ivectorpair('dimTags'),iint('wireTag'),ovectorpair('o
 doc = '''Fillet the volumes `volumeTags' on the curves `curveTags' with radii `radii'. The `radii' vector can either contain a single radius, as many radii as `curveTags', or twice as many as `curveTags' (in which case different radii are provided for the begin and end points of the curves). Return the filleted entities in `outDimTags'. Remove the original volume if `removeVolume' is set.'''
 occ.add('fillet',doc,None,ivectorint('volumeTags'),ivectorint('curveTags'),ivectordouble('radii'),ovectorpair('outDimTags'),ibool('removeVolume','true','True'))
 
-doc = '''Chamfer the volumes `volumeTags' on the curves `curveTags' with distances
-`distances' measured on surfaces `surfaceTags'. The `distances' vector can
-either contain a single distance, as many distances as `curveTags' and
-`surfaceTags', or twice as many as `curveTags' and `surfaceTags' (in which case
-the first in each pair is measured on the corresponding surface in
-`surfaceTags', the other on the other adjacent surface). Return the chamfered
-entities in `outDimTags'. Remove the original volume if `removeVolume' is
-set.'''
+doc = '''Chamfer the volumes `volumeTags' on the curves `curveTags' with distances `distances' measured on surfaces `surfaceTags'. The `distances' vector can
+either contain a single distance, as many distances as `curveTags' and `surfaceTags', or twice as many as `curveTags' and `surfaceTags' (in which case
+the first in each pair is measured on the corresponding surface in `surfaceTags', the other on the other adjacent surface). Return the chamfered
+entities in `outDimTags'. Remove the original volume if `removeVolume' is set.'''
 occ.add('chamfer',doc,None,ivectorint('volumeTags'),ivectorint('curveTags'),ivectorint('surfaceTags'),ivectordouble('distances'),ovectorpair('outDimTags'),ibool('removeVolume','true','True'))
 
 doc = '''Compute the boolean union (the fusion) of the entities `objectDimTags' and `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (ony valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
