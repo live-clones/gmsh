@@ -268,25 +268,27 @@ bool PView::readMSH(const std::string &fileName, int fileIndex)
             }
           }
         }
-        // either get existing viewData, or create new one
-        PView *p = getViewByName(viewName, timeStep, partition);
-        PViewDataGModel *d = 0;
-        if(p) d = dynamic_cast<PViewDataGModel *>(p->getData());
-        bool create = d ? false : true;
-        if(create) d = new PViewDataGModel(type);
-        if(!d->readMSH(viewName, fileName, fileIndex, fp, binary, swap,
-                       timeStep, time, partition, numComp, numEnt,
-                       interpolationScheme)) {
-          Msg::Error("Could not read data in msh file");
-          if(create) delete d;
-          fclose(fp);
-          return false;
-        }
-        else {
-          d->setName(viewName);
-          d->setFileName(fileName);
-          d->setFileIndex(index);
-          if(create) new PView(d);
+        if(numEnt > 0) {
+          // either get existing viewData, or create new one
+          PView *p = getViewByName(viewName, timeStep, partition);
+          PViewDataGModel *d = 0;
+          if(p) d = dynamic_cast<PViewDataGModel *>(p->getData());
+          bool create = d ? false : true;
+          if(create) d = new PViewDataGModel(type);
+          if(!d->readMSH(viewName, fileName, fileIndex, fp, binary, swap,
+                         timeStep, time, partition, numComp, numEnt,
+                         interpolationScheme)) {
+            Msg::Error("Could not read data in msh file");
+            if(create) delete d;
+            fclose(fp);
+            return false;
+          }
+          else {
+            d->setName(viewName);
+            d->setFileName(fileName);
+            d->setFileIndex(index);
+            if(create) new PView(d);
+          }
         }
       }
     }
