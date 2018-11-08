@@ -3177,8 +3177,10 @@ void OCC_Internals::setMeshSize(int dim, int tag, double size)
 {
   if(dim != 0) return;
   if(_tagVertex.IsBound(tag)) {
-    _meshAttributes->insert(
-      new OCCMeshAttributes(0, _tagVertex.Find(tag), size));
+    OCCMeshAttributes *a = new OCCMeshAttributes(0, _tagVertex.Find(tag), size);
+    // first remove any other constraint
+    _meshAttributes->remove(a);
+    _meshAttributes->insert(a);
   }
 }
 
