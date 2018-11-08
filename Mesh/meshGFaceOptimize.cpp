@@ -132,7 +132,7 @@ void buildMeshGenerationDataStructures(
         MVertex *v = *((*itvx)->mesh_vertices.begin());
         vSizesMap[v] =
           std::min(vSizesMap[v], (*itvx)->prescribedMeshSizeAtVertex());
-        embeddedVertices.emplace(v);
+        embeddedVertices.insert(v);
       }
       ++itvx;
     }
