@@ -302,7 +302,7 @@ namespace tetgenBR {
         }
         else if(ori == 0.0) {
           if(!b->quiet) {
-            printf("Warning:  Tet #%d is degenerate.\n", i + in->firstnumber);
+            Msg::Warning("Tet #%d is degenerate", i + in->firstnumber);
           }
         }
         // Create a new tetrahedron.

@@ -61,6 +61,11 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
   int npyram = 0;
   for(GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); it++){
     GRegion *gr = *it;
+    if(gr->meshAttributes.method == MESH_TRANSFINITE) continue;
+    if(gr->geomType() == GEntity::DiscreteVolume) continue;
+    ExtrudeParams *ep = gr->meshAttributes.extrude;
+    if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) continue;
+
     std::vector<GFace*> faces = gr->faces();
     for(unsigned int i = 0; i < faces.size(); i++){
       GFace *gf = faces[i];
