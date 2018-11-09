@@ -7,7 +7,8 @@
 #define _MESH_GREGION_BOUNDARY_RECOVERY_H_
 
 class GRegion;
+class splitQuadRecovery;
 
-bool meshGRegionBoundaryRecovery(GRegion *gr);
+bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr=0);
 
 #endif

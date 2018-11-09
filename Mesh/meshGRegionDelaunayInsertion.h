@@ -20,6 +20,7 @@
 class GRegion;
 class GFace;
 class GModel;
+class splitQuadRecovery;
 
 double tetcircumcenter(double a[3], double b[3], double c[3], double d[3],
                        double circumcenter[3], double *xi, double *eta,
@@ -219,7 +220,7 @@ void connectTets(std::vector<MTet4 *> &, const std::set<MFace, Less_Face> * = 0)
 void delaunayMeshIn3D(std::vector<MVertex *> &, std::vector<MTetrahedron *> &,
                       bool removeBox = true);
 void insertVerticesInRegion(GRegion *gr, int maxVert = 2000000000,
-                            bool _classify = true);
+                            bool _classify = true, splitQuadRecovery *sqr = 0);
 void bowyerWatsonFrontalLayers(GRegion *gr, bool hex);
 
 struct compareTet4Ptr {

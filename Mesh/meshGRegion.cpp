@@ -40,201 +40,54 @@
 #include "filterElements.h"
 #include "ExtrudeParams.h"
 
-#if defined(HAVE_ANN)
-#include "ANN/ANN.h"
-#endif
+void splitQuadRecovery::add(const MFace &f, MVertex *v, GFace *gf)
+{
+  _quad[f] = v;
+  MFace f0(f.getVertex(0), f.getVertex(1), v);
+  MFace f1(f.getVertex(1), f.getVertex(2), v);
+  MFace f2(f.getVertex(2), f.getVertex(3), v);
+  MFace f3(f.getVertex(3), f.getVertex(0), v);
+  _tri[f0] = gf;
+  _tri[f1] = gf;
+  _tri[f2] = gf;
+  _tri[f3] = gf;
+}
 
-// hybrid mesh recovery structure
-class splitQuadRecovery {
-  std::multimap<GEntity *, std::pair<MVertex *, MFace> > _data;
-  bool _empty;
+int splitQuadRecovery::buildPyramids(GModel *gm)
+{
+  if(_quad.empty()) return 0;
 
-public:
-  std::map<MFace, MVertex *, Less_Face> _invmap;
-  std::set<MFace, Less_Face> _toDelete;
-  splitQuadRecovery() : _empty(true) {}
-  bool empty() { return _empty; }
-  void setEmpty(bool val) { _empty = val; }
-  void add(const MFace &f, MVertex *v, GEntity *ge)
-  {
-    _data.insert(std::make_pair(ge, std::make_pair(v, f)));
-  }
-  void relocateVertices(GRegion *region, int niter)
-  {
-    if(empty()) return;
-    v2t_cont adj;
-    buildVertexToElement(region->tetrahedra, adj);
-    buildVertexToElement(region->pyramids, adj);
-    buildVertexToElement(region->prisms, adj);
-    buildVertexToElement(region->hexahedra, adj);
-
-    double minQual = 1;
-    double minQualOpti = 1;
-
-    std::vector<GFace *> faces = region->faces();
-
-    for(int iter = 0; iter < niter + 2; iter++) {
-      for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-          ++it) {
-        for(std::multimap<GEntity *, std::pair<MVertex *, MFace> >::iterator
-              it2 = _data.lower_bound(*it);
-            it2 != _data.upper_bound(*it); ++it2) {
-          const MFace &f = it2->second.second;
-          MVertex *v = it2->second.first;
-          MPyramid p(f.getVertex(0), f.getVertex(1), f.getVertex(2),
-                     f.getVertex(3), v);
-          minQual = std::min(minQual, std::abs(p.minSICNShapeMeasure()));
-          std::vector<MElement *> e = adj[v];
-          e.push_back(&p);
-          v->setEntity(region);
-          double relax = std::min((double)(iter + 1) / niter, 1.0);
-          //	  printf("%g (%d) --> ",e.size(),p.minSICNShapeMeasure());
-          _relocateVertexGolden(v, e, relax);
-          minQualOpti =
-            std::min(minQualOpti, std::abs(p.minSICNShapeMeasure()));
-          //	  printf("%g \n",p.minSICNShapeMeasure());
-          v->setEntity(*it);
-        }
-      }
-    }
-    // printf("relocation improves %g --> %g\n", minQual, minQualOpti);
-  }
-  int buildPyramids(GModel *gm)
-  {
-    if(empty()) return 0;
-    int NBPY = 0;
-    for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-      std::set<MFace, Less_Face> allFaces;
-      for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
-        allFaces.insert((*it)->triangles[i]->getFace(0));
-        delete(*it)->triangles[i];
-      }
-      (*it)->triangles.clear();
-      for(std::multimap<GEntity *, std::pair<MVertex *, MFace> >::iterator it2 =
-            _data.lower_bound(*it);
-          it2 != _data.upper_bound(*it); ++it2) {
-        const MFace &f = it2->second.second;
-        MVertex *v = it2->second.first;
-        v->onWhat()->mesh_vertices.erase(
-          std::find(v->onWhat()->mesh_vertices.begin(),
-                    v->onWhat()->mesh_vertices.end(), v));
-        std::set<MFace, Less_Face>::iterator itf0 =
-          allFaces.find(MFace(f.getVertex(0), f.getVertex(1), v));
-        std::set<MFace, Less_Face>::iterator itf1 =
-          allFaces.find(MFace(f.getVertex(1), f.getVertex(2), v));
-        std::set<MFace, Less_Face>::iterator itf2 =
-          allFaces.find(MFace(f.getVertex(2), f.getVertex(3), v));
-        std::set<MFace, Less_Face>::iterator itf3 =
-          allFaces.find(MFace(f.getVertex(3), f.getVertex(0), v));
-        if(itf0 != allFaces.end() && itf1 != allFaces.end() &&
-           itf2 != allFaces.end() && itf3 != allFaces.end()) {
-          (*it)->quadrangles.push_back(new MQuadrangle(
-            f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3)));
-          allFaces.erase(*itf0);
-          allFaces.erase(*itf1);
-          allFaces.erase(*itf2);
-          allFaces.erase(*itf3);
-          // printf("some pyramids should be created %d regions\n",
-          // (*it)->numRegions());
-          for(int iReg = 0; iReg < (*it)->numRegions(); iReg++) {
-            if(iReg == 1) {
-              Msg::Error("Cannot build pyramids on non manifold faces");
-              v = new MVertex(v->x(), v->y(), v->z(), (*it)->getRegion(iReg));
-            }
-            else
-              v->setEntity((*it)->getRegion(iReg));
-            // A quad face connected to an hex or a primsm --> leave the quad
-            // face as is
-            if(_toDelete.find(f) == _toDelete.end()) {
-              (*it)->getRegion(iReg)->pyramids.push_back(
-                new MPyramid(f.getVertex(0), f.getVertex(1), f.getVertex(2),
-                             f.getVertex(3), v));
-              (*it)->getRegion(iReg)->mesh_vertices.push_back(v);
-              NBPY++;
-            }
-            else {
-              delete v;
-            }
+  Msg::Info("Generating pyramids for hybrid mesh...");
+  int npyram = 0;
+  for(GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); it++){
+    GRegion *gr = *it;
+    std::vector<GFace*> faces = gr->faces();
+    for(unsigned int i = 0; i < faces.size(); i++){
+      GFace *gf = faces[i];
+      for(unsigned int j = 0; j < gf->quadrangles.size(); j++){
+        std::map<MFace, MVertex *, Less_Face>::iterator it2 =
+          _quad.find(gf->quadrangles[j]->getFace(0));
+        if(it2 != _quad.end()){
+          npyram++;
+          gr->pyramids.push_back
+            (new MPyramid(it2->first.getVertex(0), it2->first.getVertex(1),
+                          it2->first.getVertex(2), it2->first.getVertex(3),
+                          it2->second));
+          gr->mesh_vertices.push_back(it2->second);
+          if(it2->second->onWhat()->dim() == 3){
+            Msg::Error("Pyramid top vertex already classified on volume %d (!= %d) - "
+                       "non-manifold quad boundaries not supported yet",
+                       it2->second->onWhat()->tag(), gr->tag());
+          }
+          else{
+            it2->second->setEntity(gr);
           }
         }
       }
-      for(std::set<MFace, Less_Face>::iterator itf = allFaces.begin();
-          itf != allFaces.end(); ++itf) {
-        (*it)->triangles.push_back(new MTriangle(
-          itf->getVertex(0), itf->getVertex(1), itf->getVertex(2)));
-      }
-    }
-    return NBPY;
-  }
-};
-
-void getBoundingInfoAndSplitQuads(
-  GRegion *gr, std::map<MFace, GEntity *, Less_Face> &allBoundingFaces,
-  std::set<MVertex *> &allBoundingVertices, splitQuadRecovery &sqr)
-{
-  std::map<MFace, GEntity *, Less_Face> allBoundingFaces_temp;
-
-  // Get all the faces that are on the boundary
-  std::vector<GFace *> faces = gr->faces();
-  std::vector<GFace *>::iterator it = faces.begin();
-  while(it != faces.end()) {
-    GFace *gf = (*it);
-    for(unsigned int i = 0; i < gf->getNumMeshElements(); i++) {
-      allBoundingFaces_temp[gf->getMeshElement(i)->getFace(0)] = gf;
-    }
-    ++it;
-  }
-
-  // if some elements pre-exist in the mesh, then use the internal faces of
-  // those
-
-  for(unsigned int i = 0; i < gr->getNumMeshElements(); i++) {
-    MElement *e = gr->getMeshElement(i);
-    for(int j = 0; j < e->getNumFaces(); j++) {
-      std::map<MFace, GEntity *, Less_Face>::iterator it =
-        allBoundingFaces_temp.find(e->getFace(j));
-      if(it == allBoundingFaces_temp.end())
-        allBoundingFaces_temp[e->getFace(j)] = gr;
-      else
-        allBoundingFaces_temp.erase(it);
     }
   }
-
-  std::map<MFace, GEntity *, Less_Face>::iterator itx =
-    allBoundingFaces_temp.begin();
-  for(; itx != allBoundingFaces_temp.end(); ++itx) {
-    const MFace &f = itx->first;
-    // split the quad face into 4 triangular faces
-    if(f.getNumVertices() == 4) {
-      sqr.setEmpty(false);
-      MVertex *v0 = f.getVertex(0);
-      MVertex *v1 = f.getVertex(1);
-      MVertex *v2 = f.getVertex(2);
-      MVertex *v3 = f.getVertex(3);
-      MVertex *newv = new MVertex(
-        (v0->x() + v1->x() + v2->x() + v3->x()) * 0.25,
-        (v0->y() + v1->y() + v2->y() + v3->y()) * 0.25,
-        (v0->z() + v1->z() + v2->z() + v3->z()) * 0.25, itx->second);
-      sqr.add(f, newv, itx->second);
-      sqr._invmap[f] = newv;
-      allBoundingFaces[MFace(v0, v1, newv)] = itx->second;
-      allBoundingFaces[MFace(v1, v2, newv)] = itx->second;
-      allBoundingFaces[MFace(v2, v3, newv)] = itx->second;
-      allBoundingFaces[MFace(v3, v0, newv)] = itx->second;
-      itx->second->mesh_vertices.push_back(newv);
-      allBoundingVertices.insert(v0);
-      allBoundingVertices.insert(v1);
-      allBoundingVertices.insert(v2);
-      allBoundingVertices.insert(v3);
-      allBoundingVertices.insert(newv);
-    }
-    else {
-      allBoundingFaces[f] = itx->second;
-      allBoundingVertices.insert(f.getVertex(0));
-      allBoundingVertices.insert(f.getVertex(1));
-      allBoundingVertices.insert(f.getVertex(2));
-    }
-  }
+  Msg::Info("Done generating %d pyramids for hybrid mesh", npyram);
+  return npyram;
 }
 
 void MeshDelaunayVolume(std::vector<GRegion *> &regions)
@@ -247,7 +100,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     }
     return;
   }
-  
+
   if(CTX::instance()->mesh.algo3d != ALGO_3D_DELAUNAY &&
      CTX::instance()->mesh.algo3d != ALGO_3D_MMG3D)
     return;
@@ -258,7 +111,6 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   for(unsigned int i = 0; i < regions.size(); i++) {
     std::vector<GFace *> const &f = regions[i]->faces();
     std::vector<GFace *> const &f_e = regions[i]->embeddedFaces();
-
     allFacesSet.insert(f.begin(), f.end());
     allFacesSet.insert(f_e.begin(), f_e.end());
   }
@@ -285,17 +137,8 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   std::vector<GVertex *> oldEmbVertices = gr->embeddedVertices();
   gr->embeddedVertices() = allEmbVertices;
 
-  bool success = meshGRegionBoundaryRecovery(gr);
-  /*
-    FILE *fp = Fopen("debug.pos", "w");
-    if(fp){
-      fprintf(fp, "View \"debug\" {\n");
-      for(unsigned int i = 0; i < gr->tetrahedra.size(); i++)
-        gr->tetrahedra[i]->writePOS(fp, 1., gr->tag(),false,false,false,1,1);
-      fprintf(fp, "};\n");
-      fclose(fp);
-    }
-  */
+  splitQuadRecovery sqr;
+  bool success = meshGRegionBoundaryRecovery(gr, &sqr);
 
   // sort triangles in all model faces in order to be able to search in vectors
   std::vector<GFace *>::iterator itf = allFaces.begin();
@@ -318,19 +161,25 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     refineMeshMMG(gr);
   }
   else if(CTX::instance()->mesh.oldRefinement) {
-    insertVerticesInRegion(gr, 2000000000, true);
+    insertVerticesInRegion(gr, 2000000000, true, &sqr);
   }
   else {
     void edgeBasedRefinement(const int numThreads, const int nptsatonce,
                              GRegion *gr);
     // just to remove tets that are not to be meshed
-    insertVerticesInRegion(gr, 0);
+    insertVerticesInRegion(gr, 0, true, &sqr);
     for(unsigned int i = 0; i < regions.size(); i++) {
       Msg::Info("Refining volume %d with %d threads", regions[i]->tag(),
                 Msg::GetMaxThreads());
       edgeBasedRefinement(Msg::GetMaxThreads(), 1, regions[i]);
     }
-    // RelocateVertices (regions,-1);
+    // RelocateVertices(regions, -1);
+  }
+
+  if(sqr.buildPyramids(gr->model())){
+    Msg::Info("Optimizing pyramids for hybrid mesh...");
+    RelocateVertices(regions, 3);
+    Msg::Info("Done optimizing pyramids for hybrid mesh");
   }
 }
 
@@ -716,7 +565,8 @@ void optimizeMeshGRegionGmsh::operator()(GRegion *gr, bool always)
   optimizeMesh(gr, qmTetrahedron::QMTET_GAMMA);
 }
 
-bool buildFaceSearchStructure(GModel *model, fs_cont &search)
+bool buildFaceSearchStructure(GModel *model, fs_cont &search,
+                              bool onlyTriangles)
 {
   search.clear();
 
@@ -732,7 +582,8 @@ bool buildFaceSearchStructure(GModel *model, fs_cont &search)
   while(fit != faces_to_consider.end()) {
     for(unsigned int i = 0; i < (*fit)->getNumMeshElements(); i++) {
       MFace ff = (*fit)->getMeshElement(i)->getFace(0);
-      search[ff] = *fit;
+      if(!onlyTriangles || ff.getNumVertices() == 3)
+        search[ff] = *fit;
     }
     ++fit;
   }

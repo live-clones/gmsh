@@ -663,7 +663,7 @@ void non_recursive_classify(MTet4 *t, std::list<MTet4 *> &theRegion,
     t = _stackounette.top();
     _stackounette.pop();
     if(!t) {
-      Msg::Error("a tet is not connected by a boundary face");
+      Msg::Error("A tetrahedron is not connected to a boundary face");
       touchesOutsideBox = true;
     }
     else if(!t->onWhat()) {
@@ -1246,7 +1246,8 @@ int isCavityCompatibleWithEmbeddedFace(
   return 1;
 }
 
-void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
+void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
+                            splitQuadRecovery *sqr)
 {
   //  TEST_IF_BOUNDARY_IS_RECOVERED (gr);
 
@@ -1335,7 +1336,10 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
 
   if(_classify) {
     fs_cont search;
-    buildFaceSearchStructure(gr->model(), search);
+    buildFaceSearchStructure(gr->model(), search, true); // only triangles
+    if(sqr)
+      search.insert(sqr->getTri().begin(), sqr->getTri().end());
+
     for(MTet4Factory::iterator it = allTets.begin(); it != allTets.end();
         ++it) {
       if(!(*it)->onWhat()) {
@@ -1362,8 +1366,11 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
             // Make sure that Steiner points will end up in the right region
             std::vector<MVertex *> vertices;
             (*it2)->tet()->getVertices(vertices);
-            for(std::vector<MVertex *>::iterator itv = vertices.begin(); itv != vertices.end(); ++itv){
-              if ((*itv)->onWhat() != NULL && (*itv)->onWhat()->dim() == 3 && (*itv)->onWhat() != myGRegion){
+            for(std::vector<MVertex *>::iterator itv = vertices.begin();
+                itv != vertices.end(); ++itv){
+              if ((*itv)->onWhat() != NULL &&
+                  (*itv)->onWhat()->dim() == 3 &&
+                  (*itv)->onWhat() != myGRegion){
                 myGRegion->addMeshVertex((*itv));
                 (*itv)->setEntity(myGRegion);
               }
