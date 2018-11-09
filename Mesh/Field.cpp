@@ -3024,7 +3024,7 @@ double GenericField::operator()(double x, double y, double z, GEntity *ge)
   std::vector<double>::iterator it = sizes.begin();
 
   // Go over all callback functions
-  for(std::vector<std::pair<ptrfunction, void*>>::iterator itcbs = cbs_with_data.begin();
+  for(std::vector<std::pair<ptrfunction, void*> >::iterator itcbs = cbs_with_data.begin();
     itcbs != cbs_with_data.end(); itcbs++, it++){
     bool ok = (itcbs->first)(x, y, z, itcbs->second, (*it));
     if (!ok){
@@ -3034,7 +3034,7 @@ double GenericField::operator()(double x, double y, double z, GEntity *ge)
 
 
   // Go over all extended callback functions
-  for (std::vector<std::pair<ptrfunctionextended, void*>>::iterator itcbs = cbs_extended_with_data.begin();
+  for (std::vector<std::pair<ptrfunctionextended, void*> >::iterator itcbs = cbs_extended_with_data.begin();
     itcbs != cbs_extended_with_data.end(); itcbs++, it++){
     bool ok = (itcbs->first)(x, y, z, ge, itcbs->second, (*it));
     if (!ok){
