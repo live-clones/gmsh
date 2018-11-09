@@ -452,6 +452,8 @@ public:
   // callback prototypes:
   // this callback is called with a void* previously given to the GenericField !
   typedef bool (*ptrfunction)(double, double, double, void *, double &);
+  // this callback also takes the GEntity object into account
+  typedef bool (*ptrfunctionextended)(double, double, double, void*, void*, double&);
 
   GenericField();
   ~GenericField();
@@ -461,10 +463,11 @@ public:
 
   // sets the callbacks
   void setCallbackWithData(ptrfunction fct, void *data);
+  void setCallbackWithData(ptrfunctionextended fct, void *data);
 
 private:
-  std::vector<ptrfunction> cbs; // the callbacks
-  std::vector<void *> user_data; // the data to be sent to the callbacks
+  std::vector<std::pair<ptrfunction, void*>> cbs_with_data; // the callbacks with the data to be sent to them
+  std::vector<std::pair<ptrfunctionextended, void*>> cbs_extended_with_data; // the extended callbacks with the data to be sent to them
 };
 
 #endif
