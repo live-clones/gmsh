@@ -466,8 +466,8 @@ public:
   void setCallbackWithData(ptrfunctionextended fct, void *data);
 
 private:
-  std::vector<std::pair<ptrfunction, void*>> cbs_with_data; // the callbacks with the data to be sent to them
-  std::vector<std::pair<ptrfunctionextended, void*>> cbs_extended_with_data; // the extended callbacks with the data to be sent to them
+  std::vector<std::pair<ptrfunction, void*> > cbs_with_data; // the callbacks with the data to be sent to them
+  std::vector<std::pair<ptrfunctionextended, void*> > cbs_extended_with_data; // the extended callbacks with the data to be sent to them
 };
 
 #endif
