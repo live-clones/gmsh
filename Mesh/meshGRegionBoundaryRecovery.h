@@ -9,6 +9,6 @@
 class GRegion;
 class splitQuadRecovery;
 
-bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr=0);
+bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr = 0);
 
 #endif
