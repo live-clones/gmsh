@@ -3020,21 +3020,38 @@ GenericField::~GenericField(){};
 
 double GenericField::operator()(double x, double y, double z, GEntity *ge)
 {
-  std::vector<double> sizes(cbs.size());
-  std::vector<ptrfunction>::iterator itcbs = cbs.begin();
-  std::vector<void *>::iterator itdata = user_data.begin();
-  for(std::vector<double>::iterator it = sizes.begin(); it != sizes.end();
-      it++, itdata++, itcbs++) {
-    bool ok = (*itcbs)(x, y, z, (*itdata), (*it));
-    if(!ok) {
+  std::vector<double> sizes(cbs_with_data.size() + cbs_extended_with_data.size());
+  std::vector<double>::iterator it = sizes.begin();
+
+  // Go over all callback functions
+  for(std::vector<std::pair<ptrfunction, void*> >::iterator itcbs = cbs_with_data.begin();
+    itcbs != cbs_with_data.end(); itcbs++, it++){
+    bool ok = (itcbs->first)(x, y, z, itcbs->second, (*it));
+    if (!ok){
       Msg::Warning("GenericField::ERROR from callback ");
     }
   }
+
+
+  // Go over all extended callback functions
+  for (std::vector<std::pair<ptrfunctionextended, void*> >::iterator itcbs = cbs_extended_with_data.begin();
+    itcbs != cbs_extended_with_data.end(); itcbs++, it++){
+    bool ok = (itcbs->first)(x, y, z, ge, itcbs->second, (*it));
+    if (!ok){
+      Msg::Warning("GenericField::ERROR from callback ");
+    }
+  }
+
+  // Take minimum value
   return (*std::min_element(sizes.begin(), sizes.end()));
 }
 
 void GenericField::setCallbackWithData(ptrfunction fct, void *data)
 {
-  user_data.push_back(data);
-  cbs.push_back(fct);
+  cbs_with_data.push_back(std::make_pair(fct, data));
+}
+
+void GenericField::setCallbackWithData(ptrfunctionextended fct, void *data)
+{
+  cbs_extended_with_data.push_back(std::make_pair(fct, data));
 }
