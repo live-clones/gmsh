@@ -383,7 +383,7 @@ void FlGui::applyColorScheme()
 
   if(CTX::instance()->guiColorScheme == 1) { // dark mode
     Fl::set_color(FL_BACKGROUND_COLOR, 20, 20, 20);
-    Fl::set_color(FL_BACKGROUND2_COLOR, 100, 100, 100);
+    Fl::set_color(FL_BACKGROUND2_COLOR, 80, 80, 80);
     Fl::set_color(FL_FOREGROUND_COLOR, 220, 220, 220);
     for(int i = 0; i < FL_NUM_GRAY; i++) {
       double min = 0., max = 80.;
