@@ -2245,7 +2245,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Frontal Hex (experimental)", 0, 0, 0},
         {"MMG3D (experimental)", 0, 0, 0},
         {"R-tree (experimental)", 0, 0, 0},
-        {"HXT", 0, 0, 0},
+        {"HXT (experimental)", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_recombination_algo[] = {
