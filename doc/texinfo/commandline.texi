@@ -52,7 +52,7 @@ Save nodes with their parametric coordinates
 @item -save_topology
 Save model topology
 @item -algo string
-Select mesh algorithm (meshadapt, del2d, front2d, delquad, del3d, front3d, mmg3d, pack)
+Select mesh algorithm (meshadapt, del2d, front2d, delquad, del3d, front3d, mmg3d, pack, hxt)
 @item -smooth int
 Set number of mesh smoothing steps
 @item -order int
