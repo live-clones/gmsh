@@ -112,12 +112,10 @@ void discreteRegion::remesh()
                               CTX::instance()->mesh.optimizeNetgen);
       i++) {
     if(CTX::instance()->mesh.optimize >= i) {
-      printf("optimizing!\n");
-      optimizeMeshGRegionGmsh opt;
+      optimizeMeshGRegion opt;
       opt(this, true);
     }
     if(CTX::instance()->mesh.optimizeNetgen >= i) {
-      printf("optimizing netgen!\n");
       optimizeMeshGRegionNetgen opt;
       opt(this, true);
     }

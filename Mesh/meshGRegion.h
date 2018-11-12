@@ -33,7 +33,7 @@ public:
 };
 
 // Optimize the mesh of the region using gmsh's algo
-class optimizeMeshGRegionGmsh {
+class optimizeMeshGRegion {
 public:
   void operator()(GRegion *, bool always = false);
 };
