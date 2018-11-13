@@ -1008,7 +1008,8 @@ StringXNumber MeshOptions_Number[] = {
    "Reconstruct the model topology (BREP) after reading a CGNS file" },
   { F|O, "CharacteristicLengthExtendFromBoundary" ,
     opt_mesh_lc_extend_from_boundary, 1. ,
-    "Extend computation of mesh element sizes from the boundaries into the surfaces/volumes" },
+    "Extend computation of mesh element sizes from the boundaries into the interior "
+    "(for 3D Delaunay, use 1: longest or 2: shortest surface edge length)"},
   { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
     "Factor applied to all mesh element sizes" },
   { F|O, "CharacteristicLengthMin" , opt_mesh_lc_min, 0.0 ,

@@ -545,11 +545,19 @@ static void setLcs(MTriangle *t,
       vSizes.find(vi);
     std::map<MVertex *, double, MVertexLessThanNum>::iterator itj =
       vSizes.find(vj);
-    // use largest edge length
-    if(iti == vSizes.end() || iti->second < l) vSizes[vi] = l;
-    if(itj == vSizes.end() || itj->second < l) vSizes[vj] = l;
+    if(CTX::instance()->mesh.lcExtendFromBoundary == 2){
+      // use smallest edge length
+      if(iti == vSizes.end() || iti->second > l) vSizes[vi] = l;
+      if(itj == vSizes.end() || itj->second > l) vSizes[vj] = l;
+    }
+    else{
+      // use largest edge length
+      if(iti == vSizes.end() || iti->second < l) vSizes[vi] = l;
+      if(itj == vSizes.end() || itj->second < l) vSizes[vj] = l;
+    }
   }
 
+  // use average edge length
   /*
   double l = 0;
   for(int i = 0; i < 3; i++){
