@@ -2300,8 +2300,7 @@ static void assignToParent(std::set<MVertex *> &verts, PART_ENTITY *entity,
                            ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it) {
-    if(entity->getParentEntity()->dim() == 3)
-      entity->getParentEntity()->addElement((*it)->getType(), *it);
+    entity->getParentEntity()->addElement((*it)->getType(), *it);
     (*it)->setPartition(0);
 
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
@@ -2332,7 +2331,7 @@ int UnpartitionMesh(GModel *const model)
 
     if(vertex->geomType() == GEntity::PartitionVertex) {
       partitionVertex *pvertex = static_cast<partitionVertex *>(vertex);
-      if(pvertex->getParentEntity()) {
+      if(pvertex->getParentEntity() && pvertex->getParentEntity()->dim() == 0) {
         assignToParent(verts, pvertex, pvertex->points.begin(),
                        pvertex->points.end());
       }
@@ -2353,7 +2352,7 @@ int UnpartitionMesh(GModel *const model)
     GEdge *edge = *it;
     if(edge->geomType() == GEntity::PartitionCurve) {
       partitionEdge *pedge = static_cast<partitionEdge *>(edge);
-      if(pedge->getParentEntity()) {
+      if(pedge->getParentEntity() && pedge->getParentEntity()->dim() == 1) {
         assignToParent(verts, pedge, pedge->lines.begin(), pedge->lines.end());
       }
       else {
@@ -2380,7 +2379,7 @@ int UnpartitionMesh(GModel *const model)
 
     if(face->geomType() == GEntity::PartitionSurface) {
       partitionFace *pface = static_cast<partitionFace *>(face);
-      if(pface->getParentEntity()) {
+      if(pface->getParentEntity() && pface->getParentEntity()->dim() == 2) {
         assignToParent(verts, pface, pface->triangles.begin(),
                        pface->triangles.end());
         assignToParent(verts, pface, pface->quadrangles.begin(),
@@ -2413,7 +2412,7 @@ int UnpartitionMesh(GModel *const model)
 
     if(region->geomType() == GEntity::PartitionVolume) {
       partitionRegion *pregion = static_cast<partitionRegion *>(region);
-      if(pregion->getParentEntity()) {
+      if(pregion->getParentEntity() && pregion->getParentEntity()->dim() == 3) {
         assignToParent(verts, pregion, pregion->tetrahedra.begin(),
                        pregion->tetrahedra.end());
         assignToParent(verts, pregion, pregion->hexahedra.begin(),
@@ -2428,16 +2427,12 @@ int UnpartitionMesh(GModel *const model)
       else {
         for(unsigned int j = 0; j < pregion->tetrahedra.size(); j++)
           delete pregion->tetrahedra[j];
-
         for(unsigned int j = 0; j < pregion->hexahedra.size(); j++)
           delete pregion->hexahedra[j];
-
         for(unsigned int j = 0; j < pregion->prisms.size(); j++)
           delete pregion->prisms[j];
-
         for(unsigned int j = 0; j < pregion->pyramids.size(); j++)
           delete pregion->pyramids[j];
-
         for(unsigned int j = 0; j < pregion->trihedra.size(); j++)
           delete pregion->trihedra[j];
       }
