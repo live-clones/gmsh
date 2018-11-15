@@ -2507,6 +2507,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
       std::vector<cgsize_t> iBuffer1, iBuffer2;
       // Buffers for integer data
       int interfaceIndex = 0; // Index for interfaces
+      std::string zoneNameForBC = "";
 
       while(threadsWorking || zoneQueue.size()) {
         if(zoneQueue.size()) {
@@ -2546,6 +2547,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
                            Unstructured, &cgIndexZone)) {
             return cgnsErr();
           }
+          zoneNameForBC = writeTask->zoneName.c_str();
           // Manually maintain the size of the 'zoneInfo vector'.  'push_back'
           // is not used because the elements are in order of 'zoneIndex'
           if(writeTask->zoneIndex >= static_cast<int>(zoneInfo.size())) {
@@ -2794,21 +2796,24 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
           if(numBoVert >= 1) {
             Msg::Info("writing BoVerts...");
 
-            std::vector<int> iZBV(numBoVert);
-            for(int i = 0; i != numBoVert; ++i) iZBV[i] = i;
+            std::vector<int> iZBV(numBoVert - 1);
+            for(int i = 0; i != numBoVert - 1; ++i) iZBV[i] = i;
             std::sort<int *, ZoneBoVecSort>(&iZBV[0], &iZBV[numBoVert - 1],
                                             ZoneBoVecSort(zoneBoVec));
             dBuffer.reserve(1024);
             iBuffer1.reserve(1024);
 
             int iVert = 0;
-            while(iVert != numBoVert) {
+            while(iVert != numBoVert - 1) {
               dBuffer.clear();
               iBuffer1.clear();
               const int zoneIndex = zoneBoVec[iZBV[iVert]].zoneIndex;
               const int patchIndex = zoneBoVec[iZBV[iVert]].bcPatchIndex;
               const int iVertStart = iVert;
-              while(iVert != numBoVert &&
+              std::vector<int> physical_num; // Family number
+              std::string physical_name = ""; // Family name
+
+              while(iVert != numBoVert - 1 &&
                     zoneBoVec[iZBV[iVert]].zoneIndex == zoneIndex &&
                     zoneBoVec[iZBV[iVert]].bcPatchIndex == patchIndex) {
                 VertexBoundary &vertBo = zoneBoVec[iZBV[iVert]];
@@ -2816,6 +2821,16 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
                 dBuffer.push_back(vertBo.normal[1]);
                 if(vectorDim == 3) dBuffer.push_back(vertBo.normal[2]);
                 iBuffer1.push_back(vertBo.vertexIndex);
+
+                if(physical_num.size() == 0) {
+                  physical_num = vertBo.vertex->onWhat()->physicals;
+                }
+                for(unsigned int ii = 0; ii < physical_num.size(); ++ii) {
+                  if(physical_name == "") {
+                    physical_name = model.getPhysicalName(model.getDim() - 1,
+                                                          physical_num[ii]);
+                  }
+                }
                 ++iVert;
               }
               const int numBCVert = iVert - iVertStart;
@@ -2841,6 +2856,13 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
                      cgIndexBoco, &normalIndex, 1, RealDouble, &dBuffer[0])) {
                   return cgnsErr();
                 }
+              }
+
+              if(physical_name != "") {
+                if(cg_goto(cgIndexFile, cgIndexBase, zoneNameForBC.c_str(), 0,
+                           "ZoneBC_t", 1, patchName.c_str(), 0, "end"))
+                  return cgnsErr();
+                if(cg_famname_write(physical_name.c_str())) return cgnsErr();
               }
             }
           }
