@@ -108,6 +108,8 @@ int discreteFace::trianglePosition(double par1, double par2, double &u,
                                    double &v) const
 {
 #if defined(HAVE_HXT)
+  if(_parametrizations.empty()) return 0;
+
   double xy[3] = {par1, par2, 0};
   double uv[3];
   const MElement *e =
@@ -127,6 +129,8 @@ int discreteFace::trianglePosition(double par1, double par2, double &u,
 GPoint discreteFace::point(double par1, double par2) const
 {
 #if defined(HAVE_HXT)
+  if(_parametrizations.empty()) return 0;
+
   double xy[3] = {par1, par2, 0};
   double uv[3];
   const MElement *e =
@@ -217,6 +221,8 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
                                   SVector3 *normal) const
 {
 #if defined(HAVE_HXT)
+  if(_parametrizations.empty()) return GPoint();
+
   dfWrapper wrapper(queryPoint);
   do {
     wrapper._distance = 1.e22;
@@ -285,6 +291,8 @@ SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface) const
 SVector3 discreteFace::normal(const SPoint2 &param) const
 {
 #if defined(HAVE_HXT)
+  if(_parametrizations.empty()) return SVector3();
+
   MElement *e = _parametrizations[_current_parametrization].oct->find(
     param.x(), param.y(), 0.0);
   if(!e) {
@@ -315,6 +323,9 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 {
 #if defined(HAVE_HXT)
+  if(_parametrizations.empty())
+    return Pair<SVector3, SVector3>(SVector3(), SVector3());
+
   MElement *e = _parametrizations[_current_parametrization].oct->find(
     param.x(), param.y(), 0.0);
   if(!e) {
@@ -359,11 +370,9 @@ Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 
   return Pair<SVector3, SVector3>(SVector3(dxdu[0][0], dxdu[1][0], dxdu[2][0]),
                                   SVector3(dxdu[0][1], dxdu[1][1], dxdu[2][1]));
-
 #endif
-  SVector3 v;
   Msg::Error("firstDer failed");
-  return Pair<SVector3, SVector3>(v, v);
+  return Pair<SVector3, SVector3>(SVector3(), SVector3());
 }
 
 void discreteFace::secondDer(const SPoint2 &param, SVector3 &dudu,
@@ -674,6 +683,8 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
                                             double uv[2])
 {
 #if defined(HAVE_HXT)
+  if(_parametrizations.empty()) return GPoint();
+
   MTriangle *t2d =
     (MTriangle *)_parametrizations[_current_parametrization].oct->find(
       uv[0], uv[1], 0.0);

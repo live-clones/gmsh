@@ -7,7 +7,7 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm3D
-3D mesh algorithm (1: Delaunay, 4: Frontal, 5: Frontal Delaunay, 6: Frontal Hex, 7: MMG3D, 9: R-tree)@*
+3D mesh algorithm (1: Delaunay, 4: Frontal, 5: Frontal Delaunay, 6: Frontal Hex, 7: MMG3D, 9: R-tree, 10: HXT)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -57,7 +57,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CharacteristicLengthExtendFromBoundary
-Extend computation of mesh element sizes from the boundaries into the surfaces/volumes@*
+Extend computation of mesh element sizes from the boundaries into the interior (for 3D Delaunay, use 1: longest or 2: shortest surface edge length)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

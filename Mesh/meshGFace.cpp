@@ -3051,6 +3051,7 @@ void meshGFace::operator()(GFace *gf, bool print)
     killer(gf);
     gf->setMeshingAlgo(1);
     (*this)(gf, print);
+    gf->unsetMeshingAlgo();
   }
 
 }

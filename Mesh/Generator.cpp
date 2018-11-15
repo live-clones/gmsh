@@ -882,7 +882,7 @@ static void Mesh3D(GModel *m)
       if(treat_region_ok && (CTX::instance()->mesh.recombine3DAll ||
                              gr->meshAttributes.recombine3D)) {
         if(CTX::instance()->mesh.optimize) {
-          optimizeMeshGRegionGmsh opt;
+          optimizeMeshGRegion opt;
           opt(gr);
         }
         double a = Cpu();
@@ -990,7 +990,7 @@ void OptimizeMesh(GModel *m)
   Msg::StatusBar(true, "Optimizing 3D mesh...");
   double t1 = Cpu();
 
-  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionGmsh());
+  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegion());
   // Ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
 

@@ -28,6 +28,7 @@ public:
                     // 2 - elements
   int vectorDim; // Number of dimensions in a vector
                  // (only relevant for a 2D mesh)
+  bool structuredMesh; // = 1 if structured mesh, = 0 if un-structured mesh
   bool writeBC;
   bool writeUserDef; // T - write user-defined elements for
                      //     element types unsupported by CGNS
@@ -44,6 +45,7 @@ public:
     bocoLocation = 0;
     normalSource = 1;
     vectorDim = 2;
+    structuredMesh = 0;
     writeBC = true;
     writeUserDef = false;
   }

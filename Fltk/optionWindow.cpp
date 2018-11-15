@@ -328,7 +328,7 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
      o->general.butt[21]->value()) {
     opt_general_gui_color_scheme(0, GMSH_SET, o->general.butt[21]->value());
     opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
-                             o->general.butt[21]->value() ? 0. : 1.);
+                             o->general.butt[21]->value() ? 3. : 1.);
   }
 
   opt_general_tooltips(0, GMSH_SET, o->general.butt[13]->value());
@@ -1793,10 +1793,10 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[0]->callback(general_options_ok_cb);
 
       static Fl_Menu_Item menu_color_scheme[] = {
-        {"Dark", 0, 0, 0},
         {"Light", 0, 0, 0},
+        {"Default", 0, 0, 0},
         {"Grayscale", 0, 0, 0},
-        {"Reverse", 0, 0, 0},
+        {"Dark", 0, 0, 0},
         {0}
       };
 
@@ -2245,7 +2245,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Frontal Hex (experimental)", 0, 0, 0},
         {"MMG3D (experimental)", 0, 0, 0},
         {"R-tree (experimental)", 0, 0, 0},
-        {"HXT", 0, 0, 0},
+        {"HXT (experimental)", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_recombination_algo[] = {

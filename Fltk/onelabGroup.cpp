@@ -469,7 +469,6 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   _tree->color(col);
   _tree->callback(onelab_tree_cb);
   _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
-  _tree->connectorcolor(FL_DARK2);
   // _tree->marginleft(0);
   // _tree->usericonmarginleft(0);
   // _tree->labelmarginleft(0);

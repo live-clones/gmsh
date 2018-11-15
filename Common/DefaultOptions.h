@@ -490,7 +490,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "ClipWholeElements" , opt_general_clip_whole_elements , 0. ,
     "Clip whole elements" },
   { F|S, "ColorScheme", opt_general_color_scheme , 1. ,
-    "Default color scheme for graphics (0: dark, 1: light, 2: grayscale, 3: reverse)" },
+    "Default color scheme for graphics (0: light, 1: default, 2: grayscale, 3: dark)" },
   { F|O, "ConfirmOverwrite" , opt_general_confirm_overwrite, 1. ,
     "Ask confirmation before overwriting files?" },
   { F|S, "ContextPositionX" , opt_general_context_position0 , 650. ,
@@ -982,7 +982,7 @@ StringXNumber MeshOptions_Number[] = {
     "8: DelQuad)" },
   { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY ,
     "3D mesh algorithm (1: Delaunay, 4: Frontal, 5: Frontal Delaunay, 6: Frontal Hex, "
-    "7: MMG3D, 9: R-tree)" },
+    "7: MMG3D, 9: R-tree, 10: HXT)" },
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" },
   { F|O, "AngleToleranceFacetOverlap" , opt_mesh_angle_tolerance_facet_overlap , 0.1,
@@ -1008,7 +1008,8 @@ StringXNumber MeshOptions_Number[] = {
    "Reconstruct the model topology (BREP) after reading a CGNS file" },
   { F|O, "CharacteristicLengthExtendFromBoundary" ,
     opt_mesh_lc_extend_from_boundary, 1. ,
-    "Extend computation of mesh element sizes from the boundaries into the surfaces/volumes" },
+    "Extend computation of mesh element sizes from the boundaries into the interior "
+    "(for 3D Delaunay, use 1: longest or 2: shortest surface edge length)"},
   { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
     "Factor applied to all mesh element sizes" },
   { F|O, "CharacteristicLengthMin" , opt_mesh_lc_min, 0.0 ,
@@ -1801,10 +1802,10 @@ StringXNumber PrintOptions_Number[] = {
 
 StringXColor GeneralOptions_Color[] = {
   { F|O, "Background" , opt_general_color_background ,
-    {245, 245, 245, 255}, {255, 255, 255, 255}, {245, 245, 245, 255}, {50, 50, 50, 255},
+    {255, 255, 255, 255}, {255, 255, 255, 255}, {245, 245, 245, 255}, {0, 0, 0, 255},
     "Background color" },
   { F|O, "BackgroundGradient" , opt_general_color_background_gradient ,
-    {185, 185, 185, 255}, {208, 215, 255, 255}, {185, 185, 185, 255}, {50, 50, 50, 255},
+    {255, 255, 255, 255}, {208, 215, 255, 255}, {185, 185, 185, 255}, {0, 0, 0, 255},
     "Background gradient color" },
   { F|O, "Foreground" , opt_general_color_foreground ,
     {85, 85, 85, 255}, {85, 85, 85, 255}, {85, 85, 85, 255}, {170, 170, 170, 255},

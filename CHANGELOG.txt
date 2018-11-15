@@ -1,3 +1,6 @@
+4.0.5: bug fixes; automatic hybrid mesh generation (pyramid layer) when 3D
+Delaunay algorithm is applied to a volume with quadrangles on boundary.
+
 4.0.4 (October 19, 2018): fix physical names regression in 4.0.3.
 
 4.0.3 (October 18, 2018): bug fixes.
