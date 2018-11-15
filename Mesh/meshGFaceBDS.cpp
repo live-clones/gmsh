@@ -402,10 +402,10 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
         int N;
         if(!pointInsideParametricDomain(*true_boundary, pp, out, N)) {
           inside = false;
-	  printf("%g %g\n",e->p1->u,e->p1->v);
-	  printf("%g %g\n",e->p2->u,e->p2->v);
-	  printf("%d %d %g %g\n",e->p1->iD,e->p2->iD,U1,U2);
-	  printf("%g %g OUTSIDE ??\n",pp.x(),pp.y());
+	  // printf("%g %g\n",e->p1->u,e->p1->v);
+	  // printf("%g %g\n",e->p2->u,e->p2->v);
+	  // printf("%d %d %g %g\n",e->p1->iD,e->p2->iD,U1,U2);
+          Msg::Info("%g %g outside of parametric domain?", pp.x(), pp.y());
           // FILE *f = fopen("TOTO.pos","a");
           // fprintf(f,"SP(%g,%g,0){%d};\n",pp.x(),pp.y(),N);
           // fclose(f);
@@ -782,18 +782,18 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     double t1 = Cpu();
     // outputScalarField(m.triangles, "0.pos", 1, gf);
     splitEdgePass(gf, m, maxE, nb_split, true_boundary);
-    //    outputScalarField(m.triangles, "a.pos", 1, gf);
+    // outputScalarField(m.triangles, "a.pos", 1, gf);
     CHECK_STRANGE("split", m);
 
     double t2 = Cpu();
     swapEdgePass(gf, m, nb_swap);
     CHECK_STRANGE("swap", m);
-    //     outputScalarField(m.triangles, "b.pos", 1, gf);
+    // outputScalarField(m.triangles, "b.pos", 1, gf);
 
     double t3 = Cpu();
     collapseEdgePass(gf, m, minE, MAXNP, nb_collaps);
     CHECK_STRANGE("collapse", m);
-    //    outputScalarField(m.triangles, "c.pos", 1, gf);
+    // outputScalarField(m.triangles, "c.pos", 1, gf);
     double t4 = Cpu();
     swapEdgePass(gf, m, nb_swap);
     CHECK_STRANGE("swap", m);
@@ -819,8 +819,8 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     // char nn[256];
     // sprintf(nn,"ITER%d.pos",IT);
     // outputScalarField(m.triangles, nn, 1, gf);
-    //    printf("getchar\n");
-    //    getchar();
+    // printf("getchar\n");
+    // getchar();
 
     IT++;
     Msg::Debug(" iter %3d minL %8.3f/%8.3f maxL %8.3f/%8.3f : "
