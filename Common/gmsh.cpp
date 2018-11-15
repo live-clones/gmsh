@@ -1068,13 +1068,17 @@ GMSH_API void gmsh::model::mesh::setNodes(
     Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
-  if(coord.size() != 3 * nodeTags.size()) {
+  int numNodeTags = nodeTags.size(), numNodes = nodeTags.size();
+  if(!numNodeTags){ // this is allowed: we will assign new tags
+    numNodes = coord.size() / 3;
+  }
+  if(coord.size() != 3 * numNodes) {
     Msg::Error("Wrong number of coordinates");
     throw 2;
   }
   bool param = false;
   if(parametricCoord.size()) {
-    if(parametricCoord.size() != dim * nodeTags.size()) {
+    if(parametricCoord.size() != dim * numNodes) {
       Msg::Error("Wrong number of parametric coordinates");
       throw 2;
     }
@@ -1082,8 +1086,8 @@ GMSH_API void gmsh::model::mesh::setNodes(
   }
   // delete nodes and elements; this will also delete the model mesh cache
   ge->deleteMesh();
-  for(unsigned int i = 0; i < nodeTags.size(); i++) {
-    int n = nodeTags[i];
+  for(unsigned int i = 0; i < numNodes; i++) {
+    int n = (numNodeTags ? nodeTags[i] : -1);
     double x = coord[3 * i];
     double y = coord[3 * i + 1];
     double z = coord[3 * i + 2];
@@ -1347,8 +1351,13 @@ GMSH_API void gmsh::model::mesh::setElements(
   ge->deleteMesh(true);
   for(unsigned int i = 0; i < elementTypes.size(); i++) {
     int type = elementTypes[i];
-    unsigned int numEle = elementTags[i].size();
     unsigned int numVertPerEle = MElement::getInfoMSH(type);
+    if(!numVertPerEle) continue;
+    unsigned int numEleTags = elementTags[i].size();
+    unsigned int numEle = numEleTags;
+    if(!numEle){
+      numEle = nodeTags[i].size() / numVertPerEle;
+    }
     if(!numEle) continue;
     if(numEle * numVertPerEle != nodeTags[i].size()) {
       Msg::Error("Wrong number of node tags for element type %d", type);
@@ -1357,7 +1366,7 @@ GMSH_API void gmsh::model::mesh::setElements(
     std::vector<MElement *> elements(numEle);
     std::vector<MVertex *> nodes(numVertPerEle);
     for(unsigned int j = 0; j < numEle; j++) {
-      int etag = elementTags[i][j];
+      int etag = (numEleTags ? elementTags[i][j] : -1);
       MElementFactory f;
       for(unsigned int k = 0; k < numVertPerEle; k++) {
         int vtag = nodeTags[i][numVertPerEle * j + k];

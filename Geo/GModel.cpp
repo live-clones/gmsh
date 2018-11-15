@@ -1654,7 +1654,10 @@ void GModel::_storeElementsInEntities(
     case TYPE_PNT: {
       GVertex *v = getVertexByTag(it->first);
       if(!v) {
-        v = new discreteVertex(this, it->first);
+        double x = it->second[0]->getVertex(0)->x();
+        double y = it->second[0]->getVertex(0)->y();
+        double z = it->second[0]->getVertex(0)->z();
+        v = new discreteVertex(this, it->first, x, y, z);
         add(v);
       }
       if(!v->points.empty()) { // CAD points already have one by default
@@ -3175,7 +3178,8 @@ void GModel::classifyFaces(std::set<GFace *> &_faces)
       std::map<MVertex *, GVertex *>::iterator itMV = modelVertices.find(vB);
       if(itMV == modelVertices.end()) {
         GVertex *newGv = new discreteVertex(
-          GModel::current(), GModel::current()->getMaxElementaryNumber(0) + 1);
+          GModel::current(), GModel::current()->getMaxElementaryNumber(0) + 1,
+          vB->x(), vB->y(), vB->z());
         newGv->mesh_vertices.push_back(vB);
         vB->setEntity(newGv);
         newGv->points.push_back(new MPoint(vB));
@@ -3185,7 +3189,8 @@ void GModel::classifyFaces(std::set<GFace *> &_faces)
       itMV = modelVertices.find(vE);
       if(itMV == modelVertices.end()) {
         GVertex *newGv = new discreteVertex(
-          GModel::current(), GModel::current()->getMaxElementaryNumber(0) + 1);
+          GModel::current(), GModel::current()->getMaxElementaryNumber(0) + 1,
+          vE->x(), vE->y(), vE->z());
         newGv->mesh_vertices.push_back(vE);
         newGv->points.push_back(new MPoint(vE));
         vE->setEntity(newGv);

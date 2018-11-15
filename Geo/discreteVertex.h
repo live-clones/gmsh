@@ -11,22 +11,16 @@
 #include "MVertex.h"
 
 class discreteVertex : public GVertex {
+private:
+  double _x, _y, _z;
 public:
-  discreteVertex(GModel *m, int num) : GVertex(m, num) {}
-  virtual ~discreteVertex() {}
-  virtual GPoint point() const { return GPoint(x(), y(), z(), this); }
-  virtual double x() const
-  {
-    return mesh_vertices.size() ? mesh_vertices[0]->x() : 0.;
-  }
-  virtual double y() const
-  {
-    return mesh_vertices.size() ? mesh_vertices[0]->y() : 0.;
-  }
-  virtual double z() const
-  {
-    return mesh_vertices.size() ? mesh_vertices[0]->z() : 0.;
-  }
+  discreteVertex(GModel *m, int num, double x = 0., double y = 0.,
+                 double z = 0.);
+  virtual ~discreteVertex();
+  virtual GPoint point() const;
+  virtual double x() const;
+  virtual double y() const;
+  virtual double z() const;
 };
 
 #endif

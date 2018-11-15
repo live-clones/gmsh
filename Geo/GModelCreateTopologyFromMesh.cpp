@@ -259,7 +259,8 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
         num++;
 
         discreteVertex *dv =
-          new discreteVertex(gm, gm->getMaxElementaryNumber(0) + 1);
+          new discreteVertex(gm, gm->getMaxElementaryNumber(0) + 1,
+                             mv->x(), mv->y(), mv->z());
         gm->add(dv);
 
         mVertexToGVertex[mv] = dv;
@@ -319,10 +320,11 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
     if(!(*it)->getBeginVertex() && !(*it)->getEndVertex()) {
       num++;
-      discreteVertex *dv =
-        new discreteVertex(gm, gm->getMaxElementaryNumber(0) + 1);
-      gm->add(dv);
       MVertex *v = (*it)->lines[0]->getVertex(0);
+      discreteVertex *dv =
+        new discreteVertex(gm, gm->getMaxElementaryNumber(0) + 1,
+                           v->x(), v->y(), v->z());
+      gm->add(dv);
       MPoint *mp = new MPoint(v);
       dv->points.push_back(mp);
       dv->addEdge(*it);

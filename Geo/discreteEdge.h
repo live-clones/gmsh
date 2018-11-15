@@ -8,7 +8,6 @@
 
 #include "GModel.h"
 #include "GEdge.h"
-#include "discreteVertex.h"
 
 class discreteEdge : public GEdge {
 protected:

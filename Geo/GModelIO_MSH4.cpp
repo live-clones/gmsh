@@ -384,7 +384,7 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
                 model->getEntityByTag(parentDim, parentTag));
           }
           else {
-            gv = new discreteVertex(model, tag);
+            gv = new discreteVertex(model, tag, minX, minY, minZ);
           }
           model->add(gv);
         }

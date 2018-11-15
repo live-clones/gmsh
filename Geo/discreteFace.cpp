@@ -1002,7 +1002,8 @@ bool discreteFace::compute_topology_of_partition(
             //	   vs[i]->onWhat()->mesh_vertices.end());
             discreteEdge *de = static_cast<discreteEdge *>(vs[i]->onWhat());
             if(!de) Msg::Error("Can only split discrete edges at that point");
-            discreteVertex *gstart = new discreteVertex(gm, ++TAG + 1);
+            discreteVertex *gstart = new discreteVertex
+              (gm, ++TAG + 1, vs[i]->x(), vs[i]->y(), vs[i]->z());
             gm->add(gstart);
             vs[i]->setEntity(gstart);
             gstart->mesh_vertices.push_back(vs[i]);
@@ -1031,7 +1032,8 @@ bool discreteFace::compute_topology_of_partition(
         if(ends[0]->onWhat() == this || ends[1]->onWhat() == this) {
           for(int i = 0; i < 2; i++) {
             if(ends[i]->onWhat() == this) {
-              discreteVertex *gstart = new discreteVertex(gm, ++TAG);
+              discreteVertex *gstart = new discreteVertex
+                (gm, ++TAG, ends[i]->x(), ends[i]->y(), ends[i]->z());
               v_internals.push_back(gstart);
               gm->add(gstart);
               ends[i]->setEntity(gstart);
@@ -1081,7 +1083,8 @@ bool discreteFace::compute_topology_of_partition(
           //    (std::remove(ends[k]->onWhat()->mesh_vertices.begin(),
 	  //	 ends[k]->onWhat()->mesh_vertices.end(), ends[k]),
 	  //	 ends[k]->onWhat()->mesh_vertices.end());
-	  gends[k] = new discreteVertex (gm, ++TAG);
+	  gends[k] = new discreteVertex
+            (gm, ++TAG, ends[k]->x(), ends[k]->y(), ends[k]->z());
 	  v_internals.push_back(gends[k]);
 	  gm->add(gends[k]);
 	  ends[k]->setEntity(gends[k]);
@@ -1095,7 +1098,8 @@ bool discreteFace::compute_topology_of_partition(
 	    //	 ends[k]->onWhat()->mesh_vertices.end());
 	    discreteEdge *de = static_cast<discreteEdge*> (ends[k]->onWhat());
 	    if (!de)Msg::Error("can only split discrete edges at that point");
-	    gends[k] = new discreteVertex (gm, ++TAG);
+	    gends[k] = new discreteVertex
+              (gm, ++TAG, ends[k]->x(), ends[k]->y(), ends[k]->z());
 	    gm->add(gends[k]);
 	    ends[k]->setEntity(gends[k]);
 	    gends[k]->mesh_vertices.push_back(ends[k]);

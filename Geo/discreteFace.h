@@ -9,6 +9,7 @@
 #include "GmshConfig.h"
 #include "GModel.h"
 #include "GFace.h"
+#include "discreteVertex.h"
 #include "discreteEdge.h"
 #include "MTriangle.h"
 #include "MElementCut.h"
