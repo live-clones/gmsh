@@ -708,7 +708,7 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
 
   e->oppositeof(op);
 
-  int CHECK1 = -1, CHECK2 = 32;
+  int CHECK1 = -1, CHECK2 = 46;
 
   if(p1->iD == CHECK1 && p2->iD == CHECK2)
     printf("splitting edge %d %d opp %d %d new %d\n", p1->iD, p2->iD, op[0]->iD, op[1]->iD,mid->iD);
@@ -862,7 +862,7 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
     return false;
   }
   // THIS WAS CAUSIN' TROUBLES ...
-  //  if(s3 < .02 * (s1 + s2) || s4 < .02 * (s1 + s2)) return false;
+  //if(s3 < .02 * (s1 + s2) || s4 < .02 * (s1 + s2)) return false;
 
   /*
   if(!testSmallTriangles) {
@@ -1042,7 +1042,7 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest,
    */
 
   // we test if the edge is deleted
-  //    return false;
+  //return false;
 
   
   
