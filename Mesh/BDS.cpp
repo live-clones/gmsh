@@ -609,7 +609,7 @@ void recur_tag(BDS_Face *t, BDS_GeomEntity *g)
   //  BDS_Point *pts[4];
   //  t->getNodes(pts);
   //  printf("starting with trioangle %d %d %d\n",pts[0]->iD,pts[1]->iD,pts[2]->iD);
-  
+
   while(!_stack.empty()) {
     t = _stack.top();
     _stack.pop();
@@ -1044,8 +1044,8 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest,
   // we test if the edge is deleted
   //return false;
 
-  
-  
+
+
   BDS_Point *p1 = e->p1;
   BDS_Point *p2 = e->p2;
 
@@ -1581,7 +1581,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
   // return false;
   if(p->degenerated) return false;
   if(!p->config_modified) return false;
-  int CHECK = -1;//23357;
+  int CHECK = -1;
   if(p->g && p->g->classif_degree <= 1) return false;
   if(p->g && p->g->classif_tag < 0) {
     p->config_modified = true;
@@ -1611,8 +1611,8 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
   eit = p->edges.begin();
 
   if(eit == itede) {
-    //    Msg::Debug("Hidden bug ... I should have deleted a point but I still do "
-    //               "not know why it segfault when I do it :-) ");
+    // Msg::Debug("Hidden bug ... I should have deleted a point but I still do "
+    //            "not know why it segfault when I do it :-) ");
     return false;
   }
 
@@ -1638,8 +1638,8 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
     ++eit;
   }
   if(p->iD == CHECK) printf("\n");
-  //  printf("%g\n",fact);
-  //  sTot *= fact;
+  // printf("%g\n",fact);
+  // sTot *= fact;
   U /= (fact);
   V /= (fact);
   LC /= (sTot);
@@ -1647,19 +1647,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
   YY /= (sTot);
   ZZ /= (sTot);
 
-  GPoint gp;
-
-  /**  if (gf->geomType() == GEntity::DiscreteSurface){
-       SVector3 normal;
-       discreteFace *df = static_cast<discreteFace*> (gf);
-       if (df){
-       gp = df->closestPoint(SPoint3(XX, YY, ZZ), LC,&normal);
-       U = gp.u();
-       V = gp.v();
-       }
-       }
-       else*/
-  gp = gf->point(U, V);
+  GPoint gp = gf->point(U, V);
 
   if(!gp.succeeded()) {
     return false;
@@ -1703,7 +1691,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
       Msg::Debug("Impossible to move vertex %d using simple strategies... "
                  "leaving it there",
                  p->iD);
-      //      return false;
+      return false;
     }
   }
 
@@ -1742,20 +1730,20 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
     ++it;
   }
 
-  //  if (p->edges.size() == 3)printf("3 -> %22.15E\n",fabs(s2-s1));
+  // if(p->edges.size() == 3)printf("3 -> %22.15E\n", fabs(s2-s1));
   if(fabs(s2 - s1) > 1.e-12 * (s2 + s1)) {
-    //    if (p->iD == CHECK)
-    //    printf("PARAMETRIC TRIANGLES OVERLAP %22.15E!!\n",fabs(s2-s1));
-    //    else
+    // if(p->iD == CHECK)
+    //   printf("PARAMETRIC TRIANGLES OVERLAP %22.15E!!\n", fabs(s2-s1));
+    // else
     return false;
   }
   if(newWorst < oldWorst) return false;
-  //  if (p->edges.size() == 3)printf("OK \n");
+  // if (p->edges.size() == 3) printf("OK \n");
 
-  //  if (OLD < 0 && NEW > OLD){
-  //    return true;
-  //  }
-  //  if (NEW < 0)return false;
+  // if(OLD < 0 && NEW > OLD){
+  //   return true;
+  // }
+  // if(NEW < 0) return false;
 
   p->u = U;
   p->v = V;
