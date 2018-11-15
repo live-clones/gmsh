@@ -360,8 +360,8 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
   double l = 0;
   for (unsigned int i = 0; i < Points.size(); i++){
     const IntPoint &P = Points[i];
-    if (i) l +=(P.t - Points[i-1].t)*P.xp;
-    fprintf(f, "%g %g %g %g %g\n", P.t, P.xp/P.lc, P.p,P.lc, l);
+    if(i) l += (P.t - Points[i-1].t) * P.xp;
+    fprintf(f, "%g %g %g %g %g\n", P.t, P.xp/P.lc, P.p, P.lc, l);
   }
   fclose(f);
 }
@@ -380,7 +380,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
 {
   if(ge->mesh_vertices.empty()) return;
   if(ge->meshAttributes.method == MESH_TRANSFINITE) return;
-  // if (ge->mesh_vertices.size() <=3)return;
+  // if(ge->mesh_vertices.size() <= 3) return;
   bool forceOdd = false;
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
@@ -426,12 +426,12 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
     while(last % 2 != 0) last--;
   }
   /*
-    if (CTX::instance()->mesh.algoRecombine == 2){
-    if (last < 4)last = 0;
-      while (last %4 != 0)last--;
+    if(CTX::instance()->mesh.algoRecombine == 2){
+      if(last < 4) last = 0;
+        while (last %4 != 0)last--;
       }
-    else {
-      while (last %2 != 0)last--;
+      else{
+        while (last %2 != 0)last--;
       }
     }
   */
@@ -543,6 +543,18 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
 
 void meshGEdge::operator()(GEdge *ge)
 {
+  // debug stuff
+  if(CTX::instance()->debugSurface > 0){
+    std::vector<GFace *> f = ge->faces();
+    bool found = false;
+    for (size_t i=0;i<f.size(); i++){
+      if(f[i]->tag() == CTX::instance()->debugSurface) {
+	found = true;
+      }
+    }
+    if(!found) return;
+  }
+
   ge->model()->setCurrentMeshEntity(ge);
 
   if(ge->degenerate(1)) return;

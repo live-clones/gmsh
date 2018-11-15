@@ -237,7 +237,7 @@ static void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap, int FINALIZE = 0,
     qual = new BDS_SwapEdgeTestNormals(gf, orientation);
   else
     qual = new BDS_SwapEdgeTestQuality(true, true);
-  //    qual = new BDS_SwapEdgeTestQuality (true,true);
+
   typedef std::vector<BDS_Edge *>::size_type size_type;
   size_type origSize = m.edges.size();
   for(size_type index = 0; index < 2 * origSize && index < m.edges.size();
@@ -345,7 +345,7 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
 {
   std::vector<std::pair<double, BDS_Edge *> > edges;
 
-  SPoint2 out(10, 10);
+  SPoint2 out(10.21982512, 10.8635436432);
 
   for(std::set<BDS_Point *, PointLessThan>::iterator it = m.points.begin();
       it != m.points.end(); ++it) {
@@ -402,8 +402,10 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
         int N;
         if(!pointInsideParametricDomain(*true_boundary, pp, out, N)) {
           inside = false;
-          // printf("%d %d %g %g\n",e->p1->iD,e->p2->iD,U1,U2);
-          // printf("%g %g OUTSIDE ??\n",pp.x(),pp.y());
+	  // printf("%g %g\n",e->p1->u,e->p1->v);
+	  // printf("%g %g\n",e->p2->u,e->p2->v);
+	  // printf("%d %d %g %g\n",e->p1->iD,e->p2->iD,U1,U2);
+          Msg::Info("%g %g outside of parametric domain?", pp.x(), pp.y());
           // FILE *f = fopen("TOTO.pos","a");
           // fprintf(f,"SP(%g,%g,0){%d};\n",pp.x(),pp.y(),N);
           // fclose(f);
@@ -549,6 +551,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
 void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q)
 {
   // FIXME SUPER HACK
+  //  return;
   std::set<BDS_Point *, PointLessThan>::iterator itp = m.points.begin();
   while(itp != m.points.end()) {
     if(m.smooth_point_centroid(*itp, gf, q)) nb_smooth++;
@@ -816,6 +819,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     // char nn[256];
     // sprintf(nn,"ITER%d.pos",IT);
     // outputScalarField(m.triangles, nn, 1, gf);
+    // printf("getchar\n");
     // getchar();
 
     IT++;
@@ -876,10 +880,12 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
         // }
       }
       if(++ITER == 10) {
-        if(invalid && !computeNodalSizeField)
-          Msg::Warning("Meshing surface %d : %d elements remain invalid\n",
+        if(invalid && !computeNodalSizeField){
+	  gf->meshStatistics.status = GFace::FAILED;
+          Msg::Warning("Meshing surface %d : %d elements remain invalid",
                        gf->tag(), invalid);
-        break;
+	}
+	break;
       }
 
       if(bad != 0) {

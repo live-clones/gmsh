@@ -488,6 +488,9 @@ static void Mesh2D(GModel *m)
         if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
       }
       if(!nPending) break;
+      // iter == 2 is for meshing re-parametrized surfaces
+      // after that, we serialize (self-intersections of 1D meshes are not thread safe)!
+      if(nIter > 2) Msg::SetNumThreads(1);
       if(nIter++ > 10) break;
     }
   }

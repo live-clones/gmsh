@@ -39,6 +39,7 @@ GFace::GFace(GModel *model, int tag)
   : GEntity(model, tag), r1(0), r2(0), va_geom_triangles(0)
 {
   meshStatistics.status = GFace::PENDING;
+  meshStatistics.refineAllEdges = false;
   resetMeshAttributes();
 }
 
@@ -1531,6 +1532,12 @@ static void meshCompound(GFace *gf, bool verbose)
 
 void GFace::mesh(bool verbose)
 {
+  if(CTX::instance()->debugSurface > 0 &&
+     tag() != CTX::instance()->debugSurface) {
+    meshStatistics.status = GFace::DONE;
+    return;
+  }
+
 #if defined(HAVE_MESH)
   meshGFace mesher;
   mesher(this, verbose);

@@ -327,6 +327,7 @@ public:
 
   struct {
     mutable GEntity::MeshGenerationStatus status;
+    bool refineAllEdges;
     double worst_element_shape, best_element_shape, average_element_shape;
     double smallest_edge_length, longest_edge_length, efficiency_index;
     int nbEdge, nbTriangle;
