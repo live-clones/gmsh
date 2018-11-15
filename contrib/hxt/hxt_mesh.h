@@ -3,6 +3,9 @@
 
 #include "hxt_tools.h" // to have SIMD_ALIGN and stdint.h
 
+#if defined(WIN32)
+#define INT32_MAX        2147483647i32
+#endif
 
 #define HXT_GHOST_VERTEX UINT32_MAX
 

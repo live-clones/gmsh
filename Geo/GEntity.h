@@ -134,7 +134,7 @@ public:
     GhostVolume
   };
 
-  enum MeshGenerationStatus { PENDING, DONE, FAILED };
+  enum MeshGenerationStatus { PENDING, DONE, FAILED};
 
   // return a string describing the entity type
   virtual std::string getTypeString()

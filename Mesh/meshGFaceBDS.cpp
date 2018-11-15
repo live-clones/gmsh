@@ -237,7 +237,7 @@ static void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap, int FINALIZE = 0,
     qual = new BDS_SwapEdgeTestNormals(gf, orientation);
   else
     qual = new BDS_SwapEdgeTestQuality(true, true);
-  //    qual = new BDS_SwapEdgeTestQuality (true,true);
+
   typedef std::vector<BDS_Edge *>::size_type size_type;
   size_type origSize = m.edges.size();
   for(size_type index = 0; index < 2 * origSize && index < m.edges.size();
@@ -549,6 +549,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
 void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q)
 {
   // FIXME SUPER HACK
+  //  return;
   std::set<BDS_Point *, PointLessThan>::iterator itp = m.points.begin();
   while(itp != m.points.end()) {
     if(m.smooth_point_centroid(*itp, gf, q)) nb_smooth++;
@@ -876,10 +877,12 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
         // }
       }
       if(++ITER == 10) {
-        if(invalid && !computeNodalSizeField)
-          Msg::Warning("Meshing surface %d : %d elements remain invalid\n",
+        if(invalid && !computeNodalSizeField){
+	  gf->meshStatistics.status = GFace::FAILED;
+          Msg::Warning("Meshing surface %d : %d elements remain invalid",
                        gf->tag(), invalid);
-        break;
+	}
+	break;
       }
 
       if(bad != 0) {

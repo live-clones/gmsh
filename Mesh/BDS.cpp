@@ -606,21 +606,30 @@ void recur_tag(BDS_Face *t, BDS_GeomEntity *g)
   std::stack<BDS_Face *> _stack;
   _stack.push(t);
 
+  //  BDS_Point *pts[4];
+  //  t->getNodes(pts);
+  //  printf("starting with trioangle %d %d %d\n",pts[0]->iD,pts[1]->iD,pts[2]->iD);
+  
   while(!_stack.empty()) {
     t = _stack.top();
     _stack.pop();
     if(!t->g) {
+      //      t->getNodes(pts);
+      //      printf("now in trioangle %d %d %d\n",pts[0]->iD,pts[1]->iD,pts[2]->iD);
       t->g = g;
       // g->t.push_back(t);
       if(!t->e1->g && t->e1->numfaces() == 2) {
+	//	printf("going through %d %d\n",t->e1->p1->iD,t->e1->p2->iD);
         _stack.push(t->e1->otherFace(t));
         //	recur_tag(t->e1->otherFace(t), g);
       }
       if(!t->e2->g && t->e2->numfaces() == 2) {
+	//	printf("going through %d %d\n",t->e2->p1->iD,t->e2->p2->iD);
         _stack.push(t->e2->otherFace(t));
         //	recur_tag(t->e2->otherFace(t), g);
       }
       if(!t->e3->g && t->e3->numfaces() == 2) {
+	//	printf("going through %d %d\n",t->e3->p1->iD,t->e3->p2->iD);
         _stack.push(t->e3->otherFace(t));
         //	recur_tag(t->e3->otherFace(t), g);
       }
@@ -852,7 +861,8 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
   if(fabs(s1 + s2 - s3 - s4) > 1.e-12 * (s3 + s4)) {
     return false;
   }
-  if(s3 < .02 * (s1 + s2) || s4 < .02 * (s1 + s2)) return false;
+  // THIS WAS CAUSIN' TROUBLES ...
+  //  if(s3 < .02 * (s1 + s2) || s4 < .02 * (s1 + s2)) return false;
 
   /*
   if(!testSmallTriangles) {
@@ -983,7 +993,7 @@ bool BDS_SwapEdgeTestNormals::operator()(BDS_Point *_p1, BDS_Point *_p2,
   if(fabs(s1 + s2 - s3 - s4) > 1.e-12 * (s3 + s4)) {
     return false;
   }
-  if(s3 < .02 * (s1 + s2) || s4 < .02 * (s1 + s2)) return false;
+  //  if(s3 < .02 * (s1 + s2) || s4 < .02 * (s1 + s2)) return false;
   return true;
 }
 
@@ -1032,8 +1042,10 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest,
    */
 
   // we test if the edge is deleted
-  //  return false;
+  //    return false;
 
+  
+  
   BDS_Point *p1 = e->p1;
   BDS_Point *p2 = e->p2;
 
@@ -1569,7 +1581,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
   // return false;
   if(p->degenerated) return false;
   if(!p->config_modified) return false;
-  int CHECK = -1;
+  int CHECK = -1;//23357;
   if(p->g && p->g->classif_degree <= 1) return false;
   if(p->g && p->g->classif_tag < 0) {
     p->config_modified = true;
@@ -1691,7 +1703,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
       Msg::Debug("Impossible to move vertex %d using simple strategies... "
                  "leaving it there",
                  p->iD);
-      return false;
+      //      return false;
     }
   }
 

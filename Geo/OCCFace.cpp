@@ -48,7 +48,9 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   setup();
   if(model()->getOCCInternals()) model()->getOCCInternals()->bind(s, num);
 
-  //if(tag() == 11) writeBREP("s11.brep");
+  if(CTX::instance()->debugSurface > 0 &&
+     tag() == CTX::instance()->debugSurface) 
+    writeBREP("debugSurface.brep");
 }
 
 OCCFace::~OCCFace()

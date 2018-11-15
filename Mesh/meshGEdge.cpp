@@ -543,6 +543,19 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
 
 void meshGEdge::operator()(GEdge *ge)
 {
+  // debug stuff 
+  if(CTX::instance()->debugSurface > 0){
+    std::vector<GFace *> f = ge->faces();
+    bool found = false;
+    for (size_t i=0;i<f.size(); i++){
+      if (f[i]->tag() == CTX::instance()->debugSurface) {
+	found = true;
+      }
+    }
+    if (!found)return;
+  }
+
+  
   ge->model()->setCurrentMeshEntity(ge);
 
   if(ge->degenerate(1)) return;
