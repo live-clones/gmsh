@@ -1239,7 +1239,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 
   if(boundary.size()) {
     Msg::Error("The 1D mesh seems not to be forming a closed loop (%d boundary "
-               "points are considered once)",
+               "nodes are considered once)",
                boundary.size());
     gf->meshStatistics.status = GFace::FAILED;
     return false;
@@ -1273,9 +1273,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
                       gf->additionalVertices.end());
 
   if(all_vertices.size() < 3) {
-    Msg::Warning("Mesh Generation of Model Face %d Skipped: "
-                 "Only %d mesh vertices on the contours",
-                 gf->tag(), all_vertices.size());
+    Msg::Warning("Mesh generation of surface %d skipped: only %d nodes on "
+                 "the boundary", gf->tag(), all_vertices.size());
     gf->meshStatistics.status = GFace::DONE;
     return true;
   }
@@ -1441,7 +1440,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   // Recover the boundary edges and compute characteristic lenghts using mesh
   // edge spacing. If two of these edges intersect, then the 1D mesh have to be
   // densified
-  Msg::Debug("Recovering %d model Edges", edges.size());
+  Msg::Debug("Recovering %d model edges", edges.size());
   std::set<EdgeToRecover> edgesToRecover;
   std::set<EdgeToRecover> edgesNotRecovered;
   ite = edges.begin();
@@ -1473,7 +1472,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     ++ite;
   }
 
-  Msg::Debug("Recovering %d mesh Edges (%d not recovered)",
+  Msg::Debug("Recovering %d mesh edges (%d not recovered)",
              edgesToRecover.size(), edgesNotRecovered.size());
 
   if(edgesNotRecovered.size() || gf->meshStatistics.refineAllEdges) {
@@ -1482,13 +1481,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
         itr != edgesNotRecovered.end(); ++itr)
       sstream << " " << itr->ge->tag();
     if(gf->meshStatistics.refineAllEdges) {
-      Msg::Info("8-| Gmsh splits all edges and tries again");
+      Msg::Info("8-| Splitting all edges and trying again");
     }
     else {
       Msg::Info(":-( There are %d intersections in the 1D mesh (curves%s)",
                 edgesNotRecovered.size(), sstream.str().c_str());
       if(repairSelfIntersecting1dMesh)
-        Msg::Info("8-| Gmsh splits those edges and tries again");
+        Msg::Info("8-| Splitting those edges and trying again");
     }
     if(debug) {
       char name[245];
@@ -1528,10 +1527,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   }
 
   if(RECUR_ITER > 0)
-    Msg::Warning(":-) Gmsh was able to recover all edges after %d iterations",
-                 RECUR_ITER);
+    Msg::Info(":-) All edges recovered after %d iterations", RECUR_ITER);
 
-  Msg::Debug("Boundary Edges recovered for surface %d", gf->tag());
+  Msg::Debug("Boundary edges recovered for surface %d", gf->tag());
 
   // look for a triangle that has a negative node and recursively tag all
   // exterior triangles
@@ -2200,9 +2198,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   }
 
   if(nbPointsTotal < 3) {
-    Msg::Warning("Mesh Generation of Model Face %d Skipped: "
-                 "Only %d Mesh Vertices on The Contours",
-                 gf->tag(), nbPointsTotal);
+    Msg::Warning("Mesh generation of surface %d skipped: only %d nodes on "
+                 "the boundary", gf->tag(), nbPointsTotal);
     gf->meshStatistics.status = GFace::DONE;
     delete m;
     return true;
@@ -2330,7 +2327,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
               if(pp == 0) {
                 Msg::Error("Embedded edge vertex %d is on the seam edge of "
                            "surface %d and no appropriate point could be "
-                           "found!\n",
+                           "found!",
                            v->getNum(), gf->tag());
               }
             }
@@ -2425,7 +2422,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     //   -) It does not necessary recover the boundaries
     //   -) It contains triangles outside the domain (the first edge
     //      loop is the outer one)
-    Msg::Debug("Meshing of the convex hull (%d points)", nbPointsTotal);
+    Msg::Debug("Meshing of the convex hull (%d nodes)", nbPointsTotal);
 
     try {
       doc.MakeMeshWithPoints();
@@ -2528,8 +2525,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     if(Msg::GetNumThreads() != 1) {
       gf->meshStatistics.status = GFace::PENDING;
       delete m;
-      Msg::Info("Surface %d has self intersections in its 1D mesh. Serializing "
-                "this one...",
+      Msg::Info("Surface %d has self-intersections in its 1D mesh: serializing this one",
                 gf->tag());
       return true;
     }
@@ -2545,7 +2541,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
                 edgesNotRecovered.size(), sstream.str().c_str());
     }
     if(repairSelfIntersecting1dMesh) {
-      Msg::Info("8-| Gmsh splits those edges and tries again");
+      Msg::Info("8-| Splitting those edges and trying again");
       if(gf->meshStatistics.refineAllEdges) {
         std::vector<GEdge *> eds = gf->edges();
         edgesNotRecovered.clear();
@@ -2588,10 +2584,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     return false;
   }
 
-  if(RECUR_ITER > 0) {
-    Msg::Warning(":-) Gmsh was able to recover all edges after %d iterations",
-                 RECUR_ITER);
-  }
+  if(RECUR_ITER > 0)
+    Msg::Info(":-) All edges recovered after %d iterations", RECUR_ITER);
 
   // look for a triangle that has a negative node and recursively tag all
   // exterior triangles
@@ -2765,7 +2759,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       gf->meshStatistics.status = GFace::PENDING;
       gf->meshStatistics.refineAllEdges = true;
       delete m;
-      Msg::Info("serializing face %d and refining all its mesh edges",
+      Msg::Info("Serializing surface %d and refining all its bounding edges",
                 gf->tag());
       return true;
     }
@@ -2978,14 +2972,14 @@ void meshGFace::operator()(GFace *gf, bool print)
         gf->meshStatistics.status = GFace::PENDING;
         return;
       }
-      Msg::Info("Meshing face %d (%s) as a copy of %d", gf->tag(),
+      Msg::Info("Meshing surface %d (%s) as a copy of %d", gf->tag(),
                 gf->getTypeString().c_str(), gf->getMeshMaster()->tag());
       copyMesh(gff, gf);
       gf->meshStatistics.status = GFace::DONE;
       return;
     }
     else
-      Msg::Warning("Unknown mesh master face %d", gf->getMeshMaster()->tag());
+      Msg::Warning("Unknown mesh master surface %d", gf->getMeshMaster()->tag());
   }
 
   const char *algo = "Unknown";
@@ -3035,7 +3029,7 @@ void meshGFace::operator()(GFace *gf, bool print)
      (gf->periodic(0) || gf->periodic(1) || singularEdges)) {
     if(!meshGeneratorPeriodic(gf, 0, repairSelfIntersecting1dMesh,
                               debugSurface >= 0 || debugSurface == -100)) {
-      Msg::Error("Impossible to mesh periodic face %d", gf->tag());
+      Msg::Error("Impossible to mesh periodic surface %d", gf->tag());
       gf->meshStatistics.status = GFace::FAILED;
     }
   }
@@ -3171,7 +3165,7 @@ void orientMeshGFace::operator()(GFace *gf)
 
     // Exit if could not determine orientation of both non-BL el. and BL el.
     if((orientNonBL == 0) && (orientBL == 0)) {
-      Msg::Warning("Could not orient mesh in face %d", gf->tag());
+      Msg::Warning("Could not orient mesh in surface %d", gf->tag());
       return;
     }
 
