@@ -275,10 +275,6 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, int sizeofstr,
 static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
                              bool binary, bool swap)
 {
-  // max length of line for ascii input file (should large enough to handle
-  // entities with many entities on their boundary)
-  char str[4096];
-
   if(partition) {
     int numPartitions = 0;
     unsigned int ghostSize = 0;
@@ -364,15 +360,23 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
     }
   }
 
+  // max length of line for ascii input file (should be large enough to handle
+  // entities with many entities on their boundary)
+  int nume = numEntities[0] + numEntities[1] + numEntities[2] + numEntities[3];
+  unsigned int strl = std::max(4096, 128 * nume);
+  char *str = new char[strl];
+
   for(int dim = 0; dim < 4; dim++) {
     for(unsigned int i = 0; i < numEntities[dim]; i++) {
       int tag = 0, parentDim = 0, parentTag = 0;
       std::vector<unsigned int> partitions;
       double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
-      if(!readMSH4EntityInfo(fp, binary, str, sizeof(str), swap, partition, tag,
+      if(!readMSH4EntityInfo(fp, binary, str, strl, swap, partition, tag,
                              parentDim, parentTag, partitions, minX, minY, minZ,
-                             maxX, maxY, maxZ))
+                             maxX, maxY, maxZ)){
+        delete [] str;
         return false;
+      }
       switch(dim) {
       case 0: {
         GVertex *gv = model->getVertexByTag(tag);
@@ -388,7 +392,10 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
           }
           model->add(gv);
         }
-        if(!readMSH4Physicals(model, fp, gv, binary, str, swap)) return false;
+        if(!readMSH4Physicals(model, fp, gv, binary, str, swap)){
+          delete [] str;
+          return false;
+        }
       } break;
       case 1: {
         GEdge *ge = model->getEdgeByTag(tag);
@@ -404,9 +411,14 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
           }
           model->add(ge);
         }
-        if(!readMSH4Physicals(model, fp, ge, binary, str, swap)) return false;
-        if(!readMSH4BoundingEntities(model, fp, ge, binary, str, swap))
+        if(!readMSH4Physicals(model, fp, ge, binary, str, swap)){
+          delete [] str;
           return false;
+        }
+        if(!readMSH4BoundingEntities(model, fp, ge, binary, str, swap)){
+          delete [] str;
+          return false;
+        }
       } break;
       case 2: {
         GFace *gf = model->getFaceByTag(tag);
@@ -422,9 +434,14 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
           }
           model->add(gf);
         }
-        if(!readMSH4Physicals(model, fp, gf, binary, str, swap)) return false;
-        if(!readMSH4BoundingEntities(model, fp, gf, binary, str, swap))
+        if(!readMSH4Physicals(model, fp, gf, binary, str, swap)){
+          delete [] str;
           return false;
+        }
+        if(!readMSH4BoundingEntities(model, fp, gf, binary, str, swap)){
+          delete [] str;
+          return false;
+        }
       } break;
       case 3: {
         GRegion *gr = model->getRegionByTag(tag);
@@ -440,13 +457,19 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
           }
           model->add(gr);
         }
-        if(!readMSH4Physicals(model, fp, gr, binary, str, swap)) return false;
-        if(!readMSH4BoundingEntities(model, fp, gr, binary, str, swap))
+        if(!readMSH4Physicals(model, fp, gr, binary, str, swap)){
+          delete [] str;
           return false;
+        }
+        if(!readMSH4BoundingEntities(model, fp, gr, binary, str, swap)){
+          delete [] str;
+          return false;
+        }
       } break;
       }
     }
   }
+  delete [] str;
   return true;
 }
 
