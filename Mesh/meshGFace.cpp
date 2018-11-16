@@ -814,7 +814,7 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
         else {
           if(_fatallyFailed) {
             Msg::Error(
-              "Unable to recover the edge %d (%d/%d) on GEdge %d (on GFace %d)",
+              "Unable to recover the edge %d (%d/%d) on curve %d (on surface %d)",
               ge->lines[i]->getNum(), i + 1, ge->lines.size(), ge->tag(),
               ge->faces().back()->tag());
             // outputScalarField(m->triangles, "wrongmesh.pos", 0);
