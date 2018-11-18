@@ -1,5 +1,5 @@
 from distutils.core import setup, Extension
-gmshroot = ".."
+gmshroot = "../.."
 gmshmodules = [${GMSH_PYTHON_MODULES}]
 setup(
   name = 'gmshpy',
@@ -15,5 +15,3 @@ setup(
     for module in gmshmodules],
   py_modules = [ "gmshpy." + module for module in gmshmodules ]
 )
-
-

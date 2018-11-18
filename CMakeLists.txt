@@ -1932,11 +1932,11 @@ else(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
 endif(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
 
 if(ENABLE_PRIVATE_API AND ENABLE_WRAP_PYTHON AND HAVE_PYTHON)
-  add_subdirectory(wrappers/gmshpy)
+  add_subdirectory(utils/wrappers/gmshpy)
 endif(ENABLE_PRIVATE_API AND ENABLE_WRAP_PYTHON AND HAVE_PYTHON)
 
 if(ENABLE_PRIVATE_API AND ENABLE_WRAP_JAVA)
-  add_subdirectory(wrappers/java)
+  add_subdirectory(utils/wrappers/java)
 endif(ENABLE_PRIVATE_API AND ENABLE_WRAP_JAVA)
 
 include(CPack)
