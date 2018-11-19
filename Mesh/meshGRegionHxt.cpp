@@ -15,6 +15,7 @@
 #include "MTriangle.h"
 #include "MLine.h"
 #include "GmshMessage.h"
+#include "BackgroundMeshTools.h"
 
 #ifdef HAVE_HXT
 extern "C" {
@@ -27,6 +28,11 @@ extern "C" {
 
 HXTStatus hxtGmshMsgCallback(HXTMessage* msg){
   return HXT_STATUS_OK;
+}
+
+static double hxtMeshSizeGmshCallBack (double x, double y, double z, void *userData) { 
+  GRegion *gr = (GRegion*)userData;
+  double lc2 = BGM_MeshSize(gr, 0, 0, x,y,z);
 }
 
 
@@ -334,7 +340,8 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 			 refine,
                          optimize,
 			 threshold,
-			 hxt_boundary_recovery));  
+			 hxt_boundary_recovery,
+			 hxtMeshSizeGmshCallBack, regions[0]));  
 
   
   //  HXT_CHECK(hxtMeshWriteGmsh(mesh, "hxt.msh"));
