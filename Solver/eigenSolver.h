@@ -22,7 +22,7 @@ private:
   bool _hermitian;
   std::vector<std::complex<double> > _eigenValues;
   std::vector<std::vector<std::complex<double> > > _eigenVectors;
-  void _try(int ierr) const;
+  void _check(int ierr) const;
 
 public:
   eigenSolver(dofManager<double> *manager, std::string A, std::string B = "",
