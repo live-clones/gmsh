@@ -96,7 +96,7 @@ windows64_msvc_ci:
     - make package -j 1
     - PKG=`ls gmsh-*.tar*`
     - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
-    - /usr/local/bin/ctest -D Experimental -j 1 --output-on-failure
+    - /usr/local/bin/ctest -j 1 --output-on-failure
 
 linux64_official_snapshot:
   <<: *linux_official
@@ -187,7 +187,7 @@ linux32-sdk_official_release:
     - bash -c "/usr/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/mingw32-windres.exe -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc -DSLEPC_DIR=/home/geuzaine/src/slepc -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} .."
     - bash -c "/usr/bin/make package -j 2"
     - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
-    - bash -c "/usr/bin/ctest -D Experimental -j 2 --output-on-failure"
+    - bash -c "/usr/bin/ctest -j 2 --output-on-failure"
 
 windows64_official_snapshot:
   <<: *windows_official
@@ -282,7 +282,7 @@ windows32-sdk_official_release:
     - if [[ $PKG == *".dmg"* ]]; then ssh ace@ace36.montefiore.ulg.ac.be /Users/ace/re-sign.sh /tmp/${PKG}; fi
     - if [[ $PKG == *".dmg"* ]]; then scp ace@ace36.montefiore.ulg.ac.be:/tmp/${PKG} .; fi
     - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/MacOSX/${PKG/\.tar\.gz/\.tgz}
-    - /usr/local/bin/ctest -D Experimental -j 2 --output-on-failure
+    - /usr/local/bin/ctest -j 2 --output-on-failure
   tags:
     - macos64
     - official
