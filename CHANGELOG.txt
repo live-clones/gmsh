@@ -1,3 +1,5 @@
+4.0.6: bug fixes.
+
 4.0.5 (November 17, 2018): automatic hybrid mesh generation (pyramid layer) when
 3D Delaunay algorithm is applied to a volume with quadrangles on boundary;
 improved robustness of 2D MeshAdapt algorithm; bug fixes.
