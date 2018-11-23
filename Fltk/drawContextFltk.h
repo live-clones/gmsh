@@ -147,8 +147,10 @@ public:
   void drawString(const char *str) { gl_draw(str); }
   void resetFontTextures()
   {
+#if ((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)) || defined(__APPLE__)
     // force font texture recomputation
     gl_texture_pile_height(gl_texture_pile_height());
+#endif
   }
   std::string getName() { return "Fltk"; }
 };
