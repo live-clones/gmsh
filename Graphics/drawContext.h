@@ -111,6 +111,12 @@ public:
   virtual std::string getName() { return "None"; }
 };
 
+class imgtex {
+public:
+  GLuint tex, w, h;
+  imgtex() : tex(0), w(0), h(0) {}
+};
+
 class drawContext {
 private:
   static drawContextGlobal *_global;
@@ -121,9 +127,6 @@ private:
   std::set<PView *> _hiddenViews;
   GLuint _bgImageTexture, _bgImageW, _bgImageH;
   openglWindow *_openglWindow;
-  struct imgtex {
-    GLuint tex, w, h;
-  };
   std::map<std::string, imgtex> _imageTextures;
 
 public:

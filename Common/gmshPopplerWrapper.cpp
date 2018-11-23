@@ -81,6 +81,7 @@ GLuint gmshPopplerWrapper::getTextureForPage(double xres, double yres)
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img->w(), img->h(), 0,
                (img->d() == 4) ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE,
                img->array);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
   _w = img->w();
   _h = img->h();
