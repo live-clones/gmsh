@@ -23,14 +23,14 @@
 #include "fullMatrix.h"
 #include "BasisFactory.h"
 #include "InnerVertexPlacement.h"
+#include "Context.h"
 
 #if defined(HAVE_OPTHOM)
 #include "OptHomFastCurving.h"
 #include "OptHomPeriodicity.h"
 #endif
 
-// --------- Functions that help optimizing placement of points on geometry
-// -----------
+// Functions that help optimizing placement of points on geometry
 
 // The aim here is to build a polynomial representation that consist
 // in polynomial segments of equal length
@@ -247,7 +247,7 @@ void createMatLob2LagP6()
   Vandermonde.mult(coefficient, (*lob2lagP6));
 }
 
-// --------- Creation of high-order edge vertices -----------
+// Creation of high-order edge vertices
 
 static bool getEdgeVerticesOnGeo(GEdge *ge, MVertex *v0, MVertex *v1,
                                  std::vector<MVertex *> &ve, int nPts = 1)
@@ -433,7 +433,8 @@ static void getEdgeVertices(GEdge *ge, MElement *ele,
   }
   else if(p.first != p.second) { // Vertices already exist and edge is not a
                                  // degenerated edge
-    Msg::Error("Edges from different entities share vertices: create a finer mesh");
+    Msg::Error(
+      "Edges from different entities share vertices: create a finer mesh");
   }
   ve.insert(ve.end(), veEdge.begin(), veEdge.end());
 }
@@ -525,7 +526,7 @@ static void getEdgeVertices(GRegion *gr, MElement *ele,
   }
 }
 
-// --------- Creation of high-order face vertices -----------
+// Creation of high-order face vertices
 
 static void reorientTrianglePoints(std::vector<MVertex *> &vtcs,
                                    int orientation, bool swap)
@@ -924,7 +925,7 @@ static void getVolumeVertices(GRegion *gr, MElement *ele,
   }
 }
 
-// --------- Creation of high-order elements -----------
+// Creation of high-order elements
 
 static void setHighOrder(GEdge *ge, std::vector<MVertex *> &newHOVert,
                          edgeContainer &edgeVertices, bool linear,
@@ -1201,7 +1202,7 @@ static void setHighOrder(GRegion *gr, std::vector<MVertex *> &newHOVert,
   gr->deleteVertexArrays();
 }
 
-// --------- High-level functions -----------
+// High-level functions
 
 template <class T>
 static void setFirstOrder(GEntity *e, std::vector<T *> &elements,
@@ -1254,14 +1255,14 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
 
       Msg::Info(
         "Constructing high order periodicity for edge connection %d - %d",
-                tgt->tag(), src->tag());
+        tgt->tag(), src->tag());
 
       std::map<MEdge, MLine *, Less_Edge> srcEdges;
       for(unsigned int i = 0; i < src->getNumMeshElements(); i++) {
         MLine *srcLine = dynamic_cast<MLine *>(src->getMeshElement(i));
         if(!srcLine) {
           Msg::Error("Master element %d is not an edge",
-                                 src->getMeshElement(i)->getNum());
+                     src->getMeshElement(i)->getNum());
           return;
         }
         srcEdges[MEdge(srcLine->getVertex(0), srcLine->getVertex(1))] = srcLine;
@@ -1308,13 +1309,16 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
     }
   }
 
+  if(CTX::instance()->mesh.hoOptimize) {
 #if defined(HAVE_OPTHOM)
-  std::vector<GEntity *> modelEdges(m->firstEdge(), m->lastEdge());
-
-  OptHomPeriodicity edgePeriodicity(modelEdges);
-  edgePeriodicity.fixPeriodicity();
-  edgePeriodicity.fixPeriodicity(); // apply twice for operation order effects
+    std::vector<GEntity *> modelEdges(m->firstEdge(), m->lastEdge());
+    OptHomPeriodicity edgePeriodicity(modelEdges);
+    edgePeriodicity.fixPeriodicity();
+    edgePeriodicity.fixPeriodicity(); // apply twice for operation order effects
+#else
+    Msg::Error("High-order mesh optimization requires the OPTHOM module");
 #endif
+  }
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     GFace *tgt = *it;
@@ -1384,12 +1388,16 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
     }
   }
 
+  if(CTX::instance()->mesh.hoOptimize) {
 #if defined(HAVE_OPTHOM)
-  std::vector<GEntity *> modelFaces;
-  modelFaces.insert(modelFaces.end(), m->firstFace(), m->lastFace());
-  OptHomPeriodicity facePeriodicity(modelFaces);
-  facePeriodicity.fixPeriodicity();
+    std::vector<GEntity *> modelFaces;
+    modelFaces.insert(modelFaces.end(), m->firstFace(), m->lastFace());
+    OptHomPeriodicity facePeriodicity(modelFaces);
+    facePeriodicity.fixPeriodicity();
+#else
+    Msg::Error("High-order mesh optimization requires the OPTHOM module");
 #endif
+  }
 
   Msg::Debug("Finalized high order topology of periodic connections");
 }
@@ -1613,27 +1621,30 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     updateHighOrderVertices(*it, newHOVert[*it], onlyVisible);
 
+  if(CTX::instance()->mesh.hoOptimize) {
 #if defined(HAVE_OPTHOM)
-  // Determine mesh dimension and curve BL elements
-  FastCurvingParameters p;
-  p.dim = 0;
-  p.curveOuterBL = FastCurvingParameters::OUTER_CURVE;
-  p.thickness = false;
-  // p.optimizeGeometry = true;
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
-    if((*it)->getNumMeshElements() > 0) {
-      p.dim = 3;
-      break;
-    }
-  if(p.dim == 0)
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+    // Determine mesh dimension and curve BL elements
+    FastCurvingParameters p;
+    p.dim = 0;
+    p.curveOuterBL = FastCurvingParameters::OUTER_CURVE;
+    p.thickness = false;
+    // p.optimizeGeometry = true;
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
       if((*it)->getNumMeshElements() > 0) {
-        p.dim = 2;
+        p.dim = 3;
         break;
       }
-//  if (p.dim == 2)
-//    HighOrderMeshFastCurving(GModel::current(), p, true);
+    if(p.dim == 0)
+      for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+        if((*it)->getNumMeshElements() > 0) {
+          p.dim = 2;
+          break;
+        }
+    if(p.dim == 2) HighOrderMeshFastCurving(GModel::current(), p, true);
+#else
+  // Msg::Error("High-order mesh optimization requires the OPTHOM module");
 #endif
+  }
 
   updatePeriodicEdgesAndFaces(m);
 
