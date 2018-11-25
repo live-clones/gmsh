@@ -146,8 +146,8 @@ StringXString GeometryOptions_String[] = {
 
   { F|O, "OCCTargetUnit" , opt_geometry_occ_target_unit , "M" ,
     "Length unit to which coordinates from STEP and IGES files are converted to when "
-    "imported by OpenCASCADE (leave empty to keep the unit defined in the STEP and "
-    "IGES file)"},
+    "imported by OpenCASCADE, e.g. 'M' for meters (leave empty to keep the unit defined "
+    "in the STEP and IGES file)"},
 
   { 0, 0 , 0 , "" , 0 }
 } ;
@@ -1054,6 +1054,8 @@ StringXNumber MeshOptions_Number[] = {
     "Number of high order mesh elements to consider for optimization"},
   { F|O, "HighOrderOptimize" , opt_mesh_ho_optimize , 0.,
     "Optimize high order meshes?" },
+  { F|O, "HighOrderPeriodic" , opt_mesh_ho_periodic , 0.,
+    "Correct high order optimization for periodic connections?" },
   { F|0, "HighOrderPoissonRatio", opt_mesh_ho_poisson, 0.33,
     "Poisson ratio of the material used in the elastic smoother for high order meshes"
     "Must be between -1.0 and 0.5, excluded"},

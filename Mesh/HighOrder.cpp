@@ -1309,7 +1309,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
     }
   }
 
-  if(CTX::instance()->mesh.hoOptimize) {
+  if(CTX::instance()->mesh.hoPeriodic) {
 #if defined(HAVE_OPTHOM)
     std::vector<GEntity *> modelEdges(m->firstEdge(), m->lastEdge());
     OptHomPeriodicity edgePeriodicity(modelEdges);
@@ -1388,7 +1388,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
     }
   }
 
-  if(CTX::instance()->mesh.hoOptimize) {
+  if(CTX::instance()->mesh.hoPeriodic) {
 #if defined(HAVE_OPTHOM)
     std::vector<GEntity *> modelFaces;
     modelFaces.insert(modelFaces.end(), m->firstFace(), m->lastFace());
