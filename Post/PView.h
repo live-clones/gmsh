@@ -128,7 +128,8 @@ public:
   // IO read routines (these are global: they can create multiple
   // views)
   static bool readPOS(const std::string &fileName, int fileIndex = -1);
-  static bool readMSH(const std::string &fileName, int fileIndex = -1);
+  static bool readMSH(const std::string &fileName, int fileIndex = -1,
+                      int partitionToRead = -1);
   static bool readMED(const std::string &fileName, int fileIndex = -1);
   static bool writeX3D(const std::string &fileName);
   // IO write routine
