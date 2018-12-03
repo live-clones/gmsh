@@ -17,7 +17,8 @@
 #include "GmshMessage.h"
 #include "BackgroundMeshTools.h"
 
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT3D)
+
 extern "C" {
 #include "hxt_mesh3d_main.h"
 #include "hxt_boundary_recovery.h"
@@ -370,7 +371,7 @@ int meshGRegionHxt(std::vector<GRegion *> &regions)
 
 int meshGRegionHxt(std::vector<GRegion *> &regions)
 {
-  Msg::Error("Gmsh should be compile with Hxt to enable that option");
+  Msg::Error("Gmsh should be compiled with Hxt3D to enable this option");
   return -1;
 }
 

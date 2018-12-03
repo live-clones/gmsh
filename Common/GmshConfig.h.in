@@ -21,6 +21,7 @@
 #cmakedefine HAVE_GMM
 #cmakedefine HAVE_GMP
 #cmakedefine HAVE_HXT
+#cmakedefine HAVE_HXT3D
 #cmakedefine HAVE_KBIPACK
 #cmakedefine HAVE_LAPACK
 #cmakedefine HAVE_LIBCGNS

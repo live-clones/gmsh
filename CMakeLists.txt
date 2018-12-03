@@ -1127,6 +1127,9 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND
   set_config_option(HAVE_HXT "Hxt")
   add_subdirectory(contrib/hxt)
   include_directories(BEFORE contrib/hxt)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/hxt_tetDelaunay.c)
+    set_config_option(HAVE_HXT3D "Hxt3D")
+  endif()
   if(MSVC)
     # Visual C++ does not support C99 - force compilation as C++ code
     file(GLOB_RECURSE HXT_SRC contrib/hxt/*.c)
