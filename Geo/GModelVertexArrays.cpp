@@ -329,8 +329,8 @@ public:
     if(edg || fac) {
       _curved = (areSomeElementsCurved(f->triangles) ||
                  areSomeElementsCurved(f->quadrangles));
-      f->va_lines = new VertexArray(2, _estimateNumLines(f));
-      f->va_triangles = new VertexArray(3, _estimateNumTriangles(f));
+      f->va_lines = new VertexArray(2, edg ? _estimateNumLines(f) : 1000);
+      f->va_triangles = new VertexArray(3, fac ? _estimateNumTriangles(f) : 1000);
       if(CTX::instance()->mesh.triangles)
         addElementsInArrays(f, f->triangles, edg, fac);
       if(CTX::instance()->mesh.quadrangles)
@@ -413,8 +413,8 @@ public:
                  areSomeElementsCurved(r->prisms) ||
                  areSomeElementsCurved(r->pyramids) ||
                  areSomeElementsCurved(r->trihedra));
-      r->va_lines = new VertexArray(2, _estimateNumLines(r));
-      r->va_triangles = new VertexArray(3, _estimateNumTriangles(r));
+      r->va_lines = new VertexArray(2, edg ? _estimateNumLines(r) : 1000);
+      r->va_triangles = new VertexArray(3, fac ? _estimateNumTriangles(r) : 1000);
       if(CTX::instance()->mesh.tetrahedra)
         addElementsInArrays(r, r->tetrahedra, edg, fac);
       if(CTX::instance()->mesh.hexahedra)
