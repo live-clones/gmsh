@@ -195,7 +195,7 @@ public:
 
   // get bounds of parametric coordinate
   virtual Range<double> parBounds(int i) const = 0;
-  virtual Range<double> parBoundsOnFace(GFace *face = nullptr) const
+  virtual Range<double> parBoundsOnFace(GFace *face = NULL) const
   {
     return parBounds(0);
   }

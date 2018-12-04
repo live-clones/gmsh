@@ -35,7 +35,7 @@ public:
   virtual ~OCCEdge();
   virtual SBoundingBox3d bounds(bool fast = false) const;
   virtual Range<double> parBounds(int i) const;
-  virtual Range<double> parBoundsOnFace(GFace *face = nullptr) const;
+  virtual Range<double> parBoundsOnFace(GFace *face = NULL) const;
   virtual GeomType geomType() const;
   virtual bool degenerate(int) const { return BRep_Tool::Degenerated(c); }
   virtual GPoint point(double p) const;
