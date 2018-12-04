@@ -360,11 +360,18 @@ private:
   bool _curved;
   int _estimateIfClipped(int num)
   {
-    if(CTX::instance()->clipWholeElements &&
-       CTX::instance()->clipOnlyDrawIntersectingVolume) {
+    if(CTX::instance()->clipWholeElements) {
       for(int clip = 0; clip < 6; clip++) {
-        if(CTX::instance()->mesh.clip & (1 << clip))
-          return (int)sqrt((double)num);
+        if(CTX::instance()->mesh.clip & (1 << clip)){
+          if(CTX::instance()->clipOnlyDrawIntersectingVolume){
+            // let be more aggressive than num^{2/3}
+            return (int)sqrt((double)num);
+          }
+          else{
+            // why not :-)
+            return num / 4;
+          }
+        }
       }
     }
     return num;
