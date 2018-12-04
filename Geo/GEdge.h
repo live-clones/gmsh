@@ -195,6 +195,10 @@ public:
 
   // get bounds of parametric coordinate
   virtual Range<double> parBounds(int i) const = 0;
+  virtual Range<double> parBoundsOnFace(GFace *face = nullptr) const
+  {
+    return parBounds(0);
+  }
   double getLowerBound() const { return parBounds(0).low(); };
   double getUpperBound() const { return parBounds(0).high(); };
 
