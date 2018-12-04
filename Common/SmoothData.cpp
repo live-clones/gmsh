@@ -109,7 +109,7 @@ void smooth_data::add_scale(double x, double y, double z, double scale_val)
   }
 }
 
-bool smooth_data::get(double x, double y, double z, int n, double *vals)
+bool smooth_data::get(double x, double y, double z, int n, double *vals) const
 {
   std::set<xyzv, lessthanxyzv>::const_iterator it = c.find(xyzv(x, y, z));
   if(it == c.end()) return false;
@@ -118,7 +118,7 @@ bool smooth_data::get(double x, double y, double z, int n, double *vals)
 }
 
 // added by Trevor Strickler
-bool smooth_data::get_scale(double x, double y, double z, double *scale_val)
+bool smooth_data::get_scale(double x, double y, double z, double *scale_val) const
 {
   std::set<xyzv, lessthanxyzv>::const_iterator it = c.find(xyzv(x, y, z));
   if(it == c.end()) return false;
@@ -135,12 +135,12 @@ void smooth_data::normalize()
   }
 }
 
-bool smooth_data::exportview(const std::string &filename)
+bool smooth_data::exportview(const std::string &filename) const
 {
   FILE *fp = Fopen(filename.c_str(), "w");
   if(!fp) return false;
   fprintf(fp, "View \"data\" {\n");
-  std::set<xyzv, lessthanxyzv>::iterator it = c.begin();
+  std::set<xyzv, lessthanxyzv>::const_iterator it = c.begin();
   while(it != c.end()) {
     switch(it->nbvals) {
     case 1:
@@ -232,7 +232,7 @@ void smooth_normals::add(double x, double y, double z, double nx, double ny,
 }
 
 bool smooth_normals::get(double x, double y, double z, double &nx, double &ny,
-                         double &nz)
+                         double &nz) const
 {
   std::set<xyzn, lessthanxyzn>::const_iterator it =
     c.find(xyzn((float)x, (float)y, (float)z));
