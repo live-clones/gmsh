@@ -1317,6 +1317,7 @@ void delaunayTrgl(const unsigned int numThreads,
       for(unsigned int i = 0; i < bnd[K].size(); i++)
         if(bnd[K][i].t) bnd[K][i].t->unset(myThread, K);
     }
+
   }
 
   if(invalidCavities[0]) Msg::Error("%d invalid cavities", invalidCavities[0]);
@@ -1409,7 +1410,6 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
   }
 
   int nbBlocks = nptsatonce * numThreads;
-  // int blockSize = (nbBlocks * (N / nbBlocks))/nbBlocks;
 
   std::vector<Vert *> assignTo0[1];
   std::vector<std::vector<Vert *> > assignTo(nbBlocks);
@@ -1418,28 +1418,17 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
     int start = indices[i - 1];
     int end = indices[i];
     int sizePerBlock = (nbBlocks * ((end - start) / nbBlocks)) / nbBlocks;
-    // printf("sizePerBlock[%3d] = %8d\n",i,sizePerBlock);
     int currentBlock = 0;
     int localCounter = 0;
-    // FIXME : something's wrong here !!!
-    if(i < 1) {
-      for(int jPt = start; jPt < end; jPt++) {
-        assignTo0[0].push_back(S[jPt]);
-        S[jPt]->_thread = numThreads * (jPt - start) / (end - start);
+    for(int jPt = start; jPt < end; jPt++) {
+      if(localCounter++ >= sizePerBlock && currentBlock != nbBlocks - 1) {
+	localCounter = 0;
+	currentBlock++;
       }
-    }
-    else {
-      for(int jPt = start; jPt < end; jPt++) {
-        if(localCounter++ >= sizePerBlock && currentBlock != nbBlocks - 1) {
-          localCounter = 0;
-          currentBlock++;
-        }
-        assignTo[currentBlock].push_back(S[jPt]);
-      }
+      assignTo[currentBlock].push_back(S[jPt]);
     }
   }
 
-  S.clear();
   delaunayTrgl(1, 1, assignTo0[0].size(), assignTo0, allocator);
   delaunayTrgl(numThreads, nptsatonce, N, &assignTo[0], allocator);
   // __print("finalTetrahedrization.pos",0, allocator);
@@ -1462,17 +1451,13 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
   }
   double d = 1 * sqrt(maxx * maxx + maxy * maxy + maxz * maxz);
 
-  tetContainer allocator(1, S.size() * 10);
+  tetContainer allocator(numThreads, S.size() * 10);
 
   for(unsigned int i = 0; i < N; i++) {
     MVertex *mv = S[i];
-    // FIXME : should be zero !!!!
-    double dx =
-      d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
-    double dy =
-      d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
-    double dz =
-      d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
+    double dx = d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
+    double dy = d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
+    double dz = d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
     mv->x() += dx;
     mv->y() += dy;
     mv->z() += dz;
@@ -1483,19 +1468,16 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
 
   robustPredicates::exactinit(1, maxx, maxy, maxz);
 
-  // FIXME numThreads
-
   Vert *box[8];
   delaunayTriangulation(numThreads, nptsatonce, _vertices, box, allocator);
   //__print("finalTetrahedrization.pos",0, allocator);
 
-  MVertex *VV[8];
   for(int i = 0; i < 8; i++) {
     Vert *v = box[i];
     v->setNum(N + i + 1);
-    VV[i] = new MVertex(v->x(), v->y(), v->z(), NULL, N + (i + 1));
-    _temp[v->getNum()] = VV[i];
-    S.push_back(VV[i]);
+    MVertex *mv = new MVertex(v->x(), v->y(), v->z(), NULL, N + (i + 1));
+    _temp[v->getNum()] = mv;
+    S.push_back(mv);
   }
 
   for(int myThread = 0; myThread < numThreads; myThread++) {
@@ -1518,5 +1500,6 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
     }
   }
 
+  for(int i = 0; i < 8; i++) delete box[i];
   for(unsigned int i = 0; i < _vertices.size(); i++) delete _vertices[i];
 }

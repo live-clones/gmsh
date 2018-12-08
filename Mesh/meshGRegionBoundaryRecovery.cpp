@@ -125,8 +125,6 @@ namespace tetgenBR {
     GRegion *_gr = ((brdata *)p)->gr;
     splitQuadRecovery *_sqr = ((brdata *)p)->sqr;
 
-    in = new tetgenio();
-    b = new tetgenbehavior();
     char opts[128];
     sprintf(opts, "YpeQT%gp/%g", CTX::instance()->mesh.toleranceInitialDelaunay,
             CTX::instance()->mesh.angleToleranceFacetOverlap);
@@ -206,7 +204,7 @@ namespace tetgenBR {
 
     std::vector<MTetrahedron *> tets;
 
-    delaunayMeshIn3D(_vertices, tets, false);
+    delaunayMeshIn3D(_vertices, tets); // will add 8 MVertices at the end of _vertices
     if(Msg::GetErrorCount()) return false;
 
     Msg::Debug("Points have been tetrahedralized");
@@ -434,6 +432,7 @@ namespace tetgenBR {
       hullsize = tetrahedrons->items - hullsize;
 
       delete[] ver2tetarray;
+      for(unsigned int i = 0; i < tets.size(); i++) delete tets[i];
       tets.clear(); // Release all memory in this vector.
     }
 
@@ -972,6 +971,10 @@ namespace tetgenBR {
       vIter->first->setXYZ(coordinates.x(), coordinates.y(), coordinates.z());
     }
 
+    // delete 8 new enclosing box vertices added in delaunayMeshIn3d
+    for(unsigned int i = _vertices.size() - 8; i < _vertices.size(); i++)
+      delete _vertices[i];
+    
     return true;
   }
 
@@ -1184,8 +1187,12 @@ bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr)
   bool ret = false;
   try {
     tetgenBR::tetgenmesh *m = new tetgenBR::tetgenmesh();
+    m->in = new tetgenBR::tetgenio();
+    m->b = new tetgenBR::tetgenbehavior();
     tetgenBR::brdata data = {gr, sqr};
     ret = m->reconstructmesh((void *)&data);
+    delete m->in;
+    delete m->b;
     delete m;
   } catch(int err) {
     if(err == 1) {
