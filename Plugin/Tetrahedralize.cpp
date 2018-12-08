@@ -129,7 +129,7 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
       vec = &data2->SS;
     }
     else {
-      Msg::Warning("Bad data in tetrahedralization");
+      // tet connected to enclosing box
       continue;
     }
     for(int nod = 0; nod < 4; nod++) vec->push_back(p[nod]->x());
