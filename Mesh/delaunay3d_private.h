@@ -6,14 +6,11 @@
 #ifndef _DELAUNAY3D_PRIVATE_H_
 #define _DELAUNAY3D_PRIVATE_H_
 
-#include <vector>
-#include "SPoint3.h"
-#include <cmath>
-#include "robustPredicates.h"
 #include <stdio.h>
-#if defined(_OPENMP)
-#include <omp.h>
-#endif
+#include <vector>
+#include <cmath>
+#include "SPoint3.h"
+#include "robustPredicates.h"
 
 #ifndef MAX_NUM_THREADS_
 #define MAX_NUM_THREADS_ 8
@@ -242,14 +239,13 @@ struct Tet {
   Vert *V[4];
   CHECKTYPE _bitset[MAX_NUM_THREADS_];
   bool _modified;
-  //  static int in_sphere_counter;
+
   Tet() : _modified(true)
   {
     V[0] = V[1] = V[2] = V[3] = NULL;
     T[0] = T[1] = T[2] = T[3] = NULL;
     setAllDeleted();
   }
-  //  inline bool isFace () const {return V[3]==NULL;}
   int setVerticesNoTest(Vert *v0, Vert *v1, Vert *v2, Vert *v3)
   {
     _modified = true;
@@ -259,7 +255,6 @@ struct Tet {
     V[3] = v3;
     for(int i = 0; i < 4; i++)
       if(V[i]) V[i]->setT(this);
-    //    for (int i=0;i<4;i++)_copy[i] = *V[i];
     return 1;
   }
   int setVertices(Vert *v0, Vert *v1, Vert *v2, Vert *v3)
@@ -274,20 +269,16 @@ struct Tet {
     for(int i = 0; i < 4; i++)
       if(V[i]) V[i]->setT(this);
     if(val > 0) {
-      // for (int i=0;i<4;i++)_copy[i] = *V[i];
       return 1;
     }
     else if(val < 0) {
-      // throw;
       V[0] = v1;
       V[1] = v0;
       V[2] = v2;
       V[3] = v3;
-      // for (int i=0;i<4;i++)_copy[i] = *V[i];
       return -1;
     }
     else {
-      // throw;
       return 0;
     }
   }
@@ -329,7 +320,6 @@ struct Tet {
   }
   bool inSphere(Vert *vd, int thread)
   {
-    //    in_sphere_counter++;
     return inSphereTest_s(V[0], V[1], V[2], V[3], vd);
   }
 };
@@ -357,7 +347,6 @@ public:
   {
     const unsigned int _array = i / _nbAlloc;
     const unsigned int _offset = i % _nbAlloc;
-    // printf("%d %d %d\n",i,_array,_offset);
     return _all[_array] + _offset;
   }
 
@@ -377,7 +366,6 @@ public:
   {
     if(_current == _nbAlloc) {
       _all.push_back(new T[_nbAlloc]);
-      // printf("REALLOCATION %d\n",_all.size());
       _current = 0;
     }
     _current++;
@@ -400,23 +388,17 @@ public:
 
   tetContainer(int nbThreads, int preallocSizePerThread)
   {
-    // FIXME !!!
-    //    if (nbThreads != 1) throw;
     _perThread.resize(nbThreads);
-#if defined(_OPENMP)
-#pragma omp parallel num_threads(nbThreads)
-#endif
-    {
-#if defined(_OPENMP)
-      int myThread = omp_get_thread_num();
-#else
-      int myThread = 0;
-#endif
-      _perThread[myThread] = new aBunchOfStuff<Tet>(preallocSizePerThread);
+    for(unsigned int i = 0; i < _perThread.size(); i++){    
+      _perThread[i] = new aBunchOfStuff<Tet>(preallocSizePerThread);
     }
   }
   Tet *newTet(int thread) { return _perThread[thread]->newStuff(); }
-  ~tetContainer() { delete _perThread[0]; }
+  ~tetContainer()
+  {
+    for(unsigned int i = 0; i < _perThread.size(); i++)
+      delete _perThread[i];
+  }
 };
 
 typedef std::vector<Tet *> cavityContainer;
