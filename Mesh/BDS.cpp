@@ -539,7 +539,9 @@ void BDS_Mesh::del_point(BDS_Point *p)
 
 void BDS_Mesh::add_geom(int p1, int p2)
 {
-  geom.insert(new BDS_GeomEntity(p1, p2));
+  BDS_GeomEntity *e = new BDS_GeomEntity(p1, p2);
+  std::pair<std::set<BDS_GeomEntity *, GeomLessThan>::iterator, bool> res = geom.insert(e);
+  if(!res.second) delete e;
 }
 
 void BDS_Edge::computeNeighborhood(BDS_Point *pts1[4], BDS_Point *pts2[4],
