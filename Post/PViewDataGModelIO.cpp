@@ -1075,7 +1075,7 @@ void PViewDataGModel::sendToServer(const std::string &name)
       }
       int num = v->getNum();
       exp.push_back(num);
-      for(int step = 0; step < _steps.size(); step++){
+      for(unsigned int step = 0; step < _steps.size(); step++){
         for(int k = 0; k < numComp; k++){
           double data = _steps[step]->getData(i)[k];
           exp.push_back(data);

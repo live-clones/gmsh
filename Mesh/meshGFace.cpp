@@ -133,12 +133,13 @@ bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
 
 void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug)
 {
-  FILE *view_t;
+  FILE *view_t = 0;
   if(debug) {
     char name[245];
     sprintf(name, "trueBoundary%d.pos", gf->tag());
     view_t = Fopen(name, "w");
-    fprintf(view_t, "View \"True Boundary\"{\n");
+    if(view_t)
+      fprintf(view_t, "View \"True Boundary\"{\n");
   }
   std::vector<GEdge *> edg = gf->edges();
   std::set<GEdge *> edges(edg.begin(), edg.end());
@@ -155,7 +156,7 @@ void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug)
         double xi = r.low() + (r.high() - r.low()) * t;
         p[k] = ge->reparamOnFace(gf, xi, i);
         if(k > 0) {
-          if(debug) {
+          if(view_t) {
             fprintf(view_t, "SL(%g,%g,%g,%g,%g,%g){1,1};\n", p[k - 1].x(),
                     p[k - 1].y(), 0.0, p[k].x(), p[k].y(), 0.0);
           }
@@ -165,7 +166,7 @@ void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug)
       }
     }
   }
-  if(debug) {
+  if(view_t) {
     fprintf(view_t, "};\n");
     fclose(view_t);
   }
@@ -2546,7 +2547,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
         std::vector<GEdge *> eds = gf->edges();
         edgesNotRecovered.clear();
         for(size_t i = 0; i < eds.size(); i++) {
-          const int NN = eds[i]->lines.size() ? 1 : 0;
+          const unsigned int NN = eds[i]->lines.size() ? 1 : 0;
           for(size_t j = 0; j < NN; j++) {
             MVertex *v1 = eds[i]->lines[j]->getVertex(0);
             MVertex *v2 = eds[i]->lines[j]->getVertex(1);
