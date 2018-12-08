@@ -907,8 +907,7 @@ static void delaunayCavity2(Tet *tet, Tet *prevTet, Vert *v,
       finished = true;
     }
     else {
-      const std::pair<std::pair<Tet *, Tet *>, std::pair<int, int> > &next =
-        stack.top();
+      const std::pair<std::pair<Tet *, Tet *>, std::pair<int, int> > &next = stack.top();
       prev = next.first.first;
       t = next.first.second;
       iNeighStart = next.second.first;
@@ -1201,11 +1200,9 @@ void delaunayTrgl(const unsigned int numThreads,
         if(vToAdd[K]) {
           // In 3D, insertion of a point may lead to deletion of tets !!
           if(!Choice[K]->V[0]) Choice[K] = randomTet(0, allocator);
-          // int nbCoucou=0;
           while(1) {
             t[K] = walk(Choice[K], vToAdd[K], Npts, totSearch, myThread);
             if(t[K]) break;
-            // printf("coucou %d\n",nbCoucou++);
             // the domain may not be convex. we then start from a random tet and
             // walk from there
             Choice[K] = randomTet(0, allocator);
@@ -1241,7 +1238,7 @@ void delaunayTrgl(const unsigned int numThreads,
         }
       }
 
-        // t3 += Cpu() - t1;
+      // t3 += Cpu() - t1;
 
 #if defined(_OPENMP)
 #pragma omp barrier
@@ -1341,36 +1338,26 @@ static void initialCube(std::vector<Vert *> &v, Vert *box[8],
                         tetContainer &allocator)
 {
   SBoundingBox3d bbox;
-  // bbox += SPoint3(0,0,0);
-  // bbox += SPoint3(1,1,1);
   for(size_t i = 0; i < v.size(); i++) {
     Vert *pv = v[i];
     bbox += SPoint3(pv->x(), pv->y(), pv->z());
   }
   bbox *= 1.3;
-  box[0] =
-    new Vert(bbox.min().x(), bbox.min().y(), bbox.min().z(), bbox.diag());
-  box[1] =
-    new Vert(bbox.max().x(), bbox.min().y(), bbox.min().z(), bbox.diag());
-  box[2] =
-    new Vert(bbox.max().x(), bbox.max().y(), bbox.min().z(), bbox.diag());
-  box[3] =
-    new Vert(bbox.min().x(), bbox.max().y(), bbox.min().z(), bbox.diag());
-  box[4] =
-    new Vert(bbox.min().x(), bbox.min().y(), bbox.max().z(), bbox.diag());
-  box[5] =
-    new Vert(bbox.max().x(), bbox.min().y(), bbox.max().z(), bbox.diag());
-  box[6] =
-    new Vert(bbox.max().x(), bbox.max().y(), bbox.max().z(), bbox.diag());
-  box[7] =
-    new Vert(bbox.min().x(), bbox.max().y(), bbox.max().z(), bbox.diag());
+  box[0] = new Vert(bbox.min().x(), bbox.min().y(), bbox.min().z(), bbox.diag());
+  box[1] = new Vert(bbox.max().x(), bbox.min().y(), bbox.min().z(), bbox.diag());
+  box[2] = new Vert(bbox.max().x(), bbox.max().y(), bbox.min().z(), bbox.diag());
+  box[3] = new Vert(bbox.min().x(), bbox.max().y(), bbox.min().z(), bbox.diag());
+  box[4] = new Vert(bbox.min().x(), bbox.min().y(), bbox.max().z(), bbox.diag());
+  box[5] = new Vert(bbox.max().x(), bbox.min().y(), bbox.max().z(), bbox.diag());
+  box[6] = new Vert(bbox.max().x(), bbox.max().y(), bbox.max().z(), bbox.diag());
+  box[7] = new Vert(bbox.min().x(), bbox.max().y(), bbox.max().z(), bbox.diag());
 
-  /*  Tet *t0 = new Tet(box[2],box[7],box[3],box[1]);
+  /* Tet *t0 = new Tet(box[2],box[7],box[3],box[1]);
   Tet *t1 = new Tet(box[0],box[7],box[1],box[3]);
   Tet *t2 = new Tet(box[6],box[1],box[7],box[2]);
   Tet *t3 = new Tet(box[0],box[1],box[7],box[4]);
   Tet *t4 = new Tet(box[1],box[4],box[5],box[7]);
-  Tet *t5 = new Tet(box[1],box[7],box[5],box[6]);*/
+  Tet *t5 = new Tet(box[1],box[7],box[5],box[6]); */
 
   Tet *t0 = allocator.newTet(0);
   t0->setVertices(box[7], box[2], box[3], box[1]);
@@ -1394,7 +1381,6 @@ static void initialCube(std::vector<Vert *> &v, Vert *box[8],
     computeAdjacencies(t4, i, ctnr);
     computeAdjacencies(t5, i, ctnr);
   }
-  // printf("%d faces left\n",ctnr.size());
 }
 
 void delaunayTriangulation(const int numThreads, const int nptsatonce,
