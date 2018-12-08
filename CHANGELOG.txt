@@ -1,8 +1,13 @@
-4.0.5 (November 17, 2018): automatic hybrid mesh generation (pyramid layer) when
-3D Delaunay algorithm is applied to a volume with quadrangles on boundary;
+4.0.6 (November 25, 2018): moved private API wrappers to utils/wrappers;
+improved Gmsh 3 compatibility for high-order periodic meshes; fixed '-v 0' not
+being completely silent; fixed rendering of image textures on some OSes; small
+compilation fixes.
+
+4.0.5 (November 17, 2018): new automatic hybrid mesh generation (pyramid layer)
+when 3D Delaunay algorithm is applied to a volume with quadrangles on boundary;
 improved robustness of 2D MeshAdapt algorithm; bug fixes.
 
-4.0.4 (October 19, 2018): fix physical names regression in 4.0.3.
+4.0.4 (October 19, 2018): fixed physical names regression in 4.0.3.
 
 4.0.3 (October 18, 2018): bug fixes.
 
@@ -33,7 +38,7 @@ export; small improvements and bug fixes.
 
 3.0.5 (September 6, 2017): bug fixes.
 
-3.0.4 (July 28, 2017): moved vorometal code to plugin; openmp improvements; bug
+3.0.4 (July 28, 2017): moved vorometal code to plugin; OpenMP improvements; bug
 fixes.
 
 3.0.3 (June 27, 2017): new element quality measures; Block->Box; minor fixes.

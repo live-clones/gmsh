@@ -60,13 +60,11 @@ public:
   iter end() { return c.end(); }
   smooth_data() {}
   void add(double x, double y, double z, int n, double *vals);
-  bool get(double x, double y, double z, int n, double *vals);
-  void add_scale(double x, double y, double z,
-                 double scale_val); // Trevor Strickler
-  bool get_scale(double x, double y, double z,
-                 double *scale_val); // Trevor Strickler
+  bool get(double x, double y, double z, int n, double *vals) const;
+  void add_scale(double x, double y, double z, double scale_val);
+  bool get_scale(double x, double y, double z, double *scale_val) const;
   void normalize();
-  bool exportview(const std::string &filename);
+  bool exportview(const std::string &filename) const;
 };
 
 // Normal smoother with threshold (saves memory by storing normals as
@@ -107,7 +105,7 @@ private:
 public:
   smooth_normals(double angle) : tol((float)angle) {}
   void add(double x, double y, double z, double nx, double ny, double nz);
-  bool get(double x, double y, double z, double &nx, double &ny, double &nz);
+  bool get(double x, double y, double z, double &nx, double &ny, double &nz) const;
 };
 
 #endif

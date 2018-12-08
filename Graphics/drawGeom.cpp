@@ -323,7 +323,8 @@ public:
        CTX::instance()->geom.surfaceType > 0)
       f->fillVertexArray(f->geomType() == GEntity::ProjectionFace);
 
-    if(CTX::instance()->geom.surfaces || f->getSelection() > 1 ||
+    if(((CTX::instance()->geom.surfaces || f->getSelection() > 1) &&
+        CTX::instance()->geom.surfaceType == 0) ||
        CTX::instance()->geom.surfacesNum || CTX::instance()->geom.normals)
       f->buildRepresentationCross();
 

@@ -17,7 +17,8 @@
 #include "GmshMessage.h"
 #include "BackgroundMeshTools.h"
 
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT3D)
+
 extern "C" {
 #include "hxt_mesh3d_main.h"
 #include "hxt_boundary_recovery.h"
@@ -26,62 +27,72 @@ extern "C" {
 
 // This is a list of regions that are simply connected
 
-HXTStatus hxtGmshMsgCallback(HXTMessage* msg){
+HXTStatus hxtGmshMsgCallback(HXTMessage *msg)
+{
+  if(msg) Msg::Info("%s", msg->string);
   return HXT_STATUS_OK;
 }
 
-static double hxtMeshSizeGmshCallBack (double x, double y, double z, void *userData) { 
-  GRegion *gr = (GRegion*)userData;
-  double lc2 = BGM_MeshSize(gr, 0, 0, x,y,z);
+static double hxtMeshSizeGmshCallBack(double x, double y, double z,
+                                      void *userData)
+{
+  GRegion *gr = (GRegion *)userData;
+  double lc2 = BGM_MeshSize(gr, 0, 0, x, y, z);
+  return lc2;
 }
 
-
-static HXTStatus getAllFacesOfAllRegions (std::vector<GRegion *> &regions, HXTMesh *m, std::vector<GFace *> &allFaces){
+static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions,
+                                         HXTMesh *m,
+                                         std::vector<GFace *> &allFaces)
+{
   std::set<GFace *, GEntityLessThan> allFacesSet;
-  if (m){
+  if(m) {
     m->brep.numVolumes = regions.size();
-    HXT_CHECK(
-	      hxtAlignedMalloc(&m->brep.numSurfacesPerVolume, m->brep.numVolumes
-			       * sizeof(uint32_t)));
+    HXT_CHECK(hxtAlignedMalloc(&m->brep.numSurfacesPerVolume,
+                               m->brep.numVolumes * sizeof(uint32_t)));
   }
   uint32_t to_alloc = 0;
   for(unsigned int i = 0; i < regions.size(); i++) {
     std::vector<GFace *> const &f = regions[i]->faces();
     std::vector<GFace *> const &f_e = regions[i]->embeddedFaces();
-    if (m){
+    if(m) {
       m->brep.numSurfacesPerVolume[i] = f.size() + f_e.size();
       to_alloc += m->brep.numSurfacesPerVolume[i];
     }
     allFacesSet.insert(f.begin(), f.end());
     allFacesSet.insert(f_e.begin(), f_e.end());
   }
-  allFaces.insert (allFaces.begin(), allFacesSet.begin(), allFacesSet.end());
+  allFaces.insert(allFaces.begin(), allFacesSet.begin(), allFacesSet.end());
 
-  if (!m)return HXT_STATUS_OK;
+  if(!m) return HXT_STATUS_OK;
 
-  HXT_CHECK(hxtAlignedMalloc(&m->brep.surfacesPerVolume, to_alloc* sizeof(uint32_t)));
-  
+  HXT_CHECK(
+    hxtAlignedMalloc(&m->brep.surfacesPerVolume, to_alloc * sizeof(uint32_t)));
+
   uint32_t counter = 0;
   for(unsigned int i = 0; i < regions.size(); i++) {
     std::vector<GFace *> const &f = regions[i]->faces();
     std::vector<GFace *> const &f_e = regions[i]->embeddedFaces();
-    for (size_t j=0;j<f.size();j++)m->brep.surfacesPerVolume[counter++]=f[j]->tag();
-    for (size_t j=0;j<f_e.size();j++)m->brep.surfacesPerVolume[counter++]=f_e[j]->tag();
+    for(size_t j = 0; j < f.size(); j++)
+      m->brep.surfacesPerVolume[counter++] = f[j]->tag();
+    for(size_t j = 0; j < f_e.size(); j++)
+      m->brep.surfacesPerVolume[counter++] = f_e[j]->tag();
   }
 
   //  printf("volume 0 has %d faces\n",m->brep.numSurfacesPerVolume[0]);
-  //  for (int i=0;i<m->brep.numSurfacesPerVolume[0];i++)printf("%d ",m->brep.surfacesPerVolume[i]);
-  //  printf("\n");
-  
+  //  for (int i=0;i<m->brep.numSurfacesPerVolume[0];i++)printf("%d
+  //  ",m->brep.surfacesPerVolume[i]); printf("\n");
+
   return HXT_STATUS_OK;
 }
 
-static HXTStatus getAllEdgesOfAllFaces (std::vector<GFace *> &faces, HXTMesh *m, std::vector<GEdge *> &allEdges){
-  if (m){
+static HXTStatus getAllEdgesOfAllFaces(std::vector<GFace *> &faces, HXTMesh *m,
+                                       std::vector<GEdge *> &allEdges)
+{
+  if(m) {
     m->brep.numSurfaces = faces.size();
-    HXT_CHECK(
-	      hxtAlignedMalloc(&m->brep.numCurvesPerSurface, m->brep.numSurfaces
-			       * sizeof(uint32_t)));
+    HXT_CHECK(hxtAlignedMalloc(&m->brep.numCurvesPerSurface,
+                               m->brep.numSurfaces * sizeof(uint32_t)));
   }
   uint32_t to_alloc = 0;
 
@@ -89,136 +100,139 @@ static HXTStatus getAllEdgesOfAllFaces (std::vector<GFace *> &faces, HXTMesh *m,
   for(unsigned int i = 0; i < faces.size(); i++) {
     std::vector<GEdge *> const &f = faces[i]->edges();
     std::vector<GEdge *> const &f_e = faces[i]->embeddedEdges();
-    if (m){
+    if(m) {
       m->brep.numCurvesPerSurface[i] = f.size() + f_e.size();
       to_alloc += m->brep.numCurvesPerSurface[i];
     }
     allEdgesSet.insert(f.begin(), f.end());
     allEdgesSet.insert(f_e.begin(), f_e.end());
   }
-  allEdges.insert (allEdges.begin(), allEdgesSet.begin(), allEdgesSet.end());
+  allEdges.insert(allEdges.begin(), allEdgesSet.begin(), allEdgesSet.end());
 
-  if (!m)return HXT_STATUS_OK;
+  if(!m) return HXT_STATUS_OK;
 
-  HXT_CHECK(hxtAlignedMalloc(&m->brep.curvesPerSurface, to_alloc* sizeof(uint32_t)));
-  
+  HXT_CHECK(
+    hxtAlignedMalloc(&m->brep.curvesPerSurface, to_alloc * sizeof(uint32_t)));
+
   uint32_t counter = 0;
   for(unsigned int i = 0; i < faces.size(); i++) {
     std::vector<GEdge *> const &f = faces[i]->edges();
     std::vector<GEdge *> const &f_e = faces[i]->embeddedEdges();
-    for (size_t j=0;j<f.size();j++)m->brep.curvesPerSurface[counter++]=f[j]->tag();
-    for (size_t j=0;j<f_e.size();j++)m->brep.curvesPerSurface[counter++]=f_e[j]->tag();
+    for(size_t j = 0; j < f.size(); j++)
+      m->brep.curvesPerSurface[counter++] = f[j]->tag();
+    for(size_t j = 0; j < f_e.size(); j++)
+      m->brep.curvesPerSurface[counter++] = f_e[j]->tag();
   }
   return HXT_STATUS_OK;
 }
 
 static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
                           std::map<MVertex *, int> &v2c,
-                          std::vector<MVertex *> &c2v){
-
+                          std::vector<MVertex *> &c2v)
+{
   std::vector<GFace *> allFaces;
   std::vector<GEdge *> allEdges;
-  HXT_CHECK(getAllFacesOfAllRegions (regions, NULL, allFaces));
-  HXT_CHECK(getAllEdgesOfAllFaces (allFaces, NULL, allEdges));
-  std::map<int,GEdge*> i2e;
-  std::map<int,GFace*> i2f;
-  for (size_t i = 0;i<allFaces.size();i++)i2f[allFaces[i]->tag()] = allFaces[i];
-  for (size_t i = 0;i<allEdges.size();i++)i2e[allEdges[i]->tag()] = allEdges[i];
+  HXT_CHECK(getAllFacesOfAllRegions(regions, NULL, allFaces));
+  HXT_CHECK(getAllEdgesOfAllFaces(allFaces, NULL, allEdges));
+  std::map<int, GEdge *> i2e;
+  std::map<int, GFace *> i2f;
+  for(size_t i = 0; i < allFaces.size(); i++)
+    i2f[allFaces[i]->tag()] = allFaces[i];
+  for(size_t i = 0; i < allEdges.size(); i++)
+    i2e[allEdges[i]->tag()] = allEdges[i];
 
-  c2v.resize( m->vertices.num);
-  for (size_t i = c2v.size() ; i < m->vertices.num; i++){
+  c2v.resize(m->vertices.num);
+  for(size_t i = c2v.size(); i < m->vertices.num; i++) {
     c2v[i] = NULL;
   }
 
   for(size_t j = 0; j < allEdges.size(); j++) {
     GEdge *ge = allEdges[j];
     for(size_t i = 0; i < ge->lines.size(); i++) {
-      delete ge->lines[i];      
+      delete ge->lines[i];
     }
     ge->lines.clear();
   }
-  
+
   for(size_t j = 0; j < allFaces.size(); j++) {
     GFace *gf = allFaces[j];
     for(size_t i = 0; i < gf->triangles.size(); i++) {
-      delete gf->triangles[i];      
+      delete gf->triangles[i];
     }
     gf->triangles.clear();
   }
 
-  
-  for (size_t i = 0 ; i < m->lines.num ; i++){
-    uint32_t i0 = m->lines.node[2*i+0];
-    uint32_t i1 = m->lines.node[2*i+1];
+  for(size_t i = 0; i < m->lines.num; i++) {
+    uint32_t i0 = m->lines.node[2 * i + 0];
+    uint32_t i1 = m->lines.node[2 * i + 1];
     uint16_t c = m->lines.colors[i];
     MVertex *v0 = c2v[i0];
     MVertex *v1 = c2v[i1];
-    std::map<int,GEdge *>::iterator ge = i2e.find(c);
-    if (ge == i2e.end())return HXT_STATUS_ERROR;
-    if (!v0){
-      double *x = &m->vertices.coord[4*i0];				    
+    std::map<int, GEdge *>::iterator ge = i2e.find(c);
+    if(ge == i2e.end()) return HXT_STATUS_ERROR;
+    if(!v0) {
+      double *x = &m->vertices.coord[4 * i0];
       // FIXME compute true coordinates
-      v0 = new MEdgeVertex (x[0],x[1],x[2],ge->second,0);
+      v0 = new MEdgeVertex(x[0], x[1], x[2], ge->second, 0);
     }
-    if (!v1){
+    if(!v1) {
       // FIXME compute true coordinates
-      double *x = &m->vertices.coord[4*i1];				    
-      v1 = new MEdgeVertex (x[0],x[1],x[2],ge->second,0);
+      double *x = &m->vertices.coord[4 * i1];
+      v1 = new MEdgeVertex(x[0], x[1], x[2], ge->second, 0);
     }
-    ge->second->lines.push_back(new MLine(v0,v1));
+    ge->second->lines.push_back(new MLine(v0, v1));
   }
-  
-  for (size_t i = 0 ; i < m->triangles.num ; i++){
-    uint32_t i0 = m->triangles.node[3*i+0];
-    uint32_t i1 = m->triangles.node[3*i+1];
-    uint32_t i2 = m->triangles.node[3*i+2];
+
+  for(size_t i = 0; i < m->triangles.num; i++) {
+    uint32_t i0 = m->triangles.node[3 * i + 0];
+    uint32_t i1 = m->triangles.node[3 * i + 1];
+    uint32_t i2 = m->triangles.node[3 * i + 2];
     uint16_t c = m->triangles.colors[i];
     MVertex *v0 = c2v[i0];
     MVertex *v1 = c2v[i1];
     MVertex *v2 = c2v[i2];
-    std::map<int,GFace *>::iterator gf = i2f.find(c);
-    if (gf == i2f.end())return HXT_STATUS_ERROR;
-    if (!v0){
+    std::map<int, GFace *>::iterator gf = i2f.find(c);
+    if(gf == i2f.end()) return HXT_STATUS_ERROR;
+    if(!v0) {
       // FIXME compute true coordinates
-      double *x = &m->vertices.coord[4*i0];				    
-      v0 = new MFaceVertex (x[0],x[1],x[2],gf->second,0,0);
+      double *x = &m->vertices.coord[4 * i0];
+      v0 = new MFaceVertex(x[0], x[1], x[2], gf->second, 0, 0);
     }
-    if (!v1){
+    if(!v1) {
       // FIXME compute true coordinates
-      double *x = &m->vertices.coord[4*i1];				    
-      v1 = new MFaceVertex (x[0],x[1],x[2],gf->second,0,0);
+      double *x = &m->vertices.coord[4 * i1];
+      v1 = new MFaceVertex(x[0], x[1], x[2], gf->second, 0, 0);
     }
-    if (!v2){
+    if(!v2) {
       // FIXME compute true coordinates
-      double *x = &m->vertices.coord[4*i2];				    
-      v2 = new MFaceVertex (x[0],x[1],x[2],gf->second,0,0);
+      double *x = &m->vertices.coord[4 * i2];
+      v2 = new MFaceVertex(x[0], x[1], x[2], gf->second, 0, 0);
     }
-    gf->second->triangles.push_back(new MTriangle(v0,v1,v2));
+    gf->second->triangles.push_back(new MTriangle(v0, v1, v2));
   }
 
-  for (size_t i = 0 ; i < m->tetrahedra.num ; i++){
-    uint32_t *i0 = &m->tetrahedra.node[4*i+0];
+  for(size_t i = 0; i < m->tetrahedra.num; i++) {
+    uint32_t *i0 = &m->tetrahedra.node[4 * i + 0];
     uint16_t c = m->tetrahedra.colors[i];
-    if (c < regions.size()){
+    if(c < regions.size()) {
       MVertex *vv[4];
       GRegion *gr = regions[c];
-      for (int j=0;j<4;j++){
-	//	printf("%d %d %d %d\n",i,j,i0[j],c);
-	MVertex *v0 = c2v[i0[j]];
-	if (!v0) {
-	  double *x = &m->vertices.coord[4*i0[j]];				    
-	  v0 = new MVertex(x[0],x[1],x[2],gr);
-	  gr->mesh_vertices.push_back(v0);
-	  c2v[i0[j]] = v0;
-	}
-	vv[j] = v0;
+      for(int j = 0; j < 4; j++) {
+        //	printf("%d %d %d %d\n",i,j,i0[j],c);
+        MVertex *v0 = c2v[i0[j]];
+        if(!v0) {
+          double *x = &m->vertices.coord[4 * i0[j]];
+          v0 = new MVertex(x[0], x[1], x[2], gr);
+          gr->mesh_vertices.push_back(v0);
+          c2v[i0[j]] = v0;
+        }
+        vv[j] = v0;
       }
-      gr->tetrahedra.push_back(new MTetrahedron(vv[0],vv[1],vv[2],vv[3]));
+      gr->tetrahedra.push_back(new MTetrahedron(vv[0], vv[1], vv[2], vv[3]));
     }
   }
   return HXT_STATUS_OK;
 }
-
 
 static HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
                           std::map<MVertex *, int> &v2c,
@@ -227,10 +241,10 @@ static HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
   std::set<MVertex *> all;
   std::vector<GFace *> faces;
   std::vector<GEdge *> edges;
-  
-  HXT_CHECK(getAllFacesOfAllRegions (regions, m, faces));
-  HXT_CHECK(getAllEdgesOfAllFaces (faces, m, edges));
-  
+
+  HXT_CHECK(getAllFacesOfAllRegions(regions, m, faces));
+  HXT_CHECK(getAllEdgesOfAllFaces(faces, m, edges));
+
   uint64_t ntri = 0;
   uint64_t nedg = 0;
 
@@ -254,7 +268,7 @@ static HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
   }
 
   //  printf("%d vertices %d triangles\n",all.size(),ntri);
-  
+
   m->vertices.num = m->vertices.size = all.size();
   HXT_CHECK(
     hxtAlignedMalloc(&m->vertices.coord, 4 * m->vertices.num * sizeof(double)));
@@ -273,11 +287,11 @@ static HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
 
   m->lines.num = m->lines.size = nedg;
   uint64_t index = 0;
-  
-  HXT_CHECK(hxtAlignedMalloc(&m->lines.node,
-                             (m->lines.num) * 2 * sizeof(uint32_t)));
-  HXT_CHECK(hxtAlignedMalloc(&m->lines.colors,
-                             (m->lines.num) * sizeof(uint16_t)));
+
+  HXT_CHECK(
+    hxtAlignedMalloc(&m->lines.node, (m->lines.num) * 2 * sizeof(uint32_t)));
+  HXT_CHECK(
+    hxtAlignedMalloc(&m->lines.colors, (m->lines.num) * sizeof(uint16_t)));
 
   for(size_t j = 0; j < edges.size(); j++) {
     GEdge *ge = edges[j];
@@ -288,7 +302,6 @@ static HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
       index++;
     }
   }
-  
 
   m->triangles.num = m->triangles.size = ntri;
   HXT_CHECK(hxtAlignedMalloc(&m->triangles.node,
@@ -312,8 +325,8 @@ static HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
 
 static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 {
-  HXT_CHECK(hxtSetMessageCallback (hxtGmshMsgCallback));
-	    
+  HXT_CHECK(hxtSetMessageCallback(hxtGmshMsgCallback));
+
   //  int nthreads = CTX::instance()->mesh.maxNumThreads3D;
   int optimize = 1;
   int refine = 1;
@@ -332,21 +345,15 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
   Gmsh2Hxt(regions, mesh, v2c, c2v);
 
   //  Msg::Info("Entering hxtTetMesh3d using %d threads",nthreads);
-  HXT_CHECK(hxtTetMesh3d(mesh,
-			 0,0,0,
-			 reproducible,
-			 verbosity,
-			 stat,
-			 refine,
-                         optimize,
-			 threshold,
-			 hxt_boundary_recovery,
-			 hxtMeshSizeGmshCallBack, regions[0]));  
+  HXT_CHECK(
+    hxtTetMesh3d(mesh, 0, 0, 0, reproducible, verbosity, stat, refine, optimize,
+                 threshold, hxt_boundary_recovery,
+                 NULL, // hxtMeshSizeGmshCallBack, // FIXME does not work yet
+                 regions[0]));
 
-  
   //  HXT_CHECK(hxtMeshWriteGmsh(mesh, "hxt.msh"));
 
-  HXT_CHECK(Hxt2Gmsh(regions, mesh,v2c,c2v));
+  HXT_CHECK(Hxt2Gmsh(regions, mesh, v2c, c2v));
 
   HXT_CHECK(hxtMeshDelete(&mesh));
   HXT_CHECK(hxtContextDelete(&context));
@@ -364,7 +371,7 @@ int meshGRegionHxt(std::vector<GRegion *> &regions)
 
 int meshGRegionHxt(std::vector<GRegion *> &regions)
 {
-  Msg::Error("Gmsh should be compile with Hxt to enable that option");
+  Msg::Error("Gmsh should be compiled with Hxt3D to enable this option");
   return -1;
 }
 

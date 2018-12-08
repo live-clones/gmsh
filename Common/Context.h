@@ -30,7 +30,7 @@ struct contextMeshOptions {
   int recombine3DConformity, flexibleTransfinite;
   int order, secondOrderLinear, secondOrderIncomplete, secondOrderExperimental;
   int meshOnlyVisible, minCircPoints, minCurvPoints;
-  int hoOptimize, hoNLayers, hoOptPrimSurfMesh;
+  int hoOptimize, hoPeriodic, hoNLayers, hoOptPrimSurfMesh;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   std::map<int, int> algo2dPerFace;
   std::map<int, int> curvatureControlPerFace;

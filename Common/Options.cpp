@@ -6178,6 +6178,13 @@ double opt_mesh_ho_optimize(OPT_ARGS_NUM)
   return CTX::instance()->mesh.hoOptimize;
 }
 
+double opt_mesh_ho_periodic(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.hoPeriodic = (int)val;
+  return CTX::instance()->mesh.hoPeriodic;
+}
+
 double opt_mesh_ho_nlayers(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
