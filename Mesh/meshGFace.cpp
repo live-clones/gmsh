@@ -146,7 +146,7 @@ void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug)
 
   for(std::set<GEdge *>::iterator it = edges.begin(); it != edges.end(); ++it) {
     GEdge *ge = *it;
-    Range<double> r = ge->parBounds(0);
+    Range<double> r = ge->parBoundsOnFace(gf);
     SPoint2 p[300];
     int NITER = ge->isSeam(gf) ? 2 : 1;
     for(int i = 0; i < NITER; i++) {
@@ -1875,7 +1875,7 @@ static bool buildConsecutiveListOfVertices(
 
     // if(seam) printf("face %d has seam %d\n", gf->tag(), ges.ge->tag());
 
-    Range<double> range = ges.ge->parBounds(0);
+    Range<double> range = ges.ge->parBoundsOnFace(gf);
 
     MVertex *here = ges.ge->getBeginVertex()->mesh_vertices[0];
     mesh1d.push_back(ges.ge->reparamOnFace(gf, range.low(), 1));
@@ -2289,7 +2289,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
           if(it != invertedRecoverMap.end()) {
             if(it->second.size() > 1) {
               const GEdge *edge = (*ite);
-              const Range<double> parBounds = edge->parBounds(0);
+              const Range<double> parBounds = edge->parBoundsOnFace(gf);
               GPoint firstPoint = edge->point(parBounds.low());
               GPoint lastPoint = edge->point(parBounds.high());
               double param;
