@@ -93,12 +93,6 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
   std::vector<MTetrahedron *> tets;
   delaunayMeshIn3D(points, tets); // adds 8 enclosing box vertices
 
-  std::vector<MVertex*> box;
-  if(points.size() >= 8){
-    for(unsigned int i = points.size() - 8; i < points.size(); i++)
-      box.push_back(points[i]);
-  }
-
   // create output
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
