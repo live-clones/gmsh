@@ -1104,6 +1104,7 @@ Affectation :
       else
 	yymsg(0, "Unknown command '%s Field'", $1);
 #endif
+      Free($1);
       List_Delete($4);
     }
   | tField '[' FExpr ']' tAFFECT tSTRING tEND
@@ -1385,6 +1386,7 @@ Enumeration :
         }
       }
       List_Delete($1);
+      Free($3);
     }
   ;
 
