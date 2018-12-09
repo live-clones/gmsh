@@ -2538,6 +2538,7 @@ ListOfShapes :
         }
         List_Add($$, &s);
       }
+      List_Delete(tmp);
     }
   | ListOfShapes tParent GeoEntity '{' RecursiveListOfDouble '}' tEND
     {
@@ -2556,6 +2557,7 @@ ListOfShapes :
         }
         List_Add($$, &s);
       }
+      List_Delete(tmp);
     }
   | ListOfShapes GeoEntity '{' tDOTS '}' tEND
     {
@@ -2574,6 +2576,7 @@ ListOfShapes :
         }
         List_Add($$, &s);
       }
+      List_Delete(tmp);
     }
   | ListOfShapes tPhysical GeoEntity '{' tDOTS '}' tEND
     {
@@ -2594,6 +2597,8 @@ ListOfShapes :
         }
         List_Add($$, &s);
       }
+      List_Delete(tmp);
+      List_Delete(tmp2);
     }
 ;
 
