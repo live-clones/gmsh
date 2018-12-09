@@ -1127,10 +1127,9 @@ void delaunayTrgl(const unsigned int numThreads,
 #if defined(_VERBOSE)
   double totSearchGlob = 0;
   double totCavityGlob = 0;
+  printf("%d threads for inserting %d points\n", numThreads, Npts);
 #endif
 
-  // printf("%d threads for inserting %d points\n",numThreads,Npts);
-  // double t1,t2=0,t3=0,t4=0;
   // checkLocalDelaunayness(allocator, 0, "initial");
 
   std::vector<int> invalidCavities(numThreads);
@@ -1164,22 +1163,14 @@ void delaunayTrgl(const unsigned int numThreads,
       Choice[K] = randomTet(0, allocator);
 
     invalidCavities[myThread] = 0;
-    unsigned int locSize = 0;
-    std::vector<unsigned int> locSizeK(NPTS_AT_ONCE);
-    std::vector<Vert *> allocatedVerts(NPTS_AT_ONCE);
     for(unsigned int K = 0; K < NPTS_AT_ONCE; K++) {
-      locSizeK[K] = assignTo[K + myThread * NPTS_AT_ONCE].size();
-      locSize += locSizeK[K];
-      allocatedVerts[K] = new Vert[locSizeK[K]];
-      for(unsigned int iP = 0; iP < locSizeK[K]; iP++) {
-        allocatedVerts[K][iP] = *(assignTo[K + myThread * NPTS_AT_ONCE][iP]);
-        if(numThreads != 1) allocatedVerts[K][iP]._thread = myThread;
+      for(unsigned int iP = 0; iP < assignTo[K + myThread * NPTS_AT_ONCE].size(); iP++) {
+	if(numThreads != 1)
+	  assignTo[K + myThread * NPTS_AT_ONCE][iP]->_thread = myThread;
       }
     }
 
     std::vector<Vert *> vToAdd(NPTS_AT_ONCE);
-
-    // printf("reaching parallel section\n");
 
 #if defined(_OPENMP)
 #pragma omp barrier
@@ -1187,16 +1178,17 @@ void delaunayTrgl(const unsigned int numThreads,
 
     // Main loop
     for(unsigned int iPGlob = 0; iPGlob < maxLocSizeK; iPGlob++) {
-    // printf("%d vs %d\n",iPGlob,maxLocSizeK);
+
 #if defined(_OPENMP)
 #pragma omp barrier
 #endif
       std::vector<Tet *> t(NPTS_AT_ONCE);
-      // double c1 = Cpu();
+
       // FIND SEEDS
-      // t1 = Cpu();
       for(unsigned int K = 0; K < NPTS_AT_ONCE; K++) {
-        vToAdd[K] = iPGlob < locSizeK[K] ? &allocatedVerts[K][iPGlob] : NULL;
+	vToAdd[K] = (iPGlob < assignTo[K + myThread * NPTS_AT_ONCE].size()) ?
+	  assignTo[K + myThread * NPTS_AT_ONCE][iPGlob] : NULL;
+      
         if(vToAdd[K]) {
           // In 3D, insertion of a point may lead to deletion of tets !!
           if(!Choice[K]->V[0]) Choice[K] = randomTet(0, allocator);
@@ -1209,10 +1201,8 @@ void delaunayTrgl(const unsigned int numThreads,
           }
         }
       }
-      // t2+= Cpu() - t1;
-      // double c1 = Cpu();
+
       // BUILD CAVITIES
-      // t1 = Cpu();
       for(unsigned int K = 0; K < NPTS_AT_ONCE; K++) {
         if(vToAdd[K]) {
           cavityContainer &cavityK = cavity[K];
@@ -1238,8 +1228,6 @@ void delaunayTrgl(const unsigned int numThreads,
         }
       }
 
-      // t3 += Cpu() - t1;
-
 #if defined(_OPENMP)
 #pragma omp barrier
 #endif
@@ -1249,7 +1237,6 @@ void delaunayTrgl(const unsigned int numThreads,
         else
           ok[K] = canWeProcessCavity(cavity[K], myThread, K);
       }
-      // t1 = Cpu();
 
       for(unsigned int K = 0; K < NPTS_AT_ONCE; K++) {
         if(ok[K]) {
@@ -1293,7 +1280,6 @@ void delaunayTrgl(const unsigned int numThreads,
           }
         }
       }
-      // t4 += Cpu() - t1;
     }
 #if defined(_VERBOSE)
 #if defined(_OPENMP)
@@ -1397,7 +1383,6 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
 
   int nbBlocks = nptsatonce * numThreads;
 
-  std::vector<Vert *> assignTo0[1];
   std::vector<std::vector<Vert *> > assignTo(nbBlocks);
 
   for(unsigned int i = 1; i < indices.size(); i++) {
@@ -1415,7 +1400,6 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
     }
   }
 
-  delaunayTrgl(1, 1, assignTo0[0].size(), assignTo0, allocator);
   delaunayTrgl(numThreads, nptsatonce, N, &assignTo[0], allocator);
   // __print("finalTetrahedrization.pos",0, allocator);
 }
