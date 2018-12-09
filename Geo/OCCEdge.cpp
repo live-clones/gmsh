@@ -74,6 +74,18 @@ SBoundingBox3d OCCEdge::bounds(bool fast) const
 
 Range<double> OCCEdge::parBounds(int i) const { return Range<double>(s0, s1); }
 
+Range<double> OCCEdge::parBoundsOnFace(GFace *face) const
+{
+  if (face->getNativeType() != GEntity::OpenCascadeModel || !degenerate(0)) {
+    return parBounds(0);
+  }
+
+  const TopoDS_Face *s = (TopoDS_Face *)((OCCFace *)face->getNativePtr());
+  double s0, s1;
+  curve2d = BRep_Tool::CurveOnSurface(c, *s, s0, s1);
+  return {s0, s1};
+}
+
 void OCCEdge::setTrimmed(OCCFace *f)
 {
   if(!trimmed) {
