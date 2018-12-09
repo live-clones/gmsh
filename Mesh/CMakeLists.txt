@@ -37,8 +37,6 @@ set(SRC
   delaunay3d.cpp
   simple3D.cpp ThinLayer.cpp
   DivideAndConquer.cpp
-  Voronoi3D.cpp
-  Levy3D.cpp
   directions3D.cpp
   filterElements.cpp
   yamakawa.cpp

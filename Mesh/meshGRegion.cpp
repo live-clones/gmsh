@@ -32,7 +32,6 @@
 #include "simple3D.h"
 #include "directions3D.h"
 #include "pointInsertion.h"
-#include "Levy3D.h"
 #include "discreteFace.h"
 #include "filterElements.h"
 #include "ExtrudeParams.h"
