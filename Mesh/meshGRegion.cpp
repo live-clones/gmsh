@@ -162,20 +162,8 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D) {
     refineMeshMMG(gr);
   }
-  else if(CTX::instance()->mesh.oldRefinement) {
+  else{
     insertVerticesInRegion(gr, 2000000000, true, &sqr);
-  }
-  else {
-    void edgeBasedRefinement(const int numThreads, const int nptsatonce,
-                             GRegion *gr);
-    // just to remove tets that are not to be meshed
-    insertVerticesInRegion(gr, 0, true, &sqr);
-    for(unsigned int i = 0; i < regions.size(); i++) {
-      Msg::Info("Refining volume %d with %d threads", regions[i]->tag(),
-                Msg::GetMaxThreads());
-      edgeBasedRefinement(Msg::GetMaxThreads(), 1, regions[i]);
-    }
-    // RelocateVertices(regions, -1);
   }
 
   if(sqr.buildPyramids(gr->model())){

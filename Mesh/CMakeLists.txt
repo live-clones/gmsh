@@ -4,9 +4,6 @@
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 
 set(SRC
-  meshGRegionBoundaryRecovery.cpp
-  delaunay3d.cpp
-  delaunay_refinement.cpp
   Generator.cpp
   meshGEdge.cpp
     meshGEdgeExtruded.cpp
@@ -15,6 +12,7 @@ set(SRC
     meshGFaceBamg.cpp meshGFaceBDS.cpp meshGFaceDelaunayInsertion.cpp
     meshGFaceLloyd.cpp meshGFaceOptimize.cpp
   meshGRegion.cpp
+    meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGRegionNetgen.cpp
     meshGRegionDelaunayInsertion.cpp meshGRegionTransfinite.cpp
     meshGRegionExtruded.cpp  meshGRegionCarveHole.cpp
@@ -36,6 +34,7 @@ set(SRC
     meshRefine.cpp
     QuadTriUtils.cpp
       QuadTriExtruded2D.cpp QuadTriExtruded3D.cpp QuadTriTransfinite3D.cpp
+  delaunay3d.cpp
   simple3D.cpp ThinLayer.cpp
   DivideAndConquer.cpp
   Voronoi3D.cpp

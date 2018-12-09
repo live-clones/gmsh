@@ -1163,8 +1163,6 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "NumSubEdges" , opt_mesh_num_sub_edges , 2. ,
     "Number of edge subdivisions when displaying high order elements" },
 
-  { F|O, "OldRefinement" , opt_mesh_old_refinement , 1 ,
-    "Use old 3D point insertion algorithm" },
   { F|O, "Optimize" , opt_mesh_optimize , 1. ,
     "Optimize the mesh to improve the quality of tetrahedral elements" },
   { F|O, "OptimizeThreshold" , opt_mesh_optimize_threshold , 0.3 ,
