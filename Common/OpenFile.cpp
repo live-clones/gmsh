@@ -439,9 +439,6 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
     status = GModel::current()->readP3D(fileName);
     mesh = true;
   }
-  else if(ext == ".fm" || ext == ".FM") {
-    status = GModel::current()->readFourier(fileName);
-  }
 #if defined(HAVE_FLTK)
   else if(ext == ".pnm" || ext == ".PNM" || ext == ".pbm" || ext == ".PBM" ||
           ext == ".pgm" || ext == ".PGM" || ext == ".ppm" || ext == ".PPM") {

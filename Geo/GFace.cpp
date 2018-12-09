@@ -1307,7 +1307,7 @@ bool GFace::buildSTLTriangulation(bool force)
   stl_triangles.clear();
 
   // Build a simple triangulation for surfaces which we know are not trimmed
-  if(geomType() == ParametricSurface || geomType() == ProjectionFace) {
+  if(geomType() == ParametricSurface) {
     const int nu = 64, nv = 64;
     Range<double> ubounds = parBounds(0);
     Range<double> vbounds = parBounds(1);

@@ -70,7 +70,7 @@ GModel::GModel(const std::string &name)
   : _maxVertexNum(0), _maxElementNum(0), _checkPointedMaxVertexNum(0),
     _checkPointedMaxElementNum(0), _destroying(false), _name(name), _visible(1),
     _elementOctree(0), _geo_internals(0), _occ_internals(0), _acis_internals(0),
-    _fm_internals(0), _fields(0), _currentMeshEntity(0), _numPartitions(0),
+    _fields(0), _currentMeshEntity(0), _numPartitions(0),
     normals(0)
 {
   // hide all other models
@@ -176,18 +176,9 @@ void GModel::destroy(bool keepName)
   regions.clear();
   std::set<GRegion *, GEntityLessThan>().swap(regions);
 
-  std::vector<GFace *> to_keep;
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
-    // projection faces are persistent
-    if((*it)->getNativeType() == GEntity::UnknownModel &&
-       (*it)->geomType() == GEntity::ProjectionFace)
-      to_keep.push_back(*it);
-    else
-      delete *it;
-  }
+  for(fiter it = firstFace(); it != lastFace(); ++it) delete *it;
   faces.clear();
   std::set<GFace *, GEntityLessThan>().swap(faces);
-  faces.insert(to_keep.begin(), to_keep.end());
 
   for(eiter it = firstEdge(); it != lastEdge(); ++it) delete *it;
   edges.clear();

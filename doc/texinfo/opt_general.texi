@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildOptions
 Gmsh build options (read-only)@*
-Default value: @code{" 64Bit Ann Bamg Bfgs Blas(VecLib) Blossom Cairo Cgns DIntegration Dlopen Fltk GMP Gmm Hxt Jpeg(Fltk) Kbipack Lapack(VecLib) MathEx Med Mesh Metis Mmg3d Mpeg NativeFileChooser Netgen ONELAB ONELABMetamodel OpenCASCADE OpenGL OptHom PETSc Parser Plugins Png(Fltk) Post SLEPc Solver TetGen/BR Voro++ Zlib"}@*
+Default value: @code{" 64Bit Ann Bamg Bfgs Blas[veclib] Blossom Cairo Cgns DIntegration Dlopen Fltk GMP Gmm Hxt Hxt3D Jpeg[fltk] Kbipack Lapack[veclib] MathEx Med Mesh Metis Mmg3d Mpeg NativeFileChooser Netgen ONELAB ONELABMetamodel OpenCASCADE OpenGL OptHom PETSc Parser Plugins Png[fltk] Post SLEPc Solver TetGen/BR Voro++ Zlib"}@*
 Saved in: @code{-}
 
 @item General.DefaultFileName
@@ -158,7 +158,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"4.0.6-git-c9f121577"}@*
+Default value: @code{"4.0.7-git-274426afc"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern

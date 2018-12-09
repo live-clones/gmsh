@@ -2944,8 +2944,6 @@ void meshGFace::operator()(GFace *gf, bool print)
 {
   gf->model()->setCurrentMeshEntity(gf);
 
-  // if(gf->geomType() == GEntity::DiscreteFace) return;
-  if(gf->geomType() == GEntity::ProjectionFace) return;
   if(gf->meshAttributes.method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) return;
 
@@ -3121,7 +3119,6 @@ static void getGFaceOrientation(GFace *gf, BoundaryLayerColumns *blc,
 void orientMeshGFace::operator()(GFace *gf)
 {
   if(!gf->getNumMeshElements()) return;
-  if(gf->geomType() == GEntity::ProjectionFace) return;
 
   gf->model()->setCurrentMeshEntity(gf);
 

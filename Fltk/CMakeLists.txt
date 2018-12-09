@@ -23,7 +23,6 @@ set(SRC
     helpWindow.cpp
     fileDialogs.cpp
     extraDialogs.cpp
-    projectionEditor.cpp
     classificationEditor.cpp
     partitionDialog.cpp
     inputValue.cpp
@@ -32,5 +31,5 @@ set(SRC
     onelabGroup.cpp
 )
 
-file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
+file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(Fltk "${SRC};${HDR}")

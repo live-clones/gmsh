@@ -401,11 +401,6 @@ Number of edge subdivisions when displaying high order elements@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.OldRefinement
-Use old 3D point insertion algorithm@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.Optimize
 Optimize the mesh to improve the quality of tetrahedral elements@*
 Default value: @code{1}@*

@@ -43,7 +43,6 @@ typedef unsigned long intptr_t;
 #include "fileDialogs.h"
 #include "extraDialogs.h"
 #include "partitionDialog.h"
-#include "projectionEditor.h"
 #include "classificationEditor.h"
 #include "GModel.h"
 #include "PView.h"
@@ -4301,10 +4300,6 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_recombine_cb} ,
   {"0Modules/Mesh/Reclassify 2D",
    (Fl_Callback *)mesh_classify_cb} ,
-#if defined(HAVE_FOURIER_MODEL)
-  {"0Modules/Mesh/Reparameterize 2D",
-   (Fl_Callback *)mesh_parameterize_cb} ,
-#endif
   {"0Modules/Mesh/Delete/Elements",
    (Fl_Callback *)mesh_delete_parts_cb, (void*)"elements"} ,
   {"0Modules/Mesh/Delete/Curves",
