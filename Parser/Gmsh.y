@@ -1298,7 +1298,7 @@ DefineConstants :
         gmsh_yysymbols[key].value = val;
       }
       Free($3);
-      Free($6);
+      List_Delete($6);
     }
   | DefineConstants Comma String__Index LP RP tAFFECT '{' ListOfDouble
     { init_options(); }
@@ -1316,7 +1316,7 @@ DefineConstants :
         gmsh_yysymbols[key].value = val;
       }
       Free($3);
-      Free($8);
+      List_Delete($8);
     }
   | DefineConstants Comma String__Index tAFFECT StringExpr
     {

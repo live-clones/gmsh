@@ -7818,7 +7818,7 @@ yyreduce:
         gmsh_yysymbols[key].value = val;
       }
       Free((yyvsp[(3) - (9)].c));
-      Free((yyvsp[(6) - (9)].l));
+      List_Delete((yyvsp[(6) - (9)].l));
     ;}
     break;
 
@@ -7842,7 +7842,7 @@ yyreduce:
         gmsh_yysymbols[key].value = val;
       }
       Free((yyvsp[(3) - (11)].c));
-      Free((yyvsp[(8) - (11)].l));
+      List_Delete((yyvsp[(8) - (11)].l));
     ;}
     break;
 
