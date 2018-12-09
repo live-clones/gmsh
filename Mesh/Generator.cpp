@@ -843,7 +843,6 @@ static void Mesh3D(GModel *m)
   FindConnectedRegions(delaunay, connected);
 
   // remove quads elements for volumes that are recombined
-  // pragma OMP here ?
   for(unsigned int i = 0; i < connected.size(); i++) {
     for(unsigned j = 0; j < connected[i].size(); j++) {
       GRegion *gr = connected[i][j];
@@ -860,7 +859,6 @@ static void Mesh3D(GModel *m)
   double vol_hexa_recombination = 0.;
   int nb_elements_recombination = 0, nb_hexa_recombination = 0;
 
-  // pragma OMP here ?
   for(unsigned int i = 0; i < connected.size(); i++) {
     MeshDelaunayVolume(connected[i]);
 

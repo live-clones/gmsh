@@ -10,9 +10,6 @@
 #if defined(HAVE_MESH)
   #include "Generator.h"
   #include "DivideAndConquer.h"
-#if defined(HAVE_BFGS)
-  #include "meshGFaceLloyd.h"
-#endif
   #include "meshGFaceOptimize.h"
 #if defined(HAVE_OPTHOM)
   #include "OptHomRun.h"
@@ -45,9 +42,6 @@ namespace std {
 %include "Generator.h"
 #pragma SWIG nowarn=314
 %include "DivideAndConquer.h"
-#if defined(HAVE_BFGS)
-%include "meshGFaceLloyd.h"
-#endif
 %include "meshGFaceOptimize.h"
 #if defined(HAVE_OPTHOM)
 %include "OptHomRun.h"

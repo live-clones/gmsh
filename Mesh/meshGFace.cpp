@@ -1269,10 +1269,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     ++itvx;
   }
 
-  // add additional vertices
-  all_vertices.insert(gf->additionalVertices.begin(),
-                      gf->additionalVertices.end());
-
   if(all_vertices.size() < 3) {
     Msg::Warning("Mesh generation of surface %d skipped: only %d nodes on "
                  "the boundary", gf->tag(), all_vertices.size());
@@ -1814,11 +1810,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
                        gf->meshStatistics.best_element_shape,
                        gf->meshStatistics.nbTriangle,
                        gf->meshStatistics.nbGoodQuality);
-
-  gf->mesh_vertices.insert(gf->mesh_vertices.end(),
-                           gf->additionalVertices.begin(),
-                           gf->additionalVertices.end());
-  gf->additionalVertices.clear();
 
   if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
     directions_storage(gf);
