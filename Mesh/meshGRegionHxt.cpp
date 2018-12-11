@@ -340,9 +340,9 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 			 refine,
                          optimize,
 			 threshold,
-			 hxt_boundary_recovery,
-			 hxtMeshSizeGmshCallBack, regions[0]));  
-
+			 hxt_boundary_recovery,NULL,NULL));
+  //			 hxtMeshSizeGmshCallBack, regions[0]));  
+  
   
   //  HXT_CHECK(hxtMeshWriteGmsh(mesh, "hxt.msh"));
 

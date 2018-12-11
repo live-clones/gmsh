@@ -94,16 +94,16 @@ void outputScalarField(std::vector<BDS_Face *> &t, const char *iii, int param,
     if(!(*tit)->deleted) {
       (*tit)->getNodes(pts);
       // double v = BDS_Face_Validity (gf, *tit);
-      if(!param && gf) {
-        if(pts[0]->degenerated + pts[1]->degenerated + pts[2]->degenerated <
-           2) {
+      if(!param) {
+	//        if(pts[0]->degenerated + pts[1]->degenerated + pts[2]->degenerated <
+	//           2) {
           fprintf(f,
                   "ST(%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%"
                   "22.15E,%22.15E){%g,%g,%g};\n",
                   pts[0]->X, pts[0]->Y, pts[0]->Z, pts[1]->X, pts[1]->Y,
                   pts[1]->Z, pts[2]->X, pts[2]->Y, pts[2]->Z,
                   (double)pts[0]->iD, (double)pts[1]->iD, (double)pts[2]->iD);
-        }
+	  //        }
       }
       if(param && gf) {
         if(pts[0]->degenerated + pts[1]->degenerated + pts[2]->degenerated >
@@ -398,7 +398,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
 
     //    printf("%d intersected\n",intersected.size());
 
-    if(!intersected.size() || ix > 100000) {
+    if(!intersected.size() || ix > 300) {
       BDS_Edge *eee = find_edge(num1, num2);
       if(!eee) {
         if(Msg::GetVerbosity() > 98) {

@@ -20,6 +20,7 @@ set(SRC
     meshGRegionExtruded.cpp  meshGRegionCarveHole.cpp
     meshGRegionLocalMeshMod.cpp meshGRegionMMG3D.cpp
     meshGRegionRelocateVertex.cpp
+  meshGRegionBoudaryLayer.cpp
   meshDiscreteRegion.cpp
   meshMetric.cpp
   BackgroundMeshTools.cpp
