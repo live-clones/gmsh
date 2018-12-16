@@ -37,8 +37,9 @@ linux64_compatibility_ci:
     - make -j 8
     - cmake -DENABLE_MESH=1 ..
     - make -j 8
+    - rm -rf *
     - export CXXFLAGS=-std=c++98
-    - cmake -DDEFAULT=1 -DENABLE_CXX11=0 -DENABLE_OCC=0 ..
+    - cmake -DENABLE_CXX11=0 -DENABLE_OCC=0 ..
     - make -j 8
   tags:
     - linux64
