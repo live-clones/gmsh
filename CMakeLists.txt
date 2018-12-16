@@ -107,8 +107,6 @@ if(NOT GMSH_RELEASE)
   endif()
   if(GIT_COMMIT_HASH)
     set(GMSH_EXTRA_VERSION "-git-${GIT_COMMIT_HASH}")
-  else()
-    set(GMSH_EXTRA_VERSION "-git")
   endif()
 endif()
 
