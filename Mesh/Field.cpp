@@ -26,7 +26,6 @@
 #include "mathEvaluator.h"
 #include "BackgroundMeshTools.h"
 #include "STensor3.h"
-#include "meshMetric.h"
 #include "ExtrudeParams.h"
 
 #if defined(HAVE_POST)
