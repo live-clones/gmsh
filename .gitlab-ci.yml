@@ -24,7 +24,7 @@ linux64_ci:
   except:
     - tags
 
-linux64_minimal_ci:
+linux64_compatibility_ci:
   image: onelab/ubuntu18.04
   script:
     - mkdir build
@@ -37,19 +37,8 @@ linux64_minimal_ci:
     - make -j 8
     - cmake -DENABLE_MESH=1 ..
     - make -j 8
-  tags:
-    - linux64
-    - docker
-  except:
-    - tags
-
-linux64_cxx98_compat_ci:
-  image: onelab/ubuntu16.04
-  script:
-    - mkdir build
-    - cd build
     - export CXXFLAGS=-std=c++98
-    - cmake -DENABLE_CXX11=0 -DENABLE_OCC=0 ${EXTRA_OPTION} ..
+    - cmake -DDEFAULT=1 -DENABLE_CXX11=0 -DENABLE_OCC=0 ..
     - make -j 8
   tags:
     - linux64
