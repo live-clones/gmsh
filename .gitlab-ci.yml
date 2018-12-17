@@ -18,6 +18,7 @@ linux64_ci:
     - cmake ${EXTRA_OPTION} ..
     - make -j 8
     - ctest -j 8 --output-on-failure
+    - valgrind --leak-check=full --error-exitcode=1 ./gmsh ../tutorial/t5.geo -3
   tags:
     - linux64
     - docker
