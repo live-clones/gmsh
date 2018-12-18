@@ -106,7 +106,7 @@ if(NOT GMSH_RELEASE)
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif()
   if(GIT_COMMIT_HASH)
-    set(GMSH_EXTRA_VERSION "-git-${GIT_COMMIT_HASH}")
+    set(GMSH_EXTRA_VERSION "${GMSH_EXTRA_VERSION}-git-${GIT_COMMIT_HASH}")
   endif()
 endif()
 
