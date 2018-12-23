@@ -30,7 +30,7 @@ gmsh.onelab.set("""
 { "type":"number", "name":"check 1", "values":[ 0 ], "choices":[0, 1]  }
 """)
 
-# get the full parameter, store it as a python dict, and change an attribute
+# get the full parameter, store it as a Julia dict, and change an attribute
 p = JSON.parse(gmsh.onelab.get("check 1"))
 p["attributes"] = "Highlight" => "Blue"
 gmsh.onelab.set(JSON.json(p))
