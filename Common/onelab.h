@@ -610,6 +610,23 @@ namespace onelab {
       sstream << " }";
       return sstream.str();
     }
+    bool fromJSON(const std::string &json)
+    {
+#if defined(HAVE_PICOJSON)
+      picojson::value v;
+      std::string err = picojson::parse(v, json);
+      if(err.size()) return false;
+      if(!v.is<picojson::object>()) return false;
+      const picojson::value::object &par = v.get<picojson::object>();
+      picojson::value::object::const_iterator it = par.find("type");
+      if(it == par.end()) return false;
+      if(it->second.to_str() == "number") {
+        fromJSON(par);
+        return true;
+      }
+#endif
+      return false;
+    }
 #if defined(HAVE_PICOJSON)
     bool fromJSON(const picojson::value::object &par)
     {
@@ -778,6 +795,23 @@ namespace onelab {
       }
       sstream << " }";
       return sstream.str();
+    }
+    bool fromJSON(const std::string &json)
+    {
+#if defined(HAVE_PICOJSON)
+      picojson::value v;
+      std::string err = picojson::parse(v, json);
+      if(err.size()) return false;
+      if(!v.is<picojson::object>()) return false;
+      const picojson::value::object &par = v.get<picojson::object>();
+      picojson::value::object::const_iterator it = par.find("type");
+      if(it == par.end()) return false;
+      if(it->second.to_str() == "string") {
+        fromJSON(par);
+        return true;
+      }
+#endif
+      return false;
     }
 #if defined(HAVE_PICOJSON)
     bool fromJSON(const picojson::value::object &par)
@@ -1085,15 +1119,13 @@ namespace onelab {
       picojson::value v;
       std::string err = picojson::parse(v, json);
       if(err.size()) return false;
-      if(!v.is<picojson::object>()) return false;
-      const picojson::value::object &obj = v.get<picojson::object>();
-      for(picojson::value::object::const_iterator i = obj.begin();
-          i != obj.end(); ++i) {
-        if(i->first == "onelab") { // onelab database
-          if(!i->second.is<picojson::object>()) return false;
-          const picojson::value::object &db = i->second.get<picojson::object>();
-          for(picojson::value::object::const_iterator j = db.begin();
-              j != db.end(); ++j) {
+      if(v.is<picojson::object>()){ // onelab database or single parameter
+        const picojson::value::object &obj = v.get<picojson::object>();
+        picojson::value::object::const_iterator it = obj.find("onelab");
+        if(it != obj.end()){ // onelab database
+          if(!it->second.is<picojson::object>()) return false;
+          const picojson::value::object &db = it->second.get<picojson::object>();
+          for(picojson::value::object::const_iterator j = db.begin(); j != db.end(); ++j) {
             if(j->first == "version") {
               if(!j->second.is<std::string>()) return false;
               if(j->second.get<std::string>() != parameter::version())
@@ -1101,34 +1133,56 @@ namespace onelab {
             }
             else if(j->first == "parameters") {
               if(!j->second.is<picojson::array>()) return false;
-              const picojson::value::array &arr =
-                j->second.get<picojson::array>();
+              const picojson::value::array &arr = j->second.get<picojson::array>();
               for(unsigned int k = 0; k < arr.size(); k++) {
                 if(!arr[k].is<picojson::object>()) return false;
-                const picojson::value::object &par =
-                  arr[k].get<picojson::object>();
-                picojson::value::object::const_iterator it = par.find("type");
-                if(it == par.end()) return false;
-                if(it->second.to_str() == "number") {
-                  number p;
-                  p.fromJSON(par);
-                  set(p, client);
-                }
-                else if(it->second.to_str() == "string") {
-                  string p;
-                  p.fromJSON(par);
-                  set(p, client);
-                }
+                const picojson::value::object &par = arr[k].get<picojson::object>();
+                if(!fromJSON(par, client)) return false;
               }
             }
           }
+          return true;
+        }
+        else{ // single parameter
+          return fromJSON(obj, client);
         }
       }
-      return true;
+      else if(v.is<picojson::array>()){ // array of parameters
+        const picojson::value::array &arr = v.get<picojson::array>();
+        for(unsigned int k = 0; k < arr.size(); k++) {
+          if(!arr[k].is<picojson::object>()) return false;
+          const picojson::value::object &par = arr[k].get<picojson::object>();
+          if(!fromJSON(par, client)) return false;
+        }
+        return true;
+      }
+      else{
+        return false;
+      }
 #else
       return false;
 #endif
     }
+#if defined(HAVE_PICOJSON)
+    bool fromJSON(const picojson::value::object &par, const std::string &client = "")
+    {
+      picojson::value::object::const_iterator it = par.find("type");
+      if(it == par.end()) return false;
+      if(it->second.to_str() == "number") {
+        number p;
+        p.fromJSON(par);
+        set(p, client);
+        return true;
+      }
+      else if(it->second.to_str() == "string") {
+        string p;
+        p.fromJSON(par);
+        set(p, client);
+        return true;
+      }
+      return false;
+    }
+#endif
   };
 
   // The onelab client: a class that communicates with the onelab server. Each
