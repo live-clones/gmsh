@@ -1133,7 +1133,8 @@ void GenerateMesh(GModel *m, int ask)
       p.BARRIER_MAX = CTX::instance()->mesh.hoThresholdMax;
       p.dim = GModel::current()->getDim();
       p.optPrimSurfMesh = CTX::instance()->mesh.hoOptPrimSurfMesh;
-      HighOrderMeshOptimizer(GModel::current(), p);
+      // HighOrderMeshOptimizer(GModel::current(), p);
+      HighOrderMeshOptimizerNew(GModel::current(), p);
     }
 #else
     Msg::Error("High-order mesh optimization requires the OPTHOM module");
