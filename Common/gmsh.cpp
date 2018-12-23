@@ -4245,22 +4245,6 @@ GMSH_API void gmsh::fltk::run()
 
 // gmsh::onelab
 
-GMSH_API void gmsh::onelab::get(std::string &data, const std::string &format)
-{
-  if(!_isInitialized()) {
-    throw -1;
-  }
-#if defined(HAVE_ONELAB)
-  if(format == "json")
-    ::onelab::server::instance()->toJSON(data, "Gmsh");
-  else
-    Msg::Error("Unknown data format");
-#else
-  Msg::Error("Onelab not available");
-  throw -1;
-#endif
-}
-
 GMSH_API void gmsh::onelab::set(const std::string &data,
                                 const std::string &format)
 {
@@ -4268,12 +4252,139 @@ GMSH_API void gmsh::onelab::set(const std::string &data,
     throw -1;
   }
 #if defined(HAVE_ONELAB)
-  if(format == "json")
-    ::onelab::server::instance()->fromJSON(data);
+  if(format == "json"){
+    if(!::onelab::server::instance()->fromJSON(data))
+      Msg::Error("Could not parse json data '%s'", data.c_str());
+  }
   else
     Msg::Error("Unknown data format");
 #else
-  Msg::Error("Onelab not available");
+  Msg::Error("ONELAB not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::onelab::get(std::string &data,
+                                const std::string &name,
+                                const std::string &format)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_ONELAB)
+  if(format == "json"){
+    if(name.empty()){
+      ::onelab::server::instance()->toJSON(data, "Gmsh");
+    }
+    else{
+      std::vector<::onelab::number> ps;
+      ::onelab::server::instance()->get(ps, name);
+      if(ps.size()){
+        data = ps[0].toJSON();
+      }
+      else{
+        std::vector<::onelab::string> ps2;
+        ::onelab::server::instance()->get(ps2, name);
+        if(ps2.size())
+          data = ps2[0].toJSON();
+        else
+          Msg::Error("Unknown parameter '%s'", name.c_str());
+      }
+    }
+  }
+  else
+    Msg::Error("Unknown data format");
+#else
+  Msg::Error("ONELAB not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::onelab::setNumber(const std::string &name,
+                                      const std::vector<double> &value)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_ONELAB)
+  ::onelab::number p(name);
+  std::vector<::onelab::number> ps;
+  ::onelab::server::instance()->get(ps, name);
+  if(ps.size()) p = ps[0];
+  p.setValues(value);
+  ::onelab::server::instance()->set(p);
+#else
+  Msg::Error("ONELAB not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::onelab::getNumber(const std::string &name,
+                                      std::vector<double> &value)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_ONELAB)
+  std::vector<::onelab::number> ps;
+  ::onelab::server::instance()->get(ps, name);
+  if(ps.size())
+    value = ps[0].getValues();
+  else
+    Msg::Error("Unknown parameter '%s'", name.c_str());
+#else
+  Msg::Error("ONELAB not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::onelab::setString(const std::string &name,
+                                      const std::vector<std::string> &value)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_ONELAB)
+  ::onelab::string p(name);
+  std::vector<::onelab::string> ps;
+  ::onelab::server::instance()->get(ps, name);
+  if(ps.size()) p = ps[0];
+  p.setValues(value);
+  ::onelab::server::instance()->set(p);
+#else
+  Msg::Error("ONELAB not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::onelab::getString(const std::string &name,
+                                      std::vector<std::string> &value)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_ONELAB)
+  std::vector<::onelab::string> ps;
+  ::onelab::server::instance()->get(ps, name);
+  if(ps.size())
+    value = ps[0].getValues();
+  else
+    Msg::Error("Unknown parameter '%s'", name.c_str());
+#else
+  Msg::Error("ONELAB not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::onelab::clear(const std::string &name)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_ONELAB)
+  ::onelab::server::instance()->clear(name);
+#else
+  Msg::Error("ONELAB not available");
   throw -1;
 #endif
 }

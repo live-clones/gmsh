@@ -1624,13 +1624,35 @@ namespace gmsh { // Top-level functions
 
   namespace onelab { // ONELAB server functions
 
-    // Get `data' from the ONELAB server.
-    GMSH_API void get(std::string & data,
-                      const std::string & format = "json");
-
-    // Set `data' in the ONELAB server.
+    // Set one or more parameters in the ONELAB database, encoded in `format'.
     GMSH_API void set(const std::string & data,
                       const std::string & format = "json");
+
+    // Get all the parameters (or a single one if `name' is specified) from the
+    // ONELAB database, encoded in `format'.
+    GMSH_API void get(std::string & data,
+                      const std::string & name = "",
+                      const std::string & format = "json");
+
+    // Set the value the number parameter of name `name' in the ONELAB database.
+    GMSH_API void setNumber(const std::string & name,
+                            const std::vector<double> & value);
+
+    // Set the value the string parameter of name `name' in the ONELAB database.
+    GMSH_API void setString(const std::string & name,
+                            const std::vector<std::string> & value);
+
+    // Get the value the number parameter of name `name' from the ONELAB database.
+    GMSH_API void getNumber(const std::string & name,
+                            std::vector<double> & value);
+
+    // Get the value of the string parameter of name `name' from the ONELAB
+    // database.
+    GMSH_API void getString(const std::string & name,
+                            std::vector<std::string> & value);
+
+    // Clear the ONELAB database, or a single parameter if `name' is given.
+    GMSH_API void clear(const std::string & name = "");
 
     // Run a ONELAB client. If `name' is provided, create a new ONELAB client with
     // name `name' and executes `command'. If not, try to run a client that might

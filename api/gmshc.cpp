@@ -2558,12 +2558,23 @@ GMSH_API void gmshFltkRun(int * ierr)
   }
 }
 
-GMSH_API void gmshOnelabGet(char ** data, const char * format, int * ierr)
+GMSH_API void gmshOnelabSet(const char * data, const char * format, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::onelab::set(data, format);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshOnelabGet(char ** data, const char * name, const char * format, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::string api_data_;
-    gmsh::onelab::get(api_data_, format);
+    gmsh::onelab::get(api_data_, name, format);
     *data = strdup(api_data_.c_str());
   }
   catch(int api_ierr_){
@@ -2571,11 +2582,61 @@ GMSH_API void gmshOnelabGet(char ** data, const char * format, int * ierr)
   }
 }
 
-GMSH_API void gmshOnelabSet(const char * data, const char * format, int * ierr)
+GMSH_API void gmshOnelabSetNumber(const char * name, double * value, size_t value_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::onelab::set(data, format);
+    std::vector<double> api_value_(value, value + value_n);
+    gmsh::onelab::setNumber(name, api_value_);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshOnelabSetString(const char * name, char ** value, size_t value_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::string> api_value_(value, value + value_n);
+    gmsh::onelab::setString(name, api_value_);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshOnelabGetNumber(const char * name, double ** value, size_t * value_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_value_;
+    gmsh::onelab::getNumber(name, api_value_);
+    vector2ptr(api_value_, value, value_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshOnelabGetString(const char * name, char *** value, size_t * value_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::string> api_value_;
+    gmsh::onelab::getString(name, api_value_);
+    vectorstring2charptrptr(api_value_, value, value_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshOnelabClear(const char * name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::onelab::clear(name);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

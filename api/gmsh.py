@@ -96,24 +96,6 @@ def _ivectorint(o):
     else:
         return (c_int * len(o))(*o), c_size_t(len(o))
 
-def _ivectorvectorint(os):
-    n = len(os)
-    parrays = [_ivectorint(o) for o in os]
-    sizes = (c_size_t * n)(*(a[1] for a in parrays))
-    arrays = (POINTER(c_int) * n)(*(cast(a[0], POINTER(c_int)) for a in parrays))
-    arrays.ref = [a[0] for a in parrays]
-    size = c_size_t(n)
-    return arrays, sizes, size
-
-def _ivectorvectordouble(os):
-    n = len(os)
-    parrays = [_ivectordouble(o) for o in os]
-    sizes = (c_size_t * n)(*(a[1] for a in parrays))
-    arrays = (POINTER(c_double) * n)(*(cast(a[0], POINTER(c_double)) for a in parrays))
-    arrays.ref = [a[0] for a in parrays]
-    size = c_size_t(n)
-    return arrays, sizes, size
-
 def _ivectordouble(o):
     if use_numpy:
         array = numpy.ascontiguousarray(o, numpy.float64)
@@ -131,6 +113,27 @@ def _ivectorpair(o):
         return  ct, c_size_t(len(o) * 2)
     else:
         return ((c_int * 2) * len(o))(*o), c_size_t(len(o) * 2)
+
+def _ivectorstring(o):
+    return (c_char_p * len(o))(*(s.encode() for s in o)), c_size_t(len(o))
+
+def _ivectorvectorint(os):
+    n = len(os)
+    parrays = [_ivectorint(o) for o in os]
+    sizes = (c_size_t * n)(*(a[1] for a in parrays))
+    arrays = (POINTER(c_int) * n)(*(cast(a[0], POINTER(c_int)) for a in parrays))
+    arrays.ref = [a[0] for a in parrays]
+    size = c_size_t(n)
+    return arrays, sizes, size
+
+def _ivectorvectordouble(os):
+    n = len(os)
+    parrays = [_ivectordouble(o) for o in os]
+    sizes = (c_size_t * n)(*(a[1] for a in parrays))
+    arrays = (POINTER(c_double) * n)(*(cast(a[0], POINTER(c_double)) for a in parrays))
+    arrays.ref = [a[0] for a in parrays]
+    size = c_size_t(n)
+    return arrays, sizes, size
 
 def _iargcargv(o):
     return c_int(len(o)), (c_char_p * len(o))(*(s.encode() for s in o))
@@ -4304,28 +4307,9 @@ class onelab:
     """
 
     @staticmethod
-    def get(format="json"):
-        """
-        Get `data' from the ONELAB server.
-
-        Return `data'.
-        """
-        api_data_ = c_char_p()
-        ierr = c_int()
-        lib.gmshOnelabGet(
-            byref(api_data_),
-            c_char_p(format.encode()),
-            byref(ierr))
-        if ierr.value != 0:
-            raise ValueError(
-                "gmshOnelabGet returned non-zero error code: ",
-                ierr.value)
-        return _ostring(api_data_)
-
-    @staticmethod
     def set(data, format="json"):
         """
-        Set `data' in the ONELAB server.
+        Set one or more parameters in the ONELAB database, encoded in `format'.
         """
         ierr = c_int()
         lib.gmshOnelabSet(
@@ -4335,6 +4319,112 @@ class onelab:
         if ierr.value != 0:
             raise ValueError(
                 "gmshOnelabSet returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
+    def get(name="", format="json"):
+        """
+        Get all the parameters (or a single one if `name' is specified) from the
+        ONELAB database, encoded in `format'.
+
+        Return `data'.
+        """
+        api_data_ = c_char_p()
+        ierr = c_int()
+        lib.gmshOnelabGet(
+            byref(api_data_),
+            c_char_p(name.encode()),
+            c_char_p(format.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshOnelabGet returned non-zero error code: ",
+                ierr.value)
+        return _ostring(api_data_)
+
+    @staticmethod
+    def setNumber(name, value):
+        """
+        Set the value the number parameter of name `name' in the ONELAB database.
+        """
+        api_value_, api_value_n_ = _ivectordouble(value)
+        ierr = c_int()
+        lib.gmshOnelabSetNumber(
+            c_char_p(name.encode()),
+            api_value_, api_value_n_,
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshOnelabSetNumber returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
+    def setString(name, value):
+        """
+        Set the value the string parameter of name `name' in the ONELAB database.
+        """
+        api_value_, api_value_n_ = _ivectorstring(value)
+        ierr = c_int()
+        lib.gmshOnelabSetString(
+            c_char_p(name.encode()),
+            api_value_, api_value_n_,
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshOnelabSetString returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
+    def getNumber(name):
+        """
+        Get the value the number parameter of name `name' from the ONELAB database.
+
+        Return `value'.
+        """
+        api_value_, api_value_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshOnelabGetNumber(
+            c_char_p(name.encode()),
+            byref(api_value_), byref(api_value_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshOnelabGetNumber returned non-zero error code: ",
+                ierr.value)
+        return _ovectordouble(api_value_, api_value_n_.value)
+
+    @staticmethod
+    def getString(name):
+        """
+        Get the value of the string parameter of name `name' from the ONELAB
+        database.
+
+        Return `value'.
+        """
+        api_value_, api_value_n_ = POINTER(POINTER(c_char))(), c_size_t()
+        ierr = c_int()
+        lib.gmshOnelabGetString(
+            c_char_p(name.encode()),
+            byref(api_value_), byref(api_value_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshOnelabGetString returned non-zero error code: ",
+                ierr.value)
+        return _ovectorstring(api_value_, api_value_n_.value)
+
+    @staticmethod
+    def clear(name=""):
+        """
+        Clear the ONELAB database, or a single parameter if `name' is given.
+        """
+        ierr = c_int()
+        lib.gmshOnelabClear(
+            c_char_p(name.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshOnelabClear returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod

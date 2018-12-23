@@ -1721,15 +1721,42 @@ GMSH_API void gmshFltkWait(const double time,
  * yet been initialized. */
 GMSH_API void gmshFltkRun(int * ierr);
 
-/* Get `data' from the ONELAB server. */
-GMSH_API void gmshOnelabGet(char ** data,
-                            const char * format,
-                            int * ierr);
-
-/* Set `data' in the ONELAB server. */
+/* Set one or more parameters in the ONELAB database, encoded in `format'. */
 GMSH_API void gmshOnelabSet(const char * data,
                             const char * format,
                             int * ierr);
+
+/* Get all the parameters (or a single one if `name' is specified) from the
+ * ONELAB database, encoded in `format'. */
+GMSH_API void gmshOnelabGet(char ** data,
+                            const char * name,
+                            const char * format,
+                            int * ierr);
+
+/* Set the value the number parameter of name `name' in the ONELAB database. */
+GMSH_API void gmshOnelabSetNumber(const char * name,
+                                  double * value, size_t value_n,
+                                  int * ierr);
+
+/* Set the value the string parameter of name `name' in the ONELAB database. */
+GMSH_API void gmshOnelabSetString(const char * name,
+                                  char ** value, size_t value_n,
+                                  int * ierr);
+
+/* Get the value the number parameter of name `name' from the ONELAB database. */
+GMSH_API void gmshOnelabGetNumber(const char * name,
+                                  double ** value, size_t * value_n,
+                                  int * ierr);
+
+/* Get the value of the string parameter of name `name' from the ONELAB
+ * database. */
+GMSH_API void gmshOnelabGetString(const char * name,
+                                  char *** value, size_t * value_n,
+                                  int * ierr);
+
+/* Clear the ONELAB database, or a single parameter if `name' is given. */
+GMSH_API void gmshOnelabClear(const char * name,
+                              int * ierr);
 
 /* Run a ONELAB client. If `name' is provided, create a new ONELAB client with
  * name `name' and executes `command'. If not, try to run a client that might

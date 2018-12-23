@@ -2990,23 +2990,78 @@ namespace gmsh { // Top-level functions
 
   namespace onelab { // ONELAB server functions
 
-    // Get `data' from the ONELAB server.
-    GMSH_API void get(std::string & data,
-                      const std::string & format = "json")
-    {
-      int ierr = 0;
-      char *api_data_;
-      gmshOnelabGet(&api_data_, format.c_str(), &ierr);
-      if(ierr) throw ierr;
-      data = std::string(api_data_); gmshFree(api_data_);
-    }
-
-    // Set `data' in the ONELAB server.
+    // Set one or more parameters in the ONELAB database, encoded in `format'.
     GMSH_API void set(const std::string & data,
                       const std::string & format = "json")
     {
       int ierr = 0;
       gmshOnelabSet(data.c_str(), format.c_str(), &ierr);
+      if(ierr) throw ierr;
+    }
+
+    // Get all the parameters (or a single one if `name' is specified) from the
+    // ONELAB database, encoded in `format'.
+    GMSH_API void get(std::string & data,
+                      const std::string & name = "",
+                      const std::string & format = "json")
+    {
+      int ierr = 0;
+      char *api_data_;
+      gmshOnelabGet(&api_data_, name.c_str(), format.c_str(), &ierr);
+      if(ierr) throw ierr;
+      data = std::string(api_data_); gmshFree(api_data_);
+    }
+
+    // Set the value the number parameter of name `name' in the ONELAB database.
+    GMSH_API void setNumber(const std::string & name,
+                            const std::vector<double> & value)
+    {
+      int ierr = 0;
+      double *api_value_; size_t api_value_n_; vector2ptr(value, &api_value_, &api_value_n_);
+      gmshOnelabSetNumber(name.c_str(), api_value_, api_value_n_, &ierr);
+      if(ierr) throw ierr;
+      gmshFree(api_value_);
+    }
+
+    // Set the value the string parameter of name `name' in the ONELAB database.
+    GMSH_API void setString(const std::string & name,
+                            const std::vector<std::string> & value)
+    {
+      int ierr = 0;
+      char **api_value_; size_t api_value_n_; vectorstring2charptrptr(value, &api_value_, &api_value_n_);
+      gmshOnelabSetString(name.c_str(), api_value_, api_value_n_, &ierr);
+      if(ierr) throw ierr;
+      for(size_t i = 0; i < api_value_n_; ++i){ gmshFree(api_value_[i]); } gmshFree(api_value_);
+    }
+
+    // Get the value the number parameter of name `name' from the ONELAB database.
+    GMSH_API void getNumber(const std::string & name,
+                            std::vector<double> & value)
+    {
+      int ierr = 0;
+      double *api_value_; size_t api_value_n_;
+      gmshOnelabGetNumber(name.c_str(), &api_value_, &api_value_n_, &ierr);
+      if(ierr) throw ierr;
+      value.assign(api_value_, api_value_ + api_value_n_); gmshFree(api_value_);
+    }
+
+    // Get the value of the string parameter of name `name' from the ONELAB
+    // database.
+    GMSH_API void getString(const std::string & name,
+                            std::vector<std::string> & value)
+    {
+      int ierr = 0;
+      char **api_value_; size_t api_value_n_;
+      gmshOnelabGetString(name.c_str(), &api_value_, &api_value_n_, &ierr);
+      if(ierr) throw ierr;
+      value.resize(api_value_n_); for(size_t i = 0; i < api_value_n_; ++i){ value[i] = std::string(api_value_[i]); gmshFree(api_value_[i]); } gmshFree(api_value_);
+    }
+
+    // Clear the ONELAB database, or a single parameter if `name' is given.
+    GMSH_API void clear(const std::string & name = "")
+    {
+      int ierr = 0;
+      gmshOnelabClear(name.c_str(), &ierr);
       if(ierr) throw ierr;
     }
 

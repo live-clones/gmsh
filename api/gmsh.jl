@@ -3696,27 +3696,9 @@ module onelab
 import ..gmsh
 
 """
-    gmsh.onelab.get(format = "json")
-
-Get `data` from the ONELAB server.
-
-Return `data`.
-"""
-function get(format = "json")
-    api_data_ = Ref{Ptr{Cchar}}()
-    ierr = Ref{Cint}()
-    ccall((:gmshOnelabGet, gmsh.lib), Nothing,
-          (Ptr{Ptr{Cchar}}, Ptr{Cchar}, Ptr{Cint}),
-          api_data_, format, ierr)
-    ierr[] != 0 && error("gmshOnelabGet returned non-zero error code: $(ierr[])")
-    data = unsafe_string(api_data_[])
-    return data
-end
-
-"""
     gmsh.onelab.set(data, format = "json")
 
-Set `data` in the ONELAB server.
+Set one or more parameters in the ONELAB database, encoded in `format`.
 """
 function set(data, format = "json")
     ierr = Ref{Cint}()
@@ -3724,6 +3706,106 @@ function set(data, format = "json")
           (Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}),
           data, format, ierr)
     ierr[] != 0 && error("gmshOnelabSet returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.onelab.get(name = "", format = "json")
+
+Get all the parameters (or a single one if `name` is specified) from the ONELAB
+database, encoded in `format`.
+
+Return `data`.
+"""
+function get(name = "", format = "json")
+    api_data_ = Ref{Ptr{Cchar}}()
+    ierr = Ref{Cint}()
+    ccall((:gmshOnelabGet, gmsh.lib), Nothing,
+          (Ptr{Ptr{Cchar}}, Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}),
+          api_data_, name, format, ierr)
+    ierr[] != 0 && error("gmshOnelabGet returned non-zero error code: $(ierr[])")
+    data = unsafe_string(api_data_[])
+    return data
+end
+
+"""
+    gmsh.onelab.setNumber(name, value)
+
+Set the value the number parameter of name `name` in the ONELAB database.
+"""
+function setNumber(name, value)
+    ierr = Ref{Cint}()
+    ccall((:gmshOnelabSetNumber, gmsh.lib), Nothing,
+          (Ptr{Cchar}, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          name, value, length(value), ierr)
+    ierr[] != 0 && error("gmshOnelabSetNumber returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.onelab.setString(name, value)
+
+Set the value the string parameter of name `name` in the ONELAB database.
+"""
+function setString(name, value)
+    ierr = Ref{Cint}()
+    ccall((:gmshOnelabSetString, gmsh.lib), Nothing,
+          (Ptr{Cchar}, Ptr{Ptr{Cchar}}, Csize_t, Ptr{Cint}),
+          name, value, length(value), ierr)
+    ierr[] != 0 && error("gmshOnelabSetString returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.onelab.getNumber(name)
+
+Get the value the number parameter of name `name` from the ONELAB database.
+
+Return `value`.
+"""
+function getNumber(name)
+    api_value_ = Ref{Ptr{Cdouble}}()
+    api_value_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshOnelabGetNumber, gmsh.lib), Nothing,
+          (Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          name, api_value_, api_value_n_, ierr)
+    ierr[] != 0 && error("gmshOnelabGetNumber returned non-zero error code: $(ierr[])")
+    value = unsafe_wrap(Array, api_value_[], api_value_n_[], own=true)
+    return value
+end
+
+"""
+    gmsh.onelab.getString(name)
+
+Get the value of the string parameter of name `name` from the ONELAB database.
+
+Return `value`.
+"""
+function getString(name)
+    api_value_ = Ref{Ptr{Ptr{Cchar}}}()
+    api_value_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshOnelabGetString, gmsh.lib), Nothing,
+          (Ptr{Cchar}, Ptr{Ptr{Cchar}}, Ptr{Csize_t}, Ptr{Cint}),
+          name, api_value_, api_value_n_, ierr)
+    ierr[] != 0 && error("gmshOnelabGetString returned non-zero error code: $(ierr[])")
+    tmp_api_value_ = unsafe_wrap(Array, api_value_[], api_value_n_[], own=true)
+    value = [unsafe_string(tmp_api_value_[i]) for i in 1:length(tmp_api_value_) ]
+    return value
+end
+
+"""
+    gmsh.onelab.clear(name = "")
+
+Clear the ONELAB database, or a single parameter if `name` is given.
+"""
+function clear(name = "")
+    ierr = Ref{Cint}()
+    ccall((:gmshOnelabClear, gmsh.lib), Nothing,
+          (Ptr{Cchar}, Ptr{Cint}),
+          name, ierr)
+    ierr[] != 0 && error("gmshOnelabClear returned non-zero error code: $(ierr[])")
     return nothing
 end
 

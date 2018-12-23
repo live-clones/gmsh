@@ -2749,24 +2749,86 @@ been initialized.
 
 @heading Module @code{/gmsh/onelab}
 @ftable @code
-@item get
-Get @code{data} from the ONELAB server.
+@item set
+Set one or more parameters in the ONELAB database, encoded in @code{format}.
 
 @table @asis
 @item Input:
-@code{format}
+@code{data}, @code{format}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item get
+Get all the parameters (or a single one if @code{name} is specified) from the
+ONELAB database, encoded in @code{format}.
+
+@table @asis
+@item Input:
+@code{name}, @code{format}
 @item Output:
 @code{data}
 @item Return:
 -
 @end table
 
-@item set
-Set @code{data} in the ONELAB server.
+@item setNumber
+Set the value the number parameter of name @code{name} in the ONELAB database.
 
 @table @asis
 @item Input:
-@code{data}, @code{format}
+@code{name}, @code{value}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setString
+Set the value the string parameter of name @code{name} in the ONELAB database.
+
+@table @asis
+@item Input:
+@code{name}, @code{value}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item getNumber
+Get the value the number parameter of name @code{name} from the ONELAB database.
+
+@table @asis
+@item Input:
+@code{name}
+@item Output:
+@code{value}
+@item Return:
+-
+@end table
+
+@item getString
+Get the value of the string parameter of name @code{name} from the ONELAB
+database.
+
+@table @asis
+@item Input:
+@code{name}
+@item Output:
+@code{value}
+@item Return:
+-
+@end table
+
+@item clear
+Clear the ONELAB database, or a single parameter if @code{name} is given.
+
+@table @asis
+@item Input:
+@code{name}
 @item Output:
 -
 @item Return:
