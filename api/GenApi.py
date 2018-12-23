@@ -122,6 +122,27 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     a.julia_arg = name + ", length(" + name + ")"
     return a
 
+def ivectorstring(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "const std::vector<std::string> &", "char **", False)
+    api_name = "api_" + name + "_"
+    api_name_n = "api_" + name + "_n_"
+    a.c_pre = ("    std::vector<std::string> " + api_name + "(" + name + ", " +
+               name + " + " + name + "_n);\n")
+    a.c_arg = api_name
+    a.c = "char ** " + name + ", size_t " + name + "_n"
+    a.cwrap_pre = ("char **" + api_name + "; size_t " + api_name_n + "; " +
+                   "vectorstring2charptrptr(" + name + ", &" + api_name + ", &" + api_name_n + ");\n")
+    a.cwrap_arg = api_name + ", " + api_name_n
+    a.cwrap_post = ("for(size_t i = 0; i < " + api_name_n + "; ++i){ " +
+                    ns + "Free(" + api_name + "[i]); } " +
+                    ns + "Free(" + api_name + ");\n")
+    a.python_pre = api_name + ", " + api_name_n + " = _ivectorstring(" + name + ")"
+    a.python_arg = api_name + ", " + api_name_n
+    a.julia_ctype = "Ptr{Ptr{Cchar}}, Csize_t"
+    a.julia_arg = name + ", length(" + name + ")"
+    return a
+
 def ivectorpair(name, value=None, python_value=None, julia_value=None):
     if julia_value == "[]":
         julia_value = "Tuple{Cint,Cint}[]"
@@ -857,24 +878,6 @@ def _ivectorint(o):
     else:
         return (c_int * len(o))(*o), c_size_t(len(o))
 
-def _ivectorvectorint(os):
-    n = len(os)
-    parrays = [_ivectorint(o) for o in os]
-    sizes = (c_size_t * n)(*(a[1] for a in parrays))
-    arrays = (POINTER(c_int) * n)(*(cast(a[0], POINTER(c_int)) for a in parrays))
-    arrays.ref = [a[0] for a in parrays]
-    size = c_size_t(n)
-    return arrays, sizes, size
-
-def _ivectorvectordouble(os):
-    n = len(os)
-    parrays = [_ivectordouble(o) for o in os]
-    sizes = (c_size_t * n)(*(a[1] for a in parrays))
-    arrays = (POINTER(c_double) * n)(*(cast(a[0], POINTER(c_double)) for a in parrays))
-    arrays.ref = [a[0] for a in parrays]
-    size = c_size_t(n)
-    return arrays, sizes, size
-
 def _ivectordouble(o):
     if use_numpy:
         array = numpy.ascontiguousarray(o, numpy.float64)
@@ -892,6 +895,27 @@ def _ivectorpair(o):
         return  ct, c_size_t(len(o) * 2)
     else:
         return ((c_int * 2) * len(o))(*o), c_size_t(len(o) * 2)
+
+def _ivectorstring(o):
+    return (c_char_p * len(o))(*(s.encode() for s in o)), c_size_t(len(o))
+
+def _ivectorvectorint(os):
+    n = len(os)
+    parrays = [_ivectorint(o) for o in os]
+    sizes = (c_size_t * n)(*(a[1] for a in parrays))
+    arrays = (POINTER(c_int) * n)(*(cast(a[0], POINTER(c_int)) for a in parrays))
+    arrays.ref = [a[0] for a in parrays]
+    size = c_size_t(n)
+    return arrays, sizes, size
+
+def _ivectorvectordouble(os):
+    n = len(os)
+    parrays = [_ivectordouble(o) for o in os]
+    sizes = (c_size_t * n)(*(a[1] for a in parrays))
+    arrays = (POINTER(c_double) * n)(*(cast(a[0], POINTER(c_double)) for a in parrays))
+    arrays.ref = [a[0] for a in parrays]
+    size = c_size_t(n)
+    return arrays, sizes, size
 
 def _iargcargv(o):
     return c_int(len(o)), (c_char_p * len(o))(*(s.encode() for s in o))
