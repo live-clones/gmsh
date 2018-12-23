@@ -4277,13 +4277,13 @@ GMSH_API void gmsh::onelab::get(std::string &data,
       ::onelab::server::instance()->toJSON(data, "Gmsh");
     }
     else{
-      std::vector<::onelab::number> ps;
+      std::vector< ::onelab::number> ps;
       ::onelab::server::instance()->get(ps, name);
       if(ps.size()){
         data = ps[0].toJSON();
       }
       else{
-        std::vector<::onelab::string> ps2;
+        std::vector< ::onelab::string> ps2;
         ::onelab::server::instance()->get(ps2, name);
         if(ps2.size())
           data = ps2[0].toJSON();
@@ -4308,7 +4308,7 @@ GMSH_API void gmsh::onelab::setNumber(const std::string &name,
   }
 #if defined(HAVE_ONELAB)
   ::onelab::number p(name);
-  std::vector<::onelab::number> ps;
+  std::vector< ::onelab::number> ps;
   ::onelab::server::instance()->get(ps, name);
   if(ps.size()) p = ps[0];
   p.setValues(value);
@@ -4326,7 +4326,7 @@ GMSH_API void gmsh::onelab::getNumber(const std::string &name,
     throw -1;
   }
 #if defined(HAVE_ONELAB)
-  std::vector<::onelab::number> ps;
+  std::vector< ::onelab::number> ps;
   ::onelab::server::instance()->get(ps, name);
   if(ps.size())
     value = ps[0].getValues();
@@ -4346,7 +4346,7 @@ GMSH_API void gmsh::onelab::setString(const std::string &name,
   }
 #if defined(HAVE_ONELAB)
   ::onelab::string p(name);
-  std::vector<::onelab::string> ps;
+  std::vector< ::onelab::string> ps;
   ::onelab::server::instance()->get(ps, name);
   if(ps.size()) p = ps[0];
   p.setValues(value);
@@ -4364,7 +4364,7 @@ GMSH_API void gmsh::onelab::getString(const std::string &name,
     throw -1;
   }
 #if defined(HAVE_ONELAB)
-  std::vector<::onelab::string> ps;
+  std::vector< ::onelab::string> ps;
   ::onelab::server::instance()->get(ps, name);
   if(ps.size())
     value = ps[0].getValues();
