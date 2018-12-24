@@ -4272,28 +4272,33 @@ GMSH_API void gmsh::onelab::get(std::string &data,
     throw -1;
   }
 #if defined(HAVE_ONELAB)
-  if(format == "json"){
-    if(name.empty()){
+  data.clear();
+  if(name.empty()){
+    if(format == "json")
       ::onelab::server::instance()->toJSON(data, "Gmsh");
+    else
+      Msg::Error("Unknown data format");
+  }
+  else{
+    std::vector< ::onelab::number> ps;
+    ::onelab::server::instance()->get(ps, name);
+    if(ps.size()){
+      if(format == "json")
+        data = ps[0].toJSON();
+      else
+        data = ps[0].toChar();
     }
     else{
-      std::vector< ::onelab::number> ps;
-      ::onelab::server::instance()->get(ps, name);
-      if(ps.size()){
-        data = ps[0].toJSON();
-      }
-      else{
-        std::vector< ::onelab::string> ps2;
-        ::onelab::server::instance()->get(ps2, name);
-        if(ps2.size())
+      std::vector< ::onelab::string> ps2;
+      ::onelab::server::instance()->get(ps2, name);
+      if(ps2.size()){
+        if(format == "json")
           data = ps2[0].toJSON();
         else
-          Msg::Error("Unknown parameter '%s'", name.c_str());
+          data = ps2[0].toChar();
       }
     }
   }
-  else
-    Msg::Error("Unknown data format");
 #else
   Msg::Error("ONELAB not available");
   throw -1;
@@ -4326,12 +4331,10 @@ GMSH_API void gmsh::onelab::getNumber(const std::string &name,
     throw -1;
   }
 #if defined(HAVE_ONELAB)
+  value.clear();
   std::vector< ::onelab::number> ps;
   ::onelab::server::instance()->get(ps, name);
-  if(ps.size())
-    value = ps[0].getValues();
-  else
-    Msg::Error("Unknown parameter '%s'", name.c_str());
+  if(ps.size()) value = ps[0].getValues();
 #else
   Msg::Error("ONELAB not available");
   throw -1;
@@ -4364,12 +4367,10 @@ GMSH_API void gmsh::onelab::getString(const std::string &name,
     throw -1;
   }
 #if defined(HAVE_ONELAB)
+  value.clear();
   std::vector< ::onelab::string> ps;
   ::onelab::server::instance()->get(ps, name);
-  if(ps.size())
-    value = ps[0].getValues();
-  else
-    Msg::Error("Unknown parameter '%s'", name.c_str());
+  if(ps.size()) value = ps[0].getValues();
 #else
   Msg::Error("ONELAB not available");
   throw -1;
