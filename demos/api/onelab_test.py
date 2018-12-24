@@ -52,8 +52,10 @@ while 1:
     if len(a) and a[0] == 'compute':
         gmsh.onelab.setString("Action", [""])
         # do something here...
-        gmsh.logger.write("Log for run {0} in the console...".format(i))
-        gmsh.onelab.setString("Result", ["Run {0} succeeded!".format(i)])
+        n = gmsh.onelab.getNumber("number 1")
+        msg = "Run {0} done with number 1 = {1}".format(i, n)
+        gmsh.logger.write(msg)
+        gmsh.onelab.setString("Result", [msg])
         i = i + 1
         gmsh.fltk.update()
 
