@@ -2976,9 +2976,18 @@ namespace gmsh { // Top-level functions
       if(ierr) throw ierr;
     }
 
-    // Run the event loop of the Fltk graphical user interface, i.e. repeatedly
-    // calls `wait'. First automatically create the user interface if it has not
-    // yet been initialized.
+    // Update the widgets in the user interface. First automatically create the
+    // user interface if it has not yet been initialized.
+    GMSH_API void update()
+    {
+      int ierr = 0;
+      gmshFltkUpdate(&ierr);
+      if(ierr) throw ierr;
+    }
+
+    // Run the event loop of the graphical user interface, i.e. repeatedly calls
+    // `wait'. First automatically create the user interface if it has not yet been
+    // initialized.
     GMSH_API void run()
     {
       int ierr = 0;
@@ -3079,6 +3088,15 @@ namespace gmsh { // Top-level functions
   } // namespace onelab
 
   namespace logger { // Message logger functions
+
+    // Write a `message'. `level' can be "info", "warning" or "error".
+    GMSH_API void write(const std::string & message,
+                        const std::string & level = "info")
+    {
+      int ierr = 0;
+      gmshLoggerWrite(message.c_str(), level.c_str(), &ierr);
+      if(ierr) throw ierr;
+    }
 
     // Start logging messages in `log'.
     GMSH_API void start(std::vector<std::string> & log)

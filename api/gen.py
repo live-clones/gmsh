@@ -633,7 +633,10 @@ fltk.add('initialize',doc,None)
 doc = '''Wait at most `time' seconds for user interface events and return. If `time' < 0, wait indefinitely. First automatically create the user interface if it has not yet been initialized.'''
 fltk.add('wait',doc,None,idouble('time', '-1.'))
 
-doc = '''Run the event loop of the Fltk graphical user interface, i.e. repeatedly calls `wait'. First automatically create the user interface if it has not yet been initialized.'''
+doc = '''Update the widgets in the user interface. First automatically create the user interface if it has not yet been initialized.'''
+fltk.add('update',doc,None)
+
+doc = '''Run the event loop of the graphical user interface, i.e. repeatedly calls `wait'. First automatically create the user interface if it has not yet been initialized.'''
 fltk.add('run',doc,None)
 
 ################################################################################
@@ -667,6 +670,9 @@ onelab.add('run',doc,None,istring('name', '""'),istring('command', '""'))
 ################################################################################
 
 onelab = gmsh.add_module('logger','Message logger functions')
+
+doc = '''Write a `message'. `level' can be "info", "warning" or "error".'''
+onelab.add('write',doc,None,istring('message'),istring('level','"info"'))
 
 doc = '''Start logging messages in `log'.'''
 onelab.add('start',doc,None,ovectorstring('log'))

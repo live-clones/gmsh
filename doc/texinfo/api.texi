@@ -2731,8 +2731,21 @@ interface if it has not yet been initialized.
 -
 @end table
 
+@item update
+Update the widgets in the user interface. First automatically create the user
+interface if it has not yet been initialized.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item run
-Run the event loop of the Fltk graphical user interface, i.e. repeatedly calls
+Run the event loop of the graphical user interface, i.e. repeatedly calls
 @code{wait}. First automatically create the user interface if it has not yet
 been initialized.
 
@@ -2853,6 +2866,18 @@ might be linked to the processed input files.
 
 @heading Module @code{/gmsh/logger}
 @ftable @code
+@item write
+Write a @code{message}. @code{level} can be "info", "warning" or "error".
+
+@table @asis
+@item Input:
+@code{message}, @code{level}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item start
 Start logging messages in @code{log}.
 

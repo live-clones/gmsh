@@ -4286,11 +4286,25 @@ class fltk:
                 ierr.value)
 
     @staticmethod
+    def update():
+        """
+        Update the widgets in the user interface. First automatically create the
+        user interface if it has not yet been initialized.
+        """
+        ierr = c_int()
+        lib.gmshFltkUpdate(
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshFltkUpdate returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
     def run():
         """
-        Run the event loop of the Fltk graphical user interface, i.e. repeatedly
-        calls `wait'. First automatically create the user interface if it has not
-        yet been initialized.
+        Run the event loop of the graphical user interface, i.e. repeatedly calls
+        `wait'. First automatically create the user interface if it has not yet
+        been initialized.
         """
         ierr = c_int()
         lib.gmshFltkRun(
@@ -4449,6 +4463,21 @@ class logger:
     """
     Message logger functions
     """
+
+    @staticmethod
+    def write(message, level="info"):
+        """
+        Write a `message'. `level' can be "info", "warning" or "error".
+        """
+        ierr = c_int()
+        lib.gmshLoggerWrite(
+            c_char_p(message.encode()),
+            c_char_p(level.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshLoggerWrite returned non-zero error code: ",
+                ierr.value)
 
     @staticmethod
     def start():

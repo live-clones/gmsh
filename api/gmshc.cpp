@@ -2547,6 +2547,17 @@ GMSH_API void gmshFltkWait(const double time, int * ierr)
   }
 }
 
+GMSH_API void gmshFltkUpdate(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::fltk::update();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshFltkRun(int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -2648,6 +2659,17 @@ GMSH_API void gmshOnelabRun(const char * name, const char * command, int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::onelab::run(name, command);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshLoggerWrite(const char * message, const char * level, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::logger::write(message, level);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

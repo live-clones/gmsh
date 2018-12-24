@@ -158,6 +158,20 @@ GMSH_API void gmsh::clear()
   throw 1;
 }
 
+GMSH_API void gmsh::logger::write(const std::string &message,
+                                  const std::string &level)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  if(level == "error")
+    Msg::Error("%s", message.c_str());
+  else if(level == "warning")
+    Msg::Warning("%s", message.c_str());
+  else
+    Msg::Info("%s", message.c_str());
+}
+
 class apiMsg : public GmshMessage {
 private:
   std::vector<std::string> &_log;
@@ -4223,6 +4237,20 @@ GMSH_API void gmsh::fltk::wait(const double time)
     FlGui::wait(time);
   else
     FlGui::wait();
+#else
+  Msg::Error("Fltk not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::fltk::update()
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_FLTK)
+  if(!FlGui::available()) FlGui::instance(_argc, _argv);
+  FlGui::instance()->updateViews(true, true);
 #else
   Msg::Error("Fltk not available");
   throw -1;

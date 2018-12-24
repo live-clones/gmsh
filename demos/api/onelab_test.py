@@ -41,6 +41,20 @@ gmsh.onelab.setString("string 1", ["goodbye"])
 # remove a parameter
 gmsh.onelab.clear("string 2")
 
-gmsh.fltk.run()
+gmsh.option.setNumber("Solver.AutoMesh", 0.)
+gmsh.option.setNumber("Solver.AutoSaveDatabase", 0.)
+
+i = 1
+gmsh.fltk.initialize()
+while 1:
+    gmsh.fltk.wait()
+    a = gmsh.onelab.getString("Action")
+    if len(a) and a[0] == 'compute':
+        gmsh.onelab.setString("Action", [""])
+        # do something here...
+        gmsh.logger.write("Log for run {0} in the console...".format(i))
+        gmsh.onelab.setString("Result", ["Run {0} succeeded!".format(i)])
+        i = i + 1
+        gmsh.fltk.update()
 
 gmsh.finalize()

@@ -1716,9 +1716,13 @@ GMSH_API void gmshFltkInitialize(int * ierr);
 GMSH_API void gmshFltkWait(const double time,
                            int * ierr);
 
-/* Run the event loop of the Fltk graphical user interface, i.e. repeatedly
- * calls `wait'. First automatically create the user interface if it has not
- * yet been initialized. */
+/* Update the widgets in the user interface. First automatically create the
+ * user interface if it has not yet been initialized. */
+GMSH_API void gmshFltkUpdate(int * ierr);
+
+/* Run the event loop of the graphical user interface, i.e. repeatedly calls
+ * `wait'. First automatically create the user interface if it has not yet
+ * been initialized. */
 GMSH_API void gmshFltkRun(int * ierr);
 
 /* Set one or more parameters in the ONELAB database, encoded in `format'. */
@@ -1764,6 +1768,11 @@ GMSH_API void gmshOnelabClear(const char * name,
 GMSH_API void gmshOnelabRun(const char * name,
                             const char * command,
                             int * ierr);
+
+/* Write a `message'. `level' can be "info", "warning" or "error". */
+GMSH_API void gmshLoggerWrite(const char * message,
+                              const char * level,
+                              int * ierr);
 
 /* Start logging messages in `log'. */
 GMSH_API void gmshLoggerStart(char *** log, size_t * log_n,

@@ -1615,9 +1615,13 @@ namespace gmsh { // Top-level functions
     // has not yet been initialized.
     GMSH_API void wait(const double time = -1.);
 
-    // Run the event loop of the Fltk graphical user interface, i.e. repeatedly
-    // calls `wait'. First automatically create the user interface if it has not
-    // yet been initialized.
+    // Update the widgets in the user interface. First automatically create the
+    // user interface if it has not yet been initialized.
+    GMSH_API void update();
+
+    // Run the event loop of the graphical user interface, i.e. repeatedly calls
+    // `wait'. First automatically create the user interface if it has not yet been
+    // initialized.
     GMSH_API void run();
 
   } // namespace fltk
@@ -1663,6 +1667,10 @@ namespace gmsh { // Top-level functions
   } // namespace onelab
 
   namespace logger { // Message logger functions
+
+    // Write a `message'. `level' can be "info", "warning" or "error".
+    GMSH_API void write(const std::string & message,
+                        const std::string & level = "info");
 
     // Start logging messages in `log'.
     GMSH_API void start(std::vector<std::string> & log);

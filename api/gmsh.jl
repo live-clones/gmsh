@@ -3669,9 +3669,24 @@ function wait(time = -1.)
 end
 
 """
+    gmsh.fltk.update()
+
+Update the widgets in the user interface. First automatically create the user
+interface if it has not yet been initialized.
+"""
+function update()
+    ierr = Ref{Cint}()
+    ccall((:gmshFltkUpdate, gmsh.lib), Nothing,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshFltkUpdate returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.fltk.run()
 
-Run the event loop of the Fltk graphical user interface, i.e. repeatedly calls
+Run the event loop of the graphical user interface, i.e. repeatedly calls
 `wait`. First automatically create the user interface if it has not yet been
 initialized.
 """
@@ -3835,6 +3850,20 @@ Message logger functions
 module logger
 
 import ..gmsh
+
+"""
+    gmsh.logger.write(message, level = "info")
+
+Write a `message`. `level` can be "info", "warning" or "error".
+"""
+function write(message, level = "info")
+    ierr = Ref{Cint}()
+    ccall((:gmshLoggerWrite, gmsh.lib), Nothing,
+          (Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}),
+          message, level, ierr)
+    ierr[] != 0 && error("gmshLoggerWrite returned non-zero error code: $(ierr[])")
+    return nothing
+end
 
 """
     gmsh.logger.start()
