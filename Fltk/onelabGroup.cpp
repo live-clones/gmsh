@@ -99,6 +99,11 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   std::string action((const char *)data);
 
+  onelab::string o("Action", action);
+  o.setVisible(false);
+  o.setNeverChanged(true);
+  onelab::server::instance()->set(o);
+
   if(action == "refresh") {
     onelabUtils::updateGraphs();
     FlGui::instance()->rebuildTree(true);
@@ -201,11 +206,10 @@ void onelab_cb(Fl_Widget *w, void *data)
         it != onelab::server::instance()->lastClient(); it++) {
       onelab::client *c = *it;
       if(c->getName() == "Gmsh" || // local Gmsh client
-         c->getName() ==
-           "Listen" || // unknown client connecting through "-listen"
+         c->getName() == "Listen" || // unknown client connecting through "-listen"
          c->getName() == "GmshRemote" || // distant post-processing Gmsh client
          c->getName().find("NoAutoRun") !=
-           std::string::npos) // client name contains "NoAutoRun"
+         std::string::npos) // client name contains "NoAutoRun"
         continue;
       if(action != "initialize") onelabUtils::guessModelName(c);
       onelab::string o(c->getName() + "/Action", action);
