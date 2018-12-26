@@ -41,10 +41,9 @@ set(SRC
   MElement.cpp MElementOctree.cpp
     MLine.cpp MTriangle.cpp MQuadrangle.cpp MTetrahedron.cpp
     MHexahedron.cpp MPrism.cpp MPyramid.cpp MTrihedron.cpp MElementCut.cpp MSubElement.cpp
-  MZone.cpp MZoneBoundary.cpp
   Cell.cpp CellComplex.cpp ChainComplex.cpp Homology.cpp Chain.cpp
   MVertexBoundaryLayerData.cpp
-  CGNSFunctions.cpp
+  CGNSFunctions.cpp CGNSUtils.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
