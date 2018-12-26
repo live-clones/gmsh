@@ -13,29 +13,27 @@
 // will be rewritten (or removed) in a future release. In particular,
 // CGNSUtils.h will be removed.
 
+#include <string>
 #include "GmshConfig.h"
+#include "GModel.h"
+#include "GmshMessage.h"
+#include "CGNSOptions.h"
 
 #if defined(HAVE_LIBCGNS)
 
-#include <cstring>
-#include <iostream>
-#include <cstdio>
-#include <map>
-#include <string>
 #include <vector>
+#include <map>
 #include <queue>
-#include <cmath>
+#include <iostream>
 #include <fstream>
 #include <sstream>
-#include <string>
-#include <stdlib.h>
-
-#include "GModel.h"
-#include "GmshMessage.h"
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <cmath>
 #include "Context.h"
 #include "Options.h"
 #include "affineTransformation.h"
-#include "CGNSOptions.h"
 #include "CGNSFunctions.h"
 
 #if defined(HAVE_FLTK)
