@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues
 //
-// CGUtils.h - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
+// CGNSUtils.h - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
 
 // FIXME: the contents of this file will be removed in a future release of Gmsh.
 
