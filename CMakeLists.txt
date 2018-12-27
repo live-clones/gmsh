@@ -752,7 +752,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/HighOrderMeshOptimizer AND
   include_directories(contrib/HighOrderMeshOptimizer)
   add_subdirectory(contrib/MeshOptimizer)
   include_directories(contrib/MeshOptimizer)
-  include_directories(${CMAKE_CURRENT_BINARY_DIR}/contrib/MeshOptimizer)
+  include_directories(contrib/MeshOptimizer)
   add_subdirectory(contrib/MeshQualityOptimizer)
   include_directories(contrib/MeshQualityOptimizer)
   set_config_option(HAVE_OPTHOM "OptHom")
