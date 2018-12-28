@@ -5060,6 +5060,12 @@ enable optional modules or features. Here is the list of CMake options:
 
 @end ftable
 
+The wiki
+(@uref{https://gitlab.onelab.info/gmsh/gmsh/wikis/Gmsh-compilation})
+contains more detailed instructions on how to compile Gmsh, including
+the compilation of common dependencies.
+
+
 @c =========================================================================
 @c Gmsh API
 @c =========================================================================
@@ -5129,7 +5135,7 @@ Yacc (actually, Flex and Bison), and the GUI relies on OpenGL for the 3D
 graphics and FLTK (@uref{http://www.fltk.org}) for the widget
 set. Gmsh's build system is based on CMake
 (@uref{http://www.cmake.org}). Practical notes on how to compile Gmsh's
-source code is provided in @ref{Compiling the source code} (see also
+source code are provided in @ref{Compiling the source code} (see also
 @ref{Frequently asked questions}).
 
 This section is for developers who would like to contribute directly to
