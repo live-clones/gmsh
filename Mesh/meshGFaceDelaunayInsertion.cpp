@@ -7,7 +7,7 @@
 #include <set>
 #include <map>
 #include <algorithm>
-
+#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "OS.h"
 #include "robustPredicates.h"

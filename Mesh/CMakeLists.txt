@@ -27,8 +27,6 @@ set(SRC
   HighOrder.cpp
   meshPartition.cpp
   meshRefine.cpp
-  QuadTriUtils.cpp
-    QuadTriExtruded2D.cpp QuadTriExtruded3D.cpp QuadTriTransfinite3D.cpp
   delaunay3d.cpp
   DivideAndConquer.cpp
   Field.cpp

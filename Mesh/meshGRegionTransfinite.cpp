@@ -8,6 +8,8 @@
 //
 
 #include <map>
+#include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "meshGFace.h"
 #include "GFace.h"
 #include "GRegion.h"
@@ -16,8 +18,10 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "Context.h"
-#include "GmshMessage.h"
+
+#if defined(HAVE_QUADTRI)
 #include "QuadTriTransfinite3D.h"
+#endif
 
 /*
   Transfinite volume meshes
@@ -453,10 +457,9 @@ int MeshTransfiniteVolume(GRegion *gr)
     }
   }
 
-  // create elements
-
-  // for QuadTri, get external boundary diagonals for element
-  // subdivision purposes
+#if defined(HAVE_QUADTRI)
+  // for QuadTri, get external boundary diagonals for element subdivision
+  // purposes
   std::set<std::pair<MVertex *, MVertex *> > boundary_diags;
   if(gr->meshAttributes.QuadTri) {
     if(!getTransfiniteBoundaryDiags(gr, &boundary_diags)) {
@@ -467,11 +470,15 @@ int MeshTransfiniteVolume(GRegion *gr)
       return 0;
     }
   }
+#endif
+
+  // create elements
 
   if(faces.size() == 6) {
     for(int i = 0; i < N_i - 1; i++) {
       for(int j = 0; j < N_j - 1; j++) {
         for(int k = 0; k < N_k - 1; k++) {
+#if defined(HAVE_QUADTRI)
           if(gr->meshAttributes.QuadTri) {
             // create vertex array
             std::vector<MVertex *> verts;
@@ -501,6 +508,7 @@ int MeshTransfiniteVolume(GRegion *gr)
             // continue, skipping the rest which is for non-divided elements
             continue;
           }
+#endif
           if(orientedFaces[0].recombined() && orientedFaces[1].recombined() &&
              orientedFaces[2].recombined() && orientedFaces[3].recombined() &&
              orientedFaces[4].recombined() && orientedFaces[5].recombined()) {
@@ -568,6 +576,7 @@ int MeshTransfiniteVolume(GRegion *gr)
   else if(faces.size() == 5) {
     for(int j = 0; j < N_j - 1; j++) {
       for(int k = 0; k < N_k - 1; k++) {
+#if defined(HAVE_QUADTRI)
         if(gr->meshAttributes.QuadTri) {
           // create vertex array
           std::vector<MVertex *> verts;
@@ -591,6 +600,7 @@ int MeshTransfiniteVolume(GRegion *gr)
           // continue, skipping the rest which is for non-divided elements
           continue;
         }
+#endif
         if((orientedFaces[0].recombined() && orientedFaces[1].recombined() &&
             orientedFaces[2].recombined() && orientedFaces[4].recombined() &&
             orientedFaces[5].recombined()) ||
@@ -625,6 +635,7 @@ int MeshTransfiniteVolume(GRegion *gr)
     for(int i = 1; i < N_i - 1; i++) {
       for(int j = 0; j < N_j - 1; j++) {
         for(int k = 0; k < N_k - 1; k++) {
+#if defined(HAVE_QUADTRI)
           if(gr->meshAttributes.QuadTri) {
             // create vertex array
             std::vector<MVertex *> verts;
@@ -652,6 +663,7 @@ int MeshTransfiniteVolume(GRegion *gr)
             // continue, skipping the rest which is for non-divided elements
             continue;
           }
+#endif
           if(orientedFaces[0].recombined() && orientedFaces[1].recombined() &&
              orientedFaces[2].recombined() && orientedFaces[4].recombined() &&
              orientedFaces[5].recombined()) {
