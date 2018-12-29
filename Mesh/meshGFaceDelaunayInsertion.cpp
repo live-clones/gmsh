@@ -12,8 +12,6 @@
 #include "OS.h"
 #include "robustPredicates.h"
 #include "BackgroundMesh.h"
-#include "surfaceFiller.h"
-#include "pointInsertion.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGFaceOptimize.h"
 #include "meshGFace.h"
@@ -27,6 +25,11 @@
 #include "discreteFace.h"
 #include "intersectCurveSurface.h"
 #include "HilbertCurve.h"
+
+#if defined(HAVE_DOMHEX)
+#include "pointInsertion.h"
+#include "surfaceFiller.h"
+#endif
 
 static double LIMIT_ = 0.5 * std::sqrt(2.0) * 1;
 static int N_GLOBAL_SEARCH;
@@ -1755,6 +1758,7 @@ void optimalPointFrontalQuadB(GFace *gf, MTri3 *worst, int active_edge,
 void buildBackGroundMesh(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
                          std::map<MVertex *, SPoint2> *parametricCoordinates)
 {
+#if defined(HAVE_DOMHEX)
   // TODO PEB :
   // this is now done in the new backgroundMesh !!!
   // on le vire ? On insère ici les operations sur le new backgmesh ?
@@ -1762,9 +1766,8 @@ void buildBackGroundMesh(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   // maintenant... !
   if(!old_algo_hexa()) return;
   //#else
-  // END PEB + endif...
+#endif
 
-  // printf("build bak mesh\n");
   quadsToTriangles(gf, 100000);
 
   if(!backgroundMesh::current()) {
@@ -1806,8 +1809,6 @@ void buildBackGroundMesh(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
     gf->triangles = TR;
     // gf->quadrangles = QR;
   }
-
-  //#endif
 }
 
 void bowyerWatsonFrontalLayers(
@@ -1953,16 +1954,16 @@ void bowyerWatsonParallelograms(
   std::vector<MVertex *> packed;
   std::vector<SMetric3> metrics;
 
-  // printf("creating the points\n");
-  // PEB MODIF
+#if defined(HAVE_DOMHEX)
   if(old_algo_hexa())
     packingOfParallelograms(gf, packed, metrics);
   else {
     Filler2D f;
     f.pointInsertion2D(gf, packed, metrics);
   }
-  // END PEB MODIF
-  // printf("points created\n");
+#else
+  Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
+#endif
 
   buildMeshGenerationDataStructures(gf, AllTris, DATA);
 
@@ -2041,11 +2042,13 @@ void bowyerWatsonParallelogramsConstrained(
   std::vector<MVertex *> packed;
   std::vector<SMetric3> metrics;
 
-  // printf("creating the points\n");
+#if defined(HAVE_DOMHEX)
   std::cout << "   entering packingOfParallelogramsConstrained" << std::endl;
   packingOfParallelogramsConstrained(gf, constr_vertices, packed, metrics);
-  // printf("points created\n");
   std::cout << "out of packingOfParallelogramsConstrained" << std::endl;
+#else
+  Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
+#endif
 
   buildMeshGenerationDataStructures(gf, AllTris, DATA);
 

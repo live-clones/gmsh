@@ -47,6 +47,7 @@ opt(CXX11 "Enable C++11" ${DEFAULT})
 opt(C99 "Enable C99" ${DEFAULT})
 opt(PROFILE "Enable profiling compiler flags" OFF)
 opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT})
+opt(DOMHEX "Enable experimental DomHex code" ${DEFAULT})
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (as a directly linked library)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
@@ -756,6 +757,13 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/HighOrderMeshOptimizer AND
   add_subdirectory(contrib/MeshQualityOptimizer)
   include_directories(contrib/MeshQualityOptimizer)
   set_config_option(HAVE_OPTHOM "OptHom")
+endif()
+
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/domhex AND
+   ENABLE_DOMHEX AND HAVE_MESH)
+  add_subdirectory(contrib/domhex)
+  include_directories(contrib/domhex)
+  set_config_option(HAVE_OPTHOM "DomHex")
 endif()
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/kbipack AND ENABLE_KBIPACK)

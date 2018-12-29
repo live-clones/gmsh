@@ -801,3 +801,57 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex,
     return true;
   }
 }
+
+template <class ITERATOR>
+void fillv_(std::multimap<MVertex *, MElement *> &vertexToElement,
+            ITERATOR it_beg, ITERATOR it_end)
+{
+  for(ITERATOR IT = it_beg; IT != it_end; ++IT) {
+    MElement *el = *IT;
+    for(std::size_t j = 0; j < el->getNumVertices(); j++) {
+      MVertex *e = el->getVertex(j);
+      vertexToElement.insert(std::make_pair(e, el));
+    }
+  }
+}
+
+int LaplaceSmoothing(GRegion *gr)
+{
+  std::multimap<MVertex *, MElement *> vertexToElement;
+  fillv_(vertexToElement, (gr)->tetrahedra.begin(), (gr)->tetrahedra.end());
+  fillv_(vertexToElement, (gr)->hexahedra.begin(), (gr)->hexahedra.end());
+  fillv_(vertexToElement, (gr)->prisms.begin(), (gr)->prisms.end());
+  fillv_(vertexToElement, (gr)->pyramids.begin(), (gr)->pyramids.end());
+  int N = 0;
+  for(unsigned int i = 0; i < gr->mesh_vertices.size(); i++) {
+    MVertex *v = gr->mesh_vertices[i];
+    std::multimap<MVertex *, MElement *>::iterator it =
+      vertexToElement.lower_bound(v);
+    std::multimap<MVertex *, MElement *>::iterator it_low = it;
+    std::multimap<MVertex *, MElement *>::iterator it_up =
+      vertexToElement.upper_bound(v);
+    double minQual = 1.e22;
+    double volTot = 0.0;
+    double xold = v->x(), yold = v->y(), zold = v->z();
+    SPoint3 pNew(0, 0, 0);
+    for(; it != it_up; ++it) {
+      minQual = std::min(minQual, it->second->minSICNShapeMeasure());
+      double vol = fabs(it->second->getVolume());
+      SPoint3 cog = it->second->barycenter();
+      pNew += cog * vol;
+      volTot += vol;
+    }
+    pNew *= (1. / volTot);
+    v->setXYZ(pNew.x(), pNew.y(), pNew.z());
+    double minQual2 = 1.e22;
+    for(it = it_low; it != it_up; ++it) {
+      minQual2 = std::min(minQual2, it->second->minSICNShapeMeasure());
+      if(minQual2 < minQual) {
+        v->setXYZ(xold, yold, zold);
+        break;
+      }
+    }
+    if(minQual < minQual2) N++;
+  }
+  return N;
+}

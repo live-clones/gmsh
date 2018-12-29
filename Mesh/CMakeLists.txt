@@ -25,23 +25,18 @@ set(SRC
     BackgroundMesh2D.cpp
     BackgroundMesh3D.cpp
     BackgroundMeshManager.cpp
-  pointInsertionRTreeTools.cpp pointInsertion.cpp
   qualityMeasures.cpp qualityMeasuresJacobian.cpp
   BoundaryLayers.cpp
-    BDS.cpp
-    HighOrder.cpp
-    meshPartition.cpp
-    meshRefine.cpp
-    QuadTriUtils.cpp
-      QuadTriExtruded2D.cpp QuadTriExtruded3D.cpp QuadTriTransfinite3D.cpp
+  BDS.cpp
+  HighOrder.cpp
+  meshPartition.cpp
+  meshRefine.cpp
+  QuadTriUtils.cpp
+    QuadTriExtruded2D.cpp QuadTriExtruded3D.cpp QuadTriTransfinite3D.cpp
   delaunay3d.cpp
-  simple3D.cpp ThinLayer.cpp
   DivideAndConquer.cpp
-  directions3D.cpp
-  filterElements.cpp
-  yamakawa.cpp
   Field.cpp
-  surfaceFiller.cpp
+  filterElements.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

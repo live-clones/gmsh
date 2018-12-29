@@ -13,7 +13,6 @@
 #include "meshGRegionMMG3D.h"
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
-#include "boundaryLayersData.h"
 #include "meshGRegionBoundaryRecovery.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "meshGRegionRelocateVertex.h"
@@ -25,16 +24,9 @@
 #include "MTriangle.h"
 #include "MTetrahedron.h"
 #include "MPyramid.h"
-#include "MPrism.h"
-#include "BDS.h"
+#include "ExtrudeParams.h"
 #include "OS.h"
 #include "Context.h"
-#include "simple3D.h"
-#include "directions3D.h"
-#include "pointInsertion.h"
-#include "discreteFace.h"
-#include "filterElements.h"
-#include "ExtrudeParams.h"
 
 void splitQuadRecovery::add(const MFace &f, MVertex *v, GFace *gf)
 {

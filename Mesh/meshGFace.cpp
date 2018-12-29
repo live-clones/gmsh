@@ -11,7 +11,6 @@
 #include "meshGFaceBDS.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGFaceBamg.h"
-#include "meshGFaceQuadrilateralize.h"
 #include "meshGFaceOptimize.h"
 #include "DivideAndConquer.h"
 #include "BackgroundMesh.h"

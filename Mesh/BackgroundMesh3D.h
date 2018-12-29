@@ -11,7 +11,6 @@
 #include <map>
 #include <numeric>
 #include "BGMBase.h"
-#include "pointInsertion.h"
 
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
@@ -177,9 +176,6 @@ public:
     export_scalar(filename, crossFieldSmoothness);
   };
   void exportVectorialSmoothness(const std::string &filename);
-
-  //  private:
-  //    STensor3 get_random_cross()const;
 };
 
 #endif

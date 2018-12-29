@@ -15,7 +15,7 @@
 
 enum localMeshModAction { GMSH_DOIT, GMSH_EVALONLY };
 
-void LaplaceSmoothing(GRegion *gr);
+int LaplaceSmoothing(GRegion *gr);
 
 bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
               const qmTetrahedron::Measures &cr,
