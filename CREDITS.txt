@@ -1,4 +1,4 @@
-                 Gmsh is copyright (C) 1997-2018
+                 Gmsh is copyright (C) 1997-2019
 
                        Christophe Geuzaine
                      <cgeuzaine at uliege.be>

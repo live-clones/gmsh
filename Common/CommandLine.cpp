@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string>
 #include <string.h>
@@ -1166,7 +1166,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       }
       else if(!strcmp(argv[i] + 1, "help") || !strcmp(argv[i] + 1, "-help")) {
         fprintf(stderr, "Gmsh, a 3D mesh generator with pre- and post-processing facilities\n");
-        fprintf(stderr, "Copyright (C) 1997-2018 C. Geuzaine and J.-F. Remacle\n");
+        fprintf(stderr, "Copyright (C) 1997-2019 C. Geuzaine and J.-F. Remacle\n");
         PrintUsage(argv[0]);
         Msg::Exit(0);
       }
