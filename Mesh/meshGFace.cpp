@@ -7,6 +7,18 @@
 #include <sstream>
 #include <stdlib.h>
 #include <map>
+#include "GmshMessage.h"
+#include "GModel.h"
+#include "GFace.h"
+#include "GEdge.h"
+#include "GVertex.h"
+#include "GPoint.h"
+#include "discreteEdge.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
+#include "MLine.h"
+#include "MVertex.h"
+#include "meshGEdge.h"
 #include "meshGFace.h"
 #include "meshGFaceBDS.h"
 #include "meshGFaceDelaunayInsertion.h"
@@ -14,101 +26,19 @@
 #include "meshGFaceOptimize.h"
 #include "DivideAndConquer.h"
 #include "BackgroundMesh.h"
-#include "GVertex.h"
-#include "GEdge.h"
 #include "robustPredicates.h"
-#include "discreteFace.h"
-#include "GFace.h"
-#include "GModel.h"
-#include "MVertex.h"
-#include "MLine.h"
-#include "MTriangle.h"
-#include "MQuadrangle.h"
-#include "MElementCut.h"
-#include "Context.h"
-#include "GPoint.h"
-#include "GmshMessage.h"
 #include "Numeric.h"
 #include "BDS.h"
 #include "qualityMeasures.h"
 #include "OS.h"
 #include "MElementOctree.h"
 #include "HighOrder.h"
-#include "meshGEdge.h"
-#include "meshPartition.h"
-#include "CreateFile.h"
 #include "Context.h"
 #include "boundaryLayersData.h"
 #include "filterElements.h"
 
 // define this to use the old initial delaunay
 #define OLD_CODE_DELAUNAY 1
-
-void copyMesh(GEdge *, GEdge *, int);
-
-void derivativeP2(double u, double v, double dfdu[6], double dfdv[6])
-{
-  /*  const double sf[6][6] = { { 1, -3, -3,  4,  2,  2},
-                                { 0, -1,  0,  0,  2,  0},
-                                { 0,  0, -1,  0,  0,  2},
-                                { 0,  4,  0, -4, -4,  0},
-                                { 0,  0,  0,  4,  0,  0},
-                                { 0,  0,  4, -4,  0, -4} };
-  */
-  dfdu[0] = -3 + 4 * v + 4 * u;
-  dfdu[1] = -1 + 4 * u;
-  dfdu[2] = 0;
-  dfdu[3] = 4 - 4 * v - 8 * u;
-  dfdu[4] = 4 * v;
-  dfdu[5] = -4 * v;
-
-  dfdv[0] = -3 + 4 * u + 4 * v;
-  dfdv[1] = 0;
-  dfdv[2] = -1 + 4 * v;
-  dfdv[3] = -4 * u;
-  dfdv[4] = 4 * u;
-  dfdv[5] = 4 - 4 * u - 8 * v;
-}
-
-void jac_corners_p2(double *xa, double *xb, double *xc, double *xab,
-                    double *xbc, double *xca, double J[6])
-{
-  double *x[6] = {xa, xb, xc, xab, xbc, xca};
-  double nodes[6][2] = {{0, 0}, {1, 0}, {0, 1}, {0.5, 0}, {0.5, 0.5}, {0, 0.5}};
-  for(int i = 0; i < 6; i++) {
-    double u = nodes[i][0];
-    double v = nodes[i][1];
-    double dfdu[6], dfdv[6];
-    derivativeP2(u, v, dfdu, dfdv);
-    double dxdu = 0, dxdv = 0, dydu = 0, dydv = 0;
-    for(int j = 0; j < 6; j++) {
-      dxdu += x[j][0] * dfdu[j];
-      dxdv += x[j][0] * dfdv[j];
-      dydu += x[j][1] * dfdu[j];
-      dydv += x[j][1] * dfdv[j];
-    }
-    J[i] = dxdu * dydv - dydu * dxdv;
-  }
-}
-
-double validity_p2triangle_formula(double *xa, double *xb, double *xc,
-                                   double *xab, double *xbc, double *xca)
-{
-  // return 1;
-  //  return orient2d(xa,xb,xc);
-  //  double EPS = 1.e-3;
-  double J[6];
-  jac_corners_p2(xa, xb, xc, xab, xbc, xca, J);
-  double bez[6] = {J[0],
-                   J[1],
-                   J[2],
-                   2 * J[3] - 0.5 * (J[0] + J[1]),
-                   2 * J[4] - 0.5 * (J[1] + J[2]),
-                   2 * J[5] - 0.5 * (J[0] + J[2])};
-  double _MIN = 1.e22;
-  for(int i = 0; i < 6; i++) _MIN = bez[i] < _MIN ? bez[i] : _MIN;
-  return _MIN;
-}
 
 bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
                                  SPoint2 &out, int &N)
@@ -130,7 +60,7 @@ bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
   return true;
 }
 
-void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug)
+static void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug)
 {
   FILE *view_t = 0;
   if(debug) {
@@ -536,8 +466,6 @@ static void remeshUnrecoveredEdges(
   std::set<EdgeToRecover> &edgesNotRecovered, bool all)
 {
   deMeshGFace dem;
-
-  // printf("%d gateaux\n", edgesNotRecovered.size());
 
   std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
   for(; itr != edgesNotRecovered.end(); ++itr) {
@@ -1498,19 +1426,14 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     }
     else {
       std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
-      // int *_error = new int[3 * edgesNotRecovered.size()];
       int I = 0;
       for(; itr != edgesNotRecovered.end(); ++itr) {
         int p1 = itr->p1;
         int p2 = itr->p2;
         int tag = itr->ge->tag();
         Msg::Error("Edge not recovered: %d %d %d", p1, p2, tag);
-        //_error[3 * I + 0] = p1;
-        //_error[3 * I + 1] = p2;
-        //_error[3 * I + 2] = tag;
         I++;
       }
-      // throw _error;
     }
 
     // delete the mesh
@@ -1606,8 +1529,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
                edgesToRecover.size());
     std::set<BDS_Point *, PointLessThan>::iterator it = m->points.begin();
     for(; it != m->points.end(); ++it) {
-      // for(int i = 0; i < doc.numPoints; i++){
-      //   BDS_Point *pp = (BDS_Point*)doc.points[i].data;
       BDS_Point *pp = *it;
       std::map<BDS_Point *, MVertex *, PointLessThan>::iterator itv =
         recoverMap.find(pp);
@@ -2494,8 +2415,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   }
 
   if(doItAgain) {
-    // this block is not thread safe. 2D mesh will be serialized
-    // for surfaces that have their 1D mesh self-intersect
+    // this block is not thread safe. 2D mesh will be serialized for surfaces
+    // that have their 1D mesh self-intersect
     if(Msg::GetNumThreads() != 1) {
       gf->meshStatistics.status = GFace::PENDING;
       delete m;
@@ -2768,8 +2689,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     }
     // recoverMap.insert(new_relations.begin(), new_relations.end());
   }
+
   // Msg::Info("%d points that are duplicated for Delaunay meshing",
-  // equivalence.size());
+  //           equivalence.size());
 
   // fill the small gmsh structures
   BDS2GMSH(m, gf, recoverMap);

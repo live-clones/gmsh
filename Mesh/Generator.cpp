@@ -284,9 +284,8 @@ static bool TooManyElements(GModel *m, int dim)
 {
   if(CTX::instance()->expertMode || !m->getNumVertices()) return false;
 
-  // try to detect obvious mistakes in characteristic lenghts (one of
-  // the most common cause for erroneous bug reports on the mailing
-  // list)
+  // try to detect obvious mistakes in characteristic lenghts (one of the most
+  // common cause for erroneous bug reports on the mailing list)
   double sumAllLc = 0.;
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it)
     sumAllLc +=
@@ -492,14 +491,12 @@ static void Mesh2D(GModel *m)
         if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
       }
       if(!nPending) break;
-      // iter == 2 is for meshing re-parametrized surfaces
-      // after that, we serialize (self-intersections of 1D meshes are not thread safe)!
+      // iter == 2 is for meshing re-parametrized surfaces; after that, we
+      // serialize (self-intersections of 1D meshes are not thread safe)!
       if(nIter > 2) Msg::SetNumThreads(1);
       if(nIter++ > 10) break;
     }
   }
-
-  // collapseSmallEdges(*m);
 
   Msg::SetNumThreads(prevNumThreads);
 
@@ -654,7 +651,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
             MFace(it->getVertex(1), it->getVertex(2), it->getVertex(3)));
         }
       }
-      // HEX IS ONLY SURROUNED BY COMPATIBLE ELEMENTS
+      // Hex is only surrounded by compatible elements
       if((int)faces.size() == e->getNumFaces()) {
         remainingHexes.push_back(e);
       }
@@ -695,7 +692,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
             MFace(it->getVertex(1), it->getVertex(2), it->getVertex(3)));
         }
       }
-      // HEX IS ONLY SURROUNED BY COMPATIBLE ELEMENTS
+      // Hex is only surrounded by compatible elements
       if((int)faces.size() == e->getNumFaces()) {
         remainingPrisms.push_back(e);
       }
@@ -862,12 +859,6 @@ static void Mesh3D(GModel *m)
         nb_hexa_recombination += post.get_nb_hexahedra();
         vol_element_recombination += post.get_vol_elements();
         vol_hexa_recombination += post.get_vol_hexahedra();
-        // partial export
-        //        stringstream ss;
-        //        ss << "yamakawa_part_";
-        //        ss << gr->tag();
-        //        ss << ".msh";
-        //        export_gregion_mesh(gr, ss.str().c_str());
         time_recombination += (Cpu() - a);
       }
     }
@@ -891,8 +882,6 @@ static void Mesh3D(GModel *m)
   // ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
 
-  //  std::for_each(m->firstRegion(), m->lastRegion(),
-  //  optimizeMeshGRegionNetgen());
   if(Msg::GetVerbosity() > 98)
     std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
 
@@ -928,7 +917,8 @@ void OptimizeMeshNetgen(GModel *m)
   double t1 = Cpu();
 
   std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionNetgen());
-  // Ensure that all volume Jacobians are positive
+
+  // ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
 
   if(Msg::GetVerbosity() > 98)

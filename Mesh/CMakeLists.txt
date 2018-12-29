@@ -15,10 +15,9 @@ set(SRC
     meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGRegionNetgen.cpp
     meshGRegionDelaunayInsertion.cpp meshGRegionTransfinite.cpp
-    meshGRegionExtruded.cpp  meshGRegionCarveHole.cpp
+    meshGRegionExtruded.cpp meshGRegionCarveHole.cpp
     meshGRegionLocalMeshMod.cpp meshGRegionMMG3D.cpp
     meshGRegionRelocateVertex.cpp
-  meshDiscreteRegion.cpp
   meshMetric.cpp
   BackgroundMesh.cpp BackgroundMeshTools.cpp
   qualityMeasures.cpp qualityMeasuresJacobian.cpp

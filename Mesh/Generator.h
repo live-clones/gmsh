@@ -8,7 +8,6 @@
 
 class GModel;
 class GRegion;
-#include "fullMatrix.h"
 
 void GetStatistics(double stat[50], double quality[4][100] = 0);
 void AdaptMesh(GModel *m);
@@ -20,10 +19,5 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads = false,
                 bool splitIntoHexas = false);
 void BarycentricRefineMesh(GModel *m);
 void RecombineMesh(GModel *m);
-GRegion *createTetrahedralMesh(GModel *gm, fullMatrix<double> &pts,
-                               fullMatrix<int> &triangles,
-                               bool all_tets = false);
-// GRegion * createTetrahedralMesh ( GModel *gm, unsigned int nbPts , double
-// *pts, unsigned int nbTriangles, int *triangles );
 
 #endif
