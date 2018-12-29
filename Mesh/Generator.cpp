@@ -897,7 +897,7 @@ static void Mesh3D(GModel *m)
     std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
 
   std::stringstream debugInfo;
-  debugInfo << "No tetrahedra in region ";
+  debugInfo << "No elements in region ";
   bool emptyRegionFound = false;
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
     if((*it)->getNumMeshElements() == 0) {

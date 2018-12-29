@@ -36,6 +36,8 @@ Enable C99 (default: ON)
 Enable profiling compiler flags (default: OFF)
 @item ENABLE_DINTEGRATION
 Enable discrete integration (needed for levelsets) (default: ON)
+@item ENABLE_DOMHEX
+Enable experimental DOMHEX code (default: ON)
 @item ENABLE_FLTK
 Enable FLTK graphical user interface (requires mesh/post) (default: ON)
 @item ENABLE_GETDP
@@ -104,6 +106,8 @@ Enable post-processing module (required by GUI) (default: ON)
 Enable Poppler for displaying PDF documents (experimental) (default: OFF)
 @item ENABLE_PRIVATE_API
 Enable private API (default: OFF)
+@item ENABLE_QUADTRI
+Enable QuadTri structured meshing extensions (default: ON)
 @item ENABLE_REVOROPT
 Enable Revoropt (used for CVT remeshing) (default: OFF)
 @item ENABLE_SLEPC

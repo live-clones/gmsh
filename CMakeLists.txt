@@ -764,14 +764,14 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/domhex AND
    ENABLE_DOMHEX AND HAVE_MESH)
   add_subdirectory(contrib/domhex)
   include_directories(contrib/domhex)
-  set_config_option(HAVE_OPTHOM "DOMHEX")
+  set_config_option(HAVE_DOMHEX "DomHex")
 endif()
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadTri AND
    ENABLE_QUADTRI AND HAVE_MESH)
   add_subdirectory(contrib/QuadTri)
   include_directories(contrib/QuadTri)
-  set_config_option(HAVE_OPTHOM "QuadTri")
+  set_config_option(HAVE_QUADTRI "QuadTri")
 endif()
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/kbipack AND ENABLE_KBIPACK)
