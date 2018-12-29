@@ -1705,30 +1705,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   Msg::Debug("Starting to add internal points");
   // start mesh generation
   if(!algoDelaunay2D(gf) && !onlyInitialMesh) {
-    // if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine ||
-    // 1) {
-    //   backgroundMesh::unset();
-    //   buildBackGroundMesh(gf);
-    // }
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true,
                   &recoverMapInv, NULL);
     optimizeMeshBDS(gf, *m, 2);
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, false,
                   &recoverMapInv, NULL);
     optimizeMeshBDS(gf, *m, 2);
-    // if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine ||
-    // 1) {
-    //   backgroundMesh::unset();
-    // }
   }
-
-  /*
-  computeMeshSizeFieldAccuracy(gf, *m, gf->meshStatistics.efficiency_index,
-                               gf->meshStatistics.longest_edge_length,
-                               gf->meshStatistics.smallest_edge_length,
-                               gf->meshStatistics.nbEdge,
-                               gf->meshStatistics.nbGoodLength);
-  */
 
   gf->meshStatistics.status = GFace::DONE;
 
@@ -2685,22 +2668,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   // start mesh generation for periodic face
 
   if(!algoDelaunay2D(gf)) {
-    //    optimizeMeshBDS(gf, *m, 2, &recoverMap); // fix periodic shit
-    //    if(debug){
-    //      char name[245];
-    //      sprintf(name, "surface%d-fixed-real.pos", gf->tag());
-    //      outputScalarField(m->triangles, name, 0);
-    //      sprintf(name, "surface%d-fixed-param.pos", gf->tag());
-    //      outputScalarField(m->triangles, name, 1);
-    //    }
-
-    // need for a BGM for cross field
-    //    if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine
-    //    || 1) {
-    //      printf("coucou here !!!\n");
-    //      backgroundMesh::unset();
-    //      buildBackGroundMesh(gf);
-    //    }
     modifyInitialMeshToRemoveDegeneracies(gf, *m, &recoverMap);
 
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true, NULL,
@@ -2737,13 +2704,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       sprintf(name, "surface%d-phase4-param.pos", gf->tag());
       outputScalarField(m->triangles, name, 1, gf);
     }
-    // compute mesh statistics
-    /*
-    computeMeshSizeFieldAccuracy(gf, *m, gf->meshStatistics.efficiency_index,
-                                 gf->meshStatistics.longest_edge_length,
-                                 gf->meshStatistics.smallest_edge_length,
-                                 gf->meshStatistics.nbEdge,
-                                 gf->meshStatistics.nbGoodLength); */
 
     if(gf->meshStatistics.status == GFace::FAILED) {
       // splitall
@@ -2763,11 +2723,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       sprintf(name, "surface%d-just-real.pos", gf->tag());
       outputScalarField(m->triangles, name, 0, gf);
     }
-
-    // if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine ||
-    // 1) {
-    //   backgroundMesh::unset();
-    // }
   }
 
   // This is a structure that we need only for periodic cases. We will duplicate
@@ -2950,8 +2905,6 @@ void meshGFace::operator()(GFace *gf, bool print)
   deMeshGFace dem;
   dem(gf);
 
-  // FIXME: if transfinite surface, impossible to use ALGO_3D_RTREE
-  // because meshGenerator never called
   if(MeshTransfiniteSurface(gf)) return;
   if(MeshExtrudedSurface(gf)) return;
   if(gf->getMeshMaster() != gf) {

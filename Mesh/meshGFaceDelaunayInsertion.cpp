@@ -1759,46 +1759,29 @@ void buildBackGroundMesh(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
                          std::map<MVertex *, SPoint2> *parametricCoordinates)
 {
 #if defined(HAVE_DOMHEX)
-  // TODO PEB :
-  // this is now done in the new backgroundMesh !!!
-  // on le vire ? On insère ici les operations sur le new backgmesh ?
-  // parce que les opérations qui suivent sur l'ancien BGM sont inutiles
-  // maintenant... !
   if(!old_algo_hexa()) return;
-  //#else
 #endif
 
   quadsToTriangles(gf, 100000);
 
   if(!backgroundMesh::current()) {
     std::vector<MTriangle *> TR;
-    //    std::vector<MQuadrangle*> QR;
     for(unsigned int i = 0; i < gf->triangles.size(); i++) {
       TR.push_back(new MTriangle(gf->triangles[i]->getVertex(0),
                                  gf->triangles[i]->getVertex(1),
                                  gf->triangles[i]->getVertex(2)));
     }
-    /*
-       for(int i=0;i<gf->quadrangles.size();i++){
-       QR.push_back(new MQuadrangle(gf->quadrangles[i]->getVertex(0),
-       gf->quadrangles[i]->getVertex(1),
-       gf->quadrangles[i]->getVertex(2),
-       gf->quadrangles[i]->getVertex(3)));
-       }
-     */
     // avoid computing curvatures on the fly : only on the
     // BGM computes once curvatures at each node
-    //  Disable curvature control
+    // Disable curvature control
     int CurvControl = CTX::instance()->mesh.lcFromCurvature;
     CTX::instance()->mesh.lcFromCurvature = 0;
-    //  Do a background mesh
+    // Do a background mesh
     bowyerWatson(gf, 40000, equivalence, parametricCoordinates);
-    //  Re-enable curv control if asked
+    // Re-enable curv control if asked
     CTX::instance()->mesh.lcFromCurvature = CurvControl;
     // apply this to the BGM
-    // printf("1 end build bak mesh\n");
     backgroundMesh::set(gf);
-    // printf("2 end build bak mesh\n");
     char name[256];
     if(CTX::instance()->mesh.saveAll) {
       sprintf(name, "bgm-%d.pos", gf->tag());
@@ -1807,7 +1790,6 @@ void buildBackGroundMesh(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
       backgroundMesh::current()->print(name, gf, 1);
     }
     gf->triangles = TR;
-    // gf->quadrangles = QR;
   }
 }
 

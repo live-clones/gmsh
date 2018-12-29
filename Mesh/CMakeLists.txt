@@ -20,11 +20,7 @@ set(SRC
     meshGRegionRelocateVertex.cpp
   meshDiscreteRegion.cpp
   meshMetric.cpp
-  BackgroundMeshTools.cpp
-    BackgroundMesh.cpp BGMBase.cpp
-    BackgroundMesh2D.cpp
-    BackgroundMesh3D.cpp
-    BackgroundMeshManager.cpp
+  BackgroundMesh.cpp BackgroundMeshTools.cpp
   qualityMeasures.cpp qualityMeasuresJacobian.cpp
   BoundaryLayers.cpp
   BDS.cpp
