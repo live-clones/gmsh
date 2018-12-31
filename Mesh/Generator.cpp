@@ -1055,9 +1055,6 @@ void GenerateMesh(GModel *m, int ask)
   else if(m->getMeshStatus() == 3 && CTX::instance()->mesh.algoSubdivide == 2)
     RefineMesh(m, CTX::instance()->mesh.secondOrderLinear, false, true);
 
-  // Compute homology if necessary
-  if(!Msg::GetErrorCount()) m->computeHomology();
-
   // Create high order elements
   if(m->getMeshStatus() && CTX::instance()->mesh.order > 1)
     SetOrderN(m, CTX::instance()->mesh.order,
@@ -1089,6 +1086,9 @@ void GenerateMesh(GModel *m, int ask)
     m->renumberMeshVertices();
     m->renumberMeshElements();
   }
+
+  // Compute homology if necessary
+  if(!Msg::GetErrorCount()) m->computeHomology();
 
   Msg::Info("%d vertices %d elements", m->getNumMeshVertices(),
             m->getNumMeshElements());

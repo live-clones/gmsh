@@ -7,11 +7,6 @@
 
 #include "Homology.h"
 
-#if defined(HAVE_POST)
-#include "PView.h"
-#include "PViewOptions.h"
-#endif
-
 #if defined(HAVE_KBIPACK)
 
 Homology::Homology(GModel *model, const std::vector<int> &physicalDomain,
