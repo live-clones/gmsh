@@ -132,15 +132,15 @@ The colorbar widget (Fltk/Colorbar_Window.cpp) was inspired by code from the
 Vis5d program for visualizing five dimensional gridded data sets, copyright (C)
 1990-1995, Bill Hibbard, Brian Paul, Dave Santek, and Andre Battaiola.
 
-In addition, this this version of Gmsh may contain the following contributed
-codes in the contrib/ directory, each governed by their own license:
+In addition, this version of Gmsh may contain the following contributed codes in
+the contrib/ directory, each governed by their own license:
 
 * contrib/ANN copyright (C) 1997-2005 University of Maryland and Sunil Arya and
   David Mount;
 
 * contrib/gmm copyright (C) 2002-2008 Yves Renard;
 
-* contrib/hxt - Copyright (C) 2017-2018 - Universite catholique de Louvain.
+* contrib/hxt - Copyright (C) 2017-2018 - Universite catholique de Louvain;
 
 * contrib/kbipack copyright (C) 2005 Saku Suuriniemi;
 
