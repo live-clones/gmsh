@@ -592,7 +592,7 @@ static void setLcs(MTetrahedron *t,
         double const length =
           hypotenuse(vi->x() - vj->x(), vi->y() - vj->y(), vi->z() - vj->z());
 
-        if(iti == vSizes.end() || iti->second > l) { vSizes[vi] = l; }
+        if(iti == vSizes.end() || iti->second > length) { vSizes[vi] = length; }
       }
 
       if(bndVertices.find(vj) == bndVertices.end()) {
@@ -602,7 +602,7 @@ static void setLcs(MTetrahedron *t,
         double const length =
           hypotenuse(vi->x() - vj->x(), vi->y() - vj->y(), vi->z() - vj->z());
 
-        if(itj == vSizes.end() || itj->second > l) { vSizes[vj] = l; }
+        if(itj == vSizes.end() || itj->second > length) { vSizes[vj] = length; }
       }
     }
   }
