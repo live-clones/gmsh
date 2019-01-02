@@ -596,19 +596,19 @@ static void setLcs(MTetrahedron *t,
       double dy = vi->y() - vj->y();
       double dz = vi->z() - vj->z();
       double l = std::sqrt(dx * dx + dy * dy + dz * dz);
-      std::map<MVertex *, double, MVertexLessThanNum>::iterator iti =
-        vSizes.find(vi);
-      std::map<MVertex *, double, MVertexLessThanNum>::iterator itj =
-        vSizes.find(vj);
-      std::set<MVertex *, MVertexLessThanNum>::iterator itvi =
-        bndVertices.find(vi);
-      std::set<MVertex *, MVertexLessThanNum>::iterator itvj =
-        bndVertices.find(vj);
+
       // smallest tet edge
-      if(itvi == bndVertices.end() && (iti == vSizes.end() || iti->second > l))
-        vSizes[vi] = l;
-      if(itvj == bndVertices.end() && (itj == vSizes.end() || itj->second > l))
-        vSizes[vj] = l;
+      if(bndVertices.find(vi) == bndVertices.end()) {
+        std::map<MVertex *, double, MVertexLessThanNum>::iterator iti =
+          vSizes.find(vi);
+        if(iti == vSizes.end() || iti->second > l) { vSizes[vi] = l; }
+      }
+
+      if(bndVertices.find(vj) == bndVertices.end()) {
+        std::map<MVertex *, double, MVertexLessThanNum>::iterator itj =
+          vSizes.find(vj);
+        if(itj == vSizes.end() || itj->second > l) { vSizes[vj] = l; }
+      }
     }
   }
 }
