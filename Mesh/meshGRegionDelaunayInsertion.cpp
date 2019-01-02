@@ -583,21 +583,25 @@ static void setLcs(MTetrahedron *t,
     for(int j = i + 1; j < 4; j++) {
       MVertex *vi = t->getVertex(i);
       MVertex *vj = t->getVertex(j);
-      double dx = vi->x() - vj->x();
-      double dy = vi->y() - vj->y();
-      double dz = vi->z() - vj->z();
-      double l = std::sqrt(dx * dx + dy * dy + dz * dz);
 
       // smallest tet edge
       if(bndVertices.find(vi) == bndVertices.end()) {
         std::map<MVertex *, double, MVertexLessThanNum>::iterator iti =
           vSizes.find(vi);
+
+        double const length =
+          hypotenuse(vi->x() - vj->x(), vi->y() - vj->y(), vi->z() - vj->z());
+
         if(iti == vSizes.end() || iti->second > l) { vSizes[vi] = l; }
       }
 
       if(bndVertices.find(vj) == bndVertices.end()) {
         std::map<MVertex *, double, MVertexLessThanNum>::iterator itj =
           vSizes.find(vj);
+
+        double const length =
+          hypotenuse(vi->x() - vj->x(), vi->y() - vj->y(), vi->z() - vj->z());
+
         if(itj == vSizes.end() || itj->second > l) { vSizes[vj] = l; }
       }
     }
