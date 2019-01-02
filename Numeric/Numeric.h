@@ -19,6 +19,10 @@ template <class T> inline double myhypot(const T &a, const T &b)
   return std::sqrt(a * a + b * b);
 }
 
+template <class T> inline double hypotenuse(T const &a, T const &b, T const &c)
+{
+  return std::sqrt(a * a + b * b + c * c);
+}
 
 template <typename T> inline int gmsh_sign(T const &value)
 {
