@@ -19,7 +19,15 @@ template <class T> inline double myhypot(const T &a, const T &b)
   return std::sqrt(a * a + b * b);
 }
 
-template <class T> inline int gmsh_sign(const T &x) { return (x < 0) ? -1 : 1; }
+template <class T> inline double hypotenuse(T const &a, T const &b, T const &c)
+{
+  return std::sqrt(a * a + b * b + c * c);
+}
+
+template <typename T> inline int gmsh_sign(T const &value)
+{
+  return (T(0) < value) - (value < T(0));
+}
 
 struct mean_plane {
   double plan[3][3];
