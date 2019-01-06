@@ -1,4 +1,5 @@
-4.0.8: improve ONELAB support in API; code refactoring.
+4.0.8: improved ONELAB support in API; improved renumbering of mesh
+nodes/elements; code refactoring.
 
 4.0.7 (December 9, 2018): fixed small memory leaks; removed unused code.
 
