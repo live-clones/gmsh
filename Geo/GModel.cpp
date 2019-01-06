@@ -1259,11 +1259,64 @@ void GModel::renumberMeshVertices()
   setMaxVertexNumber(0);
   std::vector<GEntity *> entities;
   getEntities(entities);
+
+  // check if we will potentially only save a subset of elements, i.e. those
+  // belonging to physical groups
+  bool potentiallySaveSubset = false;
+  if(!CTX::instance()->mesh.saveAll){
+    for(unsigned int i = 0; i < entities.size(); i++){
+      if(entities[i]->physicals.size()){
+        potentiallySaveSubset = true;
+        break;
+      }
+    }
+  }
+
   unsigned int n = 0;
-  for(unsigned int i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    for(unsigned int j = 0; j < ge->getNumMeshVertices(); j++) {
-      ge->getMeshVertex(j)->forceNum(++n);
+  if(potentiallySaveSubset){
+    Msg::Debug("Renumbering for potentially partial mesh save");
+    // if we potentially only save a subset of elements, make sure to first
+    // renumber the vertices that belong to those elements (so that we end up
+    // with a dense vertex numbering in the output file)
+    for(unsigned int i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(unsigned int j = 0; j < ge->getNumMeshVertices(); j++) {
+        ge->getMeshVertex(j)->forceNum(-1);
+      }
+    }
+    for(unsigned int i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      if(ge->physicals.size()){
+        for(unsigned int j = 0; j < ge->getNumMeshElements(); j++) {
+          MElement *e = ge->getMeshElement(j);
+          for(unsigned int k = 0; k < e->getNumVertices(); k++){
+            e->getVertex(k)->forceNum(0);
+          }
+        }
+      }
+    }
+    for(unsigned int i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(unsigned int j = 0; j < ge->getNumMeshVertices(); j++) {
+        MVertex *v = ge->getMeshVertex(j);
+        if(v->getNum() == 0) v->forceNum(++n);
+      }
+    }
+    for(unsigned int i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(unsigned int j = 0; j < ge->getNumMeshVertices(); j++) {
+        MVertex *v = ge->getMeshVertex(j);
+        if(v->getNum() == -1) v->forceNum(++n);
+      }
+    }
+  }
+  else{
+    // no physical groups
+    for(unsigned int i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(unsigned int j = 0; j < ge->getNumMeshVertices(); j++) {
+        ge->getMeshVertex(j)->forceNum(++n);
+      }
     }
   }
 }
@@ -1274,11 +1327,44 @@ void GModel::renumberMeshElements()
   setMaxElementNumber(0);
   std::vector<GEntity *> entities;
   getEntities(entities);
+
+  // check if we will potentially only save a subset of elements, i.e. those
+  // belonging to physical groups
+  bool potentiallySaveSubset = false;
+  if(!CTX::instance()->mesh.saveAll){
+    for(unsigned int i = 0; i < entities.size(); i++){
+      if(entities[i]->physicals.size()){
+        potentiallySaveSubset = true;
+        break;
+      }
+    }
+  }
+
   unsigned int n = 0;
-  for(unsigned int i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++) {
-      ge->getMeshElement(j)->forceNum(++n);
+  if(potentiallySaveSubset){
+    for(unsigned int i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      if(ge->physicals.size()){
+        for(unsigned int j = 0; j < ge->getNumMeshElements(); j++) {
+          ge->getMeshElement(j)->forceNum(++n);
+        }
+      }
+    }
+    for(unsigned int i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      if(ge->physicals.empty()){
+        for(unsigned int j = 0; j < ge->getNumMeshElements(); j++) {
+          ge->getMeshElement(j)->forceNum(++n);
+        }
+      }
+    }
+  }
+  else{
+    for(unsigned int i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(unsigned int j = 0; j < ge->getNumMeshElements(); j++) {
+        ge->getMeshElement(j)->forceNum(++n);
+      }
     }
   }
 }
