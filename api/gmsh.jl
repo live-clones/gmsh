@@ -3684,6 +3684,20 @@ function update()
 end
 
 """
+    gmsh.fltk.awake()
+
+Awake the main interface thread.
+"""
+function awake()
+    ierr = Ref{Cint}()
+    ccall((:gmshFltkAwake, gmsh.lib), Nothing,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshFltkAwake returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.fltk.run()
 
 Run the event loop of the graphical user interface, i.e. repeatedly calls

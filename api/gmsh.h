@@ -1619,6 +1619,9 @@ namespace gmsh { // Top-level functions
     // user interface if it has not yet been initialized.
     GMSH_API void update();
 
+    // Awake the main interface thread.
+    GMSH_API void awake();
+
     // Run the event loop of the graphical user interface, i.e. repeatedly calls
     // `wait'. First automatically create the user interface if it has not yet been
     // initialized.

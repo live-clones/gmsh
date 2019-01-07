@@ -4300,6 +4300,19 @@ class fltk:
                 ierr.value)
 
     @staticmethod
+    def awake():
+        """
+        Awake the main interface thread.
+        """
+        ierr = c_int()
+        lib.gmshFltkAwake(
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshFltkAwake returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
     def run():
         """
         Run the event loop of the graphical user interface, i.e. repeatedly calls

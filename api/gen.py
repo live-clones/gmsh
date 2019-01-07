@@ -636,6 +636,9 @@ fltk.add('wait',doc,None,idouble('time', '-1.'))
 doc = '''Update the widgets in the user interface. First automatically create the user interface if it has not yet been initialized.'''
 fltk.add('update',doc,None)
 
+doc = '''Awake the main interface thread.'''
+fltk.add('awake',doc,None)
+
 doc = '''Run the event loop of the graphical user interface, i.e. repeatedly calls `wait'. First automatically create the user interface if it has not yet been initialized.'''
 fltk.add('run',doc,None)
 

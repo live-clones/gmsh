@@ -1720,6 +1720,9 @@ GMSH_API void gmshFltkWait(const double time,
  * user interface if it has not yet been initialized. */
 GMSH_API void gmshFltkUpdate(int * ierr);
 
+/* Awake the main interface thread. */
+GMSH_API void gmshFltkAwake(int * ierr);
+
 /* Run the event loop of the graphical user interface, i.e. repeatedly calls
  * `wait'. First automatically create the user interface if it has not yet
  * been initialized. */
