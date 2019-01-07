@@ -27,11 +27,13 @@ gmsh.onelab.set("""
 """)
 
 # set a single parameter
-gmsh.onelab.set('{ "type":"number", "name":"check 1", "values":[ 0 ], "choices":[0, 1]  }')
+gmsh.onelab.set("""
+{ "type":"number", "name":"check 1", "values":[ 0 ], "choices":[0, 1]  }
+""")
 
 # get the full parameter, store it as a python dict, and change an attribute
 p = json.loads(gmsh.onelab.get("check 1"))
-p['attributes'] = {'Highlight':'Blue'}
+p["attributes"] = {"Highlight":"Blue"}
 gmsh.onelab.set(json.dumps(p))
 
 # shorter way to just change the value, without json overhead
@@ -49,7 +51,7 @@ gmsh.fltk.initialize()
 while 1:
     gmsh.fltk.wait()
     a = gmsh.onelab.getString("Action")
-    if 'compute' in a:
+    if "compute" in a:
         gmsh.onelab.setString("Action", [""])
         # do something here...
         n = gmsh.onelab.getNumber("number 1")
