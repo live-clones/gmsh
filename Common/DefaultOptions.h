@@ -110,11 +110,11 @@ StringXString GeneralOptions_String[] = {
 
   { F|O, "TextEditor" , opt_general_editor ,
 #if defined(WIN32)
-    "notepad.exe %s" ,
+    "notepad.exe '%s'" ,
 #elif defined(__APPLE__)
-    "open -t %s" ,
+    "open -t '%s'" ,
 #else
-    "gedit %s" ,
+    "gedit '%s'" ,
 #endif
     "System command to launch a text editor" },
   { F|S, "TmpFileName" , opt_general_tmp_filename ,
