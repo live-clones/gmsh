@@ -51,7 +51,7 @@ public:
   void redrawTree() { _tree->redraw(); }
   void openTreeItem(const std::string &name);
   void setButtonVisibility();
-  void setButtonMode(const std::string &butt0, const std::string &butt1);
+  bool setButtonMode(const std::string &butt0, const std::string &butt1);
   bool isBusy();
   int getMinWindowWidth() { return _minWindowWidth; }
   int getMinWindowHeight() { return _minWindowHeight; }

@@ -250,9 +250,8 @@ void onelab_cb(Fl_Widget *w, void *data)
   }
 
   FlGui::instance()->onelab->stop(false);
-  FlGui::instance()->onelab->setButtonMode("check", "compute");
-
-  Msg::StatusBar(true, "Done");
+  if(FlGui::instance()->onelab->setButtonMode("check", "compute"))
+    Msg::StatusBar(true, "Done");
 
   if(action != "initialize") FlGui::instance()->onelab->show();
 }
@@ -1382,6 +1381,16 @@ void onelabGroup::checkForErrors(const std::string &client)
 
 void onelabGroup::setButtonVisibility()
 {
+  // custom button behavior
+  std::vector<onelab::string> ps;
+  onelab::server::instance()->get(ps, "Button");
+  if(ps.size() && ps[0].getValues().size() == 2) {
+    _butt[0]->hide();
+    _butt[1]->show();
+    setButtonMode("", "");
+    return;
+  }
+
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
   bool visible = false;
@@ -1410,9 +1419,24 @@ void onelabGroup::setButtonVisibility()
   redraw();
 }
 
-void onelabGroup::setButtonMode(const std::string &butt0,
+bool onelabGroup::setButtonMode(const std::string &butt0,
                                 const std::string &butt1)
 {
+  // custom button behavior
+  std::vector<onelab::string> ps;
+  onelab::server::instance()->get(ps, "Button");
+  if(ps.size() && ps[0].getValues().size() == 2) {
+    static char label[256];
+    strncpy(label, ps[0].getValues()[0].c_str(), 256);
+    static char action[256];
+    strncpy(action, ps[0].getValues()[1].c_str(), 256);
+    _butt[0]->deactivate();
+    _butt[1]->activate();
+    _butt[1]->label(label);
+    _butt[1]->callback(onelab_cb, (void *)action);
+    return false;
+  }
+
   if(butt0 == "check") {
     _butt[0]->activate();
     _butt[0]->label("Check");
@@ -1451,13 +1475,14 @@ void onelabGroup::setButtonMode(const std::string &butt0,
       if(i < _gearOptionsStart - 1 || i > _gearOptionsEnd - 2)
         ((Fl_Menu_Item *)_gear->menu())[i].deactivate();
   }
+  return true;
 }
 
 bool onelabGroup::isBusy()
 {
   std::string s(_butt[1]->label());
-  if(s == "Run") return false;
-  return true;
+  if(s == "Stop" || s == "Kill") return true;
+  return false;
 }
 
 std::string onelabGroup::getPath(Fl_Tree_Item *item)

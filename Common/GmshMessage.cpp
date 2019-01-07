@@ -1163,6 +1163,9 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
       if(ps[0].getValue() == "initialize") Exit(0);
     }
   }
+
+  // default onelab button mode
+  SetOnelabString("Button", "", false, true);
 #endif
 }
 
