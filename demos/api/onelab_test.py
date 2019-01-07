@@ -49,7 +49,7 @@ gmsh.fltk.initialize()
 while 1:
     gmsh.fltk.wait()
     a = gmsh.onelab.getString("Action")
-    if len(a) and a[0] == 'compute':
+    if 'compute' in a:
         gmsh.onelab.setString("Action", [""])
         # do something here...
         n = gmsh.onelab.getNumber("number 1")

@@ -360,7 +360,7 @@ def ovectorstring(name, value=None, python_value=None, julia_value=None):
     a.python_pre = api_name + ", " + api_name_n + " = POINTER(POINTER(c_char))(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectorstring(" + api_name + ", " + api_name_n + ".value)"
-    a.julia_ctype = "Ptr{Ptr{Cchar}}, Ptr{Csize_t}"
+    a.julia_ctype = "Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}"
     a.julia_pre = (api_name + " = Ref{Ptr{Ptr{Cchar}}}()\n    " +
                    api_name_n + " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
@@ -939,7 +939,7 @@ class API:
 
     def __init__(self, version, namespace="gmsh", code="Gmsh",
                  copyright="Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle",
-                 issues="https://gitlab.onelab.info/gmsh/gmsh/issues"):
+                 issues="https://gitlab.onelab.info/gmsh/gmsh/issues."):
         self.version = version
         global ns
         ns = namespace

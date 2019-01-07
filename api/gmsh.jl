@@ -236,7 +236,7 @@ function list()
     api_names_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelList, gmsh.lib), Nothing,
-          (Ptr{Ptr{Cchar}}, Ptr{Csize_t}, Ptr{Cint}),
+          (Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Cint}),
           api_names_, api_names_n_, ierr)
     ierr[] != 0 && error("gmshModelList returned non-zero error code: $(ierr[])")
     tmp_api_names_ = unsafe_wrap(Array, api_names_[], api_names_n_[], own=true)
@@ -3497,7 +3497,7 @@ function getListData(tag)
     api_data_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshViewGetListData, gmsh.lib), Nothing,
-          (Cint, Ptr{Ptr{Cchar}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          (Cint, Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
           tag, api_dataType_, api_dataType_n_, api_numElements_, api_numElements_n_, api_data_, api_data_n_, api_data_nn_, ierr)
     ierr[] != 0 && error("gmshViewGetListData returned non-zero error code: $(ierr[])")
     tmp_api_dataType_ = unsafe_wrap(Array, api_dataType_[], api_dataType_n_[], own=true)
@@ -3802,7 +3802,7 @@ function getString(name)
     api_value_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshOnelabGetString, gmsh.lib), Nothing,
-          (Ptr{Cchar}, Ptr{Ptr{Cchar}}, Ptr{Csize_t}, Ptr{Cint}),
+          (Ptr{Cchar}, Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Cint}),
           name, api_value_, api_value_n_, ierr)
     ierr[] != 0 && error("gmshOnelabGetString returned non-zero error code: $(ierr[])")
     tmp_api_value_ = unsafe_wrap(Array, api_value_[], api_value_n_[], own=true)
@@ -3877,7 +3877,7 @@ function start()
     api_log_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshLoggerStart, gmsh.lib), Nothing,
-          (Ptr{Ptr{Cchar}}, Ptr{Csize_t}, Ptr{Cint}),
+          (Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Cint}),
           api_log_, api_log_n_, ierr)
     ierr[] != 0 && error("gmshLoggerStart returned non-zero error code: $(ierr[])")
     tmp_api_log_ = unsafe_wrap(Array, api_log_[], api_log_n_[], own=true)
