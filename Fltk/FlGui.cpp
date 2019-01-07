@@ -72,21 +72,17 @@ void FlGui::wait(double time)
 
 void FlGui::lock()
 {
-#if defined(_OPENMP)
-  if(Msg::GetThreadNum() > 0) {
-    Fl::lock();
-  }
-#endif
+  if(Msg::GetThreadNum() > 0) Fl::lock();
 }
 
 void FlGui::unlock()
 {
-#if defined(_OPENMP)
-  if(Msg::GetThreadNum() > 0) {
-    Fl::unlock();
-    // Fl::awake();
-  }
-#endif
+  if(Msg::GetThreadNum() > 0) Fl::unlock();
+}
+
+void FlGui::awake()
+{
+  Fl::awake();
 }
 
 void FlGui::setOpenedThroughMacFinder(const std::string &name)
@@ -423,10 +419,8 @@ FlGui::FlGui(int argc, char **argv)
   Fl_Mac_App_Menu::quit = "Quit Gmsh";
 #endif
 
-#if defined(_OPENMP)
-  // tell fltk we're in multi-threaded mode
+  // tell fltk we're (potentially) in multi-threaded mode
   Fl::lock();
-#endif
 
   // set X display
   if(CTX::instance()->display.size())
