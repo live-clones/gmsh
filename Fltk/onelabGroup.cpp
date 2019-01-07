@@ -1433,6 +1433,15 @@ bool onelabGroup::setButtonMode(const std::string &butt0,
     _butt[0]->deactivate();
     _butt[1]->activate();
     _butt[1]->label(label);
+    fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
+    int w = 0, h = 0;
+    fl_measure(label, w, h);
+    int diff = w - _butt[1]->w() + 2 * WB;
+    if(diff > 0){
+      _butt[1]->resize(_butt[1]->x() - diff, _butt[1]->y(),
+                       _butt[1]->w() + diff, _butt[1]->h());
+      _butt[1]->redraw();
+    }
     _butt[1]->callback(onelab_cb, (void *)action);
     return false;
   }
