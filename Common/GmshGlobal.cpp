@@ -60,8 +60,6 @@ typedef unsigned long intptr_t;
 int GmshInitialize(int argc, char **argv, bool readConfigFiles,
                    bool exitOnCommandLineError)
 {
-  Msg::SetNumThreads(1);
-
   static bool isInitialized = false;
   if(isInitialized) return 1;
   isInitialized = true;
