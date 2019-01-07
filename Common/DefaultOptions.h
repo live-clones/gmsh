@@ -687,8 +687,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "NoPopup" , opt_general_nopopup , 0. ,
     "Disable interactive dialog windows in scripts (and use default values "
     "instead)" },
-  { F|O, "NumThreads" , opt_general_num_threads , 1. ,
-    "Set (maximum) number of threads" },
+  { F|O, "NumThreads" , opt_general_num_threads , 0. ,
+    "Set (maximum) number of threads (0: use system default, i.e. OMP_NUM_THREADS)" },
 
   { F|S, "OptionsPositionX" , opt_general_option_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the option "
@@ -1087,11 +1087,11 @@ StringXNumber MeshOptions_Number[] = {
     "Display width of mesh lines (in pixels)" },
 
   { F|O, "MaxNumThreads1D" , opt_mesh_max_num_threads_1d , 0. ,
-    "Maximum number of threads for 1D meshing (0: use default number of threads)" },
+    "Maximum number of threads for 1D meshing (0: use MaxNumThreads)" },
   { F|O, "MaxNumThreads2D" , opt_mesh_max_num_threads_2d , 0. ,
-    "Maximum number of threads for 2D meshing (0: use default number of threads)" },
+    "Maximum number of threads for 2D meshing (0: use MaxNumThreads)" },
   { F|O, "MaxNumThreads3D" , opt_mesh_max_num_threads_3d , 0. ,
-    "Maximum number of threads for 3D meshing (0: use default number of threads)" },
+    "Maximum number of threads for 3D meshing (0: use MaxNumThreads)" },
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
     "Mesh only visible entities (experimental: use with caution!)" },
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,

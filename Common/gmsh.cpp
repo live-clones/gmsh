@@ -4257,6 +4257,19 @@ GMSH_API void gmsh::fltk::update()
 #endif
 }
 
+GMSH_API void gmsh::fltk::awake()
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_FLTK)
+  FlGui::awake();
+#else
+  Msg::Error("Fltk not available");
+  throw -1;
+#endif
+}
+
 GMSH_API void gmsh::fltk::run()
 {
   if(!_isInitialized()) {

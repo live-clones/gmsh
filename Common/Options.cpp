@@ -4278,8 +4278,9 @@ double opt_general_light53(OPT_ARGS_NUM)
 
 double opt_general_num_threads(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
-    Msg::SetNumThreads(val);
+  if(action & GMSH_SET){
+    if(val > 0) Msg::SetNumThreads(val);
+  }
   return Msg::GetNumThreads();
 }
 
