@@ -355,7 +355,7 @@ int GmshFLTK(int argc, char **argv)
   FlGui::instance(argc, argv);
 
   // display GUI immediately for quick launch time
-  FlGui::instance()->check();
+  FlGui::check();
 
   if(FlGui::getOpenedThroughMacFinder().size() &&
      CTX::instance()->files.empty()) {

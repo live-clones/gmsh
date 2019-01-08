@@ -2993,6 +2993,22 @@ namespace gmsh { // Top-level functions
       if(ierr) throw ierr;
     }
 
+    // Block the current thread until it can safely interface thread.
+    GMSH_API void lock()
+    {
+      int ierr = 0;
+      gmshFltkLock(&ierr);
+      if(ierr) throw ierr;
+    }
+
+    // Release the lock that was set using lock.
+    GMSH_API void unlock()
+    {
+      int ierr = 0;
+      gmshFltkUnlock(&ierr);
+      if(ierr) throw ierr;
+    }
+
     // Run the event loop of the graphical user interface, i.e. repeatedly calls
     // `wait'. First automatically create the user interface if it has not yet been
     // initialized.

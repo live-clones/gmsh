@@ -90,14 +90,14 @@ public:
   // run the GUI until there's no window left
   static int run();
   // check (now!) if there are any pending events, and process them
-  static void check();
+  static void check(bool always = false);
   // wait (possibly indefinitely) for any events, then process them
-  static void wait();
+  static void wait(bool always = false);
   // wait (at most time seconds) for any events, then process them
-  static void wait(double time);
+  static void wait(double time, bool always = false);
   // lock/unlock child threads
-  static void lock();
-  static void unlock();
+  static void lock(bool always = false);
+  static void unlock(bool always = false);
   // trigger event loop in main thread
   static void awake();
   // is a file opened through the Mac Finder?

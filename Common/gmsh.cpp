@@ -4234,9 +4234,37 @@ GMSH_API void gmsh::fltk::wait(const double time)
 #if defined(HAVE_FLTK)
   if(!FlGui::available()) FlGui::instance(_argc, _argv);
   if(time >= 0)
-    FlGui::wait(time);
+    FlGui::wait(time, true);
   else
-    FlGui::wait();
+    FlGui::wait(true);
+#else
+  Msg::Error("Fltk not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::fltk::lock()
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_FLTK)
+  Msg::SetLock(1);
+  FlGui::lock(true);
+#else
+  Msg::Error("Fltk not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::fltk::unlock()
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_FLTK)
+  Msg::SetLock(0);
+  FlGui::unlock(true);
 #else
   Msg::Error("Fltk not available");
   throw -1;

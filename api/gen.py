@@ -639,6 +639,12 @@ fltk.add('update',doc,None)
 doc = '''Awake the main interface thread.'''
 fltk.add('awake',doc,None)
 
+doc = '''Block the current thread until it can safely interface thread.'''
+fltk.add('lock',doc,None)
+
+doc = '''Release the lock that was set using lock.'''
+fltk.add('unlock',doc,None)
+
 doc = '''Run the event loop of the graphical user interface, i.e. repeatedly calls `wait'. First automatically create the user interface if it has not yet been initialized.'''
 fltk.add('run',doc,None)
 

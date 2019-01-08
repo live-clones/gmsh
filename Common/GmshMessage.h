@@ -63,6 +63,8 @@ private:
   // log file
   static std::string _logFileName;
   static FILE *_logFile;
+  // lock for using messages from other threads than the master thread
+  static int _lock;
 
 public:
   Msg() {}
@@ -79,6 +81,7 @@ public:
   static void SetNumThreads(int num);
   static int GetMaxThreads();
   static int GetThreadNum();
+  static void SetLock(int val);
   static void SetVerbosity(int val);
   static void SetLogFile(const std::string &name);
   static int GetVerbosity();

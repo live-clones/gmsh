@@ -2569,6 +2569,28 @@ GMSH_API void gmshFltkAwake(int * ierr)
   }
 }
 
+GMSH_API void gmshFltkLock(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::fltk::lock();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshFltkUnlock(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::fltk::unlock();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshFltkRun(int * ierr)
 {
   if(ierr) *ierr = 0;

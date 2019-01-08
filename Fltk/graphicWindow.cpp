@@ -3233,7 +3233,7 @@ static void status_play_cb(Fl_Widget *w, void *data)
       anim_time = GetTimeInSeconds();
       status_play_manual(!CTX::instance()->post.animCycle, CTX::instance()->post.animStep);
     }
-    FlGui::instance()->check();
+    FlGui::check();
   }
 }
 
@@ -3291,7 +3291,7 @@ void show_hide_message_cb(Fl_Widget *w, void *data)
   graphicWindow *g = getGraphicWindow
     (FlGui::instance()->getCurrentOpenglWindow()->parent());
   g->showHideMessages();
-  FlGui::instance()->check();
+  FlGui::check();
 }
 
 void show_hide_menu_cb(Fl_Widget *w, void *data)
@@ -3299,7 +3299,7 @@ void show_hide_menu_cb(Fl_Widget *w, void *data)
   graphicWindow *g = getGraphicWindow
     (FlGui::instance()->getCurrentOpenglWindow()->parent());
   g->showHideMenu();
-  FlGui::instance()->check();
+  FlGui::check();
 }
 
 void attach_detach_menu_cb(Fl_Widget *w, void *data)
@@ -3307,7 +3307,7 @@ void attach_detach_menu_cb(Fl_Widget *w, void *data)
   graphicWindow *g = getGraphicWindow
     (FlGui::instance()->getCurrentOpenglWindow()->parent());
   g->attachDetachMenu();
-  FlGui::instance()->check();
+  FlGui::check();
 }
 
 static void message_menu_autoscroll_cb(Fl_Widget *w, void *data)

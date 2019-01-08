@@ -4313,6 +4313,32 @@ class fltk:
                 ierr.value)
 
     @staticmethod
+    def lock():
+        """
+        Block the current thread until it can safely interface thread.
+        """
+        ierr = c_int()
+        lib.gmshFltkLock(
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshFltkLock returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
+    def unlock():
+        """
+        Release the lock that was set using lock.
+        """
+        ierr = c_int()
+        lib.gmshFltkUnlock(
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshFltkUnlock returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
     def run():
         """
         Run the event loop of the graphical user interface, i.e. repeatedly calls

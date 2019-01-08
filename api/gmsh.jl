@@ -3698,6 +3698,34 @@ function awake()
 end
 
 """
+    gmsh.fltk.lock()
+
+Block the current thread until it can safely interface thread.
+"""
+function lock()
+    ierr = Ref{Cint}()
+    ccall((:gmshFltkLock, gmsh.lib), Nothing,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshFltkLock returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.fltk.unlock()
+
+Release the lock that was set using lock.
+"""
+function unlock()
+    ierr = Ref{Cint}()
+    ccall((:gmshFltkUnlock, gmsh.lib), Nothing,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshFltkUnlock returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.fltk.run()
 
 Run the event loop of the graphical user interface, i.e. repeatedly calls

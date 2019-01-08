@@ -1622,6 +1622,12 @@ namespace gmsh { // Top-level functions
     // Awake the main interface thread.
     GMSH_API void awake();
 
+    // Block the current thread until it can safely interface thread.
+    GMSH_API void lock();
+
+    // Release the lock that was set using lock.
+    GMSH_API void unlock();
+
     // Run the event loop of the graphical user interface, i.e. repeatedly calls
     // `wait'. First automatically create the user interface if it has not yet been
     // initialized.

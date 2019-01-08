@@ -44,7 +44,7 @@ public:
         }
       }
     }
-    FlGui::instance()->check();
+    FlGui::check();
   }
   void drawCurrentOpenglWindow(bool make_current)
   {
@@ -53,7 +53,7 @@ public:
     if(make_current) gl->make_current();
     gl->redraw();
     glFlush();
-    FlGui::instance()->check();
+    FlGui::check();
   }
   int getFontIndex(const char *fontname)
   {

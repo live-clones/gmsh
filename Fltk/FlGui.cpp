@@ -53,31 +53,31 @@
 #endif
 
 // check (now!) if there are any pending events, and process them
-void FlGui::check()
+void FlGui::check(bool always)
 {
-  if(Msg::GetThreadNum() == 0) Fl::check();
+  if(always || Msg::GetThreadNum() == 0) Fl::check();
 }
 
 // wait (possibly indefinitely) for any events, then process them
-void FlGui::wait()
+void FlGui::wait(bool always)
 {
-  if(Msg::GetThreadNum() == 0) Fl::wait();
+  if(always || Msg::GetThreadNum() == 0) Fl::wait();
 }
 
 // wait (at most time seconds) for any events, then process them
-void FlGui::wait(double time)
+void FlGui::wait(double time, bool always)
 {
-  if(Msg::GetThreadNum() == 0) Fl::wait(time);
+  if(always || Msg::GetThreadNum() == 0) Fl::wait(time);
 }
 
-void FlGui::lock()
+void FlGui::lock(bool always)
 {
-  if(Msg::GetThreadNum() > 0) Fl::lock();
+  if(always || Msg::GetThreadNum() > 0) Fl::lock();
 }
 
-void FlGui::unlock()
+void FlGui::unlock(bool always)
 {
-  if(Msg::GetThreadNum() > 0) Fl::unlock();
+  if(always || Msg::GetThreadNum() > 0) Fl::unlock();
 }
 
 void FlGui::awake()
