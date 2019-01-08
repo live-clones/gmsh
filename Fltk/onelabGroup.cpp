@@ -186,6 +186,14 @@ void onelab_cb(Fl_Widget *w, void *data)
     action = "check";
   }
 
+  // custom button behavior
+  std::vector<onelab::string> ps;
+  onelab::server::instance()->get(ps, "Button");
+  if(ps.size() && ps[0].getValues().size() == 2) {
+    // we have a custom onelab "Run" button, we're done
+    return;
+  }
+
   Msg::ResetErrorCounter();
 
   FlGui::instance()->onelab->setButtonMode("", "stop");
@@ -250,8 +258,9 @@ void onelab_cb(Fl_Widget *w, void *data)
   }
 
   FlGui::instance()->onelab->stop(false);
-  if(FlGui::instance()->onelab->setButtonMode("check", "compute"))
-    Msg::StatusBar(true, "Done");
+  FlGui::instance()->onelab->setButtonMode("check", "compute");
+
+  Msg::StatusBar(true, "Done");
 
   if(action != "initialize") FlGui::instance()->onelab->show();
 }
@@ -1419,7 +1428,7 @@ void onelabGroup::setButtonVisibility()
   redraw();
 }
 
-bool onelabGroup::setButtonMode(const std::string &butt0,
+void onelabGroup::setButtonMode(const std::string &butt0,
                                 const std::string &butt1)
 {
   // custom button behavior
@@ -1443,7 +1452,7 @@ bool onelabGroup::setButtonMode(const std::string &butt0,
       _butt[1]->redraw();
     }
     _butt[1]->callback(onelab_cb, (void *)action);
-    return false;
+    return;
   }
 
   if(butt0 == "check") {
@@ -1484,7 +1493,6 @@ bool onelabGroup::setButtonMode(const std::string &butt0,
       if(i < _gearOptionsStart - 1 || i > _gearOptionsEnd - 2)
         ((Fl_Menu_Item *)_gear->menu())[i].deactivate();
   }
-  return true;
 }
 
 bool onelabGroup::isBusy()

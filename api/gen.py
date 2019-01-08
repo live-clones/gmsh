@@ -636,10 +636,10 @@ fltk.add('wait',doc,None,idouble('time', '-1.'))
 doc = '''Update the widgets in the user interface. First automatically create the user interface if it has not yet been initialized.'''
 fltk.add('update',doc,None)
 
-doc = '''Awake the main interface thread.'''
+doc = '''Awake the main user interface thread and process pending events.'''
 fltk.add('awake',doc,None)
 
-doc = '''Block the current thread until it can safely interface thread.'''
+doc = '''Block the current thread until it can safely modify the user interface.'''
 fltk.add('lock',doc,None)
 
 doc = '''Release the lock that was set using lock.'''

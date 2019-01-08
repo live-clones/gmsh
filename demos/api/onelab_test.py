@@ -45,64 +45,6 @@ gmsh.onelab.setString("string 1", ["goodbye"])
 # remove a parameter
 gmsh.onelab.clear("string 2")
 
-gmsh.option.setNumber("Solver.AutoMesh", 0.)
-gmsh.option.setNumber("Solver.AutoSaveDatabase", 0.)
-
-# set onelab button label and associated "Action"
-gmsh.onelab.setString("Button", ["Do it!", "should compute"])
-
-stop_computation = 0
-
-# a computatially heaving routine, that will be run in its own thread
-def compute():
-    k = 0
-    p = 0
-    for j in range(10000000):
-        if stop_computation:
-            break
-        k = math.sin(k) + math.cos(j/45.)
-        if not j % 100000:
-            p = p + 1
-            # any code in a thread other than the main thread that can modify
-            # the GUI should be locked
-            gmsh.fltk.lock()
-            gmsh.logger.write("thread progress {0}/100".format(p))
-            gmsh.fltk.unlock()
-    gmsh.fltk.lock()
-    gmsh.onelab.setNumber("number 1", [k])
-    gmsh.onelab.setString("Action", ["done computing"])
-    gmsh.fltk.unlock()
-    # ask the main thread to process pending events
-    gmsh.fltk.awake()
-    return
-
-i = 1
-
-gmsh.fltk.initialize()
-
-while 1:
-    gmsh.fltk.wait()
-    a = gmsh.onelab.getString("Action")
-
-    if "should compute" in a:
-        gmsh.onelab.setString("Action", [""])
-        gmsh.onelab.setString("Button", ["Stop!", "should stop"])
-        # force GUI update (to show the new button label)
-        gmsh.fltk.update()
-        # start computationally intensive calculation in its own thread
-        thread.start_new_thread(compute, ())
-
-    if "should stop" in a:
-        stop_computation = 1
-
-    if "done computing" in a:
-        gmsh.onelab.setString("Action", [""])
-        n = gmsh.onelab.getNumber("number 1")
-        msg = "Run {0} done with number 1 = {1}".format(i, n)
-        gmsh.logger.write(msg)
-        gmsh.onelab.setString("Result", [msg])
-        i = i + 1
-        gmsh.onelab.setString("Button", ["Do it!", "should compute"])
-        gmsh.fltk.update()
+gmsh.fltk.run()
 
 gmsh.finalize()

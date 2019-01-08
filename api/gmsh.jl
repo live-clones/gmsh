@@ -3686,7 +3686,7 @@ end
 """
     gmsh.fltk.awake()
 
-Awake the main interface thread.
+Awake the main user interface thread and process pending events.
 """
 function awake()
     ierr = Ref{Cint}()
@@ -3700,7 +3700,7 @@ end
 """
     gmsh.fltk.lock()
 
-Block the current thread until it can safely interface thread.
+Block the current thread until it can safely modify the user interface.
 """
 function lock()
     ierr = Ref{Cint}()

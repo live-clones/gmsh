@@ -2985,7 +2985,7 @@ namespace gmsh { // Top-level functions
       if(ierr) throw ierr;
     }
 
-    // Awake the main interface thread.
+    // Awake the main user interface thread and process pending events.
     GMSH_API void awake()
     {
       int ierr = 0;
@@ -2993,7 +2993,7 @@ namespace gmsh { // Top-level functions
       if(ierr) throw ierr;
     }
 
-    // Block the current thread until it can safely interface thread.
+    // Block the current thread until it can safely modify the user interface.
     GMSH_API void lock()
     {
       int ierr = 0;

@@ -4302,7 +4302,7 @@ class fltk:
     @staticmethod
     def awake():
         """
-        Awake the main interface thread.
+        Awake the main user interface thread and process pending events.
         """
         ierr = c_int()
         lib.gmshFltkAwake(
@@ -4315,7 +4315,7 @@ class fltk:
     @staticmethod
     def lock():
         """
-        Block the current thread until it can safely interface thread.
+        Block the current thread until it can safely modify the user interface.
         """
         ierr = c_int()
         lib.gmshFltkLock(

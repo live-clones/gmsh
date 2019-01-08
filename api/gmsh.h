@@ -1619,10 +1619,10 @@ namespace gmsh { // Top-level functions
     // user interface if it has not yet been initialized.
     GMSH_API void update();
 
-    // Awake the main interface thread.
+    // Awake the main user interface thread and process pending events.
     GMSH_API void awake();
 
-    // Block the current thread until it can safely interface thread.
+    // Block the current thread until it can safely modify the user interface.
     GMSH_API void lock();
 
     // Release the lock that was set using lock.

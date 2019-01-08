@@ -2744,6 +2744,42 @@ interface if it has not yet been initialized.
 -
 @end table
 
+@item awake
+Awake the main user interface thread and process pending events.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item lock
+Block the current thread until it can safely modify the user interface.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item unlock
+Release the lock that was set using lock.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item run
 Run the event loop of the graphical user interface, i.e. repeatedly calls
 @code{wait}. First automatically create the user interface if it has not yet
