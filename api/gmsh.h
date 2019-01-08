@@ -1607,16 +1607,18 @@ namespace gmsh { // Top-level functions
 
   namespace fltk { // Fltk graphical user interface functions
 
-    // Create the Fltk graphical user interface.
+    // Create the Fltk graphical user interface. Can only be called in the main
+    // thread.
     GMSH_API void initialize();
 
     // Wait at most `time' seconds for user interface events and return. If `time'
     // < 0, wait indefinitely. First automatically create the user interface if it
-    // has not yet been initialized.
+    // has not yet been initialized. Can only be called in the main thread.
     GMSH_API void wait(const double time = -1.);
 
     // Update the widgets in the user interface. First automatically create the
-    // user interface if it has not yet been initialized.
+    // user interface if it has not yet been initialized. Can currently only be
+    // called in the main thread.
     GMSH_API void update();
 
     // Awake the main user interface thread and process pending events.
@@ -1630,7 +1632,7 @@ namespace gmsh { // Top-level functions
 
     // Run the event loop of the graphical user interface, i.e. repeatedly calls
     // `wait'. First automatically create the user interface if it has not yet been
-    // initialized.
+    // initialized. Can only be called in the main thread.
     GMSH_API void run();
 
   } // namespace fltk

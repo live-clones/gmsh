@@ -50,6 +50,7 @@ private:
   static FlGui *_instance;
   static std::string _openedThroughMacFinder;
   static bool _finishedProcessingCommandLine;
+  static int _locked;
   std::string _lastStatus;
 
 public:
@@ -90,14 +91,14 @@ public:
   // run the GUI until there's no window left
   static int run();
   // check (now!) if there are any pending events, and process them
-  static void check(bool always = false);
+  static void check(bool force = false);
   // wait (possibly indefinitely) for any events, then process them
-  static void wait(bool always = false);
+  static void wait(bool force = false);
   // wait (at most time seconds) for any events, then process them
-  static void wait(double time, bool always = false);
+  static void wait(double time, bool force = false);
   // lock/unlock child threads
-  static void lock(bool always = false);
-  static void unlock(bool always = false);
+  static void lock();
+  static void unlock();
   // trigger event loop in main thread
   static void awake();
   // is a file opened through the Mac Finder?

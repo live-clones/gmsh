@@ -1707,17 +1707,19 @@ GMSH_API void gmshPluginRun(const char * name,
 /* Draw all the OpenGL scenes. */
 GMSH_API void gmshGraphicsDraw(int * ierr);
 
-/* Create the Fltk graphical user interface. */
+/* Create the Fltk graphical user interface. Can only be called in the main
+ * thread. */
 GMSH_API void gmshFltkInitialize(int * ierr);
 
 /* Wait at most `time' seconds for user interface events and return. If `time'
  * < 0, wait indefinitely. First automatically create the user interface if it
- * has not yet been initialized. */
+ * has not yet been initialized. Can only be called in the main thread. */
 GMSH_API void gmshFltkWait(const double time,
                            int * ierr);
 
 /* Update the widgets in the user interface. First automatically create the
- * user interface if it has not yet been initialized. */
+ * user interface if it has not yet been initialized. Can currently only be
+ * called in the main thread. */
 GMSH_API void gmshFltkUpdate(int * ierr);
 
 /* Awake the main user interface thread and process pending events. */
@@ -1731,7 +1733,7 @@ GMSH_API void gmshFltkUnlock(int * ierr);
 
 /* Run the event loop of the graphical user interface, i.e. repeatedly calls
  * `wait'. First automatically create the user interface if it has not yet
- * been initialized. */
+ * been initialized. Can only be called in the main thread. */
 GMSH_API void gmshFltkRun(int * ierr);
 
 /* Set one or more parameters in the ONELAB database, encoded in `format'. */

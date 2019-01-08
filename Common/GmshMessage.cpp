@@ -76,7 +76,6 @@ onelab::server *onelab::server::_server = 0;
 #endif
 std::string Msg::_logFileName;
 FILE *Msg::_logFile = 0;
-int Msg::_lock = 0;
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1310) //NET 2003
 #define vsnprintf _vsnprintf
@@ -472,7 +471,7 @@ void Msg::Fatal(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(!_lock) FlGui::check();
+    FlGui::check();
     std::string tmp = std::string("@C1@.") + "Fatal   : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
     if(_firstError.empty()) _firstError = str;
@@ -522,7 +521,7 @@ void Msg::Error(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(!_lock) FlGui::check();
+    FlGui::check();
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.")
       + "Error   : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
@@ -564,7 +563,7 @@ void Msg::Warning(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(!_lock) FlGui::check();
+    FlGui::check();
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B152@." : "@C5@.")
       + "Warning : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
@@ -608,7 +607,7 @@ void Msg::Info(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(!_lock) FlGui::check();
+    FlGui::check();
     std::string tmp = std::string("Info    : ") + str;
     FlGui::instance()->addMessage(tmp.c_str());
   }
@@ -645,7 +644,7 @@ void Msg::Direct(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(!_lock) FlGui::check();
+    FlGui::check();
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B136@." : "@C4@.")
       + str;
     FlGui::instance()->addMessage(tmp.c_str());
@@ -687,7 +686,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(log && !_lock) FlGui::check();
+    if(log) FlGui::check();
     if(!log || GetVerbosity() > 4)
       FlGui::instance()->setStatus(str);
     if(log){
@@ -789,7 +788,7 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
     if(FlGui::available() && GetVerbosity() > 4){
-      if(!_lock) FlGui::check();
+      FlGui::check();
       FlGui::instance()->setProgress(str, (n > N - 1) ? 0 : n, 0, N);
     }
 #endif
@@ -1597,8 +1596,6 @@ int Msg::GetMaxThreads(){ return 1; }
 int Msg::GetThreadNum(){ return 0; }
 
 #endif
-
-void Msg::SetLock(int val){ _lock = val; }
 
 MsgProgressStatus::MsgProgressStatus(int num)
   : _totalElementToTreat(num), _currentI(0), _nextIToCheck(0),

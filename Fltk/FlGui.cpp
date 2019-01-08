@@ -48,36 +48,47 @@
 #include "gl2ps.h"
 #include "gmshPopplerWrapper.h"
 #include "PixelBuffer.h"
+
 #if defined(HAVE_3M)
 #include "3M.h"
 #endif
 
+FlGui *FlGui::_instance = 0;
+std::string FlGui::_openedThroughMacFinder = "";
+bool FlGui::_finishedProcessingCommandLine = false;
+int FlGui::_locked = 0;
+
 // check (now!) if there are any pending events, and process them
-void FlGui::check(bool always)
+void FlGui::check(bool force)
 {
-  if(always || Msg::GetThreadNum() == 0) Fl::check();
+  if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
+  Fl::check();
 }
 
 // wait (possibly indefinitely) for any events, then process them
-void FlGui::wait(bool always)
+void FlGui::wait(bool force)
 {
-  if(always || Msg::GetThreadNum() == 0) Fl::wait();
+  if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
+  Fl::wait();
 }
 
 // wait (at most time seconds) for any events, then process them
-void FlGui::wait(double time, bool always)
+void FlGui::wait(double time, bool force)
 {
-  if(always || Msg::GetThreadNum() == 0) Fl::wait(time);
+  if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
+  Fl::wait(time);
 }
 
-void FlGui::lock(bool always)
+void FlGui::lock()
 {
-  if(always || Msg::GetThreadNum() > 0) Fl::lock();
+  _locked++;
+  Fl::lock();
 }
 
-void FlGui::unlock(bool always)
+void FlGui::unlock()
 {
-  if(always || Msg::GetThreadNum() > 0) Fl::unlock();
+  _locked--;
+  Fl::unlock();
 }
 
 void FlGui::awake()
@@ -583,10 +594,6 @@ FlGui::FlGui(int argc, char **argv)
   if(CTX::instance()->showOptionsOnStartup) options->win->show();
   if(CTX::instance()->showMessagesOnStartup) graph[0]->showMessages();
 }
-
-FlGui *FlGui::_instance = 0;
-std::string FlGui::_openedThroughMacFinder = "";
-bool FlGui::_finishedProcessingCommandLine = false;
 
 bool FlGui::available() { return _instance != 0; }
 

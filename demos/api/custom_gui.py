@@ -4,7 +4,8 @@ import json
 import math
 import thread
 
-# This example shows how to implement a custom user interface using onelab
+# This example shows how to implement a custom user interface using onelab,
+# running a computationally computation in a separate thread
 
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
@@ -29,6 +30,7 @@ def compute():
         if stop_computation:
             break
         k = math.sin(k) + math.cos(j/45.)
+        # show progress in the GUI and in the message log
         if len(progress) and progress[0] == 1 and not j % 100000:
             p = p + 1
             # any code in a thread other than the main thread that can modify

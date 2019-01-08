@@ -4219,7 +4219,7 @@ GMSH_API void gmsh::fltk::initialize()
 #if defined(HAVE_FLTK)
   FlGui::instance(_argc, _argv);
   FlGui::setFinishedProcessingCommandLine();
-  FlGui::check();
+  FlGui::check(true);
 #else
   Msg::Error("Fltk not available");
   throw -1;
@@ -4249,8 +4249,7 @@ GMSH_API void gmsh::fltk::lock()
     throw -1;
   }
 #if defined(HAVE_FLTK)
-  Msg::SetLock(1);
-  FlGui::lock(true);
+  FlGui::lock();
 #else
   Msg::Error("Fltk not available");
   throw -1;
@@ -4263,8 +4262,7 @@ GMSH_API void gmsh::fltk::unlock()
     throw -1;
   }
 #if defined(HAVE_FLTK)
-  Msg::SetLock(0);
-  FlGui::unlock(true);
+  FlGui::unlock();
 #else
   Msg::Error("Fltk not available");
   throw -1;

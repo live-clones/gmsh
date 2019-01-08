@@ -4259,7 +4259,8 @@ class fltk:
     @staticmethod
     def initialize():
         """
-        Create the Fltk graphical user interface.
+        Create the Fltk graphical user interface. Can only be called in the main
+        thread.
         """
         ierr = c_int()
         lib.gmshFltkInitialize(
@@ -4274,7 +4275,7 @@ class fltk:
         """
         Wait at most `time' seconds for user interface events and return. If `time'
         < 0, wait indefinitely. First automatically create the user interface if it
-        has not yet been initialized.
+        has not yet been initialized. Can only be called in the main thread.
         """
         ierr = c_int()
         lib.gmshFltkWait(
@@ -4289,7 +4290,8 @@ class fltk:
     def update():
         """
         Update the widgets in the user interface. First automatically create the
-        user interface if it has not yet been initialized.
+        user interface if it has not yet been initialized. Can currently only be
+        called in the main thread.
         """
         ierr = c_int()
         lib.gmshFltkUpdate(
@@ -4343,7 +4345,7 @@ class fltk:
         """
         Run the event loop of the graphical user interface, i.e. repeatedly calls
         `wait'. First automatically create the user interface if it has not yet
-        been initialized.
+        been initialized. Can only be called in the main thread.
         """
         ierr = c_int()
         lib.gmshFltkRun(

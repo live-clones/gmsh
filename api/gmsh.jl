@@ -3641,7 +3641,7 @@ import ..gmsh
 """
     gmsh.fltk.initialize()
 
-Create the Fltk graphical user interface.
+Create the Fltk graphical user interface. Can only be called in the main thread.
 """
 function initialize()
     ierr = Ref{Cint}()
@@ -3657,7 +3657,7 @@ end
 
 Wait at most `time` seconds for user interface events and return. If `time` < 0,
 wait indefinitely. First automatically create the user interface if it has not
-yet been initialized.
+yet been initialized. Can only be called in the main thread.
 """
 function wait(time = -1.)
     ierr = Ref{Cint}()
@@ -3672,7 +3672,8 @@ end
     gmsh.fltk.update()
 
 Update the widgets in the user interface. First automatically create the user
-interface if it has not yet been initialized.
+interface if it has not yet been initialized. Can currently only be called in
+the main thread.
 """
 function update()
     ierr = Ref{Cint}()
@@ -3730,7 +3731,7 @@ end
 
 Run the event loop of the graphical user interface, i.e. repeatedly calls
 `wait`. First automatically create the user interface if it has not yet been
-initialized.
+initialized. Can only be called in the main thread.
 """
 function run()
     ierr = Ref{Cint}()

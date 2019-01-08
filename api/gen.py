@@ -627,13 +627,13 @@ graphics.add('draw',doc,None)
 
 fltk = gmsh.add_module('fltk','Fltk graphical user interface functions')
 
-doc = '''Create the Fltk graphical user interface.'''
+doc = '''Create the Fltk graphical user interface. Can only be called in the main thread.'''
 fltk.add('initialize',doc,None)
 
-doc = '''Wait at most `time' seconds for user interface events and return. If `time' < 0, wait indefinitely. First automatically create the user interface if it has not yet been initialized.'''
+doc = '''Wait at most `time' seconds for user interface events and return. If `time' < 0, wait indefinitely. First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread.'''
 fltk.add('wait',doc,None,idouble('time', '-1.'))
 
-doc = '''Update the widgets in the user interface. First automatically create the user interface if it has not yet been initialized.'''
+doc = '''Update the widgets in the user interface. First automatically create the user interface if it has not yet been initialized. Can currently only be called in the main thread.'''
 fltk.add('update',doc,None)
 
 doc = '''Awake the main user interface thread and process pending events.'''
@@ -645,7 +645,7 @@ fltk.add('lock',doc,None)
 doc = '''Release the lock that was set using lock.'''
 fltk.add('unlock',doc,None)
 
-doc = '''Run the event loop of the graphical user interface, i.e. repeatedly calls `wait'. First automatically create the user interface if it has not yet been initialized.'''
+doc = '''Run the event loop of the graphical user interface, i.e. repeatedly calls `wait'. First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread.'''
 fltk.add('run',doc,None)
 
 ################################################################################
