@@ -38,10 +38,8 @@ def compute():
             gmsh.fltk.unlock()
             # ask the main thread to process pending events
             gmsh.fltk.awake()
-    gmsh.fltk.lock()
     gmsh.onelab.setNumber("Result", [k])
     gmsh.onelab.setString("Action", ["done computing"])
-    gmsh.fltk.unlock()
     gmsh.fltk.awake()
     return
 
