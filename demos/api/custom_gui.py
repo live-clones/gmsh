@@ -4,9 +4,9 @@ import json
 import math
 import thread
 
-# This example shows how to implement a custom user interface running a
-# computationally expensive calculation in a separate thread, that updates the
-# interface in real-time
+# This example shows how to implement a custom user interface running
+# computationally expensive calculations in separate threads. The threads can
+# update the user interface in real-time.
 
 gmsh.initialize()
 

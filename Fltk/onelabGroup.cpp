@@ -1356,7 +1356,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
 
   FlGui::check(); // necessary e.g. on windows to avoid "ghosting"
 
-  if(0){//deleteWidgets) {
+  if(deleteWidgets) {
     // this needs to be performed after FlGui::check()
     Msg::Debug("Deleting onelabGroup widgets (%d)", (int)_treeWidgets.size());
     for(unsigned int i = 0; i < delWidgets.size(); i++)
