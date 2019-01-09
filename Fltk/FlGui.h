@@ -100,7 +100,9 @@ public:
   static void lock();
   static void unlock();
   // trigger event loop in main thread
-  static void awake();
+  static void awake(const std::string &action);
+  // is locked
+  static int locked();
   // is a file opened through the Mac Finder?
   static void setOpenedThroughMacFinder(const std::string &name);
   static std::string getOpenedThroughMacFinder();

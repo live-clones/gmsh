@@ -2558,11 +2558,11 @@ GMSH_API void gmshFltkUpdate(int * ierr)
   }
 }
 
-GMSH_API void gmshFltkAwake(int * ierr)
+GMSH_API void gmshFltkAwake(const char * action, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::fltk::awake();
+    gmsh::fltk::awake(action);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

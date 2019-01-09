@@ -4283,13 +4283,13 @@ GMSH_API void gmsh::fltk::update()
 #endif
 }
 
-GMSH_API void gmsh::fltk::awake()
+GMSH_API void gmsh::fltk::awake(const std::string &action)
 {
   if(!_isInitialized()) {
     throw -1;
   }
 #if defined(HAVE_FLTK)
-  FlGui::awake();
+  FlGui::awake(action);
 #else
   Msg::Error("Fltk not available");
   throw -1;

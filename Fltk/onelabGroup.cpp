@@ -1234,6 +1234,10 @@ static void highlight_physical_group_cb(Fl_Widget *w, void *data)
 
 void onelabGroup::rebuildTree(bool deleteWidgets)
 {
+  // rebuilding the tree does not work in a child thread (it should, as we don't
+  // show/hide windows, but it crashes - at least on macOS)
+  if(FlGui::locked()) return;
+
   setButtonVisibility();
 
   FL_NORMAL_SIZE -= CTX::instance()->deltaFontSize;
@@ -1352,7 +1356,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
 
   FlGui::check(); // necessary e.g. on windows to avoid "ghosting"
 
-  if(deleteWidgets) {
+  if(0){//deleteWidgets) {
     // this needs to be performed after FlGui::check()
     Msg::Debug("Deleting onelabGroup widgets (%d)", (int)_treeWidgets.size());
     for(unsigned int i = 0; i < delWidgets.size(); i++)

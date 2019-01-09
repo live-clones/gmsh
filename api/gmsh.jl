@@ -3671,9 +3671,10 @@ end
 """
     gmsh.fltk.update()
 
-Update the widgets in the user interface. First automatically create the user
-interface if it has not yet been initialized. Can currently only be called in
-the main thread.
+Update (and potentially create) new widgets in the user interface. First
+automatically create the user interface if it has not yet been initialized. Can
+only be called in the main thread: use `awake("update")` to trigger an update of
+the user interface from another thread.
 """
 function update()
     ierr = Ref{Cint}()
@@ -3685,15 +3686,16 @@ function update()
 end
 
 """
-    gmsh.fltk.awake()
+    gmsh.fltk.awake(action = "")
 
-Awake the main user interface thread and process pending events.
+Awake the main user interface thread and process pending events, and optionally
+perform an action (currently the only `action` allowed is "update").
 """
-function awake()
+function awake(action = "")
     ierr = Ref{Cint}()
     ccall((:gmshFltkAwake, gmsh.lib), Nothing,
-          (Ptr{Cint},),
-          ierr)
+          (Ptr{Cchar}, Ptr{Cint}),
+          action, ierr)
     ierr[] != 0 && error("gmshFltkAwake returned non-zero error code: $(ierr[])")
     return nothing
 end

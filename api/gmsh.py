@@ -4289,9 +4289,10 @@ class fltk:
     @staticmethod
     def update():
         """
-        Update the widgets in the user interface. First automatically create the
-        user interface if it has not yet been initialized. Can currently only be
-        called in the main thread.
+        Update (and potentially create) new widgets in the user interface. First
+        automatically create the user interface if it has not yet been initialized.
+        Can only be called in the main thread: use `awake("update")' to trigger an
+        update of the user interface from another thread.
         """
         ierr = c_int()
         lib.gmshFltkUpdate(
@@ -4302,12 +4303,15 @@ class fltk:
                 ierr.value)
 
     @staticmethod
-    def awake():
+    def awake(action=""):
         """
-        Awake the main user interface thread and process pending events.
+        Awake the main user interface thread and process pending events, and
+        optionally perform an action (currently the only `action' allowed is
+        "update").
         """
         ierr = c_int()
         lib.gmshFltkAwake(
+            c_char_p(action.encode()),
             byref(ierr))
         if ierr.value != 0:
             raise ValueError(

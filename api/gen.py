@@ -633,11 +633,11 @@ fltk.add('initialize',doc,None)
 doc = '''Wait at most `time' seconds for user interface events and return. If `time' < 0, wait indefinitely. First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread.'''
 fltk.add('wait',doc,None,idouble('time', '-1.'))
 
-doc = '''Update the widgets in the user interface. First automatically create the user interface if it has not yet been initialized. Can currently only be called in the main thread.'''
+doc = '''Update (and potentially create) new widgets in the user interface. First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread: use `awake("update")' to trigger an update of the user interface from another thread.'''
 fltk.add('update',doc,None)
 
-doc = '''Awake the main user interface thread and process pending events.'''
-fltk.add('awake',doc,None)
+doc = '''Awake the main user interface thread and process pending events, and optionally perform an action (currently the only `action' allowed is "update"). '''
+fltk.add('awake',doc,None,istring('action', '""'))
 
 doc = '''Block the current thread until it can safely modify the user interface.'''
 fltk.add('lock',doc,None)

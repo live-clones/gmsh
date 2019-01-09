@@ -79,8 +79,6 @@ public:
   static void SetNumThreads(int num);
   static int GetMaxThreads();
   static int GetThreadNum();
-  static void SetLock(int val);
-  static int GetLock();
   static void SetVerbosity(int val);
   static void SetLogFile(const std::string &name);
   static int GetVerbosity();

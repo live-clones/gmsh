@@ -1616,13 +1616,16 @@ namespace gmsh { // Top-level functions
     // has not yet been initialized. Can only be called in the main thread.
     GMSH_API void wait(const double time = -1.);
 
-    // Update the widgets in the user interface. First automatically create the
-    // user interface if it has not yet been initialized. Can currently only be
-    // called in the main thread.
+    // Update (and potentially create) new widgets in the user interface. First
+    // automatically create the user interface if it has not yet been initialized.
+    // Can only be called in the main thread: use `awake("update")' to trigger an
+    // update of the user interface from another thread.
     GMSH_API void update();
 
-    // Awake the main user interface thread and process pending events.
-    GMSH_API void awake();
+    // Awake the main user interface thread and process pending events, and
+    // optionally perform an action (currently the only `action' allowed is
+    // "update").
+    GMSH_API void awake(const std::string & action = "");
 
     // Block the current thread until it can safely modify the user interface.
     GMSH_API void lock();

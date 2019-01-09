@@ -2977,9 +2977,10 @@ namespace gmsh { // Top-level functions
       if(ierr) throw ierr;
     }
 
-    // Update the widgets in the user interface. First automatically create the
-    // user interface if it has not yet been initialized. Can currently only be
-    // called in the main thread.
+    // Update (and potentially create) new widgets in the user interface. First
+    // automatically create the user interface if it has not yet been initialized.
+    // Can only be called in the main thread: use `awake("update")' to trigger an
+    // update of the user interface from another thread.
     GMSH_API void update()
     {
       int ierr = 0;
@@ -2987,11 +2988,13 @@ namespace gmsh { // Top-level functions
       if(ierr) throw ierr;
     }
 
-    // Awake the main user interface thread and process pending events.
-    GMSH_API void awake()
+    // Awake the main user interface thread and process pending events, and
+    // optionally perform an action (currently the only `action' allowed is
+    // "update").
+    GMSH_API void awake(const std::string & action = "")
     {
       int ierr = 0;
-      gmshFltkAwake(&ierr);
+      gmshFltkAwake(action.c_str(), &ierr);
       if(ierr) throw ierr;
     }
 

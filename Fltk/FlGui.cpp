@@ -91,9 +91,23 @@ void FlGui::unlock()
   Fl::unlock();
 }
 
-void FlGui::awake()
+int FlGui::locked()
 {
-  Fl::awake();
+  return _locked;
+}
+
+static void awake_cb(void *data)
+{
+  if(data)
+    FlGui::instance()->updateViews(true, true);
+}
+
+void FlGui::awake(const std::string &action)
+{
+  if(action.empty())
+    Fl::awake(awake_cb, 0);
+  else
+    Fl::awake(awake_cb, (void*)"update");
 }
 
 void FlGui::setOpenedThroughMacFinder(const std::string &name)

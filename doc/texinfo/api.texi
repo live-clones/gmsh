@@ -2706,7 +2706,7 @@ Draw all the OpenGL scenes.
 @heading Module @code{/gmsh/fltk}
 @ftable @code
 @item initialize
-Create the Fltk graphical user interface.
+Create the Fltk graphical user interface. Can only be called in the main thread.
 
 @table @asis
 @item Input:
@@ -2720,7 +2720,8 @@ Create the Fltk graphical user interface.
 @item wait
 Wait at most @code{time} seconds for user interface events and return. If
 @code{time} < 0, wait indefinitely. First automatically create the user
-interface if it has not yet been initialized.
+interface if it has not yet been initialized. Can only be called in the main
+thread.
 
 @table @asis
 @item Input:
@@ -2732,8 +2733,10 @@ interface if it has not yet been initialized.
 @end table
 
 @item update
-Update the widgets in the user interface. First automatically create the user
-interface if it has not yet been initialized.
+Update (and potentially create) new widgets in the user interface. First
+automatically create the user interface if it has not yet been initialized. Can
+only be called in the main thread: use @code{awake("update")} to trigger an
+update of the user interface from another thread.
 
 @table @asis
 @item Input:
@@ -2745,11 +2748,12 @@ interface if it has not yet been initialized.
 @end table
 
 @item awake
-Awake the main user interface thread and process pending events.
+Awake the main user interface thread and process pending events, and optionally
+perform an action (currently the only @code{action} allowed is "update").
 
 @table @asis
 @item Input:
--
+@code{action}
 @item Output:
 -
 @item Return:
@@ -2783,7 +2787,7 @@ Release the lock that was set using lock.
 @item run
 Run the event loop of the graphical user interface, i.e. repeatedly calls
 @code{wait}. First automatically create the user interface if it has not yet
-been initialized.
+been initialized. Can only be called in the main thread.
 
 @table @asis
 @item Input:
