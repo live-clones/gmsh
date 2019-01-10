@@ -26,14 +26,14 @@ def compute(arg):
     k = 0
     p = 0
     n = 1000000
-    progress = gmsh.onelab.getNumber("Show progress?")
+    progress = gmsh.onelab.getNumber("Show progress?")[0]
     for j in range(n):
         # stop computation if requested by clicking on "Stop it!"
         if stop_computation:
             break
         k = math.sin(k) + math.cos(j/45.)
         # show progress in real time?
-        if len(progress) and progress[0] == 1 and not j % (n / 100):
+        if progress == 1 and not j % (n / 100):
             p = p + 1
             gmsh.onelab.setString(arg, ["{0}%".format(p)])
             # any code in a thread other than the main thread that modifies the
@@ -48,8 +48,6 @@ def compute(arg):
     gmsh.onelab.setString("Action", ["done computing"])
     gmsh.fltk.awake("update")
     return
-
-i = 1
 
 # create the graphical user interface
 gmsh.fltk.initialize()
@@ -79,6 +77,5 @@ while 1:
         gmsh.onelab.setString("Button", ["Do it!", "should compute"])
         gmsh.fltk.update()
         stop_computation = False
-        i = i + 1
 
 gmsh.finalize()
