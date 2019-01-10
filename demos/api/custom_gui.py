@@ -9,15 +9,18 @@ import thread
 
 gmsh.initialize()
 
+# hide the standard Gmsh menu
+gmsh.option.setNumber("General.ShowGmshMenu", 0)
+
 # create some onelab parameters: the number of threads to create, a toggle to
 # enable/disable showing the progress of the computation in real time, and the
 # custom onelab button with its associated action (when pressed, it will set the
 # "Action" onelab variable to "should compute")
 gmsh.onelab.set("""
 [
-  { "type":"number", "name":"Number of threads", "values":[1],
-    "choices":[1, 2, 3, 4] },
-  { "type":"number", "name":"Show progress?", "values":[1],
+  { "type":"number", "name":"My App/Number of threads", "values":[2],
+    "choices":[1, 2, 3, 4], "attributes":{"Highlight":"AliceBlue"} },
+  { "type":"number", "name":"My App/Show progress?", "values":[1],
     "choices":[0, 1] },
   { "type":"string", "name":"Button", "values":["Do it!", "should compute"],
     "visible":false }
@@ -32,7 +35,7 @@ def compute(arg):
     k = 0
     p = 0
     n = 1000000
-    progress = gmsh.onelab.getNumber("Show progress?")[0]
+    progress = gmsh.onelab.getNumber("My App/Show progress?")[0]
     for j in range(n):
         # stop computation if requested by clicking on "Stop it!"
         if stop_computation:
@@ -72,9 +75,10 @@ while 1:
         # force interface update (to show the new button label)
         gmsh.fltk.update()
         # start computationally intensive calculations in their own threads
-        n = int(gmsh.onelab.getNumber("Number of threads")[0])
-        for i in range(n):
-            thread.start_new_thread(compute, ("Thread {0}".format(i + 1),))
+        n = int(gmsh.onelab.getNumber("My App/Number of threads")[0])
+        #for i in range(n):
+        #    thread.start_new_thread(compute, ("My App/Thread {0}".format(i + 1),))
+        thread.start_new_thread(compute, ("My App/Thread {0}".format(1),))
 
     if "should stop" in a:
         stop_computation = True
@@ -82,6 +86,7 @@ while 1:
     if "done computing" in a:
         gmsh.onelab.setString("Action", [""])
         gmsh.onelab.setString("Button", ["Do it!", "should compute"])
+        print("aaaaaaaaaaaaaa")
         gmsh.fltk.update()
         stop_computation = False
 

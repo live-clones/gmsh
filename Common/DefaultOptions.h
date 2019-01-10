@@ -758,6 +758,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Material shininess" },
   { F|O, "ShininessExponent" , opt_general_shine_exponent , 40. ,
     "Material shininess exponent (between 0 and 128)" },
+  { F|O, "ShowGmshMenu" , opt_general_show_gmsh_menu , 1. ,
+    "Show the standard Gmsh menu in the tree" },
   { F|O, "ShowOptionsOnStartup", opt_general_show_options_on_startup, 0. ,
     "Show option window on startup" },
   { F|O, "ShowMessagesOnStartup", opt_general_show_messages_on_startup, 0. ,

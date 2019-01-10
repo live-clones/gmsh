@@ -2283,6 +2283,13 @@ double opt_general_system_menu_bar(OPT_ARGS_NUM)
   return CTX::instance()->systemMenuBar;
 }
 
+double opt_general_show_gmsh_menu(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->showGmshMenu = (int)val;
+  return CTX::instance()->showGmshMenu;
+}
+
 double opt_general_meshdiscrete(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){

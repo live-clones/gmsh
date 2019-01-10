@@ -101,6 +101,8 @@ namespace onelabUtils {
       onelab::string o("Gmsh/MshFileName", name, "Mesh name");
       o.setKind("file");
       o.setAttribute("Closed", "1");
+      if(!CTX::instance()->showGmshMenu)
+        o.setVisible(false);
       c->set(o);
     }
     // we could keep track of mesh file name in "Output files" so we could
