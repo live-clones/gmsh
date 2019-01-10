@@ -99,7 +99,7 @@ int FlGui::locked()
 static void awake_cb(void *data)
 {
   if(data)
-    FlGui::instance()->updateViews(true, true);
+    FlGui::instance()->updateViews(true, false);
 }
 
 void FlGui::awake(const std::string &action)
