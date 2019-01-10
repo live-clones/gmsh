@@ -9,12 +9,14 @@ import thread
 
 gmsh.initialize()
 
-# create two onelab parameters: a toggle to enable/disable showing the progress
-# of the computation in real time, and the custom onelab button with its
-# associated action (when pressed, it will set the "Action" onelab variable to
-# "should compute")
+# create some onelab parameters: the number of threads to create, a toggle to
+# enable/disable showing the progress of the computation in real time, and the
+# custom onelab button with its associated action (when pressed, it will set the
+# "Action" onelab variable to "should compute")
 gmsh.onelab.set("""
 [
+  { "type":"number", "name":"Number of threads", "values":[1],
+    "choices":[1, 2, 3, 4] },
   { "type":"number", "name":"Show progress?", "values":[1],
     "choices":[0, 1] },
   { "type":"string", "name":"Button", "values":["Do it!", "should compute"],
@@ -70,8 +72,9 @@ while 1:
         # force interface update (to show the new button label)
         gmsh.fltk.update()
         # start computationally intensive calculations in their own threads
-        thread.start_new_thread(compute, ("Thread 1",))
-        thread.start_new_thread(compute, ("Thread 2",))
+        n = int(gmsh.onelab.getNumber("Number of threads")[0])
+        for i in range(n):
+            thread.start_new_thread(compute, ("Thread {0}".format(i + 1),))
 
     if "should stop" in a:
         stop_computation = True
