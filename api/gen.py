@@ -633,7 +633,7 @@ fltk.add('initialize',doc,None)
 doc = '''Wait at most `time' seconds for user interface events and return. If `time' < 0, wait indefinitely. First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread.'''
 fltk.add('wait',doc,None,idouble('time', '-1.'))
 
-doc = '''Update (and potentially create) new widgets in the user interface. First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread: use `awake("update")' to trigger an update of the user interface from another thread.'''
+doc = '''Update the user interface (potentially creating new widgets and windows). First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread: use `awake("update")' to trigger an update of the user interface from another thread.'''
 fltk.add('update',doc,None)
 
 doc = '''Awake the main user interface thread and process pending events, and optionally perform an action (currently the only `action' allowed is "update"). '''
@@ -658,19 +658,19 @@ onelab.add('set',doc,None,istring('data'),istring('format', '"json"'))
 doc = '''Get all the parameters (or a single one if `name' is specified) from the ONELAB database, encoded in `format'.'''
 onelab.add('get',doc,None,ostring('data'),istring('name', '""'),istring('format', '"json"'))
 
-doc = '''Set the value the number parameter of name `name' in the ONELAB database.'''
+doc = '''Set the value the number parameter of name `name' in the ONELAB database. Create the parameter if it does not exist; update the value if the parameter exists.'''
 onelab.add('setNumber',doc,None,istring('name'),ivectordouble('value'))
 
-doc = '''Set the value the string parameter of name `name' in the ONELAB database.'''
+doc = '''Set the value the string parameter of name `name' in the ONELAB database. Create the parameter if it does not exist; update the value if the parameter exists.'''
 onelab.add('setString',doc,None,istring('name'),ivectorstring('value'))
 
-doc = '''Get the value the number parameter of name `name' from the ONELAB database.'''
+doc = '''Get the value the number parameter of name `name' from the ONELAB database. Return an empty vector if the parameter does not exist.'''
 onelab.add('getNumber',doc,None,istring('name'),ovectordouble('value'))
 
-doc = '''Get the value of the string parameter of name `name' from the ONELAB database.'''
+doc = '''Get the value of the string parameter of name `name' from the ONELAB database. Return an empty vector if the parameter does not exist.'''
 onelab.add('getString',doc,None,istring('name'),ovectorstring('value'))
 
-doc = '''Clear the ONELAB database, or a single parameter if `name' is given.'''
+doc = '''Clear the ONELAB database, or remove a single parameter if `name' is given.'''
 onelab.add('clear',doc,None,istring('name', '""'))
 
 doc = '''Run a ONELAB client. If `name' is provided, create a new ONELAB client with name `name' and executes `command'. If not, try to run a client that might be linked to the processed input files.'''

@@ -1,6 +1,5 @@
 import gmsh
 import sys
-import json
 import math
 import thread
 
@@ -10,13 +9,18 @@ import thread
 
 gmsh.initialize()
 
-# create some onelab parameters
+# create two onelab parameters: a toggle to enable/disable showing the progress
+# of the computation in real time, and the custom onelab button with its
+# associated action (when pressed, it will set the "Action" onelab variable to
+# "should compute")
 gmsh.onelab.set("""
-  { "type":"number", "name":"Show progress?", "values":[1], "choices":[0, 1] },
+[
+  { "type":"number", "name":"Show progress?", "values":[1],
+    "choices":[0, 1] },
+  { "type":"string", "name":"Button", "values":["Do it!", "should compute"],
+    "visible":false }
+]
 """)
-
-# set a custom onelab button with an associated "Action"
-gmsh.onelab.setString("Button", ["Do it!", "should compute"])
 
 # flag that will be set to interrupt a calculation
 stop_computation = False

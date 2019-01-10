@@ -1,4 +1,4 @@
-4.0.8: improved ONELAB support in API; improved renumbering of mesh
+4.1.0: improved ONELAB and Fltk support in API; improved renumbering of mesh
 nodes/elements; code refactoring.
 
 4.0.7 (December 9, 2018): fixed small memory leaks; removed unused code.

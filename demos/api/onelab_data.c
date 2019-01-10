@@ -30,7 +30,7 @@ int main(int argc, char **argv)
      file) */
   gmshOnelabRun("", "", &ierr); chk(ierr);
 
-  gmshOnelabGet(&json, "json", &ierr); chk(ierr);
+  gmshOnelabGet(&json, "json", "", &ierr); chk(ierr);
   printf("%s", json);
 
   gmshFinalize(&ierr); chk(ierr);

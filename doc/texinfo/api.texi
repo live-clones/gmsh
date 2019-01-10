@@ -2733,7 +2733,7 @@ thread.
 @end table
 
 @item update
-Update (and potentially create) new widgets in the user interface. First
+Update the user interface (potentially creating new widgets and windows). First
 automatically create the user interface if it has not yet been initialized. Can
 only be called in the main thread: use @code{awake("update")} to trigger an
 update of the user interface from another thread.
@@ -2829,6 +2829,8 @@ ONELAB database, encoded in @code{format}.
 
 @item setNumber
 Set the value the number parameter of name @code{name} in the ONELAB database.
+Create the parameter if it does not exist; update the value if the parameter
+exists.
 
 @table @asis
 @item Input:
@@ -2841,6 +2843,8 @@ Set the value the number parameter of name @code{name} in the ONELAB database.
 
 @item setString
 Set the value the string parameter of name @code{name} in the ONELAB database.
+Create the parameter if it does not exist; update the value if the parameter
+exists.
 
 @table @asis
 @item Input:
@@ -2853,6 +2857,7 @@ Set the value the string parameter of name @code{name} in the ONELAB database.
 
 @item getNumber
 Get the value the number parameter of name @code{name} from the ONELAB database.
+Return an empty vector if the parameter does not exist.
 
 @table @asis
 @item Input:
@@ -2865,7 +2870,7 @@ Get the value the number parameter of name @code{name} from the ONELAB database.
 
 @item getString
 Get the value of the string parameter of name @code{name} from the ONELAB
-database.
+database. Return an empty vector if the parameter does not exist.
 
 @table @asis
 @item Input:
@@ -2877,7 +2882,7 @@ database.
 @end table
 
 @item clear
-Clear the ONELAB database, or a single parameter if @code{name} is given.
+Clear the ONELAB database, or remove a single parameter if @code{name} is given.
 
 @table @asis
 @item Input:
