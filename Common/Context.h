@@ -158,7 +158,7 @@ public:
   // use the system menu bar on Mac OS X?
   int systemMenuBar;
   // show standard Gmsh menu in onelab window
-  int showGmshMenu;
+  int showModuleMenu;
   // use high-resolution opengl graphics (retina Macs)
   int highResolutionGraphics;
   // batch mode (-4: lua session, -3: server daemon, -2: check coherence, -1:

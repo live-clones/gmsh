@@ -9,8 +9,8 @@ import thread
 
 gmsh.initialize()
 
-# hide the standard Gmsh menu
-gmsh.option.setNumber("General.ShowGmshMenu", 0)
+# hide the standard Gmsh modules
+gmsh.option.setNumber("General.ShowModuleMenu", 0)
 
 # create some onelab parameters: the number of threads to create, a toggle to
 # enable/disable showing the progress of the computation in real time, and the
@@ -76,9 +76,8 @@ while 1:
         gmsh.fltk.update()
         # start computationally intensive calculations in their own threads
         n = int(gmsh.onelab.getNumber("My App/Number of threads")[0])
-        #for i in range(n):
-        #    thread.start_new_thread(compute, ("My App/Thread {0}".format(i + 1),))
-        thread.start_new_thread(compute, ("My App/Thread {0}".format(1),))
+        for i in range(n):
+            thread.start_new_thread(compute, ("My App/Thread {0}".format(i + 1),))
 
     if "should stop" in a:
         stop_computation = True
@@ -86,7 +85,6 @@ while 1:
     if "done computing" in a:
         gmsh.onelab.setString("Action", [""])
         gmsh.onelab.setString("Button", ["Do it!", "should compute"])
-        print("aaaaaaaaaaaaaa")
         gmsh.fltk.update()
         stop_computation = False
 

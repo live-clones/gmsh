@@ -101,7 +101,7 @@ namespace onelabUtils {
       onelab::string o("Gmsh/MshFileName", name, "Mesh name");
       o.setKind("file");
       o.setAttribute("Closed", "1");
-      if(!CTX::instance()->showGmshMenu)
+      if(!CTX::instance()->showModuleMenu)
         o.setVisible(false);
       c->set(o);
     }

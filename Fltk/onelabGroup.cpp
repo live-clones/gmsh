@@ -1274,7 +1274,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
     _treeStrings.clear();
   }
 
-  if(CTX::instance()->showGmshMenu)
+  if(CTX::instance()->showModuleMenu)
     _addGmshMenus();
 
   std::vector<onelab::number> numbers;

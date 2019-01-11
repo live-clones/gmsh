@@ -1056,7 +1056,7 @@ Material shininess exponent (between 0 and 128)@*
 Default value: @code{40}@*
 Saved in: @code{General.OptionsFileName}
 
-@item General.ShowGmshMenu
+@item General.ShowModuleMenu
 Show the standard Gmsh menu in the tree@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
