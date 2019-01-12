@@ -1,5 +1,4 @@
 #include <cmath>
-#include <sstream>
 #include <thread>
 #include "gmsh.h"
 
@@ -34,10 +33,10 @@ void compute(const std::string &arg)
       gmsh::fltk::lock();
       gmsh::logger::write(arg + " progress " + std::to_string(p) + "%");
       gmsh::fltk::unlock();
+      // ask the main thread to process pending events and to update the user
+      // interface, maximum 10 times per second
       if(gmsh::logger::time() - last_refresh > 0.1){
         last_refresh = gmsh::logger::time();
-        // ask the main thread to process pending events and to update the user
-        // interface, maximum 10 times per second
         gmsh::fltk::awake("update");
       }
     }
@@ -54,10 +53,9 @@ int main(int argc, char **argv)
   // hide the standard Gmsh modules
   gmsh::option::setNumber("General.ShowModuleMenu", 0);
 
-  // create some onelab parameters: the number of threads to create, a toggle to
-  // enable/disable showing the progress of the computation in real time, and
-  // the custom onelab button with its associated action (when pressed, it will
-  // set the "Action" onelab variable to "should compute")
+  // create some onelab parameters to control the number of iterations and
+  // threads, the progress display and the custom onelab button (when pressed,
+  // it will set the "Action" onelab variable to "should compute")
   gmsh::onelab::set(R"( [
     { "type":"number", "name":"My App/Iterations", "values":[1e6],
       "attributes":{"Highlight":"AliceBlue"} },
@@ -80,8 +78,10 @@ int main(int argc, char **argv)
     // value of the "Action" onelab variable
     std::vector<std::string> action;
     gmsh::onelab::getString("Action", action);
-
-    if(action.size() && action[0] == "should compute"){
+    if(action.empty()){
+      continue;
+    }
+    else if(action[0] == "should compute"){
       gmsh::onelab::setString("Action", {""});
       gmsh::onelab::setString("Button", {"Stop!", "should stop"});
       // force interface update (to show the new button label)
@@ -91,18 +91,14 @@ int main(int argc, char **argv)
       gmsh::onelab::getNumber("My App/Number of threads", v);
       int n = v.size() ? static_cast<int>(v[0]) : 1;
       for(unsigned int i = 0; i < n; i++){
-        std::ostringstream sstream;
-        sstream << "My App/Thread " << i + 1;
-        std::thread t(compute, sstream.str());
+        std::thread t(compute, "My App/Thread " + std::to_string(i + 1));
         t.detach();
       }
     }
-
-    if(action.size() && action[0] == "should stop"){
+    else if(action[0] == "should stop"){
       stop_computation = true;
     }
-
-    if(action.size() && action[0] == "done computing"){
+    else if(action[0] == "done computing"){
       // should not detach threads, and join them all here
       gmsh::onelab::setString("Action", {""});
       gmsh::onelab::setString("Button", {"Do it!", "should compute"});

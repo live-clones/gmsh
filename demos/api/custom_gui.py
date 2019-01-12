@@ -12,10 +12,9 @@ gmsh.initialize()
 # hide the standard Gmsh modules
 gmsh.option.setNumber("General.ShowModuleMenu", 0)
 
-# create some onelab parameters: the number of threads to create, a toggle to
-# enable/disable showing the progress of the computation in real time, and the
-# custom onelab button with its associated action (when pressed, it will set the
-# "Action" onelab variable to "should compute")
+# create some onelab parameters to control the number of iterations and
+# threads, the progress display and the custom onelab button (when pressed,
+# it will set the "Action" onelab variable to "should compute")
 gmsh.onelab.set("""
 [
   { "type":"number", "name":"My App/Iterations", "values":[1e6],
@@ -53,10 +52,10 @@ def compute(arg):
             gmsh.fltk.lock()
             gmsh.logger.write("{0} progress {1}%".format(arg, p))
             gmsh.fltk.unlock()
+            # ask the main thread to process pending events and to update
+            # the user interface
             if time.time() - last_refresh > 0.1:
                 last_refresh = time.time()
-                # ask the main thread to process pending events and to update
-                # the user interface
                 gmsh.fltk.awake("update")
     gmsh.onelab.setNumber(arg + " result", [k])
     gmsh.onelab.setString("Action", ["done computing"])
@@ -73,8 +72,9 @@ while 1:
     # check if the user clicked on the custom onelab button by examining the
     # value of the "Action" onelab variable
     a = gmsh.onelab.getString("Action")
-
-    if "should compute" in a:
+    if len(a) < 1:
+        continue
+    elif a[0] == "should compute":
         gmsh.onelab.setString("Action", [""])
         gmsh.onelab.setString("Button", ["Stop!", "should stop"])
         # force interface update (to show the new button label)
@@ -83,11 +83,9 @@ while 1:
         n = int(gmsh.onelab.getNumber("My App/Number of threads")[0])
         for i in range(n):
             thread.start_new_thread(compute, ("My App/Thread {0}".format(i + 1),))
-
-    if "should stop" in a:
+    elif a[0] == "should stop":
         stop_computation = True
-
-    if "done computing" in a:
+    elif a[0] == "done computing":
         gmsh.onelab.setString("Action", [""])
         gmsh.onelab.setString("Button", ["Do it!", "should compute"])
         gmsh.fltk.update()
