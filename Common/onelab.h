@@ -32,6 +32,11 @@
 #include <iostream>
 #include <algorithm>
 #include <sstream>
+
+#if __cplusplus >= 201103L
+#include <mutex>
+#endif
+
 #include "GmshSocket.h"
 
 #define HAVE_PICOJSON
@@ -853,6 +858,10 @@ namespace onelab {
   private:
     std::set<number *, parameterLessThan> _numbers;
     std::set<string *, parameterLessThan> _strings;
+#if __cplusplus >= 201103L
+    std::mutex _mutex;
+#endif
+
     // delete a parameter from the parameter space
     template <class T>
     bool _clear(const std::string &name, const std::string &client,
@@ -894,6 +903,9 @@ namespace onelab {
     bool _set(const T &p, const std::string &client,
               std::set<T *, parameterLessThan> &ps)
     {
+#if __cplusplus >= 201103L
+      _mutex.lock();
+#endif
       typename std::set<T *, parameterLessThan>::iterator it = ps.find((T *)&p);
       if(it != ps.end()) {
         (*it)->update(p);
@@ -906,6 +918,9 @@ namespace onelab {
           newp->addClient(client, parameter::defaultChangedValue());
         ps.insert(newp);
       }
+#if __cplusplus >= 201103L
+      _mutex.unlock();
+#endif
       return true;
     }
     // get the parameter matching the given name, or all the parameters in the
@@ -926,8 +941,15 @@ namespace onelab {
         T tmp(name);
         typename std::set<T *, parameterLessThan>::iterator it = ps.find(&tmp);
         if(it != ps.end()) {
-          if(client.size())
+          if(client.size()){
+#if __cplusplus >= 201103L
+            _mutex.lock();
+#endif
             (*it)->addClient(client, parameter::defaultChangedValue());
+#if __cplusplus >= 201103L
+            _mutex.unlock();
+#endif
+          }
           p.push_back(**it);
         }
       }
@@ -940,8 +962,15 @@ namespace onelab {
       T tmp(name);
       typename std::set<T *, parameterLessThan>::iterator it = ps.find(&tmp);
       if(it != ps.end()) {
-        if(client.size())
+        if(client.size()){
+#if __cplusplus >= 201103L
+          _mutex.lock();
+#endif
           (*it)->addClient(client, parameter::defaultChangedValue());
+#if __cplusplus >= 201103L
+          _mutex.unlock();
+#endif
+        }
         return *it;
       }
       return NULL;
