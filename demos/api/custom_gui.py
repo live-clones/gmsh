@@ -1,5 +1,4 @@
 import gmsh
-import sys
 import math
 import thread
 
