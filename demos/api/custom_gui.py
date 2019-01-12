@@ -1,6 +1,7 @@
 import gmsh
 import math
 import thread
+import time
 
 # This example shows how to implement a custom user interface running
 # computationally expensive calculations in separate threads. The threads can
@@ -17,8 +18,10 @@ gmsh.option.setNumber("General.ShowModuleMenu", 0)
 # "Action" onelab variable to "should compute")
 gmsh.onelab.set("""
 [
+  { "type":"number", "name":"My App/Iterations", "values":[1e6],
+    "attributes":{"Highlight":"AliceBlue"} },
   { "type":"number", "name":"My App/Number of threads", "values":[2],
-    "choices":[1, 2, 3, 4], "attributes":{"Highlight":"AliceBlue"} },
+    "min":1, "max":16, "step":1, "attributes":{"Highlight":"AliceBlue"} },
   { "type":"number", "name":"My App/Show progress?", "values":[1],
     "choices":[0, 1] },
   { "type":"string", "name":"Button", "values":["Do it!", "should compute"],
@@ -31,17 +34,18 @@ stop_computation = False
 
 # a computationally expensive routine, that will be run in its own thread
 def compute(arg):
-    k = 0
+    n = int(gmsh.onelab.getNumber("My App/Iterations")[0])
+    show = int(gmsh.onelab.getNumber("My App/Show progress?")[0])
     p = 0
-    n = 1000000
-    progress = gmsh.onelab.getNumber("My App/Show progress?")[0]
+    k = 0
+    last_refresh = -1
     for j in range(n):
         # stop computation if requested by clicking on "Stop it!"
         if stop_computation:
             break
         k = math.sin(k) + math.cos(j/45.)
         # show progress in real time?
-        if progress == 1 and not j % (n / 100):
+        if (show == 1) and (n > 1) and (not j % (n / 100)):
             p = p + 1
             gmsh.onelab.setString(arg, ["{0}%".format(p)])
             # any code in a thread other than the main thread that modifies the
@@ -49,9 +53,11 @@ def compute(arg):
             gmsh.fltk.lock()
             gmsh.logger.write("{0} progress {1}%".format(arg, p))
             gmsh.fltk.unlock()
-            # ask the main thread to process pending events and to update the
-            # user interface
-            gmsh.fltk.awake("update")
+            if time.time() - last_refresh > 0.1:
+                last_refresh = time.time()
+                # ask the main thread to process pending events and to update
+                # the user interface
+                gmsh.fltk.awake("update")
     gmsh.onelab.setNumber(arg + " result", [k])
     gmsh.onelab.setString("Action", ["done computing"])
     gmsh.fltk.awake("update")
