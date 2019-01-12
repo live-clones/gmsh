@@ -3015,8 +3015,8 @@ namespace gmsh { // Top-level functions
     }
 
     // Run the event loop of the graphical user interface, i.e. repeatedly calls
-    // `wait'. First automatically create the user interface if it has not yet been
-    // initialized. Can only be called in the main thread.
+    // `wait()'. First automatically create the user interface if it has not yet
+    // been initialized. Can only be called in the main thread.
     GMSH_API void run()
     {
       int ierr = 0;
@@ -3148,6 +3148,24 @@ namespace gmsh { // Top-level functions
       int ierr = 0;
       gmshLoggerStop(&ierr);
       if(ierr) throw ierr;
+    }
+
+    // Return wall clock time.
+    GMSH_API double time()
+    {
+      int ierr = 0;
+      double result_api_ = gmshLoggerTime(&ierr);
+      if(ierr) throw ierr;
+      return result_api_;
+    }
+
+    // Return CPU time.
+    GMSH_API double cputime()
+    {
+      int ierr = 0;
+      double result_api_ = gmshLoggerCputime(&ierr);
+      if(ierr) throw ierr;
+      return result_api_;
     }
 
   } // namespace logger

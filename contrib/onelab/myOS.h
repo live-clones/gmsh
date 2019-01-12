@@ -9,7 +9,7 @@
 #include <string>
 
 const char *GetEnvironmentVar(const char *var);
-double GetTimeInSeconds();
+double TimeOfDay();
 void SleepInSeconds(double s);
 void CheckResources();
 double Cpu();

@@ -1634,8 +1634,8 @@ namespace gmsh { // Top-level functions
     GMSH_API void unlock();
 
     // Run the event loop of the graphical user interface, i.e. repeatedly calls
-    // `wait'. First automatically create the user interface if it has not yet been
-    // initialized. Can only be called in the main thread.
+    // `wait()'. First automatically create the user interface if it has not yet
+    // been initialized. Can only be called in the main thread.
     GMSH_API void run();
 
   } // namespace fltk
@@ -1696,6 +1696,12 @@ namespace gmsh { // Top-level functions
 
     // Stop logging messages.
     GMSH_API void stop();
+
+    // Return wall clock time.
+    GMSH_API double time();
+
+    // Return CPU time.
+    GMSH_API double cputime();
 
   } // namespace logger
 

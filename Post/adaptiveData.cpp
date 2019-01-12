@@ -1109,7 +1109,7 @@ template <class T> adaptiveElements<T>::~adaptiveElements()
 template <class T> void adaptiveElements<T>::init(int level)
 {
 #ifdef TIMER
-  double t1 = GetTimeInSeconds();
+  double t1 = TimeOfDay();
 #endif
 
   T::create(level);
@@ -1151,7 +1151,7 @@ template <class T> void adaptiveElements<T>::init(int level)
   if(tmpg) delete tmpg;
 
 #ifdef TIMER
-  adaptiveData::timerInit += GetTimeInSeconds() - t1;
+  adaptiveData::timerInit += TimeOfDay() - t1;
   return;
 #endif
 }
@@ -1159,7 +1159,7 @@ template <class T> void adaptiveElements<T>::init(int level)
 template <> void adaptiveElements<adaptivePyramid>::init(int level)
 {
 #ifdef TIMER
-  double t1 = GetTimeInSeconds();
+  double t1 = TimeOfDay();
 #endif
 
   adaptivePyramid::create(level);
@@ -1205,7 +1205,7 @@ template <> void adaptiveElements<adaptivePyramid>::init(int level)
   if(tmpg) delete tmpg;
 
 #ifdef TIMER
-  adaptiveData::timerInit += GetTimeInSeconds() - t1;
+  adaptiveData::timerInit += TimeOfDay() - t1;
   return;
 #endif
 }
@@ -1233,7 +1233,7 @@ bool adaptiveElements<T>::adapt(double tol, int numComp,
   }
 
 #ifdef TIMER
-  double t1 = GetTimeInSeconds();
+  double t1 = TimeOfDay();
 #endif
 
   fullVector<double> val(numVals), res(numVertices);
@@ -1296,7 +1296,7 @@ bool adaptiveElements<T>::adapt(double tol, int numComp,
   _interpolGeom->mult(xyz, XYZ);
 
 #ifdef TIMER
-  adaptiveData::timerAdapt += GetTimeInSeconds() - t1;
+  adaptiveData::timerAdapt += TimeOfDay() - t1;
   return true;
 #endif
 
@@ -2279,7 +2279,7 @@ void adaptiveElements<T>::adaptForVTK(double tol, int numComp,
   }
 
 #ifdef TIMER
-  double t1 = GetTimeInSeconds();
+  double t1 = TimeOfDay();
 #endif
 
   fullVector<double> val(numVals), res(numVertices);
@@ -2339,7 +2339,7 @@ void adaptiveElements<T>::adaptForVTK(double tol, int numComp,
   _interpolGeom->mult(xyz, XYZ);
 
 #ifdef TIMER
-  adaptiveData::timerAdapt += GetTimeInSeconds() - t1;
+  adaptiveData::timerAdapt += TimeOfDay() - t1;
   return;
 #endif
 

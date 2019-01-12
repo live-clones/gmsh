@@ -689,6 +689,12 @@ onelab.add('start',doc,None,ovectorstring('log'))
 doc = '''Stop logging messages.'''
 onelab.add('stop',doc,None)
 
+doc = '''Return wall clock time.'''
+onelab.add('time',doc,odouble)
+
+doc = '''Return CPU time.'''
+onelab.add('cputime',doc,odouble)
+
 ################################################################################
 
 api.write_cpp()

@@ -306,22 +306,6 @@ void SetEnvironmentVar(const char *var, const char *val)
 #endif
 }
 
-double GetTimeInSeconds()
-{
-#if defined(WIN32) && !defined(__CYGWIN__)
-  FILETIME ft;
-  GetSystemTimeAsFileTime(&ft);
-  double t = 1.e-7 * 4294967296. * (double)ft.dwHighDateTime +
-             1.e-7 * (double)ft.dwLowDateTime;
-  return t;
-#else
-  struct timeval tp;
-  gettimeofday(&tp, (struct timezone *)0);
-  double t = (double)tp.tv_sec + 1.e-6 * (double)tp.tv_usec;
-  return t;
-#endif
-}
-
 void SleepInSeconds(double s)
 {
 #if defined(WIN32) && !defined(__CYGWIN__)

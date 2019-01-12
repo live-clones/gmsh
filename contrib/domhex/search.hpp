@@ -191,8 +191,8 @@ void large_neighborhood_search(State &state, Selector &selector,
   typedef typename search_traits<Search>::assignment_type assignment;
 
   /* TODO: Use a monotonic clock instead */
-  double start = GetTimeInSeconds();
-  while (GetTimeInSeconds() - start < time_limit) {
+  double start = TimeOfDay();
+  while (TimeOfDay() - start < time_limit) {
     fragment fragment(selector(state));
     assignment assignment(search(state, fragment));
     assignment(state, fragment);
@@ -355,8 +355,8 @@ void monte_carlo_tree_search(State &state, Successor &fn, Evaluator &eval) {
       size_t i;
 
       /* TODO: Use a monotonic clock instead */
-      double start = GetTimeInSeconds();
-      for (i = 0; (GetTimeInSeconds() - start) < 1.0; i++) {
+      double start = TimeOfDay();
+      for (i = 0; (TimeOfDay() - start) < 1.0; i++) {
         mcts_simulation(&node, state, fn, eval, i,
                         actions.begin(), actions.end());
       }

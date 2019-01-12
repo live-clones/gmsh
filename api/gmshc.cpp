@@ -2733,3 +2733,29 @@ GMSH_API void gmshLoggerStop(int * ierr)
   }
 }
 
+GMSH_API double gmshLoggerTime(int * ierr)
+{
+  double result_api_;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::logger::time();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
+GMSH_API double gmshLoggerCputime(int * ierr)
+{
+  double result_api_;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::logger::cputime();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+

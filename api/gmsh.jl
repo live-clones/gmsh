@@ -350,7 +350,7 @@ Add a physical group of dimension `dim`, grouping the elementary entities with
 tags `tags`. Return the tag of the physical group, equal to `tag` if `tag` is
 positive, or a new tag if `tag` < 0.
 
-Return an integer.
+Return an integer value.
 """
 function addPhysicalGroup(dim, tags, tag = -1)
     ierr = Ref{Cint}()
@@ -468,7 +468,7 @@ end
 
 Get the geometrical dimension of the current model.
 
-Return an integer.
+Return an integer value.
 """
 function getDimension()
     ierr = Ref{Cint}()
@@ -488,7 +488,7 @@ current model. Return the tag of the new discrete entity, equal to `tag` if
 the entities on the boundary of the discrete entity, if any. Specyfing
 `boundary` allows Gmsh to construct the topology of the overall model.
 
-Return an integer.
+Return an integer value.
 """
 function addDiscreteEntity(dim, tag = -1, boundary = Cint[])
     ierr = Ref{Cint}()
@@ -1706,7 +1706,7 @@ Add a new mesh size field of type `fieldType`. If `tag` is positive, assign the
 tag explcitly; otherwise a new tag is assigned automatically. Return the field
 tag.
 
-Return an integer.
+Return an integer value.
 """
 function add(fieldType, tag = -1)
     ierr = Ref{Cint}()
@@ -1824,7 +1824,7 @@ automatically. Return the tag of the point. (Note that the point will be added
 in the current model only after `synchronize` is called. This behavior holds for
 all the entities added in the geo module.)
 
-Return an integer.
+Return an integer value.
 """
 function addPoint(x, y, z, meshSize = 0., tag = -1)
     ierr = Ref{Cint}()
@@ -1842,7 +1842,7 @@ Add a straight line segment between the two points with tags `startTag` and
 `endTag`. If `tag` is positive, set the tag explicitly; otherwise a new tag is
 selected automatically. Return the tag of the line.
 
-Return an integer.
+Return an integer value.
 """
 function addLine(startTag, endTag, tag = -1)
     ierr = Ref{Cint}()
@@ -1862,7 +1862,7 @@ tag explicitly; otherwise a new tag is selected automatically. If (`nx`, `ny`,
 `nz`) != (0,0,0), explicitely set the plane of the circle arc. Return the tag of
 the circle arc.
 
-Return an integer.
+Return an integer value.
 """
 function addCircleArc(startTag, centerTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.)
     ierr = Ref{Cint}()
@@ -1882,7 +1882,7 @@ is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. If (`nx`, `ny`, `nz`) != (0,0,0), explicitely set the plane of
 the circle arc. Return the tag of the ellipse arc.
 
-Return an integer.
+Return an integer value.
 """
 function addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.)
     ierr = Ref{Cint}()
@@ -1901,7 +1901,7 @@ is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. Create a periodic curve if the first and last points are the
 same. Return the tag of the spline curve.
 
-Return an integer.
+Return an integer value.
 """
 function addSpline(pointTags, tag = -1)
     ierr = Ref{Cint}()
@@ -1920,7 +1920,7 @@ positive, set the tag explicitly; otherwise a new tag is selected automatically.
 Creates a periodic curve if the first and last points are the same. Return the
 tag of the b-spline curve.
 
-Return an integer.
+Return an integer value.
 """
 function addBSpline(pointTags, tag = -1)
     ierr = Ref{Cint}()
@@ -1938,7 +1938,7 @@ Add a Bezier curve with `pointTags` control points. If `tag` is positive, set
 the tag explicitly; otherwise a new tag is selected automatically.  Return the
 tag of the Bezier curve.
 
-Return an integer.
+Return an integer value.
 """
 function addBezier(pointTags, tag = -1)
     ierr = Ref{Cint}()
@@ -1958,7 +1958,7 @@ closed loop: a negative tag signifies that the underlying curve is considered
 with reversed orientation. If `tag` is positive, set the tag explicitly;
 otherwise a new tag is selected automatically. Return the tag of the curve loop.
 
-Return an integer.
+Return an integer value.
 """
 function addCurveLoop(curveTags, tag = -1)
     ierr = Ref{Cint}()
@@ -1977,7 +1977,7 @@ curve loop defines the exterior contour; additional curve loop define holes. If
 `tag` is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. Return the tag of the surface.
 
-Return an integer.
+Return an integer value.
 """
 function addPlaneSurface(wireTags, tag = -1)
     ierr = Ref{Cint}()
@@ -1996,7 +1996,7 @@ curve loop is supported; this curve loop should be composed by 3 or 4 curves
 only. If `tag` is positive, set the tag explicitly; otherwise a new tag is
 selected automatically. Return the tag of the surface.
 
-Return an integer.
+Return an integer value.
 """
 function addSurfaceFilling(wireTags, tag = -1, sphereCenterTag = -1)
     ierr = Ref{Cint}()
@@ -2014,7 +2014,7 @@ Add a surface loop (a closed shell) formed by `surfaceTags`.  If `tag` is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
 Return the tag of the shell.
 
-Return an integer.
+Return an integer value.
 """
 function addSurfaceLoop(surfaceTags, tag = -1)
     ierr = Ref{Cint}()
@@ -2033,7 +2033,7 @@ surface loop defines the exterior boundary; additional surface loop define
 holes. If `tag` is positive, set the tag explicitly; otherwise a new tag is
 selected automatically. Return the tag of the volume.
 
-Return an integer.
+Return an integer value.
 """
 function addVolume(shellTags, tag = -1)
     ierr = Ref{Cint}()
@@ -2394,7 +2394,7 @@ selected automatically. Return the tag of the point. (Note that the point will
 be added in the current model only after `synchronize` is called. This behavior
 holds for all the entities added in the occ module.)
 
-Return an integer.
+Return an integer value.
 """
 function addPoint(x, y, z, meshSize = 0., tag = -1)
     ierr = Ref{Cint}()
@@ -2412,7 +2412,7 @@ Add a straight line segment between the two points with tags `startTag` and
 `endTag`. If `tag` is positive, set the tag explicitly; otherwise a new tag is
 selected automatically. Return the tag of the line.
 
-Return an integer.
+Return an integer value.
 """
 function addLine(startTag, endTag, tag = -1)
     ierr = Ref{Cint}()
@@ -2430,7 +2430,7 @@ Add a circle arc between the two points with tags `startTag` and `endTag`, with
 center `centerTag`. If `tag` is positive, set the tag explicitly; otherwise a
 new tag is selected automatically. Return the tag of the circle arc.
 
-Return an integer.
+Return an integer value.
 """
 function addCircleArc(startTag, centerTag, endTag, tag = -1)
     ierr = Ref{Cint}()
@@ -2449,7 +2449,7 @@ the tag explicitly; otherwise a new tag is selected automatically. If `angle1`
 and `angle2` are specified, create a circle arc between the two angles. Return
 the tag of the circle.
 
-Return an integer.
+Return an integer value.
 """
 function addCircle(x, y, z, r, tag = -1, angle1 = 0., angle2 = 2*pi)
     ierr = Ref{Cint}()
@@ -2467,7 +2467,7 @@ Add an ellipse arc between the two points with tags `startTag` and `endTag`,
 with center `centerTag`. If `tag` is positive, set the tag explicitly; otherwise
 a new tag is selected automatically. Return the tag of the ellipse arc.
 
-Return an integer.
+Return an integer value.
 """
 function addEllipseArc(startTag, centerTag, endTag, tag = -1)
     ierr = Ref{Cint}()
@@ -2486,7 +2486,7 @@ and y-axes respectively. If `tag` is positive, set the tag explicitly; otherwise
 a new tag is selected automatically. If `angle1` and `angle2` are specified,
 create an ellipse arc between the two angles. Return the tag of the ellipse.
 
-Return an integer.
+Return an integer value.
 """
 function addEllipse(x, y, z, r1, r2, tag = -1, angle1 = 0., angle2 = 2*pi)
     ierr = Ref{Cint}()
@@ -2505,7 +2505,7 @@ is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. Create a periodic curve if the first and last points are the
 same. Return the tag of the spline curve.
 
-Return an integer.
+Return an integer value.
 """
 function addSpline(pointTags, tag = -1)
     ierr = Ref{Cint}()
@@ -2525,7 +2525,7 @@ computed automatically. If `tag` is positive, set the tag explicitly; otherwise
 a new tag is selected automatically. Create a periodic curve if the first and
 last points are the same. Return the tag of the b-spline curve.
 
-Return an integer.
+Return an integer value.
 """
 function addBSpline(pointTags, tag = -1, degree = 3, weights = Cdouble[], knots = Cdouble[], multiplicities = Cint[])
     ierr = Ref{Cint}()
@@ -2543,7 +2543,7 @@ Add a Bezier curve with `pointTags` control points. If `tag` is positive, set
 the tag explicitly; otherwise a new tag is selected automatically. Return the
 tag of the Bezier curve.
 
-Return an integer.
+Return an integer value.
 """
 function addBezier(pointTags, tag = -1)
     ierr = Ref{Cint}()
@@ -2563,7 +2563,7 @@ considered with reversed orientation. If `tag` is positive, set the tag
 explicitly; otherwise a new tag is selected automatically. Return the tag of the
 wire.
 
-Return an integer.
+Return an integer value.
 """
 function addWire(curveTags, tag = -1, checkClosed = false)
     ierr = Ref{Cint}()
@@ -2582,7 +2582,7 @@ should contain tags of curves forming a closed loop. If `tag` is positive, set
 the tag explicitly; otherwise a new tag is selected automatically. Return the
 tag of the curve loop.
 
-Return an integer.
+Return an integer value.
 """
 function addCurveLoop(curveTags, tag = -1)
     ierr = Ref{Cint}()
@@ -2601,7 +2601,7 @@ at (`x` + `dx`, `y` + `dy`, `z`). If `tag` is positive, set the tag explicitly;
 otherwise a new tag is selected automatically. Round the corners if
 `roundedRadius` is nonzero. Return the tag of the rectangle.
 
-Return an integer.
+Return an integer value.
 """
 function addRectangle(x, y, z, dx, dy, tag = -1, roundedRadius = 0.)
     ierr = Ref{Cint}()
@@ -2619,7 +2619,7 @@ Add a disk with center (`xc`, `yc`, `zc`) and radius `rx` along the x-axis and
 `ry` along the y-axis. If `tag` is positive, set the tag explicitly; otherwise a
 new tag is selected automatically. Return the tag of the disk.
 
-Return an integer.
+Return an integer value.
 """
 function addDisk(xc, yc, zc, rx, ry, tag = -1)
     ierr = Ref{Cint}()
@@ -2638,7 +2638,7 @@ Add a plane surface defined by one or more curve loops (or closed wires)
 loop define holes. If `tag` is positive, set the tag explicitly; otherwise a new
 tag is selected automatically. Return the tag of the surface.
 
-Return an integer.
+Return an integer value.
 """
 function addPlaneSurface(wireTags, tag = -1)
     ierr = Ref{Cint}()
@@ -2656,7 +2656,7 @@ Add a surface filling the curve loops in `wireTags`. If `tag` is positive, set
 the tag explicitly; otherwise a new tag is selected automatically. Return the
 tag of the surface.
 
-Return an integer.
+Return an integer value.
 """
 function addSurfaceFilling(wireTag, tag = -1)
     ierr = Ref{Cint}()
@@ -2674,7 +2674,7 @@ Add a surface loop (a closed shell) formed by `surfaceTags`.  If `tag` is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
 Return the tag of the surface loop.
 
-Return an integer.
+Return an integer value.
 """
 function addSurfaceLoop(surfaceTags, tag = -1)
     ierr = Ref{Cint}()
@@ -2693,7 +2693,7 @@ first surface loop defines the exterior boundary; additional surface loop define
 holes. If `tag` is positive, set the tag explicitly; otherwise a new tag is
 selected automatically. Return the tag of the volume.
 
-Return an integer.
+Return an integer value.
 """
 function addVolume(shellTags, tag = -1)
     ierr = Ref{Cint}()
@@ -2713,7 +2713,7 @@ optional `angle3` argument defines the azimuthal opening (from 0 to 2*Pi). If
 `tag` is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. Return the tag of the sphere.
 
-Return an integer.
+Return an integer value.
 """
 function addSphere(xc, yc, zc, radius, tag = -1, angle1 = -pi/2, angle2 = pi/2, angle3 = 2*pi)
     ierr = Ref{Cint}()
@@ -2731,7 +2731,7 @@ Add a parallelepipedic box defined by a point (`x`, `y`, `z`) and the extents
 along the x-, y- and z-axes. If `tag` is positive, set the tag explicitly;
 otherwise a new tag is selected automatically. Return the tag of the box.
 
-Return an integer.
+Return an integer value.
 """
 function addBox(x, y, z, dx, dy, dz, tag = -1)
     ierr = Ref{Cint}()
@@ -2751,7 +2751,7 @@ its radius `r`. The optional `angle` argument defines the angular opening (from
 0 to 2*Pi). If `tag` is positive, set the tag explicitly; otherwise a new tag is
 selected automatically. Return the tag of the cylinder.
 
-Return an integer.
+Return an integer value.
 """
 function addCylinder(x, y, z, dx, dy, dz, r, tag = -1, angle = 2*pi)
     ierr = Ref{Cint}()
@@ -2772,7 +2772,7 @@ positive, set the tag explicitly; otherwise a new tag is selected automatically.
 `angle` defines the optional angular opening (from 0 to 2*Pi). Return the tag of
 the cone.
 
-Return an integer.
+Return an integer value.
 """
 function addCone(x, y, z, dx, dy, dz, r1, r2, tag = -1, angle = 2*pi)
     ierr = Ref{Cint}()
@@ -2792,7 +2792,7 @@ positive, set the tag explicitly; otherwise a new tag is selected automatically.
 The optional argument `ltx` defines the top extent along the x-axis. Return the
 tag of the wedge.
 
-Return an integer.
+Return an integer value.
 """
 function addWedge(x, y, z, dx, dy, dz, tag = -1, ltx = 0.)
     ierr = Ref{Cint}()
@@ -2811,7 +2811,7 @@ If `tag` is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. The optional argument `angle` defines the angular opening (from 0
 to 2*Pi). Return the tag of the wedge.
 
-Return an integer.
+Return an integer value.
 """
 function addTorus(x, y, z, r1, r2, tag = -1, angle = 2*pi)
     ierr = Ref{Cint}()
@@ -3342,7 +3342,7 @@ Add a new post-processing view, with name `name`. If `tag` is positive use it
 (and remove the view with that tag if it already exists), otherwise associate a
 new tag. Return the view tag.
 
-Return an integer.
+Return an integer value.
 """
 function add(name, tag = -1)
     ierr = Ref{Cint}()
@@ -3374,7 +3374,7 @@ Get the index of the view with tag `tag` in the list of currently loaded views.
 This dynamic index (it can change when views are removed) is used to access view
 options.
 
-Return an integer.
+Return an integer value.
 """
 function getIndex(tag)
     ierr = Ref{Cint}()
@@ -3732,7 +3732,7 @@ end
     gmsh.fltk.run()
 
 Run the event loop of the graphical user interface, i.e. repeatedly calls
-`wait`. First automatically create the user interface if it has not yet been
+`wait()`. First automatically create the user interface if it has not yet been
 initialized. Can only be called in the main thread.
 """
 function run()
@@ -3946,6 +3946,38 @@ function stop()
           ierr)
     ierr[] != 0 && error("gmshLoggerStop returned non-zero error code: $(ierr[])")
     return nothing
+end
+
+"""
+    gmsh.logger.time()
+
+Return wall clock time.
+
+Return a floating point value.
+"""
+function time()
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshLoggerTime, gmsh.lib), Cdouble,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshLoggerTime returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
+    gmsh.logger.cputime()
+
+Return CPU time.
+
+Return a floating point value.
+"""
+function cputime()
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshLoggerCputime, gmsh.lib), Cdouble,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshLoggerCputime returned non-zero error code: $(ierr[])")
+    return api__result__
 end
 
 end # end of module logger

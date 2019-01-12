@@ -25,6 +25,7 @@
 #include <windows.h>
 #include <process.h>
 #include <io.h>
+#include <sys/timeb.h>
 #endif
 
 #if defined(__APPLE__)
@@ -50,19 +51,16 @@ const char *GetEnvironmentVar(const char *var)
 #endif
 }
 
-double GetTimeInSeconds()
+double TimeOfDay()
 {
-#if !defined(WIN32) || defined(__CYGWIN__)
-  struct timeval tp;
-  gettimeofday(&tp, (struct timezone *)0);
-  double t = (double)tp.tv_sec + 1.e-6 * (double)tp.tv_usec;
-  return t;
+#if defined(WIN32) && !defined(__CYGWIN__)
+  struct _timeb localTime;
+  _ftime(&localTime);
+  return localTime.time + 1.e-3 * localTime.millitm;
 #else
-  FILETIME ft;
-  GetSystemTimeAsFileTime(&ft);
-  double t =  1.e-7 * 4294967296. * (double)ft.dwHighDateTime +
-              1.e-7 * (double)ft.dwLowDateTime;
-  return t;
+  struct timeval t;
+  gettimeofday(&t, NULL);
+  return t.tv_sec + 1.e-6 * t.tv_usec;
 #endif
 }
 
@@ -196,7 +194,7 @@ int SystemCall(const std::string &command, bool blocking)
     CloseHandle(prInfo.hThread);
   }
   else{
-    // DETACHED_PROCESS removes the console 
+    // DETACHED_PROCESS removes the console
     // (useful if the program to launch is a console-mode exe)
     CreateProcess(NULL, (char*)command.c_str(), NULL, NULL, FALSE,
                   NORMAL_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL,

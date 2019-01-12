@@ -1736,7 +1736,7 @@ GMSH_API void gmshFltkLock(int * ierr);
 GMSH_API void gmshFltkUnlock(int * ierr);
 
 /* Run the event loop of the graphical user interface, i.e. repeatedly calls
- * `wait'. First automatically create the user interface if it has not yet
+ * `wait()'. First automatically create the user interface if it has not yet
  * been initialized. Can only be called in the main thread. */
 GMSH_API void gmshFltkRun(int * ierr);
 
@@ -1800,5 +1800,11 @@ GMSH_API void gmshLoggerStart(char *** log, size_t * log_n,
 
 /* Stop logging messages. */
 GMSH_API void gmshLoggerStop(int * ierr);
+
+/* Return wall clock time. */
+GMSH_API double gmshLoggerTime(int * ierr);
+
+/* Return CPU time. */
+GMSH_API double gmshLoggerCputime(int * ierr);
 
 #endif

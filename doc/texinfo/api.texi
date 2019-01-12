@@ -253,7 +253,7 @@ if @code{tag} is positive, or a new tag if @code{tag} < 0.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item setPhysicalName
@@ -335,7 +335,7 @@ Get the geometrical dimension of the current model.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addDiscreteEntity
@@ -352,7 +352,7 @@ topology of the overall model.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item removeEntities
@@ -1254,7 +1254,7 @@ the field tag.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item remove
@@ -1350,7 +1350,7 @@ the geo module.)
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addLine
@@ -1364,7 +1364,7 @@ new tag is selected automatically. Return the tag of the line.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addCircleArc
@@ -1380,7 +1380,7 @@ the plane of the circle arc. Return the tag of the circle arc.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addEllipseArc
@@ -1397,7 +1397,7 @@ tag of the ellipse arc.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addSpline
@@ -1412,7 +1412,7 @@ same. Return the tag of the spline curve.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addBSpline
@@ -1427,7 +1427,7 @@ same. Return the tag of the b-spline curve.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addBezier
@@ -1441,7 +1441,7 @@ Return the tag of the Bezier curve.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addCurveLoop
@@ -1458,7 +1458,7 @@ curve loop.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addPlaneSurface
@@ -1473,7 +1473,7 @@ selected automatically. Return the tag of the surface.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addSurfaceFilling
@@ -1488,7 +1488,7 @@ tag is selected automatically. Return the tag of the surface.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addSurfaceLoop
@@ -1502,7 +1502,7 @@ automatically. Return the tag of the shell.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addVolume
@@ -1517,7 +1517,7 @@ selected automatically. Return the tag of the volume.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item extrude
@@ -1809,7 +1809,7 @@ the occ module.)
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addLine
@@ -1823,7 +1823,7 @@ new tag is selected automatically. Return the tag of the line.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addCircleArc
@@ -1838,7 +1838,7 @@ the circle arc.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addCircle
@@ -1853,7 +1853,7 @@ arc between the two angles. Return the tag of the circle.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addEllipseArc
@@ -1868,7 +1868,7 @@ the ellipse arc.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addEllipse
@@ -1884,7 +1884,7 @@ two angles. Return the tag of the ellipse.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addSpline
@@ -1899,7 +1899,7 @@ same. Return the tag of the spline curve.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addBSpline
@@ -1916,7 +1916,7 @@ tag of the b-spline curve.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addBezier
@@ -1930,7 +1930,7 @@ Return the tag of the Bezier curve.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addWire
@@ -1946,7 +1946,7 @@ Return the tag of the wire.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addCurveLoop
@@ -1961,7 +1961,7 @@ automatically. Return the tag of the curve loop.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addRectangle
@@ -1977,7 +1977,7 @@ tag of the rectangle.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addDisk
@@ -1992,7 +1992,7 @@ tag of the disk.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addPlaneSurface
@@ -2007,7 +2007,7 @@ otherwise a new tag is selected automatically. Return the tag of the surface.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addSurfaceFilling
@@ -2021,7 +2021,7 @@ Return the tag of the surface.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addSurfaceLoop
@@ -2035,7 +2035,7 @@ automatically. Return the tag of the surface loop.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addVolume
@@ -2050,7 +2050,7 @@ tag is selected automatically. Return the tag of the volume.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addSphere
@@ -2067,7 +2067,7 @@ sphere.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addBox
@@ -2082,7 +2082,7 @@ box.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addCylinder
@@ -2099,7 +2099,7 @@ Return the tag of the cylinder.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addCone
@@ -2116,7 +2116,7 @@ opening (from 0 to 2*Pi). Return the tag of the cone.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addWedge
@@ -2132,7 +2132,7 @@ extent along the x-axis. Return the tag of the wedge.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addTorus
@@ -2148,7 +2148,7 @@ wedge.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addThruSections
@@ -2503,7 +2503,7 @@ associate a new tag. Return the view tag.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item remove
@@ -2529,7 +2529,7 @@ access view options.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item getTags
@@ -2786,7 +2786,7 @@ Release the lock that was set using lock.
 
 @item run
 Run the event loop of the graphical user interface, i.e. repeatedly calls
-@code{wait}. First automatically create the user interface if it has not yet
+@code{wait()}. First automatically create the user interface if it has not yet
 been initialized. Can only be called in the main thread.
 
 @table @asis
@@ -2945,6 +2945,30 @@ Stop logging messages.
 -
 @item Return:
 -
+@end table
+
+@item time
+Return wall clock time.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+floating point value
+@end table
+
+@item cputime
+Return CPU time.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+floating point value
 @end table
 
 @end ftable

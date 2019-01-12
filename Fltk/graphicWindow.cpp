@@ -3225,12 +3225,12 @@ static void status_play_cb(Fl_Widget *w, void *data)
   static double anim_time;
   getGraphicWindow(w)->setAnimButtons(0);
   stop_anim = 0;
-  anim_time = GetTimeInSeconds();
+  anim_time = TimeOfDay();
   while(1) {
     if(stop_anim)
       break;
-    if(GetTimeInSeconds() - anim_time > CTX::instance()->post.animDelay) {
-      anim_time = GetTimeInSeconds();
+    if(TimeOfDay() - anim_time > CTX::instance()->post.animDelay) {
+      anim_time = TimeOfDay();
       status_play_manual(!CTX::instance()->post.animCycle, CTX::instance()->post.animStep);
     }
     FlGui::check();

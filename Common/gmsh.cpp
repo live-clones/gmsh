@@ -33,6 +33,7 @@
 #include "Context.h"
 #include "polynomialBasis.h"
 #include "pyramidalBasis.h"
+#include "OS.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -156,62 +157,6 @@ GMSH_API void gmsh::clear()
   }
   if(GmshClearProject()) return;
   throw 1;
-}
-
-GMSH_API void gmsh::logger::write(const std::string &message,
-                                  const std::string &level)
-{
-  if(!_isInitialized()) {
-    throw -1;
-  }
-  if(level == "error")
-    Msg::Error("%s", message.c_str());
-  else if(level == "warning")
-    Msg::Warning("%s", message.c_str());
-  else
-    Msg::Info("%s", message.c_str());
-}
-
-class apiMsg : public GmshMessage {
-private:
-  std::vector<std::string> &_log;
-
-public:
-  apiMsg(std::vector<std::string> &log) : _log(log) {}
-  virtual void operator()(std::string level, std::string message)
-  {
-    _log.push_back(level + ": " + message);
-  }
-};
-
-GMSH_API void gmsh::logger::start(std::vector<std::string> &log)
-{
-  if(!_isInitialized()) {
-    throw -1;
-  }
-  GmshMessage *msg = Msg::GetCallback();
-  if(msg) {
-    Msg::Warning("Logger already started - ignoring");
-  }
-  else {
-    msg = new apiMsg(log);
-    Msg::SetCallback(msg);
-  }
-}
-
-GMSH_API void gmsh::logger::stop()
-{
-  if(!_isInitialized()) {
-    throw -1;
-  }
-  GmshMessage *msg = Msg::GetCallback();
-  if(msg) {
-    delete msg;
-    Msg::SetCallback(0);
-  }
-  else {
-    Msg::Warning("Logger not started - ignoring");
-  }
 }
 
 // gmsh::option
@@ -4466,4 +4411,78 @@ GMSH_API void gmsh::onelab::run(const std::string &name,
 #if defined(HAVE_ONELAB)
   onelabUtils::runClient(name, command);
 #endif
+}
+
+// gmsh::logger
+
+GMSH_API void gmsh::logger::write(const std::string &message,
+                                  const std::string &level)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  if(level == "error")
+    Msg::Error("%s", message.c_str());
+  else if(level == "warning")
+    Msg::Warning("%s", message.c_str());
+  else
+    Msg::Info("%s", message.c_str());
+}
+
+class apiMsg : public GmshMessage {
+private:
+  std::vector<std::string> &_log;
+
+public:
+  apiMsg(std::vector<std::string> &log) : _log(log) {}
+  virtual void operator()(std::string level, std::string message)
+  {
+    _log.push_back(level + ": " + message);
+  }
+};
+
+GMSH_API void gmsh::logger::start(std::vector<std::string> &log)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  GmshMessage *msg = Msg::GetCallback();
+  if(msg) {
+    Msg::Warning("Logger already started - ignoring");
+  }
+  else {
+    msg = new apiMsg(log);
+    Msg::SetCallback(msg);
+  }
+}
+
+GMSH_API void gmsh::logger::stop()
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  GmshMessage *msg = Msg::GetCallback();
+  if(msg) {
+    delete msg;
+    Msg::SetCallback(0);
+  }
+  else {
+    Msg::Warning("Logger not started - ignoring");
+  }
+}
+
+GMSH_API double gmsh::logger::time()
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  return TimeOfDay();
+}
+
+GMSH_API double gmsh::logger::cputime()
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  return Cpu();
 }

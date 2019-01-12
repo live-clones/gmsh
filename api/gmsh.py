@@ -458,7 +458,7 @@ class model:
         with tags `tags'. Return the tag of the physical group, equal to `tag' if
         `tag' is positive, or a new tag if `tag' < 0.
 
-        Return an integer.
+        Return an integer value.
         """
         api_tags_, api_tags_n_ = _ivectorint(tags)
         ierr = c_int()
@@ -607,7 +607,7 @@ class model:
         """
         Get the geometrical dimension of the current model.
 
-        Return an integer.
+        Return an integer value.
         """
         ierr = c_int()
         api__result__ = lib.gmshModelGetDimension(
@@ -628,7 +628,7 @@ class model:
         Specyfing `boundary' allows Gmsh to construct the topology of the overall
         model.
 
-        Return an integer.
+        Return an integer value.
         """
         api_boundary_, api_boundary_n_ = _ivectorint(boundary)
         ierr = c_int()
@@ -1994,7 +1994,7 @@ class model:
                 the tag explcitly; otherwise a new tag is assigned automatically. Return
                 the field tag.
 
-                Return an integer.
+                Return an integer value.
                 """
                 ierr = c_int()
                 api__result__ = lib.gmshModelMeshFieldAdd(
@@ -2114,7 +2114,7 @@ class model:
             the point will be added in the current model only after `synchronize' is
             called. This behavior holds for all the entities added in the geo module.)
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddPoint(
@@ -2137,7 +2137,7 @@ class model:
             `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag
             is selected automatically. Return the tag of the line.
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddLine(
@@ -2160,7 +2160,7 @@ class model:
             (`nx', `ny', `nz') != (0,0,0), explicitely set the plane of the circle arc.
             Return the tag of the circle arc.
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddCircleArc(
@@ -2188,7 +2188,7 @@ class model:
             explicitely set the plane of the circle arc. Return the tag of the ellipse
             arc.
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddEllipseArc(
@@ -2215,7 +2215,7 @@ class model:
             automatically. Create a periodic curve if the first and last points are the
             same. Return the tag of the spline curve.
 
-            Return an integer.
+            Return an integer value.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -2237,7 +2237,7 @@ class model:
             automatically. Creates a periodic curve if the first and last points are
             the same. Return the tag of the b-spline curve.
 
-            Return an integer.
+            Return an integer value.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -2258,7 +2258,7 @@ class model:
             set the tag explicitly; otherwise a new tag is selected automatically.
             Return the tag of the Bezier curve.
 
-            Return an integer.
+            Return an integer value.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -2282,7 +2282,7 @@ class model:
             explicitly; otherwise a new tag is selected automatically. Return the tag
             of the curve loop.
 
-            Return an integer.
+            Return an integer value.
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
@@ -2304,7 +2304,7 @@ class model:
             holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is
             selected automatically. Return the tag of the surface.
 
-            Return an integer.
+            Return an integer value.
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
@@ -2326,7 +2326,7 @@ class model:
             4 curves only. If `tag' is positive, set the tag explicitly; otherwise a
             new tag is selected automatically. Return the tag of the surface.
 
-            Return an integer.
+            Return an integer value.
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
@@ -2348,7 +2348,7 @@ class model:
             positive, set the tag explicitly; otherwise a new tag is selected
             automatically. Return the tag of the shell.
 
-            Return an integer.
+            Return an integer value.
             """
             api_surfaceTags_, api_surfaceTags_n_ = _ivectorint(surfaceTags)
             ierr = c_int()
@@ -2370,7 +2370,7 @@ class model:
             define holes. If `tag' is positive, set the tag explicitly; otherwise a new
             tag is selected automatically. Return the tag of the volume.
 
-            Return an integer.
+            Return an integer value.
             """
             api_shellTags_, api_shellTags_n_ = _ivectorint(shellTags)
             ierr = c_int()
@@ -2802,7 +2802,7 @@ class model:
             the point will be added in the current model only after `synchronize' is
             called. This behavior holds for all the entities added in the occ module.)
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddPoint(
@@ -2825,7 +2825,7 @@ class model:
             `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag
             is selected automatically. Return the tag of the line.
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddLine(
@@ -2847,7 +2847,7 @@ class model:
             otherwise a new tag is selected automatically. Return the tag of the circle
             arc.
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddCircleArc(
@@ -2870,7 +2870,7 @@ class model:
             automatically. If `angle1' and `angle2' are specified, create a circle arc
             between the two angles. Return the tag of the circle.
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddCircle(
@@ -2896,7 +2896,7 @@ class model:
             explicitly; otherwise a new tag is selected automatically. Return the tag
             of the ellipse arc.
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddEllipseArc(
@@ -2920,7 +2920,7 @@ class model:
             specified, create an ellipse arc between the two angles. Return the tag of
             the ellipse.
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddEllipse(
@@ -2947,7 +2947,7 @@ class model:
             automatically. Create a periodic curve if the first and last points are the
             same. Return the tag of the spline curve.
 
-            Return an integer.
+            Return an integer value.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -2971,7 +2971,7 @@ class model:
             the first and last points are the same. Return the tag of the b-spline
             curve.
 
-            Return an integer.
+            Return an integer value.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             api_weights_, api_weights_n_ = _ivectordouble(weights)
@@ -2999,7 +2999,7 @@ class model:
             set the tag explicitly; otherwise a new tag is selected automatically.
             Return the tag of the Bezier curve.
 
-            Return an integer.
+            Return an integer value.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -3022,7 +3022,7 @@ class model:
             the tag explicitly; otherwise a new tag is selected automatically. Return
             the tag of the wire.
 
-            Return an integer.
+            Return an integer value.
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
@@ -3045,7 +3045,7 @@ class model:
             is positive, set the tag explicitly; otherwise a new tag is selected
             automatically. Return the tag of the curve loop.
 
-            Return an integer.
+            Return an integer value.
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
@@ -3067,7 +3067,7 @@ class model:
             explicitly; otherwise a new tag is selected automatically. Round the
             corners if `roundedRadius' is nonzero. Return the tag of the rectangle.
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddRectangle(
@@ -3092,7 +3092,7 @@ class model:
             and `ry' along the y-axis. If `tag' is positive, set the tag explicitly;
             otherwise a new tag is selected automatically. Return the tag of the disk.
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddDisk(
@@ -3118,7 +3118,7 @@ class model:
             otherwise a new tag is selected automatically. Return the tag of the
             surface.
 
-            Return an integer.
+            Return an integer value.
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
@@ -3139,7 +3139,7 @@ class model:
             set the tag explicitly; otherwise a new tag is selected automatically.
             Return the tag of the surface.
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddSurfaceFilling(
@@ -3159,7 +3159,7 @@ class model:
             positive, set the tag explicitly; otherwise a new tag is selected
             automatically. Return the tag of the surface loop.
 
-            Return an integer.
+            Return an integer value.
             """
             api_surfaceTags_, api_surfaceTags_n_ = _ivectorint(surfaceTags)
             ierr = c_int()
@@ -3181,7 +3181,7 @@ class model:
             loop define holes. If `tag' is positive, set the tag explicitly; otherwise
             a new tag is selected automatically. Return the tag of the volume.
 
-            Return an integer.
+            Return an integer value.
             """
             api_shellTags_, api_shellTags_n_ = _ivectorint(shellTags)
             ierr = c_int()
@@ -3204,7 +3204,7 @@ class model:
             (from 0 to 2*Pi). If `tag' is positive, set the tag explicitly; otherwise a
             new tag is selected automatically. Return the tag of the sphere.
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddSphere(
@@ -3231,7 +3231,7 @@ class model:
             explicitly; otherwise a new tag is selected automatically. Return the tag
             of the box.
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddBox(
@@ -3259,7 +3259,7 @@ class model:
             otherwise a new tag is selected automatically. Return the tag of the
             cylinder.
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddCylinder(
@@ -3289,7 +3289,7 @@ class model:
             automatically. `angle' defines the optional angular opening (from 0 to
             2*Pi). Return the tag of the cone.
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddCone(
@@ -3319,7 +3319,7 @@ class model:
             automatically. The optional argument `ltx' defines the top extent along the
             x-axis. Return the tag of the wedge.
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddWedge(
@@ -3346,7 +3346,7 @@ class model:
             selected automatically. The optional argument `angle' defines the angular
             opening (from 0 to 2*Pi). Return the tag of the wedge.
 
-            Return an integer.
+            Return an integer value.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddTorus(
@@ -3940,7 +3940,7 @@ class view:
         it (and remove the view with that tag if it already exists), otherwise
         associate a new tag. Return the view tag.
 
-        Return an integer.
+        Return an integer value.
         """
         ierr = c_int()
         api__result__ = lib.gmshViewAdd(
@@ -3974,7 +3974,7 @@ class view:
         views. This dynamic index (it can change when views are removed) is used to
         access view options.
 
-        Return an integer.
+        Return an integer value.
         """
         ierr = c_int()
         api__result__ = lib.gmshViewGetIndex(
@@ -4348,7 +4348,7 @@ class fltk:
     def run():
         """
         Run the event loop of the graphical user interface, i.e. repeatedly calls
-        `wait'. First automatically create the user interface if it has not yet
+        `wait()'. First automatically create the user interface if it has not yet
         been initialized. Can only be called in the main thread.
         """
         ierr = c_int()
@@ -4559,3 +4559,35 @@ class logger:
             raise ValueError(
                 "gmshLoggerStop returned non-zero error code: ",
                 ierr.value)
+
+    @staticmethod
+    def time():
+        """
+        Return wall clock time.
+
+        Return a floating point value.
+        """
+        ierr = c_int()
+        api__result__ = lib.gmshLoggerTime(
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshLoggerTime returned non-zero error code: ",
+                ierr.value)
+        return api__result__
+
+    @staticmethod
+    def cputime():
+        """
+        Return CPU time.
+
+        Return a floating point value.
+        """
+        ierr = c_int()
+        api__result__ = lib.gmshLoggerCputime(
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshLoggerCputime returned non-zero error code: ",
+                ierr.value)
+        return api__result__
