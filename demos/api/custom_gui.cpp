@@ -116,6 +116,7 @@ int main(int argc, char **argv)
     else if(action[0] == "check"){
       // could perform action here after each change in onelab parameters,
       // e.g. rebuild a CAD model, update other parameters, ...
+      continue;
     }
   }
 
