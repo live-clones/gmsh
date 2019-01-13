@@ -2828,9 +2828,8 @@ ONELAB database, encoded in @code{format}.
 @end table
 
 @item setNumber
-Set the value the number parameter of name @code{name} in the ONELAB database.
-Create the parameter if it does not exist; update the value if the parameter
-exists.
+Set the value of the number parameter @code{name} in the ONELAB database. Create
+the parameter if it does not exist; update the value if the parameter exists.
 
 @table @asis
 @item Input:
@@ -2842,9 +2841,8 @@ exists.
 @end table
 
 @item setString
-Set the value the string parameter of name @code{name} in the ONELAB database.
-Create the parameter if it does not exist; update the value if the parameter
-exists.
+Set the value of the string parameter @code{name} in the ONELAB database. Create
+the parameter if it does not exist; update the value if the parameter exists.
 
 @table @asis
 @item Input:
@@ -2856,7 +2854,7 @@ exists.
 @end table
 
 @item getNumber
-Get the value the number parameter of name @code{name} from the ONELAB database.
+Get the value of the number parameter @code{name} from the ONELAB database.
 Return an empty vector if the parameter does not exist.
 
 @table @asis
@@ -2869,8 +2867,8 @@ Return an empty vector if the parameter does not exist.
 @end table
 
 @item getString
-Get the value of the string parameter of name @code{name} from the ONELAB
-database. Return an empty vector if the parameter does not exist.
+Get the value of the string parameter @code{name} from the ONELAB database.
+Return an empty vector if the parameter does not exist.
 
 @table @asis
 @item Input:

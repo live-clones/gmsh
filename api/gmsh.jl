@@ -3791,8 +3791,8 @@ end
 """
     gmsh.onelab.setNumber(name, value)
 
-Set the value the number parameter of name `name` in the ONELAB database. Create
-the parameter if it does not exist; update the value if the parameter exists.
+Set the value of the number parameter `name` in the ONELAB database. Create the
+parameter if it does not exist; update the value if the parameter exists.
 """
 function setNumber(name, value)
     ierr = Ref{Cint}()
@@ -3806,8 +3806,8 @@ end
 """
     gmsh.onelab.setString(name, value)
 
-Set the value the string parameter of name `name` in the ONELAB database. Create
-the parameter if it does not exist; update the value if the parameter exists.
+Set the value of the string parameter `name` in the ONELAB database. Create the
+parameter if it does not exist; update the value if the parameter exists.
 """
 function setString(name, value)
     ierr = Ref{Cint}()
@@ -3821,8 +3821,8 @@ end
 """
     gmsh.onelab.getNumber(name)
 
-Get the value the number parameter of name `name` from the ONELAB database.
-Return an empty vector if the parameter does not exist.
+Get the value of the number parameter `name` from the ONELAB database. Return an
+empty vector if the parameter does not exist.
 
 Return `value`.
 """
@@ -3841,8 +3841,8 @@ end
 """
     gmsh.onelab.getString(name)
 
-Get the value of the string parameter of name `name` from the ONELAB database.
-Return an empty vector if the parameter does not exist.
+Get the value of the string parameter `name` from the ONELAB database. Return an
+empty vector if the parameter does not exist.
 
 Return `value`.
 """

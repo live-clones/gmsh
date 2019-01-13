@@ -1752,28 +1752,28 @@ GMSH_API void gmshOnelabGet(char ** data,
                             const char * format,
                             int * ierr);
 
-/* Set the value the number parameter of name `name' in the ONELAB database.
- * Create the parameter if it does not exist; update the value if the
- * parameter exists. */
+/* Set the value of the number parameter `name' in the ONELAB database. Create
+ * the parameter if it does not exist; update the value if the parameter
+ * exists. */
 GMSH_API void gmshOnelabSetNumber(const char * name,
                                   double * value, size_t value_n,
                                   int * ierr);
 
-/* Set the value the string parameter of name `name' in the ONELAB database.
- * Create the parameter if it does not exist; update the value if the
- * parameter exists. */
+/* Set the value of the string parameter `name' in the ONELAB database. Create
+ * the parameter if it does not exist; update the value if the parameter
+ * exists. */
 GMSH_API void gmshOnelabSetString(const char * name,
                                   char ** value, size_t value_n,
                                   int * ierr);
 
-/* Get the value the number parameter of name `name' from the ONELAB database.
+/* Get the value of the number parameter `name' from the ONELAB database.
  * Return an empty vector if the parameter does not exist. */
 GMSH_API void gmshOnelabGetNumber(const char * name,
                                   double ** value, size_t * value_n,
                                   int * ierr);
 
-/* Get the value of the string parameter of name `name' from the ONELAB
- * database. Return an empty vector if the parameter does not exist. */
+/* Get the value of the string parameter `name' from the ONELAB database.
+ * Return an empty vector if the parameter does not exist. */
 GMSH_API void gmshOnelabGetString(const char * name,
                                   char *** value, size_t * value_n,
                                   int * ierr);

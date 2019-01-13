@@ -1652,25 +1652,25 @@ namespace gmsh { // Top-level functions
                       const std::string & name = "",
                       const std::string & format = "json");
 
-    // Set the value the number parameter of name `name' in the ONELAB database.
-    // Create the parameter if it does not exist; update the value if the parameter
+    // Set the value of the number parameter `name' in the ONELAB database. Create
+    // the parameter if it does not exist; update the value if the parameter
     // exists.
     GMSH_API void setNumber(const std::string & name,
                             const std::vector<double> & value);
 
-    // Set the value the string parameter of name `name' in the ONELAB database.
-    // Create the parameter if it does not exist; update the value if the parameter
+    // Set the value of the string parameter `name' in the ONELAB database. Create
+    // the parameter if it does not exist; update the value if the parameter
     // exists.
     GMSH_API void setString(const std::string & name,
                             const std::vector<std::string> & value);
 
-    // Get the value the number parameter of name `name' from the ONELAB database.
+    // Get the value of the number parameter `name' from the ONELAB database.
     // Return an empty vector if the parameter does not exist.
     GMSH_API void getNumber(const std::string & name,
                             std::vector<double> & value);
 
-    // Get the value of the string parameter of name `name' from the ONELAB
-    // database. Return an empty vector if the parameter does not exist.
+    // Get the value of the string parameter `name' from the ONELAB database.
+    // Return an empty vector if the parameter does not exist.
     GMSH_API void getString(const std::string & name,
                             std::vector<std::string> & value);
 

@@ -658,16 +658,16 @@ onelab.add('set',doc,None,istring('data'),istring('format', '"json"'))
 doc = '''Get all the parameters (or a single one if `name' is specified) from the ONELAB database, encoded in `format'.'''
 onelab.add('get',doc,None,ostring('data'),istring('name', '""'),istring('format', '"json"'))
 
-doc = '''Set the value the number parameter of name `name' in the ONELAB database. Create the parameter if it does not exist; update the value if the parameter exists.'''
+doc = '''Set the value of the number parameter `name' in the ONELAB database. Create the parameter if it does not exist; update the value if the parameter exists.'''
 onelab.add('setNumber',doc,None,istring('name'),ivectordouble('value'))
 
-doc = '''Set the value the string parameter of name `name' in the ONELAB database. Create the parameter if it does not exist; update the value if the parameter exists.'''
+doc = '''Set the value of the string parameter `name' in the ONELAB database. Create the parameter if it does not exist; update the value if the parameter exists.'''
 onelab.add('setString',doc,None,istring('name'),ivectorstring('value'))
 
-doc = '''Get the value the number parameter of name `name' from the ONELAB database. Return an empty vector if the parameter does not exist.'''
+doc = '''Get the value of the number parameter `name' from the ONELAB database. Return an empty vector if the parameter does not exist.'''
 onelab.add('getNumber',doc,None,istring('name'),ovectordouble('value'))
 
-doc = '''Get the value of the string parameter of name `name' from the ONELAB database. Return an empty vector if the parameter does not exist.'''
+doc = '''Get the value of the string parameter `name' from the ONELAB database. Return an empty vector if the parameter does not exist.'''
 onelab.add('getString',doc,None,istring('name'),ovectorstring('value'))
 
 doc = '''Clear the ONELAB database, or remove a single parameter if `name' is given.'''
