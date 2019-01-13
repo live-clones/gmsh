@@ -56,7 +56,7 @@ int main(int argc, char **argv)
   // create some onelab parameters to control the number of iterations and
   // threads, the progress display and the custom onelab button (when pressed,
   // it will set the "Action" onelab variable to "should compute")
-  gmsh::onelab::set(R"( [
+  std::string parameters = R"( [
     { "type":"number", "name":"My App/Iterations", "values":[1e6],
       "attributes":{"Highlight":"AliceBlue"} },
     { "type":"number", "name":"My App/Number of threads", "values":[2],
@@ -65,7 +65,9 @@ int main(int argc, char **argv)
       "choices":[0, 1] },
     { "type":"string", "name":"Button", "values":["Do it!", "should compute"],
       "visible":false }
-  ] )");
+  ] )";
+
+  gmsh::onelab::set(parameters);
 
   // create the graphical user interface
   gmsh::fltk::initialize();
@@ -104,6 +106,12 @@ int main(int argc, char **argv)
       gmsh::onelab::setString("Button", {"Do it!", "should compute"});
       gmsh::fltk::update();
       stop_computation = false;
+    }
+    else if(action[0] == "reset"){
+      // user clicked on "Reset database"
+      gmsh::onelab::setString("Action", {""});
+      gmsh::onelab::set(parameters);
+      gmsh::fltk::update();
     }
   }
 
