@@ -929,6 +929,15 @@ static void onelab_string_button_cb(Fl_Widget *w, void *data)
       // parse string directly
       ParseString(strings[0].getValue());
     }
+    else if(strings[0].getAttribute("Macro") == "Action") {
+      // set onelab Action for custom GUIs
+      onelab::string o("Action", strings[0].getValue());
+      o.setVisible(false);
+      o.setNeverChanged(true);
+      o.setAttribute("Persistent", "1");
+      onelab::server::instance()->set(o);
+      return; // otherwise autoCheck will set Action to "check"
+    }
     else {
       // merge file
       std::string tmp = FixRelativePath(GModel::current()->getFileName(),
@@ -1078,7 +1087,8 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
   // macro button
   if(p.getAttribute("Macro") == "Gmsh" ||
      p.getAttribute("Macro") == "GmshMergeFile" ||
-     p.getAttribute("Macro") == "GmshParseString") {
+     p.getAttribute("Macro") == "GmshParseString" ||
+     p.getAttribute("Macro") == "Action") {
     Fl_Button *but = new Fl_Button(1, 1, ww / _widgetLabelRatio, hh);
     but->box(FL_FLAT_BOX);
     but->color(_tree->color());
