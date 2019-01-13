@@ -102,6 +102,7 @@ void onelab_cb(Fl_Widget *w, void *data)
   onelab::string o("Action", action);
   o.setVisible(false);
   o.setNeverChanged(true);
+  o.setAttribute("Persistent", "1");
   onelab::server::instance()->set(o);
 
   if(action == "refresh") {
