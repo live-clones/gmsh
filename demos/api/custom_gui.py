@@ -97,5 +97,8 @@ while 1:
         gmsh.onelab.setString("Action", [""])
         gmsh.onelab.set(parameters)
         gmsh.fltk.update()
+    elif action[0] == "check":
+        # could perform action here after each change in onelab parameters,
+        # e.g. rebuild a CAD model, update other parameters, ...
 
 gmsh.finalize()
