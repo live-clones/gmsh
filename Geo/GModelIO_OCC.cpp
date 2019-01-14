@@ -3100,6 +3100,7 @@ bool OCC_Internals::importShapes(const std::string &fileName,
   }
 
   BRepTools::Clean(result);
+
   _healShape(result, CTX::instance()->geom.tolerance,
              CTX::instance()->geom.occFixDegenerated,
              CTX::instance()->geom.occFixSmallEdges,
@@ -3305,6 +3306,11 @@ void OCC_Internals::synchronize(GModel *model)
     }
     _copyExtrudedMeshAttributes(region, occr);
   }
+
+  // if fuzzy boolean tolerance was used, some vertex positions should be
+  // recomputed (e.g. end point of curves
+  if(CTX::instance()->geom.toleranceBoolean)
+    model->snapVertices();
 
   // recompute global boundind box in CTX
   SetBoundingBox();
