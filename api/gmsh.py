@@ -4359,6 +4359,68 @@ class fltk:
                 "gmshFltkRun returned non-zero error code: ",
                 ierr.value)
 
+    @staticmethod
+    def selectEntities(dim=-1):
+        """
+        Select entities in the user interface. If `dim' is >= 0, return only the
+        entities of the specified dimension (e.g. points if `dim' == 0).
+
+        Return an integer value, `dimTags'.
+        """
+        api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
+        ierr = c_int()
+        api__result__ = lib.gmshFltkSelectEntities(
+            byref(api_dimTags_), byref(api_dimTags_n_),
+            c_int(dim),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshFltkSelectEntities returned non-zero error code: ",
+                ierr.value)
+        return (
+            api__result__,
+            _ovectorpair(api_dimTags_, api_dimTags_n_.value))
+
+    @staticmethod
+    def selectElements():
+        """
+        Select elements in the user interface.
+
+        Return an integer value, `tags'.
+        """
+        api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+        ierr = c_int()
+        api__result__ = lib.gmshFltkSelectElements(
+            byref(api_tags_), byref(api_tags_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshFltkSelectElements returned non-zero error code: ",
+                ierr.value)
+        return (
+            api__result__,
+            _ovectorint(api_tags_, api_tags_n_.value))
+
+    @staticmethod
+    def selectViews():
+        """
+        Select views in the user interface.
+
+        Return an integer value, `tags'.
+        """
+        api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+        ierr = c_int()
+        api__result__ = lib.gmshFltkSelectViews(
+            byref(api_tags_), byref(api_tags_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshFltkSelectViews returned non-zero error code: ",
+                ierr.value)
+        return (
+            api__result__,
+            _ovectorint(api_tags_, api_tags_n_.value))
+
 
 class onelab:
     """

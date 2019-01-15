@@ -1740,6 +1740,20 @@ GMSH_API void gmshFltkUnlock(int * ierr);
  * been initialized. Can only be called in the main thread. */
 GMSH_API void gmshFltkRun(int * ierr);
 
+/* Select entities in the user interface. If `dim' is >= 0, return only the
+ * entities of the specified dimension (e.g. points if `dim' == 0). */
+GMSH_API int gmshFltkSelectEntities(int ** dimTags, size_t * dimTags_n,
+                                    const int dim,
+                                    int * ierr);
+
+/* Select elements in the user interface. */
+GMSH_API int gmshFltkSelectElements(int ** tags, size_t * tags_n,
+                                    int * ierr);
+
+/* Select views in the user interface. */
+GMSH_API int gmshFltkSelectViews(int ** tags, size_t * tags_n,
+                                 int * ierr);
+
 /* Set one or more parameters in the ONELAB database, encoded in `format'. */
 GMSH_API void gmshOnelabSet(const char * data,
                             const char * format,

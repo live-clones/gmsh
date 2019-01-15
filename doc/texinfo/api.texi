@@ -2798,6 +2798,43 @@ been initialized. Can only be called in the main thread.
 -
 @end table
 
+@item selectEntities
+Select entities in the user interface. If @code{dim} is >= 0, return only the
+entities of the specified dimension (e.g. points if @code{dim} == 0).
+
+@table @asis
+@item Input:
+@code{dim}
+@item Output:
+@code{dimTags}
+@item Return:
+integer value
+@end table
+
+@item selectElements
+Select elements in the user interface.
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{tags}
+@item Return:
+integer value
+@end table
+
+@item selectViews
+Select views in the user interface.
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{tags}
+@item Return:
+integer value
+@end table
+
 @end ftable
 
 @heading Module @code{/gmsh/onelab}

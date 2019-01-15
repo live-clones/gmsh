@@ -4255,6 +4255,85 @@ GMSH_API void gmsh::fltk::run()
 #endif
 }
 
+static int selectionCode(char val)
+{
+  switch(val){
+  case 'q': return 0; // abort
+  case 'l': return 1; // selected
+  case 'r': return 2; // deselected
+  case 'u': return 3; // undone last selection
+  case 'e': return 4; // ended selection
+  default: return -1; // unknown code
+  }
+}
+
+GMSH_API int gmsh::fltk::selectEntities(vectorpair &dimTags, const int dim)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  dimTags.clear();
+#if defined(HAVE_FLTK)
+  if(!FlGui::available()) FlGui::instance(_argc, _argv);
+  char ret = 0;
+  switch(dim){
+  case 0: ret = FlGui::instance()->selectEntity(ENT_POINT); break;
+  case 1: ret = FlGui::instance()->selectEntity(ENT_CURVE); break;
+  case 2: ret = FlGui::instance()->selectEntity(ENT_SURFACE); break;
+  case 3: ret = FlGui::instance()->selectEntity(ENT_VOLUME); break;
+  default: ret = FlGui::instance()->selectEntity(ENT_ALL); break;
+  }
+  for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++)
+    dimTags.push_back
+      (std::pair<int, int>(0, FlGui::instance()->selectedVertices[i]->tag()));
+  for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++)
+    dimTags.push_back
+      (std::pair<int, int>(1, FlGui::instance()->selectedEdges[i]->tag()));
+  for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++)
+    dimTags.push_back
+      (std::pair<int, int>(2, FlGui::instance()->selectedFaces[i]->tag()));
+  for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++)
+    dimTags.push_back
+      (std::pair<int, int>(1, FlGui::instance()->selectedRegions[i]->tag()));
+  return selectionCode(ret);
+#endif
+}
+
+
+GMSH_API int gmsh::fltk::selectElements(std::vector<int> &tags)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  tags.clear();
+#if defined(HAVE_FLTK)
+  if(!FlGui::available()) FlGui::instance(_argc, _argv);
+  int old = CTX::instance()->pickElements;
+  CTX::instance()->pickElements = 1;
+  CTX::instance()->mesh.changed = ENT_ALL;
+  char ret = FlGui::instance()->selectEntity(ENT_ALL);
+  CTX::instance()->pickElements = old;
+  for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++)
+    tags.push_back(FlGui::instance()->selectedElements[i]->getNum());
+  return selectionCode(ret);
+#endif
+}
+
+GMSH_API int gmsh::fltk::selectViews(std::vector<int> &tags)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  tags.clear();
+#if defined(HAVE_FLTK)
+  if(!FlGui::available()) FlGui::instance(_argc, _argv);
+  char ret = FlGui::instance()->selectEntity(ENT_ALL);
+  for(unsigned int i = 0; i < FlGui::instance()->selectedViews.size(); i++)
+    tags.push_back(FlGui::instance()->selectedViews[i]->getTag());
+  return selectionCode(ret);
+#endif
+}
+
 // gmsh::onelab
 
 GMSH_API void gmsh::onelab::set(const std::string &data,

@@ -3744,6 +3744,65 @@ function run()
     return nothing
 end
 
+"""
+    gmsh.fltk.selectEntities(dim = -1)
+
+Select entities in the user interface. If `dim` is >= 0, return only the
+entities of the specified dimension (e.g. points if `dim` == 0).
+
+Return an integer value, `dimTags`.
+"""
+function selectEntities(dim = -1)
+    api_dimTags_ = Ref{Ptr{Cint}}()
+    api_dimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshFltkSelectEntities, gmsh.lib), Cint,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, dim, ierr)
+    ierr[] != 0 && error("gmshFltkSelectEntities returned non-zero error code: $(ierr[])")
+    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own=true)
+    dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
+    return api__result__, dimTags
+end
+
+"""
+    gmsh.fltk.selectElements()
+
+Select elements in the user interface.
+
+Return an integer value, `tags`.
+"""
+function selectElements()
+    api_tags_ = Ref{Ptr{Cint}}()
+    api_tags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshFltkSelectElements, gmsh.lib), Cint,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_tags_, api_tags_n_, ierr)
+    ierr[] != 0 && error("gmshFltkSelectElements returned non-zero error code: $(ierr[])")
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
+    return api__result__, tags
+end
+
+"""
+    gmsh.fltk.selectViews()
+
+Select views in the user interface.
+
+Return an integer value, `tags`.
+"""
+function selectViews()
+    api_tags_ = Ref{Ptr{Cint}}()
+    api_tags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshFltkSelectViews, gmsh.lib), Cint,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_tags_, api_tags_n_, ierr)
+    ierr[] != 0 && error("gmshFltkSelectViews returned non-zero error code: $(ierr[])")
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
+    return api__result__, tags
+end
+
 end # end of module fltk
 
 """

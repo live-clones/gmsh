@@ -1638,6 +1638,17 @@ namespace gmsh { // Top-level functions
     // been initialized. Can only be called in the main thread.
     GMSH_API void run();
 
+    // Select entities in the user interface. If `dim' is >= 0, return only the
+    // entities of the specified dimension (e.g. points if `dim' == 0).
+    GMSH_API int selectEntities(gmsh::vectorpair & dimTags,
+                                const int dim = -1);
+
+    // Select elements in the user interface.
+    GMSH_API int selectElements(std::vector<int> & tags);
+
+    // Select views in the user interface.
+    GMSH_API int selectViews(std::vector<int> & tags);
+
   } // namespace fltk
 
   namespace onelab { // ONELAB server functions

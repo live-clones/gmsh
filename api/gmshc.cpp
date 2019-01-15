@@ -2602,6 +2602,51 @@ GMSH_API void gmshFltkRun(int * ierr)
   }
 }
 
+GMSH_API int gmshFltkSelectEntities(int ** dimTags, size_t * dimTags_n, const int dim, int * ierr)
+{
+  int result_api_;
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_;
+    result_api_ = gmsh::fltk::selectEntities(api_dimTags_, dim);
+    vectorpair2intptr(api_dimTags_, dimTags, dimTags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshFltkSelectElements(int ** tags, size_t * tags_n, int * ierr)
+{
+  int result_api_;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_tags_;
+    result_api_ = gmsh::fltk::selectElements(api_tags_);
+    vector2ptr(api_tags_, tags, tags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshFltkSelectViews(int ** tags, size_t * tags_n, int * ierr)
+{
+  int result_api_;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_tags_;
+    result_api_ = gmsh::fltk::selectViews(api_tags_);
+    vector2ptr(api_tags_, tags, tags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
 GMSH_API void gmshOnelabSet(const char * data, const char * format, int * ierr)
 {
   if(ierr) *ierr = 0;

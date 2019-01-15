@@ -648,6 +648,15 @@ fltk.add('unlock',doc,None)
 doc = '''Run the event loop of the graphical user interface, i.e. repeatedly calls `wait()'. First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread.'''
 fltk.add('run',doc,None)
 
+doc = '''Select entities in the user interface. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0).'''
+fltk.add('selectEntities',doc,oint,ovectorpair('dimTags'),iint('dim','-1'))
+
+doc = '''Select elements in the user interface.'''
+fltk.add('selectElements',doc,oint,ovectorint('tags'))
+
+doc = '''Select views in the user interface.'''
+fltk.add('selectViews',doc,oint,ovectorint('tags'))
+
 ################################################################################
 
 onelab = gmsh.add_module('onelab','ONELAB server functions')

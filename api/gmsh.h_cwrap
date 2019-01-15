@@ -3024,6 +3024,41 @@ namespace gmsh { // Top-level functions
       if(ierr) throw ierr;
     }
 
+    // Select entities in the user interface. If `dim' is >= 0, return only the
+    // entities of the specified dimension (e.g. points if `dim' == 0).
+    GMSH_API int selectEntities(gmsh::vectorpair & dimTags,
+                                const int dim = -1)
+    {
+      int ierr = 0;
+      int *api_dimTags_; size_t api_dimTags_n_;
+      int result_api_ = gmshFltkSelectEntities(&api_dimTags_, &api_dimTags_n_, dim, &ierr);
+      if(ierr) throw ierr;
+      dimTags.resize(api_dimTags_n_ / 2); for(size_t i = 0; i < api_dimTags_n_ / 2; ++i){ dimTags[i].first = api_dimTags_[i * 2 + 0]; dimTags[i].second = api_dimTags_[i * 2 + 1]; } gmshFree(api_dimTags_);
+      return result_api_;
+    }
+
+    // Select elements in the user interface.
+    GMSH_API int selectElements(std::vector<int> & tags)
+    {
+      int ierr = 0;
+      int *api_tags_; size_t api_tags_n_;
+      int result_api_ = gmshFltkSelectElements(&api_tags_, &api_tags_n_, &ierr);
+      if(ierr) throw ierr;
+      tags.assign(api_tags_, api_tags_ + api_tags_n_); gmshFree(api_tags_);
+      return result_api_;
+    }
+
+    // Select views in the user interface.
+    GMSH_API int selectViews(std::vector<int> & tags)
+    {
+      int ierr = 0;
+      int *api_tags_; size_t api_tags_n_;
+      int result_api_ = gmshFltkSelectViews(&api_tags_, &api_tags_n_, &ierr);
+      if(ierr) throw ierr;
+      tags.assign(api_tags_, api_tags_ + api_tags_n_); gmshFree(api_tags_);
+      return result_api_;
+    }
+
   } // namespace fltk
 
   namespace onelab { // ONELAB server functions
