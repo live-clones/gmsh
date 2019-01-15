@@ -498,9 +498,9 @@ void MPyramidN::getFaceVertices(const int num, std::vector<MVertex *> &v) const
   }
   case 3: // 2 3 4
   {
-    _addHOEdgePoints(3, v);
-    _addHOEdgePoints(6, v);
-    _addHOEdgePoints(4, v, false);
+    _addHOEdgePoints(5, v);
+    _addHOEdgePoints(7, v);
+    _addHOEdgePoints(6, v, false);
     break;
   }
   case 4: // 0 3 2 1
@@ -508,7 +508,7 @@ void MPyramidN::getFaceVertices(const int num, std::vector<MVertex *> &v) const
     _addHOEdgePoints(1, v);
     _addHOEdgePoints(5, v, false);
     _addHOEdgePoints(3, v, false);
-    _addHOEdgePoints(1, v, false);
+    _addHOEdgePoints(0, v, false);
     break;
   }
   }
