@@ -98,10 +98,11 @@ Background Field = 7;
 //
 // In addition, boundary mesh sizes (on curves or surfaces) are interpolated
 // inside the enclosed entity (surface or volume, respectively) if the option
-// Mesh.CharacteristicLengthExtendFromBoundary is set.
+// Mesh.CharacteristicLengthExtendFromBoundary is set (which is the case by
+// default).
 //
-// When the element size is fully specified by a background mesh, it is thus
-// often desirable to set
+// When the element size is fully specified by a background mesh (as it is in
+// this example), it is thus often desirable to set
 
 Mesh.CharacteristicLengthExtendFromBoundary = 0;
 Mesh.CharacteristicLengthFromPoints = 0;

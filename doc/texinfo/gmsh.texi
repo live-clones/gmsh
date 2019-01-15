@@ -2715,7 +2715,8 @@ The three aforementioned methods can be used simultaneously, in which
 case the smallest element size is selected at any given point. In
 addition, boundary mesh sizes (on curves or surfaces) are interpolated
 inside the enclosed entity (surface or volume, respectively) if the
-option @code{Mesh.CharacteristicLengthExtendFromBoundary} is set.
+option @code{Mesh.CharacteristicLengthExtendFromBoundary} is set (it is
+by default).
 
 All element sizes are further constrained in the interval [
 @code{Mesh.CharacteristicLengthMin}, @code{Mesh.CharacteristicLengthMax}
