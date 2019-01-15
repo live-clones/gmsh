@@ -98,6 +98,7 @@ set(GMSH_MAJOR_VERSION 4)
 set(GMSH_MINOR_VERSION 1)
 set(GMSH_PATCH_VERSION 1)
 set(GMSH_EXTRA_VERSION "")
+set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION}")
 
 if(NOT GMSH_RELEASE)
   find_package(Git)
@@ -110,6 +111,7 @@ if(NOT GMSH_RELEASE)
   if(GIT_COMMIT_HASH)
     set(GMSH_EXTRA_VERSION "${GMSH_EXTRA_VERSION}-git-${GIT_COMMIT_HASH}")
   endif()
+  set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION_TEXI} (development version)")
 endif()
 
 set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
@@ -1460,6 +1462,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshConfig.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshVersion.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h)
+
+# the texi version file is modified in the source directory (not ideal, but
+# since git tracks the contents of the file this is acceptable as it will only
+# change when the actual version is changed - not for each git hash)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi)
 
 # process cmake environment variables so we can append them to the -I include
 # commands. This is not recommended (we should only use the cache variables) but
