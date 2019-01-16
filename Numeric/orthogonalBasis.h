@@ -1,9 +1,12 @@
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
-// Created by Amaury Johnen on 12/04/18.
+// See the LICENSE.txt file for license information. Please report all
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
+// Contributed by Amaury Johnen
 
-#ifndef GMSH_ORTHOGONALBASIS_H
-#define GMSH_ORTHOGONALBASIS_H
+#ifndef ORTHOGONAL_BASIS_H
+#define ORTHOGONAL_BASIS_H
 
 class FuncSpaceData;
 
