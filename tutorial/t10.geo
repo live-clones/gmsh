@@ -93,9 +93,8 @@ Background Field = 7;
 // 4) the background mesh field;
 // 5) any per-entity mesh size constraint.
 //
-// This value is than constrained in the interval [Mesh.CharacteristicLengthMin,
+// This value is then constrained in the interval [Mesh.CharacteristicLengthMin,
 // MeshCharacteristicLengthMax] and multiplied by Mesh.CharacteristicLengthFactor.
-//
 // In addition, boundary mesh sizes (on curves or surfaces) are interpolated
 // inside the enclosed entity (surface or volume, respectively) if the option
 // Mesh.CharacteristicLengthExtendFromBoundary is set (which is the case by
