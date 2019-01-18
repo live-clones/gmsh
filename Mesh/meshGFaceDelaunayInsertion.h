@@ -75,14 +75,6 @@ int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3,
                         double *p4, double *metric);
 int inCircumCircleAniso(GFace *gf, MTriangle *base, const double *uv,
                         const double *metric, bidimMeshData &data);
-void circumCenterMetric(double *pa, double *pb, double *pc,
-                        const double *metric, double *x, double &Radius2);
-void circumCenterMetric(MTriangle *base, const double *metric,
-                        bidimMeshData &data, double *x, double &Radius2);
-bool circumCenterMetricInTriangle(MTriangle *base, const double *metric,
-                                  bidimMeshData &data);
-bool invMapUV(MTriangle *t, double *p, bidimMeshData &data, double *uv,
-              double tol);
 
 class MTri3 {
 protected:

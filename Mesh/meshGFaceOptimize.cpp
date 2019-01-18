@@ -176,9 +176,11 @@ void buildMeshGenerationDataStructures(
       it != vSizesMap.end(); ++it) {
     SPoint2 param;
     reparamMeshVertexOnFace(it->first, gf, param);
-    // Add size of background mesh to embedded vertices. For the other nodes, use the size in vSizesMap
+    // Add size of background mesh to embedded vertices. For the other nodes,
+    // use the size in vSizesMap
     const double lcBGM = (embeddedVertices.count(it->first) > 0) ?
-      BGM_MeshSize(gf, param[0], param[1], it->first->x(), it->first->y(), it->first->z()) : it->second;
+      BGM_MeshSize(gf, param[0], param[1], it->first->x(), it->first->y(),
+                   it->first->z()) : it->second;
     data.addVertex (it->first, param[0], param[1], it->second, lcBGM);
   }
   for(unsigned int i = 0; i < gf->triangles.size(); i++) {

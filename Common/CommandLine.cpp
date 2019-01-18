@@ -1010,7 +1010,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
             CTX::instance()->mesh.algo2d = ALGO_2D_MESHADAPT;
           else if(!strncmp(argv[i], "del2d", 5) || !strncmp(argv[i], "tri", 3))
             CTX::instance()->mesh.algo2d = ALGO_2D_DELAUNAY;
-          else if(!strncmp(argv[i], "delquad", 5))
+          else if(!strncmp(argv[i], "delquad", 7))
             CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL_QUAD;
           else if(!strncmp(argv[i], "pack", 4))
             CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;
@@ -1030,7 +1030,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
             CTX::instance()->mesh.algo3d = ALGO_3D_FRONTAL_DEL;
           else if(!strncmp(argv[i], "delhex3d", 8))
             CTX::instance()->mesh.algo3d = ALGO_3D_FRONTAL_HEX;
-          else if(!strncmp(argv[i], "rtree3d", 9))
+          else if(!strncmp(argv[i], "rtree3d", 7))
             CTX::instance()->mesh.algo3d = ALGO_3D_RTREE;
           else{
             Msg::Error("Unknown mesh algorithm");
