@@ -2950,7 +2950,7 @@ bool OCC_Internals::affine(const std::vector<std::pair<int, int> > &inDimTags,
 {
   std::vector<double> a(mat);
   if(a.size() < 12){
-    Msg::Warning("%d < 12 entries in affine transform matrix");
+    Msg::Warning("%d < 12 entries in affine transform matrix", (int)a.size());
     a.resize(12, 0.);
   }
   gp_GTrsf gt;
