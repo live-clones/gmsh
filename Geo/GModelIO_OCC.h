@@ -639,6 +639,11 @@ public:
   {
     return _error("apply symmetry");
   }
+  bool affine(const std::vector<std::pair<int, int> > &inDimTags,
+              const std::vector<double> &mat)
+  {
+    return _error("apply affine transform");
+  }
   bool copy(const std::vector<std::pair<int, int> > &inDimTags,
             std::vector<std::pair<int, int> > &outDimTags)
   {
