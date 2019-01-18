@@ -1561,18 +1561,18 @@ function renumberElements()
 end
 
 """
-    gmsh.model.mesh.setPeriodic(dim, tags, tagsSource, affineTransformation)
+    gmsh.model.mesh.setPeriodic(dim, tags, tagsSource, affineTransform)
 
 Set the meshes of the entities of dimension `dim` and tag `tags` as periodic
 copies of the meshes of entities `tagsSource`, using the affine transformation
 specified in `affineTransformation` (16 entries of a 4x4 matrix, by row).
 Currently only available for `dim` == 1 and `dim` == 2.
 """
-function setPeriodic(dim, tags, tagsSource, affineTransformation)
+function setPeriodic(dim, tags, tagsSource, affineTransform)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetPeriodic, gmsh.lib), Nothing,
           (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          dim, convert(Vector{Cint}, tags), length(tags), convert(Vector{Cint}, tagsSource), length(tagsSource), affineTransformation, length(affineTransformation), ierr)
+          dim, convert(Vector{Cint}, tags), length(tags), convert(Vector{Cint}, tagsSource), length(tagsSource), affineTransform, length(affineTransform), ierr)
     ierr[] != 0 && error("gmshModelMeshSetPeriodic returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -3188,6 +3188,22 @@ function symmetrize(dimTags, a, b, c, d)
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
           convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), a, b, c, d, ierr)
     ierr[] != 0 && error("gmshModelOccSymmetrize returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.occ.affineTransform(dimTags, a)
+
+Apply a general affine transformation matrix `a` (16 entries of a 4x4 matrix, by
+row; only the 12 first can be provided for convenience) to the geometrical
+entities `dimTag`.
+"""
+function affineTransform(dimTags, a)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccAffineTransform, gmsh.lib), Nothing,
+          (Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), a, length(a), ierr)
+    ierr[] != 0 && error("gmshModelOccAffineTransform returned non-zero error code: $(ierr[])")
     return nothing
 end
 

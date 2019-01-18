@@ -2411,6 +2411,23 @@ Transform :
       if(!r) yymsg(0, "Could not dilate shapes");
       $$ = $8;
     }
+  | tAffine '{' RecursiveListOfDouble '}' '{' MultipleShape '}'
+    {
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($6, dimTags);
+      bool r = true;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<double> mat;
+        ListOfDouble2Vector($3, mat);
+        r = GModel::current()->getOCCInternals()->affine(dimTags, mat);
+      }
+      else{
+        yymsg(0, "Affine transform only available with OpenCASCADE geometry kernel");
+      }
+      if(!r) yymsg(0, "Could not transform shapes");
+      List_Delete($3);
+      $$ = $6;
+    }
   | tSTRING '{' MultipleShape '}'
     {
       std::vector<std::pair<int, int> > inDimTags, outDimTags;
@@ -2453,7 +2470,7 @@ Transform :
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "Intersect line not available with OpenCASCADE");
+        yymsg(0, "Intersect line not available with OpenCASCADE geometry kernel");
       }
       else{
         std::vector<int> in, out; ListOfDouble2Vector($4, in);
@@ -2475,7 +2492,7 @@ Transform :
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "Split Line not available with OpenCASCADE");
+        yymsg(0, "Split Line not available with OpenCASCADE geometry kernel");
       }
       else{
         std::vector<int> vertices, curves; ListOfDouble2Vector($7, vertices);

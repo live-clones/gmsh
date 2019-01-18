@@ -1836,7 +1836,7 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setPeriodic(dim, tags, tagsSource, affineTransformation):
+        def setPeriodic(dim, tags, tagsSource, affineTransform):
             """
             Set the meshes of the entities of dimension `dim' and tag `tags' as
             periodic copies of the meshes of entities `tagsSource', using the affine
@@ -1845,13 +1845,13 @@ class model:
             """
             api_tags_, api_tags_n_ = _ivectorint(tags)
             api_tagsSource_, api_tagsSource_n_ = _ivectorint(tagsSource)
-            api_affineTransformation_, api_affineTransformation_n_ = _ivectordouble(affineTransformation)
+            api_affineTransform_, api_affineTransform_n_ = _ivectordouble(affineTransform)
             ierr = c_int()
             lib.gmshModelMeshSetPeriodic(
                 c_int(dim),
                 api_tags_, api_tags_n_,
                 api_tagsSource_, api_tagsSource_n_,
-                api_affineTransformation_, api_affineTransformation_n_,
+                api_affineTransform_, api_affineTransform_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -3790,6 +3790,25 @@ class model:
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelOccSymmetrize returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def affineTransform(dimTags, a):
+            """
+            Apply a general affine transformation matrix `a' (16 entries of a 4x4
+            matrix, by row; only the 12 first can be provided for convenience) to the
+            geometrical entities `dimTag'.
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            api_a_, api_a_n_ = _ivectordouble(a)
+            ierr = c_int()
+            lib.gmshModelOccAffineTransform(
+                api_dimTags_, api_dimTags_n_,
+                api_a_, api_a_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccAffineTransform returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod

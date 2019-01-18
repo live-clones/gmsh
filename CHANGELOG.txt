@@ -1,5 +1,6 @@
-4.1.1: improved handling of boolean tolerance (snap vertices); fixed face
-vertices for PyramidN; allow action on any ONELAB button; added API functions
+4.1.1: added support for general affine transformations with OpenCASCADE kernel;
+improved handling of boolean tolerance (snap vertices); fixed face vertices for
+PyramidN; added support for actions on any ONELAB button; added API functions
 for selections in user interface.
 
 4.1.0 (January 13, 2019): improved ONELAB and Fltk support in API; improved

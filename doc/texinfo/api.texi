@@ -1141,7 +1141,7 @@ matrix, by row). Currently only available for @code{dim} == 1 and @code{dim} ==
 
 @table @asis
 @item Input:
-@code{dim}, @code{tags}, @code{tagsSource}, @code{affineTransformation}
+@code{dim}, @code{tags}, @code{tagsSource}, @code{affineTransform}
 @item Output:
 -
 @item Return:
@@ -2381,6 +2381,20 @@ respect to the plane of equation @code{a} * x + @code{b} * y + @code{c} * z +
 @table @asis
 @item Input:
 @code{dimTags}, @code{a}, @code{b}, @code{c}, @code{d}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item affineTransform
+Apply a general affine transformation matrix @code{a} (16 entries of a 4x4
+matrix, by row; only the 12 first can be provided for convenience) to the
+geometrical entities @code{dimTag}.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{a}
 @item Output:
 -
 @item Return:

@@ -1213,17 +1213,17 @@ namespace gmsh { // Top-level functions
       GMSH_API void setPeriodic(const int dim,
                                 const std::vector<int> & tags,
                                 const std::vector<int> & tagsSource,
-                                const std::vector<double> & affineTransformation)
+                                const std::vector<double> & affineTransform)
       {
         int ierr = 0;
         int *api_tags_; size_t api_tags_n_; vector2ptr(tags, &api_tags_, &api_tags_n_);
         int *api_tagsSource_; size_t api_tagsSource_n_; vector2ptr(tagsSource, &api_tagsSource_, &api_tagsSource_n_);
-        double *api_affineTransformation_; size_t api_affineTransformation_n_; vector2ptr(affineTransformation, &api_affineTransformation_, &api_affineTransformation_n_);
-        gmshModelMeshSetPeriodic(dim, api_tags_, api_tags_n_, api_tagsSource_, api_tagsSource_n_, api_affineTransformation_, api_affineTransformation_n_, &ierr);
+        double *api_affineTransform_; size_t api_affineTransform_n_; vector2ptr(affineTransform, &api_affineTransform_, &api_affineTransform_n_);
+        gmshModelMeshSetPeriodic(dim, api_tags_, api_tags_n_, api_tagsSource_, api_tagsSource_n_, api_affineTransform_, api_affineTransform_n_, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_tags_);
         gmshFree(api_tagsSource_);
-        gmshFree(api_affineTransformation_);
+        gmshFree(api_affineTransform_);
       }
 
       // Get the master entity, periodic node pairs and affine transform for the
@@ -2635,6 +2635,21 @@ namespace gmsh { // Top-level functions
         gmshModelOccSymmetrize(api_dimTags_, api_dimTags_n_, a, b, c, d, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_dimTags_);
+      }
+
+      // Apply a general affine transformation matrix `a' (16 entries of a 4x4
+      // matrix, by row; only the 12 first can be provided for convenience) to the
+      // geometrical entities `dimTag'.
+      GMSH_API void affineTransform(const gmsh::vectorpair & dimTags,
+                                    const std::vector<double> & a)
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        double *api_a_; size_t api_a_n_; vector2ptr(a, &api_a_, &api_a_n_);
+        gmshModelOccAffineTransform(api_dimTags_, api_dimTags_n_, api_a_, api_a_n_, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_dimTags_);
+        gmshFree(api_a_);
       }
 
       // Copy the entities `dimTags'; the new entities are returned in

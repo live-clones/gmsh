@@ -309,6 +309,8 @@ public:
               double y, double z, double a, double b, double c);
   bool symmetry(const std::vector<std::pair<int, int> > &inDimTags, double a,
                 double b, double c, double d);
+  bool affine(const std::vector<std::pair<int, int> > &inDimTags,
+              const std::vector<double> &mat);
 
   // copy and remove
   bool copy(const std::vector<std::pair<int, int> > &inDimTags,

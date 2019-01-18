@@ -692,7 +692,7 @@ GMSH_API void gmshModelMeshRenumberElements(int * ierr);
 GMSH_API void gmshModelMeshSetPeriodic(const int dim,
                                        int * tags, size_t tags_n,
                                        int * tagsSource, size_t tagsSource_n,
-                                       double * affineTransformation, size_t affineTransformation_n,
+                                       double * affineTransform, size_t affineTransform_n,
                                        int * ierr);
 
 /* Get the master entity, periodic node pairs and affine transform for the
@@ -1533,6 +1533,13 @@ GMSH_API void gmshModelOccSymmetrize(int * dimTags, size_t dimTags_n,
                                      const double c,
                                      const double d,
                                      int * ierr);
+
+/* Apply a general affine transformation matrix `a' (16 entries of a 4x4
+ * matrix, by row; only the 12 first can be provided for convenience) to the
+ * geometrical entities `dimTag'. */
+GMSH_API void gmshModelOccAffineTransform(int * dimTags, size_t dimTags_n,
+                                          double * a, size_t a_n,
+                                          int * ierr);
 
 /* Copy the entities `dimTags'; the new entities are returned in `outDimTags'. */
 GMSH_API void gmshModelOccCopy(int * dimTags, size_t dimTags_n,

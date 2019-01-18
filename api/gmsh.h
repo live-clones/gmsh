@@ -647,7 +647,7 @@ namespace gmsh { // Top-level functions
       GMSH_API void setPeriodic(const int dim,
                                 const std::vector<int> & tags,
                                 const std::vector<int> & tagsSource,
-                                const std::vector<double> & affineTransformation);
+                                const std::vector<double> & affineTransform);
 
       // Get the master entity, periodic node pairs and affine transform for the
       // entity of dimension `dim' and tag `tag'.
@@ -1432,6 +1432,12 @@ namespace gmsh { // Top-level functions
                                const double b,
                                const double c,
                                const double d);
+
+      // Apply a general affine transformation matrix `a' (16 entries of a 4x4
+      // matrix, by row; only the 12 first can be provided for convenience) to the
+      // geometrical entities `dimTag'.
+      GMSH_API void affineTransform(const gmsh::vectorpair & dimTags,
+                                    const std::vector<double> & a);
 
       // Copy the entities `dimTags'; the new entities are returned in
       // `outDimTags'.

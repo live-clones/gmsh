@@ -3563,6 +3563,18 @@ GMSH_API void gmsh::model::occ::symmetrize(const vectorpair &dimTags,
   }
 }
 
+GMSH_API void gmsh::model::occ::affineTransform(const vectorpair &dimTags,
+                                                const std::vector<double> &a)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  _createOcc();
+  if(!GModel::current()->getOCCInternals()->affine(dimTags, a)) {
+    throw 1;
+  }
+}
+
 GMSH_API void gmsh::model::occ::copy(const vectorpair &dimTags,
                                      vectorpair &outDimTags)
 {

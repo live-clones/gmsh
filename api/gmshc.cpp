@@ -1071,14 +1071,14 @@ GMSH_API void gmshModelMeshRenumberElements(int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshSetPeriodic(const int dim, int * tags, size_t tags_n, int * tagsSource, size_t tagsSource_n, double * affineTransformation, size_t affineTransformation_n, int * ierr)
+GMSH_API void gmshModelMeshSetPeriodic(const int dim, int * tags, size_t tags_n, int * tagsSource, size_t tagsSource_n, double * affineTransform, size_t affineTransform_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_tags_(tags, tags + tags_n);
     std::vector<int> api_tagsSource_(tagsSource, tagsSource + tagsSource_n);
-    std::vector<double> api_affineTransformation_(affineTransformation, affineTransformation + affineTransformation_n);
-    gmsh::model::mesh::setPeriodic(dim, api_tags_, api_tagsSource_, api_affineTransformation_);
+    std::vector<double> api_affineTransform_(affineTransform, affineTransform + affineTransform_n);
+    gmsh::model::mesh::setPeriodic(dim, api_tags_, api_tagsSource_, api_affineTransform_);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -2256,6 +2256,23 @@ GMSH_API void gmshModelOccSymmetrize(int * dimTags, size_t dimTags_n, const doub
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
     gmsh::model::occ::symmetrize(api_dimTags_, a, b, c, d);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelOccAffineTransform(int * dimTags, size_t dimTags_n, double * a, size_t a_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    std::vector<double> api_a_(a, a + a_n);
+    gmsh::model::occ::affineTransform(api_dimTags_, api_a_);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
