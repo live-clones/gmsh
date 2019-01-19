@@ -2701,7 +2701,6 @@ void BoundaryLayerField::operator()(double x, double y, double z,
 #endif
 
 #include <nanoflann.hpp>
-using namespace nanoflann;
 
 // This is an exampleof a custom data set class
 struct PointCloud {
@@ -2758,9 +2757,8 @@ template <typename Derived> struct PointCloudAdaptor {
 }; // end of PointCloudAdaptor
 
 typedef PointCloudAdaptor<PointCloud> PC2KD;
-
-typedef KDTreeSingleIndexAdaptor<L2_Simple_Adaptor<double, PC2KD>, PC2KD, 3>
-  my_kd_tree_t;
+typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, PC2KD>,
+                                            PC2KD, 3> my_kd_tree_t;
 
 class DistanceField : public Field {
   std::list<int> nodes_id, edges_id, faces_id;
@@ -2873,7 +2871,7 @@ public:
       }
 
       // construct a kd-tree index:
-      index = new my_kd_tree_t(3, pc2kd, KDTreeSingleIndexAdaptorParams(10));
+      index = new my_kd_tree_t(3, pc2kd, nanoflann::KDTreeSingleIndexAdaptorParams(10));
       index->buildIndex();
       update_needed = false;
     }

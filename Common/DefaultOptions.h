@@ -1264,7 +1264,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Smoothing" , opt_mesh_nb_smoothing , 1. ,
     "Number of smoothing steps applied to the final mesh" },
   { F|O, "SmoothCrossField" , opt_mesh_smooth_cross_field , 0. ,
-    "Apply n barycentric smoothing passes to the cross field" },
+    "Apply n barycentric smoothing passes to the 3D cross field" },
   { F|O, "SmoothNormals" , opt_mesh_smooth_normals , 0. ,
     "Smooth the mesh normals?" },
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,
