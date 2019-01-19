@@ -1891,7 +1891,7 @@ public:
     if(update_needed) update();
     double xyz[3] = {x, y, z};
 #if defined(_OPENMP)
-#pragma omp critical
+#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
 #endif
     kdtree->annkSearch(xyz, 1, index, dist);
     double d = sqrt(dist[0]);
@@ -1915,7 +1915,7 @@ public:
     if(update_needed) update();
     double xyz[3] = {X, Y, Z};
 #if defined(_OPENMP)
-#pragma omp critical
+#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
 #endif
     kdtree->annkSearch(xyz, 1, index, dist);
     double d = sqrt(dist[0]);
@@ -2168,9 +2168,11 @@ public:
     {
       update();
     }
-    // NOT thread safe anyway :-)
     double xyz[3];
     getCoord(X, Y, Z, xyz[0], xyz[1], xyz[2], ge);
+#if defined(_OPENMP)
+#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
+#endif
     kdtree->annkSearch(xyz, 1, index, dist);
     double d = dist[0];
     return sqrt(d);

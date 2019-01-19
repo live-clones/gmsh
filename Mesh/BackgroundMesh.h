@@ -46,7 +46,7 @@ class backgroundMesh : public simpleFunction<double> {
   std::map<MVertex *, MVertex *> _2Dto3D;
   std::map<MVertex *, double> _distance;
   std::map<MVertex *, double> _angles;
-  static backgroundMesh *_current;
+  static std::vector<backgroundMesh *> _current;
   backgroundMesh(GFace *, bool dist = false);
   ~backgroundMesh();
 #if defined(HAVE_ANN)
@@ -62,7 +62,7 @@ public:
   static void set(GFace *);
   static void setCrossFieldsByDistance(GFace *);
   static void unset();
-  static backgroundMesh *current() { return _current; }
+  static backgroundMesh *current();
   void propagate1dMesh(GFace *);
   void propagateCrossField(GFace *, simpleFunction<double> *);
   void propagateCrossFieldHJ(GFace *);
@@ -85,7 +85,6 @@ public:
     default: print(filename, gf, _angles); return;
     }
   }
-  MElementOctree *get_octree();
   MElement *getMeshElementByCoord(double u, double v, double w,
                                   bool strict = true);
   int getNumMeshElements() const { return _triangles.size(); }

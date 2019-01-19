@@ -30,25 +30,42 @@
 #endif
 
 #if defined(HAVE_ANN)
-static int _NBANN = 2;
+static const int _NBANN = 2;
 #endif
+
+static const int _MAX_THREADS = 256;
+
+std::vector<backgroundMesh *> backgroundMesh::_current(_MAX_THREADS, 0);
 
 void backgroundMesh::set(GFace *gf)
 {
-  if(_current) delete _current;
-  _current = new backgroundMesh(gf);
+  int t = Msg::GetThreadNum();
+  if(t > _MAX_THREADS) return;
+  if(_current[t]) delete _current[t];
+  _current[t] = new backgroundMesh(gf);
 }
 
 void backgroundMesh::setCrossFieldsByDistance(GFace *gf)
 {
-  if(_current) delete _current;
-  _current = new backgroundMesh(gf, true);
+  int t = Msg::GetThreadNum();
+  if(t > _MAX_THREADS) return;
+  if(_current[t]) delete _current[t];
+  _current[t] = new backgroundMesh(gf, true);
 }
 
 void backgroundMesh::unset()
 {
-  if(_current) delete _current;
-  _current = 0;
+  int t = Msg::GetThreadNum();
+  if(t > _MAX_THREADS) return;
+  if(_current[t]) delete _current[t];
+  _current[t] = 0;
+}
+
+backgroundMesh *backgroundMesh::current()
+{
+  int t = Msg::GetThreadNum();
+  if(t > _MAX_THREADS) return 0;
+  return _current[t];
 }
 
 backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
@@ -92,7 +109,6 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
   }
 
 #if defined(HAVE_ANN)
-  // printf("creating uv kdtree %d \n", myBCNodes.size());
   index = new ANNidx[2];
   dist = new ANNdist[2];
   nodes = annAllocPts(myBCNodes.size(), 3);
@@ -100,7 +116,6 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
   int ind = 0;
   while(itp != myBCNodes.end()) {
     SPoint2 pt = *itp;
-    // fprintf(of, "SP(%g,%g,%g){%g};\n", pt.x(), pt.y(), 0.0, 10000);
     nodes[ind][0] = pt.x();
     nodes[ind][1] = pt.y();
     nodes[ind][2] = 0.0;
@@ -364,7 +379,6 @@ double backgroundMesh::getSmoothness(MElement *e)
   std::map<MVertex *, double>::const_iterator i2 = _angles.find(v2);
   double a[3] = {cos(4 * i0->second), cos(4 * i1->second), cos(4 * i2->second)};
   double b[3] = {sin(4 * i0->second), sin(4 * i1->second), sin(4 * i2->second)};
-  //      printf("coucou\n");
   double f[3];
   e->interpolateGrad(a, 0, 0, 0, f);
   const double gradcos = sqrt(f[0] * f[0] + f[1] * f[1] + f[2] * f[2]);
@@ -386,7 +400,6 @@ double backgroundMesh::getSmoothness(double u, double v, double w)
   std::map<MVertex *, double>::const_iterator i2 = _angles.find(v2);
   double a[3] = {cos(4 * i0->second), cos(4 * i1->second), cos(4 * i2->second)};
   double b[3] = {sin(4 * i0->second), sin(4 * i1->second), sin(4 * i2->second)};
-  //      printf("coucou\n");
   double f[3];
   e->interpolateGrad(a, 0, 0, 0, f);
   const double gradcos = sqrt(f[0] * f[0] + f[1] * f[1] + f[2] * f[2]);
@@ -404,21 +417,21 @@ void backgroundMesh::propagateCrossField(GFace *_gf)
   int ITER = 0;
   //  int NSMOOTH = _gf->triangles.size();
   while(0) {
-    //    int NSMOOTH_NOW = 0;
+    // int NSMOOTH_NOW = 0;
     for(unsigned int i = 0; i < _gf->triangles.size(); i++) {
       double smoothness = getSmoothness(_gf->triangles[i]);
       double val = smoothness < .5 ? 1.0 : 1.e-3; // exp(-absf/10);
       C.set(_gf->triangles[i], val);
     }
-    //    if (NSMOOTH_NOW == NSMOOTH) break;
-    //    NSMOOTH = NSMOOTH_NOW;
-    //    break;
+    // if(NSMOOTH_NOW == NSMOOTH) break;
+    // NSMOOTH = NSMOOTH_NOW;
+    // break;
     _angles.clear();
     propagateCrossField(_gf, &C);
     if(++ITER > 0) break;
   }
-    //  printf("converged in %d iterations\n", ITER);
-#if 0 // debug print
+  // printf("converged in %d iterations\n", ITER);
+#if 0
   char name[256];
   sprintf(name, "cross-%d-%d.pos", _gf->tag(), ITER);
   print(name, 0, 1);
@@ -509,7 +522,6 @@ void backgroundMesh::updateSizes(GFace *_gf)
       reparamMeshVertexOnFace(v, _gf, p);
       lc = BGM_MeshSize(_gf, p.x(), p.y(), v->x(), v->y(), v->z());
     }
-    // printf("2D -- %g %g 3D -- %g %g\n",p.x(),p.y(),v->x(),v->y());
     itv->second = std::min(lc, itv->second);
     itv->second = std::max(itv->second, CTX::instance()->mesh.lcMin);
     itv->second = std::min(itv->second, CTX::instance()->mesh.lcMax);
@@ -553,9 +565,11 @@ double backgroundMesh::operator()(double u, double v, double w) const
   MElement *e = _octree->find(u, v, w, 2, true);
   if(!e) {
 #if defined(HAVE_ANN)
-    // printf("BGM octree not found --> find in kdtree \n");
     if(uv_kdtree->nPoints() < 2) return -1000.;
     double pt[3] = {u, v, 0.0};
+#if defined(_OPENMP)
+#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
+#endif
     uv_kdtree->annkSearch(pt, 2, index, dist);
     SPoint3 p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
     SPoint3 p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);
@@ -591,13 +605,14 @@ double backgroundMesh::getAngle(double u, double v, double w) const
     double angle = 0.;
     if(angle_kdtree->nPoints() >= _NBANN) {
       double pt[3] = {u, v, 0.0};
+#if defined(_OPENMP)
+#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
+#endif
       angle_kdtree->annkSearch(pt, _NBANN, index, dist);
       double SINE = 0.0, COSINE = 0.0;
       for(int i = 0; i < _NBANN; i++) {
         SINE += _sin[index[i]];
         COSINE += _cos[index[i]];
-        //      printf("%2d %2d %12.5E
-        //      %12.5E\n",i,index[i],_sin[index[i]],_cos[index[i]]);
       }
       angle = atan2(SINE, COSINE) / 4.0;
     }
@@ -621,9 +636,11 @@ double backgroundMesh::getAngle(double u, double v, double w) const
   MElement *e = _octree->find(u, v, w, 2, true);
   if(!e) {
 #if defined(HAVE_ANN)
-    // printf("BGM octree not found --> find in kdtree \n");
     if(uv_kdtree->nPoints() < 2) return -1000.0;
     double pt[3] = {u, v, 0.0};
+#if defined(_OPENMP)
+#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
+#endif
     uv_kdtree->annkSearch(pt, 2, index, dist);
     SPoint3 p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
     SPoint3 p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);
@@ -703,8 +720,6 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
   fclose(f);
 }
 
-MElementOctree *backgroundMesh::get_octree() { return _octree; }
-
 MElement *backgroundMesh::getMeshElementByCoord(double u, double v, double w,
                                                 bool strict)
 {
@@ -714,5 +729,3 @@ MElement *backgroundMesh::getMeshElementByCoord(double u, double v, double w,
   }
   return _octree->find(u, v, w, 2, strict);
 }
-
-backgroundMesh *backgroundMesh::_current = 0;

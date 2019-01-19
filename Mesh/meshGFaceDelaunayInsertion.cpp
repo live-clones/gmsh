@@ -1488,8 +1488,8 @@ static void optimalPointFrontalQuad(GFace *gf, MTri3 *worst, int active_edge,
   }
 }
 
-void buildBackGroundMesh(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
-                         std::map<MVertex *, SPoint2> *parametricCoordinates)
+void buildCrossField(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
+                     std::map<MVertex *, SPoint2> *parametricCoordinates)
 {
 #if defined(HAVE_DOMHEX)
   if(!old_algo_hexa()) return;
@@ -1507,17 +1507,21 @@ void buildBackGroundMesh(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
     // avoid computing curvatures on the fly : only on the BGM computes once
     // curvatures at each node
 
-    // Disable curvature control
+    // disable curvature control
     int CurvControl = CTX::instance()->mesh.lcFromCurvature;
     CTX::instance()->mesh.lcFromCurvature = 0;
-    // Do a background mesh
+    // do a background mesh
     bowyerWatson(gf, 40000, equivalence, parametricCoordinates);
-    // Re-enable curv control if asked
+    // re-enable curv control if asked
     CTX::instance()->mesh.lcFromCurvature = CurvControl;
     // apply this to the BGM
-    backgroundMesh::set(gf);
-    char name[256];
+
+    // could add an option to select which method:
+    //backgroundMesh::set(gf); // will solve PDE
+    backgroundMesh::setCrossFieldsByDistance(gf); // simply use ANN (faster)
+
     if(CTX::instance()->mesh.saveAll) {
+      char name[256];
       sprintf(name, "bgm-%d.pos", gf->tag());
       backgroundMesh::current()->print(name, gf);
       sprintf(name, "cross-%d.pos", gf->tag());

@@ -1650,7 +1650,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     infty = true;
 
   if(!onlyInitialMesh) {
-    if(infty) buildBackGroundMesh(gf);
+    if(infty) buildCrossField(gf);
     // boundary layers
     modifyInitialMeshForBoundaryLayers(gf, blQuads, blTris, verts, debug);
   }
@@ -2719,7 +2719,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
     infty = true;
 
-  if(infty) buildBackGroundMesh(gf, &equivalence, &parametricCoordinates);
+  if(infty) buildCrossField(gf, &equivalence, &parametricCoordinates);
 
   // boundary layer
   std::vector<MQuadrangle *> blQuads;
