@@ -99,7 +99,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   std::string action((const char *)data);
 
-  onelab::string o("Action", action);
+  onelab::string o("ONELAB/Action", action);
   o.setVisible(false);
   o.setNeverChanged(true);
   o.setAttribute("Persistent", "1");
@@ -189,7 +189,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   // custom button behavior
   std::vector<onelab::string> ps;
-  onelab::server::instance()->get(ps, "Button");
+  onelab::server::instance()->get(ps, "ONELAB/Button");
   if(ps.size() && ps[0].getValues().size() == 2) {
     // we have a custom onelab "Run" button, we're done
     return;
@@ -931,7 +931,7 @@ static void onelab_string_button_cb(Fl_Widget *w, void *data)
     }
     else if(strings[0].getAttribute("Macro") == "Action") {
       // set onelab Action for custom GUIs
-      onelab::string o("Action", strings[0].getValue());
+      onelab::string o("ONELAB/Action", strings[0].getValue());
       o.setVisible(false);
       o.setNeverChanged(true);
       o.setAttribute("Persistent", "1");
@@ -1408,7 +1408,7 @@ void onelabGroup::setButtonVisibility()
 {
   // custom button behavior
   std::vector<onelab::string> ps;
-  onelab::server::instance()->get(ps, "Button");
+  onelab::server::instance()->get(ps, "ONELAB/Button");
   if(ps.size() && ps[0].getValues().size() == 2) {
     _butt[0]->hide();
     _butt[1]->show();
@@ -1449,7 +1449,7 @@ void onelabGroup::setButtonMode(const std::string &butt0,
 {
   // custom button behavior
   std::vector<onelab::string> ps;
-  onelab::server::instance()->get(ps, "Button");
+  onelab::server::instance()->get(ps, "ONELAB/Button");
   if(ps.size() && ps[0].getValues().size() == 2) {
     static char label[256];
     strncpy(label, ps[0].getValues()[0].c_str(), 256);

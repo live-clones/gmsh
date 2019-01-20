@@ -1165,7 +1165,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
   }
 
   // default onelab button mode
-  SetOnelabString("Button", "", false, true);
+  SetOnelabString("ONELAB/Button", "", false, true);
 #endif
 }
 

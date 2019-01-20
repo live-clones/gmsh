@@ -42,7 +42,7 @@ void compute(const std::string &arg)
     }
   }
   gmsh::onelab::setNumber(arg + " result", {k});
-  gmsh::onelab::setString("Action", {"done computing"});
+  gmsh::onelab::setString("ONELAB/Action", {"done computing"});
   gmsh::fltk::awake("update");
 }
 
@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 
   // create some onelab parameters to control the number of iterations and
   // threads, the progress display and the custom onelab button (when pressed,
-  // it will set the "Action" onelab variable to "should compute")
+  // it will set the "ONELAB/Action" onelab variable to "should compute")
   std::string parameters = R"( [
     { "type":"number", "name":"My App/Iterations", "values":[1e6],
       "attributes":{"Highlight":"AliceBlue"} },
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
       "choices":[1, 2, 3, 4], "attributes":{"Highlight":"AliceBlue"} },
     { "type":"number", "name":"My App/Show progress?", "values":[1],
       "choices":[0, 1] },
-    { "type":"string", "name":"Button", "values":["Do it!", "should compute"],
+    { "type":"string", "name":"ONELAB/Button", "values":["Do it!", "should compute"],
       "visible":false }
   ] )";
 
@@ -77,15 +77,15 @@ int main(int argc, char **argv)
     gmsh::fltk::wait();
 
     // check if the user clicked on the custom onelab button by examining the
-    // value of the "Action" onelab variable
+    // value of the "ONELAB/Action" onelab variable
     std::vector<std::string> action;
-    gmsh::onelab::getString("Action", action);
+    gmsh::onelab::getString("ONELAB/Action", action);
     if(action.empty()){
       continue;
     }
     else if(action[0] == "should compute"){
-      gmsh::onelab::setString("Action", {""});
-      gmsh::onelab::setString("Button", {"Stop!", "should stop"});
+      gmsh::onelab::setString("ONELAB/Action", {""});
+      gmsh::onelab::setString("ONELAB/Button", {"Stop!", "should stop"});
       // force interface update (to show the new button label)
       gmsh::fltk::update();
       // start computationally intensive calculations in their own threads
@@ -102,14 +102,14 @@ int main(int argc, char **argv)
     }
     else if(action[0] == "done computing"){
       // should not detach threads, and join them all here
-      gmsh::onelab::setString("Action", {""});
-      gmsh::onelab::setString("Button", {"Do it!", "should compute"});
+      gmsh::onelab::setString("ONELAB/Action", {""});
+      gmsh::onelab::setString("ONELAB/Button", {"Do it!", "should compute"});
       gmsh::fltk::update();
       stop_computation = false;
     }
     else if(action[0] == "reset"){
       // user clicked on "Reset database"
-      gmsh::onelab::setString("Action", {""});
+      gmsh::onelab::setString("ONELAB/Action", {""});
       gmsh::onelab::set(parameters);
       gmsh::fltk::update();
     }
