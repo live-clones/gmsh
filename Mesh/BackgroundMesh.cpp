@@ -35,12 +35,17 @@ static const int _NBANN = 2;
 
 static const int _MAX_THREADS = 256;
 
-std::vector<backgroundMesh *> backgroundMesh::_current(_MAX_THREADS, 0);
+std::vector<backgroundMesh *> backgroundMesh::_current =
+  std::vector<backgroundMesh *>(_MAX_THREADS, (backgroundMesh *)0);
 
 void backgroundMesh::set(GFace *gf)
 {
   int t = Msg::GetThreadNum();
-  if(t > _MAX_THREADS) return;
+  if(t >= _MAX_THREADS){
+    Msg::Error("Maximum number of threads (%d) exceeded in background mesh",
+               _MAX_THREADS);
+    return;
+  }
   if(_current[t]) delete _current[t];
   _current[t] = new backgroundMesh(gf);
 }
@@ -48,7 +53,7 @@ void backgroundMesh::set(GFace *gf)
 void backgroundMesh::setCrossFieldsByDistance(GFace *gf)
 {
   int t = Msg::GetThreadNum();
-  if(t > _MAX_THREADS) return;
+  if(t >= _MAX_THREADS) return;
   if(_current[t]) delete _current[t];
   _current[t] = new backgroundMesh(gf, true);
 }
@@ -56,7 +61,7 @@ void backgroundMesh::setCrossFieldsByDistance(GFace *gf)
 void backgroundMesh::unset()
 {
   int t = Msg::GetThreadNum();
-  if(t > _MAX_THREADS) return;
+  if(t >= _MAX_THREADS) return;
   if(_current[t]) delete _current[t];
   _current[t] = 0;
 }
@@ -64,7 +69,7 @@ void backgroundMesh::unset()
 backgroundMesh *backgroundMesh::current()
 {
   int t = Msg::GetThreadNum();
-  if(t > _MAX_THREADS) return 0;
+  if(t >= _MAX_THREADS) return 0;
   return _current[t];
 }
 
@@ -74,7 +79,7 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
 #endif
 {
   if(cfd) {
-    Msg::Info("Building A Cross Field Using Closest Distance");
+    Msg::Info("Building cross field using closest distance");
     propagateCrossFieldByDistance(_gf);
     return;
   }
