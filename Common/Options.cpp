@@ -5891,6 +5891,13 @@ double opt_mesh_smooth_cross_field(OPT_ARGS_NUM)
   return CTX::instance()->mesh.smoothCrossField;
 }
 
+double opt_mesh_cross_field_closest_point(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.crossFieldClosestPoint = (int)val;
+  return CTX::instance()->mesh.crossFieldClosestPoint;
+}
+
 double opt_mesh_bdf_field_format(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){

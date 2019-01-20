@@ -1043,6 +1043,10 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
           if(exitOnError) Msg::Exit(1);
         }
       }
+      else if(!strcmp(argv[i] + 1, "recall")) {
+        CTX::instance()->mesh.recombineAll = 1;
+        i++;
+      }
       else if(!strcmp(argv[i] + 1, "rec")) {
         i++;
         if (argc - i < 3){

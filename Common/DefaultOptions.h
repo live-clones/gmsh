@@ -1265,6 +1265,8 @@ StringXNumber MeshOptions_Number[] = {
     "Number of smoothing steps applied to the final mesh" },
   { F|O, "SmoothCrossField" , opt_mesh_smooth_cross_field , 0. ,
     "Apply n barycentric smoothing passes to the 3D cross field" },
+  { F|O, "CrossFieldClosestPoint" , opt_mesh_cross_field_closest_point , 1. ,
+    "Use closest point to compute 2D crossfield" },
   { F|O, "SmoothNormals" , opt_mesh_smooth_normals , 0. ,
     "Smooth the mesh normals?" },
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,

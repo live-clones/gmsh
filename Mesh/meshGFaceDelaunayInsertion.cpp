@@ -1515,11 +1515,10 @@ void buildCrossField(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
     // re-enable curv control if asked
     CTX::instance()->mesh.lcFromCurvature = CurvControl;
     // apply this to the BGM
-
-    // could add an option to select which method:
-    //backgroundMesh::set(gf); // will solve PDE
-    backgroundMesh::setCrossFieldsByDistance(gf); // simply use ANN (faster)
-
+    if(CTX::instance()->mesh.crossFieldClosestPoint)
+      backgroundMesh::setCrossFieldsByDistance(gf); // faster
+    else
+      backgroundMesh::set(gf); // will solve PDE
     if(CTX::instance()->mesh.saveAll) {
       char name[256];
       sprintf(name, "bgm-%d.pos", gf->tag());

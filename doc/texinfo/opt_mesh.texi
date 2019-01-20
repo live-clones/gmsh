@@ -602,8 +602,13 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SmoothCrossField
-Apply n barycentric smoothing passes to the cross field@*
+Apply n barycentric smoothing passes to the 3D cross field@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CrossFieldClosestPoint
+Use closest point to compute 2D crossfield@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SmoothNormals

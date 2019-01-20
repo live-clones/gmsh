@@ -1,8 +1,9 @@
 4.1.1 (January 20, 2019): added support for general affine transformations with
 OpenCASCADE kernel; improved handling of boolean tolerance (snap vertices);
-fixed face vertices for PyramidN; renamed ONELAB "Action" and "Button"
-parameters "ONELAB/Action" and "ONELAB/Button"; added support for actions on any
-ONELAB button; added API functions for selections in user interface.
+faster crossfield calculation by default (e.g. for DelQuad algorithm); fixed
+face vertices for PyramidN; renamed ONELAB "Action" and "Button" parameters
+"ONELAB/Action" and "ONELAB/Button"; added support for actions on any ONELAB
+button; added API functions for selections in user interface.
 
 4.1.0 (January 13, 2019): improved ONELAB and Fltk support in API; improved
 renumbering of mesh nodes/elements; major code refactoring.
