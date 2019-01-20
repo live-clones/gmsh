@@ -25,7 +25,9 @@
 
 int MTet4::radiusNorm = 2;
 
-void TEST_IF_BOUNDARY_IS_RECOVERED(GRegion *gr)
+#ifdef DEBUG_BOUNDARY_RECOVERY
+
+static void testIfBoundaryIsRecovered(GRegion *gr)
 {
   std::vector<GEdge *> const &e = gr->edges();
   std::vector<GFace *> f = gr->faces();
@@ -71,6 +73,8 @@ void TEST_IF_BOUNDARY_IS_RECOVERED(GRegion *gr)
   }
 }
 
+#endif
+
 struct edgeContainerB {
   std::vector<std::vector<MEdge> > _hash;
   size_t _size, _size_obj;
@@ -111,7 +115,6 @@ static void createAllEmbeddedEdges(GRegion *gr,
                                    std::set<MEdge, Less_Edge> &allEmbeddedEdges)
 {
   std::vector<GEdge *> const &e = gr->embeddedEdges();
-  //  printf("=================> %d embedded GEdges\n",e.size());
   for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end();
       ++it) {
     for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
@@ -162,7 +165,6 @@ int MTet4::inCircumSphere(const double *p) const
 
 static int faces[4][3] = {{0, 1, 2}, {0, 2, 3}, {0, 3, 1}, {1, 3, 2}};
 
-/// vertex_comparison compares two MVertex types for sorting
 struct vertex_comparator {
   bool operator()(MVertex *const a, MVertex *const b) const
   {
@@ -224,8 +226,6 @@ void connectTets_vector2_templ(size_t _size, ITER beg, ITER end,
 {
   conn.clear();
   conn.reserve(4 * _size);
-  //  unsigned int k = 0;
-  //  printf("COUCOU1 %d tets\n",t.size());
   for(ITER IT = beg; IT != end; ++IT) {
     MTet4 *t = *IT;
     if(!t->isDeleted()) {
@@ -234,10 +234,8 @@ void connectTets_vector2_templ(size_t _size, ITER beg, ITER end,
   }
   if(!conn.size()) return;
 
-  //  printf("COUCOU2 %d faces\n",conn.size());
   std::sort(conn.begin(), conn.end());
 
-  //  printf("COUCOU3\n");
   for(unsigned int i = 0; i < conn.size() - 1; i++) {
     faceXtet &f1 = conn[i];
     faceXtet &f2 = conn[i + 1];
@@ -247,7 +245,6 @@ void connectTets_vector2_templ(size_t _size, ITER beg, ITER end,
       ++i;
     }
   }
-  //  printf("COUCOU4\n");
 }
 
 template <class ITER>
@@ -259,7 +256,7 @@ void connectTets(ITER beg, ITER end,
     if(!(*beg)->isDeleted()) {
       for(int i = 0; i < 4; i++) {
         faceXtet fxt(*beg, i);
-        // if a face is embedded, do not connect tets on both sides !
+        // if a face is embedded, do not connect tets on both sides!
         if(!allEmbeddedFaces ||
            allEmbeddedFaces->find(MFace(fxt.v[0], fxt.v[1], fxt.v[2])) ==
              allEmbeddedFaces->end()) {
@@ -383,8 +380,7 @@ int makeCavityStarShaped(std::vector<faceXtet> &shell,
   if(wrong.empty()) return 0;
   // printf("cavity %p (shell size %d cavity size %d)is not star shaped "
   //        "(%d faces not visible), correcting it\n",
-  //         v,shell.size(),cavity.size(),wrong.size());
-  // bool doneNothing = true;
+  //         v, shell.size(), cavity.size(), wrong.size());
   while(!wrong.empty()) {
     faceXtet &fxt = *(wrong.begin());
     if(std::find(shell.begin(), shell.end(), fxt) != shell.end()) {
@@ -403,8 +399,7 @@ int makeCavityStarShaped(std::vector<faceXtet> &shell,
     }
     wrong.erase(wrong.begin());
   }
-  // printf("after : shell size %d cavity size
-  // %d\n",shell.size(),cavity.size());
+  // printf("after : shell size %d cavity size %d\n", shell.size(), cavity.size());
   return 1;
 }
 
@@ -439,7 +434,10 @@ void findCavity(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
   }
 }
 
-void printTets(const char *fn, std::list<MTet4 *> &cavity, bool force = false)
+#ifdef PRINT_TETS
+
+static void printTets(const char *fn, std::list<MTet4 *> &cavity,
+                      bool force = false)
 {
   FILE *f = Fopen(fn, "w");
   if(f) {
@@ -458,6 +456,8 @@ void printTets(const char *fn, std::list<MTet4 *> &cavity, bool force = false)
     fclose(f);
   }
 }
+
+#endif
 
 bool insertVertexB(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
                    MVertex *v, double lc1, double lc2,
@@ -1246,10 +1246,10 @@ int isCavityCompatibleWithEmbeddedFace(
 void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
                             splitQuadRecovery *sqr)
 {
-  //  TEST_IF_BOUNDARY_IS_RECOVERED (gr);
 
-  // printf("sizeof MTet4 = %d sizeof MTetrahedron %d sizeof(MVertex) %d\n",
-  //       sizeof(MTet4), sizeof(MTetrahedron), sizeof(MVertex));
+#ifdef DEBUG_BOUNDARY_RECOVERY
+  testIfBoundaryIsRecovered(gr);
+#endif
 
   std::vector<double> vSizes, vSizesBGM;
   MTet4Factory myFactory(1600000);
@@ -1329,7 +1329,6 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
   connectTets(allTets.begin(), allTets.end());
 
   // classify the tets on the right region
-  // Msg::Info("reclassifying %d tets", allTets.size());
 
   if(_classify) {
     fs_cont search;
@@ -1406,9 +1405,6 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
   connectTets(allTets.begin(), allTets.end(), &allEmbeddedFaces);
   Msg::Debug("All %d tets were connected", allTets.size());
 
-  //  printf("===========================>   %d embedded edges
-  //  \n",allEmbeddedEdges.size());
-
   // here the classification should be done
 
   int ITER = 0, REALCOUNT = 0;
@@ -1417,7 +1413,8 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
   int COUNT_MISS_2 = 0;
 
   double t1 = Cpu();
-  // MAIN LOOP IN DELAUNAY INSERTION STARTS HERE
+
+  // main loop in Delaunay inserstion starts here
 
   while(1) {
     if(COUNT_MISS_2 > 100000) break;
@@ -1454,18 +1451,16 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
 
       tetcircumcenter(pa, pb, pc, pd, center, NULL, NULL, NULL);
 
-      //// A TEST !!!
+      // A TEST !!!
       std::vector<faceXtet> shell;
       std::vector<MTet4 *> cavity;
-
       MVertex vv(center[0], center[1], center[2], worst->onWhat());
       findCavity(shell, cavity, &vv, worst);
-
       bool FOUND = false;
       for(std::vector<MTet4 *>::iterator itc = cavity.begin();
           itc != cavity.end(); ++itc) {
         MTetrahedron *toto = (*itc)->tet();
-        //	(*itc)->setDeleted(false);
+        // (*itc)->setDeleted(false);
         toto->xyz2uvw(center, uvw);
         if(toto->isInside(uvw[0], uvw[1], uvw[2])) {
           worst = (*itc);
@@ -1473,7 +1468,7 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
           break;
         }
       }
-      /// END TETS
+      // END TEST
 
       if(FOUND && (!allEmbeddedEdges.empty() || !allEmbeddedFaces.empty())) {
         FOUND =
@@ -1488,8 +1483,9 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
         MVertex *v =
           new MVertex(center[0], center[1], center[2], worst->onWhat());
         v->setIndex(NUM++);
-
-        //	printTets ("before.pos", cavity, true);
+#ifdef PRINT_TETS
+        printTets ("before.pos", cavity, true);
+#endif
         bool starShaped = true;
         bool correctCavity = false;
         while(1) {
@@ -1502,7 +1498,6 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
             break;
           else if(k == 1)
             correctCavity = true;
-          //	  printf("coucou\n");
         }
         if(correctCavity && starShaped) {
           NB_CORRECTION_OF_CAVITY++;
@@ -1518,7 +1513,7 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
                      uvw[0] * vSizes[worst->tet()->getVertex(1)->getIndex()] +
                      uvw[1] * vSizes[worst->tet()->getVertex(2)->getIndex()] +
                      uvw[2] * vSizes[worst->tet()->getVertex(3)->getIndex()];
-        double lc2 = BGM_MeshSize(gr, 0, 0, center[0], center[1], center[2]);
+        double lc2 = BGM_MeshSize(worst->onWhat(), 0, 0, center[0], center[1], center[2]);
 
         if(correctedCavityIncompatibleWithEmbeddedEntities || !starShaped ||
            !insertVertexB(shell, cavity, v, lc1, lc2, vSizes, vSizesBGM, worst,
@@ -1548,9 +1543,9 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
       }
     }
 
-    // Normally, a tet mesh contains about 6 times more tets than
-    // vertices. This allows to clean up the set of tets when lots of
-    // deleted ones are present in the mesh
+    // Normally, a tet mesh contains about 6 times more tets than vertices. This
+    // allows to clean up the set of tets when lots of deleted ones are present
+    // in the mesh
     if(allTets.size() > 7 * vSizes.size() && ITER > 1000) {
       memoryCleanup(myFactory, allTets);
     }
