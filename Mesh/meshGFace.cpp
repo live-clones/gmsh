@@ -1662,9 +1662,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       bowyerWatsonFrontal(gf);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
-      // TODO: to make these thread-safe:
-      // 1) modify backgroundMesh::_current to a vector of max num threads
-      // 2) switch from ANN (which is not thread-safe!) to nanoflann
+      // TODO: to make these thread-safe, we need to switch from ANN to
+      // nanoflann
       if(Msg::GetNumThreads() > 1)
         Msg::Warning("Delquad is not thread-safe");
       bowyerWatsonFrontalLayers(gf, true);

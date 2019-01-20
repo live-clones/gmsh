@@ -79,7 +79,7 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
 #endif
 {
   if(cfd) {
-    Msg::Info("Building cross field using closest distance");
+    Msg::Debug("Building cross field using closest distance");
     propagateCrossFieldByDistance(_gf);
     return;
   }
