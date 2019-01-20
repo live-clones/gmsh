@@ -53,9 +53,9 @@ int main(int argc, char **argv)
   // hide the standard Gmsh modules
   gmsh::option::setNumber("General.ShowModuleMenu", 0);
 
-  // create some onelab parameters to control the number of iterations and
-  // threads, the progress display and the custom onelab button (when pressed,
-  // it will set the "ONELAB/Action" onelab variable to "should compute")
+  // create some ONELAB parameters to control the number of iterations and
+  // threads, the progress display and the custom ONELAB button (when pressed,
+  // it will set the "ONELAB/Action" parameter to "should compute")
   std::string parameters = R"( [
     { "type":"number", "name":"My App/Iterations", "values":[1e6],
       "attributes":{"Highlight":"AliceBlue"} },
@@ -76,8 +76,8 @@ int main(int argc, char **argv)
     // wait for an event
     gmsh::fltk::wait();
 
-    // check if the user clicked on the custom onelab button by examining the
-    // value of the "ONELAB/Action" onelab variable
+    // check if the user clicked on the custom ONELAB button by examining the
+    // value of the "ONELAB/Action" parameter
     std::vector<std::string> action;
     gmsh::onelab::getString("ONELAB/Action", action);
     if(action.empty()){
@@ -114,7 +114,7 @@ int main(int argc, char **argv)
       gmsh::fltk::update();
     }
     else if(action[0] == "check"){
-      // could perform action here after each change in onelab parameters,
+      // could perform action here after each change in ONELAB parameters,
       // e.g. rebuild a CAD model, update other parameters, ...
       continue;
     }

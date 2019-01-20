@@ -12,9 +12,9 @@ gmsh.initialize()
 # hide the standard Gmsh modules
 gmsh.option.setNumber("General.ShowModuleMenu", 0)
 
-# create some onelab parameters to control the number of iterations and
-# threads, the progress display and the custom onelab button (when pressed,
-# it will set the "ONELAB/Action" onelab variable to "should compute")
+# create some ONELAB parameters to control the number of iterations and
+# threads, the progress display and the custom ONELAB button (when pressed,
+# it will set the "ONELAB/Action" parameter to "should compute")
 parameters = """
 [
   { "type":"number", "name":"My App/Iterations", "values":[1e6],
@@ -71,8 +71,8 @@ while 1:
     # wait for an event
     gmsh.fltk.wait()
 
-    # check if the user clicked on the custom onelab button by examining the
-    # value of the "ONELAB/Action" onelab variable
+    # check if the user clicked on the custom ONELAB button by examining the
+    # value of the "ONELAB/Action" parameter
     action = gmsh.onelab.getString("ONELAB/Action")
     if len(action) < 1:
         continue
@@ -98,7 +98,7 @@ while 1:
         gmsh.onelab.set(parameters)
         gmsh.fltk.update()
     elif action[0] == "check":
-        # could perform action here after each change in onelab parameters,
+        # could perform action here after each change in ONELAB parameters,
         # e.g. rebuild a CAD model, update other parameters, ...
         continue
 
