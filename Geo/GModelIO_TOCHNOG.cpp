@@ -170,7 +170,8 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
     }
   }
 
-  // Save node sets for each physical group
+  // Save node sets for each physical group (here we include node sets on
+  // physical points)
   if(saveGroupsOfNodes) {
     for(int dim = 0; dim <= 3; dim++) {
       for(std::map<int, std::vector<GEntity *> >::iterator it = groups[dim].begin();

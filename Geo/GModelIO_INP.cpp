@@ -25,7 +25,7 @@ static void writeElementsINP(FILE *fp, GEntity *ge, std::vector<T *> &elements,
         (ge->dim() == 3) ? "Volume" :
         (ge->dim() == 2) ? "Surface" :
         (ge->dim() == 1) ? "Line" :
-        "Point";
+        "Point"; // currently unused
       fprintf(fp, "*ELEMENT, type=%s, ELSET=%s%d\n", typ, str, ge->tag());
       for(unsigned int i = 0; i < elements.size(); i++)
         elements[i]->writeINP(fp, elements[i]->getNum());
@@ -95,8 +95,9 @@ int GModel::writeINP(const std::string &name, bool saveAll,
   std::map<int, std::vector<GEntity *> > groups[4];
   getPhysicalGroups(groups);
 
-  // save elements sets for each physical group
-  for(int dim = 0; dim <= 3; dim++) {
+  // save elements sets for each physical group (currently we don't save point
+  // elements: is there this concept in Abaqus?)
+  for(int dim = 1; dim <= 3; dim++) {
     for(std::map<int, std::vector<GEntity *> >::iterator it = groups[dim].begin();
         it != groups[dim].end(); it++) {
       std::vector<GEntity *> &entities = it->second;
@@ -115,7 +116,8 @@ int GModel::writeINP(const std::string &name, bool saveAll,
     }
   }
 
-  // save node sets for each physical group
+  // save node sets for each physical group (here we include node sets on
+  // physical points)
   if(saveGroupsOfNodes) {
     for(int dim = 0; dim <= 3; dim++) {
       for(std::map<int, std::vector<GEntity *> >::iterator it = groups[dim].begin();
