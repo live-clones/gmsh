@@ -40,7 +40,9 @@ static std::string physicalName(GModel *m, int dim, int num)
     char tmp[256];
     sprintf(tmp, "%s%d",
             (dim == 3) ? "PhysicalVolume" :
-                         (dim == 2) ? "PhysicalSurface" : "PhysicalLine",
+            (dim == 2) ? "PhysicalSurface" :
+            (dim == 1) ? "PhysicalLine" :
+            "PhysicalPoint",
             num);
     name = tmp;
   }
@@ -170,9 +172,8 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
 
   // Save node sets for each physical group
   if(saveGroupsOfNodes) {
-    for(int dim = 1; dim <= 3; dim++) {
-      for(std::map<int, std::vector<GEntity *> >::iterator it =
-            groups[dim].begin();
+    for(int dim = 0; dim <= 3; dim++) {
+      for(std::map<int, std::vector<GEntity *> >::iterator it = groups[dim].begin();
           it != groups[dim].end(); it++) {
         std::set<MVertex *> nodes;
         std::vector<GEntity *> &entities = it->second;
@@ -184,10 +185,8 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
           }
         }
         fprintf(fp, "\n");
-        fprintf(
-          fp,
-          "(Node sets ===> Used to set BOUNDARY CONDITIONS in Tochnog =%s)\n",
-          physicalName(this, dim, it->first).c_str());
+        fprintf(fp, "(Node sets ===> Used to set BOUNDARY CONDITIONS in Tochnog =%s)\n",
+                physicalName(this, dim, it->first).c_str());
         fprintf(fp, "\n");
         int n = 0;
         for(std::set<MVertex *>::iterator it2 = nodes.begin();
