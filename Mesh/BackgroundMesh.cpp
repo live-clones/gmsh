@@ -395,6 +395,7 @@ double backgroundMesh::getSmoothness(MElement *e)
 
 double backgroundMesh::getSmoothness(double u, double v, double w)
 {
+  if(!_octree) return 0.;
   MElement *e = _octree->find(u, v, w, 2, true);
   if(!e) return -1.0;
   MVertex *v0 = e->getVertex(0);
@@ -560,11 +561,16 @@ void backgroundMesh::updateSizes(GFace *_gf)
 
 bool backgroundMesh::inDomain(double u, double v, double w) const
 {
+  if(!_octree) return false;
   return _octree->find(u, v, w, 2, true) != 0;
 }
 
 double backgroundMesh::operator()(double u, double v, double w) const
 {
+  if(!_octree){
+    Msg::Error("No octree in background mesh");
+    return 0.;
+  }
   double uv[3] = {u, v, w};
   double uv2[3];
   MElement *e = _octree->find(u, v, w, 2, true);
@@ -601,9 +607,7 @@ double backgroundMesh::operator()(double u, double v, double w) const
 
 double backgroundMesh::getAngle(double u, double v, double w) const
 {
-  // JFR :
-  // we can use closest point for computing
-  // cross field angles : this allow NOT to
+  // use closest point for computing cross field angles: this allows NOT to
   // generate a spurious mesh and solve a PDE
   if(!_octree) {
 #if defined(HAVE_ANN)

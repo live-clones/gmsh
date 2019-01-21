@@ -1,4 +1,5 @@
-4.1.2: fixed full-quad subdivision if Mesh.SecondOrderLinear is set.
+4.1.2: fixed full-quad subdivision if Mesh.SecondOrderLinear is set; fixed
+ packing of parallelograms regression in 4.1.1.
 
 4.1.1 (January 20, 2019): added support for general affine transformations with
 OpenCASCADE kernel; improved handling of boolean tolerance (snap vertices);

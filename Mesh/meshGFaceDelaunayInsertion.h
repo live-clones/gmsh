@@ -164,8 +164,9 @@ void bowyerWatsonParallelogramsConstrained(
   GFace *gf, const std::set<MVertex *> &constr_vertices,
   std::map<MVertex *, MVertex *> *equivalence = 0,
   std::map<MVertex *, SPoint2> *parametricCoordinates = 0);
-void buildCrossField(
-  GFace *gf, std::map<MVertex *, MVertex *> *equivalence = 0,
+void buildBackgroundMesh(
+  GFace *gf, bool crossFieldClosestPoint = false,
+  std::map<MVertex *, MVertex *> *equivalence = 0,
   std::map<MVertex *, SPoint2> *parametricCoordinates = 0);
 
 void delaunayMeshIn2D(std::vector<MVertex *> &, std::vector<MTriangle *> &,

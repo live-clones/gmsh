@@ -1644,16 +1644,19 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   std::set<MVertex *> verts;
 
   bool infty = false;
-  if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
-     gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
-     gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
+  if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD){
     infty = true;
-
-  if(!onlyInitialMesh) {
-    if(infty) buildCrossField(gf);
-    // boundary layers
-    modifyInitialMeshForBoundaryLayers(gf, blQuads, blTris, verts, debug);
+    if(!onlyInitialMesh)
+      buildBackgroundMesh(gf, CTX::instance()->mesh.crossFieldClosestPoint);
   }
+  else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
+          gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR){
+    infty = true;
+    if(!onlyInitialMesh) buildBackgroundMesh(gf, false);
+  }
+
+  if(!onlyInitialMesh)
+    modifyInitialMeshForBoundaryLayers(gf, blQuads, blTris, verts, debug);
 
   // the delaunay algo is based directly on internal gmsh structures BDS mesh is
   // passed in order not to recompute local coordinates of vertices
@@ -2713,12 +2716,16 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   }
 
   bool infty = false;
-  if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
-     gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
-     gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
+  if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD){
     infty = true;
-
-  if(infty) buildCrossField(gf, &equivalence, &parametricCoordinates);
+    buildBackgroundMesh(gf, CTX::instance()->mesh.crossFieldClosestPoint,
+                        &equivalence, &parametricCoordinates);
+  }
+  else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
+          gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR){
+    infty = true;
+    buildBackgroundMesh(gf, false, &equivalence, &parametricCoordinates);
+  }
 
   // boundary layer
   std::vector<MQuadrangle *> blQuads;

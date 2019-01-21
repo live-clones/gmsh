@@ -1488,8 +1488,9 @@ static void optimalPointFrontalQuad(GFace *gf, MTri3 *worst, int active_edge,
   }
 }
 
-void buildCrossField(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
-                     std::map<MVertex *, SPoint2> *parametricCoordinates)
+void buildBackgroundMesh(GFace *gf, bool crossFieldClosestPoint,
+                         std::map<MVertex *, MVertex *> *equivalence,
+                         std::map<MVertex *, SPoint2> *parametricCoordinates)
 {
 #if defined(HAVE_DOMHEX)
   if(!old_algo_hexa()) return;
@@ -1515,8 +1516,8 @@ void buildCrossField(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
     // re-enable curv control if asked
     CTX::instance()->mesh.lcFromCurvature = CurvControl;
     // apply this to the BGM
-    if(CTX::instance()->mesh.crossFieldClosestPoint)
-      backgroundMesh::setCrossFieldsByDistance(gf); // faster
+    if(crossFieldClosestPoint)
+      backgroundMesh::setCrossFieldsByDistance(gf); // faster for delquad
     else
       backgroundMesh::set(gf); // will solve PDE
     if(CTX::instance()->mesh.saveAll) {
