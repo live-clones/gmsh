@@ -531,21 +531,6 @@ Saved in: @code{General.OptionsFileName}
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.DoRecombinationTest
-Apply recombination algorithm for test@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.RecombinationTestHorizStart
-Depth start@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.RecombinationTestNoGreedyStrat
-No greedy (global) strategies@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.RefineSteps
 Number of refinement steps in the MeshAdapt-based 2D algorithms@*
 Default value: @code{10}@*
