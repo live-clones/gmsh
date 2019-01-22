@@ -1,9 +1,12 @@
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
-// Created by Amaury Johnen on 13/02/18.
+// See the LICENSE.txt file for license information. Please report all
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
+// Contributed by Amaury Johnen
 
-#ifndef GMSH_INTERIORVERTEXPLACEMENT_H
-#define GMSH_INTERIORVERTEXPLACEMENT_H
+#ifndef _INTERIOR_VERTEX_PLACEMENT_H_
+#define _INTERIOR_VERTEX_PLACEMENT_H_
 
 #include "fullMatrix.h"
 
@@ -34,4 +37,4 @@ fullMatrix<double> gmshGenerateInnerVertexPlacementHexahedronLinear(int order,
 fullMatrix<double> gmshGenerateInnerVertexPlacementPrismLinear(int order,
                                                                int dir);
 
-#endif // GMSH_INTERIORVERTEXPLACEMENT_H
+#endif

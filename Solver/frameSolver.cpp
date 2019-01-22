@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
 #include "GmshConfig.h"
 #include "GModel.h"
 #include "GVertex.h"
@@ -7,6 +12,7 @@
 #include "linearSystemPETSc.h"
 #include "linearSystemGMM.h"
 #include "linearSystemFull.h"
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
