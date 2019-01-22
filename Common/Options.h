@@ -503,6 +503,7 @@ double opt_mesh_algo2d(OPT_ARGS_NUM);
 double opt_mesh_algo3d(OPT_ARGS_NUM);
 double opt_mesh_algo_recombine(OPT_ARGS_NUM);
 double opt_mesh_recombine_all(OPT_ARGS_NUM);
+double opt_mesh_recombine_optimize_topology(OPT_ARGS_NUM);
 double opt_mesh_recombine3d_all(OPT_ARGS_NUM);
 double opt_mesh_recombine3d_level(OPT_ARGS_NUM);
 double opt_mesh_recombine3d_conformity(OPT_ARGS_NUM);

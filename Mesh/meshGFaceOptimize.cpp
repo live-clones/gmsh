@@ -1444,6 +1444,7 @@ void recombineIntoQuads(GFace *gf, bool blossom, bool topologicalOpti,
       gf->model()->writeMSH("recombine_3topo.msh");
   }
 
+  // re-split bad quads into triangles
   quadsToTriangles(gf, minqual);
 
   if(debug)

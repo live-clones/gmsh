@@ -5990,6 +5990,14 @@ double opt_mesh_recombine_all(OPT_ARGS_NUM)
   return CTX::instance()->mesh.recombineAll;
 }
 
+double opt_mesh_recombine_optimize_topology(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.recombineOptimizeTopology = (int)val;
+  }
+  return CTX::instance()->mesh.recombineOptimizeTopology;
+}
+
 double opt_mesh_recombine3d_all(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){

@@ -237,8 +237,8 @@ public:
         }
       }
       GPoint gp = _gf->point((m[0] + m[1] + m[2] + m[3]) * 0.25);
-      // FIXME : NOT EXACTLY CORRECT, BUT THAT'S THE PLACE WE WANT THE POINT TO
-      // RESIDE
+      // FIXME : not exactly correct, but that's the place where we want to
+      // point to reside
       double XX = 0.25 * (v[0]->x() + v[1]->x() + v[2]->x() + v[3]->x());
       double YY = 0.25 * (v[0]->y() + v[1]->y() + v[2]->y() + v[3]->y());
       double ZZ = 0.25 * (v[0]->z() + v[1]->z() + v[2]->z() + v[3]->z());
@@ -263,10 +263,11 @@ public:
       // recombine the elements on the half mesh
       CTX::instance()->mesh.lcFactor /= 2.0;
       bool blossom = (CTX::instance()->mesh.algoRecombine == 3);
-      recombineIntoQuads(_gf, blossom, true, true, 0.1);
+      bool topo = (CTX::instance()->mesh.recombineOptimizeTopology ? true : false);
+      recombineIntoQuads(_gf, blossom, topo, true, 0.1);
       subdivide();
       restore();
-      recombineIntoQuads(_gf, blossom, true, true, 1.e-3);
+      recombineIntoQuads(_gf, blossom, topo, true, 1.e-3);
       computeElementShapes(_gf, _gf->meshStatistics.worst_element_shape,
                            _gf->meshStatistics.average_element_shape,
                            _gf->meshStatistics.best_element_shape,
@@ -1708,7 +1709,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      !onlyInitialMesh && CTX::instance()->mesh.algoRecombine <= 1){
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
-    recombineIntoQuads(gf, blossom, true, true, 0.1);
+    bool topo = (CTX::instance()->mesh.recombineOptimizeTopology ? true : false);
+    recombineIntoQuads(gf, blossom, topo, true, 0.1);
   }
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
@@ -2763,7 +2765,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      CTX::instance()->mesh.algoRecombine <= 1){
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
-    recombineIntoQuads(gf, blossom, true, false, 0.1); // no node repositioning
+    bool topo = (CTX::instance()->mesh.recombineOptimizeTopology ? true : false);
+    recombineIntoQuads(gf, blossom, topo, false, 0.1); // no node repositioning
   }
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,

@@ -1224,6 +1224,8 @@ StringXNumber MeshOptions_Number[] = {
     "3: blossom full-quad)" },
   { F|O, "RecombineAll" , opt_mesh_recombine_all , 0 ,
     "Apply recombination algorithm to all surfaces, ignoring per-surface spec" },
+  { F|O, "RecombineOptimizeTopology" , opt_mesh_recombine_optimize_topology , 1 ,
+    "Optimize topology of recombined surface meshes" },
   { F|O, "Recombine3DAll" , opt_mesh_recombine3d_all , 0 ,
     "Apply recombination3D algorithm to all volumes, ignoring per-volume spec" },
   { F|O, "Recombine3DLevel" , opt_mesh_recombine3d_level , 0 ,

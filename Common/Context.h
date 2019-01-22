@@ -27,7 +27,8 @@ struct contextMeshOptions {
   double anisoMax, smoothRatio;
   int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
   int nbSmoothing, algo2d, algo3d, algoSubdivide;
-  int algoRecombine, recombineAll, recombine3DAll, recombine3DLevel;
+  int algoRecombine, recombineAll, recombineOptimizeTopology;
+  int recombine3DAll, recombine3DLevel;
   int recombine3DConformity, flexibleTransfinite;
   int order, secondOrderLinear, secondOrderIncomplete, secondOrderExperimental;
   int meshOnlyVisible, minCircPoints, minCurvPoints;

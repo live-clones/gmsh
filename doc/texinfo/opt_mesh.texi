@@ -502,13 +502,18 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombinationAlgorithm
-Mesh recombination algorithm (0: standard, 1: blossom)@*
+Mesh recombination algorithm (0: simple, 1: blossom, 2: simple full-quad, 3: blossom full-quad)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombineAll
 Apply recombination algorithm to all surfaces, ignoring per-surface spec@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RecombineOptimizeTopology
+Optimize topology of recombined surface meshes@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DAll
