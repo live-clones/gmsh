@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
 #include "GModel.h"
 #include "GRegion.h"
 #include "MLine.h"
@@ -9,7 +14,6 @@
 #include "MHexahedron.h"
 #include "Context.h"
 #include "meshGFaceOptimize.h"
-#include "meshGRegionRelocateVertex.h"
 
 static double objective_function(double xi, MVertex *ver, double xTarget,
                                  double yTarget, double zTarget,
@@ -93,10 +97,10 @@ static bool Stopping_Rule(double const x0, double const x1, double const tol)
   return std::abs(x1 - x0) < tol;
 }
 
-double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
-                                       double yTarget, double zTarget,
-                                       const std::vector<MElement *> &lt,
-                                       double const tol, double &q)
+static double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
+                                              double yTarget, double zTarget,
+                                              const std::vector<MElement *> &lt,
+                                              double const tol, double &q)
 {
   const double lambda = 0.5 * (std::sqrt(5.0) - 1.0);
   const double mu = 0.5 * (3.0 - std::sqrt(5.0)); // = 1 - lambda
@@ -111,7 +115,7 @@ double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
   if(tol < 0.0) return fx1 > fx2 ? x1 : x2;
 
   while(!Stopping_Rule(a, b, tol)) {
-    //    printf("GOLDEN : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
+    // printf("GOLDEN : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
     if(fx1 < fx2) {
       a = x1;
       if(Stopping_Rule(a, b, tol)) break;
@@ -129,15 +133,15 @@ double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
       fx1 = objective_function(x1, ver, xTarget, yTarget, zTarget, lt);
     }
   }
-  //  printf("finally : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
+  // printf("finally : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
   q = std::min(fx1, fx2);
   return a;
 }
 
-double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf, SPoint2 &p1,
-                                       SPoint2 &p2,
-                                       const std::vector<MElement *> &lt,
-                                       double tol, double &worst)
+static double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf, SPoint2 &p1,
+                                              SPoint2 &p2,
+                                              const std::vector<MElement *> &lt,
+                                              double tol, double &worst)
 {
   const double lambda = 0.5 * (std::sqrt(5.0) - 1.0);
   const double mu = 0.5 * (3.0 - std::sqrt(5.0)); // = 1 - lambda
@@ -156,7 +160,7 @@ double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf, SPoint2 &p1,
   if(tol < 0.0) return fx1 > fx2 ? x1 : x2;
 
   while(!Stopping_Rule(a, b, tol)) {
-    //    printf("GOLDEN : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
+    // printf("GOLDEN : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
     if(fx1 < fx2) {
       a = x1;
       if(Stopping_Rule(a, b, tol)) break;
@@ -177,14 +181,14 @@ double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf, SPoint2 &p1,
   double final = objective_function(a, ver, gf, p1, p2, lt);
   if(final < worst) return 0.0;
   worst = final;
-  //  printf("finally : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
+  // printf("finally : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
   return a;
 }
 
-double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf, SPoint3 &p1,
-                                       SPoint3 &p2,
-                                       const std::vector<MElement *> &lt,
-                                       double tol, double &worst)
+static double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf, SPoint3 &p1,
+                                              SPoint3 &p2,
+                                              const std::vector<MElement *> &lt,
+                                              double tol, double &worst)
 {
   const double lambda = 0.5 * (std::sqrt(5.0) - 1.0);
   const double mu = 0.5 * (3.0 - std::sqrt(5.0)); // = 1 - lambda
@@ -203,7 +207,7 @@ double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf, SPoint3 &p1,
   if(tol < 0.0) return fx1 > fx2 ? x1 : x2;
 
   while(!Stopping_Rule(a, b, tol)) {
-    //    printf("GOLDEN : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
+    // printf("GOLDEN : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
     if(fx1 < fx2) {
       a = x1;
       if(Stopping_Rule(a, b, tol)) break;
@@ -224,12 +228,12 @@ double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf, SPoint3 &p1,
   double final = objective_function(a, ver, gf, p1, p2, lt);
   if(final < worst) return 0.0;
   worst = final;
-  //  printf("finally : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
+  // printf("finally : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
   return a;
 }
 
-void _relocateVertexGolden(MVertex *ver, const std::vector<MElement *> &lt,
-                           double relax, double tol)
+static void _relocateVertexGolden(MVertex *ver, const std::vector<MElement *> &lt,
+                                  double relax, double tol)
 {
   if(ver->onWhat()->dim() != 3) return;
   double x = 0.0, y = 0.0, z = 0.0;
@@ -316,7 +320,7 @@ static double _relocateVertex(GFace *gf, MVertex *ver,
   p1 *= 1. / (double)counter;
   double worst;
   double xi = Maximize_Quality_Golden_Section(ver, gf, p1, p2, lt, tol, worst);
-  //  if (xi != 0)printf("xi = %g\n",xi);
+  // if (xi != 0) printf("xi = %g\n",xi);
   SPoint2 p = p1 * (1 - xi) + p2 * xi;
   GPoint pp = gf->point(p);
   if(!pp.succeeded()) return 2.0;
@@ -332,6 +336,8 @@ void getAllBoundaryLayerVertices(GFace *gf, std::set<MVertex *> &vs);
 
 void RelocateVertices(GFace *gf, int niter, double tol)
 {
+  if(!niter) return;
+
   std::set<MVertex *> vs;
   getAllBoundaryLayerVertices(gf, vs);
 
@@ -351,6 +357,8 @@ void RelocateVertices(GFace *gf, int niter, double tol)
 
 void RelocateVertices(GRegion *region, int niter, double tol)
 {
+  if(!niter) return;
+
   v2t_cont adj;
   buildVertexToElement(region->tetrahedra, adj);
   buildVertexToElement(region->pyramids, adj);

@@ -2249,8 +2249,10 @@ optionWindow::optionWindow(int deltaFontSize)
         {0}
       };
       static Fl_Menu_Item menu_recombination_algo[] = {
-        {"Standard", 0, 0, 0},
+        {"Simple", 0, 0, 0},
         {"Blossom", 0, 0, 0},
+        {"Simple Full-Quad", 0, 0, 0},
+        {"Blossom Full-Quad", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_subdivision_algo[] = {

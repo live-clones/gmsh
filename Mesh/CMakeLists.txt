@@ -17,7 +17,7 @@ set(SRC
     meshGRegionDelaunayInsertion.cpp meshGRegionTransfinite.cpp
     meshGRegionExtruded.cpp meshGRegionCarveHole.cpp
     meshGRegionLocalMeshMod.cpp meshGRegionMMG3D.cpp
-    meshGRegionRelocateVertex.cpp
+  meshRelocateVertex.cpp
   meshMetric.cpp
   BackgroundMesh.cpp BackgroundMeshTools.cpp
   qualityMeasures.cpp qualityMeasuresJacobian.cpp

@@ -131,7 +131,7 @@ public:
   {
     // only do it if a recombination has to be done
     if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-       CTX::instance()->mesh.algoRecombine == 2) {
+       CTX::instance()->mesh.algoRecombine >= 2) {
       std::vector<GEdge *> const &edges = gf->edges();
       std::vector<GEdge *>::const_iterator ite = edges.begin();
       while(ite != edges.end()) {
@@ -259,15 +259,14 @@ public:
   void finish()
   {
     if((CTX::instance()->mesh.recombineAll || _gf->meshAttributes.recombine) &&
-       CTX::instance()->mesh.algoRecombine == 2) {
+       CTX::instance()->mesh.algoRecombine >= 2) {
       // recombine the elements on the half mesh
       CTX::instance()->mesh.lcFactor /= 2.0;
-      recombineIntoQuads(_gf, true, true, .1, true);
-      // Msg::Info("subdividing");
+      bool blossom = (CTX::instance()->mesh.algoRecombine == 3);
+      recombineIntoQuads(_gf, blossom, true, true, 0.1);
       subdivide();
-      // _gf->model()->writeMSH("hop2.msh");
       restore();
-      recombineIntoQuads(_gf, true, true, 1.e-3, false);
+      recombineIntoQuads(_gf, blossom, true, true, 1.e-3);
       computeElementShapes(_gf, _gf->meshStatistics.worst_element_shape,
                            _gf->meshStatistics.average_element_shape,
                            _gf->meshStatistics.best_element_shape,
@@ -493,11 +492,6 @@ static void remeshUnrecoveredEdges(
       MVertex *v1 = itr->ge->lines[i]->getVertex(0);
       MVertex *v2 = itr->ge->lines[i]->getVertex(1);
 
-      // std::multimap<GFace *, GFace *>::iterator itLow =
-      //   replacedBy.lower_bound(*itf);
-      // std::multimap<GFace *, GFace *>::iterator itUp =
-      //   replacedBy.upper_bound(*itf);
-
       std::multimap<MVertex *, BDS_Point *>::iterator itp1 =
         recoverMultiMapInv.lower_bound(v1);
       std::multimap<MVertex *, BDS_Point *>::iterator itp2 =
@@ -517,7 +511,6 @@ static void remeshUnrecoveredEdges(
           pp2b = itp2->second;
         }
 
-        // printf("%d %d %d %d? \n",pp1->iD, pp2->iD, pp1b->iD, pp2b->iD);
         if((pp1->iD == p1 && pp2->iD == p2) ||
            (pp1->iD == p2 && pp2->iD == p1) ||
            (pp1b->iD == p1 && pp2b->iD == p2) ||
@@ -578,9 +571,7 @@ static void remeshUnrecoveredEdges(
 
     itr->ge->lines = newLines;
     itr->ge->mesh_vertices.clear();
-    // printf("%d lines -->",N);
     N = itr->ge->lines.size();
-    // printf("%d lines\n",N);
     for(int i = 1; i < N; i++) {
       itr->ge->mesh_vertices.push_back(itr->ge->lines[i]->getVertex(0));
     }
@@ -624,7 +615,6 @@ remeshUnrecoveredEdges(std::map<MVertex *, BDS_Point *> &recoverMapInv,
       if(itp1 != recoverMapInv.end() && itp2 != recoverMapInv.end()) {
         BDS_Point *pp1 = itp1->second;
         BDS_Point *pp2 = itp2->second;
-        // printf("%d %d ? \n", pp1->iD, pp2->iD);
         if((pp1->iD == p1 && pp2->iD == p2) ||
            (pp1->iD == p2 && pp2->iD == p1)) {
           double t1;
@@ -683,9 +673,7 @@ remeshUnrecoveredEdges(std::map<MVertex *, BDS_Point *> &recoverMapInv,
 
     itr->ge->lines = newLines;
     itr->ge->mesh_vertices.clear();
-    // printf("%d lines -->",N);
     N = itr->ge->lines.size();
-    // printf("%d lines\n",N);
     for(int i = 1; i < N; i++) {
       itr->ge->mesh_vertices.push_back(itr->ge->lines[i]->getVertex(0));
     }
@@ -745,8 +733,10 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
               "Unable to recover the edge %d (%d/%d) on curve %d (on surface %d)",
               ge->lines[i]->getNum(), i + 1, ge->lines.size(), ge->tag(),
               ge->faces().back()->tag());
-            // outputScalarField(m->triangles, "wrongmesh.pos", 0);
-            // outputScalarField(m->triangles, "wrongparam.pos", 1);
+            if(Msg::GetVerbosity() == 99){
+              outputScalarField(m->triangles, "wrongmesh.pos", 0);
+              outputScalarField(m->triangles, "wrongparam.pos", 1);
+            }
           }
           return !_fatallyFailed;
         }
@@ -1716,8 +1706,10 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   splitElementsInBoundaryLayerIfNeeded(gf);
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     !onlyInitialMesh && CTX::instance()->mesh.algoRecombine != 2)
-    recombineIntoQuads(gf);
+     !onlyInitialMesh && CTX::instance()->mesh.algoRecombine <= 1){
+    bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
+    recombineIntoQuads(gf, blossom, true, true, 0.1);
+  }
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,
@@ -1809,7 +1801,7 @@ static bool buildConsecutiveListOfVertices(
       meshes_seam.insert(
         std::pair<GEntity *, std::vector<SPoint2> >(ges.ge, mesh1d_seam));
     // printMesh1d(ges.ge->tag(), seam, mesh1d);
-    // if(seam) printMesh1d (ges.ge->tag(), seam, mesh1d_seam);
+    // if(seam) printMesh1d(ges.ge->tag(), seam, mesh1d_seam);
     it++;
   }
 
@@ -1948,7 +1940,6 @@ static bool buildConsecutiveListOfVertices(
 
       BDS_Point *pp = 0;
       if(ge->dim() == 0) {
-        // Point might already be part of other loop
         // Point might already be part of other loop
         double smallestDistance = std::numeric_limits<double>::infinity();
         for(std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
@@ -2351,7 +2342,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       m->add_triangle(p1->iD, p2->iD, p3->iD);
     }
   }
-  //#endif
 
   // Recover the boundary edges and compute characteristic lenghts using mesh
   // edge spacing
@@ -2771,8 +2761,10 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   delete m;
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     CTX::instance()->mesh.algoRecombine != 2)
-    recombineIntoQuads(gf, true, false);
+     CTX::instance()->mesh.algoRecombine <= 1){
+    bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
+    recombineIntoQuads(gf, blossom, true, false, 0.1); // no node repositioning
+  }
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,

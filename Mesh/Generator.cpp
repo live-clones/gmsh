@@ -24,8 +24,8 @@
 #include "meshGFaceOptimize.h"
 #include "meshGFaceBDS.h"
 #include "meshGRegion.h"
-#include "meshGRegionRelocateVertex.h"
 #include "meshGRegionLocalMeshMod.h"
+#include "meshRelocateVertex.h"
 #include "BackgroundMesh.h"
 #include "BoundaryLayers.h"
 #include "HighOrder.h"
@@ -981,7 +981,9 @@ void RecombineMesh(GModel *m)
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     GFace *gf = *it;
-    recombineIntoQuads(gf, true, true, .01);
+    bool blossom = (CTX::instance()->mesh.algoRecombine == 1 ||
+                    CTX::instance()->mesh.algoRecombine == 3);
+    recombineIntoQuads(gf, blossom, true, true, .01);
   }
 
   CTX::instance()->mesh.changed = ENT_ALL;

@@ -15,7 +15,7 @@
 #include "meshGFaceOptimize.h"
 #include "meshGRegionBoundaryRecovery.h"
 #include "meshGRegionDelaunayInsertion.h"
-#include "meshGRegionRelocateVertex.h"
+#include "meshRelocateVertex.h"
 #include "GModel.h"
 #include "GRegion.h"
 #include "GFace.h"

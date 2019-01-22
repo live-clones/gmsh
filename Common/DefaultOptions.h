@@ -1220,7 +1220,8 @@ StringXNumber MeshOptions_Number[] = {
 #else
   { F|O, "RecombinationAlgorithm" , opt_mesh_algo_recombine , 0 ,
 #endif
-    "Mesh recombination algorithm (0: standard, 1: blossom)" },
+    "Mesh recombination algorithm (0: simple, 1: blossom, 2: simple full-quad, "
+    "3: blossom full-quad)" },
   { F|O, "RecombineAll" , opt_mesh_recombine_all , 0 ,
     "Apply recombination algorithm to all surfaces, ignoring per-surface spec" },
   { F|O, "Recombine3DAll" , opt_mesh_recombine3d_all , 0 ,

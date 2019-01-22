@@ -770,29 +770,11 @@ static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity
     ++it;
   }
 
-  // double LLMin = Extend1dMeshIn2dSurfaces() ? std::min(lcMin, lcBGMMin) : lcBGMMin;
-  // double LLVertex = Extend1dMeshIn2dSurfaces() ? std::min(lcVertex, lcBGMVertex) : lcBGMVertex;
-  // bool refinementRequired = false;
-  // if (LLVertex < 0.7 * LLMin) {
-  //   refinementRequired = true;
-  // }
-
-  // For adding a point we require that
-  // - the volume (or rather area) remains the same after addition of the point
-  // - the point is not too close to an edge
-  // - plus that at least one of following conditions is satisfied:
-  //   + the cavity contains more than 2 elements
-  //   + or, refinement is required
-  //   + or, the minimum quality improves
-  // With the latter conditions we ensure that a configuration of 2 elements(or
-  // 1) is generally accepted; We only add a point to it if sizing requires so
-  // or the quality is improved by it.Generally for squares and rectangles the
-  // quality will not be improved by adding a point.
+  // for adding a point we require that the area remains the same after addition
+  // of the point, and that the point is not too close to an edge
   if(std::abs(oldVolume - newVolume) < EPS * oldVolume && !onePointIsTooClose){
-    // &&
-    // (cavity.size() > 1 || refinementRequired || newMinQuality > oldMinQuality + 1e-8)) {
     connectTris(new_cavity.begin(), new_cavity.end(), conn);
-    // 30 % of the time is spent here !!!
+    // 30 % of the time is spent here!
     allTets.insert(newTris, newTris + shell.size());
     if(activeTets) {
       for(std::vector<MTri3 *>::iterator i = new_cavity.begin();
@@ -808,7 +790,7 @@ static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity
     return 1;
   }
   else {
-    // The cavity is NOT star shaped
+    // the cavity is NOT star shaped
     ittet = cavity.begin();
     ittete = cavity.end();
     while(ittet != ittete) {
@@ -954,7 +936,6 @@ static bool insertAPoint(GFace *gf,
   std::list<MTri3 *> cavity;
   double uv[2];
 
-  // TEST
   // if the point is able to break the bad triangle "worst"
   if(inCircumCircleAniso(gf, worst->tri(), center, metric, data)) {
     recurFindCavityAniso(gf, shell, cavity, metric, center, worst, data);
@@ -975,12 +956,10 @@ static bool insertAPoint(GFace *gf,
   }
 
   if(ptin) {
-    // we use here local coordinates as real coordinates
-    // x,y and z will be computed hereafter
-    // Msg::Info("Point is inside");
+    // we use here local coordinates as real coordinates x,y and z will be
+    // computed hereafter
     GPoint p = gf->point(center[0], center[1]);
 
-    // should not have an omp critical here
     MVertex *v = new MFaceVertex(p.x(), p.y(), p.z(), gf, center[0], center[1]);
 
     double lc1, lc;
@@ -994,9 +973,6 @@ static bool insertAPoint(GFace *gf,
     else
       lc = BGM_MeshSize(gf, center[0], center[1], p.x(), p.y(), p.z());
 
-    // SMetric3 metr = BGM_MeshMetric(gf, center[0], center[1], p.x(), p.y(),
-    // p.z());
-    //                               vMetricsBGM.push_back(metr);
     data.addVertex(v, center[0], center[1], lc1, lc);
 
     int result = -9;
@@ -1206,10 +1182,9 @@ static double optimalPointFrontal(GFace *gf, MTri3 *worst, int active_edge,
   double Q[2] = {data.Us[index1], data.Vs[index1]};
   double midpoint[2] = {0.5 * (P[0] + Q[0]), 0.5 * (P[1] + Q[1])};
 
-  // now we have the edge center and the center of the circumcircle,
-  // we try to find a point that would produce a perfect triangle while
-  // connecting the 2 points of the active edge
-
+  // now we have the edge center and the center of the circumcircle, we try to
+  // find a point that would produce a perfect triangle while connecting the 2
+  // points of the active edge
   double dir[2] = {center[0] - midpoint[0], center[1] - midpoint[1]};
   double norm = std::sqrt(dir[0] * dir[0] + dir[1] * dir[1]);
   dir[0] /= norm;
@@ -1316,11 +1291,7 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   std::set<MTri3 *, compareTri3Ptr> ActiveTris;
   bidimMeshData DATA(equivalence, parametricCoordinates);
   bool testStarShapeness = true;
-  // double r;
   SPoint3 c;
-  // if (gf->isSphere(r,c)){
-  //   testStarShapeness = false;
-  // }
   std::set<GEntity*> degenerated;
   getDegeneratedVertices(gf, degenerated);
 
@@ -1328,7 +1299,6 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
 
   // delaunise the initial mesh
   edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
-  // Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
 
   int ITER = 0, active_edge;
   // compute active triangle
@@ -1348,7 +1318,7 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   int ITERATION = 0;
   while(1) {
     ++ITERATION;
-    // if(ITERATION % 1== 0 && CTX::instance()->mesh.saveAll){
+    // if(ITERATION % 1 == 0 && Msg::GetVerbosity() == 99){
     //   char name[245];
     //   sprintf(name,"delFrontal_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
     //   _printTris (name, AllTris.begin(), AllTris.end(), &DATA);
@@ -1397,7 +1367,6 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   // _printTris (name, ActiveTris.begin(), ActiveTris.end(), &DATA);
 
   transferDataStructure(gf, AllTris, DATA);
-  // removeThreeTrianglesNodes(gf);
 
   splitElementsInBoundaryLayerIfNeeded(gf);
 }
@@ -1520,7 +1489,7 @@ void buildBackgroundMesh(GFace *gf, bool crossFieldClosestPoint,
       backgroundMesh::setCrossFieldsByDistance(gf); // faster for delquad
     else
       backgroundMesh::set(gf); // will solve PDE
-    if(CTX::instance()->mesh.saveAll) {
+    if(Msg::GetVerbosity() == 99) {
       char name[256];
       sprintf(name, "bgm-%d.pos", gf->tag());
       backgroundMesh::current()->print(name, gf);
@@ -1569,7 +1538,7 @@ void bowyerWatsonFrontalLayers(
   int max_layers = quad ? 10000 : 4;
   while(1) {
     ITERATION++;
-    // if(ITERATION % 1== 0 && CTX::instance()->mesh.saveAll){
+    // if(ITERATION % 1 == 0 && Msg::GetVerbosity() == 99){
     //   char name[245];
     //   sprintf(name,"delInfinite_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
     //   _printTris (name, AllTris.begin(), AllTris.end(), DATA,true);
