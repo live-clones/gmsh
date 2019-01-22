@@ -6,27 +6,22 @@
 // Contributor(s):
 //   Tristan Carrier Baudoin
 
+#include <queue>
+#include <stack>
 #include "GmshConfig.h"
 #include "surfaceFiller.h"
 #include "Field.h"
 #include "GModel.h"
 #include "OS.h"
-#include <queue>
-#include <stack>
-
-/// Here, we aim at producing a set of points that
-/// enables to generate a nice quad mesh
-
 #include "rtree.h"
-
 #include "MVertex.h"
 #include "MElement.h"
 #include "BackgroundMesh.h"
 #include "intersectCurveSurface.h"
-
 #include "pointInsertionRTreeTools.h"
 
-using namespace std;
+// Here, we aim at producing a set of points that enables to generate a nice
+// quad mesh
 
 // assume a point on the surface, compute the 4 possible neighbors.
 //
@@ -59,7 +54,6 @@ bool compute4neighbors(
 
   double L =
     backgroundMesh::current()->operator()(midpoint[0], midpoint[1], 0.0);
-  //  printf("L = %12.5E\n",L);
   metricField = SMetric3(1. / (L * L));
   FieldManager *fields = gf->model()->getFields();
   if(fields->getBackgroundField() > 0) {
@@ -88,8 +82,6 @@ bool compute4neighbors(
   // compute the first fundamental form i.e. the metric tensor at the point
   // M_{ij} = s_i \cdot s_j
   double metric[2][2] = {{M, E}, {E, N}};
-
-  //  printf("%d %g %g %g\n",gf->tag(),s1.x(),s1.y(),s1.z());
 
   SVector3 basis_u = s1;
   basis_u.normalize();
@@ -204,9 +196,6 @@ bool compute4neighbors(
       for(int i = 0; i < 4; i++) { //
         if(ERR[i] > 12) {
           double uvt[3] = {newPoint[i][0], newPoint[i][1], 0.0}; //
-          //	  printf("Intersecting with circle N = %g %g %g dir = %g %g %g R
-          //= %g p = %g %g
-          //%g\n",n.x(),n.y(),n.z(),dirs[i].x(),dirs[i].y(),dirs[i].z(),L,v_center->x(),v_center->y(),v_center->z());
           curveFunctorCircle cf(
             dirs[i], n, SVector3(v_center->x(), v_center->y(), v_center->z()),
             L);
@@ -220,26 +209,17 @@ bool compute4neighbors(
               sqrt((newPoint[i][0] - uvt[0]) * (newPoint[i][0] - uvt[0]) +
                    (newPoint[i][1] - uvt[1]) * (newPoint[i][1] - uvt[1]));
             double newErr = 100 * fabs(D - L) / (D + L);
-            //	    if (v_center->onWhat() != gf && gf->tag() == 3){
-            //	      crossField2d::normalizeAngle (uvt[2]);
-            //	      printf("INTERSECT angle = %g DP %g\n",uvt[2],DP);
-            //	    }
             if(newErr < 1 && DP < .1) {
-              //	      printf("%12.5E vs %12.5E : %12.5E  %12.5E vs %12.5E
-              //%12.5E
-              //\n",ERR[i],newErr,newPoint[i][0],newPoint[i][1],uvt[0],uvt[1]);
-              newPoint[i][0] = uvt[0]; //
-              newPoint[i][1] = uvt[1]; //
-            } //
-            //	    printf("OK\n");
+              newPoint[i][0] = uvt[0];
+              newPoint[i][1] = uvt[1];
+            }
           }
           else {
             Msg::Debug("Cannot put a new point on Surface %d", gf->tag());
-            //	    printf("NOT OK\n");
           }
         }
-      } //
-    } /// end non linear -------------------------------------------------//
+      }
+    }
 
     // return the four new vertices
     for(int i = 0; i < 4; i++) {
@@ -251,11 +231,9 @@ bool compute4neighbors(
 
 // recover element around vertex v and interpolate smoothness on this element...
 double get_smoothness(MVertex *v, GFace *gf,
-                      const map<MVertex *, double> &vertices2smoothness)
+                      const std::map<MVertex *, double> &vertices2smoothness)
 {
   // recover element around MVertex v
-  // cout << "Looking for element around point (" << v->x() << "," << v->y() <<
-  // "," << v->z() << ")" << endl;
   SPoint3 sp3(v->x(), v->y(), v->z());
   SPoint2 param_point;
   reparamMeshVertexOnFace(v, gf, param_point);
@@ -265,20 +243,17 @@ double get_smoothness(MVertex *v, GFace *gf,
     elem = backgroundMesh::current()->getMeshElementByCoord(
       param_point[0], param_point[1], 0., false);
     if(!elem)
-      cout << " ------ WARNING !!! surfaceFiller : get_smoothness : No element "
-              "found for coordinate ("
-           << sp3.x() << "," << sp3.y() << "," << sp3.z() << ")" << endl;
+      Msg::Warning("No element found for coordinate (%g, %g, %g)",
+                   sp3.x(), sp3.y(), sp3.z());
   }
 
   // recover element's vertices:
-  vector<MVertex *> localvertices;
+  std::vector<MVertex *> localvertices;
   localvertices.reserve(elem->getNumVertices());
 
   for(std::size_t ivert = 0; ivert < elem->getNumVertices(); ivert++) {
     MVertex *temp = elem->getVertex(ivert);
     localvertices.push_back(temp);
-    //    cout << " made of vertex " << temp->x() << "," << temp->y() << "," <<
-    //    temp->z() << endl;
   }
 
   // recover parametrisation uvw
@@ -287,62 +262,55 @@ double get_smoothness(MVertex *v, GFace *gf,
   xyz[1] = param_point[1];
   xyz[2] = 0.;
   elem->xyz2uvw(xyz, uvw);
-  //  cout << "xyz is " << xyz[0] << ","  << xyz[1] << ","  << xyz[2] << endl;
-  //  cout << "uvw is " << uvw[0] << ","  << uvw[1] << ","  << uvw[2] << endl;
 
   // interpolate :
   double val[3];
   int i = 0;
-  for(vector<MVertex *>::iterator it = localvertices.begin();
+  for(std::vector<MVertex *>::iterator it = localvertices.begin();
       it != localvertices.end(); it++) {
     MVertex *localv = *it;
-    map<MVertex *, double>::const_iterator itfind =
+    std::map<MVertex *, double>::const_iterator itfind =
       vertices2smoothness.find(localv);
     if(itfind == vertices2smoothness.end()) {
-      cerr << "WARNING: surfaceFiller : get_smoothness : BACKGROUNDMESH VERTEX "
-              "NOT FOUND IN SMOOTHNESS COMPUTATION !!! ABORTING..."
-           << endl;
-      throw;
+      Msg::Warning("Background vertex not found");
+      return 0;
     }
-    //    cout << "nodal value: " << itfind->second << endl;
     val[i++] = itfind->second;
   }
-  //  cout << "uvw is " << uvw[0] << "  " <<  uvw[1] << "  " <<  uvw[2] << endl;
   double res = elem->interpolate(val, uvw[0], uvw[1], uvw[2]);
-  //  cout << " THE VALUE = " << res << endl;
   return res;
 }
 
-void print_nodal_info_int(const string &filename, map<MVertex *, int> &mapp)
+void print_nodal_info_int(const std::string &filename, std::map<MVertex *, int> &mapp)
 {
-  ofstream out(filename.c_str());
+  std::ofstream out(filename.c_str());
 
-  out << "View \"\"{" << endl;
-  for(map<MVertex *, int>::iterator it = mapp.begin(); it != mapp.end(); it++) {
+  out << "View \"\"{" << std::endl;
+  for(std::map<MVertex *, int>::iterator it = mapp.begin(); it != mapp.end(); it++) {
     MVertex *v = it->first;
     out << "SP( " << v->x() << "," << v->y() << "," << v->z() << "){"
-        << it->second << "};" << endl;
+        << it->second << "};" << std::endl;
     ;
   }
-  out << "};" << endl;
+  out << "};" << std::endl;
 
   out.close();
 }
 
-void print_nodal_info_double(const string &filename,
-                             map<MVertex *, double> &mapp)
+void print_nodal_info_double(const std::string &filename,
+                             std::map<MVertex *, double> &mapp)
 {
-  ofstream out(filename.c_str());
+  std::ofstream out(filename.c_str());
 
-  out << "View \"\"{" << endl;
-  for(map<MVertex *, double>::iterator it = mapp.begin(); it != mapp.end();
+  out << "View \"\"{" << std::endl;
+  for(std::map<MVertex *, double>::iterator it = mapp.begin(); it != mapp.end();
       it++) {
     MVertex *v = it->first;
     out << "SP( " << v->x() << "," << v->y() << "," << v->z() << "){"
-        << it->second << "};" << endl;
+        << it->second << "};" << std::endl;
     ;
   }
-  out << "};" << endl;
+  out << "};" << std::endl;
 
   out.close();
 }
@@ -392,22 +360,16 @@ void export_point(surfacePointWithExclusionRegion *sp, int DIR, FILE *crossf,
   double size_1 = sqrt(1. / dot(t1, metricField, t1));
   double size_2 = sqrt(1. / dot(t2, metricField, t2));
 
-  //  fprintf(crossf,"VP(%g,%g,%g)
-  //  {%g,%g,%g};\n",sp->_v->x(),sp->_v->y(),sp->_v->z(),t1.x()*scale,t1.y()*scale,t1.z()*scale);
-  //  fprintf(crossf,"VP(%g,%g,%g)
-  //  {%g,%g,%g};\n",sp->_v->x(),sp->_v->y(),sp->_v->z(),t2.x()*scale,t2.y()*scale,t2.z()*scale);
-  //  fprintf(crossf,"VP(%g,%g,%g)
-  //  {%g,%g,%g};\n",sp->_v->x(),sp->_v->y(),sp->_v->z(),-t1.x()*scale,-t1.y()*scale,-t1.z()*scale);
-  //  fprintf(crossf,"VP(%g,%g,%g)
-  //  {%g,%g,%g};\n",sp->_v->x(),sp->_v->y(),sp->_v->z(),-t2.x()*scale,-t2.y()*scale,-t2.z()*scale);
-  fprintf(crossf, "VP(%g,%g,%g) {%g,%g,%g};\n", sp->_v->x(), sp->_v->y(),
-          sp->_v->z(), t1.x() * size_1, t1.y() * size_1, t1.z() * size_1);
-  fprintf(crossf, "VP(%g,%g,%g) {%g,%g,%g};\n", sp->_v->x(), sp->_v->y(),
-          sp->_v->z(), t2.x() * size_2, t2.y() * size_2, t2.z() * size_2);
-  fprintf(crossf, "VP(%g,%g,%g) {%g,%g,%g};\n", sp->_v->x(), sp->_v->y(),
-          sp->_v->z(), -t1.x() * size_1, -t1.y() * size_1, -t1.z() * size_1);
-  fprintf(crossf, "VP(%g,%g,%g) {%g,%g,%g};\n", sp->_v->x(), sp->_v->y(),
-          sp->_v->z(), -t2.x() * size_2, -t2.y() * size_2, -t2.z() * size_2);
+  if(crossf){
+    fprintf(crossf, "VP(%g,%g,%g) {%g,%g,%g};\n", sp->_v->x(), sp->_v->y(),
+            sp->_v->z(), t1.x() * size_1, t1.y() * size_1, t1.z() * size_1);
+    fprintf(crossf, "VP(%g,%g,%g) {%g,%g,%g};\n", sp->_v->x(), sp->_v->y(),
+            sp->_v->z(), t2.x() * size_2, t2.y() * size_2, t2.z() * size_2);
+    fprintf(crossf, "VP(%g,%g,%g) {%g,%g,%g};\n", sp->_v->x(), sp->_v->y(),
+            sp->_v->z(), -t1.x() * size_1, -t1.y() * size_1, -t1.z() * size_1);
+    fprintf(crossf, "VP(%g,%g,%g) {%g,%g,%g};\n", sp->_v->x(), sp->_v->y(),
+            sp->_v->z(), -t2.x() * size_2, -t2.y() * size_2, -t2.z() * size_2);
+  }
 }
 
 bool get_local_sizes_and_directions(const MVertex *v_center,
@@ -430,7 +392,6 @@ bool get_local_sizes_and_directions(const MVertex *v_center,
 
   SMetric3 metricField;
   L = backgroundMesh::current()->operator()(midpoint[0], midpoint[1], 0.0);
-  //  printf("L = %12.5E\n",L);
   metricField = SMetric3(1. / (L * L));
   FieldManager *fields = gf->model()->getFields();
   if(fields->getBackgroundField() > 0) {
@@ -460,8 +421,6 @@ bool get_local_sizes_and_directions(const MVertex *v_center,
   // M_{ij} = s_i \cdot s_j
   double metric[2][2] = {{M, E}, {E, N}};
 
-  //  printf("%d %g %g %g\n",gf->tag(),s1.x(),s1.y(),s1.z());
-
   SVector3 basis_u = s1;
   basis_u.normalize();
   SVector3 basis_v = crossprod(n, basis_u);
@@ -479,36 +438,6 @@ bool get_local_sizes_and_directions(const MVertex *v_center,
   // frame
   t2 = crossprod(n, t1);
   t2.normalize();
-
-  //  std::cout << std::endl;
-  //  std::cout << "basis uv : (" << basis_u(0) << "," <<  basis_u(1) << ") ("
-  //  << basis_v(0) << "," << basis_v(1) << std::endl; std::cout << "t        :
-  //  (" << t1(0) << "," <<  t1(1) << ") (" << t2(0) << "," << t2(1) <<
-  //  std::endl;
-
-  //  if (use_previous_basis){
-  //    std::map<double, double> angles;
-  //    SVector3 temp = crossprod(previous_t1, t1);
-  //    double a = atan2(dot(t1, previous_t1), sign(dot(temp,n))*temp.norm() );
-  //    angles.insert(std::make_pair(abs(a),a));
-  //    temp = crossprod(previous_t2, t1);
-  //    a = atan2(dot(t1, previous_t2), sign(dot(temp,n))*temp.norm());
-  //    angles.insert(std::make_pair(abs(a),a));
-  //    temp = crossprod(-1.*previous_t1, t1);
-  //    a = atan2(dot(t1, -1.*previous_t1), sign(dot(temp,n))*temp.norm());
-  //    angles.insert(std::make_pair(abs(a),a));
-  //    temp = crossprod(-1.*previous_t2, t1);
-  //    a = atan2(dot(t1, -1.*previous_t2), sign(dot(temp,n))*temp.norm());
-  //    angles.insert(std::make_pair(abs(a),a));
-  //    //    std::cout << "angles: " << std::endl;
-  //    //    for (int i=0;i<4;i++)  std::cout << angles[i] << "  " <<
-  //    std::endl; double min_angle = -(angles.begin()->second);
-  //    //    std::cout << "min angle = " << min_angle << std::endl;
-  //    t1 =  cos(min_angle)*previous_t1 + sin(min_angle)*previous_t2;
-  //    t2 = -sin(min_angle)*previous_t1 + cos(min_angle)*previous_t2;
-  //    //    std::cout << "new corrected t        : (" << t1(0) << "," <<
-  //    t1(1) << ") (" << t2(0) << "," << t2(1) << std::endl;
-  //  }
 
   double size_1 = sqrt(1. / dot(t1, metricField, t1));
   double size_2 = sqrt(1. / dot(t2, metricField, t2));
@@ -585,16 +514,13 @@ void packingOfParallelogramsSmoothness(GFace *gf,
                                        std::vector<MVertex *> &packed,
                                        std::vector<SMetric3> &metrics)
 {
-  cout << endl
-       << "------------------------------------------" << endl
-       << "   PACKINGOFPARALLELOGRAMS: NEW ALGO BASED ON SMOOTHNESS" << endl
-       << "------------------------------------------" << endl;
+  Msg::Info("Packing of parallelograms: new algorithm based on smoothness");
   const bool goNonLinear = true;
 
-  const bool debug = false;
+  const bool debug = (Msg::GetVerbosity() == 99);
 
   // build vertex -> neighbors table
-  multimap<MVertex *, MVertex *> vertex2vertex;
+  std::multimap<MVertex *, MVertex *> vertex2vertex;
   for(std::vector<MElement *>::iterator it =
         backgroundMesh::current()->begin_triangles();
       it != backgroundMesh::current()->end_triangles(); it++) {
@@ -604,14 +530,14 @@ void packingOfParallelogramsSmoothness(GFace *gf,
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
         if(i == j) continue;
         MVertex *neighbor = e->getVertex(j);
-        vertex2vertex.insert(make_pair(current, neighbor));
+        vertex2vertex.insert(std::make_pair(current, neighbor));
       }
     }
   }
 
   // build table vertex->smoothness
-  map<MVertex *, double> vertices2smoothness;
-  map<MVertex *, double> smoothness_essai;
+  std::map<MVertex *, double> vertices2smoothness;
+  std::map<MVertex *, double> smoothness_essai;
   for(std::vector<MVertex *>::iterator it =
         backgroundMesh::current()->begin_vertices();
       it != backgroundMesh::current()->end_vertices(); it++) {
@@ -626,14 +552,14 @@ void packingOfParallelogramsSmoothness(GFace *gf,
                                    size_param_1, size_param_2, L, t1, t2, n);
 
     // compare to all neighbors...
-    pair<multimap<MVertex *, MVertex *>::iterator,
-         multimap<MVertex *, MVertex *>::iterator>
+    std::pair<std::multimap<MVertex *, MVertex *>::iterator,
+              std::multimap<MVertex *, MVertex *>::iterator>
       range = vertex2vertex.equal_range(v);
     SVector3 t1_nb, t2_nb, n_nb;
     double covar1_nb[2], covar2_nb[2], L_nb, size_param_1_nb, size_param_2_nb;
     double maxprod, angle = 0.;
     int N = 0;
-    for(multimap<MVertex *, MVertex *>::iterator itneighbor = range.first;
+    for(std::multimap<MVertex *, MVertex *>::iterator itneighbor = range.first;
         itneighbor != range.second; itneighbor++) {
       N++;
       maxprod = 0.;
@@ -647,32 +573,25 @@ void packingOfParallelogramsSmoothness(GFace *gf,
       // angle comparison...
       maxprod = std::max(maxprod, fabs(t1[0] * t1_nb[0] + t1[1] * t1_nb[1]));
       maxprod = std::max(maxprod, fabs(t1[0] * t2_nb[0] + t1[1] * t2_nb[1]));
-      angle += fabs(acos(max(min(maxprod, 1.), -1.)));
+      angle += fabs(acos(std::max(std::min(maxprod, 1.), -1.)));
     }
     angle /= N;
     vertices2smoothness[v] = angle;
   }
 
-  //  if (debug){
-  //    stringstream ss;
-  //    ss << "backgroundmesh_smoothness_" << gf->tag() << ".pos";
-  //    backgroundMesh::current()->print(ss.str().c_str(),gf,
-  //    vertices2smoothness);
-  //  }
-
   // --------------- export de smoothness comme elements....
   // -----------------------
   if(debug) {
-    stringstream ss;
+    std::stringstream ss;
     ss << "backgroundmesh_element_smoothness_" << gf->tag() << ".pos";
-    ofstream out(ss.str().c_str());
-    out << "View \"directions\" {" << endl;
+    std::ofstream out(ss.str().c_str());
+    out << "View \"directions\" {" << std::endl;
     for(std::vector<MElement *>::iterator it =
           backgroundMesh::current()->begin_triangles();
         it != backgroundMesh::current()->end_triangles(); it++) {
       MElement *e = *it;
-      vector<MVertex *> nodes;
-      vector<double> smoothtemp;
+      std::vector<MVertex *> nodes;
+      std::vector<double> smoothtemp;
       for(int i = 0; i < 3; i++) {
         MVertex *v = e->getVertex(i);
         nodes.push_back(v);
@@ -689,16 +608,16 @@ void packingOfParallelogramsSmoothness(GFace *gf,
         out << (1. - (smoothtemp[i] / M_PI * 4.));
         if(i != 2) out << ",";
       }
-      out << "};" << endl;
+      out << "};" << std::endl;
     }
-    out << "};" << endl;
+    out << "};" << std::endl;
     out.close();
   }
   //                   --------------- END ----------------
 
   // for debug check...
   int priority_counter = 0;
-  map<MVertex *, int> vert_priority;
+  std::map<MVertex *, int> vert_priority;
 
   // get all the boundary vertices
   std::set<MVertex *> bnd_vertices;
@@ -754,9 +673,6 @@ void packingOfParallelogramsSmoothness(GFace *gf,
 
   // ---------- main loop -----------------
   while(!fifo.empty()) {
-    if(debug)
-      std::cout << " -------- fifo.size() = " << fifo.size() << std::endl;
-
     surfacePointWithExclusionRegion *parent = (*fifo.begin()).ptr;
     fifo.erase(fifo.begin());
     int count_nbaddedpt = 0;
@@ -789,20 +705,10 @@ void packingOfParallelogramsSmoothness(GFace *gf,
           rtree.Insert(_min, _max, sp);
           if(crossf) export_point(sp, dir, crossf, gf);
 
-          if(debug) {
-            std::cout << "  adding node (" << sp->_v->x() << "," << sp->_v->y()
-                      << "," << sp->_v->z() << ")" << std::endl;
-            std::cout
-              << "    ----------------------------- sub --- fifo.size() = "
-              << fifo.size() << std::endl;
-          }
           count_nbaddedpt++;
         }
       }
     }
-    if(debug)
-      std::cout << "////////// nbre of added point: " << count_nbaddedpt
-                << std::endl;
   }
   if(crossf) {
     fprintf(crossf, "};\n");
@@ -810,7 +716,7 @@ void packingOfParallelogramsSmoothness(GFace *gf,
   }
 
   if(debug) {
-    stringstream ss;
+    std::stringstream ss;
     ss << "priority_" << gf->tag() << ".pos";
     print_nodal_info_int(ss.str().c_str(), vert_priority);
     ss.clear();
@@ -818,13 +724,15 @@ void packingOfParallelogramsSmoothness(GFace *gf,
     print_nodal_info_double(ss.str().c_str(), smoothness_essai);
   }
 
-  // add the vertices as additional vertices in the
-  // surface mesh
-  //  char ccc[256]; sprintf(ccc,"points%d.pos",gf->tag());
-  //  FILE *f = Fopen(ccc,"w");
-  //  if(f) fprintf(f, "View \"\"{\n");
+  // add the vertices as additional vertices in the surface mesh
+  char ccc[256]; sprintf(ccc,"points%d.pos",gf->tag());
+  FILE *f = NULL;
+  if(debug){
+    f = Fopen(ccc,"w");
+  }
+  if(f) fprintf(f, "View \"\"{\n");
   for(unsigned int i = 0; i < vertices.size(); i++) {
-    //    if(f) vertices[i]->print(f,i);
+    if(f) vertices[i]->print(f,i);
     if(vertices[i]->_v->onWhat() == gf) {
       packed.push_back(vertices[i]->_v);
       metrics.push_back(vertices[i]->_meshMetric);
@@ -833,14 +741,14 @@ void packingOfParallelogramsSmoothness(GFace *gf,
     }
     delete vertices[i];
   }
-  //  if(f){
-  //    fprintf(f,"};");
-  //    fclose(f);
-  //  }
+  if(f){
+    fprintf(f,"};");
+    fclose(f);
+  }
 }
 
-// fills a surface with points in order to build a nice
-// quad mesh ------------
+// fills a surface with points in order to build a nice quad mesh
+
 void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
                              std::vector<SMetric3> &metrics)
 {
@@ -849,15 +757,15 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
   //  return;
   // END PE MODIF
 
+  const bool debug = (Msg::GetVerbosity() == 99);
+
   const bool goNonLinear = true;
 
-  //  FILE *f = Fopen ("parallelograms.pos","w");
-
-  // test test test
-  stringstream ssa;
-  ssa << "oldbgm_angles_" << gf->tag() << ".pos";
-  backgroundMesh::current()->print(ssa.str(), gf, 1);
-  // test test test
+  if(debug){
+    std::stringstream ssa;
+    ssa << "oldbgm_angles_" << gf->tag() << ".pos";
+    backgroundMesh::current()->print(ssa.str(), gf, 1);
+  }
 
   // get all the boundary vertices
   std::set<MVertex *> bnd_vertices;
@@ -870,10 +778,8 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
   }
 
   // put boundary vertices in a fifo queue
-  // std::queue<surfacePointWithExclusionRegion*> fifo;
   std::set<surfacePointWithExclusionRegion *,
-           compareSurfacePointWithExclusionRegionPtr>
-    fifo;
+           compareSurfacePointWithExclusionRegionPtr> fifo;
   std::vector<surfacePointWithExclusionRegion *> vertices;
   // put the RTREE
   RTree<surfacePointWithExclusionRegion *, double, 2, double> rtree;
@@ -883,7 +789,10 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 
   char NAME[345];
   sprintf(NAME, "crossReal%d.pos", gf->tag());
-  FILE *crossf = Fopen(NAME, "w");
+  FILE *crossf = NULL;
+  if(debug) {
+    crossf = Fopen(NAME, "w");
+  }
   if(crossf) fprintf(crossf, "View \"\"{\n");
   for(; it != bnd_vertices.end(); ++it) {
     SPoint2 midpoint;
@@ -891,14 +800,11 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
                       crossf);
     surfacePointWithExclusionRegion *sp =
       new surfacePointWithExclusionRegion(*it, newp, midpoint, metricField);
-    //    fifo.push(sp);
     fifo.insert(sp);
     vertices.push_back(sp);
     double _min[2], _max[2];
     sp->minmax(_min, _max);
-    //    printf("%g %g .. %g %g\n",_min[0],_min[1],_max[0],_max[1]);
     rtree.Insert(_min, _max, sp);
-    //    sp->print(f);
   }
 
   //  printf("initially : %d vertices in the domain\n",vertices.size());
@@ -934,11 +840,13 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     fprintf(crossf, "};\n");
     fclose(crossf);
   }
-  // add the vertices as additional vertices in the
-  // surface mesh
+  // add the vertices as additional vertices in the surface mesh
   char ccc[256];
   sprintf(ccc, "points%d.pos", gf->tag());
-  FILE *f = Fopen(ccc, "w");
+  FILE *f = NULL;
+  if(debug){
+    f = Fopen(ccc, "w");
+  }
   if(f) fprintf(f, "View \"\"{\n");
   for(unsigned int i = 0; i < vertices.size(); i++) {
     //    if(vertices[i]->_v->onWhat() != gf)
@@ -957,8 +865,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
   }
 }
 
-// fills a surface with points in order to build a nice
-// quad mesh ------------
+// fills a surface with points in order to build a nice quad mesh
 void packingOfParallelogramsConstrained(
   GFace *gf, const std::set<MVertex *> &constr_vertices,
   std::vector<MVertex *> &packed, std::vector<SMetric3> &metrics)
@@ -986,10 +893,8 @@ void packingOfParallelogramsConstrained(
   std::cout << "      got all the boundary vertices" << std::endl;
 
   // put boundary vertices in a fifo queue
-  // std::queue<surfacePointWithExclusionRegion*> fifo;
   std::set<surfacePointWithExclusionRegion *,
-           compareSurfacePointWithExclusionRegionPtr>
-    fifo;
+           compareSurfacePointWithExclusionRegionPtr> fifo;
   std::vector<surfacePointWithExclusionRegion *> vertices;
   // put the RTREE
   RTree<surfacePointWithExclusionRegion *, double, 2, double> rtree;
@@ -999,7 +904,10 @@ void packingOfParallelogramsConstrained(
 
   char NAME[345];
   sprintf(NAME, "crossReal%d.pos", gf->tag());
-  FILE *crossf = Fopen(NAME, "w");
+  FILE *crossf = NULL;
+  if(debug){
+    crossf = Fopen(NAME, "w");
+  }
   if(crossf) fprintf(crossf, "View \"\"{\n");
   std::cout << "      entering first for" << std::endl;
   for(; it != bnd_vertices.end(); ++it) {
@@ -1008,14 +916,11 @@ void packingOfParallelogramsConstrained(
                       crossf);
     surfacePointWithExclusionRegion *sp =
       new surfacePointWithExclusionRegion(*it, newp, midpoint, metricField);
-    //    fifo.push(sp);
     fifo.insert(sp);
     vertices.push_back(sp);
     double _min[2], _max[2];
     sp->minmax(_min, _max);
-    //    printf("%g %g .. %g %g\n",_min[0],_min[1],_max[0],_max[1]);
     rtree.Insert(_min, _max, sp);
-    //    sp->print(f);
   }
 
   std::set<MVertex *>::iterator it_constr = constr_vertices.begin();
@@ -1036,34 +941,23 @@ void packingOfParallelogramsConstrained(
               << std::endl;
     surfacePointWithExclusionRegion *sp = new surfacePointWithExclusionRegion(
       *it_constr, newp, midpoint, metricField);
-    //    fifo.push(sp);
     std::cout << "         done surfacePointWithExclusionRegion" << std::endl;
     fifo.insert(sp);
     vertices.push_back(sp);
     double _min[2], _max[2];
     sp->minmax(_min, _max);
-    //    printf("%g %g .. %g %g\n",_min[0],_min[1],_max[0],_max[1]);
     rtree.Insert(_min, _max, sp);
-    //    sp->print(f);
   }
 
   //  printf("initially : %d vertices in the domain\n",vertices.size());
 
   std::cout << "      entering while" << std::endl;
   while(!fifo.empty()) {
-    // surfacePointWithExclusionRegion & parent = fifo.top();
-    //    surfacePointWithExclusionRegion * parent = fifo.front();
     surfacePointWithExclusionRegion *parent = *fifo.begin();
-    //    fifo.pop();
     fifo.erase(fifo.begin());
     for(int dir = 0; dir < NUMDIR; dir++) {
-      //      printf("dir = %d\n",dir);
       int countOK = 0;
       for(int i = 0; i < 4; i++) {
-        //	printf("i = %d %12.5E %12.5E
-        //\n",i,parent._p[i][dir].x(),parent._p[i][dir].y());
-
-        //	if (!w._tooclose){
         if(!inExclusionZone(parent->_p[i][dir], rtree, vertices)) {
           countOK++;
           GPoint gp = gf->point(parent->_p[i][dir]);
@@ -1074,22 +968,14 @@ void packingOfParallelogramsConstrained(
           double para0, para1;
           v->getParameter(0, para0);
           v->getParameter(1, para1);
-          //          if (v->getNum() == 341){
-          //        	  std::cout<<" 341 dans surface filler !!!!"<<std::endl;
-          //      		std::system("pause");
-          //      		getchar();
-          //          }
           std::cout << "            point tested: para 1 " << para0
                     << " and para 2 " << para1 << std::endl;
-          //	  	printf(" %g %g %g
-          //%g\n",parent._center.x(),parent._center.y(),gp.u(),gp.v());
           SPoint2 midpoint;
           compute4neighbors(gf, v, midpoint, goNonLinear, newp, metricField,
                             crossf);
           surfacePointWithExclusionRegion *sp =
             new surfacePointWithExclusionRegion(v, newp, midpoint, metricField,
                                                 parent);
-          //	  fifo.push(sp);
           fifo.insert(sp);
           vertices.push_back(sp);
           double _min[2], _max[2];
@@ -1099,25 +985,24 @@ void packingOfParallelogramsConstrained(
       }
       if(countOK) break;
     }
-    //    printf("%d\n",vertices.size());
   }
   std::cout << "      entering if" << std::endl;
   if(crossf) {
     fprintf(crossf, "};\n");
     fclose(crossf);
   }
-  //  printf("done\n");
 
-  // add the vertices as additional vertices in the
-  // surface mesh
+  // add the vertices as additional vertices in the surface mesh
   char ccc[256];
   sprintf(ccc, "points%d.pos", gf->tag());
-  FILE *f = Fopen(ccc, "w");
-  fprintf(f, "View \"\"{\n");
+  FILE *f = NULL;
+  if(debug){
+    f = Fopen(ccc, "w");
+  }
+  if(f) fprintf(f, "View \"\"{\n");
   std::cout << "      entering another for" << std::endl;
   for(unsigned int i = 0; i < vertices.size(); i++) {
-    //    if(vertices[i]->_v->onWhat() != gf)
-    vertices[i]->print(f, i);
+    if(f) vertices[i]->print(f, i);
     if(vertices[i]->_v->onWhat() == gf) {
       packed.push_back(vertices[i]->_v);
       metrics.push_back(vertices[i]->_meshMetric);
@@ -1130,17 +1015,13 @@ void packingOfParallelogramsConstrained(
       vertices[i]->_v->getParameter(1, para1);
       std::cout << "            point tested: para 1 " << para0
                 << " and para 2 " << para1 << std::endl;
-      //      fprintf(f,"TP(%22.15E,%22.15E,%g){%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E};\n",vertices[i]->_v->x(),vertices[i]->_v->y(),vertices[i]->_v->z(),
-      //	      vertices[i]->_meshMetric(0,0),vertices[i]->_meshMetric(0,1),vertices[i]->_meshMetric(0,2),
-      //	      vertices[i]->_meshMetric(1,0),vertices[i]->_meshMetric(1,1),vertices[i]->_meshMetric(1,2),
-      //	      vertices[i]->_meshMetric(2,0),vertices[i]->_meshMetric(2,1),vertices[i]->_meshMetric(2,2));
-      // fprintf(f,"SP(%22.15E,%22.15E,%g){1};\n",midpoint.x(),midpoint.y(),0.0);
     }
     delete vertices[i];
   }
-  fprintf(f, "};");
-  fclose(f);
-  //  printf("packed.size = %d\n",packed.size());
-  //  delete rtree;
+  if(f){
+    fprintf(f, "};");
+    fclose(f);
+  }
+  // delete rtree;
 #endif
 }
