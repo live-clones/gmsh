@@ -271,7 +271,13 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
       it != boundaryConditions.end(); ++it) {
     fprintf(fp, "       BOUNDARY CONDITIONS 2.0.0\n");
 
-    std::string const regionName = getPhysicalName(2, it->first);
+    std::string regionName = getPhysicalName(2, it->first);
+    if(regionName.empty()) {
+      char tmp[256];
+      sprintf(tmp, "PhysicalSurface%d", it->first);
+      regionName = tmp;
+    }
+
     fprintf(fp, "%32s%8d%8lu%8d%8d\n", regionName.c_str(), 1, it->second.size(),
             0, gambitBoundaryCode(regionName));
     std::sort(it->second.begin(), it->second.end(), sortBCs);
