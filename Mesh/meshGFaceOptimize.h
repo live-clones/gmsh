@@ -61,7 +61,7 @@ enum splitCriterion { SPCR_CLOSE, SPCR_QUAL, SPCR_ALLWAYS };
 
 int edgeSwapPass(GFace *gf, std::set<MTri3 *, compareTri3Ptr> &allTris,
                  const swapCriterion &cr, bidimMeshData &DATA);
-void buildMeshGenerationDataStructures(
+bool buildMeshGenerationDataStructures(
   GFace *gf, std::set<MTri3 *, compareTri3Ptr> &AllTris, bidimMeshData &data);
 void transferDataStructure(GFace *gf,
                            std::set<MTri3 *, compareTri3Ptr> &AllTris,

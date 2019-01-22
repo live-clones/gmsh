@@ -29,7 +29,6 @@ public:
   virtual Range<double> parBounds(int) const;
   void createGeometry();
   virtual void mesh(bool verbose);
-  void writeGEO(FILE *fp);
   int minimumDrawSegments() const { return 2 * _pars.size(); }
 };
 

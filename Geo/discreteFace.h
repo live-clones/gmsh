@@ -77,7 +77,6 @@ public:
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
                          SVector3 &dudv) const;
-  void writeGEO(FILE *fp);
   void createGeometry();
   virtual void mesh(bool verbose);
   void setBoundEdges(const std::vector<int> &tagEdges);

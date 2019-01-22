@@ -106,16 +106,18 @@ static void setLcs(MTriangle *t, std::map<MVertex *, double> &vSizes,
   }
 }
 
-void buildMeshGenerationDataStructures(
+bool buildMeshGenerationDataStructures(
   GFace *gf, std::set<MTri3 *, compareTri3Ptr> &AllTris, bidimMeshData &data)
 {
   std::map<MVertex *, double> vSizesMap;
 
   for(unsigned int i = 0; i < gf->triangles.size(); i++)
     setLcsInit(gf->triangles[i], vSizesMap);
+
   std::map<MVertex *, double>::iterator itfind = vSizesMap.find(NULL);
   if(itfind != vSizesMap.end()) {
-    Msg::Error("some NULL points exist ?? in 2D meshing");
+    Msg::Error("Some NULL points exist in 2D mesh");
+    return false;
   }
 
   for(unsigned int i = 0; i < gf->triangles.size(); i++)
@@ -196,6 +198,8 @@ void buildMeshGenerationDataStructures(
   }
   gf->triangles.clear();
   connectTriangles(AllTris);
+
+  return true;
 }
 
 void computeEquivalences(GFace *gf, bidimMeshData &data)

@@ -1034,7 +1034,10 @@ void bowyerWatson(GFace *gf, int MAXPNT,
   std::set<MTri3 *, compareTri3Ptr> AllTris;
   bidimMeshData DATA(equivalence, parametricCoordinates);
 
-  buildMeshGenerationDataStructures(gf, AllTris, DATA);
+  if(!buildMeshGenerationDataStructures(gf, AllTris, DATA)){
+    Msg::Error("Invalid meshing data structure");
+    return;
+  }
 
   int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
   Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
@@ -1295,7 +1298,10 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   std::set<GEntity*> degenerated;
   getDegeneratedVertices(gf, degenerated);
 
-  buildMeshGenerationDataStructures(gf, AllTris, DATA);
+  if(!buildMeshGenerationDataStructures(gf, AllTris, DATA)){
+    Msg::Error("Invalid meshing data structure");
+    return;
+  }
 
   // delaunise the initial mesh
   edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
@@ -1514,7 +1520,10 @@ void bowyerWatsonFrontalLayers(
     MTri3::radiusNorm = -1;
   }
 
-  buildMeshGenerationDataStructures(gf, AllTris, DATA);
+  if(!buildMeshGenerationDataStructures(gf, AllTris, DATA)){
+    Msg::Error("Invalid meshing data structure");
+    return;
+  }
 
   // delaunise the initial mesh
   int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
@@ -1645,7 +1654,10 @@ void bowyerWatsonParallelograms(
   Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
 #endif
 
-  buildMeshGenerationDataStructures(gf, AllTris, DATA);
+  if(!buildMeshGenerationDataStructures(gf, AllTris, DATA)){
+    Msg::Error("Invalid meshing data structure");
+    return;
+  }
 
   // delaunise the initial mesh
   int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
@@ -1700,36 +1712,31 @@ void bowyerWatsonParallelogramsConstrained(
   std::map<MVertex *, MVertex *> *equivalence,
   std::map<MVertex *, SPoint2> *parametricCoordinates)
 {
-  std::cout << "   entered bowyerWatsonParallelogramsConstrained" << std::endl;
   std::set<MTri3 *, compareTri3Ptr> AllTris;
   bidimMeshData DATA(equivalence, parametricCoordinates);
   std::vector<MVertex *> packed;
   std::vector<SMetric3> metrics;
 
 #if defined(HAVE_DOMHEX)
-  std::cout << "   entering packingOfParallelogramsConstrained" << std::endl;
   packingOfParallelogramsConstrained(gf, constr_vertices, packed, metrics);
-  std::cout << "out of packingOfParallelogramsConstrained" << std::endl;
 #else
   Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
 #endif
 
-  buildMeshGenerationDataStructures(gf, AllTris, DATA);
+  if(!buildMeshGenerationDataStructures(gf, AllTris, DATA)){
+    Msg::Error("Invalid meshing data structure");
+    return;
+  }
 
-  std::cout << "out of buildMeshGenerationDataStructures" << std::endl;
   // delaunise the initial mesh
   int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
   Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
 
   std::sort(packed.begin(), packed.end(), MVertexLessThanLexicographic());
-  std::cout << "out of sort" << std::endl;
 
   MTri3 *oneNewTriangle = 0;
-  std::cout << "entering for packed" << std::endl;
   for(unsigned int i = 0; i < packed.size();) {
-    std::cout << "   First stop for" << std::endl;
     MTri3 *worst = *AllTris.begin();
-    std::cout << "   got worst" << std::endl;
     if(worst->isDeleted()) {
       delete worst->tri();
       delete worst;
@@ -1748,7 +1755,6 @@ void bowyerWatsonParallelogramsConstrained(
       if(!success) oneNewTriangle = 0;
       i++;
     }
-    std::cout << "   out of first if" << std::endl;
 
     if(1.0 * AllTris.size() > 2.5 * DATA.vSizes.size()) {
       std::set<MTri3 *, compareTri3Ptr>::iterator itd = AllTris.begin();
@@ -1761,28 +1767,18 @@ void bowyerWatsonParallelogramsConstrained(
           itd++;
       }
     }
-    std::cout << "   out of second if" << std::endl;
   }
-  std::cout << "out of for packed" << std::endl;
 
   transferDataStructure(gf, AllTris, DATA);
-  std::cout << "out of transferDataStructure" << std::endl;
-  std::cout << "testing all vertices of gf" << std::endl;
   for(unsigned int i = 0; i < gf->getNumMeshVertices(); i++) {
     MVertex *vtest = gf->getMeshVertex(i);
-    std::cout << "going to test out parameterisation of the point after "
-                 "packing and everything"
-              << std::endl;
     double para0, para1;
     vtest->getParameter(0, para0);
     vtest->getParameter(1, para1);
-    std::cout << "            point tested: para 1 " << para0 << " and para 2 "
-              << para1 << std::endl;
   }
   backgroundMesh::unset();
 
   splitElementsInBoundaryLayerIfNeeded(gf);
-  std::cout << "out of Everything" << std::endl;
 }
 
 static void initialSquare(std::vector<MVertex *> &v, MVertex *box[4],
