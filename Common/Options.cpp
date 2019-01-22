@@ -6050,30 +6050,6 @@ double opt_mesh_flexible_transfinite(OPT_ARGS_NUM)
   return CTX::instance()->mesh.flexibleTransfinite;
 }
 
-double opt_mesh_do_recombination_test(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    CTX::instance()->mesh.doRecombinationTest = (int)val;
-  }
-  return CTX::instance()->mesh.doRecombinationTest;
-}
-
-double opt_mesh_recombination_test_start(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    CTX::instance()->mesh.recombinationTestStart = (int)val;
-  }
-  return CTX::instance()->mesh.recombinationTestStart;
-}
-
-double opt_mesh_recombination_no_greedy_strat(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    CTX::instance()->mesh.recombinationTestNoGreedyStrat = (int)val;
-  }
-  return CTX::instance()->mesh.recombinationTestNoGreedyStrat;
-}
-
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -6106,18 +6082,12 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
   if(FlGui::available() && (action & GMSH_GUI)) {
     switch (CTX::instance()->mesh.algo3d) {
     case ALGO_3D_HXT:
-      FlGui::instance()->options->mesh.choice[3]->value(6);
-      break;
-    case ALGO_3D_RTREE:
-      FlGui::instance()->options->mesh.choice[3]->value(5);
-      break;
-    case ALGO_3D_MMG3D:
       FlGui::instance()->options->mesh.choice[3]->value(4);
       break;
-    case ALGO_3D_FRONTAL_HEX:
+    case ALGO_3D_RTREE:
       FlGui::instance()->options->mesh.choice[3]->value(3);
       break;
-    case ALGO_3D_FRONTAL_DEL:
+    case ALGO_3D_MMG3D:
       FlGui::instance()->options->mesh.choice[3]->value(2);
       break;
     case ALGO_3D_FRONTAL:

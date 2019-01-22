@@ -1026,10 +1026,6 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
             CTX::instance()->mesh.algo3d = ALGO_3D_FRONTAL;
           else if(!strncmp(argv[i], "mmg3d", 5))
             CTX::instance()->mesh.algo3d = ALGO_3D_MMG3D;
-          else if(!strncmp(argv[i], "delfr3d", 7))
-            CTX::instance()->mesh.algo3d = ALGO_3D_FRONTAL_DEL;
-          else if(!strncmp(argv[i], "delhex3d", 8))
-            CTX::instance()->mesh.algo3d = ALGO_3D_FRONTAL_HEX;
           else if(!strncmp(argv[i], "rtree3d", 7))
             CTX::instance()->mesh.algo3d = ALGO_3D_RTREE;
           else{
@@ -1043,35 +1039,11 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
           if(exitOnError) Msg::Exit(1);
         }
       }
-      else if(!strcmp(argv[i] + 1, "recall")) {
+      else if(!strcmp(argv[i] + 1, "quad")) {
         CTX::instance()->mesh.recombineAll = 1;
+        CTX::instance()->mesh.algoRecombine = 2;
+        CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL_QUAD;
         i++;
-      }
-      else if(!strcmp(argv[i] + 1, "rec")) {
-        i++;
-        if (argc - i < 3){
-          Msg::Error("Not enough arguments");
-          if(exitOnError) Msg::Exit(1);
-        }
-        else{
-          CTX::instance()->mesh.doRecombinationTest = 1;
-          CTX::instance()->mesh.recTestName = argv[i]; i++;
-          CTX::instance()->mesh.nProc = atoi(argv[i]); i++;
-          CTX::instance()->mesh.nbProc = atoi(argv[i]); i++;
-        }
-      }
-      else if(!strcmp(argv[i] + 1, "beg")) {
-        i++;
-        if(argv[i])
-          CTX::instance()->mesh.recombinationTestStart = atoi(argv[i++]);
-        else{
-          Msg::Error("Missing number for begin recTest");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(!strcmp(argv[i] + 1, "nogreedy")) {
-        i++;
-        CTX::instance()->mesh.recombinationTestNoGreedyStrat = 1;
       }
       else if(!strcmp(argv[i] + 1, "meshdiscrete")) {
         i++;

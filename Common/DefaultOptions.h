@@ -1233,12 +1233,6 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Recombine3DConformity" , opt_mesh_recombine3d_conformity , 0 ,
     "3d recombination conformity type (0: nonconforming, 1: trihedra, "
     "2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)" },
-  { F|O, "DoRecombinationTest" , opt_mesh_do_recombination_test , 0 ,
-    "Apply recombination algorithm for test" },
-  { F|O, "RecombinationTestHorizStart" , opt_mesh_recombination_test_start , 1 ,
-    "Depth start" },
-  { F|O, "RecombinationTestNoGreedyStrat" , opt_mesh_recombination_no_greedy_strat , 0 ,
-    "No greedy (global) strategies" },
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" },
   { F|O, "Renumber" , opt_mesh_renumber , 1 ,

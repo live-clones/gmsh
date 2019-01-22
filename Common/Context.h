@@ -58,10 +58,6 @@ struct contextMeshOptions {
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
   int partitionOldStyleMsh2;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
-  // recombination
-  int doRecombinationTest, recombinationTestStart;
-  int recombinationTestNoGreedyStrat, recombinationTestNewStrat, nProc, nbProc;
-  std::string recTestName;
   // mesh display
   int draw, changed, light, lightTwoSide, lightLines, pointType;
   int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms;

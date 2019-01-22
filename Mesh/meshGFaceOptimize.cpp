@@ -1481,9 +1481,8 @@ void quadsToTriangles(GFace *gf, double minqual)
         new MTriangle(q->getVertex(3), q->getVertex(0), q->getVertex(1));
       double qual1 = std::min(t11->gammaShapeMeasure(), t12->gammaShapeMeasure());
       double qual2 = std::min(t21->gammaShapeMeasure(), t22->gammaShapeMeasure());
-      //double ori1 = dot(t11->getFace(0).normal(), t12->getFace(0).normal());
       double ori2 = dot(t21->getFace(0).normal(), t22->getFace(0).normal());
-      // chose (t11, t12) if it leads to the best quality OR if choosing (t21,
+      // choose (t11, t12) if it leads to the best quality OR if choosing (t21,
       // t22) would revert the orientation (which can happen if q is not convex)
       if(qual1 > qual2 || ori2 < 0) {
         gf->triangles.push_back(t11);
