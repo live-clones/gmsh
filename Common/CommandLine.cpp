@@ -1042,7 +1042,6 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       else if(!strcmp(argv[i] + 1, "quad")) {
         CTX::instance()->mesh.recombineAll = 1;
         CTX::instance()->mesh.algoRecombine = 2;
-        CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL_QUAD;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "meshdiscrete")) {
