@@ -1,7 +1,7 @@
 import gmsh
 import math
-import thread
 import time
+import threading
 
 # This example shows how to implement a custom user interface running
 # computationally expensive calculations in separate threads. The threads can
@@ -84,7 +84,9 @@ while 1:
         # start computationally intensive calculations in their own threads
         n = int(gmsh.onelab.getNumber("My App/Number of threads")[0])
         for i in range(n):
-            thread.start_new_thread(compute, ("My App/Thread {0}".format(i + 1),))
+            t = threading.Thread(target=compute,
+                                 args=("My App/Thread {0}".format(i + 1),))
+            t.start()
     elif action[0] == "should stop":
         stop_computation = True
     elif action[0] == "done computing":
