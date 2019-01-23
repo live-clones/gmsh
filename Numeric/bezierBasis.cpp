@@ -1727,6 +1727,65 @@ void bezierCoeff::updateDataPtr(long diff)
     _data += diff;
 }
 
+int bezierCoeff::getIdxCornerCoeff(int i) const
+{
+  //TODO: other types
+  const int order = _funcSpaceData.spaceOrder();
+  switch(_funcSpaceData.elementType()) {
+  case TYPE_TRI:
+    switch(i) {
+    case 0: return 0;
+    case 1: return order;
+    case 2: return _r - 1;
+    }
+  case TYPE_QUA:
+    switch(i) {
+    case 0: return 0;
+    case 1: return order;
+    case 2: return _r - 1;
+    case 3: return _r - 1 - order;
+    }
+  case TYPE_TET:
+    switch(i) {
+    case 0: return 0;
+    case 1: return order;
+    case 2: return (order + 2) * (order + 1) / 2 - 1;
+    case 3: return _r - 1;
+    }
+  case TYPE_HEX:
+    switch(i) {
+    case 0: return 0;
+    case 1: return order;
+    case 2: return (order + 1) * (order + 1) - 1;
+    case 3: return (order + 1) * order;
+    case 4: return (order + 1) * (order + 1) * order;
+    case 5: return (order + 1) * (order + 1) * order + order;
+    case 6: return _r - 1;
+    case 7: return (order + 2) * (order + 1) * order;
+    }
+  case TYPE_PRI:
+    switch(i) {
+    case 0: return 0;
+    case 1: return order;
+    case 2: return (order + 2) * (order + 1) / 2 - 1;
+    case 3: return (order + 2) * (order + 1) / 2 * order;
+    case 4: return (order + 2) * (order + 1) / 2 * order + order;
+    case 5: return _r - 1;
+    }
+  case TYPE_PYR:
+    switch(i) {
+    case 0: return 0;
+    case 1: return order;
+    case 2: return (order + 1) * (order + 1) - 1;
+    case 3: return (order + 1) * order;
+    case 4: return _r - 1;
+    }
+  default:
+    Msg::Error("type %d not implemented in getIdxCornerCoeff", _funcSpaceData.elementType());
+    return 0;
+  }
+}
+
 void bezierCoeff::getCornerCoeffs(fullVector<double> &v) const
 {
   const int n = getNumCornerCoeff();

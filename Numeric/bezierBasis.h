@@ -244,27 +244,7 @@ public:
   inline int getNumCoeff() const { return _r; }
   inline int getNumColumns() const { return _c; }
   inline int getNumCornerCoeff() const { return _basis->getNumLagCoeff(); }
-  inline int getIdxCornerCoeff(int i) const
-  {
-    //TODO: other types
-    const int order = _funcSpaceData.spaceOrder();
-    switch(_funcSpaceData.elementType()) {
-    case TYPE_TRI:
-      switch(i) {
-      case 0: return 0;
-      case 1: return order;
-      case 2: return _r - 1;
-      }
-    case TYPE_QUA:
-      switch(i) {
-      case 0: return 0;
-      case 1: return order;
-      case 2: return _r - 1;
-      case 3: return _r - 1 - order;
-      }
-    default: return 0;
-    }
-  }
+  int getIdxCornerCoeff(int i) const;
   inline double getCornerCoeff(int k) const
   {
     return _data[getIdxCornerCoeff(k)];

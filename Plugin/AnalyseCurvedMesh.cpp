@@ -567,7 +567,8 @@ void GMSH_AnalyseCurvedMeshPlugin::_computePointwiseQuantities(
   }
 
   if(_pwJac) {
-    jacobianBasedQuality::sampleJacobian(el, _viewOrder, tmpVector, normals);
+    jacobianBasedQuality::sampleJacobianDeterminant(el, _viewOrder, tmpVector,
+                                                    normals);
     std::vector<double> &vec = _dataPViewJac[num];
     for(int j = 0; j < tmpVector.size(); ++j) vec.push_back(tmpVector(j));
   }
