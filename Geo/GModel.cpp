@@ -793,7 +793,8 @@ void GModel::removePhysicalName(const std::string &name)
     physicalNames.begin();
   while(it != physicalNames.end()){
     if(it->second == name)
-      it = physicalNames.erase(it);
+      //it = physicalNames.erase(it); // C++11 only
+      physicalNames.erase(it++);
     else
       ++it;
   }
