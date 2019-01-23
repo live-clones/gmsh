@@ -418,6 +418,17 @@ GMSH_API void gmshModelRemovePhysicalGroups(int * dimTags, size_t dimTags_n, int
   }
 }
 
+GMSH_API void gmshModelRemovePhysicalName(const char * name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::removePhysicalName(name);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelGetType(const int dim, const int tag, char ** entityType, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -436,6 +447,19 @@ GMSH_API void gmshModelGetParent(const int dim, const int tag, int * parentDim, 
   if(ierr) *ierr = 0;
   try {
     gmsh::model::getParent(dim, tag, *parentDim, *parentTag);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelGetPartitions(const int dim, const int tag, int ** partitions, size_t * partitions_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_partitions_;
+    gmsh::model::getPartitions(dim, tag, api_partitions_);
+    vector2ptr(api_partitions_, partitions, partitions_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

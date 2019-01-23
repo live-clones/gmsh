@@ -34,7 +34,18 @@ int main(int argc, char **argv)
       numElem += elemTags[i].size();
     std::cout << nodeTags.size() << " mesh nodes and "
               << numElem << " mesh elements on entity ("
-              << dim << "," << tag << ")\n";
+              << dim << "," << tag << ")";
+    std::vector<int> partitions;
+    gmsh::model::getPartitions(dim, tag, partitions);
+    if(partitions.size()){
+      std::cout << " - partition(s): ";
+      for(unsigned int i = 0; i < partitions.size(); i++)
+        std::cout << partitions[i] << " ";
+      int parentDim, parentTag;
+      gmsh::model::getParent(dim, tag, parentDim, parentTag);
+      std::cout << "parent entity (" << parentDim << "," << parentTag << ")";
+    }
+    std::cout << "\n";
     for(unsigned int i = 0; i < elemTypes.size(); i++){
       std::string name;
       int d, order, numv;

@@ -530,6 +530,20 @@ function removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
 end
 
 """
+    gmsh.model.removePhysicalName(name)
+
+Remove the physical name `name` of the current model.
+"""
+function removePhysicalName(name)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelRemovePhysicalName, gmsh.lib), Nothing,
+          (Ptr{Cchar}, Ptr{Cint}),
+          name, ierr)
+    ierr[] != 0 && error("gmshModelRemovePhysicalName returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.getType(dim, tag)
 
 Get the type of the entity of dimension `dim` and tag `tag`.
@@ -565,6 +579,26 @@ function getParent(dim, tag)
           dim, tag, api_parentDim_, api_parentTag_, ierr)
     ierr[] != 0 && error("gmshModelGetParent returned non-zero error code: $(ierr[])")
     return api_parentDim_[], api_parentTag_[]
+end
+
+"""
+    gmsh.model.getPartitions(dim, tag)
+
+In a partitioned model, return the tags of the partition(s) to which the entity
+belongs.
+
+Return `partitions`.
+"""
+function getPartitions(dim, tag)
+    api_partitions_ = Ref{Ptr{Cint}}()
+    api_partitions_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetPartitions, gmsh.lib), Nothing,
+          (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, api_partitions_, api_partitions_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetPartitions returned non-zero error code: $(ierr[])")
+    partitions = unsafe_wrap(Array, api_partitions_[], api_partitions_n_[], own=true)
+    return partitions
 end
 
 """

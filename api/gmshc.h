@@ -215,6 +215,10 @@ GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n,
 GMSH_API void gmshModelRemovePhysicalGroups(int * dimTags, size_t dimTags_n,
                                             int * ierr);
 
+/* Remove the physical name `name' of the current model. */
+GMSH_API void gmshModelRemovePhysicalName(const char * name,
+                                          int * ierr);
+
 /* Get the type of the entity of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelGetType(const int dim,
                                const int tag,
@@ -229,6 +233,13 @@ GMSH_API void gmshModelGetParent(const int dim,
                                  int * parentDim,
                                  int * parentTag,
                                  int * ierr);
+
+/* In a partitioned model, return the tags of the partition(s) to which the
+ * entity belongs. */
+GMSH_API void gmshModelGetPartitions(const int dim,
+                                     const int tag,
+                                     int ** partitions, size_t * partitions_n,
+                                     int * ierr);
 
 /* Evaluate the parametrization of the entity of dimension `dim' and tag `tag'
  * at the parametric coordinates `parametricCoord'. Only valid for `dim' equal

@@ -381,6 +381,18 @@ Remove the physical groups @code{dimTags} of the current model. If
 -
 @end table
 
+@item removePhysicalName
+Remove the physical name @code{name} of the current model.
+
+@table @asis
+@item Input:
+@code{name}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item getType
 Get the type of the entity of dimension @code{dim} and tag @code{tag}.
 
@@ -403,6 +415,19 @@ tag @code{tag}, i.e. from which the entity is a part of, if any.
 @code{dim}, @code{tag}
 @item Output:
 @code{parentDim}, @code{parentTag}
+@item Return:
+-
+@end table
+
+@item getPartitions
+In a partitioned model, return the tags of the partition(s) to which the entity
+belongs.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{partitions}
 @item Return:
 -
 @end table

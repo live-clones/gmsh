@@ -392,6 +392,9 @@ public:
   // "dim" and id number "num"
   std::string getPhysicalName(int dim, int num) const;
 
+  // remove physical name(s)
+  void removePhysicalName(const std::string &name);
+
   // get the number of a given physical group of dimension
   // "dim" and name "name". return -1 if not found
   int getPhysicalNumber(const int &dim, const std::string &name);

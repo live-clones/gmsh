@@ -677,6 +677,20 @@ class model:
                 ierr.value)
 
     @staticmethod
+    def removePhysicalName(name):
+        """
+        Remove the physical name `name' of the current model.
+        """
+        ierr = c_int()
+        lib.gmshModelRemovePhysicalName(
+            c_char_p(name.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelRemovePhysicalName returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
     def getType(dim, tag):
         """
         Get the type of the entity of dimension `dim' and tag `tag'.
@@ -721,6 +735,27 @@ class model:
         return (
             api_parentDim_.value,
             api_parentTag_.value)
+
+    @staticmethod
+    def getPartitions(dim, tag):
+        """
+        In a partitioned model, return the tags of the partition(s) to which the
+        entity belongs.
+
+        Return `partitions'.
+        """
+        api_partitions_, api_partitions_n_ = POINTER(c_int)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetPartitions(
+            c_int(dim),
+            c_int(tag),
+            byref(api_partitions_), byref(api_partitions_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetPartitions returned non-zero error code: ",
+                ierr.value)
+        return _ovectorint(api_partitions_, api_partitions_n_.value)
 
     @staticmethod
     def getValue(dim, tag, parametricCoord):

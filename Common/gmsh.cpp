@@ -19,6 +19,10 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "discreteRegion.h"
+#include "partitionVertex.h"
+#include "partitionEdge.h"
+#include "partitionFace.h"
+#include "partitionRegion.h"
 #include "MVertex.h"
 #include "MPoint.h"
 #include "MLine.h"
@@ -525,7 +529,13 @@ GMSH_API void gmsh::model::removePhysicalGroups(const vectorpair &dimTags)
   }
 }
 
-// FIXME: add a "removePhysicalName" function
+GMSH_API void gmsh::model::removePhysicalName(const std::string &name)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  GModel::current()->removePhysicalName(name);
+}
 
 GMSH_API void gmsh::model::getType(const int dim, const int tag,
                                    std::string &entityType)
@@ -557,12 +567,35 @@ GMSH_API void gmsh::model::getParent(const int dim, const int tag,
   GEntity *parent = ge->getParentEntity();
   if(parent) {
     parentDim = parent->dim();
-    parentDim = parent->tag();
+    parentTag = parent->tag();
   }
 }
 
-// FIXME: add functions to get partition tag + ghost cells. See
-// https://gitlab.onelab.info/gmsh/gmsh/issues/480
+GMSH_API void gmsh::model::getPartitions(const int dim, const int tag,
+                                         std::vector<int> &partitions)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  partitions.clear();
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
+  }
+  std::vector<unsigned int> p;
+  if(ge->geomType() == GEntity::PartitionPoint)
+    p = static_cast<partitionVertex*>(ge)->getPartitions();
+  else if(ge->geomType() == GEntity::PartitionCurve)
+    p = static_cast<partitionEdge*>(ge)->getPartitions();
+  else if(ge->geomType() == GEntity::PartitionSurface)
+    p = static_cast<partitionFace*>(ge)->getPartitions();
+  else if(ge->geomType() == GEntity::PartitionVolume)
+    p = static_cast<partitionRegion*>(ge)->getPartitions();
+  for(unsigned int i = 0; i < p.size(); i++)
+    partitions.push_back(p[i]);
+  // TODO: provide API access to ghost cells
+}
 
 GMSH_API void gmsh::model::getValue(const int dim, const int tag,
                                     const std::vector<double> &parametricCoord,

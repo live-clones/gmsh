@@ -135,11 +135,17 @@ model.add('removeEntities',doc,None,ivectorpair('dimTags'),ibool('recursive','fa
 doc = '''Remove the physical groups `dimTags' of the current model. If `dimTags' is empty, remove all groups.'''
 model.add('removePhysicalGroups',doc,None,ivectorpair('dimTags','gmsh::vectorpair()',"[]","[]"))
 
+doc = '''Remove the physical name `name' of the current model.'''
+model.add('removePhysicalName',doc,None,istring('name'))
+
 doc = '''Get the type of the entity of dimension `dim' and tag `tag'.'''
 model.add('getType',doc,None,iint('dim'),iint('tag'),ostring('entityType'))
 
 doc = '''In a partitioned model, get the parent of the entity of dimension `dim' and tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and `parentTag' are set to -1 if the entity has no parent.'''
 model.add('getParent',doc,None,iint('dim'),iint('tag'),oint('parentDim'),oint('parentTag'))
+
+doc = '''In a partitioned model, return the tags of the partition(s) to which the entity belongs.'''
+model.add('getPartitions',doc,None,iint('dim'),iint('tag'),ovectorint('partitions'))
 
 doc = '''Evaluate the parametrization of the entity of dimension `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim' equal to 0 (with empty `parametricCoord'), 1 (with `parametricCoord' containing parametric coordinates on the curve) or 2 (with `parametricCoord' containing pairs of u, v parametric coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]). Return triplets of x, y, z coordinates in `points', concatenated: [p1x, p1y, p1z, p2x, ...].'''
 model.add('getValue',doc,None,iint('dim'),iint('tag'),ivectordouble('parametricCoord'),ovectordouble('points'))

@@ -1388,7 +1388,7 @@ int GModel::_readMSH4(const std::string &name)
     std::vector<GEntity *> entities;
     getEntities(entities);
     for(unsigned int i = 0; i < entities.size(); i++) {
-      if(entities[i]->geomType() == GEntity::PartitionVertex) {
+      if(entities[i]->geomType() == GEntity::PartitionPoint) {
         partitionVertex *pv = static_cast<partitionVertex *>(entities[i]);
         if(pv->numPartitions() == 1) {
           const unsigned int part = pv->getPartition(0);
@@ -1484,7 +1484,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
   if(partition) {
     for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
         ++it) {
-      if((*it)->geomType() == GEntity::PartitionVertex) vertices.insert(*it);
+      if((*it)->geomType() == GEntity::PartitionPoint) vertices.insert(*it);
     }
     for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it) {
       if((*it)->geomType() == GEntity::PartitionCurve) edges.insert(*it);
@@ -1503,7 +1503,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
   else {
     for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
         ++it)
-      if((*it)->geomType() != GEntity::PartitionVertex) vertices.insert(*it);
+      if((*it)->geomType() != GEntity::PartitionPoint) vertices.insert(*it);
     for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it)
       if((*it)->geomType() != GEntity::PartitionCurve &&
          (*it)->geomType() != GEntity::GhostCurve)
@@ -2024,7 +2024,7 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   if(partitioned) {
     for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
         ++it)
-      if((*it)->geomType() == GEntity::PartitionVertex) vertices.insert(*it);
+      if((*it)->geomType() == GEntity::PartitionPoint) vertices.insert(*it);
     for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it) {
       if((*it)->geomType() == GEntity::PartitionCurve)
         edges.insert(*it);
@@ -2048,7 +2048,7 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   else {
     for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
         ++it)
-      if((*it)->geomType() != GEntity::PartitionVertex &&
+      if((*it)->geomType() != GEntity::PartitionPoint &&
          (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0)))
         vertices.insert(*it);
     for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it)
@@ -2180,7 +2180,7 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
   if(partitioned) {
     for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
         ++it)
-      if((*it)->geomType() == GEntity::PartitionVertex) vertices.insert(*it);
+      if((*it)->geomType() == GEntity::PartitionPoint) vertices.insert(*it);
     for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it) {
       if((*it)->geomType() == GEntity::PartitionCurve)
         edges.insert(*it);
@@ -2204,7 +2204,7 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
   else {
     for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
         ++it)
-      if((*it)->geomType() != GEntity::PartitionVertex) vertices.insert(*it);
+      if((*it)->geomType() != GEntity::PartitionPoint) vertices.insert(*it);
     for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it)
       if((*it)->geomType() != GEntity::PartitionCurve &&
          (*it)->geomType() != GEntity::GhostCurve)
@@ -2470,8 +2470,7 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
       fwrite(&ghostCellsSize, sizeof(int), 1, fp);
 
       for(std::map<MElement *, std::vector<unsigned int> >::iterator it =
-            ghostCells.begin();
-          it != ghostCells.end(); ++it) {
+            ghostCells.begin(); it != ghostCells.end(); ++it) {
         int elmNum = it->first->getNum();
         unsigned int part = it->second[0];
         unsigned int numGhost = it->second.size() - 1;
@@ -2726,7 +2725,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
           if(ghostEntities.size()) entitiesSet.insert(pe);
         }
       } break;
-      case GEntity::PartitionVertex: {
+      case GEntity::PartitionPoint: {
         partitionVertex *pv = static_cast<partitionVertex *>(entities[j]);
         if(std::find(pv->getPartitions().begin(), pv->getPartitions().end(),
                      i) != pv->getPartitions().end()) {

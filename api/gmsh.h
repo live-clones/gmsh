@@ -209,6 +209,9 @@ namespace gmsh { // Top-level functions
     // empty, remove all groups.
     GMSH_API void removePhysicalGroups(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
+    // Remove the physical name `name' of the current model.
+    GMSH_API void removePhysicalName(const std::string & name);
+
     // Get the type of the entity of dimension `dim' and tag `tag'.
     GMSH_API void getType(const int dim,
                           const int tag,
@@ -221,6 +224,12 @@ namespace gmsh { // Top-level functions
                             const int tag,
                             int & parentDim,
                             int & parentTag);
+
+    // In a partitioned model, return the tags of the partition(s) to which the
+    // entity belongs.
+    GMSH_API void getPartitions(const int dim,
+                                const int tag,
+                                std::vector<int> & partitions);
 
     // Evaluate the parametrization of the entity of dimension `dim' and tag `tag'
     // at the parametric coordinates `parametricCoord'. Only valid for `dim' equal

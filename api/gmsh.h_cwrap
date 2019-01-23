@@ -414,6 +414,14 @@ namespace gmsh { // Top-level functions
       gmshFree(api_dimTags_);
     }
 
+    // Remove the physical name `name' of the current model.
+    GMSH_API void removePhysicalName(const std::string & name)
+    {
+      int ierr = 0;
+      gmshModelRemovePhysicalName(name.c_str(), &ierr);
+      if(ierr) throw ierr;
+    }
+
     // Get the type of the entity of dimension `dim' and tag `tag'.
     GMSH_API void getType(const int dim,
                           const int tag,
@@ -437,6 +445,19 @@ namespace gmsh { // Top-level functions
       int ierr = 0;
       gmshModelGetParent(dim, tag, &parentDim, &parentTag, &ierr);
       if(ierr) throw ierr;
+    }
+
+    // In a partitioned model, return the tags of the partition(s) to which the
+    // entity belongs.
+    GMSH_API void getPartitions(const int dim,
+                                const int tag,
+                                std::vector<int> & partitions)
+    {
+      int ierr = 0;
+      int *api_partitions_; size_t api_partitions_n_;
+      gmshModelGetPartitions(dim, tag, &api_partitions_, &api_partitions_n_, &ierr);
+      if(ierr) throw ierr;
+      partitions.assign(api_partitions_, api_partitions_ + api_partitions_n_); gmshFree(api_partitions_);
     }
 
     // Evaluate the parametrization of the entity of dimension `dim' and tag `tag'

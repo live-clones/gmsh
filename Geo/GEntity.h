@@ -122,7 +122,7 @@ public:
     Volume,
     DiscreteVolume,
     CompoundVolume,
-    PartitionVertex,
+    PartitionPoint,
     PartitionCurve,
     PartitionSurface,
     PartitionVolume,
