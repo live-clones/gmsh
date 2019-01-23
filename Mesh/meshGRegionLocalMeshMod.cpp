@@ -12,6 +12,14 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 
+typedef struct {
+  int nbr_triangles; // number of different triangles
+  int (*triangles)[3]; // triangles array
+  int nbr_trianguls; // number of different triangulations
+  int nbr_triangles_2; // number of triangles / triangulation
+  int (*trianguls)[5]; // retriangulations array
+} SwapPattern;
+
 static int edges[6][2] = {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}};
 static int efaces[6][2] = {{0, 2}, {0, 1}, {1, 2}, {0, 3}, {2, 3}, {1, 3}};
 // static int enofaces[6][2] = {{1,3},{2,3},{0,3},{1,2},{0,1},{0,2}};
@@ -20,10 +28,9 @@ static int faces[4][3] = {{0, 1, 2}, {0, 2, 3}, {0, 1, 3}, {1, 2, 3}};
 static int vnofaces[4] = {3, 1, 2, 0};
 static int vFac[4][3] = {{0, 1, 2}, {0, 2, 3}, {0, 1, 3}, {1, 2, 3}};
 
-// as input, we give a tet and an edge, as return, we get
-// all tets that share this edge and all vertices that are
-// forming the outer ring of the cavity
-// we return true if the cavity is closed and false if it is open
+// as input, we give a tet and an edge, as return, we get all tets that share
+// this edge and all vertices that are forming the outer ring of the cavity; we
+// return true if the cavity is closed and false if it is open
 
 void computeNeighboringTetsOfACavity(const std::vector<MTet4 *> &cavity,
                                      std::vector<MTet4 *> &outside)
@@ -115,10 +122,10 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
     }
     // FIXME when hybrid mesh, this loops for ever
     if(cavity.size() > 1000) {
-      //      printf("cavity size gets laaaarge\n");
+      // printf("cavity size gets laaaarge\n");
       return false;
     }
-    //    printf("%d %d\n",ITER++, cavity.size());
+    // printf("%d %d\n",ITER++, cavity.size());
   }
   computeNeighboringTetsOfACavity(cavity, outside);
   return true;
@@ -282,8 +289,8 @@ bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
       qmTetrahedron::qm(ring[p1], ring[p2], ring[p3], v2, cr, &(volume2[i]));
   }
 
-  // look for the best triangulation, i.e. the one that maximize the
-  // minimum element quality
+  // look for the best triangulation, i.e. the one that maximize the minimum
+  // element quality
   double minQuality[100];
   // for all triangulations
   for(int i = 0; i < sp.nbr_trianguls; i++) {
@@ -513,10 +520,10 @@ void buildVertexCavity_recur(MTet4 *t, MVertex *v, std::vector<MTet4 *> &cavity)
   }
 }
 
-// sliver removal by compound mesh modif postulate : the edge cannot
-// be swopped so we split it, and then collapse the new vertex on
-// another one (of course, not the other one on the unswappable edge)
-// after that crap, the sliver is trashed
+// sliver removal by compound mesh modif postulate : the edge cannot be swopped
+// so we split it, and then collapse the new vertex on another one (of course,
+// not the other one on the unswappable edge) after that crap, the sliver is
+// trashed
 
 bool collapseVertex(std::vector<MTet4 *> &newTets, MTet4 *t, int iVertex,
                     int iTarget, const qmTetrahedron::Measures &cr,
