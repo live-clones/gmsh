@@ -1657,16 +1657,6 @@ void GModel::scaleMesh(double factor)
     }
 }
 
-int GModel::deleteMeshPartitions()
-{
-#if defined(HAVE_MESH)
-  return UnpartitionMesh(this);
-#else
-  Msg::Error("Mesh module not compiled");
-  return 1;
-#endif
-}
-
 int GModel::partitionMesh(int numPart)
 {
 #if defined(HAVE_MESH) && (defined(HAVE_METIS))
@@ -1679,6 +1669,16 @@ int GModel::partitionMesh(int numPart)
   else {
     return 1;
   }
+#else
+  Msg::Error("Mesh module not compiled");
+  return 1;
+#endif
+}
+
+int GModel::unpartitionMesh()
+{
+#if defined(HAVE_MESH)
+  return UnpartitionMesh(this);
 #else
   Msg::Error("Mesh module not compiled");
   return 1;

@@ -639,6 +639,14 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
       }
 
+      // Unpartition the mesh of the current model.
+      GMSH_API void unpartition()
+      {
+        int ierr = 0;
+        gmshModelMeshUnpartition(&ierr);
+        if(ierr) throw ierr;
+      }
+
       // Refine the mesh of the current model by uniformly splitting the elements.
       GMSH_API void refine()
       {

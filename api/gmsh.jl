@@ -835,6 +835,20 @@ function partition(numPart)
 end
 
 """
+    gmsh.model.mesh.unpartition()
+
+Unpartition the mesh of the current model.
+"""
+function unpartition()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshUnpartition, gmsh.lib), Nothing,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelMeshUnpartition returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.mesh.refine()
 
 Refine the mesh of the current model by uniformly splitting the elements.

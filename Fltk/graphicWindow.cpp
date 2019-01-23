@@ -2155,7 +2155,7 @@ static void mesh_partition_cb(Fl_Widget *w, void *data)
 
 static void mesh_unpartition_cb(Fl_Widget *w, void *data)
 {
-  int ier = GModel::current()->deleteMeshPartitions();
+  int ier = GModel::current()->unpartitionMesh();
 
   // Update the screen
   if(!ier) {

@@ -499,12 +499,12 @@ public:
   unsigned int getNumPartitions() const { return _numPartitions; }
   void setNumPartitions(unsigned int npart) { _numPartitions = npart; }
 
-  // delete all the partitions
-  int deleteMeshPartitions();
   // partition the mesh
   int partitionMesh(int num);
-  // Import a mesh partitionned by a tag given to the element en create the
-  // topology
+  // unpartition the mesh
+  int unpartitionMesh();
+  // import a mesh partitionned by a tag given by element (i.e. the old way we
+  // stored partitions) and create the new topology-based partition entitiesx
   int convertOldPartitioningToNewOne();
   // write the partitioned topology file
   int writePartitionedTopology(std::string &name);

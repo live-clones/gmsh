@@ -184,6 +184,9 @@ mesh.add('generate',doc,None,iint('dim', '3'))
 doc = '''Partition the mesh of the current model into `numPart' partitions.'''
 mesh.add('partition',doc,None,iint('numPart'))
 
+doc = '''Unpartition the mesh of the current model.'''
+mesh.add('unpartition',doc,None)
+
 doc = '''Refine the mesh of the current model by uniformly splitting the elements.'''
 mesh.add('refine',doc,None)
 

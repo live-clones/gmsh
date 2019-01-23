@@ -1,5 +1,6 @@
 4.1.3: save nodesets also for physical points (Abaqus, Tochnog); improved quad
-meshing; new getPartitions and removePhysicalName in API.
+meshing; new getPartitions, unpartition and removePhysicalName functions in API;
+small bug fixes.
 
 4.1.2 (January 21, 2019): fixed full-quad subdivision if Mesh.SecondOrderLinear
  is set; fixed packing of parallelograms regression in 4.1.1.

@@ -325,6 +325,9 @@ namespace gmsh { // Top-level functions
       // Partition the mesh of the current model into `numPart' partitions.
       GMSH_API void partition(const int numPart);
 
+      // Unpartition the mesh of the current model.
+      GMSH_API void unpartition();
+
       // Refine the mesh of the current model by uniformly splitting the elements.
       GMSH_API void refine();
 

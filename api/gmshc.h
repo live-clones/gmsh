@@ -343,6 +343,9 @@ GMSH_API void gmshModelMeshGenerate(const int dim,
 GMSH_API void gmshModelMeshPartition(const int numPart,
                                      int * ierr);
 
+/* Unpartition the mesh of the current model. */
+GMSH_API void gmshModelMeshUnpartition(int * ierr);
+
 /* Refine the mesh of the current model by uniformly splitting the elements. */
 GMSH_API void gmshModelMeshRefine(int * ierr);
 

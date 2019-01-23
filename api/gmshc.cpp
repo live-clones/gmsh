@@ -618,6 +618,17 @@ GMSH_API void gmshModelMeshPartition(const int numPart, int * ierr)
   }
 }
 
+GMSH_API void gmshModelMeshUnpartition(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::unpartition();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshRefine(int * ierr)
 {
   if(ierr) *ierr = 0;

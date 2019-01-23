@@ -1025,6 +1025,19 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def unpartition():
+            """
+            Unpartition the mesh of the current model.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshUnpartition(
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshUnpartition returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def refine():
             """
             Refine the mesh of the current model by uniformly splitting the elements.

@@ -846,6 +846,15 @@ GMSH_API void gmsh::model::mesh::partition(const int numPart)
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
+GMSH_API void gmsh::model::mesh::unpartition()
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  GModel::current()->unpartitionMesh();
+  CTX::instance()->mesh.changed = ENT_ALL;
+}
+
 GMSH_API void gmsh::model::mesh::refine()
 {
   if(!_isInitialized()) {
@@ -3905,11 +3914,12 @@ GMSH_API void gmsh::view::getModelData(const int tag, const int step,
 }
 
 // for better performance, manual C implementation of gmsh::view::getModelData
-GMSH_API void gmshViewGetModelData(const int tag, const int step,
-                                   char **dataType, int **tags, size_t *tags_n,
-                                   double ***data, size_t **data_n,
-                                   size_t *data_nn, double *time,
-                                   int *numComponents, int *ierr)
+GMSH_API void gmshViewGetModelData(const int tag, const int step, char **dataType,
+                                   int **tags, size_t *tags_n,
+                                   double ***data, size_t **data_n, size_t *data_nn,
+                                   double *time,
+                                   int *numComponents,
+                                   int *ierr)
 {
   if(!_isInitialized()) {
     if(ierr) *ierr = -1;
@@ -3942,6 +3952,7 @@ GMSH_API void gmshViewGetModelData(const int tag, const int step,
     Msg::Error("View with tag %d does not contain model data for step %d", tag,
                step);
     if(ierr) *ierr = 2;
+    return;
   }
   *tags_n = 0;
   *data_nn = 0;
@@ -3952,19 +3963,24 @@ GMSH_API void gmshViewGetModelData(const int tag, const int step,
     if(s->getData(i)) numEnt++;
   }
   if(!numEnt) return;
-  *data = (double **)Malloc(numEnt * sizeof(double *));
+  *tags_n = numEnt;
   *tags = (int *)Malloc(numEnt * sizeof(int));
+  *data_nn = numEnt;
+  *data_n = (size_t *)Malloc(numEnt * sizeof(size_t *));
+  *data = (double **)Malloc(numEnt * sizeof(double *));
   int j = 0;
   for(int i = 0; i < s->getNumData(); i++) {
     double *dd = s->getData(i);
     if(dd) {
       (*tags)[j] = i;
       int mult = s->getMult(i);
+      (*data_n)[j] = *numComponents * mult;
       (*data)[j] = (double *)Malloc(*numComponents * mult * sizeof(double));
       for(int k = 0; k < *numComponents * mult; k++) (*data)[j][k] = dd[k];
       j++;
     }
   }
+  if(ierr) *ierr = 0;
 #else
   Msg::Error("Views require the post-processing module");
   if(ierr) *ierr = -1;
