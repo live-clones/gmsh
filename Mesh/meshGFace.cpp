@@ -263,7 +263,7 @@ public:
       // recombine the elements on the half mesh
       CTX::instance()->mesh.lcFactor /= 2.0;
       bool blossom = (CTX::instance()->mesh.algoRecombine == 3);
-      bool topo = (CTX::instance()->mesh.recombineOptimizeTopology ? true : false);
+      int topo = CTX::instance()->mesh.recombineOptimizeTopology;
       recombineIntoQuads(_gf, blossom, topo, true, 0.1);
       subdivide();
       restore();
@@ -1709,7 +1709,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      !onlyInitialMesh && CTX::instance()->mesh.algoRecombine <= 1){
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
-    bool topo = (CTX::instance()->mesh.recombineOptimizeTopology ? true : false);
+    int topo = CTX::instance()->mesh.recombineOptimizeTopology;
     recombineIntoQuads(gf, blossom, topo, true, 0.1);
   }
 
@@ -2765,7 +2765,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      CTX::instance()->mesh.algoRecombine <= 1){
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
-    bool topo = (CTX::instance()->mesh.recombineOptimizeTopology ? true : false);
+    int topo = CTX::instance()->mesh.recombineOptimizeTopology;
     recombineIntoQuads(gf, blossom, topo, false, 0.1); // no node repositioning
   }
 

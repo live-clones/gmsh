@@ -512,8 +512,8 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombineOptimizeTopology
-Optimize topology of recombined surface meshes@*
-Default value: @code{1}@*
+Number of topological optimization passes (removal of diamonds, ...) of recombined surface meshes@*
+Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DAll

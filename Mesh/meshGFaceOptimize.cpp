@@ -1410,7 +1410,7 @@ static double printStats(GFace *gf, const char *message)
   return Qmin;
 }
 
-void recombineIntoQuads(GFace *gf, bool blossom, bool topologicalOpti,
+void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
                         bool nodeRepositioning, double minqual)
 {
   double t1 = Cpu();
@@ -1432,17 +1432,16 @@ void recombineIntoQuads(GFace *gf, bool blossom, bool topologicalOpti,
       gf->model()->writeMSH("recombine_2smoothed.msh");
   }
 
-  if(topologicalOpti) {
-    int ITER = 0;
-    int nbTwoQuadNodes = 1;
-    int nbDiamonds = 1;
+  if(topologicalOptiPasses > 0) {
+    int iter = 0, nbTwoQuadNodes = 1, nbDiamonds = 1;
     while(nbTwoQuadNodes || nbDiamonds) {
+      Msg::Debug("Topological optimization of quad mesh: pass %d", iter);
       nbTwoQuadNodes = removeTwoQuadsNodes(gf);
       nbDiamonds = removeDiamonds(gf);
       if(haveParam && nodeRepositioning)
         RelocateVertices(gf, CTX::instance()->mesh.nbSmoothing);
-      if(ITER > 20) break;
-      ITER++;
+      iter++;
+      if(iter > topologicalOptiPasses) break;
     }
     if(debug)
       gf->model()->writeMSH("recombine_3topo.msh");

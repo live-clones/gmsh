@@ -983,7 +983,8 @@ void RecombineMesh(GModel *m)
     GFace *gf = *it;
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1 ||
                     CTX::instance()->mesh.algoRecombine == 3);
-    recombineIntoQuads(gf, blossom, true, true, .01);
+    int topo = CTX::instance()->mesh.recombineOptimizeTopology;
+    recombineIntoQuads(gf, blossom, topo, true, .01);
   }
 
   CTX::instance()->mesh.changed = ENT_ALL;

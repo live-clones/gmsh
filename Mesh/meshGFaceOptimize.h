@@ -67,7 +67,7 @@ void transferDataStructure(GFace *gf,
                            std::set<MTri3 *, compareTri3Ptr> &AllTris,
                            bidimMeshData &DATA);
 void computeEquivalences(GFace *gf, bidimMeshData &DATA);
-void recombineIntoQuads(GFace *gf, bool blossom, bool topologicalOpti,
+void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
                         bool nodeRepositioning, double minqual);
 
 // used for meshGFaceRecombine development

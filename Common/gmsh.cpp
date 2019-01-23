@@ -561,6 +561,9 @@ GMSH_API void gmsh::model::getParent(const int dim, const int tag,
   }
 }
 
+// FIXME: add functions to get partition tag + ghost cells. See
+// https://gitlab.onelab.info/gmsh/gmsh/issues/480
+
 GMSH_API void gmsh::model::getValue(const int dim, const int tag,
                                     const std::vector<double> &parametricCoord,
                                     std::vector<double> &points)
