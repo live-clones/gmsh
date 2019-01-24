@@ -513,6 +513,8 @@ bool GEO_Internals::_extrude(int mode,
     if(dim >= 0 && dim <= 3)
       outDimTags.push_back(std::pair<int, int>(dim, s.Num));
   }
+  List_Delete(in);
+  List_Delete(out);
   _changed = true;
   return true;
 }
@@ -578,6 +580,7 @@ bool GEO_Internals::_transform(int mode,
   case 2: DilatShapes(x, y, z, a, b, c, list); break;
   case 3: SymmetryShapes(a, b, c, d, list); break;
   }
+  List_Delete(list);
   _changed = true;
   return true;
 }

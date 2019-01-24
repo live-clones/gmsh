@@ -321,9 +321,10 @@ public:
 
     if((CTX::instance()->geom.surfaces || f->getSelection() > 1) &&
        CTX::instance()->geom.surfaceType > 0)
-      f->fillVertexArray(f->geomType() == GEntity::ProjectionFace);
+      f->fillVertexArray();
 
-    if(CTX::instance()->geom.surfaces || f->getSelection() > 1 ||
+    if(((CTX::instance()->geom.surfaces || f->getSelection() > 1) &&
+        CTX::instance()->geom.surfaceType == 0) ||
        CTX::instance()->geom.surfacesNum || CTX::instance()->geom.normals)
       f->buildRepresentationCross();
 
@@ -332,11 +333,7 @@ public:
         bool selected = false;
         if(f->getSelection()) selected = true;
         _drawVertexArray(f->va_geom_triangles, CTX::instance()->geom.light,
-                         (f->geomType() == GEntity::ProjectionFace) ? true :
-                                                                      selected,
-                         (f->geomType() == GEntity::ProjectionFace) ?
-                           CTX::instance()->color.geom.projection :
-                           CTX::instance()->color.geom.selection);
+                         selected, CTX::instance()->color.geom.selection);
       }
       else {
         glEnable(GL_LINE_STIPPLE);

@@ -81,7 +81,7 @@ bool PView::readPOS(const std::string &fileName, int fileIndex)
   return true;
 }
 
-bool PView::readMSH(const std::string &fileName, int fileIndex)
+bool PView::readMSH(const std::string &fileName, int fileIndex, int partitionToRead)
 {
   FILE *fp = Fopen(fileName.c_str(), "rb");
   if(!fp) {
@@ -230,6 +230,7 @@ bool PView::readMSH(const std::string &fileName, int fileIndex)
         }
         // integer tags
         int timeStep = 0, numComp = 0, numEnt = 0, partition = 0;
+        long int blocksize = 0;
         if(!fgets(str, sizeof(str), fp)) {
           fclose(fp);
           return false;
@@ -267,28 +268,43 @@ bool PView::readMSH(const std::string &fileName, int fileIndex)
               return false;
             }
           }
+          else if(i == 4) {
+            if(sscanf(str, "%ld", &blocksize) != 1) {
+              fclose(fp);
+              return false;
+            }
+          }
         }
-        if(numEnt > 0) {
-          // either get existing viewData, or create new one
-          PView *p = getViewByName(viewName, timeStep, partition);
-          PViewDataGModel *d = 0;
-          if(p) d = dynamic_cast<PViewDataGModel *>(p->getData());
-          bool create = d ? false : true;
-          if(create) d = new PViewDataGModel(type);
-          if(!d->readMSH(viewName, fileName, fileIndex, fp, binary, swap,
-                         timeStep, time, partition, numComp, numEnt,
-                         interpolationScheme)) {
-            Msg::Error("Could not read data in msh file");
-            if(create) delete d;
-            fclose(fp);
-            return false;
+        if(partitionToRead == -1 || partitionToRead == partition) {
+          // if default (no particular partition requested from MergeFile -> -1)  or 
+          // if current partition corresponds to the requested partition, read the data
+          if(numEnt > 0) {
+            // either get existing viewData, or create new one
+            PView *p = getViewByName(viewName, timeStep, partition);
+            PViewDataGModel *d = 0;
+            if(p) d = dynamic_cast<PViewDataGModel *>(p->getData());
+            bool create = d ? false : true;
+            if(create) d = new PViewDataGModel(type);
+            if(!d->readMSH(viewName, fileName, fileIndex, fp, binary, swap,
+                           timeStep, time, partition, numComp, numEnt,
+                           interpolationScheme)) {
+              Msg::Error("Could not read data in msh file");
+              if(create) delete d;
+              fclose(fp);
+              return false;
+            }
+            else {
+              d->setName(viewName);
+              d->setFileName(fileName);
+              d->setFileIndex(index);
+              if(create) new PView(d);
+            }
           }
-          else {
-            d->setName(viewName);
-            d->setFileName(fileName);
-            d->setFileIndex(index);
-            if(create) new PView(d);
-          }
+        }
+        else if(blocksize > 0 && partitionToRead != partition) {
+          // if current partition does not correspond to the requested partition and 
+          // if its blocksise has been read (5th integer in the header), jump over it
+          fseek(fp, blocksize, SEEK_CUR);
         }
       }
     }

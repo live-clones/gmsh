@@ -133,19 +133,20 @@ bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
 
 void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug)
 {
-  FILE *view_t;
+  FILE *view_t = 0;
   if(debug) {
     char name[245];
     sprintf(name, "trueBoundary%d.pos", gf->tag());
     view_t = Fopen(name, "w");
-    fprintf(view_t, "View \"True Boundary\"{\n");
+    if(view_t)
+      fprintf(view_t, "View \"True Boundary\"{\n");
   }
   std::vector<GEdge *> edg = gf->edges();
   std::set<GEdge *> edges(edg.begin(), edg.end());
 
   for(std::set<GEdge *>::iterator it = edges.begin(); it != edges.end(); ++it) {
     GEdge *ge = *it;
-    Range<double> r = ge->parBounds(0);
+    Range<double> r = ge->parBoundsOnFace(gf);
     SPoint2 p[300];
     int NITER = ge->isSeam(gf) ? 2 : 1;
     for(int i = 0; i < NITER; i++) {
@@ -155,7 +156,7 @@ void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug)
         double xi = r.low() + (r.high() - r.low()) * t;
         p[k] = ge->reparamOnFace(gf, xi, i);
         if(k > 0) {
-          if(debug) {
+          if(view_t) {
             fprintf(view_t, "SL(%g,%g,%g,%g,%g,%g){1,1};\n", p[k - 1].x(),
                     p[k - 1].y(), 0.0, p[k].x(), p[k].y(), 0.0);
           }
@@ -165,7 +166,7 @@ void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug)
       }
     }
   }
-  if(debug) {
+  if(view_t) {
     fprintf(view_t, "};\n");
     fclose(view_t);
   }
@@ -1172,6 +1173,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
                    bool onlyInitialMesh, bool debug,
                    std::vector<GEdge *> *replacement_edges)
 {
+
+  //  printf("SURFEC %d\n",gf->tag());
   if(CTX::instance()->debugSurface > 0 &&
      gf->tag() != CTX::instance()->debugSurface) {
     gf->meshStatistics.status = GFace::DONE;
@@ -1205,6 +1208,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       return false;
     }
     if(!(*ite)->isMeshDegenerated()) {
+      //      printf("lasso %d\n",(*ite)->lines.size());
       for(unsigned int i = 0; i < (*ite)->lines.size(); i++) {
         MVertex *v1 = (*ite)->lines[i]->getVertex(0);
         MVertex *v2 = (*ite)->lines[i]->getVertex(1);
@@ -1268,10 +1272,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     ++itvx;
   }
 
-  // add additional vertices
-  all_vertices.insert(gf->additionalVertices.begin(),
-                      gf->additionalVertices.end());
-
   if(all_vertices.size() < 3) {
     Msg::Warning("Mesh generation of surface %d skipped: only %d nodes on "
                  "the boundary", gf->tag(), all_vertices.size());
@@ -1295,6 +1295,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   // meshing procedure
   BDS_Mesh *m = new BDS_Mesh;
 
+  
   std::vector<BDS_Point *> points(all_vertices.size());
   SBoundingBox3d bbox;
   int count = 0;
@@ -1316,6 +1317,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     count++;
   }
 
+
+  
   bbox.makeCube();
 
   // use a divide & conquer type algorithm to create a triangulation.
@@ -1814,11 +1817,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
                        gf->meshStatistics.nbTriangle,
                        gf->meshStatistics.nbGoodQuality);
 
-  gf->mesh_vertices.insert(gf->mesh_vertices.end(),
-                           gf->additionalVertices.begin(),
-                           gf->additionalVertices.end());
-  gf->additionalVertices.clear();
-
   if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
     directions_storage(gf);
   }
@@ -1883,7 +1881,7 @@ static bool buildConsecutiveListOfVertices(
 
     // if(seam) printf("face %d has seam %d\n", gf->tag(), ges.ge->tag());
 
-    Range<double> range = ges.ge->parBounds(0);
+    Range<double> range = ges.ge->parBoundsOnFace(gf);
 
     MVertex *here = ges.ge->getBeginVertex()->mesh_vertices[0];
     mesh1d.push_back(ges.ge->reparamOnFace(gf, range.low(), 1));
@@ -2297,7 +2295,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
           if(it != invertedRecoverMap.end()) {
             if(it->second.size() > 1) {
               const GEdge *edge = (*ite);
-              const Range<double> parBounds = edge->parBounds(0);
+              const Range<double> parBounds = edge->parBoundsOnFace(gf);
               GPoint firstPoint = edge->point(parBounds.low());
               GPoint lastPoint = edge->point(parBounds.high());
               double param;
@@ -2546,7 +2544,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
         std::vector<GEdge *> eds = gf->edges();
         edgesNotRecovered.clear();
         for(size_t i = 0; i < eds.size(); i++) {
-          const int NN = eds[i]->lines.size() ? 1 : 0;
+          const unsigned int NN = eds[i]->lines.size() ? 1 : 0;
           for(size_t j = 0; j < NN; j++) {
             MVertex *v1 = eds[i]->lines[j]->getVertex(0);
             MVertex *v2 = eds[i]->lines[j]->getVertex(1);
@@ -2946,14 +2944,12 @@ static bool isMeshValid(GFace *gf)
 }
 
 // for debugging, change value from -1 to -100;
-int debugSurface = -1; //-100;
+int debugSurface = -100; //-100;
 
 void meshGFace::operator()(GFace *gf, bool print)
 {
   gf->model()->setCurrentMeshEntity(gf);
 
-  // if(gf->geomType() == GEntity::DiscreteFace) return;
-  if(gf->geomType() == GEntity::ProjectionFace) return;
   if(gf->meshAttributes.method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) return;
 
@@ -2995,7 +2991,6 @@ void meshGFace::operator()(GFace *gf, bool print)
     algo = (gf->geomType() == GEntity::Plane) ? "Delaunay" : "MeshAdapt";
     break;
   }
-
   if(!algoDelaunay2D(gf)) {
     algo = "MeshAdapt";
   }
@@ -3129,7 +3124,6 @@ static void getGFaceOrientation(GFace *gf, BoundaryLayerColumns *blc,
 void orientMeshGFace::operator()(GFace *gf)
 {
   if(!gf->getNumMeshElements()) return;
-  if(gf->geomType() == GEntity::ProjectionFace) return;
 
   gf->model()->setCurrentMeshEntity(gf);
 

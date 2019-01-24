@@ -6,13 +6,13 @@ if(APPLE)
   option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARMv7)" OFF)
 else(APPLE)
   option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARMv7)" ON)
-endif(APPLE)
+endif()
 
 if(APPNAME)
   message(STATUS "Rebranding Onelab as " ${APPNAME})
 else(APPNAME)
   set(APPNAME Onelab)
-endif(APPNAME)
+endif()
 
 # find all benchmarks (in a two-level dir hierarchy) who provide infos.xml
 file(GLOB BENCHMARKSDIR ${MODELS_DIR}/*)
@@ -52,7 +52,7 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     message(STATUS "Found framework " ${GETDP_FRAMEWORK})
   else(GETDP_FRAMEWORK)
     message(SEND_ERROR "Could not find getdp.framework")
-  endif(GETDP_FRAMEWORK)
+  endif()
   # gmsh framework
   find_path(GMSH_FRAMEWORK gmsh.framework)
   if(GMSH_FRAMEWORK)
@@ -60,7 +60,7 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     message(STATUS "Found framework " ${GMSH_FRAMEWORK})
   else(GMSH_FRAMEWORK)
     message(SEND_ERROR "Could not find gmsh.framework")
-  endif(GMSH_FRAMEWORK)
+  endif()
   # PETSc framework
   find_path(PETSC_FRAMEWORK petsc.framework)
   if(PETSC_FRAMEWORK)
@@ -68,7 +68,7 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     message(STATUS "Found framework " ${PETSC_FRAMEWORK})
   else(PETSC_FRAMEWORK)
     message(SEND_ERROR "Could not find petsc.framework")
-  endif(PETSC_FRAMEWORK)
+  endif()
   # SLEPc framework
   find_path(SLEPC_FRAMEWORK slepc.framework)
   if(SLEPC_FRAMEWORK)
@@ -76,7 +76,7 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     message(STATUS "Found framework " ${SLEPC_FRAMEWORK})
   else(SLEPC_FRAMEWORK)
     message(SEND_ERROR "Could not find slepc.framework")
-  endif(SLEPC_FRAMEWORK)
+  endif()
   # OpenCASCADE framework
   find_path(OCCT_FRAMEWORK occt.framework)
   if(OCCT_FRAMEWORK)
@@ -84,12 +84,12 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     message(STATUS "Found framework " ${OCCT_FRAMEWORK})
   else(OCCT_FRAMEWORK)
     message(SEND_ERROR "Could not find occt.framework")
-  endif(OCCT_FRAMEWORK)
+  endif()
   # add target
   add_custom_target(xcodeProject
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/models/
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/iOS/Onelab/ 
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/iOS/Onelab/
                                                ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/iOS/Onelab.xcodeproj/
                                                ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}.xcodeproj/
@@ -121,25 +121,25 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
                        ${DIR} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/files/${DIRNAME})
   endforeach(DIR)
   if("${APPNAME}" STREQUAL "BBEMG")
-    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
+    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND
       sed -e \"s|Onelab|BBEMG|\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG.xcodeproj/project.pbxproj")
-    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
+    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND
       sed -e \"s|Images.xcassets|Images_BBEMG.xcassets|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG.xcodeproj/project.pbxproj")
-    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
+    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND
       sed -e \"s|ONELAB|BBEMG|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG/iPhoneiPodStoryboard.storyboard")
-    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
+    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND
       sed -e \"s|ONELAB|BBEMG|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG/iPadStoryboard.storyboard")
-    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
+    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND
       sed -e \"s|Onelab/Mobile|BBEMG|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG/AboutViewController.mm")
-    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
+    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND
       sed -e \"s|onelab.info|www.bbemg.be|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG/AboutViewController.mm")
-  endif("${APPNAME}" STREQUAL "BBEMG")
+  endif()
   message(STATUS "")
   message(STATUS "${APPNAME} for iOS successfully configured:")
   message(STATUS " * Run 'make xcodeProject' to create the XCode project")
   message(STATUS " * Then run 'open ${APPNAME}/${APPNAME}.xcodeproj' to launch XCode")
   message(STATUS "")
-endif(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
+endif()
 
 if(ENABLE_BUILD_ANDROID)
   append_src(drawContext.cpp)
@@ -156,7 +156,7 @@ if(ENABLE_BUILD_ANDROID)
     list(APPEND EXTERNAL_INCLUDES ${GETDP_INC})
   else(GETDP_LIB AND GETDP_INC)
     message(SEND_ERROR "Could not find getdp library")
-  endif(GETDP_LIB AND GETDP_INC)
+  endif()
   # gmsh lib
   find_library(GMSH_LIB Gmsh PATH_SUFFIXES lib)
   find_path(GMSH_INC "GmshGlobal.h" PATH_SUFFIXES include gmsh include/gmsh)
@@ -165,7 +165,7 @@ if(ENABLE_BUILD_ANDROID)
     list(APPEND EXTERNAL_INCLUDES ${GMSH_INC})
   else(GMSH_LIB AND GMSH_INC)
     message(SEND_ERROR "Could not find gmsh library")
-  endif(GMSH_LIB AND GMSH_INC)
+  endif()
   # Onelab android lib
   include_directories(${EXTERNAL_INCLUDES})
   set(CMAKE_BUILD_TYPE Release)
@@ -181,19 +181,19 @@ if(ENABLE_BUILD_ANDROID)
   find_library(PETSC_LIB petsc PATH_SUFFIXES lib)
   if(NOT PETSC_LIB)
     message(SEND_ERROR "Could not find PETSc library")
-  endif(NOT PETSC_LIB)
+  endif()
   find_library(SLEPC_LIB slepc PATH_SUFFIXES lib)
   if(NOT SLEPC_LIB)
     message(SEND_ERROR "Could not find SLEPc library")
-  endif(NOT SLEPC_LIB)
+  endif()
   find_library(BLAS_LIB f2cblas PATH_SUFFIXES lib)
   if(NOT BLAS_LIB)
     message(SEND_ERROR "Could not find BLAS library")
-  endif(NOT BLAS_LIB)
+  endif()
   find_library(LAPACK_LIB f2clapack PATH_SUFFIXES lib)
   if(NOT LAPACK_LIB)
     message(SEND_ERROR "Could not find LAPACK library")
-  endif(NOT LAPACK_LIB)
+  endif()
   set(ONELAB_LIB ${CMAKE_CURRENT_BINARY_DIR}/libs/libOnelab.so)
   add_custom_target(androidProject
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/
@@ -227,4 +227,4 @@ if(ENABLE_BUILD_ANDROID)
   message(STATUS " * Run 'make androidProject' to create the project")
   message(STATUS " * Finally build the app with gradle 'gradle assembleRelease'")
   message(STATUS "")
-endif(ENABLE_BUILD_ANDROID)
+endif()

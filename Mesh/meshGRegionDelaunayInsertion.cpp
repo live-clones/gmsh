@@ -1622,7 +1622,7 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
 // do a 3D delaunay mesh assuming a set of vertices
 
 void delaunayMeshIn3D(std::vector<MVertex *> &v,
-                      std::vector<MTetrahedron *> &result, bool removeBox)
+                      std::vector<MTetrahedron *> &result)
 {
   double t1 = Cpu();
   delaunayTriangulation(1, 1, v, result);

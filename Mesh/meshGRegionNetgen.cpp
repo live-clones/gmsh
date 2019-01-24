@@ -335,6 +335,11 @@ void optimizeMeshGRegionNetgen::operator()(GRegion *gr, bool always)
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
 
+  if(gr->prisms.size() || gr->hexahedra.size() || gr->pyramids.size()){
+    Msg::Info("Skipping Netgen optimizer for hybrid mesh");
+    return;
+  }
+
 #if !defined(HAVE_NETGEN)
   Msg::Error("Netgen optimizer is not compiled in this version of Gmsh");
 #else

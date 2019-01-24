@@ -79,12 +79,12 @@ foreach(module ${SWIG_MODULES})
   endif(NOT swig_warnings_enabled )
 
   # code backported from CMake git version, see CMake bug 4147
-  swig_get_wrapper_dependencies(${CMAKE_CURRENT_SOURCE_DIR}/\${module}.i 
+  swig_get_wrapper_dependencies(${CMAKE_CURRENT_SOURCE_DIR}/\${module}.i
     ${CMAKE_CURRENT_BINARY_DIR}/${module}PYTHON_wrap.cxx python swig_extra_dependencies)
   list(APPEND SWIG_MODULE_${module}_EXTRA_DEPS ${swig_extra_dependencies})
   swig_add_module(${module} python ${module}.i)
   swig_link_libraries(${module} ${PYTHON_LIBRARIES} shared)
-  set(GMSH_PYTHON_MODULES_INCLUDE_CODE 
+  set(GMSH_PYTHON_MODULES_INCLUDE_CODE
       "${GMSH_PYTHON_MODULES_INCLUDE_CODE}from gmshpy.${module} import *\n")
   list(APPEND GMSHPY_DEPENDS "${module}PYTHON_wrap.cxx")
 
@@ -104,7 +104,7 @@ if (NOT ENABLE_GMSHPY_SOURCE_PACKAGE)
     set(GMSH_PYTHON_OPENMPI_HACK "import ctypes\n")
     FOREACH (lib ${MPI_C_LIBRARIES})
       IF (${lib} MATCHES ".*libmpi.*")
-        set(GMSH_PYTHON_OPENMPI_HACK 
+        set(GMSH_PYTHON_OPENMPI_HACK
           "${GMSH_PYTHON_OPENMPI_HACK}ctypes.CDLL(\"${lib}\", mode = ctypes.RTLD_GLOBAL)\n")
       ENDIF (${lib} MATCHES ".*libmpi.*")
     ENDFOREACH (lib)
@@ -116,13 +116,6 @@ if (NOT ENABLE_GMSHPY_SOURCE_PACKAGE)
 endif (NOT ENABLE_GMSHPY_SOURCE_PACKAGE)
 
 if(ENABLE_GMSHPY_SOURCE_PACKAGE)
-  set(GMSH_PRIVATE_API ${GMSH_PRIVATE_API} Geo/Curvature.h 
-      Mesh/Generator.h Mesh/meshGFaceLloyd.h Numeric/DivideAndConquer.h Post/PViewFactory.h
-      Solver/linearSystemPETSc.h Fltk/FlGui.h Solver/functionSpace.h
-      Solver/STensor43.h Solver/sparsityPattern.h Solver/SElement.h
-      Solver/groupOfElements.h PARENT_SCOPE)
-
-
   string(REPLACE ";" "\", \"" GMSH_PYTHON_MODULES "${SWIG_MODULES}")
   set(GMSH_PYTHON_MODULES "\"${GMSH_PYTHON_MODULES}\"")
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in ${CMAKE_CURRENT_BINARY_DIR}/setup.py)
@@ -135,43 +128,4 @@ if(ENABLE_GMSHPY_SOURCE_PACKAGE)
     install(TARGETS _${module} DESTINATION gmshpy/src)
   endforeach(module)
 
-  set (GMSH_PYTHON_EXTRA_INCLUDE 
-    Numeric/BasisFactory.h
-    Numeric/BergotBasis.h
-    Mesh/CenterlineField.h
-    Geo/Curvature.h
-    Common/Options.h
-    Mesh/directions3D.h
-    Mesh/DivideAndConquer.h
-    Mesh/Field.h
-    Mesh/FieldPython.h
-    Fltk/FlGui.h
-    Solver/frameSolver.h
-    Solver/functionSpace.h
-    Solver/eigenSolver.h
-    Mesh/Generator.h
-    Geo/GeomMeshMatcher.h
-    Geo/gmshLevelset.h
-    Numeric/jacobiPolynomials.h
-    Numeric/legendrePolynomials.h
-    Plugin/Plugin.h
-    Solver/linearSystemPETSc.h
-    Mesh/meshGFaceLloyd.h
-    contrib/HighOrderMeshOptimizer/OptHomRun.h
-    contrib/HighOrderMeshOptimizer/OptHomElastic.h
-    contrib/MeshQualityOptimizer/MeshQualityOptimizer.h
-    Post/PViewAsSimpleFunction.h
-    Post/PViewDataList.h
-    Post/PViewFactory.h
-    Numeric/pyramidalBasis.h
-    Numeric/FuncSpaceData.h
-    Solver/SElement.h
-    Numeric/simpleFunctionPython.h
-    Solver/STensor33.h
-    Solver/STensor43.h
-  )
-
-  foreach (file ${GMSH_PYTHON_EXTRA_INCLUDE})
-    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../${file} DESTINATION gmshpy/extra_include)
-  endforeach(file)
 endif(ENABLE_GMSHPY_SOURCE_PACKAGE)

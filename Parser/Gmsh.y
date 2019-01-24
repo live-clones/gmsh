@@ -1104,6 +1104,8 @@ Affectation :
       else
 	yymsg(0, "Unknown command '%s Field'", $1);
 #endif
+      Free($1);
+      List_Delete($4);
     }
   | tField '[' FExpr ']' tAFFECT tSTRING tEND
     {
@@ -1297,7 +1299,7 @@ DefineConstants :
         gmsh_yysymbols[key].value = val;
       }
       Free($3);
-      Free($6);
+      List_Delete($6);
     }
   | DefineConstants Comma String__Index LP RP tAFFECT '{' ListOfDouble
     { init_options(); }
@@ -1315,7 +1317,7 @@ DefineConstants :
         gmsh_yysymbols[key].value = val;
       }
       Free($3);
-      Free($8);
+      List_Delete($8);
     }
   | DefineConstants Comma String__Index tAFFECT StringExpr
     {
@@ -1384,6 +1386,7 @@ Enumeration :
         }
       }
       List_Delete($1);
+      Free($3);
     }
   ;
 
@@ -2519,6 +2522,7 @@ ListOfShapes :
         }
         List_Add($$, &s);
       }
+      List_Delete($4);
     }
   | ListOfShapes tPhysical GeoEntity '{' RecursiveListOfDouble '}' tEND
     {
@@ -2537,6 +2541,8 @@ ListOfShapes :
         }
         List_Add($$, &s);
       }
+      List_Delete(tmp);
+      List_Delete($5);
     }
   | ListOfShapes tParent GeoEntity '{' RecursiveListOfDouble '}' tEND
     {
@@ -2555,6 +2561,8 @@ ListOfShapes :
         }
         List_Add($$, &s);
       }
+      List_Delete(tmp);
+      List_Delete($5);
     }
   | ListOfShapes GeoEntity '{' tDOTS '}' tEND
     {
@@ -2573,6 +2581,7 @@ ListOfShapes :
         }
         List_Add($$, &s);
       }
+      List_Delete(tmp);
     }
   | ListOfShapes tPhysical GeoEntity '{' tDOTS '}' tEND
     {
@@ -2593,6 +2602,8 @@ ListOfShapes :
         }
         List_Add($$, &s);
       }
+      List_Delete(tmp);
+      List_Delete(tmp2);
     }
 ;
 

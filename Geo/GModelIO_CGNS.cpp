@@ -37,7 +37,6 @@
 #include <sstream>
 #include <string>
 #include <stdlib.h>
-#include <unistd.h>
 
 #include "GmshConfig.h"
 #include "gmshVertex.h"

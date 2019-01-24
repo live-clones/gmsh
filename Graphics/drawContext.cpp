@@ -445,6 +445,7 @@ bool drawContext::generateTextureForImage(const std::string &name, int page,
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img2->w(), img2->h(), 0,
                    (img2->d() == 4) ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE,
                    img2->array);
+      glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
       imageW = img->w();
       imageH = img->h();
       delete img;

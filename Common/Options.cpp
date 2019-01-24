@@ -5005,13 +5005,6 @@ double opt_mesh_optimize_netgen(OPT_ARGS_NUM)
   return CTX::instance()->mesh.optimizeNetgen;
 }
 
-double opt_mesh_old_refinement(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->mesh.oldRefinement = (int)val;
-  return CTX::instance()->mesh.oldRefinement;
-}
-
 double opt_mesh_refine_steps(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -6176,6 +6169,13 @@ double opt_mesh_ho_optimize(OPT_ARGS_NUM)
       (CTX::instance()->mesh.hoOptimize);
 #endif
   return CTX::instance()->mesh.hoOptimize;
+}
+
+double opt_mesh_ho_periodic(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.hoPeriodic = (int)val;
+  return CTX::instance()->mesh.hoPeriodic;
 }
 
 double opt_mesh_ho_nlayers(OPT_ARGS_NUM)

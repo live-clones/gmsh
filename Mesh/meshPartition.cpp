@@ -140,7 +140,7 @@ public:
           _vwgt[i] = 1;
         }
         else{
-          _vwgt[i] = (_element[i]->getDim() == _dim ? 1 : 0);
+          _vwgt[i] = (_element[i]->getDim() == (int)_dim ? 1 : 0);
         }
       }
     }

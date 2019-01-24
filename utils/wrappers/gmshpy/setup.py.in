@@ -7,7 +7,7 @@ setup(
   package_dir = {'gmshpy' : 'src'},
   ext_modules = [
     Extension('gmshpy._' + module, ['src/' + module + 'PYTHON_wrap.cxx'],
-      include_dirs = ['./extra_include/', gmshroot + '/include/gmsh/'],
+      include_dirs = [gmshroot + '/include/gmsh/'],
       define_macros=[('SWIG', '1')],
       libraries = ['Gmsh'],
       library_dirs = [gmshroot + '/lib/']

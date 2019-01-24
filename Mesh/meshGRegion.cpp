@@ -32,7 +32,6 @@
 #include "simple3D.h"
 #include "directions3D.h"
 #include "pointInsertion.h"
-#include "Levy3D.h"
 #include "discreteFace.h"
 #include "filterElements.h"
 #include "ExtrudeParams.h"
@@ -142,6 +141,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   splitQuadRecovery sqr;
   bool success = meshGRegionBoundaryRecovery(gr, &sqr);
 
+  
   // sort triangles in all model faces in order to be able to search in vectors
   std::vector<GFace *>::iterator itf = allFaces.begin();
   while(itf != allFaces.end()) {
@@ -162,20 +162,12 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D) {
     refineMeshMMG(gr);
   }
-  else if(CTX::instance()->mesh.oldRefinement) {
+  else{
     insertVerticesInRegion(gr, 2000000000, true, &sqr);
-  }
-  else {
-    void edgeBasedRefinement(const int numThreads, const int nptsatonce,
-                             GRegion *gr);
-    // just to remove tets that are not to be meshed
-    insertVerticesInRegion(gr, 0, true, &sqr);
-    for(unsigned int i = 0; i < regions.size(); i++) {
-      Msg::Info("Refining volume %d with %d threads", regions[i]->tag(),
-                Msg::GetMaxThreads());
-      edgeBasedRefinement(Msg::GetMaxThreads(), 1, regions[i]);
-    }
-    // RelocateVertices(regions, -1);
+    /* T E S T*/
+    bool createBoundaryLayerOneLayer (GRegion *gr, std::vector<GFace *> & bls);
+    createBoundaryLayerOneLayer (gr, allFaces);
+    /* END TEST */
   }
 
   if(sqr.buildPyramids(gr->model())){

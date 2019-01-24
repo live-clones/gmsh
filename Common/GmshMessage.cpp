@@ -130,7 +130,7 @@ void Msg::Init(int argc, char **argv)
   // prune argv from gmsh-specific options that make PETSc verbose
   for(int i = 0; i < argc; i++){
     std::string val(argv[i]);
-    if(val != "-info" && val != "-help" && val != "-version")
+    if(val != "-info" && val != "-help" && val != "-version" && val != "-v")
       sargv[sargc++] = argv[i];
   }
   PetscInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);

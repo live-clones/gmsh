@@ -1,3 +1,14 @@
+ /**
+ * Project : Java Wrapping of Gmsh
+ * Copyright : see Gmsh Copyright
+ * License : see Gmsh License
+ * Contrat number : internal Artenum development
+ * Developed by: Artenum SARL
+ * Creation : august 2011
+ * authors : Benjamin JEANTY-RUARD - Artenum
+ * Status : final
+ */
+
 package com.artenum.sample;
 
 import org.geuz.gmsh.generated.EdgeVector;

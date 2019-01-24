@@ -1072,13 +1072,13 @@ GMSH_API void gmsh::model::mesh::setNodes(
   if(!numNodeTags){ // this is allowed: we will assign new tags
     numNodes = coord.size() / 3;
   }
-  if(coord.size() != 3 * numNodes) {
+  if((int)coord.size() != 3 * numNodes) {
     Msg::Error("Wrong number of coordinates");
     throw 2;
   }
   bool param = false;
   if(parametricCoord.size()) {
-    if(parametricCoord.size() != dim * numNodes) {
+    if((int)parametricCoord.size() != dim * numNodes) {
       Msg::Error("Wrong number of parametric coordinates");
       throw 2;
     }
@@ -1086,7 +1086,7 @@ GMSH_API void gmsh::model::mesh::setNodes(
   }
   // delete nodes and elements; this will also delete the model mesh cache
   ge->deleteMesh();
-  for(unsigned int i = 0; i < numNodes; i++) {
+  for(int i = 0; i < numNodes; i++) {
     int n = (numNodeTags ? nodeTags[i] : -1);
     double x = coord[3 * i];
     double y = coord[3 * i + 1];

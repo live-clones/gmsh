@@ -677,12 +677,12 @@ void meshGEdge::operator()(GEdge *ge)
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
      CTX::instance()->mesh.algoRecombine != 0) {
-    if(CTX::instance()->mesh.recombineAll) {
+    std::vector<GFace *> const &faces = ge->faces();
+    if(CTX::instance()->mesh.recombineAll && faces.size()) {
       if(N % 2 == 0) N++;
       if(CTX::instance()->mesh.algoRecombine == 2) N = increaseN(N);
     }
     else {
-      std::vector<GFace *> const &faces = ge->faces();
       for(std::vector<GFace *>::const_iterator it = faces.begin();
           it != faces.end(); it++) {
         if((*it)->meshAttributes.recombine) {

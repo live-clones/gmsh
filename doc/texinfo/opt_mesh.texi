@@ -151,6 +151,11 @@ Optimize high order meshes?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.HighOrderPeriodic
+Correct high order optimization for periodic connections?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.HighOrderPoissonRatio
 Poisson ratio of the material used in the elastic smoother for high order meshesMust be between -1.0 and 0.5, excluded@*
 Default value: @code{0.33}@*
@@ -394,11 +399,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.NumSubEdges
 Number of edge subdivisions when displaying high order elements@*
 Default value: @code{2}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.OldRefinement
-Use old 3D point insertion algorithm@*
-Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Optimize

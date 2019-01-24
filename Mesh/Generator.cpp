@@ -843,7 +843,6 @@ static void Mesh3D(GModel *m)
   FindConnectedRegions(delaunay, connected);
 
   // remove quads elements for volumes that are recombined
-  // pragma OMP here ?
   for(unsigned int i = 0; i < connected.size(); i++) {
     for(unsigned j = 0; j < connected[i].size(); j++) {
       GRegion *gr = connected[i][j];
@@ -860,7 +859,6 @@ static void Mesh3D(GModel *m)
   double vol_hexa_recombination = 0.;
   int nb_elements_recombination = 0, nb_hexa_recombination = 0;
 
-  // pragma OMP here ?
   for(unsigned int i = 0; i < connected.size(); i++) {
     MeshDelaunayVolume(connected[i]);
 
@@ -981,6 +979,7 @@ void OptimizeMeshNetgen(GModel *m)
     std::for_each(m->firstRegion(), m->lastRegion(),
                   TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES());
 
+  CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   Msg::StatusBar(true, "Done optimizing 3D mesh with Netgen (%g s)", t2 - t1);
 }

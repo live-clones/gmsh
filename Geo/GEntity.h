@@ -81,9 +81,7 @@ public:
   enum ModelType {
     UnknownModel,
     GmshModel,
-    FourierModel,
     OpenCascadeModel,
-    GenericModel,
     AcisModel
   };
 
@@ -114,7 +112,6 @@ public:
     Torus,
     RuledSurface,
     ParametricSurface,
-    ProjectionFace,
     BSplineSurface,
     BezierSurface,
     SurfaceOfRevolution,
@@ -165,7 +162,6 @@ public:
       "Torus",
       "Surface",
       "Parametric surface",
-      "Projection surface",
       "BSpline surface",
       "Bezier surface",
       "Surface of Revolution",

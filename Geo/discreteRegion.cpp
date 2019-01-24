@@ -97,20 +97,11 @@ void discreteRegion::remesh()
 #if defined(HAVE_MESH)
 
   bool classify = false;
-  if(CTX::instance()->mesh.oldRefinement) {
-    insertVerticesInRegion(this, 2000000000, classify);
-  }
-  else {
-    insertVerticesInRegion(this, 0, classify);
-    void edgeBasedRefinement(const int numThreads, const int nptsatonce,
-                             GRegion *gr);
-    edgeBasedRefinement(1, 1, this);
-  }
+  insertVerticesInRegion(this, 2000000000, classify);
 
   // not functional yet: need boundaries
   for(int i = 0; i < std::max(CTX::instance()->mesh.optimize,
-                              CTX::instance()->mesh.optimizeNetgen);
-      i++) {
+                              CTX::instance()->mesh.optimizeNetgen); i++) {
     if(CTX::instance()->mesh.optimize >= i) {
       optimizeMeshGRegion opt;
       opt(this, true);
