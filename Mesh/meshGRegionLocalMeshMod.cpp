@@ -318,7 +318,7 @@ bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
   }
 
   // if there exist no swap that enhance the quality
-  if(best <= tetQualityRef) return false;
+  if(best <= tetQualityRef + 1e-20) return false;
   // does random swaps  if (best < .01) return false;
 
   // we have the best configuration, so we swap
