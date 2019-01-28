@@ -1,3 +1,5 @@
+4.1.4: fix reading of ghost cells; added getGhostElements function in API.
+
 4.1.3 (January 23, 2019): improved quad meshing; new options for automatic
 full-quad meshes; save nodesets also for physical points (Abaqus, Tochnog); new
 getPartitions, unpartition and removePhysicalName functions in API; small bug
