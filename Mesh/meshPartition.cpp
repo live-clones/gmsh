@@ -2287,9 +2287,13 @@ int PartitionMesh(GModel *const model)
   AssignMeshVertices(model);
 
   if(CTX::instance()->mesh.partitionCreateGhostCells) {
+    double t4 = Cpu();
+    Msg::StatusBar(true, "Creating ghost cells...");
     graph.clearDualGraph();
     graph.createDualGraph(true);
     graph.assignGhostCells();
+    double t5 = Cpu();
+    Msg::StatusBar(true, "Done creating ghost cells (%g s)", t5 - t4);
   }
 
   return 0;
