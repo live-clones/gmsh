@@ -219,13 +219,13 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, int sizeofstr,
       maxZ = dataDouble[5];
     }
     else {
-      int numPart = 0;
-      if(fscanf(fp, "%d %d %d %d", &tag, &parentDim, &parentTag, &numPart) !=
+      int numPartitions = 0;
+      if(fscanf(fp, "%d %d %d %d", &tag, &parentDim, &parentTag, &numPartitions) !=
          4) {
         return false;
       }
-      partitions.resize(numPart, 0);
-      for(int i = 0; i < numPart; i++) {
+      partitions.resize(numPartitions, 0);
+      for(int i = 0; i < numPartitions; i++) {
         if(fscanf(fp, "%d", &partitions[i]) != 1) {
           return false;
         }
@@ -1090,9 +1090,9 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
 
   std::multimap<std::pair<MElement *, unsigned int>, unsigned int> ghostCells;
   for(int i = 0; i < numGhostCells; i++) {
-    int numElm = 0;
-    int numPart = 0;
-    unsigned int numGhost = 0;
+    int elmTag = 0;
+    int partNum = 0;
+    unsigned int numGhostPartitions = 0;
     char str[1024];
 
     if(binary) {
@@ -1101,12 +1101,12 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
         return false;
       }
       if(swap) SwapBytes((char *)data, sizeof(int), 3);
-      numElm = data[0];
-      numPart = data[1];
-      numGhost = data[2];
+      elmTag = data[0];
+      partNum = data[1];
+      numGhostPartitions = data[2];
     }
     else {
-      if(fscanf(fp, "%d %d %d", &numElm, &numPart, &numGhost) != 3) {
+      if(fscanf(fp, "%d %d %d", &elmTag, &partNum, &numGhostPartitions) != 3) {
         return false;
       }
       if(!fgets(str, sizeof(str), fp)) {
@@ -1114,13 +1114,13 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
       }
     }
 
-    MElement *elm = model->getMeshElementByTag(numElm);
+    MElement *elm = model->getMeshElementByTag(elmTag);
     if(!elm) {
-      Msg::Error("No element with tag %d", numElm);
+      Msg::Error("No element with tag %d", elmTag);
       continue;
     }
 
-    for(unsigned int j = 0; j < numGhost; j++) {
+    for(unsigned int j = 0; j < numGhostPartitions; j++) {
       int ghostPartition = 0;
 
       if(binary) {
@@ -1130,7 +1130,7 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
         if(swap) SwapBytes((char *)&ghostPartition, sizeof(int), 1);
       }
       else {
-        if(j == numGhost - 1) {
+        if(j == numGhostPartitions - 1) {
           if(sscanf(str, "%d", &ghostPartition) != 1) {
             return false;
           }
@@ -1144,7 +1144,7 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
 
       ghostCells.insert(
         std::pair<std::pair<MElement *, unsigned int>, unsigned int>(
-          std::pair<MElement *, unsigned int>(elm, numPart), ghostPartition));
+          std::pair<MElement *, unsigned int>(elm, partNum), ghostPartition));
     }
   }
 
@@ -1167,21 +1167,22 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
   }
 
   for(std::multimap<std::pair<MElement *, unsigned int>, unsigned int>::iterator
-        it = ghostCells.begin();
-      it != ghostCells.end(); ++it) {
-    if(ghostEntities[it->first.second]->geomType() == GEntity::GhostCurve) {
-      static_cast<ghostEdge *>(ghostEntities[it->first.second])
-        ->addElement(it->first.first->getType(), it->first.first, it->second);
+        it = ghostCells.begin(); it != ghostCells.end(); ++it) {
+    GEntity *ge = ghostEntities[it->second];
+    if(!ge){
+      Msg::Warning("No ghost entity on partition %d", it->second);
     }
-    else if(ghostEntities[it->first.second]->geomType() ==
-            GEntity::GhostSurface) {
-      static_cast<ghostFace *>(ghostEntities[it->first.second])
-        ->addElement(it->first.first->getType(), it->first.first, it->second);
+    else if(ge->geomType() == GEntity::GhostCurve) {
+      static_cast<ghostEdge *>(ge)->addElement
+        (it->first.first->getType(), it->first.first, it->first.second);
     }
-    else if(ghostEntities[it->first.second]->geomType() ==
-            GEntity::GhostVolume) {
-      static_cast<ghostRegion *>(ghostEntities[it->first.second])
-        ->addElement(it->first.first->getType(), it->first.first, it->second);
+    else if(ge->geomType() == GEntity::GhostSurface) {
+      static_cast<ghostFace *>(ge)->addElement
+        (it->first.first->getType(), it->first.first, it->first.second);
+    }
+    else if(ge->geomType() == GEntity::GhostVolume) {
+      static_cast<ghostRegion *>(ge)->addElement
+        (it->first.first->getType(), it->first.first, it->first.second);
     }
   }
   return true;
@@ -1521,8 +1522,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
   if(binary) {
     if(partition) {
-      unsigned int nparts = model->getNumPartitions();
-      fwrite(&nparts, sizeof(unsigned int), 1, fp);
+      unsigned int numPartitions = model->getNumPartitions();
+      fwrite(&numPartitions, sizeof(unsigned int), 1, fp);
 
       // write the ghostentities' tag
       unsigned int ghostSize = ghost.size();
@@ -2313,15 +2314,15 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
         it != elementsByDegree[dim].end(); ++it) {
       int entityTag = it->first.first;
       int elmType = it->first.second;
-      unsigned long numElm = it->second.size();
+      unsigned long elmTag = it->second.size();
       if(binary) {
         fwrite(&entityTag, sizeof(int), 1, fp);
         fwrite(&dim, sizeof(int), 1, fp);
         fwrite(&elmType, sizeof(int), 1, fp);
-        fwrite(&numElm, sizeof(unsigned long), 1, fp);
+        fwrite(&elmTag, sizeof(unsigned long), 1, fp);
       }
       else {
-        fprintf(fp, "%d %d %d %lu\n", entityTag, dim, elmType, numElm);
+        fprintf(fp, "%d %d %d %lu\n", entityTag, dim, elmType, elmTag);
       }
 
       if(binary) {
@@ -2471,12 +2472,12 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
 
       for(std::map<MElement *, std::vector<unsigned int> >::iterator it =
             ghostCells.begin(); it != ghostCells.end(); ++it) {
-        int elmNum = it->first->getNum();
-        unsigned int part = it->second[0];
-        unsigned int numGhost = it->second.size() - 1;
-        fwrite(&elmNum, sizeof(int), 1, fp);
-        fwrite(&part, sizeof(unsigned int), 1, fp);
-        fwrite(&numGhost, sizeof(unsigned int), 1, fp);
+        int elmTag = it->first->getNum();
+        unsigned int partNum = it->second[0];
+        unsigned int numGhostPartitions = it->second.size() - 1;
+        fwrite(&elmTag, sizeof(int), 1, fp);
+        fwrite(&partNum, sizeof(unsigned int), 1, fp);
+        fwrite(&numGhostPartitions, sizeof(unsigned int), 1, fp);
         for(unsigned int i = 1; i < it->second.size(); i++) {
           fwrite(&it->second[i], sizeof(int), 1, fp);
         }
