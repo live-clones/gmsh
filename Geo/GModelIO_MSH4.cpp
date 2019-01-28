@@ -1152,25 +1152,27 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
   std::vector<GEntity *> entities;
   model->getEntities(entities);
   for(unsigned int i = 0; i < entities.size(); i++) {
-    if(entities[i]->geomType() == GEntity::GhostCurve) {
-      ghostEntities[static_cast<ghostEdge *>(entities[i])->getPartition()] =
-        entities[i];
-    }
-    else if(entities[i]->geomType() == GEntity::GhostSurface) {
-      ghostEntities[static_cast<ghostFace *>(entities[i])->getPartition()] =
-        entities[i];
-    }
-    else if(entities[i]->geomType() == GEntity::GhostVolume) {
-      ghostEntities[static_cast<ghostRegion *>(entities[i])->getPartition()] =
-        entities[i];
-    }
+    GEntity *ge = entities[i];
+    int partNum = -1;
+    if(ge->geomType() == GEntity::GhostCurve)
+      partNum = static_cast<ghostEdge *>(ge)->getPartition();
+    else if(ge->geomType() == GEntity::GhostSurface)
+      partNum = static_cast<ghostFace *>(ge)->getPartition();
+    else if(ge->geomType() == GEntity::GhostVolume)
+      partNum = static_cast<ghostRegion *>(ge)->getPartition();
+    if(partNum >= 0 && partNum < ghostEntities.size())
+      ghostEntities[partNum] = ge;
   }
 
   for(std::multimap<std::pair<MElement *, unsigned int>, unsigned int>::iterator
         it = ghostCells.begin(); it != ghostCells.end(); ++it) {
+    if(it->second < 0 || it->second >= ghostEntities.size()){
+      Msg::Error("Invalid partition %d in ghost elements", it->second);
+      return false;
+    }
     GEntity *ge = ghostEntities[it->second];
     if(!ge){
-      Msg::Warning("No ghost entity on partition %d", it->second);
+      Msg::Warning("Missing ghost entity on partition %d", it->second);
     }
     else if(ge->geomType() == GEntity::GhostCurve) {
       static_cast<ghostEdge *>(ge)->addElement
@@ -1300,7 +1302,7 @@ int GModel::_readMSH4(const std::string &name)
             _vertexVectorCache[vertexCache[i].first] = vertexCache[i].second;
           }
           else {
-            Msg::Warning("Skipping duplicate vertex %d", vertexCache[i].first);
+            Msg::Info("Skipping duplicate vertex %d", vertexCache[i].first);
           }
         }
       }
@@ -1310,7 +1312,7 @@ int GModel::_readMSH4(const std::string &name)
             _vertexMapCache[vertexCache[i].first] = vertexCache[i].second;
           }
           else {
-            Msg::Warning("Skipping duplicate vertex %d", vertexCache[i].first);
+            Msg::Info("Skipping duplicate vertex %d", vertexCache[i].first);
           }
         }
       }
@@ -1334,8 +1336,7 @@ int GModel::_readMSH4(const std::string &name)
             _elementVectorCache[elementCache[i].first] = elementCache[i].second;
           }
           else {
-            Msg::Warning("Skipping duplicate element %d",
-                         elementCache[i].first);
+            Msg::Info("Skipping duplicate element %d", elementCache[i].first);
           }
         }
       }
@@ -1345,8 +1346,7 @@ int GModel::_readMSH4(const std::string &name)
             _elementMapCache[elementCache[i].first] = elementCache[i].second;
           }
           else {
-            Msg::Warning("Skipping duplicate element %d",
-                         elementCache[i].first);
+            Msg::Info("Skipping duplicate element %d", elementCache[i].first);
           }
         }
       }
@@ -2701,9 +2701,10 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
     GEntity *ghostEntity = 0;
 
     for(unsigned int j = 0; j < entities.size(); j++) {
-      switch(entities[j]->geomType()) {
+      GEntity *ge = entities[j];
+      switch(ge->geomType()) {
       case GEntity::PartitionVolume: {
-        partitionRegion *pr = static_cast<partitionRegion *>(entities[j]);
+        partitionRegion *pr = static_cast<partitionRegion *>(ge);
         if(std::find(pr->getPartitions().begin(), pr->getPartitions().end(),
                      i) != pr->getPartitions().end()) {
           tmp->add(pr);
@@ -2711,7 +2712,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
         }
       } break;
       case GEntity::PartitionSurface: {
-        partitionFace *pf = static_cast<partitionFace *>(entities[j]);
+        partitionFace *pf = static_cast<partitionFace *>(ge);
         if(std::find(pf->getPartitions().begin(), pf->getPartitions().end(),
                      i) != pf->getPartitions().end()) {
           tmp->add(pf);
@@ -2719,7 +2720,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
         }
       } break;
       case GEntity::PartitionCurve: {
-        partitionEdge *pe = static_cast<partitionEdge *>(entities[j]);
+        partitionEdge *pe = static_cast<partitionEdge *>(ge);
         if(std::find(pe->getPartitions().begin(), pe->getPartitions().end(),
                      i) != pe->getPartitions().end()) {
           tmp->add(pe);
@@ -2727,7 +2728,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
         }
       } break;
       case GEntity::PartitionPoint: {
-        partitionVertex *pv = static_cast<partitionVertex *>(entities[j]);
+        partitionVertex *pv = static_cast<partitionVertex *>(ge);
         if(std::find(pv->getPartitions().begin(), pv->getPartitions().end(),
                      i) != pv->getPartitions().end()) {
           tmp->add(pv);
@@ -2735,65 +2736,51 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
         }
       } break;
       case GEntity::GhostCurve:
-        if(i == static_cast<ghostEdge *>(entities[j])->getPartition()) {
-          static_cast<ghostEdge *>(entities[j])->saveMesh(true);
-          tmp->add(static_cast<ghostEdge *>(entities[j]));
-          if(ghostEntities.size()) entitiesSet.insert(entities[j]);
-          ghostEntity = entities[j];
+        if(i == static_cast<ghostEdge *>(ge)->getPartition()) {
+          static_cast<ghostEdge *>(ge)->saveMesh(true);
+          tmp->add(static_cast<ghostEdge *>(ge));
+          if(ghostEntities.size()) entitiesSet.insert(ge);
+          ghostEntity = ge;
         }
         break;
       case GEntity::GhostSurface:
-        if(i == static_cast<ghostFace *>(entities[j])->getPartition()) {
-          static_cast<ghostFace *>(entities[j])->saveMesh(true);
-          tmp->add(static_cast<ghostFace *>(entities[j]));
-          if(ghostEntities.size()) entitiesSet.insert(entities[j]);
-          ghostEntity = entities[j];
+        if(i == static_cast<ghostFace *>(ge)->getPartition()) {
+          static_cast<ghostFace *>(ge)->saveMesh(true);
+          tmp->add(static_cast<ghostFace *>(ge));
+          if(ghostEntities.size()) entitiesSet.insert(ge);
+          ghostEntity = ge;
         }
         break;
       case GEntity::GhostVolume:
-        if(i == static_cast<ghostRegion *>(entities[j])->getPartition()) {
-          static_cast<ghostRegion *>(entities[j])->saveMesh(true);
-          tmp->add(static_cast<ghostRegion *>(entities[j]));
-          if(ghostEntities.size()) entitiesSet.insert(entities[j]);
-          ghostEntity = entities[j];
+        if(i == static_cast<ghostRegion *>(ge)->getPartition()) {
+          static_cast<ghostRegion *>(ge)->saveMesh(true);
+          tmp->add(static_cast<ghostRegion *>(ge));
+          if(ghostEntities.size()) entitiesSet.insert(ge);
+          ghostEntity = ge;
         }
         break;
       default:
-        if(entities[j]->dim() == 0) {
-          tmp->add(static_cast<GVertex *>(entities[j]));
-          if(ghostEntities.size()) entitiesSet.insert(entities[j]);
+        switch(ge->dim()){
+        case 0: tmp->add(static_cast<GVertex *>(ge)); break;
+        case 1: tmp->add(static_cast<GEdge *>(ge)); break;
+        case 2: tmp->add(static_cast<GFace *>(ge)); break;
+        case 3: tmp->add(static_cast<GRegion *>(ge)); break;
         }
-        else if(entities[j]->dim() == 1) {
-          tmp->add(static_cast<GEdge *>(entities[j]));
-          if(ghostEntities.size()) entitiesSet.insert(entities[j]);
-        }
-        else if(entities[j]->dim() == 2) {
-          tmp->add(static_cast<GFace *>(entities[j]));
-          if(ghostEntities.size()) entitiesSet.insert(entities[j]);
-        }
-        else if(entities[j]->dim() == 3) {
-          tmp->add(static_cast<GRegion *>(entities[j]));
-          if(ghostEntities.size()) entitiesSet.insert(entities[j]);
-        }
+        if(ghostEntities.size()) entitiesSet.insert(ge);
         break;
       }
     }
 
-    if(!CTX::instance()->mesh.partitionCreateTopology) {
-      associateVertices(tmp);
-    }
+    associateVertices(tmp);
 
     if(ghostEntity) {
       for(unsigned int j = 0; j < ghostEntity->getNumMeshElements(); j++) {
-        for(unsigned int k = 0;
-            k < ghostEntity->getMeshElement(j)->getNumVertices(); k++) {
-          if(entitiesSet.find(
-               ghostEntity->getMeshElement(j)->getVertex(k)->onWhat()) ==
-             entitiesSet.end()) {
-            ghostEntity->addMeshVertex(
-              ghostEntity->getMeshElement(j)->getVertex(k));
-            ghostEntity->getMeshElement(j)->getVertex(k)->setEntity(
-              ghostEntity);
+        MElement *e = ghostEntity->getMeshElement(j);
+        for(unsigned int k = 0; k < e->getNumVertices(); k++) {
+          MVertex *v = e->getVertex(k);
+          if(entitiesSet.find(v->onWhat()) == entitiesSet.end()) {
+            v->setEntity(ghostEntity);
+            ghostEntity->addMeshVertex(v);
           }
         }
       }
@@ -2818,9 +2805,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
   }
   delete tmp;
 
-  if(!CTX::instance()->mesh.partitionCreateTopology) {
-    associateVertices(this);
-  }
+  associateVertices(this);
 
   return 1;
 }
