@@ -1671,6 +1671,31 @@ class model:
             return _ovectordouble(api_barycenters_, api_barycenters_n_.value)
 
         @staticmethod
+        def getGhostElements(dim, tag):
+            """
+            Get the ghost elements `elementTags' and their associated `partitions'
+            stored in the ghost entity of dimension `dim' and tag `tag'.
+
+            Return `elementTags', `partitions'.
+            """
+            api_elementTags_, api_elementTags_n_ = POINTER(c_int)(), c_size_t()
+            api_partitions_, api_partitions_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetGhostElements(
+                c_int(dim),
+                c_int(tag),
+                byref(api_elementTags_), byref(api_elementTags_n_),
+                byref(api_partitions_), byref(api_partitions_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetGhostElements returned non-zero error code: ",
+                    ierr.value)
+            return (
+                _ovectorint(api_elementTags_, api_elementTags_n_.value),
+                _ovectorint(api_partitions_, api_partitions_n_.value))
+
+        @staticmethod
         def setSize(dimTags, size):
             """
             Set a mesh size constraint on the geometrical entities `dimTags'. Currently

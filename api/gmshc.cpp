@@ -965,6 +965,21 @@ GMSH_API void gmshModelMeshPreallocateBarycenters(const int elementType, double 
   }
 }
 
+GMSH_API void gmshModelMeshGetGhostElements(const int dim, const int tag, int ** elementTags, size_t * elementTags_n, int ** partitions, size_t * partitions_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_elementTags_;
+    std::vector<int> api_partitions_;
+    gmsh::model::mesh::getGhostElements(dim, tag, api_elementTags_, api_partitions_);
+    vector2ptr(api_elementTags_, elementTags, elementTags_n);
+    vector2ptr(api_partitions_, partitions, partitions_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n, const double size, int * ierr)
 {
   if(ierr) *ierr = 0;

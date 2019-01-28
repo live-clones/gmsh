@@ -1419,6 +1419,29 @@ function preallocateBarycenters(elementType, tag = -1)
 end
 
 """
+    gmsh.model.mesh.getGhostElements(dim, tag)
+
+Get the ghost elements `elementTags` and their associated `partitions` stored in
+the ghost entity of dimension `dim` and tag `tag`.
+
+Return `elementTags`, `partitions`.
+"""
+function getGhostElements(dim, tag)
+    api_elementTags_ = Ref{Ptr{Cint}}()
+    api_elementTags_n_ = Ref{Csize_t}()
+    api_partitions_ = Ref{Ptr{Cint}}()
+    api_partitions_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetGhostElements, gmsh.lib), Nothing,
+          (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, api_elementTags_, api_elementTags_n_, api_partitions_, api_partitions_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetGhostElements returned non-zero error code: $(ierr[])")
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
+    partitions = unsafe_wrap(Array, api_partitions_[], api_partitions_n_[], own=true)
+    return elementTags, partitions
+end
+
+"""
     gmsh.model.mesh.setSize(dimTags, size)
 
 Set a mesh size constraint on the geometrical entities `dimTags`. Currently only

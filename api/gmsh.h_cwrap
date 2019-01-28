@@ -1087,6 +1087,22 @@ namespace gmsh { // Top-level functions
         barycenters.assign(api_barycenters_, api_barycenters_ + api_barycenters_n_); gmshFree(api_barycenters_);
       }
 
+      // Get the ghost elements `elementTags' and their associated `partitions'
+      // stored in the ghost entity of dimension `dim' and tag `tag'.
+      GMSH_API void getGhostElements(const int dim,
+                                     const int tag,
+                                     std::vector<int> & elementTags,
+                                     std::vector<int> & partitions)
+      {
+        int ierr = 0;
+        int *api_elementTags_; size_t api_elementTags_n_;
+        int *api_partitions_; size_t api_partitions_n_;
+        gmshModelMeshGetGhostElements(dim, tag, &api_elementTags_, &api_elementTags_n_, &api_partitions_, &api_partitions_n_, &ierr);
+        if(ierr) throw ierr;
+        elementTags.assign(api_elementTags_, api_elementTags_ + api_elementTags_n_); gmshFree(api_elementTags_);
+        partitions.assign(api_partitions_, api_partitions_ + api_partitions_n_); gmshFree(api_partitions_);
+      }
+
       // Set a mesh size constraint on the geometrical entities `dimTags'.
       // Currently only entities of dimension 0 (points) are handled.
       GMSH_API void setSize(const gmsh::vectorpair & dimTags,

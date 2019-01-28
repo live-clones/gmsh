@@ -259,6 +259,9 @@ mesh.add('getBarycenters',doc,None,iint('elementType'),iint('tag'),ibool('fast')
 doc = '''Preallocate the data required by `getBarycenters'. This is necessary only if `getBarycenters' is called with `numTasks' > 1.'''
 mesh.add('preallocateBarycenters',doc,None,iint('elementType'),ovectordouble('barycenters'),iint('tag', '-1'))
 
+doc = '''Get the ghost elements `elementTags' and their associated `partitions' stored in the ghost entity of dimension `dim' and tag `tag'.'''
+mesh.add('getGhostElements',doc,None,iint('dim'),iint('tag'),ovectorint('elementTags'),ovectorint('partitions'))
+
 doc = '''Set a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize',doc,None,ivectorpair('dimTags'),idouble('size'))
 

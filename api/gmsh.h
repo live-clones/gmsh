@@ -574,6 +574,13 @@ namespace gmsh { // Top-level functions
                                            std::vector<double> & barycenters,
                                            const int tag = -1);
 
+      // Get the ghost elements `elementTags' and their associated `partitions'
+      // stored in the ghost entity of dimension `dim' and tag `tag'.
+      GMSH_API void getGhostElements(const int dim,
+                                     const int tag,
+                                     std::vector<int> & elementTags,
+                                     std::vector<int> & partitions);
+
       // Set a mesh size constraint on the geometrical entities `dimTags'.
       // Currently only entities of dimension 0 (points) are handled.
       GMSH_API void setSize(const gmsh::vectorpair & dimTags,

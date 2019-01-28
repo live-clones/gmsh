@@ -599,6 +599,18 @@ Partition the mesh of the current model into @code{numPart} partitions.
 -
 @end table
 
+@item unpartition
+Unpartition the mesh of the current model.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item refine
 Refine the mesh of the current model by uniformly splitting the elements.
 
@@ -984,6 +996,19 @@ if @code{getBarycenters} is called with @code{numTasks} > 1.
 @code{elementType}, @code{tag}
 @item Output:
 @code{barycenters}
+@item Return:
+-
+@end table
+
+@item getGhostElements
+Get the ghost elements @code{elementTags} and their associated @code{partitions}
+stored in the ghost entity of dimension @code{dim} and tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{elementTags}, @code{partitions}
 @item Return:
 -
 @end table

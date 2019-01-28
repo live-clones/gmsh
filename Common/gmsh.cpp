@@ -23,6 +23,9 @@
 #include "partitionEdge.h"
 #include "partitionFace.h"
 #include "partitionRegion.h"
+#include "ghostEdge.h"
+#include "ghostFace.h"
+#include "ghostRegion.h"
 #include "MVertex.h"
 #include "MPoint.h"
 #include "MLine.h"
@@ -592,9 +595,15 @@ GMSH_API void gmsh::model::getPartitions(const int dim, const int tag,
     p = static_cast<partitionFace*>(ge)->getPartitions();
   else if(ge->geomType() == GEntity::PartitionVolume)
     p = static_cast<partitionRegion*>(ge)->getPartitions();
+  else if(ge->geomType() == GEntity::GhostCurve)
+    p.push_back(static_cast<ghostEdge*>(ge)->getPartition());
+  else if(ge->geomType() == GEntity::GhostSurface)
+    p.push_back(static_cast<ghostFace*>(ge)->getPartition());
+  else if(ge->geomType() == GEntity::GhostVolume)
+    p.push_back(static_cast<ghostRegion*>(ge)->getPartition());
+
   for(unsigned int i = 0; i < p.size(); i++)
     partitions.push_back(p[i]);
-  // TODO: provide API access to ghost cells
 }
 
 GMSH_API void gmsh::model::getValue(const int dim, const int tag,
@@ -1978,6 +1987,36 @@ GMSH_API void gmsh::model::mesh::preallocateBarycenters(
   const unsigned int numElements = _getNumElementsByType(elementType, tag);
   barycenters.clear();
   barycenters.resize(3 * numElements, 0);
+}
+
+GMSH_API void gmsh::model::mesh::getGhostElements(const int dim,
+                                                  const int tag,
+                                                  std::vector<int> &elementTags,
+                                                  std::vector<int> &partitions)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  elementTags.clear();
+  partitions.clear();
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
+  }
+  std::map<MElement *, unsigned int> ghostCells;
+  if(ge->geomType() == GEntity::GhostCurve)
+    ghostCells = static_cast<ghostEdge*>(ge)->getGhostCells();
+  else if(ge->geomType() == GEntity::GhostSurface)
+    ghostCells = static_cast<ghostFace*>(ge)->getGhostCells();
+  else if(ge->geomType() == GEntity::GhostVolume)
+    ghostCells = static_cast<ghostRegion*>(ge)->getGhostCells();
+
+  for(std::map<MElement *, unsigned int>::const_iterator it = ghostCells.begin();
+      it != ghostCells.end(); it++){
+    elementTags.push_back(it->first->getNum());
+    partitions.push_back(it->second);
+  }
 }
 
 // TODO: give access to closures

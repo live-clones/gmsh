@@ -611,6 +611,14 @@ GMSH_API void gmshModelMeshPreallocateBarycenters(const int elementType,
                                                   const int tag,
                                                   int * ierr);
 
+/* Get the ghost elements `elementTags' and their associated `partitions'
+ * stored in the ghost entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelMeshGetGhostElements(const int dim,
+                                            const int tag,
+                                            int ** elementTags, size_t * elementTags_n,
+                                            int ** partitions, size_t * partitions_n,
+                                            int * ierr);
+
 /* Set a mesh size constraint on the geometrical entities `dimTags'. Currently
  * only entities of dimension 0 (points) are handled. */
 GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n,
