@@ -1136,16 +1136,37 @@ void gmshGenerateOrderedPointsLine(int order, fullVector<double> &points)
   return;
 }
 
-void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points)
+void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
+                               bool bezierSpace)
 {
   gmshGenerateOrderedMonomials(data, points);
+  if(points.size1() == 1) return;
 
   const int type = data.elementType();
   const int order = data.spaceOrder();
-  if(type != TYPE_PYR && order == 0) return;
+
+  if(bezierSpace) {
+    if(type != TYPE_PYR) {
+      points.scale(1. / order);
+      return;
+    }
+    else {
+      const int nij = data.nij();
+      const int nk = data.nk();
+      const int div = std::max(nij, nk);
+      for(int i = 0; i < points.size1(); ++i) {
+        points(i, 2) = points(i, 2) / div;
+        const double scale = 1. - points(i, 2);
+        points(i, 0) = scale * (points(i, 0) * 1. / div);
+        points(i, 1) = scale * (points(i, 1) * 1. / div);
+      }
+    }
+    return;
+  }
 
   switch(type) {
-  case TYPE_PNT: return;
+  case TYPE_PNT:
+    return;
   case TYPE_LIN:
   case TYPE_QUA:
   case TYPE_HEX:
