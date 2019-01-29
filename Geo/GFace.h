@@ -37,7 +37,7 @@ protected:
   GRegion *r1, *r2;
   mean_plane meanPlane;
   std::vector<GEdge *> embedded_edges;
-  std::set<GVertex *> embedded_vertices;
+  std::set<GVertex *, GEntityLessThan> embedded_vertices;
 
   BoundaryLayerColumns _columns;
 
@@ -122,7 +122,7 @@ public:
   virtual std::vector<GEdge *> embeddedEdges() const { return embedded_edges; }
 
   // edges that are embedded in the face
-  virtual std::set<GVertex *> embeddedVertices() const
+  virtual std::set<GVertex *, GEntityLessThan> embeddedVertices() const
   {
     return embedded_vertices;
   }

@@ -1179,8 +1179,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   }
 
   // add embedded vertices
-  std::set<GVertex *> emb_vertx = gf->embeddedVertices();
-  std::set<GVertex *>::iterator itvx = emb_vertx.begin();
+  std::set<GVertex *, GEntityLessThan> emb_vertx = gf->embeddedVertices();
+  std::set<GVertex *, GEntityLessThan>::iterator itvx = emb_vertx.begin();
   while(itvx != emb_vertx.end()) {
     all_vertices.insert((*itvx)->mesh_vertices.begin(),
                         (*itvx)->mesh_vertices.end());
@@ -2127,8 +2127,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
     // Embedded Vertices
     // add embedded vertices
-    std::set<GVertex *> emb_vertx = gf->embeddedVertices();
-    std::set<GVertex *>::iterator itvx = emb_vertx.begin();
+    std::set<GVertex *, GEntityLessThan> emb_vertx = gf->embeddedVertices();
+    std::set<GVertex *, GEntityLessThan>::iterator itvx = emb_vertx.begin();
 
     std::map<MVertex *, std::set<BDS_Point *> > invertedRecoverMap;
     for(std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
