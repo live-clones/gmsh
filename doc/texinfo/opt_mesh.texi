@@ -327,7 +327,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionCreateGhostCells
-Create partition ghost cells@*
+Create ghost cells, i.e. create for each partition a ghost entity containing elements connected to neighboring partitions by at least one node.@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

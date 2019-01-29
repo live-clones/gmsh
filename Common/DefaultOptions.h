@@ -1133,7 +1133,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "PartitionCreatePhysicals" , opt_mesh_partition_create_physicals , 1 ,
     "Create physical groups for partitions, based on existing physical groups" },
   { F|O, "PartitionCreateGhostCells" , opt_mesh_partition_create_ghost_cells , 0 ,
-    "Create partition ghost cells" },
+    "Create ghost cells, i.e. create for each partition a ghost entity containing "
+    "elements connected to neighboring partitions by at least one node." },
   { F|O, "PartitionSplitMeshFiles" , opt_mesh_partition_split_mesh_files , 0 ,
     "Write one file for each mesh partition" },
   { F|O, "PartitionTopologyFile" , opt_mesh_partition_save_topology_file , 0 ,
