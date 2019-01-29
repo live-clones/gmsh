@@ -1641,7 +1641,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     m_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
   }
 
-  std::set<GVertex *> m_embedded_vertices = master->embeddedVertices();
+  std::set<GVertex *, GEntityLessThan> m_embedded_vertices = master->embeddedVertices();
   m_vertices.insert(m_embedded_vertices.begin(), m_embedded_vertices.end());
 
   // check topological correspondence
