@@ -1603,8 +1603,30 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
       Msg::Warning("Creating additional surface loop %d", t);
     }
     bind(shell, t, true);
+    return true;
   }
-  return true;
+
+  // if sewing didn't work and we have single surface, try brute-force
+  if(surfaceTags.size() == 1) {
+    if(!_tagFace.IsBound(surfaceTags[0])) {
+      Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[0]);
+      return false;
+    }
+    TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTags[0]));
+    Handle(Geom_Surface) surf = BRep_Tool::Surface(face);
+    BRepBuilderAPI_MakeShell s(surf);
+    s.Build();
+    if(!s.IsDone()) {
+      Msg::Error("Could not create shell");
+      return false;
+    }
+    TopoDS_Shell shell = s.Shell();
+    bind(shell, tag, true);
+    return true;
+  }
+
+  Msg::Error("Could not create shell");
+  return false;
 }
 
 bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
