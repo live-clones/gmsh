@@ -32,9 +32,9 @@ static int complink(const void *a, const void *b)
   return q->n - w->n;
 }
 
-// Find all linked edges (note that we use List_ISearchSeq so that the
-// input lists don't get sorted: it's less efficient, but it allows us
-// to do multi-level, user-friendly undos in the GUI)
+// Find all linked edges (note that we use List_ISearchSeq so that the input
+// lists don't get sorted: it's less efficient, but it allows us to do
+// multi-level, user-friendly undos in the GUI)
 
 static void recurFindLinkedEdges(int ed, List_T *edges, Tree_T *points,
                                  Tree_T *links)
@@ -200,11 +200,11 @@ int allEdgesLinked(int ed, List_T *edges)
 
   if(!Tree_Nbr(points)) {
     found = 1;
-    // at this point we can orient all the edges in a line loop in a
-    // consistent manner (left- or right-oriented, depending on the
-    // orientation of the first edge), and we can sort them so that
-    // they form a path (we can only do this now since we allow to
-    // select disconnected parts of the loop in the GUI)
+    // at this point we can orient all the edges in a line loop in a consistent
+    // manner (left- or right-oriented, depending on the orientation of the
+    // first edge), and we can sort them so that they form a path (we can only
+    // do this now since we allow to select disconnected parts of the loop in
+    // the GUI)
     orientAndSortEdges(edges, links);
   }
 
@@ -229,6 +229,7 @@ static void recurFindLinkedFaces(int fac, List_T *faces, Tree_T *edges,
   for(std::vector<GEdge *>::const_iterator it = l.begin(); it != l.end();
       it++) {
     GEdge *ge = *it;
+    if(ge->degenerate(0)) continue;
     lnk lk;
     lk.n = std::abs(ge->tag());
     if(!Tree_Search(edges, &lk.n))
@@ -263,6 +264,7 @@ static void createFaceLinks(Tree_T *links)
       for(std::vector<GEdge *>::const_iterator ite = l.begin(); ite != l.end();
           ite++) {
         GEdge *ge = *ite;
+        if(ge->degenerate(0)) continue;
         lnk li, *pli;
         li.n = std::abs(ge->tag());
         if((pli = (lnk *)Tree_PQuery(links, &li))) {
@@ -300,6 +302,7 @@ int allFacesLinked(int fac, List_T *faces)
     for(std::vector<GEdge *>::const_iterator it = l.begin(); it != l.end();
         it++) {
       GEdge *ge = *it;
+      if(ge->degenerate(0)) continue;
       int ic = std::abs(ge->tag());
       if(!Tree_Search(edges, &ic))
         Tree_Add(edges, &ic);
@@ -310,10 +313,10 @@ int allFacesLinked(int fac, List_T *faces)
 
   if(List_ISearchSeq(faces, &fac, fcmp_absint) < 0) {
     List_Add(faces, &fac);
-    // Warning: this is correct only if the surfaces are defined with
-    // correct orientations, i.e., if the hole boundaries are oriented
-    // consistently with the exterior boundaries. There is currently
-    // nothing in the code that checks this!
+    // Warning: this is correct only if the surfaces are defined with correct
+    // orientations, i.e., if the hole boundaries are oriented consistently with
+    // the exterior boundaries. There is currently nothing in the code that
+    // checks this!
     recurFindLinkedFaces(fac, faces, edges, links);
   }
 
@@ -321,8 +324,7 @@ int allFacesLinked(int fac, List_T *faces)
 
   if(!Tree_Nbr(edges)) {
     found = 1;
-    // we could orient the faces here, but it's not really
-    // necessary...
+    // we could orient the faces here, but it's not really necessary...
   }
 
   Tree_Delete(links, freeLink);
