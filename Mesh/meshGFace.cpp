@@ -3044,7 +3044,7 @@ void orientMeshGFace::operator()(GFace *gf)
 
     // Reverse BL and non-BL elements if needed
     if(existBL) { // If there is a BL, test BL/non-BL elements
-      if((orientNonBL == -1) || (orientBL == -1))
+      if((orientNonBL == -1) || (orientBL == -1)) {
         for(unsigned int iEl = 0; iEl < gf->getNumMeshElements(); iEl++) {
           MElement *e = gf->getMeshElement(iEl);
           // If el. outside of BL...
@@ -3052,20 +3052,23 @@ void orientMeshGFace::operator()(GFace *gf)
             // ... reverse if needed
             if(orientNonBL == -1) e->reverse();
           }
-          else // If el. in BL
-               // ... reverse if needed
-            if(orientBL == -1)
-            e->reverse();
+          else{ // If el. in BL ... reverse if needed
+            if(orientBL == -1) e->reverse();
+          }
         }
+      }
     }
-    else // If no BL, reverse all elements if needed
-      if(orientNonBL == -1)
-      for(unsigned int iEl = 0; iEl < gf->getNumMeshElements(); iEl++)
-        gf->getMeshElement(iEl)->reverse();
+    else { // If no BL, reverse all elements if needed
+      if(orientNonBL == -1) {
+        for(unsigned int iEl = 0; iEl < gf->getNumMeshElements(); iEl++)
+          gf->getMeshElement(iEl)->reverse();
+      }
+    }
   }
 
   // Apply user-specified mesh orientation constraints
-  if(gf->meshAttributes.reverseMesh)
+  if(gf->meshAttributes.reverseMesh) {
     for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
       gf->getMeshElement(k)->reverse();
+  }
 }
