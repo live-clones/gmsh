@@ -3864,7 +3864,10 @@ with the edges, 24 with the faces, 8 in the volume)
 @item 93
 125-node fourth order hexahedron (8 nodes associated with the vertices, 36
 with the edges, 54 with the faces, 27 in the volume)
+@item ...
 @end table
+All the currently supported elements in the format are defined in
+@url{https://gitlab.onelab.info/gmsh/gmsh/blob/master/Common/GmshDefines.h,GmshDefines.h}.
 See below for the ordering of the nodes.
 
 The post-processing sections are identical to the ones in the version 2
