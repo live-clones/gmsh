@@ -3871,8 +3871,9 @@ All the currently supported elements in the format are defined in
 See below for the ordering of the nodes.
 
 The post-processing sections are identical to the ones in the version 2
-file format (see below). These sections will be reworked in a future
-minor revision of the version 4 format (e.g. version 4.1 or 4.2).
+file format (@pxref{MSH file format version 2}). These sections will be
+reworked in a future minor revision of the version 4 format
+(e.g. version 4.1 or 4.2).
 
 @c -------------------------------------------------------------------------
 @c Node ordering
