@@ -2784,8 +2784,12 @@ void quick_access_cb(Fl_Widget *w, void *data)
     file_window_cb(0, (void*)"split_u");
   }
   else if(what == "axes"){
-    opt_general_axes(0, GMSH_SET|GMSH_GUI,
-                     opt_general_axes(0, GMSH_GET, 0) ? 0 : 3);
+    int old = opt_general_axes(0, GMSH_GET, 0);
+    opt_general_axes(0, GMSH_SET|GMSH_GUI, old ? 0 : 3);
+    if(!old){
+      opt_general_axes_auto_position(0, GMSH_SET|GMSH_GUI, 0);
+      general_options_axes_fit_cb(0, 0);
+    }
   }
   else if(what == "orthographic")
     opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 1);

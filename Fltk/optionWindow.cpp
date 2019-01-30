@@ -250,6 +250,22 @@ void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
   Msg::StatusGl("");
 }
 
+void general_options_axes_fit_cb(Fl_Widget *w, void *data)
+{
+  SBoundingBox3d bbox = GModel::current()->bounds(true);
+  if(bbox.empty())
+    bbox = SBoundingBox3d(CTX::instance()->min[0], CTX::instance()->min[1],
+                          CTX::instance()->min[2], CTX::instance()->max[0],
+                          CTX::instance()->max[1], CTX::instance()->max[2]);
+  opt_general_axes_xmin(0, GMSH_SET|GMSH_GUI, bbox.min().x());
+  opt_general_axes_ymin(0, GMSH_SET|GMSH_GUI, bbox.min().y());
+  opt_general_axes_zmin(0, GMSH_SET|GMSH_GUI, bbox.min().z());
+  opt_general_axes_xmax(0, GMSH_SET|GMSH_GUI, bbox.max().x());
+  opt_general_axes_ymax(0, GMSH_SET|GMSH_GUI, bbox.max().y());
+  opt_general_axes_zmax(0, GMSH_SET|GMSH_GUI, bbox.max().z());
+  drawContext::global()->draw();
+}
+
 void general_options_ok_cb(Fl_Widget *w, void *data)
 {
   optionWindow *o = FlGui::instance()->options;
@@ -1571,7 +1587,11 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[25]->align(FL_ALIGN_RIGHT);
       general.value[25]->callback(general_options_ok_cb);
 
-      general.butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH,
+      general.push[1] =
+        new Fl_Button(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Fit to visible");
+      general.push[1]->callback(general_options_axes_fit_cb);
+
+      general.butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH,
                                             "Show small axes");
       general.butt[1]->tooltip("(Alt+Shift+a)");
       general.butt[1]->type(FL_TOGGLE_BUTTON);
@@ -1579,13 +1599,13 @@ optionWindow::optionWindow(int deltaFontSize)
                                 (void *)"general_small_axes");
 
       general.value[26] =
-        new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
+        new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH);
       general.value[26]->minimum(-2000);
       general.value[26]->maximum(2000);
       general.value[26]->step(1);
       general.value[26]->callback(general_options_ok_cb);
       general.value[27] =
-        new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH,
+        new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH,
                            "Small axes position");
       general.value[27]->align(FL_ALIGN_RIGHT);
       general.value[27]->minimum(-2000);
@@ -3852,6 +3872,7 @@ void optionWindow::activate(const char *what)
       general.value[23]->deactivate();
       general.value[24]->deactivate();
       general.value[25]->deactivate();
+      general.push[1]->deactivate();
     }
     else {
       general.value[20]->activate();
@@ -3860,6 +3881,7 @@ void optionWindow::activate(const char *what)
       general.value[23]->activate();
       general.value[24]->activate();
       general.value[25]->activate();
+      general.push[1]->activate();
     }
   }
   else if(!strcmp(what, "general_small_axes")) {
