@@ -2677,11 +2677,20 @@ of the geometrical entities and the value of
 @code{Mesh.MinimumCirclePoints}, which gives the number of points per 2
 pi radians.
 @item
-Finally, you can specify a general background mesh mesh size field, that
-combining any of the existing fields:
+Finally, you can specify a general background mesh mesh size, expressed
+as a combination of so-called mesh size @code{Field}s:
 @itemize @bullet
 @item
-A @code{PostView} field specifies an explicit background mesh in the
+The @code{Box} field specifies the size of the elements inside and outside
+of a parallelepipedic region.
+@item
+The @code{Distance} field specifies the size of the mesh according to the
+distance to some geometrical entities.
+@item
+The @code{MathEval} field specifies the size of the mesh using an explicit
+mathematical function.
+@item
+The @code{PostView} field specifies an explicit background mesh in the
 form of a scalar post-processing view (see @ref{Post-processing
 commands}, and @ref{File formats}) in which the nodal values are the
 target element sizes.  This method is very general but it requires a
@@ -2690,30 +2699,19 @@ mesh (usually through an error estimation procedure, in an iterative
 process of mesh adaptation). Warning: only parsed (@file{.pos}) files
 can currently be used as background meshes (@file{.msh} files cannot be
 used, since the mesh used to define the field will be destroyed during
-the meshing process).
-
-(Note that you can also load a background mesh directly from the command
-line using the @code{-bgm} option (@pxref{Command-line options}), or in
-the GUI by selecting `Apply as background mesh' in the post-processing
-view option menu.)
+the meshing process). (Note that you can also load a background mesh
+directly from the command line using the @code{-bgm} option
+(@pxref{Command-line options}), or in the GUI by selecting `Apply as
+background mesh' in the post-processing view option menu.)
 @item
-A @code{Box} field specifies the size of the elements inside and outside
-of a parallelepipedic region.
-@item
-A @code{Threshold} field specifies the size of the mesh according to the
-distance to some geometrical entities. These entities can for example be
-geometry points and curves specified by an @code{Attractor} field.
-@item
-A @code{MathEval} field specifies the size of the mesh using an explicit
-mathematical function.
-@item
-A @code{Min} field specifies the size as the minimum of the sizes
-computed using other fields
+The @code{Min} field specifies the size as the minimum of the sizes
+computed using other fields.
 @item
 @dots{}
 @end itemize
 
-The list of available fields with their options is given below.
+The list of available fields with their options is given below. An
+example is available in @ref{t10.geo}.
 @end enumerate
 
 The three aforementioned methods can be used simultaneously, in which
