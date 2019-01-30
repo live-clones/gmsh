@@ -1057,6 +1057,23 @@ function reclassifyNodes()
 end
 
 """
+    gmsh.model.mesh.relocateNodes(dim = -1, tag = -1)
+
+Relocate the nodes classified on the entity of dimension `dim` and tag `tag`
+using their parametric coordinates. If `tag` < 0, relocate the nodes for all
+entities of dimension `dim`. If `dim` and `tag` are negative, relocate all the
+nodes in the mesh.
+"""
+function relocateNodes(dim = -1, tag = -1)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRelocateNodes, gmsh.lib), Nothing,
+          (Cint, Cint, Ptr{Cint}),
+          dim, tag, ierr)
+    ierr[] != 0 && error("gmshModelMeshRelocateNodes returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.mesh.getElements(dim = -1, tag = -1)
 
 Get the elements classified on the entity of dimension `dim` and tag `tag`. If

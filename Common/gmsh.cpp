@@ -1128,6 +1128,28 @@ GMSH_API void gmsh::model::mesh::reclassifyNodes()
   GModel::current()->pruneMeshVertexAssociations();
 }
 
+GMSH_API void gmsh::model::mesh::relocateNodes(const int dim,
+                                               const int tag)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  std::vector<GEntity *> entities;
+  if(dim >= 0 && tag >= 0) {
+    GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+    if(!ge) {
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      throw 2;
+    }
+    entities.push_back(ge);
+  }
+  else {
+    GModel::current()->getEntities(entities, dim);
+  }
+  for(unsigned int i = 0; i < entities.size(); i++)
+    entities[i]->relocateMeshVertices();
+}
+
 static void _getElementTypeMap(int dim, int tag,
                                std::map<int, std::vector<GEntity *> > &typeMap)
 {

@@ -764,6 +764,21 @@ etc. after the elements have been set.
 -
 @end table
 
+@item relocateNodes
+Relocate the nodes classified on the entity of dimension @code{dim} and tag
+@code{tag} using their parametric coordinates. If @code{tag} < 0, relocate the
+nodes for all entities of dimension @code{dim}. If @code{dim} and @code{tag} are
+negative, relocate all the nodes in the mesh.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item getElements
 Get the elements classified on the entity of dimension @code{dim} and tag
 @code{tag}. If @code{tag} < 0, get the elements for all entities of dimension

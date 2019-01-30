@@ -760,6 +760,17 @@ GMSH_API void gmshModelMeshReclassifyNodes(int * ierr)
   }
 }
 
+GMSH_API void gmshModelMeshRelocateNodes(const int dim, const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::relocateNodes(dim, tag);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshGetElements(int ** elementTypes, size_t * elementTypes_n, int *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn, int *** nodeTags, size_t ** nodeTags_n, size_t *nodeTags_nn, const int dim, const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;

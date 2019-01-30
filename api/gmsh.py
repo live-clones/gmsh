@@ -1254,6 +1254,24 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def relocateNodes(dim=-1, tag=-1):
+            """
+            Relocate the nodes classified on the entity of dimension `dim' and tag
+            `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes
+            for all entities of dimension `dim'. If `dim' and `tag' are negative,
+            relocate all the nodes in the mesh.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRelocateNodes(
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshRelocateNodes returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def getElements(dim=-1, tag=-1):
             """
             Get the elements classified on the entity of dimension `dim' and tag `tag'.

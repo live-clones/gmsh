@@ -2677,8 +2677,8 @@ of the geometrical entities and the value of
 @code{Mesh.MinimumCirclePoints}, which gives the number of points per 2
 pi radians.
 @item
-Finally, you can specify a general background mesh mesh size, expressed
-as a combination of so-called mesh size @code{Field}s:
+Finally, you can specify a general background mesh size, expressed as a
+combination of so-called mesh size fields:
 @itemize @bullet
 @item
 The @code{Box} field specifies the size of the elements inside and outside

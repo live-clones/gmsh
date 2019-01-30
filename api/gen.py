@@ -217,6 +217,9 @@ mesh.add('setNodes',doc,None,iint('dim'),iint('tag'),ivectorint('nodeTags'),ivec
 doc = '''Reclassify all nodes on their associated geometrical entity, based on the elements. Can be used when importing nodes in bulk (e.g. by associating them all to a single volume), to reclassify them correctly on model surfaces, curves, etc. after the elements have been set.'''
 mesh.add('reclassifyNodes',doc,None)
 
+doc = '''Relocate the nodes classified on the entity of dimension `dim' and tag `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes for all entities of dimension `dim'. If `dim' and `tag' are negative, relocate all the nodes in the mesh.'''
+mesh.add('relocateNodes',doc,None,iint('dim', '-1'),iint('tag', '-1'))
+
 doc = '''Get the elements classified on the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the elements for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the elements in the mesh. `elementTypes' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see `getElementProperties' to obtain the properties for a given element type). `elementTags' is a vector of the same length as `elementTypes'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is also a vector of the same length as `elementTypes'; each entry is a vector of length equal to the number of elements of the given type times the number N of nodes for this type of element, that contains the node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].'''
 mesh.add('getElements',doc,None,ovectorint('elementTypes'),ovectorvectorint('elementTags'),ovectorvectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'))
 

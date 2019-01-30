@@ -428,6 +428,14 @@ GMSH_API void gmshModelMeshSetNodes(const int dim,
  * surfaces, curves, etc. after the elements have been set. */
 GMSH_API void gmshModelMeshReclassifyNodes(int * ierr);
 
+/* Relocate the nodes classified on the entity of dimension `dim' and tag
+ * `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes
+ * for all entities of dimension `dim'. If `dim' and `tag' are negative,
+ * relocate all the nodes in the mesh. */
+GMSH_API void gmshModelMeshRelocateNodes(const int dim,
+                                         const int tag,
+                                         int * ierr);
+
 /* Get the elements classified on the entity of dimension `dim' and tag `tag'.
  * If `tag' < 0, get the elements for all entities of dimension `dim'. If
  * `dim' and `tag' are negative, get all the elements in the mesh.

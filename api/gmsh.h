@@ -404,6 +404,13 @@ namespace gmsh { // Top-level functions
       // surfaces, curves, etc. after the elements have been set.
       GMSH_API void reclassifyNodes();
 
+      // Relocate the nodes classified on the entity of dimension `dim' and tag
+      // `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes
+      // for all entities of dimension `dim'. If `dim' and `tag' are negative,
+      // relocate all the nodes in the mesh.
+      GMSH_API void relocateNodes(const int dim = -1,
+                                  const int tag = -1);
+
       // Get the elements classified on the entity of dimension `dim' and tag
       // `tag'. If `tag' < 0, get the elements for all entities of dimension `dim'.
       // If `dim' and `tag' are negative, get all the elements in the mesh.
