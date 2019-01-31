@@ -253,6 +253,11 @@ void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
 void general_options_axes_fit_cb(Fl_Widget *w, void *data)
 {
   SBoundingBox3d bbox = GModel::current()->bounds(true);
+  for(unsigned int i = 0; i < PView::list.size(); i++){
+    if(PView::list[i]->getOptions()->visible &&
+       !PView::list[i]->getData()->getBoundingBox().empty())
+      bbox += PView::list[i]->getData()->getBoundingBox();
+  }
   if(bbox.empty())
     bbox = SBoundingBox3d(CTX::instance()->min[0], CTX::instance()->min[1],
                           CTX::instance()->min[2], CTX::instance()->max[0],
@@ -706,18 +711,12 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       for(int i = 0; i < (int)PView::list.size(); i++) {
         if(i == current ||
            FlGui::instance()->options->browser->selected(i + 6)) {
-          // compute min/max taking current visibility status into account
-          int step = (int)opt_view_timestep(i, GMSH_GET, 0);
-          PViewData *data = PView::list[i]->getData(true);
-          PViewOptions *opt = PView::list[i]->getOptions();
+          // compute min/max taking current visibility status and tensor display
+          // mode into account
           if(str == "range_min")
-            vmin =
-              std::min(vmin, data->getMin(step, true, opt->forceNumComponents,
-                                          opt->componentMap));
+            vmin = std::min(vmin, opt_view_min_visible(i, GMSH_GET, 0));
           else if(str == "range_max")
-            vmax =
-              std::max(vmax, data->getMax(step, true, opt->forceNumComponents,
-                                          opt->componentMap));
+            vmax = std::max(vmax, opt_view_max_visible(i, GMSH_GET, 0));
         }
       }
       if(str == "range_min")
@@ -3421,10 +3420,10 @@ optionWindow::optionWindow(int deltaFontSize)
 
       static Fl_Menu_Item menu_tensor[] = {
         {"Von-Mises", 0, 0, 0},
-        {"Maximum eigen value", 0, 0, 0},
-        {"Minimum eigen value", 0, 0, 0},
-        {"Eigen vectors", 0, 0, 0},
-        {"Ellipse (2d)", 0, 0, 0},
+        {"Maximum eigenvalue", 0, 0, 0},
+        {"Minimum eigenvalue", 0, 0, 0},
+        {"Eigenvectors", 0, 0, 0},
+        {"Ellipse", 0, 0, 0},
         {"Ellipsoid", 0, 0, 0},
         {"Frame", 0, 0, 0},
         {0}

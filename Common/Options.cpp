@@ -6905,8 +6905,12 @@ double opt_view_min_visible(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEW(0.);
   if(!data) return 0.;
-  return data->getMin(opt->timeStep, true, opt->forceNumComponents,
-                      opt->componentMap);
+  int tensorRep =
+    (opt->tensorType == PViewOptions::VonMises) ? 0 :
+    (opt->tensorType == PViewOptions::MaxEigenValue) ? 1 :
+    2;
+  return data->getMin(opt->timeStep, true, tensorRep,
+                      opt->forceNumComponents, opt->componentMap);
 #else
   return 0.;
 #endif
@@ -6917,8 +6921,12 @@ double opt_view_max_visible(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEW(0.);
   if(!data) return 0.;
-  return data->getMax(opt->timeStep, true, opt->forceNumComponents,
-                      opt->componentMap);
+  int tensorRep =
+    (opt->tensorType == PViewOptions::VonMises) ? 0 :
+    (opt->tensorType == PViewOptions::MinEigenValue) ? 2 :
+    1;
+  return data->getMax(opt->timeStep, true, tensorRep,
+                      opt->forceNumComponents, opt->componentMap);
 #else
   return 0.;
 #endif

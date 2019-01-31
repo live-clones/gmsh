@@ -1567,7 +1567,8 @@ StringXNumber ViewOptions_Number[] = {
   { F,   "Max" , opt_view_max , 0. ,
     "Maximum value in the view (read-only)" },
   { F,   "MaxVisible" , opt_view_max_visible , 0. ,
-    "Maximum value in the visible parts of the view (read-only)" },
+    "Maximum value in the visible parts of the view, taking current time step "
+    "and tensor display type into account (read-only)" },
   { F,   "MaxX" , opt_view_xmax , 0. ,
     "Maximum view coordinate along the X-axis (read-only)" },
   { F,   "MaxY" , opt_view_ymax , 0. ,
@@ -1577,7 +1578,8 @@ StringXNumber ViewOptions_Number[] = {
   { F,   "Min" , opt_view_min , 0. ,
     "Minimum value in the view (read-only)" },
   { F,   "MinVisible" , opt_view_min_visible , 0. ,
-    "Minimum value in the visible parts of the view (read-only)" },
+    "Minimum value in the visible parts of the view, taking current time step "
+    "and tensor display type into account (read-only)" },
   { F,   "MinX" , opt_view_xmin , 0. ,
     "Minimum view coordinate along the X-axis (read-only)" },
   { F,   "MinY" , opt_view_ymin , 0. ,
@@ -1645,7 +1647,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "TargetError" , opt_view_target_error , 0.01 ,
     "Target representation error for adaptive views" },
   { F|O, "TensorType" , opt_view_tensor_type , 1. ,
-    "Tensor Visualization Type" },
+    "Tensor display type (1: Von-Mises, 2: maximum eigenvalue, 3: minimum eigenvalue, "
+    "4: eigenvectors, 5: ellipse, 6: ellipsoid, 7: frame"},
   { F,   "TimeStep" , opt_view_timestep , 0. ,
     "Current time step displayed" },
   { F,   "Time" , opt_view_time , -1. ,
