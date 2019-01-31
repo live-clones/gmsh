@@ -1648,7 +1648,7 @@ StringXNumber ViewOptions_Number[] = {
     "Target representation error for adaptive views" },
   { F|O, "TensorType" , opt_view_tensor_type , 1. ,
     "Tensor display type (1: Von-Mises, 2: maximum eigenvalue, 3: minimum eigenvalue, "
-    "4: eigenvectors, 5: ellipse, 6: ellipsoid, 7: frame"},
+    "4: eigenvectors, 5: ellipse, 6: ellipsoid, 7: frame)"},
   { F,   "TimeStep" , opt_view_timestep , 0. ,
     "Current time step displayed" },
   { F,   "Time" , opt_view_time , -1. ,

@@ -672,7 +672,7 @@ Default value: @code{0.01}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.TensorType
-Tensor display type (1: Von-Mises, 2: maximum eigenvalue, 3: minimum eigenvalue, 4: eigenvectors, 5: ellipse, 6: ellipsoid, 7: frame@*
+Tensor display type (1: Von-Mises, 2: maximum eigenvalue, 3: minimum eigenvalue, 4: eigenvectors, 5: ellipse, 6: ellipsoid, 7: frame)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
