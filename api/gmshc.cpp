@@ -41,6 +41,15 @@ void vectorpair2intptr(const gmsh::vectorpair &v, int **p, size_t *size)
   *size = v.size() * 2;
 }
 
+void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
+{
+  *p = (char**)gmshMalloc(sizeof(char*) * v.size());
+  for(size_t i = 0; i < v.size(); ++i){
+    (*p)[i] = strdup(v[i].c_str());
+  }
+  *size = v.size();
+}
+
 template<typename t>
 void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t **size, size_t *sizeSize)
 {
@@ -49,15 +58,6 @@ void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t *
   for(size_t i = 0; i < v.size(); ++i)
     vector2ptr(v[i], &((*p)[i]), &((*size)[i]));
   *sizeSize = v.size();
-}
-
-void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
-{
-  *p = (char**)gmshMalloc(sizeof(char*) * v.size());
-  for(size_t i = 0; i < v.size(); ++i){
-    (*p)[i] = strdup(v[i].c_str());
-  }
-  *size = v.size();
 }
 
 void vectorvectorpair2intptrptr(const std::vector<gmsh::vectorpair > &v, int ***p, size_t **size, size_t *sizeSize)
