@@ -450,22 +450,6 @@ namespace gmsh { // Top-level functions
                                             int & elementType,
                                             std::vector<int> & nodeTags);
 
-      // Set the elements of the entity of dimension `dim' and tag `tag'. `types'
-      // contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
-      // the Gmsh reference manual). `elementTags' is a vector of the same length
-      // as `types'; each entry is a vector containing the tags (unique, strictly
-      // positive identifiers) of the elements of the corresponding type.
-      // `nodeTags' is also a vector of the same length as `types'; each entry is a
-      // vector of length equal to the number of elements of the given type times
-      // the number N of nodes per element, that contains the node tags of all the
-      // elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1,
-      // ...].
-      GMSH_API void setElements(const int dim,
-                                const int tag,
-                                const std::vector<int> & elementTypes,
-                                const std::vector<std::vector<int> > & elementTags,
-                                const std::vector<std::vector<int> > & nodeTags);
-
       // Get the types of elements in the entity of dimension `dim' and tag `tag'.
       // If `tag' < 0, get the types for all entities of dimension `dim'. If `dim'
       // and `tag' are negative, get all the types in the mesh.
@@ -508,6 +492,34 @@ namespace gmsh { // Top-level functions
                                               std::vector<int> & elementTags,
                                               std::vector<int> & nodeTags,
                                               const int tag = -1);
+
+      // Set the elements of the entity of dimension `dim' and tag `tag'. `types'
+      // contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
+      // the Gmsh reference manual). `elementTags' is a vector of the same length
+      // as `types'; each entry is a vector containing the tags (unique, strictly
+      // positive identifiers) of the elements of the corresponding type.
+      // `nodeTags' is also a vector of the same length as `types'; each entry is a
+      // vector of length equal to the number of elements of the given type times
+      // the number N of nodes per element, that contains the node tags of all the
+      // elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1,
+      // ...].
+      GMSH_API void setElements(const int dim,
+                                const int tag,
+                                const std::vector<int> & elementTypes,
+                                const std::vector<std::vector<int> > & elementTags,
+                                const std::vector<std::vector<int> > & nodeTags);
+
+      // Set the elements of type `elementType' in the entity of dimension `dim'
+      // and tag `tag'. `elementTags' contains the tags (unique, strictly positive
+      // identifiers) of the elements of the corresponding type. `nodeTags' is a
+      // vector of length equal to the number of elements times the number N of
+      // nodes per element, that contains the node tags of all the elements,
+      // concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
+      GMSH_API void setElementsByType(const int dim,
+                                      const int tag,
+                                      const int elementType,
+                                      const std::vector<int> & elementTags,
+                                      const std::vector<int> & nodeTags);
 
       // Get the Jacobians of all the elements of type `elementType' classified on
       // the entity of dimension `dim' and tag `tag', at the G integration points
@@ -685,6 +697,11 @@ namespace gmsh { // Top-level functions
 
       // Remove duplicate nodes in the mesh of the current model.
       GMSH_API void removeDuplicateNodes();
+
+      // Split (into two triangles) all quadrangles in surface `tag' whose quality
+      // is lower than `quality'. If `tag' < 0, split quadrangles in all surfaces.
+      GMSH_API void splitQuadrangles(const double quality = 1.,
+                                     const int tag = -1);
 
       // Create a boundary representation from the mesh if the model does not have
       // one (e.g. when imported from mesh file formats with no BRep representation

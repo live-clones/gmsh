@@ -41,6 +41,15 @@ void vectorpair2intptr(const gmsh::vectorpair &v, int **p, size_t *size)
   *size = v.size() * 2;
 }
 
+void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
+{
+  *p = (char**)gmshMalloc(sizeof(char*) * v.size());
+  for(size_t i = 0; i < v.size(); ++i){
+    (*p)[i] = strdup(v[i].c_str());
+  }
+  *size = v.size();
+}
+
 template<typename t>
 void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t **size, size_t *sizeSize)
 {
@@ -49,15 +58,6 @@ void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t *
   for(size_t i = 0; i < v.size(); ++i)
     vector2ptr(v[i], &((*p)[i]), &((*size)[i]));
   *sizeSize = v.size();
-}
-
-void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
-{
-  *p = (char**)gmshMalloc(sizeof(char*) * v.size());
-  for(size_t i = 0; i < v.size(); ++i){
-    (*p)[i] = strdup(v[i].c_str());
-  }
-  *size = v.size();
 }
 
 void vectorvectorpair2intptrptr(const std::vector<gmsh::vectorpair > &v, int ***p, size_t **size, size_t *sizeSize)
@@ -814,24 +814,6 @@ GMSH_API void gmshModelMeshGetElementByCoordinates(const double x, const double 
   }
 }
 
-GMSH_API void gmshModelMeshSetElements(const int dim, const int tag, int * elementTypes, size_t elementTypes_n, const int ** elementTags, const size_t * elementTags_n, size_t elementTags_nn, const int ** nodeTags, const size_t * nodeTags_n, size_t nodeTags_nn, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<int> api_elementTypes_(elementTypes, elementTypes + elementTypes_n);
-    std::vector<std::vector<int> > api_elementTags_(elementTags_nn);
-    for(size_t i = 0; i < elementTags_nn; ++i)
-      api_elementTags_[i] = std::vector<int>(elementTags[i], elementTags[i] + elementTags_n[i]);
-    std::vector<std::vector<int> > api_nodeTags_(nodeTags_nn);
-    for(size_t i = 0; i < nodeTags_nn; ++i)
-      api_nodeTags_[i] = std::vector<int>(nodeTags[i], nodeTags[i] + nodeTags_n[i]);
-    gmsh::model::mesh::setElements(dim, tag, api_elementTypes_, api_elementTags_, api_nodeTags_);
-  }
-  catch(int api_ierr_){
-    if(ierr) *ierr = api_ierr_;
-  }
-}
-
 GMSH_API void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * elementTypes_n, const int dim, const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -884,6 +866,37 @@ GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType, cons
     gmsh::model::mesh::preallocateElementsByType(elementType, elementTag, nodeTag, api_elementTags_, api_nodeTags_, tag);
     vector2ptr(api_elementTags_, elementTags, elementTags_n);
     vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshSetElements(const int dim, const int tag, int * elementTypes, size_t elementTypes_n, const int ** elementTags, const size_t * elementTags_n, size_t elementTags_nn, const int ** nodeTags, const size_t * nodeTags_n, size_t nodeTags_nn, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_elementTypes_(elementTypes, elementTypes + elementTypes_n);
+    std::vector<std::vector<int> > api_elementTags_(elementTags_nn);
+    for(size_t i = 0; i < elementTags_nn; ++i)
+      api_elementTags_[i] = std::vector<int>(elementTags[i], elementTags[i] + elementTags_n[i]);
+    std::vector<std::vector<int> > api_nodeTags_(nodeTags_nn);
+    for(size_t i = 0; i < nodeTags_nn; ++i)
+      api_nodeTags_[i] = std::vector<int>(nodeTags[i], nodeTags[i] + nodeTags_n[i]);
+    gmsh::model::mesh::setElements(dim, tag, api_elementTypes_, api_elementTags_, api_nodeTags_);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshSetElementsByType(const int dim, const int tag, const int elementType, int * elementTags, size_t elementTags_n, int * nodeTags, size_t nodeTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_elementTags_(elementTags, elementTags + elementTags_n);
+    std::vector<int> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
+    gmsh::model::mesh::setElementsByType(dim, tag, elementType, api_elementTags_, api_nodeTags_);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -1166,6 +1179,17 @@ GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::removeDuplicateNodes();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshSplitQuadrangles(const double quality, const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::splitQuadrangles(quality, tag);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
