@@ -1369,35 +1369,6 @@ class model:
                 _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
 
         @staticmethod
-        def setElements(dim, tag, elementTypes, elementTags, nodeTags):
-            """
-            Set the elements of the entity of dimension `dim' and tag `tag'. `types'
-            contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
-            the Gmsh reference manual). `elementTags' is a vector of the same length as
-            `types'; each entry is a vector containing the tags (unique, strictly
-            positive identifiers) of the elements of the corresponding type. `nodeTags'
-            is also a vector of the same length as `types'; each entry is a vector of
-            length equal to the number of elements of the given type times the number N
-            of nodes per element, that contains the node tags of all the elements of
-            the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
-            """
-            api_elementTypes_, api_elementTypes_n_ = _ivectorint(elementTypes)
-            api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = _ivectorvectorint(elementTags)
-            api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_ = _ivectorvectorint(nodeTags)
-            ierr = c_int()
-            lib.gmshModelMeshSetElements(
-                c_int(dim),
-                c_int(tag),
-                api_elementTypes_, api_elementTypes_n_,
-                api_elementTags_, api_elementTags_n_, api_elementTags_nn_,
-                api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_,
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetElements returned non-zero error code: ",
-                    ierr.value)
-
-        @staticmethod
         def getElementTypes(dim=-1, tag=-1):
             """
             Get the types of elements in the entity of dimension `dim' and tag `tag'.
@@ -1514,6 +1485,60 @@ class model:
             return (
                 _ovectorint(api_elementTags_, api_elementTags_n_.value),
                 _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
+
+        @staticmethod
+        def setElements(dim, tag, elementTypes, elementTags, nodeTags):
+            """
+            Set the elements of the entity of dimension `dim' and tag `tag'. `types'
+            contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
+            the Gmsh reference manual). `elementTags' is a vector of the same length as
+            `types'; each entry is a vector containing the tags (unique, strictly
+            positive identifiers) of the elements of the corresponding type. `nodeTags'
+            is also a vector of the same length as `types'; each entry is a vector of
+            length equal to the number of elements of the given type times the number N
+            of nodes per element, that contains the node tags of all the elements of
+            the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
+            """
+            api_elementTypes_, api_elementTypes_n_ = _ivectorint(elementTypes)
+            api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = _ivectorvectorint(elementTags)
+            api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_ = _ivectorvectorint(nodeTags)
+            ierr = c_int()
+            lib.gmshModelMeshSetElements(
+                c_int(dim),
+                c_int(tag),
+                api_elementTypes_, api_elementTypes_n_,
+                api_elementTags_, api_elementTags_n_, api_elementTags_nn_,
+                api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshSetElements returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def setElementsByType(dim, tag, elementType, elementTags, nodeTags):
+            """
+            Set the elements of type `elementType' in the entity of dimension `dim' and
+            tag `tag'. `elementTags' contains the tags (unique, strictly positive
+            identifiers) of the elements of the corresponding type. `nodeTags' is a
+            vector of length equal to the number of elements times the number N of
+            nodes per element, that contains the node tags of all the elements,
+            concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
+            """
+            api_elementTags_, api_elementTags_n_ = _ivectorint(elementTags)
+            api_nodeTags_, api_nodeTags_n_ = _ivectorint(nodeTags)
+            ierr = c_int()
+            lib.gmshModelMeshSetElementsByType(
+                c_int(dim),
+                c_int(tag),
+                c_int(elementType),
+                api_elementTags_, api_elementTags_n_,
+                api_nodeTags_, api_nodeTags_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshSetElementsByType returned non-zero error code: ",
+                    ierr.value)
 
         @staticmethod
         def getJacobians(elementType, integrationType, tag=-1, task=0, numTasks=1):
@@ -1988,6 +2013,22 @@ class model:
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelMeshRemoveDuplicateNodes returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def splitQuadrangles(quality=1., tag=-1):
+            """
+            Split (into two triangles) all quadrangles in surface `tag' whose quality
+            is lower than `quality'. If `tag' < 0, split quadrangles in all surfaces.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshSplitQuadrangles(
+                c_double(quality),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshSplitQuadrangles returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod

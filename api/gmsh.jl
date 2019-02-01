@@ -1163,30 +1163,6 @@ function getElementByCoordinates(x, y, z)
 end
 
 """
-    gmsh.model.mesh.setElements(dim, tag, elementTypes, elementTags, nodeTags)
-
-Set the elements of the entity of dimension `dim` and tag `tag`. `types`
-contains the MSH types of the elements (e.g. `2` for 3-node triangles: see the
-Gmsh reference manual). `elementTags` is a vector of the same length as `types`;
-each entry is a vector containing the tags (unique, strictly positive
-identifiers) of the elements of the corresponding type. `nodeTags` is also a
-vector of the same length as `types`; each entry is a vector of length equal to
-the number of elements of the given type times the number N of nodes per
-element, that contains the node tags of all the elements of the given type,
-concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
-"""
-function setElements(dim, tag, elementTypes, elementTags, nodeTags)
-    api_elementTags_n_ = [ length(elementTags[i]) for i in 1:length(elementTags) ]
-    api_nodeTags_n_ = [ length(nodeTags[i]) for i in 1:length(nodeTags) ]
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetElements, gmsh.lib), Nothing,
-          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
-          dim, tag, convert(Vector{Cint}, elementTypes), length(elementTypes), convert(Vector{Vector{Cint}},elementTags), api_elementTags_n_, length(elementTags), convert(Vector{Vector{Cint}},nodeTags), api_nodeTags_n_, length(nodeTags), ierr)
-    ierr[] != 0 && error("gmshModelMeshSetElements returned non-zero error code: $(ierr[])")
-    return nothing
-end
-
-"""
     gmsh.model.mesh.getElementTypes(dim = -1, tag = -1)
 
 Get the types of elements in the entity of dimension `dim` and tag `tag`. If
@@ -1284,6 +1260,49 @@ function preallocateElementsByType(elementType, elementTag, nodeTag, tag = -1)
     elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
     return elementTags, nodeTags
+end
+
+"""
+    gmsh.model.mesh.setElements(dim, tag, elementTypes, elementTags, nodeTags)
+
+Set the elements of the entity of dimension `dim` and tag `tag`. `types`
+contains the MSH types of the elements (e.g. `2` for 3-node triangles: see the
+Gmsh reference manual). `elementTags` is a vector of the same length as `types`;
+each entry is a vector containing the tags (unique, strictly positive
+identifiers) of the elements of the corresponding type. `nodeTags` is also a
+vector of the same length as `types`; each entry is a vector of length equal to
+the number of elements of the given type times the number N of nodes per
+element, that contains the node tags of all the elements of the given type,
+concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
+"""
+function setElements(dim, tag, elementTypes, elementTags, nodeTags)
+    api_elementTags_n_ = [ length(elementTags[i]) for i in 1:length(elementTags) ]
+    api_nodeTags_n_ = [ length(nodeTags[i]) for i in 1:length(nodeTags) ]
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetElements, gmsh.lib), Nothing,
+          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          dim, tag, convert(Vector{Cint}, elementTypes), length(elementTypes), convert(Vector{Vector{Cint}},elementTags), api_elementTags_n_, length(elementTags), convert(Vector{Vector{Cint}},nodeTags), api_nodeTags_n_, length(nodeTags), ierr)
+    ierr[] != 0 && error("gmshModelMeshSetElements returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.setElementsByType(dim, tag, elementType, elementTags, nodeTags)
+
+Set the elements of type `elementType` in the entity of dimension `dim` and tag
+`tag`. `elementTags` contains the tags (unique, strictly positive identifiers)
+of the elements of the corresponding type. `nodeTags` is a vector of length
+equal to the number of elements times the number N of nodes per element, that
+contains the node tags of all the elements, concatenated: [e1n1, e1n2, ...,
+e1nN, e2n1, ...].
+"""
+function setElementsByType(dim, tag, elementType, elementTags, nodeTags)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetElementsByType, gmsh.lib), Nothing,
+          (Cint, Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          dim, tag, elementType, convert(Vector{Cint}, elementTags), length(elementTags), convert(Vector{Cint}, nodeTags), length(nodeTags), ierr)
+    ierr[] != 0 && error("gmshModelMeshSetElementsByType returned non-zero error code: $(ierr[])")
+    return nothing
 end
 
 """
@@ -1701,6 +1720,21 @@ function removeDuplicateNodes()
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshModelMeshRemoveDuplicateNodes returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.splitQuadrangles(quality = 1., tag = -1)
+
+Split (into two triangles) all quadrangles in surface `tag` whose quality is
+lower than `quality`. If `tag` < 0, split quadrangles in all surfaces.
+"""
+function splitQuadrangles(quality = 1., tag = -1)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSplitQuadrangles, gmsh.lib), Nothing,
+          (Cdouble, Cint, Ptr{Cint}),
+          quality, tag, ierr)
+    ierr[] != 0 && error("gmshModelMeshSplitQuadrangles returned non-zero error code: $(ierr[])")
     return nothing
 end
 

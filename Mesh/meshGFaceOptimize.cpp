@@ -1473,7 +1473,7 @@ void quadsToTriangles(GFace *gf, double minqual)
   std::map<MElement *, std::pair<MElement *, MElement *> > change;
   for(unsigned int i = 0; i < gf->quadrangles.size(); i++) {
     MQuadrangle *q = gf->quadrangles[i];
-    if(q->etaShapeMeasure() < minqual) {
+    if(q->etaShapeMeasure() < minqual + 1e-12) {
       MTriangle *t11 =
         new MTriangle(q->getVertex(0), q->getVertex(1), q->getVertex(2));
       MTriangle *t12 =

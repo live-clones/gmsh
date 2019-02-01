@@ -882,33 +882,6 @@ namespace gmsh { // Top-level functions
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
       }
 
-      // Set the elements of the entity of dimension `dim' and tag `tag'. `types'
-      // contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
-      // the Gmsh reference manual). `elementTags' is a vector of the same length
-      // as `types'; each entry is a vector containing the tags (unique, strictly
-      // positive identifiers) of the elements of the corresponding type.
-      // `nodeTags' is also a vector of the same length as `types'; each entry is a
-      // vector of length equal to the number of elements of the given type times
-      // the number N of nodes per element, that contains the node tags of all the
-      // elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1,
-      // ...].
-      GMSH_API void setElements(const int dim,
-                                const int tag,
-                                const std::vector<int> & elementTypes,
-                                const std::vector<std::vector<int> > & elementTags,
-                                const std::vector<std::vector<int> > & nodeTags)
-      {
-        int ierr = 0;
-        int *api_elementTypes_; size_t api_elementTypes_n_; vector2ptr(elementTypes, &api_elementTypes_, &api_elementTypes_n_);
-        int **api_elementTags_; size_t *api_elementTags_n_, api_elementTags_nn_; vectorvector2ptrptr(elementTags, &api_elementTags_, &api_elementTags_n_, &api_elementTags_nn_);
-        int **api_nodeTags_; size_t *api_nodeTags_n_, api_nodeTags_nn_; vectorvector2ptrptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_, &api_nodeTags_nn_);
-        gmshModelMeshSetElements(dim, tag, api_elementTypes_, api_elementTypes_n_, (const int **)api_elementTags_, api_elementTags_n_, api_elementTags_nn_, (const int **)api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, &ierr);
-        if(ierr) throw ierr;
-        gmshFree(api_elementTypes_);
-        for(size_t i = 0; i < api_elementTags_nn_; ++i){ gmshFree(api_elementTags_[i]); } gmshFree(api_elementTags_); gmshFree(api_elementTags_n_);
-        for(size_t i = 0; i < api_nodeTags_nn_; ++i){ gmshFree(api_nodeTags_[i]); } gmshFree(api_nodeTags_); gmshFree(api_nodeTags_n_);
-      }
-
       // Get the types of elements in the entity of dimension `dim' and tag `tag'.
       // If `tag' < 0, get the types for all entities of dimension `dim'. If `dim'
       // and `tag' are negative, get all the types in the mesh.
@@ -984,6 +957,54 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
         elementTags.assign(api_elementTags_, api_elementTags_ + api_elementTags_n_); gmshFree(api_elementTags_);
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
+      }
+
+      // Set the elements of the entity of dimension `dim' and tag `tag'. `types'
+      // contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
+      // the Gmsh reference manual). `elementTags' is a vector of the same length
+      // as `types'; each entry is a vector containing the tags (unique, strictly
+      // positive identifiers) of the elements of the corresponding type.
+      // `nodeTags' is also a vector of the same length as `types'; each entry is a
+      // vector of length equal to the number of elements of the given type times
+      // the number N of nodes per element, that contains the node tags of all the
+      // elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1,
+      // ...].
+      GMSH_API void setElements(const int dim,
+                                const int tag,
+                                const std::vector<int> & elementTypes,
+                                const std::vector<std::vector<int> > & elementTags,
+                                const std::vector<std::vector<int> > & nodeTags)
+      {
+        int ierr = 0;
+        int *api_elementTypes_; size_t api_elementTypes_n_; vector2ptr(elementTypes, &api_elementTypes_, &api_elementTypes_n_);
+        int **api_elementTags_; size_t *api_elementTags_n_, api_elementTags_nn_; vectorvector2ptrptr(elementTags, &api_elementTags_, &api_elementTags_n_, &api_elementTags_nn_);
+        int **api_nodeTags_; size_t *api_nodeTags_n_, api_nodeTags_nn_; vectorvector2ptrptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_, &api_nodeTags_nn_);
+        gmshModelMeshSetElements(dim, tag, api_elementTypes_, api_elementTypes_n_, (const int **)api_elementTags_, api_elementTags_n_, api_elementTags_nn_, (const int **)api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_elementTypes_);
+        for(size_t i = 0; i < api_elementTags_nn_; ++i){ gmshFree(api_elementTags_[i]); } gmshFree(api_elementTags_); gmshFree(api_elementTags_n_);
+        for(size_t i = 0; i < api_nodeTags_nn_; ++i){ gmshFree(api_nodeTags_[i]); } gmshFree(api_nodeTags_); gmshFree(api_nodeTags_n_);
+      }
+
+      // Set the elements of type `elementType' in the entity of dimension `dim'
+      // and tag `tag'. `elementTags' contains the tags (unique, strictly positive
+      // identifiers) of the elements of the corresponding type. `nodeTags' is a
+      // vector of length equal to the number of elements times the number N of
+      // nodes per element, that contains the node tags of all the elements,
+      // concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
+      GMSH_API void setElementsByType(const int dim,
+                                      const int tag,
+                                      const int elementType,
+                                      const std::vector<int> & elementTags,
+                                      const std::vector<int> & nodeTags)
+      {
+        int ierr = 0;
+        int *api_elementTags_; size_t api_elementTags_n_; vector2ptr(elementTags, &api_elementTags_, &api_elementTags_n_);
+        int *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
+        gmshModelMeshSetElementsByType(dim, tag, elementType, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_elementTags_);
+        gmshFree(api_nodeTags_);
       }
 
       // Get the Jacobians of all the elements of type `elementType' classified on
@@ -1314,6 +1335,16 @@ namespace gmsh { // Top-level functions
       {
         int ierr = 0;
         gmshModelMeshRemoveDuplicateNodes(&ierr);
+        if(ierr) throw ierr;
+      }
+
+      // Split (into two triangles) all quadrangles in surface `tag' whose quality
+      // is lower than `quality'. If `tag' < 0, split quadrangles in all surfaces.
+      GMSH_API void splitQuadrangles(const double quality = 1.,
+                                     const int tag = -1)
+      {
+        int ierr = 0;
+        gmshModelMeshSplitQuadrangles(quality, tag, &ierr);
         if(ierr) throw ierr;
       }
 
