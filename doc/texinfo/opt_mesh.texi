@@ -582,7 +582,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SecondOrderLinear
-Should second order nodes simply be created by linear interpolation?@*
+Should second order nodes (as well as nodes generated with subdivision algorithms) simply be created by linear interpolation?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
