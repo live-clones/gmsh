@@ -9,7 +9,7 @@ int main(int argc, char **argv)
   // print messages in the terminal
   gmsh::option::setNumber("General.Terminal", 1);
 
-  // creare a new Gmsh model
+  // create a new Gmsh model
   gmsh::model::add("my test model");
 
   // create three surfaces using the OpenCASCADE CAD kernel
