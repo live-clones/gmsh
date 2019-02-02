@@ -171,8 +171,6 @@ public:
       for(int j = 0; j < 3; j++) {
         MEdge E = _gf->triangles[i]->getEdge(j);
         SPoint2 p1, p2;
-        // FIXME: this is worse than what we do in meshRefine : for curved
-        // boundaries we don't put the new vertex on the CAD
         reparamMeshEdgeOnFace(E.getVertex(0), E.getVertex(1), _gf, p1, p2);
         std::map<MEdge, MVertex *, Less_Edge>::iterator it = _middle.find(E);
         std::map<MEdge, MVertex *, Less_Edge>::iterator it2 = eds.find(E);
@@ -192,6 +190,18 @@ public:
         else {
           v[j] = it->second;
           v[j]->onWhat()->mesh_vertices.push_back(v[j]);
+          if(!CTX::instance()->mesh.secondOrderLinear){
+            // re-push middle vertex on the curve (this can of course lead to an
+            // invalid mesh)
+            double u = 0.;
+            if(v[j]->getParameter(0, u) && v[j]->onWhat()->dim() == 1){
+              GEdge *ge = static_cast<GEdge*>(v[j]->onWhat());
+              GPoint p = ge->point(u);
+              v[j]->x() = p.x();
+              v[j]->y() = p.y();
+              v[j]->z() = p.z();
+            }
+          }
         }
       }
       GPoint gp = _gf->point((m[0] + m[1] + m[2]) * (1. / 3.));
@@ -234,6 +244,18 @@ public:
         else {
           v[j] = it->second;
           v[j]->onWhat()->mesh_vertices.push_back(v[j]);
+          if(!CTX::instance()->mesh.secondOrderLinear){
+            // re-push middle vertex on the curve (this can of course lead to an
+            // invalid mesh)
+            double u = 0.;
+            if(v[j]->getParameter(0, u) && v[j]->onWhat()->dim() == 1){
+              GEdge *ge = static_cast<GEdge*>(v[j]->onWhat());
+              GPoint p = ge->point(u);
+              v[j]->x() = p.x();
+              v[j]->y() = p.y();
+              v[j]->z() = p.z();
+            }
+          }
         }
       }
       GPoint gp = _gf->point((m[0] + m[1] + m[2] + m[3]) * 0.25);

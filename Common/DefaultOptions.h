@@ -1259,7 +1259,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "SecondOrderIncomplete" , opt_mesh_second_order_incomplete , 0. ,
     "Create incomplete second order elements? (8-node quads, 20-node hexas, etc.)" },
   { F|O, "SecondOrderLinear" , opt_mesh_second_order_linear , 0. ,
-    "Should second order nodes simply be created by linear interpolation?" },
+    "Should second order nodes (as well as nodes generated with subdivision algorithms) "
+    "simply be created by linear interpolation?" },
   { F|O, "Smoothing" , opt_mesh_nb_smoothing , 1. ,
     "Number of smoothing steps applied to the final mesh" },
   { F|O, "SmoothCrossField" , opt_mesh_smooth_cross_field , 0. ,
