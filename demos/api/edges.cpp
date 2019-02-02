@@ -67,9 +67,9 @@ int main(int argc, char **argv)
     int eleType1D = gmsh::model::mesh::getElementType("line", order);
     gmsh::model::mesh::setElementsByType(1, c, eleType1D, {}, nodes);
 
-    // here we created two 1D elements for each edge; to create unique elements
-    // it would be useful to call getElementEdgeNodes() with the extra `primary'
-    // argument set to 'true' (to only get start/end nodes even in the
+    // here we will create two 1D elements for each edge; to create unique
+    // elements it would be useful to call getElementEdgeNodes() with the extra
+    // `primary' argument set to 'true' (to only get start/end nodes even in the
     // high-order case, i.e. consider topological edges), then sort them and
     // make them unique.
 

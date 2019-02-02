@@ -12,7 +12,7 @@ int main(int argc, char **argv)
   // create a new Gmsh model
   gmsh::model::add("my test model");
 
-  // create three surfaces using the OpenCASCADE CAD kernel
+  // create three solids using the OpenCASCADE CAD kernel
   int v1 = gmsh::model::occ::addBox(0,0,0, 1,1,1);
   int v2 = gmsh::model::occ::addBox(1,0,0, 1,1,1);
   int v3 = gmsh::model::occ::addSphere(1.5,0.5,0.5, 0.25);
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     gmsh::logger::write("- " + std::to_string(elementTags.size()) +
                         " elements in volume " + std::to_string(v));
 
-    // get the nodes on the faces of the 3D elements
+    // get the nodes on the triangular faces of the 3D elements
     std::vector<int> nodes;
     gmsh::model::mesh::getElementFaceNodes(eleType3D, 3, nodes, v);
 
@@ -67,11 +67,11 @@ int main(int argc, char **argv)
     int eleType2D = gmsh::model::mesh::getElementType("triangle", order);
     gmsh::model::mesh::setElementsByType(2, s, eleType2D, {}, nodes);
 
-    // here we created two 2D elements for each face; to create unique elements
-    // it would be useful to call getElementFaceNodes() with the extra `primary'
-    // argument set to 'true' (to only get corner nodes even in the high-order
-    // case, i.e. consider topological faces), then sort them and make them
-    // unique.
+    // here we will create two 2D elements for each face; to create unique
+    // elements it would be useful to call getElementFaceNodes() with the extra
+    // `primary' argument set to 'true' (to only get corner nodes even in the
+    // high-order case, i.e. consider topological faces), then sort them and
+    // make them unique.
 
     // this could be enriched with additional info: each topological face could
     // be associated with the tag of its parent element; in the sorting process
