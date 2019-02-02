@@ -9,7 +9,7 @@ int main(int argc, char **argv)
   // print messages in the terminal
   gmsh::option::setNumber("General.Terminal", 1);
 
-  // creare a new Gmsh model
+  // create a new Gmsh model
   gmsh::model::add("my test model");
 
   // create three surfaces using the OpenCASCADE CAD kernel
@@ -20,7 +20,7 @@ int main(int argc, char **argv)
   // fragment all volumes to have a conformal, non-overlapping geometry
   std::vector<std::pair<int, int> > ov;
   std::vector<std::vector<std::pair<int, int> > > ovv;
-  gmsh::model::occ::fragment({{2,v1},{2,v2},{2,v3}}, {}, ov, ovv);
+  gmsh::model::occ::fragment({{3,v1},{3,v2},{3,v3}}, {}, ov, ovv);
 
   // synchronize the CAD model with the Gmsh model
   gmsh::model::occ::synchronize();
