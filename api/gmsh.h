@@ -391,7 +391,8 @@ namespace gmsh { // Top-level functions
       // nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. The optional
       // `parametricCoord' vector contains the parametric coordinates of the nodes,
       // if any. The length of `parametricCoord' can be 0 or `dim' times the length
-      // of `nodeTags'.
+      // of `nodeTags'. If the `nodeTag' vector is empty, new tags are
+      // automatically assigned to the nodes.
       GMSH_API void setNodes(const int dim,
                              const int tag,
                              const std::vector<int> & nodeTags,
@@ -457,6 +458,14 @@ namespace gmsh { // Top-level functions
                                     const int dim = -1,
                                     const int tag = -1);
 
+      // Return an element type given its family name `familyName' ("point",
+      // "line", "triangle", "quadrangle", "tetrahedron", "pyramid", "prism",
+      // "hexahedron") and polynomial order `order'. If `serendip' is true, return
+      // the corresponding serendip element type (element without interior nodes).
+      GMSH_API int getElementType(const std::string & familyName,
+                                  const int order,
+                                  const bool serendip = false);
+
       // Get the properties of an element of type `elementType': its name
       // (`elementName'), dimension (`dim'), order (`order'), number of nodes
       // (`numNodes') and parametric node coordinates (`parametricCoord' vector, of
@@ -514,7 +523,8 @@ namespace gmsh { // Top-level functions
       // identifiers) of the elements of the corresponding type. `nodeTags' is a
       // vector of length equal to the number of elements times the number N of
       // nodes per element, that contains the node tags of all the elements,
-      // concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
+      // concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the `elementTag'
+      // vector is empty, new tags are automatically assigned to the elements.
       GMSH_API void setElementsByType(const int dim,
                                       const int tag,
                                       const int elementType,
@@ -577,8 +587,9 @@ namespace gmsh { // Top-level functions
       // the entity of tag `tag'. If `primary' is set, only the primary nodes of
       // the elements are taken into account for the barycenter calculation. If
       // `fast' is set, the function returns the sum of the primary node
-      // coordinates (without normalizing by the number of nodes). If `numTasks' >
-      // 1, only compute and return the part of the data indexed by `task'.
+      // coordinates (without normalizing by the number of nodes). If `tag' < 0,
+      // get the barycenters for all entities. If `numTasks' > 1, only compute and
+      // return the part of the data indexed by `task'.
       GMSH_API void getBarycenters(const int elementType,
                                    const int tag,
                                    const bool fast,
@@ -592,6 +603,32 @@ namespace gmsh { // Top-level functions
       GMSH_API void preallocateBarycenters(const int elementType,
                                            std::vector<double> & barycenters,
                                            const int tag = -1);
+
+      // Get the nodes on the edges of all elements of type `elementType'
+      // classified on the entity of tag `tag'. If `primary' is set, only the
+      // primary (begin/end) nodes of the edges are returned. If `tag' < 0, get the
+      // edge nodes for all entities. If `numTasks' > 1, only compute and return
+      // the part of the data indexed by `task'.
+      GMSH_API void getElementEdgeNodes(const int elementType,
+                                        std::vector<int> & nodes,
+                                        const int tag = -1,
+                                        const bool primary = false,
+                                        const size_t task = 0,
+                                        const size_t numTasks = 1);
+
+      // Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
+      // for quadrangular faces) of all elements of type `elementType' classified
+      // on the entity of tag `tag'. If `primary' is set, only the primary (corner)
+      // nodes of the faces are returned. If `tag' < 0, get the face nodes for all
+      // entities. If `numTasks' > 1, only compute and return the part of the data
+      // indexed by `task'.
+      GMSH_API void getElementFaceNodes(const int elementType,
+                                        const int faceType,
+                                        std::vector<int> & nodes,
+                                        const int tag = -1,
+                                        const bool primary = false,
+                                        const size_t task = 0,
+                                        const size_t numTasks = 1);
 
       // Get the ghost elements `elementTags' and their associated `partitions'
       // stored in the ghost entity of dimension `dim' and tag `tag'.

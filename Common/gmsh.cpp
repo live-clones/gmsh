@@ -1131,7 +1131,7 @@ GMSH_API void gmsh::model::mesh::setNodes(
   // delete nodes and elements; this will also delete the model mesh cache
   ge->deleteMesh();
   for(int i = 0; i < numNodes; i++) {
-    int n = (numNodeTags ? nodeTags[i] : -1);
+    int n = (numNodeTags ? nodeTags[i] : 0); // 0 = automatic tag
     double x = coord[3 * i];
     double y = coord[3 * i + 1];
     double z = coord[3 * i + 2];
@@ -1347,7 +1347,7 @@ static void _addElements(int dim, int tag, GEntity *ge, int type,
   std::vector<MElement *> elements(numEle);
   std::vector<MVertex *> nodes(numNodesPerEle);
   for(std::size_t j = 0; j < numEle; j++) {
-    int etag = (numEleTags ? elementTags[j] : -1);
+    int etag = (numEleTags ? elementTags[j] : 0); // 0 = automatic tag
     MElementFactory f;
     for(std::size_t k = 0; k < numNodesPerEle; k++) {
       int vtag = nodeTags[numNodesPerEle * j + k];
@@ -1457,6 +1457,28 @@ GMSH_API void gmsh::model::mesh::getElementTypes(std::vector<int> &elementTypes,
         typeEnt.begin(); it != typeEnt.end(); it++) {
     elementTypes.push_back(it->first);
   }
+}
+
+GMSH_API int gmsh::model::mesh::getElementType(const std::string &family,
+                                               const int order,
+                                               const bool serendip)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  int familyType =
+    (family == "point") ? TYPE_PNT :
+    (family == "line") ? TYPE_LIN :
+    (family == "triangle") ? TYPE_TRI :
+    (family == "quadrangle") ? TYPE_QUA :
+    (family == "tetrahedron") ? TYPE_TET :
+    (family == "pyramid") ? TYPE_PYR :
+    (family == "prism") ? TYPE_PRI :
+    (family == "hexahedron") ? TYPE_HEX :
+    (family == "polygon") ? TYPE_POLYG :
+    (family == "polyhedron") ? TYPE_POLYH :
+    (family == "trihedron") ? TYPE_TRIH : -1;
+  return ElementType::getType(familyType, order, serendip);
 }
 
 GMSH_API void gmsh::model::mesh::getElementProperties(
@@ -2013,10 +2035,9 @@ GMSH_API void gmsh::model::mesh::preallocateBarycenters(
   barycenters.resize(3 * numElements, 0);
 }
 
-/*
-GMSH_API void gmsh::model::mesh::getElementFaceNodes(
-  const int elementType, const int faceType, std::vector<int> &nodes,
-  const bool primary, const int tag,
+GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
+  const int elementType, std::vector<int> &nodes,
+  const int tag, const bool primary,
   const size_t task, const size_t numTasks)
 {
   if(!_isInitialized()) {
@@ -2026,30 +2047,130 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
-  for(std::size_t i = 0; i < entities.size(); i++){
+  int familyType = ElementType::getParentType(elementType);
+  std::size_t numElements = 0;
+  int numEdgesPerEle = 0, numNodesPerEdge = 0;
+  for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
-    for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
-        j++) {
-      MElement *e = ge->getMeshElementByType(familyType, j);
-      int n = e->getNumFaces();
-      for(int k = 0; k < n; k++){
-        MFace f = e->getFace(k);
-        if(f.getNumVertices() == faceType){
-           // TODO: should we use getHighOrderFace() ? instead?
-
+    int n = ge->getNumMeshElementsByType(familyType);
+    if(n && !numNodesPerEdge){
+      MElement *e = ge->getMeshElementByType(familyType, i);
+      numEdgesPerEle = e->getNumEdges();
+      if(primary){
+        numNodesPerEdge = 2;
+      }
+      else{
+        std::vector<MVertex*> v;
+        // we could use e->getHighOrderEdge() here if we decide to remove
+        // getEdgeVertices
+        e->getEdgeVertices(0, v);
+        numNodesPerEdge = v.size();
+      }
+    }
+    numElements += n;
+  }
+  const size_t begin = (task * numElements) / numTasks;
+  const size_t end = ((task + 1) * numElements) / numTasks;
+  if(numEdgesPerEle * numNodesPerEdge * end > nodes.size()) {
+    if(numTasks > 1)
+      Msg::Error("Nodes should be preallocated if numTasks > 1");
+    nodes.resize(numEdgesPerEle * numNodesPerEdge * numElements);
+  }
+  size_t o = 0;
+  size_t idx = numEdgesPerEle * numNodesPerEdge * begin;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
+      if(o >= begin && o < end) {
+        MElement *e = ge->getMeshElementByType(familyType, j);
+        for(int k = 0; k < numEdgesPerEle; k++){
+          std::vector<MVertex*> v;
+          // we could use e->getHighOrderEdge() here if we decide to remove
+          // getEdgeVertices
+          e->getEdgeVertices(k, v);
+          std::size_t N = primary ? 2 : v.size();
+          for(std::size_t l = 0; l < N; l++){
+            nodes[idx++] = v[l]->getNum();
+          }
         }
       }
+      o++;
     }
   }
 }
 
-GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
-  const int elementType, std::vector<int> &nodes,
-  const bool primary, const int tag,
+GMSH_API void gmsh::model::mesh::getElementFaceNodes(
+  const int elementType, const int faceType, std::vector<int> &nodes,
+  const int tag, const bool primary,
   const size_t task, const size_t numTasks)
 {
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  int dim = ElementType::getDimension(elementType);
+  std::map<int, std::vector<GEntity *> > typeEnt;
+  _getEntitiesForElementTypes(dim, tag, typeEnt);
+  const std::vector<GEntity *> &entities(typeEnt[elementType]);
+  int familyType = ElementType::getParentType(elementType);
+  std::size_t numElements = 0;
+  int numFacesPerEle = 0, numNodesPerFace = 0;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    int n = ge->getNumMeshElementsByType(familyType);
+    if(n && !numNodesPerFace){
+      MElement *e = ge->getMeshElementByType(familyType, i);
+      int nf = e->getNumFaces();
+      numFacesPerEle = 0;
+      for(int j = 0; j < nf; j++){
+        MFace f = e->getFace(j);
+        if(f.getNumVertices() == faceType)
+          numFacesPerEle++;
+      }
+      if(primary){
+        numNodesPerFace = faceType;
+      }
+      else{
+        std::vector<MVertex*> v;
+        // we could use e->getHighOrderFace() here if we decide to remove
+        // getFaceVertices
+        e->getFaceVertices(0, v);
+        numNodesPerFace = v.size();
+      }
+    }
+    numElements += n;
+  }
+  const size_t begin = (task * numElements) / numTasks;
+  const size_t end = ((task + 1) * numElements) / numTasks;
+  if(numFacesPerEle * numNodesPerFace * end > nodes.size()) {
+    if(numTasks > 1)
+      Msg::Error("Nodes should be preallocated if numTasks > 1");
+    nodes.resize(numFacesPerEle * numNodesPerFace * numElements);
+  }
+  size_t o = 0;
+  size_t idx = numFacesPerEle * numNodesPerFace * begin;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
+      if(o >= begin && o < end) {
+        MElement *e = ge->getMeshElementByType(familyType, j);
+        int nf = e->getNumFaces();
+        for(int k = 0; k < nf; k++){
+          MFace f = e->getFace(k);
+          if(f.getNumVertices() != faceType) continue;
+          std::vector<MVertex*> v;
+          // we could use e->getHighOrderFace() here if we decide to remove
+          // getFaceVertices
+          e->getFaceVertices(k, v);
+          std::size_t N = primary ? faceType : v.size();
+          for(std::size_t l = 0; l < N; l++){
+            nodes[idx++] = v[l]->getNum();
+          }
+        }
+      }
+      o++;
+    }
+  }
 }
-*/
 
 GMSH_API void gmsh::model::mesh::getGhostElements(const int dim,
                                                   const int tag,

@@ -1219,7 +1219,9 @@ class model:
             length of `nodeTags' that contains the x, y, z coordinates of the nodes,
             concatenated: [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord'
             vector contains the parametric coordinates of the nodes, if any. The length
-            of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'.
+            of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If
+            the `nodeTag' vector is empty, new tags are automatically assigned to the
+            nodes.
             """
             api_nodeTags_, api_nodeTags_n_ = _ivectorint(nodeTags)
             api_coord_, api_coord_n_ = _ivectordouble(coord)
@@ -1391,6 +1393,28 @@ class model:
             return _ovectorint(api_elementTypes_, api_elementTypes_n_.value)
 
         @staticmethod
+        def getElementType(familyName, order, serendip=False):
+            """
+            Return an element type given its family name `familyName' ("point", "line",
+            "triangle", "quadrangle", "tetrahedron", "pyramid", "prism", "hexahedron")
+            and polynomial order `order'. If `serendip' is true, return the
+            corresponding serendip element type (element without interior nodes).
+
+            Return an integer value.
+            """
+            ierr = c_int()
+            api__result__ = lib.gmshModelMeshGetElementType(
+                c_char_p(familyName.encode()),
+                c_int(order),
+                c_int(bool(serendip)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetElementType returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
         def getElementProperties(elementType):
             """
             Get the properties of an element of type `elementType': its name
@@ -1523,7 +1547,8 @@ class model:
             identifiers) of the elements of the corresponding type. `nodeTags' is a
             vector of length equal to the number of elements times the number N of
             nodes per element, that contains the node tags of all the elements,
-            concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
+            concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the `elementTag'
+            vector is empty, new tags are automatically assigned to the elements.
             """
             api_elementTags_, api_elementTags_n_ = _ivectorint(elementTags)
             api_nodeTags_, api_nodeTags_n_ = _ivectorint(nodeTags)
@@ -1670,8 +1695,9 @@ class model:
             entity of tag `tag'. If `primary' is set, only the primary nodes of the
             elements are taken into account for the barycenter calculation. If `fast'
             is set, the function returns the sum of the primary node coordinates
-            (without normalizing by the number of nodes). If `numTasks' > 1, only
-            compute and return the part of the data indexed by `task'.
+            (without normalizing by the number of nodes). If `tag' < 0, get the
+            barycenters for all entities. If `numTasks' > 1, only compute and return
+            the part of the data indexed by `task'.
 
             Return `barycenters'.
             """
@@ -1712,6 +1738,62 @@ class model:
                     "gmshModelMeshPreallocateBarycenters returned non-zero error code: ",
                     ierr.value)
             return _ovectordouble(api_barycenters_, api_barycenters_n_.value)
+
+        @staticmethod
+        def getElementEdgeNodes(elementType, tag=-1, primary=False, task=0, numTasks=1):
+            """
+            Get the nodes on the edges of all elements of type `elementType' classified
+            on the entity of tag `tag'. If `primary' is set, only the primary
+            (begin/end) nodes of the edges are returned. If `tag' < 0, get the edge
+            nodes for all entities. If `numTasks' > 1, only compute and return the part
+            of the data indexed by `task'.
+
+            Return `nodes'.
+            """
+            api_nodes_, api_nodes_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementEdgeNodes(
+                c_int(elementType),
+                byref(api_nodes_), byref(api_nodes_n_),
+                c_int(tag),
+                c_int(bool(primary)),
+                c_size_t(task),
+                c_size_t(numTasks),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetElementEdgeNodes returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorint(api_nodes_, api_nodes_n_.value)
+
+        @staticmethod
+        def getElementFaceNodes(elementType, faceType, tag=-1, primary=False, task=0, numTasks=1):
+            """
+            Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
+            for quadrangular faces) of all elements of type `elementType' classified on
+            the entity of tag `tag'. If `primary' is set, only the primary (corner)
+            nodes of the faces are returned. If `tag' < 0, get the face nodes for all
+            entities. If `numTasks' > 1, only compute and return the part of the data
+            indexed by `task'.
+
+            Return `nodes'.
+            """
+            api_nodes_, api_nodes_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementFaceNodes(
+                c_int(elementType),
+                c_int(faceType),
+                byref(api_nodes_), byref(api_nodes_n_),
+                c_int(tag),
+                c_int(bool(primary)),
+                c_size_t(task),
+                c_size_t(numTasks),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetElementFaceNodes returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorint(api_nodes_, api_nodes_n_.value)
 
         @staticmethod
         def getGhostElements(dim, tag):

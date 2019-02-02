@@ -164,15 +164,15 @@ public:
   void subdivide()
   {
     std::vector<MQuadrangle *> qnew;
-
     std::map<MEdge, MVertex *, Less_Edge> eds;
-
     for(unsigned int i = 0; i < _gf->triangles.size(); i++) {
       MVertex *v[3];
       SPoint2 m[3];
       for(int j = 0; j < 3; j++) {
         MEdge E = _gf->triangles[i]->getEdge(j);
         SPoint2 p1, p2;
+        // FIXME: this is worse than what we do in meshRefine : for curved
+        // boundaries we don't put the new vertex on the CAD
         reparamMeshEdgeOnFace(E.getVertex(0), E.getVertex(1), _gf, p1, p2);
         std::map<MEdge, MVertex *, Less_Edge>::iterator it = _middle.find(E);
         std::map<MEdge, MVertex *, Less_Edge>::iterator it2 = eds.find(E);
@@ -237,7 +237,7 @@ public:
         }
       }
       GPoint gp = _gf->point((m[0] + m[1] + m[2] + m[3]) * 0.25);
-      // FIXME : not exactly correct, but that's the place where we want to
+      // FIXME: not exactly correct, but that's the place where we want the
       // point to reside
       double XX = 0.25 * (v[0]->x() + v[1]->x() + v[2]->x() + v[3]->x());
       double YY = 0.25 * (v[0]->y() + v[1]->y() + v[2]->y() + v[3]->y());

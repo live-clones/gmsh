@@ -827,6 +827,19 @@ GMSH_API void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * element
   }
 }
 
+GMSH_API int gmshModelMeshGetElementType(const char * familyName, const int order, const int serendip, int * ierr)
+{
+  int result_api_;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::mesh::getElementType(familyName, order, serendip);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
 GMSH_API void gmshModelMeshGetElementProperties(const int elementType, char ** elementName, int * dim, int * order, int * numNodes, double ** parametricCoord, size_t * parametricCoord_n, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -983,6 +996,32 @@ GMSH_API void gmshModelMeshPreallocateBarycenters(const int elementType, double 
     std::vector<double> api_barycenters_;
     gmsh::model::mesh::preallocateBarycenters(elementType, api_barycenters_, tag);
     vector2ptr(api_barycenters_, barycenters, barycenters_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshGetElementEdgeNodes(const int elementType, int ** nodes, size_t * nodes_n, const int tag, const int primary, const size_t task, const size_t numTasks, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_nodes_;
+    gmsh::model::mesh::getElementEdgeNodes(elementType, api_nodes_, tag, primary, task, numTasks);
+    vector2ptr(api_nodes_, nodes, nodes_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshGetElementFaceNodes(const int elementType, const int faceType, int ** nodes, size_t * nodes_n, const int tag, const int primary, const size_t task, const size_t numTasks, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_nodes_;
+    gmsh::model::mesh::getElementFaceNodes(elementType, faceType, api_nodes_, tag, primary, task, numTasks);
+    vector2ptr(api_nodes_, nodes, nodes_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
