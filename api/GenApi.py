@@ -722,6 +722,7 @@ cwrap_header="""// {0}
 #include <vector>
 #include <string>
 #include <utility>
+#include <string.h>
 
 extern \"C\" {{
   #include "{5}c.h"

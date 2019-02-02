@@ -29,6 +29,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <string.h>
 
 extern "C" {
   #include "gmshc.h"
