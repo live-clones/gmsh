@@ -2878,12 +2878,6 @@ void meshGFace::operator()(GFace *gf, bool print)
     Msg::Info("Meshing surface %d (%s, %s)", gf->tag(),
               gf->getTypeString().c_str(), algo);
 
-  // compute loops on the fly (indices indicate start and end points of a loop;
-  // loops are not yet oriented)
-  Msg::Debug("Computing edge loops");
-
-  Msg::Debug("Generating the mesh");
-
   quadMeshRemoveHalfOfOneDMesh halfmesh(gf);
 
   bool singularEdges = false;
@@ -2893,7 +2887,7 @@ void meshGFace::operator()(GFace *gf, bool print)
     if((*ite)->isSeam(gf)) singularEdges = true;
     if((*ite)->getBeginVertex() == (*ite)->getEndVertex()) {
       if((*ite)->geomType() == GEntity::Unknown) {
-        //	singularEdges = true;
+        // singularEdges = true;
       }
     }
     ite++;
