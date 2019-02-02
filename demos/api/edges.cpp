@@ -99,7 +99,7 @@ int main(int argc, char **argv)
     gmsh::model::mesh::getJacobians(eleType1D, "Gauss3", jac, det, pts, c);
   }
 
-  //gmsh::fltk::run();
+  gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;
