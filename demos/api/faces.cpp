@@ -6,7 +6,7 @@ int main(int argc, char **argv)
   // initialize Gmsh
   gmsh::initialize(argc, argv);
 
-  // print messages in the terminal
+  // print messages on the terminal
   gmsh::option::setNumber("General.Terminal", 1);
 
   // create a new Gmsh model
@@ -67,16 +67,16 @@ int main(int argc, char **argv)
     int eleType2D = gmsh::model::mesh::getElementType("triangle", order);
     gmsh::model::mesh::setElementsByType(2, s, eleType2D, {}, nodes);
 
-    // here we will create two 2D elements for each face; to create unique
-    // elements it would be useful to call getElementFaceNodes() with the extra
-    // `primary' argument set to 'true' (to only get corner nodes even in the
-    // high-order case, i.e. consider topological faces), then sort them and
-    // make them unique.
+    // this will create two 2D elements for each face; to create unique elements
+    // it would be useful to call getElementFaceNodes() with the extra `primary'
+    // argument set to 'true' (to only get corner nodes even in the high-order
+    // case, i.e. consider topological faces), then sort them and make them
+    // unique.
 
     // this could be enriched with additional info: each topological face could
     // be associated with the tag of its parent element; in the sorting process
-    // eliminating duplicates a second tag can be associated for internal faces,
-    // allowing to keep track of neighbors
+    // (eliminating duplicates) a second tag can be associated for internal
+    // faces, allowing to keep track of neighbors
   }
 
   //gmsh::write("faces.msh");

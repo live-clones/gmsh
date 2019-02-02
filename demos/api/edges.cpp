@@ -6,7 +6,7 @@ int main(int argc, char **argv)
   // initialize Gmsh
   gmsh::initialize(argc, argv);
 
-  // print messages in the terminal
+  // print messages on the terminal
   gmsh::option::setNumber("General.Terminal", 1);
 
   // create a new Gmsh model
@@ -67,16 +67,16 @@ int main(int argc, char **argv)
     int eleType1D = gmsh::model::mesh::getElementType("line", order);
     gmsh::model::mesh::setElementsByType(1, c, eleType1D, {}, nodes);
 
-    // here we will create two 1D elements for each edge; to create unique
-    // elements it would be useful to call getElementEdgeNodes() with the extra
-    // `primary' argument set to 'true' (to only get start/end nodes even in the
+    // this will create two 1D elements for each edge; to create unique elements
+    // it would be useful to call getElementEdgeNodes() with the extra `primary'
+    // argument set to 'true' (to only get start/end nodes even in the
     // high-order case, i.e. consider topological edges), then sort them and
     // make them unique.
 
     // this could be enriched with additional info: each topological edge could
     // be associated with the tag of its parent element; in the sorting process
-    // eliminating duplicates a second tag can be associated for internal edges,
-    // allowing to keep track of neighbors
+    // (eliminating duplicates) a second tag can be associated for internal
+    // edges, allowing to keep track of neighbors
   }
 
   //gmsh::write("edges.msh");
