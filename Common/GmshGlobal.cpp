@@ -254,13 +254,27 @@ int GmshFinalize()
   return 1;
 }
 
-int GmshBatch()
+static void StartupMessage()
 {
   Msg::Info("Running '%s' [Gmsh %s, %d node%s, max. %d thread%s]",
             Msg::GetCommandLineArgs().c_str(), GMSH_VERSION, Msg::GetCommSize(),
             Msg::GetCommSize() > 1 ? "s" : "", Msg::GetMaxThreads(),
             Msg::GetMaxThreads() > 1 ? "s" : "");
   Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
+}
+
+static void GoodbyeMessage()
+{
+  time_t now;
+  time(&now);
+  std::string currtime = ctime(&now);
+  currtime.resize(currtime.size() - 1);
+  Msg::Info("Stopped on %s", currtime.c_str());
+}
+
+int GmshBatch()
+{
+  StartupMessage();
 
   OpenProject(GModel::current()->getFileName());
   bool open = false;
@@ -334,17 +348,12 @@ int GmshBatch()
     CreateOutputFile(name, CTX::instance()->mesh.fileFormat);
   }
 
-    // launch solver (if requested)
+  // launch solver (if requested)
 #if defined(HAVE_ONELAB)
   onelabUtils::runClient();
 #endif
 
-  time_t now;
-  time(&now);
-  std::string currtime = ctime(&now);
-  currtime.resize(currtime.size() - 1);
-  Msg::Info("Stopped on %s", currtime.c_str());
-
+  GoodbyeMessage();
   return 1;
 }
 
@@ -353,6 +362,8 @@ int GmshFLTK(int argc, char **argv)
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
   // create the GUI
   FlGui::instance(argc, argv);
+
+  StartupMessage();
 
   // display GUI immediately for quick launch time
   FlGui::check();

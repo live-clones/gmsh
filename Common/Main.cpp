@@ -5,9 +5,13 @@
 
 #include <stdlib.h>
 #include "GmshGlobal.h"
+#include "GmshMessage.h"
 
 int main(int argc, char *argv[])
 {
+  // by default run the app with a single OpenMP thread
+  //Msg::SetNumThreads(1);
+
 #if defined(HAVE_FLTK)
   return GmshMainFLTK(argc, argv);
 #else
