@@ -27,6 +27,7 @@
 #include "BackgroundMeshTools.h"
 #include "STensor3.h"
 #include "ExtrudeParams.h"
+#include "nanoflann.hpp"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -1055,13 +1056,20 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = 0)
   {
-    if(update_needed) {
-      if(!expr.set_function(f))
-        Msg::Error("Field %i: Invalid matheval expression \"%s\"", this->id,
-                   f.c_str());
-      update_needed = false;
+    double ret = 0;
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+    {
+      if(update_needed) {
+        if(!expr.set_function(f))
+          Msg::Error("Field %i: Invalid matheval expression \"%s\"", this->id,
+                     f.c_str());
+        update_needed = false;
+      }
+      ret = expr.evaluate(x, y, z);
     }
-    return expr.evaluate(x, y, z);
+    return ret;
   }
   const char *getName() { return "MathEval"; }
   std::string getDescription()
@@ -1101,28 +1109,38 @@ public:
   }
   void operator()(double x, double y, double z, SMetric3 &metr, GEntity *ge = 0)
   {
-    if(update_needed) {
-      for(int i = 0; i < 6; i++) {
-        if(!expr.set_function(i, f[i]))
-          Msg::Error("Field %i: Invalid matheval expression \"%s\"", this->id,
-                     f[i].c_str());
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+    {
+      if(update_needed) {
+        for(int i = 0; i < 6; i++) {
+          if(!expr.set_function(i, f[i]))
+            Msg::Error("Field %i: Invalid matheval expression \"%s\"", this->id,
+                       f[i].c_str());
+        }
+        update_needed = false;
       }
-      update_needed = false;
+      expr.evaluate(x, y, z, metr);
     }
-    expr.evaluate(x, y, z, metr);
   }
   double operator()(double x, double y, double z, GEntity *ge = 0)
   {
-    if(update_needed) {
-      for(int i = 0; i < 6; i++) {
-        if(!expr.set_function(i, f[i]))
-          Msg::Error("Field %i: Invalid matheval expression \"%s\"", this->id,
-                     f[i].c_str());
-      }
-      update_needed = false;
-    }
     SMetric3 metr;
-    expr.evaluate(x, y, z, metr);
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+    {
+      if(update_needed) {
+        for(int i = 0; i < 6; i++) {
+          if(!expr.set_function(i, f[i]))
+            Msg::Error("Field %i: Invalid matheval expression \"%s\"", this->id,
+                       f[i].c_str());
+        }
+        update_needed = false;
+      }
+      expr.evaluate(x, y, z, metr);
+    }
     return metr(0, 0);
   }
   const char *getName() { return "MathEvalAniso"; }
@@ -1504,8 +1522,6 @@ public:
         }
       }
     }
-    //    printf("%g %g %g %g %g %g %g %g %g\n",l[0],l[1], l[2],l[3],l[4],
-    //    l[5],l[6],l[7], l[8]);
     metr(0, 0) = l[0];
     metr(0, 1) = l[1];
     metr(0, 2) = l[2];
@@ -1773,7 +1789,6 @@ public:
   const char *getName() { return "Restrict"; }
 };
 
-#if defined(HAVE_ANN)
 struct AttractorInfo {
   AttractorInfo(int a = 0, int b = 0, double c = 0, double d = 0)
     : ent(a), dim(b), u(c), v(d)
@@ -1782,6 +1797,8 @@ struct AttractorInfo {
   int ent, dim;
   double u, v;
 };
+
+#if defined(HAVE_ANN)
 
 class AttractorAnisoCurveField : public Field {
   ANNkd_tree *kdtree;
@@ -1989,10 +2006,9 @@ public:
   {
     return "Compute the distance from the nearest node in a list. It can also "
            "be used to compute the distance from curves, in which case each "
-           "curve "
-           "is replaced by NNodesByEdge equidistant nodes and the distance "
-           "from those "
-           "nodes is computed.";
+           "curve is replaced by NNodesByEdge equidistant nodes and the distance "
+           "from those nodes is computed. Attractor is deprecated: use "
+           "Distance instead.";
   }
   void getCoord(double x, double y, double z, double &cx, double &cy,
                 double &cz, GEntity *ge = NULL)
@@ -2007,25 +2023,19 @@ public:
                                                     zeronodes[index[0]][1],
                                                     zeronodes[index[0]][2]));
   }
-
   void update()
   {
     if(update_needed) {
-      //      printf("updating\n");
-      _xField = _xFieldId >= 0 ?
-                  (GModel::current()->getFields()->get(_xFieldId)) :
-                  NULL;
-      _yField = _yFieldId >= 0 ?
-                  (GModel::current()->getFields()->get(_yFieldId)) :
-                  NULL;
-      _zField = _zFieldId >= 0 ?
-                  (GModel::current()->getFields()->get(_zFieldId)) :
-                  NULL;
+      _xField = _xFieldId >= 0 ? (GModel::current()->getFields()->get(_xFieldId)) :
+        NULL;
+      _yField = _yFieldId >= 0 ? (GModel::current()->getFields()->get(_yFieldId)) :
+        NULL;
+      _zField = _zFieldId >= 0 ? (GModel::current()->getFields()->get(_zFieldId)) :
+        NULL;
       if(zeronodes) {
         annDeallocPts(zeronodes);
         delete kdtree;
       }
-
       std::vector<SPoint3> points;
       std::vector<SPoint2> uvpoints;
       std::vector<int> offset;
@@ -2179,6 +2189,8 @@ public:
   }
 };
 
+#endif // ANN
+
 class OctreeField : public Field {
   // octree field
   class Cell {
@@ -2231,111 +2243,331 @@ class OctreeField : public Field {
           }
         }
 #endif
+      }
+      if(split) {
+        _isleaf = false;
+        Cell *sub = new Cell[8];
+        double l2 = l / 2;
+        sub[0].init(x0, y0, z0, l2, field, level - 1);
+        sub[1].init(x0, y0, z0 + l2, l2, field, level - 1);
+        sub[2].init(x0, y0 + l2, z0, l2, field, level - 1);
+        sub[3].init(x0, y0 + l2, z0 + l2, l2, field, level - 1);
+        sub[4].init(x0 + l2, y0, z0, l2, field, level - 1);
+        sub[5].init(x0 + l2, y0, z0 + l2, l2, field, level - 1);
+        sub[6].init(x0 + l2, y0 + l2, z0, l2, field, level - 1);
+        sub[7].init(x0 + l2, y0 + l2, z0 + l2, l2, field, level - 1);
+        _data = (void *)sub;
+      }
+      else {
+        _isleaf = true;
+        _data = (void *)new double;
+        *(double *)_data = vc;
+      }
     }
-    if(split) {
-      _isleaf = false;
-      Cell *sub = new Cell[8];
-      double l2 = l / 2;
-      sub[0].init(x0, y0, z0, l2, field, level - 1);
-      sub[1].init(x0, y0, z0 + l2, l2, field, level - 1);
-      sub[2].init(x0, y0 + l2, z0, l2, field, level - 1);
-      sub[3].init(x0, y0 + l2, z0 + l2, l2, field, level - 1);
-      sub[4].init(x0 + l2, y0, z0, l2, field, level - 1);
-      sub[5].init(x0 + l2, y0, z0 + l2, l2, field, level - 1);
-      sub[6].init(x0 + l2, y0 + l2, z0, l2, field, level - 1);
-      sub[7].init(x0 + l2, y0 + l2, z0 + l2, l2, field, level - 1);
-      _data = (void *)sub;
+    ~Cell()
+    {
+      if(_isleaf) {
+        delete(double *)_data;
+      }
+      else {
+        Cell *sub = (Cell *)_data;
+        delete[] sub;
+      }
     }
-    else {
-      _isleaf = true;
-      _data = (void *)new double;
-      *(double *)_data = vc;
+    void print(double x0, double y0, double z0, double l, FILE *f)
+    {
+      if(_isleaf) {
+        fprintf(f, "SP(%g, %g, %g) {%g};\n", x0 + l / 2, y0 + l / 2, z0 + l / 2,
+                *(double *)_data);
+      }
+      else {
+        Cell *sub = (Cell *)_data;
+        double l2 = l / 2;
+        sub[0].print(x0, y0, z0, l2, f);
+        sub[1].print(x0, y0, z0 + l2, l2, f);
+        sub[2].print(x0, y0 + l2, z0, l2, f);
+        sub[3].print(x0, y0 + l2, z0 + l2, l2, f);
+        sub[4].print(x0 + l2, y0, z0, l2, f);
+        sub[5].print(x0 + l2, y0, z0 + l2, l2, f);
+        sub[6].print(x0 + l2, y0 + l2, z0, l2, f);
+        sub[7].print(x0 + l2, y0 + l2, z0 + l2, l2, f);
+      }
     }
-  } ~Cell()
-  {
-    if(_isleaf) {
-      delete(double *)_data;
-    }
-    else {
-      Cell *sub = (Cell *)_data;
-      delete[] sub;
-    }
-  }
-  void print(double x0, double y0, double z0, double l, FILE *f)
-  {
-    if(_isleaf) {
-      fprintf(f, "SP(%g, %g, %g) {%g};\n", x0 + l / 2, y0 + l / 2, z0 + l / 2,
-              *(double *)_data);
-    }
-    else {
-      Cell *sub = (Cell *)_data;
-      double l2 = l / 2;
-      sub[0].print(x0, y0, z0, l2, f);
-      sub[1].print(x0, y0, z0 + l2, l2, f);
-      sub[2].print(x0, y0 + l2, z0, l2, f);
-      sub[3].print(x0, y0 + l2, z0 + l2, l2, f);
-      sub[4].print(x0 + l2, y0, z0, l2, f);
-      sub[5].print(x0 + l2, y0, z0 + l2, l2, f);
-      sub[6].print(x0 + l2, y0 + l2, z0, l2, f);
-      sub[7].print(x0 + l2, y0 + l2, z0 + l2, l2, f);
-    }
-  }
-};
-Cell *_root;
-int _inFieldId;
-Field *_inField;
-SBoundingBox3d bounds;
-double _l0;
+  };
+  Cell *_root;
+  int _inFieldId;
+  Field *_inField;
+  SBoundingBox3d bounds;
+  double _l0;
 
 public:
-OctreeField()
-{
-  options["InField"] = new FieldOptionInt(
-    _inFieldId, "Id of the field to use as x coordinate.", &update_needed);
-  _root = NULL;
-}
-~OctreeField()
-{
-  if(_root) delete _root;
-}
-const char *getName() { return "Octree"; }
-std::string getDescription()
-{
-  return "Pre compute another field on an octree to speed-up evalution";
-}
-void update()
-{
-  if(update_needed) {
-    update_needed = false;
-    if(_root) {
-      delete _root;
-      _root = NULL;
+  OctreeField()
+  {
+    options["InField"] = new FieldOptionInt
+      (_inFieldId, "Id of the field to use as x coordinate.", &update_needed);
+    _root = NULL;
+  }
+  ~OctreeField()
+  {
+    if(_root) delete _root;
+  }
+  const char *getName() { return "Octree"; }
+  std::string getDescription()
+  {
+    return "Pre compute another field on an octree to speed-up evalution";
+  }
+  void update()
+  {
+    if(update_needed) {
+      update_needed = false;
+      if(_root) {
+        delete _root;
+        _root = NULL;
+      }
+    }
+    if(!_root) {
+      _inField = _inFieldId >= 0 ?
+        (GModel::current()->getFields()->get(_inFieldId)) :
+        NULL;
+      if(!_inField) return;
+      GModel::current()->getFields()->get(_inFieldId)->update();
+      bounds = GModel::current()->bounds();
+      _root = new Cell;
+      SVector3 d = bounds.max() - bounds.min();
+      _l0 = std::max(std::max(d.x(), d.y()), d.z());
+      _root->init(bounds.min().x(), bounds.min().y(), bounds.min().z(), _l0,
+                  *_inField, 4);
     }
   }
-  if(!_root) {
-    _inField = _inFieldId >= 0 ?
-                 (GModel::current()->getFields()->get(_inFieldId)) :
-                 NULL;
-    if(!_inField) return;
-    GModel::current()->getFields()->get(_inFieldId)->update();
-    bounds = GModel::current()->bounds();
-    _root = new Cell;
-    SVector3 d = bounds.max() - bounds.min();
-    _l0 = std::max(std::max(d.x(), d.y()), d.z());
-    _root->init(bounds.min().x(), bounds.min().y(), bounds.min().z(), _l0,
-                *_inField, 4);
+  using Field::operator();
+  virtual double operator()(double X, double Y, double Z, GEntity *ge = 0)
+  {
+    SPoint3 xmin = bounds.min();
+    SVector3 d = bounds.max() - xmin;
+    return _root->evaluate((X - xmin.x()) / _l0, (Y - xmin.y()) / _l0,
+                           (Z - xmin.z()) / _l0);
   }
-}
-using Field::operator();
-virtual double operator()(double X, double Y, double Z, GEntity *ge = 0)
-{
-  SPoint3 xmin = bounds.min();
-  SVector3 d = bounds.max() - xmin;
-  return _root->evaluate((X - xmin.x()) / _l0, (Y - xmin.y()) / _l0,
-                         (Z - xmin.z()) / _l0);
-}
-}
-;
+};
+
+struct PointCloud {
+  std::vector<SPoint3> pts;
+};
+
+// And this is the "dataset to kd-tree" adaptor class:
+template <typename Derived> struct PointCloudAdaptor {
+  const Derived &obj; //!< A const ref to the data set origin
+
+  // The constructor that sets the data set source
+  PointCloudAdaptor(const Derived &obj_) : obj(obj_) {}
+
+  // CRTP helper method
+  inline const Derived &derived() const { return obj; }
+
+  // Must return the number of data points
+  inline size_t kdtree_get_point_count() const { return derived().pts.size(); }
+
+  // Returns the distance between the vector "p1[0:size-1]" and the data point
+  // with index "idx_p2" stored in the class:
+  inline double kdtree_distance(const double *p1, const size_t idx_p2,
+                                size_t /*size*/) const
+  {
+    const double d0 = p1[0] - derived().pts[idx_p2].x();
+    const double d1 = p1[1] - derived().pts[idx_p2].y();
+    const double d2 = p1[2] - derived().pts[idx_p2].z();
+    return d0 * d0 + d1 * d1 + d2 * d2;
+  }
+
+  // Returns the dim'th component of the idx'th point in the class: Since this
+  // is inlined and the "dim" argument is typically an immediate value, the
+  // "if/else's" are actually solved at compile time.
+  inline double kdtree_get_pt(const size_t idx, int dim) const
+  {
+    if(dim == 0)
+      return derived().pts[idx].x();
+    else if(dim == 1)
+      return derived().pts[idx].y();
+    else
+      return derived().pts[idx].z();
+  }
+
+  // Optional bounding-box computation: return false to default to a standard
+  // bbox computation loop.  Return true if the BBOX was already computed by the
+  // class and returned in "bb" so it can be avoided to redo it again.  Look at
+  // bb.size() to find out the expected dimensionality (e.g. 2 or 3 for point
+  // clouds)
+  template <class BBOX> bool kdtree_get_bbox(BBOX & /*bb*/) const
+  {
+    return false;
+  }
+
+}; // end of PointCloudAdaptor
+
+typedef PointCloudAdaptor<PointCloud> PC2KD;
+typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, PC2KD>,
+                                            PC2KD, 3> my_kd_tree_t;
+
+class DistanceField : public Field {
+  std::list<int> nodes_id, edges_id, faces_id;
+  std::vector<AttractorInfo> _infos;
+  int _xFieldId, _yFieldId, _zFieldId;
+  Field *_xField, *_yField, *_zField;
+  int n_nodes_by_edge;
+  PointCloud P;
+  my_kd_tree_t *index;
+  PC2KD pc2kd;
+  size_t out_index;
+  double out_dist_sqr;
+
+public:
+  DistanceField()
+    : index(NULL), pc2kd(P), out_index(-1), out_dist_sqr(0)
+  {
+    n_nodes_by_edge = 20;
+    options["NodesList"] = new FieldOptionList(
+      nodes_id, "Indices of nodes in the geometric model", &update_needed);
+    options["EdgesList"] = new FieldOptionList(
+      edges_id, "Indices of curves in the geometric model", &update_needed);
+    options["NNodesByEdge"] = new FieldOptionInt(
+      n_nodes_by_edge, "Number of nodes used to discretized each curve",
+      &update_needed);
+    options["FacesList"] = new FieldOptionList(
+      faces_id,
+      "Indices of surfaces in the geometric model (Warning, this feature "
+      "is still experimental. It might (read: will probably) give wrong "
+      "results "
+      "for complex surfaces)",
+      &update_needed);
+    _xFieldId = _yFieldId = _zFieldId = -1;
+    options["FieldX"] = new FieldOptionInt(
+      _xFieldId, "Id of the field to use as x coordinate.", &update_needed);
+    options["FieldY"] = new FieldOptionInt(
+      _yFieldId, "Id of the field to use as y coordinate.", &update_needed);
+    options["FieldZ"] = new FieldOptionInt(
+      _zFieldId, "Id of the field to use as z coordinate.", &update_needed);
+  }
+  DistanceField(int dim, int tag, int nbe)
+    : n_nodes_by_edge(nbe), index(NULL), pc2kd(P), out_index(-1), out_dist_sqr(0)
+  {
+    if(dim == 0)
+      nodes_id.push_back(tag);
+    else if(dim == 2)
+      edges_id.push_back(tag);
+    else if(dim == 3)
+      faces_id.push_back(tag);
+    _xField = _yField = _zField = NULL;
+    _xFieldId = _yFieldId = _zFieldId = -1;
+    update_needed = true;
+  }
+  ~DistanceField()
+  {
+    if(index) delete index;
+  }
+  const char *getName() { return "DistanceField"; }
+  std::string getDescription()
+  {
+    return "Compute the distance from the nearest node in a list. It can also "
+           "be used to compute the distance from curves, in which case each "
+           "curve is replaced by NNodesByEdge equidistant nodes and the distance "
+           "from those nodes is computed.";
+  }
+  std::pair<AttractorInfo, SPoint3> getAttractorInfo() const
+  {
+    if(out_index >= 0 &&
+       out_index < _infos.size() &&
+       out_index < P.pts.size())
+      return std::make_pair(_infos[out_index], P.pts[out_index]);
+    return std::make_pair(AttractorInfo(), SPoint3());
+  }
+  void update()
+  {
+    if(update_needed) {
+      _xField = _xFieldId >= 0 ? (GModel::current()->getFields()->get(_xFieldId)) :
+        NULL;
+      _yField = _yFieldId >= 0 ? (GModel::current()->getFields()->get(_yFieldId)) :
+        NULL;
+      _zField = _zFieldId >= 0 ? (GModel::current()->getFields()->get(_zFieldId)) :
+        NULL;
+
+      std::vector<SPoint3> &points = P.pts;
+      for(std::list<int>::iterator it = faces_id.begin(); it != faces_id.end();
+          ++it) {
+        GFace *f = GModel::current()->getFaceByTag(*it);
+        if(f) {
+          if(f->mesh_vertices.size()) {
+            for(unsigned int i = 0; i < f->mesh_vertices.size(); i++) {
+              MVertex *v = f->mesh_vertices[i];
+              points.push_back(SPoint3(v->x(), v->y(), v->z()));
+              double uu = 0., vv = 0.;
+              v->getParameter(0, uu);
+              v->getParameter(1, vv);
+              _infos.push_back(AttractorInfo(*it, 2, uu, vv));
+            }
+          }
+          else {
+            SBoundingBox3d bb = f->bounds();
+            SVector3 dd = bb.max() - bb.min();
+            double maxDist = dd.norm() / n_nodes_by_edge;
+            std::vector<SPoint2> uvpoints;
+            f->fillPointCloud(maxDist, &points, &uvpoints);
+            for(std::size_t i = 0; i < uvpoints.size(); i++)
+              _infos.push_back(AttractorInfo(*it, 2, uvpoints[i].x(),
+                                             uvpoints[i].y()));
+          }
+        }
+      }
+
+      for(std::list<int>::iterator it = nodes_id.begin(); it != nodes_id.end();
+          ++it) {
+        GVertex *gv = GModel::current()->getVertexByTag(*it);
+        if(gv){
+          points.push_back(SPoint3(gv->x(), gv->y(), gv->z()));
+          _infos.push_back(AttractorInfo(*it, 0, 0, 0));
+        }
+      }
+
+      for(std::list<int>::iterator it = edges_id.begin(); it != edges_id.end();
+          ++it) {
+        GEdge *e = GModel::current()->getEdgeByTag(*it);
+        if(e) {
+          if(e->mesh_vertices.size()) {
+            for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
+              points.push_back(SPoint3(e->mesh_vertices[i]->x(),
+                                       e->mesh_vertices[i]->y(),
+                                       e->mesh_vertices[i]->z()));
+              double t = 0.;
+              e->mesh_vertices[i]->getParameter(0, t);
+              _infos.push_back(AttractorInfo(*it, 1, t, 0));
+            }
+          }
+          int NNN = n_nodes_by_edge - e->mesh_vertices.size();
+          for(int i = 1; i < NNN - 1; i++) {
+            double u = (double)i / (NNN - 1);
+            Range<double> b = e->parBounds(0);
+            double t = b.low() + u * (b.high() - b.low());
+            GPoint gp = e->point(t);
+            points.push_back(SPoint3(gp.x(), gp.y(), gp.z()));
+            _infos.push_back(AttractorInfo(*it, 1, t, 0));
+          }
+        }
+      }
+
+      // construct a kd-tree index:
+      index = new my_kd_tree_t(3, pc2kd, nanoflann::KDTreeSingleIndexAdaptorParams(10));
+      index->buildIndex();
+      update_needed = false;
+    }
+  }
+  using Field::operator();
+  virtual double operator()(double X, double Y, double Z, GEntity *ge = 0)
+  {
+    double query_pt[3] = {X, Y, Z};
+    const size_t num_results = 1;
+    nanoflann::KNNResultSet<double> resultSet(num_results);
+    resultSet.init(&out_index, &out_dist_sqr);
+    index->findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
+    return sqrt(out_dist_sqr);
+  }
+};
 
 const char *BoundaryLayerField::getName() { return "BoundaryLayer"; }
 
@@ -2350,7 +2582,6 @@ BoundaryLayerField::BoundaryLayerField()
   hfar = 1;
   ratio = 1.1;
   thickness = 1.e-2;
-  //  fan_angle = 30;
   tgt_aniso_ratio = 1.e10;
   iRecombine = 0;
   iIntersect = 0;
@@ -2391,7 +2622,7 @@ BoundaryLayerField::BoundaryLayerField()
 
 void BoundaryLayerField::removeAttractors()
 {
-  for(std::list<AttractorField *>::iterator it = _att_fields.begin();
+  for(std::list<DistanceField *>::iterator it = _att_fields.begin();
       it != _att_fields.end(); ++it)
     delete *it;
   _att_fields.clear();
@@ -2409,7 +2640,7 @@ void BoundaryLayerField::setupFor1d(int iE)
   edges_id.clear();
 
   bool found = std::find(edges_id_saved.begin(), edges_id_saved.end(), iE) !=
-               edges_id_saved.end();
+    edges_id_saved.end();
 
   if(!found) {
     GEdge *ge = GModel::current()->getEdgeByTag(iE);
@@ -2422,8 +2653,6 @@ void BoundaryLayerField::setupFor1d(int iE)
                       gv1->tag()) != nodes_id_saved.end();
     if(found) nodes_id.push_back(gv1->tag());
   }
-  //  printf("edge %d %d nodes added\n",iE,nodes_id.size());
-  //  getchar();
   removeAttractors();
 }
 
@@ -2491,18 +2720,18 @@ double BoundaryLayerField::operator()(double x, double y, double z, GEntity *ge)
   if(update_needed) {
     for(std::list<int>::iterator it = nodes_id.begin(); it != nodes_id.end();
         ++it) {
-      _att_fields.push_back(new AttractorField(0, *it, 100000));
+      _att_fields.push_back(new DistanceField(0, *it, 100000));
     }
     for(std::list<int>::iterator it = edges_id.begin(); it != edges_id.end();
         ++it) {
-      _att_fields.push_back(new AttractorField(1, *it, 300000));
+      _att_fields.push_back(new DistanceField(1, *it, 300000));
     }
     update_needed = false;
   }
 
   double dist = 1.e22;
   if(_att_fields.empty()) return dist;
-  for(std::list<AttractorField *>::iterator it = _att_fields.begin();
+  for(std::list<DistanceField *>::iterator it = _att_fields.begin();
       it != _att_fields.end(); ++it) {
     double cdist = (*(*it))(x, y, z);
     if(cdist < dist) {
@@ -2543,7 +2772,6 @@ void BoundaryLayerField::computeFor1dMesh(double x, double y, double z,
   }
 
   const double ll1 = (distk * (ratio - 1) + hwall_n) / (1. + 0.5 * (ratio - 1));
-  // const double ll1   = (distk*(ratio-1) + hwall_n) / (1.);
   double lc_n = std::min(ll1, hfar);
 
   if(distk > thickness) lc_n = hfar;
@@ -2554,7 +2782,7 @@ void BoundaryLayerField::computeFor1dMesh(double x, double y, double z,
   metr = buildMetricTangentToCurve(t1, lc_n, lc_n);
 }
 
-void BoundaryLayerField::operator()(AttractorField *cc, double dist, double x,
+void BoundaryLayerField::operator()(DistanceField *cc, double dist, double x,
                                     double y, double z, SMetric3 &metr,
                                     GEntity *ge)
 {
@@ -2650,11 +2878,11 @@ void BoundaryLayerField::operator()(double x, double y, double z,
   if(update_needed) {
     for(std::list<int>::iterator it = nodes_id.begin(); it != nodes_id.end();
         ++it) {
-      _att_fields.push_back(new AttractorField(0, *it, 100000));
+      _att_fields.push_back(new DistanceField(0, *it, 100000));
     }
     for(std::list<int>::iterator it = edges_id.begin(); it != edges_id.end();
         ++it) {
-      _att_fields.push_back(new AttractorField(1, *it, 10000));
+      _att_fields.push_back(new DistanceField(1, *it, 10000));
     }
     update_needed = false;
   }
@@ -2664,34 +2892,21 @@ void BoundaryLayerField::operator()(double x, double y, double z,
   std::vector<SMetric3> hop;
   SMetric3 v(1. / (CTX::instance()->mesh.lcMax * CTX::instance()->mesh.lcMax));
   hop.push_back(v);
-  for(std::list<AttractorField *>::iterator it = _att_fields.begin();
+  for(std::list<DistanceField *>::iterator it = _att_fields.begin();
       it != _att_fields.end(); ++it) {
     double cdist = (*(*it))(x, y, z);
-    AttractorInfo ainfo = (*it)->getAttractorInfo().first;
     SPoint3 CLOSEST = (*it)->getAttractorInfo().second;
-
-    bool doNotConsider = false;
-    if(ge->dim() == ainfo.dim && ge->tag() == ainfo.ent) {
-      // doNotConsider = true;
+    SMetric3 localMetric;
+    if(iIntersect) {
+      (*this)(*it, cdist, x, y, z, localMetric, ge);
+      hop.push_back(localMetric);
     }
-    else if(ge->dim() == 1 && ainfo.dim == 2) {
-      // GFace *gf = ge->model()->getFaceByTag(ainfo.ent);
-      // if (gf->containsEdge(ge->tag())) doNotConsider  = true;
-    }
-
-    if(!doNotConsider) {
-      SMetric3 localMetric;
-      if(iIntersect) {
-        (*this)(*it, cdist, x, y, z, localMetric, ge);
-        hop.push_back(localMetric);
-      }
-      if(cdist < current_distance) {
-        if(!iIntersect) (*this)(*it, cdist, x, y, z, localMetric, ge);
-        current_distance = cdist;
-        current_closest = *it;
-        v = localMetric;
-        _closest_point = CLOSEST;
-      }
+    if(cdist < current_distance) {
+      if(!iIntersect) (*this)(*it, cdist, x, y, z, localMetric, ge);
+      current_distance = cdist;
+      current_closest = *it;
+      v = localMetric;
+      _closest_point = CLOSEST;
     }
   }
   if(iIntersect)
@@ -2700,206 +2915,11 @@ void BoundaryLayerField::operator()(double x, double y, double z,
   metr = v;
 }
 
-#endif
-
-#include <nanoflann.hpp>
-
-// This is an exampleof a custom data set class
-struct PointCloud {
-  std::vector<SPoint3> pts;
-};
-
-// And this is the "dataset to kd-tree" adaptor class:
-template <typename Derived> struct PointCloudAdaptor {
-  const Derived &obj; //!< A const ref to the data set origin
-
-  // The constructor that sets the data set source
-  PointCloudAdaptor(const Derived &obj_) : obj(obj_) {}
-
-  // CRTP helper method
-  inline const Derived &derived() const { return obj; }
-
-  // Must return the number of data points
-  inline size_t kdtree_get_point_count() const { return derived().pts.size(); }
-
-  // Returns the distance between the vector "p1[0:size-1]" and the data point
-  // with index "idx_p2" stored in the class:
-  inline double kdtree_distance(const double *p1, const size_t idx_p2,
-                                size_t /*size*/) const
-  {
-    const double d0 = p1[0] - derived().pts[idx_p2].x();
-    const double d1 = p1[1] - derived().pts[idx_p2].y();
-    const double d2 = p1[2] - derived().pts[idx_p2].z();
-    return d0 * d0 + d1 * d1 + d2 * d2;
-  }
-
-  // Returns the dim'th component of the idx'th point in the class: Since this
-  // is inlined and the "dim" argument is typically an immediate value, the
-  // "if/else's" are actually solved at compile time.
-  inline double kdtree_get_pt(const size_t idx, int dim) const
-  {
-    if(dim == 0)
-      return derived().pts[idx].x();
-    else if(dim == 1)
-      return derived().pts[idx].y();
-    else
-      return derived().pts[idx].z();
-  }
-
-  // Optional bounding-box computation: return false to default to a standard
-  // bbox computation loop.  Return true if the BBOX was already computed by the
-  // class and returned in "bb" so it can be avoided to redo it again.  Look at
-  // bb.size() to find out the expected dimensionality (e.g. 2 or 3 for point
-  // clouds)
-  template <class BBOX> bool kdtree_get_bbox(BBOX & /*bb*/) const
-  {
-    return false;
-  }
-
-}; // end of PointCloudAdaptor
-
-typedef PointCloudAdaptor<PointCloud> PC2KD;
-typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, PC2KD>,
-                                            PC2KD, 3> my_kd_tree_t;
-
-class DistanceField : public Field {
-  std::list<int> nodes_id, edges_id, faces_id;
-  int _xFieldId, _yFieldId, _zFieldId;
-  Field *_xField, *_yField, *_zField;
-  int n_nodes_by_edge;
-  PointCloud P;
-  my_kd_tree_t *index;
-  PC2KD pc2kd;
-
-public:
-  DistanceField() : index(NULL), pc2kd(P)
-  {
-    n_nodes_by_edge = 20;
-    options["NodesList"] = new FieldOptionList(
-      nodes_id, "Indices of nodes in the geometric model", &update_needed);
-    options["EdgesList"] = new FieldOptionList(
-      edges_id, "Indices of curves in the geometric model", &update_needed);
-    options["NNodesByEdge"] = new FieldOptionInt(
-      n_nodes_by_edge, "Number of nodes used to discretized each curve",
-      &update_needed);
-    options["FacesList"] = new FieldOptionList(
-      faces_id,
-      "Indices of surfaces in the geometric model (Warning, this feature "
-      "is still experimental. It might (read: will probably) give wrong "
-      "results "
-      "for complex surfaces)",
-      &update_needed);
-    _xFieldId = _yFieldId = _zFieldId = -1;
-    options["FieldX"] = new FieldOptionInt(
-      _xFieldId, "Id of the field to use as x coordinate.", &update_needed);
-    options["FieldY"] = new FieldOptionInt(
-      _yFieldId, "Id of the field to use as y coordinate.", &update_needed);
-    options["FieldZ"] = new FieldOptionInt(
-      _zFieldId, "Id of the field to use as z coordinate.", &update_needed);
-  }
-  ~DistanceField()
-  {
-    if(index) delete index;
-  }
-  const char *getName() { return "DistanceField"; }
-  std::string getDescription()
-  {
-    return "Compute the distance from the nearest node in a list. It can also "
-           "be used to compute the distance from curves, in which case each "
-           "curve "
-           "is replaced by NNodesByEdge equidistant nodes and the distance "
-           "from those "
-           "nodes is computed.";
-  }
-  void update()
-  {
-    if(update_needed) {
-      _xField = _xFieldId >= 0 ?
-                  (GModel::current()->getFields()->get(_xFieldId)) :
-                  NULL;
-      _yField = _yFieldId >= 0 ?
-                  (GModel::current()->getFields()->get(_yFieldId)) :
-                  NULL;
-      _zField = _zFieldId >= 0 ?
-                  (GModel::current()->getFields()->get(_zFieldId)) :
-                  NULL;
-
-      std::vector<SPoint3> &points = P.pts;
-      for(std::list<int>::iterator it = faces_id.begin(); it != faces_id.end();
-          ++it) {
-        GFace *f = GModel::current()->getFaceByTag(*it);
-        if(f) {
-          if(f->mesh_vertices.size()) {
-            for(unsigned int i = 0; i < f->mesh_vertices.size(); i++) {
-              MVertex *v = f->mesh_vertices[i];
-              points.push_back(SPoint3(v->x(), v->y(), v->z()));
-            }
-          }
-          else {
-            SBoundingBox3d bb = f->bounds();
-            SVector3 dd = bb.max() - bb.min();
-            double maxDist = dd.norm() / n_nodes_by_edge;
-            std::vector<SPoint2> uvpoints;
-            f->fillPointCloud(maxDist, &points, &uvpoints);
-          }
-        }
-      }
-
-      for(std::list<int>::iterator it = nodes_id.begin(); it != nodes_id.end();
-          ++it) {
-        GVertex *gv = GModel::current()->getVertexByTag(*it);
-        if(gv) points.push_back(SPoint3(gv->x(), gv->y(), gv->z()));
-      }
-
-      for(std::list<int>::iterator it = edges_id.begin(); it != edges_id.end();
-          ++it) {
-        GEdge *e = GModel::current()->getEdgeByTag(*it);
-        if(e) {
-          if(e->mesh_vertices.size()) {
-            for(unsigned int i = 0; i < e->mesh_vertices.size(); i++)
-              points.push_back(SPoint3(e->mesh_vertices[i]->x(),
-                                       e->mesh_vertices[i]->y(),
-                                       e->mesh_vertices[i]->z()));
-          }
-          int NNN = n_nodes_by_edge - e->mesh_vertices.size();
-          for(int i = 1; i < NNN - 1; i++) {
-            double u = (double)i / (NNN - 1);
-            Range<double> b = e->parBounds(0);
-            double t = b.low() + u * (b.high() - b.low());
-            GPoint gp = e->point(t);
-            points.push_back(SPoint3(gp.x(), gp.y(), gp.z()));
-          }
-        }
-      }
-
-      // construct a kd-tree index:
-      index = new my_kd_tree_t(3, pc2kd, nanoflann::KDTreeSingleIndexAdaptorParams(10));
-      index->buildIndex();
-      update_needed = false;
-    }
-  }
-
-  using Field::operator();
-  virtual double operator()(double X, double Y, double Z, GEntity *ge = 0)
-  {
-    double query_pt[3] = {X, Y, Z};
-    const size_t num_results = 1;
-    size_t ret_index;
-    double out_dist_sqr;
-    nanoflann::KNNResultSet<double> resultSet(num_results);
-    resultSet.init(&ret_index, &out_dist_sqr);
-    index->findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
-    return sqrt(out_dist_sqr);
-  }
-};
-
 FieldManager::FieldManager()
 {
   map_type_name["Structured"] = new FieldFactoryT<StructuredField>();
   map_type_name["Threshold"] = new FieldFactoryT<ThresholdField>();
-#if defined(HAVE_ANN)
   map_type_name["BoundaryLayer"] = new FieldFactoryT<BoundaryLayerField>();
-#endif
   map_type_name["Box"] = new FieldFactoryT<BoxField>();
   map_type_name["Cylinder"] = new FieldFactoryT<CylinderField>();
   map_type_name["Ball"] = new FieldFactoryT<BallField>();
@@ -2909,9 +2929,7 @@ FieldManager::FieldManager()
   map_type_name["PostView"] = new FieldFactoryT<PostViewField>();
 #endif
   map_type_name["Gradient"] = new FieldFactoryT<GradientField>();
-#if defined(HAVE_ANN)
   map_type_name["Octree"] = new FieldFactoryT<OctreeField>();
-#endif
   map_type_name["Distance"] = new FieldFactoryT<DistanceField>();
   map_type_name["Restrict"] = new FieldFactoryT<RestrictField>();
   map_type_name["Min"] = new FieldFactoryT<MinField>();
@@ -2927,8 +2945,7 @@ FieldManager::FieldManager()
   map_type_name["MathEvalAniso"] = new FieldFactoryT<MathEvalFieldAniso>();
 #if defined(HAVE_ANN)
   map_type_name["Attractor"] = new FieldFactoryT<AttractorField>();
-  map_type_name["AttractorAnisoCurve"] =
-    new FieldFactoryT<AttractorAnisoCurveField>();
+  map_type_name["AttractorAnisoCurve"] = new FieldFactoryT<AttractorAnisoCurveField>();
 #endif
   map_type_name["MaxEigenHessian"] = new FieldFactoryT<MaxEigenHessianField>();
   _background_field = -1;

@@ -12,7 +12,7 @@
 #include "OS.h"
 #include "Context.h"
 
-#if !defined(HAVE_MESH) || !defined(HAVE_ANN)
+#if !defined(HAVE_MESH)
 
 BoundaryLayerField *getBLField(GModel *gm) { return 0; }
 bool buildAdditionalPoints2D(GFace *gf) { return false; }

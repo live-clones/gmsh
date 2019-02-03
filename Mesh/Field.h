@@ -173,24 +173,23 @@ public:
 // Boundary Layer Field (used both for anisotropic meshing and BL
 // extrusion)
 
-#if defined(HAVE_ANN)
-class AttractorField;
+class DistanceField;
 
 class BoundaryLayerField : public Field {
 private:
-  std::list<AttractorField *> _att_fields;
+  std::list<DistanceField *> _att_fields;
   std::list<double> hwall_n_nodes;
   std::list<int> nodes_id, edges_id;
   std::list<int> edges_id_saved, nodes_id_saved, fan_nodes_id;
-  void operator()(AttractorField *cc, double dist, double x, double y, double z,
+  void operator()(DistanceField *cc, double dist, double x, double y, double z,
                   SMetric3 &metr, GEntity *ge);
 
 public:
-  double hwall_n, ratio, hfar, thickness, fan_angle;
+  double hwall_n, ratio, hfar, thickness;
   double current_distance, tgt_aniso_ratio;
   SPoint3 _closest_point;
   int iRecombine, iIntersect;
-  AttractorField *current_closest;
+  DistanceField *current_closest;
   virtual bool isotropic() const { return false; }
   virtual const char *getName();
   virtual std::string getDescription();
@@ -234,38 +233,6 @@ public:
   void setupFor2d(int iF);
   void removeAttractors();
 };
-
-#else
-
-class BoundaryLayerField : public Field {
-public:
-  virtual bool isotropic() const { return false; }
-  virtual const char *getName() { return ""; }
-  virtual std::string getDescription() { return ""; }
-  BoundaryLayerField()
-  {
-    Msg::Error("You must compile with ANN to use BoundaryLayerField");
-  }
-  ~BoundaryLayerField() {}
-  virtual double operator()(double x, double y, double z, GEntity *ge = 0)
-  {
-    return 0.;
-  }
-  virtual void operator()(double x, double y, double z, SMetric3 &metr,
-                          GEntity *ge = 0)
-  {
-  }
-  bool isFaceBL(int iF) const { return false; }
-  bool isEdgeBL(int iE) const { return false; }
-  bool isFan(int iE) const { return false; }
-  bool isVertexBL(int iV) const { return false; }
-  void computeFor1dMesh(double x, double y, double z, SMetric3 &metr) {}
-  void setupFor2d(int iF) {}
-  void setupFor3d() {}
-  void removeAttractors() {}
-};
-
-#endif
 
 class FieldOptionString : public FieldOption {
 public:
