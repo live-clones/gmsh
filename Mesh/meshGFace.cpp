@@ -1107,6 +1107,30 @@ BDS2GMSH(BDS_Mesh *m, GFace *gf,
   }
 }
 
+static void _deleteUnusedVertices(GFace *gf)
+{
+  std::set<MVertex *> allverts;
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+    for(int j = 0; j < 3; j++){
+      if(gf->triangles[i]->getVertex(j)->onWhat() == gf)
+        allverts.insert(gf->triangles[i]->getVertex(j));
+    }
+  }
+  for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
+    for(int j = 0; j < 4; j++){
+      if(gf->quadrangles[i]->getVertex(j)->onWhat() == gf)
+        allverts.insert(gf->quadrangles[i]->getVertex(j));
+    }
+  }
+  for(std::size_t i = 0; i < gf->mesh_vertices.size(); i++) {
+    if(allverts.find(gf->mesh_vertices[i]) == allverts.end())
+      delete gf->mesh_vertices[i];
+  }
+  gf->mesh_vertices.clear();
+  gf->mesh_vertices.insert(gf->mesh_vertices.end(), allverts.begin(),
+                           allverts.end());
+}
+
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
 bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
@@ -1744,6 +1768,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
     directions_storage(gf);
   }
+
+  // remove unused vertices, generated e.g. during background mesh
+  _deleteUnusedVertices(gf);
 
   return true;
 }
@@ -2797,6 +2824,10 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
                        gf->meshStatistics.nbTriangle,
                        gf->meshStatistics.nbGoodQuality);
   gf->meshStatistics.status = GFace::DONE;
+
+  // remove unused vertices, generated e.g. during background mesh
+  _deleteUnusedVertices(gf);
+
   return true;
 }
 
