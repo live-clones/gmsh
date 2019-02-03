@@ -9,7 +9,7 @@
 
 int main(int argc, char *argv[])
 {
-  // by default run the app with a single OpenMP thread
+  // by default run the app with a single OpenMP thread?
   //Msg::SetNumThreads(1);
 
 #if defined(HAVE_FLTK)
