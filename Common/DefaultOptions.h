@@ -687,7 +687,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "NoPopup" , opt_general_nopopup , 0. ,
     "Disable interactive dialog windows in scripts (and use default values "
     "instead)" },
-  { F|O, "NumThreads" , opt_general_num_threads , 0. ,
+  { F|O, "NumThreads" , opt_general_num_threads , 1. ,
     "Set (maximum) number of threads (0: use system default, i.e. OMP_NUM_THREADS)" },
 
   { F|S, "OptionsPositionX" , opt_general_option_position0 , 650. ,

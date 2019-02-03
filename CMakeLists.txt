@@ -292,7 +292,7 @@ if(ENABLE_OPENMP)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
   elseif(APPLE AND EXISTS "/opt/local/lib/libomp")
     # just for testing the official Apple compiler with macports' libomp
-    set_config_option(HAVE_OPENMP "OpenMP(MacPorts)")
+    set_config_option(HAVE_OPENMP "OpenMP[MacPorts]")
     set(CMAKE_C_FLAGS
         "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp -I/opt/local/include/libomp")
     set(CMAKE_CXX_FLAGS
