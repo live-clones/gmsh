@@ -14,6 +14,7 @@
 #include "GVertex.h"
 #include "GPoint.h"
 #include "discreteEdge.h"
+#include "discreteFace.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MLine.h"
@@ -2833,9 +2834,10 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
 void deMeshGFace::operator()(GFace *gf)
 {
-  if(gf->geomType() == GEntity::DiscreteSurface &&
-     !CTX::instance()->meshDiscrete)
-    return;
+  if(gf->geomType() == GEntity::DiscreteSurface){
+    if(!static_cast<discreteFace *>(gf)->haveParametrization())
+      return;
+  }
   gf->deleteMesh();
   gf->meshStatistics.status = GFace::PENDING;
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;

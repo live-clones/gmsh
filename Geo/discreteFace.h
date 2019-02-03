@@ -78,6 +78,14 @@ public:
   virtual void secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
                          SVector3 &dudv) const;
   void createGeometry();
+  virtual bool haveParametrization()
+  {
+#if defined(HAVE_HXT)
+    return !_parametrizations.empty();
+#else
+    return false;
+#endif
+  }
   virtual void mesh(bool verbose);
   void setBoundEdges(const std::vector<int> &tagEdges);
   void setBoundEdges(const std::vector<int> &tagEdges,

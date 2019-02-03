@@ -26,6 +26,7 @@
 #include "meshGRegion.h"
 #include "meshGRegionLocalMeshMod.h"
 #include "meshRelocateVertex.h"
+#include "discreteFace.h"
 #include "BackgroundMesh.h"
 #include "BoundaryLayers.h"
 #include "HighOrder.h"
@@ -463,6 +464,14 @@ static void Mesh2D(GModel *m)
   // boundary layers are not yet thread-safe
   if(m->getFields()->getNumBoundaryLayerFields())
     Msg::SetNumThreads(1);
+
+  // STL remeshing is not yet thread-safe
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+    if((*it)->geomType() == GEntity::DiscreteSurface){
+      if(static_cast<discreteFace *>(*it)->haveParametrization())
+        Msg::SetNumThreads(1);
+    }
+  }
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
     (*it)->meshStatistics.status = GFace::PENDING;

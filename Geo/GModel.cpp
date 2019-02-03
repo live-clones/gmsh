@@ -1837,18 +1837,14 @@ void GModel::createGeometryOfDiscreteEntities()
 
   Msg::Info("Creating the geometry of discrete surfaces");
   for(fiter it = firstFace(); it != lastFace(); ++it) {
-    if((*it)->geomType() == GEntity::DiscreteSurface) {
-      discreteFace *df = dynamic_cast<discreteFace *>(*it);
-      if(df) df->createGeometry();
-    }
+    if((*it)->geomType() == GEntity::DiscreteSurface)
+      static_cast<discreteFace *>(*it)->createGeometry();
   }
 
   Msg::Info("Creating the geometry of discrete curves");
   for(eiter it = firstEdge(); it != lastEdge(); ++it) {
-    if((*it)->geomType() == GEntity::DiscreteCurve) {
-      discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
-      if(de) de->createGeometry();
-    }
+    if((*it)->geomType() == GEntity::DiscreteCurve)
+      static_cast<discreteEdge *>(*it)->createGeometry();
   }
 }
 
