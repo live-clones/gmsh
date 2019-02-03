@@ -29,6 +29,7 @@
 #include "discreteFace.h"
 #include "BackgroundMesh.h"
 #include "BoundaryLayers.h"
+#include "ExtrudeParams.h"
 #include "HighOrder.h"
 #include "Generator.h"
 #include "Field.h"
@@ -343,6 +344,13 @@ static void Mesh1D(GModel *m)
   if(m->getFields()->getNumBoundaryLayerFields())
     Msg::SetNumThreads(1);
 
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
+    // Extruded meshes are not yet fully thread-safe (not sure why!)
+    if((*it)->meshAttributes.extrude &&
+       (*it)->meshAttributes.extrude->mesh.ExtrudeMesh)
+      Msg::SetNumThreads(1);
+  }
+
   std::vector<GEdge *> temp;
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
     (*it)->meshStatistics.status = GEdge::PENDING;
@@ -465,12 +473,24 @@ static void Mesh2D(GModel *m)
   if(m->getFields()->getNumBoundaryLayerFields())
     Msg::SetNumThreads(1);
 
-  // STL remeshing is not yet thread-safe
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+    // STL remeshing is not yet thread-safe
     if((*it)->geomType() == GEntity::DiscreteSurface){
       if(static_cast<discreteFace *>(*it)->haveParametrization())
         Msg::SetNumThreads(1);
     }
+    // DelQuad and co are not yet thread-safe
+    if((*it)->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
+       (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
+       (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
+      Msg::SetNumThreads(1);
+    // Periodic meshing is not yet thread-safe
+    if((*it)->getMeshMaster() != *it)
+      Msg::SetNumThreads(1);
+    // Extruded meshes are not yet fully thread-safe (not sure why!)
+    if((*it)->meshAttributes.extrude &&
+       (*it)->meshAttributes.extrude->mesh.ExtrudeMesh)
+      Msg::SetNumThreads(1);
   }
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
@@ -788,6 +808,13 @@ static void Mesh3D(GModel *m)
   if(CTX::instance()->mesh.maxNumThreads3D > 0 &&
      CTX::instance()->mesh.maxNumThreads3D <= Msg::GetMaxThreads())
     Msg::SetNumThreads(CTX::instance()->mesh.maxNumThreads3D);
+
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+    // Extruded meshes are not yet fully thread-safe (not sure why!)
+    if((*it)->meshAttributes.extrude &&
+       (*it)->meshAttributes.extrude->mesh.ExtrudeMesh)
+      Msg::SetNumThreads(1);
+  }
 
   if(m->getNumRegions()) Msg::ProgressMeter(0, 100, false, "Meshing 3D...");
 
