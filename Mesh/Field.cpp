@@ -2560,6 +2560,7 @@ public:
   using Field::operator();
   virtual double operator()(double X, double Y, double Z, GEntity *ge = 0)
   {
+    if(!index) return MAX_LC;
     double query_pt[3] = {X, Y, Z};
     const size_t num_results = 1;
     nanoflann::KNNResultSet<double> resultSet(num_results);
