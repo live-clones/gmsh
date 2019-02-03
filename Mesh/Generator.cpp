@@ -338,6 +338,10 @@ static void Mesh1D(GModel *m)
      CTX::instance()->mesh.maxNumThreads1D <= Msg::GetMaxThreads())
     Msg::SetNumThreads(CTX::instance()->mesh.maxNumThreads1D);
 
+  // boundary layers are not yet thread-safe
+  if(m->getFields()->getNumBoundaryLayerFields())
+    Msg::SetNumThreads(1);
+
   std::vector<GEdge *> temp;
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
     (*it)->meshStatistics.status = GEdge::PENDING;
@@ -455,6 +459,10 @@ static void Mesh2D(GModel *m)
   if(CTX::instance()->mesh.maxNumThreads2D > 0 &&
      CTX::instance()->mesh.maxNumThreads2D <= Msg::GetMaxThreads())
     Msg::SetNumThreads(CTX::instance()->mesh.maxNumThreads2D);
+
+  // boundary layers are not yet thread-safe
+  if(m->getFields()->getNumBoundaryLayerFields())
+    Msg::SetNumThreads(1);
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
     (*it)->meshStatistics.status = GFace::PENDING;
