@@ -1552,7 +1552,6 @@ void quadsToTriangles(GFace *gf, double minqual)
 
 void splitElementsInBoundaryLayerIfNeeded(GFace *gf)
 {
-#if defined(HAVE_ANN)
   if(!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine) {
     int numSplit = 0;
     int numNoSplit = 0;
@@ -1573,5 +1572,4 @@ void splitElementsInBoundaryLayerIfNeeded(GFace *gf)
                    "layers together. Keeping them non-simplicial...");
     if(numNoSplit == 0 && numSplit > 0) quadsToTriangles(gf, 10000);
   }
-#endif
 }

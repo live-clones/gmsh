@@ -14,6 +14,7 @@
 #include "GVertex.h"
 #include "GPoint.h"
 #include "discreteEdge.h"
+#include "discreteFace.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MLine.h"
@@ -1702,20 +1703,12 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       bowyerWatsonFrontal(gf);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
-      // TODO: to make these thread-safe, we need to switch from ANN to
-      // nanoflann
-      if(Msg::GetNumThreads() > 1)
-        Msg::Warning("Delquad is not thread-safe");
       bowyerWatsonFrontalLayers(gf, true);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS) {
-      if(Msg::GetNumThreads() > 1)
-        Msg::Warning("Packing of parallelograms is not thread-safe");
       bowyerWatsonParallelograms(gf);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
-      if(Msg::GetNumThreads() > 1)
-        Msg::Warning("Packing of parallelograms is not thread-safe");
       bowyerWatsonParallelogramsConstrained(gf, gf->constr_vertices);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
@@ -2833,9 +2826,10 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
 void deMeshGFace::operator()(GFace *gf)
 {
-  if(gf->geomType() == GEntity::DiscreteSurface &&
-     !CTX::instance()->meshDiscrete)
-    return;
+  if(gf->geomType() == GEntity::DiscreteSurface){
+    if(!static_cast<discreteFace *>(gf)->haveParametrization())
+      return;
+  }
   gf->deleteMesh();
   gf->meshStatistics.status = GFace::PENDING;
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;

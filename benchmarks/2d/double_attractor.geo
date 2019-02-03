@@ -23,7 +23,7 @@ Line(4) = {4,1};
 Line Loop(5) = {1,2,3,4};
 Plane Surface(6) = {5};
 
-Field[1] = Attractor;
+Field[1] = Distance;
 Field[1].NodesList = {5};
 
 Field[2] = Threshold;
@@ -35,7 +35,7 @@ Field[2].DistMax = 0.2;
 Field[2].StopAtDistMax = 1; // don't impose element size outside DistMax
 //Field[2].Sigmoid = 1; // use sigmoid instead of linear interpol
 
-Field[3] = Attractor;
+Field[3] = Distance;
 Field[3].NodesList = {5};
 
 Field[4] = Threshold;
@@ -49,4 +49,3 @@ Field[5] = Min;
 Field[5].FieldsList = {2,4};
 
 Background Field = 5;
-

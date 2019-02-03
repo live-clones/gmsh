@@ -19,7 +19,7 @@ Point(18) = {-.2,.7,1.3,1.0};
 Point(19) = {1.22,.1,-.8,1.0};
 Line(31) = {18,19};
 
-Field[1] = Attractor;
+Field[1] = Distance;
 Field[1].NNodesByEdge = 100;
 Field[1].NodesList = {1,4,5,6,10,14};
 Field[1].EdgesList = {30,31};

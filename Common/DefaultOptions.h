@@ -663,7 +663,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "MenuPositionY" , opt_general_menu_position1 , 400. ,
     "Vertical position (in pixels) of the (detached) menu tree" },
   { F|O, "MeshDiscrete" , opt_general_meshdiscrete , 0. ,
-    "Mesh discrete surfaces through automatic parametrization (MUMPS required for efficiency) (0)" },
+    "Mesh discrete surfaces through automatic parametrization (0)" },
   { F|O, "MessageFontSize" , opt_general_message_fontsize , -1. ,
     "Size of the font in the message window, in pixels (-1: automatic)" },
   { F|S, "MessageHeight" , opt_general_message_size , 300. ,

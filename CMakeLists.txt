@@ -96,7 +96,7 @@ opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
 set(GMSH_MINOR_VERSION 1)
-set(GMSH_PATCH_VERSION 4)
+set(GMSH_PATCH_VERSION 5)
 set(GMSH_EXTRA_VERSION "")
 set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION}")
 
@@ -290,6 +290,14 @@ if(ENABLE_OPENMP)
     set_config_option(HAVE_OPENMP "OpenMP")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  elseif(APPLE AND EXISTS "/opt/local/lib/libomp")
+    # just for testing the official Apple compiler with macports' libomp
+    set_config_option(HAVE_OPENMP "OpenMP(MacPorts)")
+    set(CMAKE_C_FLAGS
+        "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp -I/opt/local/include/libomp")
+    set(CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp -I/opt/local/include/libomp")
+    list(APPEND EXTERNAL_LIBRARIES "-L/opt/local/lib/libomp -lomp")
   endif()
 endif()
 

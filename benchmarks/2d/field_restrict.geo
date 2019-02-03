@@ -1,7 +1,7 @@
 /* --------------------------------------------------------------------------
     This is a gmsh geometry file
    --------------------------------------------------------------------------*/
- 
+
 res1  = 1e-1;
 x = 1.0;
 y = 0.1;
@@ -12,8 +12,8 @@ a2 = newp; Point(a2) = {x,0,0,res1};
 
 la1 = newl; Circle(la1) = {a1,a0,a2};
 la2 = newl; Circle(la2) = {a2,a0,a1};
-    
-loop = newll; Line Loop(loop) = {la1,la2}; 
+
+loop = newll; Line Loop(loop) = {la1,la2};
 
 sa = news; Plane Surface(sa) = {loop};
 
@@ -30,7 +30,7 @@ Plane Surface(10) = {9, 3};
 
 // specifying explicit element sizes as a function of the distance to
 // the point a0 (square function here)
-Field[1] = Attractor;
+Field[1] = Distance;
 Field[1].EdgesList = {la1,la2,6};
 Field[1].NNodesByEdge = 100;
 Field[2] = MathEval;

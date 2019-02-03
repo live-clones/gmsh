@@ -41,7 +41,7 @@ closestPointFinder::closestPointFinder(GEntity *ge, double e) : _tolerance(e)
       oversample(pts, _tolerance);
     }
     else {
-      Msg::Error("Can get edge in closestPointFinder");
+      Msg::Error("Unknown curve in closestPointFinder");
     }
   }
   index = new ANNidx[1];
