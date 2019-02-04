@@ -1848,29 +1848,29 @@ void GModel::createGeometryOfDiscreteEntities()
   }
 }
 
-void GModel::_associateEntityWithMeshVertices()
+void GModel::_associateEntityWithMeshVertices(bool force)
 {
   // loop on regions, then on faces, edges and vertices and store the entity
   // pointer in the the elements' vertices (this way we associate the entity of
   // lowest geometrical degree with each vertex)
   for(riter it = firstRegion(); it != lastRegion(); ++it) {
-    _associateEntityWithElementVertices(*it, (*it)->tetrahedra);
-    _associateEntityWithElementVertices(*it, (*it)->hexahedra);
-    _associateEntityWithElementVertices(*it, (*it)->prisms);
-    _associateEntityWithElementVertices(*it, (*it)->pyramids);
-    _associateEntityWithElementVertices(*it, (*it)->trihedra);
-    _associateEntityWithElementVertices(*it, (*it)->polyhedra);
+    _associateEntityWithElementVertices(*it, (*it)->tetrahedra, force);
+    _associateEntityWithElementVertices(*it, (*it)->hexahedra, force);
+    _associateEntityWithElementVertices(*it, (*it)->prisms, force);
+    _associateEntityWithElementVertices(*it, (*it)->pyramids, force);
+    _associateEntityWithElementVertices(*it, (*it)->trihedra, force);
+    _associateEntityWithElementVertices(*it, (*it)->polyhedra, force);
   }
   for(fiter it = firstFace(); it != lastFace(); ++it) {
-    _associateEntityWithElementVertices(*it, (*it)->triangles);
-    _associateEntityWithElementVertices(*it, (*it)->quadrangles);
-    _associateEntityWithElementVertices(*it, (*it)->polygons);
+    _associateEntityWithElementVertices(*it, (*it)->triangles, force);
+    _associateEntityWithElementVertices(*it, (*it)->quadrangles, force);
+    _associateEntityWithElementVertices(*it, (*it)->polygons, force);
   }
   for(eiter it = firstEdge(); it != lastEdge(); ++it) {
-    _associateEntityWithElementVertices(*it, (*it)->lines);
+    _associateEntityWithElementVertices(*it, (*it)->lines, force);
   }
   for(viter it = firstVertex(); it != lastVertex(); ++it) {
-    _associateEntityWithElementVertices(*it, (*it)->points);
+    _associateEntityWithElementVertices(*it, (*it)->points, force);
   }
 }
 
@@ -2356,7 +2356,7 @@ int GModel::removeDuplicateMeshElements()
 }
 */
 
-static void recurConnectMElementsByMFace(
+static void connectMElementsByMFace(
   const MFace &f, std::multimap<MFace, MElement *, Less_Face> &e2f,
   std::set<MElement *> &group, std::set<MFace, Less_Face> &touched,
   int recur_level)
@@ -2394,7 +2394,7 @@ static int connectedVolumes(std::vector<MElement *> &elements,
   while(!e2f.empty()) {
     std::set<MElement *> group;
     std::set<MFace, Less_Face> touched;
-    recurConnectMElementsByMFace(e2f.begin()->first, e2f, group, touched, 0);
+    connectMElementsByMFace(e2f.begin()->first, e2f, group, touched, 0);
     std::vector<MElement *> temp;
     temp.insert(temp.begin(), group.begin(), group.end());
     regs.push_back(temp);
@@ -2405,7 +2405,7 @@ static int connectedVolumes(std::vector<MElement *> &elements,
   return regs.size();
 }
 
-static void recurConnectMElementsByMEdge(
+static void connectMElementsByMEdge(
   const MEdge &e, std::multimap<MEdge, MElement *, Less_Edge> &e2e,
   std::set<MElement *> &group, std::set<MEdge, Less_Edge> &touched)
 {
@@ -2442,7 +2442,7 @@ static int connectedSurfaces(std::vector<MElement *> &elements,
   while(!e2e.empty()) {
     std::set<MElement *> group;
     std::set<MEdge, Less_Edge> touched;
-    recurConnectMElementsByMEdge(e2e.begin()->first, e2e, group, touched);
+    connectMElementsByMEdge(e2e.begin()->first, e2e, group, touched);
     std::vector<MElement *> temp;
     temp.insert(temp.begin(), group.begin(), group.end());
     faces.push_back(temp);
