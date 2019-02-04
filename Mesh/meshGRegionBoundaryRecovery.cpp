@@ -284,6 +284,42 @@ namespace tetgenBR {
         ver2tetarray[i] = NULL;
       }
 
+
+
+#if 0
+      /*  N E W   V E R S I O N	  */
+      std::vector<triface> ts( tets.size() );
+      for(unsigned int i = 0; i < tets.size(); i++) {
+	point p[4];
+	tets[i]->tet()->forceNum(i+1);
+	p[0] = idx2verlist[tets[i]->getVertex(0)->getIndex()];
+	p[1] = idx2verlist[tets[i]->getVertex(1)->getIndex()];
+	p[2] = idx2verlist[tets[i]->getVertex(2)->getIndex()];
+	p[3] = idx2verlist[tets[i]->getVertex(3)->getIndex()];
+	setvertices(ts[i], p[0], p[1], p[2], p[3]);
+      }
+          // we can make this in parallel, iterations are totally independent
+      for (uint64_t i = 0; i < tets.size(); i++) {
+	triface tf1 = ts[i];
+	
+	for (tf1.ver=0; tf1.ver<4; tf1.ver++){
+	  uint64_t neigh = tets[i]->getNeigh(tf1.ver)->tet()->getNum() - 1;
+	  triface tf2 = ts[n];
+	  
+	  // the face of the neighbor tetrahedra that is the same
+	  uint32_t face2[3] = {mesh->tetrahedra.node[4*n+((iface2+1)&3)],
+			       mesh->tetrahedra.node[4*n+((iface2&2)^3)],
+			       mesh->tetrahedra.node[4*n+((iface2+3)&2)]};
+	  
+	  tf2.ver = computeTetGenVersion2(mesh->tetrahedra.node[4*i+((tf1.ver+1)&3)], face2, iface2);
+	  bond(tf1,tf2);
+	}
+      }
+      
+#else
+      
+      /*  N E W   V E R S I O N	  */
+      
       // Create the tetrahedra and connect those that share a common face.
       for(unsigned int i = 0; i < tets.size(); i++) {
         // Get the four vertices.
@@ -435,6 +471,7 @@ namespace tetgenBR {
       for(unsigned int i = 0; i < tets.size(); i++) delete tets[i];
       tets.clear(); // Release all memory in this vector.
     }
+#endif
 
     std::vector<GFace *> const &f_list = _gr->faces();
     std::vector<GEdge *> const &e_list = _gr->embeddedEdges();

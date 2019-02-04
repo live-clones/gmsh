@@ -623,7 +623,6 @@ remeshUnrecoveredEdges(std::map<MVertex *, BDS_Point *> &recoverMapInv,
     // add a new point in the middle of the intersecting segment
     int p1 = itr->p1;
     int p2 = itr->p2;
-    // printf("splitting %d %d\n",p1,p2);
     int N = itr->ge->lines.size();
     GVertex *g1 = itr->ge->getBeginVertex();
     GVertex *g2 = itr->ge->getEndVertex();
@@ -1138,8 +1137,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
                    bool onlyInitialMesh, bool debug,
                    std::vector<GEdge *> *replacement_edges)
 {
-
-  //  printf("SURFEC %d\n",gf->tag());
   if(CTX::instance()->debugSurface > 0 &&
      gf->tag() != CTX::instance()->debugSurface) {
     gf->meshStatistics.status = GFace::DONE;
@@ -1173,7 +1170,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       return false;
     }
     if(!(*ite)->isMeshDegenerated()) {
-      //      printf("lasso %d\n",(*ite)->lines.size());
       for(unsigned int i = 0; i < (*ite)->lines.size(); i++) {
         MVertex *v1 = (*ite)->lines[i]->getVertex(0);
         MVertex *v2 = (*ite)->lines[i]->getVertex(1);
@@ -1260,7 +1256,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   // meshing procedure
   BDS_Mesh *m = new BDS_Mesh;
 
-  
+
   std::vector<BDS_Point *> points(all_vertices.size());
   SBoundingBox3d bbox;
   int count = 0;
@@ -1283,7 +1279,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   }
 
 
-  
+
   bbox.makeCube();
 
   // use a divide & conquer type algorithm to create a triangulation.

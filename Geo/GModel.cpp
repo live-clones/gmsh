@@ -2409,24 +2409,22 @@ static void recurConnectMElementsByMEdge(
   const MEdge &e, std::multimap<MEdge, MElement *, Less_Edge> &e2e,
   std::set<MElement *> &group, std::set<MEdge, Less_Edge> &touched)
 {
-
+  // this is very slow...
   std::stack<MEdge> _stack;
   _stack.push(e);
-  //  touched.insert(e);
-  
-  while(!_stack.empty()){
-    MEdge &me = _stack.top();
-    touched.insert(me);
-    _stack.pop();
-    for(std::multimap<MEdge, MElement *, Less_Edge>::iterator it =
-	  e2e.lower_bound(me);
-	it != e2e.upper_bound(me); ++it) {
-      group.insert(it->second);
 
-      for(int i = 0; i < it->second->getNumEdges(); ++i) {
-	if(touched.find(it->second->getEdge(i)) == touched.end()) 
-	  _stack.push(it->second->getEdge(i));	  
-	//	recurConnectMElementsByMEdge(it->second->getEdge(i), e2e, group, touched);
+  while(!_stack.empty()) {
+    MEdge ee = _stack.top();
+    _stack.pop();
+    if(touched.find(ee) == touched.end()) {
+      touched.insert(ee);
+      for(std::multimap<MEdge, MElement *, Less_Edge>::iterator it =
+            e2e.lower_bound(ee);
+          it != e2e.upper_bound(ee); ++it) {
+        group.insert(it->second);
+        for(int i = 0; i < it->second->getNumEdges(); ++i) {
+          _stack.push(it->second->getEdge(i));
+        }
       }
     }
   }
