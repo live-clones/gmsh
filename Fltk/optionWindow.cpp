@@ -1489,6 +1489,9 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[32]->step(1);
       general.value[32]->align(FL_ALIGN_RIGHT);
       general.value[32]->callback(general_options_ok_cb);
+#if !defined(_OPENMP)
+      general.value[32]->deactivate();
+#endif
 
 #if defined(HAVE_VISUDEV)
       general.butt[23] =
