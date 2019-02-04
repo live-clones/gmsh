@@ -389,6 +389,7 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_axes_zmax(0, GMSH_SET, o->general.value[25]->value());
   opt_general_small_axes_position0(0, GMSH_SET, o->general.value[26]->value());
   opt_general_small_axes_position1(0, GMSH_SET, o->general.value[27]->value());
+  opt_general_num_threads(0, GMSH_SET, o->general.value[32]->value());
 
   opt_general_default_filename(0, GMSH_SET, o->general.input[0]->value());
   opt_general_editor(0, GMSH_SET, o->general.input[1]->value());
@@ -1481,15 +1482,23 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[10]->type(FL_TOGGLE_BUTTON);
       general.butt[10]->callback(general_options_ok_cb);
 
+      general.value[32] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH,
+                                            "Number of threads");
+      general.value[32]->minimum(0);
+      general.value[32]->maximum(16);
+      general.value[32]->step(1);
+      general.value[32]->align(FL_ALIGN_RIGHT);
+      general.value[32]->callback(general_options_ok_cb);
+
 #if defined(HAVE_VISUDEV)
       general.butt[23] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW / 2 - WB, BH,
+       new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW / 2 - WB, BH,
                             "Enable heavy visualization capabilities");
       general.butt[23]->type(FL_TOGGLE_BUTTON);
       general.butt[23]->callback(general_options_ok_cb);
 #endif
 
-      Fl_Button *b2 = new Fl_Button(L + 2 * WB, 2 * WB + 10 * BH, BW, BH,
+      Fl_Button *b2 = new Fl_Button(L + 2 * WB, 2 * WB + 11 * BH, BW, BH,
                                     "Restore all options to default settings");
       b2->callback(options_restore_defaults_cb);
       if(CTX::instance()->guiColorScheme)
