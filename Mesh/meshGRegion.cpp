@@ -133,7 +133,6 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   splitQuadRecovery sqr;
   bool success = meshGRegionBoundaryRecovery(gr, &sqr);
 
-  
   // sort triangles in all model faces in order to be able to search in vectors
   std::vector<GFace *>::iterator itf = allFaces.begin();
   while(itf != allFaces.end()) {
@@ -150,31 +149,24 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   if(!success) return;
 
   // now do insertion of points
-
   if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D) {
     refineMeshMMG(gr);
   }
   else{
-    bool pyr = sqr.buildPyramids(gr->model());
-    if(pyr){
-      //      Msg::Info("Optimizing pyramids for hybrid mesh...");
-      //      RelocateVerticesOfPyramids(regions, 5);
-      //      Msg::Info("Done optimizing pyramids for hybrid mesh");
-    }
     insertVerticesInRegion(gr, 2000000000, true, &sqr);
-    if(pyr){
-      Msg::Info("Optimizing pyramids for hybrid mesh...");
-      RelocateVerticesOfPyramids(regions, 5);
-      RelocateVertices(regions, 5);
-      Msg::Info("Done optimizing pyramids for hybrid mesh");
-    }
-
-    /* T E S T*/
-    //    bool createBoundaryLayerOneLayer (GRegion *gr, std::vector<GFace *> & bls);
-    //    createBoundaryLayerOneLayer (gr, allFaces);
-    /* END TEST */
   }
 
+  if(sqr.buildPyramids(gr->model())){
+    Msg::Info("Optimizing pyramids for hybrid mesh...");
+    // test:
+    //RelocateVerticesOfPyramids(regions, 3);
+    RelocateVertices(regions, 3);
+    Msg::Info("Done optimizing pyramids for hybrid mesh");
+  }
+
+  // test:
+  // bool createBoundaryLayerOneLayer(GRegion *gr, std::vector<GFace *> & bls);
+  // createBoundaryLayerOneLayer(gr, allFaces);
 }
 
 void deMeshGRegion::operator()(GRegion *gr)
