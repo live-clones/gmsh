@@ -40,7 +40,7 @@ Field[1].EdgesList = {2};
 //                           /
 // LcMin -o----------------/
 //        |                |       |
-//    Attractor         DistMin DistMax
+//      Point           DistMin DistMax
 Field[2] = Threshold;
 Field[2].IField = 1;
 Field[2].LcMin = lc / 30;
@@ -54,12 +54,12 @@ Field[3] = MathEval;
 Field[3].F = "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101";
 
 // We could also combine MathEval with values coming from other fields. For
-// example, let's define an Attractor around point 1
-Field[4] = Attractor;
+// example, let's define an Distance field around point 1
+Field[4] = Distance;
 Field[4].NodesList = {1};
 
 // We can then create a MathEval field with a function that depends on the
-// return value of the Attractr Field[4], i.e., depending on the distance to
+// return value of the Distance Field[4], i.e., depending on the distance to
 // point 1 (here using a cubic law, with minumum element size = lc / 100)
 Field[5] = MathEval;
 Field[5].F = Sprintf("F4^3 + %g", lc / 100);

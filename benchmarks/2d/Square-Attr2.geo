@@ -30,7 +30,7 @@ Line(13) = {17,18};
 Line(14) = {18,19};
 Line(15) = {19,20};
 
-Field[1] = Attractor;
+Field[1] = Distance;
 Field[1].NNodesByEdge = 100;
 Field[1].EdgesList = {7,8,9,10,11,12,13,14,15};
 

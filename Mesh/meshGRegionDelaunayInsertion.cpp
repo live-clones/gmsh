@@ -77,16 +77,16 @@ static void testIfBoundaryIsRecovered(GRegion *gr)
 
 struct edgeContainerB {
   std::vector<std::vector<MEdge> > _hash;
-  size_t _size, _size_obj;
+  std::size_t _size, _size_obj;
 
   edgeContainerB(unsigned int N = 1000000)
     : _hash(N), _size(0), _size_obj(sizeof(MEdge))
   {
   }
 
-  size_t H(const MEdge &e) const
+  std::size_t H(const MEdge &e) const
   {
-    const size_t h = ((size_t)e.getSortedVertex(0));
+    const std::size_t h = ((std::size_t)e.getSortedVertex(0));
     return (h / _size_obj) % _hash.size();
   }
 
@@ -221,7 +221,7 @@ struct faceXtet {
 };
 
 template <class ITER>
-void connectTets_vector2_templ(size_t _size, ITER beg, ITER end,
+void connectTets_vector2_templ(std::size_t _size, ITER beg, ITER end,
                                std::vector<faceXtet> &conn)
 {
   conn.clear();
@@ -614,7 +614,7 @@ static void completeTheSetOfFaces(GModel *model, std::set<GFace *> &faces_bound)
   for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it) {
     if(faces_bound.find(*it) != faces_bound.end()) {
       if((*it)->_compound.size()) {
-        for(size_t i = 0; i < (*it)->_compound.size(); ++i) {
+        for(std::size_t i = 0; i < (*it)->_compound.size(); ++i) {
           GFace *gf = static_cast<GFace *>((*it)->_compound[i]);
           if(gf) toAdd.insert(gf);
         }
@@ -1246,6 +1246,25 @@ int isCavityCompatibleWithEmbeddedFace(
   return 1;
 }
 
+static void _deleteUnusedVertices(GRegion *gr)
+{
+  std::set<MVertex *> allverts;
+  for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
+    for(int j = 0; j < 4; j++) {
+      if(gr->tetrahedra[i]->getVertex(j)->onWhat() == gr)
+        allverts.insert(gr->tetrahedra[i]->getVertex(j));
+    }
+  }
+  for(std::size_t i = 0; i < gr->mesh_vertices.size(); i++) {
+    // FIXME: investiagte crashes on exit (e.g. t16.geo)
+    //if(allverts.find(gr->mesh_vertices[i]) == allverts.end())
+    //  delete gr->mesh_vertices[i];
+  }
+  gr->mesh_vertices.clear();
+  gr->mesh_vertices.insert(gr->mesh_vertices.end(), allverts.begin(),
+                           allverts.end());
+}
+
 void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
                             splitQuadRecovery *sqr)
 {
@@ -1592,17 +1611,7 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
     allTets.erase(allTets.begin());
   }
 
-  std::set<MVertex *> allverts;
-  for(size_t i = 0; i < gr->tetrahedra.size(); i++) {
-    for(int j = 0; j < 4; j++) {
-      if(gr->tetrahedra[i]->getVertex(j)->onWhat() == gr)
-        allverts.insert(gr->tetrahedra[i]->getVertex(j));
-    }
-  }
-  // FIXME: should delete unused vertices
-  gr->mesh_vertices.clear();
-  gr->mesh_vertices.insert(gr->mesh_vertices.end(), allverts.begin(),
-                           allverts.end());
+  _deleteUnusedVertices(gr);
 }
 
 // do a 3D delaunay mesh assuming a set of vertices

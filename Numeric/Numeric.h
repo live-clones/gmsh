@@ -166,7 +166,7 @@ void FindCubicRoots(const double coeff[4], double re[3], double im[3]);
 void eigsort(double d[3]);
 void gradSimplex(double *x, double *y, double *z, double *v, double *grad);
 double ComputeVonMises(double *val);
-double ComputeScalarRep(int numComp, double *val);
+double ComputeScalarRep(int numComp, double *val, int tensorRep = 0);
 void invert_singular_matrix3x3(double MM[3][3], double II[3][3]);
 bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
                fullVector<double> &x, void *data, double relax = 1.,

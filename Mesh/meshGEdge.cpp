@@ -80,15 +80,7 @@ static double smoothPrimitive(GEdge *ge, double alpha,
 struct F_LcB {
   double operator()(GEdge *ge, double t)
   {
-    /*  BoundaryLayerField *blf = 0;
-  #if defined(HAVE_ANN)
-    FieldManager *fields = ge->model()->getFields();
-    Field *bl_field = fields->get(fields->getBoundaryLayerField());
-    blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-  #endif
-    */
     GPoint p = ge->point(t);
-
     return BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
   }
 };
@@ -96,31 +88,18 @@ struct F_LcB {
 struct F_Lc {
   double operator()(GEdge *ge, double t)
   {
-    /*
-    BoundaryLayerField *blf = 0;
-    #if defined(HAVE_ANN)
-    FieldManager *fields = ge->model()->getFields();
-    Field *bl_field = fields->get(fields->getBoundaryLayerField());
-    blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-    #endif
-    */
     GPoint p = ge->point(t);
-
     Range<double> bounds = ge->parBounds(0);
     double t_begin = bounds.low();
     double t_end = bounds.high();
-
     double lc_here;
-
     if(t == t_begin)
       lc_here = BGM_MeshSize(ge->getBeginVertex(), t, 0, p.x(), p.y(), p.z());
     else if(t == t_end)
       lc_here = BGM_MeshSize(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
     else
       lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
-
     SVector3 der = ge->firstDer(t);
-
     return norm(der) / lc_here;
   }
 };
@@ -142,11 +121,8 @@ struct F_Lc_aniso {
     else
       lc_here = BGM_MeshMetric(ge, t, 0, p.x(), p.y(), p.z());
 
-#if defined(HAVE_ANN)
     FieldManager *fields = ge->model()->getFields();
-    int n = fields->getNumBoundaryLayerFields();
-
-    for(int i = 0; i < n; ++i) {
+    for(int i = 0; i < fields->getNumBoundaryLayerFields(); ++i) {
       Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
       if(bl_field == NULL) continue;
       BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
@@ -155,7 +131,6 @@ struct F_Lc_aniso {
       blf->computeFor1dMesh(p.x(), p.y(), p.z(), lc_bgm);
       lc_here = intersection_conserveM1(lc_here, lc_bgm);
     }
-#endif
 
     SVector3 der = ge->firstDer(t);
     return std::sqrt(dot(der, lc_here, der));
@@ -342,8 +317,10 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
 
 void deMeshGEdge::operator()(GEdge *ge)
 {
-  if(ge->geomType() == GEntity::DiscreteCurve && !CTX::instance()->meshDiscrete)
-    return;
+  if(ge->geomType() == GEntity::DiscreteCurve){
+    if(!static_cast<discreteEdge *>(ge)->haveParametrization())
+      return;
+  }
   ge->deleteMesh();
   ge->meshStatistics.status = GEdge::PENDING;
   ge->correspondingVertices.clear();
@@ -454,7 +431,6 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
 static void createPoints(GVertex *gv, GEdge *ge, BoundaryLayerField *blf,
                          std::vector<MVertex *> &v, const SVector3 &dir)
 {
-#if defined(HAVE_ANN)
   const double hwall = blf->hwall(gv->tag());
   double L = hwall;
   double LEdge = distance(ge->getBeginVertex()->mesh_vertices[0],
@@ -470,14 +446,12 @@ static void createPoints(GVertex *gv, GEdge *ge, BoundaryLayerField *blf,
     int ith = v.size();
     L += hwall * std::pow(blf->ratio, ith);
   }
-#endif
 }
 
 static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
                                    std::vector<MVertex *> &_addBegin,
                                    std::vector<MVertex *> &_addEnd)
 {
-#if defined(HAVE_ANN)
   _addBegin.clear();
   _addEnd.clear();
 
@@ -538,7 +512,6 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
       if(!_addEnd.empty()) _addEnd[_addEnd.size() - 1]->getParameter(0, t_end);
     }
   }
-#endif
 }
 
 void meshGEdge::operator()(GEdge *ge)
@@ -558,7 +531,6 @@ void meshGEdge::operator()(GEdge *ge)
   ge->model()->setCurrentMeshEntity(ge);
 
   if(ge->degenerate(1)) return;
-  // if(ge->geomType() == GEntity::DiscreteCurve) return;
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
   if(ge->meshAttributes.method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return;

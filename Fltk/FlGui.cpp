@@ -624,18 +624,9 @@ FlGui *FlGui::instance(int argc, char **argv)
     // say welcome!
     Msg::StatusBar(false, "Gmsh %s", GetGmshVersion());
     // log the following for bug reports
-    Msg::Info("-------------------------------------------------------");
-    Msg::Info("Gmsh version   : %s", GetGmshVersion());
-    Msg::Info("Build OS       : %s", GetGmshBuildOS());
-    Msg::Info("Build options  :%s", GetGmshBuildOptions());
-    Msg::Info("Build date     : %s", GetGmshBuildDate());
-    Msg::Info("Build host     : %s", GetGmshBuildHost());
-    Msg::Info("Packager       : %s", GetGmshPackager());
-    Msg::Info("Executable     : %s", CTX::instance()->exeFileName.c_str());
-    Msg::Info("Home directory : %s", CTX::instance()->homeDir.c_str());
-    Msg::Info("Launch date    : %s", Msg::GetLaunchDate().c_str());
-    Msg::Info("Command line   : %s", Msg::GetCommandLineArgs().c_str());
-    Msg::Info("-------------------------------------------------------");
+    Msg::Direct("-------------------------------------------------------");
+    PrintInfo();
+    Msg::Direct("-------------------------------------------------------");
     // update views (in case the GUI is created after some data has been loaded)
     _instance->updateViews(true, true);
     // set global bounding box in CTX (necessary if we run the gui without any

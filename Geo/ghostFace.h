@@ -16,14 +16,14 @@
 
 class ghostFace : public discreteFace {
 private:
-  unsigned int _partitions;
+  unsigned int _partition;
   std::map<MElement *, unsigned int> _ghostCells;
   bool _saveMesh;
   bool _haveMesh;
 
 public:
-  ghostFace(GModel *model, const int num, const unsigned int partitions)
-    : discreteFace(model, num), _partitions(partitions), _ghostCells(),
+  ghostFace(GModel *model, const int num, const unsigned int partition)
+    : discreteFace(model, num), _partition(partition), _ghostCells(),
       _saveMesh(false), _haveMesh(false)
   {
   }
@@ -37,11 +37,11 @@ public:
     }
   }
   virtual GeomType geomType() const { return GhostSurface; }
-  virtual void setPartition(const unsigned int partitions)
+  virtual void setPartition(const unsigned int partition)
   {
-    _partitions = partitions;
+    _partition = partition;
   }
-  virtual unsigned int getPartition() const { return _partitions; }
+  virtual unsigned int getPartition() const { return _partition; }
   bool saveMesh() const { return _saveMesh; }
   void saveMesh(bool saveMesh) { _saveMesh = saveMesh; }
   bool haveMesh() const { return _haveMesh; }

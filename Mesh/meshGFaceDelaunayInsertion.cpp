@@ -1933,7 +1933,6 @@ bool swapedge(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, MTri3 *t1,
     delete t2b;
     return false;
   }
-  // printf("volumes ok\n");
 
   delete t1->tri();
   delete t2->tri();

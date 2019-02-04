@@ -126,8 +126,8 @@ bool buildMeshGenerationDataStructures(
   // take care of embedded vertices
   std::set<MVertex *> embeddedVertices;
   {
-    std::set<GVertex *> emb_vertx = gf->embeddedVertices();
-    std::set<GVertex *>::iterator itvx = emb_vertx.begin();
+    std::set<GVertex *, GEntityLessThan> emb_vertx = gf->embeddedVertices();
+    std::set<GVertex *, GEntityLessThan>::iterator itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()) {
       if((*itvx)->mesh_vertices.size()) {
         MVertex *v = *((*itvx)->mesh_vertices.begin());
@@ -1473,7 +1473,7 @@ void quadsToTriangles(GFace *gf, double minqual)
   std::map<MElement *, std::pair<MElement *, MElement *> > change;
   for(unsigned int i = 0; i < gf->quadrangles.size(); i++) {
     MQuadrangle *q = gf->quadrangles[i];
-    if(q->etaShapeMeasure() < minqual) {
+    if(q->etaShapeMeasure() < minqual + 1e-12) {
       MTriangle *t11 =
         new MTriangle(q->getVertex(0), q->getVertex(1), q->getVertex(2));
       MTriangle *t12 =
@@ -1552,7 +1552,6 @@ void quadsToTriangles(GFace *gf, double minqual)
 
 void splitElementsInBoundaryLayerIfNeeded(GFace *gf)
 {
-#if defined(HAVE_ANN)
   if(!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine) {
     int numSplit = 0;
     int numNoSplit = 0;
@@ -1573,5 +1572,4 @@ void splitElementsInBoundaryLayerIfNeeded(GFace *gf)
                    "layers together. Keeping them non-simplicial...");
     if(numNoSplit == 0 && numSplit > 0) quadsToTriangles(gf, 10000);
   }
-#endif
 }

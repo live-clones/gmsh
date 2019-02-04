@@ -14,14 +14,14 @@
 
 class ghostEdge : public discreteEdge {
 private:
-  unsigned int _partitions;
+  unsigned int _partition;
   std::map<MElement *, unsigned int> _ghostCells;
   bool _saveMesh;
   bool _haveMesh;
 
 public:
-  ghostEdge(GModel *model, const int num, const unsigned int partitions)
-    : discreteEdge(model, num, NULL, NULL), _partitions(partitions),
+  ghostEdge(GModel *model, const int num, const unsigned int partition)
+    : discreteEdge(model, num, NULL, NULL), _partition(partition),
       _ghostCells(), _saveMesh(false), _haveMesh(false)
   {
   }
@@ -33,11 +33,11 @@ public:
     }
   }
   virtual GeomType geomType() const { return GhostCurve; }
-  virtual void setPartition(const unsigned int partitions)
+  virtual void setPartition(const unsigned int partition)
   {
-    _partitions = partitions;
+    _partition = partition;
   }
-  virtual unsigned int getPartition() const { return _partitions; }
+  virtual unsigned int getPartition() const { return _partition; }
   bool saveMesh() const { return _saveMesh; }
   void saveMesh(bool saveMesh) { _saveMesh = saveMesh; }
   bool haveMesh() const { return _haveMesh; }

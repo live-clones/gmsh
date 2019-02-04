@@ -139,8 +139,11 @@ public:
   // get the vertex using KEY ordering
   virtual MVertex *getVertexKEY(int num) { return getVertex(num); }
 
-  // get the number of vertices associated with edges, faces and volumes
-  // (nonzero only for higher order elements, polygons or polyhedra)
+  // get the number of vertices associated with edges, faces and volumes (i.e.
+  // internal vertices on edges, faces and volume; nonzero only for higher order
+  // elements, polygons or polyhedra) - These functions should be renamed to
+  // getNumInternal*Vertices(), to avoid confusion with getEdgeVertices() and
+  // getFaceVertices()
   virtual int getNumEdgeVertices() const { return 0; }
   virtual int getNumFaceVertices() const { return 0; }
   virtual int getNumVolumeVertices() const { return 0; }

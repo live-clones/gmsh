@@ -663,7 +663,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "MenuPositionY" , opt_general_menu_position1 , 400. ,
     "Vertical position (in pixels) of the (detached) menu tree" },
   { F|O, "MeshDiscrete" , opt_general_meshdiscrete , 0. ,
-    "Mesh discrete surfaces through automatic parametrization (MUMPS required for efficiency) (0)" },
+    "Mesh discrete surfaces through automatic parametrization (0)" },
   { F|O, "MessageFontSize" , opt_general_message_fontsize , -1. ,
     "Size of the font in the message window, in pixels (-1: automatic)" },
   { F|S, "MessageHeight" , opt_general_message_size , 300. ,
@@ -687,7 +687,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "NoPopup" , opt_general_nopopup , 0. ,
     "Disable interactive dialog windows in scripts (and use default values "
     "instead)" },
-  { F|O, "NumThreads" , opt_general_num_threads , 0. ,
+  { F|O, "NumThreads" , opt_general_num_threads , 1. ,
     "Set (maximum) number of threads (0: use system default, i.e. OMP_NUM_THREADS)" },
 
   { F|S, "OptionsPositionX" , opt_general_option_position0 , 650. ,
@@ -1089,11 +1089,11 @@ StringXNumber MeshOptions_Number[] = {
     "Display width of mesh lines (in pixels)" },
 
   { F|O, "MaxNumThreads1D" , opt_mesh_max_num_threads_1d , 0. ,
-    "Maximum number of threads for 1D meshing (0: use MaxNumThreads)" },
+    "Maximum number of threads for 1D meshing (0: use default)" },
   { F|O, "MaxNumThreads2D" , opt_mesh_max_num_threads_2d , 0. ,
-    "Maximum number of threads for 2D meshing (0: use MaxNumThreads)" },
+    "Maximum number of threads for 2D meshing (0: use default)" },
   { F|O, "MaxNumThreads3D" , opt_mesh_max_num_threads_3d , 0. ,
-    "Maximum number of threads for 3D meshing (0: use MaxNumThreads)" },
+    "Maximum number of threads for 3D meshing (0: use default)" },
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
     "Mesh only visible entities (experimental: use with caution!)" },
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
@@ -1133,7 +1133,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "PartitionCreatePhysicals" , opt_mesh_partition_create_physicals , 1 ,
     "Create physical groups for partitions, based on existing physical groups" },
   { F|O, "PartitionCreateGhostCells" , opt_mesh_partition_create_ghost_cells , 0 ,
-    "Create partition ghost cells" },
+    "Create ghost cells, i.e. create for each partition a ghost entity containing "
+    "elements connected to neighboring partitions by at least one node." },
   { F|O, "PartitionSplitMeshFiles" , opt_mesh_partition_split_mesh_files , 0 ,
     "Write one file for each mesh partition" },
   { F|O, "PartitionTopologyFile" , opt_mesh_partition_save_topology_file , 0 ,
@@ -1258,7 +1259,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "SecondOrderIncomplete" , opt_mesh_second_order_incomplete , 0. ,
     "Create incomplete second order elements? (8-node quads, 20-node hexas, etc.)" },
   { F|O, "SecondOrderLinear" , opt_mesh_second_order_linear , 0. ,
-    "Should second order nodes simply be created by linear interpolation?" },
+    "Should second order nodes (as well as nodes generated with subdivision algorithms) "
+    "simply be created by linear interpolation?" },
   { F|O, "Smoothing" , opt_mesh_nb_smoothing , 1. ,
     "Number of smoothing steps applied to the final mesh" },
   { F|O, "SmoothCrossField" , opt_mesh_smooth_cross_field , 0. ,
@@ -1566,7 +1568,8 @@ StringXNumber ViewOptions_Number[] = {
   { F,   "Max" , opt_view_max , 0. ,
     "Maximum value in the view (read-only)" },
   { F,   "MaxVisible" , opt_view_max_visible , 0. ,
-    "Maximum value in the visible parts of the view (read-only)" },
+    "Maximum value in the visible parts of the view, taking current time step "
+    "and tensor display type into account (read-only)" },
   { F,   "MaxX" , opt_view_xmax , 0. ,
     "Maximum view coordinate along the X-axis (read-only)" },
   { F,   "MaxY" , opt_view_ymax , 0. ,
@@ -1576,7 +1579,8 @@ StringXNumber ViewOptions_Number[] = {
   { F,   "Min" , opt_view_min , 0. ,
     "Minimum value in the view (read-only)" },
   { F,   "MinVisible" , opt_view_min_visible , 0. ,
-    "Minimum value in the visible parts of the view (read-only)" },
+    "Minimum value in the visible parts of the view, taking current time step "
+    "and tensor display type into account (read-only)" },
   { F,   "MinX" , opt_view_xmin , 0. ,
     "Minimum view coordinate along the X-axis (read-only)" },
   { F,   "MinY" , opt_view_ymin , 0. ,
@@ -1644,7 +1648,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "TargetError" , opt_view_target_error , 0.01 ,
     "Target representation error for adaptive views" },
   { F|O, "TensorType" , opt_view_tensor_type , 1. ,
-    "Tensor Visualization Type" },
+    "Tensor display type (1: Von-Mises, 2: maximum eigenvalue, 3: minimum eigenvalue, "
+    "4: eigenvectors, 5: ellipse, 6: ellipsoid, 7: frame)"},
   { F,   "TimeStep" , opt_view_timestep , 0. ,
     "Current time step displayed" },
   { F,   "Time" , opt_view_time , -1. ,

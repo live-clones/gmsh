@@ -14,6 +14,7 @@
 #include "GVertex.h"
 #include "GPoint.h"
 #include "discreteEdge.h"
+#include "discreteFace.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MLine.h"
@@ -164,9 +165,7 @@ public:
   void subdivide()
   {
     std::vector<MQuadrangle *> qnew;
-
     std::map<MEdge, MVertex *, Less_Edge> eds;
-
     for(unsigned int i = 0; i < _gf->triangles.size(); i++) {
       MVertex *v[3];
       SPoint2 m[3];
@@ -192,6 +191,18 @@ public:
         else {
           v[j] = it->second;
           v[j]->onWhat()->mesh_vertices.push_back(v[j]);
+          if(!CTX::instance()->mesh.secondOrderLinear){
+            // re-push middle vertex on the curve (this can of course lead to an
+            // invalid mesh)
+            double u = 0.;
+            if(v[j]->getParameter(0, u) && v[j]->onWhat()->dim() == 1){
+              GEdge *ge = static_cast<GEdge*>(v[j]->onWhat());
+              GPoint p = ge->point(u);
+              v[j]->x() = p.x();
+              v[j]->y() = p.y();
+              v[j]->z() = p.z();
+            }
+          }
         }
       }
       GPoint gp = _gf->point((m[0] + m[1] + m[2]) * (1. / 3.));
@@ -234,10 +245,22 @@ public:
         else {
           v[j] = it->second;
           v[j]->onWhat()->mesh_vertices.push_back(v[j]);
+          if(!CTX::instance()->mesh.secondOrderLinear){
+            // re-push middle vertex on the curve (this can of course lead to an
+            // invalid mesh)
+            double u = 0.;
+            if(v[j]->getParameter(0, u) && v[j]->onWhat()->dim() == 1){
+              GEdge *ge = static_cast<GEdge*>(v[j]->onWhat());
+              GPoint p = ge->point(u);
+              v[j]->x() = p.x();
+              v[j]->y() = p.y();
+              v[j]->z() = p.z();
+            }
+          }
         }
       }
       GPoint gp = _gf->point((m[0] + m[1] + m[2] + m[3]) * 0.25);
-      // FIXME : not exactly correct, but that's the place where we want to
+      // FIXME: not exactly correct, but that's the place where we want the
       // point to reside
       double XX = 0.25 * (v[0]->x() + v[1]->x() + v[2]->x() + v[3]->x());
       double YY = 0.25 * (v[0]->y() + v[1]->y() + v[2]->y() + v[3]->y());
@@ -1085,6 +1108,30 @@ BDS2GMSH(BDS_Mesh *m, GFace *gf,
   }
 }
 
+static void _deleteUnusedVertices(GFace *gf)
+{
+  std::set<MVertex *> allverts;
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+    for(int j = 0; j < 3; j++){
+      if(gf->triangles[i]->getVertex(j)->onWhat() == gf)
+        allverts.insert(gf->triangles[i]->getVertex(j));
+    }
+  }
+  for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
+    for(int j = 0; j < 4; j++){
+      if(gf->quadrangles[i]->getVertex(j)->onWhat() == gf)
+        allverts.insert(gf->quadrangles[i]->getVertex(j));
+    }
+  }
+  for(std::size_t i = 0; i < gf->mesh_vertices.size(); i++) {
+    if(allverts.find(gf->mesh_vertices[i]) == allverts.end())
+      delete gf->mesh_vertices[i];
+  }
+  gf->mesh_vertices.clear();
+  gf->mesh_vertices.insert(gf->mesh_vertices.end(), allverts.begin(),
+                           allverts.end());
+}
+
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
 bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
@@ -1182,8 +1229,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   }
 
   // add embedded vertices
-  std::set<GVertex *> emb_vertx = gf->embeddedVertices();
-  std::set<GVertex *>::iterator itvx = emb_vertx.begin();
+  std::set<GVertex *, GEntityLessThan> emb_vertx = gf->embeddedVertices();
+  std::set<GVertex *, GEntityLessThan>::iterator itvx = emb_vertx.begin();
   while(itvx != emb_vertx.end()) {
     all_vertices.insert((*itvx)->mesh_vertices.begin(),
                         (*itvx)->mesh_vertices.end());
@@ -1662,20 +1709,12 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       bowyerWatsonFrontal(gf);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
-      // TODO: to make these thread-safe, we need to switch from ANN to
-      // nanoflann
-      if(Msg::GetNumThreads() > 1)
-        Msg::Warning("Delquad is not thread-safe");
       bowyerWatsonFrontalLayers(gf, true);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS) {
-      if(Msg::GetNumThreads() > 1)
-        Msg::Warning("Packing of parallelograms is not thread-safe");
       bowyerWatsonParallelograms(gf);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
-      if(Msg::GetNumThreads() > 1)
-        Msg::Warning("Packing of parallelograms is not thread-safe");
       bowyerWatsonParallelogramsConstrained(gf, gf->constr_vertices);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
@@ -1728,6 +1767,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
     directions_storage(gf);
   }
+
+  // remove unused vertices, generated e.g. during background mesh
+  _deleteUnusedVertices(gf);
 
   return true;
 }
@@ -2133,8 +2175,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
     // Embedded Vertices
     // add embedded vertices
-    std::set<GVertex *> emb_vertx = gf->embeddedVertices();
-    std::set<GVertex *>::iterator itvx = emb_vertx.begin();
+    std::set<GVertex *, GEntityLessThan> emb_vertx = gf->embeddedVertices();
+    std::set<GVertex *, GEntityLessThan>::iterator itvx = emb_vertx.begin();
 
     std::map<MVertex *, std::set<BDS_Point *> > invertedRecoverMap;
     for(std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
@@ -2781,14 +2823,19 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
                        gf->meshStatistics.nbTriangle,
                        gf->meshStatistics.nbGoodQuality);
   gf->meshStatistics.status = GFace::DONE;
+
+  // remove unused vertices, generated e.g. during background mesh
+  _deleteUnusedVertices(gf);
+
   return true;
 }
 
 void deMeshGFace::operator()(GFace *gf)
 {
-  if(gf->geomType() == GEntity::DiscreteSurface &&
-     !CTX::instance()->meshDiscrete)
-    return;
+  if(gf->geomType() == GEntity::DiscreteSurface){
+    if(!static_cast<discreteFace *>(gf)->haveParametrization())
+      return;
+  }
   gf->deleteMesh();
   gf->meshStatistics.status = GFace::PENDING;
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;
@@ -2883,12 +2930,6 @@ void meshGFace::operator()(GFace *gf, bool print)
     Msg::Info("Meshing surface %d (%s, %s)", gf->tag(),
               gf->getTypeString().c_str(), algo);
 
-  // compute loops on the fly (indices indicate start and end points of a loop;
-  // loops are not yet oriented)
-  Msg::Debug("Computing edge loops");
-
-  Msg::Debug("Generating the mesh");
-
   quadMeshRemoveHalfOfOneDMesh halfmesh(gf);
 
   bool singularEdges = false;
@@ -2898,7 +2939,7 @@ void meshGFace::operator()(GFace *gf, bool print)
     if((*ite)->isSeam(gf)) singularEdges = true;
     if((*ite)->getBeginVertex() == (*ite)->getEndVertex()) {
       if((*ite)->geomType() == GEntity::Unknown) {
-        //	singularEdges = true;
+        // singularEdges = true;
       }
     }
     ite++;
@@ -3049,7 +3090,7 @@ void orientMeshGFace::operator()(GFace *gf)
 
     // Reverse BL and non-BL elements if needed
     if(existBL) { // If there is a BL, test BL/non-BL elements
-      if((orientNonBL == -1) || (orientBL == -1))
+      if((orientNonBL == -1) || (orientBL == -1)) {
         for(unsigned int iEl = 0; iEl < gf->getNumMeshElements(); iEl++) {
           MElement *e = gf->getMeshElement(iEl);
           // If el. outside of BL...
@@ -3057,20 +3098,23 @@ void orientMeshGFace::operator()(GFace *gf)
             // ... reverse if needed
             if(orientNonBL == -1) e->reverse();
           }
-          else // If el. in BL
-               // ... reverse if needed
-            if(orientBL == -1)
-            e->reverse();
+          else{ // If el. in BL ... reverse if needed
+            if(orientBL == -1) e->reverse();
+          }
         }
+      }
     }
-    else // If no BL, reverse all elements if needed
-      if(orientNonBL == -1)
-      for(unsigned int iEl = 0; iEl < gf->getNumMeshElements(); iEl++)
-        gf->getMeshElement(iEl)->reverse();
+    else { // If no BL, reverse all elements if needed
+      if(orientNonBL == -1) {
+        for(unsigned int iEl = 0; iEl < gf->getNumMeshElements(); iEl++)
+          gf->getMeshElement(iEl)->reverse();
+      }
+    }
   }
 
   // Apply user-specified mesh orientation constraints
-  if(gf->meshAttributes.reverseMesh)
+  if(gf->meshAttributes.reverseMesh) {
     for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
       gf->getMeshElement(k)->reverse();
+  }
 }

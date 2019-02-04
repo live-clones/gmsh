@@ -599,6 +599,18 @@ Partition the mesh of the current model into @code{numPart} partitions.
 -
 @end table
 
+@item unpartition
+Unpartition the mesh of the current model.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item refine
 Refine the mesh of the current model by uniformly splitting the elements.
 
@@ -726,7 +738,8 @@ length of @code{nodeTags} that contains the x, y, z coordinates of the nodes,
 concatenated: [n1x, n1y, n1z, n2x, ...]. The optional @code{parametricCoord}
 vector contains the parametric coordinates of the nodes, if any. The length of
 @code{parametricCoord} can be 0 or @code{dim} times the length of
-@code{nodeTags}.
+@code{nodeTags}. If the @code{nodeTag} vector is empty, new tags are
+automatically assigned to the nodes.
 
 @table @asis
 @item Input:
@@ -746,6 +759,21 @@ etc. after the elements have been set.
 @table @asis
 @item Input:
 -
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item relocateNodes
+Relocate the nodes classified on the entity of dimension @code{dim} and tag
+@code{tag} using their parametric coordinates. If @code{tag} < 0, relocate the
+nodes for all entities of dimension @code{dim}. If @code{dim} and @code{tag} are
+negative, relocate all the nodes in the mesh.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
 @item Output:
 -
 @item Return:
@@ -807,26 +835,6 @@ elements, as it relies on a search in a spatial octree.
 -
 @end table
 
-@item setElements
-Set the elements of the entity of dimension @code{dim} and tag @code{tag}.
-@code{types} contains the MSH types of the elements (e.g. @code{2} for 3-node
-triangles: see the Gmsh reference manual). @code{elementTags} is a vector of the
-same length as @code{types}; each entry is a vector containing the tags (unique,
-strictly positive identifiers) of the elements of the corresponding type.
-@code{nodeTags} is also a vector of the same length as @code{types}; each entry
-is a vector of length equal to the number of elements of the given type times
-the number N of nodes per element, that contains the node tags of all the
-elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
-
-@table @asis
-@item Input:
-@code{dim}, @code{tag}, @code{elementTypes}, @code{elementTags}, @code{nodeTags}
-@item Output:
--
-@item Return:
--
-@end table
-
 @item getElementTypes
 Get the types of elements in the entity of dimension @code{dim} and tag
 @code{tag}. If @code{tag} < 0, get the types for all entities of dimension
@@ -840,6 +848,21 @@ mesh.
 @code{elementTypes}
 @item Return:
 -
+@end table
+
+@item getElementType
+Return an element type given its family name @code{familyName} ("point", "line",
+"triangle", "quadrangle", "tetrahedron", "pyramid", "prism", "hexahedron") and
+polynomial order @code{order}. If @code{serendip} is true, return the
+corresponding serendip element type (element without interior nodes).
+
+@table @asis
+@item Input:
+@code{familyName}, @code{order}, @code{serendip}
+@item Output:
+-
+@item Return:
+integer value
 @end table
 
 @item getElementProperties
@@ -886,6 +909,44 @@ Preallocate the data for @code{getElementsByType}. This is necessary only if
 @code{elementType}, @code{elementTag}, @code{nodeTag}, @code{tag}
 @item Output:
 @code{elementTags}, @code{nodeTags}
+@item Return:
+-
+@end table
+
+@item setElements
+Set the elements of the entity of dimension @code{dim} and tag @code{tag}.
+@code{types} contains the MSH types of the elements (e.g. @code{2} for 3-node
+triangles: see the Gmsh reference manual). @code{elementTags} is a vector of the
+same length as @code{types}; each entry is a vector containing the tags (unique,
+strictly positive identifiers) of the elements of the corresponding type.
+@code{nodeTags} is also a vector of the same length as @code{types}; each entry
+is a vector of length equal to the number of elements of the given type times
+the number N of nodes per element, that contains the node tags of all the
+elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{elementTypes}, @code{elementTags}, @code{nodeTags}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setElementsByType
+Set the elements of type @code{elementType} in the entity of dimension
+@code{dim} and tag @code{tag}. @code{elementTags} contains the tags (unique,
+strictly positive identifiers) of the elements of the corresponding type.
+@code{nodeTags} is a vector of length equal to the number of elements times the
+number N of nodes per element, that contains the node tags of all the elements,
+concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the @code{elementTag}
+vector is empty, new tags are automatically assigned to the elements.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{elementType}, @code{elementTags}, @code{nodeTags}
+@item Output:
+-
 @item Return:
 -
 @end table
@@ -963,8 +1024,9 @@ Get the barycenters of all elements of type @code{elementType} classified on the
 entity of tag @code{tag}. If @code{primary} is set, only the primary nodes of
 the elements are taken into account for the barycenter calculation. If
 @code{fast} is set, the function returns the sum of the primary node coordinates
-(without normalizing by the number of nodes). If @code{numTasks} > 1, only
-compute and return the part of the data indexed by @code{task}.
+(without normalizing by the number of nodes). If @code{tag} < 0, get the
+barycenters for all entities. If @code{numTasks} > 1, only compute and return
+the part of the data indexed by @code{task}.
 
 @table @asis
 @item Input:
@@ -984,6 +1046,52 @@ if @code{getBarycenters} is called with @code{numTasks} > 1.
 @code{elementType}, @code{tag}
 @item Output:
 @code{barycenters}
+@item Return:
+-
+@end table
+
+@item getElementEdgeNodes
+Get the nodes on the edges of all elements of type @code{elementType} classified
+on the entity of tag @code{tag}. If @code{primary} is set, only the primary
+(begin/end) nodes of the edges are returned. If @code{tag} < 0, get the edge
+nodes for all entities. If @code{numTasks} > 1, only compute and return the part
+of the data indexed by @code{task}.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{tag}, @code{primary}, @code{task}, @code{numTasks}
+@item Output:
+@code{nodes}
+@item Return:
+-
+@end table
+
+@item getElementFaceNodes
+Get the nodes on the faces of type @code{faceType} (3 for triangular faces, 4
+for quadrangular faces) of all elements of type @code{elementType} classified on
+the entity of tag @code{tag}. If @code{primary} is set, only the primary
+(corner) nodes of the faces are returned. If @code{tag} < 0, get the face nodes
+for all entities. If @code{numTasks} > 1, only compute and return the part of
+the data indexed by @code{task}.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{faceType}, @code{tag}, @code{primary}, @code{task}, @code{numTasks}
+@item Output:
+@code{nodes}
+@item Return:
+-
+@end table
+
+@item getGhostElements
+Get the ghost elements @code{elementTags} and their associated @code{partitions}
+stored in the ghost entity of dimension @code{dim} and tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{elementTags}, @code{partitions}
 @item Return:
 -
 @end table
@@ -1192,6 +1300,20 @@ Remove duplicate nodes in the mesh of the current model.
 @table @asis
 @item Input:
 -
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item splitQuadrangles
+Split (into two triangles) all quadrangles in surface @code{tag} whose quality
+is lower than @code{quality}. If @code{tag} < 0, split quadrangles in all
+surfaces.
+
+@table @asis
+@item Input:
+@code{quality}, @code{tag}
 @item Output:
 -
 @item Return:

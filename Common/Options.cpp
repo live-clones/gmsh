@@ -4288,7 +4288,12 @@ double opt_general_num_threads(OPT_ARGS_NUM)
   if(action & GMSH_SET){
     if(val > 0) Msg::SetNumThreads(val);
   }
-  return Msg::GetNumThreads();
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.value[32]->value
+      (Msg::GetMaxThreads());
+#endif
+  return Msg::GetMaxThreads();
 }
 
 double opt_geometry_transform(OPT_ARGS_NUM)
@@ -6905,8 +6910,12 @@ double opt_view_min_visible(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEW(0.);
   if(!data) return 0.;
-  return data->getMin(opt->timeStep, true, opt->forceNumComponents,
-                      opt->componentMap);
+  int tensorRep =
+    (opt->tensorType == PViewOptions::VonMises) ? 0 :
+    (opt->tensorType == PViewOptions::MaxEigenValue) ? 1 :
+    2;
+  return data->getMin(opt->timeStep, true, tensorRep,
+                      opt->forceNumComponents, opt->componentMap);
 #else
   return 0.;
 #endif
@@ -6917,8 +6926,12 @@ double opt_view_max_visible(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEW(0.);
   if(!data) return 0.;
-  return data->getMax(opt->timeStep, true, opt->forceNumComponents,
-                      opt->componentMap);
+  int tensorRep =
+    (opt->tensorType == PViewOptions::VonMises) ? 0 :
+    (opt->tensorType == PViewOptions::MinEigenValue) ? 2 :
+    1;
+  return data->getMax(opt->timeStep, true, tensorRep,
+                      opt->forceNumComponents, opt->componentMap);
 #else
   return 0.;
 #endif

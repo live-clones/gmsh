@@ -1153,10 +1153,6 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
         double z = xyz[i][2];
 
         SPoint3 xx(x, y, z);
-
-        //	printf("%g %g %g %g %g %g %g %g
-        //%g\n",n0.x(),n0.y(),n0.z(),n1.x(),n1.y(),n1.z(),n2.x(),n2.y(),n2.z());
-
         double x0[3] = {x + d0[0] + d1[0] + d2[0], y + d0[1] + d1[1] + d2[1],
                         z + d0[2] + d1[2] + d2[2]};
         double x1[3] = {x - d0[0] + d1[0] + d2[0], y - d0[1] + d1[1] + d2[1],

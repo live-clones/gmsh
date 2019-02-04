@@ -302,6 +302,41 @@ void PrintUsage(const std::string &name)
   }
 }
 
+void PrintInfo()
+{
+  Msg::Direct("Version       : %s", GMSH_VERSION);
+  Msg::Direct("License       : %s", GMSH_SHORT_LICENSE);
+  Msg::Direct("Build OS      : %s", GMSH_OS);
+  Msg::Direct("Build date    : %s", GMSH_DATE);
+  Msg::Direct("Build host    : %s", GMSH_HOST);
+  Msg::Direct("Build options :%s", GMSH_CONFIG_OPTIONS);
+#if defined(HAVE_FLTK)
+  Msg::Direct("FLTK version  : %d.%d.%d", FL_MAJOR_VERSION,
+              FL_MINOR_VERSION, FL_PATCH_VERSION);
+#endif
+#if defined(HAVE_PETSC)
+  Msg::Direct("PETSc version : %d.%d.%d (%s arithmtic)", PETSC_VERSION_MAJOR,
+              PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR,
+#if defined(PETSC_USE_COMPLEX)
+              "complex"
+#else
+              "real"
+#endif
+              );
+#endif
+#if defined(HAVE_OCC)
+  Msg::Direct("OCC version   : %d.%d.%d", OCC_VERSION_MAJOR,
+              OCC_VERSION_MINOR, OCC_VERSION_MAINTENANCE);
+#endif
+#if defined(HAVE_MED)
+  Msg::Direct("MED version   : %d.%d.%d", MED_NUM_MAJEUR,
+              MED_NUM_MINEUR, MED_NUM_RELEASE);
+#endif
+  Msg::Direct("Packaged by   : %s", GMSH_PACKAGER);
+  Msg::Direct("Web site      : http://gmsh.info");
+  Msg::Direct("Issue tracker : https://gitlab.onelab.info/gmsh/gmsh/issues");
+}
+
 void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
 {
   // print messages on terminal (use special 99 value so that we can detect if
@@ -1106,42 +1141,12 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "info") || !strcmp(argv[i] + 1, "-info")) {
-        fprintf(stderr, "Version          : %s\n", GMSH_VERSION);
-        fprintf(stderr, "License          : %s\n", GMSH_SHORT_LICENSE);
-        fprintf(stderr, "Build OS         : %s\n", GMSH_OS);
-        fprintf(stderr, "Build date       : %s\n", GMSH_DATE);
-        fprintf(stderr, "Build host       : %s\n", GMSH_HOST);
-        fprintf(stderr, "Build options    :%s\n", GMSH_CONFIG_OPTIONS);
-#if defined(HAVE_FLTK)
-        fprintf(stderr, "FLTK version     : %d.%d.%d\n", FL_MAJOR_VERSION,
-                FL_MINOR_VERSION, FL_PATCH_VERSION);
-#endif
-#if defined(HAVE_PETSC)
-        fprintf(stderr, "PETSc version    : %d.%d.%d (%s arithmtic)\n", PETSC_VERSION_MAJOR,
-                PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR,
-#if defined(PETSC_USE_COMPLEX)
-                "complex"
-#else
-                "real"
-#endif
-                );
-#endif
-#if defined(HAVE_OCC)
-        fprintf(stderr, "OCC version      : %d.%d.%d\n", OCC_VERSION_MAJOR,
-                OCC_VERSION_MINOR, OCC_VERSION_MAINTENANCE);
-#endif
-#if defined(HAVE_MED)
-        fprintf(stderr, "MED version      : %d.%d.%d\n", MED_NUM_MAJEUR,
-                MED_NUM_MINEUR, MED_NUM_RELEASE);
-#endif
-        fprintf(stderr, "Packaged by      : %s\n", GMSH_PACKAGER);
-        fprintf(stderr, "Web site         : http://gmsh.info\n");
-        fprintf(stderr, "Issue tracker    : https://gitlab.onelab.info/gmsh/gmsh/issues\n");
+        PrintInfo();
         Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "help") || !strcmp(argv[i] + 1, "-help")) {
-        fprintf(stderr, "Gmsh, a 3D mesh generator with pre- and post-processing facilities\n");
-        fprintf(stderr, "Copyright (C) 1997-2019 C. Geuzaine and J.-F. Remacle\n");
+        Msg::Direct("Gmsh, a 3D mesh generator with pre- and post-processing facilities");
+        Msg::Direct("Copyright (C) 1997-2019 C. Geuzaine and J.-F. Remacle");
         PrintUsage(argv[0]);
         Msg::Exit(0);
       }

@@ -1028,7 +1028,8 @@ identification numbers). `coord` is a vector of length 3 times the length of
 `nodeTags` that contains the x, y, z coordinates of the nodes, concatenated:
 [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord` vector contains the
 parametric coordinates of the nodes, if any. The length of `parametricCoord` can
-be 0 or `dim` times the length of `nodeTags`.
+be 0 or `dim` times the length of `nodeTags`. If the `nodeTag` vector is empty,
+new tags are automatically assigned to the nodes.
 """
 function setNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
     ierr = Ref{Cint}()
@@ -1053,6 +1054,23 @@ function reclassifyNodes()
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshModelMeshReclassifyNodes returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.relocateNodes(dim = -1, tag = -1)
+
+Relocate the nodes classified on the entity of dimension `dim` and tag `tag`
+using their parametric coordinates. If `tag` < 0, relocate the nodes for all
+entities of dimension `dim`. If `dim` and `tag` are negative, relocate all the
+nodes in the mesh.
+"""
+function relocateNodes(dim = -1, tag = -1)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRelocateNodes, gmsh.lib), Nothing,
+          (Cint, Cint, Ptr{Cint}),
+          dim, tag, ierr)
+    ierr[] != 0 && error("gmshModelMeshRelocateNodes returned non-zero error code: $(ierr[])")
     return nothing
 end
 
@@ -1146,30 +1164,6 @@ function getElementByCoordinates(x, y, z)
 end
 
 """
-    gmsh.model.mesh.setElements(dim, tag, elementTypes, elementTags, nodeTags)
-
-Set the elements of the entity of dimension `dim` and tag `tag`. `types`
-contains the MSH types of the elements (e.g. `2` for 3-node triangles: see the
-Gmsh reference manual). `elementTags` is a vector of the same length as `types`;
-each entry is a vector containing the tags (unique, strictly positive
-identifiers) of the elements of the corresponding type. `nodeTags` is also a
-vector of the same length as `types`; each entry is a vector of length equal to
-the number of elements of the given type times the number N of nodes per
-element, that contains the node tags of all the elements of the given type,
-concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
-"""
-function setElements(dim, tag, elementTypes, elementTags, nodeTags)
-    api_elementTags_n_ = [ length(elementTags[i]) for i in 1:length(elementTags) ]
-    api_nodeTags_n_ = [ length(nodeTags[i]) for i in 1:length(nodeTags) ]
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetElements, gmsh.lib), Nothing,
-          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
-          dim, tag, convert(Vector{Cint}, elementTypes), length(elementTypes), convert(Vector{Vector{Cint}},elementTags), api_elementTags_n_, length(elementTags), convert(Vector{Vector{Cint}},nodeTags), api_nodeTags_n_, length(nodeTags), ierr)
-    ierr[] != 0 && error("gmshModelMeshSetElements returned non-zero error code: $(ierr[])")
-    return nothing
-end
-
-"""
     gmsh.model.mesh.getElementTypes(dim = -1, tag = -1)
 
 Get the types of elements in the entity of dimension `dim` and tag `tag`. If
@@ -1188,6 +1182,25 @@ function getElementTypes(dim = -1, tag = -1)
     ierr[] != 0 && error("gmshModelMeshGetElementTypes returned non-zero error code: $(ierr[])")
     elementTypes = unsafe_wrap(Array, api_elementTypes_[], api_elementTypes_n_[], own=true)
     return elementTypes
+end
+
+"""
+    gmsh.model.mesh.getElementType(familyName, order, serendip = false)
+
+Return an element type given its family name `familyName` ("point", "line",
+"triangle", "quadrangle", "tetrahedron", "pyramid", "prism", "hexahedron") and
+polynomial order `order`. If `serendip` is true, return the corresponding
+serendip element type (element without interior nodes).
+
+Return an integer value.
+"""
+function getElementType(familyName, order, serendip = false)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelMeshGetElementType, gmsh.lib), Cint,
+          (Ptr{Cchar}, Cint, Cint, Ptr{Cint}),
+          familyName, order, serendip, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetElementType returned non-zero error code: $(ierr[])")
+    return api__result__
 end
 
 """
@@ -1267,6 +1280,50 @@ function preallocateElementsByType(elementType, elementTag, nodeTag, tag = -1)
     elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
     return elementTags, nodeTags
+end
+
+"""
+    gmsh.model.mesh.setElements(dim, tag, elementTypes, elementTags, nodeTags)
+
+Set the elements of the entity of dimension `dim` and tag `tag`. `types`
+contains the MSH types of the elements (e.g. `2` for 3-node triangles: see the
+Gmsh reference manual). `elementTags` is a vector of the same length as `types`;
+each entry is a vector containing the tags (unique, strictly positive
+identifiers) of the elements of the corresponding type. `nodeTags` is also a
+vector of the same length as `types`; each entry is a vector of length equal to
+the number of elements of the given type times the number N of nodes per
+element, that contains the node tags of all the elements of the given type,
+concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
+"""
+function setElements(dim, tag, elementTypes, elementTags, nodeTags)
+    api_elementTags_n_ = [ length(elementTags[i]) for i in 1:length(elementTags) ]
+    api_nodeTags_n_ = [ length(nodeTags[i]) for i in 1:length(nodeTags) ]
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetElements, gmsh.lib), Nothing,
+          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          dim, tag, convert(Vector{Cint}, elementTypes), length(elementTypes), convert(Vector{Vector{Cint}},elementTags), api_elementTags_n_, length(elementTags), convert(Vector{Vector{Cint}},nodeTags), api_nodeTags_n_, length(nodeTags), ierr)
+    ierr[] != 0 && error("gmshModelMeshSetElements returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.setElementsByType(dim, tag, elementType, elementTags, nodeTags)
+
+Set the elements of type `elementType` in the entity of dimension `dim` and tag
+`tag`. `elementTags` contains the tags (unique, strictly positive identifiers)
+of the elements of the corresponding type. `nodeTags` is a vector of length
+equal to the number of elements times the number N of nodes per element, that
+contains the node tags of all the elements, concatenated: [e1n1, e1n2, ...,
+e1nN, e2n1, ...]. If the `elementTag` vector is empty, new tags are
+automatically assigned to the elements.
+"""
+function setElementsByType(dim, tag, elementType, elementTags, nodeTags)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetElementsByType, gmsh.lib), Nothing,
+          (Cint, Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          dim, tag, elementType, convert(Vector{Cint}, elementTags), length(elementTags), convert(Vector{Cint}, nodeTags), length(nodeTags), ierr)
+    ierr[] != 0 && error("gmshModelMeshSetElementsByType returned non-zero error code: $(ierr[])")
+    return nothing
 end
 
 """
@@ -1381,8 +1438,8 @@ Get the barycenters of all elements of type `elementType` classified on the
 entity of tag `tag`. If `primary` is set, only the primary nodes of the elements
 are taken into account for the barycenter calculation. If `fast` is set, the
 function returns the sum of the primary node coordinates (without normalizing by
-the number of nodes). If `numTasks` > 1, only compute and return the part of the
-data indexed by `task`.
+the number of nodes). If `tag` < 0, get the barycenters for all entities. If
+`numTasks` > 1, only compute and return the part of the data indexed by `task`.
 
 Return `barycenters`.
 """
@@ -1416,6 +1473,74 @@ function preallocateBarycenters(elementType, tag = -1)
     ierr[] != 0 && error("gmshModelMeshPreallocateBarycenters returned non-zero error code: $(ierr[])")
     barycenters = unsafe_wrap(Array, api_barycenters_[], api_barycenters_n_[], own=true)
     return barycenters
+end
+
+"""
+    gmsh.model.mesh.getElementEdgeNodes(elementType, tag = -1, primary = false, task = 0, numTasks = 1)
+
+Get the nodes on the edges of all elements of type `elementType` classified on
+the entity of tag `tag`. If `primary` is set, only the primary (begin/end) nodes
+of the edges are returned. If `tag` < 0, get the edge nodes for all entities. If
+`numTasks` > 1, only compute and return the part of the data indexed by `task`.
+
+Return `nodes`.
+"""
+function getElementEdgeNodes(elementType, tag = -1, primary = false, task = 0, numTasks = 1)
+    api_nodes_ = Ref{Ptr{Cint}}()
+    api_nodes_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetElementEdgeNodes, gmsh.lib), Nothing,
+          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, api_nodes_, api_nodes_n_, tag, primary, task, numTasks, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetElementEdgeNodes returned non-zero error code: $(ierr[])")
+    nodes = unsafe_wrap(Array, api_nodes_[], api_nodes_n_[], own=true)
+    return nodes
+end
+
+"""
+    gmsh.model.mesh.getElementFaceNodes(elementType, faceType, tag = -1, primary = false, task = 0, numTasks = 1)
+
+Get the nodes on the faces of type `faceType` (3 for triangular faces, 4 for
+quadrangular faces) of all elements of type `elementType` classified on the
+entity of tag `tag`. If `primary` is set, only the primary (corner) nodes of the
+faces are returned. If `tag` < 0, get the face nodes for all entities. If
+`numTasks` > 1, only compute and return the part of the data indexed by `task`.
+
+Return `nodes`.
+"""
+function getElementFaceNodes(elementType, faceType, tag = -1, primary = false, task = 0, numTasks = 1)
+    api_nodes_ = Ref{Ptr{Cint}}()
+    api_nodes_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetElementFaceNodes, gmsh.lib), Nothing,
+          (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, faceType, api_nodes_, api_nodes_n_, tag, primary, task, numTasks, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetElementFaceNodes returned non-zero error code: $(ierr[])")
+    nodes = unsafe_wrap(Array, api_nodes_[], api_nodes_n_[], own=true)
+    return nodes
+end
+
+"""
+    gmsh.model.mesh.getGhostElements(dim, tag)
+
+Get the ghost elements `elementTags` and their associated `partitions` stored in
+the ghost entity of dimension `dim` and tag `tag`.
+
+Return `elementTags`, `partitions`.
+"""
+function getGhostElements(dim, tag)
+    api_elementTags_ = Ref{Ptr{Cint}}()
+    api_elementTags_n_ = Ref{Csize_t}()
+    api_partitions_ = Ref{Ptr{Cint}}()
+    api_partitions_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetGhostElements, gmsh.lib), Nothing,
+          (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, api_elementTags_, api_elementTags_n_, api_partitions_, api_partitions_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetGhostElements returned non-zero error code: $(ierr[])")
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
+    partitions = unsafe_wrap(Array, api_partitions_[], api_partitions_n_[], own=true)
+    return elementTags, partitions
 end
 
 """
@@ -1661,6 +1786,21 @@ function removeDuplicateNodes()
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshModelMeshRemoveDuplicateNodes returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.splitQuadrangles(quality = 1., tag = -1)
+
+Split (into two triangles) all quadrangles in surface `tag` whose quality is
+lower than `quality`. If `tag` < 0, split quadrangles in all surfaces.
+"""
+function splitQuadrangles(quality = 1., tag = -1)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSplitQuadrangles, gmsh.lib), Nothing,
+          (Cdouble, Cint, Ptr{Cint}),
+          quality, tag, ierr)
+    ierr[] != 0 && error("gmshModelMeshSplitQuadrangles returned non-zero error code: $(ierr[])")
     return nothing
 end
 

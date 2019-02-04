@@ -681,15 +681,6 @@ extern \"C\" {{
 """
 
 c_cpp_utils="""
-void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
-{{
-  *p = (char**){0}Malloc(sizeof(char*) * v.size());
-  for(size_t i = 0; i < v.size(); ++i){{
-    (*p)[i] = strdup(v[i].c_str());
-  }}
-  *size = v.size();
-}}
-
 void vectorvectorpair2intptrptr(const std::vector<{0}::vectorpair > &v, int ***p, size_t **size, size_t *sizeSize)
 {{
   *p = (int**){0}Malloc(sizeof(int*) * v.size());
@@ -731,6 +722,7 @@ cwrap_header="""// {0}
 #include <vector>
 #include <string>
 #include <utility>
+#include <string.h>
 
 extern \"C\" {{
   #include "{5}c.h"
@@ -768,6 +760,15 @@ void vectorpair2intptr(const {0}::vectorpair &v, int **p, size_t *size)
     (*p)[i * 2 + 1] = v[i].second;
   }}
   *size = v.size() * 2;
+}}
+
+void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
+{{
+  *p = (char**){0}Malloc(sizeof(char*) * v.size());
+  for(size_t i = 0; i < v.size(); ++i){{
+    (*p)[i] = strdup(v[i].c_str());
+  }}
+  *size = v.size();
 }}
 
 template<typename t>

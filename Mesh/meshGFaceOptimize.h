@@ -53,9 +53,6 @@ void buildEdgeToElements(std::vector<MElement *> &tris, e2t_cont &adj);
 
 void laplaceSmoothing(GFace *gf, int niter = 1, bool infinity_norm = false);
 
-void _relocateVertex(GFace *gf, MVertex *ver,
-                     const std::vector<MElement *> &lt);
-
 enum swapCriterion { SWCR_DEL, SWCR_QUAL, SWCR_SPH };
 enum splitCriterion { SPCR_CLOSE, SPCR_QUAL, SPCR_ALLWAYS };
 

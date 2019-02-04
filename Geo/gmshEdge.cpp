@@ -32,7 +32,7 @@ bool gmshEdge::degenerate(int dim) const
 {
   if(c->beg == c->end && c->Typ == MSH_SEGM_LINE &&
      List_Nbr(c->Control_Points) == 0) {
-    Msg::Info("Model Edge %d is degenerate", tag());
+    Msg::Info("Curve %d is degenerate", tag());
     return true;
   }
   return false;

@@ -547,8 +547,6 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
 
   if(setBoundingBox) SetBoundingBox();
 
-  // this should be made less global, creating the topology and the
-  // parametrizations only when actually needed
   if(mesh && CTX::instance()->meshDiscrete)
     GModel::current()->createGeometryOfDiscreteEntities();
 
