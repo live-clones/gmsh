@@ -3629,7 +3629,10 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _label = new mainWindowProgress(x, mh + glheight + mheight + 2, width - x - 2, sht);
   _label->box(FL_FLAT_BOX);
   _label->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-  _label->color(FL_BACKGROUND_COLOR, FL_DARK2);
+  if(CTX::instance()->guiColorScheme)
+    _label->color(FL_BACKGROUND_COLOR, FL_LIGHT3);
+  else
+    _label->color(FL_BACKGROUND_COLOR, FL_DARK2);
 
   _win->position(CTX::instance()->glPosition[0], CTX::instance()->glPosition[1]);
   _win->end();
