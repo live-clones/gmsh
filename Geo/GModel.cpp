@@ -2356,7 +2356,7 @@ int GModel::removeDuplicateMeshElements()
 }
 */
 
-static void recurConnectMElementsByMFace(
+static void connectMElementsByMFace(
   const MFace &f, std::multimap<MFace, MElement *, Less_Face> &e2f,
   std::set<MElement *> &group, std::set<MFace, Less_Face> &touched,
   int recur_level)
@@ -2394,7 +2394,7 @@ static int connectedVolumes(std::vector<MElement *> &elements,
   while(!e2f.empty()) {
     std::set<MElement *> group;
     std::set<MFace, Less_Face> touched;
-    recurConnectMElementsByMFace(e2f.begin()->first, e2f, group, touched, 0);
+    connectMElementsByMFace(e2f.begin()->first, e2f, group, touched, 0);
     std::vector<MElement *> temp;
     temp.insert(temp.begin(), group.begin(), group.end());
     regs.push_back(temp);
@@ -2405,7 +2405,7 @@ static int connectedVolumes(std::vector<MElement *> &elements,
   return regs.size();
 }
 
-static void recurConnectMElementsByMEdge(
+static void connectMElementsByMEdge(
   const MEdge &e, std::multimap<MEdge, MElement *, Less_Edge> &e2e,
   std::set<MElement *> &group, std::set<MEdge, Less_Edge> &touched)
 {
@@ -2442,7 +2442,7 @@ static int connectedSurfaces(std::vector<MElement *> &elements,
   while(!e2e.empty()) {
     std::set<MElement *> group;
     std::set<MEdge, Less_Edge> touched;
-    recurConnectMElementsByMEdge(e2e.begin()->first, e2e, group, touched);
+    connectMElementsByMEdge(e2e.begin()->first, e2e, group, touched);
     std::vector<MElement *> temp;
     temp.insert(temp.begin(), group.begin(), group.end());
     faces.push_back(temp);
