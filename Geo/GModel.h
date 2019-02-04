@@ -158,7 +158,7 @@ protected:
 
   // loop over all vertices connected to elements and associate
   // geometrical entity
-  void _associateEntityWithMeshVertices();
+  void _associateEntityWithMeshVertices(bool force = false);
 
   // store the vertices in the geometrical entity they are associated
   // with, and delete those that are not associated with any entity

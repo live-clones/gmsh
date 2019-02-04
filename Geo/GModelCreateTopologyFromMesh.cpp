@@ -695,7 +695,7 @@ void GModel::createTopologyFromMeshNew()
   if(dim >= 2) createTopologyFromMesh2D(this, numE);
   if(dim >= 1) createTopologyFromMesh1D(this, numV);
 
-  _associateEntityWithMeshVertices();
+  _associateEntityWithMeshVertices(true); // force
 
   std::vector<GEntity *> entities;
   getEntities(entities);
