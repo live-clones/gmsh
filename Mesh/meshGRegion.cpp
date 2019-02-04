@@ -164,8 +164,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     insertVerticesInRegion(gr, 2000000000, true, &sqr);
     if(pyr){
       Msg::Info("Optimizing pyramids for hybrid mesh...");
-      RelocateVerticesOfPyramids(regions, 5);
-      RelocateVertices(regions, 5);
+      RelocateVerticesOfPyramids(regions, 3);
       Msg::Info("Done optimizing pyramids for hybrid mesh");
     }
 

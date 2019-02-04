@@ -439,6 +439,7 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
   buildVertexToElement(region->pyramids, adj);
   buildVertexToElement(region->prisms, adj);
   buildVertexToElement(region->hexahedra, adj);
+  
   for(int i = 0; i < niter ; i++) {
     v2t_cont::iterator it = adj.begin();
     double relax = std::min((double)(i + 1) / niter, 1.0);
@@ -447,6 +448,18 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
       ++it;
     }
   }
+  
+  return;
+  for(int i = 0; i < niter + 2; i++) {
+    v2t_cont::iterator it = adj.begin();
+    double relax = std::min((double)(i + 1) / niter, 1.0);
+    while(it != adj.end()) {
+      _relocateVertexGolden(it->first, it->second, relax, tol);
+      ++it;
+    }
+  }
+
+
 }
 
 
