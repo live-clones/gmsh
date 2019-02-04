@@ -2409,14 +2409,23 @@ static void recurConnectMElementsByMEdge(
   const MEdge &e, std::multimap<MEdge, MElement *, Less_Edge> &e2e,
   std::set<MElement *> &group, std::set<MEdge, Less_Edge> &touched)
 {
-  if(touched.find(e) != touched.end()) return;
-  touched.insert(e);
-  for(std::multimap<MEdge, MElement *, Less_Edge>::iterator it =
-        e2e.lower_bound(e);
-      it != e2e.upper_bound(e); ++it) {
-    group.insert(it->second);
-    for(int i = 0; i < it->second->getNumEdges(); ++i) {
-      recurConnectMElementsByMEdge(it->second->getEdge(i), e2e, group, touched);
+  // this is very slow...
+  std::stack<MEdge> _stack;
+  _stack.push(e);
+
+  while(!_stack.empty()) {
+    MEdge ee = _stack.top();
+    _stack.pop();
+    if(touched.find(ee) == touched.end()) {
+      touched.insert(ee);
+      for(std::multimap<MEdge, MElement *, Less_Edge>::iterator it =
+            e2e.lower_bound(ee);
+          it != e2e.upper_bound(ee); ++it) {
+        group.insert(it->second);
+        for(int i = 0; i < it->second->getNumEdges(); ++i) {
+          _stack.push(it->second->getEdge(i));
+        }
+      }
     }
   }
 }
