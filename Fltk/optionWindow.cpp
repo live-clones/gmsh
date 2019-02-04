@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #if !defined(HAVE_NO_STDINT_H)
@@ -554,30 +554,18 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
 
   opt_mesh_point_type(0, GMSH_SET, o->mesh.choice[0]->value());
   opt_mesh_algo2d(0, GMSH_SET,
-                  (o->mesh.choice[2]->value() == 1) ?
-                    ALGO_2D_MESHADAPT :
-                    (o->mesh.choice[2]->value() == 2) ?
-                    ALGO_2D_DELAUNAY :
-                    (o->mesh.choice[2]->value() == 3) ?
-                    ALGO_2D_FRONTAL :
-                    (o->mesh.choice[2]->value() == 4) ?
-                    ALGO_2D_FRONTAL_QUAD :
-                    (o->mesh.choice[2]->value() == 5) ? ALGO_2D_PACK_PRLGRMS :
-                                                        ALGO_2D_AUTO);
+                  (o->mesh.choice[2]->value() == 1) ? ALGO_2D_MESHADAPT :
+                  (o->mesh.choice[2]->value() == 2) ? ALGO_2D_DELAUNAY :
+                  (o->mesh.choice[2]->value() == 3) ? ALGO_2D_FRONTAL :
+                  (o->mesh.choice[2]->value() == 4) ? ALGO_2D_FRONTAL_QUAD :
+                  (o->mesh.choice[2]->value() == 5) ? ALGO_2D_PACK_PRLGRMS :
+                  ALGO_2D_AUTO);
   opt_mesh_algo3d(0, GMSH_SET,
-                  (o->mesh.choice[3]->value() == 1) ?
-                    ALGO_3D_FRONTAL :
-                    (o->mesh.choice[3]->value() == 2) ?
-                    ALGO_3D_FRONTAL_DEL :
-                    (o->mesh.choice[3]->value() == 3) ?
-                    ALGO_3D_FRONTAL_HEX :
-                    (o->mesh.choice[3]->value() == 4) ?
-                    ALGO_3D_MMG3D :
-                    (o->mesh.choice[3]->value() == 6) ?
-                    ALGO_3D_HXT :
-                    (o->mesh.choice[3]->value() == 5) ? ALGO_3D_RTREE :
-                                                        ALGO_3D_DELAUNAY
-		  );
+                  (o->mesh.choice[3]->value() == 1) ? ALGO_3D_FRONTAL :
+                  (o->mesh.choice[3]->value() == 2) ? ALGO_3D_MMG3D :
+                  (o->mesh.choice[3]->value() == 3) ? ALGO_3D_RTREE :
+                  (o->mesh.choice[3]->value() == 4) ? ALGO_3D_HXT :
+                  ALGO_3D_DELAUNAY);
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
   opt_mesh_color_carousel(0, GMSH_SET, o->mesh.choice[4]->value());
@@ -2234,23 +2222,23 @@ optionWindow::optionWindow(int deltaFontSize)
         {"MeshAdapt", 0, 0, 0},
         {"Delaunay", 0, 0, 0},
         {"Frontal", 0, 0, 0},
-        {"Delaunay for quads (experimental)", 0, 0, 0},
-        {"Packing of parallelograms (experimental)", 0, 0, 0},
+        {"Delaunay for Quads (experimental)", 0, 0, 0},
+        {"Packing of Parallelograms (experimental)", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Delaunay", 0, 0, 0},
         {"Frontal", 0, 0, 0},
-        {"Frontal Delaunay (experimental)", 0, 0, 0},
-        {"Frontal Hex (experimental)", 0, 0, 0},
         {"MMG3D (experimental)", 0, 0, 0},
-        {"R-tree (experimental)", 0, 0, 0},
+        {"R-Tree (experimental)", 0, 0, 0},
         {"HXT (experimental)", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_recombination_algo[] = {
-        {"Standard", 0, 0, 0},
+        {"Simple", 0, 0, 0},
         {"Blossom", 0, 0, 0},
+        {"Simple Full-Quad", 0, 0, 0},
+        {"Blossom Full-Quad", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_subdivision_algo[] = {

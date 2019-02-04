@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string>
 #include <string.h>
@@ -1010,7 +1010,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
             CTX::instance()->mesh.algo2d = ALGO_2D_MESHADAPT;
           else if(!strncmp(argv[i], "del2d", 5) || !strncmp(argv[i], "tri", 3))
             CTX::instance()->mesh.algo2d = ALGO_2D_DELAUNAY;
-          else if(!strncmp(argv[i], "delquad", 5))
+          else if(!strncmp(argv[i], "delquad", 7))
             CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL_QUAD;
           else if(!strncmp(argv[i], "pack", 4))
             CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;
@@ -1026,11 +1026,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
             CTX::instance()->mesh.algo3d = ALGO_3D_FRONTAL;
           else if(!strncmp(argv[i], "mmg3d", 5))
             CTX::instance()->mesh.algo3d = ALGO_3D_MMG3D;
-          else if(!strncmp(argv[i], "delfr3d", 7))
-            CTX::instance()->mesh.algo3d = ALGO_3D_FRONTAL_DEL;
-          else if(!strncmp(argv[i], "delhex3d", 8))
-            CTX::instance()->mesh.algo3d = ALGO_3D_FRONTAL_HEX;
-          else if(!strncmp(argv[i], "rtree3d", 9))
+          else if(!strncmp(argv[i], "rtree3d", 7))
             CTX::instance()->mesh.algo3d = ALGO_3D_RTREE;
           else{
             Msg::Error("Unknown mesh algorithm");
@@ -1043,31 +1039,10 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
           if(exitOnError) Msg::Exit(1);
         }
       }
-      else if(!strcmp(argv[i] + 1, "rec")) {
+      else if(!strcmp(argv[i] + 1, "quad")) {
+        CTX::instance()->mesh.recombineAll = 1;
+        CTX::instance()->mesh.algoRecombine = 2;
         i++;
-        if (argc - i < 3){
-          Msg::Error("Not enough arguments");
-          if(exitOnError) Msg::Exit(1);
-        }
-        else{
-          CTX::instance()->mesh.doRecombinationTest = 1;
-          CTX::instance()->mesh.recTestName = argv[i]; i++;
-          CTX::instance()->mesh.nProc = atoi(argv[i]); i++;
-          CTX::instance()->mesh.nbProc = atoi(argv[i]); i++;
-        }
-      }
-      else if(!strcmp(argv[i] + 1, "beg")) {
-        i++;
-        if(argv[i])
-          CTX::instance()->mesh.recombinationTestStart = atoi(argv[i++]);
-        else{
-          Msg::Error("Missing number for begin recTest");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(!strcmp(argv[i] + 1, "nogreedy")) {
-        i++;
-        CTX::instance()->mesh.recombinationTestNoGreedyStrat = 1;
       }
       else if(!strcmp(argv[i] + 1, "meshdiscrete")) {
         i++;
@@ -1166,7 +1141,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       }
       else if(!strcmp(argv[i] + 1, "help") || !strcmp(argv[i] + 1, "-help")) {
         fprintf(stderr, "Gmsh, a 3D mesh generator with pre- and post-processing facilities\n");
-        fprintf(stderr, "Copyright (C) 1997-2018 C. Geuzaine and J.-F. Remacle\n");
+        fprintf(stderr, "Copyright (C) 1997-2019 C. Geuzaine and J.-F. Remacle\n");
         PrintUsage(argv[0]);
         Msg::Exit(0);
       }

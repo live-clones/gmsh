@@ -25,7 +25,7 @@ Enable Android NDK library target (experimental) (default: OFF)
 @item ENABLE_BUILD_IOS
 Enable iOS library target (experimental) (default: OFF)
 @item ENABLE_CGNS
-Enable CGNS mesh import (default: ON)
+Enable CGNS mesh import (experimental) (default: ON)
 @item ENABLE_CAIRO
 Enable Cairo to render fonts (experimental) (default: ON)
 @item ENABLE_CXX11
@@ -36,10 +36,12 @@ Enable C99 (default: ON)
 Enable profiling compiler flags (default: OFF)
 @item ENABLE_DINTEGRATION
 Enable discrete integration (needed for levelsets) (default: ON)
+@item ENABLE_DOMHEX
+Enable experimental DOMHEX code (default: ON)
 @item ENABLE_FLTK
 Enable FLTK graphical user interface (requires mesh/post) (default: ON)
 @item ENABLE_GETDP
-Enable GetDP solver (as a directly linked library) (default: ON)
+Enable GetDP solver (linked as a library, experimental) (default: ON)
 @item ENABLE_GMM
 Enable GMM linear solvers (simple alternative to PETSc) (default: ON)
 @item ENABLE_GMP
@@ -47,11 +49,11 @@ Enable GMP for Kbipack (advanced) (default: ON)
 @item ENABLE_GRAPHICS
 Enable building graphics lib even without GUI (advanced) (default: OFF)
 @item ENABLE_HXT
-Enable HXT library (default: ON)
+Enable HXT library (for reparametrization and meshing) (default: ON)
 @item ENABLE_KBIPACK
 Enable Kbipack (neeeded by homology solver) (default: ON)
 @item ENABLE_MATHEX
-Enable math expression parser (used by plugins and options) (default: ON)
+Enable Mathex expression parser (used by plugins and options) (default: ON)
 @item ENABLE_MED
 Enable MED mesh and post file formats (default: ON)
 @item ENABLE_MESH
@@ -63,7 +65,7 @@ Enable MMG3D 3D anisotropic mesh refinement (default: ON)
 @item ENABLE_MPEG_ENCODE
 Enable built-in MPEG movie encoder (default: ON)
 @item ENABLE_MPI
-Enable MPI (mostly for parser and solver - mesh generation is sequential) (default: OFF)
+Enable MPI (experimental, not used for meshing) (default: OFF)
 @item ENABLE_MSVC_STATIC_RUNTIME
 Enable static Visual C++ runtime (default: OFF)
 @item ENABLE_MUMPS
@@ -73,11 +75,11 @@ Enable native file chooser in GUI (default: ON)
 @item ENABLE_NETGEN
 Enable Netgen 3D frontal mesh generator (default: ON)
 @item ENABLE_NUMPY
-Enable fullMatrix and numpy array conversion for internal developer API (default: OFF)
+Enable fullMatrix and numpy array conversion for private API (default: OFF)
 @item ENABLE_PETSC4PY
-Enable petsc4py wrappers for petsc matrices in internal developer API (default: ON)
+Enable petsc4py wrappers for petsc matrices for private API (default: ON)
 @item ENABLE_OCC
-Enable OpenCASCADE geometrical models (default: ON)
+Enable OpenCASCADE CAD kernel (default: ON)
 @item ENABLE_OCC_CAF
 Enable OpenCASCADE CAF module (default: OFF)
 @item ENABLE_ONELAB
@@ -85,7 +87,7 @@ Enable ONELAB solver interface (default: ON)
 @item ENABLE_ONELAB_METAMODEL
 Enable ONELAB metamodels (experimental) (default: ON)
 @item ENABLE_OPENMP
-Enable OpenMP (experimental) (default: OFF)
+Enable OpenMP (default: OFF)
 @item ENABLE_OPTHOM
 Enable high-order mesh optimization tools (default: ON)
 @item ENABLE_OS_SPECIFIC_INSTALL
@@ -104,18 +106,20 @@ Enable post-processing module (required by GUI) (default: ON)
 Enable Poppler for displaying PDF documents (experimental) (default: OFF)
 @item ENABLE_PRIVATE_API
 Enable private API (default: OFF)
+@item ENABLE_QUADTRI
+Enable QuadTri structured meshing extensions (default: ON)
 @item ENABLE_REVOROPT
 Enable Revoropt (used for CVT remeshing) (default: OFF)
 @item ENABLE_SLEPC
-Enable SLEPc eigensolvers (required for conformal compounds) (default: ON)
+Enable SLEPc eigensolvers (default: ON)
 @item ENABLE_SOLVER
 Enable built-in finite element solvers (required for compounds) (default: ON)
 @item ENABLE_SYSTEM_CONTRIB
 Use system versions of contrib libraries, when possible (default: OFF)
 @item ENABLE_TCMALLOC
-Enable libtcmalloc, a fast malloc implementation but that does not release memory (default: OFF)
+Enable libtcmalloc (fast malloc that does not release memory) (default: OFF)
 @item ENABLE_VISUDEV
-Enable additional visualization capabilities for development purpose (default: OFF)
+Enable additional visualization capabilities for development purposes (default: OFF)
 @item ENABLE_VOROPP
 Enable voro++ (for hex meshing, experimental) (default: ON)
 @item ENABLE_WRAP_JAVA

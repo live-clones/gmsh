@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Anthony Royer.
 
@@ -901,7 +901,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
     int elementaryNumber = model->getMaxElementaryNumber(0);
 
     for(GModel::const_viter it = vertices.begin(); it != vertices.end(); ++it) {
-      if((*it)->geomType() == GEntity::PartitionVertex) {
+      if((*it)->geomType() == GEntity::PartitionPoint) {
         partitionVertex *vertex = static_cast<partitionVertex *>(*it);
 
         if(vertex->getNumMeshElements() > 1) {
@@ -2227,7 +2227,7 @@ static void AssignPhysicalName(GModel *model)
   // Loop over vertices
   for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex();
       ++it) {
-    if((*it)->geomType() == GEntity::PartitionVertex) {
+    if((*it)->geomType() == GEntity::PartitionPoint) {
       addPhysical(model, *it, nameToNumber, iterators, numPhysical);
     }
   }
@@ -2329,7 +2329,7 @@ int UnpartitionMesh(GModel *const model)
   for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it) {
     GVertex *vertex = *it;
 
-    if(vertex->geomType() == GEntity::PartitionVertex) {
+    if(vertex->geomType() == GEntity::PartitionPoint) {
       partitionVertex *pvertex = static_cast<partitionVertex *>(vertex);
       if(pvertex->getParentEntity() && pvertex->getParentEntity()->dim() == 0) {
         assignToParent(verts, pvertex, pvertex->points.begin(),

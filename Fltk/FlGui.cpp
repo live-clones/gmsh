@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #include <sstream>
@@ -48,45 +48,70 @@
 #include "gl2ps.h"
 #include "gmshPopplerWrapper.h"
 #include "PixelBuffer.h"
+
 #if defined(HAVE_3M)
 #include "3M.h"
 #endif
 
+FlGui *FlGui::_instance = 0;
+std::string FlGui::_openedThroughMacFinder = "";
+bool FlGui::_finishedProcessingCommandLine = false;
+#if __cplusplus >= 201103L
+std::atomic<int> FlGui::_locked(0);
+#else
+int FlGui::_locked = 0;
+#endif
+
 // check (now!) if there are any pending events, and process them
-void FlGui::check()
+void FlGui::check(bool force)
 {
-  if(Msg::GetThreadNum() == 0) Fl::check();
+  if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
+  Fl::check();
 }
 
 // wait (possibly indefinitely) for any events, then process them
-void FlGui::wait()
+void FlGui::wait(bool force)
 {
-  if(Msg::GetThreadNum() == 0) Fl::wait();
+  if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
+  Fl::wait();
 }
 
 // wait (at most time seconds) for any events, then process them
-void FlGui::wait(double time)
+void FlGui::wait(double time, bool force)
 {
-  if(Msg::GetThreadNum() == 0) Fl::wait(time);
+  if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
+  Fl::wait(time);
 }
 
 void FlGui::lock()
 {
-#if defined(_OPENMP)
-  if(Msg::GetThreadNum() > 0) {
-    Fl::lock();
-  }
-#endif
+  _locked++;
+  Fl::lock();
 }
 
 void FlGui::unlock()
 {
-#if defined(_OPENMP)
-  if(Msg::GetThreadNum() > 0) {
-    Fl::unlock();
-    // Fl::awake();
-  }
-#endif
+  _locked--;
+  Fl::unlock();
+}
+
+int FlGui::locked()
+{
+  return _locked;
+}
+
+static void awake_cb(void *data)
+{
+  if(data)
+    FlGui::instance()->updateViews(true, false);
+}
+
+void FlGui::awake(const std::string &action)
+{
+  if(action.empty())
+    Fl::awake(awake_cb, 0);
+  else
+    Fl::awake(awake_cb, (void*)"update");
 }
 
 void FlGui::setOpenedThroughMacFinder(const std::string &name)
@@ -423,10 +448,8 @@ FlGui::FlGui(int argc, char **argv)
   Fl_Mac_App_Menu::quit = "Quit Gmsh";
 #endif
 
-#if defined(_OPENMP)
-  // tell fltk we're in multi-threaded mode
+  // tell fltk we're (potentially) in multi-threaded mode
   Fl::lock();
-#endif
 
   // set X display
   if(CTX::instance()->display.size())
@@ -589,10 +612,6 @@ FlGui::FlGui(int argc, char **argv)
   if(CTX::instance()->showOptionsOnStartup) options->win->show();
   if(CTX::instance()->showMessagesOnStartup) graph[0]->showMessages();
 }
-
-FlGui *FlGui::_instance = 0;
-std::string FlGui::_openedThroughMacFinder = "";
-bool FlGui::_finishedProcessingCommandLine = false;
 
 bool FlGui::available() { return _instance != 0; }
 

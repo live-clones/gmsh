@@ -222,17 +222,17 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MaxNumThreads1D
-Maximum number of threads for 1D meshing (0: use default number of threads)@*
+Maximum number of threads for 1D meshing (0: use MaxNumThreads)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MaxNumThreads2D
-Maximum number of threads for 2D meshing (0: use default number of threads)@*
+Maximum number of threads for 2D meshing (0: use MaxNumThreads)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MaxNumThreads3D
-Maximum number of threads for 3D meshing (0: use default number of threads)@*
+Maximum number of threads for 3D meshing (0: use MaxNumThreads)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -257,7 +257,7 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MinimumCirclePoints
-Minimum number of points used to mesh a circle@*
+Minimum number of nodes used to mesh a circle (and number of nodes per 2*pi radians when the mesh size of adapted to the curvature)@*
 Default value: @code{7}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -502,13 +502,18 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombinationAlgorithm
-Mesh recombination algorithm (0: standard, 1: blossom)@*
+Mesh recombination algorithm (0: simple, 1: blossom, 2: simple full-quad, 3: blossom full-quad)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombineAll
 Apply recombination algorithm to all surfaces, ignoring per-surface spec@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RecombineOptimizeTopology
+Number of topological optimization passes (removal of diamonds, ...) of recombined surface meshes@*
+Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DAll
@@ -523,21 +528,6 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DConformity
 3d recombination conformity type (0: nonconforming, 1: trihedra, 2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.DoRecombinationTest
-Apply recombination algorithm for test@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.RecombinationTestHorizStart
-Depth start@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.RecombinationTestNoGreedyStrat
-No greedy (global) strategies@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -602,8 +592,13 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SmoothCrossField
-Apply n barycentric smoothing passes to the cross field@*
+Apply n barycentric smoothing passes to the 3D cross field@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CrossFieldClosestPoint
+Use closest point to compute 2D crossfield@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SmoothNormals

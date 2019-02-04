@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "MPyramid.h"
 #include "Numeric.h"
@@ -498,9 +498,9 @@ void MPyramidN::getFaceVertices(const int num, std::vector<MVertex *> &v) const
   }
   case 3: // 2 3 4
   {
-    _addHOEdgePoints(3, v);
-    _addHOEdgePoints(6, v);
-    _addHOEdgePoints(4, v, false);
+    _addHOEdgePoints(5, v);
+    _addHOEdgePoints(7, v);
+    _addHOEdgePoints(6, v, false);
     break;
   }
   case 4: // 0 3 2 1
@@ -508,7 +508,7 @@ void MPyramidN::getFaceVertices(const int num, std::vector<MVertex *> &v) const
     _addHOEdgePoints(1, v);
     _addHOEdgePoints(5, v, false);
     _addHOEdgePoints(3, v, false);
-    _addHOEdgePoints(1, v, false);
+    _addHOEdgePoints(0, v, false);
     break;
   }
   }

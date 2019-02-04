@@ -253,7 +253,7 @@ if @code{tag} is positive, or a new tag if @code{tag} < 0.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item setPhysicalName
@@ -335,7 +335,7 @@ Get the geometrical dimension of the current model.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addDiscreteEntity
@@ -352,7 +352,7 @@ topology of the overall model.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item removeEntities
@@ -381,6 +381,18 @@ Remove the physical groups @code{dimTags} of the current model. If
 -
 @end table
 
+@item removePhysicalName
+Remove the physical name @code{name} of the current model.
+
+@table @asis
+@item Input:
+@code{name}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item getType
 Get the type of the entity of dimension @code{dim} and tag @code{tag}.
 
@@ -403,6 +415,19 @@ tag @code{tag}, i.e. from which the entity is a part of, if any.
 @code{dim}, @code{tag}
 @item Output:
 @code{parentDim}, @code{parentTag}
+@item Return:
+-
+@end table
+
+@item getPartitions
+In a partitioned model, return the tags of the partition(s) to which the entity
+belongs.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{partitions}
 @item Return:
 -
 @end table
@@ -1141,7 +1166,7 @@ matrix, by row). Currently only available for @code{dim} == 1 and @code{dim} ==
 
 @table @asis
 @item Input:
-@code{dim}, @code{tags}, @code{tagsSource}, @code{affineTransformation}
+@code{dim}, @code{tags}, @code{tagsSource}, @code{affineTransform}
 @item Output:
 -
 @item Return:
@@ -1254,7 +1279,7 @@ the field tag.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item remove
@@ -1350,7 +1375,7 @@ the geo module.)
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addLine
@@ -1364,7 +1389,7 @@ new tag is selected automatically. Return the tag of the line.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addCircleArc
@@ -1380,7 +1405,7 @@ the plane of the circle arc. Return the tag of the circle arc.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addEllipseArc
@@ -1397,7 +1422,7 @@ tag of the ellipse arc.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addSpline
@@ -1412,7 +1437,7 @@ same. Return the tag of the spline curve.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addBSpline
@@ -1427,7 +1452,7 @@ same. Return the tag of the b-spline curve.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addBezier
@@ -1441,7 +1466,7 @@ Return the tag of the Bezier curve.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addCurveLoop
@@ -1458,7 +1483,7 @@ curve loop.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addPlaneSurface
@@ -1473,7 +1498,7 @@ selected automatically. Return the tag of the surface.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addSurfaceFilling
@@ -1488,7 +1513,7 @@ tag is selected automatically. Return the tag of the surface.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addSurfaceLoop
@@ -1502,7 +1527,7 @@ automatically. Return the tag of the shell.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addVolume
@@ -1517,7 +1542,7 @@ selected automatically. Return the tag of the volume.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item extrude
@@ -1809,7 +1834,7 @@ the occ module.)
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addLine
@@ -1823,7 +1848,7 @@ new tag is selected automatically. Return the tag of the line.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addCircleArc
@@ -1838,7 +1863,7 @@ the circle arc.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addCircle
@@ -1853,7 +1878,7 @@ arc between the two angles. Return the tag of the circle.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addEllipseArc
@@ -1868,7 +1893,7 @@ the ellipse arc.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addEllipse
@@ -1884,7 +1909,7 @@ two angles. Return the tag of the ellipse.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addSpline
@@ -1899,7 +1924,7 @@ same. Return the tag of the spline curve.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addBSpline
@@ -1916,7 +1941,7 @@ tag of the b-spline curve.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addBezier
@@ -1930,7 +1955,7 @@ Return the tag of the Bezier curve.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addWire
@@ -1946,7 +1971,7 @@ Return the tag of the wire.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addCurveLoop
@@ -1961,7 +1986,7 @@ automatically. Return the tag of the curve loop.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addRectangle
@@ -1977,7 +2002,7 @@ tag of the rectangle.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addDisk
@@ -1992,7 +2017,7 @@ tag of the disk.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addPlaneSurface
@@ -2007,7 +2032,7 @@ otherwise a new tag is selected automatically. Return the tag of the surface.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addSurfaceFilling
@@ -2021,7 +2046,7 @@ Return the tag of the surface.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addSurfaceLoop
@@ -2035,7 +2060,7 @@ automatically. Return the tag of the surface loop.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addVolume
@@ -2050,7 +2075,7 @@ tag is selected automatically. Return the tag of the volume.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addSphere
@@ -2067,7 +2092,7 @@ sphere.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addBox
@@ -2082,7 +2107,7 @@ box.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addCylinder
@@ -2099,7 +2124,7 @@ Return the tag of the cylinder.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addCone
@@ -2116,7 +2141,7 @@ opening (from 0 to 2*Pi). Return the tag of the cone.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addWedge
@@ -2132,7 +2157,7 @@ extent along the x-axis. Return the tag of the wedge.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addTorus
@@ -2148,7 +2173,7 @@ wedge.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item addThruSections
@@ -2387,6 +2412,20 @@ respect to the plane of equation @code{a} * x + @code{b} * y + @code{c} * z +
 -
 @end table
 
+@item affineTransform
+Apply a general affine transformation matrix @code{a} (16 entries of a 4x4
+matrix, by row; only the 12 first can be provided for convenience) to the
+geometrical entities @code{dimTag}.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{a}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item copy
 Copy the entities @code{dimTags}; the new entities are returned in
 @code{outDimTags}.
@@ -2503,7 +2542,7 @@ associate a new tag. Return the view tag.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item remove
@@ -2529,7 +2568,7 @@ access view options.
 @item Output:
 -
 @item Return:
-integer
+integer value
 @end table
 
 @item getTags
@@ -2706,7 +2745,7 @@ Draw all the OpenGL scenes.
 @heading Module @code{/gmsh/fltk}
 @ftable @code
 @item initialize
-Create the Fltk graphical user interface.
+Create the Fltk graphical user interface. Can only be called in the main thread.
 
 @table @asis
 @item Input:
@@ -2720,7 +2759,8 @@ Create the Fltk graphical user interface.
 @item wait
 Wait at most @code{time} seconds for user interface events and return. If
 @code{time} < 0, wait indefinitely. First automatically create the user
-interface if it has not yet been initialized.
+interface if it has not yet been initialized. Can only be called in the main
+thread.
 
 @table @asis
 @item Input:
@@ -2731,10 +2771,11 @@ interface if it has not yet been initialized.
 -
 @end table
 
-@item run
-Run the event loop of the Fltk graphical user interface, i.e. repeatedly calls
-@code{wait}. First automatically create the user interface if it has not yet
-been initialized.
+@item update
+Update the user interface (potentially creating new widgets and windows). First
+automatically create the user interface if it has not yet been initialized. Can
+only be called in the main thread: use @code{awake("update")} to trigger an
+update of the user interface from another thread.
 
 @table @asis
 @item Input:
@@ -2743,30 +2784,183 @@ been initialized.
 -
 @item Return:
 -
+@end table
+
+@item awake
+Awake the main user interface thread and process pending events, and optionally
+perform an action (currently the only @code{action} allowed is "update").
+
+@table @asis
+@item Input:
+@code{action}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item lock
+Block the current thread until it can safely modify the user interface.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item unlock
+Release the lock that was set using lock.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item run
+Run the event loop of the graphical user interface, i.e. repeatedly calls
+@code{wait()}. First automatically create the user interface if it has not yet
+been initialized. Can only be called in the main thread.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item selectEntities
+Select entities in the user interface. If @code{dim} is >= 0, return only the
+entities of the specified dimension (e.g. points if @code{dim} == 0).
+
+@table @asis
+@item Input:
+@code{dim}
+@item Output:
+@code{dimTags}
+@item Return:
+integer value
+@end table
+
+@item selectElements
+Select elements in the user interface.
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{tags}
+@item Return:
+integer value
+@end table
+
+@item selectViews
+Select views in the user interface.
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{tags}
+@item Return:
+integer value
 @end table
 
 @end ftable
 
 @heading Module @code{/gmsh/onelab}
 @ftable @code
-@item get
-Get @code{data} from the ONELAB server.
+@item set
+Set one or more parameters in the ONELAB database, encoded in @code{format}.
 
 @table @asis
 @item Input:
-@code{format}
+@code{data}, @code{format}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item get
+Get all the parameters (or a single one if @code{name} is specified) from the
+ONELAB database, encoded in @code{format}.
+
+@table @asis
+@item Input:
+@code{name}, @code{format}
 @item Output:
 @code{data}
 @item Return:
 -
 @end table
 
-@item set
-Set @code{data} in the ONELAB server.
+@item setNumber
+Set the value of the number parameter @code{name} in the ONELAB database. Create
+the parameter if it does not exist; update the value if the parameter exists.
 
 @table @asis
 @item Input:
-@code{data}, @code{format}
+@code{name}, @code{value}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setString
+Set the value of the string parameter @code{name} in the ONELAB database. Create
+the parameter if it does not exist; update the value if the parameter exists.
+
+@table @asis
+@item Input:
+@code{name}, @code{value}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item getNumber
+Get the value of the number parameter @code{name} from the ONELAB database.
+Return an empty vector if the parameter does not exist.
+
+@table @asis
+@item Input:
+@code{name}
+@item Output:
+@code{value}
+@item Return:
+-
+@end table
+
+@item getString
+Get the value of the string parameter @code{name} from the ONELAB database.
+Return an empty vector if the parameter does not exist.
+
+@table @asis
+@item Input:
+@code{name}
+@item Output:
+@code{value}
+@item Return:
+-
+@end table
+
+@item clear
+Clear the ONELAB database, or remove a single parameter if @code{name} is given.
+
+@table @asis
+@item Input:
+@code{name}
 @item Output:
 -
 @item Return:
@@ -2791,6 +2985,18 @@ might be linked to the processed input files.
 
 @heading Module @code{/gmsh/logger}
 @ftable @code
+@item write
+Write a @code{message}. @code{level} can be "info", "warning" or "error".
+
+@table @asis
+@item Input:
+@code{message}, @code{level}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item start
 Start logging messages in @code{log}.
 
@@ -2813,6 +3019,30 @@ Stop logging messages.
 -
 @item Return:
 -
+@end table
+
+@item time
+Return wall clock time.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+floating point value
+@end table
+
+@item cputime
+Return CPU time.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+floating point value
 @end table
 
 @end ftable

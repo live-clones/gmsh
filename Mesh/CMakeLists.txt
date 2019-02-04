@@ -1,7 +1,7 @@
-# Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 set(SRC
   Generator.cpp
@@ -15,34 +15,22 @@ set(SRC
     meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGRegionNetgen.cpp
     meshGRegionDelaunayInsertion.cpp meshGRegionTransfinite.cpp
-    meshGRegionExtruded.cpp  meshGRegionCarveHole.cpp
+    meshGRegionExtruded.cpp meshGRegionCarveHole.cpp
     meshGRegionLocalMeshMod.cpp meshGRegionMMG3D.cpp
-    meshGRegionRelocateVertex.cpp
   meshGRegionBoundaryLayer.cpp
-  meshDiscreteRegion.cpp
+  meshRelocateVertex.cpp
   meshMetric.cpp
-  BackgroundMeshTools.cpp
-    BackgroundMesh.cpp BGMBase.cpp
-    BackgroundMesh2D.cpp
-    BackgroundMesh3D.cpp
-    BackgroundMeshManager.cpp
-  pointInsertionRTreeTools.cpp pointInsertion.cpp
+  BackgroundMesh.cpp BackgroundMeshTools.cpp
   qualityMeasures.cpp qualityMeasuresJacobian.cpp
   BoundaryLayers.cpp
-    BDS.cpp
-    HighOrder.cpp
-    meshPartition.cpp
-    meshRefine.cpp
-    QuadTriUtils.cpp
-      QuadTriExtruded2D.cpp QuadTriExtruded3D.cpp QuadTriTransfinite3D.cpp
+  BDS.cpp
+  HighOrder.cpp
+  meshPartition.cpp
+  meshRefine.cpp
   delaunay3d.cpp
-  simple3D.cpp ThinLayer.cpp
   DivideAndConquer.cpp
-  directions3D.cpp
-  filterElements.cpp
-  yamakawa.cpp
   Field.cpp
-  surfaceFiller.cpp
+  filterElements.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

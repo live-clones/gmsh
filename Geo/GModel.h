@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _GMODEL_H_
 #define _GMODEL_H_
@@ -392,6 +392,9 @@ public:
   // "dim" and id number "num"
   std::string getPhysicalName(int dim, int num) const;
 
+  // remove physical name(s)
+  void removePhysicalName(const std::string &name);
+
   // get the number of a given physical group of dimension
   // "dim" and name "name". return -1 if not found
   int getPhysicalNumber(const int &dim, const std::string &name);
@@ -496,12 +499,12 @@ public:
   unsigned int getNumPartitions() const { return _numPartitions; }
   void setNumPartitions(unsigned int npart) { _numPartitions = npart; }
 
-  // delete all the partitions
-  int deleteMeshPartitions();
   // partition the mesh
   int partitionMesh(int num);
-  // Import a mesh partitionned by a tag given to the element en create the
-  // topology
+  // unpartition the mesh
+  int unpartitionMesh();
+  // import a mesh partitionned by a tag given by element (i.e. the old way we
+  // stored partitions) and create the new topology-based partition entitiesx
   int convertOldPartitioningToNewOne();
   // write the partitioned topology file
   int writePartitionedTopology(std::string &name);

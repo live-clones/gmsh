@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
 #include <vector>
@@ -13,10 +13,9 @@
 #include "meshGRegionMMG3D.h"
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
-#include "boundaryLayersData.h"
 #include "meshGRegionBoundaryRecovery.h"
 #include "meshGRegionDelaunayInsertion.h"
-#include "meshGRegionRelocateVertex.h"
+#include "meshRelocateVertex.h"
 #include "GModel.h"
 #include "GRegion.h"
 #include "GFace.h"
@@ -25,16 +24,9 @@
 #include "MTriangle.h"
 #include "MTetrahedron.h"
 #include "MPyramid.h"
-#include "MPrism.h"
-#include "BDS.h"
+#include "ExtrudeParams.h"
 #include "OS.h"
 #include "Context.h"
-#include "simple3D.h"
-#include "directions3D.h"
-#include "pointInsertion.h"
-#include "discreteFace.h"
-#include "filterElements.h"
-#include "ExtrudeParams.h"
 
 void splitQuadRecovery::add(const MFace &f, MVertex *v, GFace *gf)
 {
@@ -163,18 +155,26 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     refineMeshMMG(gr);
   }
   else{
+    bool pyr = sqr.buildPyramids(gr->model());
+    if(pyr){
+      //      Msg::Info("Optimizing pyramids for hybrid mesh...");
+      //      RelocateVerticesOfPyramids(regions, 5);
+      //      Msg::Info("Done optimizing pyramids for hybrid mesh");
+    }
     insertVerticesInRegion(gr, 2000000000, true, &sqr);
+    if(pyr){
+      Msg::Info("Optimizing pyramids for hybrid mesh...");
+      RelocateVerticesOfPyramids(regions, 5);
+      RelocateVertices(regions, 5);
+      Msg::Info("Done optimizing pyramids for hybrid mesh");
+    }
+
     /* T E S T*/
-    bool createBoundaryLayerOneLayer (GRegion *gr, std::vector<GFace *> & bls);
-    createBoundaryLayerOneLayer (gr, allFaces);
+    //    bool createBoundaryLayerOneLayer (GRegion *gr, std::vector<GFace *> & bls);
+    //    createBoundaryLayerOneLayer (gr, allFaces);
     /* END TEST */
   }
 
-  if(sqr.buildPyramids(gr->model())){
-    Msg::Info("Optimizing pyramids for hybrid mesh...");
-    RelocateVertices(regions, 3);
-    Msg::Info("Done optimizing pyramids for hybrid mesh");
-  }
 }
 
 void deMeshGRegion::operator()(GRegion *gr)

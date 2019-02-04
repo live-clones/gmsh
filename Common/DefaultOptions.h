@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _DEFAULT_OPTIONS_H_
 #define _DEFAULT_OPTIONS_H_
@@ -110,11 +110,11 @@ StringXString GeneralOptions_String[] = {
 
   { F|O, "TextEditor" , opt_general_editor ,
 #if defined(WIN32)
-    "notepad.exe %s" ,
+    "notepad.exe '%s'" ,
 #elif defined(__APPLE__)
-    "open -t %s" ,
+    "open -t '%s'" ,
 #else
-    "gedit %s" ,
+    "gedit '%s'" ,
 #endif
     "System command to launch a text editor" },
   { F|S, "TmpFileName" , opt_general_tmp_filename ,
@@ -687,8 +687,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "NoPopup" , opt_general_nopopup , 0. ,
     "Disable interactive dialog windows in scripts (and use default values "
     "instead)" },
-  { F|O, "NumThreads" , opt_general_num_threads , 1. ,
-    "Set (maximum) number of threads" },
+  { F|O, "NumThreads" , opt_general_num_threads , 0. ,
+    "Set (maximum) number of threads (0: use system default, i.e. OMP_NUM_THREADS)" },
 
   { F|S, "OptionsPositionX" , opt_general_option_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the option "
@@ -758,6 +758,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Material shininess" },
   { F|O, "ShininessExponent" , opt_general_shine_exponent , 40. ,
     "Material shininess exponent (between 0 and 128)" },
+  { F|O, "ShowModuleMenu" , opt_general_show_module_menu , 1. ,
+    "Show the standard Gmsh menu in the tree" },
   { F|O, "ShowOptionsOnStartup", opt_general_show_options_on_startup, 0. ,
     "Show option window on startup" },
   { F|O, "ShowMessagesOnStartup", opt_general_show_messages_on_startup, 0. ,
@@ -1087,11 +1089,11 @@ StringXNumber MeshOptions_Number[] = {
     "Display width of mesh lines (in pixels)" },
 
   { F|O, "MaxNumThreads1D" , opt_mesh_max_num_threads_1d , 0. ,
-    "Maximum number of threads for 1D meshing (0: use default number of threads)" },
+    "Maximum number of threads for 1D meshing (0: use MaxNumThreads)" },
   { F|O, "MaxNumThreads2D" , opt_mesh_max_num_threads_2d , 0. ,
-    "Maximum number of threads for 2D meshing (0: use default number of threads)" },
+    "Maximum number of threads for 2D meshing (0: use MaxNumThreads)" },
   { F|O, "MaxNumThreads3D" , opt_mesh_max_num_threads_3d , 0. ,
-    "Maximum number of threads for 3D meshing (0: use default number of threads)" },
+    "Maximum number of threads for 3D meshing (0: use MaxNumThreads)" },
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
     "Mesh only visible entities (experimental: use with caution!)" },
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
@@ -1102,7 +1104,8 @@ StringXNumber MeshOptions_Number[] = {
     "METIS algorithm for k-way refinement (1: FM-based cut, 2: Greedy, "
     "3: Two-sided node FM, 4: One-sided node FM)" },
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
-    "Minimum number of points used to mesh a circle" },
+    "Minimum number of nodes used to mesh a circle (and number of nodes per 2*pi "
+    "radians when the mesh size of adapted to the curvature)" },
   { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
     "Minimum number of points used to mesh a (non-straight) curve" },
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.0 ,
@@ -1217,9 +1220,13 @@ StringXNumber MeshOptions_Number[] = {
 #else
   { F|O, "RecombinationAlgorithm" , opt_mesh_algo_recombine , 0 ,
 #endif
-    "Mesh recombination algorithm (0: standard, 1: blossom)" },
+    "Mesh recombination algorithm (0: simple, 1: blossom, 2: simple full-quad, "
+    "3: blossom full-quad)" },
   { F|O, "RecombineAll" , opt_mesh_recombine_all , 0 ,
     "Apply recombination algorithm to all surfaces, ignoring per-surface spec" },
+  { F|O, "RecombineOptimizeTopology" , opt_mesh_recombine_optimize_topology , 5 ,
+    "Number of topological optimization passes (removal of diamonds, ...) of "
+    "recombined surface meshes" },
   { F|O, "Recombine3DAll" , opt_mesh_recombine3d_all , 0 ,
     "Apply recombination3D algorithm to all volumes, ignoring per-volume spec" },
   { F|O, "Recombine3DLevel" , opt_mesh_recombine3d_level , 0 ,
@@ -1227,12 +1234,6 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Recombine3DConformity" , opt_mesh_recombine3d_conformity , 0 ,
     "3d recombination conformity type (0: nonconforming, 1: trihedra, "
     "2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)" },
-  { F|O, "DoRecombinationTest" , opt_mesh_do_recombination_test , 0 ,
-    "Apply recombination algorithm for test" },
-  { F|O, "RecombinationTestHorizStart" , opt_mesh_recombination_test_start , 1 ,
-    "Depth start" },
-  { F|O, "RecombinationTestNoGreedyStrat" , opt_mesh_recombination_no_greedy_strat , 0 ,
-    "No greedy (global) strategies" },
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" },
   { F|O, "Renumber" , opt_mesh_renumber , 1 ,
@@ -1261,7 +1262,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Smoothing" , opt_mesh_nb_smoothing , 1. ,
     "Number of smoothing steps applied to the final mesh" },
   { F|O, "SmoothCrossField" , opt_mesh_smooth_cross_field , 0. ,
-    "Apply n barycentric smoothing passes to the cross field" },
+    "Apply n barycentric smoothing passes to the 3D cross field" },
+  { F|O, "CrossFieldClosestPoint" , opt_mesh_cross_field_closest_point , 1. ,
+    "Use closest point to compute 2D crossfield" },
   { F|O, "SmoothNormals" , opt_mesh_smooth_normals , 0. ,
     "Smooth the mesh normals?" },
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,

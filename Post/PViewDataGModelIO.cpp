@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -473,7 +473,7 @@ extern "C" {
 #include <med.h>
 }
 
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
 // To avoid too many ifdefs below we use defines for the bits of the
 // API that did not change too much between MED2 and MED3. If we
 // remove MED2 support at some point, please remove these defines and
@@ -502,7 +502,7 @@ std::vector<std::string> medGetFieldNames(const std::string &fileName)
 {
   std::vector<std::string> fieldNames;
 
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
   med_idt fid = MEDfileOpen(fileName.c_str(), MED_ACC_RDONLY);
 #else
   med_idt fid = MEDouvrir((char *)fileName.c_str(), MED_LECTURE);
@@ -512,7 +512,7 @@ std::vector<std::string> medGetFieldNames(const std::string &fileName)
     return fieldNames;
   }
 
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
   med_int numFields = MEDnField(fid);
 #else
   med_int numFields = MEDnChamp(fid, 0);
@@ -531,7 +531,7 @@ std::vector<std::string> medGetFieldNames(const std::string &fileName)
     std::vector<char> compUnit(numComp * MED_TAILLE_PNOM + 1);
     med_int numSteps = 0;
     med_type_champ type;
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
     med_bool localMesh;
     if(MEDfieldInfo(fid, index + 1, name, meshName, &localMesh, &type,
                     &compName[0], &compUnit[0], dtUnit, &numSteps) < 0) {
@@ -545,7 +545,7 @@ std::vector<std::string> medGetFieldNames(const std::string &fileName)
     fieldNames.push_back(name);
   }
 
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
   if(MEDfileClose(fid) < 0) {
 #else
   if(MEDfermer(fid) < 0) {
@@ -575,7 +575,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
   std::vector<char> compUnit(numComp * MED_TAILLE_PNOM + 1);
   med_int numSteps = 0;
   med_type_champ type;
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
   med_bool localMesh;
   if(MEDfieldInfo(fid, fileIndex + 1, name, meshName, &localMesh, &type,
                   &compName[0], &compUnit[0], dtUnit, &numSteps) < 0) {
@@ -606,7 +606,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
   // with which we implicitly index them in GModel::readMED)
   const med_entite_maillage entType[] = {MED_NOEUD, MED_MAILLE,
                                          MED_NOEUD_MAILLE};
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
   const med_geometrie_element eleType[] = {
     MED_NONE,   MED_SEG2,   MED_TRIA3, MED_QUAD4,  MED_TETRA4,  MED_HEXA8,
     MED_PENTA6, MED_PYRA5,  MED_SEG3,  MED_TRIA6,  MED_QUAD9,   MED_TETRA10,
@@ -626,7 +626,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
   for(unsigned int i = 0; i < sizeof(entType) / sizeof(entType[0]); i++) {
     for(unsigned int j = 0; j < sizeof(eleType) / sizeof(eleType[0]); j++) {
       if((!i && !j) || j) {
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
         med_int n = numSteps;
 #else
         med_int n = MEDnPasdetemps(fid, name, entType[i], eleType[j]);
@@ -658,7 +658,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
       med_geometrie_element ele = eleType[pairs[pair].second];
       med_int numdt, numit, ngauss;
       med_float dt;
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
       if(MEDfieldComputingStepInfo(fid, name, step + 1, &numdt, &numit, &dt) <
          0) {
 #else
@@ -693,7 +693,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
       // get number of values in the field (numVal takes the number of
       // Gauss points or the number of nodes per element into account,
       // but not the number of components)
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
       med_int profileSize;
       med_int numVal = MEDfieldnValueWithProfile(
         fid, name, numdt, numit, ent, ele, 1, MED_COMPACT_STMODE, profileName,
@@ -720,7 +720,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
 
       // read field data
       std::vector<double> val(numVal * numComp);
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
       if(MEDfieldValueWithProfileRd(fid, name, numdt, numit, ent, ele,
                                     MED_COMPACT_STMODE, profileName,
                                     MED_FULL_INTERLACE, MED_ALL_CONSTITUENT,
@@ -754,7 +754,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
           std::vector<med_float> refcoo((ele % 100) * dim);
           std::vector<med_float> gscoo(ngauss * dim);
           std::vector<med_float> wg(ngauss);
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
           if(MEDlocalizationRd(fid, locName, MED_FULL_INTERLACE, &refcoo[0],
                                &gscoo[0], &wg[0]) < 0) {
 #else
@@ -781,7 +781,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
         if(n > 0) {
           Msg::Debug("MED has full profile");
           profile.resize(n);
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
           if(MEDprofileRd(fid, profileName, &profile[0]) < 0) {
 #else
           if(MEDprofilLire(fid, &profile[0], profileName) < 0) {
@@ -799,7 +799,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
 
       // get size of full array and tags (if any) of entities
       bool nodal = (ent == MED_NOEUD);
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
       med_bool changeOfCoord;
       med_bool geoTransform;
       med_int numEnt = MEDmeshnEntity(
@@ -813,7 +813,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
                    nodal ? (med_connectivite)0 : MED_NOD);
 #endif
       std::vector<med_int> tags(numEnt);
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
       if(MEDmeshEntityNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT,
                                nodal ? MED_NODE : MED_CELL,
                                nodal ? MED_NO_GEOTYPE : ele, &tags[0]) < 0)
@@ -834,7 +834,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
         }
         else {
           for(int i = 1; i < pairs[pair].second; i++) {
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
             med_int n = MEDmeshnEntity(
               fid, meshName, MED_NO_DT, MED_NO_IT, MED_CELL, eleType[i],
               MED_CONNECTIVITY, MED_NODAL, &changeOfCoord, &geoTransform);
@@ -905,7 +905,7 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
   std::string meshName(model->getName());
   std::string fieldName(getName());
 
-#if(MED_MAJOR_NUM == 3) && (MED_MINOR_NUM >= 3)
+#if(MED_MAJOR_NUM >= 3) && (MED_MINOR_NUM >= 3)
   // MEDfileVersionOpen actually appeared in MED 3.2.1
   med_int major = MED_MAJOR_NUM, minor = MED_MINOR_NUM, release = MED_RELEASE_NUM;
   if(CTX::instance()->mesh.medFileMinorVersion >= 0){
@@ -943,7 +943,7 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
     return false;
   }
 
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
   if(MEDprofileWr(fid, profileName, (med_int)profile.size(), &profile[0]) < 0) {
 #else
   if(MEDprofilEcr(fid, &profile[0], (med_int)profile.size(), profileName) < 0) {
@@ -953,7 +953,7 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
   }
 
   int numComp = _steps[0]->getNumComponents();
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
   if(MEDfieldCr(fid, (char *)fieldName.c_str(), MED_FLOAT64, (med_int)numComp,
                 "unknown", "unknown", "unknown",
                 (char *)meshName.c_str()) < 0) {
@@ -965,7 +965,7 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
     return false;
   }
 
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
   med_bool changeOfCoord, geoTransform;
   med_int numNodes =
     MEDmeshnEntity(fid, (char *)meshName.c_str(), MED_NO_DT, MED_NO_IT,
@@ -992,7 +992,7 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
     for(unsigned int i = 0; i < profile.size(); i++)
       for(int k = 0; k < numComp; k++)
         val[i * numComp + k] = _steps[step]->getData(indices[i])[k];
-#if(MED_MAJOR_NUM == 3)
+#if(MED_MAJOR_NUM >= 3)
     if(MEDfieldValueWithProfileWr(
          fid, (char *)fieldName.c_str(), (med_int)(step + 1), MED_NO_IT, time,
          MED_NODE, MED_NO_GEOTYPE, MED_COMPACT_STMODE, profileName, "",

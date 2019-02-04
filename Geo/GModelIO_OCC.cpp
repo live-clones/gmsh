@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -2945,6 +2945,23 @@ bool OCC_Internals::symmetry(const std::vector<std::pair<int, int> > &inDimTags,
   return _transform(inDimTags, 0, &gtfo);
 }
 
+bool OCC_Internals::affine(const std::vector<std::pair<int, int> > &inDimTags,
+                           const std::vector<double> &mat)
+{
+  std::vector<double> a(mat);
+  if(a.size() < 12){
+    Msg::Warning("%d < 12 entries in affine transform matrix", (int)a.size());
+    a.resize(12, 0.);
+  }
+  gp_GTrsf gt;
+  gt.SetVectorialPart(gp_Mat(a[0], a[1], a[2],
+                             a[4], a[5], a[6],
+                             a[8], a[9], a[10]));
+  gt.SetTranslationPart(gp_XYZ(a[3], a[7], a[11]));
+  BRepBuilderAPI_GTransform gtfo(gt);
+  return _transform(inDimTags, 0, &gtfo);
+}
+
 bool OCC_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
                          std::vector<std::pair<int, int> > &outDimTags)
 {
@@ -3100,6 +3117,7 @@ bool OCC_Internals::importShapes(const std::string &fileName,
   }
 
   BRepTools::Clean(result);
+
   _healShape(result, CTX::instance()->geom.tolerance,
              CTX::instance()->geom.occFixDegenerated,
              CTX::instance()->geom.occFixSmallEdges,
@@ -3305,6 +3323,11 @@ void OCC_Internals::synchronize(GModel *model)
     }
     _copyExtrudedMeshAttributes(region, occr);
   }
+
+  // if fuzzy boolean tolerance was used, some vertex positions should be
+  // recomputed (e.g. end point of curves
+  if(CTX::instance()->geom.toleranceBoolean)
+    model->snapVertices();
 
   // recompute global boundind box in CTX
   SetBoundingBox();

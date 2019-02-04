@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <limits>
 #include <stdlib.h>
@@ -766,14 +766,14 @@ GModel::piter GModel::setPhysicalName(piter pos, const std::string &name,
   // if no number is given, find the next available one
   if(!number) number = getMaxPhysicalNumber(dim) + 1;
 #if __cplusplus >= 201103L
-  // Insertion complexity in O(1) if position points to
-  // the element that will FOLLOW the inserted element.
+  // Insertion complexity in O(1) if position points to the element that will
+  // FOLLOW the inserted element.
   if(pos != lastPhysicalName()) ++pos;
   return physicalNames.insert(pos, std::pair<std::pair<int, int>, std::string>(
                                      std::pair<int, int>(dim, number), name));
 #else
-  // Insertion complexity in O(1) if position points to
-  // the element that will PRECEDE the inserted element.
+  // Insertion complexity in O(1) if position points to the element that will
+  // PRECEDE the inserted element.
   return physicalNames.insert(pos, std::pair<std::pair<int, int>, std::string>(
                                      std::pair<int, int>(dim, number), name));
 #endif
@@ -785,6 +785,19 @@ std::string GModel::getPhysicalName(int dim, int number) const
     physicalNames.find(std::pair<int, int>(dim, number));
   if(it != physicalNames.end()) return it->second;
   return "";
+}
+
+void GModel::removePhysicalName(const std::string &name)
+{
+  std::map<std::pair<int, int>, std::string>::iterator it =
+    physicalNames.begin();
+  while(it != physicalNames.end()){
+    if(it->second == name)
+      //it = physicalNames.erase(it); // C++11 only
+      physicalNames.erase(it++);
+    else
+      ++it;
+  }
 }
 
 int GModel::getPhysicalNumber(const int &dim, const std::string &name)
@@ -1259,11 +1272,64 @@ void GModel::renumberMeshVertices()
   setMaxVertexNumber(0);
   std::vector<GEntity *> entities;
   getEntities(entities);
+
+  // check if we will potentially only save a subset of elements, i.e. those
+  // belonging to physical groups
+  bool potentiallySaveSubset = false;
+  if(!CTX::instance()->mesh.saveAll){
+    for(unsigned int i = 0; i < entities.size(); i++){
+      if(entities[i]->physicals.size()){
+        potentiallySaveSubset = true;
+        break;
+      }
+    }
+  }
+
   unsigned int n = 0;
-  for(unsigned int i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    for(unsigned int j = 0; j < ge->getNumMeshVertices(); j++) {
-      ge->getMeshVertex(j)->forceNum(++n);
+  if(potentiallySaveSubset){
+    Msg::Debug("Renumbering for potentially partial mesh save");
+    // if we potentially only save a subset of elements, make sure to first
+    // renumber the vertices that belong to those elements (so that we end up
+    // with a dense vertex numbering in the output file)
+    for(unsigned int i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(unsigned int j = 0; j < ge->getNumMeshVertices(); j++) {
+        ge->getMeshVertex(j)->forceNum(-1);
+      }
+    }
+    for(unsigned int i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      if(ge->physicals.size()){
+        for(unsigned int j = 0; j < ge->getNumMeshElements(); j++) {
+          MElement *e = ge->getMeshElement(j);
+          for(unsigned int k = 0; k < e->getNumVertices(); k++){
+            e->getVertex(k)->forceNum(0);
+          }
+        }
+      }
+    }
+    for(unsigned int i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(unsigned int j = 0; j < ge->getNumMeshVertices(); j++) {
+        MVertex *v = ge->getMeshVertex(j);
+        if(v->getNum() == 0) v->forceNum(++n);
+      }
+    }
+    for(unsigned int i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(unsigned int j = 0; j < ge->getNumMeshVertices(); j++) {
+        MVertex *v = ge->getMeshVertex(j);
+        if(v->getNum() == -1) v->forceNum(++n);
+      }
+    }
+  }
+  else{
+    // no physical groups
+    for(unsigned int i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(unsigned int j = 0; j < ge->getNumMeshVertices(); j++) {
+        ge->getMeshVertex(j)->forceNum(++n);
+      }
     }
   }
 }
@@ -1274,11 +1340,44 @@ void GModel::renumberMeshElements()
   setMaxElementNumber(0);
   std::vector<GEntity *> entities;
   getEntities(entities);
+
+  // check if we will potentially only save a subset of elements, i.e. those
+  // belonging to physical groups
+  bool potentiallySaveSubset = false;
+  if(!CTX::instance()->mesh.saveAll){
+    for(unsigned int i = 0; i < entities.size(); i++){
+      if(entities[i]->physicals.size()){
+        potentiallySaveSubset = true;
+        break;
+      }
+    }
+  }
+
   unsigned int n = 0;
-  for(unsigned int i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++) {
-      ge->getMeshElement(j)->forceNum(++n);
+  if(potentiallySaveSubset){
+    for(unsigned int i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      if(ge->physicals.size()){
+        for(unsigned int j = 0; j < ge->getNumMeshElements(); j++) {
+          ge->getMeshElement(j)->forceNum(++n);
+        }
+      }
+    }
+    for(unsigned int i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      if(ge->physicals.empty()){
+        for(unsigned int j = 0; j < ge->getNumMeshElements(); j++) {
+          ge->getMeshElement(j)->forceNum(++n);
+        }
+      }
+    }
+  }
+  else{
+    for(unsigned int i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(unsigned int j = 0; j < ge->getNumMeshElements(); j++) {
+        ge->getMeshElement(j)->forceNum(++n);
+      }
     }
   }
 }
@@ -1559,16 +1658,6 @@ void GModel::scaleMesh(double factor)
     }
 }
 
-int GModel::deleteMeshPartitions()
-{
-#if defined(HAVE_MESH)
-  return UnpartitionMesh(this);
-#else
-  Msg::Error("Mesh module not compiled");
-  return 1;
-#endif
-}
-
 int GModel::partitionMesh(int numPart)
 {
 #if defined(HAVE_MESH) && (defined(HAVE_METIS))
@@ -1581,6 +1670,16 @@ int GModel::partitionMesh(int numPart)
   else {
     return 1;
   }
+#else
+  Msg::Error("Mesh module not compiled");
+  return 1;
+#endif
+}
+
+int GModel::unpartitionMesh()
+{
+#if defined(HAVE_MESH)
+  return UnpartitionMesh(this);
 #else
   Msg::Error("Mesh module not compiled");
   return 1;

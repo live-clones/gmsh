@@ -1,7 +1,7 @@
-# Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
@@ -41,37 +41,38 @@ opt(BUILD_SHARED "Enable 'shared' target for building shared Gmsh library" OFF)
 opt(BUILD_DYNAMIC "Enable dynamic Gmsh executable (linked with shared lib)" OFF)
 opt(BUILD_ANDROID "Enable Android NDK library target (experimental)" OFF)
 opt(BUILD_IOS "Enable iOS library target (experimental)" OFF)
-opt(CGNS "Enable CGNS mesh import" ${DEFAULT})
+opt(CGNS "Enable CGNS mesh import (experimental)" ${DEFAULT})
 opt(CAIRO "Enable Cairo to render fonts (experimental)" ${DEFAULT})
-opt(CXX11 "Enable C++11" ${DEFAULT})
-opt(C99 "Enable C99" ${DEFAULT})
+opt(CXX11 "Enable C++11" ON)
+opt(C99 "Enable C99" ON)
 opt(PROFILE "Enable profiling compiler flags" OFF)
 opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT})
+opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
-opt(GETDP "Enable GetDP solver (as a directly linked library)" ${DEFAULT})
+opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
 opt(GMP "Enable GMP for Kbipack (advanced)" ON)
 opt(GRAPHICS "Enable building graphics lib even without GUI (advanced)" OFF)
-opt(HXT "Enable HXT library" ${DEFAULT})
+opt(HXT "Enable HXT library (for reparametrization and meshing)" ${DEFAULT})
 opt(KBIPACK "Enable Kbipack (neeeded by homology solver)" ${DEFAULT})
-opt(MATHEX "Enable math expression parser (used by plugins and options)" ${DEFAULT})
+opt(MATHEX "Enable Mathex expression parser (used by plugins and options)" ${DEFAULT})
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
 opt(MESH "Enable mesh module (required by GUI)" ${DEFAULT})
 opt(METIS "Enable Metis mesh partitioner" ${DEFAULT})
 opt(MMG3D "Enable MMG3D 3D anisotropic mesh refinement" ${DEFAULT})
 opt(MPEG_ENCODE "Enable built-in MPEG movie encoder" ${DEFAULT})
-opt(MPI "Enable MPI (mostly for parser and solver - mesh generation is sequential)" OFF)
+opt(MPI "Enable MPI (experimental, not used for meshing)" OFF)
 opt(MSVC_STATIC_RUNTIME "Enable static Visual C++ runtime" OFF)
 opt(MUMPS "Enable MUMPS sparse direct linear solver" OFF)
 opt(NATIVE_FILE_CHOOSER "Enable native file chooser in GUI" ${DEFAULT})
 opt(NETGEN "Enable Netgen 3D frontal mesh generator" ${DEFAULT})
-opt(NUMPY "Enable fullMatrix and numpy array conversion for internal developer API" OFF)
-opt(PETSC4PY "Enable petsc4py wrappers for petsc matrices in internal developer API" ON)
-opt(OCC "Enable OpenCASCADE geometrical models" ${DEFAULT})
+opt(NUMPY "Enable fullMatrix and numpy array conversion for private API" OFF)
+opt(PETSC4PY "Enable petsc4py wrappers for petsc matrices for private API" ON)
+opt(OCC "Enable OpenCASCADE CAD kernel" ${DEFAULT})
 opt(OCC_CAF "Enable OpenCASCADE CAF module" OFF)
 opt(ONELAB "Enable ONELAB solver interface" ${DEFAULT})
 opt(ONELAB_METAMODEL "Enable ONELAB metamodels (experimental)" ${DEFAULT})
-opt(OPENMP "Enable OpenMP (experimental)" OFF)
+opt(OPENMP "Enable OpenMP" OFF)
 opt(OPTHOM "Enable high-order mesh optimization tools" ${DEFAULT})
 opt(OS_SPECIFIC_INSTALL "Enable OS-specific (e.g. app bundle) installation" OFF)
 opt(OSMESA "Enable OSMesa for offscreen rendering (experimental)" OFF)
@@ -81,21 +82,23 @@ opt(PLUGINS "Enable post-processing plugins" ${DEFAULT})
 opt(POST "Enable post-processing module (required by GUI)" ${DEFAULT})
 opt(POPPLER "Enable Poppler for displaying PDF documents (experimental)" OFF)
 opt(PRIVATE_API "Enable private API" OFF)
+opt(QUADTRI "Enable QuadTri structured meshing extensions" ${DEFAULT})
 opt(REVOROPT "Enable Revoropt (used for CVT remeshing)" OFF)
-opt(SLEPC "Enable SLEPc eigensolvers (required for conformal compounds)" ${DEFAULT})
+opt(SLEPC "Enable SLEPc eigensolvers" ${DEFAULT})
 opt(SOLVER "Enable built-in finite element solvers (required for compounds)" ${DEFAULT})
 opt(SYSTEM_CONTRIB "Use system versions of contrib libraries, when possible" OFF)
-opt(TCMALLOC "Enable libtcmalloc, a fast malloc implementation but that does not release memory" OFF)
-opt(VISUDEV "Enable additional visualization capabilities for development purpose" OFF)
+opt(TCMALLOC "Enable libtcmalloc (fast malloc that does not release memory)" OFF)
+opt(VISUDEV "Enable additional visualization capabilities for development purposes" OFF)
 opt(VOROPP "Enable voro++ (for hex meshing, experimental)" ${DEFAULT})
 opt(WRAP_JAVA "Enable generation of Java wrappers for private API" OFF)
 opt(WRAP_PYTHON "Enable generation of Python wrappers for private API" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
-set(GMSH_MINOR_VERSION 0)
-set(GMSH_PATCH_VERSION 7)
+set(GMSH_MINOR_VERSION 1)
+set(GMSH_PATCH_VERSION 3)
 set(GMSH_EXTRA_VERSION "")
+set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION}")
 
 if(NOT GMSH_RELEASE)
   find_package(Git)
@@ -106,10 +109,9 @@ if(NOT GMSH_RELEASE)
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif()
   if(GIT_COMMIT_HASH)
-    set(GMSH_EXTRA_VERSION "-git-${GIT_COMMIT_HASH}")
-  else()
-    set(GMSH_EXTRA_VERSION "-git")
+    set(GMSH_EXTRA_VERSION "${GMSH_EXTRA_VERSION}-git-${GIT_COMMIT_HASH}")
   endif()
+  set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION_TEXI} (development version)")
 endif()
 
 set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
@@ -758,6 +760,20 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/HighOrderMeshOptimizer AND
   add_subdirectory(contrib/MeshQualityOptimizer)
   include_directories(contrib/MeshQualityOptimizer)
   set_config_option(HAVE_OPTHOM "OptHom")
+endif()
+
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/domhex AND
+   ENABLE_DOMHEX AND HAVE_MESH)
+  add_subdirectory(contrib/domhex)
+  include_directories(contrib/domhex)
+  set_config_option(HAVE_DOMHEX "DomHex")
+endif()
+
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadTri AND
+   ENABLE_QUADTRI AND HAVE_MESH)
+  add_subdirectory(contrib/QuadTri)
+  include_directories(contrib/QuadTri)
+  set_config_option(HAVE_QUADTRI "QuadTri")
 endif()
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/kbipack AND ENABLE_KBIPACK)
@@ -1446,6 +1462,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshConfig.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshVersion.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h)
+
+# the texi version file is modified in the source directory (not ideal, but
+# since git tracks the contents of the file this is acceptable as it will only
+# change when the actual version is changed - not for each git hash)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi)
 
 # process cmake environment variables so we can append them to the -I include
 # commands. This is not recommended (we should only use the cache variables) but

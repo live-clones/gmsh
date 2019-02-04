@@ -34,10 +34,10 @@ model.setColor(model.getEntities(2),249,166,2)
 
 # this would be equivalent to gmsh.fltk.run():
 #
-# gmsh.graphics.draw();
-# while 1:
+# gmsh.graphics.draw()
+# while True:
 #     gmsh.fltk.wait()
-#     print "just treated an event in the interface"
+#     print("just treated an event in the interface")
 
 gmsh.fltk.run()
 

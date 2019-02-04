@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _MESH_GFACE_DELAUNAY_INSERTIONFACE_H_
 #define _MESH_GFACE_DELAUNAY_INSERTIONFACE_H_
@@ -75,14 +75,6 @@ int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3,
                         double *p4, double *metric);
 int inCircumCircleAniso(GFace *gf, MTriangle *base, const double *uv,
                         const double *metric, bidimMeshData &data);
-void circumCenterMetric(double *pa, double *pb, double *pc,
-                        const double *metric, double *x, double &Radius2);
-void circumCenterMetric(MTriangle *base, const double *metric,
-                        bidimMeshData &data, double *x, double &Radius2);
-bool circumCenterMetricInTriangle(MTriangle *base, const double *metric,
-                                  bidimMeshData &data);
-bool invMapUV(MTriangle *t, double *p, bidimMeshData &data, double *uv,
-              double tol);
 
 class MTri3 {
 protected:
@@ -172,8 +164,9 @@ void bowyerWatsonParallelogramsConstrained(
   GFace *gf, const std::set<MVertex *> &constr_vertices,
   std::map<MVertex *, MVertex *> *equivalence = 0,
   std::map<MVertex *, SPoint2> *parametricCoordinates = 0);
-void buildBackGroundMesh(
-  GFace *gf, std::map<MVertex *, MVertex *> *equivalence = 0,
+void buildBackgroundMesh(
+  GFace *gf, bool crossFieldClosestPoint = false,
+  std::map<MVertex *, MVertex *> *equivalence = 0,
   std::map<MVertex *, SPoint2> *parametricCoordinates = 0);
 
 void delaunayMeshIn2D(std::vector<MVertex *> &, std::vector<MTriangle *> &,

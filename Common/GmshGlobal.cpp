@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string>
 #include <time.h>
@@ -60,8 +60,6 @@ typedef unsigned long intptr_t;
 int GmshInitialize(int argc, char **argv, bool readConfigFiles,
                    bool exitOnCommandLineError)
 {
-  Msg::SetNumThreads(1);
-
   static bool isInitialized = false;
   if(isInitialized) return 1;
   isInitialized = true;
@@ -357,7 +355,7 @@ int GmshFLTK(int argc, char **argv)
   FlGui::instance(argc, argv);
 
   // display GUI immediately for quick launch time
-  FlGui::instance()->check();
+  FlGui::check();
 
   if(FlGui::getOpenedThroughMacFinder().size() &&
      CTX::instance()->files.empty()) {

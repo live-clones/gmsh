@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _MESH_GFACE_OPTIMIZE_H_
 #define _MESH_GFACE_OPTIMIZE_H_
@@ -61,16 +61,14 @@ enum splitCriterion { SPCR_CLOSE, SPCR_QUAL, SPCR_ALLWAYS };
 
 int edgeSwapPass(GFace *gf, std::set<MTri3 *, compareTri3Ptr> &allTris,
                  const swapCriterion &cr, bidimMeshData &DATA);
-void removeThreeTrianglesNodes(GFace *gf);
-void buildMeshGenerationDataStructures(
+bool buildMeshGenerationDataStructures(
   GFace *gf, std::set<MTri3 *, compareTri3Ptr> &AllTris, bidimMeshData &data);
 void transferDataStructure(GFace *gf,
                            std::set<MTri3 *, compareTri3Ptr> &AllTris,
                            bidimMeshData &DATA);
 void computeEquivalences(GFace *gf, bidimMeshData &DATA);
-void recombineIntoQuads(GFace *gf, bool topologicalOpti = true,
-                        bool nodeRepositioning = true, double minqual = 0.1,
-                        bool verbose = true);
+void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
+                        bool nodeRepositioning, double minqual);
 
 // used for meshGFaceRecombine development
 void quadsToTriangles(GFace *gf, double minqual);

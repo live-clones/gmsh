@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributor(s):
 //   Jonathan Lambrechts
@@ -26,7 +26,6 @@
 #include "mathEvaluator.h"
 #include "BackgroundMeshTools.h"
 #include "STensor3.h"
-#include "meshMetric.h"
 #include "ExtrudeParams.h"
 
 #if defined(HAVE_POST)
@@ -1892,7 +1891,7 @@ public:
     if(update_needed) update();
     double xyz[3] = {x, y, z};
 #if defined(_OPENMP)
-#pragma omp critical
+#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
 #endif
     kdtree->annkSearch(xyz, 1, index, dist);
     double d = sqrt(dist[0]);
@@ -1916,7 +1915,7 @@ public:
     if(update_needed) update();
     double xyz[3] = {X, Y, Z};
 #if defined(_OPENMP)
-#pragma omp critical
+#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
 #endif
     kdtree->annkSearch(xyz, 1, index, dist);
     double d = sqrt(dist[0]);
@@ -2169,9 +2168,11 @@ public:
     {
       update();
     }
-    // NOT thread safe anyway :-)
     double xyz[3];
     getCoord(X, Y, Z, xyz[0], xyz[1], xyz[2], ge);
+#if defined(_OPENMP)
+#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
+#endif
     kdtree->annkSearch(xyz, 1, index, dist);
     double d = dist[0];
     return sqrt(d);
@@ -2702,7 +2703,6 @@ void BoundaryLayerField::operator()(double x, double y, double z,
 #endif
 
 #include <nanoflann.hpp>
-using namespace nanoflann;
 
 // This is an exampleof a custom data set class
 struct PointCloud {
@@ -2759,9 +2759,8 @@ template <typename Derived> struct PointCloudAdaptor {
 }; // end of PointCloudAdaptor
 
 typedef PointCloudAdaptor<PointCloud> PC2KD;
-
-typedef KDTreeSingleIndexAdaptor<L2_Simple_Adaptor<double, PC2KD>, PC2KD, 3>
-  my_kd_tree_t;
+typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, PC2KD>,
+                                            PC2KD, 3> my_kd_tree_t;
 
 class DistanceField : public Field {
   std::list<int> nodes_id, edges_id, faces_id;
@@ -2874,7 +2873,7 @@ public:
       }
 
       // construct a kd-tree index:
-      index = new my_kd_tree_t(3, pc2kd, KDTreeSingleIndexAdaptorParams(10));
+      index = new my_kd_tree_t(3, pc2kd, nanoflann::KDTreeSingleIndexAdaptorParams(10));
       index->buildIndex();
       update_needed = false;
     }

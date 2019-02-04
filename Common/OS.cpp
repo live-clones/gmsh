@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 // This file contains a bunch of functions that depend on OS-dependent
 // features and/or system calls
@@ -303,22 +303,6 @@ void SetEnvironmentVar(const char *var, const char *val)
   _putenv((std::string(var) + "=" + std::string(val)).c_str());
 #else
   setenv(var, val, 1);
-#endif
-}
-
-double GetTimeInSeconds()
-{
-#if defined(WIN32) && !defined(__CYGWIN__)
-  FILETIME ft;
-  GetSystemTimeAsFileTime(&ft);
-  double t = 1.e-7 * 4294967296. * (double)ft.dwHighDateTime +
-             1.e-7 * (double)ft.dwLowDateTime;
-  return t;
-#else
-  struct timeval tp;
-  gettimeofday(&tp, (struct timezone *)0);
-  double t = (double)tp.tv_sec + 1.e-6 * (double)tp.tv_usec;
-  return t;
 #endif
 }
 

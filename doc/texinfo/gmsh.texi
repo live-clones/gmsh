@@ -1,8 +1,8 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+@c Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file for license information. Please report all
-@c issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+@c issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 @c
 @c =========================================================================
 @c
@@ -21,8 +21,8 @@
 @c =========================================================================
 @c %**starts of header
 @setfilename gmsh.info
-@set GMSH-VERSION 4.0
-@set COPYRIGHT @copyright{} 1997-2018 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@include version.texi
+@set COPYRIGHT @copyright{} 1997-2019 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate
 @setchapternewpage odd
@@ -2359,6 +2359,11 @@ Transforms all elementary entities symmetrically to a plane. The
 @var{expression-list} should contain four @w{@var{expression}s} giving
 the coefficients of the plane's equation.
 
+@item Affine @{ @var{expression-list} @} @{ @var{transform-list} @}
+Applies a 4 x 4 affine transformation matrix (16 entries given by row;
+only 12 can be provided for convenience) to all elementary
+entities. Currently only available with the OpenCASCADE kernel.
+
 @item Translate @{ @var{expression-list} @} @{ @var{transform-list} @}
 Translates all elementary entities in @var{transform-list}. The
 @var{expression-list} should contain three @w{@var{expression}s} giving
@@ -2650,31 +2655,30 @@ your system}, and @ref{Command-line options}).
 @cindex Mesh, background
 @cindex Background mesh
 
-There are three ways to specify the size of the mesh elements for a
+There are several  ways to specify the size of the mesh elements for a
 given geometry:
 
 @enumerate
 @item
-First, if @code{Mesh.CharacteristicLengthFromPoints} is set (it is by
-default), you can simply specify desired mesh element sizes at the
-geometrical points of the model (with the @code{Point} command: see
-@ref{Points}). The size of the mesh elements will then be computed by
-linearly interpolating these values on the initial mesh (see
-@ref{Mesh}). This might sometimes lead to over-refinement in some areas,
-so that you may have to add ``dummy'' geometrical entities in the model
-in order to get the desired element sizes.
-
-This method works with all the algorithms implemented in the mesh
-module. The final element sizes are of course constrained by the structured
-algorithms for which the element sizes are explicitly specified (e.g.,
-transfinite and extruded grids: see @ref{Structured grids}).
+First, if the two options @code{Mesh.CharacteristicLengthFromPoints} and
+@code{Mesh.CharacteristicLengthExtendFromBoundary} are set (they are by
+default; see @ref{Mesh options list}), you can simply specify desired
+mesh element sizes at the geometrical points of the model (with the
+@code{Point} command: see @ref{Points}). The size of the mesh elements
+will then be computed by interpolating these values inside the domain
+during mesh generation. This might sometimes lead to over-refinement in
+some areas, so that you may have to add ``dummy'' geometrical entities
+in the model in order to get the desired element sizes or use more
+advanced methods explained below.
 @item
 Second, if @code{Mesh.CharacteristicLengthFromCurvature} is set (it is
 not by default), the mesh will be adapted with respect to the curvature
-of the geometrical entities.
+of the geometrical entities and the value of
+@code{Mesh.MinimumCirclePoints}, which gives the number of points per 2
+pi radians.
 @item
-Finally, you can specify general mesh size ``fields''. Various fields
-exist:
+Finally, you can specify a general background mesh mesh size field, that
+combining any of the existing fields:
 @itemize @bullet
 @item
 A @code{PostView} field specifies an explicit background mesh in the
@@ -2709,17 +2713,30 @@ computed using other fields
 @dots{}
 @end itemize
 
-Fields are supported by all the algorithms except those based on
-Netgen. The list of available fields with their options is given below.
+The list of available fields with their options is given below.
 @end enumerate
 
 The three aforementioned methods can be used simultaneously, in which
-case the smallest element size is selected at any given point.
+case the smallest element size is selected at any given point. In
+addition, boundary mesh sizes (on curves or surfaces) are interpolated
+inside the enclosed entity (surface or volume, respectively) if the
+option @code{Mesh.CharacteristicLengthExtendFromBoundary} is set (it is
+by default).
 
-All element sizes are further constrained by the
+All element sizes are further constrained in the interval [
 @code{Mesh.CharacteristicLengthMin}, @code{Mesh.CharacteristicLengthMax}
-and @code{Mesh.CharacteristicLengthFactor} options (@pxref{Mesh options
-list})
+]. The resulting value is then finally multiplied by
+@code{Mesh.CharacteristicLengthFactor}.
+
+Note that when the element size is fully specified by a background mesh
+field, it is thus often desirable to set
+@smallexample
+Mesh.CharacteristicLengthFromPoints = 0;
+Mesh.CharacteristicLengthFromCurvature = 0;
+Mesh.CharacteristicLengthExtendFromBoundary = 0;
+@end smallexample
+to prevent over-refinement inside an entity due to small mesh sizes on
+its boundary.
 
 Here are the mesh commands that are related to the specification of
 mesh element sizes:
@@ -2980,9 +2997,10 @@ right-hand side (master, with boundary edges specified between braces).
 @item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Affine | Translate @{ @var{expression-list} @} ;
 Force mesh of curves or surfaces on the left-hand side (slaves) to match
 the mesh of the curves on the right-hand side (masters), using
-prescribed geometrical transformations. @code{Affine} takes a 4 x 4 (or
-4 x 3) affine transformation matrix given by row; @code{Translate} takes
-the 3 components of the translation as in @ref{Transformations}.
+prescribed geometrical transformations. @code{Affine} takes a 4 x 4
+affine transformation matrix given by row (only 12 entries can be
+provided for convenience); @code{Translate} takes the 3 components of
+the translation as in @ref{Transformations}.
 
 @item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Rotate @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} ;
 Force mesh of curves or surfaces on the left-hand side (slaves) to match
@@ -5060,6 +5078,12 @@ enable optional modules or features. Here is the list of CMake options:
 
 @end ftable
 
+The wiki
+(@uref{https://gitlab.onelab.info/gmsh/gmsh/wikis/Gmsh-compilation})
+contains more detailed instructions on how to compile Gmsh, including
+the compilation of common dependencies.
+
+
 @c =========================================================================
 @c Gmsh API
 @c =========================================================================
@@ -5129,7 +5153,7 @@ Yacc (actually, Flex and Bison), and the GUI relies on OpenGL for the 3D
 graphics and FLTK (@uref{http://www.fltk.org}) for the widget
 set. Gmsh's build system is based on CMake
 (@uref{http://www.cmake.org}). Practical notes on how to compile Gmsh's
-source code is provided in @ref{Compiling the source code} (see also
+source code are provided in @ref{Compiling the source code} (see also
 @ref{Frequently asked questions}).
 
 This section is for developers who would like to contribute directly to

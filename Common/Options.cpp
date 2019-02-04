@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string.h>
 #include <stdlib.h>
@@ -2283,6 +2283,13 @@ double opt_general_system_menu_bar(OPT_ARGS_NUM)
   return CTX::instance()->systemMenuBar;
 }
 
+double opt_general_show_module_menu(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->showModuleMenu = (int)val;
+  return CTX::instance()->showModuleMenu;
+}
+
 double opt_general_meshdiscrete(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -4278,8 +4285,9 @@ double opt_general_light53(OPT_ARGS_NUM)
 
 double opt_general_num_threads(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
-    Msg::SetNumThreads(val);
+  if(action & GMSH_SET){
+    if(val > 0) Msg::SetNumThreads(val);
+  }
   return Msg::GetNumThreads();
 }
 
@@ -5883,6 +5891,13 @@ double opt_mesh_smooth_cross_field(OPT_ARGS_NUM)
   return CTX::instance()->mesh.smoothCrossField;
 }
 
+double opt_mesh_cross_field_closest_point(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.crossFieldClosestPoint = (int)val;
+  return CTX::instance()->mesh.crossFieldClosestPoint;
+}
+
 double opt_mesh_bdf_field_format(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -5948,7 +5963,7 @@ double opt_mesh_algo_recombine(OPT_ARGS_NUM)
       Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.algoRecombine = (int)val;
     if(CTX::instance()->mesh.algoRecombine < 0 &&
-       CTX::instance()->mesh.algoRecombine > 1)
+       CTX::instance()->mesh.algoRecombine > 3)
       CTX::instance()->mesh.algoRecombine = 0;
   }
 #if defined(HAVE_FLTK)
@@ -5973,6 +5988,14 @@ double opt_mesh_recombine_all(OPT_ARGS_NUM)
       (CTX::instance()->mesh.recombineAll);
 #endif
   return CTX::instance()->mesh.recombineAll;
+}
+
+double opt_mesh_recombine_optimize_topology(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.recombineOptimizeTopology = (int)val;
+  }
+  return CTX::instance()->mesh.recombineOptimizeTopology;
 }
 
 double opt_mesh_recombine3d_all(OPT_ARGS_NUM)
@@ -6027,30 +6050,6 @@ double opt_mesh_flexible_transfinite(OPT_ARGS_NUM)
   return CTX::instance()->mesh.flexibleTransfinite;
 }
 
-double opt_mesh_do_recombination_test(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    CTX::instance()->mesh.doRecombinationTest = (int)val;
-  }
-  return CTX::instance()->mesh.doRecombinationTest;
-}
-
-double opt_mesh_recombination_test_start(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    CTX::instance()->mesh.recombinationTestStart = (int)val;
-  }
-  return CTX::instance()->mesh.recombinationTestStart;
-}
-
-double opt_mesh_recombination_no_greedy_strat(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    CTX::instance()->mesh.recombinationTestNoGreedyStrat = (int)val;
-  }
-  return CTX::instance()->mesh.recombinationTestNoGreedyStrat;
-}
-
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -6083,18 +6082,12 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
   if(FlGui::available() && (action & GMSH_GUI)) {
     switch (CTX::instance()->mesh.algo3d) {
     case ALGO_3D_HXT:
-      FlGui::instance()->options->mesh.choice[3]->value(6);
-      break;
-    case ALGO_3D_RTREE:
-      FlGui::instance()->options->mesh.choice[3]->value(5);
-      break;
-    case ALGO_3D_MMG3D:
       FlGui::instance()->options->mesh.choice[3]->value(4);
       break;
-    case ALGO_3D_FRONTAL_HEX:
+    case ALGO_3D_RTREE:
       FlGui::instance()->options->mesh.choice[3]->value(3);
       break;
-    case ALGO_3D_FRONTAL_DEL:
+    case ALGO_3D_MMG3D:
       FlGui::instance()->options->mesh.choice[3]->value(2);
       break;
     case ALGO_3D_FRONTAL:

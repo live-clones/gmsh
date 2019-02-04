@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _GMSH_DEFINES_H_
 #define _GMSH_DEFINES_H_
@@ -243,8 +243,6 @@
 // 3D meshing algorithms (numbers should not be changed)
 #define ALGO_3D_DELAUNAY       1
 #define ALGO_3D_FRONTAL        4
-#define ALGO_3D_FRONTAL_DEL    5
-#define ALGO_3D_FRONTAL_HEX    6
 #define ALGO_3D_MMG3D          7
 #define ALGO_3D_RTREE          9
 #define ALGO_3D_HXT           10

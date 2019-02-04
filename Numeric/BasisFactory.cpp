@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-B-> Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "BasisFactory.h"
 #include "GmshDefines.h"

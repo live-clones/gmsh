@@ -1,7 +1,7 @@
-# Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 # This is the master definition file for the Gmsh API.
 #
@@ -135,11 +135,17 @@ model.add('removeEntities',doc,None,ivectorpair('dimTags'),ibool('recursive','fa
 doc = '''Remove the physical groups `dimTags' of the current model. If `dimTags' is empty, remove all groups.'''
 model.add('removePhysicalGroups',doc,None,ivectorpair('dimTags','gmsh::vectorpair()',"[]","[]"))
 
+doc = '''Remove the physical name `name' of the current model.'''
+model.add('removePhysicalName',doc,None,istring('name'))
+
 doc = '''Get the type of the entity of dimension `dim' and tag `tag'.'''
 model.add('getType',doc,None,iint('dim'),iint('tag'),ostring('entityType'))
 
 doc = '''In a partitioned model, get the parent of the entity of dimension `dim' and tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and `parentTag' are set to -1 if the entity has no parent.'''
 model.add('getParent',doc,None,iint('dim'),iint('tag'),oint('parentDim'),oint('parentTag'))
+
+doc = '''In a partitioned model, return the tags of the partition(s) to which the entity belongs.'''
+model.add('getPartitions',doc,None,iint('dim'),iint('tag'),ovectorint('partitions'))
 
 doc = '''Evaluate the parametrization of the entity of dimension `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim' equal to 0 (with empty `parametricCoord'), 1 (with `parametricCoord' containing parametric coordinates on the curve) or 2 (with `parametricCoord' containing pairs of u, v parametric coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]). Return triplets of x, y, z coordinates in `points', concatenated: [p1x, p1y, p1z, p2x, ...].'''
 model.add('getValue',doc,None,iint('dim'),iint('tag'),ivectordouble('parametricCoord'),ovectordouble('points'))
@@ -177,6 +183,9 @@ mesh.add('generate',doc,None,iint('dim', '3'))
 
 doc = '''Partition the mesh of the current model into `numPart' partitions.'''
 mesh.add('partition',doc,None,iint('numPart'))
+
+doc = '''Unpartition the mesh of the current model.'''
+mesh.add('unpartition',doc,None)
 
 doc = '''Refine the mesh of the current model by uniformly splitting the elements.'''
 mesh.add('refine',doc,None)
@@ -287,7 +296,7 @@ doc = '''Renumber the element tags in a contiunous sequence.'''
 mesh.add('renumberElements',doc,None)
 
 doc = '''Set the meshes of the entities of dimension `dim' and tag `tags' as periodic copies of the meshes of entities `tagsSource', using the affine transformation specified in `affineTransformation' (16 entries of a 4x4 matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.'''
-mesh.add('setPeriodic',doc,None,iint('dim'),ivectorint('tags'),ivectorint('tagsSource'),ivectordouble('affineTransformation'))
+mesh.add('setPeriodic',doc,None,iint('dim'),ivectorint('tags'),ivectorint('tagsSource'),ivectordouble('affineTransform'))
 
 doc = '''Get the master entity, periodic node pairs and affine transform for the entity of dimension `dim' and tag `tag'.'''
 mesh.add('getPeriodicNodes',doc,None,iint('dim'),iint('tag'),oint('tagMaster'),ovectorpair('nodes'),ovectordouble('affineTransform'))
@@ -548,6 +557,9 @@ occ.add('dilate',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idoub
 doc = '''Apply a symmetry transformation to the geometrical entities `dimTag', with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
 occ.add('symmetrize',doc,None,ivectorpair('dimTags'),idouble('a'),idouble('b'),idouble('c'),idouble('d'))
 
+doc = '''Apply a general affine transformation matrix `a' (16 entries of a 4x4 matrix, by row; only the 12 first can be provided for convenience) to the geometrical entities `dimTag'.'''
+occ.add('affineTransform',doc,None,ivectorpair('dimTags'),ivectordouble('a'))
+
 doc = '''Copy the entities `dimTags'; the new entities are returned in `outDimTags'.'''
 occ.add('copy',doc,None,ivectorpair('dimTags'),ovectorpair('outDimTags'))
 
@@ -627,24 +639,60 @@ graphics.add('draw',doc,None)
 
 fltk = gmsh.add_module('fltk','Fltk graphical user interface functions')
 
-doc = '''Create the Fltk graphical user interface.'''
+doc = '''Create the Fltk graphical user interface. Can only be called in the main thread.'''
 fltk.add('initialize',doc,None)
 
-doc = '''Wait at most `time' seconds for user interface events and return. If `time' < 0, wait indefinitely. First automatically create the user interface if it has not yet been initialized.'''
+doc = '''Wait at most `time' seconds for user interface events and return. If `time' < 0, wait indefinitely. First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread.'''
 fltk.add('wait',doc,None,idouble('time', '-1.'))
 
-doc = '''Run the event loop of the Fltk graphical user interface, i.e. repeatedly calls `wait'. First automatically create the user interface if it has not yet been initialized.'''
+doc = '''Update the user interface (potentially creating new widgets and windows). First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread: use `awake("update")' to trigger an update of the user interface from another thread.'''
+fltk.add('update',doc,None)
+
+doc = '''Awake the main user interface thread and process pending events, and optionally perform an action (currently the only `action' allowed is "update"). '''
+fltk.add('awake',doc,None,istring('action', '""'))
+
+doc = '''Block the current thread until it can safely modify the user interface.'''
+fltk.add('lock',doc,None)
+
+doc = '''Release the lock that was set using lock.'''
+fltk.add('unlock',doc,None)
+
+doc = '''Run the event loop of the graphical user interface, i.e. repeatedly calls `wait()'. First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread.'''
 fltk.add('run',doc,None)
+
+doc = '''Select entities in the user interface. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0).'''
+fltk.add('selectEntities',doc,oint,ovectorpair('dimTags'),iint('dim','-1'))
+
+doc = '''Select elements in the user interface.'''
+fltk.add('selectElements',doc,oint,ovectorint('tags'))
+
+doc = '''Select views in the user interface.'''
+fltk.add('selectViews',doc,oint,ovectorint('tags'))
 
 ################################################################################
 
 onelab = gmsh.add_module('onelab','ONELAB server functions')
 
-doc = '''Get `data' from the ONELAB server.'''
-onelab.add('get',doc,None,ostring('data'),istring('format', '"json"'))
-
-doc = '''Set `data' in the ONELAB server.'''
+doc = '''Set one or more parameters in the ONELAB database, encoded in `format'.'''
 onelab.add('set',doc,None,istring('data'),istring('format', '"json"'))
+
+doc = '''Get all the parameters (or a single one if `name' is specified) from the ONELAB database, encoded in `format'.'''
+onelab.add('get',doc,None,ostring('data'),istring('name', '""'),istring('format', '"json"'))
+
+doc = '''Set the value of the number parameter `name' in the ONELAB database. Create the parameter if it does not exist; update the value if the parameter exists.'''
+onelab.add('setNumber',doc,None,istring('name'),ivectordouble('value'))
+
+doc = '''Set the value of the string parameter `name' in the ONELAB database. Create the parameter if it does not exist; update the value if the parameter exists.'''
+onelab.add('setString',doc,None,istring('name'),ivectorstring('value'))
+
+doc = '''Get the value of the number parameter `name' from the ONELAB database. Return an empty vector if the parameter does not exist.'''
+onelab.add('getNumber',doc,None,istring('name'),ovectordouble('value'))
+
+doc = '''Get the value of the string parameter `name' from the ONELAB database. Return an empty vector if the parameter does not exist.'''
+onelab.add('getString',doc,None,istring('name'),ovectorstring('value'))
+
+doc = '''Clear the ONELAB database, or remove a single parameter if `name' is given.'''
+onelab.add('clear',doc,None,istring('name', '""'))
 
 doc = '''Run a ONELAB client. If `name' is provided, create a new ONELAB client with name `name' and executes `command'. If not, try to run a client that might be linked to the processed input files.'''
 onelab.add('run',doc,None,istring('name', '""'),istring('command', '""'))
@@ -653,11 +701,20 @@ onelab.add('run',doc,None,istring('name', '""'),istring('command', '""'))
 
 onelab = gmsh.add_module('logger','Message logger functions')
 
+doc = '''Write a `message'. `level' can be "info", "warning" or "error".'''
+onelab.add('write',doc,None,istring('message'),istring('level','"info"'))
+
 doc = '''Start logging messages in `log'.'''
 onelab.add('start',doc,None,ovectorstring('log'))
 
 doc = '''Stop logging messages.'''
 onelab.add('stop',doc,None)
+
+doc = '''Return wall clock time.'''
+onelab.add('time',doc,odouble)
+
+doc = '''Return CPU time.'''
+onelab.add('cputime',doc,odouble)
 
 ################################################################################
 

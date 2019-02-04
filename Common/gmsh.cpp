@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <sstream>
 #include "GmshConfig.h"
@@ -19,6 +19,10 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "discreteRegion.h"
+#include "partitionVertex.h"
+#include "partitionEdge.h"
+#include "partitionFace.h"
+#include "partitionRegion.h"
 #include "MVertex.h"
 #include "MPoint.h"
 #include "MLine.h"
@@ -33,6 +37,7 @@
 #include "Context.h"
 #include "polynomialBasis.h"
 #include "pyramidalBasis.h"
+#include "OS.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -156,48 +161,6 @@ GMSH_API void gmsh::clear()
   }
   if(GmshClearProject()) return;
   throw 1;
-}
-
-class apiMsg : public GmshMessage {
-private:
-  std::vector<std::string> &_log;
-
-public:
-  apiMsg(std::vector<std::string> &log) : _log(log) {}
-  virtual void operator()(std::string level, std::string message)
-  {
-    _log.push_back(level + ": " + message);
-  }
-};
-
-GMSH_API void gmsh::logger::start(std::vector<std::string> &log)
-{
-  if(!_isInitialized()) {
-    throw -1;
-  }
-  GmshMessage *msg = Msg::GetCallback();
-  if(msg) {
-    Msg::Warning("Logger already started - ignoring");
-  }
-  else {
-    msg = new apiMsg(log);
-    Msg::SetCallback(msg);
-  }
-}
-
-GMSH_API void gmsh::logger::stop()
-{
-  if(!_isInitialized()) {
-    throw -1;
-  }
-  GmshMessage *msg = Msg::GetCallback();
-  if(msg) {
-    delete msg;
-    Msg::SetCallback(0);
-  }
-  else {
-    Msg::Warning("Logger not started - ignoring");
-  }
 }
 
 // gmsh::option
@@ -566,7 +529,13 @@ GMSH_API void gmsh::model::removePhysicalGroups(const vectorpair &dimTags)
   }
 }
 
-// FIXME: add a "removePhysicalName" function
+GMSH_API void gmsh::model::removePhysicalName(const std::string &name)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  GModel::current()->removePhysicalName(name);
+}
 
 GMSH_API void gmsh::model::getType(const int dim, const int tag,
                                    std::string &entityType)
@@ -598,8 +567,34 @@ GMSH_API void gmsh::model::getParent(const int dim, const int tag,
   GEntity *parent = ge->getParentEntity();
   if(parent) {
     parentDim = parent->dim();
-    parentDim = parent->tag();
+    parentTag = parent->tag();
   }
+}
+
+GMSH_API void gmsh::model::getPartitions(const int dim, const int tag,
+                                         std::vector<int> &partitions)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  partitions.clear();
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
+  }
+  std::vector<unsigned int> p;
+  if(ge->geomType() == GEntity::PartitionPoint)
+    p = static_cast<partitionVertex*>(ge)->getPartitions();
+  else if(ge->geomType() == GEntity::PartitionCurve)
+    p = static_cast<partitionEdge*>(ge)->getPartitions();
+  else if(ge->geomType() == GEntity::PartitionSurface)
+    p = static_cast<partitionFace*>(ge)->getPartitions();
+  else if(ge->geomType() == GEntity::PartitionVolume)
+    p = static_cast<partitionRegion*>(ge)->getPartitions();
+  for(unsigned int i = 0; i < p.size(); i++)
+    partitions.push_back(p[i]);
+  // TODO: provide API access to ghost cells
 }
 
 GMSH_API void gmsh::model::getValue(const int dim, const int tag,
@@ -848,6 +843,15 @@ GMSH_API void gmsh::model::mesh::partition(const int numPart)
   }
   GModel::current()->partitionMesh(
     numPart >= 0 ? numPart : CTX::instance()->mesh.numPartitions);
+  CTX::instance()->mesh.changed = ENT_ALL;
+}
+
+GMSH_API void gmsh::model::mesh::unpartition()
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  GModel::current()->unpartitionMesh();
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
@@ -3604,6 +3608,18 @@ GMSH_API void gmsh::model::occ::symmetrize(const vectorpair &dimTags,
   }
 }
 
+GMSH_API void gmsh::model::occ::affineTransform(const vectorpair &dimTags,
+                                                const std::vector<double> &a)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  _createOcc();
+  if(!GModel::current()->getOCCInternals()->affine(dimTags, a)) {
+    throw 1;
+  }
+}
+
 GMSH_API void gmsh::model::occ::copy(const vectorpair &dimTags,
                                      vectorpair &outDimTags)
 {
@@ -3898,11 +3914,12 @@ GMSH_API void gmsh::view::getModelData(const int tag, const int step,
 }
 
 // for better performance, manual C implementation of gmsh::view::getModelData
-GMSH_API void gmshViewGetModelData(const int tag, const int step,
-                                   char **dataType, int **tags, size_t *tags_n,
-                                   double ***data, size_t **data_n,
-                                   size_t *data_nn, double *time,
-                                   int *numComponents, int *ierr)
+GMSH_API void gmshViewGetModelData(const int tag, const int step, char **dataType,
+                                   int **tags, size_t *tags_n,
+                                   double ***data, size_t **data_n, size_t *data_nn,
+                                   double *time,
+                                   int *numComponents,
+                                   int *ierr)
 {
   if(!_isInitialized()) {
     if(ierr) *ierr = -1;
@@ -3935,6 +3952,7 @@ GMSH_API void gmshViewGetModelData(const int tag, const int step,
     Msg::Error("View with tag %d does not contain model data for step %d", tag,
                step);
     if(ierr) *ierr = 2;
+    return;
   }
   *tags_n = 0;
   *data_nn = 0;
@@ -3945,19 +3963,24 @@ GMSH_API void gmshViewGetModelData(const int tag, const int step,
     if(s->getData(i)) numEnt++;
   }
   if(!numEnt) return;
-  *data = (double **)Malloc(numEnt * sizeof(double *));
+  *tags_n = numEnt;
   *tags = (int *)Malloc(numEnt * sizeof(int));
+  *data_nn = numEnt;
+  *data_n = (size_t *)Malloc(numEnt * sizeof(size_t *));
+  *data = (double **)Malloc(numEnt * sizeof(double *));
   int j = 0;
   for(int i = 0; i < s->getNumData(); i++) {
     double *dd = s->getData(i);
     if(dd) {
       (*tags)[j] = i;
       int mult = s->getMult(i);
+      (*data_n)[j] = *numComponents * mult;
       (*data)[j] = (double *)Malloc(*numComponents * mult * sizeof(double));
       for(int k = 0; k < *numComponents * mult; k++) (*data)[j][k] = dd[k];
       j++;
     }
   }
+  if(ierr) *ierr = 0;
 #else
   Msg::Error("Views require the post-processing module");
   if(ierr) *ierr = -1;
@@ -4205,7 +4228,7 @@ GMSH_API void gmsh::fltk::initialize()
 #if defined(HAVE_FLTK)
   FlGui::instance(_argc, _argv);
   FlGui::setFinishedProcessingCommandLine();
-  FlGui::check();
+  FlGui::check(true);
 #else
   Msg::Error("Fltk not available");
   throw -1;
@@ -4220,9 +4243,62 @@ GMSH_API void gmsh::fltk::wait(const double time)
 #if defined(HAVE_FLTK)
   if(!FlGui::available()) FlGui::instance(_argc, _argv);
   if(time >= 0)
-    FlGui::wait(time);
+    FlGui::wait(time, true);
   else
-    FlGui::wait();
+    FlGui::wait(true);
+#else
+  Msg::Error("Fltk not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::fltk::lock()
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_FLTK)
+  FlGui::lock();
+#else
+  Msg::Error("Fltk not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::fltk::unlock()
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_FLTK)
+  FlGui::unlock();
+#else
+  Msg::Error("Fltk not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::fltk::update()
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_FLTK)
+  if(!FlGui::available()) FlGui::instance(_argc, _argv);
+  FlGui::instance()->updateViews(true, true);
+#else
+  Msg::Error("Fltk not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::fltk::awake(const std::string &action)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_FLTK)
+  FlGui::awake(action);
 #else
   Msg::Error("Fltk not available");
   throw -1;
@@ -4243,23 +4319,86 @@ GMSH_API void gmsh::fltk::run()
 #endif
 }
 
-// gmsh::onelab
+static int selectionCode(char val)
+{
+  switch(val){
+  case 'q': return 0; // abort
+  case 'l': return 1; // selected
+  case 'r': return 2; // deselected
+  case 'u': return 3; // undone last selection
+  case 'e': return 4; // ended selection
+  default: return -1; // unknown code
+  }
+}
 
-GMSH_API void gmsh::onelab::get(std::string &data, const std::string &format)
+GMSH_API int gmsh::fltk::selectEntities(vectorpair &dimTags, const int dim)
 {
   if(!_isInitialized()) {
     throw -1;
   }
-#if defined(HAVE_ONELAB)
-  if(format == "json")
-    ::onelab::server::instance()->toJSON(data, "Gmsh");
-  else
-    Msg::Error("Unknown data format");
-#else
-  Msg::Error("Onelab not available");
-  throw -1;
+  dimTags.clear();
+#if defined(HAVE_FLTK)
+  if(!FlGui::available()) FlGui::instance(_argc, _argv);
+  char ret = 0;
+  switch(dim){
+  case 0: ret = FlGui::instance()->selectEntity(ENT_POINT); break;
+  case 1: ret = FlGui::instance()->selectEntity(ENT_CURVE); break;
+  case 2: ret = FlGui::instance()->selectEntity(ENT_SURFACE); break;
+  case 3: ret = FlGui::instance()->selectEntity(ENT_VOLUME); break;
+  default: ret = FlGui::instance()->selectEntity(ENT_ALL); break;
+  }
+  for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++)
+    dimTags.push_back
+      (std::pair<int, int>(0, FlGui::instance()->selectedVertices[i]->tag()));
+  for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++)
+    dimTags.push_back
+      (std::pair<int, int>(1, FlGui::instance()->selectedEdges[i]->tag()));
+  for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++)
+    dimTags.push_back
+      (std::pair<int, int>(2, FlGui::instance()->selectedFaces[i]->tag()));
+  for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++)
+    dimTags.push_back
+      (std::pair<int, int>(1, FlGui::instance()->selectedRegions[i]->tag()));
+  return selectionCode(ret);
 #endif
 }
+
+
+GMSH_API int gmsh::fltk::selectElements(std::vector<int> &tags)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  tags.clear();
+#if defined(HAVE_FLTK)
+  if(!FlGui::available()) FlGui::instance(_argc, _argv);
+  int old = CTX::instance()->pickElements;
+  CTX::instance()->pickElements = 1;
+  CTX::instance()->mesh.changed = ENT_ALL;
+  char ret = FlGui::instance()->selectEntity(ENT_ALL);
+  CTX::instance()->pickElements = old;
+  for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++)
+    tags.push_back(FlGui::instance()->selectedElements[i]->getNum());
+  return selectionCode(ret);
+#endif
+}
+
+GMSH_API int gmsh::fltk::selectViews(std::vector<int> &tags)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  tags.clear();
+#if defined(HAVE_FLTK)
+  if(!FlGui::available()) FlGui::instance(_argc, _argv);
+  char ret = FlGui::instance()->selectEntity(ENT_ALL);
+  for(unsigned int i = 0; i < FlGui::instance()->selectedViews.size(); i++)
+    tags.push_back(FlGui::instance()->selectedViews[i]->getTag());
+  return selectionCode(ret);
+#endif
+}
+
+// gmsh::onelab
 
 GMSH_API void gmsh::onelab::set(const std::string &data,
                                 const std::string &format)
@@ -4268,12 +4407,140 @@ GMSH_API void gmsh::onelab::set(const std::string &data,
     throw -1;
   }
 #if defined(HAVE_ONELAB)
-  if(format == "json")
-    ::onelab::server::instance()->fromJSON(data);
+  if(format == "json"){
+    if(!::onelab::server::instance()->fromJSON(data))
+      Msg::Error("Could not parse json data '%s'", data.c_str());
+  }
   else
     Msg::Error("Unknown data format");
 #else
-  Msg::Error("Onelab not available");
+  Msg::Error("ONELAB not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::onelab::get(std::string &data,
+                                const std::string &name,
+                                const std::string &format)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_ONELAB)
+  data.clear();
+  if(name.empty()){
+    if(format == "json")
+      ::onelab::server::instance()->toJSON(data, "Gmsh");
+    else
+      Msg::Error("Unknown data format");
+  }
+  else{
+    std::vector< ::onelab::number> ps;
+    ::onelab::server::instance()->get(ps, name);
+    if(ps.size()){
+      if(format == "json")
+        data = ps[0].toJSON();
+      else
+        data = ps[0].toChar();
+    }
+    else{
+      std::vector< ::onelab::string> ps2;
+      ::onelab::server::instance()->get(ps2, name);
+      if(ps2.size()){
+        if(format == "json")
+          data = ps2[0].toJSON();
+        else
+          data = ps2[0].toChar();
+      }
+    }
+  }
+#else
+  Msg::Error("ONELAB not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::onelab::setNumber(const std::string &name,
+                                      const std::vector<double> &value)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_ONELAB)
+  ::onelab::number p(name);
+  std::vector< ::onelab::number> ps;
+  ::onelab::server::instance()->get(ps, name);
+  if(ps.size()) p = ps[0];
+  p.setValues(value);
+  ::onelab::server::instance()->set(p);
+#else
+  Msg::Error("ONELAB not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::onelab::getNumber(const std::string &name,
+                                      std::vector<double> &value)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_ONELAB)
+  value.clear();
+  std::vector< ::onelab::number> ps;
+  ::onelab::server::instance()->get(ps, name);
+  if(ps.size()) value = ps[0].getValues();
+#else
+  Msg::Error("ONELAB not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::onelab::setString(const std::string &name,
+                                      const std::vector<std::string> &value)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_ONELAB)
+  ::onelab::string p(name);
+  std::vector< ::onelab::string> ps;
+  ::onelab::server::instance()->get(ps, name);
+  if(ps.size()) p = ps[0];
+  p.setValues(value);
+  ::onelab::server::instance()->set(p);
+#else
+  Msg::Error("ONELAB not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::onelab::getString(const std::string &name,
+                                      std::vector<std::string> &value)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_ONELAB)
+  value.clear();
+  std::vector< ::onelab::string> ps;
+  ::onelab::server::instance()->get(ps, name);
+  if(ps.size()) value = ps[0].getValues();
+#else
+  Msg::Error("ONELAB not available");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::onelab::clear(const std::string &name)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+#if defined(HAVE_ONELAB)
+  ::onelab::server::instance()->clear(name);
+#else
+  Msg::Error("ONELAB not available");
   throw -1;
 #endif
 }
@@ -4287,4 +4554,78 @@ GMSH_API void gmsh::onelab::run(const std::string &name,
 #if defined(HAVE_ONELAB)
   onelabUtils::runClient(name, command);
 #endif
+}
+
+// gmsh::logger
+
+GMSH_API void gmsh::logger::write(const std::string &message,
+                                  const std::string &level)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  if(level == "error")
+    Msg::Error("%s", message.c_str());
+  else if(level == "warning")
+    Msg::Warning("%s", message.c_str());
+  else
+    Msg::Info("%s", message.c_str());
+}
+
+class apiMsg : public GmshMessage {
+private:
+  std::vector<std::string> &_log;
+
+public:
+  apiMsg(std::vector<std::string> &log) : _log(log) {}
+  virtual void operator()(std::string level, std::string message)
+  {
+    _log.push_back(level + ": " + message);
+  }
+};
+
+GMSH_API void gmsh::logger::start(std::vector<std::string> &log)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  GmshMessage *msg = Msg::GetCallback();
+  if(msg) {
+    Msg::Warning("Logger already started - ignoring");
+  }
+  else {
+    msg = new apiMsg(log);
+    Msg::SetCallback(msg);
+  }
+}
+
+GMSH_API void gmsh::logger::stop()
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  GmshMessage *msg = Msg::GetCallback();
+  if(msg) {
+    delete msg;
+    Msg::SetCallback(0);
+  }
+  else {
+    Msg::Warning("Logger not started - ignoring");
+  }
+}
+
+GMSH_API double gmsh::logger::time()
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  return TimeOfDay();
+}
+
+GMSH_API double gmsh::logger::cputime()
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  return Cpu();
 }

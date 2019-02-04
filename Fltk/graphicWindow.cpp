@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #include "GmshDefines.h"
@@ -2155,7 +2155,7 @@ static void mesh_partition_cb(Fl_Widget *w, void *data)
 
 static void mesh_unpartition_cb(Fl_Widget *w, void *data)
 {
-  int ier = GModel::current()->deleteMeshPartitions();
+  int ier = GModel::current()->unpartitionMesh();
 
   // Update the screen
   if(!ier) {
@@ -3225,15 +3225,15 @@ static void status_play_cb(Fl_Widget *w, void *data)
   static double anim_time;
   getGraphicWindow(w)->setAnimButtons(0);
   stop_anim = 0;
-  anim_time = GetTimeInSeconds();
+  anim_time = TimeOfDay();
   while(1) {
     if(stop_anim)
       break;
-    if(GetTimeInSeconds() - anim_time > CTX::instance()->post.animDelay) {
-      anim_time = GetTimeInSeconds();
+    if(TimeOfDay() - anim_time > CTX::instance()->post.animDelay) {
+      anim_time = TimeOfDay();
       status_play_manual(!CTX::instance()->post.animCycle, CTX::instance()->post.animStep);
     }
-    FlGui::instance()->check();
+    FlGui::check();
   }
 }
 
@@ -3291,7 +3291,7 @@ void show_hide_message_cb(Fl_Widget *w, void *data)
   graphicWindow *g = getGraphicWindow
     (FlGui::instance()->getCurrentOpenglWindow()->parent());
   g->showHideMessages();
-  FlGui::instance()->check();
+  FlGui::check();
 }
 
 void show_hide_menu_cb(Fl_Widget *w, void *data)
@@ -3299,7 +3299,7 @@ void show_hide_menu_cb(Fl_Widget *w, void *data)
   graphicWindow *g = getGraphicWindow
     (FlGui::instance()->getCurrentOpenglWindow()->parent());
   g->showHideMenu();
-  FlGui::instance()->check();
+  FlGui::check();
 }
 
 void attach_detach_menu_cb(Fl_Widget *w, void *data)
@@ -3307,7 +3307,7 @@ void attach_detach_menu_cb(Fl_Widget *w, void *data)
   graphicWindow *g = getGraphicWindow
     (FlGui::instance()->getCurrentOpenglWindow()->parent());
   g->attachDetachMenu();
-  FlGui::instance()->check();
+  FlGui::check();
 }
 
 static void message_menu_autoscroll_cb(Fl_Widget *w, void *data)

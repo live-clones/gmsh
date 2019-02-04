@@ -1,7 +1,7 @@
-# Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 variables:
   EXTRA_OPTION: ""
@@ -18,13 +18,14 @@ linux64_ci:
     - cmake ${EXTRA_OPTION} ..
     - make -j 8
     - ctest -j 8 --output-on-failure
+    - valgrind --leak-check=full --error-exitcode=1 ./gmsh ../tutorial/t5.geo -3
   tags:
     - linux64
     - docker
   except:
     - tags
 
-linux64_minimal_ci:
+linux64_compatibility_ci:
   image: onelab/ubuntu18.04
   script:
     - mkdir build
@@ -37,19 +38,9 @@ linux64_minimal_ci:
     - make -j 8
     - cmake -DENABLE_MESH=1 ..
     - make -j 8
-  tags:
-    - linux64
-    - docker
-  except:
-    - tags
-
-linux64_cxx98_compat_ci:
-  image: onelab/ubuntu16.04
-  script:
-    - mkdir build
-    - cd build
+    - rm -rf *
     - export CXXFLAGS=-std=c++98
-    - cmake -DENABLE_CXX11=0 -DENABLE_OCC=0 ${EXTRA_OPTION} ..
+    - cmake -DENABLE_CXX11=0 -DENABLE_OCC=0 ..
     - make -j 8
   tags:
     - linux64

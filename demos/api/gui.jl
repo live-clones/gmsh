@@ -28,10 +28,11 @@ factory.synchronize();
 
 # this would be equivalent to gmsh.fltk.run():
 #
-# gmsh.graphics.draw();
-# while 1:
+# gmsh.graphics.draw()
+# while true
 #     gmsh.fltk.wait()
-#     print "just treated an event in the interface"
+#     println("just treated an event in the interface")
+# end
 
 gmsh.fltk.run()
 

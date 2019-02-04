@@ -23,8 +23,10 @@ For t In {1:5}
   x += 0.166 ;
   z += 0.166 ;
   Sphere(3 + t) = {x,y,z,r};
+  Physical Volume(t) = {3 + t};
 EndFor
-v() = BooleanFragments{ Volume{3}; Delete; }{ Volume{3+1:3+5}; Delete; };
+v() = BooleanFragments{ Volume{3}; Delete; }{ Volume{3 + 1 : 3 + 5}; Delete; };
+Physical Volume(10) = v(#v()-1);
 
 lcar1 = .1;
 lcar2 = .0005;
@@ -32,8 +34,9 @@ lcar3 = .055;
 eps = 1e-3;
 
 Characteristic Length{ PointsOf{ Volume{:}; } } = lcar1;
-Characteristic Length{ PointsOf{ Volume{3+1:3+5}; } } = lcar3;
-p() = Point In BoundingBox{0.5-eps,0.5-eps,0.5-eps,0.5+eps,0.5+eps,0.5+eps};
+Characteristic Length{ PointsOf{ Volume{3 + 1 : 3 + 5}; } } = lcar3;
+p() = Point In BoundingBox{0.5-eps, 0.5-eps, 0.5-eps,
+                           0.5+eps, 0.5+eps, 0.5+eps};
 Characteristic Length{ p() } = lcar2;
 
 // Additional examples are available in the demos/boolean directory.
