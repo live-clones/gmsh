@@ -1160,7 +1160,7 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
       partNum = static_cast<ghostFace *>(ge)->getPartition();
     else if(ge->geomType() == GEntity::GhostVolume)
       partNum = static_cast<ghostRegion *>(ge)->getPartition();
-    if(partNum >= 0 && partNum < ghostEntities.size())
+    if(partNum >= 0 && partNum < (int)ghostEntities.size())
       ghostEntities[partNum] = ge;
   }
 

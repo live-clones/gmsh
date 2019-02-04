@@ -1332,7 +1332,7 @@ static void _addElements(int dim, int tag, GEntity *ge, int type,
                          const std::vector<int> &elementTags,
                          const std::vector<int> &nodeTags)
 {
-  int numNodesPerEle = MElement::getInfoMSH(type);
+  unsigned int numNodesPerEle = MElement::getInfoMSH(type);
   if(!numNodesPerEle) return;
   std::size_t numEleTags = elementTags.size();
   std::size_t numEle = numEleTags;
@@ -2123,7 +2123,7 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
       numFacesPerEle = 0;
       for(int j = 0; j < nf; j++){
         MFace f = e->getFace(j);
-        if(f.getNumVertices() == faceType)
+        if(faceType == (int)f.getNumVertices())
           numFacesPerEle++;
       }
       if(primary){
@@ -2156,7 +2156,7 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
         int nf = e->getNumFaces();
         for(int k = 0; k < nf; k++){
           MFace f = e->getFace(k);
-          if(f.getNumVertices() != faceType) continue;
+          if(faceType != (int)f.getNumVertices()) continue;
           std::vector<MVertex*> v;
           // we could use e->getHighOrderFace() here if we decide to remove
           // getFaceVertices
@@ -4544,6 +4544,7 @@ GMSH_API void gmsh::fltk::run()
 #endif
 }
 
+#if defined(HAVE_FLTK)
 static int selectionCode(char val)
 {
   switch(val){
@@ -4555,6 +4556,7 @@ static int selectionCode(char val)
   default: return -1; // unknown code
   }
 }
+#endif
 
 GMSH_API int gmsh::fltk::selectEntities(vectorpair &dimTags, const int dim)
 {
@@ -4585,6 +4587,8 @@ GMSH_API int gmsh::fltk::selectEntities(vectorpair &dimTags, const int dim)
     dimTags.push_back
       (std::pair<int, int>(1, FlGui::instance()->selectedRegions[i]->tag()));
   return selectionCode(ret);
+#else
+  return 0;
 #endif
 }
 
@@ -4605,6 +4609,8 @@ GMSH_API int gmsh::fltk::selectElements(std::vector<int> &tags)
   for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size(); i++)
     tags.push_back(FlGui::instance()->selectedElements[i]->getNum());
   return selectionCode(ret);
+#else
+  return 0;
 #endif
 }
 
@@ -4620,6 +4626,8 @@ GMSH_API int gmsh::fltk::selectViews(std::vector<int> &tags)
   for(std::size_t i = 0; i < FlGui::instance()->selectedViews.size(); i++)
     tags.push_back(FlGui::instance()->selectedViews[i]->getTag());
   return selectionCode(ret);
+#else
+  return 0;
 #endif
 }
 
