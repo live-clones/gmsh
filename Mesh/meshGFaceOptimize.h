@@ -6,8 +6,8 @@
 #ifndef _MESH_GFACE_OPTIMIZE_H_
 #define _MESH_GFACE_OPTIMIZE_H_
 
-#include <unordered_map>
 #include <map>
+//#include <unordered_map>
 #include <vector>
 #include "MElement.h"
 #include "MEdge.h"
@@ -25,10 +25,10 @@ struct edge_angle {
   bool operator<(const edge_angle &other) const { return other.angle < angle; }
 };
 
-//typedef std::map<MVertex *, std::vector<MElement *>, MVertexLessThanNum>
-//  v2t_cont;
-typedef std::unordered_map<MVertex *, std::vector<MElement *>>
-  v2t_cont;
+// TODO: switch to unordered_map here & verify deterministic bahavior
+typedef std::map<MVertex *, std::vector<MElement *>, MVertexLessThanNum> v2t_cont;
+//typedef std::unordered_map<MVertex *, std::vector<MElement *> > v2t_cont;
+
 typedef std::map<MEdge, std::pair<MElement *, MElement *>, Less_Edge> e2t_cont;
 
 template <class T>
