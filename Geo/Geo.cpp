@@ -542,7 +542,7 @@ void FreeCurve(void *a, void *b)
 {
   Curve *pC = *(Curve **)a;
   if(pC) {
-    delete[] pC->k;
+    if(pC->k) delete[] pC->k;
     List_Delete(pC->Control_Points);
     if(pC->Extrude) delete pC->Extrude;
     delete pC;
