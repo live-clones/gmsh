@@ -431,10 +431,10 @@ static void getEdgeVertices(GEdge *ge, MElement *ele,
       edgeVertices[p].insert(edgeVertices[p].end(), veEdge.rbegin(),
                              veEdge.rend());
   }
-  else if(p.first != p.second) { // Vertices already exist and edge is not a
-                                 // degenerated edge
-    Msg::Error(
-      "Edges from different entities share vertices: create a finer mesh");
+  else if(p.first != p.second) {
+    // Vertices already exist and edge is not a degenerated edge
+    Msg::Error("Edges from different entities share vertices: create a finer mesh "
+               "(curve involved: %d)", ge->tag());
   }
   ve.insert(ve.end(), veEdge.begin(), veEdge.end());
 }
