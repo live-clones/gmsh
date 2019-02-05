@@ -101,7 +101,7 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
     t = t->getNeigh(iFace);
     if(!t) return false;
     if(t->isDeleted()) {
-      Msg::Warning("Weird!");
+      Msg::Warning("Strange edge cavity (tet is deleted)");
       return false;
     }
     if(t == cavity[0]) break;
@@ -117,7 +117,7 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
       }
     }
     if(iLocalEdge == -1) {
-      Msg::Error("loc = %d", iLocalEdge);
+      Msg::Warning("Strange edge cavity (local edge not found)");
       return false;
     }
     // FIXME when hybrid mesh, this loops for ever
