@@ -1897,21 +1897,21 @@ static bool buildConsecutiveListOfVertices(
         if(MYDEBUG) printf("Followed by edge = %d\n", (*it).ge->tag());
         SPoint2 first_coord = mesh1d[0];
         double d = -1, d_reversed = -1, d_seam = -1, d_seam_reversed = -1;
-        d = dist2(last_coord, first_coord);
+        d = dist2(last_coord, first_coord);		
         if(MYDEBUG)
           printf("%g %g dist = %12.5E\n", first_coord.x(), first_coord.y(), d);
-        if(d < tol) {
+        SPoint2 first_coord_reversed = mesh1d_reversed[0];
+        d_reversed = dist2(last_coord, first_coord_reversed);
+        if(MYDEBUG)
+          printf("%g %g dist_reversed = %12.5E\n", first_coord_reversed.x(),
+                 first_coord_reversed.y(), d_reversed);
+        if(d < tol && d < d_reversed) {
           coords.clear();
           coords = mesh1d;
           found = GEdgeSigned(1, ge);
           unordered.erase(it);
           goto Finalize;
         }
-        SPoint2 first_coord_reversed = mesh1d_reversed[0];
-        d_reversed = dist2(last_coord, first_coord_reversed);
-        if(MYDEBUG)
-          printf("%g %g dist_reversed = %12.5E\n", first_coord_reversed.x(),
-                 first_coord_reversed.y(), d_reversed);
         if(d_reversed < tol) {
           coords.clear();
           coords = mesh1d_reversed;
