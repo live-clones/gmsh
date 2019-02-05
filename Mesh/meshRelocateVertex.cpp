@@ -18,7 +18,8 @@
 
 static double objective_function(double xi, MVertex *ver, double xTarget,
                                  double yTarget, double zTarget,
-                                 const std::vector<MElement *> &lt, bool onlytet = false)
+                                 const std::vector<MElement *> &lt,
+                                 bool onlytet = false)
 {
   double x = ver->x();
   double y = ver->y();
@@ -28,18 +29,21 @@ static double objective_function(double xi, MVertex *ver, double xTarget,
   ver->z() = (1. - xi) * ver->z() + xi * zTarget;
   double minQual = 1.0;
   for(unsigned int i = 0; i < lt.size(); i++) {
-    if(lt[i]->getNumVertices() == 4){
+    if(lt[i]->getNumVertices() == 4) {
       //      if (onlytet)
       double V;
-      double Q =  qmTetrahedron::gamma(lt[i]->getVertex(0)->x(),lt[i]->getVertex(0)->y(),lt[i]->getVertex(0)->z(),
-				       lt[i]->getVertex(1)->x(),lt[i]->getVertex(1)->y(),lt[i]->getVertex(1)->z(),
-				       lt[i]->getVertex(2)->x(),lt[i]->getVertex(2)->y(),lt[i]->getVertex(2)->z(),
-				       lt[i]->getVertex(3)->x(),lt[i]->getVertex(3)->y(),lt[i]->getVertex(3)->z(),&V);
-      if (V > 0)Q = -Q;
+      double Q = qmTetrahedron::gamma(
+        lt[i]->getVertex(0)->x(), lt[i]->getVertex(0)->y(),
+        lt[i]->getVertex(0)->z(), lt[i]->getVertex(1)->x(),
+        lt[i]->getVertex(1)->y(), lt[i]->getVertex(1)->z(),
+        lt[i]->getVertex(2)->x(), lt[i]->getVertex(2)->y(),
+        lt[i]->getVertex(2)->z(), lt[i]->getVertex(3)->x(),
+        lt[i]->getVertex(3)->y(), lt[i]->getVertex(3)->z(), &V);
+      if(V > 0) Q = -Q;
       minQual = std::min(Q, minQual);
-	//      else minQual = std::min((lt[i]->minSICNShapeMeasure()), minQual);
+      //      else minQual = std::min((lt[i]->minSICNShapeMeasure()), minQual);
     }
-    else if (!onlytet)
+    else if(!onlytet)
       //  minQual = std::min((lt[i]->specialQuality()), minQual);
       minQual = std::min(std::abs(lt[i]->minSICNShapeMeasure()) * .2, minQual);
   }
@@ -148,8 +152,8 @@ static double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
   return a;
 }
 
-static double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf, SPoint2 &p1,
-                                              SPoint2 &p2,
+static double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf,
+                                              SPoint2 &p1, SPoint2 &p2,
                                               const std::vector<MElement *> &lt,
                                               double tol, double &worst)
 {
@@ -195,8 +199,8 @@ static double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf, SPoint2 &
   return a;
 }
 
-static double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf, SPoint3 &p1,
-                                              SPoint3 &p2,
+static double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf,
+                                              SPoint3 &p1, SPoint3 &p2,
                                               const std::vector<MElement *> &lt,
                                               double tol, double &worst)
 {
@@ -242,7 +246,9 @@ static double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf, SPoint3 &
   return a;
 }
 
-static void _relocateVertexOfPyramid(MVertex *ver, const std::vector<MElement *> &lt, double relax)
+static void _relocateVertexOfPyramid(MVertex *ver,
+                                     const std::vector<MElement *> &lt,
+                                     double relax)
 {
   if(ver->onWhat()->dim() != 3) return;
   double x = 0.0, y = 0.0, z = 0.0;
@@ -251,12 +257,13 @@ static void _relocateVertexOfPyramid(MVertex *ver, const std::vector<MElement *>
 
   for(unsigned int i = 0; i < lt.size(); i++) {
     double XCG = 0.0, YCG = 0.0, ZCG = 0.0;
-    if (lt[i]->getNumVertices() == 5) pyramid = lt[i];
+    if(lt[i]->getNumVertices() == 5)
+      pyramid = lt[i];
     else {
       for(std::size_t j = 0; j < lt[i]->getNumVertices(); j++) {
-	XCG += lt[i]->getVertex(j)->x();
-	YCG += lt[i]->getVertex(j)->y();
-	ZCG += lt[i]->getVertex(j)->z();
+        XCG += lt[i]->getVertex(j)->x();
+        YCG += lt[i]->getVertex(j)->y();
+        ZCG += lt[i]->getVertex(j)->z();
       }
       x += XCG;
       y += YCG;
@@ -268,21 +275,22 @@ static void _relocateVertexOfPyramid(MVertex *ver, const std::vector<MElement *>
   y /= N;
   z /= N;
 
-  if (pyramid){
+  if(pyramid) {
     MFace q = pyramid->getFace(4);
     double A = q.approximateArea();
     SVector3 n = q.normal();
     n.normalize();
     SPoint3 c = q.barycenter();
-    SVector3 d (x-c.x(),y-c.y(),z-c.z());
-    if (dot (n,d) < 0) n = n*(-1.0);
-    double H = .5*sqrt (fabs(A));
-    double XOPT = c.x() + relax*H*n.x();
-    double YOPT = c.y() + relax*H*n.y();
-    double ZOPT = c.z() + relax*H*n.z();
-    double FULL_MOVE_OBJ = objective_function(1.0, ver, XOPT,YOPT,ZOPT,lt,true);
+    SVector3 d(x - c.x(), y - c.y(), z - c.z());
+    if(dot(n, d) < 0) n = n * (-1.0);
+    double H = .5 * sqrt(fabs(A));
+    double XOPT = c.x() + relax * H * n.x();
+    double YOPT = c.y() + relax * H * n.y();
+    double ZOPT = c.z() + relax * H * n.z();
+    double FULL_MOVE_OBJ =
+      objective_function(1.0, ver, XOPT, YOPT, ZOPT, lt, true);
     //    printf("relax %g obj %g\n",relax,FULL_MOVE_OBJ);
-    if (FULL_MOVE_OBJ > 0.1){
+    if(FULL_MOVE_OBJ > 0.1) {
       ver->x() = XOPT;
       ver->y() = YOPT;
       ver->z() = ZOPT;
@@ -291,7 +299,8 @@ static void _relocateVertexOfPyramid(MVertex *ver, const std::vector<MElement *>
   }
 }
 
-static void _relocateVertexGolden(MVertex *ver, const std::vector<MElement *> &lt,
+static void _relocateVertexGolden(MVertex *ver,
+                                  const std::vector<MElement *> &lt,
                                   double relax, double tol)
 {
   if(ver->onWhat()->dim() != 3) return;
@@ -311,17 +320,17 @@ static void _relocateVertexGolden(MVertex *ver, const std::vector<MElement *> &l
     N += lt[i]->getNumVertices();
   }
 
-  double NO_MOVE_OBJ   = objective_function(0.0, ver, x/N,y/N,z/N,lt);
-  if (NO_MOVE_OBJ > 0.1)return;
-  double FULL_MOVE_OBJ = objective_function(1.0, ver, x/N,y/N,z/N,lt);
-  if (FULL_MOVE_OBJ > NO_MOVE_OBJ){
+  double NO_MOVE_OBJ = objective_function(0.0, ver, x / N, y / N, z / N, lt);
+  if(NO_MOVE_OBJ > 0.1) return;
+  double FULL_MOVE_OBJ = objective_function(1.0, ver, x / N, y / N, z / N, lt);
+  if(FULL_MOVE_OBJ > NO_MOVE_OBJ) {
     ver->x() = x / N;
     ver->y() = y / N;
     ver->z() = z / N;
     return;
   }
   //  printf("coucouc %g %g\n",FULL_MOVE_OBJ ,NO_MOVE_OBJ);
-  
+
   double q;
   double xi = relax * Maximize_Quality_Golden_Section(ver, x / N, y / N, z / N,
                                                       lt, tol, q);
@@ -449,59 +458,58 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
 {
   if(!niter) return;
 
-  // FAST IMPLEMENTATION  
-  std::vector<MVertex*> _v_pyr;
-  for (size_t i=0;i<region->pyramids.size();i++){
+  // FAST IMPLEMENTATION
+  std::vector<MVertex *> _v_pyr;
+  for(size_t i = 0; i < region->pyramids.size(); i++) {
     _v_pyr.push_back(region->pyramids[i]->getVertex(4));
   }
   std::sort(_v_pyr.begin(), _v_pyr.end());
 
   //  printf("coucou1\n");
-  
-  std::vector<MTetrahedron*> _tets;
-  std::set<MVertex*> _vts;
-  for (size_t i=0;i<region->tetrahedra.size();i++){
+
+  std::vector<MTetrahedron *> _tets;
+  std::set<MVertex *> _vts;
+  for(size_t i = 0; i < region->tetrahedra.size(); i++) {
     MTetrahedron *t = region->tetrahedra[i];
-    for (size_t j=0;j<4;j++){
+    for(size_t j = 0; j < 4; j++) {
       MVertex *v = t->getVertex(j);
-      if (std::binary_search(_v_pyr.begin(), _v_pyr.end(),v)){
-	_tets.push_back(t);
-	_vts.insert (t->getVertex(0));
-	_vts.insert (t->getVertex(1));
-	_vts.insert (t->getVertex(2));
-	_vts.insert (t->getVertex(3));
-	break;
+      if(std::binary_search(_v_pyr.begin(), _v_pyr.end(), v)) {
+        _tets.push_back(t);
+        _vts.insert(t->getVertex(0));
+        _vts.insert(t->getVertex(1));
+        _vts.insert(t->getVertex(2));
+        _vts.insert(t->getVertex(3));
+        break;
       }
     }
   }
   //  printf("coucou1b %d\n",_tets.size());
   _tets.clear();
-  for (size_t i=0;i<region->tetrahedra.size();i++){
+  for(size_t i = 0; i < region->tetrahedra.size(); i++) {
     MTetrahedron *t = region->tetrahedra[i];
-    for (size_t j=0;j<4;j++){
+    for(size_t j = 0; j < 4; j++) {
       MVertex *v = t->getVertex(j);
-      if (_vts.find(v) != _vts.end()){
-	_tets.push_back(t);
-	break;
+      if(_vts.find(v) != _vts.end()) {
+        _tets.push_back(t);
+        break;
       }
     }
   }
 
   //  printf("coucou2 %d\n",_tets.size());
-  
-  
+
   v2t_cont adj;
-  //buildVertexToElement(region->tetrahedra, adj);
+  // buildVertexToElement(region->tetrahedra, adj);
   buildVertexToElement(_tets, adj);
   buildVertexToElement(region->pyramids, adj);
   buildVertexToElement(region->prisms, adj);
   buildVertexToElement(region->hexahedra, adj);
 
-  for (int i=0;i<10;i++){
-    double X = (double)(i+1)/10.;
+  for(int i = 0; i < 10; i++) {
+    double X = (double)(i + 1) / 10.;
     v2t_cont::iterator it = adj.begin();
     while(it != adj.end()) {
-      _relocateVertexOfPyramid(it->first, it->second,X);
+      _relocateVertexOfPyramid(it->first, it->second, X);
       ++it;
     }
   }
@@ -514,11 +522,10 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
       ++it;
     }
   }
-
 }
 
-
-void RelocateVerticesOfPyramids(std::vector<GRegion *> &regions, int niter, double tol)
+void RelocateVerticesOfPyramids(std::vector<GRegion *> &regions, int niter,
+                                double tol)
 {
   for(unsigned int k = 0; k < regions.size(); k++) {
     RelocateVerticesOfPyramids(regions[k], niter, tol);
