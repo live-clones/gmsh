@@ -41,6 +41,24 @@ typedef unsigned long intptr_t;
 #include "drawContext.h"
 #endif
 
+
+static inline int computeTetGenVersion2(uint32_t v1, uint32_t* v2Choices, const int iface2){
+  int i;
+  for (i=0; i<3; i++) {
+      if(v1==v2Choices[i]){
+        break;
+      }
+  }
+
+  if(i==3)
+    Msg::Error("should never happen (file:%s line:%d)\n", __FILE__, __LINE__);
+  
+  // version%4 : corresponding face in adjacent tet
+  // version/4 : which of the 3 rotation of the facet the tetrahedra has...
+  return 4*i + iface2;
+}
+
+
 namespace tetgenBR {
 
 #define REAL double
@@ -284,6 +302,44 @@ namespace tetgenBR {
         ver2tetarray[i] = NULL;
       }
 
+
+
+#if 0
+      /*  N E W   V E R S I O N	  */
+      std::vector<triface> ts( tets.size() );
+      for(unsigned int i = 0; i < tets.size(); i++) {
+	point p[4];
+	// index tetrahedra in order to have access to neighbors ids.
+	tets[i]->tet()->forceNum(i+1);
+	p[0] = idx2verlist[tets[i]->getVertex(0)->getIndex()];
+	p[1] = idx2verlist[tets[i]->getVertex(1)->getIndex()];
+	p[2] = idx2verlist[tets[i]->getVertex(2)->getIndex()];
+	p[3] = idx2verlist[tets[i]->getVertex(3)->getIndex()];
+	setvertices(ts[i], p[0], p[1], p[2], p[3]);
+      }
+          // we can make this in parallel, iterations are totally independent
+      for (uint64_t i = 0; i < tets.size(); i++) {
+	triface tf1 = ts[i];
+	
+	for (tf1.ver=0; tf1.ver<4; tf1.ver++){
+	  uint64_t neigh = tets[i]->getNeigh(tf1.ver)->tet()->getNum() - 1;
+	  triface tf2 = ts[neigh];
+	  int iface2 = tf1.ver;
+	  
+	  int face2[3] = {
+	    tets[i]->getVertex(faces_tetra(tf1.ver),0)->getIndex(),
+	    tets[i]->getVertex(faces_tetra(tf1.ver),1)->getIndex(),
+	    tets[i]->getVertex(faces_tetra(tf1.ver),2)->getIndex()};
+	  
+	  tf2.ver = computeTetGenVersion2(faces2[0], face2, iface2);
+	  bond(tf1,tf2);
+	}
+      }
+      
+#else
+      
+      /*  N E W   V E R S I O N	  */
+      
       // Create the tetrahedra and connect those that share a common face.
       for(unsigned int i = 0; i < tets.size(); i++) {
         // Get the four vertices.
@@ -435,6 +491,7 @@ namespace tetgenBR {
       for(unsigned int i = 0; i < tets.size(); i++) delete tets[i];
       tets.clear(); // Release all memory in this vector.
     }
+#endif
 
     std::vector<GFace *> const &f_list = _gr->faces();
     std::vector<GEdge *> const &e_list = _gr->embeddedEdges();
