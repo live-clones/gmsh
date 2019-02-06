@@ -1163,8 +1163,9 @@ if(ENABLE_OCC)
   else()
     set(OCC_SYS_NAME ${CMAKE_SYSTEM_NAME})
   endif()
-  find_path(OCC_INC "Standard_Version.hxx" HINTS ENV CASROOT PATH_SUFFIXES inc
-            include include/oce opencascade include/opencascade)
+  find_path(OCC_INC "Standard_Version.hxx" HINTS ENV CASROOT PATH_SUFFIXES
+            inc include include/oce opencascade include/opencascade
+            occt include/occt)
   if(OCC_INC)
     file(STRINGS ${OCC_INC}/Standard_Version.hxx
          OCC_MAJOR REGEX "#define OCC_VERSION_MAJOR.*")
@@ -1184,7 +1185,7 @@ if(ENABLE_OCC)
     message(WARNING "Gmsh requires OpenCASCADE >= ${OCC_MINIMAL_VERSION}. "
         "Use CMAKE_PREFIX_PATH or the CASROOT environment variable "
         "to explicitely specify the installation path of OpenCASCADE")
-  else()
+  elseif(OCC_INC)
     set(OCC_LIBS_REQUIRED
 	# subset of DataExchange
       	TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
