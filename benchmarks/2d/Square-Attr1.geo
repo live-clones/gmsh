@@ -13,7 +13,7 @@ Point(11) = {0.1, 0.1, 0, lc};
 Point(22) = {0.9, 0.9 ,0, lc};
 Line(5) = {11,22};
 
-Field[1] = Attractor;
+Field[1] = Distance;
 Field[1].NNodesByEdge = 100;
 Field[1].EdgesList = {3,5};
 

@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GModel.h"
 #include "OS.h"
@@ -22,9 +22,10 @@ static void writeElementsINP(FILE *fp, GEntity *ge, std::vector<T *> &elements,
     const char *typ = elements[0]->getStringForINP();
     if(typ) {
       const char *str =
-        (ge->dim() == 3) ?
-          "Volume" :
-          (ge->dim() == 2) ? "Surface" : (ge->dim() == 1) ? "Line" : "Point";
+        (ge->dim() == 3) ? "Volume" :
+        (ge->dim() == 2) ? "Surface" :
+        (ge->dim() == 1) ? "Line" :
+        "Point"; // currently unused
       fprintf(fp, "*ELEMENT, type=%s, ELSET=%s%d\n", typ, str, ge->tag());
       for(unsigned int i = 0; i < elements.size(); i++)
         elements[i]->writeINP(fp, elements[i]->getNum());
@@ -39,7 +40,9 @@ static std::string physicalName(GModel *m, int dim, int num)
     char tmp[256];
     sprintf(tmp, "%s%d",
             (dim == 3) ? "PhysicalVolume" :
-                         (dim == 2) ? "PhysicalSurface" : "PhysicalLine",
+            (dim == 2) ? "PhysicalSurface" :
+            (dim == 1) ? "PhysicalLine" :
+            "PhysicalPoint",
             num);
     name = tmp;
   }
@@ -92,10 +95,10 @@ int GModel::writeINP(const std::string &name, bool saveAll,
   std::map<int, std::vector<GEntity *> > groups[4];
   getPhysicalGroups(groups);
 
-  // save elements sets for each physical group
-  for(int dim = 0; dim <= 3; dim++) {
-    for(std::map<int, std::vector<GEntity *> >::iterator it =
-          groups[dim].begin();
+  // save elements sets for each physical group (currently we don't save point
+  // elements: is there this concept in Abaqus?)
+  for(int dim = 1; dim <= 3; dim++) {
+    for(std::map<int, std::vector<GEntity *> >::iterator it = groups[dim].begin();
         it != groups[dim].end(); it++) {
       std::vector<GEntity *> &entities = it->second;
       fprintf(fp, "*ELSET,ELSET=%s\n",
@@ -113,11 +116,11 @@ int GModel::writeINP(const std::string &name, bool saveAll,
     }
   }
 
-  // save node sets for each physical group
+  // save node sets for each physical group (here we include node sets on
+  // physical points)
   if(saveGroupsOfNodes) {
-    for(int dim = 1; dim <= 3; dim++) {
-      for(std::map<int, std::vector<GEntity *> >::iterator it =
-            groups[dim].begin();
+    for(int dim = 0; dim <= 3; dim++) {
+      for(std::map<int, std::vector<GEntity *> >::iterator it = groups[dim].begin();
           it != groups[dim].end(); it++) {
         std::set<MVertex *> nodes;
         std::vector<GEntity *> &entities = it->second;

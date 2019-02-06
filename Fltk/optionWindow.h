@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _OPTION_WINDOW_H_
 #define _OPTION_WINDOW_H_
@@ -33,11 +33,7 @@ public:
 
   struct {
     Fl_Group *group;
-#if defined(HAVE_VISUDEV)
     Fl_Check_Button *butt[24];
-#else
-    Fl_Check_Button *butt[23];
-#endif
     Fl_Button *push[20];
     Fl_Value_Input *value[50];
     Fl_Button *color[50];
@@ -112,5 +108,6 @@ void view_options_cb(Fl_Widget *w, void *data);
 void general_gmpdcf_cb(Fl_Widget *w, void *data);
 void general_options_ok_cb(Fl_Widget *w, void *data);
 void general_options_rotation_center_select_cb(Fl_Widget *w, void *data);
+void general_options_axes_fit_cb(Fl_Widget *w, void *data);
 
 #endif

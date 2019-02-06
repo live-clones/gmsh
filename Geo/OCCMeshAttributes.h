@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _OCC_MESH_ATTRIBUTES_
 #define _OCC_MESH_ATTRIBUTES_
@@ -119,8 +119,7 @@ public:
     try {
       BRepBndLib::Add(v->getShape(), box);
       if(box.IsVoid()) {
-        Msg::Debug(
-          "Inserting (null or degenerate) shape with void bounding box");
+        Msg::Debug("Inserting (null or degenerate) shape with void bounding box");
         // BRepTools::Dump(v->getShape(), std::cout);
         return;
       }
@@ -136,6 +135,30 @@ public:
     double bmin[3] = {x - _tol, y - _tol, z - _tol};
     double bmax[3] = {x + _tol, y + _tol, z + _tol};
     _rtree[v->getDim()]->Insert(bmin, bmax, v);
+  }
+  void remove(OCCMeshAttributes *v)
+  {
+    if(v->getDim() < 0 || v->getDim() > 3) return;
+    Bnd_Box box;
+    try {
+      BRepBndLib::Add(v->getShape(), box);
+      if(box.IsVoid()) {
+        Msg::Debug("Removing (null or degenerate) shape with void bounding box");
+        // BRepTools::Dump(v->getShape(), std::cout);
+        return;
+      }
+    } catch(Standard_Failure &err) {
+      Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+      return;
+    }
+    double xmin, ymin, zmin, xmax, ymax, zmax;
+    box.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+    double x = 0.5 * (xmin + xmax);
+    double y = 0.5 * (ymin + ymax);
+    double z = 0.5 * (zmin + zmax);
+    double bmin[3] = {x - _tol, y - _tol, z - _tol};
+    double bmax[3] = {x + _tol, y + _tol, z + _tol};
+    _rtree[v->getDim()]->Remove(bmin, bmax, v);
   }
   void find(int dim, const TopoDS_Shape &shape,
             std::vector<OCCMeshAttributes *> &attr, bool requireMeshSize,

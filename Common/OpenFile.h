@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _OPENFILE_H_
 #define _OPENFILE_H_
@@ -14,7 +14,8 @@ void ParseString(const std::string &str, bool inCurrentModelDir = false);
 void OpenProject(const std::string &filename);
 void OpenProjectMacFinder(const char *fileName);
 int MergeFile(const std::string &fileName, bool warnIfMissing = false,
-              bool setBoundingBox = true, bool importPhysicalsInOnelab = true);
+              bool setBoundingBox = true, bool importPhysicalsInOnelab = true,
+              int partitionToRead = -1);
 int MergePostProcessingFile(const std::string &fileName, int showViews = 2,
                             bool showLastStep = false,
                             bool warnIfMissing = false);

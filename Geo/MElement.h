@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _MELEMENT_H_
 #define _MELEMENT_H_
@@ -139,8 +139,11 @@ public:
   // get the vertex using KEY ordering
   virtual MVertex *getVertexKEY(int num) { return getVertex(num); }
 
-  // get the number of vertices associated with edges, faces and volumes
-  // (nonzero only for higher order elements, polygons or polyhedra)
+  // get the number of vertices associated with edges, faces and volumes (i.e.
+  // internal vertices on edges, faces and volume; nonzero only for higher order
+  // elements, polygons or polyhedra) - These functions should be renamed to
+  // getNumInternal*Vertices(), to avoid confusion with getEdgeVertices() and
+  // getFaceVertices()
   virtual int getNumEdgeVertices() const { return 0; }
   virtual int getNumFaceVertices() const { return 0; }
   virtual int getNumVolumeVertices() const { return 0; }

@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #include "GModel.h"
@@ -80,15 +80,7 @@ static double smoothPrimitive(GEdge *ge, double alpha,
 struct F_LcB {
   double operator()(GEdge *ge, double t)
   {
-    /*  BoundaryLayerField *blf = 0;
-  #if defined(HAVE_ANN)
-    FieldManager *fields = ge->model()->getFields();
-    Field *bl_field = fields->get(fields->getBoundaryLayerField());
-    blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-  #endif
-    */
     GPoint p = ge->point(t);
-
     return BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
   }
 };
@@ -96,31 +88,18 @@ struct F_LcB {
 struct F_Lc {
   double operator()(GEdge *ge, double t)
   {
-    /*
-    BoundaryLayerField *blf = 0;
-    #if defined(HAVE_ANN)
-    FieldManager *fields = ge->model()->getFields();
-    Field *bl_field = fields->get(fields->getBoundaryLayerField());
-    blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-    #endif
-    */
     GPoint p = ge->point(t);
-
     Range<double> bounds = ge->parBounds(0);
     double t_begin = bounds.low();
     double t_end = bounds.high();
-
     double lc_here;
-
     if(t == t_begin)
       lc_here = BGM_MeshSize(ge->getBeginVertex(), t, 0, p.x(), p.y(), p.z());
     else if(t == t_end)
       lc_here = BGM_MeshSize(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
     else
       lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
-
     SVector3 der = ge->firstDer(t);
-
     return norm(der) / lc_here;
   }
 };
@@ -142,11 +121,8 @@ struct F_Lc_aniso {
     else
       lc_here = BGM_MeshMetric(ge, t, 0, p.x(), p.y(), p.z());
 
-#if defined(HAVE_ANN)
     FieldManager *fields = ge->model()->getFields();
-    int n = fields->getNumBoundaryLayerFields();
-
-    for(int i = 0; i < n; ++i) {
+    for(int i = 0; i < fields->getNumBoundaryLayerFields(); ++i) {
       Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
       if(bl_field == NULL) continue;
       BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
@@ -155,7 +131,6 @@ struct F_Lc_aniso {
       blf->computeFor1dMesh(p.x(), p.y(), p.z(), lc_bgm);
       lc_here = intersection_conserveM1(lc_here, lc_bgm);
     }
-#endif
 
     SVector3 der = ge->firstDer(t);
     return std::sqrt(dot(der, lc_here, der));
@@ -342,8 +317,10 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
 
 void deMeshGEdge::operator()(GEdge *ge)
 {
-  if(ge->geomType() == GEntity::DiscreteCurve && !CTX::instance()->meshDiscrete)
-    return;
+  if(ge->geomType() == GEntity::DiscreteCurve){
+    if(!static_cast<discreteEdge *>(ge)->haveParametrization())
+      return;
+  }
   ge->deleteMesh();
   ge->meshStatistics.status = GEdge::PENDING;
   ge->correspondingVertices.clear();
@@ -360,8 +337,8 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
   double l = 0;
   for (unsigned int i = 0; i < Points.size(); i++){
     const IntPoint &P = Points[i];
-    if (i) l +=(P.t - Points[i-1].t)*P.xp;
-    fprintf(f, "%g %g %g %g %g\n", P.t, P.xp/P.lc, P.p,P.lc, l);
+    if(i) l += (P.t - Points[i-1].t) * P.xp;
+    fprintf(f, "%g %g %g %g %g\n", P.t, P.xp/P.lc, P.p, P.lc, l);
   }
   fclose(f);
 }
@@ -380,7 +357,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
 {
   if(ge->mesh_vertices.empty()) return;
   if(ge->meshAttributes.method == MESH_TRANSFINITE) return;
-  // if (ge->mesh_vertices.size() <=3)return;
+  // if(ge->mesh_vertices.size() <= 3) return;
   bool forceOdd = false;
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
@@ -426,12 +403,12 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
     while(last % 2 != 0) last--;
   }
   /*
-    if (CTX::instance()->mesh.algoRecombine == 2){
-    if (last < 4)last = 0;
-      while (last %4 != 0)last--;
+    if(CTX::instance()->mesh.algoRecombine == 2){
+      if(last < 4) last = 0;
+        while (last %4 != 0)last--;
       }
-    else {
-      while (last %2 != 0)last--;
+      else{
+        while (last %2 != 0)last--;
       }
     }
   */
@@ -454,7 +431,6 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
 static void createPoints(GVertex *gv, GEdge *ge, BoundaryLayerField *blf,
                          std::vector<MVertex *> &v, const SVector3 &dir)
 {
-#if defined(HAVE_ANN)
   const double hwall = blf->hwall(gv->tag());
   double L = hwall;
   double LEdge = distance(ge->getBeginVertex()->mesh_vertices[0],
@@ -470,14 +446,12 @@ static void createPoints(GVertex *gv, GEdge *ge, BoundaryLayerField *blf,
     int ith = v.size();
     L += hwall * std::pow(blf->ratio, ith);
   }
-#endif
 }
 
 static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
                                    std::vector<MVertex *> &_addBegin,
                                    std::vector<MVertex *> &_addEnd)
 {
-#if defined(HAVE_ANN)
   _addBegin.clear();
   _addEnd.clear();
 
@@ -538,15 +512,25 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
       if(!_addEnd.empty()) _addEnd[_addEnd.size() - 1]->getParameter(0, t_end);
     }
   }
-#endif
 }
 
 void meshGEdge::operator()(GEdge *ge)
 {
+  // debug stuff
+  if(CTX::instance()->debugSurface > 0){
+    std::vector<GFace *> f = ge->faces();
+    bool found = false;
+    for (size_t i=0;i<f.size(); i++){
+      if(f[i]->tag() == CTX::instance()->debugSurface) {
+	found = true;
+      }
+    }
+    if(!found) return;
+  }
+
   ge->model()->setCurrentMeshEntity(ge);
 
   if(ge->degenerate(1)) return;
-  // if(ge->geomType() == GEntity::DiscreteCurve) return;
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
   if(ge->meshAttributes.method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return;
@@ -665,12 +649,12 @@ void meshGEdge::operator()(GEdge *ge)
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
      CTX::instance()->mesh.algoRecombine != 0) {
-    if(CTX::instance()->mesh.recombineAll) {
+    std::vector<GFace *> const &faces = ge->faces();
+    if(CTX::instance()->mesh.recombineAll && faces.size()) {
       if(N % 2 == 0) N++;
       if(CTX::instance()->mesh.algoRecombine == 2) N = increaseN(N);
     }
     else {
-      std::vector<GFace *> const &faces = ge->faces();
       for(std::vector<GFace *>::const_iterator it = faces.begin();
           it != faces.end(); it++) {
         if((*it)->meshAttributes.recombine) {

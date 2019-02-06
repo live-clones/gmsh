@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _BACKGROUND_MESH_H_
 #define _BACKGROUND_MESH_H_
@@ -46,7 +46,7 @@ class backgroundMesh : public simpleFunction<double> {
   std::map<MVertex *, MVertex *> _2Dto3D;
   std::map<MVertex *, double> _distance;
   std::map<MVertex *, double> _angles;
-  static backgroundMesh *_current;
+  static std::vector<backgroundMesh *> _current;
   backgroundMesh(GFace *, bool dist = false);
   ~backgroundMesh();
 #if defined(HAVE_ANN)
@@ -62,7 +62,7 @@ public:
   static void set(GFace *);
   static void setCrossFieldsByDistance(GFace *);
   static void unset();
-  static backgroundMesh *current() { return _current; }
+  static backgroundMesh *current();
   void propagate1dMesh(GFace *);
   void propagateCrossField(GFace *, simpleFunction<double> *);
   void propagateCrossFieldHJ(GFace *);
@@ -85,7 +85,6 @@ public:
     default: print(filename, gf, _angles); return;
     }
   }
-  MElementOctree *get_octree();
   MElement *getMeshElementByCoord(double u, double v, double w,
                                   bool strict = true);
   int getNumMeshElements() const { return _triangles.size(); }

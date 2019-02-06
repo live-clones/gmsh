@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
 #include "GmshGlobal.h"
@@ -121,7 +121,7 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> _entities,
     if(_entities[ii]->dim() == _maxDim) {
       for(unsigned int i = 0; i < _entities[ii]->getNumMeshElements(); i++) {
         MElement *e = _entities[ii]->getMeshElement(i);
-        int numNodes = e->getNumVertices();
+        int numNodes = e->getNumPrimaryVertices();
         if(e->getNumChildren())
           numNodes = e->getNumChildren() * e->getChild(0)->getNumVertices();
         std::vector<double> x(numNodes), y(numNodes), z(numNodes);
@@ -525,7 +525,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
         it != allElems.end(); it++) {
       MElement *e = *it;
 
-      int numNodes = e->getNumVertices();
+      int numNodes = e->getNumPrimaryVertices();
       if(e->getType() == TYPE_POLYG)
         numNodes = e->getNumChildren() * e->getChild(0)->getNumVertices();
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);

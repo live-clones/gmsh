@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdio.h>
 #include <string.h>
@@ -12,6 +12,7 @@
 
 #if defined(HAVE_TETGENBR)
 
+#include "meshGRegion.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "robustPredicates.h"
 #include "GModel.h"
@@ -21,6 +22,7 @@
 #include "MLine.h"
 #include "MPoint.h"
 #include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "MTetrahedron.h"
 #include "Context.h"
 #include "OS.h"
@@ -39,9 +41,32 @@ typedef unsigned long intptr_t;
 #include "drawContext.h"
 #endif
 
+
+static inline int computeTetGenVersion2(uint32_t v1, uint32_t* v2Choices, const int iface2){
+  int i;
+  for (i=0; i<3; i++) {
+      if(v1==v2Choices[i]){
+        break;
+      }
+  }
+
+  if(i==3)
+    Msg::Error("should never happen (file:%s line:%d)\n", __FILE__, __LINE__);
+  
+  // version%4 : corresponding face in adjacent tet
+  // version/4 : which of the 3 rotation of the facet the tetrahedra has...
+  return 4*i + iface2;
+}
+
+
 namespace tetgenBR {
 
 #define REAL double
+
+  struct brdata{
+    GRegion *gr;
+    splitQuadRecovery *sqr;
+  };
 
   // dummy tetgenio class
   class tetgenio {
@@ -115,10 +140,9 @@ namespace tetgenBR {
 
   bool tetgenmesh::reconstructmesh(void *p)
   {
-    GRegion *_gr = (GRegion *)p;
+    GRegion *_gr = ((brdata *)p)->gr;
+    splitQuadRecovery *_sqr = ((brdata *)p)->sqr;
 
-    in = new tetgenio();
-    b = new tetgenbehavior();
     char opts[128];
     sprintf(opts, "YpeQT%gp/%g", CTX::instance()->mesh.toleranceInitialDelaunay,
             CTX::instance()->mesh.angleToleranceFacetOverlap);
@@ -135,9 +159,33 @@ namespace tetgenBR {
           ++it) {
         GFace *gf = *it;
         for(unsigned int i = 0; i < gf->triangles.size(); i++) {
-          all.insert(gf->triangles[i]->getVertex(0));
-          all.insert(gf->triangles[i]->getVertex(1));
-          all.insert(gf->triangles[i]->getVertex(2));
+          MVertex *v0 = gf->triangles[i]->getVertex(0);
+          MVertex *v1 = gf->triangles[i]->getVertex(1);
+          MVertex *v2 = gf->triangles[i]->getVertex(2);
+          all.insert(v0);
+          all.insert(v1);
+          all.insert(v2);
+        }
+        if(_sqr){
+          for(unsigned int i = 0; i < gf->quadrangles.size(); i++) {
+            MVertex *v0 = gf->quadrangles[i]->getVertex(0);
+            MVertex *v1 = gf->quadrangles[i]->getVertex(1);
+            MVertex *v2 = gf->quadrangles[i]->getVertex(2);
+            MVertex *v3 = gf->quadrangles[i]->getVertex(3);
+            MVertex *newv = new MVertex
+              ((v0->x() + v1->x() + v2->x() + v3->x()) * 0.25,
+               (v0->y() + v1->y() + v2->y() + v3->y()) * 0.25,
+               (v0->z() + v1->z() + v2->z() + v3->z()) * 0.25, gf);
+            // the extra vertex will be added in a GRegion (and reclassified
+            // correctly on that GRegion) when the pyramid is generated
+            MFace mf = gf->quadrangles[i]->getFace(0);
+            _sqr->add(mf, newv, gf);
+            all.insert(v0);
+            all.insert(v1);
+            all.insert(v2);
+            all.insert(v3);
+            all.insert(newv);
+          }
         }
       }
       std::vector<GEdge *> const &e = _gr->embeddedEdges();
@@ -174,7 +222,7 @@ namespace tetgenBR {
 
     std::vector<MTetrahedron *> tets;
 
-    delaunayMeshIn3D(_vertices, tets, false);
+    delaunayMeshIn3D(_vertices, tets); // will add 8 MVertices at the end of _vertices
     if(Msg::GetErrorCount()) return false;
 
     Msg::Debug("Points have been tetrahedralized");
@@ -254,6 +302,44 @@ namespace tetgenBR {
         ver2tetarray[i] = NULL;
       }
 
+
+
+#if 0
+      /*  N E W   V E R S I O N	  */
+      std::vector<triface> ts( tets.size() );
+      for(unsigned int i = 0; i < tets.size(); i++) {
+	point p[4];
+	// index tetrahedra in order to have access to neighbors ids.
+	tets[i]->tet()->forceNum(i+1);
+	p[0] = idx2verlist[tets[i]->getVertex(0)->getIndex()];
+	p[1] = idx2verlist[tets[i]->getVertex(1)->getIndex()];
+	p[2] = idx2verlist[tets[i]->getVertex(2)->getIndex()];
+	p[3] = idx2verlist[tets[i]->getVertex(3)->getIndex()];
+	setvertices(ts[i], p[0], p[1], p[2], p[3]);
+      }
+          // we can make this in parallel, iterations are totally independent
+      for (uint64_t i = 0; i < tets.size(); i++) {
+	triface tf1 = ts[i];
+	
+	for (tf1.ver=0; tf1.ver<4; tf1.ver++){
+	  uint64_t neigh = tets[i]->getNeigh(tf1.ver)->tet()->getNum() - 1;
+	  triface tf2 = ts[neigh];
+	  int iface2 = tf1.ver;
+	  
+	  int face2[3] = {
+	    tets[i]->getVertex(faces_tetra(tf1.ver),0)->getIndex(),
+	    tets[i]->getVertex(faces_tetra(tf1.ver),1)->getIndex(),
+	    tets[i]->getVertex(faces_tetra(tf1.ver),2)->getIndex()};
+	  
+	  tf2.ver = computeTetGenVersion2(faces2[0], face2, iface2);
+	  bond(tf1,tf2);
+	}
+      }
+      
+#else
+      
+      /*  N E W   V E R S I O N	  */
+      
       // Create the tetrahedra and connect those that share a common face.
       for(unsigned int i = 0; i < tets.size(); i++) {
         // Get the four vertices.
@@ -270,7 +356,7 @@ namespace tetgenBR {
         }
         else if(ori == 0.0) {
           if(!b->quiet) {
-            printf("Warning:  Tet #%d is degenerate.\n", i + in->firstnumber);
+            Msg::Warning("Tet #%d is degenerate", i + in->firstnumber);
           }
         }
         // Create a new tetrahedron.
@@ -402,8 +488,10 @@ namespace tetgenBR {
       hullsize = tetrahedrons->items - hullsize;
 
       delete[] ver2tetarray;
+      for(unsigned int i = 0; i < tets.size(); i++) delete tets[i];
       tets.clear(); // Release all memory in this vector.
     }
+#endif
 
     std::vector<GFace *> const &f_list = _gr->faces();
     std::vector<GEdge *> const &e_list = _gr->embeddedEdges();
@@ -425,7 +513,6 @@ namespace tetgenBR {
               setpointtype(p[j], FACETVERTEX);
             }
           }
-          // Create an initial triangulation.
           makeshellface(subfaces, &newsh);
           setshvertices(newsh, p[0], p[1], p[2]);
           setshellmark(newsh, gf->tag()); // the GFace's tag.
@@ -438,8 +525,34 @@ namespace tetgenBR {
             ssbond(newsh, newseg);
             senextself(newsh);
           }
-        } // i
+        }
       } // it
+
+      if(_sqr){
+        std::map<MFace, GFace *, Less_Face> f = _sqr->getTri();
+        for(std::map<MFace, GFace *, Less_Face>::iterator it = f.begin();
+            it != f.end(); it++){
+          const MFace &mf = it->first;
+          for(int j = 0; j < 3; j++) {
+            p[j] = idx2verlist[mf.getVertex(j)->getIndex()];
+            if(pointtype(p[j]) == VOLVERTEX) {
+              setpointtype(p[j], FACETVERTEX);
+            }
+          }
+          makeshellface(subfaces, &newsh);
+          setshvertices(newsh, p[0], p[1], p[2]);
+          setshellmark(newsh, it->second->tag());
+          recentsh = newsh;
+          for(int j = 0; j < 3; j++) {
+            makeshellface(subsegs, &newseg);
+            setshvertices(newseg, sorg(newsh), sdest(newsh), NULL);
+            // Set the default segment marker '-1'.
+            setshellmark(newseg, -1);
+            ssbond(newsh, newseg);
+            senextself(newsh);
+          }
+        }
+      }
 
       // Connecting triangles, removing redundant segments.
       unifysegments();
@@ -843,6 +956,11 @@ namespace tetgenBR {
             delete gf->triangles[i];
           gf->triangles.clear();
           gf->deleteVertexArrays();
+
+          if(gf->quadrangles.size()){
+            Msg::Warning("Steiner points not handled for quad surface mesh");
+          }
+
           // Create the new triangles.
           subloop.shver = 0;
           subfaces->traversalinit();
@@ -910,6 +1028,10 @@ namespace tetgenBR {
       vIter->first->setXYZ(coordinates.x(), coordinates.y(), coordinates.z());
     }
 
+    // delete 8 new enclosing box vertices added in delaunayMeshIn3d
+    for(unsigned int i = _vertices.size() - 8; i < _vertices.size(); i++)
+      delete _vertices[i];
+    
     return true;
   }
 
@@ -1117,12 +1239,17 @@ namespace tetgenBR {
 
 } // end namespace
 
-bool meshGRegionBoundaryRecovery(GRegion *gr)
+bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr)
 {
   bool ret = false;
   try {
     tetgenBR::tetgenmesh *m = new tetgenBR::tetgenmesh();
-    ret = m->reconstructmesh((void *)gr);
+    m->in = new tetgenBR::tetgenio();
+    m->b = new tetgenBR::tetgenbehavior();
+    tetgenBR::brdata data = {gr, sqr};
+    ret = m->reconstructmesh((void *)&data);
+    delete m->in;
+    delete m->b;
     delete m;
   } catch(int err) {
     if(err == 1) {
@@ -1253,6 +1380,9 @@ bool meshGRegionBoundaryRecovery(GRegion *gr)
 
 #else
 
-bool meshGRegionBoundaryRecovery(GRegion *gr) { return false; }
+bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr)
+{
+  return false;
+}
 
 #endif

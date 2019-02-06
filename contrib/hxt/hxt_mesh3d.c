@@ -15,6 +15,20 @@
 // }
 // #endif
 
+HXTStatus hxtCreateNodalSizeFromFunction(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
+                                         double (*mesh_size)(double x, double y, double z, void* userData),
+                                         void* userData)
+{
+  HXT_CHECK(hxtAlignedMalloc(&delOptions->nodalSizes,mesh->vertices.num*sizeof(double)));
+
+  #pragma omp parallel for
+  for (uint32_t i=0; i<mesh->vertices.num; i++) {
+    double* coord = &mesh->vertices.coord[4*i];
+    delOptions->nodalSizes[i] = mesh_size(coord[0], coord[1], coord[2], userData);
+  }
+
+  return HXT_STATUS_OK;
+}
 
 
 HXTStatus hxtCreateNodalsizeFromTrianglesAndLines(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
@@ -247,7 +261,9 @@ double hxtTetCircumcenter(double a[3], double b[3], double c[3], double d[3],
 }
 
 
-HXTStatus hxtRefineTetrahedraOneStep(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HXTMeshSize* sizeField, int *nbAdd, int iter)
+static HXTStatus hxtRefineTetrahedraOneStep(HXTMesh* mesh, HXTDelaunayOptions* delOptions,
+                                            double (*mesh_size)(double x, double y, double z, void* userData),
+                                            void* userData , int *nbAdd, int iter)
 {
   double *newVertices;
   uint32_t *numCreated;
@@ -280,33 +296,46 @@ HXTStatus hxtRefineTetrahedraOneStep(HXTMesh* mesh, HXTDelaunayOptions* delOptio
         double circumradius2 = (a[0]-circumcenter[0])*(a[0]-circumcenter[0])+
                                (a[1]-circumcenter[1])*(a[1]-circumcenter[1])+
                                (a[2]-circumcenter[2])*(a[2]-circumcenter[2]);
+
+        setProcessedFlag(mesh, i); // we do not need to refine that tetrahedra anymore
+
         // all new edges will have a length equal to circumradius2
         double meshSize;
         //        HXTStatus status = hxtMeshSizeEvaluate ( sizeField, circumcenter, &meshSize);
 
-        double SIZES[4];
-        double AVG = 0;
-        int NN = 0;
-        for (int j=0;j<4;j++){
-          SIZES[j] = delOptions->nodalSizes[mesh->tetrahedra.node[4*i+j]];
-          if (SIZES[j] != DBL_MAX){
-            NN++;
-            AVG += SIZES[j];
-          }
+        if(u <= 0 || v <= 0 || w <= 0 || 1.-u-v-w <= 0)
+          continue;
+        
+        if(mesh_size!=NULL) {
+          meshSize = mesh_size(circumcenter[0], circumcenter[1], circumcenter[2], userData);
         }
-        if (NN != 4){
-          AVG /= NN;
+        else { // we suppose delOptions->nodalSize!=NULL
+          double SIZES[4];
+          double AVG = 0;
+          int NN = 0;
           for (int j=0;j<4;j++){
-            if (SIZES[j] == DBL_MAX){
-              // delOptions->nodalSizes[mesh->tetrahedra.node[4*i+j]] = AVG;
-              SIZES[j] = AVG;
+            SIZES[j] = delOptions->nodalSizes[mesh->tetrahedra.node[4*i+j]];
+            if (SIZES[j] != DBL_MAX){
+              NN++;
+              AVG += SIZES[j];
             }
           }
+          if (NN != 4){
+            AVG /= NN;
+            for (int j=0;j<4;j++){
+              if (SIZES[j] == DBL_MAX){
+                // delOptions->nodalSizes[mesh->tetrahedra.node[4*i+j]] = AVG;
+                SIZES[j] = AVG;
+              }
+            }
+          }
+
+          meshSize = SIZES[0] * (1-u-v-w) + SIZES[1] * u + SIZES[2] * v + SIZES[3] * w;
         }
   
-        meshSize = SIZES[0] * (1-u-v-w) + SIZES[1] * u + SIZES[2] * v + SIZES[3] * w;
+        
   
-        if (u > 0 && v > 0 && w > 0 && 1.-u-v-w > 0 && meshSize * meshSize * .49 < circumradius2) {
+        if (meshSize * meshSize /* .49*/ < circumradius2) {
           //    printf("%llu %g\n",i,sqrt(circumradius2),meshSize);
           newVertices[(size_t) 4*i  ] = circumcenter[0];
           newVertices[(size_t) 4*i+1] = circumcenter[1];
@@ -314,8 +343,6 @@ HXTStatus hxtRefineTetrahedraOneStep(HXTMesh* mesh, HXTDelaunayOptions* delOptio
           newVertices[(size_t) 4*i+3] = meshSize;
           localAdd++;
         }
-
-        setProcessedFlag(mesh, i); // we do not need to refine that tetrahedra anymore
       }
     }
 
@@ -375,11 +402,14 @@ HXTStatus hxtRefineTetrahedraOneStep(HXTMesh* mesh, HXTDelaunayOptions* delOptio
   return HXT_STATUS_OK;
 }
 
-HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HXTMeshSize* sizeField) {
+HXTStatus hxtRefineTetrahedra(HXTMesh* mesh,
+                              HXTDelaunayOptions* delOptions,
+                              double (*mesh_size)(double x, double y, double z, void* userData),
+                              void* userData) {
   int iter = 0;
   while(iter++ < 40){
     int nbAdd=0;
-    HXT_CHECK(hxtRefineTetrahedraOneStep(mesh, delOptions, sizeField, &nbAdd, iter));
+    HXT_CHECK(hxtRefineTetrahedraOneStep(mesh, delOptions, mesh_size, userData, &nbAdd, iter));
     //    uint32_t nb;
     //    HXT_CHECK(hxtColorMesh(mesh,&nb));
     if (nbAdd == 0) break;

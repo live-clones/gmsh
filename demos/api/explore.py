@@ -20,7 +20,11 @@ for e in entities:
     # report some statistics
     numElem = sum(len(i) for i in elemTags)
     print str(len(nodeTags)) + " mesh nodes and " + str(numElem),\
-          "mesh elements on entity " + str(e) + " " + gmsh.model.getType(e[0], e[1])
+          "mesh elements on entity " + str(e) + " of type " + gmsh.model.getType(e[0], e[1])
+    partitions = gmsh.model.getPartitions(e[0], e[1])
+    if len(partitions):
+           print " - Partition tag(s): " + str(partitions) + " - parent entity" +\
+               str(gmsh.model.getParent(e[0], e[1]))
     for t in elemTypes:
         name, dim, order, numv, parv = gmsh.model.mesh.getElementProperties(t)
         print " - Element type: " + name + ", order " + str(order)

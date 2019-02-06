@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <limits>
 #include "GmshConfig.h"
@@ -73,6 +73,18 @@ SBoundingBox3d OCCEdge::bounds(bool fast) const
 }
 
 Range<double> OCCEdge::parBounds(int i) const { return Range<double>(s0, s1); }
+
+Range<double> OCCEdge::parBoundsOnFace(GFace *face) const
+{
+  if (face->getNativeType() != GEntity::OpenCascadeModel || !degenerate(0)) {
+    return parBounds(0);
+  }
+
+  const TopoDS_Face *s = (TopoDS_Face *)((OCCFace *)face->getNativePtr());
+  double s0, s1;
+  curve2d = BRep_Tool::CurveOnSurface(c, *s, s0, s1);
+  return {s0, s1};
+}
 
 void OCCEdge::setTrimmed(OCCFace *f)
 {

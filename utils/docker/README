@@ -6,3 +6,6 @@ docker build -f Dockerfile.ubuntu18.04 -t onelab/ubuntu18.04 .
 docker login
 docker push onelab/ubuntu16.04
 docker push onelab/ubuntu18.04
+
+# run something
+docker run onelab/ubuntu18.04 ls -al /

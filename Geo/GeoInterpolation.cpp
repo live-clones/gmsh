@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshMessage.h"
 #include "Geo.h"
@@ -498,34 +498,34 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
       Msg::Error("Line with less than 2 control points");
       V.Pos.X = V.Pos.Y = V.Pos.Z = 0;
     }
+    else{
+      int i = static_cast<int>(static_cast<double>(N - 1) * u);
+      // clamp
+      if(i >= N - 1) i = N - 2;
+      if(i < 0) i = 0;
 
-    int i = static_cast<int>(static_cast<double>(N - 1) * u);
+      t1 = static_cast<double>(i) / static_cast<double>(N - 1);
+      t2 = static_cast<double>(i + 1) / static_cast<double>(N - 1);
+      t = (u - t1) / (t2 - t1);
 
-    // clamp
-    if(i >= N - 1) i = N - 2;
-    if(i < 0) i = 0;
+      List_Read(c->Control_Points, i, &v[1]);
+      List_Read(c->Control_Points, i + 1, &v[2]);
 
-    t1 = static_cast<double>(i) / static_cast<double>(N - 1);
-    t2 = static_cast<double>(i + 1) / static_cast<double>(N - 1);
-    t = (u - t1) / (t2 - t1);
-
-    List_Read(c->Control_Points, i, &v[1]);
-    List_Read(c->Control_Points, i + 1, &v[2]);
-
-    if(!c->geometry) {
-      V.Pos.X = v[1]->Pos.X + t * (v[2]->Pos.X - v[1]->Pos.X);
-      V.Pos.Y = v[1]->Pos.Y + t * (v[2]->Pos.Y - v[1]->Pos.Y);
-      V.Pos.Z = v[1]->Pos.Z + t * (v[2]->Pos.Z - v[1]->Pos.Z);
-      V.w = (1. - t) * v[1]->w + t * v[2]->w;
-      V.lc = (1. - t) * v[1]->lc + t * v[2]->lc;
-    }
-    else {
-      SPoint2 p =
-        v[1]->pntOnGeometry + (v[2]->pntOnGeometry - v[1]->pntOnGeometry) * t;
-      SPoint3 pp = c->geometry->point(p);
-      V.Pos.X = pp.x();
-      V.Pos.Y = pp.y();
-      V.Pos.Z = pp.z();
+      if(!c->geometry) {
+        V.Pos.X = v[1]->Pos.X + t * (v[2]->Pos.X - v[1]->Pos.X);
+        V.Pos.Y = v[1]->Pos.Y + t * (v[2]->Pos.Y - v[1]->Pos.Y);
+        V.Pos.Z = v[1]->Pos.Z + t * (v[2]->Pos.Z - v[1]->Pos.Z);
+        V.w = (1. - t) * v[1]->w + t * v[2]->w;
+        V.lc = (1. - t) * v[1]->lc + t * v[2]->lc;
+      }
+      else {
+        SPoint2 p =
+          v[1]->pntOnGeometry + (v[2]->pntOnGeometry - v[1]->pntOnGeometry) * t;
+        SPoint3 pp = c->geometry->point(p);
+        V.Pos.X = pp.x();
+        V.Pos.Y = pp.y();
+        V.Pos.Z = pp.z();
+      }
     }
     break;
   }

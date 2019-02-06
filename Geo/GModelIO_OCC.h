@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _GMODELIO_OCC_H_
 #define _GMODELIO_OCC_H_
@@ -309,6 +309,8 @@ public:
               double y, double z, double a, double b, double c);
   bool symmetry(const std::vector<std::pair<int, int> > &inDimTags, double a,
                 double b, double c, double d);
+  bool affine(const std::vector<std::pair<int, int> > &inDimTags,
+              const std::vector<double> &mat);
 
   // copy and remove
   bool copy(const std::vector<std::pair<int, int> > &inDimTags,
@@ -636,6 +638,11 @@ public:
                 double b, double c, double d)
   {
     return _error("apply symmetry");
+  }
+  bool affine(const std::vector<std::pair<int, int> > &inDimTags,
+              const std::vector<double> &mat)
+  {
+    return _error("apply affine transform");
   }
   bool copy(const std::vector<std::pair<int, int> > &inDimTags,
             std::vector<std::pair<int, int> > &outDimTags)

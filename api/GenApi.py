@@ -1,7 +1,7 @@
-# Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 # Contributor(s):
 #   Jonathan Lambrechts
@@ -122,6 +122,27 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     a.julia_arg = name + ", length(" + name + ")"
     return a
 
+def ivectorstring(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "const std::vector<std::string> &", "char **", False)
+    api_name = "api_" + name + "_"
+    api_name_n = "api_" + name + "_n_"
+    a.c_pre = ("    std::vector<std::string> " + api_name + "(" + name + ", " +
+               name + " + " + name + "_n);\n")
+    a.c_arg = api_name
+    a.c = "char ** " + name + ", size_t " + name + "_n"
+    a.cwrap_pre = ("char **" + api_name + "; size_t " + api_name_n + "; " +
+                   "vectorstring2charptrptr(" + name + ", &" + api_name + ", &" + api_name_n + ");\n")
+    a.cwrap_arg = api_name + ", " + api_name_n
+    a.cwrap_post = ("for(size_t i = 0; i < " + api_name_n + "; ++i){ " +
+                    ns + "Free(" + api_name + "[i]); } " +
+                    ns + "Free(" + api_name + ");\n")
+    a.python_pre = api_name + ", " + api_name_n + " = _ivectorstring(" + name + ")"
+    a.python_arg = api_name + ", " + api_name_n
+    a.julia_ctype = "Ptr{Ptr{Cchar}}, Csize_t"
+    a.julia_arg = name + ", length(" + name + ")"
+    return a
+
 def ivectorpair(name, value=None, python_value=None, julia_value=None):
     if julia_value == "[]":
         julia_value = "Tuple{Cint,Cint}[]"
@@ -220,7 +241,7 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
 class oint(arg):
     rcpp_type = "int"
     rc_type = "int"
-    rtexi_type = "integer"
+    rtexi_type = "integer value"
     rjulia_type = "Cint"
     def __init__(self, name, value=None, python_value=None, julia_value=None):
         arg.__init__(self, name, value, python_value, julia_value,
@@ -236,20 +257,24 @@ class oint(arg):
         self.julia_arg = api_name
         self.julia_return = api_name + "[]"
 
-def odouble(name, value=None, python_value=None, julia_value=None):
-    a = arg(name, value, python_value, julia_value,
-            "double &", "double *", True)
-    api_name = "api_" + name + "_"
-    a.c_arg = "*" + name
-    a.cwrap_arg = "&" + name
-    a.python_pre = api_name + " = c_double()"
-    a.python_arg = "byref(" + api_name + ")"
-    a.python_return = api_name + ".value"
-    a.julia_ctype = "Ptr{Cdouble}"
-    a.julia_pre = api_name + " = Ref{Cdouble}()"
-    a.julia_arg = api_name
-    a.julia_return = api_name + "[]"
-    return a
+class odouble(arg):
+    rcpp_type = "double"
+    rc_type = "double"
+    rtexi_type = "floating point value"
+    rjulia_type = "Cdouble"
+    def __init__(self, name, value=None, python_value=None, julia_value=None):
+        arg.__init__(self, name, value, python_value, julia_value,
+                     "double &", "double *", True)
+        api_name = "api_" + name + "_"
+        self.c_arg = "*" + name
+        self.cwrap_arg = "&" + name
+        self.python_pre = api_name + " = c_double()"
+        self.python_arg = "byref(" + api_name + ")"
+        self.python_return = api_name + ".value"
+        self.julia_ctype = "Ptr{Cdouble}"
+        self.julia_pre = api_name + " = Ref{Cdouble}()"
+        self.julia_arg = api_name
+        self.julia_return = api_name + "[]"
 
 def ostring(name, value=None, python_value=None, julia_value=None):
     a = arg(name, value, python_value, julia_value,
@@ -339,7 +364,7 @@ def ovectorstring(name, value=None, python_value=None, julia_value=None):
     a.python_pre = api_name + ", " + api_name_n + " = POINTER(POINTER(c_char))(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectorstring(" + api_name + ", " + api_name_n + ".value)"
-    a.julia_ctype = "Ptr{Ptr{Cchar}}, Ptr{Csize_t}"
+    a.julia_ctype = "Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}"
     a.julia_pre = (api_name + " = Ref{Ptr{Ptr{Cchar}}}()\n    " +
                    api_name_n + " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
@@ -656,15 +681,6 @@ extern \"C\" {{
 """
 
 c_cpp_utils="""
-void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
-{{
-  *p = (char**){0}Malloc(sizeof(char*) * v.size());
-  for(size_t i = 0; i < v.size(); ++i){{
-    (*p)[i] = strdup(v[i].c_str());
-  }}
-  *size = v.size();
-}}
-
 void vectorvectorpair2intptrptr(const std::vector<{0}::vectorpair > &v, int ***p, size_t **size, size_t *sizeSize)
 {{
   *p = (int**){0}Malloc(sizeof(int*) * v.size());
@@ -706,6 +722,7 @@ cwrap_header="""// {0}
 #include <vector>
 #include <string>
 #include <utility>
+#include <string.h>
 
 extern \"C\" {{
   #include "{5}c.h"
@@ -743,6 +760,15 @@ void vectorpair2intptr(const {0}::vectorpair &v, int **p, size_t *size)
     (*p)[i * 2 + 1] = v[i].second;
   }}
   *size = v.size() * 2;
+}}
+
+void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
+{{
+  *p = (char**){0}Malloc(sizeof(char*) * v.size());
+  for(size_t i = 0; i < v.size(); ++i){{
+    (*p)[i] = strdup(v[i].c_str());
+  }}
+  *size = v.size();
 }}
 
 template<typename t>
@@ -857,24 +883,6 @@ def _ivectorint(o):
     else:
         return (c_int * len(o))(*o), c_size_t(len(o))
 
-def _ivectorvectorint(os):
-    n = len(os)
-    parrays = [_ivectorint(o) for o in os]
-    sizes = (c_size_t * n)(*(a[1] for a in parrays))
-    arrays = (POINTER(c_int) * n)(*(cast(a[0], POINTER(c_int)) for a in parrays))
-    arrays.ref = [a[0] for a in parrays]
-    size = c_size_t(n)
-    return arrays, sizes, size
-
-def _ivectorvectordouble(os):
-    n = len(os)
-    parrays = [_ivectordouble(o) for o in os]
-    sizes = (c_size_t * n)(*(a[1] for a in parrays))
-    arrays = (POINTER(c_double) * n)(*(cast(a[0], POINTER(c_double)) for a in parrays))
-    arrays.ref = [a[0] for a in parrays]
-    size = c_size_t(n)
-    return arrays, sizes, size
-
 def _ivectordouble(o):
     if use_numpy:
         array = numpy.ascontiguousarray(o, numpy.float64)
@@ -892,6 +900,27 @@ def _ivectorpair(o):
         return  ct, c_size_t(len(o) * 2)
     else:
         return ((c_int * 2) * len(o))(*o), c_size_t(len(o) * 2)
+
+def _ivectorstring(o):
+    return (c_char_p * len(o))(*(s.encode() for s in o)), c_size_t(len(o))
+
+def _ivectorvectorint(os):
+    n = len(os)
+    parrays = [_ivectorint(o) for o in os]
+    sizes = (c_size_t * n)(*(a[1] for a in parrays))
+    arrays = (POINTER(c_int) * n)(*(cast(a[0], POINTER(c_int)) for a in parrays))
+    arrays.ref = [a[0] for a in parrays]
+    size = c_size_t(n)
+    return arrays, sizes, size
+
+def _ivectorvectordouble(os):
+    n = len(os)
+    parrays = [_ivectordouble(o) for o in os]
+    sizes = (c_size_t * n)(*(a[1] for a in parrays))
+    arrays = (POINTER(c_double) * n)(*(cast(a[0], POINTER(c_double)) for a in parrays))
+    arrays.ref = [a[0] for a in parrays]
+    size = c_size_t(n)
+    return arrays, sizes, size
 
 def _iargcargv(o):
     return c_int(len(o)), (c_char_p * len(o))(*(s.encode() for s in o))
@@ -914,8 +943,8 @@ julia_header = """# {0}
 class API:
 
     def __init__(self, version, namespace="gmsh", code="Gmsh",
-                 copyright="Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle",
-                 issues="https://gitlab.onelab.info/gmsh/gmsh/issues"):
+                 copyright="Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle",
+                 issues="https://gitlab.onelab.info/gmsh/gmsh/issues."):
         self.version = version
         global ns
         ns = namespace
@@ -1007,7 +1036,7 @@ class API:
                         fcwrap.write(indent + "  " + a.cwrap_pre)
                 fcwrap.write(indent + "  ")
                 if rtype:
-                    fcwrap.write("int result_api_ = ")
+                    fcwrap.write(rt + " result_api_ = ")
                 fcwrap.write(fname + "(" + ", ".join((a.cwrap_arg for a in args)))
                 if args:
                     fcwrap.write(", &ierr);\n")
@@ -1064,14 +1093,15 @@ class API:
             f.write(indent + ("\n" + indent).join(textwrap.wrap(doc, 75)) + "\n")
             if rtype or oargs:
                 f.write("\n" + indent + "Return " + ", ".join(
-                    (["an " + rtype.rtexi_type] if rtype else[])
+                    ([("an " if rtype.rtexi_type == "integer value" else "a ") +
+                      rtype.rtexi_type] if rtype else[])
                    + [("`" + a.name + "'") for a in oargs])
                + ".\n")
             f.write(indent + '"""\n')
             for a in args:
                 if a.python_pre: f.write(indent + a.python_pre + "\n")
             f.write(indent + "ierr = c_int()\n")
-            f.write(indent + "api__result__ = " if rtype is oint else (indent))
+            f.write(indent + "api__result__ = " if ((rtype is oint) or (rtype is odouble)) else (indent))
             c_name = modulepath + name[0].upper() + name[1:]
             f.write("lib." + c_name + "(\n    " + indent +
                     (",\n" + indent + "    ").join(
@@ -1121,7 +1151,8 @@ class API:
             f.write("\n".join(textwrap.wrap(doc, 80)).replace("'", "`") + "\n")
             if rtype or oargs:
                 f.write("\nReturn " + ", ".join(
-                    (["an " + rtype.rtexi_type] if rtype else[])
+                    ([("an " if rtype.rtexi_type == "integer value" else "a ") +
+                      rtype.rtexi_type] if rtype else[])
                    + [("`" + a.name + "`") for a in oargs])
                + ".\n")
             f.write('"""\n')
@@ -1131,7 +1162,7 @@ class API:
             for a in args:
                 if a.julia_pre: f.write("    " + a.julia_pre + "\n")
             f.write("    ierr = Ref{Cint}()\n    ")
-            f.write("api__result__ = " if rtype is oint else "")
+            f.write("api__result__ = " if ((rtype is oint) or (rtype is odouble)) else "")
             c_name = c_mpath + name[0].upper() + name[1:]
             f.write("ccall((:" + c_name + ", " +
                     ("" if c_mpath == ns else ns + ".") + "lib), " +

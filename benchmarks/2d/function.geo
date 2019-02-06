@@ -11,9 +11,8 @@ Point(55) = {0.2,.5,0,lc};
 Line Loop(5) = {1,2,3,4};
 Plane Surface(6) = {5};
 
-Field[1] = Attractor;
+Field[1] = Distance;
 Field[1].NodesList = {55};
 Field[2] = MathEval;
 Field[2].F = "(F1+0.025)^2";
 Background Field = 2;
-

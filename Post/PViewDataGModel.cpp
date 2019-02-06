@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "PViewDataGModel.h"
 #include "MPoint.h"
@@ -90,6 +90,7 @@ bool PViewDataGModel::finalize(bool computeMinMax,
   if(computeMinMax) {
     _min = VAL_INF;
     _max = -VAL_INF;
+    int tensorRep = 0; // Von-Mises: we could/should be able to choose this
     for(int step = 0; step < getNumTimeSteps(); step++) {
       _steps[step]->setMin(VAL_INF);
       _steps[step]->setMax(-VAL_INF);
@@ -99,7 +100,7 @@ bool PViewDataGModel::finalize(bool computeMinMax,
         for(int i = 0; i < _steps[step]->getNumData(); i++) {
           double *d = _steps[step]->getData(i);
           if(d) {
-            double val = ComputeScalarRep(numComp, d);
+            double val = ComputeScalarRep(numComp, d, tensorRep);
             _steps[step]->setMin(std::min(_steps[step]->getMin(), val));
             _steps[step]->setMax(std::max(_steps[step]->getMax(), val));
           }
@@ -112,7 +113,7 @@ bool PViewDataGModel::finalize(bool computeMinMax,
             if(skipElement(step, ent, ele)) continue;
             for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++) {
               double val;
-              getScalarValue(step, ent, ele, nod, val);
+              getScalarValue(step, ent, ele, nod, val, tensorRep);
               _steps[step]->setMin(std::min(_steps[step]->getMin(), val));
               _steps[step]->setMax(std::max(_steps[step]->getMax(), val));
             }
@@ -280,12 +281,12 @@ double PViewDataGModel::getTime(int step)
   return _steps[step]->getTime();
 }
 
-double PViewDataGModel::getMin(int step, bool onlyVisible,
+double PViewDataGModel::getMin(int step, bool onlyVisible, int tensorRep,
                                int forceNumComponents, int componentMap[9])
 {
   if(_steps.empty()) return _min;
 
-  if(onlyVisible || forceNumComponents) {
+  if(onlyVisible || forceNumComponents || tensorRep) {
     double vmin = VAL_INF;
     for(int ent = 0; ent < getNumEntities(step); ent++) {
       if(onlyVisible && skipEntity(step, ent)) continue;
@@ -293,8 +294,8 @@ double PViewDataGModel::getMin(int step, bool onlyVisible,
         if(skipElement(step, ent, ele, onlyVisible)) continue;
         for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++) {
           double val;
-          getScalarValue(step, ent, ele, nod, val, forceNumComponents,
-                         componentMap);
+          getScalarValue(step, ent, ele, nod, val, tensorRep,
+                         forceNumComponents, componentMap);
           vmin = std::min(vmin, val);
         }
       }
@@ -306,12 +307,12 @@ double PViewDataGModel::getMin(int step, bool onlyVisible,
   return _steps[step]->getMin();
 }
 
-double PViewDataGModel::getMax(int step, bool onlyVisible,
+double PViewDataGModel::getMax(int step, bool onlyVisible, int tensorRep,
                                int forceNumComponents, int componentMap[9])
 {
   if(_steps.empty()) return _max;
 
-  if(onlyVisible || forceNumComponents) {
+  if(onlyVisible || forceNumComponents || tensorRep) {
     double vmax = -VAL_INF;
     for(int ent = 0; ent < getNumEntities(step); ent++) {
       if(onlyVisible && skipEntity(step, ent)) continue;
@@ -319,8 +320,8 @@ double PViewDataGModel::getMax(int step, bool onlyVisible,
         if(skipElement(step, ent, ele, onlyVisible)) continue;
         for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++) {
           double val;
-          getScalarValue(step, ent, ele, nod, val, forceNumComponents,
-                         componentMap);
+          getScalarValue(step, ent, ele, nod, val, tensorRep,
+                         forceNumComponents, componentMap);
           vmax = std::max(vmax, val);
         }
       }

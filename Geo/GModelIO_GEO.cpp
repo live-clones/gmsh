@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <sstream>
 #include <stdlib.h>
@@ -513,6 +513,8 @@ bool GEO_Internals::_extrude(int mode,
     if(dim >= 0 && dim <= 3)
       outDimTags.push_back(std::pair<int, int>(dim, s.Num));
   }
+  List_Delete(in);
+  List_Delete(out);
   _changed = true;
   return true;
 }
@@ -578,6 +580,7 @@ bool GEO_Internals::_transform(int mode,
   case 2: DilatShapes(x, y, z, a, b, c, list); break;
   case 3: SymmetryShapes(a, b, c, d, list); break;
   }
+  List_Delete(list);
   _changed = true;
   return true;
 }
@@ -1093,26 +1096,32 @@ void GEO_Internals::synchronize(GModel *model)
   // GModel, we update the pointer and the underlying dependencies (e.g. surface
   // boundaries): this is necessary because a GEO entity can change (while
   // keeping the same tag), due e.g. to ReplaceDuplicates.
-
+  //
+  // We also remove any entities of type "UnknownModel": these are discrete
+  // entities, which are also store in GEO_Internals so that they can be
+  // combined with GEO entities; but they are not GmshModel entities.
   std::vector<std::pair<int, int> > toRemove;
   for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
       ++it) {
     GVertex *gv = *it;
-    if(gv->getNativeType() == GEntity::GmshModel) {
+    if(gv->getNativeType() == GEntity::GmshModel ||
+       gv->getNativeType() == GEntity::UnknownModel) {
       if(!FindPoint(gv->tag()))
         toRemove.push_back(std::pair<int, int>(0, gv->tag()));
     }
   }
   for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it) {
     GEdge *ge = *it;
-    if(ge->getNativeType() == GEntity::GmshModel) {
+    if(ge->getNativeType() == GEntity::GmshModel ||
+       ge->getNativeType() == GEntity::UnknownModel) {
       if(!FindCurve(ge->tag()))
         toRemove.push_back(std::pair<int, int>(1, ge->tag()));
     }
   }
   for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it) {
     GFace *gf = *it;
-    if(gf->getNativeType() == GEntity::GmshModel) {
+    if(gf->getNativeType() == GEntity::GmshModel ||
+       gf->getNativeType() == GEntity::UnknownModel) {
       if(!FindSurface(gf->tag()))
         toRemove.push_back(std::pair<int, int>(2, gf->tag()));
     }
@@ -1120,7 +1129,8 @@ void GEO_Internals::synchronize(GModel *model)
   for(GModel::riter it = model->firstRegion(); it != model->lastRegion();
       ++it) {
     GRegion *gr = *it;
-    if(gr->getNativeType() == GEntity::GmshModel) {
+    if(gr->getNativeType() == GEntity::GmshModel ||
+       gr->getNativeType() == GEntity::UnknownModel) {
       if(!FindVolume(gr->tag()))
         toRemove.push_back(std::pair<int, int>(3, gr->tag()));
     }

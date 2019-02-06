@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _DEFAULT_OPTIONS_H_
 #define _DEFAULT_OPTIONS_H_
@@ -110,11 +110,11 @@ StringXString GeneralOptions_String[] = {
 
   { F|O, "TextEditor" , opt_general_editor ,
 #if defined(WIN32)
-    "notepad.exe %s" ,
+    "notepad.exe '%s'" ,
 #elif defined(__APPLE__)
-    "open -t %s" ,
+    "open -t '%s'" ,
 #else
-    "gedit %s" ,
+    "gedit '%s'" ,
 #endif
     "System command to launch a text editor" },
   { F|S, "TmpFileName" , opt_general_tmp_filename ,
@@ -146,8 +146,8 @@ StringXString GeometryOptions_String[] = {
 
   { F|O, "OCCTargetUnit" , opt_geometry_occ_target_unit , "M" ,
     "Length unit to which coordinates from STEP and IGES files are converted to when "
-    "imported by OpenCASCADE (leave empty to keep the unit defined in the STEP and "
-    "IGES file)"},
+    "imported by OpenCASCADE, e.g. 'M' for meters (leave empty to keep the unit defined "
+    "in the STEP and IGES file)"},
 
   { 0, 0 , 0 , "" , 0 }
 } ;
@@ -490,7 +490,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "ClipWholeElements" , opt_general_clip_whole_elements , 0. ,
     "Clip whole elements" },
   { F|S, "ColorScheme", opt_general_color_scheme , 1. ,
-    "Default color scheme for graphics (0: dark, 1: light, 2: grayscale, 3: reverse)" },
+    "Default color scheme for graphics (0: light, 1: default, 2: grayscale, 3: dark)" },
   { F|O, "ConfirmOverwrite" , opt_general_confirm_overwrite, 1. ,
     "Ask confirmation before overwriting files?" },
   { F|S, "ContextPositionX" , opt_general_context_position0 , 650. ,
@@ -663,7 +663,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "MenuPositionY" , opt_general_menu_position1 , 400. ,
     "Vertical position (in pixels) of the (detached) menu tree" },
   { F|O, "MeshDiscrete" , opt_general_meshdiscrete , 0. ,
-    "Mesh discrete surfaces through automatic parametrization (MUMPS required for efficiency) (0)" },
+    "Mesh discrete surfaces through automatic parametrization (0)" },
   { F|O, "MessageFontSize" , opt_general_message_fontsize , -1. ,
     "Size of the font in the message window, in pixels (-1: automatic)" },
   { F|S, "MessageHeight" , opt_general_message_size , 300. ,
@@ -688,7 +688,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Disable interactive dialog windows in scripts (and use default values "
     "instead)" },
   { F|O, "NumThreads" , opt_general_num_threads , 1. ,
-    "Set (maximum) number of threads" },
+    "Set (maximum) number of threads (0: use system default, i.e. OMP_NUM_THREADS)" },
 
   { F|S, "OptionsPositionX" , opt_general_option_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the option "
@@ -758,6 +758,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Material shininess" },
   { F|O, "ShininessExponent" , opt_general_shine_exponent , 40. ,
     "Material shininess exponent (between 0 and 128)" },
+  { F|O, "ShowModuleMenu" , opt_general_show_module_menu , 1. ,
+    "Show the standard Gmsh menu in the tree" },
   { F|O, "ShowOptionsOnStartup", opt_general_show_options_on_startup, 0. ,
     "Show option window on startup" },
   { F|O, "ShowMessagesOnStartup", opt_general_show_messages_on_startup, 0. ,
@@ -982,7 +984,7 @@ StringXNumber MeshOptions_Number[] = {
     "8: DelQuad)" },
   { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY ,
     "3D mesh algorithm (1: Delaunay, 4: Frontal, 5: Frontal Delaunay, 6: Frontal Hex, "
-    "7: MMG3D, 9: R-tree)" },
+    "7: MMG3D, 9: R-tree, 10: HXT)" },
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" },
   { F|O, "AngleToleranceFacetOverlap" , opt_mesh_angle_tolerance_facet_overlap , 0.1,
@@ -1008,7 +1010,8 @@ StringXNumber MeshOptions_Number[] = {
    "Reconstruct the model topology (BREP) after reading a CGNS file" },
   { F|O, "CharacteristicLengthExtendFromBoundary" ,
     opt_mesh_lc_extend_from_boundary, 1. ,
-    "Extend computation of mesh element sizes from the boundaries into the surfaces/volumes" },
+    "Extend computation of mesh element sizes from the boundaries into the interior "
+    "(for 3D Delaunay, use 1: longest or 2: shortest surface edge length)"},
   { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
     "Factor applied to all mesh element sizes" },
   { F|O, "CharacteristicLengthMin" , opt_mesh_lc_min, 0.0 ,
@@ -1053,6 +1056,8 @@ StringXNumber MeshOptions_Number[] = {
     "Number of high order mesh elements to consider for optimization"},
   { F|O, "HighOrderOptimize" , opt_mesh_ho_optimize , 0.,
     "Optimize high order meshes?" },
+  { F|O, "HighOrderPeriodic" , opt_mesh_ho_periodic , 0.,
+    "Correct high order optimization for periodic connections?" },
   { F|0, "HighOrderPoissonRatio", opt_mesh_ho_poisson, 0.33,
     "Poisson ratio of the material used in the elastic smoother for high order meshes"
     "Must be between -1.0 and 0.5, excluded"},
@@ -1084,11 +1089,11 @@ StringXNumber MeshOptions_Number[] = {
     "Display width of mesh lines (in pixels)" },
 
   { F|O, "MaxNumThreads1D" , opt_mesh_max_num_threads_1d , 0. ,
-    "Maximum number of threads for 1D meshing (0: use default number of threads)" },
+    "Maximum number of threads for 1D meshing (0: use default)" },
   { F|O, "MaxNumThreads2D" , opt_mesh_max_num_threads_2d , 0. ,
-    "Maximum number of threads for 2D meshing (0: use default number of threads)" },
+    "Maximum number of threads for 2D meshing (0: use default)" },
   { F|O, "MaxNumThreads3D" , opt_mesh_max_num_threads_3d , 0. ,
-    "Maximum number of threads for 3D meshing (0: use default number of threads)" },
+    "Maximum number of threads for 3D meshing (0: use default)" },
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
     "Mesh only visible entities (experimental: use with caution!)" },
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
@@ -1099,7 +1104,8 @@ StringXNumber MeshOptions_Number[] = {
     "METIS algorithm for k-way refinement (1: FM-based cut, 2: Greedy, "
     "3: Two-sided node FM, 4: One-sided node FM)" },
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
-    "Minimum number of points used to mesh a circle" },
+    "Minimum number of nodes used to mesh a circle (and number of nodes per 2*pi "
+    "radians when the mesh size of adapted to the curvature)" },
   { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
     "Minimum number of points used to mesh a (non-straight) curve" },
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.0 ,
@@ -1127,7 +1133,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "PartitionCreatePhysicals" , opt_mesh_partition_create_physicals , 1 ,
     "Create physical groups for partitions, based on existing physical groups" },
   { F|O, "PartitionCreateGhostCells" , opt_mesh_partition_create_ghost_cells , 0 ,
-    "Create partition ghost cells" },
+    "Create ghost cells, i.e. create for each partition a ghost entity containing "
+    "elements connected to neighboring partitions by at least one node." },
   { F|O, "PartitionSplitMeshFiles" , opt_mesh_partition_split_mesh_files , 0 ,
     "Write one file for each mesh partition" },
   { F|O, "PartitionTopologyFile" , opt_mesh_partition_save_topology_file , 0 ,
@@ -1160,8 +1167,6 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "NumSubEdges" , opt_mesh_num_sub_edges , 2. ,
     "Number of edge subdivisions when displaying high order elements" },
 
-  { F|O, "OldRefinement" , opt_mesh_old_refinement , 1 ,
-    "Use old 3D point insertion algorithm" },
   { F|O, "Optimize" , opt_mesh_optimize , 1. ,
     "Optimize the mesh to improve the quality of tetrahedral elements" },
   { F|O, "OptimizeThreshold" , opt_mesh_optimize_threshold , 0.3 ,
@@ -1216,9 +1221,13 @@ StringXNumber MeshOptions_Number[] = {
 #else
   { F|O, "RecombinationAlgorithm" , opt_mesh_algo_recombine , 0 ,
 #endif
-    "Mesh recombination algorithm (0: standard, 1: blossom)" },
+    "Mesh recombination algorithm (0: simple, 1: blossom, 2: simple full-quad, "
+    "3: blossom full-quad)" },
   { F|O, "RecombineAll" , opt_mesh_recombine_all , 0 ,
     "Apply recombination algorithm to all surfaces, ignoring per-surface spec" },
+  { F|O, "RecombineOptimizeTopology" , opt_mesh_recombine_optimize_topology , 5 ,
+    "Number of topological optimization passes (removal of diamonds, ...) of "
+    "recombined surface meshes" },
   { F|O, "Recombine3DAll" , opt_mesh_recombine3d_all , 0 ,
     "Apply recombination3D algorithm to all volumes, ignoring per-volume spec" },
   { F|O, "Recombine3DLevel" , opt_mesh_recombine3d_level , 0 ,
@@ -1226,12 +1235,6 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Recombine3DConformity" , opt_mesh_recombine3d_conformity , 0 ,
     "3d recombination conformity type (0: nonconforming, 1: trihedra, "
     "2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)" },
-  { F|O, "DoRecombinationTest" , opt_mesh_do_recombination_test , 0 ,
-    "Apply recombination algorithm for test" },
-  { F|O, "RecombinationTestHorizStart" , opt_mesh_recombination_test_start , 1 ,
-    "Depth start" },
-  { F|O, "RecombinationTestNoGreedyStrat" , opt_mesh_recombination_no_greedy_strat , 0 ,
-    "No greedy (global) strategies" },
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" },
   { F|O, "Renumber" , opt_mesh_renumber , 1 ,
@@ -1256,11 +1259,14 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "SecondOrderIncomplete" , opt_mesh_second_order_incomplete , 0. ,
     "Create incomplete second order elements? (8-node quads, 20-node hexas, etc.)" },
   { F|O, "SecondOrderLinear" , opt_mesh_second_order_linear , 0. ,
-    "Should second order nodes simply be created by linear interpolation?" },
+    "Should second order nodes (as well as nodes generated with subdivision algorithms) "
+    "simply be created by linear interpolation?" },
   { F|O, "Smoothing" , opt_mesh_nb_smoothing , 1. ,
     "Number of smoothing steps applied to the final mesh" },
   { F|O, "SmoothCrossField" , opt_mesh_smooth_cross_field , 0. ,
-    "Apply n barycentric smoothing passes to the cross field" },
+    "Apply n barycentric smoothing passes to the 3D cross field" },
+  { F|O, "CrossFieldClosestPoint" , opt_mesh_cross_field_closest_point , 1. ,
+    "Use closest point to compute 2D crossfield" },
   { F|O, "SmoothNormals" , opt_mesh_smooth_normals , 0. ,
     "Smooth the mesh normals?" },
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,
@@ -1287,6 +1293,10 @@ StringXNumber MeshOptions_Number[] = {
     "Tolerance for initial 3D Delaunay mesher" },
   { F|O, "Triangles" , opt_mesh_triangles , 1. ,
     "Display mesh triangles?" },
+
+  { F|O, "UnvStrictFormat" , opt_mesh_unv_strict_format , 1 ,
+    "Use strict format specification for UNV files, with 'D' for exponents (instead of "
+    "the more commonly used 'E')" },
 
   { F|O, "VolumeEdges" , opt_mesh_volumes_edges , 1. ,
     "Display edges of volume mesh?" },
@@ -1562,7 +1572,8 @@ StringXNumber ViewOptions_Number[] = {
   { F,   "Max" , opt_view_max , 0. ,
     "Maximum value in the view (read-only)" },
   { F,   "MaxVisible" , opt_view_max_visible , 0. ,
-    "Maximum value in the visible parts of the view (read-only)" },
+    "Maximum value in the visible parts of the view, taking current time step "
+    "and tensor display type into account (read-only)" },
   { F,   "MaxX" , opt_view_xmax , 0. ,
     "Maximum view coordinate along the X-axis (read-only)" },
   { F,   "MaxY" , opt_view_ymax , 0. ,
@@ -1572,7 +1583,8 @@ StringXNumber ViewOptions_Number[] = {
   { F,   "Min" , opt_view_min , 0. ,
     "Minimum value in the view (read-only)" },
   { F,   "MinVisible" , opt_view_min_visible , 0. ,
-    "Minimum value in the visible parts of the view (read-only)" },
+    "Minimum value in the visible parts of the view, taking current time step "
+    "and tensor display type into account (read-only)" },
   { F,   "MinX" , opt_view_xmin , 0. ,
     "Minimum view coordinate along the X-axis (read-only)" },
   { F,   "MinY" , opt_view_ymin , 0. ,
@@ -1640,7 +1652,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "TargetError" , opt_view_target_error , 0.01 ,
     "Target representation error for adaptive views" },
   { F|O, "TensorType" , opt_view_tensor_type , 1. ,
-    "Tensor Visualization Type" },
+    "Tensor display type (1: Von-Mises, 2: maximum eigenvalue, 3: minimum eigenvalue, "
+    "4: eigenvectors, 5: ellipse, 6: ellipsoid, 7: frame)"},
   { F,   "TimeStep" , opt_view_timestep , 0. ,
     "Current time step displayed" },
   { F,   "Time" , opt_view_time , -1. ,
@@ -1801,10 +1814,10 @@ StringXNumber PrintOptions_Number[] = {
 
 StringXColor GeneralOptions_Color[] = {
   { F|O, "Background" , opt_general_color_background ,
-    {245, 245, 245, 255}, {255, 255, 255, 255}, {245, 245, 245, 255}, {50, 50, 50, 255},
+    {255, 255, 255, 255}, {255, 255, 255, 255}, {245, 245, 245, 255}, {0, 0, 0, 255},
     "Background color" },
   { F|O, "BackgroundGradient" , opt_general_color_background_gradient ,
-    {185, 185, 185, 255}, {208, 215, 255, 255}, {185, 185, 185, 255}, {50, 50, 50, 255},
+    {255, 255, 255, 255}, {208, 215, 255, 255}, {185, 185, 185, 255}, {0, 0, 0, 255},
     "Background gradient color" },
   { F|O, "Foreground" , opt_general_color_foreground ,
     {85, 85, 85, 255}, {85, 85, 85, 255}, {85, 85, 85, 255}, {170, 170, 170, 255},

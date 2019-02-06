@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _DRAW_CONTEXT_H_
 #define _DRAW_CONTEXT_H_
@@ -111,6 +111,12 @@ public:
   virtual std::string getName() { return "None"; }
 };
 
+class imgtex {
+public:
+  GLuint tex, w, h;
+  imgtex() : tex(0), w(0), h(0) {}
+};
+
 class drawContext {
 private:
   static drawContextGlobal *_global;
@@ -121,9 +127,6 @@ private:
   std::set<PView *> _hiddenViews;
   GLuint _bgImageTexture, _bgImageW, _bgImageH;
   openglWindow *_openglWindow;
-  struct imgtex {
-    GLuint tex, w, h;
-  };
   std::map<std::string, imgtex> _imageTextures;
 
 public:

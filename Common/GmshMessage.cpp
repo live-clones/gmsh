@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 
@@ -130,7 +130,7 @@ void Msg::Init(int argc, char **argv)
   // prune argv from gmsh-specific options that make PETSc verbose
   for(int i = 0; i < argc; i++){
     std::string val(argv[i]);
-    if(val != "-info" && val != "-help" && val != "-v")
+    if(val != "-info" && val != "-help" && val != "-version" && val != "-v")
       sargv[sargc++] = argv[i];
   }
   PetscInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
@@ -471,7 +471,7 @@ void Msg::Fatal(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    FlGui::instance()->check();
+    FlGui::check();
     std::string tmp = std::string("@C1@.") + "Fatal   : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
     if(_firstError.empty()) _firstError = str;
@@ -521,7 +521,7 @@ void Msg::Error(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    FlGui::instance()->check();
+    FlGui::check();
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.")
       + "Error   : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
@@ -563,7 +563,7 @@ void Msg::Warning(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    FlGui::instance()->check();
+    FlGui::check();
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B152@." : "@C5@.")
       + "Warning : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
@@ -607,7 +607,7 @@ void Msg::Info(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    FlGui::instance()->check();
+    FlGui::check();
     std::string tmp = std::string("Info    : ") + str;
     FlGui::instance()->addMessage(tmp.c_str());
   }
@@ -644,7 +644,7 @@ void Msg::Direct(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    FlGui::instance()->check();
+    FlGui::check();
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B136@." : "@C4@.")
       + str;
     FlGui::instance()->addMessage(tmp.c_str());
@@ -686,7 +686,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(log) FlGui::instance()->check();
+    if(log) FlGui::check();
     if(!log || GetVerbosity() > 4)
       FlGui::instance()->setStatus(str);
     if(log){
@@ -788,7 +788,7 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
     if(FlGui::available() && GetVerbosity() > 4){
-      FlGui::instance()->check();
+      FlGui::check();
       FlGui::instance()->setProgress(str, (n > N - 1) ? 0 : n, 0, N);
     }
 #endif
@@ -1163,6 +1163,9 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
       if(ps[0].getValue() == "initialize") Exit(0);
     }
   }
+
+  // default onelab button mode
+  SetOnelabString("ONELAB/Button", "", false, true);
 #endif
 }
 

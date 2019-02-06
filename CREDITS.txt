@@ -1,4 +1,4 @@
-                 Gmsh is copyright (C) 1997-2018
+                 Gmsh is copyright (C) 1997-2019
 
                        Christophe Geuzaine
                      <cgeuzaine at uliege.be>
@@ -47,7 +47,8 @@ Hackbarth, Peter Wainwright, Jiri Hnidek, Thierry Thomas, Konstantinos Poulios,
 Laurent Van Miegroet, Shahrokh Ghavamian, Geordie McBain, Jose Paulo Moitinho de
 Almeida, Guillaume Demesy, Wendy Merks-Swolfs, Cosmin Stefan Deaconu, Nigel
 Nunn, Serban Georgescu, Julien Troufflard, Michele Mocciola, Matthijs Sypkens
-Smit, Sauli Ruuska, Romain Boman, Fredrik Ekre, Mark Burton, Max Orok.
+Smit, Sauli Ruuska, Romain Boman, Fredrik Ekre, Mark Burton, Max Orok, Paul
+Cristini.
 
 Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
 and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
@@ -132,15 +133,15 @@ The colorbar widget (Fltk/Colorbar_Window.cpp) was inspired by code from the
 Vis5d program for visualizing five dimensional gridded data sets, copyright (C)
 1990-1995, Bill Hibbard, Brian Paul, Dave Santek, and Andre Battaiola.
 
-In addition, this this version of Gmsh may contain the following contributed
-codes in the contrib/ directory, each governed by their own license:
+In addition, this version of Gmsh may contain the following contributed codes in
+the contrib/ directory, each governed by their own license:
 
 * contrib/ANN copyright (C) 1997-2005 University of Maryland and Sunil Arya and
   David Mount;
 
 * contrib/gmm copyright (C) 2002-2008 Yves Renard;
 
-* contrib/hxt - Copyright (C) 2017-2018 - Universite catholique de Louvain.
+* contrib/hxt - Copyright (C) 2017-2018 - Universite catholique de Louvain;
 
 * contrib/kbipack copyright (C) 2005 Saku Suuriniemi;
 

@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _TREE_ICONS_H_
 #define _TREE_ICONS_H_
@@ -29,10 +29,10 @@
     "#.........#", "#.........#", "#.........#", "#.........#", "###########"
 
 #if defined(__APPLE__)
-static const char *const open_xpm_light[] = {TREE_ICON_RIGHT("@ c #222222")};
-static const char *const close_xpm_light[] = {TREE_ICON_DOWN("@ c #222222")};
-static const char *const open_xpm_dark[] = {TREE_ICON_RIGHT("@ c #444444")};
-static const char *const close_xpm_dark[] = {TREE_ICON_DOWN("@ c #444444")};
+static const char *const open_xpm_light[] = {TREE_ICON_RIGHT("@ c #444444")};
+static const char *const close_xpm_light[] = {TREE_ICON_DOWN("@ c #444444")};
+static const char *const open_xpm_dark[] = {TREE_ICON_RIGHT("@ c #222222")};
+static const char *const close_xpm_dark[] = {TREE_ICON_DOWN("@ c #222222")};
 #else
 static const char *const open_xpm_light[] = {TREE_ICON_PLUS(". c #fefefe")};
 static const char *const close_xpm_light[] = {TREE_ICON_MINUS(". c #fefefe")};

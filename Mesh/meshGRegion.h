@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _MESH_GREGION_H_
 #define _MESH_GREGION_H_
@@ -33,7 +33,7 @@ public:
 };
 
 // Optimize the mesh of the region using gmsh's algo
-class optimizeMeshGRegionGmsh {
+class optimizeMeshGRegion {
 public:
   void operator()(GRegion *, bool always = false);
 };
@@ -64,8 +64,21 @@ GFace *findInFaceSearchStructure(MVertex *p1, MVertex *p2, MVertex *p3,
 GFace *findInFaceSearchStructure(const MFace &f, const fs_cont &search);
 GEdge *findInEdgeSearchStructure(MVertex *p1, MVertex *p2,
                                  const es_cont &search);
-bool buildFaceSearchStructure(GModel *model, fs_cont &search);
+bool buildFaceSearchStructure(GModel *model, fs_cont &search, bool onlyTriangles = false);
 bool buildEdgeSearchStructure(GModel *model, es_cont &search);
+
+// hybrid mesh recovery structure
+class splitQuadRecovery {
+private:
+  std::map<MFace, MVertex *, Less_Face> _quad;
+  std::map<MFace, GFace *, Less_Face> _tri;
+public:
+  splitQuadRecovery() {}
+  void add(const MFace &f, MVertex *v, GFace *gf);
+  std::map<MFace, GFace *, Less_Face> &getTri() { return _tri; }
+  std::map<MFace, MVertex *, Less_Face> &getQuad() { return _quad; }
+  int buildPyramids(GModel *gm);
+};
 
 // adapt the mesh of a region
 class adaptMeshGRegion {

@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 
@@ -101,6 +101,8 @@ namespace onelabUtils {
       onelab::string o("Gmsh/MshFileName", name, "Mesh name");
       o.setKind("file");
       o.setAttribute("Closed", "1");
+      if(!CTX::instance()->showModuleMenu)
+        o.setVisible(false);
       c->set(o);
     }
     // we could keep track of mesh file name in "Output files" so we could

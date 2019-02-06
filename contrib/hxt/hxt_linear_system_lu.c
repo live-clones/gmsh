@@ -5,7 +5,7 @@
 #include "hxt_tools.h"
 #include "hxt_linear_system_lu.h"
 
-#define CONMAX 200
+#define CONMAX 20000
 static void connectivityInsert(int *connectivity, int i, int j)
 {
   for (int k = 0; k < CONMAX; ++k) {

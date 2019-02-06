@@ -203,7 +203,15 @@ public class ModelList extends Activity {
                         }
                         catch (IOException e) {
                         }
-                        copies.add(Uri.fromFile(copy));
+                        // FIXME: Starting with Nougat (api 24+) this is not allowed anymore and it
+                        // throws a android.os.FileUriExposedException
+                        //
+                        // https://proandroiddev.com/sharing-files-though-intents-are-you-ready-for-nougat-70f7e9294a0b
+                        try{
+                          copies.add(Uri.fromFile(copy));
+                        }
+                        catch(Exception e){
+                        }
                       }
                     }
                     emailIntent.putExtra(Intent.EXTRA_STREAM, copies);

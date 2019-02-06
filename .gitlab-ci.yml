@@ -1,7 +1,7 @@
-# Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 variables:
   EXTRA_OPTION: ""
@@ -18,13 +18,14 @@ linux64_ci:
     - cmake ${EXTRA_OPTION} ..
     - make -j 8
     - ctest -j 8 --output-on-failure
+    - valgrind --leak-check=full --error-exitcode=1 ./gmsh ../tutorial/t5.geo -3
   tags:
     - linux64
     - docker
   except:
     - tags
 
-linux64_minimal_ci:
+linux64_compatibility_ci:
   image: onelab/ubuntu18.04
   script:
     - mkdir build
@@ -37,19 +38,9 @@ linux64_minimal_ci:
     - make -j 8
     - cmake -DENABLE_MESH=1 ..
     - make -j 8
-  tags:
-    - linux64
-    - docker
-  except:
-    - tags
-
-linux64_cxx98_compat_ci:
-  image: onelab/ubuntu16.04
-  script:
-    - mkdir build
-    - cd build
+    - rm -rf *
     - export CXXFLAGS=-std=c++98
-    - cmake -DENABLE_CXX11=0 -DENABLE_OCC=0 ${EXTRA_OPTION} ..
+    - cmake -DENABLE_CXX11=0 -DENABLE_OCC=0 ..
     - make -j 8
   tags:
     - linux64
@@ -96,7 +87,7 @@ windows64_msvc_ci:
     - make package -j 1
     - PKG=`ls gmsh-*.tar*`
     - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
-    - /usr/local/bin/ctest -D Experimental -j 1 --output-on-failure
+    - /usr/local/bin/ctest -j 1 --output-on-failure
 
 linux64_official_snapshot:
   <<: *linux_official
@@ -187,7 +178,7 @@ linux32-sdk_official_release:
     - bash -c "/usr/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/mingw32-windres.exe -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc -DSLEPC_DIR=/home/geuzaine/src/slepc -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} .."
     - bash -c "/usr/bin/make package -j 2"
     - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
-    - bash -c "/usr/bin/ctest -D Experimental -j 2 --output-on-failure"
+    - bash -c "/usr/bin/ctest -j 2 --output-on-failure"
 
 windows64_official_snapshot:
   <<: *windows_official
@@ -282,7 +273,7 @@ windows32-sdk_official_release:
     - if [[ $PKG == *".dmg"* ]]; then ssh ace@ace36.montefiore.ulg.ac.be /Users/ace/re-sign.sh /tmp/${PKG}; fi
     - if [[ $PKG == *".dmg"* ]]; then scp ace@ace36.montefiore.ulg.ac.be:/tmp/${PKG} .; fi
     - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/MacOSX/${PKG/\.tar\.gz/\.tgz}
-    - /usr/local/bin/ctest -D Experimental -j 2 --output-on-failure
+    - /usr/local/bin/ctest -j 2 --output-on-failure
   tags:
     - macos64
     - official

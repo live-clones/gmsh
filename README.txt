@@ -1,7 +1,7 @@
 This is Gmsh, an automatic three-dimensional finite element mesh generator with
 built-in pre- and post-processing facilities.
 
-Gmsh is copyright (C) 1997-2018 C. Geuzaine and J.-F. Remacle, and is
+Gmsh is copyright (C) 1997-2019 C. Geuzaine and J.-F. Remacle, and is
 distributed under the terms of the GNU General Public License, Version 2 or
 later, with an exception to allow for easier linking with external
 libraries. See LICENSE.txt and CREDITS.txt for more information.
@@ -10,10 +10,11 @@ See the doc/ and tutorial/ directories for documentation. The reference manual
 is located in doc/texinfo/. See the demos/ directory and the web site
 http://gmsh.info for additional examples.
 
-Building Gmsh from its source code requires a C++ compiler and CMake
+Building Gmsh from source code requires a C++ compiler and CMake
 (http://cmake.org). Building the graphical user interface requires FLTK 1.3.2 or
-higher (http://fltk.org), configured with OpenGL support. Support for
-constructive solid geometry requires OpenCASCADE 6.9 or higher (version 7.2 or
+higher (FLTK-dev 1.4 is required on macOS Mojave; http://fltk.org), configured
+with OpenGL support. Support for boolean operations, constructive solid geometry
+features and STEP file import requires OpenCASCADE 6.9 or higher (version 7.2 or
 higher is highly recommended; http://www.opencascade.com).
 
 
@@ -50,7 +51,7 @@ Build Gmsh from the command line
 
     cmake -DCMAKE_INSTALL_PREFIX=/opt
 
-  to change the installation directory. Or you can use
+  to change the installation directory. Or you could use
 
     cmake -DENABLE_FLTK=0 ..
 

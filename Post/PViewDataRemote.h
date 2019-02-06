@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _PVIEW_DATA_REMOTE_H_
 #define _PVIEW_DATA_REMOTE_H_
@@ -13,8 +13,7 @@
 #include "SBoundingBox3d.h"
 #include "onelab.h"
 
-// The container for a remote dataset (does not contain any actual
-// data)
+// The container for a remote dataset (does not contain any actual data)
 class PViewDataRemote : public PViewData {
 private:
   onelab::localNetworkClient *_remote;
@@ -37,12 +36,12 @@ public:
     return true;
   }
   int getNumTimeSteps() { return _numTimeSteps; }
-  double getMin(int step = -1, bool onlyVisible = false,
+  double getMin(int step = -1, bool onlyVisible = false, int tensorRep = 0,
                 int forceNumComponents = 0, int componentMap[9] = 0)
   {
     return _min;
   }
-  double getMax(int step = -1, bool onlyVisible = false,
+  double getMax(int step = -1, bool onlyVisible = false, int tensorRep = 0,
                 int forceNumComponents = 0, int componentMap[9] = 0)
   {
     return _max;

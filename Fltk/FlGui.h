@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _FL_GUI_H_
 #define _FL_GUI_H_
@@ -9,6 +9,9 @@
 #include <string>
 #include <vector>
 #include "SPoint2.h"
+#if __cplusplus >= 201103L
+#include <atomic>
+#endif
 
 #define GMSH_WINDOW_BOX FL_FLAT_BOX
 #define GMSH_SIMPLE_RIGHT_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 1)
@@ -50,6 +53,11 @@ private:
   static FlGui *_instance;
   static std::string _openedThroughMacFinder;
   static bool _finishedProcessingCommandLine;
+#if __cplusplus >= 201103L
+  static std::atomic<int> _locked;
+#else
+  static int _locked;
+#endif
   std::string _lastStatus;
 
 public:
@@ -90,14 +98,18 @@ public:
   // run the GUI until there's no window left
   static int run();
   // check (now!) if there are any pending events, and process them
-  static void check();
+  static void check(bool force = false);
   // wait (possibly indefinitely) for any events, then process them
-  static void wait();
+  static void wait(bool force = false);
   // wait (at most time seconds) for any events, then process them
-  static void wait(double time);
+  static void wait(double time, bool force = false);
   // lock/unlock child threads
   static void lock();
   static void unlock();
+  // trigger event loop in main thread
+  static void awake(const std::string &action);
+  // is locked
+  static int locked();
   // is a file opened through the Mac Finder?
   static void setOpenedThroughMacFinder(const std::string &name);
   static std::string getOpenedThroughMacFinder();

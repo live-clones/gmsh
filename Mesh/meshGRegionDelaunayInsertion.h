@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _MESH_GREGION_DELAUNAY_INSERTION_H_
 #define _MESH_GREGION_DELAUNAY_INSERTION_H_
@@ -20,6 +20,7 @@
 class GRegion;
 class GFace;
 class GModel;
+class splitQuadRecovery;
 
 double tetcircumcenter(double a[3], double b[3], double c[3], double d[3],
                        double circumcenter[3], double *xi, double *eta,
@@ -216,10 +217,9 @@ public:
 
 void connectTets(std::list<MTet4 *> &, const std::set<MFace, Less_Face> * = 0);
 void connectTets(std::vector<MTet4 *> &, const std::set<MFace, Less_Face> * = 0);
-void delaunayMeshIn3D(std::vector<MVertex *> &, std::vector<MTetrahedron *> &,
-                      bool removeBox = true);
+void delaunayMeshIn3D(std::vector<MVertex *> &, std::vector<MTetrahedron *> &);
 void insertVerticesInRegion(GRegion *gr, int maxVert = 2000000000,
-                            bool _classify = true);
+                            bool _classify = true, splitQuadRecovery *sqr = 0);
 void bowyerWatsonFrontalLayers(GRegion *gr, bool hex);
 
 struct compareTet4Ptr {

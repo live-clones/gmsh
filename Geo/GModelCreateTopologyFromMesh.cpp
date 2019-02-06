@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stack>
 #include <set>
@@ -259,7 +259,8 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
         num++;
 
         discreteVertex *dv =
-          new discreteVertex(gm, gm->getMaxElementaryNumber(0) + 1);
+          new discreteVertex(gm, gm->getMaxElementaryNumber(0) + 1,
+                             mv->x(), mv->y(), mv->z());
         gm->add(dv);
 
         mVertexToGVertex[mv] = dv;
@@ -319,10 +320,11 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
     if(!(*it)->getBeginVertex() && !(*it)->getEndVertex()) {
       num++;
-      discreteVertex *dv =
-        new discreteVertex(gm, gm->getMaxElementaryNumber(0) + 1);
-      gm->add(dv);
       MVertex *v = (*it)->lines[0]->getVertex(0);
+      discreteVertex *dv =
+        new discreteVertex(gm, gm->getMaxElementaryNumber(0) + 1,
+                           v->x(), v->y(), v->z());
+      gm->add(dv);
       MPoint *mp = new MPoint(v);
       dv->points.push_back(mp);
       dv->addEdge(*it);
@@ -693,7 +695,7 @@ void GModel::createTopologyFromMeshNew()
   if(dim >= 2) createTopologyFromMesh2D(this, numE);
   if(dim >= 1) createTopologyFromMesh1D(this, numV);
 
-  _associateEntityWithMeshVertices();
+  _associateEntityWithMeshVertices(true); // force
 
   std::vector<GEntity *> entities;
   getEntities(entities);

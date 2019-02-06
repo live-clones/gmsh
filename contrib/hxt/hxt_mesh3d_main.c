@@ -17,7 +17,9 @@ HXTStatus hxtTetMesh3d(HXTMesh* mesh,
                       int refine,
                       int optimize,
                       double qualityThreshold,
-                      HXTStatus (*bnd_recovery)(HXTMesh* mesh)) {
+                      HXTStatus (*bnd_recovery)(HXTMesh* mesh),
+                      double (*mesh_size)(double x, double y, double z, void* userData),
+                      void* userData) {
 
   if(defaulThreads>0) {
     omp_set_num_threads(defaulThreads);
@@ -100,7 +102,7 @@ HXTStatus hxtTetMesh3d(HXTMesh* mesh,
     HXT_CHECK( hxtConstrainLinesNotInTriangles(mesh, lines2TetMap, lines2TriMap) );
 
   HXT_CHECK( hxtColorMesh(mesh, &nbColors) );
- 
+
   HXT_CHECK( hxtMapColorsToBrep(mesh, nbColors, tri2TetMap) );
 
   HXT_CHECK( hxtAlignedFree(&tri2TetMap) );
@@ -111,20 +113,18 @@ HXTStatus hxtTetMesh3d(HXTMesh* mesh,
 
   if(refine){
     // HXT_CHECK(hxtComputeMeshSizeFromMesh(mesh, &delOptions));
-    HXT_CHECK(hxtCreateNodalsizeFromTrianglesAndLines(mesh, &delOptions));
-    
+    if(mesh_size==NULL)
+    	HXT_CHECK(hxtCreateNodalsizeFromTrianglesAndLines(mesh, &delOptions));
+    else
+    	HXT_CHECK(hxtCreateNodalSizeFromFunction(mesh, &delOptions, mesh_size, userData) );
+
     if(nbColors!=mesh->brep.numVolumes) {
       HXT_CHECK( setFlagsToProcessOnlyVolumesInBrep(mesh) );
     }
 
-    HXTMeshSize *meshSize = NULL;
-    // HXT_CHECK(hxtMeshSizeCreate (context,&meshSize));
-    // HXT_CHECK(hxtMeshSizeCompute (meshSize, bbox.min, bbox.max, mySize, NULL));
-    //    printf("time from empty mesh to first insertion: %f second\n", omp_get_wtime() - time);
-    HXT_CHECK(hxtRefineTetrahedra(mesh, &delOptions, meshSize));
-    // HXT_CHECK(hxtMeshSizeDelete (&meshSize));
+    HXT_CHECK(hxtRefineTetrahedra(mesh, &delOptions, mesh_size, userData));
+
     HXT_CHECK( hxtDestroyNodalsize(&delOptions) );
-    // #endif
   }
 
   t[5] = omp_get_wtime();

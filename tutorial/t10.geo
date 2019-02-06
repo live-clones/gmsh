@@ -40,7 +40,7 @@ Field[1].EdgesList = {2};
 //                           /
 // LcMin -o----------------/
 //        |                |       |
-//    Attractor         DistMin DistMax
+//      Point           DistMin DistMax
 Field[2] = Threshold;
 Field[2].IField = 1;
 Field[2].LcMin = lc / 30;
@@ -54,12 +54,12 @@ Field[3] = MathEval;
 Field[3].F = "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101";
 
 // We could also combine MathEval with values coming from other fields. For
-// example, let's define an Attractor around point 1
-Field[4] = Attractor;
+// example, let's define an Distance field around point 1
+Field[4] = Distance;
 Field[4].NodesList = {1};
 
 // We can then create a MathEval field with a function that depends on the
-// return value of the Attractr Field[4], i.e., depending on the distance to
+// return value of the Distance Field[4], i.e., depending on the distance to
 // point 1 (here using a cubic law, with minumum element size = lc / 100)
 Field[5] = MathEval;
 Field[5].F = Sprintf("F4^3 + %g", lc / 100);
@@ -83,6 +83,28 @@ Field[7] = Min;
 Field[7].FieldsList = {2, 3, 5, 6};
 Background Field = 7;
 
-// If the boundary mesh size was too small, we could ask not to extend the
-// elements sizes from the boundary inside the domain:
-// Mesh.CharacteristicLengthExtendFromBoundary = 0;
+// To determine the size of mesh elements, Gmsh locally computes the minimum of
+//
+// 1) the size of the model bounding box;
+// 2) if Mesh.CharacteristicLengthFromPoints is set, the mesh size specified at
+//    geometrical points;
+// 3) if Mesh.CharacteristicLengthFromCurvature is set, the mesh size based on
+//    the curvature and Mesh.MinimumCirclePoints;
+// 4) the background mesh field;
+// 5) any per-entity mesh size constraint.
+//
+// This value is then constrained in the interval [Mesh.CharacteristicLengthMin,
+// MeshCharacteristicLengthMax] and multiplied by Mesh.CharacteristicLengthFactor.
+// In addition, boundary mesh sizes (on curves or surfaces) are interpolated
+// inside the enclosed entity (surface or volume, respectively) if the option
+// Mesh.CharacteristicLengthExtendFromBoundary is set (which is the case by
+// default).
+//
+// When the element size is fully specified by a background mesh (as it is in
+// this example), it is thus often desirable to set
+
+Mesh.CharacteristicLengthExtendFromBoundary = 0;
+Mesh.CharacteristicLengthFromPoints = 0;
+Mesh.CharacteristicLengthFromCurvature = 0;
+
+// This will prevent over-refinement due to small mesh sizes on the boundary.

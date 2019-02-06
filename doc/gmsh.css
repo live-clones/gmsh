@@ -25,7 +25,7 @@ img { border: none; vertical-align: middle; }
 #banner { float: right; width: 180px; padding-left: 1.5em; padding-bottom: 1.5em;
   background: #ffffff; }
 #banner img { width: 180px; margin-bottom: 1.5ex; box-shadow: 0px 1px 4px #bbb; }
-img.screenshot { margin:0.5ex; box-shadow: 0px 1px 4px #bbb;  }
+img.screenshot { width:250px; margin:0.5ex; box-shadow: 0px 1px 4px #bbb;  }
 #toc { margin-top:2em; margin-bottom:2.5em; }
 .fb-like, .twitter-follow-button { vertical-align:bottom; }
 .social{ height:18px; vertical-align:top; }

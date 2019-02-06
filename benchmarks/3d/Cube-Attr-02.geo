@@ -13,7 +13,7 @@ Extrude {0,0.0,1}{ Surface{6}; }
 
 Point(55) = {0.3,0.3,0.3,1};
 
-Field[1] = Attractor;
+Field[1] = Distance;
 Field[1].NodesList = {55};
 
 Field[2] = Threshold;

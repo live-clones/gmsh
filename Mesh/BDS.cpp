@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stack>
 #include <cmath>
@@ -94,16 +94,16 @@ void outputScalarField(std::vector<BDS_Face *> &t, const char *iii, int param,
     if(!(*tit)->deleted) {
       (*tit)->getNodes(pts);
       // double v = BDS_Face_Validity (gf, *tit);
-      if(!param && gf) {
-        if(pts[0]->degenerated + pts[1]->degenerated + pts[2]->degenerated <
-           2) {
+      if(!param) {
+	//        if(pts[0]->degenerated + pts[1]->degenerated + pts[2]->degenerated <
+	//           2) {
           fprintf(f,
                   "ST(%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%"
                   "22.15E,%22.15E){%g,%g,%g};\n",
                   pts[0]->X, pts[0]->Y, pts[0]->Z, pts[1]->X, pts[1]->Y,
                   pts[1]->Z, pts[2]->X, pts[2]->Y, pts[2]->Z,
                   (double)pts[0]->iD, (double)pts[1]->iD, (double)pts[2]->iD);
-        }
+	  //        }
       }
       if(param && gf) {
         if(pts[0]->degenerated + pts[1]->degenerated + pts[2]->degenerated >
@@ -398,7 +398,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
 
     //    printf("%d intersected\n",intersected.size());
 
-    if(!intersected.size() || ix > 100000) {
+    if(!intersected.size() || ix > 300) {
       BDS_Edge *eee = find_edge(num1, num2);
       if(!eee) {
         if(Msg::GetVerbosity() > 98) {
@@ -539,7 +539,9 @@ void BDS_Mesh::del_point(BDS_Point *p)
 
 void BDS_Mesh::add_geom(int p1, int p2)
 {
-  geom.insert(new BDS_GeomEntity(p1, p2));
+  BDS_GeomEntity *e = new BDS_GeomEntity(p1, p2);
+  std::pair<std::set<BDS_GeomEntity *, GeomLessThan>::iterator, bool> res = geom.insert(e);
+  if(!res.second) delete e;
 }
 
 void BDS_Edge::computeNeighborhood(BDS_Point *pts1[4], BDS_Point *pts2[4],
@@ -606,21 +608,30 @@ void recur_tag(BDS_Face *t, BDS_GeomEntity *g)
   std::stack<BDS_Face *> _stack;
   _stack.push(t);
 
+  //  BDS_Point *pts[4];
+  //  t->getNodes(pts);
+  //  printf("starting with trioangle %d %d %d\n",pts[0]->iD,pts[1]->iD,pts[2]->iD);
+
   while(!_stack.empty()) {
     t = _stack.top();
     _stack.pop();
     if(!t->g) {
+      //      t->getNodes(pts);
+      //      printf("now in trioangle %d %d %d\n",pts[0]->iD,pts[1]->iD,pts[2]->iD);
       t->g = g;
       // g->t.push_back(t);
       if(!t->e1->g && t->e1->numfaces() == 2) {
+	//	printf("going through %d %d\n",t->e1->p1->iD,t->e1->p2->iD);
         _stack.push(t->e1->otherFace(t));
         //	recur_tag(t->e1->otherFace(t), g);
       }
       if(!t->e2->g && t->e2->numfaces() == 2) {
+	//	printf("going through %d %d\n",t->e2->p1->iD,t->e2->p2->iD);
         _stack.push(t->e2->otherFace(t));
         //	recur_tag(t->e2->otherFace(t), g);
       }
       if(!t->e3->g && t->e3->numfaces() == 2) {
+	//	printf("going through %d %d\n",t->e3->p1->iD,t->e3->p2->iD);
         _stack.push(t->e3->otherFace(t));
         //	recur_tag(t->e3->otherFace(t), g);
       }
@@ -699,7 +710,7 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
 
   e->oppositeof(op);
 
-  int CHECK1 = -1, CHECK2 = 32;
+  int CHECK1 = -1, CHECK2 = 46;
 
   if(p1->iD == CHECK1 && p2->iD == CHECK2)
     printf("splitting edge %d %d opp %d %d new %d\n", p1->iD, p2->iD, op[0]->iD, op[1]->iD,mid->iD);
@@ -852,7 +863,8 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
   if(fabs(s1 + s2 - s3 - s4) > 1.e-12 * (s3 + s4)) {
     return false;
   }
-  if(s3 < .02 * (s1 + s2) || s4 < .02 * (s1 + s2)) return false;
+  // THIS WAS CAUSIN' TROUBLES ...
+  //if(s3 < .02 * (s1 + s2) || s4 < .02 * (s1 + s2)) return false;
 
   /*
   if(!testSmallTriangles) {
@@ -983,7 +995,7 @@ bool BDS_SwapEdgeTestNormals::operator()(BDS_Point *_p1, BDS_Point *_p2,
   if(fabs(s1 + s2 - s3 - s4) > 1.e-12 * (s3 + s4)) {
     return false;
   }
-  if(s3 < .02 * (s1 + s2) || s4 < .02 * (s1 + s2)) return false;
+  //  if(s3 < .02 * (s1 + s2) || s4 < .02 * (s1 + s2)) return false;
   return true;
 }
 
@@ -1032,7 +1044,9 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest,
    */
 
   // we test if the edge is deleted
-  //  return false;
+  //return false;
+
+
 
   BDS_Point *p1 = e->p1;
   BDS_Point *p2 = e->p2;
@@ -1599,8 +1613,8 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
   eit = p->edges.begin();
 
   if(eit == itede) {
-    //    Msg::Debug("Hidden bug ... I should have deleted a point but I still do "
-    //               "not know why it segfault when I do it :-) ");
+    // Msg::Debug("Hidden bug ... I should have deleted a point but I still do "
+    //            "not know why it segfault when I do it :-) ");
     return false;
   }
 
@@ -1626,8 +1640,8 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
     ++eit;
   }
   if(p->iD == CHECK) printf("\n");
-  //  printf("%g\n",fact);
-  //  sTot *= fact;
+  // printf("%g\n",fact);
+  // sTot *= fact;
   U /= (fact);
   V /= (fact);
   LC /= (sTot);
@@ -1635,19 +1649,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
   YY /= (sTot);
   ZZ /= (sTot);
 
-  GPoint gp;
-
-  /**  if (gf->geomType() == GEntity::DiscreteSurface){
-       SVector3 normal;
-       discreteFace *df = static_cast<discreteFace*> (gf);
-       if (df){
-       gp = df->closestPoint(SPoint3(XX, YY, ZZ), LC,&normal);
-       U = gp.u();
-       V = gp.v();
-       }
-       }
-       else*/
-  gp = gf->point(U, V);
+  GPoint gp = gf->point(U, V);
 
   if(!gp.succeeded()) {
     return false;
@@ -1730,20 +1732,20 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
     ++it;
   }
 
-  //  if (p->edges.size() == 3)printf("3 -> %22.15E\n",fabs(s2-s1));
+  // if(p->edges.size() == 3)printf("3 -> %22.15E\n", fabs(s2-s1));
   if(fabs(s2 - s1) > 1.e-12 * (s2 + s1)) {
-    //    if (p->iD == CHECK)
-    //    printf("PARAMETRIC TRIANGLES OVERLAP %22.15E!!\n",fabs(s2-s1));
-    //    else
+    // if(p->iD == CHECK)
+    //   printf("PARAMETRIC TRIANGLES OVERLAP %22.15E!!\n", fabs(s2-s1));
+    // else
     return false;
   }
   if(newWorst < oldWorst) return false;
-  //  if (p->edges.size() == 3)printf("OK \n");
+  // if (p->edges.size() == 3) printf("OK \n");
 
-  //  if (OLD < 0 && NEW > OLD){
-  //    return true;
-  //  }
-  //  if (NEW < 0)return false;
+  // if(OLD < 0 && NEW > OLD){
+  //   return true;
+  // }
+  // if(NEW < 0) return false;
 
   p->u = U;
   p->v = V;

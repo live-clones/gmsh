@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _NUMERIC_H_
 #define _NUMERIC_H_
@@ -19,7 +19,15 @@ template <class T> inline double myhypot(const T &a, const T &b)
   return std::sqrt(a * a + b * b);
 }
 
-template <class T> inline int gmsh_sign(const T &x) { return (x < 0) ? -1 : 1; }
+template <class T> inline double hypotenuse(T const &a, T const &b, T const &c)
+{
+  return std::sqrt(a * a + b * b + c * c);
+}
+
+template <typename T> inline int gmsh_sign(T const &value)
+{
+  return (T(0) < value) - (value < T(0));
+}
 
 struct mean_plane {
   double plan[3][3];
@@ -158,7 +166,7 @@ void FindCubicRoots(const double coeff[4], double re[3], double im[3]);
 void eigsort(double d[3]);
 void gradSimplex(double *x, double *y, double *z, double *v, double *grad);
 double ComputeVonMises(double *val);
-double ComputeScalarRep(int numComp, double *val);
+double ComputeScalarRep(int numComp, double *val, int tensorRep = 0);
 void invert_singular_matrix3x3(double MM[3][3], double II[3][3]);
 bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
                fullVector<double> &x, void *data, double relax = 1.,

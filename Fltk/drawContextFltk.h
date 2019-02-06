@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _DRAW_CONTEXT_FLTK_H_
 #define _DRAW_CONTEXT_FLTK_H_
@@ -44,7 +44,7 @@ public:
         }
       }
     }
-    FlGui::instance()->check();
+    FlGui::check();
   }
   void drawCurrentOpenglWindow(bool make_current)
   {
@@ -53,7 +53,7 @@ public:
     if(make_current) gl->make_current();
     gl->redraw();
     glFlush();
-    FlGui::instance()->check();
+    FlGui::check();
   }
   int getFontIndex(const char *fontname)
   {
@@ -147,9 +147,9 @@ public:
   void drawString(const char *str) { gl_draw(str); }
   void resetFontTextures()
   {
-#if defined(__APPLE__)
-    gl_texture_pile_height(
-      gl_texture_pile_height()); // force font texture recomputation
+#if ((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)) || defined(__APPLE__)
+    // force font texture recomputation
+    gl_texture_pile_height(gl_texture_pile_height());
 #endif
   }
   std::string getName() { return "Fltk"; }

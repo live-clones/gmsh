@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _MESH_GFACE_H_
 #define _MESH_GFACE_H_
@@ -16,7 +16,6 @@
 class GEdge;
 class GFace;
 class MVertex;
-class GFaceCompound;
 
 // Create the mesh of the face
 class meshGFace {
@@ -55,14 +54,10 @@ void findTransfiniteCorners(GFace *gf, std::vector<MVertex *> &corners);
 int MeshTransfiniteSurface(GFace *gf);
 int MeshExtrudedSurface(
   GFace *gf, std::set<std::pair<MVertex *, MVertex *> > *constrainedEdges = 0);
-void partitionAndRemesh(GFaceCompound *gf);
-bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge *> &edges);
 bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
                    bool onlyInitialMesh, bool debug = true,
                    std::vector<GEdge *> *replacement_edges = 0);
 bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
                                  SPoint2 &out, int &N);
-double validity_p2triangle_formula(double *xa, double *xb, double *xc,
-                                   double *xab, double *xbc, double *xca);
 
 #endif

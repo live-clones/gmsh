@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _OCC_EDGE_H_
 #define _OCC_EDGE_H_
@@ -35,6 +35,7 @@ public:
   virtual ~OCCEdge();
   virtual SBoundingBox3d bounds(bool fast = false) const;
   virtual Range<double> parBounds(int i) const;
+  virtual Range<double> parBoundsOnFace(GFace *face = NULL) const;
   virtual GeomType geomType() const;
   virtual bool degenerate(int) const { return BRep_Tool::Degenerated(c); }
   virtual GPoint point(double p) const;

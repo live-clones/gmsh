@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "gmshPopplerWrapper.h"
 
@@ -81,6 +81,7 @@ GLuint gmshPopplerWrapper::getTextureForPage(double xres, double yres)
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img->w(), img->h(), 0,
                (img->d() == 4) ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE,
                img->array);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
   _w = img->w();
   _h = img->h();

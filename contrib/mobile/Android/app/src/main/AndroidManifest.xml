@@ -4,8 +4,8 @@
           android:versionCode="39"
           android:installLocation="auto" >
 
-  <uses-sdk android:minSdkVersion="14"
-            android:targetSdkVersion="26" />
+  <uses-sdk android:minSdkVersion="15"
+            android:targetSdkVersion="28" />
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
   <uses-feature android:glEsVersion="0x00010000" android:required="true" />

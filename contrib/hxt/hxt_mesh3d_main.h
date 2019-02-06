@@ -13,6 +13,8 @@ HXTStatus hxtTetMesh3d(HXTMesh* mesh,
                       int refine,
                       int optimize,
                       double qualityThreshold,
-                      HXTStatus (*bnd_recovery)(HXTMesh* mesh));
+                      HXTStatus (*bnd_recovery)(HXTMesh* mesh),
+                      double (*mesh_size)(double x, double y, double z, void* userData),
+                      void* userData);
 
 #endif

@@ -1,8 +1,8 @@
 %{
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <sstream>
 #include <map>
@@ -1104,6 +1104,8 @@ Affectation :
       else
 	yymsg(0, "Unknown command '%s Field'", $1);
 #endif
+      Free($1);
+      List_Delete($4);
     }
   | tField '[' FExpr ']' tAFFECT tSTRING tEND
     {
@@ -1297,7 +1299,7 @@ DefineConstants :
         gmsh_yysymbols[key].value = val;
       }
       Free($3);
-      Free($6);
+      List_Delete($6);
     }
   | DefineConstants Comma String__Index LP RP tAFFECT '{' ListOfDouble
     { init_options(); }
@@ -1315,7 +1317,7 @@ DefineConstants :
         gmsh_yysymbols[key].value = val;
       }
       Free($3);
-      Free($8);
+      List_Delete($8);
     }
   | DefineConstants Comma String__Index tAFFECT StringExpr
     {
@@ -1384,6 +1386,7 @@ Enumeration :
         }
       }
       List_Delete($1);
+      Free($3);
     }
   ;
 
@@ -2408,6 +2411,23 @@ Transform :
       if(!r) yymsg(0, "Could not dilate shapes");
       $$ = $8;
     }
+  | tAffine '{' RecursiveListOfDouble '}' '{' MultipleShape '}'
+    {
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($6, dimTags);
+      bool r = true;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<double> mat;
+        ListOfDouble2Vector($3, mat);
+        r = GModel::current()->getOCCInternals()->affine(dimTags, mat);
+      }
+      else{
+        yymsg(0, "Affine transform only available with OpenCASCADE geometry kernel");
+      }
+      if(!r) yymsg(0, "Could not transform shapes");
+      List_Delete($3);
+      $$ = $6;
+    }
   | tSTRING '{' MultipleShape '}'
     {
       std::vector<std::pair<int, int> > inDimTags, outDimTags;
@@ -2450,7 +2470,7 @@ Transform :
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "Intersect line not available with OpenCASCADE");
+        yymsg(0, "Intersect line not available with OpenCASCADE geometry kernel");
       }
       else{
         std::vector<int> in, out; ListOfDouble2Vector($4, in);
@@ -2472,7 +2492,7 @@ Transform :
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "Split Line not available with OpenCASCADE");
+        yymsg(0, "Split Line not available with OpenCASCADE geometry kernel");
       }
       else{
         std::vector<int> vertices, curves; ListOfDouble2Vector($7, vertices);
@@ -2519,6 +2539,7 @@ ListOfShapes :
         }
         List_Add($$, &s);
       }
+      List_Delete($4);
     }
   | ListOfShapes tPhysical GeoEntity '{' RecursiveListOfDouble '}' tEND
     {
@@ -2537,6 +2558,8 @@ ListOfShapes :
         }
         List_Add($$, &s);
       }
+      List_Delete(tmp);
+      List_Delete($5);
     }
   | ListOfShapes tParent GeoEntity '{' RecursiveListOfDouble '}' tEND
     {
@@ -2555,6 +2578,8 @@ ListOfShapes :
         }
         List_Add($$, &s);
       }
+      List_Delete(tmp);
+      List_Delete($5);
     }
   | ListOfShapes GeoEntity '{' tDOTS '}' tEND
     {
@@ -2573,6 +2598,7 @@ ListOfShapes :
         }
         List_Add($$, &s);
       }
+      List_Delete(tmp);
     }
   | ListOfShapes tPhysical GeoEntity '{' tDOTS '}' tEND
     {
@@ -2593,6 +2619,8 @@ ListOfShapes :
         }
         List_Add($$, &s);
       }
+      List_Delete(tmp);
+      List_Delete(tmp2);
     }
 ;
 

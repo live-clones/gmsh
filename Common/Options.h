@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
@@ -161,6 +161,7 @@ double opt_general_polygon_offset_always(OPT_ARGS_NUM);
 double opt_general_polygon_offset_factor(OPT_ARGS_NUM);
 double opt_general_polygon_offset_units(OPT_ARGS_NUM);
 double opt_general_system_menu_bar(OPT_ARGS_NUM);
+double opt_general_show_module_menu(OPT_ARGS_NUM);
 double opt_general_meshdiscrete(OPT_ARGS_NUM);
 double opt_general_message_size(OPT_ARGS_NUM);
 double opt_general_message_fontsize(OPT_ARGS_NUM);
@@ -420,7 +421,6 @@ double opt_mesh_label_sampling(OPT_ARGS_NUM);
 double opt_mesh_optimize(OPT_ARGS_NUM);
 double opt_mesh_optimize_threshold(OPT_ARGS_NUM);
 double opt_mesh_optimize_netgen(OPT_ARGS_NUM);
-double opt_mesh_old_refinement(OPT_ARGS_NUM);
 double opt_mesh_refine_steps(OPT_ARGS_NUM);
 double opt_mesh_normals(OPT_ARGS_NUM);
 double opt_mesh_num_sub_edges(OPT_ARGS_NUM);
@@ -495,6 +495,7 @@ double opt_mesh_partition_create_ghost_cells(OPT_ARGS_NUM);
 double opt_mesh_partition_old_style_msh2(OPT_ARGS_NUM);
 double opt_mesh_binary(OPT_ARGS_NUM);
 double opt_mesh_smooth_cross_field(OPT_ARGS_NUM);
+double opt_mesh_cross_field_closest_point(OPT_ARGS_NUM);
 double opt_mesh_bdf_field_format(OPT_ARGS_NUM);
 double opt_mesh_boundary_layer_fan_points(OPT_ARGS_NUM);
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM);
@@ -502,13 +503,11 @@ double opt_mesh_algo2d(OPT_ARGS_NUM);
 double opt_mesh_algo3d(OPT_ARGS_NUM);
 double opt_mesh_algo_recombine(OPT_ARGS_NUM);
 double opt_mesh_recombine_all(OPT_ARGS_NUM);
+double opt_mesh_recombine_optimize_topology(OPT_ARGS_NUM);
 double opt_mesh_recombine3d_all(OPT_ARGS_NUM);
 double opt_mesh_recombine3d_level(OPT_ARGS_NUM);
 double opt_mesh_recombine3d_conformity(OPT_ARGS_NUM);
 double opt_mesh_flexible_transfinite(OPT_ARGS_NUM);
-double opt_mesh_do_recombination_test(OPT_ARGS_NUM);
-double opt_mesh_recombination_test_start(OPT_ARGS_NUM);
-double opt_mesh_recombination_no_greedy_strat(OPT_ARGS_NUM);
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM);
 double opt_mesh_mesh_only_visible(OPT_ARGS_NUM);
 double opt_mesh_min_circ_points(OPT_ARGS_NUM);
@@ -516,6 +515,7 @@ double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM);
 double opt_mesh_min_curv_points(OPT_ARGS_NUM);
 double opt_mesh_order(OPT_ARGS_NUM);
 double opt_mesh_ho_optimize(OPT_ARGS_NUM);
+double opt_mesh_ho_periodic(OPT_ARGS_NUM);
 double opt_mesh_ho_nlayers(OPT_ARGS_NUM);
 double opt_mesh_ho_threshold_min(OPT_ARGS_NUM);
 double opt_mesh_ho_threshold_max(OPT_ARGS_NUM);
@@ -554,6 +554,7 @@ double opt_mesh_max_num_threads_2d(OPT_ARGS_NUM);
 double opt_mesh_max_num_threads_3d(OPT_ARGS_NUM);
 double opt_mesh_angle_tolerance_facet_overlap(OPT_ARGS_NUM);
 double opt_mesh_renumber(OPT_ARGS_NUM);
+double opt_mesh_unv_strict_format(OPT_ARGS_NUM);
 double opt_solver_listen(OPT_ARGS_NUM);
 double opt_solver_timeout(OPT_ARGS_NUM);
 double opt_solver_plugins(OPT_ARGS_NUM);

@@ -31,11 +31,11 @@ done
 
 ios=ios
 iphoneos=iphoneos
-iphoneos_version=iphoneos-version
+iphoneos_version_min=-miphoneos-version-min=8.0
 if [ $enable_simulator != 0 ]; then
   ios=iossimulator
   iphoneos=iphonesimulator
-  iphoneos_version=ios-simulator-version
+  iphoneos_version_min=
 fi
 
 gmsh_git="${HOME}/src/gmsh/"
@@ -79,7 +79,7 @@ mkdir -p $gmsh_git/build_${ios}
 cd $gmsh_git/build_${ios}
 cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_KBIPACK=1 -DENABLE_GMP=0 -DENABLE_ZIPPER=1 -DENABLE_OCC=$enable_occ -DOCC_LIBS="$occt_framework/occt" -DOCC_INC="$occt_framework/Headers/" ..
 check
-$build_cmd OTHER_CFLAGS="-m${iphoneos_version}-min=8.0 -fembed-bitcode" OTHER_CPLUSPLUSFLAGS="-m${iphoneos_version}-min=8.0 -fembed-bitcode -std=c++11"
+$build_cmd OTHER_CFLAGS="${iphoneos_version_min} -fembed-bitcode" OTHER_CPLUSPLUSFLAGS="${iphoneos_version_min} -fembed-bitcode -std=c++11"
 check
 $headers_cmd
 mkdir -p $gmsh_framework/Headers
@@ -94,7 +94,7 @@ mkdir -p $getdp_git/build_${ios}
 cd $getdp_git/build_${ios}
 PETSC_DIR= PETSC_ARCH= SLEPC_DIR= cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_GMSH=1 -DENABLE_KERNEL=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_framework/Headers/" -DPETSC_LIBS="$petsc_framework/petsc" -DENABLE_SLEPC=1 -DSLEPC_INC="$slepc_framework/Headers/" -DSLEPC_LIB="$slepc_framework/slepc" -DGMSH_INC="$gmsh_framework/Headers/" -DGMSH_LIB="$gmsh_framework/gmsh" ..
 check
-$build_cmd OTHER_CFLAGS="-m${iphoneos_version}-min=8.0 -fembed-bitcode" OTHER_CPLUSPLUSFLAGS="-m${iphoneos_version}-min=8.0 -fembed-bitcode"
+$build_cmd OTHER_CFLAGS="${iphoneos_version_min} -fembed-bitcode" OTHER_CPLUSPLUSFLAGS="${iphoneos_version_min} -fembed-bitcode"
 check
 $headers_cmd
 mkdir -p $getdp_framework/Headers

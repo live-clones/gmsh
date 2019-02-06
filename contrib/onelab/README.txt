@@ -1,4 +1,4 @@
-// ONELAB - Copyright (C) 2011-2018 Universite de Liege - Universite catholique
+// ONELAB - Copyright (C) 2011-2019 Universite de Liege - Universite catholique
 // de Louvain
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy

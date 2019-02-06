@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -48,7 +48,9 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   setup();
   if(model()->getOCCInternals()) model()->getOCCInternals()->bind(s, num);
 
-  //if(tag() == 11) writeBREP("s11.brep");
+  if(CTX::instance()->debugSurface > 0 &&
+     tag() == CTX::instance()->debugSurface) 
+    writeBREP("debugSurface.brep");
 }
 
 OCCFace::~OCCFace()

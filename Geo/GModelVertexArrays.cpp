@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <cmath>
 #include "GmshMessage.h"
@@ -190,6 +190,9 @@ template <class T>
 static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
                                 bool edges, bool faces)
 {
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
   for(unsigned int i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
 
@@ -222,7 +225,12 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
           for(int k = 0; k < 2; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
                                      n[k][2]);
-        e->va_lines->add(x, y, z, n, col, ele, unique);
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+        {
+          e->va_lines->add(x, y, z, n, col, ele, unique);
+        }
       }
     }
 
@@ -244,7 +252,12 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
           for(int k = 0; k < 3; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
                                      n[k][2]);
-        e->va_triangles->add(x, y, z, n, col, ele, unique, skin);
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+        {
+          e->va_triangles->add(x, y, z, n, col, ele, unique, skin);
+        }
       }
     }
   }
@@ -329,8 +342,8 @@ public:
     if(edg || fac) {
       _curved = (areSomeElementsCurved(f->triangles) ||
                  areSomeElementsCurved(f->quadrangles));
-      f->va_lines = new VertexArray(2, _estimateNumLines(f));
-      f->va_triangles = new VertexArray(3, _estimateNumTriangles(f));
+      f->va_lines = new VertexArray(2, edg ? _estimateNumLines(f) : 100);
+      f->va_triangles = new VertexArray(3, fac ? _estimateNumTriangles(f) : 100);
       if(CTX::instance()->mesh.triangles)
         addElementsInArrays(f, f->triangles, edg, fac);
       if(CTX::instance()->mesh.quadrangles)
@@ -347,11 +360,18 @@ private:
   bool _curved;
   int _estimateIfClipped(int num)
   {
-    if(CTX::instance()->clipWholeElements &&
-       CTX::instance()->clipOnlyDrawIntersectingVolume) {
+    if(CTX::instance()->clipWholeElements) {
       for(int clip = 0; clip < 6; clip++) {
-        if(CTX::instance()->mesh.clip & (1 << clip))
-          return (int)sqrt((double)num);
+        if(CTX::instance()->mesh.clip & (1 << clip)){
+          if(CTX::instance()->clipOnlyDrawIntersectingVolume){
+            // let be more aggressive than num^{2/3}
+            return (int)sqrt((double)num);
+          }
+          else{
+            // why not :-)
+            return num / 4;
+          }
+        }
       }
     }
     return num;
@@ -413,8 +433,8 @@ public:
                  areSomeElementsCurved(r->prisms) ||
                  areSomeElementsCurved(r->pyramids) ||
                  areSomeElementsCurved(r->trihedra));
-      r->va_lines = new VertexArray(2, _estimateNumLines(r));
-      r->va_triangles = new VertexArray(3, _estimateNumTriangles(r));
+      r->va_lines = new VertexArray(2, edg ? _estimateNumLines(r) : 100);
+      r->va_triangles = new VertexArray(3, fac ? _estimateNumTriangles(r) : 100);
       if(CTX::instance()->mesh.tetrahedra)
         addElementsInArrays(r, r->tetrahedra, edg, fac);
       if(CTX::instance()->mesh.hexahedra)

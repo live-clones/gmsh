@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _EIGEN_SOLVER_H_
 #define _EIGEN_SOLVER_H_
@@ -22,7 +22,7 @@ private:
   bool _hermitian;
   std::vector<std::complex<double> > _eigenValues;
   std::vector<std::vector<std::complex<double> > > _eigenVectors;
-  void _try(int ierr) const;
+  void _check(int ierr) const;
 
 public:
   eigenSolver(dofManager<double> *manager, std::string A, std::string B = "",

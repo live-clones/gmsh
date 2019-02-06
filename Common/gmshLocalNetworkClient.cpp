@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #if !defined(HAVE_NO_STDINT_H)
@@ -51,9 +51,9 @@ public:
   }
   int NonBlockingWait(double waitint, double timeout, int socket)
   {
-    double start = GetTimeInSeconds();
+    double start = TimeOfDay();
     while(1) {
-      if(timeout > 0 && GetTimeInSeconds() - start > timeout)
+      if(timeout > 0 && TimeOfDay() - start > timeout)
         return 2; // timeout
       if(_client->getPid() < 0 ||
          (_client->getExecutable().empty() && !CTX::instance()->solver.listen))
@@ -216,7 +216,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
   // receive a message on the associated GmshServer; 'master' is only used when
   // creating subclients with GMSH_CONNECT.
 
-  double timer = GetTimeInSeconds();
+  double timer = TimeOfDay();
 
   if(!getGmshServer()) {
     Msg::Error("Abnormal server termination (no valid server)");
@@ -441,7 +441,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     break;
   case GmshSocket::GMSH_SPEED_TEST:
     Msg::Info("got %d Mb message in %g seconds", length / 1024 / 1024,
-              GetTimeInSeconds() - timer);
+              TimeOfDay() - timer);
     break;
   case GmshSocket::GMSH_VERTEX_ARRAY: {
     int n = PView::list.size();

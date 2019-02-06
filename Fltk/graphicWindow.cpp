@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #include "GmshDefines.h"
@@ -43,7 +43,6 @@ typedef unsigned long intptr_t;
 #include "fileDialogs.h"
 #include "extraDialogs.h"
 #include "partitionDialog.h"
-#include "projectionEditor.h"
 #include "classificationEditor.h"
 #include "GModel.h"
 #include "PView.h"
@@ -2156,7 +2155,7 @@ static void mesh_partition_cb(Fl_Widget *w, void *data)
 
 static void mesh_unpartition_cb(Fl_Widget *w, void *data)
 {
-  int ier = GModel::current()->deleteMeshPartitions();
+  int ier = GModel::current()->unpartitionMesh();
 
   // Update the screen
   if(!ier) {
@@ -2785,8 +2784,12 @@ void quick_access_cb(Fl_Widget *w, void *data)
     file_window_cb(0, (void*)"split_u");
   }
   else if(what == "axes"){
-    opt_general_axes(0, GMSH_SET|GMSH_GUI,
-                     opt_general_axes(0, GMSH_GET, 0) ? 0 : 3);
+    int old = opt_general_axes(0, GMSH_GET, 0);
+    opt_general_axes(0, GMSH_SET|GMSH_GUI, old ? 0 : 3);
+    if(!old){
+      opt_general_axes_auto_position(0, GMSH_SET|GMSH_GUI, 0);
+      general_options_axes_fit_cb(0, 0);
+    }
   }
   else if(what == "orthographic")
     opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 1);
@@ -3226,15 +3229,15 @@ static void status_play_cb(Fl_Widget *w, void *data)
   static double anim_time;
   getGraphicWindow(w)->setAnimButtons(0);
   stop_anim = 0;
-  anim_time = GetTimeInSeconds();
+  anim_time = TimeOfDay();
   while(1) {
     if(stop_anim)
       break;
-    if(GetTimeInSeconds() - anim_time > CTX::instance()->post.animDelay) {
-      anim_time = GetTimeInSeconds();
+    if(TimeOfDay() - anim_time > CTX::instance()->post.animDelay) {
+      anim_time = TimeOfDay();
       status_play_manual(!CTX::instance()->post.animCycle, CTX::instance()->post.animStep);
     }
-    FlGui::instance()->check();
+    FlGui::check();
   }
 }
 
@@ -3292,7 +3295,7 @@ void show_hide_message_cb(Fl_Widget *w, void *data)
   graphicWindow *g = getGraphicWindow
     (FlGui::instance()->getCurrentOpenglWindow()->parent());
   g->showHideMessages();
-  FlGui::instance()->check();
+  FlGui::check();
 }
 
 void show_hide_menu_cb(Fl_Widget *w, void *data)
@@ -3300,7 +3303,7 @@ void show_hide_menu_cb(Fl_Widget *w, void *data)
   graphicWindow *g = getGraphicWindow
     (FlGui::instance()->getCurrentOpenglWindow()->parent());
   g->showHideMenu();
-  FlGui::instance()->check();
+  FlGui::check();
 }
 
 void attach_detach_menu_cb(Fl_Widget *w, void *data)
@@ -3308,7 +3311,7 @@ void attach_detach_menu_cb(Fl_Widget *w, void *data)
   graphicWindow *g = getGraphicWindow
     (FlGui::instance()->getCurrentOpenglWindow()->parent());
   g->attachDetachMenu();
-  FlGui::instance()->check();
+  FlGui::check();
 }
 
 static void message_menu_autoscroll_cb(Fl_Widget *w, void *data)
@@ -3626,7 +3629,10 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _label = new mainWindowProgress(x, mh + glheight + mheight + 2, width - x - 2, sht);
   _label->box(FL_FLAT_BOX);
   _label->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-  _label->color(FL_BACKGROUND_COLOR, FL_DARK2);
+  if(CTX::instance()->guiColorScheme)
+    _label->color(FL_BACKGROUND_COLOR, FL_LIGHT3);
+  else
+    _label->color(FL_BACKGROUND_COLOR, FL_DARK2);
 
   _win->position(CTX::instance()->glPosition[0], CTX::instance()->glPosition[1]);
   _win->end();
@@ -4301,10 +4307,6 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_recombine_cb} ,
   {"0Modules/Mesh/Reclassify 2D",
    (Fl_Callback *)mesh_classify_cb} ,
-#if defined(HAVE_FOURIER_MODEL)
-  {"0Modules/Mesh/Reparameterize 2D",
-   (Fl_Callback *)mesh_parameterize_cb} ,
-#endif
   {"0Modules/Mesh/Delete/Elements",
    (Fl_Callback *)mesh_delete_parts_cb, (void*)"elements"} ,
   {"0Modules/Mesh/Delete/Curves",

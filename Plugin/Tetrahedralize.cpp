@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <vector>
 #include "GmshConfig.h"
@@ -91,17 +91,22 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
   }
 
   std::vector<MTetrahedron *> tets;
-  delaunayMeshIn3D(points, tets);
+  delaunayMeshIn3D(points, tets); // adds 8 enclosing box vertices
 
   // create output
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
   for(unsigned int i = 0; i < tets.size(); i++) {
+    bool ok = true;
     PointData *p[4];
-    p[0] = (PointData *)tets[i]->getVertex(0);
-    p[1] = (PointData *)tets[i]->getVertex(1);
-    p[2] = (PointData *)tets[i]->getVertex(2);
-    p[3] = (PointData *)tets[i]->getVertex(3);
+    for(int j = 0; j < 4; j++){
+      p[j] = dynamic_cast<PointData*>(tets[i]->getVertex(j));
+      if(!p[j]){ // tet connected to enclosing box
+        ok = false;
+        break;
+      }
+    }
+    if(!ok) continue;
     int numComp = 0;
     std::vector<double> *vec = 0;
     if((int)p[0]->val.size() == 9 * numSteps &&
@@ -129,7 +134,7 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
       vec = &data2->SS;
     }
     else {
-      Msg::Warning("Bad data in tetrahedralization");
+      Msg::Warning("Skipping unknown type of data");
       continue;
     }
     for(int nod = 0; nod < 4; nod++) vec->push_back(p[nod]->x());

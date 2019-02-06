@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _MVERTEX_H_
 #define _MVERTEX_H_
@@ -109,7 +109,8 @@ public:
                  double scalingFactor = 1.0);
   void writePLY2(FILE *fp);
   void writeVRML(FILE *fp, double scalingFactor = 1.0);
-  void writeUNV(FILE *fp, double scalingFactor = 1.0);
+  void writeUNV(FILE *fp, bool officialExponentFormat,
+                double scalingFactor = 1.0);
   void writeVTK(FILE *fp, bool binary = false, double scalingFactor = 1.0,
                 bool bigEndian = false);
   void writeMATLAB(FILE *fp, int type, bool binary, double scalingFactor = 1.0);

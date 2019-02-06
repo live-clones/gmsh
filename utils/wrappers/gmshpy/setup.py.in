@@ -1,0 +1,17 @@
+from distutils.core import setup, Extension
+gmshroot = "../.."
+gmshmodules = [${GMSH_PYTHON_MODULES}]
+setup(
+  name = 'gmshpy',
+  packages = ['gmshpy'],
+  package_dir = {'gmshpy' : 'src'},
+  ext_modules = [
+    Extension('gmshpy._' + module, ['src/' + module + 'PYTHON_wrap.cxx'],
+      include_dirs = [gmshroot + '/include/gmsh/'],
+      define_macros=[('SWIG', '1')],
+      libraries = ['Gmsh'],
+      library_dirs = [gmshroot + '/lib/']
+      )
+    for module in gmshmodules],
+  py_modules = [ "gmshpy." + module for module in gmshmodules ]
+)

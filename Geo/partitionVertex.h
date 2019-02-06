@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _PARTITION_VERTEX_H_
 #define _PARTITION_VERTEX_H_
@@ -25,7 +25,7 @@ public:
   {
   }
   virtual ~partitionVertex() {}
-  virtual GeomType geomType() const { return PartitionVertex; }
+  virtual GeomType geomType() const { return PartitionPoint; }
   virtual void setParentEntity(GEntity *v) { _parentEntity = v; }
   virtual GEntity *getParentEntity() { return _parentEntity; }
   virtual void setPartitions(std::vector<unsigned int> &partitions)

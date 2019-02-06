@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // CGNSOptions.h - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
 
@@ -28,6 +28,7 @@ public:
                     // 2 - elements
   int vectorDim; // Number of dimensions in a vector
                  // (only relevant for a 2D mesh)
+  bool structuredMesh; // = 1 if structured mesh, = 0 if un-structured mesh
   bool writeBC;
   bool writeUserDef; // T - write user-defined elements for
                      //     element types unsupported by CGNS
@@ -44,6 +45,7 @@ public:
     bocoLocation = 0;
     normalSource = 1;
     vectorDim = 2;
+    structuredMesh = 0;
     writeBC = true;
     writeUserDef = false;
   }
