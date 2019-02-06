@@ -57,6 +57,7 @@
 #define FORMAT_KEY          51
 
 // Element types
+#define MSH_TYPE_NUM 13
 #define TYPE_PNT     1
 #define TYPE_LIN     2
 #define TYPE_TRI     3
