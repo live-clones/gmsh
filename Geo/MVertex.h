@@ -109,7 +109,8 @@ public:
                  double scalingFactor = 1.0);
   void writePLY2(FILE *fp);
   void writeVRML(FILE *fp, double scalingFactor = 1.0);
-  void writeUNV(FILE *fp, double scalingFactor = 1.0);
+  void writeUNV(FILE *fp, bool officialExponentFormat,
+                double scalingFactor = 1.0);
   void writeVTK(FILE *fp, bool binary = false, double scalingFactor = 1.0,
                 bool bigEndian = false);
   void writeMATLAB(FILE *fp, int type, bool binary, double scalingFactor = 1.0);

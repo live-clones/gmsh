@@ -6534,11 +6534,19 @@ double opt_mesh_max_num_threads_3d(OPT_ARGS_NUM)
 double opt_mesh_angle_tolerance_facet_overlap(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
-    if(!(action & GMSH_SET_DEFAULT) && val != CTX::instance()->mesh.angleToleranceFacetOverlap)
+    if(!(action & GMSH_SET_DEFAULT) &&
+       val != CTX::instance()->mesh.angleToleranceFacetOverlap)
       Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.angleToleranceFacetOverlap = val;
   }
   return CTX::instance()->mesh.angleToleranceFacetOverlap;
+}
+
+double opt_mesh_unv_strict_format(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.unvStrictFormat = (int)val;
+  return CTX::instance()->mesh.unvStrictFormat;
 }
 
 double opt_solver_listen(OPT_ARGS_NUM)

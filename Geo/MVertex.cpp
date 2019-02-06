@@ -258,7 +258,7 @@ void MVertex::writeVRML(FILE *fp, double scalingFactor)
           z() * scalingFactor);
 }
 
-void MVertex::writeUNV(FILE *fp, double scalingFactor)
+void MVertex::writeUNV(FILE *fp, bool officialExponentFormat, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
@@ -267,13 +267,20 @@ void MVertex::writeUNV(FILE *fp, double scalingFactor)
   int color = 11;
   fprintf(fp, "%10d%10d%10d%10d\n", _index, coord_sys, displacement_coord_sys,
           color);
-  // hack to print the numbers with "D+XX" exponents
-  char tmp[128];
-  sprintf(tmp, "%25.16E%25.16E%25.16E\n", x() * scalingFactor,
-          y() * scalingFactor, z() * scalingFactor);
-  for(unsigned int i = 0; i < strlen(tmp); i++)
-    if(tmp[i] == 'E') tmp[i] = 'D';
-  fprintf(fp, "%s", tmp);
+
+  if(officialExponentFormat){
+    // hack to print the numbers with "D+XX" exponents
+    char tmp[128];
+    sprintf(tmp, "%25.16E%25.16E%25.16E\n", x() * scalingFactor,
+            y() * scalingFactor, z() * scalingFactor);
+    for(unsigned int i = 0; i < strlen(tmp); i++)
+      if(tmp[i] == 'E') tmp[i] = 'D';
+    fprintf(fp, "%s", tmp);
+  }
+  else{
+    fprintf(fp, "%25.16E%25.16E%25.16E\n", x() * scalingFactor,
+            y() * scalingFactor, z() * scalingFactor);
+  }
 }
 
 void MVertex::writeVTK(FILE *fp, bool binary, double scalingFactor,
