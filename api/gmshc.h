@@ -797,6 +797,14 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality,
                                             const int tag,
                                             int * ierr);
 
+/* Classify ("color") the surface mesh based on the angle threshold `angle'
+ * (in radians), and create discrete curves accordingly. If `boundary' is set,
+ * also create discrete curves on the boundary if the surface is open.
+ * Warning: this is an experimental feature. */
+GMSH_API void gmshModelMeshClassifySurfaces(const double angle,
+                                            const int boundary,
+                                            int * ierr);
+
 /* Create a boundary representation from the mesh if the model does not have
  * one (e.g. when imported from mesh file formats with no BRep representation
  * of the underlying model). Warning: this is an experimental feature. */

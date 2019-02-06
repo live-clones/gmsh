@@ -1805,6 +1805,23 @@ function splitQuadrangles(quality = 1., tag = -1)
 end
 
 """
+    gmsh.model.mesh.classifySurfaces(angle, boundary = true)
+
+Classify ("color") the surface mesh based on the angle threshold `angle` (in
+radians), and create discrete curves accordingly. If `boundary` is set, also
+create discrete curves on the boundary if the surface is open. Warning: this is
+an experimental feature.
+"""
+function classifySurfaces(angle, boundary = true)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshClassifySurfaces, gmsh.lib), Nothing,
+          (Cdouble, Cint, Ptr{Cint}),
+          angle, boundary, ierr)
+    ierr[] != 0 && error("gmshModelMeshClassifySurfaces returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.mesh.createTopology()
 
 Create a boundary representation from the mesh if the model does not have one

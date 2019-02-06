@@ -1235,6 +1235,17 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality, const int tag,
   }
 }
 
+GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int boundary, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::classifySurfaces(angle, boundary);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshCreateTopology(int * ierr)
 {
   if(ierr) *ierr = 0;

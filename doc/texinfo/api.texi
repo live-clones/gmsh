@@ -1320,6 +1320,21 @@ surfaces.
 -
 @end table
 
+@item classifySurfaces
+Classify ("color") the surface mesh based on the angle threshold @code{angle}
+(in radians), and create discrete curves accordingly. If @code{boundary} is set,
+also create discrete curves on the boundary if the surface is open. Warning:
+this is an experimental feature.
+
+@table @asis
+@item Input:
+@code{angle}, @code{boundary}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item createTopology
 Create a boundary representation from the mesh if the model does not have one
 (e.g. when imported from mesh file formats with no BRep representation of the

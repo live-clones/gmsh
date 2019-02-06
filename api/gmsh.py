@@ -2114,6 +2114,24 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def classifySurfaces(angle, boundary=True):
+            """
+            Classify ("color") the surface mesh based on the angle threshold `angle'
+            (in radians), and create discrete curves accordingly. If `boundary' is set,
+            also create discrete curves on the boundary if the surface is open.
+            Warning: this is an experimental feature.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshClassifySurfaces(
+                c_double(angle),
+                c_int(bool(boundary)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshClassifySurfaces returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def createTopology():
             """
             Create a boundary representation from the mesh if the model does not have

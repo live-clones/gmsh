@@ -2564,6 +2564,15 @@ GMSH_API void gmsh::model::mesh::removeDuplicateNodes()
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
+GMSH_API void gmsh::model::mesh::classifySurfaces(const double angle,
+                                                  const bool boundary)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  GModel::current()->classifyAllFaces(angle, boundary);
+}
+
 GMSH_API void gmsh::model::mesh::createTopology()
 {
   if(!_isInitialized()) {
