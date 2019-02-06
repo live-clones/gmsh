@@ -3053,10 +3053,9 @@ GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
     return it->second;
 }
 
-#if defined(HAVE_MESH)
-
 void GModel::classifyAllFaces(double angleThreshold, bool includeBoundary)
 {
+#if defined(HAVE_MESH)
   std::set<GFace *> faces;
   std::vector<MElement *> elements;
   for(GModel::fiter it = this->firstFace(); it != this->lastFace(); ++it) {
@@ -3095,8 +3094,12 @@ void GModel::classifyAllFaces(double angleThreshold, bool includeBoundary)
   elements.clear();
   edges_detected.clear();
   edges_lonely.clear();
+#else
+  Msg::Error("Surface classification requires the mesh module");
+#endif
 }
 
+#if defined(HAVE_MESH)
 void recurClassifyEdges(MTri3 *t, std::map<MTriangle *, GFace *> &reverse,
                         std::map<MLine *, GEdge *, compareMLinePtr> &lines,
                         std::set<MLine *> &touched,
