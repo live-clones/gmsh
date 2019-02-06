@@ -3611,11 +3611,11 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
         int cgIndexConn(0);
         int interfaceEdge(0);
         int interfaceWritten(0);
-        int *Point_Range = NULL;
-        int *Point_Donor_Range = NULL;
+        cgsize_t *Point_Range = NULL;
+        cgsize_t *Point_Donor_Range = NULL;
         int *Transform = NULL;
-        Point_Range = new int[4];
-        Point_Donor_Range = new int[4];
+        Point_Range = new cgsize_t[4];
+        Point_Donor_Range = new cgsize_t[4];
         Transform = new int[2];
 
         for(unsigned int iBc = 0; iBc < 4; ++iBc) {
@@ -4000,11 +4000,11 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
         int cgIndexConn(0);
         int interfaceFace(0);
         int interfaceFaceWritten(0);
-        int *Point_Range = NULL;
-        int *Point_Donor_Range = NULL;
+        cgsize_t *Point_Range = NULL;
+        cgsize_t *Point_Donor_Range = NULL;
         int *Transform = NULL;
-        Point_Range = new int[6];
-        Point_Donor_Range = new int[6];
+        Point_Range = new cgsize_t[6];
+        Point_Donor_Range = new cgsize_t[6];
         Transform = new int[3];
 
         for(unsigned int iBc = 0; iBc < 6; ++iBc) {
