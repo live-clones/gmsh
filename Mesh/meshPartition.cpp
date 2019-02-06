@@ -17,6 +17,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+#include "ElementType.h"
 
 // TODO C++11 remove this nasty stuff
 #if __cplusplus >= 201103L
@@ -703,7 +704,7 @@ static int PartitionGraph(Graph &graph)
     switch(metisError) {
     case METIS_OK: break;
     case METIS_ERROR_INPUT: Msg::Error("METIS input error"); return 1;
-    case METIS_ERROR_MEMORY: Msg::Error("METIS memoty error"); return 1;
+    case METIS_ERROR_MEMORY: Msg::Error("METIS memory error"); return 1;
     case METIS_ERROR:
     default: Msg::Error("METIS error"); return 1;
     }
@@ -2246,6 +2247,11 @@ int PartitionMesh(GModel *const model)
   graph.nparts(CTX::instance()->mesh.numPartitions);
   if(PartitionGraph(graph)) return 1;
 
+  std::vector<int> eltCount[MSH_TYPE_NUM];
+  for (int i=0;i<MSH_TYPE_NUM;i++) {
+    eltCount[i].resize(CTX::instance()->mesh.numPartitions,0);
+  }
+
   // Assign partitions to elements
   hashmap<MElement *, unsigned int> elmToPartition;
   for(unsigned int i = 0; i < graph.ne(); i++) {
@@ -2255,6 +2261,7 @@ int PartitionMesh(GModel *const model)
           graph.element(i), graph.partition(i) + 1));
         // Should be removed
         graph.element(i)->setPartition(graph.partition(i) + 1);
+        eltCount[graph.element(i)->getType()][graph.partition(i)]++;
       }
       else {
         elmToPartition.insert(
@@ -2265,13 +2272,35 @@ int PartitionMesh(GModel *const model)
     }
   }
   model->setNumPartitions(graph.nparts());
-
+  
   CreateNewEntities(model, elmToPartition);
   elmToPartition.clear();
-
+  
   double t2 = Cpu();
   Msg::StatusBar(true, "Done partitioning mesh (%g s)", t2 - t1);
+  
+  // ** KH -- statistics
 
+  for (int it=0;it<MSH_TYPE_NUM;it++) {
+    std::vector<int>& count = eltCount[it];
+    int minCount = std::numeric_limits<int>::max();
+    int maxCount = 0;
+    int totCount = 0;
+    for (int ip=0;ip<CTX::instance()->mesh.numPartitions;ip++) {
+      minCount = std::min(count[ip],minCount);
+      maxCount = std::max(count[ip],maxCount);
+      totCount += count[ip];
+    }
+    if (totCount > 0) {
+      Msg::StatusBar(true,"Repartition of %g %s: %g(min) %g(max) %g(avg)",
+                     ElementType::nameOfParentType(it).c_str(),totCount,
+                     minCount,maxCount,
+                     (double) totCount/CTX::instance()->mesh.numPartitions);
+    }
+  }
+
+  // --- finished
+  
   if(CTX::instance()->mesh.partitionCreateTopology) {
     Msg::StatusBar(true, "Creating partition topology...");
     std::vector<std::set<MElement *> > boundaryElements =
