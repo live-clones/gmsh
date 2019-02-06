@@ -422,6 +422,9 @@ public:
   // get the highest dimension of the GModel
   int getDim() const;
 
+  // get the highest dimension of the mesh in the GModel
+  int getMeshDim() const;
+
   // set the selection flag on all entities
   void setSelection(int val);
 
@@ -432,8 +435,8 @@ public:
   int getMeshStatus(bool countDiscrete = true);
 
   // return the total number of elements in the mesh
-  int getNumMeshElements(int dim = -1);
-  int getNumMeshParentElements();
+  int getNumMeshElements(int dim = -1) const;
+  int getNumMeshParentElements() const;
 
   // get the number of each type of element in the mesh at the largest
   // dimension and return the dimension
@@ -568,12 +571,9 @@ public:
   // fill the vertex arrays, given the current option and data
   bool fillVertexArrays();
 
-  // reclassify a mesh i.e. use an angle threshold to tag edges faces and
-  // regions
+  // reclassify a surface mesh, using an angle threshold to tag edges and faces
+  void classifyAllFaces(double angleThreshold, bool includeBoundary);
   void classifyFaces(std::set<GFace *> &_faces);
-
-  // classify a mesh for all faces on the current model
-  void classifyAllFaces();
 
   // build a new GModel by cutting the elements crossed by the levelset ls
   // if cutElem is set to false, split the model without cutting the elements

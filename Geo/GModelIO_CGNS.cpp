@@ -2414,8 +2414,8 @@ public:
 //    2D second-order elements
 //    1D first-order elements
 //    1D second-order elements
-//    MSH_NUM_TYPE+1 is used to place non-cgns elements last.
-static const int msh2cgns[MSH_NUM_TYPE][2] = {
+//    MSH_MAX_NUM+1 is used to place non-cgns elements last.
+static const int msh2cgns[MSH_MAX_NUM][2] = {
   {BAR_2, 16},
   {TRI_3, 11},
   {QUAD_4, 12},
@@ -2430,25 +2430,25 @@ static const int msh2cgns[MSH_NUM_TYPE][2] = {
   {HEXA_27, 10},
   {PENTA_18, 8},
   {PYRA_14, 6},
-  {-1, MSH_NUM_TYPE + 1}, // MSH_PNT (NODE in CGNS but not used herein)
+  {-1, MSH_MAX_NUM + 1}, // MSH_PNT (NODE in CGNS but not used herein)
   {QUAD_8, 14},
   {HEXA_20, 9},
   {PENTA_15, 7},
-  {-1, MSH_NUM_TYPE + 1}, // MSH_PYR_13
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TRI_9
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TRI_10
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TRI_12
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TRI_15
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TRI_15I
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TRI_21
-  {-1, MSH_NUM_TYPE + 1}, // MSH_LIN_4
-  {-1, MSH_NUM_TYPE + 1}, // MSH_LIN_5
-  {-1, MSH_NUM_TYPE + 1}, // MSH_LIN_6
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TET_20
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TET_35
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TET_56
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TET_22
-  {-1, MSH_NUM_TYPE + 1} // MSH_TET_28
+  {-1, MSH_MAX_NUM + 1}, // MSH_PYR_13
+  {-1, MSH_MAX_NUM + 1}, // MSH_TRI_9
+  {-1, MSH_MAX_NUM + 1}, // MSH_TRI_10
+  {-1, MSH_MAX_NUM + 1}, // MSH_TRI_12
+  {-1, MSH_MAX_NUM + 1}, // MSH_TRI_15
+  {-1, MSH_MAX_NUM + 1}, // MSH_TRI_15I
+  {-1, MSH_MAX_NUM + 1}, // MSH_TRI_21
+  {-1, MSH_MAX_NUM + 1}, // MSH_LIN_4
+  {-1, MSH_MAX_NUM + 1}, // MSH_LIN_5
+  {-1, MSH_MAX_NUM + 1}, // MSH_LIN_6
+  {-1, MSH_MAX_NUM + 1}, // MSH_TET_20
+  {-1, MSH_MAX_NUM + 1}, // MSH_TET_35
+  {-1, MSH_MAX_NUM + 1}, // MSH_TET_56
+  {-1, MSH_MAX_NUM + 1}, // MSH_TET_22
+  {-1, MSH_MAX_NUM + 1} // MSH_TET_28
 };
 
 // This functor allows for sorting of the element types according to the
@@ -2507,7 +2507,7 @@ static void translateElementMSH2CGNS(ElementConnectivity *const zoneElemConn)
   static const int trPYR14[14] = {0, 1, 2, 3, 4, 5, 8, 9, 6, 10, 7, 11, 12, 13};
 
   int tmp[maxVPE];
-  for(int iElemType = 0; iElemType != MSH_NUM_TYPE; ++iElemType) {
+  for(int iElemType = 0; iElemType != MSH_MAX_NUM; ++iElemType) {
     int numVPE;
     const int *tr;
     if(zoneElemConn[iElemType].numElem > 0) {
@@ -2780,7 +2780,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
 #ifdef CGNS_TEST1
           // Count all the sub-elements in a Triangle 10
           cgZoneSize[1] = 0;
-          for(int iElemType = 0; iElemType != MSH_NUM_TYPE; ++iElemType) {
+          for(int iElemType = 0; iElemType != MSH_MAX_NUM; ++iElemType) {
             switch(iElemType) {
             case MSH_TRI_10 - 1:
               cgZoneSize[1] +=
@@ -2848,10 +2848,10 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
 
           // Obtain indices sorted in the order the CGNS elements will be
           // written
-          int indexElemType[MSH_NUM_TYPE];
-          for(int i = 0; i != MSH_NUM_TYPE; ++i) indexElemType[i] = i;
+          int indexElemType[MSH_MAX_NUM];
+          for(int i = 0; i != MSH_MAX_NUM; ++i) indexElemType[i] = i;
           std::sort<int *, ElemSortCGNSType>(
-            indexElemType, indexElemType + MSH_NUM_TYPE,
+            indexElemType, indexElemType + MSH_MAX_NUM,
             ElemSortCGNSType(writeZone->zoneElemConn));
 
           // Write the element connectivity

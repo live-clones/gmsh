@@ -330,7 +330,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
                            nodeTags.empty() ? 0 : nodeTags[i]);
 
   // read elements (loop over all possible MSH element types)
-  for(int mshType = 0; mshType < MSH_NUM_TYPE; mshType++) {
+  for(int mshType = 0; mshType < MSH_MAX_NUM + 1; mshType++) {
     med_geometrie_element type = msh2medElementType(mshType);
     if(type == MED_NONE) continue;
 #if(MED_MAJOR_NUM >= 3)

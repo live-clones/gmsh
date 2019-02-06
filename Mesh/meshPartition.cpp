@@ -507,7 +507,7 @@ static int MakeGraph(GModel *const model, Graph &graph, int selectDim)
   if(selectDim < 0) {
     graph.ne(model->getNumMeshElements());
     graph.nn(model->getNumMeshVertices());
-    graph.dim(model->getDim());
+    graph.dim(model->getMeshDim());
     graph.elementResize(graph.ne());
     graph.vertexResize(model->getMaxVertexNumber());
     graph.eptrResize(graph.ne() + 1);
@@ -541,7 +541,7 @@ static int MakeGraph(GModel *const model, Graph &graph, int selectDim)
 
     graph.ne(tmp->getNumMeshElements());
     graph.nn(vertices.size());
-    graph.dim(tmp->getDim());
+    graph.dim(tmp->getMeshDim());
     graph.elementResize(graph.ne());
     graph.vertexResize(model->getMaxVertexNumber());
     graph.eptrResize(graph.ne() + 1);
@@ -950,7 +950,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
     Graph graph(model);
     graph.ne(model->getNumMeshElements(1));
     graph.nn(model->getNumMeshVertices(1));
-    graph.dim(model->getDim());
+    graph.dim(model->getMeshDim());
     graph.elementResize(graph.ne());
     graph.vertexResize(model->getMaxVertexNumber());
     graph.eptrResize(graph.ne() + 1);
@@ -1046,7 +1046,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
     Graph graph(model);
     graph.ne(model->getNumMeshElements(2));
     graph.nn(model->getNumMeshVertices(2));
-    graph.dim(model->getDim());
+    graph.dim(model->getMeshDim());
     graph.elementResize(graph.ne());
     graph.vertexResize(model->getMaxVertexNumber());
     graph.eptrResize(graph.ne() + 1);
@@ -1143,7 +1143,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
     Graph graph(model);
     graph.ne(model->getNumMeshElements(3));
     graph.nn(model->getNumMeshVertices(3));
-    graph.dim(model->getDim());
+    graph.dim(model->getMeshDim());
     graph.elementResize(graph.ne());
     graph.vertexResize(model->getMaxVertexNumber());
     graph.eptrResize(graph.ne() + 1);
@@ -1823,7 +1823,7 @@ static void CreatePartitionTopology(
   GModel *const model,
   const std::vector<std::set<MElement *> > &boundaryElements, Graph &meshGraph)
 {
-  const int meshDim = model->getDim();
+  const int meshDim = model->getMeshDim();
   hashmap<MElement *, GEntity *> elementToEntity;
   fillElementToEntity(model, elementToEntity, -1);
   assignNewEntityBRep(meshGraph, elementToEntity);
@@ -2247,9 +2247,9 @@ int PartitionMesh(GModel *const model)
   graph.nparts(CTX::instance()->mesh.numPartitions);
   if(PartitionGraph(graph)) return 1;
 
-  std::vector<int> eltCount[MSH_TYPE_NUM];
-  for (int i=0;i<MSH_TYPE_NUM;i++) {
-    eltCount[i].resize(CTX::instance()->mesh.numPartitions,0);
+  std::vector<int> elmCount[TYPE_MAX_NUM + 1];
+  for (int i = 0; i < TYPE_MAX_NUM + 1; i++) {
+    elmCount[i].resize(CTX::instance()->mesh.numPartitions, 0);
   }
 
   // Assign partitions to elements
@@ -2259,9 +2259,9 @@ int PartitionMesh(GModel *const model)
       if(graph.nparts() > 1) {
         elmToPartition.insert(std::pair<MElement *, unsigned int>(
           graph.element(i), graph.partition(i) + 1));
+        elmCount[graph.element(i)->getType()][graph.partition(i)]++;
         // Should be removed
         graph.element(i)->setPartition(graph.partition(i) + 1);
-        eltCount[graph.element(i)->getType()][graph.partition(i)]++;
       }
       else {
         elmToPartition.insert(
@@ -2272,35 +2272,31 @@ int PartitionMesh(GModel *const model)
     }
   }
   model->setNumPartitions(graph.nparts());
-  
+
   CreateNewEntities(model, elmToPartition);
   elmToPartition.clear();
-  
+
   double t2 = Cpu();
   Msg::StatusBar(true, "Done partitioning mesh (%g s)", t2 - t1);
-  
-  // ** KH -- statistics
 
-  for (int it=0;it<MSH_TYPE_NUM;it++) {
-    std::vector<int>& count = eltCount[it];
+  for(std::size_t i = 0; i < TYPE_MAX_NUM + 1; i++) {
+    std::vector<int> &count = elmCount[i];
     int minCount = std::numeric_limits<int>::max();
     int maxCount = 0;
     int totCount = 0;
-    for (int ip=0;ip<CTX::instance()->mesh.numPartitions;ip++) {
-      minCount = std::min(count[ip],minCount);
-      maxCount = std::max(count[ip],maxCount);
-      totCount += count[ip];
+    for (std::size_t j = 0; j < count.size(); j++) {
+      minCount = std::min(count[j], minCount);
+      maxCount = std::max(count[j], maxCount);
+      totCount += count[j];
     }
-    if (totCount > 0) {
-      Msg::StatusBar(true,"Repartition of %g %s: %g(min) %g(max) %g(avg)",
-                     ElementType::nameOfParentType(it).c_str(),totCount,
-                     minCount,maxCount,
-                     (double) totCount/CTX::instance()->mesh.numPartitions);
+    if(totCount > 0) {
+      Msg::Info(" - Repartition of %d %s(s): %d(min) %d(max) %g(avg)",
+                totCount, ElementType::nameOfParentType(i).c_str(),
+                minCount, maxCount,
+                totCount / (double)CTX::instance()->mesh.numPartitions);
     }
   }
 
-  // --- finished
-  
   if(CTX::instance()->mesh.partitionCreateTopology) {
     Msg::StatusBar(true, "Creating partition topology...");
     std::vector<std::set<MElement *> > boundaryElements =

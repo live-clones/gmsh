@@ -327,7 +327,7 @@ int GmshBatch()
     else if(CTX::instance()->batch == 5)
       RefineMesh(GModel::current(), CTX::instance()->mesh.secondOrderLinear);
     else if(CTX::instance()->batch == 6)
-      GModel::current()->classifyAllFaces();
+      GModel::current()->classifyAllFaces(0.7, true);
     else if(CTX::instance()->batch == 7)
       BarycentricRefineMesh(GModel::current());
 #endif

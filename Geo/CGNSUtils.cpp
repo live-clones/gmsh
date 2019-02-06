@@ -156,7 +156,7 @@ template <unsigned DIM> int MZone<DIM>::zoneData()
   //--Initialize the connectivity array for the various types of elements.  Note
   //--that 'iElemType' is MSH_TYPE-1.
 
-  for(int iElemType = 0; iElemType != MSH_NUM_TYPE; ++iElemType) {
+  for(int iElemType = 0; iElemType != MSH_MAX_NUM; ++iElemType) {
     if(zoneElemConn[iElemType].numElem > 0) {
       zoneElemConn[iElemType].connectivity.resize(
         zoneElemConn[iElemType].numElem * MElement::getInfoMSH(iElemType + 1));

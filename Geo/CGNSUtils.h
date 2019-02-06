@@ -725,7 +725,7 @@ public:
     boFaceMap.clear();
     boVertMap.clear();
     zoneVertVec.clear();
-    for(int i = 0; i != MSH_NUM_TYPE; ++i) {
+    for(int i = 0; i != MSH_MAX_NUM; ++i) {
       zoneElemConn[i].clear();
     }
     numBoVert = 0;
@@ -744,7 +744,7 @@ public:
   int totalElements() const
   {
     int numElem = 0;
-    for(int iElemType = 0; iElemType != MSH_NUM_TYPE; ++iElemType)
+    for(int iElemType = 0; iElemType != MSH_MAX_NUM; ++iElemType)
       numElem += zoneElemConn[iElemType].numElem;
     return numElem;
   }
@@ -754,7 +754,7 @@ public:
   int numElementTypes() const
   {
     int numElemType = 0;
-    for(int iElemType = 0; iElemType != MSH_NUM_TYPE; ++iElemType)
+    for(int iElemType = 0; iElemType != MSH_MAX_NUM; ++iElemType)
       if(zoneElemConn[iElemType].numElem > 0) ++numElemType;
     return numElemType;
   }
@@ -786,7 +786,7 @@ private:
 public:
   // I/O
   VertexVec zoneVertVec;
-  ElementConnectivity zoneElemConn[MSH_NUM_TYPE];
+  ElementConnectivity zoneElemConn[MSH_MAX_NUM];
   // Connectivity for each type of element
   int numBoVert;
 

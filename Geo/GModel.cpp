@@ -55,8 +55,6 @@
 #include "meshMetric.h"
 #include "meshGRegionMMG3D.h"
 #include "meshGFaceBamg.h"
-
-static const float EDGE_ANGLE_THRESHOLD = 0.698132;
 #endif
 
 #if defined(HAVE_KBIPACK)
@@ -819,6 +817,15 @@ int GModel::getDim() const
   return -1;
 }
 
+int GModel::getMeshDim() const
+{
+  if(getNumMeshElements(3)) return 3;
+  if(getNumMeshElements(2)) return 2;
+  if(getNumMeshElements(1)) return 1;
+  if(getNumMeshElements(0)) return 0;
+  return -1;
+}
+
 std::string GModel::getElementaryName(int dim, int number)
 {
   std::map<std::pair<int, int>, std::string>::iterator it =
@@ -1245,7 +1252,7 @@ int GModel::getNumMeshVertices(int dim) const
   return n;
 }
 
-int GModel::getNumMeshElements(int dim)
+int GModel::getNumMeshElements(int dim) const
 {
   std::vector<GEntity *> entities;
   getEntities(entities);
@@ -1256,7 +1263,7 @@ int GModel::getNumMeshElements(int dim)
   return n;
 }
 
-int GModel::getNumMeshParentElements()
+int GModel::getNumMeshParentElements() const
 {
   std::vector<GEntity *> entities;
   getEntities(entities);
@@ -3048,7 +3055,7 @@ GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
 
 #if defined(HAVE_MESH)
 
-void GModel::classifyAllFaces()
+void GModel::classifyAllFaces(double angleThreshold, bool includeBoundary)
 {
   std::set<GFace *> faces;
   std::vector<MElement *> elements;
@@ -3066,12 +3073,18 @@ void GModel::classifyAllFaces()
 
   e2t_cont adj;
   buildEdgeToElements(elements, adj);
-  std::vector<edge_angle> edges_detected, edges_lonly;
-  buildListOfEdgeAngle(adj, edges_detected, edges_lonly);
+  std::vector<edge_angle> edges_detected, edges_lonely;
+  buildListOfEdgeAngle(adj, edges_detected, edges_lonely);
   for(unsigned int i = 0; i < edges_detected.size(); i++) {
     edge_angle ea = edges_detected[i];
-    if(ea.angle <= EDGE_ANGLE_THRESHOLD) break;
+    if(ea.angle <= angleThreshold) break;
     edge->lines.push_back(new MLine(ea.v1, ea.v2));
+  }
+  if(includeBoundary){
+    for(unsigned int i = 0; i < edges_lonely.size(); i++) {
+      edge_angle ea = edges_lonely[i];
+      edge->lines.push_back(new MLine(ea.v1, ea.v2));
+    }
   }
 
   this->classifyFaces(faces);
@@ -3081,7 +3094,7 @@ void GModel::classifyAllFaces()
   delete edge;
   elements.clear();
   edges_detected.clear();
-  edges_lonly.clear();
+  edges_lonely.clear();
 }
 
 void recurClassifyEdges(MTri3 *t, std::map<MTriangle *, GFace *> &reverse,
@@ -3329,7 +3342,7 @@ void GModel::classifyFaces(std::set<GFace *> &_faces)
       it != newEdges.end(); ++it) {
     GEdge *ge = it->second;
     GModel::current()->remove(ge);
-    //    delete ge;
+    // delete ge;
   }
 
   it = tris.begin();
