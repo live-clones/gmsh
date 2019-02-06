@@ -661,6 +661,11 @@ Display mesh triangles?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.UnvStrictFormat
+Use strict format specification for UNV files, with 'D' for exponents (instead of 'E' as used by some tools)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.VolumeEdges
 Display edges of volume mesh?@*
 Default value: @code{1}@*

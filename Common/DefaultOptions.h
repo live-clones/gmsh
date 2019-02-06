@@ -1296,7 +1296,7 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "UnvStrictFormat" , opt_mesh_unv_strict_format , 1 ,
     "Use strict format specification for UNV files, with 'D' for exponents (instead of "
-    "the more commonly used 'E')" },
+    "'E' as used by some tools)" },
 
   { F|O, "VolumeEdges" , opt_mesh_volumes_edges , 1. ,
     "Display edges of volume mesh?" },
