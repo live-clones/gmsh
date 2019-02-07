@@ -289,7 +289,7 @@ static void _relocateVertexOfPyramid(MVertex *ver,
     double ZOPT = c.z() + relax * H * n.z();
     double FULL_MOVE_OBJ =
       objective_function(1.0, ver, XOPT, YOPT, ZOPT, lt, true);
-    //    printf("relax %g obj %g\n",relax,FULL_MOVE_OBJ);
+    // printf("relax %g obj %g\n",relax,FULL_MOVE_OBJ);
     if(FULL_MOVE_OBJ > 0.1) {
       ver->x() = XOPT;
       ver->y() = YOPT;
@@ -329,12 +329,10 @@ static void _relocateVertexGolden(MVertex *ver,
     ver->z() = z / N;
     return;
   }
-  //  printf("coucouc %g %g\n",FULL_MOVE_OBJ ,NO_MOVE_OBJ);
 
   double q;
   double xi = relax * Maximize_Quality_Golden_Section(ver, x / N, y / N, z / N,
                                                       lt, tol, q);
-  //  printf("coucouc %g %g %g\n",FULL_MOVE_OBJ ,NO_MOVE_OBJ,q);
   ver->x() = (1. - xi) * ver->x() + xi * x / N;
   ver->y() = (1. - xi) * ver->y() + xi * y / N;
   ver->z() = (1. - xi) * ver->z() + xi * z / N;
@@ -465,8 +463,6 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
   }
   std::sort(_v_pyr.begin(), _v_pyr.end());
 
-  //  printf("coucou1\n");
-
   std::vector<MTetrahedron *> _tets;
   std::set<MVertex *> _vts;
   for(size_t i = 0; i < region->tetrahedra.size(); i++) {
@@ -483,7 +479,7 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
       }
     }
   }
-  //  printf("coucou1b %d\n",_tets.size());
+
   _tets.clear();
   for(size_t i = 0; i < region->tetrahedra.size(); i++) {
     MTetrahedron *t = region->tetrahedra[i];
@@ -495,8 +491,6 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
       }
     }
   }
-
-  //  printf("coucou2 %d\n",_tets.size());
 
   v2t_cont adj;
   // buildVertexToElement(region->tetrahedra, adj);

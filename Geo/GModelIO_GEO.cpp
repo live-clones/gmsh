@@ -1098,7 +1098,7 @@ void GEO_Internals::synchronize(GModel *model)
   // keeping the same tag), due e.g. to ReplaceDuplicates.
   //
   // We also remove any entities of type "UnknownModel": these are discrete
-  // entities, which are also store in GEO_Internals so that they can be
+  // entities, which are also stored in GEO_Internals so that they can be
   // combined with GEO entities; but they are not GmshModel entities.
   std::vector<std::pair<int, int> > toRemove;
   for(GModel::viter it = model->firstVertex(); it != model->lastVertex();

@@ -81,34 +81,35 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
       c.find(v1);
     if(it0 == c.end())
       c[v0] = std::make_pair(v1, (MVertex *)NULL);
-    else{
-      if (it0->second.second == NULL){
-	it0->second.second = v1;
+    else {
+      if(it0->second.second == NULL) {
+        it0->second.second = v1;
       }
-      else{
-	Msg::Error ("wrong topology for a list of edges ");
+      else {
+        Msg::Error("wrong topology for a list of edges ");
       }
     }
     if(it1 == c.end())
       c[v1] = std::make_pair(v0, (MVertex *)NULL);
     else {
-      if (it1->second.second == NULL){
-	it1->second.second = v0;
+      if(it1->second.second == NULL) {
+        it1->second.second = v0;
       }
-      else{
-	 Msg::Error ("wrong topology for a list of edges ");
+      else {
+        Msg::Error("wrong topology for a list of edges ");
       }
     }
   }
   //  printf(" ] \n");
 
-  //  std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator it  =  c.begin();
-  //  while (it != c.end()){
-  //    printf("%8d -- %7d %7d \n",it->first->getNum(),it->second.first->getNum(),it->second.second ? it->second.second->getNum():-1);
+  //  std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator it  =
+  //  c.begin(); while (it != c.end()){
+  //    printf("%8d -- %7d %7d
+  //    \n",it->first->getNum(),it->second.first->getNum(),it->second.second ?
+  //    it->second.second->getNum():-1);
   //    ++it;
   //  }
 
-  
   while(!c.empty()) {
     std::vector<MVertex *> v;
     MVertex *start = NULL;
@@ -123,28 +124,28 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
         }
       }
     }
-    
-    
+
     std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator its =
       c.find(start);
 
     //    if (it == c.end()){
     //      Msg::Error ("impossible to find starting point %d",start->getNum());
     //    }
-    
+
     MVertex *prev =
       (its->second.second == start) ? its->second.first : its->second.second;
-    MVertex *current = start;    
+    MVertex *current = start;
 
     do {
-      if (c.size() == 0){
-	Msg::Warning("WRONG TOPOLOGY IN A WIRE");
-	return false;
+      if(c.size() == 0) {
+        Msg::Warning("WRONG TOPOLOGY IN A WIRE");
+        return false;
       }
       v.push_back(current);
-      std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator it = c.find(current);
-      if (it == c.end() || it->first == NULL){
-	Msg::Error ("impossible to find %d",current->getNum());
+      std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator it =
+        c.find(current);
+      if(it == c.end() || it->first == NULL) {
+        Msg::Error("impossible to find %d", current->getNum());
       }
       MVertex *v1 = it->second.first;
       MVertex *v2 = it->second.second;

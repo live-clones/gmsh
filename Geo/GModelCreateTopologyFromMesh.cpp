@@ -31,17 +31,16 @@ bool topoExists(GModel *gm)
 {
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
     GEdge *ge = *it;
-    if (ge->getBeginVertex() == NULL &&
-	ge->getEndVertex() == NULL )return false;
+    if(ge->getBeginVertex() == NULL && ge->getEndVertex() == NULL) return false;
   }
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++) {
     GFace *gf = *it;
-    if (gf->edges().empty())return false;
+    if(gf->edges().empty()) return false;
   }
   for(GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); it++) {
     GRegion *gr = *it;
-    if (gr->faces().empty())return false;
-  }  
+    if(gr->faces().empty()) return false;
+  }
   return true;
 }
 
@@ -265,9 +264,8 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
       if(gEdgesToGVertex.find(gEdges) == gEdgesToGVertex.end()) {
         num++;
 
-        discreteVertex *dv =
-          new discreteVertex(gm, gm->getMaxElementaryNumber(0) + 1,
-                             mv->x(), mv->y(), mv->z());
+        discreteVertex *dv = new discreteVertex(
+          gm, gm->getMaxElementaryNumber(0) + 1, mv->x(), mv->y(), mv->z());
         gm->add(dv);
 
         mVertexToGVertex[mv] = dv;
@@ -309,10 +307,10 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
     else {
       std::vector<GEdge *> splits = ensureSimplyConnectedEdge(ge);
       if(splits.size() == 1) { // periodic case
-	GVertex *gv1 = *(gVerts.begin());
-	ge->setBeginVertex(gv1);
-	gv1->addEdge(ge);	
-      }     
+        GVertex *gv1 = *(gVerts.begin());
+        ge->setBeginVertex(gv1);
+        gv1->addEdge(ge);
+      }
       else {
         std::ostringstream gVertexList;
         for(std::set<GVertex *>::iterator gvIter = gVerts.begin();
@@ -333,9 +331,8 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
     if(!(*it)->getBeginVertex() && !(*it)->getEndVertex()) {
       num++;
       MVertex *v = (*it)->lines[0]->getVertex(0);
-      discreteVertex *dv =
-        new discreteVertex(gm, gm->getMaxElementaryNumber(0) + 1,
-                           v->x(), v->y(), v->z());
+      discreteVertex *dv = new discreteVertex(
+        gm, gm->getMaxElementaryNumber(0) + 1, v->x(), v->y(), v->z());
       gm->add(dv);
       MPoint *mp = new MPoint(v);
       dv->points.push_back(mp);
@@ -430,7 +427,7 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
     std::set<GFace *> &gfaces = it->second;
 
     //    printf("%d faces\n",gfaces.size());
-    
+
     if(gfaces.size() > 1) {
       GFacesToGEdgeMap::iterator gfIter = gFacesToGEdge.find(gfaces);
 
