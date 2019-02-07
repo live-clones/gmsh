@@ -453,15 +453,16 @@ static int _removeTwoQuadsNodes(GFace *gf)
   v2t_cont adj;
   buildVertexToElement(gf->triangles, adj);
   buildVertexToElement(gf->quadrangles, adj);
-  v2t_cont ::iterator it = adj.begin();
+  v2t_cont::iterator it = adj.begin();
   std::set<MElement *> touched;
   std::set<MVertex *> vtouched;
   while(it != adj.end()) {
     MVertex *v = it->first;
-    if(it->second.size() == 2 && v->onWhat()->dim() == 2) {
+    if(it->second.size() == 2 && v->onWhat() == gf) {
       MElement *q1 = it->second[0];
       MElement *q2 = it->second[1];
-      if(q1->getNumVertices() == 4 && q2->getNumVertices() == 4 &&
+      if(q1->getNumVertices() == 4 &&
+         q2->getNumVertices() == 4 &&
          touched.find(q1) == touched.end() &&
          touched.find(q2) == touched.end()) {
         int comm = 0;
@@ -476,31 +477,24 @@ static int _removeTwoQuadsNodes(GFace *gf)
         MVertex *v3 = q1->getVertex((comm + 3) % 4);
         MVertex *v4 = 0;
         for(int i = 0; i < 4; i++) {
-          if(q2->getVertex(i) != v1 && q2->getVertex(i) != v3 &&
+          if(q2->getVertex(i) != v1 &&
+             q2->getVertex(i) != v3 &&
              q2->getVertex(i) != v) {
             v4 = q2->getVertex(i);
             break;
           }
         }
         if(!v4) {
-          Msg::Error("BUG DISCOVERED IN _removeTwoQuadsNodes ,%p,%p,%p", v1, v2,
-                     v3);
+          Msg::Error("Bug in removeTwoQuadsNodes %p,%p,%p", v1, v2, v3);
           q1->writePOS(stdout, true, false, false, false, false, false);
           q2->writePOS(stdout, true, false, false, false, false, false);
           return 0;
         }
         MQuadrangle *q = new MQuadrangle(v1, v2, v3, v4);
-        double s1 = 0; // surfaceFaceUV(q,gf);
-        double s2 = 1; // surfaceFaceUV(q1,gf) + surfaceFaceUV(q2,gf);;
-        if(s1 > s2) {
-          delete q;
-        }
-        else {
-          touched.insert(q1);
-          touched.insert(q2);
-          gf->quadrangles.push_back(q);
-          vtouched.insert(v);
-        }
+        touched.insert(q1);
+        touched.insert(q2);
+        gf->quadrangles.push_back(q);
+        vtouched.insert(v);
       }
     }
     it++;
@@ -726,14 +720,16 @@ static bool has_none_of(std::set<MVertex *> const &touched, MVertex *const v1,
 {
   return touched.find(v1) == touched.end() &&
          touched.find(v2) == touched.end() &&
-         touched.find(v3) == touched.end() && touched.find(v4) == touched.end();
+         touched.find(v3) == touched.end() &&
+         touched.find(v4) == touched.end();
 }
 
-static bool are_all_on_dimension_two(MVertex *const v1, MVertex *const v2,
-                                     MVertex *const v3, MVertex *const v4)
+static bool are_all_on_surface(MVertex *const v1, MVertex *const v2,
+                               MVertex *const v3, MVertex *const v4,
+                               GFace *gf)
 {
-  return v1->onWhat()->dim() == 2 && v2->onWhat()->dim() == 2 &&
-         v3->onWhat()->dim() == 2 && v4->onWhat()->dim() == 2;
+  return v1->onWhat() == gf && v2->onWhat() == gf &&
+         v3->onWhat() == gf && v4->onWhat() == gf;
 }
 
 template <class InputIterator>
@@ -774,7 +770,7 @@ static int _removeDiamonds(GFace *const gf)
       v2t_cont::iterator it3 = adj.find(v3);
       v2t_cont::iterator it4 = adj.find(v4);
 
-      if(are_all_on_dimension_two(v1, v2, v3, v4) && are_size_three(it1, it3) &&
+      if(are_all_on_surface(v1, v2, v3, v4, gf) && are_size_three(it1, it3) &&
          _tryToCollapseThatVertex(gf, it1->second, it3->second, q, v1, v3)) {
         touched.insert(v1);
         touched.insert(v2);
@@ -785,10 +781,8 @@ static int _removeDiamonds(GFace *const gf)
 
         diamonds.push_back(q);
       }
-      else if(are_all_on_dimension_two(v1, v2, v3, v4) &&
-              are_size_three(it2, it4) &&
-              _tryToCollapseThatVertex(gf, it2->second, it4->second, q, v2,
-                                       v4)) {
+      else if(are_all_on_surface(v1, v2, v3, v4, gf) && are_size_three(it2, it4) &&
+              _tryToCollapseThatVertex(gf, it2->second, it4->second, q, v2, v4)) {
         touched.insert(v1);
         touched.insert(v2);
         touched.insert(v3);
@@ -820,8 +814,7 @@ static int _removeDiamonds(GFace *const gf)
       mesh_vertices2.push_back(gf->mesh_vertices[i]);
     }
     else {
-      // FIXME : this sometimes leads to crashes - to investigate
-      // delete gf->mesh_vertices[i];
+      delete gf->mesh_vertices[i];
     }
   }
   gf->mesh_vertices = mesh_vertices2;
@@ -851,7 +844,7 @@ struct p1p2p3 {
 static void _relocate(GFace *gf, MVertex *ver,
                       const std::vector<MElement *> &lt)
 {
-  if(ver->onWhat()->dim() != 2) return;
+  if(ver->onWhat() != gf) return;
   MFaceVertex *fv = dynamic_cast<MFaceVertex *>(ver);
   if(fv && fv->bl_data) return;
 
@@ -1410,6 +1403,27 @@ static double printStats(GFace *gf, const char *message)
   return Qmin;
 }
 
+// The topological optimization routines assume that a full topology of the
+// model exists. When reading multi-surface STL files for example, if
+// CreateTopology or ReclassifySurfaces is not called, quads can have nodes
+// owned by an adjacent surface. Since the topological optimization routines
+// remove nodes, this will produce an invalide model mesh (and crash).
+static bool _isModelOkForTopologicalOpti(GModel *m)
+{
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
+    GFace *gf = *it;
+    for(unsigned int j = 0; j < gf->getNumMeshElements(); j++){
+      MElement *e = gf->getMeshElement(j);
+      for(int k = 0; k < e->getNumVertices(); k++){
+        GEntity *ge = e->getVertex(k)->onWhat();
+        if(!ge) return false;
+        if(ge->dim() == 2 && ge != gf) return false;
+      }
+    }
+  }
+  return true;
+}
+
 void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
                         bool nodeRepositioning, double minqual)
 {
@@ -1433,18 +1447,23 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
   }
 
   if(topologicalOptiPasses > 0) {
-    int iter = 0, nbTwoQuadNodes = 1, nbDiamonds = 1;
-    while(nbTwoQuadNodes || nbDiamonds) {
-      Msg::Debug("Topological optimization of quad mesh: pass %d", iter);
-      nbTwoQuadNodes = removeTwoQuadsNodes(gf);
-      nbDiamonds = removeDiamonds(gf);
-      if(haveParam && nodeRepositioning)
-        RelocateVertices(gf, CTX::instance()->mesh.nbSmoothing);
-      iter++;
-      if(iter > topologicalOptiPasses) break;
+    if(!_isModelOkForTopologicalOpti(gf->model())){
+      Msg::Info("Skipping topological optimization - mesh topology is not complete");
     }
-    if(debug)
-      gf->model()->writeMSH("recombine_3topo.msh");
+    else{
+      int iter = 0, nbTwoQuadNodes = 1, nbDiamonds = 1;
+      while(nbTwoQuadNodes || nbDiamonds) {
+        Msg::Debug("Topological optimization of quad mesh: pass %d", iter);
+        nbTwoQuadNodes = removeTwoQuadsNodes(gf);
+        nbDiamonds = removeDiamonds(gf);
+        if(haveParam && nodeRepositioning)
+          RelocateVertices(gf, CTX::instance()->mesh.nbSmoothing);
+        iter++;
+        if(iter > topologicalOptiPasses) break;
+      }
+      if(debug)
+        gf->model()->writeMSH("recombine_3topo.msh");
+    }
   }
 
   // re-split bad quads into triangles
