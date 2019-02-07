@@ -830,7 +830,7 @@ bool discreteFace::compute_topology_of_partition(
     _parametrizations[colors[i]].t2d.reserve(cpt[colors[i]]);
   }
 
-#undef debug
+#define debug
 #ifdef debug
   // save the atlas in pos files for checking - debugging
   FILE *f = fopen("atlasP.pos", "w");

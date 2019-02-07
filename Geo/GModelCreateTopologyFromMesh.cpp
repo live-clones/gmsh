@@ -29,12 +29,19 @@
 
 bool topoExists(GModel *gm)
 {
-  std::vector<GEntity *> entities;
-  gm->getEntities(entities);
-  std::set<MVertex *> vs;
-  for(unsigned int i = 0; i < entities.size(); i++) {
-    if(entities[i]->vertices().empty()) return false;
+  for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
+    GEdge *ge = *it;
+    if (ge->getBeginVertex() == NULL &&
+	ge->getEndVertex() == NULL )return false;
   }
+  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++) {
+    GFace *gf = *it;
+    if (gf->edges().empty())return false;
+  }
+  for(GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); it++) {
+    GRegion *gr = *it;
+    if (gr->faces().empty())return false;
+  }  
   return true;
 }
 
@@ -281,6 +288,7 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
 
   // link all GEdge to GVertex and vice versa
   // we expect to see two GVertex per GEdge
+  // unless it is periodic !!!!
 
   for(GEdgeToGVerticesMap::iterator gEIter = gEdgeToGVertices.begin();
       gEIter != gEdgeToGVertices.end(); ++gEIter) {
@@ -300,8 +308,12 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
 
     else {
       std::vector<GEdge *> splits = ensureSimplyConnectedEdge(ge);
-
-      if(splits.size() == 1) {
+      if(splits.size() == 1) { // periodic case
+	GVertex *gv1 = *(gVerts.begin());
+	ge->setBeginVertex(gv1);
+	gv1->addEdge(ge);	
+      }     
+      else {
         std::ostringstream gVertexList;
         for(std::set<GVertex *>::iterator gvIter = gVerts.begin();
             gvIter != gVerts.end(); ++gvIter) {
@@ -417,6 +429,8 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
   for(it = tEdgeToGFaces.begin(); it != tEdgeToGFaces.end(); ++it) {
     std::set<GFace *> &gfaces = it->second;
 
+    //    printf("%d faces\n",gfaces.size());
+    
     if(gfaces.size() > 1) {
       GFacesToGEdgeMap::iterator gfIter = gFacesToGEdge.find(gfaces);
 

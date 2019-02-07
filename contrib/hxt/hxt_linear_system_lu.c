@@ -5,7 +5,7 @@
 #include "hxt_tools.h"
 #include "hxt_linear_system_lu.h"
 
-#define CONMAX 20000
+#define CONMAX 2000
 static void connectivityInsert(int *connectivity, int i, int j)
 {
   for (int k = 0; k < CONMAX; ++k) {
@@ -298,7 +298,8 @@ HXTStatus hxtLinearSystemLUCreate(HXTLinearSystemLU **pSystem, int nElements, in
   system->M = malloc(sizeof(double)*totalSize); // FIXME Gmsh
   system->rows = malloc(sizeof(double*)*system->n);
   for (int i = 0; i < totalSize; ++i)
-    system->M[i] = 0;
+    system->M[i] = 0.0;
+
   system->rows[0] = system->M;
   totalSize = 0;
   for (int i = 0; i < system->n; ++i){

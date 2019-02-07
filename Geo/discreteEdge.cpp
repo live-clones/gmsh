@@ -45,6 +45,7 @@ discreteEdge::~discreteEdge()
 void discreteEdge::orderMLines()
 {
   size_t ss = lines.size();
+
   std::vector<MEdge> ed;
   std::vector<std::vector<MVertex *> > vs;
   for(unsigned int i = 0; i < lines.size(); i++) {

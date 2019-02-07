@@ -30,6 +30,7 @@ public:
   void createGeometry();
   virtual void mesh(bool verbose);
   int minimumDrawSegments() const { return 2 * _pars.size(); }
+  virtual int minimumMeshSegments() const { return periodic(0) ? 3: 1;}
 };
 
 #endif
