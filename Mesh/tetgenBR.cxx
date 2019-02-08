@@ -6090,6 +6090,13 @@ int tetgenmesh::flipnm(triface* abtets, int n, int level, int abedgepivot,
             j += (elemcounter(spintet)); 
             fnextself(spintet);
             if (spintet.tet == flipedge.tet) break;
+
+            // Highest n1 encountered in a valid testcase is 12. For values
+            // much higher than that, we are likely stuck in an infinite loop.
+            const size_t surelyHangingLoopCountThreshold = 10000;
+            if (n1 > surelyHangingLoopCountThreshold) {
+              terminatetetgen(this, 1000);
+            }
           }
           if (n1 < 3) {
             // This is only possible when the mesh contains inverted
@@ -14191,10 +14198,19 @@ int tetgenmesh::removevertexbyflips(point steinerpt)
     finddirection(&searchtet, rpt);
     sstbond1(rightseg, searchtet);
     spintet = searchtet;
+    size_t loopCount = 0;	
     while (1) {
       tssbond1(spintet, rightseg);
       fnextself(spintet);
       if (spintet.tet == searchtet.tet) break;
+
+      // Highest loopCount encountered in a valid testcase is 7. For values
+      // much higher than that, we are likely stuck in an infinite loop.
+      const size_t surelyHangingLoopCountThreshold = 10000;
+      if (loopCount > surelyHangingLoopCountThreshold) {
+        terminatetetgen(this, 1000);
+      }
+      loopCount++;
     }
 
     if (checksubfaceflag) {
