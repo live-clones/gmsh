@@ -1452,9 +1452,11 @@ void onelabGroup::setButtonMode(const std::string &butt0,
   onelab::server::instance()->get(ps, "ONELAB/Button");
   if(ps.size() && ps[0].getValues().size() == 2) {
     static char label[256];
-    strncpy(label, ps[0].getValues()[0].c_str(), 256);
+    strncpy(label, ps[0].getValues()[0].c_str(), sizeof(label) - 1);
+    label[sizeof(label) - 1] = '\0';
     static char action[256];
-    strncpy(action, ps[0].getValues()[1].c_str(), 256);
+    strncpy(action, ps[0].getValues()[1].c_str(), sizeof(action) - 1);
+    action[sizeof(action) - 1] = '\0';
     _butt[0]->deactivate();
     _butt[1]->activate();
     _butt[1]->label(label);

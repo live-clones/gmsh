@@ -291,15 +291,18 @@ class GmshClient : public GmshSocket {
       const char *port = strstr(sockname, ":");
       int portno = atoi(port + 1);
       int remotelen = strlen(sockname) - strlen(port);
-      char remote[256];
+      char *remote = strdup(sockname);
       if(remotelen > 0)
         strncpy(remote, sockname, remotelen);
-      remote[remotelen] = '\0';
+      if(remotelen >= 0)
+        remote[remotelen] = '\0';
       struct hostent *server;
       if(!(server = gethostbyname(remote))){
         CloseSocket(_sock);
+        free(remote);
         return -3; // no such host
       }
+      free(remote);
       struct sockaddr_in addr_in;
       memset((char *) &addr_in, 0, sizeof(addr_in));
       addr_in.sin_family = AF_INET;

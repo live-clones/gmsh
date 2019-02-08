@@ -281,7 +281,7 @@ GMSH_API void gmshModelGetPhysicalGroupsForEntity(const int dim, const int tag, 
 
 GMSH_API int gmshModelAddPhysicalGroup(const int dim, int * tags, size_t tags_n, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_tags_(tags, tags + tags_n);
@@ -361,7 +361,7 @@ GMSH_API void gmshModelGetBoundingBox(const int dim, const int tag, double * xmi
 
 GMSH_API int gmshModelGetDimension(int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::getDimension();
@@ -374,7 +374,7 @@ GMSH_API int gmshModelGetDimension(int * ierr)
 
 GMSH_API int gmshModelAddDiscreteEntity(const int dim, const int tag, int * boundary, size_t boundary_n, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_boundary_(boundary, boundary + boundary_n);
@@ -829,7 +829,7 @@ GMSH_API void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * element
 
 GMSH_API int gmshModelMeshGetElementType(const char * familyName, const int order, const int serendip, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::mesh::getElementType(familyName, order, serendip);
@@ -1298,7 +1298,7 @@ GMSH_API void gmshModelMeshComputeCohomology(int * domainTags, size_t domainTags
 
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::mesh::field::add(fieldType, tag);
@@ -1378,7 +1378,7 @@ GMSH_API void gmshModelMeshFieldSetAsBoundaryLayer(const int tag, int * ierr)
 
 GMSH_API int gmshModelGeoAddPoint(const double x, const double y, const double z, const double meshSize, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::geo::addPoint(x, y, z, meshSize, tag);
@@ -1391,7 +1391,7 @@ GMSH_API int gmshModelGeoAddPoint(const double x, const double y, const double z
 
 GMSH_API int gmshModelGeoAddLine(const int startTag, const int endTag, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::geo::addLine(startTag, endTag, tag);
@@ -1404,7 +1404,7 @@ GMSH_API int gmshModelGeoAddLine(const int startTag, const int endTag, const int
 
 GMSH_API int gmshModelGeoAddCircleArc(const int startTag, const int centerTag, const int endTag, const int tag, const double nx, const double ny, const double nz, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::geo::addCircleArc(startTag, centerTag, endTag, tag, nx, ny, nz);
@@ -1417,7 +1417,7 @@ GMSH_API int gmshModelGeoAddCircleArc(const int startTag, const int centerTag, c
 
 GMSH_API int gmshModelGeoAddEllipseArc(const int startTag, const int centerTag, const int majorTag, const int endTag, const int tag, const double nx, const double ny, const double nz, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::geo::addEllipseArc(startTag, centerTag, majorTag, endTag, tag, nx, ny, nz);
@@ -1430,7 +1430,7 @@ GMSH_API int gmshModelGeoAddEllipseArc(const int startTag, const int centerTag, 
 
 GMSH_API int gmshModelGeoAddSpline(int * pointTags, size_t pointTags_n, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
@@ -1444,7 +1444,7 @@ GMSH_API int gmshModelGeoAddSpline(int * pointTags, size_t pointTags_n, const in
 
 GMSH_API int gmshModelGeoAddBSpline(int * pointTags, size_t pointTags_n, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
@@ -1458,7 +1458,7 @@ GMSH_API int gmshModelGeoAddBSpline(int * pointTags, size_t pointTags_n, const i
 
 GMSH_API int gmshModelGeoAddBezier(int * pointTags, size_t pointTags_n, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
@@ -1472,7 +1472,7 @@ GMSH_API int gmshModelGeoAddBezier(int * pointTags, size_t pointTags_n, const in
 
 GMSH_API int gmshModelGeoAddCurveLoop(int * curveTags, size_t curveTags_n, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
@@ -1486,7 +1486,7 @@ GMSH_API int gmshModelGeoAddCurveLoop(int * curveTags, size_t curveTags_n, const
 
 GMSH_API int gmshModelGeoAddPlaneSurface(int * wireTags, size_t wireTags_n, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_wireTags_(wireTags, wireTags + wireTags_n);
@@ -1500,7 +1500,7 @@ GMSH_API int gmshModelGeoAddPlaneSurface(int * wireTags, size_t wireTags_n, cons
 
 GMSH_API int gmshModelGeoAddSurfaceFilling(int * wireTags, size_t wireTags_n, const int tag, const int sphereCenterTag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_wireTags_(wireTags, wireTags + wireTags_n);
@@ -1514,7 +1514,7 @@ GMSH_API int gmshModelGeoAddSurfaceFilling(int * wireTags, size_t wireTags_n, co
 
 GMSH_API int gmshModelGeoAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_surfaceTags_(surfaceTags, surfaceTags + surfaceTags_n);
@@ -1528,7 +1528,7 @@ GMSH_API int gmshModelGeoAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n,
 
 GMSH_API int gmshModelGeoAddVolume(int * shellTags, size_t shellTags_n, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_shellTags_(shellTags, shellTags + shellTags_n);
@@ -1806,7 +1806,7 @@ GMSH_API void gmshModelGeoMeshSetReverse(const int dim, const int tag, const int
 
 GMSH_API int gmshModelOccAddPoint(const double x, const double y, const double z, const double meshSize, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::occ::addPoint(x, y, z, meshSize, tag);
@@ -1819,7 +1819,7 @@ GMSH_API int gmshModelOccAddPoint(const double x, const double y, const double z
 
 GMSH_API int gmshModelOccAddLine(const int startTag, const int endTag, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::occ::addLine(startTag, endTag, tag);
@@ -1832,7 +1832,7 @@ GMSH_API int gmshModelOccAddLine(const int startTag, const int endTag, const int
 
 GMSH_API int gmshModelOccAddCircleArc(const int startTag, const int centerTag, const int endTag, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::occ::addCircleArc(startTag, centerTag, endTag, tag);
@@ -1845,7 +1845,7 @@ GMSH_API int gmshModelOccAddCircleArc(const int startTag, const int centerTag, c
 
 GMSH_API int gmshModelOccAddCircle(const double x, const double y, const double z, const double r, const int tag, const double angle1, const double angle2, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::occ::addCircle(x, y, z, r, tag, angle1, angle2);
@@ -1858,7 +1858,7 @@ GMSH_API int gmshModelOccAddCircle(const double x, const double y, const double 
 
 GMSH_API int gmshModelOccAddEllipseArc(const int startTag, const int centerTag, const int endTag, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::occ::addEllipseArc(startTag, centerTag, endTag, tag);
@@ -1871,7 +1871,7 @@ GMSH_API int gmshModelOccAddEllipseArc(const int startTag, const int centerTag, 
 
 GMSH_API int gmshModelOccAddEllipse(const double x, const double y, const double z, const double r1, const double r2, const int tag, const double angle1, const double angle2, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::occ::addEllipse(x, y, z, r1, r2, tag, angle1, angle2);
@@ -1884,7 +1884,7 @@ GMSH_API int gmshModelOccAddEllipse(const double x, const double y, const double
 
 GMSH_API int gmshModelOccAddSpline(int * pointTags, size_t pointTags_n, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
@@ -1898,7 +1898,7 @@ GMSH_API int gmshModelOccAddSpline(int * pointTags, size_t pointTags_n, const in
 
 GMSH_API int gmshModelOccAddBSpline(int * pointTags, size_t pointTags_n, const int tag, const int degree, double * weights, size_t weights_n, double * knots, size_t knots_n, int * multiplicities, size_t multiplicities_n, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
@@ -1915,7 +1915,7 @@ GMSH_API int gmshModelOccAddBSpline(int * pointTags, size_t pointTags_n, const i
 
 GMSH_API int gmshModelOccAddBezier(int * pointTags, size_t pointTags_n, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
@@ -1929,7 +1929,7 @@ GMSH_API int gmshModelOccAddBezier(int * pointTags, size_t pointTags_n, const in
 
 GMSH_API int gmshModelOccAddWire(int * curveTags, size_t curveTags_n, const int tag, const int checkClosed, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
@@ -1943,7 +1943,7 @@ GMSH_API int gmshModelOccAddWire(int * curveTags, size_t curveTags_n, const int 
 
 GMSH_API int gmshModelOccAddCurveLoop(int * curveTags, size_t curveTags_n, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
@@ -1957,7 +1957,7 @@ GMSH_API int gmshModelOccAddCurveLoop(int * curveTags, size_t curveTags_n, const
 
 GMSH_API int gmshModelOccAddRectangle(const double x, const double y, const double z, const double dx, const double dy, const int tag, const double roundedRadius, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::occ::addRectangle(x, y, z, dx, dy, tag, roundedRadius);
@@ -1970,7 +1970,7 @@ GMSH_API int gmshModelOccAddRectangle(const double x, const double y, const doub
 
 GMSH_API int gmshModelOccAddDisk(const double xc, const double yc, const double zc, const double rx, const double ry, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::occ::addDisk(xc, yc, zc, rx, ry, tag);
@@ -1983,7 +1983,7 @@ GMSH_API int gmshModelOccAddDisk(const double xc, const double yc, const double 
 
 GMSH_API int gmshModelOccAddPlaneSurface(int * wireTags, size_t wireTags_n, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_wireTags_(wireTags, wireTags + wireTags_n);
@@ -1997,7 +1997,7 @@ GMSH_API int gmshModelOccAddPlaneSurface(int * wireTags, size_t wireTags_n, cons
 
 GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::occ::addSurfaceFilling(wireTag, tag);
@@ -2010,7 +2010,7 @@ GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag, const int tag, int
 
 GMSH_API int gmshModelOccAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_surfaceTags_(surfaceTags, surfaceTags + surfaceTags_n);
@@ -2024,7 +2024,7 @@ GMSH_API int gmshModelOccAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n,
 
 GMSH_API int gmshModelOccAddVolume(int * shellTags, size_t shellTags_n, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_shellTags_(shellTags, shellTags + shellTags_n);
@@ -2038,7 +2038,7 @@ GMSH_API int gmshModelOccAddVolume(int * shellTags, size_t shellTags_n, const in
 
 GMSH_API int gmshModelOccAddSphere(const double xc, const double yc, const double zc, const double radius, const int tag, const double angle1, const double angle2, const double angle3, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::occ::addSphere(xc, yc, zc, radius, tag, angle1, angle2, angle3);
@@ -2051,7 +2051,7 @@ GMSH_API int gmshModelOccAddSphere(const double xc, const double yc, const doubl
 
 GMSH_API int gmshModelOccAddBox(const double x, const double y, const double z, const double dx, const double dy, const double dz, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::occ::addBox(x, y, z, dx, dy, dz, tag);
@@ -2064,7 +2064,7 @@ GMSH_API int gmshModelOccAddBox(const double x, const double y, const double z, 
 
 GMSH_API int gmshModelOccAddCylinder(const double x, const double y, const double z, const double dx, const double dy, const double dz, const double r, const int tag, const double angle, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::occ::addCylinder(x, y, z, dx, dy, dz, r, tag, angle);
@@ -2077,7 +2077,7 @@ GMSH_API int gmshModelOccAddCylinder(const double x, const double y, const doubl
 
 GMSH_API int gmshModelOccAddCone(const double x, const double y, const double z, const double dx, const double dy, const double dz, const double r1, const double r2, const int tag, const double angle, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::occ::addCone(x, y, z, dx, dy, dz, r1, r2, tag, angle);
@@ -2090,7 +2090,7 @@ GMSH_API int gmshModelOccAddCone(const double x, const double y, const double z,
 
 GMSH_API int gmshModelOccAddWedge(const double x, const double y, const double z, const double dx, const double dy, const double dz, const int tag, const double ltx, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::occ::addWedge(x, y, z, dx, dy, dz, tag, ltx);
@@ -2103,7 +2103,7 @@ GMSH_API int gmshModelOccAddWedge(const double x, const double y, const double z
 
 GMSH_API int gmshModelOccAddTorus(const double x, const double y, const double z, const double r1, const double r2, const int tag, const double angle, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::model::occ::addTorus(x, y, z, r1, r2, tag, angle);
@@ -2514,7 +2514,7 @@ GMSH_API void gmshModelOccSynchronize(int * ierr)
 
 GMSH_API int gmshViewAdd(const char * name, const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::view::add(name, tag);
@@ -2538,7 +2538,7 @@ GMSH_API void gmshViewRemove(const int tag, int * ierr)
 
 GMSH_API int gmshViewGetIndex(const int tag, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::view::getIndex(tag);
@@ -2756,7 +2756,7 @@ GMSH_API void gmshFltkRun(int * ierr)
 
 GMSH_API int gmshFltkSelectEntities(int ** dimTags, size_t * dimTags_n, const int dim, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     gmsh::vectorpair api_dimTags_;
@@ -2771,7 +2771,7 @@ GMSH_API int gmshFltkSelectEntities(int ** dimTags, size_t * dimTags_n, const in
 
 GMSH_API int gmshFltkSelectElements(int ** tags, size_t * tags_n, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_tags_;
@@ -2786,7 +2786,7 @@ GMSH_API int gmshFltkSelectElements(int ** tags, size_t * tags_n, int * ierr)
 
 GMSH_API int gmshFltkSelectViews(int ** tags, size_t * tags_n, int * ierr)
 {
-  int result_api_;
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_tags_;
@@ -2932,7 +2932,7 @@ GMSH_API void gmshLoggerStop(int * ierr)
 
 GMSH_API double gmshLoggerTime(int * ierr)
 {
-  double result_api_;
+  double result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::logger::time();
@@ -2945,7 +2945,7 @@ GMSH_API double gmshLoggerTime(int * ierr)
 
 GMSH_API double gmshLoggerCputime(int * ierr)
 {
-  double result_api_;
+  double result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::logger::cputime();

@@ -872,7 +872,8 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
 void openglWindow::drawTooltip(const std::string &text)
 {
   static char str[1024];
-  strncpy(str, text.c_str(), sizeof(str));
+  strncpy(str, text.c_str(), sizeof(str) - 1);
+  str[sizeof(str) - 1] = '\0';
   Fl_Tooltip::exit(0);
   bool enabled = Fl_Tooltip::enabled();
   if(!enabled) Fl_Tooltip::enable();

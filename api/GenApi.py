@@ -1006,7 +1006,7 @@ class API:
                              ", ".join(list((a.c for a in args + (oint("ierr"), )))) +
                              ")\n{\n")
                     if rtype:
-                        fc.write("  " + rtype.rc_type + " result_api_;\n")
+                        fc.write("  " + rtype.rc_type + " result_api_ = 0;\n")
                     fc.write("  if(ierr) *ierr = 0;\n");
                     fc.write("  try {\n");
                     fc.write("".join((a.c_pre for a in args)))
