@@ -611,6 +611,11 @@ Ratio between mesh sizes at nodes of a same edge (used in BAMG)@*
 Default value: @code{1.8}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.StlRemoveDuplicateTriangles
+Remove duplicate triangles when importing STL files?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.SubdivisionAlgorithm
 Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra)@*
 Default value: @code{0}@*

@@ -1271,6 +1271,8 @@ StringXNumber MeshOptions_Number[] = {
     "Smooth the mesh normals?" },
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,
     "Ratio between mesh sizes at nodes of a same edge (used in BAMG)" },
+  { F|O, "StlRemoveDuplicateTriangles" , opt_mesh_stl_remove_duplicate_triangles, 0. ,
+    "Remove duplicate triangles when importing STL files?" },
   { F|O, "SubdivisionAlgorithm" , opt_mesh_algo_subdivide , 0 ,
     "Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra)" },
   { F|O, "SurfaceEdges" , opt_mesh_surfaces_edges , 1. ,
