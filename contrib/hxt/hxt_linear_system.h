@@ -20,7 +20,9 @@ HXTStatus hxtLinearSystemGetRhsNorm(HXTLinearSystem *lsys, double *rhs, double *
 HXTStatus hxtLinearSystemHasConverged(HXTLinearSystem *lsys, int *converged);
 
 HXTStatus hxtLinearSystemCreateLU(HXTLinearSystem **sys, int nElement, int nNodesByElement, int nFields, uint32_t *elements);
+#ifndef HEXTREME_LINEAR_SYSTEM_LU_H // to avoid illegal (in C) redefinition of typedef
 typedef struct HXTLinearSystemLUStruct HXTLinearSystemLU;
+#endif
 HXTStatus hxtLinearSystemGetLinearSystemLU(HXTLinearSystem *sys, HXTLinearSystemLU **psys);
 
 #ifdef HXT_HAVE_PETSC

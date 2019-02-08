@@ -3,7 +3,7 @@
 #include "hxt_mesh_size.h"
 #include <math.h>
 
-typedef struct hxtMeshSizeStruct HXTMeshSize;
+//typedef struct hxtMeshSizeStruct HXTMeshSize; // already defined in hxt_api.h
 
 HXTStatus hxtMeshSizeCellEvaluate(HXTMeshSizeCell *cell, double x, double y, double z, double *v) {
   if (cell->isleaf){
@@ -54,7 +54,7 @@ HXTStatus hxtMeshSizeCellInit(HXTMeshSizeCell *cell, double x0, double y0, doubl
   double vmin = v[0];
   double vc = field(x0+l/2,y0+l/2,z0+l/2);
   for (int i = 0; i < 8; ++i){
-    dmax = fmax(dmax, std::abs(vc-v[i])); 
+    dmax = fmax(dmax, std::abs(vc-v[i]));
     vmin = fmin(vmin, v[i]);
   }
 #else
@@ -73,7 +73,7 @@ HXTStatus hxtMeshSizeCellInit(HXTMeshSizeCell *cell, double x0, double y0, doubl
           double xs[3] = {x0 + i*dl, y0+j*dl, z0+k*dl};
           double w;
           HXT_CHECK(cb(xs, data, &w));
-          dmax = fmax(dmax, fabs(vc-w)); 
+          dmax = fmax(dmax, fabs(vc-w));
           vmin = fmin(vmin, w);
           split |= (dmax/vmin > 0.2 && vmin < l);
           if(split)
@@ -117,7 +117,7 @@ HXTStatus hxtMeshSizeDelete(HXTMeshSize **meshSizePtr)
   return HXT_STATUS_OK;
 }
 
-HXTStatus hxtMeshSizeEvaluate(HXTMeshSize *meshSize, double x[3], double *v) 
+HXTStatus hxtMeshSizeEvaluate(HXTMeshSize *meshSize, double x[3], double *v)
 {
   if(!meshSize->root.data) {
     //hxtMessageError(meshSize->context, "meshSize has not been computed\n");
@@ -140,6 +140,6 @@ HXTStatus  hxtMeshSizeCompute( HXTMeshSize *meshSize , double min[3], double max
   }
   double l = fmax(max[0]-min[0], fmax(max[1]-min[1], max[2]-min[2]));
   meshSize->l0 = l;
-  HXT_CHECK(hxtMeshSizeCellInit(&meshSize->root,min[0],min[1],min[2],l, cb, data, 4)); 
+  HXT_CHECK(hxtMeshSizeCellInit(&meshSize->root,min[0],min[1],min[2],l, cb, data, 4));
   return HXT_STATUS_OK;
 }
