@@ -1,11 +1,13 @@
 # build image
 docker build -f Dockerfile.ubuntu16.04 -t onelab/ubuntu16.04 .
 docker build -f Dockerfile.ubuntu18.04 -t onelab/ubuntu18.04 .
+docker build -f Dockerfile.ubuntu18.04.simple -t onelab/ubuntu18.04.simple .
 
 # push image to docker-hub
 docker login
 docker push onelab/ubuntu16.04
 docker push onelab/ubuntu18.04
+docker push onelab/ubuntu18.04.simple
 
 # run something
 docker run onelab/ubuntu18.04 ls -al /
