@@ -39,6 +39,8 @@ try:
 except:
     pass
 
+# Utility functions, not part of the Gmsh Python API
+
 def _ostring(s):
     sp = s.value.decode("utf-8")
     lib.gmshFree(s)
@@ -138,6 +140,7 @@ def _ivectorvectordouble(os):
 def _iargcargv(o):
     return c_int(len(o)), (c_char_p * len(o))(*(s.encode() for s in o))
 
+# Gmsh Python API begins here
 
 def initialize(argv=[], readConfigFiles=True):
     """
