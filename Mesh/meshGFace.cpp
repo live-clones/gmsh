@@ -122,47 +122,11 @@ static void computeElementShapes(GFace *gf, double &worst, double &avg,
 }
 
 class quadMeshRemoveHalfOfOneDMesh {
+private:
   GFace *_gf;
-
-public:
   std::map<GEdge *, std::vector<MLine *> > _backup;
   std::map<MEdge, MVertex *, Less_Edge> _middle;
-  // remove one point every two and remember middle points
-  quadMeshRemoveHalfOfOneDMesh(GFace *gf) : _gf(gf)
-  {
-    // only do it if a recombination has to be done
-    if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-       CTX::instance()->mesh.algoRecombine >= 2) {
-      std::vector<GEdge *> const &edges = gf->edges();
-      std::vector<GEdge *>::const_iterator ite = edges.begin();
-      while(ite != edges.end()) {
-        if(!(*ite)->isMeshDegenerated()) {
-          std::vector<MLine *> temp;
-          (*ite)->mesh_vertices.clear();
-          for(unsigned int i = 0; i < (*ite)->lines.size(); i += 2) {
-            if(i + 1 >= (*ite)->lines.size()) {
-              Msg::Error("1D mesh cannot be divided by 2");
-              break;
-            }
-            MVertex *v1 = (*ite)->lines[i]->getVertex(0);
-            MVertex *v2 = (*ite)->lines[i]->getVertex(1);
-            MVertex *v3 = (*ite)->lines[i + 1]->getVertex(1);
-            v2->x() = 0.5 * (v1->x() + v3->x());
-            v2->y() = 0.5 * (v1->y() + v3->y());
-            v2->z() = 0.5 * (v1->z() + v3->z());
-            temp.push_back(new MLine(v1, v3));
-            if(v1->onWhat() == *ite) (*ite)->mesh_vertices.push_back(v1);
-            _middle[MEdge(v1, v3)] = v2;
-          }
-          _backup[*ite] = (*ite)->lines;
-          (*ite)->lines = temp;
-        }
-        ++ite;
-      }
-      CTX::instance()->mesh.lcFactor *= 2.0;
-    }
-  }
-  void subdivide()
+  void _subdivide()
   {
     std::vector<MQuadrangle *> qnew;
     std::map<MEdge, MVertex *, Less_Edge> eds;
@@ -279,26 +243,7 @@ public:
     }
     _gf->quadrangles = qnew;
   }
-  void finish()
-  {
-    if((CTX::instance()->mesh.recombineAll || _gf->meshAttributes.recombine) &&
-       CTX::instance()->mesh.algoRecombine >= 2) {
-      // recombine the elements on the half mesh
-      CTX::instance()->mesh.lcFactor /= 2.0;
-      bool blossom = (CTX::instance()->mesh.algoRecombine == 3);
-      int topo = CTX::instance()->mesh.recombineOptimizeTopology;
-      recombineIntoQuads(_gf, blossom, topo, true, 0.1);
-      subdivide();
-      restore();
-      recombineIntoQuads(_gf, blossom, topo, true, 1.e-3);
-      computeElementShapes(_gf, _gf->meshStatistics.worst_element_shape,
-                           _gf->meshStatistics.average_element_shape,
-                           _gf->meshStatistics.best_element_shape,
-                           _gf->meshStatistics.nbTriangle,
-                           _gf->meshStatistics.nbGoodQuality);
-    }
-  }
-  void restore()
+  void _restore()
   {
     std::vector<GEdge *> const &edges = _gf->edges();
     std::vector<GEdge *>::const_iterator ite = edges.begin();
@@ -309,6 +254,64 @@ public:
       (*ite)->lines = _backup[*ite];
       ++ite;
     }
+  }
+public:
+  // remove one point every two and remember middle points
+  quadMeshRemoveHalfOfOneDMesh(GFace *gf, bool periodic) : _gf(gf)
+  {
+    // only do it if a full recombination has to (and can) be done
+    if(!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine)
+      return;
+    if(CTX::instance()->mesh.algoRecombine < 2)
+      return;
+    if(periodic){
+      Msg::Error("Full-quad recombination not ready yet for periodic surfaces");
+      return;
+    }
+    std::vector<GEdge *> const &edges = gf->edges();
+    std::vector<GEdge *>::const_iterator ite = edges.begin();
+    while(ite != edges.end()) {
+      if(!(*ite)->isMeshDegenerated()) {
+        std::vector<MLine *> temp;
+        (*ite)->mesh_vertices.clear();
+        for(unsigned int i = 0; i < (*ite)->lines.size(); i += 2) {
+          if(i + 1 >= (*ite)->lines.size()) {
+            Msg::Error("1D mesh cannot be divided by 2");
+            break;
+          }
+          MVertex *v1 = (*ite)->lines[i]->getVertex(0);
+          MVertex *v2 = (*ite)->lines[i]->getVertex(1);
+          MVertex *v3 = (*ite)->lines[i + 1]->getVertex(1);
+          v2->x() = 0.5 * (v1->x() + v3->x());
+          v2->y() = 0.5 * (v1->y() + v3->y());
+          v2->z() = 0.5 * (v1->z() + v3->z());
+          temp.push_back(new MLine(v1, v3));
+          if(v1->onWhat() == *ite) (*ite)->mesh_vertices.push_back(v1);
+          _middle[MEdge(v1, v3)] = v2;
+        }
+        _backup[*ite] = (*ite)->lines;
+        (*ite)->lines = temp;
+      }
+      ++ite;
+    }
+    CTX::instance()->mesh.lcFactor *= 2.0;
+  }
+  void finish()
+  {
+    if(_backup.empty()) return;
+    // recombine the elements on the half mesh
+    CTX::instance()->mesh.lcFactor /= 2.0;
+    bool blossom = (CTX::instance()->mesh.algoRecombine == 3);
+    int topo = CTX::instance()->mesh.recombineOptimizeTopology;
+    recombineIntoQuads(_gf, blossom, topo, true, 0.1);
+    _subdivide();
+    _restore();
+    recombineIntoQuads(_gf, blossom, topo, true, 1.e-3);
+    computeElementShapes(_gf, _gf->meshStatistics.worst_element_shape,
+                         _gf->meshStatistics.average_element_shape,
+                         _gf->meshStatistics.best_element_shape,
+                         _gf->meshStatistics.nbTriangle,
+                         _gf->meshStatistics.nbGoodQuality);
   }
 };
 
@@ -1897,7 +1900,7 @@ static bool buildConsecutiveListOfVertices(
         if(MYDEBUG) printf("Followed by edge = %d\n", (*it).ge->tag());
         SPoint2 first_coord = mesh1d[0];
         double d = -1, d_reversed = -1, d_seam = -1, d_seam_reversed = -1;
-        d = dist2(last_coord, first_coord);		
+        d = dist2(last_coord, first_coord);
         if(MYDEBUG)
           printf("%g %g dist = %12.5E\n", first_coord.x(), first_coord.y(), d);
         SPoint2 first_coord_reversed = mesh1d_reversed[0];
@@ -2926,23 +2929,19 @@ void meshGFace::operator()(GFace *gf, bool print)
     Msg::Info("Meshing surface %d (%s, %s)", gf->tag(),
               gf->getTypeString().c_str(), algo);
 
-  quadMeshRemoveHalfOfOneDMesh halfmesh(gf);
-
   bool singularEdges = false;
   std::vector<GEdge *>::const_iterator ite = gf->edges().begin();
-
   while(ite != gf->edges().end()) {
     if((*ite)->isSeam(gf)) singularEdges = true;
-    if((*ite)->getBeginVertex() == (*ite)->getEndVertex()) {
-      if((*ite)->geomType() == GEntity::Unknown) {
-        // singularEdges = true;
-      }
-    }
     ite++;
   }
 
-  if(gf->getNativeType() != GEntity::GmshModel &&
-     (gf->periodic(0) || gf->periodic(1) || singularEdges)) {
+  bool periodic = (gf->getNativeType() != GEntity::GmshModel) &&
+    (gf->periodic(0) || gf->periodic(1) || singularEdges);
+
+  quadMeshRemoveHalfOfOneDMesh halfmesh(gf, periodic);
+
+  if(periodic) {
     if(!meshGeneratorPeriodic(gf, 0, repairSelfIntersecting1dMesh,
                               debugSurface >= 0 || debugSurface == -100)) {
       Msg::Error("Impossible to mesh periodic surface %d", gf->tag());
