@@ -5,12 +5,11 @@
 
 const double ObjContrib::BIGVAL = 1.e300;
 
-
-ObjContrib::ObjContrib(std::string mesName, std::string name) :
- _parent(this), _min(BIGVAL), _max(-BIGVAL), _measureName(mesName), _name(name)
+ObjContrib::ObjContrib(std::string mesName, std::string name)
+  : _parent(this), _min(BIGVAL), _max(-BIGVAL), _measureName(mesName),
+    _name(name)
 {
 }
-
 
 void ObjContrib::updateResults()
 {

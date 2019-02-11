@@ -7,12 +7,9 @@
 #include "ap.h"
 #include "MeshOptCommon.h"
 
-
 class Patch;
 
-
-class ObjContrib
-{
+class ObjContrib {
 public:
   ObjContrib(std::string mesName, std::string name);
   virtual ~ObjContrib() {}
@@ -36,6 +33,5 @@ protected:
   std::string _measureName, _name;
   double _min, _max;
 };
-
 
 #endif /* _MESHOPTOBJCONTRIB_H_ */

@@ -6,10 +6,10 @@
 #include "MeshOptPatch.h"
 #include "MeshOptObjContrib.h"
 
-
-template<class FuncType>
-class ObjContribScaledNodeDispSq : public ObjContrib, public FuncType
-{
+template <class FuncType>
+class ObjContribScaledNodeDispSq
+  : public ObjContrib
+  , public FuncType {
 public:
   ObjContribScaledNodeDispSq(double weight, Patch::LengthScaling scaling);
   virtual ~ObjContribScaledNodeDispSq() {}
@@ -28,24 +28,22 @@ protected:
   Patch::LengthScaling _scaling;
 };
 
-
-template<class FuncType>
-ObjContribScaledNodeDispSq<FuncType>::ObjContribScaledNodeDispSq(double weight,
-                                                                 Patch::LengthScaling scaling) :
-  ObjContrib("ScaledNodeDispSq", FuncType::getNamePrefix()+"ScaledNodeDispSq"),
-  _mesh(0), _weight(weight), _scaling(scaling)
+template <class FuncType>
+ObjContribScaledNodeDispSq<FuncType>::ObjContribScaledNodeDispSq(
+  double weight, Patch::LengthScaling scaling)
+  : ObjContrib("ScaledNodeDispSq",
+               FuncType::getNamePrefix() + "ScaledNodeDispSq"),
+    _mesh(0), _weight(weight), _scaling(scaling)
 {
 }
 
-
-template<class FuncType>
+template <class FuncType>
 ObjContrib *ObjContribScaledNodeDispSq<FuncType>::copy() const
 {
   return new ObjContribScaledNodeDispSq<FuncType>(*this);
 }
 
-
-template<class FuncType>
+template <class FuncType>
 void ObjContribScaledNodeDispSq<FuncType>::initialize(Patch *mesh)
 {
   _mesh = mesh;
@@ -54,21 +52,20 @@ void ObjContribScaledNodeDispSq<FuncType>::initialize(Patch *mesh)
   FuncType::initialize(_min, _max);
 }
 
-
-template<class FuncType>
-bool ObjContribScaledNodeDispSq<FuncType>::addContrib(double &Obj,
-                                                      alglib::real_1d_array &gradObj)
+template <class FuncType>
+bool ObjContribScaledNodeDispSq<FuncType>::addContrib(
+  double &Obj, alglib::real_1d_array &gradObj)
 {
   _min = BIGVAL;
   _max = -BIGVAL;
 
-  for (int iFV = 0; iFV < _mesh->nFV(); iFV++) {
+  for(int iFV = 0; iFV < _mesh->nFV(); iFV++) {
     const double dSq = _mesh->scaledNodeDispSq(iFV);
     Obj += _weight * FuncType::compute(dSq);
     std::vector<double> gDSq(_mesh->nPCFV(iFV));
     _mesh->gradScaledNodeDispSq(iFV, gDSq);
     const double dfact = _weight * FuncType::computeDiff(dSq);
-    for (int iPC = 0; iPC < _mesh->nPCFV(iFV); iPC++)
+    for(int iPC = 0; iPC < _mesh->nPCFV(iFV); iPC++)
       gradObj[_mesh->indPCFV(iFV, iPC)] += dfact * gDSq[iPC];
     _min = std::min(_min, dSq);
     _max = std::max(_max, dSq);
@@ -77,19 +74,17 @@ bool ObjContribScaledNodeDispSq<FuncType>::addContrib(double &Obj,
   return true;
 }
 
-
-template<class FuncType>
+template <class FuncType>
 void ObjContribScaledNodeDispSq<FuncType>::updateMinMax()
 {
   _min = BIGVAL;
   _max = -BIGVAL;
 
-  for (int iFV = 0; iFV < _mesh->nFV(); iFV++) {
+  for(int iFV = 0; iFV < _mesh->nFV(); iFV++) {
     const double dSq = _mesh->scaledNodeDispSq(iFV);
     _min = std::min(_min, dSq);
     _max = std::max(_max, dSq);
   }
 }
-
 
 #endif /* _MESHOPTOBJCONTRIBSCALEDNODEDISPSQ_H_ */

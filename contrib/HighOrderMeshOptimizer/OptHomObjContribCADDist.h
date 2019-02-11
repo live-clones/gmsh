@@ -5,10 +5,10 @@
 
 #include "MeshOptObjContrib.h"
 
-
-template<class FuncType>
-class ObjContribCADDistSq : public ObjContrib, public FuncType
-{
+template <class FuncType>
+class ObjContribCADDistSq
+  : public ObjContrib
+  , public FuncType {
 public:
   ObjContribCADDistSq(double weight, double refDist);
   virtual ~ObjContribCADDistSq() {}
@@ -27,23 +27,22 @@ protected:
   double _refDist;
 };
 
-
-template<class FuncType>
-ObjContribCADDistSq<FuncType>::ObjContribCADDistSq(double weight, double refDist) :
-  ObjContrib("ScaledCADDistSq", FuncType::getNamePrefix()+"ScaledCADDistSq"),
-  _mesh(0), _weight(weight), _refDist(refDist)
+template <class FuncType>
+ObjContribCADDistSq<FuncType>::ObjContribCADDistSq(double weight,
+                                                   double refDist)
+  : ObjContrib("ScaledCADDistSq",
+               FuncType::getNamePrefix() + "ScaledCADDistSq"),
+    _mesh(0), _weight(weight), _refDist(refDist)
 {
 }
 
-
-template<class FuncType>
+template <class FuncType>
 ObjContrib *ObjContribCADDistSq<FuncType>::copy() const
 {
   return new ObjContribCADDistSq<FuncType>(*this);
 }
 
-
-template<class FuncType>
+template <class FuncType>
 void ObjContribCADDistSq<FuncType>::initialize(Patch *mesh)
 {
   _mesh = mesh;
@@ -52,31 +51,37 @@ void ObjContribCADDistSq<FuncType>::initialize(Patch *mesh)
   FuncType::initialize(_min, _max);
 }
 
-
-template<class FuncType>
-bool ObjContribCADDistSq<FuncType>::addContrib(double &Obj, alglib::real_1d_array &gradObj)
+template <class FuncType>
+bool ObjContribCADDistSq<FuncType>::addContrib(double &Obj,
+                                               alglib::real_1d_array &gradObj)
 {
   _min = BIGVAL;
   _max = -BIGVAL;
 
-  const int bndDim = _mesh->dim()-1;
+  const int bndDim = _mesh->dim() - 1;
 
-  for (int iBndEl = 0; iBndEl < _mesh->nBndEl(); iBndEl++) {
+  for(int iBndEl = 0; iBndEl < _mesh->nBndEl(); iBndEl++) {
     const int nVEl = _mesh->nNodBndEl(iBndEl);
     double f;
-    std::vector<double> gradF(nVEl*bndDim);
+    std::vector<double> gradF(nVEl * bndDim);
     _mesh->scaledCADDistSqAndGradients(iBndEl, f, gradF);
     _min = std::min(_min, f);
     _max = std::max(_max, f);
     Obj += FuncType::compute(f) * _weight;
     const double dFact = _weight * FuncType::computeDiff(f);
-    for (int i=0; i<nVEl; i++) {
+    for(int i = 0; i < nVEl; i++) {
       const int iFVi = _mesh->bndEl2FV(iBndEl, i);
-      if (iFVi >= 0) {                                                                            // Skip if not free vertex
-        if (bndDim == 1) gradObj[_mesh->indPCFV(iFVi, 0)] += gradF[i] * dFact;                    // 2D
-        else {                                                                                    // 3D
-          gradObj[_mesh->indPCFV(iFVi, 0)] += gradF[2*i] * dFact;                                 // Deriv. w.r.t. 1st param.coord (edge or face vertex)
-          if (_mesh->nPCFV(iFVi) > 1) gradObj[_mesh->indPCFV(iFVi, 1)] += gradF[2*i+1] * dFact;   // Deriv. w.r.t. 2nd param. coord. (only if face vertex)
+      if(iFVi >= 0) { // Skip if not free vertex
+        if(bndDim == 1)
+          gradObj[_mesh->indPCFV(iFVi, 0)] += gradF[i] * dFact; // 2D
+        else { // 3D
+          gradObj[_mesh->indPCFV(iFVi, 0)] +=
+            gradF[2 * i] *
+            dFact; // Deriv. w.r.t. 1st param.coord (edge or face vertex)
+          if(_mesh->nPCFV(iFVi) > 1)
+            gradObj[_mesh->indPCFV(iFVi, 1)] +=
+              gradF[2 * i + 1] *
+              dFact; // Deriv. w.r.t. 2nd param. coord. (only if face vertex)
         }
       }
     }
@@ -85,24 +90,21 @@ bool ObjContribCADDistSq<FuncType>::addContrib(double &Obj, alglib::real_1d_arra
   return true;
 }
 
-
-template<class FuncType>
-void ObjContribCADDistSq<FuncType>::updateMinMax()
+template <class FuncType> void ObjContribCADDistSq<FuncType>::updateMinMax()
 {
   _min = BIGVAL;
   _max = -BIGVAL;
 
-  const int bndDim = _mesh->dim()-1;
+  const int bndDim = _mesh->dim() - 1;
 
-  for (int iBndEl = 0; iBndEl < _mesh->nBndEl(); iBndEl++) {
+  for(int iBndEl = 0; iBndEl < _mesh->nBndEl(); iBndEl++) {
     const int nVEl = _mesh->nNodBndEl(iBndEl);
     double f;
-    std::vector<double> dumGradF(nVEl*bndDim);
+    std::vector<double> dumGradF(nVEl * bndDim);
     _mesh->scaledCADDistSqAndGradients(iBndEl, f, dumGradF);
     _min = std::min(_min, f);
     _max = std::max(_max, f);
   }
 }
-
 
 #endif /* _OPTHOMOBJCONTRIBCADDIST_H_ */

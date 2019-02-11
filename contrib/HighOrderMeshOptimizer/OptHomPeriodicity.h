@@ -38,11 +38,11 @@ class GPoint;
 
 class OptHomPeriodicity {
 private:
-  std::multimap<GEntity*, GEntity*> _master2slave;
-  //std::map<GEntity*, std::map<MVertex*, MVertex*> > _ent2vv;
+  std::multimap<GEntity *, GEntity *> _master2slave;
+  // std::map<GEntity*, std::map<MVertex*, MVertex*> > _ent2vv;
 
 public:
-  OptHomPeriodicity(std::vector<GEntity*>&);
+  OptHomPeriodicity(std::vector<GEntity *> &);
 
   void fixPeriodicity();
 
@@ -50,8 +50,8 @@ private:
   void _relocateMasterVertices();
   void _copyBackMasterVertices();
 
-  static SPoint3 _transform(MVertex*, const std::vector<double>&);
-  static std::vector<double> _inverse(const std::vector<double>&);
+  static SPoint3 _transform(MVertex *, const std::vector<double> &);
+  static std::vector<double> _inverse(const std::vector<double> &);
 };
 
 #endif

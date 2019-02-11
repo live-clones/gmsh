@@ -6,10 +6,10 @@
 #include "MeshOptPatch.h"
 #include "MeshOptObjContrib.h"
 
-
-template<class FuncType>
-class ObjContribScaledJac : public ObjContrib, public FuncType
-{
+template <class FuncType>
+class ObjContribScaledJac
+  : public ObjContrib
+  , public FuncType {
 public:
   ObjContribScaledJac(double weight);
   virtual ~ObjContribScaledJac() {}
@@ -27,23 +27,20 @@ protected:
   double _weight;
 };
 
-
-template<class FuncType>
-ObjContribScaledJac<FuncType>::ObjContribScaledJac(double weight) :
-  ObjContrib("ScaledJac", FuncType::getNamePrefix()+"ScaledJac"),
-  _mesh(0), _weight(weight)
+template <class FuncType>
+ObjContribScaledJac<FuncType>::ObjContribScaledJac(double weight)
+  : ObjContrib("ScaledJac", FuncType::getNamePrefix() + "ScaledJac"), _mesh(0),
+    _weight(weight)
 {
 }
 
-
-template<class FuncType>
+template <class FuncType>
 ObjContrib *ObjContribScaledJac<FuncType>::copy() const
 {
   return new ObjContribScaledJac<FuncType>(*this);
 }
 
-
-template<class FuncType>
+template <class FuncType>
 void ObjContribScaledJac<FuncType>::initialize(Patch *mesh)
 {
   _mesh = mesh;
@@ -52,22 +49,25 @@ void ObjContribScaledJac<FuncType>::initialize(Patch *mesh)
   FuncType::initialize(_min, _max);
 }
 
-
-template<class FuncType>
-bool ObjContribScaledJac<FuncType>::addContrib(double &Obj, alglib::real_1d_array &gradObj)
+template <class FuncType>
+bool ObjContribScaledJac<FuncType>::addContrib(double &Obj,
+                                               alglib::real_1d_array &gradObj)
 {
   _min = BIGVAL;
   _max = -BIGVAL;
 
-  for (int iEl = 0; iEl < _mesh->nEl(); iEl++) {
-    std::vector<double> sJ(_mesh->nBezEl(iEl));                                       // Scaled Jacobians
-    std::vector<double> gSJ(_mesh->nBezEl(iEl)*_mesh->nPCEl(iEl));                    // Gradients of scaled Jacobians
+  for(int iEl = 0; iEl < _mesh->nEl(); iEl++) {
+    std::vector<double> sJ(_mesh->nBezEl(iEl)); // Scaled Jacobians
+    std::vector<double> gSJ(_mesh->nBezEl(iEl) *
+                            _mesh->nPCEl(iEl)); // Gradients of scaled Jacobians
     _mesh->scaledJacAndGradients(iEl, sJ, gSJ);
-    for (int l = 0; l < _mesh->nBezEl(iEl); l++) {                                    // Add contribution for each Bezier coeff.
+    for(int l = 0; l < _mesh->nBezEl(iEl);
+        l++) { // Add contribution for each Bezier coeff.
       Obj += _weight * FuncType::compute(sJ[l]);
       const double dfact = _weight * FuncType::computeDiff(sJ[l]);
-      for (int iPC = 0; iPC < _mesh->nPCEl(iEl); iPC++)
-        gradObj[_mesh->indPCEl(iEl, iPC)] += dfact * gSJ[_mesh->indGSJ(iEl, l, iPC)];
+      for(int iPC = 0; iPC < _mesh->nPCEl(iEl); iPC++)
+        gradObj[_mesh->indPCEl(iEl, iPC)] +=
+          dfact * gSJ[_mesh->indGSJ(iEl, l, iPC)];
       _min = std::min(_min, sJ[l]);
       _max = std::max(_max, sJ[l]);
     }
@@ -76,23 +76,21 @@ bool ObjContribScaledJac<FuncType>::addContrib(double &Obj, alglib::real_1d_arra
   return true;
 }
 
-
-template<class FuncType>
-void ObjContribScaledJac<FuncType>::updateMinMax()
+template <class FuncType> void ObjContribScaledJac<FuncType>::updateMinMax()
 {
   _min = BIGVAL;
   _max = -BIGVAL;
 
-  for (int iEl = 0; iEl < _mesh->nEl(); iEl++) {
-    std::vector<double> sJ(_mesh->nBezEl(iEl));                         // Scaled Jacobians
-    std::vector<double> dumGSJ(_mesh->nBezEl(iEl)*_mesh->nPCEl(iEl));   // Gradients of scaled Jacobians
+  for(int iEl = 0; iEl < _mesh->nEl(); iEl++) {
+    std::vector<double> sJ(_mesh->nBezEl(iEl)); // Scaled Jacobians
+    std::vector<double> dumGSJ(
+      _mesh->nBezEl(iEl) * _mesh->nPCEl(iEl)); // Gradients of scaled Jacobians
     _mesh->scaledJacAndGradients(iEl, sJ, dumGSJ);
-    for (int l = 0; l < _mesh->nBezEl(iEl); l++) {                      // Check each Bezier coeff.
+    for(int l = 0; l < _mesh->nBezEl(iEl); l++) { // Check each Bezier coeff.
       _min = std::min(_min, sJ[l]);
       _max = std::max(_max, sJ[l]);
     }
   }
 }
-
 
 #endif /* _OPTHOMOBJCONTRIBSCALEDJAC_H_ */

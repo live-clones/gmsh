@@ -5,10 +5,10 @@
 
 #include "MeshOptObjContrib.h"
 
-
-template<class FuncType>
-class ObjContribCADDistOld : public ObjContrib, public FuncType
-{
+template <class FuncType>
+class ObjContribCADDistOld
+  : public ObjContrib
+  , public FuncType {
 public:
   ObjContribCADDistOld(double weight, double geomTol);
   virtual ~ObjContribCADDistOld() {}
@@ -27,23 +27,21 @@ protected:
   double _geomTol;
 };
 
-
-template<class FuncType>
-ObjContribCADDistOld<FuncType>::ObjContribCADDistOld(double weight, double geomTol) :
-  ObjContrib("CADDistOld", FuncType::getNamePrefix()+"CADDistOld"),
-  _mesh(0), _weight(weight), _geomTol(geomTol)
+template <class FuncType>
+ObjContribCADDistOld<FuncType>::ObjContribCADDistOld(double weight,
+                                                     double geomTol)
+  : ObjContrib("CADDistOld", FuncType::getNamePrefix() + "CADDistOld"),
+    _mesh(0), _weight(weight), _geomTol(geomTol)
 {
 }
 
-
-template<class FuncType>
+template <class FuncType>
 ObjContrib *ObjContribCADDistOld<FuncType>::copy() const
 {
   return new ObjContribCADDistOld<FuncType>(*this);
 }
 
-
-template<class FuncType>
+template <class FuncType>
 void ObjContribCADDistOld<FuncType>::initialize(Patch *mesh)
 {
   _mesh = mesh;
@@ -52,22 +50,22 @@ void ObjContribCADDistOld<FuncType>::initialize(Patch *mesh)
   FuncType::initialize(_min, _max);
 }
 
-
-template<class FuncType>
-bool ObjContribCADDistOld<FuncType>::addContrib(double &Obj, alglib::real_1d_array &gradObj)
+template <class FuncType>
+bool ObjContribCADDistOld<FuncType>::addContrib(double &Obj,
+                                                alglib::real_1d_array &gradObj)
 {
   _min = BIGVAL;
   _max = -BIGVAL;
 
   std::vector<double> gradF;
-  for (int iEl = 0; iEl < _mesh->nEl(); iEl++) {
+  for(int iEl = 0; iEl < _mesh->nEl(); iEl++) {
     double f;
-    if (_mesh->bndDistAndGradients(iEl, f, gradF, _geomTol)) {
+    if(_mesh->bndDistAndGradients(iEl, f, gradF, _geomTol)) {
       _min = std::min(_min, f);
       _max = std::max(_max, f);
       Obj += FuncType::compute(f) * _weight;
       const double dFact = _weight * FuncType::computeDiff(f);
-      for (size_t i = 0; i < _mesh->nPCEl(iEl); ++i)
+      for(size_t i = 0; i < _mesh->nPCEl(iEl); ++i)
         gradObj[_mesh->indPCEl(iEl, i)] += gradF[i] * dFact;
     }
   }
@@ -75,22 +73,19 @@ bool ObjContribCADDistOld<FuncType>::addContrib(double &Obj, alglib::real_1d_arr
   return true;
 }
 
-
-template<class FuncType>
-void ObjContribCADDistOld<FuncType>::updateMinMax()
+template <class FuncType> void ObjContribCADDistOld<FuncType>::updateMinMax()
 {
   _min = BIGVAL;
   _max = -BIGVAL;
 
   std::vector<double> dumGradF;
-  for (int iEl = 0; iEl < _mesh->nEl(); iEl++) {
+  for(int iEl = 0; iEl < _mesh->nEl(); iEl++) {
     double f;
-    if (_mesh->bndDistAndGradients(iEl, f, dumGradF, _geomTol)) {
+    if(_mesh->bndDistAndGradients(iEl, f, dumGradF, _geomTol)) {
       _min = std::min(_min, f);
       _max = std::max(_max, f);
     }
   }
 }
-
 
 #endif /* _OPTHOMOBJCONTRIBCADDISTOLD_H_ */

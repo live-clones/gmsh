@@ -33,188 +33,194 @@
 #include "ParamCoord.h"
 #include "GmshMessage.h"
 
-SPoint3 ParamCoordParent::getUvw(MVertex* vert)
+SPoint3 ParamCoordParent::getUvw(MVertex *vert)
 {
   GEntity *ge = vert->onWhat();
-  if ((ge->geomType() == GEntity::DiscreteCurve) ||
-      (ge->geomType() == GEntity::DiscreteSurface))
+  if((ge->geomType() == GEntity::DiscreteCurve) ||
+     (ge->geomType() == GEntity::DiscreteSurface))
     Msg::Error("Using parent coordinates on discrete curve or surface");
 
-  switch (ge->dim()) {
+  switch(ge->dim()) {
   case 1: {
-    SPoint3 p(0.,0.,0.);
-    reparamMeshVertexOnEdge(vert,static_cast<GEdge*>(ge),p[0]);     // Overkill if vert. well classified and parametrized
+    SPoint3 p(0., 0., 0.);
+    reparamMeshVertexOnEdge(
+      vert, static_cast<GEdge *>(ge),
+      p[0]); // Overkill if vert. well classified and parametrized
     return p;
     break;
   }
   case 2: {
     SPoint2 p;
-    reparamMeshVertexOnFace(vert,static_cast<GFace*>(ge),p);      // Overkill if vert. well classified and parametrized
-    return SPoint3(p[0],p[1],0.);
+    reparamMeshVertexOnFace(
+      vert, static_cast<GFace *>(ge),
+      p); // Overkill if vert. well classified and parametrized
+    return SPoint3(p[0], p[1], 0.);
     break;
   }
   }
-  return SPoint3(0.,0.,0.);
+  return SPoint3(0., 0., 0.);
 }
 
 SPoint3 ParamCoordParent::uvw2Xyz(const SPoint3 &uvw)
 {
   GEntity *ge = _vert->onWhat();
-  GPoint gp = (ge->dim() == 1) ? static_cast<GEdge*>(ge)->point(uvw[0]) :
-                                 static_cast<GFace*>(ge)->point(uvw[0],uvw[1]);
-  return SPoint3(gp.x(),gp.y(),gp.z());
+  GPoint gp = (ge->dim() == 1) ?
+                static_cast<GEdge *>(ge)->point(uvw[0]) :
+                static_cast<GFace *>(ge)->point(uvw[0], uvw[1]);
+  return SPoint3(gp.x(), gp.y(), gp.z());
 }
 
-void ParamCoordParent::gXyz2gUvw(const SPoint3 &uvw, const SPoint3 &gXyz, SPoint3 &gUvw)
+void ParamCoordParent::gXyz2gUvw(const SPoint3 &uvw, const SPoint3 &gXyz,
+                                 SPoint3 &gUvw)
 {
-
   GEntity *ge = _vert->onWhat();
 
-  if (ge->dim() == 1) {
-    SVector3 der = static_cast<GEdge*>(ge)->firstDer(uvw[0]);
+  if(ge->dim() == 1) {
+    SVector3 der = static_cast<GEdge *>(ge)->firstDer(uvw[0]);
     gUvw[0] = gXyz.x() * der.x() + gXyz.y() * der.y() + gXyz.z() * der.z();
   }
   else {
-    Pair<SVector3,SVector3> der = static_cast<GFace*>(ge)->firstDer(SPoint2(uvw[0],uvw[1]));
+    Pair<SVector3, SVector3> der =
+      static_cast<GFace *>(ge)->firstDer(SPoint2(uvw[0], uvw[1]));
     gUvw[0] = gXyz.x() * der.first().x() + gXyz.y() * der.first().y() +
-      gXyz.z() * der.first().z();
+              gXyz.z() * der.first().z();
     gUvw[1] = gXyz.x() * der.second().x() + gXyz.y() * der.second().y() +
-      gXyz.z() * der.second().z();
+              gXyz.z() * der.second().z();
   }
-
 }
 
 void ParamCoordParent::gXyz2gUvw(const SPoint3 &uvw,
-                                 const std::vector<SPoint3> &gXyz, std::vector<SPoint3> &gUvw)
+                                 const std::vector<SPoint3> &gXyz,
+                                 std::vector<SPoint3> &gUvw)
 {
-
   GEntity *ge = _vert->onWhat();
 
-  if (ge->dim() == 1) {
-    SVector3 der = static_cast<GEdge*>(ge)->firstDer(uvw[0]);
+  if(ge->dim() == 1) {
+    SVector3 der = static_cast<GEdge *>(ge)->firstDer(uvw[0]);
     std::vector<SPoint3>::iterator itUvw = gUvw.begin();
-    for (std::vector<SPoint3>::const_iterator itXyz=gXyz.begin();
-         itXyz != gXyz.end(); itXyz++) {
-      (*itUvw)[0] = itXyz->x() * der.x() + itXyz->y() * der.y() + itXyz->z() * der.z();
+    for(std::vector<SPoint3>::const_iterator itXyz = gXyz.begin();
+        itXyz != gXyz.end(); itXyz++) {
+      (*itUvw)[0] =
+        itXyz->x() * der.x() + itXyz->y() * der.y() + itXyz->z() * der.z();
       itUvw++;
     }
   }
   else {
-    Pair<SVector3,SVector3> der = static_cast<GFace*>(ge)->firstDer
-      (SPoint2(uvw[0],uvw[1]));
-    std::vector<SPoint3>::iterator itUvw=gUvw.begin();
-    for (std::vector<SPoint3>::const_iterator itXyz=gXyz.begin();
-         itXyz != gXyz.end(); itXyz++) {
-      (*itUvw)[0] = itXyz->x() * der.first().x() + itXyz->y() * der.first().y() +
-        itXyz->z() * der.first().z();
-      (*itUvw)[1] = itXyz->x() * der.second().x() + itXyz->y() * der.second().y() +
-        itXyz->z() * der.second().z();
+    Pair<SVector3, SVector3> der =
+      static_cast<GFace *>(ge)->firstDer(SPoint2(uvw[0], uvw[1]));
+    std::vector<SPoint3>::iterator itUvw = gUvw.begin();
+    for(std::vector<SPoint3>::const_iterator itXyz = gXyz.begin();
+        itXyz != gXyz.end(); itXyz++) {
+      (*itUvw)[0] = itXyz->x() * der.first().x() +
+                    itXyz->y() * der.first().y() + itXyz->z() * der.first().z();
+      (*itUvw)[1] = itXyz->x() * der.second().x() +
+                    itXyz->y() * der.second().y() +
+                    itXyz->z() * der.second().z();
       itUvw++;
     }
   }
-
 }
 
 namespace {
 
-SVector3 getLineElTangent(MElement *el, int iNode) {
+  SVector3 getLineElTangent(MElement *el, int iNode)
+  {
+    double gsf[1256][3], u, v, w;
+    el->getNode(iNode, u, v, w);
+    //  el->getGradShapeFunctions(u,v,w,gsf);
+    el->getGradShapeFunctions(u, v, w, gsf, 1);
 
-  double gsf[1256][3], u, v, w;
-  el->getNode(iNode,u,v,w);
-//  el->getGradShapeFunctions(u,v,w,gsf);
-  el->getGradShapeFunctions(u,v,w,gsf,1);
+    SVector3 dxyzdu(0.);
+    //  int nSF = el->getNumShapeFunctions()();
+    int nSF = el->getNumPrimaryVertices();
+    for(int j = 0; j < nSF; j++) {
+      const SPoint3 p = el->getVertex(j)->point();
+      dxyzdu(0) += gsf[j][0] * p.x();
+      dxyzdu(1) += gsf[j][0] * p.y();
+      dxyzdu(2) += gsf[j][0] * p.z();
+    }
+    dxyzdu.normalize();
 
-  SVector3 dxyzdu(0.);
-//  int nSF = el->getNumShapeFunctions()();
-  int nSF = el->getNumPrimaryVertices();
-  for (int j=0; j<nSF; j++) {
-    const SPoint3 p = el->getVertex(j)->point();
-    dxyzdu(0) += gsf[j][0]*p.x();
-    dxyzdu(1) += gsf[j][0]*p.y();
-    dxyzdu(2) += gsf[j][0]*p.z();
-  }
-  dxyzdu.normalize();
-
-  return dxyzdu;
-
-}
-
-SVector3 getSurfElNormal(MElement *el, int iNode) {
-
-  double gsf[1256][3], u, v, w;
-  el->getNode(iNode,u,v,w);
-//  el->getGradShapeFunctions(u,v,w,gsf);
-  el->getGradShapeFunctions(u,v,w,gsf,1);
-
-  SVector3 dxyzdu(0.), dxyzdv(0.);
-//  int nSF = el->getNumShapeFunctions()();
-  int nSF = el->getNumPrimaryVertices();
-  for (int j=0; j<nSF; j++) {
-    const SPoint3 p = el->getVertex(j)->point();
-    dxyzdu(0) += gsf[j][0]*p.x();
-    dxyzdu(1) += gsf[j][0]*p.y();
-    dxyzdu(2) += gsf[j][0]*p.z();
-    dxyzdv(0) += gsf[j][1]*p.x();
-    dxyzdv(1) += gsf[j][1]*p.y();
-    dxyzdv(2) += gsf[j][1]*p.z();
+    return dxyzdu;
   }
 
-  SVector3 normal = crossprod(dxyzdu,dxyzdv);
-  normal.normalize();
-  return normal;
+  SVector3 getSurfElNormal(MElement *el, int iNode)
+  {
+    double gsf[1256][3], u, v, w;
+    el->getNode(iNode, u, v, w);
+    //  el->getGradShapeFunctions(u,v,w,gsf);
+    el->getGradShapeFunctions(u, v, w, gsf, 1);
 
-}
+    SVector3 dxyzdu(0.), dxyzdv(0.);
+    //  int nSF = el->getNumShapeFunctions()();
+    int nSF = el->getNumPrimaryVertices();
+    for(int j = 0; j < nSF; j++) {
+      const SPoint3 p = el->getVertex(j)->point();
+      dxyzdu(0) += gsf[j][0] * p.x();
+      dxyzdu(1) += gsf[j][0] * p.y();
+      dxyzdu(2) += gsf[j][0] * p.z();
+      dxyzdv(0) += gsf[j][1] * p.x();
+      dxyzdv(1) += gsf[j][1] * p.y();
+      dxyzdv(2) += gsf[j][1] * p.z();
+    }
 
-}
+    SVector3 normal = crossprod(dxyzdu, dxyzdv);
+    normal.normalize();
+    return normal;
+  }
 
-ParamCoordLocalLine::ParamCoordLocalLine(MVertex* v) :
-    dir(0.), x0(v->x()), y0(v->y()), z0(v->z())
+} // namespace
+
+ParamCoordLocalLine::ParamCoordLocalLine(MVertex *v)
+  : dir(0.), x0(v->x()), y0(v->y()), z0(v->z())
 {
-
   GEntity *ge = v->onWhat();
   const unsigned nEl = ge->getNumMeshElements();
 
-  for (unsigned iEl = 0; iEl < nEl; iEl++) {
+  for(unsigned iEl = 0; iEl < nEl; iEl++) {
     MElement *el = ge->getMeshElement(iEl);
-    std::vector<MVertex*> lVerts;
+    std::vector<MVertex *> lVerts;
     el->getVertices(lVerts);
-    std::vector<MVertex*>::iterator itV = std::find(lVerts.begin(),lVerts.end(),v);
-    if (itV != lVerts.end()) {
-      const int iNode = std::distance(lVerts.begin(),itV);
-      dir += getLineElTangent(el,iNode);
+    std::vector<MVertex *>::iterator itV =
+      std::find(lVerts.begin(), lVerts.end(), v);
+    if(itV != lVerts.end()) {
+      const int iNode = std::distance(lVerts.begin(), itV);
+      dir += getLineElTangent(el, iNode);
     }
   }
   dir.normalize();
-
 }
 
-ParamCoordLocalSurf::ParamCoordLocalSurf(MVertex* v) : x0(v->x()), y0(v->y()), z0(v->z())
+ParamCoordLocalSurf::ParamCoordLocalSurf(MVertex *v)
+  : x0(v->x()), y0(v->y()), z0(v->z())
 {
-
   GEntity *ge = v->onWhat();
   const unsigned nEl = ge->getNumMeshElements();
 
   SVector3 n(0.);
-  for (unsigned iEl = 0; iEl < nEl; iEl++) {
+  for(unsigned iEl = 0; iEl < nEl; iEl++) {
     MElement *el = ge->getMeshElement(iEl);
-    std::vector<MVertex*> lVerts;
+    std::vector<MVertex *> lVerts;
     el->getVertices(lVerts);
-    std::vector<MVertex*>::iterator itV = std::find(lVerts.begin(),lVerts.end(),v);
-    if (itV != lVerts.end()) {
-      const int iNode = std::distance(lVerts.begin(),itV);
-      n += getSurfElNormal(el,iNode);
+    std::vector<MVertex *>::iterator itV =
+      std::find(lVerts.begin(), lVerts.end(), v);
+    if(itV != lVerts.end()) {
+      const int iNode = std::distance(lVerts.begin(), itV);
+      n += getSurfElNormal(el, iNode);
     }
   }
   n.normalize();
 
-  if (fabs(fabs(dot(n,SVector3(1.,0.,0.)))-1.) < 1.e-10) {    // If normal is x-axis, take y- and z- axis as dir.
-    dir0 = SVector3(0.,1.,0.);
-    dir1 = SVector3(0.,0.,1.);
+  if(fabs(fabs(dot(n, SVector3(1., 0., 0.))) - 1.) <
+     1.e-10) { // If normal is x-axis, take y- and z- axis as dir.
+    dir0 = SVector3(0., 1., 0.);
+    dir1 = SVector3(0., 0., 1.);
   }
   else {
-    dir0 = SVector3(1.-n.x()*n.x(),-n.x()*n.y(),-n.x()*n.z());  // 1st dir. = (normalized) proj. of e_x in plane
+    dir0 =
+      SVector3(1. - n.x() * n.x(), -n.x() * n.y(),
+               -n.x() * n.z()); // 1st dir. = (normalized) proj. of e_x in plane
     dir0.normalize();
-    dir1 = crossprod(dir0,n);
+    dir1 = crossprod(dir0, n);
   }
-
 }

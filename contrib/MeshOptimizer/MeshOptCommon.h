@@ -41,78 +41,98 @@ void mvinit();
 void mvterminate();
 void mvpause();
 void mvgetScreenSize(int &nbRow, int &nbCol);
-void mvprintCenter(int row, const char* fmt, ...);
-void mvprintLeft(int row, const char* fmt, ...);
-void mvprintRight(int row, const char* fmt, ...);
-void mvprintXY(int row, int col, const char* fmt, ...);
+void mvprintCenter(int row, const char *fmt, ...);
+void mvprintLeft(int row, const char *fmt, ...);
+void mvprintRight(int row, const char *fmt, ...);
+void mvprintXY(int row, int col, const char *fmt, ...);
 // color scheme: 0=default, 1=last in yellow back, others in white back, 2=even
 // numbers in white back
-void mvprintList(int row, int maxSize, std::list<char*> listStr, int colorScheme=0);
-void mvfillRow(int row, char fillWith=' ');
+void mvprintList(int row, int maxSize, std::list<char *> listStr,
+                 int colorScheme = 0);
+void mvfillRow(int row, char fillWith = ' ');
 void mvbold(bool on);
 void mvcolor(int colorScheme, bool on);
 
-class redirectMessage : public GmshMessage
-{
- private:
+class redirectMessage : public GmshMessage {
+private:
   std::string _logFileName;
   bool _console;
- public:
+
+public:
   virtual void operator()(std::string level, std::string message);
-  redirectMessage(std::string logFileName , bool console);
+  redirectMessage(std::string logFileName, bool console);
 };
 
 class MeshOptPatchDef {
 public:
   enum { STRAT_DISJOINT, STRAT_ONEBYONE };
-  int strategy;                                         // Strategy: disjoint patches or adaptive one-by-one
-  int minLayers, maxLayers;                             // Min. and max. nb. of layers around a bad element in patch
+  int strategy; // Strategy: disjoint patches or adaptive one-by-one
+  int minLayers,
+    maxLayers; // Min. and max. nb. of layers around a bad element in patch
   union {
-    struct {                                            // If adaptive strategy:
-      int maxPatchAdapt;                                // Max. nb. of adaptation iterations
-      int maxLayersAdaptFact;                           // Growth rate in number of layers around a bad element
-      double distanceAdaptFact;                         // Growth rate in max. distance from bad element
+    struct { // If adaptive strategy:
+      int maxPatchAdapt; // Max. nb. of adaptation iterations
+      int maxLayersAdaptFact; // Growth rate in number of layers around a bad
+                              // element
+      double distanceAdaptFact; // Growth rate in max. distance from bad element
     };
-    bool weakMerge;                                     // If disjoint strategy: weak or strong merging of patches
+    bool weakMerge; // If disjoint strategy: weak or strong merging of patches
   };
   virtual ~MeshOptPatchDef() {}
-  virtual double elBadness(MElement *el,                // Determine "badness" of a given element (for patch creation)
-                           GEntity* gEnt) const = 0;
-  virtual double bndElBadness(MElement *el,             // Determine "badness" of a given boundary element (for patch creation)
-                              GEntity* gEnt) const = 0;
-  virtual double maxDistance(MElement *el) const = 0;   // Compute max. distance to a given bad element for elements in patch
-  virtual int inPatch(const SPoint3 &badBary,           // Determine whether a given element should be included in the patch around a...
-                      double limDist,                   // ... given bad element barycenter, with a limit distance if needed. Output: ...
-                      MElement *el,                     // ... -1 = excluded, 0 = included only up to minLayers, 1 = included up to maxLayers
-                      GEntity* gEnt) const = 0;
+  virtual double elBadness(
+    MElement *el, // Determine "badness" of a given element (for patch creation)
+    GEntity *gEnt) const = 0;
+  virtual double
+  bndElBadness(MElement *el, // Determine "badness" of a given boundary element
+                             // (for patch creation)
+               GEntity *gEnt) const = 0;
+  virtual double
+  maxDistance(MElement *el) const = 0; // Compute max. distance to a given bad
+                                       // element for elements in patch
+  virtual int
+  inPatch(const SPoint3 &badBary, // Determine whether a given element should be
+                                  // included in the patch around a...
+          double limDist, // ... given bad element barycenter, with a limit
+                          // distance if needed. Output: ...
+          MElement *el, // ... -1 = excluded, 0 = included only up to minLayers,
+                        // 1 = included up to maxLayers
+          GEntity *gEnt) const = 0;
+
 protected:
-  bool testElInDist(const SPoint3 &P, double limDist,   // Test whether an element is within a certain distance from a point
+  bool testElInDist(const SPoint3 &P,
+                    double limDist, // Test whether an element is within a
+                                    // certain distance from a point
                     MElement *el) const;
 };
 
-
-struct MeshOptPass {                                    // Parameters controlling the optimization procedure in each pass
-  std::vector<ObjContrib*> contrib;                     // Indices of contributions to objective function
-  int maxOptIter;                                       // Max. number of opt. iterations each time the barrier is moved
-  int maxParamUpdates;                                  // Max. number of times the obj. func. parameters are updated (i.e. the barrier is moved)
+struct MeshOptPass { // Parameters controlling the optimization procedure in
+                     // each pass
+  std::vector<ObjContrib *>
+    contrib; // Indices of contributions to objective function
+  int
+    maxOptIter; // Max. number of opt. iterations each time the barrier is moved
+  int maxParamUpdates; // Max. number of times the obj. func. parameters are
+                       // updated (i.e. the barrier is moved)
 };
 
-
-class MeshOptParameters {                              // Parameters controlling the strategy
- public:
-  int dim ;                                             // Which dimension to optimize
-  bool onlyVisible ;                                    // Apply optimization to visible entities ONLY
-  bool fixBndNodes;                                     // If points can move on boundaries
-  bool useGeomForPatches, useGeomForOpt;                // Whether to use info from CAD for creation of patches and for optimization
-  bool useBoundaries;                                   // Whether to use boundary elements
+class MeshOptParameters { // Parameters controlling the strategy
+public:
+  int dim; // Which dimension to optimize
+  bool onlyVisible; // Apply optimization to visible entities ONLY
+  bool fixBndNodes; // If points can move on boundaries
+  bool useGeomForPatches,
+    useGeomForOpt; // Whether to use info from CAD for creation of patches and
+                   // for optimization
+  bool useBoundaries; // Whether to use boundary elements
   MeshOptPatchDef *patchDef;
   std::vector<MeshOptPass> pass;
-  int displayInterv;                                    // Sampling rate in opt. iterations for display
-  int verbose;                                          // Level of information displayed and written to disk
-  int nCurses;                                          // Enhanced text output (not affected by verbose)
-  std::string logFileName;                              // External log file (affected by verbose)
-  int success;                                          // Success flag: -1 = fail, 0 = partial fail (target not reached), 1 = success
-  double CPU;                                           // Time for optimization
+  int displayInterv; // Sampling rate in opt. iterations for display
+  int verbose; // Level of information displayed and written to disk
+  int nCurses; // Enhanced text output (not affected by verbose)
+  std::string logFileName; // External log file (affected by verbose)
+  int success; // Success flag: -1 = fail, 0 = partial fail (target not
+               // reached), 1 = success
+  double CPU; // Time for optimization
 };
 
 #endif

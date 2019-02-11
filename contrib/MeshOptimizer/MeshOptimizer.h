@@ -30,6 +30,6 @@
 class GEntity;
 class MeshOptParameters;
 
-void meshOptimizer(std::vector<GEntity*> &entities, MeshOptParameters &par);
+void meshOptimizer(std::vector<GEntity *> &entities, MeshOptParameters &par);
 
 #endif
