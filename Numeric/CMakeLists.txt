@@ -39,6 +39,7 @@ set(SRC
   Iso.cpp
   approximationError.cpp
   ConjugateGradients.cpp
+
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
