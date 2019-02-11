@@ -578,8 +578,8 @@ void highOrderTools::computeStraightSidedPositions()
             _straightSidedLocation.size());
 }
 
-// apply a displacement that does not create elements that are
-// distorted over a value "thres"
+// apply a displacement that does not create elements that are distorted over a
+// value "thres"
 double highOrderTools::apply_incremental_displacement(
   double max_incr, std::vector<MElement *> &v, bool mixed, double thres,
   char *meshName, std::vector<MElement *> &disto)
@@ -659,11 +659,10 @@ double highOrderTools::apply_incremental_displacement(
   }
 
   // Move vertices @ maximum
-  FILE *fd = Fopen("d.msh", "w");
-  fprintf(fd,
-          "$MeshFormat\n2 0 8\n$EndMeshFormat\n$NodeData\n1\n"
-          "\"tr(sigma)\"\n1\n0.0\n3\n1\n3\n%d\n",
-          (int)_vertices.size());
+  //FILE *fd = Fopen("d.msh", "w");
+  //fprintf(fd, "$MeshFormat\n2 0 8\n$EndMeshFormat\n$NodeData\n1\n"
+  //            "\"tr(sigma)\"\n1\n0.0\n3\n1\n3\n%d\n",
+  //            (int)_vertices.size());
   for(std::set<MVertex *>::iterator it = _vertices.begin();
       it != _vertices.end(); ++it) {
     double ax, ay, az;
@@ -673,14 +672,14 @@ double highOrderTools::apply_incremental_displacement(
     (*it)->x() += max_incr * ax;
     (*it)->y() += max_incr * ay;
     (*it)->z() += max_incr * az;
-    fprintf(fd, "%d %g %g %g\n", (*it)->getIndex(), ax, ay, az);
+    //fprintf(fd, "%d %g %g %g\n", (*it)->getIndex(), ax, ay, az);
   }
-  fprintf(fd, "$EndNodeData\n");
-  fclose(fd);
+  //fprintf(fd, "$EndNodeData\n");
+  //fclose(fd);
 
   // Check now if elements are ok
 
-  (*_vertices.begin())->onWhat()->model()->writeMSH(meshName);
+  // (*_vertices.begin())->onWhat()->model()->writeMSH(meshName);
 
   double percentage = max_incr * 100.;
   while(1) {
