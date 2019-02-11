@@ -1055,7 +1055,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|0, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,
     "Number of high order mesh elements to consider for optimization"},
   { F|O, "HighOrderOptimize" , opt_mesh_ho_optimize , 0.,
-    "Optimize high order meshes?" },
+    "Optimize high order meshes (-1: elastic smoothing, 1: optimization, 2: both)?" },
   { F|O, "HighOrderPeriodic" , opt_mesh_ho_periodic , 0.,
     "Correct high order optimization for periodic connections?" },
   { F|0, "HighOrderPoissonRatio", opt_mesh_ho_poisson, 0.33,

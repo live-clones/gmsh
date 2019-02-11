@@ -147,7 +147,7 @@ Default value: @code{6}@*
 Saved in: @code{-}
 
 @item Mesh.HighOrderOptimize
-Optimize high order meshes?@*
+Optimize high order meshes (-1: elastic smoothing, 1: optimization, 2: both)?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
