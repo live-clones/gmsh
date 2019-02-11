@@ -1120,8 +1120,10 @@ void GenerateMesh(GModel *m, int ask)
       p.nbLayers = CTX::instance()->mesh.hoNLayers;
       p.BARRIER_MIN = CTX::instance()->mesh.hoThresholdMin;
       p.BARRIER_MAX = CTX::instance()->mesh.hoThresholdMax;
+      p.itMax = CTX::instance()->mesh.hoIterMax;
+      p.optPassMax = CTX::instance()->mesh.hoPassMax;
       p.dim = GModel::current()->getDim();
-      p.optPrimSurfMesh = CTX::instance()->mesh.hoOptPrimSurfMesh;
+      p.optPrimSurfMesh = CTX::instance()->mesh.hoPrimSurfMesh;
       // HighOrderMeshOptimizer(GModel::current(), p);
       HighOrderMeshOptimizerNew(GModel::current(), p);
     }

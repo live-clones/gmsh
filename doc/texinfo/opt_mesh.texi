@@ -171,9 +171,19 @@ Maximum threshold for high order element optimization@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.HighOrderOptPrimSurfMesh
+@item Mesh.HighOrderPrimSurfMesh
 Try to fix flipped surface mesh elements in high-order optimizer@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderIterMax
+Maximum number of iteration in high-order optimization pass@*
+Default value: @code{100}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderPassMax
+Maximum number of high-order optimization passes (moving barrier)@*
+Default value: @code{25}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LabelSampling

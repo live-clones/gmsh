@@ -392,7 +392,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[3]->maximum(10000);
   value[3]->step(10);
   value[3]->align(FL_ALIGN_RIGHT);
-  value[3]->value(300);
+  value[3]->value(CTX::instance()->mesh.hoIterMax);
 
   y += BH;
   value[4] = new Fl_Value_Input(x, y, IW, BH, "Max. number of barrier updates");
@@ -400,7 +400,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[4]->maximum(100);
   value[4]->step(1);
   value[4]->align(FL_ALIGN_RIGHT);
-  value[4]->value(50);
+  value[4]->value(CTX::instance()->mesh.hoPassMax);
 
   static Fl_Menu_Item menu_strategy[] = {{"Disjoint strong", 0, 0, 0},
                                          {"Adaptive one-by-one", 0, 0, 0},
