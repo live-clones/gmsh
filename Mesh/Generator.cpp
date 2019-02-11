@@ -1111,10 +1111,11 @@ void GenerateMesh(GModel *m, int ask)
   // Optimize high order elements
   if(CTX::instance()->mesh.hoOptimize) {
 #if defined(HAVE_OPTHOM)
-    if(CTX::instance()->mesh.hoOptimize < 0) {
+    if(CTX::instance()->mesh.hoOptimize < 0 ||
+       CTX::instance()->mesh.hoOptimize >= 2) {
       ElasticAnalogy(GModel::current(), false);
     }
-    else {
+    if(CTX::instance()->mesh.hoOptimize >= 1){
       OptHomParameters p;
       p.nbLayers = CTX::instance()->mesh.hoNLayers;
       p.BARRIER_MIN = CTX::instance()->mesh.hoThresholdMin;

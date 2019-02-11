@@ -609,7 +609,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       else if(!strcmp(argv[i] + 1, "optimize_ho") ||
               !strcmp(argv[i] + 1, "hoOptimize")) {
         i++;
-        opt_mesh_ho_optimize(0, GMSH_SET, 1);
+        opt_mesh_ho_optimize(0, GMSH_SET, 2);
       }
       else if(!strcmp(argv[i] + 1, "ho_min")) {
         i++;
