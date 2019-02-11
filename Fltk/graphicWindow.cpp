@@ -3565,7 +3565,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   _butt[5] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_models");
   _butt[5]->callback(status_options_cb, (void *)"model");
-  _butt[5]->tooltip("Select active model");
+  _butt[5]->tooltip("Set current (active) model");
   x += sw;
   _butt[8] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "O");
   _butt[8]->callback(status_options_cb, (void *)"quick_access");

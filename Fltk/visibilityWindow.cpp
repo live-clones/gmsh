@@ -242,7 +242,7 @@ public:
     if(type == Models) {
       for(unsigned int i = 0; i < GModel::list.size(); i++) {
         std::string name = GModel::list[i]->getName();
-        if(GModel::list[i] == GModel::current()) name += " (Active)";
+        if(GModel::list[i] == GModel::current()) name += " (Current Model)";
         _entities.push_back(new VisModel(GModel::list[i], i, name));
       }
     }
@@ -603,7 +603,7 @@ static void _rebuild_tree_browser(bool force)
     GModel *m = GModel::list[i];
     std::ostringstream model;
     model << "Model [" << i << "] <<" << m->getName() << ">>";
-    if(m == GModel::current()) model << " (Active)";
+    if(m == GModel::current()) model << " (Current Model)";
     model << "/";
 
     Fl_Tree_Item *n;
