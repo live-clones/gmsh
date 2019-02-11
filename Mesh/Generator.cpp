@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
 #include <stack>
@@ -24,19 +24,25 @@
 #include "meshGFaceOptimize.h"
 #include "meshGFaceBDS.h"
 #include "meshGRegion.h"
+#include "meshGRegionLocalMeshMod.h"
+#include "meshRelocateVertex.h"
+#include "discreteFace.h"
 #include "BackgroundMesh.h"
 #include "BoundaryLayers.h"
+#include "ExtrudeParams.h"
 #include "HighOrder.h"
 #include "Generator.h"
 #include "Field.h"
 #include "Options.h"
-#include "simple3D.h"
-#include "yamakawa.h"
-#include "meshGRegionRelocateVertex.h"
-#include "pointInsertion.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
+#endif
+
+#if defined(HAVE_DOMHEX)
+#include "simple3D.h"
+#include "yamakawa.h"
+#include "pointInsertion.h"
 #endif
 
 #if defined(HAVE_OPTHOM)
@@ -49,7 +55,7 @@
 #include "PViewData.h"
 #endif
 
-class TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES {
+class EmbeddedCompatibilityTest {
 public:
   void operator()(GRegion *gr)
   {
@@ -280,9 +286,8 @@ static bool TooManyElements(GModel *m, int dim)
 {
   if(CTX::instance()->expertMode || !m->getNumVertices()) return false;
 
-  // try to detect obvious mistakes in characteristic lenghts (one of
-  // the most common cause for erroneous bug reports on the mailing
-  // list)
+  // try to detect obvious mistakes in characteristic lenghts (one of the most
+  // common cause for erroneous bug reports on the mailing list)
   double sumAllLc = 0.;
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it)
     sumAllLc +=
@@ -334,6 +339,17 @@ static void Mesh1D(GModel *m)
   if(CTX::instance()->mesh.maxNumThreads1D > 0 &&
      CTX::instance()->mesh.maxNumThreads1D <= Msg::GetMaxThreads())
     Msg::SetNumThreads(CTX::instance()->mesh.maxNumThreads1D);
+
+  // boundary layers are not yet thread-safe
+  if(m->getFields()->getNumBoundaryLayerFields())
+    Msg::SetNumThreads(1);
+
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
+    // Extruded meshes are not yet fully thread-safe (not sure why!)
+    if((*it)->meshAttributes.extrude &&
+       (*it)->meshAttributes.extrude->mesh.ExtrudeMesh)
+      Msg::SetNumThreads(1);
+  }
 
   std::vector<GEdge *> temp;
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
@@ -453,6 +469,30 @@ static void Mesh2D(GModel *m)
      CTX::instance()->mesh.maxNumThreads2D <= Msg::GetMaxThreads())
     Msg::SetNumThreads(CTX::instance()->mesh.maxNumThreads2D);
 
+  // boundary layers are not yet thread-safe
+  if(m->getFields()->getNumBoundaryLayerFields())
+    Msg::SetNumThreads(1);
+
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+    // STL remeshing is not yet thread-safe
+    if((*it)->geomType() == GEntity::DiscreteSurface){
+      if(static_cast<discreteFace *>(*it)->haveParametrization())
+        Msg::SetNumThreads(1);
+    }
+    // DelQuad and co are not yet thread-safe
+    if((*it)->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
+       (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
+       (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
+      Msg::SetNumThreads(1);
+    // Periodic meshing is not yet thread-safe
+    if((*it)->getMeshMaster() != *it)
+      Msg::SetNumThreads(1);
+    // Extruded meshes are not yet fully thread-safe (not sure why!)
+    if((*it)->meshAttributes.extrude &&
+       (*it)->meshAttributes.extrude->mesh.ExtrudeMesh)
+      Msg::SetNumThreads(1);
+  }
+
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
     (*it)->meshStatistics.status = GFace::PENDING;
 
@@ -488,14 +528,12 @@ static void Mesh2D(GModel *m)
         if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
       }
       if(!nPending) break;
-      // iter == 2 is for meshing re-parametrized surfaces
-      // after that, we serialize (self-intersections of 1D meshes are not thread safe)!
+      // iter == 2 is for meshing re-parametrized surfaces; after that, we
+      // serialize (self-intersections of 1D meshes are not thread safe)!
       if(nIter > 2) Msg::SetNumThreads(1);
       if(nIter++ > 10) break;
     }
   }
-
-  // collapseSmallEdges(*m);
 
   Msg::SetNumThreads(prevNumThreads);
 
@@ -547,60 +585,6 @@ FindConnectedRegions(const std::vector<GRegion *> &del,
   }
   Msg::Info("3D Meshing %d volumes with %d connected components",
             nbVolumes, connected.size());
-}
-
-template <class ITERATOR>
-void fillv_(std::multimap<MVertex *, MElement *> &vertexToElement,
-            ITERATOR it_beg, ITERATOR it_end)
-{
-  for(ITERATOR IT = it_beg; IT != it_end; ++IT) {
-    MElement *el = *IT;
-    for(std::size_t j = 0; j < el->getNumVertices(); j++) {
-      MVertex *e = el->getVertex(j);
-      vertexToElement.insert(std::make_pair(e, el));
-    }
-  }
-}
-
-int LaplaceSmoothing(GRegion *gr)
-{
-  std::multimap<MVertex *, MElement *> vertexToElement;
-  fillv_(vertexToElement, (gr)->tetrahedra.begin(), (gr)->tetrahedra.end());
-  fillv_(vertexToElement, (gr)->hexahedra.begin(), (gr)->hexahedra.end());
-  fillv_(vertexToElement, (gr)->prisms.begin(), (gr)->prisms.end());
-  fillv_(vertexToElement, (gr)->pyramids.begin(), (gr)->pyramids.end());
-  int N = 0;
-  for(unsigned int i = 0; i < gr->mesh_vertices.size(); i++) {
-    MVertex *v = gr->mesh_vertices[i];
-    std::multimap<MVertex *, MElement *>::iterator it =
-      vertexToElement.lower_bound(v);
-    std::multimap<MVertex *, MElement *>::iterator it_low = it;
-    std::multimap<MVertex *, MElement *>::iterator it_up =
-      vertexToElement.upper_bound(v);
-    double minQual = 1.e22;
-    double volTot = 0.0;
-    double xold = v->x(), yold = v->y(), zold = v->z();
-    SPoint3 pNew(0, 0, 0);
-    for(; it != it_up; ++it) {
-      minQual = std::min(minQual, it->second->minSICNShapeMeasure());
-      double vol = fabs(it->second->getVolume());
-      SPoint3 cog = it->second->barycenter();
-      pNew += cog * vol;
-      volTot += vol;
-    }
-    pNew *= (1. / volTot);
-    v->setXYZ(pNew.x(), pNew.y(), pNew.z());
-    double minQual2 = 1.e22;
-    for(it = it_low; it != it_up; ++it) {
-      minQual2 = std::min(minQual2, it->second->minSICNShapeMeasure());
-      if(minQual2 < minQual) {
-        v->setXYZ(xold, yold, zold);
-        break;
-      }
-    }
-    if(minQual < minQual2) N++;
-  }
-  return N;
 }
 
 // JFR : use hex-splitting to resolve non conformity
@@ -704,7 +688,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
             MFace(it->getVertex(1), it->getVertex(2), it->getVertex(3)));
         }
       }
-      // HEX IS ONLY SURROUNED BY COMPATIBLE ELEMENTS
+      // Hex is only surrounded by compatible elements
       if((int)faces.size() == e->getNumFaces()) {
         remainingHexes.push_back(e);
       }
@@ -745,7 +729,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
             MFace(it->getVertex(1), it->getVertex(2), it->getVertex(3)));
         }
       }
-      // HEX IS ONLY SURROUNED BY COMPATIBLE ELEMENTS
+      // Hex is only surrounded by compatible elements
       if((int)faces.size() == e->getNumFaces()) {
         remainingPrisms.push_back(e);
       }
@@ -773,7 +757,8 @@ bool MakeMeshConformal(GModel *gm, int howto)
   return true;
 }
 
-void TestConformity(GModel *gm)
+#if defined(HAVE_DOMHEX)
+static void TestConformity(GModel *gm)
 {
   fs_cont search;
   buildFaceSearchStructure(gm, search);
@@ -809,6 +794,7 @@ void TestConformity(GModel *gm)
   else
     Msg::Error("Mesh is not conforming (%d hanging faces)!", count);
 }
+#endif
 
 static void Mesh3D(GModel *m)
 {
@@ -822,6 +808,13 @@ static void Mesh3D(GModel *m)
   if(CTX::instance()->mesh.maxNumThreads3D > 0 &&
      CTX::instance()->mesh.maxNumThreads3D <= Msg::GetMaxThreads())
     Msg::SetNumThreads(CTX::instance()->mesh.maxNumThreads3D);
+
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+    // Extruded meshes are not yet fully thread-safe (not sure why!)
+    if((*it)->meshAttributes.extrude &&
+       (*it)->meshAttributes.extrude->mesh.ExtrudeMesh)
+      Msg::SetNumThreads(1);
+  }
 
   if(m->getNumRegions()) Msg::ProgressMeter(0, 100, false, "Meshing 3D...");
 
@@ -843,7 +836,6 @@ static void Mesh3D(GModel *m)
   FindConnectedRegions(delaunay, connected);
 
   // remove quads elements for volumes that are recombined
-  // pragma OMP here ?
   for(unsigned int i = 0; i < connected.size(); i++) {
     for(unsigned j = 0; j < connected[i].size(); j++) {
       GRegion *gr = connected[i][j];
@@ -856,15 +848,18 @@ static void Mesh3D(GModel *m)
     }
   }
 
+#if defined(HAVE_DOMHEX)
   double time_recombination = 0., vol_element_recombination = 0.;
   double vol_hexa_recombination = 0.;
   int nb_elements_recombination = 0, nb_hexa_recombination = 0;
+#endif
 
-  // pragma OMP here ?
   for(unsigned int i = 0; i < connected.size(); i++) {
     MeshDelaunayVolume(connected[i]);
 
-    // additional code for experimental hex mesh
+#if defined(HAVE_DOMHEX)
+    // additional code for experimental hex mesh - will eventually be replaced
+    // by new HXT-based code
     for(unsigned j = 0; j < connected[i].size(); j++) {
       GRegion *gr = connected[i][j];
       bool treat_region_ok = false;
@@ -886,9 +881,7 @@ static void Mesh3D(GModel *m)
           opt(gr);
         }
         double a = Cpu();
-
         // CTX::instance()->mesh.recombine3DLevel = 2;
-
         if(CTX::instance()->mesh.recombine3DLevel >= 0) {
           Recombinator rec;
           rec.execute(gr);
@@ -910,17 +903,13 @@ static void Mesh3D(GModel *m)
         nb_hexa_recombination += post.get_nb_hexahedra();
         vol_element_recombination += post.get_vol_elements();
         vol_hexa_recombination += post.get_vol_hexahedra();
-        // partial export
-        //        stringstream ss;
-        //        ss << "yamakawa_part_";
-        //        ss << gr->tag();
-        //        ss << ".msh";
-        //        export_gregion_mesh(gr, ss.str().c_str());
         time_recombination += (Cpu() - a);
       }
     }
+#endif
   }
 
+#if defined(HAVE_DOMHEX)
   if(CTX::instance()->mesh.recombine3DAll) {
     Msg::Info("RECOMBINATION timing:");
     Msg::Info(" --- CUMULATIVE TIME RECOMBINATION : %g s.", time_recombination);
@@ -932,18 +921,16 @@ static void Mesh3D(GModel *m)
     // MakeMeshConformal (m, 1);
     TestConformity(m);
   }
+#endif
 
   // ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
 
-  //  std::for_each(m->firstRegion(), m->lastRegion(),
-  //  optimizeMeshGRegionNetgen());
   if(Msg::GetVerbosity() > 98)
-    std::for_each(m->firstRegion(), m->lastRegion(),
-                  TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES());
+    std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
 
   std::stringstream debugInfo;
-  debugInfo << "No tetrahedra in region ";
+  debugInfo << "No elements in region ";
   bool emptyRegionFound = false;
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
     if((*it)->getNumMeshElements() == 0) {
@@ -974,12 +961,12 @@ void OptimizeMeshNetgen(GModel *m)
   double t1 = Cpu();
 
   std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionNetgen());
-  // Ensure that all volume Jacobians are positive
+
+  // ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
 
   if(Msg::GetVerbosity() > 98)
-    std::for_each(m->firstRegion(), m->lastRegion(),
-                  TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES());
+    std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
 
   CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
@@ -996,8 +983,7 @@ void OptimizeMesh(GModel *m)
   m->setAllVolumesPositive();
 
   if(Msg::GetVerbosity() > 98)
-    std::for_each(m->firstRegion(), m->lastRegion(),
-                  TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES());
+    std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
 
   CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
@@ -1039,7 +1025,10 @@ void RecombineMesh(GModel *m)
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     GFace *gf = *it;
-    recombineIntoQuads(gf, true, true, .01);
+    bool blossom = (CTX::instance()->mesh.algoRecombine == 1 ||
+                    CTX::instance()->mesh.algoRecombine == 3);
+    int topo = CTX::instance()->mesh.recombineOptimizeTopology;
+    recombineIntoQuads(gf, blossom, topo, true, .01);
   }
 
   CTX::instance()->mesh.changed = ENT_ALL;
@@ -1113,9 +1102,6 @@ void GenerateMesh(GModel *m, int ask)
   else if(m->getMeshStatus() == 3 && CTX::instance()->mesh.algoSubdivide == 2)
     RefineMesh(m, CTX::instance()->mesh.secondOrderLinear, false, true);
 
-  // Compute homology if necessary
-  if(!Msg::GetErrorCount()) m->computeHomology();
-
   // Create high order elements
   if(m->getMeshStatus() && CTX::instance()->mesh.order > 1)
     SetOrderN(m, CTX::instance()->mesh.order,
@@ -1135,7 +1121,8 @@ void GenerateMesh(GModel *m, int ask)
       p.BARRIER_MAX = CTX::instance()->mesh.hoThresholdMax;
       p.dim = GModel::current()->getDim();
       p.optPrimSurfMesh = CTX::instance()->mesh.hoOptPrimSurfMesh;
-      HighOrderMeshOptimizer(GModel::current(), p);
+      // HighOrderMeshOptimizer(GModel::current(), p);
+      HighOrderMeshOptimizerNew(GModel::current(), p);
     }
 #else
     Msg::Error("High-order mesh optimization requires the OPTHOM module");
@@ -1146,6 +1133,9 @@ void GenerateMesh(GModel *m, int ask)
     m->renumberMeshVertices();
     m->renumberMeshElements();
   }
+
+  // Compute homology if necessary
+  if(!Msg::GetErrorCount()) m->computeHomology();
 
   Msg::Info("%d vertices %d elements", m->getNumMeshVertices(),
             m->getNumMeshElements());

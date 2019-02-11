@@ -23,7 +23,7 @@ R=0.001;
 // facteur de raffinement
 fact=0.01;
 
-Field[1] = Attractor;
+Field[1] = Distance;
 Field[1].NNodesByEdge = 100;
 Field[1].EdgesList = {1};
 

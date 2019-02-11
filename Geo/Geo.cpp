@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
 #include <string.h>
@@ -542,7 +542,7 @@ void FreeCurve(void *a, void *b)
 {
   Curve *pC = *(Curve **)a;
   if(pC) {
-    delete[] pC->k;
+    if(pC->k) delete[] pC->k;
     List_Delete(pC->Control_Points);
     if(pC->Extrude) delete pC->Extrude;
     delete pC;
@@ -1305,19 +1305,9 @@ static void vecmat4x4(double mat[4][4], double vec[4], double res[4])
   }
 }
 
-static void ApplyTransformationToPoint(double matrix[4][4], Vertex *v)
+static void ApplyTransformationToPointAlways(double matrix[4][4], Vertex *v)
 {
   double pos[4], vec[4];
-
-  if(!ListOfTransformedPoints)
-    ListOfTransformedPoints = List_Create(50, 50, sizeof(int));
-
-  if(!List_Search(ListOfTransformedPoints, &v->Num, fcmp_absint)) {
-    List_Add(ListOfTransformedPoints, &v->Num);
-  }
-  else
-    return;
-
   vec[0] = v->Pos.X;
   vec[1] = v->Pos.Y;
   vec[2] = v->Pos.Z;
@@ -1327,6 +1317,19 @@ static void ApplyTransformationToPoint(double matrix[4][4], Vertex *v)
   v->Pos.Y = pos[1];
   v->Pos.Z = pos[2];
   v->w = pos[3];
+}
+
+static void ApplyTransformationToPoint(double matrix[4][4], Vertex *v)
+{
+  if(!ListOfTransformedPoints)
+    ListOfTransformedPoints = List_Create(50, 50, sizeof(int));
+
+  if(!List_Search(ListOfTransformedPoints, &v->Num, fcmp_absint)) {
+    List_Add(ListOfTransformedPoints, &v->Num);
+  }
+  else
+    return;
+  ApplyTransformationToPointAlways(matrix, v);
 }
 
 static void ApplyTransformationToCurve(double matrix[4][4], Curve *c)
@@ -2394,19 +2397,16 @@ void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e)
   T[1] = -e->geo.pt[1];
   T[2] = -e->geo.pt[2];
   SetTranslationMatrix(matrix, T);
-  List_Reset(ListOfTransformedPoints);
-  ApplyTransformationToPoint(matrix, &v);
+  ApplyTransformationToPointAlways(matrix, &v);
 
   SetRotationMatrix(matrix, e->geo.axe, e->geo.angle);
-  List_Reset(ListOfTransformedPoints);
-  ApplyTransformationToPoint(matrix, &v);
+  ApplyTransformationToPointAlways(matrix, &v);
 
   T[0] = -T[0];
   T[1] = -T[1];
   T[2] = -T[2];
   SetTranslationMatrix(matrix, T);
-  List_Reset(ListOfTransformedPoints);
-  ApplyTransformationToPoint(matrix, &v);
+  ApplyTransformationToPointAlways(matrix, &v);
 
   x = v.Pos.X;
   y = v.Pos.Y;

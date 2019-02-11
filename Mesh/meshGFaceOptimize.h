@@ -1,12 +1,13 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _MESH_GFACE_OPTIMIZE_H_
 #define _MESH_GFACE_OPTIMIZE_H_
 
 #include <map>
+//#include <unordered_map>
 #include <vector>
 #include "MElement.h"
 #include "MEdge.h"
@@ -24,8 +25,10 @@ struct edge_angle {
   bool operator<(const edge_angle &other) const { return other.angle < angle; }
 };
 
-typedef std::map<MVertex *, std::vector<MElement *>, MVertexLessThanNum>
-  v2t_cont;
+// TODO: switch to unordered_map here & verify deterministic bahavior
+typedef std::map<MVertex *, std::vector<MElement *>, MVertexLessThanNum> v2t_cont;
+//typedef std::unordered_map<MVertex *, std::vector<MElement *> > v2t_cont;
+
 typedef std::map<MEdge, std::pair<MElement *, MElement *>, Less_Edge> e2t_cont;
 
 template <class T>
@@ -53,24 +56,19 @@ void buildEdgeToElements(std::vector<MElement *> &tris, e2t_cont &adj);
 
 void laplaceSmoothing(GFace *gf, int niter = 1, bool infinity_norm = false);
 
-void _relocateVertex(GFace *gf, MVertex *ver,
-                     const std::vector<MElement *> &lt);
-
 enum swapCriterion { SWCR_DEL, SWCR_QUAL, SWCR_SPH };
 enum splitCriterion { SPCR_CLOSE, SPCR_QUAL, SPCR_ALLWAYS };
 
 int edgeSwapPass(GFace *gf, std::set<MTri3 *, compareTri3Ptr> &allTris,
                  const swapCriterion &cr, bidimMeshData &DATA);
-void removeThreeTrianglesNodes(GFace *gf);
-void buildMeshGenerationDataStructures(
+bool buildMeshGenerationDataStructures(
   GFace *gf, std::set<MTri3 *, compareTri3Ptr> &AllTris, bidimMeshData &data);
 void transferDataStructure(GFace *gf,
                            std::set<MTri3 *, compareTri3Ptr> &AllTris,
                            bidimMeshData &DATA);
 void computeEquivalences(GFace *gf, bidimMeshData &DATA);
-void recombineIntoQuads(GFace *gf, bool topologicalOpti = true,
-                        bool nodeRepositioning = true, double minqual = 0.1,
-                        bool verbose = true);
+void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
+                        bool nodeRepositioning, double minqual);
 
 // used for meshGFaceRecombine development
 void quadsToTriangles(GFace *gf, double minqual);

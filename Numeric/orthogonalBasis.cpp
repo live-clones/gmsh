@@ -1,6 +1,9 @@
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
-// Created by Amaury Johnen on 12/04/18.
+// See the LICENSE.txt file for license information. Please report all
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
+// Contributed by Amaury Johnen
 
 #include <cmath>
 #include <vector>

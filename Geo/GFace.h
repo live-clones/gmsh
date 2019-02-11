@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _GFACE_H_
 #define _GFACE_H_
@@ -37,7 +37,7 @@ protected:
   GRegion *r1, *r2;
   mean_plane meanPlane;
   std::vector<GEdge *> embedded_edges;
-  std::set<GVertex *> embedded_vertices;
+  std::set<GVertex *, GEntityLessThan> embedded_vertices;
 
   BoundaryLayerColumns _columns;
 
@@ -55,13 +55,6 @@ public: // this will become protected or private
 
   // align elements with mesh master
   void alignElementsWithMaster();
-
-  // an array with additional vertices that are supposed to exist in
-  // the final mesh of the model face. This can be used for boundary
-  // layer meshes or when using Lloyd-like smoothing algorithms those
-  // vertices are classifed on this GFace, their type is MFaceVertex.
-  // After mesh generation, those are moved to the mesh_vertices array
-  std::vector<MVertex *> additionalVertices;
 
 public:
   GFace(GModel *model, int tag);
@@ -129,7 +122,7 @@ public:
   virtual std::vector<GEdge *> embeddedEdges() const { return embedded_edges; }
 
   // edges that are embedded in the face
-  virtual std::set<GVertex *> embeddedVertices() const
+  virtual std::set<GVertex *, GEntityLessThan> embeddedVertices() const
   {
     return embedded_vertices;
   }
@@ -283,12 +276,6 @@ public:
   bool fillPointCloud(double maxDist, std::vector<SPoint3> *points,
                       std::vector<SPoint2> *uvpoints = 0,
                       std::vector<SVector3> *normals = 0);
-
-  // apply Lloyd's algorithm to the mesh
-  void lloyd(int nIter, int infNorm = 0);
-
-  // replace edges (for gluing)
-  void replaceEdges(std::vector<GEdge *> &);
 
   // tells if it's a sphere, and if it is, returns parameters
   virtual bool isSphere(double &radius, SPoint3 &center) const { return false; }

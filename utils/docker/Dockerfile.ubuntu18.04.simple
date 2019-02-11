@@ -1,0 +1,13 @@
+FROM ubuntu:18.04
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && apt-get install -y git cmake python curl g++ gfortran texlive texinfo valgrind libfreetype6-dev libgl1-mesa-dev libxi-dev libxmu-dev mesa-common-dev tcl-dev tk-dev
+
+VOLUME ["/etc/gitlab-runner"]
+RUN useradd -ms /bin/bash validator
+USER validator
+WORKDIR /home/validator
+
+RUN mkdir -p ~/.ssh
+RUN chmod 700 ~/.ssh

@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "PViewData.h"
 #include "adaptiveData.h"
@@ -92,7 +92,8 @@ bool PViewData::skipElement(int step, int ent, int ele, bool checkVisibility,
 }
 
 void PViewData::getScalarValue(int step, int ent, int ele, int nod, double &val,
-                               int forceNumComponents, int componentMap[9])
+                               int tensorRep, int forceNumComponents,
+                               int componentMap[9])
 {
   int numComp = getNumComponents(step, ent, ele);
   if(forceNumComponents && componentMap) {
@@ -104,7 +105,7 @@ void PViewData::getScalarValue(int step, int ent, int ele, int nod, double &val,
       else
         d[i] = 0.;
     }
-    val = ComputeScalarRep(forceNumComponents, &d[0]);
+    val = ComputeScalarRep(forceNumComponents, &d[0], tensorRep);
   }
   else if(numComp == 1) {
     getValue(step, ent, ele, nod, 0, val);
@@ -113,7 +114,7 @@ void PViewData::getScalarValue(int step, int ent, int ele, int nod, double &val,
     std::vector<double> d(numComp);
     for(int comp = 0; comp < numComp; comp++)
       getValue(step, ent, ele, nod, comp, d[comp]);
-    val = ComputeScalarRep(numComp, &d[0]);
+    val = ComputeScalarRep(numComp, &d[0], tensorRep);
   }
 }
 

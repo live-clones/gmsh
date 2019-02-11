@@ -1,8 +1,8 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+@c Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file for license information. Please report all
-@c issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+@c issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 @c
 @c =========================================================================
 @c
@@ -21,8 +21,11 @@
 @c =========================================================================
 @c %**starts of header
 @setfilename gmsh.info
-@set GMSH-VERSION 4.0
-@set COPYRIGHT @copyright{} 1997-2018 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@include version.texi
+@set COPYRIGHT @copyright{} 1997-2019 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set SYN a synchronization of the CAD model with the internal Gmsh model.
+@set SYNC This operation triggers @value{SYN}
+@set SYNCS These operations all trigger @value{SYN}
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate
 @setchapternewpage odd
@@ -968,12 +971,14 @@ corresponding to the indices provided by the @var{expression-list}).
 The next cases permit to retrieve the indices of entities created
 through geometrical transformations, extrusions and boolean operations
 (see @ref{Transformations}, @ref{Extrusions} and @ref{Boolean
-operations}). The next two cases allow to retrieve entities in a given
-bounding box, or get the bounding box of a given entity. The last three
-cases permit to retrieve the coordinates of a given geometry point
-(@pxref{Points}), to retrieve the elementary entities making up physical
-groups, and to retrieve the tags of all (physical or elementary) points,
-curves, surfaces or volumes in the model,
+operations}).
+
+The next two cases allow to retrieve entities in a given bounding box,
+or get the bounding box of a given entity. The last three cases permit
+to retrieve the coordinates of a given geometry point (@pxref{Points}),
+to retrieve the elementary entities making up physical groups, and to
+retrieve the tags of all (physical or elementary) points, curves,
+surfaces or volumes in the model. @value{SYNCS}
 
 To see the practical use of such expressions, have a look at the first
 couple of examples in @ref{Tutorial}. Note that, in order to lighten the
@@ -1664,7 +1669,7 @@ Same as @code{Printf}, but raises an error.
 Merges a file named @var{char-expression}. This command is equivalent to
 the `File->Merge' menu in the GUI. If the path in @var{char-expression}
 is not absolute, @var{char-expression} is appended to the path of the
-current file.
+current file. @value{SYNC}
 
 @item ShapeFromFile( @var{char-expression} );
 Merges a BREP or STEP file and returns the tags of the
@@ -1696,6 +1701,7 @@ If there is no mesh and no geometry, but there are some post-processing
 views, the bounding box is taken as the box enclosing all the primitives in
 the views.
 @end enumerate
+@value{SYNC}
 
 @item BoundingBox @{ @var{expression}, @var{expression}, @var{expression}, @var{expression}, @var{expression}, @var{expression} @};
 Forces the bounding box of the scene to the given @w{@var{expression}s} (X
@@ -1721,7 +1727,7 @@ Deletes the expression @var{string}.
 Prints the graphic window in a file named @var{char-expression}, using
 the current @code{Print.Format} (@pxref{General options list}). If the
 path in @var{char-expression} is not absolute, @var{char-expression} is
-appended to the path of the current file.
+appended to the path of the current file. @value{SYNC}
 
 @item Sleep @var{expression};
 Suspends the execution of Gmsh during @var{expression} seconds.
@@ -2359,6 +2365,11 @@ Transforms all elementary entities symmetrically to a plane. The
 @var{expression-list} should contain four @w{@var{expression}s} giving
 the coefficients of the plane's equation.
 
+@item Affine @{ @var{expression-list} @} @{ @var{transform-list} @}
+Applies a 4 x 4 affine transformation matrix (16 entries given by row;
+only 12 can be provided for convenience) to all elementary
+entities. Currently only available with the OpenCASCADE kernel.
+
 @item Translate @{ @var{expression-list} @} @{ @var{transform-list} @}
 Translates all elementary entities in @var{transform-list}. The
 @var{expression-list} should contain three @w{@var{expression}s} giving
@@ -2369,17 +2380,18 @@ the X, Y and Z components of the translation vector.
 the elementary entities in @var{transform-list}, with signs indicating
 their orientation in the boundary. To get unsigned tags (e.g. to reuse
 the output in other commands), apply the @code{Abs} function on the
-returned list.
+returned list. @value{SYNC}
 
 @item CombinedBoundary @{ @var{transform-list} @}
 (Not a transformation per-se.) Returns the boundary of the elementary
 entities, combined as if a single entity, in
 @var{transform-list}. Useful to compute the boundary of a complex part.
+@value{SYNC}
 
 @item PointsOf @{ @var{transform-list} @}
 (Not a transformation per-se.) Returns all the geometrical points on the
 boundary of the elementary entities. Useful to compute the boundary of a
-complex part.
+complex part. @value{SYNC}
 
 @c @item Intersect Curve @{ @var{expression-list} @} Surface @{ @var{expression} @}
 @c (Not a transformation per-se.) Returns the intersections of the curves
@@ -2420,7 +2432,7 @@ in @var{expression-list-or-all}. If an entity is linked to another
 entity (for example, if a point is used as a control point of a curve),
 @code{Delete} has no effect (the curve will have to be deleted before the
 point can). The @code{Recursive} variant deletes the entities as well as
-all its sub-entities of lower dimension.
+all its sub-entities of lower dimension. @value{SYNC}
 
 @item < Recursive > Hide @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Hide the entities listed in @var{expression-list-or-all}, if
@@ -2650,34 +2662,42 @@ your system}, and @ref{Command-line options}).
 @cindex Mesh, background
 @cindex Background mesh
 
-There are three ways to specify the size of the mesh elements for a
+There are several  ways to specify the size of the mesh elements for a
 given geometry:
 
 @enumerate
 @item
-First, if @code{Mesh.CharacteristicLengthFromPoints} is set (it is by
-default), you can simply specify desired mesh element sizes at the
-geometrical points of the model (with the @code{Point} command: see
-@ref{Points}). The size of the mesh elements will then be computed by
-linearly interpolating these values on the initial mesh (see
-@ref{Mesh}). This might sometimes lead to over-refinement in some areas,
-so that you may have to add ``dummy'' geometrical entities in the model
-in order to get the desired element sizes.
-
-This method works with all the algorithms implemented in the mesh
-module. The final element sizes are of course constrained by the structured
-algorithms for which the element sizes are explicitly specified (e.g.,
-transfinite and extruded grids: see @ref{Structured grids}).
+First, if the two options @code{Mesh.CharacteristicLengthFromPoints} and
+@code{Mesh.CharacteristicLengthExtendFromBoundary} are set (they are by
+default; see @ref{Mesh options list}), you can simply specify desired
+mesh element sizes at the geometrical points of the model (with the
+@code{Point} command: see @ref{Points}). The size of the mesh elements
+will then be computed by interpolating these values inside the domain
+during mesh generation. This might sometimes lead to over-refinement in
+some areas, so that you may have to add ``dummy'' geometrical entities
+in the model in order to get the desired element sizes or use more
+advanced methods explained below.
 @item
 Second, if @code{Mesh.CharacteristicLengthFromCurvature} is set (it is
 not by default), the mesh will be adapted with respect to the curvature
-of the geometrical entities.
+of the geometrical entities and the value of
+@code{Mesh.MinimumCirclePoints}, which gives the number of points per 2
+pi radians.
 @item
-Finally, you can specify general mesh size ``fields''. Various fields
-exist:
+Finally, you can specify a general background mesh size, expressed as a
+combination of so-called mesh size fields:
 @itemize @bullet
 @item
-A @code{PostView} field specifies an explicit background mesh in the
+The @code{Box} field specifies the size of the elements inside and outside
+of a parallelepipedic region.
+@item
+The @code{Distance} field specifies the size of the mesh according to the
+distance to some geometrical entities.
+@item
+The @code{MathEval} field specifies the size of the mesh using an explicit
+mathematical function.
+@item
+The @code{PostView} field specifies an explicit background mesh in the
 form of a scalar post-processing view (see @ref{Post-processing
 commands}, and @ref{File formats}) in which the nodal values are the
 target element sizes.  This method is very general but it requires a
@@ -2686,40 +2706,42 @@ mesh (usually through an error estimation procedure, in an iterative
 process of mesh adaptation). Warning: only parsed (@file{.pos}) files
 can currently be used as background meshes (@file{.msh} files cannot be
 used, since the mesh used to define the field will be destroyed during
-the meshing process).
-
-(Note that you can also load a background mesh directly from the command
-line using the @code{-bgm} option (@pxref{Command-line options}), or in
-the GUI by selecting `Apply as background mesh' in the post-processing
-view option menu.)
+the meshing process). (Note that you can also load a background mesh
+directly from the command line using the @code{-bgm} option
+(@pxref{Command-line options}), or in the GUI by selecting `Apply as
+background mesh' in the post-processing view option menu.)
 @item
-A @code{Box} field specifies the size of the elements inside and outside
-of a parallelepipedic region.
-@item
-A @code{Threshold} field specifies the size of the mesh according to the
-distance to some geometrical entities. These entities can for example be
-geometry points and curves specified by an @code{Attractor} field.
-@item
-A @code{MathEval} field specifies the size of the mesh using an explicit
-mathematical function.
-@item
-A @code{Min} field specifies the size as the minimum of the sizes
-computed using other fields
+The @code{Min} field specifies the size as the minimum of the sizes
+computed using other fields.
 @item
 @dots{}
 @end itemize
 
-Fields are supported by all the algorithms except those based on
-Netgen. The list of available fields with their options is given below.
+The list of available fields with their options is given below. An
+example is available in @ref{t10.geo}.
 @end enumerate
 
 The three aforementioned methods can be used simultaneously, in which
-case the smallest element size is selected at any given point.
+case the smallest element size is selected at any given point. In
+addition, boundary mesh sizes (on curves or surfaces) are interpolated
+inside the enclosed entity (surface or volume, respectively) if the
+option @code{Mesh.CharacteristicLengthExtendFromBoundary} is set (it is
+by default).
 
-All element sizes are further constrained by the
+All element sizes are further constrained in the interval [
 @code{Mesh.CharacteristicLengthMin}, @code{Mesh.CharacteristicLengthMax}
-and @code{Mesh.CharacteristicLengthFactor} options (@pxref{Mesh options
-list})
+]. The resulting value is then finally multiplied by
+@code{Mesh.CharacteristicLengthFactor}.
+
+Note that when the element size is fully specified by a background mesh
+field, it is thus often desirable to set
+@smallexample
+Mesh.CharacteristicLengthFromPoints = 0;
+Mesh.CharacteristicLengthFromCurvature = 0;
+Mesh.CharacteristicLengthExtendFromBoundary = 0;
+@end smallexample
+to prevent over-refinement inside an entity due to small mesh sizes on
+its boundary.
 
 Here are the mesh commands that are related to the specification of
 mesh element sizes:
@@ -2877,33 +2899,33 @@ extrude to have a last layer height = (1.6-0.6) * 5.0 = 5.0.
 @item Transfinite Curve @{ @var{expression-list-or-all} @} = @var{expression} < Using Progression | Bump @var{expression} >;
 Selects the curves in @var{expression-list} to be meshed with the 1D
 transfinite algorithm. The @var{expression} on the right hand side gives
-the number of nodes that will be created on the curve (this overrides any
-other mesh element size prescription---see @ref{Specifying mesh element
-sizes}). The optional argument `@code{Using Progression
+the number of nodes that will be created on the curve (this overrides
+any other mesh element size prescription---see @ref{Specifying mesh
+element sizes}). The optional argument `@code{Using Progression
 @var{expression}}' instructs the transfinite algorithm to distribute the
 nodes following a geometric progression (@code{Progression 2} meaning
 for example that each line element in the series will be twice as long
 as the preceding one). The optional argument `@code{Using Bump
 @var{expression}}' instructs the transfinite algorithm to distribute the
-nodes with a refinement at both ends of the curve.
+nodes with a refinement at both ends of the curve. @value{SYNC}
 
 @item Transfinite Surface @{ @var{expression-list-or-all}  @}  < = @{ @var{expression-list} @} > < Left | Right | Alternate | AlternateRight | AlternateLeft > ;
 Selects surfaces to be meshed with the 2D transfinite algorithm. The
-@var{expression-list} on the right-hand-side should contain the
-tags of three or four points on the boundary of the
-surface that define the corners of the transfinite interpolation. If no
-tags are given, the transfinite algorithm will try to
-find the corners automatically. The optional argument specifies the way
-the triangles are oriented when the mesh is not
-recombined. (@code{Alternate} is a synonym for @code{AlternateRight}).
+@var{expression-list} on the right-hand-side should contain the tags of
+three or four points on the boundary of the surface that define the
+corners of the transfinite interpolation. If no tags are given, the
+transfinite algorithm will try to find the corners automatically. The
+optional argument specifies the way the triangles are oriented when the
+mesh is not recombined. @code{Alternate} is a synonym for
+@code{AlternateRight}. @value{SYNC}
 
 @item Transfinite Volume @{ @var{expression-list} @} < = @{ @var{expression-list} @} > ;
 Selects five- or six-face volumes to be meshed with the 3D transfinite
 algorithm.  The @var{expression-list} on the right-hand-side should
-contain the tags of the six or eight points on the
-boundary of the volume that define the corners of the transfinite
-interpolation. If no tags are given, the transfinite
-algorithm will try to find the corners automatically.
+contain the tags of the six or eight points on the boundary of the
+volume that define the corners of the transfinite interpolation. If no
+tags are given, the transfinite algorithm will try to find the corners
+automatically. @value{SYNC}
 
 @item TransfQuadTri @{ @var{expression-list} @} ;
 
@@ -2911,7 +2933,7 @@ Applies the transfinite QuadTri algorithm on the @var{expression-list}
 list of volumes.  A transfinite volume with any combination of
 recombined and un-recombined transfinite boundary surfaces is valid when
 meshed with @code{TransfQuadTri}. When applied to non-Transfinite
-volumes, TransfQuadTri has no effect on those volumes.
+volumes, TransfQuadTri has no effect on those volumes. @value{SYNC}
 
 @end ftable
 
@@ -2932,13 +2954,13 @@ Here is a list of all other mesh commands currently available:
 
 @ftable @code
 @item Mesh @var{expression};
-Generates @var{expression}-D mesh.
+Generates @var{expression}-D mesh. @value{SYNC}
 
 @item RefineMesh;
 Refines the current mesh by splitting all elements. If
 @code{Mesh.SecondOrderLinear} is set, the new nodes are inserted by
 linear interpolatinon. Otherwise they are snapped on the actual
-geometry.
+geometry. @value{SYNC}
 
 @item OptimizeMesh @var{char-expression};
 Optimizes the current mesh with the given algorithm (currently
@@ -2950,7 +2972,7 @@ Performs adaptive mesh generation. Documentation not yet available.
 @item RelocateMesh Point | Curve | Surface @{ @var{expression-list-or-all} @};
 Relocates the mesh nodes on the given entities using the parametric
 coordinates stored in the nodes. Useful for creating perturbation of
-meshes e.g. for sensitivity analyzes.
+meshes e.g. for sensitivity analyzes. @value{SYNC}
 
 @item SetOrder @var{expression};
 Changes the order of the elements in the current mesh.
@@ -2960,34 +2982,36 @@ Partitions the mesh into @var{expression}, using current partitioning options.
 
 @item Point | Curve @{ @var{expression-list} @} In Surface @{ @var{expression} @};
 Embed the point(s) or curve(s) in the given surface. The surface mesh
-will conform to the mesh of the point(s) or curves(s).
+will conform to the mesh of the point(s) or curves(s). @value{SYNC}
 
 @item Point | Curve | Surface @{ @var{expression-list} @} In Volume @{ @var{expression} @};
 Embed the point(s), curve(s) or surface(s) in the given volume. The
 volume mesh will conform to the mesh of the corresponding point(s),
 curve(s) or surface(s). This is only supported with the 3D Delaunay
-algorithm.
+algorithm. @value{SYNC}
 
 @item Periodic Curve @{ @var{expression-list} @} = @{ @var{expression-list} @} ;
 Force mesh of curves on the left-hand side (slaves) to match the mesh of
-the curves on the right-hand side (masters).
+the curves on the right-hand side (masters). @value{SYNC}
 
 @item Periodic Surface @var{expression} @{ @var{expression-list} @} = @var{expression} @{ @var{expression-list} @} ;
 Force mesh of the surface on the left-hand side (slave, with boundary
 edges specified between braces) to match the mesh of the surface on the
-right-hand side (master, with boundary edges specified between braces).
+right-hand side (master, with boundary edges specified between
+braces). @value{SYNC}
 
 @item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Affine | Translate @{ @var{expression-list} @} ;
 Force mesh of curves or surfaces on the left-hand side (slaves) to match
 the mesh of the curves on the right-hand side (masters), using
-prescribed geometrical transformations. @code{Affine} takes a 4 x 4 (or
-4 x 3) affine transformation matrix given by row; @code{Translate} takes
-the 3 components of the translation as in @ref{Transformations}.
+prescribed geometrical transformations. @code{Affine} takes a 4 x 4
+affine transformation matrix given by row (only 12 entries can be
+provided for convenience); @code{Translate} takes the 3 components of
+the translation as in @ref{Transformations}. @value{SYNC}
 
 @item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Rotate @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} ;
 Force mesh of curves or surfaces on the left-hand side (slaves) to match
 the mesh of the curves on the right-hand side (masters), using
-a rotation specified as in @ref{Transformations}.
+a rotation specified as in @ref{Transformations}. @value{SYNC}
 
 @item Coherence Mesh;
 Removes all duplicate mesh nodes.
@@ -3006,21 +3030,25 @@ an underlying CAD description).
 Renumbers the node tags in the current mesh in a contiunous sequence.
 
 @item RenumberMeshElements;
-Renumbers the elements tags in the current mesh in a contiunous sequence.
+Renumbers the elements tags in the current mesh in a contiunous
+sequence.
 
 @item SetPartition @var{expression} @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
-Sets the partition tag of the mesh elements in the entities in @var{expression-list} to @var{expression}.
+Sets the partition tag of the mesh elements in the entities in
+@var{expression-list} to @var{expression}.
 
 @item < Recursive > Color @var{color-expression} @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
-Sets the mesh color of the entities in @var{expression-list} to @var{color-expression}.
+Sets the mesh color of the entities in @var{expression-list} to
+@var{color-expression}. @value{SYNC}
 
 @item < Recursive > Hide @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Hides the mesh of the entities in @var{expression-list}, if
-@code{General.VisibilityMode} is set to @code{0} or @code{2}.
+@code{General.VisibilityMode} is set to @code{0} or
+@code{2}. @value{SYNC}
 
 @item Hide @{ : @}
 Hide the mesh of all entities, if @code{General.VisibilityMode} is set
-to @code{0} or @code{2}.
+to @code{0} or @code{2}. @value{SYNC}
 
 @item Recombine Surface @{ @var{expression-list-or-all} @}  < = @var{expression} >;
 Recombines the triangular meshes of the surfaces listed in
@@ -3029,7 +3057,7 @@ optional @var{expression} on the right hand side specifies the maximum
 difference (in degrees) allowed between the largest angle of a
 quadrangle and a right angle (a value of 0 would only accept quadrangles
 with right angles; a value of 90 would allow degenerate quadrangles;
-default value is 45).
+default value is 45). @value{SYNC}
 
 @item MeshAlgorithm Surface @{ @var{expression-list} @} = @var{expression};
 Forces the meshing algorithm per surface.
@@ -3039,31 +3067,33 @@ Treats the given entities as a single entity when meshing, i.e. perform
 cross-patch meshing of the entities.
 
 @item ReverseMesh Curve | Surface @{ @var{expression-list-or-all} @} ;
-Reverses the mesh of the given curve(s) or surface(s).
+Reverses the mesh of the given curve(s) or surface(s). @value{SYNC}
 
 @item ReorientMesh Volume @{ @var{expression-list} @} ;
 Reorients the meshes of the bounding surfaces of the given volumes so
 that the normals point outward to the volumes. Currently only available
-with the OpenCASCADE kernel, as it relies on the STL triangulation.
+with the OpenCASCADE kernel, as it relies on the STL
+triangulation. @value{SYNC}
 
 @item Save @var{char-expression};
 Saves the mesh in a file named @var{char-expression}, using the current
 @code{Mesh.Format} (@pxref{Mesh options list}). If the path in
 @var{char-expression} is not absolute, @var{char-expression} is appended
-to the path of the current file.
+to the path of the current file. @value{SYNC}
 
 @item < Recursive > Show @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Shows the mesh of the entities in @var{expression-list}, if
-@code{General.VisibilityMode} is set to @code{0} or @code{2}.
+@code{General.VisibilityMode} is set to @code{0} or
+@code{2}. @value{SYNC}
 
 @item Show @{ : @};
 Shows the mesh of all entities, if @code{General.VisibilityMode} is set
-to @code{0} or @code{2}.
+to @code{0} or @code{2}. @value{SYNC}
 
 @item Smoother Surface @{ @var{expression-list} @} = @var{expression};
 Sets number of elliptic smoothing steps for the surfaces listed in
 @var{expression-list} (smoothing only applies to transfinite meshes at
-the moment).
+the moment). @value{SYNC}
 
 @item Homology ( @{ @var{expression-list} @} ) @{ @{ @var{expression-list} @} , @{ @var{expression-list} @} @};
 Compute a basis representation for homology spaces after a mesh has
@@ -3848,12 +3878,16 @@ with the edges, 24 with the faces, 8 in the volume)
 @item 93
 125-node fourth order hexahedron (8 nodes associated with the vertices, 36
 with the edges, 54 with the faces, 27 in the volume)
+@item ...
 @end table
+All the currently supported elements in the format are defined in
+@url{https://gitlab.onelab.info/gmsh/gmsh/blob/master/Common/GmshDefines.h,GmshDefines.h}.
 See below for the ordering of the nodes.
 
 The post-processing sections are identical to the ones in the version 2
-file format (see below). These sections will be reworked in a future
-minor revision of the version 4 format (e.g. version 4.1 or 4.2).
+file format (@pxref{MSH file format version 2}). These sections will be
+reworked in a future minor revision of the version 4 format
+(e.g. version 4.1 or 4.2).
 
 @c -------------------------------------------------------------------------
 @c Node ordering
@@ -5060,6 +5094,12 @@ enable optional modules or features. Here is the list of CMake options:
 
 @end ftable
 
+The wiki
+(@uref{https://gitlab.onelab.info/gmsh/gmsh/wikis/Gmsh-compilation})
+contains more detailed instructions on how to compile Gmsh, including
+the compilation of common dependencies.
+
+
 @c =========================================================================
 @c Gmsh API
 @c =========================================================================
@@ -5129,7 +5169,7 @@ Yacc (actually, Flex and Bison), and the GUI relies on OpenGL for the 3D
 graphics and FLTK (@uref{http://www.fltk.org}) for the widget
 set. Gmsh's build system is based on CMake
 (@uref{http://www.cmake.org}). Practical notes on how to compile Gmsh's
-source code is provided in @ref{Compiling the source code} (see also
+source code are provided in @ref{Compiling the source code} (see also
 @ref{Frequently asked questions}).
 
 This section is for developers who would like to contribute directly to

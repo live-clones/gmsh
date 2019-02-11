@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _GMSH_DEFINES_H_
 #define _GMSH_DEFINES_H_
@@ -70,6 +70,7 @@
 #define TYPE_XFEM    11
 #define TYPE_MINI    12
 #define TYPE_TRIH    13
+#define TYPE_MAX_NUM 13 // keep this up-to-date when adding new type
 
 // Element types in .msh file format (numbers should not be changed)
 #define MSH_LIN_2    1
@@ -173,81 +174,78 @@
 #define MSH_HEX_1000 98
 // HEXES INCOMPLETE (3->9)
 #define MSH_HEX_32   99
-#define MSH_HEX_44  100
-#define MSH_HEX_56  101
-#define MSH_HEX_68  102
-#define MSH_HEX_80  103
-#define MSH_HEX_92  104
-#define MSH_HEX_104 105
+#define MSH_HEX_44   100
+#define MSH_HEX_56   101
+#define MSH_HEX_68   102
+#define MSH_HEX_80   103
+#define MSH_HEX_92   104
+#define MSH_HEX_104  105
 // PRISMS COMPLETE (5->9)
-#define MSH_PRI_126 106
-#define MSH_PRI_196 107
-#define MSH_PRI_288 108
-#define MSH_PRI_405 109
-#define MSH_PRI_550 110
+#define MSH_PRI_126  106
+#define MSH_PRI_196  107
+#define MSH_PRI_288  108
+#define MSH_PRI_405  109
+#define MSH_PRI_550  110
 // PRISMS INCOMPLETE (3->9)
-#define MSH_PRI_24  111
-#define MSH_PRI_33  112
-#define MSH_PRI_42  113
-#define MSH_PRI_51  114
-#define MSH_PRI_60  115
-#define MSH_PRI_69  116
-#define MSH_PRI_78  117
+#define MSH_PRI_24   111
+#define MSH_PRI_33   112
+#define MSH_PRI_42   113
+#define MSH_PRI_51   114
+#define MSH_PRI_60   115
+#define MSH_PRI_69   116
+#define MSH_PRI_78   117
 // PYRAMIDS COMPLETE (3->9)
-#define MSH_PYR_30  118
-#define MSH_PYR_55  119
-#define MSH_PYR_91  120
-#define MSH_PYR_140 121
-#define MSH_PYR_204 122
-#define MSH_PYR_285 123
-#define MSH_PYR_385 124
+#define MSH_PYR_30   118
+#define MSH_PYR_55   119
+#define MSH_PYR_91   120
+#define MSH_PYR_140  121
+#define MSH_PYR_204  122
+#define MSH_PYR_285  123
+#define MSH_PYR_385  124
 // PYRAMIDS INCOMPLETE (3->9)
-#define MSH_PYR_21  125
-#define MSH_PYR_29  126
-#define MSH_PYR_37  127
-#define MSH_PYR_45  128
-#define MSH_PYR_53  129
-#define MSH_PYR_61  130
-#define MSH_PYR_69  131
+#define MSH_PYR_21   125
+#define MSH_PYR_29   126
+#define MSH_PYR_37   127
+#define MSH_PYR_45   128
+#define MSH_PYR_53   129
+#define MSH_PYR_61   130
+#define MSH_PYR_69   131
 // Additional types
-#define MSH_PYR_1   132
-#define MSH_PNT_SUB 133
-#define MSH_LIN_SUB 134
-#define MSH_TRI_SUB 135
-#define MSH_TET_SUB 136
-#define MSH_TET_16  137
+#define MSH_PYR_1    132
+#define MSH_PNT_SUB  133
+#define MSH_LIN_SUB  134
+#define MSH_TRI_SUB  135
+#define MSH_TET_SUB  136
+#define MSH_TET_16   137
 #define MSH_TRI_MINI 138
 #define MSH_TET_MINI 139
 #define MSH_TRIH_4   140
-
-#define MSH_NUM_TYPE 140
+#define MSH_MAX_NUM  140 // keep this up-to-date when adding new type
 
 // Geometric entities
-#define ENT_NONE     0
-#define ENT_POINT    (1<<0)
-#define ENT_CURVE    (1<<1)
-#define ENT_SURFACE  (1<<2)
-#define ENT_VOLUME   (1<<3)
-#define ENT_ALL      (ENT_POINT | ENT_CURVE | ENT_SURFACE | ENT_VOLUME)
+#define ENT_NONE    0
+#define ENT_POINT   (1<<0)
+#define ENT_CURVE   (1<<1)
+#define ENT_SURFACE (1<<2)
+#define ENT_VOLUME  (1<<3)
+#define ENT_ALL     (ENT_POINT | ENT_CURVE | ENT_SURFACE | ENT_VOLUME)
 
 // 2D meshing algorithms (numbers should not be changed)
-#define ALGO_2D_MESHADAPT      1
-#define ALGO_2D_AUTO           2
-#define ALGO_2D_DELAUNAY       5
-#define ALGO_2D_FRONTAL        6
-#define ALGO_2D_BAMG           7
-#define ALGO_2D_FRONTAL_QUAD   8
-#define ALGO_2D_PACK_PRLGRMS   9
-#define ALGO_2D_PACK_PRLGRMS_CSTR   10
+#define ALGO_2D_MESHADAPT         1
+#define ALGO_2D_AUTO              2
+#define ALGO_2D_DELAUNAY          5
+#define ALGO_2D_FRONTAL           6
+#define ALGO_2D_BAMG              7
+#define ALGO_2D_FRONTAL_QUAD      8
+#define ALGO_2D_PACK_PRLGRMS      9
+#define ALGO_2D_PACK_PRLGRMS_CSTR 10
 
 // 3D meshing algorithms (numbers should not be changed)
-#define ALGO_3D_DELAUNAY       1
-#define ALGO_3D_FRONTAL        4
-#define ALGO_3D_FRONTAL_DEL    5
-#define ALGO_3D_FRONTAL_HEX    6
-#define ALGO_3D_MMG3D          7
-#define ALGO_3D_RTREE          9
-#define ALGO_3D_HXT           10
+#define ALGO_3D_DELAUNAY 1
+#define ALGO_3D_FRONTAL  4
+#define ALGO_3D_MMG3D    7
+#define ALGO_3D_RTREE    9
+#define ALGO_3D_HXT      10
 
 // Meshing methods
 #define MESH_NONE         0
@@ -255,11 +253,11 @@
 #define MESH_UNSTRUCTURED 2
 
 // QuadTri options (structured/unstructured coupling with pyramids)
-#define NO_QUADTRI                    0
-#define QUADTRI_ADDVERTS_1            1
-#define QUADTRI_ADDVERTS_1_RECOMB     2
-#define QUADTRI_NOVERTS_1             3
-#define QUADTRI_NOVERTS_1_RECOMB      4
-#define TRANSFINITE_QUADTRI_1         5
+#define NO_QUADTRI                0
+#define QUADTRI_ADDVERTS_1        1
+#define QUADTRI_ADDVERTS_1_RECOMB 2
+#define QUADTRI_NOVERTS_1         3
+#define QUADTRI_NOVERTS_1_RECOMB  4
+#define TRANSFINITE_QUADTRI_1     5
 
 #endif

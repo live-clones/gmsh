@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
 #include <vector>
@@ -13,10 +13,9 @@
 #include "meshGRegionMMG3D.h"
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
-#include "boundaryLayersData.h"
 #include "meshGRegionBoundaryRecovery.h"
 #include "meshGRegionDelaunayInsertion.h"
-#include "meshGRegionRelocateVertex.h"
+#include "meshRelocateVertex.h"
 #include "GModel.h"
 #include "GRegion.h"
 #include "GFace.h"
@@ -25,17 +24,9 @@
 #include "MTriangle.h"
 #include "MTetrahedron.h"
 #include "MPyramid.h"
-#include "MPrism.h"
-#include "BDS.h"
+#include "ExtrudeParams.h"
 #include "OS.h"
 #include "Context.h"
-#include "simple3D.h"
-#include "directions3D.h"
-#include "pointInsertion.h"
-#include "Levy3D.h"
-#include "discreteFace.h"
-#include "filterElements.h"
-#include "ExtrudeParams.h"
 
 void splitQuadRecovery::add(const MFace &f, MVertex *v, GFace *gf)
 {
@@ -158,30 +149,23 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   if(!success) return;
 
   // now do insertion of points
-
   if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D) {
     refineMeshMMG(gr);
   }
-  else if(CTX::instance()->mesh.oldRefinement) {
+  else{
     insertVerticesInRegion(gr, 2000000000, true, &sqr);
-  }
-  else {
-    void edgeBasedRefinement(const int numThreads, const int nptsatonce,
-                             GRegion *gr);
-    // just to remove tets that are not to be meshed
-    insertVerticesInRegion(gr, 0, true, &sqr);
-    for(unsigned int i = 0; i < regions.size(); i++) {
-      Msg::Info("Refining volume %d with %d threads", regions[i]->tag(),
-                Msg::GetMaxThreads());
-      edgeBasedRefinement(Msg::GetMaxThreads(), 1, regions[i]);
-    }
-    // RelocateVertices(regions, -1);
-  }
 
-  if(sqr.buildPyramids(gr->model())){
-    Msg::Info("Optimizing pyramids for hybrid mesh...");
-    RelocateVertices(regions, 3);
-    Msg::Info("Done optimizing pyramids for hybrid mesh");
+    if(sqr.buildPyramids(gr->model())){
+      Msg::Info("Optimizing pyramids for hybrid mesh...");
+      gr->model()->setAllVolumesPositive();
+      RelocateVerticesOfPyramids(regions, 3);
+      //RelocateVertices(regions, 3);
+      Msg::Info("Done optimizing pyramids for hybrid mesh");
+    }
+
+    // test:
+    // bool createBoundaryLayerOneLayer(GRegion *gr, std::vector<GFace *> & bls);
+    // createBoundaryLayerOneLayer(gr, allFaces);
   }
 }
 

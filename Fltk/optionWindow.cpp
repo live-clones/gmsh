@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #if !defined(HAVE_NO_STDINT_H)
@@ -250,6 +250,27 @@ void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
   Msg::StatusGl("");
 }
 
+void general_options_axes_fit_cb(Fl_Widget *w, void *data)
+{
+  SBoundingBox3d bbox = GModel::current()->bounds(true);
+  for(unsigned int i = 0; i < PView::list.size(); i++){
+    if(PView::list[i]->getOptions()->visible &&
+       !PView::list[i]->getData()->getBoundingBox().empty())
+      bbox += PView::list[i]->getData()->getBoundingBox();
+  }
+  if(bbox.empty())
+    bbox = SBoundingBox3d(CTX::instance()->min[0], CTX::instance()->min[1],
+                          CTX::instance()->min[2], CTX::instance()->max[0],
+                          CTX::instance()->max[1], CTX::instance()->max[2]);
+  opt_general_axes_xmin(0, GMSH_SET|GMSH_GUI, bbox.min().x());
+  opt_general_axes_ymin(0, GMSH_SET|GMSH_GUI, bbox.min().y());
+  opt_general_axes_zmin(0, GMSH_SET|GMSH_GUI, bbox.min().z());
+  opt_general_axes_xmax(0, GMSH_SET|GMSH_GUI, bbox.max().x());
+  opt_general_axes_ymax(0, GMSH_SET|GMSH_GUI, bbox.max().y());
+  opt_general_axes_zmax(0, GMSH_SET|GMSH_GUI, bbox.max().z());
+  drawContext::global()->draw();
+}
+
 void general_options_ok_cb(Fl_Widget *w, void *data)
 {
   optionWindow *o = FlGui::instance()->options;
@@ -368,6 +389,7 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_axes_zmax(0, GMSH_SET, o->general.value[25]->value());
   opt_general_small_axes_position0(0, GMSH_SET, o->general.value[26]->value());
   opt_general_small_axes_position1(0, GMSH_SET, o->general.value[27]->value());
+  opt_general_num_threads(0, GMSH_SET, o->general.value[32]->value());
 
   opt_general_default_filename(0, GMSH_SET, o->general.input[0]->value());
   opt_general_editor(0, GMSH_SET, o->general.input[1]->value());
@@ -554,30 +576,18 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
 
   opt_mesh_point_type(0, GMSH_SET, o->mesh.choice[0]->value());
   opt_mesh_algo2d(0, GMSH_SET,
-                  (o->mesh.choice[2]->value() == 1) ?
-                    ALGO_2D_MESHADAPT :
-                    (o->mesh.choice[2]->value() == 2) ?
-                    ALGO_2D_DELAUNAY :
-                    (o->mesh.choice[2]->value() == 3) ?
-                    ALGO_2D_FRONTAL :
-                    (o->mesh.choice[2]->value() == 4) ?
-                    ALGO_2D_FRONTAL_QUAD :
-                    (o->mesh.choice[2]->value() == 5) ? ALGO_2D_PACK_PRLGRMS :
-                                                        ALGO_2D_AUTO);
+                  (o->mesh.choice[2]->value() == 1) ? ALGO_2D_MESHADAPT :
+                  (o->mesh.choice[2]->value() == 2) ? ALGO_2D_DELAUNAY :
+                  (o->mesh.choice[2]->value() == 3) ? ALGO_2D_FRONTAL :
+                  (o->mesh.choice[2]->value() == 4) ? ALGO_2D_FRONTAL_QUAD :
+                  (o->mesh.choice[2]->value() == 5) ? ALGO_2D_PACK_PRLGRMS :
+                  ALGO_2D_AUTO);
   opt_mesh_algo3d(0, GMSH_SET,
-                  (o->mesh.choice[3]->value() == 1) ?
-                    ALGO_3D_FRONTAL :
-                    (o->mesh.choice[3]->value() == 2) ?
-                    ALGO_3D_FRONTAL_DEL :
-                    (o->mesh.choice[3]->value() == 3) ?
-                    ALGO_3D_FRONTAL_HEX :
-                    (o->mesh.choice[3]->value() == 4) ?
-                    ALGO_3D_MMG3D :
-                    (o->mesh.choice[3]->value() == 6) ?
-                    ALGO_3D_HXT :
-                    (o->mesh.choice[3]->value() == 5) ? ALGO_3D_RTREE :
-                                                        ALGO_3D_DELAUNAY
-		  );
+                  (o->mesh.choice[3]->value() == 1) ? ALGO_3D_FRONTAL :
+                  (o->mesh.choice[3]->value() == 2) ? ALGO_3D_MMG3D :
+                  (o->mesh.choice[3]->value() == 3) ? ALGO_3D_RTREE :
+                  (o->mesh.choice[3]->value() == 4) ? ALGO_3D_HXT :
+                  ALGO_3D_DELAUNAY);
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
   opt_mesh_color_carousel(0, GMSH_SET, o->mesh.choice[4]->value());
@@ -702,18 +712,12 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       for(int i = 0; i < (int)PView::list.size(); i++) {
         if(i == current ||
            FlGui::instance()->options->browser->selected(i + 6)) {
-          // compute min/max taking current visibility status into account
-          int step = (int)opt_view_timestep(i, GMSH_GET, 0);
-          PViewData *data = PView::list[i]->getData(true);
-          PViewOptions *opt = PView::list[i]->getOptions();
+          // compute min/max taking current visibility status and tensor display
+          // mode into account
           if(str == "range_min")
-            vmin =
-              std::min(vmin, data->getMin(step, true, opt->forceNumComponents,
-                                          opt->componentMap));
+            vmin = std::min(vmin, opt_view_min_visible(i, GMSH_GET, 0));
           else if(str == "range_max")
-            vmax =
-              std::max(vmax, data->getMax(step, true, opt->forceNumComponents,
-                                          opt->componentMap));
+            vmax = std::max(vmax, opt_view_max_visible(i, GMSH_GET, 0));
         }
       }
       if(str == "range_min")
@@ -1478,15 +1482,26 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[10]->type(FL_TOGGLE_BUTTON);
       general.butt[10]->callback(general_options_ok_cb);
 
+      general.value[32] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH,
+                                            "Number of threads");
+      general.value[32]->minimum(0);
+      general.value[32]->maximum(16);
+      general.value[32]->step(1);
+      general.value[32]->align(FL_ALIGN_RIGHT);
+      general.value[32]->callback(general_options_ok_cb);
+#if !defined(_OPENMP)
+      general.value[32]->deactivate();
+#endif
+
 #if defined(HAVE_VISUDEV)
       general.butt[23] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW / 2 - WB, BH,
+       new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW / 2 - WB, BH,
                             "Enable heavy visualization capabilities");
       general.butt[23]->type(FL_TOGGLE_BUTTON);
       general.butt[23]->callback(general_options_ok_cb);
 #endif
 
-      Fl_Button *b2 = new Fl_Button(L + 2 * WB, 2 * WB + 10 * BH, BW, BH,
+      Fl_Button *b2 = new Fl_Button(L + 2 * WB, 2 * WB + 11 * BH, BW, BH,
                                     "Restore all options to default settings");
       b2->callback(options_restore_defaults_cb);
       if(CTX::instance()->guiColorScheme)
@@ -1583,7 +1598,11 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[25]->align(FL_ALIGN_RIGHT);
       general.value[25]->callback(general_options_ok_cb);
 
-      general.butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH,
+      general.push[1] =
+        new Fl_Button(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Fit to visible");
+      general.push[1]->callback(general_options_axes_fit_cb);
+
+      general.butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH,
                                             "Show small axes");
       general.butt[1]->tooltip("(Alt+Shift+a)");
       general.butt[1]->type(FL_TOGGLE_BUTTON);
@@ -1591,13 +1610,13 @@ optionWindow::optionWindow(int deltaFontSize)
                                 (void *)"general_small_axes");
 
       general.value[26] =
-        new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
+        new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH);
       general.value[26]->minimum(-2000);
       general.value[26]->maximum(2000);
       general.value[26]->step(1);
       general.value[26]->callback(general_options_ok_cb);
       general.value[27] =
-        new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH,
+        new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH,
                            "Small axes position");
       general.value[27]->align(FL_ALIGN_RIGHT);
       general.value[27]->minimum(-2000);
@@ -2234,23 +2253,23 @@ optionWindow::optionWindow(int deltaFontSize)
         {"MeshAdapt", 0, 0, 0},
         {"Delaunay", 0, 0, 0},
         {"Frontal", 0, 0, 0},
-        {"Delaunay for quads (experimental)", 0, 0, 0},
-        {"Packing of parallelograms (experimental)", 0, 0, 0},
+        {"Delaunay for Quads (experimental)", 0, 0, 0},
+        {"Packing of Parallelograms (experimental)", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Delaunay", 0, 0, 0},
         {"Frontal", 0, 0, 0},
-        {"Frontal Delaunay (experimental)", 0, 0, 0},
-        {"Frontal Hex (experimental)", 0, 0, 0},
         {"MMG3D (experimental)", 0, 0, 0},
-        {"R-tree (experimental)", 0, 0, 0},
+        {"R-Tree (experimental)", 0, 0, 0},
         {"HXT (experimental)", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_recombination_algo[] = {
-        {"Standard", 0, 0, 0},
+        {"Simple", 0, 0, 0},
         {"Blossom", 0, 0, 0},
+        {"Simple Full-Quad", 0, 0, 0},
+        {"Blossom Full-Quad", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_subdivision_algo[] = {
@@ -3413,10 +3432,10 @@ optionWindow::optionWindow(int deltaFontSize)
 
       static Fl_Menu_Item menu_tensor[] = {
         {"Von-Mises", 0, 0, 0},
-        {"Maximum eigen value", 0, 0, 0},
-        {"Minimum eigen value", 0, 0, 0},
-        {"Eigen vectors", 0, 0, 0},
-        {"Ellipse (2d)", 0, 0, 0},
+        {"Maximum eigenvalue", 0, 0, 0},
+        {"Minimum eigenvalue", 0, 0, 0},
+        {"Eigenvectors", 0, 0, 0},
+        {"Ellipse", 0, 0, 0},
         {"Ellipsoid", 0, 0, 0},
         {"Frame", 0, 0, 0},
         {0}
@@ -3864,6 +3883,7 @@ void optionWindow::activate(const char *what)
       general.value[23]->deactivate();
       general.value[24]->deactivate();
       general.value[25]->deactivate();
+      general.push[1]->deactivate();
     }
     else {
       general.value[20]->activate();
@@ -3872,6 +3892,7 @@ void optionWindow::activate(const char *what)
       general.value[23]->activate();
       general.value[24]->activate();
       general.value[25]->activate();
+      general.push[1]->activate();
     }
   }
   else if(!strcmp(what, "general_small_axes")) {

@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _PVIEW_DATA_H_
 #define _PVIEW_DATA_H_
@@ -90,9 +90,11 @@ public:
 
   // get/set min/max for given step (global over all steps if step=-1)
   virtual double getMin(int step = -1, bool onlyVisible = false,
+                        int tensorRep = 0,
                         int forceNumComponents = 0,
                         int componentMap[9] = 0) = 0;
   virtual double getMax(int step = -1, bool onlyVisible = false,
+                        int tensorRep = 0,
                         int forceNumComponents = 0,
                         int componentMap[9] = 0) = 0;
   virtual void setMin(double min) = 0;
@@ -162,11 +164,13 @@ public:
   virtual void setValue(int step, int ent, int ele, int nod, int comp,
                         double val);
 
-  // return a scalar value (same as value for scalars, norm for vectors, etc.)
-  // associated with the node-th node from the ele-th element in the ent-th
-  // entity
+  // return a scalar value associated with the node-th node from the ele-th
+  // element in the ent-th entity: same as value for scalars, norm for vectors,
+  // Von-Mises (if tensorRep == 0), max eigenvalue (if tensorRep == 1) or min
+  // eigenvalue (if tensorRep == 2) for tensors
   void getScalarValue(int step, int ent, int ele, int nod, double &val,
-                      int forceNumComponents = 0, int componentMap[9] = 0);
+                      int tensorRep = 0, int forceNumComponents = 0,
+                      int componentMap[9] = 0);
 
   // return the number of edges of the ele-th element in the ent-th
   // entity

@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string.h>
 #include <stdlib.h>
@@ -2283,6 +2283,13 @@ double opt_general_system_menu_bar(OPT_ARGS_NUM)
   return CTX::instance()->systemMenuBar;
 }
 
+double opt_general_show_module_menu(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->showModuleMenu = (int)val;
+  return CTX::instance()->showModuleMenu;
+}
+
 double opt_general_meshdiscrete(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -4278,9 +4285,15 @@ double opt_general_light53(OPT_ARGS_NUM)
 
 double opt_general_num_threads(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
-    Msg::SetNumThreads(val);
-  return Msg::GetNumThreads();
+  if(action & GMSH_SET){
+    if(val > 0) Msg::SetNumThreads(val);
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.value[32]->value
+      (Msg::GetMaxThreads());
+#endif
+  return Msg::GetMaxThreads();
 }
 
 double opt_geometry_transform(OPT_ARGS_NUM)
@@ -5003,13 +5016,6 @@ double opt_mesh_optimize_netgen(OPT_ARGS_NUM)
       (CTX::instance()->mesh.optimizeNetgen);
 #endif
   return CTX::instance()->mesh.optimizeNetgen;
-}
-
-double opt_mesh_old_refinement(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->mesh.oldRefinement = (int)val;
-  return CTX::instance()->mesh.oldRefinement;
 }
 
 double opt_mesh_refine_steps(OPT_ARGS_NUM)
@@ -5890,6 +5896,13 @@ double opt_mesh_smooth_cross_field(OPT_ARGS_NUM)
   return CTX::instance()->mesh.smoothCrossField;
 }
 
+double opt_mesh_cross_field_closest_point(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.crossFieldClosestPoint = (int)val;
+  return CTX::instance()->mesh.crossFieldClosestPoint;
+}
+
 double opt_mesh_bdf_field_format(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -5899,6 +5912,14 @@ double opt_mesh_bdf_field_format(OPT_ARGS_NUM)
       CTX::instance()->mesh.bdfFieldFormat = 1;
   }
   return CTX::instance()->mesh.bdfFieldFormat;
+}
+
+double opt_mesh_stl_remove_duplicate_triangles(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.stlRemoveDuplicateTriangles = (int)val;
+  }
+  return CTX::instance()->mesh.stlRemoveDuplicateTriangles;
 }
 
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM)
@@ -5955,7 +5976,7 @@ double opt_mesh_algo_recombine(OPT_ARGS_NUM)
       Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.algoRecombine = (int)val;
     if(CTX::instance()->mesh.algoRecombine < 0 &&
-       CTX::instance()->mesh.algoRecombine > 1)
+       CTX::instance()->mesh.algoRecombine > 3)
       CTX::instance()->mesh.algoRecombine = 0;
   }
 #if defined(HAVE_FLTK)
@@ -5980,6 +6001,14 @@ double opt_mesh_recombine_all(OPT_ARGS_NUM)
       (CTX::instance()->mesh.recombineAll);
 #endif
   return CTX::instance()->mesh.recombineAll;
+}
+
+double opt_mesh_recombine_optimize_topology(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.recombineOptimizeTopology = (int)val;
+  }
+  return CTX::instance()->mesh.recombineOptimizeTopology;
 }
 
 double opt_mesh_recombine3d_all(OPT_ARGS_NUM)
@@ -6034,30 +6063,6 @@ double opt_mesh_flexible_transfinite(OPT_ARGS_NUM)
   return CTX::instance()->mesh.flexibleTransfinite;
 }
 
-double opt_mesh_do_recombination_test(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    CTX::instance()->mesh.doRecombinationTest = (int)val;
-  }
-  return CTX::instance()->mesh.doRecombinationTest;
-}
-
-double opt_mesh_recombination_test_start(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    CTX::instance()->mesh.recombinationTestStart = (int)val;
-  }
-  return CTX::instance()->mesh.recombinationTestStart;
-}
-
-double opt_mesh_recombination_no_greedy_strat(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    CTX::instance()->mesh.recombinationTestNoGreedyStrat = (int)val;
-  }
-  return CTX::instance()->mesh.recombinationTestNoGreedyStrat;
-}
-
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -6090,18 +6095,12 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
   if(FlGui::available() && (action & GMSH_GUI)) {
     switch (CTX::instance()->mesh.algo3d) {
     case ALGO_3D_HXT:
-      FlGui::instance()->options->mesh.choice[3]->value(6);
-      break;
-    case ALGO_3D_RTREE:
-      FlGui::instance()->options->mesh.choice[3]->value(5);
-      break;
-    case ALGO_3D_MMG3D:
       FlGui::instance()->options->mesh.choice[3]->value(4);
       break;
-    case ALGO_3D_FRONTAL_HEX:
+    case ALGO_3D_RTREE:
       FlGui::instance()->options->mesh.choice[3]->value(3);
       break;
-    case ALGO_3D_FRONTAL_DEL:
+    case ALGO_3D_MMG3D:
       FlGui::instance()->options->mesh.choice[3]->value(2);
       break;
     case ALGO_3D_FRONTAL:
@@ -6543,11 +6542,19 @@ double opt_mesh_max_num_threads_3d(OPT_ARGS_NUM)
 double opt_mesh_angle_tolerance_facet_overlap(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
-    if(!(action & GMSH_SET_DEFAULT) && val != CTX::instance()->mesh.angleToleranceFacetOverlap)
+    if(!(action & GMSH_SET_DEFAULT) &&
+       val != CTX::instance()->mesh.angleToleranceFacetOverlap)
       Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.angleToleranceFacetOverlap = val;
   }
   return CTX::instance()->mesh.angleToleranceFacetOverlap;
+}
+
+double opt_mesh_unv_strict_format(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.unvStrictFormat = (int)val;
+  return CTX::instance()->mesh.unvStrictFormat;
 }
 
 double opt_solver_listen(OPT_ARGS_NUM)
@@ -6919,8 +6926,12 @@ double opt_view_min_visible(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEW(0.);
   if(!data) return 0.;
-  return data->getMin(opt->timeStep, true, opt->forceNumComponents,
-                      opt->componentMap);
+  int tensorRep =
+    (opt->tensorType == PViewOptions::VonMises) ? 0 :
+    (opt->tensorType == PViewOptions::MaxEigenValue) ? 1 :
+    2;
+  return data->getMin(opt->timeStep, true, tensorRep,
+                      opt->forceNumComponents, opt->componentMap);
 #else
   return 0.;
 #endif
@@ -6931,8 +6942,12 @@ double opt_view_max_visible(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEW(0.);
   if(!data) return 0.;
-  return data->getMax(opt->timeStep, true, opt->forceNumComponents,
-                      opt->componentMap);
+  int tensorRep =
+    (opt->tensorType == PViewOptions::VonMises) ? 0 :
+    (opt->tensorType == PViewOptions::MinEigenValue) ? 2 :
+    1;
+  return data->getMax(opt->timeStep, true, tensorRep,
+                      opt->forceNumComponents, opt->componentMap);
 #else
   return 0.;
 #endif

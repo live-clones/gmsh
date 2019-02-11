@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string>
 #include <string.h>
@@ -80,7 +80,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-bin", "Create binary files when possible"));
   s.push_back(mp("-refine", "Perform uniform mesh refinement, then exit"));
   s.push_back(mp("-barycentric_refine", "Perform barycentric mesh refinement, then exit"));
-  s.push_back(mp("-reclassify", "Reclassify mesh, then exit"));
+  s.push_back(mp("-reclassify", "Reclassify surface mesh, then exit"));
   s.push_back(mp("-part int", "Partition after batch mesh generation"));
   s.push_back(mp("-part_weight tri|quad|tet|hex|pri|pyr|trih int",
                  "Weight of a triangle/quad/etc. during partitioning"));
@@ -300,6 +300,41 @@ void PrintUsage(const std::string &name)
       Msg::Direct("  %s %s", a.c_str(), b.c_str());
     }
   }
+}
+
+void PrintInfo()
+{
+  Msg::Direct("Version       : %s", GMSH_VERSION);
+  Msg::Direct("License       : %s", GMSH_SHORT_LICENSE);
+  Msg::Direct("Build OS      : %s", GMSH_OS);
+  Msg::Direct("Build date    : %s", GMSH_DATE);
+  Msg::Direct("Build host    : %s", GMSH_HOST);
+  Msg::Direct("Build options :%s", GMSH_CONFIG_OPTIONS);
+#if defined(HAVE_FLTK)
+  Msg::Direct("FLTK version  : %d.%d.%d", FL_MAJOR_VERSION,
+              FL_MINOR_VERSION, FL_PATCH_VERSION);
+#endif
+#if defined(HAVE_PETSC)
+  Msg::Direct("PETSc version : %d.%d.%d (%s arithmtic)", PETSC_VERSION_MAJOR,
+              PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR,
+#if defined(PETSC_USE_COMPLEX)
+              "complex"
+#else
+              "real"
+#endif
+              );
+#endif
+#if defined(HAVE_OCC)
+  Msg::Direct("OCC version   : %d.%d.%d", OCC_VERSION_MAJOR,
+              OCC_VERSION_MINOR, OCC_VERSION_MAINTENANCE);
+#endif
+#if defined(HAVE_MED)
+  Msg::Direct("MED version   : %d.%d.%d", MED_NUM_MAJEUR,
+              MED_NUM_MINEUR, MED_NUM_RELEASE);
+#endif
+  Msg::Direct("Packaged by   : %s", GMSH_PACKAGER);
+  Msg::Direct("Web site      : http://gmsh.info");
+  Msg::Direct("Issue tracker : https://gitlab.onelab.info/gmsh/gmsh/issues");
 }
 
 void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
@@ -1010,7 +1045,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
             CTX::instance()->mesh.algo2d = ALGO_2D_MESHADAPT;
           else if(!strncmp(argv[i], "del2d", 5) || !strncmp(argv[i], "tri", 3))
             CTX::instance()->mesh.algo2d = ALGO_2D_DELAUNAY;
-          else if(!strncmp(argv[i], "delquad", 5))
+          else if(!strncmp(argv[i], "delquad", 7))
             CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL_QUAD;
           else if(!strncmp(argv[i], "pack", 4))
             CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;
@@ -1026,11 +1061,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
             CTX::instance()->mesh.algo3d = ALGO_3D_FRONTAL;
           else if(!strncmp(argv[i], "mmg3d", 5))
             CTX::instance()->mesh.algo3d = ALGO_3D_MMG3D;
-          else if(!strncmp(argv[i], "delfr3d", 7))
-            CTX::instance()->mesh.algo3d = ALGO_3D_FRONTAL_DEL;
-          else if(!strncmp(argv[i], "delhex3d", 8))
-            CTX::instance()->mesh.algo3d = ALGO_3D_FRONTAL_HEX;
-          else if(!strncmp(argv[i], "rtree3d", 9))
+          else if(!strncmp(argv[i], "rtree3d", 7))
             CTX::instance()->mesh.algo3d = ALGO_3D_RTREE;
           else{
             Msg::Error("Unknown mesh algorithm");
@@ -1043,31 +1074,10 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
           if(exitOnError) Msg::Exit(1);
         }
       }
-      else if(!strcmp(argv[i] + 1, "rec")) {
+      else if(!strcmp(argv[i] + 1, "quad")) {
+        CTX::instance()->mesh.recombineAll = 1;
+        CTX::instance()->mesh.algoRecombine = 2;
         i++;
-        if (argc - i < 3){
-          Msg::Error("Not enough arguments");
-          if(exitOnError) Msg::Exit(1);
-        }
-        else{
-          CTX::instance()->mesh.doRecombinationTest = 1;
-          CTX::instance()->mesh.recTestName = argv[i]; i++;
-          CTX::instance()->mesh.nProc = atoi(argv[i]); i++;
-          CTX::instance()->mesh.nbProc = atoi(argv[i]); i++;
-        }
-      }
-      else if(!strcmp(argv[i] + 1, "beg")) {
-        i++;
-        if(argv[i])
-          CTX::instance()->mesh.recombinationTestStart = atoi(argv[i++]);
-        else{
-          Msg::Error("Missing number for begin recTest");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(!strcmp(argv[i] + 1, "nogreedy")) {
-        i++;
-        CTX::instance()->mesh.recombinationTestNoGreedyStrat = 1;
       }
       else if(!strcmp(argv[i] + 1, "meshdiscrete")) {
         i++;
@@ -1131,42 +1141,12 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "info") || !strcmp(argv[i] + 1, "-info")) {
-        fprintf(stderr, "Version          : %s\n", GMSH_VERSION);
-        fprintf(stderr, "License          : %s\n", GMSH_SHORT_LICENSE);
-        fprintf(stderr, "Build OS         : %s\n", GMSH_OS);
-        fprintf(stderr, "Build date       : %s\n", GMSH_DATE);
-        fprintf(stderr, "Build host       : %s\n", GMSH_HOST);
-        fprintf(stderr, "Build options    :%s\n", GMSH_CONFIG_OPTIONS);
-#if defined(HAVE_FLTK)
-        fprintf(stderr, "FLTK version     : %d.%d.%d\n", FL_MAJOR_VERSION,
-                FL_MINOR_VERSION, FL_PATCH_VERSION);
-#endif
-#if defined(HAVE_PETSC)
-        fprintf(stderr, "PETSc version    : %d.%d.%d (%s arithmtic)\n", PETSC_VERSION_MAJOR,
-                PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR,
-#if defined(PETSC_USE_COMPLEX)
-                "complex"
-#else
-                "real"
-#endif
-                );
-#endif
-#if defined(HAVE_OCC)
-        fprintf(stderr, "OCC version      : %d.%d.%d\n", OCC_VERSION_MAJOR,
-                OCC_VERSION_MINOR, OCC_VERSION_MAINTENANCE);
-#endif
-#if defined(HAVE_MED)
-        fprintf(stderr, "MED version      : %d.%d.%d\n", MED_NUM_MAJEUR,
-                MED_NUM_MINEUR, MED_NUM_RELEASE);
-#endif
-        fprintf(stderr, "Packaged by      : %s\n", GMSH_PACKAGER);
-        fprintf(stderr, "Web site         : http://gmsh.info\n");
-        fprintf(stderr, "Issue tracker    : https://gitlab.onelab.info/gmsh/gmsh/issues\n");
+        PrintInfo();
         Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "help") || !strcmp(argv[i] + 1, "-help")) {
-        fprintf(stderr, "Gmsh, a 3D mesh generator with pre- and post-processing facilities\n");
-        fprintf(stderr, "Copyright (C) 1997-2018 C. Geuzaine and J.-F. Remacle\n");
+        Msg::Direct("Gmsh, a 3D mesh generator with pre- and post-processing facilities");
+        Msg::Direct("Copyright (C) 1997-2019 C. Geuzaine and J.-F. Remacle");
         PrintUsage(argv[0]);
         Msg::Exit(0);
       }

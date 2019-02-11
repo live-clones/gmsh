@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <vector>
 #include "GmshConfig.h"
@@ -45,6 +45,7 @@ discreteEdge::~discreteEdge()
 void discreteEdge::orderMLines()
 {
   size_t ss = lines.size();
+
   std::vector<MEdge> ed;
   std::vector<std::vector<MVertex *> > vs;
   for(unsigned int i = 0; i < lines.size(); i++) {
@@ -54,17 +55,17 @@ void discreteEdge::orderMLines()
   lines.clear();
 
   if(!SortEdgeConsecutive(ed, vs))
-    Msg::Warning("Discrete edge segments cannot be ordered");
+    Msg::Warning("Discrete curve elements cannot be ordered");
 
   if(vs.size() != 1)
-    Msg::Warning("Discrete Edge %d is mutiply connected", tag());
+    Msg::Warning("Discrete curve %d is mutiply connected", tag());
 
   unsigned int START = 0;
   for(; START < vs[0].size(); START++)
     if(vs[0][START]->onWhat()->dim() == 0) break;
 
   if(START == vs[0].size())
-    Msg::Warning("Discrete Edge %d topology is wrong", tag());
+    Msg::Warning("Discrete curve %d topology is wrong", tag());
 
   unsigned int i = START;
   while(lines.size() != ss) {
@@ -80,10 +81,10 @@ void discreteEdge::orderMLines()
     mesh_vertices.push_back(v11);
   }
   GVertex *g0 = static_cast<GVertex *>(lines[0]->getVertex(0)->onWhat());
-  if(!g0) Msg::Error("Compound Edge with non consecutive lines");
+  if(!g0) Msg::Error("Discrete curve with non consecutive elements");
   GVertex *g1 =
     static_cast<GVertex *>(lines[lines.size() - 1]->getVertex(1)->onWhat());
-  if(!g1) Msg::Error("Compound Edge with non consecutive lines");
+  if(!g1) Msg::Error("Discrete curve with non consecutive elements");
   setBeginVertex(g0);
   setEndVertex(g1);
 }
@@ -144,7 +145,7 @@ SVector3 discreteEdge::firstDer(double par) const
 
 double discreteEdge::curvature(double par) const
 {
-  Msg::Error("Curvature for discrete edge not implemented yet");
+  Msg::Error("Curvature for discrete curve not implemented yet");
   return 0.;
 }
 
@@ -204,11 +205,4 @@ void discreteEdge::mesh(bool verbose)
   meshGEdge mesher;
   mesher(this);
 #endif
-}
-
-void discreteEdge::writeGEO(FILE *fp)
-{
-  if(getBeginVertex() && getEndVertex())
-    fprintf(fp, "Discrete Line(%d) = {%d,%d};\n", tag(),
-            getBeginVertex()->tag(), getEndVertex()->tag());
 }

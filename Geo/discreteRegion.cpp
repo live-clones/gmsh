@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #include "discreteRegion.h"
@@ -97,20 +97,11 @@ void discreteRegion::remesh()
 #if defined(HAVE_MESH)
 
   bool classify = false;
-  if(CTX::instance()->mesh.oldRefinement) {
-    insertVerticesInRegion(this, 2000000000, classify);
-  }
-  else {
-    insertVerticesInRegion(this, 0, classify);
-    void edgeBasedRefinement(const int numThreads, const int nptsatonce,
-                             GRegion *gr);
-    edgeBasedRefinement(1, 1, this);
-  }
+  insertVerticesInRegion(this, 2000000000, classify);
 
   // not functional yet: need boundaries
   for(int i = 0; i < std::max(CTX::instance()->mesh.optimize,
-                              CTX::instance()->mesh.optimizeNetgen);
-      i++) {
+                              CTX::instance()->mesh.optimizeNetgen); i++) {
     if(CTX::instance()->mesh.optimize >= i) {
       optimizeMeshGRegion opt;
       opt(this, true);

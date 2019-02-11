@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -1603,8 +1603,30 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
       Msg::Warning("Creating additional surface loop %d", t);
     }
     bind(shell, t, true);
+    return true;
   }
-  return true;
+
+  // if sewing didn't work and we have single surface, try brute-force
+  if(surfaceTags.size() == 1) {
+    if(!_tagFace.IsBound(surfaceTags[0])) {
+      Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[0]);
+      return false;
+    }
+    TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTags[0]));
+    Handle(Geom_Surface) surf = BRep_Tool::Surface(face);
+    BRepBuilderAPI_MakeShell s(surf);
+    s.Build();
+    if(!s.IsDone()) {
+      Msg::Error("Could not create shell");
+      return false;
+    }
+    TopoDS_Shell shell = s.Shell();
+    bind(shell, tag, true);
+    return true;
+  }
+
+  Msg::Error("Could not create shell");
+  return false;
 }
 
 bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
@@ -1983,11 +2005,13 @@ void OCC_Internals::_setExtrudedMeshAttributes(
 {
   if(!p && !r) return;
 
-  if(r && angle >= 2 * M_PI) {
+  bool extrude_attributes = (e ? true : false);
+
+  if(extrude_attributes && r && angle >= 2 * M_PI) {
     // OCC removes the origin edge from e.g. disks, which makes it impossible to
     // generate the 2D surface mesh by extrusion of the 1D edge mesh
     Msg::Warning("Extruded meshes by revolution only for angle < 2*Pi");
-    return;
+    extrude_attributes = false;
   }
 
   TopExp_Explorer exp0;
@@ -1996,14 +2020,14 @@ void OCC_Internals::_setExtrudedMeshAttributes(
     TopoDS_Face face = TopoDS::Face(exp0.Current());
     TopoDS_Shape bot = p ? p->FirstShape(face) : r->FirstShape(face);
     TopoDS_Shape top = p ? p->LastShape(face) : r->LastShape(face);
-    if(e) {
+    if(extrude_attributes) {
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       _meshAttributes->insert(new OCCMeshAttributes(2, top, ee, 2, bot));
     }
     TopoDS_Shape vol = p ? p->Shape(face) : r->Shape(face);
-    if(e) {
+    if(extrude_attributes) {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
@@ -2015,14 +2039,14 @@ void OCC_Internals::_setExtrudedMeshAttributes(
     TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
     TopoDS_Shape bot = p ? p->FirstShape(edge) : r->FirstShape(edge);
     TopoDS_Shape top = p ? p->LastShape(edge) : r->LastShape(edge);
-    if(e) {
+    if(extrude_attributes) {
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       _meshAttributes->insert(new OCCMeshAttributes(1, top, ee, 1, bot));
     }
     TopoDS_Shape sur = p ? p->Shape(edge) : r->Shape(edge);
-    if(e) {
+    if(extrude_attributes) {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
@@ -2035,7 +2059,7 @@ void OCC_Internals::_setExtrudedMeshAttributes(
     TopoDS_Shape bot = p ? p->FirstShape(vertex) : r->FirstShape(vertex);
     TopoDS_Shape top = p ? p->LastShape(vertex) : r->LastShape(vertex);
     TopoDS_Shape lin = p ? p->Shape(vertex) : r->Shape(vertex);
-    if(e) {
+    if(extrude_attributes) {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
@@ -2945,6 +2969,23 @@ bool OCC_Internals::symmetry(const std::vector<std::pair<int, int> > &inDimTags,
   return _transform(inDimTags, 0, &gtfo);
 }
 
+bool OCC_Internals::affine(const std::vector<std::pair<int, int> > &inDimTags,
+                           const std::vector<double> &mat)
+{
+  std::vector<double> a(mat);
+  if(a.size() < 12){
+    Msg::Warning("%d < 12 entries in affine transform matrix", (int)a.size());
+    a.resize(12, 0.);
+  }
+  gp_GTrsf gt;
+  gt.SetVectorialPart(gp_Mat(a[0], a[1], a[2],
+                             a[4], a[5], a[6],
+                             a[8], a[9], a[10]));
+  gt.SetTranslationPart(gp_XYZ(a[3], a[7], a[11]));
+  BRepBuilderAPI_GTransform gtfo(gt);
+  return _transform(inDimTags, 0, &gtfo);
+}
+
 bool OCC_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
                          std::vector<std::pair<int, int> > &outDimTags)
 {
@@ -3100,6 +3141,7 @@ bool OCC_Internals::importShapes(const std::string &fileName,
   }
 
   BRepTools::Clean(result);
+
   _healShape(result, CTX::instance()->geom.tolerance,
              CTX::instance()->geom.occFixDegenerated,
              CTX::instance()->geom.occFixSmallEdges,
@@ -3305,6 +3347,11 @@ void OCC_Internals::synchronize(GModel *model)
     }
     _copyExtrudedMeshAttributes(region, occr);
   }
+
+  // if fuzzy boolean tolerance was used, some vertex positions should be
+  // recomputed (e.g. end point of curves
+  if(CTX::instance()->geom.toleranceBoolean)
+    model->snapVertices();
 
   // recompute global boundind box in CTX
   SetBoundingBox();

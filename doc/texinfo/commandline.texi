@@ -28,7 +28,7 @@ Perform uniform mesh refinement, then exit
 @item -barycentric_refine
 Perform barycentric mesh refinement, then exit
 @item -reclassify
-Reclassify mesh, then exit
+Reclassify surface mesh, then exit
 @item -part int
 Partition after batch mesh generation
 @item -part_weight tri|quad|tet|hex|pri|pyr|trih int

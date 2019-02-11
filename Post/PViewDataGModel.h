@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _PVIEW_DATA_GMODEL_H_
 #define _PVIEW_DATA_GMODEL_H_
@@ -190,9 +190,9 @@ public:
   int getNumTimeSteps();
   int getFirstNonEmptyTimeStep(int start = 0);
   double getTime(int step);
-  double getMin(int step = -1, bool onlyVisible = false,
+  double getMin(int step = -1, bool onlyVisible = false, int tensorRep = 0,
                 int forceNumComponents = 0, int componentMap[9] = 0);
-  double getMax(int step = -1, bool onlyVisible = false,
+  double getMax(int step = -1, bool onlyVisible = false, int tensorRep = 0,
                 int forceNumComponents = 0, int componentMap[9] = 0);
   void setMin(double min) { _min = min; }
   void setMax(double max) { _max = max; }

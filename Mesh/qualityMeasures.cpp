@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "robustPredicates.h"
 #include "qualityMeasures.h"
@@ -669,8 +669,11 @@ double qmTetrahedron::qm(const double &x1, const double &y1, const double &z1,
   case QMTET_ONE: return 1.0;
   case QMTET_ETA:
     return eta(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, volume);
-  case QMTET_GAMMA:
-    return gamma(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, volume);
+  case QMTET_GAMMA:{
+    double G = gamma(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, volume);
+    *volume = fabs (*volume);
+    return G;
+  }
   case QMTET_COND:
     return cond(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, volume);
   default: Msg::Error("Unknown quality measure"); return 0.;
@@ -714,9 +717,9 @@ double qmTetrahedron::gamma(const double &x1, const double &y1,
   double p2[3] = {x3, y3, z3};
   double p3[3] = {x4, y4, z4};
 
-  *volume = fabs(robustPredicates::orient3d(p0, p1, p2, p3)) / 6.0;
+  *volume = (robustPredicates::orient3d(p0, p1, p2, p3)) / 6.0;
 
-  if (*volume == 0) return 0;
+  if (fabs(*volume) == 0) return 0;
 
   double la = (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1);
   double lb = (x3-x1)*(x3-x1) + (y3-y1)*(y3-y1) + (z3-z1)*(z3-z1);

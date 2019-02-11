@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
 #include "GmshConfig.h"
@@ -504,14 +504,35 @@ double ComputeVonMises(double *V)
                      v23 * v23 + v31 * v31 + v32 * v32 + v33 * v33));
 }
 
-double ComputeScalarRep(int numComp, double *val)
+double ComputeScalarRep(int numComp, double *val, int tensorRep)
 {
   if(numComp == 1)
     return val[0];
   else if(numComp == 3)
     return sqrt(val[0] * val[0] + val[1] * val[1] + val[2] * val[2]);
-  else if(numComp == 9)
-    return ComputeVonMises(val);
+  else if(numComp == 9){
+    if(tensorRep == 0){ // Von-Mises
+      return ComputeVonMises(val);
+    }
+    else{
+      fullMatrix<double> tensor(3, 3);
+      fullVector<double> S(3), imS(3);
+      fullMatrix<double> V(3, 3);
+      fullMatrix<double> rightV(3, 3);
+      for(int j = 0; j < 3; j++) {
+        tensor(j, 0) = val[0 + j * 3];
+        tensor(j, 1) = val[1 + j * 3];
+        tensor(j, 2) = val[2 + j * 3];
+      }
+      tensor.eig(S, imS, V, rightV, true);
+      if(tensorRep == 1){ // max eigenvalue
+        return S(2);
+      }
+      else{ // min eigenvalue
+        return S(0);
+      }
+    }
+  }
   return 0.;
 }
 

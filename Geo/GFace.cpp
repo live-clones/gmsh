@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <sstream>
 #include "GmshConfig.h"
@@ -23,7 +23,6 @@
 #if defined(HAVE_MESH)
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
-#include "meshGFaceLloyd.h"
 #include "BackgroundMeshTools.h"
 #endif
 
@@ -1308,7 +1307,7 @@ bool GFace::buildSTLTriangulation(bool force)
   stl_triangles.clear();
 
   // Build a simple triangulation for surfaces which we know are not trimmed
-  if(geomType() == ParametricSurface || geomType() == ProjectionFace) {
+  if(geomType() == ParametricSurface) {
     const int nu = 64, nv = 64;
     Range<double> ubounds = parBounds(0);
     Range<double> vbounds = parBounds(1);
@@ -1559,35 +1558,6 @@ void GFace::mesh(bool verbose)
 #endif
 }
 
-void GFace::lloyd(int nbiter, int infn)
-{
-#if defined(HAVE_MESH) && defined(HAVE_BFGS)
-  smoothing s = smoothing(nbiter, infn);
-  s.optimize_face(this);
-#endif
-}
-
-void GFace::replaceEdges(std::vector<GEdge *> &new_edges)
-{
-  std::vector<GEdge *>::iterator it = l_edges.begin();
-  std::vector<GEdge *>::iterator it2 = new_edges.begin();
-  std::vector<int>::iterator it3 = l_dirs.begin();
-
-  std::vector<int> newdirs;
-  newdirs.reserve(l_edges.size());
-
-  for(; it != l_edges.end(); ++it, ++it2, ++it3) {
-    (*it)->delFace(this);
-    (*it2)->addFace(this);
-    if((*it2)->getBeginVertex() == (*it)->getBeginVertex())
-      newdirs.push_back(*it3);
-    else
-      newdirs.push_back(-(*it3));
-  }
-  l_edges = new_edges;
-  l_dirs = newdirs;
-}
-
 void GFace::moveToValidRange(SPoint2 &pt) const
 {
   for(int i = 0; i < 2; i++) {
@@ -1671,7 +1641,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     m_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
   }
 
-  std::set<GVertex *> m_embedded_vertices = master->embeddedVertices();
+  std::set<GVertex *, GEntityLessThan> m_embedded_vertices = master->embeddedVertices();
   m_vertices.insert(m_embedded_vertices.begin(), m_embedded_vertices.end());
 
   // check topological correspondence

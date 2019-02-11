@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <FL/Fl.H>
 #include "GmshConfig.h"
@@ -99,6 +99,12 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   std::string action((const char *)data);
 
+  onelab::string o("ONELAB/Action", action);
+  o.setVisible(false);
+  o.setNeverChanged(true);
+  o.setAttribute("Persistent", "1");
+  onelab::server::instance()->set(o);
+
   if(action == "refresh") {
     onelabUtils::updateGraphs();
     FlGui::instance()->rebuildTree(true);
@@ -181,6 +187,14 @@ void onelab_cb(Fl_Widget *w, void *data)
     action = "check";
   }
 
+  // custom button behavior
+  std::vector<onelab::string> ps;
+  onelab::server::instance()->get(ps, "ONELAB/Button");
+  if(ps.size() && ps[0].getValues().size() == 2) {
+    // we have a custom onelab "Run" button, we're done
+    return;
+  }
+
   Msg::ResetErrorCounter();
 
   FlGui::instance()->onelab->setButtonMode("", "stop");
@@ -201,11 +215,10 @@ void onelab_cb(Fl_Widget *w, void *data)
         it != onelab::server::instance()->lastClient(); it++) {
       onelab::client *c = *it;
       if(c->getName() == "Gmsh" || // local Gmsh client
-         c->getName() ==
-           "Listen" || // unknown client connecting through "-listen"
+         c->getName() == "Listen" || // unknown client connecting through "-listen"
          c->getName() == "GmshRemote" || // distant post-processing Gmsh client
          c->getName().find("NoAutoRun") !=
-           std::string::npos) // client name contains "NoAutoRun"
+         std::string::npos) // client name contains "NoAutoRun"
         continue;
       if(action != "initialize") onelabUtils::guessModelName(c);
       onelab::string o(c->getName() + "/Action", action);
@@ -916,6 +929,15 @@ static void onelab_string_button_cb(Fl_Widget *w, void *data)
       // parse string directly
       ParseString(strings[0].getValue());
     }
+    else if(strings[0].getAttribute("Macro") == "Action") {
+      // set onelab Action for custom GUIs
+      onelab::string o("ONELAB/Action", strings[0].getValue());
+      o.setVisible(false);
+      o.setNeverChanged(true);
+      o.setAttribute("Persistent", "1");
+      onelab::server::instance()->set(o);
+      return; // otherwise autoCheck will set Action to "check"
+    }
     else {
       // merge file
       std::string tmp = FixRelativePath(GModel::current()->getFileName(),
@@ -1065,7 +1087,8 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
   // macro button
   if(p.getAttribute("Macro") == "Gmsh" ||
      p.getAttribute("Macro") == "GmshMergeFile" ||
-     p.getAttribute("Macro") == "GmshParseString") {
+     p.getAttribute("Macro") == "GmshParseString" ||
+     p.getAttribute("Macro") == "Action") {
     Fl_Button *but = new Fl_Button(1, 1, ww / _widgetLabelRatio, hh);
     but->box(FL_FLAT_BOX);
     but->color(_tree->color());
@@ -1222,6 +1245,10 @@ static void highlight_physical_group_cb(Fl_Widget *w, void *data)
 
 void onelabGroup::rebuildTree(bool deleteWidgets)
 {
+  // rebuilding the tree does not work in a child thread (it should, as we don't
+  // show/hide windows, but it crashes - at least on macOS)
+  if(FlGui::locked()) return;
+
   setButtonVisibility();
 
   FL_NORMAL_SIZE -= CTX::instance()->deltaFontSize;
@@ -1258,7 +1285,8 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
     _treeStrings.clear();
   }
 
-  _addGmshMenus();
+  if(CTX::instance()->showModuleMenu)
+    _addGmshMenus();
 
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
@@ -1378,6 +1406,16 @@ void onelabGroup::checkForErrors(const std::string &client)
 
 void onelabGroup::setButtonVisibility()
 {
+  // custom button behavior
+  std::vector<onelab::string> ps;
+  onelab::server::instance()->get(ps, "ONELAB/Button");
+  if(ps.size() && ps[0].getValues().size() == 2) {
+    _butt[0]->hide();
+    _butt[1]->show();
+    setButtonMode("", "");
+    return;
+  }
+
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
   bool visible = false;
@@ -1409,6 +1447,32 @@ void onelabGroup::setButtonVisibility()
 void onelabGroup::setButtonMode(const std::string &butt0,
                                 const std::string &butt1)
 {
+  // custom button behavior
+  std::vector<onelab::string> ps;
+  onelab::server::instance()->get(ps, "ONELAB/Button");
+  if(ps.size() && ps[0].getValues().size() == 2) {
+    static char label[256];
+    strncpy(label, ps[0].getValues()[0].c_str(), sizeof(label) - 1);
+    label[sizeof(label) - 1] = '\0';
+    static char action[256];
+    strncpy(action, ps[0].getValues()[1].c_str(), sizeof(action) - 1);
+    action[sizeof(action) - 1] = '\0';
+    _butt[0]->deactivate();
+    _butt[1]->activate();
+    _butt[1]->label(label);
+    fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
+    int w = 0, h = 0;
+    fl_measure(label, w, h);
+    int diff = w - _butt[1]->w() + 2 * WB;
+    if(diff > 0){
+      _butt[1]->resize(_butt[1]->x() - diff, _butt[1]->y(),
+                       _butt[1]->w() + diff, _butt[1]->h());
+      _butt[1]->redraw();
+    }
+    _butt[1]->callback(onelab_cb, (void *)action);
+    return;
+  }
+
   if(butt0 == "check") {
     _butt[0]->activate();
     _butt[0]->label("Check");
@@ -1452,8 +1516,8 @@ void onelabGroup::setButtonMode(const std::string &butt0,
 bool onelabGroup::isBusy()
 {
   std::string s(_butt[1]->label());
-  if(s == "Run") return false;
-  return true;
+  if(s == "Stop" || s == "Kill") return true;
+  return false;
 }
 
 std::string onelabGroup::getPath(Fl_Tree_Item *item)

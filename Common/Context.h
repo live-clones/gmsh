@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
@@ -17,7 +17,8 @@ class GamePad;
 
 struct contextMeshOptions {
   // mesh algorithms
-  int optimize, optimizeNetgen, smoothCrossField, refineSteps;
+  int optimize, optimizeNetgen, refineSteps;
+  int smoothCrossField, crossFieldClosestPoint;
   double lcFactor, randFactor, randFactor3d, lcIntegrationPrecision;
   double optimizeThreshold, normals, tangents, explode, angleSmoothNormals;
   double allowSwapEdgeAngle;
@@ -25,8 +26,9 @@ struct contextMeshOptions {
   double lcMin, lcMax, toleranceEdgeLength, toleranceInitialDelaunay;
   double anisoMax, smoothRatio;
   int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
-  int nbSmoothing, algo2d, algo3d, algoSubdivide, oldRefinement;
-  int algoRecombine, recombineAll, recombine3DAll, recombine3DLevel;
+  int nbSmoothing, algo2d, algo3d, algoSubdivide;
+  int algoRecombine, recombineAll, recombineOptimizeTopology;
+  int recombine3DAll, recombine3DLevel;
   int recombine3DConformity, flexibleTransfinite;
   int order, secondOrderLinear, secondOrderIncomplete, secondOrderExperimental;
   int meshOnlyVisible, minCircPoints, minCurvPoints;
@@ -43,6 +45,7 @@ struct contextMeshOptions {
   int fileFormat;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
   int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
+  int unvStrictFormat, stlRemoveDuplicateTriangles;
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
   int cgnsImportOrder, cgnsConstructTopology;
@@ -56,10 +59,6 @@ struct contextMeshOptions {
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
   int partitionOldStyleMsh2;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
-  // recombination
-  int doRecombinationTest, recombinationTestStart;
-  int recombinationTestNoGreedyStrat, recombinationTestNewStrat, nProc, nbProc;
-  std::string recTestName;
   // mesh display
   int draw, changed, light, lightTwoSide, lightLines, pointType;
   int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms;
@@ -157,6 +156,8 @@ public:
   int fileChooserPosition[2], extraPosition[2], extraSize[2];
   // use the system menu bar on Mac OS X?
   int systemMenuBar;
+  // show standard Gmsh menu in onelab window
+  int showModuleMenu;
   // use high-resolution opengl graphics (retina Macs)
   int highResolutionGraphics;
   // batch mode (-4: lua session, -3: server daemon, -2: check coherence, -1:

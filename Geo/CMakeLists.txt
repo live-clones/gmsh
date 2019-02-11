@@ -1,7 +1,7 @@
-# Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 set(SRC
   boundaryLayersData.cpp
@@ -15,14 +15,12 @@ set(SRC
     gmshVertex.cpp gmshEdge.cpp gmshFace.cpp gmshRegion.cpp
     gmshSurface.cpp
     OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp
-    GenericVertex.cpp GenericEdge.cpp GenericFace.cpp GenericRegion.cpp
     discreteVertex.cpp discreteEdge.cpp discreteFace.cpp discreteRegion.cpp
-    fourierEdge.cpp fourierFace.cpp fourierProjectionFace.cpp
     ACISVertex.cpp ACISEdge.cpp ACISFace.cpp
   GModel.cpp
     GModelCreateTopologyFromMesh.cpp
     GModelVertexArrays.cpp
-    GModelIO_GEO.cpp GModelIO_ACIS.cpp GModelIO_OCC.cpp GModelIO_Fourier.cpp
+    GModelIO_GEO.cpp GModelIO_ACIS.cpp GModelIO_OCC.cpp
     GModelIO_MSH.cpp GModelIO_MSH2.cpp GModelIO_MSH3.cpp GModelIO_MSH4.cpp
     GModelIO_VTK.cpp GModelIO_CGNS.cpp GModelIO_MED.cpp GModelIO_MESH.cpp
     GModelIO_STL.cpp  GModelIO_TOCHNOG.cpp GModelIO_PLY.cpp GModelIO_VRML.cpp
@@ -43,10 +41,9 @@ set(SRC
   MElement.cpp MElementOctree.cpp
     MLine.cpp MTriangle.cpp MQuadrangle.cpp MTetrahedron.cpp
     MHexahedron.cpp MPrism.cpp MPyramid.cpp MTrihedron.cpp MElementCut.cpp MSubElement.cpp
-  MZone.cpp MZoneBoundary.cpp
   Cell.cpp CellComplex.cpp ChainComplex.cpp Homology.cpp Chain.cpp
   MVertexBoundaryLayerData.cpp
-  CGNSFunctions.cpp
+  CGNSUtils.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

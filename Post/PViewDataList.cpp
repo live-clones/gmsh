@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
 #include "PViewDataList.h"
@@ -160,19 +160,19 @@ double PViewDataList::getTime(int step)
   return Time[step];
 }
 
-double PViewDataList::getMin(int step, bool onlyVisible, int forceNumComponents,
-                             int componentMap[9])
+double PViewDataList::getMin(int step, bool onlyVisible, int tensorRep,
+                             int forceNumComponents, int componentMap[9])
 {
   if(step >= (int)TimeStepMin.size()) return Min;
 
-  if(forceNumComponents) {
+  if(forceNumComponents || tensorRep) {
     double vmin = VAL_INF;
     for(int ent = 0; ent < getNumEntities(step); ent++) {
       for(int ele = 0; ele < getNumElements(step, ent); ele++) {
         for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++) {
           double val;
-          getScalarValue(step, ent, ele, nod, val, forceNumComponents,
-                         componentMap);
+          getScalarValue(step, ent, ele, nod, val, tensorRep,
+                         forceNumComponents, componentMap);
           vmin = std::min(vmin, val);
         }
       }
@@ -184,19 +184,19 @@ double PViewDataList::getMin(int step, bool onlyVisible, int forceNumComponents,
   return TimeStepMin[step];
 }
 
-double PViewDataList::getMax(int step, bool onlyVisible, int forceNumComponents,
-                             int componentMap[9])
+double PViewDataList::getMax(int step, bool onlyVisible, int tensorRep,
+                             int forceNumComponents, int componentMap[9])
 {
   if(step >= (int)TimeStepMax.size()) return Max;
 
-  if(forceNumComponents) {
+  if(forceNumComponents || tensorRep) {
     double vmax = -VAL_INF;
     for(int ent = 0; ent < getNumEntities(step); ent++) {
       for(int ele = 0; ele < getNumElements(step, ent); ele++) {
         for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++) {
           double val;
-          getScalarValue(step, ent, ele, nod, val, forceNumComponents,
-                         componentMap);
+          getScalarValue(step, ent, ele, nod, val, tensorRep,
+                         forceNumComponents, componentMap);
           vmax = std::max(vmax, val);
         }
       }
@@ -280,8 +280,9 @@ void PViewDataList::_stat(std::vector<double> &list, int nbcomp, int nbelm,
     }
 
     // update min/max
+    int tensorRep = 0; // Von-Mises: we could/should be able to choose this
     for(int j = 0; j < N; j += nbcomp) {
-      double l0 = ComputeScalarRep(nbcomp, &V[j]);
+      double l0 = ComputeScalarRep(nbcomp, &V[j], tensorRep);
       Min = std::min(l0, Min);
       Max = std::max(l0, Max);
       int ts = j / nbval;

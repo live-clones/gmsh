@@ -32,9 +32,21 @@ int main(int argc, char **argv)
     int numElem = 0;
     for(unsigned int i = 0; i < elemTags.size(); i++)
       numElem += elemTags[i].size();
+    std::string type;
+    gmsh::model::getType(dim, tag, type);
     std::cout << nodeTags.size() << " mesh nodes and "
               << numElem << " mesh elements on entity ("
-              << dim << "," << tag << ")\n";
+              << dim << "," << tag << ") of type " << type << "\n";
+    std::vector<int> partitions;
+    gmsh::model::getPartitions(dim, tag, partitions);
+    if(partitions.size()){
+      std::cout << " - Partition tag(s):";
+      for(unsigned int i = 0; i < partitions.size(); i++)
+        std::cout << " " << partitions[i];
+      int parentDim, parentTag;
+      gmsh::model::getParent(dim, tag, parentDim, parentTag);
+      std::cout << " - parent entity (" << parentDim << "," << parentTag << ")\n";
+    }
     for(unsigned int i = 0; i < elemTypes.size(); i++){
       std::string name;
       int d, order, numv;

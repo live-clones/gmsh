@@ -1,9 +1,9 @@
-# Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-set(SRC  
+set(SRC
   GmshGlobal.cpp
   GmshMessage.cpp
   gmshPopplerWrapper.cpp
@@ -15,7 +15,7 @@ set(SRC
   CreateFile.cpp
   VertexArray.cpp
   SmoothData.cpp
-  Octree.cpp 
+  Octree.cpp
     OctreeInternals.cpp
   StringUtils.cpp
   ListUtils.cpp
@@ -24,14 +24,9 @@ set(SRC
   onelabUtils.cpp
   GamePad.cpp
   GmshRemote.cpp
+  gmshLocalNetworkClient.cpp
   gmsh.cpp
 )
 
-if(ENABLE_ONELAB AND NOT ENABLE_ONELAB2)
-  set(SRC
-    ${SRC}
-    gmshLocalNetworkClient.cpp)
-endif(ENABLE_ONELAB AND NOT ENABLE_ONELAB2)
-
-file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
+file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(Common "${SRC};${HDR}")

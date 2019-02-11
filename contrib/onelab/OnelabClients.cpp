@@ -36,9 +36,9 @@ class onelabMetaModelServer : public GmshServer{
   }
   int NonBlockingWait(double waitint, double timeout, int socket)
   {
-    double start = GetTimeInSeconds();
+    double start = TimeOfDay();
     while(1){
-      if(timeout > 0 && GetTimeInSeconds() - start > timeout)
+      if(timeout > 0 && TimeOfDay() - start > timeout)
         return 2; // timeout
 
       if(_client->getPid() < 0 /*|| (_client->getCommandLine().empty())*/)
@@ -97,7 +97,7 @@ std::string localNetworkSolverClient::appendArguments(){
 }
 
 bool localNetworkSolverClient::receiveMessage(){
-  double timer = GetTimeInSeconds();
+  double timer = TimeOfDay();
 
   if(!getGmshServer()){
     OLMsg::Error("Abnormal server termination (no valid server)");
@@ -237,7 +237,7 @@ bool localNetworkSolverClient::receiveMessage(){
     break;
  case GmshSocket::GMSH_SPEED_TEST:
     OLMsg::Info("got %d Mb message in %g seconds",
-              length / 1024 / 1024, GetTimeInSeconds() - timer);
+              length / 1024 / 1024, TimeOfDay() - timer);
     break;
   case GmshSocket::GMSH_VERTEX_ARRAY:
     {

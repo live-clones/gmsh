@@ -215,7 +215,7 @@ public:
     brio_threshold = 64;
     brio_ratio = 0.125;
     facet_separate_ang_tol = 179.9;
-    facet_overlap_ang_tol = 0.01;
+    facet_overlap_ang_tol = 0.001;
     facet_small_ang_tol = 15.0;
     maxvolume = -1.0;
     minratio = 2.0;

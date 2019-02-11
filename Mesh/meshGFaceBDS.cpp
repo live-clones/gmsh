@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
 #include "GmshMessage.h"
@@ -129,30 +129,6 @@ double NewGetLc(BDS_Point *p1, BDS_Point *p2, GFace *f)
   double linearLength = computeEdgeLinearLength(p1, p2, f);
   double l = correctLC_(p1, p2, f);
   return linearLength / l;
-}
-
-void computeMeshSizeFieldAccuracy(GFace *gf, BDS_Mesh &m, double &avg,
-                                  double &max_e, double &min_e, int &nE,
-                                  int &GS)
-{
-  std::vector<BDS_Edge *>::const_iterator it = m.edges.begin();
-  avg = 0.0;
-  min_e = 1.e22;
-  max_e = 0;
-  nE = 0;
-  GS = 0;
-  while(it != m.edges.end()) {
-    if(!(*it)->deleted) {
-      double const lone = NewGetLc(*it, gf);
-      if(lone > 1.0 / std::sqrt(2.0) && lone < std::sqrt(2.0)) GS++;
-      avg += lone > 1 ? (1. / lone) - 1. : lone - 1.;
-      max_e = std::max(max_e, lone);
-      min_e = std::min(min_e, lone);
-      nE++;
-    }
-    ++it;
-  }
-  avg = 100 * std::exp(1.0 / nE * avg);
 }
 
 // SWAP TESTS i.e. tell if swap should be done
@@ -726,8 +702,8 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   // classify correctly the embedded vertices use a negative model
   // face number to avoid mesh motion
   if(recoverMapInv) {
-    std::set<GVertex *> emb_vertx = gf->embeddedVertices();
-    std::set<GVertex *>::iterator itvx = emb_vertx.begin();
+    std::set<GVertex *, GEntityLessThan> emb_vertx = gf->embeddedVertices();
+    std::set<GVertex *, GEntityLessThan>::iterator itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()) {
       MVertex *v = *((*itvx)->mesh_vertices.begin());
       std::map<MVertex *, BDS_Point *>::iterator itp = recoverMapInv->find(v);

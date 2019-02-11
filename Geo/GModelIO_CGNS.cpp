@@ -1,52 +1,46 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
-// GModelIO_CGNS.cpp - Copyright (C) 2008-2012 S. Guzik, B. Gorissen,
-// C. Geuzaine, J.-F. Remacle
+// Contributor(s):
+//   S. Guzik
+//   B. Gorissen
+//   K. Hillewart
 
+// The first part of this file (before #include "CGNSUtils.h") reads CGNS data.
+//
+// The second part of this file (after #include "CGNSUtils.h") writes CGNS
+// data. This second part is copyright 2008 S. Guzik, C. Geuzaine and
+// J.-F. Remacle. It will be rewritten (or removed) in a future release. In
+// particular, CGNSUtils.h will be removed.
+
+#include <string>
 #include "GmshConfig.h"
 #include "GModel.h"
-#include "CGNSOptions.h"
 #include "GmshMessage.h"
+#include "CGNSOptions.h"
 
 #if defined(HAVE_LIBCGNS)
 
-#ifdef _OPENMP
-#include <omp.h>
-#else
-#define omp_get_num_threads() 1
-#define omp_get_thread_num() 0
-#define omp_lock_t int
-#define omp_init_lock(x)
-#define omp_set_lock(x)
-#define omp_unset_lock(x)
-#define omp_destroy_lock(x)
-#endif
-
-#include <cstring>
-#include <iostream>
-#include <cstdio>
-#include <map>
-#include <string>
 #include <vector>
+#include <map>
 #include <queue>
-#include <cmath>
+#include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <sstream>
-#include <string>
-#include <stdlib.h>
-
-#include "GmshConfig.h"
-#include "gmshVertex.h"
-#include "gmshRegion.h"
-#include "Geo.h"
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <cmath>
 #include "Context.h"
 #include "Options.h"
-#include "MZone.h"
-#include "MZoneBoundary.h"
 #include "affineTransformation.h"
+#include "BasisFactory.h"
+#include "SVector3.h"
+#include "fullMatrix.h"
+#include "GmshDefines.h"
 
 #if defined(HAVE_FLTK)
 #include "extraDialogs.h"
@@ -57,62 +51,572 @@ namespace CGNS {
 #include <cgnslib.h>
 }
 
-using namespace std;
 using namespace CGNS;
 
 #define maxLenCGNS 32
 
-// --- encoding the CGNS element conventions, implementation in
-// cgnsConventions.cpp
-
-// get gmsh parent tag
-extern int parentFromCGNSType(ElementType_t cgnsType);
-
-// get mapping order
-extern int orderFromCGNSType(ElementType_t cgnsType);
-
-// is the element complete ?
-extern bool completeCGNSType(ElementType_t cgnsType);
-
-// get the gmsh tag for this element type
-extern int tagFromCGNSType(ElementType_t cgnsType);
-
-// get the dimension for a grid location
-extern int gridLocationDimCGNS(GridLocation_t location);
-
-// get element location for a given dimension
-extern GridLocation_t unstructuredGridLocationCGNS(int d);
-
-// // generate the projection matrix from cgns to gmsh control points
-// // equidistant corresponds to gmsh/equidistant, else strict cgns standard
-// extern fullMatrix<double> projectionFromCGNS(int parentType,
-//                                              int order,
-//                                              bool complete,
-//                                              bool equidistant);
-
-// generate the index renumbering from cgns to gmsh control points
-// equidistant corresponds to gmsh/equidistant, else strict cgns standard
-// will fail in case non-equidistant points are used (NULL pointer).
-extern int *getRenumberingToGmsh(ElementType_t);
-extern fullMatrix<double> getTransformationToGmsh(ElementType_t);
-
-//--Error function for the CGNS library
-
-int cgnsErr(const int cgIndexFile = -1)
+static int parentFromCGNSType(ElementType_t cgnsType)
 {
-  Msg::Error("Error detected by CGNS library\n");
+  switch(cgnsType) {
+  case NODE: return TYPE_PNT;
+  case BAR_2:
+  case BAR_3:
+  case BAR_4:
+  case BAR_5: return TYPE_LIN;
+  case TRI_3:
+  case TRI_6:
+  case TRI_9:
+  case TRI_10:
+  case TRI_12:
+  case TRI_15: return TYPE_TRI;
+  case QUAD_4:
+  case QUAD_9:
+  case QUAD_16:
+  case QUAD_25:
+  case QUAD_8:
+  case QUAD_12:
+  case QUAD_P4_16: return TYPE_QUA;
+  case TETRA_4:
+  case TETRA_10:
+  case TETRA_20:
+  case TETRA_35:
+  case TETRA_16:
+  case TETRA_22:
+  case TETRA_34: return TYPE_TET;
+  case PYRA_5:
+  case PYRA_14:
+  case PYRA_30:
+  case PYRA_55:
+  case PYRA_13:
+  case PYRA_21:
+  case PYRA_P4_29:
+  case PYRA_29:
+  case PYRA_50: return TYPE_PYR;
+  case PENTA_6:
+  case PENTA_18:
+  case PENTA_40:
+  case PENTA_75:
+  case PENTA_15:
+  case PENTA_24:
+  case PENTA_33:
+  case PENTA_38:
+  case PENTA_66: return TYPE_PRI;
+  case HEXA_8:
+  case HEXA_27:
+  case HEXA_64:
+  case HEXA_125:
+  case HEXA_20:
+  case HEXA_32:
+  case HEXA_44:
+  case HEXA_56:
+  case HEXA_98: return TYPE_HEX;
+  case MIXED:
+  case NGON_n:
+  case NFACE_n:
+  case ElementTypeUserDefined:
+  case ElementTypeNull:
+    Msg::Warning("Finding parent type for unsupported CGNS element type %i",
+                 cgnsType);
+    return -1;
+  }
+  return -1;
+}
+
+static int orderFromCGNSType(ElementType_t cgnsType)
+{
+  switch(cgnsType) {
+  case NODE: return 0;
+  case BAR_2:
+  case TRI_3:
+  case QUAD_4:
+  case TETRA_4:
+  case PYRA_5:
+  case PENTA_6:
+  case HEXA_8: return 1;
+  case BAR_3:
+  case TRI_6:
+  case QUAD_9:
+  case TETRA_10:
+  case PYRA_14:
+  case PENTA_18:
+  case HEXA_27:
+  case QUAD_8:
+  case PYRA_13:
+  case PENTA_15:
+  case HEXA_20: return 2;
+  case BAR_4:
+  case TRI_10:
+  case QUAD_16:
+  case TETRA_20:
+  case PYRA_30:
+  case PENTA_40:
+  case HEXA_64:
+  case TRI_9:
+  case QUAD_12:
+  case TETRA_16:
+  case PYRA_21:
+  case PENTA_24:
+  case HEXA_32:
+  case PYRA_29:
+  case PENTA_38:
+  case HEXA_56: return 3;
+  case BAR_5:
+  case TRI_15:
+  case QUAD_25:
+  case TETRA_35:
+  case PYRA_55:
+  case PENTA_75:
+  case HEXA_125:
+  case TRI_12:
+  case QUAD_P4_16:
+  case TETRA_22:
+  case PYRA_P4_29:
+  case PENTA_33:
+  case HEXA_44:
+  case TETRA_34:
+  case PYRA_50:
+  case PENTA_66:
+  case HEXA_98: return 4;
+  case MIXED:
+  case NGON_n:
+  case NFACE_n:
+  case ElementTypeUserDefined:
+  case ElementTypeNull:
+    Msg::Warning("Finding order for unsupported CGNS element type %i",
+                 cgnsType);
+    return -1;
+  }
+  return -1;
+}
+
+static bool completeCGNSType(ElementType_t cgnsType)
+{
+  switch(cgnsType) {
+    // complete elements
+  case NODE:
+  case BAR_2:
+  case TRI_3:
+  case QUAD_4:
+  case TETRA_4:
+  case PYRA_5:
+  case PENTA_6:
+  case HEXA_8:
+  case BAR_3:
+  case TRI_6:
+  case QUAD_9:
+  case TETRA_10:
+  case PYRA_14:
+  case PENTA_18:
+  case HEXA_27:
+  case BAR_4:
+  case TRI_10:
+  case QUAD_16:
+  case TETRA_20:
+  case PYRA_30:
+  case PENTA_40:
+  case HEXA_64:
+  case BAR_5:
+  case TRI_15:
+  case QUAD_25:
+  case TETRA_35:
+  case PYRA_55:
+  case PENTA_75:
+  case HEXA_125:
+    return true;
+    // serendipity edge elements
+  case QUAD_8:
+  case PYRA_13:
+  case PENTA_15:
+  case HEXA_20:
+  case QUAD_12:
+  case TETRA_16:
+  case PYRA_21:
+  case PENTA_24:
+  case HEXA_32:
+  case TRI_12:
+  case QUAD_P4_16:
+  case TETRA_22:
+  case PYRA_P4_29:
+  case PENTA_33:
+  case HEXA_44:
+    return false;
+    // serendipity elements
+  case PYRA_29:
+  case PENTA_38:
+  case HEXA_56:
+  case TETRA_34:
+  case PYRA_50:
+  case PENTA_66:
+  case HEXA_98:
+  default: return false;
+  }
+  return false;
+}
+
+static int tagFromCGNSType(ElementType_t cgnsType)
+{
+  return ElementType::getType(parentFromCGNSType(cgnsType),
+                              orderFromCGNSType(cgnsType),
+                              !completeCGNSType(cgnsType));
+}
+
+static std::vector<SVector3> generatePointsCGNS(int, int, bool, bool);
+
+static void addEdgePointsCGNS(const SVector3 p0, const SVector3 p1, int order,
+                       std::vector<SVector3> &points)
+{
+  double ds = 1. / order;
+  for(int i = 1; i < order; i++) {
+    double f = ds * i;
+    points.push_back(p0 * (1. - f) + p1 * f);
+  }
+}
+
+static void addTriPointsCGNS(const SVector3 p0, const SVector3 p1,
+                             const SVector3 p2,
+                             int order, bool equidistant,
+                             std::vector<SVector3> &points)
+{
+  std::vector<SVector3> triPoints =
+    generatePointsCGNS(TYPE_TRI, order - 3, true, true);
+
+  double scale = double(order - 3) / double(order);
+  SVector3 offset(1. / order, 1. / order, 0);
+
+  for(size_t i = 0; i < triPoints.size(); i++) {
+    SVector3 ip = triPoints[i];
+    double u = ip[0] * scale + 1. / order;
+    double v = ip[1] * scale + 1. / order;
+
+    SVector3 pt = (1. - u - v) * p0 + u * p1 + v * p2;
+
+    points.push_back(pt);
+  }
+}
+
+static void addQuaPointsCGNS(int order, std::vector<SVector3> &points)
+{
+  if(order > 2) {
+    double scale = double(order - 2) / double(order);
+
+    SVector3 corner[4] = {SVector3(-1, -1, 0), SVector3(1, -1, 0),
+                          SVector3(1, 1, 0), SVector3(-1, 1, 0)};
+
+    for(int i = 0; i < 4; i++) {
+      SVector3 c1 = corner[i];
+      SVector3 c2 = corner[(i + 1) % 4];
+      double ds = 1. / (order - 2);
+      for(int i = 0; i < order - 2; i++)
+        points.push_back((c1 * (1. - i * ds) + c2 * (i * ds)) * scale);
+    }
+  }
+  if(order == 2 || order == 4) points.push_back(SVector3(0, 0, 0));
+}
+
+static void addQuaPointsCGNS(const SVector3 p0, const SVector3 p1,
+                             const SVector3 p2, const SVector3 p3,
+                             int order, std::vector<SVector3> &points)
+{
+  std::vector<SVector3> quaPoints;
+
+  addQuaPointsCGNS(order, quaPoints);
+
+  for(size_t i = 0; i < quaPoints.size(); i++) {
+    SVector3 ip = quaPoints[i];
+    double u = ip[0];
+    double v = ip[1];
+    SVector3 pt = ((1. - u) * (1. - v) * p0 + (1. + u) * (1. - v) * p1 +
+                   (1. + u) * (1. + v) * p2 + (1. - u) * (1. + v) * p3) *
+                  0.25;
+    points.push_back(pt);
+  }
+}
+
+static std::vector<SVector3> generatePointsCGNS(int parentType, int order,
+                                                bool complete, bool equidistant)
+{
+  std::vector<SVector3> pp;
+
+  if(order == 0) pp.push_back(SVector3(0, 0, 0));
+  if(order > 0) {
+    switch(parentType) {
+    case TYPE_LIN: {
+      // principal vertices
+      pp.push_back(SVector3(-1, 0, 0));
+      pp.push_back(SVector3(1, 0, 0));
+
+      // internal points
+      addEdgePointsCGNS(pp[0], pp[1], order, pp);
+
+      break;
+    }
+    case TYPE_TRI: {
+      // principal vertices
+      pp.push_back(SVector3(0, 0, 0));
+      pp.push_back(SVector3(1, 0, 0));
+      pp.push_back(SVector3(0, 1, 0));
+
+      // internal points of edges
+      for(int i = 0; i < 3; i++)
+        addEdgePointsCGNS(pp[i], pp[(i + 1) % 3], order, pp);
+
+      // internal points
+      if(complete && order > 2) {
+        addTriPointsCGNS(pp[0], pp[1], pp[2], order, equidistant, pp);
+      }
+
+      break;
+    }
+    case TYPE_QUA: {
+      // principal vertices
+      pp.push_back(SVector3(-1, -1, 0));
+      pp.push_back(SVector3(1, -1, 0));
+      pp.push_back(SVector3(1, 1, 0));
+      pp.push_back(SVector3(-1, 1, 0));
+
+      // internal points of edges
+      for(int i = 0; i < 4; i++) {
+        addEdgePointsCGNS(pp[i], pp[(i + 1) % 4], order, pp);
+      }
+
+      // internal points
+      if(complete && order > 1) {
+        addQuaPointsCGNS(pp[0], pp[1], pp[2], pp[3], order, pp);
+      }
+      break;
+    }
+    case TYPE_TET: {
+      // principal vertices
+      pp.push_back(SVector3(0, 0, 0));
+      pp.push_back(SVector3(1, 0, 0));
+      pp.push_back(SVector3(0, 1, 0));
+      pp.push_back(SVector3(0, 0, 1));
+
+      // internal points in edges of base triangle
+      for(int i = 0; i < 3; i++)
+        addEdgePointsCGNS(pp[i], pp[(i + 1) % 3], order, pp);
+
+      // internal points in upstanding edges
+      for(int i = 0; i < 3; i++) addEdgePointsCGNS(pp[i], pp[3], order, pp);
+
+      if(complete && order > 2) {
+        // internal points of base triangle
+        addTriPointsCGNS(pp[0], pp[1], pp[2], order, equidistant, pp);
+
+        // internal points of upstanding triangles
+        for(int i = 0; i < 3; i++) {
+          addTriPointsCGNS(pp[i], pp[(i + 1) % 3], pp[3], order, equidistant,
+                           pp);
+        }
+
+        // internal points as a tet of order p-3
+        if(order > 3) {
+          std::vector<SVector3> tetPp =
+            generatePointsCGNS(TYPE_TET, order - 4, true, true);
+
+          double scale = (order - 4) / order;
+          SVector3 offset(1. / order, 1. / order, 1. / order);
+          for(size_t i = 0; i < tetPp.size(); i++) {
+            SVector3 volumePoint = tetPp[i];
+            volumePoint *= scale;
+            volumePoint += offset;
+            pp.push_back(volumePoint);
+          }
+        }
+      }
+
+      break;
+    }
+    case TYPE_HEX: {
+      // principal vertices
+      pp.push_back(SVector3(-1, -1, -1));
+      pp.push_back(SVector3(1, -1, -1));
+      pp.push_back(SVector3(1, 1, -1));
+      pp.push_back(SVector3(-1, 1, -1));
+      pp.push_back(SVector3(-1, -1, 1));
+      pp.push_back(SVector3(1, -1, 1));
+      pp.push_back(SVector3(1, 1, 1));
+      pp.push_back(SVector3(-1, 1, 1));
+
+      // internal points of base quadrangle edges
+      for(int i = 0; i < 4; i++)
+        addEdgePointsCGNS(pp[i], pp[(i + 1) % 4], order, pp);
+
+      std::vector<SVector3> up[4];
+      // internal points of mounting edges
+      for(int i = 0; i < 4; i++) {
+        addEdgePointsCGNS(pp[i], pp[i + 4], order, up[i]);
+        pp.insert(pp.end(), up[i].begin(), up[i].end());
+      }
+
+      // internal points of top quadrangle edges
+      for(int i = 0; i < 4; i++)
+        addEdgePointsCGNS(pp[i + 4], pp[(i + 1) % 4 + 4], order, pp);
+
+      if(complete && order > 1) {
+        // internal points of base quadrangle
+        addQuaPointsCGNS(pp[0], pp[1], pp[2], pp[3], order, pp);
+
+        // internal points of upstanding faces
+        for(int i = 0; i < 4; i++) {
+          addQuaPointsCGNS(pp[i], pp[(i + 1) % 4], pp[(i + 1) % 4 + 4],
+                           pp[i + 4], order, pp);
+        }
+
+        // internal points of top quadrangle
+        addQuaPointsCGNS(pp[4], pp[5], pp[6], pp[7], order, pp);
+
+        // internal volume points as a succession of internal planes
+        for(int i = 0; i <= order - 2; i++) {
+          addQuaPointsCGNS(up[0][i], up[1][i], up[2][i], up[3][i], order, pp);
+        }
+      }
+
+      break;
+    }
+    case TYPE_PRI: {
+      // principal vertices
+      pp.push_back(SVector3(0, 0, -1));
+      pp.push_back(SVector3(1, 0, -1));
+      pp.push_back(SVector3(0, 1, -1));
+      pp.push_back(SVector3(0, 0, 1));
+      pp.push_back(SVector3(1, 0, 1));
+      pp.push_back(SVector3(0, 1, 1));
+
+      // internal points in edges of base triangle
+      for(int i = 0; i < 3; i++)
+        addEdgePointsCGNS(pp[i], pp[(i + 1) % 3], order, pp);
+
+      // internal points in upstanding edges
+      std::vector<SVector3> edge[3]; // keep for definition of volume pp
+      for(int i = 0; i < 3; i++) {
+        addEdgePointsCGNS(pp[i], pp[i + 3], order, edge[i]);
+        pp.insert(pp.end(), edge[i].begin(), edge[i].end());
+      }
+
+      // internal points in edges of top triangle
+      for(int i = 0; i < 3; i++)
+        addEdgePointsCGNS(pp[i + 3], pp[(i + 1) % 3 + 3], order, pp);
+
+      if(complete) {
+        // internal vertices for base triangle
+        addTriPointsCGNS(pp[0], pp[1], pp[2], order, true, pp);
+
+        // internal vertices for upstanding quadrilaterals
+        for(int i = 0; i < 3; i++) {
+          addQuaPointsCGNS(pp[i], pp[(i + 1) % 3], pp[(i + 1) % 3 + 3],
+                           pp[i + 3], order, pp);
+        }
+
+        // internal points for top triangle
+        addTriPointsCGNS(pp[3], pp[4], pp[5], order, true, pp);
+
+        // internal points in the volume as a succession of "triangles"
+        for(int o = 0; o < order - 1; o++) {
+          addTriPointsCGNS(edge[0][o], edge[1][o], edge[2][o], order, true, pp);
+        }
+      }
+      break;
+    }
+    case TYPE_PYR: {
+      // principal vertices
+      pp.push_back(SVector3(-1, -1, 0));
+      pp.push_back(SVector3(1, -1, 0));
+      pp.push_back(SVector3(1, 1, 0));
+      pp.push_back(SVector3(-1, 1, 0));
+      pp.push_back(SVector3(0, 0, 1));
+
+      // internal points in edges of base quadrilateral
+      for(int i = 0; i < 4; i++)
+        addEdgePointsCGNS(pp[i], pp[(i + 1) % 4], order, pp);
+
+      // internal points in upstanding edges
+      for(int i = 0; i < 4; i++) addEdgePointsCGNS(pp[i], pp[4], order, pp);
+
+      // internal points in base quadrilateral
+      addQuaPointsCGNS(pp[0], pp[1], pp[2], pp[3], order, pp);
+
+      // internal points in upstanding triangles
+      for(int i = 0; i < 4; i++)
+        addTriPointsCGNS(pp[i], pp[(i + 1) % 4], pp[4], order, true, pp);
+
+      // internal points as an internal pyramid of order p-3
+      std::vector<SVector3> pyr =
+        generatePointsCGNS(TYPE_PYR, order - 3, true, true);
+
+      SVector3 offset(0, 0, 1. / order);
+      double scale = double(order - 3) / double(order);
+
+      for(size_t i = 0; i < pyr.size(); ++i)
+        pp.push_back((pyr[i] * scale) + offset);
+
+      break;
+    }
+    default:
+      Msg::Error(
+        "%s (%i) : Error CGNS element %i of order %i not yet implemented",
+        __FILE__, __LINE__, ElementType::nameOfParentType(parentType).c_str(),
+        order);
+    }
+  }
+
+  return pp;
+}
+
+static int *getRenumberingToGmsh(ElementType_t cgnsType)
+{
+  int parent = parentFromCGNSType(cgnsType);
+  int order = orderFromCGNSType(cgnsType);
+  bool complete = completeCGNSType(cgnsType);
+  int gmshType = tagFromCGNSType(cgnsType);
+
+  std::vector<SVector3> points =
+    generatePointsCGNS(parent, order, complete, true);
+  fullMatrix<double> cgnsPoints(points.size(), 3);
+
+  for(size_t i = 0; i < points.size(); i++) {
+    for(size_t d = 0; d < 3; d++) cgnsPoints(i, d) = points[i][d];
+  }
+
+  // cgnsPoints.print("Point location in renumberings","%.1f");
+
+  const nodalBasis *nb = BasisFactory::getNodalBasis(gmshType);
+
+  int *renum = new int[points.size()];
+  nb->forwardRenumbering(cgnsPoints, renum);
+
+  // std::ostringstream filename;
+  // filename << ElementType::nameOfParentType(parent) << "_p" << order <<
+  // ".dat"; std::ofstream checkFile(filename.str().c_str());
+
+  // checkFile << "CGNS Control points in a " <<
+  // ElementType::nameOfParentType(parent)
+  //           << " of order " << order << std::endl;
+  // for (size_t i=0;i<points.size();i++) {
+  //   checkFile << std::setw(2) << i+1
+  //             << " -> "  << std::setw(2) << renum[i]
+  //             << " - "
+  //             << "(" << std::setw(4) << points[i][0]
+  //             << "," << std::setw(4) << points[i][1]
+  //             << "," << std::setw(4) << points[i][2] << ")" << std::endl;
+  // }
+  // checkFile.close();
+
+  return renum;
+}
+
+static int cgnsErr(const int cgIndexFile = -1)
+{
+  Msg::Error("Error detected by CGNS library");
   Msg::Error(cg_get_error());
   if(cgIndexFile != -1)
     if(cg_close(cgIndexFile)) Msg::Error("Unable to close CGNS file");
   return 0;
 }
 
-// --- read length scale in the file
-
-double readCGNSScale()
+static double readCGNSScale()
 {
   double scale = 1;
-
   MassUnits_t mass;
   LengthUnits_t length;
   TimeUnits_t time;
@@ -151,161 +655,11 @@ double readCGNSScale()
   return scale;
 }
 
-/*==============================================================================
- * Required types
- *============================================================================*/
-
-typedef std::map<int, std::vector<GEntity *> > PhysGroupMap;
-// Type providing a vector of entities
-// for a physical group index
-
-//--Class to gather elements that belong to a partition.  This class mimics a
-//--GEntity class.
-
-class DummyPartitionEntity : public GEntity {
-public:
-  DummyPartitionEntity() : GEntity(0, 0) {}
-
-  // number of types of elements
-  int getNumElementTypes() const { return 1; }
-  void getNumMeshElements(unsigned *const c) const { c[0] += elements.size(); }
-
-  // get the start of the array of a type of element
-  MElement *const *getStartElementType(int type) const { return &elements[0]; }
-
-  std::vector<MElement *> elements;
-};
-
-//--Class to make C style CGNS name strings act like C++ types
-
-class CGNSNameStr {
-private:
-  char name[33];
-
-public:
-  // Constructors
-  CGNSNameStr() { name[0] = '\0'; }
-  CGNSNameStr(const char *const cstr)
-  {
-    std::strncpy(name, cstr, 32);
-    name[32] = '\0';
-  }
-  CGNSNameStr(std::string &s)
-  {
-    std::strncpy(name, s.c_str(), 32);
-    name[32] = '\0';
-  }
-  CGNSNameStr(const int d, const char *const fmt = "%d")
-  {
-    std::sprintf(name, fmt, d);
-  }
-  CGNSNameStr(const CGNSNameStr &cgs) { std::strcpy(name, cgs.name); }
-  // Assignment
-  CGNSNameStr &operator=(const CGNSNameStr &cgs)
-  {
-    if(&cgs != this) { std::strcpy(name, cgs.name); }
-    return *this;
-  }
-  CGNSNameStr &operator=(const char *const cstr)
-  {
-    std::strncpy(name, cstr, 32);
-    name[32] = '\0';
-    return *this;
-  }
-  // Return the C string
-  char *c_str() { return name; }
-  const char *c_str() const { return name; }
-};
-
-//--Provides a CGNS element type for a MSH element type and indicates the order
-//--in which the CGNS elements are to be written:
-//    3D first-order elements
-//    3D second-order elements
-//    2D first-order elements
-//    2D second-order elements
-//    1D first-order elements
-//    1D second-order elements
-//    MSH_NUM_TYPE+1 is used to place non-cgns elements last.
-static const int msh2cgns[MSH_NUM_TYPE][2] = {
-  {BAR_2, 16},
-  {TRI_3, 11},
-  {QUAD_4, 12},
-  {TETRA_4, 1},
-  {HEXA_8, 4},
-  {PENTA_6, 3},
-  {PYRA_5, 2},
-  {BAR_3, 17},
-  {TRI_6, 13},
-  {QUAD_9, 15},
-  {TETRA_10, 5},
-  {HEXA_27, 10},
-  {PENTA_18, 8},
-  {PYRA_14, 6},
-  {-1, MSH_NUM_TYPE + 1}, // MSH_PNT (NODE in CGNS but not used herein)
-  {QUAD_8, 14},
-  {HEXA_20, 9},
-  {PENTA_15, 7},
-  {-1, MSH_NUM_TYPE + 1}, // MSH_PYR_13
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TRI_9
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TRI_10
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TRI_12
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TRI_15
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TRI_15I
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TRI_21
-  {-1, MSH_NUM_TYPE + 1}, // MSH_LIN_4
-  {-1, MSH_NUM_TYPE + 1}, // MSH_LIN_5
-  {-1, MSH_NUM_TYPE + 1}, // MSH_LIN_6
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TET_20
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TET_35
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TET_56
-  {-1, MSH_NUM_TYPE + 1}, // MSH_TET_22
-  {-1, MSH_NUM_TYPE + 1} // MSH_TET_28
-};
-
-//--This functor allows for sorting of the element types according to the
-//--"write-order" in array 'msh2cgns'
-
-struct ElemSortCGNSType {
-  bool operator()(const int t0, const int t1)
-  {
-    if(zoneElemConn[t0].numElem > 0 && zoneElemConn[t1].numElem > 0)
-      return msh2cgns[t0][1] < msh2cgns[t1][1];
-    else if(zoneElemConn[t0].numElem > 0)
-      return true;
-    else
-      return false;
-  }
-  ElemSortCGNSType(const ElementConnectivity *const _zoneElemConn)
-    : zoneElemConn(_zoneElemConn)
-  {
-  }
-
-private:
-  const ElementConnectivity *const zoneElemConn;
-};
-
-/*==============================================================================
- * Forward declarations
- *============================================================================*/
-
-template <unsigned DIM>
-int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
-                     const CGNSOptions &options, const double scalingFactor,
-                     const int vectorDim, const PhysGroupMap &group,
-                     const int cgIndexFile, const int cgIndexBase);
-
 static MElement *
 createElementMSH(GModel *m, int num, int typeMSH, int reg, int part,
                  std::vector<MVertex *> &v,
                  std::map<int, std::vector<MElement *> > elements[10])
 {
-  /*
-    if(CTX::instance()->mesh.switchElementTags) {
-    int tmp = reg;
-    reg = physical;
-    physical = reg;
-    }
-  */
   MElementFactory factory;
   MElement *e = factory.create(typeMSH, v, num, part, false, 0, 0, 0);
 
@@ -359,18 +713,10 @@ static int getIndicesQuad(int i1, int i2, int i3, int i4, int j1, int j2,
   }
 
   // corners
-  ind_i.push_back(i1);
-  ind_j.push_back(j1);
-  ind_k.push_back(k1);
-  ind_i.push_back(i2);
-  ind_j.push_back(j2);
-  ind_k.push_back(k2);
-  ind_i.push_back(i3);
-  ind_j.push_back(j3);
-  ind_k.push_back(k3);
-  ind_i.push_back(i4);
-  ind_j.push_back(j4);
-  ind_k.push_back(k4);
+  ind_i.push_back(i1); ind_j.push_back(j1); ind_k.push_back(k1);
+  ind_i.push_back(i2); ind_j.push_back(j2); ind_k.push_back(k2);
+  ind_i.push_back(i3); ind_j.push_back(j3); ind_k.push_back(k3);
+  ind_i.push_back(i4); ind_j.push_back(j4); ind_k.push_back(k4);
 
   added += 4;
 
@@ -408,23 +754,17 @@ static int getIndicesQuad(int i1, int i2, int i3, int i4, int j1, int j2,
       added++;
     }
 
-    /*
-      int ioffset = (i3-i1)/abs(i2-i1);
-      int joffset = (j3-j1)/abs(j2-j1);
-      int koffset = (k3-k1)/abs(k2-k1);
-    */
     added += getIndicesQuad(
       i1 + offset[f][0][0], i2 + offset[f][1][0], i3 + offset[f][2][0],
       i4 + offset[f][3][0], j1 + offset[f][0][1], j2 + offset[f][1][1],
       j3 + offset[f][2][1], j4 + offset[f][3][1], k1 + offset[f][0][2],
-      k2 + offset[f][1][2], k3 + offset[f][2][2], k4 + offset[f][3][2], ind_i,
-      ind_j, ind_k, order - 2, f);
-    /**/
+      k2 + offset[f][1][2], k3 + offset[f][2][2], k4 + offset[f][3][2],
+      ind_i, ind_j, ind_k, order - 2, f);
   }
   return added;
 }
 
-// --- get ijk indices for a high order face defined by principal vertices 1-4
+// get ijk indices for a high order face defined by principal vertices 1-4
 
 static int getIndicesFace(int i1, int i2, int i3, int i4, int j1, int j2,
                           int j3, int j4, int k1, int k2, int k3, int k4,
@@ -498,22 +838,16 @@ static int getIndicesFace(int i1, int i2, int i3, int i4, int j1, int j2,
       added++;
     }
   }
-  /*
-    int ioffset = (i3-i1)/abs(i2-i1);
-    int joffset = (j3-j1)/abs(j2-j1);
-    int koffset = (k3-k1)/abs(k2-k1);
-  */
   added += getIndicesFace(
     i1 + offset[f][0][0], i2 - offset[f][1][0], i3 - offset[f][2][0],
     i4 + offset[f][3][0], j1 + offset[f][0][1], j2 - offset[f][1][1],
     j3 - offset[f][2][1], j4 + offset[f][3][1], k1 + offset[f][0][2],
     k2 - offset[f][1][2], k3 - offset[f][2][2], k4 + offset[f][3][2], ind_i,
     ind_j, ind_k, order - 2, f);
-  /**/
   return added;
 }
 
-// --- get ijk indices for a high order hexahedral element
+// get ijk indices for a high order hexahedral element
 
 static void getIndices(int i, int j, int k, std::vector<int> &ind_i,
                        std::vector<int> &ind_j, std::vector<int> &ind_k,
@@ -541,30 +875,14 @@ static void getIndices(int i, int j, int k, std::vector<int> &ind_i,
   }
 
   // 8 principal points
-  ind_i.push_back(i);
-  ind_j.push_back(j);
-  ind_k.push_back(k);
-  ind_i.push_back(i + order);
-  ind_j.push_back(j);
-  ind_k.push_back(k);
-  ind_i.push_back(i + order);
-  ind_j.push_back(j + order);
-  ind_k.push_back(k);
-  ind_i.push_back(i);
-  ind_j.push_back(j + order);
-  ind_k.push_back(k);
-  ind_i.push_back(i);
-  ind_j.push_back(j);
-  ind_k.push_back(k + order);
-  ind_i.push_back(i + order);
-  ind_j.push_back(j);
-  ind_k.push_back(k + order);
-  ind_i.push_back(i + order);
-  ind_j.push_back(j + order);
-  ind_k.push_back(k + order);
-  ind_i.push_back(i);
-  ind_j.push_back(j + order);
-  ind_k.push_back(k + order);
+  ind_i.push_back(i); ind_j.push_back(j); ind_k.push_back(k);
+  ind_i.push_back(i + order); ind_j.push_back(j); ind_k.push_back(k);
+  ind_i.push_back(i + order); ind_j.push_back(j + order); ind_k.push_back(k);
+  ind_i.push_back(i); ind_j.push_back(j + order); ind_k.push_back(k);
+  ind_i.push_back(i); ind_j.push_back(j); ind_k.push_back(k + order);
+  ind_i.push_back(i + order); ind_j.push_back(j); ind_k.push_back(k + order);
+  ind_i.push_back(i + order); ind_j.push_back(j + order); ind_k.push_back(k + order);
+  ind_i.push_back(i); ind_j.push_back(j + order); ind_k.push_back(k + order);
 
   int initial_point = startpoint + 8;
 
@@ -613,25 +931,9 @@ static void getIndices(int i, int j, int k, std::vector<int> &ind_i,
   }
 }
 
-/*******************************************************************************
- *
- * Routine readCGNS
- *
- * Purpose
- * =======
- *
- *
- *
- * I/O
- * ===
- *
- *   name               - (I) file name
- *
- ******************************************************************************/
+// compute the face index in the block from the index range
 
-// --- compute the face index in the block from the index range ----------------
-
-int computeCGNSFace(const cgsize_t *range)
+static int computeCGNSFace(const cgsize_t *range)
 {
   int face = -1;
 
@@ -656,7 +958,7 @@ int computeCGNSFace(const cgsize_t *range)
   return face;
 }
 
-// --- structure for storing periodic connections ------------------------------
+// structure for storing periodic connections
 
 struct CGNSStruPeriodic {
   // the data that are modified on the fly by looping on the CGNSStruPeriodic
@@ -691,7 +993,7 @@ public:
 
     int ijk[3];
 
-    string print() const
+    std::string print() const
     {
       std::ostringstream printout;
       printout << "(" << ijk[0] << "," << ijk[1] << "," << ijk[2] << ")";
@@ -699,22 +1001,22 @@ public:
     }
   };
 
-  string tgtZone; // cgns name of the block
+  std::string tgtZone; // cgns name of the block
   int tgtFace; // index of the face in the block
   mutable int tgtFaceId; // elementary tag corresponding to the face
-  mutable vector<MVertex *> tgtVertices; // ordered vertices in the tgt
-  vector<IJK> tgtIJK; // ijk indices of the face points in the block
+  mutable std::vector<MVertex *> tgtVertices; // ordered vertices in the tgt
+  std::vector<IJK> tgtIJK; // ijk indices of the face points in the block
 
-  string srcName; // cgns name of the block
+  std::string srcName; // cgns name of the block
   int srcFace; // index of the face in the block
   mutable int srcFaceId; // elementary tag corresponding to the face
-  mutable vector<MVertex *> srcVertices; // ordered vertices in the src
-  vector<IJK> srcIJK; // ijk indices in the source face, ordered following tgt
+  mutable std::vector<MVertex *> srcVertices; // ordered vertices in the src
+  std::vector<IJK> srcIJK; // ijk indices in the source face, ordered following tgt
 
   std::vector<double> tfo; // transformation
 
 public:
-  void print(ostream &out) const
+  void print(std::ostream &out) const
   {
     out << "Connection of face " << tgtFace << " (" << tgtFaceId << ")"
         << " of domain " << tgtZone << " to " << srcFace << " (" << srcFaceId
@@ -722,20 +1024,13 @@ public:
         << " of " << srcName << std::endl;
   }
 
-public: // constructors
-  // -- empty constructor
-
+public:
   CGNSStruPeriodic() { setUnitAffineTransformation(tfo); }
-
-  // -- standard constructor
-
   CGNSStruPeriodic(const char *tn, const cgsize_t *tr, const char *sn,
                    const cgsize_t *sr, const int *iTfo, int o, int tfid,
                    const float *rotationCenter, const float *rotationAngle,
                    const float *translation)
-    :
-
-      tgtZone(tn), tgtFace(computeCGNSFace(tr)), tgtFaceId(tfid), srcName(sn),
+    : tgtZone(tn), tgtFace(computeCGNSFace(tr)), tgtFaceId(tfid), srcName(sn),
       srcFace(computeCGNSFace(sr)), srcFaceId(-1)
   {
     // compute the structured grid indices
@@ -790,8 +1085,6 @@ public: // constructors
                                 tfo);
   }
 
-  // -- copy constructor
-
   CGNSStruPeriodic(const CGNSStruPeriodic &old)
   {
     tgtVertices.resize(old.getNbPoints(), NULL);
@@ -811,8 +1104,6 @@ public: // constructors
 
     tfo = old.tfo;
   }
-
-  // -- constructor of the inverse connection
 
   CGNSStruPeriodic getInverse() const
   {
@@ -839,7 +1130,6 @@ public: // constructors
     return inv;
   }
 
-public: // vertex functions
   size_t getNbPoints() const { return tgtIJK.size(); }
 
   bool getTgtIJK(size_t ip, int &i, int &j, int &k) const
@@ -873,11 +1163,7 @@ public: // vertex functions
     srcVertices[ip] = v;
     return true;
   }
-
-public: // transformation operations
 };
-
-// --- definition of a set for storing periodic connections --------------------
 
 class CGNSStruPeriodicLess {
 public:
@@ -888,8 +1174,6 @@ public:
     return (f.srcFace < d.srcFace);
   }
 };
-
-// --- structure for storing periodic connections ------------------------------
 
 class CGNSUnstPeriodic {
   // the data that are modified on the fly by looping on the CGNSUnstPeriodic
@@ -938,13 +1222,8 @@ protected:
     }
   }
 
-public: // constructors
-  // -- empty constructor
-
+public:
   CGNSUnstPeriodic() { setUnitAffineTransformation(tfo); }
-
-  // -- standard constructor
-
   CGNSUnstPeriodic(const char *n, const char *tn, const cgsize_t *tPts,
                    PointSetType_t tType, cgsize_t tSize, const char *sn,
                    const cgsize_t *sPts, PointSetType_t sType, cgsize_t sSize,
@@ -953,10 +1232,8 @@ public: // constructors
     : name(n), tgtZone(tn), srcZone(sn)
   {
     // compute the structured grid indices
-
     computeAffineTransformation(rotationCenter, rotationAngle, translation,
                                 tfo);
-
     std::vector<int> srcPts;
     addPoints(sType, sSize, sPts, srcPts);
 
@@ -970,12 +1247,8 @@ public: // constructors
       }
     }
   }
-
-public: // vertex functions
   size_t nbPoints() const { return tgtToSrcPts.size(); }
 };
-
-// -----------------------------------------------------------------------------
 
 class CGNSUnstPeriodicLess {
 public:
@@ -996,30 +1269,24 @@ public:
   }
 };
 
-// -----------------------------------------------------------------------------
-
-int openCGNSFile(const std::string &fileName, int &fileIndex, int &nbBasis,
-                 double &scale)
+static int openCGNSFile(const std::string &fileName, int &fileIndex,
+                        int &nbBasis, double &scale)
 {
-  // Open the CGNS file
   if(cg_open(fileName.c_str(), CG_MODE_READ, &fileIndex)) {
     Msg::Error("%s (%i) : Error reading CGNS file %s : %s", __FILE__, __LINE__,
                fileName.c_str(), cg_get_error());
     return 0;
   }
-
   scale = readCGNSScale();
-
   cg_nbases(fileIndex, &nbBasis);
   return 1;
 }
 
-// ------------------------------------------------------------------------------
-
-bool readCGNSBoundaryConditions(int fileIndex, int baseIndex, int zoneIndex,
-                                int classIndex, int meshDim,
-                                std::map<int, int> &eltToClass,
-                                std::map<int, std::string> &classToName)
+static bool readCGNSBoundaryConditions(int fileIndex, int baseIndex,
+                                       int zoneIndex, int classIndex,
+                                       int meshDim,
+                                       std::map<int, int> &eltToClass,
+                                       std::map<int, std::string> &classToName)
 {
   int nbBoCos;
 
@@ -1127,7 +1394,7 @@ bool readCGNSBoundaryConditions(int fileIndex, int baseIndex, int zoneIndex,
   return true;
 }
 
-bool readCGNSPeriodicConnections(
+static bool readCGNSPeriodicConnections(
   int fileIndex, int baseIndex, int zoneIndex, char *zoneName,
   ZoneType_t zoneType,
   std::set<CGNSUnstPeriodic, CGNSUnstPeriodicLess> &connections)
@@ -1186,11 +1453,9 @@ bool readCGNSPeriodicConnections(
   return true;
 }
 
-// -----------------------------------------------------------------------------
-
-int addCGNSPoints(const string &fileName, int fileIndex, int baseIndex,
-                  int zoneIndex, cgsize_t nbPoints, int dim, double scale,
-                  GEntity *entity, int &index, std::vector<MVertex *> &vertices)
+static int addCGNSPoints(const std::string &fileName, int fileIndex, int baseIndex,
+                         int zoneIndex, cgsize_t nbPoints, int dim, double scale,
+                         GEntity *entity, int &index, std::vector<MVertex *> &vertices)
 {
   int nbDim;
   if(cg_ncoords(fileIndex, baseIndex, zoneIndex, &nbDim) != CG_OK) {
@@ -1244,20 +1509,18 @@ int addCGNSPoints(const string &fileName, int fileIndex, int baseIndex,
   return 1;
 }
 
-// -----------------------------------------------------------------------------
-
 int GModel::_readCGNSUnstructured(const std::string &fileName)
 {
-  // --- global containers and indices for points and elements
+  // global containers and indices for points and elements
 
   std::map<int, std::vector<MElement *> > eltMap[10];
   std::vector<MVertex *> newVertices;
 
-  // --- keep connectivity information
+  // keep connectivity information
 
   std::set<CGNSUnstPeriodic, CGNSUnstPeriodicLess> periodic;
 
-  // --- open file and read generic information
+  // open file and read generic information
 
   int fileIndex(-1);
   int nbBases(0);
@@ -1277,7 +1540,7 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
     return 0;
   }
 
-  // --- read boundary conditions to retain name for physical classification
+  // read boundary conditions to retain name for physical classification
 
   int nbFamilies(0);
   if(cg_nfamilies(fileIndex, baseIndex, &nbFamilies) != CG_OK) {
@@ -1286,7 +1549,7 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
     return 0;
   }
 
-  map<string, int> family;
+  std::map<std::string, int> family;
 
   for(int familyIndex = 1; familyIndex <= nbFamilies; familyIndex++) {
     char familyName[maxLenCGNS];
@@ -1305,15 +1568,12 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
     family[familyName] = familyIndex;
   }
 
-  // ---------------------------------------------------------------------------
-  // --- read the zones containing the elements --------------------------------
-  // ---------------------------------------------------------------------------
+  // read the zones containing the elements
 
   // keep renumbering table once generated
-
   std::map<ElementType_t, int *> renumbering;
 
-  // --- read mesh zones -------------------------------------------------------
+  // read mesh zones
 
   int nbZones(0);
   if(cg_nzones(fileIndex, baseIndex, &nbZones) != CG_OK) {
@@ -1322,7 +1582,7 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
     return 0;
   }
 
-  // --- node and element numbering is implicit in the zone, therefore offset
+  // node and element numbering is implicit in the zone, therefore offset
   // required
 
   // provide a global numbering
@@ -1346,12 +1606,12 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
   int classIndex = nbZones + 1;
 
   for(int zoneIndex = 1; zoneIndex <= nbZones; zoneIndex++) {
-    // --- using an offset to translate zone local numbering to global numbering
+    // using an offset to translate zone local numbering to global numbering
 
     int vtxOffset = newVertices.size();
 
-    // --- check that this is an unstructured zone
-    //     we can later add ijk here to allow for mixed meshes
+    // check that this is an unstructured zone we can later add ijk here to
+    // allow for mixed meshes
 
     ZoneType_t zoneType;
     if(cg_zone_type(fileIndex, baseIndex, zoneIndex, &zoneType) != CG_OK) {
@@ -1362,7 +1622,7 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
 
     if(zoneType != Unstructured) return 0;
 
-    // --- get element counts
+    // get element counts
 
     cgsize_t sizes[3];
 
@@ -1382,7 +1642,7 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
 
     cgsize_t nbPoints = sizes[0];
 
-    // --- read the family attached to the zone
+    // read the family attached to the zone
 
     if(cg_goto(fileIndex, baseIndex, "Zone_t", zoneIndex, "end") != CG_OK) {
       Msg::Error("%s (%i) : Error reading CGNS file %s : %s", __FILE__,
@@ -1403,7 +1663,7 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
 
     if(ierr == CG_OK) {
       Msg::Info("Zone %i has family name %s", zoneIndex, zoneFamilyName);
-      map<string, int>::iterator fIter = family.find(zoneFamilyName);
+      std::map<std::string, int>::iterator fIter = family.find(zoneFamilyName);
       // if(fIter != family.end()) zoneFamilyIndex = fIter->second;
       if(fIter == family.end())
         Msg::Error("%s (%i) : Error reading CGNS file %s : "
@@ -1411,21 +1671,21 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
                    __FILE__, __LINE__, fileName.c_str());
     }
 
-    // --- read coordinates and create vertices
+    // read coordinates and create vertices
 
     addCGNSPoints(fileName, fileIndex, baseIndex, zoneIndex, nbPoints, meshDim,
                   scale, NULL, vtxIndex, newVertices);
 
     Msg::Info("Read %i points", nbPoints);
 
-    // --- provide a finer classification based on boundary conditions
+    // provide a finer classification based on boundary conditions
 
     std::map<int, int> eltToBC;
 
     bool topologyDefined = readCGNSBoundaryConditions(
       fileIndex, baseIndex, zoneIndex, classIndex, meshDim, eltToBC, bcToName);
 
-    // --- create element using the sections
+    // create element using the sections
 
     int nbSections;
 
@@ -1446,7 +1706,7 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
 
       std::map<ElementType_t, int> elementCount;
 
-      // --- read connection block size
+      // read connection block size
 
       if(cg_section_read(fileIndex, baseIndex, zoneIndex, sectIndex, sectName,
                          &cgnsType, &eltBeg, &eltEnd, &nbBound,
@@ -1458,7 +1718,7 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
 
       int nbElt = eltEnd - eltBeg + 1;
 
-      // --- read connections
+      // read connections
 
       cgsize_t sectSize;
       if(cg_ElementDataSize(fileIndex, baseIndex, zoneIndex, sectIndex,
@@ -1468,7 +1728,7 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
         return 0;
       }
 
-      // --- read elements
+      // read elements
 
       cgsize_t *elts = new cgsize_t[sectSize];
 
@@ -1479,11 +1739,11 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
         return 0;
       }
 
-      // --- create elements
+      // create elements
 
       cgsize_t *pElt = elts;
       for(int iElt = 0; iElt < nbElt; iElt++, eltIndex++) {
-        vector<MVertex *> vtcs;
+        std::vector<MVertex *> vtcs;
 
         ElementType_t myType = cgnsType;
         if(cgnsType == MIXED) myType = (ElementType_t)*pElt++;
@@ -1536,7 +1796,8 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
       delete[] elts;
     }
 
-    // readCGNSPeriodicConnections(fileIndex,baseIndex,zoneIndex,zoneName,zoneType,periodic);
+    // readCGNSPeriodicConnections(fileIndex, baseIndex, zoneIndex, zoneName,
+    //                             zoneType, periodic);
   }
 
   for(std::map<ElementType_t, int *>::iterator rIter = renumbering.begin();
@@ -1593,8 +1854,6 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
 
   return 1;
 }
-
-// -----------------------------------------------------------------------------
 
 int GModel::_readCGNSStructured(const std::string &name)
 {
@@ -1676,7 +1935,7 @@ int GModel::_readCGNSStructured(const std::string &name)
       jelem = jelem / 2.0;
       kelem = kelem / 2.0;
     }
-    max_order = min(order, max_order);
+    max_order = std::min(order, max_order);
   }
 
   opt_mesh_cgns_import_order(0, GMSH_SET, max_order);
@@ -1718,7 +1977,7 @@ int GModel::_readCGNSStructured(const std::string &name)
     // int elementary_edge = getNumEdges();
     // int elementary_vertex = getNumVertices();
 
-    set<CGNSStruPeriodic, CGNSStruPeriodicLess> periodicConnections;
+    std::set<CGNSStruPeriodic, CGNSStruPeriodicLess> periodicConnections;
 
     // Read the zones
     for(int index_zone = 1; index_zone <= nZones; index_zone++) {
@@ -1867,12 +2126,12 @@ int GModel::_readCGNSStructured(const std::string &name)
         cg_1to1_read(index_file, index_base, index_zone, index_section,
                      ConnectionName, DonorName, range, donor_range, transform);
 
-        // --- face indices in the block and in the global geometry
+        // face indices in the block and in the global geometry
 
         int face = computeCGNSFace(range);
         int faceIndex = elementary_face + face + 1;
 
-        // --- encode periodic boundary transformation  / connection information
+        // encode periodic boundary transformation  / connection information
 
         float RotationCenter[3];
         float RotationAngle[3];
@@ -1886,7 +2145,7 @@ int GModel::_readCGNSStructured(const std::string &name)
                                 RotationAngle, Translation);
 
           CGNSStruPeriodic pinv(pnew.getInverse());
-          set<CGNSStruPeriodic, CGNSStruPeriodicLess>::iterator pIter =
+          std::set<CGNSStruPeriodic, CGNSStruPeriodicLess>::iterator pIter =
             periodicConnections.find(pinv);
 
           // create a new connection if inverse not found
@@ -1913,7 +2172,7 @@ int GModel::_readCGNSStructured(const std::string &name)
           }
         }
 
-        // --- ignore internal connections
+        // ignore internal connections
 
         else {
           int *range_int = new int[6];
@@ -1930,130 +2189,56 @@ int GModel::_readCGNSStructured(const std::string &name)
         int move[3][4] = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
         switch(face) {
         case 0:
-          imin = 0;
-          imax = zoneSizes[3];
-          jmin = 0;
-          jmax = zoneSizes[4];
-          kmin = 0;
-          kmax = 1;
+          imin = 0; imax = zoneSizes[3];
+          jmin = 0; jmax = zoneSizes[4];
+          kmin = 0; kmax = 1;
           kgrow = 0;
-          move[0][0] = 0;
-          move[0][1] = 0;
-          move[0][2] = igrow;
-          move[0][3] = igrow;
-          move[1][0] = 0;
-          move[1][1] = jgrow;
-          move[1][2] = jgrow;
-          move[1][3] = 0;
-          move[2][0] = 0;
-          move[2][1] = 0;
-          move[2][2] = 0;
-          move[2][3] = 0;
+          move[0][0] = 0; move[0][1] = 0;     move[0][2] = igrow; move[0][3] = igrow;
+          move[1][0] = 0; move[1][1] = jgrow; move[1][2] = jgrow; move[1][3] = 0;
+          move[2][0] = 0; move[2][1] = 0;     move[2][2] = 0;     move[2][3] = 0;
           break;
         case 1:
-          imin = 0;
-          imax = zoneSizes[3];
-          jmin = 0;
-          jmax = zoneSizes[4];
-          kmin = zoneSizes[2] - 1;
-          kmax = zoneSizes[2];
+          imin = 0; imax = zoneSizes[3];
+          jmin = 0; jmax = zoneSizes[4];
+          kmin = zoneSizes[2] - 1; kmax = zoneSizes[2];
           kgrow = 0;
-          move[0][0] = 0;
-          move[0][1] = igrow;
-          move[0][2] = igrow;
-          move[0][3] = 0;
-          move[1][0] = 0;
-          move[1][1] = 0;
-          move[1][2] = jgrow;
-          move[1][3] = jgrow;
-          move[2][0] = 0;
-          move[2][1] = 0;
-          move[2][2] = 0;
-          move[2][3] = 0;
+          move[0][0] = 0; move[0][1] = igrow; move[0][2] = igrow; move[0][3] = 0;
+          move[1][0] = 0; move[1][1] = 0;     move[1][2] = jgrow; move[1][3] = jgrow;
+          move[2][0] = 0; move[2][1] = 0;     move[2][2] = 0;     move[2][3] = 0;
           break;
         case 2:
-          imin = 0;
-          imax = zoneSizes[3];
-          jmin = 0;
-          jmax = 1;
+          imin = 0; imax = zoneSizes[3];
+          jmin = 0; jmax = 1;
           jgrow = 0;
-          kmin = 0;
-          kmax = zoneSizes[5];
-          move[0][0] = 0;
-          move[0][1] = igrow;
-          move[0][2] = igrow;
-          move[0][3] = 0;
-          move[1][0] = 0;
-          move[1][1] = 0;
-          move[1][2] = 0;
-          move[1][3] = 0;
-          move[2][0] = 0;
-          move[2][1] = 0;
-          move[2][2] = kgrow;
-          move[2][3] = kgrow;
+          kmin = 0; kmax = zoneSizes[5];
+          move[0][0] = 0; move[0][1] = igrow; move[0][2] = igrow; move[0][3] = 0;
+          move[1][0] = 0; move[1][1] = 0;     move[1][2] = 0;     move[1][3] = 0;
+          move[2][0] = 0; move[2][1] = 0;     move[2][2] = kgrow; move[2][3] = kgrow;
           break;
         case 3:
-          imin = 0;
-          imax = zoneSizes[3];
-          jmin = zoneSizes[1] - 1;
-          jmax = zoneSizes[1];
+          imin = 0;                imax = zoneSizes[3];
+          jmin = zoneSizes[1] - 1; jmax = zoneSizes[1];
           jgrow = 0;
-          kmin = 0;
-          kmax = zoneSizes[5];
-          move[0][0] = 0;
-          move[0][1] = 0;
-          move[0][2] = igrow;
-          move[0][3] = igrow;
-          move[1][0] = 0;
-          move[1][1] = 0;
-          move[1][2] = 0;
-          move[1][3] = 0;
-          move[2][0] = 0;
-          move[2][1] = kgrow;
-          move[2][2] = kgrow;
-          move[2][3] = 0;
+          kmin = 0; kmax = zoneSizes[5];
+          move[0][0] = 0; move[0][1] = 0;     move[0][2] = igrow; move[0][3] = igrow;
+          move[1][0] = 0; move[1][1] = 0;     move[1][2] = 0;     move[1][3] = 0;
+          move[2][0] = 0; move[2][1] = kgrow; move[2][2] = kgrow; move[2][3] = 0;
           break;
         case 4:
-          imin = 0;
-          imax = 1;
-          igrow = 0;
-          jmin = 0;
-          jmax = zoneSizes[4];
-          kmin = 0;
-          kmax = zoneSizes[5];
-          move[0][0] = 0;
-          move[0][1] = 0;
-          move[0][2] = 0;
-          move[0][3] = 0;
-          move[1][0] = 0;
-          move[1][1] = 0;
-          move[1][2] = jgrow;
-          move[1][3] = jgrow;
-          move[2][0] = 0;
-          move[2][1] = kgrow;
-          move[2][2] = kgrow;
-          move[2][3] = 0;
+          imin = 0; imax = 1; igrow = 0;
+          jmin = 0; jmax = zoneSizes[4];
+          kmin = 0; kmax = zoneSizes[5];
+          move[0][0] = 0; move[0][1] = 0;     move[0][2] = 0;     move[0][3] = 0;
+          move[1][0] = 0; move[1][1] = 0;     move[1][2] = jgrow; move[1][3] = jgrow;
+          move[2][0] = 0; move[2][1] = kgrow; move[2][2] = kgrow; move[2][3] = 0;
           break;
         case 5:
-          imin = zoneSizes[0] - 1;
-          imax = zoneSizes[0];
-          igrow = 0;
-          jmin = 0;
-          jmax = zoneSizes[4];
-          kmin = 0;
-          kmax = zoneSizes[5];
-          move[0][0] = 0;
-          move[0][1] = 0;
-          move[0][2] = 0;
-          move[0][3] = 0;
-          move[1][0] = 0;
-          move[1][1] = jgrow;
-          move[1][2] = jgrow;
-          move[1][3] = 0;
-          move[2][0] = 0;
-          move[2][1] = 0;
-          move[2][2] = kgrow;
-          move[2][3] = kgrow;
+          imin = zoneSizes[0] - 1; imax = zoneSizes[0]; igrow = 0;
+          jmin = 0;                jmax = zoneSizes[4];
+          kmin = 0;                kmax = zoneSizes[5];
+          move[0][0] = 0; move[0][1] = 0;     move[0][2] = 0;     move[0][3] = 0;
+          move[1][0] = 0; move[1][1] = jgrow; move[1][2] = jgrow; move[1][3] = 0;
+          move[2][0] = 0; move[2][1] = 0;     move[2][2] = kgrow; move[2][3] = kgrow;
           break;
         }
 
@@ -2125,9 +2310,9 @@ int GModel::_readCGNSStructured(const std::string &name)
     // store the vertices in their associated geometrical entity
     _storeVerticesInEntities(vertexMap);
 
-    // --- now encode the periodic boundaries
+    // now encode the periodic boundaries
 
-    set<CGNSStruPeriodic, CGNSStruPeriodicLess>::iterator pIter =
+    std::set<CGNSStruPeriodic, CGNSStruPeriodicLess>::iterator pIter =
       periodicConnections.begin();
 
     for(; pIter != periodicConnections.end(); ++pIter) {
@@ -2162,25 +2347,141 @@ int GModel::readCGNS(const std::string &name)
   return _readCGNSUnstructured(name);
 }
 
-/*******************************************************************************
- *
- * Routine tranlateElementMSH2CGNS
- *
- * Purpose
- * =======
- *
- *   Rewrites the mesh connectivity using CGNS node ordering
- *
- * I/O
- * ===
- *
- *   zoneElemConn       - (I) connectivity for the zone using gmsh node ordering
- *                            (see MElement.h)
- *                        (O) connectivity using CGNS node ordering
- *
- ******************************************************************************/
 
-void translateElementMSH2CGNS(ElementConnectivity *const zoneElemConn)
+// FIXME: all the code below this line will be rewritten or removed in a future
+// release of Gmsh. In particular CGNSUtils.h will be removed.
+
+#include "CGNSUtils.h"
+
+#ifdef _OPENMP
+#include <omp.h>
+#else
+#define omp_get_num_threads() 1
+#define omp_get_thread_num() 0
+#define omp_lock_t int
+#define omp_init_lock(x)
+#define omp_set_lock(x)
+#define omp_unset_lock(x)
+#define omp_destroy_lock(x)
+#endif
+
+// class to make C style CGNS name strings act like C++ types
+
+class CGNSNameStr {
+private:
+  char name[33];
+
+public:
+  // Constructors
+  CGNSNameStr() { name[0] = '\0'; }
+  CGNSNameStr(const char *const cstr)
+  {
+    std::strncpy(name, cstr, 32);
+    name[32] = '\0';
+  }
+  CGNSNameStr(std::string &s)
+  {
+    std::strncpy(name, s.c_str(), 32);
+    name[32] = '\0';
+  }
+  CGNSNameStr(const int d, const char *const fmt = "%d")
+  {
+    std::sprintf(name, fmt, d);
+  }
+  CGNSNameStr(const CGNSNameStr &cgs) { std::strcpy(name, cgs.name); }
+  // Assignment
+  CGNSNameStr &operator=(const CGNSNameStr &cgs)
+  {
+    if(&cgs != this) { std::strcpy(name, cgs.name); }
+    return *this;
+  }
+  CGNSNameStr &operator=(const char *const cstr)
+  {
+    std::strncpy(name, cstr, 32);
+    name[32] = '\0';
+    return *this;
+  }
+  // Return the C string
+  char *c_str() { return name; }
+  const char *c_str() const { return name; }
+};
+
+// Provides a CGNS element type for a MSH element type and indicates the order
+// in which the CGNS elements are to be written:
+//    3D first-order elements
+//    3D second-order elements
+//    2D first-order elements
+//    2D second-order elements
+//    1D first-order elements
+//    1D second-order elements
+//    MSH_MAX_NUM+1 is used to place non-cgns elements last.
+static const int msh2cgns[MSH_MAX_NUM][2] = {
+  {BAR_2, 16},
+  {TRI_3, 11},
+  {QUAD_4, 12},
+  {TETRA_4, 1},
+  {HEXA_8, 4},
+  {PENTA_6, 3},
+  {PYRA_5, 2},
+  {BAR_3, 17},
+  {TRI_6, 13},
+  {QUAD_9, 15},
+  {TETRA_10, 5},
+  {HEXA_27, 10},
+  {PENTA_18, 8},
+  {PYRA_14, 6},
+  {-1, MSH_MAX_NUM + 1}, // MSH_PNT (NODE in CGNS but not used herein)
+  {QUAD_8, 14},
+  {HEXA_20, 9},
+  {PENTA_15, 7},
+  {-1, MSH_MAX_NUM + 1}, // MSH_PYR_13
+  {-1, MSH_MAX_NUM + 1}, // MSH_TRI_9
+  {-1, MSH_MAX_NUM + 1}, // MSH_TRI_10
+  {-1, MSH_MAX_NUM + 1}, // MSH_TRI_12
+  {-1, MSH_MAX_NUM + 1}, // MSH_TRI_15
+  {-1, MSH_MAX_NUM + 1}, // MSH_TRI_15I
+  {-1, MSH_MAX_NUM + 1}, // MSH_TRI_21
+  {-1, MSH_MAX_NUM + 1}, // MSH_LIN_4
+  {-1, MSH_MAX_NUM + 1}, // MSH_LIN_5
+  {-1, MSH_MAX_NUM + 1}, // MSH_LIN_6
+  {-1, MSH_MAX_NUM + 1}, // MSH_TET_20
+  {-1, MSH_MAX_NUM + 1}, // MSH_TET_35
+  {-1, MSH_MAX_NUM + 1}, // MSH_TET_56
+  {-1, MSH_MAX_NUM + 1}, // MSH_TET_22
+  {-1, MSH_MAX_NUM + 1} // MSH_TET_28
+};
+
+// This functor allows for sorting of the element types according to the
+// "write-order" in array 'msh2cgns'
+
+struct ElemSortCGNSType {
+  bool operator()(const int t0, const int t1)
+  {
+    if(zoneElemConn[t0].numElem > 0 && zoneElemConn[t1].numElem > 0)
+      return msh2cgns[t0][1] < msh2cgns[t1][1];
+    else if(zoneElemConn[t0].numElem > 0)
+      return true;
+    else
+      return false;
+  }
+  ElemSortCGNSType(const ElementConnectivity *const _zoneElemConn)
+    : zoneElemConn(_zoneElemConn)
+  {
+  }
+
+private:
+  const ElementConnectivity *const zoneElemConn;
+};
+
+// type providing a vector of entities for a physical group index
+typedef std::map<int, std::vector<GEntity *> > PhysGroupMap;
+
+// Rewrites the mesh connectivity using CGNS node ordering
+// zoneElemConn       - (I) connectivity for the zone using gmsh node ordering
+//                         (see MElement.h)
+//                    - (O) connectivity using CGNS node ordering
+
+static void translateElementMSH2CGNS(ElementConnectivity *const zoneElemConn)
 {
   const int maxVPE = 27;
   // Location to write a MSH_TET_10 vertex to get a CGNS TETRA_10
@@ -2206,7 +2507,7 @@ void translateElementMSH2CGNS(ElementConnectivity *const zoneElemConn)
   static const int trPYR14[14] = {0, 1, 2, 3, 4, 5, 8, 9, 6, 10, 7, 11, 12, 13};
 
   int tmp[maxVPE];
-  for(int iElemType = 0; iElemType != MSH_NUM_TYPE; ++iElemType) {
+  for(int iElemType = 0; iElemType != MSH_MAX_NUM; ++iElemType) {
     int numVPE;
     const int *tr;
     if(zoneElemConn[iElemType].numElem > 0) {
@@ -2257,23 +2558,14 @@ void translateElementMSH2CGNS(ElementConnectivity *const zoneElemConn)
   }
 }
 
-/*******************************************************************************
- *
- * Routine expand_name
- *
- * Purpose
- * =======
- *
- *   Expands variables in a string 's' that are supported by the CGNS I/O.  's'
- *   is overwritten with the expanded string.
- *
- *   - &I[0][%width]% expands into 'index'.  Normally 'index' is assumed to have
- *     C numbering and therefore 1 is added to it.  Option [0] prevents the
- *     addition of the one.  Option [%width] sets the width of the index to
- *     'width' and pads with leading zeros.
- *   - &N& expands to 'name'.
- *
- ******************************************************************************/
+// Expands variables in a string 's' that are supported by the CGNS I/O.  's'
+// is overwritten with the expanded string.
+//
+// - &I[0][%width]% expands into 'index'.  Normally 'index' is assumed to have
+//   C numbering and therefore 1 is added to it.  Option [0] prevents the
+//   addition of the one.  Option [%width] sets the width of the index to
+//   'width' and pads with leading zeros.
+// - &N& expands to 'name'.
 
 void expand_name(std::string &s, const int index, const char *const name)
 {
@@ -2311,34 +2603,23 @@ void expand_name(std::string &s, const int index, const char *const name)
   }
 }
 
-/*******************************************************************************
- *
- * Routine get_zone_definition
- *
- * Purpose
- * =======
- *
- *   Defines the next zone based on physicals or partitions and provides a name
- *   for the zone
- *
- * I/O
- * ===
- *
- *   model              - (I) gmsh model
- *   zoneDefinition     - (I) how to define the zone (see enum in code)
- *   numZone            - (I) Number of zones in the domain
- *   options            - (I) options for CGNS I/O
- *   meshDim            - (I) dimension of the mesh elements
- *   group              - (I) the group of physicals used to define the mesh
- *   globalZoneIndex    - (I/O)
- *   globalPhysicalIt   - (I/O) a global scope iterator to the physicals
- *   zoneIndex          - (O) index of the zone
- *   partition          - (O) partition of the zone
- *   physicalItBegin    - (O) begin physical for defining the zone
- *   physicalItEnd      - (O) end physical for defining the zone
- *   zoneName           - (O) name of the zone
- *
- ******************************************************************************/
+
+// Defines the next zone based on physicals or partitions and provides a name
+// for the zone
+//
+//   model              - (I) gmsh model
+//   zoneDefinition     - (I) how to define the zone (see enum in code)
+//   numZone            - (I) Number of zones in the domain
+//   options            - (I) options for CGNS I/O
+//   meshDim            - (I) dimension of the mesh elements
+//   group              - (I) the group of physicals used to define the mesh
+//   globalZoneIndex    - (I/O)
+//   globalPhysicalIt   - (I/O) a global scope iterator to the physicals
+//   zoneIndex          - (O) index of the zone
+//   partition          - (O) partition of the zone
+//   physicalItBegin    - (O) begin physical for defining the zone
+//   physicalItEnd      - (O) end physical for defining the zone
+//   zoneName           - (O) name of the zone
 
 int get_zone_definition(
   GModel &model, const int zoneDefinition, const int numZone,
@@ -2354,9 +2635,6 @@ int get_zone_definition(
 
   //--Get indices for the zonex
 
-#ifdef _OPENMP
-#pragma omp critical(get_zone_definition)
-#endif
   {
     if(globalZoneIndex >= numZone)
       status = 1;
@@ -2402,36 +2680,7 @@ int get_zone_definition(
   return status;
 }
 
-/*******************************************************************************
- *
- * Routine write_CGNS_zone
- *
- * Purpose
- * =======
- *
- *   Writes the CGNS zones, splitting up the work between several processors if
- *   threads are enabled.
- *
- * I/O
- * ===
- *
- *   model              - (I)
- *   zoneDefinition     - (I) how to define a zone
- *   options            - (I) CGNS specific options
- *   scalingFactor
- *   vectorDim          - (I) Dimensions of a vector (must be 3 for a 3D mesh,
- *                            may be 2 or 3 for a 2D mesh)
- *   group              - (I) Group of physicals and associated entities
- *   cgIndexFile        - (I) index of the CGNS file node
- *   cgIndexBase        - (I) index of the CGNS base node
- *
- ******************************************************************************/
-
-/*--------------------------------------------------------------------*
- * Required types
- *--------------------------------------------------------------------*/
-
-//--A task for a thread
+// A task for a thread
 
 template <unsigned DIM> struct ZoneTask {
   MZone<DIM> zone;
@@ -2446,14 +2695,11 @@ template <unsigned DIM> struct ZoneTask {
   ZoneTask() : status(0), indexInOwner(0) {}
   void change_status(const int _status)
   {
-#ifdef _OPENMP
-    //#pragma omp atomic
-#endif
     status = _status;
   }
 };
 
-//--Information about a zone
+// Information about a zone
 
 struct ZoneInfo {
   CGNSNameStr name;
@@ -2461,13 +2707,26 @@ struct ZoneInfo {
   ZoneInfo() : cgIndex(-1) {}
 };
 
+// Writes the CGNS zones, splitting up the work between several processors if
+// threads are enabled.
+//
+//   model              - (I)
+//   zoneDefinition     - (I) how to define a zone
+//   options            - (I) CGNS specific options
+//   scalingFactor
+//   vectorDim          - (I) Dimensions of a vector (must be 3 for a 3D mesh,
+//                            may be 2 or 3 for a 2D mesh)
+//   group              - (I) Group of physicals and associated entities
+//   cgIndexFile        - (I) index of the CGNS file node
+//   cgIndexBase        - (I) index of the CGNS base node
+
 template <unsigned DIM>
 int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
                      const CGNSOptions &options, const double scalingFactor,
                      const int vectorDim, const PhysGroupMap &group,
                      const int cgIndexFile, const int cgIndexBase)
 {
-  //--Shared data
+  // Shared data
 
   int threadsWorking = omp_get_num_threads();
   // Semaphore for working threads
@@ -2482,17 +2741,16 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
   int globalZoneIndex = 0;
   PhysGroupMap::const_iterator globalPhysicalIt = group.begin();
 
-  //--Initialize omp locks
+  // Initialize omp locks
 
   omp_init_lock(&threadWLock);
   omp_init_lock(&queueLock);
 
-  //**Spawn threads
+  // Spawn threads
 
   {
-    //--Master thread (primary task is to define boundary connections and
-    // perform
-    //--I/O but can also process a zone if idle)
+    // Master thread (primary task is to define boundary connections and perform
+    // I/O but can also process a zone if idle)
 
     if(omp_get_thread_num() == 0) {
       ZoneTask<DIM> zoneTask;
@@ -2510,14 +2768,10 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
 
       while(threadsWorking || zoneQueue.size()) {
         if(zoneQueue.size()) {
-          /*--------------------------------------------------------------------*
-           * Write the zone in the queue
-           *--------------------------------------------------------------------*/
+          // Write the zone in the queue
 
           ZoneTask<DIM> *const writeTask = zoneQueue.front();
           MZone<DIM> *const writeZone = &writeTask->zone;
-
-          //--Write the zone
 
           // Write the zone node
           int cgIndexZone = 0;
@@ -2526,7 +2780,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
 #ifdef CGNS_TEST1
           // Count all the sub-elements in a Triangle 10
           cgZoneSize[1] = 0;
-          for(int iElemType = 0; iElemType != MSH_NUM_TYPE; ++iElemType) {
+          for(int iElemType = 0; iElemType != MSH_MAX_NUM; ++iElemType) {
             switch(iElemType) {
             case MSH_TRI_10 - 1:
               cgZoneSize[1] +=
@@ -2594,10 +2848,10 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
 
           // Obtain indices sorted in the order the CGNS elements will be
           // written
-          int indexElemType[MSH_NUM_TYPE];
-          for(int i = 0; i != MSH_NUM_TYPE; ++i) indexElemType[i] = i;
+          int indexElemType[MSH_MAX_NUM];
+          for(int i = 0; i != MSH_MAX_NUM; ++i) indexElemType[i] = i;
           std::sort<int *, ElemSortCGNSType>(
-            indexElemType, indexElemType + MSH_NUM_TYPE,
+            indexElemType, indexElemType + MSH_MAX_NUM,
             ElemSortCGNSType(writeZone->zoneElemConn));
 
           // Write the element connectivity
@@ -2734,9 +2988,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
           writeTask->change_status(0);
         }
 
-        /*--------------------------------------------------------------------*
-         * No zones waiting in the queue, process a zone
-         *--------------------------------------------------------------------*/
+        // No zones waiting in the queue, process a zone
 
         else {
           PhysGroupMap::const_iterator physicalItBegin;
@@ -2782,9 +3034,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
         }
       } // End master thread loop
 
-      /*--------------------------------------------------------------------*
-       * Write the remaining unconnected vertices as boundary conditions
-       *--------------------------------------------------------------------*/
+      // Write the remaining unconnected vertices as boundary conditions
 
       if(options.writeBC) {
         ZoneBoVec zoneBoVec; // from 'MZoneBoundary.h'
@@ -2876,7 +3126,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
     } // End master thread instructions
   } // End omp parallel section
 
-  //--Destroy omp locks
+  // Destroy omp locks
 
   omp_destroy_lock(&threadWLock);
   omp_destroy_lock(&queueLock);
@@ -2884,28 +3134,10 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
   return 0;
 }
 
-int sameVertex(GVertex *v1, GVertex *v2)
-/* This function determines whether given vertices v1 and v2 are at same
- * location or not */
+static int sameVertex(GVertex *v1, MVertex *v2)
 {
-  SPoint3 v1_xyz = v1->xyz();
-  SPoint3 v2_xyz = v2->xyz();
-
-  double dx = abs(v1_xyz[0] - v2_xyz[0]);
-  double dy = abs(v1_xyz[1] - v2_xyz[1]);
-  double dz = abs(v1_xyz[2] - v2_xyz[2]);
-
-  if((dx + dy + dz) < 0.00001) return 1;
-  /* floating point error of 0.00001 is used here.
-      if gmsh has any tolerance value change it to that */
-
-  return 0;
-}
-
-int sameVertex(GVertex *v1, MVertex *v2)
-/* This function determines whether given vertices v1 and v2 are at same
- * location or not */
-{
+  // This function determines whether given vertices v1 and v2 are at same
+  // location or not
   SPoint3 v1_xyz = v1->xyz();
   SPoint3 v2_xyz = v2->point();
 
@@ -2920,10 +3152,10 @@ int sameVertex(GVertex *v1, MVertex *v2)
   return 0;
 }
 
-int sameVertex(MVertex *v1, MVertex *v2)
-/* This function determines whether given vertices v1 and v2 are at same
- * location or not */
+static int sameVertex(MVertex *v1, MVertex *v2)
 {
+  // This function determines whether given vertices v1 and v2 are at same
+  // location or not
   SPoint3 v1_xyz = v1->point();
   SPoint3 v2_xyz = v2->point();
 
@@ -2932,56 +3164,17 @@ int sameVertex(MVertex *v1, MVertex *v2)
   double dz = abs(v1_xyz[2] - v2_xyz[2]);
 
   if((dx + dy + dz) < 0.00001) return 1;
-  /* floating point error of 0.00001 is used here.
-      if gmsh has any tolerance value change it to that */
+  // FIXME: floating point error of 0.00001 is used here.  if gmsh has any
+  // tolerance value change it to that
 
   return 0;
 }
 
-int sameEdge(GEdge *e1, GEdge *e2)
-/* This function determines whether given edges e1 and e2 are same or not */
+static int sameFace(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
+                    MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8)
 {
-  GVertex *vertex1_edge1, *vertex2_edge1;
-  vertex1_edge1 = e1->getBeginVertex();
-  vertex2_edge1 = e1->getEndVertex();
-
-  GVertex *vertex1_edge2, *vertex2_edge2;
-  vertex1_edge2 = e2->getBeginVertex();
-  vertex2_edge2 = e2->getEndVertex();
-
-  if(((sameVertex(vertex1_edge1, vertex1_edge2)) ||
-      (sameVertex(vertex1_edge1, vertex2_edge2))) &&
-     ((sameVertex(vertex2_edge1, vertex1_edge2)) ||
-      (sameVertex(vertex2_edge1, vertex2_edge2))))
-    return 1;
-
-  return 0;
-}
-
-int sameFace(GFace *f1, GFace *f2)
-/* This function determines whether given faces f1 and f2 are same or not */
-{
-  std::vector<GEdge *> const &edges_face1 = f1->edges();
-  std::vector<GEdge *> const &edges_face2 = f2->edges();
-
-  if(edges_face1.size() != edges_face2.size()) return 0;
-
-  unsigned int count = 0;
-  for(unsigned int i1 = 0; i1 < edges_face1.size(); ++i1) {
-    for(unsigned int i2 = 0; i2 < edges_face2.size(); ++i2) {
-      if(sameEdge(edges_face1[i1], edges_face2[i2])) { count += 1; }
-    }
-  }
-  if(count == edges_face1.size()) { return 1; }
-
-  return 0;
-}
-
-int sameFace(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, MVertex *v5,
-             MVertex *v6, MVertex *v7, MVertex *v8)
-/* Checks whether Face formed by vertices v1, v2, v3, v4 is same as the face
- * formed by vertices v5, v6, v7, v8 */
-{
+  // Checks whether Face formed by vertices v1, v2, v3, v4 is same as the face
+  // formed by vertices v5, v6, v7, v8
   if((sameVertex(v1, v5) || sameVertex(v1, v6) || sameVertex(v1, v7) ||
       sameVertex(v1, v8)) &&
      (sameVertex(v2, v5) || sameVertex(v2, v6) || sameVertex(v2, v7) ||
@@ -2997,10 +3190,9 @@ int sameFace(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, MVertex *v5,
   }
 }
 
-void faceOrientationTransfinite(GFace *f, double *Face_Orientation)
-/* This subroutine returns i,j,k components of unit normal of the given face f
- */
+static void faceOrientationTransfinite(GFace *f, double *Face_Orientation)
 {
+  // This subroutine returns i,j,k components of unit normal of the given face f
   MVertex *v0 = f->transfinite_vertices[0][0];
   MVertex *v1 = f->transfinite_vertices[1][0];
   MVertex *v2 = f->transfinite_vertices[0][1];
@@ -3033,10 +3225,10 @@ void faceOrientationTransfinite(GFace *f, double *Face_Orientation)
   return;
 }
 
-int volumeOrientationTransfinite(GRegion *gr)
-/* If the volume mesh is in Right-Hand orientation this function returns 1
- * otherwise -1 */
+static int volumeOrientationTransfinite(GRegion *gr)
 {
+  // If the volume mesh is in Right-Hand orientation this function returns 1
+  // otherwise -1
   MVertex *v0 = gr->transfinite_vertices[0][0][0];
   MVertex *v1 = gr->transfinite_vertices[1][0][0];
   MVertex *v2 = gr->transfinite_vertices[0][1][0];
@@ -3087,63 +3279,13 @@ int volumeOrientationTransfinite(GRegion *gr)
   }
 }
 
-void findCornerIndexStructMesh2D(GFace *f, GVertex *v, int &i_index,
-                                 int &j_index)
-/* This function computes i,j index (for 2D) of a corner vertex v in face f */
+static int isInterfaceFace(GModel *const model, MVertex *v0, MVertex *v1, MVertex *v2,
+                           MVertex *v3)
 {
-  std::vector<GVertex *> vf = f->vertices();
-
-  for(unsigned int i = 0; i < 4; ++i) {
-    GVertex *vi = vf[i];
-    SPoint3 vp = vi->xyz();
-  }
-
-  if(vf.size() != 4) {
-    Msg::Warning("Error obtaining vertices of face. Number of vertices != 4 ");
-  }
-
-  int imax = f->transfinite_vertices.size();
-  int jmax = f->transfinite_vertices[0].size();
-
-  MVertex *v1 = f->transfinite_vertices[0][0];
-  MVertex *v2 = f->transfinite_vertices[imax - 1][0];
-  MVertex *v3 = f->transfinite_vertices[imax - 1][jmax - 1];
-  MVertex *v4 = f->transfinite_vertices[0][jmax - 1];
-
-  for(unsigned int i = 0; i < vf.size(); ++i) {
-    GVertex *vf2 = vf[i];
-    if(sameVertex(vf2, v1) && sameVertex(vf2, v)) {
-      i_index = 1;
-      j_index = 1;
-      return;
-    }
-    if(sameVertex(vf2, v2) && sameVertex(vf2, v)) {
-      i_index = imax;
-      j_index = 1;
-      return;
-    }
-    if(sameVertex(vf2, v3) && sameVertex(vf2, v)) {
-      i_index = imax;
-      j_index = jmax;
-      return;
-    }
-    if(sameVertex(vf2, v4) && sameVertex(vf2, v)) {
-      i_index = 1;
-      j_index = jmax;
-      return;
-    }
-  }
-
-  return;
-}
-
-int isInterfaceFace(GModel *const model, MVertex *v0, MVertex *v1, MVertex *v2,
-                    MVertex *v3)
-/* This function determines whether a face formed by four corner vertices
-   v0,v1,v2,v3 is an interface-face between two regions or not This function
-   makes use of a fact that a face is an interrior face if it is shared by two
-   volumes */
-{
+  // This function determines whether a face formed by four corner vertices
+  // v0,v1,v2,v3 is an interface-face between two regions or not This function
+  // makes use of a fact that a face is an interrior face if it is shared by
+  // two volumes
   int countFace(0);
 
   std::vector<GRegion *> regions;
@@ -3184,71 +3326,29 @@ int isInterfaceFace(GModel *const model, MVertex *v0, MVertex *v1, MVertex *v2,
   }
 }
 
-int isInterfaceFace(GModel *const model, GVertex *v0, GVertex *v1, GVertex *v2,
-                    GVertex *v3)
-/* This function determines whether a face formed by four corner vertices
-   v0,v1,v2,v3 is an interface-face between two regions or not This function
-   makes use of a fact that a face is an interrior face if it is shared by two
-   volumes */
-{
-  int countFace(0);
+// class to gather elements that belong to a partition.  This class mimics a
+// GEntity class.
 
-  std::vector<GRegion *> regions;
-  for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it)
-    if((*it)->transfinite_vertices.size() &&
-       (*it)->transfinite_vertices[0].size() &&
-       (*it)->transfinite_vertices[0][0].size()) {
-      regions.push_back(*it);
-    }
+class DummyPartitionEntity : public GEntity {
+public:
+  DummyPartitionEntity() : GEntity(0, 0) {}
 
-  for(unsigned int iRegion = 0; iRegion < regions.size(); iRegion++) {
-    GRegion *gr = regions[iRegion];
-    std::vector<GFace *> faces = gr->faces();
-    if(faces.size() != 6) {
-      Msg::Warning("Error in Number of faces in Structured Mesh Region (!=6) ");
-    }
+  // number of types of elements
+  int getNumElementTypes() const { return 1; }
+  void getNumMeshElements(unsigned *const c) const { c[0] += elements.size(); }
 
-    for(unsigned int iFace = 0; iFace < faces.size(); iFace++) {
-      std::vector<GVertex *> vf = faces[iFace]->vertices();
-      if(vf.size() != 4) {
-        Msg::Warning(
-          "Error in Number of vertices in Structured Mesh Face (!=4) ");
-      }
-      if((sameVertex(vf[0], v0) || sameVertex(vf[0], v1) ||
-          sameVertex(vf[0], v2) || sameVertex(vf[0], v3)) &&
-         (sameVertex(vf[1], v0) || sameVertex(vf[1], v1) ||
-          sameVertex(vf[1], v2) || sameVertex(vf[1], v3)) &&
-         (sameVertex(vf[2], v0) || sameVertex(vf[2], v1) ||
-          sameVertex(vf[2], v2) || sameVertex(vf[2], v3)) &&
-         (sameVertex(vf[3], v0) || sameVertex(vf[3], v1) ||
-          sameVertex(vf[3], v2) || sameVertex(vf[3], v3)))
-        countFace += 1;
-    }
-  }
-  if(countFace == 2) { return 1; }
-  else {
-    return 0;
-  }
-}
+  // get the start of the array of a type of element
+  MElement *const *getStartElementType(int type) const { return &elements[0]; }
 
-/*******************************************************************************
- *
- * Routine writeCGNS
- *
- * Purpose
- * =======
- *
- *   Writes out the mesh in CGNS format
- *
- * I/O
- * ===
- *
- *   name               - (I) file name
- *   zoneDefinition     - (I) how to define a zone
- *   options            - (I) options specific to CGNS
- *   scalingFactor      - (I) scaling for coordinates
- *
- ******************************************************************************/
+  std::vector<MElement *> elements;
+};
+
+// Writes out the mesh in CGNS format
+//
+// name               - (I) file name
+// zoneDefinition     - (I) how to define a zone
+// options            - (I) options specific to CGNS
+// scalingFactor      - (I) scaling for coordinates
 
 int GModel::writeCGNS(const std::string &name, int zoneDefinition,
                       const CGNSOptions &options, double scalingFactor)
@@ -3511,11 +3611,11 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
         int cgIndexConn(0);
         int interfaceEdge(0);
         int interfaceWritten(0);
-        int *Point_Range = NULL;
-        int *Point_Donor_Range = NULL;
+        cgsize_t *Point_Range = NULL;
+        cgsize_t *Point_Donor_Range = NULL;
         int *Transform = NULL;
-        Point_Range = new int[4];
-        Point_Donor_Range = new int[4];
+        Point_Range = new cgsize_t[4];
+        Point_Donor_Range = new cgsize_t[4];
         Transform = new int[2];
 
         for(unsigned int iBc = 0; iBc < 4; ++iBc) {
@@ -3900,11 +4000,11 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
         int cgIndexConn(0);
         int interfaceFace(0);
         int interfaceFaceWritten(0);
-        int *Point_Range = NULL;
-        int *Point_Donor_Range = NULL;
+        cgsize_t *Point_Range = NULL;
+        cgsize_t *Point_Donor_Range = NULL;
         int *Transform = NULL;
-        Point_Range = new int[6];
-        Point_Donor_Range = new int[6];
+        Point_Range = new cgsize_t[6];
+        Point_Donor_Range = new cgsize_t[6];
         Transform = new int[3];
 
         for(unsigned int iBc = 0; iBc < 6; ++iBc) {

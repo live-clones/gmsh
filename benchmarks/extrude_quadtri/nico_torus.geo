@@ -5,13 +5,12 @@
 Geometry.Surfaces=1;
 Mesh.SurfaceFaces=1;
 Mesh.RecombinationAlgorithm = 0;
-Mesh.RemeshAlgorithm = 1;
 Mesh.Algorithm=6; // mesh algorithm
 Mesh.Algorithm3D=4; // mesh algorithm
 Geometry.AutoCoherence = 1;
 Geometry.OldRuledSurface=1;
 
-Function Torus
+Function MyTorus
   // Given a zshift and two radii irad and orad, and a zshift, this
   // creates a torus parallel to the x-y-plane.
   // The points:
@@ -76,4 +75,4 @@ lcar = 0.05;
 orad = 0.5;
 irad = 0.15;
 zshift = 0.04;
-Call Torus;
+Call MyTorus;

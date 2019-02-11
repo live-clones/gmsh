@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
 #include "MEdge.h"
@@ -70,22 +70,45 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
 {
   if(e.empty()) return true;
   std::map<MVertex *, std::pair<MVertex *, MVertex *> > c;
+  //  printf("EDGES =  [ ");
   for(size_t i = 0; i < e.size(); i++) {
     MVertex *v0 = e[i].getVertex(0);
     MVertex *v1 = e[i].getVertex(1);
+    //    printf("(%d %d) ",v0->getNum(),v1->getNum());
     std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator it0 =
       c.find(v0);
     std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator it1 =
       c.find(v1);
     if(it0 == c.end())
       c[v0] = std::make_pair(v1, (MVertex *)NULL);
-    else
-      it0->second.second = v1;
+    else {
+      if(it0->second.second == NULL) {
+        it0->second.second = v1;
+      }
+      else {
+        Msg::Error("wrong topology for a list of edges ");
+      }
+    }
     if(it1 == c.end())
       c[v1] = std::make_pair(v0, (MVertex *)NULL);
-    else
-      it1->second.second = v0;
+    else {
+      if(it1->second.second == NULL) {
+        it1->second.second = v0;
+      }
+      else {
+        Msg::Error("wrong topology for a list of edges ");
+      }
+    }
   }
+  //  printf(" ] \n");
+
+  //  std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator it  =
+  //  c.begin(); while (it != c.end()){
+  //    printf("%8d -- %7d %7d
+  //    \n",it->first->getNum(),it->second.first->getNum(),it->second.second ?
+  //    it->second.second->getNum():-1);
+  //    ++it;
+  //  }
 
   while(!c.empty()) {
     std::vector<MVertex *> v;
@@ -101,15 +124,29 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
         }
       }
     }
-    std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator it =
+
+    std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator its =
       c.find(start);
+
+    //    if (it == c.end()){
+    //      Msg::Error ("impossible to find starting point %d",start->getNum());
+    //    }
+
     MVertex *prev =
-      (it->second.second == start) ? it->second.first : it->second.second;
+      (its->second.second == start) ? its->second.first : its->second.second;
     MVertex *current = start;
+
     do {
+      if(c.size() == 0) {
+        Msg::Warning("WRONG TOPOLOGY IN A WIRE");
+        return false;
+      }
       v.push_back(current);
       std::map<MVertex *, std::pair<MVertex *, MVertex *> >::iterator it =
         c.find(current);
+      if(it == c.end() || it->first == NULL) {
+        Msg::Error("impossible to find %d", current->getNum());
+      }
       MVertex *v1 = it->second.first;
       MVertex *v2 = it->second.second;
       c.erase(it);
@@ -128,7 +165,6 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
     } while(current != start && current != NULL);
     vs.push_back(v);
   }
-
   return true;
 }
 

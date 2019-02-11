@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <sstream>
 #include <string.h>
@@ -439,9 +439,6 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
     status = GModel::current()->readP3D(fileName);
     mesh = true;
   }
-  else if(ext == ".fm" || ext == ".FM") {
-    status = GModel::current()->readFourier(fileName);
-  }
 #if defined(HAVE_FLTK)
   else if(ext == ".pnm" || ext == ".PNM" || ext == ".pbm" || ext == ".PBM" ||
           ext == ".pgm" || ext == ".PGM" || ext == ".ppm" || ext == ".PPM") {
@@ -550,8 +547,6 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
 
   if(setBoundingBox) SetBoundingBox();
 
-  // this should be made less global, creating the topology and the
-  // parametrizations only when actually needed
   if(mesh && CTX::instance()->meshDiscrete)
     GModel::current()->createGeometryOfDiscreteEntities();
 

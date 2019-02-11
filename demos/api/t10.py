@@ -26,7 +26,7 @@ factory.addLine(4,1, 4);
 factory.addCurveLoop([1,2,3,4], 5)
 factory.addPlaneSurface([5], 6)
 
-model.mesh.field.add("Attractor", 1)
+model.mesh.field.add("Distance", 1)
 model.mesh.field.setNumbers(1, "NodesList", [5])
 model.mesh.field.setNumber(1, "NNodesByEdge", 100)
 model.mesh.field.setNumbers(1, "EdgesList", [2])
@@ -41,7 +41,7 @@ model.mesh.field.setNumber(2, "DistMax", 0.5)
 model.mesh.field.add("MathEval", 3)
 model.mesh.field.setString(3, "F", "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101")
 
-model.mesh.field.add("Attractor", 4)
+model.mesh.field.add("Distance", 4)
 model.mesh.field.setNumbers(4, "NodesList", [1])
 
 model.mesh.field.add("MathEval", 5);
@@ -64,4 +64,3 @@ factory.synchronize()
 model.mesh.generate(2)
 gmsh.write("t10.msh")
 gmsh.finalize()
-

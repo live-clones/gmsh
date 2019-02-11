@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdio.h>
 #include <string.h>
@@ -872,7 +872,8 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
 void openglWindow::drawTooltip(const std::string &text)
 {
   static char str[1024];
-  strncpy(str, text.c_str(), sizeof(str));
+  strncpy(str, text.c_str(), sizeof(str) - 1);
+  str[sizeof(str) - 1] = '\0';
   Fl_Tooltip::exit(0);
   bool enabled = Fl_Tooltip::enabled();
   if(!enabled) Fl_Tooltip::enable();

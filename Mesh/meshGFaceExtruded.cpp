@@ -1,9 +1,10 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <set>
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -12,7 +13,10 @@
 #include "MVertexRTree.h"
 #include "Context.h"
 #include "GmshMessage.h"
+
+#if defined(HAVE_QUADTRI)
 #include "QuadTriExtruded2D.h"
+#endif
 
 static void addTriangle(MVertex *v1, MVertex *v2, MVertex *v3, GFace *to)
 {
@@ -116,14 +120,15 @@ extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
     }
   }
 
-  // Trevor Strickler
-  // figure out whether to recombine this surface or not in the event
-  // of quadToTri region neighbors (if QuadToTri, tri_quad_flag is an
-  // int flag that lets createQuadTri() override the surface's
-  // intrinsic ep->mesh.Recombine flag.  tri_quad_flag values: 0 = no
-  // override, 1 = mesh with quads, 2 = mesh with triangles.)
-  bool detectQuadToTriLateral = false;
   int tri_quad_flag = 0;
+
+#if defined(HAVE_QUADTRI)
+  // figure out whether to recombine this surface or not in the event of
+  // quadToTri region neighbors (if QuadToTri, tri_quad_flag is an int flag that
+  // lets createQuadTri() override the surface's intrinsic ep->mesh.Recombine
+  // flag.  tri_quad_flag values: 0 = no override, 1 = mesh with quads, 2 = mesh
+  // with triangles.)
+  bool detectQuadToTriLateral = false;
   bool quadToTri_valid =
     IsValidQuadToTriLateral(to, &tri_quad_flag, &detectQuadToTriLateral);
   if(detectQuadToTriLateral && !quadToTri_valid)
@@ -131,10 +136,11 @@ extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
       "In MeshGFaceExtrudedSurface::extrudeMesh(), Mesh of QuadToTri Lateral "
       "surface %d likely has errors.",
       to->tag());
+#endif
 
-  // create elements (note that it would be faster to access the
-  // *interior* nodes by direct indexing, but it's just simpler to
-  // query everything by position)
+  // create elements (note that it would be faster to access the *interior*
+  // nodes by direct indexing, but it's just simpler to query everything by
+  // position)
   for(unsigned int i = 0; i < from->lines.size(); i++) {
     MVertex *v0 = from->lines[i]->getVertex(0);
     MVertex *v1 = from->lines[i]->getVertex(1);
@@ -196,10 +202,11 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
     pos.insert(newv);
   }
 
-  // if performing QuadToTri mesh, cannot simply copy the mesh from
-  // the source.  The vertices and triangles can be copied directly
-  // though.  First, of course, do some checks and make sure this is a
-  // valid QuadToTri top surface before engaging in QuadToTri meshing.
+#if defined(HAVE_QUADTRI)
+  // if performing QuadToTri mesh, cannot simply copy the mesh from the source.
+  // The vertices and triangles can be copied directly though.  First, of
+  // course, do some checks and make sure this is a valid QuadToTri top surface
+  // before engaging in QuadToTri meshing.
   int quadToTri = NO_QUADTRI;
   bool detectQuadToTriTop = false;
   int quadToTri_valid =
@@ -225,6 +232,7 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
         to->tag(), root->tag());
     }
   }
+#endif
 
   // create triangle elements
   for(unsigned int i = 0; i < from->triangles.size(); i++) {
@@ -246,9 +254,9 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
     addTriangle(verts[0], verts[1], verts[2], to);
   }
 
-  // Add triangles for divided quads for QuadTri -- Trevor Strickler
-  // if quadtotri and not part of a toroidal extrusion, mesh the top surface
-  // accordingly
+#if defined(HAVE_QUADTRI)
+  // Add triangles for divided quads for QuadTri. If quadtotri and not part of a
+  // toroidal extrusion, mesh the top surface accordingly
   if(detectQuadToTriTop && !is_toroidal) {
     if(!MeshQuadToTriTopSurface(from, to, pos))
       Msg::Error("In MeshExtrudedSurface()::copyMesh(), mesh of QuadToTri top "
@@ -256,6 +264,7 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
                  to->tag());
     return;
   }
+#endif
 
   // create quadrangle elements if NOT QuadToTri and NOT toroidal
   for(unsigned int i = 0; i < from->quadrangles.size(); i++) {

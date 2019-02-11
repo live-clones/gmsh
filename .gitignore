@@ -1,10 +1,12 @@
 bin*
 lib
+build
 build_*/
 contrib/mobile/frameworks_*
 contrib/3M
 contrib/Parasolid
 *.db
+doc/doxygen/html
 .DS_Store
 *~
 *.so

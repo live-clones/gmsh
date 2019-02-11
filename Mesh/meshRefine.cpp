@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributor(s):
 //   Brian Helenbrook
@@ -104,7 +104,7 @@ static void Subdivide(GEdge *ge)
 }
 
 static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
-                      faceContainer &faceVertices)
+                      faceContainer &faceVertices, bool linear)
 {
   if(!splitIntoQuads && !splitIntoHexas) {
     std::vector<MTriangle *> triangles2;
@@ -148,21 +148,23 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
       if(t->getNumVertices() == 6) {
         SPoint2 pt;
         SPoint3 ptx;
-        t->pnt(0.5, 0.5, 0, ptx);
+        t->pnt(1. / 3., 1. / 3., 0., ptx);
         bool reparamOK = true;
-        for(int k = 0; k < 6; k++) {
-          SPoint2 temp;
-          reparamOK &= reparamMeshVertexOnFace(t->getVertex(k), gf, temp);
-          pt[0] += temp[0] / 6.;
-          pt[1] += temp[1] / 6.;
+        if(!linear){
+          for(int k = 0; k < 6; k++) {
+            SPoint2 temp;
+            reparamOK &= reparamMeshVertexOnFace(t->getVertex(k), gf, temp);
+            pt[0] += temp[0] / 6.;
+            pt[1] += temp[1] / 6.;
+          }
         }
         MVertex *newv;
-        if(reparamOK) {
-          GPoint gp = gf->point(pt);
-          newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, pt[0], pt[1]);
+        if(linear || !reparamOK) {
+          newv = new MVertex(ptx.x(), ptx.y(), ptx.z(), gf);
         }
         else {
-          newv = new MVertex(ptx.x(), ptx.y(), ptx.z(), gf);
+          GPoint gp = gf->point(pt);
+          newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, pt[0], pt[1]);
         }
         gf->mesh_vertices.push_back(newv);
         if(splitIntoHexas) faceVertices[t->getFace(0)].push_back(newv);
@@ -348,9 +350,9 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
       }
     }
     gr->prisms.clear();
-    // --------------------------------------------------
-    // YAMAKAWA DIVISION OF A PYRAMID INTO 88 HEXES !!!!!
-    // --------------------------------------------------
+
+    // Yamakawa subdivision of a pyramid into 88 hexes (thanks to Tristan
+    // Carrier Baudouin!)
     std::vector<MHexahedron *> dwarfs88;
     for(unsigned int i = 0; i < gr->pyramids.size(); i++) {
       MPyramid *p = gr->pyramids[i];
@@ -360,9 +362,6 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
       }
     }
     gr->pyramids.clear();
-    // --------------------------------------------------
-    // ---- THANKS TO TRISTAN CARRIER BAUDOUIN ----------
-    // --------------------------------------------------
   }
   gr->hexahedra = hexahedra2;
 
@@ -460,9 +459,6 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
 void RefineMesh(GModel *m, bool linear, bool splitIntoQuads,
                 bool splitIntoHexas)
 {
-  //  splitIntoQuads = true;
-  //  splitIntoHexas = true;
-
   Msg::StatusBar(true, "Refining mesh...");
   double t1 = Cpu();
 
@@ -477,10 +473,8 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads,
   // mesh
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
     Subdivide(*it);
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
-    Subdivide(*it, splitIntoQuads, splitIntoHexas, faceVertices);
-    // if(splitIntoQuads) recombineIntoQuads(*it, true, true);
-  }
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+    Subdivide(*it, splitIntoQuads, splitIntoHexas, faceVertices, linear);
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     Subdivide(*it, splitIntoHexas, faceVertices);
 
@@ -556,7 +550,7 @@ void BarycentricRefineMesh(GModel *m)
   Msg::StatusBar(true, "Done barycentrically refining mesh (%g s)", t2 - t1);
 }
 
-///------ Tristan Carrier Baudouin's Contribution on Full Hex Meshing
+// Tristan Carrier Baudouin's contribution on Full Hex Meshing
 
 static double schneiders_x(int i)
 {

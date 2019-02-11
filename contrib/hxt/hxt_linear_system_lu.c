@@ -5,7 +5,9 @@
 #include "hxt_tools.h"
 #include "hxt_linear_system_lu.h"
 
-#define CONMAX 200
+//#define CONMAX 2000
+
+#ifdef CONMAX  
 static void connectivityInsert(int *connectivity, int i, int j)
 {
   for (int k = 0; k < CONMAX; ++k) {
@@ -17,6 +19,7 @@ static void connectivityInsert(int *connectivity, int i, int j)
   }
   printf("ERROR : node %i has more than %i neighbours\n", i, CONMAX);
 }
+#endif
 
 struct HXTLinearSystemLUStruct{
   double *M;
@@ -35,31 +38,96 @@ struct HXTLinearSystemLUStruct{
   int flaglu;
 };
 
+struct HXTConnectivity {
+  int nNodes;
+  int quantum;
+  int *degree;
+  int *allocated;
+  int **nodeConnectivity;  
+};
+
+void mallocConnectivity (struct HXTConnectivity *c, int n, int q)
+{
+  c-> nNodes = n;
+  c-> quantum = q;
+  c-> allocated        = malloc (sizeof(int) * c->nNodes);
+  c-> degree           = malloc (sizeof(int) * c->nNodes);
+  c-> nodeConnectivity = malloc (sizeof(int*)* c->nNodes);
+  for (int i=0;i<c->nNodes;i++){
+    c-> allocated[i] = c->quantum;
+    c-> degree [i] = 0;
+    c-> nodeConnectivity [i] = malloc (sizeof(int) * c-> allocated[i]);    
+  }    
+}
+
+void freeConnectivity (struct HXTConnectivity *c)
+{
+  for (int i=0;i<c->nNodes;i++){
+    free(c-> nodeConnectivity [i]);
+  }    
+  free(c-> nodeConnectivity);
+  free(c-> degree);
+  free(c-> allocated);
+  c-> nNodes = 0;
+}
+
+
+int addToConnectivity (struct HXTConnectivity *c, int myRow, int myCol){
+  if (myRow >= c->nNodes) return -1;
+
+  if (c->allocated[myRow] == c->degree[myRow]){
+    c->allocated[myRow]*= 2;
+    c-> nodeConnectivity [myRow] = realloc (c-> nodeConnectivity [myRow],sizeof(int) * c-> allocated[myRow]);
+  }
+  for (int i=0;i<c->degree[myRow];i++){
+    if (c-> nodeConnectivity [myRow][i] == myCol)return 0;
+  }
+  c-> nodeConnectivity [myRow][c->degree[myRow]] = myCol;
+  c->degree[myRow]++;
+}
+
+
 static void reverseCuthillMckee(HXTLinearSystemLU *system, int *ordering)
 {
+#ifdef CONMAX  
   int *nodeConnectivity = malloc(sizeof(int)*system->nNodes*CONMAX);
   for (int i = 0; i < system->nNodes*CONMAX; ++i) {
     nodeConnectivity[i] = -1;
   }
+#else
+  struct HXTConnectivity myConnectivity;
+  mallocConnectivity (&myConnectivity,system->nNodes,9); // 7 is the average connectivity of a triangular mesh, we put a llitle more
+#endif
+  
   for (int i = 0; i < system->nElements; ++i) {
     uint32_t *el = system->elements + i*system->nNodesByElement;
     for (int k = 0; k < system->nNodesByElement; ++k){
       for (int l = 0; l < system->nNodesByElement; ++l){
         if (k == l) continue;
+#ifdef CONMAX  
         connectivityInsert(nodeConnectivity, el[k], el[l]);
         connectivityInsert(nodeConnectivity, el[l], el[k]);
+#else
+	addToConnectivity(&myConnectivity,el[k], el[l]);
+	addToConnectivity(&myConnectivity,el[l], el[k]);
+#endif
       }
     }
   }
+#ifdef CONMAX  
   int *nodeDegree = malloc(sizeof(int)*system->nNodes);
   for (int i = 0; i < system->nNodes; ++i) {
     nodeDegree[i] = 0;
     for (int j = 0; j < CONMAX; ++j) {
       if (nodeConnectivity[CONMAX*i+j] == -1)
-        break;
+	break;
       nodeDegree[i] += 1;
     }
   }
+#else
+  int *nodeDegree = myConnectivity.degree;
+#endif
+  
   int *queue = malloc(sizeof(int)*system->nNodes);
   queue[0] = 0;
   for (int i = 0; i < system->nNodes; ++i){
@@ -77,7 +145,11 @@ static void reverseCuthillMckee(HXTLinearSystemLU *system, int *ordering)
       int c = queue[i];
       ordering[c] = id++;
       for(int j = 0; j < nodeDegree[c]; ++j) {
+#ifdef CONMAX  
         int o = nodeConnectivity[c*CONMAX+j];
+#else
+        int o = myConnectivity.nodeConnectivity[c][j];
+#endif
         if (ordering[o] == -1) {
           ordering[o] = -2;
 #if 1
@@ -101,8 +173,13 @@ static void reverseCuthillMckee(HXTLinearSystemLU *system, int *ordering)
     if(ordering[i] >= 0)
       ordering[i] = id-1-ordering[i];
   free(queue);
+  
+#ifdef CONMAX  
   free(nodeDegree);
   free(nodeConnectivity);
+#else
+  freeConnectivity (&myConnectivity);
+#endif
 }
 
 
@@ -298,7 +375,8 @@ HXTStatus hxtLinearSystemLUCreate(HXTLinearSystemLU **pSystem, int nElements, in
   system->M = malloc(sizeof(double)*totalSize); // FIXME Gmsh
   system->rows = malloc(sizeof(double*)*system->n);
   for (int i = 0; i < totalSize; ++i)
-    system->M[i] = 0;
+    system->M[i] = 0.0;
+
   system->rows[0] = system->M;
   totalSize = 0;
   for (int i = 0; i < system->n; ++i){

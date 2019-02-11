@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string>
 #include <time.h>
@@ -60,8 +60,6 @@ typedef unsigned long intptr_t;
 int GmshInitialize(int argc, char **argv, bool readConfigFiles,
                    bool exitOnCommandLineError)
 {
-  Msg::SetNumThreads(1);
-
   static bool isInitialized = false;
   if(isInitialized) return 1;
   isInitialized = true;
@@ -256,13 +254,27 @@ int GmshFinalize()
   return 1;
 }
 
-int GmshBatch()
+static void StartupMessage()
 {
   Msg::Info("Running '%s' [Gmsh %s, %d node%s, max. %d thread%s]",
             Msg::GetCommandLineArgs().c_str(), GMSH_VERSION, Msg::GetCommSize(),
             Msg::GetCommSize() > 1 ? "s" : "", Msg::GetMaxThreads(),
             Msg::GetMaxThreads() > 1 ? "s" : "");
   Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
+}
+
+static void GoodbyeMessage()
+{
+  time_t now;
+  time(&now);
+  std::string currtime = ctime(&now);
+  currtime.resize(currtime.size() - 1);
+  Msg::Info("Stopped on %s", currtime.c_str());
+}
+
+int GmshBatch()
+{
+  StartupMessage();
 
   OpenProject(GModel::current()->getFileName());
   bool open = false;
@@ -315,7 +327,7 @@ int GmshBatch()
     else if(CTX::instance()->batch == 5)
       RefineMesh(GModel::current(), CTX::instance()->mesh.secondOrderLinear);
     else if(CTX::instance()->batch == 6)
-      GModel::current()->classifyAllFaces();
+      GModel::current()->classifyAllFaces(0.7, true);
     else if(CTX::instance()->batch == 7)
       BarycentricRefineMesh(GModel::current());
 #endif
@@ -336,17 +348,12 @@ int GmshBatch()
     CreateOutputFile(name, CTX::instance()->mesh.fileFormat);
   }
 
-    // launch solver (if requested)
+  // launch solver (if requested)
 #if defined(HAVE_ONELAB)
   onelabUtils::runClient();
 #endif
 
-  time_t now;
-  time(&now);
-  std::string currtime = ctime(&now);
-  currtime.resize(currtime.size() - 1);
-  Msg::Info("Stopped on %s", currtime.c_str());
-
+  GoodbyeMessage();
   return 1;
 }
 
@@ -356,8 +363,10 @@ int GmshFLTK(int argc, char **argv)
   // create the GUI
   FlGui::instance(argc, argv);
 
+  StartupMessage();
+
   // display GUI immediately for quick launch time
-  FlGui::instance()->check();
+  FlGui::check();
 
   if(FlGui::getOpenedThroughMacFinder().size() &&
      CTX::instance()->files.empty()) {

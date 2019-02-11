@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string.h>
 #include <cmath>
@@ -258,7 +258,7 @@ void MVertex::writeVRML(FILE *fp, double scalingFactor)
           z() * scalingFactor);
 }
 
-void MVertex::writeUNV(FILE *fp, double scalingFactor)
+void MVertex::writeUNV(FILE *fp, bool officialExponentFormat, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
@@ -267,13 +267,20 @@ void MVertex::writeUNV(FILE *fp, double scalingFactor)
   int color = 11;
   fprintf(fp, "%10d%10d%10d%10d\n", _index, coord_sys, displacement_coord_sys,
           color);
-  // hack to print the numbers with "D+XX" exponents
-  char tmp[128];
-  sprintf(tmp, "%25.16E%25.16E%25.16E\n", x() * scalingFactor,
-          y() * scalingFactor, z() * scalingFactor);
-  for(unsigned int i = 0; i < strlen(tmp); i++)
-    if(tmp[i] == 'E') tmp[i] = 'D';
-  fprintf(fp, "%s", tmp);
+
+  if(officialExponentFormat){
+    // hack to print the numbers with "D+XX" exponents
+    char tmp[128];
+    sprintf(tmp, "%25.16E%25.16E%25.16E\n", x() * scalingFactor,
+            y() * scalingFactor, z() * scalingFactor);
+    for(unsigned int i = 0; i < strlen(tmp); i++)
+      if(tmp[i] == 'E') tmp[i] = 'D';
+    fprintf(fp, "%s", tmp);
+  }
+  else{
+    fprintf(fp, "%25.16E%25.16E%25.16E\n", x() * scalingFactor,
+            y() * scalingFactor, z() * scalingFactor);
+  }
 }
 
 void MVertex::writeVTK(FILE *fp, bool binary, double scalingFactor,
@@ -467,12 +474,10 @@ static void getAllParameters(MVertex *v, GFace *gf,
 {
   params.clear();
 
-#if defined(HAVE_ANN) && defined(HAVE_SOLVER)
   if(gf->geomType() == GEntity::DiscreteSurface) {
     params.push_back(gf->parFromPoint(SPoint3(v->x(), v->y(), v->z())));
     return;
   }
-#endif
 
   if(v->onWhat()->dim() == 0) {
     GVertex *gv = (GVertex *)v->onWhat();
@@ -565,13 +570,6 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,
 bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
                              bool onSurface)
 {
-  //#if defined(HAVE_ANN) && defined(HAVE_SOLVER)
-  //  if (gf->geomType() == GEntity::DiscreteSurface ){
-  //    param=gf->parFromPoint(SPoint3(v->x(),v->y(),v->z()));
-  //    return true;
-  //  }
-  //#endif
-
   if(v->onWhat()->geomType() == GEntity::DiscreteCurve ||
      v->onWhat()->geomType() == GEntity::BoundaryLayerCurve) {
     param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);

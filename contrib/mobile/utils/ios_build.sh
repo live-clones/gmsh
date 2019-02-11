@@ -31,7 +31,7 @@ done
 
 ios=ios
 iphoneos=iphoneos
-iphoneos_version_min=-miphoneos_version-min=8.0
+iphoneos_version_min=-miphoneos-version-min=8.0
 if [ $enable_simulator != 0 ]; then
   ios=iossimulator
   iphoneos=iphonesimulator

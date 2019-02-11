@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributor(s):
 //   Stephen Guzik
@@ -109,8 +109,9 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
   static int thefilterindex = 0;
 
   // reset the filter and the selection if the filter has changed
-  if(strncmp(thefilter, filter, 1024)) {
-    strncpy(thefilter, filter, 1024);
+  if(strncmp(thefilter, filter, sizeof(thefilter) - 1)) {
+    strncpy(thefilter, filter, sizeof(thefilter) - 1);
+    thefilter[sizeof(thefilter) - 1] = '\0';
     thefilterindex = 0;
   }
 

@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Anthony Royer.
 
@@ -17,6 +17,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+#include "ElementType.h"
 
 // TODO C++11 remove this nasty stuff
 #if __cplusplus >= 201103L
@@ -140,7 +141,7 @@ public:
           _vwgt[i] = 1;
         }
         else{
-          _vwgt[i] = (_element[i]->getDim() == _dim ? 1 : 0);
+          _vwgt[i] = (_element[i]->getDim() == (int)_dim ? 1 : 0);
         }
       }
     }
@@ -506,7 +507,7 @@ static int MakeGraph(GModel *const model, Graph &graph, int selectDim)
   if(selectDim < 0) {
     graph.ne(model->getNumMeshElements());
     graph.nn(model->getNumMeshVertices());
-    graph.dim(model->getDim());
+    graph.dim(model->getMeshDim());
     graph.elementResize(graph.ne());
     graph.vertexResize(model->getMaxVertexNumber());
     graph.eptrResize(graph.ne() + 1);
@@ -540,7 +541,7 @@ static int MakeGraph(GModel *const model, Graph &graph, int selectDim)
 
     graph.ne(tmp->getNumMeshElements());
     graph.nn(vertices.size());
-    graph.dim(tmp->getDim());
+    graph.dim(tmp->getMeshDim());
     graph.elementResize(graph.ne());
     graph.vertexResize(model->getMaxVertexNumber());
     graph.eptrResize(graph.ne() + 1);
@@ -703,7 +704,7 @@ static int PartitionGraph(Graph &graph)
     switch(metisError) {
     case METIS_OK: break;
     case METIS_ERROR_INPUT: Msg::Error("METIS input error"); return 1;
-    case METIS_ERROR_MEMORY: Msg::Error("METIS memoty error"); return 1;
+    case METIS_ERROR_MEMORY: Msg::Error("METIS memory error"); return 1;
     case METIS_ERROR:
     default: Msg::Error("METIS error"); return 1;
     }
@@ -901,7 +902,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
     int elementaryNumber = model->getMaxElementaryNumber(0);
 
     for(GModel::const_viter it = vertices.begin(); it != vertices.end(); ++it) {
-      if((*it)->geomType() == GEntity::PartitionVertex) {
+      if((*it)->geomType() == GEntity::PartitionPoint) {
         partitionVertex *vertex = static_cast<partitionVertex *>(*it);
 
         if(vertex->getNumMeshElements() > 1) {
@@ -949,7 +950,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
     Graph graph(model);
     graph.ne(model->getNumMeshElements(1));
     graph.nn(model->getNumMeshVertices(1));
-    graph.dim(model->getDim());
+    graph.dim(model->getMeshDim());
     graph.elementResize(graph.ne());
     graph.vertexResize(model->getMaxVertexNumber());
     graph.eptrResize(graph.ne() + 1);
@@ -1045,7 +1046,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
     Graph graph(model);
     graph.ne(model->getNumMeshElements(2));
     graph.nn(model->getNumMeshVertices(2));
-    graph.dim(model->getDim());
+    graph.dim(model->getMeshDim());
     graph.elementResize(graph.ne());
     graph.vertexResize(model->getMaxVertexNumber());
     graph.eptrResize(graph.ne() + 1);
@@ -1142,7 +1143,7 @@ dividedNonConnectedEntities(GModel *const model, int dim,
     Graph graph(model);
     graph.ne(model->getNumMeshElements(3));
     graph.nn(model->getNumMeshVertices(3));
-    graph.dim(model->getDim());
+    graph.dim(model->getMeshDim());
     graph.elementResize(graph.ne());
     graph.vertexResize(model->getMaxVertexNumber());
     graph.eptrResize(graph.ne() + 1);
@@ -1822,7 +1823,7 @@ static void CreatePartitionTopology(
   GModel *const model,
   const std::vector<std::set<MElement *> > &boundaryElements, Graph &meshGraph)
 {
-  const int meshDim = model->getDim();
+  const int meshDim = model->getMeshDim();
   hashmap<MElement *, GEntity *> elementToEntity;
   fillElementToEntity(model, elementToEntity, -1);
   assignNewEntityBRep(meshGraph, elementToEntity);
@@ -2227,7 +2228,7 @@ static void AssignPhysicalName(GModel *model)
   // Loop over vertices
   for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex();
       ++it) {
-    if((*it)->geomType() == GEntity::PartitionVertex) {
+    if((*it)->geomType() == GEntity::PartitionPoint) {
       addPhysical(model, *it, nameToNumber, iterators, numPhysical);
     }
   }
@@ -2246,6 +2247,11 @@ int PartitionMesh(GModel *const model)
   graph.nparts(CTX::instance()->mesh.numPartitions);
   if(PartitionGraph(graph)) return 1;
 
+  std::vector<int> elmCount[TYPE_MAX_NUM + 1];
+  for (int i = 0; i < TYPE_MAX_NUM + 1; i++) {
+    elmCount[i].resize(CTX::instance()->mesh.numPartitions, 0);
+  }
+
   // Assign partitions to elements
   hashmap<MElement *, unsigned int> elmToPartition;
   for(unsigned int i = 0; i < graph.ne(); i++) {
@@ -2253,6 +2259,7 @@ int PartitionMesh(GModel *const model)
       if(graph.nparts() > 1) {
         elmToPartition.insert(std::pair<MElement *, unsigned int>(
           graph.element(i), graph.partition(i) + 1));
+        elmCount[graph.element(i)->getType()][graph.partition(i)]++;
         // Should be removed
         graph.element(i)->setPartition(graph.partition(i) + 1);
       }
@@ -2272,6 +2279,24 @@ int PartitionMesh(GModel *const model)
   double t2 = Cpu();
   Msg::StatusBar(true, "Done partitioning mesh (%g s)", t2 - t1);
 
+  for(std::size_t i = 0; i < TYPE_MAX_NUM + 1; i++) {
+    std::vector<int> &count = elmCount[i];
+    int minCount = std::numeric_limits<int>::max();
+    int maxCount = 0;
+    int totCount = 0;
+    for (std::size_t j = 0; j < count.size(); j++) {
+      minCount = std::min(count[j], minCount);
+      maxCount = std::max(count[j], maxCount);
+      totCount += count[j];
+    }
+    if(totCount > 0) {
+      Msg::Info(" - Repartition of %d %s(s): %d(min) %d(max) %g(avg)",
+                totCount, ElementType::nameOfParentType(i).c_str(),
+                minCount, maxCount,
+                totCount / (double)CTX::instance()->mesh.numPartitions);
+    }
+  }
+
   if(CTX::instance()->mesh.partitionCreateTopology) {
     Msg::StatusBar(true, "Creating partition topology...");
     std::vector<std::set<MElement *> > boundaryElements =
@@ -2287,9 +2312,13 @@ int PartitionMesh(GModel *const model)
   AssignMeshVertices(model);
 
   if(CTX::instance()->mesh.partitionCreateGhostCells) {
+    double t4 = Cpu();
+    Msg::StatusBar(true, "Creating ghost cells...");
     graph.clearDualGraph();
     graph.createDualGraph(true);
     graph.assignGhostCells();
+    double t5 = Cpu();
+    Msg::StatusBar(true, "Done creating ghost cells (%g s)", t5 - t4);
   }
 
   return 0;
@@ -2329,7 +2358,7 @@ int UnpartitionMesh(GModel *const model)
   for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it) {
     GVertex *vertex = *it;
 
-    if(vertex->geomType() == GEntity::PartitionVertex) {
+    if(vertex->geomType() == GEntity::PartitionPoint) {
       partitionVertex *pvertex = static_cast<partitionVertex *>(vertex);
       if(pvertex->getParentEntity() && pvertex->getParentEntity()->dim() == 0) {
         assignToParent(verts, pvertex, pvertex->points.begin(),

@@ -2,7 +2,7 @@
 
 @ftable @code
 @item Attractor
-Compute the distance from the nearest node in a list. It can also be used to compute the distance from curves, in which case each curve is replaced by NNodesByEdge equidistant nodes and the distance from those nodes is computed.@*
+Compute the distance from the nearest node in a list. It can also be used to compute the distance from curves, in which case each curve is replaced by NNodesByEdge equidistant nodes and the distance from those nodes is computed. Attractor is deprecated: use Distance instead.@*
 Options:@*
 @table @code
 @item EdgesList

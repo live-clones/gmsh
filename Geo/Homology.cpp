@@ -1,16 +1,11 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
 
 #include "Homology.h"
-
-#if defined(HAVE_POST)
-#include "PView.h"
-#include "PViewOptions.h"
-#endif
 
 #if defined(HAVE_KBIPACK)
 

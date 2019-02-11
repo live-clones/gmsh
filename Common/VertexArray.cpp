@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string.h>
 #include <algorithm>
@@ -9,6 +9,7 @@
 #include "VertexArray.h"
 #include "Context.h"
 #include "Numeric.h"
+#include "OS.h"
 
 template<int N> float ElementDataLessThan<N>::tolerance = 0.0F;
 float BarycenterLessThan::tolerance = 0.0F;
@@ -17,9 +18,25 @@ VertexArray::VertexArray(int numVerticesPerElement, int numElements)
   : _numVerticesPerElement(numVerticesPerElement)
 {
   int nb = (numElements ? numElements : 1) * _numVerticesPerElement;
+
+  double memv = (nb * 3. * sizeof(float)) / 1024. / 1024.;
+  double memmax = TotalRam() / 3.;
+  if(memv > memmax){
+    int old = nb;
+    nb = memmax / (3. * sizeof(float)) * 1024 * 1024;
+    Msg::Debug("Reduce preallocation of vertex array (%d -> %d)", old, nb);
+  }
   _vertices.reserve(nb * 3);
   _normals.reserve(nb * 3);
   _colors.reserve(nb * 4);
+}
+
+double VertexArray::getMemoryInMb()
+{
+  int bytes = _vertices.size() * sizeof(float) +
+              _normals.size() * sizeof(normal_type) +
+              _colors.size() * sizeof(unsigned char);
+  return (double)bytes / 1024. / 1024.;
 }
 
 void VertexArray::_addVertex(float x, float y, float z)
@@ -212,14 +229,6 @@ void VertexArray::sort(double x, double y, double z)
   _vertices = sortedVertices;
   _normals = sortedNormals;
   _colors = sortedColors;
-}
-
-double VertexArray::getMemoryInMb()
-{
-  int bytes = _vertices.size() * sizeof(float) +
-              _normals.size() * sizeof(normal_type) +
-              _colors.size() * sizeof(unsigned char);
-  return (double)bytes / 1024. / 1024.;
 }
 
 char *VertexArray::toChar(int num, const std::string &name, int type,

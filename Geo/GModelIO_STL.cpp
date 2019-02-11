@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdio.h>
 #include "GModel.h"
@@ -12,6 +12,7 @@
 #include "MVertexRTree.h"
 #include "discreteFace.h"
 #include "StringUtils.h"
+#include "Context.h"
 
 int GModel::readSTL(const std::string &name, double tolerance)
 {
@@ -158,16 +159,18 @@ int GModel::readSTL(const std::string &name, double tolerance)
         double z = points[i][j + k].z();
         v[k] = pos.find(x, y, z);
       }
-      // FIXME: is this unicity test really useful? it slows down large STL
-      // reads. It would be better to provide an API to detect/remove duplicate
-      // elements
-      MFace mf(v[0], v[1], v[2]);
-      if(unique.find(mf) == unique.end()) {
-        faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
-        unique.insert(mf);
+      if(CTX::instance()->mesh.stlRemoveDuplicateTriangles){
+        MFace mf(v[0], v[1], v[2]);
+        if(unique.find(mf) == unique.end()) {
+          faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+          unique.insert(mf);
+        }
+        else {
+          nbDuplic++;
+        }
       }
-      else {
-        nbDuplic++;
+      else{
+        faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
       }
     }
   }

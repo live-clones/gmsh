@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _GMSH_CONFIG_H_
 #define _GMSH_CONFIG_H_
@@ -16,11 +16,12 @@
 #cmakedefine HAVE_CAIRO
 #cmakedefine HAVE_DLOPEN
 #cmakedefine HAVE_DINTEGRATION
+#cmakedefine HAVE_DOMHEX
 #cmakedefine HAVE_FLTK
-#cmakedefine HAVE_FOURIER_MODEL
 #cmakedefine HAVE_GMM
 #cmakedefine HAVE_GMP
 #cmakedefine HAVE_HXT
+#cmakedefine HAVE_HXT3D
 #cmakedefine HAVE_KBIPACK
 #cmakedefine HAVE_LAPACK
 #cmakedefine HAVE_LIBCGNS
@@ -58,7 +59,7 @@
 #cmakedefine HAVE_PLUGINS
 #cmakedefine HAVE_POST
 #cmakedefine HAVE_POPPLER
-#cmakedefine HAVE_QT
+#cmakedefine HAVE_QUADTRI
 #cmakedefine HAVE_REVOROPT
 #cmakedefine HAVE_SALOME
 #cmakedefine HAVE_SGEOM

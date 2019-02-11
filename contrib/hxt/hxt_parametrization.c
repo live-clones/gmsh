@@ -622,7 +622,7 @@ HXTStatus hxtParametrizationCreate(HXTMesh *mesh, int nrefinements, HXTParametri
   HXT_CHECK(hxtEdgesCreate(initialMesh, &param0->edges));
 
   HXT_CHECK(hxtCheckConnectivity(param0->edges,NULL));
-  HXT_CHECK(hxtLongestEdgeBisection(param0->edges,nrefinements));
+  //  HXT_CHECK(hxtLongestEdgeBisection(param0->edges,nrefinements));
   
   HXTEdges *edges=NULL;
   HXT_CHECK(hxtEdgesCreate(initialMesh, &edges));

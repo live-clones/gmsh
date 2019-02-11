@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <map>
 #include <set>
@@ -17,7 +17,8 @@
 #include "GmshMessage.h"
 #include "BackgroundMeshTools.h"
 
-#ifdef HAVE_HXT
+#if defined(HAVE_HXT3D)
+
 extern "C" {
 #include "hxt_mesh3d_main.h"
 #include "hxt_boundary_recovery.h"
@@ -345,11 +346,11 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 
   //  Msg::Info("Entering hxtTetMesh3d using %d threads",nthreads);
   HXT_CHECK(
-    hxtTetMesh3d(mesh, 0, 0, 0, reproducible, verbosity, stat, refine, optimize,
-                 threshold, hxt_boundary_recovery,
-                 NULL, // hxtMeshSizeGmshCallBack, // FIXME does not work yet
-                 regions[0]));
-
+	    hxtTetMesh3d(mesh, 0, 0, 0, reproducible, verbosity, stat, refine, optimize,
+			 threshold, hxt_boundary_recovery,
+			 NULL, // hxtMeshSizeGmshCallBack, // FIXME does not work yet
+			 regions[0]));
+  
   //  HXT_CHECK(hxtMeshWriteGmsh(mesh, "hxt.msh"));
 
   HXT_CHECK(Hxt2Gmsh(regions, mesh, v2c, c2v));
@@ -370,7 +371,7 @@ int meshGRegionHxt(std::vector<GRegion *> &regions)
 
 int meshGRegionHxt(std::vector<GRegion *> &regions)
 {
-  Msg::Error("Gmsh should be compile with Hxt to enable that option");
+  Msg::Error("Gmsh should be compiled with Hxt3D to enable this option");
   return -1;
 }
 

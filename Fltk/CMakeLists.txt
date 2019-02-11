@@ -1,7 +1,7 @@
-# Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 set(SRC
   FlGui.cpp
@@ -23,7 +23,6 @@ set(SRC
     helpWindow.cpp
     fileDialogs.cpp
     extraDialogs.cpp
-    projectionEditor.cpp
     classificationEditor.cpp
     partitionDialog.cpp
     inputValue.cpp
@@ -32,5 +31,5 @@ set(SRC
     onelabGroup.cpp
 )
 
-file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
+file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(Fltk "${SRC};${HDR}")

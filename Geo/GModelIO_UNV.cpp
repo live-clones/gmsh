@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
 #include <string.h>
@@ -306,7 +306,8 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
   fprintf(fp, "%6d\n", 2411);
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
-      entities[i]->mesh_vertices[j]->writeUNV(fp, scalingFactor);
+      entities[i]->mesh_vertices[j]->writeUNV
+        (fp, CTX::instance()->mesh.unvStrictFormat ? true : false, scalingFactor);
   fprintf(fp, "%6d\n", -1);
 
   // elements

@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <utility>
 
@@ -126,7 +126,7 @@ int GModel::writeMATLAB(const std::string &name, bool binary, bool saveAll,
     fprintf(fp, "msh.MIN = min(msh.POS);\n");
     // We have to store every element in an array and then store them in the
     // file.
-    std::vector<std::vector<std::pair<MElement *, int> > > elems(MSH_NUM_TYPE);
+    std::vector<std::vector<std::pair<MElement *, int> > > elems(MSH_MAX_NUM);
     // loop on each element and fill the vectors of connectivity
     for(unsigned int i = 0; i < entities.size(); i++) {
       if(saveAll)
@@ -140,7 +140,7 @@ int GModel::writeMATLAB(const std::string &name, bool binary, bool saveAll,
       }
     }
     // Store in Matlab structure
-    for(int elemtype = 1; elemtype < MSH_NUM_TYPE + 1; elemtype++) {
+    for(int elemtype = 1; elemtype < MSH_MAX_NUM + 1; elemtype++) {
       if(elems[elemtype - 1].empty()) continue;
       fprintf(fp, "msh.%s =[\n", getMATLABName(elemtype).c_str());
       // writes

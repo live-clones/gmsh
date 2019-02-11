@@ -502,7 +502,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item View.MaxVisible
-Maximum value in the visible parts of the view (read-only)@*
+Maximum value in the visible parts of the view, taking current time step and tensor display type into account (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
@@ -527,7 +527,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item View.MinVisible
-Minimum value in the visible parts of the view (read-only)@*
+Minimum value in the visible parts of the view, taking current time step and tensor display type into account (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
@@ -672,7 +672,7 @@ Default value: @code{0.01}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.TensorType
-Tensor Visualization Type@*
+Tensor display type (1: Von-Mises, 2: maximum eigenvalue, 3: minimum eigenvalue, 4: eigenvectors, 5: ellipse, 6: ellipsoid, 7: frame)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

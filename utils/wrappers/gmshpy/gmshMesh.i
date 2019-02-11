@@ -10,9 +10,6 @@
 #if defined(HAVE_MESH)
   #include "Generator.h"
   #include "DivideAndConquer.h"
-#if defined(HAVE_BFGS)
-  #include "meshGFaceLloyd.h"
-#endif
   #include "meshGFaceOptimize.h"
 #if defined(HAVE_OPTHOM)
   #include "OptHomRun.h"
@@ -28,8 +25,6 @@
   #include "FieldPython.h"
   #include "meshMetric.h"
   #include "simple3D.h"
-  #include "Voronoi3D.h"
-  #include "Levy3D.h"
   #include "directions3D.h"
   #include "yamakawa.h"
 #endif
@@ -47,9 +42,6 @@ namespace std {
 %include "Generator.h"
 #pragma SWIG nowarn=314
 %include "DivideAndConquer.h"
-#if defined(HAVE_BFGS)
-%include "meshGFaceLloyd.h"
-#endif
 %include "meshGFaceOptimize.h"
 #if defined(HAVE_OPTHOM)
 %include "OptHomRun.h"
@@ -80,8 +72,6 @@ namespace std {
 }
 %include "meshMetric.h"
 %include "simple3D.h"
-%include "Voronoi3D.h"
-%include "Levy3D.h"
 %include "directions3D.h"
 %include "yamakawa.h"
 #endif

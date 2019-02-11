@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributor(s):
 //   Koen Hillewaert
@@ -431,10 +431,10 @@ static void getEdgeVertices(GEdge *ge, MElement *ele,
       edgeVertices[p].insert(edgeVertices[p].end(), veEdge.rbegin(),
                              veEdge.rend());
   }
-  else if(p.first != p.second) { // Vertices already exist and edge is not a
-                                 // degenerated edge
-    Msg::Error(
-      "Edges from different entities share vertices: create a finer mesh");
+  else if(p.first != p.second) {
+    // Vertices already exist and edge is not a degenerated edge
+    Msg::Error("Edges from different entities share vertices: create a finer mesh "
+               "(curve involved: %d)", ge->tag());
   }
   ve.insert(ve.end(), veEdge.begin(), veEdge.end());
 }

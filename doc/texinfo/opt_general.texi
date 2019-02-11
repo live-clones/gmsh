@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildOptions
 Gmsh build options (read-only)@*
-Default value: @code{" 64Bit Ann Bamg Bfgs Blas(VecLib) Blossom Cairo Cgns DIntegration Dlopen Fltk GMP Gmm Hxt Jpeg(Fltk) Kbipack Lapack(VecLib) MathEx Med Mesh Metis Mmg3d Mpeg NativeFileChooser Netgen ONELAB ONELABMetamodel OpenCASCADE OpenGL OptHom PETSc Parser Plugins Png(Fltk) Post SLEPc Solver TetGen/BR Voro++ Zlib"}@*
+Default value: @code{" 64Bit Ann Bamg Bfgs Blas[veclib] Blossom Cairo Cgns DIntegration Dlopen DomHex Fltk GMP Gmm Hxt Hxt3D Jpeg[fltk] Kbipack Lapack[veclib] MathEx Med Mesh Metis Mmg3d Mpeg NativeFileChooser Netgen ONELAB ONELABMetamodel OpenCASCADE OpenGL OpenMP[MacPorts] OptHom PETSc Parser Plugins Png[fltk] Post QuadTri SLEPc Solver TetGen/BR Voro++ Zlib"}@*
 Saved in: @code{-}
 
 @item General.DefaultFileName
@@ -148,7 +148,7 @@ Saved in: @code{-}
 
 @item General.TextEditor
 System command to launch a text editor@*
-Default value: @code{"open -t %s"}@*
+Default value: @code{"open -t '%s'"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.TmpFileName
@@ -158,7 +158,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"4.0.6-git-c9f121577"}@*
+Default value: @code{"4.1.5-git-f2becbcde"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
@@ -862,7 +862,7 @@ Default value: @code{400}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.MeshDiscrete
-Mesh discrete surfaces through automatic parametrization (MUMPS required for efficiency) (0)@*
+Mesh discrete surfaces through automatic parametrization (0)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -917,7 +917,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.NumThreads
-Set (maximum) number of threads@*
+Set (maximum) number of threads (0: use system default, i.e. OMP_NUM_THREADS)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -1054,6 +1054,11 @@ Saved in: @code{General.OptionsFileName}
 @item General.ShininessExponent
 Material shininess exponent (between 0 and 128)@*
 Default value: @code{40}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.ShowModuleMenu
+Show the standard Gmsh menu in the tree@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.ShowOptionsOnStartup

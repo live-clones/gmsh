@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _GMODEL_H_
 #define _GMODEL_H_
@@ -20,7 +20,6 @@
 
 template <class scalar> class simpleFunction;
 
-class FM_Internals;
 class GEO_Internals;
 class OCC_Internals;
 class ACIS_Internals;
@@ -107,8 +106,6 @@ protected:
   OCC_Internals *_occ_internals;
   // ACIS model internal data
   ACIS_Internals *_acis_internals;
-  // Fourier model internal data
-  FM_Internals *_fm_internals;
 
   // characteristic length (mesh size) fields
   FieldManager *_fields;
@@ -147,9 +144,6 @@ protected:
 
   void _deleteACISInternals();
 
-  void _createFMInternals();
-  void _deleteFMInternals();
-
   // CGNS helpers
   int _readCGNSStructured(const std::string &name);
   int _readCGNSUnstructured(const std::string &name);
@@ -164,7 +158,7 @@ protected:
 
   // loop over all vertices connected to elements and associate
   // geometrical entity
-  void _associateEntityWithMeshVertices();
+  void _associateEntityWithMeshVertices(bool force = false);
 
   // store the vertices in the geometrical entity they are associated
   // with, and delete those that are not associated with any entity
@@ -255,7 +249,6 @@ public:
   GEO_Internals *getGEOInternals() { return _geo_internals; }
   void createOCCInternals();
   OCC_Internals *getOCCInternals() { return _occ_internals; }
-  FM_Internals *getFMInternals() { return _fm_internals; }
   ACIS_Internals *getACISInternals() { return _acis_internals; }
 
   // access characteristic length (mesh size) fields
@@ -399,6 +392,9 @@ public:
   // "dim" and id number "num"
   std::string getPhysicalName(int dim, int num) const;
 
+  // remove physical name(s)
+  void removePhysicalName(const std::string &name);
+
   // get the number of a given physical group of dimension
   // "dim" and name "name". return -1 if not found
   int getPhysicalNumber(const int &dim, const std::string &name);
@@ -426,6 +422,9 @@ public:
   // get the highest dimension of the GModel
   int getDim() const;
 
+  // get the highest dimension of the mesh in the GModel
+  int getMeshDim() const;
+
   // set the selection flag on all entities
   void setSelection(int val);
 
@@ -436,8 +435,8 @@ public:
   int getMeshStatus(bool countDiscrete = true);
 
   // return the total number of elements in the mesh
-  int getNumMeshElements(int dim = -1);
-  int getNumMeshParentElements();
+  int getNumMeshElements(int dim = -1) const;
+  int getNumMeshParentElements() const;
 
   // get the number of each type of element in the mesh at the largest
   // dimension and return the dimension
@@ -503,12 +502,12 @@ public:
   unsigned int getNumPartitions() const { return _numPartitions; }
   void setNumPartitions(unsigned int npart) { _numPartitions = npart; }
 
-  // delete all the partitions
-  int deleteMeshPartitions();
   // partition the mesh
   int partitionMesh(int num);
-  // Import a mesh partitionned by a tag given to the element en create the
-  // topology
+  // unpartition the mesh
+  int unpartitionMesh();
+  // import a mesh partitionned by a tag given by element (i.e. the old way we
+  // stored partitions) and create the new topology-based partition entitiesx
   int convertOldPartitioningToNewOne();
   // write the partitioned topology file
   int writePartitionedTopology(std::string &name);
@@ -572,12 +571,9 @@ public:
   // fill the vertex arrays, given the current option and data
   bool fillVertexArrays();
 
-  // reclassify a mesh i.e. use an angle threshold to tag edges faces and
-  // regions
+  // reclassify a surface mesh, using an angle threshold to tag edges and faces
+  void classifyAllFaces(double angleThreshold, bool includeBoundary);
   void classifyFaces(std::set<GFace *> &_faces);
-
-  // classify a mesh for all faces on the current model
-  void classifyAllFaces();
 
   // build a new GModel by cutting the elements crossed by the levelset ls
   // if cutElem is set to false, split the model without cutting the elements
@@ -628,11 +624,6 @@ public:
   int writeGEO(const std::string &name, bool printLabels = true,
                bool onlyPhysicals = false);
   int exportDiscreteGEOInternals();
-
-  // Fourier model
-  int readFourier();
-  int readFourier(const std::string &name);
-  int writeFourier(const std::string &name);
 
   // OCC model
   int readOCCBREP(const std::string &name);
