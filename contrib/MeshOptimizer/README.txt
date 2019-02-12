@@ -1,4 +1,4 @@
-// HighOrderMeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
+// MeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -21,37 +21,3 @@
 // WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
-//
-// Contributors: Amaury Johnen
-
-#ifndef _OPTHOMPERIODICITY_H_
-#define _OPTHOMPERIODICITY_H_
-
-#include <map>
-#include <vector>
-
-class GEntity;
-class GFace;
-class GPoint;
-
-#include "MVertex.h"
-
-class OptHomPeriodicity {
-private:
-  std::multimap<GEntity *, GEntity *> _master2slave;
-  // std::map<GEntity*, std::map<MVertex*, MVertex*> > _ent2vv;
-
-public:
-  OptHomPeriodicity(std::vector<GEntity *> &);
-
-  void fixPeriodicity();
-
-private:
-  void _relocateMasterVertices();
-  void _copyBackMasterVertices();
-
-  static SPoint3 _transform(MVertex *, const std::vector<double> &);
-  static std::vector<double> _inverse(const std::vector<double> &);
-};
-
-#endif

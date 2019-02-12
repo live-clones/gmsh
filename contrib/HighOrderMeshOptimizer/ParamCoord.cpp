@@ -1,4 +1,4 @@
-// Copyright (C) 2013 UCL
+// HighOrderMeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
