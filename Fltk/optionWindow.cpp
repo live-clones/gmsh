@@ -2389,7 +2389,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.butt[3] =
         new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
-                            "Optimize high order meshes (experimental)");
+                            "Optimize high-order meshes (experimental)");
       mesh.butt[3]->type(FL_TOGGLE_BUTTON);
       mesh.butt[3]->callback(mesh_options_ok_cb);
 

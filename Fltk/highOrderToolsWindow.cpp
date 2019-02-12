@@ -247,7 +247,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
-                          "High order tools");
+                          "High-order tools");
   win->box(GMSH_WINDOW_BOX);
 
   int y = WB;
@@ -260,7 +260,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   butt[1] =
     new Fl_Check_Button(x, y, width - 4 * WB, BH,
-                        "Only apply high order tools to visible entities");
+                        "Only apply high-order tools to visible entities");
   butt[1]->type(FL_TOGGLE_BUTTON);
   butt[1]->value(1);
 
@@ -281,7 +281,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   {
     y += BH;
     Fl_Box *b =
-      new Fl_Box(x - WB, y, width, BH, "1. Generation of high order nodes");
+      new Fl_Box(x - WB, y, width, BH, "1. Generation of high-order nodes");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   }
 
@@ -326,7 +326,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   {
     y += BH;
     Fl_Box *b = new Fl_Box(x - WB, y, width, BH,
-                           "2. Regularization of high order elements");
+                           "2. Regularization of high-order elements");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   }
 

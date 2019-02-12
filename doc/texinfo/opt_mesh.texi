@@ -141,49 +141,49 @@ Display mesh hexahedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.HighOrderIterMax
+Maximum number of iterations in high-order optimization pass@*
+Default value: @code{100}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.HighOrderNumLayers
-Number of high order mesh elements to consider for optimization@*
+Number of layers around a problematic element to consider for high-order optimization@*
 Default value: @code{6}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderOptimize
-Optimize high order meshes (-1: elastic smoothing, 1: optimization, 2: both)?@*
+Optimize high-order meshes? (-1: elastic smoothing, 1: optimization, 2: both)@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.HighOrderPeriodic
-Correct high order optimization for periodic connections?@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.HighOrderPoissonRatio
-Poisson ratio of the material used in the elastic smoother for high order meshesMust be between -1.0 and 0.5, excluded@*
-Default value: @code{0.33}@*
-Saved in: @code{-}
-
-@item Mesh.HighOrderThresholdMin
-Minimum threshold for high order element optimization@*
-Default value: @code{0.1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.HighOrderThresholdMax
-Maximum threshold for high order element optimization@*
-Default value: @code{2}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.HighOrderPrimSurfMesh
-Try to fix flipped surface mesh elements in high-order optimizer@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.HighOrderIterMax
-Maximum number of iteration in high-order optimization pass@*
-Default value: @code{100}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderPassMax
 Maximum number of high-order optimization passes (moving barrier)@*
 Default value: @code{25}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderPeriodic
+Correct high-order optimization for periodic connections?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderPoissonRatio
+Poisson ratio of the material used in the elastic smoother for high-order meshes (between -1.0 and 0.5, excluded)@*
+Default value: @code{0.33}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderPrimSurfMesh
+Try to fix flipped surface mesh elements in high-order optimizer?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderThresholdMin
+Minimum threshold for high-order element optimization@*
+Default value: @code{0.1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderThresholdMax
+Maximum threshold for high-order element optimization@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LabelSampling
@@ -407,7 +407,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NumSubEdges
-Number of edge subdivisions when displaying high order elements@*
+Number of edge subdivisions when displaying high-order elements@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
