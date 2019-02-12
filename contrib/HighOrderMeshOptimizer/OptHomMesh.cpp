@@ -178,16 +178,16 @@ void Mesh::calcScaledNormalEl2D(
   }
   elNorm.scale(factor); // Re-scaling normal here is faster than an extra
                         // scaling operation on the Jacobian
-  //  elNorm.setAll(1);
+  // elNorm.setAll(1);
 }
 
 int Mesh::getFreeVertexStartIndex(MVertex *vert)
 {
   std::map<MVertex *, int>::iterator itVert = _startPC4FV.find(vert);
   if(itVert == _startPC4FV.end()) {
-    //    Msg::Fatal("OptHOM Error : cannot find free vertex %d class %d %d (%d
-    //    free
-    //    vertices)",vert->getNum(),vert->onWhat()->tag(),vert->onWhat()->dim(),_freeVert.size());
+    // Msg::Error("OptHOM Error : cannot find free vertex %d class %d %d "
+    //            "(%d free vertices)", vert->getNum(), vert->onWhat()->tag(),
+    //            vert->onWhat()->dim(), _freeVert.size());
     return -1;
   }
   return itVert->second;

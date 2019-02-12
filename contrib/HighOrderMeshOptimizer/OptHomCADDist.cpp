@@ -66,49 +66,10 @@ double MFaceGFaceDistanceOld(MTriangle *t, GFace *gf,
     }
     SVector3 diff1 =
       (dot(tg_cad, tg_mesh) > 0) ? tg_cad - tg_mesh : tg_cad + tg_mesh;
-    //    printf("%g %g %g vs %g %g
-    //    %g\n",tg_cad.x(),tg_cad.y(),tg_cad.z(),tg_mesh.x(),tg_mesh.y(),tg_mesh.z());
+
     distFace += diff1.norm();
   }
   return distFace;
-}
-
-double MLineGEdgeDistanceOld(MLine *l, GEdge *ge, FILE *f)
-{
-  const nodalBasis &elbasis = *l->getFunctionSpace();
-  const double h = .25 * 0.5 * distance(l->getVertex(0), l->getVertex(1)) /
-                   (l->getNumVertices() - 1);
-  double jac[3][3];
-  double distEdge = 0.0;
-
-  //  if(f)printf("%d\n",l->getNumVertices());
-
-  for(int j = 0; j < l->getNumVertices(); j++) {
-    double t_mesh = elbasis.points(j, 0);
-    //    if (f) printf("%g ",t_mesh);
-    double detJ = l->getJacobian(t_mesh, 0, 0, jac);
-    SVector3 tg_mesh(jac[0][0], jac[0][1], jac[0][2]);
-    tg_mesh.normalize();
-    double t_cad;
-    reparamMeshVertexOnEdge(l->getVertex(j), ge, t_cad);
-    SVector3 tg_cad = ge->firstDer(t_cad);
-    tg_cad.normalize();
-
-    SVector3 diff1 =
-      (dot(tg_cad, tg_mesh) > 0) ? tg_cad - tg_mesh : tg_cad + tg_mesh;
-
-    if(f) {
-      fprintf(f, "SP(%g,%g,%g){%g};\n", l->getVertex(j)->x(),
-              l->getVertex(j)->y(), l->getVertex(j)->z(), h * diff1.norm());
-    }
-
-    //    SVector3 n = crossprod(tg_cad,tg_mesh);
-    //    printf("%g %g vs %g
-    //    %g\n",tg_cad.x(),tg_cad.y(),tg_mesh.x(),tg_mesh.y());
-    distEdge += diff1.norm();
-  }
-  //  if(f)printf("\n");
-  return h * distEdge;
 }
 
 double distToCAD1D(const GradientBasis *gb, const fullMatrix<double> &nodesXYZ,

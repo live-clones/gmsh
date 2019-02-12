@@ -345,7 +345,8 @@ namespace {
 
     return (d1 > d2) ? d1 : d2;
 #else
-    Msg::Fatal("Gmsh should be compiled using ANN");
+    Msg::Error("Gmsh should be compiled using ANN to compute Hausdorff distance");
+    return 0.;
 #endif
   }
 

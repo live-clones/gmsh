@@ -24,8 +24,6 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-static int NEVAL = 0;
-
 #include <iostream>
 #include <algorithm>
 #include "OptHomMesh.h"
@@ -125,7 +123,6 @@ bool OptHOM::addApproximationErrorObjGrad(double factor, double &Obj,
       gradObj[mesh.indPCEl(iEl, i)] += gradF[i] * factor;
     }
   }
-  //  printf("DIST = %12.5E\n",DISTANCE);
   return true;
 }
 
@@ -198,8 +195,6 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj,
         for(int j = 2; j < (*it)->lines[i]->getNumVertices(); j++) {
           MVertex *v = (*it)->lines[i]->getVertex(j);
           int index = mesh.getFreeVertexStartIndex(v);
-          //	printf("%d %d (%d
-          //%d)\n",v->getNum(),index,v->onWhat()->tag(),v->onWhat()->dim());
           if(index >= 0) {
             double t;
             v->getParameter(0, t);
@@ -211,14 +206,11 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj,
             double deriv = (dist2 - dist[i]) / eps;
             v->setXYZ(pp.x(), pp.y(), pp.z());
             v->setParameter(0, t);
-            //	  printf("%g %g %g\n",dist[i],dist2, MLineGEdgeDistance (
-            //(*it)->lines[i] , *it ));
             // get the index of the vertex
             gradObj[index] += deriv * factor;
           }
         }
       }
-      //    printf("done\n");
       // For a low order vertex classified on the GEdge, we recompute
       // two distances for the two MLines connected to the vertex
       for(unsigned int i = 0; i < (*it)->lines.size() - 1; i++) {
@@ -233,8 +225,6 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj,
           v->setXYZ(gp.x(), gp.y(), gp.z());
           MLine *l1 = (*it)->lines[i];
           MLine *l2 = (*it)->lines[i + 1];
-          //	printf("%d %d -- %d
-          //%d\n",l1->getVertex(0)->getNum(),l1->getVertex(1)->getNum(),l2->getVertex(0)->getNum(),l2->getVertex(1)->getNum());
           double deriv = (MLineGEdgeDistance(l1, *it) - dist[i]) / eps +
                          (MLineGEdgeDistance(l2, *it) - dist[i + 1]) / eps;
           v->setXYZ(pp.x(), pp.y(), pp.z());
@@ -244,7 +234,6 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj,
       }
     }
   }
-  //  printf("computing distance : 1D part %12.5E\n",distCAD);
 
   // now the 3D part !
 
@@ -359,8 +348,6 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj,
   }
   mesh.updateGEntityPositions(xyz, uvw);
   Obj += distCAD;
-  //  printf("computing distance : 2D part %12.5E\n",distCAD);
-  //  printf("%22.15E\n",distCAD);
   return true;
 }
 
@@ -410,44 +397,24 @@ bool OptHOM::addDistObjGrad(double Fact, double &Obj,
   }
   if(nbBnd != 0) avgDist /= nbBnd;
 
-  //  printf("DISTANCE %22.15E\n",avgDist);
-
   return true;
 }
-
-// FIXME TEST
-// Assume a unit square centered on 0,0
-// fct is
-// class toto : public simpleFunction<double>
-//{
-// public :
-//  double operator () (double x, double y, double z) const{
-//    const double r = sqrt(x*x+y*y);
-//    const double r0 = .3;
-//  const double f = atan(20*(x));
-//    return f;
-//  }
-//};
 
 void OptHOM::evalObjGrad(const alglib::real_1d_array &x, double &Obj,
                          alglib::real_1d_array &gradObj)
 {
-  NEVAL++;
   mesh.updateMesh(x.getcontent());
 
   Obj = 0.;
   for(int i = 0; i < gradObj.length(); i++) gradObj[i] = 0.;
 
-  //  printf("Computing Obj : ");
-  /// control Jacobians
+  // control Jacobians
   addJacObjGrad(Obj, gradObj);
-  /// Control distance to the straight sided mesh
+  // Control distance to the straight sided mesh
   addDistObjGrad(lambda, Obj, gradObj);
 
   if(_optimizeMetricMin) addMetricMinObjGrad(Obj, gradObj);
   if(_optimizeCAD) addBndObjGrad(lambda3, Obj, gradObj);
-
-  //  printf("Obj = %12.5E\n",Obj);
 
   if((minJac > barrier_min) && (maxJac < barrier_max || !_optimizeBarrierMax) &&
      (maxDistCAD < distance_max || !_optimizeCAD)) {
@@ -655,9 +622,7 @@ int OptHOM::optimize(double weight, double weightCAD, double b_min,
 
   while(minJac < barrier_min || (maxDistCAD > distance_max && _optimizeCAD)) {
     const double startMinJac = minJac;
-    NEVAL = 0;
     OptimPass(x, itMax);
-    printf("######  NEVAL = %d\n", NEVAL);
     recalcJacDist();
     jacBar = (minJac > 0.) ? 0.9 * minJac : 1.1 * minJac;
     if(_optimizeCAD) jacBar = std::min(jacBar, barrier_min);

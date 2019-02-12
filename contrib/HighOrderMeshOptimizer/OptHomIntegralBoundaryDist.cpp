@@ -30,6 +30,9 @@
 #include "OptHomIntegralBoundaryDist.h"
 #include "discreteFrechetDistance.h"
 #include "MLine.h"
+#include "MElement.h"
+#include "MVertex.h"
+#include "BasisFactory.h"
 
 parametricLineNodalBasis::parametricLineNodalBasis(
   const nodalBasis &basis, const std::vector<SPoint3> &xyz)
@@ -105,7 +108,6 @@ static void oversample(std::vector<SPoint3> &s, double tol)
     SPoint3 p1 = s[i];
     double d = p0.distance(p1);
     int N = (int)(d / tol);
-    //    printf("N = %d %g %g\n",N,d,tol);
     t.push_back(p0);
     for(int j = 1; j < N; j++) {
       const double xi = (double)j / N;
@@ -156,11 +158,11 @@ double parametricLine::frechetDistance(const parametricLine &l, SPoint3 &p1,
   std::vector<double> ts1, ts2;
   discretize(dpts1, ts1, tol);
   l.discretize(dpts2, ts2, tol);
-  //  printf("discretizing gives %d %d points\n",dpts1.size(),dpts2.size());
+  // printf("discretizing gives %d %d points\n",dpts1.size(),dpts2.size());
   oversample(dpts1, tol);
   oversample(dpts2, tol);
-  //  printf("after oversaplinf an discretizing gives %d %d
-  //  points\n",dpts1.size(),dpts2.size());
+  // printf("after oversaplinf an discretizing gives %d %d points\n",
+  //        dpts1.size(),dpts2.size());
   return discreteFrechetDistance(dpts1, dpts2);
 }
 double parametricLine::hausdorffDistance(const parametricLine &l, SPoint3 &p1,
@@ -173,7 +175,7 @@ double parametricLine::hausdorffDistance(const parametricLine &l, SPoint3 &p1,
 
   //  oversample(dpts1,tolerance);
   //  oversample(dpts2,tolerance);
-  //  printf("coucou4 %d %d points\n",dpts1.size(),dpts2.size());
+
   double h1 = 0.0;
   int I1 = 0, J1 = 0;
   int I2 = 0, J2 = 0;
@@ -236,8 +238,6 @@ double computeBndDistF(GEdge *edge,
 }
 
 // GMSH's DISTANCE
-/*
- */
 double computeBndDistGb(GEdge *edge,
                         std::vector<double> &params, // the model edge
                         const nodalBasis &basis,
@@ -284,7 +284,7 @@ double computeBndDistG_(GEdge *edge, std::vector<double> &p, // the model edge
   for(unsigned int i = 2; i < p.size(); i++) o.push_back(i);
   o.push_back(1);
 
-  //  printf("computing diustance with tolerance %g\n",tolerac);
+  // printf("computing diustance with tolerance %g\n",tolerac);
 
   double D = 0.0;
   const double U0 = basis.points(0, 0);
@@ -334,12 +334,9 @@ double computeBndDistG(GEdge *edge, std::vector<double> &p, // the model edge
   int N = 5;
   double d = computeBndDistG_(edge, p, basis, xyz, N);
 
-  //  printf("GO !!\n");
   while(1) {
     N *= 2;
     double dp = computeBndDistG_(edge, p, basis, xyz, N);
-    //    printf("N %d %12.5E %12.5E %12.5E %12.5E\n",N,d,dp,fabs(d -
-    //    dp),tolerance);
     if(fabs(d - dp) <
        tolerance * (d + dp)) // Richardson with assumed linear convergence ...
       return dp;
@@ -356,8 +353,6 @@ void parametricLine::recur_discretize(const double &t1, const double &t2,
   double t = 0.5 * (t2 + t1);
   SPoint3 p = (*this)(t);
   SVector3 dx(p, (p1 + p2) * 0.5);
-  //  printf("%g %g -- %g %g dist %12.5E
-  //  %12.5E\n",p1.x(),p1.y(),p2.x(),p2.y(),dx.norm(),Prec);
   if((depth > 20 && dx.norm() < Prec) || depth > 45) {
     dpts.push_back(p);
     ts.push_back(t);
@@ -377,12 +372,6 @@ void parametricLine::discretize(std::vector<SPoint3> &dpts,
   dpts.push_back((*this)(t0));
   ts.push_back(t0);
   recur_discretize(t0, t1, dpts[0], (*this)(t1), dpts, ts, Prec, 0);
-
-  //  printf("discretizing from %g to %g\n",t0,t1);
-  //  for (unsigned int i=0;i<ts.size();i++){
-  //    printf("%g ",ts[i]);
-  //  }
-  //  printf("\n");
 }
 
 double trapeze(SPoint3 &p1, SPoint3 &p2)
@@ -410,33 +399,25 @@ double computeDeviationOfTangents(
   for(unsigned int i = 0; i < p.size(); i++) {
     const double u = basis.points(o[i], 0);
     SVector3 xp = edge->firstDer(p[o[i]]);
-    //    SVector3 xpp = edge->secondDer (p[o[i]]);
-    //    const double nxp = xp.norm();
-    //    const double onxp = 1./nxp;
-    //    SVector3 c = (onxp*onxp*onxp)*(xpp*nxp-xp*dot(xp,xpp)*onxp);
+    // SVector3 xpp = edge->secondDer (p[o[i]]);
+    // const double nxp = xp.norm();
+    // const double onxp = 1./nxp;
+    // SVector3 c = (onxp*onxp*onxp)*(xpp*nxp-xp*dot(xp,xpp)*onxp);
 
     SVector3 t_mesh_edge = l2.derivative(0.5 * (1 + u));
-    //    SVector3 c2  = l2.curvature(0.5*(1+u));
-    //    GPoint p0 = edge->point(p[o[i]]);
-    //    SPoint3 p1 = l2 (0.5*(1+u));
-    //    printf("%g = %g %g vs %g %g\n",u,p0.x(),p0.y(),p1.x(),p1.y());
+    // SVector3 c2  = l2.curvature(0.5*(1+u));
+    // GPoint p0 = edge->point(p[o[i]]);
+    // SPoint3 p1 = l2 (0.5*(1+u));
     xp.normalize();
     t_mesh_edge.normalize();
     SVector3 diff1 =
       (dot(xp, t_mesh_edge) > 0) ? xp - t_mesh_edge : xp + t_mesh_edge;
-    //    SVector3 diff2 = (dot(c, c2) > 0) ? c -  c2 : c +  c2;
-    // printf("%g %g %g vs %g %g %g diff %g %g
-    // %g\n",c.x(),c.y(),c.z(),c2.x(),c2.y(),c2.z(),diff2.x(),diff2.y(),diff2.z());
-    //    printf("%g %g %g vs %g %g %g val
-    //    %g\n",t_model_edge.x(),t_model_edge.y(),t_model_edge.z(),
-    //	   t_mesh_edge.x(),t_mesh_edge.y(),t_mesh_edge.z(),c.norm());
-    //     deviation = std::max(diff1.norm(),deviation);
-    //    ddeviation = std::max(diff2.norm(),ddeviation);
+    // SVector3 diff2 = (dot(c, c2) > 0) ? c -  c2 : c +  c2;
     deviation += diff1.norm();
-    //    ddeviation += diff2.norm();
+    // ddeviation += diff2.norm();
   }
   const double h = dx.norm();
-  //  printf ("%g %g\n",deviation * h,ddeviation * h * h * 0.5);
+
   return deviation * h; // + ddeviation * h * h * 0.5;
 }
 
@@ -455,7 +436,7 @@ double computeBndDistAccurateArea(
   for(unsigned int i = 2; i < p.size(); i++) o.push_back(i);
   o.push_back(1);
 
-  //  printf("computing diustance with tolerance %g\n",tolerac);
+  // printf("computing diustance with tolerance %g\n",tolerac);
 
   for(int i = 0; i < basis.order; i++) {
     const double u0 = basis.points(o[i], 0);
@@ -468,7 +449,6 @@ double computeBndDistAccurateArea(
     std::vector<double> ts1, ts2;
     l1.discretize(dpts1, ts1, tolerance);
     l2.discretize(dpts2, ts2, tolerance, 0.5 * (1 + u0), 0.5 * (1 + u1));
-    //    printf("discretizing : %g %g and %g %g\n",u0,u1,t0,t1);
     // simple 2D version
     double arealocal = 0.0;
     for(unsigned int j = 1; j < dpts1.size(); j++) {
@@ -483,7 +463,6 @@ double computeBndDistAccurateArea(
   return area;
 }
 
-// INPUT FCT FOR OPTIMIZATION
 double computeBndDistAndGradient(
   GEdge *edge,
   std::vector<double> &param, // parameters of mesh vertices on the model edge
@@ -525,9 +504,6 @@ double computeBndDistAndGradient(
   return ref;
 }
 
-#include "MElement.h"
-#include "MVertex.h"
-#include "BasisFactory.h"
 double computeBndDist(MElement *element, int distanceDefinition,
                       double tolerance)
 {
@@ -585,7 +561,7 @@ double computeBndDist(MElement *element, int distanceDefinition,
             *BasisFactory::getNodalBasis(elbasis.getClosureType(clId)), xyz),
           dist);
       else
-        Msg::Fatal("unknown distance definition %d. Choose 1 for Hausdorff and "
+        Msg::Error("unknown distance definition %d. Choose 1 for Hausdorff and "
                    "2 for Area/Length 4 for Discrete Frechet",
                    distanceDefinition);
     }
