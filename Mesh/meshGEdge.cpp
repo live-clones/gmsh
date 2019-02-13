@@ -645,6 +645,10 @@ void meshGEdge::operator()(GEdge *ge)
     N = std::max(filterMinimumN, (int)(a + 1.99));
   }
 
+  if (ge->tag() == 236){
+    printf("%g %d\n",length,N);
+  }
+  
   // force odd number of points if blossom is used for recombination
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
