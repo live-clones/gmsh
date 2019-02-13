@@ -53,10 +53,9 @@ private:
   HXTStatus reparametrize_through_hxt();
   bool
   compute_topology_of_partition(int nbColors, int *colors, int *nNodes,
-                                int *nodes, double *uv, double angle_threshold,
+                                int *nodes, double *uv,
                                 std::vector<MVertex *> &c2v,
-                                std::vector<std::vector<MEdge> > &boundaries,
-                                std::vector<std::vector<MEdge> > &internals);
+                                std::vector<std::vector<MEdge> > &boundaries);
 #endif
 
 public:

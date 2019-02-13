@@ -44,7 +44,7 @@ double BDS_Face_Validity(GFace *gf, BDS_Face *f)
 void outputScalarField(std::vector<BDS_Face *> &t, const char *iii, int param,
                        GFace *gf)
 {
-  if(gf) {
+  if(gf && 0) {
     FILE *view_c = Fopen("param_mesh_as_it_is_in_3D.pos", "w");
     if(!view_c) {
       Msg::Error("Could not open file param_mesh_as_it_is_in_3D.pos");

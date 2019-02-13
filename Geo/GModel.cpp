@@ -1842,12 +1842,15 @@ void GModel::createGeometryOfDiscreteEntities()
   createTopologyFromMeshNew();
   exportDiscreteGEOInternals();
 
+  
+  printf("%d edges\n",getNumEdges());
   Msg::Info("Creating the geometry of discrete surfaces");
   for(fiter it = firstFace(); it != lastFace(); ++it) {
     if((*it)->geomType() == GEntity::DiscreteSurface)
       static_cast<discreteFace *>(*it)->createGeometry();
   }
 
+  printf("%d edges\n",getNumEdges());
   Msg::Info("Creating the geometry of discrete curves");
   for(eiter it = firstEdge(); it != lastEdge(); ++it) {
     if((*it)->geomType() == GEntity::DiscreteCurve)

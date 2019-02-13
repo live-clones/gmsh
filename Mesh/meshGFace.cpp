@@ -1168,6 +1168,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   }
 
   while(ite != edges.end()) {
+    if (gf->tag() == 15){
+      printf ("%d %d %d %d\n",(*ite)->tag(),(*ite)->isSeam(gf),(*ite)->isMeshDegenerated(),(*ite)->lines.size());
+    }
     if((*ite)->isSeam(gf)) {
       if(fdeb != NULL) fclose(fdeb);
       return false;
