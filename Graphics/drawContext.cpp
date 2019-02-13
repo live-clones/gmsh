@@ -402,7 +402,7 @@ bool drawContext::generateTextureForImage(const std::string &name, int page,
                                           GLuint &imageH)
 {
   if(StatFile(name)) {
-    Msg::Warning("Could not open file `%s'", name.c_str());
+    Msg::Error("Could not open file `%s'", name.c_str());
     return false;
   }
 

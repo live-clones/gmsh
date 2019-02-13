@@ -1,4 +1,4 @@
-// Copyright (C) 2014 ULg-UCL
+// MeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -30,6 +30,6 @@
 class GEntity;
 class MeshOptParameters;
 
-void meshOptimizer(std::vector<GEntity*> &entities, MeshOptParameters &par);
+void meshOptimizer(std::vector<GEntity *> &entities, MeshOptParameters &par);
 
 #endif

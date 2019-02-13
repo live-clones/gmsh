@@ -6205,11 +6205,25 @@ double opt_mesh_ho_threshold_max(OPT_ARGS_NUM)
   return CTX::instance()->mesh.hoThresholdMax;
 }
 
-double opt_mesh_ho_opt_prim_surf_mesh(OPT_ARGS_NUM)
+double opt_mesh_ho_prim_surf_mesh(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.hoOptPrimSurfMesh = (int)val;
-  return CTX::instance()->mesh.hoOptPrimSurfMesh;
+    CTX::instance()->mesh.hoPrimSurfMesh = (int)val;
+  return CTX::instance()->mesh.hoPrimSurfMesh;
+}
+
+double opt_mesh_ho_iter_max(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.hoIterMax = (int)val;
+  return CTX::instance()->mesh.hoIterMax;
+}
+
+double opt_mesh_ho_pass_max(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.hoPassMax = (int)val;
+  return CTX::instance()->mesh.hoPassMax;
 }
 
 double opt_mesh_ho_poisson(OPT_ARGS_NUM)

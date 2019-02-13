@@ -1,4 +1,4 @@
-// Copyright (C) 2017 ULg-UCL
+// HighOrderMeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -44,24 +44,27 @@ struct nodalBasis;
 typedef std::pair<MElement *, std::vector<MElement *> > PairMElemVecMElem;
 typedef std::vector<PairMElemVecMElem> VecPairMElemVecMElem;
 
-namespace BoundaryLayerCurver
-{
+namespace BoundaryLayerCurver {
   bool computeCommonEdge(MElement *el1, MElement *el2, MEdge &e);
 
   void repositionInnerVertices(const std::vector<MFaceN> &stackFaces,
                                const GFace *gface);
 
-  MElement* createPrimaryElement(MElement *el);
+  MElement *createPrimaryElement(MElement *el);
 
   // The boundary layer curver algorithm is seperated into different modules:
-  namespace EdgeCurver2D {}
-  namespace EdgeCurver3D {}
-  namespace FaceCurver {}
-  namespace InteriorEdgeCurver {}
-  namespace InteriorFaceCurver {}
+  namespace EdgeCurver2D {
+  }
+  namespace EdgeCurver3D {
+  }
+  namespace FaceCurver {
+  }
+  namespace InteriorEdgeCurver {
+  }
+  namespace InteriorFaceCurver {
+  }
 
-  namespace EdgeCurver2D
-  {
+  namespace EdgeCurver2D {
     // A 2D edge can be on a 3D face or in a plane. The normal to the surface
     // that contain the edge is needed. It is computed from the CAD if 'gface'
     // and 'gedge' are provided. Otherwise, 'normal' is taken into account.
@@ -71,7 +74,7 @@ namespace BoundaryLayerCurver
 
     void recoverQualityElements(std::vector<MEdgeN> &stackEdges,
                                 std::vector<MFaceN> &stackFaces,
-                                std::vector<MElement*> &stackElements,
+                                std::vector<MElement *> &stackElements,
                                 int iFirst, int iLast, const GFace *gface);
 
     class _Frame {
@@ -84,56 +87,60 @@ namespace BoundaryLayerCurver
 
     public:
       _Frame(const MEdgeN *edge, const GFace *gface, const GEdge *gedge,
-            const SVector3 &normal);
+             const SVector3 &normal);
 
-      void computeFrame(double paramEdge, SVector3 &t, SVector3 &n,
-                        SVector3 &w, bool atExtremity = false) const;
+      void computeFrame(double paramEdge, SVector3 &t, SVector3 &n, SVector3 &w,
+                        bool atExtremity = false) const;
 
       SPoint3 pnt(double u) const;
     };
-  }
+  } // namespace EdgeCurver2D
 
-  namespace InteriorEdgeCurver
-  {
+  namespace InteriorEdgeCurver {
     void curveEdges(std::vector<MEdgeN> &stack, int iFirst, int iLast,
                     const GFace *gface);
 
     void curveEdgesAndPreserveQuality(std::vector<MEdgeN> &stackEdges,
                                       std::vector<MFaceN> &stackFaces,
-                                      std::vector<MElement*> &stackElements,
-                                      int iFirst, int iLast, const GFace *gface);
-  }
+                                      std::vector<MElement *> &stackElements,
+                                      int iFirst, int iLast,
+                                      const GFace *gface);
+  } // namespace InteriorEdgeCurver
 
   struct Parameters3DCurve {
     double thickness[2];
     double coeffb[2];
     double coeffc[2];
 
-    double thicknessAtPoint(double xi, int triDirection = 0) const {
-      if (triDirection == 0)
+    double thicknessAtPoint(double xi, int triDirection = 0) const
+    {
+      if(triDirection == 0)
         return thickness[0] * (1 - xi) / 2 + thickness[1] * (1 + xi) / 2;
-      else if (triDirection > 0)
+      else if(triDirection > 0)
         return thickness[1] * (1 + xi) / 2;
       else
         return thickness[0] * (1 - xi) / 2;
     }
-    double coeffbAtPoint(double xi, int triDirection = 0) const {
-      if (triDirection == 0)
+    double coeffbAtPoint(double xi, int triDirection = 0) const
+    {
+      if(triDirection == 0)
         return coeffb[0] * (1 - xi) / 2 + coeffb[1] * (1 + xi) / 2;
-      else if (triDirection > 0)
+      else if(triDirection > 0)
         return coeffb[1] * (1 + xi) / 2;
       else
         return coeffb[0] * (1 - xi) / 2;
     }
-    double coeffcAtPoint(double xi, int triDirection = 0) const {
-      if (triDirection == 0)
+    double coeffcAtPoint(double xi, int triDirection = 0) const
+    {
+      if(triDirection == 0)
         return coeffc[0] * (1 - xi) / 2 + coeffc[1] * (1 + xi) / 2;
-      else if (triDirection > 0)
+      else if(triDirection > 0)
         return coeffc[1] * (1 + xi) / 2;
       else
         return coeffc[0] * (1 - xi) / 2;
     }
-    double characteristicThickness() {
+    double characteristicThickness()
+    {
       return std::min(std::abs(thickness[0]), std::abs(thickness[1]));
     }
   };
@@ -146,7 +153,7 @@ namespace BoundaryLayerCurver
     int _order; // not necessary
     double _factorDegenerate[4];
     const nodalBasis *_fs, *_primaryFs;
-//    const MFaceN baseFace;
+    //    const MFaceN baseFace;
 
   public:
     Parameters3DSurface() {}
@@ -154,17 +161,17 @@ namespace BoundaryLayerCurver
 
     void computeParameters(const MFaceN &baseFace, const MFaceN &topFace);
 
-    SPoint3 computeIdealPositionTopFace(const MFaceN &baseFace,
-                                        double u, double v) const;
+    SPoint3 computeIdealPositionTopFace(const MFaceN &baseFace, double u,
+                                        double v) const;
 
-//    double characteristicThickness() {
-//      return std::min(std::abs(thickness[0]), std::abs(thickness[1]));
-//    }
+    //    double characteristicThickness() {
+    //      return std::min(std::abs(thickness[0]), std::abs(thickness[1]));
+    //    }
   };
 
   struct LeastSquareData {
     fullMatrix<double> invA;
-//    fullMatrix<double> Leg2Lag;
+    //    fullMatrix<double> Leg2Lag;
     int nbPoints;
     IntPt *intPoints;
   };
@@ -174,35 +181,34 @@ namespace BoundaryLayerCurver
     fullMatrix<double> T1;
   };
 
-
   // Least square data
   typedef std::pair<int, std::pair<int, int> > TupleLeastSquareData;
-  static std::map<TupleLeastSquareData, LeastSquareData*> leastSquareData;
-  LeastSquareData* getLeastSquareData(int typeElement, int order,
+  static std::map<TupleLeastSquareData, LeastSquareData *> leastSquareData;
+  LeastSquareData *getLeastSquareData(int typeElement, int order,
                                       int orderGauss);
-  LeastSquareData* constructLeastSquareData(int typeElement, int order,
+  LeastSquareData *constructLeastSquareData(int typeElement, int order,
                                             int orderGauss);
 
   namespace InnerVertPlacementMatrices {
     const fullMatrix<double> *triangle(int order, bool linear, int edge = 2);
     const fullMatrix<double> *quadrangle(int order, bool linear);
-    const fullMatrix<double>* tetrahedron(int order, bool linear, int face = 0,
+    const fullMatrix<double> *tetrahedron(int order, bool linear, int face = 0,
                                           int otherFace = 0);
-    const fullMatrix<double>* hexahedron(int order, bool linear, int face = 0);
-    const fullMatrix<double>* prism(int order, bool linear, int face = 0);
-  }
+    const fullMatrix<double> *hexahedron(int order, bool linear, int face = 0);
+    const fullMatrix<double> *prism(int order, bool linear, int face = 0);
+  } // namespace InnerVertPlacementMatrices
 
-}
+} // namespace BoundaryLayerCurver
 
 // BL in planar surface (always prefer this one if possible)
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
                           const GEdge *edge = NULL);
 
 // BL on CAD surface
-void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace*,
-                          const GEdge*);
+void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace *,
+                          const GEdge *);
 
 // 3D BL
-void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace*);
+void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace *);
 
 #endif

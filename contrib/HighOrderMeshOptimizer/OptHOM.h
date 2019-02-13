@@ -1,4 +1,4 @@
-// Copyright (C) 2013 ULg-UCL
+// HighOrderMeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -37,41 +37,47 @@
 
 #include "ap.h"
 
-class OptHOM
-{
+class OptHOM {
 public:
   Mesh mesh;
-  OptHOM(const std::map<MElement*,GEntity*> &element2entity,
-         const std::set<MElement*, Less_ElementPtr> &els, std::set<MVertex*> & toFix,
-         bool fixBndNodes, bool fastJacEval = false);
+  OptHOM(const std::map<MElement *, GEntity *> &element2entity,
+         const std::set<MElement *, Less_ElementPtr> &els,
+         std::set<MVertex *> &toFix, bool fixBndNodes,
+         bool fastJacEval = false);
   // returns 1 if the mesh has been optimized with success i.e. all jacobians
   // are in the range; returns 0 if the mesh is valid (all jacobians positive,
   // JMIN > 0) but JMIN < barrier_min || JMAX > barrier_max; returns -1 if the
   // mesh is invalid : some jacobians cannot be made positive
-  int optimize(double lambda, double lambda3, double barrier_min, double barrier_max,
-               bool optimizeMetricMin, int pInt, int itMax, int optPassMax,
-               int optimizeCAD, double optCADDistMax, double tolerance);
+  int optimize(double lambda, double lambda3, double barrier_min,
+               double barrier_max, bool optimizeMetricMin, int pInt, int itMax,
+               int optPassMax, int optimizeCAD, double optCADDistMax,
+               double tolerance);
   void recalcJacDist();
-  inline void getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD);
+  inline void getJacDist(double &minJ, double &maxJ, double &maxD,
+                         double &avgD);
   void updateMesh(const alglib::real_1d_array &x);
   void evalObjGrad(const alglib::real_1d_array &x, double &Obj,
                    alglib::real_1d_array &gradObj);
   void printProgress(const alglib::real_1d_array &x, double Obj);
 
   double barrier_min, barrier_max, distance_max, geomTol;
- private:
+
+private:
   double lambda, lambda3, jacBar, invLengthScaleSq;
-  int iter, progressInterv; // Current iteration, interval of iterations for reporting
+  int iter,
+    progressInterv; // Current iteration, interval of iterations for reporting
   bool _optimizeMetricMin;
   double initObj, initMaxDist, initAvgDist; // Values for reporting
   double minJac, maxJac, maxDist, maxDistCAD, avgDist; // Values for reporting
   bool _optimizeBarrierMax; // false : only moving barrier min;
                             // true : fixed barrier min + moving barrier max
-  bool _optimizeCAD; // false : do not minimize the distance between mesh and CAD
-                     // true : minimize the distance between mesh and CAD
-  bool addApproximationErrorObjGrad(double Fact, double &Obj, alglib::real_1d_array &gradObj, simpleFunction<double>& fct);
+  bool _optimizeCAD; // false : do not minimize the distance between mesh and
+                     // CAD true : minimize the distance between mesh and CAD
+  bool addApproximationErrorObjGrad(double Fact, double &Obj,
+                                    alglib::real_1d_array &gradObj,
+                                    simpleFunction<double> &fct);
   bool addJacObjGrad(double &Obj, alglib::real_1d_array &gradObj);
-  bool addBndObjGrad (double Fact, double &Obj, alglib::real_1d_array &gradObj);
+  bool addBndObjGrad(double Fact, double &Obj, alglib::real_1d_array &gradObj);
   bool addMetricMinObjGrad(double &Obj, alglib::real_1d_array &gradObj);
   bool addDistObjGrad(double Fact, double &Obj, alglib::real_1d_array &gradObj);
   void calcScale(alglib::real_1d_array &scale);
@@ -80,12 +86,15 @@ public:
 
 void OptHOM::getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD)
 {
-  minJ = minJac; maxJ = maxJac; maxD = maxDist; avgD = avgDist;
+  minJ = minJac;
+  maxJ = maxJac;
+  maxD = maxDist;
+  avgD = avgDist;
 }
 
 double distanceToGeometry(GModel *gm);
-void distanceFromElementsToGeometry(GModel *gm, int dim, std::map<MElement*,double> &distances);
-
+void distanceFromElementsToGeometry(GModel *gm, int dim,
+                                    std::map<MElement *, double> &distances);
 
 #endif
 

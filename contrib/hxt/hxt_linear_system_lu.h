@@ -3,7 +3,9 @@
 #include <stdint.h>
 #include "hxt_api.h"
 
+#ifndef HEXTREME_LINEAR_SYSTEM_H // to avoid illegal (in C) redefinition of typedef
 typedef struct HXTLinearSystemLUStruct HXTLinearSystemLU;
+#endif
 
 HXTStatus hxtLinearSystemLUAddToMatrix(HXTLinearSystemLU *lsys, int el0, int el1, const double *localMatrix);
 HXTStatus hxtLinearSystemLUAddMatrixEntry(HXTLinearSystemLU *lsys, int node0, int field0, int node1, int field1, double entry);

@@ -212,7 +212,6 @@ void drawContext::drawImage(const std::string &name, double x, double y,
     img = &_imageTextures[file];
     file = FixRelativePath(GModel::current()->getFileName(), file);
     if(!generateTextureForImage(file, 1, img->tex, img->w, img->h)) {
-      Msg::Error("Problem generating image texture");
       return;
     }
   }
@@ -220,7 +219,7 @@ void drawContext::drawImage(const std::string &name, double x, double y,
     img = &_imageTextures[file];
   }
   if(!img->tex) {
-    Msg::Error("No texture for image");
+    Msg::Debug("No texture for image - skipping image draw");
     return;
   }
 

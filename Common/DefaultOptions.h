@@ -559,10 +559,10 @@ StringXNumber GeneralOptions_Number[] = {
     "Width (in pixels) of the graphic window" },
 
   { F|S, "HighOrderToolsPositionX" , opt_general_hot_position0 , 650. ,
-    "Horizontal position (in pixels) of the upper left corner of the high order "
+    "Horizontal position (in pixels) of the upper left corner of the high-order "
     "tools window" },
   { F|S, "HighOrderToolsPositionY" , opt_general_hot_position1 , 150. ,
-    "Vertical position (in pixels) of the upper left corner of the high order "
+    "Vertical position (in pixels) of the upper left corner of the high-order "
     "tools window" },
   { F|O, "HighResolutionGraphics" , opt_general_high_resolution_graphics , 1. ,
     "Use high-resolution OpenGL graphics (e.g. for Macs with retina displays)" },
@@ -1052,21 +1052,25 @@ StringXNumber MeshOptions_Number[] = {
     "38: ir3, 39: inp, 40: ply2, 41: celum, 42: su2, 47: tochnog, 49: neu, 50: matlab)" },
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. ,
     "Display mesh hexahedra?" },
-  { F|0, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,
-    "Number of high order mesh elements to consider for optimization"},
+  { F|O, "HighOrderIterMax", opt_mesh_ho_iter_max, 100,
+    "Maximum number of iterations in high-order optimization pass"},
+  { F|O, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,
+    "Number of layers around a problematic element to consider for high-order optimization"},
   { F|O, "HighOrderOptimize" , opt_mesh_ho_optimize , 0.,
-    "Optimize high order meshes?" },
+    "Optimize high-order meshes? (-1: elastic smoothing, 1: optimization, 2: both)" },
+  { F|O, "HighOrderPassMax", opt_mesh_ho_pass_max, 25,
+    "Maximum number of high-order optimization passes (moving barrier)"},
   { F|O, "HighOrderPeriodic" , opt_mesh_ho_periodic , 0.,
-    "Correct high order optimization for periodic connections?" },
-  { F|0, "HighOrderPoissonRatio", opt_mesh_ho_poisson, 0.33,
-    "Poisson ratio of the material used in the elastic smoother for high order meshes"
-    "Must be between -1.0 and 0.5, excluded"},
+    "Correct high-order optimization for periodic connections?" },
+  { F|O, "HighOrderPoissonRatio", opt_mesh_ho_poisson, 0.33,
+    "Poisson ratio of the material used in the elastic smoother for high-order meshes "
+    "(between -1.0 and 0.5, excluded)"},
+  { F|O, "HighOrderPrimSurfMesh", opt_mesh_ho_prim_surf_mesh, 0,
+    "Try to fix flipped surface mesh elements in high-order optimizer?"},
   { F|O, "HighOrderThresholdMin", opt_mesh_ho_threshold_min, 0.1,
-    "Minimum threshold for high order element optimization"},
+    "Minimum threshold for high-order element optimization"},
   { F|O, "HighOrderThresholdMax", opt_mesh_ho_threshold_max, 2.0,
-    "Maximum threshold for high order element optimization"},
-  { F|O, "HighOrderOptPrimSurfMesh", opt_mesh_ho_opt_prim_surf_mesh, 0,
-    "Try to fix flipped surface mesh elements in high-order optimizer"},
+    "Maximum threshold for high-order element optimization"},
 
   { F|O, "LabelSampling" , opt_mesh_label_sampling , 1. ,
     "Label sampling rate (display one label every `LabelSampling' elements)" },
@@ -1165,7 +1169,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Normals" , opt_mesh_normals , 0.0 ,
     "Display size of normal vectors (in pixels)" },
   { F|O, "NumSubEdges" , opt_mesh_num_sub_edges , 2. ,
-    "Number of edge subdivisions when displaying high order elements" },
+    "Number of edge subdivisions when displaying high-order elements" },
 
   { F|O, "Optimize" , opt_mesh_optimize , 1. ,
     "Optimize the mesh to improve the quality of tetrahedral elements" },

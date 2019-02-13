@@ -1,4 +1,4 @@
-// Copyright (C) 2013 ULg-UCL
+// MeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -43,26 +43,26 @@
 
 class MeshOptParameters;
 
-class MeshOpt
-{
+class MeshOpt {
 public:
   Patch patch;
-  MeshOpt(const std::map<MElement*, GEntity*> &element2entity,
-          const std::map<MElement*, GEntity*> &bndEl2Ent,
-          const std::set<MElement*> &els, std::set<MVertex*> &toFix,
-          const std::set<MElement*> &bndEls, const MeshOptParameters &par);
+  MeshOpt(const std::map<MElement *, GEntity *> &element2entity,
+          const std::map<MElement *, GEntity *> &bndEl2Ent,
+          const std::set<MElement *> &els, std::set<MVertex *> &toFix,
+          const std::set<MElement *> &bndEls, const MeshOptParameters &par);
   ~MeshOpt();
   int optimize(const MeshOptParameters &par);
   void updateMesh(const alglib::real_1d_array &x);
   void updateResults();
-  void evalObjGrad(const alglib::real_1d_array &x,
-                    double &Obj, alglib::real_1d_array &gradObj);
+  void evalObjGrad(const alglib::real_1d_array &x, double &Obj,
+                   alglib::real_1d_array &gradObj);
   void printProgress(const alglib::real_1d_array &x, double Obj);
   ObjectiveFunction *objFunction();
- private:
+
+private:
   int _verbose;
   bool _nCurses;
-  std::list<char*> _iterHistory, _optHistory;
+  std::list<char *> _iterHistory, _optHistory;
   int _iPass;
   // Contributions to objective function for current pass
   std::vector<ObjectiveFunction> _allObjFunc;

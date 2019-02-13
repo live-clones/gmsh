@@ -1,4 +1,4 @@
-// Copyright (C) 2013 ULg-UCL
+// HighOrderMeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -45,60 +45,60 @@ class MElement;
 class GFace;
 class GRegion;
 
-class highOrderTools
-{
+class highOrderTools {
   GModel *_gm;
   const int _tag;
   // contains the position of vertices in a straight sided mesh
-  std::map<MVertex*,SVector3> _straightSidedLocation;
+  std::map<MVertex *, SVector3> _straightSidedLocation;
   // contains the position of vertices in the best curvilinear mesh
   // available
-  std::map<MVertex*,SVector3> _targetLocation;
+  std::map<MVertex *, SVector3> _targetLocation;
   int _dim;
   void _clean()
   {
     _straightSidedLocation.clear();
     _targetLocation.clear();
   }
-  double smooth_metric_(std::vector<MElement*>  & v,
-			GFace *gf,
-			dofManager<double> &myAssembler,
-			std::set<MVertex*> &verticesToMove,
-			elasticityTerm &El);
-  void computeMetricInfo(GFace *gf,
-			 MElement *e,
-			 fullMatrix<double> &J,
-			 fullMatrix<double> &JT,
-			 fullVector<double> &D);
-  double apply_incremental_displacement (double max_incr,
-					 std::vector<MElement*> & v,
-					 bool mixed,
-					 double thres,
-					 char *meshName,
-					 std::vector<MElement*> & disto);
+  double smooth_metric_(std::vector<MElement *> &v, GFace *gf,
+                        dofManager<double> &myAssembler,
+                        std::set<MVertex *> &verticesToMove,
+                        elasticityTerm &El);
+  void computeMetricInfo(GFace *gf, MElement *e, fullMatrix<double> &J,
+                         fullMatrix<double> &JT, fullVector<double> &D);
+  double apply_incremental_displacement(double max_incr,
+                                        std::vector<MElement *> &v, bool mixed,
+                                        double thres, char *meshName,
+                                        std::vector<MElement *> &disto);
   void moveToStraightSidedLocation(MElement *) const;
-  void computeStraightSidedPositions ();
- public:
+  void computeStraightSidedPositions();
+
+public:
   highOrderTools(GModel *gm);
   highOrderTools(GModel *gm, GModel *mesh, int order);
   //  void applyGlobalSmoothing ();
   void ensureMinimumDistorsion(MElement *e, double threshold);
-  void ensureMinimumDistorsion (std::vector<MElement*> &all, double threshold);
-  void ensureMinimumDistorsion (double threshold);
-  double applySmoothingTo (GFace *gf, double tres = 0.1, bool mixed = false);
-  void applySmoothingTo(std::vector<MElement*> & all, GFace *gf);
-  double applySmoothingTo (std::vector<MElement*> &all,  double threshold, bool mixed);
+  void ensureMinimumDistorsion(std::vector<MElement *> &all, double threshold);
+  void ensureMinimumDistorsion(double threshold);
+  double applySmoothingTo(GFace *gf, double tres = 0.1, bool mixed = false);
+  void applySmoothingTo(std::vector<MElement *> &all, GFace *gf);
+  double applySmoothingTo(std::vector<MElement *> &all, double threshold,
+                          bool mixed);
   inline SVector3 getSSL(MVertex *v) const
   {
-    std::map<MVertex*,SVector3>::const_iterator it =  _straightSidedLocation.find(v);
-    if (it != _straightSidedLocation.end())return it->second;
-    else return SVector3(v->x(),v->y(),v->z());
+    std::map<MVertex *, SVector3>::const_iterator it =
+      _straightSidedLocation.find(v);
+    if(it != _straightSidedLocation.end())
+      return it->second;
+    else
+      return SVector3(v->x(), v->y(), v->z());
   }
   inline SVector3 getTL(MVertex *v) const
   {
-    std::map<MVertex*,SVector3>::const_iterator it =  _targetLocation.find(v);
-    if (it != _targetLocation.end())return it->second;
-    else return SVector3(v->x(),v->y(),v->z());
+    std::map<MVertex *, SVector3>::const_iterator it = _targetLocation.find(v);
+    if(it != _targetLocation.end())
+      return it->second;
+    else
+      return SVector3(v->x(), v->y(), v->z());
   }
   void makePosViewWithJacobians(const char *nm);
 };

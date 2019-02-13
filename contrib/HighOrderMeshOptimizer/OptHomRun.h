@@ -1,4 +1,4 @@
-// Copyright (C) 2013 ULg-UCL
+// HighOrderMeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -31,30 +31,35 @@ class GModel;
 
 struct OptHomParameters {
   // INPUT ------>
-  double BARRIER_MIN_METRIC ; // minimum scaled jcaobian
-  double BARRIER_MIN ; // minimum scaled jcaobian
-  double BARRIER_MAX ; // maximum scaled jcaobian
-  double weight ; // weight of the energy for nodes
-  int nbLayers ; // number of layers taken around a bad element
-  int dim ; // which dimension to optimize
-  int itMax ; // max number of iterations in the optimization process
-  int optPassMax ; // max number of optimization passes
-  double TMAX ; // max CPU time allowed
-  bool onlyVisible ; // apply optimization to visible entities ONLY
+  double BARRIER_MIN_METRIC; // minimum scaled jcaobian
+  double BARRIER_MIN; // minimum scaled jcaobian
+  double BARRIER_MAX; // maximum scaled jcaobian
+  double weight; // weight of the energy for nodes
+  int nbLayers; // number of layers taken around a bad element
+  int dim; // which dimension to optimize
+  int itMax; // max number of iterations in the optimization process
+  int optPassMax; // max number of optimization passes
+  double TMAX; // max CPU time allowed
+  bool onlyVisible; // apply optimization to visible entities ONLY
   double distanceFactor; // filter elements such that no elements further away
                          // than DistanceFactor times the max distance to
                          // straight sided version of an element are optimized
-  bool fixBndNodes;  // how jacobians are computed and if points can move on boundaries
+  bool fixBndNodes; // how jacobians are computed and if points can move on
+                    // boundaries
   int strategy; // 0 = connected blobs, 1 = adaptive one-by-one
   int maxAdaptBlob; // Max. nb. of blob adaptation interations
-  int adaptBlobLayerFact; // Growth factor in number of layers for blob adaptation
-  double adaptBlobDistFact; // Growth factor in distance factor for blob adaptation
+  int
+    adaptBlobLayerFact; // Growth factor in number of layers for blob adaptation
+  double
+    adaptBlobDistFact; // Growth factor in distance factor for blob adaptation
   bool optPrimSurfMesh; // Enable optimisation of p1 surface meshes
-  bool optCAD;//Enable optimization of mesh vertices positions for geometrical fitting
-  double optCADWeight;//Weight
-  double optCADDistMax;//Maximum allowed distance from the CAD
+  bool optCAD; // Enable optimization of mesh vertices positions for geometrical
+               // fitting
+  double optCADWeight; // Weight
+  double optCADDistMax; // Maximum allowed distance from the CAD
   double discrTolerance;
-  bool lockCurvedBLElts; // Do not include in optimization elements already fixed by "fast curving"
+  bool lockCurvedBLElts; // Do not include in optimization elements already
+                         // fixed by "fast curving"
 
   // OUTPUT ------>
   int SUCCESS; // 0 --> success , 1 --> Not converged
@@ -62,13 +67,14 @@ struct OptHomParameters {
   double minJac, maxJac; // after optimization, range of jacobians
   double CPU; // Time for optimization
 
-  OptHomParameters ()
+  OptHomParameters()
     : BARRIER_MIN_METRIC(-1.), BARRIER_MIN(0.1), BARRIER_MAX(2.0), weight(1.),
       nbLayers(6), dim(3), itMax(300), optPassMax(50), onlyVisible(true),
       distanceFactor(12), fixBndNodes(false), strategy(0), maxAdaptBlob(3),
       adaptBlobLayerFact(2.), adaptBlobDistFact(2.), optPrimSurfMesh(false),
-      optCAD(false), optCADWeight(1000.), optCADDistMax(1.e22), discrTolerance(1.e-4),
-      lockCurvedBLElts(true), SUCCESS(0), numBlobs(0), minJac(0.), maxJac(0.), CPU(0.)
+      optCAD(false), optCADWeight(1000.), optCADDistMax(1.e22),
+      discrTolerance(1.e-4), lockCurvedBLElts(true), SUCCESS(0), numBlobs(0),
+      minJac(0.), maxJac(0.), CPU(0.)
   {
   }
 };
@@ -76,7 +82,8 @@ struct OptHomParameters {
 void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p);
 void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p);
 // distanceDefinition 1) Hausdorff 2) Area/Length 3) Frechet (not done)
-double ComputeDistanceToGeometry (GEntity *ge , int distanceDefinition,double tolerance) ;
-//double ComputeDistanceToGeometry (GModel*gm);
+double ComputeDistanceToGeometry(GEntity *ge, int distanceDefinition,
+                                 double tolerance);
+// double ComputeDistanceToGeometry (GModel*gm);
 
 #endif

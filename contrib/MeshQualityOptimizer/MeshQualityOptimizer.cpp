@@ -1,6 +1,27 @@
-// TODO: Copyright
+// MeshQualityOptimizer - Copyright (C) 2015-2019 UCLouvain-ULiege
+//
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use, copy,
+// modify, merge, publish, distribute, and/or sell copies of the
+// Software, and to permit persons to whom the Software is furnished
+// to do so, provided that the above copyright notice(s) and this
+// permission notice appear in all copies of the Software and that
+// both the above copyright notice(s) and this permission notice
+// appear in supporting documentation.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT OF THIRD PARTY RIGHTS. IN NO EVENT SHALL THE
+// COPYRIGHT HOLDER OR HOLDERS INCLUDED IN THIS NOTICE BE LIABLE FOR
+// ANY CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY
+// DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+// WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+// ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
+// OF THIS SOFTWARE.
 
-//#include "GModel.h"
 #include "GEntity.h"
 #include "GFace.h"
 #include "GRegion.h"
@@ -18,23 +39,21 @@
 #include "MeshOptimizer.h"
 #include "MeshQualityOptimizer.h"
 
-
-struct QualPatchDefParameters : public MeshOptPatchDef
-{
+struct QualPatchDefParameters : public MeshOptPatchDef {
   QualPatchDefParameters(const MeshQualOptParameters &p);
   virtual ~QualPatchDefParameters() {}
-  virtual double elBadness(MElement *el, GEntity* gEnt) const;
-  virtual double bndElBadness(MElement *el, GEntity* gEnt) const { return 1.; }
+  virtual double elBadness(MElement *el, GEntity *gEnt) const;
+  virtual double bndElBadness(MElement *el, GEntity *gEnt) const { return 1.; }
   virtual double maxDistance(MElement *el) const;
-  virtual int inPatch(const SPoint3 &badBary, double limDist,
-                      MElement *el, GEntity* gEnt) const;
+  virtual int inPatch(const SPoint3 &badBary, double limDist, MElement *el,
+                      GEntity *gEnt) const;
+
 private:
   bool _onlyValidity;
   bool _excludeQuad, _excludeHex, _excludePrism, _excludeBL;
   double _idealJacMin, _invCondNumMin;
   double _distanceFactor;
 };
-
 
 QualPatchDefParameters::QualPatchDefParameters(const MeshQualOptParameters &p)
 {
@@ -50,7 +69,7 @@ QualPatchDefParameters::QualPatchDefParameters(const MeshQualOptParameters &p)
   minLayers = (p.dim == 3) ? 1 : 0;
   maxLayers = p.nbLayers;
   _distanceFactor = p.distanceFactor;
-  if (strategy == MeshOptPatchDef::STRAT_DISJOINT)
+  if(strategy == MeshOptPatchDef::STRAT_DISJOINT)
     weakMerge = (p.strategy == 2);
   else {
     maxPatchAdapt = p.maxPatchAdapt;
@@ -59,66 +78,65 @@ QualPatchDefParameters::QualPatchDefParameters(const MeshQualOptParameters &p)
   }
 }
 
-
-double QualPatchDefParameters::elBadness(MElement *el, GEntity* gEnt) const
+double QualPatchDefParameters::elBadness(MElement *el, GEntity *gEnt) const
 {
   const int typ = el->getType();
-  if (_excludeQuad && (typ == TYPE_QUA)) return 1.;
-  if (_excludeHex && (typ == TYPE_HEX)) return 1.;
-  if (_excludePrism && (typ == TYPE_PRI)) return 1.;
-  if (_excludeBL) {
+  if(_excludeQuad && (typ == TYPE_QUA)) return 1.;
+  if(_excludeHex && (typ == TYPE_HEX)) return 1.;
+  if(_excludePrism && (typ == TYPE_PRI)) return 1.;
+  if(_excludeBL) {
     BoundaryLayerColumns *blc = 0;
-    if (gEnt->dim() == 2)
-      blc = static_cast<GFace*>(gEnt)->getColumns();
-    else if (gEnt->dim() == 3)
-      blc = static_cast<GRegion*>(gEnt)->getColumns();
-    if (blc) {
-      std::map<MElement*, MElement*>::iterator itBLEl = blc->_toFirst.find(el);
-      if (itBLEl != blc->_toFirst.end()) return 1.;
+    if(gEnt->dim() == 2)
+      blc = static_cast<GFace *>(gEnt)->getColumns();
+    else if(gEnt->dim() == 3)
+      blc = static_cast<GRegion *>(gEnt)->getColumns();
+    if(blc) {
+      std::map<MElement *, MElement *>::iterator itBLEl =
+        blc->_toFirst.find(el);
+      if(itBLEl != blc->_toFirst.end()) return 1.;
     }
   }
-  if (_onlyValidity) {
+  if(_onlyValidity) {
     double jMin, jMax;
     el->idealJacRange(jMin, jMax);
-    return jMin-_idealJacMin;
+    return jMin - _idealJacMin;
   }
   else {
     double iCNMin, iCNMax;
     el->signedInvCondNumRange(iCNMin, iCNMax);
-    return iCNMin-_invCondNumMin;
+    return iCNMin - _invCondNumMin;
   }
 }
-
 
 double QualPatchDefParameters::maxDistance(MElement *el) const
 {
   return _distanceFactor * el->maxEdge();
 }
 
-
 int QualPatchDefParameters::inPatch(const SPoint3 &badBary, double limDist,
-                                    MElement *el, GEntity* gEnt) const
+                                    MElement *el, GEntity *gEnt) const
 {
   const int typ = el->getType();
-  if (_excludeQuad && (typ == TYPE_QUA)) return -1;
-  if (_excludeHex && (typ == TYPE_HEX)) return -1;
-  if (_excludePrism && (typ == TYPE_PRI)) return -1;
-  if (_excludeBL) {
+  if(_excludeQuad && (typ == TYPE_QUA)) return -1;
+  if(_excludeHex && (typ == TYPE_HEX)) return -1;
+  if(_excludePrism && (typ == TYPE_PRI)) return -1;
+  if(_excludeBL) {
     BoundaryLayerColumns *blc = 0;
-    if (gEnt->dim() == 2)
-      blc = static_cast<GFace*>(gEnt)->getColumns();
-    else if (gEnt->dim() == 3)
-      blc = static_cast<GRegion*>(gEnt)->getColumns();
-    if (blc) {
-      std::map<MElement*, MElement*>::iterator itBLEl = blc->_toFirst.find(el);
-      if (itBLEl != blc->_toFirst.end()) return -1;
+    if(gEnt->dim() == 2)
+      blc = static_cast<GFace *>(gEnt)->getColumns();
+    else if(gEnt->dim() == 3)
+      blc = static_cast<GRegion *>(gEnt)->getColumns();
+    if(blc) {
+      std::map<MElement *, MElement *>::iterator itBLEl =
+        blc->_toFirst.find(el);
+      if(itBLEl != blc->_toFirst.end()) return -1;
     }
   }
   return testElInDist(badBary, limDist, el) ? 1 : 0;
 }
 
-
-void MeshQualityOptimizer(std::vector<GEntity*> &entities, MeshQualOptParameters &p)
+void MeshQualityOptimizer(std::vector<GEntity *> &entities,
+                          MeshQualOptParameters &p)
 {
   Msg::StatusBar(true, "Optimizing mesh quality...");
 
@@ -136,9 +154,8 @@ void MeshQualityOptimizer(std::vector<GEntity*> &entities, MeshQualOptParameters
   par.nCurses = p.nCurses;
   par.logFileName = p.logFileName;
 
-
-  ObjContribScaledNodeDispSq<ObjContribFuncSimple> nodeDistFunc(p.weight,
-                                                                Patch::LS_MINEDGELENGTH);
+  ObjContribScaledNodeDispSq<ObjContribFuncSimple> nodeDistFunc(
+    p.weight, Patch::LS_MINEDGELENGTH);
   ObjContribIdealJac<ObjContribFuncBarrierMovMin> minIdealJacBarFunc(1.);
   minIdealJacBarFunc.setTarget(p.minTargetIdealJac, 1.);
   ObjContribInvCondNum<ObjContribFuncBarrierMovMin> minInvCondNumBarFunc(1.);
@@ -146,7 +163,7 @@ void MeshQualityOptimizer(std::vector<GEntity*> &entities, MeshQualOptParameters
 
   MeshOptPass minJacPass;
   MeshOptPass minInvCondNumPass;
-  if (p.onlyValidity) {
+  if(p.onlyValidity) {
     minJacPass.maxParamUpdates = p.maxBarrierUpdates;
     minJacPass.maxOptIter = p.maxOptIter;
     minJacPass.contrib.push_back(&nodeDistFunc);
@@ -164,7 +181,7 @@ void MeshQualityOptimizer(std::vector<GEntity*> &entities, MeshQualOptParameters
   meshOptimizer(entities, par);
 
   p.CPU = par.CPU;
-  if (p.onlyValidity) {
+  if(p.onlyValidity) {
     p.minIdealJac = minIdealJacBarFunc.getMin();
     p.maxIdealJac = minIdealJacBarFunc.getMax();
   }
@@ -174,10 +191,9 @@ void MeshQualityOptimizer(std::vector<GEntity*> &entities, MeshQualOptParameters
   }
 }
 
-
 void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
 {
-  std::vector<GEntity*> entities;
+  std::vector<GEntity *> entities;
   gm->getEntities(entities);
   MeshQualityOptimizer(entities, p);
 }
