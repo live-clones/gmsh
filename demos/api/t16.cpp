@@ -13,7 +13,7 @@ int main(int argc, char **argv)
 
   model::add("t16");
 
-  gmsh::logger::start();
+  //gmsh::logger::start();
 
   std::vector<std::pair<int, int> > ov;
   std::vector<std::vector<std::pair<int, int> > > ovv;
@@ -51,10 +51,10 @@ int main(int argc, char **argv)
 
   gmsh::write("t16.msh");
 
-  std::vector<std::string> log;
-  gmsh::logger::get(log);
-  std::cout << "Logger has recorded " << log.size() << " lines" << std::endl;
-  gmsh::logger::stop();
+  //std::vector<std::string> log;
+  //gmsh::logger::get(log);
+  //std::cout << "Logger has recorded " << log.size() << " lines" << std::endl;
+  //gmsh::logger::stop();
 
   gmsh::finalize();
   return 0;
