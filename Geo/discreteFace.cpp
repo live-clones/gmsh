@@ -77,8 +77,6 @@ static void splitDiscreteEdge(discreteEdge *de, MVertex *v, GVertex *gv, int &TA
   de_new[1]  = new discreteEdge(de->model(), ++TAG, gv, gv1);
 
   de->setSplit(de_new[0],de_new[1]);
-  //  printf("splitting discrete edge %d\n",de->tag());
-
 
   int current = 0;
   de_new[current]->lines.push_back(de->lines[0]);
@@ -100,12 +98,12 @@ static void splitDiscreteEdge(discreteEdge *de, MVertex *v, GVertex *gv, int &TA
     old_eds = f[i]->edges();
     discreteFace *df = dynamic_cast<discreteFace *>(f[i]);
     if(!df){
-      Msg::Error ("A discrete edge is adjacent to a face that is not a discrete face : cannot remesh");
+      Msg::Error("A discrete edge is adjacent to a face that is not a discrete face - "
+                 "cannot remesh");
       return;
     }
     for (size_t j=0;j<old_eds.size();j++){
       if (old_eds[j]==de){
-	//	printf("replacing %d by %d %d in %d\n",de->tag(),de_new[0]->tag(),de_new[1]->tag(),f[i]->tag());
 	new_eds.push_back(de_new[0]);
 	new_eds.push_back(de_new[1]);
 	new_eds[0]->addFace(f[i]);
@@ -115,7 +113,6 @@ static void splitDiscreteEdge(discreteEdge *de, MVertex *v, GVertex *gv, int &TA
 	new_eds.push_back(old_eds[j]);
     }
     f[i]->set(new_eds);
-    //    printf("face %d has now %d edges\n",f[i]->tag(),new_eds.size());
   }
   de->model()->add(de_new[0]);
   de->model()->add(de_new[1]);
