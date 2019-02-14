@@ -1795,8 +1795,11 @@ namespace gmsh { // Top-level functions
     GMSH_API void write(const std::string & message,
                         const std::string & level = "info");
 
-    // Start logging messages in `log'.
-    GMSH_API void start(std::vector<std::string> & log);
+    // Start logging messages.
+    GMSH_API void start();
+
+    // Get logged messages.
+    GMSH_API void get(std::vector<std::string> & log);
 
     // Stop logging messages.
     GMSH_API void stop();

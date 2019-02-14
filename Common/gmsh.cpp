@@ -4816,17 +4816,18 @@ GMSH_API void gmsh::logger::write(const std::string &message,
 
 class apiMsg : public GmshMessage {
 private:
-  std::vector<std::string> &_log;
+  std::vector<std::string> _log;
 
 public:
-  apiMsg(std::vector<std::string> &log) : _log(log) {}
+  apiMsg(){}
   virtual void operator()(std::string level, std::string message)
   {
     _log.push_back(level + ": " + message);
   }
+  void get(std::vector<std::string> &log) const { log = _log; }
 };
 
-GMSH_API void gmsh::logger::start(std::vector<std::string> &log)
+GMSH_API void gmsh::logger::start()
 {
   if(!_isInitialized()) {
     throw -1;
@@ -4836,8 +4837,22 @@ GMSH_API void gmsh::logger::start(std::vector<std::string> &log)
     Msg::Warning("Logger already started - ignoring");
   }
   else {
-    msg = new apiMsg(log);
+    msg = new apiMsg();
     Msg::SetCallback(msg);
+  }
+}
+
+GMSH_API void gmsh::logger::get(std::vector<std::string> &log)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  apiMsg *msg = dynamic_cast<apiMsg*>(Msg::GetCallback());
+  if(msg) {
+    msg->get(log);
+  }
+  else {
+    log.clear();
   }
 }
 

@@ -728,8 +728,11 @@ onelab = gmsh.add_module('logger','Message logger functions')
 doc = '''Write a `message'. `level' can be "info", "warning" or "error".'''
 onelab.add('write',doc,None,istring('message'),istring('level','"info"'))
 
-doc = '''Start logging messages in `log'.'''
-onelab.add('start',doc,None,ovectorstring('log'))
+doc = '''Start logging messages.'''
+onelab.add('start',doc,None)
+
+doc = '''Get logged messages.'''
+onelab.add('get',doc,None,ovectorstring('log'))
 
 doc = '''Stop logging messages.'''
 onelab.add('stop',doc,None)

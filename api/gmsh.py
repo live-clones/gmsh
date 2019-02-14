@@ -4848,18 +4848,31 @@ class logger:
     @staticmethod
     def start():
         """
-        Start logging messages in `log'.
+        Start logging messages.
+        """
+        ierr = c_int()
+        lib.gmshLoggerStart(
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshLoggerStart returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
+    def get():
+        """
+        Get logged messages.
 
         Return `log'.
         """
         api_log_, api_log_n_ = POINTER(POINTER(c_char))(), c_size_t()
         ierr = c_int()
-        lib.gmshLoggerStart(
+        lib.gmshLoggerGet(
             byref(api_log_), byref(api_log_n_),
             byref(ierr))
         if ierr.value != 0:
             raise ValueError(
-                "gmshLoggerStart returned non-zero error code: ",
+                "gmshLoggerGet returned non-zero error code: ",
                 ierr.value)
         return _ovectorstring(api_log_, api_log_n_.value)
 

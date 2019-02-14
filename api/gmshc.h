@@ -1913,9 +1913,12 @@ GMSH_API void gmshLoggerWrite(const char * message,
                               const char * level,
                               int * ierr);
 
-/* Start logging messages in `log'. */
-GMSH_API void gmshLoggerStart(char *** log, size_t * log_n,
-                              int * ierr);
+/* Start logging messages. */
+GMSH_API void gmshLoggerStart(int * ierr);
+
+/* Get logged messages. */
+GMSH_API void gmshLoggerGet(char *** log, size_t * log_n,
+                            int * ierr);
 
 /* Stop logging messages. */
 GMSH_API void gmshLoggerStop(int * ierr);

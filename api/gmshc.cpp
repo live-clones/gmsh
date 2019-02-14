@@ -2906,12 +2906,23 @@ GMSH_API void gmshLoggerWrite(const char * message, const char * level, int * ie
   }
 }
 
-GMSH_API void gmshLoggerStart(char *** log, size_t * log_n, int * ierr)
+GMSH_API void gmshLoggerStart(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::logger::start();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshLoggerGet(char *** log, size_t * log_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::string> api_log_;
-    gmsh::logger::start(api_log_);
+    gmsh::logger::get(api_log_);
     vectorstring2charptrptr(api_log_, log, log_n);
   }
   catch(int api_ierr_){

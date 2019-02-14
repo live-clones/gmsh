@@ -163,6 +163,14 @@ template <class scalar> void linearSystemPETSc<scalar>::preAllocateEntries()
   }
   if(blockSize > 1) _check(MatSetOption(_a, MAT_ROW_ORIENTED, PETSC_FALSE));
   _entriesPreAllocated = true;
+
+#if ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 3))
+  // Preallocation routines automatically set now
+  // MAT_NEW_NONZERO_ALLOCATION_ERR, which causes a problem when the mask of the
+  // matrix changes.  We must disable the error generation and allow new
+  // allocation (if needed)
+  _check(MatSetOption(_a, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE));
+#endif
 }
 
 template <class scalar> void linearSystemPETSc<scalar>::allocate(int nbRows)
@@ -219,6 +227,7 @@ template <class scalar> void linearSystemPETSc<scalar>::allocate(int nbRows)
   _localRowEnd = nbRows;
   _globalSize = _localSize;
 #endif
+
   // preallocation option must be set after other options
   _check(VecCreate(_comm, &_x));
   _check(VecSetSizes(_x, blockSize * nbRows, PETSC_DETERMINE));
