@@ -1839,11 +1839,11 @@ static void _associateEntityWithElementVertices(GEntity *ge,
 
 void GModel::createGeometryOfDiscreteEntities()
 {
-  Msg::StatusBar(true, "Creating geometry of discrete entities...");
-  double t1 = Cpu();
-
   createTopologyFromMeshNew();
   exportDiscreteGEOInternals();
+
+  Msg::StatusBar(true, "Creating geometry of discrete entities...");
+  double t1 = Cpu();
 
   Msg::Info(" - Creating the geometry of discrete surfaces");
   for(fiter it = firstFace(); it != lastFace(); ++it) {

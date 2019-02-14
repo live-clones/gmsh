@@ -1489,7 +1489,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   }
 
   if(RECUR_ITER > 0)
-    Msg::Info(":-) All edges recovered after %d iteration(s)", RECUR_ITER);
+    Msg::Info(":-) All edges recovered after %d iteration%s", RECUR_ITER,
+              (RECUR_ITER > 1) ? "s" : "");
 
   Msg::Debug("Boundary edges recovered for surface %d", gf->tag());
 
@@ -2530,7 +2531,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   }
 
   if(RECUR_ITER > 0)
-    Msg::Info(":-) All edges recovered after %d iteration(s)", RECUR_ITER);
+    Msg::Info(":-) All edges recovered after %d iteration%s", RECUR_ITER,
+              (RECUR_ITER > 1) ? "s" : "");
 
   // look for a triangle that has a negative node and recursively tag all
   // exterior triangles

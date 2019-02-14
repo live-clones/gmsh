@@ -504,8 +504,9 @@ void discreteFace::mesh(bool verbose)
   std::vector<GEdge *> const tmp = l_edges;
   int _tagtemp = tag();
 
-  Msg::Info("Meshing discrete surface %d: the atlas contains %d map(s)",
-            tag(), _parametrizations.size());
+  Msg::Info("Meshing discrete surface %d: the atlas contains %d map%s",
+            tag(), _parametrizations.size(),
+            (_parametrizations.size() > 1) ? "s" : "");
 
   for(size_t i = 0; i < _parametrizations.size(); i++) {
     //    setTag(i);
@@ -978,7 +979,8 @@ HXTStatus discreteFace::reparametrize_through_hxt()
 				    c2v, boundaries))
     Msg::Warning("Impossible to compute the topology of the %d partitions", nc);
 
-  Msg::Info("Surface %d split in %d part(s)", tag(), _parametrizations.size());
+  Msg::Info("Surface %d split in %d part%s", tag(), _parametrizations.size(),
+            (_parametrizations.size() > 1) ? "s" : "");
 
   for(size_t i = 0; i < _parametrizations.size(); i++) {
     Less_Edge le;
