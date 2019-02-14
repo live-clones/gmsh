@@ -31,7 +31,7 @@ public:
   void createGeometry();
   virtual void mesh(bool verbose);
   int minimumDrawSegments() const { return 2 * _pars.size(); }
-  virtual int minimumMeshSegments() const { return periodic(0) ? 3: 1;}
+  virtual int minimumMeshSegments() const { return periodic(0) ? 3: 2;}
   void setSplit (discreteEdge *e0, discreteEdge *e1) {
     _split[0] = e0;
     _split[1] = e1;
