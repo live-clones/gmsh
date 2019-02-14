@@ -1839,21 +1839,26 @@ static void _associateEntityWithElementVertices(GEntity *ge,
 
 void GModel::createGeometryOfDiscreteEntities()
 {
+  Msg::StatusBar(true, "Creating geometry of discrete entities...");
+  double t1 = Cpu();
+
   createTopologyFromMeshNew();
   exportDiscreteGEOInternals();
 
-  
-  Msg::Info("Creating the geometry of discrete surfaces");
+  Msg::Info(" - Creating the geometry of discrete surfaces");
   for(fiter it = firstFace(); it != lastFace(); ++it) {
     if((*it)->geomType() == GEntity::DiscreteSurface)
       static_cast<discreteFace *>(*it)->createGeometry();
   }
 
-  Msg::Info("Creating the geometry of discrete curves");
+  Msg::Info(" - Creating the geometry of discrete curves");
   for(eiter it = firstEdge(); it != lastEdge(); ++it) {
     if((*it)->geomType() == GEntity::DiscreteCurve)
       static_cast<discreteEdge *>(*it)->createGeometry();
   }
+  double t2 = Cpu();
+  Msg::StatusBar(true, "Done creating geometry of discrete entities (%g s)",
+                 t2 - t1);
 }
 
 void GModel::_associateEntityWithMeshVertices(bool force)
@@ -3057,6 +3062,10 @@ GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
 void GModel::classifyAllFaces(double angleThreshold, bool includeBoundary)
 {
 #if defined(HAVE_MESH)
+  Msg::StatusBar(true, "Classifying surfaces with angle = %g...",
+                 angleThreshold * 180. / M_PI);
+  double t1 = Cpu();
+
   std::set<GFace *> faces;
   std::vector<MElement *> elements;
   for(GModel::fiter it = this->firstFace(); it != this->lastFace(); ++it) {
@@ -3095,6 +3104,10 @@ void GModel::classifyAllFaces(double angleThreshold, bool includeBoundary)
   elements.clear();
   edges_detected.clear();
   edges_lonely.clear();
+
+  double t2 = Cpu();
+  Msg::StatusBar(true, "Done classifying surfaces (%g s)", t2 - t1);
+
 #else
   Msg::Error("Surface classification requires the mesh module");
 #endif
@@ -3394,6 +3407,7 @@ void GModel::computeHomology()
   if(_homologyRequests.empty()) return;
 
 #if defined(HAVE_KBIPACK)
+  Msg::StatusBar(true, "Homology and cohomology computation...");
   double t1 = Cpu();
 
   // find unique domain/subdomain requests
