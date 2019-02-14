@@ -34,8 +34,8 @@ public:
   std::vector<MVertex> v3d;
   std::vector<MTriangle> t2d;
   std::vector<MTriangle> t3d;
-  std::vector<discreteEdge *> bnd;
-  std::vector<discreteEdge *> emb;
+  std::vector<GEdge *> bnd;
+  std::vector<GEdge *> emb;
   hxt_reparam_surf() : oct(NULL) {}
   ~hxt_reparam_surf();
 };

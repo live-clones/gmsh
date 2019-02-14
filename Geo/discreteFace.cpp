@@ -105,7 +105,7 @@ static void splitDiscreteEdge(discreteEdge *de, MVertex *v, GVertex *gv, int &TA
     }
     for (size_t j=0;j<old_eds.size();j++){
       if (old_eds[j]==de){
-	printf("replacing %d by %d %d in %d\n",de->tag(),de_new[0]->tag(),de_new[1]->tag(),f[i]->tag());
+	//	printf("replacing %d by %d %d in %d\n",de->tag(),de_new[0]->tag(),de_new[1]->tag(),f[i]->tag());
 	new_eds.push_back(de_new[0]);
 	new_eds.push_back(de_new[1]);
 	new_eds[0]->addFace(f[i]);
@@ -115,7 +115,7 @@ static void splitDiscreteEdge(discreteEdge *de, MVertex *v, GVertex *gv, int &TA
 	new_eds.push_back(old_eds[j]);
     }
     f[i]->set(new_eds);
-    printf("face %d has now %d edges\n",f[i]->tag(),new_eds.size());
+    //    printf("face %d has now %d edges\n",f[i]->tag(),new_eds.size());
   }
   de->model()->add(de_new[0]);
   de->model()->add(de_new[1]);
@@ -396,7 +396,7 @@ Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 }
 
 void discreteFace::secondDer(const SPoint2 &param, SVector3 &dudu,
-                             SVector3 &dvdv, SVector3 &dudv) const
+			       SVector3 &dvdv, SVector3 &dudv) const
 {
   return;
 }
@@ -513,7 +513,10 @@ void discreteFace::mesh(bool verbose)
     //    setTag(i);
     l_edges.clear();
     for (size_t j=0;j<_parametrizations[i].bnd.size(); j++){
-      _parametrizations[i].bnd[j]->getSplit(l_edges);
+      if (_parametrizations[i].bnd[j]->geomType() == DiscreteCurve)
+	((discreteEdge*)_parametrizations[i].bnd[j])->getSplit(l_edges);
+      else
+	l_edges.push_back(_parametrizations[i].bnd[j]);
     }
     
     embedded_edges.clear();
@@ -704,7 +707,7 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
 #endif
   GPoint pp(0);
   pp.setNoSuccess();
-  Msg::Warning("Could not intersect with circle");
+  //  Msg::Warning("Could not intersect with circle");
   return pp;
 }
 
@@ -758,7 +761,7 @@ bool discreteFace::compute_topology_of_partition(
     _parametrizations[colors[i]].t2d.reserve(cpt[colors[i]]);
   }
 
-#define debug
+  //#define debug
 #ifdef debug
   // save the atlas in pos files for checking - debugging
   char zz[256];
@@ -888,7 +891,7 @@ bool discreteFace::compute_topology_of_partition(
             //     (std::remove(vs[i]->onWhat()->mesh_vertices.begin(),
             //	   vs[i]->onWhat()->mesh_vertices.end(), vs[i]),
             //	   vs[i]->onWhat()->mesh_vertices.end());
-            discreteEdge *de = static_cast<discreteEdge *>(vs[i]->onWhat());
+            discreteEdge *de = dynamic_cast<discreteEdge *>(vs[i]->onWhat());
             if(!de) Msg::Error("Can only split discrete curves at that point");
             discreteVertex *gstart = new discreteVertex
               (gm, ++TAG + 1, vs[i]->x(), vs[i]->y(), vs[i]->z());
@@ -995,14 +998,14 @@ HXTStatus discreteFace::reparametrize_through_hxt()
   for(size_t i = 0; i < _parametrizations.size(); i++) {
     Less_Edge le;
     std::sort(boundaries[i].begin(), boundaries[i].end(), le);
-    std::set<discreteEdge *> des;
+    std::set<GEdge *> des;
     for(GModel::eiter it = model()->firstEdge(); it != model()->lastEdge();
         it++) {
       for(size_t k = 0; k < (*it)->lines.size(); k++) {
         MEdge e((*it)->lines[k]->getVertex(0), (*it)->lines[k]->getVertex(1));
         if(std::binary_search(boundaries[i].begin(), boundaries[i].end(), e,
                               le)) {
-          discreteEdge *de = static_cast<discreteEdge *>(*it);
+          GEdge *de = *it;
           if(!de)
             Msg::Error("Reparametrization only works for discrete geometries");
           if(des.find(de) == des.end()) {
