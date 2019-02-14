@@ -63,7 +63,7 @@ void discreteFace::setBoundEdges(const std::vector<int> &tagEdges,
 
 static void splitDiscreteEdge(discreteEdge *de, MVertex *v, GVertex *gv, int &TAG )
 {
-  
+
   GVertex *gv0 = de->getBeginVertex();
   GVertex *gv1 = de->getEndVertex();
 
@@ -72,13 +72,13 @@ static void splitDiscreteEdge(discreteEdge *de, MVertex *v, GVertex *gv, int &TA
     return;
   }
   discreteEdge *de_new[2];
-  
+
   de_new[0]  = new discreteEdge(de->model(), ++TAG, gv0, gv);
   de_new[1]  = new discreteEdge(de->model(), ++TAG, gv, gv1);
 
   de->setSplit(de_new[0],de_new[1]);
   //  printf("splitting discrete edge %d\n",de->tag());
-  
+
 
   int current = 0;
   de_new[current]->lines.push_back(de->lines[0]);
@@ -111,7 +111,7 @@ static void splitDiscreteEdge(discreteEdge *de, MVertex *v, GVertex *gv, int &TA
 	new_eds[0]->addFace(f[i]);
 	new_eds[1]->addFace(f[i]);
       }
-      else 
+      else
 	new_eds.push_back(old_eds[j]);
     }
     f[i]->set(new_eds);
@@ -507,7 +507,8 @@ void discreteFace::mesh(bool verbose)
   std::vector<GEdge *> const tmp = l_edges;
   int _tagtemp = tag();
 
-  Msg::Info ("Meshing discrete surface %d: the atlas contains %d maps",tag(),_parametrizations.size());
+  Msg::Info("Meshing discrete surface %d: the atlas contains %d map(s)",
+            tag(), _parametrizations.size());
 
   for(size_t i = 0; i < _parametrizations.size(); i++) {
     //    setTag(i);
@@ -518,7 +519,7 @@ void discreteFace::mesh(bool verbose)
       else
 	l_edges.push_back(_parametrizations[i].bnd[j]);
     }
-    
+
     embedded_edges.clear();
     embedded_edges.insert(embedded_edges.begin(),
                           _parametrizations[i].emb.begin(),
@@ -713,20 +714,6 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
 
 #if defined(HAVE_HXT)
 
-/*
-static void existingEdges(GFace *gf, std::map<MEdge, GEdge *, Less_Edge> &edges)
-{
-  std::vector<GEdge *> const &e = gf->edges();
-  for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end();
-      ++it) {
-    for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
-      MLine *ml = (*it)->lines[i];
-      edges.insert(
-        std::make_pair(MEdge(ml->getVertex(0), ml->getVertex(1)), *it));
-    }
-  }
-}
-*/
 bool discreteFace::compute_topology_of_partition(
   int nbColors, int *colors, int *nNodes, int *nodes, double *uv,
   std::vector<MVertex *> &c2v,
@@ -892,14 +879,18 @@ bool discreteFace::compute_topology_of_partition(
             //	   vs[i]->onWhat()->mesh_vertices.end(), vs[i]),
             //	   vs[i]->onWhat()->mesh_vertices.end());
             discreteEdge *de = dynamic_cast<discreteEdge *>(vs[i]->onWhat());
-            if(!de) Msg::Error("Can only split discrete curves at that point");
-            discreteVertex *gstart = new discreteVertex
-              (gm, ++TAG + 1, vs[i]->x(), vs[i]->y(), vs[i]->z());
-            gm->add(gstart);
-            vs[i]->setEntity(gstart);
-            gstart->mesh_vertices.push_back(vs[i]);
-            splitDiscreteEdge(de, vs[i], gstart, TAG);
-            Msg::Info("Splitting existing discrete curve %d", de->tag());
+            if(!de){
+              Msg::Error("Can currently only split discrete curves");
+            }
+            else{
+              discreteVertex *gstart = new discreteVertex
+                (gm, ++TAG + 1, vs[i]->x(), vs[i]->y(), vs[i]->z());
+              gm->add(gstart);
+              vs[i]->setEntity(gstart);
+              gstart->mesh_vertices.push_back(vs[i]);
+              splitDiscreteEdge(de, vs[i], gstart, TAG);
+              Msg::Info("Splitting existing discrete curve %d", de->tag());
+            }
           }
         }
       }
@@ -974,7 +965,7 @@ HXTStatus discreteFace::reparametrize_through_hxt()
   HXT_CHECK(hxtParametrizationCompute(parametrization, &colors, &nNodes, &nodes,
                                       &uv, &nc, &m));
 
-  //  HXT_CHECK(hxtParametrizationWrite(parametrization, zz));
+  // HXT_CHECK(hxtParametrizationWrite(parametrization, zz));
 
   // compute curvatures
   HXTEdges *edges;
@@ -990,10 +981,7 @@ HXTStatus discreteFace::reparametrize_through_hxt()
 				    c2v, boundaries))
     Msg::Warning("Impossible to compute the topology of the %d partitions", nc);
 
-  Msg::Info("Surface %d split in %d parts", tag(), _parametrizations.size());
-
-  //  std::map<MEdge, GEdge *, Less_Edge> cad_edges;
-  //  existingEdges(this, cad_edges);
+  Msg::Info("Surface %d split in %d part(s)", tag(), _parametrizations.size());
 
   for(size_t i = 0; i < _parametrizations.size(); i++) {
     Less_Edge le;
@@ -1003,11 +991,8 @@ HXTStatus discreteFace::reparametrize_through_hxt()
         it++) {
       for(size_t k = 0; k < (*it)->lines.size(); k++) {
         MEdge e((*it)->lines[k]->getVertex(0), (*it)->lines[k]->getVertex(1));
-        if(std::binary_search(boundaries[i].begin(), boundaries[i].end(), e,
-                              le)) {
+        if(std::binary_search(boundaries[i].begin(), boundaries[i].end(), e, le)) {
           GEdge *de = *it;
-          if(!de)
-            Msg::Error("Reparametrization only works for discrete geometries");
           if(des.find(de) == des.end()) {
             if(de->_compound.size()) {
               if(de->compound_edge)
