@@ -1,4 +1,4 @@
-4.2.0: changed logger API.
+4.2.0: changed logger API; bug fixes.
 
 4.1.5 (February 14, 2019): improved OpenMP parallelization, STL remeshing, mesh
 partitioning and high-order mesh optimization; added classifySurfaces in API;
