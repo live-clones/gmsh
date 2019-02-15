@@ -57,6 +57,9 @@ void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible)
   bool CAD, complete;
   int meshOrder;
 
+  double t1 = Cpu();
+  Msg::StatusBar(true, "Applying elastic analogy to high-order mesh...");
+
   getMeshInfoForHighOrder(m, meshOrder, complete, CAD);
   highOrderTools hot(m);
   // now we smooth mesh the internal vertices of the faces
@@ -90,6 +93,10 @@ void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible)
     }
   }
   checkHighOrderTetrahedron("Final volume mesh", m, bad, worst);
+
+  double t2 = Cpu();
+  Msg::StatusBar(true, "Done applying elastic analogy to high-order mesh (%g s)",
+                 t2 - t1);
 }
 
 void highOrderTools::moveToStraightSidedLocation(MElement *e) const
