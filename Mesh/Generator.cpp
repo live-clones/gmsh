@@ -46,8 +46,8 @@
 #endif
 
 #if defined(HAVE_OPTHOM)
-#include "OptHomRun.h"
-#include "OptHomElastic.h"
+#include "HighOrderMeshOptimizer.h"
+#include "HighOrderMeshElasticAnalogy.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -442,7 +442,7 @@ static void PrintMesh2dStatistics(GModel *m)
     }
   }
 
-  Msg::Info("*** Efficiency index for surface mesh tau=%g ",
+  Msg::Info("Efficiency index for surface mesh tau=%g ",
             100 * exp(e_avg / (double)nTotE));
 
   fprintf(statreport, "\t%16s\t%d\t\t%d\t\t", m->getName().c_str(), numFaces,
@@ -1113,7 +1113,7 @@ void GenerateMesh(GModel *m, int ask)
 #if defined(HAVE_OPTHOM)
     if(CTX::instance()->mesh.hoOptimize < 0 ||
        CTX::instance()->mesh.hoOptimize >= 2) {
-      ElasticAnalogy(GModel::current(), false);
+      HighOrderMeshElasticAnalogy(GModel::current(), false);
     }
     if(CTX::instance()->mesh.hoOptimize >= 1){
       OptHomParameters p;
@@ -1124,8 +1124,7 @@ void GenerateMesh(GModel *m, int ask)
       p.optPassMax = CTX::instance()->mesh.hoPassMax;
       p.dim = GModel::current()->getDim();
       p.optPrimSurfMesh = CTX::instance()->mesh.hoPrimSurfMesh;
-      // HighOrderMeshOptimizer(GModel::current(), p);
-      HighOrderMeshOptimizerNew(GModel::current(), p);
+      HighOrderMeshOptimizer(GModel::current(), p);
     }
 #else
     Msg::Error("High-order mesh optimization requires the OPTHOM module");

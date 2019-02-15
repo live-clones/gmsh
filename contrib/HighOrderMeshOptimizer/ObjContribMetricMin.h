@@ -22,8 +22,8 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _OPTHOMOBJCONTRIBMETRICMIN_H_
-#define _OPTHOMOBJCONTRIBMETRICMIN_H_
+#ifndef _OBJCONTRIBMETRICMIN_H_
+#define _OBJCONTRIBMETRICMIN_H_
 
 #include "MeshOptPatch.h"
 #include "MeshOptObjContrib.h"
@@ -115,4 +115,4 @@ template <class FuncType> void ObjContribMetricMin<FuncType>::updateMinMax()
   }
 }
 
-#endif /* _OPTHOMOBJCONTRIBMETRICMIN_H_ */
+#endif

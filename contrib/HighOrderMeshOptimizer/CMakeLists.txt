@@ -4,16 +4,13 @@
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 set(SRC
-  OptHomMesh.cpp 
-  OptHOM.cpp 
-  OptHomRun.cpp 
-  OptHomIntegralBoundaryDist.cpp
-  OptHomCADDist.cpp
-  ParamCoord.cpp 
-  MetaEl.cpp 
-  OptHomElastic.cpp
-  OptHomFastCurving.cpp
-  OptHomPeriodicity.cpp
+  HighOrderMeshOptimizer.cpp
+  HighOrderMeshElasticAnalogy.cpp
+  HighOrderMeshFastCurving.cpp
+  HighOrderMeshPeriodicity.cpp
+  IntegralBoundaryDist.cpp
+  ParamCoord.cpp
+  MetaEl.cpp
   CADDistances.cpp
   BoundaryLayerCurver2D.cpp
   BoundaryLayerCurver3D.cpp

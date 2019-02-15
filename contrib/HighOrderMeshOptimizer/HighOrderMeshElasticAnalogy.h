@@ -31,8 +31,6 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 
-void ElasticAnalogy(GModel *m, bool onlyVisible);
-
 #if defined(HAVE_SOLVER)
 
 #include "SVector3.h"
@@ -104,5 +102,7 @@ public:
 };
 
 #endif
+
+void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible);
 
 #endif

@@ -28,6 +28,7 @@
 #define _OPTHOMRUN_H_
 
 class GModel;
+class GEntity;
 
 struct OptHomParameters {
   // INPUT ------>
@@ -80,10 +81,9 @@ struct OptHomParameters {
 };
 
 void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p);
-void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p);
+
 // distanceDefinition 1) Hausdorff 2) Area/Length 3) Frechet (not done)
 double ComputeDistanceToGeometry(GEntity *ge, int distanceDefinition,
                                  double tolerance);
-// double ComputeDistanceToGeometry (GModel*gm);
 
 #endif

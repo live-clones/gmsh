@@ -22,7 +22,7 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#include "OptHomElastic.h"
+#include "HighOrderMeshElasticAnalogy.h"
 #include "GModel.h"
 #include "GmshConfig.h"
 
@@ -52,7 +52,7 @@
 
 #define SQU(a) ((a) * (a))
 
-void ElasticAnalogy(GModel *m, bool onlyVisible)
+void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible)
 {
   bool CAD, complete;
   int meshOrder;
@@ -296,8 +296,8 @@ void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
 
   if(!v.size()) return;
   Msg::Info(
-    "Smoothing high order mesh : model face %d (%d elements considered in "
-    "the elastic analogy, worst mapping %12.5E, %3d bad elements)",
+    "Smoothing surface %d (%d elements considered in elastic analogy, "
+    "worst mapping %12.5E, %3d bad elements)",
     gf->tag(), v.size(), minD, numBad);
 
   addOneLayer(all, v, layer);
@@ -574,7 +574,7 @@ void highOrderTools::computeStraightSidedPositions()
     }
   }
 
-  Msg::Info("highOrderTools has been set up : %d nodes are considered",
+  Msg::Info("High-order tools set up: %d nodes are considered",
             _straightSidedLocation.size());
 }
 
@@ -752,7 +752,7 @@ double highOrderTools::applySmoothingTo(std::vector<MElement *> &all,
     percentage_of_what_is_left =
       apply_incremental_displacement(1., all, mixed, threshold, NN, all);
     percentage += (1. - percentage) * percentage_of_what_is_left / 100.;
-    Msg::Info("The smoother was able to do %3d percent of the motion",
+    Msg::Info("Smoother was able to do %3d percent of the motion",
               (int)(percentage * 100.));
     if(percentage_of_what_is_left == 0.0)
       break;
@@ -761,8 +761,8 @@ double highOrderTools::applySmoothingTo(std::vector<MElement *> &all,
   }
 
   getDistordedElements(all, 0.3, disto, minD);
-  Msg::Info("iter %d : %d elements / %d distorted  min Disto = %g ", ITER,
-            all.size(), disto.size(), minD);
+  Msg::Info(" - Iter %d: %d elements / %d distorted, min Disto = %g",
+            ITER, all.size(), disto.size(), minD);
   return percentage;
 }
 
@@ -819,7 +819,7 @@ void highOrderTools::makePosViewWithJacobians(const char *fn)
 
 #else
 
-void ElasticAnalogy(GModel *m, bool onlyVisible)
+void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible)
 {
   Msg::Error("Elastic analogy high-order optimzer requires the solver module");
 }

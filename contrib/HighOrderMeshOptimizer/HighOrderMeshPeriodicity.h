@@ -24,8 +24,8 @@
 //
 // Contributors: Amaury Johnen
 
-#ifndef _OPTHOMPERIODICITY_H_
-#define _OPTHOMPERIODICITY_H_
+#ifndef _HIGH_ORDER_MESH_PERIODICITY_H_
+#define _HIGH_ORDER_MESH_PERIODICITY_H_
 
 #include <map>
 #include <vector>
@@ -36,13 +36,13 @@ class GPoint;
 
 #include "MVertex.h"
 
-class OptHomPeriodicity {
+class HighOrderMeshPeriodicity {
 private:
   std::multimap<GEntity *, GEntity *> _master2slave;
   // std::map<GEntity*, std::map<MVertex*, MVertex*> > _ent2vv;
 
 public:
-  OptHomPeriodicity(std::vector<GEntity *> &);
+  HighOrderMeshPeriodicity(std::vector<GEntity *> &);
 
   void fixPeriodicity();
 

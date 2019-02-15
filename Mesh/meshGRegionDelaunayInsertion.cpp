@@ -1139,7 +1139,7 @@ static void memoryCleanup(MTet4Factory &myFactory,
     else
       itd++;
   }
-  // Msg::Info("cleaning up the memory %d -> %d", n1, allTets.size());
+  // Msg::Info("Cleaning up memory %d -> %d", n1, allTets.size());
 }
 
 static int isCavityCompatibleWithEmbeddedEdges(std::vector<MTet4 *> &cavity,
@@ -1163,32 +1163,6 @@ static int isCavityCompatibleWithEmbeddedEdges(std::vector<MTet4 *> &cavity,
       MEdge e = (*itc)->tet()->getEdge(j);
       if(std::find(ed.begin(), ed.end(), e) == ed.end() &&
          allEmbeddedEdges.find(e)) {
-        return 0;
-      }
-    }
-  }
-  return 1;
-}
-
-static int isCavityCompatibleWithEmbeddedEdges(
-  std::list<MTet4 *> &cavity, std::vector<faceXtet> &shell,
-  std::set<MEdge, Less_Edge> &allEmbeddedEdges)
-{
-  if (allEmbeddedEdges.empty())return 1;
-  std::set<MEdge, Less_Edge> ed;
-  for(std::vector<faceXtet>::iterator it = shell.begin(); it != shell.end();
-      it++) {
-    ed.insert(MEdge(it->v[0], it->v[1]));
-    ed.insert(MEdge(it->v[1], it->v[2]));
-    ed.insert(MEdge(it->v[2], it->v[0]));
-  }
-
-  for(std::list<MTet4 *>::iterator itc = cavity.begin(); itc != cavity.end();
-      ++itc) {
-    for(int j = 0; j < 6; j++) {
-      MEdge e = (*itc)->tet()->getEdge(j);
-      if(ed.find(e) == ed.end() &&
-         allEmbeddedEdges.find(e) != allEmbeddedEdges.end()) {
         return 0;
       }
     }
@@ -1472,8 +1446,7 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
 
       if(FOUND && (!allEmbeddedEdges.empty() || !allEmbeddedFaces.empty())) {
         FOUND =
-          isCavityCompatibleWithEmbeddedEdges(cavity, shell,
-                                              allEmbeddedEdges) &&
+          isCavityCompatibleWithEmbeddedEdges(cavity, shell, allEmbeddedEdges) &&
           isCavityCompatibleWithEmbeddedFace(cavity, shell, allEmbeddedFaces);
       }
 

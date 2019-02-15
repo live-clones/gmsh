@@ -22,8 +22,8 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _OPTHOMOBJCONTRIBCADDIST_H_
-#define _OPTHOMOBJCONTRIBCADDIST_H_
+#ifndef _OBJCONTRIBCADDIST_H_
+#define _OBJCONTRIBCADDIST_H_
 
 #include "MeshOptObjContrib.h"
 
@@ -129,4 +129,4 @@ template <class FuncType> void ObjContribCADDistSq<FuncType>::updateMinMax()
   }
 }
 
-#endif /* _OPTHOMOBJCONTRIBCADDIST_H_ */
+#endif

@@ -24,14 +24,14 @@
 //
 // Contributors: Amaury Johnen
 
-#include "OptHomPeriodicity.h"
+#include "HighOrderMeshPeriodicity.h"
 #include "GEntity.h"
 #include "GFace.h"
 #include "GEdge.h"
 #include "MVertex.h"
 #include "fullMatrix.h"
 
-OptHomPeriodicity::OptHomPeriodicity(std::vector<GEntity *> &entities)
+HighOrderMeshPeriodicity::HighOrderMeshPeriodicity(std::vector<GEntity *> &entities)
 {
   for(unsigned int i = 0; i < entities.size(); ++i) {
     // MVertex on GVertex cannot move
@@ -44,7 +44,7 @@ OptHomPeriodicity::OptHomPeriodicity(std::vector<GEntity *> &entities)
   }
 }
 
-void OptHomPeriodicity::fixPeriodicity()
+void HighOrderMeshPeriodicity::fixPeriodicity()
 {
   Msg::Debug("Correcting high order optimization for periodic connections");
   _relocateMasterVertices();
@@ -53,7 +53,7 @@ void OptHomPeriodicity::fixPeriodicity()
     "Finished correcting high order optimization for periodic connections");
 }
 
-void OptHomPeriodicity::_relocateMasterVertices()
+void HighOrderMeshPeriodicity::_relocateMasterVertices()
 {
   std::multimap<GEntity *, GEntity *>::iterator it;
   for(it = _master2slave.begin(); it != _master2slave.end(); ++it) {
@@ -171,7 +171,7 @@ void OptHomPeriodicity::_relocateMasterVertices()
 // face/edges to avoid small errors in periodicity (they are on the CAD on the
 // master side) !!
 
-void OptHomPeriodicity::_copyBackMasterVertices()
+void HighOrderMeshPeriodicity::_copyBackMasterVertices()
 {
   std::multimap<GEntity *, GEntity *>::iterator it;
   for(it = _master2slave.begin(); it != _master2slave.end(); ++it) {
@@ -270,8 +270,8 @@ void OptHomPeriodicity::_copyBackMasterVertices()
   }
 }
 
-SPoint3 OptHomPeriodicity::_transform(MVertex *vsource,
-                                      const std::vector<double> &tfo)
+SPoint3 HighOrderMeshPeriodicity::_transform(MVertex *vsource,
+                                             const std::vector<double> &tfo)
 {
   double ps[4] = {vsource->x(), vsource->y(), vsource->z(), 1.};
   double res[4] = {0., 0., 0., 0.};
@@ -282,7 +282,7 @@ SPoint3 OptHomPeriodicity::_transform(MVertex *vsource,
   return SPoint3(res[0], res[1], res[2]);
 }
 
-std::vector<double> OptHomPeriodicity::_inverse(const std::vector<double> &tfo)
+std::vector<double> HighOrderMeshPeriodicity::_inverse(const std::vector<double> &tfo)
 {
   std::vector<double> result(16, 0.);
   if(tfo.size() < 16) {

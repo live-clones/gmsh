@@ -12,9 +12,9 @@
   #include "DivideAndConquer.h"
   #include "meshGFaceOptimize.h"
 #if defined(HAVE_OPTHOM)
-  #include "OptHomRun.h"
-  #include "OptHomElastic.h"
-  #include "OptHomFastCurving.h"
+  #include "HighOrderMeshOptimizer.h"
+  #include "HighOrderMeshElasticAnalogy.h"
+  #include "HighOrderMeshFastCurving.h"
   #include "MeshQualityOptimizer.h"
   #include "CADDistances.h"
 #endif
@@ -44,9 +44,9 @@ namespace std {
 %include "DivideAndConquer.h"
 %include "meshGFaceOptimize.h"
 #if defined(HAVE_OPTHOM)
-%include "OptHomRun.h"
-%include "OptHomElastic.h"
-%include "OptHomFastCurving.h"
+%include "HighOrderMeshOptimizer.h"
+%include "HighOrderMeshElasticAnalogy.h"
+%include "HighOrderMeshFastCurving.h"
 %include "MeshQualityOptimizer.h"
 %include "CADDistances.h"
 #endif

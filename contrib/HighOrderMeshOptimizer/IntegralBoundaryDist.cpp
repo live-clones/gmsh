@@ -27,7 +27,7 @@
 #include "SVector3.h"
 #include <algorithm>
 #include <limits>
-#include "OptHomIntegralBoundaryDist.h"
+#include "IntegralBoundaryDist.h"
 #include "discreteFrechetDistance.h"
 #include "MLine.h"
 #include "MElement.h"

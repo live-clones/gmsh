@@ -26,8 +26,8 @@
 #include "Context.h"
 
 #if defined(HAVE_OPTHOM)
-#include "OptHomFastCurving.h"
-#include "OptHomPeriodicity.h"
+#include "HighOrderMeshFastCurving.h"
+#include "HighOrderMeshPeriodicity.h"
 #endif
 
 // Functions that help optimizing placement of points on geometry
@@ -1312,7 +1312,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
   if(CTX::instance()->mesh.hoPeriodic) {
 #if defined(HAVE_OPTHOM)
     std::vector<GEntity *> modelEdges(m->firstEdge(), m->lastEdge());
-    OptHomPeriodicity edgePeriodicity(modelEdges);
+    HighOrderMeshPeriodicity edgePeriodicity(modelEdges);
     edgePeriodicity.fixPeriodicity();
     edgePeriodicity.fixPeriodicity(); // apply twice for operation order effects
 #else
@@ -1392,7 +1392,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
 #if defined(HAVE_OPTHOM)
     std::vector<GEntity *> modelFaces;
     modelFaces.insert(modelFaces.end(), m->firstFace(), m->lastFace());
-    OptHomPeriodicity facePeriodicity(modelFaces);
+    HighOrderMeshPeriodicity facePeriodicity(modelFaces);
     facePeriodicity.fixPeriodicity();
 #else
     Msg::Error("High-order mesh optimization requires the OPTHOM module");

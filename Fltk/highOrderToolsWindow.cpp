@@ -26,9 +26,9 @@
 #include "HighOrder.h"
 
 #if defined(HAVE_OPTHOM)
-#include "OptHomRun.h"
-#include "OptHomElastic.h"
-#include "OptHomFastCurving.h"
+#include "HighOrderMeshOptimizer.h"
+#include "HighOrderMeshElasticAnalogy.h"
+#include "HighOrderMeshFastCurving.h"
 #endif
 
 // static void change_completeness_cb(Fl_Widget *w, void *data)
@@ -199,12 +199,11 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     p.adaptBlobLayerFact = (int)o->value[10]->value();
     p.adaptBlobDistFact = o->value[11]->value();
     p.optPrimSurfMesh = false;
-    // HighOrderMeshOptimizer(GModel::current(), p);
-    HighOrderMeshOptimizerNew(GModel::current(), p);
+    HighOrderMeshOptimizer(GModel::current(), p);
     break;
   }
   case 1: { // Elastic analogy
-    ElasticAnalogy(GModel::current(), onlyVisible);
+    HighOrderMeshElasticAnalogy(GModel::current(), onlyVisible);
     break;
   }
   case 2: { // Fast curving

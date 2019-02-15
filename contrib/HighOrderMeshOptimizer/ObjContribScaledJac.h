@@ -22,8 +22,8 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _OPTHOMOBJCONTRIBSCALEDJAC_H_
-#define _OPTHOMOBJCONTRIBSCALEDJAC_H_
+#ifndef _OBJCONTRIBSCALEDJAC_H_
+#define _OBJCONTRIBSCALEDJAC_H_
 
 #include "MeshOptPatch.h"
 #include "MeshOptObjContrib.h"
@@ -115,4 +115,4 @@ template <class FuncType> void ObjContribScaledJac<FuncType>::updateMinMax()
   }
 }
 
-#endif /* _OPTHOMOBJCONTRIBSCALEDJAC_H_ */
+#endif

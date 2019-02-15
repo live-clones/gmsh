@@ -29,7 +29,7 @@
 #include <fstream>
 #include <string>
 #include <cmath>
-#include "OptHomFastCurving.h"
+#include "HighOrderMeshFastCurving.h"
 #include "GmshConfig.h"
 #include "GModel.h"
 #include "MLine.h"
