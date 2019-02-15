@@ -9,7 +9,6 @@ set(SRC
   HighOrderMeshFastCurving.cpp
   HighOrderMeshPeriodicity.cpp
   IntegralBoundaryDist.cpp
-  ParamCoord.cpp
   MetaEl.cpp
   CADDistances.cpp
   BoundaryLayerCurver2D.cpp
