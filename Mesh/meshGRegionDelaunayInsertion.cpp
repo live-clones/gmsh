@@ -764,8 +764,6 @@ void adaptMeshGRegion::operator()(GRegion *gr)
       }
     }
 
-    printf("nbCollapses = %d\n", nbCollapse);
-
     for(CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it) {
       if(!(*it)->isDeleted()) {
         double qq = (*it)->getQuality();
@@ -844,10 +842,9 @@ void adaptMeshGRegion::operator()(GRegion *gr)
       }
     }
     double t2 = Cpu();
-    Msg::Info("%d edge swaps, %d face swaps, %d node relocations (volume = %g): "
-              "worst = %g / average = %g (%g s)",
-              nbESwap, nbFSwap, nbReloc, totalVolumeb, worst, avg / count,
-              t2 - t1);
+    Msg::Info("%d edge swaps, %d face swaps, %d node collapse, %d node relocations "
+              "(volume = %g): worst = %g / average = %g (%g s)", nbESwap, nbFSwap,
+              nbCollapse, nbReloc, totalVolumeb, worst, avg / count, t2 - t1);
     break;
   }
 
@@ -887,11 +884,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
 
   if(qMin <= 0.0) return;
 
-  // well, this should not be true !!!
-  // if (gr->hexahedra.size() ||
-  //      gr->prisms.size() ||
-  //      gr->pyramids.size())return;
-  if(!gr->tetrahedra.size()) return;
+  if(gr->tetrahedra.empty()) return;
 
   typedef std::vector<MTet4 *> CONTAINER;
   CONTAINER allTets;
@@ -953,28 +946,15 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   }
 
   double sliverLimit = 0.04;
-
-  int nbESwap = 0, nbFSwap = 0, nbReloc = 0;
-
+  int nbESwap = 0, nbReloc = 0;
   double worstA = 0.0;
 
   while(1) {
     std::vector<MTet4 *> newTets;
-    /*    for (CONTAINER::iterator it = allTets.begin(); it != allTets.end();
-    ++it){ if (!(*it)->isDeleted()){ double qq = (*it)->getQuality(); if (qq <
-    qMin){ for (int i = 0; i < 4; i++){ if (faceSwap(newTets, *it, i, qm,
-    allEmbeddedFaces)){ nbFSwap++; break;
-            }
-          }
-        }
-      }
-    }
-    */
 
     illegals.clear();
     for(int i = 0; i < nbRanges; i++) quality_ranges[i] = 0;
 
-    //   printf("coucou\n");
     for(CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it) {
       if(!(*it)->isDeleted()) {
         double qq = (*it)->getQuality();
@@ -999,7 +979,6 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
         }
       }
     }
-    //    printf("coucou\n");
 
     if(!newTets.size()) { break; }
 
@@ -1013,14 +992,15 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     }
 
     // relocate vertices
-    if(!gr->hexahedra.size() && !gr->prisms.size() && !gr->pyramids.size()) {
+    if(gr->hexahedra.empty() && gr->prisms.empty() && gr->pyramids.empty()) {
       for(CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it) {
         if(!(*it)->isDeleted()) {
           double qq = (*it)->getQuality();
-          if(qq < qMin)
+          if(qq < qMin){
             for(int i = 0; i < 4; i++) {
               if(smoothVertex(*it, i, qm)) nbReloc++;
             }
+          }
         }
       }
     }
@@ -1041,10 +1021,9 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     }
 
     double t2 = Cpu();
-    Msg::Info("%d edge swaps, %d face swaps, %d node relocations (volume = %g): "
-              "worst = %g / average = %g (%g s)",
-              nbESwap, nbFSwap, nbReloc, totalVolumeb, worst, avg / count,
-              t2 - t1);
+    Msg::Info("%d edge swaps, %d node relocations (volume = %g): "
+              "worst = %g / average = %g (%g s)", nbESwap, nbReloc,
+              totalVolumeb, worst, avg / count, t2 - t1);
     if(worstA != 0.0 && worst - worstA < 1.e-6) break;
     worstA = worst;
   }
@@ -1150,7 +1129,7 @@ double tetcircumcenter(double a[3], double b[3], double c[3], double d[3],
 static void memoryCleanup(MTet4Factory &myFactory,
                           std::set<MTet4 *, compareTet4Ptr> &allTets)
 {
-  //  int n1 = allTets.size();
+  // int n1 = allTets.size();
   std::set<MTet4 *, compareTet4Ptr>::iterator itd = allTets.begin();
   while(itd != allTets.end()) {
     if((*itd)->isDeleted()) {
@@ -1160,12 +1139,12 @@ static void memoryCleanup(MTet4Factory &myFactory,
     else
       itd++;
   }
-  //  Msg::Info("cleaning up the memory %d -> %d", n1, allTets.size());
+  // Msg::Info("cleaning up the memory %d -> %d", n1, allTets.size());
 }
 
-int isCavityCompatibleWithEmbeddedEdges(std::vector<MTet4 *> &cavity,
-                                        std::vector<faceXtet> &shell,
-                                        edgeContainerB &allEmbeddedEdges)
+static int isCavityCompatibleWithEmbeddedEdges(std::vector<MTet4 *> &cavity,
+                                               std::vector<faceXtet> &shell,
+                                               edgeContainerB &allEmbeddedEdges)
 {
   if (allEmbeddedEdges.empty())return 1;
   std::vector<MEdge> ed;
@@ -1191,7 +1170,7 @@ int isCavityCompatibleWithEmbeddedEdges(std::vector<MTet4 *> &cavity,
   return 1;
 }
 
-int isCavityCompatibleWithEmbeddedEdges(
+static int isCavityCompatibleWithEmbeddedEdges(
   std::list<MTet4 *> &cavity, std::vector<faceXtet> &shell,
   std::set<MEdge, Less_Edge> &allEmbeddedEdges)
 {
@@ -1217,7 +1196,7 @@ int isCavityCompatibleWithEmbeddedEdges(
   return 1;
 }
 
-int isCavityCompatibleWithEmbeddedFace(
+static int isCavityCompatibleWithEmbeddedFace(
   const std::vector<MTet4 *> &cavity, const std::vector<faceXtet> &shell,
   const std::set<MFace, Less_Face> &allEmbeddedFaces)
 {
