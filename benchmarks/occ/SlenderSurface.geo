@@ -1,6 +1,6 @@
 SetFactory("OpenCASCADE");
 
-a() = ShapeFromFile("SlendSurfaceSurface.brep");
+a() = ShapeFromFile("SlenderSurface.brep");
 
 Mesh.Algorithm = 6;
 Mesh.CharacteristicLengthExtendFromBoundary = 1;
