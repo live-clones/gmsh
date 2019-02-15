@@ -10,7 +10,7 @@
 
 void GEdgeSigned::print() const
 {
-  Msg::Info("GEdgeSigned : Edge %d sign %d Ordered Vertices %d,%d", ge->tag(),
+  Msg::Info("Edge %d sign %d, ordered vertices %d,%d", ge->tag(),
             _sign, getBeginVertex()->tag(), getEndVertex()->tag());
 }
 

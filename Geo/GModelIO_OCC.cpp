@@ -3625,17 +3625,17 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
         if(sff->Status(ShapeExtend_DONE1) || sff->Status(ShapeExtend_DONE2) ||
            sff->Status(ShapeExtend_DONE3) || sff->Status(ShapeExtend_DONE4) ||
            sff->Status(ShapeExtend_DONE5)) {
-          Msg::Info(" ... Repaired face %d", _fmap.FindIndex(face));
+          Msg::Info(" . Repaired face %d", _fmap.FindIndex(face));
           if(sff->Status(ShapeExtend_DONE1))
-            Msg::Info(" ... Some wires are fixed");
+            Msg::Info(" . Some wires are fixed");
           else if(sff->Status(ShapeExtend_DONE2))
-            Msg::Info(" ... Orientation of wires fixed");
+            Msg::Info(" . Orientation of wires fixed");
           else if(sff->Status(ShapeExtend_DONE3))
-            Msg::Info(" ... Missing seam added");
+            Msg::Info(" . Missing seam added");
           else if(sff->Status(ShapeExtend_DONE4))
-            Msg::Info(" ... Small area wire removed");
+            Msg::Info(" . Small area wire removed");
           else if(sff->Status(ShapeExtend_DONE5))
-            Msg::Info(" ... Natural bounds added");
+            Msg::Info(" . Natural bounds added");
           TopoDS_Face newface = sff->Face();
 
           rebuild->Replace(face, newface);
@@ -3680,7 +3680,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
            !(sfw->StatusSmall(ShapeExtend_FAIL1) ||
              sfw->StatusSmall(ShapeExtend_FAIL2) ||
              sfw->StatusSmall(ShapeExtend_FAIL3))) {
-          Msg::Info(" ... Fixed small edge in wire %d", _wmap.FindIndex(oldwire));
+          Msg::Info(" . Fixed small edge in wire %d", _wmap.FindIndex(oldwire));
           replace = true;
         }
         else if(sfw->StatusSmall(ShapeExtend_FAIL1))
@@ -3760,13 +3760,13 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
       Msg::Info(" - Fixing wire gaps");
       if(sfwf->StatusWireGaps(ShapeExtend_OK)) Msg::Info("  no gaps found");
       if(sfwf->StatusWireGaps(ShapeExtend_DONE1))
-        Msg::Info(" ... Some 2D gaps fixed");
+        Msg::Info(" . Some 2D gaps fixed");
       if(sfwf->StatusWireGaps(ShapeExtend_DONE2))
-        Msg::Info(" ... Some 3D gaps fixed");
+        Msg::Info(" . Some 3D gaps fixed");
       if(sfwf->StatusWireGaps(ShapeExtend_FAIL1))
-        Msg::Info(" ... Failed to fix some 2D gaps");
+        Msg::Info(" . Failed to fix some 2D gaps");
       if(sfwf->StatusWireGaps(ShapeExtend_FAIL2))
-        Msg::Info(" ... Failed to fix some 3D gaps");
+        Msg::Info(" . Failed to fix some 3D gaps");
     }
 
     sfwf->SetPrecision(tolerance);
@@ -3774,11 +3774,11 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     if(sfwf->FixSmallEdges()) {
       Msg::Info(" - Fixing wire frames");
       if(sfwf->StatusSmallEdges(ShapeExtend_OK))
-        Msg::Info(" ... No small edges found");
+        Msg::Info(" . No small edges found");
       if(sfwf->StatusSmallEdges(ShapeExtend_DONE1))
-        Msg::Info(" ... Some small edges fixed");
+        Msg::Info(" . Some small edges fixed");
       if(sfwf->StatusSmallEdges(ShapeExtend_FAIL1))
-        Msg::Info(" ... Failed to fix some small edges");
+        Msg::Info(" . Failed to fix some small edges");
     }
 
     myshape = sfwf->Shape();
@@ -3809,7 +3809,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     if(!sewedObj.SewedShape().IsNull())
       myshape = sewedObj.SewedShape();
     else
-      Msg::Info(" ... Could not sew");
+      Msg::Info(" . Could not sew");
   }
 
   {
@@ -3833,7 +3833,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     }
 
     if(!count) {
-      Msg::Info(" ... Could not make solid (no shells)");
+      Msg::Info(" . Could not make solid (no shells)");
     }
     else {
       BRepCheck_Analyzer ba(ms);
@@ -3859,7 +3859,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
         }
       }
       else
-        Msg::Info(" ... Could not make solid");
+        Msg::Info(" . Could not make solid");
     }
   }
 

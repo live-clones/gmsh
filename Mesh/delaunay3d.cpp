@@ -97,7 +97,7 @@ static bool inSphereTest_s(Vert *va, Vert *vb, Vert *vc, Vert *vd, Vert *ve)
   double val = robustPredicates::insphere(
     (double *)va, (double *)vb, (double *)vc, (double *)vd, (double *)ve);
   if(val == 0.0) {
-    Msg::Info("symbolic perturbation needed vol %22.15E",
+    Msg::Info("Symbolic perturbation needed vol %22.15E",
               orientationTestFast((double *)va, (double *)vb, (double *)vc,
                                   (double *)vd));
     int count;

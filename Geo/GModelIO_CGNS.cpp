@@ -3368,7 +3368,7 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
 
   // Start writing mesh if it is a Structured mesh
   if(options.structuredMesh == 1) {
-    Msg::Info("Writing Structured Mesh...............");
+    Msg::Info("Writing Structured Mesh...");
     /* This part (Structured CGNS file output) is written with the financial aid
     of Indian Institute of Technology Hyderabad - BRNS sponsored project in 2018
     Under the guidance of Prof. Vinayak Eswaran <eswar@iith.ac.in>
