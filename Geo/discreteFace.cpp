@@ -11,7 +11,6 @@
 #include "Geo.h"
 #include "Context.h"
 #include "MPoint.h"
-
 #include "MElementOctree.h"
 #include "Octree.h"
 
@@ -32,8 +31,7 @@ void discreteFace::setBoundEdges(const std::vector<int> &tagEdges)
       ge->addFace(this);
     }
     else {
-      Msg::Error("Unknown curve %d in discrete surface %d",
-                 tagEdges[i], tag());
+      Msg::Error("Unknown curve %d in discrete surface %d", tagEdges[i], tag());
     }
   }
 }
@@ -53,30 +51,29 @@ void discreteFace::setBoundEdges(const std::vector<int> &tagEdges,
       ge->addFace(this);
     }
     else {
-      Msg::Error("Unknown curve %d in discrete surface %d",
-                 tagEdges[i], tag());
+      Msg::Error("Unknown curve %d in discrete surface %d", tagEdges[i], tag());
     }
   }
 }
 
 #if defined(HAVE_HXT)
 
-static void splitDiscreteEdge(discreteEdge *de, MVertex *v, GVertex *gv, int &TAG )
+static void splitDiscreteEdge(discreteEdge *de, MVertex *v, GVertex *gv,
+                              int &TAG)
 {
-
   GVertex *gv0 = de->getBeginVertex();
   GVertex *gv1 = de->getEndVertex();
 
-  if(v != gv->mesh_vertices[0]){
+  if(v != gv->mesh_vertices[0]) {
     Msg::Error("Wrong vertex for splitting discrete curve");
     return;
   }
   discreteEdge *de_new[2];
 
-  de_new[0]  = new discreteEdge(de->model(), ++TAG, gv0, gv);
-  de_new[1]  = new discreteEdge(de->model(), ++TAG, gv, gv1);
+  de_new[0] = new discreteEdge(de->model(), ++TAG, gv0, gv);
+  de_new[1] = new discreteEdge(de->model(), ++TAG, gv, gv1);
 
-  de->setSplit(de_new[0],de_new[1]);
+  de->setSplit(de_new[0], de_new[1]);
 
   int current = 0;
   de_new[current]->lines.push_back(de->lines[0]);
@@ -92,25 +89,26 @@ static void splitDiscreteEdge(discreteEdge *de, MVertex *v, GVertex *gv, int &TA
   de->lines.clear();
   de->mesh_vertices.clear();
 
-  std::vector<GFace*> f = de->faces();
-  for (size_t i=0;i<f.size();i++){
-    std::vector<GEdge*> new_eds, old_eds;
+  std::vector<GFace *> f = de->faces();
+  for(size_t i = 0; i < f.size(); i++) {
+    std::vector<GEdge *> new_eds, old_eds;
     old_eds = f[i]->edges();
     discreteFace *df = dynamic_cast<discreteFace *>(f[i]);
-    if(!df){
-      Msg::Error("A discrete edge is adjacent to a face that is not a discrete face - "
-                 "cannot remesh");
+    if(!df) {
+      Msg::Error(
+        "A discrete edge is adjacent to a face that is not a discrete face - "
+        "cannot remesh");
       return;
     }
-    for (size_t j=0;j<old_eds.size();j++){
-      if (old_eds[j]==de){
-	new_eds.push_back(de_new[0]);
-	new_eds.push_back(de_new[1]);
-	new_eds[0]->addFace(f[i]);
-	new_eds[1]->addFace(f[i]);
+    for(size_t j = 0; j < old_eds.size(); j++) {
+      if(old_eds[j] == de) {
+        new_eds.push_back(de_new[0]);
+        new_eds.push_back(de_new[1]);
+        new_eds[0]->addFace(f[i]);
+        new_eds[1]->addFace(f[i]);
       }
       else
-	new_eds.push_back(old_eds[j]);
+        new_eds.push_back(old_eds[j]);
     }
     f[i]->set(new_eds);
   }
@@ -130,11 +128,11 @@ int discreteFace::trianglePosition(double par1, double par2, double &u,
   double xy[3] = {par1, par2, 0};
   double uv[3];
   const MElement *e =
-    _parametrizations[_current_parametrization].oct->find(par1, par2, 0.0);
+    _parametrizations[_currentParametrization].oct->find(par1, par2, 0.0);
   if(!e) return -1;
   e->xyz2uvw(xy, uv);
   int position =
-    (int)((MTriangle *)e - &_parametrizations[_current_parametrization].t2d[0]);
+    (int)((MTriangle *)e - &_parametrizations[_currentParametrization].t2d[0]);
   u = uv[0];
   v = uv[1];
   return position;
@@ -151,7 +149,7 @@ GPoint discreteFace::point(double par1, double par2) const
   double xy[3] = {par1, par2, 0};
   double uv[3];
   const MElement *e =
-    _parametrizations[_current_parametrization].oct->find(par1, par2, 0.0);
+    _parametrizations[_currentParametrization].oct->find(par1, par2, 0.0);
   if(!e) {
     GPoint gp = GPoint(1.e21, 1.e21, 1.e21, this, xy);
     gp.setNoSuccess();
@@ -159,9 +157,9 @@ GPoint discreteFace::point(double par1, double par2) const
   }
   e->xyz2uvw(xy, uv);
   int position =
-    (int)((MTriangle *)e - &_parametrizations[_current_parametrization].t2d[0]);
+    (int)((MTriangle *)e - &_parametrizations[_currentParametrization].t2d[0]);
   const MTriangle &t3d =
-    _parametrizations[_current_parametrization].t3d[position];
+    _parametrizations[_currentParametrization].t3d[position];
 
   double X = 0, Y = 0, Z = 0;
   double eval[3] = {1. - uv[0] - uv[1], uv[0], uv[1]};
@@ -247,7 +245,7 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
                      queryPoint.z() - maxDistance};
     double MAX[3] = {queryPoint.x() + maxDistance, queryPoint.y() + maxDistance,
                      queryPoint.z() + maxDistance};
-    _parametrizations[_current_parametrization].rtree3d.Search(
+    _parametrizations[_currentParametrization].rtree3d.Search(
       MIN, MAX, discreteFace_rtree_callback, &wrapper);
     maxDistance *= 2.0;
   } while(!wrapper._t3d);
@@ -310,7 +308,7 @@ SVector3 discreteFace::normal(const SPoint2 &param) const
 #if defined(HAVE_HXT)
   if(_parametrizations.empty()) return SVector3();
 
-  MElement *e = _parametrizations[_current_parametrization].oct->find(
+  MElement *e = _parametrizations[_currentParametrization].oct->find(
     param.x(), param.y(), 0.0);
   if(!e) {
     Msg::Warning("Triangle not found at uv=(%g,%g) on discrete surface %d",
@@ -318,9 +316,9 @@ SVector3 discreteFace::normal(const SPoint2 &param) const
     return SVector3(0, 0, 1);
   }
   int position =
-    (int)((MTriangle *)e - &_parametrizations[_current_parametrization].t2d[0]);
+    (int)((MTriangle *)e - &_parametrizations[_currentParametrization].t2d[0]);
   const MTriangle &t3d =
-    _parametrizations[_current_parametrization].t3d[position];
+    _parametrizations[_currentParametrization].t3d[position];
   return _NORMAL_(t3d);
 #else
   Msg::Error("Cannot evaluate normal on discrete surface without HXT");
@@ -343,19 +341,20 @@ Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
   if(_parametrizations.empty())
     return Pair<SVector3, SVector3>(SVector3(), SVector3());
 
-  MElement *e = _parametrizations[_current_parametrization].oct->find(
+  MElement *e = _parametrizations[_currentParametrization].oct->find(
     param.x(), param.y(), 0.0);
   if(!e) {
     Msg::Warning("Triangle not found for first derivative at uv=(%g,%g) on "
-                 "discrete surface %d", param.x(), param.y(), tag());
+                 "discrete surface %d",
+                 param.x(), param.y(), tag());
     return Pair<SVector3, SVector3>(SVector3(1, 0, 0), SVector3(0, 1, 0));
   }
 
   int position =
-    (int)((MTriangle *)e - &_parametrizations[_current_parametrization].t2d[0]);
+    (int)((MTriangle *)e - &_parametrizations[_currentParametrization].t2d[0]);
 
   const MTriangle &t3d =
-    _parametrizations[_current_parametrization].t3d[position];
+    _parametrizations[_currentParametrization].t3d[position];
   const MVertex *v1 = t3d.getVertex(0);
   const MVertex *v2 = t3d.getVertex(1);
   const MVertex *v3 = t3d.getVertex(2);
@@ -379,21 +378,20 @@ Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
   for(int i = 0; i < 3; i++) {
     for(int j = 0; j < 2; j++) {
       dxdu[i][j] = 0.;
-      for(int k = 0; k < 2; k++) {
-        dxdu[i][j] += det * M3D[i][k] * M2D[k][j];
-      }
+      for(int k = 0; k < 2; k++) { dxdu[i][j] += det * M3D[i][k] * M2D[k][j]; }
     }
   }
 
   return Pair<SVector3, SVector3>(SVector3(dxdu[0][0], dxdu[1][0], dxdu[2][0]),
                                   SVector3(dxdu[0][1], dxdu[1][1], dxdu[2][1]));
 #endif
-  Msg::Error("Cannot evaluate first derivative on discrete surface without HXT");
+  Msg::Error(
+    "Cannot evaluate first derivative on discrete surface without HXT");
   return Pair<SVector3, SVector3>(SVector3(1, 0, 0), SVector3(0, 0, 0));
 }
 
 void discreteFace::secondDer(const SPoint2 &param, SVector3 &dudu,
-			       SVector3 &dvdv, SVector3 &dudv) const
+                             SVector3 &dvdv, SVector3 &dudv) const
 {
   return;
 }
@@ -402,18 +400,21 @@ void discreteFace::createGeometry()
 {
 #if defined(HAVE_HXT)
   if(_parametrizations.size()) return;
-  checkAndFixOrientation();
-  HXTStatus s = reparametrize_through_hxt();
+  if(!_checkAndFixOrientation()) return;
+  HXTStatus s = _reparametrizeThroughHxt();
   if(s != HXT_STATUS_OK)
     Msg::Error("Could not create geometry of discrete surface %d", tag());
 #endif
 }
 
-void discreteFace::checkAndFixOrientation()
+bool discreteFace::_checkAndFixOrientation()
 {
+  if(triangles.empty()) return false;
+
   // first of all, all the triangles have to be oriented in the same way
-  std::map<MEdge, std::vector<MElement *>, Less_Edge>
-    ed2tri; // edge to 1 or 2 triangle(s)
+
+  // edge to 1 or 2 triangle(s)
+  std::map<MEdge, std::vector<MElement *>, Less_Edge> ed2tri;
 
   for(unsigned int i = 0; i < triangles.size(); ++i) {
     MElement *e = triangles[i];
@@ -492,6 +493,7 @@ void discreteFace::checkAndFixOrientation()
       }
     }
   }
+  return true;
 }
 
 void discreteFace::mesh(bool verbose)
@@ -504,25 +506,25 @@ void discreteFace::mesh(bool verbose)
   std::vector<GEdge *> const tmp = l_edges;
   int _tagtemp = tag();
 
-  Msg::Info("Meshing discrete surface %d: the atlas contains %d map%s",
-            tag(), _parametrizations.size(),
+  Msg::Info("Meshing discrete surface %d: the atlas contains %d map%s", tag(),
+            _parametrizations.size(),
             (_parametrizations.size() > 1) ? "s" : "");
 
   for(size_t i = 0; i < _parametrizations.size(); i++) {
-    //    setTag(i);
+    // setTag(i);
     l_edges.clear();
-    for (size_t j=0;j<_parametrizations[i].bnd.size(); j++){
-      if (_parametrizations[i].bnd[j]->geomType() == DiscreteCurve)
-	((discreteEdge*)_parametrizations[i].bnd[j])->getSplit(l_edges);
+    for(size_t j = 0; j < _parametrizations[i].bnd.size(); j++) {
+      if(_parametrizations[i].bnd[j]->geomType() == DiscreteCurve)
+        ((discreteEdge *)_parametrizations[i].bnd[j])->getSplit(l_edges);
       else
-	l_edges.push_back(_parametrizations[i].bnd[j]);
+        l_edges.push_back(_parametrizations[i].bnd[j]);
     }
 
     embedded_edges.clear();
     embedded_edges.insert(embedded_edges.begin(),
                           _parametrizations[i].emb.begin(),
                           _parametrizations[i].emb.end());
-    _current_parametrization = i;
+    _currentParametrization = i;
     triangles.clear();
     mesh_vertices.clear();
     GFace::mesh(verbose);
@@ -542,8 +544,9 @@ void discreteFace::mesh(bool verbose)
 
 #if defined(HAVE_HXT)
 
-HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm, std::map<MVertex *, int> &v2c,
-                   std::vector<MVertex *> &c2v)
+static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
+                          std::map<MVertex *, int> &v2c,
+                          std::vector<MVertex *> &c2v)
 {
   HXTContext *context;
   hxtContextCreate(&context);
@@ -600,25 +603,25 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
   if(_parametrizations.empty()) return GPoint();
 
   MTriangle *t2d =
-    (MTriangle *)_parametrizations[_current_parametrization].oct->find(
+    (MTriangle *)_parametrizations[_currentParametrization].oct->find(
       uv[0], uv[1], 0.0);
   MTriangle *t3d = NULL;
   if(t2d) {
     int position =
-      (int)(t2d - &_parametrizations[_current_parametrization].t2d[0]);
-    t3d = &_parametrizations[_current_parametrization].t3d[position];
+      (int)(t2d - &_parametrizations[_currentParametrization].t2d[0]);
+    t3d = &_parametrizations[_currentParametrization].t3d[position];
   }
 
   SVector3 n = crossprod(n1, n2);
   n.normalize();
 
-  int N = _parametrizations[_current_parametrization].t3d.size();
+  int N = _parametrizations[_currentParametrization].t3d.size();
   int start = 0;
   if(t2d) start = -1;
   for(int i = start; i < N; i++) {
     if(i >= 0) {
-      t2d = &_parametrizations[_current_parametrization].t2d[i];
-      t3d = &_parametrizations[_current_parametrization].t3d[i];
+      t2d = &_parametrizations[_currentParametrization].t2d[i];
+      t3d = &_parametrizations[_currentParametrization].t3d[i];
     }
     SVector3 v0(t3d->getVertex(0)->x(), t3d->getVertex(0)->y(),
                 t3d->getVertex(0)->z());
@@ -665,9 +668,7 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
         m[0][1] = n.y();
         m[1][0] = t.x();
         m[1][1] = t.y();
-        if(sys2x2(m, rhs, r)) {
-          x0 = SVector3(r[0], r[1], 0);
-        }
+        if(sys2x2(m, rhs, r)) { x0 = SVector3(r[0], r[1], 0); }
         else {
           // printf("mauvaise pioche\n");
           continue;
@@ -712,10 +713,9 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
 
 #if defined(HAVE_HXT)
 
-bool discreteFace::compute_topology_of_partition(
+bool discreteFace::_computeTopologyOfPartition(
   int nbColors, int *colors, int *nNodes, int *nodes, double *uv,
-  std::vector<MVertex *> &c2v,
-  std::vector<std::vector<MEdge> > &boundaries)
+  std::vector<MVertex *> &c2v, std::vector<std::vector<MEdge> > &boundaries)
 {
   GModel *gm = model();
 
@@ -738,9 +738,7 @@ bool discreteFace::compute_topology_of_partition(
   }
 
   // count how much triangles per partition
-  for(size_t i = 0; i < ts.size(); i++) {
-    cpt[colors[i]]++;
-  }
+  for(size_t i = 0; i < ts.size(); i++) { cpt[colors[i]]++; }
   for(size_t i = 0; i < _parametrizations.size(); i++) {
     _parametrizations[colors[i]].t3d.reserve(cpt[colors[i]]);
     _parametrizations[colors[i]].t2d.reserve(cpt[colors[i]]);
@@ -750,10 +748,10 @@ bool discreteFace::compute_topology_of_partition(
 #ifdef debug
   // save the atlas in pos files for checking - debugging
   char zz[256];
-  sprintf(zz,"parametrization_P%d.pos",tag());
+  sprintf(zz, "parametrization_P%d.pos", tag());
   FILE *f = fopen(zz, "w");
   fprintf(f, "View \"\"{\n");
-  sprintf(zz,"parametrization_R%d.pos",tag());
+  sprintf(zz, "parametrization_R%d.pos", tag());
   FILE *f2 = fopen(zz, "w");
   fprintf(f2, "View \"\"{\n");
 #endif
@@ -809,9 +807,7 @@ bool discreteFace::compute_topology_of_partition(
         l[e] = p;
       }
       else {
-        if(it->second.first == c) {
-          l.erase(it);
-        }
+        if(it->second.first == c) { l.erase(it); }
         else
           it->second.second = c;
       }
@@ -877,17 +873,15 @@ bool discreteFace::compute_topology_of_partition(
             //	   vs[i]->onWhat()->mesh_vertices.end(), vs[i]),
             //	   vs[i]->onWhat()->mesh_vertices.end());
             discreteEdge *de = dynamic_cast<discreteEdge *>(vs[i]->onWhat());
-            if(!de){
-              Msg::Error("Can currently only split discrete curves");
-            }
-            else{
-              discreteVertex *gstart = new discreteVertex
-                (gm, ++TAG + 1, vs[i]->x(), vs[i]->y(), vs[i]->z());
+            if(!de) { Msg::Error("Can currently only split discrete curves"); }
+            else {
+              discreteVertex *gstart = new discreteVertex(
+                gm, ++TAG + 1, vs[i]->x(), vs[i]->y(), vs[i]->z());
               gm->add(gstart);
               vs[i]->setEntity(gstart);
               gstart->mesh_vertices.push_back(vs[i]);
               splitDiscreteEdge(de, vs[i], gstart, TAG);
-              Msg::Info("Splitting existing discrete curve %d", de->tag());
+              Msg::Info(" . Splitting discrete curve %d", de->tag());
             }
           }
         }
@@ -911,9 +905,8 @@ bool discreteFace::compute_topology_of_partition(
         if(ends[0]->onWhat() == this || ends[1]->onWhat() == this) {
           for(int i = 0; i < 2; i++) {
             if(ends[i]->onWhat() == this) {
-              discreteVertex *gstart = new discreteVertex
-                (gm, ++TAG, ends[i]->x(), ends[i]->y(), ends[i]->z());
-              v_internals.push_back(gstart);
+              discreteVertex *gstart = new discreteVertex(
+                gm, ++TAG, ends[i]->x(), ends[i]->y(), ends[i]->z());
               gm->add(gstart);
               ends[i]->setEntity(gstart);
               gstart->mesh_vertices.push_back(ends[i]);
@@ -924,9 +917,8 @@ bool discreteFace::compute_topology_of_partition(
           discreteEdge *de =
             new discreteEdge(gm, ++TAG, (GVertex *)ends[0]->onWhat(),
                              (GVertex *)ends[1]->onWhat());
-          e_internals.push_back(de);
-          Msg::Info("Creation of one internal discrete curve %d (%d %d) in "
-                    "discrete surface %d", de->tag(), ends[0]->onWhat()->tag(),
+          Msg::Info(" . Creating internal discrete curve %d (%d %d) in surface %d",
+                    de->tag(), ends[0]->onWhat()->tag(),
                     ends[1]->onWhat()->tag(), tag());
           gm->add(de);
           for(size_t i = 1; i < v.size() - 1; i++) {
@@ -946,7 +938,7 @@ bool discreteFace::compute_topology_of_partition(
   return true;
 }
 
-HXTStatus discreteFace::reparametrize_through_hxt()
+HXTStatus discreteFace::_reparametrizeThroughHxt()
 {
   int n = 1;
   HXT_CHECK(hxtInitializeLinearSystems(&n, NULL));
@@ -975,11 +967,11 @@ HXTStatus discreteFace::reparametrize_through_hxt()
   _parametrizations.resize(nc);
   std::vector<std::vector<MEdge> > boundaries(nc);
   std::vector<std::vector<MEdge> > internals(nc);
-  if(!compute_topology_of_partition(nc, colors, nNodes, nodes, uv,
-				    c2v, boundaries))
+  if(!_computeTopologyOfPartition(nc, colors, nNodes, nodes, uv, c2v,
+                                  boundaries))
     Msg::Warning("Impossible to compute the topology of the %d partitions", nc);
 
-  Msg::Info("Surface %d split in %d part%s", tag(), _parametrizations.size(),
+  Msg::Info(" . Surface %d split in %d part%s", tag(), _parametrizations.size(),
             (_parametrizations.size() > 1) ? "s" : "");
 
   for(size_t i = 0; i < _parametrizations.size(); i++) {
@@ -990,7 +982,8 @@ HXTStatus discreteFace::reparametrize_through_hxt()
         it++) {
       for(size_t k = 0; k < (*it)->lines.size(); k++) {
         MEdge e((*it)->lines[k]->getVertex(0), (*it)->lines[k]->getVertex(1));
-        if(std::binary_search(boundaries[i].begin(), boundaries[i].end(), e, le)) {
+        if(std::binary_search(boundaries[i].begin(), boundaries[i].end(), e,
+                              le)) {
           GEdge *de = *it;
           if(des.find(de) == des.end()) {
             if(de->_compound.size()) {

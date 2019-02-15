@@ -23,7 +23,7 @@ discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   Curve *c = CreateCurve(num, MSH_SEGM_DISCRETE, 0, 0, 0, -1, -1, 0., 1.);
   Tree_Add(model->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
-  _split[0] = _split[1] = NULL; 
+  _split[0] = _split[1] = NULL;
 }
 
 discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
@@ -31,7 +31,7 @@ discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
   Curve *c = CreateCurve(num, MSH_SEGM_DISCRETE, 0, 0, 0, -1, -1, 0., 1.);
   Tree_Add(model->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
-  _split[0] = _split[1] = NULL; 
+  _split[0] = _split[1] = NULL;
 }
 
 discreteEdge::~discreteEdge()
@@ -42,12 +42,13 @@ discreteEdge::~discreteEdge()
     delete discrete_vertices[i];
   discrete_lines.clear();
   discrete_vertices.clear();
-  _split[0] = _split[1] = NULL; 
+  _split[0] = _split[1] = NULL;
 }
 
 void discreteEdge::orderMLines()
 {
   size_t ss = lines.size();
+  if(!ss) return;
 
   std::vector<MEdge> ed;
   std::vector<std::vector<MVertex *> > vs;
@@ -159,6 +160,8 @@ Range<double> discreteEdge::parBounds(int i) const
 
 void discreteEdge::createGeometry()
 {
+  if(lines.empty()) return;
+
   if(discrete_lines.empty()) {
     orderMLines();
 
