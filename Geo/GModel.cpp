@@ -1075,7 +1075,7 @@ int GModel::adaptMesh(std::vector<int> technique,
   int ITER = 0;
   if(meshAll) {
     while(1) {
-      Msg::Info("-- adaptMesh (allDim) ITER =%d ", ITER);
+      Msg::Info(" - Adapt mesh (all dimensions) iter. = %d", ITER);
       fields->reset();
       meshMetric *metric = new meshMetric(this);
       for(unsigned int imetric = 0; imetric < technique.size(); imetric++) {
@@ -1109,7 +1109,7 @@ int GModel::adaptMesh(std::vector<int> technique,
   }
   else { // adapt only upper most dimension
     while(1) {
-      Msg::Info("-- adaptMesh ITER =%d ", ITER);
+      Msg::Info(" - Adapt mesh iter. = %d ", ITER);
       std::vector<MElement *> elements;
 
       if(getDim() == 2) {
@@ -3062,7 +3062,7 @@ GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
 void GModel::classifyAllFaces(double angleThreshold, bool includeBoundary)
 {
 #if defined(HAVE_MESH)
-  Msg::StatusBar(true, "Classifying surfaces with angle = %g...",
+  Msg::StatusBar(true, "Classifying surfaces (angle: %g)...",
                  angleThreshold * 180. / M_PI);
   double t1 = Cpu();
 

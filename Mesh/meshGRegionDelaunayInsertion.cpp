@@ -734,12 +734,12 @@ void adaptMeshGRegion::operator()(GRegion *gr)
         }
       }
     }
-    Msg::Info("Adaptation : START with %12.5E QBAD %12.5E QAVG %12.5E",
+    Msg::Info("Adaptation starts (volume = %g) with worst = %g / average = %g:",
               totalVolumeb, worst, avg / count);
     for(int i = 0; i < nbRanges; i++) {
       double low = (double)i / nbRanges;
       double high = (double)(i + 1) / nbRanges;
-      Msg::Info("Opti : %3.2f < QUAL < %3.2f : %9d elements ", low, high,
+      Msg::Info("%3.2f < quality < %3.2f: %9d elements ", low, high,
                 quality_ranges[i]);
     }
   }
@@ -844,7 +844,8 @@ void adaptMeshGRegion::operator()(GRegion *gr)
       }
     }
     double t2 = Cpu();
-    Msg::Info("Opti : (%d,%d,%d) = %12.5E QBAD %12.5E QAVG %12.5E (%8.3f sec)",
+    Msg::Info("%d edge swaps, %d face swaps, %d node relocations (volume = %g): "
+              "worst = %g / average = %g (%g s)",
               nbESwap, nbFSwap, nbReloc, totalVolumeb, worst, avg / count,
               t2 - t1);
     break;
@@ -855,19 +856,17 @@ void adaptMeshGRegion::operator()(GRegion *gr)
     if(!(illegals[i]->isDeleted())) nbSlivers++;
 
   if(nbSlivers) {
-    Msg::Info(
-      "Opti : %d illegal tets are still in the mesh, trying to remove them",
-      nbSlivers);
+    Msg::Info("%d illegal tets are still in the mesh, trying to remove them",
+              nbSlivers);
   }
   else {
-    Msg::Info("Opti : no illegal tets in the mesh ;-)", nbSlivers);
+    Msg::Info("No illegal tets in the mesh :-)", nbSlivers);
   }
 
   for(int i = 0; i < nbRanges; i++) {
     double low = (double)i / nbRanges;
     double high = (double)(i + 1) / nbRanges;
-    Msg::Info("Opti : %3.2f < QUAL < %3.2f : %9d elements", low, high,
-              quality_ranges[i]);
+    Msg::Info("%3.2f < quality < %3.2f: %9d elements", low, high, quality_ranges[i]);
   }
 
   for(CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it) {
@@ -943,12 +942,12 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
         }
       }
     }
-    Msg::Info("Opti : STARTS with %12.5E QBAD %12.5E QAVG %12.5E", totalVolumeb,
-              worst, avg / count);
+    Msg::Info("Optimization starts (volume = %g) with worst = %g / average = %g:",
+              totalVolumeb, worst, avg / count);
     for(int i = 0; i < nbRanges; i++) {
       double low = (double)i / nbRanges;
       double high = (double)(i + 1) / nbRanges;
-      Msg::Info("Opti : %3.2f < QUAL < %3.2f : %9d elements", low, high,
+      Msg::Info("%3.2f < quality < %3.2f : %9d elements", low, high,
                 quality_ranges[i]);
     }
   }
@@ -1042,7 +1041,8 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     }
 
     double t2 = Cpu();
-    Msg::Info("Opti : (%d,%d,%d) = %12.5E QBAD %12.5E QAVG %12.5E (%8.3f sec)",
+    Msg::Info("%d edge swaps, %d face swaps, %d node relocations (volume = %g): "
+              "worst = %g / average = %g (%g s)",
               nbESwap, nbFSwap, nbReloc, totalVolumeb, worst, avg / count,
               t2 - t1);
     if(worstA != 0.0 && worst - worstA < 1.e-6) break;
@@ -1050,17 +1050,17 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   }
 
   if(illegals.size()) {
-    Msg::Info("Opti : %d ill-shaped tets are still in the mesh",
+    Msg::Info("%d ill-shaped tets are still in the mesh",
               illegals.size());
   }
   else {
-    Msg::Info("Opti : no ill-shaped tets in the mesh ;-)");
+    Msg::Info("No ill-shaped tets in the mesh :-)");
   }
 
   for(int i = 0; i < nbRanges; i++) {
     double low = (double)i / nbRanges;
     double high = (double)(i + 1) / nbRanges;
-    Msg::Info("Opti : %3.2f < QUAL < %3.2f : %9d elements", low, high,
+    Msg::Info("%3.2f < quality < %3.2f : %9d elements", low, high,
               quality_ranges[i]);
   }
 
@@ -1454,8 +1454,7 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
     }
     else {
       if(ITER++ % 500 == 0)
-        Msg::Info(
-          "%d points created - Worst tet radius is %g (PTS removed %d %d)",
+        Msg::Info("%d points created - worst tet radius %g (points removed %d %d)",
           REALCOUNT, worst->getRadius(), COUNT_MISS_1, COUNT_MISS_2);
       if(worst->getRadius() < 1) break;
       double center[3];
@@ -1582,7 +1581,7 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
   Msg::Info(" - %d Delaunay cavities modified for star shapeness",
             NB_CORRECTION_OF_CAVITY);
   Msg::Info(" - %d points could not be inserted", COUNT_MISS);
-  Msg::Info(" - %d tetrahedra created in %g sec. (%d tets/sec.)",
+  Msg::Info(" - %d tetrahedra created in %g sec. (%d tets/s)",
             allTets.size(), dt, (int)(allTets.size() / dt));
 
   // relocate vertices

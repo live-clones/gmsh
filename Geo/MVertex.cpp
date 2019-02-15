@@ -306,8 +306,7 @@ void MVertex::writeMATLAB(FILE *fp, int filetype, bool binary,
 {
   if(_index < 0) return; // negative index vertices are never saved
   if(binary) {
-    Msg::Warning(
-      "Binary format not available for Matlab, saving into ASCII format");
+    Msg::Warning("Binary format not available for Matlab, saving in ASCII");
     binary = false;
   }
   fprintf(fp, "%.16g %.16g %.16g;\n", x() * scalingFactor, y() * scalingFactor,
@@ -606,7 +605,8 @@ bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
     v->getParameter(0, t);
     param = ge->reparamOnFace(gf, t, 1);
     if(!v->getParameter(0, t)) {
-      Msg::Error("Vertex %p not MEdgeVertex", v);
+      Msg::Warning("No parametric coordinate on vertex %d classified on curve %d",
+                   v->getNum(), ge->tag());
       return false;
       // param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);
     }

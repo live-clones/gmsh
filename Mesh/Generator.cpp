@@ -911,14 +911,14 @@ static void Mesh3D(GModel *m)
 
 #if defined(HAVE_DOMHEX)
   if(CTX::instance()->mesh.recombine3DAll) {
-    Msg::Info("RECOMBINATION timing:");
-    Msg::Info(" --- CUMULATIVE TIME RECOMBINATION : %g s.", time_recombination);
-    Msg::Info("RECOMBINATION CUMULATIVE STATISTICS:");
-    Msg::Info(".... Percentage of hexahedra   (#) : %g",
+    Msg::Info("Recombination timing:");
+    Msg::Info(" - Cumulative time recombination: %g s", time_recombination);
+    Msg::Info("Recombination cumulative statistics:");
+    Msg::Info(" - Percentage of hexahedra (#)  : %g",
               nb_hexa_recombination * 100. / nb_elements_recombination);
-    Msg::Info(".... Percentage of hexahedra (Vol) : %g",
+    Msg::Info(" - Percentage of hexahedra (Vol): %g",
               vol_hexa_recombination * 100. / vol_element_recombination);
-    // MakeMeshConformal (m, 1);
+    // MakeMeshConformal(m, 1);
     TestConformity(m);
   }
 #endif

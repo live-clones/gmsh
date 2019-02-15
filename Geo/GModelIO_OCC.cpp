@@ -3552,7 +3552,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
                                bool makesolids, double scaling)
 {
   if(scaling != 1.0) {
-    Msg::Info("Scaling geometry by factor %g", scaling);
+    Msg::Info("Scaling geometry (factor: %g)", scaling);
     gp_Trsf t;
     t.SetScaleFactor(scaling);
     BRepBuilderAPI_Transform trsf(myshape, t);
@@ -3563,7 +3563,8 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
      !makesolids)
     return;
 
-  Msg::Info("Starting shape healing (tolerance: %g)", tolerance);
+  Msg::Info("Healing shapes (tolerance: %g)", tolerance);
+  double t1 = Cpu();
 
   _somap.Clear();
   _shmap.Clear();
@@ -3589,7 +3590,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   }
 
   if(fixdegenerated) {
-    Msg::Info("- fix degenerated edges and faces");
+    Msg::Info(" - Fixing degenerated edges and faces");
 
     {
       Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
@@ -3624,17 +3625,17 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
         if(sff->Status(ShapeExtend_DONE1) || sff->Status(ShapeExtend_DONE2) ||
            sff->Status(ShapeExtend_DONE3) || sff->Status(ShapeExtend_DONE4) ||
            sff->Status(ShapeExtend_DONE5)) {
-          Msg::Info("  repaired face %d", _fmap.FindIndex(face));
+          Msg::Info(" ... Repaired face %d", _fmap.FindIndex(face));
           if(sff->Status(ShapeExtend_DONE1))
-            Msg::Info("  (some wires are fixed)");
+            Msg::Info(" ... Some wires are fixed");
           else if(sff->Status(ShapeExtend_DONE2))
-            Msg::Info("  (orientation of wires fixed)");
+            Msg::Info(" ... Orientation of wires fixed");
           else if(sff->Status(ShapeExtend_DONE3))
-            Msg::Info("  (missing seam added)");
+            Msg::Info(" ... Missing seam added");
           else if(sff->Status(ShapeExtend_DONE4))
-            Msg::Info("  (small area wire removed)");
+            Msg::Info(" ... Small area wire removed");
           else if(sff->Status(ShapeExtend_DONE5))
-            Msg::Info("  (natural bounds added)");
+            Msg::Info(" ... Natural bounds added");
           TopoDS_Face newface = sff->Face();
 
           rebuild->Replace(face, newface);
@@ -3655,7 +3656,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   }
 
   if(fixsmalledges) {
-    Msg::Info("- fixing small edges");
+    Msg::Info(" - Fixing small edges");
 
     Handle(ShapeFix_Wire) sfw;
     Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
@@ -3679,7 +3680,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
            !(sfw->StatusSmall(ShapeExtend_FAIL1) ||
              sfw->StatusSmall(ShapeExtend_FAIL2) ||
              sfw->StatusSmall(ShapeExtend_FAIL3))) {
-          Msg::Info("  fixed small edge in wire %d", _wmap.FindIndex(oldwire));
+          Msg::Info(" ... Fixed small edge in wire %d", _wmap.FindIndex(oldwire));
           replace = true;
         }
         else if(sfw->StatusSmall(ShapeExtend_FAIL1))
@@ -3730,7 +3731,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
           BRepGProp::LinearProperties(edge, system);
           if(system.Mass() < tolerance) {
             Msg::Info(
-              "  removing degenerated edge %d from vertex %d to vertex %d",
+              "  - Removing degenerated edge %d from vertex %d to vertex %d",
               _emap.FindIndex(edge), _vmap.FindIndex(TopExp::FirstVertex(edge)),
               _vmap.FindIndex(TopExp::LastVertex(edge)));
             rebuild->Remove(edge);
@@ -3756,35 +3757,35 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     sfwf->ModeDropSmallEdges() = Standard_True;
 
     if(sfwf->FixWireGaps()) {
-      Msg::Info("- fixing wire gaps");
+      Msg::Info(" - Fixing wire gaps");
       if(sfwf->StatusWireGaps(ShapeExtend_OK)) Msg::Info("  no gaps found");
       if(sfwf->StatusWireGaps(ShapeExtend_DONE1))
-        Msg::Info("  some 2D gaps fixed");
+        Msg::Info(" ... Some 2D gaps fixed");
       if(sfwf->StatusWireGaps(ShapeExtend_DONE2))
-        Msg::Info("  some 3D gaps fixed");
+        Msg::Info(" ... Some 3D gaps fixed");
       if(sfwf->StatusWireGaps(ShapeExtend_FAIL1))
-        Msg::Info("  failed to fix some 2D gaps");
+        Msg::Info(" ... Failed to fix some 2D gaps");
       if(sfwf->StatusWireGaps(ShapeExtend_FAIL2))
-        Msg::Info("  failed to fix some 3D gaps");
+        Msg::Info(" ... Failed to fix some 3D gaps");
     }
 
     sfwf->SetPrecision(tolerance);
 
     if(sfwf->FixSmallEdges()) {
-      Msg::Info("- fixing wire frames");
+      Msg::Info(" - Fixing wire frames");
       if(sfwf->StatusSmallEdges(ShapeExtend_OK))
-        Msg::Info("  no small edges found");
+        Msg::Info(" ... No small edges found");
       if(sfwf->StatusSmallEdges(ShapeExtend_DONE1))
-        Msg::Info("  some small edges fixed");
+        Msg::Info(" ... Some small edges fixed");
       if(sfwf->StatusSmallEdges(ShapeExtend_FAIL1))
-        Msg::Info("  failed to fix some small edges");
+        Msg::Info(" ... Failed to fix some small edges");
     }
 
     myshape = sfwf->Shape();
   }
 
   if(fixspotstripfaces) {
-    Msg::Info("- fixing spot and strip faces");
+    Msg::Info(" - Fixing spot and strip faces");
     Handle(ShapeFix_FixSmallFace) sffsm = new ShapeFix_FixSmallFace();
     sffsm->Init(myshape);
     sffsm->SetPrecision(tolerance);
@@ -3794,7 +3795,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   }
 
   if(sewfaces) {
-    Msg::Info("- sewing faces");
+    Msg::Info(" - Sewing faces");
 
     BRepOffsetAPI_Sewing sewedObj(tolerance);
 
@@ -3808,7 +3809,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     if(!sewedObj.SewedShape().IsNull())
       myshape = sewedObj.SewedShape();
     else
-      Msg::Info("  not possible");
+      Msg::Info(" ... Could not sew");
   }
 
   {
@@ -3822,7 +3823,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   }
 
   if(makesolids) {
-    Msg::Info("- making solids");
+    Msg::Info(" - Making solids");
 
     BRepBuilderAPI_MakeSolid ms;
     int count = 0;
@@ -3832,7 +3833,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     }
 
     if(!count) {
-      Msg::Info("  not possible (no shells)");
+      Msg::Info(" ... Could not make solid (no shells)");
     }
     else {
       BRepCheck_Analyzer ba(ms);
@@ -3858,7 +3859,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
         }
       }
       else
-        Msg::Info("  not possible");
+        Msg::Info(" ... Could not make solid");
     }
   }
 
@@ -3883,17 +3884,17 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   for(exp0.Init(myshape, TopAbs_COMPOUND); exp0.More(); exp0.Next()) nnrc++;
   for(exp0.Init(myshape, TopAbs_COMPSOLID); exp0.More(); exp0.Next()) nnrcs++;
 
-  Msg::Info("-----------------------------------");
-  Msg::Info("Compounds          : %d (%d)", nnrc, nrc);
-  Msg::Info("Composite solids   : %d (%d)", nnrcs, nrcs);
-  Msg::Info("Solids             : %d (%d)", nnrso, nrso);
-  Msg::Info("Shells             : %d (%d)", nnrsh, nrsh);
-  Msg::Info("Wires              : %d (%d)", nnrw, nrw);
-  Msg::Info("Faces              : %d (%d)", nnrf, nrf);
-  Msg::Info("Edges              : %d (%d)", nnre, nre);
-  Msg::Info("Vertices           : %d (%d)", nnrv, nrv);
-  Msg::Info("Totol surface area : %g (%g)", newsurfacecont, surfacecont);
-  Msg::Info("-----------------------------------");
+  double t2 = Cpu();
+  Msg::Info("Done healing shapes (%g s):", t2 - t1);
+  Msg::Info(" - Compounds          : %d (%d)", nnrc, nrc);
+  Msg::Info(" - Composite solids   : %d (%d)", nnrcs, nrcs);
+  Msg::Info(" - Solids             : %d (%d)", nnrso, nrso);
+  Msg::Info(" - Shells             : %d (%d)", nnrsh, nrsh);
+  Msg::Info(" - Wires              : %d (%d)", nnrw, nrw);
+  Msg::Info(" - Faces              : %d (%d)", nnrf, nrf);
+  Msg::Info(" - Edges              : %d (%d)", nnre, nre);
+  Msg::Info(" - Vertices           : %d (%d)", nnrv, nrv);
+  Msg::Info(" - Totol surface area : %g (%g)", newsurfacecont, surfacecont);
 }
 
 static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,

@@ -52,7 +52,7 @@ static inline int computeTetGenVersion2(uint32_t v1, uint32_t* v2Choices, const 
 
   if(i==3)
     Msg::Error("should never happen (file:%s line:%d)\n", __FILE__, __LINE__);
-  
+
   // version%4 : corresponding face in adjacent tet
   // version/4 : which of the 3 rotation of the facet the tetrahedra has...
   return 4*i + iface2;
@@ -320,26 +320,26 @@ namespace tetgenBR {
           // we can make this in parallel, iterations are totally independent
       for (uint64_t i = 0; i < tets.size(); i++) {
 	triface tf1 = ts[i];
-	
+
 	for (tf1.ver=0; tf1.ver<4; tf1.ver++){
 	  uint64_t neigh = tets[i]->getNeigh(tf1.ver)->tet()->getNum() - 1;
 	  triface tf2 = ts[neigh];
 	  int iface2 = tf1.ver;
-	  
+
 	  int face2[3] = {
 	    tets[i]->getVertex(faces_tetra(tf1.ver),0)->getIndex(),
 	    tets[i]->getVertex(faces_tetra(tf1.ver),1)->getIndex(),
 	    tets[i]->getVertex(faces_tetra(tf1.ver),2)->getIndex()};
-	  
+
 	  tf2.ver = computeTetGenVersion2(faces2[0], face2, iface2);
 	  bond(tf1,tf2);
 	}
       }
-      
+
 #else
-      
+
       /*  N E W   V E R S I O N	  */
-      
+
       // Create the tetrahedra and connect those that share a common face.
       for(unsigned int i = 0; i < tets.size(); i++) {
         // Get the four vertices.
@@ -748,7 +748,7 @@ namespace tetgenBR {
     {
       // Write mesh into to GRegion.
 
-      Msg::Info("Writing to GRegion...");
+      Msg::Debug("Writing to GRegion...");
 
       point p[4];
 
@@ -883,7 +883,7 @@ namespace tetgenBR {
       }
 
       if(!_extras.empty())
-        Msg::Info("We add %d steiner points...", _extras.size());
+        Msg::Info("Added %d steiner points", _extras.size());
 
       if(l_edges.size() > 0) {
         // There are Steiner points on segments!
@@ -904,7 +904,7 @@ namespace tetgenBR {
             }
           }
           assert(ge != NULL);
-          // Msg::Info("Steiner points exist on GEdge %d", ge->tag());
+          Msg::Info("Steiner points exist on curve %d", ge->tag());
           // Delete the old triangles.
           for(unsigned int i = 0; i < ge->lines.size(); i++)
             delete ge->lines[i];
@@ -951,7 +951,7 @@ namespace tetgenBR {
           }
           assert(gf != NULL);
           // Delete the old triangles.
-          Msg::Info("Steiner points exist on GFace %d", gf->tag());
+          Msg::Info("Steiner points exist on surface %d", gf->tag());
           for(unsigned int i = 0; i < gf->triangles.size(); i++)
             delete gf->triangles[i];
           gf->triangles.clear();
@@ -1031,7 +1031,7 @@ namespace tetgenBR {
     // delete 8 new enclosing box vertices added in delaunayMeshIn3d
     for(unsigned int i = _vertices.size() - 8; i < _vertices.size(); i++)
       delete _vertices[i];
-    
+
     return true;
   }
 

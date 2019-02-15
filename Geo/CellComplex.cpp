@@ -118,9 +118,9 @@ bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain)
     double t2 = Cpu();
     if(t2 - t1 > CellComplex::_patience && dim > 1) {
       if(domain == 0)
-        Msg::Info(" ... creating domain %d-cells", dim);
+        Msg::Info(" . Creating domain %d-cells", dim);
       else if(domain == 1)
-        Msg::Info(" ... creating subdomain %d-cells", dim);
+        Msg::Info(" . Creating subdomain %d-cells", dim);
     }
 
     for(citer cit = firstCell(dim); cit != lastCell(dim); cit++) {
@@ -524,7 +524,7 @@ int CellComplex::reduceComplex(int combine, bool omit, bool homseq)
 
   double t2 = Cpu();
   if(t2 - t1 > CellComplex::_patience) {
-    Msg::Info(" .. %d volumes, %d faces, %d edges, and %d vertices", getSize(3),
+    Msg::Info(" . %d volumes, %d faces, %d edges, and %d vertices", getSize(3),
               getSize(2), getSize(1), getSize(0));
   }
 
@@ -626,7 +626,7 @@ int CellComplex::coreduceComplex(int combine, bool omit, int heuristic)
 
   double t2 = Cpu();
   if(t2 - t1 > CellComplex::_patience) {
-    Msg::Info(" .. %d volumes, %d faces, %d edges, and %d vertices", getSize(3),
+    Msg::Info(" . %d volumes, %d faces, %d edges, and %d vertices", getSize(3),
               getSize(2), getSize(1), getSize(0));
   }
 
@@ -682,7 +682,7 @@ int CellComplex::combine(int dim)
     double t2 = Cpu();
     if(t2 - t1 > CellComplex::_patience) {
       t1 = Cpu();
-      Msg::Info(" ... %d volumes, %d faces, %d edges, and %d vertices",
+      Msg::Info(" . %d volumes, %d faces, %d edges, and %d vertices",
                 getSize(3), getSize(2), getSize(1), getSize(0));
     }
 
@@ -760,7 +760,7 @@ int CellComplex::cocombine(int dim)
     double t2 = Cpu();
     if(t2 - t1 > CellComplex::_patience) {
       t1 = Cpu();
-      Msg::Info(" ... %d volumes, %d faces, %d edges, and %d vertices",
+      Msg::Info(" . %d volumes, %d faces, %d edges, and %d vertices",
                 getSize(3), getSize(2), getSize(1), getSize(0));
     }
 
@@ -996,7 +996,7 @@ int CellComplex::saveComplex(const std::string &filename)
     printf("\nUnable to open file '%s' \n", filename.c_str());
     return 0;
   }
-  printf("\nWriting file '%s' ... \n", filename.c_str());
+  printf("\nWriting file '%s'...\n", filename.c_str());
 
   fprintf(fp, "$Cells\n");
   fprintf(fp, "%d\n", getSize(0)+getSize(1)+getSize(2)+getSize(3));
