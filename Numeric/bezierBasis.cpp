@@ -1813,29 +1813,28 @@ void bezierCoeff::subdivide(std::vector<bezierCoeff *> &subCoeff) const
     Msg::Warning("expected empty vector of bezierCoeff");
     subCoeff.clear();
   }
-  int n = _funcSpaceData.spaceOrder() + 1;
 
   // TODO: other types
   switch(_funcSpaceData.elementType()) {
   case TYPE_TRI:
     for(int i = 0; i < 4; ++i) subCoeff.push_back(new bezierCoeff(*this));
-    _subdivideTriangle(*this, n, 0, subCoeff);
+    _subdivideTriangle(*this, 0, subCoeff);
     return;
   case TYPE_QUA:
     for(int i = 0; i < 4; ++i) subCoeff.push_back(new bezierCoeff(*this));
-    _subdivideQuadrangle(*this, n, subCoeff);
+    _subdivideQuadrangle(*this, subCoeff);
     return;
   case TYPE_TET:
     for(int i = 0; i < 8; ++i) subCoeff.push_back(new bezierCoeff(*this));
-    _subdivideTetrahedron(*this, n, subCoeff);
+    _subdivideTetrahedron(*this, subCoeff);
     return;
   case TYPE_HEX:
     for(int i = 0; i < 8; ++i) subCoeff.push_back(new bezierCoeff(*this));
-    _subdivideHexahedron(*this, n, subCoeff);
+    _subdivideHexahedron(*this, subCoeff);
     return;
   case TYPE_PRI:
     for(int i = 0; i < 8; ++i) subCoeff.push_back(new bezierCoeff(*this));
-    _subdividePrism(*this, n, subCoeff);
+    _subdividePrism(*this, subCoeff);
     return;
   case TYPE_PYR:
     // Pyr is tensorial like hex but may not be 'cubic' => to check
@@ -1873,9 +1872,10 @@ void bezierCoeff::_subdivide(fullMatrix<double> &coeff, int n, int start,
   }
 }
 
-void bezierCoeff::_subdivideTriangle(const bezierCoeff &coeff, int n, int start,
+void bezierCoeff::_subdivideTriangle(const bezierCoeff &coeff, int start,
                                      std::vector<bezierCoeff *> &vSubCoeff)
 {
+  const int n = coeff.getPolynomialOrder() + 1;
   const int dim = coeff._c;
 
   bezierCoeff &sub1 = *vSubCoeff[0];
@@ -2077,9 +2077,10 @@ void bezierCoeff::_subdivideTet(_SubdivisionTet which, int n,
   }
 }
 
-void bezierCoeff::_subdivideTetrahedron(const bezierCoeff &coeff, int n,
+void bezierCoeff::_subdivideTetrahedron(const bezierCoeff &coeff,
                                         std::vector<bezierCoeff *> &vSubCoeff)
 {
+  const int n = coeff.getPolynomialOrder() + 1;
   const int N = (n + 2) * (n + 1) * n / 6;
 
   bezierCoeff &sub1 = *vSubCoeff[0];
@@ -2119,9 +2120,10 @@ void bezierCoeff::_subdivideTetrahedron(const bezierCoeff &coeff, int n,
   // node 3 cross edge 1-2
 }
 
-void bezierCoeff::_subdivideQuadrangle(const bezierCoeff &coeff, int n,
+void bezierCoeff::_subdivideQuadrangle(const bezierCoeff &coeff,
                                        std::vector<bezierCoeff *> &subCoeff)
 {
+  const int n = coeff.getPolynomialOrder() + 1;
   const int N = 2 * n - 1;
   const int dim = coeff._c;
   _sub.resize(N * N, dim, false);
@@ -2147,9 +2149,10 @@ void bezierCoeff::_subdivideQuadrangle(const bezierCoeff &coeff, int n,
   return;
 }
 
-void bezierCoeff::_subdivideHexahedron(const bezierCoeff &coeff, int n,
+void bezierCoeff::_subdivideHexahedron(const bezierCoeff &coeff,
                                        std::vector<bezierCoeff *> &subCoeff)
 {
+  const int n = coeff.getPolynomialOrder() + 1;
   const int N = 2 * n - 1;
   const int dim = coeff._c;
   _sub.resize(N * N * N, dim, false);
@@ -2190,11 +2193,12 @@ void bezierCoeff::_subdivideHexahedron(const bezierCoeff &coeff, int n,
   return;
 }
 
-void bezierCoeff::_subdividePrism(const bezierCoeff &coeff, int n,
+void bezierCoeff::_subdividePrism(const bezierCoeff &coeff,
                                   std::vector<bezierCoeff *> &subCoeff)
 {
-  const int N = 2 * n - 1;
+  const int n = coeff.getPolynomialOrder() + 1;
   const int ntri = (n + 1) * n / 2;
+  const int N = 2 * n - 1;
   const int dim = coeff._c;
   _sub.resize(N * ntri, dim, false);
   for(int k = 0; k < n; ++k) {
@@ -2218,8 +2222,8 @@ void bezierCoeff::_subdividePrism(const bezierCoeff &coeff, int n,
   _copyLine(_sub, n * ntri, 0, *subCoeff[0]);
   _copyLine(_sub, n * ntri, (n - 1) * ntri, *subCoeff2[0]);
   for(int k = 0; k < n; ++k) {
-    _subdivideTriangle(*subCoeff[0], n, k*ntri, subCoeff);
-    _subdivideTriangle(*subCoeff2[0], n, k*ntri, subCoeff2);
+    _subdivideTriangle(*subCoeff[0], k*ntri, subCoeff);
+    _subdivideTriangle(*subCoeff2[0], k*ntri, subCoeff2);
   }
   return;
 }

@@ -284,15 +284,15 @@ private:
 
   static void _subdivide(fullMatrix<double> &coeff, int n, int start);
   static void _subdivide(fullMatrix<double> &coeff, int n, int start, int inc);
-  static void _subdivideTriangle(const bezierCoeff &coeff, int n, int start,
+  static void _subdivideTriangle(const bezierCoeff &coeff, int start,
                                  std::vector<bezierCoeff *> &subCoeff);
-  static void _subdivideTetrahedron(const bezierCoeff &coeff, int n,
+  static void _subdivideTetrahedron(const bezierCoeff &coeff,
                                     std::vector<bezierCoeff *> &vSubCoeff);
-  static void _subdivideQuadrangle(const bezierCoeff &coeff, int n,
+  static void _subdivideQuadrangle(const bezierCoeff &coeff,
                                    std::vector<bezierCoeff *> &subCoeff);
-  static void _subdivideHexahedron(const bezierCoeff &coeff, int n,
+  static void _subdivideHexahedron(const bezierCoeff &coeff,
                                    std::vector<bezierCoeff *> &subCoeff);
-  static void _subdividePrism(const bezierCoeff &coeff, int n,
+  static void _subdividePrism(const bezierCoeff &coeff,
                               std::vector<bezierCoeff *> &subCoeff);
   static void _copy(const bezierCoeff &from, int start, int num,
                     bezierCoeff &to);
