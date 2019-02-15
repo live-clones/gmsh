@@ -4,9 +4,9 @@
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 set(SRC
+  MeshOptimizer.cpp
   MeshOpt.cpp
   MeshOptCommon.cpp
-  MeshOptimizer.cpp
   MeshOptPatch.cpp
   MeshOptObjectiveFunction.cpp
   MeshOptObjContrib.cpp

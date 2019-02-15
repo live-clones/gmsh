@@ -714,7 +714,7 @@ namespace {
 
 #endif
 
-void meshOptimizer(std::vector<GEntity *> &entities, MeshOptParameters &par)
+void MeshOptimizer(std::vector<GEntity *> &entities, MeshOptParameters &par)
 {
 #if defined(HAVE_BFGS)
   if(par.nCurses) mvinit();

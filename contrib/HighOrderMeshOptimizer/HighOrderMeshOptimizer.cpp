@@ -385,7 +385,7 @@ void HighOrderMeshOptimizer(std::vector<GEntity *> &entities,
     par.pass.push_back(maxCADDistPass);
   }
 
-  meshOptimizer(entities, par);
+  MeshOptimizer(entities, par);
 
   p.CPU = par.CPU;
   p.minJac = minMaxJacBarFunc.getMin();

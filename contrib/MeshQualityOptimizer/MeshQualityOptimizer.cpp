@@ -178,7 +178,7 @@ void MeshQualityOptimizer(std::vector<GEntity *> &entities,
     par.pass.push_back(minInvCondNumPass);
   }
 
-  meshOptimizer(entities, par);
+  MeshOptimizer(entities, par);
 
   p.CPU = par.CPU;
   if(p.onlyValidity) {
