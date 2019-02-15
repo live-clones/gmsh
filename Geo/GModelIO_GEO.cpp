@@ -1575,11 +1575,11 @@ int GModel::exportDiscreteGEOInternals()
       for(int i = 0; i < List_Nbr(points); i++) {
         Vertex *v;
         List_Read(points, i, &v);
-        if(v->Num == gvb->tag()) {
+        if(gvb && gvb->tag() == v->Num) {
           List_Add(c->Control_Points, &v);
           c->beg = v;
         }
-        if(v->Num == gve->tag()) {
+        if(gve && gve->tag() == v->Num) {
           List_Add(c->Control_Points, &v);
           c->end = v;
         }
