@@ -65,7 +65,7 @@ public:
   GRegion *_gr;
   GFace *_f[2];
   double max_angle, min_angle;
-  int _N_SUBNORMALS;
+  unsigned int _N_SUBNORMALS;
 
   void computeType(double angle)
   {
