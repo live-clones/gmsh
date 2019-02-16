@@ -33,8 +33,8 @@ HXTStatus hxtGmshMsgCallback(HXTMessage *msg)
   return HXT_STATUS_OK;
 }
 
-static double hxtMeshSizeGmshCallBack(double x, double y, double z,
-                                      void *userData)
+double hxtMeshSizeGmshCallBack(double x, double y, double z,
+                               void *userData)
 {
   GRegion *gr = (GRegion *)userData;
   double lc2 = BGM_MeshSize(gr, 0, 0, x, y, z);
@@ -350,7 +350,7 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 			 threshold, hxt_boundary_recovery,
 			 NULL, // hxtMeshSizeGmshCallBack, // FIXME does not work yet
 			 regions[0]));
-  
+
   //  HXT_CHECK(hxtMeshWriteGmsh(mesh, "hxt.msh"));
 
   HXT_CHECK(Hxt2Gmsh(regions, mesh, v2c, c2v));
