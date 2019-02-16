@@ -322,6 +322,18 @@ int MeshTransfiniteVolume(GRegion *gr)
     return 0;
   }
 
+  // make sure that all bounding edges have begin/end points: everything in here
+  // depends on it
+  const std::vector<GEdge *> &edges = gr->edges();
+  for(std::vector<GEdge *>::const_iterator it = edges.begin();
+      it != edges.end(); it++){
+    if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()){
+      Msg::Error("Transfinite algorithm cannot be applied with curve %d which "
+                 "has no begin or end point", (*it)->tag());
+      return 0;
+    }
+  }
+
   std::vector<MVertex *> corners;
   findTransfiniteCorners(gr, corners);
   if(corners.size() != 6 && corners.size() != 8) {

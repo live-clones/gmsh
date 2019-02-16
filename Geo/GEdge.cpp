@@ -66,6 +66,9 @@ void GEdge::setMeshMaster(GEdge *ge, int ori)
   GEntity::setMeshMaster(ge);
   masterOrientation = ori > 0 ? 1 : -1;
 
+  if(!getBeginVertex() || !ge->getBeginVertex() ||
+     !getEndVertex() || !ge->getEndVertex()) return;
+
   if(ori < 0) {
     vertexCounterparts[getBeginVertex()] = ge->getEndVertex();
     vertexCounterparts[getEndVertex()] = ge->getBeginVertex();
@@ -82,6 +85,9 @@ void GEdge::setMeshMaster(GEdge *ge, int ori)
 
 void GEdge::setMeshMaster(GEdge *ge, const std::vector<double> &tfo)
 {
+  if(!getBeginVertex() || !ge->getBeginVertex() ||
+     !getEndVertex() || !ge->getEndVertex()) return;
+
   SPoint3 oriXYZ0 = ge->getBeginVertex()->xyz();
   SPoint3 oriXYZ1 = ge->getEndVertex()->xyz();
 
@@ -252,12 +258,16 @@ SOrientedBoundingBox GEdge::getOBB()
         vertices.push_back(mv->point());
       }
       // Don't forget to add the first and last vertices...
-      SPoint3 pt1(getBeginVertex()->x(), getBeginVertex()->y(),
-                  getBeginVertex()->z());
-      SPoint3 pt2(getEndVertex()->x(), getEndVertex()->y(),
-                  getEndVertex()->z());
-      vertices.push_back(pt1);
-      vertices.push_back(pt2);
+      if(getBeginVertex()){
+        SPoint3 pt1(getBeginVertex()->x(), getBeginVertex()->y(),
+                    getBeginVertex()->z());
+        vertices.push_back(pt1);
+      }
+      if(getEndVertex()){
+        SPoint3 pt2(getEndVertex()->x(), getEndVertex()->y(),
+                    getEndVertex()->z());
+        vertices.push_back(pt2);
+      }
     }
     else if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve) {
       Range<double> tr = this->parBounds(0);
@@ -696,10 +706,14 @@ void GEdge::discretize(double tol, std::vector<SPoint3> &dpts,
                        std::vector<double> &ts)
 {
   std::vector<sortedPoint> upts;
-  sortedPoint pnt1 = {getBeginVertex()->xyz(), 0., 1};
-  upts.push_back(pnt1);
-  sortedPoint pnt2 = {getEndVertex()->xyz(), 1., -1};
-  upts.push_back(pnt2);
+  if(getBeginVertex()){
+    sortedPoint pnt1 = {getBeginVertex()->xyz(), 0., 1};
+    upts.push_back(pnt1);
+  }
+  if(getEndVertex()){
+    sortedPoint pnt2 = {getEndVertex()->xyz(), 1., -1};
+    upts.push_back(pnt2);
+  }
   _discretize(tol, this, upts, 0);
   dpts.clear();
   dpts.reserve(upts.size());

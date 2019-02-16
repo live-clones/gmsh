@@ -462,7 +462,8 @@ int Mesh2DWithBoundaryLayers(GModel *m)
       ExtrudeParams *ep = ge->meshAttributes.extrude;
       if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) {
         GVertex *vsrc, *vdest;
-        if(ge->getBeginVertex()->geomType() == GEntity::BoundaryLayerPoint) {
+        if(ge->getBeginVertex() &&
+           ge->getBeginVertex()->geomType() == GEntity::BoundaryLayerPoint) {
           vsrc = ge->getEndVertex();
           vdest = ge->getBeginVertex();
         }
@@ -470,12 +471,13 @@ int Mesh2DWithBoundaryLayers(GModel *m)
           vsrc = ge->getBeginVertex();
           vdest = ge->getEndVertex();
         }
-        GPoint p = vsrc->point();
-
-        ep->Extrude(ep->mesh.NbLayer - 1,
-                    ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], p.x(), p.y(),
-                    p.z());
-        vdest->setPosition(p);
+        if(vsrc && vdest){
+          GPoint p = vsrc->point();
+          ep->Extrude(ep->mesh.NbLayer - 1,
+                      ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], p.x(), p.y(),
+                      p.z());
+          vdest->setPosition(p);
+        }
       }
     }
   }

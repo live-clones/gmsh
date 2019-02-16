@@ -119,8 +119,12 @@ void HighOrderMeshPeriodicity::_relocateMasterVertices()
           "of master edge %i (%i-%i) using slave %i (%i-%i)",
           slave->correspondingVertices.size(),
           slave->correspondingHOPoints.size(), master->getNumMeshVertices(),
-          me->tag(), me->getBeginVertex()->tag(), me->getEndVertex()->tag(),
-          se->tag(), se->getBeginVertex()->tag(), se->getEndVertex()->tag());
+          me->tag(),
+          me->getBeginVertex() ? me->getBeginVertex()->tag() : -1,
+          me->getEndVertex() ? me->getEndVertex()->tag() : -1,
+          se->tag(),
+          se->getBeginVertex() ? se->getBeginVertex()->tag() : -1,
+          se->getEndVertex() ? se->getEndVertex()->tag() : -1);
 
         std::map<MVertex *, MVertex *>::iterator vit;
 

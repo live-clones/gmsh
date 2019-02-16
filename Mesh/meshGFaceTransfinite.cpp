@@ -96,6 +96,7 @@ static void computeEdgeLoops(const GFace *gf,
     ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
   GVertex *v_end =
     ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
+
   all_mvertices.push_back(start->mesh_vertices[0]);
   if(*ito == 1)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
@@ -142,6 +143,18 @@ int MeshTransfiniteSurface(GFace *gf)
   if(gf->meshAttributes.method != MESH_TRANSFINITE) return 0;
 
   Msg::Info("Meshing surface %d (transfinite)", gf->tag());
+
+  // make sure that all bounding edges have begin/end points: everything in here
+  // depends on it
+  const std::vector<GEdge *> &edges = gf->edges();
+  for(std::vector<GEdge *>::const_iterator it = edges.begin();
+      it != edges.end(); it++){
+    if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()){
+      Msg::Error("Transfinite algorithm cannot be applied with curve %d which "
+                 "has no begin or end point", (*it)->tag());
+      return 0;
+    }
+  }
 
   std::vector<MVertex *> corners;
   findTransfiniteCorners(gf, corners);

@@ -1219,10 +1219,12 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     if(!(*ite)->isMeshDegenerated()) {
       all_vertices.insert((*ite)->mesh_vertices.begin(),
                           (*ite)->mesh_vertices.end());
-      all_vertices.insert((*ite)->getBeginVertex()->mesh_vertices.begin(),
-                          (*ite)->getBeginVertex()->mesh_vertices.end());
-      all_vertices.insert((*ite)->getEndVertex()->mesh_vertices.begin(),
-                          (*ite)->getEndVertex()->mesh_vertices.end());
+      if((*ite)->getBeginVertex())
+        all_vertices.insert((*ite)->getBeginVertex()->mesh_vertices.begin(),
+                            (*ite)->getBeginVertex()->mesh_vertices.end());
+      if((*ite)->getEndVertex())
+        all_vertices.insert((*ite)->getEndVertex()->mesh_vertices.begin(),
+                            (*ite)->getEndVertex()->mesh_vertices.end());
     }
     ++ite;
   }
@@ -1828,22 +1830,17 @@ static bool buildConsecutiveListOfVertices(
     std::vector<SPoint2> mesh1d_seam;
 
     bool seam = ges.ge->isSeam(gf);
-
-    // if(seam) printf("face %d has seam %d\n", gf->tag(), ges.ge->tag());
-
     Range<double> range = ges.ge->parBoundsOnFace(gf);
 
-    MVertex *here = ges.ge->getBeginVertex()->mesh_vertices[0];
     mesh1d.push_back(ges.ge->reparamOnFace(gf, range.low(), 1));
     if(seam) mesh1d_seam.push_back(ges.ge->reparamOnFace(gf, range.low(), -1));
     for(unsigned int i = 0; i < ges.ge->mesh_vertices.size(); i++) {
+      MVertex *here = ges.ge->mesh_vertices[i];
       double u;
-      here = ges.ge->mesh_vertices[i];
       here->getParameter(0, u);
       mesh1d.push_back(ges.ge->reparamOnFace(gf, u, 1));
       if(seam) mesh1d_seam.push_back(ges.ge->reparamOnFace(gf, u, -1));
     }
-    here = ges.ge->getEndVertex()->mesh_vertices[0];
     mesh1d.push_back(ges.ge->reparamOnFace(gf, range.high(), 1));
     if(seam) mesh1d_seam.push_back(ges.ge->reparamOnFace(gf, range.high(), -1));
     meshes.insert(std::pair<GEntity *, std::vector<SPoint2> >(ges.ge, mesh1d));
@@ -2481,8 +2478,10 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       for(std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
           itr != edgesNotRecovered.end(); ++itr)
         sstream << " " << itr->ge->tag() << "("
-                << itr->ge->getBeginVertex()->tag() << ","
-                << itr->ge->getEndVertex()->tag() << ")";
+                << (itr->ge->getBeginVertex() ?
+                    itr->ge->getBeginVertex()->tag() : -1) << ","
+                << (itr->ge->getEndVertex() ?
+                    itr->ge->getEndVertex()->tag() : -1) << ")";
       Msg::Info(":-( There are %d intersections in the 1D mesh (curves%s)",
                 edgesNotRecovered.size(), sstream.str().c_str());
     }

@@ -49,7 +49,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   if(model()->getOCCInternals()) model()->getOCCInternals()->bind(s, num);
 
   if(CTX::instance()->debugSurface > 0 &&
-     tag() == CTX::instance()->debugSurface) 
+     tag() == CTX::instance()->debugSurface)
     writeBREP("debugSurface.brep");
 }
 
@@ -89,7 +89,8 @@ void OCCFace::setup()
       else {
         l_wire.push_back(e);
         Msg::Debug("Edge %d (%d --> %d) ori %d", e->tag(),
-                   e->getBeginVertex()->tag(), e->getEndVertex()->tag(),
+                   e->getBeginVertex() ? e->getBeginVertex()->tag() : -1,
+                   e->getEndVertex() ? e->getEndVertex()->tag() : -1,
                    edge.Orientation());
         e->addFace(this);
         if(!e->is3D()) {

@@ -36,11 +36,11 @@ static void getDegeneratedVertices(GFace *gf, std::set<GEntity*> & degenerated)
 {
   degenerated.clear();
   const std::vector<GEdge *> &ed = gf->edges();
-  for (size_t i=0;i<ed.size();i++){
+  for (size_t i = 0; i < ed.size() ;i++){
     GEdge *e = ed[i];
-    if (e->getBeginVertex() == e->getEndVertex()){
+    if (e->getBeginVertex() && e->getBeginVertex() == e->getEndVertex()){
       if (e->geomType() == GEntity::Unknown){
-	degenerated.insert (e->getBeginVertex());
+	degenerated.insert(e->getBeginVertex());
       }
     }
   }

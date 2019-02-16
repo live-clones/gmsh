@@ -346,7 +346,7 @@ void OCCEdge::writeGEO(FILE *fp)
       center = Handle(Geom_Circle)::DownCast(curve)->Location();
     }
     // GEO supports only circle arcs < Pi
-    if(s1 - s0 < M_PI) {
+    if(s1 - s0 < M_PI && getBeginVertex() && getEndVertex()) {
       fprintf(fp, "p%d = newp;\n", tag());
       fprintf(fp, "Point(p%d + 1) = {%.16g, %.16g, %.16g};\n", tag(),
               center.X(), center.Y(), center.Z());

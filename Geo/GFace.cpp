@@ -284,12 +284,18 @@ SOrientedBoundingBox GFace::getOBB()
           vertices.push_back(mv->point());
         }
         // Don't forget to add the first and last vertices...
-        SPoint3 pt1((*ed)->getBeginVertex()->x(), (*ed)->getBeginVertex()->y(),
-                    (*ed)->getBeginVertex()->z());
-        SPoint3 pt2((*ed)->getEndVertex()->x(), (*ed)->getEndVertex()->y(),
-                    (*ed)->getEndVertex()->z());
-        vertices.push_back(pt1);
-        vertices.push_back(pt2);
+        if((*ed)->getBeginVertex()){
+          SPoint3 pt1((*ed)->getBeginVertex()->x(),
+                      (*ed)->getBeginVertex()->y(),
+                      (*ed)->getBeginVertex()->z());
+          vertices.push_back(pt1);
+        }
+        if((*ed)->getEndVertex()){
+          SPoint3 pt2((*ed)->getEndVertex()->x(),
+                      (*ed)->getEndVertex()->y(),
+                      (*ed)->getEndVertex()->z());
+          vertices.push_back(pt2);
+        }
       }
     }
     else if(buildSTLTriangulation()) {
@@ -1602,17 +1608,21 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
   for(eIter = l_edges.begin(); eIter != l_edges.end(); ++eIter) {
     GVertex *v0 = (*eIter)->getBeginVertex();
     GVertex *v1 = (*eIter)->getEndVertex();
-    l_vertices.insert(v0);
-    l_vertices.insert(v1);
-    l_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
+    if(v0 && v1){
+      l_vertices.insert(v0);
+      l_vertices.insert(v1);
+      l_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
+    }
   }
 
   for(eIter = embedded_edges.begin(); eIter != embedded_edges.end(); ++eIter) {
     GVertex *v0 = (*eIter)->getBeginVertex();
     GVertex *v1 = (*eIter)->getEndVertex();
-    l_vertices.insert(v0);
-    l_vertices.insert(v1);
-    l_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
+    if(v0 && v1){
+      l_vertices.insert(v0);
+      l_vertices.insert(v1);
+      l_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
+    }
   }
 
   l_vertices.insert(embedded_vertices.begin(), embedded_vertices.end());
@@ -1625,9 +1635,11 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
   for(eIter = m_edges.begin(); eIter != m_edges.end(); ++eIter) {
     GVertex *v0 = (*eIter)->getBeginVertex();
     GVertex *v1 = (*eIter)->getEndVertex();
-    m_vertices.insert(v0);
-    m_vertices.insert(v1);
-    m_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
+    if(v0 && v1){
+      m_vertices.insert(v0);
+      m_vertices.insert(v1);
+      m_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
+    }
   }
 
   std::vector<GEdge *> const &m_embedded_edges = master->embeddedEdges();
@@ -1636,9 +1648,11 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
       eIter++) {
     GVertex *v0 = (*eIter)->getBeginVertex();
     GVertex *v1 = (*eIter)->getEndVertex();
-    m_vertices.insert(v0);
-    m_vertices.insert(v1);
-    m_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
+    if(v0 && v1){
+      m_vertices.insert(v0);
+      m_vertices.insert(v1);
+      m_vtxToEdge[std::make_pair(v0, v1)] = (*eIter);
+    }
   }
 
   std::set<GVertex *, GEntityLessThan> m_embedded_vertices = master->embeddedVertices();
@@ -1852,13 +1866,16 @@ void GFace::setMeshMaster(GFace *master, const std::map<int, int> &edgeCopies)
     // master edge
     GEdge *me = master->model()->getEdgeByTag(abs(source_e));
 
-    if(source_e * sign > 0) {
-      vs2vt[me->getBeginVertex()] = le->getBeginVertex();
-      vs2vt[me->getEndVertex()] = le->getEndVertex();
-    }
-    else {
-      vs2vt[me->getBeginVertex()] = le->getEndVertex();
-      vs2vt[me->getEndVertex()] = le->getBeginVertex();
+    if(le->getBeginVertex() && le->getEndVertex() &&
+       me->getBeginVertex() && me->getEndVertex()){
+      if(source_e * sign > 0) {
+        vs2vt[me->getBeginVertex()] = le->getBeginVertex();
+        vs2vt[me->getEndVertex()] = le->getEndVertex();
+      }
+      else {
+        vs2vt[me->getBeginVertex()] = le->getEndVertex();
+        vs2vt[me->getEndVertex()] = le->getBeginVertex();
+      }
     }
   }
 

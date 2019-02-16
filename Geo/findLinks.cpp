@@ -44,6 +44,9 @@ static void recurFindLinkedEdges(int ed, List_T *edges, Tree_T *points,
     Msg::Error("Unknown curve %d", ed);
     return;
   }
+  if(!ge->getBeginVertex() || !ge->getEndVertex()){
+    return;
+  }
 
   int ip[2];
   ip[0] = ge->getBeginVertex()->tag();
@@ -77,9 +80,8 @@ static int createEdgeLinks(Tree_T *links)
   GModel *m = GModel::current();
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++) {
     GEdge *ge = *it;
-    ;
     if(!ge->getBeginVertex() || !ge->getEndVertex()) {
-      Msg::Error("Cannot link curves with no begin or end points");
+      Msg::Error("Cannot link curve %d with no begin or end point", ge->tag());
       return 0;
     }
     if(ge->tag() > 0) {
@@ -119,6 +121,10 @@ static void orientAndSortEdges(List_T *edges, Tree_T *links)
   if(!ge0) {
     Msg::Error("Unknown curve %d", abs(num));
     List_Delete(temp);
+    return;
+  }
+  if(!ge0->getBeginVertex() || !ge0->getEndVertex()) {
+    Msg::Error("Cannot orient curve %d with no begin or end point", ge0->tag());
     return;
   }
 
@@ -178,6 +184,10 @@ int allEdgesLinked(int ed, List_T *edges)
       Msg::Error("Unknown curve %d", abs(num));
       Tree_Delete(links, freeLink);
       Tree_Delete(points);
+      return 0;
+    }
+    if(!ge->getBeginVertex() || !ge->getEndVertex()) {
+      Msg::Error("Cannot link curve %d with no begin or end point", ge->tag());
       return 0;
     }
     int ip[2];

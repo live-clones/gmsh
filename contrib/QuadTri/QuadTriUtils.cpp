@@ -244,8 +244,10 @@ void QuadToTriInsertSourceEdgeVertices(GRegion *gr, MVertexRTree &pos_src_edge)
   std::vector<GEdge *>::const_iterator ite = edges.begin();
   for(ite = edges.begin(); ite != edges.end(); ite++) {
     pos_src_edge.insert((*ite)->mesh_vertices);
-    pos_src_edge.insert((*ite)->getBeginVertex()->mesh_vertices);
-    pos_src_edge.insert((*ite)->getEndVertex()->mesh_vertices);
+    if((*ite)->getBeginVertex())
+      pos_src_edge.insert((*ite)->getBeginVertex()->mesh_vertices);
+    if((*ite)->getEndVertex())
+      pos_src_edge.insert((*ite)->getEndVertex()->mesh_vertices);
   }
 }
 
@@ -257,8 +259,10 @@ void QuadToTriInsertFaceEdgeVertices(GFace *face, MVertexRTree &pos_edges)
   std::vector<GEdge *>::const_iterator ite = edges.begin();
   while(ite != edges.end()) {
     pos_edges.insert((*ite)->mesh_vertices);
-    pos_edges.insert((*ite)->getBeginVertex()->mesh_vertices);
-    pos_edges.insert((*ite)->getEndVertex()->mesh_vertices);
+    if((*ite)->getBeginVertex())
+      pos_edges.insert((*ite)->getBeginVertex()->mesh_vertices);
+    if((*ite)->getEndVertex())
+      pos_edges.insert((*ite)->getEndVertex()->mesh_vertices);
     ++ite;
   }
 }

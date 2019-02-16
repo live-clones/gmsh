@@ -946,11 +946,13 @@ public:
           _externals.empty() || ridge->getType() == blyr_ridge::EXTERNAL;
         if(create_vertices_on_edge) {
           double t = 0.0;
-          if(v == ge->getBeginVertex()->mesh_vertices[0]) {
+          if(ge->getBeginVertex() &&
+             v == ge->getBeginVertex()->mesh_vertices[0]) {
             SVector3 tgt = ge->firstDer(bounds.low());
             t = bounds.low() + thk / tgt.norm();
           }
-          else if(v == ge->getEndVertex()->mesh_vertices[0]) {
+          else if(ge->getEndVertex() &&
+                  v == ge->getEndVertex()->mesh_vertices[0]) {
             SVector3 tgt = ge->firstDer(bounds.high());
             t = bounds.high() - thk / tgt.norm();
           }

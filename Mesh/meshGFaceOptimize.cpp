@@ -1153,12 +1153,14 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
       if(!(*ite)->isMeshDegenerated()) {
         emb_edgeverts.insert(emb_edgeverts.end(), (*ite)->mesh_vertices.begin(),
                              (*ite)->mesh_vertices.end());
-        emb_edgeverts.insert(emb_edgeverts.end(),
-                             (*ite)->getBeginVertex()->mesh_vertices.begin(),
-                             (*ite)->getBeginVertex()->mesh_vertices.end());
-        emb_edgeverts.insert(emb_edgeverts.end(),
-                             (*ite)->getEndVertex()->mesh_vertices.begin(),
-                             (*ite)->getEndVertex()->mesh_vertices.end());
+        if((*ite)->getBeginVertex())
+          emb_edgeverts.insert(emb_edgeverts.end(),
+                               (*ite)->getBeginVertex()->mesh_vertices.begin(),
+                               (*ite)->getBeginVertex()->mesh_vertices.end());
+        if((*ite)->getEndVertex())
+          emb_edgeverts.insert(emb_edgeverts.end(),
+                               (*ite)->getEndVertex()->mesh_vertices.begin(),
+                               (*ite)->getEndVertex()->mesh_vertices.end());
       }
       ++ite;
     }
@@ -1173,12 +1175,14 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
           emb_edgeverts.insert(emb_edgeverts.end(),
                                (*ite)->mesh_vertices.begin(),
                                (*ite)->mesh_vertices.end());
-          emb_edgeverts.insert(emb_edgeverts.end(),
-                               (*ite)->getBeginVertex()->mesh_vertices.begin(),
-                               (*ite)->getBeginVertex()->mesh_vertices.end());
-          emb_edgeverts.insert(emb_edgeverts.end(),
-                               (*ite)->getEndVertex()->mesh_vertices.begin(),
-                               (*ite)->getEndVertex()->mesh_vertices.end());
+          if((*ite)->getBeginVertex())
+            emb_edgeverts.insert(emb_edgeverts.end(),
+                                 (*ite)->getBeginVertex()->mesh_vertices.begin(),
+                                 (*ite)->getBeginVertex()->mesh_vertices.end());
+          if((*ite)->getEndVertex())
+            emb_edgeverts.insert(emb_edgeverts.end(),
+                                 (*ite)->getEndVertex()->mesh_vertices.begin(),
+                                 (*ite)->getEndVertex()->mesh_vertices.end());
         }
       }
       ++ite;

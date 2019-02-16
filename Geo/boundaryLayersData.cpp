@@ -365,19 +365,21 @@ static void addColumnAtTheEndOfTheBL(GEdge *ge, GVertex *gv,
                                      BoundaryLayerField *blf)
 {
   if(!blf->isEdgeBL(ge->tag())) {
-    GVertex *g0 = ge->getBeginVertex();
-    GVertex *g1 = ge->getEndVertex();
-    MVertex *v0 = g0->mesh_vertices[0];
-    MVertex *v1 = g1->mesh_vertices[0];
     std::vector<MVertex *> invert;
     for(unsigned int i = 0; i < ge->mesh_vertices.size(); i++)
       invert.push_back(ge->mesh_vertices[ge->mesh_vertices.size() - i - 1]);
-    SVector3 t(v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z());
-    t.normalize();
-    if(g0 == gv)
-      _columns->addColumn(t, v0, ge->mesh_vertices);
-    else if(g1 == gv)
-      _columns->addColumn(t * -1.0, v1, invert);
+    GVertex *g0 = ge->getBeginVertex();
+    GVertex *g1 = ge->getEndVertex();
+    if(g0 && g1){
+      MVertex *v0 = g0->mesh_vertices[0];
+      MVertex *v1 = g1->mesh_vertices[0];
+      SVector3 t(v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z());
+      t.normalize();
+      if(g0 == gv)
+        _columns->addColumn(t, v0, ge->mesh_vertices);
+      else if(g1 == gv)
+        _columns->addColumn(t * -1.0, v1, invert);
+    }
   }
 }
 
@@ -394,15 +396,17 @@ void getLocalInfoAtNode(MVertex *v, BoundaryLayerField *blf, double &hwall)
     double t_end = bounds.high();
     double t;
     v->getParameter(0, t);
-    double hwall_beg = blf->hwall(ge->getBeginVertex()->tag());
-    double hwall_end = blf->hwall(ge->getEndVertex()->tag());
-    double x = (t - t_begin) / (t_end - t_begin);
-    double hwallLin = hwall_beg + x * (hwall_end - hwall_beg);
-    double hwall_mid = std::min(hwall_beg, hwall_end);
-    double hwallQuad = hwall_beg * (1 - x) * (1 - x) +
-                       hwall_mid * 2 * x * (1 - x) + hwall_end * x * x;
-    // we prefer a quadratic growing:
-    hwall = 0 * hwallLin + 1 * hwallQuad;
+    if(ge->getBeginVertex() && ge->getEndVertex()){
+      double hwall_beg = blf->hwall(ge->getBeginVertex()->tag());
+      double hwall_end = blf->hwall(ge->getEndVertex()->tag());
+      double x = (t - t_begin) / (t_end - t_begin);
+      double hwallLin = hwall_beg + x * (hwall_end - hwall_beg);
+      double hwall_mid = std::min(hwall_beg, hwall_end);
+      double hwallQuad = hwall_beg * (1 - x) * (1 - x) +
+        hwall_mid * 2 * x * (1 - x) + hwall_end * x * x;
+      // we prefer a quadratic growing:
+      hwall = 0 * hwallLin + 1 * hwallQuad;
+    }
   }
 }
 

@@ -691,7 +691,7 @@ void meshGEdge::operator()(GEdge *ge)
 
   GPoint beg_p, end_p;
   if(!ge->getBeginVertex() || !ge->getEndVertex()) {
-    Msg::Warning("Skipping curve with no begin or end vertex");
+    Msg::Warning("Skipping curve with no begin or end point");
     return;
   }
   else if(ge->getBeginVertex() == ge->getEndVertex() &&

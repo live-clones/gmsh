@@ -2643,13 +2643,17 @@ void BoundaryLayerField::setupFor1d(int iE)
   if(!found) {
     GEdge *ge = GModel::current()->getEdgeByTag(iE);
     GVertex *gv0 = ge->getBeginVertex();
-    found = std::find(nodes_id_saved.begin(), nodes_id_saved.end(),
-                      gv0->tag()) != nodes_id_saved.end();
-    if(found) nodes_id.push_back(gv0->tag());
+    if(gv0){
+      found = std::find(nodes_id_saved.begin(), nodes_id_saved.end(),
+                        gv0->tag()) != nodes_id_saved.end();
+      if(found) nodes_id.push_back(gv0->tag());
+    }
     GVertex *gv1 = ge->getEndVertex();
-    found = std::find(nodes_id_saved.begin(), nodes_id_saved.end(),
-                      gv1->tag()) != nodes_id_saved.end();
-    if(found) nodes_id.push_back(gv1->tag());
+    if(gv1){
+      found = std::find(nodes_id_saved.begin(), nodes_id_saved.end(),
+                        gv1->tag()) != nodes_id_saved.end();
+      if(found) nodes_id.push_back(gv1->tag());
+    }
   }
   removeAttractors();
 }
@@ -2711,8 +2715,10 @@ void BoundaryLayerField::setupFor2d(int iF)
     }
     if(isIn) {
       edges_id.push_back(iE);
-      nodes_id.push_back((*it)->getBeginVertex()->tag());
-      nodes_id.push_back((*it)->getEndVertex()->tag());
+      if((*it)->getBeginVertex())
+        nodes_id.push_back((*it)->getBeginVertex()->tag());
+      if((*it)->getEndVertex())
+        nodes_id.push_back((*it)->getEndVertex()->tag());
     }
   }
 

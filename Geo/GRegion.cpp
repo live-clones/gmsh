@@ -214,13 +214,18 @@ SOrientedBoundingBox GRegion::getOBB()
             vertices.push_back(mv->point());
           }
           // Don't forget to add the first and last vertices...
-          SPoint3 pt1((*ed)->getBeginVertex()->x(),
-                      (*ed)->getBeginVertex()->y(),
-                      (*ed)->getBeginVertex()->z());
-          SPoint3 pt2((*ed)->getEndVertex()->x(), (*ed)->getEndVertex()->y(),
-                      (*ed)->getEndVertex()->z());
-          vertices.push_back(pt1);
-          vertices.push_back(pt2);
+          if((*ed)->getBeginVertex()){
+            SPoint3 pt1((*ed)->getBeginVertex()->x(),
+                        (*ed)->getBeginVertex()->y(),
+                        (*ed)->getBeginVertex()->z());
+            vertices.push_back(pt1);
+          }
+          if((*ed)->getEndVertex()){
+            SPoint3 pt2((*ed)->getEndVertex()->x(),
+                        (*ed)->getEndVertex()->y(),
+                        (*ed)->getEndVertex()->z());
+            vertices.push_back(pt2);
+          }
         }
       }
       else if((*b_face)->buildSTLTriangulation()) {

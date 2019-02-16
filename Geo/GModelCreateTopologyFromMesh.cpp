@@ -31,7 +31,7 @@ bool topoExists(GModel *gm)
 {
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
     GEdge *ge = *it;
-    if(ge->getBeginVertex() == NULL && ge->getEndVertex() == NULL) return false;
+    if(!ge->getBeginVertex() || !ge->getEndVertex()) return false;
   }
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++) {
     GFace *gf = *it;
@@ -328,7 +328,7 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
   // we still need to check this is actually the case ...
 
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
-    if(!(*it)->getBeginVertex() && !(*it)->getEndVertex()) {
+    if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()) {
       num++;
       MVertex *v = (*it)->lines[0]->getVertex(0);
       discreteVertex *dv = new discreteVertex(

@@ -302,8 +302,10 @@ int MeshExtrudedSurface(
   std::vector<GEdge *>::const_iterator it = edges.begin();
   while(it != edges.end()) {
     pos.insert((*it)->mesh_vertices);
-    pos.insert((*it)->getBeginVertex()->mesh_vertices);
-    pos.insert((*it)->getEndVertex()->mesh_vertices);
+    if((*it)->getBeginVertex())
+      pos.insert((*it)->getBeginVertex()->mesh_vertices);
+    if((*it)->getEndVertex())
+      pos.insert((*it)->getEndVertex()->mesh_vertices);
     ++it;
   }
 

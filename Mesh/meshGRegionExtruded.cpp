@@ -233,8 +233,10 @@ static void insertAllVertices(GRegion *gr, MVertexRTree &pos)
     std::vector<GEdge *>::const_iterator ite = edges.begin();
     while(ite != edges.end()) {
       pos.insert((*ite)->mesh_vertices);
-      pos.insert((*ite)->getBeginVertex()->mesh_vertices);
-      pos.insert((*ite)->getEndVertex()->mesh_vertices);
+      if((*ite)->getBeginVertex())
+        pos.insert((*ite)->getBeginVertex()->mesh_vertices);
+      if((*ite)->getEndVertex())
+         pos.insert((*ite)->getEndVertex()->mesh_vertices);
       ++ite;
     }
     ++itf;

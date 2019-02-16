@@ -242,8 +242,8 @@ namespace BoundaryLayerCurver {
                          edge->getVertex(i)->getNum(), gedge->tag());
           }
           else if(gedge->periodic(0) &&
-                  edge->getVertex(i) ==
-                    gedge->getBeginVertex()->mesh_vertices[0]) {
+                  gedge->getBeginVertex() &&
+                  edge->getVertex(i) == gedge->getBeginVertex()->mesh_vertices[0]) {
             double u0 = gedge->getLowerBound();
             double un = gedge->getUpperBound();
             int k = (nVert == 2 ? 1 - i : (i == 0 ? 2 : nVert - 1));

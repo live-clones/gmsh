@@ -10,8 +10,12 @@
 
 void GEdgeSigned::print() const
 {
-  Msg::Info("Edge %d sign %d, ordered vertices %d,%d", ge->tag(),
-            _sign, getBeginVertex()->tag(), getEndVertex()->tag());
+  if(getBeginVertex() && getEndVertex())
+    Msg::Info("Curve %d sign %d, ordered nodes %d, %d", ge->tag(),
+              _sign, getBeginVertex()->tag(), getEndVertex()->tag());
+  else
+    Msg::Info("Curve %d sign %d, no begin or end nodes!", ge->tag(),
+              _sign);
 }
 
 int countInList(std::list<GEdge *> &wire, GEdge *ge)
@@ -108,16 +112,8 @@ static void loopTheLoop(std::list<GEdge *> &wire, std::list<GEdgeSigned> &loop,
     else
       ges = nextOne(prevOne, wire);
     if(ges.getSign() == 0) { // oops
-      if(0) {
-        Msg::Error("Something wrong in edge loop of size=%d, no sign !",
+      Msg::Warning("Something wrong in edge loop of size=%d, no sign!",
                    wire.size());
-        for(std::list<GEdge *>::iterator it = wire.begin(); it != wire.end();
-            it++) {
-          Msg::Error("GEdge=%d begin=%d end =%d", (*it)->tag(),
-                     (*it)->getBeginVertex()->tag(),
-                     (*it)->getEndVertex()->tag());
-        }
-      }
       break;
     }
     prevOne = &ges;
