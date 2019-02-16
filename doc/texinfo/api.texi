@@ -1323,8 +1323,9 @@ surfaces.
 @item classifySurfaces
 Classify ("color") the surface mesh based on the angle threshold @code{angle}
 (in radians), and create discrete curves accordingly. If @code{boundary} is set,
-also create discrete curves on the boundary if the surface is open. Warning:
-this is an experimental feature.
+also create discrete curves on the boundary if the surface is open.
+@code{classifySurfaces} calls @code{createTopology} if necessary. Warning: this
+is an experimental feature.
 
 @table @asis
 @item Input:
@@ -3135,7 +3136,19 @@ Write a @code{message}. @code{level} can be "info", "warning" or "error".
 @end table
 
 @item start
-Start logging messages in @code{log}.
+Start logging messages.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item get
+Get logged messages.
 
 @table @asis
 @item Input:

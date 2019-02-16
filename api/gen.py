@@ -325,7 +325,7 @@ mesh.add('removeDuplicateNodes',doc,None)
 doc = '''Split (into two triangles) all quadrangles in surface `tag' whose quality is lower than `quality'. If `tag' < 0, split quadrangles in all surfaces.'''
 mesh.add('splitQuadrangles',doc,None,idouble('quality','1.'),iint('tag','-1'))
 
-doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create discrete curves accordingly. If `boundary' is set, also create discrete curves on the boundary if the surface is open. Warning: this is an experimental feature.'''
+doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create discrete curves accordingly. If `boundary' is set, also create discrete curves on the boundary if the surface is open. `classifySurfaces' calls `createTopology' if necessary. Warning: this is an experimental feature.'''
 mesh.add('classifySurfaces',doc,None,idouble('angle'),ibool('boundary','true','True'))
 
 doc = '''Create a boundary representation from the mesh if the model does not have one (e.g. when imported from mesh file formats with no BRep representation of the underlying model). Warning: this is an experimental feature.'''
