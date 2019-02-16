@@ -38,6 +38,7 @@ static void replaceCommaByDot(const std::string &name)
   SystemCall(myCommand2, true);
 }
 
+#if defined(HAVE_POST)
 static bool getProperties(int num, int *indices, std::vector<double> &vec,
                           std::vector<double> &properties)
 {
@@ -51,6 +52,7 @@ static bool getProperties(int num, int *indices, std::vector<double> &vec,
   }
   return true;
 }
+#endif
 
 int GModel::readPLY(const std::string &name)
 {
