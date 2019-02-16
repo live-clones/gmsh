@@ -27,6 +27,8 @@
 #ifndef _MESH_OPTIMIZER_H_
 #define _MESH_OPTIMIZER_H_
 
+#include <vector>
+
 class GEntity;
 class MeshOptParameters;
 
