@@ -28,8 +28,10 @@
 #include <iterator>
 #include <stdio.h>
 #include <string.h>
+
 #include "GmshConfig.h"
 #include "HighOrderMeshOptimizer.h"
+#include "MeshOptimizer.h"
 #include "GModel.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -43,13 +45,12 @@
 #include "GEntity.h"
 #include "CADDistances.h"
 #include "MeshOptCommon.h"
-#include "MeshOptObjContribFunc.h"
-#include "MeshOptObjContrib.h"
-#include "MeshOptObjContribScaledNodeDispSq.h"
+#include "ObjContribFunc.h"
+#include "ObjContrib.h"
+#include "ObjContribScaledNodeDispSq.h"
 #include "ObjContribScaledJac.h"
 #include "ObjContribMetricMin.h"
 #include "ObjContribCADDist.h"
-#include "MeshOptimizer.h"
 
 void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
 {

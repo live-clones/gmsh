@@ -7,11 +7,13 @@ set(SRC
   MeshOptimizer.cpp
   MeshOpt.cpp
   MeshOptCommon.cpp
-  MeshOptPatch.cpp
-  MeshOptObjectiveFunction.cpp
-  MeshOptObjContrib.cpp
-  MeshOptObjContribFunc.cpp
-  MeshOptVertexCoord.cpp
+  Patch.cpp
+  ObjectiveFunction.cpp
+  ObjContrib.cpp
+  ObjContribFunc.cpp
+  VertexCoord.cpp
+  CADDistances.cpp
+  IntegralBoundaryDist.cpp
 )
 
 

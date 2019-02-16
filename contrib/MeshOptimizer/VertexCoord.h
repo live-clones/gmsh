@@ -24,8 +24,8 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-#ifndef _VERTEXCOORD_H_
-#define _VERTEXCOORD_H_
+#ifndef _VERTEX_COORD_H_
+#define _VERTEX_COORD_H_
 
 #include "SPoint3.h"
 #include "GEntity.h"

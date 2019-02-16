@@ -8,9 +8,7 @@ set(SRC
   HighOrderMeshElasticAnalogy.cpp
   HighOrderMeshFastCurving.cpp
   HighOrderMeshPeriodicity.cpp
-  IntegralBoundaryDist.cpp
   MetaEl.cpp
-  CADDistances.cpp
   BoundaryLayerCurver2D.cpp
   BoundaryLayerCurver3D.cpp
 )

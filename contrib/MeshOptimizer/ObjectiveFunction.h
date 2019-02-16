@@ -22,38 +22,34 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _MESHOPTOBJCONTRIB_H_
-#define _MESHOPTOBJCONTRIB_H_
+#ifndef _OBJECTIVE_FUNCTION_H_
+#define _OBJECTIVE_FUNCTION_H_
 
 #include <string>
+#include <vector>
 #include "ap.h"
-#include "MeshOptCommon.h"
 
+class ObjContrib;
 class Patch;
 
-class ObjContrib {
+class ObjectiveFunction
+  : public std::vector<ObjContrib *> // Contributions to objective function in
+                                     // each pass
+{
 public:
-  ObjContrib(std::string mesName, std::string name);
-  virtual ~ObjContrib() {}
-  virtual ObjContrib *copy() const = 0;
-  const double getMin() { return _min; }
-  const double getMax() { return _max; }
-  const std::string &getName() const { return _name; }
-  const std::string &getMeasureName() const { return _measureName; }
-  virtual void initialize(Patch *mesh) = 0;
-  virtual bool fail() = 0;
-  virtual bool addContrib(double &Obj, alglib::real_1d_array &gradObj) = 0;
-  virtual void updateParameters() = 0;
-  virtual bool targetReached() = 0;
-  virtual bool stagnated() = 0;
-  virtual void updateMinMax() = 0;
+  void initialize(Patch *mesh);
+  std::string contribNames();
+  std::string minMaxStr();
+  std::vector<std::pair<double, double> > minMax();
+  std::vector<std::string> names();
+  void updateMinMax();
+  void updateParameters();
   void updateResults();
-
-protected:
-  static const double BIGVAL;
-  ObjContrib *_parent;
-  std::string _measureName, _name;
-  double _min, _max;
+  bool stagnated();
+  bool targetReached();
+  std::string failMeasures();
+  std::string targetsNotReached();
+  bool compute(double &obj, alglib::real_1d_array &gradObj);
 };
 
-#endif /* _MESHOPTOBJCONTRIB_H_ */
+#endif

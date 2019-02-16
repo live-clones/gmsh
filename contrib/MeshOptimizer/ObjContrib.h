@@ -22,19 +22,38 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#include "MeshOptObjContrib.h"
-#include <algorithm>
+#ifndef _OBJ_CONTRIB_H_
+#define _OBJ_CONTRIB_H_
 
-const double ObjContrib::BIGVAL = 1.e300;
+#include <string>
+#include "ap.h"
+#include "MeshOptCommon.h"
 
-ObjContrib::ObjContrib(std::string mesName, std::string name)
-  : _parent(this), _min(BIGVAL), _max(-BIGVAL), _measureName(mesName),
-    _name(name)
-{
-}
+class Patch;
 
-void ObjContrib::updateResults()
-{
-  _parent->_min = std::min(_parent->_min, _min);
-  _parent->_max = std::max(_parent->_max, _max);
-}
+class ObjContrib {
+public:
+  ObjContrib(std::string mesName, std::string name);
+  virtual ~ObjContrib() {}
+  virtual ObjContrib *copy() const = 0;
+  const double getMin() { return _min; }
+  const double getMax() { return _max; }
+  const std::string &getName() const { return _name; }
+  const std::string &getMeasureName() const { return _measureName; }
+  virtual void initialize(Patch *mesh) = 0;
+  virtual bool fail() = 0;
+  virtual bool addContrib(double &Obj, alglib::real_1d_array &gradObj) = 0;
+  virtual void updateParameters() = 0;
+  virtual bool targetReached() = 0;
+  virtual bool stagnated() = 0;
+  virtual void updateMinMax() = 0;
+  void updateResults();
+
+protected:
+  static const double BIGVAL;
+  ObjContrib *_parent;
+  std::string _measureName, _name;
+  double _min, _max;
+};
+
+#endif

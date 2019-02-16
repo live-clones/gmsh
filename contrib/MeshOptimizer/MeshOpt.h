@@ -24,8 +24,8 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-#ifndef _MESHOPT_H_
-#define _MESHOPT_H_
+#ifndef _MESH_OPT_H_
+#define _MESH_OPT_H_
 
 #include <iostream>
 #include <fstream>
@@ -33,8 +33,8 @@
 #include <math.h>
 #include <map>
 #include <set>
-#include "MeshOptObjectiveFunction.h"
-#include "MeshOptPatch.h"
+#include "ObjectiveFunction.h"
+#include "Patch.h"
 #include "GmshConfig.h"
 
 #if defined(HAVE_BFGS)

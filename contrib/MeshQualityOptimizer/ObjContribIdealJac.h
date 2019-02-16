@@ -22,11 +22,11 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _MESHQUALITYOBJCONTRIBIDEALJAC_H_
-#define _MESHQUALITYOBJCONTRIBIDEALJAC_H_
+#ifndef _OBJ_CONTRIB_IDEAL_JAC_H_
+#define _OBJ_CONTRIB_IDEAL_JAC_H_
 
-#include "MeshOptPatch.h"
-#include "MeshOptObjContrib.h"
+#include "Patch.h"
+#include "ObjContrib.h"
 
 template <class FuncType>
 class ObjContribIdealJac
@@ -114,4 +114,4 @@ template <class FuncType> void ObjContribIdealJac<FuncType>::updateMinMax()
   }
 }
 
-#endif /* _MESHQUALITYOBJCONTRIBIDEALJAC_H_ */
+#endif

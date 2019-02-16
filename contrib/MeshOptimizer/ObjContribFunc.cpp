@@ -24,7 +24,7 @@
 
 #include <cmath>
 #include "GmshMessage.h"
-#include "MeshOptObjContribFunc.h"
+#include "ObjContribFunc.h"
 
 const double ObjContribFuncSimpleTargetMax::STAGTHRESHOLD = 0.01;
 

@@ -24,8 +24,8 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-#ifndef _MESHOPTIMIZER_H_
-#define _MESHOPTIMIZER_H_
+#ifndef _MESH_OPTIMIZER_H_
+#define _MESH_OPTIMIZER_H_
 
 class GEntity;
 class MeshOptParameters;

@@ -24,8 +24,8 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-#ifndef _OPTHOMRUN_H_
-#define _OPTHOMRUN_H_
+#ifndef _HIGH_ORDER_MESH_OPTIMIZER_H_
+#define _HIGH_ORDER_MESH_OPTIMIZER_H_
 
 class GModel;
 class GEntity;

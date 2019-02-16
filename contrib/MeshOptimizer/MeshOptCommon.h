@@ -24,8 +24,8 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-#ifndef _MESHOPTCOMMON_H_
-#define _MESHOPTCOMMON_H_
+#ifndef _MESH_OPT_COMMON_H_
+#define _MESH_OPT_COMMON_H_
 
 #include <vector>
 #include "GmshMessage.h"

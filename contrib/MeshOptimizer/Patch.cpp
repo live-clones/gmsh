@@ -35,7 +35,7 @@
 #include "IntegralBoundaryDist.h"
 #include "CADDistances.h"
 #include "qualityMeasures.h"
-#include "MeshOptPatch.h"
+#include "Patch.h"
 
 Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
              const std::map<MElement *, GEntity *> &bndEl2Ent,

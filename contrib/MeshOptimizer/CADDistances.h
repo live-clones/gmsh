@@ -1,4 +1,4 @@
-// HighOrderMeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
+// MeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -22,8 +22,8 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _CADDISTANCES_H_
-#define _CADDISTANCES_H_
+#ifndef _CAD_DISTANCES_H_
+#define _CAD_DISTANCES_H_
 
 #include "fullMatrix.h"
 #include <vector>
@@ -69,4 +69,4 @@ double distanceToGeometry(GModel *gm, int dim, int tag,
                           int meshDiscr = CADDIST_DECASTELJAU,
                           int geomDiscr = CADDIST_DECASTELJAU);
 
-#endif /* _CADDISTANCES_H_ */
+#endif

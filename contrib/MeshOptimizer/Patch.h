@@ -24,15 +24,15 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-#ifndef _MESHOPTPATCH_H_
-#define _MESHOPTPATCH_H_
+#ifndef _PATCH_H_
+#define _PATCH_H_
 
 #include <vector>
 #include <map>
 #include <set>
 #include "fullMatrix.h"
 #include "SPoint3.h"
-#include "MeshOptVertexCoord.h"
+#include "VertexCoord.h"
 
 class GEntity;
 class MVertex;

@@ -31,7 +31,7 @@
 #include "GEdge.h"
 #include "MVertex.h"
 #include "MLine.h"
-#include "MeshOptVertexCoord.h"
+#include "VertexCoord.h"
 
 SPoint3 VertexCoordParent::getUvw(MVertex *vert) const
 {

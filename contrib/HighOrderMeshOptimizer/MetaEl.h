@@ -80,4 +80,4 @@ private:
                        std::vector<SVector3> &baseNorm);
 };
 
-#endif // _METAEL_H_
+#endif

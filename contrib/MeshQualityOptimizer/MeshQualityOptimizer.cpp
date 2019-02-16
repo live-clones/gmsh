@@ -30,14 +30,14 @@
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "qualityMeasures.h"
-#include "MeshOptCommon.h"
-#include "MeshOptObjContribFunc.h"
-#include "MeshOptObjContrib.h"
-#include "MeshOptObjContribScaledNodeDispSq.h"
-#include "MeshQualityObjContribIdealJac.h"
-#include "MeshQualityObjContribInvCond.h"
 #include "MeshOptimizer.h"
 #include "MeshQualityOptimizer.h"
+#include "MeshOptCommon.h"
+#include "ObjContribFunc.h"
+#include "ObjContrib.h"
+#include "ObjContribScaledNodeDispSq.h"
+#include "ObjContribIdealJac.h"
+#include "ObjContribInvCond.h"
 
 struct QualPatchDefParameters : public MeshOptPatchDef {
   QualPatchDefParameters(const MeshQualOptParameters &p);

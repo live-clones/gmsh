@@ -22,11 +22,11 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _MESHOPTOBJCONTRIBSCALEDNODEDISPSQ_H_
-#define _MESHOPTOBJCONTRIBSCALEDNODEDISPSQ_H_
+#ifndef _OBJ_CONTRIB_SCALED_NODE_DISP_SQ_H_
+#define _OBJ_CONTRIB_SCALED_NODE_DISP_SQ_H_
 
-#include "MeshOptPatch.h"
-#include "MeshOptObjContrib.h"
+#include "Patch.h"
+#include "ObjContrib.h"
 
 template <class FuncType>
 class ObjContribScaledNodeDispSq
@@ -109,4 +109,4 @@ void ObjContribScaledNodeDispSq<FuncType>::updateMinMax()
   }
 }
 
-#endif /* _MESHOPTOBJCONTRIBSCALEDNODEDISPSQ_H_ */
+#endif

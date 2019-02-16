@@ -22,34 +22,19 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _MESHOPTOBJECTIVEFUNCTION_H_
-#define _MESHOPTOBJECTIVEFUNCTION_H_
+#include <algorithm>
+#include "ObjContrib.h"
 
-#include <string>
-#include <vector>
-#include "ap.h"
+const double ObjContrib::BIGVAL = 1.e300;
 
-class ObjContrib;
-class Patch;
-
-class ObjectiveFunction
-  : public std::vector<ObjContrib *> // Contributions to objective function in
-                                     // each pass
+ObjContrib::ObjContrib(std::string mesName, std::string name)
+  : _parent(this), _min(BIGVAL), _max(-BIGVAL), _measureName(mesName),
+    _name(name)
 {
-public:
-  void initialize(Patch *mesh);
-  std::string contribNames();
-  std::string minMaxStr();
-  std::vector<std::pair<double, double> > minMax();
-  std::vector<std::string> names();
-  void updateMinMax();
-  void updateParameters();
-  void updateResults();
-  bool stagnated();
-  bool targetReached();
-  std::string failMeasures();
-  std::string targetsNotReached();
-  bool compute(double &obj, alglib::real_1d_array &gradObj);
-};
+}
 
-#endif /* _MESHOPTOBJECTIVEFUNCTION_H_ */
+void ObjContrib::updateResults()
+{
+  _parent->_min = std::min(_parent->_min, _min);
+  _parent->_max = std::max(_parent->_max, _max);
+}

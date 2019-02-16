@@ -22,8 +22,8 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _MESHOPTOBJCONTRIBFUNC_H_
-#define _MESHOPTOBJCONTRIBFUNC_H_
+#ifndef _OBJ_CONTRIB_FUNC_H_
+#define _OBJ_CONTRIB_FUNC_H_
 
 #include <string>
 
@@ -209,4 +209,4 @@ inline double ObjContribFuncBarrierFixMinMovMax::computeDiff(double v)
     return -1e300;
 }
 
-#endif /* _MESHOPTOBJCONTRIBFUNC_H_ */
+#endif

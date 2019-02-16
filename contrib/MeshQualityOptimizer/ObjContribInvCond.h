@@ -22,11 +22,11 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _MESHQUALITYOBJCONTRIBINVCOND_H_
-#define _MESHQUALITYOBJCONTRIBINVCOND_H_
+#ifndef _OBJ_CONTRIB_INV_COND_H_
+#define _OBJ_CONTRIB_INV_COND_H_
 
-#include "MeshOptPatch.h"
-#include "MeshOptObjContrib.h"
+#include "Patch.h"
+#include "ObjContrib.h"
 
 template <class FuncType>
 class ObjContribInvCondNum
@@ -116,4 +116,4 @@ template <class FuncType> void ObjContribInvCondNum<FuncType>::updateMinMax()
   }
 }
 
-#endif /* _MESHQUALITYOBJCONTRIBINVCOND_H_ */
+#endif

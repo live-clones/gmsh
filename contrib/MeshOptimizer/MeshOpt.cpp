@@ -29,8 +29,8 @@
 #include <algorithm>
 #include "GmshMessage.h"
 #include "GmshConfig.h"
-#include "MeshOptObjContrib.h"
-#include "MeshOptObjectiveFunction.h"
+#include "ObjContrib.h"
+#include "ObjectiveFunction.h"
 #include "MeshOptCommon.h"
 #include "MeshOpt.h"
 

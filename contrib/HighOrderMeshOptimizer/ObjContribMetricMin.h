@@ -22,11 +22,11 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _OBJCONTRIBMETRICMIN_H_
-#define _OBJCONTRIBMETRICMIN_H_
+#ifndef _OBJ_CONTRIB_METRIC_MIN_H_
+#define _OBJ_CONTRIB_METRIC_MIN_H_
 
-#include "MeshOptPatch.h"
-#include "MeshOptObjContrib.h"
+#include "Patch.h"
+#include "ObjContrib.h"
 
 template <class FuncType>
 class ObjContribMetricMin

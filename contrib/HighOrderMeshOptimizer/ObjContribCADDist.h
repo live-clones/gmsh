@@ -22,10 +22,10 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _OBJCONTRIBCADDIST_H_
-#define _OBJCONTRIBCADDIST_H_
+#ifndef _OBJ_CONTRIB_CAD_DIST_H_
+#define _OBJ_CONTRIB_CAD_DIST_H_
 
-#include "MeshOptObjContrib.h"
+#include "ObjContrib.h"
 
 template <class FuncType>
 class ObjContribCADDistSq

@@ -25,8 +25,8 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
-#include "MeshOptObjContrib.h"
-#include "MeshOptObjectiveFunction.h"
+#include "ObjContrib.h"
+#include "ObjectiveFunction.h"
 
 void ObjectiveFunction::initialize(Patch *mesh)
 {
