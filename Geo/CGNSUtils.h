@@ -23,6 +23,14 @@
 #include "MFaceHash.h"
 #include "GmshMessage.h"
 
+// FIXME: This code is faaaar too complicated for what it does - as is the whole
+// CGNS mess. Until we rewrite this whole thing, let's quiet GCC about the
+// reinterpret_casts dereferencing type-punned pointer, which will break
+// strict-aliasing rules:
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+
 /*******************************************************************************
  *
  * This lightweight pool class attempts to reduce memory usage by having the
@@ -551,6 +559,7 @@ namespace CCon // "Custom Container"
 
 } // End of namespace CCon
 
+#pragma GCC diagnostic pop
 
 /*******************************************************************************
  *
