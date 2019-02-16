@@ -382,7 +382,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
       bool ok = true;
       for(int k = 0; k < numNodPerEle; k++) {
         int idx = conn[numNodPerEle * j + med2mshNodeIndex(type, k)] - 1;
-        if(idx < 0 || idx > verts.size() - 1) {
+        if(idx < 0 || idx > (int)verts.size() - 1) {
           Msg::Error("Wrong node index %d in MED file", idx);
           ok = false;
         }
@@ -513,7 +513,7 @@ static void fillElementsMED(med_int family, std::vector<T *> &elements,
   }
   for(unsigned int i = 0; i < elements.size(); i++) {
     elements[i]->setVolumePositive();
-    for(int j = 0; j < elements[i]->getNumVertices(); j++)
+    for(unsigned int j = 0; j < elements[i]->getNumVertices(); j++)
       conn.push_back(
         elements[i]->getVertex(med2mshNodeIndex(type, j))->getIndex());
     fam.push_back(family);
