@@ -298,7 +298,7 @@ public:
         MLine *l = ge->lines[j];
         MVertex *l0 = l->getVertex(0);
         MVertex *l1 = l->getVertex(1);
-        MVertex *op0 = 0, *op1 = 0;
+        MVertex *op1 = 0;
         SVector3 N[2];
         std::set<blyr_mvertex>::iterator it = _vertices.find(l->getVertex(0));
         for(size_t k = 0; k < it->_triangles.size(); k++) {
@@ -309,7 +309,6 @@ public:
           if((v0 == l0 && v1 == l1) || (v0 == l1 && v1 == l0)) {
             if(gf == f0) {
               N[0] = it->_normals[k];
-              op0 = v2;
             }
             if(gf == f1) {
               N[1] = it->_normals[k];
@@ -319,7 +318,6 @@ public:
           if((v0 == l0 && v2 == l1) || (v0 == l1 && v2 == l0)) {
             if(gf == f0) {
               N[0] = it->_normals[k];
-              op0 = v1;
             }
             if(gf == f1) {
               N[1] = it->_normals[k];
@@ -329,7 +327,6 @@ public:
           if((v1 == l0 && v2 == l1) || (v1 == l1 && v2 == l0)) {
             if(gf == f0) {
               N[0] = it->_normals[k];
-              op0 = v0;
             }
             if(gf == f1) {
               N[1] = it->_normals[k];
@@ -1243,7 +1240,7 @@ public:
 
           //	  printf("%d %d %d\n",fan0.size(),fan1.size(),r._N_SUBNORMALS);
           if(fan0.size() == r._N_SUBNORMALS && fan1.size() == r._N_SUBNORMALS) {
-            for(int k = 0; k <= r._N_SUBNORMALS; k++) {
+            for(unsigned int k = 0; k <= r._N_SUBNORMALS; k++) {
               MVertex *v00 = (k == 0 ? o00 : fan0[k - 1]);
               MVertex *v10 = (k == 0 ? o10 : fan1[k - 1]);
               MVertex *v01 = (k == r._N_SUBNORMALS ? o01 : fan0[k]);
