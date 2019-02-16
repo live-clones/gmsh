@@ -93,9 +93,9 @@ struct F_Lc {
     double t_begin = bounds.low();
     double t_end = bounds.high();
     double lc_here;
-    if(t == t_begin)
+    if(t == t_begin && ge->getBeginVertex())
       lc_here = BGM_MeshSize(ge->getBeginVertex(), t, 0, p.x(), p.y(), p.z());
-    else if(t == t_end)
+    else if(t == t_end && ge->getEndVertex())
       lc_here = BGM_MeshSize(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
     else
       lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
@@ -114,9 +114,9 @@ struct F_Lc_aniso {
     double t_begin = bounds.low();
     double t_end = bounds.high();
 
-    if(t == t_begin)
+    if(t == t_begin && ge->getBeginVertex())
       lc_here = BGM_MeshMetric(ge->getBeginVertex(), t, 0, p.x(), p.y(), p.z());
-    else if(t == t_end)
+    else if(t == t_end && ge->getEndVertex())
       lc_here = BGM_MeshMetric(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
     else
       lc_here = BGM_MeshMetric(ge, t, 0, p.x(), p.y(), p.z());
@@ -275,6 +275,12 @@ static double Integration(GEdge *ge, double t1, double t2, function f,
 
 void copyMesh(GEdge *from, GEdge *to, int direction)
 {
+  if(!from->getBeginVertex() || !from->getEndVertex() ||
+     !to->getBeginVertex() || !to->getEndVertex()){
+    Msg::Error("Cannot copy mesh on curves without begin/end points");
+    return;
+  }
+
   Range<double> u_bounds = from->parBounds(0);
   double u_min = u_bounds.low();
   double u_max = u_bounds.high();
@@ -357,7 +363,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
 {
   if(ge->mesh_vertices.empty()) return;
   if(ge->meshAttributes.method == MESH_TRANSFINITE) return;
-  // if(ge->mesh_vertices.size() <= 3) return;
+
   bool forceOdd = false;
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
@@ -366,6 +372,8 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
       forceOdd = true;
     }
   }
+
+  if(!ge->getBeginVertex() || !ge->getEndVertex()) return;
 
   MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
   std::vector<std::pair<double, MVertex *> > lengths;
@@ -431,6 +439,8 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
 static void createPoints(GVertex *gv, GEdge *ge, BoundaryLayerField *blf,
                          std::vector<MVertex *> &v, const SVector3 &dir)
 {
+  if(!ge->getBeginVertex() || !ge->getEndVertex()) return;
+
   const double hwall = blf->hwall(gv->tag());
   double L = hwall;
   double LEdge = distance(ge->getBeginVertex()->mesh_vertices[0],
@@ -461,6 +471,8 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
   int n = fields->getNumBoundaryLayerFields();
 
   if(n == 0) return;
+
+  if(!ge->getBeginVertex() || !ge->getEndVertex()) return;
 
   // Check if edge is a BL edge
   for(int i = 0; i < n; ++i) {
@@ -678,8 +690,8 @@ void meshGEdge::operator()(GEdge *ge)
   std::vector<MVertex *> &mesh_vertices = ge->mesh_vertices;
 
   GPoint beg_p, end_p;
-  if(!ge->getBeginVertex() && !ge->getEndVertex()) {
-    Msg::Warning("Skipping curve with no begin nor end vertex");
+  if(!ge->getBeginVertex() || !ge->getEndVertex()) {
+    Msg::Warning("Skipping curve with no begin or end vertex");
     return;
   }
   else if(ge->getBeginVertex() == ge->getEndVertex() &&

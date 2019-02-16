@@ -98,7 +98,7 @@ std::vector<GEdge *> ensureSimplyConnectedEdge(GEdge *ge)
 
   if(_parts.size() <= 1) return _all;
 
-  Msg::Info("Edge %d is not simply connected: splitting it in %d parts",
+  Msg::Info("Curve %d is not simply connected: splitting it in %d parts",
             ge->tag(), _parts.size());
 
   for(size_t i = 0; i < _parts.size(); i++) {
@@ -185,7 +185,7 @@ void ensureManifoldFace(GFace *gf)
     _sub.push_back(_f);
   }
 
-  Msg::Info("Face %d is non-manifold: splitting it in %d parts", gf->tag(),
+  Msg::Info("Surface %d is non-manifold: splitting it in %d parts", gf->tag(),
             _sub.size());
 
   for(unsigned int i = 0; i < _sub.size(); i++) {
