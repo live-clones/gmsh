@@ -11,10 +11,10 @@
 void GEdgeSigned::print() const
 {
   if(getBeginVertex() && getEndVertex())
-    Msg::Info("Curve %d sign %d, ordered nodes %d, %d", ge->tag(),
+    Msg::Info("Curve %d sign %d, ordered points %d, %d", ge->tag(),
               _sign, getBeginVertex()->tag(), getEndVertex()->tag());
   else
-    Msg::Info("Curve %d sign %d, no begin or end nodes!", ge->tag(),
+    Msg::Info("Curve %d sign %d, no begin or end points", ge->tag(),
               _sign);
 }
 
