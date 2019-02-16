@@ -84,13 +84,16 @@ void discreteEdge::orderMLines()
     MVertex *v11 = lines[i]->getVertex(1);
     mesh_vertices.push_back(v11);
   }
-  GVertex *g0 = static_cast<GVertex *>(lines[0]->getVertex(0)->onWhat());
-  if(!g0) Msg::Error("Discrete curve with non consecutive elements");
-  GVertex *g1 =
-    static_cast<GVertex *>(lines[lines.size() - 1]->getVertex(1)->onWhat());
-  if(!g1) Msg::Error("Discrete curve with non consecutive elements");
-  setBeginVertex(g0);
-  setEndVertex(g1);
+  if(lines.empty()){
+    Msg::Error("No line elements in discrete curve %d", tag());
+    return;
+  }
+  GVertex *g0 = dynamic_cast<GVertex *>(lines[0]->getVertex(0)->onWhat());
+  if(g0) setBeginVertex(g0);
+  GVertex *g1 = dynamic_cast<GVertex *>(lines[lines.size() - 1]->getVertex(1)->onWhat());
+  if(g1) setEndVertex(g1);
+  if(!g0 || !g1)
+    Msg::Error("Discrete curve %d has non consecutive line elements", tag());
 }
 
 bool discreteEdge::getLocalParameter(const double &t, int &iLine,
@@ -165,7 +168,9 @@ void discreteEdge::createGeometry()
   if(discrete_lines.empty()) {
     orderMLines();
 
-    bool reverse = lines[0]->getVertex(0) == getEndVertex()->mesh_vertices[0];
+    bool reverse = false;
+    if(getEndVertex())
+      reverse = (lines[0]->getVertex(0) == getEndVertex()->mesh_vertices[0]);
 
     std::map<MVertex *, MVertex *> old2new;
 
