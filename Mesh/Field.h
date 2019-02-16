@@ -181,6 +181,7 @@ private:
   std::list<double> hwall_n_nodes;
   std::list<int> nodes_id, edges_id;
   std::list<int> edges_id_saved, nodes_id_saved, fan_nodes_id;
+  std::list<int> excluded_faces_id;
   void operator()(DistanceField *cc, double dist, double x, double y, double z,
                   SMetric3 &metr, GEntity *ge);
 

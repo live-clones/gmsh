@@ -6,11 +6,11 @@ Compute the distance from the nearest node in a list. It can also be used to com
 Options:@*
 @table @code
 @item EdgesList
-Indices of curves in the geometric model@*
+Tags of curves in the geometric model@*
 type: list@*
 default value: @code{@{@}}
 @item FacesList
-Indices of surfaces in the geometric model (Warning, this feature is still experimental. It might (read: will probably) give wrong results for complex surfaces)@*
+Tags of surfaces in the geometric model (Warning, this feature is still experimental. It might (read: will probably) give wrong results for complex surfaces)@*
 type: list@*
 default value: @code{@{@}}
 @item FieldX
@@ -30,7 +30,7 @@ Number of nodes used to discretized each curve@*
 type: integer@*
 default value: @code{20}
 @item NodesList
-Indices of nodes in the geometric model@*
+Tags of points in the geometric model@*
 type: list@*
 default value: @code{@{@}}
 @end table
@@ -40,7 +40,7 @@ Compute the distance from the nearest curve in a list. Then the mesh size can be
 Options:@*
 @table @code
 @item EdgesList
-Indices of curves in the geometric model@*
+Tags of curves in the geometric model@*
 type: list@*
 default value: @code{@{@}}
 @item NNodesByEdge
@@ -115,11 +115,15 @@ Threshold angle for creating a mesh fan in the boundary layer@*
 type: float@*
 default value: @code{10000000000}
 @item EdgesList
-Indices of curves in the geometric model for which a boundary layer is needed@*
+Tags of curves in the geometric model for which a boundary layer is needed@*
+type: list@*
+default value: @code{@{@}}
+@item ExcludedFaceList
+Tags of surfaces in the geometric model where the boundary layer should not be applied@*
 type: list@*
 default value: @code{@{@}}
 @item FanNodesList
-Indices of vertices in the geometric model for which a fan is created@*
+Tags of points in the geometric model for which a fan is created@*
 type: list@*
 default value: @code{@{@}}
 @item IntersectMetrics
@@ -127,7 +131,7 @@ Intersect metrics of all faces@*
 type: integer@*
 default value: @code{0}
 @item NodesList
-Indices of vertices in the geometric model for which a BL ends@*
+Tags of points in the geometric model for which a boundary layer ends@*
 type: list@*
 default value: @code{@{@}}
 @item Quads
@@ -265,11 +269,11 @@ Compute the distance from the nearest node in a list. It can also be used to com
 Options:@*
 @table @code
 @item EdgesList
-Indices of curves in the geometric model@*
+Tags of curves in the geometric model@*
 type: list@*
 default value: @code{@{@}}
 @item FacesList
-Indices of surfaces in the geometric model (Warning, this feature is still experimental. It might (read: will probably) give wrong results for complex surfaces)@*
+Tags of surfaces in the geometric model (Warning, this feature is still experimental. It might (read: will probably) give wrong results for complex surfaces)@*
 type: list@*
 default value: @code{@{@}}
 @item FieldX
@@ -289,7 +293,7 @@ Number of nodes used to discretized each curve@*
 type: integer@*
 default value: @code{20}
 @item NodesList
-Indices of nodes in the geometric model@*
+Tags of points in the geometric model@*
 type: list@*
 default value: @code{@{@}}
 @end table
@@ -661,11 +665,11 @@ Restrict the application of a field to a given list of geometrical points, curve
 Options:@*
 @table @code
 @item EdgesList
-Curve indices@*
+Curve tags@*
 type: list@*
 default value: @code{@{@}}
 @item FacesList
-Surface indices@*
+Surface tags@*
 type: list@*
 default value: @code{@{@}}
 @item IField
@@ -673,11 +677,11 @@ Field index@*
 type: integer@*
 default value: @code{1}
 @item RegionsList
-Volume indices@*
+Volume tags@*
 type: list@*
 default value: @code{@{@}}
 @item VerticesList
-Point indices@*
+Point tags@*
 type: list@*
 default value: @code{@{@}}
 @end table

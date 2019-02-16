@@ -1759,10 +1759,10 @@ public:
   {
     iField = 1;
     options["IField"] = new FieldOptionInt(iField, "Field index");
-    options["VerticesList"] = new FieldOptionList(vertices, "Point indices");
-    options["EdgesList"] = new FieldOptionList(edges, "Curve indices");
-    options["FacesList"] = new FieldOptionList(faces, "Surface indices");
-    options["RegionsList"] = new FieldOptionList(regions, "Volume indices");
+    options["VerticesList"] = new FieldOptionList(vertices, "Point tags");
+    options["EdgesList"] = new FieldOptionList(edges, "Curve tags");
+    options["FacesList"] = new FieldOptionList(faces, "Surface tags");
+    options["RegionsList"] = new FieldOptionList(regions, "Volume tags");
   }
   std::string getDescription()
   {
@@ -1824,7 +1824,7 @@ public:
     lMaxNormal = 0.5;
     lMaxTangent = 0.5;
     options["EdgesList"] = new FieldOptionList(
-      edges_id, "Indices of curves in the geometric model", &update_needed);
+      edges_id, "Tags of curves in the geometric model", &update_needed);
     options["NNodesByEdge"] = new FieldOptionInt(
       n_nodes_by_edge, "Number of nodes used to discretized each curve",
       &update_needed);
@@ -1973,15 +1973,15 @@ public:
     dist = new ANNdist[1];
     n_nodes_by_edge = 20;
     options["NodesList"] = new FieldOptionList(
-      nodes_id, "Indices of nodes in the geometric model", &update_needed);
+      nodes_id, "Tags of points in the geometric model", &update_needed);
     options["EdgesList"] = new FieldOptionList(
-      edges_id, "Indices of curves in the geometric model", &update_needed);
+      edges_id, "Tags of curves in the geometric model", &update_needed);
     options["NNodesByEdge"] = new FieldOptionInt(
       n_nodes_by_edge, "Number of nodes used to discretized each curve",
       &update_needed);
     options["FacesList"] = new FieldOptionList(
       faces_id,
-      "Indices of surfaces in the geometric model (Warning, this feature "
+      "Tags of surfaces in the geometric model (Warning, this feature "
       "is still experimental. It might (read: will probably) give wrong "
       "results "
       "for complex surfaces)",
@@ -2424,15 +2424,15 @@ public:
   {
     n_nodes_by_edge = 20;
     options["NodesList"] = new FieldOptionList(
-      nodes_id, "Indices of nodes in the geometric model", &update_needed);
+      nodes_id, "Tags of points in the geometric model", &update_needed);
     options["EdgesList"] = new FieldOptionList(
-      edges_id, "Indices of curves in the geometric model", &update_needed);
+      edges_id, "Tags of curves in the geometric model", &update_needed);
     options["NNodesByEdge"] = new FieldOptionInt(
       n_nodes_by_edge, "Number of nodes used to discretized each curve",
       &update_needed);
     options["FacesList"] = new FieldOptionList(
       faces_id,
-      "Indices of surfaces in the geometric model (Warning, this feature "
+      "Tags of surfaces in the geometric model (Warning, this feature "
       "is still experimental. It might (read: will probably) give wrong "
       "results "
       "for complex surfaces)",
@@ -2586,39 +2586,36 @@ BoundaryLayerField::BoundaryLayerField()
   tgt_aniso_ratio = 1.e10;
   iRecombine = 0;
   iIntersect = 0;
-  options["EdgesList"] = new FieldOptionList(
-    edges_id,
-    "Indices of curves in the geometric model for which a boundary "
-    "layer is needed",
-    &update_needed);
-  options["FanNodesList"] = new FieldOptionList(
-    fan_nodes_id,
-    "Indices of vertices in the geometric model for which a fan "
-    "is created",
-    &update_needed);
-  options["NodesList"] = new FieldOptionList(
-    nodes_id,
-    "Indices of vertices in the geometric model for which a BL "
-    "ends",
-    &update_needed);
-  options["Quads"] = new FieldOptionInt(
-    iRecombine, "Generate recombined elements in the boundary layer");
-  options["IntersectMetrics"] =
-    new FieldOptionInt(iIntersect, "Intersect metrics of all faces");
-  options["hwall_n"] =
-    new FieldOptionDouble(hwall_n, "Mesh Size Normal to the The Wall");
-  options["hwall_n_nodes"] = new FieldOptionListDouble(
-    hwall_n_nodes, "Mesh Size Normal to the The Wall at nodes (overwrite "
-                   "hwall_n when defined)");
-  options["AnisoMax"] = new FieldOptionDouble(
-    tgt_aniso_ratio,
-    "Threshold angle for creating a mesh fan in the boundary layer");
-  options["ratio"] =
-    new FieldOptionDouble(ratio, "Size Ratio Between Two Successive Layers");
-  options["hfar"] =
-    new FieldOptionDouble(hfar, "Element size far from the wall");
-  options["thickness"] =
-    new FieldOptionDouble(thickness, "Maximal thickness of the boundary layer");
+  options["EdgesList"] = new FieldOptionList
+    (edges_id, "Tags of curves in the geometric model for which a boundary "
+     "layer is needed", &update_needed);
+  options["FanNodesList"] = new FieldOptionList
+    (fan_nodes_id, "Tags of points in the geometric model for which a fan "
+     "is created", &update_needed);
+  options["NodesList"] = new FieldOptionList
+    (nodes_id, "Tags of points in the geometric model for which a boundary "
+     "layer ends", &update_needed);
+  options["Quads"] = new FieldOptionInt
+    (iRecombine, "Generate recombined elements in the boundary layer");
+  options["IntersectMetrics"] = new FieldOptionInt
+    (iIntersect, "Intersect metrics of all faces");
+  options["hwall_n"] = new FieldOptionDouble
+    (hwall_n, "Mesh Size Normal to the The Wall");
+  options["hwall_n_nodes"] = new FieldOptionListDouble
+    (hwall_n_nodes, "Mesh Size Normal to the The Wall at nodes (overwrite "
+     "hwall_n when defined)");
+  options["AnisoMax"] = new FieldOptionDouble
+    (tgt_aniso_ratio, "Threshold angle for creating a mesh fan in the boundary "
+     "layer");
+  options["ratio"] = new FieldOptionDouble
+    (ratio, "Size Ratio Between Two Successive Layers");
+  options["hfar"] = new FieldOptionDouble
+    (hfar, "Element size far from the wall");
+  options["thickness"] = new FieldOptionDouble
+    (thickness, "Maximal thickness of the boundary layer");
+  options["ExcludedFaceList"] = new FieldOptionList
+    (excluded_faces_id, "Tags of surfaces in the geometric model where the "
+     "boundary layer should not be applied", &update_needed);
 }
 
 void BoundaryLayerField::removeAttractors()
@@ -2659,6 +2656,10 @@ void BoundaryLayerField::setupFor1d(int iE)
 
 void BoundaryLayerField::setupFor2d(int iF)
 {
+  if(std::find(excluded_faces_id.begin(), excluded_faces_id.end(), iF) !=
+     excluded_faces_id.end())
+    return;
+
   // remove GFaces from the attractors (only used in 2D) for edges and vertices
   if(edges_id_saved.empty()) {
     edges_id_saved = edges_id;
@@ -2682,15 +2683,18 @@ void BoundaryLayerField::setupFor2d(int iF)
     bool isIn = false;
     int iE = (*it)->tag();
     bool found = std::find(edges_id_saved.begin(), edges_id_saved.end(), iE) !=
-                 edges_id_saved.end();
+      edges_id_saved.end();
     // this edge is a BL Edge
     if(found) {
       std::vector<GFace *> fc = (*it)->faces();
       int numf = 0;
-      for(std::vector<GFace *>::iterator it = fc.begin(); it != fc.end();
-          it++) {
+      for(std::vector<GFace *>::iterator it = fc.begin(); it != fc.end(); it++) {
         if((*it)->meshAttributes.extrude &&
            (*it)->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY) {
+          // ok
+        }
+        else if(std::find(excluded_faces_id.begin(), excluded_faces_id.end(),
+                          (*it)->tag()) != excluded_faces_id.end()){
           // ok
         }
         else {
@@ -2701,9 +2705,8 @@ void BoundaryLayerField::setupFor2d(int iF)
       if(numf <= 1)
         isIn = true;
       else {
-        Msg::Error("Only 2D Boundary Layers are supported (edge %d is adjacet "
-                   "to %d faces",
-                   iE, fc.size());
+        Msg::Error("Only 2D Boundary Layers are supported (curve %d is adjacet "
+                   "to %d surfaces)", iE, fc.size());
       }
     }
     if(isIn) {
