@@ -404,8 +404,8 @@ public:
         SVector3 n0 = v._n_per_vertex[i];
         SVector3 n1 = v._n_per_vertex[j];
         std::vector<MVertex *> fan;
-        for(int i = 0; i < num_subnormals; i++) {
-          double u = (double)(i + 1) / (num_subnormals + 1);
+        for(int k = 0; k < num_subnormals; k++) {
+          double u = (double)(k + 1) / (num_subnormals + 1);
           SVector3 n = n0 * (1. - u) + n1 * u;
           n.normalize();
           MVertex *new_v =
