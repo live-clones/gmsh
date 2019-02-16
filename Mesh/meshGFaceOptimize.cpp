@@ -1418,7 +1418,7 @@ static bool _isModelOkForTopologicalOpti(GModel *m)
     GFace *gf = *it;
     for(unsigned int j = 0; j < gf->getNumMeshElements(); j++){
       MElement *e = gf->getMeshElement(j);
-      for(int k = 0; k < e->getNumVertices(); k++){
+      for(std::size_t k = 0; k < e->getNumVertices(); k++){
         GEntity *ge = e->getVertex(k)->onWhat();
         if(!ge) return false;
         if(ge->dim() == 2 && ge != gf) return false;

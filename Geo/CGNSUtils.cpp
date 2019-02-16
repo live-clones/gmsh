@@ -840,7 +840,7 @@ void updateBoVec<3, MFace>(
             MFace mFace =
               faces[iFace].parentElement->getFace(faces[iFace].parentFace);
             const int nVOnF = mFace.getNumVertices();
-            int vertexOnF; // The index of 'vertex' in the face
+            int vertexOnF = 0; // The index of 'vertex' in the face
             for(int iVOnF = 0; iVOnF != nVOnF; ++iVOnF) {
               const MVertex *const vertex2 = mFace.getVertex(iVOnF);
               if(vertex == vertex2)
@@ -864,8 +864,8 @@ void updateBoVec<3, MFace>(
             //   also the unlikely case where the two other MVertex are both on
             //   edges ... and the MElement is still on the GFace.
             if(!matchedFace && (3 == nVOnF)) {
-              const MVertex *vertex2;
-              const MVertex *vertex3;
+              const MVertex *vertex2 = 0;
+              const MVertex *vertex3 = 0;
               switch(vertexOnF) {
               case 0:
                 vertex2 = mFace.getVertex(1);
@@ -880,38 +880,42 @@ void updateBoVec<3, MFace>(
                 vertex3 = mFace.getVertex(1);
                 break;
               }
-              const GEntity *const ent2 = vertex2->onWhat();
-              const GEntity *const ent3 = vertex3->onWhat();
-              if(ent2->dim() == 1 && ent3->dim() == 1) {
-                // Which GFace is bounded by edges ent2 and ent3?
-                for(std::list<GFace *>::const_iterator gFIt = gFaceList.begin();
-                    gFIt != gFaceList.end(); ++gFIt) {
-                  gEdgeList = (*gFIt)->edges();
-                  if((std::find(gEdgeList.begin(), gEdgeList.end(), ent2) !=
-                      gEdgeList.end()) &&
-                     (std::find(gEdgeList.begin(), gEdgeList.end(), ent3) !=
-                      gEdgeList.end())) {
-                    // Edges ent2 and ent3 bound this face
-                    useGFace.push_back(*gFIt);
-                    break;
+              if(vertex2 && vertex3){
+                const GEntity *const ent2 = vertex2->onWhat();
+                const GEntity *const ent3 = vertex3->onWhat();
+                if(ent2 && ent3){
+                  if(ent2->dim() == 1 && ent3->dim() == 1) {
+                    // Which GFace is bounded by edges ent2 and ent3?
+                    for(std::list<GFace *>::const_iterator gFIt = gFaceList.begin();
+                        gFIt != gFaceList.end(); ++gFIt) {
+                      gEdgeList = (*gFIt)->edges();
+                      if((std::find(gEdgeList.begin(), gEdgeList.end(), ent2) !=
+                          gEdgeList.end()) &&
+                         (std::find(gEdgeList.begin(), gEdgeList.end(), ent3) !=
+                          gEdgeList.end())) {
+                        // Edges ent2 and ent3 bound this face
+                        useGFace.push_back(*gFIt);
+                        break;
+                      }
+                    }
                   }
-                }
-              }
-              else if(ent->dim() == 1 && (ent2->dim() + ent3->dim() == 1)) {
-                const GEntity *entCmp;
-                if(ent2->dim() == 1)
-                  entCmp = ent2;
-                else
-                  entCmp = ent3;
-                // Which GFace is bounded by entCmp
-                for(std::list<GFace *>::const_iterator gFIt = gFaceList.begin();
-                    gFIt != gFaceList.end(); ++gFIt) {
-                  gEdgeList = (*gFIt)->edges();
-                  if(std::find(gEdgeList.begin(), gEdgeList.end(), entCmp) !=
-                     gEdgeList.end()) {
-                    // Edge entCmp and the original edge bound this face
-                    useGFace.push_back(*gFIt);
-                    break;
+                  else if(ent->dim() == 1 && (ent2->dim() + ent3->dim() == 1)) {
+                    const GEntity *entCmp;
+                    if(ent2->dim() == 1)
+                      entCmp = ent2;
+                    else
+                      entCmp = ent3;
+                    // Which GFace is bounded by entCmp
+                    for(std::list<GFace *>::const_iterator gFIt = gFaceList.begin();
+                        gFIt != gFaceList.end(); ++gFIt) {
+                      gEdgeList = (*gFIt)->edges();
+                      if(std::find(gEdgeList.begin(), gEdgeList.end(), entCmp) !=
+                         gEdgeList.end()) {
+                        // Edge entCmp and the original edge bound this face
+                        useGFace.push_back(*gFIt);
+                        break;
+                      }
+                    }
                   }
                 }
               }
