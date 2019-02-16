@@ -192,7 +192,7 @@ void Homology::findHomologyBasis(std::vector<int> dim)
             _cellComplex->getSize(3), _cellComplex->getSize(2),
             _cellComplex->getSize(1), _cellComplex->getSize(0));
 
-  Msg::StatusBar(true, "Computing homology space bases ...");
+  Msg::StatusBar(true, "Computing homology space bases...");
   t1 = Cpu();
   ChainComplex chainComplex = ChainComplex(_cellComplex);
   chainComplex.computeHomology();
