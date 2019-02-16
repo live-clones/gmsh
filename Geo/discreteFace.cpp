@@ -881,7 +881,7 @@ bool discreteFace::_computeTopologyOfPartition(
               vs[i]->setEntity(gstart);
               gstart->mesh_vertices.push_back(vs[i]);
               splitDiscreteEdge(de, vs[i], gstart, TAG);
-              Msg::Info(" . Splitting discrete curve %d", de->tag());
+              Msg::Info(" - Splitting discrete curve %d", de->tag());
             }
           }
         }
@@ -917,7 +917,7 @@ bool discreteFace::_computeTopologyOfPartition(
           discreteEdge *de =
             new discreteEdge(gm, ++TAG, (GVertex *)ends[0]->onWhat(),
                              (GVertex *)ends[1]->onWhat());
-          Msg::Info(" . Creating internal discrete curve %d (%d %d) in surface %d",
+          Msg::Info(" - Creating internal discrete curve %d (%d %d) in surface %d",
                     de->tag(), ends[0]->onWhat()->tag(),
                     ends[1]->onWhat()->tag(), tag());
           gm->add(de);
@@ -971,7 +971,7 @@ HXTStatus discreteFace::_reparametrizeThroughHxt()
                                   boundaries))
     Msg::Warning("Impossible to compute the topology of the %d partitions", nc);
 
-  Msg::Info(" . Surface %d split in %d part%s", tag(), _parametrizations.size(),
+  Msg::Info(" - Surface %d split in %d part%s", tag(), _parametrizations.size(),
             (_parametrizations.size() > 1) ? "s" : "");
 
   for(size_t i = 0; i < _parametrizations.size(); i++) {

@@ -1842,22 +1842,24 @@ void GModel::createGeometryOfDiscreteEntities()
   createTopologyFromMeshNew();
   exportDiscreteGEOInternals();
 
-  Msg::StatusBar(true, "Creating geometry of discrete entities...");
+  Msg::StatusBar(true, "Creating geometry of discrete surfaces...");
   double t1 = Cpu();
-
-  Msg::Info(" - Creating the geometry of discrete surfaces");
   for(fiter it = firstFace(); it != lastFace(); ++it) {
     if((*it)->geomType() == GEntity::DiscreteSurface)
       static_cast<discreteFace *>(*it)->createGeometry();
   }
+  double t2 = Cpu();
+  Msg::StatusBar(true, "Done creating geometry of discrete surfaces (%g s)",
+                 t2 - t1);
 
-  Msg::Info(" - Creating the geometry of discrete curves");
+  Msg::StatusBar(true, "Creating geometry of discrete curves...");
+  t1 = Cpu();
   for(eiter it = firstEdge(); it != lastEdge(); ++it) {
     if((*it)->geomType() == GEntity::DiscreteCurve)
       static_cast<discreteEdge *>(*it)->createGeometry();
   }
-  double t2 = Cpu();
-  Msg::StatusBar(true, "Done creating geometry of discrete entities (%g s)",
+  t2 = Cpu();
+  Msg::StatusBar(true, "Done creating geometry of discrete curves (%g s)",
                  t2 - t1);
 }
 
