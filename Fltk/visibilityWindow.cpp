@@ -1120,7 +1120,7 @@ static void visibility_per_window_cb(Fl_Widget *w, void *data)
   if(what == "item") {
     drawContext *ctx =
       FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
-    for(std::size_t i = 0; i < FlGui::instance()->visibility->per_window->size();
+    for(int i = 0; i < FlGui::instance()->visibility->per_window->size();
         i++) {
       if(i < GModel::list.size()) {
         GModel *m = GModel::list[i];
