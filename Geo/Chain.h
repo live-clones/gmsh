@@ -134,10 +134,10 @@ public:
   ElemChain(int dim, std::vector<MVertex *> &v);
 
   int getDim() const { return _dim; }
-  int getNumVertices() const { return _v.size(); }
+  std::size_t getNumVertices() const { return _v.size(); }
   MVertex *getMeshVertex(int i) const { return _v.at(i); }
   void getMeshVertices(std::vector<MVertex *> &v) const { v = _v; }
-  int getNumSortedVertices() const { return _v.size(); }
+  std::size_t getNumSortedVertices() const { return _v.size(); }
   inline int getSortedVertex(int i) const;
 
   int getTypeMSH() const;
