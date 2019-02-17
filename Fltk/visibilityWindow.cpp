@@ -1122,14 +1122,14 @@ static void visibility_per_window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
     for(int i = 0; i < FlGui::instance()->visibility->per_window->size();
         i++) {
-      if(i < GModel::list.size()) {
+      if(i < (int)GModel::list.size()) {
         GModel *m = GModel::list[i];
         if(FlGui::instance()->visibility->per_window->selected(i + 1))
           ctx->show(m);
         else
           ctx->hide(m);
       }
-      else if(i < GModel::list.size() + PView::list.size()) {
+      else if(i < (int)(GModel::list.size() + PView::list.size())) {
         PView *v = PView::list[i - GModel::list.size()];
         if(FlGui::instance()->visibility->per_window->selected(i + 1))
           ctx->show(v);
