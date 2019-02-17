@@ -42,7 +42,7 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
     if(!saveAll && f->physicals.empty()) continue;
     numf += f->triangles.size();
     std::set<MVertex *> vset;
-    for(unsigned int i = 0; i < f->triangles.size(); i++) {
+    for(std::size_t i = 0; i < f->triangles.size(); i++) {
       for(int j = 0; j < 3; j++) vset.insert(f->triangles[i]->getVertex(j));
     }
     nums += vset.size();
@@ -83,7 +83,7 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
     if(!saveAll && f->physicals.empty()) continue;
     std::vector<MVertex *> vvec;
     std::map<MVertex *, CelumInfo> vmap;
-    for(unsigned int i = 0; i < f->triangles.size(); i++) {
+    for(std::size_t i = 0; i < f->triangles.size(); i++) {
       fprintf(fpf, "%d \"face %d\"", idf++, f->tag());
       for(int j = 0; j < 3; j++) {
         MVertex *v = f->triangles[i]->getVertex(j);
@@ -105,7 +105,7 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
       }
       fprintf(fpf, "\n\n");
     }
-    for(unsigned int i = 0; i < vvec.size(); i++) {
+    for(std::size_t i = 0; i < vvec.size(); i++) {
       MVertex *v = vvec[i];
       std::map<MVertex *, CelumInfo>::iterator it = vmap.find(v);
       fprintf(fps, "%d %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n\n",

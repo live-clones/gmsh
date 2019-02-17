@@ -26,7 +26,7 @@ void MPolyhedron::_init()
 {
   if(_parts.size() == 0) return;
 
-  for(unsigned int i = 0; i < _parts.size(); i++) {
+  for(std::size_t i = 0; i < _parts.size(); i++) {
     if(_parts[i]->getVolume() * _parts[0]->getVolume() < 0.)
       _parts[i]->reverse();
     for(int j = 0; j < 4; j++) {
@@ -55,7 +55,7 @@ void MPolyhedron::_init()
   }
 
   if(_parts.size() >= 4) {
-    for(unsigned int i = 0; i < _faces.size(); i++) {
+    for(std::size_t i = 0; i < _faces.size(); i++) {
       for(int j = 0; j < 3; j++) {
         int k;
         for(k = _edges.size() - 1; k >= 0; k--)
@@ -72,7 +72,7 @@ void MPolyhedron::_init()
   }
 
   // innerVertices
-  for(unsigned int i = 0; i < _parts.size(); i++) {
+  for(std::size_t i = 0; i < _parts.size(); i++) {
     for(int j = 0; j < 4; j++) {
       if(std::find(_vertices.begin(), _vertices.end(),
                    _parts[i]->getVertex(j)) == _vertices.end())
@@ -85,7 +85,7 @@ bool MPolyhedron::isInside(double u, double v, double w) const
 {
   if(!_orig) return false;
   double uvw[3] = {u, v, w};
-  for(unsigned int i = 0; i < _parts.size(); i++) {
+  for(std::size_t i = 0; i < _parts.size(); i++) {
     double verts[4][3];
     for(int j = 0; j < 4; j++) {
       MVertex *vij = _parts[i]->getVertex(j);
@@ -111,7 +111,7 @@ void MPolyhedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   if(!_orig) return;
   double jac[3][3];
   _intpt = new IntPt[getNGQTetPts(pOrder) * _parts.size()];
-  for(unsigned int i = 0; i < _parts.size(); i++) {
+  for(std::size_t i = 0; i < _parts.size(); i++) {
     int nptsi;
     IntPt *ptsi;
     _parts[i]->getIntegrationPoints(pOrder, &nptsi, &ptsi);
@@ -159,7 +159,7 @@ void MPolygon::_initVertices()
     n = _orig->getFace(0).normal();
   else
     n = _parts[0]->getFace(0).normal();
-  for(unsigned int i = 0; i < _parts.size(); i++) {
+  for(std::size_t i = 0; i < _parts.size(); i++) {
     SVector3 ni = _parts[i]->getFace(0).normal();
     if(dot(n, ni) < 0.) _parts[i]->reverse();
   }
@@ -169,7 +169,7 @@ void MPolygon::_initVertices()
   edg.reserve(_parts[0]->getNumEdges());
   for(int j = 0; j < _parts[0]->getNumEdges(); j++)
     edg.push_back(_parts[0]->getEdge(j));
-  for(unsigned int i = 1; i < _parts.size(); i++) {
+  for(std::size_t i = 1; i < _parts.size(); i++) {
     for(int j = 0; j < _parts[i]->getNumEdges(); j++) {
       bool found = false;
       MEdge ed = _parts[i]->getEdge(j);
@@ -221,7 +221,7 @@ void MPolygon::_initVertices()
   edg.erase(edg.begin());
   while(edg.size()) {
     MVertex *v = _edges[_edges.size() - 1].getVertex(1);
-    for(unsigned int i = 0; i < edg.size(); i++) {
+    for(std::size_t i = 0; i < edg.size(); i++) {
       if(edg[i].getVertex(0) == v) {
         _edges.push_back(edg[i]);
         edg.erase(edg.begin() + i);
@@ -240,12 +240,12 @@ void MPolygon::_initVertices()
     }
   }
 
-  for(unsigned int i = 0; i < _edges.size(); i++) {
+  for(std::size_t i = 0; i < _edges.size(); i++) {
     _vertices.push_back(_edges[i].getVertex(0));
   }
 
   // innerVertices
-  for(unsigned int i = 0; i < _parts.size(); i++) {
+  for(std::size_t i = 0; i < _parts.size(); i++) {
     for(int j = 0; j < 3; j++) {
       if(std::find(_vertices.begin(), _vertices.end(),
                    _parts[i]->getVertex(j)) == _vertices.end())
@@ -258,7 +258,7 @@ bool MPolygon::isInside(double u, double v, double w) const
 {
   if(!getParent()) return false;
   double uvw[3] = {u, v, w};
-  for(unsigned int i = 0; i < _parts.size(); i++) {
+  for(std::size_t i = 0; i < _parts.size(); i++) {
     double v_uvw[3][3];
     for(int j = 0; j < 3; j++) {
       MVertex *vij = _parts[i]->getVertex(j);
@@ -283,7 +283,7 @@ void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   if(!getParent()) return;
   double jac[3][3];
   _intpt = new IntPt[getNGQTPts(pOrder) * _parts.size()];
-  for(unsigned int i = 0; i < _parts.size(); i++) {
+  for(std::size_t i = 0; i < _parts.size(); i++) {
     int nptsi;
     IntPt *ptsi;
     _parts[i]->getIntegrationPoints(pOrder, &nptsi, &ptsi);
@@ -494,7 +494,7 @@ assignPhysicals(GModel *GM, std::vector<int> &gePhysicals, int reg, int dim,
                 std::map<int, std::map<int, std::string> > physicals[4],
                 std::map<int, int> &newPhysTags, int lsTag)
 {
-  for(unsigned int i = 0; i < gePhysicals.size(); i++) {
+  for(std::size_t i = 0; i < gePhysicals.size(); i++) {
     int phys = gePhysicals[i];
 
     if(lsTag > 0 && newPhysTags.count(phys)) {
@@ -570,7 +570,7 @@ static int getElementaryTag(int lsTag, int elementary,
 static void getPhysicalTag(int lsTag, const std::vector<int> &physicals,
                            std::map<int, int> &newPhysTags)
 {
-  for(unsigned int i = 0; i < physicals.size(); i++) {
+  for(std::size_t i = 0; i < physicals.size(); i++) {
     int phys = physicals[i];
     if(lsTag < 0) {
       if(!newPhysTags.count(-phys)) newPhysTags[-phys] = ++newPhysTags[0];
@@ -856,11 +856,11 @@ static void elementCutMesh(
   std::vector<DI_IntegrationPoint *> ipV;
   std::vector<DI_IntegrationPoint *> ipS;
   bool isCut = false;
-  unsigned int nbL = lines.size();
-  unsigned int nbTr = triangles.size();
-  unsigned int nbQ = quads.size();
-  unsigned int nbTe = tetras.size();
-  unsigned int nbH = hexas.size();
+  std::size_t nbL = lines.size();
+  std::size_t nbTr = triangles.size();
+  std::size_t nbQ = quads.size();
+  std::size_t nbTe = tetras.size();
+  std::size_t nbH = hexas.size();
 
   MElement *copy = e->copy(vertexMap, newParents, newDomains);
   MElement *parent = eParent ? copy->getParent() : copy;
@@ -983,7 +983,7 @@ static void elementCutMesh(
     if(isCut) {
       std::vector<MTetrahedron *> poly[2];
 
-      for(unsigned int i = nbTe; i < tetras.size(); i++) {
+      for(std::size_t i = nbTe; i < tetras.size(); i++) {
         MVertex *mv[4] = {NULL, NULL, NULL, NULL};
         for(int j = 0; j < 4; j++) {
           int numV = getElementVertexNum(tetras[i]->pt(j), e);
@@ -1052,7 +1052,7 @@ static void elementCutMesh(
         bords.push_back(std::pair<MElement *, MElement *>(dom, tb));
       }
       borders[1].erase(itr.first, itr.second);
-      for(unsigned int i = 0; i < bords.size(); i++)
+      for(std::size_t i = 0; i < bords.size(); i++)
         borders[1].insert(bords[i]);
       if(eParent) {
         copy->setParent(NULL, false);
@@ -1081,7 +1081,7 @@ static void elementCutMesh(
                       lsTag);
     }
 
-    for(unsigned int i = nbTr; i < triangles.size(); i++) {
+    for(std::size_t i = nbTr; i < triangles.size(); i++) {
       MVertex *mv[3] = {NULL, NULL, NULL};
       for(int j = 0; j < 3; j++) {
         int numV = getElementVertexNum(triangles[i]->pt(j), e);
@@ -1188,7 +1188,7 @@ static void elementCutMesh(
     if(isCut) {
       std::vector<MTriangle *> poly[2];
 
-      for(unsigned int i = nbTr; i < triangles.size(); i++) {
+      for(std::size_t i = nbTr; i < triangles.size(); i++) {
         MVertex *mv[3] = {NULL, NULL, NULL};
         for(int j = 0; j < 3; j++) {
           int numV = getElementVertexNum(triangles[i]->pt(j), e);
@@ -1218,7 +1218,7 @@ static void elementCutMesh(
           poly[1].push_back(mt);
       }
       // if quads
-      for(unsigned int i = nbQ; i < quads.size(); i++) {
+      for(std::size_t i = nbQ; i < quads.size(); i++) {
         MVertex *mv[4] = {NULL, NULL, NULL, NULL};
         for(int j = 0; j < 4; j++) {
           int numV = getElementVertexNum(quads[i]->pt(j), e);
@@ -1308,7 +1308,7 @@ static void elementCutMesh(
         bords.push_back(std::pair<MElement *, MElement *>(dom, lb));
       }
       borders[0].erase(itr.first, itr.second);
-      for(unsigned int i = 0; i < bords.size(); i++)
+      for(std::size_t i = 0; i < bords.size(); i++)
         borders[0].insert(bords[i]);
       if(eParent) {
         copy->setParent(NULL, false);
@@ -1337,7 +1337,7 @@ static void elementCutMesh(
             std::pair<MElement *, MElement *>(copy->getDomain(i), copy));
     }
 
-    for(unsigned int i = nbL; i < lines.size(); i++) {
+    for(std::size_t i = nbL; i < lines.size(); i++) {
       MVertex *mv[2] = {NULL, NULL};
       for(int j = 0; j < 2; j++) {
         int numV = getElementVertexNum(lines[i]->pt(j), e);
@@ -1405,7 +1405,7 @@ static void elementCutMesh(
 
     if(isCut) {
       bool own = (eParent && !e->ownsParent()) ? false : true;
-      for(unsigned int i = nbL; i < lines.size(); i++) {
+      for(std::size_t i = nbL; i < lines.size(); i++) {
         MVertex *mv[2] = {NULL, NULL};
         for(int j = 0; j < 2; j++) {
           int numV = getElementVertexNum(lines[i]->pt(j), e);
@@ -1479,8 +1479,8 @@ static void elementCutMesh(
   default: Msg::Error("This type of element cannot be cut %d.", eType); break;
   }
 
-  for(unsigned int i = 0; i < ipS.size(); i++) delete ipS[i];
-  for(unsigned int i = 0; i < ipV.size(); i++) delete ipV[i];
+  for(std::size_t i = 0; i < ipS.size(); i++) delete ipS[i];
+  for(std::size_t i = 0; i < ipV.size(); i++) delete ipV[i];
   delete[] nodeLs;
 }
 
@@ -1518,8 +1518,8 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     }
   if(lsPoints) {
     std::vector<MVertex *> vert;
-    for(unsigned int i = 0; i < gmEntities.size(); i++) {
-      for(unsigned int j = 0; j < gmEntities[i]->getNumMeshVertices(); j++) {
+    for(std::size_t i = 0; i < gmEntities.size(); i++) {
+      for(std::size_t j = 0; j < gmEntities[i]->getNumMeshVertices(); j++) {
         vert.push_back(gmEntities[i]->getMeshVertex(j));
       }
     }
@@ -1531,8 +1531,8 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   }
 
   // compute and store levelset values + create new nodes
-  for(unsigned int i = 0; i < gmEntities.size(); i++) {
-    for(unsigned int j = 0; j < gmEntities[i]->getNumMeshVertices(); j++) {
+  for(std::size_t i = 0; i < gmEntities.size(); i++) {
+    for(std::size_t j = 0; j < gmEntities[i]->getNumMeshVertices(); j++) {
       MVertex *vi = gmEntities[i]->getMeshVertex(j);
       if(vi->getIndex() < 0) continue;
       int k = 0;
@@ -1549,8 +1549,8 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
 
   // element number increment
   int numEle = gm->getNumMeshElements() + gm->getNumMeshParentElements();
-  for(unsigned int i = 0; i < gmEntities.size(); i++) {
-    for(unsigned int j = 0; j < gmEntities[i]->getNumMeshElements(); j++) {
+  for(std::size_t i = 0; i < gmEntities.size(); i++) {
+    for(std::size_t j = 0; j < gmEntities[i]->getNumMeshElements(); j++) {
       MElement *e = gmEntities[i]->getMeshElement(j);
       if(e->getNum() > numEle) numEle = e->getNum();
       if(e->getParent())
@@ -1573,8 +1573,8 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
 
   // SplitMesh
   if(!cutElem) {
-    for(unsigned int i = 0; i < gmEntities.size(); i++) {
-      for(unsigned int j = 0; j < gmEntities[i]->getNumMeshElements(); j++) {
+    for(std::size_t i = 0; i < gmEntities.size(); i++) {
+      for(std::size_t j = 0; j < gmEntities[i]->getNumMeshElements(); j++) {
         MElement *e = gmEntities[i]->getMeshElement(j);
         e->setVolumePositive();
         elementSplitMesh(e, RPN, verticesLs, gmEntities[i], gm, numEle,
@@ -1600,14 +1600,14 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   std::vector<DI_Tetra *> tetras;
   std::vector<DI_Hexa *> hexas;
   std::vector<int> lsLineRegs;
-  for(unsigned int i = 0; i < gmEntities.size(); i++) {
+  for(std::size_t i = 0; i < gmEntities.size(); i++) {
     std::vector<int> oldLineRegs;
     for(std::map<int, std::vector<MElement *> >::iterator it =
           elements[1].begin();
         it != elements[1].end(); it++)
       oldLineRegs.push_back(it->first);
     int nbBorders = borders[0].size();
-    for(unsigned int j = 0; j < gmEntities[i]->getNumMeshElements(); j++) {
+    for(std::size_t j = 0; j < gmEntities[i]->getNumMeshElements(); j++) {
       MElement *e = gmEntities[i]->getMeshElement(j);
       e->setVolumePositive();
       elementCutMesh(e, RPN, verticesLs, gmEntities[i], gm, numEle, vertexMap,
@@ -1632,7 +1632,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
         else
           lsLineRegs.push_back(it->first);
       }
-      for(unsigned int j = 0; j < lsLineRegs.size(); j++) {
+      for(std::size_t j = 0; j < lsLineRegs.size(); j++) {
         int nLR = lsLineRegs[j];
         bool havePhys = physicals[1][nLR].size();
         while(1) {
@@ -1641,7 +1641,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
           elements[1][nLR].erase(elements[1][nLR].begin());
           MVertex *v1 = conLines[0]->getVertex(0);
           MVertex *v2 = conLines[0]->getVertex(1);
-          for(unsigned int k = 0; k < elements[1][nLR].size();) {
+          for(std::size_t k = 0; k < elements[1][nLR].size();) {
             MVertex *va = elements[1][nLR][k]->getVertex(0);
             MVertex *vb = elements[1][nLR][k]->getVertex(1);
             if(va == v1 || vb == v1 || va == v2 || vb == v2) {
@@ -1666,11 +1666,11 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
             if(newPhys)
               assignLsPhysical(gm, newReg, 1, physicals, newPhys,
                                lines[lines.size() - 1]->lsTag());
-            for(unsigned int k = 0; k < conLines.size(); k++)
+            for(std::size_t k = 0; k < conLines.size(); k++)
               elements[1][newReg].push_back(conLines[k]);
           }
           else {
-            for(unsigned int k = 0; k < conLines.size(); k++)
+            for(std::size_t k = 0; k < conLines.size(); k++)
               elements[1][nLR].push_back(conLines[k]);
             break;
           }
@@ -1680,11 +1680,11 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
 
     for(DI_Point::Container::iterator it = cp.begin(); it != cp.end(); it++)
       delete *it;
-    for(unsigned int k = 0; k < lines.size(); k++) delete lines[k];
-    for(unsigned int k = 0; k < triangles.size(); k++) delete triangles[k];
-    for(unsigned int k = 0; k < quads.size(); k++) delete quads[k];
-    for(unsigned int k = 0; k < tetras.size(); k++) delete tetras[k];
-    for(unsigned int k = 0; k < hexas.size(); k++) delete hexas[k];
+    for(std::size_t k = 0; k < lines.size(); k++) delete lines[k];
+    for(std::size_t k = 0; k < triangles.size(); k++) delete triangles[k];
+    for(std::size_t k = 0; k < quads.size(); k++) delete quads[k];
+    for(std::size_t k = 0; k < tetras.size(); k++) delete tetras[k];
+    for(std::size_t k = 0; k < hexas.size(); k++) delete hexas[k];
     cp.clear();
     lines.clear();
     triangles.clear();
@@ -1700,7 +1700,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     for(std::map<int, std::vector<MElement*> >::iterator it = elements[i].begin();
         it != elements[i].end(); it++){
       printf(" elementary : %d\n",it->first);
-      for(unsigned int j = 0; j < it->second.size(); j++){
+      for(std::size_t j = 0; j < it->second.size(); j++){
         MElement *e = it->second[j];
         printf("element %d",e->getNum());
         if(e->getParent()) printf(" par=%d (%d)",e->getParent()->getNum(),e->ownsParent());

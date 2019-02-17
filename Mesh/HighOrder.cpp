@@ -687,7 +687,7 @@ static void getFaceVerticesOnGeo(GFace *gf,
 {
   SPoint2 pts[1000];
   bool reparamOK = true;
-  for(unsigned int k = 0; k < vertices.size(); ++k)
+  for(std::size_t k = 0; k < vertices.size(); ++k)
     reparamOK &= reparamMeshVertexOnFace(vertices[k], gf, pts[k]);
   for(int k = 0; k < coefficients.size1(); k++) {
     double X(0), Y(0), Z(0), GUESS[2] = {0, 0};
@@ -932,7 +932,7 @@ static void setHighOrder(GEdge *ge, std::vector<MVertex *> &newHOVert,
                          int nbPts = 1)
 {
   std::vector<MLine *> lines2;
-  for(unsigned int i = 0; i < ge->lines.size(); i++) {
+  for(std::size_t i = 0; i < ge->lines.size(); i++) {
     MLine *l = ge->lines[i];
     std::vector<MVertex *> ve;
     getEdgeVertices(ge, l, ve, newHOVert, edgeVertices, linear, nbPts);
@@ -1009,7 +1009,7 @@ static void setHighOrder(GFace *gf, std::vector<MVertex *> &newHOVert,
                          bool incomplete, int nPts = 1)
 {
   std::vector<MTriangle *> triangles2;
-  for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     MTriangle *t = gf->triangles[i];
     MTriangle *tNew = setHighOrder(t, gf, newHOVert, edgeVertices, faceVertices,
                                    linear, incomplete, nPts);
@@ -1019,7 +1019,7 @@ static void setHighOrder(GFace *gf, std::vector<MVertex *> &newHOVert,
   gf->triangles = triangles2;
 
   std::vector<MQuadrangle *> quadrangles2;
-  for(unsigned int i = 0; i < gf->quadrangles.size(); i++) {
+  for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
     MQuadrangle *q = gf->quadrangles[i];
     MQuadrangle *qNew = setHighOrder(q, gf, newHOVert, edgeVertices,
                                      faceVertices, linear, incomplete, nPts);
@@ -1160,7 +1160,7 @@ static void setHighOrder(GRegion *gr, std::vector<MVertex *> &newHOVert,
                          int nPts = 1)
 {
   std::vector<MTetrahedron *> tetrahedra2;
-  for(unsigned int i = 0; i < gr->tetrahedra.size(); i++) {
+  for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
     MTetrahedron *t = gr->tetrahedra[i];
     MTetrahedron *tNew = setHighOrder(t, gr, newHOVert, edgeVertices,
                                       faceVertices, incomplete, nPts);
@@ -1170,7 +1170,7 @@ static void setHighOrder(GRegion *gr, std::vector<MVertex *> &newHOVert,
   gr->tetrahedra = tetrahedra2;
 
   std::vector<MHexahedron *> hexahedra2;
-  for(unsigned int i = 0; i < gr->hexahedra.size(); i++) {
+  for(std::size_t i = 0; i < gr->hexahedra.size(); i++) {
     MHexahedron *h = gr->hexahedra[i];
     MHexahedron *hNew = setHighOrder(h, gr, newHOVert, edgeVertices,
                                      faceVertices, incomplete, nPts);
@@ -1180,7 +1180,7 @@ static void setHighOrder(GRegion *gr, std::vector<MVertex *> &newHOVert,
   gr->hexahedra = hexahedra2;
 
   std::vector<MPrism *> prisms2;
-  for(unsigned int i = 0; i < gr->prisms.size(); i++) {
+  for(std::size_t i = 0; i < gr->prisms.size(); i++) {
     MPrism *p = gr->prisms[i];
     MPrism *pNew = setHighOrder(p, gr, newHOVert, edgeVertices, faceVertices,
                                 incomplete, nPts);
@@ -1190,7 +1190,7 @@ static void setHighOrder(GRegion *gr, std::vector<MVertex *> &newHOVert,
   gr->prisms = prisms2;
 
   std::vector<MPyramid *> pyramids2;
-  for(unsigned int i = 0; i < gr->pyramids.size(); i++) {
+  for(std::size_t i = 0; i < gr->pyramids.size(); i++) {
     MPyramid *p = gr->pyramids[i];
     MPyramid *pNew = setHighOrder(p, gr, newHOVert, edgeVertices, faceVertices,
                                   incomplete, nPts);
@@ -1210,7 +1210,7 @@ static void setFirstOrder(GEntity *e, std::vector<T *> &elements,
 {
   if(onlyVisible && !e->getVisibility()) return;
   std::vector<T *> elements1;
-  for(unsigned int i = 0; i < elements.size(); i++) {
+  for(std::size_t i = 0; i < elements.size(); i++) {
     T *ele = elements[i];
     int n = ele->getNumPrimaryVertices();
     std::vector<MVertex *> v1;
@@ -1229,7 +1229,7 @@ static void updateHighOrderVertices(GEntity *e,
 {
   if(onlyVisible && !e->getVisibility()) return;
   std::vector<MVertex *> v1;
-  for(unsigned int i = 0; i < e->mesh_vertices.size(); i++) {
+  for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
     if(e->mesh_vertices[i]->getPolynomialOrder() > 1)
       delete e->mesh_vertices[i];
     else
@@ -1258,7 +1258,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
         tgt->tag(), src->tag());
 
       std::map<MEdge, MLine *, Less_Edge> srcEdges;
-      for(unsigned int i = 0; i < src->getNumMeshElements(); i++) {
+      for(std::size_t i = 0; i < src->getNumMeshElements(); i++) {
         MLine *srcLine = dynamic_cast<MLine *>(src->getMeshElement(i));
         if(!srcLine) {
           Msg::Error("Master element %d is not an edge",
@@ -1268,7 +1268,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
         srcEdges[MEdge(srcLine->getVertex(0), srcLine->getVertex(1))] = srcLine;
       }
 
-      for(unsigned int i = 0; i < tgt->getNumMeshElements(); ++i) {
+      for(std::size_t i = 0; i < tgt->getNumMeshElements(); ++i) {
         MLine *tgtLine = dynamic_cast<MLine *>(tgt->getMeshElement(i));
         MVertex *vtcs[2];
         if(!tgtLine) {
@@ -1302,7 +1302,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
         else {
           MLine *srcLine = srcIter->second;
           if(tgtLine->getNumVertices() != srcLine->getNumVertices()) throw;
-          for(unsigned int i = 2; i < tgtLine->getNumVertices(); i++)
+          for(std::size_t i = 2; i < tgtLine->getNumVertices(); i++)
             p2p[tgtLine->getVertex(i)] = srcLine->getVertex(i);
         }
       }
@@ -1334,7 +1334,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
 
       std::map<MFace, MElement *, Less_Face> srcFaces;
 
-      for(unsigned int i = 0; i < src->getNumMeshElements(); ++i) {
+      for(std::size_t i = 0; i < src->getNumMeshElements(); ++i) {
         MElement *srcElmt = src->getMeshElement(i);
         int nbVtcs = 0;
         if(dynamic_cast<MTriangle *>(srcElmt)) nbVtcs = 3;
@@ -1347,7 +1347,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
         srcFaces[MFace(vtcs)] = srcElmt;
       }
 
-      for(unsigned int i = 0; i < tgt->getNumMeshElements(); ++i) {
+      for(std::size_t i = 0; i < tgt->getNumMeshElements(); ++i) {
         MElement *tgtElmt = tgt->getMeshElement(i);
         int nbVtcs = 0;
         if(dynamic_cast<MTriangle *>(tgtElmt)) nbVtcs = 3;
@@ -1442,7 +1442,7 @@ void checkHighOrderTriangles(const char *cc, GModel *m,
   double avg = 0.0;
   int count = 0, nbfair = 0;
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
-    for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
       MTriangle *t = (*it)->triangles[i];
       double disto_ = t->distoShapeMeasure();
       double gamma_ = t->gammaShapeMeasure();
@@ -1457,7 +1457,7 @@ void checkHighOrderTriangles(const char *cc, GModel *m,
         nbfair++;
     }
     /*
-    for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++){
+    for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++){
       MQuadrangle *t = (*it)->quadrangles[i];
       double disto_ = t->distoShapeMeasure();
       double gamma_ = t->gammaShapeMeasure();
@@ -1490,7 +1490,7 @@ void checkHighOrderTetrahedron(const char *cc, GModel *m,
   double avg = 0.0;
   int count = 0, nbfair = 0;
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
-    for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->tetrahedra.size(); i++) {
       MTetrahedron *t = (*it)->tetrahedra[i];
       double disto_ = t->distoShapeMeasure();
       minJGlob = std::min(minJGlob, disto_);
@@ -1666,7 +1666,7 @@ void SetHighOrderComplete(GModel *m, bool onlyVisible)
     if(onlyVisible && !(*it)->getVisibility()) continue;
     std::vector<MVertex *> dumNewHOVert;
     std::vector<MTriangle *> newT;
-    for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
       MTriangle *t = (*it)->triangles[i];
       std::vector<MVertex *> vv;
       for(std::size_t j = 3; j < t->getNumVertices() - t->getNumFaceVertices();
@@ -1682,7 +1682,7 @@ void SetHighOrderComplete(GModel *m, bool onlyVisible)
     (*it)->triangles = newT;
 
     std::vector<MQuadrangle *> newQ;
-    for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++) {
       MQuadrangle *t = (*it)->quadrangles[i];
 
       std::vector<MVertex *> vv;
@@ -1702,7 +1702,7 @@ void SetHighOrderComplete(GModel *m, bool onlyVisible)
     (*it)->quadrangles = newQ;
 
     std::set<MVertex *> newV;
-    for(unsigned int i = 0; i < (*it)->getNumMeshElements(); ++i) {
+    for(std::size_t i = 0; i < (*it)->getNumMeshElements(); ++i) {
       MElement *e = (*it)->getMeshElement(i);
       for(std::size_t j = 0; j < e->getNumVertices(); j++)
         newV.insert(e->getVertex(j));
@@ -1722,7 +1722,7 @@ void SetHighOrderIncomplete(GModel *m, bool onlyVisible)
     if(onlyVisible && !(*it)->getVisibility()) continue;
     std::vector<MTriangle *> newT;
 
-    for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
       MTriangle *t = (*it)->triangles[i];
       std::vector<MVertex *> vt;
       int order = t->getPolynomialOrder();
@@ -1740,7 +1740,7 @@ void SetHighOrderIncomplete(GModel *m, bool onlyVisible)
     (*it)->triangles = newT;
 
     std::vector<MQuadrangle *> newQ;
-    for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++) {
       MQuadrangle *q = (*it)->quadrangles[i];
       std::vector<MVertex *> vt;
       int nPts = q->getPolynomialOrder() - 1;
@@ -1759,7 +1759,7 @@ void SetHighOrderIncomplete(GModel *m, bool onlyVisible)
 
     std::vector<MVertex *> newV;
     int numd = 0;
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); ++i) {
+    for(std::size_t i = 0; i < (*it)->mesh_vertices.size(); ++i) {
       if(toDelete.find((*it)->mesh_vertices[i]) == toDelete.end())
         newV.push_back((*it)->mesh_vertices[i]);
       else {

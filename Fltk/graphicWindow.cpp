@@ -584,13 +584,13 @@ void file_watch_cb(Fl_Widget *w, void *data)
             (matches.size() > 1) ? "es" : "", pattern.c_str());
 
   std::set<std::string> allFiles;
-  for(unsigned int i = 0; i < GModel::list.size(); i++)
+  for(std::size_t i = 0; i < GModel::list.size(); i++)
     allFiles.insert(GetFileNameWithoutPath(GModel::list[i]->getFileName()));
-  for(unsigned int i = 0; i < PView::list.size(); i++)
+  for(std::size_t i = 0; i < PView::list.size(); i++)
     for(int j = 0; j < PView::list[i]->getData()->getNumTimeSteps(); j++)
       allFiles.insert(GetFileNameWithoutPath(PView::list[i]->getData()->getFileName(j)));
 
-  for(unsigned int i = 0; i < matches.size(); i++)
+  for(std::size_t i = 0; i < matches.size(); i++)
     if(allFiles.find(GetFileNameWithoutPath(matches[i])) == allFiles.end())
       MergeFile(matches[i]);
   drawContext::global()->draw();
@@ -681,8 +681,8 @@ static void add_new_point_based_entity(const std::string &what, int pane)
   FlGui::instance()->elementaryContext->show(pane);
 
   while(1) {
-    for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
-      for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
         FlGui::instance()->graph[i]->gl[j]->addPointMode = 1;
     std::string name = what;
     std::transform(name.begin(), name.end(), name.begin(), ::tolower);
@@ -801,8 +801,8 @@ static void add_new_point_based_entity(const std::string &what, int pane)
       drawContext::global()->draw();
     }
     if(ib == 'q'){
-      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
-        for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
           FlGui::instance()->graph[i]->gl[j]->addPointMode = 0;
       break;
     }
@@ -833,7 +833,7 @@ static void add_new_multiline(const std::string &type)
                     "or 'q' to abort]");
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
     if(ib == 'l') {
-      for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
         FlGui::instance()->selectedVertices[i]->setSelection(1);
         p.push_back(FlGui::instance()->selectedVertices[i]->tag());
       }
@@ -1325,25 +1325,25 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
 
     char ib = FlGui::instance()->selectEntity(type);
     if(ib == 'l') {
-      for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
         FlGui::instance()->selectedVertices[i]->setSelection(1);
         std::pair<int, int> t(0, FlGui::instance()->selectedVertices[i]->tag());
         if(std::find(dimTags.begin(), dimTags.end(), t) == dimTags.end())
           dimTags.push_back(t);
       }
-      for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
         FlGui::instance()->selectedEdges[i]->setSelection(1);
         std::pair<int, int> t(1, FlGui::instance()->selectedEdges[i]->tag());
         if(std::find(dimTags.begin(), dimTags.end(), t) == dimTags.end())
           dimTags.push_back(t);
       }
-      for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
         FlGui::instance()->selectedFaces[i]->setSelection(1);
         std::pair<int, int> t(2, FlGui::instance()->selectedFaces[i]->tag());
         if(std::find(dimTags.begin(), dimTags.end(), t) == dimTags.end())
           dimTags.push_back(t);
       }
-      for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
         FlGui::instance()->selectedRegions[i]->setSelection(1);
         std::pair<int, int> t(3, FlGui::instance()->selectedRegions[i]->tag());
         if(std::find(dimTags.begin(), dimTags.end(), t) == dimTags.end())
@@ -1353,7 +1353,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
     }
     if(ib == 'r') {
       std::vector<std::pair<int, int> >::iterator it;
-      for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
         std::pair<int, int> t(0, FlGui::instance()->selectedVertices[i]->tag());
         it = std::find(dimTags.begin(), dimTags.end(), t);
         if(it != dimTags.end()){
@@ -1362,7 +1362,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
           if(ge) ge->setSelection(0);
         }
       }
-      for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
         std::pair<int, int> t(1, FlGui::instance()->selectedEdges[i]->tag());
         it = std::find(dimTags.begin(), dimTags.end(), t);
         if(it != dimTags.end()){
@@ -1371,7 +1371,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
           if(ge) ge->setSelection(0);
         }
       }
-      for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
         std::pair<int, int> t(2, FlGui::instance()->selectedFaces[i]->tag());
         it = std::find(dimTags.begin(), dimTags.end(), t);
         if(it != dimTags.end()){
@@ -1380,7 +1380,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
           if(ge) ge->setSelection(0);
         }
       }
-      for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
         std::pair<int, int> t(3, FlGui::instance()->selectedRegions[i]->tag());
         it = std::find(dimTags.begin(), dimTags.end(), t);
         if(it != dimTags.end()){
@@ -1472,7 +1472,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
         case 11:
           {
             std::vector<int> tags;
-            for(unsigned int i = 0; i < dimTags.size(); i++){
+            for(std::size_t i = 0; i < dimTags.size(); i++){
               if((dimTags[i].first == 0 && what == "Point") ||
                  (dimTags[i].first == 1 && what == "Curve") ||
                  (dimTags[i].first == 2 && what == "Surface") ||
@@ -1493,7 +1493,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
         case 8:
           {
             std::vector<int> tags;
-            for(unsigned int i = 0; i < dimTags.size(); i++){
+            for(std::size_t i = 0; i < dimTags.size(); i++){
               if(dimTags[i].first == 0 && what == "Point")
                 tags.push_back(dimTags[i].second);
             }
@@ -1505,7 +1505,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
         case 9:
           {
             std::vector<int> tags;
-            for(unsigned int i = 0; i < dimTags.size(); i++){
+            for(std::size_t i = 0; i < dimTags.size(); i++){
               if(dimTags[i].first == 2 && what == "Surface")
                 tags.push_back(dimTags[i].second);
             }
@@ -1515,7 +1515,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
         case 10:
           {
             std::vector<int> tags;
-            for(unsigned int i = 0; i < dimTags.size(); i++){
+            for(std::size_t i = 0; i < dimTags.size(); i++){
               if((dimTags[i].first == 1 && what == "Curve") ||
                  (dimTags[i].first == 2 && what == "Surface") ||
                  (dimTags[i].first == 3 && what == "Volume"))
@@ -1533,7 +1533,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
           }
           else{
             std::vector<int> l;
-            for(unsigned int i = 0; i < dimTags.size(); i++){
+            for(std::size_t i = 0; i < dimTags.size(); i++){
               if(dimTags[i].first == 1) l.push_back(dimTags[i].second);
             }
             add_pipe(GModel::current()->getFileName(), dimTagsSaved, l);
@@ -1652,7 +1652,7 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
 
     char ib = FlGui::instance()->selectEntity(type);
     if(ib == 'l') {
-      for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
         if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
           FlGui::instance()->selectedEdges[i]->setSelection(1);
           std::pair<int, int> t(1, FlGui::instance()->selectedEdges[i]->tag());
@@ -1662,7 +1662,7 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
             tool.push_back(t);
         }
       }
-      for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
         if(FlGui::instance()->selectedFaces[i]->getSelection() != 1){
           FlGui::instance()->selectedFaces[i]->setSelection(1);
           std::pair<int, int> t(2, FlGui::instance()->selectedFaces[i]->tag());
@@ -1672,7 +1672,7 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
             tool.push_back(t);
         }
       }
-      for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
         if(FlGui::instance()->selectedRegions[i]->getSelection() != 1){
           FlGui::instance()->selectedRegions[i]->setSelection(1);
           std::pair<int, int> t(3, FlGui::instance()->selectedRegions[i]->tag());
@@ -1760,13 +1760,13 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
 
     char ib = FlGui::instance()->selectEntity(selectRegions ? ENT_VOLUME : ENT_CURVE);
     if(ib == 'l') {
-      for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
         if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
           FlGui::instance()->selectedEdges[i]->setSelection(1);
           edges.push_back(FlGui::instance()->selectedEdges[i]->tag());
         }
       }
-      for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
         if(FlGui::instance()->selectedRegions[i]->getSelection() != 1){
           FlGui::instance()->selectedRegions[i]->setSelection(1);
           regions.push_back(FlGui::instance()->selectedRegions[i]->tag());
@@ -1851,7 +1851,7 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
       split_edge(edge_to_split->tag(), List1, GModel::current()->getFileName());
       break;
     }
-    for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
+    for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
       int tag = FlGui::instance()->selectedVertices[i]->tag();
       int index = List_ISearchSeq(List1, &tag, fcmp_int);
       if(index < 0) List_Add(List1, &tag);
@@ -1969,7 +1969,7 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
     char ib = FlGui::instance()->selectEntity(what);
     if(ib == 'l') {
       if(CTX::instance()->pickElements){
-        for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++){
+        for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size(); i++){
           if(FlGui::instance()->selectedElements[i]->getVisibility() != 2){
             FlGui::instance()->selectedElements[i]->setVisibility(2);
             ele.push_back(FlGui::instance()->selectedElements[i]);
@@ -1977,19 +1977,19 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
         }
       }
       else{
-        for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
+        for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
           if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
             FlGui::instance()->selectedEdges[i]->setSelection(1);
             ent.push_back(FlGui::instance()->selectedEdges[i]);
           }
         }
-        for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
+        for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
           if(FlGui::instance()->selectedFaces[i]->getSelection() != 1){
             FlGui::instance()->selectedFaces[i]->setSelection(1);
             ent.push_back(FlGui::instance()->selectedFaces[i]);
           }
         }
-        for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
+        for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
           if(FlGui::instance()->selectedRegions[i]->getSelection() != 1){
             FlGui::instance()->selectedRegions[i]->setSelection(1);
             ent.push_back(FlGui::instance()->selectedRegions[i]);
@@ -1999,15 +1999,15 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
     }
     if(ib == 'r') {
       if(CTX::instance()->pickElements){
-        for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++)
+        for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size(); i++)
           FlGui::instance()->selectedElements[i]->setVisibility(1);
       }
       else{
-        for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++)
+        for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++)
           FlGui::instance()->selectedEdges[i]->setSelection(0);
-        for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++)
+        for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++)
           FlGui::instance()->selectedFaces[i]->setSelection(0);
-        for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++)
+        for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++)
           FlGui::instance()->selectedRegions[i]->setSelection(0);
       }
     }
@@ -2027,11 +2027,11 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
     }
     if(ib == 'e') {
       if(CTX::instance()->pickElements){
-        for(unsigned int i = 0; i < ele.size(); i++)
+        for(std::size_t i = 0; i < ele.size(); i++)
           if(ele[i]->getVisibility() == 2) ele[i]->setVisibility(0);
       }
       else{
-        for(unsigned int i = 0; i < ent.size(); i++)
+        for(std::size_t i = 0; i < ent.size(); i++)
           if(ent[i]->getSelection() == 1) ent[i]->setVisibility(0);
       }
       GModel::current()->removeInvisibleElements();
@@ -2067,11 +2067,11 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
         CTX::instance()->mesh.changed = ENT_ALL;
         drawContext::global()->draw();
         std::vector<std::string> info = SplitString(ele->getInfoString(true), '\n');
-        for(unsigned int i = 0; i < info.size(); i++)
+        for(std::size_t i = 0; i < info.size(); i++)
           Msg::Direct("%s", info[i].c_str());
         if(CTX::instance()->tooltips){
           std::string str;
-          for(unsigned int i = 0; i < info.size(); i++)
+          for(std::size_t i = 0; i < info.size(); i++)
             str += info[i] + "\n";
           FlGui::instance()->getCurrentOpenglWindow()->drawTooltip(str);
         }
@@ -2262,7 +2262,7 @@ static void mesh_define_transfinite(int dim)
     if(ib == 'l') {
       switch (dim) {
       case 1:
-        for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
+        for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
           FlGui::instance()->selectedEdges[i]->setSelection(1);
           p.push_back(FlGui::instance()->selectedEdges[i]->tag());
         }
@@ -2290,7 +2290,7 @@ static void mesh_define_transfinite(int dim)
                           "or 'q' to abort]");
           ib = FlGui::instance()->selectEntity(ENT_POINT);
           if(ib == 'l') {
-            for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
+            for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
               FlGui::instance()->selectedVertices[i]->setSelection(1);
               p.push_back(FlGui::instance()->selectedVertices[i]->tag());
               break;
@@ -2411,7 +2411,7 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
     char ib = FlGui::instance()->selectEntity(t);
     if(ib == 'l') {
       if(selectEntities && what == "Point"){
-        for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
+        for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
           if(FlGui::instance()->selectedVertices[i]->getSelection() != 1){
             FlGui::instance()->selectedVertices[i]->setSelection(1);
             entities.push_back(FlGui::instance()->selectedVertices[i]->tag());
@@ -2419,7 +2419,7 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
         }
       }
       else if(selectEntities && what == "Curve"){
-        for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
+        for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
           if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
             FlGui::instance()->selectedEdges[i]->setSelection(1);
             entities.push_back(FlGui::instance()->selectedEdges[i]->tag());
@@ -2427,7 +2427,7 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
         }
       }
       else if(selectEntities && what == "Surface"){
-        for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
+        for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
           if(FlGui::instance()->selectedFaces[i]->getSelection() != 1){
             FlGui::instance()->selectedFaces[i]->setSelection(1);
             entities.push_back(FlGui::instance()->selectedFaces[i]->tag());
@@ -2630,7 +2630,7 @@ static Fl_Menu_Item sysbar_table[] = {
 static graphicWindow *getGraphicWindow(Fl_Widget *w)
 {
   if(!w || !w->parent()) return FlGui::instance()->graph[0];
-  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
     if(FlGui::instance()->graph[i]->getWindow() == w->parent())
       return FlGui::instance()->graph[i];
   return FlGui::instance()->graph[0];
@@ -2646,7 +2646,7 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
   else
     gls.push_back(FlGui::instance()->getCurrentOpenglWindow());
 
-  for(unsigned int i = 0; i < gls.size(); i++){
+  for(std::size_t i = 0; i < gls.size(); i++){
     drawContext *ctx = gls[i]->getDrawContext();
     if(!strcmp(str, "r")){
       // rotate +90 or -90 (shift) degress around axis perp to the
@@ -2834,17 +2834,17 @@ void quick_access_cb(Fl_Widget *w, void *data)
                                 true, "Factor", true, 0.01, 100, 0.01);
   else if(what == "view_element_outlines"){
     int set = 0;
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0) &&
          (set = opt_view_show_element(i, GMSH_GET, 0)))
         break;
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_show_element(i, GMSH_SET|GMSH_GUI, !set);
   }
   else if(what == "view_normal_raise"){
     double val = 0.;
-    for(unsigned int i = 0; i < PView::list.size(); i++){
+    for(std::size_t i = 0; i < PView::list.size(); i++){
       if(opt_view_visible(i, GMSH_GET, 0)){
         double maxval = std::max(fabs(opt_view_min(i, GMSH_GET, 0)),
                                  fabs(opt_view_max(i, GMSH_GET, 0)));
@@ -2855,71 +2855,71 @@ void quick_access_cb(Fl_Widget *w, void *data)
         break;
       }
     }
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_normal_raise(i, GMSH_SET|GMSH_GUI, val);
   }
   else if(what == "view_iso"){
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 1);
     drawContext::global()->draw();
     double val = 0.;
-    for(unsigned int i = 0; i < PView::list.size(); i++){
+    for(std::size_t i = 0; i < PView::list.size(); i++){
       if(opt_view_visible(i, GMSH_GET, 0)){
         val = numberOrStringOptionChooser("View", i, "NbIso",
                                           true, "Intervals", true, 1, 100, 1);
         break;
       }
     }
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_nb_iso(i, GMSH_SET|GMSH_GUI, val);
   }
   else if(what == "view_continous"){
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 2);
   }
   else if(what == "view_filled"){
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 3);
     drawContext::global()->draw();
     double val = 0.;
-    for(unsigned int i = 0; i < PView::list.size(); i++){
+    for(std::size_t i = 0; i < PView::list.size(); i++){
       if(opt_view_visible(i, GMSH_GET, 0)){
         val = numberOrStringOptionChooser("View", i, "NbIso",
                                           true, "Intervals", true, 1, 100, 1);
         break;
       }
     }
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_nb_iso(i, GMSH_SET|GMSH_GUI, val);
   }
   else if(what == "view_numeric"){
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 4);
   }
   else if(what == "view_line"){
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_vector_type(i, GMSH_SET|GMSH_GUI, 1);
   }
   else if(what == "view_3d_arrow"){
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_vector_type(i, GMSH_SET|GMSH_GUI, 4);
   }
   else if(what == "view_displacement"){
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_vector_type(i, GMSH_SET|GMSH_GUI, 5);
     drawContext::global()->draw();
     double val = 0.;
-    for(unsigned int i = 0; i < PView::list.size(); i++){
+    for(std::size_t i = 0; i < PView::list.size(); i++){
       if(opt_view_visible(i, GMSH_GET, 0)){
         double maxval = std::max(fabs(opt_view_min(i, GMSH_GET, 0)),
                                  fabs(opt_view_max(i, GMSH_GET, 0)));
@@ -2930,27 +2930,27 @@ void quick_access_cb(Fl_Widget *w, void *data)
         break;
       }
     }
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_displacement_factor(i, GMSH_SET|GMSH_GUI, val);
   }
   else if(what == "view_glyph_barycenter"){
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_glyph_location(i, GMSH_SET|GMSH_GUI, 1);
   }
   else if(what == "view_glyph_node"){
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_glyph_location(i, GMSH_SET|GMSH_GUI, 2);
   }
   else if(what == "view_range_default"){
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_range_type(i, GMSH_SET|GMSH_GUI, 1);
   }
   else if(what == "view_range_per_step"){
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_range_type(i, GMSH_SET|GMSH_GUI, 3);
   }
@@ -2996,7 +2996,7 @@ static void model_switch_cb(Fl_Widget* w, void *data)
   int index = (intptr_t)data;
   GModel::current(index);
   SetBoundingBox();
-  for(unsigned int i = 0; i < GModel::list.size(); i++)
+  for(std::size_t i = 0; i < GModel::list.size(); i++)
     GModel::list[i]->setVisibility(0);
   GModel::current()->setVisibility(1);
   CTX::instance()->mesh.changed = ENT_ALL;
@@ -3014,9 +3014,9 @@ void status_options_cb(Fl_Widget *w, void *data)
     std::vector<char*> tofree;
     std::vector<Fl_Menu_Item> menu;
     int selected = 0;
-    for(unsigned int i = 0; i < GModel::list.size(); i++){
+    for(std::size_t i = 0; i < GModel::list.size(); i++){
       char tmp[256];
-      sprintf(tmp, "Model [%d] <<%s>> ", i, GModel::list[i]->getName().c_str());
+      sprintf(tmp, "Model [%lu] <<%s>> ", i, GModel::list[i]->getName().c_str());
       char *str = strdup(tmp);
       Fl_Menu_Item menuItem = {str, 0, model_switch_cb, (void*)(intptr_t)i, FL_MENU_RADIO};
       if(GModel::list[i] == GModel::current()){
@@ -3031,7 +3031,7 @@ void status_options_cb(Fl_Widget *w, void *data)
     Fl_Menu_Item *m = (Fl_Menu_Item*)(&menu[0])->popup(Fl::event_x(), Fl::event_y(),
                                                        0, &menu[selected], 0);
     if(m) m->do_callback(0);
-    for(unsigned int i = 0; i < tofree.size(); i++) free(tofree[i]);
+    for(std::size_t i = 0; i < tofree.size(); i++) free(tofree[i]);
     drawContext::global()->draw();
   }
   else if(what == "?"){ // display options
@@ -3117,7 +3117,7 @@ void status_options_cb(Fl_Widget *w, void *data)
     };
     const int gen = 7, geo = 13, msh = 20, pos = 31, end = 53;
     if(opt_general_axes(0, GMSH_GET, 0)) menu[gen + 0].set(); else menu[gen + 0].clear();
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0) && opt_view_axes(i, GMSH_GET, 0))
         menu[gen + 0].set();
     if(opt_geometry_points(0, GMSH_GET, 0)) menu[geo + 1].set(); else menu[geo + 1].clear();
@@ -3140,7 +3140,7 @@ void status_options_cb(Fl_Widget *w, void *data)
       menu[pos - 1].flags = FL_MENU_DIVIDER;
       for(int i = pos; i <= end; i++) menu[i].show();
       menu[pos].clear();
-      for(unsigned int i = 0; i < PView::list.size(); i++){
+      for(std::size_t i = 0; i < PView::list.size(); i++){
         if(opt_view_visible(i, GMSH_GET, 0) && opt_view_show_element(i, GMSH_GET, 0)){
           menu[pos].set();
           break;
@@ -3158,8 +3158,8 @@ void status_options_cb(Fl_Widget *w, void *data)
   else if(what == "S"){ // mouse selection
     if(CTX::instance()->mouseSelection){
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 0);
-      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
-        for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
           FlGui::instance()->graph[i]->gl[j]->cursor
             (FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
     }
@@ -3184,7 +3184,7 @@ void status_play_manual(int time, int incr, bool redraw)
   file_watch_cb(0, 0);
 
   if(time) {
-    for(unsigned int i = 0; i < PView::list.size(); i++){
+    for(std::size_t i = 0; i < PView::list.size(); i++){
       if(opt_view_visible(i, GMSH_GET, 0)){
         // skip empty steps
         int step = (int)opt_view_timestep(i, GMSH_GET, 0) + incr;
@@ -3250,14 +3250,14 @@ static void status_pause_cb(Fl_Widget *w, void *data)
 static void status_rewind_cb(Fl_Widget *w, void *data)
 {
   if(!CTX::instance()->post.animCycle) {
-    for(unsigned int i = 0; i < PView::list.size(); i++) {
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
       int step = PView::list[i]->getData()->getFirstNonEmptyTimeStep();
       opt_view_timestep(i, GMSH_SET | GMSH_GUI, step);
     }
   }
   else {
     view_in_cycle = 0;
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       opt_view_visible(i, GMSH_SET | GMSH_GUI, !i);
   }
   drawContext::global()->draw();
@@ -3277,7 +3277,7 @@ static void remove_graphic_window_cb(Fl_Widget *w, void *data)
 {
   std::vector<graphicWindow*> graph2;
   graphicWindow *deleteMe = 0;
-  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++){
+  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++){
     if(FlGui::instance()->graph[i]->getWindow() == w)
       deleteMe = FlGui::instance()->graph[i];
     else
@@ -3393,7 +3393,7 @@ public:
   {
     if(event == FL_PUSH){
       if(FlGui::available()){
-        for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+        for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
           FlGui::instance()->graph[i]->showHideMessages();
       }
       return 1;
@@ -3516,7 +3516,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     mode |= FL_DOUBLE;
     mode |= FL_STEREO;
   }
-  for(unsigned int i = 0; i < gl.size(); i++) gl[i]->mode(mode);
+  for(std::size_t i = 0; i < gl.size(); i++) gl[i]->mode(mode);
 
   if(main){
     _browser = new messageBrowser(twidth, mh + glheight, glwidth, mheight);
@@ -3680,7 +3680,7 @@ void graphicWindow::detachMenu()
   int w = _onelab->w();
   _tile->remove(_onelab);
   _browser->resize(0, _browser->y(), _browser->w() + w, _browser->h());
-  for(unsigned int i = 0; i < gl.size(); i++){
+  for(std::size_t i = 0; i < gl.size(); i++){
     if(gl[i]->x() == w){
       gl[i]->resize(0, gl[i]->y(), gl[i]->w() + w, gl[i]->h());
     }
@@ -3720,7 +3720,7 @@ void graphicWindow::attachMenu()
   int w = _onelab->w();
   if(_browser->w() - w < 0) w = _browser->w() / 2;
   _browser->resize(w, _browser->y(), _browser->w() - w, _browser->h());
-  for(unsigned int i = 0; i < gl.size(); i++){
+  for(std::size_t i = 0; i < gl.size(); i++){
     if(gl[i]->x() == 0){
       gl[i]->resize(w, gl[i]->y(), gl[i]->w() - w, gl[i]->h());
     }
@@ -3801,7 +3801,7 @@ bool graphicWindow::split(openglWindow *g, char how)
     // brutal :-)
     int mode = g->mode();
     openglWindow::setLastHandled(0);
-    for(unsigned int i = 0; i < gl.size(); i++){
+    for(std::size_t i = 0; i < gl.size(); i++){
       _tile->remove(gl[i]);
       delete gl[i];
     }
@@ -3849,7 +3849,7 @@ bool graphicWindow::split(openglWindow *g, char how)
 void graphicWindow::setStereo(bool st)
 {
   openglWindow::setLastHandled(0);
-  for(unsigned int i = 0; i < gl.size(); i++){
+  for(std::size_t i = 0; i < gl.size(); i++){
     if (st) {
       gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE | FL_STEREO);
     }
@@ -3880,7 +3880,7 @@ void graphicWindow::checkAnimButtons()
     play = true;
   }
   else{
-    for(unsigned int i = 0; i < PView::list.size(); i++){
+    for(std::size_t i = 0; i < PView::list.size(); i++){
       if(PView::list[i]->getData()->getNumTimeSteps() > 1){
         play = true;
         break;
@@ -3912,7 +3912,7 @@ void graphicWindow::setMenuWidth(int w)
   if(!_browser) return;
   double dw = w - _onelab->w();
   if(!dw) return;
-  for(unsigned int i = 0; i < gl.size(); i++){
+  for(std::size_t i = 0; i < gl.size(); i++){
     if(gl[i]->x() == _onelab->x() + _onelab->w()){
       gl[i]->resize(gl[i]->x() + dw, gl[i]->y(), gl[i]->w() - dw, gl[i]->h());
     }
@@ -3955,7 +3955,7 @@ void graphicWindow::setMessageHeight(int h)
   if(!_browser) return;
   int dh = h - _browser->h();
   if(!dh) return;
-  for(unsigned int i = 0; i < gl.size(); i++){
+  for(std::size_t i = 0; i < gl.size(); i++){
     if(gl[i]->y() + gl[i]->h() == _browser->y()){
       gl[i]->resize(gl[i]->x(), gl[i]->y(), gl[i]->w(), gl[i]->h() - dh);
     }
@@ -4324,7 +4324,7 @@ void onelabGroup::_addGmshMenus()
   _tree->sortorder(FL_TREE_SORT_NONE);
 
   // add static geometry and mesh module items
-  for(unsigned int i = 0; i < sizeof(static_modules) / sizeof(static_modules[0]); i++)
+  for(std::size_t i = 0; i < sizeof(static_modules) / sizeof(static_modules[0]); i++)
     _addMenu(static_modules[i].label, static_modules[i].callback, static_modules[i].arg);
 
   // add dynamic solver module items
@@ -4334,7 +4334,7 @@ void onelabGroup::_addGmshMenus()
   }
 
   // add dynamic post-processing module items
-  for(unsigned int i = 0; i < PView::list.size(); i++) _addViewMenu(i);
+  for(std::size_t i = 0; i < PView::list.size(); i++) _addViewMenu(i);
 
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
 

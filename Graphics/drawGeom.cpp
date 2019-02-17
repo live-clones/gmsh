@@ -34,7 +34,7 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
   }
   else {
     strcpy(str, "");
-    for(unsigned int i = 0; i < e->physicals.size(); i++) {
+    for(std::size_t i = 0; i < e->physicals.size(); i++) {
       char tmp[32];
       if(i) strcat(str, ", ");
       sprintf(tmp, "%d", e->physicals[i]);
@@ -340,9 +340,9 @@ public:
         glLineStipple(1, 0x0F0F);
         gl2psEnable(GL2PS_LINE_STIPPLE);
         for(int dim = 0; dim < 2; dim++) {
-          for(unsigned int i = 0; i < f->cross[dim].size(); i++) {
+          for(std::size_t i = 0; i < f->cross[dim].size(); i++) {
             glBegin(GL_LINE_STRIP);
-            for(unsigned int j = 0; j < f->cross[dim][i].size(); j++) {
+            for(std::size_t j = 0; j < f->cross[dim][i].size(); j++) {
               double x = f->cross[dim][i][j].x();
               double y = f->cross[dim][i][j].y();
               double z = f->cross[dim][i][j].z();
@@ -464,7 +464,7 @@ void drawContext::drawGeom()
     else
       glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
-  for(unsigned int i = 0; i < GModel::list.size(); i++) {
+  for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
     if(m->getVisibility() && isVisible(m)) {
       std::for_each(m->firstVertex(), m->lastVertex(), drawGVertex(this));

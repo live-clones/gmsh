@@ -2045,7 +2045,7 @@ public:
         GFace *f = GModel::current()->getFaceByTag(*it);
         if(f) {
           if(f->mesh_vertices.size()) {
-            for(unsigned int i = 0; i < f->mesh_vertices.size(); i++) {
+            for(std::size_t i = 0; i < f->mesh_vertices.size(); i++) {
               MVertex *v = f->mesh_vertices[i];
               double uu, vv;
               v->getParameter(0, uu);
@@ -2083,7 +2083,7 @@ public:
         GEdge *e = GModel::current()->getEdgeByTag(*it);
         if(e) {
           if(e->mesh_vertices.size()) {
-            for(unsigned int i = 0; i < e->mesh_vertices.size(); i++) {
+            for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
               double u;
               e->mesh_vertices[i]->getParameter(0, u);
               GPoint gp = e->point(u);
@@ -2492,7 +2492,7 @@ public:
         GFace *f = GModel::current()->getFaceByTag(*it);
         if(f) {
           if(f->mesh_vertices.size()) {
-            for(unsigned int i = 0; i < f->mesh_vertices.size(); i++) {
+            for(std::size_t i = 0; i < f->mesh_vertices.size(); i++) {
               MVertex *v = f->mesh_vertices[i];
               points.push_back(SPoint3(v->x(), v->y(), v->z()));
               double uu = 0., vv = 0.;
@@ -2528,7 +2528,7 @@ public:
         GEdge *e = GModel::current()->getEdgeByTag(*it);
         if(e) {
           if(e->mesh_vertices.size()) {
-            for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
+            for(std::size_t i = 0; i < e->mesh_vertices.size(); i++){
               points.push_back(SPoint3(e->mesh_vertices[i]->x(),
                                        e->mesh_vertices[i]->y(),
                                        e->mesh_vertices[i]->z()));
@@ -2918,7 +2918,7 @@ void BoundaryLayerField::operator()(double x, double y, double z,
     }
   }
   if(iIntersect)
-    for(unsigned int i = 0; i < hop.size(); i++)
+    for(std::size_t i = 0; i < hop.size(); i++)
       v = intersection_conserveM1(v, hop[i]);
   metr = v;
 }
@@ -2991,8 +2991,8 @@ void Field::putOnNewView()
   std::map<int, std::vector<double> > d;
   std::vector<GEntity *> entities;
   GModel::current()->getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++) {
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
       MVertex *v = entities[i]->mesh_vertices[j];
       d[v->getNum()].push_back((*this)(v->x(), v->y(), v->z(), entities[i]));
     }

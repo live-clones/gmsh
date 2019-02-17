@@ -148,16 +148,16 @@ int GFace::delEdge(GEdge *edge)
 void GFace::deleteMesh(bool onlyDeleteElements)
 {
   if(!onlyDeleteElements) {
-    for(unsigned int i = 0; i < mesh_vertices.size(); i++)
+    for(std::size_t i = 0; i < mesh_vertices.size(); i++)
       delete mesh_vertices[i];
     mesh_vertices.clear();
     transfinite_vertices.clear();
   }
-  for(unsigned int i = 0; i < triangles.size(); i++) delete triangles[i];
+  for(std::size_t i = 0; i < triangles.size(); i++) delete triangles[i];
   triangles.clear();
-  for(unsigned int i = 0; i < quadrangles.size(); i++) delete quadrangles[i];
+  for(std::size_t i = 0; i < quadrangles.size(); i++) delete quadrangles[i];
   quadrangles.clear();
-  for(unsigned int i = 0; i < polygons.size(); i++) delete polygons[i];
+  for(std::size_t i = 0; i < polygons.size(); i++) delete polygons[i];
   polygons.clear();
   deleteVertexArrays();
   model()->destroyMeshCaches();
@@ -168,7 +168,7 @@ std::size_t GFace::getNumMeshElements() const
   return triangles.size() + quadrangles.size() + polygons.size();
 }
 
-unsigned int GFace::getNumMeshElementsByType(const int familyType) const
+std::size_t GFace::getNumMeshElementsByType(const int familyType) const
 {
   if(familyType == TYPE_TRI)
     return triangles.size();
@@ -180,10 +180,10 @@ unsigned int GFace::getNumMeshElementsByType(const int familyType) const
   return 0;
 }
 
-unsigned int GFace::getNumMeshParentElements()
+std::size_t GFace::getNumMeshParentElements()
 {
-  unsigned int n = 0;
-  for(unsigned int i = 0; i < polygons.size(); i++)
+  std::size_t n = 0;
+  for(std::size_t i = 0; i < polygons.size(); i++)
     if(polygons[i]->ownsParent()) n++;
   return n;
 }
@@ -211,7 +211,7 @@ MElement *const *GFace::getStartElementType(int type) const
   return 0;
 }
 
-MElement *GFace::getMeshElement(unsigned int index) const
+MElement *GFace::getMeshElement(std::size_t index) const
 {
   if(index < triangles.size())
     return triangles[index];
@@ -223,7 +223,7 @@ MElement *GFace::getMeshElement(unsigned int index) const
 }
 
 MElement *GFace::getMeshElementByType(const int familyType,
-                                      const unsigned int index) const
+                                      const std::size_t index) const
 {
   if(familyType == TYPE_TRI)
     return triangles[index];
@@ -258,8 +258,8 @@ SBoundingBox3d GFace::bounds(bool fast) const
   else {
     int ipp = getNumMeshElements() / 20;
     if(ipp < 1) ipp = 1;
-    for(unsigned int i = 0; i < getNumMeshElements(); i += ipp)
-      for(unsigned int j = 0; j < getMeshElement(i)->getNumVertices(); j++)
+    for(std::size_t i = 0; i < getNumMeshElements(); i += ipp)
+      for(std::size_t j = 0; j < getMeshElement(i)->getNumVertices(); j++)
         res += getMeshElement(i)->getVertex(j)->point();
   }
   return res;
@@ -456,7 +456,7 @@ void GFace::writeGEO(FILE *fp)
         it++)
       ori.push_back((*it) > 0 ? 1 : -1);
     fprintf(fp, "Line Loop(%d) = ", tag());
-    for(unsigned int i = 0; i < num.size(); i++) {
+    for(std::size_t i = 0; i < num.size(); i++) {
       if(i)
         fprintf(fp, ", %d", num[i] * ori[i]);
       else
@@ -486,7 +486,7 @@ void GFace::writeGEO(FILE *fp)
     fprintf(fp, "Transfinite Surface {%d}", tag());
     if(meshAttributes.corners.size()) {
       fprintf(fp, " = {");
-      for(unsigned int i = 0; i < meshAttributes.corners.size(); i++) {
+      for(std::size_t i = 0; i < meshAttributes.corners.size(); i++) {
         if(i) fprintf(fp, ",");
         fprintf(fp, "%d", meshAttributes.corners[i]->tag());
       }
@@ -530,7 +530,7 @@ void GFace::computeMeanPlane()
     double res[4] = {0., 0., 0., 0.}, xm = 0., ym = 0., zm = 0.;
     if(pts.size() >= 3) {
       SVector3 d01(pts[0], pts[1]);
-      for(unsigned int i = 2; i < pts.size(); i++) {
+      for(std::size_t i = 2; i < pts.size(); i++) {
         SVector3 d0i(pts[0], pts[i]);
         SVector3 n = crossprod(d01, d0i);
         // if too small, the points are almost colinear; tolerance is relatively
@@ -589,7 +589,7 @@ void GFace::computeMeanPlane()
         ite != edg.end(); ite++) {
       const GEdge *e = *ite;
       if(e->mesh_vertices.size() > 1) {
-        for(unsigned int i = 0; i < e->mesh_vertices.size(); i++)
+        for(std::size_t i = 0; i < e->mesh_vertices.size(); i++)
           pts.push_back(e->mesh_vertices[i]->point());
       }
       else {
@@ -608,7 +608,7 @@ void GFace::computeMeanPlane()
 void GFace::computeMeanPlane(const std::vector<MVertex *> &points)
 {
   std::vector<SPoint3> pts;
-  for(unsigned int i = 0; i < points.size(); i++)
+  for(std::size_t i = 0; i < points.size(); i++)
     pts.push_back(SPoint3(points[i]->x(), points[i]->y(), points[i]->z()));
   computeMeanPlane(pts);
 }
@@ -773,7 +773,7 @@ void GFace::computeMeshSizeFieldAccuracy(double &avg, double &max_e,
 {
 #if defined(HAVE_MESH)
   std::set<MEdge, Less_Edge> es;
-  for(unsigned int i = 0; i < getNumMeshElements(); i++) {
+  for(std::size_t i = 0; i < getNumMeshElements(); i++) {
     MElement *e = getMeshElement(i);
     for(int j = 0; j < e->getNumEdges(); j++) es.insert(e->getEdge(j));
   }
@@ -1361,7 +1361,7 @@ bool GFace::fillVertexArray(bool force)
   unsigned int col[4] = {c, c, c, c};
   if(stl_vertices_xyz.size() &&
      (stl_vertices_xyz.size() == stl_normals.size())) {
-    for(unsigned int i = 0; i < stl_triangles.size(); i += 3) {
+    for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {
       SPoint3 &p1(stl_vertices_xyz[stl_triangles[i]]);
       SPoint3 &p2(stl_vertices_xyz[stl_triangles[i + 1]]);
       SPoint3 &p3(stl_vertices_xyz[stl_triangles[i + 2]]);
@@ -1375,7 +1375,7 @@ bool GFace::fillVertexArray(bool force)
     }
   }
   else if(stl_vertices_uv.size()) {
-    for(unsigned int i = 0; i < stl_triangles.size(); i += 3) {
+    for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {
       SPoint2 &p1(stl_vertices_uv[stl_triangles[i]]);
       SPoint2 &p2(stl_vertices_uv[stl_triangles[i + 1]]);
       SPoint2 &p3(stl_vertices_uv[stl_triangles[i + 2]]);
@@ -1418,7 +1418,7 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
   if(!points) return false;
 
   if(buildSTLTriangulation() && stl_vertices_uv.size()) {
-    for(unsigned int i = 0; i < stl_triangles.size(); i += 3) {
+    for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {
       SPoint2 &p0(stl_vertices_uv[stl_triangles[i]]);
       SPoint2 &p1(stl_vertices_uv[stl_triangles[i + 1]]);
       SPoint2 &p2(stl_vertices_uv[stl_triangles[i + 2]]);
@@ -1468,13 +1468,13 @@ static void meshCompound(GFace *gf, bool verbose)
   std::vector<GFace *> triangles_tag;
   std::vector<SPoint2> triangles_uv;
 
-  for(unsigned int i = 0; i < gf->_compound.size(); i++) {
+  for(std::size_t i = 0; i < gf->_compound.size(); i++) {
     GFace *c = (GFace *)gf->_compound[i];
     df->triangles.insert(df->triangles.end(), c->triangles.begin(),
                          c->triangles.end());
     df->mesh_vertices.insert(df->mesh_vertices.end(), c->mesh_vertices.begin(),
                              c->mesh_vertices.end());
-    for(unsigned int j = 0; j < c->triangles.size(); j++) {
+    for(std::size_t j = 0; j < c->triangles.size(); j++) {
       triangles_tag.push_back(c);
       for(int k = 0; k < 3; k++) {
         SPoint2 param;
@@ -1489,7 +1489,7 @@ static void meshCompound(GFace *gf, bool verbose)
   df->createGeometry();
   df->mesh(verbose);
 
-  for(GFace::size_type i = 0; i < df->mesh_vertices.size(); i++) {
+  for(std::size_t i = 0; i < df->mesh_vertices.size(); i++) {
     double u, v;
     df->mesh_vertices[i]->getParameter(0, u);
     df->mesh_vertices[i]->getParameter(1, v);
@@ -1517,7 +1517,7 @@ static void meshCompound(GFace *gf, bool verbose)
     }
   }
 
-  for(GFace::size_type i = 0; i < df->triangles.size(); i++) {
+  for(std::size_t i = 0; i < df->triangles.size(); i++) {
     MTriangle *t = df->triangles[i];
     if(t->getVertex(0)->onWhat()->dim() == 2)
       ((GFace *)t->getVertex(0)->onWhat())->triangles.push_back(t);
@@ -1549,7 +1549,7 @@ void GFace::mesh(bool verbose)
   if(_compound.size()) { // Some faces are meshed together
     if(_compound[0] == this) { // I'm the one that makes the compound job
       bool ok = true;
-      for(unsigned int i = 0; i < _compound.size(); i++) {
+      for(std::size_t i = 0; i < _compound.size(); i++) {
         GFace *gf = (GFace *)_compound[i];
         ok &= (gf->meshStatistics.status == GFace::DONE);
       }
@@ -1580,7 +1580,7 @@ void GFace::moveToValidRange(SPoint2 &pt) const
 
 void GFace::relocateMeshVertices()
 {
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++) {
+  for(std::size_t i = 0; i < mesh_vertices.size(); i++) {
     MVertex *v = mesh_vertices[i];
     double u0 = 0., u1 = 0.;
     if(v->getParameter(0, u0) && v->getParameter(1, u1)) {
@@ -2058,7 +2058,7 @@ bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
       }
 
       std::vector<MTriangle *> newTrianglesOrder(triangles.size());
-      for(unsigned int i = 0; i < ordering.size(); i++) {
+      for(std::size_t i = 0; i < ordering.size(); i++) {
         newTrianglesOrder[i] = triangles[ordering[i]];
       }
 #if __cplusplus >= 201103L
@@ -2081,7 +2081,7 @@ bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
       }
 
       std::vector<MQuadrangle *> newQuadranglesOrder(quadrangles.size());
-      for(unsigned int i = 0; i < ordering.size(); i++) {
+      for(std::size_t i = 0; i < ordering.size(); i++) {
         newQuadranglesOrder[i] = quadrangles[ordering[i]];
       }
 #if __cplusplus >= 201103L
@@ -2104,7 +2104,7 @@ bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
       }
 
       std::vector<MPolygon *> newPolygonsOrder(polygons.size());
-      for(unsigned int i = 0; i < ordering.size(); i++) {
+      for(std::size_t i = 0; i < ordering.size(); i++) {
         newPolygonsOrder[i] = polygons[ordering[i]];
       }
 #if __cplusplus >= 201103L

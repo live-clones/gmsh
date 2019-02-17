@@ -36,9 +36,9 @@ discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
 
 discreteEdge::~discreteEdge()
 {
-  for(unsigned int i = 0; i < discrete_lines.size(); i++)
+  for(std::size_t i = 0; i < discrete_lines.size(); i++)
     delete discrete_lines[i];
-  for(unsigned int i = 0; i < discrete_vertices.size(); i++)
+  for(std::size_t i = 0; i < discrete_vertices.size(); i++)
     delete discrete_vertices[i];
   discrete_lines.clear();
   discrete_vertices.clear();
@@ -52,7 +52,7 @@ void discreteEdge::orderMLines()
 
   std::vector<MEdge> ed;
   std::vector<std::vector<MVertex *> > vs;
-  for(unsigned int i = 0; i < lines.size(); i++) {
+  for(std::size_t i = 0; i < lines.size(); i++) {
     ed.push_back(MEdge(lines[i]->getVertex(0), lines[i]->getVertex(1)));
     delete lines[i];
   }
@@ -64,14 +64,14 @@ void discreteEdge::orderMLines()
   if(vs.size() != 1)
     Msg::Warning("Discrete curve %d is mutiply connected", tag());
 
-  unsigned int START = 0;
+  std::size_t START = 0;
   for(; START < vs[0].size(); START++)
     if(vs[0][START]->onWhat()->dim() == 0) break;
 
   if(START == vs[0].size())
     Msg::Warning("Discrete curve %d topology is wrong", tag());
 
-  unsigned int i = START;
+  std::size_t i = START;
   while(lines.size() != ss) {
     if(vs[0][i % vs[0].size()] != vs[0][(i + 1) % vs[0].size()])
       lines.push_back(
@@ -80,7 +80,7 @@ void discreteEdge::orderMLines()
   }
 
   mesh_vertices.clear();
-  for(unsigned int i = 0; i < lines.size() - 1; ++i) {
+  for(std::size_t i = 0; i < lines.size() - 1; ++i) {
     MVertex *v11 = lines[i]->getVertex(1);
     mesh_vertices.push_back(v11);
   }
@@ -174,8 +174,8 @@ void discreteEdge::createGeometry()
 
     std::map<MVertex *, MVertex *> old2new;
 
-    for(unsigned int i = 0; i < lines.size(); i++) {
-      for(unsigned int j = 0; j < 2; j++) {
+    for(std::size_t i = 0; i < lines.size(); i++) {
+      for(std::size_t j = 0; j < 2; j++) {
         MVertex *v = lines[i]->getVertex(j);
         if(old2new.find(v) == old2new.end()) {
           MVertex *vnew = new MVertex(v->x(), v->y(), v->z(), this);
@@ -186,7 +186,7 @@ void discreteEdge::createGeometry()
 
     std::vector<MLine *> _temp;
     discrete_lines.resize(lines.size());
-    for(unsigned int i = 0; i < lines.size(); i++) {
+    for(std::size_t i = 0; i < lines.size(); i++) {
       MVertex *v0 = lines[i]->getVertex(0);
       MVertex *v1 = lines[i]->getVertex(1);
       MVertex *v00 = old2new[v0];
@@ -198,7 +198,7 @@ void discreteEdge::createGeometry()
     }
     // compute parameters and recompute the vertices
     _pars.push_back(0.0);
-    for(unsigned int i = 1; i < discrete_lines.size(); i++) {
+    for(std::size_t i = 1; i < discrete_lines.size(); i++) {
       _pars.push_back((double)i);
       MVertex *newv = discrete_lines[i]->getVertex(0);
       discrete_vertices.push_back(newv);

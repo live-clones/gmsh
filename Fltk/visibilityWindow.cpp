@@ -78,7 +78,7 @@ public:
 
 static void setVisibilityOnOtherModels(GEntity *ge, char val, bool recursive)
 {
-  for(unsigned int i = 0; i < GModel::list.size(); i++) {
+  for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m2 = GModel::list[i];
     if(m2 != ge->model()) {
       GEntity *ge2 = 0;
@@ -151,7 +151,7 @@ public:
   void setVisibility(char val, bool recursive = false, bool allmodels = false)
   {
     _visible = val;
-    for(unsigned int i = 0; i < _list.size(); i++) {
+    for(std::size_t i = 0; i < _list.size(); i++) {
       _list[i]->setVisibility(val, recursive);
       if(allmodels) setVisibilityOnOtherModels(_list[i], val, recursive);
     }
@@ -172,13 +172,13 @@ public:
   void setVisibility(char val, bool recursive = false, bool allmodels = false)
   {
     _visible = val;
-    for(unsigned int i = 0; i < GModel::list.size(); i++) {
+    for(std::size_t i = 0; i < GModel::list.size(); i++) {
       GModel *m = GModel::list[i];
       if(allmodels || m == GModel::current()) {
         std::vector<GEntity *> entities;
         m->getEntities(entities);
-        for(unsigned int j = 0; j < entities.size(); j++)
-          for(unsigned int k = 0; k < entities[j]->getNumMeshElements(); k++)
+        for(std::size_t j = 0; j < entities.size(); j++)
+          for(std::size_t k = 0; k < entities[j]->getNumMeshElements(); k++)
             if(entities[j]->getMeshElement(k)->getPartition() == _tag)
               entities[j]->getMeshElement(k)->setVisibility(val);
       }
@@ -232,15 +232,15 @@ public:
           gmsh_yysymbols.begin();
         it != gmsh_yysymbols.end(); ++it)
       if(it->first.size())
-        for(unsigned int i = 0; i < it->second.value.size(); i++)
+        for(std::size_t i = 0; i < it->second.value.size(); i++)
           oldLabels[(int)it->second.value[i]] =
             std::string("(") + it->first + ")";
 #endif
-    for(unsigned int i = 0; i < _entities.size(); i++) delete _entities[i];
+    for(std::size_t i = 0; i < _entities.size(); i++) delete _entities[i];
     _entities.clear();
     GModel *m = GModel::current();
     if(type == Models) {
-      for(unsigned int i = 0; i < GModel::list.size(); i++) {
+      for(std::size_t i = 0; i < GModel::list.size(); i++) {
         std::string name = GModel::list[i]->getName();
         if(GModel::list[i] == GModel::current()) name += " (Current Model)";
         _entities.push_back(new VisModel(GModel::list[i], i, name));
@@ -249,7 +249,7 @@ public:
     else if(type == ElementaryEntities) {
       std::vector<GEntity *> entities;
       m->getEntities(entities);
-      for(unsigned int i = 0; i < entities.size(); i++) {
+      for(std::size_t i = 0; i < entities.size(); i++) {
         GEntity *ge = entities[i];
         std::string name = m->getElementaryName(ge->dim(), ge->tag());
         if(name.empty()) name = oldLabels[ge->tag()];
@@ -270,7 +270,7 @@ public:
       }
     }
     else if(type == MeshPartitions) {
-      for(unsigned int part = 0; part < m->getNumPartitions(); part++)
+      for(std::size_t part = 0; part < m->getNumPartitions(); part++)
         _entities.push_back(new VisPartition(part + 1));
     }
     std::sort(_entities.begin(), _entities.end(), VisLessThan());
@@ -291,17 +291,17 @@ public:
   void setAllInvisible(VisibilityType type, bool allmodels = false)
   {
     if(type == Models) {
-      for(unsigned int i = 0; i < GModel::list.size(); i++)
+      for(std::size_t i = 0; i < GModel::list.size(); i++)
         GModel::list[i]->setVisibility(0);
     }
     else if(type == ElementaryEntities || type == PhysicalEntities) {
       // elementary or physical mode: set all entities in the model invisible
-      for(unsigned int i = 0; i < GModel::list.size(); i++) {
+      for(std::size_t i = 0; i < GModel::list.size(); i++) {
         GModel *m = GModel::list[i];
         if(allmodels || m == GModel::current()) {
           std::vector<GEntity *> entities;
           m->getEntities(entities);
-          for(unsigned int j = 0; j < entities.size(); j++)
+          for(std::size_t j = 0; j < entities.size(); j++)
             entities[j]->setVisibility(0);
         }
       }
@@ -551,28 +551,28 @@ static void _add_physical_group(int dim, int num, std::vector<GEntity *> &ge,
     group << "Physical Volume " << num << name << "/";
     n = tree->add(group.str().c_str());
     if(n) n->close();
-    for(unsigned int i = 0; i < ge.size(); i++)
+    for(std::size_t i = 0; i < ge.size(); i++)
       _add_region((GRegion *)ge[i], tree, group.str());
     break;
   case 2:
     group << "Physical Surface " << num << name << "/";
     n = tree->add(group.str().c_str());
     if(n) n->close();
-    for(unsigned int i = 0; i < ge.size(); i++)
+    for(std::size_t i = 0; i < ge.size(); i++)
       _add_face((GFace *)ge[i], tree, group.str());
     break;
   case 1:
     group << "Physical Curve " << num << name << "/";
     n = tree->add(group.str().c_str());
     if(n) n->close();
-    for(unsigned int i = 0; i < ge.size(); i++)
+    for(std::size_t i = 0; i < ge.size(); i++)
       _add_edge((GEdge *)ge[i], tree, group.str());
     break;
   case 0:
     group << "Physical Point " << num << name << "/";
     n = tree->add(group.str().c_str());
     if(n) n->close();
-    for(unsigned int i = 0; i < ge.size(); i++)
+    for(std::size_t i = 0; i < ge.size(); i++)
       _add_vertex((GVertex *)ge[i], tree, group.str());
     break;
   default: break;
@@ -583,7 +583,7 @@ static void _rebuild_tree_browser(bool force)
 {
   if(!force) {
     int numEnt = 0;
-    for(unsigned int i = 0; i < GModel::list.size(); i++) {
+    for(std::size_t i = 0; i < GModel::list.size(); i++) {
       numEnt +=
         GModel::list[i]->getNumRegions() + GModel::list[i]->getNumFaces() +
         GModel::list[i]->getNumEdges() + GModel::list[i]->getNumVertices();
@@ -599,7 +599,7 @@ static void _rebuild_tree_browser(bool force)
   FlGui::instance()->visibility->tree->show();
   FlGui::instance()->visibility->tree->clear();
 
-  for(unsigned int i = 0; i < GModel::list.size(); i++) {
+  for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
     std::ostringstream model;
     model << "Model [" << i << "] <<" << m->getName() << ">>";
@@ -637,7 +637,7 @@ static void _rebuild_tree_browser(bool force)
           gmsh_yysymbols.begin();
         it != gmsh_yysymbols.end(); ++it)
       if(it->first.size())
-        for(unsigned int i = 0; i < it->second.value.size(); i++)
+        for(std::size_t i = 0; i < it->second.value.size(); i++)
           oldLabels[(int)it->second.value[i]] =
             std::string("(") + it->first + ")";
 #endif
@@ -721,7 +721,7 @@ static void visibility_tree_apply_cb(Fl_Widget *w, void *data)
     // set all entities as invisible
     std::vector<GEntity *> entities;
     m->getEntities(entities);
-    for(unsigned int j = 0; j < entities.size(); j++)
+    for(std::size_t j = 0; j < entities.size(); j++)
       entities[j]->setVisibility(0);
     // set visibility flag according to tree selection
     _recur_set_visible(n);
@@ -812,7 +812,7 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
     if(state[i][mode].size()) {
       str += labels[i];
       str += "{";
-      for(unsigned int j = 0; j < state[i][mode].size(); j++) {
+      for(std::size_t j = 0; j < state[i][mode].size(); j++) {
         if(j) str += ",";
         sprintf(tmp, "%d", state[i][mode][j]);
         str += tmp;
@@ -830,7 +830,7 @@ static void _set_visibility_by_number(int what, int num, char val,
 {
   bool all = (num < 0) ? true : false;
 
-  for(unsigned int mod = 0; mod < GModel::list.size(); mod++) {
+  for(std::size_t mod = 0; mod < GModel::list.size(); mod++) {
     GModel *m = GModel::list[mod];
     if(allmodels || m == GModel::current()) {
       std::vector<GEntity *> entities;
@@ -838,16 +838,16 @@ static void _set_visibility_by_number(int what, int num, char val,
 
       switch(what) {
       case 0: // nodes
-        for(unsigned int i = 0; i < entities.size(); i++) {
-          for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) {
+        for(std::size_t i = 0; i < entities.size(); i++) {
+          for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
             MVertex *v = entities[i]->mesh_vertices[j];
             if(all || v->getNum() == num) v->setVisibility(val);
           }
         }
         break;
       case 1: // elements
-        for(unsigned int i = 0; i < entities.size(); i++) {
-          for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
+        for(std::size_t i = 0; i < entities.size(); i++) {
+          for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
             MElement *e = entities[i]->getMeshElement(j);
             if(all || e->getNum() == num) e->setVisibility(val);
           }
@@ -871,25 +871,25 @@ static void _set_visibility_by_number(int what, int num, char val,
         break;
       case 6: // physical point
         for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
-          for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
+          for(std::size_t i = 0; i < (*it)->physicals.size(); i++)
             if(all || std::abs((*it)->physicals[i]) == num)
               (*it)->setVisibility(val, recursive);
         break;
       case 7: // physical line
         for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
-          for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
+          for(std::size_t i = 0; i < (*it)->physicals.size(); i++)
             if(all || std::abs((*it)->physicals[i]) == num)
               (*it)->setVisibility(val, recursive);
         break;
       case 8: // physical surface
         for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
-          for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
+          for(std::size_t i = 0; i < (*it)->physicals.size(); i++)
             if(all || std::abs((*it)->physicals[i]) == num)
               (*it)->setVisibility(val, recursive);
         break;
       case 9: // physical volume
         for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
-          for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
+          for(std::size_t i = 0; i < (*it)->physicals.size(); i++)
             if(all || std::abs((*it)->physicals[i]) == num)
               (*it)->setVisibility(val, recursive);
         break;
@@ -921,39 +921,39 @@ static void _apply_visibility(char mode, bool physical,
   if(mode == 2) mode = 1;
 
   if(CTX::instance()->pickElements) {
-    for(unsigned int i = 0; i < elements.size(); i++)
+    for(std::size_t i = 0; i < elements.size(); i++)
       elements[i]->setVisibility(mode);
   }
   else {
-    for(unsigned int i = 0; i < vertices.size(); i++) {
+    for(std::size_t i = 0; i < vertices.size(); i++) {
       if(!physical)
         vertices[i]->setVisibility(mode, recursive);
       else
-        for(unsigned int j = 0; j < vertices[i]->physicals.size(); j++)
+        for(std::size_t j = 0; j < vertices[i]->physicals.size(); j++)
           _set_visibility_by_number(6, vertices[i]->physicals[j], mode,
                                     recursive, allmodels);
     }
-    for(unsigned int i = 0; i < edges.size(); i++) {
+    for(std::size_t i = 0; i < edges.size(); i++) {
       if(!physical)
         edges[i]->setVisibility(mode, recursive);
       else
-        for(unsigned int j = 0; j < edges[i]->physicals.size(); j++)
+        for(std::size_t j = 0; j < edges[i]->physicals.size(); j++)
           _set_visibility_by_number(7, edges[i]->physicals[j], mode, recursive,
                                     allmodels);
     }
-    for(unsigned int i = 0; i < faces.size(); i++) {
+    for(std::size_t i = 0; i < faces.size(); i++) {
       if(!physical)
         faces[i]->setVisibility(mode, recursive);
       else
-        for(unsigned int j = 0; j < faces[i]->physicals.size(); j++)
+        for(std::size_t j = 0; j < faces[i]->physicals.size(); j++)
           _set_visibility_by_number(8, faces[i]->physicals[j], mode, recursive,
                                     allmodels);
     }
-    for(unsigned int i = 0; i < regions.size(); i++) {
+    for(std::size_t i = 0; i < regions.size(); i++) {
       if(!physical)
         regions[i]->setVisibility(mode, recursive);
       else
-        for(unsigned int j = 0; j < regions[i]->physicals.size(); j++)
+        for(std::size_t j = 0; j < regions[i]->physicals.size(); j++)
           _set_visibility_by_number(9, regions[i]->physicals[j], mode,
                                     recursive, allmodels);
     }
@@ -1120,8 +1120,7 @@ static void visibility_per_window_cb(Fl_Widget *w, void *data)
   if(what == "item") {
     drawContext *ctx =
       FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
-    for(unsigned int i = 0;
-        i < (unsigned int)FlGui::instance()->visibility->per_window->size();
+    for(std::size_t i = 0; i < FlGui::instance()->visibility->per_window->size();
         i++) {
       if(i < GModel::list.size()) {
         GModel *m = GModel::list[i];
@@ -1140,8 +1139,8 @@ static void visibility_per_window_cb(Fl_Widget *w, void *data)
     }
   }
   else if(what == "reset_all") {
-    for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++) {
-      for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++) {
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
+      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++) {
         drawContext *ctx = FlGui::instance()->graph[i]->gl[j]->getDrawContext();
         ctx->showAll();
       }
@@ -1513,7 +1512,7 @@ void visibilityWindow::updatePerWindow(bool force)
   per_window->clear();
   int line = 1;
 
-  for(unsigned int i = 0; i < GModel::list.size(); i++) {
+  for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
     std::ostringstream sstream;
     sstream << "Model [" << i << "] <<" << m->getName() << ">>";
@@ -1522,7 +1521,7 @@ void visibilityWindow::updatePerWindow(bool force)
     line++;
   }
 
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     PView *v = PView::list[i];
     std::ostringstream sstream;
     sstream << "View [" << i << "] <<" << v->getData()->getName() << ">>";

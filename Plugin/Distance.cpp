@@ -117,9 +117,9 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> _entities,
   }
   fprintf(fName, "View \"distance \"{\n");
 
-  for(unsigned int ii = 0; ii < _entities.size(); ii++) {
+  for(std::size_t ii = 0; ii < _entities.size(); ii++) {
     if(_entities[ii]->dim() == _maxDim) {
-      for(unsigned int i = 0; i < _entities[ii]->getNumMeshElements(); i++) {
+      for(std::size_t i = 0; i < _entities[ii]->getNumMeshElements(); i++) {
         MElement *e = _entities[ii]->getMeshElement(i);
         int numNodes = e->getNumPrimaryVertices();
         if(e->getNumChildren())
@@ -174,7 +174,7 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> _entities,
         }
 
         fprintf(fName, "){");
-        for(unsigned int i = 0; i < dist.size(); i++) {
+        for(std::size_t i = 0; i < dist.size(); i++) {
           if(_minScale > 0 && _maxScale > 0)
             dist[i] = _minScale + ((dist[i] - minDist) / (maxDist - minDist)) *
                                     (_maxScale - _minScale);
@@ -231,7 +231,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   int integrationPointTetra[2] = {0, 0};
 
   int numnodes = 0;
-  for(unsigned int i = 0; i < _entities.size() - 1; i++)
+  for(std::size_t i = 0; i < _entities.size() - 1; i++)
     numnodes += _entities[i]->mesh_vertices.size();
   int totNodes =
     numnodes + _entities[_entities.size() - 1]->mesh_vertices.size();
@@ -265,10 +265,10 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   }
 
   int k = 0;
-  for(unsigned int i = 0; i < _entities.size(); i++) {
+  for(std::size_t i = 0; i < _entities.size(); i++) {
     GEntity *ge = _entities[i];
     _maxDim = std::max(_maxDim, ge->dim());
-    for(unsigned int j = 0; j < ge->mesh_vertices.size(); j++) {
+    for(std::size_t j = 0; j < ge->mesh_vertices.size(); j++) {
       MVertex *v = ge->mesh_vertices[j];
       pts.push_back(SPoint3(v->x(), v->y(), v->z()));
       _distance_map.insert(std::make_pair(v, 0.0));
@@ -286,12 +286,12 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   if(type < 0.0) {
     bool existEntity = false;
 
-    for(unsigned int i = 0; i < _entities.size(); i++) {
+    for(std::size_t i = 0; i < _entities.size(); i++) {
       GEntity *g2 = _entities[i];
       int gDim = g2->dim();
       std::vector<int> phys = g2->getPhysicalEntities();
       bool computeForEntity = false;
-      for(unsigned int k = 0; k < phys.size(); k++) {
+      for(std::size_t k = 0; k < phys.size(); k++) {
         int tagp = phys[k];
         if(id_pt == 0 && id_line == 0 && id_face == 0 && gDim == _maxDim - 1)
           computeForEntity = true;
@@ -302,7 +302,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
       }
       if(computeForEntity) {
         existEntity = true;
-        for(unsigned int k = 0; k < g2->getNumMeshElements(); k++) {
+        for(std::size_t k = 0; k < g2->getNumMeshElements(); k++) {
           std::vector<double> iDistances;
           std::vector<SPoint3> iClosePts;
           std::vector<double> iDistancesE;
@@ -323,7 +323,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
             signedDistancesPointsTriangle(iDistances, iClosePts, pts, p1, p2,
                                           p3);
           }
-          for(unsigned int kk = 0; kk < pts.size(); kk++) {
+          for(std::size_t kk = 0; kk < pts.size(); kk++) {
             if(std::abs(iDistances[kk]) < distances[kk]) {
               distances[kk] = std::abs(iDistances[kk]);
               MVertex *v = pt2Vertex[kk];
@@ -357,12 +357,12 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 
     bool existEntity = false;
     SBoundingBox3d bbox;
-    for(unsigned int i = 0; i < _entities.size(); i++) {
+    for(std::size_t i = 0; i < _entities.size(); i++) {
       GEntity *ge = _entities[i];
       int gDim = ge->dim();
       bool fixForEntity = false;
       std::vector<int> phys = ge->getPhysicalEntities();
-      for(unsigned int k = 0; k < phys.size(); k++) {
+      for(std::size_t k = 0; k < phys.size(); k++) {
         int tagp = phys[k];
         if(id_pt == 0 && id_line == 0 && id_face == 0 && gDim == _maxDim - 1)
           fixForEntity = true;
@@ -373,7 +373,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
       }
       if(fixForEntity) {
         existEntity = true;
-        for(unsigned int i = 0; i < ge->getNumMeshElements(); ++i) {
+        for(std::size_t i = 0; i < ge->getNumMeshElements(); ++i) {
           MElement *t = ge->getMeshElement(i);
           for(std::size_t k = 0; k < t->getNumVertices(); k++) {
             MVertex *v = t->getVertex(k);
@@ -391,10 +391,10 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     }
     else {
       std::vector<MElement *> allElems;
-      for(unsigned int ii = 0; ii < _entities.size(); ii++) {
+      for(std::size_t ii = 0; ii < _entities.size(); ii++) {
         if(_entities[ii]->dim() == _maxDim) {
           GEntity *ge = _entities[ii];
-          for(unsigned int i = 0; i < ge->getNumMeshElements(); ++i) {
+          for(std::size_t i = 0; i < ge->getNumMeshElements(); ++i) {
             MElement *t = ge->getMeshElement(i);
             allElems.push_back(t);
             for(std::size_t k = 0; k < t->getNumVertices(); k++)
@@ -457,10 +457,10 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     double dMax = 1.0; // EMI TO CHANGE
 
     std::vector<MElement *> allElems;
-    for(unsigned int ii = 0; ii < _entities.size(); ii++) {
+    for(std::size_t ii = 0; ii < _entities.size(); ii++) {
       if(_entities[ii]->dim() == _maxDim) {
         GEntity *ge = _entities[ii];
-        for(unsigned int i = 0; i < ge->getNumMeshElements(); ++i) {
+        for(std::size_t i = 0; i < ge->getNumMeshElements(); ++i) {
           MElement *t = ge->getMeshElement(i);
           double vMean = 0.0;
           for(std::size_t k = 0; k < t->getNumVertices(); k++) {
@@ -575,7 +575,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
         orth.push_back(value);
       }
       fprintf(f5, "){");
-      for(unsigned int i = 0; i < orth.size(); i++) {
+      for(std::size_t i = 0; i < orth.size(); i++) {
         out2->push_back(orth[i]);
         if(i)
           fprintf(f5, ",%g", orth[i]);

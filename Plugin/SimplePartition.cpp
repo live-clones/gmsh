@@ -105,9 +105,9 @@ void GMSH_SimplePartitionPlugin::run()
   std::vector<GEntity *> entities;
   m->getEntities(entities);
   hashmap<MElement *, unsigned int> elmToPartition;
-  for(unsigned int i = 0; i < entities.size(); i++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
-    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++) {
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       SPoint3 point = e->barycenter();
       for(int k = 0; k < numSlices; k++) {

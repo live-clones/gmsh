@@ -89,13 +89,13 @@ PView *GMSH_CVTRemeshPlugin::execute(PView *v)
   unsigned int offset = 0;
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     (*it)->buildSTLTriangulation();
-    for(unsigned int i = 0; i < (*it)->stl_vertices.size(); ++i) {
+    for(std::size_t i = 0; i < (*it)->stl_vertices.size(); ++i) {
       GPoint p = (*it)->point((*it)->stl_vertices[i]);
       vertices.push_back(p.x());
       vertices.push_back(p.y());
       vertices.push_back(p.z());
     }
-    for(unsigned int i = 0; i < (*it)->stl_triangles.size(); ++i) {
+    for(std::size_t i = 0; i < (*it)->stl_triangles.size(); ++i) {
       faces.push_back((*it)->stl_triangles[i] + offset);
     }
     offset += (*it)->stl_vertices.size();
@@ -117,7 +117,7 @@ PView *GMSH_CVTRemeshPlugin::execute(PView *v)
 
   // lifted vertices
   std::vector<double> lifted_vertices(6 * mesh.vertices_size(), 0);
-  for(unsigned int vertex = 0; vertex < mesh.vertices_size(); ++vertex) {
+  for(std::size_t vertex = 0; vertex < mesh.vertices_size(); ++vertex) {
     std::copy(mesh.vertex(vertex), mesh.vertex(vertex) + 3,
               lifted_vertices.data() + 6 * vertex);
     std::copy(normals.data() + 3 * vertex, normals.data() + 3 * vertex + 3,
@@ -134,7 +134,7 @@ PView *GMSH_CVTRemeshPlugin::execute(PView *v)
   // face ratios
   std::vector<double> triangle_weights(lifted_mesh.faces_size());
   if(twfactor > 0) {
-    for(unsigned int f = 0; f < lifted_mesh.faces_size(); ++f) {
+    for(std::size_t f = 0; f < lifted_mesh.faces_size(); ++f) {
       // vertices of the initial triangle
       const unsigned int *fverts = mesh.face(f);
 
@@ -221,7 +221,7 @@ PView *GMSH_CVTRemeshPlugin::execute(PView *v)
   ;
 
   // weight the normal component by the provided factor
-  for(unsigned int i = 0; i < lifted_mesh.vertices_size(); ++i) {
+  for(std::size_t i = 0; i < lifted_mesh.vertices_size(); ++i) {
     double *v = lifted_vertices.data() + 6 * i;
     v[3] *= nfactor;
     v[4] *= nfactor;
@@ -293,14 +293,14 @@ PView *GMSH_CVTRemeshPlugin::execute(PView *v)
 
   // scale back and transfer to gmsh
   std::vector<MVertex *> m_verts(nsites);
-  for(unsigned int i = 0; i < nsites; ++i) {
+  for(std::size_t i = 0; i < nsites; ++i) {
     m_verts[i] =
       new MVertex(lifted_sites[6 * i] * mesh_scale + mesh_center[0],
                   lifted_sites[6 * i + 1] * mesh_scale + mesh_center[1],
                   lifted_sites[6 * i + 2] * mesh_scale + mesh_center[2]);
     res_face->addMeshVertex(m_verts[i]);
   }
-  for(unsigned int i = 0; i < rdt_triangles.size() / 3; ++i) {
+  for(std::size_t i = 0; i < rdt_triangles.size() / 3; ++i) {
     res_face->addTriangle(new MTriangle(m_verts[rdt_triangles[3 * i]],
                                         m_verts[rdt_triangles[3 * i + 1]],
                                         m_verts[rdt_triangles[3 * i + 2]]));

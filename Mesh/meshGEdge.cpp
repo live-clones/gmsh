@@ -37,7 +37,7 @@ static double smoothPrimitive(GEdge *ge, double alpha,
 
     // use a gauss-seidel iteration; iterate forward and then backward;
     // convergence is usually very fast
-    for(unsigned int i = 1; i < Points.size(); i++) {
+    for(std::size_t i = 1; i < Points.size(); i++) {
       double dh =
         (Points[i].xp / Points[i].lc - Points[i - 1].xp / Points[i - 1].lc);
       double dt = Points[i].t - Points[i - 1].t;
@@ -299,7 +299,7 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
   to->correspondingVertices[vt0] = direction > 0 ? vs0 : vs1;
   to->correspondingVertices[vt1] = direction > 0 ? vs1 : vs0;
 
-  for(unsigned int i = 0; i < from->mesh_vertices.size(); i++) {
+  for(std::size_t i = 0; i < from->mesh_vertices.size(); i++) {
     int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
     MVertex *v = from->mesh_vertices[index];
     double u;
@@ -311,7 +311,7 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
     to->mesh_vertices.push_back(vv);
     to->correspondingVertices[vv] = v;
   }
-  for(unsigned int i = 0; i < to->mesh_vertices.size() + 1; i++) {
+  for(std::size_t i = 0; i < to->mesh_vertices.size() + 1; i++) {
     MVertex *v0 = (i == 0) ? to->getBeginVertex()->mesh_vertices[0] :
                              to->mesh_vertices[i - 1];
     MVertex *v1 = (i == to->mesh_vertices.size()) ?
@@ -341,7 +341,7 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
   FILE *f = Fopen(name, "w");
   if(!f) return;
   double l = 0;
-  for (unsigned int i = 0; i < Points.size(); i++){
+  for (std::size_t i = 0; i < Points.size(); i++){
     const IntPoint &P = Points[i];
     if(i) l += (P.t - Points[i-1].t) * P.xp;
     fprintf(f, "%g %g %g %g %g\n", P.t, P.xp/P.lc, P.p, P.lc, l);
@@ -377,7 +377,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
 
   MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
   std::vector<std::pair<double, MVertex *> > lengths;
-  for(unsigned int i = 0; i < ge->mesh_vertices.size(); i++) {
+  for(std::size_t i = 0; i < ge->mesh_vertices.size(); i++) {
     MEdgeVertex *v = dynamic_cast<MEdgeVertex *>(ge->mesh_vertices[i]);
     if(!v) {
       Msg::Error("in 1D mesh filterPoints");
@@ -743,7 +743,7 @@ void meshGEdge::operator()(GEdge *ge)
     std::vector<MVertex *> vv;
     vv.insert(vv.end(), _addBegin.begin(), _addBegin.end());
     vv.insert(vv.end(), mesh_vertices.begin(), mesh_vertices.end());
-    for(unsigned int i = 0; i < _addEnd.size(); i++)
+    for(std::size_t i = 0; i < _addEnd.size(); i++)
       vv.push_back(_addEnd[_addEnd.size() - 1 - i]);
     //    vv.insert(vv.end(), _addEnd.rend(), _addEnd.rbegin());
     mesh_vertices = vv;
@@ -779,6 +779,6 @@ void orientMeshGEdge::operator()(GEdge *ge)
 {
   // apply user-specified mesh orientation constraints
   if(ge->meshAttributes.reverseMesh)
-    for(unsigned int k = 0; k < ge->getNumMeshElements(); k++)
+    for(std::size_t k = 0; k < ge->getNumMeshElements(); k++)
       ge->getMeshElement(k)->reverse();
 }

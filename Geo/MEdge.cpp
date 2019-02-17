@@ -157,7 +157,7 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
 MEdgeN::MEdgeN(const std::vector<MVertex *> &v)
 {
   _v.resize(v.size());
-  for(unsigned int i = 0; i < v.size(); i++) _v[i] = v[i];
+  for(std::size_t i = 0; i < v.size(); i++) _v[i] = v[i];
 }
 
 MEdge MEdgeN::getEdge() const { return MEdge(_v[0], _v[1]); }

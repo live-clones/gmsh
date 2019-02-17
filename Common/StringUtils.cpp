@@ -48,7 +48,7 @@ std::string SanitizeTeXString(const char *in, int equation)
   // otherwise, escape the following special characters:
   char bad[8] = {'%', '^', '#', '%', '&', '_', '{', '}'};
   while(*in) {
-    for(unsigned int i = 0; i < sizeof(bad); i++) {
+    for(std::size_t i = 0; i < sizeof(bad); i++) {
       if(*in == bad[i]) {
         out.push_back('\\');
         break;

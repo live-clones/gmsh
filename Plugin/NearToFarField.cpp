@@ -112,7 +112,7 @@ double GMSH_NearToFarFieldPlugin::getFarFieldJin(
   }
 
   int i = 0;
-  for(unsigned int ele = 0; ele < allElems.size(); ele++) {
+  for(std::size_t ele = 0; ele < allElems.size(); ele++) {
     element *e = allElems[ele];
     int numNodes = e->getNumNodes();
 
@@ -213,7 +213,7 @@ double GMSH_NearToFarFieldPlugin::getFarFieldMonk(
 
   double integral_r[3] = {0., 0., 0.}, integral_i[3] = {0., 0., 0.};
   int i = 0;
-  for(unsigned int ele = 0; ele < allElems.size(); ele++) {
+  for(std::size_t ele = 0; ele < allElems.size(); ele++) {
     element *e = allElems[ele];
     int numNodes = e->getNumNodes();
     std::vector<double> integrand_r(numNodes * 3), integrand_i(numNodes * 3);
@@ -269,8 +269,8 @@ static void printVector(FILE *fp, const std::string &name,
                         std::vector<std::vector<double> > &vec)
 {
   fprintf(fp, "%s = [", name.c_str());
-  for(unsigned int i = 0; i < vec.size(); i++)
-    for(unsigned int j = 0; j < vec[i].size(); j++)
+  for(std::size_t i = 0; i < vec.size(); i++)
+    for(std::size_t j = 0; j < vec[i].size(); j++)
       fprintf(fp, "%.16g ", vec[i][j]);
   fprintf(fp, "];\n");
 }
@@ -449,7 +449,7 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
     }
     Msg::ProgressMeter(i, _NbPhi, true, "Computing far field");
   }
-  for(unsigned int i = 0; i < allElems.size(); i++) delete allElems[i];
+  for(std::size_t i = 0; i < allElems.size(); i++) delete allElems[i];
 
   if(_normalize) {
     if(!ffmax)

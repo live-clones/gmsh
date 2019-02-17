@@ -319,15 +319,15 @@ public:
              int part = 0)
     : MTriangle(v0, v1, v2, num, part), _vs(v), _order(order)
   {
-    for(unsigned int i = 0; i < _vs.size(); i++)
+    for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
   MTriangleN(const std::vector<MVertex *> &v, char order, int num = 0,
              int part = 0)
     : MTriangle(v[0], v[1], v[2], num, part), _order(order)
   {
-    for(unsigned int i = 3; i < v.size(); i++) _vs.push_back(v[i]);
-    for(unsigned int i = 0; i < _vs.size(); i++)
+    for(std::size_t i = 3; i < v.size(); i++) _vs.push_back(v[i]);
+    for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
   ~MTriangleN() {}
@@ -379,7 +379,7 @@ public:
   {
     v.resize(3 + _vs.size());
     MTriangle::_getFaceVertices(v);
-    for(unsigned int i = 0; i != _vs.size(); ++i) v[i + 3] = _vs[i];
+    for(std::size_t i = 0; i != _vs.size(); ++i) v[i + 3] = _vs[i];
   }
   virtual int getTypeForMSH() const
   {

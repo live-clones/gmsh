@@ -27,7 +27,7 @@ static void writeElementsINP(FILE *fp, GEntity *ge, std::vector<T *> &elements,
         (ge->dim() == 1) ? "Line" :
         "Point"; // currently unused
       fprintf(fp, "*ELEMENT, type=%s, ELSET=%s%d\n", typ, str, ge->tag());
-      for(unsigned int i = 0; i < elements.size(); i++)
+      for(std::size_t i = 0; i < elements.size(); i++)
         elements[i]->writeINP(fp, elements[i]->getNum());
     }
   }
@@ -46,7 +46,7 @@ static std::string physicalName(GModel *m, int dim, int num)
             num);
     name = tmp;
   }
-  for(unsigned int i = 0; i < name.size(); i++)
+  for(std::size_t i = 0; i < name.size(); i++)
     if(name[i] == ' ') name[i] = '_';
   return name;
 }
@@ -70,8 +70,8 @@ int GModel::writeINP(const std::string &name, bool saveAll,
   fprintf(fp, " %s\n", name.c_str());
 
   fprintf(fp, "*NODE\n");
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeINP(fp, scalingFactor);
 
   fprintf(fp, "******* E L E M E N T S *************\n");
@@ -104,8 +104,8 @@ int GModel::writeINP(const std::string &name, bool saveAll,
       fprintf(fp, "*ELSET,ELSET=%s\n",
               physicalName(this, dim, it->first).c_str());
       int n = 0;
-      for(unsigned int i = 0; i < entities.size(); i++) {
-        for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
+      for(std::size_t i = 0; i < entities.size(); i++) {
+        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
           MElement *e = entities[i]->getMeshElement(j);
           if(n && !(n % 10)) fprintf(fp, "\n");
           fprintf(fp, "%d, ", e->getNum());
@@ -124,8 +124,8 @@ int GModel::writeINP(const std::string &name, bool saveAll,
           it != groups[dim].end(); it++) {
         std::set<MVertex *> nodes;
         std::vector<GEntity *> &entities = it->second;
-        for(unsigned int i = 0; i < entities.size(); i++) {
-          for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
+        for(std::size_t i = 0; i < entities.size(); i++) {
+          for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
             MElement *e = entities[i]->getMeshElement(j);
             for(std::size_t k = 0; k < e->getNumVertices(); k++)
               nodes.insert(e->getVertex(k));

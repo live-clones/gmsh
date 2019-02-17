@@ -116,7 +116,7 @@ PView *GMSH_BubblesPlugin::execute(PView *v)
 
     // compute vertex-to-triangle_barycenter map
     std::map<MVertex *, std::vector<SPoint3> > v2t;
-    for(unsigned int i = 0; i < (*fit)->triangles.size(); i++)
+    for(std::size_t i = 0; i < (*fit)->triangles.size(); i++)
       for(int j = 0; j < 3; j++)
         v2t[(*fit)->triangles[i]->getVertex(j)].push_back(
           (*fit)->triangles[i]->barycenter());
@@ -135,13 +135,13 @@ PView *GMSH_BubblesPlugin::execute(PView *v)
       if(it->second.size() > 2) {
         // get barycenter of cell boundary points and order them
         SPoint3 bc;
-        for(unsigned int i = 0; i < it->second.size(); i++) bc += it->second[i];
+        for(std::size_t i = 0; i < it->second.size(); i++) bc += it->second[i];
         bc *= 1. / (double)it->second.size();
         compareAngle comp(bc);
         std::sort(it->second.begin(), it->second.end(), comp);
         // shrink cells
         if(shrink) {
-          for(unsigned int i = 0; i < it->second.size(); i++) {
+          for(std::size_t i = 0; i < it->second.size(); i++) {
             double dir[3] = {it->second[i].x() - bc.x(),
                              it->second[i].y() - bc.y(),
                              it->second[i].z() - bc.z()};

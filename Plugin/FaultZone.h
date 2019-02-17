@@ -82,7 +82,7 @@ inline bool compareHeav(const std::vector<int> heav1,
                         const std::vector<int> heav2)
 {
   assert(heav1.size() >= heav2.size());
-  for(unsigned int i = 0; i < heav2.size(); i++) {
+  for(std::size_t i = 0; i < heav2.size(); i++) {
     if(heav1[i] != 0 && heav1[i] != heav2[i] && heav2[i] != 0) {
       return false;
     }
@@ -95,10 +95,10 @@ inline bool compareHeav(const std::vector<int> heav1,
  * \brief Find the matching heaviside function heav, in the vector heavFunc
  */
 //=============================================================================
-inline int findMatchingHeav(const std::vector<std::vector<int> > &heavFunc,
-                            const std::vector<int> &heav)
+inline std::size_t findMatchingHeav(const std::vector<std::vector<int> > &heavFunc,
+                                    const std::vector<int> &heav)
 {
-  unsigned int i = 0;
+  std::size_t i = 0;
   for(; i < heavFunc.size(); i++)
     if(compareHeav(heavFunc[i], heav)) break;
   assert(i < heavFunc.size());

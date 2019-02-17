@@ -24,10 +24,10 @@ void frameSolver2d::addFixations(const std::vector<int> &dirs,
                                  const std::vector<int> &modelVertices,
                                  double value)
 {
-  for(unsigned int j = 0; j < modelVertices.size(); j++) {
+  for(std::size_t j = 0; j < modelVertices.size(); j++) {
     GVertex *gv = _myModel->getVertexByTag(modelVertices[j]);
     if(gv) {
-      for(unsigned int i = 0; i < dirs.size(); i++) {
+      for(std::size_t i = 0; i < dirs.size(); i++) {
         _fixations.push_back(gmshFixation(gv, dirs[i], value));
       }
     }
@@ -37,7 +37,7 @@ void frameSolver2d::addFixations(const std::vector<int> &dirs,
 void frameSolver2d::addNodalForces(const std::vector<int> &modelVertices,
                                    const std::vector<double> &force)
 {
-  for(unsigned int j = 0; j < modelVertices.size(); j++) {
+  for(std::size_t j = 0; j < modelVertices.size(); j++) {
     GVertex *gv = _myModel->getVertexByTag(modelVertices[j]);
     if(gv) {
       _nodalForces.push_back(std::make_pair(gv, force));
@@ -50,11 +50,11 @@ void frameSolver2d::addBeamsOrBars(const std::vector<int> &modelEdges, double E,
 {
   int r_middle[2] = {1, 1}, r_left[2] = {r[0], 1}, r_right[2] = {0, r[1]};
   //  printf("adding %d beams\n",modelEdges.size());
-  for(unsigned int i = 0; i < modelEdges.size(); i++) {
+  for(std::size_t i = 0; i < modelEdges.size(); i++) {
     GEdge *ge = _myModel->getEdgeByTag(modelEdges[i]);
     if(ge) {
       //      printf("model edge %d found\n",ge->tag());
-      for(unsigned int j = 0; j < ge->lines.size(); ++j) {
+      for(std::size_t j = 0; j < ge->lines.size(); ++j) {
         MLine *l = ge->lines[j];
         if(j == 0 && j == ge->lines.size() - 1)
           _beams.push_back(gmshBeam2d(l, E, I, A, r));
@@ -95,7 +95,7 @@ void frameSolver2d::addBars(const std::vector<int> &modelEdges, double E,
 void frameSolver2d::createDofs()
 {
   //  printf("coucou %d fixations\n",_fixations.size());
-  for(unsigned int i = 0; i < _fixations.size(); ++i) {
+  for(std::size_t i = 0; i < _fixations.size(); ++i) {
     const gmshFixation &f = _fixations[i];
     //    printf("f._vertex(%d) = %p %d
     //    %g\n",i,f._vertex,f._direction,f._value);
@@ -107,10 +107,10 @@ void frameSolver2d::createDofs()
   //  printf("coucou2\n");
   computeRotationTags();
   //  printf("coucou3\n");
-  for(unsigned int i = 0; i < _beams.size(); i++) {
+  for(std::size_t i = 0; i < _beams.size(); i++) {
     //    printf("beam[%d] rot %d
     //    %d\n",i,_beams[i]._rotationTags[0],_beams[i]._rotationTags[1]);
-    for(unsigned int j = 0; j < 2; j++) {
+    for(std::size_t j = 0; j < 2; j++) {
       MVertex *v = _beams[i]._element->getVertex(j);
       Dof theta(v->getNum(),
                 Dof::createTypeWithTwoInts(2, _beams[i]._rotationTags[j]));
@@ -192,7 +192,7 @@ void frameSolver2d::solve()
   }
 
   // stifness matrix
-  for(unsigned int i = 0; i < _beams.size(); i++) {
+  for(std::size_t i = 0; i < _beams.size(); i++) {
     fullMatrix<double> K(6, 6);
     computeStiffnessMatrix(i, K);
     _beams[i]._stiffness = K;
@@ -216,7 +216,7 @@ void frameSolver2d::solve()
   lsys->systemSolve();
 
   // save the solution
-  for(unsigned int i = 0; i < _beams.size(); i++) {
+  for(std::size_t i = 0; i < _beams.size(); i++) {
     MVertex *v0 = _beams[i]._element->getVertex(0);
     MVertex *v1 = _beams[i]._element->getVertex(1);
     Dof theta0(v0->getNum(),
@@ -241,7 +241,7 @@ void frameSolver2d::exportFrameData(const char *DISPL, const char *M)
 #if defined(HAVE_POST)
   {
     std::map<int, std::vector<double> > data;
-    for(unsigned int i = 0; i < _beams.size(); i++) {
+    for(std::size_t i = 0; i < _beams.size(); i++) {
       std::vector<double> tmp;
       //      tmp.push_back(_beams[i]._E);
       //      tmp.push_back(_beams[i]._I);
@@ -258,7 +258,7 @@ void frameSolver2d::exportFrameData(const char *DISPL, const char *M)
   }
   {
     std::map<int, std::vector<double> > data;
-    for(unsigned int i = 0; i < _beams.size(); i++) {
+    for(std::size_t i = 0; i < _beams.size(); i++) {
       std::vector<double> tmp;
       fullVector<double> d(_beams[i]._displacement, 6), F(6);
       _beams[i]._stiffness.mult(d, F);
@@ -277,7 +277,7 @@ void frameSolver2d::exportFrameData(const char *DISPL, const char *M)
 void frameSolver2d::computeRotationTags()
 {
   std::multimap<MVertex *, gmshBeam2d *> v2b;
-  for(unsigned int i = 0; i < _beams.size(); i++) {
+  for(std::size_t i = 0; i < _beams.size(); i++) {
     v2b.insert(std::make_pair(_beams[i]._element->getVertex(0), &_beams[i]));
     v2b.insert(std::make_pair(_beams[i]._element->getVertex(1), &_beams[i]));
   }

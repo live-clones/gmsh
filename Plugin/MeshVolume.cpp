@@ -66,8 +66,8 @@ void GMSH_MeshVolumePlugin::run(){
   // Iterate on elements and compute the volume //
   ////////////////////////////////////////////////
   double vol = 0;
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
       vol += entities[i]->getMeshElement(j)->getVolume();
 
   // Display volume as a message //

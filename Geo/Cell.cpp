@@ -35,7 +35,7 @@ bool equalVertices(const std::vector<MVertex *> &v1,
                    const std::vector<MVertex *> &v2)
 {
   if(v1.size() != v2.size()) return false;
-  for(unsigned int i = 0; i < v1.size(); i++)
+  for(std::size_t i = 0; i < v1.size(); i++)
     if(v1[i]->getNum() != v2[i]->getNum()) return false;
   return true;
 }
@@ -101,7 +101,7 @@ bool Cell::_sortVertexIndices()
   std::map<MVertex *, int, MVertexLessThanNum> si;
 
   bool noinsert = false;
-  for(unsigned int i = 0; i < _v.size(); i++)
+  for(std::size_t i = 0; i < _v.size(); i++)
     noinsert = (!si.insert(std::make_pair(_v[i], i)).second || noinsert);
 
   if(noinsert == true) {
@@ -486,7 +486,7 @@ int Cell::getTypeMSH() const
 bool Cell::hasVertex(int vertex) const
 {
   std::vector<int> v;
-  for(unsigned int i = 0; i < _v.size(); i++) {
+  for(std::size_t i = 0; i < _v.size(); i++) {
     v.push_back(_v[(int)_si[i]]->getNum());
   }
   std::vector<int>::const_iterator it = std::find(v.begin(), v.end(), vertex);
@@ -533,13 +533,13 @@ void Cell::restoreCellBoundary()
     it->second.reset();
     if(it->second.get() == 0) toRemove.push_back(it->first);
   }
-  for(unsigned int i = 0; i < toRemove.size(); i++) _cbd.erase(toRemove[i]);
+  for(std::size_t i = 0; i < toRemove.size(); i++) _cbd.erase(toRemove[i]);
   toRemove.clear();
   for(biter it = firstBoundary(true); it != lastBoundary(); it++) {
     it->second.reset();
     if(it->second.get() == 0) toRemove.push_back(it->first);
   }
-  for(unsigned int i = 0; i < toRemove.size(); i++) _bd.erase(toRemove[i]);
+  for(std::size_t i = 0; i < toRemove.size(); i++) _bd.erase(toRemove[i]);
 }
 
 void Cell::addBoundaryCell(int orientation, Cell *cell, bool other)
@@ -796,7 +796,7 @@ CombinedCell::CombinedCell(std::vector<Cell *> &cells)
   _immune = false;
 
   // cells
-  for(unsigned int i = 0; i < cells.size(); i++) {
+  for(std::size_t i = 0; i < cells.size(); i++) {
     Cell *c = cells.at(i);
     if(c->getImmune()) _immune = true;
     _cells[c] = 1;

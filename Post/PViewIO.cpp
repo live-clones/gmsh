@@ -276,7 +276,7 @@ bool PView::readMSH(const std::string &fileName, int fileIndex, int partitionToR
           }
         }
         if(partitionToRead == -1 || partitionToRead == partition) {
-          // if default (no particular partition requested from MergeFile -> -1)  or 
+          // if default (no particular partition requested from MergeFile -> -1)  or
           // if current partition corresponds to the requested partition, read the data
           if(numEnt > 0) {
             // either get existing viewData, or create new one
@@ -302,7 +302,7 @@ bool PView::readMSH(const std::string &fileName, int fileIndex, int partitionToR
           }
         }
         else if(blocksize > 0 && partitionToRead != partition) {
-          // if current partition does not correspond to the requested partition and 
+          // if current partition does not correspond to the requested partition and
           // if its blocksise has been read (5th integer in the header), jump over it
           fseek(fp, blocksize, SEEK_CUR);
         }
@@ -326,7 +326,7 @@ bool PView::readMED(const std::string &fileName, int fileIndex)
 {
   std::vector<std::string> fieldNames = medGetFieldNames(fileName);
 
-  for(unsigned int index = 0; index < fieldNames.size(); index++) {
+  for(std::size_t index = 0; index < fieldNames.size(); index++) {
     if(fileIndex < 0 || (int)index == fileIndex) {
       PViewDataGModel *d = 0;
       // we use the filename as a kind of "partition" indicator, allowing to

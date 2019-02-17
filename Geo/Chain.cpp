@@ -41,7 +41,7 @@ inline void ElemChain::_sortVertexIndices()
 {
   std::map<MVertex *, int, MVertexLessThanNum> si;
 
-  for(unsigned int i = 0; i < _v.size(); i++) si[_v[i]] = i;
+  for(std::size_t i = 0; i < _v.size(); i++) si[_v[i]] = i;
 
   std::map<MVertex *, int, MVertexLessThanNum>::iterator it;
   for(it = si.begin(); it != si.end(); it++) _si.push_back(it->second);
@@ -54,14 +54,14 @@ void findEntitiesInPhysicalGroups(GModel *m,
   std::map<int, std::vector<GEntity *> > groups[4];
   m->getPhysicalGroups(groups);
   std::map<int, std::vector<GEntity *> >::iterator it;
-  for(unsigned int i = 0; i < physicalGroups.size(); i++) {
+  for(std::size_t i = 0; i < physicalGroups.size(); i++) {
     bool found = false;
     for(int j = 0; j < 4; j++) {
       it = groups[j].find(physicalGroups.at(i));
       if(it != groups[j].end()) {
         found = true;
         std::vector<GEntity *> physicalGroup = it->second;
-        for(unsigned int k = 0; k < physicalGroup.size(); k++) {
+        for(std::size_t k = 0; k < physicalGroup.size(); k++) {
           entities.push_back(physicalGroup.at(k));
         }
       }
@@ -75,7 +75,7 @@ void findEntitiesInPhysicalGroups(GModel *m,
 bool ElemChain::_equalVertices(const std::vector<MVertex *> &v2) const
 {
   if(_v.size() != v2.size()) return false;
-  for(unsigned int i = 0; i < _v.size(); i++)
+  for(std::size_t i = 0; i < _v.size(); i++)
     if(_v[i]->getNum() != v2[i]->getNum()) return false;
   return true;
 }
@@ -255,12 +255,12 @@ ElemChain ElemChain::getBoundaryElemChain(int i) const
 bool ElemChain::inEntity(GEntity *e) const
 {
   if(_vertexCache[e].empty()) {
-    for(unsigned int i = 0; i < e->getNumMeshElements(); i++)
+    for(std::size_t i = 0; i < e->getNumMeshElements(); i++)
       for(std::size_t j = 0; j < e->getMeshElement(i)->getNumVertices(); j++)
         _vertexCache[e].insert(e->getMeshElement(i)->getVertex(j));
   }
 
-  for(int i = 0; i < this->getNumVertices(); i++)
+  for(std::size_t i = 0; i < this->getNumVertices(); i++)
     if(!_vertexCache[e].count(this->getMeshVertex(i))) return false;
   return true;
 }

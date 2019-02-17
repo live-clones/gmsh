@@ -211,7 +211,7 @@ int GModel::readMED(const std::string &name)
   }
 
   int ret = 1;
-  for(unsigned int i = 0; i < meshNames.size(); i++) {
+  for(std::size_t i = 0; i < meshNames.size(); i++) {
     // we use the filename as a kind of "partition" indicator, allowing to
     // complete a model part by part (used e.g. in DDM, since MED does not store
     // a partition index)
@@ -511,9 +511,9 @@ static void fillElementsMED(med_int family, std::vector<T *> &elements,
     Msg::Warning("Unsupported element type in MED format");
     return;
   }
-  for(unsigned int i = 0; i < elements.size(); i++) {
+  for(std::size_t i = 0; i < elements.size(); i++) {
     elements[i]->setVolumePositive();
-    for(unsigned int j = 0; j < elements[i]->getNumVertices(); j++)
+    for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++)
       conn.push_back(
         elements[i]->getVertex(med2mshNodeIndex(type, j))->getIndex());
     fam.push_back(family);
@@ -610,7 +610,7 @@ int GModel::writeMED(const std::string &name, bool saveAll,
 
     // create one family per elementary entity, with one group per
     // physical entity and no attributes
-    for(unsigned int i = 0; i < entities.size(); i++) {
+    for(std::size_t i = 0; i < entities.size(); i++) {
       if(saveAll || entities[i]->physicals.size()) {
         int num = -((int)families.size() + 1);
         families[entities[i]] = num;
@@ -648,8 +648,8 @@ int GModel::writeMED(const std::string &name, bool saveAll,
   {
     std::vector<med_float> coord;
     std::vector<med_int> fam;
-    for(unsigned int i = 0; i < entities.size(); i++) {
-      for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) {
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
         MVertex *v = entities[i]->mesh_vertices[j];
         if(v->getIndex() >= 0) {
           coord.push_back(v->x() * scalingFactor);

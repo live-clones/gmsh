@@ -84,7 +84,7 @@ static bool setBLData(MElement *el)
 static void Subdivide(GEdge *ge)
 {
   std::vector<MLine *> lines2;
-  for(unsigned int i = 0; i < ge->lines.size(); i++) {
+  for(std::size_t i = 0; i < ge->lines.size(); i++) {
     MLine *l = ge->lines[i];
     if(l->getNumVertices() == 3) {
       lines2.push_back(new MLine(l->getVertex(0), l->getVertex(2)));
@@ -98,7 +98,7 @@ static void Subdivide(GEdge *ge)
   // 2nd order meshing destroyed the ordering of the vertices on the edge
   std::sort(ge->mesh_vertices.begin(), ge->mesh_vertices.end(),
             MVertexLessThanParam());
-  for(unsigned int i = 0; i < ge->mesh_vertices.size(); i++)
+  for(std::size_t i = 0; i < ge->mesh_vertices.size(); i++)
     ge->mesh_vertices[i]->setPolynomialOrder(1);
   ge->deleteVertexArrays();
 }
@@ -108,7 +108,7 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
 {
   if(!splitIntoQuads && !splitIntoHexas) {
     std::vector<MTriangle *> triangles2;
-    for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+    for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       MTriangle *t = gf->triangles[i];
       if(t->getNumVertices() == 6) {
         triangles2.push_back(
@@ -127,7 +127,7 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
   }
 
   std::vector<MQuadrangle *> quadrangles2;
-  for(unsigned int i = 0; i < gf->quadrangles.size(); i++) {
+  for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
     MQuadrangle *q = gf->quadrangles[i];
     if(q->getNumVertices() == 9) {
       quadrangles2.push_back(new MQuadrangle(q->getVertex(0), q->getVertex(4),
@@ -143,7 +143,7 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
     delete q;
   }
   if(splitIntoQuads || splitIntoHexas) {
-    for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+    for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       MTriangle *t = gf->triangles[i];
       if(t->getNumVertices() == 6) {
         SPoint2 pt;
@@ -182,7 +182,7 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
   }
   gf->quadrangles = quadrangles2;
 
-  for(unsigned int i = 0; i < gf->mesh_vertices.size(); i++)
+  for(std::size_t i = 0; i < gf->mesh_vertices.size(); i++)
     gf->mesh_vertices[i]->setPolynomialOrder(1);
   gf->deleteVertexArrays();
 }
@@ -193,7 +193,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
   if(!splitIntoHexas) {
     // Split tets into other tets
     std::vector<MTetrahedron *> tetrahedra2;
-    for(unsigned int i = 0; i < gr->tetrahedra.size(); i++) {
+    for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
       MTetrahedron *t = gr->tetrahedra[i];
       // FIXME: we should choose the template to maximize the quality
       if(t->getNumVertices() == 10) {
@@ -222,7 +222,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
 
   // Split hexes into other hexes.
   std::vector<MHexahedron *> hexahedra2;
-  for(unsigned int i = 0; i < gr->hexahedra.size(); i++) {
+  for(std::size_t i = 0; i < gr->hexahedra.size(); i++) {
     MHexahedron *h = gr->hexahedra[i];
     if(h->getNumVertices() == 27) {
       hexahedra2.push_back(new MHexahedron(h->getVertex(0), h->getVertex(8),
@@ -260,7 +260,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
 
   // Split tets into other hexes.
   if(splitIntoHexas) {
-    for(unsigned int i = 0; i < gr->tetrahedra.size(); i++) {
+    for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
       MTetrahedron *t = gr->tetrahedra[i];
       if(t->getNumVertices() == 10) {
         std::vector<MVertex *> newv;
@@ -304,7 +304,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
     }
     gr->tetrahedra.clear();
 
-    for(unsigned int i = 0; i < gr->prisms.size(); i++) {
+    for(std::size_t i = 0; i < gr->prisms.size(); i++) {
       MPrism *p = gr->prisms[i];
       if(p->getNumVertices() == 18) {
         std::vector<MVertex *> newv;
@@ -354,7 +354,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
     // Yamakawa subdivision of a pyramid into 88 hexes (thanks to Tristan
     // Carrier Baudouin!)
     std::vector<MHexahedron *> dwarfs88;
-    for(unsigned int i = 0; i < gr->pyramids.size(); i++) {
+    for(std::size_t i = 0; i < gr->pyramids.size(); i++) {
       MPyramid *p = gr->pyramids[i];
       if(p->getNumVertices() == 14) {
         subdivide_pyramid(p, gr, faceVertices, dwarfs88);
@@ -366,7 +366,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
   gr->hexahedra = hexahedra2;
 
   std::vector<MPrism *> prisms2;
-  for(unsigned int i = 0; i < gr->prisms.size(); i++) {
+  for(std::size_t i = 0; i < gr->prisms.size(); i++) {
     MPrism *p = gr->prisms[i];
     if(p->getNumVertices() == 18) {
       prisms2.push_back(new MPrism(p->getVertex(0), p->getVertex(6),
@@ -400,7 +400,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
   gr->prisms = prisms2;
 
   std::vector<MPyramid *> pyramids2;
-  for(unsigned int i = 0; i < gr->pyramids.size(); i++) {
+  for(std::size_t i = 0; i < gr->pyramids.size(); i++) {
     if(splitIntoHexas) {
       Msg::Error("Full hexahedron subdivision is not implemented for pyramids");
       return;
@@ -451,7 +451,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
   }
   gr->pyramids = pyramids2;
 
-  for(unsigned int i = 0; i < gr->mesh_vertices.size(); i++)
+  for(std::size_t i = 0; i < gr->mesh_vertices.size(); i++)
     gr->mesh_vertices[i]->setPolynomialOrder(1);
   gr->deleteVertexArrays();
 }
@@ -497,10 +497,10 @@ void BarycentricRefineMesh(GModel *m)
   if(m->getNumRegions() == 0) {
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
       GFace *gf = *it;
-      unsigned int numt = gf->triangles.size();
+      std::size_t numt = gf->triangles.size();
       if(!numt) continue;
       std::vector<MTriangle *> triangles2(3 * numt);
-      for(unsigned int i = 0; i < numt; i++) {
+      for(std::size_t i = 0; i < numt; i++) {
         MTriangle *t = gf->triangles[i];
         SPoint3 bary = t->barycenter();
         // FIXME: create an MFaceVertex (with correct parametric coordinates)?
@@ -520,10 +520,10 @@ void BarycentricRefineMesh(GModel *m)
   else {
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
       GRegion *gr = *it;
-      unsigned int numt = gr->tetrahedra.size();
+      std::size_t numt = gr->tetrahedra.size();
       if(!numt) continue;
       std::vector<MTetrahedron *> tetrahedra2(4 * numt);
-      for(unsigned int i = 0; i < numt; i++) {
+      for(std::size_t i = 0; i < numt; i++) {
         MTetrahedron *t = gr->tetrahedra[i];
         SPoint3 bary = t->barycenter();
         // FIXME: create an MFaceVertex (with correct parametric coordinates)?

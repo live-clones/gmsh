@@ -133,7 +133,7 @@ protected:
   std::map<std::pair<int, int>, std::string> physicalNames, elementaryNames;
 
   // the set of all used mesh partition numbers
-  unsigned int _numPartitions;
+  std::size_t _numPartitions;
 
 protected:
   void _createGEOInternals();
@@ -184,8 +184,6 @@ public:
 
   // elementary/physical name iterator
   typedef std::map<std::pair<int, int>, std::string>::iterator piter;
-
-  typedef std::set<GVertex *, GEntityLessThan>::size_type size_type;
 
 public:
   GModel(const std::string &name = "");
@@ -271,10 +269,10 @@ public:
   void setVisibility(char val) { _visible = val; }
 
   // get the number of entities in this model
-  int getNumRegions() const { return regions.size(); }
-  int getNumFaces() const { return faces.size(); }
-  int getNumEdges() const { return edges.size(); }
-  size_type getNumVertices() const { return vertices.size(); }
+  std::size_t getNumRegions() const { return regions.size(); }
+  std::size_t getNumFaces() const { return faces.size(); }
+  std::size_t getNumEdges() const { return edges.size(); }
+  std::size_t getNumVertices() const { return vertices.size(); }
 
   // quickly check if the model is empty (i.e., if it contains no
   // entities)
@@ -435,12 +433,12 @@ public:
   int getMeshStatus(bool countDiscrete = true);
 
   // return the total number of elements in the mesh
-  int getNumMeshElements(int dim = -1) const;
-  int getNumMeshParentElements() const;
+  std::size_t getNumMeshElements(int dim = -1) const;
+  std::size_t getNumMeshParentElements() const;
 
   // get the number of each type of element in the mesh at the largest
   // dimension and return the dimension
-  int getNumMeshElements(unsigned c[6]);
+  std::size_t getNumMeshElements(unsigned c[6]);
 
   // access a mesh element by coordinates (using an octree search)
   MElement *getMeshElementByCoord(SPoint3 &p, int dim = -1, bool strict = true);
@@ -455,7 +453,7 @@ public:
   void setMeshElementIndex(MElement *e, int index);
 
   // return the total number of vertices in the mesh
-  int getNumMeshVertices(int dim = -1) const;
+  std::size_t getNumMeshVertices(int dim = -1) const;
 
   // recompute _vertexVectorCache if there is a dense vertex numbering or
   // _vertexMapCache if not.
@@ -499,7 +497,7 @@ public:
   void removeInvisibleElements();
 
   // the list of partitions
-  unsigned int getNumPartitions() const { return _numPartitions; }
+  std::size_t getNumPartitions() const { return _numPartitions; }
   void setNumPartitions(unsigned int npart) { _numPartitions = npart; }
 
   // partition the mesh

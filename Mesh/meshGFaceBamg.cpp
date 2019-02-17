@@ -72,7 +72,7 @@ void meshGFaceBamg(GFace *gf)
   std::set<MVertex *> bcVertex;
   for(std::vector<GEdge *>::const_iterator it = edges.begin();
       it != edges.end(); it++) {
-    for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       bcVertex.insert((*it)->lines[i]->getVertex(0));
       bcVertex.insert((*it)->lines[i]->getVertex(1));
     }
@@ -81,8 +81,8 @@ void meshGFaceBamg(GFace *gf)
   // fill mesh data fo bamg (bamgVertices, bamgTriangles, bamgBoundary)
   std::set<MVertex *> all;
   std::map<int, MVertex *> recover;
-  for(unsigned int i = 0; i < gf->triangles.size(); i++) {
-    for(unsigned int j = 0; j < 3; j++)
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+    for(std::size_t j = 0; j < 3; j++)
       all.insert(gf->triangles[i]->getVertex(j));
   }
 
@@ -118,7 +118,7 @@ void meshGFaceBamg(GFace *gf)
   std::vector<MElement *> myParamElems;
   std::vector<MVertex *> newVert;
   Triangle2 *bamgTriangles = new Triangle2[gf->triangles.size()];
-  for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     int nodes[3] = {gf->triangles[i]->getVertex(0)->getIndex(),
                     gf->triangles[i]->getVertex(1)->getIndex(),
                     gf->triangles[i]->getVertex(2)->getIndex()};
@@ -148,7 +148,7 @@ void meshGFaceBamg(GFace *gf)
   int count = 0;
   for(std::vector<GEdge *>::const_iterator it = edges.begin();
       it != edges.end(); ++it) {
-    for(unsigned int i = 0; i < (*it)->lines.size(); ++i) {
+    for(std::size_t i = 0; i < (*it)->lines.size(); ++i) {
       int nodes[2] = {(*it)->lines[i]->getVertex(0)->getIndex(),
                       (*it)->lines[i]->getVertex(1)->getIndex()};
       bamgBoundary[count].init(bamgVertices, nodes, (*it)->tag());
@@ -218,7 +218,7 @@ void meshGFaceBamg(GFace *gf)
     }
   }
 
-  for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     delete gf->triangles[i];
   }
   gf->triangles.clear();

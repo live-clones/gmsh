@@ -23,7 +23,7 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 
 void discreteFace::setBoundEdges(const std::vector<int> &tagEdges)
 {
-  for(unsigned int i = 0; i != tagEdges.size(); i++) {
+  for(std::size_t i = 0; i != tagEdges.size(); i++) {
     GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
     if(ge) {
       l_edges.push_back(ge);
@@ -416,7 +416,7 @@ bool discreteFace::_checkAndFixOrientation()
   // edge to 1 or 2 triangle(s)
   std::map<MEdge, std::vector<MElement *>, Less_Edge> ed2tri;
 
-  for(unsigned int i = 0; i < triangles.size(); ++i) {
+  for(std::size_t i = 0; i < triangles.size(); ++i) {
     MElement *e = triangles[i];
     for(int j = 0; j < e->getNumEdges(); j++) {
       MEdge ed = e->getEdge(j);
@@ -426,7 +426,7 @@ bool discreteFace::_checkAndFixOrientation()
 
   // element to its neighbors
   std::map<MElement *, std::vector<MElement *> > neighbors;
-  for(unsigned int i = 0; i < triangles.size(); ++i) {
+  for(std::size_t i = 0; i < triangles.size(); ++i) {
     MElement *e = triangles[i];
     for(int j = 0; j < e->getNumEdges(); j++) {
       // #improveme: efficiency could be improved by setting neighbors mutually
@@ -459,7 +459,7 @@ bool discreteFace::_checkAndFixOrientation()
 
     checkList.push(myMT);
 
-    for(unsigned int i = 0; i < myV.size(); ++i) {
+    for(std::size_t i = 0; i < myV.size(); ++i) {
       if(check_todo.find(myV[i]) == check_todo.end()) {
         myInsertion.push_back(myV[i]);
         check_todo[myV[i]] = true;
@@ -474,10 +474,10 @@ bool discreteFace::_checkAndFixOrientation()
     checkList.pop();
     std::vector<MElement *> neigs = checkLists.front();
     checkLists.pop();
-    for(unsigned int i = 0; i < neigs.size(); i++) {
+    for(std::size_t i = 0; i < neigs.size(); i++) {
       bool myCond = false;
-      for(unsigned int k = 0; k < 3; k++) {
-        for(unsigned int j = 0; j < 3; j++) {
+      for(std::size_t k = 0; k < 3; k++) {
+        for(std::size_t j = 0; j < 3; j++) {
           if(current->getVertex(k) == neigs[i]->getVertex(j)) {
             myCond = true;
             if(!(current->getVertex(k != 2 ? k + 1 : 0) ==

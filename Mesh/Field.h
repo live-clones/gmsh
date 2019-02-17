@@ -152,14 +152,14 @@ public:
   inline void setBackgroundFieldId(int id) { _background_field = id; };
   inline void addBoundaryLayerFieldId(int id)
   {
-    for(unsigned int i = 0; i < _boundaryLayer_fields.size(); ++i) {
+    for(std::size_t i = 0; i < _boundaryLayer_fields.size(); ++i) {
       if(_boundaryLayer_fields[i] == id) return;
     }
     _boundaryLayer_fields.push_back(id);
   }
   inline void addBoundaryLayerFieldId(std::vector<int> &tags)
   {
-    for(unsigned int i = 0; i < tags.size(); ++i)
+    for(std::size_t i = 0; i < tags.size(); ++i)
       addBoundaryLayerFieldId(tags[i]);
   }
   inline int getBackgroundField() { return _background_field; }

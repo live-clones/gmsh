@@ -23,7 +23,7 @@ public:
   ~geo_cell() {}
   int search_line(std::pair<int, int> line)
   {
-    unsigned int i;
+    std::size_t i;
     for(i = 0; i < lines.size(); i++) {
       if(lines[i].first == line.first && lines[i].second == line.second)
         return i;

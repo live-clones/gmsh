@@ -28,7 +28,7 @@ static double objective_function(double xi, MVertex *ver, double xTarget,
   ver->y() = (1. - xi) * ver->y() + xi * yTarget;
   ver->z() = (1. - xi) * ver->z() + xi * zTarget;
   double minQual = 1.0;
-  for(unsigned int i = 0; i < lt.size(); i++) {
+  for(std::size_t i = 0; i < lt.size(); i++) {
     if(lt[i]->getNumVertices() == 4) {
       //      if (onlytet)
       double V;
@@ -66,7 +66,7 @@ static double objective_function(double xi, MVertex *ver, GFace *gf,
   ver->y() = pp.y();
   ver->z() = pp.z();
   double minQual = 1.0;
-  for(unsigned int i = 0; i < lt.size(); i++) {
+  for(std::size_t i = 0; i < lt.size(); i++) {
     if(lt[i]->getNumVertices() == 4)
       minQual = std::min((lt[i]->etaShapeMeasure()), minQual);
     else
@@ -94,7 +94,7 @@ static double objective_function(double const xi, MVertex *const ver,
   ver->y() = pp.y();
   ver->z() = pp.z();
   double minQual = 1.0;
-  for(unsigned int i = 0; i < lt.size(); i++) {
+  for(std::size_t i = 0; i < lt.size(); i++) {
     if(lt[i]->getNumVertices() == 4)
       minQual = std::min(lt[i]->etaShapeMeasure(), minQual);
     else
@@ -255,7 +255,7 @@ static void _relocateVertexOfPyramid(MVertex *ver,
   int N = 0;
   MElement *pyramid = NULL;
 
-  for(unsigned int i = 0; i < lt.size(); i++) {
+  for(std::size_t i = 0; i < lt.size(); i++) {
     double XCG = 0.0, YCG = 0.0, ZCG = 0.0;
     if(lt[i]->getNumVertices() == 5)
       pyramid = lt[i];
@@ -306,7 +306,7 @@ static void _relocateVertexGolden(MVertex *ver,
   if(ver->onWhat()->dim() != 3) return;
   double x = 0.0, y = 0.0, z = 0.0;
   int N = 0;
-  for(unsigned int i = 0; i < lt.size(); i++) {
+  for(std::size_t i = 0; i < lt.size(); i++) {
     // TODO C++11 use std::accumulate instead
     double XCG = 0.0, YCG = 0.0, ZCG = 0.0;
     for(std::size_t j = 0; j < lt[i]->getNumVertices(); j++) {
@@ -344,7 +344,7 @@ static double _relocateVertex2(GFace *gf, MVertex *ver,
 {
   SPoint3 p1(0, 0, 0);
   std::size_t counter = 0;
-  for(unsigned int i = 0; i < lt.size(); i++) {
+  for(std::size_t i = 0; i < lt.size(); i++) {
     for(std::size_t j = 0; j < lt[i]->getNumVertices(); j++) {
       MVertex *v = lt[i]->getVertex(j);
       p1 += SPoint3(v->x(), v->y(), v->z());
@@ -381,7 +381,7 @@ static double _relocateVertex(GFace *gf, MVertex *ver,
   }
 
   std::size_t counter = 0;
-  for(unsigned int i = 0; i < lt.size(); i++) {
+  for(std::size_t i = 0; i < lt.size(); i++) {
     for(std::size_t j = 0; j < lt[i]->getNumVertices(); j++) {
       MVertex *v = lt[i]->getVertex(j);
       SPoint2 pp;
@@ -521,14 +521,14 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
 void RelocateVerticesOfPyramids(std::vector<GRegion *> &regions, int niter,
                                 double tol)
 {
-  for(unsigned int k = 0; k < regions.size(); k++) {
+  for(std::size_t k = 0; k < regions.size(); k++) {
     RelocateVerticesOfPyramids(regions[k], niter, tol);
   }
 }
 
 void RelocateVertices(std::vector<GRegion *> &regions, int niter, double tol)
 {
-  for(unsigned int k = 0; k < regions.size(); k++) {
+  for(std::size_t k = 0; k < regions.size(); k++) {
     RelocateVertices(regions[k], niter, tol);
   }
 }

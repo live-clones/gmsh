@@ -90,7 +90,7 @@ extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
 
   // create vertices (if the edges are constrained, they already exist)
   if(!constrainedEdges) {
-    for(unsigned int i = 0; i < from->mesh_vertices.size(); i++) {
+    for(std::size_t i = 0; i < from->mesh_vertices.size(); i++) {
       std::vector<MVertex *> extruded_vertices;
       MVertex *v = from->mesh_vertices[i];
       MEdgeVertex *mv = (MEdgeVertex *)v;
@@ -141,7 +141,7 @@ extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
   // create elements (note that it would be faster to access the *interior*
   // nodes by direct indexing, but it's just simpler to query everything by
   // position)
-  for(unsigned int i = 0; i < from->lines.size(); i++) {
+  for(std::size_t i = 0; i < from->lines.size(); i++) {
     MVertex *v0 = from->lines[i]->getVertex(0);
     MVertex *v1 = from->lines[i]->getVertex(1);
     for(int j = 0; j < ep->mesh.NbLayer; j++) {
@@ -183,7 +183,7 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
   mesh_vertices.insert(mesh_vertices.end(), embedded.begin(), embedded.end());
 
   // create extruded vertices
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++) {
+  for(std::size_t i = 0; i < mesh_vertices.size(); i++) {
     MVertex *v = mesh_vertices[i];
     double x = v->x(), y = v->y(), z = v->z();
     ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
@@ -235,7 +235,7 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
 #endif
 
   // create triangle elements
-  for(unsigned int i = 0; i < from->triangles.size(); i++) {
+  for(std::size_t i = 0; i < from->triangles.size(); i++) {
     std::vector<MVertex *> verts;
     for(int j = 0; j < 3; j++) {
       MVertex *v = from->triangles[i]->getVertex(j);
@@ -267,7 +267,7 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
 #endif
 
   // create quadrangle elements if NOT QuadToTri and NOT toroidal
-  for(unsigned int i = 0; i < from->quadrangles.size(); i++) {
+  for(std::size_t i = 0; i < from->quadrangles.size(); i++) {
     std::vector<MVertex *> verts;
     for(int j = 0; j < 4; j++) {
       MVertex *v = from->quadrangles[i]->getVertex(j);

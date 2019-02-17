@@ -236,7 +236,7 @@ MFaceN MElement::getHighOrderFace(int num, int sign, int rot)
   const std::vector<int> &closure = fs->getClosure(id);
 
   std::vector<MVertex *> vertices(closure.size());
-  for(unsigned int i = 0; i < closure.size(); ++i) {
+  for(std::size_t i = 0; i < closure.size(); ++i) {
     vertices[i] = getVertex(closure[i]);
   }
 
@@ -940,7 +940,7 @@ double MElement::getJacobian(const std::vector<SVector3> &gsf,
 double MElement::getJacobian(const std::vector<SVector3> &gsf,
                              double *jac) const
 {
-  for(unsigned int i = 0; i < 9; i++) {
+  for(std::size_t i = 0; i < 9; i++) {
     jac[i] = 0.;
   }
 
@@ -1446,7 +1446,7 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
       int numGhosts = ghosts->size();
       fprintf(fp, " %d %d %d %d %d", 4 + numGhosts + par + dom, abs(physical),
               elementary, 1 + numGhosts, _partition);
-      for(unsigned int i = 0; i < ghosts->size(); i++)
+      for(std::size_t i = 0; i < ghosts->size(); i++)
         fprintf(fp, " %d", -(*ghosts)[i]);
     }
     if(version >= 2.0 && par) fprintf(fp, " %d", parentNum);
@@ -1501,14 +1501,14 @@ void MElement::writeMSH4(FILE *fp, bool binary)
 
   if(binary) { // Implemented but not used in practice
     fwrite(&_num, sizeof(int), 1, fp);
-    for(unsigned int i = 0; i < verts.size(); i++) {
+    for(std::size_t i = 0; i < verts.size(); i++) {
       int vertNum = verts[i]->getNum();
       fwrite(&vertNum, sizeof(int), 1, fp);
     }
   }
   else {
     fprintf(fp, "%d ", _num);
-    for(unsigned int i = 0; i < verts.size(); i++) {
+    for(std::size_t i = 0; i < verts.size(); i++) {
       fprintf(fp, "%d ", verts[i]->getNum());
     }
     fprintf(fp, "\n");
@@ -2622,9 +2622,9 @@ MElement *MElementFactory::create(int num, int type,
 
   MElement *element = create(type, vertices, num, part, false, parent);
 
-  for(unsigned int j = 0; j < ghosts.size(); j++) {
-    // model->getGhostCells().insert(std::pair<MElement*, short>(element,
-    // ghosts[j]));
+  for(std::size_t j = 0; j < ghosts.size(); j++) {
+    // model->getGhostCells().insert(std::pair<MElement*, short>
+    //                               (element, ghosts[j]));
   }
   if(part > model->getNumPartitions()) model->setNumPartitions(part);
 

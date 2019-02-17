@@ -302,7 +302,7 @@ namespace ClosureGen {
       nodes2edges[edges[i]][edges[i + 1]] = i;
       nodes2edges[edges[i + 1]][edges[i]] = i + 1;
     }
-    for(unsigned int iClosure = 0; iClosure < closureFull.size(); iClosure++) {
+    for(std::size_t iClosure = 0; iClosure < closureFull.size(); iClosure++) {
       std::vector<int> &cl = closureFull[iClosure];
       for(int iEdge = 0; edges[iEdge] >= 0; iEdge += 2) {
         if(cl.empty()) continue;
@@ -353,12 +353,12 @@ namespace ClosureGen {
     // Mapping for the p1 nodes
     nodalBasis::clCont closure;
     generateFaceClosureTet(closure, 1);
-    for(unsigned int i = 0; i < closureFull.size(); i++) {
+    for(std::size_t i = 0; i < closureFull.size(); i++) {
       std::vector<int> &clFull = closureFull[i];
       std::vector<int> &cl = closure[i];
       clFull.resize(4, -1);
       closureRef[i] = 0;
-      for(unsigned int j = 0; j < cl.size(); j++) clFull[closure[0][j]] = cl[j];
+      for(std::size_t j = 0; j < cl.size(); j++) clFull[closure[0][j]] = cl[j];
       for(int j = 0; j < 4; j++)
         if(clFull[j] == -1)
           clFull[j] = (6 - clFull[(j + 1) % 4] - clFull[(j + 2) % 4] -
@@ -380,7 +380,7 @@ namespace ClosureGen {
       generate2dEdgeClosureFull(closureTriangles, closureTrianglesRef,
                                 order - 3, 3, false);
     addEdgeNodes(closureFull, edges, order);
-    for(unsigned int iClosure = 0; iClosure < closureFull.size(); iClosure++) {
+    for(std::size_t iClosure = 0; iClosure < closureFull.size(); iClosure++) {
       // faces
       std::vector<int> &cl = closureFull[iClosure];
       if(order >= 3) {
@@ -404,9 +404,9 @@ namespace ClosureGen {
       std::vector<int> fakeClosureRef;
       generateFaceClosureTetFull(insideClosure, fakeClosureRef, order - 4,
                                  false);
-      for(unsigned int i = 0; i < closureFull.size(); i++) {
-        unsigned int shift = closureFull[i].size();
-        for(unsigned int j = 0; j < insideClosure[i].size(); j++)
+      for(std::size_t i = 0; i < closureFull.size(); i++) {
+        std::size_t shift = closureFull[i].size();
+        for(std::size_t j = 0; j < insideClosure[i].size(); j++)
           closureFull[i].push_back(insideClosure[i][j] + shift);
       }
     }
@@ -445,7 +445,7 @@ namespace ClosureGen {
           nodalBasis::closure cl;
           cl.type = fsFace.type;
           cl.resize(fsFace.points.size1());
-          for(unsigned int iNode = 0; iNode < cl.size(); ++iNode) {
+          for(std::size_t iNode = 0; iNode < cl.size(); ++iNode) {
             double u, v, w;
             rotateHex(iFace, iRotate, iSign, fsFace.points(iNode, 0),
                       fsFace.points(iNode, 1), u, v, w);
@@ -642,7 +642,7 @@ namespace ClosureGen {
     closureRef.resize(40);
     generateFaceClosurePrism(closure, 1);
     int ref3 = -1, ref4a = -1, ref4b = -1;
-    for(unsigned int i = 0; i < closure.size(); i++) {
+    for(std::size_t i = 0; i < closure.size(); i++) {
       std::vector<int> &clFull = closureFull[i];
       std::vector<int> &cl = closure[i];
       if(cl.size() == 0) continue;
@@ -651,7 +651,7 @@ namespace ClosureGen {
         cl.size() == 3 ? ref3 : (cl[0] / 3 + cl[1] / 3) % 2 ? ref4b : ref4a;
       if(ref == -1) ref = i;
       closureRef[i] = ref;
-      for(unsigned int j = 0; j < cl.size(); j++)
+      for(std::size_t j = 0; j < cl.size(); j++)
         clFull[closure[ref][j]] = cl[j];
       for(int j = 0; j < 6; j++) {
         if(clFull[j] == -1) {
@@ -681,7 +681,7 @@ namespace ClosureGen {
         }
         nodeSum2Face[nodeSum] = iFace;
       }
-      for(unsigned int i = 0; i < closureFull.size(); i++) {
+      for(std::size_t i = 0; i < closureFull.size(); i++) {
         if(closureFull[i].empty()) continue;
         for(int iFace = 0; iFace < numFaces; iFace++) {
           int nodeSum = 0;
@@ -724,7 +724,7 @@ namespace ClosureGen {
           nodalBasis::closure cl;
           cl.type = fsFace->type;
           cl.resize(fsFace->points.size1());
-          for(unsigned int iNode = 0; iNode < cl.size(); ++iNode) {
+          for(std::size_t iNode = 0; iNode < cl.size(); ++iNode) {
             double u, v, w;
             rotatePyr(iFace, iRotate, iSign, fsFace->points(iNode, 0),
                       fsFace->points(iNode, 1), u, v, w);

@@ -65,7 +65,7 @@ public:
   GRegion *_gr;
   GFace *_f[2];
   double max_angle, min_angle;
-  unsigned int _N_SUBNORMALS;
+  std::size_t _N_SUBNORMALS;
 
   void computeType(double angle)
   {
@@ -1240,7 +1240,7 @@ public:
 
           //	  printf("%d %d %d\n",fan0.size(),fan1.size(),r._N_SUBNORMALS);
           if(fan0.size() == r._N_SUBNORMALS && fan1.size() == r._N_SUBNORMALS) {
-            for(unsigned int k = 0; k <= r._N_SUBNORMALS; k++) {
+            for(std::size_t k = 0; k <= r._N_SUBNORMALS; k++) {
               MVertex *v00 = (k == 0 ? o00 : fan0[k - 1]);
               MVertex *v10 = (k == 0 ? o10 : fan1[k - 1]);
               MVertex *v01 = (k == r._N_SUBNORMALS ? o01 : fan0[k]);

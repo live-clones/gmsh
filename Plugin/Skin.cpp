@@ -137,10 +137,10 @@ public:
       break;
     }
     if(!vec) return;
-    for(unsigned int i = 0; i < x.size(); i++) vec->push_back(x[i]);
-    for(unsigned int i = 0; i < y.size(); i++) vec->push_back(y[i]);
-    for(unsigned int i = 0; i < z.size(); i++) vec->push_back(z[i]);
-    for(unsigned int i = 0; i < v.size(); i++) vec->push_back(v[i]);
+    for(std::size_t i = 0; i < x.size(); i++) vec->push_back(x[i]);
+    for(std::size_t i = 0; i < y.size(); i++) vec->push_back(y[i]);
+    for(std::size_t i = 0; i < z.size(); i++) vec->push_back(z[i]);
+    for(std::size_t i = 0; i < v.size(); i++) vec->push_back(v[i]);
   }
 };
 
@@ -193,11 +193,11 @@ static void getBoundaryFromMesh(GModel *m, int visible)
   m->getEntities(entities);
   std::set<MFace, Less_Face> bndFaces;
   std::set<MEdge, Less_Edge> bndEdges;
-  for(unsigned int i = 0; i < entities.size(); i++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     if(ge->dim() != dim) continue;
     if(visible && !ge->getVisibility()) continue;
-    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++) {
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       if(dim == 2) {
         for(int i = 0; i < e->getNumEdges(); i++) {

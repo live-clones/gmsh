@@ -20,11 +20,11 @@ GVertex::~GVertex() { deleteMesh(); }
 void GVertex::deleteMesh(bool onlyDeleteElements)
 {
   if(!onlyDeleteElements) {
-    for(unsigned int i = 0; i < mesh_vertices.size(); i++)
+    for(std::size_t i = 0; i < mesh_vertices.size(); i++)
       delete mesh_vertices[i];
     mesh_vertices.clear();
   }
-  for(unsigned int i = 0; i < points.size(); i++) delete points[i];
+  for(std::size_t i = 0; i < points.size(); i++) delete points[i];
   points.clear();
   deleteVertexArrays();
   model()->destroyMeshCaches();
@@ -83,7 +83,7 @@ void GVertex::writeGEO(FILE *fp, const std::string &meshSizeParameter)
     fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g};\n", tag(), x(), y(), z());
 }
 
-unsigned int GVertex::getNumMeshElementsByType(const int familyType) const
+std::size_t GVertex::getNumMeshElementsByType(const int familyType) const
 {
   if(familyType == TYPE_PNT) return points.size();
 
@@ -95,14 +95,14 @@ void GVertex::getNumMeshElements(unsigned *const c) const
   c[0] += points.size();
 }
 
-MElement *GVertex::getMeshElement(unsigned int index) const
+MElement *GVertex::getMeshElement(std::size_t index) const
 {
   if(index < points.size()) return points[index];
   return 0;
 }
 
 MElement *GVertex::getMeshElementByType(const int familyType,
-                                        const unsigned int index) const
+                                        const std::size_t index) const
 {
   if(familyType == TYPE_PNT) return points[index];
 
@@ -152,7 +152,7 @@ std::list<GRegion *> GVertex::regions() const
 
 void GVertex::relocateMeshVertices()
 {
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++) {
+  for(std::size_t i = 0; i < mesh_vertices.size(); i++) {
     MVertex *v = mesh_vertices[i];
     v->x() = x();
     v->y() = y();
@@ -192,7 +192,7 @@ bool GVertex::reorder(const int elementType, const std::vector<int> &ordering)
       }
 
       std::vector<MPoint *> newPointsOrder(points.size());
-      for(unsigned int i = 0; i < ordering.size(); i++) {
+      for(std::size_t i = 0; i < ordering.size(); i++) {
         newPointsOrder[i] = points[ordering[i]];
       }
 #if __cplusplus >= 201103L

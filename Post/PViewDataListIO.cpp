@@ -338,7 +338,7 @@ static void writeTimePOS(FILE *fp, std::vector<double> &list)
 {
   if(list.size() > 1) {
     fprintf(fp, "TIME{");
-    for(unsigned int i = 0; i < list.size(); i++) {
+    for(std::size_t i = 0; i < list.size(); i++) {
       if(i) fprintf(fp, ",");
       fprintf(fp, "%.16g", list[i]);
     }
@@ -351,7 +351,7 @@ static void writeElementPOS(FILE *fp, const char *str, int nbnod, int nb,
 {
   if(nb) {
     int n = list.size() / nb;
-    for(unsigned int i = 0; i < list.size(); i += n) {
+    for(std::size_t i = 0; i < list.size(); i += n) {
       double *x = &list[i];
       double *y = &list[i + nbnod];
       double *z = &list[i + 2 * nbnod];
@@ -374,7 +374,7 @@ static void writeTextPOS(FILE *fp, int nbc, int nb, std::vector<double> &TD,
                          std::vector<char> &TC)
 {
   if(!nb || (nbc != 4 && nbc != 5)) return;
-  for(unsigned int j = 0; j < TD.size(); j += nbc) {
+  for(std::size_t j = 0; j < TD.size(); j += nbc) {
     double x = TD[j];
     double y = TD[j + 1];
     double z = (nbc == 5) ? TD[j + 2] : 0.;
@@ -432,7 +432,7 @@ bool PViewDataList::writePOS(const std::string &fileName, bool binary,
   }
 
   std::string str = getName();
-  for(unsigned int i = 0; i < str.size(); i++)
+  for(std::size_t i = 0; i < str.size(); i++)
     if(str[i] == ' ') str[i] = '^';
 
   if(!parsed) {
@@ -529,7 +529,7 @@ static void createVertices(std::vector<double> &list, int nbelm, int nbnod,
 {
   if(!nbelm) return;
   int nb = list.size() / nbelm;
-  for(unsigned int i = 0; i < list.size(); i += nb) {
+  for(std::size_t i = 0; i < list.size(); i += nb) {
     double *x = &list[i];
     double *y = &list[i + nbnod];
     double *z = &list[i + 2 * nbnod];
@@ -614,7 +614,7 @@ static void createElements(std::vector<double> &list, int nbelm, int nbnod,
   }
   MElementFactory factory;
   int nb = list.size() / nbelm;
-  for(unsigned int i = 0; i < list.size(); i += nb) {
+  for(std::size_t i = 0; i < list.size(); i += nb) {
     double *x = &list[i];
     double *y = &list[i + nbnod];
     double *z = &list[i + 2 * nbnod];
@@ -662,7 +662,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
   }
   MVertexRTree pos(eps);
   std::vector<MVertex *> unique;
-  for(unsigned int i = 0; i < vertices.size(); i++) {
+  for(std::size_t i = 0; i < vertices.size(); i++) {
     if(!pos.insert(vertices[i])) unique.push_back(vertices[i]);
   }
   vertices.clear();
@@ -678,7 +678,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
   }
 
   int num = 0;
-  for(unsigned int i = 0; i < unique.size(); i++) unique[i]->setIndex(++num);
+  for(std::size_t i = 0; i < unique.size(); i++) unique[i]->setIndex(++num);
 
   if(version > 2.2)
     Msg::Warning("Mesh-based export of list-based datasets not available with "
@@ -689,7 +689,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
   if(saveMesh) {
     fprintf(fp, "$Nodes\n");
     fprintf(fp, "%d\n", (int)unique.size());
-    for(unsigned int i = 0; i < unique.size(); i++) {
+    for(std::size_t i = 0; i < unique.size(); i++) {
       MVertex *v = unique[i];
       fprintf(fp, "%d %.16g %.16g %.16g\n", v->getIndex(), v->x(), v->y(),
               v->z());
@@ -698,7 +698,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
 
     fprintf(fp, "$Elements\n");
     fprintf(fp, "%d\n", (int)elements.size());
-    for(unsigned int i = 0; i < elements.size(); i++) {
+    for(std::size_t i = 0; i < elements.size(); i++) {
       elements[i]->writeMSH2(fp, 2.2, false, i + 1);
     }
     fprintf(fp, "$EndElements\n");
@@ -747,7 +747,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
       fprintf(fp, "3\n%d\n%d\n%d\n", ts, numComponents, size);
 
     if(forceNodeData) {
-      for(unsigned int i = 0; i < unique.size(); i++) {
+      for(std::size_t i = 0; i < unique.size(); i++) {
         MVertex *v = unique[i];
         fprintf(fp, "%d", v->getIndex());
         int nbnod = vertexData[v].nbnod;
@@ -770,7 +770,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
           int mult = numNodes;
           if(_interpolation.count(typ)) mult = _interpolation[typ][0]->size1();
           int nb = list->size() / *numEle;
-          for(unsigned int i = 0; i < list->size(); i += nb) {
+          for(std::size_t i = 0; i < list->size(); i += nb) {
             double *v = &(*list)[i + 3 * numNodes];
             if(forceElementData) { // just keep first vertex value
               fprintf(fp, "%d", ++n);

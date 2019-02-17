@@ -111,14 +111,14 @@ PView *GMSH_CrackPlugin::execute(PView *view)
 
   // get crack elements
   std::vector<MElement *> crackElements;
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
       crackElements.push_back(entities[i]->getMeshElement(j));
 
   // get internal crack vertices and boundary vertices
   std::set<MVertex *> crackVertices, bndVertices;
   if(dim == 1) {
-    for(unsigned int i = 0; i < crackElements.size(); i++) {
+    for(std::size_t i = 0; i < crackElements.size(); i++) {
       for(std::size_t j = 0; j < crackElements[i]->getNumVertices(); j++) {
         MVertex *v = crackElements[i]->getVertex(j);
         crackVertices.insert(v);
@@ -134,7 +134,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   }
   else {
     std::set<EdgeData, Less_EdgeData> bnd;
-    for(unsigned int i = 0; i < crackElements.size(); i++) {
+    for(std::size_t i = 0; i < crackElements.size(); i++) {
       for(std::size_t j = 0; j < crackElements[i]->getNumVertices(); j++) {
         MVertex *v = crackElements[i]->getVertex(j);
         crackVertices.insert(v);
@@ -155,8 +155,8 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   }
 
   // get (forced) open boundary vertices and remove them from boundary vertices
-  for(unsigned int i = 0; i < openEntities.size(); i++) {
-    for(unsigned int j = 0; j < openEntities[i]->getNumMeshElements(); j++) {
+  for(std::size_t i = 0; i < openEntities.size(); i++) {
+    for(std::size_t j = 0; j < openEntities[i]->getNumMeshElements(); j++) {
       MElement *e = openEntities[i]->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
         MVertex *v = e->getVertex(k);
@@ -172,9 +172,9 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   std::set<MElement *> oneside;
   std::vector<GEntity *> allentities;
   m->getEntities(allentities);
-  for(unsigned int ent = 0; ent < allentities.size(); ent++) {
+  for(std::size_t ent = 0; ent < allentities.size(); ent++) {
     if(crackEntities.find(allentities[ent]) != crackEntities.end()) continue;
-    for(unsigned int i = 0; i < allentities[ent]->getNumMeshElements(); i++) {
+    for(std::size_t i = 0; i < allentities[ent]->getNumMeshElements(); i++) {
       MElement *e = allentities[ent]->getMeshElement(i);
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
         if(crackVertices.find(e->getVertex(j)) != crackVertices.end()) {
@@ -182,7 +182,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
           SPoint3 b = e->barycenter();
           double d = 1e200;
           MElement *ce = 0;
-          for(unsigned int k = 0; k < crackElements.size(); k++) {
+          for(std::size_t k = 0; k < crackElements.size(); k++) {
             double d2 = b.distance(crackElements[k]->barycenter());
             if(d2 < d) {
               d = d2;
@@ -241,11 +241,11 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   }
 
   // duplicate crack elements
-  for(unsigned int i = 0; i < crackElements.size(); i++) {
+  for(std::size_t i = 0; i < crackElements.size(); i++) {
     MElement *e = crackElements[i];
     std::vector<MVertex *> verts;
     e->getVertices(verts);
-    for(unsigned int j = 0; j < verts.size(); j++) {
+    for(std::size_t j = 0; j < verts.size(); j++) {
       if(vxv.count(verts[j])) verts[j] = vxv[verts[j]];
     }
     MElementFactory f;

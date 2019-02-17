@@ -111,19 +111,19 @@ public:
   int getNumElementTypes() const { return 6; }
 
   // get total/by-type number of elements in the mesh
-  size_type getNumMeshElements() const;
-  unsigned int getNumMeshElementsByType(const int familyType) const;
-  unsigned int getNumMeshParentElements();
+  std::size_t getNumMeshElements() const;
+  std::size_t getNumMeshElementsByType(const int familyType) const;
+  std::size_t getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
 
   // get the start of the array of a type of element
   MElement *const *getStartElementType(int type) const;
 
   // get the element at the given index
-  MElement *getMeshElement(unsigned int index) const;
+  MElement *getMeshElement(std::size_t index) const;
   // get the element at the given index for a given familyType
   MElement *getMeshElementByType(const int familyType,
-                                 const unsigned int index) const;
+                                 const std::size_t index) const;
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();

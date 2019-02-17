@@ -586,7 +586,7 @@ void DocRecord::makePosView(const std::string &fileName, GFace *gf)
         // if (gf) p0 = gf->point(pc[0], pc[1]);
         fprintf(f, "SP(%g,%g,%g){%g};\n", p0.x(), p0.y(), p0.z(), (double)i);
         voronoiCell(i, pts);
-        for(unsigned int j = 0; j < pts.size(); j++) {
+        for(std::size_t j = 0; j < pts.size(); j++) {
           SPoint2 pp1 = pts[j];
           SPoint2 pp2 = pts[(j + 1) % pts.size()];
           GPoint p1(pp1.x(), pp1.y(), 0.0);
@@ -656,7 +656,7 @@ void DocRecord::printMedialAxis(Octree *_octree, const std::string &fileName,
         if(gf) p0 = gf->point(pc[0], pc[1]);
         fprintf(f, "SP(%g,%g,%g){%g};\n", p0.x(), p0.y(), p0.z(), (double)i);
         voronoiCell(i, pts);
-        for(unsigned int j = 0; j < pts.size(); j++) {
+        for(std::size_t j = 0; j < pts.size(); j++) {
           SVector3 pp1(pts[j].x(), pts[j].y(), 0.0);
           SVector3 pp2(pts[(j + 1) % pts.size()].x(),
                        pts[(j + 1) % pts.size()].y(), 0.0);
@@ -723,7 +723,7 @@ void centroidOfPolygon(SPoint2 &pc, std::vector<SPoint2> &pts, double &xc,
   double area_tot = 0;
   areaCell = 0.0;
   SPoint2 center(0, 0);
-  for(unsigned int j = 0; j < pts.size(); j++) {
+  for(std::size_t j = 0; j < pts.size(); j++) {
     SPoint2 &pa = pts[j];
     SPoint2 &pb = pts[(j + 1) % pts.size()];
     const double area = triangle_area2d(pa, pb, pc);
@@ -737,7 +737,7 @@ void centroidOfPolygon(SPoint2 &pc, std::vector<SPoint2> &pts, double &xc,
   }
   SPoint2 x = center * (1.0 / area_tot);
   inertia = 0;
-  for(unsigned int j = 0; j < pts.size(); j++) {
+  for(std::size_t j = 0; j < pts.size(); j++) {
     SPoint2 &pa = pts[j];
     SPoint2 &pb = pts[(j + 1) % pts.size()];
     const double area = triangle_area2d(pa, pb, pc);
@@ -971,7 +971,7 @@ void DocRecord::concave(double x, double y, GFace *gf)
 
   for(it1 = list.begin(); it1 != list.end(); it1++) {
     edge = *it1;
-    for(unsigned int i = 0; i < edge->getNumMeshElements(); i++) {
+    for(std::size_t i = 0; i < edge->getNumMeshElements(); i++) {
       element = edge->getMeshElement(i);
       vertex1 = element->getVertex(0);
       vertex2 = element->getVertex(1);
@@ -1009,7 +1009,7 @@ bool DocRecord::contain(int index1, int index2, int index3)
   void *dataB;
   dataA = points[index2].data;
   dataB = points[index3].data;
-  for(unsigned int i = 0; i < points[index1].vicinity.size() - 1; i = i + 2) {
+  for(std::size_t i = 0; i < points[index1].vicinity.size() - 1; i = i + 2) {
     if(points[index1].vicinity[i] == dataA &&
        points[index1].vicinity[i + 1] == dataB) {
       return 1;
@@ -1103,7 +1103,7 @@ bool DocRecord::delaunay_conformity(GFace *gf)
   for(std::vector<GEdge *>::const_iterator it = list.begin(); it != list.end();
       it++) {
     GEdge *edge = *it;
-    for(unsigned int i = 0; i < edge->getNumMeshElements(); i++) {
+    for(std::size_t i = 0; i < edge->getNumMeshElements(); i++) {
       MElement *element = edge->getMeshElement(i);
       MVertex *vertex1 = element->getVertex(0);
       MVertex *vertex2 = element->getVertex(1);

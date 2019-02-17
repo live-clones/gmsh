@@ -250,7 +250,7 @@ namespace onelab {
     std::string sanitize(const std::string &in) const
     {
       std::string out(in);
-      for(unsigned int i = 0; i < in.size(); i++)
+      for(std::size_t i = 0; i < in.size(); i++)
         if(out[i] == charSep()) out[i] = ' ';
       return out;
     }
@@ -329,9 +329,9 @@ namespace onelab {
       time(&now);
       fprintf(fp, "ONELAB database created by %s on %s", creator.c_str(),
               ctime(&now));
-      for(unsigned int i = 0; i < msg.size(); i++) {
+      for(std::size_t i = 0; i < msg.size(); i++) {
         fprintf(fp, "%d ", (int)msg[i].size());
-        for(unsigned int j = 0; j < msg[i].size(); j++) fputc(msg[i][j], fp);
+        for(std::size_t j = 0; j < msg[i].size(); j++) fputc(msg[i][j], fp);
         fputc('\n', fp);
       }
       return true;
@@ -480,7 +480,7 @@ namespace onelab {
     {
       if(labels.size() != _choices.size()) return;
       if(_valueLabels.size()) _valueLabels.clear();
-      for(unsigned int i = 0; i < _choices.size(); i++)
+      for(std::size_t i = 0; i < _choices.size(); i++)
         _valueLabels[_choices[i]] = labels[i];
     }
     void setValueLabels(const std::map<double, std::string> &valueLabels)
@@ -498,7 +498,7 @@ namespace onelab {
       return _values[0];
     }
     const std::vector<double> &getValues() const { return _values; }
-    unsigned int getNumValues() const { return _values.size(); }
+    int getNumValues() const { return (int)_values.size(); }
     double getMin() const { return _min; }
     double getMax() const { return _max; }
     double getStep() const { return _step; }
@@ -524,7 +524,7 @@ namespace onelab {
       setReadOnly(p.getReadOnly());
       setAttributes(p.getAttributes());
       bool changed = false;
-      for(unsigned int i = 0; i < p.getValues().size(); i++) {
+      for(std::size_t i = 0; i < p.getValues().size(); i++) {
         if(p.getValues()[i] != getValues()[i]) {
           changed = true;
           break;
@@ -547,11 +547,11 @@ namespace onelab {
       std::ostringstream sstream;
       sstream.precision(16);
       sstream << parameter::toChar() << _values.size() << charSep();
-      for(unsigned int i = 0; i < _values.size(); i++)
+      for(std::size_t i = 0; i < _values.size(); i++)
         sstream << _values[i] << charSep();
       sstream << _min << charSep() << _max << charSep() << _step << charSep()
               << _index << charSep() << _choices.size() << charSep();
-      for(unsigned int i = 0; i < _choices.size(); i++)
+      for(std::size_t i = 0; i < _choices.size(); i++)
         sstream << _choices[i] << charSep();
       sstream << _valueLabels.size() << charSep();
       for(std::map<double, std::string>::const_iterator it =
@@ -566,14 +566,14 @@ namespace onelab {
       std::string::size_type pos = parameter::fromChar(msg);
       if(!pos) return 0;
       _values.resize(atoi(getNextToken(msg, pos).c_str()));
-      for(unsigned int i = 0; i < _values.size(); i++)
+      for(std::size_t i = 0; i < _values.size(); i++)
         _values[i] = atof(getNextToken(msg, pos).c_str());
       setMin(atof(getNextToken(msg, pos).c_str()));
       setMax(atof(getNextToken(msg, pos).c_str()));
       setStep(atof(getNextToken(msg, pos).c_str()));
       setIndex(atoi(getNextToken(msg, pos).c_str()));
       _choices.resize(atoi(getNextToken(msg, pos).c_str()));
-      for(unsigned int i = 0; i < _choices.size(); i++)
+      for(std::size_t i = 0; i < _choices.size(); i++)
         _choices[i] = atof(getNextToken(msg, pos).c_str());
       int numValueLabels = atoi(getNextToken(msg, pos).c_str());
       for(int i = 0; i < numValueLabels; i++) {
@@ -587,7 +587,7 @@ namespace onelab {
       std::ostringstream sstream;
       sstream.precision(16);
       sstream << "{ " << parameter::toJSON() << ", \"values\":[ ";
-      for(unsigned int i = 0; i < _values.size(); i++) {
+      for(std::size_t i = 0; i < _values.size(); i++) {
         if(i) sstream << ", ";
         sstream << _values[i];
       }
@@ -596,7 +596,7 @@ namespace onelab {
               << ", \"step\":" << _step << ", \"index\":" << _index;
       if(_choices.size()) {
         sstream << ", \"choices\":[ ";
-        for(unsigned int i = 0; i < _choices.size(); i++) {
+        for(std::size_t i = 0; i < _choices.size(); i++) {
           if(i) sstream << ", ";
           sstream << _choices[i];
         }
@@ -642,7 +642,7 @@ namespace onelab {
           if(!it->second.is<picojson::array>()) return false;
           const picojson::value::array &arr = it->second.get<picojson::array>();
           _values.resize(arr.size());
-          for(unsigned int i = 0; i < arr.size(); i++) {
+          for(std::size_t i = 0; i < arr.size(); i++) {
             if(!arr[i].is<double>()) return false;
             _values[i] = arr[i].get<double>();
           }
@@ -667,7 +667,7 @@ namespace onelab {
           if(!it->second.is<picojson::array>()) return false;
           const picojson::value::array &arr = it->second.get<picojson::array>();
           _choices.resize(arr.size());
-          for(unsigned int i = 0; i < arr.size(); i++) {
+          for(std::size_t i = 0; i < arr.size(); i++) {
             if(!arr[i].is<double>()) return false;
             _choices[i] = arr[i].get<double>();
           }
@@ -726,7 +726,7 @@ namespace onelab {
       return _values[0];
     }
     const std::vector<std::string> &getValues() const { return _values; }
-    unsigned int getNumValues() const { return _values.size(); }
+    int getNumValues() const { return (int)_values.size(); }
     const std::string &getKind() const { return _kind; }
     const std::vector<std::string> &getChoices() const { return _choices; }
     void update(const string &p)
@@ -738,7 +738,7 @@ namespace onelab {
       setReadOnly(p.getReadOnly());
       setAttributes(p.getAttributes());
       bool changed = false;
-      for(unsigned int i = 0; i < p.getValues().size(); i++) {
+      for(std::size_t i = 0; i < p.getValues().size(); i++) {
         if(p.getValues()[i] != getValues()[i]) {
           changed = true;
           break;
@@ -759,10 +759,10 @@ namespace onelab {
     {
       std::ostringstream sstream;
       sstream << parameter::toChar() << _values.size() << charSep();
-      for(unsigned int i = 0; i < _values.size(); i++)
+      for(std::size_t i = 0; i < _values.size(); i++)
         sstream << sanitize(_values[i]) << charSep();
       sstream << sanitize(_kind) << charSep() << _choices.size() << charSep();
-      for(unsigned int i = 0; i < _choices.size(); i++)
+      for(std::size_t i = 0; i < _choices.size(); i++)
         sstream << sanitize(_choices[i]) << charSep();
       return sstream.str();
     }
@@ -771,11 +771,11 @@ namespace onelab {
       std::string::size_type pos = parameter::fromChar(msg);
       if(!pos) return 0;
       _values.resize(atoi(getNextToken(msg, pos).c_str()));
-      for(unsigned int i = 0; i < _values.size(); i++)
+      for(std::size_t i = 0; i < _values.size(); i++)
         _values[i] = getNextToken(msg, pos);
       setKind(getNextToken(msg, pos));
       _choices.resize(atoi(getNextToken(msg, pos).c_str()));
-      for(unsigned int i = 0; i < _choices.size(); i++)
+      for(std::size_t i = 0; i < _choices.size(); i++)
         _choices[i] = getNextToken(msg, pos);
       return pos;
     }
@@ -783,7 +783,7 @@ namespace onelab {
     {
       std::ostringstream sstream;
       sstream << "{ " << parameter::toJSON() << ", \"values\":[ ";
-      for(unsigned int i = 0; i < _values.size(); i++) {
+      for(std::size_t i = 0; i < _values.size(); i++) {
         if(i) sstream << ", ";
         sstream << "\"" << sanitizeJSON(_values[i]) << "\"";
       }
@@ -792,7 +792,7 @@ namespace onelab {
         sstream << ", \"kind\":\"" << sanitizeJSON(_kind) << "\"";
       if(_choices.size()) {
         sstream << ", \"choices\":[ ";
-        for(unsigned int i = 0; i < _choices.size(); i++) {
+        for(std::size_t i = 0; i < _choices.size(); i++) {
           if(i) sstream << ", ";
           sstream << "\"" << sanitizeJSON(_choices[i]) << "\"";
         }
@@ -828,7 +828,7 @@ namespace onelab {
           if(!it->second.is<picojson::array>()) return false;
           const picojson::value::array &arr = it->second.get<picojson::array>();
           _values.resize(arr.size());
-          for(unsigned int i = 0; i < arr.size(); i++) {
+          for(std::size_t i = 0; i < arr.size(); i++) {
             if(!arr[i].is<std::string>()) return false;
             _values[i] = arr[i].get<std::string>();
           }
@@ -841,7 +841,7 @@ namespace onelab {
           if(!it->second.is<picojson::array>()) return false;
           const picojson::value::array &arr = it->second.get<picojson::array>();
           _choices.resize(arr.size());
-          for(unsigned int i = 0; i < arr.size(); i++) {
+          for(std::size_t i = 0; i < arr.size(); i++) {
             if(!arr[i].is<std::string>()) return false;
             _choices[i] = arr[i].get<std::string>();
           }
@@ -1028,7 +1028,7 @@ namespace onelab {
       ps.insert(_numbers.begin(), _numbers.end());
       ps.insert(_strings.begin(), _strings.end());
     }
-    unsigned int getNumParameters()
+    int getNumParameters()
     {
       return (int)(_numbers.size() + _strings.size());
     }
@@ -1095,7 +1095,7 @@ namespace onelab {
     bool fromChar(const std::vector<std::string> &msg,
                   const std::string &client = "")
     {
-      for(unsigned int i = 0; i < msg.size(); i++) {
+      for(std::size_t i = 0; i < msg.size(); i++) {
         std::string version, type, name;
         onelab::parameter::getInfoFromChar(msg[i], version, type, name);
         if(onelab::parameter::version() != version) return false;
@@ -1163,7 +1163,7 @@ namespace onelab {
             else if(j->first == "parameters") {
               if(!j->second.is<picojson::array>()) return false;
               const picojson::value::array &arr = j->second.get<picojson::array>();
-              for(unsigned int k = 0; k < arr.size(); k++) {
+              for(std::size_t k = 0; k < arr.size(); k++) {
                 if(!arr[k].is<picojson::object>()) return false;
                 const picojson::value::object &par = arr[k].get<picojson::object>();
                 if(!fromJSON(par, client)) return false;
@@ -1178,7 +1178,7 @@ namespace onelab {
       }
       else if(v.is<picojson::array>()){ // array of parameters
         const picojson::value::array &arr = v.get<picojson::array>();
-        for(unsigned int k = 0; k < arr.size(); k++) {
+        for(std::size_t k = 0; k < arr.size(); k++) {
           if(!arr[k].is<picojson::object>()) return false;
           const picojson::value::object &par = arr[k].get<picojson::object>();
           if(!fromJSON(par, client)) return false;
@@ -1273,15 +1273,15 @@ namespace onelab {
       std::vector<std::string> out;
       std::vector<number> n;
       get(n);
-      for(unsigned int i = 0; i < n.size(); i++) out.push_back(n[i].toChar());
+      for(std::size_t i = 0; i < n.size(); i++) out.push_back(n[i].toChar());
       std::vector<string> s;
       get(s);
-      for(unsigned int i = 0; i < s.size(); i++) out.push_back(s[i].toChar());
+      for(std::size_t i = 0; i < s.size(); i++) out.push_back(s[i].toChar());
       return out;
     }
     bool fromChar(const std::vector<std::string> &msg)
     {
-      for(unsigned int i = 0; i < msg.size(); i++) {
+      for(std::size_t i = 0; i < msg.size(); i++) {
         std::string version, type, name;
         onelab::parameter::getInfoFromChar(msg[i], version, type, name);
         if(onelab::parameter::version() != version) return false;
@@ -1373,7 +1373,7 @@ namespace onelab {
     {
       _parameterSpace.thresholdChanged(value, client);
     }
-    unsigned int getNumParameters()
+    int getNumParameters()
     {
       return _parameterSpace.getNumParameters();
     }
@@ -1470,7 +1470,7 @@ namespace onelab {
                                    const std::string &name = "")
     {
       bool ret = _get(ps, name);
-      for(unsigned int i = 0; i < ps.size(); i++)
+      for(std::size_t i = 0; i < ps.size(); i++)
         ps[i].setChoices(std::vector<double>());
       return ret;
     }
@@ -1478,7 +1478,7 @@ namespace onelab {
                                    const std::string &name = "")
     {
       bool ret = _get(ps, name);
-      for(unsigned int i = 0; i < ps.size(); i++)
+      for(std::size_t i = 0; i < ps.size(); i++)
         ps[i].setChoices(std::vector<std::string>());
       return ret;
     }

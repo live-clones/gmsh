@@ -26,8 +26,8 @@ ChainComplex::ChainComplex(CellComplex *cellComplex, int domain)
 
   int lastCols = 0;
   for(int dim = 0; dim < 4; dim++) {
-    unsigned int cols = cellComplex->getSize(dim);
-    unsigned int rows = 0;
+    std::size_t cols = cellComplex->getSize(dim);
+    std::size_t rows = 0;
 
     int index = 1;
     // ignore cells depending on domain
@@ -543,7 +543,7 @@ bool ChainComplex::deform(std::map<Cell *, int, Less_Cell> &cells,
 
   if(cc.empty() || (getDim() == 2 && cc.size() < 2)) return false;
   int inout = cc[0] * bc[0];
-  for(unsigned int i = 0; i < cc.size(); i++) {
+  for(std::size_t i = 0; i < cc.size(); i++) {
     if(cc[i] * bc[i] != inout) return false;
   }
 
@@ -682,7 +682,7 @@ void ChainComplex::eraseNullCells(std::map<Cell *, int, Less_Cell> &cells)
   for(citer cit = cells.begin(); cit != cells.end(); cit++) {
     if(cit->second == 0) toRemove.push_back(cit->first);
   }
-  for(unsigned int i = 0; i < toRemove.size(); i++) cells.erase(toRemove[i]);
+  for(std::size_t i = 0; i < toRemove.size(); i++) cells.erase(toRemove[i]);
 }
 
 void ChainComplex::deImmuneCells(std::map<Cell *, int, Less_Cell> &cells)

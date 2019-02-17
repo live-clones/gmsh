@@ -503,15 +503,15 @@ public:
           int part = 0)
     : MPrism(v0, v1, v2, v3, v4, v5, num, part), _vs(v), _order(order)
   {
-    for(unsigned int i = 0; i < _vs.size(); i++)
+    for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
   MPrismN(const std::vector<MVertex *> &v, char order, int num = 0,
           int part = 0)
     : MPrism(v, num, part), _order(order)
   {
-    for(unsigned int i = 6; i < v.size(); i++) _vs.push_back(v[i]);
-    for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(2);
+    for(std::size_t i = 6; i < v.size(); i++) _vs.push_back(v[i]);
+    for(std::size_t i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(2);
   }
   ~MPrismN() {}
   virtual int getPolynomialOrder() const { return _order; }

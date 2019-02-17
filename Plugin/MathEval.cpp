@@ -151,9 +151,9 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   const char *names[] = {"x",  "y",  "z",  "v0", "v1", "v2", "v3",
                          "v4", "v5", "v6", "v7", "v8", "w0", "w1",
                          "w2", "w3", "w4", "w5", "w6", "w7", "w8"};
-  unsigned int numVariables = sizeof(names) / sizeof(names[0]);
+  std::size_t numVariables = sizeof(names) / sizeof(names[0]);
   std::vector<std::string> variables(numVariables);
-  for(unsigned int i = 0; i < numVariables; i++) variables[i] = names[i];
+  for(std::size_t i = 0; i < numVariables; i++) variables[i] = names[i];
   mathEvaluator f(expr, variables);
   if(expr.empty()) return view;
   std::vector<double> values(numVariables), res(numComp2);

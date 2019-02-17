@@ -82,7 +82,7 @@ void gmshFace::resetNativePtr(Surface *face)
   l_wire.reserve(eds.size());
 
   GVertex *first = 0;
-  for(unsigned int i = 0; i < eds.size(); i++) {
+  for(std::size_t i = 0; i < eds.size(); i++) {
     GEdge *e = eds[i];
     int num = nums[i];
     GVertex *start = (num > 0) ? e->getBeginVertex() : e->getEndVertex();
@@ -380,7 +380,7 @@ bool gmshFace::buildSTLTriangulation(bool force)
 
   std::map<MVertex *, int> _v;
   int COUNT = 0;
-  for(unsigned int j = 0; j < triangles.size(); j++) {
+  for(std::size_t j = 0; j < triangles.size(); j++) {
     for(int i = 0; i < 3; i++) {
       MVertex *v = triangles[j]->getVertex(i);
       std::map<MVertex *, int>::iterator it = _v.find(v);

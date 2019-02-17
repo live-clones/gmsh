@@ -1179,9 +1179,9 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices(const int newZoneIndex,
       // are all unique.
       const typename MZone<DIM>::BoFaceMap::const_iterator *zFace =
         &zoneVertData.faces[0];
-      for(int nZFace = zoneVertData.faces.size(); nZFace--;) {
+      for(unsigned nZFace = zoneVertData.faces.size(); nZFace--;) {
         bool foundMatch = false;
-        for(unsigned int iGFace = 0; iGFace != nGFace; ++iGFace) {
+        for(unsigned iGFace = 0; iGFace != nGFace; ++iGFace) {
           // NBN: face is now a pointer, so need to de-reference
           // if((*zFace)->first ==  globalVertData.faces[iGFace].face )
           if(globalVertData.faces[iGFace].face) {

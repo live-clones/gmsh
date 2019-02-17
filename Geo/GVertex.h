@@ -84,15 +84,15 @@ public:
   virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter = "");
 
   // get number of elements in the mesh
-  size_type getNumMeshElements() const { return points.size(); }
-  unsigned int getNumMeshElementsByType(const int familyType) const;
+  std::size_t getNumMeshElements() const { return points.size(); }
+  std::size_t getNumMeshElementsByType(const int familyType) const;
   void getNumMeshElements(unsigned *const c) const;
 
   // get the element at the given index
-  MElement *getMeshElement(unsigned int index) const;
+  MElement *getMeshElement(std::size_t index) const;
   // get the element at the given index for a given familyType
   MElement *getMeshElementByType(const int familyType,
-                                 const unsigned int index) const;
+                                 const std::size_t index) const;
 
   // return true if this vertex is on a seam of the given face
   bool isOnSeam(const GFace *gf) const;

@@ -596,7 +596,7 @@ public:
     : MHexahedron(v0, v1, v2, v3, v4, v5, v6, v7, num, part), _order(order),
       _vs(v)
   {
-    for(unsigned int i = 0; i < _vs.size(); i++)
+    for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
   MHexahedronN(const std::vector<MVertex *> &v, char order, int num = 0,
@@ -604,8 +604,8 @@ public:
     : MHexahedron(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], num, part),
       _order(order)
   {
-    for(unsigned int i = 8; i < v.size(); i++) _vs.push_back(v[i]);
-    for(unsigned int i = 0; i < _vs.size(); i++)
+    for(std::size_t i = 8; i < v.size(); i++) _vs.push_back(v[i]);
+    for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
   ~MHexahedronN() {}
