@@ -42,8 +42,8 @@ static void getAllBoundingVertices(
   }
 }
 
-Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
-                              std::vector<MVertex *> &numberedV)
+static Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
+                                     std::vector<MVertex *> &numberedV)
 {
   Ng_Init();
   Ng_Mesh *ngmesh = Ng_NewMesh();
@@ -107,8 +107,8 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
   return ngmesh;
 }
 
-void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh,
-                        std::vector<MVertex *> &numberedV)
+static void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh,
+                               std::vector<MVertex *> &numberedV)
 {
   // Gets total number of vertices of Netgen's mesh
   int nbv = Ng_GetNP(ngmesh);
@@ -139,15 +139,13 @@ void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh,
   }
 }
 
-#endif
-
 // X_1 (1-u-v) + X_2 u + X_3 v = P_x + t N_x
 // Y_1 (1-u-v) + Y_2 u + Y_3 v = P_y + t N_y
 // Z_1 (1-u-v) + Z_2 u + Z_3 v = P_z + t N_z
 
-static int intersect_line_triangle(double X[3], double Y[3], double Z[3],
-                                   double P[3], double N[3],
-                                   const double eps_prec)
+static int intersectLineTriangle(double X[3], double Y[3], double Z[3],
+                                 double P[3], double N[3],
+                                 const double eps_prec)
 {
   double mat[3][3], det;
   double b[3], res[3];
@@ -260,7 +258,7 @@ static void meshNormalsPointOutOfTheRegion(GRegion *gr)
               Y_b[j] /= scaling;
               Z_b[j] /= scaling;
             }
-            int inters = intersect_line_triangle(X_b, Y_b, Z_b, P, N, 1.e-9);
+            int inters = intersectLineTriangle(X_b, Y_b, Z_b, P, N, 1.e-9);
             nb_intersect += inters;
           }
         }
@@ -297,6 +295,8 @@ static void meshNormalsPointOutOfTheRegion(GRegion *gr)
   //   fclose(fp);
   // }
 }
+
+#endif
 
 void meshGRegionNetgen(GRegion *gr)
 {
