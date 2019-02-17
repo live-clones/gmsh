@@ -2122,8 +2122,7 @@ class model:
             Classify ("color") the surface mesh based on the angle threshold `angle'
             (in radians), and create discrete curves accordingly. If `boundary' is set,
             also create discrete curves on the boundary if the surface is open.
-            `classifySurfaces' calls `createTopology' if necessary. Warning: this is an
-            experimental feature.
+            Warning: this is an experimental feature.
             """
             ierr = c_int()
             lib.gmshModelMeshClassifySurfaces(
@@ -2155,7 +2154,8 @@ class model:
             """
             Create a parametrization for curves and surfaces that do not have one (i.e.
             discrete curves and surfaces represented solely by meshes, without an
-            underlying CAD description). Warning: this is an experimental feature.
+            underlying CAD description). `createGeometry' automatically calls
+            `createTopology'. Warning: this is an experimental feature.
             """
             ierr = c_int()
             lib.gmshModelMeshCreateGeometry(

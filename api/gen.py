@@ -325,13 +325,13 @@ mesh.add('removeDuplicateNodes',doc,None)
 doc = '''Split (into two triangles) all quadrangles in surface `tag' whose quality is lower than `quality'. If `tag' < 0, split quadrangles in all surfaces.'''
 mesh.add('splitQuadrangles',doc,None,idouble('quality','1.'),iint('tag','-1'))
 
-doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create discrete curves accordingly. If `boundary' is set, also create discrete curves on the boundary if the surface is open. `classifySurfaces' calls `createTopology' if necessary. Warning: this is an experimental feature.'''
+doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create discrete curves accordingly. If `boundary' is set, also create discrete curves on the boundary if the surface is open. Warning: this is an experimental feature.'''
 mesh.add('classifySurfaces',doc,None,idouble('angle'),ibool('boundary','true','True'))
 
 doc = '''Create a boundary representation from the mesh if the model does not have one (e.g. when imported from mesh file formats with no BRep representation of the underlying model). Warning: this is an experimental feature.'''
 mesh.add('createTopology',doc,None)
 
-doc = '''Create a parametrization for curves and surfaces that do not have one (i.e. discrete curves and surfaces represented solely by meshes, without an underlying CAD description). Warning: this is an experimental feature.'''
+doc = '''Create a parametrization for curves and surfaces that do not have one (i.e. discrete curves and surfaces represented solely by meshes, without an underlying CAD description). `createGeometry' automatically calls `createTopology'. Warning: this is an experimental feature.'''
 mesh.add('createGeometry',doc,None)
 
 doc = '''Compute a basis representation for homology spaces after a mesh has been generated. The computation domain is given in a list of physical group tags `domainTags'; if empty, the whole mesh is the domain. The computation subdomain for relative homology computation is given in a list of physical group tags `subdomainTags'; if empty, absolute homology is computed. The dimensions homology bases to be computed are given in the list `dim'; if empty, all bases are computed. Resulting basis representation chains are stored as physical groups in the mesh.'''
