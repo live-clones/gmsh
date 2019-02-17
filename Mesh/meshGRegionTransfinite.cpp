@@ -261,7 +261,7 @@ void findTransfiniteCorners(GRegion *gr, std::vector<MVertex *> &corners)
 {
   if(gr->meshAttributes.corners.size()) {
     // corners have been specified explicitly
-    for(unsigned int i = 0; i < gr->meshAttributes.corners.size(); i++)
+    for(std::size_t i = 0; i < gr->meshAttributes.corners.size(); i++)
       corners.push_back(gr->meshAttributes.corners[i]->mesh_vertices[0]);
   }
   else {
@@ -291,8 +291,8 @@ void findTransfiniteCorners(GRegion *gr, std::vector<MVertex *> &corners)
           it != fedges.end(); it++)
         redges.erase(std::find(redges.begin(), redges.end(), *it));
       findTransfiniteCorners(gf, corners);
-      unsigned int N = corners.size();
-      for(unsigned int i = 0; i < N; i++) {
+      std::size_t N = corners.size();
+      for(std::size_t i = 0; i < N; i++) {
         for(std::vector<GEdge *>::const_iterator it = redges.begin();
             it != redges.end(); it++) {
           if((*it)->getBeginVertex()->mesh_vertices[0] == corners[i]) {

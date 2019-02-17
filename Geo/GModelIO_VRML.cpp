@@ -37,7 +37,7 @@ static int readVerticesVRML(FILE *fp, std::vector<MVertex *> &vertexVector,
   vertexVector.push_back(new MVertex(x, y, z));
   while(fscanf(fp, " , %lf %lf %lf", &x, &y, &z) == 3)
     vertexVector.push_back(new MVertex(x, y, z));
-  for(unsigned int i = 0; i < vertexVector.size(); i++)
+  for(std::size_t i = 0; i < vertexVector.size(); i++)
     allVertexVector.push_back(vertexVector[i]);
   Msg::Info("%d vertices", vertexVector.size());
   return 1;
@@ -71,7 +71,7 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex *> &vertexVector,
     }
     else {
       std::vector<MVertex *> vertices;
-      for(unsigned int j = 0; j < idx.size(); j++) {
+      for(std::size_t j = 0; j < idx.size(); j++) {
         if(idx[j] < 0 || idx[j] > (int)(vertexVector.size() - 1)) {
           Msg::Error("Wrong vertex index %d", idx[j]);
           return 0;
@@ -93,7 +93,7 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex *> &vertexVector,
         elements[2][region].push_back(new MQuadrangle(vertices));
       }
       else if(strips) { // triangle strip
-        for(unsigned int j = 2; j < vertices.size(); j++) {
+        for(std::size_t j = 2; j < vertices.size(); j++) {
           if(j % 2)
             elements[1][region].push_back(
               new MTriangle(vertices[j], vertices[j - 1], vertices[j - 2]));
@@ -103,7 +103,7 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex *> &vertexVector,
         }
       }
       else { // import polygon as triangle fan
-        for(unsigned int j = 2; j < vertices.size(); j++) {
+        for(std::size_t j = 2; j < vertices.size(); j++) {
           elements[1][region].push_back(
             new MTriangle(vertices[0], vertices[j - 1], vertices[j]));
         }
@@ -212,13 +212,13 @@ int GModel::writeVRML(const std::string &name, bool saveAll,
   fprintf(fp, "  point [\n");
 
   for(viter it = firstVertex(); it != lastVertex(); ++it)
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+    for(std::size_t i = 0; i < (*it)->mesh_vertices.size(); i++)
       (*it)->mesh_vertices[i]->writeVRML(fp, scalingFactor);
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+    for(std::size_t i = 0; i < (*it)->mesh_vertices.size(); i++)
       (*it)->mesh_vertices[i]->writeVRML(fp, scalingFactor);
   for(fiter it = firstFace(); it != lastFace(); ++it)
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+    for(std::size_t i = 0; i < (*it)->mesh_vertices.size(); i++)
       (*it)->mesh_vertices[i]->writeVRML(fp, scalingFactor);
 
   fprintf(fp, "  ]\n");
@@ -228,7 +228,7 @@ int GModel::writeVRML(const std::string &name, bool saveAll,
     if(saveAll || (*it)->physicals.size()) {
       fprintf(fp, "DEF Curve%d IndexedLineSet {\n", (*it)->tag());
       fprintf(fp, "  coordIndex [\n");
-      for(unsigned int i = 0; i < (*it)->lines.size(); i++)
+      for(std::size_t i = 0; i < (*it)->lines.size(); i++)
         (*it)->lines[i]->writeVRML(fp);
       fprintf(fp, "  ]\n");
       fprintf(fp, "}\n");
@@ -239,9 +239,9 @@ int GModel::writeVRML(const std::string &name, bool saveAll,
     if(saveAll || (*it)->physicals.size()) {
       fprintf(fp, "DEF Surface%d IndexedFaceSet {\n", (*it)->tag());
       fprintf(fp, "  coordIndex [\n");
-      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+      for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
         (*it)->triangles[i]->writeVRML(fp);
-      for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
+      for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++)
         (*it)->quadrangles[i]->writeVRML(fp);
       fprintf(fp, "  ]\n");
       fprintf(fp, "}\n");

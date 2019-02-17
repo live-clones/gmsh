@@ -1510,7 +1510,8 @@ GMSH_API void
 gmsh::model::mesh::getElementsByType(const int elementType,
                                      std::vector<int> &elementTags,
                                      std::vector<int> &nodeTags, const int tag,
-                                     const size_t task, const size_t numTasks)
+                                     const std::size_t task,
+                                     const std::size_t numTasks)
 {
   if(!_isInitialized()) {
     throw -1;
@@ -1632,8 +1633,8 @@ static bool _getFunctionSpaceInfo(const std::string &fsType,
 GMSH_API void gmsh::model::mesh::getJacobians(
   const int elementType, const std::string &integrationType,
   std::vector<double> &jacobians, std::vector<double> &determinants,
-  std::vector<double> &points, const int tag, const size_t task,
-  const size_t numTasks)
+  std::vector<double> &points, const int tag, const std::size_t task,
+  const std::size_t numTasks)
 {
   if(!_isInitialized()) {
     throw -1;
@@ -1959,7 +1960,8 @@ GMSH_API void gmsh::model::mesh::precomputeBasisFunctions(const int elementType)
 
 GMSH_API void gmsh::model::mesh::getBarycenters(
   const int elementType, const int tag, const bool fast, const bool primary,
-  std::vector<double> &barycenters, const size_t task, const size_t numTasks)
+  std::vector<double> &barycenters, const std::size_t task,
+  const std::size_t numTasks)
 {
   if(!_isInitialized()) {
     throw -1;
@@ -2038,7 +2040,7 @@ GMSH_API void gmsh::model::mesh::preallocateBarycenters(
 GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
   const int elementType, std::vector<int> &nodes,
   const int tag, const bool primary,
-  const size_t task, const size_t numTasks)
+  const std::size_t task, const std::size_t numTasks)
 {
   if(!_isInitialized()) {
     throw -1;
@@ -2102,7 +2104,7 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
 GMSH_API void gmsh::model::mesh::getElementFaceNodes(
   const int elementType, const int faceType, std::vector<int> &nodes,
   const int tag, const bool primary,
-  const size_t task, const size_t numTasks)
+  const std::size_t task, const std::size_t numTasks)
 {
   if(!_isInitialized()) {
     throw -1;

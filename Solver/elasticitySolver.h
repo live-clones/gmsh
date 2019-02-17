@@ -85,7 +85,7 @@ public:
   virtual ~elasticitySolver()
   {
     if(LagSpace) delete LagSpace;
-    for(unsigned int i = 0; i < LagrangeMultiplierSpaces.size(); i++)
+    for(std::size_t i = 0; i < LagrangeMultiplierSpaces.size(); i++)
       if(LagrangeMultiplierSpaces[i]) delete LagrangeMultiplierSpaces[i];
     LagrangeMultiplierSpaces.clear();
     if(pAssembler) delete pAssembler;

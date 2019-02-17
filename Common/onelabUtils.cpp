@@ -69,7 +69,7 @@ namespace onelabUtils {
         }
         else {
           sstream << " -setlistofnumbers " << it->first;
-          for(unsigned int i = 0; i < it->second.size(); i++)
+          for(std::size_t i = 0; i < it->second.size(); i++)
             sstream << " " << it->second[i];
         }
       }
@@ -148,7 +148,7 @@ namespace onelabUtils {
     bool changed = false;
     std::vector<onelab::number> numbers;
     onelab::server::instance()->get(numbers);
-    for(unsigned int i = 0; i < numbers.size(); i++) {
+    for(std::size_t i = 0; i < numbers.size(); i++) {
       if(numbers[i].getAttribute("Loop") == level) {
         if(numbers[i].getChoices().size() > 1) {
           numbers[i].setIndex(0);
@@ -190,7 +190,7 @@ namespace onelabUtils {
     bool recompute = false, loop = false;
     std::vector<onelab::number> numbers;
     onelab::server::instance()->get(numbers);
-    for(unsigned int i = 0; i < numbers.size(); i++) {
+    for(std::size_t i = 0; i < numbers.size(); i++) {
       if(numbers[i].getAttribute("Loop") == level) {
         loop = true;
 
@@ -273,7 +273,7 @@ namespace onelabUtils {
 #if defined(HAVE_POST)
     PView *view = 0;
 
-    for(unsigned int i = 0; i < PView::list.size(); i++) {
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
       if(PView::list[i]->getData()->getFileName() == "ONELAB" + graphNum) {
         view = PView::list[i];
         break;
@@ -286,7 +286,7 @@ namespace onelabUtils {
     int graphType = 3;
     std::vector<onelab::number> numbers;
     onelab::server::instance()->get(numbers);
-    for(unsigned int i = 0; i < numbers.size(); i++) {
+    for(std::size_t i = 0; i < numbers.size(); i++) {
       std::string v = numbers[i].getAttribute("Graph");
       v.resize(36, '0');
       if(v[2 * num] != '0') {
@@ -303,7 +303,7 @@ namespace onelabUtils {
     }
     if(x.empty()) {
       xName.clear();
-      for(unsigned int i = 0; i < y.size(); i++) x.push_back(i);
+      for(std::size_t i = 0; i < y.size(); i++) x.push_back(i);
     }
     if(x.size() && y.size()) {
       if(x.size() != y.size())
@@ -738,11 +738,11 @@ namespace onelabUtils {
     // add time stamp in all output files in the db, and rename them on disk
     std::vector<onelab::string> strings;
     onelab::server::instance()->get(strings);
-    for(unsigned int i = 0; i < strings.size(); i++) {
+    for(std::size_t i = 0; i < strings.size(); i++) {
       if(strings[i].getName().find("9Output files") != std::string::npos) {
         std::vector<std::string> names = strings[i].getChoices();
         names.push_back(strings[i].getValue());
-        for(unsigned int j = 0; j < names.size(); j++) {
+        for(std::size_t j = 0; j < names.size(); j++) {
           std::vector<std::string> split = SplitFileName(names[j]);
           int n = split[1].size();
           // if name is not already stamped
@@ -789,7 +789,7 @@ namespace onelabUtils {
     if(strings.size()) {
       std::vector<std::string> names = strings[0].getChoices();
       if(names.size()) {
-        for(unsigned int j = 0; j < names.size(); j++) {
+        for(std::size_t j = 0; j < names.size(); j++) {
           std::vector<std::string> split = SplitFileName(names[j]);
           std::string old = names[j];
           CreateSingleDir(dir);
@@ -830,7 +830,7 @@ namespace onelabUtils {
     onelab::server::instance()->get(allNumbers);
     onelab::server::instance()->get(allStrings);
     bool ismetamodel = false;
-    for(unsigned int i = 0; i < allNumbers.size(); i++) {
+    for(std::size_t i = 0; i < allNumbers.size(); i++) {
       if(allNumbers[i].getAttribute("Persistent") == "1")
         persistentNumbers.push_back(allNumbers[i]);
       // these 2 should always be persistent
@@ -840,7 +840,7 @@ namespace onelabUtils {
         persistentNumbers.push_back(allNumbers[i]);
       }
     }
-    for(unsigned int i = 0; i < allStrings.size(); i++) {
+    for(std::size_t i = 0; i < allStrings.size(); i++) {
       if(allStrings[i].getAttribute("Persistent") == "1")
         persistentStrings.push_back(allStrings[i]);
     }
@@ -855,12 +855,12 @@ namespace onelabUtils {
       onelabUtils::runGmshClient("reset", CTX::instance()->solver.autoMesh);
     }
 
-    for(unsigned int i = 0; i < persistentNumbers.size(); i++) {
+    for(std::size_t i = 0; i < persistentNumbers.size(); i++) {
       Msg::Debug("Restoring persistent parameter %s",
                  persistentNumbers[i].getName().c_str());
       onelab::server::instance()->set(persistentNumbers[i]);
     }
-    for(unsigned int i = 0; i < persistentStrings.size(); i++) {
+    for(std::size_t i = 0; i < persistentStrings.size(); i++) {
       Msg::Debug("Restoring persistent parameter %s",
                  persistentStrings[i].getName().c_str());
       onelab::server::instance()->set(persistentStrings[i]);

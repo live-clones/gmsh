@@ -191,7 +191,7 @@ void xyzn::update(char nx, char ny, char nz, float tol)
   // store the average value as the cluster center as we go), but it
   // seems to work very nicely in practice (and it's faster than
   // storing everyting and averaging at the end)
-  for(unsigned int i = 0; i < n.size(); i++) {
+  for(std::size_t i = 0; i < n.size(); i++) {
     if(tol >= 180. || std::abs(angle(i, nx, ny, nz)) < tol) {
       // just ignore it if we have more than 100 contributions to a
       // single point...
@@ -240,7 +240,7 @@ bool smooth_normals::get(double x, double y, double z, double &nx, double &ny,
   if(it == c.end()) return false;
 
   xyzn *p = (xyzn *)&(*it);
-  for(unsigned int i = 0; i < p->n.size(); i++) {
+  for(std::size_t i = 0; i < p->n.size(); i++) {
     if(std::abs(p->angle(i, float2char((float)nx), float2char((float)ny),
                          float2char((float)nz))) < tol) {
       nx = char2float(p->n[i].nx);

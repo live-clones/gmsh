@@ -1091,8 +1091,8 @@ public:
         itBoV != itEnd; ++itBoV) {
       // ... clear the faces
       GlobalVertexData<FaceT> &ref = itBoV->second;
-      size_t nf = ref.faces.size();
-      for(unsigned int i = 0; i < nf; ++i) {
+      std::size_t nf = ref.faces.size();
+      for(std::size_t i = 0; i < nf; ++i) {
         ++icount;
         FaceT *p = ref.faces[i].face;
         if(p) {

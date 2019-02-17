@@ -63,7 +63,7 @@ int GModel::readUNV(const std::string &name)
           if(sscanf(buffer, "%d %d %d %d", &num, &dum, &dum, &dum) != 4) break;
           if(!gmshgets(buffer, sizeof(buffer), fp)) break;
           double x, y, z;
-          for(unsigned int i = 0; i < strlen(buffer); i++)
+          for(std::size_t i = 0; i < strlen(buffer); i++)
             if(buffer[i] == 'D') buffer[i] = 'E';
           if(sscanf(buffer, "%lf %lf %lf", &x, &y, &z) != 3) break;
           _vertexMapCache[num] = new MVertex(x, y, z, 0, num);
@@ -280,7 +280,7 @@ static std::string physicalName(GModel *m, int dim, int num)
             num);
     name = tmp;
   }
-  for(unsigned int i = 0; i < name.size(); i++)
+  for(std::size_t i = 0; i < name.size(); i++)
     if(name[i] == ' ') name[i] = '_';
   return name;
 }
@@ -304,8 +304,8 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
   // nodes
   fprintf(fp, "%6d\n", -1);
   fprintf(fp, "%6d\n", 2411);
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeUNV
         (fp, CTX::instance()->mesh.unvStrictFormat ? true : false, scalingFactor);
   fprintf(fp, "%6d\n", -1);
@@ -313,9 +313,9 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
   // elements
   fprintf(fp, "%6d\n", -1);
   fprintf(fp, "%6d\n", 2412);
-  for(unsigned int i = 0; i < entities.size(); i++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
     if(saveAll || entities[i]->physicals.size()) {
-      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
+      for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
         MElement *e = entities[i]->getMeshElement(j);
         e->writeUNV(fp, e->getNum(), entities[i]->tag(), 0);
       }
@@ -338,8 +338,8 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
 
       std::set<MVertex *> nodes;
       if(saveGroupsOfNodes) {
-        for(unsigned int i = 0; i < entities.size(); i++) {
-          for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
+        for(std::size_t i = 0; i < entities.size(); i++) {
+          for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
             MElement *e = entities[i]->getMeshElement(j);
             for(std::size_t k = 0; k < e->getNumVertices(); k++)
               nodes.insert(e->getVertex(k));
@@ -348,7 +348,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
       }
 
       int nele = 0;
-      for(unsigned int i = 0; i < entities.size(); i++)
+      for(std::size_t i = 0; i < entities.size(); i++)
         nele += entities[i]->getNumMeshElements();
 
       fprintf(fp, "%10d%10d%10d%10d%10d%10d%10d%10d\n", it->first, 0, 0, 0, 0,
@@ -371,8 +371,8 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
 
       {
         int row = 0;
-        for(unsigned int i = 0; i < entities.size(); i++) {
-          for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
+        for(std::size_t i = 0; i < entities.size(); i++) {
+          for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
             MElement *e = entities[i]->getMeshElement(j);
             if(row == 2) {
               fprintf(fp, "\n");

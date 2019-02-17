@@ -64,7 +64,7 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
 {
   mmg->ne = gr->tetrahedra.size();
   std::set<MVertex *> allVertices;
-  for(unsigned int i = 0; i < gr->tetrahedra.size(); i++) {
+  for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
     allVertices.insert(gr->tetrahedra[i]->getVertex(0));
     allVertices.insert(gr->tetrahedra[i]->getVertex(1));
     allVertices.insert(gr->tetrahedra[i]->getVertex(2));
@@ -96,7 +96,7 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
 
   std::map<MVertex *, std::pair<double, int> > LCS;
   for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); ++it) {
-    for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
       MTriangle *t = (*it)->triangles[i];
       double L = t->maxEdge();
       for(int k = 0; k < 3; k++) {
@@ -184,7 +184,7 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
 
   k = 1;
   for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); ++it) {
-    for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
       MMG_pTria ptriangle = &mmg->tria[k];
       ptriangle->v[0] =
         gmsh2mmg_num[(*it)->triangles[i]->getVertex(0)->getNum()];
@@ -207,7 +207,7 @@ static void updateSizes(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
   std::map<MVertex *, std::pair<double, int> > LCS;
   //  if (CTX::instance()->mesh.lcExtendFromBoundary){
   for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); ++it) {
-    for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
       MTriangle *t = (*it)->triangles[i];
       double L = t->maxEdge();
       for(int k = 0; k < 3; k++) {
@@ -307,10 +307,10 @@ void refineMeshMMG(GRegion *gr)
   // MMG_saveMesh(mmg, test);
 
   gr->deleteVertexArrays();
-  for(unsigned int i = 0; i < gr->tetrahedra.size(); ++i)
+  for(std::size_t i = 0; i < gr->tetrahedra.size(); ++i)
     delete gr->tetrahedra[i];
   gr->tetrahedra.clear();
-  for(unsigned int i = 0; i < gr->mesh_vertices.size(); ++i)
+  for(std::size_t i = 0; i < gr->mesh_vertices.size(); ++i)
     delete gr->mesh_vertices[i];
   gr->mesh_vertices.clear();
 

@@ -195,7 +195,7 @@ namespace jacobianBasedQuality {
     min = domains[0]->minB();
     max = domains[0]->maxB();
     delete domains[0];
-    for(unsigned int i = 1; i < domains.size(); ++i) {
+    for(std::size_t i = 1; i < domains.size(); ++i) {
       min = std::min(min, domains[i]->minB());
       max = std::max(max, domains[i]->maxB());
       delete domains[i];
@@ -986,7 +986,7 @@ namespace jacobianBasedQuality {
       cd->getSubCoeff(subs);
       delete cd;
 
-      for(unsigned int i = 0; i < subs.size(); i++) {
+      for(std::size_t i = 0; i < subs.size(); i++) {
         minL = std::min(minL, subs[i]->minL());
         maxL = std::max(maxL, subs[i]->maxL());
         domains.push_back(subs[i]);
@@ -1007,7 +1007,7 @@ namespace jacobianBasedQuality {
     }
     double minL = domains[0]->minL();
     double maxL = domains[0]->maxL();
-    for(unsigned int i = 1; i < domains.size(); ++i) {
+    for(std::size_t i = 1; i < domains.size(); ++i) {
       minL = std::min(minL, domains[i]->minL());
       maxL = std::max(maxL, domains[i]->maxL());
     }
@@ -1021,7 +1021,7 @@ namespace jacobianBasedQuality {
     double minB = domains[0]->minB();
     double minL = domains[0]->minL();
     delete domains[0];
-    for(unsigned int i = 1; i < domains.size(); ++i) {
+    for(std::size_t i = 1; i < domains.size(); ++i) {
       minB = std::min(minB, domains[i]->minB());
       minL = std::min(minL, domains[i]->minL());
       delete domains[i];

@@ -442,7 +442,7 @@ bool OCCFace::containsParam(const SPoint2 &pt)
     return GFace::containsParam(pt);
   }
   SPoint2 mine = pt;
-  for(unsigned int i = 0; i < stl_triangles.size(); i += 3){
+  for(std::size_t i = 0; i < stl_triangles.size(); i += 3){
     SPoint2 gp1 = stl_vertices_uv[stl_triangles[i]];
     SPoint2 gp2 = stl_vertices_uv[stl_triangles[i + 1]];
     SPoint2 gp3 = stl_vertices_uv[stl_triangles[i + 2]];

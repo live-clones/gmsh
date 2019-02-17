@@ -36,19 +36,19 @@ void computeNeighboringTetsOfACavity(const std::vector<MTet4 *> &cavity,
                                      std::vector<MTet4 *> &outside)
 {
   outside.clear();
-  for(unsigned int i = 0; i < cavity.size(); i++) {
+  for(std::size_t i = 0; i < cavity.size(); i++) {
     for(int j = 0; j < 4; j++) {
       MTet4 *neigh = cavity[i]->getNeigh(j);
       if(neigh) {
         bool found = false;
-        for(unsigned int k = 0; k < outside.size(); k++) {
+        for(std::size_t k = 0; k < outside.size(); k++) {
           if(outside[k] == neigh) {
             found = true;
             break;
           }
         }
         if(!found) {
-          for(unsigned int k = 0; k < cavity.size(); k++) {
+          for(std::size_t k = 0; k < cavity.size(); k++) {
             if(cavity[k] == neigh) {
               found = true;
             }
@@ -258,7 +258,7 @@ bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
 
   double volumeRef = 0.0;
   double tetQualityRef = 1;
-  for(unsigned int i = 0; i < cavity.size(); i++) {
+  for(std::size_t i = 0; i < cavity.size(); i++) {
     double vol = fabs(cavity[i]->tet()->getVolume());
     tetQualityRef = std::min(tetQualityRef, cavity[i]->getQuality());
     volumeRef += vol;
@@ -347,7 +347,7 @@ bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
     newTets.push_back(t42);
   }
 
-  for(unsigned int i = 0; i < cavity.size(); i++) cavity[i]->setDeleted(true);
+  for(std::size_t i = 0; i < cavity.size(); i++) cavity[i]->setDeleted(true);
 
   connectTets(outside, &embeddedFaces);
 
@@ -366,7 +366,7 @@ bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MVertex *newVertex,
     buildEdgeCavity(tet, iLocalEdge, &v1, &v2, cavity, outside, ring);
   if(!closed) return false;
 
-  for(unsigned int j = 0; j < ring.size(); j++) {
+  for(std::size_t j = 0; j < ring.size(); j++) {
     MVertex *pv1 = ring[j];
     MVertex *pv2 = ring[(j + 1) % ring.size()];
     MTetrahedron *tr1 = new MTetrahedron(pv1, pv2, newVertex, v1);
@@ -381,7 +381,7 @@ bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MVertex *newVertex,
     newTets.push_back(t42);
   }
 
-  for(unsigned int i = 0; i < cavity.size(); i++) cavity[i]->setDeleted(true);
+  for(std::size_t i = 0; i < cavity.size(); i++) cavity[i]->setDeleted(true);
 
   connectTets(outside);
 
@@ -438,7 +438,7 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
   for(int i = 0; i < 4; i++) {
     if(t1->getNeigh(i) && t1->getNeigh(i) != t2) {
       bool found = false;
-      for(unsigned int j = 0; j < outside.size(); j++) {
+      for(std::size_t j = 0; j < outside.size(); j++) {
         if(outside[j] == t1->getNeigh(i)) {
           found = true;
           break;
@@ -450,7 +450,7 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
   for(int i = 0; i < 4; i++) {
     if(t2->getNeigh(i) && t2->getNeigh(i) != t1) {
       bool found = false;
-      for(unsigned int j = 0; j < outside.size(); j++) {
+      for(std::size_t j = 0; j < outside.size(); j++) {
         if(outside[j] == t2->getNeigh(i)) {
           found = true;
           break;
@@ -506,7 +506,7 @@ void buildVertexCavity_recur(MTet4 *t, MVertex *v, std::vector<MTet4 *> &cavity)
     MTet4 *neigh = t->getNeigh(vFac[iV][i]);
     if(neigh) {
       bool found = false;
-      for(unsigned int j = 0; j < cavity.size(); j++) {
+      for(std::size_t j = 0; j < cavity.size(); j++) {
         if(cavity[j] == neigh) {
           found = true;
           j = cavity.size();
@@ -549,7 +549,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets, MTet4 *t, int iVertex,
   std::vector<MTet4 *> toUpdate;
   double volume = 0;
   double worst = 1.0;
-  for(unsigned int i = 0; i < cavity_v.size(); i++) {
+  for(std::size_t i = 0; i < cavity_v.size(); i++) {
     bool found = false;
     volume += fabs(cavity_v[i]->tet()->getVolume());
     double q = cavity_v[i]->getQuality();
@@ -574,7 +574,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets, MTet4 *t, int iVertex,
 
   double worstAfter = 1.0;
   std::vector<double> newQuals(toUpdate.size());
-  for(unsigned int i = 0; i < toUpdate.size(); i++) {
+  for(std::size_t i = 0; i < toUpdate.size(); i++) {
     double vv;
     newQuals[i] = qmTetrahedron::qm(toUpdate[i]->tet(), cr, &vv);
     worstAfter = std::min(worstAfter, newQuals[i]);
@@ -596,7 +596,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets, MTet4 *t, int iVertex,
   }
   // ok we collapse
   computeNeighboringTetsOfACavity(cavity_v, outside);
-  for(unsigned int i = 0; i < toUpdate.size(); i++) {
+  for(std::size_t i = 0; i < toUpdate.size(); i++) {
     MTetrahedron *tr1 = new MTetrahedron(
       toUpdate[i]->tet()->getVertex(0) == v ? tg :
                                               toUpdate[i]->tet()->getVertex(0),
@@ -612,7 +612,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets, MTet4 *t, int iVertex,
     outside.push_back(t41);
     newTets.push_back(t41);
   }
-  for(unsigned int i = 0; i < cavity_v.size(); i++)
+  for(std::size_t i = 0; i < cavity_v.size(); i++)
     cavity_v[i]->setDeleted(true);
 
   connectTets(outside);
@@ -636,7 +636,7 @@ bool smoothVertex(MTet4 *t, int iVertex, const qmTetrahedron::Measures &cr)
   double vTot = 0;
   double worst = 1.0;
 
-  for(unsigned int i = 0; i < cavity.size(); i++) {
+  for(std::size_t i = 0; i < cavity.size(); i++) {
     double volume = fabs(cavity[i]->tet()->getVolume());
     double q = cavity[i]->getQuality();
     worst = std::min(worst, q);
@@ -674,7 +674,7 @@ bool smoothVertex(MTet4 *t, int iVertex, const qmTetrahedron::Measures &cr)
   t->tet()->getVertex(iVertex)->z() = zcg;
   double worstAfter = 1.0;
   std::vector<double> newQuals(cavity.size());
-  for(unsigned int i = 0; i < cavity.size(); i++) {
+  for(std::size_t i = 0; i < cavity.size(); i++) {
     double volume;
     newQuals[i] = qmTetrahedron::qm(cavity[i]->tet(), cr, &volume);
     volumeAfter += volume;
@@ -689,7 +689,7 @@ bool smoothVertex(MTet4 *t, int iVertex, const qmTetrahedron::Measures &cr)
   }
   else {
     // restore new quality
-    for(unsigned int i = 0; i < cavity.size(); i++) {
+    for(std::size_t i = 0; i < cavity.size(); i++) {
       cavity[i]->setQuality(newQuals[i]);
     }
     return true;
@@ -772,7 +772,7 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex,
 
   double vTot = 0;
 
-  for(unsigned int i = 0; i < vd.ts.size(); i++) {
+  for(std::size_t i = 0; i < vd.ts.size(); i++) {
     double volume = fabs(vd.ts[i]->tet()->getVolume());
     vTot += volume;
   }
@@ -788,7 +788,7 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex,
   t->tet()->getVertex(iVertex)->z() = xyzopti[2];
 
   std::vector<double> newQuals(vd.ts.size());
-  for(unsigned int i = 0; i < vd.ts.size(); i++) {
+  for(std::size_t i = 0; i < vd.ts.size(); i++) {
     double volume;
     newQuals[i] = qmTetrahedron::qm(vd.ts[i]->tet(), cr, &volume);
     volumeAfter += volume;
@@ -802,7 +802,7 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex,
   }
   else {
     // restore new quality
-    for(unsigned int i = 0; i < vd.ts.size(); i++) {
+    for(std::size_t i = 0; i < vd.ts.size(); i++) {
       vd.ts[i]->setQuality(newQuals[i]);
     }
     return true;
@@ -830,7 +830,7 @@ int LaplaceSmoothing(GRegion *gr)
   fillv_(vertexToElement, (gr)->prisms.begin(), (gr)->prisms.end());
   fillv_(vertexToElement, (gr)->pyramids.begin(), (gr)->pyramids.end());
   int N = 0;
-  for(unsigned int i = 0; i < gr->mesh_vertices.size(); i++) {
+  for(std::size_t i = 0; i < gr->mesh_vertices.size(); i++) {
     MVertex *v = gr->mesh_vertices[i];
     std::multimap<MVertex *, MElement *>::iterator it =
       vertexToElement.lower_bound(v);

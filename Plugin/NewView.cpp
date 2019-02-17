@@ -69,8 +69,8 @@ PView *GMSH_NewViewPlugin::execute(PView *v)
   std::map<int, std::vector<double> > d;
   std::vector<GEntity *> entities;
   GModel::current()->getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++) {
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
       MVertex *ve = entities[i]->mesh_vertices[j];
       d[ve->getNum()].resize(numComp);
     }

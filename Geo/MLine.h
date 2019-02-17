@@ -199,14 +199,14 @@ public:
          int num = 0, int part = 0)
     : MLine(v0, v1, num, part), _vs(vs)
   {
-    for(unsigned int i = 0; i < _vs.size(); i++)
+    for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_vs.size() + 1);
   }
   MLineN(const std::vector<MVertex *> &v, int num = 0, int part = 0)
     : MLine(v[0], v[1], num, part)
   {
-    for(unsigned int i = 2; i < v.size(); i++) _vs.push_back(v[i]);
-    for(unsigned int i = 0; i < _vs.size(); i++)
+    for(std::size_t i = 2; i < v.size(); i++) _vs.push_back(v[i]);
+    for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_vs.size() + 1);
   }
   ~MLineN() {}
@@ -235,7 +235,7 @@ public:
   {
     v.resize(2 + _vs.size());
     MLine::_getEdgeVertices(v);
-    for(unsigned int i = 0; i != _vs.size(); ++i) v[i + 2] = _vs[i];
+    for(std::size_t i = 0; i != _vs.size(); ++i) v[i + 2] = _vs[i];
   }
   virtual int getTypeForMSH() const
   {

@@ -39,7 +39,7 @@ public:
       Msg::Error("Got %d vertices for polyhedron", (int)v.size());
       return;
     }
-    for(unsigned int i = 0; i < v.size(); i += 4)
+    for(std::size_t i = 0; i < v.size(); i += 4)
       _parts.push_back(new MTetrahedron(v[i], v[i + 1], v[i + 2], v[i + 3]));
     _init();
   }
@@ -47,13 +47,13 @@ public:
               bool owner = false, MElement *orig = NULL)
     : MElement(num, part), _owner(owner), _orig(orig), _intpt(0)
   {
-    for(unsigned int i = 0; i < vT.size(); i++) _parts.push_back(vT[i]);
+    for(std::size_t i = 0; i < vT.size(); i++) _parts.push_back(vT[i]);
     _init();
   }
   ~MPolyhedron()
   {
     if(_owner) delete _orig;
-    for(unsigned int i = 0; i < _parts.size(); i++) delete _parts[i];
+    for(std::size_t i = 0; i < _parts.size(); i++) delete _parts[i];
     if(_intpt) delete[] _intpt;
   }
   virtual int getDim() const { return 3; }
@@ -81,7 +81,7 @@ public:
                           SVector3 *n)
   {
     MEdge e(getEdge(num));
-    for(unsigned int i = 0; i < _faces.size(); i++)
+    for(std::size_t i = 0; i < _faces.size(); i++)
       for(int j = 0; j < 3; j++)
         if(_faces[i].getEdge(j) == e)
           _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, i);
@@ -112,7 +112,7 @@ public:
   virtual int getTypeForMSH() const { return MSH_POLYH_; }
   virtual void reverse()
   {
-    for(unsigned int i = 0; i < _parts.size(); i++) _parts[i]->reverse();
+    for(std::size_t i = 0; i < _parts.size(); i++) _parts[i]->reverse();
     _vertices.clear();
     _innerVertices.clear();
     _edges.clear();
@@ -122,7 +122,7 @@ public:
   virtual double getVolume()
   {
     double vol = 0;
-    for(unsigned int i = 0; i < _parts.size(); i++)
+    for(std::size_t i = 0; i < _parts.size(); i++)
       vol += _parts[i]->getVolume();
     return vol;
   }
@@ -185,7 +185,7 @@ public:
   {
     int n = getNumVerticesForMSH();
     verts.resize(n);
-    for(unsigned int i = 0; i < _parts.size(); i++)
+    for(std::size_t i = 0; i < _parts.size(); i++)
       for(int j = 0; j < 4; j++)
         verts[i * 4 + j] = _parts[i]->getVertex(j)->getIndex();
   }
@@ -211,7 +211,7 @@ public:
            bool owner = false, MElement *orig = NULL)
     : MElement(num, part), _owner(owner), _orig(orig), _intpt(0)
   {
-    for(unsigned int i = 0; i < v.size() / 3; i++)
+    for(std::size_t i = 0; i < v.size() / 3; i++)
       _parts.push_back(new MTriangle(v[i * 3], v[i * 3 + 1], v[i * 3 + 2]));
     _initVertices();
   }
@@ -219,7 +219,7 @@ public:
            bool owner = false, MElement *orig = NULL)
     : MElement(num, part), _owner(owner), _orig(orig), _intpt(0)
   {
-    for(unsigned int i = 0; i < vT.size(); i++) {
+    for(std::size_t i = 0; i < vT.size(); i++) {
       MTriangle *t = (MTriangle *)vT[i];
       _parts.push_back(t);
     }
@@ -228,7 +228,7 @@ public:
   ~MPolygon()
   {
     if(_owner) delete _orig;
-    for(unsigned int i = 0; i < _parts.size(); i++) delete _parts[i];
+    for(std::size_t i = 0; i < _parts.size(); i++) delete _parts[i];
     if(_intpt) delete[] _intpt;
   }
   virtual int getDim() const { return 2; }
@@ -276,7 +276,7 @@ public:
   virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(_vertices.size() + _innerVertices.size());
-    for(unsigned int i = 0; i < _vertices.size() + _innerVertices.size(); i++)
+    for(std::size_t i = 0; i < _vertices.size() + _innerVertices.size(); i++)
       v[i] = (i < _vertices.size()) ? _vertices[i] :
                                       _innerVertices[i - _vertices.size()];
   }
@@ -284,7 +284,7 @@ public:
   virtual int getTypeForMSH() const { return MSH_POLYG_; }
   virtual void reverse()
   {
-    for(unsigned int i = 0; i < _parts.size(); i++) _parts[i]->reverse();
+    for(std::size_t i = 0; i < _parts.size(); i++) _parts[i]->reverse();
     _vertices.clear();
     _innerVertices.clear();
     _edges.clear();
@@ -349,7 +349,7 @@ public:
   {
     int n = getNumVerticesForMSH();
     verts.resize(n);
-    for(unsigned int i = 0; i < _parts.size(); i++)
+    for(std::size_t i = 0; i < _parts.size(); i++)
       for(int j = 0; j < 3; j++)
         verts[i * 3 + j] = _parts[i]->getVertex(j)->getIndex();
   }

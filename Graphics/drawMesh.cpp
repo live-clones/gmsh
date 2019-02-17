@@ -45,7 +45,7 @@ static void drawElementLabels(drawContext *ctx, GEntity *e,
   int labelStep = CTX::instance()->mesh.labelSampling;
   if(labelStep <= 0) labelStep = 1;
 
-  for(unsigned int i = 0; i < elements.size(); i++) {
+  for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
     if(!isElementVisible(ele)) continue;
     if(i % labelStep == 0) {
@@ -73,7 +73,7 @@ template <class T>
 static void drawNormals(drawContext *ctx, std::vector<T *> &elements)
 {
   glColor4ubv((GLubyte *)&CTX::instance()->color.mesh.normals);
-  for(unsigned int i = 0; i < elements.size(); i++) {
+  for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
     if(!isElementVisible(ele)) continue;
     SVector3 n = ele->getFace(0).normal();
@@ -89,7 +89,7 @@ template <class T>
 static void drawTangents(drawContext *ctx, std::vector<T *> &elements)
 {
   glColor4ubv((GLubyte *)&CTX::instance()->color.mesh.tangents);
-  for(unsigned int i = 0; i < elements.size(); i++) {
+  for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
     if(!isElementVisible(ele)) continue;
     SVector3 t = ele->getEdge(0).tangent();
@@ -147,7 +147,7 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
 {
   if(CTX::instance()->mesh.points) {
     if(CTX::instance()->mesh.pointType) {
-      for(unsigned int i = 0; i < e->mesh_vertices.size(); i++) {
+      for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
         MVertex *v = e->mesh_vertices[i];
         if(!v->getVisibility()) continue;
         if(CTX::instance()->mesh.colorCarousel == 0 ||
@@ -168,7 +168,7 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
     }
     else {
       glBegin(GL_POINTS);
-      for(unsigned int i = 0; i < e->mesh_vertices.size(); i++) {
+      for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
         MVertex *v = e->mesh_vertices[i];
         if(!v->getVisibility()) continue;
         if(CTX::instance()->mesh.colorCarousel == 0 ||
@@ -191,7 +191,7 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
   if(CTX::instance()->mesh.pointsNum) {
     int labelStep = CTX::instance()->mesh.labelSampling;
     if(labelStep <= 0) labelStep = 1;
-    for(unsigned int i = 0; i < e->mesh_vertices.size(); i++)
+    for(std::size_t i = 0; i < e->mesh_vertices.size(); i++)
       if(i % labelStep == 0) drawVertexLabel(ctx, e, e->mesh_vertices[i]);
   }
 }
@@ -200,7 +200,7 @@ template <class T>
 static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
                                    std::vector<T *> &elements)
 {
-  for(unsigned int i = 0; i < elements.size(); i++) {
+  for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
     for(std::size_t j = 0; j < ele->getNumVertices(); j++) {
       MVertex *v = ele->getVertex(j);
@@ -243,7 +243,7 @@ template <class T> static void drawBarycentricDual(std::vector<T *> &elements)
   glLineStipple(1, 0x0F0F);
   gl2psEnable(GL2PS_LINE_STIPPLE);
   glBegin(GL_LINES);
-  for(unsigned int i = 0; i < elements.size(); i++) {
+  for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
     if(!isElementVisible(ele)) continue;
     SPoint3 pc = ele->barycenter();
@@ -284,7 +284,7 @@ template <class T> static void drawVoronoiDual(std::vector<T *> &elements)
   glLineStipple(1, 0x0F0F);
   gl2psEnable(GL2PS_LINE_STIPPLE);
   glBegin(GL_LINES);
-  for(unsigned int i = 0; i < elements.size(); i++) {
+  for(std::size_t i = 0; i < elements.size(); i++) {
     T *ele = elements[i];
     if(!isElementVisible(ele)) continue;
     SPoint3 pc = ele->circumcenter();
@@ -685,8 +685,8 @@ void drawContext::drawMesh()
   // changed if the underlying mesh has, before resetting the changed
   // flag
   if(CTX::instance()->mesh.changed) {
-    for(unsigned int i = 0; i < GModel::list.size(); i++)
-      for(unsigned int j = 0; j < PView::list.size(); j++)
+    for(std::size_t i = 0; i < GModel::list.size(); i++)
+      for(std::size_t j = 0; j < PView::list.size(); j++)
         if(PView::list[j]->getData()->hasModel(GModel::list[i]))
           PView::list[j]->setChanged(true);
   }
@@ -707,7 +707,7 @@ void drawContext::drawMesh()
         glDisable((GLenum)(GL_CLIP_PLANE0 + i));
   }
 
-  for(unsigned int i = 0; i < GModel::list.size(); i++) {
+  for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
     bool changed = m->fillVertexArrays();
     if(changed) Msg::Debug("mesh vertex arrays have changed");

@@ -38,7 +38,7 @@ class arg:
 
 def isize(name, value=None, python_value=None, julia_value=None):
     a = arg(name, value, python_value, julia_value,
-          "const size_t", "const size_t", False)
+            "const std::size_t", "const size_t", False)
     a.python_arg = "c_size_t(" + name + ")"
     a.julia_ctype = "Csize_t"
     return a
@@ -237,6 +237,25 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
     return a
 
 # output types
+
+class osize(arg):
+    rcpp_type = "std::size_t"
+    rc_type = "size_t"
+    rtexi_type = "size value"
+    rjulia_type = "Csize_t"
+    def __init__(self, name, value=None, python_value=None, julia_value=None):
+        arg.__init__(self, name, value, python_value, julia_value,
+                     "std::size_t &", "size_t *", True)
+        api_name = "api_" + name + "_"
+        self.c_arg = "*" + name
+        self.cwrap_arg = "&" + name
+        self.python_pre = api_name + " = c_size_t()"
+        self.python_arg = "byref(" + api_name + ")"
+        self.python_return = api_name + ".value"
+        self.julia_ctype = "Ptr{Csize_t}"
+        self.julia_pre = api_name + " = Ref{Csize_t}()"
+        self.julia_arg = api_name
+        self.julia_return = api_name + "[]"
 
 class oint(arg):
     rcpp_type = "int"

@@ -1490,7 +1490,7 @@ void adaptiveElements<T>::addInView(double tol, int step, PViewData *in,
       }
       if(adapt(tol, numComp, coords, values, out->Min, out->Max, plug)){
         *outNb += coords.size() / T::numNodes;
-        for(unsigned int i = 0; i < coords.size() / T::numNodes; i++) {
+        for(std::size_t i = 0; i < coords.size() / T::numNodes; i++) {
           for(int k = 0; k < T::numNodes; ++k)
             outList->push_back(coords[T::numNodes * i + k].c[0]);
           for(int k = 0; k < T::numNodes; ++k)
@@ -2573,7 +2573,7 @@ void adaptiveElements<T>::addInViewForVTK(int step, PViewData *in,
       myVTKData.vtkLocalCoords.resize(numNodInsert, PCoords(0.0, 0.0, 0.0));
       myVTKData.vtkLocalValues.resize(numNodInsert, PValues(numComp));
 
-      for(unsigned int i = 0; i < coords.size() / T::numNodes; i++) {
+      for(std::size_t i = 0; i < coords.size() / T::numNodes; i++) {
         // Loop over
         //  - all refined elements if refinement level > 0
         //  - single initial element when refinement box is checked for the

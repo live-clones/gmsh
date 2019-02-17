@@ -35,7 +35,7 @@ private:
     tmp.precision(12);
     if(_choices.size()) {
       // construct range string using choices
-      for(unsigned int i = 0; i < _choices.size(); i++) {
+      for(std::size_t i = 0; i < _choices.size(); i++) {
         if(i) tmp << ", ";
         tmp << _choices[i];
       }

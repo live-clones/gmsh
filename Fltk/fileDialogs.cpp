@@ -1524,12 +1524,12 @@ static void _saveViews(const std::string &name, int which, int format,
   }
   else if(which == 1) {
     int numVisible = 0;
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(PView::list[i]->getOptions()->visible) numVisible++;
     if(!numVisible) { Msg::Error("No visible view"); }
     else {
       bool first = true;
-      for(unsigned int i = 0; i < PView::list.size(); i++) {
+      for(std::size_t i = 0; i < PView::list.size(); i++) {
         if(PView::list[i]->getOptions()->visible) {
           std::string fileName = name;
           if(!canAppend && numVisible > 1) {
@@ -1544,7 +1544,7 @@ static void _saveViews(const std::string &name, int which, int format,
     }
   }
   else {
-    for(unsigned int i = 0; i < PView::list.size(); i++) {
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
       std::string fileName = name;
       if(!canAppend && PView::list.size() > 1) {
         std::ostringstream os;
@@ -1640,12 +1640,12 @@ static void _saveAdaptedViews(const std::string &name, int useDefaultName,
   }
   else if(which == 1) {
     int numVisible = 0;
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(PView::list[i]->getOptions()->visible) numVisible++;
     if(!numVisible) { Msg::Error("No visible view"); }
     else {
       bool first = true;
-      for(unsigned int i = 0; i < PView::list.size(); i++) {
+      for(std::size_t i = 0; i < PView::list.size(); i++) {
         if(PView::list[i]->getOptions()->visible) {
           std::string fileName = name;
           if(!canAppend && numVisible > 1) {
@@ -1662,7 +1662,7 @@ static void _saveAdaptedViews(const std::string &name, int useDefaultName,
     }
   }
   else {
-    for(unsigned int i = 0; i < PView::list.size(); i++) {
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
       std::string fileName = name;
       if(!canAppend && PView::list.size() > 1) {
         std::ostringstream os;

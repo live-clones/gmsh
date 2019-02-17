@@ -49,11 +49,11 @@ GEdge::~GEdge()
 void GEdge::deleteMesh(bool onlyDeleteElements)
 {
   if(!onlyDeleteElements) {
-    for(unsigned int i = 0; i < mesh_vertices.size(); i++)
+    for(std::size_t i = 0; i < mesh_vertices.size(); i++)
       delete mesh_vertices[i];
     mesh_vertices.clear();
   }
-  for(unsigned int i = 0; i < lines.size(); i++) delete lines[i];
+  for(std::size_t i = 0; i < lines.size(); i++) delete lines[i];
   lines.clear();
   deleteVertexArrays();
   model()->destroyMeshCaches();
@@ -154,7 +154,7 @@ void GEdge::reverse()
     (*line)->reverse();
 }
 
-unsigned int GEdge::getNumMeshElementsByType(const int familyType) const
+std::size_t GEdge::getNumMeshElementsByType(const int familyType) const
 {
   if(familyType == TYPE_LIN) return lines.size();
 
@@ -169,7 +169,7 @@ struct owns_parent {
   }
 };
 
-unsigned int GEdge::getNumMeshParentElements()
+std::size_t GEdge::getNumMeshParentElements()
 {
   return std::count_if(lines.begin(), lines.end(), owns_parent());
 }
@@ -185,14 +185,14 @@ MElement *const *GEdge::getStartElementType(int type) const
   return reinterpret_cast<MElement *const *>(&lines[0]);
 }
 
-MElement *GEdge::getMeshElement(unsigned int index) const
+MElement *GEdge::getMeshElement(std::size_t index) const
 {
   if(index < lines.size()) return lines[index];
   return 0;
 }
 
 MElement *GEdge::getMeshElementByType(const int familyType,
-                                      const unsigned int index) const
+                                      const std::size_t index) const
 {
   if(familyType == TYPE_LIN) return lines[index];
 
@@ -240,8 +240,8 @@ SBoundingBox3d GEdge::bounds(bool fast) const
   }
   else {
     std::size_t ipp = std::max(getNumMeshElements() / 20, std::size_t(1));
-    for(size_type i = 0; i < getNumMeshElements(); i += ipp)
-      for(size_type j = 0; j < getMeshElement(i)->getNumVertices(); j++)
+    for(std::size_t i = 0; i < getNumMeshElements(); i += ipp)
+      for(std::size_t j = 0; j < getMeshElement(i)->getNumVertices(); j++)
         bbox += getMeshElement(i)->getVertex(j)->point();
   }
   return bbox;
@@ -619,7 +619,7 @@ std::list<GRegion *> GEdge::regions() const
 
 void GEdge::relocateMeshVertices()
 {
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++) {
+  for(std::size_t i = 0; i < mesh_vertices.size(); i++) {
     MVertex *v = mesh_vertices[i];
     double u0 = 0;
     if(v->getParameter(0, u0)) {
@@ -729,9 +729,9 @@ void GEdge::discretize(double tol, std::vector<SPoint3> &dpts,
 static void meshCompound(GEdge *ge)
 {
   std::vector<MLine *> lines;
-  for(unsigned int i = 0; i < ge->_compound.size(); i++) {
+  for(std::size_t i = 0; i < ge->_compound.size(); i++) {
     GEdge *c = (GEdge *)ge->_compound[i];
-    for(unsigned int j = 0; j < c->lines.size(); j++) {
+    for(std::size_t j = 0; j < c->lines.size(); j++) {
       lines.push_back(
         new MLine(c->lines[j]->getVertex(0), c->lines[j]->getVertex(1)));
     }
@@ -754,7 +754,7 @@ void GEdge::mesh(bool verbose)
   if(_compound.size()) { // Some faces are meshed together
     if(_compound[0] == this) { // I'm the one that makes the compound job
       bool ok = true;
-      for(unsigned int i = 0; i < _compound.size(); i++) {
+      for(std::size_t i = 0; i < _compound.size(); i++) {
         GEdge *ge = (GEdge *)_compound[i];
         ok &= (ge->meshStatistics.status == GEdge::DONE);
       }
@@ -782,7 +782,7 @@ bool GEdge::reorder(const int elementType, const std::vector<int> &ordering)
     }
 
     std::vector<MLine *> newLinesOrder(lines.size());
-    for(unsigned int i = 0; i < ordering.size(); i++) {
+    for(std::size_t i = 0; i < ordering.size(); i++) {
       newLinesOrder[i] = lines[ordering[i]];
     }
 

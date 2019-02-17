@@ -208,7 +208,7 @@ void fieldWindow::loadFieldViewList()
   put_on_view_btn->clear();
   put_on_view_btn->add("Create new view");
   put_on_view_btn->activate();
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     std::ostringstream s;
     s << "Put on View [" << i << "]";
     put_on_view_btn->add(s.str().c_str());

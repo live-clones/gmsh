@@ -31,8 +31,8 @@ public:
       FlGui::instance()->fullscreen->redraw();
     }
     else {
-      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++) {
-        for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size();
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
+        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size();
             j++) {
           FlGui::instance()->graph[i]->gl[j]->make_current();
           FlGui::instance()->graph[i]->gl[j]->redraw();

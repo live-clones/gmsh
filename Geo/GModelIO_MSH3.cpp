@@ -558,7 +558,7 @@ static void writeMSHPhysicals(FILE *fp, GEntity *ge)
 void writeMSHEntities(FILE *fp, GModel *gm) // also used in MSH2
 {
   fprintf(fp, "$Entities\n");
-  fprintf(fp, "%lu %d %d %d\n", gm->getNumVertices(), gm->getNumEdges(),
+  fprintf(fp, "%lu %lu %lu %lu\n", gm->getNumVertices(), gm->getNumEdges(),
           gm->getNumFaces(), gm->getNumRegions());
   for(GModel::viter it = gm->firstVertex(); it != gm->lastVertex(); ++it) {
     fprintf(fp, "%d ", (*it)->tag());
@@ -589,10 +589,10 @@ void writeMSHEntities(FILE *fp, GModel *gm) // also used in MSH2
     std::vector<int> signs(ori.begin(), ori.end());
 
     if(tags.size() == signs.size()) {
-      for(unsigned int i = 0; i < tags.size(); i++)
+      for(std::size_t i = 0; i < tags.size(); i++)
         tags[i] *= (signs[i] > 0 ? 1 : -1);
     }
-    for(unsigned int i = 0; i < tags.size(); i++) fprintf(fp, "%d ", tags[i]);
+    for(std::size_t i = 0; i < tags.size(); i++) fprintf(fp, "%d ", tags[i]);
     writeMSHPhysicals(fp, *it);
     fprintf(fp, "\n");
   }
@@ -608,10 +608,10 @@ void writeMSHEntities(FILE *fp, GModel *gm) // also used in MSH2
         itf++)
       signs.push_back(*itf);
     if(tags.size() == signs.size()) {
-      for(unsigned int i = 0; i < tags.size(); i++)
+      for(std::size_t i = 0; i < tags.size(); i++)
         tags[i] *= (signs[i] > 0 ? 1 : -1);
     }
-    for(unsigned int i = 0; i < tags.size(); i++) fprintf(fp, "%d ", tags[i]);
+    for(std::size_t i = 0; i < tags.size(); i++) fprintf(fp, "%d ", tags[i]);
     writeMSHPhysicals(fp, *it);
     fprintf(fp, "\n");
   }
@@ -625,7 +625,7 @@ static int getNumElementsMSH(GEntity *ge, bool saveAll, int saveSinglePartition)
     if(saveSinglePartition <= 0)
       n = ge->getNumMeshElements();
     else
-      for(unsigned int i = 0; i < ge->getNumMeshElements(); i++)
+      for(std::size_t i = 0; i < ge->getNumMeshElements(); i++)
         if(ge->getMeshElement(i)->getPartition() == saveSinglePartition) n++;
   }
   return n;
@@ -654,7 +654,7 @@ static void writeElementsMSH(FILE *fp, GModel *model, GEntity *ge,
                              int saveSinglePartition, bool binary)
 {
   if(saveAll || ge->physicals.size()) {
-    for(unsigned int i = 0; i < ele.size(); i++) {
+    for(std::size_t i = 0; i < ele.size(); i++) {
       if(saveSinglePartition && ele[i]->getPartition() != saveSinglePartition)
         continue;
       writeElementMSH(fp, model, ele[i], binary, ge->tag());
@@ -666,12 +666,12 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
                            bool renumber) // also used in MSH2
 {
   int count = 0;
-  for(unsigned int i = 0; i < entities.size(); i++)
+  for(std::size_t i = 0; i < entities.size(); i++)
     if(entities[i]->getMeshMaster() != entities[i]) count++;
   if(!count) return;
   fprintf(fp, "$Periodic\n");
   fprintf(fp, "%d\n", count);
-  for(unsigned int i = 0; i < entities.size(); i++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *g_slave = entities[i];
     GEntity *g_master = g_slave->getMeshMaster();
     if(g_slave != g_master) {
@@ -736,7 +736,7 @@ int GModel::_writeMSH3(const std::string &name, double version, bool binary,
   std::vector<GEntity *> entities;
   getEntities(entities);
   int numElements = 0;
-  for(unsigned int i = 0; i < entities.size(); i++)
+  for(std::size_t i = 0; i < entities.size(); i++)
     numElements += getNumElementsMSH(entities[i], saveAll, saveSinglePartition);
 
   fprintf(fp, "$MeshFormat\n");
@@ -764,8 +764,8 @@ int GModel::_writeMSH3(const std::string &name, double version, bool binary,
 
   fprintf(fp, "$Nodes\n");
   fprintf(fp, "%d\n", numVertices);
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeMSH(fp, binary, saveParametric,
                                               scalingFactor);
 
@@ -826,7 +826,7 @@ int GModel::_writePartitionedMSH3(const std::string &baseName, double version,
     return 0;
   }
 
-  for(unsigned int partition = 0; partition < getNumPartitions(); partition++) {
+  for(std::size_t partition = 0; partition < getNumPartitions(); partition++) {
     std::ostringstream sstream;
     sstream << baseName << "_" << std::setw(6) << std::setfill('0')
             << partition;

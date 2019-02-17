@@ -38,7 +38,7 @@ static void testIfBoundaryIsRecovered(GRegion *gr)
   std::vector<GEdge *>::const_iterator it = e.begin();
   std::vector<GFace *>::iterator itf = f.begin();
   for(; it != e.end(); ++it) {
-    for(unsigned int i = 0; i < (*it)->lines.size(); ++i) {
+    for(std::size_t i = 0; i < (*it)->lines.size(); ++i) {
       if(distance((*it)->lines[i]->getVertex(0),
                   (*it)->lines[i]->getVertex(1)) > 1.e-12)
         edges.insert(std::make_pair(
@@ -47,7 +47,7 @@ static void testIfBoundaryIsRecovered(GRegion *gr)
     }
   }
   for(; itf != f.end(); ++itf) {
-    for(unsigned int i = 0; i < (*itf)->triangles.size(); ++i) {
+    for(std::size_t i = 0; i < (*itf)->triangles.size(); ++i) {
       faces.insert(std::make_pair(MFace((*itf)->triangles[i]->getVertex(0),
                                         (*itf)->triangles[i]->getVertex(1),
                                         (*itf)->triangles[i]->getVertex(2)),
@@ -57,7 +57,7 @@ static void testIfBoundaryIsRecovered(GRegion *gr)
   Msg::Info("Searching for %d mesh edges and %d mesh faces among %d elements "
             "in region %d",
             edges.size(), faces.size(), gr->getNumMeshElements(), gr->tag());
-  for(unsigned int k = 0; k < gr->getNumMeshElements(); k++) {
+  for(std::size_t k = 0; k < gr->getNumMeshElements(); k++) {
     for(int j = 0; j < gr->getMeshElement(k)->getNumEdges(); j++) {
       edges.erase(gr->getMeshElement(k)->getEdge(j));
     }
@@ -79,7 +79,7 @@ struct edgeContainerB {
   std::vector<std::vector<MEdge> > _hash;
   std::size_t _size, _size_obj;
 
-  edgeContainerB(unsigned int N = 1000000)
+  edgeContainerB(std::size_t N = 1000000)
     : _hash(N), _size(0), _size_obj(sizeof(MEdge))
   {
   }
@@ -117,7 +117,7 @@ static void createAllEmbeddedEdges(GRegion *gr,
   std::vector<GEdge *> const &e = gr->embeddedEdges();
   for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end();
       ++it) {
-    for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       allEmbeddedEdges.insert(
         MEdge((*it)->lines[i]->getVertex(0), (*it)->lines[i]->getVertex(1)));
     }
@@ -129,7 +129,7 @@ static void createAllEmbeddedEdges(GRegion *gr, edgeContainerB &embedded)
   std::vector<GEdge *> const &e = gr->embeddedEdges();
   for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end();
       ++it) {
-    for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       embedded.addNewEdge(
         MEdge((*it)->lines[i]->getVertex(0), (*it)->lines[i]->getVertex(1)));
     }
@@ -142,7 +142,7 @@ static void createAllEmbeddedFaces(GRegion *gr,
   std::vector<GFace *> const &f = gr->embeddedFaces();
   for(std::vector<GFace *>::const_iterator it = f.begin(); it != f.end();
       ++it) {
-    for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
       allEmbeddedFaces.insert((*it)->triangles[i]->getFace(0));
     }
   }
@@ -236,7 +236,7 @@ void connectTets_vector2_templ(std::size_t _size, ITER beg, ITER end,
 
   std::sort(conn.begin(), conn.end());
 
-  for(unsigned int i = 0; i < conn.size() - 1; i++) {
+  for(std::size_t i = 0; i < conn.size() - 1; i++) {
     faceXtet &f1 = conn[i];
     faceXtet &f2 = conn[i + 1];
     if(f1 == f2 && f1.t1 != f2.t1) {
@@ -508,7 +508,7 @@ bool insertVertexB(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
     return true;
   }
   else /* one point is too close */ {
-    for(unsigned int i = 0; i < shell.size(); i++) myFactory.Free(new_tets[i]);
+    for(std::size_t i = 0; i < shell.size(); i++) myFactory.Free(new_tets[i]);
     std::vector<MTet4 *>::iterator ittet = cavity.begin();
     std::vector<MTet4 *>::iterator ittete = cavity.end();
     while(ittet != ittete) {
@@ -697,7 +697,7 @@ void adaptMeshGRegion::operator()(GRegion *gr)
 
   typedef std::list<MTet4 *> CONTAINER;
   CONTAINER allTets;
-  for(unsigned int i = 0; i < gr->tetrahedra.size(); i++) {
+  for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
     allTets.push_back(new MTet4(gr->tetrahedra[i], qm));
   }
   gr->tetrahedra.clear();
@@ -808,7 +808,7 @@ void adaptMeshGRegion::operator()(GRegion *gr)
     if(!newTets.size()) break;
 
     // add all the new tets in the container
-    for(unsigned int i = 0; i < newTets.size(); i++) {
+    for(std::size_t i = 0; i < newTets.size(); i++) {
       if(!newTets[i]->isDeleted()) { allTets.push_back(newTets[i]); }
       else {
         delete newTets[i]->tet();
@@ -849,7 +849,7 @@ void adaptMeshGRegion::operator()(GRegion *gr)
   }
 
   int nbSlivers = 0;
-  for(unsigned int i = 0; i < illegals.size(); i++)
+  for(std::size_t i = 0; i < illegals.size(); i++)
     if(!(illegals[i]->isDeleted())) nbSlivers++;
 
   if(nbSlivers) {
@@ -888,7 +888,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
 
   typedef std::vector<MTet4 *> CONTAINER;
   CONTAINER allTets;
-  for(unsigned int i = 0; i < gr->tetrahedra.size(); i++) {
+  for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
     MTet4 *t = new MTet4(gr->tetrahedra[i], qm);
     t->setOnWhat(gr);
     allTets.push_back(t);
@@ -983,7 +983,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     if(!newTets.size()) { break; }
 
     // add all the new tets in the container
-    for(unsigned int i = 0; i < newTets.size(); i++) {
+    for(std::size_t i = 0; i < newTets.size(); i++) {
       if(!newTets[i]->isDeleted()) { allTets.push_back(newTets[i]); }
       else {
         delete newTets[i]->tet();
@@ -1241,7 +1241,7 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
       std::vector<GEdge *> const &e = (*rit)->embeddedEdges();
       for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end();
           ++it) {
-        for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
+        for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
           MVertex *vi = (*it)->lines[i]->getVertex(0);
           MVertex *vj = (*it)->lines[i]->getVertex(1);
           double dx = vi->x() - vj->x();
@@ -1277,11 +1277,11 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
     for(GModel::fiter it = gr->model()->firstFace();
         it != gr->model()->lastFace(); ++it) {
       GFace *gf = *it;
-      for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+      for(std::size_t i = 0; i < gf->triangles.size(); i++) {
         setLcs(gf->triangles[i], vSizesMap, bndVertices);
       }
     }
-    for(unsigned int i = 0; i < gr->tetrahedra.size(); i++)
+    for(std::size_t i = 0; i < gr->tetrahedra.size(); i++)
       setLcs(gr->tetrahedra[i], vSizesMap, bndVertices);
 
     for(std::map<MVertex *, double, MVertexLessThanNum>::iterator it =
@@ -1293,7 +1293,7 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify,
     }
   }
 
-  for(unsigned int i = 0; i < gr->tetrahedra.size(); i++) {
+  for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
     gr->tetrahedra[i]->setVolumePositive();
     allTets.insert(myFactory.Create(gr->tetrahedra[i], vSizes, vSizesBGM));
   }

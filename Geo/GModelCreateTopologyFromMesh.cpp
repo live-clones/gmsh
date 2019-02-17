@@ -54,7 +54,7 @@ std::vector<GEdge *> ensureSimplyConnectedEdge(GEdge *ge)
   _all.push_back(ge);
 
   // create vertex to edge connectivity : only To neighbors are considered ...
-  for(unsigned int i = 0; i < ge->lines.size(); i++) {
+  for(std::size_t i = 0; i < ge->lines.size(); i++) {
     _lines.insert(ge->lines[i]);
     for(int j = 0; j < 2; j++) {
       std::map<MVertex *, std::pair<MLine *, MLine *> >::iterator it =
@@ -134,7 +134,7 @@ void ensureManifoldFace(GFace *gf)
 
   std::set<MElement *> _allFaces;
 
-  for(unsigned int i = 0; i < gf->getNumMeshElements(); i++) {
+  for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *e = gf->getMeshElement(i);
     _allFaces.insert(e);
     for(int j = 0; j < e->getNumEdges(); j++) {
@@ -188,7 +188,7 @@ void ensureManifoldFace(GFace *gf)
   Msg::Info("Surface %d is non-manifold: splitting it in %d parts", gf->tag(),
             _sub.size());
 
-  for(unsigned int i = 0; i < _sub.size(); i++) {
+  for(std::size_t i = 0; i < _sub.size(); i++) {
     if(i == 0)
       assignFace(gf, _sub[i]);
     else {
@@ -205,7 +205,7 @@ void ensureManifoldFaces(GModel *gm)
   std::vector<GFace *> f;
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++)
     f.push_back(*it);
-  for(unsigned int i = 0; i < f.size(); i++) ensureManifoldFace(f[i]);
+  for(std::size_t i = 0; i < f.size(); i++) ensureManifoldFace(f[i]);
 }
 
 typedef std::map<MVertex *, std::set<GEdge *> > MVertexToGEdgesMap;
@@ -238,7 +238,7 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
 
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
     GEdge *ge = *it;
-    for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       MLine *e = (*it)->lines[i];
       for(int j = 0; j < 2; j++) {
         MVertex *mv = e->getVertex(j);
@@ -387,7 +387,7 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
 
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
     GEdge *ge = *it;
-    for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       topoEdge te(ge->lines[i], 0);
       tEdgeToGEdge[te] = ge;
     }
@@ -400,7 +400,7 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
 
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++) {
     GFace *gf = *it;
-    for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++) {
+    for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
       MElement *e = (*it)->getMeshElement(i);
       if(e->getDim() == 2) {
         for(int j = 0; j < e->getNumEdges(); j++) {
@@ -711,7 +711,7 @@ void GModel::createTopologyFromMeshNew()
   std::vector<GEntity *> entities;
   getEntities(entities);
   std::set<MVertex *> vs;
-  for(unsigned int i = 0; i < entities.size(); i++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
     vs.insert(entities[i]->mesh_vertices.begin(),
               entities[i]->mesh_vertices.end());
     entities[i]->mesh_vertices.clear();

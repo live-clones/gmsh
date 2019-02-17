@@ -435,9 +435,9 @@ namespace BoundaryLayerCurver {
                           std::vector<std::pair<int, int> > &adjacencies)
   {
     std::map<MEdge, int, Less_Edge> edge2element;
-    for(unsigned int i = 0; i < bndEl2column.size(); ++i) {
+    for(std::size_t i = 0; i < bndEl2column.size(); ++i) {
       MElement *el = bndEl2column[i].first;
-      for(unsigned int j = 0; j < el->getNumEdges(); ++j) {
+      for(std::size_t j = 0; j < el->getNumEdges(); ++j) {
         MEdge e = el->getEdge(j);
         std::map<MEdge, int, Less_Edge>::iterator it = edge2element.find(e);
         if(it != edge2element.end()) {
@@ -525,7 +525,7 @@ namespace BoundaryLayerCurver {
                                    std::vector<MVertex *> &stack)
   {
     int numVertexPerLayer = c1.first->getNumPrimaryVertices();
-    unsigned int numLayers = c1.second.size();
+    std::size_t numLayers = c1.second.size();
     stack.assign(numVertexPerLayer * numLayers, NULL);
 
     int k = 0;
@@ -533,7 +533,7 @@ namespace BoundaryLayerCurver {
       stack[k++] = c1.first->getVertex(i);
     }
     MFace bottomFace = c1.first->getFace(0);
-    for(unsigned int i = 0; i < numLayers - 1; ++i) {
+    for(std::size_t i = 0; i < numLayers - 1; ++i) {
       MElement *currentElement = c1.second[i];
       MFace topFace;
       if(!computeCommonFace(currentElement, c1.second[i + 1], topFace)) {
@@ -638,7 +638,7 @@ namespace BoundaryLayerCurver {
         return;
       }
       interfacePrimaryVertices.resize(2 * (stackElements.size()));
-      for(unsigned int i = 0; i < stackElements.size(); ++i) {
+      for(std::size_t i = 0; i < stackElements.size(); ++i) {
         interfacePrimaryVertices[2 * i + 0] =
           allPrimaryVertices[nVertexPerLayer * i + n0];
         interfacePrimaryVertices[2 * i + 1] =
@@ -968,7 +968,7 @@ namespace BoundaryLayerCurver {
 
   void repositionInteriorNodes(std::vector<MFaceN> &column)
   {
-    for(unsigned int i = 0; i < column.size(); ++i) {
+    for(std::size_t i = 0; i < column.size(); ++i) {
       MFaceN &f = column[i];
       const fullMatrix<double> *placement = NULL;
       if(f.isTriangular()) {
@@ -1004,7 +1004,7 @@ namespace BoundaryLayerCurver {
                        std::vector<std::pair<int, int> > &adjacencies,
                        const GFace *boundary)
   {
-    for(unsigned int i = 0; i < adjacencies.size(); ++i) {
+    for(std::size_t i = 0; i < adjacencies.size(); ++i) {
       MEdgeN bottomEdge, topEdge;
       std::vector<MFaceN> interface;
       PairMElemVecMElem &column1 = bndEl2column[adjacencies[i].first];
@@ -1040,7 +1040,7 @@ namespace BoundaryLayerCurver {
     // FIXME already calculated in computeInterfaces. Reuse them?
 
     int nVertexPerLayer = bndEl2column.first->getNumPrimaryVertices();
-    for(unsigned int j = 0; j < stack.size(); ++j) {
+    for(std::size_t j = 0; j < stack.size(); ++j) {
       MFace f;
       if(nVertexPerLayer == 3)
         f = MFace(allPrimaryVertices[j * 3 + 0], allPrimaryVertices[j * 3 + 1],
@@ -1179,7 +1179,7 @@ namespace BoundaryLayerCurver {
                                const std::vector<MElement *> &column)
   {
     // TODO: reposition last elements
-    for(unsigned int i = 0; i < column.size() - 1; ++i) {
+    for(std::size_t i = 0; i < column.size() - 1; ++i) {
       MElement *el = column[i];
       const fullMatrix<double> *placement = NULL;
       const int order = el->getPolynomialOrder();
@@ -1219,7 +1219,7 @@ namespace BoundaryLayerCurver {
   void curveColumns(VecPairMElemVecMElem &bndEl2column, const GFace *boundary)
   {
     Parameters3DSurface parameters;
-    for(unsigned int i = 0; i < bndEl2column.size(); ++i) {
+    for(std::size_t i = 0; i < bndEl2column.size(); ++i) {
       //      if (bndEl2column[i].first->getNum() != 855) continue;
 
       std::vector<MFaceN> stackFaces;
@@ -1251,7 +1251,7 @@ void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
     bndEl2column[i].first->setVisibility(1);
     //    Msg::Info("el %d, size %d", bndEl2column[i].first->getNum(),
     //    bndEl2column[i].second.size());
-    for(unsigned int j = 0; j < bndEl2column[i].second.size(); ++j) {
+    for(std::size_t j = 0; j < bndEl2column[i].second.size(); ++j) {
       bndEl2column[i].second[j]->setVisibility(1);
     }
   }

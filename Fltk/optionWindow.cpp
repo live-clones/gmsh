@@ -253,7 +253,7 @@ void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
 void general_options_axes_fit_cb(Fl_Widget *w, void *data)
 {
   SBoundingBox3d bbox = GModel::current()->bounds(true);
-  for(unsigned int i = 0; i < PView::list.size(); i++){
+  for(std::size_t i = 0; i < PView::list.size(); i++){
     if(PView::list[i]->getOptions()->visible &&
        !PView::list[i]->getData()->getBoundingBox().empty())
       bbox += PView::list[i]->getData()->getBoundingBox();
@@ -429,7 +429,7 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_camera_aperture(0, GMSH_SET, o->general.value[31]->value());
   if(opt_general_stereo_mode(0, GMSH_GET, 0) != o->general.butt[17]->value()) {
     opt_general_stereo_mode(0, GMSH_SET, o->general.butt[17]->value());
-    for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       FlGui::instance()->graph[i]->setStereo((bool)CTX::instance()->stereo);
   }
 
@@ -3585,9 +3585,9 @@ void optionWindow::resetBrowser()
   browser->add("Mesh");
   browser->add("Solver");
   browser->add("Post-pro");
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     char str[128];
-    sprintf(str, "View [%d]", i);
+    sprintf(str, "View [%lu]", i);
     browser->add(str);
   }
   int num = (select <= browser->size()) ? select : browser->size();
@@ -3601,8 +3601,8 @@ void optionWindow::resetExternalViewList()
   view.choice[11]->clear();
   view.choice[10]->add("Self");
   view.choice[11]->add("Self");
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
-    sprintf(str, "View [%d]", i);
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
+    sprintf(str, "View [%lu]", i);
     view.choice[10]->add(str, 0, NULL);
     view.choice[11]->add(str, 0, NULL);
   }

@@ -210,13 +210,13 @@ public:
 
     std::map<Dof, int>::iterator it = unknown.find(key);
     if(it == unknown.end()) {
-      unsigned int size = unknown.size();
+      std::size_t size = unknown.size();
       unknown[key] = size;
     }
   }
   virtual inline void numberDof(const std::vector<Dof> &R)
   {
-    for(unsigned int i = 0; i < R.size(); i++) this->numberDof(R[i]);
+    for(std::size_t i = 0; i < R.size(); i++) this->numberDof(R[i]);
   }
   inline void numberDof(long int ent, int type) { numberDof(Dof(ent, type)); }
   inline void numberVertex(MVertex *v, int iComp, int iField)
@@ -357,8 +357,8 @@ public:
 
   virtual inline void sparsityDof(const std::vector<Dof> &keys)
   {
-    for(unsigned int itR = 0; itR < keys.size(); itR++) {
-      for(unsigned int itC = 0; itC < keys.size(); itC++) {
+    for(std::size_t itR = 0; itR < keys.size(); itR++) {
+      for(std::size_t itC = 0; itC < keys.size(); itC++) {
         insertInSparsityPattern(keys[itR], keys[itC]);
       }
     }
@@ -398,23 +398,23 @@ public:
 
     std::vector<int> NR(R.size()), NC(C.size());
 
-    for(unsigned int i = 0; i < R.size(); i++) {
+    for(std::size_t i = 0; i < R.size(); i++) {
       std::map<Dof, int>::iterator itR = unknown.find(R[i]);
       if(itR != unknown.end())
         NR[i] = itR->second;
       else
         NR[i] = -1;
     }
-    for(unsigned int i = 0; i < C.size(); i++) {
+    for(std::size_t i = 0; i < C.size(); i++) {
       std::map<Dof, int>::iterator itC = unknown.find(C[i]);
       if(itC != unknown.end())
         NC[i] = itC->second;
       else
         NC[i] = -1;
     }
-    for(unsigned int i = 0; i < R.size(); i++) {
+    for(std::size_t i = 0; i < R.size(); i++) {
       if(NR[i] != -1) {
-        for(unsigned int j = 0; j < C.size(); j++) {
+        for(std::size_t j = 0; j < C.size(); j++) {
           if(NC[j] != -1) {
             _current->addToMatrix(NR[i], NC[j], m(i, j));
           }
@@ -433,7 +433,7 @@ public:
         }
       }
       else {
-        for(unsigned int j = 0; j < C.size(); j++) {
+        for(std::size_t j = 0; j < C.size(); j++) {
           assembleLinConst(R[i], C[j], m(i, j));
         }
       }
@@ -446,14 +446,14 @@ public:
     if(_isParallel && !_parallelFinalized) _parallelFinalize();
     if(!_current->isAllocated()) _current->allocate(sizeOfR());
     std::vector<int> NR(R.size());
-    for(unsigned int i = 0; i < R.size(); i++) {
+    for(std::size_t i = 0; i < R.size(); i++) {
       std::map<Dof, int>::iterator itR = unknown.find(R[i]);
       if(itR != unknown.end())
         NR[i] = itR->second;
       else
         NR[i] = -1;
     }
-    for(unsigned int i = 0; i < R.size(); i++) {
+    for(std::size_t i = 0; i < R.size(); i++) {
       if(NR[i] != -1) {
         _current->addToRightHandSide(NR[i], m(i));
       }
@@ -478,16 +478,16 @@ public:
     if(_isParallel && !_parallelFinalized) _parallelFinalize();
     if(!_current->isAllocated()) _current->allocate(sizeOfR());
     std::vector<int> NR(R.size());
-    for(unsigned int i = 0; i < R.size(); i++) {
+    for(std::size_t i = 0; i < R.size(); i++) {
       std::map<Dof, int>::iterator itR = unknown.find(R[i]);
       if(itR != unknown.end())
         NR[i] = itR->second;
       else
         NR[i] = -1;
     }
-    for(unsigned int i = 0; i < R.size(); i++) {
+    for(std::size_t i = 0; i < R.size(); i++) {
       if(NR[i] != -1) {
-        for(unsigned int j = 0; j < R.size(); j++) {
+        for(std::size_t j = 0; j < R.size(); j++) {
           if(NR[j] != -1) {
             _current->addToMatrix(NR[i], NR[j], m(i, j));
           }
@@ -506,7 +506,7 @@ public:
         }
       }
       else {
-        for(unsigned int j = 0; j < R.size(); j++) {
+        for(std::size_t j = 0; j < R.size(); j++) {
           assembleLinConst(R[i], R[j], m(i, j));
         }
       }

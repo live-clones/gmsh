@@ -110,7 +110,7 @@ static void computeElementShapes(GFace *gf, double &worst, double &avg,
   best = 0.0;
   nT = 0;
   greaterThan = 0;
-  for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     double q = qmTriangle::gamma(gf->triangles[i]);
     if(q > .9) greaterThan++;
     avg += q;
@@ -130,7 +130,7 @@ private:
   {
     std::vector<MQuadrangle *> qnew;
     std::map<MEdge, MVertex *, Less_Edge> eds;
-    for(unsigned int i = 0; i < _gf->triangles.size(); i++) {
+    for(std::size_t i = 0; i < _gf->triangles.size(); i++) {
       MVertex *v[3];
       SPoint2 m[3];
       for(int j = 0; j < 3; j++) {
@@ -184,7 +184,7 @@ private:
       delete _gf->triangles[i];
     }
     _gf->triangles.clear();
-    for(unsigned int i = 0; i < _gf->quadrangles.size(); i++) {
+    for(std::size_t i = 0; i < _gf->quadrangles.size(); i++) {
       MVertex *v[4];
       SPoint2 m[4];
       for(int j = 0; j < 4; j++) {
@@ -248,7 +248,7 @@ private:
     std::vector<GEdge *> const &edges = _gf->edges();
     std::vector<GEdge *>::const_iterator ite = edges.begin();
     while(ite != edges.end()) {
-      for(unsigned int i = 0; i < (*ite)->lines.size(); i++) {
+      for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
         delete(*ite)->lines[i];
       }
       (*ite)->lines = _backup[*ite];
@@ -274,7 +274,7 @@ public:
       if(!(*ite)->isMeshDegenerated()) {
         std::vector<MLine *> temp;
         (*ite)->mesh_vertices.clear();
-        for(unsigned int i = 0; i < (*ite)->lines.size(); i += 2) {
+        for(std::size_t i = 0; i < (*ite)->lines.size(); i += 2) {
           if(i + 1 >= (*ite)->lines.size()) {
             Msg::Error("1D mesh cannot be divided by 2");
             break;
@@ -415,7 +415,7 @@ static void copyMesh(GFace *source, GFace *target)
   // now transform
   std::vector<double> &tfo = target->affineTransform;
 
-  for(unsigned int i = 0; i < source->mesh_vertices.size(); i++) {
+  for(std::size_t i = 0; i < source->mesh_vertices.size(); i++) {
     MVertex *vs = source->mesh_vertices[i];
     SPoint2 XXX;
 
@@ -736,7 +736,7 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
 
   bool _fatallyFailed;
 
-  for(unsigned int i = 0; i < ge->lines.size(); i++) {
+  for(std::size_t i = 0; i < ge->lines.size(); i++) {
     MVertex *vstart = ge->lines[i]->getVertex(0);
     MVertex *vend = ge->lines[i]->getVertex(1);
     std::map<MVertex *, BDS_Point *>::iterator itpstart =
@@ -833,13 +833,13 @@ static void modifyInitialMeshForBoundaryLayers(
   std::vector<MLine *> _lines;
 
   while(ite != edges.end()) {
-    for(unsigned int i = 0; i < (*ite)->lines.size(); i++) {
+    for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
       _lines.push_back((*ite)->lines[i]);
       MVertex *v1 = (*ite)->lines[i]->getVertex(0);
       MVertex *v2 = (*ite)->lines[i]->getVertex(1);
       MEdge dv(v1, v2);
       addOrRemove(v1, v2, bedges, removed);
-      for(unsigned int SIDE = 0; SIDE < _columns->_normals.count(dv); SIDE++) {
+      for(std::size_t SIDE = 0; SIDE < _columns->_normals.count(dv); SIDE++) {
         std::vector<MElement *> myCol;
         edgeColumn ec = _columns->getColumns(v1, v2, SIDE);
         const BoundaryLayerData &c1 = ec._c1;
@@ -885,7 +885,7 @@ static void modifyInitialMeshForBoundaryLayers(
                     v->x(), v->y(), v->z(), N + 1, N + 1, N + 1);
         }
         // int M = std::max(c1._column.size(),c2._column.size());
-        for(unsigned int l = 0; l < myCol.size(); l++)
+        for(std::size_t l = 0; l < myCol.size(); l++)
           _columns->_toFirst[myCol[l]] = myCol[0];
         _columns->_elemColumns[myCol[0]] = myCol;
       }
@@ -938,7 +938,7 @@ static void modifyInitialMeshForBoundaryLayers(
                     v21->y(), v21->z(), l + 1, l + 1, l + 1);
         }
       }
-      for(unsigned int l = 0; l < myCol.size(); l++)
+      for(std::size_t l = 0; l < myCol.size(); l++)
         _columns->_toFirst[myCol[l]] = myCol[0];
       _columns->_elemColumns[myCol[0]] = myCol;
     }
@@ -952,7 +952,7 @@ static void modifyInitialMeshForBoundaryLayers(
   filterOverlappingElements(_lines, blTris, blQuads, _columns->_elemColumns,
                             _columns->_toFirst);
 
-  for(unsigned int i = 0; i < blQuads.size(); i++) {
+  for(std::size_t i = 0; i < blQuads.size(); i++) {
     addOrRemove(blQuads[i]->getVertex(0), blQuads[i]->getVertex(1), bedges,
                 removed);
     addOrRemove(blQuads[i]->getVertex(1), blQuads[i]->getVertex(2), bedges,
@@ -965,7 +965,7 @@ static void modifyInitialMeshForBoundaryLayers(
       if(blQuads[i]->getVertex(j)->onWhat() == gf)
         verts.insert(blQuads[i]->getVertex(j));
   }
-  for(unsigned int i = 0; i < blTris.size(); i++) {
+  for(std::size_t i = 0; i < blTris.size(); i++) {
     addOrRemove(blTris[i]->getVertex(0), blTris[i]->getVertex(1), bedges,
                 removed);
     addOrRemove(blTris[i]->getVertex(1), blTris[i]->getVertex(2), bedges,
@@ -1040,7 +1040,7 @@ static bool improved_translate(GFace *gf, MVertex *vertex, SVector3 &v1,
 static void directions_storage(GFace *gf)
 {
   std::set<MVertex *> vertices;
-  for(unsigned int i = 0; i < gf->getNumMeshElements(); i++) {
+  for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *element = gf->getMeshElement(i);
     for(std::size_t j = 0; j < element->getNumVertices(); j++) {
       MVertex *vertex = element->getVertex(j);
@@ -1173,7 +1173,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       return false;
     }
     if(!(*ite)->isMeshDegenerated()) {
-      for(unsigned int i = 0; i < (*ite)->lines.size(); i++) {
+      for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
         MVertex *v1 = (*ite)->lines[i]->getVertex(0);
         MVertex *v2 = (*ite)->lines[i]->getVertex(1);
 
@@ -1296,7 +1296,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     SVector3 dd(bbox.max(), bbox.min());
     double LC2D = norm(dd);
     DocRecord doc(points.size() + 4);
-    for(unsigned int i = 0; i < points.size(); i++) {
+    for(std::size_t i = 0; i < points.size(); i++) {
       double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
                   (double)RAND_MAX;
       double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
@@ -1362,7 +1362,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     v.insert(v.end(), all_vertices.begin(), all_vertices.end());
 
     std::map<MVertex *, SPoint3> pos;
-    for(unsigned int i = 0; i < v.size(); i++) {
+    for(std::size_t i = 0; i < v.size(); i++) {
       MVertex *v0 = v[i];
       BDS_Point *p0 = recoverMapInv[v0];
       pos[v0] = SPoint3(v0->x(), v0->y(), v0->z());
@@ -1370,7 +1370,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     }
     delaunayMeshIn2D(v, result, 0);
 
-    for(unsigned int i = 0; i < v.size() - 4; i++) {
+    for(std::size_t i = 0; i < v.size() - 4; i++) {
       MVertex *v0 = v[i];
       SPoint3 pp = pos[v0];
       v0->setXYZ(pp.x(), pp.y(), pp.z());
@@ -1386,7 +1386,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       pp->g = g;
     }
     // add the triangles
-    for(unsigned int i = 0; i < result.size(); i++) {
+    for(std::size_t i = 0; i < result.size(); i++) {
       MVertex *v0 = result[i]->getVertex(0);
       MVertex *v1 = result[i]->getVertex(1);
       MVertex *v2 = result[i]->getVertex(2);
@@ -1792,7 +1792,7 @@ static inline double dist2(const SPoint2 &p1, const SPoint2 &p2)
 static void printMesh1d(int iEdge, int seam, std::vector<SPoint2> &m)
 {
   printf("Mesh1D for edge %d seam %d\n", iEdge, seam);
-  for(unsigned int i = 0; i < m.size(); i++){
+  for(std::size_t i = 0; i < m.size(); i++){
     printf("%12.5E %12.5E\n", m[i].x(), m[i].y());
   }
 }
@@ -1834,7 +1834,7 @@ static bool buildConsecutiveListOfVertices(
 
     mesh1d.push_back(ges.ge->reparamOnFace(gf, range.low(), 1));
     if(seam) mesh1d_seam.push_back(ges.ge->reparamOnFace(gf, range.low(), -1));
-    for(unsigned int i = 0; i < ges.ge->mesh_vertices.size(); i++) {
+    for(std::size_t i = 0; i < ges.ge->mesh_vertices.size(); i++) {
       MVertex *here = ges.ge->mesh_vertices[i];
       double u;
       here->getParameter(0, u);
@@ -1964,7 +1964,7 @@ static bool buildConsecutiveListOfVertices(
     if(found._sign == 1) {
       if(found.ge->getBeginVertex()) {
         edgeLoop.push_back(found.ge->getBeginVertex()->mesh_vertices[0]);
-        for(unsigned int i = 0; i < found.ge->mesh_vertices.size(); i++)
+        for(std::size_t i = 0; i < found.ge->mesh_vertices.size(); i++)
           edgeLoop.push_back(found.ge->mesh_vertices[i]);
       }
     }
@@ -1981,7 +1981,7 @@ static bool buildConsecutiveListOfVertices(
              (int)coords.size());
 
     std::vector<BDS_Point *> edgeLoop_BDS;
-    for(unsigned int i = 0; i < edgeLoop.size(); i++) {
+    for(std::size_t i = 0; i < edgeLoop.size(); i++) {
       MVertex *here = edgeLoop[i];
       GEntity *ge = here->onWhat();
 
@@ -2189,8 +2189,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       std::vector<GEdge *>::const_iterator ite = emb_edges.begin();
       std::set<MVertex *> vs;
       while(ite != emb_edges.end()) {
-        for(unsigned int i = 0; i < (*ite)->lines.size(); i++) {
-          for(unsigned int j = 0; j < 2; j++) {
+        for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
+          for(std::size_t j = 0; j < 2; j++) {
             MVertex *v = (*ite)->lines[i]->getVertex(j);
             if(invertedRecoverMap.find(v) == invertedRecoverMap.end() &&
                vs.find(v) == vs.end()) {
@@ -2232,8 +2232,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     std::map<MVertex *, BDS_Point *> facile;
     while(ite != emb_edges.end()) {
       m->add_geom(-(*ite)->tag(), 1);
-      for(unsigned int i = 0; i < (*ite)->lines.size(); i++) {
-        for(unsigned int j = 0; j < 2; j++) {
+      for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
+        for(std::size_t j = 0; j < 2; j++) {
           MVertex *v = (*ite)->lines[i]->getVertex(j);
           BDS_Point *pp = 0;
           const std::map<MVertex *, std::set<BDS_Point *> >::iterator it =
@@ -2309,7 +2309,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
           }
         }
       }
-      for(unsigned int i = 0; i < (*ite)->lines.size(); i++) {
+      for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
         BDS_Point *p0 = facile[(*ite)->lines[i]->getVertex(0)];
         BDS_Point *p1 = facile[(*ite)->lines[i]->getVertex(1)];
         edgesEmbedded.push_back(p0->iD);
@@ -2318,9 +2318,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       ++ite;
     }
 
-    for(unsigned int i = 0; i < edgeLoops_BDS.size(); i++) {
+    for(std::size_t i = 0; i < edgeLoops_BDS.size(); i++) {
       std::vector<BDS_Point *> &edgeLoop_BDS = edgeLoops_BDS[i];
-      for(unsigned int j = 0; j < edgeLoop_BDS.size(); j++) {
+      for(std::size_t j = 0; j < edgeLoop_BDS.size(); j++) {
         BDS_Point *pp = edgeLoop_BDS[j];
         double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
                     (double)RAND_MAX;
@@ -2406,7 +2406,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
   bool _fatallyFailed;
 
-  for(unsigned int i = 0; i < edgesEmbedded.size() / 2; i++) {
+  for(std::size_t i = 0; i < edgesEmbedded.size() / 2; i++) {
     BDS_Edge *e = m->recover_edge(edgesEmbedded[2 * i],
                                   edgesEmbedded[2 * i + 1], _fatallyFailed);
     if(!e) {
@@ -2423,9 +2423,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   std::set<EdgeToRecover> edgesNotRecovered;
 
   bool doItAgain = gf->meshStatistics.refineAllEdges;
-  for(unsigned int i = 0; i < edgeLoops_BDS.size(); i++) {
+  for(std::size_t i = 0; i < edgeLoops_BDS.size(); i++) {
     std::vector<BDS_Point *> &edgeLoop_BDS = edgeLoops_BDS[i];
-    for(unsigned int j = 0; j < edgeLoop_BDS.size(); j++) {
+    for(std::size_t j = 0; j < edgeLoop_BDS.size(); j++) {
       int num1 = edgeLoop_BDS[j]->iD;
       int num2 = edgeLoop_BDS[(j + 1) % edgeLoop_BDS.size()]->iD;
       BDS_Edge *e = m->find_edge(num1, num2);
@@ -2491,7 +2491,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
         std::vector<GEdge *> eds = gf->edges();
         edgesNotRecovered.clear();
         for(size_t i = 0; i < eds.size(); i++) {
-          const unsigned int NN = eds[i]->lines.size() ? 1 : 0;
+          const std::size_t NN = eds[i]->lines.size() ? 1 : 0;
           for(size_t j = 0; j < NN; j++) {
             MVertex *v1 = eds[i]->lines[j]->getVertex(0);
             MVertex *v2 = eds[i]->lines[j]->getVertex(1);
@@ -3019,7 +3019,7 @@ static void getGFaceOrientation(GFace *gf, BoundaryLayerColumns *blc,
                                 bool existBL, bool fromVert, int &orientNonBL,
                                 int &orientBL)
 {
-  for(unsigned int iEl = 0; iEl < gf->getNumMeshElements(); iEl++) {
+  for(std::size_t iEl = 0; iEl < gf->getNumMeshElements(); iEl++) {
     MElement *e = gf->getMeshElement(iEl);
     const bool isBLEl =
       existBL && (blc->_toFirst.find(e) != blc->_toFirst.end());
@@ -3087,7 +3087,7 @@ void orientMeshGFace::operator()(GFace *gf)
     // Reverse BL and non-BL elements if needed
     if(existBL) { // If there is a BL, test BL/non-BL elements
       if((orientNonBL == -1) || (orientBL == -1)) {
-        for(unsigned int iEl = 0; iEl < gf->getNumMeshElements(); iEl++) {
+        for(std::size_t iEl = 0; iEl < gf->getNumMeshElements(); iEl++) {
           MElement *e = gf->getMeshElement(iEl);
           // If el. outside of BL...
           if(blc->_toFirst.find(e) == blc->_toFirst.end()) {
@@ -3102,7 +3102,7 @@ void orientMeshGFace::operator()(GFace *gf)
     }
     else { // If no BL, reverse all elements if needed
       if(orientNonBL == -1) {
-        for(unsigned int iEl = 0; iEl < gf->getNumMeshElements(); iEl++)
+        for(std::size_t iEl = 0; iEl < gf->getNumMeshElements(); iEl++)
           gf->getMeshElement(iEl)->reverse();
       }
     }
@@ -3110,7 +3110,7 @@ void orientMeshGFace::operator()(GFace *gf)
 
   // Apply user-specified mesh orientation constraints
   if(gf->meshAttributes.reverseMesh) {
-    for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
+    for(std::size_t k = 0; k < gf->getNumMeshElements(); k++)
       gf->getMeshElement(k)->reverse();
   }
 }

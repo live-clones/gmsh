@@ -59,8 +59,8 @@ int GModel::readP3D(const std::string &name)
           }
         }
       }
-      for(unsigned int i = 0; i < gf->transfinite_vertices.size() - 1; i++)
-        for(unsigned int j = 0; j < gf->transfinite_vertices[0].size() - 1; j++)
+      for(std::size_t i = 0; i < gf->transfinite_vertices.size() - 1; i++)
+        for(std::size_t j = 0; j < gf->transfinite_vertices[0].size() - 1; j++)
           gf->quadrangles.push_back(new MQuadrangle(
             gf->transfinite_vertices[i][j], gf->transfinite_vertices[i + 1][j],
             gf->transfinite_vertices[i + 1][j + 1],
@@ -100,9 +100,9 @@ int GModel::readP3D(const std::string &name)
           }
         }
       }
-      for(unsigned int i = 0; i < gr->transfinite_vertices.size() - 1; i++)
-        for(unsigned int j = 0; j < gr->transfinite_vertices[0].size() - 1; j++)
-          for(unsigned int k = 0; k < gr->transfinite_vertices[0][0].size() - 1;
+      for(std::size_t i = 0; i < gr->transfinite_vertices.size() - 1; i++)
+        for(std::size_t j = 0; j < gr->transfinite_vertices[0].size() - 1; j++)
+          for(std::size_t k = 0; k < gr->transfinite_vertices[0][0].size() - 1;
               k++)
             gr->hexahedra.push_back(
               new MHexahedron(gr->transfinite_vertices[i][j][k],
@@ -154,20 +154,20 @@ int GModel::writeP3D(const std::string &name, bool saveAll,
 
   fprintf(fp, "%d\n", (int)(faces.size() + regions.size()));
 
-  for(unsigned int i = 0; i < faces.size(); i++)
+  for(std::size_t i = 0; i < faces.size(); i++)
     fprintf(fp, "%d %d 1\n", (int)faces[i]->transfinite_vertices.size(),
             (int)faces[i]->transfinite_vertices[0].size());
 
-  for(unsigned int i = 0; i < regions.size(); i++)
+  for(std::size_t i = 0; i < regions.size(); i++)
     fprintf(fp, "%d %d %d\n", (int)regions[i]->transfinite_vertices.size(),
             (int)regions[i]->transfinite_vertices[0].size(),
             (int)regions[i]->transfinite_vertices[0][0].size());
 
-  for(unsigned int i = 0; i < faces.size(); i++) {
+  for(std::size_t i = 0; i < faces.size(); i++) {
     GFace *gf = faces[i];
     for(int coord = 0; coord < 3; coord++) {
-      for(unsigned int k = 0; k < gf->transfinite_vertices[0].size(); k++) {
-        for(unsigned int j = 0; j < gf->transfinite_vertices.size(); j++) {
+      for(std::size_t k = 0; k < gf->transfinite_vertices[0].size(); k++) {
+        for(std::size_t j = 0; j < gf->transfinite_vertices.size(); j++) {
           MVertex *v = gf->transfinite_vertices[j][k];
           double d = (coord == 0) ? v->x() : (coord == 1) ? v->y() : v->z();
           fprintf(fp, "%.16g ", d * scalingFactor);
@@ -177,12 +177,12 @@ int GModel::writeP3D(const std::string &name, bool saveAll,
     }
   }
 
-  for(unsigned int i = 0; i < regions.size(); i++) {
+  for(std::size_t i = 0; i < regions.size(); i++) {
     GRegion *gr = regions[i];
     for(int coord = 0; coord < 3; coord++) {
-      for(unsigned int l = 0; l < gr->transfinite_vertices[0][0].size(); l++) {
-        for(unsigned int k = 0; k < gr->transfinite_vertices[0].size(); k++) {
-          for(unsigned int j = 0; j < gr->transfinite_vertices.size(); j++) {
+      for(std::size_t l = 0; l < gr->transfinite_vertices[0][0].size(); l++) {
+        for(std::size_t k = 0; k < gr->transfinite_vertices[0].size(); k++) {
+          for(std::size_t j = 0; j < gr->transfinite_vertices.size(); j++) {
             MVertex *v = gr->transfinite_vertices[j][k][l];
             double d = (coord == 0) ? v->x() : (coord == 1) ? v->y() : v->z();
             fprintf(fp, "%.16g ", d * scalingFactor);

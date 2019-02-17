@@ -74,7 +74,7 @@ bool PView::writeX3D(const std::string &fileName)
   // tags duplicated triangles
   int _size = 1;
   if(!CTX::instance()->print.x3dRemoveInnerBorders) {
-    for(unsigned int i = 0; i < PView::list.size(); i++) {
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
       VertexArray *va = PView::list[i]->va_triangles;
       _size += va->getNumVertices() / 3;
     }
@@ -85,7 +85,7 @@ bool PView::writeX3D(const std::string &fileName)
     // evaluate bbox of each triangle
     std::list<TriangleToSort *> tlist;
     tlist.clear();
-    for(unsigned int ivp = 0; ivp < PView::list.size(); ivp++) {
+    for(std::size_t ivp = 0; ivp < PView::list.size(); ivp++) {
       VertexArray *va = PView::list[ivp]->va_triangles;
       for(int ipt = 0; ipt < va->getNumVertices(); ipt += 3) {
         float *p0 = va->getVertexArray(3 * ipt);
@@ -265,7 +265,7 @@ bool PView::writeX3D(const std::string &fileName)
   double font_size = 0.02;
   if(!CTX::instance()->print.x3dCompatibility) {
     std::vector<PView *> scales;
-    for(unsigned int i = 0; i < PView::list.size(); i++) {
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
       PViewData *data = PView::list[i]->getData();
       PViewOptions *opt = PView::list[i]->getOptions();
       if(!data->getDirty() && opt->visible && opt->showScale &&
@@ -355,7 +355,7 @@ bool PView::writeX3D(const std::string &fileName)
       const double bar_size = tic * 1.6;
       double width = 0., width_prev = 0., width_total = 0.;
 
-      for(unsigned int i = 0; i < scales.size(); i++) {
+      for(std::size_t i = 0; i < scales.size(); i++) {
         PView *p = scales[i];
         PViewData *data = p->getData();
         PViewOptions *opt = p->getOptions();
@@ -434,7 +434,7 @@ bool PView::writeX3D(const std::string &fileName)
 
   // points - NOT TREATED YET
   /*
-    for(unsigned int ipv = 0; ipv < PView::list.size(); ipv++){
+    for(std::size_t ipv = 0; ipv < PView::list.size(); ipv++){
     data = PView::list[ipv]->getData(true);
     opt  = PView::list[ipv]->getOptions();
     if( !data->getDirty() && opt->visible ) {
@@ -464,7 +464,7 @@ bool PView::writeX3D(const std::string &fileName)
   int _ind = 0;
   fprintf(fp, "    <Shape> \n");
   fprintf(fp, "      <IndexedLineSet coordIndex=' ");
-  for(unsigned int ipv = 0; ipv < PView::list.size(); ipv++) {
+  for(std::size_t ipv = 0; ipv < PView::list.size(); ipv++) {
     PViewData *data = PView::list[ipv]->getData(true);
     PViewOptions *opt = PView::list[ipv]->getOptions();
     if(!data->getDirty() && opt->visible) {
@@ -479,7 +479,7 @@ bool PView::writeX3D(const std::string &fileName)
   } // end for loop on PView::list
   fprintf(fp, "'>\n");
   fprintf(fp, "        <Coordinate DEF='TurnPoints' point=' ");
-  for(unsigned int ipv = 0; ipv < PView::list.size(); ipv++) {
+  for(std::size_t ipv = 0; ipv < PView::list.size(); ipv++) {
     PViewData *data = PView::list[ipv]->getData(true);
     PViewOptions *opt = PView::list[ipv]->getOptions();
     if(!data->getDirty() && opt->visible) {
@@ -504,7 +504,7 @@ bool PView::writeX3D(const std::string &fileName)
   fprintf(fp, "    </Shape>\n");
 
   // vectors - colored arrow replaced by colored cones
-  for(unsigned int ipv = 0; ipv < PView::list.size(); ipv++) {
+  for(std::size_t ipv = 0; ipv < PView::list.size(); ipv++) {
     data = PView::list[ipv]->getData(true);
     opt = PView::list[ipv]->getOptions();
     if(!data->getDirty() && opt->visible) {
@@ -556,7 +556,7 @@ bool PView::writeX3D(const std::string &fileName)
               "colorPerVertex='true' \n ");
   fprintf(
     fp, "         normalPerVertex='true'  containerField='geometry' index=' ");
-  for(unsigned int ipv = 0; ipv < PView::list.size(); ipv++) {
+  for(std::size_t ipv = 0; ipv < PView::list.size(); ipv++) {
     data = PView::list[ipv]->getData(true);
     opt = PView::list[ipv]->getOptions();
     if(!data->getDirty() && opt->visible) {
@@ -575,7 +575,7 @@ bool PView::writeX3D(const std::string &fileName)
   fprintf(fp, " ' > \n");
   fprintf(fp, "          <Coordinate point='");
   _count = 0;
-  for(unsigned int ipv = 0; ipv < PView::list.size(); ipv++) {
+  for(std::size_t ipv = 0; ipv < PView::list.size(); ipv++) {
     data = PView::list[ipv]->getData(true);
     opt = PView::list[ipv]->getOptions();
     if(!data->getDirty() && opt->visible) {
@@ -598,7 +598,7 @@ bool PView::writeX3D(const std::string &fileName)
 
   fprintf(fp, "          <Color color='");
   _count = 0;
-  for(unsigned int ipv = 0; ipv < PView::list.size(); ipv++) {
+  for(std::size_t ipv = 0; ipv < PView::list.size(); ipv++) {
     data = PView::list[ipv]->getData(true);
     opt = PView::list[ipv]->getOptions();
     if(!data->getDirty() && opt->visible) {

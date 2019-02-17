@@ -134,7 +134,7 @@ static void PrintStringOptions(int num, int level, int diff, int help,
           fprintf(file, "%s\n", tmp);
         else{
           // remove \n, \t, \r
-          for(unsigned int i = 0; i < strlen(tmp); i++)
+          for(std::size_t i = 0; i < strlen(tmp); i++)
             if(tmp[i] == '\n' || tmp[i] == '\t' || tmp[i] == '\r') tmp[i] = ' ';
           if(vec)
             vec->push_back(std::string(tmp) + '\0' + "string");
@@ -169,7 +169,7 @@ static void PrintStringOptionsDoc(StringXString s[], const char *prefix, FILE *f
 
     // sanitize the string for texinfo
     std::string val = s[i].function(0, GMSH_GET, "");
-    for(unsigned int j = 1; j < val.size(); j++){
+    for(std::size_t j = 1; j < val.size(); j++){
       if(val[j] == '\n' && val[j - 1] == '\n')
         val[j - 1] = '.';
     }
@@ -502,7 +502,7 @@ void ReInitOptions(int num)
 
 #if defined(HAVE_POST)
   PView::list = tmp;
-  for(unsigned int i = 0; i < PView::list.size(); i++)
+  for(std::size_t i = 0; i < PView::list.size(); i++)
     PView::list[i]->setOptions();
 #endif
 }
@@ -708,9 +708,9 @@ void PrintOptions(int num, int level, int diff, int help, const char *filename,
 
   if(level & GMSH_FULLRC) {
 #if defined(HAVE_POST)
-    for(unsigned int i = 0; i < PView::list.size(); i++) {
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
       char tmp[256];
-      sprintf(tmp, "View[%d].", i);
+      sprintf(tmp, "View[%lu].", i);
       PrintOptionCategory(level, diff, help, "View options (strings)", file, vec);
       PrintStringOptions(i, level, diff, help, ViewOptions_String, tmp, file, vec);
       PrintOptionCategory(level, diff, help, "View options (numbers)", file, vec);
@@ -942,7 +942,7 @@ void PrintOptionsDoc()
     }
     std::vector<std::pair<std::string, std::string> > s = GetShortcutsUsage("Ctrl+");
     fprintf(file, "%s@table @kbd\n", warn);
-    for(unsigned int i = 0; i < s.size(); i++)
+    for(std::size_t i = 0; i < s.size(); i++)
       fprintf(file, "@item %s\n%s\n", s[i].first.c_str(), s[i].second.c_str());
     fprintf(file, "@end table\n");
     fclose(file);
@@ -955,7 +955,7 @@ void PrintOptionsDoc()
     }
     std::vector<std::pair<std::string, std::string> > s = GetMouseUsage();
     fprintf(file, "%s@table @kbd\n", warn);
-    for(unsigned int i = 0; i < s.size(); i++)
+    for(std::size_t i = 0; i < s.size(); i++)
       fprintf(file, "@item %s\n%s\n", s[i].first.c_str(), s[i].second.c_str());
     fprintf(file, "@end table\n");
     fclose(file);
@@ -968,7 +968,7 @@ void PrintOptionsDoc()
     }
     std::vector<std::pair<std::string, std::string> > s = GetUsage();
     fprintf(file, "%s@ftable @code\n", warn);
-    for(unsigned int i = 0; i < s.size(); i++)
+    for(std::size_t i = 0; i < s.size(); i++)
       if(s[i].first.size() && s[i].second.size())
         fprintf(file, "@item %s\n%s\n", s[i].first.c_str(), s[i].second.c_str());
       else if(s[i].first.size() && s[i].second.empty())
@@ -1106,8 +1106,8 @@ std::string opt_general_background_image_filename(OPT_ARGS_STR)
   if(action & GMSH_SET){
 #if defined(HAVE_FLTK)
     if(CTX::instance()->bgImageFileName != val && FlGui::available()){
-      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
-        for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
           FlGui::instance()->graph[i]->gl[j]->getDrawContext()->
             invalidateBgImageTexture();
     }
@@ -3012,16 +3012,16 @@ double opt_general_mouse_selection(OPT_ARGS_NUM)
     if(CTX::instance()->mouseSelection){
       if(FlGui::available())
         Msg::StatusBar(false, "Mouse selection ON");
-      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->getSelectionButton()->color(FL_BACKGROUND_COLOR);
     }
     else{
       if(FlGui::available())
         Msg::StatusBar(false, "Mouse selection OFF");
-      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->getSelectionButton()->color(FL_RED);
     }
-    for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       FlGui::instance()->graph[i]->getSelectionButton()->redraw();
   }
 #endif
@@ -3387,8 +3387,8 @@ double opt_general_double_buffer(OPT_ARGS_NUM)
     if(FlGui::available()) {
       int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
       if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
-        for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
           FlGui::instance()->graph[i]->gl[j]->mode(mode);
     }
 #endif
@@ -3409,8 +3409,8 @@ double opt_general_antialiasing(OPT_ARGS_NUM)
     if(FlGui::available()) {
       int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
       if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
-        for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
           FlGui::instance()->graph[i]->gl[j]->mode(mode);
     }
 #endif
@@ -3488,7 +3488,7 @@ double opt_general_color_scheme(OPT_ARGS_NUM)
     SetDefaultColorOptions(0, SolverOptions_Color);
     SetDefaultColorOptions(0, PostProcessingOptions_Color);
 #if defined(HAVE_POST)
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       SetDefaultColorOptions(i, ViewOptions_Color);
 #endif
     SetDefaultColorOptions(0, PrintOptions_Color);
@@ -3499,7 +3499,7 @@ double opt_general_color_scheme(OPT_ARGS_NUM)
     SetColorOptionsGUI(0, SolverOptions_Color);
     SetColorOptionsGUI(0, PostProcessingOptions_Color);
 #if defined(HAVE_POST)
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       SetColorOptionsGUI(i, ViewOptions_Color);
 #endif
     SetColorOptionsGUI(0, PrintOptions_Color);
@@ -6722,7 +6722,7 @@ double opt_post_anim_cycle(OPT_ARGS_NUM)
     FlGui::instance()->options->post.butt[0]->value
       (CTX::instance()->post.animCycle);
   if(FlGui::available())
-    for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       FlGui::instance()->graph[i]->checkAnimButtons();
 #endif
   return CTX::instance()->post.animCycle;
@@ -6835,7 +6835,7 @@ double opt_view_nb_timestep(OPT_ARGS_NUM)
   if(_gui_action_valid(action, num))
     FlGui::instance()->options->view.value[50]->maximum(data->getNumTimeSteps() - 1);
   if(FlGui::available())
-    for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       FlGui::instance()->graph[i]->checkAnimButtons();
 #endif
   return data->getNumTimeSteps();

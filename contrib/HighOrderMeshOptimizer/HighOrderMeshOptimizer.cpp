@@ -60,8 +60,8 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
   std::vector<GEntity *> entities;
   gm->getEntities(entities);
   fprintf(f, "%d %d\n", numVertices, dim);
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) {
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
       MVertex *v = entities[i]->mesh_vertices[j];
       if(dim == 2)
         fprintf(f, "%d %22.15E %22.15E\n", v->getIndex(), v->x(), v->y());

@@ -1013,7 +1013,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
   try {
     TColgp_Array1OfPnt ctrlPoints(1, pointTags.size());
     TopoDS_Vertex start, end;
-    for(unsigned int i = 0; i < pointTags.size(); i++) {
+    for(std::size_t i = 0; i < pointTags.size(); i++) {
       if(!_tagVertex.IsBound(pointTags[i])) {
         Msg::Error("Unknown OpenCASCADE point with tag %d", pointTags[i]);
         return false;
@@ -1079,7 +1079,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
         Msg::Error("Number of BSpline knots (%d) should be >= 2", knots.size());
         return false;
       }
-      for(unsigned int i = 0; i < knots.size() - 1; i++) {
+      for(std::size_t i = 0; i < knots.size() - 1; i++) {
         if(knots[i] >= knots[i + 1]) {
           Msg::Error("BSpline knots should be increasing: knot %d (%g) > "
                      "knot %d (%g)",
@@ -1087,7 +1087,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
           return false;
         }
       }
-      for(unsigned int i = 0; i < multiplicities.size(); i++) {
+      for(std::size_t i = 0; i < multiplicities.size(); i++) {
         if(multiplicities[i] < 1) {
           Msg::Error("BSpline multiplicities should be >= 1");
           return false;
@@ -1114,7 +1114,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
         }
         // TODO C++11 std::accumulate
         std::size_t sum = 0;
-        for(unsigned int i = 0; i < multiplicities.size() - 1; i++)
+        for(std::size_t i = 0; i < multiplicities.size() - 1; i++)
           sum += multiplicities[i];
         if(pointTags.size() - 1 != sum) {
           Msg::Error(
@@ -1126,7 +1126,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       }
       else {
         std::size_t sum = 0;
-        for(unsigned int i = 0; i < multiplicities.size(); i++)
+        for(std::size_t i = 0; i < multiplicities.size(); i++)
           sum += multiplicities[i];
         if(pointTags.size() != sum - degree - 1) {
           Msg::Error("Number of control points for non-periodic BSpline should "
@@ -1142,10 +1142,10 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
         w.SetValue(i, weights[i - 1]);
       }
       TColStd_Array1OfReal k(1, knots.size());
-      for(unsigned int i = 0; i < knots.size(); i++)
+      for(std::size_t i = 0; i < knots.size(); i++)
         k.SetValue(i + 1, knots[i]);
       TColStd_Array1OfInteger m(1, multiplicities.size());
-      for(unsigned int i = 0; i < multiplicities.size(); i++)
+      for(std::size_t i = 0; i < multiplicities.size(); i++)
         m.SetValue(i + 1, multiplicities[i]);
       Handle(Geom_BSplineCurve) curve =
         new Geom_BSplineCurve(p, w, k, m, degree, periodic);
@@ -1219,14 +1219,14 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
         return false;
       }
       k.resize(num_knots);
-      for(unsigned int i = 0; i < k.size(); i++) k[i] = i;
+      for(std::size_t i = 0; i < k.size(); i++) k[i] = i;
       m.resize(num_knots, 1);
       m.front() = d + 1;
       m.back() = d + 1;
     }
     else {
       k.resize(pointTags.size() - 1);
-      for(unsigned int i = 0; i < k.size(); i++) k[i] = i;
+      for(std::size_t i = 0; i < k.size(); i++) k[i] = i;
       m.resize(k.size(), 1);
       m.front() = d - 1;
       m.back() = d - 1;
@@ -1246,7 +1246,7 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
   TopoDS_Wire result;
   try {
     BRepBuilderAPI_MakeWire w;
-    for(unsigned int i = 0; i < curveTags.size(); i++) {
+    for(std::size_t i = 0; i < curveTags.size(); i++) {
       if(!_tagEdge.IsBound(curveTags[i])) {
         Msg::Error("Unknown OpenCASCADE curve with tag %d", curveTags[i]);
         return false;
@@ -1273,7 +1273,7 @@ bool OCC_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags)
   std::vector<int> tags(curveTags);
   // all curve tags are > 0 for OCC : to improve compatibility between GEO and
   // OCC factories, allow negative tags - and simply ignore the sign here
-  for(unsigned int i = 0; i < tags.size(); i++) tags[i] = std::abs(tags[i]);
+  for(std::size_t i = 0; i < tags.size(); i++) tags[i] = std::abs(tags[i]);
   return addWire(tag, tags, true);
 }
 
@@ -1436,7 +1436,7 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
   }
 
   std::vector<TopoDS_Wire> wires;
-  for(unsigned int i = 0; i < wireTags.size(); i++) {
+  for(std::size_t i = 0; i < wireTags.size(); i++) {
     // all wire tags are > 0 for OCC : to improve compatibility between GEO and
     // OCC factories, allow negative tags - and simply ignore the sign here
     int wireTag = std::abs(wireTags[i]);
@@ -1456,7 +1456,7 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 
   try {
     BRepBuilderAPI_MakeFace f(wires[0]);
-    for(unsigned int i = 1; i < wires.size(); i++) {
+    for(std::size_t i = 1; i < wires.size(); i++) {
       // holes
       TopoDS_Wire w = wires[i];
       w.Orientation(TopAbs_REVERSED);
@@ -1525,7 +1525,7 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
       i++;
     }
     // point constraints
-    for(unsigned int i = 0; i < pointTags.size(); i++) {
+    for(std::size_t i = 0; i < pointTags.size(); i++) {
       if(!_tagVertex.IsBound(pointTags[i])) {
         Msg::Error("Unknown OpenCASCADE point with tag %d", pointTags[i]);
         return false;
@@ -1569,7 +1569,7 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
   TopoDS_Shape result;
   try {
     BRepBuilderAPI_Sewing s;
-    for(unsigned int i = 0; i < surfaceTags.size(); i++) {
+    for(std::size_t i = 0; i < surfaceTags.size(); i++) {
       if(!_tagFace.IsBound(surfaceTags[i])) {
         Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[i]);
         return false;
@@ -1639,7 +1639,7 @@ bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
   TopoDS_Solid result;
   try {
     BRepBuilderAPI_MakeSolid s;
-    for(unsigned int i = 0; i < shellTags.size(); i++) {
+    for(std::size_t i = 0; i < shellTags.size(); i++) {
       if(!_tagShell.IsBound(shellTags[i])) {
         Msg::Error("Unknown OpenCASCADE surface loop with tag %d",
                    shellTags[i]);
@@ -1929,7 +1929,7 @@ bool OCC_Internals::addThruSections(
   TopoDS_Shape result;
   try {
     BRepOffsetAPI_ThruSections ts(makeSolid, makeRuled);
-    for(unsigned int i = 0; i < wireTags.size(); i++) {
+    for(std::size_t i = 0; i < wireTags.size(); i++) {
       if(!_tagWire.IsBound(wireTags[i])) {
         Msg::Error("Unknown OpenCASCADE wire or line loop with tag %d",
                    wireTags[i]);
@@ -1974,7 +1974,7 @@ bool OCC_Internals::addThickSolid(int tag, int solidTag,
   try {
     TopoDS_Shape shape = _find(3, solidTag);
     TopTools_ListOfShape exclude;
-    for(unsigned int i = 0; i < excludeFaceTags.size(); i++) {
+    for(std::size_t i = 0; i < excludeFaceTags.size(); i++) {
       if(!_tagFace.IsBound(excludeFaceTags[i])) {
         Msg::Error("Unknown OpenCASCADE surface with tag %d",
                    excludeFaceTags[i]);
@@ -2081,7 +2081,7 @@ int OCC_Internals::_getFuzzyTag(int dim, const TopoDS_Shape &s)
   _meshAttributes->getSimilarShapes(dim, s, candidates);
 
   int num = 0;
-  for(unsigned int i = 0; i < candidates.size(); i++) {
+  for(std::size_t i = 0; i < candidates.size(); i++) {
     if(_isBound(dim, candidates[i])) {
       num++;
     }
@@ -2089,7 +2089,7 @@ int OCC_Internals::_getFuzzyTag(int dim, const TopoDS_Shape &s)
   Msg::Info("Extruded mesh constraint fuzzy search: found %d candidates "
             "(dim=%d, %d bound)",
             (int)candidates.size(), dim, num);
-  for(unsigned int i = 0; i < candidates.size(); i++) {
+  for(std::size_t i = 0; i < candidates.size(); i++) {
     if(_isBound(dim, candidates[i])) {
       return _find(dim, candidates[i]);
     }
@@ -2199,7 +2199,7 @@ bool OCC_Internals::_extrude(int mode,
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  for(unsigned int i = 0; i < inDimTags.size(); i++) {
+  for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
     if(!_isBound(dim, tag)) {
@@ -2281,7 +2281,7 @@ bool OCC_Internals::_extrude(int mode,
   if(dim >= 1 && dim <= 3 && top.size() == inDimTags.size() &&
      top.size() == body.size()) {
     outDimTags.clear();
-    for(unsigned int i = 0; i < top.size(); i++) {
+    for(std::size_t i = 0; i < top.size(); i++) {
       if(_isBound(dim - 1, top[i]))
         outDimTags.push_back(
           std::pair<int, int>(dim - 1, _find(dim - 1, top[i])));
@@ -2289,7 +2289,7 @@ bool OCC_Internals::_extrude(int mode,
         outDimTags.push_back(std::pair<int, int>(dim, _find(dim, body[i])));
       if(CTX::instance()->geom.extrudeReturnLateral &&
          top.size() == lateral.size()) {
-        for(unsigned int j = 0; j < lateral[i].size(); j++) {
+        for(std::size_t j = 0; j < lateral[i].size(); j++) {
           if(_isBound(dim - 1, lateral[i][j]))
             outDimTags.push_back(
               std::pair<int, int>(dim - 1, _find(dim - 1, lateral[i][j])));
@@ -2335,7 +2335,7 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
                             bool removeVolume)
 {
   std::vector<TopoDS_Edge> edges;
-  for(unsigned int i = 0; i < curveTags.size(); i++) {
+  for(std::size_t i = 0; i < curveTags.size(); i++) {
     if(!_tagEdge.IsBound(curveTags[i])) {
       Msg::Error("Unknown OpenCASCADE curve with tag %d", curveTags[i]);
       return false;
@@ -2344,7 +2344,7 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
   }
 
   std::vector<TopoDS_Face> faces;
-  for(unsigned int i = 0; i < surfaceTags.size(); i++) {
+  for(std::size_t i = 0; i < surfaceTags.size(); i++) {
     if(!_tagFace.IsBound(surfaceTags[i])) {
       Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[i]);
       return false;
@@ -2360,7 +2360,7 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  for(unsigned int i = 0; i < volumeTags.size(); i++) {
+  for(std::size_t i = 0; i < volumeTags.size(); i++) {
     if(!_isBound(3, volumeTags[i])) {
       Msg::Error("Unknown OpenCASCADE volume with tag %d", volumeTags[i]);
       return false;
@@ -2379,7 +2379,7 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
   try {
     if(mode == 0) { // fillet
       BRepFilletAPI_MakeFillet f(c);
-      for(unsigned int i = 0; i < edges.size(); i++) {
+      for(std::size_t i = 0; i < edges.size(); i++) {
         if(param.size() == 1)
           f.Add(param[0], edges[i]);
         else if(param.size() == edges.size())
@@ -2396,7 +2396,7 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
     }
     else { // chamfer
       BRepFilletAPI_MakeChamfer f(c);
-      for(unsigned int i = 0; i < edges.size(); i++) {
+      for(std::size_t i = 0; i < edges.size(); i++) {
         if(param.size() == 1)
           f.Add(param[0], param[0], edges[i], faces[i]);
         else if(param.size() == edges.size())
@@ -2451,7 +2451,7 @@ static void _filterTags(std::vector<std::pair<int, int> > &outDimTags,
 {
   std::vector<std::pair<int, int> > tmp(outDimTags);
   outDimTags.clear();
-  for(unsigned int i = 0; i < tmp.size(); i++) {
+  for(std::size_t i = 0; i < tmp.size(); i++) {
     if(tmp[i].first >= minDim) outDimTags.push_back(tmp[i]);
   }
 }
@@ -2477,7 +2477,7 @@ bool OCC_Internals::booleanOperator(
 
   int minDim = 3;
   TopTools_ListOfShape objectShapes, toolShapes;
-  for(unsigned int i = 0; i < objectDimTags.size(); i++) {
+  for(std::size_t i = 0; i < objectDimTags.size(); i++) {
     int dim = objectDimTags[i].first;
     int t = objectDimTags[i].second;
     if(!_isBound(dim, t)) {
@@ -2491,7 +2491,7 @@ bool OCC_Internals::booleanOperator(
     }
     minDim = std::min(minDim, dim);
   }
-  for(unsigned int i = 0; i < toolDimTags.size(); i++) {
+  for(std::size_t i = 0; i < toolDimTags.size(); i++) {
     int dim = toolDimTags[i].first;
     int t = toolDimTags[i].second;
     if(!_isBound(dim, t)) {
@@ -2626,12 +2626,12 @@ bool OCC_Internals::booleanOperator(
   std::vector<std::pair<int, int> > inDimTags;
   inDimTags.insert(inDimTags.end(), objectDimTags.begin(), objectDimTags.end());
   inDimTags.insert(inDimTags.end(), toolDimTags.begin(), toolDimTags.end());
-  unsigned int numObjects = objectDimTags.size();
+  std::size_t numObjects = objectDimTags.size();
 
   if(tag >= 0 || !preserveNumbering) {
     // if we specify the tag explicitly, or if we don't care about preserving
     // the numering, just go ahead and bind the resulting shape (and sub-shapes)
-    for(unsigned int i = 0; i < inDimTags.size(); i++) {
+    for(std::size_t i = 0; i < inDimTags.size(); i++) {
       bool remove = (i < numObjects) ? removeObject : removeTool;
       if(remove) {
         int d = inDimTags[i].first;
@@ -2648,7 +2648,7 @@ bool OCC_Internals::booleanOperator(
     // the numbering of smaller dimension entities (on boundaries) they should
     // appear *before* higher dimensional entities in the object/tool lists.
     _toPreserve.clear();
-    for(unsigned int i = 0; i < inDimTags.size(); i++) {
+    for(std::size_t i = 0; i < inDimTags.size(); i++) {
       int dim = inDimTags[i].first;
       int tag = inDimTags[i].second;
       bool remove = (i < numObjects) ? removeObject : removeTool;
@@ -2687,7 +2687,7 @@ bool OCC_Internals::booleanOperator(
   }
 
   // return input/output correspondance maps
-  for(unsigned int i = 0; i < inDimTags.size(); i++) {
+  for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
     std::pair<int, int> dimTag(dim, tag);
@@ -2715,7 +2715,7 @@ bool OCC_Internals::booleanOperator(
     }
     std::ostringstream sstream;
     sstream << "BOOL in (" << dim << "," << tag << ") -> out";
-    for(unsigned int j = 0; j < dimTags.size(); j++)
+    for(std::size_t j = 0; j < dimTags.size(); j++)
       sstream << " (" << dimTags[j].first << "," << dimTags[j].second << ")";
     Msg::Debug("%s", sstream.str().c_str());
     outDimTagsMap.push_back(dimTags);
@@ -2811,7 +2811,7 @@ bool OCC_Internals::mergeVertices(const std::vector<int> &tags)
 {
   std::vector<std::pair<int, int> > objectDimTags, toolDimTags, outDimTags;
   std::vector<std::vector<std::pair<int, int> > > outDimTagsMap;
-  for(unsigned int i = 0; i < tags.size(); i++)
+  for(std::size_t i = 0; i < tags.size(); i++)
     objectDimTags.push_back(std::pair<int, int>(0, tags[i]));
   return booleanFragments(-1, objectDimTags, toolDimTags, outDimTags,
                           outDimTagsMap, true, true);
@@ -2852,7 +2852,7 @@ bool OCC_Internals::_transform(
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  for(unsigned int i = 0; i < inDimTags.size(); i++) {
+  for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
     if(!_isBound(dim, tag)) {
@@ -2910,7 +2910,7 @@ bool OCC_Internals::_transform(
     Msg::Error("OpenCASCADE transform changed the number of shapes");
     return false;
   }
-  for(unsigned int i = 0; i < inDimTags.size(); i++) {
+  for(std::size_t i = 0; i < inDimTags.size(); i++) {
     // FIXME we should implement rebind(object, result, dim) which would
     // unbind/bind all subshapes to the same tags
     int dim = inDimTags[i].first;
@@ -2990,7 +2990,7 @@ bool OCC_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
                          std::vector<std::pair<int, int> > &outDimTags)
 {
   bool ret = true;
-  for(unsigned int i = 0; i < inDimTags.size(); i++) {
+  for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
     if(!_isBound(dim, tag)) {
@@ -3022,7 +3022,7 @@ bool OCC_Internals::remove(const std::vector<std::pair<int, int> > &dimTags,
                            bool recursive)
 {
   bool ret = true;
-  for(unsigned int i = 0; i < dimTags.size(); i++) {
+  for(std::size_t i = 0; i < dimTags.size(); i++) {
     if(!remove(dimTags[i].first, dimTags[i].second, recursive)) ret = false;
   }
   return ret;

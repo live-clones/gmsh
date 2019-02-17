@@ -67,7 +67,7 @@ static void draw_stl(std::vector<SPoint3> &vertices,
   glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
 
   VertexArray va(3, triangles.size());
-  for(unsigned int i = 0; i < triangles.size(); i += 3) {
+  for(std::size_t i = 0; i < triangles.size(); i += 3) {
     SPoint3 p1 = vertices[triangles[i]];
     SPoint3 p2 = vertices[triangles[i + 1]];
     SPoint3 p3 = vertices[triangles[i + 2]];
@@ -1127,8 +1127,8 @@ static void selection_mode_cb(Fl_Widget *w, void *data)
     opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
     break;
   }
-  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
-    for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+    for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
       FlGui::instance()->graph[i]->gl[j]->changeSelection = mode;
   drawContext::global()->draw();
 }
@@ -1454,8 +1454,8 @@ void physicalContextWindow::show(bool remove)
 {
   static std::vector<Fl_Menu_Item> menu;
   static std::vector<char *> names;
-  for(unsigned int i = 0; i < menu.size(); i++) menu[i].text = "";
-  for(unsigned int i = 0; i < names.size(); i++) free(names[i]);
+  for(std::size_t i = 0; i < menu.size(); i++) menu[i].text = "";
+  for(std::size_t i = 0; i < names.size(); i++) free(names[i]);
   names.clear();
   menu.clear();
   for(GModel::piter it = GModel::current()->firstPhysicalName();

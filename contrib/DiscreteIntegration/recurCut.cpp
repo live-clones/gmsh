@@ -227,18 +227,18 @@ bool signChange (RecurElement *re, const DI_Element *e, const std::vector<gLevel
   std::vector<DI_CuttingPoint *> cp;
   std::vector<gLevelset *> RPNi;
   int iPrim = 0;
-  for(unsigned int l = 0; l < RPN.size(); l++) {
+  for(std::size_t l = 0; l < RPN.size(); l++) {
     gLevelset *Lsi = RPN[l];
     RPNi.push_back(Lsi);
     if(Lsi->isPrimitive()) {
       elem->addLs(e, Lsi, iPrim++, nodeLs);
-      for(unsigned int i = 0; i < cp.size(); i++)
+      for(std::size_t i = 0; i < cp.size(); i++)
         cp[i]->addLs(elem);
       if(re->super) re->el->addLs(elem);
       re->el->getCuttingPoints(elem, RPNi, cp);
     }
     else {
-      for(unsigned int p = 0; p < cp.size(); p++)
+      for(std::size_t p = 0; p < cp.size(); p++)
         cp[p]->chooseLs(Lsi);
       if(re->super) re->el->chooseLs(Lsi);
     }
@@ -255,7 +255,7 @@ bool signChange (RecurElement *re, const DI_Element *e, const std::vector<gLevel
   return cS;
 }
 
-// Set isCrossed to true if a sub RecurElement is crossed. 
+// Set isCrossed to true if a sub RecurElement is crossed.
 // If it has no sub RecurElement, set isCrossed to true if the element is crossed or run along by the levelset
 //(the levelset is computed with the values at the nodes of the triangle e)
 bool computeIsCrossed (RecurElement *re, const DI_Element *e, const std::vector<gLevelset *> &RPN,

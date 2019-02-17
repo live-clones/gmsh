@@ -945,8 +945,8 @@ namespace gmsh { // Top-level functions
                                       std::vector<int> & elementTags,
                                       std::vector<int> & nodeTags,
                                       const int tag = -1,
-                                      const size_t task = 0,
-                                      const size_t numTasks = 1)
+                                      const std::size_t task = 0,
+                                      const std::size_t numTasks = 1)
       {
         int ierr = 0;
         int *api_elementTags_; size_t api_elementTags_n_;
@@ -1043,8 +1043,8 @@ namespace gmsh { // Top-level functions
                                  std::vector<double> & determinants,
                                  std::vector<double> & points,
                                  const int tag = -1,
-                                 const size_t task = 0,
-                                 const size_t numTasks = 1)
+                                 const std::size_t task = 0,
+                                 const std::size_t numTasks = 1)
       {
         int ierr = 0;
         double *api_jacobians_; size_t api_jacobians_n_;
@@ -1124,8 +1124,8 @@ namespace gmsh { // Top-level functions
                                    const bool fast,
                                    const bool primary,
                                    std::vector<double> & barycenters,
-                                   const size_t task = 0,
-                                   const size_t numTasks = 1)
+                                   const std::size_t task = 0,
+                                   const std::size_t numTasks = 1)
       {
         int ierr = 0;
         double *api_barycenters_; size_t api_barycenters_n_;
@@ -1156,8 +1156,8 @@ namespace gmsh { // Top-level functions
                                         std::vector<int> & nodes,
                                         const int tag = -1,
                                         const bool primary = false,
-                                        const size_t task = 0,
-                                        const size_t numTasks = 1)
+                                        const std::size_t task = 0,
+                                        const std::size_t numTasks = 1)
       {
         int ierr = 0;
         int *api_nodes_; size_t api_nodes_n_;
@@ -1177,8 +1177,8 @@ namespace gmsh { // Top-level functions
                                         std::vector<int> & nodes,
                                         const int tag = -1,
                                         const bool primary = false,
-                                        const size_t task = 0,
-                                        const size_t numTasks = 1)
+                                        const std::size_t task = 0,
+                                        const std::size_t numTasks = 1)
       {
         int ierr = 0;
         int *api_nodes_; size_t api_nodes_n_;

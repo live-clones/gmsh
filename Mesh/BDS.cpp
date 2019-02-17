@@ -1164,7 +1164,7 @@ int BDS_Edge::numTriangles() const
 {
   // TODO C++11 use std::count_if
   int NT = 0;
-  for(unsigned int i = 0; i < _faces.size(); i++)
+  for(std::size_t i = 0; i < _faces.size(); i++)
     if(faces(i)->numEdges() == 3) NT++;
   return NT;
 }

@@ -103,7 +103,7 @@ SVector3 parametricLineGEdge::secondDerivative(double xi) const
 static void oversample(std::vector<SPoint3> &s, double tol)
 {
   std::vector<SPoint3> t;
-  for(unsigned int i = 1; i < s.size(); i++) {
+  for(std::size_t i = 1; i < s.size(); i++) {
     SPoint3 p0 = s[i - 1];
     SPoint3 p1 = s[i];
     double d = p0.distance(p1);
@@ -129,12 +129,12 @@ double computeBndDistH(GEdge *edge,
   std::vector<SPoint3> dpts;
   std::vector<double> ts;
   std::vector<MVertex *> hov;
-  for(unsigned int i = 2; i < vs.size(); i++) hov.push_back(vs[i]);
+  for(std::size_t i = 2; i < vs.size(); i++) hov.push_back(vs[i]);
   MLineN l(vs[0], vs[1], hov);
   l.discretize(tolerance, dpts, ts);
   oversample(dpts, tolerance);
   double maxDist = 0.0;
-  for(unsigned int i = 0; i < dpts.size(); i++) {
+  for(std::size_t i = 0; i < dpts.size(); i++) {
     maxDist = std::max(
       maxDist, dpts[i].distance(edge->closestPoint(dpts[i], tolerance)));
   }
@@ -179,10 +179,10 @@ double parametricLine::hausdorffDistance(const parametricLine &l, SPoint3 &p1,
   double h1 = 0.0;
   int I1 = 0, J1 = 0;
   int I2 = 0, J2 = 0;
-  for(unsigned int i = 0; i < dpts1.size(); i++) {
+  for(std::size_t i = 0; i < dpts1.size(); i++) {
     double hl = 1.e22;
     int JLOC = 0;
-    for(unsigned int j = 0; j < dpts2.size(); j++) {
+    for(std::size_t j = 0; j < dpts2.size(); j++) {
       double H = dpts1[i].distance(dpts2[j]);
       if(hl < H) {
         hl = H;
@@ -196,10 +196,10 @@ double parametricLine::hausdorffDistance(const parametricLine &l, SPoint3 &p1,
     }
   }
   double h2 = 0.0;
-  for(unsigned int i = 0; i < dpts2.size(); i++) {
+  for(std::size_t i = 0; i < dpts2.size(); i++) {
     double hl = 1.e22;
     int JLOC = 0;
-    for(unsigned int j = 0; j < dpts1.size(); j++) {
+    for(std::size_t j = 0; j < dpts1.size(); j++) {
       double H = dpts1[j].distance(dpts2[i]);
       if(hl < H) {
         hl = H;
@@ -246,17 +246,17 @@ double computeBndDistGb(GEdge *edge,
 {
   parametricLineGEdge l1 = parametricLineGEdge(edge, params[0], params[1]);
   parametricLineNodalBasis l2 = parametricLineNodalBasis(basis, xyz);
-  const unsigned int N = 20;
+  const std::size_t N = 20;
   SPoint3 P1[N];
   SPoint3 P2[N];
   double D = 0.0;
-  for(unsigned int i = 0; i < N; i++) {
+  for(std::size_t i = 0; i < N; i++) {
     const double _x2 = (double)i / (N - 1);
     P1[i] = l1(_x2);
     P2[i] = l2(_x2);
   }
   double L = 0.0;
-  for(unsigned int i = 0; i < N - 1; i++) {
+  for(std::size_t i = 0; i < N - 1; i++) {
     SPoint3 p11 = P1[i];
     SPoint3 p12 = P1[i + 1];
     SPoint3 p21 = P2[i];
@@ -276,12 +276,12 @@ double computeBndDistGb(GEdge *edge,
 double computeBndDistG_(GEdge *edge, std::vector<double> &p, // the model edge
                         const nodalBasis &basis,
                         const std::vector<SPoint3> &xyz,
-                        const unsigned int NN) // the mesh edge
+                        const std::size_t NN) // the mesh edge
 {
-  const unsigned int N = 200;
+  const std::size_t N = 200;
   std::vector<int> o;
   o.push_back(0);
-  for(unsigned int i = 2; i < p.size(); i++) o.push_back(i);
+  for(std::size_t i = 2; i < p.size(); i++) o.push_back(i);
   o.push_back(1);
 
   // printf("computing diustance with tolerance %g\n",tolerac);
@@ -300,7 +300,7 @@ double computeBndDistG_(GEdge *edge, std::vector<double> &p, // the model edge
     parametricLineGEdge l1 = parametricLineGEdge(edge, t0, t1);
     parametricLineNodalBasis l2 = parametricLineNodalBasis(basis, xyz);
     std::vector<SPoint3> P1(N), P2(N);
-    for(unsigned int i = 0; i < N; i++) {
+    for(std::size_t i = 0; i < N; i++) {
       const double _x2 = (double)i / (N - 1);
       const double u = u0 + _x2 * (u1 - u0);
       // U0 + uu * (U1 - U0) = u
@@ -309,7 +309,7 @@ double computeBndDistG_(GEdge *edge, std::vector<double> &p, // the model edge
       P2[i] = l2(uu);
     }
     //    double L = 0.0;
-    for(unsigned int i = 0; i < N - 1; i++) {
+    for(std::size_t i = 0; i < N - 1; i++) {
       SPoint3 p11 = P1[i];
       SPoint3 p12 = P1[i + 1];
       SPoint3 p21 = P2[i];
@@ -391,12 +391,12 @@ double computeDeviationOfTangents(
   //  double ddeviation = 0;
   std::vector<int> o;
   o.push_back(0);
-  for(unsigned int i = 2; i < p.size(); i++) o.push_back(i);
+  for(std::size_t i = 2; i < p.size(); i++) o.push_back(i);
   o.push_back(1);
 
   SVector3 dx(xyz[xyz.size() - 1], xyz[0]);
 
-  for(unsigned int i = 0; i < p.size(); i++) {
+  for(std::size_t i = 0; i < p.size(); i++) {
     const double u = basis.points(o[i], 0);
     SVector3 xp = edge->firstDer(p[o[i]]);
     // SVector3 xpp = edge->secondDer (p[o[i]]);
@@ -433,7 +433,7 @@ double computeBndDistAccurateArea(
   double length = 0.0;
   std::vector<int> o;
   o.push_back(0);
-  for(unsigned int i = 2; i < p.size(); i++) o.push_back(i);
+  for(std::size_t i = 2; i < p.size(); i++) o.push_back(i);
   o.push_back(1);
 
   // printf("computing diustance with tolerance %g\n",tolerac);
@@ -451,11 +451,11 @@ double computeBndDistAccurateArea(
     l2.discretize(dpts2, ts2, tolerance, 0.5 * (1 + u0), 0.5 * (1 + u1));
     // simple 2D version
     double arealocal = 0.0;
-    for(unsigned int j = 1; j < dpts1.size(); j++) {
+    for(std::size_t j = 1; j < dpts1.size(); j++) {
       length += dpts1[j - 1].distance(dpts1[j]);
       arealocal += trapeze(dpts1[j - 1], dpts1[j]);
     }
-    for(unsigned int j = 1; j < dpts2.size(); j++) {
+    for(std::size_t j = 1; j < dpts2.size(); j++) {
       arealocal -= trapeze(dpts2[j - 1], dpts2[j]);
     }
     area += fabs(arealocal);

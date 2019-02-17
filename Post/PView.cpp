@@ -33,7 +33,7 @@ void PView::_init(int tag)
   va_points = va_lines = va_triangles = va_vectors = va_ellipses = 0;
   normals = 0;
 
-  for(unsigned int i = 0; i < list.size(); i++) {
+  for(std::size_t i = 0; i < list.size(); i++) {
     if(list[i]->getTag() == _tag) {
       // in normal operation this should not happen, but we allow it when
       // programmatically forcing view tags (e.g. when using the views from
@@ -45,7 +45,7 @@ void PView::_init(int tag)
   }
 
   list.push_back(this);
-  for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
+  for(std::size_t i = 0; i < list.size(); i++) list[i]->setIndex(i);
 }
 
 PView::PView(int tag)
@@ -173,18 +173,18 @@ PView::~PView()
 
   std::vector<PView *>::iterator it = std::find(list.begin(), list.end(), this);
   if(it != list.end()) list.erase(it);
-  for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
+  for(std::size_t i = 0; i < list.size(); i++) list[i]->setIndex(i);
 
   if(!_data) return;
 
   // do not delete if another view is an alias of this one
-  for(unsigned int i = 0; i < list.size(); i++)
+  for(std::size_t i = 0; i < list.size(); i++)
     if(list[i]->getAliasOf() == _tag) return;
 
   // do not delete if this view is an alias and 1) if the original
   // still exists, or 2) if there are other aliases to the same view
   if(_aliasOf >= 0)
-    for(unsigned int i = 0; i < list.size(); i++)
+    for(std::size_t i = 0; i < list.size(); i++)
       if(list[i]->getTag() == _aliasOf || list[i]->getAliasOf() == _aliasOf)
         return;
 
@@ -243,7 +243,7 @@ void PView::combine(bool time, int how, bool remove)
   //        2: try to combine all views having identical names
 
   std::vector<nameData> nds;
-  for(unsigned int i = 0; i < list.size(); i++) {
+  for(std::size_t i = 0; i < list.size(); i++) {
     PView *p = list[i];
     PViewData *data = p->getData();
     if(how || p->getOptions()->visible) {
@@ -256,7 +256,7 @@ void PView::combine(bool time, int how, bool remove)
         nd.name = "__all__";
       else
         nd.name = "__vis__";
-      unsigned int j = 0;
+      std::size_t j = 0;
       while(j < nds.size()) {
         if(nds[j].name == nd.name) {
           nds[j].data.push_back(data);
@@ -274,11 +274,11 @@ void PView::combine(bool time, int how, bool remove)
   }
 
   std::set<PView *> rm;
-  for(unsigned int i = 0; i < nds.size(); i++) {
+  for(std::size_t i = 0; i < nds.size(); i++) {
     if(nds[i].data.size() > 1) { // there's potentially something to combine
       // sanity checks:
       bool allListBased = true, allModelBased = true;
-      for(unsigned int j = 0; j < nds[i].data.size(); j++) {
+      for(std::size_t j = 0; j < nds[i].data.size(); j++) {
         PViewDataList *d1 = dynamic_cast<PViewDataList *>(nds[i].data[j]);
         if(!d1) allListBased = false;
         PViewDataGModel *d2 = dynamic_cast<PViewDataGModel *>(nds[i].data[j]);
@@ -299,7 +299,7 @@ void PView::combine(bool time, int how, bool remove)
       PView *p = new PView(data);
       bool res = time ? data->combineTime(nds[i]) : data->combineSpace(nds[i]);
       if(res) {
-        for(unsigned int j = 0; j < nds[i].indices.size(); j++)
+        for(std::size_t j = 0; j < nds[i].indices.size(); j++)
           rm.insert(list[nds[i].indices[j]]);
         PViewOptions *opt = p->getOptions();
         if(opt->adaptVisualizationGrid) {
@@ -330,7 +330,7 @@ public:
 void PView::sortByName()
 {
   std::sort(list.begin(), list.end(), PViewLessThanName());
-  for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
+  for(std::size_t i = 0; i < list.size(); i++) list[i]->setIndex(i);
 }
 
 PView *PView::getViewByName(const std::string &name, int timeStep,
@@ -364,7 +364,7 @@ PView *PView::getViewByFileName(const std::string &fileName, int timeStep,
 
 PView *PView::getViewByTag(int tag, int timeStep, int partition)
 {
-  for(unsigned int i = 0; i < list.size(); i++) {
+  for(std::size_t i = 0; i < list.size(); i++) {
     if(list[i]->getTag() == tag &&
        ((timeStep < 0 || !list[i]->getData()->hasTimeStep(timeStep)) ||
         (partition < 0 ||

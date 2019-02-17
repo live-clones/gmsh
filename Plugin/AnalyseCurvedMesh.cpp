@@ -201,7 +201,7 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
         if(!_PViewJac[dim - 1] && computeJac) {
           _PViewJac[dim - 1] = true;
           std::map<int, std::vector<double> > dataPV;
-          for(unsigned int i = 0; i < _data.size(); ++i) {
+          for(std::size_t i = 0; i < _data.size(); ++i) {
             MElement *const el = _data[i].element();
             if(el->getDim() == dim) {
               double q = 0;
@@ -221,7 +221,7 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
         if(!_PViewIGE[dim - 1] && computeIGE) {
           _PViewIGE[dim - 1] = true;
           std::map<int, std::vector<double> > dataPV;
-          for(unsigned int i = 0; i < _data.size(); ++i) {
+          for(std::size_t i = 0; i < _data.size(); ++i) {
             MElement *const el = _data[i].element();
             if(el->getDim() == dim)
               dataPV[el->getNum()].push_back(_data[i].minS());
@@ -235,7 +235,7 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
         if(!_PViewICN[dim - 1] && computeICN) {
           _PViewICN[dim - 1] = true;
           std::map<int, std::vector<double> > dataPV;
-          for(unsigned int i = 0; i < _data.size(); ++i) {
+          for(std::size_t i = 0; i < _data.size(); ++i) {
             MElement *const el = _data[i].element();
             if(el->getDim() == dim)
               dataPV[el->getNum()].push_back(_data[i].minI());
@@ -389,7 +389,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinIGE(int dim)
 
   MsgProgressStatus progress(_data.size());
 
-  for(unsigned int i = 0; i < _data.size(); ++i) {
+  for(std::size_t i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
     if(el->getDim() != dim) continue;
     if(_data[i].minJ() <= 0 && _data[i].maxJ() > 0) {
@@ -410,7 +410,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinICN(int dim)
 
   MsgProgressStatus progress(_data.size());
 
-  for(unsigned int i = 0; i < _data.size(); ++i) {
+  for(std::size_t i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
     if(el->getDim() != dim) continue;
     if(_data[i].minJ() <= 0 && _data[i].maxJ() > 0) {
@@ -433,7 +433,7 @@ int GMSH_AnalyseCurvedMeshPlugin::_hideWithThreshold(int askedDim,
 
   int nHidden = 0;
 
-  for(unsigned int i = 0; i < _data.size(); ++i) {
+  for(std::size_t i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
     const int dim = el->getDim();
     if((askedDim == 4 && dim > 1) || dim == askedDim) {
@@ -470,7 +470,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatJacobian()
   supminJ = supratJ = -1e10;
   avgminJ = avgratJ = avgratJc = 0;
 
-  for(unsigned int i = 0; i < _data.size(); ++i) {
+  for(std::size_t i = 0; i < _data.size(); ++i) {
     infminJ = std::min(infminJ, _data[i].minJ());
     supminJ = std::max(supminJ, _data[i].minJ());
     avgminJ += _data[i].minJ();
@@ -513,7 +513,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatIGE()
   double infminS, supminS, avgminS;
   infminS = supminS = avgminS = _data[0].minS();
 
-  for(unsigned int i = 1; i < _data.size(); ++i) {
+  for(std::size_t i = 1; i < _data.size(); ++i) {
     infminS = std::min(infminS, _data[i].minS());
     supminS = std::max(supminS, _data[i].minS());
     avgminS += _data[i].minS();
@@ -533,7 +533,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatICN()
   double infminI, supminI, avgminI;
   infminI = supminI = avgminI = _data[0].minI();
 
-  for(unsigned int i = 1; i < _data.size(); ++i) {
+  for(std::size_t i = 1; i < _data.size(); ++i) {
     infminI = std::min(infminI, _data[i].minI());
     supminI = std::max(supminI, _data[i].minI());
     avgminI += _data[i].minI();

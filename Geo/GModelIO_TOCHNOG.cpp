@@ -27,7 +27,7 @@ static void writeElementsTOCHNOG(FILE *fp, GEntity *ge,
       // const char *str = (ge->dim() == 3) ? " 3 " : (ge->dim() == 2) ?
       //  " 2 " : (ge->dim() == 1) ? " 1 " : "Point";
       // fprintf(fp, "( 'number_of_space_dimensions   %s)\n", str);
-      for(unsigned int i = 0; i < elements.size(); i++)
+      for(std::size_t i = 0; i < elements.size(); i++)
         elements[i]->writeTOCHNOG(fp, elements[i]->getNum());
     }
   }
@@ -46,7 +46,7 @@ static std::string physicalName(GModel *m, int dim, int num)
             num);
     name = tmp;
   }
-  for(unsigned int i = 0; i < name.size(); i++)
+  for(std::size_t i = 0; i < name.size(); i++)
     if(name[i] == ' ') name[i] = '_';
   return name;
 }
@@ -87,8 +87,8 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
   std::vector<GEntity *> entities;
   getEntities(entities);
 
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeTOCHNOG(fp, dim, scalingFactor);
   fprintf(fp, "\n");
   // Nodes
@@ -158,8 +158,8 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
               "MATERIALS =%s)\n",
               physicalName(this, dim, it->first).c_str());
       int n = 0;
-      for(unsigned int i = 0; i < entities.size(); i++) {
-        for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
+      for(std::size_t i = 0; i < entities.size(); i++) {
+        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
           MElement *e = entities[i]->getMeshElement(j);
           if(n && !(n % 10)) fprintf(fp, "\n");
           fprintf(fp, "%d ", e->getNum());
@@ -178,8 +178,8 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
           it != groups[dim].end(); it++) {
         std::set<MVertex *> nodes;
         std::vector<GEntity *> &entities = it->second;
-        for(unsigned int i = 0; i < entities.size(); i++) {
-          for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
+        for(std::size_t i = 0; i < entities.size(); i++) {
+          for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
             MElement *e = entities[i]->getMeshElement(j);
             for(std::size_t k = 0; k < e->getNumVertices(); k++)
               nodes.insert(e->getVertex(k));

@@ -111,7 +111,7 @@ bool buildMeshGenerationDataStructures(
 {
   std::map<MVertex *, double> vSizesMap;
 
-  for(unsigned int i = 0; i < gf->triangles.size(); i++)
+  for(std::size_t i = 0; i < gf->triangles.size(); i++)
     setLcsInit(gf->triangles[i], vSizesMap);
 
   std::map<MVertex *, double>::iterator itfind = vSizesMap.find(NULL);
@@ -120,7 +120,7 @@ bool buildMeshGenerationDataStructures(
     return false;
   }
 
-  for(unsigned int i = 0; i < gf->triangles.size(); i++)
+  for(std::size_t i = 0; i < gf->triangles.size(); i++)
     setLcs(gf->triangles[i], vSizesMap, data);
 
   // take care of embedded vertices
@@ -145,7 +145,7 @@ bool buildMeshGenerationDataStructures(
     std::vector<GEdge *>::const_iterator ite = embedded_edges.begin();
     while(ite != embedded_edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {
-        for(unsigned int i = 0; i < (*ite)->lines.size(); i++)
+        for(std::size_t i = 0; i < (*ite)->lines.size(); i++)
           data.internalEdges.insert(MEdge((*ite)->lines[i]->getVertex(0),
                                           (*ite)->lines[i]->getVertex(1)));
       }
@@ -159,7 +159,7 @@ bool buildMeshGenerationDataStructures(
     std::vector<GEdge *>::const_iterator ite = _edges.begin();
     while(ite != _edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {
-        for(unsigned int i = 0; i < (*ite)->lines.size(); i++) {
+        for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
           double d = distance((*ite)->lines[i]->getVertex(0),
                               (*ite)->lines[i]->getVertex(1));
           double d0 = vSizesMap[(*ite)->lines[i]->getVertex(0)];
@@ -183,7 +183,7 @@ bool buildMeshGenerationDataStructures(
                    it->first->z()) : it->second;
     data.addVertex (it->first, param[0], param[1], it->second, lcBGM);
   }
-  for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     double lc = 0.3333333333 *
                 (data.vSizes[data.getIndex(gf->triangles[i]->getVertex(0))] +
                  data.vSizes[data.getIndex(gf->triangles[i]->getVertex(1))] +
@@ -206,7 +206,7 @@ void computeEquivalences(GFace *gf, bidimMeshData &data)
 {
   if(data.equivalence) {
     std::vector<MTriangle *> newT;
-    for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+    for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       MTriangle *t = gf->triangles[i];
       MVertex *v[3];
       for(int j = 0; j < 3; j++) {
@@ -258,7 +258,7 @@ bool computeEquivalentTriangles(GFace *gf,
   std::vector<MTriangle *> WTF;
   if(!equivalence) return false;
   std::set<equivalentTriangle> eqTs;
-  for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     equivalentTriangle et(gf->triangles[i], equivalence);
     std::set<equivalentTriangle>::iterator iteq = eqTs.find(et);
     if(iteq == eqTs.end())
@@ -271,7 +271,7 @@ bool computeEquivalentTriangles(GFace *gf,
 
   if(WTF.size()) {
     Msg::Info("%d triangles are equivalent", WTF.size());
-    for(unsigned int i = 0; i < WTF.size(); i++) {
+    for(std::size_t i = 0; i < WTF.size(); i++) {
     }
     return true;
   }
@@ -325,7 +325,7 @@ void transferDataStructure(GFace *gf,
       normal3points(v0->x(), v0->y(), v0->z(), v1->x(), v1->y(), v1->z(),
                     v2->x(), v2->y(), v2->z(), n1);
     }
-    for(unsigned int j = 1; j < gf->triangles.size(); j++) {
+    for(std::size_t j = 1; j < gf->triangles.size(); j++) {
       t = gf->triangles[j];
       v0 = t->getVertex(0);
       v1 = t->getVertex(1);
@@ -360,7 +360,7 @@ void buildVertexToTriangle(std::vector<MTriangle *> &eles, v2t_cont &adj)
 template <class T>
 void buildEdgeToElement(std::vector<T *> &elements, e2t_cont &adj)
 {
-  for(unsigned int i = 0; i < elements.size(); i++) {
+  for(std::size_t i = 0; i < elements.size(); i++) {
     T *t = elements[i];
     for(int j = 0; j < t->getNumEdges(); j++) {
       MEdge e = t->getEdge(j);
@@ -501,7 +501,7 @@ static int _removeTwoQuadsNodes(GFace *gf)
   }
   std::vector<MQuadrangle *> quadrangles2;
   quadrangles2.reserve(gf->quadrangles.size() - touched.size());
-  for(unsigned int i = 0; i < gf->quadrangles.size(); i++) {
+  for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
     if(touched.find(gf->quadrangles[i]) == touched.end()) {
       quadrangles2.push_back(gf->quadrangles[i]);
     }
@@ -513,7 +513,7 @@ static int _removeTwoQuadsNodes(GFace *gf)
 
   std::vector<MVertex *> mesh_vertices2;
   mesh_vertices2.reserve(gf->mesh_vertices.size() - vtouched.size());
-  for(unsigned int i = 0; i < gf->mesh_vertices.size(); i++) {
+  for(std::size_t i = 0; i < gf->mesh_vertices.size(); i++) {
     if(vtouched.find(gf->mesh_vertices[i]) == vtouched.end()) {
       mesh_vertices2.push_back(gf->mesh_vertices[i]);
     }
@@ -562,7 +562,7 @@ static bool _tryToCollapseThatVertex2(GFace *gf, std::vector<MElement *> &e1,
   double worst_quality_new = 1.0;
 
   int count = 0;
-  for(unsigned int j = 0; j < e.size(); ++j) {
+  for(std::size_t j = 0; j < e.size(); ++j) {
     if(e[j] != q) {
       count++;
       worst_quality_old = std::min(worst_quality_old, e[j]->etaShapeMeasure());
@@ -586,7 +586,7 @@ static bool _tryToCollapseThatVertex2(GFace *gf, std::vector<MElement *> &e1,
     v1->x() = pp.x();
     v1->y() = pp.y();
     v1->z() = pp.z();
-    for(unsigned int j = 0; j < e.size(); ++j) {
+    for(std::size_t j = 0; j < e.size(); ++j) {
       if(e[j] != q) {
         for(int k = 0; k < 4; k++) {
           if(e[j]->getVertex(k) == v2) {
@@ -629,7 +629,7 @@ static bool _tryToCollapseThatVertex(GFace *gf, std::vector<MElement *> &e1,
   double worst_quality_old = 1.0;
   double worst_quality_new = 1.0;
   int count = 0;
-  for(unsigned int j = 0; j < e.size(); ++j) {
+  for(std::size_t j = 0; j < e.size(); ++j) {
     if(e[j] != q) {
       count++;
       worst_quality_old = std::min(worst_quality_old, e[j]->etaShapeMeasure());
@@ -663,7 +663,7 @@ static bool _tryToCollapseThatVertex(GFace *gf, std::vector<MElement *> &e1,
     v1->z() = pp.z();
     v1->setParameter(0, pp.u());
     v1->setParameter(1, pp.v());
-    for(unsigned int j = 0; j < e.size(); ++j) {
+    for(std::size_t j = 0; j < e.size(); ++j) {
       if(e[j] != q) {
         for(int k = 0; k < 4; k++) {
           if(e[j]->getVertex(k) == v2) {
@@ -691,7 +691,7 @@ static bool _isItAGoodIdeaToMoveThatVertex(GFace *gf,
   SPoint3 pbefore(v1->x(), v1->y(), v1->z());
 
   double minq = 1.0;
-  for(unsigned int j = 0; j < e1.size(); ++j) {
+  for(std::size_t j = 0; j < e1.size(); ++j) {
     surface_old += surfaceFaceUV(e1[j], gf, false);
     minq = std::min(e1[j]->etaShapeMeasure(), minq);
   }
@@ -701,7 +701,7 @@ static bool _isItAGoodIdeaToMoveThatVertex(GFace *gf,
   v1->setXYZ(pafter.x(), pafter.y(), pafter.z());
 
   double minq_new = 1.0;
-  for(unsigned int j = 0; j < e1.size(); ++j) {
+  for(std::size_t j = 0; j < e1.size(); ++j) {
     surface_new += surfaceFaceUV(e1[j], gf, false);
     minq_new = std::min(e1[j]->etaShapeMeasure(), minq_new);
   }
@@ -750,13 +750,13 @@ static int _removeDiamonds(GFace *const gf)
   std::vector<MQuadrangle *> quadrangles2;
   quadrangles2.reserve(gf->quadrangles.size());
 
-  for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     touched.insert(gf->triangles[i]->getVertex(0));
     touched.insert(gf->triangles[i]->getVertex(1));
     touched.insert(gf->triangles[i]->getVertex(2));
   }
 
-  for(unsigned int i = 0; i < gf->quadrangles.size(); i++) {
+  for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
     MQuadrangle *const q = gf->quadrangles[i];
 
     MVertex *const v1 = q->getVertex(0);
@@ -808,7 +808,7 @@ static int _removeDiamonds(GFace *const gf)
   std::vector<MVertex *> mesh_vertices2;
   mesh_vertices2.reserve(gf->mesh_vertices.size());
 
-  for(unsigned int i = 0; i < gf->mesh_vertices.size(); i++) {
+  for(std::size_t i = 0; i < gf->mesh_vertices.size(); i++) {
     if(!std::binary_search(deleted.begin(), deleted.end(),
                            gf->mesh_vertices[i])) {
       mesh_vertices2.push_back(gf->mesh_vertices[i]);
@@ -854,7 +854,7 @@ static void _relocate(GFace *gf, MVertex *ver,
 
   // compute the vertices connected to that one
   std::map<MVertex *, SPoint2, MVertexLessThanNum> pts;
-  for(unsigned int i = 0; i < lt.size(); i++) {
+  for(std::size_t i = 0; i < lt.size(); i++) {
     for(int j = 0; j < lt[i]->getNumEdges(); j++) {
       MEdge e = lt[i]->getEdge(j);
       SPoint2 param0, param1;
@@ -1248,7 +1248,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
       Msg::Debug("Perfect Match Starts %d edges %d nodes", ecount, ncount);
       std::map<MElement *, int> t2n;
       std::map<int, MElement *> n2t;
-      for(unsigned int i = 0; i < gf->triangles.size(); ++i) {
+      for(std::size_t i = 0; i < gf->triangles.size(); ++i) {
         t2n[gf->triangles[i]] = i;
         n2t[i] = gf->triangles[i];
       }
@@ -1393,7 +1393,7 @@ static double printStats(GFace *gf, const char *message)
   int nbInv = 0;
   double Qav = 0;
   double Qmin = 1;
-  for(unsigned int i = 0; i < gf->quadrangles.size(); i++) {
+  for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
     double Q = gf->quadrangles[i]->etaShapeMeasure();
     if(Q <= 0.0) nbInv++;
     if(Q <= 0.1) nbBad++;
@@ -1416,7 +1416,7 @@ static bool _isModelOkForTopologicalOpti(GModel *m)
 {
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
     GFace *gf = *it;
-    for(unsigned int j = 0; j < gf->getNumMeshElements(); j++){
+    for(std::size_t j = 0; j < gf->getNumMeshElements(); j++){
       MElement *e = gf->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++){
         GEntity *ge = e->getVertex(k)->onWhat();
@@ -1494,7 +1494,7 @@ void quadsToTriangles(GFace *gf, double minqual)
 {
   std::vector<MQuadrangle *> qds;
   std::map<MElement *, std::pair<MElement *, MElement *> > change;
-  for(unsigned int i = 0; i < gf->quadrangles.size(); i++) {
+  for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
     MQuadrangle *q = gf->quadrangles[i];
     if(q->etaShapeMeasure() < minqual + 1e-12) {
       MTriangle *t11 =
@@ -1554,7 +1554,7 @@ void quadsToTriangles(GFace *gf, double minqual)
     std::vector<MElement *> &newColumn = newElemColumns[firstEl];
     std::vector<MElement *> &oldColumn = it->second;
 
-    for(unsigned int i = 0; i < oldColumn.size(); i++) {
+    for(std::size_t i = 0; i < oldColumn.size(); i++) {
       MElement *oldEl = oldColumn[i];
       it2 = change.find(oldEl);
       if(it2 == change.end()) {

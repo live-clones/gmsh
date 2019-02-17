@@ -76,13 +76,13 @@ PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
 
   // get input elements
   std::vector<MElement *> elements;
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
       elements.push_back(entities[i]->getMeshElement(j));
 
   if(outputdim == 0) { // create point elements for mesh vertices
     std::set<MVertex *> vertices;
-    for(unsigned int i = 0; i < elements.size(); i++) {
+    for(std::size_t i = 0; i < elements.size(); i++) {
       for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++) {
         MVertex *v = elements[i]->getVertex(j);
         vertices.insert(v);
@@ -107,7 +107,7 @@ PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
   }
   else if(outputdim == 1) { // create line elements for mesh edges
     std::set<MEdge, Less_Edge> edges;
-    for(unsigned int i = 0; i < elements.size(); i++) {
+    for(std::size_t i = 0; i < elements.size(); i++) {
       for(int j = 0; j < elements[i]->getNumEdges(); j++) {
         MEdge e = elements[i]->getEdge(j);
         edges.insert(e);

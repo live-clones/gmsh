@@ -151,8 +151,8 @@ int GModel::readPLY(const std::string &name)
   for(int iV = 0; iV < nbView; iV++) {
     PView *view = new PView();
     PViewDataList *data = dynamic_cast<PViewDataList *>(view->getData());
-    for(unsigned int ii = 0; ii < _entities.size(); ii++) {
-      for(unsigned int i = 0; i < _entities[ii]->getNumMeshElements(); i++) {
+    for(std::size_t ii = 0; ii < _entities.size(); ii++) {
+      for(std::size_t i = 0; i < _entities[ii]->getNumMeshElements(); i++) {
         MElement *e = _entities[ii]->getMeshElement(i);
         int numNodes = e->getNumVertices();
         std::vector<double> x(numNodes), y(numNodes), z(numNodes);
@@ -272,12 +272,12 @@ int GModel::writePLY2(const std::string &name)
 
   std::vector<GEntity *> entities;
   getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writePLY2(fp);
 
   for(fiter it = firstFace(); it != lastFace(); ++it) {
-    for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+    for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
       (*it)->triangles[i]->writePLY2(fp);
   }
 

@@ -71,7 +71,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
 
   // check if we could parse something
   bool empty = true;
-  for(unsigned int i = 0; i < points.size(); i++) {
+  for(std::size_t i = 0; i < points.size(); i++) {
     if(points[i].size()) {
       empty = false;
       break;
@@ -103,7 +103,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
         char *data = new char[nfacets * 50 * sizeof(char)];
         ret = fread(data, sizeof(char), nfacets * 50, fp);
         if(ret == nfacets * 50) {
-          for(unsigned int i = 0; i < nfacets; i++) {
+          for(std::size_t i = 0; i < nfacets; i++) {
             float *xyz = (float *)&data[i * 50 * sizeof(char)];
             if(swap) SwapBytes((char *)xyz, sizeof(float), 12);
             for(int j = 0; j < 3; j++) {
@@ -119,7 +119,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
   }
 
   std::vector<GFace *> faces;
-  for(unsigned int i = 0; i < points.size(); i++) {
+  for(std::size_t i = 0; i < points.size(); i++) {
     if(points[i].empty()) {
       Msg::Error("No facets found in STL file for solid %d", i);
       fclose(fp);
@@ -141,8 +141,8 @@ int GModel::readSTL(const std::string &name, double tolerance)
   // create triangles using unique vertices
   double eps = norm(SVector3(bbox.max(), bbox.min())) * tolerance;
   std::vector<MVertex *> vertices;
-  for(unsigned int i = 0; i < points.size(); i++)
-    for(unsigned int j = 0; j < points[i].size(); j++)
+  for(std::size_t i = 0; i < points.size(); i++)
+    for(std::size_t j = 0; j < points[i].size(); j++)
       vertices.push_back(
         new MVertex(points[i][j].x(), points[i][j].y(), points[i][j].z()));
   MVertexRTree pos(eps);
@@ -150,8 +150,8 @@ int GModel::readSTL(const std::string &name, double tolerance)
 
   std::set<MFace, Less_Face> unique;
   int nbDuplic = 0;
-  for(unsigned int i = 0; i < points.size(); i++) {
-    for(unsigned int j = 0; j < points[i].size(); j += 3) {
+  for(std::size_t i = 0; i < points.size(); i++) {
+    for(std::size_t j = 0; j < points[i].size(); j += 3) {
       MVertex *v[3];
       for(int k = 0; k < 3; k++) {
         double x = points[i][j + k].x();
@@ -225,7 +225,7 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
   for(fiter it = firstFace(); it != lastFace(); ++it) {
     if(saveAll || (*it)->physicals.size()) {
       if(useGeoSTL && (*it)->stl_vertices_uv.size()) {
-        for(unsigned int i = 0; i < (*it)->stl_triangles.size(); i += 3) {
+        for(std::size_t i = 0; i < (*it)->stl_triangles.size(); i += 3) {
           SPoint2 &p1((*it)->stl_vertices_uv[(*it)->stl_triangles[i]]);
           SPoint2 &p2((*it)->stl_vertices_uv[(*it)->stl_triangles[i + 1]]);
           SPoint2 &p3((*it)->stl_vertices_uv[(*it)->stl_triangles[i + 2]]);
@@ -264,9 +264,9 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
         }
       }
       else {
-        for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+        for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
           (*it)->triangles[i]->writeSTL(fp, binary, scalingFactor);
-        for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
+        for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++)
           (*it)->quadrangles[i]->writeSTL(fp, binary, scalingFactor);
       }
     }

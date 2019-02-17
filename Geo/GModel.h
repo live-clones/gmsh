@@ -43,8 +43,8 @@ private:
   std::set<GVertex *, GEntityLessThan> _chainVertices;
 
   // the maximum vertex and element id number in the mesh
-  int _maxVertexNum, _maxElementNum;
-  int _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
+  std::size_t _maxVertexNum, _maxElementNum;
+  std::size_t _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
   // flag set to true when the model is being destroyed
   bool _destroying;
 
@@ -133,7 +133,7 @@ protected:
   std::map<std::pair<int, int>, std::string> physicalNames, elementaryNames;
 
   // the set of all used mesh partition numbers
-  unsigned int _numPartitions;
+  std::size_t _numPartitions;
 
 protected:
   void _createGEOInternals();
@@ -185,8 +185,6 @@ public:
   // elementary/physical name iterator
   typedef std::map<std::pair<int, int>, std::string>::iterator piter;
 
-  typedef std::set<GVertex *, GEntityLessThan>::size_type size_type;
-
 public:
   GModel(const std::string &name = "");
   virtual ~GModel();
@@ -214,16 +212,16 @@ public:
   bool isBeingDestroyed() const { return _destroying; }
 
   // get/set global vertex/element num
-  int getMaxVertexNumber() { return _maxVertexNum; }
-  int getMaxElementNumber() { return _maxElementNum; }
-  void setMaxVertexNumber(int num) { _maxVertexNum = num; }
-  void setMaxElementNumber(int num) { _maxElementNum = num; }
+  std::size_t getMaxVertexNumber() { return _maxVertexNum; }
+  std::size_t getMaxElementNumber() { return _maxElementNum; }
+  void setMaxVertexNumber(std::size_t num) { _maxVertexNum = num; }
+  void setMaxElementNumber(std::size_t num) { _maxElementNum = num; }
   void checkPointMaxNumbers()
   {
     _checkPointedMaxVertexNum = _maxVertexNum;
     _checkPointedMaxVertexNum = _maxVertexNum;
   }
-  void getCheckPointedMaxNumbers(int &maxv, int &maxe)
+  void getCheckPointedMaxNumbers(std::size_t &maxv, std::size_t &maxe)
   {
     maxv = _checkPointedMaxVertexNum;
     maxe = _checkPointedMaxElementNum;
@@ -271,10 +269,10 @@ public:
   void setVisibility(char val) { _visible = val; }
 
   // get the number of entities in this model
-  int getNumRegions() const { return regions.size(); }
-  int getNumFaces() const { return faces.size(); }
-  int getNumEdges() const { return edges.size(); }
-  size_type getNumVertices() const { return vertices.size(); }
+  std::size_t getNumRegions() const { return regions.size(); }
+  std::size_t getNumFaces() const { return faces.size(); }
+  std::size_t getNumEdges() const { return edges.size(); }
+  std::size_t getNumVertices() const { return vertices.size(); }
 
   // quickly check if the model is empty (i.e., if it contains no
   // entities)
@@ -435,12 +433,12 @@ public:
   int getMeshStatus(bool countDiscrete = true);
 
   // return the total number of elements in the mesh
-  int getNumMeshElements(int dim = -1) const;
-  int getNumMeshParentElements() const;
+  std::size_t getNumMeshElements(int dim = -1) const;
+  std::size_t getNumMeshParentElements() const;
 
   // get the number of each type of element in the mesh at the largest
   // dimension and return the dimension
-  int getNumMeshElements(unsigned c[6]);
+  std::size_t getNumMeshElements(unsigned c[6]);
 
   // access a mesh element by coordinates (using an octree search)
   MElement *getMeshElementByCoord(SPoint3 &p, int dim = -1, bool strict = true);
@@ -455,7 +453,7 @@ public:
   void setMeshElementIndex(MElement *e, int index);
 
   // return the total number of vertices in the mesh
-  int getNumMeshVertices(int dim = -1) const;
+  std::size_t getNumMeshVertices(int dim = -1) const;
 
   // recompute _vertexVectorCache if there is a dense vertex numbering or
   // _vertexMapCache if not.
@@ -499,7 +497,7 @@ public:
   void removeInvisibleElements();
 
   // the list of partitions
-  unsigned int getNumPartitions() const { return _numPartitions; }
+  std::size_t getNumPartitions() const { return _numPartitions; }
   void setNumPartitions(unsigned int npart) { _numPartitions = npart; }
 
   // partition the mesh

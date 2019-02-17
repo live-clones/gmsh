@@ -37,7 +37,7 @@ static void copyMesh(GEdge *from, GEdge *to)
   double u_min = u_bounds.low();
   double u_max = u_bounds.high();
 
-  for(unsigned int i = 0; i < from->mesh_vertices.size(); i++) {
+  for(std::size_t i = 0; i < from->mesh_vertices.size(); i++) {
     int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
     MVertex *v = from->mesh_vertices[index];
     double x = v->x(), y = v->y(), z = v->z();
@@ -83,7 +83,7 @@ int MeshExtrudedCurve(GEdge *ge)
   }
 
   // create elements
-  for(unsigned int i = 0; i < ge->mesh_vertices.size() + 1; i++) {
+  for(std::size_t i = 0; i < ge->mesh_vertices.size() + 1; i++) {
     MVertex *v0 = (i == 0) ?
       ge->getBeginVertex()->mesh_vertices[0] :
       ge->mesh_vertices[i - 1];

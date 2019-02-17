@@ -22,7 +22,7 @@ meshMetric::meshMetric(GModel *gm)
 
   if(_dim == 2) {
     for(GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); ++fit) {
-      for(unsigned int i = 0; i < (*fit)->getNumMeshElements(); i++) {
+      for(std::size_t i = 0; i < (*fit)->getNumMeshElements(); i++) {
         MElement *e = (*fit)->getMeshElement(i);
         MElement *copy = e->copy(_vertexMap, newP, newD);
         _elements.push_back(copy);
@@ -31,7 +31,7 @@ meshMetric::meshMetric(GModel *gm)
   }
   else if(_dim == 3) {
     for(GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
-      for(unsigned int i = 0; i < (*rit)->getNumMeshElements(); i++) {
+      for(std::size_t i = 0; i < (*rit)->getNumMeshElements(); i++) {
         MElement *e = (*rit)->getMeshElement(i);
         MElement *copy = e->copy(_vertexMap, newP, newD);
         _elements.push_back(copy);
@@ -50,7 +50,7 @@ meshMetric::meshMetric(std::vector<MElement *> elements)
   std::map<MElement *, MElement *> newP;
   std::map<MElement *, MElement *> newD;
 
-  for(unsigned int i = 0; i < elements.size(); i++) {
+  for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *e = elements[i];
     MElement *copy = e->copy(_vertexMap, newP, newD);
     _elements.push_back(copy);
@@ -89,7 +89,7 @@ void meshMetric::updateMetrics()
     _nodalSizes[ver] = setOfSizes[0][ver];
 
     if(setOfMetrics.size() > 1)
-      for(unsigned int i = 1; i < setOfMetrics.size(); i++) {
+      for(std::size_t i = 1; i < setOfMetrics.size(); i++) {
         _nodalMetrics[ver] =
           (_dim == 3) ? intersection_conserve_mostaniso(_nodalMetrics[ver],
                                                         setOfMetrics[i][ver]) :
@@ -209,7 +209,7 @@ void meshMetric::exportInfo(const char *fileendname)
 meshMetric::~meshMetric()
 {
   if(_octree) delete _octree;
-  for(unsigned int i = 0; i < _elements.size(); i++) delete _elements[i];
+  for(std::size_t i = 0; i < _elements.size(); i++) delete _elements[i];
 }
 
 void meshMetric::computeValues()
@@ -224,7 +224,7 @@ void meshMetric::computeValues()
 }
 
 // Determines set of vertices to use for least squares
-std::vector<MVertex *> getLSBlob(unsigned int minNbPt, v2t_cont::iterator it,
+std::vector<MVertex *> getLSBlob(std::size_t minNbPt, v2t_cont::iterator it,
                                  v2t_cont &adj)
 {
   //  static const double RADFACT = 3;
@@ -275,15 +275,15 @@ std::vector<MVertex *> getLSBlob(unsigned int minNbPt, v2t_cont::iterator it,
 // a_i0*x^2+a_i1*x*y+a_i2*x*z+a_i3*y^2+a_i4*y*z+a_i5*z^2+a_i6*x+a_i7*y+a_i8*z+a_i9=b_i
 void meshMetric::computeHessian()
 {
-  unsigned int sysDim = (_dim == 2) ? 6 : 10;
-  unsigned int minNbPtBlob = 3 * sysDim;
+  std::size_t sysDim = (_dim == 2) ? 6 : 10;
+  std::size_t minNbPtBlob = 3 * sysDim;
 
   for(v2t_cont::iterator it = _adj.begin(); it != _adj.end(); it++) {
     MVertex *ver = it->first;
     std::vector<MVertex *> vv = getLSBlob(minNbPtBlob, it, _adj);
     fullMatrix<double> A(vv.size(), sysDim), ATA(sysDim, sysDim);
     fullVector<double> b(vv.size()), ATb(sysDim), coeffs(sysDim);
-    for(unsigned int i = 0; i < vv.size(); i++) {
+    for(std::size_t i = 0; i < vv.size(); i++) {
       const double &x = vv[i]->x(), &y = vv[i]->y(), &z = vv[i]->z();
       if(_dim == 2) {
         A(i, 0) = x * x;
@@ -708,7 +708,7 @@ void meshMetric::scaleMetric(int nbElementsTarget, nodalMetricTensor &nmt)
 {
   // compute N
   double N = 0;
-  for(unsigned int i = 0; i < _elements.size(); i++) {
+  for(std::size_t i = 0; i < _elements.size(); i++) {
     MElement *e = _elements[i];
     SMetric3 m1 = nmt[e->getVertex(0)];
     SMetric3 m2 = nmt[e->getVertex(1)];

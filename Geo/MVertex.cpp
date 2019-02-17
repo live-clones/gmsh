@@ -34,7 +34,8 @@ MVertex::MVertex(double x, double y, double z, GEntity *ge, int num)
     GModel *m = GModel::current();
     if(num) {
       _num = num;
-      m->setMaxVertexNumber(std::max(m->getMaxVertexNumber(), _num));
+      // FIXME remove cast once we store long tags
+      m->setMaxVertexNumber(std::max((int)m->getMaxVertexNumber(), _num));
     }
     else {
       m->setMaxVertexNumber(m->getMaxVertexNumber() + 1);
@@ -51,7 +52,8 @@ void MVertex::deleteLast()
 #endif
   {
     GModel *m = GModel::current();
-    if(_num == m->getMaxVertexNumber())
+    // FIXME remove cast once we store long tags
+    if(_num == (int)m->getMaxVertexNumber())
       m->setMaxVertexNumber(m->getMaxVertexNumber() - 1);
     delete this;
   }
@@ -65,7 +67,8 @@ void MVertex::forceNum(int num)
   {
     GModel *m = GModel::current();
     _num = num;
-    m->setMaxVertexNumber(std::max(m->getMaxVertexNumber(), _num));
+    // FIXME remove cast once we store long tags
+    m->setMaxVertexNumber(std::max((int)m->getMaxVertexNumber(), _num));
   }
 }
 
@@ -273,7 +276,7 @@ void MVertex::writeUNV(FILE *fp, bool officialExponentFormat, double scalingFact
     char tmp[128];
     sprintf(tmp, "%25.16E%25.16E%25.16E\n", x() * scalingFactor,
             y() * scalingFactor, z() * scalingFactor);
-    for(unsigned int i = 0; i < strlen(tmp); i++)
+    for(std::size_t i = 0; i < strlen(tmp); i++)
       if(tmp[i] == 'E') tmp[i] = 'D';
     fprintf(fp, "%s", tmp);
   }
@@ -534,7 +537,7 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,
     {
       double d = (p2[0].x() - p1[0].x()) * (p2[0].x() - p1[0].x()) +
                  (p2[0].y() - p1[0].y()) * (p2[0].y() - p1[0].y());
-      for(unsigned int i = 0; i < p2.size(); i++) {
+      for(std::size_t i = 0; i < p2.size(); i++) {
         double d1 = (p2[i].x() - p1[0].x()) * (p2[i].x() - p1[0].x()) +
                     (p2[i].y() - p1[0].y()) * (p2[i].y() - p1[0].y());
         if(d1 < d) {
@@ -546,7 +549,7 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,
     {
       double d = (p2[0].x() - p1[0].x()) * (p2[0].x() - p1[0].x()) +
                  (p2[0].y() - p1[0].y()) * (p2[0].y() - p1[0].y());
-      for(unsigned int i = 0; i < p1.size(); i++) {
+      for(std::size_t i = 0; i < p1.size(); i++) {
         double d1 = (p2[0].x() - p1[i].x()) * (p2[0].x() - p1[i].x()) +
                     (p2[0].y() - p1[i].y()) * (p2[0].y() - p1[i].y());
         if(d1 < d) {

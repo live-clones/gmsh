@@ -129,14 +129,14 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   if(hom != 0) homology->findHomologyBasis(dimsave);
   if(coh != 0) homology->findCohomologyBasis(dimsave);
 
-  for(unsigned int i = 0; i < dimsave.size(); i++) {
+  for(std::size_t i = 0; i < dimsave.size(); i++) {
     int dim = dimsave.at(i);
     if(dim > -1 && dim < 4 && hom != 0) {
       homology->addChainsToModel(dim, pviews, hompg);
       if(hompg != -1) hompg += homology->betti(dim);
     }
   }
-  for(unsigned int i = 0; i < dimsave.size(); i++) {
+  for(std::size_t i = 0; i < dimsave.size(); i++) {
     int dim = dimsave.at(i);
     if(dim > -1 && dim < 4 && coh != 0) {
       homology->addCochainsToModel(dim, pviews, cohpg);

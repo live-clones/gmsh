@@ -262,7 +262,7 @@ public:
   virtual void addDof(Dof key) { _dofset.insert(key); }
   virtual void addDof(std::vector<Dof> &R)
   {
-    for(unsigned int i = 0; i < R.size(); i++) this->addDof(R[i]);
+    for(std::size_t i = 0; i < R.size(); i++) this->addDof(R[i]);
   }
 };
 

@@ -25,8 +25,8 @@ int GModel::writePOS(const std::string &name, bool printElementary,
     fprintf(fp, "View \"Vertices\" {\n");
     std::vector<GEntity*> entities;
     getEntities(entities);
-    for(unsigned int i = 0; i < entities.size(); i++)
-      for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+    for(std::size_t i = 0; i < entities.size(); i++)
+      for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++){
         MVertex *v = entities[i]->mesh_vertices[j];
         fprintf(fp, "SP(%g,%g,%g){1};\n", v->x(), v->y(), v->z());
       }
@@ -93,9 +93,9 @@ int GModel::writePOS(const std::string &name, bool printElementary,
 
   std::vector<GEntity *> entities;
   getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++)
+  for(std::size_t i = 0; i < entities.size(); i++)
     if(saveAll || entities[i]->physicals.size())
-      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
+      for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
         entities[i]->getMeshElement(j)->writePOS(
           fp, printElementary, printElementNumber, printSICN, printSIGE,
           printGamma, printDisto, scalingFactor, entities[i]->tag());

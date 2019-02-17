@@ -109,7 +109,7 @@ public:
     std::vector<MVertex *> v;
     GModel *m = _gm;
     m->getMeshVerticesForPhysicalGroup(dim, physical, v);
-    for(unsigned int i = 0; i < v.size(); i++)
+    for(std::size_t i = 0; i < v.size(); i++)
       dm.fixVertex(v[i], comp, field, e(v[i]->x(), v[i]->y(), v[i]->z()));
   }
 
@@ -150,9 +150,9 @@ public:
     std::map<int, std::vector<GEntity *> >::iterator it =
       groups[dim].find(physical);
     if(it == groups[dim].end()) return;
-    for(unsigned int i = 0; i < it->second.size(); ++i) {
+    for(std::size_t i = 0; i < it->second.size(); ++i) {
       GEntity *ge = it->second[i];
-      for(unsigned int j = 0; j < ge->getNumMeshElements(); j++) {
+      for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
         MElement *e = ge->getMeshElement(j);
         neumannNodalBC(e, comp, field, fct, dm);
       }
@@ -168,9 +168,9 @@ public:
     std::map<int, std::vector<GEntity *> >::iterator it =
       groups[dim].find(physical);
     if(it == groups[dim].end()) return;
-    for(unsigned int i = 0; i < it->second.size(); ++i) {
+    for(std::size_t i = 0; i < it->second.size(); ++i) {
       GEntity *ge = it->second[i];
-      for(unsigned int j = 0; j < ge->getNumMeshElements(); j++) {
+      for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
         MElement *e = ge->getMeshElement(j);
 
         neumannNodalBC(e, 0, field, fct, dm);

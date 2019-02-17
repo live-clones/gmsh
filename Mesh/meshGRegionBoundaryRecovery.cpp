@@ -160,7 +160,7 @@ namespace tetgenBR {
       for(std::vector<GFace *>::const_iterator it = f.begin(); it != f.end();
           ++it) {
         GFace *gf = *it;
-        for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+        for(std::size_t i = 0; i < gf->triangles.size(); i++) {
           MVertex *v0 = gf->triangles[i]->getVertex(0);
           MVertex *v1 = gf->triangles[i]->getVertex(1);
           MVertex *v2 = gf->triangles[i]->getVertex(2);
@@ -169,7 +169,7 @@ namespace tetgenBR {
           all.insert(v2);
         }
         if(_sqr){
-          for(unsigned int i = 0; i < gf->quadrangles.size(); i++) {
+          for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
             MVertex *v0 = gf->quadrangles[i]->getVertex(0);
             MVertex *v1 = gf->quadrangles[i]->getVertex(1);
             MVertex *v2 = gf->quadrangles[i]->getVertex(2);
@@ -194,7 +194,7 @@ namespace tetgenBR {
       for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end();
           ++it) {
         GEdge *ge = *it;
-        for(unsigned int i = 0; i < ge->lines.size(); i++) {
+        for(std::size_t i = 0; i < ge->lines.size(); i++) {
           all.insert(ge->lines[i]->getVertex(0));
           all.insert(ge->lines[i]->getVertex(1));
         }
@@ -203,7 +203,7 @@ namespace tetgenBR {
       for(std::vector<GVertex *>::const_iterator it = v.begin(); it != v.end();
           ++it) {
         GVertex *gv = *it;
-        for(unsigned int i = 0; i < gv->points.size(); i++) {
+        for(std::size_t i = 0; i < gv->points.size(); i++) {
           all.insert(gv->points[i]->getVertex(0));
         }
       }
@@ -217,7 +217,7 @@ namespace tetgenBR {
     // Store all coordinates of the vertices as these will be pertubated in
     // function delaunayTriangulation
     std::map<MVertex *, SPoint3> originalCoordinates;
-    for(unsigned int i = 0; i < _vertices.size(); i++) {
+    for(std::size_t i = 0; i < _vertices.size(); i++) {
       MVertex *v = _vertices[i];
       originalCoordinates[v] = v->point();
     }
@@ -234,7 +234,7 @@ namespace tetgenBR {
       REAL x, y, z;
 
       // Read the points.
-      for(unsigned int i = 0; i < _vertices.size(); i++) {
+      for(std::size_t i = 0; i < _vertices.size(); i++) {
         makepoint(&pointloop, UNUSEDVERTEX);
         // Read the point coordinates.
         x = pointloop[0] = _vertices[i]->x();
@@ -280,7 +280,7 @@ namespace tetgenBR {
     idx2verlist[0] = dummypoint; // Let 0th-entry be dummypoint.
     // Index the vertices, starting at 1 (vertex index 0 is used as special code
     // in tetgenBR in case of failure)
-    for(unsigned int i = 0; i < _vertices.size(); i++) {
+    for(std::size_t i = 0; i < _vertices.size(); i++) {
       _vertices[i]->setIndex(i + 1);
     }
 
@@ -299,7 +299,7 @@ namespace tetgenBR {
 
       // Allocate an array that maps each vertex to its adjacent tets.
       ver2tetarray = new tetrahedron[_vertices.size() + in->firstnumber];
-      for(unsigned int i = 0; i < _vertices.size() + in->firstnumber; i++) {
+      for(std::size_t i = 0; i < _vertices.size() + in->firstnumber; i++) {
         setpointtype(idx2verlist[i], VOLVERTEX); // initial type.
         ver2tetarray[i] = NULL;
       }
@@ -309,7 +309,7 @@ namespace tetgenBR {
 #if 0
       /*  N E W   V E R S I O N	  */
       std::vector<triface> ts( tets.size() );
-      for(unsigned int i = 0; i < tets.size(); i++) {
+      for(std::size_t i = 0; i < tets.size(); i++) {
 	point p[4];
 	// index tetrahedra in order to have access to neighbors ids.
 	tets[i]->tet()->forceNum(i+1);
@@ -343,7 +343,7 @@ namespace tetgenBR {
       /*  N E W   V E R S I O N	  */
 
       // Create the tetrahedra and connect those that share a common face.
-      for(unsigned int i = 0; i < tets.size(); i++) {
+      for(std::size_t i = 0; i < tets.size(); i++) {
         // Get the four vertices.
         for(int j = 0; j < 4; j++) {
           p[j] = idx2verlist[tets[i]->getVertex(j)->getIndex()];
@@ -490,7 +490,7 @@ namespace tetgenBR {
       hullsize = tetrahedrons->items - hullsize;
 
       delete[] ver2tetarray;
-      for(unsigned int i = 0; i < tets.size(); i++) delete tets[i];
+      for(std::size_t i = 0; i < tets.size(); i++) delete tets[i];
       tets.clear(); // Release all memory in this vector.
     }
 #endif
@@ -508,7 +508,7 @@ namespace tetgenBR {
       for(std::vector<GFace *>::const_iterator it = f_list.begin();
           it != f_list.end(); ++it) {
         GFace *gf = *it;
-        for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+        for(std::size_t i = 0; i < gf->triangles.size(); i++) {
           for(int j = 0; j < 3; j++) {
             p[j] = idx2verlist[gf->triangles[i]->getVertex(j)->getIndex()];
             if(pointtype(p[j]) == VOLVERTEX) {
@@ -576,7 +576,7 @@ namespace tetgenBR {
       for(std::vector<GEdge *>::const_iterator it = e_list.begin();
           it != e_list.end(); ++it) {
         GEdge *ge = *it;
-        for(unsigned int i = 0; i < ge->lines.size(); i++) {
+        for(std::size_t i = 0; i < ge->lines.size(); i++) {
           for(int j = 0; j < 2; j++) {
             p[j] = idx2verlist[ge->lines[i]->getVertex(j)->getIndex()];
             setpointtype(p[j], RIDGEVERTEX);
@@ -908,7 +908,7 @@ namespace tetgenBR {
           assert(ge != NULL);
           Msg::Info("Steiner points exist on curve %d", ge->tag());
           // Delete the old triangles.
-          for(unsigned int i = 0; i < ge->lines.size(); i++)
+          for(std::size_t i = 0; i < ge->lines.size(); i++)
             delete ge->lines[i];
           ge->lines.clear();
           ge->deleteVertexArrays();
@@ -954,7 +954,7 @@ namespace tetgenBR {
           assert(gf != NULL);
           // Delete the old triangles.
           Msg::Info("Steiner points exist on surface %d", gf->tag());
-          for(unsigned int i = 0; i < gf->triangles.size(); i++)
+          for(std::size_t i = 0; i < gf->triangles.size(); i++)
             delete gf->triangles[i];
           gf->triangles.clear();
           gf->deleteVertexArrays();
@@ -1031,7 +1031,7 @@ namespace tetgenBR {
     }
 
     // delete 8 new enclosing box vertices added in delaunayMeshIn3d
-    for(unsigned int i = _vertices.size() - 8; i < _vertices.size(); i++)
+    for(std::size_t i = _vertices.size() - 8; i < _vertices.size(); i++)
       delete _vertices[i];
 
     return true;
@@ -1263,7 +1263,7 @@ bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr)
       std::vector<GFace *> f = gr->faces();
       for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); ++it) {
         GFace *gf = *it;
-        for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+        for(std::size_t i = 0; i < gf->triangles.size(); i++) {
           for(int j = 0; j < 3; j++) {
             MVertex *v = gf->triangles[i]->getVertex(j);
             all[v->getIndex()] = v;
@@ -1274,7 +1274,7 @@ bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr)
       for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end();
           ++it) {
         GEdge *ge = *it;
-        for(unsigned int i = 0; i < ge->lines.size(); i++) {
+        for(std::size_t i = 0; i < ge->lines.size(); i++) {
           for(int j = 0; j < 2; j++) {
             MVertex *v = ge->lines[i]->getVertex(j);
             all[v->getIndex()] = v;
@@ -1285,12 +1285,12 @@ bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr)
       for(std::vector<GVertex *>::const_iterator it = v.begin(); it != v.end();
           ++it) {
         GVertex *gv = *it;
-        for(unsigned int i = 0; i < gv->points.size(); i++) {
+        for(std::size_t i = 0; i < gv->points.size(); i++) {
           MVertex *v = gv->points[i]->getVertex(0);
           all[v->getIndex()] = v;
         }
       }
-      for(unsigned int i = 0; i < gr->mesh_vertices.size(); i++) {
+      for(std::size_t i = 0; i < gr->mesh_vertices.size(); i++) {
         MVertex *v = gr->mesh_vertices[i];
         all[v->getIndex()] = v;
       }
