@@ -1154,7 +1154,7 @@ namespace {
       ++it;
     }
 
-    for(unsigned int i = 0; i < bndEl2column.size(); ++i) {
+    for(std::size_t i = 0; i < bndEl2column.size(); ++i) {
       if(aboveElements[i])
         bndEl2column[i].second.push_back(aboveElements[i]);
       else if(bndEl2column[i].second.size() &&
@@ -1183,19 +1183,19 @@ namespace {
     std::list<MElement *> bndEl;
     if(bndEnt->dim() == 1) {
       GEdge *gEd = bndEnt->cast2Edge();
-      for(unsigned int i = 0; i < gEd->lines.size(); i++)
+      for(std::size_t i = 0; i < gEd->lines.size(); i++)
         //      insertIfCurved(gEd->lines[i], bndEl);
         bndEl.push_back(gEd->lines[i]);
     }
     else if(bndEnt->dim() == 2) {
       GFace *gFace = bndEnt->cast2Face();
-      for(unsigned int i = 0; i < gFace->triangles.size(); i++) {
+      for(std::size_t i = 0; i < gFace->triangles.size(); i++) {
         if(p.thickness)
           bndEl.push_back(gFace->triangles[i]);
         else
           insertIfCurved(gFace->triangles[i], bndEl);
       }
-      for(unsigned int i = 0; i < gFace->quadrangles.size(); i++)
+      for(std::size_t i = 0; i < gFace->quadrangles.size(); i++)
         if(p.thickness)
           bndEl.push_back(gFace->quadrangles[i]);
         else
@@ -1236,9 +1236,9 @@ namespace {
 
     std::list<MElement *> bndElts;
     GFace *gFace = bndEnt->cast2Face();
-    for(unsigned int i = 0; i < gFace->triangles.size(); i++)
+    for(std::size_t i = 0; i < gFace->triangles.size(); i++)
       bndElts.push_back(gFace->triangles[i]);
-    for(unsigned int i = 0; i < gFace->quadrangles.size(); i++)
+    for(std::size_t i = 0; i < gFace->quadrangles.size(); i++)
       bndElts.push_back(gFace->quadrangles[i]);
 
     std::list<MElement *>::iterator it = bndElts.begin();
@@ -1328,7 +1328,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
       bndEnts = std::vector<GEntity *>(gEds.begin(), gEds.end());
       for(int iBndEnt = 0; iBndEnt < bndEnts.size(); iBndEnt++) {
         GEntity *&bndEnt = bndEnts[iBndEnt];
-        for(unsigned int k = 0; k < blFields.size(); ++k) {
+        for(std::size_t k = 0; k < blFields.size(); ++k) {
           if(blFields[k]->isEdgeBL(bndEnt->tag())) {
             blBndEnts.insert(bndEnt);
             break;

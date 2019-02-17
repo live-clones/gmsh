@@ -168,7 +168,7 @@ static void getDistordedElements(const std::vector<MElement *> &v,
 {
   d.clear();
   minD = 1;
-  for(unsigned int i = 0; i < v.size(); i++) {
+  for(std::size_t i = 0; i < v.size(); i++) {
     const double disto = v[i]->distoShapeMeasure();
     if(disto < threshold) d.push_back(v[i]);
     minD = std::min(minD, disto);
@@ -180,7 +180,7 @@ static void addOneLayer(const std::vector<MElement *> &v,
                         std::vector<MElement *> &layer)
 {
   std::set<MVertex *> all;
-  for(unsigned int i = 0; i < d.size(); i++) {
+  for(std::size_t i = 0; i < d.size(); i++) {
     MElement *e = d[i];
     int n = e->getNumPrimaryVertices();
     for(int j = 0; j < n; j++) { all.insert(e->getVertex(j)); }
@@ -188,7 +188,7 @@ static void addOneLayer(const std::vector<MElement *> &v,
   layer.clear();
   std::sort(d.begin(), d.end());
 
-  for(unsigned int i = 0; i < v.size(); i++) {
+  for(std::size_t i = 0; i < v.size(); i++) {
     MElement *e = v[i];
     bool found = std::binary_search(d.begin(), d.end(), e);
     // element is not yet there
@@ -312,7 +312,7 @@ void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
   std::set<MVertex *> verticesToMove;
 
   // on the last layer, fix displacement to 0
-  for(unsigned int i = 0; i < layer.size(); i++) {
+  for(std::size_t i = 0; i < layer.size(); i++) {
     for(int j = 0; j < layer[i]->getNumVertices(); j++) {
       MVertex *vert = layer[i]->getVertex(j);
       myAssembler.fixVertex(vert, 0, _tag, 0);
@@ -321,7 +321,7 @@ void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
   }
 
   // fix all vertices that cannot move
-  for(unsigned int i = 0; i < v.size(); i++) {
+  for(std::size_t i = 0; i < v.size(); i++) {
     moveToStraightSidedLocation(v[i]);
     for(int j = 0; j < v[i]->getNumVertices(); j++) {
       MVertex *vert = v[i]->getVertex(j);
@@ -334,7 +334,7 @@ void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
   }
 
   // number the other DOFs
-  for(unsigned int i = 0; i < v.size(); i++) {
+  for(std::size_t i = 0; i < v.size(); i++) {
     for(int j = 0; j < v[i]->getNumVertices(); j++) {
       MVertex *vert = v[i]->getVertex(j);
       myAssembler.numberVertex(vert, 0, _tag);
@@ -385,7 +385,7 @@ double highOrderTools::smooth_metric_(std::vector<MElement *> &v, GFace *gf,
 
   if(myAssembler.sizeOfR()) {
     // while convergence
-    for(unsigned int i = 0; i < v.size(); i++) {
+    for(std::size_t i = 0; i < v.size(); i++) {
       MElement *e = v[i];
       int nbNodes = e->getNumVertices();
       const int n2 = 2 * nbNodes;
@@ -471,7 +471,7 @@ void highOrderTools::computeStraightSidedPositions()
   // compute stright sided positions of vertices that are classified on model
   // edges
   for(GModel::eiter it = _gm->firstEdge(); it != _gm->lastEdge(); ++it) {
-    for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       MLine *l = (*it)->lines[i];
       int N = l->getNumVertices() - 2;
       SVector3 p0((*it)->lines[i]->getVertex(0)->x(),
@@ -498,12 +498,12 @@ void highOrderTools::computeStraightSidedPositions()
   // compute stright sided positions of vertices that are classified on model
   // faces
   for(GModel::fiter it = _gm->firstFace(); it != _gm->lastFace(); ++it) {
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->mesh_vertices.size(); i++) {
       MVertex *v = (*it)->mesh_vertices[i];
       _targetLocation[v] = SVector3(v->x(), v->y(), v->z());
     }
 
-    for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
       MTriangle *t = (*it)->triangles[i];
       MFace face = t->getFace(0);
       const nodalBasis *fs = t->getFunctionSpace();
@@ -517,7 +517,7 @@ void highOrderTools::computeStraightSidedPositions()
         }
       }
     }
-    for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++) {
       //      printf("coucou quad %d\n",i);
       MQuadrangle *q = (*it)->quadrangles[i];
       MFace face = q->getFace(0);
@@ -535,11 +535,11 @@ void highOrderTools::computeStraightSidedPositions()
   }
 
   for(GModel::riter it = _gm->firstRegion(); it != _gm->lastRegion(); ++it) {
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->mesh_vertices.size(); i++) {
       MVertex *v = (*it)->mesh_vertices[i];
       _targetLocation[v] = SVector3(v->x(), v->y(), v->z());
     }
-    for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->tetrahedra.size(); i++) {
       _dim = 3;
       MTetrahedron *t = (*it)->tetrahedra[i];
       MTetrahedron t_1(
@@ -558,7 +558,7 @@ void highOrderTools::computeStraightSidedPositions()
         }
       }
     }
-    for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->hexahedra.size(); i++) {
       _dim = 3;
       MHexahedron *h = (*it)->hexahedra[i];
       MHexahedron h_1(
@@ -607,7 +607,7 @@ double highOrderTools::apply_incremental_displacement(
   //+++++++++ Boundary Conditions & Numbering +++++++++++++++++++++++++++++++
   // fix all dof that correspond to vertices on the boundary
   // the value is equal
-  for(unsigned int i = 0; i < v.size(); i++) {
+  for(std::size_t i = 0; i < v.size(); i++) {
     for(int j = 0; j < v[i]->getNumVertices(); j++) {
       MVertex *vert = v[i]->getVertex(j);
       _vertices.insert(vert);
@@ -616,7 +616,7 @@ double highOrderTools::apply_incremental_displacement(
 
   //+++++++++ Fix d tr(eps) = 0 +++++++++++++++++++++++++++++++
   if(mixed) {
-    for(unsigned int i = 0; i < disto.size(); i++) {
+    for(std::size_t i = 0; i < disto.size(); i++) {
       for(int j = 0; j < disto[i]->getNumVertices(); j++) {
         MVertex *vert = disto[i]->getVertex(j);
         myAssembler.fixVertex(vert, 4, _tag, 0.0);
@@ -654,7 +654,7 @@ double highOrderTools::apply_incremental_displacement(
 
   if(myAssembler.sizeOfR()) {
     // assembly of the elasticity term on the
-    for(unsigned int i = 0; i < v.size(); i++) {
+    for(std::size_t i = 0; i < v.size(); i++) {
       SElement se(v[i]);
       if(mixed)
         El_mixed.addToMatrix(myAssembler, &se);
@@ -727,7 +727,7 @@ void highOrderTools::ensureMinimumDistorsion(std::vector<MElement *> &all,
     if(disto.empty()) break;
     Msg::Info("Fixing %d bad curved elements (worst disto %g)", disto.size(),
               minD);
-    for(unsigned int i = 0; i < disto.size(); i++) {
+    for(std::size_t i = 0; i < disto.size(); i++) {
       ensureMinimumDistorsion(disto[i], threshold);
     }
   }
@@ -740,7 +740,7 @@ double highOrderTools::applySmoothingTo(std::vector<MElement *> &all,
   double minD;
   std::vector<MElement *> disto;
   // move the points to their straight sided locations
-  for(unsigned int i = 0; i < all.size(); i++)
+  for(std::size_t i = 0; i < all.size(); i++)
     moveToStraightSidedLocation(all[i]);
   // apply the displacement
 
@@ -781,7 +781,7 @@ void printJacobians(GModel *m, const char *nm)
   FILE *f = Fopen(nm, "w");
   fprintf(f, "View \"\"{\n");
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
-    for(unsigned int j = 0; j < (*it)->triangles.size(); j++) {
+    for(std::size_t j = 0; j < (*it)->triangles.size(); j++) {
       MTriangle *t = (*it)->triangles[j];
       for(int i = 0; i < n; i++) {
         for(int k = 0; k < n - i; k++) {

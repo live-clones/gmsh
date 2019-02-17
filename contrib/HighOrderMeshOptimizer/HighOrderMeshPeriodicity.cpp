@@ -33,7 +33,7 @@
 
 HighOrderMeshPeriodicity::HighOrderMeshPeriodicity(std::vector<GEntity *> &entities)
 {
-  for(unsigned int i = 0; i < entities.size(); ++i) {
+  for(std::size_t i = 0; i < entities.size(); ++i) {
     // MVertex on GVertex cannot move
     if(entities[i]->dim() == 0) continue;
 
@@ -147,7 +147,7 @@ void HighOrderMeshPeriodicity::_relocateMasterVertices()
       }
 
       double coeff = 1. / (1 + numSlave);
-      for(unsigned int k = 0; k < master->getNumMeshVertices(); ++k) {
+      for(std::size_t k = 0; k < master->getNumMeshVertices(); ++k) {
         MEdgeVertex *v = dynamic_cast<MEdgeVertex *>(master->getMeshVertex(k));
         if(v && v->onWhat() == master) {
           SPoint3 p3(v->x() * coeff, v->y() * coeff, v->z() * coeff);

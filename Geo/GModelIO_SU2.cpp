@@ -20,7 +20,7 @@ static std::string physicalName(GModel *m, int dim, int num)
             num);
     name = tmp;
   }
-  for(unsigned int i = 0; i < name.size(); i++)
+  for(std::size_t i = 0; i < name.size(); i++)
     if(name[i] == ' ') name[i] = '_';
   return name;
 }
@@ -69,13 +69,13 @@ int GModel::writeSU2(const std::string &name, bool saveAll,
   if(ndime == 2) {
     for(fiter it = firstFace(); it != lastFace(); it++)
       if(saveAll || (*it)->physicals.size())
-        for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++)
+        for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++)
           (*it)->getMeshElement(i)->writeSU2(fp, num++);
   }
   else {
     for(riter it = firstRegion(); it != lastRegion(); it++)
       if(saveAll || (*it)->physicals.size())
-        for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++)
+        for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++)
           (*it)->getMeshElement(i)->writeSU2(fp, num++);
   }
 
@@ -83,8 +83,8 @@ int GModel::writeSU2(const std::string &name, bool saveAll,
   fprintf(fp, "NPOIN= %d\n", npoin);
   std::vector<GEntity *> entities;
   getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeSU2(fp, ndime, scalingFactor);
 
   // markers for physical groups of dimension (ndime - 1)
@@ -98,14 +98,14 @@ int GModel::writeSU2(const std::string &name, bool saveAll,
         it != groups[ndime - 1].end(); it++) {
       std::vector<GEntity *> &entities = it->second;
       int n = 0;
-      for(unsigned int i = 0; i < entities.size(); i++)
+      for(std::size_t i = 0; i < entities.size(); i++)
         n += entities[i]->getNumMeshElements();
       if(n) {
         fprintf(fp, "MARKER_TAG= %s\n",
                 physicalName(this, ndime - 1, it->first).c_str());
         fprintf(fp, "MARKER_ELEMS= %d\n", n);
-        for(unsigned int i = 0; i < entities.size(); i++)
-          for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
+        for(std::size_t i = 0; i < entities.size(); i++)
+          for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
             entities[i]->getMeshElement(j)->writeSU2(fp, -1);
       }
     }

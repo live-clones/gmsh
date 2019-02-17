@@ -39,7 +39,7 @@ template <> void dofManager<double>::scatterSolution()
   while(MPI_Waitany(Msg::GetCommSize(), &reqRecv[0], &index, &status) == 0 &&
         index != MPI_UNDEFINED) {
     if(status.MPI_TAG == 0)
-      for(unsigned int j = 0; j < recvBuf[index].size(); j++) {
+      for(std::size_t j = 0; j < recvBuf[index].size(); j++) {
         ghostValue[ghostByProc[index][j]] = recvBuf[index][j];
         // const Dof &dof = ghostByProc[index][j];
       }

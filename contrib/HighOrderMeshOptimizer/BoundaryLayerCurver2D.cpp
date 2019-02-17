@@ -52,8 +52,8 @@ namespace {
   void drawEquidistantPoints(GEdge *gedge, int N)
   {
     return;
-    const unsigned int numLine = gedge->getNumMeshElements();
-    for(unsigned int i = 0; i < numLine; ++i) {
+    const std::size_t numLine = gedge->getNumMeshElements();
+    for(std::size_t i = 0; i < numLine; ++i) {
       gedge->getMeshElement(i)->setVisibility(0);
     }
 
@@ -493,7 +493,7 @@ namespace BoundaryLayerCurver {
       vertices.resize((unsigned int)order + 1);
       MEdgeN lowOrderEdge(vertices);
 
-      for(unsigned int i = 2; i < vertices.size(); ++i) {
+      for(std::size_t i = 2; i < vertices.size(); ++i) {
         vertices[i]->x() = newxyzLow(i, 0);
         vertices[i]->y() = newxyzLow(i, 1);
         vertices[i]->z() = newxyzLow(i, 2);
@@ -504,7 +504,7 @@ namespace BoundaryLayerCurver {
       const fullMatrix<double> &refpnts = nb->getReferenceNodes();
 
       fullMatrix<double> newxyz(edge->getNumVertices(), 3);
-      for(unsigned int i = 2; i < edge->getNumVertices(); ++i) {
+      for(std::size_t i = 2; i < edge->getNumVertices(); ++i) {
         SPoint3 p = lowOrderEdge.pnt(refpnts(i, 0));
         newxyz(i, 0) = p.x();
         newxyz(i, 1) = p.y();
@@ -738,7 +738,7 @@ namespace BoundaryLayerCurver {
       MVertex *vb0 = stack[0].getVertex(0);
       MVertex *vb1 = stack[0].getVertex(1);
 
-      for(unsigned int i = 1; i < stack.size(); ++i) {
+      for(std::size_t i = 1; i < stack.size(); ++i) {
         MVertex *v0 = stack[i].getVertex(0);
         MVertex *v1 = stack[i].getVertex(1);
         eta[i].first = vb0->distance(v0);
@@ -857,7 +857,7 @@ namespace BoundaryLayerCurver {
 
       int numVertices = stack[0].getNumVertices();
 
-      for(unsigned int i = 1; i < stack.size(); ++i) {
+      for(std::size_t i = 1; i < stack.size(); ++i) {
         if(i == iLast) continue;
         // we want to change stack[iFirst] but not stack[iLast]
 
@@ -928,7 +928,7 @@ namespace BoundaryLayerCurver {
       // Compute quality of primary elements
       unsigned long numElements = stackElements.size() - 1;
       std::vector<double> qualitiesLinear(numElements);
-      for(unsigned int i = 0; i < numElements; ++i) {
+      for(std::size_t i = 0; i < numElements; ++i) {
         MElement *linear = createPrimaryElement(stackElements[i]);
         qualitiesLinear[i] = jacobianBasedQuality::minIGEMeasure(linear);
         delete linear;
@@ -942,7 +942,7 @@ namespace BoundaryLayerCurver {
 
         bool allOk = true;
         if(coeffHermite[i]) {
-          for(unsigned int i = 0; i < numElements; ++i) {
+          for(std::size_t i = 0; i < numElements; ++i) {
             double qual = jacobianBasedQuality::minIGEMeasure(stackElements[i]);
             if(qual < .5 && qual < .8 * qualitiesLinear[i]) {
               allOk = false;
@@ -1202,7 +1202,7 @@ namespace BoundaryLayerCurver {
       stack[k++] = bottomElement->getVertex(i);
     }
     MEdge bottomEdge = bottomElement->getEdge(0);
-    for(unsigned int i = 0; i < numLayers - 1; ++i) {
+    for(std::size_t i = 0; i < numLayers - 1; ++i) {
       MElement *currentElement = stackElements[i];
       MEdge topEdge;
       if(!computeCommonEdge(currentElement, stackElements[i + 1], topEdge)) {
@@ -1254,11 +1254,11 @@ namespace BoundaryLayerCurver {
     std::vector<MVertex *> primVert;
     compute2DstackPrimaryVertices(column, primVert);
 
-    for(unsigned int i = 0; i < numElements; ++i) {
+    for(std::size_t i = 0; i < numElements; ++i) {
       MEdge e(primVert[2 * i + 0], primVert[2 * i + 1]);
       stackEdges[i] = stackElements[i]->getHighOrderEdge(e);
     }
-    for(unsigned int i = 0; i < numElements - 1; ++i) {
+    for(std::size_t i = 0; i < numElements - 1; ++i) {
       MFace face;
       if(primVert[2 * i + 0] == primVert[2 * i + 2])
         face =
@@ -1299,7 +1299,7 @@ namespace BoundaryLayerCurver {
     placementTri = InnerVertPlacementMatrices::triangle(order, true);
     placementQua = InnerVertPlacementMatrices::quadrangle(order, true);
 
-    for(unsigned int i = 0; i < stackFaces.size() - 1; ++i) {
+    for(std::size_t i = 0; i < stackFaces.size() - 1; ++i) {
       const MFaceN &face = stackFaces[i];
       if(face.getType() == TYPE_QUA)
         face.repositionInnerVertices(placementQua);
@@ -1479,7 +1479,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
 
   //  for (int i = 0; i < bndEl2column.size(); ++i) {
   //    bndEl2column[i].first->setVisibility(1);
-  //    for (unsigned int j = 0; j < bndEl2column[i].second.size(); ++j) {
+  //    for (std::size_t j = 0; j < bndEl2column[i].second.size(); ++j) {
   //      bndEl2column[i].second[j]->setVisibility(1);
   //    }
   //  }
@@ -1521,7 +1521,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
 
   //  for (int i = 0; i < bndEl2column.size(); ++i) {
   //    bndEl2column[i].first->setVisibility(1);
-  //    for (unsigned int j = 0; j < bndEl2column[i].second.size(); ++j) {
+  //    for (std::size_t j = 0; j < bndEl2column[i].second.size(); ++j) {
   //      bndEl2column[i].second[j]->setVisibility(1);
   //    }
   //  }
