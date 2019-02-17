@@ -2415,12 +2415,12 @@ class DistanceField : public Field {
   PointCloud P;
   my_kd_tree_t *index;
   PC2KD pc2kd;
-  size_t out_index;
+  std::size_t out_index;
   double out_dist_sqr;
 
 public:
   DistanceField()
-    : index(NULL), pc2kd(P), out_index(-1), out_dist_sqr(0)
+    : index(NULL), pc2kd(P), out_index(0), out_dist_sqr(0)
   {
     n_nodes_by_edge = 20;
     options["NodesList"] = new FieldOptionList(
@@ -2446,7 +2446,7 @@ public:
       _zFieldId, "Id of the field to use as z coordinate.", &update_needed);
   }
   DistanceField(int dim, int tag, int nbe)
-    : n_nodes_by_edge(nbe), index(NULL), pc2kd(P), out_index(-1), out_dist_sqr(0)
+    : n_nodes_by_edge(nbe), index(NULL), pc2kd(P), out_index(0), out_dist_sqr(0)
   {
     if(dim == 0)
       nodes_id.push_back(tag);
@@ -2472,9 +2472,7 @@ public:
   }
   std::pair<AttractorInfo, SPoint3> getAttractorInfo() const
   {
-    if(out_index >= 0 &&
-       out_index < _infos.size() &&
-       out_index < P.pts.size())
+    if(out_index < _infos.size() && out_index < P.pts.size())
       return std::make_pair(_infos[out_index], P.pts[out_index]);
     return std::make_pair(AttractorInfo(), SPoint3());
   }

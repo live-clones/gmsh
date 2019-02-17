@@ -1166,7 +1166,7 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
 
   for(std::multimap<std::pair<MElement *, unsigned int>, unsigned int>::iterator
         it = ghostCells.begin(); it != ghostCells.end(); ++it) {
-    if(it->second < 0 || it->second >= ghostEntities.size()){
+    if(it->second >= ghostEntities.size()){
       Msg::Error("Invalid partition %d in ghost elements", it->second);
       return false;
     }

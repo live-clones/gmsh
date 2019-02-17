@@ -41,23 +41,25 @@ typedef unsigned long intptr_t;
 #include "drawContext.h"
 #endif
 
-
-static inline int computeTetGenVersion2(uint32_t v1, uint32_t* v2Choices, const int iface2){
+#if 0
+static int computeTetGenVersion2(uint32_t v1, uint32_t* v2Choices,
+                                 const int iface2)
+{
   int i;
-  for (i=0; i<3; i++) {
-      if(v1==v2Choices[i]){
-        break;
-      }
+  for (i = 0; i < 3; i++) {
+    if(v1 == v2Choices[i]){
+      break;
+    }
   }
 
-  if(i==3)
-    Msg::Error("should never happen (file:%s line:%d)\n", __FILE__, __LINE__);
+  if(i == 3)
+    Msg::Error("Should never happen (file:%s line:%d)", __FILE__, __LINE__);
 
   // version%4 : corresponding face in adjacent tet
   // version/4 : which of the 3 rotation of the facet the tetrahedra has...
-  return 4*i + iface2;
+  return 4 * i + iface2;
 }
-
+#endif
 
 namespace tetgenBR {
 
