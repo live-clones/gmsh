@@ -45,7 +45,8 @@ MElement::MElement(int num, int part) : _visible(1)
     GModel *m = GModel::current();
     if(num) {
       _num = num;
-      m->setMaxElementNumber(std::max(m->getMaxElementNumber(), _num));
+      // FIXME remove cast once we store long tags
+      m->setMaxElementNumber(std::max((int)m->getMaxElementNumber(), _num));
     }
     else {
       m->setMaxElementNumber(m->getMaxElementNumber() + 1);
@@ -63,7 +64,8 @@ void MElement::forceNum(int num)
   {
     GModel *m = GModel::current();
     _num = num;
-    m->setMaxElementNumber(std::max(m->getMaxElementNumber(), _num));
+    // FIXME remove cast once we store long tags
+    m->setMaxElementNumber(std::max((int)m->getMaxElementNumber(), _num));
   }
 }
 

@@ -484,7 +484,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
     }
   }
 
-    // check if we need to read some post-processing data later
+  // check if we need to read some post-processing data later
 #if(MED_MAJOR_NUM >= 3)
   bool postpro = (MEDnField(fid) > 0) ? true : false;
 #else

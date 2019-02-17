@@ -34,7 +34,8 @@ MVertex::MVertex(double x, double y, double z, GEntity *ge, int num)
     GModel *m = GModel::current();
     if(num) {
       _num = num;
-      m->setMaxVertexNumber(std::max(m->getMaxVertexNumber(), _num));
+      // FIXME remove cast once we store long tags
+      m->setMaxVertexNumber(std::max((int)m->getMaxVertexNumber(), _num));
     }
     else {
       m->setMaxVertexNumber(m->getMaxVertexNumber() + 1);
@@ -65,7 +66,8 @@ void MVertex::forceNum(int num)
   {
     GModel *m = GModel::current();
     _num = num;
-    m->setMaxVertexNumber(std::max(m->getMaxVertexNumber(), _num));
+    // FIXME remove cast once we store long tags
+    m->setMaxVertexNumber(std::max((int)m->getMaxVertexNumber(), _num));
   }
 }
 

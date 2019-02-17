@@ -825,9 +825,9 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
 
       // if we don't have tags, compute the starting index (i.e., how many
       // elements of different type are in the mesh before these ones)
-      int startIndex = 0;
+      std::size_t startIndex = 0;
       if(tags.empty()) {
-        int maxv, maxe;
+        std::size_t maxv, maxe;
         _steps[step]->getModel()->getCheckPointedMaxNumbers(maxv, maxe);
         if(nodal) {
           startIndex += maxv;
@@ -846,12 +846,12 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
           }
           startIndex += maxe;
         }
-        Msg::Debug("MED has no tags -- assuming starting index %d", startIndex);
+        Msg::Debug("MED has no tags -- assuming starting index %lu", startIndex);
       }
 
       // compute entity numbers using profile, then fill step data
       for(std::size_t i = 0; i < profile.size(); i++) {
-        int num;
+        std::size_t num;
         if(tags.empty()) {
           num = startIndex + profile[i];
         }

@@ -43,8 +43,8 @@ private:
   std::set<GVertex *, GEntityLessThan> _chainVertices;
 
   // the maximum vertex and element id number in the mesh
-  int _maxVertexNum, _maxElementNum;
-  int _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
+  std::size_t _maxVertexNum, _maxElementNum;
+  std::size_t _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
   // flag set to true when the model is being destroyed
   bool _destroying;
 
@@ -212,16 +212,16 @@ public:
   bool isBeingDestroyed() const { return _destroying; }
 
   // get/set global vertex/element num
-  int getMaxVertexNumber() { return _maxVertexNum; }
-  int getMaxElementNumber() { return _maxElementNum; }
-  void setMaxVertexNumber(int num) { _maxVertexNum = num; }
-  void setMaxElementNumber(int num) { _maxElementNum = num; }
+  std::size_t getMaxVertexNumber() { return _maxVertexNum; }
+  std::size_t getMaxElementNumber() { return _maxElementNum; }
+  void setMaxVertexNumber(std::size_t num) { _maxVertexNum = num; }
+  void setMaxElementNumber(std::size_t num) { _maxElementNum = num; }
   void checkPointMaxNumbers()
   {
     _checkPointedMaxVertexNum = _maxVertexNum;
     _checkPointedMaxVertexNum = _maxVertexNum;
   }
-  void getCheckPointedMaxNumbers(int &maxv, int &maxe)
+  void getCheckPointedMaxNumbers(std::size_t &maxv, std::size_t &maxe)
   {
     maxv = _checkPointedMaxVertexNum;
     maxe = _checkPointedMaxElementNum;
