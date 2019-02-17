@@ -490,8 +490,8 @@ namespace gmsh { // Top-level functions
                                       std::vector<int> & elementTags,
                                       std::vector<int> & nodeTags,
                                       const int tag = -1,
-                                      const size_t task = 0,
-                                      const size_t numTasks = 1);
+                                      const std::size_t task = 0,
+                                      const std::size_t numTasks = 1);
 
       // Preallocate the data for `getElementsByType'. This is necessary only if
       // `getElementsByType' is called with `numTasks' > 1.
@@ -550,8 +550,8 @@ namespace gmsh { // Top-level functions
                                  std::vector<double> & determinants,
                                  std::vector<double> & points,
                                  const int tag = -1,
-                                 const size_t task = 0,
-                                 const size_t numTasks = 1);
+                                 const std::size_t task = 0,
+                                 const std::size_t numTasks = 1);
 
       // Preallocate the data required by `getJacobians'. This is necessary only if
       // `getJacobians' is called with `numTasks' > 1.
@@ -595,8 +595,8 @@ namespace gmsh { // Top-level functions
                                    const bool fast,
                                    const bool primary,
                                    std::vector<double> & barycenters,
-                                   const size_t task = 0,
-                                   const size_t numTasks = 1);
+                                   const std::size_t task = 0,
+                                   const std::size_t numTasks = 1);
 
       // Preallocate the data required by `getBarycenters'. This is necessary only
       // if `getBarycenters' is called with `numTasks' > 1.
@@ -613,8 +613,8 @@ namespace gmsh { // Top-level functions
                                         std::vector<int> & nodes,
                                         const int tag = -1,
                                         const bool primary = false,
-                                        const size_t task = 0,
-                                        const size_t numTasks = 1);
+                                        const std::size_t task = 0,
+                                        const std::size_t numTasks = 1);
 
       // Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
       // for quadrangular faces) of all elements of type `elementType' classified
@@ -627,8 +627,8 @@ namespace gmsh { // Top-level functions
                                         std::vector<int> & nodes,
                                         const int tag = -1,
                                         const bool primary = false,
-                                        const size_t task = 0,
-                                        const size_t numTasks = 1);
+                                        const std::size_t task = 0,
+                                        const std::size_t numTasks = 1);
 
       // Get the ghost elements `elementTags' and their associated `partitions'
       // stored in the ghost entity of dimension `dim' and tag `tag'.

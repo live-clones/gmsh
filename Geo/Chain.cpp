@@ -260,7 +260,7 @@ bool ElemChain::inEntity(GEntity *e) const
         _vertexCache[e].insert(e->getMeshElement(i)->getVertex(j));
   }
 
-  for(std::size_t i = 0; i < this->getNumVertices(); i++)
+  for(int i = 0; i < this->getNumVertices(); i++)
     if(!_vertexCache[e].count(this->getMeshVertex(i))) return false;
   return true;
 }
