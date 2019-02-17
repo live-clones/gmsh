@@ -52,7 +52,8 @@ void MVertex::deleteLast()
 #endif
   {
     GModel *m = GModel::current();
-    if(_num == m->getMaxVertexNumber())
+    // FIXME remove cast once we store long tags
+    if(_num == (int)m->getMaxVertexNumber())
       m->setMaxVertexNumber(m->getMaxVertexNumber() - 1);
     delete this;
   }
