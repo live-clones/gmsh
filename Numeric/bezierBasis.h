@@ -294,14 +294,18 @@ private:
                                    std::vector<bezierCoeff *> &subCoeff);
   static void _subdividePrism(const bezierCoeff &coeff,
                               std::vector<bezierCoeff *> &subCoeff);
+  static void _subdividePyramid(const bezierCoeff &coeff,
+                                std::vector<bezierCoeff *> &subCoeff);
   static void _copy(const bezierCoeff &from, int start, int num,
                     bezierCoeff &to);
   static void _copyLine(const fullMatrix<double> &allSub, int n, int starti,
                         bezierCoeff &sub);
-  static void _copyQuad(const fullMatrix<double> &allSub, int n, int starti, int startj,
-                          bezierCoeff &sub);
-  static void _copyHex(const fullMatrix<double> &allSub, int n, int starti, int startj,
-                         int startk, bezierCoeff &sub);
+  static void _copyQuad(const fullMatrix<double> &allSub, int n, int starti,
+                        int startj, bezierCoeff &sub);
+  static void _copyHex(const fullMatrix<double> &allSub, int n, int starti,
+                       int startj, int startk, bezierCoeff &sub);
+  static void _copyPyr(const fullMatrix<double> &allSub, int nij, int nk,
+                       int starti, int startj, int startk, bezierCoeff &sub);
   inline static int _ij2Index(int i, int j, int n)
   {
     return i + j * n - j * (j - 1) / 2;

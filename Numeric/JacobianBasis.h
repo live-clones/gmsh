@@ -87,6 +87,7 @@ public:
   inline int getNumMapNodes() const { return numMapNodes; }
   inline int getNumPrimJacNodes() const { return numPrimJacNodes; }
   inline int getNumPrimMapNodes() const { return numPrimMapNodes; }
+  inline FuncSpaceData getFuncSpaceData() const { return _data; }
   const bezierBasis *getBezier() const;
 
   // Jacobian evaluation methods

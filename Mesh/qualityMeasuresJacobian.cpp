@@ -366,8 +366,7 @@ namespace jacobianBasedQuality {
 
     bezierCoeff::usePools(coeffLag.size(), 0);
     std::vector<_coefData *> domains;
-    bezierCoeff *bez =
-      new bezierCoeff(FuncSpaceData(el, jfs->getJacOrder()), coeffLag, 0);
+    bezierCoeff *bez = new bezierCoeff(jfs->getFuncSpaceData(), coeffLag, 0);
     domains.push_back(new _coefDataJac(coeffBez, jfs->getBezier(), 0, bez));
 
     //  int N = 5e5;
@@ -611,7 +610,12 @@ namespace jacobianBasedQuality {
   void sampleJacobianDeterminant(MElement *el, int deg, fullVector<double> &jac,
                                  const fullMatrix<double> *normals)
   {
-    FuncSpaceData sampleSpace = FuncSpaceData(el, deg);
+    FuncSpaceData sampleSpace;
+    if (el->getType() != TYPE_PYR)
+      sampleSpace = FuncSpaceData(el, deg);
+    else
+      sampleSpace = FuncSpaceData(true, el->getTypeForMSH(), true, 1, deg-1);
+
     const JacobianBasis *jacBasis = BasisFactory::getJacobianBasis(sampleSpace);
 
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);

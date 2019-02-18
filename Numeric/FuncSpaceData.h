@@ -31,11 +31,10 @@ private:
   bool _pyramidalSpace;
   // For pyramids, '_spaceOrder' is not used.
   // There are two possible spaces in function of '_pyramidalSpace'.
-  // if '_pyramidalSpace' == true,
-  //   the space is {X^i Y^j Z^k | i,j <= k+'_nij', k <= '_nk'}, (pyramid-like
-  //   space)
-  // otherwise,
-  //   the space is {X^i Y^j Z^k | i,j <= '_nij', k <= '_nk'}, (hex-like space)
+  // if '_pyramidalSpace' == true, the space is a pyramid-like space:
+  //   {X^i Y^j Z^k | i,j <= k+'_nij', k <= '_nk'},
+  // otherwise, the space is a hex-like space:
+  //   {X^i Y^j Z^k | i,j <= '_nij', k <= '_nk'},
   // where X = xi/(1-zeta), Y = eta/(1-zeta) and Z = (1-zeta).
 
 public:

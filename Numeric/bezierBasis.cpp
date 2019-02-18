@@ -998,6 +998,9 @@ void bezierBasis::_constructPyr()
   matrixBez2Lag =
     generateBez2LagMatrixPyramid(_exponents, bezierPoints, pyr, nij, nk);
   matrixBez2Lag.invert(matrixLag2Bez);
+  matrixBez2Lag2 =
+    generateBez2LagMatrixPyramid(_exponents2, bezierPoints, pyr, nij, nk);
+  matrixBez2Lag2.invert(matrixLag2Bez2);
   if(pyr) {
     _numDivisions = 0;
   }
@@ -1773,12 +1776,28 @@ int bezierCoeff::getIdxCornerCoeff(int i) const
     case 5: return _r - 1;
     }
   case TYPE_PYR:
-    switch(i) {
-    case 0: return 0;
-    case 1: return order;
-    case 2: return (order + 1) * (order + 1) - 1;
-    case 3: return (order + 1) * order;
-    case 4: return _r - 1;
+    if (_funcSpaceData.isPyramidalSpace()) {
+      switch(i) {
+      case 0: return 0;
+      case 1: return order;
+      case 2: return (order + 1) * (order + 1) - 1;
+      case 3: return (order + 1) * order;
+      case 4: return _r - 1;
+      }
+    }
+    else {
+      const int nij = _funcSpaceData.nij();
+      const int nk = _funcSpaceData.nk();
+      switch(i) {
+      case 0: return 0;
+      case 1: return nij;
+      case 2: return (nij + 1) * (nij + 1) - 1;
+      case 3: return (nij + 1) * nij;
+      case 4: return (nij + 1) * (nij + 1) * nk;
+      case 5: return (nij + 1) * (nij + 1) * nk + nij;
+      case 6: return _r - 1;
+      case 7: return (nij + 1) * (nij + 1) * nk + (nij + 1) * nij;
+      }
     }
   default:
     Msg::Error("type %d not implemented in getIdxCornerCoeff", _funcSpaceData.elementType());
@@ -1837,9 +1856,8 @@ void bezierCoeff::subdivide(std::vector<bezierCoeff *> &subCoeff) const
     _subdividePrism(*this, subCoeff);
     return;
   case TYPE_PYR:
-    // Pyr is tensorial like hex but may not be 'cubic' => to check
-//    for(int i = 0; i < 8; ++i) subCoeff.push_back(new bezierCoeff(*this));
-//    _subdivideHexahedron(*this, n, subCoeff);
+    for(int i = 0; i < 8; ++i) subCoeff.push_back(new bezierCoeff(*this));
+    _subdividePyramid(*this, subCoeff);
     return;
   }
 }
@@ -2228,6 +2246,53 @@ void bezierCoeff::_subdividePrism(const bezierCoeff &coeff,
   return;
 }
 
+void bezierCoeff::_subdividePyramid(const bezierCoeff &coeff,
+                                    std::vector<bezierCoeff *> &subCoeff)
+{
+  const int nij = coeff._funcSpaceData.nij();
+  const int nk = coeff._funcSpaceData.nk();
+  const int Nij = 2 * nij - 1;
+  const int Nk = 2 * nk - 1;
+  const int dim = coeff._c;
+
+  _sub.resize(Nij * Nij * Nk, dim, false);
+  for(int i = 0; i < nij; ++i) {
+    for(int j = 0; j < nij; ++j) {
+      for(int k = 0; k < nk; ++k) {
+        const int I1 = i + j * nij + k * nij * nij;
+        const int I2 = (2 * i) + (2 * j) * Nij + (2 * k) * Nij * Nij;
+        for(int k = 0; k < dim; ++k) {
+          _sub(I2, k) = coeff(I1, k);
+        }
+      }
+    }
+  }
+  for(int i = 0; i < Nij; i += 2) {
+    for(int j = 0; j < Nij; j += 2) {
+      _subdivide(_sub, nk, i + j * Nij, Nij * Nij);
+    }
+  }
+  for(int i = 0; i < Nij; i += 2) {
+    for(int k = 0; k < Nk; ++k) {
+      _subdivide(_sub, nij, i + k * Nij * Nij, Nij);
+    }
+  }
+  for(int j = 0; j < Nij; ++j) {
+    for(int k = 0; k < Nk; ++k) {
+      _subdivide(_sub, nij, j * Nij + k * Nij * Nij);
+    }
+  }
+  _copyPyr(_sub, nij, nk, 0, 0, 0, *subCoeff[0]);
+  _copyPyr(_sub, nij, nk, nij - 1, 0, 0, *subCoeff[1]);
+  _copyPyr(_sub, nij, nk, 0, nij - 1, 0, *subCoeff[2]);
+  _copyPyr(_sub, nij, nk, nij - 1, nij - 1, 0, *subCoeff[3]);
+  _copyPyr(_sub, nij, nk, 0, 0, nk - 1, *subCoeff[4]);
+  _copyPyr(_sub, nij, nk, nij - 1, 0, nk - 1, *subCoeff[5]);
+  _copyPyr(_sub, nij, nk, 0, nij - 1, nk - 1, *subCoeff[6]);
+  _copyPyr(_sub, nij, nk, nij - 1, nij - 1, nk - 1, *subCoeff[7]);
+  return;
+}
+
 void bezierCoeff::_copy(const bezierCoeff &from, int start, int num,
                         bezierCoeff &to)
 {
@@ -2279,6 +2344,25 @@ bezierCoeff::_copyHex(const fullMatrix<double> &allSub, int n, int starti, int s
       for(int k = 0; k < n; ++k) {
         const int I1 = i + j * n + k * n * n;
         const int I2 = (starti + i) + (startj + j) * N + (startk + k) * N * N;
+        for(int K = 0; K < dim; ++K) {
+          sub(I1, K) = allSub(I2, K);
+        }
+      }
+    }
+  }
+}
+
+void
+bezierCoeff::_copyPyr(const fullMatrix<double> &allSub, int nij, int nk,
+                      int starti, int startj, int startk, bezierCoeff &sub)
+{
+  const int dim = allSub.size2();
+  const int Nij = 2 * nij - 1;
+  for(int i = 0; i < nij; ++i) {
+    for(int j = 0; j < nij; ++j) {
+      for(int k = 0; k < nk; ++k) {
+        const int I1 = i + j * nij + k * nij * nij;
+        const int I2 = (starti + i) + (startj + j) * Nij + (startk + k) * Nij * Nij;
         for(int K = 0; K < dim; ++K) {
           sub(I1, K) = allSub(I2, K);
         }

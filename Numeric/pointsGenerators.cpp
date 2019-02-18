@@ -1286,19 +1286,36 @@ void gmshGenerateOrderedMonomials(FuncSpaceData data, fullMatrix<double> &monomi
     }
     return;
   case TYPE_PYR: {
-    if(data.isPyramidalSpace())
-      Msg::Warning("Ordered monomials for pyramids is tensorial space");
     const int nij = data.nij();
     const int nk = data.nk();
-    monomials.resize((nij + 1) * (nij + 1) * (nk + 1), 3);
-    int idx = 0;
-    for(int k = 0; k < nk + 1; ++k) {
-      for(int j = 0; j < nij + 1; ++j) {
-        for(int i = 0; i < nij + 1; ++i) {
-          monomials(idx, 0) = i;
-          monomials(idx, 1) = j;
-          monomials(idx, 2) = k;
-          ++idx;
+    if(data.isPyramidalSpace()) {
+      int n = nk + nij;
+      int numMonomials = (n + 1) * (n + 2) * (2 * n + 3) / 6;
+      numMonomials -= nij * (nij + 1) * (2 * nij + 1) / 6;
+      monomials.resize(numMonomials, 3);
+      idx = 0;
+      for(int k = 0; k < nk + 1; ++k) {
+        for(int j = 0; j < k + nij + 1; ++j) {
+          for(int i = 0; i < k + nij + 1; ++i) {
+            monomials(idx, 0) = i;
+            monomials(idx, 1) = j;
+            monomials(idx, 2) = k;
+            ++idx;
+          }
+        }
+      }
+    }
+    else {
+      monomials.resize((nij + 1) * (nij + 1) * (nk + 1), 3);
+      idx = 0;
+      for(int k = 0; k < nk + 1; ++k) {
+        for(int j = 0; j < nij + 1; ++j) {
+          for(int i = 0; i < nij + 1; ++i) {
+            monomials(idx, 0) = i;
+            monomials(idx, 1) = j;
+            monomials(idx, 2) = k;
+            ++idx;
+          }
         }
       }
     }
