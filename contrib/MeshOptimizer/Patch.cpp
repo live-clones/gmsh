@@ -25,11 +25,7 @@
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
 #include "GmshMessage.h"
-#include "GRegion.h"
 #include "GFace.h"
-#include "MTriangle.h"
-#include "MQuadrangle.h"
-#include "MTetrahedron.h"
 #include "BasisFactory.h"
 #include "CondNumBasis.h"
 #include "IntegralBoundaryDist.h"

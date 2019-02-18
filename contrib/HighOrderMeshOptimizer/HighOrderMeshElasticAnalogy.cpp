@@ -34,7 +34,6 @@
 #include "MTetrahedron.h"
 #include "MHexahedron.h"
 #include "MPrism.h"
-#include "MPyramid.h"
 #include "MPoint.h"
 #include "HighOrder.h"
 #include "meshGFaceOptimize.h"
@@ -89,6 +88,8 @@ void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible)
       v.insert(v.begin(), (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
       v.insert(v.end(), (*it)->hexahedra.begin(), (*it)->hexahedra.end());
       v.insert(v.end(), (*it)->prisms.begin(), (*it)->prisms.end());
+      if((*it)->pyramids.size())
+        Msg::Error("Pyramids not yet handled in high-order elastic analogy");
       hot.applySmoothingTo(v, 1.e32, false);
     }
   }
@@ -467,7 +468,6 @@ void highOrderTools::computeStraightSidedPositions()
     }
   }
 
-  //  printf("coucou2\n");
   // compute stright sided positions of vertices that are classified on model
   // edges
   for(GModel::eiter it = _gm->firstEdge(); it != _gm->lastEdge(); ++it) {
@@ -494,7 +494,6 @@ void highOrderTools::computeStraightSidedPositions()
     }
   }
 
-  //  printf("coucou3\n");
   // compute stright sided positions of vertices that are classified on model
   // faces
   for(GModel::fiter it = _gm->firstFace(); it != _gm->lastFace(); ++it) {
@@ -518,7 +517,6 @@ void highOrderTools::computeStraightSidedPositions()
       }
     }
     for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++) {
-      //      printf("coucou quad %d\n",i);
       MQuadrangle *q = (*it)->quadrangles[i];
       MFace face = q->getFace(0);
       const nodalBasis *fs = q->getFunctionSpace();
@@ -575,6 +573,26 @@ void highOrderTools::computeStraightSidedPositions()
           SPoint3 pc;
           h_1.pnt(t1, t2, t3, pc);
           _straightSidedLocation[h->getVertex(j)] =
+            SVector3(pc.x(), pc.y(), pc.z());
+        }
+      }
+    }
+    for(std::size_t i = 0; i < (*it)->prisms.size(); i++) {
+      _dim = 3;
+      MPrism *p = (*it)->prisms[i];
+      MPrism p_1(
+        (*it)->prisms[i]->getVertex(0), (*it)->prisms[i]->getVertex(1),
+        (*it)->prisms[i]->getVertex(2), (*it)->prisms[i]->getVertex(3),
+        (*it)->prisms[i]->getVertex(4), (*it)->prisms[i]->getVertex(5));
+      const nodalBasis *fs = p->getFunctionSpace();
+      for(int j = 0; j < p->getNumVertices(); j++) {
+        if(p->getVertex(j)->onWhat() == *it) {
+          double t1 = fs->points(j, 0);
+          double t2 = fs->points(j, 1);
+          double t3 = fs->points(j, 2);
+          SPoint3 pc;
+          p_1.pnt(t1, t2, t3, pc);
+          _straightSidedLocation[p->getVertex(j)] =
             SVector3(pc.x(), pc.y(), pc.z());
         }
       }
