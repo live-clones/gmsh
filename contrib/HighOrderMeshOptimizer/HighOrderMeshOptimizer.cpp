@@ -220,29 +220,6 @@ static bool testElInDist(const SPoint3 p, double limDist, MElement *el)
   return false;
 }
 
-double ComputeDistanceToGeometry(GEntity *ge, int distanceDefinition,
-                                 double tolerance)
-{
-  double maxd = 0.0;
-  double sum = 0.0;
-  int NUM = 0;
-  for(int iEl = 0; iEl < ge->getNumMeshElements(); iEl++) {
-    MElement *el = ge->getMeshElement(iEl);
-    if(ge->dim() == el->getDim()) {
-      const double DISTE = computeBndDist(el, distanceDefinition, tolerance);
-      if(DISTE != 0.0) {
-        NUM++;
-        // if(distanceDefinition == 1)printf("%d %12.5E\n",iEl,DISTE);
-        maxd = std::max(maxd, DISTE);
-        sum += DISTE;
-      }
-    }
-  }
-  if(distanceDefinition == 2) return sum;
-  if(distanceDefinition == 6) return sum;
-  return maxd;
-}
-
 struct HOPatchDefParameters : public MeshOptPatchDef {
   HOPatchDefParameters(const OptHomParameters &p);
   virtual ~HOPatchDefParameters() {}
@@ -293,14 +270,14 @@ double HOPatchDefParameters::bndElBadness(MElement *el, GEntity *gEnt) const
 {
   if(optCAD) {
     if(el->getType() == TYPE_LIN) { // 2D
-      if(gEnt->geomType() !=
-         GEntity::Line) // Straight geometric line -> no distance
+      // Straight geometric line -> no distance
+      if(gEnt->geomType() != GEntity::Line)
         return optCADDistMax -
                taylorDistanceEdge(static_cast<MLine *>(el), gEnt->cast2Edge());
     }
     else { // 3D
-      if(gEnt->geomType() !=
-         GEntity::Plane) // Straight geometric plance -> no distance
+      // Straight geometric plance -> no distance
+      if(gEnt->geomType() != GEntity::Plane)
         return optCADDistMax - taylorDistanceFace(el, gEnt->cast2Face());
     }
   }
@@ -327,6 +304,18 @@ void HighOrderMeshOptimizer(std::vector<GEntity *> &entities,
 {
   Msg::StatusBar(true, "Optimizing high-order mesh...");
 
+  bool order1 = false;
+  for(std::size_t i = 0; i < entities.size(); i++){
+    for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++){
+      if(entities[i]->getMeshElement(j)->getPolynomialOrder() < 2){
+        order1 = true;
+        break;
+      }
+    }
+  }
+  if(order1)
+    Msg::Warning("Applying high-order mesh optimizer to mesh with linear elements");
+
   MeshOptParameters par;
   par.dim = p.dim;
   par.onlyVisible = p.onlyVisible;
@@ -347,8 +336,8 @@ void HighOrderMeshOptimizer(std::vector<GEntity *> &entities,
   minJacBarFunc.setTarget(p.BARRIER_MIN, 1.);
   ObjContribScaledJac<ObjContribFuncBarrierFixMinMovMax> minMaxJacBarFunc(1.);
   minMaxJacBarFunc.setTarget(p.BARRIER_MAX, 1.);
-  //  ObjContribCADDistSq<ObjContribFuncSimpleTargetMax>
-  //  CADDistFunc(p.optCADWeight, p.optCADDistMax); CADDistFunc.setTarget(0.);
+  // ObjContribCADDistSq<ObjContribFuncSimpleTargetMax>
+  // CADDistFunc(p.optCADWeight, p.optCADDistMax); CADDistFunc.setTarget(0.);
   ObjContribCADDistSq<ObjContribFuncBarrierMovMax> CADDistFunc(p.optCADWeight,
                                                                p.optCADDistMax);
   CADDistFunc.setTarget(1., 0.);
@@ -360,7 +349,7 @@ void HighOrderMeshOptimizer(std::vector<GEntity *> &entities,
   minJacPass.maxOptIter = p.itMax;
   minJacPass.contrib.push_back(&nodeDistFunc);
   minJacPass.contrib.push_back(&minJacBarFunc);
-  //  if (p.optCAD) minJacPass.contrib.push_back(&CADDistFunc);
+  // if (p.optCAD) minJacPass.contrib.push_back(&CADDistFunc);
   par.pass.push_back(minJacPass);
 
   if(p.BARRIER_MAX > 0.) {
@@ -369,7 +358,7 @@ void HighOrderMeshOptimizer(std::vector<GEntity *> &entities,
     minMaxJacPass.maxOptIter = p.itMax;
     minMaxJacPass.contrib.push_back(&nodeDistFunc);
     minMaxJacPass.contrib.push_back(&minMaxJacBarFunc);
-    //    if (p.optCAD) minMaxJacPass.contrib.push_back(&CADDistFunc);
+    // if (p.optCAD) minMaxJacPass.contrib.push_back(&CADDistFunc);
     par.pass.push_back(minMaxJacPass);
   }
 
