@@ -1548,7 +1548,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   }
 
   // element number increment
-  int numEle = gm->getNumMeshElements() + gm->getNumMeshParentElements();
+  std::size_t numEle = gm->getNumMeshElements() + gm->getNumMeshParentElements();
   for(std::size_t i = 0; i < gmEntities.size(); i++) {
     for(std::size_t j = 0; j < gmEntities[i]->getNumMeshElements(); j++) {
       MElement *e = gmEntities[i]->getMeshElement(j);

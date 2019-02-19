@@ -18,7 +18,7 @@ GMSH_Plugin *GMSH_RegisterShowNeighborElementsPlugin();
 class GMSH_ShowNeighborElementsPlugin : public GMSH_PostPlugin {
 private:
   int _nLayers;
-  int _nel1, _nel2, _nel3, _nel4, _nel5;
+  std::size_t _nel1, _nel2, _nel3, _nel4, _nel5;
   std::multimap<MVertex *, MElement *> _vert2elem;
   std::set<MVertex *> _vertices;
 
