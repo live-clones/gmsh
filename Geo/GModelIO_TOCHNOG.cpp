@@ -193,7 +193,7 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
         for(std::set<MVertex *>::iterator it2 = nodes.begin();
             it2 != nodes.end(); it2++) {
           if(n && !(n % 10)) fprintf(fp, "\n");
-          fprintf(fp, "%d ", (*it2)->getIndex());
+          fprintf(fp, "%ld ", (*it2)->getIndex());
           n++;
         }
         fprintf(fp, "\n");

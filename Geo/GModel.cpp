@@ -1298,10 +1298,15 @@ void GModel::renumberMeshVertices()
     // if we potentially only save a subset of elements, make sure to first
     // renumber the vertices that belong to those elements (so that we end up
     // with a dense vertex numbering in the output file)
+    std::size_t nv = 0;
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      nv += ge->getNumMeshVertices();
+    }
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
-        ge->getMeshVertex(j)->forceNum(-1);
+        ge->getMeshVertex(j)->forceNum(nv + 1);
       }
     }
     for(std::size_t i = 0; i < entities.size(); i++) {
@@ -1326,7 +1331,7 @@ void GModel::renumberMeshVertices()
       GEntity *ge = entities[i];
       for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
         MVertex *v = ge->getMeshVertex(j);
-        if(v->getNum() == -1) v->forceNum(++n);
+        if(v->getNum() == nv + 1) v->forceNum(++n);
       }
     }
   }

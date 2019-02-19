@@ -691,7 +691,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
     fprintf(fp, "%d\n", (int)unique.size());
     for(std::size_t i = 0; i < unique.size(); i++) {
       MVertex *v = unique[i];
-      fprintf(fp, "%d %.16g %.16g %.16g\n", v->getIndex(), v->x(), v->y(),
+      fprintf(fp, "%ld %.16g %.16g %.16g\n", v->getIndex(), v->x(), v->y(),
               v->z());
     }
     fprintf(fp, "$EndNodes\n");
@@ -749,7 +749,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
     if(forceNodeData) {
       for(std::size_t i = 0; i < unique.size(); i++) {
         MVertex *v = unique[i];
-        fprintf(fp, "%d", v->getIndex());
+        fprintf(fp, "%ld", v->getIndex());
         int nbnod = vertexData[v].nbnod;
         int nod = vertexData[v].nod;
         double *d = vertexData[v].data;

@@ -42,7 +42,7 @@ int GModel::writeMAIL(const std::string &name, bool saveAll,
     if(saveAll || (*it)->physicals.size()) {
       for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
         MTriangle *t = (*it)->triangles[i];
-        fprintf(fp, " %d %d %d\n", t->getVertex(0)->getIndex(),
+        fprintf(fp, " %ld %ld %ld\n", t->getVertex(0)->getIndex(),
                 t->getVertex(1)->getIndex(), t->getVertex(2)->getIndex());
       }
     }

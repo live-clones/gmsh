@@ -26,6 +26,11 @@ double angle3Vertices(const MVertex *p1, const MVertex *p2, const MVertex *p3)
 MVertex::MVertex(double x, double y, double z, GEntity *ge, int num)
   : _visible(1), _order(1), _x(x), _y(y), _z(z), _ge(ge)
 {
+  if(num < 0){
+    Msg::Error("size_t transition: should never set negative vertex num - "
+               "please send us a report if you see this message");
+  }
+
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
@@ -41,7 +46,10 @@ MVertex::MVertex(double x, double y, double z, GEntity *ge, int num)
       m->setMaxVertexNumber(m->getMaxVertexNumber() + 1);
       _num = m->getMaxVertexNumber();
     }
-    _index = num;
+    // on some architectures _index can be smaller than _num; this is OK as the
+    // places where _index is used (IO formats that don't support 64 bit
+    // indices), surface meshing and initial 3D meshing
+    _index = (long int)num;
   }
 }
 
@@ -61,6 +69,11 @@ void MVertex::deleteLast()
 
 void MVertex::forceNum(int num)
 {
+  // FIXME remove this once we switch to size_t
+  if(num < 0){
+    Msg::Error("size_t transition: should never force negative vertex num - "
+               "please send us a report if you see this message");
+  }
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
@@ -78,11 +91,12 @@ void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric,
   if(_index < 0) return; // negative index vertices are never saved
 
   if(!binary) {
-    fprintf(fp, "%d %.16g %.16g %.16g ", _index, x() * scalingFactor,
+    fprintf(fp, "%ld %.16g %.16g %.16g ", _index, x() * scalingFactor,
             y() * scalingFactor, z() * scalingFactor);
   }
   else {
-    fwrite(&_index, sizeof(int), 1, fp);
+    int i = (int)_index;
+    fwrite(&i, sizeof(int), 1, fp);
     double data[3] = {x() * scalingFactor, y() * scalingFactor,
                       z() * scalingFactor};
     fwrite(data, sizeof(double), 3, fp);
@@ -157,14 +171,15 @@ void MVertex::writeMSH2(FILE *fp, bool binary, bool saveParametric,
 
   if(!binary) {
     if(!saveParametric)
-      fprintf(fp, "%d %.16g %.16g %.16g\n", _index, x() * scalingFactor,
+      fprintf(fp, "%ld %.16g %.16g %.16g\n", _index, x() * scalingFactor,
               y() * scalingFactor, z() * scalingFactor);
     else
-      fprintf(fp, "%d %.16g %.16g %.16g %d %d", _index, x() * scalingFactor,
+      fprintf(fp, "%ld %.16g %.16g %.16g %d %d", _index, x() * scalingFactor,
               y() * scalingFactor, z() * scalingFactor, myDim, myTag);
   }
   else {
-    fwrite(&_index, sizeof(int), 1, fp);
+    int i = (int)_index;
+    fwrite(&i, sizeof(int), 1, fp);
     double data[3] = {x() * scalingFactor, y() * scalingFactor,
                       z() * scalingFactor};
     fwrite(data, sizeof(double), 3, fp);
@@ -268,7 +283,7 @@ void MVertex::writeUNV(FILE *fp, bool officialExponentFormat, double scalingFact
   int coord_sys = 1;
   int displacement_coord_sys = 1;
   int color = 11;
-  fprintf(fp, "%10d%10d%10d%10d\n", _index, coord_sys, displacement_coord_sys,
+  fprintf(fp, "%10ld%10d%10d%10d\n", _index, coord_sys, displacement_coord_sys,
           color);
 
   if(officialExponentFormat){
@@ -320,15 +335,15 @@ void MVertex::writeTOCHNOG(FILE *fp, int dim, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
   if(dim == 2) {
-    fprintf(fp, "node %d %.16g %.16g\n", _index, x() * scalingFactor,
+    fprintf(fp, "node %ld %.16g %.16g\n", _index, x() * scalingFactor,
             y() * scalingFactor);
   }
   else if(dim == 3) {
-    fprintf(fp, "node %d %.16g %.16g %.16g\n", _index, x() * scalingFactor,
+    fprintf(fp, "node %ld %.16g %.16g %.16g\n", _index, x() * scalingFactor,
             y() * scalingFactor, z() * scalingFactor);
   }
   else if(dim == 1) {
-    fprintf(fp, "node %d %.16g\n", _index, x() * scalingFactor);
+    fprintf(fp, "node %ld %.16g\n", _index, x() * scalingFactor);
   }
   else {
     fprintf(fp, "ERROR -- unsupported dimension: %d\n", dim);
@@ -350,14 +365,14 @@ void MVertex::writeNEU(FILE *fp, int dim, double scalingFactor)
 
   switch(dim) {
   case 3:
-    fprintf(fp, "%10d%20.11e%20.11e%20.11e\n", _index, x() * scalingFactor,
+    fprintf(fp, "%10ld%20.11e%20.11e%20.11e\n", _index, x() * scalingFactor,
             y() * scalingFactor, z() * scalingFactor);
     break;
   case 2:
-    fprintf(fp, "%10d%20.11e%20.11e\n", _index, x() * scalingFactor,
+    fprintf(fp, "%10ld%20.11e%20.11e\n", _index, x() * scalingFactor,
             y() * scalingFactor);
     break;
-  case 1: fprintf(fp, "%10d%20.11e\n", _index, x() * scalingFactor); break;
+  case 1: fprintf(fp, "%10ld%20.11e\n", _index, x() * scalingFactor); break;
   }
 }
 
@@ -401,20 +416,20 @@ void MVertex::writeBDF(FILE *fp, int format, double scalingFactor)
     double_to_char8(x1, xs);
     double_to_char8(y1, ys);
     double_to_char8(z1, zs);
-    fprintf(fp, "GRID,%d,%d,%s,%s,%s\n", _index, 0, xs, ys, zs);
+    fprintf(fp, "GRID,%ld,%d,%s,%s,%s\n", _index, 0, xs, ys, zs);
   }
   else if(format == 1) {
     // small field format (8 char par field, 10 per line)
     double_to_char8(x1, xs);
     double_to_char8(y1, ys);
     double_to_char8(z1, zs);
-    fprintf(fp, "GRID    %-8d%-8d%-8s%-8s%-8s\n", _index, 0, xs, ys, zs);
+    fprintf(fp, "GRID    %-8ld%-8d%-8s%-8s%-8s\n", _index, 0, xs, ys, zs);
   }
   else {
     // large field format (8 char first/last field, 16 char middle, 6 per line)
-    fprintf(fp, "GRID*   %-16d%-16d%-16.9G%-16.9G*N%-6d\n", _index, 0, x1, y1,
+    fprintf(fp, "GRID*   %-16ld%-16d%-16.9G%-16.9G*N%-6ld\n", _index, 0, x1, y1,
             _index);
-    fprintf(fp, "*N%-6d%-16.9G\n", _index, z1);
+    fprintf(fp, "*N%-6ld%-16.9G\n", _index, z1);
   }
 }
 
@@ -422,7 +437,7 @@ void MVertex::writeINP(FILE *fp, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
-  fprintf(fp, "%d, %.14g, %.14g, %.14g\n", _index, x() * scalingFactor,
+  fprintf(fp, "%ld, %.14g, %.14g, %.14g\n", _index, x() * scalingFactor,
           y() * scalingFactor, z() * scalingFactor);
 }
 
@@ -430,7 +445,7 @@ void MVertex::writeKEY(FILE *fp, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
-  fprintf(fp, "%d, %.14g, %.14g, %.14g\n", _index, x() * scalingFactor,
+  fprintf(fp, "%ld, %.14g, %.14g, %.14g\n", _index, x() * scalingFactor,
           y() * scalingFactor, z() * scalingFactor);
 }
 
@@ -438,7 +453,7 @@ void MVertex::writeDIFF(FILE *fp, bool binary, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
-  fprintf(fp, " %d ( %25.16E , %25.16E , %25.16E )", _index,
+  fprintf(fp, " %ld ( %25.16E , %25.16E , %25.16E )", _index,
           x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
 }
 
@@ -447,10 +462,10 @@ void MVertex::writeSU2(FILE *fp, int dim, double scalingFactor)
   if(_index < 0) return; // negative index vertices are never saved
 
   if(dim == 2)
-    fprintf(fp, "%.16g %.16g %d\n", x() * scalingFactor, y() * scalingFactor,
+    fprintf(fp, "%.16g %.16g %ld\n", x() * scalingFactor, y() * scalingFactor,
             _index - 1);
   else
-    fprintf(fp, "%.16g %.16g %.16g %d\n", x() * scalingFactor,
+    fprintf(fp, "%.16g %.16g %.16g %ld\n", x() * scalingFactor,
             y() * scalingFactor, z() * scalingFactor, _index - 1);
 }
 
@@ -608,7 +623,7 @@ bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
     v->getParameter(0, t);
     param = ge->reparamOnFace(gf, t, 1);
     if(!v->getParameter(0, t)) {
-      Msg::Warning("No parametric coordinate on vertex %d classified on curve %d",
+      Msg::Warning("No parametric coordinate on node %d classified on curve %d",
                    v->getNum(), ge->tag());
       return false;
       // param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);

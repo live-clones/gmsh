@@ -363,7 +363,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
             fprintf(fp, "\n");
             row = 0;
           }
-          fprintf(fp, "%10d%10d%10d%10d", 7, (*it2)->getIndex(), 0, 0);
+          fprintf(fp, "%10d%10ld%10d%10d", 7, (*it2)->getIndex(), 0, 0);
           row++;
         }
         fprintf(fp, "\n");

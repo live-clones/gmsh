@@ -151,9 +151,9 @@ int GModel::writeKEY(const std::string &name, int saveAll,
         for(std::set<MVertex *>::iterator it2 = nodes.begin();
             it2 != nodes.end(); it2++) {
           if(!(n % 8))
-            fprintf(fp, "\n%d", (*it2)->getIndex());
+            fprintf(fp, "\n%ld", (*it2)->getIndex());
           else
-            fprintf(fp, ", %d", (*it2)->getIndex());
+            fprintf(fp, ", %ld", (*it2)->getIndex());
           n++;
         }
         if(n) fprintf(fp, "\n");

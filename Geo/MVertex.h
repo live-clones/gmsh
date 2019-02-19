@@ -25,13 +25,16 @@ class MVertex {
 protected:
   // the immutable id number of the vertex (this number is unique and is
   // guaranteed never to change once a vertex has been created, unless the mesh
-  // is explicitely renumbered)
+  // is explicitely renumbered). This will eventually be changed to size_t.
   int _num;
   // a vertex index, used for example during mesh generation or when saving a
   // mesh (this index is not necessarily unique, can change after mesh
   // renumbering, etc.). By convention, vertices with negative indices are not
-  // saved
-  int _index;
+  // saved. (On some architectures _index will be smaller than _num: this is OK,
+  // as _index is only used for partial indexing in 2D and 3D meshing, or for IO
+  // formats that don't support 64 bit indexing; _index is destined to be
+  // eventually removed anyway.)
+  long int _index;
   // a visibility and polynomial order flags
   char _visible, _order;
   // the cartesian coordinates of the vertex
@@ -80,8 +83,8 @@ public:
   void forceNum(int num);
 
   // get/set the index
-  int getIndex() const { return _index; }
-  void setIndex(int index) { _index = index; }
+  long int getIndex() const { return _index; }
+  void setIndex(long int index) { _index = index; }
 
   // get/set ith parameter
   virtual bool getParameter(int i, double &par) const
