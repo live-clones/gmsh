@@ -288,9 +288,9 @@ void PluginManager::registerDefaultPlugins()
 #endif
 #if defined(HAVE_KBIPACK)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
-      "Homology", GMSH_RegisterHomologyComputationPlugin()));
+      "HomologyComputation", GMSH_RegisterHomologyComputationPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
-      "HomologyPost", GMSH_RegisterHomologyPostProcessingPlugin()));
+      "HomologyPostProcessing", GMSH_RegisterHomologyPostProcessingPlugin()));
 #endif
 #if defined(HAVE_SOLVER)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(

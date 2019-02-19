@@ -1528,6 +1528,10 @@ gmsh::model::mesh::getElementsByType(const int elementType,
   for(std::size_t i = 0; i < entities.size(); i++)
     numElements += entities[i]->getNumMeshElementsByType(familyType);
   const int numNodes = ElementType::getNumVertices(elementType);
+  if(!numTasks){
+    Msg::Error("Number of tasks should be > 0");
+    throw 4;
+  }
   const std::size_t begin = (task * numElements) / numTasks;
   const std::size_t end = ((task + 1) * numElements) / numTasks;
   // check arrays
@@ -1682,6 +1686,10 @@ GMSH_API void gmsh::model::mesh::getJacobians(
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       numElements += ge->getNumMeshElementsByType(familyType);
+    }
+    if(!numTasks){
+      Msg::Error("Number of tasks should be > 0");
+      throw 4;
     }
     const size_t begin = (task * numElements) / numTasks;
     const size_t end = ((task + 1) * numElements) / numTasks;
@@ -1980,6 +1988,10 @@ GMSH_API void gmsh::model::mesh::getBarycenters(
     GEntity *ge = entities[i];
     numElements += ge->getNumMeshElementsByType(familyType);
   }
+  if(!numTasks){
+    Msg::Error("Number of tasks should be > 0");
+    throw 4;
+  }
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
   if(3 * end > barycenters.size()) {
@@ -2075,6 +2087,10 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
     }
     numElements += n;
   }
+  if(!numTasks){
+    Msg::Error("Number of tasks should be > 0");
+    throw 4;
+  }
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
   if(numEdgesPerEle * numNodesPerEdge * end > nodeTags.size()) {
@@ -2145,6 +2161,10 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
       }
     }
     numElements += n;
+  }
+  if(!numTasks){
+    Msg::Error("Number of tasks should be > 0");
+    throw 4;
   }
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
