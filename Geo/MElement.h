@@ -30,7 +30,7 @@ private:
   // the id number of the element (this number is unique and is guaranteed never
   // to change once a mesh has been generated, unless the mesh is explicitly
   // renumbered)
-  int _num;
+  std::size_t _num;
   // the number of the mesh partition the element belongs to
   short _partition;
   // a visibility flag
@@ -55,7 +55,7 @@ protected:
                            int &rot);
 
 public:
-  MElement(int num = 0, int part = 0);
+  MElement(std::size_t num = 0, int part = 0);
   virtual ~MElement() {}
 
   // set/get the tolerance for isInside() test
@@ -63,11 +63,11 @@ public:
   static double getTolerance();
 
   // return the tag of the element
-  virtual int getNum() const { return _num; }
+  virtual std::size_t getNum() const { return _num; }
 
   // force the immutable number (this should never be used, except when
   // explicitly renumbering the mesh)
-  void forceNum(int num);
+  void forceNum(std::size_t num);
 
   // return the geometrical dimension of the element
   virtual int getDim() const = 0;

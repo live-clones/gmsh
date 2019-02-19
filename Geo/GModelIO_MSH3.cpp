@@ -692,9 +692,9 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
         MVertex *v1 = it->first;
         MVertex *v2 = it->second;
         if(renumber)
-          fprintf(fp, "%d %d\n", v1->getIndex(), v2->getIndex());
+          fprintf(fp, "%ld %ld\n", v1->getIndex(), v2->getIndex());
         else
-          fprintf(fp, "%d %d\n", v1->getNum(), v2->getNum());
+          fprintf(fp, "%lu %lu\n", v1->getNum(), v2->getNum());
       }
     }
   }

@@ -597,7 +597,7 @@ static int getBorderTag(int lsTag, int count, int &maxTag,
 
 static void elementSplitMesh(
   MElement *e, std::vector<gLevelset *> &RPN, fullMatrix<double> &verticesLs,
-  GEntity *ge, GModel *GM, int &numEle, std::map<int, MVertex *> &vertexMap,
+  GEntity *ge, GModel *GM, std::size_t &numEle, std::map<int, MVertex *> &vertexMap,
   std::map<MElement *, MElement *> &newParents,
   std::map<MElement *, MElement *> &newDomains,
   std::map<int, std::vector<MElement *> > elements[10],
@@ -832,7 +832,7 @@ typedef std::set<MVertex *, MVertexLessThanLexicographic> newVerticesContainer;
 
 static void elementCutMesh(
   MElement *e, std::vector<gLevelset *> &RPN, fullMatrix<double> &verticesLs,
-  GEntity *ge, GModel *GM, int &numEle, std::map<int, MVertex *> &vertexMap,
+  GEntity *ge, GModel *GM, std::size_t &numEle, std::map<int, MVertex *> &vertexMap,
   newVerticesContainer &newVertices,
   std::map<MElement *, MElement *> &newParents,
   std::map<MElement *, MElement *> &newDomains,
@@ -1548,7 +1548,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   }
 
   // element number increment
-  int numEle = gm->getNumMeshElements() + gm->getNumMeshParentElements();
+  std::size_t numEle = gm->getNumMeshElements() + gm->getNumMeshParentElements();
   for(std::size_t i = 0; i < gmEntities.size(); i++) {
     for(std::size_t j = 0; j < gmEntities[i]->getNumMeshElements(); j++) {
       MElement *e = gmEntities[i]->getMeshElement(j);

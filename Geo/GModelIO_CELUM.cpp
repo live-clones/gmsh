@@ -101,14 +101,14 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
           vmap[v] = info;
           vvec.push_back(v);
         }
-        fprintf(fpf, " %d", v->getIndex());
+        fprintf(fpf, " %ld", v->getIndex());
       }
       fprintf(fpf, "\n\n");
     }
     for(std::size_t i = 0; i < vvec.size(); i++) {
       MVertex *v = vvec[i];
       std::map<MVertex *, CelumInfo>::iterator it = vmap.find(v);
-      fprintf(fps, "%d %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n\n",
+      fprintf(fps, "%ld %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n\n",
               it->first->getIndex(), it->first->x(), it->first->y(),
               it->first->z(), it->second.normal.x(), it->second.normal.y(),
               it->second.normal.z(), it->second.curvMin, it->second.curvMax,

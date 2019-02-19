@@ -2136,6 +2136,7 @@ static void mesh_recombine_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+#if defined(HAVE_NETGEN)
 static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
 {
   if(CTX::instance()->lock) {
@@ -2147,6 +2148,7 @@ static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
   CTX::instance()->lock = 0;
   drawContext::global()->draw();
 }
+#endif
 
 static void mesh_partition_cb(Fl_Widget *w, void *data)
 {

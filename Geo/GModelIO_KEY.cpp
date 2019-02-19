@@ -72,20 +72,20 @@ int GModel::writeKEY(const std::string &name, int saveAll,
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeKEY(fp, scalingFactor);
 
-  if(!(saveAll & 0x2)) /* save or ignore Vertex, not in GUI */
+  if(!(saveAll & 0x2)) // save or ignore Vertex, not in GUI
     for(viter it = firstVertex(); it != lastVertex(); ++it) {
       writeElementsKEY(fp, *it, (*it)->points, saveAll & 0x1);
     }
-  if(!(saveAll & 0x8)) /* save or ignore line */
+  if(!(saveAll & 0x8)) // save or ignore line
     for(eiter it = firstEdge(); it != lastEdge(); ++it) {
       writeElementsKEY(fp, *it, (*it)->lines, saveAll & 0x4);
     }
-  if(!(saveAll & 0x20)) /* save or ignore surface */
+  if(!(saveAll & 0x20)) // save or ignore surface
     for(fiter it = firstFace(); it != lastFace(); ++it) {
       writeElementsKEY(fp, *it, (*it)->triangles, saveAll & 0x10);
       writeElementsKEY(fp, *it, (*it)->quadrangles, saveAll & 0x10);
     }
-  if(!(saveAll & 0x80)) /* save or ignore surface */
+  if(!(saveAll & 0x80)) // save or ignore surface
     for(riter it = firstRegion(); it != lastRegion(); ++it) {
       writeElementsKEY(fp, *it, (*it)->tetrahedra, saveAll & 0x40);
       writeElementsKEY(fp, *it, (*it)->hexahedra, saveAll & 0x40);
@@ -100,7 +100,7 @@ int GModel::writeKEY(const std::string &name, int saveAll,
   // save elements sets for each physical group
   if(saveGroupsOfNodes & 0x2) {
     for(int dim = 0; dim <= 3; dim++) {
-      if(saveAll & (0x2 << (2 * dim))) continue; /* elements are ignored*/
+      if(saveAll & (0x2 << (2 * dim))) continue; // elements are ignored
       for(std::map<int, std::vector<GEntity *> >::iterator it =
             groups[dim].begin();
           it != groups[dim].end(); it++) {
@@ -119,9 +119,9 @@ int GModel::writeKEY(const std::string &name, int saveAll,
                       physicalName(this, dim, it->first).c_str(), ++setid);
             }
             if(!(n % 8))
-              fprintf(fp, "\n%d", e->getNum());
+              fprintf(fp, "\n%lu", e->getNum());
             else
-              fprintf(fp, ", %d", e->getNum());
+              fprintf(fp, ", %lu", e->getNum());
             n++;
           }
         }
@@ -151,9 +151,9 @@ int GModel::writeKEY(const std::string &name, int saveAll,
         for(std::set<MVertex *>::iterator it2 = nodes.begin();
             it2 != nodes.end(); it2++) {
           if(!(n % 8))
-            fprintf(fp, "\n%d", (*it2)->getIndex());
+            fprintf(fp, "\n%ld", (*it2)->getIndex());
           else
-            fprintf(fp, ", %d", (*it2)->getIndex());
+            fprintf(fp, ", %ld", (*it2)->getIndex());
           n++;
         }
         if(n) fprintf(fp, "\n");

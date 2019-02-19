@@ -36,7 +36,7 @@ int GModel::writeIR3(const std::string &name, int elementTagType, bool saveAll,
   for(std::size_t i = 0; i < entities.size(); i++)
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
       if(entities[i]->mesh_vertices[j]->getIndex() >= 0)
-        fprintf(fp, "%d %.16g %.16g %.16g\n",
+        fprintf(fp, "%ld %.16g %.16g %.16g\n",
                 entities[i]->mesh_vertices[j]->getIndex(),
                 entities[i]->mesh_vertices[j]->x() * scalingFactor,
                 entities[i]->mesh_vertices[j]->y() * scalingFactor,

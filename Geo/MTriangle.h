@@ -445,10 +445,12 @@ template <class T> void sort3(T t[3])
 struct compareMTriangleLexicographic {
   bool operator()(MTriangle *t1, MTriangle *t2) const
   {
-    int _v1[3] = {t1->getVertex(0)->getNum(), t1->getVertex(1)->getNum(),
-                  t1->getVertex(2)->getNum()};
-    int _v2[3] = {t2->getVertex(0)->getNum(), t2->getVertex(1)->getNum(),
-                  t2->getVertex(2)->getNum()};
+    std::size_t _v1[3] = {t1->getVertex(0)->getNum(),
+                          t1->getVertex(1)->getNum(),
+                          t1->getVertex(2)->getNum()};
+    std::size_t _v2[3] = {t2->getVertex(0)->getNum(),
+                          t2->getVertex(1)->getNum(),
+                          t2->getVertex(2)->getNum()};
     sort3(_v1);
     sort3(_v2);
     if(_v1[0] < _v2[0]) return true;

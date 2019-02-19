@@ -2344,22 +2344,20 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     }
 
     bbox *= 3.5;
-    MVertex *bb[4];
-    bb[0] = new MVertex(bbox.min().x(), bbox.min().y(), 0, 0, -1);
-    bb[1] = new MVertex(bbox.min().x(), bbox.max().y(), 0, 0, -2);
-    bb[2] = new MVertex(bbox.max().x(), bbox.min().y(), 0, 0, -3);
-    bb[3] = new MVertex(bbox.max().x(), bbox.max().y(), 0, 0, -4);
+    GPoint bb[4] = {GPoint(bbox.min().x(), bbox.min().y(), 0),
+                    GPoint(bbox.min().x(), bbox.max().y(), 0),
+                    GPoint(bbox.max().x(), bbox.min().y(), 0),
+                    GPoint(bbox.max().x(), bbox.max().y(), 0)};
     for(int ip = 0; ip < 4; ip++) {
-      BDS_Point *pp = m->add_point(-ip - 1, bb[ip]->x(), bb[ip]->y(), gf);
+      BDS_Point *pp = m->add_point(-ip - 1, bb[ip].x(), bb[ip].y(), gf);
       m->add_geom(gf->tag(), 2);
       BDS_GeomEntity *g = m->get_geom(gf->tag(), 2);
       pp->g = g;
-      doc.points[nbPointsTotal + ip].where.h = bb[ip]->x();
-      doc.points[nbPointsTotal + ip].where.v = bb[ip]->y();
+      doc.points[nbPointsTotal + ip].where.h = bb[ip].x();
+      doc.points[nbPointsTotal + ip].where.v = bb[ip].y();
       doc.points[nbPointsTotal + ip].adjacent = 0;
       doc.points[nbPointsTotal + ip].data = pp;
     }
-    for(int ip = 0; ip < 4; ip++) delete bb[ip];
 
     // Use "fast" inhouse recursive algo to generate the triangulation
     // At this stage the triangulation is not what we need

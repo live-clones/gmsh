@@ -462,9 +462,7 @@ double GMSH_ThinLayerFixMeshPlugin::computeDistToOppSide(MVertex *v)
   FindNewPoint((&CurrentPos), CurrentTri, &CurrentTet, InteriorNormal);
   DistToOppSide += CurrentPos.distance(LastPos);
   LastPos = CurrentPos;
-  int countWhile = 0;
-  int prevprevtet = 1;
-  int prevtet = 2;
+  std::size_t countWhile = 0, prevprevtet = 1, prevtet = 2;
   while((CurrentTet != 0) && (countWhile < 50)) {
     countWhile++;
     faceXtetFM fxtCVtmp(PastTet, (*CurrentTri));

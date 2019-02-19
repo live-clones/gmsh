@@ -282,7 +282,7 @@ void FixNodalDofs(FunctionSpaceBase &space, MElement *e, Assembler &assembler,
     Dof key = *itd;
     if(filter(key)) {
       for(int i = 0; i < nv; ++i) {
-        if(tabV[i]->getNum() == key.getEntity()) {
+        if((long int)tabV[i]->getNum() == key.getEntity()) {
           assembler.fixDof(key, fct(tabV[i]->x(), tabV[i]->y(), tabV[i]->z()));
           break;
         }

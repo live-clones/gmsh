@@ -2423,7 +2423,7 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
         for(std::map<MVertex *, MVertex *>::iterator it =
               g_slave->correspondingVertices.begin();
             it != g_slave->correspondingVertices.end(); ++it) {
-          fprintf(fp, "%d %d\n", it->first->getNum(), it->second->getNum());
+          fprintf(fp, "%lu %lu\n", it->first->getNum(), it->second->getNum());
         }
       }
     }
@@ -2490,7 +2490,7 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
       for(std::map<MElement *, std::vector<unsigned int> >::iterator it =
             ghostCells.begin();
           it != ghostCells.end(); ++it) {
-        fprintf(fp, "%d %d %ld", it->first->getNum(), it->second[0],
+        fprintf(fp, "%lu %d %ld", it->first->getNum(), it->second[0],
                 it->second.size() - 1);
         for(std::size_t i = 1; i < it->second.size(); i++) {
           fprintf(fp, " %d", it->second[i]);

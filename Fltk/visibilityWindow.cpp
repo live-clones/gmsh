@@ -841,7 +841,7 @@ static void _set_visibility_by_number(int what, int num, char val,
         for(std::size_t i = 0; i < entities.size(); i++) {
           for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
             MVertex *v = entities[i]->mesh_vertices[j];
-            if(all || v->getNum() == num) v->setVisibility(val);
+            if(all || (int)v->getNum() == num) v->setVisibility(val);
           }
         }
         break;
@@ -849,7 +849,7 @@ static void _set_visibility_by_number(int what, int num, char val,
         for(std::size_t i = 0; i < entities.size(); i++) {
           for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
             MElement *e = entities[i]->getMeshElement(j);
-            if(all || e->getNum() == num) e->setVisibility(val);
+            if(all || (int)e->getNum() == num) e->setVisibility(val);
           }
         }
         break;
