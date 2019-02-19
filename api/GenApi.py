@@ -36,13 +36,6 @@ class arg:
 
 # input types
 
-def isize(name, value=None, python_value=None, julia_value=None):
-    a = arg(name, value, python_value, julia_value,
-            "const std::size_t", "const size_t", False)
-    a.python_arg = "c_size_t(" + name + ")"
-    a.julia_ctype = "Csize_t"
-    return a
-
 def ibool(name, value=None, python_value=None, julia_value=None):
     a = arg(name, value, python_value, julia_value,
             "const bool", "const int", False)
@@ -56,6 +49,13 @@ def iint(name, value=None, python_value=None, julia_value=None):
             "const int", "const int", False)
     a.python_arg = "c_int(" + name + ")"
     a.julia_ctype = "Cint"
+    return a
+
+def isize(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "const std::size_t", "const size_t", False)
+    a.python_arg = "c_size_t(" + name + ")"
+    a.julia_ctype = "Csize_t"
     return a
 
 def idouble(name, value=None, python_value=None, julia_value=None):
@@ -99,6 +99,27 @@ def ivectorint(name, value=None, python_value=None, julia_value=None):
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cint}, Csize_t"
     a.julia_arg = "convert(Vector{Cint}, " + name + "), length(" + name + ")"
+    return a
+
+def ivectorsize(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Csize_t[]"
+    a = arg(name, value, python_value, julia_value,
+            "const std::vector<std::size_t> &", "const size_t *", False)
+    api_name = "api_" + name + "_"
+    api_name_n = "api_" + name + "_n_"
+    a.c_pre = ("    std::vector<std::size_t> " + api_name + "(" + name + ", " + name +
+               " + " + name + "_n);\n")
+    a.c_arg = api_name
+    a.c = "size_t * " + name + ", size_t " + name + "_n"
+    a.cwrap_pre = ("size_t *" + api_name + "; size_t " + api_name_n + "; " +
+                   "vector2ptr(" + name + ", &" + api_name + ", &" + api_name_n + ");\n")
+    a.cwrap_arg = api_name + ", " + api_name_n
+    a.cwrap_post = ns + "Free(" + api_name + ");\n"
+    a.python_pre = api_name + ", " + api_name_n + " = _ivectorsize(" + name + ")"
+    a.python_arg = api_name + ", " + api_name_n
+    a.julia_ctype = "Ptr{Csize_t}, Csize_t"
+    a.julia_arg = "convert(Vector{Csize_t}, " + name + "), length(" + name + ")"
     return a
 
 def ivectordouble(name, value=None, python_value=None, julia_value=None):
@@ -202,6 +223,39 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
                    ", length(" + name + ")")
     return a
 
+def ivectorvectorsize(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Vector{Csize_t}[]"
+    a = arg(name, value, python_value, julia_value,
+            "const std::vector<std::vector<std::size_t> > &", "const size_t **", False)
+    api_name = "api_" + name + "_"
+    api_name_n = "api_" + name + "_n_"
+    api_name_nn = "api_" + name + "_nn_"
+    a.c_pre = ("    std::vector<std::vector<std::size_t> > " + api_name +
+               "(" + name + "_nn);\n" +
+               "    for(size_t i = 0; i < " + name + "_nn; ++i)\n" +
+               "      " + api_name + "[i] = std::vector<std::size_t>(" + name + "[i], " +
+               name + "[i] + " + name + "_n[i]);\n")
+    a.c_arg = api_name
+    a.c = ("const size_t ** " + name + ", const size_t * " + name + "_n, " +
+           "size_t " + name + "_nn")
+    a.cwrap_pre = ("size_t **" + api_name + "; size_t *" + api_name_n + ", " +
+                   api_name_nn + "; " + "vectorvector2ptrptr(" + name + ", &" +
+                   api_name + ", &" + api_name_n + ", &" + api_name_nn + ");\n")
+    a.cwrap_arg = "(const size_t **)" + api_name + ", " + api_name_n + ", " + api_name_nn
+    a.cwrap_post = ("for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +
+                    ns + "Free(" + api_name + "[i]); } " +
+                    ns + "Free(" + api_name + "); " + ns + "Free(" + api_name_n + ");\n")
+    a.python_pre = (api_name + ", " + api_name_n + ", " +
+                    api_name_nn + " = _ivectorvectorsize(" + name + ")")
+    a.python_arg = api_name + ", " + api_name_n + ", " + api_name_nn
+    a.julia_ctype = "Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Csize_t"
+    a.julia_pre = (api_name_n + " = [ length(" + name + "[i]) for i in 1:length(" +
+                   name + ") ]")
+    a.julia_arg = ("convert(Vector{Vector{Csize_t}}," + name + "), " + api_name_n +
+                   ", length(" + name + ")")
+    return a
+
 def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
     if julia_value == "[]":
         julia_value = "Vector{Cdouble}[]"
@@ -238,25 +292,6 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
 
 # output types
 
-class osize(arg):
-    rcpp_type = "std::size_t"
-    rc_type = "size_t"
-    rtexi_type = "size value"
-    rjulia_type = "Csize_t"
-    def __init__(self, name, value=None, python_value=None, julia_value=None):
-        arg.__init__(self, name, value, python_value, julia_value,
-                     "std::size_t &", "size_t *", True)
-        api_name = "api_" + name + "_"
-        self.c_arg = "*" + name
-        self.cwrap_arg = "&" + name
-        self.python_pre = api_name + " = c_size_t()"
-        self.python_arg = "byref(" + api_name + ")"
-        self.python_return = api_name + ".value"
-        self.julia_ctype = "Ptr{Csize_t}"
-        self.julia_pre = api_name + " = Ref{Csize_t}()"
-        self.julia_arg = api_name
-        self.julia_return = api_name + "[]"
-
 class oint(arg):
     rcpp_type = "int"
     rc_type = "int"
@@ -273,6 +308,25 @@ class oint(arg):
         self.python_return = api_name + ".value"
         self.julia_ctype = "Ptr{Cint}"
         self.julia_pre = api_name + " = Ref{Cint}()"
+        self.julia_arg = api_name
+        self.julia_return = api_name + "[]"
+
+class osize(arg):
+    rcpp_type = "std::size_t"
+    rc_type = "size_t"
+    rtexi_type = "size value"
+    rjulia_type = "Csize_t"
+    def __init__(self, name, value=None, python_value=None, julia_value=None):
+        arg.__init__(self, name, value, python_value, julia_value,
+                     "std::size_t &", "size_t *", True)
+        api_name = "api_" + name + "_"
+        self.c_arg = "*" + name
+        self.cwrap_arg = "&" + name
+        self.python_pre = api_name + " = c_size_t()"
+        self.python_arg = "byref(" + api_name + ")"
+        self.python_return = api_name + ".value"
+        self.julia_ctype = "Ptr{Csize_t}"
+        self.julia_pre = api_name + " = Ref{Csize_t}()"
         self.julia_arg = api_name
         self.julia_return = api_name + "[]"
 
@@ -333,6 +387,30 @@ def ovectorint(name, value=None, python_value=None, julia_value=None):
     a.python_return = "_ovectorint(" + api_name + ", " + api_name_n + ".value)"
     a.julia_ctype = "Ptr{Ptr{Cint}}, Ptr{Csize_t}"
     a.julia_pre = (api_name + " = Ref{Ptr{Cint}}()\n    " +
+                   api_name_n + " = Ref{Csize_t}()")
+    a.julia_arg = api_name + ", " + api_name_n
+    a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[], " +
+                    api_name_n + "[], own=true)")
+    return a
+
+def ovectorsize(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "std::vector<std::size_t> &", "size_t **", True)
+    api_name = "api_" + name + "_"
+    api_name_n = api_name + "n_"
+    a.c_pre = "    std::vector<std::size_t> " + api_name + ";\n"
+    a.c_arg = api_name
+    a.c_post = "    vector2ptr(" + api_name + ", " + name + ", " + name + "_n);\n"
+    a.c = "size_t ** " + name + ", size_t * " + name + "_n"
+    a.cwrap_pre = "size_t *" + api_name + "; size_t " + api_name_n + ";\n"
+    a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
+    a.cwrap_post = (name + ".assign(" + api_name + ", " + api_name + " + " +
+                    api_name_n + "); " + ns + "Free(" + api_name + ");\n")
+    a.python_pre = api_name + ", " + api_name_n + " = POINTER(c_size_t)(), c_size_t()"
+    a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
+    a.python_return = "_ovectorsize(" + api_name + ", " + api_name_n + ".value)"
+    a.julia_ctype = "Ptr{Ptr{Csize_t}}, Ptr{Csize_t}"
+    a.julia_pre = (api_name + " = Ref{Ptr{Csize_t}}()\n    " +
                    api_name_n + " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[], " +
@@ -448,6 +526,44 @@ def ovectorvectorint(name, value=None, python_value=None, julia_value=None):
                        api_name_nn + ")")
     a.julia_ctype = "Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}"
     a.julia_pre = (api_name + " = Ref{Ptr{Ptr{Cint}}}()\n    " +
+                   api_name_n + " = Ref{Ptr{Csize_t}}()\n    " +
+                   api_name_nn + " = Ref{Csize_t}()")
+    a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
+    a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[], " +
+                    api_name_nn + "[], own=true)\n    " +
+                    "tmp_" + api_name_n + " = unsafe_wrap(Array, " + api_name_n + "[], " +
+                    api_name_nn + "[], own=true)\n    " +
+                    name + " = [ unsafe_wrap(Array, tmp_" + api_name + "[i], " +
+                    "tmp_" + api_name_n + "[i], own=true) for i in 1:" +
+                    api_name_nn + "[] ]")
+    return a
+
+def ovectorvectorsize(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "std::vector<std::vector<std::size_t> > &", "size_t **", True)
+    api_name = "api_" + name + "_"
+    api_name_n = api_name + "n_"
+    api_name_nn = api_name + "nn_"
+    a.c_pre = "    std::vector<std::vector<std::size_t> > " + api_name + ";\n"
+    a.c_arg = api_name
+    a.c_post = ("    vectorvector2ptrptr(" + api_name + ", " + name + ", " +
+                name + "_n, " + name + "_nn);\n")
+    a.c  = "size_t *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
+    a.cwrap_pre = "size_t **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + ";\n"
+    a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n + ", " + "&" + api_name_nn
+    a.cwrap_post = (name + ".resize(" + api_name_nn + "); " +
+                    "for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +
+                    name + "[i].assign(" + api_name + "[i], " + api_name + "[i] + " +
+                    api_name_n + "[i]); " + ns + "Free(" + api_name + "[i]); } " +
+                    ns + "Free(" + api_name + "); " + ns + "Free(" + api_name_n + ");\n")
+    a.python_pre = (api_name + ", " + api_name_n + ", " + api_name_nn +
+                    " = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()")
+    a.python_arg = ("byref(" + api_name + "), byref(" + api_name_n + "), byref(" +
+                    api_name_nn + ")")
+    a.python_return = ("_ovectorvectorsize(" + api_name + ", " + api_name_n + ", " +
+                       api_name_nn + ")")
+    a.julia_ctype = "Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}"
+    a.julia_pre = (api_name + " = Ref{Ptr{Ptr{Csize_t}}}()\n    " +
                    api_name_n + " = Ref{Ptr{Csize_t}}()\n    " +
                    api_name_nn + " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
@@ -866,6 +982,15 @@ def _ovectorint(ptr, size):
         lib.{5}Free(ptr)
     return v
 
+def _ovectorsize(ptr, size):
+    if use_numpy:
+        v = numpy.ctypeslib.as_array(ptr, (size, ))
+        weakreffinalize(v, lib.{5}Free, ptr)
+    else:
+        v = list(ptr[i] for i in range(size))
+        lib.{5}Free(ptr)
+    return v
+
 def _ovectordouble(ptr, size):
     if use_numpy:
         v = numpy.ctypeslib.as_array(ptr, (size, ))
@@ -881,6 +1006,12 @@ def _ovectorstring(ptr, size):
     return v
 
 def _ovectorvectorint(ptr, size, n):
+    v = [_ovectorint(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
+    lib.{5}Free(size)
+    lib.{5}Free(ptr)
+    return v
+
+def _ovectorvectorsize(ptr, size, n):
     v = [_ovectorint(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
     lib.{5}Free(size)
     lib.{5}Free(ptr)
@@ -903,6 +1034,12 @@ def _ivectorint(o):
         return numpy.ascontiguousarray(o, numpy.int32).ctypes, c_size_t(len(o))
     else:
         return (c_int * len(o))(*o), c_size_t(len(o))
+
+def _ivectorsize(o):
+    if use_numpy:
+        return numpy.ascontiguousarray(o, numpy.uintp).ctypes, c_size_t(len(o))
+    else:
+        return (c_size_t * len(o))(*o), c_size_t(len(o))
 
 def _ivectordouble(o):
     if use_numpy:
@@ -930,6 +1067,15 @@ def _ivectorvectorint(os):
     parrays = [_ivectorint(o) for o in os]
     sizes = (c_size_t * n)(*(a[1] for a in parrays))
     arrays = (POINTER(c_int) * n)(*(cast(a[0], POINTER(c_int)) for a in parrays))
+    arrays.ref = [a[0] for a in parrays]
+    size = c_size_t(n)
+    return arrays, sizes, size
+
+def _ivectorvectorsize(os):
+    n = len(os)
+    parrays = [_ivectorsize(o) for o in os]
+    sizes = (c_size_t * n)(*(a[1] for a in parrays))
+    arrays = (POINTER(c_size_t) * n)(*(cast(a[0], POINTER(c_size_t)) for a in parrays))
     arrays.ref = [a[0] for a in parrays]
     size = c_size_t(n)
     return arrays, sizes, size

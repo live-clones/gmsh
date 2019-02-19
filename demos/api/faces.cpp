@@ -51,13 +51,13 @@ int main(int argc, char **argv)
   gmsh::model::getEntities(entities, 3);
   for(std::size_t i = 0; i < entities.size(); i++){
     int v = entities[i].second;
-    std::vector<int> elementTags, nodeTags;
+    std::vector<std::size_t> elementTags, nodeTags;
     gmsh::model::mesh::getElementsByType(eleType3D, elementTags, nodeTags, v);
     gmsh::logger::write("- " + std::to_string(elementTags.size()) +
                         " elements in volume " + std::to_string(v));
 
     // get the nodes on the triangular faces of the 3D elements
-    std::vector<int> nodes;
+    std::vector<std::size_t> nodes;
     gmsh::model::mesh::getElementFaceNodes(eleType3D, 3, nodes, v);
 
     // create a new discrete entity of dimension 2
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
   gmsh::model::getEntities(entities, 2);
   for(std::size_t i = 0; i < entities.size(); i++){
     int s = entities[i].second;
-    std::vector<int> elementTags, nodeTags;
+    std::vector<std::size_t> elementTags, nodeTags;
     gmsh::model::mesh::getElementsByType(eleType2D, elementTags, nodeTags, s);
     gmsh::logger::write("- " + std::to_string(elementTags.size()) +
                         " elements on surface " + std::to_string(s));

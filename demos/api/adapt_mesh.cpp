@@ -69,11 +69,11 @@ class myMesh{
  public:
   myMesh()
   {
-    std::vector<int> vtags;
+    std::vector<std::size_t> vtags;
     std::vector<double> vxyz, vuvw;
     gmsh::model::mesh::getNodes(vtags, vxyz, vuvw);
     std::vector<int> etypes;
-    std::vector<std::vector<int> > etags, evtags;
+    std::vector<std::vector<std::size_t> > etags, evtags;
     gmsh::model::mesh::getElements(etypes, etags, evtags);
     for(unsigned int i = 0; i < vtags.size(); i++){
       _nodes[vtags[i]] = new myVertex

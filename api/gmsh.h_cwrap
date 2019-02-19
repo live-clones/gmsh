@@ -686,10 +686,10 @@ namespace gmsh { // Top-level functions
 
       // Get the last nodes (if any) where a meshing error occurred. Currently only
       // populated by the new 3D meshing algorithms.
-      GMSH_API void getLastNodeError(std::vector<int> & nodeTags)
+      GMSH_API void getLastNodeError(std::vector<std::size_t> & nodeTags)
       {
         int ierr = 0;
-        int *api_nodeTags_; size_t api_nodeTags_n_;
+        size_t *api_nodeTags_; size_t api_nodeTags_n_;
         gmshModelMeshGetLastNodeError(&api_nodeTags_, &api_nodeTags_n_, &ierr);
         if(ierr) throw ierr;
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
@@ -708,7 +708,7 @@ namespace gmsh { // Top-level functions
       // classified on the boundary of the entity (wich will be reparametrized on
       // the entity if `dim' >= 0 in order to compute their parametric
       // coordinates).
-      GMSH_API void getNodes(std::vector<int> & nodeTags,
+      GMSH_API void getNodes(std::vector<std::size_t> & nodeTags,
                              std::vector<double> & coord,
                              std::vector<double> & parametricCoord,
                              const int dim = -1,
@@ -716,7 +716,7 @@ namespace gmsh { // Top-level functions
                              const bool includeBoundary = false)
       {
         int ierr = 0;
-        int *api_nodeTags_; size_t api_nodeTags_n_;
+        size_t *api_nodeTags_; size_t api_nodeTags_n_;
         double *api_coord_; size_t api_coord_n_;
         double *api_parametricCoord_; size_t api_parametricCoord_n_;
         gmshModelMeshGetNodes(&api_nodeTags_, &api_nodeTags_n_, &api_coord_, &api_coord_n_, &api_parametricCoord_, &api_parametricCoord_n_, dim, tag, (int)includeBoundary, &ierr);
@@ -732,7 +732,7 @@ namespace gmsh { // Top-level functions
       // meshes all the nodes in the model should be numbered in a continuous
       // sequence of tags from 1 to N to maintain reasonnable performance (in this
       // case the internal cache is based on a vector; otherwise it uses a map).
-      GMSH_API void getNode(const int nodeTag,
+      GMSH_API void getNode(const std::size_t nodeTag,
                             std::vector<double> & coord,
                             std::vector<double> & parametricCoord)
       {
@@ -759,11 +759,11 @@ namespace gmsh { // Top-level functions
       // x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...].
       GMSH_API void getNodesForPhysicalGroup(const int dim,
                                              const int tag,
-                                             std::vector<int> & nodeTags,
+                                             std::vector<std::size_t> & nodeTags,
                                              std::vector<double> & coord)
       {
         int ierr = 0;
-        int *api_nodeTags_; size_t api_nodeTags_n_;
+        size_t *api_nodeTags_; size_t api_nodeTags_n_;
         double *api_coord_; size_t api_coord_n_;
         gmshModelMeshGetNodesForPhysicalGroup(dim, tag, &api_nodeTags_, &api_nodeTags_n_, &api_coord_, &api_coord_n_, &ierr);
         if(ierr) throw ierr;
@@ -778,16 +778,16 @@ namespace gmsh { // Top-level functions
       // nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. The optional
       // `parametricCoord' vector contains the parametric coordinates of the nodes,
       // if any. The length of `parametricCoord' can be 0 or `dim' times the length
-      // of `nodeTags'. If the `nodeTag' vector is empty, new tags are
+      // of `nodeTags'. If the `nodeTags' vector is empty, new tags are
       // automatically assigned to the nodes.
       GMSH_API void setNodes(const int dim,
                              const int tag,
-                             const std::vector<int> & nodeTags,
+                             const std::vector<std::size_t> & nodeTags,
                              const std::vector<double> & coord,
                              const std::vector<double> & parametricCoord = std::vector<double>())
       {
         int ierr = 0;
-        int *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
+        size_t *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
         double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
         double *api_parametricCoord_; size_t api_parametricCoord_n_; vector2ptr(parametricCoord, &api_parametricCoord_, &api_parametricCoord_n_);
         gmshModelMeshSetNodes(dim, tag, api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, &ierr);
@@ -834,15 +834,15 @@ namespace gmsh { // Top-level functions
       // the node tags of all the elements of the given type, concatenated: [e1n1,
       // e1n2, ..., e1nN, e2n1, ...].
       GMSH_API void getElements(std::vector<int> & elementTypes,
-                                std::vector<std::vector<int> > & elementTags,
-                                std::vector<std::vector<int> > & nodeTags,
+                                std::vector<std::vector<std::size_t> > & elementTags,
+                                std::vector<std::vector<std::size_t> > & nodeTags,
                                 const int dim = -1,
                                 const int tag = -1)
       {
         int ierr = 0;
         int *api_elementTypes_; size_t api_elementTypes_n_;
-        int **api_elementTags_; size_t *api_elementTags_n_, api_elementTags_nn_;
-        int **api_nodeTags_; size_t *api_nodeTags_n_, api_nodeTags_nn_;
+        size_t **api_elementTags_; size_t *api_elementTags_n_, api_elementTags_nn_;
+        size_t **api_nodeTags_; size_t *api_nodeTags_n_, api_nodeTags_nn_;
         gmshModelMeshGetElements(&api_elementTypes_, &api_elementTypes_n_, &api_elementTags_, &api_elementTags_n_, &api_elementTags_nn_, &api_nodeTags_, &api_nodeTags_n_, &api_nodeTags_nn_, dim, tag, &ierr);
         if(ierr) throw ierr;
         elementTypes.assign(api_elementTypes_, api_elementTypes_ + api_elementTypes_n_); gmshFree(api_elementTypes_);
@@ -856,12 +856,12 @@ namespace gmsh { // Top-level functions
       // model should be numbered in a continuous sequence of tags from 1 to N to
       // maintain reasonnable performance (in this case the internal cache is based
       // on a vector; otherwise it uses a map).
-      GMSH_API void getElement(const int elementTag,
+      GMSH_API void getElement(const std::size_t elementTag,
                                int & elementType,
-                               std::vector<int> & nodeTags)
+                               std::vector<std::size_t> & nodeTags)
       {
         int ierr = 0;
-        int *api_nodeTags_; size_t api_nodeTags_n_;
+        size_t *api_nodeTags_; size_t api_nodeTags_n_;
         gmshModelMeshGetElement(elementTag, &elementType, &api_nodeTags_, &api_nodeTags_n_, &ierr);
         if(ierr) throw ierr;
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
@@ -873,12 +873,12 @@ namespace gmsh { // Top-level functions
       GMSH_API void getElementByCoordinates(const double x,
                                             const double y,
                                             const double z,
-                                            int & elementTag,
+                                            std::size_t & elementTag,
                                             int & elementType,
-                                            std::vector<int> & nodeTags)
+                                            std::vector<std::size_t> & nodeTags)
       {
         int ierr = 0;
-        int *api_nodeTags_; size_t api_nodeTags_n_;
+        size_t *api_nodeTags_; size_t api_nodeTags_n_;
         gmshModelMeshGetElementByCoordinates(x, y, z, &elementTag, &elementType, &api_nodeTags_, &api_nodeTags_n_, &ierr);
         if(ierr) throw ierr;
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
@@ -942,15 +942,15 @@ namespace gmsh { // Top-level functions
       // `numTasks' > 1, only compute and return the part of the data indexed by
       // `task'.
       GMSH_API void getElementsByType(const int elementType,
-                                      std::vector<int> & elementTags,
-                                      std::vector<int> & nodeTags,
+                                      std::vector<std::size_t> & elementTags,
+                                      std::vector<std::size_t> & nodeTags,
                                       const int tag = -1,
                                       const std::size_t task = 0,
                                       const std::size_t numTasks = 1)
       {
         int ierr = 0;
-        int *api_elementTags_; size_t api_elementTags_n_;
-        int *api_nodeTags_; size_t api_nodeTags_n_;
+        size_t *api_elementTags_; size_t api_elementTags_n_;
+        size_t *api_nodeTags_; size_t api_nodeTags_n_;
         gmshModelMeshGetElementsByType(elementType, &api_elementTags_, &api_elementTags_n_, &api_nodeTags_, &api_nodeTags_n_, tag, task, numTasks, &ierr);
         if(ierr) throw ierr;
         elementTags.assign(api_elementTags_, api_elementTags_ + api_elementTags_n_); gmshFree(api_elementTags_);
@@ -962,13 +962,13 @@ namespace gmsh { // Top-level functions
       GMSH_API void preallocateElementsByType(const int elementType,
                                               const bool elementTag,
                                               const bool nodeTag,
-                                              std::vector<int> & elementTags,
-                                              std::vector<int> & nodeTags,
+                                              std::vector<std::size_t> & elementTags,
+                                              std::vector<std::size_t> & nodeTags,
                                               const int tag = -1)
       {
         int ierr = 0;
-        int *api_elementTags_; size_t api_elementTags_n_;
-        int *api_nodeTags_; size_t api_nodeTags_n_;
+        size_t *api_elementTags_; size_t api_elementTags_n_;
+        size_t *api_nodeTags_; size_t api_nodeTags_n_;
         gmshModelMeshPreallocateElementsByType(elementType, (int)elementTag, (int)nodeTag, &api_elementTags_, &api_elementTags_n_, &api_nodeTags_, &api_nodeTags_n_, tag, &ierr);
         if(ierr) throw ierr;
         elementTags.assign(api_elementTags_, api_elementTags_ + api_elementTags_n_); gmshFree(api_elementTags_);
@@ -988,14 +988,14 @@ namespace gmsh { // Top-level functions
       GMSH_API void setElements(const int dim,
                                 const int tag,
                                 const std::vector<int> & elementTypes,
-                                const std::vector<std::vector<int> > & elementTags,
-                                const std::vector<std::vector<int> > & nodeTags)
+                                const std::vector<std::vector<std::size_t> > & elementTags,
+                                const std::vector<std::vector<std::size_t> > & nodeTags)
       {
         int ierr = 0;
         int *api_elementTypes_; size_t api_elementTypes_n_; vector2ptr(elementTypes, &api_elementTypes_, &api_elementTypes_n_);
-        int **api_elementTags_; size_t *api_elementTags_n_, api_elementTags_nn_; vectorvector2ptrptr(elementTags, &api_elementTags_, &api_elementTags_n_, &api_elementTags_nn_);
-        int **api_nodeTags_; size_t *api_nodeTags_n_, api_nodeTags_nn_; vectorvector2ptrptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_, &api_nodeTags_nn_);
-        gmshModelMeshSetElements(dim, tag, api_elementTypes_, api_elementTypes_n_, (const int **)api_elementTags_, api_elementTags_n_, api_elementTags_nn_, (const int **)api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, &ierr);
+        size_t **api_elementTags_; size_t *api_elementTags_n_, api_elementTags_nn_; vectorvector2ptrptr(elementTags, &api_elementTags_, &api_elementTags_n_, &api_elementTags_nn_);
+        size_t **api_nodeTags_; size_t *api_nodeTags_n_, api_nodeTags_nn_; vectorvector2ptrptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_, &api_nodeTags_nn_);
+        gmshModelMeshSetElements(dim, tag, api_elementTypes_, api_elementTypes_n_, (const size_t **)api_elementTags_, api_elementTags_n_, api_elementTags_nn_, (const size_t **)api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_elementTypes_);
         for(size_t i = 0; i < api_elementTags_nn_; ++i){ gmshFree(api_elementTags_[i]); } gmshFree(api_elementTags_); gmshFree(api_elementTags_n_);
@@ -1012,12 +1012,12 @@ namespace gmsh { // Top-level functions
       GMSH_API void setElementsByType(const int dim,
                                       const int tag,
                                       const int elementType,
-                                      const std::vector<int> & elementTags,
-                                      const std::vector<int> & nodeTags)
+                                      const std::vector<std::size_t> & elementTags,
+                                      const std::vector<std::size_t> & nodeTags)
       {
         int ierr = 0;
-        int *api_elementTags_; size_t api_elementTags_n_; vector2ptr(elementTags, &api_elementTags_, &api_elementTags_n_);
-        int *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
+        size_t *api_elementTags_; size_t api_elementTags_n_; vector2ptr(elementTags, &api_elementTags_, &api_elementTags_n_);
+        size_t *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
         gmshModelMeshSetElementsByType(dim, tag, elementType, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_elementTags_);
@@ -1148,54 +1148,54 @@ namespace gmsh { // Top-level functions
       }
 
       // Get the nodes on the edges of all elements of type `elementType'
-      // classified on the entity of tag `tag'. If `primary' is set, only the
-      // primary (begin/end) nodes of the edges are returned. If `tag' < 0, get the
-      // edge nodes for all entities. If `numTasks' > 1, only compute and return
-      // the part of the data indexed by `task'.
+      // classified on the entity of tag `tag'. `nodeTags' contains the node tags.
+      // If `primary' is set, only the primary (begin/end) nodes of the edges are
+      // returned. If `tag' < 0, get the edge nodes for all entities. If `numTasks'
+      // > 1, only compute and return the part of the data indexed by `task'.
       GMSH_API void getElementEdgeNodes(const int elementType,
-                                        std::vector<int> & nodes,
+                                        std::vector<std::size_t> & nodeTags,
                                         const int tag = -1,
                                         const bool primary = false,
                                         const std::size_t task = 0,
                                         const std::size_t numTasks = 1)
       {
         int ierr = 0;
-        int *api_nodes_; size_t api_nodes_n_;
-        gmshModelMeshGetElementEdgeNodes(elementType, &api_nodes_, &api_nodes_n_, tag, (int)primary, task, numTasks, &ierr);
+        size_t *api_nodeTags_; size_t api_nodeTags_n_;
+        gmshModelMeshGetElementEdgeNodes(elementType, &api_nodeTags_, &api_nodeTags_n_, tag, (int)primary, task, numTasks, &ierr);
         if(ierr) throw ierr;
-        nodes.assign(api_nodes_, api_nodes_ + api_nodes_n_); gmshFree(api_nodes_);
+        nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
       }
 
       // Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
       // for quadrangular faces) of all elements of type `elementType' classified
-      // on the entity of tag `tag'. If `primary' is set, only the primary (corner)
-      // nodes of the faces are returned. If `tag' < 0, get the face nodes for all
-      // entities. If `numTasks' > 1, only compute and return the part of the data
-      // indexed by `task'.
+      // on the entity of tag `tag'. `nodeTags' contains the node tags. If
+      // `primary' is set, only the primary (corner) nodes of the faces are
+      // returned. If `tag' < 0, get the face nodes for all entities. If `numTasks'
+      // > 1, only compute and return the part of the data indexed by `task'.
       GMSH_API void getElementFaceNodes(const int elementType,
                                         const int faceType,
-                                        std::vector<int> & nodes,
+                                        std::vector<std::size_t> & nodeTags,
                                         const int tag = -1,
                                         const bool primary = false,
                                         const std::size_t task = 0,
                                         const std::size_t numTasks = 1)
       {
         int ierr = 0;
-        int *api_nodes_; size_t api_nodes_n_;
-        gmshModelMeshGetElementFaceNodes(elementType, faceType, &api_nodes_, &api_nodes_n_, tag, (int)primary, task, numTasks, &ierr);
+        size_t *api_nodeTags_; size_t api_nodeTags_n_;
+        gmshModelMeshGetElementFaceNodes(elementType, faceType, &api_nodeTags_, &api_nodeTags_n_, tag, (int)primary, task, numTasks, &ierr);
         if(ierr) throw ierr;
-        nodes.assign(api_nodes_, api_nodes_ + api_nodes_n_); gmshFree(api_nodes_);
+        nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
       }
 
       // Get the ghost elements `elementTags' and their associated `partitions'
       // stored in the ghost entity of dimension `dim' and tag `tag'.
       GMSH_API void getGhostElements(const int dim,
                                      const int tag,
-                                     std::vector<int> & elementTags,
+                                     std::vector<std::size_t> & elementTags,
                                      std::vector<int> & partitions)
       {
         int ierr = 0;
-        int *api_elementTags_; size_t api_elementTags_n_;
+        size_t *api_elementTags_; size_t api_elementTags_n_;
         int *api_partitions_; size_t api_partitions_n_;
         gmshModelMeshGetGhostElements(dim, tag, &api_elementTags_, &api_elementTags_n_, &api_partitions_, &api_partitions_n_, &ierr);
         if(ierr) throw ierr;
@@ -1371,20 +1371,24 @@ namespace gmsh { // Top-level functions
         gmshFree(api_affineTransform_);
       }
 
-      // Get the master entity, periodic node pairs and affine transform for the
-      // entity of dimension `dim' and tag `tag'.
+      // Get the master entity `tagMaster', the node tags `nodeTags' and their
+      // corresponding master node tags `nodeTagsMaster', and the affine transform
+      // `affineTransform' for the entity of dimension `dim' and tag `tag'.
       GMSH_API void getPeriodicNodes(const int dim,
                                      const int tag,
                                      int & tagMaster,
-                                     gmsh::vectorpair & nodes,
+                                     std::vector<std::size_t> & nodeTags,
+                                     std::vector<std::size_t> & nodeTagsMaster,
                                      std::vector<double> & affineTransform)
       {
         int ierr = 0;
-        int *api_nodes_; size_t api_nodes_n_;
+        size_t *api_nodeTags_; size_t api_nodeTags_n_;
+        size_t *api_nodeTagsMaster_; size_t api_nodeTagsMaster_n_;
         double *api_affineTransform_; size_t api_affineTransform_n_;
-        gmshModelMeshGetPeriodicNodes(dim, tag, &tagMaster, &api_nodes_, &api_nodes_n_, &api_affineTransform_, &api_affineTransform_n_, &ierr);
+        gmshModelMeshGetPeriodicNodes(dim, tag, &tagMaster, &api_nodeTags_, &api_nodeTags_n_, &api_nodeTagsMaster_, &api_nodeTagsMaster_n_, &api_affineTransform_, &api_affineTransform_n_, &ierr);
         if(ierr) throw ierr;
-        nodes.resize(api_nodes_n_ / 2); for(size_t i = 0; i < api_nodes_n_ / 2; ++i){ nodes[i].first = api_nodes_[i * 2 + 0]; nodes[i].second = api_nodes_[i * 2 + 1]; } gmshFree(api_nodes_);
+        nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
+        nodeTagsMaster.assign(api_nodeTagsMaster_, api_nodeTagsMaster_ + api_nodeTagsMaster_n_); gmshFree(api_nodeTagsMaster_);
         affineTransform.assign(api_affineTransform_, api_affineTransform_ + api_affineTransform_n_); gmshFree(api_affineTransform_);
       }
 
@@ -3221,24 +3225,24 @@ namespace gmsh { // Top-level functions
     }
 
     // Select elements in the user interface.
-    GMSH_API int selectElements(std::vector<int> & tags)
+    GMSH_API int selectElements(std::vector<std::size_t> & elementTags)
     {
       int ierr = 0;
-      int *api_tags_; size_t api_tags_n_;
-      int result_api_ = gmshFltkSelectElements(&api_tags_, &api_tags_n_, &ierr);
+      size_t *api_elementTags_; size_t api_elementTags_n_;
+      int result_api_ = gmshFltkSelectElements(&api_elementTags_, &api_elementTags_n_, &ierr);
       if(ierr) throw ierr;
-      tags.assign(api_tags_, api_tags_ + api_tags_n_); gmshFree(api_tags_);
+      elementTags.assign(api_elementTags_, api_elementTags_ + api_elementTags_n_); gmshFree(api_elementTags_);
       return result_api_;
     }
 
     // Select views in the user interface.
-    GMSH_API int selectViews(std::vector<int> & tags)
+    GMSH_API int selectViews(std::vector<int> & viewTags)
     {
       int ierr = 0;
-      int *api_tags_; size_t api_tags_n_;
-      int result_api_ = gmshFltkSelectViews(&api_tags_, &api_tags_n_, &ierr);
+      int *api_viewTags_; size_t api_viewTags_n_;
+      int result_api_ = gmshFltkSelectViews(&api_viewTags_, &api_viewTags_n_, &ierr);
       if(ierr) throw ierr;
-      tags.assign(api_tags_, api_tags_ + api_tags_n_); gmshFree(api_tags_);
+      viewTags.assign(api_viewTags_, api_viewTags_ + api_viewTags_n_); gmshFree(api_viewTags_);
       return result_api_;
     }
 

@@ -906,11 +906,11 @@ populated by the new 3D meshing algorithms.
 Return `nodeTags`.
 """
 function getLastNodeError()
-    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
     api_nodeTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetLastNodeError, gmsh.lib), Nothing,
-          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
           api_nodeTags_, api_nodeTags_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetLastNodeError returned non-zero error code: $(ierr[])")
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
@@ -936,7 +936,7 @@ coordinates).
 Return `nodeTags`, `coord`, `parametricCoord`.
 """
 function getNodes(dim = -1, tag = -1, includeBoundary = false)
-    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
     api_nodeTags_n_ = Ref{Csize_t}()
     api_coord_ = Ref{Ptr{Cdouble}}()
     api_coord_n_ = Ref{Csize_t}()
@@ -944,7 +944,7 @@ function getNodes(dim = -1, tag = -1, includeBoundary = false)
     api_parametricCoord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetNodes, gmsh.lib), Nothing,
-          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
+          (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
           api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, dim, tag, includeBoundary, ierr)
     ierr[] != 0 && error("gmshModelMeshGetNodes returned non-zero error code: $(ierr[])")
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
@@ -972,7 +972,7 @@ function getNode(nodeTag)
     api_parametricCoord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetNode, gmsh.lib), Nothing,
-          (Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          (Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           nodeTag, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetNode returned non-zero error code: $(ierr[])")
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
@@ -1005,13 +1005,13 @@ the nodes, concatenated: [n1x, n1y, n1z, n2x, ...].
 Return `nodeTags`, `coord`.
 """
 function getNodesForPhysicalGroup(dim, tag)
-    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
     api_nodeTags_n_ = Ref{Csize_t}()
     api_coord_ = Ref{Ptr{Cdouble}}()
     api_coord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetNodesForPhysicalGroup, gmsh.lib), Nothing,
-          (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          (Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetNodesForPhysicalGroup returned non-zero error code: $(ierr[])")
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
@@ -1028,14 +1028,14 @@ identification numbers). `coord` is a vector of length 3 times the length of
 `nodeTags` that contains the x, y, z coordinates of the nodes, concatenated:
 [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord` vector contains the
 parametric coordinates of the nodes, if any. The length of `parametricCoord` can
-be 0 or `dim` times the length of `nodeTags`. If the `nodeTag` vector is empty,
+be 0 or `dim` times the length of `nodeTags`. If the `nodeTags` vector is empty,
 new tags are automatically assigned to the nodes.
 """
 function setNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetNodes, gmsh.lib), Nothing,
-          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          dim, tag, convert(Vector{Cint}, nodeTags), length(nodeTags), coord, length(coord), parametricCoord, length(parametricCoord), ierr)
+          (Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          dim, tag, convert(Vector{Csize_t}, nodeTags), length(nodeTags), coord, length(coord), parametricCoord, length(parametricCoord), ierr)
     ierr[] != 0 && error("gmshModelMeshSetNodes returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -1095,15 +1095,15 @@ Return `elementTypes`, `elementTags`, `nodeTags`.
 function getElements(dim = -1, tag = -1)
     api_elementTypes_ = Ref{Ptr{Cint}}()
     api_elementTypes_n_ = Ref{Csize_t}()
-    api_elementTags_ = Ref{Ptr{Ptr{Cint}}}()
+    api_elementTags_ = Ref{Ptr{Ptr{Csize_t}}}()
     api_elementTags_n_ = Ref{Ptr{Csize_t}}()
     api_elementTags_nn_ = Ref{Csize_t}()
-    api_nodeTags_ = Ref{Ptr{Ptr{Cint}}}()
+    api_nodeTags_ = Ref{Ptr{Ptr{Csize_t}}}()
     api_nodeTags_n_ = Ref{Ptr{Csize_t}}()
     api_nodeTags_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElements, gmsh.lib), Nothing,
-          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           api_elementTypes_, api_elementTypes_n_, api_elementTags_, api_elementTags_n_, api_elementTags_nn_, api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, dim, tag, ierr)
     ierr[] != 0 && error("gmshModelMeshGetElements returned non-zero error code: $(ierr[])")
     elementTypes = unsafe_wrap(Array, api_elementTypes_[], api_elementTypes_n_[], own=true)
@@ -1129,11 +1129,11 @@ Return `elementType`, `nodeTags`.
 """
 function getElement(elementTag)
     api_elementType_ = Ref{Cint}()
-    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
     api_nodeTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElement, gmsh.lib), Nothing,
-          (Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          (Csize_t, Ptr{Cint}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
           elementTag, api_elementType_, api_nodeTags_, api_nodeTags_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetElement returned non-zero error code: $(ierr[])")
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
@@ -1150,13 +1150,13 @@ it relies on a search in a spatial octree.
 Return `elementTag`, `elementType`, `nodeTags`.
 """
 function getElementByCoordinates(x, y, z)
-    api_elementTag_ = Ref{Cint}()
+    api_elementTag_ = Ref{Csize_t}()
     api_elementType_ = Ref{Cint}()
-    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
     api_nodeTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElementByCoordinates, gmsh.lib), Nothing,
-          (Cdouble, Cdouble, Cdouble, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          (Cdouble, Cdouble, Cdouble, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
           x, y, z, api_elementTag_, api_elementType_, api_nodeTags_, api_nodeTags_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetElementByCoordinates returned non-zero error code: $(ierr[])")
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
@@ -1245,13 +1245,13 @@ the part of the data indexed by `task`.
 Return `elementTags`, `nodeTags`.
 """
 function getElementsByType(elementType, tag = -1, task = 0, numTasks = 1)
-    api_elementTags_ = Ref{Ptr{Cint}}()
+    api_elementTags_ = Ref{Ptr{Csize_t}}()
     api_elementTags_n_ = Ref{Csize_t}()
-    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
     api_nodeTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElementsByType, gmsh.lib), Nothing,
-          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
           elementType, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, tag, task, numTasks, ierr)
     ierr[] != 0 && error("gmshModelMeshGetElementsByType returned non-zero error code: $(ierr[])")
     elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
@@ -1268,13 +1268,13 @@ Preallocate the data for `getElementsByType`. This is necessary only if
 Return `elementTags`, `nodeTags`.
 """
 function preallocateElementsByType(elementType, elementTag, nodeTag, tag = -1)
-    api_elementTags_ = Ref{Ptr{Cint}}()
+    api_elementTags_ = Ref{Ptr{Csize_t}}()
     api_elementTags_n_ = Ref{Csize_t}()
-    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
     api_nodeTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshPreallocateElementsByType, gmsh.lib), Nothing,
-          (Cint, Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          (Cint, Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           elementType, elementTag, nodeTag, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, tag, ierr)
     ierr[] != 0 && error("gmshModelMeshPreallocateElementsByType returned non-zero error code: $(ierr[])")
     elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
@@ -1300,8 +1300,8 @@ function setElements(dim, tag, elementTypes, elementTags, nodeTags)
     api_nodeTags_n_ = [ length(nodeTags[i]) for i in 1:length(nodeTags) ]
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetElements, gmsh.lib), Nothing,
-          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
-          dim, tag, convert(Vector{Cint}, elementTypes), length(elementTypes), convert(Vector{Vector{Cint}},elementTags), api_elementTags_n_, length(elementTags), convert(Vector{Vector{Cint}},nodeTags), api_nodeTags_n_, length(nodeTags), ierr)
+          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          dim, tag, convert(Vector{Cint}, elementTypes), length(elementTypes), convert(Vector{Vector{Csize_t}},elementTags), api_elementTags_n_, length(elementTags), convert(Vector{Vector{Csize_t}},nodeTags), api_nodeTags_n_, length(nodeTags), ierr)
     ierr[] != 0 && error("gmshModelMeshSetElements returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -1320,8 +1320,8 @@ automatically assigned to the elements.
 function setElementsByType(dim, tag, elementType, elementTags, nodeTags)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetElementsByType, gmsh.lib), Nothing,
-          (Cint, Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
-          dim, tag, elementType, convert(Vector{Cint}, elementTags), length(elementTags), convert(Vector{Cint}, nodeTags), length(nodeTags), ierr)
+          (Cint, Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          dim, tag, elementType, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Csize_t}, nodeTags), length(nodeTags), ierr)
     ierr[] != 0 && error("gmshModelMeshSetElementsByType returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -1479,22 +1479,23 @@ end
     gmsh.model.mesh.getElementEdgeNodes(elementType, tag = -1, primary = false, task = 0, numTasks = 1)
 
 Get the nodes on the edges of all elements of type `elementType` classified on
-the entity of tag `tag`. If `primary` is set, only the primary (begin/end) nodes
-of the edges are returned. If `tag` < 0, get the edge nodes for all entities. If
-`numTasks` > 1, only compute and return the part of the data indexed by `task`.
+the entity of tag `tag`. `nodeTags` contains the node tags. If `primary` is set,
+only the primary (begin/end) nodes of the edges are returned. If `tag` < 0, get
+the edge nodes for all entities. If `numTasks` > 1, only compute and return the
+part of the data indexed by `task`.
 
-Return `nodes`.
+Return `nodeTags`.
 """
 function getElementEdgeNodes(elementType, tag = -1, primary = false, task = 0, numTasks = 1)
-    api_nodes_ = Ref{Ptr{Cint}}()
-    api_nodes_n_ = Ref{Csize_t}()
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElementEdgeNodes, gmsh.lib), Nothing,
-          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
-          elementType, api_nodes_, api_nodes_n_, tag, primary, task, numTasks, ierr)
+          (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, api_nodeTags_, api_nodeTags_n_, tag, primary, task, numTasks, ierr)
     ierr[] != 0 && error("gmshModelMeshGetElementEdgeNodes returned non-zero error code: $(ierr[])")
-    nodes = unsafe_wrap(Array, api_nodes_[], api_nodes_n_[], own=true)
-    return nodes
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
+    return nodeTags
 end
 
 """
@@ -1502,22 +1503,23 @@ end
 
 Get the nodes on the faces of type `faceType` (3 for triangular faces, 4 for
 quadrangular faces) of all elements of type `elementType` classified on the
-entity of tag `tag`. If `primary` is set, only the primary (corner) nodes of the
-faces are returned. If `tag` < 0, get the face nodes for all entities. If
-`numTasks` > 1, only compute and return the part of the data indexed by `task`.
+entity of tag `tag`. `nodeTags` contains the node tags. If `primary` is set,
+only the primary (corner) nodes of the faces are returned. If `tag` < 0, get the
+face nodes for all entities. If `numTasks` > 1, only compute and return the part
+of the data indexed by `task`.
 
-Return `nodes`.
+Return `nodeTags`.
 """
 function getElementFaceNodes(elementType, faceType, tag = -1, primary = false, task = 0, numTasks = 1)
-    api_nodes_ = Ref{Ptr{Cint}}()
-    api_nodes_n_ = Ref{Csize_t}()
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElementFaceNodes, gmsh.lib), Nothing,
-          (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
-          elementType, faceType, api_nodes_, api_nodes_n_, tag, primary, task, numTasks, ierr)
+          (Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, faceType, api_nodeTags_, api_nodeTags_n_, tag, primary, task, numTasks, ierr)
     ierr[] != 0 && error("gmshModelMeshGetElementFaceNodes returned non-zero error code: $(ierr[])")
-    nodes = unsafe_wrap(Array, api_nodes_[], api_nodes_n_[], own=true)
-    return nodes
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
+    return nodeTags
 end
 
 """
@@ -1529,13 +1531,13 @@ the ghost entity of dimension `dim` and tag `tag`.
 Return `elementTags`, `partitions`.
 """
 function getGhostElements(dim, tag)
-    api_elementTags_ = Ref{Ptr{Cint}}()
+    api_elementTags_ = Ref{Ptr{Csize_t}}()
     api_elementTags_n_ = Ref{Csize_t}()
     api_partitions_ = Ref{Ptr{Cint}}()
     api_partitions_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetGhostElements, gmsh.lib), Nothing,
-          (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          (Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, api_elementTags_, api_elementTags_n_, api_partitions_, api_partitions_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetGhostElements returned non-zero error code: $(ierr[])")
     elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
@@ -1753,26 +1755,29 @@ end
 """
     gmsh.model.mesh.getPeriodicNodes(dim, tag)
 
-Get the master entity, periodic node pairs and affine transform for the entity
-of dimension `dim` and tag `tag`.
+Get the master entity `tagMaster`, the node tags `nodeTags` and their
+corresponding master node tags `nodeTagsMaster`, and the affine transform
+`affineTransform` for the entity of dimension `dim` and tag `tag`.
 
-Return `tagMaster`, `nodes`, `affineTransform`.
+Return `tagMaster`, `nodeTags`, `nodeTagsMaster`, `affineTransform`.
 """
 function getPeriodicNodes(dim, tag)
     api_tagMaster_ = Ref{Cint}()
-    api_nodes_ = Ref{Ptr{Cint}}()
-    api_nodes_n_ = Ref{Csize_t}()
+    api_nodeTags_ = Ref{Ptr{Csize_t}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    api_nodeTagsMaster_ = Ref{Ptr{Csize_t}}()
+    api_nodeTagsMaster_n_ = Ref{Csize_t}()
     api_affineTransform_ = Ref{Ptr{Cdouble}}()
     api_affineTransform_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetPeriodicNodes, gmsh.lib), Nothing,
-          (Cint, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, api_tagMaster_, api_nodes_, api_nodes_n_, api_affineTransform_, api_affineTransform_n_, ierr)
+          (Cint, Cint, Ptr{Cint}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, api_tagMaster_, api_nodeTags_, api_nodeTags_n_, api_nodeTagsMaster_, api_nodeTagsMaster_n_, api_affineTransform_, api_affineTransform_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetPeriodicNodes returned non-zero error code: $(ierr[])")
-    tmp_api_nodes_ = unsafe_wrap(Array, api_nodes_[], api_nodes_n_[], own=true)
-    nodes = [ (tmp_api_nodes_[i], tmp_api_nodes_[i+1]) for i in 1:2:length(tmp_api_nodes_) ]
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
+    nodeTagsMaster = unsafe_wrap(Array, api_nodeTagsMaster_[], api_nodeTagsMaster_n_[], own=true)
     affineTransform = unsafe_wrap(Array, api_affineTransform_[], api_affineTransform_n_[], own=true)
-    return api_tagMaster_[], nodes, affineTransform
+    return api_tagMaster_[], nodeTags, nodeTagsMaster, affineTransform
 end
 
 """
@@ -3992,18 +3997,18 @@ end
 
 Select elements in the user interface.
 
-Return an integer value, `tags`.
+Return an integer value, `elementTags`.
 """
 function selectElements()
-    api_tags_ = Ref{Ptr{Cint}}()
-    api_tags_n_ = Ref{Csize_t}()
+    api_elementTags_ = Ref{Ptr{Csize_t}}()
+    api_elementTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     api__result__ = ccall((:gmshFltkSelectElements, gmsh.lib), Cint,
-          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          api_tags_, api_tags_n_, ierr)
+          (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_elementTags_, api_elementTags_n_, ierr)
     ierr[] != 0 && error("gmshFltkSelectElements returned non-zero error code: $(ierr[])")
-    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
-    return api__result__, tags
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
+    return api__result__, elementTags
 end
 
 """
@@ -4011,18 +4016,18 @@ end
 
 Select views in the user interface.
 
-Return an integer value, `tags`.
+Return an integer value, `viewTags`.
 """
 function selectViews()
-    api_tags_ = Ref{Ptr{Cint}}()
-    api_tags_n_ = Ref{Csize_t}()
+    api_viewTags_ = Ref{Ptr{Cint}}()
+    api_viewTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     api__result__ = ccall((:gmshFltkSelectViews, gmsh.lib), Cint,
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          api_tags_, api_tags_n_, ierr)
+          api_viewTags_, api_viewTags_n_, ierr)
     ierr[] != 0 && error("gmshFltkSelectViews returned non-zero error code: $(ierr[])")
-    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
-    return api__result__, tags
+    viewTags = unsafe_wrap(Array, api_viewTags_[], api_viewTags_n_[], own=true)
+    return api__result__, viewTags
 end
 
 end # end of module fltk

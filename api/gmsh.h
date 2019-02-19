@@ -340,7 +340,7 @@ namespace gmsh { // Top-level functions
 
       // Get the last nodes (if any) where a meshing error occurred. Currently only
       // populated by the new 3D meshing algorithms.
-      GMSH_API void getLastNodeError(std::vector<int> & nodeTags);
+      GMSH_API void getLastNodeError(std::vector<std::size_t> & nodeTags);
 
       // Get the nodes classified on the entity of dimension `dim' and tag `tag'.
       // If `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim'
@@ -355,7 +355,7 @@ namespace gmsh { // Top-level functions
       // classified on the boundary of the entity (wich will be reparametrized on
       // the entity if `dim' >= 0 in order to compute their parametric
       // coordinates).
-      GMSH_API void getNodes(std::vector<int> & nodeTags,
+      GMSH_API void getNodes(std::vector<std::size_t> & nodeTags,
                              std::vector<double> & coord,
                              std::vector<double> & parametricCoord,
                              const int dim = -1,
@@ -368,7 +368,7 @@ namespace gmsh { // Top-level functions
       // meshes all the nodes in the model should be numbered in a continuous
       // sequence of tags from 1 to N to maintain reasonnable performance (in this
       // case the internal cache is based on a vector; otherwise it uses a map).
-      GMSH_API void getNode(const int nodeTag,
+      GMSH_API void getNode(const std::size_t nodeTag,
                             std::vector<double> & coord,
                             std::vector<double> & parametricCoord);
 
@@ -381,7 +381,7 @@ namespace gmsh { // Top-level functions
       // x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...].
       GMSH_API void getNodesForPhysicalGroup(const int dim,
                                              const int tag,
-                                             std::vector<int> & nodeTags,
+                                             std::vector<std::size_t> & nodeTags,
                                              std::vector<double> & coord);
 
       // Set the nodes classified on the geometrical entity of dimension `dim' and
@@ -391,11 +391,11 @@ namespace gmsh { // Top-level functions
       // nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. The optional
       // `parametricCoord' vector contains the parametric coordinates of the nodes,
       // if any. The length of `parametricCoord' can be 0 or `dim' times the length
-      // of `nodeTags'. If the `nodeTag' vector is empty, new tags are
+      // of `nodeTags'. If the `nodeTags' vector is empty, new tags are
       // automatically assigned to the nodes.
       GMSH_API void setNodes(const int dim,
                              const int tag,
-                             const std::vector<int> & nodeTags,
+                             const std::vector<std::size_t> & nodeTags,
                              const std::vector<double> & coord,
                              const std::vector<double> & parametricCoord = std::vector<double>());
 
@@ -426,8 +426,8 @@ namespace gmsh { // Top-level functions
       // the node tags of all the elements of the given type, concatenated: [e1n1,
       // e1n2, ..., e1nN, e2n1, ...].
       GMSH_API void getElements(std::vector<int> & elementTypes,
-                                std::vector<std::vector<int> > & elementTags,
-                                std::vector<std::vector<int> > & nodeTags,
+                                std::vector<std::vector<std::size_t> > & elementTags,
+                                std::vector<std::vector<std::size_t> > & nodeTags,
                                 const int dim = -1,
                                 const int tag = -1);
 
@@ -437,9 +437,9 @@ namespace gmsh { // Top-level functions
       // model should be numbered in a continuous sequence of tags from 1 to N to
       // maintain reasonnable performance (in this case the internal cache is based
       // on a vector; otherwise it uses a map).
-      GMSH_API void getElement(const int elementTag,
+      GMSH_API void getElement(const std::size_t elementTag,
                                int & elementType,
-                               std::vector<int> & nodeTags);
+                               std::vector<std::size_t> & nodeTags);
 
       // Get the tag, type and node tags of the element located at coordinates
       // (`x', `y', `z'). This is a sometimes useful but inefficient way of
@@ -447,9 +447,9 @@ namespace gmsh { // Top-level functions
       GMSH_API void getElementByCoordinates(const double x,
                                             const double y,
                                             const double z,
-                                            int & elementTag,
+                                            std::size_t & elementTag,
                                             int & elementType,
-                                            std::vector<int> & nodeTags);
+                                            std::vector<std::size_t> & nodeTags);
 
       // Get the types of elements in the entity of dimension `dim' and tag `tag'.
       // If `tag' < 0, get the types for all entities of dimension `dim'. If `dim'
@@ -487,8 +487,8 @@ namespace gmsh { // Top-level functions
       // `numTasks' > 1, only compute and return the part of the data indexed by
       // `task'.
       GMSH_API void getElementsByType(const int elementType,
-                                      std::vector<int> & elementTags,
-                                      std::vector<int> & nodeTags,
+                                      std::vector<std::size_t> & elementTags,
+                                      std::vector<std::size_t> & nodeTags,
                                       const int tag = -1,
                                       const std::size_t task = 0,
                                       const std::size_t numTasks = 1);
@@ -498,8 +498,8 @@ namespace gmsh { // Top-level functions
       GMSH_API void preallocateElementsByType(const int elementType,
                                               const bool elementTag,
                                               const bool nodeTag,
-                                              std::vector<int> & elementTags,
-                                              std::vector<int> & nodeTags,
+                                              std::vector<std::size_t> & elementTags,
+                                              std::vector<std::size_t> & nodeTags,
                                               const int tag = -1);
 
       // Set the elements of the entity of dimension `dim' and tag `tag'. `types'
@@ -515,8 +515,8 @@ namespace gmsh { // Top-level functions
       GMSH_API void setElements(const int dim,
                                 const int tag,
                                 const std::vector<int> & elementTypes,
-                                const std::vector<std::vector<int> > & elementTags,
-                                const std::vector<std::vector<int> > & nodeTags);
+                                const std::vector<std::vector<std::size_t> > & elementTags,
+                                const std::vector<std::vector<std::size_t> > & nodeTags);
 
       // Set the elements of type `elementType' in the entity of dimension `dim'
       // and tag `tag'. `elementTags' contains the tags (unique, strictly positive
@@ -528,8 +528,8 @@ namespace gmsh { // Top-level functions
       GMSH_API void setElementsByType(const int dim,
                                       const int tag,
                                       const int elementType,
-                                      const std::vector<int> & elementTags,
-                                      const std::vector<int> & nodeTags);
+                                      const std::vector<std::size_t> & elementTags,
+                                      const std::vector<std::size_t> & nodeTags);
 
       // Get the Jacobians of all the elements of type `elementType' classified on
       // the entity of dimension `dim' and tag `tag', at the G integration points
@@ -605,12 +605,12 @@ namespace gmsh { // Top-level functions
                                            const int tag = -1);
 
       // Get the nodes on the edges of all elements of type `elementType'
-      // classified on the entity of tag `tag'. If `primary' is set, only the
-      // primary (begin/end) nodes of the edges are returned. If `tag' < 0, get the
-      // edge nodes for all entities. If `numTasks' > 1, only compute and return
-      // the part of the data indexed by `task'.
+      // classified on the entity of tag `tag'. `nodeTags' contains the node tags.
+      // If `primary' is set, only the primary (begin/end) nodes of the edges are
+      // returned. If `tag' < 0, get the edge nodes for all entities. If `numTasks'
+      // > 1, only compute and return the part of the data indexed by `task'.
       GMSH_API void getElementEdgeNodes(const int elementType,
-                                        std::vector<int> & nodes,
+                                        std::vector<std::size_t> & nodeTags,
                                         const int tag = -1,
                                         const bool primary = false,
                                         const std::size_t task = 0,
@@ -618,13 +618,13 @@ namespace gmsh { // Top-level functions
 
       // Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
       // for quadrangular faces) of all elements of type `elementType' classified
-      // on the entity of tag `tag'. If `primary' is set, only the primary (corner)
-      // nodes of the faces are returned. If `tag' < 0, get the face nodes for all
-      // entities. If `numTasks' > 1, only compute and return the part of the data
-      // indexed by `task'.
+      // on the entity of tag `tag'. `nodeTags' contains the node tags. If
+      // `primary' is set, only the primary (corner) nodes of the faces are
+      // returned. If `tag' < 0, get the face nodes for all entities. If `numTasks'
+      // > 1, only compute and return the part of the data indexed by `task'.
       GMSH_API void getElementFaceNodes(const int elementType,
                                         const int faceType,
-                                        std::vector<int> & nodes,
+                                        std::vector<std::size_t> & nodeTags,
                                         const int tag = -1,
                                         const bool primary = false,
                                         const std::size_t task = 0,
@@ -634,7 +634,7 @@ namespace gmsh { // Top-level functions
       // stored in the ghost entity of dimension `dim' and tag `tag'.
       GMSH_API void getGhostElements(const int dim,
                                      const int tag,
-                                     std::vector<int> & elementTags,
+                                     std::vector<std::size_t> & elementTags,
                                      std::vector<int> & partitions);
 
       // Set a mesh size constraint on the geometrical entities `dimTags'.
@@ -724,12 +724,14 @@ namespace gmsh { // Top-level functions
                                 const std::vector<int> & tagsSource,
                                 const std::vector<double> & affineTransform);
 
-      // Get the master entity, periodic node pairs and affine transform for the
-      // entity of dimension `dim' and tag `tag'.
+      // Get the master entity `tagMaster', the node tags `nodeTags' and their
+      // corresponding master node tags `nodeTagsMaster', and the affine transform
+      // `affineTransform' for the entity of dimension `dim' and tag `tag'.
       GMSH_API void getPeriodicNodes(const int dim,
                                      const int tag,
                                      int & tagMaster,
-                                     gmsh::vectorpair & nodes,
+                                     std::vector<std::size_t> & nodeTags,
+                                     std::vector<std::size_t> & nodeTagsMaster,
                                      std::vector<double> & affineTransform);
 
       // Remove duplicate nodes in the mesh of the current model.
@@ -1738,10 +1740,10 @@ namespace gmsh { // Top-level functions
                                 const int dim = -1);
 
     // Select elements in the user interface.
-    GMSH_API int selectElements(std::vector<int> & tags);
+    GMSH_API int selectElements(std::vector<std::size_t> & elementTags);
 
     // Select views in the user interface.
-    GMSH_API int selectViews(std::vector<int> & tags);
+    GMSH_API int selectViews(std::vector<int> & viewTags);
 
   } // namespace fltk
 

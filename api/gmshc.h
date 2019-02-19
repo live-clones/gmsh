@@ -360,7 +360,7 @@ GMSH_API void gmshModelMeshGetLastEntityError(int ** dimTags, size_t * dimTags_n
 
 /* Get the last nodes (if any) where a meshing error occurred. Currently only
  * populated by the new 3D meshing algorithms. */
-GMSH_API void gmshModelMeshGetLastNodeError(int ** nodeTags, size_t * nodeTags_n,
+GMSH_API void gmshModelMeshGetLastNodeError(size_t ** nodeTags, size_t * nodeTags_n,
                                             int * ierr);
 
 /* Get the nodes classified on the entity of dimension `dim' and tag `tag'. If
@@ -375,7 +375,7 @@ GMSH_API void gmshModelMeshGetLastNodeError(int ** nodeTags, size_t * nodeTags_n
  * `includeBoundary' is set, also return the nodes classified on the boundary
  * of the entity (wich will be reparametrized on the entity if `dim' >= 0 in
  * order to compute their parametric coordinates). */
-GMSH_API void gmshModelMeshGetNodes(int ** nodeTags, size_t * nodeTags_n,
+GMSH_API void gmshModelMeshGetNodes(size_t ** nodeTags, size_t * nodeTags_n,
                                     double ** coord, size_t * coord_n,
                                     double ** parametricCoord, size_t * parametricCoord_n,
                                     const int dim,
@@ -389,7 +389,7 @@ GMSH_API void gmshModelMeshGetNodes(int ** nodeTags, size_t * nodeTags_n,
  * the nodes in the model should be numbered in a continuous sequence of tags
  * from 1 to N to maintain reasonnable performance (in this case the internal
  * cache is based on a vector; otherwise it uses a map). */
-GMSH_API void gmshModelMeshGetNode(const int nodeTag,
+GMSH_API void gmshModelMeshGetNode(const size_t nodeTag,
                                    double ** coord, size_t * coord_n,
                                    double ** parametricCoord, size_t * parametricCoord_n,
                                    int * ierr);
@@ -404,7 +404,7 @@ GMSH_API void gmshModelMeshRebuildNodeCache(const int onlyIfNecessary,
  * y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. */
 GMSH_API void gmshModelMeshGetNodesForPhysicalGroup(const int dim,
                                                     const int tag,
-                                                    int ** nodeTags, size_t * nodeTags_n,
+                                                    size_t ** nodeTags, size_t * nodeTags_n,
                                                     double ** coord, size_t * coord_n,
                                                     int * ierr);
 
@@ -415,11 +415,11 @@ GMSH_API void gmshModelMeshGetNodesForPhysicalGroup(const int dim,
  * concatenated: [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord'
  * vector contains the parametric coordinates of the nodes, if any. The length
  * of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If
- * the `nodeTag' vector is empty, new tags are automatically assigned to the
+ * the `nodeTags' vector is empty, new tags are automatically assigned to the
  * nodes. */
 GMSH_API void gmshModelMeshSetNodes(const int dim,
                                     const int tag,
-                                    int * nodeTags, size_t nodeTags_n,
+                                    size_t * nodeTags, size_t nodeTags_n,
                                     double * coord, size_t coord_n,
                                     double * parametricCoord, size_t parametricCoord_n,
                                     int * ierr);
@@ -452,8 +452,8 @@ GMSH_API void gmshModelMeshRelocateNodes(const int dim,
  * the node tags of all the elements of the given type, concatenated: [e1n1,
  * e1n2, ..., e1nN, e2n1, ...]. */
 GMSH_API void gmshModelMeshGetElements(int ** elementTypes, size_t * elementTypes_n,
-                                       int *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn,
-                                       int *** nodeTags, size_t ** nodeTags_n, size_t *nodeTags_nn,
+                                       size_t *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn,
+                                       size_t *** nodeTags, size_t ** nodeTags_n, size_t *nodeTags_nn,
                                        const int dim,
                                        const int tag,
                                        int * ierr);
@@ -464,9 +464,9 @@ GMSH_API void gmshModelMeshGetElements(int ** elementTypes, size_t * elementType
  * should be numbered in a continuous sequence of tags from 1 to N to maintain
  * reasonnable performance (in this case the internal cache is based on a
  * vector; otherwise it uses a map). */
-GMSH_API void gmshModelMeshGetElement(const int elementTag,
+GMSH_API void gmshModelMeshGetElement(const size_t elementTag,
                                       int * elementType,
-                                      int ** nodeTags, size_t * nodeTags_n,
+                                      size_t ** nodeTags, size_t * nodeTags_n,
                                       int * ierr);
 
 /* Get the tag, type and node tags of the element located at coordinates (`x',
@@ -475,9 +475,9 @@ GMSH_API void gmshModelMeshGetElement(const int elementTag,
 GMSH_API void gmshModelMeshGetElementByCoordinates(const double x,
                                                    const double y,
                                                    const double z,
-                                                   int * elementTag,
+                                                   size_t * elementTag,
                                                    int * elementType,
-                                                   int ** nodeTags, size_t * nodeTags_n,
+                                                   size_t ** nodeTags, size_t * nodeTags_n,
                                                    int * ierr);
 
 /* Get the types of elements in the entity of dimension `dim' and tag `tag'.
@@ -519,8 +519,8 @@ GMSH_API void gmshModelMeshGetElementProperties(const int elementType,
  * `numTasks' > 1, only compute and return the part of the data indexed by
  * `task'. */
 GMSH_API void gmshModelMeshGetElementsByType(const int elementType,
-                                             int ** elementTags, size_t * elementTags_n,
-                                             int ** nodeTags, size_t * nodeTags_n,
+                                             size_t ** elementTags, size_t * elementTags_n,
+                                             size_t ** nodeTags, size_t * nodeTags_n,
                                              const int tag,
                                              const size_t task,
                                              const size_t numTasks,
@@ -531,8 +531,8 @@ GMSH_API void gmshModelMeshGetElementsByType(const int elementType,
 GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType,
                                                      const int elementTag,
                                                      const int nodeTag,
-                                                     int ** elementTags, size_t * elementTags_n,
-                                                     int ** nodeTags, size_t * nodeTags_n,
+                                                     size_t ** elementTags, size_t * elementTags_n,
+                                                     size_t ** nodeTags, size_t * nodeTags_n,
                                                      const int tag,
                                                      int * ierr);
 
@@ -548,8 +548,8 @@ GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType,
 GMSH_API void gmshModelMeshSetElements(const int dim,
                                        const int tag,
                                        int * elementTypes, size_t elementTypes_n,
-                                       const int ** elementTags, const size_t * elementTags_n, size_t elementTags_nn,
-                                       const int ** nodeTags, const size_t * nodeTags_n, size_t nodeTags_nn,
+                                       const size_t ** elementTags, const size_t * elementTags_n, size_t elementTags_nn,
+                                       const size_t ** nodeTags, const size_t * nodeTags_n, size_t nodeTags_nn,
                                        int * ierr);
 
 /* Set the elements of type `elementType' in the entity of dimension `dim' and
@@ -562,8 +562,8 @@ GMSH_API void gmshModelMeshSetElements(const int dim,
 GMSH_API void gmshModelMeshSetElementsByType(const int dim,
                                              const int tag,
                                              const int elementType,
-                                             int * elementTags, size_t elementTags_n,
-                                             int * nodeTags, size_t nodeTags_n,
+                                             size_t * elementTags, size_t elementTags_n,
+                                             size_t * nodeTags, size_t nodeTags_n,
                                              int * ierr);
 
 /* Get the Jacobians of all the elements of type `elementType' classified on
@@ -646,12 +646,12 @@ GMSH_API void gmshModelMeshPreallocateBarycenters(const int elementType,
                                                   int * ierr);
 
 /* Get the nodes on the edges of all elements of type `elementType' classified
- * on the entity of tag `tag'. If `primary' is set, only the primary
- * (begin/end) nodes of the edges are returned. If `tag' < 0, get the edge
- * nodes for all entities. If `numTasks' > 1, only compute and return the part
- * of the data indexed by `task'. */
+ * on the entity of tag `tag'. `nodeTags' contains the node tags. If `primary'
+ * is set, only the primary (begin/end) nodes of the edges are returned. If
+ * `tag' < 0, get the edge nodes for all entities. If `numTasks' > 1, only
+ * compute and return the part of the data indexed by `task'. */
 GMSH_API void gmshModelMeshGetElementEdgeNodes(const int elementType,
-                                               int ** nodes, size_t * nodes_n,
+                                               size_t ** nodeTags, size_t * nodeTags_n,
                                                const int tag,
                                                const int primary,
                                                const size_t task,
@@ -660,13 +660,13 @@ GMSH_API void gmshModelMeshGetElementEdgeNodes(const int elementType,
 
 /* Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
  * for quadrangular faces) of all elements of type `elementType' classified on
- * the entity of tag `tag'. If `primary' is set, only the primary (corner)
- * nodes of the faces are returned. If `tag' < 0, get the face nodes for all
- * entities. If `numTasks' > 1, only compute and return the part of the data
- * indexed by `task'. */
+ * the entity of tag `tag'. `nodeTags' contains the node tags. If `primary' is
+ * set, only the primary (corner) nodes of the faces are returned. If `tag' <
+ * 0, get the face nodes for all entities. If `numTasks' > 1, only compute and
+ * return the part of the data indexed by `task'. */
 GMSH_API void gmshModelMeshGetElementFaceNodes(const int elementType,
                                                const int faceType,
-                                               int ** nodes, size_t * nodes_n,
+                                               size_t ** nodeTags, size_t * nodeTags_n,
                                                const int tag,
                                                const int primary,
                                                const size_t task,
@@ -677,7 +677,7 @@ GMSH_API void gmshModelMeshGetElementFaceNodes(const int elementType,
  * stored in the ghost entity of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelMeshGetGhostElements(const int dim,
                                             const int tag,
-                                            int ** elementTags, size_t * elementTags_n,
+                                            size_t ** elementTags, size_t * elementTags_n,
                                             int ** partitions, size_t * partitions_n,
                                             int * ierr);
 
@@ -779,12 +779,14 @@ GMSH_API void gmshModelMeshSetPeriodic(const int dim,
                                        double * affineTransform, size_t affineTransform_n,
                                        int * ierr);
 
-/* Get the master entity, periodic node pairs and affine transform for the
- * entity of dimension `dim' and tag `tag'. */
+/* Get the master entity `tagMaster', the node tags `nodeTags' and their
+ * corresponding master node tags `nodeTagsMaster', and the affine transform
+ * `affineTransform' for the entity of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim,
                                             const int tag,
                                             int * tagMaster,
-                                            int ** nodes, size_t * nodes_n,
+                                            size_t ** nodeTags, size_t * nodeTags_n,
+                                            size_t ** nodeTagsMaster, size_t * nodeTagsMaster_n,
                                             double ** affineTransform, size_t * affineTransform_n,
                                             int * ierr);
 
@@ -1853,11 +1855,11 @@ GMSH_API int gmshFltkSelectEntities(int ** dimTags, size_t * dimTags_n,
                                     int * ierr);
 
 /* Select elements in the user interface. */
-GMSH_API int gmshFltkSelectElements(int ** tags, size_t * tags_n,
+GMSH_API int gmshFltkSelectElements(size_t ** elementTags, size_t * elementTags_n,
                                     int * ierr);
 
 /* Select views in the user interface. */
-GMSH_API int gmshFltkSelectViews(int ** tags, size_t * tags_n,
+GMSH_API int gmshFltkSelectViews(int ** viewTags, size_t * viewTags_n,
                                  int * ierr);
 
 /* Set one or more parameters in the ONELAB database, encoded in `format'. */
