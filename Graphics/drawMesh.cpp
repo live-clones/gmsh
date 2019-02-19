@@ -63,7 +63,7 @@ static void drawElementLabels(drawContext *ctx, GEntity *e,
       else if(CTX::instance()->mesh.labelType == 1)
         sprintf(str, "%d", e->tag());
       else
-        sprintf(str, "%d", ele->getNum());
+        sprintf(str, "%lu", ele->getNum());
       ctx->drawString(str, pc.x(), pc.y(), pc.z());
     }
   }

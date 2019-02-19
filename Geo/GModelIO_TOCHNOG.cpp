@@ -162,7 +162,7 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
         for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
           MElement *e = entities[i]->getMeshElement(j);
           if(n && !(n % 10)) fprintf(fp, "\n");
-          fprintf(fp, "%d ", e->getNum());
+          fprintf(fp, "%lu ", e->getNum());
           n++;
         }
       }

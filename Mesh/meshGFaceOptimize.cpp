@@ -977,8 +977,8 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
       v4 = t2->tri()->getVertex(i);
 
   if(!v4) {
-    printf("%d %d %d\n", v1->getNum(), v2->getNum(), v3->getNum());
-    printf("%d %d %d\n", t2->tri()->getVertex(0)->getNum(),
+    printf("%lu %lu %lu\n", v1->getNum(), v2->getNum(), v3->getNum());
+    printf("%lu %lu %lu\n", t2->tri()->getVertex(0)->getNum(),
            t2->tri()->getVertex(1)->getNum(),
            t2->tri()->getVertex(2)->getNum());
   }

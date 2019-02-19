@@ -378,7 +378,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
               fprintf(fp, "\n");
               row = 0;
             }
-            fprintf(fp, "%10d%10d%10d%10d", 8, e->getNum(), 0, 0);
+            fprintf(fp, "%10d%10lu%10d%10d", 8, e->getNum(), 0, 0);
             row++;
           }
         }
