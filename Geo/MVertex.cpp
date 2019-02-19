@@ -23,14 +23,9 @@ double angle3Vertices(const MVertex *p1, const MVertex *p2, const MVertex *p3)
   return std::atan2(sinA, cosA);
 }
 
-MVertex::MVertex(double x, double y, double z, GEntity *ge, int num)
+MVertex::MVertex(double x, double y, double z, GEntity *ge, std::size_t num)
   : _visible(1), _order(1), _x(x), _y(y), _z(z), _ge(ge)
 {
-  if(num < 0){
-    Msg::Error("size_t transition: should never set negative vertex num - "
-               "please send us a report if you see this message");
-  }
-
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
@@ -39,16 +34,12 @@ MVertex::MVertex(double x, double y, double z, GEntity *ge, int num)
     GModel *m = GModel::current();
     if(num) {
       _num = num;
-      // FIXME remove cast once we store long tags
-      m->setMaxVertexNumber(std::max((int)m->getMaxVertexNumber(), _num));
+      m->setMaxVertexNumber(std::max(m->getMaxVertexNumber(), _num));
     }
     else {
       m->setMaxVertexNumber(m->getMaxVertexNumber() + 1);
       _num = m->getMaxVertexNumber();
     }
-    // on some architectures _index can be smaller than _num; this is OK as the
-    // places where _index is used (IO formats that don't support 64 bit
-    // indices), surface meshing and initial 3D meshing
     _index = (long int)num;
   }
 }
@@ -60,28 +51,21 @@ void MVertex::deleteLast()
 #endif
   {
     GModel *m = GModel::current();
-    // FIXME remove cast once we store long tags
-    if(_num == (int)m->getMaxVertexNumber())
+    if(_num == m->getMaxVertexNumber())
       m->setMaxVertexNumber(m->getMaxVertexNumber() - 1);
     delete this;
   }
 }
 
-void MVertex::forceNum(int num)
+void MVertex::forceNum(std::size_t num)
 {
-  // FIXME remove this once we switch to size_t
-  if(num < 0){
-    Msg::Error("size_t transition: should never force negative vertex num - "
-               "please send us a report if you see this message");
-  }
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
   {
     GModel *m = GModel::current();
     _num = num;
-    // FIXME remove cast once we store long tags
-    m->setMaxVertexNumber(std::max((int)m->getMaxVertexNumber(), _num));
+    m->setMaxVertexNumber(std::max(m->getMaxVertexNumber(), _num));
   }
 }
 
@@ -218,7 +202,9 @@ void MVertex::writeMSH4(FILE *fp, bool binary, bool saveParametric,
                         double scalingFactor)
 {
   if(binary) {
-    fwrite(&_num, sizeof(int), 1, fp);
+    // FIXME change this for MSH4.1
+    int num = (int)_num;
+    fwrite(&num, sizeof(int), 1, fp);
     double xScale = _x * scalingFactor;
     double yScale = _y * scalingFactor;
     double zScale = _z * scalingFactor;
@@ -241,7 +227,7 @@ void MVertex::writeMSH4(FILE *fp, bool binary, bool saveParametric,
     }
   }
   else {
-    fprintf(fp, "%d %.16g %.16g %.16g", _num, _x * scalingFactor,
+    fprintf(fp, "%lu %.16g %.16g %.16g", _num, _x * scalingFactor,
             _y * scalingFactor, _z * scalingFactor);
     if(saveParametric) {
       if(_ge->dim() == 1) {

@@ -122,7 +122,7 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
   else if(CTX::instance()->mesh.labelType == 1)
     sprintf(str, "%d", e->tag());
   else
-    sprintf(str, "%d", v->getNum());
+    sprintf(str, "%lu", v->getNum());
 
   if(CTX::instance()->mesh.colorCarousel == 0 ||
      CTX::instance()->mesh.volumesFaces ||

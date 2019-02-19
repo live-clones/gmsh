@@ -1519,7 +1519,7 @@ void MElement::writeMSH4(FILE *fp, bool binary)
   else {
     fprintf(fp, "%d ", _num);
     for(std::size_t i = 0; i < verts.size(); i++) {
-      fprintf(fp, "%d ", verts[i]->getNum());
+      fprintf(fp, "%lu ", verts[i]->getNum());
     }
     fprintf(fp, "\n");
   }

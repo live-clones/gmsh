@@ -2423,7 +2423,7 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
         for(std::map<MVertex *, MVertex *>::iterator it =
               g_slave->correspondingVertices.begin();
             it != g_slave->correspondingVertices.end(); ++it) {
-          fprintf(fp, "%d %d\n", it->first->getNum(), it->second->getNum());
+          fprintf(fp, "%lu %lu\n", it->first->getNum(), it->second->getNum());
         }
       }
     }

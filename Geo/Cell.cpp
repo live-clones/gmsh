@@ -510,7 +510,7 @@ void Cell::printCell()
   printf("%d-cell %d: \n", getDim(), getNum());
   printf("  Vertices:");
   for(int i = 0; i < this->getNumVertices(); i++) {
-    printf(" %d", this->getMeshVertex(i)->getNum());
+    printf(" %lu", this->getMeshVertex(i)->getNum());
   }
   printf(", in subdomain: %d, ", inSubdomain());
   printf("combined: %d. \n", isCombined());

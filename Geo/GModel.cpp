@@ -2221,7 +2221,7 @@ void GModel::checkMeshCoherence(double tolerance)
         for(std::set<MVertex *>::iterator it = duplicates.begin();
             it != duplicates.end(); it++) {
           MVertex *v = *it;
-          fprintf(fp, "SP(%.16g,%.16g,%.16g){%d};\n", v->x(), v->y(), v->z(),
+          fprintf(fp, "SP(%.16g,%.16g,%.16g){%lu};\n", v->x(), v->y(), v->z(),
                   v->getNum());
         }
         fprintf(fp, "};\n");
