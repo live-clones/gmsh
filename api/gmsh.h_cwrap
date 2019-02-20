@@ -2980,14 +2980,14 @@ namespace gmsh { // Top-level functions
                                const int step,
                                const std::string & modelName,
                                const std::string & dataType,
-                               const std::vector<int> & tags,
+                               const std::vector<std::size_t> & tags,
                                const std::vector<std::vector<double> > & data,
                                const double time = 0.,
                                const int numComponents = -1,
                                const int partition = 0)
     {
       int ierr = 0;
-      int *api_tags_; size_t api_tags_n_; vector2ptr(tags, &api_tags_, &api_tags_n_);
+      size_t *api_tags_; size_t api_tags_n_; vector2ptr(tags, &api_tags_, &api_tags_n_);
       double **api_data_; size_t *api_data_n_, api_data_nn_; vectorvector2ptrptr(data, &api_data_, &api_data_n_, &api_data_nn_);
       gmshViewAddModelData(tag, step, modelName.c_str(), dataType.c_str(), api_tags_, api_tags_n_, (const double **)api_data_, api_data_n_, api_data_nn_, time, numComponents, partition, &ierr);
       if(ierr) throw ierr;
@@ -3002,14 +3002,14 @@ namespace gmsh { // Top-level functions
     GMSH_API void getModelData(const int tag,
                                const int step,
                                std::string & dataType,
-                               std::vector<int> & tags,
+                               std::vector<std::size_t> & tags,
                                std::vector<std::vector<double> > & data,
                                double & time,
                                int & numComponents)
     {
       int ierr = 0;
       char *api_dataType_;
-      int *api_tags_; size_t api_tags_n_;
+      size_t *api_tags_; size_t api_tags_n_;
       double **api_data_; size_t *api_data_n_, api_data_nn_;
       gmshViewGetModelData(tag, step, &api_dataType_, &api_tags_, &api_tags_n_, &api_data_, &api_data_n_, &api_data_nn_, &time, &numComponents, &ierr);
       if(ierr) throw ierr;

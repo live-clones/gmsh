@@ -48,7 +48,7 @@ bool PViewDataGModel::addData(GModel *model,
   return true;
 }
 
-bool PViewDataGModel::addData(GModel *model, const std::vector<int> &tags,
+bool PViewDataGModel::addData(GModel *model, const std::vector<std::size_t> &tags,
                               const std::vector<std::vector<double> > &data,
                               int step, double time, int partition, int numComp)
 {

@@ -64,8 +64,8 @@ class myElement{
 
 class myMesh{
  private:
-  std::map<int, myVertex*> _nodes;
-  std::map<int, myElement*> _elements;
+  std::map<std::size_t, myVertex*> _nodes;
+  std::map<std::size_t, myElement*> _elements;
  public:
   myMesh()
   {
@@ -117,8 +117,8 @@ class myMesh{
       }
     }
   }
-  const std::map<int, myVertex*> &nodes() const { return _nodes; }
-  const std::map<int, myElement*> &elements() const { return _elements; }
+  const std::map<std::size_t, myVertex*> &nodes() const { return _nodes; }
+  const std::map<std::size_t, myElement*> &elements() const { return _elements; }
 };
 
 class myFunction{
@@ -132,17 +132,17 @@ public:
 };
 
 void computeInterpolationError(const myMesh &mesh, const myFunction &f,
-                               std::map<int, double> &f_nod,
-                               std::map<int, double> &err_ele)
+                               std::map<std::size_t, double> &f_nod,
+                               std::map<std::size_t, double> &err_ele)
 {
   // evaluate f at the nodes
-  for(std::map<int, myVertex*>::const_iterator it = mesh.nodes().begin();
+  for(std::map<std::size_t, myVertex*>::const_iterator it = mesh.nodes().begin();
       it != mesh.nodes().end(); it++){
     myVertex *v = it->second;
     f_nod[it->first] = f(v->x(), v->y(), v->z());
   }
   // compute the interpolation error on the elements
-  for(std::map<int, myElement*>::const_iterator it = mesh.elements().begin();
+  for(std::map<std::size_t, myElement*>::const_iterator it = mesh.elements().begin();
       it != mesh.elements().end(); it++){
     myElement *e = it->second;
     if(e->nodes().size() == 3){
@@ -164,36 +164,36 @@ void computeInterpolationError(const myMesh &mesh, const myFunction &f,
 }
 
 void computeSizeField(const myMesh &mesh,
-                      const std::map<int, double> &err_ele,
+                      const std::map<std::size_t, double> &err_ele,
                       int N,
-                      std::map<int, double> &sf_ele)
+                      std::map<std::size_t, double> &sf_ele)
 {
   double a = 2.;
   double d = 2.;
   double fact = 0.;
-  for(std::map<int, double>::const_iterator it = err_ele.begin();
+  for(std::map<std::size_t, double>::const_iterator it = err_ele.begin();
       it != err_ele.end(); it++){
     double e = it->second;
     fact += std::pow(e, 2./(1.+a));
   }
   fact *= (std::pow(a, (2.+a)/(1.+a)) + std::pow(a, 1./(1.+a)));
-  for(std::map<int, double>::const_iterator it = err_ele.begin();
+  for(std::map<std::size_t, double>::const_iterator it = err_ele.begin();
       it != err_ele.end(); it++){
     double e = it->second;
     double ri = std::pow(e, 2./(2.*(1+a))) * std::pow(a, 1./(d*(1.+a))) *
       std::pow((1.+a)*N/fact, 1./d);
-    std::map<int, myElement*>::const_iterator ite = mesh.elements().find(it->first);
+    std::map<std::size_t, myElement*>::const_iterator ite = mesh.elements().find(it->first);
     sf_ele[it->first] = ite->second->maxEdge() / ri;
   }
 }
 
-void getKeysValues(const std::map<int, double> &f,
-                   std::vector<int> &keys,
+void getKeysValues(const std::map<std::size_t, double> &f,
+                   std::vector<std::size_t> &keys,
                    std::vector<std::vector<double> > &values)
 {
   keys.clear();
   values.clear();
-  for(std::map<int, double>::const_iterator it = f.begin();
+  for(std::map<std::size_t, double>::const_iterator it = f.begin();
       it != f.end(); it++){
     keys.push_back(it->first);
     values.push_back(std::vector<double>(1, it->second));
@@ -229,9 +229,9 @@ int main(int argc, char **argv)
 
   // compute and visualize the interpolation error
   myFunction f;
-  std::map<int, double> f_nod, err_ele;
+  std::map<std::size_t, double> f_nod, err_ele;
   computeInterpolationError(mesh, f, f_nod, err_ele);
-  std::vector<int> keys;
+  std::vector<std::size_t> keys;
   std::vector<std::vector<double> > values;
   int f_view = gmsh::view::add("nodal function");
   getKeysValues(f_nod, keys, values);
@@ -243,7 +243,7 @@ int main(int argc, char **argv)
   if(dumpfiles) gmsh::view::write(err_view, "err.pos");
 
   // compute and visualize the remeshing size field
-  std::map<int, double> sf_ele;
+  std::map<std::size_t, double> sf_ele;
   computeSizeField(mesh, err_ele, N, sf_ele);
   int sf_view = gmsh::view::add("mesh size field");
   getKeysValues(sf_ele, keys, values);
@@ -265,7 +265,7 @@ int main(int argc, char **argv)
   myMesh mesh2;
 
   // compute and visualize the interpolation error on the adapted mesh
-  std::map<int, double> f2_nod, err2_ele;
+  std::map<std::size_t, double> f2_nod, err2_ele;
   computeInterpolationError(mesh2, f, f2_nod, err2_ele);
   int f2_view = gmsh::view::add("nodal function on adapted mesh");
   getKeysValues(f2_nod, keys, values);

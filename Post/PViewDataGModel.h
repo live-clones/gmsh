@@ -257,7 +257,7 @@ public:
                int step, double time, int partition, int numComp);
 
   // Add some data "on the fly", without a map
-  bool addData(GModel *model, const std::vector<int> &tags,
+  bool addData(GModel *model, const std::vector<std::size_t> &tags,
                const std::vector<std::vector<double> > &data, int step,
                double time, int partition, int numComp);
 

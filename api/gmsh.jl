@@ -3651,8 +3651,8 @@ function addModelData(tag, step, modelName, dataType, tags, data, time = 0., num
     api_data_n_ = [ length(data[i]) for i in 1:length(data) ]
     ierr = Ref{Cint}()
     ccall((:gmshViewAddModelData, gmsh.lib), Nothing,
-          (Cint, Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Csize_t, Cdouble, Cint, Cint, Ptr{Cint}),
-          tag, step, modelName, dataType, convert(Vector{Cint}, tags), length(tags), convert(Vector{Vector{Cdouble}},data), api_data_n_, length(data), time, numComponents, partition, ierr)
+          (Cint, Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Csize_t, Cdouble, Cint, Cint, Ptr{Cint}),
+          tag, step, modelName, dataType, convert(Vector{Csize_t}, tags), length(tags), convert(Vector{Vector{Cdouble}},data), api_data_n_, length(data), time, numComponents, partition, ierr)
     ierr[] != 0 && error("gmshViewAddModelData returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -3668,7 +3668,7 @@ Return `dataType`, `tags`, `data`, `time`, `numComponents`.
 """
 function getModelData(tag, step)
     api_dataType_ = Ref{Ptr{Cchar}}()
-    api_tags_ = Ref{Ptr{Cint}}()
+    api_tags_ = Ref{Ptr{Csize_t}}()
     api_tags_n_ = Ref{Csize_t}()
     api_data_ = Ref{Ptr{Ptr{Cdouble}}}()
     api_data_n_ = Ref{Ptr{Csize_t}}()
@@ -3677,7 +3677,7 @@ function getModelData(tag, step)
     api_numComponents_ = Ref{Cint}()
     ierr = Ref{Cint}()
     ccall((:gmshViewGetModelData, gmsh.lib), Nothing,
-          (Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cdouble}, Ptr{Cint}, Ptr{Cint}),
+          (Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cdouble}, Ptr{Cint}, Ptr{Cint}),
           tag, step, api_dataType_, api_tags_, api_tags_n_, api_data_, api_data_n_, api_data_nn_, api_time_, api_numComponents_, ierr)
     ierr[] != 0 && error("gmshViewGetModelData returned non-zero error code: $(ierr[])")
     dataType = unsafe_string(api_dataType_[])

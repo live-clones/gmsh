@@ -2,7 +2,7 @@ import gmsh
 import sys
 
 if len(sys.argv) < 2:
-    print "Usage: " + sys.argv[0] + " file.msh [options]"
+    print "Usage: " + sys.argv[0] + " file.msh"
     exit(0)
 
 gmsh.initialize()

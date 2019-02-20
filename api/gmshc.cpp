@@ -2564,11 +2564,11 @@ GMSH_API void gmshViewGetTags(int ** tags, size_t * tags_n, int * ierr)
   }
 }
 
-GMSH_API void gmshViewAddModelData(const int tag, const int step, const char * modelName, const char * dataType, int * tags, size_t tags_n, const double ** data, const size_t * data_n, size_t data_nn, const double time, const int numComponents, const int partition, int * ierr)
+GMSH_API void gmshViewAddModelData(const int tag, const int step, const char * modelName, const char * dataType, size_t * tags, size_t tags_n, const double ** data, const size_t * data_n, size_t data_nn, const double time, const int numComponents, const int partition, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<int> api_tags_(tags, tags + tags_n);
+    std::vector<std::size_t> api_tags_(tags, tags + tags_n);
     std::vector<std::vector<double> > api_data_(data_nn);
     for(size_t i = 0; i < data_nn; ++i)
       api_data_[i] = std::vector<double>(data[i], data[i] + data_n[i]);

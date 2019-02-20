@@ -1614,7 +1614,7 @@ namespace gmsh { // Top-level functions
                                const int step,
                                const std::string & modelName,
                                const std::string & dataType,
-                               const std::vector<int> & tags,
+                               const std::vector<std::size_t> & tags,
                                const std::vector<std::vector<double> > & data,
                                const double time = 0.,
                                const int numComponents = -1,
@@ -1627,7 +1627,7 @@ namespace gmsh { // Top-level functions
     GMSH_API void getModelData(const int tag,
                                const int step,
                                std::string & dataType,
-                               std::vector<int> & tags,
+                               std::vector<std::size_t> & tags,
                                std::vector<std::vector<double> > & data,
                                double & time,
                                int & numComponents);

@@ -4309,7 +4309,7 @@ class view:
         entity; if negative, it is automatically inferred (when possible) from the
         input data. `partition' allows to specify data in several sub-sets.
         """
-        api_tags_, api_tags_n_ = _ivectorint(tags)
+        api_tags_, api_tags_n_ = _ivectorsize(tags)
         api_data_, api_data_n_, api_data_nn_ = _ivectorvectordouble(data)
         ierr = c_int()
         lib.gmshViewAddModelData(
@@ -4339,7 +4339,7 @@ class view:
         Return `dataType', `tags', `data', `time', `numComponents'.
         """
         api_dataType_ = c_char_p()
-        api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+        api_tags_, api_tags_n_ = POINTER(c_size_t)(), c_size_t()
         api_data_, api_data_n_, api_data_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
         api_time_ = c_double()
         api_numComponents_ = c_int()
@@ -4359,7 +4359,7 @@ class view:
                 ierr.value)
         return (
             _ostring(api_dataType_),
-            _ovectorint(api_tags_, api_tags_n_.value),
+            _ovectorsize(api_tags_, api_tags_n_.value),
             _ovectorvectordouble(api_data_, api_data_n_, api_data_nn_),
             api_time_.value,
             api_numComponents_.value)

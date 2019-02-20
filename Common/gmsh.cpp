@@ -4051,7 +4051,7 @@ GMSH_API void gmsh::view::getTags(std::vector<int> &tags)
 
 GMSH_API void gmsh::view::addModelData(
   const int tag, const int step, const std::string &modelName,
-  const std::string &dataType, const std::vector<int> &tags,
+  const std::string &dataType, const std::vector<std::size_t> &tags,
   const std::vector<std::vector<double> > &data, const double time,
   const int numComponents, const int partition)
 {
@@ -4113,7 +4113,7 @@ GMSH_API void gmsh::view::addModelData(
 
 GMSH_API void gmsh::view::getModelData(const int tag, const int step,
                                        std::string &dataType,
-                                       std::vector<int> &tags,
+                                       std::vector<std::size_t> &tags,
                                        std::vector<std::vector<double> > &data,
                                        double &time, int &numComponents)
 {
@@ -4154,14 +4154,14 @@ GMSH_API void gmsh::view::getModelData(const int tag, const int step,
   time = s->getTime();
   numComponents = s->getNumComponents();
   int numEnt = 0;
-  for(int i = 0; i < s->getNumData(); i++) {
+  for(std::size_t i = 0; i < s->getNumData(); i++) {
     if(s->getData(i)) numEnt++;
   }
   if(!numEnt) return;
   data.resize(numEnt);
   tags.resize(numEnt);
-  int j = 0;
-  for(int i = 0; i < s->getNumData(); i++) {
+  std::size_t j = 0;
+  for(std::size_t i = 0; i < s->getNumData(); i++) {
     double *dd = s->getData(i);
     if(dd) {
       tags[j] = i;
@@ -4179,7 +4179,7 @@ GMSH_API void gmsh::view::getModelData(const int tag, const int step,
 
 // for better performance, manual C implementation of gmsh::view::getModelData
 GMSH_API void gmshViewGetModelData(const int tag, const int step, char **dataType,
-                                   int **tags, size_t *tags_n,
+                                   size_t **tags, size_t *tags_n,
                                    double ***data, size_t **data_n, size_t *data_nn,
                                    double *time,
                                    int *numComponents,
@@ -4223,17 +4223,17 @@ GMSH_API void gmshViewGetModelData(const int tag, const int step, char **dataTyp
   *time = s->getTime();
   *numComponents = s->getNumComponents();
   int numEnt = 0;
-  for(int i = 0; i < s->getNumData(); i++) {
+  for(size_t i = 0; i < s->getNumData(); i++) {
     if(s->getData(i)) numEnt++;
   }
   if(!numEnt) return;
   *tags_n = numEnt;
-  *tags = (int *)Malloc(numEnt * sizeof(int));
+  *tags = (size_t *)Malloc(numEnt * sizeof(int));
   *data_nn = numEnt;
   *data_n = (size_t *)Malloc(numEnt * sizeof(size_t *));
   *data = (double **)Malloc(numEnt * sizeof(double *));
-  int j = 0;
-  for(int i = 0; i < s->getNumData(); i++) {
+  size_t j = 0;
+  for(size_t i = 0; i < s->getNumData(); i++) {
     double *dd = s->getData(i);
     if(dd) {
       (*tags)[j] = i;
