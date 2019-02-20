@@ -760,7 +760,7 @@ GMSH_API void gmshModelMeshEmbed(const int dim,
  * `tag' according to `ordering'. */
 GMSH_API void gmshModelMeshReorderElements(const int elementType,
                                            const int tag,
-                                           int * ordering, size_t ordering_n,
+                                           size_t * ordering, size_t ordering_n,
                                            int * ierr);
 
 /* Renumber the node tags in a contiunous sequence. */

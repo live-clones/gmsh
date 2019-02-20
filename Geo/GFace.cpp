@@ -2046,13 +2046,13 @@ void GFace::removeElement(int type, MElement *e)
   }
 }
 
-bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
+bool GFace::reorder(const int elementType, const std::vector<std::size_t> &ordering)
 {
   if(triangles.size() != 0) {
     if(triangles.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != triangles.size()) return false;
 
-      for(std::vector<int>::const_iterator it = ordering.begin();
+      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
         if(*it < 0 || *it >= static_cast<int>(triangles.size())) return false;
       }
@@ -2075,7 +2075,7 @@ bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
     if(quadrangles.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != quadrangles.size()) return false;
 
-      for(std::vector<int>::const_iterator it = ordering.begin();
+      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
         if(*it < 0 || *it >= static_cast<int>(quadrangles.size())) return false;
       }
@@ -2098,7 +2098,7 @@ bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
     if(polygons.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != polygons.size()) return false;
 
-      for(std::vector<int>::const_iterator it = ordering.begin();
+      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
         if(*it < 0 || *it >= static_cast<int>(polygons.size())) return false;
       }
