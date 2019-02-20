@@ -106,7 +106,7 @@ public:
   void addElement(int type, MElement *e);
   void removeElement(int type, MElement *e);
 
-  virtual bool reorder(const int elementType, const std::vector<int> &ordering);
+  virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering);
 };
 
 #endif

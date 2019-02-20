@@ -1326,10 +1326,10 @@ namespace gmsh { // Top-level functions
       // `tag' according to `ordering'.
       GMSH_API void reorderElements(const int elementType,
                                     const int tag,
-                                    const std::vector<int> & ordering)
+                                    const std::vector<std::size_t> & ordering)
       {
         int ierr = 0;
-        int *api_ordering_; size_t api_ordering_n_; vector2ptr(ordering, &api_ordering_, &api_ordering_n_);
+        size_t *api_ordering_; size_t api_ordering_n_; vector2ptr(ordering, &api_ordering_, &api_ordering_n_);
         gmshModelMeshReorderElements(elementType, tag, api_ordering_, api_ordering_n_, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_ordering_);

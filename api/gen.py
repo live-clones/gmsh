@@ -305,7 +305,7 @@ doc = '''Embed the geometrical entities of dimension `dim' and tags `tags' in th
 mesh.add('embed',doc,None,iint('dim'),ivectorint('tags'),iint('inDim'),iint('inTag'))
 
 doc = '''Reorder the elements of type `elementType' classified on the entity of tag `tag' according to `ordering'.'''
-mesh.add('reorderElements',doc,None,iint('elementType'),iint('tag'),ivectorint('ordering'))
+mesh.add('reorderElements',doc,None,iint('elementType'),iint('tag'),ivectorsize('ordering'))
 
 doc = '''Renumber the node tags in a contiunous sequence.'''
 mesh.add('renumberNodes',doc,None)

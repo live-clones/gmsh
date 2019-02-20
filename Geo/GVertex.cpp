@@ -180,15 +180,15 @@ void GVertex::removeElement(int type, MElement *e)
   }
 }
 
-bool GVertex::reorder(const int elementType, const std::vector<int> &ordering)
+bool GVertex::reorder(const int elementType, const std::vector<std::size_t> &ordering)
 {
   if(points.size() != 0) {
     if(points.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != points.size()) return false;
 
-      for(std::vector<int>::const_iterator it = ordering.begin();
+      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
-        if(*it < 0 || *it >= static_cast<int>(points.size())) return false;
+        if(*it < 0 || *it >= points.size()) return false;
       }
 
       std::vector<MPoint *> newPointsOrder(points.size());

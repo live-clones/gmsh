@@ -1701,8 +1701,8 @@ according to `ordering`.
 function reorderElements(elementType, tag, ordering)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshReorderElements, gmsh.lib), Nothing,
-          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
-          elementType, tag, convert(Vector{Cint}, ordering), length(ordering), ierr)
+          (Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          elementType, tag, convert(Vector{Csize_t}, ordering), length(ordering), ierr)
     ierr[] != 0 && error("gmshModelMeshReorderElements returned non-zero error code: $(ierr[])")
     return nothing
 end
