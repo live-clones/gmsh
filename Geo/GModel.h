@@ -400,11 +400,6 @@ public:
   // get all tags of elementary entities associated with a given physical group
   // name
   std::vector<int> getTagsForPhysicalName(int dim, const std::string &name);
-  // deprecated
-  std::vector<int> getEdgesByStringTag(const std::string &name)
-  {
-    return getTagsForPhysicalName(1, name);
-  }
 
   // set physical tags to entities in a given bounding box
   void setPhysicalNumToEntitiesInBox(int EntityDimension, int PhysicalNumber,
@@ -577,29 +572,6 @@ public:
   // if cutElem is set to false, split the model without cutting the elements
   GModel *buildCutGModel(gLevelset *ls, bool cutElem = true,
                          bool saveTri = false);
-
-  // create a GModel by importing a mesh (vertexMap has a dim equal to the
-  // number of vertices and all the other vectors have a dim equal to the number
-  // of elements)
-  static GModel *createGModel(std::map<int, MVertex *> &vertexMap,
-                              std::vector<int> &numElement,
-                              std::vector<std::vector<int> > &vertexIndices,
-                              std::vector<int> &elementType,
-                              std::vector<int> &physical,
-                              std::vector<int> &elementary,
-                              std::vector<int> &partition);
-
-  // create a GModel from newly created mesh elements (with their own newly
-  // created mesh vertices), and let element entities have given physical group
-  // tags
-  static GModel *
-  createGModel(std::map<int, std::vector<MElement *> > &entityToElementsMap,
-               std::map<int, std::vector<int> > &entityToPhysicalsMap);
-
-  // for elements cut having new vertices
-  void store(std::vector<MVertex *> &vertices, int dim,
-             std::map<int, std::vector<MElement *> > &entityMap,
-             std::map<int, std::map<int, std::string> > &physicalMap);
 
   // store mesh elements of a chain in a new elementary and physical entity
   void storeChain(int dim, std::map<int, std::vector<MElement *> > &entityMap,
