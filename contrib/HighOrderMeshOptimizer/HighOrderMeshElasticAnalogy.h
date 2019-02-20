@@ -44,12 +44,12 @@ class GFace;
 class GRegion;
 
 class highOrderTools {
+private:
   GModel *_gm;
   const int _tag;
   // contains the position of vertices in a straight sided mesh
   std::map<MVertex *, SVector3> _straightSidedLocation;
-  // contains the position of vertices in the best curvilinear mesh
-  // available
+  // contains the position of vertices in the best curvilinear mesh available
   std::map<MVertex *, SVector3> _targetLocation;
   int _dim;
   void _clean()
@@ -57,18 +57,18 @@ class highOrderTools {
     _straightSidedLocation.clear();
     _targetLocation.clear();
   }
-  double smooth_metric_(std::vector<MElement *> &v, GFace *gf,
-                        dofManager<double> &myAssembler,
-                        std::set<MVertex *> &verticesToMove,
-                        elasticityTerm &El);
-  void computeMetricInfo(GFace *gf, MElement *e, fullMatrix<double> &J,
-                         fullMatrix<double> &JT, fullVector<double> &D);
-  double apply_incremental_displacement(double max_incr,
-                                        std::vector<MElement *> &v, bool mixed,
-                                        double thres, char *meshName,
-                                        std::vector<MElement *> &disto);
-  void moveToStraightSidedLocation(MElement *) const;
-  void computeStraightSidedPositions();
+  double _smoothMetric(std::vector<MElement *> &v, GFace *gf,
+                       dofManager<double> &myAssembler,
+                       std::set<MVertex *> &verticesToMove,
+                       elasticityTerm &El);
+  void _computeMetricInfo(GFace *gf, MElement *e, fullMatrix<double> &J,
+                          fullMatrix<double> &JT, fullVector<double> &D);
+  double _applyIncrementalDisplacement(double max_incr,
+                                       std::vector<MElement *> &v, bool mixed,
+                                       double thres, char *meshName,
+                                       std::vector<MElement *> &disto);
+  void _moveToStraightSidedLocation(MElement *) const;
+  void _computeStraightSidedPositions();
 
 public:
   highOrderTools(GModel *gm);

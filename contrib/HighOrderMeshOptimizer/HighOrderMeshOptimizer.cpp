@@ -307,7 +307,8 @@ void HighOrderMeshOptimizer(std::vector<GEntity *> &entities,
   bool order1 = false;
   for(std::size_t i = 0; i < entities.size(); i++){
     for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++){
-      if(entities[i]->getMeshElement(j)->getPolynomialOrder() < 2){
+      if(entities[i]->dim() > 0 &&
+         entities[i]->getMeshElement(j)->getPolynomialOrder() < 2){
         order1 = true;
         break;
       }

@@ -467,6 +467,10 @@ namespace {
                            bndElts[iPatch], par);
     }
     if(par.nCurses) displayResultTable(nbPatchSuccess, toOptimize.size());
+
+#if defined(_OPENMP)
+//#pragma omp parallel for schedule(dynamic)
+#endif
     for(int iPatch = 0; iPatch < toOptimize.size(); ++iPatch) {
       // Initialize optimization and output if asked
       if(par.nCurses) {
@@ -502,25 +506,37 @@ namespace {
 
       // Evaluate mesh and update it if (partial) success
       opt.updateResults();
-      if(newObjFunctionRange.size() == 0) {
-        newObjFunctionRange = opt.objFunction()->minMax();
-        objFunctionNames = opt.objFunction()->names();
-      }
-      else {
-        for(int i = 0; i < newObjFunctionRange.size(); i++) {
-          newObjFunctionRange[i].first = std::min(
-            newObjFunctionRange[i].first, opt.objFunction()->minMax()[i].first);
-          newObjFunctionRange[i].second =
-            std::max(newObjFunctionRange[i].second,
-                     opt.objFunction()->minMax()[i].second);
+
+#if defined(_OPENMP)
+//#pragma omp critical
+#endif
+      {
+        if(newObjFunctionRange.size() == 0) {
+          newObjFunctionRange = opt.objFunction()->minMax();
+          objFunctionNames = opt.objFunction()->names();
+        }
+        else {
+          for(int i = 0; i < newObjFunctionRange.size(); i++) {
+            newObjFunctionRange[i].first =
+              std::min(newObjFunctionRange[i].first,
+                       opt.objFunction()->minMax()[i].first);
+            newObjFunctionRange[i].second =
+              std::max(newObjFunctionRange[i].second,
+                       opt.objFunction()->minMax()[i].second);
+          }
         }
       }
+
       if(success >= 0) opt.patch.updateGEntityPositions();
 
-      //#pragma omp critical
-      par.success = std::min(par.success, success);
+#if defined(_OPENMP)
+//#pragma omp critical
+#endif
+      {
+        par.success = std::min(par.success, success);
+        nbPatchSuccess[success + 1]++;
+      }
 
-      nbPatchSuccess[success + 1]++;
       if(par.nCurses) {
         displayMinMaxVal(nbPatchSuccess, objFunctionNames, newObjFunctionRange);
         displayResultTable(nbPatchSuccess, toOptimize.size());
@@ -528,6 +544,7 @@ namespace {
                                   iPatch, -1);
       }
     }
+
     while(_patchHistory.size() > 0) {
       delete[] _patchHistory.back();
       _patchHistory.pop_back();

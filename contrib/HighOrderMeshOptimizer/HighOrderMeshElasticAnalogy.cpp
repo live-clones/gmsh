@@ -100,7 +100,7 @@ void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible)
                  t2 - t1);
 }
 
-void highOrderTools::moveToStraightSidedLocation(MElement *e) const
+void highOrderTools::_moveToStraightSidedLocation(MElement *e) const
 {
   for(int i = 0; i < e->getNumVertices(); i++) {
     MVertex *v = e->getVertex(i);
@@ -239,21 +239,16 @@ void highOrderTools::ensureMinimumDistorsion(double threshold)
   ensureMinimumDistorsion(v, threshold);
 }
 
-void highOrderTools::computeMetricInfo(GFace *gf, MElement *e,
-                                       fullMatrix<double> &J,
-                                       fullMatrix<double> &JT,
-                                       fullVector<double> &D)
+void highOrderTools::_computeMetricInfo(GFace *gf, MElement *e,
+                                        fullMatrix<double> &J,
+                                        fullMatrix<double> &JT,
+                                        fullVector<double> &D)
 {
   int nbNodes = e->getNumVertices();
-  //  printf("ELEMENT --\n");
   for(int j = 0; j < nbNodes; j++) {
     SPoint2 param;
     reparamMeshVertexOnFace(e->getVertex(j), gf, param);
-    //    printf("%g %g vs %g %g %g\n",param.x(),param.y(),
-    //	   e->getVertex(j)->x(),e->getVertex(j)->y(),e->getVertex(j)->z());
-
     Pair<SVector3, SVector3> der = gf->firstDer(param);
-
     int XJ = j;
     int YJ = j + nbNodes;
     int ZJ = j + 2 * nbNodes;
@@ -283,11 +278,12 @@ void highOrderTools::computeMetricInfo(GFace *gf, MElement *e,
 
 void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
 {
-#ifdef HAVE_TAUCS
-  linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
+#if !defined(HAVE_PETSC)
+  Msg::Error("Elastic analogy smoother on surface %d requires PETSc",
+             gf->tag());
 #else
   linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
-#endif
+
   // compute the straight sided positions of high order nodes that are
   // on the edges of the face in the UV plane
   dofManager<double> myAssembler(lsys);
@@ -303,6 +299,7 @@ void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
   }
 
   if(!v.size()) return;
+
   Msg::Info(
     "Smoothing surface %d (%d elements considered in elastic analogy, "
     "worst mapping %12.5E, %3d bad elements)",
@@ -323,7 +320,7 @@ void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
 
   // fix all vertices that cannot move
   for(std::size_t i = 0; i < v.size(); i++) {
-    moveToStraightSidedLocation(v[i]);
+    _moveToStraightSidedLocation(v[i]);
     for(int j = 0; j < v[i]->getNumVertices(); j++) {
       MVertex *vert = v[i]->getVertex(j);
       if(vert->onWhat()->dim() < 2) {
@@ -344,12 +341,12 @@ void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
     }
   }
 
-  double dx0 = smooth_metric_(v, gf, myAssembler, verticesToMove, El);
+  double dx0 = _smoothMetric(v, gf, myAssembler, verticesToMove, El);
   double dx = dx0;
   Msg::Debug(" dx0 = %12.5E", dx0);
   int iter = 0;
   while(0) {
-    double dx2 = smooth_metric_(v, gf, myAssembler, verticesToMove, El);
+    double dx2 = _smoothMetric(v, gf, myAssembler, verticesToMove, El);
     Msg::Debug(" dx2  = %12.5E", dx2);
     if(fabs(dx2 - dx) < 1.e-4 * dx0) break;
     if(iter++ > 2) break;
@@ -374,12 +371,13 @@ void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
     }
   }
   delete lsys;
+#endif
 }
 
-double highOrderTools::smooth_metric_(std::vector<MElement *> &v, GFace *gf,
-                                      dofManager<double> &myAssembler,
-                                      std::set<MVertex *> &verticesToMove,
-                                      elasticityTerm &El)
+double highOrderTools::_smoothMetric(std::vector<MElement *> &v, GFace *gf,
+                                     dofManager<double> &myAssembler,
+                                     std::set<MVertex *> &verticesToMove,
+                                     elasticityTerm &El)
 {
   std::set<MVertex *>::iterator it;
   double dx = 0.0;
@@ -402,7 +400,7 @@ double highOrderTools::smooth_metric_(std::vector<MElement *> &v, GFace *gf,
       K33.setAll(0.0);
       SElement se(e);
       El.elementMatrix(&se, K33);
-      computeMetricInfo(gf, e, J32, J23, D3);
+      _computeMetricInfo(gf, e, J32, J23, D3);
       J23K33.gemm(J23, K33, 1, 0);
       K22.gemm(J23K33, J32, 1, 0);
       J23K33.mult(D3, R2);
@@ -440,7 +438,7 @@ double highOrderTools::smooth_metric_(std::vector<MElement *> &v, GFace *gf,
 
 highOrderTools::highOrderTools(GModel *gm) : _gm(gm), _tag(111), _dim(2)
 {
-  computeStraightSidedPositions();
+  _computeStraightSidedPositions();
 }
 
 highOrderTools::highOrderTools(GModel *gm, GModel *mesh, int order)
@@ -449,10 +447,10 @@ highOrderTools::highOrderTools(GModel *gm, GModel *mesh, int order)
   GeomMeshMatcher::instance()->forceTomatch(gm, mesh, 1.e-5);
   GeomMeshMatcher::instance()->destroy();
   SetOrderN(gm, order, false, false);
-  computeStraightSidedPositions();
+  _computeStraightSidedPositions();
 }
 
-void highOrderTools::computeStraightSidedPositions()
+void highOrderTools::_computeStraightSidedPositions()
 {
   _clean();
   // compute straigh sided positions that are actually X,Y,Z positions
@@ -605,26 +603,31 @@ void highOrderTools::computeStraightSidedPositions()
 
 // apply a displacement that does not create elements that are distorted over a
 // value "thres"
-double highOrderTools::apply_incremental_displacement(
+double highOrderTools::_applyIncrementalDisplacement(
   double max_incr, std::vector<MElement *> &v, bool mixed, double thres,
   char *meshName, std::vector<MElement *> &disto)
 {
-#ifdef HAVE_PETSC
-  // assume that the mesh is OK, yet already curved
-  // linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
-  linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
-  lsys->setParameter("petscOptions", "-pc_type ilu");
-  lsys->setParameter("petscOptions", "-ksp_monitor");
+#if !defined(HAVE_PETSC)
+  Msg::Error("Elastic analogy smoother requires PETSc");
+#else
+  if(v.empty()) return 1.;
 
+  // assume that the mesh is OK, yet already curved
+  linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
+  char opt[256];
+  sprintf(opt, "-pc_type ilu -ksp_monitor -petsc_prealloc %d",
+          100 * (v[0]->getPolynomialOrder() + 2));
+  lsys->setParameter("petscOptions", opt);
+  Msg::Info("Assembling linear system...");
   dofManager<double> myAssembler(lsys);
   elasticityMixedTerm El_mixed(0, 1.0, .333, _tag);
   elasticityTerm El(0, 1.0, .333, _tag);
 
   std::set<MVertex *> _vertices;
 
-  //+++++++++ Boundary Conditions & Numbering +++++++++++++++++++++++++++++++
-  // fix all dof that correspond to vertices on the boundary
-  // the value is equal
+  // Boundary Conditions & Numbering
+
+  // fix all dof that correspond to vertices on the boundary the value is equal
   for(std::size_t i = 0; i < v.size(); i++) {
     for(int j = 0; j < v[i]->getNumVertices(); j++) {
       MVertex *vert = v[i]->getVertex(j);
@@ -632,7 +635,7 @@ double highOrderTools::apply_incremental_displacement(
     }
   }
 
-  //+++++++++ Fix d tr(eps) = 0 +++++++++++++++++++++++++++++++
+  // Fix d tr(eps) = 0
   if(mixed) {
     for(std::size_t i = 0; i < disto.size(); i++) {
       for(int j = 0; j < disto[i]->getNumVertices(); j++) {
@@ -658,7 +661,6 @@ double highOrderTools::apply_incremental_displacement(
       myAssembler.fixVertex(vert, 1, _tag, 0);
       myAssembler.fixVertex(vert, 2, _tag, 0);
     }
-    //    }
     if(_dim == 2) myAssembler.fixVertex(vert, 2, _tag, 0);
     // number vertices
     myAssembler.numberVertex(vert, 0, _tag);
@@ -679,6 +681,7 @@ double highOrderTools::apply_incremental_displacement(
       else
         El.addToMatrix(myAssembler, &se);
     }
+    Msg::Info("Solving linear system (%d unknowns)...", myAssembler.sizeOfR());
     // solve the system
     lsys->systemSolve();
   }
@@ -757,17 +760,21 @@ double highOrderTools::applySmoothingTo(std::vector<MElement *> &all,
   int ITER = 0;
   double minD;
   std::vector<MElement *> disto;
+
   // move the points to their straight sided locations
   for(std::size_t i = 0; i < all.size(); i++)
-    moveToStraightSidedLocation(all[i]);
+    _moveToStraightSidedLocation(all[i]);
+
   // apply the displacement
 
   // _gm->writeMSH("straightSided.msh");
 
   char sm[] = "sm.msh";
-  double percentage_of_what_is_left =
-    apply_incremental_displacement(1., all, mixed, -100000000, sm, all);
-  //  ensureMinimumDistorsion (all, threshold);
+  double percentage_of_what_is_left = _applyIncrementalDisplacement
+    (1., all, mixed, -100000000, sm, all);
+
+  // ensureMinimumDistorsion (all, threshold);
+
   return 1.;
 
   double percentage = 0.0;
@@ -775,7 +782,7 @@ double highOrderTools::applySmoothingTo(std::vector<MElement *> &all,
     char NN[256];
     sprintf(NN, "smoothing-%d.msh", ITER++);
     percentage_of_what_is_left =
-      apply_incremental_displacement(1., all, mixed, threshold, NN, all);
+      _applyIncrementalDisplacement(1., all, mixed, threshold, NN, all);
     percentage += (1. - percentage) * percentage_of_what_is_left / 100.;
     Msg::Info("Smoother was able to do %3d percent of the motion",
               (int)(percentage * 100.));
