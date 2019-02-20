@@ -249,7 +249,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
 
   for(std::size_t step = 0; step < _steps.size(); step++) {
     int numEnt = 0, numComp = _steps[step]->getNumComponents();
-    for(int i = 0; i < _steps[step]->getNumData(); i++)
+    for(std::size_t i = 0; i < _steps[step]->getNumData(); i++)
       if(_steps[step]->getData(i)) numEnt++;
     if(numEnt) {
       if(_type == NodeData) {
@@ -261,7 +261,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
                   partitionNum);
         else
           fprintf(fp, "3\n%lu\n%d\n%d\n", step, numComp, numEnt);
-        for(int i = 0; i < _steps[step]->getNumData(); i++) {
+        for(std::size_t i = 0; i < _steps[step]->getNumData(); i++) {
           if(_steps[step]->getData(i)) {
             MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(i);
             if(!v) {
@@ -302,7 +302,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
                   partitionNum);
         else
           fprintf(fp, "3\n%lu\n%d\n%d\n", step, numComp, numEnt);
-        for(int i = 0; i < _steps[step]->getNumData(); i++) {
+        for(std::size_t i = 0; i < _steps[step]->getNumData(); i++) {
           if(_steps[step]->getData(i)) {
             MElement *e = model->getMeshElementByTag(i);
             if(!e) {
@@ -926,7 +926,7 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
   // compute profile
   char *profileName = (char *)"nodeProfile";
   std::vector<med_int> profile, indices;
-  for(int i = 0; i < _steps[0]->getNumData(); i++) {
+  for(std::size_t i = 0; i < _steps[0]->getNumData(); i++) {
     if(_steps[0]->getData(i)) {
       MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
       if(!v) {
@@ -981,7 +981,7 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
   }
   for(std::size_t step = 0; step < _steps.size(); step++) {
     std::size_t n = 0;
-    for(int i = 0; i < _steps[step]->getNumData(); i++)
+    for(std::size_t i = 0; i < _steps[step]->getNumData(); i++)
       if(_steps[step]->getData(i)) n++;
     if(n != profile.size() || numComp != _steps[step]->getNumComponents()) {
       Msg::Error("Skipping incompatible step");
@@ -1049,7 +1049,7 @@ void PViewDataGModel::sendToServer(const std::string &name)
   for(std::size_t step = 0; step < _steps.size(); step++) {
     int nc = _steps[step]->getNumComponents();
     int ne = 0;
-    for(int i = 0; i < _steps[step]->getNumData(); i++)
+    for(std::size_t i = 0; i < _steps[step]->getNumData(); i++)
       if(_steps[step]->getData(i)) ne++;
     if(!step){
       numEnt = ne;
@@ -1066,7 +1066,7 @@ void PViewDataGModel::sendToServer(const std::string &name)
   std::vector<double> exp;
   exp.push_back(numEnt);
 
-  for(int i = 0; i < _steps[0]->getNumData(); i++) {
+  for(std::size_t i = 0; i < _steps[0]->getNumData(); i++) {
     if(_steps[0]->getData(i)) {
       MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
       if(!v) {

@@ -68,9 +68,9 @@ public:
     _max = other._max;
     _numComp = other._numComp;
     if(other._data) {
-      int n = other.getNumData();
+      std::size_t n = other.getNumData();
       _data = new std::vector<Real *>(n, (Real *)0);
-      for(int i = 0; i < n; i++) {
+      for(std::size_t i = 0; i < n; i++) {
         Real *d = other.getData(i);
         if(d) {
           int m = other.getMult(i) * _numComp;
@@ -106,7 +106,7 @@ public:
   void setMin(double min) { _min = min; }
   double getMax() { return _max; }
   void setMax(double max) { _max = max; }
-  int getNumData()
+  std::size_t getNumData()
   {
     if(!_data) return 0;
     return _data->size();
@@ -120,7 +120,7 @@ public:
   {
     if(index < 0) return 0;
     if(allocIfNeeded) {
-      if(index >= getNumData()) resizeData(index + 100); // optimize this
+      if(index >= (int)getNumData()) resizeData(index + 100); // optimize this
       if(!(*_data)[index]) {
         (*_data)[index] = new Real[_numComp * mult];
         for(int i = 0; i < _numComp * mult; i++) (*_data)[index][i] = 0.;
@@ -132,7 +132,7 @@ public:
       }
     }
     else {
-      if(index >= getNumData()) return 0;
+      if(index >= (int)getNumData()) return 0;
     }
     return (*_data)[index];
   }
@@ -154,7 +154,7 @@ public:
   double getMemoryInMb()
   {
     double b = 0.;
-    for(int i = 0; i < getNumData(); i++) b += getMult(i);
+    for(std::size_t i = 0; i < getNumData(); i++) b += getMult(i);
     return b * getNumComponents() * sizeof(Real) / 1024. / 1024.;
   }
 };
