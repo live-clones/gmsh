@@ -343,7 +343,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
   BDS_Point *p2 = find_point(num2);
 
   if(!p1 || !p2) {
-    Msg::Fatal("Could not find points %d or %d in BDS mesh", num1, num2);
+    Msg::Error("Could not find points %d or %d in BDS mesh", num1, num2);
     return 0;
   }
 
@@ -489,7 +489,7 @@ BDS_Edge *BDS_Mesh::add_edge(int const p1, int const p2)
   BDS_Point *pp2 = find_point(p2);
 
   if(!pp1 || !pp2) {
-    Msg::Fatal("Could not find points %d or %d in BDS mesh", p1, p2);
+    Msg::Error("Could not find points %d or %d in BDS mesh", p1, p2);
     return 0;
   }
   edges.push_back(new BDS_Edge(pp1, pp2));
@@ -533,8 +533,8 @@ void BDS_Mesh::del_edge(BDS_Edge *e)
 
 void BDS_Mesh::del_point(BDS_Point *p)
 {
-  points.erase(p);
-  delete p;
+  if(points.erase(p))
+    delete p;
 }
 
 void BDS_Mesh::add_geom(int p1, int p2)

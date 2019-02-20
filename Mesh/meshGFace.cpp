@@ -1953,8 +1953,7 @@ static bool buildConsecutiveListOfVertices(
       // has to be taken with the other parametric coordinates (because it is
       // only present once in the closure of the domain).
       for(std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
-            recoverMapLocal.begin();
-          it != recoverMapLocal.end(); ++it) {
+            recoverMapLocal.begin(); it != recoverMapLocal.end(); ++it) {
         m->del_point(it->first);
       }
       return false;

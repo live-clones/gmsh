@@ -120,7 +120,10 @@ void linearSystemPETSc<scalar>::insertInSparsityPattern(int i, int j)
 template <class scalar> void linearSystemPETSc<scalar>::preAllocateEntries()
 {
   if(_entriesPreAllocated) return;
-  if(!_isAllocated) Msg::Fatal("system must be allocated first");
+  if(!_isAllocated){
+    Msg::Error("System must be allocated first");
+    return;
+  }
   int blockSize = _getBlockSizeFromParameters();
   std::vector<int> nByRowDiag(_localSize), nByRowOffDiag(_localSize);
   if(_sparsity.getNbRows() == 0) {

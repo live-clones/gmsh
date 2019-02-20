@@ -129,7 +129,7 @@ static bool inSphereTest_s(Vert *va, Vert *vb, Vert *vc, Vert *vd, Vert *ve)
       double oriB = -robustPredicates::orient3d(
         (double *)pt[0], (double *)pt[2], (double *)pt[3], (double *)pt[4]);
       if(oriB == 0.0) {
-        Msg::Fatal("Symbolic perturbation failed in icCircle Predicate");
+        Msg::Error("Symbolic perturbation failed in icCircle Predicate");
       }
       // Flip the sign if there are odd number of swaps.
       if((swaps % 2) != 0) oriB = -oriB;

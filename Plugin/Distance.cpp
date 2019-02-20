@@ -550,7 +550,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
         case 3: fprintf(f5, "ST("); break;
         case 4: fprintf(f5, "SQ("); break;
         default:
-          Msg::Fatal("Error in Plugin 'Distance' (numNodes=%g).", numNodes);
+          Msg::Error("Error in Plugin 'Distance' (numNodes=%g).", numNodes);
           break;
         }
       else if(_maxDim == 3)
@@ -560,8 +560,8 @@ PView *GMSH_DistancePlugin::execute(PView *v)
         case 6: fprintf(f5, "SI("); break;
         case 5: fprintf(f5, "SY("); break;
         default:
-          Msg::Fatal("Error in Plugin 'Distance' (numNodes=%g).", numNodes);
-          break;
+          Msg::Error("Error in Plugin 'Distance' (numNodes=%g).", numNodes);
+          continue;
         }
 
       for(int j = 0; j < numNodes; j++) {

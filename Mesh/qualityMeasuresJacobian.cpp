@@ -601,8 +601,9 @@ namespace jacobianBasedQuality {
     : _CoeffData(depth), _coeffs(v.getDataPtr(), v.size()), _bfs(bfs)
   {
     if(!v.getOwnData()) {
-      Msg::Fatal("Cannot create an instance of _CoeffDataJac from a "
+      Msg::Error("Cannot create an instance of _CoeffDataJac from a "
                  "fullVector that does not own its data.");
+      return;
     }
     // _coeffs reuses the data of v, this avoid to allocate a new array and to
     // copy data that are not used outside of this object.
@@ -655,8 +656,9 @@ namespace jacobianBasedQuality {
       _bfsDet(bfsDet), _bfsMat(bfsMat), _type(type)
   {
     if(!det.getOwnData() || !mat.getOwnData()) {
-      Msg::Fatal("Cannot create an instance of _CoeffDataIGE from a "
+      Msg::Error("Cannot create an instance of _CoeffDataIGE from a "
                  "fullVector or a fullMatrix that does not own its data.");
+      return;
     }
     // _coeffsJacDet and _coeffsJacMat reuse data, this avoid to allocate new
     // arrays and to copy data that are not used outside of this object.
@@ -850,8 +852,9 @@ namespace jacobianBasedQuality {
       _bfsDet(bfsDet), _bfsMat(bfsMat)
   {
     if(!det.getOwnData() || !mat.getOwnData()) {
-      Msg::Fatal("Cannot create an instance of _CoeffDataIGE from a "
+      Msg::Error("Cannot create an instance of _CoeffDataIGE from a "
                  "fullVector or a fullMatrix that does not own its data.");
+      return;
     }
     // _coeffsJacDet and _coeffsMetric reuse data, this avoid to allocate new
     // arrays and to copy data that are not used outside of this object.
@@ -1035,7 +1038,7 @@ namespace jacobianBasedQuality {
                                bool lower, bool positiveDenom)
   {
     if(numerator.size() != denominator.size()) {
-      Msg::Fatal("In order to compute a bound on a rational function, I need "
+      Msg::Error("In order to compute a bound on a rational function, I need "
                  "vectors of the same size! (%d vs %d)",
                  numerator.size(), denominator.size());
       return 0;

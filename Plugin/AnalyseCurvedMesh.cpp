@@ -278,7 +278,8 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
     for(GModel::eiter it = _m->firstEdge(); it != _m->lastEdge(); it++)
       entities.insert(*it);
     break;
-  default: Msg::Fatal("This should not happen."); return;
+  default:
+    return;
   }
 
   int cntInverted = 0;

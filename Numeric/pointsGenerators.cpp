@@ -980,8 +980,9 @@ fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij,
                                                        bool forSerendipPoints)
 {
   if(nij < 0 || nk < 0) {
-    Msg::Fatal("Wrong arguments for pyramid's monomials generation ! (%d & %d)",
+    Msg::Error("Wrong arguments for pyramid's monomials generation ! (%d & %d)",
                nij, nk);
+    nij = nk = 1;
   }
   if(!pyr && nk > 0 && nij == 0) {
     Msg::Error("Wrong argument association for pyramid's monomials generation! "

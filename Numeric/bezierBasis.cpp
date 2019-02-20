@@ -309,7 +309,7 @@ namespace {
                                            int order, int dimSimplex)
   {
     if(exponent.size1() != point.size1() || exponent.size2() != point.size2()) {
-      Msg::Fatal("Wrong sizes for bez2lag matrix generation %d %d -- %d %d",
+      Msg::Error("Wrong sizes for bez2lag matrix generation %d %d -- %d %d",
                  exponent.size1(), point.size1(), exponent.size2(),
                  point.size2());
       return fullMatrix<double>(1, 1);
@@ -352,7 +352,7 @@ namespace {
   {
     if(exponent.size1() != point.size1() || exponent.size2() != point.size2() ||
        exponent.size2() != 3) {
-      Msg::Fatal(
+      Msg::Error(
         "Wrong sizes for pyramid's bez2lag matrix generation %d %d -- %d %d",
         exponent.size1(), point.size1(), exponent.size2(), point.size2());
       return fullMatrix<double>(1, 1);

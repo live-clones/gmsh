@@ -76,8 +76,10 @@ bool eigenSolver::solve(int numEigenValues, std::string which,
     _check(EPSSetType(eps, EPSARPACK));
   else if(method == "power")
     _check(EPSSetType(eps, EPSPOWER));
-  else
-    Msg::Fatal("eigenSolver: method '%s' not available", method.c_str());
+  else{
+    Msg::Error("eigenSolver: method '%s' not available", method.c_str());
+    _check(EPSSetType(eps, EPSKRYLOVSCHUR));
+  }
 
   // override these options at runtime, petsc-style
   _check(EPSSetFromOptions(eps));
