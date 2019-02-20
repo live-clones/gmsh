@@ -244,7 +244,7 @@ public:
   SPoint3 closestPoint(SPoint3 &p, double tolerance);
   virtual void mesh(bool verbose);
 
-  virtual bool reorder(const int elementType, const std::vector<int> &ordering);
+  virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering);
 };
 
 #endif

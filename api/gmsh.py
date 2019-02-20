@@ -2028,7 +2028,7 @@ class model:
             Reorder the elements of type `elementType' classified on the entity of tag
             `tag' according to `ordering'.
             """
-            api_ordering_, api_ordering_n_ = _ivectorint(ordering)
+            api_ordering_, api_ordering_n_ = _ivectorsize(ordering)
             ierr = c_int()
             lib.gmshModelMeshReorderElements(
                 c_int(elementType),

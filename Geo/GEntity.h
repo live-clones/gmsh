@@ -405,7 +405,7 @@ public:
   std::map<MVertex *, MVertex *> correspondingHOPoints;
 
   // reorder the mesh elements of the given type, according to ordering
-  virtual bool reorder(const int elementType, const std::vector<int> &ordering)
+  virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering)
   {
     return false;
   }

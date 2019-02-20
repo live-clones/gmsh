@@ -591,15 +591,15 @@ void GRegion::removeElement(int type, MElement *e)
   }
 }
 
-bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
+bool GRegion::reorder(const int elementType, const std::vector<std::size_t> &ordering)
 {
   if(tetrahedra.size() != 0) {
     if(tetrahedra.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != tetrahedra.size()) return false;
 
-      for(std::vector<int>::const_iterator it = ordering.begin();
+      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
-        if(*it < 0 || *it >= static_cast<int>(tetrahedra.size())) return false;
+        if(*it < 0 || *it >= tetrahedra.size()) return false;
       }
 
       std::vector<MTetrahedron *> newTetrahedraOrder(tetrahedra.size());
@@ -620,9 +620,9 @@ bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
     if(hexahedra.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != hexahedra.size()) return false;
 
-      for(std::vector<int>::const_iterator it = ordering.begin();
+      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
-        if(*it < 0 || *it >= static_cast<int>(hexahedra.size())) return false;
+        if(*it < 0 || *it >= hexahedra.size()) return false;
       }
 
       std::vector<MHexahedron *> newHexahedraOrder(hexahedra.size());
@@ -643,9 +643,9 @@ bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
     if(prisms.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != prisms.size()) return false;
 
-      for(std::vector<int>::const_iterator it = ordering.begin();
+      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
-        if(*it < 0 || *it >= static_cast<int>(prisms.size())) return false;
+        if(*it < 0 || *it >= prisms.size()) return false;
       }
 
       std::vector<MPrism *> newPrismsOrder(prisms.size());
@@ -666,9 +666,9 @@ bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
     if(pyramids.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != pyramids.size()) return false;
 
-      for(std::vector<int>::const_iterator it = ordering.begin();
+      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
-        if(*it < 0 || *it >= static_cast<int>(pyramids.size())) return false;
+        if(*it < 0 || *it >= pyramids.size()) return false;
       }
 
       std::vector<MPyramid *> newPyramidsOrder(pyramids.size());
@@ -689,9 +689,9 @@ bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
     if(polyhedra.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != polyhedra.size()) return false;
 
-      for(std::vector<int>::const_iterator it = ordering.begin();
+      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
-        if(*it < 0 || *it >= static_cast<int>(polyhedra.size())) return false;
+        if(*it < 0 || *it >= polyhedra.size()) return false;
       }
 
       std::vector<MPolyhedron *> newPolyhedraOrder(polyhedra.size());
@@ -712,9 +712,9 @@ bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
     if(trihedra.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != trihedra.size()) return false;
 
-      for(std::vector<int>::const_iterator it = ordering.begin();
+      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
-        if(*it < 0 || *it >= static_cast<int>(trihedra.size())) return false;
+        if(*it < 0 || *it >= trihedra.size()) return false;
       }
 
       std::vector<MTrihedron *> newTrihedraOrder(trihedra.size());

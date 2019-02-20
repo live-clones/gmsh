@@ -1150,11 +1150,11 @@ GMSH_API void gmshModelMeshEmbed(const int dim, int * tags, size_t tags_n, const
   }
 }
 
-GMSH_API void gmshModelMeshReorderElements(const int elementType, const int tag, int * ordering, size_t ordering_n, int * ierr)
+GMSH_API void gmshModelMeshReorderElements(const int elementType, const int tag, size_t * ordering, size_t ordering_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<int> api_ordering_(ordering, ordering + ordering_n);
+    std::vector<std::size_t> api_ordering_(ordering, ordering + ordering_n);
     gmsh::model::mesh::reorderElements(elementType, tag, api_ordering_);
   }
   catch(int api_ierr_){

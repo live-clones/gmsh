@@ -363,7 +363,7 @@ public:
   std::vector<SVector3> storage3; // sizes and directions storage
   std::vector<double> storage4; // sizes and directions storage
 
-  virtual bool reorder(const int elementType, const std::vector<int> &ordering);
+  virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering);
 };
 
 #endif

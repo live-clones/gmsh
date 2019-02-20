@@ -2466,7 +2466,7 @@ GMSH_API void gmsh::model::mesh::embed(const int dim,
 
 GMSH_API void
 gmsh::model::mesh::reorderElements(const int elementType, const int tag,
-                                   const std::vector<int> &ordering)
+                                   const std::vector<std::size_t> &ordering)
 {
   if(!_isInitialized()) {
     throw -1;

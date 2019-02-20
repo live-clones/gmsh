@@ -707,7 +707,7 @@ namespace gmsh { // Top-level functions
       // `tag' according to `ordering'.
       GMSH_API void reorderElements(const int elementType,
                                     const int tag,
-                                    const std::vector<int> & ordering);
+                                    const std::vector<std::size_t> & ordering);
 
       // Renumber the node tags in a contiunous sequence.
       GMSH_API void renumberNodes();
