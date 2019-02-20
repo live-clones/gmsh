@@ -97,7 +97,7 @@ bool PViewDataGModel::finalize(bool computeMinMax,
       if(_type == NodeData || _type == ElementData) {
         // treat these 2 special cases separately for maximum efficiency
         int numComp = _steps[step]->getNumComponents();
-        for(int i = 0; i < _steps[step]->getNumData(); i++) {
+        for(std::size_t i = 0; i < _steps[step]->getNumData(); i++) {
           double *d = _steps[step]->getData(i);
           if(d) {
             double val = ComputeScalarRep(numComp, d, tensorRep);
@@ -737,7 +737,7 @@ void PViewDataGModel::smooth()
         }
       }
     }
-    for(int i = 0; i < _steps2.back()->getNumData(); i++) {
+    for(std::size_t i = 0; i < _steps2.back()->getNumData(); i++) {
       double *d = _steps2.back()->getData(i);
       if(d) {
         double f = nodeConnect[i];
