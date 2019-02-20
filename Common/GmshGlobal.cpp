@@ -24,6 +24,7 @@ typedef unsigned long intptr_t;
 #include "OS.h"
 #include "Context.h"
 #include "robustPredicates.h"
+#include "BasisFactory.h"
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -246,6 +247,9 @@ int GmshFinalize()
   // Delete static _interpolationSchemes of PViewData class
   PViewData::removeAllInterpolationSchemes();
 #endif
+
+  // Delete static interpolation bases
+  BasisFactory::clearAll();
 
   // Delete all Gmodels
   while(GModel::list.size() > 0) delete GModel::list[GModel::list.size() - 1];
