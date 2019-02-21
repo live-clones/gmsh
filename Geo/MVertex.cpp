@@ -202,8 +202,7 @@ void MVertex::writeMSH4(FILE *fp, bool binary, bool saveParametric,
                         double scalingFactor)
 {
   if(binary) {
-    int num = (int)_num; // FIXME change this for MSH4.1
-    fwrite(&num, sizeof(int), 1, fp);
+    fwrite(&_num, sizeof(std::size_t), 1, fp);
     double data[5] = {_x * scalingFactor, _y * scalingFactor, _z * scalingFactor,
                       0., 0.};
     int n = 3;

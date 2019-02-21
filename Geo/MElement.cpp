@@ -2435,7 +2435,8 @@ MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
   return newEl;
 }
 
-MElement *MElementFactory::create(int type, std::vector<MVertex *> &v, int num,
+MElement *MElementFactory::create(int type, std::vector<MVertex *> &v,
+                                  std::size_t num,
                                   int part, bool owner, int parent,
                                   MElement *parent_ptr, MElement *d1,
                                   MElement *d2)
