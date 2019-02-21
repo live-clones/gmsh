@@ -499,7 +499,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
   unsigned long minNodeNum = nbrNodes + 1;
   std::pair<int, MVertex *> *vertexCache =
     new std::pair<int, MVertex *>[nbrNodes];
-  Msg::Info("%lu vertices", nbrNodes);
+  Msg::Info("%lu nodes", nbrNodes);
   for(unsigned int i = 0; i < numBlock; i++) {
     int parametric = 0;
     int entityTag = 0, entityDim = 0;
@@ -1302,7 +1302,7 @@ int GModel::_readMSH4(const std::string &name)
             _vertexVectorCache[vertexCache[i].first] = vertexCache[i].second;
           }
           else {
-            Msg::Info("Skipping duplicate vertex %d", vertexCache[i].first);
+            Msg::Info("Skipping duplicate node %d", vertexCache[i].first);
           }
         }
       }
@@ -1312,7 +1312,7 @@ int GModel::_readMSH4(const std::string &name)
             _vertexMapCache[vertexCache[i].first] = vertexCache[i].second;
           }
           else {
-            Msg::Info("Skipping duplicate vertex %d", vertexCache[i].first);
+            Msg::Info("Skipping duplicate node %d", vertexCache[i].first);
           }
         }
       }
@@ -2221,7 +2221,7 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
         regions.insert(*it);
   }
 
-  std::map<std::pair<int, int>, std::vector<MElement *> > elementsByDegree[4];
+  std::map<std::pair<int, int>, std::vector<MElement *> > elementsByType[4];
   unsigned long numElements = 0;
 
   for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it) {
@@ -2230,7 +2230,7 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
     numElements += (*it)->points.size();
     for(std::size_t i = 0; i < (*it)->points.size(); i++) {
       std::pair<int, int> p((*it)->tag(), (*it)->points[i]->getTypeForMSH());
-      elementsByDegree[0][p].push_back((*it)->points[i]);
+      elementsByType[0][p].push_back((*it)->points[i]);
     }
   }
 
@@ -2242,7 +2242,7 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
     numElements += (*it)->lines.size();
     for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       std::pair<int, int> p((*it)->tag(), (*it)->lines[i]->getTypeForMSH());
-      elementsByDegree[1][p].push_back((*it)->lines[i]);
+      elementsByType[1][p].push_back((*it)->lines[i]);
     }
   }
 
@@ -2254,13 +2254,13 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
     numElements += (*it)->triangles.size();
     for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
       std::pair<int, int> p((*it)->tag(), (*it)->triangles[i]->getTypeForMSH());
-      elementsByDegree[2][p].push_back((*it)->triangles[i]);
+      elementsByType[2][p].push_back((*it)->triangles[i]);
     }
     numElements += (*it)->quadrangles.size();
     for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++) {
       std::pair<int, int> p((*it)->tag(),
                             (*it)->quadrangles[i]->getTypeForMSH());
-      elementsByDegree[2][p].push_back((*it)->quadrangles[i]);
+      elementsByType[2][p].push_back((*it)->quadrangles[i]);
     }
   }
 
@@ -2273,32 +2273,32 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
     for(std::size_t i = 0; i < (*it)->tetrahedra.size(); i++) {
       std::pair<int, int> p((*it)->tag(),
                             (*it)->tetrahedra[i]->getTypeForMSH());
-      elementsByDegree[3][p].push_back((*it)->tetrahedra[i]);
+      elementsByType[3][p].push_back((*it)->tetrahedra[i]);
     }
     numElements += (*it)->hexahedra.size();
     for(std::size_t i = 0; i < (*it)->hexahedra.size(); i++) {
       std::pair<int, int> p((*it)->tag(), (*it)->hexahedra[i]->getTypeForMSH());
-      elementsByDegree[3][p].push_back((*it)->hexahedra[i]);
+      elementsByType[3][p].push_back((*it)->hexahedra[i]);
     }
     numElements += (*it)->prisms.size();
     for(std::size_t i = 0; i < (*it)->prisms.size(); i++) {
       std::pair<int, int> p((*it)->tag(), (*it)->prisms[i]->getTypeForMSH());
-      elementsByDegree[3][p].push_back((*it)->prisms[i]);
+      elementsByType[3][p].push_back((*it)->prisms[i]);
     }
     numElements += (*it)->pyramids.size();
     for(std::size_t i = 0; i < (*it)->pyramids.size(); i++) {
       std::pair<int, int> p((*it)->tag(), (*it)->pyramids[i]->getTypeForMSH());
-      elementsByDegree[3][p].push_back((*it)->pyramids[i]);
+      elementsByType[3][p].push_back((*it)->pyramids[i]);
     }
     numElements += (*it)->trihedra.size();
     for(std::size_t i = 0; i < (*it)->trihedra.size(); i++) {
       std::pair<int, int> p((*it)->tag(), (*it)->trihedra[i]->getTypeForMSH());
-      elementsByDegree[3][p].push_back((*it)->trihedra[i]);
+      elementsByType[3][p].push_back((*it)->trihedra[i]);
     }
   }
 
   unsigned long numSection = 0;
-  for(int dim = 0; dim <= 3; dim++) numSection += elementsByDegree[dim].size();
+  for(int dim = 0; dim <= 3; dim++) numSection += elementsByType[dim].size();
 
   if(binary) {
     fwrite(&numSection, sizeof(unsigned long), 1, fp);
@@ -2310,19 +2310,18 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
 
   for(int dim = 0; dim <= 3; dim++) {
     for(std::map<std::pair<int, int>, std::vector<MElement *> >::iterator it =
-          elementsByDegree[dim].begin();
-        it != elementsByDegree[dim].end(); ++it) {
+          elementsByType[dim].begin(); it != elementsByType[dim].end(); ++it) {
       int entityTag = it->first.first;
       int elmType = it->first.second;
-      unsigned long elmTag = it->second.size();
+      unsigned long numElm = it->second.size();
       if(binary) {
         fwrite(&entityTag, sizeof(int), 1, fp);
         fwrite(&dim, sizeof(int), 1, fp);
         fwrite(&elmType, sizeof(int), 1, fp);
-        fwrite(&elmTag, sizeof(unsigned long), 1, fp);
+        fwrite(&numElm, sizeof(unsigned long), 1, fp);
       }
       else {
-        fprintf(fp, "%d %d %d %lu\n", entityTag, dim, elmType, elmTag);
+        fprintf(fp, "%d %d %d %lu\n", entityTag, dim, elmType, numElm);
       }
 
       if(binary) {
