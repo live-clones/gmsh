@@ -80,15 +80,21 @@ namespace gmsh { // Top-level functions
     GMSH_API void setNumber(const std::string & name,
                             const double value);
 
-    // Get the `value' of a numerical option.
+    // Get the `value' of a numerical option. `name' is of the form
+    // "category.option" or "category[num].option". Available categories and
+    // options are listed in the Gmsh reference manual.
     GMSH_API void getNumber(const std::string & name,
                             double & value);
 
-    // Set a string option to `value'.
+    // Set a string option to `value'. `name' is of the form "category.option" or
+    // "category[num].option". Available categories and options are listed in the
+    // Gmsh reference manual.
     GMSH_API void setString(const std::string & name,
                             const std::string & value);
 
-    // Get the `value' of a string option.
+    // Get the `value' of a string option. `name' is of the form "category.option"
+    // or "category[num].option". Available categories and options are listed in
+    // the Gmsh reference manual.
     GMSH_API void getString(const std::string & name,
                             std::string & value);
 

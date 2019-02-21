@@ -68,13 +68,13 @@ option = gmsh.add_module('option','Global option handling functions')
 doc = '''Set a numerical option to `value'. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('setNumber',doc,None,istring('name'),idouble('value'))
 
-doc = '''Get the `value' of a numerical option.'''
+doc = '''Get the `value' of a numerical option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('getNumber',doc,None,istring('name'),odouble('value'))
 
-doc = '''Set a string option to `value'.'''
+doc = '''Set a string option to `value'. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('setString',doc,None,istring('name'),istring('value'))
 
-doc = '''Get the `value' of a string option.'''
+doc = '''Get the `value' of a string option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('getString',doc,None,istring('name'),ostring('value'))
 
 ################################################################################

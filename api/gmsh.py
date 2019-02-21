@@ -283,7 +283,9 @@ class option:
     @staticmethod
     def getNumber(name):
         """
-        Get the `value' of a numerical option.
+        Get the `value' of a numerical option. `name' is of the form
+        "category.option" or "category[num].option". Available categories and
+        options are listed in the Gmsh reference manual.
 
         Return `value'.
         """
@@ -302,7 +304,9 @@ class option:
     @staticmethod
     def setString(name, value):
         """
-        Set a string option to `value'.
+        Set a string option to `value'. `name' is of the form "category.option" or
+        "category[num].option". Available categories and options are listed in the
+        Gmsh reference manual.
         """
         ierr = c_int()
         lib.gmshOptionSetString(
@@ -317,7 +321,9 @@ class option:
     @staticmethod
     def getString(name):
         """
-        Get the `value' of a string option.
+        Get the `value' of a string option. `name' is of the form "category.option"
+        or "category[num].option". Available categories and options are listed in
+        the Gmsh reference manual.
 
         Return `value'.
         """

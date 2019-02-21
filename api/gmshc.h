@@ -71,17 +71,23 @@ GMSH_API void gmshOptionSetNumber(const char * name,
                                   const double value,
                                   int * ierr);
 
-/* Get the `value' of a numerical option. */
+/* Get the `value' of a numerical option. `name' is of the form
+ * "category.option" or "category[num].option". Available categories and
+ * options are listed in the Gmsh reference manual. */
 GMSH_API void gmshOptionGetNumber(const char * name,
                                   double * value,
                                   int * ierr);
 
-/* Set a string option to `value'. */
+/* Set a string option to `value'. `name' is of the form "category.option" or
+ * "category[num].option". Available categories and options are listed in the
+ * Gmsh reference manual. */
 GMSH_API void gmshOptionSetString(const char * name,
                                   const char * value,
                                   int * ierr);
 
-/* Get the `value' of a string option. */
+/* Get the `value' of a string option. `name' is of the form "category.option"
+ * or "category[num].option". Available categories and options are listed in
+ * the Gmsh reference manual. */
 GMSH_API void gmshOptionGetString(const char * name,
                                   char ** value,
                                   int * ierr);

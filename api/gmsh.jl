@@ -139,7 +139,9 @@ end
 """
     gmsh.option.getNumber(name)
 
-Get the `value` of a numerical option.
+Get the `value` of a numerical option. `name` is of the form "category.option"
+or "category[num].option". Available categories and options are listed in the
+Gmsh reference manual.
 
 Return `value`.
 """
@@ -156,7 +158,9 @@ end
 """
     gmsh.option.setString(name, value)
 
-Set a string option to `value`.
+Set a string option to `value`. `name` is of the form "category.option" or
+"category[num].option". Available categories and options are listed in the Gmsh
+reference manual.
 """
 function setString(name, value)
     ierr = Ref{Cint}()
@@ -170,7 +174,9 @@ end
 """
     gmsh.option.getString(name)
 
-Get the `value` of a string option.
+Get the `value` of a string option. `name` is of the form "category.option" or
+"category[num].option". Available categories and options are listed in the Gmsh
+reference manual.
 
 Return `value`.
 """
