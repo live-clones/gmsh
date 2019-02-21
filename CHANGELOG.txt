@@ -1,6 +1,8 @@
 4.2.0: changed type of node and element tags in API to support (very) large
-meshes (using size_t instead of int); changed the logger and getPeriodicNodes
-API; small improvements and bug fixes.
+meshes (using size_t instead of int); new MSH4.1 revision of the MSH file
+format, with support for size_t node and element tags (see the reference manual
+for detailed changes); changed the logger and getPeriodicNodes API; small
+improvements and bug fixes.
 
 4.1.5 (February 14, 2019): improved OpenMP parallelization, STL remeshing, mesh
 partitioning and high-order mesh optimization; added classifySurfaces in API;
