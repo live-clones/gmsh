@@ -496,7 +496,7 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
   return true;
 }
 
-static std::pair<int, MVertex *> *
+static std::pair<std::size_t, MVertex *> *
 readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
               std::size_t &nbrNodes, std::size_t &maxNodeNum, bool swap,
               double version)
@@ -534,7 +534,8 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
 
   std::size_t nodeRead = 0;
   std::size_t minNodeNum = nbrNodes + 1;
-  std::pair<int, MVertex *> *vertexCache = new std::pair<int, MVertex *>[nbrNodes];
+  std::pair<std::size_t, MVertex *> *vertexCache =
+    new std::pair<std::size_t, MVertex *>[nbrNodes];
 
   Msg::Info("%lu nodes", nbrNodes);
   for(std::size_t i = 0; i < numBlock; i++) {
@@ -708,7 +709,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
           }
           vertex = new MVertex(xyz[0], xyz[1], xyz[2], entity, nodeTag);
           break;
-        default: delete[]vertexCache; return 0; break;
+        default: delete [] vertexCache; return 0; break;
         }
       }
       else {
@@ -739,7 +740,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
       minNodeNum = std::min(minNodeNum, nodeTag);
       maxNodeNum = std::max(maxNodeNum, nodeTag);
 
-      vertexCache[nodeRead] = std::pair<int, MVertex *>(nodeTag, vertex);
+      vertexCache[nodeRead] = std::pair<std::size_t, MVertex *>(nodeTag, vertex);
       nodeRead++;
 
       if(nbrNodes > 100000)
@@ -765,7 +766,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
   return vertexCache;
 }
 
-static std::pair<int, MElement *> *
+static std::pair<std::size_t, MElement *> *
 readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
                  std::size_t &nbrElements, std::size_t &maxElementNum,
                  bool swap, double version)
@@ -804,8 +805,8 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
 
   std::size_t elementRead = 0;
   std::size_t minElementNum = nbrElements + 1;
-  std::pair<int, MElement *> *elementCache =
-    new std::pair<int, MElement *>[nbrElements];
+  std::pair<std::size_t, MElement *> *elementCache =
+    new std::pair<std::size_t, MElement *>[nbrElements];
   Msg::Info("%lu elements", nbrElements);
   for(std::size_t i = 0; i < numBlock; i++) {
     int entityTag = 0, entityDim = 0, elmType = 0;
@@ -908,7 +909,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         maxElementNum = std::max(maxElementNum, data[j]);
 
         elementCache[elementRead] =
-          std::pair<int, MElement *>(data[j], element);
+          std::pair<std::size_t, MElement *>(data[j], element);
         elementRead++;
 
         if(nbrElements > 100000)
@@ -968,7 +969,8 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         minElementNum = std::min(minElementNum, elmTag);
         maxElementNum = std::max(maxElementNum, elmTag);
 
-        elementCache[elementRead] = std::pair<int, MElement *>(elmTag, element);
+        elementCache[elementRead] =
+          std::pair<std::size_t, MElement *>(elmTag, element);
         elementRead++;
 
         if(nbrElements > 100000)
@@ -1309,6 +1311,18 @@ int GModel::_readMSH4(const std::string &name)
           Msg::Debug("Swapping bytes from binary file");
         }
       }
+
+      if(binary && size != sizeof(std::size_t)){
+        Msg::Error("Binary file has sizeof(size_t) = %d, not matching "
+                   "machine sizeof(size_t) = %d", size, sizeof(std::size_t));
+        return false;
+      }
+
+      if(binary && version < 4.1){
+        Msg::Error("Can only read MSH 4.0 format in ASCII mode");
+        return false;
+      }
+
     }
     else if(!strncmp(&str[1], "PhysicalNames", 13)) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) {
@@ -1360,7 +1374,7 @@ int GModel::_readMSH4(const std::string &name)
       Msg::ResetProgressMeter();
       bool dense = false;
       std::size_t nbrNodes = 0, maxNodeNum;
-      std::pair<int, MVertex *> *vertexCache =
+      std::pair<std::size_t, MVertex *> *vertexCache =
         readMSH4Nodes(this, fp, binary, dense, nbrNodes, maxNodeNum, swap,
                       version);
       if(!vertexCache) {
@@ -1395,7 +1409,7 @@ int GModel::_readMSH4(const std::string &name)
       Msg::ResetProgressMeter();
       bool dense = false;
       std::size_t nbrElements = 0, maxElementNum = 0;
-      std::pair<int, MElement *> *elementCache = readMSH4Elements
+      std::pair<std::size_t, MElement *> *elementCache = readMSH4Elements
         (this, fp, binary, dense, nbrElements, maxElementNum, swap, version);
       if(!elementCache) {
         Msg::Error("Could not read elements");
@@ -2655,7 +2669,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // header
   fprintf(fp, "$MeshFormat\n");
-  fprintf(fp, "%g %d %lu\n", version, (binary ? 1 : 0), sizeof(double));
+  fprintf(fp, "%g %d %lu\n", version, (binary ? 1 : 0), sizeof(std::size_t));
   if(binary) {
     int one = 1;
     fwrite(&one, sizeof(int), 1, fp); // swapping byte
