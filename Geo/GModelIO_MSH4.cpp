@@ -13,6 +13,7 @@
 #include <sstream>
 #include <string>
 #include <cstdlib>
+#include <limits>
 
 #include "GmshDefines.h"
 #include "OS.h"
@@ -497,8 +498,8 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
 
   unsigned long nodeRead = 0;
   unsigned long minNodeNum = nbrNodes + 1;
-  std::pair<int, MVertex *> *vertexCache =
-    new std::pair<int, MVertex *>[nbrNodes];
+  std::pair<int, MVertex *> *vertexCache = new std::pair<int, MVertex *>[nbrNodes];
+
   Msg::Info("%lu nodes", nbrNodes);
   for(unsigned int i = 0; i < numBlock; i++) {
     int parametric = 0;
@@ -2015,7 +2016,7 @@ getAdditionalEntities(std::set<GRegion *, GEntityLessThan> &regions,
 
 static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
                            bool binary, int saveParametric,
-                           double scalingFactor, bool saveAll)
+                           double scalingFactor, bool saveAll, double version)
 {
   std::set<GRegion *, GEntityLessThan> regions;
   std::set<GFace *, GEntityLessThan> faces;
@@ -2075,16 +2076,51 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
     numVertices = getAdditionalEntities(regions, faces, edges, vertices);
   }
 
+  std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
+  if(version >= 4.1){
+    for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it) {
+      for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++){
+        minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
+        maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
+      }
+    }
+    for(GModel::eiter it = edges.begin(); it != edges.end(); ++it) {
+      for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++){
+        minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
+        maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
+      }
+    }
+    for(GModel::fiter it = faces.begin(); it != faces.end(); ++it) {
+      for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++){
+        minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
+        maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
+      }
+    }
+    for(GModel::riter it = regions.begin(); it != regions.end(); ++it) {
+      for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++){
+        minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
+        maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
+      }
+    }
+    Msg::Info("Min/max node tags: %lu %lu", minTag, maxTag);
+  }
+
   if(binary) {
     unsigned long numSection =
       vertices.size() + edges.size() + faces.size() + regions.size();
     fwrite(&numSection, sizeof(unsigned long), 1, fp);
     fwrite(&numVertices, sizeof(unsigned long), 1, fp);
+    if(version >= 4.1){
+      // print minTag and maxTag
+    }
   }
   else {
     fprintf(fp, "%lu %lu\n",
             vertices.size() + edges.size() + faces.size() + regions.size(),
             numVertices);
+    if(version >= 4.1){
+      // print minTag and maxTag
+    }
   }
 
   for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it) {
@@ -2171,7 +2207,7 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
 }
 
 static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
-                              bool binary, bool saveAll)
+                              bool binary, bool saveAll, double version)
 {
   std::set<GRegion *, GEntityLessThan> regions;
   std::set<GFace *, GEntityLessThan> faces;
@@ -2300,12 +2336,32 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
   unsigned long numSection = 0;
   for(int dim = 0; dim <= 3; dim++) numSection += elementsByType[dim].size();
 
+  std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
+  if(version >= 4.1){
+    for(int dim = 0; dim <= 3; dim++) {
+      for(std::map<std::pair<int, int>, std::vector<MElement *> >::iterator it =
+            elementsByType[dim].begin(); it != elementsByType[dim].end(); ++it) {
+        for(std::size_t i = 0; i < it->second.size(); i++){
+          minTag = std::min(minTag, it->second[i]->getNum());
+          maxTag = std::max(maxTag, it->second[i]->getNum());
+        }
+      }
+    }
+    Msg::Info("Min/max element tags: %lu %lu", minTag, maxTag);
+  }
+
   if(binary) {
     fwrite(&numSection, sizeof(unsigned long), 1, fp);
     fwrite(&numElements, sizeof(unsigned long), 1, fp);
+    if(version >= 4.1){
+      // print minTag and maxTag
+    }
   }
   else {
     fprintf(fp, "%lu %lu\n", numSection, numElements);
+    if(version >= 4.1){
+      // print minTag and maxTag
+    }
   }
 
   for(int dim = 0; dim <= 3; dim++) {
@@ -2557,13 +2613,13 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   // nodes
   fprintf(fp, "$Nodes\n");
   writeMSH4Nodes(this, fp, getNumPartitions() == 0 ? false : true, binary,
-                 saveParametric ? 1 : 0, scalingFactor, saveAll);
+                 saveParametric ? 1 : 0, scalingFactor, saveAll, version);
   fprintf(fp, "$EndNodes\n");
 
   // elements
   fprintf(fp, "$Elements\n");
   writeMSH4Elements(this, fp, getNumPartitions() == 0 ? false : true, binary,
-                    saveAll);
+                    saveAll, version);
   fprintf(fp, "$EndElements\n");
 
   // periodic
