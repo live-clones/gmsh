@@ -185,7 +185,7 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
 static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, int sizeofstr,
                                bool swap, double version, bool partition,
                                int dim, int &tag, int &parentDim, int &parentTag,
-                               std::vector<unsigned int> &partitions,
+                               std::vector<int> &partitions,
                                double &minX, double &minY, double &minZ,
                                double &maxX, double &maxY, double &maxZ)
 {
@@ -205,11 +205,11 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, int sizeofstr,
         return false;
       }
       partitions.resize(numPart, 0);
-      if(fread(&partitions[0], sizeof(unsigned int), numPart, fp) != numPart) {
+      if(fread(&partitions[0], sizeof(int), numPart, fp) != numPart) {
         return false;
       }
       if(swap)
-        SwapBytes((char *)&partitions[0], sizeof(unsigned int), numPart);
+        SwapBytes((char *)&partitions[0], sizeof(int), numPart);
       double dataDouble[6];
       if(fread(dataDouble, sizeof(double), nbb, fp) != nbb) {
         return false;
@@ -392,14 +392,16 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
   for(int dim = 0; dim < 4; dim++) {
     for(std::size_t i = 0; i < numEntities[dim]; i++) {
       int tag = 0, parentDim = 0, parentTag = 0;
-      std::vector<unsigned int> partitions;
+      std::vector<int> parts;
       double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
       if(!readMSH4EntityInfo(fp, binary, str, strl, swap, version, partition,
-                             dim, tag, parentDim, parentTag, partitions,
+                             dim, tag, parentDim, parentTag, parts,
                              minX, minY, minZ, maxX, maxY, maxZ)){
         delete [] str;
         return false;
       }
+      // FIXME: rewrite partition classes in terms of int
+      std::vector<unsigned int> partitions(parts.begin(), parts.end());
       switch(dim) {
       case 0: {
         GVertex *gv = model->getVertexByTag(tag);
@@ -1158,7 +1160,7 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
     }
   }
 
-  std::multimap<std::pair<MElement *, unsigned int>, unsigned int> ghostCells;
+  std::multimap<std::pair<MElement *, int>, int> ghostCells;
   for(std::size_t i = 0; i < numGhostCells; i++) {
     std::size_t elmTag = 0;
     int partNum = 0;
@@ -1217,8 +1219,8 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
       }
 
       ghostCells.insert(
-        std::pair<std::pair<MElement *, unsigned int>, unsigned int>(
-          std::pair<MElement *, unsigned int>(elm, partNum), ghostPartition));
+        std::pair<std::pair<MElement *, int>, int>(
+          std::pair<MElement *, int>(elm, partNum), ghostPartition));
     }
   }
 
@@ -1238,7 +1240,7 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
       ghostEntities[partNum] = ge;
   }
 
-  for(std::multimap<std::pair<MElement *, unsigned int>, unsigned int>::iterator
+  for(std::multimap<std::pair<MElement *, int>, int>::iterator
         it = ghostCells.begin(); it != ghostCells.end(); ++it) {
     if(it->second >= ghostEntities.size()){
       Msg::Error("Invalid partition %d in ghost elements", it->second);
@@ -1479,7 +1481,7 @@ int GModel::_readMSH4(const std::string &name)
       if(entities[i]->geomType() == GEntity::PartitionPoint) {
         partitionVertex *pv = static_cast<partitionVertex *>(entities[i]);
         if(pv->numPartitions() == 1) {
-          const unsigned int part = pv->getPartition(0);
+          const int part = pv->getPartition(0);
           for(std::size_t j = 0; j < pv->getNumMeshElements(); j++) {
             pv->getMeshElement(j)->setPartition(part);
           }
@@ -1488,7 +1490,7 @@ int GModel::_readMSH4(const std::string &name)
       else if(entities[i]->geomType() == GEntity::PartitionCurve) {
         partitionEdge *pe = static_cast<partitionEdge *>(entities[i]);
         if(pe->numPartitions() == 1) {
-          const unsigned int part = pe->getPartition(0);
+          const int part = pe->getPartition(0);
           for(std::size_t j = 0; j < pe->getNumMeshElements(); j++) {
             pe->getMeshElement(j)->setPartition(part);
           }
@@ -1497,7 +1499,7 @@ int GModel::_readMSH4(const std::string &name)
       else if(entities[i]->geomType() == GEntity::PartitionSurface) {
         partitionFace *pf = static_cast<partitionFace *>(entities[i]);
         if(pf->numPartitions() == 1) {
-          const unsigned int part = pf->getPartition(0);
+          const int part = pf->getPartition(0);
           for(std::size_t j = 0; j < pf->getNumMeshElements(); j++) {
             pf->getMeshElement(j)->setPartition(part);
           }
@@ -1506,7 +1508,7 @@ int GModel::_readMSH4(const std::string &name)
       else if(entities[i]->geomType() == GEntity::PartitionVolume) {
         partitionRegion *pr = static_cast<partitionRegion *>(entities[i]);
         if(pr->numPartitions() == 1) {
-          const unsigned int part = pr->getPartition(0);
+          const int part = pr->getPartition(0);
           for(std::size_t j = 0; j < pr->getNumMeshElements(); j++) {
             pr->getMeshElement(j)->setPartition(part);
           }
@@ -1664,10 +1666,11 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         }
         fwrite(&parentEntityDim, sizeof(int), 1, fp);
         fwrite(&parentEntityTag, sizeof(int), 1, fp);
-        std::vector<unsigned int> partitions = pv->getPartitions();
+        std::vector<int> partitions(pv->getPartitions().begin(),
+                                    pv->getPartitions().end()); // FIXME
         std::size_t numPart = partitions.size();
         fwrite(&numPart, sizeof(std::size_t), 1, fp);
-        fwrite(&partitions[0], sizeof(unsigned int), partitions.size(), fp);
+        fwrite(&partitions[0], sizeof(int), partitions.size(), fp);
       }
       writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary,
                            0, version);
@@ -1697,10 +1700,11 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         }
         fwrite(&parentEntityDim, sizeof(int), 1, fp);
         fwrite(&parentEntityTag, sizeof(int), 1, fp);
-        std::vector<unsigned int> partitions = pe->getPartitions();
+        std::vector<int> partitions(pe->getPartitions().begin(),
+                                    pe->getPartitions().end()); // FIXME
         std::size_t numPart = partitions.size();
         fwrite(&numPart, sizeof(std::size_t), 1, fp);
-        fwrite(&partitions[0], sizeof(unsigned int), partitions.size(), fp);
+        fwrite(&partitions[0], sizeof(int), partitions.size(), fp);
       }
       writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary,
                            1, version);
@@ -1730,10 +1734,11 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         }
         fwrite(&parentEntityDim, sizeof(int), 1, fp);
         fwrite(&parentEntityTag, sizeof(int), 1, fp);
-        std::vector<unsigned int> partitions = pf->getPartitions();
+        std::vector<int> partitions(pf->getPartitions().begin(),
+                                    pf->getPartitions().end()); // FIXME
         std::size_t numPart = partitions.size();
         fwrite(&numPart, sizeof(std::size_t), 1, fp);
-        fwrite(&partitions[0], sizeof(unsigned int), partitions.size(), fp);
+        fwrite(&partitions[0], sizeof(int), partitions.size(), fp);
       }
       writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary,
                            2, version);
@@ -1771,10 +1776,11 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         }
         fwrite(&parentEntityDim, sizeof(int), 1, fp);
         fwrite(&parentEntityTag, sizeof(int), 1, fp);
-        std::vector<unsigned int> partitions = pr->getPartitions();
+        std::vector<int> partitions(pr->getPartitions().begin(),
+                                    pr->getPartitions().end()); // FIXME
         std::size_t numPart = partitions.size();
         fwrite(&numPart, sizeof(std::size_t), 1, fp);
-        fwrite(&partitions[0], sizeof(unsigned int), partitions.size(), fp);
+        fwrite(&partitions[0], sizeof(int), partitions.size(), fp);
       }
       writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary,
                            3, version);
@@ -1846,8 +1852,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
           parentEntityTag = pv->getParentEntity()->tag();
         }
         fprintf(fp, "%d %d ", parentEntityDim, parentEntityTag);
-        std::vector<unsigned int> partitions = pv->getPartitions();
-        fprintf(fp, "%d ", (int)partitions.size());
+        std::vector<int> partitions(pv->getPartitions().begin(),
+                                    pv->getPartitions().end()); // FIXME
+        fprintf(fp, "%lu ", partitions.size());
         for(std::size_t i = 0; i < partitions.size(); i++)
           fprintf(fp, "%d ", partitions[i]);
       }
@@ -1878,8 +1885,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
           parentEntityTag = pe->getParentEntity()->tag();
         }
         fprintf(fp, "%d %d ", parentEntityDim, parentEntityTag);
-        std::vector<unsigned int> partitions = pe->getPartitions();
-        fprintf(fp, "%d ", (int)partitions.size());
+        std::vector<int> partitions(pe->getPartitions().begin(),
+                                    pe->getPartitions().end()); // FIXME
+        fprintf(fp, "%lu ", partitions.size());
         for(std::size_t i = 0; i < partitions.size(); i++)
           fprintf(fp, "%d ", partitions[i]);
       }
@@ -1908,8 +1916,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
           parentEntityTag = pf->getParentEntity()->tag();
         }
         fprintf(fp, "%d %d ", parentEntityDim, parentEntityTag);
-        std::vector<unsigned int> partitions = pf->getPartitions();
-        fprintf(fp, "%d ", (int)partitions.size());
+        std::vector<int> partitions(pf->getPartitions().begin(),
+                                    pf->getPartitions().end()); // FIXME
+        fprintf(fp, "%lu ", partitions.size());
         for(std::size_t i = 0; i < partitions.size(); i++)
           fprintf(fp, "%d ", partitions[i]);
       }
@@ -1944,8 +1953,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
           parentEntityTag = pr->getParentEntity()->tag();
         }
         fprintf(fp, "%d %d ", parentEntityDim, parentEntityTag);
-        std::vector<unsigned int> partitions = pr->getPartitions();
-        fprintf(fp, "%d ", (int)partitions.size());
+        std::vector<int> partitions(pr->getPartitions().begin(),
+                                    pr->getPartitions().end()); // FIXME
+        fprintf(fp, "%lu ", partitions.size());
         for(std::size_t i = 0; i < partitions.size(); i++)
           fprintf(fp, "%d ", partitions[i]);
       }
@@ -2584,11 +2594,11 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
 {
   std::vector<GEntity *> entities;
   model->getEntities(entities);
-  std::map<MElement *, std::vector<unsigned int> > ghostCells;
+  std::map<MElement *, std::vector<int> > ghostCells;
 
   for(std::size_t i = 0; i < entities.size(); i++) {
-    std::map<MElement *, unsigned int> ghostElements;
-    unsigned int partition;
+    std::map<MElement *, unsigned int> ghostElements; // FIXME
+    int partition;
 
     if(entities[i]->geomType() == GEntity::GhostCurve) {
       ghostElements = static_cast<ghostEdge *>(entities[i])->getGhostCells();
@@ -2617,7 +2627,7 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
       std::size_t ghostCellsSize = ghostCells.size();
       fwrite(&ghostCellsSize, sizeof(std::size_t), 1, fp);
 
-      for(std::map<MElement *, std::vector<unsigned int> >::iterator it =
+      for(std::map<MElement *, std::vector<int> >::iterator it =
             ghostCells.begin(); it != ghostCells.end(); ++it) {
         std::size_t elmTag = it->first->getNum();
         int partNum = it->second[0];
@@ -2634,7 +2644,7 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
     else {
       fprintf(fp, "%ld\n", ghostCells.size());
 
-      for(std::map<MElement *, std::vector<unsigned int> >::iterator it =
+      for(std::map<MElement *, std::vector<int> >::iterator it =
             ghostCells.begin();
           it != ghostCells.end(); ++it) {
         fprintf(fp, "%lu %d %ld", it->first->getNum(), it->second[0],
