@@ -1499,12 +1499,11 @@ void MElement::writeMSH4(FILE *fp, bool binary)
   std::vector<MVertex *> verts;
   getVertices(verts);
 
-  if(binary) { // Implemented but not used in practice
-    int num = (int)_num; // FIXME change this in MSH4.1
-    fwrite(&num, sizeof(int), 1, fp);
+  if(binary) { // implemented but not used in practice
+    fwrite(&_num, sizeof(std::size_t), 1, fp);
     for(std::size_t i = 0; i < verts.size(); i++) {
-      int vertNum = (int)verts[i]->getNum();
-      fwrite(&vertNum, sizeof(int), 1, fp);
+      std::size_t vertNum = verts[i]->getNum();
+      fwrite(&vertNum, sizeof(std::size_t), 1, fp);
     }
   }
   else {
