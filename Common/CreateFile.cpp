@@ -39,7 +39,7 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".msh1")     { if(version) *version = 1.0; return FORMAT_MSH; }
   else if(ext == ".msh2")     { if(version) *version = 2.2; return FORMAT_MSH; }
   else if(ext == ".msh3")     { if(version) *version = 3.0; return FORMAT_MSH; }
-  else if(ext == ".msh4")     { if(version) *version = 4.0; return FORMAT_MSH; }
+  else if(ext == ".msh4")     { if(version) *version = 4.1; return FORMAT_MSH; }
   else if(ext == ".x3d")      return FORMAT_X3D;
   else if(ext == ".pos")      return FORMAT_POS;
   else if(ext == ".pvtu")     return FORMAT_PVTU;
