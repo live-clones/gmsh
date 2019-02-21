@@ -229,7 +229,7 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, int sizeofstr,
         return false;
       }
       partitions.resize(numPart, 0);
-      for(int i = 0; i < numPart; i++) {
+      for(std::size_t i = 0; i < numPart; i++) {
         if(fscanf(fp, "%d", &partitions[i]) != 1) {
           return false;
         }
@@ -1558,7 +1558,7 @@ static void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
     fwrite(bb, sizeof(double), nbb, fp);
   }
   else {
-    for(int i = 0; i < nbb; i++) fprintf(fp, "%.16g ", bb[i]);
+    for(std::size_t i = 0; i < nbb; i++) fprintf(fp, "%.16g ", bb[i]);
   }
 }
 
