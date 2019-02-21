@@ -57,7 +57,6 @@ protected:
 public:
   MElement(int num = 0, int part = 0);
   virtual ~MElement() {}
-
   // set/get the tolerance for isInside() test
   static void setTolerance(const double tol);
   static double getTolerance();

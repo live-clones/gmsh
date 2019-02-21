@@ -1,10 +1,8 @@
 #ifndef _ORTHOGONALPOLY_H_
 #define _ORTHOGONALPOLY_H_
 
-#include <string>
 #include <math.h>
-
-#include <iostream>
+#include <string>
 namespace  OrthogonalPoly{
   
   

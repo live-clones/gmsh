@@ -11,6 +11,7 @@
 #include <set>
 #include <map>
 #include <string>
+#include <unordered_map>
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -41,7 +42,7 @@ private:
   std::set<GFace *, GEntityLessThan> _chainFaces;
   std::set<GEdge *, GEntityLessThan> _chainEdges;
   std::set<GVertex *, GEntityLessThan> _chainVertices;
-
+  std::unordered_map<int, MEdge> _mapEdgeNum;
   // the maximum vertex and element id number in the mesh
   int _maxVertexNum, _maxElementNum;
   int _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
@@ -52,16 +53,15 @@ private:
   int _readMSH2(const std::string &name);
   int _writeMSH2(const std::string &name, double version, bool binary,
                  bool saveAll, bool saveParametric, double scalingFactor,
-                 int elementStartNum, int saveSinglePartition,
-                 bool append, bool renumberVertices);
+                 int elementStartNum, int saveSinglePartition, bool append,
+                 bool renumberVertices);
   int _writePartitionedMSH2(const std::string &baseName, bool binary,
                             bool saveAll, bool saveParametric,
                             double scalingFactor);
   int _readMSH3(const std::string &name);
   int _writeMSH3(const std::string &name, double version, bool binary,
                  bool saveAll, bool saveParametric, double scalingFactor,
-                 int elementStartNum, int saveSinglePartition,
-                 bool append);
+                 int elementStartNum, int saveSinglePartition, bool append);
   int _writePartitionedMSH3(const std::string &baseName, double version,
                             bool binary, bool saveAll, bool saveParametric,
                             double scalingFactor);
@@ -228,7 +228,9 @@ public:
     maxv = _checkPointedMaxVertexNum;
     maxe = _checkPointedMaxElementNum;
   }
-
+  // number the edges
+  void addMEdge(MEdge edge);
+  int getMEdgeKey(MEdge edge);
   // renumber mesh vertices and elements in a continuous sequence (this
   // invalidates the mesh caches)
   void renumberMeshVertices();

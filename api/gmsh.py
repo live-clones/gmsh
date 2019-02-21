@@ -1678,6 +1678,69 @@ class model:
                 _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value))
 
         @staticmethod
+        def getHierarchicalBasisForElements(integrationType, elementType, functionSpaceType, order, tag=-1):
+            """
+            Get the hierarchical basis of the element of type `elementType' for the
+            given `integrationType' integration rule. 'HierarchicalBasis' conatains the
+            evaluation of de the basis functions at the integration points. 'weight'
+            conntains the Gauss weights. 'order' is the polynomial order. Each physical
+            mesh edge (or Face) will  be assigned a unique orientation,and all edges
+            (or Faces) of physical mesh will be equipped with an orientation tag ,
+            indicating whether the image of the corresponding edge (or Face) of the
+            reference domain through the reference map has the same or opposite
+            orientation.The global edge orientation always pointing from the vertex
+            with the lower global vertex number to the one with the higher one.
+
+            Return `hierarchicalBasis', `weight', `keys'.
+            """
+            api_hierarchicalBasis_, api_hierarchicalBasis_n_ = POINTER(c_double)(), c_size_t()
+            api_weight_, api_weight_n_ = POINTER(c_double)(), c_size_t()
+            api_keys_, api_keys_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetHierarchicalBasisForElements(
+                c_char_p(integrationType.encode()),
+                c_int(elementType),
+                byref(api_hierarchicalBasis_), byref(api_hierarchicalBasis_n_),
+                byref(api_weight_), byref(api_weight_n_),
+                c_char_p(functionSpaceType.encode()),
+                c_int(order),
+                byref(api_keys_), byref(api_keys_n_),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetHierarchicalBasisForElements returned non-zero error code: ",
+                    ierr.value)
+            return (
+                _ovectordouble(api_hierarchicalBasis_, api_hierarchicalBasis_n_.value),
+                _ovectordouble(api_weight_, api_weight_n_.value),
+                _ovectorpair(api_keys_, api_keys_n_.value))
+
+        @staticmethod
+        def getInformationForElements(keys, order, functionSpaceType):
+            """
+             get information about the vectorpair 'Keys' . 'info' contains the order
+            and the type of fonction (vertex=1,edge=2 or bubble=4). 'order' is the
+            polynomial order of all element
+
+            Return `info'.
+            """
+            api_keys_, api_keys_n_ = _ivectorpair(keys)
+            api_info_, api_info_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetInformationForElements(
+                api_keys_, api_keys_n_,
+                byref(api_info_), byref(api_info_n_),
+                c_int(order),
+                c_char_p(functionSpaceType.encode()),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetInformationForElements returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorpair(api_info_, api_info_n_.value)
+
+        @staticmethod
         def precomputeBasisFunctions(elementType):
             """
             Precomputes the basis functions corresponding to `elementType'.

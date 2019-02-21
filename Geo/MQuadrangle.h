@@ -56,6 +56,7 @@ public:
     for(int i = 0; i < 4; i++) _v[i] = v[i];
   }
   ~MQuadrangle() {}
+
   virtual double etaShapeMeasure();
   virtual double gammaShapeMeasure();
   virtual int getDim() const { return 2; }

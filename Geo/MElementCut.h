@@ -56,6 +56,7 @@ public:
     for(unsigned int i = 0; i < _parts.size(); i++) delete _parts[i];
     if(_intpt) delete[] _intpt;
   }
+   virtual  std::vector<int>  getOrientationFlag(){ return std::vector<int>();}
   virtual int getDim() const { return 3; }
   virtual std::size_t getNumVertices() const
   {

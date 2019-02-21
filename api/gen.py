@@ -259,7 +259,13 @@ mesh.add('preallocateJacobians',doc,None,iint('elementType'),istring('integratio
 doc = '''Get the basis functions of the element of type `elementType' for the given `integrationType' integration rule (e.g. \"Gauss4\") and `functionSpaceType' function space (e.g. \"IsoParametric\"). `integrationPoints' contains the parametric coordinates u, v, w and the weight q for each integeration point, concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. `numComponents' returns the number C of components of a basis function. `basisFunctions' contains the evaluation of the basis functions at the integration points: [g1f1, ..., g1fC, g2f1, ...].'''
 mesh.add('getBasisFunctions',doc,None,iint('elementType'),istring('integrationType'),istring('functionSpaceType'),ovectordouble('integrationPoints'),oint('numComponents'),ovectordouble('basisFunctions'))
 
-doc = '''Precomputes the basis functions corresponding to `elementType'.'''
+doc = '''Get the hierarchical basis of the element of type `elementType' for the given `integrationType' integration rule. 'HierarchicalBasis' conatains the evaluation of de the basis functions at the integration points. 'weight' conntains the Gauss weights. 'order' is the polynomial order. Each physical mesh edge (or Face) will  be assigned a unique orientation,and all edges (or Faces) of physical mesh will be equipped with an orientation tag , indicating whether the image of the corresponding edge (or Face) of the reference domain through the reference map has the same or opposite orientation.The global edge orientation always pointing from the vertex with the lower global vertex number to the one with the higher one.  '''
+mesh.add('getHierarchicalBasisForElements',doc,None,istring('integrationType'),iint('elementType'),ovectordouble('hierarchicalBasis'),ovectordouble('weight'),istring('functionSpaceType'),iint('order'),ovectorpair('keys'),iint('tag','-1'))
+doc = ''' get information about the vectorpair 'Keys' . 'info' contains the order and the type of fonction (vertex=1,edge=2 or bubble=4). 'order' is the polynomial order of all element '''
+mesh.add('getInformationForElements',doc,None,ivectorpair('keys'),ovectorpair('info'),iint('order'),istring('functionSpaceType'))
+
+
+doc = '''Precomputes the basis functions corresponding to `elementType'. '''
 mesh.add('precomputeBasisFunctions',doc,None,iint('elementType'))
 
 doc = '''Get the barycenters of all elements of type `elementType' classified on the entity of tag `tag'. If `primary' is set, only the primary nodes of the elements are taken into account for the barycenter calculation. If `fast' is set, the function returns the sum of the primary node coordinates (without normalizing by the number of nodes). If `tag' < 0, get the barycenters for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
