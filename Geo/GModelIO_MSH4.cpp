@@ -1649,7 +1649,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         fwrite(&parentEntityDim, sizeof(int), 1, fp);
         fwrite(&parentEntityTag, sizeof(int), 1, fp);
         std::vector<unsigned int> partitions = pv->getPartitions();
-        partitions.insert(partitions.begin(), partitions.size());
+        std::size_t numPart = partitions.size();
+        fwrite(&numPart, sizeof(std::size_t), 1, fp);
         fwrite(&partitions[0], sizeof(unsigned int), partitions.size(), fp);
       }
       writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary,
@@ -1681,7 +1682,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         fwrite(&parentEntityDim, sizeof(int), 1, fp);
         fwrite(&parentEntityTag, sizeof(int), 1, fp);
         std::vector<unsigned int> partitions = pe->getPartitions();
-        partitions.insert(partitions.begin(), partitions.size());
+        std::size_t numPart = partitions.size();
+        fwrite(&numPart, sizeof(std::size_t), 1, fp);
         fwrite(&partitions[0], sizeof(unsigned int), partitions.size(), fp);
       }
       writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary,
@@ -1713,7 +1715,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         fwrite(&parentEntityDim, sizeof(int), 1, fp);
         fwrite(&parentEntityTag, sizeof(int), 1, fp);
         std::vector<unsigned int> partitions = pf->getPartitions();
-        partitions.insert(partitions.begin(), partitions.size());
+        std::size_t numPart = partitions.size();
+        fwrite(&numPart, sizeof(std::size_t), 1, fp);
         fwrite(&partitions[0], sizeof(unsigned int), partitions.size(), fp);
       }
       writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary,
@@ -1753,7 +1756,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         fwrite(&parentEntityDim, sizeof(int), 1, fp);
         fwrite(&parentEntityTag, sizeof(int), 1, fp);
         std::vector<unsigned int> partitions = pr->getPartitions();
-        partitions.insert(partitions.begin(), partitions.size());
+        std::size_t numPart = partitions.size();
+        fwrite(&numPart, sizeof(std::size_t), 1, fp);
         fwrite(&partitions[0], sizeof(unsigned int), partitions.size(), fp);
       }
       writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary,

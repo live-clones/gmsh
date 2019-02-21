@@ -3638,7 +3638,7 @@ binary mode will evolve in a future minor revision of the format to
 allow for 64-bit node and element tags.
 
 The 4.1 revision of format includes the following modifications with
-respect to the original 4.0 version:
+respect to the initial 4.0 version:
 @itemize @bullet
 @item
 All the @code{unsigned long} entries are changed to @code{size_t}. All
