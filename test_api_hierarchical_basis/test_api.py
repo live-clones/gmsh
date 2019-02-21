@@ -9,10 +9,10 @@ import gmsh
 import sys
 import numpy as np
 
-INTEGRATION = 'Gauss1'
+INTEGRATION = 'Gauss2'
 model = gmsh.model
 factory = model.occ
-order=1
+order=2
 #gmsh.initialize()
 #gmsh.option.setNumber("General.Terminal", 1)
 #
@@ -111,9 +111,10 @@ model.mesh.generate(2)
 gmsh.write("poisson.msh")
    
 sf, weights ,ky = model.mesh.getHierarchicalBasisForElements(INTEGRATION,3, 'Legendre',
-                                                                                order,2)           
-print(sf)
-print(ky)
+                                                                                order)           
+#print(sf)
+print(len(sf))
+#print(ky)
 info=model.mesh.getInformationForElements(ky,order, "Legendre")
-print(info)
+#print(info)
 gmsh.finalize()
