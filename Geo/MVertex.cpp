@@ -202,29 +202,23 @@ void MVertex::writeMSH4(FILE *fp, bool binary, bool saveParametric,
                         double scalingFactor)
 {
   if(binary) {
-    // FIXME change this for MSH4.1
-    int num = (int)_num;
+    int num = (int)_num; // FIXME change this for MSH4.1
     fwrite(&num, sizeof(int), 1, fp);
-    double xScale = _x * scalingFactor;
-    double yScale = _y * scalingFactor;
-    double zScale = _z * scalingFactor;
-    fwrite(&xScale, sizeof(double), 1, fp);
-    fwrite(&yScale, sizeof(double), 1, fp);
-    fwrite(&zScale, sizeof(double), 1, fp);
+    double data[5] = {_x * scalingFactor, _y * scalingFactor, _z * scalingFactor,
+                      0., 0.};
+    int n = 3;
     if(saveParametric) {
       if(_ge->dim() == 1) {
-        double u;
-        getParameter(0, u);
-        fwrite(&u, sizeof(double), 1, fp);
+        n = 4;
+        getParameter(0, data[3]);
       }
       else if(_ge->dim() == 2) {
-        double u, v;
-        getParameter(0, u);
-        getParameter(1, v);
-        fwrite(&u, sizeof(double), 1, fp);
-        fwrite(&v, sizeof(double), 1, fp);
+        n = 5;
+        getParameter(0, data[3]);
+        getParameter(1, data[4]);
       }
     }
+    fwrite(data, sizeof(double), n, fp);
   }
   else {
     fprintf(fp, "%lu %.16g %.16g %.16g", _num, _x * scalingFactor,
@@ -242,7 +236,6 @@ void MVertex::writeMSH4(FILE *fp, bool binary, bool saveParametric,
         fprintf(fp, " %.16g %.16g", u, v);
       }
     }
-
     fprintf(fp, "\n");
   }
 }
