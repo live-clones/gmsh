@@ -3612,9 +3612,12 @@ physical group names (@code{$PhysicalName}), the entities
 elements (@code{$GhostElements}) and post-processing datasets
 (@code{$NodeData}, @code{$ElementData}, @code{$ElementNodeData}).
 
-To represent a mesh, the minimal sections that should be present in the
-file are @code{$MeshFormat}, @code{$Nodes} and @code{$Elements}. Nodes
-are assumed to be defined before elements. Sections can be repeated in
+To represent a simple mesh, the minimal sections that should be present
+in the file are @code{$MeshFormat}, @code{$Nodes} and
+@code{$Elements}. Nodes are assumed to be defined before elements. To
+represent a mesh with the full topology (BRep) of the model and
+associated physical groups, an @code{$Entities} section should be
+present before the @code{$Nodes} section. Sections can be repeated in
 the same file, and post-processing sections can be put into separate
 files (e.g. one file per time step). Any section with an unrecognized
 header is simply ignored: you can thus add comments in a @file{.msh}
@@ -3929,36 +3932,36 @@ consisting of two quadrangles and an associated nodal scalar dataset
 
 @smallexample
 $MeshFormat
-4.1 0 8            @emph{MSH4.1, ASCII}
+4.1 0 8          @emph{MSH4.1, ASCII}
 $EndMeshFormat
 $Nodes
-1 6 1 6            @emph{1 bloc, 6 nodes total, min/max node tags: 1 and 6}
-2 1 0 6            @emph{surface 1, no parametric coordinates, 6 nodes}
-1 0. 0. 0.         @emph{  node #1: coordinates (0., 0., 0.)}
-2 1. 0. 0.         @emph{  node #2: coordinates (1., 0., 0.)}
-3 1. 1. 0.         @emph{  etc.}
+1 6 1 6          @emph{1 entity bloc, 6 nodes total, min/max node tags: 1 and 6}
+2 1 0 6          @emph{2D entity (surface) 1, no parametric coordinates, 6 nodes}
+1 0. 0. 0.       @emph{  node #1: coordinates (0., 0., 0.)}
+2 1. 0. 0.       @emph{  node #2: coordinates (1., 0., 0.)}
+3 1. 1. 0.       @emph{  etc.}
 4 0. 1. 0.
 5 2. 0. 0.
 6 2. 1. 0.
 $EndNodes
 $Elements
-1 2 1 2            @emph{1 bloc, 2 elements total, min/max element tags: 1 and 2}
-2 1 3 2            @emph{surface 1, element type 3 (4-node quad), 2 elements}
-1 1 2 3 4          @emph{  quad #1: nodes 1 2 3 4}
-2 2 5 6 3          @emph{  quad #2: nodes 2 5 6 3}
+1 2 1 2          @emph{1 entity bloc, 2 elements total, min/max element tags: 1 and 2}
+2 1 3 2          @emph{2D entity (surface) 1, element type 3 (4-node quad), 2 elements}
+1 1 2 3 4        @emph{  quad #1: nodes 1 2 3 4}
+2 2 5 6 3        @emph{  quad #2: nodes 2 5 6 3}
 $EndElements
 $NodeData
-1                  @emph{1 string tag:}
-"A scalar view"    @emph{  the name of the view ("A scalar view")}
-1                  @emph{1 real tag:}
-0.0                @emph{  the time value (0.0)}
-3                  @emph{3 integer tags:}
-0                  @emph{  the time step (0; time steps always start at 0)}
-1                  @emph{  1-component (scalar) field}
-6                  @emph{  6 associated nodal values}
-1 0.0              @emph{value associated with node #1 (0.0)}
-2 0.1              @emph{value associated with node #2 (0.1)}
-3 0.2              @emph{etc.}
+1                @emph{1 string tag:}
+"A scalar view"  @emph{  the name of the view ("A scalar view")}
+1                @emph{1 real tag:}
+0.0              @emph{  the time value (0.0)}
+3                @emph{3 integer tags:}
+0                @emph{  the time step (0; time steps always start at 0)}
+1                @emph{  1-component (scalar) field}
+6                @emph{  6 associated nodal values}
+1 0.0            @emph{value associated with node #1 (0.0)}
+2 0.1            @emph{value associated with node #2 (0.1)}
+3 0.2            @emph{etc.}
 4 0.0
 5 0.2
 6 0.4
@@ -3969,27 +3972,28 @@ The 4.1 revision of the format includes the following modifications with
 respect to the initial 4.0 version:
 @itemize @bullet
 @item
-All the @code{unsigned long} entries are changed to @code{size_t}. All
-the entries designating counts which were previsouly encoded as
-@code{int} are also changed to @code{size_t}. (This only impacts binary
-files.)
+All the @code{unsigned long} entries have been changed to
+@code{size_t}. All the entries designating counts which were previsouly
+encoded as @code{int} have also been changed to @code{size_t}. (This
+only impacts binary files.)
 @item
 The @code{$Entities} section is now optional.
 @item
-The bounding box for point entities is simply replaced by the 3
+The bounding box for point entities has been replaced simply by the 3
 coordinates of the point (instead of the six bounding box values).
 @item
-The @code{entityDim} and @code{entityTag} values are switched in the
+The @code{entityDim} and @code{entityTag} values have been switched in the
 @code{$Nodes} and @code{$Elements} sections (for consistency with the
 ordering used elsewhere).
 @item
-The minimum and the maximum tag of nodes (resp. elements) is added in
-the header of the @code{$Nodes} (resp. @code{$Elements}) section, to
-facilitate the detection of sparse or dense numberings when reading the
-file.
+The minimum and the maximum tag of nodes (resp. elements) have been
+added in the header of the @code{$Nodes} (resp. @code{$Elements})
+section, to facilitate the detection of sparse or dense numberings when
+reading the file.
 @item
 The @code{$Periodic} section has been changed to always provide the
-number of values in the affine transform (which can be zero).
+number of values in the affine transform (which can be zero, if the
+transform is not provided).
 @end itemize
 
 @c -------------------------------------------------------------------------
