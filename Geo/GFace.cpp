@@ -2054,7 +2054,7 @@ bool GFace::reorder(const int elementType, const std::vector<std::size_t> &order
 
       for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
-        if(*it < 0 || *it >= triangles.size()) return false;
+        if(*it >= triangles.size()) return false;
       }
 
       std::vector<MTriangle *> newTrianglesOrder(triangles.size());
@@ -2077,7 +2077,7 @@ bool GFace::reorder(const int elementType, const std::vector<std::size_t> &order
 
       for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
-        if(*it < 0 || *it >= quadrangles.size()) return false;
+        if(*it >= quadrangles.size()) return false;
       }
 
       std::vector<MQuadrangle *> newQuadranglesOrder(quadrangles.size());
@@ -2100,7 +2100,7 @@ bool GFace::reorder(const int elementType, const std::vector<std::size_t> &order
 
       for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
-        if(*it < 0 || *it >= polygons.size()) return false;
+        if(*it >= polygons.size()) return false;
       }
 
       std::vector<MPolygon *> newPolygonsOrder(polygons.size());
