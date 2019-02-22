@@ -1268,27 +1268,17 @@ int GModel::getNumMeshParentElements() const
   return n;
 }
 
-void GModel::addMEdge(MEdge edge)
+int GModel::addMEdge(MEdge edge)
 {
-  bool found = false;
-  std::unordered_map<int, MEdge>::const_iterator it = _mapEdgeNum.begin();
-
-  while(it != _mapEdgeNum.end() &&  !found) {
-    if(it->second == edge) { found = true; }
-    ++it;
-  }
-  if(!found) { _mapEdgeNum[_mapEdgeNum.size()] = edge; }
-}
-
-int GModel::getMEdgeKey(MEdge edge)
-{
-  int key;
-  std::unordered_map<int, MEdge>::const_iterator it = _mapEdgeNum.cbegin();
+  hashmap<int, MEdge>::const_iterator it = _mapEdgeNum.cbegin();
   while(it != _mapEdgeNum.cend()) {
     if(it->second == edge) { return it->first; }
     ++it;
+  
   }
-  return 0;
+  int edgeGlobalIndice=_mapEdgeNum.size();
+  _mapEdgeNum[edgeGlobalIndice] = edge;
+  return edgeGlobalIndice;
 }
 
 void GModel::renumberMeshVertices()

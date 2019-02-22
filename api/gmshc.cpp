@@ -965,15 +965,15 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType, const char *
   }
 }
 
-GMSH_API void gmshModelMeshGetHierarchicalBasisForElements(const char * integrationType, const int elementType, double ** hierarchicalBasis, size_t * hierarchicalBasis_n, double ** weight, size_t * weight_n, const char * functionSpaceType, const int order, int ** keys, size_t * keys_n, const int tag, int * ierr)
+GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const char * integrationType, const int elementType, double ** basisFunctions, size_t * basisFunctions_n, double ** weight, size_t * weight_n, const char * functionSpaceType, const int order, int ** keys, size_t * keys_n, const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_hierarchicalBasis_;
+    std::vector<double> api_basisFunctions_;
     std::vector<double> api_weight_;
     gmsh::vectorpair api_keys_;
-    gmsh::model::mesh::getHierarchicalBasisForElements(integrationType, elementType, api_hierarchicalBasis_, api_weight_, functionSpaceType, order, api_keys_, tag);
-    vector2ptr(api_hierarchicalBasis_, hierarchicalBasis, hierarchicalBasis_n);
+    gmsh::model::mesh::getBasisFunctionsForElements(integrationType, elementType, api_basisFunctions_, api_weight_, functionSpaceType, order, api_keys_, tag);
+    vector2ptr(api_basisFunctions_, basisFunctions, basisFunctions_n);
     vector2ptr(api_weight_, weight, weight_n);
     vectorpair2intptr(api_keys_, keys, keys_n);
   }

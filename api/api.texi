@@ -1007,9 +1007,9 @@ at the integration points: [g1f1, ..., g1fC, g2f1, ...].
 -
 @end table
 
-@item getHierarchicalBasisForElements
-Get the hierarchical basis of the element of type @code{elementType} for the
-given @code{integrationType} integration rule. }HierarchicalBasis} conatains the
+@item getBasisFunctionsForElements
+Get the basis function of the element of type @code{elementType} for the given
+@code{integrationType} integration rule. }basisFunctions} contains the
 evaluation of de the basis functions at the integration points. }weight}
 conntains the Gauss weights. }order} is the polynomial order. Each physical mesh
 edge (or Face) will  be assigned a unique orientation,and all edges (or Faces)
@@ -1023,7 +1023,7 @@ to the one with the higher one.
 @item Input:
 @code{integrationType}, @code{elementType}, @code{functionSpaceType}, @code{order}, @code{tag}
 @item Output:
-@code{hierarchicalBasis}, @code{weight}, @code{keys}
+@code{basisFunctions}, @code{weight}, @code{keys}
 @item Return:
 -
 @end table

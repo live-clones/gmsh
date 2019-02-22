@@ -1817,13 +1817,13 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
   }
 }
 
-GMSH_API void gmsh::model::mesh::getHierarchicalBasisForElements(
+GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   const std::string &integrationType, const int elementType,
-  std::vector<double> &hierarchicalBasis, std::vector<double> &weight,
+  std::vector<double> &basisFunctions, std::vector<double> &weight,
   const std::string &functionSpaceType, const int order, gmsh::vectorpair &keys,
   const int tag)
 {
-  hierarchicalBasis.clear();
+  basisFunctions.clear();
   weight.clear();
   std::string intName = "";
   int intOrder = 0;
@@ -1869,7 +1869,7 @@ GMSH_API void gmsh::model::mesh::getHierarchicalBasisForElements(
     numElements += ge->getNumMeshElementsByType(familyType);
   }
   int const1=n*numElements;
-  hierarchicalBasis.resize(const1* numComponents * nq , 0.);
+  basisFunctions.resize(const1* numComponents * nq , 0.);
   switch(numComponents) {
   case 1:
     for(int i = 0; i < nq; i++) {
@@ -1885,12 +1885,13 @@ GMSH_API void gmsh::model::mesh::getHierarchicalBasisForElements(
             j++) {
           MElement *e = ge->getMeshElementByType(familyType, j);
           int numberEdge = e->getNumEdges();
+	  std::vector<double> edgeGlobalIndice(numberEdge);
           std::vector<int> orientationFlag(numberEdge);
           double eTableCopy[eSize];
           for(int r = 0; r < eSize; r++) { eTableCopy[r] = eTable[r]; }
           for(int jj = 0; jj < numberEdge; jj++) {
             MEdge edge = e->getEdge(jj);
-            GModel::current()->addMEdge(edge);
+            edgeGlobalIndice[jj]=GModel::current()->addMEdge(edge);
             if(edge.getMinVertex()->getNum() != edge.getVertex(0)->getNum()) {
               orientationFlag[jj] = -1;
             }
@@ -1902,7 +1903,7 @@ GMSH_API void gmsh::model::mesh::getHierarchicalBasisForElements(
             h1QuadBasis.orientateEdge(orientationFlag[k], k, eTableCopy);
           }
           for(int k = 0; k < vSize; k++) {
-            hierarchicalBasis[const1 * i  + n * elementIterator + k] =
+            basisFunctions[const1 * i  + n * elementIterator + k] =
               vTable[k];
               keys.push_back(std::pair<int, int>(2, e->getVertex(k)->getNum()));
           }
@@ -1912,7 +1913,7 @@ GMSH_API void gmsh::model::mesh::getHierarchicalBasisForElements(
           int var = 0;
           bool change = true;
           for(int k = vSize; k < n2; k++) {
-            hierarchicalBasis[const1 * i  + n * elementIterator + k] =
+            basisFunctions[const1 * i  + n * elementIterator + k] =
               eTableCopy[k - vSize];
             if(iterator > order - 2) {
               iterator = 0;
@@ -1923,8 +1924,7 @@ GMSH_API void gmsh::model::mesh::getHierarchicalBasisForElements(
             int indiceOrder = k - vSize - var + 3;
             iterator++;
             if(change) {
-              MEdge edge = e->getEdge(localNumEdge);
-              globalNumEdge = GModel::current()->getMEdgeKey(edge);
+              globalNumEdge =  edgeGlobalIndice[localNumEdge];
               change = false;
             }
             keys.push_back(std::pair<int, int>(indiceOrder, globalNumEdge));
@@ -1936,7 +1936,7 @@ GMSH_API void gmsh::model::mesh::getHierarchicalBasisForElements(
               iterator = 0;
               var2--;
             }
-            hierarchicalBasis[const1 * i  + n * elementIterator + k] =
+            basisFunctions[const1 * i  + n * elementIterator + k] =
               bTable[k - n2];
             keys.push_back(
               std::pair<int, int>(k - n2 + order + var2, e->getNum()));
@@ -1969,6 +1969,7 @@ GMSH_API void gmsh::model::mesh::getHierarchicalBasisForElements(
             j++) {
           MElement *e = ge->getMeshElementByType(familyType, j);
           int numberEdge = e->getNumEdges();
+	  std::vector<double> edgeGlobalIndice(numberEdge);
           std::vector<int> orientationFlag(numberEdge);
           double eTableUCopy[eSize];
           double eTableVCopy[eSize];
@@ -1978,8 +1979,7 @@ GMSH_API void gmsh::model::mesh::getHierarchicalBasisForElements(
           }
           for(int jj = 0; jj < numberEdge; jj++) {
             MEdge edge = e->getEdge(jj);
-            GModel::current()->addMEdge(edge);
-
+	    edgeGlobalIndice[jj]=GModel::current()->addMEdge(edge);
             if(edge.getMinVertex()->getNum() != edge.getVertex(0)->getNum()) {
               orientationFlag[jj] = -1;
             }
@@ -1992,9 +1992,9 @@ GMSH_API void gmsh::model::mesh::getHierarchicalBasisForElements(
                                           eTableVCopy);
           }
           for(int k = 0; k < vSize; k++) {
-            hierarchicalBasis[ const2 * i +
+            basisFunctions[ const2 * i +
                               const3 * elementIterator + 2 * k] = vTableU[k];
-            hierarchicalBasis[const2* i  +
+            basisFunctions[const2* i  +
                               const3 * elementIterator + 2 * k + 1] = vTableV[k];
             keys.push_back(std::pair<int, int>(2, e->getVertex(k)->getNum()));
           }
@@ -2004,10 +2004,10 @@ GMSH_API void gmsh::model::mesh::getHierarchicalBasisForElements(
           int var = 0;
           bool change = true;
           for(int k = vSize; k < n2; k++) {
-            hierarchicalBasis[const2 * i +
+            basisFunctions[const2 * i +
                               const3 * elementIterator + 2 * k] =
               eTableUCopy[k - vSize];
-            hierarchicalBasis[const2 * i  +
+            basisFunctions[const2 * i  +
                               const3 * elementIterator + 2 * k + 1] =
               eTableVCopy[k - vSize];
             if(iterator > order - 2) {
@@ -2019,8 +2019,7 @@ GMSH_API void gmsh::model::mesh::getHierarchicalBasisForElements(
             int indiceOrder = k - vSize - var + 3;
             iterator++;
             if(change) {
-              MEdge edge = e->getEdge(localNumEdge);
-              globalNumEdge = GModel::current()->getMEdgeKey(edge);
+              globalNumEdge =  edgeGlobalIndice[localNumEdge];
               change = false;
             }
             keys.push_back(std::pair<int, int>(indiceOrder, globalNumEdge));
@@ -2032,10 +2031,10 @@ GMSH_API void gmsh::model::mesh::getHierarchicalBasisForElements(
               iterator = 0;
               var2--;
             }
-            hierarchicalBasis[const2  * i +
+            basisFunctions[const2  * i +
                                const3 * elementIterator + 2 * k] =
               bTableU[k - n2];
-            hierarchicalBasis[const2 * i  +
+            basisFunctions[const2 * i  +
                               const3 * elementIterator + 2 * k + 1] =
               bTableV[k - n2];
             keys.push_back(

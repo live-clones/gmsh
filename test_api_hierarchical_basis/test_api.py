@@ -40,9 +40,11 @@ order=2
 #gmsh.write("square_element.msh")
 #vElementTypes = model.mesh.getElementTypes(2,1)
 #elementType=vElementTypes[0]
-#bs, we ,ky=model.mesh.getHierarchicalBasisForElements(INTEGRATION,vElementTypes[0], 'Legendre',order) 
+#bs, we ,ky=model.mesh.getBasisFunctionsForElements(INTEGRATION,vElementTypes[0], 'Legendre',order) 
 #print(bs)
+#print(len(bs))
 #print(ky)
+#print(len(ky))
 #info=model.mesh.getInformationForElements(ky,order, "Legendre")
 #print(info)
 #gmsh.finalize()
@@ -62,7 +64,7 @@ order=2
 #model.mesh.setRecombine(2,1)
 #model.mesh.generate(2)
 #gmsh.write("mesh_square.msh")
-#bs, we ,ky=model.mesh.getHierarchicalBasisForElements(INTEGRATION,3, 'Legendre',order) 
+#bs, we ,ky=model.mesh.getBasisFunctionsForElements(INTEGRATION,3, 'Legendre',order) 
 #print(len(bs))
 #print(bs)
 #print(len(ky))
@@ -72,7 +74,7 @@ order=2
 #gmsh.finalize()
 
 #test3
-#
+
 def create_geometry():
     model.add("poisson")
     surf = []
@@ -110,9 +112,8 @@ model.mesh.setRecombine(2,4)
 model.mesh.generate(2)
 gmsh.write("poisson.msh")
    
-sf, weights ,ky = model.mesh.getHierarchicalBasisForElements(INTEGRATION,3, 'Legendre',
-                                                                                order)           
-#print(sf)
+sf, weights ,ky = model.mesh.getBasisFunctionsForElements(INTEGRATION,3, 'Legendre',order)           
+print(sf)
 print(len(sf))
 #print(ky)
 info=model.mesh.getInformationForElements(ky,order, "Legendre")

@@ -1678,10 +1678,10 @@ class model:
                 _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value))
 
         @staticmethod
-        def getHierarchicalBasisForElements(integrationType, elementType, functionSpaceType, order, tag=-1):
+        def getBasisFunctionsForElements(integrationType, elementType, functionSpaceType, order, tag=-1):
             """
-            Get the hierarchical basis of the element of type `elementType' for the
-            given `integrationType' integration rule. 'HierarchicalBasis' conatains the
+            Get the basis function of the element of type `elementType' for the given
+            `integrationType' integration rule. 'basisFunctions' contains the
             evaluation of de the basis functions at the integration points. 'weight'
             conntains the Gauss weights. 'order' is the polynomial order. Each physical
             mesh edge (or Face) will  be assigned a unique orientation,and all edges
@@ -1691,16 +1691,16 @@ class model:
             orientation.The global edge orientation always pointing from the vertex
             with the lower global vertex number to the one with the higher one.
 
-            Return `hierarchicalBasis', `weight', `keys'.
+            Return `basisFunctions', `weight', `keys'.
             """
-            api_hierarchicalBasis_, api_hierarchicalBasis_n_ = POINTER(c_double)(), c_size_t()
+            api_basisFunctions_, api_basisFunctions_n_ = POINTER(c_double)(), c_size_t()
             api_weight_, api_weight_n_ = POINTER(c_double)(), c_size_t()
             api_keys_, api_keys_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetHierarchicalBasisForElements(
+            lib.gmshModelMeshGetBasisFunctionsForElements(
                 c_char_p(integrationType.encode()),
                 c_int(elementType),
-                byref(api_hierarchicalBasis_), byref(api_hierarchicalBasis_n_),
+                byref(api_basisFunctions_), byref(api_basisFunctions_n_),
                 byref(api_weight_), byref(api_weight_n_),
                 c_char_p(functionSpaceType.encode()),
                 c_int(order),
@@ -1709,10 +1709,10 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetHierarchicalBasisForElements returned non-zero error code: ",
+                    "gmshModelMeshGetBasisFunctionsForElements returned non-zero error code: ",
                     ierr.value)
             return (
-                _ovectordouble(api_hierarchicalBasis_, api_hierarchicalBasis_n_.value),
+                _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value),
                 _ovectordouble(api_weight_, api_weight_n_.value),
                 _ovectorpair(api_keys_, api_keys_n_.value))
 

@@ -11,7 +11,6 @@
 #include <set>
 #include <map>
 #include <string>
-#include <unordered_map>
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -19,6 +18,13 @@
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
 
+
+#if __cplusplus >= 201103L
+#include <unordered_map>
+#define hashmap std::unordered_map
+#else
+#define hashmap std::map
+#endif
 template <class scalar> class simpleFunction;
 
 class GEO_Internals;
@@ -42,7 +48,7 @@ private:
   std::set<GFace *, GEntityLessThan> _chainFaces;
   std::set<GEdge *, GEntityLessThan> _chainEdges;
   std::set<GVertex *, GEntityLessThan> _chainVertices;
-  std::unordered_map<int, MEdge> _mapEdgeNum;
+  hashmap<int, MEdge> _mapEdgeNum;
   // the maximum vertex and element id number in the mesh
   int _maxVertexNum, _maxElementNum;
   int _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
@@ -228,9 +234,8 @@ public:
     maxv = _checkPointedMaxVertexNum;
     maxe = _checkPointedMaxElementNum;
   }
-  // number the edges
-  void addMEdge(MEdge edge);
-  int getMEdgeKey(MEdge edge);
+  // number the edges 
+  int addMEdge(MEdge edge); // to _mapEdgeNum
   // renumber mesh vertices and elements in a continuous sequence (this
   // invalidates the mesh caches)
   void renumberMeshVertices();

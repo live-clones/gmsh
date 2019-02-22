@@ -618,8 +618,8 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
                                              double ** basisFunctions, size_t * basisFunctions_n,
                                              int * ierr);
 
-/* Get the hierarchical basis of the element of type `elementType' for the
- * given `integrationType' integration rule. 'HierarchicalBasis' conatains the
+/* Get the basis function of the element of type `elementType' for the given
+ * `integrationType' integration rule. 'basisFunctions' contains the
  * evaluation of de the basis functions at the integration points. 'weight'
  * conntains the Gauss weights. 'order' is the polynomial order. Each physical
  * mesh edge (or Face) will  be assigned a unique orientation,and all edges
@@ -628,15 +628,15 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
  * reference domain through the reference map has the same or opposite
  * orientation.The global edge orientation always pointing from the vertex
  * with the lower global vertex number to the one with the higher one. */
-GMSH_API void gmshModelMeshGetHierarchicalBasisForElements(const char * integrationType,
-                                                           const int elementType,
-                                                           double ** hierarchicalBasis, size_t * hierarchicalBasis_n,
-                                                           double ** weight, size_t * weight_n,
-                                                           const char * functionSpaceType,
-                                                           const int order,
-                                                           int ** keys, size_t * keys_n,
-                                                           const int tag,
-                                                           int * ierr);
+GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const char * integrationType,
+                                                        const int elementType,
+                                                        double ** basisFunctions, size_t * basisFunctions_n,
+                                                        double ** weight, size_t * weight_n,
+                                                        const char * functionSpaceType,
+                                                        const int order,
+                                                        int ** keys, size_t * keys_n,
+                                                        const int tag,
+                                                        int * ierr);
 
 /*  get information about the vectorpair 'Keys' . 'info' contains the order
  * and the type of fonction (vertex=1,edge=2 or bubble=4). 'order' is the

@@ -1418,38 +1418,38 @@ function getBasisFunctions(elementType, integrationType, functionSpaceType)
 end
 
 """
-    gmsh.model.mesh.getHierarchicalBasisForElements(integrationType, elementType, functionSpaceType, order, tag = -1)
+    gmsh.model.mesh.getBasisFunctionsForElements(integrationType, elementType, functionSpaceType, order, tag = -1)
 
-Get the hierarchical basis of the element of type `elementType` for the given
-`integrationType` integration rule. `HierarchicalBasis` conatains the evaluation
-of de the basis functions at the integration points. `weight` conntains the
-Gauss weights. `order` is the polynomial order. Each physical mesh edge (or
-Face) will  be assigned a unique orientation,and all edges (or Faces) of
-physical mesh will be equipped with an orientation tag , indicating whether the
-image of the corresponding edge (or Face) of the reference domain through the
-reference map has the same or opposite orientation.The global edge orientation
-always pointing from the vertex with the lower global vertex number to the one
-with the higher one.
+Get the basis function of the element of type `elementType` for the given
+`integrationType` integration rule. `basisFunctions` contains the evaluation of
+de the basis functions at the integration points. `weight` conntains the Gauss
+weights. `order` is the polynomial order. Each physical mesh edge (or Face) will
+be assigned a unique orientation,and all edges (or Faces) of physical mesh will
+be equipped with an orientation tag , indicating whether the image of the
+corresponding edge (or Face) of the reference domain through the reference map
+has the same or opposite orientation.The global edge orientation always pointing
+from the vertex with the lower global vertex number to the one with the higher
+one.
 
-Return `hierarchicalBasis`, `weight`, `keys`.
+Return `basisFunctions`, `weight`, `keys`.
 """
-function getHierarchicalBasisForElements(integrationType, elementType, functionSpaceType, order, tag = -1)
-    api_hierarchicalBasis_ = Ref{Ptr{Cdouble}}()
-    api_hierarchicalBasis_n_ = Ref{Csize_t}()
+function getBasisFunctionsForElements(integrationType, elementType, functionSpaceType, order, tag = -1)
+    api_basisFunctions_ = Ref{Ptr{Cdouble}}()
+    api_basisFunctions_n_ = Ref{Csize_t}()
     api_weight_ = Ref{Ptr{Cdouble}}()
     api_weight_n_ = Ref{Csize_t}()
     api_keys_ = Ref{Ptr{Cint}}()
     api_keys_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetHierarchicalBasisForElements, gmsh.lib), Nothing,
+    ccall((:gmshModelMeshGetBasisFunctionsForElements, gmsh.lib), Nothing,
           (Ptr{Cchar}, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cchar}, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          integrationType, elementType, api_hierarchicalBasis_, api_hierarchicalBasis_n_, api_weight_, api_weight_n_, functionSpaceType, order, api_keys_, api_keys_n_, tag, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetHierarchicalBasisForElements returned non-zero error code: $(ierr[])")
-    hierarchicalBasis = unsafe_wrap(Array, api_hierarchicalBasis_[], api_hierarchicalBasis_n_[], own=true)
+          integrationType, elementType, api_basisFunctions_, api_basisFunctions_n_, api_weight_, api_weight_n_, functionSpaceType, order, api_keys_, api_keys_n_, tag, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetBasisFunctionsForElements returned non-zero error code: $(ierr[])")
+    basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], own=true)
     weight = unsafe_wrap(Array, api_weight_[], api_weight_n_[], own=true)
     tmp_api_keys_ = unsafe_wrap(Array, api_keys_[], api_keys_n_[], own=true)
     keys = [ (tmp_api_keys_[i], tmp_api_keys_[i+1]) for i in 1:2:length(tmp_api_keys_) ]
-    return hierarchicalBasis, weight, keys
+    return basisFunctions, weight, keys
 end
 
 """
