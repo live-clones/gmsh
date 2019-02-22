@@ -189,7 +189,6 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, int sizeofstr,
                                double &minX, double &minY, double &minZ,
                                double &maxX, double &maxY, double &maxZ)
 {
-  const std::size_t nbb = (version < 4.1 || dim > 0) ? 6 : 3;
   if(partition) {
     if(binary) {
       int dataInt[3];
@@ -211,6 +210,7 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, int sizeofstr,
       if(swap)
         SwapBytes((char *)&partitions[0], sizeof(int), numPart);
       double dataDouble[6];
+      const std::size_t nbb = (dim > 0) ? 6 : 3;
       if(fread(dataDouble, sizeof(double), nbb, fp) != nbb) {
         return false;
       }
@@ -234,7 +234,7 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, int sizeofstr,
           return false;
         }
       }
-      if(nbb == 6){
+      if(version < 4.1 || dim > 0){
         if(fscanf(fp, "%lf %lf %lf %lf %lf %lf", &minX, &minY, &minZ, &maxX,
                   &maxY, &maxZ) != 6) {
           return false;
@@ -261,6 +261,7 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, int sizeofstr,
       }
       if(swap) SwapBytes((char *)&dataInt, sizeof(int), 1);
       double dataDouble[6];
+      const std::size_t nbb = (dim > 0) ? 6 : 3;
       if(fread(dataDouble, sizeof(double), nbb, fp) != nbb) {
         return false;
       }
@@ -274,7 +275,7 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, int sizeofstr,
       maxZ = dataDouble[(nbb == 6) ? 5 : 2];
     }
     else {
-      if(nbb == 6){
+      if(version < 4.1 || dim > 0){
         if(fscanf(fp, "%d %lf %lf %lf %lf %lf %lf", &tag, &minX, &minY, &minZ,
                   &maxX, &maxY, &maxZ) != 7) {
           return false;
@@ -507,18 +508,15 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
   nbrNodes = 0;
   maxNodeNum = 0;
   if(binary) {
-    const std::size_t nd = (version >= 4.1) ? 4 : 2;
     std::size_t data[4];
-    if(fread(data, sizeof(std::size_t), nd, fp) != nd) {
+    if(fread(data, sizeof(std::size_t), 4, fp) != 4) {
       return 0;
     }
-    if(swap) SwapBytes((char *)data, sizeof(std::size_t), nd);
+    if(swap) SwapBytes((char *)data, sizeof(std::size_t), 4);
     numBlock = data[0];
     nbrNodes = data[1];
-    if(version >= 4.1){
-      minTag = data[2];
-      maxTag = data[3];
-    }
+    minTag = data[2];
+    maxTag = data[3];
   }
   else {
     if(version >= 4.1){
@@ -552,14 +550,8 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         return 0;
       }
       if(swap) SwapBytes((char *)data, sizeof(int), 3);
-      if(version >= 4.1){
-        entityDim = data[0];
-        entityTag = data[1];
-      }
-      else{
-        entityTag = data[0];
-        entityDim = data[1];
-      }
+      entityDim = data[0];
+      entityTag = data[1];
       parametric = data[2];
 
       if(fread(&numNodes, sizeof(std::size_t), 1, fp) != 1) {
@@ -778,18 +770,15 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
   nbrElements = 0;
   maxElementNum = 0;
   if(binary) {
-    const std::size_t nd = (version >= 4.1) ? 4 : 2;
     std::size_t data[4];
-    if(fread(data, sizeof(std::size_t), nd, fp) != nd) {
+    if(fread(data, sizeof(std::size_t), 4, fp) != 4) {
       return 0;
     }
-    if(swap) SwapBytes((char *)data, sizeof(std::size_t), nd);
+    if(swap) SwapBytes((char *)data, sizeof(std::size_t), 4);
     numBlock = data[0];
     nbrElements = data[1];
-    if(version >= 4.1){
-      minTag = data[2];
-      maxTag = data[3];
-    }
+    minTag = data[2];
+    maxTag = data[3];
   }
   else {
     if(version >= 4.1){
@@ -821,15 +810,8 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         return 0;
       }
       if(swap) SwapBytes((char *)data, sizeof(int), 3);
-
-      if(version >= 4.1){
-        entityDim = data[0];
-        entityTag = data[1];
-      }
-      else{
-        entityTag = data[0];
-        entityDim = data[1];
-      }
+      entityDim = data[0];
+      entityTag = data[1];
       elmType = data[2];
 
       if(fread(&numElements, sizeof(std::size_t), 1, fp) != 1) {
@@ -1003,10 +985,6 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
 static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
                                   bool swap, double version)
 {
-  if(version < 4.1){
-    Msg::Warning("Periodic node reader only supports MSH format >= 4.1");
-    return true;
-  }
   std::size_t numPeriodicLinks = 0;
   if(binary) {
     if(fread(&numPeriodicLinks, sizeof(std::size_t), 1, fp) != 1) {
@@ -1091,24 +1069,56 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
         SwapBytes((char *)&correspondingVertexSize, sizeof(std::size_t), 1);
     }
     else {
-      std::size_t numAffine;
-      if(!fscanf(fp, "%lu", &numAffine)) {
-        return false;
+      if(version >= 4.1){
+        std::size_t numAffine;
+        if(!fscanf(fp, "%lu", &numAffine)) {
+          return false;
+        }
+        if(numAffine){
+          std::vector<double> tfo(numAffine);
+          for(std::size_t i = 0; i < numAffine; i++){
+            if(fscanf(fp, "%lf", &tfo[i]) != 1){
+              return false;
+            }
+          }
+          slave->setMeshMaster(master, tfo);
+        }
+        else{
+          slave->setMeshMaster(master);
+        }
+        if(fscanf(fp, "%lu", &correspondingVertexSize) != 1) {
+          return false;
+        }
       }
-      if(numAffine){
-        std::vector<double> tfo(numAffine);
-        for(std::size_t i = 0; i < numAffine; i++){
-          if(fscanf(fp, "%lf", &tfo[i]) != 1){
+      else{
+        char affine[256];
+        if(!fscanf(fp, "%s", affine)) {
+          return false;
+        }
+        if(!strncmp(affine, "Affine", 6)) {
+          if(!fgets(affine, sizeof(affine), fp)) {
+            return false;
+          }
+          std::vector<double> tfo(16);
+          if(sscanf(affine,
+                    "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf "
+                    "%lf %lf %lf %lf",
+                    &tfo[0], &tfo[1], &tfo[2], &tfo[3], &tfo[4], &tfo[5], &tfo[6],
+                    &tfo[7], &tfo[8], &tfo[9], &tfo[10], &tfo[11], &tfo[12],
+                    &tfo[13], &tfo[14], &tfo[15]) != 16) {
+            return false;
+          }
+          slave->setMeshMaster(master, tfo);
+          if(fscanf(fp, "%lu", &correspondingVertexSize) != 1) {
             return false;
           }
         }
-        slave->setMeshMaster(master, tfo);
-      }
-      else{
-        slave->setMeshMaster(master);
-      }
-      if(fscanf(fp, "%lu", &correspondingVertexSize) != 1) {
-        return false;
+        else {
+          slave->setMeshMaster(master);
+          if(sscanf(affine, "%lu", &correspondingVertexSize) != 1) {
+            return false;
+          }
+        }
       }
     }
 
@@ -1319,12 +1329,10 @@ int GModel::_readMSH4(const std::string &name)
                    "machine sizeof(size_t) = %d", size, sizeof(std::size_t));
         return false;
       }
-
       if(binary && version < 4.1){
         Msg::Error("Can only read MSH 4.0 format in ASCII mode");
         return false;
       }
-
     }
     else if(!strncmp(&str[1], "PhysicalNames", 13)) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) {
@@ -1545,7 +1553,6 @@ static void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
                                  double scalingFactor, bool binary,
                                  int dim, double version)
 {
-  std::size_t nbb = (version < 4.1 || dim > 0) ? 6 : 3;
   double bb[6] = {0., 0., 0., 0., 0., 0.};
   if(!boundBox.empty()) {
     boundBox *= scalingFactor;
@@ -1557,10 +1564,12 @@ static void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
     bb[5] = boundBox.max().z();
   }
   if(binary) {
-    fwrite(bb, sizeof(double), nbb, fp);
+    fwrite(bb, sizeof(double), (dim > 0) ? 6 : 3, fp);
   }
   else {
-    for(std::size_t i = 0; i < nbb; i++) fprintf(fp, "%.16g ", bb[i]);
+    std::size_t n = (version < 4.1 || dim > 0) ? 6 : 3;
+    for(std::size_t i = 0; i < n; i++)
+      fprintf(fp, "%.16g ", bb[i]);
   }
 }
 
@@ -2132,14 +2141,8 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
     int entityDim = ge->dim();
     int entityTag = ge->tag();
     std::size_t numVerts = ge->getNumMeshVertices();
-    if(version >= 4.1){
-      fwrite(&entityDim, sizeof(int), 1, fp);
-      fwrite(&entityTag, sizeof(int), 1, fp);
-    }
-    else{
-      fwrite(&entityTag, sizeof(int), 1, fp);
-      fwrite(&entityDim, sizeof(int), 1, fp);
-    }
+    fwrite(&entityDim, sizeof(int), 1, fp);
+    fwrite(&entityTag, sizeof(int), 1, fp);
     fwrite(&saveParametric, sizeof(int), 1, fp);
     fwrite(&numVerts, sizeof(std::size_t), 1, fp);
   }
@@ -2218,30 +2221,28 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   }
 
   std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
-  if(version >= 4.1){
-    for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it) {
-      for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++){
-        minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
-        maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
-      }
+  for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it) {
+    for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++){
+      minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
+      maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
     }
-    for(GModel::eiter it = edges.begin(); it != edges.end(); ++it) {
-      for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++){
-        minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
-        maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
-      }
+  }
+  for(GModel::eiter it = edges.begin(); it != edges.end(); ++it) {
+    for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++){
+      minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
+      maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
     }
-    for(GModel::fiter it = faces.begin(); it != faces.end(); ++it) {
-      for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++){
-        minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
-        maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
-      }
+  }
+  for(GModel::fiter it = faces.begin(); it != faces.end(); ++it) {
+    for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++){
+      minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
+      maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
     }
-    for(GModel::riter it = regions.begin(); it != regions.end(); ++it) {
-      for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++){
-        minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
-        maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
-      }
+  }
+  for(GModel::riter it = regions.begin(); it != regions.end(); ++it) {
+    for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++){
+      minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
+      maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
     }
   }
 
@@ -2250,10 +2251,8 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
       vertices.size() + edges.size() + faces.size() + regions.size();
     fwrite(&numSection, sizeof(std::size_t), 1, fp);
     fwrite(&numVertices, sizeof(std::size_t), 1, fp);
-    if(version >= 4.1){
-      fwrite(&minTag, sizeof(std::size_t), 1, fp);
-      fwrite(&maxTag, sizeof(std::size_t), 1, fp);
-    }
+    fwrite(&minTag, sizeof(std::size_t), 1, fp);
+    fwrite(&maxTag, sizeof(std::size_t), 1, fp);
   }
   else {
     if(version >= 4.1){
@@ -2417,14 +2416,12 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
   for(int dim = 0; dim <= 3; dim++) numSection += elementsByType[dim].size();
 
   std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
-  if(version >= 4.1){
-    for(int dim = 0; dim <= 3; dim++) {
-      for(std::map<std::pair<int, int>, std::vector<MElement *> >::iterator it =
-            elementsByType[dim].begin(); it != elementsByType[dim].end(); ++it) {
-        for(std::size_t i = 0; i < it->second.size(); i++){
-          minTag = std::min(minTag, it->second[i]->getNum());
-          maxTag = std::max(maxTag, it->second[i]->getNum());
-        }
+  for(int dim = 0; dim <= 3; dim++) {
+    for(std::map<std::pair<int, int>, std::vector<MElement *> >::iterator it =
+          elementsByType[dim].begin(); it != elementsByType[dim].end(); ++it) {
+      for(std::size_t i = 0; i < it->second.size(); i++){
+        minTag = std::min(minTag, it->second[i]->getNum());
+        maxTag = std::max(maxTag, it->second[i]->getNum());
       }
     }
   }
@@ -2432,10 +2429,8 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
   if(binary) {
     fwrite(&numSection, sizeof(std::size_t), 1, fp);
     fwrite(&numElements, sizeof(std::size_t), 1, fp);
-    if(version >= 4.1){
-      fwrite(&minTag, sizeof(std::size_t), 1, fp);
-      fwrite(&maxTag, sizeof(std::size_t), 1, fp);
-    }
+    fwrite(&minTag, sizeof(std::size_t), 1, fp);
+    fwrite(&maxTag, sizeof(std::size_t), 1, fp);
   }
   else {
     if(version >= 4.1)
@@ -2451,14 +2446,8 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
       int elmType = it->first.second;
       std::size_t numElm = it->second.size();
       if(binary) {
-        if(version >= 4.1){
-          fwrite(&dim, sizeof(int), 1, fp);
-          fwrite(&entityTag, sizeof(int), 1, fp);
-        }
-        else{
-          fwrite(&entityTag, sizeof(int), 1, fp);
-          fwrite(&dim, sizeof(int), 1, fp);
-        }
+        fwrite(&dim, sizeof(int), 1, fp);
+        fwrite(&entityTag, sizeof(int), 1, fp);
         fwrite(&elmType, sizeof(int), 1, fp);
         fwrite(&numElm, sizeof(std::size_t), 1, fp);
       }
@@ -2508,11 +2497,6 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
     if(entities[i]->getMeshMaster() != entities[i]) count++;
 
   if(!count) return;
-
-  if(version < 4.1){
-    Msg::Warning("Periodic node writer only supports MSH format >= 4.1");
-    return;
-  }
 
   fprintf(fp, "$Periodic\n");
 
@@ -2565,14 +2549,24 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
         fprintf(fp, "%d %d %d\n", g_slave->dim(), g_slave->tag(),
                 g_master->tag());
 
-        if(g_slave->affineTransform.size() == 16) {
-          fprintf(fp, "16");
-          for(int j = 0; j < 16; j++)
-            fprintf(fp, " %.16g", g_slave->affineTransform[j]);
-          fprintf(fp, "\n");
+        if(version >= 4.1){
+          if(g_slave->affineTransform.size() == 16) {
+            fprintf(fp, "16");
+            for(int j = 0; j < 16; j++)
+              fprintf(fp, " %.16g", g_slave->affineTransform[j]);
+            fprintf(fp, "\n");
+          }
+          else{
+            fprintf(fp, "0\n");
+          }
         }
         else{
-          fprintf(fp, "0\n");
+          if(g_slave->affineTransform.size() == 16) {
+            fprintf(fp, "Affine");
+            for(int j = 0; j < 16; j++)
+              fprintf(fp, " %.16g", g_slave->affineTransform[j]);
+            fprintf(fp, "\n");
+          }
         }
 
         fprintf(fp, "%lu\n", g_slave->correspondingVertices.size());
@@ -2671,6 +2665,11 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   if(!fp) {
     Msg::Error("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  if(version < 4.1 && binary){
+    Msg::Error("Can only write MSH 4.0 format in ASCII mode");
     return 0;
   }
 
