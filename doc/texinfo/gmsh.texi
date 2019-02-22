@@ -3604,63 +3604,39 @@ cases.)
 
 The MSH file format 4 (at its current revision, version 4.1) contains
 one mandatory section giving information about the file
-(@code{$MeshFormat}), followed by several sections defining the physical
-group names (@code{$PhysicalName}, optional), the entities
-(@code{$Entities}, optional), the partitioned entities
-(@code{$PartitionedEntities}, optional), nodes (@code{$Nodes}), elements
-(@code{$Elements}), periodicity relations (@code{$Periodic}, optional),
-ghost elements (@code{$GhostElements}, optional) and post-processing
-datasets (@code{$NodeData}, @code{$ElementData},
-@code{$ElementNodeData}, all optional).
+(@code{$MeshFormat}), followed by several optional sections defining the
+physical group names (@code{$PhysicalName}), the entities
+(@code{$Entities}), the partitioned entities
+(@code{$PartitionedEntities}), nodes (@code{$Nodes}), elements
+(@code{$Elements}), periodicity relations (@code{$Periodic}), ghost
+elements (@code{$GhostElements}) and post-processing datasets
+(@code{$NodeData}, @code{$ElementData}, @code{$ElementNodeData}).
+
+To represent a mesh, the minimal sections that should be present in the
+file are @code{$MeshFormat}, @code{$Nodes} and @code{$Elements}. Nodes
+are assumed to be defined before elements. Sections can be repeated in
+the same file, and post-processing sections can be put into separate
+files (e.g. one file per time step). Any section with an unrecognized
+header is simply ignored: you can thus add comments in a @file{.msh}
+file by putting them e.g. inside a @code{$Comments}/@code{$EndComments}
+section.
 
 Important note about efficiency. Node and element tags can be "sparse",
 i.e., do not have to constitute a continuous list of indexes starting at
-1. However, using non-continuous tags will lead to performance
-degradation. For meshes, non-continuous indexing forces Gmsh to use a
-map instead of a vector to access nodes and elements. The performance
-hit is on speed. For post-processing datasets, which always use vectors
-to access data, the performance hit is on memory. A @code{$NodeData} with
-two nodes, tagged 1 and 1000000, will allocate a (mostly empty) vector
-of 1000000 elements.
-
-Any section with an unrecognized header is simply ignored: you can thus
-add comments in a @file{.msh} file by putting them e.g. inside a
-@code{$Comments}/@code{$EndComments} section.
-
-Sections can be repeated in the same file, and post-processing sections
-can be put into separate files (e.g. one file per time step).  Nodes are
-assumed to be defined before elements.
+1. However, using sparse tags will lead to performance degradation. For
+meshes, non-continuous indexing forces Gmsh to use a map instead of a
+vector to access nodes and elements. The performance hit is on
+speed. For post-processing datasets, which always use vectors to access
+data, the performance hit is on memory. A @code{$NodeData} with two
+nodes, tagged 1 and 1000000, will allocate a (mostly empty) vector of
+1000000 elements.
 
 In binary mode (@code{Mesh.Binary=1} or @code{-bin} on the command
 line), all the numerical values (integer and floating point) not marked
-as ASCII in what follows are written in binary form.
+as ASCII in the format description below are written in binary form,
+using the type given in between the parentheses.
 
-The 4.1 revision of the format includes the following modifications with
-respect to the initial 4.0 version:
-@itemize @bullet
-@item
-All the @code{unsigned long} entries are changed to @code{size_t}. All
-the entries designating counts which were previsouly encoded as
-@code{int} are also changed to @code{size_t}. (This only impacts binary
-files.)
-@item
-The @code{$Entities} section is now optional.
-@item
-The bounding box for point entities is simply replaced by the 3
-coordinates of the point (instead of the six bounding box values).
-@item
-The @code{entityDim} and @code{entityTag} values are switched in the
-@code{$Nodes} and @code{$Elements} sections (for consistency with the
-ordering used elsewhere).
-@item
-The minimum and the maximum tag of nodes (resp. elements) is added in
-the header of the @code{$Nodes} (resp. @code{$Elements}) section, to
-facilitate the detection of sparse or dense numberings when reading the
-file.
-@item
-The @code{$Periodic} section has been changed to always provide the
-number of values in the affine transform (which can be zero).
-@end itemize
+The format is defined as follows:
 
 @example
 $MeshFormat // same as MSH version 2
@@ -3670,13 +3646,13 @@ $MeshFormat // same as MSH version 2
   <int with value one; only in binary mode, to detect endianness>
 $EndMeshFormat
 
-<$PhysicalNames> // same as MSH version 2
+$PhysicalNames // same as MSH version 2
   numPhysicalNames(ASCII int)
   dimension(ASCII int) tag(ASCII int) name(127 characters max)
   ...
-<$EndPhysicalNames>
+$EndPhysicalNames
 
-<$Entities>
+$Entities
   numPoints(size_t) numCurves(size_t)
     numSurfaces(size_t) numVolumes(size_t)
   pointTag(int) X(double) Y(double) Z(double)
@@ -3697,9 +3673,9 @@ $EndMeshFormat
     numPhysicals(size_t) physicalTag(int) ...
     numBoundngSurfaces(size_t) surfaceTag(int) ...
   ...
-<$EndEntities>
+$EndEntities
 
-<$PartitionedEntities>
+$PartitionedEntities
   numPartitions(size_t)
   numGhostEntities(size_t)
     ghostEntityTag(int) partition(int)
@@ -3732,7 +3708,7 @@ $EndMeshFormat
     numPhysicals(size_t) physicalTag(int) ...
     numBoundingSurfaces(size_t) surfaceTag(int) ...
   ...
-<$EndPartitionedEntities>
+$EndPartitionedEntities
 
 $Nodes
   numEntityBlocks(size_t) numNodes(size_t)
@@ -3752,7 +3728,7 @@ $Elements
   ...
 $EndElements
 
-<$Periodic>
+$Periodic
   numPeriodicLinks(size_t)
   slaveEntityDim(int) slaveEntityTag(int) masterEntityTag(int)
   numAffine(size_t) value(double) ...
@@ -3760,16 +3736,16 @@ $EndElements
     nodeTag(size_t) nodeTag(size_t)
     ...
   ...
-<$EndPeriodic>
+$EndPeriodic
 
-<$GhostElements>
+$GhostElements
   numGhostElements(size_t)
   elementTag(size_t) partitionTag(int)
     numGhostPartitions(size_t) ghostPartitionTag(int) ...
   ...
-<$EndGhostElements>
+$EndGhostElements
 
-<$NodeData>
+$NodeData
   numStringTags(ASCII int)
   stringTag(string) ...
   numRealTags(ASCII int)
@@ -3778,9 +3754,9 @@ $EndElements
   integerTag(ASCII int) ...
   nodeTag(size_t) value(double) ...
   ...
-<$EndNodeData>
+$EndNodeData
 
-<$ElementData>
+$ElementData
   numStringTags(ASCII int)
   stringTag(string) ...
   numRealTags(ASCII int)
@@ -3789,9 +3765,9 @@ $EndElements
   integerTag(ASCII int) ...
   elementTag(size_t) value(double) ...
   ...
-<$EndElementData>
+$EndElementData
 
-<$ElementNodeData>
+$ElementNodeData
   numStringTags(ASCII int)
   stringTag(string) ...
   numRealTags(ASCII int)
@@ -3800,15 +3776,15 @@ $EndElements
   integerTag(ASCII int) ...
   elementTag(size_t) numNodesPerElement(int) value(double) ...
   ...
-<$EndElementNodeData>
+$EndElementNodeData
 
-<$InterpolationScheme>
+$InterpolationScheme
   name(string)
   numElementTopologies(ASCII int)
   elementTopology
   numInterpolationMatrices(ASCII int)
   numRows(ASCII int) numColumns(ASCII int) value(ASCII double) ...
-<$EndInterpolationScheme>
+$EndInterpolationScheme
 @end example
 
 In the format description above, @code{elementType} is e.g.:
@@ -3907,70 +3883,114 @@ with the edges, 54 with the faces, 27 in the volume)
 @item ...
 @end table
 All the currently supported elements in the format are defined in
-@url{https://gitlab.onelab.info/gmsh/gmsh/blob/master/Common/GmshDefines.h,GmshDefines.h}.
-See below for the ordering of the nodes.
+@url{https://gitlab.onelab.info/gmsh/gmsh/blob/master/Common/GmshDefines.h,GmshDefines.h}. See
+@ref{Node ordering} for the ordering of the nodes.
 
-In the post-processing sections (@code{$NodeData}, @code{$ElementData},
-@code{$ElementNodeData}) generated by Gmsh:
+The post-processing sections (@code{$NodeData}, @code{$ElementData},
+@code{$ElementNodeData}) can contain @code{numStringTags} string tags,
+@code{numRealTags} real value tags and @code{numIntegerTags} integer
+tags. The default set of tags understood by Gmsh is as follows:
 @table @code
-@item numStringTags
-is 1 or 2. The first @code{stringTag} is interpreted as the name of the
-post-processing view and the second as the name of the interpolation
-scheme, as provided in the @code{$InterpolationScheme} section.
-@item numRealTags
-is 1 and is interpreted as a time value associated with the dataset.
-@item numIntegerTags
-is 3 or 4. The first @var{integerTag} is interpreted as a time step
-index (starting at 0), the second as the number of field components of
-the data in the view (1, 3 or 9), the third as the number of entities
-(nodes or elements) in the view, and the fourth as the partition index
-for the view data (0 for no partition).
+@item stringTag
+The first is interpreted as the name of the post-processing view and the
+second as the name of the interpolation scheme, as provided in the
+@code{$InterpolationScheme} section.
+@item realTag
+The first is interpreted as a time value associated with the dataset.
+@item integerTag
+The first is interpreted as a time step index (starting at 0), the
+second as the number of field components of the data in the view (1, 3
+or 9), the third as the number of entities (nodes or elements) in the
+view, and the fourth as the partition index for the view data (0 for no
+partition).
 @end table
 
-The @code{$InterpolationScheme} is defined as in MSH2 (@pxref{MSH file
-format version 2}).
+In the @code{$InterpolationScheme} section:
+@table @code
+@item numElementTopologies
+is the number of element topologies for which interpolation matrices are
+provided.
+@item elementTopology
+is the id tag of a given element topology: 1 for points, 2 for lines, 3
+for triangles, 4 for quadrangles, 5 for tetrahedra, 6 for pyramids, 7
+for prisms, 8 for hexahedra, 9 for polygons and 10 for polyhedra.
+@item numInterpolationMatrices
+is the number of interpolation matrices provided for the given element
+topology. Currently you should provide 2 matrices, i.e., the matrices
+that specify how to interpolate the data (they have the same meaning as
+in @ref{Post-processing commands}). The matrices are specified by 2
+integers (@code{numRows} and @code{numColumns}) followed by the values,
+by row.
+@end table
 
-Below is a small example of a minimal ASCII MSH4.1 file, with a mesh
-consisting of two quadrangles and an associated nodal scalar
-dataset. (The comments are not part of the actual file!)
+Here is a small example of a minimal ASCII MSH4.1 file, with a mesh
+consisting of two quadrangles and an associated nodal scalar dataset
+(the comments are not part of the actual file):
 
 @smallexample
 $MeshFormat
-4.1 0 8          @emph{MSH4.1, ASCII}
+4.1 0 8            @emph{MSH4.1, ASCII}
 $EndMeshFormat
 $Nodes
-1 6 1 6          @emph{1 bloc, 6 nodes total, min/max node tags: 1 and 6}
-2 1 0 6          @emph{surface 1, no parametric coordinates, 6 nodes}
-1 0. 0. 0.       @emph{  node #1: coordinates (0., 0., 0.)}
-2 1. 0. 0.       @emph{  node #2: coordinates (1., 0., 0.)}
-3 1. 1. 0.       @emph{  etc.}
+1 6 1 6            @emph{1 bloc, 6 nodes total, min/max node tags: 1 and 6}
+2 1 0 6            @emph{surface 1, no parametric coordinates, 6 nodes}
+1 0. 0. 0.         @emph{  node #1: coordinates (0., 0., 0.)}
+2 1. 0. 0.         @emph{  node #2: coordinates (1., 0., 0.)}
+3 1. 1. 0.         @emph{  etc.}
 4 0. 1. 0.
 5 2. 0. 0.
 6 2. 1. 0.
 $EndNodes
 $Elements
-1 2 1 2          @emph{1 bloc, 2 elements total, min/max element tags: 1 and 2}
-2 1 3 2          @emph{surface 1, element type 3 (4-node quad), 2 elements}
-1 1 2 3 4        @emph{  quad #1: nodes 1 2 3 4}
-2 2 5 6 3        @emph{  quad #2: nodes 2 5 6 3}
+1 2 1 2            @emph{1 bloc, 2 elements total, min/max element tags: 1 and 2}
+2 1 3 2            @emph{surface 1, element type 3 (4-node quad), 2 elements}
+1 1 2 3 4          @emph{  quad #1: nodes 1 2 3 4}
+2 2 5 6 3          @emph{  quad #2: nodes 2 5 6 3}
 $EndElements
 $NodeData
-1                @emph{1 string tag:}
-"A scalar view"  @emph{  the name of the view ("A scalar view")}
-1                @emph{1 real tag:}
-0.0              @emph{  the time value (0.0)}
-3                @emph{3 integer tags:}
-0                @emph{  the time step (0; time steps always start at 0)}
-1                @emph{  1-component (scalar) field}
-6                @emph{  6 associated nodal values}
-1 0.0            @emph{value associated with node #1 (0.0)}
-2 0.1            @emph{value associated with node #2 (0.1)}
-3 0.2            @emph{etc.}
+1                  @emph{1 string tag:}
+"A scalar view"    @emph{  the name of the view ("A scalar view")}
+1                  @emph{1 real tag:}
+0.0                @emph{  the time value (0.0)}
+3                  @emph{3 integer tags:}
+0                  @emph{  the time step (0; time steps always start at 0)}
+1                  @emph{  1-component (scalar) field}
+6                  @emph{  6 associated nodal values}
+1 0.0              @emph{value associated with node #1 (0.0)}
+2 0.1              @emph{value associated with node #2 (0.1)}
+3 0.2              @emph{etc.}
 4 0.0
 5 0.2
 6 0.4
 $EndNodeData
 @end smallexample
+
+The 4.1 revision of the format includes the following modifications with
+respect to the initial 4.0 version:
+@itemize @bullet
+@item
+All the @code{unsigned long} entries are changed to @code{size_t}. All
+the entries designating counts which were previsouly encoded as
+@code{int} are also changed to @code{size_t}. (This only impacts binary
+files.)
+@item
+The @code{$Entities} section is now optional.
+@item
+The bounding box for point entities is simply replaced by the 3
+coordinates of the point (instead of the six bounding box values).
+@item
+The @code{entityDim} and @code{entityTag} values are switched in the
+@code{$Nodes} and @code{$Elements} sections (for consistency with the
+ordering used elsewhere).
+@item
+The minimum and the maximum tag of nodes (resp. elements) is added in
+the header of the @code{$Nodes} (resp. @code{$Elements}) section, to
+facilitate the detection of sparse or dense numberings when reading the
+file.
+@item
+The @code{$Periodic} section has been changed to always provide the
+number of values in the affine transform (which can be zero).
+@end itemize
 
 @c -------------------------------------------------------------------------
 @c Node ordering
