@@ -1857,18 +1857,18 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   HierarchicalBasisH1Quad h1QuadBasis(order, order, order, order, order, order);
-  int nq = weights.size();
-  int vSize = h1QuadBasis.getnVertexFunction();
-  int bSize = h1QuadBasis.getnBubbleFunction();
-  int eSize = h1QuadBasis.getnEdgeFunction();
-  int n2 = vSize + eSize;
-  int n = n2 + bSize;
+  int const  nq = weights.size();
+  int const vSize = h1QuadBasis.getnVertexFunction();
+  int const  bSize = h1QuadBasis.getnBubbleFunction();
+  int const eSize = h1QuadBasis.getnEdgeFunction();
+  int const  n2 = vSize + eSize;
+  int const n = n2 + bSize;
   std::size_t numElements = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     numElements += ge->getNumMeshElementsByType(familyType);
   }
-  int const1=n*numElements;
+  int const const1=n*numElements;
   basisFunctions.resize(const1* numComponents * nq , 0.);
   switch(numComponents) {
   case 1:
@@ -1950,8 +1950,8 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     }
     break;
   case 2:
-    int const2=2*const1;
-    int const3=2*n;
+    int const const2=2*const1;
+    int const const3=2*n;
     for(int i = 0; i < nq; i++) {
       double u = pts(i, 0), v = pts(i, 1);
       double vTableU[vSize];
