@@ -3635,7 +3635,7 @@ In binary mode (@code{Mesh.Binary=1} or @code{-bin} on the command
 line), all the numerical values (integer and floating point) not marked
 as ASCII in what follows are written in binary form.
 
-The 4.1 revision of format includes the following modifications with
+The 4.1 revision of the format includes the following modifications with
 respect to the initial 4.0 version:
 @itemize @bullet
 @item
