@@ -3714,8 +3714,8 @@ $PartitionedEntities
 $EndPartitionedEntities
 
 $Nodes
-  numEntityBlocks(size_t) numNodes(size_t)
-  entityTag(int) entityDim(int) parametric(int; 0 or 1) numNodes(size_t)
+  numEntityBlocks(size_t) numNodes(size_t) minNodeTag(size_t) maxNodeTag(size_t)
+  entityDim(int) entityTag(int) parametric(int; 0 or 1) numNodes(size_t)
     nodeTag(size_t) x(double) y(double) z(double)
        <u(double; if parametric and on curve or surface)>
        <v(double; if parametric and on surface)>
@@ -3724,8 +3724,8 @@ $Nodes
 $EndNodes
 
 $Elements
-  numEntityBlocks(size_t) numElements(size_t)
-  entityTag(int) entityDim(int) elementType(int; see below) numElements(size_t)
+  numEntityBlocks(size_t) numElements(size_t) minElementTag(size_t) maxElementTag(size_t)
+  entityDim(int) entityTag(int) elementType(int; see below) numElements(size_t)
     elementTag(size_t) nodeTag(size_t) ...
     ...
   ...
