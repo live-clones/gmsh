@@ -83,11 +83,9 @@ void GMSH_SimplePartitionPlugin::run()
   std::vector<std::string> expr(1);
   expr[0] = SimplePartitionOptions_String[0].def;
 
-  // partition the highest dimension elements in the current model (lower
-  // dimension elements on boundaries cannot be tagged a priori: there are
-  // special geometrical cases where this will fail)
-  Msg::Info("Partitioning highest dimension elements");
   GModel *m = GModel::current();
+  m->unpartitionMesh();
+
   SBoundingBox3d bbox = m->bounds();
   double pmin = bbox.min()[direction], pmax = bbox.max()[direction];
   std::vector<double> pp(numSlices + 1);
