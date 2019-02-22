@@ -829,7 +829,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
 #endif
           // convert mesh to latest binary format
           if(GModel::current()->getMeshStatus() > 0){
-            CTX::instance()->mesh.mshFileVersion = 4.0;
+            CTX::instance()->mesh.mshFileVersion = 4.1;
             CTX::instance()->mesh.binary = 1;
             CreateOutputFile(fileName, FORMAT_MSH);
           }
