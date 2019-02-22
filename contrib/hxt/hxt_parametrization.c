@@ -644,7 +644,7 @@ HXTStatus hxtParametrizationCreate(HXTMesh *mesh, int nrefinements, HXTParametri
   for(int i=0; i<connect->last+1; i++)
     HXT_CHECK(hxtCuttingProcess(connect->ptr[i],1,0,toparam));
 
-  //  printf("initial cutting process is done\n");
+  printf("initial cutting process is done\n");
   
   HXTVector *atlas;
   HXT_CHECK(hxtVectorInit(&atlas));

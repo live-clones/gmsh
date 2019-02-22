@@ -21,6 +21,8 @@
 #include "Context.h"
 #include "Parser.h"
 
+#include "MLine.h"
+
 #if defined(HAVE_MESH)
 #include "Field.h"
 #endif
@@ -1557,6 +1559,7 @@ int GModel::exportDiscreteGEOInternals()
   }
   _geo_internals = new GEO_Internals;
 
+  
   for(viter it = firstVertex(); it != lastVertex(); it++) {
     Vertex *v = CreateVertex((*it)->tag(), (*it)->x(), (*it)->y(), (*it)->z(),
                              (*it)->prescribedMeshSizeAtVertex(), 1.0);
@@ -1570,6 +1573,12 @@ int GModel::exportDiscreteGEOInternals()
       List_T *points = Tree2List(_geo_internals->Points);
       GVertex *gvb = (*it)->getBeginVertex();
       GVertex *gve = (*it)->getEndVertex();
+      
+      if (!gvb || !gve){
+	Msg::Error("Discrete Edge %d has NULL endpoint(s) : %p %p",(*it)->tag(),gvb,gve);
+	//	for (int i=0;i<(*it)->lines.size();++it)printf("%d %d\n",(*it)->lines[i]->getVertex(0)->getNum(),
+	//						       (*it)->lines[i]->getVertex(1)->getNum());	
+      }
       int nb = 2;
       c->Control_Points = List_Create(nb, 1, sizeof(Vertex *));
       for(int i = 0; i < List_Nbr(points); i++) {

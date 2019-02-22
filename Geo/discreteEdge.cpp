@@ -148,8 +148,51 @@ SVector3 discreteEdge::firstDer(double par) const
 
 double discreteEdge::curvature(double par) const
 {
-  Msg::Error("Curvature for discrete curve not implemented yet");
-  return 0.;
+  double tLoc;
+  int iEdge;
+  if (discrete_lines.size() <= 2) return 0.0; // no clue on how to compute curvature with so few data...
+
+  if(!getLocalParameter(par, iEdge, tLoc)) return 0.0;
+  
+  // Take 3 points x y z : radius of curvature is equal to  |x-y| |x-z| |z-y| / area (x,y,z) 
+  int iEdgePlus = iEdge + 1, iEdgeMinus = iEdge - 1; 
+  if (iEdge == 0){
+    iEdge++;
+    iEdgePlus++;
+    iEdgeMinus++;
+    if (periodic(0)){
+      iEdgeMinus = discrete_lines.size()-1;
+    }
+  }
+  else if (iEdge == discrete_lines.size()-1){
+    iEdge--;
+    iEdgePlus--;
+    iEdgeMinus--;
+    if (periodic(0)){
+      iEdgePlus = 0;
+    }
+  }
+  
+  SPoint3 a ((discrete_lines[iEdgeMinus]->getVertex(0)->x() + discrete_lines[iEdgeMinus]->getVertex(1)->x())*.5,
+	     (discrete_lines[iEdgeMinus]->getVertex(0)->y() + discrete_lines[iEdgeMinus]->getVertex(1)->y())*.5,
+	     (discrete_lines[iEdgeMinus]->getVertex(0)->z() + discrete_lines[iEdgeMinus]->getVertex(1)->z())*.5);
+  SPoint3 b ((discrete_lines[iEdge]->getVertex(0)->x() + discrete_lines[iEdge]->getVertex(1)->x())*.5,
+	     (discrete_lines[iEdge]->getVertex(0)->y() + discrete_lines[iEdge]->getVertex(1)->y())*.5,
+	     (discrete_lines[iEdge]->getVertex(0)->z() + discrete_lines[iEdge]->getVertex(1)->z())*.5);
+  SPoint3 c ((discrete_lines[iEdgePlus]->getVertex(0)->x() + discrete_lines[iEdgePlus]->getVertex(1)->x())*.5,
+	     (discrete_lines[iEdgePlus]->getVertex(0)->y() + discrete_lines[iEdgePlus]->getVertex(1)->y())*.5,
+	     (discrete_lines[iEdgePlus]->getVertex(0)->z() + discrete_lines[iEdgePlus]->getVertex(1)->z())*.5);
+  double A = b.distance(c);
+  double B = c.distance(a);
+  double C = a.distance(b);
+
+  // radius of the circumcircle ...
+  // Heron's formula for the area of a triangle
+  double R = A*B*C/sqrt ((A+B+C)*(-A+B+C)*(A-B+C)*(A+B-C));
+
+  //  printf("R(%d,%g) = %g\n",tag(),par,R);
+  
+  return R = 0.0 ? 1.E22 : 1./R;
 }
 
 Range<double> discreteEdge::parBounds(int i) const
@@ -209,3 +252,128 @@ void discreteEdge::mesh(bool verbose)
   mesher(this);
 #endif
 }
+
+bool discreteEdge::split(MVertex *v, GVertex *gv, int &TAG )
+{
+  
+  GVertex *gv0 = getBeginVertex();
+  GVertex *gv1 = getEndVertex();
+
+  if(v != gv->mesh_vertices[0]){
+    Msg::Error("Wrong vertex for splitting discrete curve");
+    return false;
+  }
+  discreteEdge *de_new[2];
+  
+  de_new[0]  = new discreteEdge(model(), ++TAG, gv0, gv);
+  de_new[1]  = new discreteEdge(model(), ++TAG, gv, gv1);
+  
+  setSplit(de_new[0],de_new[1], gv);
+
+  int current = 0;
+  de_new[current]->lines.push_back(lines[0]);
+  //  printf("lines :");
+  //  for(size_t i = 0; i < lines.size(); i++) {
+  //    printf("(%d %d)",lines[i]->getVertex(0)->onWhat()->tag(),lines[i]->getVertex(1)->onWhat()->tag());
+  // }
+  //  printf("\n");
+  for(size_t i = 1; i < lines.size(); i++) {
+    if(lines[i]->getVertex(0) == v){
+      current++;
+    }
+    else {
+      de_new[current]->mesh_vertices.push_back(lines[i]->getVertex(0));
+      lines[i]->getVertex(0)->setEntity(de_new[current]);
+    }
+    de_new[current]->lines.push_back(lines[i]);
+  }
+  lines.clear();
+  mesh_vertices.clear();
+  Msg::Info ("Edge %d split in %d %d (%d and %d lines)\n",tag(),de_new[0] ->tag(),de_new[1] ->tag(),de_new[0] ->lines.size(),de_new[1] ->lines.size());
+
+  std::vector<GFace*> f = faces();
+  for (size_t i=0;i<f.size();i++){
+    std::vector<GEdge*> new_eds, old_eds;
+    old_eds = f[i]->edges();
+    for (size_t j=0;j<old_eds.size();j++){
+      if (old_eds[j]==this){
+	new_eds.push_back(de_new[0]);
+	new_eds.push_back(de_new[1]);
+	new_eds[0]->addFace(f[i]);
+	new_eds[1]->addFace(f[i]);
+      }
+      else 
+	new_eds.push_back(old_eds[j]);
+    }
+    f[i]->set(new_eds);
+  }
+  model()->add(de_new[0]);
+  model()->add(de_new[1]);
+  model()->remove(this);
+  return true;
+}
+
+
+
+void discreteEdge :: unsplit (void) {
+  if (_split[2] != NULL)return;
+  if (_split[0] == NULL)return;
+  std::vector<GEdge*> l_edges;
+  std::vector<GVertex*> l_vertices;
+  getSplit( l_edges ,  l_vertices);
+  // remove all internal model vertices
+  for (size_t k=0;k<l_vertices.size();k++){
+    l_vertices[k]->mesh_vertices.clear();
+    model()->remove(l_vertices[k]);  
+  }
+  // remove all internal model edges
+  for (size_t k=0;k<l_edges.size();k++){
+    for (int l=0;l<l_edges[k]->lines.size();l++){
+      lines.push_back(l_edges[k]->lines[l]);
+      if (l_edges[k]->lines[l]->getVertex(0)->onWhat() != getBeginVertex() &&
+	  l_edges[k]->lines[l]->getVertex(0)->onWhat() != getEndVertex() &&
+	  l_edges[k]->lines[l]->getVertex(0)->onWhat() != this)
+	l_edges[k]->lines[l]->getVertex(0)->setEntity(this);
+      if (l_edges[k]->lines[l]->getVertex(1)->onWhat() != getBeginVertex() &&
+	  l_edges[k]->lines[l]->getVertex(1)->onWhat() != getEndVertex() &&
+	  l_edges[k]->lines[l]->getVertex(1)->onWhat() != this)
+	l_edges[k]->lines[l]->getVertex(1)->setEntity(this);	      		  
+      if (l_edges[k]->lines[l]->getVertex(1)->onWhat() == this &&
+	  std::find(mesh_vertices.begin(),
+		    mesh_vertices.end(),
+		    l_edges[k]->lines[l]->getVertex(0)) == mesh_vertices.end())
+	mesh_vertices.push_back(l_edges[k]->lines[l]->getVertex(1));
+      if (l_edges[k]->lines[l]->getVertex(1)->onWhat() == this &&
+	  std::find(mesh_vertices.begin(),
+		    mesh_vertices.end(),
+		    l_edges[k]->lines[l]->getVertex(1)) == mesh_vertices.end())
+	mesh_vertices.push_back(l_edges[k]->lines[l]->getVertex(1));		  
+    }
+    l_edges[k]->lines.clear();
+    l_edges[k]->mesh_vertices.clear();
+    model()->remove(l_edges[k]);    
+  }
+  // recompute the right edge 2 face topology
+
+  std::vector<GFace*> f = faces();
+  for (size_t i=0;i<f.size();i++){
+    std::vector<GEdge*> new_eds, old_eds;
+    old_eds = f[i]->edges();
+    new_eds.push_back(this);
+    for (size_t j=0;j<old_eds.size();j++){
+      if (std::find(l_edges.begin(),l_edges.end(),old_eds[j]) == l_edges.end()){
+	new_eds.push_back(old_eds[j]);
+      }
+    }
+    f[i]->set(new_eds);  
+  }
+}
+
+
+
+
+
+
+
+
+

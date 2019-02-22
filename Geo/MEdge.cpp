@@ -86,7 +86,7 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
         it0->second.second = v1;
       }
       else {
-        Msg::Error("wrong topology for a list of edges ");
+        Msg::Error("A list of edges is multiply connected ! ");
       }
     }
     if(it1 == c.end())

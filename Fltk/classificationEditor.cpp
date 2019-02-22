@@ -43,9 +43,10 @@ static void ElementsSelectedMode(classificationEditor *e)
   e->buttons[CLASS_BUTTON_RESET_SELECTION]->activate();
   e->toggles[CLASS_TOGGLE_BOUNDARY]->activate();
   e->inputs[CLASS_VALUE_ANGLE]->activate();
+  e->buttons[CLASS_BUTTON_CLASSIFY]->activate();
 
-  e->buttons[CLASS_BUTTON_SELECT_ELEMENTS]->deactivate();
-  e->buttons[CLASS_BUTTON_SELECT_ALL_ELEMENTS]->deactivate();
+  //  e->buttons[CLASS_BUTTON_SELECT_ELEMENTS]->deactivate();
+  //  e->buttons[CLASS_BUTTON_SELECT_ALL_ELEMENTS]->deactivate();
 }
 
 static void update_edges_cb(Fl_Widget *w, void *data)
@@ -307,9 +308,39 @@ static void select_surfaces_cb(Fl_Widget *w, void *data)
   Msg::StatusGl("");
 }
 
+static void ensureGenusOnePartitions(std::set<GFace*> &faces, GEdge *e){
+
+  std::vector<MEdge> _e;
+  std::set<GFace*>::iterator it = faces.begin();
+  for (;it !=faces.end();++it){
+    discreteFace* df = dynamic_cast<discreteFace*>(*it);
+    if (df && df->triangles.size()){
+      printf("face %d %d triangles\n",df->tag(),df->triangles.size());
+      df->computsSplitEdgesForPartitionIntoGenusOneSurfaces(_e);
+    }
+    else Msg::Error("not a discrete face");
+  }
+  printf("addinfg some %d edges (%d faces)\n",_e.size(),faces.size());
+  for (size_t i=0;i<_e.size();i++){
+    e->lines.push_back(new MLine (_e[i].getVertex(0),_e[i].getVertex(1)));
+  }
+}
+
 static void classify_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor *)data;
+
+  for(GModel::fiter it = GModel::current()->firstFace();
+      it != GModel::current()->lastFace(); ++it)
+    e->faces.insert(*it);
+
+  if (e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()){
+    if (!e->selected) e->selected =
+			new discreteEdge(GModel::current(),
+					 GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
+    GModel::current()->add(e->selected);
+    ensureGenusOnePartitions(e->faces, e->selected);
+  }
 
   GModel::current()->classifyFaces(e->faces);
 
@@ -322,6 +353,7 @@ static void classify_cb(Fl_Widget *w, void *data)
   }
   e->elements.clear();
   e->edges_detected.clear();
+  GModel::current()->pruneMeshVertexAssociations();
   NoElementsSelectedMode(e);
 }
 
@@ -332,7 +364,7 @@ classificationEditor::classificationEditor() : selected(0)
   drawContext::global()->draw();
 
   int BBB = (int)(1.4 * BB);
-  const int width = (int)(3.15 * BBB), height = (int)(9.5 * BH);
+  const int width = (int)(3.15 * BBB), height = (int)(10.5 * BH);
 
   window = new paletteWindow(width, height,
                              CTX::instance()->nonModalWindows ? true : false,
@@ -428,21 +460,27 @@ classificationEditor::classificationEditor() : selected(0)
     x += WB;
     y += BH;
 
-    buttons[CLASS_BUTTON_SELECT_SURFACES] =
-      new Fl_Button(x, y, BBB, BH, "Select surfaces");
-    buttons[CLASS_BUTTON_SELECT_SURFACES]->callback(select_surfaces_cb, this);
+    //    buttons[CLASS_BUTTON_SELECT_SURFACES] =
+    //      new Fl_Button(x, y, BBB, BH, "Select surfaces");
+    //    buttons[CLASS_BUTTON_SELECT_SURFACES]->callback(select_surfaces_cb, this);
 
-    buttons[CLASS_BUTTON_SELECT_ALL_SURFACES] =
-      new Fl_Button(x + BBB + WB, y, (int)(0.5 * BBB) - WB, BH, "All");
-    buttons[CLASS_BUTTON_SELECT_ALL_SURFACES]->callback(select_surfaces_cb,
-                                                        this);
+    //    buttons[CLASS_BUTTON_SELECT_ALL_SURFACES] =
+    //      new Fl_Button(x + BBB + WB, y, (int)(0.5 * BBB) - WB, BH, "All");
+    //    buttons[CLASS_BUTTON_SELECT_ALL_SURFACES]->callback(select_surfaces_cb,
+    //                                                        this);
 
     buttons[CLASS_BUTTON_CLASSIFY] =
-      new Fl_Return_Button((int)(x + 1.5 * BBB + WB), y, BBB, BH, "Reclassify");
+      new Fl_Return_Button((int)(x /*+ 1.5 * BBB + WB*/), y, BBB, BH, "Reclassify");
     buttons[CLASS_BUTTON_CLASSIFY]->callback(classify_cb, this);
-    buttons[CLASS_BUTTON_CLASSIFY]->deactivate();
+    buttons[CLASS_BUTTON_CLASSIFY]->activate();
 
+    
     x -= WB;
+
+    y += BH;
+    toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES] = new Fl_Check_Button( x, y, width - x - 2 * WB, BH, "Ensure Genus one surfaces (needed for parametrization)");
+    toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->type(FL_TOGGLE_BUTTON);
+
   }
 
   window->end();

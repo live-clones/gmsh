@@ -134,9 +134,11 @@ void ensureManifoldFace(GFace *gf)
 
   std::set<MElement *> _allFaces;
 
+  //  printf("ensuring that face %d is manifold ... (%d elements)\n",gf->tag(),gf->getNumMeshElements());
   for(unsigned int i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *e = gf->getMeshElement(i);
     _allFaces.insert(e);
+    //    printf("%d edges\n",e->getNumEdges());
     for(int j = 0; j < e->getNumEdges(); j++) {
       MEdge ed = e->getEdge(j);
       if(_nonManifold.find(ed) == _nonManifold.end()) {
@@ -225,7 +227,7 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
       MVertex *mv = gv->mesh_vertices[0];
       mVertexToGVertex[mv] = gv;
       Msg::Info(
-        "The mesh contains already topological vertex %i containing vertex %i",
+        "The mesh contains already topological GVertex %i containing MVertex %i",
         gv->tag(), mv->getNum());
     }
   }
@@ -309,6 +311,7 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
       if(splits.size() == 1) { // periodic case
         GVertex *gv1 = *(gVerts.begin());
         ge->setBeginVertex(gv1);
+        ge->setEndVertex(gv1);
         gv1->addEdge(ge);
       }
       else {

@@ -3038,6 +3038,7 @@ GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
   int i1 = std::min(t1, t2);
   int i2 = std::max(t1, t2);
 
+  /// FIXME REMOVE INTERNAL EDGES !!!!
   if(i1 == i2) return 0;
 
   std::map<std::pair<int, int>, GEdge *>::iterator it =
@@ -3047,6 +3048,7 @@ GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
       new discreteEdge(GModel::current(),
                        GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
     GModel::current()->add(ge);
+    if(i1 == i2) printf("internal edge %d\n",ge->tag());
     newEdges[std::make_pair(i1, i2)] = ge;
     return ge;
   }
@@ -3120,11 +3122,11 @@ void recurClassifyEdges(MTri3 *t, std::map<MTriangle *, GFace *> &reverse,
       std::map<MLine *, GEdge *, compareMLinePtr>::iterator it =
         lines.find(&ml);
       if(it != lines.end()) {
-        if(touched.find(it->first) == touched.end()) {
+	if(touched.find(it->first) == touched.end()) {
           GEdge *ge = getNewModelEdge(gf1, gf2, newEdges);
           if(ge) ge->lines.push_back(it->first);
-          touched.insert(it->first);
-        }
+	  touched.insert(it->first);
+	}
       }
       if(tn)
         recurClassifyEdges(tn, reverse, lines, touched, trisTouched, newEdges);
@@ -3158,14 +3160,33 @@ void recurClassify(MTri3 *t, GFace *gf,
 void GModel::classifyFaces(std::set<GFace *> &_faces)
 {
 #if defined(HAVE_MESH)
+  // faces are ALL faces of the mesh, if not, this makes NO sense
   std::map<MLine *, GEdge *, compareMLinePtr> lines;
-
+  
+  /// create a structure from mesh edges edges to geometrical edges
+  /// remove existing GEdges but keep track of their traces ...
+  /// remove existing Model Vertices
+  std::vector<GEdge*> __edges;
   for(GModel::eiter it = GModel::current()->firstEdge();
       it != GModel::current()->lastEdge(); ++it) {
-    for(unsigned int i = 0; i < (*it)->lines.size(); i++)
+    for(unsigned int i = 0; i < (*it)->lines.size(); i++){
       lines[(*it)->lines[i]] = *it;
+    }
+    if ((*it)->getBeginVertex())__edges.push_back(*it);
   }
 
+  //  for(GModel::viter it = GModel::current()->firstVertex();
+  //      it != GModel::current()->lastVertex(); ++it) {
+    //    delete *it;
+  //  }
+  vertices.clear();
+  for (size_t i=0;i<__edges.size();++i){
+    remove(__edges[i]);
+    //    delete __edges[i];
+  }
+
+  
+  // create triangle 2 triangle connections
   std::map<MTriangle *, GFace *> reverse_old;
   std::list<MTri3 *> tris;
   {
@@ -3183,8 +3204,11 @@ void GModel::classifyFaces(std::set<GFace *> &_faces)
   }
   if(tris.empty()) return;
 
+  printf("coucou1\n");
   connectTriangles(tris);
+  printf("coucou2\n");
 
+  // classify
   std::map<MTriangle *, GFace *> reverse;
   std::multimap<GFace *, GFace *> replacedBy;
   // color all triangles
@@ -3205,6 +3229,7 @@ void GModel::classifyFaces(std::set<GFace *> &_faces)
     ++it;
   }
 
+  printf("coucou3\n");
   // now we have all faces coloured. If some regions were existing, replace
   // their faces by the new ones
 
@@ -3223,6 +3248,7 @@ void GModel::classifyFaces(std::set<GFace *> &_faces)
     (*rit)->set(std::vector<GFace *>(_newFaces.begin(), _newFaces.end()));
   }
 
+  printf("coucou4\n");
   // color some lines
   it = tris.begin();
   while(it != tris.end()) {
@@ -3242,6 +3268,7 @@ void GModel::classifyFaces(std::set<GFace *> &_faces)
                        trisTouched, newEdges);
 
   std::map<discreteFace *, std::vector<int> > newFaceTopology;
+  printf("coucou5\n");
 
   // check if new edges should not be splitted
   // splitted if composed of several open or closed edges
@@ -3250,6 +3277,7 @@ void GModel::classifyFaces(std::set<GFace *> &_faces)
 
   for(std::map<std::pair<int, int>, GEdge *>::iterator ite = newEdges.begin();
       ite != newEdges.end(); ++ite) {
+    //    printf("%d %d --> %d\n",ite->first.first,ite->first.second,ite->second->tag());
     std::list<MLine *> allSegments;
     for(unsigned int i = 0; i < ite->second->lines.size(); i++)
       allSegments.push_back(ite->second->lines[i]);
@@ -3320,7 +3348,7 @@ void GModel::classifyFaces(std::set<GFace *> &_faces)
       for(std::list<MLine *>::iterator itL =
             segmentsForThisDiscreteEdge.begin();
           itL != segmentsForThisDiscreteEdge.end(); ++itL) {
-        if((*itL)->getVertex(0)->onWhat()->dim() != 0) {
+        if(/*1 ||*/ (*itL)->getVertex(0)->onWhat()->dim() != 0) {
           newGe->mesh_vertices.push_back((*itL)->getVertex(0));
           (*itL)->getVertex(0)->setEntity(newGe);
         }
@@ -3368,12 +3396,28 @@ void GModel::classifyFaces(std::set<GFace *> &_faces)
         }
       }
     }
+    printf("FACE %d with %d triangles\n",(*fit)->tag(),(*fit)->triangles.size());
     if((*fit)->triangles.size())
       (*fit)->mesh_vertices.insert((*fit)->mesh_vertices.begin(),
                                    _verts.begin(), _verts.end());
     else
       remove(*fit);
   }
+
+  for(eiter eit = firstEdge(); eit != lastEdge(); ++eit) {
+    for (size_t i=0;i<(*eit)->lines.size();i++){
+      MLine *l = (*eit)->lines[i];
+      for (int j=0;j<2;j++){
+	GEntity *ge = l->getVertex(j)->onWhat();
+	if (ge != (*eit)->getBeginVertex() && ge != (*eit)->getEndVertex() ){
+	  if (ge->dim() == 0 && (*eit)->getBeginVertex()){
+	    Msg::Error ("edge %d (%d %d) should be split on model vertex %d",(*eit)->tag(),(*eit)->getBeginVertex()->tag(), (*eit)->getEndVertex()->tag(),ge->tag());
+	  }
+	}
+      }
+    }
+  }
+
 #endif
 }
 

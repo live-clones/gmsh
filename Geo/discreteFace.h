@@ -34,6 +34,7 @@ public:
   std::vector<MVertex> v3d;
   std::vector<MTriangle> t2d;
   std::vector<MTriangle> t3d;
+  std::vector<SVector3> CURV;
   std::vector<GEdge *> bnd;
   std::vector<GEdge *> emb;
   hxt_reparam_surf() : oct(NULL) {}
@@ -52,10 +53,15 @@ private:
   std::vector<discreteVertex *> v_internals;
   HXTStatus reparametrize_through_hxt();
   bool
-  compute_topology_of_partition(int nbColors, int *colors, int *nNodes,
-                                int *nodes, double *uv,
-                                std::vector<MVertex *> &c2v,
-                                std::vector<std::vector<MEdge> > &boundaries);
+    compute_topology_of_partition(int nbColors, int *colors, int *nNodes,
+				  int *nodes, double *uv, double* nodalCurvatures,
+				  std::vector<MVertex *> &c2v);
+  bool
+    compute_topology_of_partition2(int nbColors, int *colors, int *nNodes,
+				   int *nodes, double *uv, double* nodalCurvatures,
+				   std::vector<MVertex *> &c2v);
+  void
+    computeSplitEdges(int nbColors, int *colors, std::vector<MEdge> &splitEdges);
 #endif
 
 public:
@@ -93,6 +99,13 @@ public:
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
                                 const SVector3 &p, const double &R,
                                 double uv[2]);
+#if defined(HAVE_HXT)
+  HXTStatus computsSplitEdgesForPartitionIntoGenusOneSurfaces(std::vector<MEdge> &splitEdges);
+#else
+  bool computsSplitEdgesForPartitionIntoGenusOneSurfaces(std::vector<MEdge> &splitEdges){
+    return false;
+  }    
+#endif
 };
 
 #endif
