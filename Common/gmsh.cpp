@@ -482,7 +482,6 @@ GMSH_API int gmsh::model::addDiscreteEntity(const int dim, const int tag,
   case 0: {
     GVertex *gv = new discreteVertex(GModel::current(), outTag);
     GModel::current()->add(gv);
-    e = gv;
     break;
   }
   case 1: {

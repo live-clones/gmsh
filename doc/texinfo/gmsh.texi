@@ -3606,7 +3606,7 @@ The MSH file format 4 (at its current revision, version 4.1) contains
 one mandatory section giving information about the file
 (@code{$MeshFormat}), followed by several sections defining the physical
 group names (@code{$PhysicalName}, optional), the entities
-(@code{$Entities}), the partitioned entities
+(@code{$Entities}, optional), the partitioned entities
 (@code{$PartitionedEntities}, optional), nodes (@code{$Nodes}), elements
 (@code{$Elements}), periodicity relations (@code{$Periodic}, optional),
 ghost elements (@code{$GhostElements}, optional) and post-processing
@@ -3644,6 +3644,8 @@ the entries designating counts which were previsouly encoded as
 @code{int} are also changed to @code{size_t}. (This only impacts binary
 files.)
 @item
+The @code{$Entities} section is now optional.
+@item
 The bounding box for point entities is simply replaced by the 3
 coordinates of the point (instead of the six bounding box values).
 @item
@@ -3674,7 +3676,7 @@ $EndMeshFormat
   ...
 <$EndPhysicalNames>
 
-$Entities
+<$Entities>
   numPoints(size_t) numCurves(size_t)
     numSurfaces(size_t) numVolumes(size_t)
   pointTag(int) X(double) Y(double) Z(double)
@@ -3695,7 +3697,7 @@ $Entities
     numPhysicals(size_t) physicalTag(int) ...
     numBoundngSurfaces(size_t) surfaceTag(int) ...
   ...
-$EndEntities
+<$EndEntities>
 
 <$PartitionedEntities>
   numPartitions(size_t)

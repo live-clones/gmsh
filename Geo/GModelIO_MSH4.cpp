@@ -579,9 +579,36 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
 
     GEntity *entity = model->getEntityByTag(entityDim, entityTag);
     if(!entity) {
-      Msg::Error("Unknown entity %d of dimension %d", entityTag, entityDim);
-      delete [] vertexCache;
-      return 0;
+      switch(entityDim) {
+      case 0: {
+        Msg::Info("Creating discrete point %d", entityTag);
+        GVertex *gv = new discreteVertex(model, entityTag);
+        GModel::current()->add(gv);
+        entity = gv;
+        break;
+      }
+      case 1: {
+        Msg::Info("Creating discrete curve %d", entityTag);
+        GEdge *ge = new discreteEdge(model, entityTag, 0, 0);
+        GModel::current()->add(ge);
+        entity = ge;
+        break;
+      }
+      case 2: {
+        Msg::Info("Creating discrete surface %d", entityTag);
+        GFace *gf = new discreteFace(model, entityTag);
+        GModel::current()->add(gf);
+        entity = gf;
+        break;
+      }
+      case 3: {
+        Msg::Info("Creating discrete volume %d", entityTag);
+        GRegion *gr = new discreteRegion(model, entityTag);
+        GModel::current()->add(gr);
+        entity = gr;
+        break;
+      }
+      }
     }
 
     for(std::size_t j = 0; j < numNodes; j++) {
