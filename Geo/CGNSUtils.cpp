@@ -589,8 +589,6 @@ void updateBoVec<2, MEdge>(
        *--------------------------------------------------------------------*/
 
       {
-        // Get the edge entities that are connected to the vertex
-        std::vector<GEdge *> const &gEdgeList = ent->edges();
         // Find edge entities that are connected to elements in the zone
         std::vector<std::pair<GEdge *, int> > useGEdge;
         const int nFace = faces.size();
