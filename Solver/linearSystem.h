@@ -28,8 +28,8 @@ public:
   // x = A*b
   virtual int matMult() { return 0; }
 
-  void setParameter(std::string const &key, std::string value);
-  std::string getParameter(std::string const &key) const;
+  void setParameter(const std::string &key, std::string value);
+  std::string getParameter(const std::string &key) const;
   virtual void insertInSparsityPattern(int _row, int _col){};
   virtual double normInfRightHandSide() const = 0;
   virtual double normInfSolution() const { return 0; };

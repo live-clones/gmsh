@@ -111,8 +111,8 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
 }
 
 // Test intersection between sphere and segment
-static bool testSegSphereIntersect(SPoint3 const &A, SPoint3 const &B,
-                                   SPoint3 const &P, double const rr)
+static bool testSegSphereIntersect(const SPoint3 &A, const SPoint3 &B,
+                                   const SPoint3 &P, double const rr)
 {
   // Test if separating plane between sphere and segment vertices
   // For each vertex, separation if vertex is outside sphere and P on opposite
@@ -137,8 +137,8 @@ static bool testSegSphereIntersect(SPoint3 const &A, SPoint3 const &B,
 // Test intersection between sphere and triangle
 // Inspired by Christer Ericson,
 // http://realtimecollisiondetection.net/blog/?p=103
-static bool testTriSphereIntersect(SPoint3 const &A, SPoint3 const &B,
-                                   SPoint3 const &C, const SPoint3 &P,
+static bool testTriSphereIntersect(const SPoint3 &A, const SPoint3 &B,
+                                   const SPoint3 &C, const SPoint3 &P,
                                    const double rr)
 {
   // Test if separating plane between sphere and triangle plane
@@ -184,7 +184,7 @@ static bool testTriSphereIntersect(SPoint3 const &A, SPoint3 const &B,
 }
 
 // Approximate test of intersection element with circle/sphere by sampling
-static bool testElInDist(SPoint3 const &p, double limDist, MElement *el)
+static bool testElInDist(const SPoint3 &p, double limDist, MElement *el)
 {
   const double limDistSq = limDist * limDist;
 

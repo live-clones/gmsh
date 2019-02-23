@@ -39,7 +39,7 @@ public:
   void setCurvedTop(double factor);
   void setFlatTop();
   bool isOK() const { return _metaEl; }
-  bool isPointIn(SPoint3 const &p) const;
+  bool isPointIn(const SPoint3 &p) const;
   bool straightToCurved(double *xyzS, double *xyzC) const;
   std::string printPOS();
   void printCoord()

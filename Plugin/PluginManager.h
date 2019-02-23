@@ -29,16 +29,16 @@ public:
   static PluginManager *instance();
 
   // Dynamically add a plugin pluginName.so in dirName
-  void addPlugin(std::string const &fileName);
+  void addPlugin(const std::string &fileName);
 
   // Uninstall a given plugin
-  void uninstallPlugin(std::string const &pluginName) {}
+  void uninstallPlugin(const std::string &pluginName) {}
 
   // Set an option to a value in plugin named pluginName
-  void setPluginOption(std::string const &pluginName, std::string const &option,
+  void setPluginOption(const std::string &pluginName, const std::string &option,
                        double value);
-  void setPluginOption(std::string const &pluginName, std::string const &option,
-                       std::string const &value);
+  void setPluginOption(const std::string &pluginName, const std::string &option,
+                       const std::string &value);
 
   // Iterator on plugins
   std::map<std::string, GMSH_Plugin *>::iterator begin()
@@ -51,14 +51,14 @@ public:
   }
 
   // Find a plugin named pluginName
-  GMSH_Plugin *find(std::string const &pluginName);
+  GMSH_Plugin *find(const std::string &pluginName);
 
   // Get The ONLY Solver Plugin
   GMSH_SolverPlugin *findSolverPlugin();
 
   // Perform an action on the plugin. Default action are Run and
   // Save. Other plugins may perform other actions.
-  void action(std::string const &pluginName, std::string const &action,
+  void action(const std::string &pluginName, const std::string &action,
               void *data);
 };
 

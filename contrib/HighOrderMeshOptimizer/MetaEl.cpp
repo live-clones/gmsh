@@ -391,7 +391,7 @@ void MetaEl::setFlatTop()
   placeOtherNodes();
 }
 
-bool MetaEl::isPointIn(SPoint3 const &p) const
+bool MetaEl::isPointIn(const SPoint3 &p) const
 {
   double xyz[3] = {p.x(), p.y(), p.z()}, uvw[3];
   _metaEl0->xyz2uvw(xyz, uvw);

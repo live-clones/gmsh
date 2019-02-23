@@ -3978,14 +3978,14 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
   return true;
 }
 
-bool OCC_Internals::makeFaceSTL(TopoDS_Face const &s,
+bool OCC_Internals::makeFaceSTL(const TopoDS_Face &s,
                                 std::vector<SPoint2> &vertices_uv,
                                 std::vector<int> &triangles)
 {
   return makeSTL(s, &vertices_uv, 0, 0, triangles);
 }
 
-bool OCC_Internals::makeFaceSTL(TopoDS_Face const &s,
+bool OCC_Internals::makeFaceSTL(const TopoDS_Face &s,
                                 std::vector<SPoint2> &vertices_uv,
                                 std::vector<SPoint3> &vertices,
                                 std::vector<SVector3> &normals,
@@ -3994,7 +3994,7 @@ bool OCC_Internals::makeFaceSTL(TopoDS_Face const &s,
   return makeSTL(s, &vertices_uv, &vertices, &normals, triangles);
 }
 
-bool OCC_Internals::makeFaceSTL(TopoDS_Face const &s,
+bool OCC_Internals::makeFaceSTL(const TopoDS_Face &s,
                                 std::vector<SPoint3> &vertices,
                                 std::vector<SVector3> &normals,
                                 std::vector<int> &triangles)

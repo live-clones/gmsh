@@ -2809,7 +2809,7 @@ int GModel::readGEO(const std::string &name)
 
 void GModel::setPhysicalNumToEntitiesInBox(int EntityDimension,
                                            int PhysicalNumber,
-                                           SBoundingBox3d const &box)
+                                           const SBoundingBox3d &box)
 {
   std::vector<GEntity *> entities;
   getEntitiesInBox(entities, box, EntityDimension);

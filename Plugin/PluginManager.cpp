@@ -93,7 +93,7 @@ PluginManager::~PluginManager()
     delete it->second;
 }
 
-GMSH_Plugin *PluginManager::find(std::string const &pluginName)
+GMSH_Plugin *PluginManager::find(const std::string &pluginName)
 {
   std::map<std::string, GMSH_Plugin *>::iterator it =
     allPlugins.find(pluginName);
@@ -114,8 +114,8 @@ GMSH_SolverPlugin *PluginManager::findSolverPlugin()
   return 0;
 }
 
-void PluginManager::action(std::string const &pluginName,
-                           std::string const &action, void *data)
+void PluginManager::action(const std::string &pluginName,
+                           const std::string &action, void *data)
 {
   GMSH_Plugin *plugin = find(pluginName);
   if(!plugin) throw "Unknown plugin name";
@@ -129,9 +129,9 @@ void PluginManager::action(std::string const &pluginName,
     throw "Unknown plugin action";
 }
 
-void PluginManager::setPluginOption(std::string const &pluginName,
-                                    std::string const &option,
-                                    std::string const &value)
+void PluginManager::setPluginOption(const std::string &pluginName,
+                                    const std::string &option,
+                                    const std::string &value)
 {
   GMSH_Plugin *plugin = find(pluginName);
   if(!plugin) throw "Unknown plugin name";
@@ -146,8 +146,8 @@ void PluginManager::setPluginOption(std::string const &pluginName,
   throw "Unknown plugin option name";
 }
 
-void PluginManager::setPluginOption(std::string const &pluginName,
-                                    std::string const &option,
+void PluginManager::setPluginOption(const std::string &pluginName,
+                                    const std::string &option,
                                     double const value)
 {
   GMSH_Plugin *plugin = find(pluginName);
@@ -323,7 +323,7 @@ void PluginManager::registerDefaultPlugins()
 #endif
 }
 
-void PluginManager::addPlugin(std::string const &fileName)
+void PluginManager::addPlugin(const std::string &fileName)
 {
 #if !defined(HAVE_DLOPEN) || !defined(HAVE_FLTK)
   Msg::Warning("No dynamic plugin loading on this platform");

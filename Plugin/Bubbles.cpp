@@ -67,7 +67,7 @@ private:
   SPoint3 v;
 
 public:
-  compareAngle(SPoint3 const &vv) : v(vv) {}
+  compareAngle(const SPoint3 &vv) : v(vv) {}
   bool operator()(const SPoint3 &b1, const SPoint3 &b2)
   {
     double p1[3] = {b1.x(), b1.y(), b1.z()};

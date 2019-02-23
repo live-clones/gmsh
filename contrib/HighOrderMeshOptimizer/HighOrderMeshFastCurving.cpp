@@ -631,7 +631,7 @@ namespace {
       for(int iV = 0; iV < elt->getNumVertices(); iV++)
         point_.push_back(elt->getVertex(iV)->point());
     }
-    void write(std::string const &fNameBase, int tag)
+    void write(const std::string &fNameBase, int tag)
     {
       std::ostringstream oss;
       oss << fNameBase << "_" << tag << ".msh";
@@ -677,7 +677,7 @@ namespace {
       for(int iV = 0; iV < elt->getNumVertices(); iV++)
         vert_.insert(elt->getVertex(iV));
     }
-    void write(std::string const &fNameBase, int tag)
+    void write(const std::string &fNameBase, int tag)
     {
       std::ostringstream oss;
       oss << fNameBase << "_" << tag << ".msh";
@@ -1096,7 +1096,7 @@ namespace {
                                        GEntity *bndEnt,
                                        std::list<MElement *> &bndElts,
                                        const FastCurvingParameters &p,
-                                       SVector3 const &normal)
+                                       const SVector3 &normal)
   {
     // inspired from curveMeshFromBndElt
 

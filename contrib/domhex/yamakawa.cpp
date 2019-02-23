@@ -5185,7 +5185,7 @@ bool PostOp::valid(MPyramid *pyr)
 template <class T>
 void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl,
                                        int clique_number,
-                                       string const &filename)
+                                       const std::string &filename)
 {
   ofstream out(filename.c_str());
   out << "Graph G {" << endl;
@@ -6068,7 +6068,7 @@ void Recombinator_Graph::buildGraphOnly(GRegion *gr,
 }
 
 void Recombinator_Graph::execute_blossom(unsigned int max_nb_cliques,
-                                         std::string const &filename)
+                                         const std::string &filename)
 {
   GRegion *gr;
   GModel *model = GModel::current();
@@ -6228,7 +6228,7 @@ void Recombinator_Graph::createBlossomInfo(GRegion *gr)
 
 void Recombinator_Graph::execute_blossom(GRegion *gr,
                                          unsigned int max_nb_cliques,
-                                         std::string const &filename)
+                                         const std::string &filename)
 {
   throw;
 

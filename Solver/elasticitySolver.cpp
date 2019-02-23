@@ -385,7 +385,7 @@ void elasticitySolver::setElasticDomain(int phys, double E, double nu)
 }
 
 void elasticitySolver::setLagrangeMultipliers(int phys, double tau,
-                                              SVector3 const &d, int tag,
+                                              const SVector3 &d, int tag,
                                               simpleFunction<double> *f)
 {
   LagrangeMultiplierField field;
@@ -1030,7 +1030,7 @@ PView *elasticitySolver::buildStrainView(const std::string postFileName)
 }
 
 PView *
-elasticitySolver::buildLagrangeMultiplierView(std::string const &postFileName,
+elasticitySolver::buildLagrangeMultiplierView(const std::string &postFileName,
                                               int tag)
 {
   std::cout << "build Lagrange Multiplier View" << std::endl;

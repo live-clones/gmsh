@@ -405,7 +405,7 @@ public:
                                      std::vector<double> p1,
                                      std::vector<double> p2);
   void setPhysicalNumToEntitiesInBox(int EntityDimension, int PhysicalNumber,
-                                     SBoundingBox3d const &box);
+                                     const SBoundingBox3d &box);
 
   // get the name (if any) of a given elementary entity of dimension
   // "dim" and id number "num"

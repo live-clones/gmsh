@@ -567,7 +567,7 @@ public:
   typedef std::map<int, T> ranking_data;
 
   typedef void (*ptrfunction_export)(cliques_compatibility_graph<T> &, int,
-                                     std::string const &);
+                                     const std::string &);
 
   cliques_compatibility_graph(graph &_g,
                               const map<T, std::vector<double> > &_hex_ranks,
@@ -634,7 +634,7 @@ public:
   typedef multimap<hash_key, T> graph_data;
   typedef multimap<hash_key, pair<T, graph_data> > graph;
   typedef void (*ptrfunction_export)(cliques_compatibility_graph<T> &, int,
-                                     std::string const &);
+                                     const std::string &);
 
   cliques_losses_graph(graph &_g,
                        const map<T, std::vector<double> > &_hex_ranks,
@@ -841,11 +841,11 @@ public:
   virtual void buildGraphOnly(GRegion *, unsigned int max_nb_cliques,
                               string filename = string());
   virtual void execute_blossom(unsigned int max_nb_cliques,
-                               std::string const &filename = string());
+                               const std::string &filename = string());
   // What is this function supposed to do?
   // Right now it throws at the first line. JP
   virtual void execute_blossom(GRegion *, unsigned int max_nb_cliques,
-                               std::string const &filename = "mygraph.dot");
+                               const std::string &filename = "mygraph.dot");
   virtual void createBlossomInfo();
   void createBlossomInfo(GRegion *gr);
 
