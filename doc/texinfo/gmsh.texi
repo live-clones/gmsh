@@ -3033,10 +3033,6 @@ Renumbers the node tags in the current mesh in a contiunous sequence.
 Renumbers the elements tags in the current mesh in a contiunous
 sequence.
 
-@item SetPartition @var{expression} @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
-Sets the partition tag of the mesh elements in the entities in
-@var{expression-list} to @var{expression}.
-
 @item < Recursive > Color @var{color-expression} @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Sets the mesh color of the entities in @var{expression-list} to
 @var{color-expression}. @value{SYNC}
