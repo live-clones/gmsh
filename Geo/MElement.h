@@ -424,6 +424,8 @@ public:
   {
     Msg::Error("No integration points defined for this type of element: %d",
                this->getType());
+    *npts = 0;
+    *pts = 0;
   }
   double integrate(double val[], int pOrder, int stride = 1, int order = -1);
   // val[] must contain interpolation data for face/edge vertices of given

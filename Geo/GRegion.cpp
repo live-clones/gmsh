@@ -20,7 +20,7 @@
 
 GRegion::GRegion(GModel *model, int tag) : GEntity(model, tag)
 {
-  resetMeshAttributes();
+  GRegion::resetMeshAttributes();
 }
 
 GRegion::~GRegion()
@@ -30,7 +30,7 @@ GRegion::~GRegion()
     (*it)->delRegion(this);
     ++it;
   }
-  deleteMesh();
+  GRegion::deleteMesh();
 }
 
 void GRegion::deleteMesh(bool onlyDeleteElements)

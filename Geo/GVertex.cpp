@@ -15,7 +15,7 @@ GVertex::GVertex(GModel *m, int tag, double ms) : GEntity(m, tag), meshSize(ms)
 {
 }
 
-GVertex::~GVertex() { deleteMesh(); }
+GVertex::~GVertex() { GVertex::deleteMesh(); }
 
 void GVertex::deleteMesh(bool onlyDeleteElements)
 {

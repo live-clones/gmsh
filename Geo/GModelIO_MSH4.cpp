@@ -608,6 +608,12 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         entity = gr;
         break;
       }
+      default: {
+        Msg::Error("Invalid dimension %d to create discrete entity",
+                   entityDim);
+        delete [] vertexCache;
+        return 0;
+      }
       }
     }
 
