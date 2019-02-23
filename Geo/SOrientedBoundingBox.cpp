@@ -7,6 +7,7 @@
 //   Bastien Gorissen
 //
 
+#include <algorithm>
 #include <cmath>
 #include <time.h>
 

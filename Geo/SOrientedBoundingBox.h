@@ -13,6 +13,7 @@
 #include "SVector3.h"
 #include "SPoint2.h"
 
+#include <algorithm>
 #include <vector>
 
 class SOrientedBoundingRectangle {
