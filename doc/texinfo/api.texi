@@ -99,7 +99,9 @@ are listed in the Gmsh reference manual.
 @end table
 
 @item getNumber
-Get the @code{value} of a numerical option.
+Get the @code{value} of a numerical option. @code{name} is of the form
+"category.option" or "category[num].option". Available categories and options
+are listed in the Gmsh reference manual.
 
 @table @asis
 @item Input:
@@ -111,7 +113,9 @@ Get the @code{value} of a numerical option.
 @end table
 
 @item setString
-Set a string option to @code{value}.
+Set a string option to @code{value}. @code{name} is of the form
+"category.option" or "category[num].option". Available categories and options
+are listed in the Gmsh reference manual.
 
 @table @asis
 @item Input:
@@ -123,7 +127,9 @@ Set a string option to @code{value}.
 @end table
 
 @item getString
-Get the @code{value} of a string option.
+Get the @code{value} of a string option. @code{name} is of the form
+"category.option" or "category[num].option". Available categories and options
+are listed in the Gmsh reference manual.
 
 @table @asis
 @item Input:
@@ -1269,14 +1275,14 @@ Renumber the element tags in a contiunous sequence.
 
 @item setPeriodic
 Set the meshes of the entities of dimension @code{dim} and tag @code{tags} as
-periodic copies of the meshes of entities @code{tagsSource}, using the affine
+periodic copies of the meshes of entities @code{tagsMaster}, using the affine
 transformation specified in @code{affineTransformation} (16 entries of a 4x4
 matrix, by row). Currently only available for @code{dim} == 1 and @code{dim} ==
 2.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tags}, @code{tagsSource}, @code{affineTransform}
+@code{dim}, @code{tags}, @code{tagsMaster}, @code{affineTransform}
 @item Output:
 -
 @item Return:
