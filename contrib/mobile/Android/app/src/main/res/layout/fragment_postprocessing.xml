@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              android:padding="15dp" >
+  <TextView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:text="@string/postpro_intervalstype" />
+  <Spinner
+      android:id="@+id/intervals_type"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content" />
+  <TextView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:text="@string/postpro_intervals" />
+  <SeekBar 
+      android:id="@+id/intervals"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:max="100" />
+  <TextView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:text="@string/postpro_raisez" />
+  <SeekBar 
+      android:id="@+id/raisez"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:max="100" />
+</LinearLayout>

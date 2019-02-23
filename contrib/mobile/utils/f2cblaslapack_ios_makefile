@@ -1,0 +1,45 @@
+
+
+########################################################################################
+# f2cblaslapack: BLAS/LAPACK in C
+########################################################################################
+
+ALL: blas_lib lapack_lib
+
+########################################################################################
+# Specify options to compile and create libraries
+########################################################################################
+CC         = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang
+COPTFLAGS  = -O -arch armv7 -arch armv7s -arch arm64 -fembed-bitcode -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -miphoneos-version-min=7.0
+CNOOPT     = -O0 -arch armv7 -arch armv7s -arch arm64 -fembed-bitcode -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -miphoneos-version-min=7.0
+RM         = /bin/rm
+AR         = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar
+AR_FLAGS   = cr
+LIB_SUFFIX = a
+RANLIB     = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib
+
+########################################################################################
+# compile the source files and create the blas and lapack libs
+########################################################################################
+
+BLAS_LIB_NAME       = libf2cblas.$(LIB_SUFFIX)
+LAPACK_LIB_NAME     = libf2clapack.$(LIB_SUFFIX)
+MAKE_OPTIONS        =  CC="$(CC)" COPTFLAGS="$(COPTFLAGS)" CNOOPT="$(CNOOPT)" AR="$(AR)" AR_FLAGS="$(AR_FLAGS)" RM="$(RM)"
+MAKE_OPTIONS_BLAS   = $(MAKE_OPTIONS) LIBNAME="$(BLAS_LIB_NAME)"
+MAKE_OPTIONS_LAPACK = $(MAKE_OPTIONS) LIBNAME="$(LAPACK_LIB_NAME)"
+
+blas_lib:
+	-@cd blas;   $(MAKE) lib $(MAKE_OPTIONS_BLAS)
+	-@$(RANLIB) $(BLAS_LIB_NAME)
+
+lapack_lib:
+	-@cd lapack; $(MAKE) lib $(MAKE_OPTIONS_LAPACK)
+	-@$(RANLIB) $(LAPACK_LIB_NAME)
+
+clean: cleanblaslapck cleanlib
+
+cleanblaslapck:
+	$(RM) */*.o
+
+cleanlib:
+	$(RM) ./*.a ./*.lib

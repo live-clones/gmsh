@@ -15,10 +15,11 @@ linux64_ci:
   script:
     - mkdir build
     - cd build
+    - export CXXFLAGS=-Werror
     - cmake ${EXTRA_OPTION} ..
     - make -j 8
     - ctest -j 8 --output-on-failure
-    - valgrind --leak-check=full --error-exitcode=1 ./gmsh ../tutorial/t5.geo -2
+    - valgrind --leak-check=full --error-exitcode=1 ./gmsh ../tutorial/t5.geo -3
   tags:
     - linux64
     - docker
@@ -79,18 +80,15 @@ windows64_msvc_ci:
 
 .linux_official: &linux_official
   only:
-    - master@gmsh/asml
+    - master@gmsh/gmsh
   script:
     - mkdir build
     - cd build
     - /usr/local/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DENABLE_NATIVE_FILE_CHOOSER:bool=FALSE -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc -DSLEPC_DIR=/home/geuzaine/src/slepc ${EXTRA_OPTION} ..
     - make package -j 1
     - PKG=`ls gmsh-*.tar*`
-    - mv ${PKG} ../${PKG/\.tar\.gz/\.tgz}
-  artifacts:
-    name: "$CI_JOB_NAME"
-    paths:
-       - "*.tgz"
+    - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
+    - /usr/local/bin/ctest -j 1 --output-on-failure
 
 linux64_official_snapshot:
   <<: *linux_official
@@ -130,7 +128,7 @@ linux64-sdk_official_release:
   only:
     - /^gmsh_.*$/
 
-.linux32_official_snapshot:
+linux32_official_snapshot:
   <<: *linux_official
   tags:
     - linux32
@@ -138,7 +136,7 @@ linux64-sdk_official_release:
   except:
     - tags
 
-.linux32_official_release:
+linux32_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *linux_official
@@ -148,7 +146,7 @@ linux64-sdk_official_release:
   only:
     - /^gmsh_.*$/
 
-.linux32-sdk_official_snapshot:
+linux32-sdk_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
@@ -158,7 +156,7 @@ linux64-sdk_official_release:
   except:
     - tags
 
-.linux32-sdk_official_release:
+linux32-sdk_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
@@ -174,17 +172,14 @@ linux64-sdk_official_release:
 
 .windows_official: &windows_official
   only:
-    - master@gmsh/asml
+    - master@gmsh/gmsh
   script:
     - md build
     - cd build
     - bash -c "/usr/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/mingw32-windres.exe -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc -DSLEPC_DIR=/home/geuzaine/src/slepc -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} .."
     - bash -c "/usr/bin/make package -j 2"
-    - bash -c "mv gmsh-*.zip .."
-  artifacts:
-    name: "%CI_JOB_NAME%"
-    paths:
-       - "*.zip"
+    - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
+    - bash -c "/usr/bin/ctest -j 2 --output-on-failure"
 
 windows64_official_snapshot:
   <<: *windows_official
@@ -224,7 +219,7 @@ windows64-sdk_official_release:
   only:
     - /^gmsh_.*$/
 
-.windows32_official_snapshot:
+windows32_official_snapshot:
   <<: *windows_official
   tags:
     - windows32
@@ -232,7 +227,7 @@ windows64-sdk_official_release:
   except:
     - tags
 
-.windows32_official_release:
+windows32_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *windows_official
@@ -242,7 +237,7 @@ windows64-sdk_official_release:
   only:
     - /^gmsh_.*$/
 
-.windows32-sdk_official_snapshot:
+windows32-sdk_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *windows_official
@@ -252,7 +247,7 @@ windows64-sdk_official_release:
   except:
     - tags
 
-.windows32-sdk_official_release:
+windows32-sdk_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *windows_official

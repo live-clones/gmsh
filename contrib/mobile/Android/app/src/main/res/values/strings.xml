@@ -1,0 +1,13 @@
+<resources>
+  <string name="app_name">Onelab</string>
+  <string name="title_activity_main">Onelab</string>
+  <string name="title_activity_about">About</string>
+  <string name="title_activity_options">Parameters</string>
+  <string name="menu_parameters">Parameters</string>
+  <string name="menu_run">Run</string>
+  <string name="menu_stop">Stop</string>
+  <string name="menu_save">Save</string>
+  <string name="postpro_intervalstype">Intervals type</string>
+  <string name="postpro_intervals">Intervals</string>
+  <string name="postpro_raisez">Raise (Z)</string>
+</resources>
