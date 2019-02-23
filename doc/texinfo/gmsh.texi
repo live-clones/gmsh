@@ -2991,27 +2991,27 @@ curve(s) or surface(s). This is only supported with the 3D Delaunay
 algorithm. @value{SYNC}
 
 @item Periodic Curve @{ @var{expression-list} @} = @{ @var{expression-list} @} ;
-Force mesh of curves on the left-hand side (slaves) to match the mesh of
+Force mesh of curves on the left-hand side to match the mesh of
 the curves on the right-hand side (masters). @value{SYNC}
 
 @item Periodic Surface @var{expression} @{ @var{expression-list} @} = @var{expression} @{ @var{expression-list} @} ;
-Force mesh of the surface on the left-hand side (slave, with boundary
-edges specified between braces) to match the mesh of the surface on the
-right-hand side (master, with boundary edges specified between
+Force mesh of the surface on the left-hand side (with boundary edges
+specified between braces) to match the mesh of the master surface on the
+right-hand side (with boundary edges specified between
 braces). @value{SYNC}
 
 @item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Affine | Translate @{ @var{expression-list} @} ;
-Force mesh of curves or surfaces on the left-hand side (slaves) to match
-the mesh of the curves on the right-hand side (masters), using
-prescribed geometrical transformations. @code{Affine} takes a 4 x 4
-affine transformation matrix given by row (only 12 entries can be
-provided for convenience); @code{Translate} takes the 3 components of
-the translation as in @ref{Transformations}. @value{SYNC}
+Force mesh of curves or surfaces on the left-hand side to match the mesh
+of the curves on the right-hand side (masters), using prescribed
+geometrical transformations. @code{Affine} takes a 4 x 4 affine
+transformation matrix given by row (only 12 entries can be provided for
+convenience); @code{Translate} takes the 3 components of the translation
+as in @ref{Transformations}. @value{SYNC}
 
 @item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Rotate @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} ;
-Force mesh of curves or surfaces on the left-hand side (slaves) to match
-the mesh of the curves on the right-hand side (masters), using
-a rotation specified as in @ref{Transformations}. @value{SYNC}
+Force mesh of curves or surfaces on the left-hand side to match the mesh
+of the curves on the right-hand side (masters), using a rotation
+specified as in @ref{Transformations}. @value{SYNC}
 
 @item Coherence Mesh;
 Removes all duplicate mesh nodes.
@@ -4226,9 +4226,9 @@ $Elements
 $EndElements
 $Periodic
 @var{number-of-periodic-entities}
-@var{dimension} @var{slave-entity-tag} @var{master-entity-tag}
+@var{dimension} @var{entity-tag} @var{master-entity-tag}
 @var{number-of-nodes}
-@var{slave-node-number master-node-number}
+@var{node-number master-node-number}
 @dots{}
 $EndPeriodic
 $NodeData
