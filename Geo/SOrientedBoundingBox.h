@@ -10,41 +10,28 @@
 #ifndef _ORIENTED_BOUNDING_BOX_H_
 #define _ORIENTED_BOUNDING_BOX_H_
 
-#include <vector>
-#include <list>
 #include "SVector3.h"
 #include "SPoint2.h"
-#include "Pair.h"
+
+#include <algorithm>
+#include <vector>
 
 class SOrientedBoundingRectangle {
 public:
-  std::vector<double> *center;
-  std::vector<double> *size;
-  std::vector<double> *axisX;
-  std::vector<double> *axisY;
   SOrientedBoundingRectangle();
-  ~SOrientedBoundingRectangle();
+
   double area();
+
+public:
+  // TODO C++11 std::array<double, 2>
+  std::vector<double> center;
+  std::vector<double> size;
+  std::vector<double> axisX;
+  std::vector<double> axisY;
 };
 
 class SOrientedBoundingBox {
-private:
-  SVector3 center;
-  SVector3 size;
-  SVector3 axisX;
-  SVector3 axisY;
-  SVector3 axisZ;
-  void fillp();
-
 public:
-  double p1x, p1y, p1z;
-  double p2x, p2y, p2z;
-  double p3x, p3y, p3z;
-  double p4x, p4y, p4z;
-  double p5x, p5y, p5z;
-  double p6x, p6y, p6z;
-  double p7x, p7y, p7z;
-  double p8x, p8y, p8z;
   SOrientedBoundingBox();
 
   // x, y, z are the box center, whereas the sizes are in the local
@@ -56,25 +43,51 @@ public:
                        const SVector3 &axisY, const SVector3 &axisZ);
 
   SOrientedBoundingBox(SOrientedBoundingBox *other);
-  ~SOrientedBoundingBox() {}
 
-  SVector3 getCenter() { return center; }
   const SVector3 &getCenter() const { return center; }
-  double getCenterX() { return center[0]; }
-  double getCenterY() { return center[1]; }
-  double getCenterZ() { return center[2]; }
-  SVector3 getSize() { return size; }
-  double getMaxSize();
-  double getMinSize();
+  double getCenterX() const { return center[0]; }
+  double getCenterY() const { return center[1]; }
+  double getCenterZ() const { return center[2]; }
+  SVector3 getSize() const { return size; }
 
-  // valid values for axis are 0 (X-axis), 1 (Y-axis) or 2 (Z-axis)
-  SVector3 getAxis(int axis);
+  double getMaxSize() const
+  {
+    return std::max(size[0], std::max(size[1], size[2]));
+  }
+
+  double getMinSize() const
+  {
+    return std::min(size[0], std::min(size[1], size[2]));
+  }
+
+  /// valid values for axis are 0 (X-axis), 1 (Y-axis) or 2 (Z-axis)
+  SVector3 getAxis(int axis) const;
 
   static SOrientedBoundingBox *buildOBB(std::vector<SPoint3> &vertices);
 
-  bool intersects(SOrientedBoundingBox &obb);
+  bool intersects(SOrientedBoundingBox &obb) const;
 
   static double compare(SOrientedBoundingBox &obb1, SOrientedBoundingBox &obb2);
+
+public:
+  double p1x, p1y, p1z;
+  double p2x, p2y, p2z;
+  double p3x, p3y, p3z;
+  double p4x, p4y, p4z;
+  double p5x, p5y, p5z;
+  double p6x, p6y, p6z;
+  double p7x, p7y, p7z;
+  double p8x, p8y, p8z;
+
+private:
+  void fillp();
+
+private:
+  SVector3 center;
+  SVector3 size;
+  SVector3 axisX;
+  SVector3 axisY;
+  SVector3 axisZ;
 };
 
 #endif
