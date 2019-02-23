@@ -96,7 +96,7 @@ public:
   virtual void setMesh(const std::string &meshFileName, int dim = 0);
   void cutMesh(gLevelset *ls);
   void setElasticDomain(int phys, double E, double nu);
-  void setLagrangeMultipliers(int phys, double tau, SVector3 d, int tag,
+  void setLagrangeMultipliers(int phys, double tau, const SVector3 &d, int tag,
                               simpleFunction<double> *f);
   void changeLMTau(int tag, double tau);
   void setEdgeDisp(int edge, int comp, simpleFunction<double> *f);
@@ -108,7 +108,7 @@ public:
   virtual PView *buildDisplacementView(const std::string postFileName);
   virtual PView *buildStrainView(const std::string postFileName);
   virtual PView *buildStressesView(const std::string postFileName);
-  virtual PView *buildLagrangeMultiplierView(const std::string posFileName,
+  virtual PView *buildLagrangeMultiplierView(const std::string &posFileName,
                                              int tag = -1);
   virtual PView *buildElasticEnergyView(const std::string postFileName);
   virtual PView *buildVonMisesView(const std::string postFileName);

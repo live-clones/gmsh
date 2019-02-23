@@ -68,8 +68,7 @@ GModel::GModel(const std::string &name)
   : _maxVertexNum(0), _maxElementNum(0), _checkPointedMaxVertexNum(0),
     _checkPointedMaxElementNum(0), _destroying(false), _name(name), _visible(1),
     _elementOctree(0), _geo_internals(0), _occ_internals(0), _acis_internals(0),
-    _fields(0), _currentMeshEntity(0), _numPartitions(0),
-    normals(0)
+    _fields(0), _currentMeshEntity(0), _numPartitions(0), normals(0)
 {
   // hide all other models
   for(std::size_t i = 0; i < list.size(); i++) list[i]->setVisibility(0);
@@ -400,9 +399,7 @@ void GModel::remove(int dim, int tag, bool recursive)
           break;
         }
       }
-      if(!skip) {
-        remove(gv);
-      }
+      if(!skip) { remove(gv); }
     }
   }
 }
@@ -434,9 +431,7 @@ void GModel::snapVertices()
         it != edges.end(); ++it) {
       Range<double> parb = (*it)->parBounds(0);
       double t;
-      if((*it)->getBeginVertex() == *vit) {
-        t = parb.low();
-      }
+      if((*it)->getBeginVertex() == *vit) { t = parb.low(); }
       else if((*it)->getEndVertex() == *vit) {
         t = parb.high();
       }
@@ -705,7 +700,7 @@ void GModel::removePhysicalGroups()
   // we cannot remove the names here, as removePhysicalGroups() is used in
   // GModelIO_GEO for the synchronization. We need to add an explicit cleanup of
   // physical names + move all physical defintions directly in GModel.
-  //physicalNames.clear();
+  // physicalNames.clear();
 }
 
 void GModel::removePhysicalGroup(int dim, int tag)
@@ -789,9 +784,9 @@ void GModel::removePhysicalName(const std::string &name)
 {
   std::map<std::pair<int, int>, std::string>::iterator it =
     physicalNames.begin();
-  while(it != physicalNames.end()){
+  while(it != physicalNames.end()) {
     if(it->second == name)
-      //it = physicalNames.erase(it); // C++11 only
+      // it = physicalNames.erase(it); // C++11 only
       physicalNames.erase(it++);
     else
       ++it;
@@ -1021,45 +1016,45 @@ int GModel::adaptMesh(std::vector<int> technique,
                       std::vector<std::vector<double> > parameters, int niter,
                       bool meshAll)
 {
-// For all algorithms:
-//
-// parameters[1] = lcmin (default : in global gmsh options
-//           CTX::instance()->mesh.lcMin)
-// parameters[2] = lcmax (default : in global gmsh options
-//   CTX::instance()->mesh.lcMax) niter is the maximum number of iterations
+  // For all algorithms:
+  //
+  // parameters[1] = lcmin (default : in global gmsh options
+  //           CTX::instance()->mesh.lcMin)
+  // parameters[2] = lcmax (default : in global gmsh options
+  //   CTX::instance()->mesh.lcMax) niter is the maximum number of iterations
 
-// Available algorithms:
-//
-//    1) Assume that the function is a levelset -> adapt using Coupez
-//    technique (technique = 1)
-//           parameters[0] = thickness of the interface (mandatory)
-//    2) Assume that the function is a physical quantity -> adapt using the
-//    Hessian (technique = 2)
-//           parameters[0] = N, the final number of elements
-//    3) A variant of 1) by P. Frey (= Coupez + takes curvature function into
-//    account)
-//           parameters[0] = thickness of the interface (mandatory)
-//           parameters[3] = the required minimum number of elements to
-//             represent a circle - used for curvature-based metric (default: =
-//             15)
-//    4) A variant (3), direct implementation in the metric eigendirections,
-//    assuming a level set (ls):
-//        - hmin is imposed in the ls gradient,
-//        - hmax is imposed in the two eigendirections of the ls hessian that
-//        are
-//          (almost ?) tangent to the iso-zero plane
-//          + the latter eigenvalues (1/hmax^2) are modified if necessary to
-//          capture the iso-zero curvature
-//      parameters[0] = thickness of the interface in the positive ls direction
-//      (mandatory) parameters[4] = thickness of the interface in the negative
-//      ls direction
-//         (=parameters[0] if not specified)
-//      parameters[3] = the required minimum number of elements to represent a
-//      circle
-//         - used for curvature-based metric (default: = 15)
-//    5) Same as 4, except that the transition in band E uses linear
-//    interpolation
-//       of h, instead of linear interpolation of metric
+  // Available algorithms:
+  //
+  //    1) Assume that the function is a levelset -> adapt using Coupez
+  //    technique (technique = 1)
+  //           parameters[0] = thickness of the interface (mandatory)
+  //    2) Assume that the function is a physical quantity -> adapt using the
+  //    Hessian (technique = 2)
+  //           parameters[0] = N, the final number of elements
+  //    3) A variant of 1) by P. Frey (= Coupez + takes curvature function into
+  //    account)
+  //           parameters[0] = thickness of the interface (mandatory)
+  //           parameters[3] = the required minimum number of elements to
+  //             represent a circle - used for curvature-based metric (default:
+  //             = 15)
+  //    4) A variant (3), direct implementation in the metric eigendirections,
+  //    assuming a level set (ls):
+  //        - hmin is imposed in the ls gradient,
+  //        - hmax is imposed in the two eigendirections of the ls hessian that
+  //        are
+  //          (almost ?) tangent to the iso-zero plane
+  //          + the latter eigenvalues (1/hmax^2) are modified if necessary to
+  //          capture the iso-zero curvature
+  //      parameters[0] = thickness of the interface in the positive ls
+  //      direction (mandatory) parameters[4] = thickness of the interface in
+  //      the negative ls direction
+  //         (=parameters[0] if not specified)
+  //      parameters[3] = the required minimum number of elements to represent a
+  //      circle
+  //         - used for curvature-based metric (default: = 15)
+  //    5) Same as 4, except that the transition in band E uses linear
+  //    interpolation
+  //       of h, instead of linear interpolation of metric
 
 #if defined(HAVE_MESH)
   // copy context (in order to allow multiple calls)
@@ -1283,9 +1278,9 @@ void GModel::renumberMeshVertices()
   // check if we will potentially only save a subset of elements, i.e. those
   // belonging to physical groups
   bool potentiallySaveSubset = false;
-  if(!CTX::instance()->mesh.saveAll){
-    for(std::size_t i = 0; i < entities.size(); i++){
-      if(entities[i]->physicals.size()){
+  if(!CTX::instance()->mesh.saveAll) {
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      if(entities[i]->physicals.size()) {
         potentiallySaveSubset = true;
         break;
       }
@@ -1293,7 +1288,7 @@ void GModel::renumberMeshVertices()
   }
 
   std::size_t n = 0;
-  if(potentiallySaveSubset){
+  if(potentiallySaveSubset) {
     Msg::Debug("Renumbering for potentially partial mesh save");
     // if we potentially only save a subset of elements, make sure to first
     // renumber the vertices that belong to those elements (so that we end up
@@ -1311,10 +1306,10 @@ void GModel::renumberMeshVertices()
     }
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
-      if(ge->physicals.size()){
+      if(ge->physicals.size()) {
         for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
           MElement *e = ge->getMeshElement(j);
-          for(std::size_t k = 0; k < e->getNumVertices(); k++){
+          for(std::size_t k = 0; k < e->getNumVertices(); k++) {
             e->getVertex(k)->forceNum(0);
           }
         }
@@ -1335,7 +1330,7 @@ void GModel::renumberMeshVertices()
       }
     }
   }
-  else{
+  else {
     // no physical groups
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
@@ -1356,9 +1351,9 @@ void GModel::renumberMeshElements()
   // check if we will potentially only save a subset of elements, i.e. those
   // belonging to physical groups
   bool potentiallySaveSubset = false;
-  if(!CTX::instance()->mesh.saveAll){
-    for(std::size_t i = 0; i < entities.size(); i++){
-      if(entities[i]->physicals.size()){
+  if(!CTX::instance()->mesh.saveAll) {
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      if(entities[i]->physicals.size()) {
         potentiallySaveSubset = true;
         break;
       }
@@ -1366,10 +1361,10 @@ void GModel::renumberMeshElements()
   }
 
   std::size_t n = 0;
-  if(potentiallySaveSubset){
+  if(potentiallySaveSubset) {
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
-      if(ge->physicals.size()){
+      if(ge->physicals.size()) {
         for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
           ge->getMeshElement(j)->forceNum(++n);
         }
@@ -1377,14 +1372,14 @@ void GModel::renumberMeshElements()
     }
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
-      if(ge->physicals.empty()){
+      if(ge->physicals.empty()) {
         for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
           ge->getMeshElement(j)->forceNum(++n);
         }
       }
     }
   }
-  else{
+  else {
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
@@ -2165,10 +2160,11 @@ int GModel::removeDuplicateMeshElements()
 }
 */
 
-static void connectMElementsByMFace(
-  const MFace &f, std::multimap<MFace, MElement *, Less_Face> &e2f,
-  std::set<MElement *> &group, std::set<MFace, Less_Face> &touched,
-  int recur_level)
+static void
+connectMElementsByMFace(const MFace &f,
+                        std::multimap<MFace, MElement *, Less_Face> &e2f,
+                        std::set<MElement *> &group,
+                        std::set<MFace, Less_Face> &touched, int recur_level)
 {
   // this is very slow...
   std::stack<MFace> _stack;
@@ -2813,7 +2809,7 @@ int GModel::readGEO(const std::string &name)
 
 void GModel::setPhysicalNumToEntitiesInBox(int EntityDimension,
                                            int PhysicalNumber,
-                                           SBoundingBox3d box)
+                                           const SBoundingBox3d &box)
 {
   std::vector<GEntity *> entities;
   getEntitiesInBox(entities, box, EntityDimension);
@@ -2885,7 +2881,7 @@ void GModel::classifyAllFaces(double angleThreshold, bool includeBoundary)
     if(ea.angle <= angleThreshold) break;
     edge->lines.push_back(new MLine(ea.v1, ea.v2));
   }
-  if(includeBoundary){
+  if(includeBoundary) {
     for(std::size_t i = 0; i < edges_lonely.size(); i++) {
       edge_angle ea = edges_lonely[i];
       edge->lines.push_back(new MLine(ea.v1, ea.v2));

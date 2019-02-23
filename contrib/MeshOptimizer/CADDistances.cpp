@@ -345,7 +345,8 @@ namespace {
 
     return (d1 > d2) ? d1 : d2;
 #else
-    Msg::Error("Gmsh should be compiled using ANN to compute Hausdorff distance");
+    Msg::Error(
+      "Gmsh should be compiled using ANN to compute Hausdorff distance");
     return 0.;
 #endif
   }
@@ -380,6 +381,7 @@ namespace {
       const nodalBasis &basis = *(l->getFunctionSpace());
       std::vector<SPoint3> xyz;
       const int nV = l->getNumVertices();
+      xyz.reserve(nV);
       for(int i = 0; i < nV; ++i) xyz.push_back(l->getVertex(i)->point());
       parametricLineNodalBasis l2(basis, xyz);
       int minDepth = std::ceil(std::log(nV) / std::log(2));

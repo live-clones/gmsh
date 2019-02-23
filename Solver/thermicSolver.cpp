@@ -317,7 +317,7 @@ PView *thermicSolver::buildTemperatureView(const std::string postFileName)
 }
 
 PView *
-thermicSolver::buildLagrangeMultiplierView(const std::string postFileName)
+thermicSolver::buildLagrangeMultiplierView(const std::string &postFileName)
 {
   std::cout << "build Lagrange Multiplier View" << std::endl;
   if(!LagrangeMultiplierSpace) return new PView();
@@ -345,7 +345,7 @@ thermicSolver::buildLagrangeMultiplierView(const std::string postFileName)
   return pv;
 }
 
-PView *thermicSolver::buildErrorEstimateView(const std::string errorFileName,
+PView *thermicSolver::buildErrorEstimateView(const std::string &errorFileName,
                                              simpleFunction<double> *sol)
 {
   std::cout << "build Error View" << std::endl;
@@ -387,20 +387,20 @@ PView *thermicSolver::buildErrorEstimateView(const std::string errorFileName,
 }
 
 #else
-PView *thermicSolver::buildTemperatureView(const std::string postFileName)
+PView *thermicSolver::buildTemperatureView(const std::string &postFileName)
 {
   Msg::Error("Post-pro module not available");
   return 0;
 }
 
 PView *
-thermicSolver::buildLagrangeMultiplierView(const std::string postFileName)
+thermicSolver::buildLagrangeMultiplierView(const std::string &postFileName)
 {
   Msg::Error("Post-pro module not available");
   return 0;
 }
 
-PView *thermicSolver::buildErrorEstimateView(const std::string errorFileName,
+PView *thermicSolver::buildErrorEstimateView(const std::string &errorFileName,
                                              simpleFunction<double> *sol)
 {
   Msg::Error("Post-pro module not available");

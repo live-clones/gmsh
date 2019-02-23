@@ -196,7 +196,7 @@ template <unsigned DIM> int MZone<DIM>::zoneData()
   }
 
   //--Now loop through all elements again and do same thing for all elements
-  //with
+  // with
   //--index set to 0
 
   for(ElementVec::iterator eVecIt = elemVec.begin(); eVecIt != eVecEnd;
@@ -589,8 +589,6 @@ void updateBoVec<2, MEdge>(
        *--------------------------------------------------------------------*/
 
       {
-        // Get the edge entities that are connected to the vertex
-        std::vector<GEdge *> gEdgeList = ent->edges();
         // Find edge entities that are connected to elements in the zone
         std::vector<std::pair<GEdge *, int> > useGEdge;
         const int nFace = faces.size();
@@ -613,7 +611,7 @@ void updateBoVec<2, MEdge>(
         }
 
         //--'useGEdge' now contains the edge entities that will be used to
-        //determine
+        // determine
         //--the normals
 
         switch(useGEdge.size()) {
@@ -828,7 +826,7 @@ void updateBoVec<3, MFace>(
         }
 
         //--Get a list of face entities connected to the 'vertex' that are also
-        //in the
+        // in the
         //--zone
 
         std::list<const GFace *> useGFace;
@@ -880,13 +878,14 @@ void updateBoVec<3, MFace>(
                 vertex3 = mFace.getVertex(1);
                 break;
               }
-              if(vertex2 && vertex3){
+              if(vertex2 && vertex3) {
                 const GEntity *const ent2 = vertex2->onWhat();
                 const GEntity *const ent3 = vertex3->onWhat();
-                if(ent2 && ent3){
+                if(ent2 && ent3) {
                   if(ent2->dim() == 1 && ent3->dim() == 1) {
                     // Which GFace is bounded by edges ent2 and ent3?
-                    for(std::list<GFace *>::const_iterator gFIt = gFaceList.begin();
+                    for(std::list<GFace *>::const_iterator gFIt =
+                          gFaceList.begin();
                         gFIt != gFaceList.end(); ++gFIt) {
                       gEdgeList = (*gFIt)->edges();
                       if((std::find(gEdgeList.begin(), gEdgeList.end(), ent2) !=
@@ -906,11 +905,12 @@ void updateBoVec<3, MFace>(
                     else
                       entCmp = ent3;
                     // Which GFace is bounded by entCmp
-                    for(std::list<GFace *>::const_iterator gFIt = gFaceList.begin();
+                    for(std::list<GFace *>::const_iterator gFIt =
+                          gFaceList.begin();
                         gFIt != gFaceList.end(); ++gFIt) {
                       gEdgeList = (*gFIt)->edges();
-                      if(std::find(gEdgeList.begin(), gEdgeList.end(), entCmp) !=
-                         gEdgeList.end()) {
+                      if(std::find(gEdgeList.begin(), gEdgeList.end(),
+                                   entCmp) != gEdgeList.end()) {
                         // Edge entCmp and the original edge bound this face
                         useGFace.push_back(*gFIt);
                         break;
@@ -927,7 +927,7 @@ void updateBoVec<3, MFace>(
         useGFace.unique();
 
         //--'useGFace' now contains the face entities that connect to vertex.  A
-        //BC
+        // BC
         //--patch will be written for each of them.
 
         for(std::list<const GFace *>::const_iterator gFIt = useGFace.begin();
