@@ -3124,6 +3124,7 @@ Colorify :
 SetPartition :
     tSetPartition FExpr '{' ListOfShapes '}'
     {
+      yymsg(2, "'SetPartition' command is deprecated");
       std::vector<std::pair<int, int> > dimTags;
       ListOfShapes2VectorOfPairs($4, dimTags);
       for(std::size_t i = 0; i < dimTags.size(); i++){
