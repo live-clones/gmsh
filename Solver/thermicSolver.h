@@ -90,10 +90,10 @@ public:
   void setFaceTemp(int face, simpleFunction<double> *f);
   void solve();
   virtual PView *buildTemperatureView(const std::string postFileName);
-  virtual PView *buildLagrangeMultiplierView(const std::string postFileName);
+  virtual PView *buildLagrangeMultiplierView(std::string const &postFileName);
   double computeL2Norm(simpleFunction<double> *f);
   double computeLagNorm(int tag, simpleFunction<double> *f);
-  PView *buildErrorEstimateView(const std::string errorFileName,
+  PView *buildErrorEstimateView(std::string const &errorFileName,
                                 simpleFunction<double> *sol);
   // std::pair<PView *, PView*> buildErrorEstimateView
   //   (const std::string &errorFileName, const elasticityData &ref, double,

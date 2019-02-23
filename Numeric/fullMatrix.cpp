@@ -82,7 +82,7 @@ void fullVector<std::complex<double> >::setAll(
 
 template <> void fullMatrix<int>::setAll(const fullMatrix<int> &m)
 {
-  if(_r != m._r || _c != m._c){
+  if(_r != m._r || _c != m._c) {
     Msg::Error("fullMatrix size does not match");
     return;
   }
@@ -92,7 +92,7 @@ template <> void fullMatrix<int>::setAll(const fullMatrix<int> &m)
 
 template <> void fullMatrix<double>::setAll(const fullMatrix<double> &m)
 {
-  if(_r != m._r || _c != m._c){
+  if(_r != m._r || _c != m._c) {
     Msg::Error("fullMatrix size does not match");
     return;
   }
@@ -105,7 +105,7 @@ template <>
 void fullMatrix<std::complex<double> >::setAll(
   const fullMatrix<std::complex<double> > &m)
 {
-  if(_r != m._r || _c != m._c){
+  if(_r != m._r || _c != m._c) {
     Msg::Error("fullMatrix size does not match");
     return;
   }
@@ -380,7 +380,7 @@ template <> bool fullMatrix<double>::invert(fullMatrix<double> &result) const
   if(result.size2() != M || result.size1() != N) {
     if(result._own_data || !result._data)
       result.resize(M, N, false);
-    else{
+    else {
       Msg::Error("FullMatrix: Bad dimension, I cannot write in proxy");
       return false;
     }
@@ -593,9 +593,7 @@ template <> bool fullMatrix<double>::invert(fullMatrix<double> &result) const
 
   // inv = transpose of cofactor / Determinant
   for(int i = 0; i < _r; i++) {
-    for(int j = 0; j < _c; j++) {
-      result(j, i) = cofactor(i, j) / det;
-    }
+    for(int j = 0; j < _c; j++) { result(j, i) = cofactor(i, j) / det; }
   }
   return true;
 }
@@ -603,8 +601,8 @@ template <> bool fullMatrix<double>::invert(fullMatrix<double> &result) const
 #endif
 
 template <>
-void fullMatrix<double>::print(const std::string name,
-                               const std::string format) const
+void fullMatrix<double>::print(const std::string &name,
+                               const std::string &format) const
 {
   std::string rformat = (format == "") ? "%12.5E " : format;
   int ni = size1();
@@ -625,8 +623,8 @@ void fullMatrix<double>::print(const std::string name,
 }
 
 template <>
-void fullMatrix<int>::print(const std::string name,
-                            const std::string format) const
+void fullMatrix<int>::print(const std::string &name,
+                            const std::string &format) const
 {
   std::string rformat = (format == "") ? "%12d " : format;
   int ni = size1();

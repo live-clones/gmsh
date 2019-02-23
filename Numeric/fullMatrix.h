@@ -355,9 +355,7 @@ public:
   {
     printf("double %s[%d]=\n", name, size());
     printf("{  ");
-    for(int I = 0; I < size(); I++) {
-      printf("%12.5E ", (*this)(I));
-    }
+    for(int I = 0; I < size(); I++) { printf("%12.5E ", (*this)(I)); }
     printf("};\n");
   }
 
@@ -773,7 +771,8 @@ public:
 #endif
   ;
 
-  void print(const std::string name = "", const std::string format = "") const;
+  void print(const std::string &name = "",
+             const std::string &format = "") const;
 
   void binarySave(FILE *f) const { fwrite(_data, sizeof(scalar), _r * _c, f); }
   void binaryLoad(FILE *f)

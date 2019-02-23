@@ -346,12 +346,12 @@ public:
   GRegion *getRegionForOCCShape(GModel *model, const TopoDS_Solid &toFind);
 
   // STL utilities
-  bool makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices_uv,
+  bool makeFaceSTL(TopoDS_Face const &s, std::vector<SPoint2> &vertices_uv,
                    std::vector<int> &triangles);
-  bool makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices_uv,
+  bool makeFaceSTL(TopoDS_Face const &s, std::vector<SPoint2> &vertices_uv,
                    std::vector<SPoint3> &vertices,
                    std::vector<SVector3> &normals, std::vector<int> &triangles);
-  bool makeFaceSTL(TopoDS_Face s, std::vector<SPoint3> &vertices,
+  bool makeFaceSTL(TopoDS_Face const &s, std::vector<SPoint3> &vertices,
                    std::vector<SVector3> &normals, std::vector<int> &triangles);
   bool makeSolidSTL(const TopoDS_Solid &s, std::vector<SPoint3> &vertices,
                     std::vector<SVector3> &normals,

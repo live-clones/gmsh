@@ -384,8 +384,8 @@ void elasticitySolver::setElasticDomain(int phys, double E, double nu)
   elasticFields.push_back(field);
 }
 
-void elasticitySolver::setLagrangeMultipliers(int phys, double tau, SVector3 d,
-                                              int tag,
+void elasticitySolver::setLagrangeMultipliers(int phys, double tau,
+                                              SVector3 const &d, int tag,
                                               simpleFunction<double> *f)
 {
   LagrangeMultiplierField field;
@@ -433,12 +433,11 @@ void elasticitySolver::addDirichletBC(int dim, int entityId, int component,
   case 0: diri.onWhat = BoundaryCondition::ON_VERTEX; break;
   case 1: diri.onWhat = BoundaryCondition::ON_EDGE; break;
   case 2: diri.onWhat = BoundaryCondition::ON_FACE; break;
-  default:
-    {
-      delete diri.g;
-      delete diri._f;
-      return;
-    }
+  default: {
+    delete diri.g;
+    delete diri._f;
+    return;
+  }
   }
   allDirichlet.push_back(diri);
 }
@@ -462,12 +461,11 @@ void elasticitySolver::addNeumannBC(int dim, int entityId,
   case 0: neu.onWhat = BoundaryCondition::ON_VERTEX; break;
   case 1: neu.onWhat = BoundaryCondition::ON_EDGE; break;
   case 2: neu.onWhat = BoundaryCondition::ON_FACE; break;
-  default:
-    {
-      delete neu.g;
-      delete neu._f;
-      return;
-    }
+  default: {
+    delete neu.g;
+    delete neu._f;
+    return;
+  }
   }
   allNeumann.push_back(neu);
 }
@@ -1032,7 +1030,7 @@ PView *elasticitySolver::buildStrainView(const std::string postFileName)
 }
 
 PView *
-elasticitySolver::buildLagrangeMultiplierView(const std::string postFileName,
+elasticitySolver::buildLagrangeMultiplierView(std::string const &postFileName,
                                               int tag)
 {
   std::cout << "build Lagrange Multiplier View" << std::endl;

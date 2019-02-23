@@ -1142,8 +1142,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
         w.SetValue(i, weights[i - 1]);
       }
       TColStd_Array1OfReal k(1, knots.size());
-      for(std::size_t i = 0; i < knots.size(); i++)
-        k.SetValue(i + 1, knots[i]);
+      for(std::size_t i = 0; i < knots.size(); i++) k.SetValue(i + 1, knots[i]);
       TColStd_Array1OfInteger m(1, multiplicities.size());
       for(std::size_t i = 0; i < multiplicities.size(); i++)
         m.SetValue(i + 1, multiplicities[i]);
@@ -1595,9 +1594,7 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
       shell = fix.Shell();
     }
     int t = tag;
-    if(first) {
-      first = false;
-    }
+    if(first) { first = false; }
     else {
       t = getMaxTag(-2) + 1;
       Msg::Warning("Creating additional surface loop %d", t);
@@ -2082,17 +2079,13 @@ int OCC_Internals::_getFuzzyTag(int dim, const TopoDS_Shape &s)
 
   int num = 0;
   for(std::size_t i = 0; i < candidates.size(); i++) {
-    if(_isBound(dim, candidates[i])) {
-      num++;
-    }
+    if(_isBound(dim, candidates[i])) { num++; }
   }
   Msg::Info("Extruded mesh constraint fuzzy search: found %d candidates "
             "(dim=%d, %d bound)",
             (int)candidates.size(), dim, num);
   for(std::size_t i = 0; i < candidates.size(); i++) {
-    if(_isBound(dim, candidates[i])) {
-      return _find(dim, candidates[i]);
-    }
+    if(_isBound(dim, candidates[i])) { return _find(dim, candidates[i]); }
   }
   return -1;
 }
@@ -2973,14 +2966,13 @@ bool OCC_Internals::affine(const std::vector<std::pair<int, int> > &inDimTags,
                            const std::vector<double> &mat)
 {
   std::vector<double> a(mat);
-  if(a.size() < 12){
+  if(a.size() < 12) {
     Msg::Warning("%d < 12 entries in affine transform matrix", (int)a.size());
     a.resize(12, 0.);
   }
   gp_GTrsf gt;
-  gt.SetVectorialPart(gp_Mat(a[0], a[1], a[2],
-                             a[4], a[5], a[6],
-                             a[8], a[9], a[10]));
+  gt.SetVectorialPart(
+    gp_Mat(a[0], a[1], a[2], a[4], a[5], a[6], a[8], a[9], a[10]));
   gt.SetTranslationPart(gp_XYZ(a[3], a[7], a[11]));
   BRepBuilderAPI_GTransform gtfo(gt);
   return _transform(inDimTags, 0, &gtfo);
@@ -3350,8 +3342,7 @@ void OCC_Internals::synchronize(GModel *model)
 
   // if fuzzy boolean tolerance was used, some vertex positions should be
   // recomputed (e.g. end point of curves
-  if(CTX::instance()->geom.toleranceBoolean)
-    model->snapVertices();
+  if(CTX::instance()->geom.toleranceBoolean) model->snapVertices();
 
   // recompute global boundind box in CTX
   SetBoundingBox();
@@ -3540,9 +3531,7 @@ void OCC_Internals::_addShapeToMaps(const TopoDS_Shape &shape)
   // Free Vertices
   for(exp5.Init(shape, TopAbs_VERTEX, TopAbs_EDGE); exp5.More(); exp5.Next()) {
     TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
-    if(_vmap.FindIndex(vertex) < 1) {
-      _vmap.Add(vertex);
-    }
+    if(_vmap.FindIndex(vertex) < 1) { _vmap.Add(vertex); }
   }
 }
 
@@ -3832,9 +3821,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
       ms.Add(TopoDS::Shell(exp0.Current()));
     }
 
-    if(!count) {
-      Msg::Info(" . Could not make solid (no shells)");
-    }
+    if(!count) { Msg::Info(" . Could not make solid (no shells)"); }
     else {
       BRepCheck_Analyzer ba(ms);
       if(ba.IsValid()) {
@@ -3902,7 +3889,6 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
                     std::vector<SVector3> *normals, std::vector<int> &triangles)
 {
   if(CTX::instance()->geom.occDisableSTL) return false;
-
 
 #if OCC_VERSION_HEX > 0x070300
   BRepMesh_IncrementalMesh aMesher(s, 0.1, Standard_False, 0.35, Standard_True);
@@ -3992,14 +3978,14 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
   return true;
 }
 
-bool OCC_Internals::makeFaceSTL(TopoDS_Face s,
+bool OCC_Internals::makeFaceSTL(TopoDS_Face const &s,
                                 std::vector<SPoint2> &vertices_uv,
                                 std::vector<int> &triangles)
 {
   return makeSTL(s, &vertices_uv, 0, 0, triangles);
 }
 
-bool OCC_Internals::makeFaceSTL(TopoDS_Face s,
+bool OCC_Internals::makeFaceSTL(TopoDS_Face const &s,
                                 std::vector<SPoint2> &vertices_uv,
                                 std::vector<SPoint3> &vertices,
                                 std::vector<SVector3> &normals,
@@ -4008,7 +3994,8 @@ bool OCC_Internals::makeFaceSTL(TopoDS_Face s,
   return makeSTL(s, &vertices_uv, &vertices, &normals, triangles);
 }
 
-bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint3> &vertices,
+bool OCC_Internals::makeFaceSTL(TopoDS_Face const &s,
+                                std::vector<SPoint3> &vertices,
                                 std::vector<SVector3> &normals,
                                 std::vector<int> &triangles)
 {

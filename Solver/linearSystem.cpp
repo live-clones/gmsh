@@ -7,14 +7,14 @@
 #include "linearSystemCSR.h"
 #include "linearSystemGMM.h"
 
-void linearSystemBase::setParameter(std::string key, std::string value)
+void linearSystemBase::setParameter(std::string const &key, std::string value)
 {
   if(isAllocated())
     Msg::Error("this system is already allocated, parameters cannot be set");
   _parameters[key] = value;
 }
 
-std::string linearSystemBase::getParameter(std::string key) const
+std::string linearSystemBase::getParameter(std::string const &key) const
 {
   std::map<std::string, std::string>::const_iterator it;
   it = this->_parameters.find(key);

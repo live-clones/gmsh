@@ -52,16 +52,15 @@ private:
   int _readMSH2(const std::string &name);
   int _writeMSH2(const std::string &name, double version, bool binary,
                  bool saveAll, bool saveParametric, double scalingFactor,
-                 int elementStartNum, int saveSinglePartition,
-                 bool append, bool renumberVertices);
+                 int elementStartNum, int saveSinglePartition, bool append,
+                 bool renumberVertices);
   int _writePartitionedMSH2(const std::string &baseName, bool binary,
                             bool saveAll, bool saveParametric,
                             double scalingFactor);
   int _readMSH3(const std::string &name);
   int _writeMSH3(const std::string &name, double version, bool binary,
                  bool saveAll, bool saveParametric, double scalingFactor,
-                 int elementStartNum, int saveSinglePartition,
-                 bool append);
+                 int elementStartNum, int saveSinglePartition, bool append);
   int _writePartitionedMSH3(const std::string &baseName, double version,
                             bool binary, bool saveAll, bool saveParametric,
                             double scalingFactor);
@@ -406,7 +405,7 @@ public:
                                      std::vector<double> p1,
                                      std::vector<double> p2);
   void setPhysicalNumToEntitiesInBox(int EntityDimension, int PhysicalNumber,
-                                     SBoundingBox3d box);
+                                     SBoundingBox3d const &box);
 
   // get the name (if any) of a given elementary entity of dimension
   // "dim" and id number "num"

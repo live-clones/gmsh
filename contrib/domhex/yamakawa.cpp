@@ -114,18 +114,14 @@ namespace {
         bool vertex_found = false;
         for(unsigned int vface = 0; vface < 4; ++vface) {
           unsigned int v_hex = hex_facet_to_vertex[f][vface];
-          if(hex.getVertex(v_hex) == tet_vertex) {
-            vertex_found = true;
-          }
+          if(hex.getVertex(v_hex) == tet_vertex) { vertex_found = true; }
         }
         if(!vertex_found) {
           tet_in_facet = false;
           break;
         }
       }
-      if(tet_in_facet) {
-        return true;
-      }
+      if(tet_in_facet) { return true; }
     }
     return false;
   }
@@ -269,9 +265,7 @@ namespace {
       bool cur_facet_ok = (triangle_found[0] && triangle_found[1]) ||
                           (triangle_found[2] && triangle_found[3]);
 
-      if(!cur_facet_ok) {
-        return false;
-      }
+      if(!cur_facet_ok) { return false; }
     }
     return true;
   }
@@ -356,9 +350,7 @@ namespace {
   {
     for(unsigned int f = 0; f < 6; ++f) {
       bool valid_facet = validFace(hex, f, tet_mesh);
-      if(!valid_facet) {
-        return false;
-      }
+      if(!valid_facet) { return false; }
     }
     return true;
   }
@@ -379,9 +371,7 @@ namespace {
       double eta_value =
         eta(hex.vertex_in_facet(f, 0), hex.vertex_in_facet(f, 1),
             hex.vertex_in_facet(f, 2), hex.vertex_in_facet(f, 3));
-      if(eta_value < min_eta) {
-        return false;
-      }
+      if(eta_value < min_eta) { return false; }
     }
     return validFaces(hex, tet_mesh);
   }
@@ -405,9 +395,7 @@ namespace {
       tet_mesh.tets_around_vertex(vertex);
     for(TetMeshConnectivity::TetSet::const_iterator tet = tets_around_v.begin();
         tet != tets_around_v.end(); ++tet) {
-      if(hex_contains_tet(hex, *tet)) {
-        result.insert(*tet);
-      }
+      if(hex_contains_tet(hex, *tet)) { result.insert(*tet); }
     }
   }
 
@@ -423,9 +411,7 @@ namespace {
   {
     for(unsigned int i = 0; i < 4; ++i) {
       MVertex *v = tet->getVertex(i);
-      if(v != v1 && v != v2 && v != v3) {
-        return v;
-      }
+      if(v != v1 && v != v2 && v != v3) { return v; }
     }
     return NULL;
   }
@@ -469,9 +455,7 @@ namespace {
   {
     typename std::multiset<T>::const_iterator it = set.find(value);
     for(; it != set.end() && it->get_hash() == value.get_hash(); ++it) {
-      if(value.same_vertices(*it)) {
-        return true;
-      }
+      if(value.same_vertices(*it)) { return true; }
     }
     return false;
   }
@@ -480,9 +464,7 @@ namespace {
   template <class T>
   void add_value_to_multiset(std::multiset<T> &set, const T &value)
   {
-    if(!find_value_in_multiset(set, value)) {
-      set.insert(value);
-    }
+    if(!find_value_in_multiset(set, value)) { set.insert(value); }
   }
 
   // Compute the intersection of bin1 and bin2
@@ -639,9 +621,7 @@ void Recombinator::execute()
       region_itr != model->lastRegion(); region_itr++) {
     GRegion *region = *region_itr;
 
-    if(region->getNumMeshElements() > 0) {
-      execute(region);
-    }
+    if(region->getNumMeshElements() > 0) { execute(region); }
   }
 }
 
@@ -942,9 +922,7 @@ void Recombinator::pattern3()
 
 void Recombinator::add_or_free_potential_hex(Hex *candidate)
 {
-  if(valid(*candidate, tet_mesh)) {
-    potential.push_back(candidate);
-  }
+  if(valid(*candidate, tet_mesh)) { potential.push_back(candidate); }
   else {
     delete candidate;
   }
@@ -961,9 +939,7 @@ bool Recombinator::are_all_tets_free(const std::set<MElement *> &tets) const
       it++) {
     MElement *tet = *it;
     std::map<MElement *, bool>::const_iterator it2 = markings.find(tet);
-    if(it2->second == true) {
-      return false;
-    }
+    if(it2->second == true) { return false; }
   }
   return true;
 }
@@ -1044,9 +1020,7 @@ void Recombinator::merge()
   for(unsigned int i = 0; i < potential.size(); i++) {
     const Hex &hex = *potential[i];
     // TODO - Not storing low quality tets in the first place would be cheaper
-    if(hex.get_quality() < hex_threshold_quality) {
-      break;
-    }
+    if(hex.get_quality() < hex_threshold_quality) { break; }
     bool hex_added = add_hex_to_region_if_valid(hex);
 
     // Compute tet quality statistics
@@ -1055,9 +1029,7 @@ void Recombinator::merge()
       nb_final_hex++;
     }
   }
-  if(nb_final_hex > 0) {
-    delete_marked_tets_in_region();
-  }
+  if(nb_final_hex > 0) { delete_marked_tets_in_region(); }
 
   Msg::Info("Number of hexaedra: %d", nb_final_hex);
 
@@ -1164,9 +1136,7 @@ void Recombinator::delete_quad_triangles_in_boundary() const
       bool is_triangle = element->getNumVertices() == 3;
       if(is_triangle) {
         bool is_in_quad = triangles.find(element) != triangles.end();
-        if(!is_in_quad) {
-          triangles_to_keep.push_back(element);
-        }
+        if(!is_in_quad) { triangles_to_keep.push_back(element); }
       }
     }
     gf->triangles.clear();
@@ -1221,9 +1191,7 @@ void Recombinator::create_quads_on_boundary(MVertex *a, MVertex *b, MVertex *c,
 
     GFace *face = stored_tuple2.get_gf();
     assert(stored_tuple3.get_gf() == face);
-    if(!quad_added) {
-      face->addQuadrangle(new MQuadrangle(a, b, c, d));
-    }
+    if(!quad_added) { face->addQuadrangle(new MQuadrangle(a, b, c, d)); }
     else {
       // This should not happen. Even with slivers and whatever
       // the surface mesh is supposed to be valid at the beginning isn't it? JP
@@ -1255,9 +1223,7 @@ bool Recombinator::conformityA(const Hex &hex)
     }
     unsigned int nb_triangles_inA =
       std::count(triangle_inA.begin(), triangle_inA.end(), true);
-    if(nb_triangles_inA != 0 && nb_triangles_inA != 4) {
-      return false;
-    }
+    if(nb_triangles_inA != 0 && nb_triangles_inA != 4) { return false; }
   }
   return true;
 }
@@ -1269,9 +1235,7 @@ bool Recombinator::conformityB(const Hex &hex)
     Diagonal hex_edge(hex.getVertex(hex_edge_to_vertex[edge][0]),
                       hex.getVertex(hex_edge_to_vertex[edge][1]));
     bool is_already_diagonal = find_value_in_multiset(hash_tableB, hex_edge);
-    if(is_already_diagonal) {
-      return false;
-    }
+    if(is_already_diagonal) { return false; }
   }
 
   // And check that for each hex facet only one of the 2 diagonals is in tableB
@@ -1282,9 +1246,7 @@ bool Recombinator::conformityB(const Hex &hex)
     bool is_already_diagonal0 = find_value_in_multiset(hash_tableB, d0);
     bool is_already_diagonal1 = find_value_in_multiset(hash_tableB, d1);
 
-    if(is_already_diagonal0 != is_already_diagonal1) {
-      return false;
-    }
+    if(is_already_diagonal0 != is_already_diagonal1) { return false; }
   }
   return true;
 }
@@ -1298,9 +1260,7 @@ bool Recombinator::conformityC(const Hex &hex)
                             hex.getVertex(hex_facet_diagonal[i][1]));
     bool is_already_hex_edge =
       find_value_in_multiset(hash_tableC, facet_diagonal);
-    if(is_already_hex_edge) {
-      return false;
-    }
+    if(is_already_hex_edge) { return false; }
   }
   return true;
 }
@@ -1335,16 +1295,12 @@ bool Recombinator::faces_statuquo(MVertex *a, MVertex *b, MVertex *c,
     GFace *gf2 = NULL;
 
     while(it1 != tuples.end() && it1->get_hash() == tuple1.get_hash()) {
-      if(tuple1.same_vertices(*it1)) {
-        gf1 = it1->get_gf();
-      }
+      if(tuple1.same_vertices(*it1)) { gf1 = it1->get_gf(); }
       it1++;
     }
 
     while(it2 != tuples.end() && it2->get_hash() == tuple2.get_hash()) {
-      if(tuple2.same_vertices(*it2)) {
-        gf2 = it2->get_gf();
-      }
+      if(tuple2.same_vertices(*it2)) { gf2 = it2->get_gf(); }
       it2++;
     }
     // Normalement soit on a trouvé les 2 soit on en trouve aucune
@@ -1352,9 +1308,7 @@ bool Recombinator::faces_statuquo(MVertex *a, MVertex *b, MVertex *c,
     assert((gf1 == NULL && gf2 == NULL) || (gf1 != NULL && gf2 != NULL));
 
     if(gf1 != NULL && gf2 != NULL) {
-      if(gf1 != gf2) {
-        return false;
-      }
+      if(gf1 != gf2) { return false; }
       else
         return true;
     }
@@ -1372,23 +1326,17 @@ bool Recombinator::faces_statuquo(MVertex *a, MVertex *b, MVertex *c,
     GFace *gf2 = NULL;
 
     while(it1 != tuples.end() && it1->get_hash() == tuple1.get_hash()) {
-      if(tuple1.same_vertices(*it1)) {
-        gf1 = it1->get_gf();
-      }
+      if(tuple1.same_vertices(*it1)) { gf1 = it1->get_gf(); }
       it1++;
     }
 
     while(it2 != tuples.end() && it2->get_hash() == tuple2.get_hash()) {
-      if(tuple2.same_vertices(*it2)) {
-        gf2 = it2->get_gf();
-      }
+      if(tuple2.same_vertices(*it2)) { gf2 = it2->get_gf(); }
       it2++;
     }
 
     if(gf1 != NULL && gf2 != NULL) {
-      if(gf1 != gf2) {
-        return false;
-      }
+      if(gf1 != gf2) { return false; }
       else
         return true;
     }
@@ -1653,9 +1601,7 @@ void Supplementary::execute()
 
   for(it = model->firstRegion(); it != model->lastRegion(); it++) {
     gr = *it;
-    if(gr->getNumMeshElements() > 0) {
-      execute(gr);
-    }
+    if(gr->getNumMeshElements() > 0) { execute(gr); }
   }
 }
 
@@ -1799,9 +1745,7 @@ void Supplementary::pattern(GRegion *gr)
                 prism = Prism(a, b, c, d, p, q);
                 quality = min_scaled_jacobian(prism);
                 prism.set_quality(quality);
-                if(valid(prism)) {
-                  potential.push_back(prism);
-                }
+                if(valid(prism)) { potential.push_back(prism); }
               }
             }
           }
@@ -1834,9 +1778,7 @@ void Supplementary::merge(GRegion *gr)
     prism = potential[i];
 
     threshold = 0.6;
-    if(prism.get_quality() < threshold) {
-      break;
-    }
+    if(prism.get_quality() < threshold) { break; }
 
     a = prism.get_a();
     b = prism.get_b();
@@ -1864,25 +1806,15 @@ void Supplementary::merge(GRegion *gr)
     }
     if(!flag) continue;
 
-    if(!valid(prism, parts)) {
-      continue;
-    }
+    if(!valid(prism, parts)) { continue; }
 
-    if(!conformityA(prism)) {
-      continue;
-    }
+    if(!conformityA(prism)) { continue; }
 
-    if(!conformityB(prism)) {
-      continue;
-    }
+    if(!conformityB(prism)) { continue; }
 
-    if(!conformityC(prism)) {
-      continue;
-    }
+    if(!conformityC(prism)) { continue; }
 
-    if(!faces_statuquo(prism)) {
-      continue;
-    }
+    if(!faces_statuquo(prism)) { continue; }
 
     // printf("%d - %d/%d -
     // %f\n",count,i,(int)potential.size(),prism.get_quality());
@@ -1907,9 +1839,7 @@ void Supplementary::merge(GRegion *gr)
   for(i = 0; i < opt.size(); i++) {
     element = (MElement *)(opt[i]);
     it2 = markings.find(element);
-    if(it2->second == 0) {
-      gr->tetrahedra.push_back(opt[i]);
-    }
+    if(it2->second == 0) { gr->tetrahedra.push_back(opt[i]); }
     else {
       delete opt[i];
     }
@@ -2029,9 +1959,7 @@ void Supplementary::create_quads_on_boundary(GRegion *gr)
 
       if(element->getNumVertices() == 3) {
         it2 = triangles.find(element);
-        if(it2 == triangles.end()) {
-          opt.push_back(element);
-        }
+        if(it2 == triangles.end()) { opt.push_back(element); }
       }
     }
 
@@ -2066,9 +1994,7 @@ void Supplementary::create_quads_on_boundary(MVertex *a, MVertex *b, MVertex *c,
   flag2 = 0;
 
   while(it1 != tuples.end()) {
-    if(tuple1.get_hash() != it1->get_hash()) {
-      break;
-    }
+    if(tuple1.get_hash() != it1->get_hash()) { break; }
 
     if(tuple1.same_vertices(*it1)) {
       flag1 = 1;
@@ -2080,9 +2006,7 @@ void Supplementary::create_quads_on_boundary(MVertex *a, MVertex *b, MVertex *c,
   }
 
   while(it2 != tuples.end()) {
-    if(tuple2.get_hash() != it2->get_hash()) {
-      break;
-    }
+    if(tuple2.get_hash() != it2->get_hash()) { break; }
 
     if(tuple2.same_vertices(*it2)) {
       flag2 = 1;
@@ -2110,9 +2034,7 @@ void Supplementary::create_quads_on_boundary(MVertex *a, MVertex *b, MVertex *c,
   flag2 = 0;
 
   while(it1 != tuples.end()) {
-    if(tuple1.get_hash() != it1->get_hash()) {
-      break;
-    }
+    if(tuple1.get_hash() != it1->get_hash()) { break; }
 
     if(tuple1.same_vertices(*it1)) {
       flag1 = 1;
@@ -2124,9 +2046,7 @@ void Supplementary::create_quads_on_boundary(MVertex *a, MVertex *b, MVertex *c,
   }
 
   while(it2 != tuples.end()) {
-    if(tuple2.get_hash() != it2->get_hash()) {
-      break;
-    }
+    if(tuple2.get_hash() != it2->get_hash()) { break; }
 
     if(tuple2.same_vertices(*it2)) {
       flag2 = 1;
@@ -2261,9 +2181,7 @@ bool Supplementary::valid(Prism prism, const std::set<MElement *> &parts)
   flag5 = inclusion(d, e, f, parts);
   ok4 = flag4 && flag5;
 
-  if(ok1 && ok2 && ok3 && ok4) {
-    return 1;
-  }
+  if(ok1 && ok2 && ok3 && ok4) { return 1; }
   else {
     return 0;
   }
@@ -2456,9 +2374,7 @@ void Supplementary::find(MVertex *getVertex, const Prism &prism,
       flag3 = inclusion(c, prism);
       flag4 = inclusion(d, prism);
 
-      if(flag1 && flag2 && flag3 && flag4) {
-        final.insert(*it2);
-      }
+      if(flag1 && flag2 && flag3 && flag4) { final.insert(*it2); }
     }
   }
 }
@@ -2486,9 +2402,7 @@ void Supplementary::intersection(const std::set<MVertex *> &bin1,
       }
     }
 
-    if(ok) {
-      final.insert(*it);
-    }
+    if(ok) { final.insert(*it); }
   }
 }
 
@@ -2574,9 +2488,7 @@ bool Supplementary::inclusion(const Facet &facet)
   flag = 0;
 
   while(it != hash_tableA.end()) {
-    if(facet.get_hash() != it->get_hash()) {
-      break;
-    }
+    if(facet.get_hash() != it->get_hash()) { break; }
 
     if(facet.same_vertices(*it)) {
       flag = 1;
@@ -2598,9 +2510,7 @@ bool Supplementary::inclusion(const Diagonal &diagonal)
   flag = 0;
 
   while(it != hash_tableB.end()) {
-    if(diagonal.get_hash() != it->get_hash()) {
-      break;
-    }
+    if(diagonal.get_hash() != it->get_hash()) { break; }
 
     if(diagonal.same_vertices(*it)) {
       flag = 1;
@@ -2622,9 +2532,7 @@ bool Supplementary::duplicate(const Diagonal &diagonal)
   flag = 0;
 
   while(it != hash_tableC.end()) {
-    if(diagonal.get_hash() != it->get_hash()) {
-      break;
-    }
+    if(diagonal.get_hash() != it->get_hash()) { break; }
 
     if(diagonal.same_vertices(*it)) {
       flag = 1;
@@ -2705,9 +2613,7 @@ bool Supplementary::conformityB(Prism prism)
   c6 = inclusion(Diagonal(c, e));
   flag2 = flag2 || (c5 && !c6) || (!c5 && c6);
 
-  if(flag1 || flag2) {
-    return 0;
-  }
+  if(flag1 || flag2) { return 0; }
   else {
     return 1;
   }
@@ -2733,9 +2639,7 @@ bool Supplementary::conformityC(Prism prism)
   flag = flag || duplicate(Diagonal(b, f));
   flag = flag || duplicate(Diagonal(c, e));
 
-  if(flag) {
-    return 0;
-  }
+  if(flag) { return 0; }
   else {
     return 1;
   }
@@ -2784,9 +2688,7 @@ bool Supplementary::faces_statuquo(MVertex *a, MVertex *b, MVertex *c,
   flag2 = 0;
 
   while(it1 != tuples.end()) {
-    if(tuple1.get_hash() != it1->get_hash()) {
-      break;
-    }
+    if(tuple1.get_hash() != it1->get_hash()) { break; }
 
     if(tuple1.same_vertices(*it1)) {
       flag1 = 1;
@@ -2797,9 +2699,7 @@ bool Supplementary::faces_statuquo(MVertex *a, MVertex *b, MVertex *c,
   }
 
   while(it2 != tuples.end()) {
-    if(tuple2.get_hash() != it2->get_hash()) {
-      break;
-    }
+    if(tuple2.get_hash() != it2->get_hash()) { break; }
 
     if(tuple2.same_vertices(*it2)) {
       flag2 = 1;
@@ -2810,9 +2710,7 @@ bool Supplementary::faces_statuquo(MVertex *a, MVertex *b, MVertex *c,
   }
 
   if(flag1 && flag2) {
-    if(gf1 != gf2) {
-      ok = 0;
-    }
+    if(gf1 != gf2) { ok = 0; }
   }
 
   tuple1 = Tuple(a, b, d);
@@ -2825,9 +2723,7 @@ bool Supplementary::faces_statuquo(MVertex *a, MVertex *b, MVertex *c,
   flag2 = 0;
 
   while(it1 != tuples.end()) {
-    if(tuple1.get_hash() != it1->get_hash()) {
-      break;
-    }
+    if(tuple1.get_hash() != it1->get_hash()) { break; }
 
     if(tuple1.same_vertices(*it1)) {
       flag1 = 1;
@@ -2838,9 +2734,7 @@ bool Supplementary::faces_statuquo(MVertex *a, MVertex *b, MVertex *c,
   }
 
   while(it2 != tuples.end()) {
-    if(tuple2.get_hash() != it2->get_hash()) {
-      break;
-    }
+    if(tuple2.get_hash() != it2->get_hash()) { break; }
 
     if(tuple2.same_vertices(*it2)) {
       flag2 = 1;
@@ -2851,9 +2745,7 @@ bool Supplementary::faces_statuquo(MVertex *a, MVertex *b, MVertex *c,
   }
 
   if(flag1 && flag2) {
-    if(gf1 != gf2) {
-      ok = 0;
-    }
+    if(gf1 != gf2) { ok = 0; }
   }
 
   return ok;
@@ -2904,9 +2796,7 @@ void Supplementary::build_vertex_to_tetrahedra(GRegion *gr)
         MVertex *getVertex = element->getVertex(j);
 
         Vertex2Elements::iterator it = vertex_to_tetrahedra.find(getVertex);
-        if(it != vertex_to_tetrahedra.end()) {
-          it->second.insert(element);
-        }
+        if(it != vertex_to_tetrahedra.end()) { it->second.insert(element); }
         else {
           bin.clear();
           bin.insert(element);
@@ -2953,9 +2843,7 @@ void Supplementary::build_hash_tableA(const Facet &facet)
   flag = 1;
 
   while(it != hash_tableA.end()) {
-    if(facet.get_hash() != it->get_hash()) {
-      break;
-    }
+    if(facet.get_hash() != it->get_hash()) { break; }
 
     if(facet.same_vertices(*it)) {
       flag = 0;
@@ -2965,9 +2853,7 @@ void Supplementary::build_hash_tableA(const Facet &facet)
     it++;
   }
 
-  if(flag) {
-    hash_tableA.insert(facet);
-  }
+  if(flag) { hash_tableA.insert(facet); }
 }
 
 void Supplementary::build_hash_tableB(Prism prism)
@@ -3003,9 +2889,7 @@ void Supplementary::build_hash_tableB(const Diagonal &diagonal)
   flag = 1;
 
   while(it != hash_tableB.end()) {
-    if(diagonal.get_hash() != it->get_hash()) {
-      break;
-    }
+    if(diagonal.get_hash() != it->get_hash()) { break; }
 
     if(diagonal.same_vertices(*it)) {
       flag = 0;
@@ -3015,9 +2899,7 @@ void Supplementary::build_hash_tableB(const Diagonal &diagonal)
     it++;
   }
 
-  if(flag) {
-    hash_tableB.insert(diagonal);
-  }
+  if(flag) { hash_tableB.insert(diagonal); }
 }
 
 void Supplementary::build_hash_tableC(Prism prism)
@@ -3052,9 +2934,7 @@ void Supplementary::build_hash_tableC(const Diagonal &diagonal)
   flag = 1;
 
   while(it != hash_tableC.end()) {
-    if(diagonal.get_hash() != it->get_hash()) {
-      break;
-    }
+    if(diagonal.get_hash() != it->get_hash()) { break; }
 
     if(diagonal.same_vertices(*it)) {
       flag = 0;
@@ -3064,9 +2944,7 @@ void Supplementary::build_hash_tableC(const Diagonal &diagonal)
     it++;
   }
 
-  if(flag) {
-    hash_tableC.insert(diagonal);
-  }
+  if(flag) { hash_tableC.insert(diagonal); }
 }
 
 double Supplementary::scaled_jacobian(MVertex *a, MVertex *b, MVertex *c,
@@ -3160,9 +3038,7 @@ void PostOp::execute(int level, int conformity)
 
   for(it = model->firstRegion(); it != model->lastRegion(); it++) {
     gr = *it;
-    if(gr->getNumMeshElements() > 0) {
-      execute(gr, level, conformity);
-    }
+    if(gr->getNumMeshElements() > 0) { execute(gr, level, conformity); }
   }
 }
 
@@ -3282,9 +3158,7 @@ void PostOp::removeElseAdd(std::set<Facet> &set, MVertex *a, MVertex *b,
                            MVertex *c)
 {
   Facet f = Facet(a, b, c);
-  if(set.find(f) != set.end()) {
-    set.erase(f);
-  }
+  if(set.find(f) != set.end()) { set.erase(f); }
   else {
     set.insert(f);
   }
@@ -3355,18 +3229,14 @@ MFace PostOp::find_quadFace(MVertex *v1, MVertex *v2, MVertex *v3)
       for(int i = 2; i < 5; ++i) {
         MFace f = el->getFace(i);
         matchQuadFace(f, v1, v2, v3);
-        if(f.getNumVertices()) {
-          return f;
-        }
+        if(f.getNumVertices()) { return f; }
       }
     }
     else if(el->getType() == TYPE_HEX) {
       for(int i = 0; i < 6; ++i) {
         MFace f = el->getFace(i);
         matchQuadFace(f, v1, v2, v3);
-        if(f.getNumVertices()) {
-          return f;
-        }
+        if(f.getNumVertices()) { return f; }
       }
     }
   }
@@ -3407,9 +3277,7 @@ void PostOp::matchQuadFace(MFace &f, MVertex *v1, MVertex *v2, MVertex *v3)
 
   for(int i = 0; i < 3; ++i) {
     if(f.getVertex(ind + 1 % 4) == vertices[i]) {
-      if(f.getVertex(ind + 2 % 4) == vertices[i + 1 % 3]) {
-        return;
-      }
+      if(f.getVertex(ind + 2 % 4) == vertices[i + 1 % 3]) { return; }
       else {
         f =
           MFace(f.getVertex(3), f.getVertex(2), f.getVertex(1), f.getVertex(0));
@@ -3539,9 +3407,7 @@ void PostOp::split_hexahedra(GRegion *gr)
 
   for(size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *element = gr->getMeshElement(i);
-    if(eight(element)) {
-      hexahedra.push_back(element);
-    }
+    if(eight(element)) { hexahedra.push_back(element); }
   }
 
   for(size_t i = 0; i < hexahedra.size(); i++) {
@@ -3600,9 +3466,7 @@ void PostOp::split_hexahedra(GRegion *gr)
   for(size_t i = 0; i < opt.size(); i++) {
     MElement *element = (MElement *)(opt[i]);
     it = markings.find(element);
-    if(it->second == 0) {
-      gr->hexahedra.push_back(opt[i]);
-    }
+    if(it->second == 0) { gr->hexahedra.push_back(opt[i]); }
     else {
       delete opt[i];
     }
@@ -3619,9 +3483,7 @@ void PostOp::split_prisms(GRegion *gr)
 
   for(size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *element = gr->getMeshElement(i);
-    if(six(element)) {
-      prisms.push_back(element);
-    }
+    if(six(element)) { prisms.push_back(element); }
   }
 
   for(size_t i = 0; i < prisms.size(); i++) {
@@ -3671,9 +3533,7 @@ void PostOp::split_prisms(GRegion *gr)
   for(size_t i = 0; i < opt.size(); i++) {
     MElement *element = (MElement *)(opt[i]);
     it = markings.find(element);
-    if(it->second == 0) {
-      gr->prisms.push_back(opt[i]);
-    }
+    if(it->second == 0) { gr->prisms.push_back(opt[i]); }
     else {
       delete opt[i];
     }
@@ -3690,9 +3550,7 @@ void PostOp::split_pyramids(GRegion *gr)
 
   for(size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *element = gr->getMeshElement(i);
-    if(five(element)) {
-      pyramids.push_back(element);
-    }
+    if(five(element)) { pyramids.push_back(element); }
   }
 
   for(size_t i = 0; i < pyramids.size(); i++) {
@@ -3728,9 +3586,7 @@ void PostOp::split_pyramids(GRegion *gr)
     if(otherPyr.size() == 2) {
       element_set_itr myit = otherPyr.begin();
       MElement *other = *myit;
-      if(other == element) {
-        other = *(++myit);
-      }
+      if(other == element) { other = *(++myit); }
       // TODO test also quality of tet after split of other pyr ?
       MTetrahedron *tempA1 = new MTetrahedron(a, b, c, apex);
       MTetrahedron *tempA2 = new MTetrahedron(a, c, d, apex);
@@ -3838,9 +3694,7 @@ void PostOp::split_pyramids(GRegion *gr)
   for(size_t i = 0; i < opt.size(); i++) {
     MElement *element = (MElement *)(opt[i]);
     it = markings.find(element);
-    if(it->second == 0) {
-      gr->pyramids.push_back(opt[i]);
-    }
+    if(it->second == 0) { gr->pyramids.push_back(opt[i]); }
     else {
       delete opt[i];
     }
@@ -3863,9 +3717,7 @@ int PostOp::nonConformDiag(MVertex *a, MVertex *b, MVertex *c, MVertex *d,
   find_pyramids_from_tri(a, c, d, diag1b);
   find_pyramids_from_tri(b, c, d, diag2a);
   find_pyramids_from_tri(a, b, d, diag2b);
-  if(diag1a.size() == 1 || diag1b.size() == 1) {
-    return 1;
-  }
+  if(diag1a.size() == 1 || diag1b.size() == 1) { return 1; }
   else if(diag2a.size() == 1 || diag2b.size() == 1) {
     return 2;
   }
@@ -3888,9 +3740,7 @@ void PostOp::pyramids1(GRegion *gr)
 
   for(i = 0; i < gr->getNumMeshElements(); i++) {
     element = gr->getMeshElement(i);
-    if(eight(element)) {
-      hexahedra.push_back(element);
-    }
+    if(eight(element)) { hexahedra.push_back(element); }
     else if(six(element)) {
       prisms.push_back(element);
     }
@@ -3939,9 +3789,7 @@ void PostOp::pyramids1(GRegion *gr)
   for(i = 0; i < opt.size(); i++) {
     element = (MElement *)(opt[i]);
     it = markings.find(element);
-    if(it->second == 0) {
-      gr->tetrahedra.push_back(opt[i]);
-    }
+    if(it->second == 0) { gr->tetrahedra.push_back(opt[i]); }
     else {
       delete opt[i];
     }
@@ -3965,9 +3813,7 @@ void PostOp::pyramids2(GRegion *gr, bool allowNonConforming)
 
   for(i = 0; i < gr->getNumMeshElements(); i++) {
     element = gr->getMeshElement(i);
-    if(eight(element)) {
-      hexahedra.push_back(element);
-    }
+    if(eight(element)) { hexahedra.push_back(element); }
     else if(six(element)) {
       prisms.push_back(element);
     }
@@ -4016,9 +3862,7 @@ void PostOp::pyramids2(GRegion *gr, bool allowNonConforming)
   for(i = 0; i < opt1.size(); i++) {
     element = (MElement *)(opt1[i]);
     it = markings.find(element);
-    if(it->second == 0) {
-      gr->tetrahedra.push_back(opt1[i]);
-    }
+    if(it->second == 0) { gr->tetrahedra.push_back(opt1[i]); }
     else {
       delete opt1[i];
     }
@@ -4032,9 +3876,7 @@ void PostOp::pyramids2(GRegion *gr, bool allowNonConforming)
   for(i = 0; i < opt2.size(); i++) {
     element = (MElement *)(opt2[i]);
     it = markings.find(element);
-    if(it->second == 0) {
-      gr->pyramids.push_back(opt2[i]);
-    }
+    if(it->second == 0) { gr->pyramids.push_back(opt2[i]); }
     else {
       delete opt2[i];
     }
@@ -4069,18 +3911,10 @@ void PostOp::pyramids1(MVertex *a, MVertex *b, MVertex *c, MVertex *d,
   //  find_tetrahedra(b,d,bin2);
 
   bin.clear();
-  for(it = bin1a.begin(); it != bin1a.end(); it++) {
-    bin.insert(*it);
-  }
-  for(it = bin1b.begin(); it != bin1b.end(); it++) {
-    bin.insert(*it);
-  }
-  for(it = bin2a.begin(); it != bin2a.end(); it++) {
-    bin.insert(*it);
-  }
-  for(it = bin2b.begin(); it != bin2b.end(); it++) {
-    bin.insert(*it);
-  }
+  for(it = bin1a.begin(); it != bin1a.end(); it++) { bin.insert(*it); }
+  for(it = bin1b.begin(); it != bin1b.end(); it++) { bin.insert(*it); }
+  for(it = bin2a.begin(); it != bin2a.end(); it++) { bin.insert(*it); }
+  for(it = bin2b.begin(); it != bin2b.end(); it++) { bin.insert(*it); }
 
   if(bin.size() == 2) { // 2 tetrahedra on face
     it = bin.begin();
@@ -4118,9 +3952,7 @@ void PostOp::trihedra(GRegion *gr)
 
   for(i = 0; i < gr->getNumMeshElements(); i++) {
     element = gr->getMeshElement(i);
-    if(eight(element)) {
-      hexahedra.push_back(element);
-    }
+    if(eight(element)) { hexahedra.push_back(element); }
     else if(six(element)) {
       prisms.push_back(element);
     }
@@ -4246,33 +4078,17 @@ void PostOp::pyramids2(MVertex *a, MVertex *b, MVertex *c, MVertex *d,
   pyramids.clear();
   if((bin1a.size() + bin3a.size() == 1) && (bin1b.size() + bin3b.size() == 1)) {
     flag = true;
-    for(it = bin1a.begin(); it != bin1a.end(); it++) {
-      tetrahedra.insert(*it);
-    }
-    for(it = bin1b.begin(); it != bin1b.end(); it++) {
-      tetrahedra.insert(*it);
-    }
-    for(it = bin3a.begin(); it != bin3a.end(); it++) {
-      pyramids.insert(*it);
-    }
-    for(it = bin3b.begin(); it != bin3b.end(); it++) {
-      pyramids.insert(*it);
-    }
+    for(it = bin1a.begin(); it != bin1a.end(); it++) { tetrahedra.insert(*it); }
+    for(it = bin1b.begin(); it != bin1b.end(); it++) { tetrahedra.insert(*it); }
+    for(it = bin3a.begin(); it != bin3a.end(); it++) { pyramids.insert(*it); }
+    for(it = bin3b.begin(); it != bin3b.end(); it++) { pyramids.insert(*it); }
   }
   else if((bin2a.size() + bin4a.size() == 1) &&
           (bin2b.size() + bin4b.size() == 1)) {
-    for(it = bin2a.begin(); it != bin2a.end(); it++) {
-      tetrahedra.insert(*it);
-    }
-    for(it = bin2b.begin(); it != bin2b.end(); it++) {
-      tetrahedra.insert(*it);
-    }
-    for(it = bin4a.begin(); it != bin4a.end(); it++) {
-      pyramids.insert(*it);
-    }
-    for(it = bin4b.begin(); it != bin4b.end(); it++) {
-      pyramids.insert(*it);
-    }
+    for(it = bin2a.begin(); it != bin2a.end(); it++) { tetrahedra.insert(*it); }
+    for(it = bin2b.begin(); it != bin2b.end(); it++) { tetrahedra.insert(*it); }
+    for(it = bin4a.begin(); it != bin4a.end(); it++) { pyramids.insert(*it); }
+    for(it = bin4b.begin(); it != bin4b.end(); it++) { pyramids.insert(*it); }
   }
 
   if(flag) {
@@ -4567,15 +4383,11 @@ void PostOp::statistics(GRegion *gr)
       vol4 = vol4 + element->getVolume();
     }
 
-    if(fourTrih(element)) {
-      nbr4Trih = nbr4Trih + 1;
-    }
+    if(fourTrih(element)) { nbr4Trih = nbr4Trih + 1; }
 
     nbr = nbr + 1;
 
-    if(!five(element)) {
-      vol = vol + element->getVolume();
-    }
+    if(!five(element)) { vol = vol + element->getVolume(); }
     else {
       // vol = vol + workaround(element);
       vol = vol + element->getVolume();
@@ -4664,9 +4476,7 @@ void PostOp::create_quads_on_boundary(GRegion *gr)
 
       if(element->getNumVertices() == 3) {
         it2 = triangles.find(element);
-        if(it2 == triangles.end()) {
-          opt.push_back(element);
-        }
+        if(it2 == triangles.end()) { opt.push_back(element); }
       }
     }
 
@@ -4701,9 +4511,7 @@ void PostOp::create_quads_on_boundary(MVertex *a, MVertex *b, MVertex *c,
   flag2 = 0;
 
   while(it1 != tuples.end()) {
-    if(tuple1.get_hash() != it1->get_hash()) {
-      break;
-    }
+    if(tuple1.get_hash() != it1->get_hash()) { break; }
 
     if(tuple1.same_vertices(*it1)) {
       flag1 = 1;
@@ -4715,9 +4523,7 @@ void PostOp::create_quads_on_boundary(MVertex *a, MVertex *b, MVertex *c,
   }
 
   while(it2 != tuples.end()) {
-    if(tuple2.get_hash() != it2->get_hash()) {
-      break;
-    }
+    if(tuple2.get_hash() != it2->get_hash()) { break; }
 
     if(tuple2.same_vertices(*it2)) {
       flag2 = 1;
@@ -4745,9 +4551,7 @@ void PostOp::create_quads_on_boundary(MVertex *a, MVertex *b, MVertex *c,
   flag2 = 0;
 
   while(it1 != tuples.end()) {
-    if(tuple1.get_hash() != it1->get_hash()) {
-      break;
-    }
+    if(tuple1.get_hash() != it1->get_hash()) { break; }
 
     if(tuple1.same_vertices(*it1)) {
       flag1 = 1;
@@ -4759,9 +4563,7 @@ void PostOp::create_quads_on_boundary(MVertex *a, MVertex *b, MVertex *c,
   }
 
   while(it2 != tuples.end()) {
-    if(tuple2.get_hash() != it2->get_hash()) {
-      break;
-    }
+    if(tuple2.get_hash() != it2->get_hash()) { break; }
 
     if(tuple2.same_vertices(*it2)) {
       flag2 = 1;
@@ -4822,9 +4624,7 @@ bool PostOp::eight(MElement *element)
 
 bool PostOp::equal(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4)
 {
-  if((v1 == v3 && v2 == v4) || (v1 == v4 && v2 == v3)) {
-    return 1;
-  }
+  if((v1 == v3 && v2 == v4) || (v1 == v4 && v2 == v3)) { return 1; }
   else {
     return 0;
   }
@@ -4866,9 +4666,7 @@ bool PostOp::equal(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
 
 bool PostOp::different(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4)
 {
-  if(v1 != v3 && v1 != v4 && v2 != v3 && v2 != v4) {
-    return 1;
-  }
+  if(v1 != v3 && v1 != v4 && v2 != v3 && v2 != v4) { return 1; }
   else {
     return 0;
   }
@@ -4932,9 +4730,7 @@ void PostOp::mean(const std::set<MVertex *> &Ns, MVertex *mid,
   y = y / Ns.size();
   z = z / Ns.size();
 
-  for(i = 0; i < movables.size(); i++) {
-    movables[i]->setVolumePositive();
-  }
+  for(i = 0; i < movables.size(); i++) { movables[i]->setVolumePositive(); }
 
   mid->setXYZ(x, y, z);
 
@@ -4942,14 +4738,10 @@ void PostOp::mean(const std::set<MVertex *> &Ns, MVertex *mid,
     flag = 0;
 
     for(i = 0; i < movables.size(); i++) {
-      if(movables[i]->getVolume() < 0.0) {
-        flag = 1;
-      }
+      if(movables[i]->getVolume() < 0.0) { flag = 1; }
     }
 
-    if(!flag) {
-      break;
-    }
+    if(!flag) { break; }
 
     x = 0.1 * init_x + 0.9 * mid->x();
     y = 0.1 * init_y + 0.9 * mid->y();
@@ -4964,14 +4756,10 @@ void PostOp::mean(const std::set<MVertex *> &Ns, MVertex *mid,
     flag = 0;
 
     for(i = 0; i < movables.size(); i++) {
-      if(movables[i]->gammaShapeMeasure() < 0.2) {
-        flag = 1;
-      }
+      if(movables[i]->gammaShapeMeasure() < 0.2) { flag = 1; }
     }
 
-    if(!flag) {
-      break;
-    }
+    if(!flag) { break; }
 
     x = 0.1 * init_x + 0.9 * mid->x();
     y = 0.1 * init_y + 0.9 * mid->y();
@@ -5124,9 +4912,7 @@ void PostOp::find_pyramids_from_tri(MVertex *v1, MVertex *v2, MVertex *v3,
               equal(v1, v2, (*it)->getVertex(2), (*it)->getVertex(3)) ||
               equal(v1, v2, (*it)->getVertex(3), (*it)->getVertex(0)));
     }
-    if(flag) {
-      final.insert(*it);
-    }
+    if(flag) { final.insert(*it); }
   }
 }
 void PostOp::find_pyramids_from_quad(MVertex *v1, MVertex *v2, MVertex *v3,
@@ -5249,9 +5035,7 @@ void PostOp::build_vertex_to_tetrahedra(GRegion *gr)
 
   for(i = 0; i < gr->getNumMeshElements(); i++) {
     element = gr->getMeshElement(i);
-    if(four(element)) {
-      build_vertex_to_tetrahedra(element);
-    }
+    if(four(element)) { build_vertex_to_tetrahedra(element); }
   }
 }
 
@@ -5263,9 +5047,7 @@ void PostOp::build_vertex_to_tetrahedra(MElement *element)
     MVertex *getVertex = element->getVertex(i);
 
     Vertex2Elements::iterator it = vertex_to_tetrahedra.find(getVertex);
-    if(it != vertex_to_tetrahedra.end()) {
-      it->second.insert(element);
-    }
+    if(it != vertex_to_tetrahedra.end()) { it->second.insert(element); }
     else {
       bin.clear();
       bin.insert(element);
@@ -5281,9 +5063,7 @@ void PostOp::erase_vertex_to_tetrahedra(MElement *element)
     MVertex *getVertex = element->getVertex(i);
 
     Vertex2Elements::iterator it = vertex_to_tetrahedra.find(getVertex);
-    if(it != vertex_to_tetrahedra.end()) {
-      it->second.erase(element);
-    }
+    if(it != vertex_to_tetrahedra.end()) { it->second.erase(element); }
   }
 }
 
@@ -5293,9 +5073,7 @@ void PostOp::build_vertex_to_pyramids(GRegion *gr)
 
   for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *element = gr->getMeshElement(i);
-    if(five(element)) {
-      build_vertex_to_pyramids(element);
-    }
+    if(five(element)) { build_vertex_to_pyramids(element); }
   }
 }
 
@@ -5307,9 +5085,7 @@ void PostOp::build_vertex_to_pyramids(MElement *element)
     MVertex *getVertex = element->getVertex(i);
 
     Vertex2Elements::iterator it = vertex_to_pyramids.find(getVertex);
-    if(it != vertex_to_pyramids.end()) {
-      it->second.insert(element);
-    }
+    if(it != vertex_to_pyramids.end()) { it->second.insert(element); }
     else {
       bin.clear();
       bin.insert(element);
@@ -5325,9 +5101,7 @@ void PostOp::erase_vertex_to_pyramids(MElement *element)
     MVertex *getVertex = element->getVertex(i);
 
     Vertex2Elements::iterator it = vertex_to_pyramids.find(getVertex);
-    if(it != vertex_to_pyramids.end()) {
-      it->second.erase(element);
-    }
+    if(it != vertex_to_pyramids.end()) { it->second.erase(element); }
   }
 }
 
@@ -5337,9 +5111,7 @@ void PostOp::build_vertex_to_hexPrism(GRegion *gr)
 
   for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *element = gr->getMeshElement(i);
-    if(six(element) || eight(element)) {
-      build_vertex_to_hexPrism(element);
-    }
+    if(six(element) || eight(element)) { build_vertex_to_hexPrism(element); }
   }
 }
 
@@ -5351,9 +5123,7 @@ void PostOp::build_vertex_to_hexPrism(MElement *element)
     MVertex *getVertex = element->getVertex(i);
 
     Vertex2Elements::iterator it = vertex_to_hexPrism.find(getVertex);
-    if(it != vertex_to_hexPrism.end()) {
-      it->second.insert(element);
-    }
+    if(it != vertex_to_hexPrism.end()) { it->second.insert(element); }
     else {
       bin.clear();
       bin.insert(element);
@@ -5369,9 +5139,7 @@ void PostOp::erase_vertex_to_hexPrism(MElement *element)
     MVertex *getVertex = element->getVertex(i);
 
     Vertex2Elements::iterator it = vertex_to_hexPrism.find(getVertex);
-    if(it != vertex_to_hexPrism.end()) {
-      it->second.erase(element);
-    }
+    if(it != vertex_to_hexPrism.end()) { it->second.erase(element); }
   }
 }
 
@@ -5416,15 +5184,14 @@ bool PostOp::valid(MPyramid *pyr)
 // Why template?
 template <class T>
 void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl,
-                                       int clique_number, string filename)
+                                       int clique_number,
+                                       string const &filename)
 {
   ofstream out(filename.c_str());
   out << "Graph G {" << endl;
   typename multimap<int, set<T> >::reverse_iterator it_all = cl.allQ.rbegin();
 
-  for(int i = 0; i < clique_number; i++) {
-    it_all++;
-  }
+  for(int i = 0; i < clique_number; i++) { it_all++; }
   //  int clique_size = it_all->second.size();
   typename set<T>::iterator ithex = it_all->second.begin();
   typename set<T>::iterator ithexen = it_all->second.end();
@@ -5674,9 +5441,7 @@ bool clique_stop_criteria<T>::stop(const graph_data_no_hash &clique) const
   double threshold = 1.e-3 * meanvolume;
   for(set<MElement *>::iterator it = thetets.begin(); it != thetets.end();
       it++) {
-    if((*it)->getVolume() < threshold) {
-      nb_slivers++;
-    }
+    if((*it)->getVolume() < threshold) { nb_slivers++; }
   }
 
   total = thetets.size() - nb_slivers;
@@ -5785,9 +5550,7 @@ template <class T> void cliques_compatibility_graph<T>::store_clique(int n)
     //}
   }
   // finally, possibly delete worst clique, to reduce memory footprint
-  if(delete_worst) {
-    allQ.erase(allQ.begin());
-  }
+  if(delete_worst) { allQ.erase(allQ.begin()); }
 
   bool found_best_clique_so_far = Q.size() > max_clique_size;
   if(found_best_clique_so_far) {
@@ -5875,9 +5638,7 @@ void cliques_compatibility_graph<T>::find_cliques(graph_data &subgraph, int n)
     }
 
     find_cliques(black, n + 1);
-    if(cancel_search) {
-      break;
-    }
+    if(cancel_search) { break; }
 
     erase_entry(white, u, u_key);
     erase_entry(subgraph, u, u_key);
@@ -5998,9 +5759,7 @@ bool cliques_compatibility_graph<T>::compatibility(const T &u,
     range_vkey = itfind_u->second.second.equal_range(v_key);
   for(typename graph_data::const_iterator itfind_v = range_vkey.first;
       itfind_v != range_vkey.second; itfind_v++) {
-    if(itfind_v->second == v) {
-      return true;
-    }
+    if(itfind_v->second == v) { return true; }
   }
   return false;
 }
@@ -6058,7 +5817,7 @@ MVertex *PEEntity::getVertex(size_t n) const
 
 bool PEEntity::hasVertex(MVertex *v) const
 {
-  return (find(vertices.begin(), vertices.end(), v) != vertices.end());
+  return std::find(vertices.begin(), vertices.end(), v) != vertices.end();
 }
 
 bool PEEntity::same_vertices(const PEEntity *t) const
@@ -6173,9 +5932,7 @@ void Recombinator_Graph::fill_tet_to_hex_table(Hex *hex)
   set<MVertex *> vertices;
   for(element_set_itr it = parts.begin(); it != parts.end(); it++) {
     element = *it;
-    for(int i = 0; i < 4; i++) {
-      vertices.insert(element->getVertex(i));
-    }
+    for(int i = 0; i < 4; i++) { vertices.insert(element->getVertex(i)); }
   }
 
   if(vertices.size() != 8) {
@@ -6272,9 +6029,7 @@ void Recombinator_Graph::fill_tet_to_hex_table(Hex *hex)
     hex_to_tet[hex].insert(element);
   }
 
-  if(very_verbose) {
-    export_single_hex_all(hex, "");
-  }
+  if(very_verbose) { export_single_hex_all(hex, ""); }
 }
 
 void Recombinator_Graph::buildGraphOnly(unsigned int max_nb_cliques,
@@ -6313,7 +6068,7 @@ void Recombinator_Graph::buildGraphOnly(GRegion *gr,
 }
 
 void Recombinator_Graph::execute_blossom(unsigned int max_nb_cliques,
-                                         string filename)
+                                         std::string const &filename)
 {
   GRegion *gr;
   GModel *model = GModel::current();
@@ -6473,7 +6228,7 @@ void Recombinator_Graph::createBlossomInfo(GRegion *gr)
 
 void Recombinator_Graph::execute_blossom(GRegion *gr,
                                          unsigned int max_nb_cliques,
-                                         string filename)
+                                         std::string const &filename)
 {
   throw;
 
@@ -6516,7 +6271,6 @@ void Recombinator_Graph::execute_blossom(GRegion *gr,
 
   int clique_number = 0;
 
-  if(filename.empty()) filename.assign("mygraph.dot");
   //  export_clique_graphviz_format(cl,1,"mygraph2.dot");
   export_the_clique_graphviz_format(cl, clique_number, filename);
 
@@ -6572,7 +6326,8 @@ PETriangle *Recombinator_Graph::get_triangle(MElement *element, int i, int j,
   return t;
 }
 
-Recombinator_Graph::Recombinator_Graph(unsigned int _n, const string &filename)
+Recombinator_Graph::Recombinator_Graph(unsigned int _n,
+                                       const std::string &filename)
   : max_nb_cliques(_n), graphfilename(filename)
 {
 }
@@ -6683,9 +6438,7 @@ void Recombinator_Graph::merge_clique(GRegion *gr,
   std::set<MElement *> parts;
   // int clique_size = 0;
 
-  for(int i = 0; i < clique_number; i++) {
-    it_all++;
-  }
+  for(int i = 0; i < clique_number; i++) { it_all++; }
 
   for(; it_all != it_allen; it_all++, clique_counter++) {
     if(clique_counter >= 1) break;
@@ -6977,9 +6730,7 @@ void Recombinator_Graph::create_indirect_neighbors_graph()
         // incompatibility relationship
         continue;
       }
-      if(is_not_good_enough(hex)) {
-        continue;
-      }
+      if(is_not_good_enough(hex)) { continue; }
       graph::iterator itfind_graph = find_hex_in_graph(hex);
       if(itfind_graph == incompatibility_graph.end()) {
         // Add the hex to the graph
@@ -7009,9 +6760,7 @@ Recombinator_Graph::find_the_created_potential_hex(
     list.equal_range(hex->get_hash());
   for(graph_data::const_iterator it = range.first; it != range.second; it++) {
     Hex *candidate = it->second;
-    if(candidate->same_vertices(hex)) {
-      return it;
-    }
+    if(candidate->same_vertices(hex)) { return it; }
   }
   return list.end();
 }
@@ -7206,13 +6955,9 @@ void Recombinator_Graph::create_direct_neighbors_incompatibility_graph()
 void Recombinator_Graph::evaluate_hex_couple(Hex *hex, Hex *other_hex)
 {
   // Why are the not good enough hex here in the first place? JP
-  if(is_not_good_enough(other_hex)) {
-    return;
-  }
+  if(is_not_good_enough(other_hex)) { return; }
 
-  if(find_hex_couple_in_graph(hex, other_hex)) {
-    return;
-  }
+  if(find_hex_couple_in_graph(hex, other_hex)) { return; }
   if(!conformityA(*other_hex)) {
     add_graph_entry(hex, other_hex);
     return;
@@ -7235,21 +6980,13 @@ void Recombinator_Graph::evaluate_hex_couple(Hex *hex, Hex *other_hex)
 
 bool Recombinator_Graph::post_check_validation(Hex *current_hex)
 {
-  if(!conformityA(*current_hex)) {
-    return false;
-  }
+  if(!conformityA(*current_hex)) { return false; }
 
-  if(!conformityB(*current_hex)) {
-    return false;
-  }
+  if(!conformityB(*current_hex)) { return false; }
 
-  if(!conformityC(*current_hex)) {
-    return false;
-  }
+  if(!conformityC(*current_hex)) { return false; }
 
-  if(!faces_statuquo(*current_hex)) {
-    return false;
-  }
+  if(!faces_statuquo(*current_hex)) { return false; }
   return true;
 }
 
@@ -7264,9 +7001,7 @@ void Recombinator_Graph::add_face(
   PETriangle *q = new PETriangle(v);
   std::multimap<unsigned long long, pair<PETriangle *, int> >::iterator itfind =
     find_the_triangle(q, f);
-  if(itfind == f.end()) {
-    f.insert(make_pair(q->get_hash(), make_pair(q, 1)));
-  }
+  if(itfind == f.end()) { f.insert(make_pair(q->get_hash(), make_pair(q, 1))); }
   else {
     delete q;
   }
@@ -7340,9 +7075,7 @@ Recombinator_Graph::find_hex_in_graph(Hex *hex)
 
   graph::iterator it = range.first;
   for(; it != range.second; it++) {
-    if(it->second.first == hex) {
-      return it;
-    }
+    if(it->second.first == hex) { return it; }
   }
   return incompatibility_graph.end();
 }
@@ -7356,9 +7089,7 @@ Recombinator_Graph::find_hex_in_graphrow(Hex *hex, graph_data &row)
 
   graph_data::iterator it = range.first;
   for(; it != range.second; it++) {
-    if(it->second == hex) {
-      return it;
-    }
+    if(it->second == hex) { return it; }
   }
   return row.end();
 }
@@ -7436,9 +7167,7 @@ void Recombinator_Graph::add_face_connectivity(MElement *tet, int i, int j,
   v.push_back(tet->getVertex(k));
   t = new PETriangle(v);
   citer itfind = find_the_triangle(t, triangular_faces);
-  if(itfind != triangular_faces.end()) {
-    faces_connectivity[itfind->second]++;
-  }
+  if(itfind != triangular_faces.end()) { faces_connectivity[itfind->second]++; }
   delete t;
 }
 

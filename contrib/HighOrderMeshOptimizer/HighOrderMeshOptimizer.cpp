@@ -111,8 +111,8 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
 }
 
 // Test intersection between sphere and segment
-static bool testSegSphereIntersect(SPoint3 A, SPoint3 B, const SPoint3 &P,
-                                   const double rr)
+static bool testSegSphereIntersect(SPoint3 const &A, SPoint3 const &B,
+                                   SPoint3 const &P, double const rr)
 {
   // Test if separating plane between sphere and segment vertices
   // For each vertex, separation if vertex is outside sphere and P on opposite
@@ -137,8 +137,9 @@ static bool testSegSphereIntersect(SPoint3 A, SPoint3 B, const SPoint3 &P,
 // Test intersection between sphere and triangle
 // Inspired by Christer Ericson,
 // http://realtimecollisiondetection.net/blog/?p=103
-static bool testTriSphereIntersect(SPoint3 A, SPoint3 B, SPoint3 C,
-                                   const SPoint3 &P, const double rr)
+static bool testTriSphereIntersect(SPoint3 const &A, SPoint3 const &B,
+                                   SPoint3 const &C, const SPoint3 &P,
+                                   const double rr)
 {
   // Test if separating plane between sphere and triangle plane
   const SVector3 PA(P, A), AB(A, B), AC(A, C);
@@ -183,7 +184,7 @@ static bool testTriSphereIntersect(SPoint3 A, SPoint3 B, SPoint3 C,
 }
 
 // Approximate test of intersection element with circle/sphere by sampling
-static bool testElInDist(const SPoint3 p, double limDist, MElement *el)
+static bool testElInDist(SPoint3 const &p, double limDist, MElement *el)
 {
   const double limDistSq = limDist * limDist;
 
@@ -305,17 +306,18 @@ void HighOrderMeshOptimizer(std::vector<GEntity *> &entities,
   Msg::StatusBar(true, "Optimizing high-order mesh...");
 
   bool order1 = false;
-  for(std::size_t i = 0; i < entities.size(); i++){
-    for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++){
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
       if(entities[i]->dim() > 0 &&
-         entities[i]->getMeshElement(j)->getPolynomialOrder() < 2){
+         entities[i]->getMeshElement(j)->getPolynomialOrder() < 2) {
         order1 = true;
         break;
       }
     }
   }
   if(order1)
-    Msg::Warning("Applying high-order mesh optimizer to mesh with linear elements");
+    Msg::Warning(
+      "Applying high-order mesh optimizer to mesh with linear elements");
 
   MeshOptParameters par;
   par.dim = p.dim;
