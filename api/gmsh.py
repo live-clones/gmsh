@@ -2073,21 +2073,21 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setPeriodic(dim, tags, tagsSource, affineTransform):
+        def setPeriodic(dim, tags, tagsMaster, affineTransform):
             """
             Set the meshes of the entities of dimension `dim' and tag `tags' as
-            periodic copies of the meshes of entities `tagsSource', using the affine
+            periodic copies of the meshes of entities `tagsMaster', using the affine
             transformation specified in `affineTransformation' (16 entries of a 4x4
             matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.
             """
             api_tags_, api_tags_n_ = _ivectorint(tags)
-            api_tagsSource_, api_tagsSource_n_ = _ivectorint(tagsSource)
+            api_tagsMaster_, api_tagsMaster_n_ = _ivectorint(tagsMaster)
             api_affineTransform_, api_affineTransform_n_ = _ivectordouble(affineTransform)
             ierr = c_int()
             lib.gmshModelMeshSetPeriodic(
                 c_int(dim),
                 api_tags_, api_tags_n_,
-                api_tagsSource_, api_tagsSource_n_,
+                api_tagsMaster_, api_tagsMaster_n_,
                 api_affineTransform_, api_affineTransform_n_,
                 byref(ierr))
             if ierr.value != 0:

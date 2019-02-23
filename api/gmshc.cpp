@@ -1184,14 +1184,14 @@ GMSH_API void gmshModelMeshRenumberElements(int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshSetPeriodic(const int dim, int * tags, size_t tags_n, int * tagsSource, size_t tagsSource_n, double * affineTransform, size_t affineTransform_n, int * ierr)
+GMSH_API void gmshModelMeshSetPeriodic(const int dim, int * tags, size_t tags_n, int * tagsMaster, size_t tagsMaster_n, double * affineTransform, size_t affineTransform_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_tags_(tags, tags + tags_n);
-    std::vector<int> api_tagsSource_(tagsSource, tagsSource + tagsSource_n);
+    std::vector<int> api_tagsMaster_(tagsMaster, tagsMaster + tagsMaster_n);
     std::vector<double> api_affineTransform_(affineTransform, affineTransform + affineTransform_n);
-    gmsh::model::mesh::setPeriodic(dim, api_tags_, api_tagsSource_, api_affineTransform_);
+    gmsh::model::mesh::setPeriodic(dim, api_tags_, api_tagsMaster_, api_affineTransform_);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

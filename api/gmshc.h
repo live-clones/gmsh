@@ -776,12 +776,12 @@ GMSH_API void gmshModelMeshRenumberNodes(int * ierr);
 GMSH_API void gmshModelMeshRenumberElements(int * ierr);
 
 /* Set the meshes of the entities of dimension `dim' and tag `tags' as
- * periodic copies of the meshes of entities `tagsSource', using the affine
+ * periodic copies of the meshes of entities `tagsMaster', using the affine
  * transformation specified in `affineTransformation' (16 entries of a 4x4
  * matrix, by row). Currently only available for `dim' == 1 and `dim' == 2. */
 GMSH_API void gmshModelMeshSetPeriodic(const int dim,
                                        int * tags, size_t tags_n,
-                                       int * tagsSource, size_t tagsSource_n,
+                                       int * tagsMaster, size_t tagsMaster_n,
                                        double * affineTransform, size_t affineTransform_n,
                                        int * ierr);
 

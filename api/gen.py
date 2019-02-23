@@ -313,8 +313,8 @@ mesh.add('renumberNodes',doc,None)
 doc = '''Renumber the element tags in a contiunous sequence.'''
 mesh.add('renumberElements',doc,None)
 
-doc = '''Set the meshes of the entities of dimension `dim' and tag `tags' as periodic copies of the meshes of entities `tagsSource', using the affine transformation specified in `affineTransformation' (16 entries of a 4x4 matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.'''
-mesh.add('setPeriodic',doc,None,iint('dim'),ivectorint('tags'),ivectorint('tagsSource'),ivectordouble('affineTransform'))
+doc = '''Set the meshes of the entities of dimension `dim' and tag `tags' as periodic copies of the meshes of entities `tagsMaster', using the affine transformation specified in `affineTransformation' (16 entries of a 4x4 matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.'''
+mesh.add('setPeriodic',doc,None,iint('dim'),ivectorint('tags'),ivectorint('tagsMaster'),ivectordouble('affineTransform'))
 
 doc = '''Get the master entity `tagMaster', the node tags `nodeTags' and their corresponding master node tags `nodeTagsMaster', and the affine transform `affineTransform' for the entity of dimension `dim' and tag `tag'.'''
 mesh.add('getPeriodicNodes',doc,None,iint('dim'),iint('tag'),oint('tagMaster'),ovectorsize('nodeTags'),ovectorsize('nodeTagsMaster'),ovectordouble('affineTransform'))

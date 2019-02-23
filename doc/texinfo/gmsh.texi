@@ -3710,7 +3710,8 @@ $PartitionedEntities
 $EndPartitionedEntities
 
 $Nodes
-  numEntityBlocks(size_t) numNodes(size_t) minNodeTag(size_t) maxNodeTag(size_t)
+  numEntityBlocks(size_t) numNodes(size_t)
+    minNodeTag(size_t) maxNodeTag(size_t)
   entityDim(int) entityTag(int) parametric(int; 0 or 1) numNodes(size_t)
     nodeTag(size_t) x(double) y(double) z(double)
        <u(double; if parametric and on curve or surface)>
@@ -3720,7 +3721,8 @@ $Nodes
 $EndNodes
 
 $Elements
-  numEntityBlocks(size_t) numElements(size_t) minElementTag(size_t) maxElementTag(size_t)
+  numEntityBlocks(size_t) numElements(size_t)
+    minElementTag(size_t) maxElementTag(size_t)
   entityDim(int) entityTag(int) elementType(int; see below) numElements(size_t)
     elementTag(size_t) nodeTag(size_t) ...
     ...
@@ -3729,10 +3731,10 @@ $EndElements
 
 $Periodic
   numPeriodicLinks(size_t)
-  slaveEntityDim(int) slaveEntityTag(int) masterEntityTag(int)
+  entityDim(int) entityTag(int) entityTagMaster(int)
   numAffine(size_t) value(double) ...
   numCorrespondingNodes(size_t)
-    nodeTag(size_t) nodeTag(size_t)
+    nodeTag(size_t) nodeTagMaster(size_t)
     ...
   ...
 $EndPeriodic

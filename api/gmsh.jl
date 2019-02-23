@@ -1742,18 +1742,18 @@ function renumberElements()
 end
 
 """
-    gmsh.model.mesh.setPeriodic(dim, tags, tagsSource, affineTransform)
+    gmsh.model.mesh.setPeriodic(dim, tags, tagsMaster, affineTransform)
 
 Set the meshes of the entities of dimension `dim` and tag `tags` as periodic
-copies of the meshes of entities `tagsSource`, using the affine transformation
+copies of the meshes of entities `tagsMaster`, using the affine transformation
 specified in `affineTransformation` (16 entries of a 4x4 matrix, by row).
 Currently only available for `dim` == 1 and `dim` == 2.
 """
-function setPeriodic(dim, tags, tagsSource, affineTransform)
+function setPeriodic(dim, tags, tagsMaster, affineTransform)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetPeriodic, gmsh.lib), Nothing,
           (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          dim, convert(Vector{Cint}, tags), length(tags), convert(Vector{Cint}, tagsSource), length(tagsSource), affineTransform, length(affineTransform), ierr)
+          dim, convert(Vector{Cint}, tags), length(tags), convert(Vector{Cint}, tagsMaster), length(tagsMaster), affineTransform, length(affineTransform), ierr)
     ierr[] != 0 && error("gmshModelMeshSetPeriodic returned non-zero error code: $(ierr[])")
     return nothing
 end
