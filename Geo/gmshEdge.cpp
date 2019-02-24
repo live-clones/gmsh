@@ -16,7 +16,7 @@
 gmshEdge::gmshEdge(GModel *m, Curve *edge, GVertex *v1, GVertex *v2)
   : GEdge(m, edge->Num, v1, v2), c(edge)
 {
-  resetMeshAttributes();
+  gmshEdge::resetMeshAttributes();
 }
 
 void gmshEdge::resetNativePtr(Curve *edge, GVertex *_v1, GVertex *_v2)

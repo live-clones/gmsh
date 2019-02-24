@@ -23,7 +23,7 @@
 gmshFace::gmshFace(GModel *m, Surface *face) : GFace(m, face->Num)
 {
   resetNativePtr(face);
-  resetMeshAttributes();
+  gmshFace::resetMeshAttributes();
 }
 
 // a face is degenerate if

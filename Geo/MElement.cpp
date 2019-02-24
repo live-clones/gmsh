@@ -882,6 +882,7 @@ double MElement::getJacobian(double u, double v, double w,
   jac[0][0] = jac[0][1] = jac[0][2] = 0.;
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
+  if(getDim() > 3) return 0;
 
   double gsf[1256][3];
   getGradShapeFunctions(u, v, w, gsf);
@@ -904,6 +905,7 @@ double MElement::getJacobian(const fullMatrix<double> &gsf,
   jac[0][0] = jac[0][1] = jac[0][2] = 0.;
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
+  if(gsf.size2() > 3) return 0;
 
   const int numShapeFunctions = getNumShapeFunctions();
   for(int i = 0; i < numShapeFunctions; i++) {

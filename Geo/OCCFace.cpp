@@ -152,7 +152,7 @@ void OCCFace::setup()
     }
   }
 
-  if(geomType() == GEntity::Sphere) {
+  if(OCCFace::geomType() == GEntity::Sphere) {
     BRepAdaptor_Surface surface(s);
     gp_Sphere sphere = surface.Sphere();
     _radius = sphere.Radius();

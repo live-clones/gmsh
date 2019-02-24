@@ -72,10 +72,7 @@ template <class T> T findMatching(std::vector<Pair<T, T> > &matching, T &entity)
   return (0);
 }
 
-// Private
-
-// ------------------------------------------------------------[ Matching
-// vertices ]
+// Matching vertices
 
 std::vector<Pair<GVertex *, GVertex *> > *
 GeomMeshMatcher::matchVertices(GModel *m1, GModel *m2, bool &ok)
@@ -95,7 +92,6 @@ GeomMeshMatcher::matchVertices(GModel *m1, GModel *m2, bool &ok)
     double tol = CTX::instance()->geom.matchMeshTolerance;
 
     discreteVertex *choice = 0;
-    GEntity *choice_ge = 0;
     double best_score = DBL_MAX;
 
     for(GModel::viter vit2 = m2->firstVertex(); vit2 != m2->lastVertex();
@@ -109,14 +105,11 @@ GeomMeshMatcher::matchVertices(GModel *m1, GModel *m2, bool &ok)
                  std::max(fabs(v1->y() - v2->y()), fabs(v1->z() - v2->z())));
       if(score < tol && score < best_score) {
         choice = v2;
-        choice_ge = (*vit2);
         best_score = score;
       }
     }
 
-    if(best_score != DBL_MAX) {
-      Msg::Debug("Model Vertex %i (geom) and %i (mesh) match", v1->tag(),
-                 choice_ge->tag());
+    if(choice && best_score != DBL_MAX) {
       choice->physicals = v1->physicals;
       coresp_v->push_back(Pair<GVertex *, GVertex *>(v1, choice));
       num_matched_vertices++;
@@ -129,8 +122,7 @@ GeomMeshMatcher::matchVertices(GModel *m1, GModel *m2, bool &ok)
   return (coresp_v);
 }
 
-// ------------------------------------------------------------[ Matching edges
-// ]
+// Matching edges
 
 std::vector<Pair<GEdge *, GEdge *> > *
 GeomMeshMatcher::matchEdges(GModel *m1, GModel *m2,
@@ -208,13 +200,13 @@ GeomMeshMatcher::matchEdges(GModel *m1, GModel *m2,
         }
       }
     }
-    Msg::Debug("Edges %i (geom) and %i (mesh) match.", e1->tag(),
-               choice->tag());
     coresp_e->push_back(Pair<GEdge *, GEdge *>(e1, choice));
 
-    // --- copy topological information
-    // choice->setTag(e1->tag());
-    choice->physicals = e1->physicals;
+    // copy topological information
+    if(choice){
+      // choice->setTag(e1->tag());
+      choice->physicals = e1->physicals;
+    }
 
     num_matched_edges++;
   }
@@ -224,8 +216,7 @@ GeomMeshMatcher::matchEdges(GModel *m1, GModel *m2,
   return (coresp_e);
 }
 
-// ------------------------------------------------------------[ Matching faces
-// ]
+// Matching faces
 
 std::vector<Pair<GFace *, GFace *> > *
 GeomMeshMatcher::matchFaces(GModel *m1, GModel *m2,
@@ -293,7 +284,7 @@ GeomMeshMatcher::matchFaces(GModel *m1, GModel *m2,
       Msg::Debug("Faces %i (geom) and %i (mesh) match.", f1->tag(),
                  choice->tag());
       coresp_f->push_back(Pair<GFace *, GFace *>(f1, choice));
-      // --- copy topological information
+      // copy topological information
       choice->setTag(f1->tag());
       f1->physicals = choice->physicals;
       num_matched_faces++;
@@ -305,8 +296,7 @@ GeomMeshMatcher::matchFaces(GModel *m1, GModel *m2,
   return coresp_f;
 }
 
-// ------------------------------------------------------------[ Matching
-// regions ]
+// Matching regions
 
 std::vector<Pair<GRegion *, GRegion *> > *
 GeomMeshMatcher::matchRegions(GModel *m1, GModel *m2,
@@ -395,10 +385,10 @@ GeomMeshMatcher::matchRegions(GModel *m1, GModel *m2,
       }
       coresp_r->push_back(
         Pair<GRegion *, GRegion *>((GRegion *)*entity1, choice));
-
-      choice->setTag(((GRegion *)*entity1)->tag());
-      (*entity1)->physicals = choice->physicals;
-
+      if(choice){
+        choice->setTag(((GRegion *)*entity1)->tag());
+        (*entity1)->physicals = choice->physicals;
+      }
       num_matched_regions++;
     }
   }

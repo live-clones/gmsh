@@ -38,6 +38,11 @@ static int ComparePosition(const void *a, const void *b)
   Vertex *q = *(Vertex **)a;
   Vertex *w = *(Vertex **)b;
 
+  if(!q || !w){
+    Msg::Error("Cannot compare position of null points");
+    return 99;
+  }
+
   // Warning: tolerance (before 1.61, it was set to 1.e-10 *
   // CTX::instance()->lc)
   double eps = CTX::instance()->geom.tolerance * CTX::instance()->lc;

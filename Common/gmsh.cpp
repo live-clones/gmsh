@@ -4186,12 +4186,14 @@ GMSH_API void gmshViewGetModelData(const int tag, const int step, char **dataTyp
 {
   if(!_isInitialized()) {
     if(ierr) *ierr = -1;
+    return;
   }
 #if defined(HAVE_POST)
   PView *view = PView::getViewByTag(tag);
   if(!view) {
     Msg::Error("Unknown view with tag %d", tag);
     if(ierr) *ierr = 2;
+    return;
   }
   PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(view->getData());
   if(!d) {

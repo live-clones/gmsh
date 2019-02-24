@@ -39,7 +39,7 @@ GFace::GFace(GModel *model, int tag)
 {
   meshStatistics.status = GFace::PENDING;
   meshStatistics.refineAllEdges = false;
-  resetMeshAttributes();
+  GFace::resetMeshAttributes();
 }
 
 GFace::~GFace()
@@ -52,7 +52,7 @@ GFace::~GFace()
 
   if(va_geom_triangles) delete va_geom_triangles;
 
-  deleteMesh();
+  GFace::deleteMesh();
 }
 
 int GFace::getCurvatureControlParameter() const

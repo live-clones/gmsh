@@ -61,7 +61,7 @@ private:
 public:
   drawTransformScaled(double mat[3][3], double tra[3] = 0) : drawTransform()
   {
-    setMatrix(mat, tra);
+    drawTransformScaled::setMatrix(mat, tra);
   }
   virtual void setMatrix(double mat[3][3], double tra[3] = 0)
   {
