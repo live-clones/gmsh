@@ -25,7 +25,7 @@ typedef unsigned __int64 uint64_t;
 #define PRIu8 "u"
 #define PRIu64 "I64u"
 #else
-#define __STDC_FORMATMACROS
+#define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #endif
 
