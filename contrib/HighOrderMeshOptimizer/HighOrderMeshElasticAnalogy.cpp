@@ -618,7 +618,7 @@ double highOrderTools::_applyIncrementalDisplacement(
   sprintf(opt, "-pc_type ilu -ksp_monitor -petsc_prealloc %d",
           100 * (v[0]->getPolynomialOrder() + 2));
   lsys->setParameter("petscOptions", opt);
-  Msg::Info("Assembling linear system...");
+  Msg::Info("Generating elastic system...");
   dofManager<double> myAssembler(lsys);
   elasticityMixedTerm El_mixed(0, 1.0, .333, _tag);
   elasticityTerm El(0, 1.0, .333, _tag);
