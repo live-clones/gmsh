@@ -34,9 +34,9 @@ public:
   std::vector<MElement *> elements;
   std::set<GFace *> faces;
   Fl_Window *window;
-  Fl_Button *buttons[10];
-  Fl_Check_Button *toggles[10];
-  Fl_Value_Input *inputs[10];
+  Fl_Button *buttons[7];
+  Fl_Check_Button *toggles[3];
+  Fl_Value_Input *inputs[1];
   GEdge *selected;
   std::vector<edge_angle> edges_detected, edges_lonly;
   classificationEditor();

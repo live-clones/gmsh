@@ -252,8 +252,8 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   int y = WB;
   int x = 2 * WB;
 
-  box[0] = new Fl_Box(x, y, width - 4 * WB, BH);
-  box[0]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+  box = new Fl_Box(x, y, width - 4 * WB, BH);
+  box->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
   y += BH;
 
@@ -460,11 +460,11 @@ void highOrderToolsWindow::show(bool redrawOnly)
     value[0]->value(meshOrder);
     butt[0]->value(!complete);
     if(CAD) {
-      box[0]->label("CAD model is available");
+      box->label("CAD model is available");
       choice[0]->value(1);
     }
     else {
-      box[0]->label("CAD model is not available");
+      box->label("CAD model is not available");
       choice[0]->deactivate();
     }
     win->show();

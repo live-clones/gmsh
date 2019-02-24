@@ -342,7 +342,7 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_options_save(0, GMSH_SET, o->general.butt[9]->value());
   opt_general_expert_mode(0, GMSH_SET, o->general.butt[10]->value());
 #if defined(HAVE_VISUDEV)
-  opt_general_heavy_visualization(0, GMSH_SET, o->general.butt[23]->value());
+  opt_general_heavy_visualization(0, GMSH_SET, o->general.butt[20]->value());
 #endif
 
   if(opt_general_gui_color_scheme(0, GMSH_GET, 0) !=
@@ -1307,6 +1307,37 @@ static void view_options_max_recursion_cb(Fl_Widget *w, void *data)
 
 optionWindow::optionWindow(int deltaFontSize)
 {
+  general.butt.resize(50, 0);
+  general.push.resize(50, 0);
+  general.value.resize(50, 0);
+  general.color.resize(50, 0);
+  general.input.resize(50, 0);
+  general.choice.resize(50, 0);
+  geo.butt.resize(50, 0);
+  geo.value.resize(50, 0);
+  geo.color.resize(50, 0);
+  geo.choice.resize(50, 0);
+  mesh.butt.resize(50, 0);
+  mesh.retbutt.resize(50, 0);
+  mesh.input.resize(50, 0);
+  mesh.value.resize(50, 0);
+  mesh.color.resize(50, 0);
+  mesh.choice.resize(50, 0);
+  solver.butt.resize(50, 0);
+  solver.value.resize(50, 0);
+  solver.input.resize(50, 0);
+  post.butt.resize(50, 0);
+  post.value.resize(50, 0);
+  post.choice.resize(50, 0);
+  view.butt.resize(50, 0);
+  view.value.resize(100, 0);
+  view.input.resize(50, 0);
+  view.push.resize(50, 0);
+  view.choice.resize(50, 0);
+  view.color.resize(50, 0);
+  view.label.resize(50, 0);
+  view.menu.resize(50, 0);
+
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 37 * FL_NORMAL_SIZE + WB;
@@ -1494,11 +1525,11 @@ optionWindow::optionWindow(int deltaFontSize)
 #endif
 
 #if defined(HAVE_VISUDEV)
-      general.butt[23] =
+      general.butt[20] =
        new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW / 2 - WB, BH,
                             "Enable heavy visualization capabilities");
-      general.butt[23]->type(FL_TOGGLE_BUTTON);
-      general.butt[23]->callback(general_options_ok_cb);
+      general.butt[20]->type(FL_TOGGLE_BUTTON);
+      general.butt[20]->callback(general_options_ok_cb);
 #endif
 
       Fl_Button *b2 = new Fl_Button(L + 2 * WB, 2 * WB + 11 * BH, BW, BH,
@@ -1851,6 +1882,10 @@ optionWindow::optionWindow(int deltaFontSize)
         general.color[i]->callback(color_cb,
                                    (void *)GeneralOptions_Color[i].function);
         i++;
+        if(i >= general.color.size()){
+          Msg::Error("General color widget vector should be resized");
+          break;
+        }
       }
       s->end();
 
@@ -2229,6 +2264,10 @@ optionWindow::optionWindow(int deltaFontSize)
         geo.color[i]->callback(color_cb,
                                (void *)GeometryOptions_Color[i].function);
         i++;
+        if(i >= geo.color.size()){
+          Msg::Error("Geometry color widget vector should be resized");
+          break;
+        }
       }
       s->end();
 
@@ -2676,6 +2715,10 @@ optionWindow::optionWindow(int deltaFontSize)
         mesh.color[i]->callback(color_cb,
                                 (void *)MeshOptions_Color[i].function);
         i++;
+        if(i >= mesh.color.size()){
+          Msg::Error("Mesh color widget vector should be resized");
+          break;
+        }
       }
       s->end();
 
@@ -3497,6 +3540,10 @@ optionWindow::optionWindow(int deltaFontSize)
         view.color[i]->callback(view_color_cb,
                                 (void *)ViewOptions_Color[i].function);
         i++;
+        if(i >= view.color.size()){
+          Msg::Error("View color widget vector should be resized");
+          break;
+        }
       }
       s->end();
 

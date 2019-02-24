@@ -35,7 +35,7 @@ private:
   messageBrowser *_browser;
   onelabGroup *_onelab;
   Fl_Box *_bottom;
-  Fl_Button *_butt[14];
+  Fl_Button *_butt[12];
   Fl_Progress *_label;
   int _minWidth, _minHeight;
   std::vector<std::string> _messages;

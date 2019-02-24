@@ -3658,7 +3658,7 @@ double opt_general_heavy_visualization(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->general.butt[23]->value
+    FlGui::instance()->options->general.butt[20]->value
         (CTX::instance()->heavyVisu);
 #endif
   return CTX::instance()->heavyVisu;
@@ -9757,18 +9757,20 @@ unsigned int opt_mesh_color_normals(OPT_ARGS_COL)
 
 unsigned int opt_mesh_color_(int i, OPT_ARGS_COL)
 {
+  int n = (i < 0 || i >= 20) ? 0 : i;
   if(action & GMSH_SET) {
     // vertex arrays need to be regenerated only when we color by
     // partition
-    if(CTX::instance()->color.mesh.carousel[i] != val &&
+    if(CTX::instance()->color.mesh.carousel[n] != val &&
        CTX::instance()->mesh.colorCarousel == 3)
       CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
-    CTX::instance()->color.mesh.carousel[i] = val;
+    CTX::instance()->color.mesh.carousel[n] = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.carousel[i], FlGui::instance()->options->mesh.color[12+i]);
+  CCC(CTX::instance()->color.mesh.carousel[n],
+      FlGui::instance()->options->mesh.color[12 + n]);
 #endif
-  return CTX::instance()->color.mesh.carousel[i];
+  return CTX::instance()->color.mesh.carousel[n];
 }
 
 unsigned int opt_mesh_color_0(OPT_ARGS_COL){ return opt_mesh_color_(0, num, action, val); }

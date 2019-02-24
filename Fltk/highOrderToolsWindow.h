@@ -21,11 +21,11 @@ public:
   bool CAD, complete;
   int meshOrder;
   Fl_Window *win;
-  Fl_Box *box[20];
-  Fl_Check_Button *butt[20];
-  Fl_Value_Input *value[20];
-  Fl_Choice *choice[20];
-  Fl_Button *push[20];
+  Fl_Box *box;
+  Fl_Check_Button *butt[4];
+  Fl_Value_Input *value[12];
+  Fl_Choice *choice[4];
+  Fl_Button *push[2];
 
 public:
   highOrderToolsWindow(int deltaFontSize = 0);
