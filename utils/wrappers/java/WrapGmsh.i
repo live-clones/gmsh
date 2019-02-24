@@ -47,7 +47,6 @@ enum meshGenerationStatus {PENDING, DONE, FAILED};
 %include "MVertex.h"
 %include "GEntity.h"
 %include "ListUtils.h"
-extern int GModel::indexMeshVertices(bool all, int singlePartition);
 extern int GmshInitialize(int argc, char **argv);
 extern int GmshFinalize();
 

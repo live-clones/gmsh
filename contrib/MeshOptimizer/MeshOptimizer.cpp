@@ -433,7 +433,7 @@ namespace {
       _patchHistory.push_front(_patchHistory.back());
       _patchHistory.pop_back();
     }
-    sprintf(_patchHistory.front(), objFunctionStr.c_str());
+    sprintf(_patchHistory.front(), "%s", objFunctionStr.c_str());
     mvprintList(9, -8, _patchHistory, 2);
   }
 

@@ -53,17 +53,17 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
 {
   FILE *f = fopen(fn.c_str(), "w");
 
-  int numVertices = gm->indexMeshVertices(true);
+  std::size_t numVertices = gm->indexMeshVertices(true);
   std::vector<GEntity *> entities;
   gm->getEntities(entities);
-  fprintf(f, "%d %d\n", numVertices, dim);
+  fprintf(f, "%lu %d\n", numVertices, dim);
   for(std::size_t i = 0; i < entities.size(); i++)
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
       MVertex *v = entities[i]->mesh_vertices[j];
       if(dim == 2)
-        fprintf(f, "%d %22.15E %22.15E\n", v->getIndex(), v->x(), v->y());
+        fprintf(f, "%ld %22.15E %22.15E\n", v->getIndex(), v->x(), v->y());
       else if(dim == 3)
-        fprintf(f, "%d %22.15E %22.15E %22.5E\n", v->getIndex(), v->x(), v->y(),
+        fprintf(f, "%ld %22.15E %22.15E %22.5E\n", v->getIndex(), v->x(), v->y(),
                 v->z());
     }
 
@@ -83,7 +83,7 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
         MTriangle *t = tris[i];
         fprintf(f, "%d ", count++);
         for(int j = 0; j < t->getNumVertices(); j++) {
-          fprintf(f, "%d ", t->getVertex(j)->getIndex());
+          fprintf(f, "%ld ", t->getVertex(j)->getIndex());
         }
         fprintf(f, "\n");
       }
@@ -101,7 +101,7 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
         MLine *t = l[i];
         fprintf(f, "%d ", count++);
         for(int j = 0; j < t->getNumVertices(); j++) {
-          fprintf(f, "%d ", t->getVertex(j)->getIndex());
+          fprintf(f, "%ld ", t->getVertex(j)->getIndex());
         }
         fprintf(f, "%d \n", (*ite)->tag());
       }
@@ -206,15 +206,17 @@ static bool testElInDist(const SPoint3 &p, double limDist, MElement *el)
       const SPoint3 A = faceVert[0]->point();
       const SPoint3 B = faceVert[1]->point();
       const SPoint3 C = faceVert[2]->point();
-      if(faceVert.size() == 3)
-        if(testTriSphereIntersect(A, B, C, p, limDistSq))
+      if(faceVert.size() == 3) {
+        if(testTriSphereIntersect(A, B, C, p, limDistSq)){
           return true;
+        }
         else {
           const SPoint3 D = faceVert[3]->point();
           if(testTriSphereIntersect(A, B, C, p, limDistSq) ||
              testTriSphereIntersect(A, C, D, p, limDistSq))
             return true;
         }
+      }
     }
   }
 

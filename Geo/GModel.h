@@ -463,8 +463,8 @@ public:
 
   // index all the (used) mesh vertices in a continuous sequence,
   // starting at 1
-  int indexMeshVertices(bool all, int singlePartition = 0,
-                        bool renumber = true);
+  std::size_t indexMeshVertices(bool all, int singlePartition = 0,
+                                bool renumber = true);
 
   // scale the mesh by the given factor
   void scaleMesh(double factor);
