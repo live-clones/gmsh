@@ -1873,7 +1873,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 6 * BH, IW + 20,
                                    height - 5 * WB - 6 * BH);
-      int i = 0;
+      std::size_t i = 0;
       while(GeneralOptions_Color[i].str) {
         general.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (6 + i) * BH, IW,
                                          BH, GeneralOptions_Color[i].str);
@@ -2257,7 +2257,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 2 * WB + 4 * BH, IW + 20,
                                    height - 4 * WB - 4 * BH);
-      int i = 0;
+      std::size_t i = 0;
       while(GeometryOptions_Color[i].str) {
         geo.color[i] = new Fl_Button(L + 2 * WB, 2 * WB + (4 + i) * BH, IW, BH,
                                      GeometryOptions_Color[i].str);
@@ -2708,7 +2708,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 7 * BH, IW + 20,
                                    height - 5 * WB - 7 * BH);
-      int i = 0;
+      std::size_t i = 0;
       while(MeshOptions_Color[i].str) {
         mesh.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (7 + i) * BH, IW, BH,
                                       MeshOptions_Color[i].str);
@@ -3533,7 +3533,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 7 * BH, IW + 20,
                                    height - 5 * WB - 7 * BH);
-      int i = 0;
+      std::size_t i = 0;
       while(ViewOptions_Color[i].str) {
         view.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (7 + i) * BH, IW, BH,
                                       ViewOptions_Color[i].str);
