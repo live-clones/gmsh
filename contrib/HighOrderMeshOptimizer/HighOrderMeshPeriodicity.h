@@ -24,8 +24,8 @@
 //
 // Contributors: Amaury Johnen
 
-#ifndef _HIGH_ORDER_MESH_PERIODICITY_H_
-#define _HIGH_ORDER_MESH_PERIODICITY_H_
+#ifndef HIGH_ORDER_MESH_PERIODICITY_H
+#define HIGH_ORDER_MESH_PERIODICITY_H
 
 #include <map>
 #include <vector>

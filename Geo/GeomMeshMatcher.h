@@ -7,8 +7,8 @@
 //   Bastien Gorissen
 //
 
-#ifndef _GEOM_MESH_MATCHER_H_
-#define _GEOM_MESH_MATCHER_H_
+#ifndef GEOM_MESH_MATCHER_H
+#define GEOM_MESH_MATCHER_H
 
 #include <vector>
 #include "GModel.h"

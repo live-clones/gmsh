@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _HELMHOLTZ_TERM_H_
-#define _HELMHOLTZ_TERM_H_
+#ifndef HELMHOLTZ_TERM_H
+#define HELMHOLTZ_TERM_H
 
 #include <assert.h>
 #include "femTerm.h"

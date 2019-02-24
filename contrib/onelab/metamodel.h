@@ -3,6 +3,9 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#ifndef METAMODEL_H
+#define METAMODEL_H
+
 #include <string>
 
 namespace onelab{ class client; }
@@ -17,3 +20,5 @@ void setNumber(const std::string &name, const double value);
 void setString(const std::string &name, const std::string &value);
 double getNumber(const std::string &name);
 std::string getString(const std::string &name);
+
+#endif

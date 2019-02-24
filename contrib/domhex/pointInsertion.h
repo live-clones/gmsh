@@ -4,8 +4,8 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 
-#ifndef _POINTINSERTION_H_
-#define _POINTINSERTION_H_
+#ifndef POINTINSERTION_H
+#define POINTINSERTION_H
 
 #include "STensor3.h"
 #include <vector>

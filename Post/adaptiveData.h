@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _ADAPTIVE_DATA_H_
-#define _ADAPTIVE_DATA_H_
+#ifndef ADAPTIVE_DATA_H
+#define ADAPTIVE_DATA_H
 
 #include <list>
 #include <set>
@@ -25,7 +25,7 @@ typedef unsigned __int64 uint64_t;
 #define PRIu8 "u"
 #define PRIu64 "I64u"
 #else
-#define __STDC_FORMAT_MACROS
+#define _STDC_FORMATMACROS
 #include <inttypes.h>
 #endif
 

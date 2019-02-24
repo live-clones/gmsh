@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _THERMIC_SOLVER_H_
-#define _THERMIC_SOLVER_H_
+#ifndef THERMIC_SOLVER_H
+#define THERMIC_SOLVER_H
 
 #include <map>
 #include <string>

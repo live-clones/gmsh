@@ -24,8 +24,8 @@
 //
 // Contributors: Amaury Johnen
 
-#ifndef _BOUNDARY_LAYER_CURVER_H_
-#define _BOUNDARY_LAYER_CURVER_H_
+#ifndef BOUNDARY_LAYER_CURVER_H
+#define BOUNDARY_LAYER_CURVER_H
 
 #include <algorithm>
 #include <list>

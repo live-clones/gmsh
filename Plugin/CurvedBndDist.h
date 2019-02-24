@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CURVEDBNDDIST_H_
-#define _CURVEDBNDDIST_H_
+#ifndef CURVEDBNDDIST_H
+#define CURVEDBNDDIST_H
 
 #include "Plugin.h"
 

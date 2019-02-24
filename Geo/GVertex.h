@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GVERTEX_H_
-#define _GVERTEX_H_
+#ifndef GVERTEX_H
+#define GVERTEX_H
 
 #include <list>
 #include <string>

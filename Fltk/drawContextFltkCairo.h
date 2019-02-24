@@ -5,8 +5,8 @@
 //
 // Contributed by Jonathan Lambrechts
 
-#ifndef _DRAW_CONTEXT_FLTK_CAIRO_H_
-#define _DRAW_CONTEXT_FLTK_CAIRO_H_
+#ifndef DRAW_CONTEXT_FLTK_CAIRO_H
+#define DRAW_CONTEXT_FLTK_CAIRO_H
 
 #include "GmshConfig.h"
 

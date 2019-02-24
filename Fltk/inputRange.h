@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _INPUT_RANGE_H_
-#define _INPUT_RANGE_H_
+#ifndef INPUT_RANGE_H
+#define INPUT_RANGE_H
 
 #include <string>
 #include <sstream>

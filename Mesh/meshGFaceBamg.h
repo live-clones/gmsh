@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MESHGFACE_BAMG_
-#define _MESHGFACE_BAMG_
+#ifndef MESHGFACE_BAMG
+#define MESHGFACE_BAMG
 
 class GFace;
 

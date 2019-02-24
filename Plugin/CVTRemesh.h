@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CVT_REMESH_H_
-#define _CVT_REMESH_H_
+#ifndef CVT_REMESH_H
+#define CVT_REMESH_H
 
 #include "Plugin.h"
 

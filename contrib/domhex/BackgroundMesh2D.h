@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _BACKGROUND_MESH2D_H_
-#define _BACKGROUND_MESH2D_H_
+#ifndef BACKGROUND_MESH2D_H
+#define BACKGROUND_MESH2D_H
 
 #include <string>
 #include <map>

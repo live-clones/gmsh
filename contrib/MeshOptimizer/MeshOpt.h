@@ -24,8 +24,8 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-#ifndef _MESH_OPT_H_
-#define _MESH_OPT_H_
+#ifndef MESH_OPT_H
+#define MESH_OPT_H
 
 #include <iostream>
 #include <fstream>

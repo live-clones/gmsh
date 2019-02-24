@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _FILE_DIALOGS_H_
-#define _FILE_DIALOGS_H_
+#ifndef FILE_DIALOGS_H
+#define FILE_DIALOGS_H
 
 #include <string>
 

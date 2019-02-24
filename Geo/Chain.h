@@ -5,8 +5,8 @@
 //
 // Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
 
-#ifndef _CHAIN_H_
-#define _CHAIN_H_
+#ifndef CHAIN_H
+#define CHAIN_H
 
 #include <sstream>
 #include "GModel.h"

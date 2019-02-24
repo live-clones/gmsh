@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GFACE_H_
-#define _GFACE_H_
+#ifndef GFACE_H
+#define GFACE_H
 
 #include <list>
 #include <string>

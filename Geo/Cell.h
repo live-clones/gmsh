@@ -5,8 +5,8 @@
 //
 // Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
 
-#ifndef _CELL_H_
-#define _CELL_H_
+#ifndef CELL_H
+#define CELL_H
 
 #include <map>
 #include <vector>

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MLINE_H_
-#define _MLINE_H_
+#ifndef MLINE_H
+#define MLINE_H
 
 #include "MElement.h"
 #include "nodalBasis.h"

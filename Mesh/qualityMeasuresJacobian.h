@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
-#ifndef _QUALITY_MEASURES_JACOBIAN_H_
-#define _QUALITY_MEASURES_JACOBIAN_H_
+#ifndef QUALITY_MEASURES_JACOBIAN_H
+#define QUALITY_MEASURES_JACOBIAN_H
 
 #include <vector>
 #include "fullMatrix.h"

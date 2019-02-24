@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _FUNCTION_SPACE_H_
-#define _FUNCTION_SPACE_H_
+#ifndef FUNCTION_SPACE_H
+#define FUNCTION_SPACE_H
 
 #include "SVector3.h"
 #include "STensor3.h"

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SHAPE_FUNCTIONS_H_
-#define _SHAPE_FUNCTIONS_H_
+#ifndef SHAPE_FUNCTIONS_H
+#define SHAPE_FUNCTIONS_H
 
 #include "Numeric.h"
 #include "GmshMessage.h"

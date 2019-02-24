@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _NEAREST_NEIGHBOR_H_
-#define _NEAREST_NEIGHBOR_H_
+#ifndef NEAREST_NEIGHBOR_H
+#define NEAREST_NEIGHBOR_H
 
 #include "Plugin.h"
 

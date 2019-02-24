@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _DIVERGENCE_H_
-#define _DIVERGENCE_H_
+#ifndef DIVERGENCE_H
+#define DIVERGENCE_H
 
 #include "Plugin.h"
 

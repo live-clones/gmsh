@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _FRAME_SOLVER_H_
-#define _FRAME_SOLVER_H_
+#ifndef FRAME_SOLVER_H
+#define FRAME_SOLVER_H
 
 class GVertex;
 

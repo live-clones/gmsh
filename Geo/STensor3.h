@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _STENSOR3_H_
-#define _STENSOR3_H_
+#ifndef STENSOR3_H
+#define STENSOR3_H
 
 #include "SVector3.h"
 #include "fullMatrix.h"

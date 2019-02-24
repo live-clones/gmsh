@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _LONGITUDELATITUDE_H_
-#define _LONGITUDELATITUDE_H_
+#ifndef LONGITUDELATITUDE_H
+#define LONGITUDELATITUDE_H
 
 #include "Plugin.h"
 

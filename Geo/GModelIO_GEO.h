@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GMODELIO_GEO_H_
-#define _GMODELIO_GEO_H_
+#ifndef GMODELIO_GEO_H
+#define GMODELIO_GEO_H
 
 class GModel;
 class ExtrudeParams;

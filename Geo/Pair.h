@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _PAIR_H_
-#define _PAIR_H_
+#ifndef PAIR_H
+#define PAIR_H
 
 // A pair of values, the types of which can be different
 template <class L, class R> class Pair {

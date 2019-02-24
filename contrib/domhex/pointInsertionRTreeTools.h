@@ -5,8 +5,8 @@
 //
 // Contributed by Tristan Carrier and Paul-Emile Bernard
 
-#ifndef _POINTINSERTIONRTREETOOLS_H_
-#define _POINTINSERTIONRTREETOOLS_H_
+#ifndef POINTINSERTIONRTREETOOLS_H
+#define POINTINSERTIONRTREETOOLS_H
 
 #include <cmath>
 #include <queue>

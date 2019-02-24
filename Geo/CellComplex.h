@@ -5,8 +5,8 @@
 //
 // Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
 
-#ifndef _CELLCOMPLEX_H_
-#define _CELLCOMPLEX_H_
+#ifndef CELLCOMPLEX_H
+#define CELLCOMPLEX_H
 
 #include <map>
 #include <string.h>

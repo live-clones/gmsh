@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CRACK_H_
-#define _CRACK_H_
+#ifndef CRACK_H
+#define CRACK_H
 
 #include "Plugin.h"
 

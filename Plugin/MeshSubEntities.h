@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MESH_ENTITIES_H_
-#define _MESH_ENTITIES_H_
+#ifndef MESH_ENTITIES_H
+#define MESH_ENTITIES_H
 
 #include "Plugin.h"
 

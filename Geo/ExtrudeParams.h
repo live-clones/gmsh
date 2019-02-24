@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _EXTRUDE_PARAMS_H_
-#define _EXTRUDE_PARAMS_H_
+#ifndef EXTRUDE_PARAMS_H
+#define EXTRUDE_PARAMS_H
 
 #include <vector>
 #include <map>

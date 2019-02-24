@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _PLUGIN_MANAGER_H_
-#define _PLUGIN_MANAGER_H_
+#ifndef PLUGIN_MANAGER_H
+#define PLUGIN_MANAGER_H
 
 #include <map>
 #include <string>

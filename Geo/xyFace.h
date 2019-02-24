@@ -5,8 +5,8 @@
 
 // a face in the XY plane for simple 2D interface meshing
 
-#ifndef _XY_FACE_H_
-#define _XY_FACE_H_
+#ifndef XY_FACE_H
+#define XY_FACE_H
 
 #include "xyEdge.h"
 #include "GFace.h"

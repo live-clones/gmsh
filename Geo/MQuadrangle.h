@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MQUADRANGLE_H_
-#define _MQUADRANGLE_H_
+#ifndef MQUADRANGLE_H
+#define MQUADRANGLE_H
 
 #include "MElement.h"
 

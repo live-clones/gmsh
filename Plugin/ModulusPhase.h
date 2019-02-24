@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MODULUS_PHASE_H_
-#define _MODULUS_PHASE_H_
+#ifndef MODULUS_PHASE_H
+#define MODULUS_PHASE_H
 
 #include "Plugin.h"
 

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MATH_EVAL_H_
-#define _MATH_EVAL_H_
+#ifndef MATH_EVAL_H
+#define MATH_EVAL_H
 
 #include "Plugin.h"
 

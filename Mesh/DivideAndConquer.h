@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _DIVIDE_AND_CONQUER_H_
-#define _DIVIDE_AND_CONQUER_H_
+#ifndef DIVIDE_AND_CONQUER_H
+#define DIVIDE_AND_CONQUER_H
 
 #include <vector>
 #include <algorithm>

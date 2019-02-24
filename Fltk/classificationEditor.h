@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CLASSIFICATION_EDITOR_H_
-#define _CLASSIFICATION_EDITOR_H_
+#ifndef CLASSIFICATION_EDITOR_H
+#define CLASSIFICATION_EDITOR_H
 
 #include <vector>
 #include <set>

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MVERTEX_H_
-#define _MVERTEX_H_
+#ifndef MVERTEX_H
+#define MVERTEX_H
 
 #include <cmath>
 #include <stdio.h>

@@ -5,8 +5,8 @@
 //
 // Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
 
-#ifndef _CHAINCOMPLEX_H_
-#define _CHAINCOMPLEX_H_
+#ifndef CHAINCOMPLEX_H
+#define CHAINCOMPLEX_H
 
 #include "GmshConfig.h"
 #if defined(HAVE_KBIPACK)

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GEO_DEFINES_H_
-#define _GEO_DEFINES_H_
+#ifndef GEO_DEFINES_H
+#define GEO_DEFINES_H
 
 class Shape {
 public:

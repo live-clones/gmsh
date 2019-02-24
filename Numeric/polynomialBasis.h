@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _POLYNOMIAL_BASIS_H_
-#define _POLYNOMIAL_BASIS_H_
+#ifndef POLYNOMIAL_BASIS_H
+#define POLYNOMIAL_BASIS_H
 
 #include <math.h>
 #include <map>

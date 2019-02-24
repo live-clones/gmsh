@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _STRING_UTILS_H_
-#define _STRING_UTILS_H_
+#ifndef STRING_UTILS_H
+#define STRING_UTILS_H
 
 #include <string.h>
 #include <string>

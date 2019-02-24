@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _HAUSDORFF_DISTANCE_H_
-#define _HAUSDORFF_DISTANCE_H_
+#ifndef HAUSDORFF_DISTANCE_H
+#define HAUSDORFF_DISTANCE_H
 
 #include <vector>
 #include "SPoint3.h"

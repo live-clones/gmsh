@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GEDGE_H_
-#define _GEDGE_H_
+#ifndef GEDGE_H
+#define GEDGE_H
 
 #include <string>
 #include <vector>

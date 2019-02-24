@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _DRAW_CONTEXT_FLTK_H_
-#define _DRAW_CONTEXT_FLTK_H_
+#ifndef DRAW_CONTEXT_FLTK_H
+#define DRAW_CONTEXT_FLTK_H
 
 #include "GmshConfig.h"
 #if !defined(HAVE_NO_STDINT_H)

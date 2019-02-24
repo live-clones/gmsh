@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _OCC_VERTEX_H_
-#define _OCC_VERTEX_H_
+#ifndef OCC_VERTEX_H
+#define OCC_VERTEX_H
 
 #include "GmshConfig.h"
 #include "GModel.h"

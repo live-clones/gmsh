@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CLOSEST_VERTEX_H_
-#define _CLOSEST_VERTEX_H_
+#ifndef CLOSEST_VERTEX_H
+#define CLOSEST_VERTEX_H
 
 #include "GmshConfig.h"
 

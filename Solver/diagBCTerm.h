@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _DIAGBC_TERM_H_
-#define _DIAGBC_TERM_H_
+#ifndef DIAGBC_TERM_H
+#define DIAGBC_TERM_H
 
 #include <assert.h>
 #include "femTerm.h"

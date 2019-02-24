@@ -24,8 +24,8 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-#ifndef _MESH_OPTIMIZER_H_
-#define _MESH_OPTIMIZER_H_
+#ifndef MESH_OPTIMIZER_H
+#define MESH_OPTIMIZER_H
 
 #include <vector>
 

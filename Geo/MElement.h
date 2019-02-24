@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MELEMENT_H_
-#define _MELEMENT_H_
+#ifndef MELEMENT_H
+#define MELEMENT_H
 
 #include <stdio.h>
 #include <algorithm>

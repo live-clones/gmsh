@@ -67,7 +67,7 @@ extern "C" {
 
 // experimental support for int64_t (see README.mkdn for detail)
 #ifdef PICOJSON_USE_INT64
-#define __STDC_FORMAT_MACROS
+#define _STDC_FORMATMACROS
 #include <errno.h>
 #include <inttypes.h>
 #endif

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GMSH_EDGE_H_
-#define _GMSH_EDGE_H_
+#ifndef GMSH_EDGE_H
+#define GMSH_EDGE_H
 
 #include "GEdge.h"
 

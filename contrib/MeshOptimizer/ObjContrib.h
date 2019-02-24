@@ -22,8 +22,8 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _OBJ_CONTRIB_H_
-#define _OBJ_CONTRIB_H_
+#ifndef OBJ_CONTRIB_H
+#define OBJ_CONTRIB_H
 
 #include <string>
 #include "ap.h"

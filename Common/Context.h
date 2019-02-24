@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CONTEXT_H_
-#define _CONTEXT_H_
+#ifndef CONTEXT_H
+#define CONTEXT_H
 
 #include <vector>
 #include <map>

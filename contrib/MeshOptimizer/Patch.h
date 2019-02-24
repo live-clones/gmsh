@@ -24,8 +24,8 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-#ifndef _PATCH_H_
-#define _PATCH_H_
+#ifndef PATCH_H
+#define PATCH_H
 
 #include <vector>
 #include <map>

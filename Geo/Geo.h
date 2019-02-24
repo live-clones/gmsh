@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GEO_H_
-#define _GEO_H_
+#ifndef GEO_H
+#define GEO_H
 
 // Internal data structures and functions for the built-in CAD kernel. This is
 // legacy code and should never be used directly: use GEO_Internals instead, or

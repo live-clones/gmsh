@@ -5,8 +5,8 @@
  * issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
  */
 
-#ifndef _GMSHC_H_
-#define _GMSHC_H_
+#ifndef GMSHC_H
+#define GMSHC_H
 
 /*
  * This file defines the Gmsh C API (v4.2).

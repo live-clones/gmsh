@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _VISIBILITY_WINDOW_H_
-#define _VISIBILITY_WINDOW_H_
+#ifndef VISIBILITY_WINDOW_H
+#define VISIBILITY_WINDOW_H
 
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Choice.H>

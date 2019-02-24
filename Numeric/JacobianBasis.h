@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _JACOBIAN_BASIS_H_
-#define _JACOBIAN_BASIS_H_
+#ifndef JACOBIAN_BASIS_H
+#define JACOBIAN_BASIS_H
 
 #include "fullMatrix.h"
 #include "FuncSpaceData.h"

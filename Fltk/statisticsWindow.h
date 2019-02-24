@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _STATISTICS_WINDOW_H_
-#define _STATISTICS_WINDOW_H_
+#ifndef STATISTICS_WINDOW_H
+#define STATISTICS_WINDOW_H
 
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Output.H>

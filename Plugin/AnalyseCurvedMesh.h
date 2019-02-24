@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _ANALYSECURVEDMESH_H_
-#define _ANALYSECURVEDMESH_H_
+#ifndef ANALYSECURVEDMESH_H
+#define ANALYSECURVEDMESH_H
 
 #include "Plugin.h"
 #include <vector>

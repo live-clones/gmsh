@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _BEZIER_BASIS_H_
-#define _BEZIER_BASIS_H_
+#ifndef BEZIER_BASIS_H
+#define BEZIER_BASIS_H
 
 #include <vector>
 #include "fullMatrix.h"

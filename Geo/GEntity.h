@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GENTITY_H_
-#define _GENTITY_H_
+#ifndef GENTITY_H
+#define GENTITY_H
 
 #include <list>
 #include <string>

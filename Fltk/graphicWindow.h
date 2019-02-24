@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GRAPHIC_WINDOW_H_
-#define _GRAPHIC_WINDOW_H_
+#ifndef GRAPHIC_WINDOW_H
+#define GRAPHIC_WINDOW_H
 
 #include <string>
 #include <vector>

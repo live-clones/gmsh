@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _DOF_MANAGER_H_
-#define _DOF_MANAGER_H_
+#ifndef DOF_MANAGER_H
+#define DOF_MANAGER_H
 
 #include <vector>
 #include <string>

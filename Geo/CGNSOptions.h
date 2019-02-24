@@ -5,8 +5,8 @@
 //
 // CGNSOptions.h - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
 
-#ifndef _CGNSOPTIONS_H_
-#define _CGNSOPTIONS_H_
+#ifndef CGNSOPTIONS_H
+#define CGNSOPTIONS_H
 
 #include <string>
 

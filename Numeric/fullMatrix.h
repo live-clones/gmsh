@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _FULL_MATRIX_H_
-#define _FULL_MATRIX_H_
+#ifndef FULL_MATRIX_H
+#define FULL_MATRIX_H
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"

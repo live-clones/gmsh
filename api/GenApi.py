@@ -703,8 +703,8 @@ cpp_header="""// {0}
 // See the LICENSE.txt file for license information. Please report all
 // issues on {1}
 
-#ifndef _{2}_H_
-#define _{2}_H_
+#ifndef {2}_H
+#define {2}_H
 
 // This file defines the {3} C++ API (v{4}).
 //
@@ -757,8 +757,8 @@ c_header="""/*
  * issues on {1}
  */
 
-#ifndef _{2}C_H_
-#define _{2}C_H_
+#ifndef {2}C_H
+#define {2}C_H
 
 /*
  * This file defines the {3} C API (v{4}).
@@ -831,8 +831,8 @@ cwrap_header="""// {0}
 // See the LICENSE.txt file for license information. Please report all
 // issues on {1}
 
-#ifndef _{2}_H_
-#define _{2}_H_
+#ifndef {2}_H
+#define {2}_H
 
 // This file redefines the {3} C++ API in terms of the C API (v{4}).
 //

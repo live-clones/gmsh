@@ -7,8 +7,8 @@
 //   Bastien Gorissen
 //
 
-#ifndef _ORIENTED_BOUNDING_BOX_H_
-#define _ORIENTED_BOUNDING_BOX_H_
+#ifndef ORIENTED_BOUNDING_BOX_H
+#define ORIENTED_BOUNDING_BOX_H
 
 #include "SVector3.h"
 #include "SPoint2.h"

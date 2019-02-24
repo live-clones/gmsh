@@ -24,8 +24,8 @@
 //
 // Contributor: Thomas Toulorge
 
-#ifndef _METAEL_H_
-#define _METAEL_H_
+#ifndef METAEL_H
+#define METAEL_H
 
 #include <string>
 #include "MElement.h"

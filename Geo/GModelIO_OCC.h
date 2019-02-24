@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GMODELIO_OCC_H_
-#define _GMODELIO_OCC_H_
+#ifndef GMODELIO_OCC_H
+#define GMODELIO_OCC_H
 
 #include <vector>
 #include <map>

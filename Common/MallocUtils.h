@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MALLOC_UTILS_H_
-#define _MALLOC_UTILS_H_
+#ifndef MALLOC_UTILS_H
+#define MALLOC_UTILS_H
 
 #include <stdlib.h>
 

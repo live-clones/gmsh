@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MESH_METRIC_H_
-#define _MESH_METRIC_H_
+#ifndef MESH_METRIC_H
+#define MESH_METRIC_H
 
 #include <map>
 #include <algorithm>

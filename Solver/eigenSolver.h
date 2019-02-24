@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _EIGEN_SOLVER_H_
-#define _EIGEN_SOLVER_H_
+#ifndef EIGEN_SOLVER_H
+#define EIGEN_SOLVER_H
 
 #include <string>
 #include <complex>

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _FIELD_H_
-#define _FIELD_H_
+#ifndef FIELD_H
+#define FIELD_H
 
 #include <string>
 #include <map>

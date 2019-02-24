@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CUT_PARAMETRIC_H_
-#define _CUT_PARAMETRIC_H_
+#ifndef CUT_PARAMETRIC_H
+#define CUT_PARAMETRIC_H
 
 #include <string>
 #include <vector>

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MESH_FAULTZONE_H_
-#define _MESH_FAULTZONE_H_
+#ifndef MESH_FAULTZONE_H
+#define MESH_FAULTZONE_H
 
 #include <assert.h>
 #include "Plugin.h"

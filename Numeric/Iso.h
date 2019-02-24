@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _ISO_H_
-#define _ISO_H_
+#ifndef ISO_H
+#define ISO_H
 
 double InterpolateIso(double *X, double *Y, double *Z, double *Val, double V,
                       int I1, int I2, double *XI, double *YI, double *ZI);

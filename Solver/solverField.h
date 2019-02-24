@@ -7,8 +7,8 @@
 //   Eric Bechet
 //
 
-#ifndef _SOLVERFIELD_H_
-#define _SOLVERFIELD_H_
+#ifndef SOLVERFIELD_H
+#define SOLVERFIELD_H
 
 #include <vector>
 #include <iostream>

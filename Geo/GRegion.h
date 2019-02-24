@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GREGION_H_
-#define _GREGION_H_
+#ifndef GREGION_H
+#define GREGION_H
 
 #include <list>
 #include <string>

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _DISCRETE_FACE_H_
-#define _DISCRETE_FACE_H_
+#ifndef DISCRETE_FACE_H
+#define DISCRETE_FACE_H
 
 #include <algorithm>
 #include "GmshConfig.h"

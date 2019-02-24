@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GMSH_REMOTE_H_
-#define _GMSH_REMOTE_H_
+#ifndef GMSH_REMOTE_H
+#define GMSH_REMOTE_H
 
 #include <string>
 

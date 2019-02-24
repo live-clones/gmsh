@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _DEFAULT_OPTIONS_H_
-#define _DEFAULT_OPTIONS_H_
+#ifndef DEFAULT_OPTIONS_H
+#define DEFAULT_OPTIONS_H
 
 #include "GmshConfig.h"
 #include "GmshDefines.h"

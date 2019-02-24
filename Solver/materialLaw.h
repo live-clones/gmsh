@@ -7,8 +7,8 @@
 //   Eric Bechet
 //
 
-#ifndef _MATERIALLAW_H_
-#define _MATERIALLAW_H_
+#ifndef MATERIALLAW_H
+#define MATERIALLAW_H
 
 class Material {
 public:

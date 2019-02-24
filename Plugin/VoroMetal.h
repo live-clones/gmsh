@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _VOROMETAL_H_
-#define _VOROMETAL_H_
+#ifndef VOROMETAL_H
+#define VOROMETAL_H
 
 #include <vector>
 #include "Plugin.h"

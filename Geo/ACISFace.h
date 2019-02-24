@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _ACIS_FACE_H_
-#define _ACIS_FACE_H_
+#ifndef ACIS_FACE_H
+#define ACIS_FACE_H
 
 #include "GmshConfig.h"
 #include "GFace.h"

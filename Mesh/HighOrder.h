@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _HIGH_ORDER_H_
-#define _HIGH_ORDER_H_
+#ifndef HIGH_ORDER_H
+#define HIGH_ORDER_H
 
 #include "GModel.h"
 #include "MFace.h"

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GHOST_REGION_H_
-#define _GHOST_REGION_H_
+#ifndef GHOST_REGION_H
+#define GHOST_REGION_H
 
 #include "GModel.h"
 #include "discreteRegion.h"

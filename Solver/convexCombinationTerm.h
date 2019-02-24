@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CONVEX_COMBINATION_TERM_H_
-#define _CONVEX_COMBINATION_TERM_H_
+#ifndef CONVEX_COMBINATION_TERM_H
+#define CONVEX_COMBINATION_TERM_H
 
 #include <assert.h>
 #include "femTerm.h"

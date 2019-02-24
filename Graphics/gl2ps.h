@@ -33,8 +33,8 @@
  * Please report all bugs and problems to <gl2ps@geuz.org>.
  */
 
-#ifndef __GL2PS_H__
-#define __GL2PS_H__
+#ifndef _GL2PS_H_
+#define _GL2PS_H_
 
 #include <stdio.h>
 #include <stdlib.h>

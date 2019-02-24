@@ -5,8 +5,8 @@
 //
 // Contributed by Gilles Marckmann <gilles.marckmann@ec-nantes.fr>
 
-#ifndef _CAMERA_H_
-#define _CAMERA_H_
+#ifndef CAMERA_H
+#define CAMERA_H
 
 class Quaternion;
 

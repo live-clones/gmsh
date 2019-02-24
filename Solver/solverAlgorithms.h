@@ -7,8 +7,8 @@
 //   Eric Bechet
 //
 
-#ifndef _SOLVERALGORITHMS_H_
-#define _SOLVERALGORITHMS_H_
+#ifndef SOLVERALGORITHMS_H
+#define SOLVERALGORITHMS_H
 
 #include "dofManager.h"
 #include "terms.h"

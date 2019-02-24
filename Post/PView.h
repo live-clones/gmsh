@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _PVIEW_H_
-#define _PVIEW_H_
+#ifndef PVIEW_H
+#define PVIEW_H
 
 #include <vector>
 #include <map>

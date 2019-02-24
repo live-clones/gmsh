@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GMSH_H_
-#define _GMSH_H_
+#ifndef GMSH_H
+#define GMSH_H
 
 // This file defines the Gmsh C++ API (v4.2).
 //

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SIMPLE_FUNCTION_H_
-#define _SIMPLE_FUNCTION_H_
+#ifndef SIMPLE_FUNCTION_H
+#define SIMPLE_FUNCTION_H
 
 // FIXME: Numeric/ should not depend on Geo/
 class MElement;

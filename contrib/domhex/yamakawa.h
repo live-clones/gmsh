@@ -5,8 +5,8 @@
 //
 // Contributed by Tristan Carrier
 
-#ifndef _YAMAKAWA_H_
-#define _YAMAKAWA_H_
+#ifndef YAMAKAWA_H
+#define YAMAKAWA_H
 
 #include "GRegion.h"
 #include "MVertex.h"

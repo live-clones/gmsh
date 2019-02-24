@@ -6,8 +6,8 @@
 // Contributor(s):
 //   Gaetan Bricteux
 
-#ifndef _GMSH_LEVELSET_H_
-#define _GMSH_LEVELSET_H_
+#ifndef GMSH_LEVELSET_H
+#define GMSH_LEVELSET_H
 
 #include <string>
 #include <cmath>

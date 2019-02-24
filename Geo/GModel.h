@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GMODEL_H_
-#define _GMODEL_H_
+#ifndef GMODEL_H
+#define GMODEL_H
 
 #include <algorithm>
 #include <vector>

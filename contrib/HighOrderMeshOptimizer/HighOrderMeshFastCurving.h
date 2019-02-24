@@ -24,8 +24,8 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-#ifndef _HIGH_ORDER_MESH_FAST_CURVING_H_
-#define _HIGH_ORDER_MESH_FAST_CURVING_H_
+#ifndef HIGH_ORDER_MESH_FAST_CURVING_H
+#define HIGH_ORDER_MESH_FAST_CURVING_H
 
 class GModel;
 

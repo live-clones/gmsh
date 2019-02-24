@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MVERTEX_RTREE_
-#define _MVERTEX_RTREE_
+#ifndef MVERTEX_RTREE
+#define MVERTEX_RTREE
 
 #include <vector>
 #include "GmshMessage.h"

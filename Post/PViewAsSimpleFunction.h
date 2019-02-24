@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _PVIEW_AS_SIMPLEFUNCTION_H
-#define _PVIEW_AS_SIMPLEFUNCTION_H
+#ifndef PVIEW_AS_SIMPLEFUNCTIONH
+#define PVIEW_AS_SIMPLEFUNCTIONH
 
 #include "simpleFunction.h"
 

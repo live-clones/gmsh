@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _OUTPUT_RANGE_H_
-#define _OUTPUT_RANGE_H_
+#ifndef OUTPUT_RANGE_H
+#define OUTPUT_RANGE_H
 
 #include <string>
 #include <stdio.h>

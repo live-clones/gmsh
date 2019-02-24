@@ -24,8 +24,8 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-#ifndef _HIGH_ORDER_MESH_OPTIMIZER_H_
-#define _HIGH_ORDER_MESH_OPTIMIZER_H_
+#ifndef HIGH_ORDER_MESH_OPTIMIZER_H
+#define HIGH_ORDER_MESH_OPTIMIZER_H
 
 class GModel;
 class GEntity;
