@@ -1037,7 +1037,7 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "ElementOrder" , opt_mesh_order , 1. ,
     // "Order" is a reserved token in the parser
-    "Element order (1: linear elements, N (<6): elements of higher order)" },
+    "Element order (1: first order elements)" },
   { F|O, "Explode" , opt_mesh_explode , 1.0 ,
     "Element shrinking factor (between 0 and 1)" },
 

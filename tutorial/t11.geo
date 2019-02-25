@@ -36,13 +36,17 @@ Recombine Surface{100};
 // following paper: J.-F. Remacle, J. Lambrechts, B. Seny, E. Marchandise,
 // A. Johnen and C. Geuzaine, "Blossom-Quad: a non-uniform quadrilateral mesh
 // generator using a minimum cost perfect matching algorithm", International
-// Journal for Numerical Methods in Engineering, 2011 (in press).
+// Journal for Numerical Methods in Engineering 89, pp. 1102-1119, 2012.
 
 // For even better 2D (planar) quadrilateral meshes, you can try the
 // experimental "Delaunay for quads" (DelQuad) meshing algorithm: DelQuad is a
 // triangulation algorithm that enables to create right triangles almost
-// everywhere. Uncomment the following line to try DelQuad:
-
+// everywhere: J.-F. Remacle, F. Henrotte, T. Carrier-Baudouin, E. Bechet,
+// E. Marchandise, C. Geuzaine and T. Mouton. A frontal Delaunay quad mesh
+// generator using the L^inf norm. International Journal for Numerical Methods
+// in Engineering, 94, pp. 494-512, 2013. Uncomment the following line to try
+// DelQuad:
+//
 // Mesh.Algorithm = 8;
 
 // The default recombination algorithm might leave some triangles in the mesh,
@@ -52,5 +56,5 @@ Recombine Surface{100};
 // algorithm, which will automatically perform a coarser mesh followed by
 // recombination, smoothing and subdivision. Uncomment the followin line to
 // try the full-quad algorithm:
-
+//
 // Mesh.RecombinationAlgorithm = 2; // or 3
