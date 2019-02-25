@@ -1313,21 +1313,21 @@ function setElements(dim, tag, elementTypes, elementTags, nodeTags)
 end
 
 """
-    gmsh.model.mesh.setElementsByType(dim, tag, elementType, elementTags, nodeTags)
+    gmsh.model.mesh.setElementsByType(tag, elementType, elementTags, nodeTags)
 
-Set the elements of type `elementType` in the entity of dimension `dim` and tag
-`tag`. `elementTags` contains the tags (unique, strictly positive identifiers)
-of the elements of the corresponding type. `nodeTags` is a vector of length
-equal to the number of elements times the number N of nodes per element, that
-contains the node tags of all the elements, concatenated: [e1n1, e1n2, ...,
-e1nN, e2n1, ...]. If the `elementTag` vector is empty, new tags are
-automatically assigned to the elements.
+Set the elements of type `elementType` in the entity of tag `tag`. `elementTags`
+contains the tags (unique, strictly positive identifiers) of the elements of the
+corresponding type. `nodeTags` is a vector of length equal to the number of
+elements times the number N of nodes per element, that contains the node tags of
+all the elements, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the
+`elementTag` vector is empty, new tags are automatically assigned to the
+elements.
 """
-function setElementsByType(dim, tag, elementType, elementTags, nodeTags)
+function setElementsByType(tag, elementType, elementTags, nodeTags)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetElementsByType, gmsh.lib), Nothing,
-          (Cint, Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
-          dim, tag, elementType, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Csize_t}, nodeTags), length(nodeTags), ierr)
+          (Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          tag, elementType, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Csize_t}, nodeTags), length(nodeTags), ierr)
     ierr[] != 0 && error("gmshModelMeshSetElementsByType returned non-zero error code: $(ierr[])")
     return nothing
 end

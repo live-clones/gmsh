@@ -1008,15 +1008,14 @@ namespace gmsh { // Top-level functions
         for(size_t i = 0; i < api_nodeTags_nn_; ++i){ gmshFree(api_nodeTags_[i]); } gmshFree(api_nodeTags_); gmshFree(api_nodeTags_n_);
       }
 
-      // Set the elements of type `elementType' in the entity of dimension `dim'
-      // and tag `tag'. `elementTags' contains the tags (unique, strictly positive
-      // identifiers) of the elements of the corresponding type. `nodeTags' is a
-      // vector of length equal to the number of elements times the number N of
-      // nodes per element, that contains the node tags of all the elements,
-      // concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the `elementTag'
-      // vector is empty, new tags are automatically assigned to the elements.
-      GMSH_API void setElementsByType(const int dim,
-                                      const int tag,
+      // Set the elements of type `elementType' in the entity of tag `tag'.
+      // `elementTags' contains the tags (unique, strictly positive identifiers) of
+      // the elements of the corresponding type. `nodeTags' is a vector of length
+      // equal to the number of elements times the number N of nodes per element,
+      // that contains the node tags of all the elements, concatenated: [e1n1,
+      // e1n2, ..., e1nN, e2n1, ...]. If the `elementTag' vector is empty, new tags
+      // are automatically assigned to the elements.
+      GMSH_API void setElementsByType(const int tag,
                                       const int elementType,
                                       const std::vector<std::size_t> & elementTags,
                                       const std::vector<std::size_t> & nodeTags)
@@ -1024,7 +1023,7 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         size_t *api_elementTags_; size_t api_elementTags_n_; vector2ptr(elementTags, &api_elementTags_, &api_elementTags_n_);
         size_t *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
-        gmshModelMeshSetElementsByType(dim, tag, elementType, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, &ierr);
+        gmshModelMeshSetElementsByType(tag, elementType, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_elementTags_);
         gmshFree(api_nodeTags_);

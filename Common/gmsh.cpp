@@ -1430,13 +1430,14 @@ GMSH_API void gmsh::model::mesh::setElements(
 }
 
 GMSH_API void gmsh::model::mesh::setElementsByType(
-  const int dim, const int tag, const int elementType,
+  const int tag, const int elementType,
   const std::vector<std::size_t> &elementTags,
   const std::vector<std::size_t> &nodeTags)
 {
   if(!_isInitialized()) {
     throw -1;
   }
+  int dim = ElementType::getDimension(elementType);
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge) {
     Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());

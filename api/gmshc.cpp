@@ -903,13 +903,13 @@ GMSH_API void gmshModelMeshSetElements(const int dim, const int tag, int * eleme
   }
 }
 
-GMSH_API void gmshModelMeshSetElementsByType(const int dim, const int tag, const int elementType, size_t * elementTags, size_t elementTags_n, size_t * nodeTags, size_t nodeTags_n, int * ierr)
+GMSH_API void gmshModelMeshSetElementsByType(const int tag, const int elementType, size_t * elementTags, size_t elementTags_n, size_t * nodeTags, size_t nodeTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
     std::vector<std::size_t> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
-    gmsh::model::mesh::setElementsByType(dim, tag, elementType, api_elementTags_, api_nodeTags_);
+    gmsh::model::mesh::setElementsByType(tag, elementType, api_elementTags_, api_nodeTags_);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

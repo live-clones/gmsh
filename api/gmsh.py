@@ -1579,21 +1579,20 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setElementsByType(dim, tag, elementType, elementTags, nodeTags):
+        def setElementsByType(tag, elementType, elementTags, nodeTags):
             """
-            Set the elements of type `elementType' in the entity of dimension `dim' and
-            tag `tag'. `elementTags' contains the tags (unique, strictly positive
-            identifiers) of the elements of the corresponding type. `nodeTags' is a
-            vector of length equal to the number of elements times the number N of
-            nodes per element, that contains the node tags of all the elements,
-            concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the `elementTag'
-            vector is empty, new tags are automatically assigned to the elements.
+            Set the elements of type `elementType' in the entity of tag `tag'.
+            `elementTags' contains the tags (unique, strictly positive identifiers) of
+            the elements of the corresponding type. `nodeTags' is a vector of length
+            equal to the number of elements times the number N of nodes per element,
+            that contains the node tags of all the elements, concatenated: [e1n1, e1n2,
+            ..., e1nN, e2n1, ...]. If the `elementTag' vector is empty, new tags are
+            automatically assigned to the elements.
             """
             api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
             api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
             ierr = c_int()
             lib.gmshModelMeshSetElementsByType(
-                c_int(dim),
                 c_int(tag),
                 c_int(elementType),
                 api_elementTags_, api_elementTags_n_,

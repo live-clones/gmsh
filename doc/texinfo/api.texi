@@ -940,17 +940,17 @@ elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
 @end table
 
 @item setElementsByType
-Set the elements of type @code{elementType} in the entity of dimension
-@code{dim} and tag @code{tag}. @code{elementTags} contains the tags (unique,
-strictly positive identifiers) of the elements of the corresponding type.
-@code{nodeTags} is a vector of length equal to the number of elements times the
-number N of nodes per element, that contains the node tags of all the elements,
-concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the @code{elementTag}
-vector is empty, new tags are automatically assigned to the elements.
+Set the elements of type @code{elementType} in the entity of tag @code{tag}.
+@code{elementTags} contains the tags (unique, strictly positive identifiers) of
+the elements of the corresponding type. @code{nodeTags} is a vector of length
+equal to the number of elements times the number N of nodes per element, that
+contains the node tags of all the elements, concatenated: [e1n1, e1n2, ...,
+e1nN, e2n1, ...]. If the @code{elementTag} vector is empty, new tags are
+automatically assigned to the elements.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{elementType}, @code{elementTags}, @code{nodeTags}
+@code{tag}, @code{elementType}, @code{elementTags}, @code{nodeTags}
 @item Output:
 -
 @item Return:

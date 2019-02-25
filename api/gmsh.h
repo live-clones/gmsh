@@ -524,15 +524,14 @@ namespace gmsh { // Top-level functions
                                 const std::vector<std::vector<std::size_t> > & elementTags,
                                 const std::vector<std::vector<std::size_t> > & nodeTags);
 
-      // Set the elements of type `elementType' in the entity of dimension `dim'
-      // and tag `tag'. `elementTags' contains the tags (unique, strictly positive
-      // identifiers) of the elements of the corresponding type. `nodeTags' is a
-      // vector of length equal to the number of elements times the number N of
-      // nodes per element, that contains the node tags of all the elements,
-      // concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the `elementTag'
-      // vector is empty, new tags are automatically assigned to the elements.
-      GMSH_API void setElementsByType(const int dim,
-                                      const int tag,
+      // Set the elements of type `elementType' in the entity of tag `tag'.
+      // `elementTags' contains the tags (unique, strictly positive identifiers) of
+      // the elements of the corresponding type. `nodeTags' is a vector of length
+      // equal to the number of elements times the number N of nodes per element,
+      // that contains the node tags of all the elements, concatenated: [e1n1,
+      // e1n2, ..., e1nN, e2n1, ...]. If the `elementTag' vector is empty, new tags
+      // are automatically assigned to the elements.
+      GMSH_API void setElementsByType(const int tag,
                                       const int elementType,
                                       const std::vector<std::size_t> & elementTags,
                                       const std::vector<std::size_t> & nodeTags);
