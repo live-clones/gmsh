@@ -41,7 +41,9 @@
 #include "polynomialBasis.h"
 #include "pyramidalBasis.h"
 #include "OS.h"
+#include "HierarchicalBasisH1.h"
 #include "HierarchicalBasisH1Quad.h"
+#include "HierarchicalBasisH1Tria.h"
 #if defined(HAVE_MESH)
 #include "Field.h"
 #include "meshGFaceOptimize.h"
@@ -1855,21 +1857,81 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   }
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
+  /*HierarchicalBasisH1* basis=0;
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
-  HierarchicalBasisH1Quad h1QuadBasis(order, order, order, order, order, order);
-  int const  nq = weights.size();
-  int const vSize = h1QuadBasis.getnVertexFunction();
-  int const  bSize = h1QuadBasis.getnBubbleFunction();
-  int const eSize = h1QuadBasis.getnEdgeFunction();
-  int const  n2 = vSize + eSize;
+   switch(familyType){
+     case TYPE_QUA:{
+        HierarchicalBasisH1Quad  h1QuadBasis(order, order, order, order, order, order);
+        basis= & h1QuadBasis;
+     }
+     break;
+     case TYPE_TRI:{
+        basis= Hierarh1TriBasis(order, order, order, order);
+
+     }
+    default:
+       Msg::Error("Unknown familyType ");
+       throw 2;
+   }
+
+  int const nq = weight.size();
+  int const vSize = basis->getnVertexFunction();
+  int const bSize = basis->getnBubbleFunction();
+  int const eSize = basis->getnEdgeFunction();
+  int const n2 = vSize + eSize;
   int const n = n2 + bSize;
+  // compute the number of Element , generate Keys for each Elements:
   std::size_t numElements = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
-    numElements += ge->getNumMeshElementsByType(familyType);
+    std::size_t numElementsInEntitie = ge->getNumMeshElementsByType(familyType);
+    numElements += numElementsInEntitie;
+    for(std::size_t j = 0; j < numElementsInEntitie; j++) {
+      MElement *e = ge->getMeshElementByType(familyType, j);
+      int numberEdge = e->getNumEdges();
+      std::vector<double> edgeGlobalIndice(numberEdge);
+      for(int jj = 0; jj < numberEdge; jj++) {
+        MEdge edge = e->getEdge(jj);
+        edgeGlobalIndice[jj] = GModel::current()->addMEdge(edge);
+      }
+      for(int k = 0; k < vSize; k++) {
+        keys.push_back(std::pair<int, int>(2, e->getVertex(k)->getNum()));
+      }
+      int localNumEdge = 0;
+      int globalNumEdge;
+      int iterator = 0;
+      int var = 0;
+      bool change = true;
+      for(int k = vSize; k < n2; k++) {
+        if(iterator > order - 2) {
+          iterator = 0;
+          localNumEdge++;
+          var = var + order - 1;
+          change = true;
+        }
+        int indiceOrder = k - vSize - var + 3;
+        iterator++;
+        if(change) {
+          globalNumEdge = edgeGlobalIndice[localNumEdge];
+          change = false;
+        }
+        keys.push_back(std::pair<int, int>(indiceOrder, globalNumEdge));
+      }
+      iterator = 0;
+      int var2 = 4;
+      for(int k = n2; k < n; k++) {
+        if(iterator > 2) {
+          iterator = 0;
+          var2--;
+        }
+        keys.push_back(std::pair<int, int>(k - n2 + order + var2, e->getNum()));
+        var2++;
+        iterator++;
+      }
+    }
   }
-  int const const1=n*numElements;
-  basisFunctions.resize(const1* numComponents * nq , 0.);
+  int const const1 = n * numElements;
+  basisFunctions.resize(const1 * numComponents * nq, 0.);
   switch(numComponents) {
   case 1:
     for(int i = 0; i < nq; i++) {
@@ -1877,7 +1939,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
       double vTable[vSize];
       double bTable[bSize];
       double eTable[eSize];
-      h1QuadBasis.generateBasis(u, v, vTable, eTable, bTable);
+      basis->generateBasis(u, v, vTable, eTable, bTable);
       int elementIterator = 0;
       for(std::size_t ii = 0; ii < entities.size(); ii++) {
         GEntity *ge = entities[ii];
@@ -1885,13 +1947,11 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
             j++) {
           MElement *e = ge->getMeshElementByType(familyType, j);
           int numberEdge = e->getNumEdges();
-	  std::vector<double> edgeGlobalIndice(numberEdge);
           std::vector<int> orientationFlag(numberEdge);
           double eTableCopy[eSize];
           for(int r = 0; r < eSize; r++) { eTableCopy[r] = eTable[r]; }
           for(int jj = 0; jj < numberEdge; jj++) {
             MEdge edge = e->getEdge(jj);
-            edgeGlobalIndice[jj]=GModel::current()->addMEdge(edge);
             if(edge.getMinVertex()->getNum() != edge.getVertex(0)->getNum()) {
               orientationFlag[jj] = -1;
             }
@@ -1900,58 +1960,28 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
             }
           }
           for(int k = 0; k < numberEdge; k++) {
-            h1QuadBasis.orientateEdge(orientationFlag[k], k, eTableCopy);
+            basis->orientateEdge(orientationFlag[k], k, eTableCopy);
           }
           for(int k = 0; k < vSize; k++) {
-            basisFunctions[const1 * i  + n * elementIterator + k] =
-              vTable[k];
-              keys.push_back(std::pair<int, int>(2, e->getVertex(k)->getNum()));
-          }
-          int localNumEdge = 0;
-          int globalNumEdge;
-          int iterator = 0;
-          int var = 0;
-          bool change = true;
-          for(int k = vSize; k < n2; k++) {
-            basisFunctions[const1 * i  + n * elementIterator + k] =
-              eTableCopy[k - vSize];
-            if(iterator > order - 2) {
-              iterator = 0;
-              localNumEdge++;
-              var = var + order - 1;
-              change = true;
-            }
-            int indiceOrder = k - vSize - var + 3;
-            iterator++;
-            if(change) {
-              globalNumEdge =  edgeGlobalIndice[localNumEdge];
-              change = false;
-            }
-            keys.push_back(std::pair<int, int>(indiceOrder, globalNumEdge));
-          }
-          iterator = 0;
-          int var2 = 4;
-	  for(int k = n2; k < n; k++) {
-            if(iterator > 2) {
-              iterator = 0;
-              var2--;
-            }
-            basisFunctions[const1 * i  + n * elementIterator + k] =
-              bTable[k - n2];
-            keys.push_back(
-              std::pair<int, int>(k - n2 + order + var2, e->getNum()));
-            var2++;
-            iterator++;
+            basisFunctions[const1 * i + n * elementIterator + k] = vTable[k];
           }
 
+          for(int k = vSize; k < n2; k++) {
+            basisFunctions[const1 * i + n * elementIterator + k] =
+              eTableCopy[k - vSize];
+          }
+          for(int k = n2; k < n; k++) {
+            basisFunctions[const1 * i + n * elementIterator + k] =
+              bTable[k - n2];
+          }
           elementIterator++;
         }
       }
     }
     break;
   case 2:
-    int const const2=2*const1;
-    int const const3=2*n;
+    int const const2 = 2 * const1;
+    int const const3 = 2 * n;
     for(int i = 0; i < nq; i++) {
       double u = pts(i, 0), v = pts(i, 1);
       double vTableU[vSize];
@@ -1960,7 +1990,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
       double bTableV[bSize];
       double eTableU[eSize];
       double eTableV[eSize];
-      h1QuadBasis.generateGradientBasis(u, v, vTableU, vTableV, eTableU,
+      basis->generateGradientBasis(u, v, vTableU, vTableV, eTableU,
                                         eTableV, bTableU, bTableV);
       int elementIterator = 0;
       for(std::size_t ii = 0; ii < entities.size(); ii++) {
@@ -1969,7 +1999,6 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
             j++) {
           MElement *e = ge->getMeshElementByType(familyType, j);
           int numberEdge = e->getNumEdges();
-	  std::vector<double> edgeGlobalIndice(numberEdge);
           std::vector<int> orientationFlag(numberEdge);
           double eTableUCopy[eSize];
           double eTableVCopy[eSize];
@@ -1979,7 +2008,6 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           }
           for(int jj = 0; jj < numberEdge; jj++) {
             MEdge edge = e->getEdge(jj);
-	    edgeGlobalIndice[jj]=GModel::current()->addMEdge(edge);
             if(edge.getMinVertex()->getNum() != edge.getVertex(0)->getNum()) {
               orientationFlag[jj] = -1;
             }
@@ -1988,110 +2016,50 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
             }
           }
           for(int k = 0; k < numberEdge; k++) {
-            h1QuadBasis.orientateEdgeGrad(orientationFlag[k], k, eTableUCopy,
+            basis->orientateEdgeGrad(orientationFlag[k], k, eTableUCopy,
                                           eTableVCopy);
           }
           for(int k = 0; k < vSize; k++) {
-            basisFunctions[ const2 * i +
-                              const3 * elementIterator + 2 * k] = vTableU[k];
-            basisFunctions[const2* i  +
-                              const3 * elementIterator + 2 * k + 1] = vTableV[k];
-            keys.push_back(std::pair<int, int>(2, e->getVertex(k)->getNum()));
+            basisFunctions[const2 * i + const3 * elementIterator + 2 * k] =
+              vTableU[k];
+            basisFunctions[const2 * i + const3 * elementIterator + 2 * k + 1] =
+              vTableV[k];
           }
-          int localNumEdge = 0;
-          int globalNumEdge;
-          int iterator = 0;
-          int var = 0;
-          bool change = true;
           for(int k = vSize; k < n2; k++) {
-            basisFunctions[const2 * i +
-                              const3 * elementIterator + 2 * k] =
+            basisFunctions[const2 * i + const3 * elementIterator + 2 * k] =
               eTableUCopy[k - vSize];
-            basisFunctions[const2 * i  +
-                              const3 * elementIterator + 2 * k + 1] =
+            basisFunctions[const2 * i + const3 * elementIterator + 2 * k + 1] =
               eTableVCopy[k - vSize];
-            if(iterator > order - 2) {
-              iterator = 0;
-              localNumEdge++;
-              var = var + order - 1;
-              change = true;
-            }
-            int indiceOrder = k - vSize - var + 3;
-            iterator++;
-            if(change) {
-              globalNumEdge =  edgeGlobalIndice[localNumEdge];
-              change = false;
-            }
-            keys.push_back(std::pair<int, int>(indiceOrder, globalNumEdge));
           }
-          iterator = 0;
-          int var2 = 4;
           for(int k = n2; k < n; k++) {
-            if(iterator > 2) {
-              iterator = 0;
-              var2--;
-            }
-            basisFunctions[const2  * i +
-                               const3 * elementIterator + 2 * k] =
+            basisFunctions[const2 * i + const3 * elementIterator + 2 * k] =
               bTableU[k - n2];
-            basisFunctions[const2 * i  +
-                              const3 * elementIterator + 2 * k + 1] =
+            basisFunctions[const2 * i + const3 * elementIterator + 2 * k + 1] =
               bTableV[k - n2];
-            keys.push_back(
-              std::pair<int, int>(k - n2 + order + var2, e->getNum()));
-            var2++;
-            iterator++;
           }
-
           elementIterator++;
         }
       }
     }
     break;
-  }
+  }*/
 }
 
 GMSH_API void gmsh::model::mesh::getInformationForElements(
-  const gmsh::vectorpair &keys, gmsh::vectorpair &info, const int order,
-  const std::string &functionSpaceType)
+  const gmsh::vectorpair &keys, gmsh::vectorpair &info, const int order)
 {
-  int numComponents = 0;
-  _getHierarchicalFunctionSpaceInfo(functionSpaceType, numComponents);
-  switch(numComponents) {
-  case 1:
-    for(std::size_t i = 0; i < keys.size(); i++) {
-      if(keys[i].first == 2) { info.push_back(std::pair<int, int>(2, 1)); }
+  for(std::size_t i = 0; i < keys.size(); i++) {
+    if(keys[i].first == 2) { info.push_back(std::pair<int, int>(2, 1)); }
+
+    else {
+      if(keys[i].first > 2 && keys[i].first < order + 2) {
+        info.push_back(std::pair<int, int>(keys[i].first, 2));
+      }
 
       else {
-        if(keys[i].first > 2 && keys[i].first < order + 2) {
-          info.push_back(std::pair<int, int>(keys[i].first, 2));
-        }
-
-        else {
-          info.push_back(std::pair<int, int>(keys[i].first - order, 4));
-        }
+        info.push_back(std::pair<int, int>(keys[i].first - order, 4));
       }
     }
-    break;
-  case 2:
-    for(std::size_t i = 0; i < keys.size(); i++) {
-      if(keys[i].first == 2) {
-        info.push_back(std::pair<int, int>(2, 1));
-        info.push_back(std::pair<int, int>(2, 1));
-      }
-      else {
-        if(keys[i].first > 2 && keys[i].first < order + 2) {
-          info.push_back(std::pair<int, int>(keys[i].first, 2));
-          info.push_back(std::pair<int, int>(keys[i].first, 2));
-        }
-        else {
-          info.push_back(std::pair<int, int>(keys[i].first - order, 4));
-          info.push_back(std::pair<int, int>(keys[i].first - order, 4));
-        }
-      }
-    }
-
-    break;
   }
 }
 

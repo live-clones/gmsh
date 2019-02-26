@@ -42,6 +42,7 @@ set(SRC
   OrthogonalPoly.cpp
   HierarchicalBasisH1.cpp
   HierarchicalBasisH1Quad.cpp
+  HierarchicalBasisH1Tria.cpp
 
 )
 

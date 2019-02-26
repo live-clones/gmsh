@@ -644,7 +644,6 @@ GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const char * integration
 GMSH_API void gmshModelMeshGetInformationForElements(int * keys, size_t keys_n,
                                                      int ** info, size_t * info_n,
                                                      const int order,
-                                                     const char * functionSpaceType,
                                                      int * ierr);
 
 /* Precomputes the basis functions corresponding to `elementType'. */

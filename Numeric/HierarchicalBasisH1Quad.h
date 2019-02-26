@@ -29,17 +29,11 @@ public:
   // vertexBasis=[v0,...,v3]
   // edgeBasis=[phie0_{2},...phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]
   // bubbleBasis=[phieb_{2,2},...,phieb_{2,peb2},phieb_{3,2},...,phieb_{3,peb2},...,phieb_{peb1,2},...,phieb_{peb1,peb2}]
-  void generateBasis(double const &u, double const &v, double *vertexBasis,
-                     double *edgeBasis, double *bubbleBasis);
-  void generateGradientBasis(double const &u, double const &v,
-                             double *gradientVertexU, double *gradientVertexV,
-                             double *gradientEdgeU, double *gradientEdgeV,
-                             double *gradientBubbleU, double *gradientBubbleV);
-  void orientateEdge(int const &flagOrientation, int const &edgeNumber,
+ virtual void generateBasis(double const &u, double const & v, double const & w,double *vertexBasis,double *edgeBasis, double*faceBasis,double *bubbleBasis);
+ virtual void generateGradientBasis(double const & u,double const & v, double const & w,double gradientVertex[][3],  double gradientEdge[][3], double gradientFace[][3], double gradientBubble[][3]);
+  virtual void orientateEdge(int const &flagOrientation, int const &edgeNumber,
                      double *edgeBasis);
-  void orientateEdgeGrad(int const &flagOrientation, int const &edgeNumber,
-                         double *gradientEdgeU, double *gradientEdgeV);
-
+  virtual void orientateEdgeGrad(int const &flagOrientation, int const &edgeNumber,double gradientEdge[][3]);
 
 
 private:

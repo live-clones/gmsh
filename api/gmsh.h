@@ -604,8 +604,7 @@ namespace gmsh { // Top-level functions
       // polynomial order of all element
       GMSH_API void getInformationForElements(const gmsh::vectorpair & keys,
                                               gmsh::vectorpair & info,
-                                              const int order,
-                                              const std::string & functionSpaceType);
+                                              const int order);
 
       // Precomputes the basis functions corresponding to `elementType'.
       GMSH_API void precomputeBasisFunctions(const int elementType);

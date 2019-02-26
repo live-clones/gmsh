@@ -1453,7 +1453,7 @@ function getBasisFunctionsForElements(integrationType, elementType, functionSpac
 end
 
 """
-    gmsh.model.mesh.getInformationForElements(keys, order, functionSpaceType)
+    gmsh.model.mesh.getInformationForElements(keys, order)
 
  get information about the vectorpair `Keys` . `info` contains the order and the
 type of fonction (vertex=1,edge=2 or bubble=4). `order` is the polynomial order
@@ -1461,13 +1461,13 @@ of all element
 
 Return `info`.
 """
-function getInformationForElements(keys, order, functionSpaceType)
+function getInformationForElements(keys, order)
     api_info_ = Ref{Ptr{Cint}}()
     api_info_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetInformationForElements, gmsh.lib), Nothing,
-          (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cchar}, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(keys))), 2 * length(keys), api_info_, api_info_n_, order, functionSpaceType, ierr)
+          (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(keys))), 2 * length(keys), api_info_, api_info_n_, order, ierr)
     ierr[] != 0 && error("gmshModelMeshGetInformationForElements returned non-zero error code: $(ierr[])")
     tmp_api_info_ = unsafe_wrap(Array, api_info_[], api_info_n_[], own=true)
     info = [ (tmp_api_info_[i], tmp_api_info_[i+1]) for i in 1:2:length(tmp_api_info_) ]
