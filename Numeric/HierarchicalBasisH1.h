@@ -15,6 +15,7 @@ protected:
   int nBubbleFunction;
 
 public:
+  virtual ~HierarchicalBasisH1()=0;
   int getnVertexFunction() const;
   int getnEdgeFunction() const;
   int getnFaceFunction() const;

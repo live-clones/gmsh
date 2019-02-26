@@ -1035,7 +1035,7 @@ of all element
 
 @table @asis
 @item Input:
-@code{keys}, @code{order}
+@code{keys}, @code{order}, @code{elementType}
 @item Output:
 @code{info}
 @item Return:

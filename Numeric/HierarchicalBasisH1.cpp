@@ -1,17 +1,6 @@
 #include "HierarchicalBasisH1.h"
-/*
-HierarchicalBasisH1::HierarchicalBasisH1(int nvertex, int nedge, int nface,
-                                         int nVertexFunction, int nEdgeFunction,
-                                         int nFaceFunction, int nBubbleFunction)
-{
-  this->nvertex = nvertex;
-  this->nedge = nedge;
-  this->nface = nface;
-  this->nVertexFunction = nVertexFunction;
-  this->nEdgeFunction = nEdgeFunction;
-  this->nFaceFunction = nFaceFunction;
-  this->nBubbleFunction = nBubbleFunction;
-}*/
+
+ HierarchicalBasisH1::~HierarchicalBasisH1(){}
 
 int HierarchicalBasisH1::getnEdgeFunction() const
 {

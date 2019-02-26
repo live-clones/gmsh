@@ -9,10 +9,16 @@ import gmsh
 import sys
 import numpy as np
 
-INTEGRATION = 'Gauss2'
+INTEGRATION = 'Gauss1'
 model = gmsh.model
 factory = model.occ
 order=2
+dsf=[1,2,0,1,3,0,4,5,0,4,6,0]
+numElements=2
+numGaussPoints=1
+dsf = np.array(dsf).reshape((numGaussPoints,numElements,-1))
+print(dsf)
+                    #dsf = np.array(dsf).reshape((numGaussPoints,numElements,3))[:,:,:-1]
 
 #gmsh.initialize()
 #gmsh.option.setNumber("General.Terminal", 1)
@@ -48,10 +54,10 @@ order=2
 #print(ky)
 #
 #print("getInformationForElements() :")
-#info=model.mesh.getInformationForElements(ky,order)
-#print(info)
+##info=model.mesh.getInformationForElements(ky,order)
+##print(info)
 #gmsh.finalize()
-#
+
 #
 ##test_2
 #

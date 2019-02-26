@@ -1717,7 +1717,7 @@ class model:
                 _ovectorpair(api_keys_, api_keys_n_.value))
 
         @staticmethod
-        def getInformationForElements(keys, order):
+        def getInformationForElements(keys, order, elementType):
             """
              get information about the vectorpair 'Keys' . 'info' contains the order
             and the type of fonction (vertex=1,edge=2 or bubble=4). 'order' is the
@@ -1732,6 +1732,7 @@ class model:
                 api_keys_, api_keys_n_,
                 byref(api_info_), byref(api_info_n_),
                 c_int(order),
+                c_int(elementType),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

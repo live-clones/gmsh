@@ -19,9 +19,9 @@ import sys
 # $ python poisson.py
 
 
-INTEGRATION = 'Gauss30'
-RECOMBINE = 1
-order=15#polynomial order
+INTEGRATION = 'Gauss4'
+RECOMBINE = 0
+order=1#polynomial order
 
 def create_geometry_legendre():
     model.add("poisson_legendre")
@@ -107,12 +107,15 @@ def fem_solve_legendre():
                 # (triangles or quadrangles)
                 if dimEntity==2 :
                     sf, weights ,ky = model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType, 'Legendre',
-                                                                                 order,tagEntity)                              
+                                                                                 order,tagEntity)            
+                   
                     numGaussPoints = len(weights)
                     weights=np.array(weights)
                     sf = np.array(sf).reshape((numGaussPoints,numElements,-1))    
                     dsf,_, _ = model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType,
-                                                                         'GradLegendre',order,tagEntity)    
+                                                                         'GradLegendre',order,tagEntity) 
+                 
+                   
                     dsf = np.array(dsf).reshape((numGaussPoints,numElements,-1))
                     qjac, qdet, qpoint = model.mesh.getJacobians(
                         elementType, INTEGRATION, tagEntity)
@@ -129,7 +132,7 @@ def fem_solve_legendre():
                              k3=0
                              while (k3< len(gradientVector)):
                                  gradient=np.array([gradientVector[k3],gradientVector[k3+1]])
-                                 k3=k3+2
+                                 k3=k3+3
                                  produit=np.array([a[0][0]*gradient[0]+a[0][1]*gradient[1],a[1][0]*gradient[0]+a[1][1]*gradient[1] ])
                                  li.append(produit)
                              b.append(li)
@@ -248,6 +251,8 @@ def fem_solve_legendre():
     sview = gmsh.view.add("solution")
     gmsh.view.addModelData(sview, 0, "", "NodeData", nodegraph,        solgraph)
     return
+
+
 model = gmsh.model
 factory = model.occ
 gmsh.initialize(sys.argv)

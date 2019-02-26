@@ -1139,12 +1139,13 @@ namespace gmsh { // Top-level functions
       // polynomial order of all element
       GMSH_API void getInformationForElements(const gmsh::vectorpair & keys,
                                               gmsh::vectorpair & info,
-                                              const int order)
+                                              const int order,
+                                              const int elementType)
       {
         int ierr = 0;
         int *api_keys_; size_t api_keys_n_; vectorpair2intptr(keys, &api_keys_, &api_keys_n_);
         int *api_info_; size_t api_info_n_;
-        gmshModelMeshGetInformationForElements(api_keys_, api_keys_n_, &api_info_, &api_info_n_, order, &ierr);
+        gmshModelMeshGetInformationForElements(api_keys_, api_keys_n_, &api_info_, &api_info_n_, order, elementType, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_keys_);
         info.resize(api_info_n_ / 2); for(size_t i = 0; i < api_info_n_ / 2; ++i){ info[i].first = api_info_[i * 2 + 0]; info[i].second = api_info_[i * 2 + 1]; } gmshFree(api_info_);

@@ -262,7 +262,7 @@ mesh.add('getBasisFunctions',doc,None,iint('elementType'),istring('integrationTy
 doc = '''Get the basis function of the element of type `elementType' for the given `integrationType' integration rule. 'basisFunctions' contains the evaluation of de the basis functions at the integration points. 'weight' conntains the Gauss weights. 'order' is the polynomial order. Each physical mesh edge (or Face) will  be assigned a unique orientation,and all edges (or Faces) of physical mesh will be equipped with an orientation tag , indicating whether the image of the corresponding edge (or Face) of the reference domain through the reference map has the same or opposite orientation.The global edge orientation always pointing from the vertex with the lower global vertex number to the one with the higher one.  '''
 mesh.add('getBasisFunctionsForElements',doc,None,istring('integrationType'),iint('elementType'),ovectordouble('basisFunctions'),ovectordouble('weight'),istring('functionSpaceType'),iint('order'),ovectorpair('keys'),iint('tag','-1'))
 doc = ''' get information about the vectorpair 'Keys' . 'info' contains the order and the type of fonction (vertex=1,edge=2 or bubble=4). 'order' is the polynomial order of all element '''
-mesh.add('getInformationForElements',doc,None,ivectorpair('keys'),ovectorpair('info'),iint('order'))
+mesh.add('getInformationForElements',doc,None,ivectorpair('keys'),ovectorpair('info'),iint('order'),iint('elementType'))
 
 
 doc = '''Precomputes the basis functions corresponding to `elementType'. '''
