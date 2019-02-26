@@ -2231,7 +2231,7 @@ Shape :
   | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints "
-            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Line");
+            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Curve");
       $$.Type = 0;
       $$.Num = 0;
     }
@@ -2239,7 +2239,7 @@ Shape :
       '{' RecursiveListOfListOfDouble '}' tEND
     {
       yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints "
-            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Line");
+            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Curve");
       $$.Type = 0;
       $$.Num = 0;
     }
