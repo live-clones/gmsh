@@ -651,10 +651,10 @@ static void writeElementMSH(FILE *fp, GModel *model, MElement *ele, bool binary,
     for(std::multimap<MElement *, short>::iterator it = itp.first;
         it != itp.second; it++)
       ghosts.push_back(it->second);
-    ele->writeMSH(fp, binary, elementary, &ghosts);
+    ele->writeMSH3(fp, binary, elementary, &ghosts);
   }
   else
-    ele->writeMSH(fp, binary, elementary);
+    ele->writeMSH3(fp, binary, elementary);
 }
 
 template <class T>

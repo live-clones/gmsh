@@ -434,13 +434,12 @@ public:
   double integrateFlux(double val[], int face, int pOrder, int order = -1);
 
   // IO routines
-  virtual void writeMSH(FILE *fp, bool binary = false, int elementary = 1,
-                        std::vector<short> *ghosts = 0);
   virtual void writeMSH2(FILE *fp, double version = 1.0, bool binary = false,
                          int num = 0, int elementary = 1, int physical = 1,
                          int parentNum = 0, int dom1Num = 0, int dom2Num = 0,
                          std::vector<short> *ghosts = 0);
-  virtual void writeMSH4(FILE *fp, bool binary = false);
+  virtual void writeMSH3(FILE *fp, bool binary = false, int elementary = 1,
+                         std::vector<short> *ghosts = 0);
   virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber,
                         bool printSICN, bool printSIGE, bool printGamma,
                         bool printDisto, double scalingFactor = 1.0,

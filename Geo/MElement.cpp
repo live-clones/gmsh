@@ -1350,48 +1350,6 @@ double MElement::integrateFlux(double val[], int face, int pOrder, int order)
   return prosca(n, intv);
 }
 
-void MElement::writeMSH(FILE *fp, bool binary, int entity,
-                        std::vector<short> *ghosts)
-{
-  int num = (int)getNum();
-  int type = getTypeForMSH();
-  if(!type) return;
-
-  std::vector<int> verts;
-  getVerticesIdForMSH(verts);
-
-  // FIXME: once we create elements using their own interpretion of data, we
-  // should move this also into each element base class
-  std::vector<int> data;
-  data.insert(data.end(), verts.begin(), verts.end());
-  if(getParent()) data.push_back(getParent()->getNum());
-  if(getPartition()) {
-    if(ghosts) {
-      data.push_back(1 + ghosts->size());
-      data.push_back(getPartition());
-      data.insert(data.end(), ghosts->begin(), ghosts->end());
-    }
-    else {
-      data.push_back(1);
-      data.push_back(getPartition());
-    }
-  }
-  int numData = data.size();
-
-  if(!binary) {
-    fprintf(fp, "%d %d %d %d", num, type, entity, numData);
-    for(int i = 0; i < numData; i++) fprintf(fp, " %d", data[i]);
-    fprintf(fp, "\n");
-  }
-  else {
-    fwrite(&num, sizeof(int), 1, fp);
-    fwrite(&type, sizeof(int), 1, fp);
-    fwrite(&entity, sizeof(int), 1, fp);
-    fwrite(&numData, sizeof(int), 1, fp);
-    fwrite(&data[0], sizeof(int), numData, fp);
-  }
-}
-
 void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
                          int elementary, int physical, int parentNum,
                          int dom1Num, int dom2Num, std::vector<short> *ghosts)
@@ -1496,24 +1454,45 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
   if(physical < 0) reverse();
 }
 
-void MElement::writeMSH4(FILE *fp, bool binary)
+void MElement::writeMSH3(FILE *fp, bool binary, int entity,
+                         std::vector<short> *ghosts)
 {
-  std::vector<MVertex *> verts;
-  getVertices(verts);
+  int num = (int)getNum();
+  int type = getTypeForMSH();
+  if(!type) return;
 
-  if(binary) { // implemented but not used in practice
-    fwrite(&_num, sizeof(std::size_t), 1, fp);
-    for(std::size_t i = 0; i < verts.size(); i++) {
-      std::size_t vertNum = verts[i]->getNum();
-      fwrite(&vertNum, sizeof(std::size_t), 1, fp);
+  std::vector<int> verts;
+  getVerticesIdForMSH(verts);
+
+  // FIXME: once we create elements using their own interpretion of data, we
+  // should move this also into each element base class
+  std::vector<int> data;
+  data.insert(data.end(), verts.begin(), verts.end());
+  if(getParent()) data.push_back(getParent()->getNum());
+  if(getPartition()) {
+    if(ghosts) {
+      data.push_back(1 + ghosts->size());
+      data.push_back(getPartition());
+      data.insert(data.end(), ghosts->begin(), ghosts->end());
+    }
+    else {
+      data.push_back(1);
+      data.push_back(getPartition());
     }
   }
-  else {
-    fprintf(fp, "%lu ", _num);
-    for(std::size_t i = 0; i < verts.size(); i++) {
-      fprintf(fp, "%lu ", verts[i]->getNum());
-    }
+  int numData = data.size();
+
+  if(!binary) {
+    fprintf(fp, "%d %d %d %d", num, type, entity, numData);
+    for(int i = 0; i < numData; i++) fprintf(fp, " %d", data[i]);
     fprintf(fp, "\n");
+  }
+  else {
+    fwrite(&num, sizeof(int), 1, fp);
+    fwrite(&type, sizeof(int), 1, fp);
+    fwrite(&entity, sizeof(int), 1, fp);
+    fwrite(&numData, sizeof(int), 1, fp);
+    fwrite(&data[0], sizeof(int), numData, fp);
   }
 }
 

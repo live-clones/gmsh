@@ -3,7 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
-// Contributed by Anthony Royer
+// Contributor(s):
+//   Anthony Royer
 
 #include <cstdio>
 #include <fstream>
@@ -49,17 +50,15 @@ static bool readMSH4Physicals(GModel *const model, FILE *fp,
     }
     if(swap) SwapBytes((char *)&numPhy, sizeof(std::size_t), 1);
 
-    int *phyTags = new int[numPhy];
-    if(fread(phyTags, sizeof(int), numPhy, fp) != numPhy) {
-      delete[] phyTags;
+    std::vector<int> phyTags(numPhy);
+    if(fread(&phyTags[0], sizeof(int), numPhy, fp) != numPhy) {
       return false;
     }
-    if(swap) SwapBytes((char *)phyTags, sizeof(int), numPhy);
+    if(swap) SwapBytes((char *)&phyTags[0], sizeof(int), numPhy);
 
     for(std::size_t i = 0; i < numPhy; i++) {
       entity->addPhysicalEntity(phyTags[i]);
     }
-    delete[] phyTags;
   }
   else {
     sscanf(str, "%lu %[0-9- ]", &numPhy, str);
@@ -97,12 +96,11 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
     }
     if(swap) SwapBytes((char *)&numBrep, sizeof(std::size_t), 1);
 
-    int *brepTags = new int[numBrep];
-    if(fread(brepTags, sizeof(int), numBrep, fp) != numBrep) {
-      delete[] brepTags;
+    std::vector<int> brepTags(numBrep);
+    if(fread(&brepTags[0], sizeof(int), numBrep, fp) != numBrep) {
       return false;
     }
-    if(swap) SwapBytes((char *)brepTags, sizeof(int), numBrep);
+    if(swap) SwapBytes((char *)&brepTags[0], sizeof(int), numBrep);
 
     for(std::size_t i = 0; i < numBrep; i++) {
       GEntity *brep =
@@ -115,7 +113,6 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
       boundingEntities.push_back(brep);
       boundingSign.push_back((std::abs(brepTags[i]) == brepTags[i] ? 1 : -1));
     }
-    delete[] brepTags;
   }
   else {
     sscanf(str, "%lu %[0-9- ]", &numBrep, str);
@@ -303,7 +300,7 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
   if(partition) {
     std::size_t numPartitions = 0;
     std::size_t ghostSize = 0;
-    int *ghostTags = 0;
+    std::vector<int> ghostTags;
 
     if(binary) {
       if(fread(&numPartitions, sizeof(std::size_t), 1, fp) != 1) {
@@ -316,12 +313,11 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
       }
       if(swap) SwapBytes((char *)&ghostSize, sizeof(std::size_t), 1);
       if(ghostSize) {
-        ghostTags = new int[2 * ghostSize];
-        if(fread(ghostTags, sizeof(int), 2 * ghostSize, fp) != 2 * ghostSize) {
-          delete[] ghostTags;
+        ghostTags.resize(2 * ghostSize);
+        if(fread(&ghostTags[0], sizeof(int), 2 * ghostSize, fp) != 2 * ghostSize) {
           return false;
         }
-        if(swap) SwapBytes((char *)ghostTags, sizeof(int), 2 * ghostSize);
+        if(swap) SwapBytes((char *)&ghostTags[0], sizeof(int), 2 * ghostSize);
       }
     }
     else {
@@ -332,10 +328,9 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
         return false;
       }
       if(ghostSize) {
-        ghostTags = new int[2 * ghostSize];
+        ghostTags.resize(2 * ghostSize);
         for(std::size_t i = 0; i < 2 * ghostSize; i += 2) {
           if(fscanf(fp, "%d %d", &ghostTags[i], &ghostTags[i + 1]) != 2) {
-            delete[] ghostTags;
             return false;
           }
         }
@@ -363,10 +358,6 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
       } break;
       default: break;
       }
-    }
-
-    if(ghostTags != 0){
-      delete[] ghostTags;
     }
   }
 
@@ -844,20 +835,18 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
 
     const int numVertPerElm = MElement::getInfoMSH(elmType);
     if(binary) {
-      std::size_t *data = new std::size_t[numElements * (numVertPerElm + 1)];
-      if(fread(data, sizeof(std::size_t), numElements * (numVertPerElm + 1), fp) !=
-         numElements * (numVertPerElm + 1)) {
+      std::size_t n = 1 + numVertPerElm;
+      std::vector<std::size_t> data(numElements * n);
+      if(fread(&data[0], sizeof(std::size_t), numElements * n, fp) !=
+         numElements * n) {
         delete[] elementCache;
-        delete[] data;
         return 0;
       }
       if(swap)
-        SwapBytes((char *)data, sizeof(std::size_t),
-                  numElements * (numVertPerElm + 1));
+        SwapBytes((char *)&data[0], sizeof(std::size_t), numElements * n);
 
       std::vector<MVertex *> vertices(numVertPerElm, (MVertex *)0);
-      for(std::size_t j = 0; j < numElements * (numVertPerElm + 1);
-          j += (numVertPerElm + 1)) {
+      for(std::size_t j = 0; j < numElements * n; j += n) {
         for(int k = 0; k < numVertPerElm; k++) {
           vertices[k] = model->getMeshVertexByTag(data[j + k + 1]);
           if(!vertices[k]) {
@@ -889,8 +878,6 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
           Msg::ProgressMeter(elementRead, totalNumElements, true,
                              "Reading elements");
       }
-
-      delete[] data;
     }
     else {
       for(std::size_t j = 0; j < numElements; j++) {
@@ -1616,9 +1603,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
       // write the ghostentities' tag
       std::size_t ghostSize = ghost.size();
-      int *tags = 0;
+      std::vector<int> tags;
       if(ghostSize) {
-        tags = new int[2 * ghostSize];
+        tags.resize(2 * ghostSize);
         int index = 0;
         for(std::set<GEntity *, GEntityLessThan>::iterator it = ghost.begin();
             it != ghost.end(); ++it) {
@@ -1638,9 +1625,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         }
       }
       fwrite(&ghostSize, sizeof(std::size_t), 1, fp);
-      if(tags) {
-        fwrite(tags, sizeof(int), 2 * ghostSize, fp);
-        delete[] tags;
+      if(ghostSize) {
+        fwrite(&tags[0], sizeof(int), 2 * ghostSize, fp);
       }
     }
     std::size_t verticesSize = vertices.size();
@@ -1808,9 +1794,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
       // write the ghostentities' tag
       std::size_t ghostSize = ghost.size();
-      int *tags = 0;
+      std::vector<int> tags;
       if(ghostSize) {
-        tags = new int[2 * ghostSize];
+        tags.resize(2 * ghostSize);
         int index = 0;
         for(std::set<GEntity *, GEntityLessThan>::iterator it = ghost.begin();
             it != ghost.end(); ++it) {
@@ -1830,11 +1816,10 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         }
       }
       fprintf(fp, "%lu\n", ghostSize);
-      if(tags) {
+      if(ghostSize) {
         for(std::size_t i = 0; i < 2 * ghostSize; i += 2) {
           fprintf(fp, "%d %d\n", tags[i], tags[i + 1]);
         }
-        delete[] tags;
       }
     }
     fprintf(fp, "%lu %lu %lu %lu\n", vertices.size(), edges.size(),
@@ -2495,27 +2480,30 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
                 elmType, numElm);
       }
 
+      std::size_t N = it->second.size();
       if(binary) {
         const int numVertPerElm = MElement::getInfoMSH(elmType);
-        std::size_t indexElement = 0;
-        std::size_t *elementData = new std::size_t[it->second.size() *
-                                                   (numVertPerElm + 1)];
-        for(std::size_t i = 0; i < it->second.size() * (numVertPerElm + 1);
-            i += (numVertPerElm + 1)) {
-          elementData[i] = it->second[indexElement]->getNum();
+        std::size_t n = 1 + numVertPerElm;
+        std::vector<std::size_t> tags(N * n);
+        std::size_t k = 0;
+        for(std::size_t i = 0; i < N; i++){
+          MElement *e = it->second[i];
+          tags[k] = e->getNum();
           for(int j = 0; j < numVertPerElm; j++) {
-            elementData[i + 1 + j] =
-              it->second[indexElement]->getVertex(j)->getNum();
+            tags[k + 1 + j] = e->getVertex(j)->getNum();
           }
-          indexElement++;
+          k += n;
         }
-        fwrite(elementData, sizeof(std::size_t),
-               it->second.size() * (numVertPerElm + 1), fp);
-        delete[] elementData;
+        fwrite(&tags[0], sizeof(std::size_t), N * n, fp);
       }
       else {
-        for(std::size_t i = 0; i < it->second.size(); i++) {
-          it->second[i]->writeMSH4(fp, binary);
+        for(std::size_t i = 0; i < N; i++) {
+          MElement *e = it->second[i];
+          fprintf(fp, "%lu ", e->getNum());
+          for(std::size_t i = 0; i < e->getNumVertices(); i++) {
+            fprintf(fp, "%lu ", e->getVertex(i)->getNum());
+          }
+          fprintf(fp, "\n");
         }
       }
     }
