@@ -3642,7 +3642,7 @@ $MeshFormat // same as MSH version 2
   version(ASCII double; currently 4.1)
     file-type(ASCII int; 0 for ASCII mode, 1 for binary mode)
     data-size(ASCII int; sizeof(size_t))
-  <int with value one; only in binary mode, to detect endianness>
+  < int with value one; only in binary mode, to detect endianness >
 $EndMeshFormat
 
 $PhysicalNames // same as MSH version 2
@@ -3713,9 +3713,11 @@ $Nodes
   numEntityBlocks(size_t) numNodes(size_t)
     minNodeTag(size_t) maxNodeTag(size_t)
   entityDim(int) entityTag(int) parametric(int; 0 or 1) numNodes(size_t)
-    nodeTag(size_t) x(double) y(double) z(double)
-       <u(double; if parametric and on curve or surface)>
-       <v(double; if parametric and on surface)>
+    nodeTag(size_t)
+    ...
+    x(double) y(double) z(double)
+       < u(double; if parametric and entityDim = 1 or entityDim = 2) >
+       < v(double; if parametric and entityDim = 2) >
     ...
   ...
 $EndNodes
@@ -3935,18 +3937,24 @@ $EndMeshFormat
 $Nodes
 1 6 1 6          @emph{1 entity bloc, 6 nodes total, min/max node tags: 1 and 6}
 2 1 0 6          @emph{2D entity (surface) 1, no parametric coordinates, 6 nodes}
-1 0. 0. 0.       @emph{  node #1: coordinates (0., 0., 0.)}
-2 1. 0. 0.       @emph{  node #2: coordinates (1., 0., 0.)}
-3 1. 1. 0.       @emph{  etc.}
-4 0. 1. 0.
-5 2. 0. 0.
-6 2. 1. 0.
+1                @emph{  node tag #1}
+2                @emph{  node tag #2}
+3                @emph{  etc.}
+4
+5
+6
+0. 0. 0.         @emph{  node #1 coordinates (0., 0., 0.)}
+1. 0. 0.         @emph{  node #2 coordinates (1., 0., 0.)}
+1. 1. 0.         @emph{  etc.}
+0. 1. 0.
+2. 0. 0.
+2. 1. 0.
 $EndNodes
 $Elements
 1 2 1 2          @emph{1 entity bloc, 2 elements total, min/max element tags: 1 and 2}
 2 1 3 2          @emph{2D entity (surface) 1, element type 3 (4-node quad), 2 elements}
-1 1 2 3 4        @emph{  quad #1: nodes 1 2 3 4}
-2 2 5 6 3        @emph{  quad #2: nodes 2 5 6 3}
+1 1 2 3 4        @emph{  quad tag #1, nodes 1 2 3 4}
+2 2 5 6 3        @emph{  quad tag #2, nodes 2 5 6 3}
 $EndElements
 $NodeData
 1                @emph{1 string tag:}
@@ -3977,6 +3985,10 @@ only impacts binary files.)
 @item
 The @code{$Entities} section is now optional.
 @item
+Integer and floating point data in the @code{$Nodes} section is not
+mixed anymore: all the tags are given first, followed by all the
+coordinates.
+@item
 The bounding box for point entities has been replaced simply by the 3
 coordinates of the point (instead of the six bounding box values).
 @item
@@ -3992,6 +4004,16 @@ reading the file.
 The @code{$Periodic} section has been changed to always provide the
 number of values in the affine transform (which can be zero, if the
 transform is not provided).
+@end itemize
+
+The following changes are foreseen in a future revision of the MSH format:
+@itemize @bullet
+@item
+The @code{$NodeData}, @code{$ElementData} and @code{$ElementNodeData}
+will be reworked for greater IO efficiency: same block structure as for
+@code{$Nodes} and @code{$Elements} (to have blocks of predictable size)
+and separation of tags and values (so that integer and floating point
+data is not mixed).
 @end itemize
 
 @c -------------------------------------------------------------------------
