@@ -22,7 +22,7 @@ public:
   virtual void generateBasis(double const &u, double const & v, double const & w,double *vertexBasis,double *edgeBasis, double*faceBasis,double *bubbleBasis)=0;
   virtual void generateGradientBasis( double const & u,double const & v, double const & w,double gradientVertex[][3],  double gradientEdge[][3], double gradientFace[][3], double gradientBubble[][3])=0;
   virtual void orientateEdge(int const &flagOrientation, int const &edgeNumber, double *edgeBasis)=0;
-  virtual void orientateEdgeGrad(int const &flagOrientation, int const &edgeNumber,double gradientEdge[][3]);
+  virtual void orientateEdgeGrad(int const &flagOrientation, int const &edgeNumber,double gradientEdge[][3])=0;
 };
 
 #endif
