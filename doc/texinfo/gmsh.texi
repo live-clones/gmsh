@@ -3620,15 +3620,15 @@ header is simply ignored: you can thus add comments in a @file{.msh}
 file by putting them e.g. inside a @code{$Comments}/@code{$EndComments}
 section.
 
-Important note about efficiency. Node and element tags can be "sparse",
-i.e., do not have to constitute a continuous list of indexes starting at
-1. However, using sparse tags will lead to performance degradation. For
-meshes, non-continuous indexing forces Gmsh to use a map instead of a
-vector to access nodes and elements. The performance hit is on
-speed. For post-processing datasets, which always use vectors to access
-data, the performance hit is on memory. A @code{$NodeData} with two
-nodes, tagged 1 and 1000000, will allocate a (mostly empty) vector of
-1000000 elements.
+Important note about efficiency. Node and element tags (their global
+identification numbers) can be "sparse", i.e., do not have to constitute
+a continuous list of indexes starting at 1. However, using sparse tags
+will lead to performance degradation. For meshes, non-continuous
+indexing forces Gmsh to use a map instead of a vector to access nodes
+and elements. The performance hit is on speed. For post-processing
+datasets, which always use vectors to access data, the performance hit
+is on memory. A @code{$NodeData} with two nodes, tagged 1 and 1000000,
+will allocate a (mostly empty) vector of 1000000 elements.
 
 In binary mode (@code{Mesh.Binary=1} or @code{-bin} on the command
 line), all the numerical values (integer and floating point) not marked
