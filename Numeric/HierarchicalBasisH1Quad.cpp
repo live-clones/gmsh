@@ -12,7 +12,7 @@ HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int pb1, int pb2, int pe0,
   this->nVertexFunction = 4;
   this->nEdgeFunction = pe0 + pe1 + pe2 + pe3 - 4;
   this->nFaceFunction = 0;
-  this->nBubbleFunction =   (pb1 - 1) * (pb2 - 1);
+  this->nBubbleFunction = (pb1 - 1) * (pb2 - 1);
   this->pb1 = pb1;
   this->pb2 = pb2;
   if(pe1 > pb2 || pe3 > pb2) { throw std::string("pe1 and pe3 must be <=pb2"); }
@@ -27,7 +27,7 @@ HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int pb1, int pb2, int pe0,
 
 HierarchicalBasisH1Quad::~HierarchicalBasisH1Quad() {}
 
-double HierarchicalBasisH1Quad::affineCoordinate(int j, double u, double v)
+double HierarchicalBasisH1Quad::affineCoordinate(int const &j, double const & u, double const & v)
 {
   switch(j) {
   case(1): return 0.5 * (1 + u);
@@ -38,7 +38,9 @@ double HierarchicalBasisH1Quad::affineCoordinate(int j, double u, double v)
   }
 }
 
-void HierarchicalBasisH1Quad::generateBasis(double const &u, double const & v, double const & w,double *vertexBasis,double *edgeBasis, double*faceBasis,double *bubbleBasis)
+void HierarchicalBasisH1Quad::generateBasis(
+  double const &u, double const &v, double const &w, double *vertexBasis,
+  double *edgeBasis, double *faceBasis, double *bubbleBasis)
 {
   double lambda1 = affineCoordinate(1, u, v);
   double lambda2 = affineCoordinate(2, u, v);
@@ -183,7 +185,10 @@ void HierarchicalBasisH1Quad::generateBasis(double const &u, double const & v, d
   }
 }
 
-void HierarchicalBasisH1Quad::generateGradientBasis(double const & u,double const & v, double const & w,double gradientVertex[][3],  double gradientEdge[][3], double gradientFace[][3], double gradientBubble[][3])
+void HierarchicalBasisH1Quad::generateGradientBasis(
+  double const &u, double const &v, double const &w, double gradientVertex[][3],
+  double gradientEdge[][3], double gradientFace[][3],
+  double gradientBubble[][3])
 {
   double dlambda1 = 0.5;
   double dlambda2 = -0.5;
@@ -195,9 +200,9 @@ void HierarchicalBasisH1Quad::generateGradientBasis(double const & u,double cons
   double lambda4 = affineCoordinate(4, u, v);
   // vertex gradient functions:
   gradientVertex[0][0] = dlambda2 * lambda4;
-  gradientVertex[0][1]= lambda2 * dlambda4;
+  gradientVertex[0][1] = lambda2 * dlambda4;
   gradientVertex[1][0] = dlambda1 * lambda4;
-  gradientVertex[1][1]= lambda1 * dlambda4;
+  gradientVertex[1][1] = lambda1 * dlambda4;
   gradientVertex[2][0] = dlambda1 * lambda3;
   gradientVertex[2][1] = lambda1 * dlambda3;
   gradientVertex[3][0] = dlambda2 * lambda3;
@@ -395,23 +400,23 @@ void HierarchicalBasisH1Quad::orientateEdge(int const &flagOrientation,
     int constant2;
     switch(edgeNumber) {
     case(0): {
-       constant1=0;
-       constant2 = this->pOrderEdge[0] - 2;
+      constant1 = 0;
+      constant2 = this->pOrderEdge[0] - 2;
     } break;
     case(1): {
-     constant1 = this->pOrderEdge[0] - 1;
-       constant2 = this->pOrderEdge[1] + this->pOrderEdge[0] - 3;
+      constant1 = this->pOrderEdge[0] - 1;
+      constant2 = this->pOrderEdge[1] + this->pOrderEdge[0] - 3;
     } break;
     case(2): {
-     constant1 = this->pOrderEdge[0] + this->pOrderEdge[1] - 2;
-       constant2 =
+      constant1 = this->pOrderEdge[0] + this->pOrderEdge[1] - 2;
+      constant2 =
         this->pOrderEdge[1] + this->pOrderEdge[0] + this->pOrderEdge[2] - 4;
-        } break;
+    } break;
     case(3): {
-     constant1 =
+      constant1 =
         this->pOrderEdge[0] + this->pOrderEdge[1] + this->pOrderEdge[2] - 1;
-       constant2 = this->pOrderEdge[1] + this->pOrderEdge[0] +
-                      this->pOrderEdge[2] + pOrderEdge[3] - 5;
+      constant2 = this->pOrderEdge[1] + this->pOrderEdge[0] +
+                  this->pOrderEdge[2] + pOrderEdge[3] - 5;
     } break;
     default: throw std::string("edgeNumber  must be : 0<=edgeNumber<=3");
     }
@@ -421,27 +426,32 @@ void HierarchicalBasisH1Quad::orientateEdge(int const &flagOrientation,
   }
 }
 
-void HierarchicalBasisH1Quad::orientateEdgeGrad(int const &flagOrientation, int const &edgeNumber,double gradientEdge[][3])
+void HierarchicalBasisH1Quad::orientateEdgeGrad(int const &flagOrientation,
+                                                int const &edgeNumber,
+                                                double gradientEdge[][3])
 {
   if(flagOrientation == -1) {
     int constant1;
     int constant2;
     switch(edgeNumber) {
     case(0): {
-       constant1=0;
-       constant2 = this->pOrderEdge[0] - 2;
+      constant1 = 0;
+      constant2 = this->pOrderEdge[0] - 2;
     } break;
     case(1): {
-       constant1 = this->pOrderEdge[0] - 1;
-       constant2 = this->pOrderEdge[1] + this->pOrderEdge[0] - 3;
-      } break;
+      constant1 = this->pOrderEdge[0] - 1;
+      constant2 = this->pOrderEdge[1] + this->pOrderEdge[0] - 3;
+    } break;
     case(2): {
-     constant1 = this->pOrderEdge[0] + this->pOrderEdge[1] - 2;
-       constant2 =this->pOrderEdge[1] + this->pOrderEdge[0] + this->pOrderEdge[2] - 4;
+      constant1 = this->pOrderEdge[0] + this->pOrderEdge[1] - 2;
+      constant2 =
+        this->pOrderEdge[1] + this->pOrderEdge[0] + this->pOrderEdge[2] - 4;
     } break;
     case(3): {
-       constant1 = this->pOrderEdge[0] + this->pOrderEdge[1] + this->pOrderEdge[2] - 1;
-       constant2 = this->pOrderEdge[1] + this->pOrderEdge[0] + this->pOrderEdge[2] + pOrderEdge[3] - 5;
+      constant1 =
+        this->pOrderEdge[0] + this->pOrderEdge[1] + this->pOrderEdge[2] - 1;
+      constant2 = this->pOrderEdge[1] + this->pOrderEdge[0] +
+                  this->pOrderEdge[2] + pOrderEdge[3] - 5;
     } break;
     default: throw std::string("edgeNumber  must be : 0<=edgeNumber<=3");
     }

@@ -1,6 +1,6 @@
 #include "HierarchicalBasisH1.h"
 
- HierarchicalBasisH1::~HierarchicalBasisH1(){}
+HierarchicalBasisH1::~HierarchicalBasisH1() {}
 
 int HierarchicalBasisH1::getnEdgeFunction() const
 {

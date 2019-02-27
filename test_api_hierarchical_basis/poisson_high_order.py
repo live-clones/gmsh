@@ -19,9 +19,9 @@ import sys
 # $ python poisson.py
 
 
-INTEGRATION = 'Gauss4'
+INTEGRATION = 'Gauss6'
 RECOMBINE = 0
-order=1#polynomial order
+order=3#polynomial order
 
 def create_geometry_legendre():
     model.add("poisson_legendre")
@@ -76,7 +76,14 @@ def fem_solve_legendre():
     globalrhs=[]
     dimGroup = 1 
     tagGroup = 11
-    nddl=4+4*(order-1)+(order-1)*(order-1)
+    if RECOMBINE :
+        nddl=4+4*(order-1)+(order-1)*(order-1)
+        nEdge=4
+        nVertex=4
+    else :
+        nddl=3+3*(order-1)+int((order-1)*(order-2)/2)
+        nEdge=3
+        nVertex=3
     vEntities = model.getEntitiesForPhysicalGroup(dimGroup, tagGroup)
     tagNodeInBoundary=[]
     for tagEntity in vEntities:
@@ -146,7 +153,7 @@ def fem_solve_legendre():
                     for i in range(numElements):
                         Elementconnectivity=[]
                         belongBoundary=[]
-                        for j in range(4):
+                        for j in range(nVertex):
                                    if(nodeBelongsBoundary(ky[j+i*nddl][1], tagNodeInBoundary)):
                                         belongBoundary.append(-1)
                                    else:
@@ -155,41 +162,18 @@ def fem_solve_legendre():
                                    Elementconnectivity.append(num)
                                    allConnectivity[tuple(ky[j+i*nddl])]=num
                                   
-                       
-                        for j in range(4,4+order-1):
+                        for k in range(nEdge):
+                            for j in range(nVertex+k*(order-1),nVertex+(k+1)*(order-1)):
                                 
-                                 if(nodeBelongsBoundary(ky[0][1], tagNodeInBoundary) and nodeBelongsBoundary(ky[1][1], tagNodeInBoundary) ):
+                                 if(nodeBelongsBoundary(ky[k][1], tagNodeInBoundary) and nodeBelongsBoundary(ky[(k+1)%4][1], tagNodeInBoundary) ):
                                      belongBoundary.append(-1)
                                  else:
                                      belongBoundary.append(0)
                                  num=assignNumberToFunction(allConnectivity, ky[j+i*nddl])
                                  Elementconnectivity.append(num)
                                  allConnectivity[tuple(ky[j+i*nddl])]=num
-                        for j in range(4+order-1,4+2*(order-1)):
-                                if(nodeBelongsBoundary(ky[1][1], tagNodeInBoundary) and nodeBelongsBoundary(ky[2][1], tagNodeInBoundary) ):
-                                     belongBoundary.append(-1)
-                                else:
-                                     belongBoundary.append(0)
-                                num=assignNumberToFunction(allConnectivity, ky[j+i*nddl])
-                                Elementconnectivity.append(num)
-                                allConnectivity[tuple(ky[j+i*nddl])]=num
-                        for j in range(4+2*(order-1),4+3*(order-1)):
-                                if(nodeBelongsBoundary(ky[2][1], tagNodeInBoundary) and nodeBelongsBoundary(ky[3][1], tagNodeInBoundary) ):
-                                     belongBoundary.append(-1)
-                                else:
-                                     belongBoundary.append(0)
-                                num=assignNumberToFunction(allConnectivity, ky[j+i*nddl])
-                                Elementconnectivity.append(num)
-                                allConnectivity[tuple(ky[j+i*nddl])]=num         
-                        for j in range(4+3*(order-1),4+4*(order-1)):
-                                if(nodeBelongsBoundary(ky[3][1], tagNodeInBoundary) and nodeBelongsBoundary(ky[0][1], tagNodeInBoundary) ):
-                                     belongBoundary.append(-1)
-                                else:
-                                     belongBoundary.append(0)
-                                num=assignNumberToFunction(allConnectivity, ky[j+i*nddl])
-                                Elementconnectivity.append(num)
-                                allConnectivity[tuple(ky[j+i*nddl])]=num    
-                        for j in range(4+4*(order-1),nddl):
+                        
+                        for j in range(nVertex+nEdge*(order-1),nddl):
                                 belongBoundary.append(0)
                                 num=assignNumberToFunction(allConnectivity, ky[j+i*nddl])
                                 Elementconnectivity.append(num)

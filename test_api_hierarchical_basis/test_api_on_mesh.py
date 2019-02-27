@@ -9,16 +9,12 @@ import gmsh
 import sys
 import numpy as np
 
-INTEGRATION = 'Gauss1'
+INTEGRATION = 'Gauss2'
 model = gmsh.model
 factory = model.occ
-order=2
-dsf=[1,2,0,1,3,0,4,5,0,4,6,0]
-numElements=2
-numGaussPoints=1
-dsf = np.array(dsf).reshape((numGaussPoints,numElements,-1))
-print(dsf)
-                    #dsf = np.array(dsf).reshape((numGaussPoints,numElements,3))[:,:,:-1]
+order=6
+
+                  
 
 #gmsh.initialize()
 #gmsh.option.setNumber("General.Terminal", 1)
@@ -47,15 +43,15 @@ print(dsf)
 #gmsh.write("square_element.msh")
 #vElementTypes = model.mesh.getElementTypes(2,1)
 #elementType=vElementTypes[0]
-#bs, we ,ky=model.mesh.getBasisFunctionsForElements(INTEGRATION,vElementTypes[0], 'GradLegendre',order) 
+#bs, we ,ky=model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType, 'GradLegendre',order) 
 #print( "Evaluation of de the basis functions at the integration points: ")
 #print(bs)
 #print("key :")
 #print(ky)
 #
 #print("getInformationForElements() :")
-##info=model.mesh.getInformationForElements(ky,order)
-##print(info)
+#info=model.mesh.getInformationForElements(ky,order,elementType)
+#print(info)
 #gmsh.finalize()
 
 #
@@ -70,15 +66,15 @@ print(dsf)
 #model.addPhysicalGroup(2, [surf], 4)
 #model.setPhysicalName(2, 4, 'Domain')
 #
-#model.mesh.setRecombine(2,1)
+##model.mesh.setRecombine(2,1)
 #model.mesh.generate(2)
 #gmsh.write("mesh_square.msh")
-#bs, we ,ky=model.mesh.getBasisFunctionsForElements(INTEGRATION,3, 'Legendre',order) 
-#print(len(bs))
-#print(bs)
-#print(len(ky))
-#print(ky)
-#info=model.mesh.getInformationForElements(ky,order)
+#bs, we ,ky=model.mesh.getBasisFunctionsForElements(INTEGRATION,2, 'Legendre',order) 
+##print(len(bs))
+##print(bs)
+##print(len(ky))
+##print(ky)
+#info=model.mesh.getInformationForElements(ky,order,2)
 #print(info)
 #gmsh.finalize()
 

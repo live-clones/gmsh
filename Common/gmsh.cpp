@@ -1856,26 +1856,24 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   }
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
-  HierarchicalBasisH1* basis(0);
+  HierarchicalBasisH1 *basis(0);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
 
-  switch(familyType){
-     case TYPE_QUA:{
-        basis=  new HierarchicalBasisH1Quad(order, order, order, order, order, order);
-     }
-     break;
-    case TYPE_TRI:{
-        basis= new HierarchicalBasisH1Tria(order, order, order, order) ;
-     }break;
-    default:
-       Msg::Error("Unknown familyType ");
-       throw 2;
-   }
+  switch(familyType) {
+  case TYPE_QUA: {
+    basis =
+      new HierarchicalBasisH1Quad(order, order, order, order, order, order);
+  } break;
+  case TYPE_TRI: {
+    basis = new HierarchicalBasisH1Tria(order, order, order, order);
+  } break;
+  default: Msg::Error("Unknown familyType "); throw 2;
+  }
   int const nq = weight.size();
   int const vSize = basis->getnVertexFunction();
   int const bSize = basis->getnBubbleFunction();
   int const eSize = basis->getnEdgeFunction();
-  int const fSize=basis->getnFaceFunction();
+  int const fSize = basis->getnFaceFunction();
   int const n2 = vSize + eSize;
   int const n = n2 + bSize;
   // compute the number of Element , generate Keys for each Elements:
@@ -1916,7 +1914,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
         keys.push_back(std::pair<int, int>(indiceOrder, globalNumEdge));
       }
       for(int k = n2; k < n; k++) {
-        keys.push_back(std::pair<int, int>(k - n2 + order+3, e->getNum()));
+        keys.push_back(std::pair<int, int>(k - n2 + order + 3, e->getNum()));
       }
     }
   }
@@ -1925,12 +1923,12 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   switch(numComponents) {
   case 1:
     for(int i = 0; i < nq; i++) {
-      double u = pts(i, 0), v = pts(i, 1) , w=pts(i,2);
+      double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
       double vTable[vSize];
       double bTable[bSize];
       double fTable[fSize];
       double eTable[eSize];
-      basis->generateBasis(u, v,w, vTable, eTable,fTable, bTable);
+      basis->generateBasis(u, v, w, vTable, eTable, fTable, bTable);
       int elementIterator = 0;
       for(std::size_t ii = 0; ii < entities.size(); ii++) {
         GEntity *ge = entities[ii];
@@ -1974,12 +1972,13 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     int const const2 = 3 * const1;
     int const const3 = 3 * n;
     for(int i = 0; i < nq; i++) {
-      double u = pts(i, 0), v = pts(i, 1), w=pts(i,2);
+      double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
       double gradientVertex[vSize][3];
       double gradientEdge[eSize][3];
       double gradientFace[fSize][3];
       double gradientBubble[bSize][3];
-      basis->generateGradientBasis(u, v,w, gradientVertex,  gradientEdge,  gradientFace,  gradientBubble);
+      basis->generateGradientBasis(u, v, w, gradientVertex, gradientEdge,
+                                   gradientFace, gradientBubble);
       int elementIterator = 0;
       for(std::size_t ii = 0; ii < entities.size(); ii++) {
         GEntity *ge = entities[ii];
@@ -1992,8 +1991,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           for(int r = 0; r < eSize; r++) {
             eTableCopy[r][0] = gradientEdge[r][0];
             eTableCopy[r][1] = gradientEdge[r][1];
-              eTableCopy[r][2] = gradientEdge[r][2];
-
+            eTableCopy[r][2] = gradientEdge[r][2];
           }
           for(int jj = 0; jj < numberEdge; jj++) {
             MEdge edge = e->getEdge(jj);
@@ -2008,19 +2006,28 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
             basis->orientateEdgeGrad(orientationFlag[k], k, eTableCopy);
           }
           for(int k = 0; k < vSize; k++) {
-            basisFunctions[const2 * i + const3 * elementIterator + 3 * k] =gradientVertex[k][0];
-            basisFunctions[const2 * i + const3 * elementIterator + 3 * k + 1] =gradientVertex[k][1];
-            basisFunctions[const2 * i + const3 * elementIterator + 3 * k + 2] =gradientVertex[k][2];
+            basisFunctions[const2 * i + const3 * elementIterator + 3 * k] =
+              gradientVertex[k][0];
+            basisFunctions[const2 * i + const3 * elementIterator + 3 * k + 1] =
+              gradientVertex[k][1];
+            basisFunctions[const2 * i + const3 * elementIterator + 3 * k + 2] =
+              gradientVertex[k][2];
           }
           for(int k = vSize; k < n2; k++) {
-            basisFunctions[const2 * i + const3 * elementIterator + 3 * k] = eTableCopy[k - vSize][0];
-          basisFunctions[const2 * i + const3 * elementIterator + 3 * k+1] = eTableCopy[k - vSize][1];
-          basisFunctions[const2 * i + const3 * elementIterator + 3 * k+2] = eTableCopy[k - vSize][2];
+            basisFunctions[const2 * i + const3 * elementIterator + 3 * k] =
+              eTableCopy[k - vSize][0];
+            basisFunctions[const2 * i + const3 * elementIterator + 3 * k + 1] =
+              eTableCopy[k - vSize][1];
+            basisFunctions[const2 * i + const3 * elementIterator + 3 * k + 2] =
+              eTableCopy[k - vSize][2];
           }
           for(int k = n2; k < n; k++) {
-            basisFunctions[const2 * i + const3 * elementIterator + 3 * k] =gradientBubble[k - n2][0];
-              basisFunctions[const2 * i + const3 * elementIterator + 3 * k+1] =gradientBubble[k - n2][1];
-                basisFunctions[const2 * i + const3 * elementIterator + 3 * k+2] =gradientBubble[k - n2][2];
+            basisFunctions[const2 * i + const3 * elementIterator + 3 * k] =
+              gradientBubble[k - n2][0];
+            basisFunctions[const2 * i + const3 * elementIterator + 3 * k + 1] =
+              gradientBubble[k - n2][1];
+            basisFunctions[const2 * i + const3 * elementIterator + 3 * k + 2] =
+              gradientBubble[k - n2][2];
           }
           elementIterator++;
         }
@@ -2029,47 +2036,74 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     break;
   }
   delete basis;
-  basis=0;
+  basis = 0;
 }
 
 GMSH_API void gmsh::model::mesh::getInformationForElements(
-  const gmsh::vectorpair &keys, gmsh::vectorpair &info, const int order,  const int elementType)
-{/*
+  const gmsh::vectorpair &keys, gmsh::vectorpair &info, const int order,
+  const int elementType)
+{
   int familyType = ElementType::getParentType(elementType);
-  switch(familyType){
-    case TYPE_QUA:{
-      for(std::size_t i = 0; i < keys.size(); i++) {
-        if(keys[i].first == 2) { info.push_back(std::pair<int, int>(2, 1)); }
+  switch(familyType) {
+  case TYPE_QUA: {
+    int bnumElement = 0;
+    int it2 = 0;
+    int bubbleOrder[(order - 1) * (order - 1)];
+    int it = 0;
+    for(int n1 = 2; n1 <= order; n1++) {
+      for(int n2 = 2; n2 <= order; n2++) {
+        bubbleOrder[it] = n1 + n2;
+        it++;
+      }
+    }
+    for(std::size_t i = 0; i < keys.size(); i++) {
+      if(keys[i].first == 2) { info.push_back(std::pair<int, int>(2, 1)); }
 
+      else {
+        if(keys[i].first > 2 && keys[i].first < order + 2) {
+          info.push_back(std::pair<int, int>(keys[i].first, 2));
+        }
         else {
-          if(keys[i].first > 2 && keys[i].first < order + 2) {
-            info.push_back(std::pair<int, int>(keys[i].first, 2));
-          }
-
-          else {
-            iterator = 0;
-     int var2 = 4;
-     for(int k = n2; k < n; k++) {
-       if(iterator > 2) {
-         iterator = 0;
-         var2--;
-       }
-       keys.push_back(std::pair<int, int>(k - n2 + order + var2, e->getNum()));
-       var2++;
-       iterator++;
-            info.push_back(std::pair<int, int>(keys[i].first - order-3, 4));
-          }
+          int numElement = keys[i].second;
+          if(numElement != bnumElement) { it2 = 0; }
+          info.push_back(std::pair<int, int>(bubbleOrder[it2], 4));
+          it2++;
+          bnumElement = numElement;
         }
       }
+    }
+  } break;
+  case TYPE_TRI: {
+    int bnumElement = 0;
+    int it2 = 0;
+    int bubbleOrder[int((order - 1) * (order - 2) / 2)];
+    int it = 0;
+    for(int n1 = 1; n1 <= order - 2; n1++) {
+      for(int n2 = 1; n2 <= order - 1 - n1; n2++) {
+        bubbleOrder[it] = 1+ n1 + n2;
+        it++;
+      }
+    }
+    for(std::size_t i = 0; i < keys.size(); i++) {
+      if(keys[i].first == 2) { info.push_back(std::pair<int, int>(1, 1)); }
 
-    }break;
-    case TYPE_TRI:{
+      else {
+        if(keys[i].first > 2 && keys[i].first < order + 2) {
+          info.push_back(std::pair<int, int>(keys[i].first - 1, 2));
+        }
+        else {
+          int numElement = keys[i].second;
+          if(numElement != bnumElement) { it2 = 0; }
+          info.push_back(std::pair<int, int>(bubbleOrder[it2], 4));
+          it2++;
+          bnumElement = numElement;
+        }
+      }
+    }
 
-
-
-    }break;
-    */
-
+  } break;
+  default: Msg::Error("Unknown familyType "); throw 2;
+  }
 }
 
 GMSH_API void gmsh::model::mesh::precomputeBasisFunctions(const int elementType)
