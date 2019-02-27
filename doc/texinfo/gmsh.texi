@@ -4234,8 +4234,6 @@ The MSH file format version 2 is Gmsh's previous native mesh file
 format, now superseded by the format described in @ref{MSH file format
 (version 4)}. It is defined as follows:
 
-The format is defined as follows:
-
 @example
 $MeshFormat
 @var{version-number} @var{file-type} @var{data-size}
