@@ -3622,18 +3622,28 @@ section.
 
 Important note about efficiency. Node and element tags (their global
 identification numbers) can be "sparse", i.e., do not have to constitute
-a continuous list of indexes starting at 1. However, using sparse tags
-will lead to performance degradation. For meshes, non-continuous
-indexing forces Gmsh to use a map instead of a vector to access nodes
-and elements. The performance hit is on speed. For post-processing
-datasets, which always use vectors to access data, the performance hit
-is on memory. A @code{$NodeData} with two nodes, tagged 1 and 1000000,
-will allocate a (mostly empty) vector of 1000000 elements.
+a continuous list of numbers starting at 1. However, using sparse tags
+can lead to performance degradation. For meshes, sparse indexing
+can@footnote{If the numbering is not too sparse, Gmsh will still use a
+vector.} force Gmsh to use a map instead of a vector to access nodes and
+elements. The performance hit is on speed. For post-processing datasets,
+which always use vectors to access data, the performance hit is on
+memory. A @code{$NodeData} with two nodes, tagged 1 and 1000000, will
+allocate a (mostly empty) vector of 1000000 elements. By default, for
+non-partitioned, single file meshes, Gmsh will create files with a
+continuous ordering of node and element tags, starting at 1. Detecting
+if the numbering is continuous can be done easily when reading a file by
+inspecting @code{numNodes}, @code{minNodeTag} and @code{maxNodeTag} in
+the @code{$Nodes} section; and @code{numElements}, @code{minElementTag}
+and @code{maxElementTag} in the @code{$Elements} section.
 
 In binary mode (@code{Mesh.Binary=1} or @code{-bin} on the command
 line), all the numerical values (integer and floating point) not marked
 as ASCII in the format description below are written in binary form,
-using the type given in between the parentheses.
+using the type given between parentheses. The block structure of the
+@code{$Nodes} and @code{$Elements} sections allows to read integer and
+floating point data in each block in a single step (e.g. using
+@code{fread} in C).
 
 The format is defined as follows:
 
@@ -3647,7 +3657,7 @@ $EndMeshFormat
 
 $PhysicalNames // same as MSH version 2
   numPhysicalNames(ASCII int)
-  dimension(ASCII int) tag(ASCII int) name(127 characters max)
+  dimension(ASCII int) physicalTag(ASCII int) "name"(127 characters max)
   ...
 $EndPhysicalNames
 
@@ -3655,21 +3665,21 @@ $Entities
   numPoints(size_t) numCurves(size_t)
     numSurfaces(size_t) numVolumes(size_t)
   pointTag(int) X(double) Y(double) Z(double)
-    numPhysicals(size_t) physicalTag(int) ...
+    numPhysicalTags(size_t) physicalTag(int) ...
   ...
   curveTag(int) minX(double) minY(double) minZ(double)
     maxX(double) maxY(double) maxZ(double)
-    numPhysicals(size_t) physicalTag(int) ...
+    numPhysicalTags(size_t) physicalTag(int) ...
     numBoundingPoints(size_t) pointTag(int) ...
   ...
   surfaceTag(int) minX(double) minY(double) minZ(double)
     maxX(double) maxY(double) maxZ(double)
-    numPhysicals(size_t) physicalTag(int) ...
+    numPhysicalTags(size_t) physicalTag(int) ...
     numBoundingCurves(size_t) curveTag(int) ...
   ...
   volumeTag(int) minX(double) minY(double) minZ(double)
     maxX(double) maxY(double) maxZ(double)
-    numPhysicals(size_t) physicalTag(int) ...
+    numPhysicalTags(size_t) physicalTag(int) ...
     numBoundngSurfaces(size_t) surfaceTag(int) ...
   ...
 $EndEntities
@@ -3684,27 +3694,27 @@ $PartitionedEntities
   pointTag(int) parentDim(int) parentTag(int)
     numPartitions(size_t) partitionTag(int) ...
     X(double) Y(double) Z(double)
-    numPhysicals(size_t) physicalTag(int) ...
+    numPhysicalTags(size_t) physicalTag(int) ...
   ...
   curveTag(int) parentDim(int) parentTag(int)
     numPartitions(size_t) partitionTag(int) ...
     minX(double) minY(double) minZ(double)
     maxX(double) maxY(double) maxZ(double)
-    numPhysicals(size_t) physicalTag(int) ...
+    numPhysicalTags(size_t) physicalTag(int) ...
     numBoundingPoints(size_t) pointTag(int) ...
   ...
   surfaceTag(int) parentDim(int) parentTag(int)
     numPartitions(size_t) partitionTag(int) ...
     minX(double) minY(double) minZ(double)
     maxX(double) maxY(double) maxZ(double)
-    numPhysicals(size_t) physicalTag(int) ...
+    numPhysicalTags(size_t) physicalTag(int) ...
     numBoundingCurves(size_t) curveTag(int) ...
   ...
   volumeTag(int) parentDim(int) parentTag(int)
     numPartitions(size_t) partitionTag(int) ...
     minX(double) minY(double) minZ(double)
     maxX(double) maxY(double) maxZ(double)
-    numPhysicals(size_t) physicalTag(int) ...
+    numPhysicalTags(size_t) physicalTag(int) ...
     numBoundingSurfaces(size_t) surfaceTag(int) ...
   ...
 $EndPartitionedEntities
@@ -3712,7 +3722,7 @@ $EndPartitionedEntities
 $Nodes
   numEntityBlocks(size_t) numNodes(size_t)
     minNodeTag(size_t) maxNodeTag(size_t)
-  entityDim(int) entityTag(int) parametric(int; 0 or 1) numNodes(size_t)
+  entityDim(int) entityTag(int) parametric(int; 0 or 1) numNodesBlock(size_t)
     nodeTag(size_t)
     ...
     x(double) y(double) z(double)
@@ -3725,7 +3735,7 @@ $EndNodes
 $Elements
   numEntityBlocks(size_t) numElements(size_t)
     minElementTag(size_t) maxElementTag(size_t)
-  entityDim(int) entityTag(int) elementType(int; see below) numElements(size_t)
+  entityDim(int) entityTag(int) elementType(int; see below) numElementsBlock(size_t)
     elementTag(size_t) nodeTag(size_t) ...
     ...
   ...
@@ -4009,11 +4019,10 @@ transform is not provided).
 The following changes are foreseen in a future revision of the MSH format:
 @itemize @bullet
 @item
-The @code{$NodeData}, @code{$ElementData} and @code{$ElementNodeData}
-will be reworked for greater IO efficiency: same block structure as for
-@code{$Nodes} and @code{$Elements} (to have blocks of predictable size)
-and separation of tags and values (so that integer and floating point
-data is not mixed).
+The @code{$GhostElements}, @code{$NodeData}, @code{$ElementData} and
+@code{$ElementNodeData} will be reworked for greater IO efficiency, with
+separation of entries by type and a block structure with predictable
+sizes.
 @end itemize
 
 @c -------------------------------------------------------------------------
