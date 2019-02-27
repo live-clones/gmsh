@@ -850,7 +850,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         for(int k = 0; k < numVertPerElm; k++) {
           vertices[k] = model->getMeshVertexByTag(data[j + k + 1]);
           if(!vertices[k]) {
-            Msg::Error("Unknown vertex %lu in element %lu", data[j + k + 1],
+            Msg::Error("Unknown node %lu in element %lu", data[j + k + 1],
                        data[j]);
             delete[] elementCache;
             return 0;
@@ -860,7 +860,12 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         MElementFactory elementFactory;
         MElement *element = elementFactory.create(elmType, vertices, data[j], 0,
                                                   false, 0, 0, 0, 0);
-
+        if(!element){
+          Msg::Error("Could not create element %lu of type %d", data[j],
+                     elmType);
+          delete[] elementCache;
+          return 0;
+        }
         if(entity->geomType() != GEntity::GhostCurve &&
            entity->geomType() != GEntity::GhostSurface &&
            entity->geomType() != GEntity::GhostVolume) {
@@ -910,7 +915,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
 
           vertices[k] = model->getMeshVertexByTag(vertexTag);
           if(!vertices[k]) {
-            Msg::Error("Unknown vertex %lu in element %lu", vertexTag, elmTag);
+            Msg::Error("Unknown node %lu in element %lu", vertexTag, elmTag);
             delete[] elementCache;
             return 0;
           }
@@ -919,7 +924,12 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         MElementFactory elementFactory;
         MElement *element = elementFactory.create(elmType, vertices, elmTag, 0,
                                                   false, 0, 0, 0, 0);
-
+        if(!element){
+          Msg::Error("Could not create element %lu of type %d", elmTag,
+                     elmType);
+          delete[] elementCache;
+          return 0;
+        }
         if(entity->geomType() != GEntity::GhostCurve &&
            entity->geomType() != GEntity::GhostSurface &&
            entity->geomType() != GEntity::GhostVolume) {
