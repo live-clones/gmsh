@@ -709,6 +709,7 @@ if(HAVE_FLTK OR ENABLE_GRAPHICS)
   endif()
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Graphics)
+    set(OpenGL_GL_PREFERENCE "LEGACY")
     find_package(OpenGL REQUIRED)
     if(OPENGL_GLU_FOUND AND OPENGL_FOUND)
       add_subdirectory(Graphics)
