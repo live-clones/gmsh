@@ -18,6 +18,8 @@ Top-level functions
 module gmsh
 
 const GMSH_API_VERSION = "4.2"
+const GMSH_API_VERSION_MAJOR = 4
+const GMSH_API_VERSION_MINOR = 2
 const libdir = dirname(@__FILE__)
 const lib = joinpath(libdir, Sys.iswindows() ? "gmsh-4.2" : "libgmsh")
 

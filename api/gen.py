@@ -31,13 +31,12 @@ with open(os.path.join(dirname, '..', 'CMakeLists.txt'), 'rt') as f:
     contents = f.read()
     start = contents.find('GMSH_MAJOR_VERSION') + 18
     end = contents.find(')', start)
-    major = int(contents[start:end])
+    version_major = int(contents[start:end])
     start = contents.find('GMSH_MINOR_VERSION') + 18
     end = contents.find(')', start)
-    minor = int(contents[start:end])
+    version_minor = int(contents[start:end])
 
-version = str(major) + '.' + str(minor)
-api = API(version)
+api = API(version_major, version_minor)
 
 ################################################################################
 

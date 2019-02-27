@@ -20,6 +20,8 @@
 #include <stddef.h>
 
 #define GMSH_API_VERSION "4.2"
+#define GMSH_API_VERSION_MAJOR 4
+#define GMSH_API_VERSION_MINOR 2
 
 #if defined(GMSH_DLL)
 #if defined(GMSH_DLL_EXPORT)

@@ -18,6 +18,8 @@ import platform
 from math import pi
 
 GMSH_API_VERSION = "4.2"
+GMSH_API_VERSION_MAJOR = 4
+GMSH_API_VERSION_MINOR = 2
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
