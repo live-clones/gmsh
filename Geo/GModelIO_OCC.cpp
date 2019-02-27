@@ -3064,40 +3064,33 @@ bool OCC_Internals::importShapes(const std::string &fileName,
         return false;
       }
       reader.Transfer(step_doc);
-      // Read in the shape(s) and the colours present in the STEP File
+      // Read in the shape(s) present in the STEP File
       Handle_XCAFDoc_ShapeTool step_shape_contents =
         XCAFDoc_DocumentTool::ShapeTool(step_doc->Main());
-      Handle_XCAFDoc_ColorTool step_colour_contents =
-        XCAFDoc_DocumentTool::ColorTool(step_doc->Main());
       TDF_LabelSequence step_shapes;
       step_shape_contents->GetShapes(step_shapes);
       for(int i = 1; i <= step_shapes.Length(); i++) {
-        printf("step shape %d: \n", i);
         TDF_Label label = step_shapes.Value(i);
         Handle(TDataStd_Name) N;
         if(label.FindAttribute(TDataStd_Name::GetID(), N)) {
           TCollection_ExtendedString name = N->Get();
           std::string s1 = TCollection_AsciiString(name).ToCString();
-          printf("hey %s\n", s1.c_str());
+          Msg::Info("STEP shape %d label '%s'", i, s1.c_str());
         }
       }
 
-      /*
-      // List out the available colours in the STEP File as Colour Names
+      // Read in the colours present in the STEP File
+      Handle_XCAFDoc_ColorTool step_colour_contents =
+        XCAFDoc_DocumentTool::ColorTool(step_doc->Main());
       TDF_LabelSequence all_colours;
       step_colour_contents->GetColors(all_colours);
-      Msg::Info("Number of colours in STEP File: ", all_colours.Length());
       for(int i = 1; i <= all_colours.Length(); i++){
         Quantity_Color col;
-        std::stringstream col_rgb;
-        step_colour_contents->GetColor(all_colours.Value(i),col);
-        col_rgb << " : (" << col.Red() << "," << col.Green() << "," <<
-      col.Blue() << ")"; Msg::Info("Colour [", i, "] = ",
-      col.StringName(col.Name()), col_rgb.str().c_str());
+        step_colour_contents->GetColor(all_colours.Value(i), col);
+        Msg::Info("STEP color %d = (%g, %g, %g)", i, col.Red(), col.Green(),
+                  col.Blue());
       }
-      // For the STEP File Reader in OCC, the 1st Shape contains the entire
-      */
-      // compound geometry as one shape
+      // 1st shape contains the entire compound geometry
       result = step_shape_contents->GetShape(step_shapes.Value(1));
 #else
       STEPControl_Reader reader;
