@@ -211,8 +211,8 @@ public:
   bool isBeingDestroyed() const { return _destroying; }
 
   // get/set global vertex/element num
-  std::size_t getMaxVertexNumber() { return _maxVertexNum; }
-  std::size_t getMaxElementNumber() { return _maxElementNum; }
+  std::size_t getMaxVertexNumber() const { return _maxVertexNum; }
+  std::size_t getMaxElementNumber() const { return _maxElementNum; }
   void setMaxVertexNumber(std::size_t num) { _maxVertexNum = num; }
   void setMaxElementNumber(std::size_t num) { _maxElementNum = num; }
   void checkPointMaxNumbers()
@@ -220,7 +220,7 @@ public:
     _checkPointedMaxVertexNum = _maxVertexNum;
     _checkPointedMaxVertexNum = _maxVertexNum;
   }
-  void getCheckPointedMaxNumbers(std::size_t &maxv, std::size_t &maxe)
+  void getCheckPointedMaxNumbers(std::size_t &maxv, std::size_t &maxe) const
   {
     maxv = _checkPointedMaxVertexNum;
     maxe = _checkPointedMaxElementNum;
@@ -253,18 +253,18 @@ public:
 
   // get/set the model name
   void setName(const std::string &name) { _name = name; }
-  std::string getName() { return _name; }
+  std::string getName() const { return _name; }
 
   // get/set the model file name
   void setFileName(const std::string &fileName);
-  std::string getFileName() { return _fileName; }
-  bool hasFileName(const std::string &name)
+  std::string getFileName() const { return _fileName; }
+  bool hasFileName(const std::string &name) const
   {
     return _fileNames.find(name) != _fileNames.end();
   }
 
   // get/set the visibility flag
-  char getVisibility() { return _visible; }
+  char getVisibility() const { return _visible; }
   void setVisibility(char val) { _visible = val; }
 
   // get the number of entities in this model
@@ -374,7 +374,7 @@ public:
   piter lastElementaryName() { return elementaryNames.end(); }
 
   // get the number of physical names
-  int numPhysicalNames() { return physicalNames.size(); }
+  int numPhysicalNames() const { return physicalNames.size(); }
 
   // get iterators to the last physical name of each dimension
   void getInnerPhysicalNamesIterators(std::vector<piter> &iterators);
