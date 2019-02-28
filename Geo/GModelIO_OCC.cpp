@@ -3934,7 +3934,7 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
   if(CTX::instance()->geom.occDisableSTL) return false;
 
 #if OCC_VERSION_HEX > 0x070300
-  BRepMesh_IncrementalMesh aMesher(s, 0.1, Standard_False, 0.35, Standard_True);
+  BRepMesh_IncrementalMesh aMesher(s, 0.01, Standard_False, 0.35, Standard_True);
 #elif OCC_VERSION_HEX > 0x070000
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
@@ -3989,33 +3989,18 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
       normals->push_back(n);
     }
   }
-  bool reverse = false;
   for(int i = 1; i <= triangulation->NbTriangles(); i++) {
     Poly_Triangle triangle = (triangulation->Triangles())(i);
     int p1, p2, p3;
     triangle.Get(p1, p2, p3);
-    if(i == 1 && normals) { // verify orientation
-      SVector3 nn = (*normals)[start + p1 - 1];
-      gp_Pnt pp1 = (triangulation->Nodes())(p1);
-      gp_Pnt pp2 = (triangulation->Nodes())(p2);
-      gp_Pnt pp3 = (triangulation->Nodes())(p3);
-      double n[3];
-      normal3points(pp1.X(), pp1.Y(), pp1.Z(), pp2.X(), pp2.Y(), pp2.Z(),
-                    pp3.X(), pp3.Y(), pp3.Z(), n);
-      SVector3 ne(n[0], n[1], n[2]);
-      if(dot(ne, nn) < 0) {
-        Msg::Debug("Reversing orientation of STL mesh");
-        reverse = true;
-      }
-    }
     triangles.push_back(start + p1 - 1);
-    if(!reverse) {
-      triangles.push_back(start + p2 - 1);
+    if(s.Orientation() == TopAbs_REVERSED) {
       triangles.push_back(start + p3 - 1);
+      triangles.push_back(start + p2 - 1);
     }
     else {
-      triangles.push_back(start + p3 - 1);
       triangles.push_back(start + p2 - 1);
+      triangles.push_back(start + p3 - 1);
     }
   }
   return true;
