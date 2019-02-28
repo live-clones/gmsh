@@ -20,7 +20,20 @@ HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int pb, int pe0, int pe1,
   this->pOrderEdge[1] = pe1;
   this->pOrderEdge[2] = pe2;
 }
-
+HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int order)
+{
+  this->nvertex = 3;
+  this->nedge = 3;
+  this->nface = 1;
+  this->nVertexFunction = 3;
+  this->nEdgeFunction = 3*order - 3;
+  this->nFaceFunction = 0;
+  this->nBubbleFunction = (order- 1) * (order - 2) / 2;
+  this->pb = order;
+  this->pOrderEdge[0] = order;
+  this->pOrderEdge[1] = order;
+  this->pOrderEdge[2] = order;
+}
 HierarchicalBasisH1Tria::~HierarchicalBasisH1Tria() {}
 
 double HierarchicalBasisH1Tria::affineCoordinate(int const& j, double const& u, double  const& v)

@@ -1270,11 +1270,11 @@ int GModel::getNumMeshParentElements() const
 
 int GModel::addMEdge(MEdge edge)
 {
-  hashmap<int, MEdge>::const_iterator it = _mapEdgeNum.cbegin();
-  while(it != _mapEdgeNum.cend()) {
+  hashmap<int, MEdge>::iterator it = _mapEdgeNum.begin();
+  while(it != _mapEdgeNum.end()) {
     if(it->second == edge) { return it->first; }
     ++it;
-  
+
   }
   int edgeGlobalIndice=_mapEdgeNum.size();
   _mapEdgeNum[edgeGlobalIndice] = edge;

@@ -1861,11 +1861,10 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
 
   switch(familyType) {
   case TYPE_QUA: {
-    basis =
-      new HierarchicalBasisH1Quad(order, order, order, order, order, order);
+    basis =  new HierarchicalBasisH1Quad(order);
   } break;
   case TYPE_TRI: {
-    basis = new HierarchicalBasisH1Tria(order, order, order, order);
+    basis = new HierarchicalBasisH1Tria(order);
   } break;
   default: Msg::Error("Unknown familyType "); throw 2;
   }

@@ -11,8 +11,8 @@ import sys
 # $ python poisson.py
 
 
-INTEGRATION = 'Gauss6'
-RECOMBINE = 0
+INTEGRATION = 'Gauss8'
+RECOMBINE = 1
 
 
 def create_geometry_lagrange():

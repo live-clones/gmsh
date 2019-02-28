@@ -19,9 +19,9 @@ import sys
 # $ python poisson.py
 
 
-INTEGRATION = 'Gauss6'
-RECOMBINE = 0
-order=3#polynomial order
+INTEGRATION = 'Gauss8'
+RECOMBINE = 1
+order=4#polynomial order
 
 def create_geometry_legendre():
     model.add("poisson_legendre")

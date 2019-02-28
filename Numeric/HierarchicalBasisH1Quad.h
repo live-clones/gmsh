@@ -25,6 +25,7 @@
 class HierarchicalBasisH1Quad : public HierarchicalBasisH1 {
 public:
   HierarchicalBasisH1Quad(int pb1, int pb2, int pe0, int pe1, int pe2, int pe3);
+  HierarchicalBasisH1Quad(int order);
   virtual ~HierarchicalBasisH1Quad();
   // vertexBasis=[v0,...,v3]
   // edgeBasis=[phie0_{2},...phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]

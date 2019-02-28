@@ -27,6 +27,7 @@
 class HierarchicalBasisH1Tria : public HierarchicalBasisH1 {
 public:
   HierarchicalBasisH1Tria(int pb, int pe0, int pe1, int pe2);
+  HierarchicalBasisH1Tria(int order);
   virtual ~HierarchicalBasisH1Tria();
   // vertexBasis=[v0,...,v2]
   // edgeBasis=[phie0_{2},...phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]

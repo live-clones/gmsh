@@ -24,6 +24,23 @@ HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int pb1, int pb2, int pe0,
   this->pOrderEdge[2] = pe2;
   this->pOrderEdge[3] = pe3;
 }
+HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int order)
+
+{
+  this->nvertex = 4;
+  this->nedge = 4;
+  this->nface = 1;
+  this->nVertexFunction = 4;
+  this->nEdgeFunction = 4*order - 4;
+  this->nFaceFunction = 0;
+  this->nBubbleFunction = (order - 1) * (order- 1);
+  this->pb1 = order;
+  this->pb2 = order;
+  this->pOrderEdge[0] = order;
+  this->pOrderEdge[1] = order;
+  this->pOrderEdge[2] = order;
+  this->pOrderEdge[3] = order;
+}
 
 HierarchicalBasisH1Quad::~HierarchicalBasisH1Quad() {}
 
