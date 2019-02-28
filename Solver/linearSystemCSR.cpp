@@ -452,7 +452,8 @@ template <> int linearSystemCSRGmm<double>::systemSolve()
   gmm::csr_matrix<double, 0> M;
   M.init_with(ref);
 
-  gmm::ildltt_precond<gmm::csr_matrix<double, 0> > P(M, 10, 1.e-10);
+  //gmm::ildltt_precond<gmm::csr_matrix<double, 0> > P(M, 10, 1.e-10);
+  gmm::ilu_precond<gmm::csr_matrix<double, 0> > P(M);
   gmm::iteration iter(_prec);
   iter.set_noisy(_noisy);
   if(_gmres)

@@ -42,8 +42,9 @@ void thermicSolver::solve()
 #if defined(HAVE_PETSC)
   linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM)
-  linearSystemGmm<double> *lsys = new linearSystemGmm<double>;
-  lsys->setNoisy(2);
+  linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
+  lsys->setGmres(1);
+  lsys->setNoisy(1);
 #else
   linearSystemFull<double> *lsys = new linearSystemFull<double>;
 #endif

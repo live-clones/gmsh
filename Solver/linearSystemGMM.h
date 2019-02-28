@@ -102,10 +102,9 @@ public:
 #if defined(HAVE_MUMPS)
     gmm::MUMPS_solve(*_a, *_x, *_b);
 #else
-    // gmm::ilutp_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 25,
-    // 0.);
-    gmm::ildltt_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 30,
-                                                                    1.e-10);
+    // gmm::ilutp_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 25, 0.);
+    // gmm::ildltt_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 30, 1.e-10);
+    gmm::ilu_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a);
     gmm::iteration iter(_prec);
     iter.set_noisy(_noisy);
     if(_gmres)
