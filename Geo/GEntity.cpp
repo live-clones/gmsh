@@ -65,6 +65,17 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
     }
   }
 
+  {
+    std::string name = model()->getElementaryName(dim(), tag());
+    if(name.size()) {
+      if(multiline)
+        sstream << "\n";
+      else
+        sstream << ", ";
+      sstream << name;
+    }
+  }
+
   if(physicals.size()) {
     if(multiline)
       sstream << "\n";
