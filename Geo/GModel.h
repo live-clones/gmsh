@@ -129,7 +129,7 @@ protected:
 
   // map between the pair <dimension, elementary or physical number>
   // and an optional associated name
-  std::map<std::pair<int, int>, std::string> physicalNames, elementaryNames;
+  std::map<std::pair<int, int>, std::string> _physicalNames, _elementaryNames;
 
   // the set of all used mesh partition numbers
   std::size_t _numPartitions;
@@ -352,11 +352,11 @@ public:
                          std::map<int, std::vector<GEntity *> > &groups) const;
   const std::map<std::pair<int, int>, std::string> &getPhysicalNames() const
   {
-    return physicalNames;
+    return _physicalNames;
   }
   void setPhysicalNames(const std::map<std::pair<int, int>, std::string> &names)
   {
-    physicalNames = names;
+    _physicalNames = names;
   }
 
   // remove physical groups in the model
@@ -368,13 +368,13 @@ public:
   int getMaxPhysicalNumber(int dim);
 
   // get an iterator on the elementary/physical names
-  piter firstPhysicalName() { return physicalNames.begin(); }
-  piter lastPhysicalName() { return physicalNames.end(); }
-  piter firstElementaryName() { return elementaryNames.begin(); }
-  piter lastElementaryName() { return elementaryNames.end(); }
+  piter firstPhysicalName() { return _physicalNames.begin(); }
+  piter lastPhysicalName() { return _physicalNames.end(); }
+  piter firstElementaryName() { return _elementaryNames.begin(); }
+  piter lastElementaryName() { return _elementaryNames.end(); }
 
   // get the number of physical names
-  int numPhysicalNames() const { return physicalNames.size(); }
+  int numPhysicalNames() const { return _physicalNames.size(); }
 
   // get iterators to the last physical name of each dimension
   void getInnerPhysicalNamesIterators(std::vector<piter> &iterators);
@@ -410,6 +410,10 @@ public:
   // get the name (if any) of a given elementary entity of dimension
   // "dim" and id number "num"
   std::string getElementaryName(int dim, int num);
+  void setElementaryName(int dim, int tag, const std::string &name)
+  {
+    _elementaryNames[std::pair<int, int>(dim, tag)] = name;
+  }
 
   // get the highest dimension of the GModel
   int getDim() const;

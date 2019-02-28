@@ -111,9 +111,14 @@
 #include <XCAFDoc_ShapeTool.hxx>
 #include <XCAFDoc_DocumentTool.hxx>
 #include <XCAFDoc_ColorTool.hxx>
+#include <XCAFDoc_Color.hxx>
+#include <XCAFDoc_MaterialTool.hxx>
+#include <XCAFDoc_Location.hxx>
 #include <STEPCAFControl_Reader.hxx>
 #include <IGESCAFControl_Reader.hxx>
 #include <TDataStd_Name.hxx>
+#include <TDF_Tool.hxx>
+#include <TDF_ChildIterator.hxx>
 #endif
 
 OCC_Internals::OCC_Internals()
@@ -3027,6 +3032,61 @@ static void setTargetUnit(const std::string &unit)
     Msg::Error("Could not set OpenCASCADE target unit '%s'", unit.c_str());
 }
 
+#if defined(HAVE_OCC_CAF)
+
+static void setShapeAttributes(OCCMeshAttributesRTree *meshAttributes,
+                               const Handle_XCAFDoc_ShapeTool &shapeTool,
+                               const Handle_XCAFDoc_ColorTool &colorTool,
+                               const Handle_XCAFDoc_MaterialTool &materialTool,
+                               const TDF_Label &label,
+                               const TopLoc_Location &loc,
+                               const std::string &pathName,
+                               bool isRef, int dep)
+{
+  std::string phys = pathName;
+  Handle(TDataStd_Name) n;
+  if(label.FindAttribute(TDataStd_Name::GetID(), n)) {
+    TCollection_ExtendedString name = n->Get();
+    if(!phys.empty()) phys += "/";
+    phys += TCollection_AsciiString(name).ToCString();
+  }
+
+  TopLoc_Location partLoc = loc;
+  Handle(XCAFDoc_Location) l;
+  if (label.FindAttribute(XCAFDoc_Location::GetID(), l)) {
+    if (isRef)
+      partLoc = partLoc * l->Get();
+    else
+      partLoc = l->Get();
+  }
+
+  TDF_Label ref;
+  if (shapeTool->IsReference(label) && shapeTool->GetReferredShape(label, ref)) {
+    setShapeAttributes(meshAttributes, shapeTool, colorTool, materialTool,
+                       ref, partLoc, phys, true, dep + 1);
+  }
+
+  if (shapeTool->IsSimpleShape(label) && (isRef || shapeTool->IsFree(label))) {
+    TopoDS_Shape shape = shapeTool->GetShape(label);
+    shape.Location(isRef ? loc : partLoc);
+    int dim =
+      (shape.ShapeType() == TopAbs_VERTEX) ? 0 :
+      (shape.ShapeType() == TopAbs_EDGE ||
+       shape.ShapeType() == TopAbs_WIRE) ? 1 :
+      (shape.ShapeType() == TopAbs_FACE ||
+       shape.ShapeType() == TopAbs_SHELL) ? 2 : 3;
+    Msg::Debug("Inserting attribute '%s'", phys.c_str());
+    meshAttributes->insert(new OCCMeshAttributes(dim, shape, phys));
+  }
+  else {
+    for (TDF_ChildIterator it(label); it.More(); it.Next()) {
+      setShapeAttributes(meshAttributes, shapeTool, colorTool, materialTool,
+                         it.Value(), partLoc, phys, isRef, dep + 1);
+    }
+  }
+}
+#endif
+
 bool OCC_Internals::importShapes(const std::string &fileName,
                                  bool highestDimOnly,
                                  std::vector<std::pair<int, int> > &outDimTags,
@@ -3045,53 +3105,40 @@ bool OCC_Internals::importShapes(const std::string &fileName,
     else if(format == "step" || split[2] == ".step" || split[2] == ".stp" ||
             split[2] == ".STEP" || split[2] == ".STP") {
 #if defined(HAVE_OCC_CAF)
-      // Initiate a dummy XCAF Application to handle the STEP XCAF Document
-      static Handle_XCAFApp_Application dummy_app =
-        XCAFApp_Application::GetApplication();
-      // Create an XCAF Document to contain the STEP file itself
-      Handle_TDocStd_Document step_doc;
-      // Check if a STEP File is already open under this handle, if so, close it
-      // to prevent Segmentation Faults when trying to create a new document
-      if(dummy_app->NbDocuments() > 0) {
-        dummy_app->GetDocument(1, step_doc);
-        dummy_app->Close(step_doc);
-      }
-      dummy_app->NewDocument("STEP-XCAF", step_doc);
       STEPCAFControl_Reader reader;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
       if(reader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
       }
+      // dummy XCAF Application to handle the STEP XCAF Document
+      static Handle_XCAFApp_Application dummy_app =
+        XCAFApp_Application::GetApplication();
+      // XCAF Document to contain the STEP file itself
+      Handle_TDocStd_Document step_doc;
+      // check if a STEP File is already open under this handle, if so, close it
+      // to prevent segfaults when trying to create a new document
+      if(dummy_app->NbDocuments() > 0) {
+        dummy_app->GetDocument(1, step_doc);
+        dummy_app->Close(step_doc);
+      }
+      dummy_app->NewDocument("STEP-XCAF", step_doc);
+      // transfer STEP into the document, and get the main label
       reader.Transfer(step_doc);
-      // Read in the shape(s) present in the STEP File
-      Handle_XCAFDoc_ShapeTool step_shape_contents =
-        XCAFDoc_DocumentTool::ShapeTool(step_doc->Main());
-      TDF_LabelSequence step_shapes;
-      step_shape_contents->GetShapes(step_shapes);
-      for(int i = 1; i <= step_shapes.Length(); i++) {
-        TDF_Label label = step_shapes.Value(i);
-        Handle(TDataStd_Name) N;
-        if(label.FindAttribute(TDataStd_Name::GetID(), N)) {
-          TCollection_ExtendedString name = N->Get();
-          std::string s1 = TCollection_AsciiString(name).ToCString();
-          Msg::Info("STEP shape %d label '%s'", i, s1.c_str());
-        }
-      }
-
-      // Read in the colours present in the STEP File
-      Handle_XCAFDoc_ColorTool step_colour_contents =
-        XCAFDoc_DocumentTool::ColorTool(step_doc->Main());
-      TDF_LabelSequence all_colours;
-      step_colour_contents->GetColors(all_colours);
-      for(int i = 1; i <= all_colours.Length(); i++){
-        Quantity_Color col;
-        step_colour_contents->GetColor(all_colours.Value(i), col);
-        Msg::Info("STEP color %d = (%g, %g, %g)", i, col.Red(), col.Green(),
-                  col.Blue());
-      }
-      // 1st shape contains the entire compound geometry
-      result = step_shape_contents->GetShape(step_shapes.Value(1));
+      TDF_Label mainLabel = step_doc->Main();
+      Handle_XCAFDoc_ShapeTool shapeTool =
+        XCAFDoc_DocumentTool::ShapeTool(mainLabel);
+      Handle_XCAFDoc_ColorTool colorTool =
+        XCAFDoc_DocumentTool::ColorTool(mainLabel);
+      Handle_XCAFDoc_MaterialTool materialTool =
+        XCAFDoc_DocumentTool::MaterialTool(mainLabel);
+      // traverse the labels recursively to set attributes on shapes
+      setShapeAttributes(_meshAttributes, shapeTool, colorTool, materialTool,
+                         mainLabel, TopLoc_Location(), "", false, 0);
+      // the main shape (compound) is the first one
+      TDF_LabelSequence shapeLabels;
+      shapeTool->GetShapes(shapeLabels);
+      result = shapeTool->GetShape(shapeLabels.Value(1));
 #else
       STEPControl_Reader reader;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
@@ -3331,6 +3378,9 @@ void OCC_Internals::synchronize(GModel *model)
       model->add(occr);
     }
     _copyExtrudedMeshAttributes(region, occr);
+    std::vector<std::string> labels;
+    _meshAttributes->getLabels(3, region, labels);
+    if(labels.size()) model->setElementaryName(3, occr->tag(), labels[0]);
   }
 
   // if fuzzy boolean tolerance was used, some vertex positions should be

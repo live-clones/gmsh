@@ -700,7 +700,7 @@ void GModel::removePhysicalGroups()
   // we cannot remove the names here, as removePhysicalGroups() is used in
   // GModelIO_GEO for the synchronization. We need to add an explicit cleanup of
   // physical names + move all physical defintions directly in GModel.
-  // physicalNames.clear();
+  // _physicalNames.clear();
 }
 
 void GModel::removePhysicalGroup(int dim, int tag)
@@ -716,7 +716,7 @@ void GModel::removePhysicalGroup(int dim, int tag)
         p.push_back(entities[i]->physicals[j]);
     entities[i]->physicals = p;
   }
-  physicalNames.erase(std::pair<int, int>(dim, tag));
+  _physicalNames.erase(std::pair<int, int>(dim, tag));
 }
 
 int GModel::getMaxPhysicalNumber(int dim)
@@ -748,7 +748,7 @@ int GModel::setPhysicalName(const std::string &name, int dim, int number)
 
   // if no number is given, find the next available one
   if(!number) number = getMaxPhysicalNumber(dim) + 1;
-  physicalNames.insert(std::pair<std::pair<int, int>, std::string>(
+  _physicalNames.insert(std::pair<std::pair<int, int>, std::string>(
     std::pair<int, int>(dim, number), name));
   return number;
 }
@@ -762,32 +762,32 @@ GModel::piter GModel::setPhysicalName(piter pos, const std::string &name,
   // Insertion complexity in O(1) if position points to the element that will
   // FOLLOW the inserted element.
   if(pos != lastPhysicalName()) ++pos;
-  return physicalNames.insert(pos, std::pair<std::pair<int, int>, std::string>(
-                                     std::pair<int, int>(dim, number), name));
+  return _physicalNames.insert(pos, std::pair<std::pair<int, int>, std::string>(
+                                      std::pair<int, int>(dim, number), name));
 #else
   // Insertion complexity in O(1) if position points to the element that will
   // PRECEDE the inserted element.
-  return physicalNames.insert(pos, std::pair<std::pair<int, int>, std::string>(
-                                     std::pair<int, int>(dim, number), name));
+  return _physicalNames.insert(pos, std::pair<std::pair<int, int>, std::string>(
+                                      std::pair<int, int>(dim, number), name));
 #endif
 }
 
 std::string GModel::getPhysicalName(int dim, int number) const
 {
   std::map<std::pair<int, int>, std::string>::const_iterator it =
-    physicalNames.find(std::pair<int, int>(dim, number));
-  if(it != physicalNames.end()) return it->second;
+    _physicalNames.find(std::pair<int, int>(dim, number));
+  if(it != _physicalNames.end()) return it->second;
   return "";
 }
 
 void GModel::removePhysicalName(const std::string &name)
 {
   std::map<std::pair<int, int>, std::string>::iterator it =
-    physicalNames.begin();
-  while(it != physicalNames.end()) {
+    _physicalNames.begin();
+  while(it != _physicalNames.end()) {
     if(it->second == name)
       // it = physicalNames.erase(it); // C++11 only
-      physicalNames.erase(it++);
+      _physicalNames.erase(it++);
     else
       ++it;
   }
@@ -824,8 +824,8 @@ int GModel::getMeshDim() const
 std::string GModel::getElementaryName(int dim, int number)
 {
   std::map<std::pair<int, int>, std::string>::iterator it =
-    elementaryNames.find(std::pair<int, int>(dim, number));
-  if(it != elementaryNames.end()) return it->second;
+    _elementaryNames.find(std::pair<int, int>(dim, number));
+  if(it != _elementaryNames.end()) return it->second;
   return "";
 }
 

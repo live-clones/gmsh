@@ -466,7 +466,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
     else
       ge = getVertexByTag(-familyNum);
     if(ge) {
-      elementaryNames[std::pair<int, int>(ge->dim(), -familyNum)] = familyName;
+      setElementaryName(ge->dim(), -familyNum, familyName);
       if(numGroups > 0) {
         for(int j = 0; j < numGroups; j++) {
           char tmp[MED_TAILLE_LNOM + 1];

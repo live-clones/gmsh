@@ -1535,7 +1535,7 @@ int GModel::writeGEO(const std::string &name, bool printLabels,
   for(int i = 0; i < 4; i++)
     std::for_each(
       groups[i].begin(), groups[i].end(),
-      writePhysicalGroupGEO(fp, i, printLabels, labels, physicalNames));
+      writePhysicalGroupGEO(fp, i, printLabels, labels, _physicalNames));
 
 #if defined(HAVE_MESH)
   std::for_each(getFields()->begin(), getFields()->end(), writeFieldGEO(fp));
