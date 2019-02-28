@@ -3328,6 +3328,9 @@ void OCC_Internals::synchronize(GModel *model)
       occv = new OCCVertex(model, tag, vertex, lc);
       model->add(occv);
     }
+    std::vector<std::string> labels;
+    _meshAttributes->getLabels(0, vertex, labels);
+    if(labels.size()) model->setElementaryName(0, occv->tag(), labels[0]);
   }
   for(int i = 1; i <= _emap.Extent(); i++) {
     TopoDS_Edge edge = TopoDS::Edge(_emap(i));
@@ -3346,6 +3349,9 @@ void OCC_Internals::synchronize(GModel *model)
       model->add(occe);
     }
     _copyExtrudedMeshAttributes(edge, occe);
+    std::vector<std::string> labels;
+    _meshAttributes->getLabels(1, edge, labels);
+    if(labels.size()) model->setElementaryName(1, occe->tag(), labels[0]);
   }
   for(int i = 1; i <= _fmap.Extent(); i++) {
     TopoDS_Face face = TopoDS::Face(_fmap(i));
@@ -3362,6 +3368,9 @@ void OCC_Internals::synchronize(GModel *model)
       model->add(occf);
     }
     _copyExtrudedMeshAttributes(face, occf);
+    std::vector<std::string> labels;
+    _meshAttributes->getLabels(2, face, labels);
+    if(labels.size()) model->setElementaryName(2, occf->tag(), labels[0]);
   }
   for(int i = 1; i <= _somap.Extent(); i++) {
     TopoDS_Solid region = TopoDS::Solid(_somap(i));
