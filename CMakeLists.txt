@@ -1194,7 +1194,7 @@ if(ENABLE_OCC)
 	# subset of DataExchange
       	TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
       	# ModelingAlgorithms
-      	TKOffset TKFeat TKFillet TKBool TKShHealing TKMesh TKHLR TKBO TKPrim
+      	TKOffset TKFeat TKFillet TKBool TKMesh TKHLR TKBO TKPrim TKShHealing
       	TKTopAlgo TKGeomAlgo
       	# ModelingData
       	TKBRep TKGeomBase TKG3d TKG2d
