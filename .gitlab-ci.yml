@@ -84,7 +84,7 @@ windows64_msvc_ci:
   script:
     - mkdir build
     - cd build
-    - /usr/local/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DENABLE_NATIVE_FILE_CHOOSER:bool=FALSE -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran' ${EXTRA_OPTION} ..
+    - /usr/local/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DENABLE_NATIVE_FILE_CHOOSER:bool=FALSE -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lpthread' ${EXTRA_OPTION} ..
     - make package -j 1
     - PKG=`ls gmsh-*.tar*`
     - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
