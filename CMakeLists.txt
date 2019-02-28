@@ -1252,6 +1252,9 @@ if(ENABLE_OCC)
     set_config_option(HAVE_OCC_CAF "OpenCASCADE-CAF")
     list(APPEND EXTERNAL_LIBRARIES ${OCC_CAF_LIBS} ${FREETYPE_LIBRARIES})
     list(APPEND EXTERNAL_INCLUDES ${FREETYPE_INCLUDE_DIRS})
+    if(WIN32 OR CYGWIN)
+      list(APPEND EXTERNAL_LIBRARIES "windowscodecs")
+    endif()
   endif()
 
   # then append OCC libraries
