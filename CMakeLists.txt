@@ -1254,6 +1254,7 @@ if(ENABLE_OCC)
     list(APPEND EXTERNAL_INCLUDES ${FREETYPE_INCLUDE_DIRS})
     if(WIN32 OR CYGWIN)
       list(APPEND EXTERNAL_LIBRARIES "windowscodecs")
+      list(APPEND EXTERNAL_LIBRARIES "ole32")
     endif()
   endif()
 
