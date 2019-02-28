@@ -1340,7 +1340,7 @@ namespace gmsh { // Top-level functions
         gmshFree(api_ordering_);
       }
 
-      // Renumber the node tags in a contiunous sequence.
+      // Renumber the node tags in a continuous sequence.
       GMSH_API void renumberNodes()
       {
         int ierr = 0;
@@ -1348,7 +1348,7 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
       }
 
-      // Renumber the element tags in a contiunous sequence.
+      // Renumber the element tags in a continuous sequence.
       GMSH_API void renumberElements()
       {
         int ierr = 0;

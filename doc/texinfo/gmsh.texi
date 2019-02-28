@@ -5371,7 +5371,7 @@ to make the code easy to read/debug/maintain:
 See @uref{https://gitlab.onelab.info/gmsh/gmsh/wikis/Git-cheat-sheet}
 for instructions on how to contribute to Gmsh's GIT source code
 repository. All branches are tested; make sure that all tests pass and
-that your code does not produce any warning before submitting merge
+that your code does not produce any warnings before submitting merge
 requests.
 @item
 Follow the style used in the existing code when adding something new:

@@ -3924,7 +3924,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   Msg::Info(" - Faces              : %d (%d)", nnrf, nrf);
   Msg::Info(" - Edges              : %d (%d)", nnre, nre);
   Msg::Info(" - Vertices           : %d (%d)", nnrv, nrv);
-  Msg::Info(" - Totol surface area : %g (%g)", newsurfacecont, surfacecont);
+  Msg::Info(" - Total surface area : %g (%g)", newsurfacecont, surfacecont);
 }
 
 static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,

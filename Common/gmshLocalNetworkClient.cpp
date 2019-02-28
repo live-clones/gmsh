@@ -415,7 +415,9 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     break;
   case GmshSocket::GMSH_MERGE_FILE:
     if(CTX::instance()->solver.autoMergeFile) {
+#if defined(HAVE_FLTK)
       std::size_t n = PView::list.size();
+#endif
       bool changedBeforeMerge = onelab::server::instance()->getChanged("Gmsh");
       MergePostProcessingFile(message, CTX::instance()->solver.autoShowViews,
                               CTX::instance()->solver.autoShowLastStep, true);
@@ -444,7 +446,9 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
               TimeOfDay() - timer);
     break;
   case GmshSocket::GMSH_VERTEX_ARRAY: {
+#if defined(HAVE_FLTK)
     int n = PView::list.size();
+#endif
     PView::fillVertexArray(this, length, &message[0], swap);
 #if defined(HAVE_FLTK)
     if(FlGui::available())

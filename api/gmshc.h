@@ -770,10 +770,10 @@ GMSH_API void gmshModelMeshReorderElements(const int elementType,
                                            size_t * ordering, size_t ordering_n,
                                            int * ierr);
 
-/* Renumber the node tags in a contiunous sequence. */
+/* Renumber the node tags in a continuous sequence. */
 GMSH_API void gmshModelMeshRenumberNodes(int * ierr);
 
-/* Renumber the element tags in a contiunous sequence. */
+/* Renumber the element tags in a continuous sequence. */
 GMSH_API void gmshModelMeshRenumberElements(int * ierr);
 
 /* Set the meshes of the entities of dimension `dim' and tag `tags' as

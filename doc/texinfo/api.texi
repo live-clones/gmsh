@@ -1250,7 +1250,7 @@ Reorder the elements of type @code{elementType} classified on the entity of tag
 @end table
 
 @item renumberNodes
-Renumber the node tags in a contiunous sequence.
+Renumber the node tags in a continuous sequence.
 
 @table @asis
 @item Input:
@@ -1262,7 +1262,7 @@ Renumber the node tags in a contiunous sequence.
 @end table
 
 @item renumberElements
-Renumber the element tags in a contiunous sequence.
+Renumber the element tags in a continuous sequence.
 
 @table @asis
 @item Input:
