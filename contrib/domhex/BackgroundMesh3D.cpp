@@ -19,11 +19,13 @@
 #include "MTetrahedron.h"
 #include "OS.h"
 
-#if defined(HAVE_PETSC)
+#if defined(HAVE_SOLVER)
 #include "dofManager.h"
 #include "laplaceTerm.h"
 #include "linearSystemPETSc.h"
 #include "linearSystemFull.h"
+#include "linearSystemGMM.h"
+#include "linearSystemCSR.h"
 #endif
 
 /// \return -1 if value is negative, +1 if positive and zero otherwise
@@ -110,8 +112,15 @@ void backgroundMesh3D::propagateValues(DoubleStorageType &dirichlet,
     return;
   }
 
+#if defined(HAVE_SOLVER)
 #if defined(HAVE_PETSC)
-  linearSystem<double> *system = new linearSystemPETSc<double>;
+  linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
+#elif defined(HAVE_GMM)
+  linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
+  lsys->setGmres(1);
+#else
+   linearSystemFull<double> *lsys = new linearSystemFull<double>;
+#endif
 
   size_t i;
   int count;
@@ -122,7 +131,7 @@ void backgroundMesh3D::propagateValues(DoubleStorageType &dirichlet,
   std::set<MVertex *>::iterator it;
   DoubleStorageType::iterator it2;
 
-  dofManager<double> assembler(system);
+  dofManager<double> assembler(lsys);
 
   count = 0;
   for(it2 = dirichlet.begin(); it2 != dirichlet.end(); it2++) {
@@ -163,7 +172,7 @@ void backgroundMesh3D::propagateValues(DoubleStorageType &dirichlet,
   // printf("volume = %f\n",volume);
 
   if(assembler.sizeOfR()) {
-    system->systemSolve();
+    lsys->systemSolve();
   }
 
   for(it = interior.begin(); it != interior.end(); it++) {
@@ -171,7 +180,7 @@ void backgroundMesh3D::propagateValues(DoubleStorageType &dirichlet,
     dirichlet.insert(std::pair<MVertex *, double>(*it, val));
   }
 
-  delete system;
+  delete lsys;
 #endif
 }
 
