@@ -77,11 +77,11 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
   }
 
   if(physicals.size()) {
-    if(multiline)
-      sstream << "\n";
-    else
-      sstream << " ";
     for(std::size_t i = 0; i < physicals.size(); i++) {
+      if(multiline)
+        sstream << "\n";
+      else
+        sstream << ", ";
       sstream << "Physical ";
       switch(dim()) {
       case 0: sstream << "Point"; break;
@@ -111,6 +111,8 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
       sstream << ", ";
     sstream << "Color (" << r << ", " << g << ", " << b << ")";
   }
+
+
 
   return sstream.str();
 }
