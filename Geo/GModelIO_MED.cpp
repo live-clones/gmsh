@@ -271,7 +271,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
   setName(meshName);
   setFileName(name);
   if(meshType == MED_NON_STRUCTURE) {
-    Msg::Info("Reading %d-D unstructured mesh <<%s>>", spaceDim, meshName);
+    Msg::Info("Reading %d-D unstructured mesh '%s'", spaceDim, meshName);
   }
   else {
     Msg::Error("Reading structured MED meshes is not supported");

@@ -587,7 +587,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
     return false;
   }
 
-  Msg::Info("Reading %d-component field <<%s>>", numComp, name);
+  Msg::Info("Reading %d-component field '%s'", numComp, name);
   setName(name);
   setFileName(fileName);
   setFileIndex(fileIndex);
@@ -676,7 +676,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
       if(!pair) {
         GModel *m = GModel::findByName(meshName);
         if(!m) {
-          Msg::Error("Could not find mesh <<%s>>", meshName);
+          Msg::Error("Could not find mesh '%s'", meshName);
           return false;
         }
         while(step >= (int)_steps.size())

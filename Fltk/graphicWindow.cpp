@@ -14,6 +14,7 @@ typedef unsigned long intptr_t;
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <sstream>
 #include <fstream>
 #include <string>
 #include <algorithm>
@@ -3017,9 +3018,12 @@ void status_options_cb(Fl_Widget *w, void *data)
     std::vector<Fl_Menu_Item> menu;
     int selected = 0;
     for(std::size_t i = 0; i < GModel::list.size(); i++){
-      char tmp[256];
-      sprintf(tmp, "Model [%lu] <<%s>> ", i, GModel::list[i]->getName().c_str());
-      char *str = strdup(tmp);
+      std::ostringstream sstream;
+      sstream << "Model " << i;
+      if(GModel::list[i]->getName().size())
+        sstream << " - " << GModel::list[i]->getName();
+      sstream << " ";
+      char *str = strdup(sstream.str().c_str());
       Fl_Menu_Item menuItem = {str, 0, model_switch_cb, (void*)(intptr_t)i, FL_MENU_RADIO};
       if(GModel::list[i] == GModel::current()){
         selected = i;
