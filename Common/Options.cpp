@@ -5774,73 +5774,80 @@ double opt_mesh_med_file_minor_version(OPT_ARGS_NUM)
   return CTX::instance()->mesh.medFileMinorVersion;
 }
 
+double opt_mesh_med_import_groups_of_nodes(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.medImportGroupsOfNodes = (int)val;
+  return CTX::instance()->mesh.medImportGroupsOfNodes;
+}
+
 double opt_mesh_partition_split_mesh_files(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.partitionSplitMeshFiles = (int) val;
+    CTX::instance()->mesh.partitionSplitMeshFiles = (int)val;
   return CTX::instance()->mesh.partitionSplitMeshFiles;
 }
 
 double opt_mesh_partition_save_topology_file(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.partitionSaveTopologyFile = (int) val;
+    CTX::instance()->mesh.partitionSaveTopologyFile = (int)val;
   return CTX::instance()->mesh.partitionSaveTopologyFile;
 }
 
 double opt_mesh_partition_hex_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->mesh.partitionHexWeight = (int) val;
+    CTX::instance()->mesh.partitionHexWeight = (int)val;
   return CTX::instance()->mesh.partitionHexWeight;
 }
 
 double opt_mesh_partition_pri_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->mesh.partitionPriWeight = (int) val;
+    CTX::instance()->mesh.partitionPriWeight = (int)val;
   return CTX::instance()->mesh.partitionPriWeight;
 }
 
 double opt_mesh_partition_pyr_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->mesh.partitionPyrWeight = (int) val;
+    CTX::instance()->mesh.partitionPyrWeight = (int)val;
   return CTX::instance()->mesh.partitionPyrWeight;
 }
 
 double opt_mesh_partition_trih_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->mesh.partitionTrihWeight = (int) val;
+    CTX::instance()->mesh.partitionTrihWeight = (int)val;
   return CTX::instance()->mesh.partitionTrihWeight;
 }
 
 double opt_mesh_partition_qua_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->mesh.partitionQuaWeight = (int) val;
+    CTX::instance()->mesh.partitionQuaWeight = (int)val;
   return CTX::instance()->mesh.partitionQuaWeight;
 }
 
 double opt_mesh_partition_tet_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->mesh.partitionTetWeight = (int) val;
+    CTX::instance()->mesh.partitionTetWeight = (int)val;
   return CTX::instance()->mesh.partitionTetWeight;
 }
 
 double opt_mesh_partition_tri_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->mesh.partitionTriWeight = (int) val;
+    CTX::instance()->mesh.partitionTriWeight = (int)val;
   return CTX::instance()->mesh.partitionTriWeight;
 }
 
 double opt_mesh_partition_line_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->mesh.partitionLinWeight = (int) val;
+    CTX::instance()->mesh.partitionLinWeight = (int)val;
   return CTX::instance()->mesh.partitionLinWeight;
 }
 
@@ -6521,35 +6528,35 @@ double opt_mesh_clip(OPT_ARGS_NUM)
 double opt_mesh_preserve_numbering_msh2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.preserveNumberingMsh2 = (int) val;
+    CTX::instance()->mesh.preserveNumberingMsh2 = (int)val;
   return CTX::instance()->mesh.preserveNumberingMsh2;
 }
 
 double opt_mesh_ignore_periodicity(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.ignorePeriodicity = (int) val;
+    CTX::instance()->mesh.ignorePeriodicity = (int)val;
   return CTX::instance()->mesh.ignorePeriodicity;
 }
 
 double opt_mesh_max_num_threads_1d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.maxNumThreads1D = (int) val;
+    CTX::instance()->mesh.maxNumThreads1D = (int)val;
   return CTX::instance()->mesh.maxNumThreads1D;
 }
 
 double opt_mesh_max_num_threads_2d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.maxNumThreads2D = (int) val;
+    CTX::instance()->mesh.maxNumThreads2D = (int)val;
   return CTX::instance()->mesh.maxNumThreads2D;
 }
 
 double opt_mesh_max_num_threads_3d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.maxNumThreads3D = (int) val;
+    CTX::instance()->mesh.maxNumThreads3D = (int)val;
   return CTX::instance()->mesh.maxNumThreads3D;
 }
 

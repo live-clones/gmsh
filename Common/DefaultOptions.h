@@ -1116,6 +1116,8 @@ StringXNumber MeshOptions_Number[] = {
     "Version of the MSH file format to use" },
   { F|O, "MedFileMinorVersion" , opt_mesh_med_file_minor_version , -1. ,
     "Minor version of the MED file format to use (-1: use minor version of the MED library)" },
+  { F|O, "MedImportGroupsOfNodes" , opt_mesh_med_import_groups_of_nodes , 0. ,
+    "Import groups of nodes (0: no; 1: create geometrical point for each node)?" },
   { F|O, "PartitionHexWeight" , opt_mesh_partition_hex_weight , -1 ,
     "Weight of hexahedral element for METIS load balancing (-1: automatic)" },
   { F|O, "PartitionLineWeight" , opt_mesh_partition_line_weight , -1 ,

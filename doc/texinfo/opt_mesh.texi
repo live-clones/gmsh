@@ -286,6 +286,11 @@ Minor version of the MED file format to use (-1: use minor version of the MED li
 Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.MedImportGroupsOfNodes
+Import groups of nodes (0: no; 1: create geometrical point for each node)?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.PartitionHexWeight
 Weight of hexahedral element for METIS load balancing (-1: automatic)@*
 Default value: @code{-1}@*
