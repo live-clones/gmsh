@@ -3041,7 +3041,7 @@ static void setShapeAttributes(OCCAttributesRTree *meshAttributes,
                                const TDF_Label &label,
                                const TopLoc_Location &loc,
                                const std::string &pathName,
-                               bool isRef, int dep)
+                               bool isRef)
 {
   std::string phys = pathName;
   Handle(TDataStd_Name) n;
@@ -3063,7 +3063,7 @@ static void setShapeAttributes(OCCAttributesRTree *meshAttributes,
   TDF_Label ref;
   if (shapeTool->IsReference(label) && shapeTool->GetReferredShape(label, ref)) {
     setShapeAttributes(meshAttributes, shapeTool, colorTool, materialTool,
-                       ref, partLoc, phys, true, dep + 1);
+                       ref, partLoc, phys, true);
   }
 
   if (shapeTool->IsSimpleShape(label) && (isRef || shapeTool->IsFree(label))) {
@@ -3115,7 +3115,7 @@ static void setShapeAttributes(OCCAttributesRTree *meshAttributes,
   else {
     for (TDF_ChildIterator it(label); it.More(); it.Next()) {
       setShapeAttributes(meshAttributes, shapeTool, colorTool, materialTool,
-                         it.Value(), partLoc, phys, isRef, dep + 1);
+                         it.Value(), partLoc, phys, isRef);
     }
   }
 }
@@ -3168,7 +3168,7 @@ bool OCC_Internals::importShapes(const std::string &fileName,
         XCAFDoc_DocumentTool::MaterialTool(mainLabel);
       // traverse the labels recursively to set attributes on shapes
       setShapeAttributes(_attributes, shapeTool, colorTool, materialTool,
-                         mainLabel, TopLoc_Location(), "", false, 0);
+                         mainLabel, TopLoc_Location(), "", false);
       // the main shape (compound) is the first one
       TDF_LabelSequence shapeLabels;
       shapeTool->GetShapes(shapeLabels);
