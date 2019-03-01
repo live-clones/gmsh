@@ -3083,7 +3083,7 @@ static void setShapeAttributes(OCCAttributesRTree *meshAttributes,
     Handle(TCollection_HAsciiString) matDensValType;
     if(materialTool->GetMaterial(label, matName, matDescription, matDensity,
                                  matDensName, matDensValType)){
-      phys += " & ";
+      if(!phys.empty()) phys += " & ";
       phys += matName->ToCString();
       Msg::Info(" - Label & material '%s' (%dD)", phys.c_str());
     }
@@ -3416,6 +3416,10 @@ void OCC_Internals::synchronize(GModel *model)
     unsigned int col, boundary;
     if(_attributes->getColor(2, face, col, boundary)){
       occf->setColor(col);
+      if(boundary == 2){
+        std::vector<GEdge *> edges = occf->edges();
+        for(std::size_t j = 0; j < edges.size(); j++) edges[j]->setColor(col);
+      }
     }
   }
   for(int i = 1; i <= _somap.Extent(); i++) {
