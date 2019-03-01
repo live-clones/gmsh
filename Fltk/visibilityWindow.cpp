@@ -601,7 +601,7 @@ static void _rebuild_tree_browser(bool force)
         GModel::list[i]->getNumRegions() + GModel::list[i]->getNumFaces() +
         GModel::list[i]->getNumEdges() + GModel::list[i]->getNumVertices();
     }
-    if(numEnt > 10000) {
+    if(numEnt > 50000) {
       FlGui::instance()->visibility->tree->hide();
       FlGui::instance()->visibility->tree_create->show();
       return;
@@ -1279,7 +1279,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 
     tree_create =
       new Fl_Button(2 * WB, 2 * WB + BH, brw, height - 6 * WB - 3 * BH,
-                    "The model contains more than ten thousand entities,\n"
+                    "The model contains more than 50 thousand entities,\n"
                     "which might slow down the tree browser.\n\n"
                     "Create tree browser anyway?");
     tree_create->callback(build_tree_cb);
