@@ -3460,18 +3460,21 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSurfaceFilling(wireTag, tag=-1):
+        def addSurfaceFilling(wireTag, tag=-1, pointTags=[]):
             """
             Add a surface filling the curve loops in `wireTags'. If `tag' is positive,
             set the tag explicitly; otherwise a new tag is selected automatically.
-            Return the tag of the surface.
+            Return the tag of the surface. If `pointTags' are provided, force the
+            surface to pass through the given points.
 
             Return an integer value.
             """
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddSurfaceFilling(
                 c_int(wireTag),
                 c_int(tag),
+                api_pointTags_, api_pointTags_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

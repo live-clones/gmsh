@@ -3496,15 +3496,16 @@ GMSH_API int gmsh::model::occ::addPlaneSurface(const std::vector<int> &wireTags,
 }
 
 GMSH_API int gmsh::model::occ::addSurfaceFilling(const int wireTag,
-                                                 const int tag)
+                                                 const int tag,
+                                                 const std::vector<int> &pointTags)
 {
   if(!_isInitialized()) {
     throw -1;
   }
   _createOcc();
   int outTag = tag;
-  if(!GModel::current()->getOCCInternals()->addSurfaceFilling(outTag,
-                                                              wireTag)) {
+  if(!GModel::current()->getOCCInternals()->addSurfaceFilling
+     (outTag, wireTag, pointTags)) {
     throw 1;
   }
   return outTag;

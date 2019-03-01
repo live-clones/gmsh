@@ -2915,19 +2915,20 @@ function addPlaneSurface(wireTags, tag = -1)
 end
 
 """
-    gmsh.model.occ.addSurfaceFilling(wireTag, tag = -1)
+    gmsh.model.occ.addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[])
 
 Add a surface filling the curve loops in `wireTags`. If `tag` is positive, set
 the tag explicitly; otherwise a new tag is selected automatically. Return the
-tag of the surface.
+tag of the surface. If `pointTags` are provided, force the surface to pass
+through the given points.
 
 Return an integer value.
 """
-function addSurfaceFilling(wireTag, tag = -1)
+function addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[])
     ierr = Ref{Cint}()
     api__result__ = ccall((:gmshModelOccAddSurfaceFilling, gmsh.lib), Cint,
-          (Cint, Cint, Ptr{Cint}),
-          wireTag, tag, ierr)
+          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          wireTag, tag, convert(Vector{Cint}, pointTags), length(pointTags), ierr)
     ierr[] != 0 && error("gmshModelOccAddSurfaceFilling returned non-zero error code: $(ierr[])")
     return api__result__
 end

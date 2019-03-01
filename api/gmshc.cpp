@@ -2032,12 +2032,13 @@ GMSH_API int gmshModelOccAddPlaneSurface(int * wireTags, size_t wireTags_n, cons
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag, const int tag, int * ierr)
+GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag, const int tag, int * pointTags, size_t pointTags_n, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::model::occ::addSurfaceFilling(wireTag, tag);
+    std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
+    result_api_ = gmsh::model::occ::addSurfaceFilling(wireTag, tag, api_pointTags_);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

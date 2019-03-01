@@ -517,8 +517,8 @@ occ.add('addDisk',doc,oint,idouble('xc'),idouble('yc'),idouble('zc'),idouble('rx
 doc = '''Add a plane surface defined by one or more curve loops (or closed wires) `wireTags'. The first curve loop defines the exterior contour; additional curve loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
 occ.add('addPlaneSurface',doc,oint,ivectorint('wireTags'),iint('tag','-1'))
 
-doc = '''Add a surface filling the curve loops in `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
-occ.add('addSurfaceFilling',doc,oint,iint('wireTag'),iint('tag','-1'))
+doc = '''Add a surface filling the curve loops in `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface. If `pointTags' are provided, force the surface to pass through the given points.'''
+occ.add('addSurfaceFilling',doc,oint,iint('wireTag'),iint('tag','-1'),ivectorint('pointTags','std::vector<int>()',"[]","[]"))
 
 doc = '''Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface loop.'''
 occ.add('addSurfaceLoop',doc,oint,ivectorint('surfaceTags'),iint('tag','-1'))

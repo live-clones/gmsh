@@ -2222,11 +2222,12 @@ integer value
 @item addSurfaceFilling
 Add a surface filling the curve loops in @code{wireTags}. If @code{tag} is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
-Return the tag of the surface.
+Return the tag of the surface. If @code{pointTags} are provided, force the
+surface to pass through the given points.
 
 @table @asis
 @item Input:
-@code{wireTag}, @code{tag}
+@code{wireTag}, @code{tag}, @code{pointTags}
 @item Output:
 -
 @item Return:

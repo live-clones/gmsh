@@ -1262,9 +1262,11 @@ namespace gmsh { // Top-level functions
 
       // Add a surface filling the curve loops in `wireTags'. If `tag' is positive,
       // set the tag explicitly; otherwise a new tag is selected automatically.
-      // Return the tag of the surface.
+      // Return the tag of the surface. If `pointTags' are provided, force the
+      // surface to pass through the given points.
       GMSH_API int addSurfaceFilling(const int wireTag,
-                                     const int tag = -1);
+                                     const int tag = -1,
+                                     const std::vector<int> & pointTags = std::vector<int>());
 
       // Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
       // positive, set the tag explicitly; otherwise a new tag is selected
