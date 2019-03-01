@@ -497,10 +497,12 @@ int GModel::readMED(const std::string &name, int meshIndex)
             (this, getMaxElementaryNumber(0) + 1, verts[i]->x(), verts[i]->y(),
              verts[i]->z());
           add(gv);
+          if(!verts[i]->onWhat()){
+            verts[i]->setEntity(gv);
+            gv->mesh_vertices.push_back(verts[i]);
+          }
+          gv->points.push_back(new MPoint(verts[i]));
           setElementaryName(0, gv->tag(), familyName);
-          if(!verts[i]->onWhat()) verts[i]->setEntity(gv);
-          MPoint *e = new MPoint(verts[i]);
-          gv->points.push_back(e);
           newPoints.push_back(gv);
         }
       }
