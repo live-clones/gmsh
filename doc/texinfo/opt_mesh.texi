@@ -112,7 +112,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ElementOrder
-Element order (1: linear elements, N (<6): elements of higher order)@*
+Element order (1: first order elements)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -278,7 +278,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFileVersion
 Version of the MSH file format to use@*
-Default value: @code{4}@*
+Default value: @code{4.1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MedFileMinorVersion

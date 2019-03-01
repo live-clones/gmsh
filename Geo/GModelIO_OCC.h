@@ -32,7 +32,7 @@ class BRepSweep_Prism;
 class BRepSweep_Revol;
 class BRepBuilderAPI_Transform;
 class BRepBuilderAPI_GTransform;
-class OCCMeshAttributesRTree;
+class OCCAttributesRTree;
 
 class OCC_Internals {
 public:
@@ -67,7 +67,7 @@ private:
   std::set<std::pair<int, int> > _toPreserve;
 
   // mesh attributes
-  OCCMeshAttributesRTree *_meshAttributes;
+  OCCAttributesRTree *_attributes;
 
   // get tag of shape, but search for other candidates at the same location if
   // the actual shape is not found
@@ -143,14 +143,14 @@ private:
                bool removeVolume);
 
   // set extruded mesh attributes
-  void _setExtrudedMeshAttributes(const TopoDS_Compound &c, BRepSweep_Prism *p,
-                                  BRepSweep_Revol *r, ExtrudeParams *e,
-                                  double x, double y, double z, double dx,
-                                  double dy, double dz, double ax, double ay,
-                                  double az, double angle);
-  void _copyExtrudedMeshAttributes(TopoDS_Edge edge, GEdge *ge);
-  void _copyExtrudedMeshAttributes(TopoDS_Face face, GFace *gf);
-  void _copyExtrudedMeshAttributes(TopoDS_Solid solid, GRegion *gr);
+  void _setExtrudedAttributes(const TopoDS_Compound &c, BRepSweep_Prism *p,
+                              BRepSweep_Revol *r, ExtrudeParams *e,
+                              double x, double y, double z, double dx,
+                              double dy, double dz, double ax, double ay,
+                              double az, double angle);
+  void _copyExtrudedAttributes(TopoDS_Edge edge, GEdge *ge);
+  void _copyExtrudedAttributes(TopoDS_Face face, GFace *gf);
+  void _copyExtrudedAttributes(TopoDS_Solid solid, GRegion *gr);
 
 public:
   OCC_Internals();

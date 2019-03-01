@@ -20,7 +20,7 @@ Save mesh, then exit
 @item -o file
 Specify output file name
 @item -format string
-Select output mesh format (auto, msh1, msh2, msh3, msh4, msh, unv, vtk, wrl, mail, stl, p3d, mesh, bdf, cgns, med, diff, ir3, inp, ply2, celum, su2, x3d, dat, neu, m, key)
+Select output mesh format (auto, msh1, msh2, msh22, msh3, msh4, msh40, msh41, msh, unv, vtk, wrl, mail, stl, p3d, mesh, bdf, cgns, med, diff, ir3, inp, ply2, celum, su2, x3d, dat, neu, m, key)
 @item -bin
 Create binary files when possible
 @item -refine

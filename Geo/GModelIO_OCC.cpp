@@ -92,7 +92,7 @@
 #include <gce_MakePln.hxx>
 #include <utility>
 
-#include "OCCMeshAttributes.h"
+#include "OCCAttributes.h"
 
 #if OCC_VERSION_HEX < 0x060900
 #error "Gmsh requires OpenCASCADE >= 6.9"
@@ -105,35 +105,35 @@
 #endif
 
 #if defined(HAVE_OCC_CAF)
+#include <IGESCAFControl_Reader.hxx>
 #include <Quantity_Color.hxx>
+#include <STEPCAFControl_Reader.hxx>
+#include <TDF_ChildIterator.hxx>
+#include <TDF_Tool.hxx>
+#include <TDataStd_Name.hxx>
 #include <TDocStd_Document.hxx>
 #include <XCAFApp_Application.hxx>
-#include <XCAFDoc_ShapeTool.hxx>
-#include <XCAFDoc_DocumentTool.hxx>
-#include <XCAFDoc_ColorTool.hxx>
 #include <XCAFDoc_Color.hxx>
-#include <XCAFDoc_MaterialTool.hxx>
+#include <XCAFDoc_ColorTool.hxx>
+#include <XCAFDoc_DocumentTool.hxx>
 #include <XCAFDoc_Location.hxx>
-#include <STEPCAFControl_Reader.hxx>
-#include <IGESCAFControl_Reader.hxx>
-#include <TDataStd_Name.hxx>
-#include <TDF_Tool.hxx>
-#include <TDF_ChildIterator.hxx>
+#include <XCAFDoc_MaterialTool.hxx>
+#include <XCAFDoc_ShapeTool.hxx>
 #endif
 
 OCC_Internals::OCC_Internals()
 {
   for(int i = 0; i < 6; i++) _maxTag[i] = 0;
   _changed = true;
-  _meshAttributes = new OCCMeshAttributesRTree(CTX::instance()->geom.tolerance);
+  _attributes = new OCCAttributesRTree(CTX::instance()->geom.tolerance);
 }
 
-OCC_Internals::~OCC_Internals() { delete _meshAttributes; }
+OCC_Internals::~OCC_Internals() { delete _attributes; }
 
 void OCC_Internals::reset()
 {
   for(int i = 0; i < 6; i++) _maxTag[i] = 0;
-  _meshAttributes->clear();
+  _attributes->clear();
   _somap.Clear();
   _shmap.Clear();
   _fmap.Clear();
@@ -202,7 +202,7 @@ void OCC_Internals::bind(const TopoDS_Vertex &vertex, int tag, bool recursive)
     _tagVertex.Bind(tag, vertex);
     setMaxTag(0, tag);
     _changed = true;
-    _meshAttributes->insert(new OCCMeshAttributes(0, vertex));
+    _attributes->insert(new OCCAttributes(0, vertex));
   }
 }
 
@@ -224,7 +224,7 @@ void OCC_Internals::bind(const TopoDS_Edge &edge, int tag, bool recursive)
     _tagEdge.Bind(tag, edge);
     setMaxTag(1, tag);
     _changed = true;
-    _meshAttributes->insert(new OCCMeshAttributes(1, edge));
+    _attributes->insert(new OCCAttributes(1, edge));
   }
   if(recursive) {
     TopExp_Explorer exp0;
@@ -287,7 +287,7 @@ void OCC_Internals::bind(const TopoDS_Face &face, int tag, bool recursive)
     _tagFace.Bind(tag, face);
     setMaxTag(2, tag);
     _changed = true;
-    _meshAttributes->insert(new OCCMeshAttributes(2, face));
+    _attributes->insert(new OCCAttributes(2, face));
   }
   if(recursive) {
     TopExp_Explorer exp0;
@@ -357,7 +357,7 @@ void OCC_Internals::bind(const TopoDS_Solid &solid, int tag, bool recursive)
     _tagSolid.Bind(tag, solid);
     setMaxTag(3, tag);
     _changed = true;
-    _meshAttributes->insert(new OCCMeshAttributes(3, solid));
+    _attributes->insert(new OCCAttributes(3, solid));
   }
   if(recursive) {
     TopExp_Explorer exp0;
@@ -744,7 +744,7 @@ bool OCC_Internals::addVertex(int &tag, double x, double y, double z,
     return false;
   }
   if(meshSize > 0 && meshSize < MAX_LC)
-    _meshAttributes->insert(new OCCMeshAttributes(0, result, meshSize));
+    _attributes->insert(new OCCAttributes(0, result, meshSize));
   if(tag < 0) tag = getMaxTag(0) + 1;
   bind(result, tag, true);
   return true;
@@ -2000,7 +2000,7 @@ bool OCC_Internals::addThickSolid(int tag, int solidTag,
   return true;
 }
 
-void OCC_Internals::_setExtrudedMeshAttributes(
+void OCC_Internals::_setExtrudedAttributes(
   const TopoDS_Compound &c, BRepSweep_Prism *p, BRepSweep_Revol *r,
   ExtrudeParams *e, double x, double y, double z, double dx, double dy,
   double dz, double ax, double ay, double az, double angle)
@@ -2026,14 +2026,14 @@ void OCC_Internals::_setExtrudedMeshAttributes(
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
-      _meshAttributes->insert(new OCCMeshAttributes(2, top, ee, 2, bot));
+      _attributes->insert(new OCCAttributes(2, top, ee, 2, bot));
     }
     TopoDS_Shape vol = p ? p->Shape(face) : r->Shape(face);
     if(extrude_attributes) {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
-      _meshAttributes->insert(new OCCMeshAttributes(3, vol, ee, 2, bot));
+      _attributes->insert(new OCCAttributes(3, vol, ee, 2, bot));
     }
   }
 
@@ -2045,14 +2045,14 @@ void OCC_Internals::_setExtrudedMeshAttributes(
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
-      _meshAttributes->insert(new OCCMeshAttributes(1, top, ee, 1, bot));
+      _attributes->insert(new OCCAttributes(1, top, ee, 1, bot));
     }
     TopoDS_Shape sur = p ? p->Shape(edge) : r->Shape(edge);
     if(extrude_attributes) {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
-      _meshAttributes->insert(new OCCMeshAttributes(2, sur, ee, 1, bot));
+      _attributes->insert(new OCCAttributes(2, sur, ee, 1, bot));
     }
   }
 
@@ -2065,12 +2065,12 @@ void OCC_Internals::_setExtrudedMeshAttributes(
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
-      _meshAttributes->insert(new OCCMeshAttributes(1, lin, ee, 0, bot));
+      _attributes->insert(new OCCAttributes(1, lin, ee, 0, bot));
     }
     {
-      double lc = _meshAttributes->getMeshSize(0, bot);
+      double lc = _attributes->getMeshSize(0, bot);
       if(lc > 0 && lc < MAX_LC)
-        _meshAttributes->insert(new OCCMeshAttributes(0, top, lc));
+        _attributes->insert(new OCCAttributes(0, top, lc));
     }
   }
 }
@@ -2080,7 +2080,7 @@ int OCC_Internals::_getFuzzyTag(int dim, const TopoDS_Shape &s)
   if(_isBound(dim, s)) return _find(dim, s);
 
   std::vector<TopoDS_Shape> candidates;
-  _meshAttributes->getSimilarShapes(dim, s, candidates);
+  _attributes->getSimilarShapes(dim, s, candidates);
 
   int num = 0;
   for(std::size_t i = 0; i < candidates.size(); i++) {
@@ -2095,12 +2095,12 @@ int OCC_Internals::_getFuzzyTag(int dim, const TopoDS_Shape &s)
   return -1;
 }
 
-void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Edge edge, GEdge *ge)
+void OCC_Internals::_copyExtrudedAttributes(TopoDS_Edge edge, GEdge *ge)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
   ExtrudeParams *e =
-    _meshAttributes->getExtrudeParams(1, edge, sourceDim, sourceShape);
+    _attributes->getExtrudeParams(1, edge, sourceDim, sourceShape);
   if(!e) return;
   ge->meshAttributes.extrude = e;
   if(ge->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY) {
@@ -2114,12 +2114,12 @@ void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Edge edge, GEdge *ge)
   }
 }
 
-void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Face face, GFace *gf)
+void OCC_Internals::_copyExtrudedAttributes(TopoDS_Face face, GFace *gf)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
   ExtrudeParams *e =
-    _meshAttributes->getExtrudeParams(2, face, sourceDim, sourceShape);
+    _attributes->getExtrudeParams(2, face, sourceDim, sourceShape);
   if(!e) return;
   gf->meshAttributes.extrude = e;
   if(gf->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY) {
@@ -2133,12 +2133,12 @@ void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Face face, GFace *gf)
   }
 }
 
-void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Solid solid, GRegion *gr)
+void OCC_Internals::_copyExtrudedAttributes(TopoDS_Solid solid, GRegion *gr)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
   ExtrudeParams *e =
-    _meshAttributes->getExtrudeParams(3, solid, sourceDim, sourceShape);
+    _attributes->getExtrudeParams(3, solid, sourceDim, sourceShape);
   if(!e) return;
   gr->meshAttributes.extrude = e;
   if(gr->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY) {
@@ -2222,8 +2222,8 @@ bool OCC_Internals::_extrude(int mode,
       }
       result = p.Shape();
       const BRepSweep_Prism &prism(p.Prism());
-      _setExtrudedMeshAttributes(c, (BRepSweep_Prism *)&prism, 0, e, 0., 0., 0.,
-                                 dx, dy, dz, 0., 0., 0., 0.);
+      _setExtrudedAttributes(c, (BRepSweep_Prism *)&prism, 0, e, 0., 0., 0.,
+                             dx, dy, dz, 0., 0., 0., 0.);
       dim = getReturnedShapes(c, (BRepSweep_Prism *)&prism, top, body, lateral);
     }
     else if(mode == 1) { // revolve
@@ -2236,8 +2236,8 @@ bool OCC_Internals::_extrude(int mode,
       }
       result = r.Shape();
       const BRepSweep_Revol &revol(r.Revol());
-      _setExtrudedMeshAttributes(c, 0, (BRepSweep_Revol *)&revol, e, x, y, z,
-                                 0., 0., 0., ax, ay, az, angle);
+      _setExtrudedAttributes(c, 0, (BRepSweep_Revol *)&revol, e, x, y, z,
+                             0., 0., 0., ax, ay, az, angle);
       dim = getReturnedShapes(c, (BRepSweep_Revol *)&revol, top, body, lateral);
     }
     else if(mode == 2) { // pipe
@@ -2893,9 +2893,9 @@ bool OCC_Internals::_transform(
     else if(gtfo)
       transformed = gtfo->ModifiedShape(vertex);
     if(!transformed.IsNull()) {
-      double lc = _meshAttributes->getMeshSize(0, vertex);
+      double lc = _attributes->getMeshSize(0, vertex);
       if(lc > 0 && lc < MAX_LC)
-        _meshAttributes->insert(new OCCMeshAttributes(0, transformed, lc));
+        _attributes->insert(new OCCAttributes(0, transformed, lc));
     }
   }
 
@@ -3034,7 +3034,7 @@ static void setTargetUnit(const std::string &unit)
 
 #if defined(HAVE_OCC_CAF)
 
-static void setShapeAttributes(OCCMeshAttributesRTree *meshAttributes,
+static void setShapeAttributes(OCCAttributesRTree *meshAttributes,
                                const Handle_XCAFDoc_ShapeTool &shapeTool,
                                const Handle_XCAFDoc_ColorTool &colorTool,
                                const Handle_XCAFDoc_MaterialTool &materialTool,
@@ -3076,7 +3076,32 @@ static void setShapeAttributes(OCCMeshAttributesRTree *meshAttributes,
       (shape.ShapeType() == TopAbs_FACE ||
        shape.ShapeType() == TopAbs_SHELL) ? 2 : 3;
     Msg::Debug("Inserting attribute '%s'", phys.c_str());
-    meshAttributes->insert(new OCCMeshAttributes(dim, shape, phys));
+    meshAttributes->insert(new OCCAttributes(dim, shape, phys));
+
+    Quantity_Color col;
+    if (colorTool->GetColor(label, XCAFDoc_ColorGen, col) ||
+        colorTool->GetColor(label, XCAFDoc_ColorSurf, col) ||
+        colorTool->GetColor(label, XCAFDoc_ColorCurv, col)) {
+      Msg::Info("color %g %g %g", (float)col.Red(), (float)col.Green(),
+                (float)col.Blue());
+      Standard_Integer argb;
+      Quantity_Color::Color2argb(col, argb);
+      // first two bytes are always 00, so the 24 shift is skipped
+      int r = (argb >> 16) & 0xFF;
+      int g = (argb >> 8) & 0xFF;
+      int b = argb & 0xFF;
+      unsigned int rgba = CTX::instance()->packColor(r, g, b, 255);
+    }
+
+    Handle(TCollection_HAsciiString) matName;
+    Handle(TCollection_HAsciiString) matDescription;
+    Standard_Real matDensity;
+    Handle(TCollection_HAsciiString) matDensName;
+    Handle(TCollection_HAsciiString) matDensValType;
+    if(materialTool->GetMaterial(label, matName, matDescription, matDensity,
+                                 matDensName, matDensValType)){
+      Msg::Info("material %s", matName->ToCString());
+    }
   }
   else {
     for (TDF_ChildIterator it(label); it.More(); it.Next()) {
@@ -3133,7 +3158,7 @@ bool OCC_Internals::importShapes(const std::string &fileName,
       Handle_XCAFDoc_MaterialTool materialTool =
         XCAFDoc_DocumentTool::MaterialTool(mainLabel);
       // traverse the labels recursively to set attributes on shapes
-      setShapeAttributes(_meshAttributes, shapeTool, colorTool, materialTool,
+      setShapeAttributes(_attributes, shapeTool, colorTool, materialTool,
                          mainLabel, TopLoc_Location(), "", false, 0);
       // the main shape (compound) is the first one
       TDF_LabelSequence shapeLabels;
@@ -3251,10 +3276,10 @@ void OCC_Internals::setMeshSize(int dim, int tag, double size)
 {
   if(dim != 0) return;
   if(_tagVertex.IsBound(tag)) {
-    OCCMeshAttributes *a = new OCCMeshAttributes(0, _tagVertex.Find(tag), size);
+    OCCAttributes *a = new OCCAttributes(0, _tagVertex.Find(tag), size);
     // first remove any other constraint
-    _meshAttributes->remove(a);
-    _meshAttributes->insert(a);
+    _attributes->remove(a);
+    _attributes->insert(a);
   }
 }
 
@@ -3324,12 +3349,12 @@ void OCC_Internals::synchronize(GModel *model)
         tag = ++vTagMax;
         Msg::Info("Binding unbound OpenCASCADE point to tag %d", tag);
       }
-      double lc = _meshAttributes->getMeshSize(0, vertex);
+      double lc = _attributes->getMeshSize(0, vertex);
       occv = new OCCVertex(model, tag, vertex, lc);
       model->add(occv);
     }
     std::vector<std::string> labels;
-    _meshAttributes->getLabels(0, vertex, labels);
+    _attributes->getLabels(0, vertex, labels);
     if(labels.size()) model->setElementaryName(0, occv->tag(), labels[0]);
   }
   for(int i = 1; i <= _emap.Extent(); i++) {
@@ -3348,9 +3373,9 @@ void OCC_Internals::synchronize(GModel *model)
       occe = new OCCEdge(model, edge, tag, v1, v2);
       model->add(occe);
     }
-    _copyExtrudedMeshAttributes(edge, occe);
+    _copyExtrudedAttributes(edge, occe);
     std::vector<std::string> labels;
-    _meshAttributes->getLabels(1, edge, labels);
+    _attributes->getLabels(1, edge, labels);
     if(labels.size()) model->setElementaryName(1, occe->tag(), labels[0]);
   }
   for(int i = 1; i <= _fmap.Extent(); i++) {
@@ -3367,9 +3392,9 @@ void OCC_Internals::synchronize(GModel *model)
       occf = new OCCFace(model, face, tag);
       model->add(occf);
     }
-    _copyExtrudedMeshAttributes(face, occf);
+    _copyExtrudedAttributes(face, occf);
     std::vector<std::string> labels;
-    _meshAttributes->getLabels(2, face, labels);
+    _attributes->getLabels(2, face, labels);
     if(labels.size()) model->setElementaryName(2, occf->tag(), labels[0]);
   }
   for(int i = 1; i <= _somap.Extent(); i++) {
@@ -3386,9 +3411,9 @@ void OCC_Internals::synchronize(GModel *model)
       occr = new OCCRegion(model, region, tag);
       model->add(occr);
     }
-    _copyExtrudedMeshAttributes(region, occr);
+    _copyExtrudedAttributes(region, occr);
     std::vector<std::string> labels;
-    _meshAttributes->getLabels(3, region, labels);
+    _attributes->getLabels(3, region, labels);
     if(labels.size()) model->setElementaryName(3, occr->tag(), labels[0]);
   }
 
