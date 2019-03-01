@@ -491,17 +491,17 @@ int GModel::readMED(const std::string &name, int meshIndex)
       // classified on another entity. This is expensive, and should be disabled
       // for large groups of nodes.
       std::vector<GVertex*> newPoints;
-      for(std::size_t i = 0; i < numNodes; i++){
-        if(nodeFamily[i] == familyNum){
+      for(std::size_t j = 0; j < numNodes; j++){
+        if(nodeFamily[j] == familyNum){
           discreteVertex *gv = new discreteVertex
-            (this, getMaxElementaryNumber(0) + 1, verts[i]->x(), verts[i]->y(),
-             verts[i]->z());
+            (this, getMaxElementaryNumber(0) + 1, verts[j]->x(), verts[j]->y(),
+             verts[j]->z());
           add(gv);
-          if(!verts[i]->onWhat()){
-            verts[i]->setEntity(gv);
-            gv->mesh_vertices.push_back(verts[i]);
+          if(!verts[j]->onWhat()){
+            verts[j]->setEntity(gv);
+            gv->mesh_vertices.push_back(verts[j]);
           }
-          gv->points.push_back(new MPoint(verts[i]));
+          gv->points.push_back(new MPoint(verts[j]));
           setElementaryName(0, gv->tag(), familyName);
           newPoints.push_back(gv);
         }
