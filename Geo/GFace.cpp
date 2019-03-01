@@ -1357,7 +1357,7 @@ bool GFace::fillVertexArray(bool force)
   if(stl_triangles.empty()) return false;
 
   va_geom_triangles = new VertexArray(3, stl_triangles.size() / 3);
-  unsigned int c = CTX::instance()->color.geom.surface;
+  unsigned int c = useColor() ? getColor() : CTX::instance()->color.geom.surface;
   unsigned int col[4] = {c, c, c, c};
   if(stl_vertices_xyz.size() &&
      (stl_vertices_xyz.size() == stl_normals.size())) {

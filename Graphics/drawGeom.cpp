@@ -81,7 +81,9 @@ public:
       glPointSize((float)ps);
       gl2psPointSize((float)(CTX::instance()->geom.pointSize *
                              CTX::instance()->print.epsPointSizeFactor));
-      glColor4ubv((GLubyte *)&CTX::instance()->color.geom.point);
+      unsigned int col = v->useColor() ? v->getColor() :
+        CTX::instance()->color.geom.point;
+      glColor4ubv((GLubyte *)&col);
     }
 
     if(CTX::instance()->geom.highlightOrphans) {
@@ -156,7 +158,9 @@ public:
       glLineWidth((float)CTX::instance()->geom.curveWidth);
       gl2psLineWidth((float)(CTX::instance()->geom.curveWidth *
                              CTX::instance()->print.epsLineWidthFactor));
-      glColor4ubv((GLubyte *)&CTX::instance()->color.geom.curve);
+      unsigned int col = e->useColor() ? e->getColor() :
+        CTX::instance()->color.geom.curve;
+      glColor4ubv((GLubyte *)&col);
     }
 
     if(CTX::instance()->geom.highlightOrphans) {
@@ -311,7 +315,9 @@ public:
       glLineWidth((float)(CTX::instance()->geom.curveWidth / 2.));
       gl2psLineWidth((float)(CTX::instance()->geom.curveWidth / 2. *
                              CTX::instance()->print.epsLineWidthFactor));
-      glColor4ubv((GLubyte *)&CTX::instance()->color.geom.surface);
+      unsigned int col = f->useColor() ? f->getColor() :
+        CTX::instance()->color.geom.surface;
+      glColor4ubv((GLubyte *)&col);
     }
 
     if(CTX::instance()->geom.lightTwoSide)
@@ -416,10 +422,14 @@ public:
     else
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
-    if(r->getSelection())
+    if(r->getSelection()){
       glColor4ubv((GLubyte *)&CTX::instance()->color.geom.selection);
-    else
-      glColor4ubv((GLubyte *)&CTX::instance()->color.geom.volume);
+    }
+    else{
+      unsigned int col = r->useColor() ? r->getColor() :
+        CTX::instance()->color.geom.volume;
+      glColor4ubv((GLubyte *)&col);
+    }
 
     const double size = 8.;
     double x = 0., y = 0., z = 0.;
