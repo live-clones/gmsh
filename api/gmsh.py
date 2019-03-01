@@ -430,6 +430,42 @@ class model:
         return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
 
     @staticmethod
+    def setEntityName(dim, tag, name):
+        """
+        Set the name of the entity of dimension `dim' and tag `tag'.
+        """
+        ierr = c_int()
+        lib.gmshModelSetEntityName(
+            c_int(dim),
+            c_int(tag),
+            c_char_p(name.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelSetEntityName returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
+    def getEntityName(dim, tag):
+        """
+        Get the name of the entity of dimension `dim' and tag `tag'.
+
+        Return `name'.
+        """
+        api_name_ = c_char_p()
+        ierr = c_int()
+        lib.gmshModelGetEntityName(
+            c_int(dim),
+            c_int(tag),
+            byref(api_name_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetEntityName returned non-zero error code: ",
+                ierr.value)
+        return _ostring(api_name_)
+
+    @staticmethod
     def getPhysicalGroups(dim=-1):
         """
         Get all the physical groups in the current model. If `dim' is >= 0, return
@@ -702,6 +738,20 @@ class model:
                 ierr.value)
 
     @staticmethod
+    def removeEntityName(name):
+        """
+        Remove the entity name `name' from the current model.
+        """
+        ierr = c_int()
+        lib.gmshModelRemoveEntityName(
+            c_char_p(name.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelRemoveEntityName returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
     def removePhysicalGroups(dimTags=[]):
         """
         Remove the physical groups `dimTags' of the current model. If `dimTags' is
@@ -720,7 +770,7 @@ class model:
     @staticmethod
     def removePhysicalName(name):
         """
-        Remove the physical name `name' of the current model.
+        Remove the physical name `name' from the current model.
         """
         ierr = c_int()
         lib.gmshModelRemovePhysicalName(

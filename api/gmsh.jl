@@ -290,6 +290,38 @@ function getEntities(dim = -1)
 end
 
 """
+    gmsh.model.setEntityName(dim, tag, name)
+
+Set the name of the entity of dimension `dim` and tag `tag`.
+"""
+function setEntityName(dim, tag, name)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelSetEntityName, gmsh.lib), Nothing,
+          (Cint, Cint, Ptr{Cchar}, Ptr{Cint}),
+          dim, tag, name, ierr)
+    ierr[] != 0 && error("gmshModelSetEntityName returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.getEntityName(dim, tag)
+
+Get the name of the entity of dimension `dim` and tag `tag`.
+
+Return `name`.
+"""
+function getEntityName(dim, tag)
+    api_name_ = Ref{Ptr{Cchar}}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetEntityName, gmsh.lib), Nothing,
+          (Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}),
+          dim, tag, api_name_, ierr)
+    ierr[] != 0 && error("gmshModelGetEntityName returned non-zero error code: $(ierr[])")
+    name = unsafe_string(api_name_[])
+    return name
+end
+
+"""
     gmsh.model.getPhysicalGroups(dim = -1)
 
 Get all the physical groups in the current model. If `dim` is >= 0, return only
@@ -523,6 +555,20 @@ function removeEntities(dimTags, recursive = false)
 end
 
 """
+    gmsh.model.removeEntityName(name)
+
+Remove the entity name `name` from the current model.
+"""
+function removeEntityName(name)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelRemoveEntityName, gmsh.lib), Nothing,
+          (Ptr{Cchar}, Ptr{Cint}),
+          name, ierr)
+    ierr[] != 0 && error("gmshModelRemoveEntityName returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
 
 Remove the physical groups `dimTags` of the current model. If `dimTags` is
@@ -540,7 +586,7 @@ end
 """
     gmsh.model.removePhysicalName(name)
 
-Remove the physical name `name` of the current model.
+Remove the physical name `name` from the current model.
 """
 function removePhysicalName(name)
     ierr = Ref{Cint}()

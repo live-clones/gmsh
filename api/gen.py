@@ -95,6 +95,12 @@ model.add('setCurrent',doc,None,istring('name'))
 doc = '''Get all the (elementary) geometrical entities in the current model. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0). The entities are returned as a vector of (dim, tag) integer pairs.'''
 model.add('getEntities',doc,None,ovectorpair('dimTags'),iint('dim','-1'))
 
+doc = '''Set the name of the entity of dimension `dim' and tag `tag'.'''
+model.add('setEntityName',doc,None,iint('dim'),iint('tag'),istring('name'))
+
+doc = '''Get the name of the entity of dimension `dim' and tag `tag'.'''
+model.add('getEntityName',doc,None,iint('dim'),iint('tag'),ostring('name'))
+
 doc = '''Get all the physical groups in the current model. If `dim' is >= 0, return only the entities of the specified dimension (e.g. physical points if `dim' == 0). The entities are returned as a vector of (dim, tag) integer pairs.'''
 model.add('getPhysicalGroups',doc,None,ovectorpair('dimTags'),iint('dim','-1'))
 
@@ -131,10 +137,13 @@ model.add('addDiscreteEntity',doc,oint,iint('dim'),iint('tag','-1'),ivectorint('
 doc = '''Remove the entities `dimTags' of the current model. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
 model.add('removeEntities',doc,None,ivectorpair('dimTags'),ibool('recursive','false','False'))
 
+doc = '''Remove the entity name `name' from the current model.'''
+model.add('removeEntityName',doc,None,istring('name'))
+
 doc = '''Remove the physical groups `dimTags' of the current model. If `dimTags' is empty, remove all groups.'''
 model.add('removePhysicalGroups',doc,None,ivectorpair('dimTags','gmsh::vectorpair()',"[]","[]"))
 
-doc = '''Remove the physical name `name' of the current model.'''
+doc = '''Remove the physical name `name' from the current model.'''
 model.add('removePhysicalName',doc,None,istring('name'))
 
 doc = '''Get the type of the entity of dimension `dim' and tag `tag'.'''

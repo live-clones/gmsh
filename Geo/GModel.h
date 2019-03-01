@@ -415,6 +415,9 @@ public:
     _elementaryNames[std::pair<int, int>(dim, tag)] = name;
   }
 
+  // remove elememtary name(s)
+  void removeElementaryName(const std::string &name);
+
   // get the highest dimension of the GModel
   int getDim() const;
 

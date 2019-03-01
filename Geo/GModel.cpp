@@ -786,7 +786,7 @@ void GModel::removePhysicalName(const std::string &name)
     _physicalNames.begin();
   while(it != _physicalNames.end()) {
     if(it->second == name)
-      // it = physicalNames.erase(it); // C++11 only
+      // it = _physicalNames.erase(it); // C++11 only
       _physicalNames.erase(it++);
     else
       ++it;
@@ -827,6 +827,19 @@ std::string GModel::getElementaryName(int dim, int number)
     _elementaryNames.find(std::pair<int, int>(dim, number));
   if(it != _elementaryNames.end()) return it->second;
   return "";
+}
+
+void GModel::removeElementaryName(const std::string &name)
+{
+  std::map<std::pair<int, int>, std::string>::iterator it =
+    _elementaryNames.begin();
+  while(it != _elementaryNames.end()) {
+    if(it->second == name)
+      // it = _elementaryNames.erase(it); // C++11 only
+      _elementaryNames.erase(it++);
+    else
+      ++it;
+  }
 }
 
 void GModel::setSelection(int val)

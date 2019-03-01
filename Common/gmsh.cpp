@@ -279,6 +279,24 @@ GMSH_API void gmsh::model::getEntities(vectorpair &dimTags, const int dim)
       std::pair<int, int>(entities[i]->dim(), entities[i]->tag()));
 }
 
+GMSH_API void gmsh::model::setEntityName(const int dim, const int tag,
+                                           const std::string &name)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  GModel::current()->setElementaryName(dim, tag, name);
+}
+
+GMSH_API void gmsh::model::getEntityName(const int dim, const int tag,
+                                         std::string &name)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  name = GModel::current()->getElementaryName(dim, tag);
+}
+
 GMSH_API void gmsh::model::getPhysicalGroups(vectorpair &dimTags, const int dim)
 {
   if(!_isInitialized()) {
@@ -511,6 +529,14 @@ GMSH_API void gmsh::model::removeEntities(const vectorpair &dimTags,
     throw -1;
   }
   GModel::current()->remove(dimTags, recursive);
+}
+
+GMSH_API void gmsh::model::removeEntityName(const std::string &name)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  GModel::current()->removeElementaryName(name);
 }
 
 GMSH_API void gmsh::model::removePhysicalGroups(const vectorpair &dimTags)

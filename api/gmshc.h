@@ -118,6 +118,18 @@ GMSH_API void gmshModelGetEntities(int ** dimTags, size_t * dimTags_n,
                                    const int dim,
                                    int * ierr);
 
+/* Set the name of the entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelSetEntityName(const int dim,
+                                     const int tag,
+                                     const char * name,
+                                     int * ierr);
+
+/* Get the name of the entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelGetEntityName(const int dim,
+                                     const int tag,
+                                     char ** name,
+                                     int * ierr);
+
 /* Get all the physical groups in the current model. If `dim' is >= 0, return
  * only the entities of the specified dimension (e.g. physical points if `dim'
  * == 0). The entities are returned as a vector of (dim, tag) integer pairs. */
@@ -218,12 +230,16 @@ GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n,
                                       const int recursive,
                                       int * ierr);
 
+/* Remove the entity name `name' from the current model. */
+GMSH_API void gmshModelRemoveEntityName(const char * name,
+                                        int * ierr);
+
 /* Remove the physical groups `dimTags' of the current model. If `dimTags' is
  * empty, remove all groups. */
 GMSH_API void gmshModelRemovePhysicalGroups(int * dimTags, size_t dimTags_n,
                                             int * ierr);
 
-/* Remove the physical name `name' of the current model. */
+/* Remove the physical name `name' from the current model. */
 GMSH_API void gmshModelRemovePhysicalName(const char * name,
                                           int * ierr);
 

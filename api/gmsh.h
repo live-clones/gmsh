@@ -124,6 +124,16 @@ namespace gmsh { // Top-level functions
     GMSH_API void getEntities(gmsh::vectorpair & dimTags,
                               const int dim = -1);
 
+    // Set the name of the entity of dimension `dim' and tag `tag'.
+    GMSH_API void setEntityName(const int dim,
+                                const int tag,
+                                const std::string & name);
+
+    // Get the name of the entity of dimension `dim' and tag `tag'.
+    GMSH_API void getEntityName(const int dim,
+                                const int tag,
+                                std::string & name);
+
     // Get all the physical groups in the current model. If `dim' is >= 0, return
     // only the entities of the specified dimension (e.g. physical points if `dim'
     // == 0). The entities are returned as a vector of (dim, tag) integer pairs.
@@ -213,11 +223,14 @@ namespace gmsh { // Top-level functions
     GMSH_API void removeEntities(const gmsh::vectorpair & dimTags,
                                  const bool recursive = false);
 
+    // Remove the entity name `name' from the current model.
+    GMSH_API void removeEntityName(const std::string & name);
+
     // Remove the physical groups `dimTags' of the current model. If `dimTags' is
     // empty, remove all groups.
     GMSH_API void removePhysicalGroups(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
-    // Remove the physical name `name' of the current model.
+    // Remove the physical name `name' from the current model.
     GMSH_API void removePhysicalName(const std::string & name);
 
     // Get the type of the entity of dimension `dim' and tag `tag'.
