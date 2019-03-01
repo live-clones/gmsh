@@ -31,7 +31,6 @@ private:
   TopoDS_Shape _sourceShape;
   std::string _label;
   std::vector<double> _color;
-
 public:
   OCCAttributes()
     : _dim(-1), _meshSize(MAX_LC), _extrude(0), _sourceDim(-1)
@@ -56,13 +55,16 @@ public:
       _label(label)
   {
   }
-  OCCAttributes(int dim, TopoDS_Shape shape, double r, double g, double b)
+  OCCAttributes(int dim, TopoDS_Shape shape, double r, double g, double b,
+                double a = 1., int boundary = 0)
     : _dim(dim), _shape(shape), _meshSize(MAX_LC), _extrude(0), _sourceDim(-1)
   {
-    _color.resize(3);
+    _color.resize(boundary ? 5 : 4);
     _color[0] = r;
     _color[1] = g;
     _color[2] = b;
+    _color[3] = a;
+    if(boundary) _color[4] = boundary;
   }
   ~OCCAttributes() {}
   int getDim() { return _dim; }
@@ -274,19 +276,27 @@ public:
         labels.push_back(attr[i]->getLabel());
     }
   }
-  bool getColor(int dim, TopoDS_Shape shape, unsigned int &color)
+  bool getColor(int dim, TopoDS_Shape shape, unsigned int &color,
+                unsigned int &boundary)
   {
     std::vector<OCCAttributes *> attr;
     _find(dim, shape, attr, false, false, false, true, false);
     for(std::size_t i = 0; i < attr.size(); i++) {
-      if(attr[i]->getColor().size() == 3){
-        int r = (int)(attr[i]->getColor()[0] * 255);
+      const std::vector<double> &col = attr[i]->getColor();
+      if(col.size() >= 3){
+        int r = (int)(col[0] * 255);
         r = (r < 0) ? 0 : (r > 255) ? 255 : r;
-        int g = (int)(attr[i]->getColor()[1] * 255);
+        int g = (int)(col[1] * 255);
         g = (g < 0) ? 0 : (g > 255) ? 255 : g;
-        int b = (int)(attr[i]->getColor()[2] * 255);
+        int b = (int)(col[2] * 255);
         b = (b < 0) ? 0 : (b > 255) ? 255 : b;
-        color = CTX::instance()->packColor(r, b, g, 255);
+        int a = 255;
+        if(col.size() >= 4){
+          int a = (int)(col[3] * 255);
+          a = (a < 0) ? 0 : (a > 255) ? 255 : a;
+        }
+        color = CTX::instance()->packColor(r, b, g, a);
+        boundary = (col.size() == 5) ? col[4] : 0;
         return true;
       }
     }

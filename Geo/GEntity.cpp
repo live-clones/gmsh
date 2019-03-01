@@ -101,6 +101,17 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
     }
   }
 
+  if(useColor()){
+    int r = CTX::instance()->unpackRed(_color);
+    int g = CTX::instance()->unpackGreen(_color);
+    int b = CTX::instance()->unpackBlue(_color);
+    if(multiline)
+      sstream << "\n";
+    else
+      sstream << ", ";
+    sstream << "Color (" << r << ", " << g << ", " << b << ")";
+  }
+
   return sstream.str();
 }
 

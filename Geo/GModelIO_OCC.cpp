@@ -3075,17 +3075,6 @@ static void setShapeAttributes(OCCAttributesRTree *meshAttributes,
        shape.ShapeType() == TopAbs_WIRE) ? 1 :
       (shape.ShapeType() == TopAbs_FACE ||
        shape.ShapeType() == TopAbs_SHELL) ? 2 : 3;
-    Msg::Debug("Inserting label attribute '%s'", phys.c_str());
-    meshAttributes->insert(new OCCAttributes(dim, shape, phys));
-
-    Quantity_Color col;
-    if (colorTool->GetColor(label, XCAFDoc_ColorGen, col) ||
-        colorTool->GetColor(label, XCAFDoc_ColorSurf, col) ||
-        colorTool->GetColor(label, XCAFDoc_ColorCurv, col)) {
-      double r = col.Red(), g = col.Green(), b = col.Blue();
-      Msg::Debug("Inserting color attribute %g %g %g", r, g, b);
-      meshAttributes->insert(new OCCAttributes(dim, shape, r, g, b));
-    }
 
     Handle(TCollection_HAsciiString) matName;
     Handle(TCollection_HAsciiString) matDescription;
@@ -3094,8 +3083,34 @@ static void setShapeAttributes(OCCAttributesRTree *meshAttributes,
     Handle(TCollection_HAsciiString) matDensValType;
     if(materialTool->GetMaterial(label, matName, matDescription, matDensity,
                                  matDensName, matDensValType)){
-      Msg::Info("material %s", matName->ToCString());
+      phys += " & ";
+      phys += matName->ToCString();
+      Msg::Info(" - Label & material '%s' (%dD)", phys.c_str());
     }
+    else if(phys.size()){
+      Msg::Info(" - Label '%s' (%dD)", phys.c_str(), dim);
+    }
+    if(phys.size()){
+      meshAttributes->insert(new OCCAttributes(dim, shape, phys));
+    }
+
+    Quantity_Color col;
+    if (colorTool->GetColor(label, XCAFDoc_ColorGen, col)) {
+      double r = col.Red(), g = col.Green(), b = col.Blue();
+      Msg::Info(" - Color (%g, %g, %g) (%dD)", r, g, b, dim);
+      meshAttributes->insert(new OCCAttributes(dim, shape, r, g, b, 1.));
+    }
+    else if(colorTool->GetColor(label, XCAFDoc_ColorSurf, col)) {
+      double r = col.Red(), g = col.Green(), b = col.Blue();
+      Msg::Info(" - Color (%g, %g, %g) (%dD & Surf)", r, g, b, dim);
+      meshAttributes->insert(new OCCAttributes(dim, shape, r, g, b, 1., 1));
+    }
+    else if(colorTool->GetColor(label, XCAFDoc_ColorCurv, col)) {
+      double r = col.Red(), g = col.Green(), b = col.Blue();
+      Msg::Info(" - Color (%g, %g, %g) (%dD & Curv)", r, g, b, dim);
+      meshAttributes->insert(new OCCAttributes(dim, shape, r, g, b, 1, 2));
+    }
+
   }
   else {
     for (TDF_ChildIterator it(label); it.More(); it.Next()) {
@@ -3350,8 +3365,10 @@ void OCC_Internals::synchronize(GModel *model)
     std::vector<std::string> labels;
     _attributes->getLabels(0, vertex, labels);
     if(labels.size()) model->setElementaryName(0, occv->tag(), labels[0]);
-    unsigned int col;
-    if(_attributes->getColor(0, vertex, col)) occv->setColor(col);
+    unsigned int col, boundary;
+    if(_attributes->getColor(0, vertex, col, boundary)){
+      occv->setColor(col);
+    }
   }
   for(int i = 1; i <= _emap.Extent(); i++) {
     TopoDS_Edge edge = TopoDS::Edge(_emap(i));
@@ -3373,8 +3390,10 @@ void OCC_Internals::synchronize(GModel *model)
     std::vector<std::string> labels;
     _attributes->getLabels(1, edge, labels);
     if(labels.size()) model->setElementaryName(1, occe->tag(), labels[0]);
-    unsigned int col;
-    if(_attributes->getColor(1, edge, col)) occe->setColor(col);
+    unsigned int col, boundary;
+    if(_attributes->getColor(1, edge, col, boundary)){
+      occe->setColor(col);
+    }
   }
   for(int i = 1; i <= _fmap.Extent(); i++) {
     TopoDS_Face face = TopoDS::Face(_fmap(i));
@@ -3394,8 +3413,10 @@ void OCC_Internals::synchronize(GModel *model)
     std::vector<std::string> labels;
     _attributes->getLabels(2, face, labels);
     if(labels.size()) model->setElementaryName(2, occf->tag(), labels[0]);
-    unsigned int col;
-    if(_attributes->getColor(2, face, col)) occf->setColor(col);
+    unsigned int col, boundary;
+    if(_attributes->getColor(2, face, col, boundary)){
+      occf->setColor(col);
+    }
   }
   for(int i = 1; i <= _somap.Extent(); i++) {
     TopoDS_Solid region = TopoDS::Solid(_somap(i));
@@ -3415,8 +3436,18 @@ void OCC_Internals::synchronize(GModel *model)
     std::vector<std::string> labels;
     _attributes->getLabels(3, region, labels);
     if(labels.size()) model->setElementaryName(3, occr->tag(), labels[0]);
-    unsigned int col;
-    if(_attributes->getColor(3, region, col)) occr->setColor(col);
+    unsigned int col, boundary;
+    if(_attributes->getColor(3, region, col, boundary)){
+      occr->setColor(col);
+      if(boundary == 1){
+        std::vector<GFace *> faces = occr->faces();
+        for(std::size_t j = 0; j < faces.size(); j++) faces[j]->setColor(col);
+      }
+      else if(boundary == 2){
+        std::vector<GEdge *> edges = occr->edges();
+        for(std::size_t j = 0; j < edges.size(); j++) edges[j]->setColor(col);
+      }
+    }
   }
 
   // if fuzzy boolean tolerance was used, some vertex positions should be
