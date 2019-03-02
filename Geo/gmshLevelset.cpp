@@ -809,17 +809,17 @@ double gLevelsetShamrock::operator()(double x, double y, double z) const
   return sign * distance;
 }
 
-gLevelsetPopcorn::gLevelsetPopcorn(double _xc, double _yc, double _zc,
-                                   double _r0, double _A, double _sigma,
+gLevelsetPopcorn::gLevelsetPopcorn(double myxc, double myyc, double myzc,
+                                   double myr0, double myA, double mysigma,
                                    int tag)
   : gLevelsetPrimitive(tag)
 {
-  A = _A;
-  sigma = _sigma;
-  r0 = _r0;
-  xc = _xc;
-  yc = _yc;
-  zc = _zc;
+  A = myA;
+  sigma = mysigma;
+  r0 = myr0;
+  xc = myxc;
+  yc = myyc;
+  zc = myzc;
 }
 
 double gLevelsetPopcorn::operator()(double x, double y, double z) const

@@ -17,7 +17,7 @@
 #include "meshGFaceDelaunayInsertion.h"
 #include "qualityMeasures.h"
 
-double _COS_N(BDS_Point *_p1, BDS_Point *_p2, BDS_Point *_p3, GFace *gf)
+static double _cos_N(BDS_Point *_p1, BDS_Point *_p2, BDS_Point *_p3, GFace *gf)
 {
   double n[3];
   normal_triangle(_p1, _p2, _p3, n);
@@ -36,7 +36,7 @@ double BDS_Face_Validity(GFace *gf, BDS_Face *f)
   f->getNodes(pts);
   if(pts[0]->degenerated + pts[1]->degenerated + pts[2]->degenerated < 2) {
     double qa1 = qmTriangle::gamma(pts[0], pts[1], pts[2]);
-    return qa1 * _COS_N(pts[0], pts[1], pts[2], gf);
+    return qa1 * _cos_N(pts[0], pts[1], pts[2], gf);
   }
   return 1.0;
 }
@@ -1011,17 +1011,15 @@ bool BDS_SwapEdgeTestNormals::operator()(BDS_Point *_p1, BDS_Point *_p2,
   double qb1 = qmTriangle::gamma(_op1, _op2, _op3);
   double qb2 = qmTriangle::gamma(_oq1, _oq2, _oq3);
 
-  //double mina = std::min(qa1, qa2);
-  //double minb = std::min(qb1, qb2);
-  //  if(minb > 5 * mina) return true;
+  // double mina = std::min(qa1, qa2);
+  // double minb = std::min(qb1, qb2);
+  // if(minb > 5 * mina) return true;
 
-  double OLD = std::min(_ori * qa1 * _COS_N(_p1, _p2, _p3, gf),
-                        _ori * qa2 * _COS_N(_q1, _q2, _q3, gf));
+  double OLD = std::min(_ori * qa1 * _cos_N(_p1, _p2, _p3, gf),
+                        _ori * qa2 * _cos_N(_q1, _q2, _q3, gf));
 
-  double NEW = std::min(_ori * qb1 * _COS_N(_op1, _op2, _op3, gf),
-                        _ori * qb2 * _COS_N(_oq1, _oq2, _oq3, gf));
-
-  //  printf("%d %d %g %g\n",_p1->iD, _p2->iD, OLD, NEW);
+  double NEW = std::min(_ori * qb1 * _cos_N(_op1, _op2, _op3, gf),
+                        _ori * qb2 * _cos_N(_oq1, _oq2, _oq3, gf));
 
   if(OLD < 0.2 && OLD < NEW) return true;
   return false;
@@ -1710,7 +1708,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool hard)
     BDS_Face *t = *it;
     BDS_Point *n[4];
     t->getNodes(n);
-    //    OLD = std::min (OLD,_COS_N ( n[0], n[1], n[2], gf));
+    // OLD = std::min (OLD, _cos_N(n[0], n[1], n[2], gf));
     p->u = U;
     p->v = V;
     double snew = std::abs(surface_triangle_param(n[0], n[1], n[2]));

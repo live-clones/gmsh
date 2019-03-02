@@ -30,7 +30,7 @@ struct LagrangeMultiplierField {
 struct elasticField {
   int _tag; // tag for the dofManager
   groupOfElements *g; // support for this field
-  double _E, _nu; // specific elastic datas (should be somewhere else)
+  double _e, _nu; // specific elastic datas (should be somewhere else)
   elasticField() : _tag(0), g(0) {}
 };
 

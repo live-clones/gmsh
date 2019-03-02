@@ -238,7 +238,7 @@ public:
 
 private:
   container allTets;
-#ifdef _GMSH_PRE_ALLOCATE_STRATEGY_
+#ifdef GMSH_PRE_ALLOCATE_STRATEGY
   MTet4 *allSlots;
   int s_last, s_alloc;
   std::stack<MTet4 *> emptySlots;
@@ -262,7 +262,7 @@ private:
 public:
   MTet4Factory(int _size = 1000000)
   {
-#ifdef _GMSH_PRE_ALLOCATE_STRATEGY_
+#ifdef GMSH_PRE_ALLOCATE_STRATEGY
     s_last = 0;
     s_alloc = _size;
     allSlots = new MTet4[s_alloc];
@@ -270,14 +270,14 @@ public:
   }
   ~MTet4Factory()
   {
-#ifdef _GMSH_PRE_ALLOCATE_STRATEGY_
+#ifdef GMSH_PRE_ALLOCATE_STRATEGY
     delete[] allSlots;
 #endif
   }
   MTet4 *Create(MTetrahedron *t, std::vector<double> &sizes,
                 std::vector<double> &sizesBGM)
   {
-#ifdef _GMSH_PRE_ALLOCATE_STRATEGY_
+#ifdef GMSH_PRE_ALLOCATE_STRATEGY
     MTet4 *t4 = getAnEmptySlot();
 #else
     MTet4 *t4 = new MTet4;
@@ -288,7 +288,7 @@ public:
   MTet4 *Create(MTetrahedron *t, std::vector<double> &sizes,
                 std::vector<double> &sizesBGM, double lc1, double lc2)
   {
-#ifdef _GMSH_PRE_ALLOCATE_STRATEGY_
+#ifdef GMSH_PRE_ALLOCATE_STRATEGY
     MTet4 *t4 = getAnEmptySlot();
 #else
     MTet4 *t4 = new MTet4;
@@ -301,7 +301,7 @@ public:
   {
     if(t->tet()) delete t->tet();
     t->tet() = 0;
-#ifdef _GMSH_PRE_ALLOCATE_STRATEGY_
+#ifdef GMSH_PRE_ALLOCATE_STRATEGY
     emptySlots.push(t);
     t->setDeleted(true);
 #else

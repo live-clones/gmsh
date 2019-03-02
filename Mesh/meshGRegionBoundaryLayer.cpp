@@ -65,7 +65,7 @@ public:
   GRegion *_gr;
   GFace *_f[2];
   double max_angle, min_angle;
-  std::size_t _N_SUBNORMALS;
+  std::size_t N_SUBNORMALS;
 
   void computeType(double angle)
   {
@@ -82,7 +82,7 @@ public:
   type getType() const { return _t; }
 
   blyr_ridge(GEdge *ge, GRegion *gr, GFace *f0, GFace *f1)
-    : _ge(ge), _gr(gr), _N_SUBNORMALS(0)
+    : _ge(ge), _gr(gr), N_SUBNORMALS(0)
   {
     _f[0] = f0;
     _f[1] = f1;
@@ -351,13 +351,13 @@ public:
       }
       // nice "outer" ridge
       if(_ridges[i].min_angle > 0 && _ridges[i].max_angle > 0) {
-        while(_ridges[i].max_angle / (_ridges[i]._N_SUBNORMALS + 1) >
+        while(_ridges[i].max_angle / (_ridges[i].N_SUBNORMALS + 1) >
               _threshold_angle) {
-          _ridges[i]._N_SUBNORMALS++;
+          _ridges[i].N_SUBNORMALS++;
         }
       }
       if(_ridges[i].min_angle < 0 && _ridges[i].max_angle < 0) {
-        _ridges[i]._N_SUBNORMALS = 0;
+        _ridges[i].N_SUBNORMALS = 0;
       }
     }
   }
@@ -397,7 +397,7 @@ public:
               _ridges[k]._f[1] == _unique[j]) ||
              (_ridges[k]._f[1] == _unique[i] &&
               _ridges[k]._f[0] == _unique[j])) {
-            num_subnormals = _ridges[k]._N_SUBNORMALS;
+            num_subnormals = _ridges[k].N_SUBNORMALS;
           }
         }
 
@@ -583,7 +583,7 @@ public:
       GPoint p = f->closestPoint(newp, initialGuess);
       vs[i] = new MFaceVertex(p.x(), p.y(), p.z(), f, p.u(), p.v());
       f->mesh_vertices.push_back(vs[i]);
-      ridge->_N_SUBNORMALS = 1;
+      ridge->N_SUBNORMALS = 1;
       v._v_per_face.push_back(vs[i]);
       v._n_per_vertex.push_back(n);
       v._f_per_normal.push_back(f);
@@ -1196,7 +1196,7 @@ public:
 
       //      printf("ridge %d %d\n",f0->tag(),f1->tag());
 
-      if(r._N_SUBNORMALS) {
+      if(r.N_SUBNORMALS) {
         for(size_t j = 0; j < r._ge->lines.size(); j++) {
           MLine *l = r._ge->lines[j];
           MVertex *v0 = l->getVertex(0);
@@ -1238,14 +1238,14 @@ public:
             }
           }
 
-          //	  printf("%d %d %d\n",fan0.size(),fan1.size(),r._N_SUBNORMALS);
-          if(fan0.size() == r._N_SUBNORMALS && fan1.size() == r._N_SUBNORMALS) {
-            for(std::size_t k = 0; k <= r._N_SUBNORMALS; k++) {
+          // printf("%d %d %d\n",fan0.size(),fan1.size(),r.N_SUBNORMALS);
+          if(fan0.size() == r.N_SUBNORMALS && fan1.size() == r.N_SUBNORMALS) {
+            for(std::size_t k = 0; k <= r.N_SUBNORMALS; k++) {
               MVertex *v00 = (k == 0 ? o00 : fan0[k - 1]);
               MVertex *v10 = (k == 0 ? o10 : fan1[k - 1]);
-              MVertex *v01 = (k == r._N_SUBNORMALS ? o01 : fan0[k]);
-              MVertex *v11 = (k == r._N_SUBNORMALS ? o11 : fan1[k]);
-              //	      printf("%p %p %p %p\n",v00,v01,v10,v11);
+              MVertex *v01 = (k == r.N_SUBNORMALS ? o01 : fan0[k]);
+              MVertex *v11 = (k == r.N_SUBNORMALS ? o11 : fan1[k]);
+              // printf("%p %p %p %p\n",v00,v01,v10,v11);
               _gr->prisms.push_back(new MPrism(v0, v00, v01, v1, v10, v11));
             }
           }

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _Q_GUI_H_
-#define _Q_GUI_H_
+#ifndef Q_GUI_H
+#define Q_GUI_H
 
 #include <string>
 #include <vector>

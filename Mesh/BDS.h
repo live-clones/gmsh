@@ -413,7 +413,7 @@ class BDS_Mesh {
 public:
   int MAXPOINTNUMBER;
   double Min[3], Max[3], LC;
-  BDS_Mesh(int _MAXX = 0) : MAXPOINTNUMBER(_MAXX) {}
+  BDS_Mesh(int MAXX = 0) : MAXPOINTNUMBER(MAXX) {}
   virtual ~BDS_Mesh();
   BDS_Mesh(const BDS_Mesh &other);
   std::set<BDS_GeomEntity *, GeomLessThan> geom;

@@ -223,30 +223,30 @@ static void addListOfStuff(Octree *o, std::vector<double> &l, int nbelm)
 
 OctreePost::~OctreePost()
 {
-  Octree_Delete(_SPP);
-  Octree_Delete(_VPP);
-  Octree_Delete(_TPP);
-  Octree_Delete(_SL);
-  Octree_Delete(_VL);
-  Octree_Delete(_TL);
-  Octree_Delete(_ST);
-  Octree_Delete(_VT);
-  Octree_Delete(_TT);
-  Octree_Delete(_SQ);
-  Octree_Delete(_VQ);
-  Octree_Delete(_TQ);
-  Octree_Delete(_SS);
-  Octree_Delete(_VS);
-  Octree_Delete(_TS);
-  Octree_Delete(_SH);
-  Octree_Delete(_VH);
-  Octree_Delete(_TH);
-  Octree_Delete(_SI);
-  Octree_Delete(_VI);
-  Octree_Delete(_TI);
-  Octree_Delete(_SY);
-  Octree_Delete(_VY);
-  Octree_Delete(_TY);
+  Octree_Delete(_sp);
+  Octree_Delete(_vp);
+  Octree_Delete(_tp);
+  Octree_Delete(_sl);
+  Octree_Delete(_vl);
+  Octree_Delete(_tl);
+  Octree_Delete(_st);
+  Octree_Delete(_vt);
+  Octree_Delete(_tt);
+  Octree_Delete(_sq);
+  Octree_Delete(_vq);
+  Octree_Delete(_tq);
+  Octree_Delete(_ss);
+  Octree_Delete(_vs);
+  Octree_Delete(_ts);
+  Octree_Delete(_sh);
+  Octree_Delete(_vh);
+  Octree_Delete(_th);
+  Octree_Delete(_si);
+  Octree_Delete(_vi);
+  Octree_Delete(_ti);
+  Octree_Delete(_sy);
+  Octree_Delete(_vy);
+  Octree_Delete(_ty);
 }
 
 OctreePost::OctreePost(PView *v)
@@ -258,9 +258,9 @@ OctreePost::OctreePost(PViewData *data) { _create(data); }
 
 void OctreePost::_create(PViewData *data)
 {
-  _SPP = _VPP = _TPP = _SL = _VL = _TL = _ST = _VT = _TT = 0;
-  _SQ = _VQ = _TQ = _SS = _VS = _TS = _SH = _VH = _TH = 0;
-  _SI = _VI = _TI = _SY = _VY = _TY = 0;
+  _sp = _vp = _tp = _sl = _vl = _tl = _st = _vt = _tt = 0;
+  _sq = _vq = _tq = _ss = _vs = _ts = _sh = _vh = _th = 0;
+  _si = _vi = _ti = _sy = _vy = _ty = 0;
   _theViewDataList = 0;
   _theViewDataGModel = 0;
 
@@ -291,109 +291,109 @@ void OctreePost::_create(PViewData *data)
                       bbmax.z() - bbmin.z()};
     const int maxElePerBucket = 100; // memory vs. speed trade-off
 
-    _SPP =
+    _sp =
       Octree_Create(maxElePerBucket, min, size, pntBB, pntCentroid, pntInEle);
-    addListOfStuff(_SPP, l->SP, 3 + 1 * l->getNumTimeSteps());
-    Octree_Arrange(_SPP);
-    _VPP =
+    addListOfStuff(_sp, l->SP, 3 + 1 * l->getNumTimeSteps());
+    Octree_Arrange(_sp);
+    _vp =
       Octree_Create(maxElePerBucket, min, size, pntBB, pntCentroid, pntInEle);
-    addListOfStuff(_VPP, l->VP, 3 + 3 * l->getNumTimeSteps());
-    Octree_Arrange(_VPP);
-    _TPP =
+    addListOfStuff(_vp, l->VP, 3 + 3 * l->getNumTimeSteps());
+    Octree_Arrange(_vp);
+    _tp =
       Octree_Create(maxElePerBucket, min, size, pntBB, pntCentroid, pntInEle);
-    addListOfStuff(_TPP, l->TP, 3 + 9 * l->getNumTimeSteps());
-    Octree_Arrange(_TPP);
+    addListOfStuff(_tp, l->TP, 3 + 9 * l->getNumTimeSteps());
+    Octree_Arrange(_tp);
 
-    _SL =
+    _sl =
       Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
-    addListOfStuff(_SL, l->SL, 6 + 2 * l->getNumTimeSteps());
-    Octree_Arrange(_SL);
-    _VL =
+    addListOfStuff(_sl, l->SL, 6 + 2 * l->getNumTimeSteps());
+    Octree_Arrange(_sl);
+    _vl =
       Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
-    addListOfStuff(_VL, l->VL, 6 + 6 * l->getNumTimeSteps());
-    Octree_Arrange(_VL);
-    _TL =
+    addListOfStuff(_vl, l->VL, 6 + 6 * l->getNumTimeSteps());
+    Octree_Arrange(_vl);
+    _tl =
       Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
-    addListOfStuff(_TL, l->TL, 6 + 18 * l->getNumTimeSteps());
-    Octree_Arrange(_TL);
+    addListOfStuff(_tl, l->TL, 6 + 18 * l->getNumTimeSteps());
+    Octree_Arrange(_tl);
 
-    _ST =
+    _st =
       Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
-    addListOfStuff(_ST, l->ST, 9 + 3 * l->getNumTimeSteps());
-    Octree_Arrange(_ST);
-    _VT =
+    addListOfStuff(_st, l->ST, 9 + 3 * l->getNumTimeSteps());
+    Octree_Arrange(_st);
+    _vt =
       Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
-    addListOfStuff(_VT, l->VT, 9 + 9 * l->getNumTimeSteps());
-    Octree_Arrange(_VT);
-    _TT =
+    addListOfStuff(_vt, l->VT, 9 + 9 * l->getNumTimeSteps());
+    Octree_Arrange(_vt);
+    _tt =
       Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
-    addListOfStuff(_TT, l->TT, 9 + 27 * l->getNumTimeSteps());
-    Octree_Arrange(_TT);
+    addListOfStuff(_tt, l->TT, 9 + 27 * l->getNumTimeSteps());
+    Octree_Arrange(_tt);
 
-    _SQ =
+    _sq =
       Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
-    addListOfStuff(_SQ, l->SQ, 12 + 4 * l->getNumTimeSteps());
-    Octree_Arrange(_SQ);
-    _VQ =
+    addListOfStuff(_sq, l->SQ, 12 + 4 * l->getNumTimeSteps());
+    Octree_Arrange(_sq);
+    _vq =
       Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
-    addListOfStuff(_VQ, l->VQ, 12 + 12 * l->getNumTimeSteps());
-    Octree_Arrange(_VQ);
-    _TQ =
+    addListOfStuff(_vq, l->VQ, 12 + 12 * l->getNumTimeSteps());
+    Octree_Arrange(_vq);
+    _tq =
       Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
-    addListOfStuff(_TQ, l->TQ, 12 + 36 * l->getNumTimeSteps());
-    Octree_Arrange(_TQ);
+    addListOfStuff(_tq, l->TQ, 12 + 36 * l->getNumTimeSteps());
+    Octree_Arrange(_tq);
 
-    _SS =
+    _ss =
       Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
-    addListOfStuff(_SS, l->SS, 12 + 4 * l->getNumTimeSteps());
-    Octree_Arrange(_SS);
-    _VS =
+    addListOfStuff(_ss, l->SS, 12 + 4 * l->getNumTimeSteps());
+    Octree_Arrange(_ss);
+    _vs =
       Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
-    addListOfStuff(_VS, l->VS, 12 + 12 * l->getNumTimeSteps());
-    Octree_Arrange(_VS);
-    _TS =
+    addListOfStuff(_vs, l->VS, 12 + 12 * l->getNumTimeSteps());
+    Octree_Arrange(_vs);
+    _ts =
       Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
-    addListOfStuff(_TS, l->TS, 12 + 36 * l->getNumTimeSteps());
-    Octree_Arrange(_TS);
+    addListOfStuff(_ts, l->TS, 12 + 36 * l->getNumTimeSteps());
+    Octree_Arrange(_ts);
 
-    _SH =
+    _sh =
       Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
-    addListOfStuff(_SH, l->SH, 24 + 8 * l->getNumTimeSteps());
-    Octree_Arrange(_SH);
-    _VH =
+    addListOfStuff(_sh, l->SH, 24 + 8 * l->getNumTimeSteps());
+    Octree_Arrange(_sh);
+    _vh =
       Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
-    addListOfStuff(_VH, l->VH, 24 + 24 * l->getNumTimeSteps());
-    Octree_Arrange(_VH);
-    _TH =
+    addListOfStuff(_vh, l->VH, 24 + 24 * l->getNumTimeSteps());
+    Octree_Arrange(_vh);
+    _th =
       Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
-    addListOfStuff(_TH, l->TH, 24 + 72 * l->getNumTimeSteps());
-    Octree_Arrange(_TH);
+    addListOfStuff(_th, l->TH, 24 + 72 * l->getNumTimeSteps());
+    Octree_Arrange(_th);
 
-    _SI =
+    _si =
       Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
-    addListOfStuff(_SI, l->SI, 18 + 6 * l->getNumTimeSteps());
-    Octree_Arrange(_SI);
-    _VI =
+    addListOfStuff(_si, l->SI, 18 + 6 * l->getNumTimeSteps());
+    Octree_Arrange(_si);
+    _vi =
       Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
-    addListOfStuff(_VI, l->VI, 18 + 18 * l->getNumTimeSteps());
-    Octree_Arrange(_VI);
-    _TI =
+    addListOfStuff(_vi, l->VI, 18 + 18 * l->getNumTimeSteps());
+    Octree_Arrange(_vi);
+    _ti =
       Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
-    addListOfStuff(_TI, l->TI, 18 + 54 * l->getNumTimeSteps());
-    Octree_Arrange(_TI);
+    addListOfStuff(_ti, l->TI, 18 + 54 * l->getNumTimeSteps());
+    Octree_Arrange(_ti);
 
-    _SY =
+    _sy =
       Octree_Create(maxElePerBucket, min, size, pyrBB, pyrCentroid, pyrInEle);
-    addListOfStuff(_SY, l->SY, 15 + 5 * l->getNumTimeSteps());
-    Octree_Arrange(_SY);
-    _VY =
+    addListOfStuff(_sy, l->SY, 15 + 5 * l->getNumTimeSteps());
+    Octree_Arrange(_sy);
+    _vy =
       Octree_Create(maxElePerBucket, min, size, pyrBB, pyrCentroid, pyrInEle);
-    addListOfStuff(_VY, l->VY, 15 + 15 * l->getNumTimeSteps());
-    Octree_Arrange(_VY);
-    _TY =
+    addListOfStuff(_vy, l->VY, 15 + 15 * l->getNumTimeSteps());
+    Octree_Arrange(_vy);
+    _ty =
       Octree_Create(maxElePerBucket, min, size, pyrBB, pyrCentroid, pyrInEle);
-    addListOfStuff(_TY, l->TY, 15 + 45 * l->getNumTimeSteps());
-    Octree_Arrange(_TY);
+    addListOfStuff(_ty, l->TY, 15 + 45 * l->getNumTimeSteps());
+    Octree_Arrange(_ty);
   }
 }
 
@@ -578,28 +578,28 @@ bool OctreePost::searchScalar(double x, double y, double z, double *values,
   }
 
   if(_theViewDataList) {
-    if(_getValue(getElement(P, _SS, 4, qn, qx, qy, qz), 3, 4, 1, P, step,
+    if(_getValue(getElement(P, _ss, 4, qn, qx, qy, qz), 3, 4, 1, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _SH, 8, qn, qx, qy, qz), 3, 8, 1, P, step,
+    if(_getValue(getElement(P, _sh, 8, qn, qx, qy, qz), 3, 8, 1, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _SI, 6, qn, qx, qy, qz), 3, 6, 1, P, step,
+    if(_getValue(getElement(P, _si, 6, qn, qx, qy, qz), 3, 6, 1, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _SY, 5, qn, qx, qy, qz), 3, 5, 1, P, step,
+    if(_getValue(getElement(P, _sy, 5, qn, qx, qy, qz), 3, 5, 1, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _ST, 3, qn, qx, qy, qz), 2, 3, 1, P, step,
+    if(_getValue(getElement(P, _st, 3, qn, qx, qy, qz), 2, 3, 1, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _SQ, 4, qn, qx, qy, qz), 2, 4, 1, P, step,
+    if(_getValue(getElement(P, _sq, 4, qn, qx, qy, qz), 2, 4, 1, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _SL, 2, qn, qx, qy, qz), 1, 2, 1, P, step,
+    if(_getValue(getElement(P, _sl, 2, qn, qx, qy, qz), 1, 2, 1, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _SPP, 1, qn, qx, qy, qz), 0, 1, 1, P, step,
+    if(_getValue(getElement(P, _sp, 1, qn, qx, qy, qz), 0, 1, 1, P, step,
                  values, size, grad))
       return true;
   }
@@ -653,28 +653,28 @@ bool OctreePost::searchVector(double x, double y, double z, double *values,
   }
 
   if(_theViewDataList) {
-    if(_getValue(getElement(P, _VS, 4, qn, qx, qy, qz), 3, 4, 3, P, step,
+    if(_getValue(getElement(P, _vs, 4, qn, qx, qy, qz), 3, 4, 3, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _VH, 8, qn, qx, qy, qz), 3, 8, 3, P, step,
+    if(_getValue(getElement(P, _vh, 8, qn, qx, qy, qz), 3, 8, 3, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _VI, 6, qn, qx, qy, qz), 3, 6, 3, P, step,
+    if(_getValue(getElement(P, _vi, 6, qn, qx, qy, qz), 3, 6, 3, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _VY, 5, qn, qx, qy, qz), 3, 5, 3, P, step,
+    if(_getValue(getElement(P, _vy, 5, qn, qx, qy, qz), 3, 5, 3, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _VT, 3, qn, qx, qy, qz), 2, 3, 3, P, step,
+    if(_getValue(getElement(P, _vt, 3, qn, qx, qy, qz), 2, 3, 3, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _VQ, 4, qn, qx, qy, qz), 2, 4, 3, P, step,
+    if(_getValue(getElement(P, _vq, 4, qn, qx, qy, qz), 2, 4, 3, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _VL, 2, qn, qx, qy, qz), 1, 2, 3, P, step,
+    if(_getValue(getElement(P, _vl, 2, qn, qx, qy, qz), 1, 2, 3, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _VPP, 1, qn, qx, qy, qz), 0, 1, 3, P, step,
+    if(_getValue(getElement(P, _vp, 1, qn, qx, qy, qz), 0, 1, 3, P, step,
                  values, size, grad))
       return true;
   }
@@ -728,28 +728,28 @@ bool OctreePost::searchTensor(double x, double y, double z, double *values,
   }
 
   if(_theViewDataList) {
-    if(_getValue(getElement(P, _TS, 4, qn, qx, qy, qz), 3, 4, 9, P, step,
+    if(_getValue(getElement(P, _ts, 4, qn, qx, qy, qz), 3, 4, 9, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _TH, 8, qn, qx, qy, qz), 3, 8, 9, P, step,
+    if(_getValue(getElement(P, _th, 8, qn, qx, qy, qz), 3, 8, 9, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _TI, 6, qn, qx, qy, qz), 3, 6, 9, P, step,
+    if(_getValue(getElement(P, _ti, 6, qn, qx, qy, qz), 3, 6, 9, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _TY, 5, qn, qx, qy, qz), 3, 5, 9, P, step,
+    if(_getValue(getElement(P, _ty, 5, qn, qx, qy, qz), 3, 5, 9, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _TT, 3, qn, qx, qy, qz), 2, 3, 9, P, step,
+    if(_getValue(getElement(P, _tt, 3, qn, qx, qy, qz), 2, 3, 9, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _TQ, 4, qn, qx, qy, qz), 2, 4, 9, P, step,
+    if(_getValue(getElement(P, _tq, 4, qn, qx, qy, qz), 2, 4, 9, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _TL, 2, qn, qx, qy, qz), 1, 2, 9, P, step,
+    if(_getValue(getElement(P, _tl, 2, qn, qx, qy, qz), 1, 2, 9, P, step,
                  values, size, grad))
       return true;
-    if(_getValue(getElement(P, _TPP, 1, qn, qx, qy, qz), 0, 1, 9, P, step,
+    if(_getValue(getElement(P, _tp, 1, qn, qx, qy, qz), 0, 1, 9, P, step,
                  values, size, grad))
       return true;
   }

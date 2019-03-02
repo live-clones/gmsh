@@ -13,8 +13,8 @@ Geuzaine and J.-F. Remacle with the understanding that his contribution shall be
 cited appropriately. See the LICENSE.txt file for license information.
 ********************************************************************************/
 
-#if !defined(_QTTRANS3D_H_)
-#define _QTTRANS3D_H_
+#ifndef QTTRANS3D_H
+#define QTTRANS3D_H
 
 #include "QuadTriUtils.h"
 

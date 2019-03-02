@@ -405,4 +405,4 @@ public:
 
 #include "terms.hpp"
 
-#endif // _TERMS_H_
+#endif

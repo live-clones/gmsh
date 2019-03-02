@@ -346,7 +346,7 @@ void *searchElement(octantBucket *_buckets_head, double *_pt,
   return NULL;
 }
 
-int xyzInElementBB(double *_xyz, void *_region, BBFunction _BBElement)
+int xyzInElementBB(double *_xyz, void *_region, BBFunction _bbElement)
 // Check if xyz is in the region's bounding box, return 1 if true, 0 otherwise
 // BBElement is the function given by user to find the bounding box
 {
@@ -354,7 +354,7 @@ int xyzInElementBB(double *_xyz, void *_region, BBFunction _BBElement)
   double minPt[3]; // corner with smallest x,y,z coords
   double maxPt[3]; // corner with largest x,y,z coords
 
-  (*_BBElement)(_region, minPt, maxPt);
+  (*_bbElement)(_region, minPt, maxPt);
 
   for(i = 0; i < 3; i++) {
     if(_xyz[i] > maxPt[i] || _xyz[i] < minPt[i]) return 0;

@@ -36,7 +36,7 @@ class ChainComplex {
 private:
   // boundary operator matrices for this chain complex
   // h_k: C_k -> C_(k-1)
-  gmp_matrix *_HMatrix[5];
+  gmp_matrix *_hMatrix[5];
 
   // Basis matrices for the kernels and codomains of the boundary operator
   // matrices
@@ -44,14 +44,14 @@ private:
   gmp_matrix *_codH[5];
 
   // matrix of the mapping B_k -> Z_k
-  gmp_matrix *_JMatrix[5];
+  gmp_matrix *_jMatrix[5];
   // matrix of the mapping H_k -> Z_k
-  gmp_matrix *_QMatrix[5];
+  gmp_matrix *_qMatrix[5];
 
   // bases for homology groups
-  gmp_matrix *_Hbasis[5];
+  gmp_matrix *_hbasis[5];
   // torsion coefficients of homology generators
-  // corresponding the columns of _Hbasis
+  // corresponding the columns of _hbasis
   std::vector<long int> _torsion[5];
 
   int _dim;
@@ -64,7 +64,7 @@ private:
   // set the matrices
   void setHMatrix(int dim, gmp_matrix *matrix)
   {
-    if(dim > -1 && dim < 5) _HMatrix[dim] = matrix;
+    if(dim > -1 && dim < 5) _hMatrix[dim] = matrix;
   }
   void setKerHMatrix(int dim, gmp_matrix *matrix)
   {
@@ -76,22 +76,22 @@ private:
   }
   void setJMatrix(int dim, gmp_matrix *matrix)
   {
-    if(dim > -1 && dim < 5) _JMatrix[dim] = matrix;
+    if(dim > -1 && dim < 5) _jMatrix[dim] = matrix;
   }
   void setQMatrix(int dim, gmp_matrix *matrix)
   {
-    if(dim > -1 && dim < 5) _QMatrix[dim] = matrix;
+    if(dim > -1 && dim < 5) _qMatrix[dim] = matrix;
   }
   void setHbasis(int dim, gmp_matrix *matrix)
   {
-    if(dim > -1 && dim < 5) _Hbasis[dim] = matrix;
+    if(dim > -1 && dim < 5) _hbasis[dim] = matrix;
   }
 
   // get the boundary operator matrix dim->dim-1
   gmp_matrix *getHMatrix(int dim) const
   {
     if(dim > -1 && dim < 5)
-      return _HMatrix[dim];
+      return _hMatrix[dim];
     else
       return NULL;
   }
@@ -112,21 +112,21 @@ private:
   gmp_matrix *getJMatrix(int dim) const
   {
     if(dim > -1 && dim < 5)
-      return _JMatrix[dim];
+      return _jMatrix[dim];
     else
       return NULL;
   }
   gmp_matrix *getQMatrix(int dim) const
   {
     if(dim > -1 && dim < 5)
-      return _QMatrix[dim];
+      return _qMatrix[dim];
     else
       return NULL;
   }
   gmp_matrix *getHbasis(int dim) const
   {
     if(dim > -1 && dim < 5)
-      return _Hbasis[dim];
+      return _hbasis[dim];
     else
       return NULL;
   }
@@ -158,7 +158,7 @@ public:
   gmp_matrix *getBoundaryOp(int dim)
   {
     if(dim > -1 && dim < 5)
-      return _HMatrix[dim];
+      return _hMatrix[dim];
     else
       return NULL;
   }
@@ -212,8 +212,8 @@ public:
   // apply a transformation T to a basis (T should be unimodular)
   void transformBasis(gmp_matrix *T, int dim, int basis)
   {
-    if(basis == 3 && _Hbasis[dim] != NULL) {
-      gmp_matrix_right_mult(_Hbasis[dim], T);
+    if(basis == 3 && _hbasis[dim] != NULL) {
+      gmp_matrix_right_mult(_hbasis[dim], T);
     }
   }
   // void printBasisChain(std::map<Cell*, int, Less_Cell>& chain);

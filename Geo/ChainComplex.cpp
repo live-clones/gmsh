@@ -16,12 +16,12 @@ ChainComplex::ChainComplex(CellComplex *cellComplex, int domain)
   _cellComplex = cellComplex;
 
   for(int i = 0; i < 5; i++) {
-    _HMatrix[i] = NULL;
+    _hMatrix[i] = NULL;
     _kerH[i] = NULL;
     _codH[i] = NULL;
-    _JMatrix[i] = NULL;
-    _QMatrix[i] = NULL;
-    _Hbasis[i] = NULL;
+    _jMatrix[i] = NULL;
+    _qMatrix[i] = NULL;
+    _hbasis[i] = NULL;
   }
 
   int lastCols = 0;
@@ -49,15 +49,15 @@ ChainComplex::ChainComplex(CellComplex *cellComplex, int domain)
     lastCols = cols;
 
     if(cols == 0) { // no dim-cells, no map
-      _HMatrix[dim] = NULL;
+      _hMatrix[dim] = NULL;
     }
     else if(rows == 0) { // no dim-1-cells, maps everything to zero
-      _HMatrix[dim] = create_gmp_matrix_zero(1, cols);
+      _hMatrix[dim] = create_gmp_matrix_zero(1, cols);
     }
     else {
       mpz_t elem;
       mpz_init(elem);
-      _HMatrix[dim] = create_gmp_matrix_zero(rows, cols);
+      _hMatrix[dim] = create_gmp_matrix_zero(rows, cols);
       for(std::set<Cell *, Less_Cell>::iterator cit =
             cellComplex->firstCell(dim);
           cit != cellComplex->lastCell(dim); cit++) {
@@ -73,15 +73,15 @@ ChainComplex::ChainComplex(CellComplex *cellComplex, int domain)
               int old_elem = 0;
               int bdCellIndex = getCellIndex(bdCell);
               int cellIndex = getCellIndex(cell);
-              if(bdCellIndex > (int)gmp_matrix_rows(_HMatrix[dim]) ||
+              if(bdCellIndex > (int)gmp_matrix_rows(_hMatrix[dim]) ||
                  bdCellIndex < 1 ||
-                 cellIndex > (int)gmp_matrix_cols(_HMatrix[dim]) ||
+                 cellIndex > (int)gmp_matrix_cols(_hMatrix[dim]) ||
                  cellIndex < 1) {
                 Msg::Debug("Index out of bound! HMatrix: %d", dim);
               }
               else {
                 gmp_matrix_get_elem(elem, bdCellIndex, cellIndex,
-                                    _HMatrix[dim]);
+                                    _hMatrix[dim]);
                 old_elem = mpz_get_si(elem);
                 mpz_set_si(elem, old_elem + it->second.get());
                 if(abs((old_elem + it->second.get())) > 1) {
@@ -89,7 +89,7 @@ ChainComplex::ChainComplex(CellComplex *cellComplex, int domain)
                   // + (*it).second), dim);
                 }
                 gmp_matrix_set_elem(elem, bdCellIndex, cellIndex,
-                                    _HMatrix[dim]);
+                                    _hMatrix[dim]);
               }
             }
           }
@@ -99,42 +99,42 @@ ChainComplex::ChainComplex(CellComplex *cellComplex, int domain)
     }
     _kerH[dim] = NULL;
     _codH[dim] = NULL;
-    _JMatrix[dim] = NULL;
-    _QMatrix[dim] = NULL;
-    _Hbasis[dim] = NULL;
+    _jMatrix[dim] = NULL;
+    _qMatrix[dim] = NULL;
+    _hbasis[dim] = NULL;
   }
 }
 
 ChainComplex::~ChainComplex()
 {
   for(int i = 0; i < 5; i++) {
-    destroy_gmp_matrix(_HMatrix[i]);
+    destroy_gmp_matrix(_hMatrix[i]);
     destroy_gmp_matrix(_kerH[i]);
     destroy_gmp_matrix(_codH[i]);
-    destroy_gmp_matrix(_JMatrix[i]);
-    destroy_gmp_matrix(_QMatrix[i]);
-    destroy_gmp_matrix(_Hbasis[i]);
+    destroy_gmp_matrix(_jMatrix[i]);
+    destroy_gmp_matrix(_qMatrix[i]);
+    destroy_gmp_matrix(_hbasis[i]);
   }
 }
 
 void ChainComplex::transposeHMatrices()
 {
   for(int i = 0; i < 5; i++)
-    if(_HMatrix[i] != NULL) gmp_matrix_transp(_HMatrix[i]);
+    if(_hMatrix[i] != NULL) gmp_matrix_transp(_hMatrix[i]);
 }
 void ChainComplex::transposeHMatrix(int dim)
 {
-  if(dim > -1 && dim < 5 && _HMatrix[dim] != NULL)
-    gmp_matrix_transp(_HMatrix[dim]);
+  if(dim > -1 && dim < 5 && _hMatrix[dim] != NULL)
+    gmp_matrix_transp(_hMatrix[dim]);
 }
 
 void ChainComplex::KerCod(int dim)
 {
-  if(dim < 0 || dim > 3 || _HMatrix[dim] == NULL) return;
+  if(dim < 0 || dim > 3 || _hMatrix[dim] == NULL) return;
 
   gmp_matrix *HMatrix =
-    copy_gmp_matrix(_HMatrix[dim], 1, 1, gmp_matrix_rows(_HMatrix[dim]),
-                    gmp_matrix_cols(_HMatrix[dim]));
+    copy_gmp_matrix(_hMatrix[dim], 1, 1, gmp_matrix_rows(_hMatrix[dim]),
+                    gmp_matrix_cols(_hMatrix[dim]));
 
   gmp_normal_form *normalForm =
     create_gmp_Hermite_normal_form(HMatrix, NOT_INVERTED, INVERTED);
@@ -264,12 +264,12 @@ void ChainComplex::Inclusion(int lowDim, int highDim)
 
 void ChainComplex::Quotient(int dim, int setDim)
 {
-  if(dim < 0 || dim > 4 || _JMatrix[dim] == NULL) return;
+  if(dim < 0 || dim > 4 || _jMatrix[dim] == NULL) return;
   if(setDim < 0 || setDim > 4) return;
 
   gmp_matrix *JMatrix =
-    copy_gmp_matrix(_JMatrix[dim], 1, 1, gmp_matrix_rows(_JMatrix[dim]),
-                    gmp_matrix_cols(_JMatrix[dim]));
+    copy_gmp_matrix(_jMatrix[dim], 1, 1, gmp_matrix_rows(_jMatrix[dim]),
+                    gmp_matrix_cols(_jMatrix[dim]));
   int rows = gmp_matrix_rows(JMatrix);
   int cols = gmp_matrix_cols(JMatrix);
 
@@ -298,7 +298,7 @@ void ChainComplex::Quotient(int dim, int setDim)
   if(rows - rank > 0) {
     gmp_matrix *Hbasis =
       copy_gmp_matrix(normalForm->left, 1, rank + 1, rows, rows);
-    _QMatrix[dim] = Hbasis;
+    _qMatrix[dim] = Hbasis;
   }
 
   mpz_clear(elem);
@@ -414,10 +414,10 @@ std::vector<int> ChainComplex::getCoeffVector(int dim, int chainNumber)
   std::vector<int> coeffVector;
 
   if(dim < 0 || dim > 4) return coeffVector;
-  if(_Hbasis[dim] == NULL || (int)gmp_matrix_cols(_Hbasis[dim]) < chainNumber)
+  if(_hbasis[dim] == NULL || (int)gmp_matrix_cols(_hbasis[dim]) < chainNumber)
     return coeffVector;
 
-  int rows = gmp_matrix_rows(_Hbasis[dim]);
+  int rows = gmp_matrix_rows(_hbasis[dim]);
 
   int elemi;
   long int elemli;
@@ -425,7 +425,7 @@ std::vector<int> ChainComplex::getCoeffVector(int dim, int chainNumber)
   mpz_init(elem);
 
   for(int i = 1; i <= rows; i++) {
-    gmp_matrix_get_elem(elem, i, chainNumber, _Hbasis[dim]);
+    gmp_matrix_get_elem(elem, i, chainNumber, _hbasis[dim]);
     elemli = mpz_get_si(elem);
     elemi = elemli;
     coeffVector.push_back(elemi);
@@ -444,7 +444,7 @@ gmp_matrix *ChainComplex::getBasis(int dim, int basis)
   else if(basis == 1)
     return _kerH[dim];
   else if(basis == 3)
-    return _Hbasis[dim];
+    return _hbasis[dim];
   else
     return NULL;
 }
@@ -494,8 +494,8 @@ void ChainComplex::getBasisChain(std::map<Cell *, int, Less_Cell> &chain,
 int ChainComplex::getBasisSize(int dim, int basis)
 {
   gmp_matrix *basisMatrix;
-  if(basis == 0 && _HMatrix[dim] != NULL) {
-    return gmp_matrix_cols(_HMatrix[dim]);
+  if(basis == 0 && _hMatrix[dim] != NULL) {
+    return gmp_matrix_cols(_hMatrix[dim]);
   }
   else if(basis == 1)
     basisMatrix = getBasis(dim, 1);
@@ -515,7 +515,7 @@ int ChainComplex::getBasisSize(int dim, int basis)
 int ChainComplex::getTorsion(int dim, int num)
 {
   if(dim < 0 || dim > 4) return 0;
-  if(_Hbasis[dim] == NULL || (int)gmp_matrix_cols(_Hbasis[dim]) < num) return 0;
+  if(_hbasis[dim] == NULL || (int)gmp_matrix_cols(_hbasis[dim]) < num) return 0;
   if(_torsion[dim].empty() || (int)_torsion[dim].size() < num)
     return 1;
   else

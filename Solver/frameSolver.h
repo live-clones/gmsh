@@ -17,16 +17,16 @@ class GVertex;
 
 struct gmshBeam2d {
   MLine *_element;
-  double _I, _A, _E, _L;
+  double _i, _a, _e, _l;
   bool _rigidNodes[2];
   double _forceVector[6];
   double _displacement[6];
   int _rotationTags[2];
   fullMatrix<double> _stiffness;
   gmshBeam2d(MLine *l, double E, double I, double A, int r[2])
-    : _element(l), _I(I), _A(A), _E(E)
+    : _element(l), _i(I), _a(A), _e(E)
   {
-    _L = distance(_element->getVertex(0), _element->getVertex(1));
+    _l = distance(_element->getVertex(0), _element->getVertex(1));
     _rotationTags[0] = _rotationTags[1] = 0;
     _rigidNodes[0] = r[0];
     _rigidNodes[1] = r[1];

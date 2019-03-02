@@ -15,7 +15,7 @@
 #include "MElement.h"
 
 class GFace;
-typedef struct _CDLIST DListRecord, *DListPeek;
+typedef struct CDList DListRecord, *DListPeek;
 typedef int PointNumero;
 
 typedef struct {
@@ -36,7 +36,7 @@ struct PointRecord {
   }
 };
 
-struct _CDLIST {
+struct CDList {
   PointNumero point_num;
   DListPeek next, prev;
 };

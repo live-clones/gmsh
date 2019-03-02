@@ -18,7 +18,7 @@
 
 class eigenSolver {
 private:
-  linearSystemPETSc<double> *_A, *_B;
+  linearSystemPETSc<double> *_sysA, *_sysB;
   bool _hermitian;
   std::vector<std::complex<double> > _eigenValues;
   std::vector<std::vector<std::complex<double> > > _eigenVectors;
