@@ -7,7 +7,7 @@
 
 //#define CONMAX 2000
 
-#ifdef CONMAX  
+#ifdef CONMAX
 static void connectivityInsert(int *connectivity, int i, int j)
 {
   for (int k = 0; k < CONMAX; ++k) {
@@ -43,7 +43,7 @@ struct HXTConnectivity {
   int quantum;
   int *degree;
   int *allocated;
-  int **nodeConnectivity;  
+  int **nodeConnectivity;
 };
 
 void mallocConnectivity (struct HXTConnectivity *c, int n, int q)
@@ -56,15 +56,15 @@ void mallocConnectivity (struct HXTConnectivity *c, int n, int q)
   for (int i=0;i<c->nNodes;i++){
     c-> allocated[i] = c->quantum;
     c-> degree [i] = 0;
-    c-> nodeConnectivity [i] = malloc (sizeof(int) * c-> allocated[i]);    
-  }    
+    c-> nodeConnectivity [i] = malloc (sizeof(int) * c-> allocated[i]);
+  }
 }
 
 void freeConnectivity (struct HXTConnectivity *c)
 {
   for (int i=0;i<c->nNodes;i++){
     free(c-> nodeConnectivity [i]);
-  }    
+  }
   free(c-> nodeConnectivity);
   free(c-> degree);
   free(c-> allocated);
@@ -89,7 +89,7 @@ int addToConnectivity (struct HXTConnectivity *c, int myRow, int myCol){
 
 static void reverseCuthillMckee(HXTLinearSystemLU *system, int *ordering)
 {
-#ifdef CONMAX  
+#ifdef CONMAX
   int *nodeConnectivity = malloc(sizeof(int)*system->nNodes*CONMAX);
   for (int i = 0; i < system->nNodes*CONMAX; ++i) {
     nodeConnectivity[i] = -1;
@@ -98,13 +98,13 @@ static void reverseCuthillMckee(HXTLinearSystemLU *system, int *ordering)
   struct HXTConnectivity myConnectivity;
   mallocConnectivity (&myConnectivity,system->nNodes,9); // 7 is the average connectivity of a triangular mesh, we put a llitle more
 #endif
-  
+
   for (int i = 0; i < system->nElements; ++i) {
     uint32_t *el = system->elements + i*system->nNodesByElement;
     for (int k = 0; k < system->nNodesByElement; ++k){
       for (int l = 0; l < system->nNodesByElement; ++l){
         if (k == l) continue;
-#ifdef CONMAX  
+#ifdef CONMAX
         connectivityInsert(nodeConnectivity, el[k], el[l]);
         connectivityInsert(nodeConnectivity, el[l], el[k]);
 #else
@@ -114,7 +114,7 @@ static void reverseCuthillMckee(HXTLinearSystemLU *system, int *ordering)
       }
     }
   }
-#ifdef CONMAX  
+#ifdef CONMAX
   int *nodeDegree = malloc(sizeof(int)*system->nNodes);
   for (int i = 0; i < system->nNodes; ++i) {
     nodeDegree[i] = 0;
@@ -127,7 +127,7 @@ static void reverseCuthillMckee(HXTLinearSystemLU *system, int *ordering)
 #else
   int *nodeDegree = myConnectivity.degree;
 #endif
-  
+
   int *queue = malloc(sizeof(int)*system->nNodes);
   queue[0] = 0;
   for (int i = 0; i < system->nNodes; ++i){
@@ -145,7 +145,7 @@ static void reverseCuthillMckee(HXTLinearSystemLU *system, int *ordering)
       int c = queue[i];
       ordering[c] = id++;
       for(int j = 0; j < nodeDegree[c]; ++j) {
-#ifdef CONMAX  
+#ifdef CONMAX
         int o = nodeConnectivity[c*CONMAX+j];
 #else
         int o = myConnectivity.nodeConnectivity[c][j];
@@ -173,8 +173,8 @@ static void reverseCuthillMckee(HXTLinearSystemLU *system, int *ordering)
     if(ordering[i] >= 0)
       ordering[i] = id-1-ordering[i];
   free(queue);
-  
-#ifdef CONMAX  
+
+#ifdef CONMAX
   free(nodeDegree);
   free(nodeConnectivity);
 #else
@@ -187,7 +187,10 @@ static void reverseCuthillMckee(HXTLinearSystemLU *system, int *ordering)
 
 
 typedef hxtDeclareAligned double alignedDouble;
+#ifndef HAVE_NO_IMMINTRIN_H // FIXME: Gmsh
 #include <immintrin.h>
+#endif
+
 // y[from:to] += a*x[from:to]
 // y and x must be 256-bit aligned
 // memory should be allocated in consequence
