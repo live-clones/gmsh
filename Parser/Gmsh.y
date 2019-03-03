@@ -5992,27 +5992,15 @@ StringExprVar :
       strcpy($$, out.c_str());
       Free($1); Free($6);
     }
-  | tPhysical tPoint '{' FExpr '}'
+  | GeoEntity '{' FExpr '}'
     {
-      std::string name = GModel::current()->getPhysicalName(0, (int)$4);
+      std::string name = GModel::current()->getElementaryName($1, (int)$3);
       $$ = (char*)Malloc((name.size() + 1) * sizeof(char));
       strcpy($$, name.c_str());
     }
-  | tPhysical tCurve '{' FExpr '}'
+  | tPhysical GeoEntity '{' FExpr '}'
     {
-      std::string name = GModel::current()->getPhysicalName(1, (int)$4);
-      $$ = (char*)Malloc((name.size() + 1) * sizeof(char));
-      strcpy($$, name.c_str());
-    }
-  | tPhysical tSurface '{' FExpr '}'
-    {
-      std::string name = GModel::current()->getPhysicalName(2, (int)$4);
-      $$ = (char*)Malloc((name.size() + 1) * sizeof(char));
-      strcpy($$, name.c_str());
-    }
-  | tPhysical tVolume '{' FExpr '}'
-    {
-      std::string name = GModel::current()->getPhysicalName(3, (int)$4);
+      std::string name = GModel::current()->getPhysicalName($2, (int)$4);
       $$ = (char*)Malloc((name.size() + 1) * sizeof(char));
       strcpy($$, name.c_str());
     }

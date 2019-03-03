@@ -1038,6 +1038,7 @@ Character expressions are defined as:
   GetStringValue ( @var{char-expression} , @var{char-expression} ) |
   StrReplace ( @var{char-expression} , @var{char-expression} , @var{char-expression} )
   NameToString ( @var{string} ) | N2S ( @var{string} ) |
+  <Physical> Point|Curve|Surface|Volume @{ @var{expression} @} |
   DefineString(@var{char-expression}, @var{onelab-options})
 @end example
 
@@ -1070,8 +1071,9 @@ exist).  @code{GetStringValue} asks the user for a value interactively
 (the second argument is the value used in non-interactive
 mode). @code{StrReplace}'s arguments are: input string, old substring,
 new substring (brackets can be used instead of parentheses in @code{Str}
-and @code{Sprintf}). @code{NameToString} converts a variable name into a
-string.
+and @code{Sprintf}). @code{Physical Point}, etc., or @code{Point}, etc.,
+retrieve the name of the physical or elementary entity, if any.
+@code{NameToString} converts a variable name into a string.
 
 @code{DefineString} allows to define a ONELAB variable in-line. The
 @var{char-expression} given as the first argument is the default value;
