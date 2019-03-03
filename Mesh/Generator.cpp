@@ -170,7 +170,8 @@ GetQualityMeasure(std::vector<T *> &ele, double &gamma, double &gammaMin,
   }
 }
 
-void GetStatistics(double stat[50], double quality[3][100])
+void GetStatistics(double stat[50], double quality[3][100],
+                   bool visibleOnly)
 {
   for(int i = 0; i < 50; i++) stat[i] = 0.;
 
@@ -189,22 +190,26 @@ void GetStatistics(double stat[50], double quality[3][100])
              physicals[3].size();
 
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it) {
+    if(visibleOnly && !(*it)->getVisibility()) continue;
     stat[4] += (*it)->mesh_vertices.size();
     stat[5] += (*it)->points.size();
   }
 
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
+    if(visibleOnly && !(*it)->getVisibility()) continue;
     stat[4] += (*it)->mesh_vertices.size();
     stat[6] += (*it)->lines.size();
   }
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+    if(visibleOnly && !(*it)->getVisibility()) continue;
     stat[4] += (*it)->mesh_vertices.size();
     stat[7] += (*it)->triangles.size();
     stat[8] += (*it)->quadrangles.size();
   }
 
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+    if(visibleOnly && !(*it)->getVisibility()) continue;
     stat[4] += (*it)->mesh_vertices.size();
     stat[9] += (*it)->tetrahedra.size();
     stat[10] += (*it)->hexahedra.size();
@@ -227,6 +232,7 @@ void GetStatistics(double stat[50], double quality[3][100])
     double N = stat[9] + stat[10] + stat[11] + stat[12] + stat[13];
     if(N) { // if we have 3D elements
       for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+        if(visibleOnly && !(*it)->getVisibility()) continue;
         GetQualityMeasure((*it)->tetrahedra, gamma, gammaMin, gammaMax, minSICN,
                           minSICNMin, minSICNMax, minSIGE, minSIGEMin,
                           minSIGEMax, quality);
@@ -244,6 +250,7 @@ void GetStatistics(double stat[50], double quality[3][100])
     else { // 2D elements
       N = stat[7] + stat[8];
       for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+        if(visibleOnly && !(*it)->getVisibility()) continue;
         GetQualityMeasure((*it)->quadrangles, gamma, gammaMin, gammaMax,
                           minSICN, minSICNMin, minSICNMax, minSIGE, minSIGEMin,
                           minSIGEMax, quality);

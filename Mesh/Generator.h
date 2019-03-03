@@ -9,7 +9,8 @@
 class GModel;
 class GRegion;
 
-void GetStatistics(double stat[50], double quality[4][100] = 0);
+void GetStatistics(double stat[50], double quality[4][100] = 0,
+                   bool visibleOnly = false);
 void AdaptMesh(GModel *m);
 void GenerateMesh(GModel *m, int dimension);
 void OptimizeMesh(GModel *m);
