@@ -57,10 +57,5 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Intel")
                              "-fp-model strict")
 endif()
 
-find_path(IMMINTRIN_H "immintrin.h")
-if(NOT IMMINTRIN_H)
-  add_definitions(-DHAVE_NO_IMMINTRIN_H)
-endif()
-
 file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(contrib/hxt "${SRC};${HDR}")
