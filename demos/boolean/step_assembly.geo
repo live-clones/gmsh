@@ -3,6 +3,10 @@ SetFactory("OpenCASCADE");
 // this step file contains several assemblies, with overlapping surfaces
 vol() = ShapeFromFile("as1-tu-203.stp");
 
+Mesh.Algorithm = 6;
+Mesh.CharacteristicLengthMin = 5;
+Mesh.CharacteristicLengthMax = 5;
+
 SyncModel;
 
 Physical Volume("Rod") = {};
