@@ -3162,13 +3162,15 @@ bool OCC_Internals::importShapes(const std::string &fileName,
       TDF_Label mainLabel = step_doc->Main();
       Handle_XCAFDoc_ShapeTool shapeTool =
         XCAFDoc_DocumentTool::ShapeTool(mainLabel);
-      Handle_XCAFDoc_ColorTool colorTool =
-        XCAFDoc_DocumentTool::ColorTool(mainLabel);
-      Handle_XCAFDoc_MaterialTool materialTool =
-        XCAFDoc_DocumentTool::MaterialTool(mainLabel);
-      // traverse the labels recursively to set attributes on shapes
-      setShapeAttributes(_attributes, shapeTool, colorTool, materialTool,
-                         mainLabel, TopLoc_Location(), "", false);
+      if(CTX::instance()->geom.occImportLabels){
+        Handle_XCAFDoc_ColorTool colorTool =
+          XCAFDoc_DocumentTool::ColorTool(mainLabel);
+        Handle_XCAFDoc_MaterialTool materialTool =
+          XCAFDoc_DocumentTool::MaterialTool(mainLabel);
+        // traverse the labels recursively to set attributes on shapes
+        setShapeAttributes(_attributes, shapeTool, colorTool, materialTool,
+                           mainLabel, TopLoc_Location(), "", false);
+      }
       // the main shape (compound) is the first one
       TDF_LabelSequence shapeLabels;
       shapeTool->GetShapes(shapeLabels);

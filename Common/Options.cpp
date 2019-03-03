@@ -4829,6 +4829,13 @@ double opt_geometry_occ_scaling(OPT_ARGS_NUM)
   return CTX::instance()->geom.occScaling;
 }
 
+double opt_geometry_occ_import_labels(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occImportLabels = (int)val;
+  return CTX::instance()->geom.occImportLabels;
+}
+
 double opt_geometry_old_circle(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

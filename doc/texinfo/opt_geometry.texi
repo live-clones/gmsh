@@ -136,6 +136,11 @@ Automatically fix orientation of wires, faces, shells and volumes when creating 
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCBooleanPreserveNumbering
+Try to preserve numbering of entities through OCC boolean operations@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OCCDisableSTL
 Disable STL computation@*
 Default value: @code{0}@*
@@ -156,9 +161,9 @@ Fix small faces in STEP, IGES and BRep models@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.OCCSewFaces
-Sew faces in STEP, IGES and BRep models@*
-Default value: @code{0}@*
+@item Geometry.OCCImportLabels
+Import labels and colors from STEP models@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCParallel
@@ -166,14 +171,14 @@ Use multi-threaded OCC boolean operators@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.OCCBooleanPreserveNumbering
-Try to preserve numbering of entities through OCC boolean operations@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Geometry.OCCScaling
 Scale STEP, IGES and BRep model by given factor@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCSewFaces
+Sew faces in STEP, IGES and BRep models@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OffsetX
