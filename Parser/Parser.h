@@ -6,6 +6,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+#include <algorithm>
 #include <map>
 #include <string>
 #include <vector>
