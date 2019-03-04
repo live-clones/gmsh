@@ -287,7 +287,8 @@ public:
   // handle the master entity for periodic meshes
   GEntity *getMeshMaster() const { return _meshMaster; }
   void setMeshMaster(GEntity *);
-  void setMeshMaster(GEntity *, const std::vector<double> &);
+  void setMeshMaster(GEntity *, const std::vector<double> &,
+                     bool updateCorrespondingVertices = true);
   void updateCorrespondingVertices();
   void copyMasterCoordinates();
 
@@ -391,9 +392,6 @@ public:
   GEdge *cast2Edge();
   GFace *cast2Face();
   GRegion *cast2Region();
-
-  // update all vertex lists, including periodic connections
-  void updateVertices(const std::map<MVertex *, MVertex *> &);
 
   // transformation from master
   std::vector<double> affineTransform;

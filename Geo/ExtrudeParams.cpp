@@ -135,3 +135,52 @@ double ExtrudeParams::u(int iLayer, int iElemLayer)
   double t = (double)iElemLayer / (double)mesh.NbElmLayer[iLayer];
   return t0 + t * (t1 - t0);
 }
+
+void ExtrudeParams::GetAffineTransform(std::vector<double> &tfo)
+{
+  tfo.clear();
+  double v[3], m1[4][4], m2[4][4], m3[4][4];
+  switch(geo.Type) {
+  case TRANSLATE:
+    SetTranslationMatrix(m1, geo.trans);
+    tfo.resize(16);
+    for(int i = 0; i < 4; i++)
+      for(int j = 0; j < 4; j++)
+        tfo[i * 4 + j] = m1[i][j];
+    break;
+  case ROTATE:
+  case TRANSLATE_ROTATE:
+    v[0] = -geo.pt[0];
+    v[1] = -geo.pt[1];
+    v[2] = -geo.pt[2];
+    SetTranslationMatrix(m1, v);
+    SetRotationMatrix(m2, geo.axe, geo.angle);
+    for(int i = 0; i < 4; i++){
+      for(int j = 0; j < 4; j++){
+        m3[i][j] = 0;
+        for(int k = 0; k < 4; k++){
+          m3[i][j] += m1[i][k] * m2[k][j];
+        }
+      }
+    }
+    SetTranslationMatrix(m1, geo.pt);
+    for(int i = 0; i < 4; i++){
+      for(int j = 0; j < 4; j++){
+        m2[i][j] = 0;
+        for(int k = 0; k < 4; k++){
+          m2[i][j] += m3[i][k] * m1[k][j];
+        }
+      }
+    }
+    tfo.resize(16);
+    for(int i = 0; i < 4; i++)
+      for(int j = 0; j < 4; j++)
+        tfo[i * 4 + j] = m2[i][j];
+    if(geo.Type == TRANSLATE_ROTATE){
+      tfo[3] += geo.trans[0];
+      tfo[7] += geo.trans[1];
+      tfo[11] += geo.trans[2];
+    }
+    break;
+  }
+}

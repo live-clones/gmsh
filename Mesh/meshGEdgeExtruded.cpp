@@ -27,7 +27,9 @@ static void extrudeMesh(GVertex *from, GEdge *to)
     }
   }
   to->getEndVertex()->correspondingVertices[to->getEndVertex()->mesh_vertices[0]] = v;
-  to->getEndVertex()->GEntity::setMeshMaster(from);
+  std::vector<double> tfo;
+  ep->GetAffineTransform(tfo);
+  to->getEndVertex()->GEntity::setMeshMaster(from, tfo, false);
 }
 
 static void copyMesh(GEdge *from, GEdge *to)
@@ -53,7 +55,9 @@ static void copyMesh(GEdge *from, GEdge *to)
     to->mesh_vertices.push_back(newv);
     to->correspondingVertices[newv] = v;
   }
-  to->GEntity::setMeshMaster(from);
+  std::vector<double> tfo;
+  ep->GetAffineTransform(tfo);
+  to->GEntity::setMeshMaster(from, tfo, false);
 }
 
 int MeshExtrudedCurve(GEdge *ge)
