@@ -358,7 +358,7 @@ namespace {
                           const elSet &elts, elSet &bndElts,
                           MeshOptParameters &par)
   {
-    for(elSetIter itEl = elts.begin(); itEl != elts.end(); itEl++) {
+    for(elSet::const_iterator itEl = elts.begin(); itEl != elts.end(); itEl++) {
       elElMap::const_iterator itBndEl = el2BndEl.find(*itEl);
       if(itBndEl != el2BndEl.end()) {
         MElement *bndEl = itBndEl->second;

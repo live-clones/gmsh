@@ -1036,7 +1036,7 @@ int solveInvalidPeriodic(
 
   std::set<BDS_Edge *, EdgeLessThan> toSplit;
   invalidEdgesPeriodic(m, recoverMap, toSplit);
-  std::set<BDS_Edge *>::iterator ite = toSplit.begin();
+  std::set<BDS_Edge *, EdgeLessThan>::iterator ite = toSplit.begin();
 
   Msg::Debug("%d edges of the initial mesh are going to be split",
              toSplit.size());

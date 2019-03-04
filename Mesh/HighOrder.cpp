@@ -1367,7 +1367,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
             vtcs.push_back(tIter->second);
         }
 
-        std::map<MFace, MElement *>::iterator srcIter =
+        std::map<MFace, MElement *, Less_Face>::iterator srcIter =
           srcFaces.find(MFace(vtcs));
         if(srcIter == srcFaces.end()) {
           std::ostringstream faceDef;

@@ -617,7 +617,7 @@ static void copy_periodicity(std::vector<Pair<GEType *, GEType *> > &eCor,
 
     if(oldSrc != NULL && oldSrc != oldTgt) {
       GEType *newTgt = srcIter->second;
-      typename std::map<GEType *, GEType *>::iterator tgtIter =
+      typename std::multimap<GEType *, GEType *>::iterator tgtIter =
         eMap.find(oldSrc);
       if(tgtIter == eMap.end()) {
         Msg::Error("Could not find matched entity for %d",
