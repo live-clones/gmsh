@@ -1572,6 +1572,7 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
 
   TopoDS_Shape result;
   try {
+#if 1
     BRepBuilderAPI_Sewing s;
     for(std::size_t i = 0; i < surfaceTags.size(); i++) {
       if(!_tagFace.IsBound(surfaceTags[i])) {
@@ -1583,6 +1584,22 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
     }
     s.Perform();
     result = s.SewedShape();
+#else
+    // Another way: not sure which is better
+    BRep_Builder builder;
+    BRepPrim_Builder b(builder);
+    TopoDS_Shell shell;
+    b.MakeShell(shell);
+    for(std::size_t i = 0; i < surfaceTags.size(); i++) {
+      if(!_tagFace.IsBound(surfaceTags[i])) {
+        Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[i]);
+        return false;
+      }
+      TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTags[i]));
+      b.AddShellFace(shell, face);
+    }
+    result = shell;
+#endif
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
