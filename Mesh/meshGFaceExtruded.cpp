@@ -199,8 +199,10 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
       newv = new MVertex(x, y, z, to);
     }
     to->mesh_vertices.push_back(newv);
+    to->correspondingVertices[newv] = v;
     pos.insert(newv);
   }
+  to->GEntity::setMeshMaster(from);
 
 #if defined(HAVE_QUADTRI)
   // if performing QuadToTri mesh, cannot simply copy the mesh from the source.

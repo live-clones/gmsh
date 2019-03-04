@@ -1597,7 +1597,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
   std::vector<GEdge *>::const_iterator eIter;
   std::list<GVertex *>::iterator vIter;
 
-  Msg::Info("Setting mesh master using transformation ");
+  Msg::Info("Setting mesh master using transformation");
 
   // list all vertices and construct vertex to edge correspondence for local
   // edge
