@@ -336,36 +336,29 @@ Default value: @code{10}
 @end table
 
 @item Plugin(Distance)
-Plugin(Distance) computes distances to physical entities in a mesh.@*
+Plugin(Distance) computes distances to entities in a mesh.@*
 @*
-Define the physical entities to which the distance is computed. If Point=0, Line=0, and Surface=0, then the distance is computed to all the boundaries of the mesh (edges in 2D and faces in 3D).@*
+If `PhysicalPoint', `PhysicalLine' and `PhysicalSurface' are 0, the distance is computed to all the boundaries. Otherwise the distance is computed to the given physical group.@*
 @*
-Computation<0. computes the geometrical euclidian distance (warning: different than the geodesic distance), and  Computation=a>0.0 solves a PDE on the mesh with the diffusion constant mu = a*bbox, with bbox being the max size of the bounding box of the mesh (see paper Legrand 2006).@*
+If `DistanceType' is 0, the plugin computes the geometrical Euclidean distance (different than the geodesic distance!). If `DistanceType' > 0, the plugin solves a PDE on the mesh with a diffusion constant equal to `DistanceType' time the maximum size of the bounding box of the mesh [Legrand, 2006].@*
 @*
-Min Scale and max Scale, scale the distance function. If min Scale<0 and max Scale<0, then no scaling is applied to the distance function.@*
+Positive `MinScale' and `MaxScale' scale the distance function.@*
 @*
-Plugin(Distance) creates a new distance view and also saves the view in the fileName.pos file.
-String options:
-@table @code
-@item Filename
-Default value: @code{"distance.pos"}
-@end table
+Plugin(Distance) creates one or two new views.
 Numeric options:
 @table @code
-@item PhysPoint
+@item PhysicalPoint
 Default value: @code{0}
-@item PhysLine
+@item PhysicalLine
 Default value: @code{0}
-@item PhysSurface
+@item PhysicalSurface
 Default value: @code{0}
-@item Computation
-Default value: @code{-1}
+@item DistanceType
+Default value: @code{0}
 @item MinScale
-Default value: @code{-1}
+Default value: @code{0}
 @item MaxScale
-Default value: @code{-1}
-@item Orthogonal
-Default value: @code{-1}
+Default value: @code{0}
 @end table
 
 @item Plugin(Divergence)
