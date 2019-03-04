@@ -9,7 +9,6 @@
 #include "GModel.h"
 #include "OS.h"
 #include "Distance.h"
-#include "distanceTerm.h"
 #include "Context.h"
 #include "Numeric.h"
 
@@ -19,8 +18,7 @@
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
-#include "laplaceTerm.h"
-#include "crossConfTerm.h"
+#include "distanceTerm.h"
 #endif
 
 template <class scalar> class simpleFunction;
