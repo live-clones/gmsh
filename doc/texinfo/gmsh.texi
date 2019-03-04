@@ -3584,30 +3584,30 @@ underlying mesh, and can therefore be easier to use in some
 cases.)
 
 @menu
-* MSH file format (version 4)::
+* MSH file format::
 * Node ordering::
 * Legacy formats::
 @end menu
 
 @c -------------------------------------------------------------------------
-@c MSH file format (version 4)
+@c MSH file format
 @c -------------------------------------------------------------------------
 
-@node MSH file format (version 4), Node ordering, File formats, File formats
-@section MSH file format (version 4)
+@node MSH file format, Node ordering, File formats, File formats
+@section MSH file format
 
 @cindex Mesh, file format
 @cindex File format, mesh
 @cindex MSH4 file
 
-The MSH file format 4 (at its current revision, version 4.1) contains
+The MSH file format version 4 (current revision: version 4.1) contains
 one mandatory section giving information about the file
 (@code{$MeshFormat}), followed by several optional sections defining the
 physical group names (@code{$PhysicalName}), the entities
 (@code{$Entities}), the partitioned entities
-(@code{$PartitionedEntities}), nodes (@code{$Nodes}), elements
-(@code{$Elements}), periodicity relations (@code{$Periodic}), ghost
-elements (@code{$GhostElements}) and post-processing datasets
+(@code{$PartitionedEntities}), the nodes (@code{$Nodes}), the elements
+(@code{$Elements}), the periodicity relations (@code{$Periodic}), the
+ghost elements (@code{$GhostElements}) and the post-processing datasets
 (@code{$NodeData}, @code{$ElementData}, @code{$ElementNodeData}).
 
 To represent a simple mesh, the minimal sections that should be present
@@ -3622,9 +3622,10 @@ header is simply ignored: you can thus add comments in a @file{.msh}
 file by putting them e.g. inside a @code{$Comments}/@code{$EndComments}
 section.
 
-Important note about efficiency. Node and element tags (their global
-identification numbers) can be "sparse", i.e., do not have to constitute
-a continuous list of numbers starting at 1. However, using sparse tags
+All the tags (global identification numbers) used in an MSH file should
+be strictly positive. (Tag @code{0} is reserved for internal use.)
+Important note about efficiency: tags can be "sparse", i.e., do not have
+to constitute a continuous list of numbers. However, using sparse tags
 can lead to performance degradation. For meshes, sparse indexing
 can@footnote{If the numbering is not too sparse, Gmsh will still use a
 vector.} force Gmsh to use a map instead of a vector to access nodes and
@@ -4031,7 +4032,7 @@ sizes.
 @c Node ordering
 @c -------------------------------------------------------------------------
 
-@node Node ordering, Legacy formats, MSH file format (version 4), File formats
+@node Node ordering, Legacy formats, MSH file format, File formats
 @section Node ordering
 
 @cindex Nodes, ordering
@@ -4219,22 +4220,22 @@ of Gmsh will continue to support these formats, but we recommend that
 you do not use them in new applications.
 
 @menu
-* MSH file format version 2::
-* MSH file format version 1::
-* POS ASCII file format::
-* POS binary file format::
+* MSH file format version 2 (Legacy)::
+* MSH file format version 1 (Legacy)::
+* POS ASCII file format (Legacy)::
+* POS binary file format (Legacy)::
 @end menu
 
 @c .........................................................................
 @c MSH file format version 2
 @c .........................................................................
 
-@node MSH file format version 2, MSH file format version 1, Legacy formats, Legacy formats
-@subsection MSH file format version 2
+@node MSH file format version 2 (Legacy), MSH file format version 1 (Legacy), Legacy formats, Legacy formats
+@subsection MSH file format version 2 (Legacy)
 
 The MSH file format version 2 is Gmsh's previous native mesh file
-format, now superseded by the format described in @ref{MSH file format
-(version 4)}. It is defined as follows:
+format, now superseded by the format described in @ref{MSH file
+format}. It is defined as follows:
 
 @example
 $MeshFormat
@@ -4348,7 +4349,7 @@ ordered sequence.
 
 @item @var{elm-type}
 defines the geometrical type of the @var{n}-th element: see @ref{MSH
-file format (version 4)}.
+file format}.
 
 @item @var{number-of-tags}
 gives the number of integer tags that follow for the @var{n}-th
@@ -4561,12 +4562,12 @@ for(i = 0; i < number_of_triangles; i++)@{
 @c MSH file format version 1
 @c .........................................................................
 
-@node MSH file format version 1, POS ASCII file format, MSH file format version 2, Legacy formats
-@subsection MSH file format version 1
+@node MSH file format version 1 (Legacy), POS ASCII file format (Legacy), MSH file format version 2 (Legacy), Legacy formats
+@subsection MSH file format version 1 (Legacy)
 
 The MSH file format version 1 is Gmsh's original native mesh file
 format, now superseded by the format described in @ref{MSH file
-format (version 4)}. It is defined as follows:
+format}. It is defined as follows:
 
 @example
 $NOD
@@ -4684,11 +4685,11 @@ element. The ordering of the nodes is given in @ref{Node ordering}.
 @c POS ASCII file format
 @c .........................................................................
 
-@node POS ASCII file format, POS binary file format, MSH file format version 1, Legacy formats
+@node POS ASCII file format (Legacy), POS binary file format (Legacy), MSH file format version 1 (Legacy), Legacy formats
 @subsection POS ASCII file format (Legacy)
 
 The POS ASCII file is Gmsh's old native post-processing format, now
-superseded by the format described in @ref{MSH file format (version 4)}. It is
+superseded by the format described in @ref{MSH file format}. It is
 defined as follows:
 
 @example
@@ -4851,11 +4852,11 @@ null `@code{\0}' character.
 @c POS binary file format
 @c .........................................................................
 
-@node POS binary file format,  , POS ASCII file format, Legacy formats
+@node POS binary file format (Legacy),  , POS ASCII file format (Legacy), Legacy formats
 @subsection POS binary file format (Legacy)
 
 The POS binary file format is the same as the POS ASCII file format
-described in @ref{POS ASCII file format}, except that:
+described in @ref{POS ASCII file format (Legacy)}, except that:
 
 @enumerate
 @item
