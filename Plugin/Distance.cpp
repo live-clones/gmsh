@@ -51,12 +51,12 @@ std::string GMSH_DistancePlugin::getHelp() const
          "distance is computed to all the boundaries. Otherwise the distance "
          "is computed to the given physical group.\n\n"
          "If `DistanceType' is 0, the plugin computes the geometrical Euclidean "
-         "distance (different than the geodesic distance!). If `DistanceType' > 0, "
-         "the plugin solves a PDE on the mesh with a diffusion constant "
-         "equal to `DistanceType' time the maximum size of the bounding "
-         "box of the mesh [Legrand, 2006].\n\n"
+         "distance using the naive O(N^2) algorithm. If `DistanceType' > 0, "
+         "the plugin computes an approximate distance by solving a PDE with "
+         "a diffusion constant equal to `DistanceType' time the maximum size "
+         "of the bounding box of the mesh as in [Legrand et al. 2006].\n\n"
          "Positive `MinScale' and `MaxScale' scale the distance function.\n\n"
-         "Plugin(Distance) creates one or two new views.";
+         "Plugin(Distance) creates one new view.";
 }
 
 int GMSH_DistancePlugin::getNbOptions() const
