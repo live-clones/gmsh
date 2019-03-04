@@ -17,16 +17,6 @@ std::vector<SPoint3> ExtrudeParams::normalsCoherence;
 // extrude consistently (an average of scaled and non-scaled heights).
 bool ExtrudeParams::calcLayerScaleFactor[2] = {0, 0};
 
-static void Projette(double p[3], double mat[3][3])
-{
-  double X = p[0] * mat[0][0] + p[1] * mat[0][1] + p[2] * mat[0][2];
-  double Y = p[0] * mat[1][0] + p[1] * mat[1][1] + p[2] * mat[1][2];
-  double Z = p[0] * mat[2][0] + p[1] * mat[2][1] + p[2] * mat[2][2];
-  p[0] = X;
-  p[1] = Y;
-  p[2] = Z;
-}
-
 ExtrudeParams::ExtrudeParams(int ModeEx)
 {
   geo.Mode = ModeEx;
@@ -85,13 +75,6 @@ void ExtrudeParams::Extrude(int iLayer, int iElemLayer, double &x, double &y,
   Extrude(t, x, y, z);
 }
 
-void ExtrudeParams::Rotate(double matr[3][3])
-{
-  Projette(geo.trans, matr);
-  Projette(geo.axe, matr);
-  Projette(geo.pt, matr);
-  geo.angle = -geo.angle;
-}
 
 void ExtrudeParams::Extrude(double t, double &x, double &y, double &z)
 {

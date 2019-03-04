@@ -31,7 +31,6 @@ public:
   double u(int iLayer, int iElemLayer);
   void Extrude(int iLayer, int iElemLayer, double &dx, double &dy, double &dz);
   void Extrude(double t, double &x, double &y, double &z);
-  void Rotate(double matr[3][3]);
   struct {
     bool ExtrudeMesh;
     bool Recombine;
