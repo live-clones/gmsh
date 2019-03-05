@@ -14,7 +14,6 @@
 
 #if defined(HAVE_SOLVER)
 #include "dofManager.h"
-#include "linearSystemGMM.h"
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
@@ -231,9 +230,6 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM)
     linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
-    lsys->setNoisy(1);
-    lsys->setGmres(1);
-    lsys->setPrec(5.e-8);
 #else
     linearSystemFull<double> *lsys = new linearSystemFull<double>;
 #endif

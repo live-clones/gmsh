@@ -19,7 +19,9 @@
 #endif
 
 StringXNumber TriangulateOptions_Number[] = {
-  {GMSH_FULLRC, "Algorithm", NULL, 0.}, {GMSH_FULLRC, "View", NULL, -1.}};
+  {GMSH_FULLRC, "Algorithm", NULL, 1.},
+  {GMSH_FULLRC, "View", NULL, -1.}
+};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterTriangulatePlugin()
