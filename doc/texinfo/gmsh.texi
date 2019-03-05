@@ -3603,8 +3603,8 @@ cases.)
 The MSH file format version 4 (current revision: version 4.1) contains
 one mandatory section giving information about the file
 (@code{$MeshFormat}), followed by several optional sections defining the
-physical group names (@code{$PhysicalName}), the entities
-(@code{$Entities}), the partitioned entities
+physical group names (@code{$PhysicalName}), the elementary geometrical
+entities (@code{$Entities}), the partitioned entities
 (@code{$PartitionedEntities}), the nodes (@code{$Nodes}), the elements
 (@code{$Elements}), the periodicity relations (@code{$Periodic}), the
 ghost elements (@code{$GhostElements}) and the post-processing datasets
@@ -3622,17 +3622,18 @@ header is simply ignored: you can thus add comments in a @file{.msh}
 file by putting them e.g. inside a @code{$Comments}/@code{$EndComments}
 section.
 
-All the tags (global identification numbers) used in an MSH file should
-be strictly positive. (Tag @code{0} is reserved for internal use.)
-Important note about efficiency: tags can be "sparse", i.e., do not have
-to constitute a continuous list of numbers. However, using sparse tags
-can lead to performance degradation. For meshes, sparse indexing
-can@footnote{If the numbering is not too sparse, Gmsh will still use a
-vector.} force Gmsh to use a map instead of a vector to access nodes and
-elements. The performance hit is on speed. For post-processing datasets,
-which always use vectors to access data, the performance hit is on
-memory. A @code{$NodeData} with two nodes, tagged 1 and 1000000, will
-allocate a (mostly empty) vector of 1000000 elements. By default, for
+All the node, element and entity tags (their global identification
+numbers) should be strictly positive. (Tag @code{0} is reserved for
+internal use.)  Important note about efficiency: tags can be "sparse",
+i.e., do not have to constitute a continuous list of numbers (the format
+even allows them to not be ordered). However, using sparse tags can lead
+to performance degradation. For meshes, sparse indexing can@footnote{If
+the numbering is not too sparse, Gmsh will still use a vector.} force
+Gmsh to use a map instead of a vector to access nodes and elements. The
+performance hit is on speed. For post-processing datasets, which always
+use vectors to access data, the performance hit is on memory. A
+@code{$NodeData} with two nodes, tagged 1 and 1000000, will allocate a
+(mostly empty) vector of 1000000 elements. By default, for
 non-partitioned, single file meshes, Gmsh will create files with a
 continuous ordering of node and element tags, starting at 1. Detecting
 if the numbering is continuous can be done easily when reading a file by
@@ -4005,9 +4006,9 @@ coordinates.
 The bounding box for point entities has been replaced simply by the 3
 coordinates of the point (instead of the six bounding box values).
 @item
-The @code{entityDim} and @code{entityTag} values have been switched in the
-@code{$Nodes} and @code{$Elements} sections (for consistency with the
-ordering used elsewhere).
+The @code{entityDim} and @code{entityTag} values have been switched in
+the @code{$Nodes} and @code{$Elements} sections (for consistency with
+the ordering used elsewhere in the file and in the @ref{Gmsh API}).
 @item
 The minimum and the maximum tag of nodes (resp. elements) have been
 added in the header of the @code{$Nodes} (resp. @code{$Elements})
