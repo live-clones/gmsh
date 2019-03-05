@@ -1144,7 +1144,7 @@ int mshFileDialog(const char *name)
           0, GMSH_SET | GMSH_GUI,
           (dialog->c->value() == 0) ?
             1.0 :
-            (dialog->c->value() == 1 || dialog->c->value() == 2) ? 2.2 : 4.0);
+            (dialog->c->value() == 1 || dialog->c->value() == 2) ? 2.2 : 4.1);
         opt_mesh_binary(
           0, GMSH_SET | GMSH_GUI,
           (dialog->c->value() == 2 || dialog->c->value() == 4) ? 1 : 0);
