@@ -23,7 +23,6 @@
 #if defined(HAVE_SOLVER)
 #include "dofManager.h"
 #include "laplaceTerm.h"
-#include "linearSystemGMM.h"
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
@@ -178,8 +177,6 @@ static void propagateValuesOnFace(GFace *_gf,
   linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM)
   linearSystemCSRGmm<double> *_lsys = new linearSystemCSRGmm<double>;
-  _lsys->setNoisy(1);
-  _lsys->setGmres(1);
 #else
   linearSystemFull<double> *_lsys = new linearSystemFull<double>;
 #endif

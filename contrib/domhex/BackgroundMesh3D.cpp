@@ -24,7 +24,6 @@
 #include "laplaceTerm.h"
 #include "linearSystemPETSc.h"
 #include "linearSystemFull.h"
-#include "linearSystemGMM.h"
 #include "linearSystemCSR.h"
 #endif
 

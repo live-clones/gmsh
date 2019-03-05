@@ -8,7 +8,6 @@
 #include "thermicSolver.h"
 #include "linearSystemCSR.h"
 #include "linearSystemPETSc.h"
-#include "linearSystemGMM.h"
 #include "linearSystemFull.h"
 #include "Numeric.h"
 #include "GModel.h"
@@ -19,6 +18,7 @@
 #include "solverField.h"
 #include "MPoint.h"
 #include "gmshLevelset.h"
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"

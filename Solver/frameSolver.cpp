@@ -10,7 +10,6 @@
 #include "frameSolver.h"
 #include "linearSystemCSR.h"
 #include "linearSystemPETSc.h"
-#include "linearSystemGMM.h"
 #include "linearSystemFull.h"
 
 #if defined(HAVE_POST)

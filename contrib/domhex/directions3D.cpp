@@ -18,7 +18,6 @@
 #if defined(HAVE_SOLVER)
 #include "linearSystemCSR.h"
 #include "linearSystemPETSc.h"
-#include "linearSystemGMM.h"
 #include "linearSystemFull.h"
 #include "dofManager.h"
 #include "laplaceTerm.h"

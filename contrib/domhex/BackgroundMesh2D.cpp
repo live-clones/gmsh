@@ -26,7 +26,6 @@
 #if defined(HAVE_SOLVER)
 #include "dofManager.h"
 #include "laplaceTerm.h"
-#include "linearSystemGMM.h"
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"

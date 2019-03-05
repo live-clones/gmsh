@@ -8,7 +8,6 @@
 #include "elasticitySolver.h"
 #include "linearSystemCSR.h"
 #include "linearSystemPETSc.h"
-#include "linearSystemGMM.h"
 #include "linearSystemFull.h"
 #include "Numeric.h"
 #include "GModel.h"
@@ -20,6 +19,7 @@
 #include "solverField.h"
 #include "MPoint.h"
 #include "gmshLevelset.h"
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
@@ -121,8 +121,6 @@ void elasticitySolver::solve()
   linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM)
   linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
-  lsys->setGmres(1);
-  lsys->setNoisy(1);
 #else
   linearSystemFull<double> *lsys = new linearSystemFull<double>;
 #endif
