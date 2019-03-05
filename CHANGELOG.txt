@@ -1,7 +1,7 @@
-4.2.0: changed type of node and element tags in API to support (very) large
-meshes (using size_t instead of int); new MSH4.1 revision of the MSH file
-format, with support for size_t node and element tags (see the reference manual
-for detailed changes); changed the logger, getPeriodicNodes and
+4.2.0 (March 5, 2019): changed type of node and element tags in API to support
+(very) large meshes (using size_t instead of int); new MSH4.1 revision of the
+MSH file format, with support for size_t node and element tags (see the
+reference manual for detailed changes); changed the logger, getPeriodicNodes and
 setElementsByType API; added support for reading STEP labels and colors with OCC
 CAF; changed default "General.OCCTargetUnit" value to none (i.e. use STEP file
 coordinates as-is, without conversion); improved high-order mesh optimization;
