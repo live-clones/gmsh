@@ -123,15 +123,24 @@ fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip)
 fullMatrix<double> gmshGeneratePointsPyramidGeneral(bool pyr, int nij, int nk,
                                                     bool forSerendipPoints)
 {
+  // if pyr:
+  //   div = nk + nij
+  //   monomial(i, j, k) -> (-(1-k')+2*i/div, -(1-k')+2*j/div, (nk-k)/div)
+  // else:
+  //   div = max(nij, nk)
+  //   monomial(i, j, k) -> (-1+2*i/nij)*(1-k'), (-1+2*j/nij)*(1-k'), (nk-k)/div)
   fullMatrix<double> points =
     gmshGenerateMonomialsPyramidGeneral(pyr, nij, nk, forSerendipPoints);
+  points.print("monomials");
   if(points.size1() == 1) return points;
   const int div = pyr ? nk + nij : std::max(nij, nk);
+  double scale = 2. / div;
   for(int i = 0; i < points.size1(); ++i) {
     points(i, 2) = (nk - points(i, 2)) / div;
-    const double scale = 1. - points(i, 2);
-    points(i, 0) = scale * (-1 + points(i, 0) * 2. / div);
-    points(i, 1) = scale * (-1 + points(i, 1) * 2. / div);
+    const double duv = 1. - points(i, 2);
+    if (!pyr) scale = 2. / nij * duv;
+    points(i, 0) = -duv + points(i, 0) * scale;
+    points(i, 1) = -duv + points(i, 1) * scale;
   }
   return points;
 }
@@ -1089,9 +1098,9 @@ fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij,
         int i1 = 4 + (iedge + 1) % 4;
 
         int u0 =
-          static_cast<int>((monomials(i1, 0) - monomials(i0, 0)) / nijBase);
+          static_cast<int>((monomials(i1, 0) - monomials(i0, 0)) / nij);
         int u1 =
-          static_cast<int>((monomials(i1, 1) - monomials(i0, 1)) / nijBase);
+          static_cast<int>((monomials(i1, 1) - monomials(i0, 1)) / nij);
 
         for(int i = 1; i < nij; ++i, ++index) {
           monomials(index, 0) = monomials(i0, 0) + i * u0;
