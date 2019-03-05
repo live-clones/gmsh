@@ -1153,6 +1153,7 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
 
   const int type = data.elementType();
   const int order = data.spaceOrder();
+  const bool pyr = data.isPyramidalSpace();
 
   if(bezierSpace) {
     if(type != TYPE_PYR) {
@@ -1160,14 +1161,21 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
       return;
     }
     else {
+      // if pyr:
+      //   div = nk + nij
+      //   monomial(i, j, k) -> (i/div, j/div, (nk-k)/div)
+      // else:
+      //   div = max(nij, nk)
+      //   monomial(i, j, k) -> (i/nij*(1-k'), j/nij*(1-k'), (nk-k)/div)
       const int nij = data.nij();
       const int nk = data.nk();
-      const int div = std::max(nij, nk);
+      const int div = pyr ? nij + nk : std::max(nij, nk);
+      double scale = 1. / (nij + nk);
       for(int i = 0; i < points.size1(); ++i) {
-        points(i, 2) = points(i, 2) / div;
-        const double scale = 1. - points(i, 2);
-        points(i, 0) = scale * (points(i, 0) * 1. / div);
-        points(i, 1) = scale * (points(i, 1) * 1. / div);
+        points(i, 2) = (nk - points(i, 2)) / div;
+        if (!pyr) scale = (1 - points(i, 2)) / nij;
+        points(i, 0) = points(i, 0) * scale;
+        points(i, 1) = points(i, 1) * scale;
       }
     }
     return;
@@ -1197,15 +1205,22 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
     return;
   }
   case TYPE_PYR: {
-    if(points.size1() == 1) return;
+    // if pyr:
+    //   div = nk + nij
+    //   monomial(i, j, k) -> (-(1-k')+2*i/div, -(1-k')+2*j/div, (nk-k)/div)
+    // else:
+    //   div = max(nij, nk)
+    //   monomial(i, j, k) -> (-1+2*i/nij)*(1-k'), (-1+2*j/nij)*(1-k'), (nk-k)/div)
     const int nij = data.nij();
     const int nk = data.nk();
-    const int div = std::max(nij, nk);
+    const int div = pyr ? nij + nk : std::max(nij, nk);
+    double scale = 2. / div;
     for(int i = 0; i < points.size1(); ++i) {
-      points(i, 2) = points(i, 2) / div;
-      const double scale = 1. - points(i, 2);
-      points(i, 0) = scale * (-1 + points(i, 0) * 2. / div);
-      points(i, 1) = scale * (-1 + points(i, 1) * 2. / div);
+      points(i, 2) = (nk - points(i, 2)) / div;
+      const double duv = 1. - points(i, 2);
+      if (!pyr) scale = 2. / nij * duv;
+      points(i, 0) = -duv + points(i, 0) * scale;
+      points(i, 1) = -duv + points(i, 1) * scale;
     }
     return;
   }
@@ -1303,7 +1318,7 @@ void gmshGenerateOrderedMonomials(FuncSpaceData data, fullMatrix<double> &monomi
       numMonomials -= nij * (nij + 1) * (2 * nij + 1) / 6;
       monomials.resize(numMonomials, 3);
       idx = 0;
-      for(int k = 0; k < nk + 1; ++k) {
+      for(int k = nk; k >= 0; --k) {
         for(int j = 0; j < k + nij + 1; ++j) {
           for(int i = 0; i < k + nij + 1; ++i) {
             monomials(idx, 0) = i;
@@ -1317,7 +1332,7 @@ void gmshGenerateOrderedMonomials(FuncSpaceData data, fullMatrix<double> &monomi
     else {
       monomials.resize((nij + 1) * (nij + 1) * (nk + 1), 3);
       idx = 0;
-      for(int k = 0; k < nk + 1; ++k) {
+      for(int k = nk; k >= 0; --k) {
         for(int j = 0; j < nij + 1; ++j) {
           for(int i = 0; i < nij + 1; ++i) {
             monomials(idx, 0) = i;
