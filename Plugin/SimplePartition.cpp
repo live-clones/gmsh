@@ -59,7 +59,7 @@ std::string GMSH_SimplePartitionPlugin::getHelp() const
          "and Z-axis, respectively. The distribtion of these slices is governed "
          "by `MappingX', `MappingY' and `MappingZ', where `t' is a normalized "
          "absissa along each direction. (Setting `MappingX' to `t' will thus lead "
-         "to equidistant slices along the X-axis.\n\n"
+         "to equidistant slices along the X-axis.)\n\n"
          "The plugin creates the topology of the partitioned entities if "
          "`CreateTopology' is set.";
 }

@@ -77,11 +77,15 @@ Enable Netgen 3D frontal mesh generator (default: ON)
 @item ENABLE_NUMPY
 Enable fullMatrix and numpy array conversion for private API (default: OFF)
 @item ENABLE_PETSC4PY
-Enable petsc4py wrappers for petsc matrices for private API (default: ON)
+Enable petsc4py wrappers for petsc matrices for private API (default: OFF)
 @item ENABLE_OCC
 Enable OpenCASCADE CAD kernel (default: ON)
 @item ENABLE_OCC_CAF
-Enable OpenCASCADE CAF module (default: OFF)
+Enable OpenCASCADE CAF module (for STEP/IGES attributes) (default: ON)
+@item ENABLE_OCC_STATIC
+Link OpenCASCADE static instead of dynamic libraries (requires ENABLE_OCC) (default: OFF)
+@item ENABLE_OCC_TBB
+Add TBB libraries in list of OCC libraries (default: OFF)
 @item ENABLE_ONELAB
 Enable ONELAB solver interface (default: ON)
 @item ENABLE_ONELAB_METAMODEL
@@ -97,7 +101,7 @@ Enable OSMesa for offscreen rendering (experimental) (default: OFF)
 @item ENABLE_PARSER
 Enable GEO file parser (required for .geo/.pos files) (default: ON)
 @item ENABLE_PETSC
-Enable PETSc linear solvers (required for SLEPc) (default: ON)
+Enable PETSc linear solvers (required for SLEPc) (default: OFF)
 @item ENABLE_PLUGINS
 Enable post-processing plugins (default: ON)
 @item ENABLE_POST
@@ -111,7 +115,7 @@ Enable QuadTri structured meshing extensions (default: ON)
 @item ENABLE_REVOROPT
 Enable Revoropt (used for CVT remeshing) (default: OFF)
 @item ENABLE_SLEPC
-Enable SLEPc eigensolvers (default: ON)
+Enable SLEPc eigensolvers (default: OFF)
 @item ENABLE_SOLVER
 Enable built-in finite element solvers (required for compounds) (default: ON)
 @item ENABLE_SYSTEM_CONTRIB

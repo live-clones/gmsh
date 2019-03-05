@@ -340,11 +340,11 @@ Plugin(Distance) computes distances to entities in a mesh.@*
 @*
 If `PhysicalPoint', `PhysicalLine' and `PhysicalSurface' are 0, the distance is computed to all the boundaries. Otherwise the distance is computed to the given physical group.@*
 @*
-If `DistanceType' is 0, the plugin computes the geometrical Euclidean distance (different than the geodesic distance!). If `DistanceType' > 0, the plugin solves a PDE on the mesh with a diffusion constant equal to `DistanceType' time the maximum size of the bounding box of the mesh [Legrand, 2006].@*
+If `DistanceType' is 0, the plugin computes the geometrical Euclidean distance using the naive O(N^2) algorithm. If `DistanceType' > 0, the plugin computes an approximate distance by solving a PDE with a diffusion constant equal to `DistanceType' time the maximum size of the bounding box of the mesh as in [Legrand et al. 2006].@*
 @*
 Positive `MinScale' and `MaxScale' scale the distance function.@*
 @*
-Plugin(Distance) creates one or two new views.
+Plugin(Distance) creates one new view.
 Numeric options:
 @table @code
 @item PhysicalPoint
@@ -433,27 +433,6 @@ Default value: @code{1}
 Default value: @code{-1}
 @item View
 Default value: @code{-1}
-@end table
-
-@item Plugin(FaultZone)
-Plugin(FaultZone) convert all the embedded lines of an existing surfacic mesh to flat quadrangles. Flat quadrangles represent joint elements suitable to model a fault zone with Code_Aster.@*
-@*
-`SurfaceTag' must be an existing plane surface containing embedded lines. Embedded lines must have been added to the surface via the command Line In Surface. The surface must be meshed with quadratic incomplete elements.@*
-@*
-`Thickness' is the thickness of the flat quadrangles. Set a value different to zero can be helpful to check the connectivity. @*
-@*
-`Prefix' is the prefix of the name of physicals containing the new embedded. All physicals containing embedded lines are replaced by physicals containing the corresponding joint elements.
-String options:
-@table @code
-@item Prefix
-Default value: @code{"FAMI_"}
-@end table
-Numeric options:
-@table @code
-@item SurfaceTag
-Default value: @code{1}
-@item Thickness
-Default value: @code{0}
 @end table
 
 @item Plugin(FieldFromAmplitudePhase)
@@ -1110,7 +1089,7 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(ShowNeighborElements)
-Plugin(ShowNeighborElements) allows to set visible some given elements  and a layer of elements around them, the other being set invisible.
+Plugin(ShowNeighborElements) sets visible some elements and a layer of elements around them, the other being set invisible.
 Numeric options:
 @table @code
 @item NumLayers
@@ -1128,18 +1107,26 @@ Default value: @code{0}
 @end table
 
 @item Plugin(SimplePartition)
-Plugin(SimplePartition) partitions the current mesh into `NumSlices' slices, along the X-, Y- or Z-axis depending on the value of `Direction' (0,1,2). The plugin creates partition topology if `CreateTopology' is set.
+Plugin(SimplePartition) partitions the current mesh into `NumSlicesX', `NumSlicesY' and `NumSlicesZ' slices along the X-, Y- and Z-axis, respectively. The distribtion of these slices is governed by `MappingX', `MappingY' and `MappingZ', where `t' is a normalized absissa along each direction. (Setting `MappingX' to `t' will thus lead to equidistant slices along the X-axis.)@*
+@*
+The plugin creates the topology of the partitioned entities if `CreateTopology' is set.
 String options:
 @table @code
-@item Mapping
+@item MappingX
+Default value: @code{"t"}
+@item MappingY
+Default value: @code{"t"}
+@item MappingZ
 Default value: @code{"t"}
 @end table
 Numeric options:
 @table @code
-@item NumSlices
+@item NumSlicesX
 Default value: @code{4}
-@item Direction
-Default value: @code{0}
+@item NumSlicesY
+Default value: @code{1}
+@item NumSlicesZ
+Default value: @code{1}
 @item CreateTopology
 Default value: @code{1}
 @end table
@@ -1293,9 +1280,6 @@ Numeric options:
 @item View
 Default value: @code{-1}
 @end table
-
-@item Plugin(ThinLayerFixMesh)
-Fix the mesh in thin parts
 
 @item Plugin(Transform)
 Plugin(Transform) transforms the homogeneous node coordinates (x,y,z,1) of the elements in the view `View' by the matrix@*
