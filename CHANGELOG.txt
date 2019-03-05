@@ -5,8 +5,9 @@ for detailed changes); changed the logger, getPeriodicNodes and
 setElementsByType API; added support for reading STEP labels and colors with OCC
 CAF; changed default "General.OCCTargetUnit" value to none (i.e. use STEP file
 coordinates as-is, without conversion); improved high-order mesh optimization;
-added ability to import groups of nodes from MED files; extruded meshes now fill
-in periodic node information; removed unmaintained plugins; removed default
+added ability to import groups of nodes from MED files; extruded meshes now
+fill-in periodic node information; enhanced Plugin(Distance) and
+Plugin(SimplePartition); removed unmaintained plugins; removed default
 dependency on PETSc; small improvements and bug fixes.
 
 4.1.5 (February 14, 2019): improved OpenMP parallelization, STL remeshing, mesh
@@ -68,7 +69,7 @@ meshing of surfaces with singular parametrizations (spheres, etc.); uniformized
 entity naming conventions (line/curve, vertex/node, etc.); generalized handling
 of "all" entities in geo file (using {:} notation); added support for creating
 LSDYNA mesh files; removed old CAD creation factory (GModelFactory), old
-reparametrization code (G{Edge, Face, Region}Compound) and old partitionning
+reparametrization code (G{Edge, Face, Region}Compound) and old partitioning
 code (Metis 4 and Chaco); various cleanups, bug fixes and enhancements.
 
 3.0.6 (November 5, 2017): improved meshing of spheres; improved handling of mesh
