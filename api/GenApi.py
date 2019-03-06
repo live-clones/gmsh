@@ -938,6 +938,7 @@ python_header = """# {0}
 # examples.
 
 from ctypes import *
+from ctypes.util import find_library
 import signal
 import os
 import platform
@@ -950,11 +951,16 @@ from math import pi
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == 'Windows':
-    lib = CDLL(os.path.join(libdir, "{6}-{3}.{4}.dll"))
+    libpath = os.path.join(libdir, "{6}-{3}.{4}.dll")
 elif platform.system() == 'Darwin':
-    lib = CDLL(os.path.join(libdir, "lib{6}.dylib"))
+    libpath = os.path.join(libdir, "lib{6}.dylib")
 else:
-    lib = CDLL(os.path.join(libdir, "lib{6}.so"))
+    libpath = os.path.join(libdir, "lib{6}.so")
+
+if not os.path.exists(libpath):
+    libpath = find_library("{6}")
+
+lib = CDLL(libpath)
 
 use_numpy = False
 try:
