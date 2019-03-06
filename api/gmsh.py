@@ -24,9 +24,9 @@ GMSH_API_VERSION_MINOR = 2
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
-if platform.system() == 'Windows':
+if platform.system() == "Windows":
     libpath = os.path.join(libdir, "gmsh-4.2.dll")
-elif platform.system() == 'Darwin':
+elif platform.system() == "Darwin":
     libpath = os.path.join(libdir, "libgmsh.dylib")
 else:
     libpath = os.path.join(libdir, "libgmsh.so")

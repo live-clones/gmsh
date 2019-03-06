@@ -950,9 +950,9 @@ from math import pi
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
-if platform.system() == 'Windows':
+if platform.system() == "Windows":
     libpath = os.path.join(libdir, "{6}-{3}.{4}.dll")
-elif platform.system() == 'Darwin':
+elif platform.system() == "Darwin":
     libpath = os.path.join(libdir, "lib{6}.dylib")
 else:
     libpath = os.path.join(libdir, "lib{6}.so")
@@ -1382,9 +1382,11 @@ class API:
                 f.write('const {0}_API_VERSION_MINOR = {1}\n'.
                         format(ns.upper(), self.version_minor))
                 f.write('const libdir = dirname(@__FILE__)\n')
-                f.write('const lib = joinpath(libdir, Sys.iswindows() ? "' + ns +
+                f.write('const libname = Sys.iswindows() ? "' + ns +
                         '-{0}.{1}'.format(self.version_major, self.version_minor) +
-                        '" : "lib' + ns + '")\n')
+                        '" : "lib' + ns + '"\n')
+                f.write('import Libdl\n')
+                f.write('const lib = Libdl.find_library([libname], [libdir])\n')
             else:
                 f.write("import " + ("." * level) + ns + "\n")
             if c_mpath:
