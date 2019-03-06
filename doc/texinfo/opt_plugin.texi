@@ -756,7 +756,9 @@ Default value: @code{2000}
 @end table
 
 @item Plugin(MeshVolume)
-Plugin(MeshVolume) computes the volume of the mesh. Only the elements tagged with the physical given in 'Physical' and with the dimension given in 'Dimension' are taken into account. If 'Physical' is equal to -1, the entire mesh (of the given dimension) is considered.
+Plugin(MeshVolume) computes the volume of the mesh.@*
+@*
+Only the elements in the physical group `Physical' of dimension `Dimension' are taken into account, unless 'Physical' is negative, in which case all the elements of the given `Dimension' are considered.
 Numeric options:
 @table @code
 @item Physical
@@ -912,7 +914,7 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(NewView)
-Plugin(NewView) creates a new model-based view from the current mesh, with `NumComp' field components.@*
+Plugin(NewView) creates a new model-based view from the current mesh, with `NumComp' field components, set to value `Value'.@*
 @*
 If `ViewTag' is positive, force that tag for the created view.
 String options:
@@ -924,6 +926,8 @@ Numeric options:
 @table @code
 @item NumComp
 Default value: @code{1}
+@item Value
+Default value: @code{0}
 @item ViewTag
 Default value: @code{-1}
 @end table
@@ -1334,7 +1338,7 @@ Plugin(Triangulate) creates one new view.
 Numeric options:
 @table @code
 @item Algorithm
-Default value: @code{0}
+Default value: @code{1}
 @item View
 Default value: @code{-1}
 @end table
