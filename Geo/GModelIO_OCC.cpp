@@ -1069,15 +1069,12 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       }
       if(weights.size() != pointTags.size()) {
         Msg::Error("Number of BSpline weights (%d) and control points (%d) "
-                   "should equal",
-                   weights.size(), pointTags.size());
+                   "should be equal", weights.size(), pointTags.size());
         return false;
       }
       if(knots.size() != multiplicities.size()) {
-        Msg::Error(
-          "Number of BSpline knots (%d) and multiplicities (%d) should "
-          "equal",
-          knots.size(), multiplicities.size());
+        Msg::Error("Number of BSpline knots (%d) and multiplicities (%d) should "
+                   "equal", knots.size(), multiplicities.size());
         return false;
       }
       if(knots.size() < 2) {
@@ -1087,8 +1084,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       for(std::size_t i = 0; i < knots.size() - 1; i++) {
         if(knots[i] >= knots[i + 1]) {
           Msg::Error("BSpline knots should be increasing: knot %d (%g) > "
-                     "knot %d (%g)",
-                     i, knots[i], i + 1, knots[i + 1]);
+                     "knot %d (%g)", i, knots[i], i + 1, knots[i + 1]);
           return false;
         }
       }
@@ -1099,8 +1095,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
         }
         if(i != 0 && i != multiplicities.size() - 1 &&
            multiplicities[i] > degree) {
-          Msg::Error(
-            "BSpline interior knot multiplicities should be <= degree");
+          Msg::Error("BSpline interior knot multiplicities should be <= degree");
           return false;
         }
         if((i == 0 || i == multiplicities.size() - 1) &&
@@ -1111,10 +1106,8 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       }
       if(periodic) {
         if(multiplicities.front() != multiplicities.back()) {
-          Msg::Error(
-            "Periodic BSpline end knot multiplicies (%d and %d) should "
-            "be equal",
-            multiplicities.front(), multiplicities.back());
+          Msg::Error("Periodic BSpline end knot multiplicies (%d and %d) should "
+                     "be equal", multiplicities.front(), multiplicities.back());
           return false;
         }
         // TODO C++11 std::accumulate
@@ -1122,10 +1115,9 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
         for(std::size_t i = 0; i < multiplicities.size() - 1; i++)
           sum += multiplicities[i];
         if(pointTags.size() - 1 != sum) {
-          Msg::Error(
-            "Number of control points - 1 for periodic BSpline should "
-            "be equal to the sum of multiplicities for all knots except "
-            "the first (or last)");
+          Msg::Error("Number of control points - 1 for periodic BSpline should "
+                     "be equal to the sum of multiplicities for all knots "
+                     "except the first (or last)");
           return false;
         }
       }
@@ -1218,8 +1210,8 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
       int sum_of_all_mult = pointTags.size() + d + 1;
       int num_knots = sum_of_all_mult - 2 * d;
       if(num_knots < 2) {
-        Msg::Error(
-          "Not enough control points for building BSpline of degree %d", d);
+        Msg::Error("Not enough control points for building BSpline of "
+                   "degree %d", d);
         return false;
       }
       k.resize(num_knots);

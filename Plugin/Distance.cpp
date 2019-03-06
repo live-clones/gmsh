@@ -134,15 +134,15 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   int id_face = (int)DistanceOptions_Number[2].def;
   double type = (double)DistanceOptions_Number[3].def;
 
-  PView *view = new PView();
-  _data = getDataList(view);
-
   GModel *m = GModel::current();
   int totNumNodes = m->getNumMeshVertices();
   if(!totNumNodes) {
     Msg::Error("Plugin(Distance) needs a mesh");
-    return view;
+    return v;
   }
+
+  PView *view = new PView();
+  _data = getDataList(view);
 
   _maxDim = m->getMeshDim();
 
