@@ -40,7 +40,7 @@ p1 = newp; Point(p1) = {r1*Exp(delta*t)*Cos(t),  -r1*Exp(delta*t)*Sin(t),  0,  L
 Return
 
 /*Mesh Algorithms*/
-Mesh.Algorithm = 6; // (1) MeshAdapt (2) Auto (5) Delaunay (6) frontal (7) BAMG (8) DelQuad
+Mesh.Algorithm = 6;
 Mesh.Smoothing = 100;
 Mesh.OptimizeNetgen = 1;
 Mesh.HighOrderOptimize = 0;

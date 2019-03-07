@@ -214,7 +214,7 @@ directly} for more information.
 @cindex Introduction
 @cindex Overview
 
-Gmsh is a three-dimensional finite element grid generator with a
+Gmsh is a three-dimensional finite element mesh generator with a
 build-in CAD engine and post-processor. Its design goal is to provide
 a fast, light and user-friendly meshing tool with parametric input and
 advanced visualization capabilities.
@@ -224,11 +224,9 @@ post-processing. All geometrical, mesh, solver and post-processing
 instructions are prescribed either interactively using the graphical
 user interface (GUI) or in text files using Gmsh's own scripting
 language.  Interactive actions generate language bits in the input
-files, and vice versa. This makes it possible to automate all
-treatments, using loops, conditionals and external system calls. A
-programming API is also available, for integrating Gmsh as a library in
-your own C++, C, Python or Julia code: see @ref{Gmsh API}. A brief
-description of the four modules is given hereafter.
+files, and vice versa. A programming API is also available, for
+integrating Gmsh in your own C++, C, Python or Julia code: see @ref{Gmsh
+API}. A brief description of the four modules is given hereafter.
 
 @menu
 * Geometry::
@@ -247,14 +245,32 @@ description of the four modules is given hereafter.
 @node Geometry, Mesh, Overview, Overview
 @section Geometry: geometrical entity definition
 
-Gmsh uses a boundary representation (``BRep'') to describe geometries.
-Models are created in a bottom-up flow by successively defining points,
-oriented curves (line segments, circles, ellipses, splines, @dots{}),
-oriented surfaces (plane surfaces, surfaces, triangulated
-surfaces, @dots{}) and volumes. Groups of geometrical entities (called
-``physical groups'') can also be defined, based on these elementary
-geometric entities. Gmsh's scripting language allows all geometrical
-entities to be fully parametrized.
+A model in Gmsh is defined using its Boundary Representation (BRep): a
+volume is bounded by a set of surfaces, a surface is bounded by a series
+of curves, and a curve is bounded by two end points. Model entities are
+topological entities, i.e., they only deal with adjacencies in the
+model, and are implemented as a set of abstract topological
+classes. This BRep is extended by the definition of embedded, or
+internal, model entities: internal points, edges and surfaces can be
+embedded in volumes; and internal points and curves can be embedded in
+surfaces.
+
+The geometry of model entities can be provided by different CAD
+kernels. The two default kernels interfaced by Gmsh are the ``Built-in''
+kernel and the ``OpenCASCADE'' kernel. Gmsh does not translate the
+geometrical representation from one kernel to another, or from these
+kernels to some neutral representation. Instead, Gmsh directly queries
+the native data for each CAD kernel, which avoids data loss and is
+crucial for complex models where translations invariably introduce
+issues linked to slightly different representations.
+
+Gmsh's scripting language and the Gmsh API allow to parametrize all
+geometrical entities. The entities can either be built in a
+``bottom-up'' manner (first points, then curves, surfaces and volumes)
+or in a ``Constructive Solid Geometry'' fashion (solids on which boolean
+operations are performed). Both methodologies can also be
+combined. Finally, groups of geometrical entities (called ``physical
+groups'') can be defined, based on the elementary geometric entities.
 
 @c -------------------------------------------------------------------------
 @c Mesh: finite element mesh generation
@@ -263,51 +279,38 @@ entities to be fully parametrized.
 @node Mesh, Solver, Geometry, Overview
 @section Mesh: finite element mesh generation
 
-A finite element mesh is a tessellation of a given subset of the
-three-dimensional space by elementary geometrical elements of various
-shapes (in Gmsh's case: lines, triangles, quadrangles, tetrahedra,
-prisms, hexahedra and pyramids), arranged in such a way that if two of
-them intersect, they do so along a face, an edge or a node, and never
-otherwise. All the finite element meshes produced by Gmsh are considered
-as ``unstructured'', even if they were generated in a ``structured'' way
-(e.g., by extrusion). This implies that the elementary geometrical
-elements are defined only by an ordered list of their nodes but that
-no predefined order relation is assumed between any two elements.
+A finite element mesh of a model is a tessellation of its geometry by
+simple geometrical elements of various shapes (in Gmsh: lines,
+triangles, quadrangles, tetrahedra, prisms, hexahedra and pyramids),
+arranged in such a way that if two of them intersect, they do so along a
+face, an edge or a node, and never otherwise. This defines a so-called
+``conformal'' mesh. Gmsh implements several algorithms to generate such
+meshes automatically. All the meshes produced by Gmsh are considered as
+``unstructured'', even if they were generated in a ``structured'' way
+(e.g., by extrusion). This implies that the mesh elements are completely
+defined simply by an ordered list of their nodes, and that no predefined
+ordering relation is assumed between any two elements.
 
-The mesh generation is performed in the same bottom-up flow as the
-geometry creation: curves are discretized first; the mesh of the curves
-is then used to mesh the surfaces; then the mesh of the surfaces is used
-to mesh the volumes. In this process, the mesh of an entity is only
-constrained by the mesh of its boundary. For example, in three
-dimensions, the triangles discretizing a surface will be forced to be
-faces of tetrahedra in the final 3D mesh only if the surface is part of
-the boundary of a volume; the line elements discretizing a curve will be
-forced to be edges of tetrahedra in the final 3D mesh only if the curve
-is part of the boundary of a surface, itself part of the boundary of a
-volume; a single node discretizing a point in the middle of a volume
-will be forced to be a node of one of the tetrahedra in the final 3D
-mesh only if this point is connected to a curve, itself part of the
-boundary of a surface, itself part of the boundary of a volume. This
-automatically assures the conformity of the mesh when, for example, two
-surfaces share a common curve. But this also implies that the
-discretization of an ``isolated'' (@var{n}-1)-th dimensional entity
-inside an @var{n}-th dimensional entity does @emph{not} constrain the
-@var{n}-th dimensional mesh---unless it is explicitly told to do so
-(@pxref{Miscellaneous mesh commands}).  Every meshing step is
-constrained by a ``size field'' (sometimes called ``characteristic
-length field''), which prescribes the desired size of the elements in
-the mesh. This size field can be uniform, specified by values associated
-with points in the geometry, or defined by general ``fields'' (for
-example related to the distance to some boundary, to a arbitrary scalar
-field defined on another mesh, etc.).
-
-For each meshing step, all structured mesh directives are executed
-first, and serve as additional constraints for the unstructured parts
-@footnote{Note that mixing structured volume grids with unstructured
-volume grids generated with the default 3D Delaunay algorithm can
-result, in certain cases, to non-conform surface meshes on their shared
-boundary. If this happens, you may consider using the frontal algorithm
-for the unstructured part.}.
+In order to guarantee the conformity of the mesh, mesh generation is
+performed in a bottom-up flow: curves are discretized first; the mesh of
+the curves is then used to mesh the surfaces; then the mesh of the
+surfaces is used to mesh the volumes. In this process, the mesh of an
+entity is only constrained by the mesh of its boundary, unless entities
+of lower dimensions are explicitly embedded in entities of higher
+dimension. For example, in three dimensions, the triangles discretizing
+a surface will be forced to be faces of tetrahedra in the final 3D mesh
+only if the surface is part of the boundary of a volume, or if that
+surface has been explicitly embedded in the volume. This automatically
+ensures the conformity of the mesh when, for example, two volumes share
+a common surface. Every meshing step is constrained by a ``size field''
+(also called ``characteristic length field''), which prescribes the
+desired size of the elements in the mesh. This size field can be
+uniform, specified by values associated with points in the geometry, or
+defined by general ``fields'' (for example related to the distance to
+some boundary, to a arbitrary scalar field defined on another mesh,
+etc.): see @ref{Specifying mesh element sizes}. For each meshing step,
+all structured mesh directives are executed first, and serve as
+additional constraints for the unstructured parts.
 
 @c -------------------------------------------------------------------------
 @c Solver: external solver interface
@@ -316,14 +319,36 @@ for the unstructured part.}.
 @node Solver, Post-processing, Mesh, Overview
 @section Solver: external solver interface
 
-External solvers can be interfaced with Gmsh through Unix or TCP/IP
-sockets, which permits to modify solver parameters, launch external
-computations and process the results directly from within Gmsh's
-post-processing module. The default solver interfaced with Gmsh is GetDP
-(@uref{http://getdp.info}). Examples on how to interface other solvers
-are available in the source distribution (in the
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/solvers,utils/solvers}
-directory).
+Gmsh implements a ONELAB (@uref{http://onelab.info}) server to pilot
+external solvers (called ``clients''). The ONELAB interface allows to
+call such clients and have them share parameters and modeling
+information. The implementation is based on a client-server model, with
+a server-side database and local or remote clients communicating
+in-memory or through TCP/IP sockets. Contrary to most solver interfaces,
+the ONELAB server has no a priori knowledge about any specifics (input
+file format, syntax, ...) of the clients. This is made possible by
+having any simulation preceded by an analysis phase, during which the
+clients are asked to upload their parameter set to the server. The
+issues of completeness and consistency of the parameter sets are
+completely dealt with on the client side: the role of ONELAB is limited
+to data centralization, modification and re-dispatching.
+
+Examples on how to interface solvers are available in the source
+distribution (see
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/solvers,utils/solvers}). A
+full-featured solver interfaced in this manner is GetDP
+(@uref{http://getdp.info}), a general finite elements solver using mixed
+finite elements.
+
+Using the Gmsh API, Gmsh can also be embedded directly in your own
+solver, and ONELAB parameters can be used to interactively drive
+it. Examples on how to embed Gmsh in your solver, and build a custom
+graphical user interface to control it, are available in
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api,demos/api}.
+See in particular
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py,custom_gui.py}
+and
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp,custom_gui.cpp}.
 
 @c -------------------------------------------------------------------------
 @c Post-processing: scalar, vector and tensor field visualization
@@ -333,17 +358,18 @@ directory).
 @section Post-processing: scalar, vector and tensor field visualization
 
 Gmsh can load and manipulate multiple post-processing scalar, vector or
-tensor maps along with the geometry and the mesh. Scalar fields are
-represented by iso-value curves/surfaces or color maps, while vector
-fields are represented by three-dimensional arrows or displacement
+tensor fields along with the geometry and the mesh. Such fields,
+together with visualization options, are called ``post-processing
+views'' (or simply ``views''). Scalar views can be represented by
+iso-curves, iso-surfaces or color maps, while vector views can be
+represented by three-dimensional arrows or displacement
 maps. Post-processing functions include section computation, offset,
 elevation, boundary and component extraction, color map and range
 modification, animation, vector graphic output, etc. All the
-post-processing options can be accessed either interactively or through
-the input script files. Scripting permits to automate all
-post-processing operations, as for example to create
-animations. User-defined operations can also be performed on
-post-processing views through dynamically loadable plugins.
+post-processing options can be accessed either interactively, through
+the input script files or through the API. Various operations on the
+post-processing data can also be performed through plugins (see
+@ref{Post-processing plugins}).
 
 @c -------------------------------------------------------------------------
 @c What Gmsh is pretty good at...
@@ -356,32 +382,43 @@ Here is a tentative list of what Gmsh does best:
 
 @itemize @bullet
 @item
-quickly describe simple and/or ``repetitive'' geometries, thanks to
-user-defined macros, loops, conditionals and includes (see
-@ref{User-defined macros}, @ref{Loops and conditionals}, and @ref{General
-commands});
+quickly describe simple and/or ``repetitive'' geometries with the
+built-in scripting language, thanks to user-defined macros, loops,
+conditionals and includes (see @ref{User-defined macros}, @ref{Loops and
+conditionals}, and @ref{General commands}). For more advanced
+geometries, using the Gmsh API (@pxref{Gmsh API}) in the language of
+your choice (C++, C, Python or Julia) brings even greater flexibility,
+the only downside being that you need to either compile your code (for
+C++ and C) or to configure and install an interpreter (Python or Julia)
+in addition to Gmsh. A binary Software Development Kit (SDK) is
+distributed on the Gmsh web site to make the process easier;
 @item
-parametrize these geometries. Gmsh's scripting language enables all
-commands and command arguments to depend on previous calculations (see
-@ref{Expressions}, and @ref{Geometry commands}). Using the OpenCASCADE
-geometry kernel, Gmsh gives access to all usual constructive solid
-geometry operations;
+parametrize these geometries. Gmsh's scripting language or the Gmsh API
+enable all commands and command arguments to depend on previous
+calculations (see @ref{Expressions}, @ref{Geometry commands}, and
+@ref{Gmsh API}). Using the OpenCASCADE geometry kernel, Gmsh gives
+access to all usual constructive solid geometry operations;
+@item
+import geometries from other CAD software in standard exchange
+formats. Gmsh uses OpenCASCADE to import such files, including label and
+color information from STEP files;
 @item
 generate 1D, 2D and 3D simplicial (i.e., using line segments, triangles
-and tetrahedra) finite element meshes for CAD models in their native
-format (without translations) when linked with the appropriate CAD
-kernel (see @ref{Mesh module});
+and tetrahedra) finite element meshes (see @ref{Mesh module}), with fine
+control over the element size (@pxref{Specifying mesh element sizes});
 @item
-specify target element sizes accurately. Gmsh provides several
-mechanisms to control the size of the elements in the final mesh:
-through interpolation from sizes specified at geometry points or using
-flexible mesh size fields (@pxref{Mesh commands});
+create simple extruded geometries and meshes (see @ref{Geometry
+commands}, and @ref{Mesh commands}), and allow to automatically couple
+such structured meshes with unstructured ones (using a layer of pyramids
+in 3D);
 @item
-create simple extruded geometries and meshes (see @ref{Geometry commands},
-and @ref{Mesh commands});
+generate high-order (curved) meshes that conform to the CAD model
+geometry. High-order mesh optimization tools allow to guarantee the
+validity of such curved meshes;
 @item
-interact with external solvers through a simple client-server
-architecture (@pxref{Solver module});
+interact with external solvers by defining ONELAB parameters, shared
+between Gmsh and the solvers and easily modifiable in the GUI
+(@pxref{Solver module});
 @item
 visualize and export computational results in a great variety of
 ways. Gmsh can display scalar, vector and tensor datasets, perform
@@ -398,13 +435,12 @@ your system});
 @item
 configure your preferred options. Gmsh has a large number of
 configuration options that can be set interactively using the GUI,
-scattered inside command files, changed on the fly in scripts, set in
-per-user configuration files, or specified on the command-line (see
-@ref{Running Gmsh on your system} and @ref{Options});
+scattered inside script files, changed through the API, set in per-user
+configuration files and specified on the command-line (see @ref{Running
+Gmsh on your system} and @ref{Options});
 @item
 and do all the above on various platforms (Windows, Mac and Unix), for
-free (@pxref{Copying conditions}), using simple script files and/or a
-small but powerful GUI.
+free (@pxref{Copying conditions})!
 @end itemize
 
 @c -------------------------------------------------------------------------
@@ -425,13 +461,7 @@ Gmsh's user interface is only exposing a limited number of the available
 features, and many aspects of the interface could be enhanced
 (especially manipulators).
 @item
-Gmsh's scripting language is quite limited, providing only very crude
-loop controls and user-defined macros, with no local variables. For more
-complex workflows, or for integrating Gmsh as a library directly in
-other software tools, an application programming interface is available
-(@pxref{Gmsh API}). This allows to directly access Gmsh features from
-C++, C, Python or Julia. The C interface makes it relatively easy to
-build interfaces to additional languages (e.g. Javascript, Java or Go).
+Your complaints about Gmsh here :-)
 @end itemize
 
 If you have the skills and some free time, feel free to join the
@@ -452,12 +482,12 @@ developers}) to remedy the aforementioned (and all other) shortcomings!
 @cindex Authors, e-mail
 @cindex E-mail, authors
 
-If you think you have found a bug in Gmsh, please file an issue on
-@url{https://gitlab.onelab.info/gmsh/gmsh/issues}. Please provided as
-precise a description of the problem as you can, including sample input
-files that produce the bug. Don't forget to mention both the version of
-Gmsh and the version of your operation system (@pxref{Command-line
-options} to see how to get this information).
+Please file issues on
+@url{https://gitlab.onelab.info/gmsh/gmsh/issues}. Provide as precise a
+description of the problem as you can, including sample input files that
+produce the bug. Don't forget to mention both the version of Gmsh and
+the version of your operation system (@pxref{Command-line options} to
+see how to get this information).
 
 See @ref{Frequently asked questions}, and the
 @url{https://gitlab.onelab.info/gmsh/gmsh/issues,bug tracking system} to
@@ -474,10 +504,10 @@ Gmsh can be used at three levels:
 
 @enumerate
 @item
-as a stand-alone graphical program, driven by an interactive graphical
-user interface (GUI);
+as a stand-alone application manipulated through its graphical user
+interface (GUI);
 @item
-as a stand-alone script-driven program;
+as a stand-alone script-driven application;
 @item
 as a library.
 @end enumerate
@@ -512,7 +542,7 @@ built: check the `File->Export' menu for a list of available formats.
 Finally, to use Gmsh at the third level (i.e., to link the Gmsh library
 with your own code), you will need to learn the Gmsh Application
 Programming Interface (API). This API is available in C++, C, Python and
-Julia: see @ref{Gmsh API} for more information.
+Julia, and is fully documented in @ref{Gmsh API}.
 
 @c -------------------------------------------------------------------------
 @c Syntactic rules used in the manual
@@ -760,6 +790,9 @@ related to one of the geometry, mesh, solver or post-processing
 modules''. Commands peculiar to these modules will be introduced in
 @ref{Geometry module}, @ref{Mesh module}, @ref{Solver module}, and
 @ref{Post-processing module}, respectively.
+
+If you plan to use Gmsh through its API (@pxref{Gmsh API}) instead of
+the built-in scripting language, you can skip this chapter entirely.
 
 @menu
 * Comments::
@@ -1794,22 +1827,27 @@ the same time.
 @cindex Module, geometry
 
 Geometries can be constructed in Gmsh using different underlying CAD
-kernels, specified in @code{.geo} files with the @code{SetFactory}
-command.
+kernels. Selecting the CAD kernel in @code{.geo} files is done with the
+@code{SetFactory} command. In the Gmsh API, the kernel appears
+explicitely in all the relevant functions from the @code{gmsh/model}
+module, with @code{geo} or @code{occ} prefixes for the built-in and
+OpenCASCADE kernel, respectively.
 
-The built-in CAD kernel (@code{SetFactory("built-in")}) provides a
-simple CAD engine based on a boundary representation (``BRep'')
-approach: you need to first define points (using the @code{Point}
-command: see below), then curves (using @code{Line}, @code{Circle},
-@code{Spline}, @dots{}, commands or by extruding points), then surfaces
-(using for example the @code{Plane Surface} or @code{Surface} commands,
-or by extruding curves), and finally volumes (using the @code{Volume}
-command or by extruding surfaces). The OpenCASCADE CAD kernel
-(@code{SetFactory("OpenCASCADE")}) uses the open source OpenCASCADE
+The built-in CAD kernel (@code{SetFactory("Built-in")}) provides a
+simple CAD engine based on a bottom-up boundary representation approach:
+you need to first define points (using the @code{Point} command: see
+below), then curves (using @code{Line}, @code{Circle}, @code{Spline},
+@dots{}, commands or by extruding points), then surfaces (using for
+example the @code{Plane Surface} or @code{Surface} commands, or by
+extruding curves), and finally volumes (using the @code{Volume} command
+or by extruding surfaces). The OpenCASCADE kernel
+(@code{SetFactory("OpenCASCADE")}) allows to build models in the same
+bottom-up manner, or using a constructive solid geometry approach, where
+solids are first defined, on which boolean operations are performed.
 
 These geometrical entities are called ``elementary'' in Gmsh's jargon,
-and are assigned tags (stricly positive identification numbers) when
-they are created:
+and are assigned tags (stricly positive global identification numbers)
+when they are created:
 
 @enumerate
 @item each elementary point must possess a unique tag;
@@ -1826,13 +1864,13 @@ references them. Zero or negative tags are reserved by the system for
 special uses: do not use them in your scripts.
 
 Groups of elementary geometrical entities can also be defined and are
-called ``physical'' groups. These physical groups cannot be modified
-by geometry commands: their only purpose is to assemble elementary
-entities into larger groups so that they can be referred to by the mesh
-module as single entities. As is the case with elementary entities, each
-physical point, physical curve, physical surface or physical volume must
-be assigned a unique tag. See @ref{Mesh module}, for more information
-about how physical groups affect the way meshes are saved.
+called ``physical'' groups. These physical groups cannot be modified by
+geometry commands: their only purpose is to assemble elementary entities
+into larger groups so that they can be referred to later as single
+entities. As is the case with elementary entities, each physical point,
+physical curve, physical surface or physical volume must be assigned a
+unique tag. See @ref{Mesh module}, for more information about how
+physical groups affect the way meshes are saved.
 
 @menu
 * Geometry commands::
@@ -1849,12 +1887,15 @@ about how physical groups affect the way meshes are saved.
 @cindex Geometry commands
 @cindex Commands, geometry
 
-The next subsections describe all the available geometry commands. These
-commands can be used anywhere in a Gmsh script file. Note that the
-following general syntax rule is followed for the definition of
-geometrical entities: ``If an @var{expression} defines a new entity, it
-is enclosed between parentheses. If an @var{expression} refers to a
-previously defined entity, it is enclosed between braces.''
+The next subsections describe all the available geometry commands in the
+scripting language. For the equivalent commands in the Gmsh API, see the
+@code{gmsh/model/geo} and @code{gmsh/model/occ} modules in @ref{Gmsh
+API}.
+
+Note that the following general syntax rule is followed for the
+definition of geometrical entities: ``If an @var{expression} defines a
+new entity, it is enclosed between parentheses. If an @var{expression}
+refers to a previously defined entity, it is enclosed between braces.''
 
 @menu
 * Points::
@@ -2466,7 +2507,7 @@ or @code{1}.
 
 The list of all the options that control the behavior of geometry
 commands, as well as the way geometrical entities are handled in the
-GUI, is give in  @ref{Geometry options list}.
+GUI, is given in @ref{Geometry options list}.
 
 @c =========================================================================
 @c Mesh module
@@ -2484,10 +2525,10 @@ all producing grids conforming in the sense of finite elements
 
 @itemize @bullet
 @item
-The 2D @emph{unstructured} algorithms generate triangles or both
-triangles and quadrangles (when @code{Recombine Surface} is used: see
-@ref{Miscellaneous mesh commands}). The 3D @emph{unstructured}
-algorithms generate tetrahedra.
+The 2D @emph{unstructured} algorithms generate triangles and/or
+quadrangles (when recombination commands or options are used). The 3D
+@emph{unstructured} algorithms generate tetrahedra, or tetrahedra and
+pyramids (when the boundary mesh contains quadrangles).
 @item
 The 2D @emph{structured} algorithms (transfinite and extrusion) generate
 triangles by default, but quadrangles can be obtained by using the
@@ -2499,9 +2540,7 @@ type of the surface meshes they are based on.
 
 All meshes can be subdivided to generate fully quadrangular or fully
 hexahedral meshes with the @code{Mesh.SubdivisionAlgorihm} option
-(@pxref{Mesh options list}). However, beware that the quality of
-subdivided elements initially generated with an @emph{unstructured}
-algorithm can be quite poor.
+(@pxref{Mesh options list}).
 
 @c todo: explain what happens if we have a degenerate geometry (incorrect
 @c holes with surfaces in contact with the exterior shell, intersecting
@@ -2521,9 +2560,8 @@ algorithm can be quite poor.
 @node Choosing the right unstructured algorithm, Elementary entities vs physical groups, Mesh module, Mesh module
 @section Choosing the right unstructured algorithm
 
-Gmsh currently provides a choice between three 2D unstructured
-algorithms and between two 3D unstructured algorithms. Each algorithm
-has its own advantages and disadvantages.
+Gmsh currently provides a choice between several 2D and 3D unstructured
+algorithms. Each algorithm has its own advantages and disadvantages.
 
 For all 2D unstructured algorithms a Delaunay mesh that contains all the
 points of the 1D mesh is initially constructed using a
@@ -2534,10 +2572,10 @@ on computational geometry, Yorktown Heights, 2--4 June 1986.}. Missing
 edges are recovered using edge swaps@footnote{N. P. Weatherill,
 @emph{The integrity of geometrical boundaries in the two-dimensional
 Delaunay triangulation}, Commun. Appl. Numer. Methods 6(2),
-pp. 101--109, 1990.}. After this initial step three different algorithms
-can be applied to generate the final mesh:
+pp. 101--109, 1990.}. After this initial step several algorithms can be
+applied to generate the final mesh:
 
-@enumerate
+@itemize
 @item
 The ``MeshAdapt'' algorithm@footnote{C. Geuzaine and J.-F. Remacle,
 @emph{Gmsh: a three-dimensional finite element mesh generator with
@@ -2553,56 +2591,83 @@ Lyon, 2000.}. New points are inserted sequentially at the circumcenter
 of the element that has the largest adimensional circumradius. The mesh
 is then reconnected using an anisotropic Delaunay criterion.
 @item
-The ``Frontal'' algorithm is inspired by the work of
+The ``Frontal-Delaunay'' algorithm is inspired by the work of
 S. Rebay@footnote{S. Rebay, @emph{Efficient unstructured mesh generation
 by means of Delaunay triangulation and Bowyer-Watson algorithm},
 J. Comput.  Phys. 106, pp. 25--138, 1993.}.
-@end enumerate
+@item
+Other experimental algorithms with specific features are also
+available. In particular, ``Frontal-Delaunay for quads'' is a variant of
+the ``Frontal-Delaunay'' algorithm aiming at generating right-angle
+triangles suitable for recombination; and ``BAMG''@footnote{F. Hecht,
+@emph{BAMG: bidimensional anisotropic mesh generator}, User Guide,
+INRIA, Rocquencourt, 1998.} allows to generate anisotropic
+triangulations.
+@end itemize
 
-These algorithms can be ranked as follows:
-
-@example
-              Robustness        Performance      Element quality
-MeshAdapt         1                  3                 2
-Delaunay          2                  1                 2
-Frontal           3                  2                 1
-@end example
-
-For very complex curved surfaces the ``MeshAdapt'' algorithm is the best
-choice. When high element quality is important, the ``Frontal''
+For very complex curved surfaces the ``MeshAdapt'' algorithm is the most
+robust. When high element quality is important, the ``Delaunay-Frontal''
 algorithm should be tried. For very large meshes of plane surfaces the
 ``Delaunay'' algorithm is the fastest.
 
 The ``Automatic'' algorithm tries to select the best algorithm
-automatically for each surface in the model. As of Gmsh 2.8, the
-``Automatic'' algorithm selects ``Delaunay'' for plane surfaces and
-``MeshAdapt'' for all other surfaces.
+automatically for each surface in the model: ``Delaunay'' for plane
+surfaces and ``MeshAdapt'' for all other surfaces. When the ``Delaunay''
+or ``Frontal-Delaunay'' algorithms fail, ``MeshAdapt'' is automatically
+triggered.
 
-In 3D two unstructured algorithms are available:
+Several 3D unstructured algorithms are als available:
 
-@enumerate
+@itemize
 @item
 The ``Delaunay'' algorithm is split into two separate steps. First, an
-initial mesh of the union of all the volumes in the model is performed
-using H. Si's Tetgen algorithm@footnote{H. Si, @emph{Tetgen: a quality
-tetrahedral mesh generator and three-dimensional Delaunay triangulator},
-2004.}. Then a three-dimensional version of the 2D Delaunay algorithm
+initial mesh of the union of all the volumes in the model is
+performed. Then a three-dimensional version of the 2D Delaunay algorithm
 described above is applied.
 @item
 The ``Frontal'' algorithm uses J. Schoeberl's Netgen algorithm
 @footnote{J. Schoeberl, @emph{Netgen, an advancing front 2d/3d-mesh
 generator based on abstract rules}, Comput. Visual. Sci., 1, pp. 41--52,
 1997.}.
-@end enumerate
+@item
+The ``HXT'' algorithm@footnote{C. Marot, J. Pellerin and J.‐F. Remacle,
+@emph{One machine, one minute, three billion tetrahedra}, International
+Journal for Numerical Methods in Engineering 117.9, pp 967-990, 2019.}
+is a new efficient and parallel reimplementaton of the Delaunay
+algorithm.
+@item
+Other experimental algorithms with specific features are also available.
+In particular, ``MMG3D''@footnote{C. Dobrzynski, @emph{MMG3D: user
+guide}, INRIA, 2012.}  allows to generate anisotropic
+tetrahedralizations.
+@end itemize
 
-The ``Delaunay'' algorithm is the most robust and the fastest, and is
-the only one that supports the @code{Field} mechanism to specify element
-sizes (@pxref{Specifying mesh element sizes}). However, this algorithm
-will sometimes modify the surface mesh, and is thus not suitable for
-producing hybrid structured/unstructured grids. In that case the
-``Frontal'' algorithm should be preferred. The quality of the elements
-produced by both algorithms is comparable. If element quality is
-important the mesh optimizer(s) should be applied.
+The ``Delaunay'' algorithm is currently the most robust and is the only
+one that supports embedded geometrical entities, the @code{Field}
+mechanism to specify element sizes (@pxref{Specifying mesh element
+sizes}) and the automatic generation of hybrid meshes with
+pyramids. These features will eventually be intergrated in the HXT
+algorithm, which at that point will become the default 3D meshing
+algorithm.
+
+If your version of Gmsh is compiler with OpenMP support
+(@pxref{Compiling the source code}), most of the meshing steps can be
+performed in parallel:
+@itemize
+@item
+1D and 2D meshing is parallelized using a coarse-grain approach,
+i.e. curves (resp. surfaces) are each meshed sequentially, but several
+curves (resp. surfaces) are meshed at the same time.
+@item
+3D meshing using HXT is parallelized using a fine-grained approach,
+i.e. the actual meshing procedure for a single volume is done is
+parallel.
+@end itemize
+The number of threads is controlled on the command line with the
+@code{-nt} option (@pxref{Command-line options}), or using the
+@code{General.NumThreads}, @code{Mesh.MaxNumThreads1D},
+@code{Mesh.MaxNumThreads2D} and @code{Mesh.MaxNumThreads3D} options (see
+@ref{General options list} and @ref{Mesh options list}).
 
 @c -------------------------------------------------------------------------
 @c Elementary entities vs. physical groups
@@ -2638,12 +2703,15 @@ To save all mesh element wether or not physical groups are defined, use
 @cindex Mesh commands
 @cindex Commands, mesh
 
-The mesh module commands mostly permit to modify the mesh element sizes
-and specify structured grid parameters. The actual mesh ``actions''
-(i.e., ``mesh the curves'', ``mesh the surfaces'' and ``mesh the
-volumes'') cannot be specified in the script files. They have to be
-given either in the GUI or on the command line (see @ref{Running Gmsh on
-your system}, and @ref{Command-line options}).
+The mesh module commands allow to modify the mesh element sizes and
+specify structured grid parameters. Certain mesh ``actions'' (i.e.,
+``mesh the curves'', ``mesh the surfaces'' and ``mesh the volumes'') can
+also be specified in the script files but are performed either in the
+GUI or on the command line (see @ref{Running Gmsh on your system}, and
+@ref{Command-line options}).
+
+In the Gmsh API, the mesh commands are available in the
+@code{gmsh/model/mesh} module (@pxref{Gmsh API}).
 
 @menu
 * Specifying mesh element sizes::
@@ -3134,36 +3202,27 @@ as well as the way meshes are displayed in the GUI, is given in
 @cindex Solver, module
 @cindex Module, Solver
 
-External solvers can be driven by Gmsh through the ONELAB
-@url{http://www.onelab.info} interface. To add a new solver in the
-solver module, you need to specify its name (@code{Solver.Name0},
+Solvers can be driven by Gmsh through the ONELAB
+@url{http://www.onelab.info} interface, which allows to run the solvers
+have them share parameters and modeling information.  To add a new
+external solver, you need to specify its name (@code{Solver.Name0},
 @code{Solver.Name1}, etc.) and the path to the executable
-(@code{Solver.Executable0}, @code{Solver.Executable1}, etc.); see
-@ref{Solver options list}).
+(@code{Solver.Executable0}, @code{Solver.Executable1}, etc.).  The list
+of all the solver options is given in @ref{Solver options
+list}. Examples on how to interface solvers are available in the source
+distribution (in the
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/solvers,utils/solvers}
+directory). A full-featured solver interfaced in this manner is GetDP
+(@uref{http://getdp.info}), a general finite elements solver using mixed
+finite elements.
 
-The client-server API for the solver interface is defined in the
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/onelab.h,onelab.h}
-header. See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/solvers/c++/solver.cpp,utils/solvers/c++/solver.cpp}
-for a simple example on how to use the ONELAB programming interface. See
-the sources of GetDP (@url{http://getdp.info}) for a more comprehensive
-example.
-
-@menu
-* Solver options::
-@end menu
-
-@c -------------------------------------------------------------------------
-@c Solver options
-@c -------------------------------------------------------------------------
-
-@node Solver options,  , Solver module, Solver module
-@section Solver options
-
-@cindex Solver commands
-@cindex Options, geometry
-
-The list of all the solver options is given in @ref{Solver options list}.
+Using the Gmsh API, you can also directly embed gmsh in your own solver,
+and use ONELAB for interactive parameter definition and
+modification. See
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py,custom_gui.py}
+and
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp,custom_gui.cpp})for
+examples.
 
 @c =========================================================================
 @c Post-processing module
@@ -3186,23 +3245,23 @@ be given in several formats: in human-readable ``parsed'' format (these
 are just part of a standard input script, but are usually put in
 separate files with a @file{.pos} extension), in native MSH files (ASCII
 or binary files with @file{.msh} extensions: see @ref{File formats}), or
-in standard third-party formats (like MED:
-@uref{http://www.code-aster.org/outils/med/}).
+in standard third-party formats.
 
-Once loaded into Gmsh, scalar fields can be displayed as iso-value curves
-and surfaces or color maps, whereas vector fields can be represented
-either by three-dimensional arrows or by displacement maps. (Tensor
-fields are currently displayed as Von-Mises effective stresses, min/max
-eigenvalues, eigenvectors, ellipsis or ellipsoid. To display other
+Once loaded into Gmsh, scalar fields can be displayed as iso-curves,
+iso-surfaces or color maps, whereas vector fields can be represented
+either by three-dimensional arrows or by displacement maps. Tensor
+fields can be displayed as Von-Mises effective stresses, min/max
+eigenvalues, eigenvectors, ellipses or ellipsoids. (To display other
 (combinations of) components, you can use the @code{Force scalar} or
 @code{Force vector} options, or use @code{Plugin(MathEval)}: see
 @ref{Post-processing plugins}.)
 
-In Gmsh's jargon, each dataset is called a ``view''. Each view is given
-a name, and can be manipulated either individually (each view has its
-own button in the GUI and can be referred to by its index in a script)
-or globally (see the @code{PostProcessing.Link} option in
-@ref{Post-processing options list}).
+In Gmsh's jargon, each dataset, along with the visualization options, is
+called a ``post-processing view'', or simply a ``view''. Each view is
+given a name, and can be manipulated either individually (each view has
+its own button in the GUI and can be referred to by its index in a
+script or in the API) or globally (see the @code{PostProcessing.Link}
+option in @ref{Post-processing options list}).
 
 By default, Gmsh treats all post-processing views as three-dimensional
 plots, i.e., draws the scalar, vector and tensor primitives (points, curves,
@@ -3222,10 +3281,11 @@ in a `2D time' plot, one curve is drawn for each scalar point in the view
 and the abscissa is the time step.
 @end itemize
 
-Although visualization is usually mostly an interactive task, Gmsh exposes
-all the post-processing commands and options to the user in its scripting
-language to permit a complete automation of the post-processing process (see
-e.g., @ref{t8.geo}, and @ref{t9.geo}).
+Although visualization is usually mostly an interactive task, Gmsh
+exposes all the post-processing commands and options to the user in its
+scripting language and through the API to permit a complete automation
+of the post-processing process (see e.g., @ref{t8.geo}, and
+@ref{t9.geo}).
 
 The two following sections summarize all available post-processing commands
 and options. Most options apply to both 2D and 3D plots (colormaps,
@@ -3256,6 +3316,10 @@ files). The ``parsed'' format is defined in the next section (cf. the
 
 @cindex Post-processing commands
 @cindex Commands, post-processing
+
+This section describes the post-processing commands availanble in the
+scripting language. For the equivalent commands in the Gmsh API, see the
+@code{gmsh/view} module in @ref{Gmsh API}.
 
 @ftable @code
 @item Alias View[@var{expression}];
@@ -3531,7 +3595,8 @@ destructive, non-reversible way).
 
 Plugins are available in the GUI by right-clicking on a view button (or
 by clicking on the black arrow next to the view button) and then
-selecting the `Plugin' submenu.
+selecting the `Plugin' submenu. In the API, plugins are available in the
+@code{gmsh/plugin} module (@pxref{Gmsh API}).
 
 Here is the list of the plugins that are shipped by default with Gmsh:
 
@@ -4930,7 +4995,9 @@ The following examples introduce new features gradually, starting with
 @ref{t1.geo}. The files corresponding to these examples are available in
 the
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial,tutorial}
-directory of the Gmsh distribution.
+directory of the Gmsh distribution. C++, C, Python or Julia versions of
+several of these tutorials are also available in
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api,demos/api}.
 
 To learn how to run Gmsh on your computer, see @ref{Running Gmsh on your
 system}. Screencasts that show how to use the GUI are available on
@@ -5124,6 +5191,9 @@ To reset all options to their default values, use the `Restore default
 options' button in `Tools->Options->General->Advanced', or erase the
 @code{General.SessionFileName} and @code{General.OptionsFileName} files
 by hand.
+
+All the options can be manipulated through the Gmsh API through the
+@code{gmsh/option} module (@pxref{Gmsh API}).
 
 @c All the included files are generated automatically with `gmsh -doc'
 

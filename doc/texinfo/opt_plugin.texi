@@ -758,7 +758,9 @@ Default value: @code{2000}
 @item Plugin(MeshVolume)
 Plugin(MeshVolume) computes the volume of the mesh.@*
 @*
-Only the elements in the physical group `Physical' of dimension `Dimension' are taken into account, unless 'Physical' is negative, in which case all the elements of the given `Dimension' are considered.
+Only the elements in the physical group `Physical' of dimension `Dimension' are taken into account, unless 'Physical' is negative, in which case all the elements of the given `Dimension' are considered. If `Dimension` is negative, all the elments are considered.@*
+@*
+Plugin(MeshVolume) creates one new view.
 Numeric options:
 @table @code
 @item Physical
