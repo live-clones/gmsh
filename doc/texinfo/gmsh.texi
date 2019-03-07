@@ -5405,29 +5405,63 @@ between the four core modules
 (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo,Geo},
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Mesh,Mesh},
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Solver,Solver},
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post,Post}) and associated
-utilities (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Common,Common},
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Numeric,Numeric}) on one hand, and
-the graphics (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Graphics,Graphics})
-and interface (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Fltk,Fltk},
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Parser,Parser}) code on the other.
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post,Post}) and
+associated utilities
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Common,Common},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Numeric,Numeric})
+on one hand, and the graphics
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Graphics,Graphics})
+and interface
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Fltk,Fltk},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Parser,Parser},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api,api}) code on
+the other.
 
-The geometry and mesh modules are based on an object-oriented model
-class (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GModel.h,Geo/GModel.h}),
-built upon abstract geometrical entity classes
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GVertex.h,Geo/GVertex.h},
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GEdge.h,Geo/GEdge.h},
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GFace.h,Geo/GFace.h} and
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GRegion.h,Geo/GRegion.h}). Concrete
-implementations of the geometrical entity classes are provided for each
-supported CAD kernel
+The geometry module is based on a model class
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GModel.h,Geo/GModel.h}),
+and abstract entity classes for geometrical points
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GVertex.h,Geo/GVertex.h}),
+curves
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GEdge.h,Geo/GEdge.h}),
+surfaces
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GFace.h,Geo/GFace.h})
+and volumes
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GRegion.h,Geo/GRegion.h}). Concrete
+implementations of these classes are provided for each supported CAD
+kernel
 (e.g. @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/gmshVertex.h,Geo/gmshVertex.h}
 for geometry points in Gmsh's native CAD format, or
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/OCCVertex.h,Geo/OCCVertex.h}
-for geometry points from OpenCASCADE). The post-processing module is
-based on the concept of views
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PView.h,Post/PView.h}) and
-abstract data containers (derived from
+for geometry points from OpenCASCADE). All these elementary geometry
+entities derive from
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GEntity.h,Geo/GEntity.h}.
+Physical groups are simply stored as integer tags in the entities.
+
+A mesh is composed of elements: mesh points
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MPoint.h,Geo/MPoint.h}),
+lines
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MLine.h,Geo/MLine.h}),
+triangles
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MTriangle.h,Geo/MTriangle.h}),
+quadrangles
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MQuadrangle.h,Geo/MQuadrangle.h}),
+tetrahedra
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MTetrahedron.h,Geo/MTetrahedron.h}),
+etc. All the mesh elements are derived from
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MElement.h,Geo/MElement.h},
+and are stored in the corresponding geometrical entities: one mesh point
+per geometrical point, mesh lines in geometrical curves, triangles and
+quadrangles in surfaces, etc. The elements are defined in terms of their
+nodes
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MVertex.h,Geo/MVertex.h}).
+Each geometrical entity stores only its internal nodes: boundary nodes
+are stored in the bounding entities. This allows to easily and
+efficiently handle the creation, modification and destruction of
+conformal meshes.
+
+The post-processing module is based on the concept of views
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PView.h,Post/PView.h})
+and abstract data containers (derived from
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PViewData.h,Post/PViewData.h}).
 
 @c -------------------------------------------------------------------------
