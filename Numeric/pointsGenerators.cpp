@@ -1140,7 +1140,7 @@ void gmshGenerateOrderedPointsLine(int order, fullVector<double> &points)
 {
   points.resize(order + 1);
   for(int i = 0; i < order + 1; ++i) {
-    points(i) = (i * 2 - order) / static_cast<double>(order);
+    points(i) = i / static_cast<double>(order);
   }
   return;
 }

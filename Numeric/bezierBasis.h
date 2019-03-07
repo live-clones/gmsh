@@ -37,7 +37,7 @@ public:
   fullMatrix<double> matrixLag2Bez3;
   fullMatrix<double> matrixLag2Bez4;
   fullMatrix<double> subDivisor;
-  fullVector<double> order1dPoints;
+  fullVector<double> ordered1dBezPoints;
 
   // Constructors
   bezierBasis(FuncSpaceData data);

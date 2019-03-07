@@ -584,6 +584,14 @@ namespace {
   void convertLag2Bez(const fullMatrix<double> &lag, int order, int start,
                       int inc, const fullVector<D> &x, fullMatrix<double> &bez)
   {
+    // Algorithm to compute Bézier coefficients of f(x), x in [0, 1].
+    // f is given by the Lagrange expansion: the coefficients are 'lag'
+    // and the corresponding Lagrange basis polynomials are constructed with
+    // nodes 'x'. Those nodes should be in [0, 1] if we aim at expanding the
+    // "same" function in Bézier interpolation.
+    // See this paper for the details:
+    // "Computing the Bézier control points of the Lagrangian interpolant in
+    // arbitrary dimension" by M. Ainsworth and M. A. Sánchez
     const int nColumns = lag.size2();
     fullMatrix<D> f(order + 1, nColumns);
     for(int i = start, n = 0; n <= order; i += inc, ++n) {
@@ -971,7 +979,7 @@ void bezierBasis::_construct()
   //  matrixLag2Bez.print("matrixLag2Bez");
   //  matrixLag2Bez2.print("matrixLag2Bez2");
 
-  gmshGenerateOrderedPointsLine(order, order1dPoints);
+  gmshGenerateOrderedPointsLine(order, ordered1dBezPoints);
 }
 
 void bezierBasis::_constructPyr()
@@ -1666,7 +1674,7 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffData)
   const int order = _funcSpaceData.spaceOrder();
   const int npt = order + 1;
   const fullMatrix<double> lag(const_cast<double*>(lagCoeffData), _r, _c);
-  const fullVector<double> &x = _basis->order1dPoints;
+  const fullVector<double> &x = _basis->ordered1dBezPoints;
   fullMatrix<double> bez(_data, _r, _c);
 
   // For simplicial elements, do as before for now
