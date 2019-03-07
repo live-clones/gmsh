@@ -131,7 +131,7 @@ fullMatrix<double> gmshGeneratePointsPyramidGeneral(bool pyr, int nij, int nk,
   //   monomial(i, j, k) -> (-1+2*i/nij)*(1-k'), (-1+2*j/nij)*(1-k'), (nk-k)/div)
   fullMatrix<double> points =
     gmshGenerateMonomialsPyramidGeneral(pyr, nij, nk, forSerendipPoints);
-  points.print("monomials");
+//  points.print("monomials");
   if(points.size1() == 1) return points;
   const int div = pyr ? nk + nij : std::max(nij, nk);
   double scale = 2. / div;
@@ -1156,6 +1156,7 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
   const bool pyr = data.isPyramidalSpace();
 
   if(bezierSpace) {
+    // Warning! duplicate code: see bezierBasis::generateGmshBezierPoints
     if(type != TYPE_PYR) {
       points.scale(1. / order);
       return;

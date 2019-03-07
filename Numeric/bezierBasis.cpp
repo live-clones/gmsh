@@ -15,104 +15,31 @@
 
 namespace {
 
-  // Exponents
-
-  fullMatrix<double> generateExponents(int type, int order)
+  // Exponents:
+  void generateExponents(FuncSpaceData data, fullMatrix<double> &exp)
   {
-    fullMatrix<double> exp;
-    int idx;
-    switch(type) {
-    case TYPE_LIN:
-      exp.resize(order + 1, 1);
-      idx = 0;
-      for(int i = 0; i < order + 1; ++i) {
-        exp(idx, 0) = i;
-        ++idx;
-      }
-      return exp;
-    case TYPE_TRI:
-      exp.resize((order + 1) * (order + 2) / 2, 2);
-      idx = 0;
-      for(int j = 0; j < order + 1; ++j) {
-        for(int i = 0; i < order + 1 - j; ++i) {
-          exp(idx, 0) = i;
-          exp(idx, 1) = j;
-          ++idx;
-        }
-      }
-      return exp;
-    case TYPE_QUA:
-      exp.resize((order + 1) * (order + 1), 2);
-      idx = 0;
-      for(int j = 0; j < order + 1; ++j) {
-        for(int i = 0; i < order + 1; ++i) {
-          exp(idx, 0) = i;
-          exp(idx, 1) = j;
-          ++idx;
-        }
-      }
-      return exp;
-    case TYPE_TET:
-      exp.resize((order + 1) * (order + 2) * (order + 3) / 6, 3);
-      idx = 0;
-      for(int k = 0; k < order + 1; ++k) {
-        for(int j = 0; j < order + 1 - k; ++j) {
-          for(int i = 0; i < order + 1 - j - k; ++i) {
-            exp(idx, 0) = i;
-            exp(idx, 1) = j;
-            exp(idx, 2) = k;
-            ++idx;
-          }
-        }
-      }
-      return exp;
-    case TYPE_PRI:
-      exp.resize((order + 1) * (order + 1) * (order + 2) / 2, 3);
-      idx = 0;
-      for(int k = 0; k < order + 1; ++k) {
-        for(int j = 0; j < order + 1; ++j) {
-          for(int i = 0; i < order + 1 - j; ++i) {
-            exp(idx, 0) = i;
-            exp(idx, 1) = j;
-            exp(idx, 2) = k;
-            ++idx;
-          }
-        }
-      }
-      return exp;
-    case TYPE_HEX:
-      exp.resize((order + 1) * (order + 1) * (order + 1), 3);
-      idx = 0;
-      for(int k = 0; k < order + 1; ++k) {
-        for(int j = 0; j < order + 1; ++j) {
-          for(int i = 0; i < order + 1; ++i) {
-            exp(idx, 0) = i;
-            exp(idx, 1) = j;
-            exp(idx, 2) = k;
-            ++idx;
-          }
-        }
-      }
-      return exp;
-    }
-    return fullMatrix<double>();
+    gmshGenerateOrderedMonomials(data, exp);
   }
-
-  fullMatrix<double> generateExponentsPyramid(int nij, int nk)
+  void generateBezierPoints(FuncSpaceData data, fullMatrix<double> &points)
   {
-    fullMatrix<double> exp((nij + 1) * (nij + 1) * (nk + 1), 3);
-    int idx = 0;
-    for(int k = 0; k < nk + 1; ++k) {
-      for(int j = 0; j < nij + 1; ++j) {
-        for(int i = 0; i < nij + 1; ++i) {
-          exp(idx, 0) = i;
-          exp(idx, 1) = j;
-          exp(idx, 2) = k;
-          ++idx;
-        }
+    // Warning! duplicate code: see gmshGenerateOrderedPoints
+    gmshGenerateMonomials(data, points);
+//    points.print("monomials");
+    if (data.elementType() != TYPE_PYR)
+      points.scale(1. / data.spaceOrder());
+    else {
+      const int pyr = data.isPyramidalSpace();
+      const int nij = data.nij();
+      const int nk = data.nk();
+      const int div = pyr ? nij + nk : std::max(nij, nk);
+      double scale = 1. / (nij + nk);
+      for(int i = 0; i < points.size1(); ++i) {
+        points(i, 2) = (nk - points(i, 2)) / div;
+        if (!pyr) scale = (1 - points(i, 2)) / nij;
+        points(i, 0) = points(i, 0) * scale;
+        points(i, 1) = points(i, 1) * scale;
       }
     }
-    return exp;
   }
 
   // Sub Control Points
@@ -723,17 +650,6 @@ void bezierBasis::f(double u, double v, double w, double *sf) const
   }
 }
 
-void bezierBasis::generateBezierPoints(fullMatrix<double> &points) const
-{
-  gmshGenerateMonomials(_data, points);
-  points.scale(1. / _data.spaceOrder());
-  if(_data.elementType() == TYPE_PYR && _data.nk() < _data.spaceOrder()) {
-    fullMatrix<double> prox;
-    prox.setAsProxy(points, 2, 1);
-    prox.add(1 - static_cast<double>(_data.nk()) / _data.spaceOrder());
-  }
-}
-
 void bezierBasis::_fePoints2BezPoints(fullMatrix<double> &points) const
 {
   fullMatrix<double> tmp;
@@ -908,11 +824,11 @@ void bezierBasis::_construct()
     Msg::Error("Unknown function space for parentType %d", _data.elementType());
     return;
   }
-  _exponents2 = generateExponents(_data.elementType(), order);
+  generateExponents(_data, _exponents2);
   _numDivisions = static_cast<int>(subPoints.size());
 
-  fullMatrix<double> bezierPoints = _exponents;
-  if(order) bezierPoints.scale(1. / order);
+  fullMatrix<double> bezierPoints;
+  generateBezierPoints(_data, bezierPoints);
 
   matrixBez2Lag =
     generateBez2LagMatrix(_exponents, bezierPoints, order, _dimSimplex);
@@ -926,7 +842,8 @@ void bezierBasis::_construct()
   if(_data.elementType() == TYPE_QUA) {
     fullMatrix<double> oneDPoints = gmshGenerateMonomialsLine(order);
     if(order) oneDPoints.scale(1. / order);
-    fullMatrix<double> oneDExponents = generateExponents(TYPE_LIN, order);
+    fullMatrix<double> oneDExponents;
+    generateExponents(FuncSpaceData(false, TYPE_LIN, order), oneDExponents);
     fullMatrix<double> oneDMatrixBez2Lag =
       generateBez2LagMatrix(oneDExponents, oneDPoints, order, 0);
     fullMatrix<double> oneDMatrixLag2Bez;
@@ -995,14 +912,9 @@ void bezierBasis::_constructPyr()
   _dimSimplex = 0;
   gmshGenerateMonomials(_data, _exponents);
 
-  // If pyr == true, we cannot subdivide => we don't care about the order
-  if (pyr)
-    gmshGenerateMonomials(_data, _exponents2);
-  else
-    _exponents2 = generateExponentsPyramid(nij, nk);
-
   fullMatrix<double> bezierPoints;
-  generateBezierPoints(bezierPoints);
+  generateBezierPoints(_data, bezierPoints);
+  generateExponents(_data, _exponents2);
   matrixBez2Lag =
     generateBez2LagMatrixPyramid(_exponents, bezierPoints, pyr, nij, nk);
   matrixBez2Lag.invert(matrixLag2Bez);
@@ -1028,22 +940,6 @@ bezierBasisRaiser *bezierBasis::getRaiser() const
   }
   return _raiser;
 }
-
-// const bezierBasis* bezierBasisRaiser::getRaisedBezierBasis(int raised) const
-//{
-//  if(raised != 2 && raised != 3){
-//    Msg::Error("Why would you want other than 2 or 3?");
-//    return NULL;
-//  }
-//  if(_bfs->_data.elementType() != TYPE_PYR)
-//    return BasisFactory::getBezierBasis(
-//        FuncSpaceData(_bfs->_data, _bfs->_data.spaceOrder()*raised));
-//  else
-//    return BasisFactory::getBezierBasis(
-//        FuncSpaceData(_bfs->_data,
-//                      _bfs->_data.nij()*raised,
-//                      _bfs->_data.nk()*raised));
-//}
 
 void bezierBasisRaiser::_fillRaiserData()
 {
@@ -1081,8 +977,9 @@ void bezierBasisRaiser::_fillRaiserData()
       gmshGenerateMonomials(dataRaiser2, expD2);
       double2int(expD2, exp2);
       _raiser2.resize(exp2.size1());
-      fullMatrix<double> expD2New =
-        generateExponents(_bfs->_data.elementType(), 2 * order);
+      fullMatrix<double> expD2New;
+      FuncSpaceData data(false, _bfs->_data.elementType(), 2 * order);
+      generateExponents(data, expD2New);
       double2int(expD2New, exp2New);
       _raiser2New.resize(exp2New.size1());
     }
@@ -1177,8 +1074,9 @@ void bezierBasisRaiser::_fillRaiserData()
       gmshGenerateMonomials(dataRaiser3, expD3);
       double2int(expD3, exp3);
       _raiser3.resize(exp3.size1());
-      fullMatrix<double> expD3New =
-        generateExponents(_bfs->_data.elementType(), 3 * order);
+      fullMatrix<double> expD3New;
+      FuncSpaceData data(false, _bfs->_data.elementType(), 3 * order);
+      generateExponents(data, expD3New);
       double2int(expD3New, exp3New);
       _raiser3New.resize(exp3New.size1());
     }
