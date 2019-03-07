@@ -140,8 +140,19 @@ namespace {
 
 GradientBasis::GradientBasis(FuncSpaceData data) : _data(data)
 {
+  // Matrix gradShapeMatX, when multiplied by Lagrange coefficients,
+  // gives the first derivative with respect to first reference coordinate at
+  // a certain number of sampling points (for element tag 'data._tag')
+  // The number of sampling points is determined by 'data._spaceOrder'.
+  // The ordering of the sampling points is "ordered" (see pointsGenerator.cpp)
+  // and is thus different from the Gmsh ordering convention. This is for being
+  // able to convert sampling of jacobian from lagrange to bezier space easily.
   fullMatrix<double> samplingPoints;
+#if defined(JACOBIAN_ORDERED)
   gmshGenerateOrderedPoints(data, samplingPoints);
+#else
+  gmshGeneratePoints(data, samplingPoints);
+#endif
   const int numSampPnts = samplingPoints.size1();
 
   // Store shape function gradients of mapping at Jacobian nodes
