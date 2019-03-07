@@ -401,7 +401,7 @@ access to all usual constructive solid geometry operations;
 @item
 import geometries from other CAD software in standard exchange
 formats. Gmsh uses OpenCASCADE to import such files, including label and
-color information from STEP files;
+color information from STEP and IGES files;
 @item
 generate 1D, 2D and 3D simplicial (i.e., using line segments, triangles
 and tetrahedra) finite element meshes (see @ref{Mesh module}), with fine
@@ -1707,7 +1707,7 @@ is not absolute, @var{char-expression} is appended to the path of the
 current file. @value{SYNC}
 
 @item ShapeFromFile( @var{char-expression} );
-Merges a BREP or STEP file and returns the tags of the
+Merges a BREP, STEP or IGES file and returns the tags of the
 highest-dimensional entities. Only available with the OpenCASCADE
 geometry kernel.
 
@@ -1842,10 +1842,11 @@ example the @code{Plane Surface} or @code{Surface} commands, or by
 extruding curves), and finally volumes (using the @code{Volume} command
 or by extruding surfaces). The OpenCASCADE kernel
 (@code{SetFactory("OpenCASCADE")}) allows to build models in the same
-bottom-up manner, or using a constructive solid geometry approach, where
-solids are first defined, on which boolean operations are performed.
+bottom-up manner, or by using a constructive solid geometry approach
+where solids are defined first. Boolean operations can then be performed
+to modify them.
 
-These geometrical entities are called ``elementary'' in Gmsh's jargon,
+These geometrical entities are dubbed ``elementary'' in Gmsh's jargon,
 and are assigned tags (stricly positive global identification numbers)
 when they are created:
 
@@ -2560,7 +2561,7 @@ hexahedral meshes with the @code{Mesh.SubdivisionAlgorihm} option
 @node Choosing the right unstructured algorithm, Elementary entities vs physical groups, Mesh module, Mesh module
 @section Choosing the right unstructured algorithm
 
-Gmsh currently provides a choice between several 2D and 3D unstructured
+Gmsh provides a choice between several 2D and 3D unstructured
 algorithms. Each algorithm has its own advantages and disadvantages.
 
 For all 2D unstructured algorithms a Delaunay mesh that contains all the
@@ -2597,7 +2598,7 @@ by means of Delaunay triangulation and Bowyer-Watson algorithm},
 J. Comput.  Phys. 106, pp. 25--138, 1993.}.
 @item
 Other experimental algorithms with specific features are also
-available. In particular, ``Frontal-Delaunay for quads'' is a variant of
+available. In particular, ``Frontal-Delaunay for Quads'' is a variant of
 the ``Frontal-Delaunay'' algorithm aiming at generating right-angle
 triangles suitable for recombination; and ``BAMG''@footnote{F. Hecht,
 @emph{BAMG: bidimensional anisotropic mesh generator}, User Guide,
@@ -2608,22 +2609,23 @@ triangulations.
 For very complex curved surfaces the ``MeshAdapt'' algorithm is the most
 robust. When high element quality is important, the ``Delaunay-Frontal''
 algorithm should be tried. For very large meshes of plane surfaces the
-``Delaunay'' algorithm is the fastest.
+``Delaunay'' algorithm is the fastest.  The ``Automatic'' algorithm
+tries to select the best algorithm automatically for each surface in the
+model: ``Delaunay'' for plane surfaces and ``MeshAdapt'' for all other
+surfaces. When the ``Delaunay'' or ``Frontal-Delaunay'' algorithms fail,
+``MeshAdapt'' is automatically triggered.
 
-The ``Automatic'' algorithm tries to select the best algorithm
-automatically for each surface in the model: ``Delaunay'' for plane
-surfaces and ``MeshAdapt'' for all other surfaces. When the ``Delaunay''
-or ``Frontal-Delaunay'' algorithms fail, ``MeshAdapt'' is automatically
-triggered.
-
-Several 3D unstructured algorithms are als available:
+Several 3D unstructured algorithms are also available:
 
 @itemize
 @item
-The ``Delaunay'' algorithm is split into two separate steps. First, an
-initial mesh of the union of all the volumes in the model is
-performed. Then a three-dimensional version of the 2D Delaunay algorithm
-described above is applied.
+The ``Delaunay'' algorithm is split into three separate steps. First, an
+initial mesh of the union of all the volumes in the model is performed,
+without inserting points in the volume. The surface mesh is then
+recovered using H. Si's boundary recovery algorithm Tetgen/BR. Then a
+three-dimensional version of the 2D Delaunay algorithm described above
+is applied to insert points in the volume to respect the mesh size
+constraints.
 @item
 The ``Frontal'' algorithm uses J. Schoeberl's Netgen algorithm
 @footnote{J. Schoeberl, @emph{Netgen, an advancing front 2d/3d-mesh
@@ -2646,25 +2648,23 @@ The ``Delaunay'' algorithm is currently the most robust and is the only
 one that supports embedded geometrical entities, the @code{Field}
 mechanism to specify element sizes (@pxref{Specifying mesh element
 sizes}) and the automatic generation of hybrid meshes with
-pyramids. These features will eventually be intergrated in the HXT
-algorithm, which at that point will become the default 3D meshing
-algorithm.
+pyramids.
 
-If your version of Gmsh is compiler with OpenMP support
+If your version of Gmsh is compiled with OpenMP support
 (@pxref{Compiling the source code}), most of the meshing steps can be
 performed in parallel:
 @itemize
 @item
 1D and 2D meshing is parallelized using a coarse-grain approach,
 i.e. curves (resp. surfaces) are each meshed sequentially, but several
-curves (resp. surfaces) are meshed at the same time.
+curves (resp. surfaces) can be meshed at the same time.
 @item
 3D meshing using HXT is parallelized using a fine-grained approach,
 i.e. the actual meshing procedure for a single volume is done is
 parallel.
 @end itemize
-The number of threads is controlled on the command line with the
-@code{-nt} option (@pxref{Command-line options}), or using the
+The number of threads can be controlled with the @code{-nt} flag on the
+command line (@pxref{Command-line options}), or with the
 @code{General.NumThreads}, @code{Mesh.MaxNumThreads1D},
 @code{Mesh.MaxNumThreads2D} and @code{Mesh.MaxNumThreads3D} options (see
 @ref{General options list} and @ref{Mesh options list}).
@@ -3202,10 +3202,10 @@ as well as the way meshes are displayed in the GUI, is given in
 @cindex Solver, module
 @cindex Module, Solver
 
-Solvers can be driven by Gmsh through the ONELAB
-@url{http://www.onelab.info} interface, which allows to run the solvers
-have them share parameters and modeling information.  To add a new
-external solver, you need to specify its name (@code{Solver.Name0},
+Solvers can be driven by Gmsh through the ONELAB interface (see
+@url{http://www.onelab.info}), which allows to run the solvers have
+them share parameters and modeling information.  To add a new external
+solver, you need to specify its name (@code{Solver.Name0},
 @code{Solver.Name1}, etc.) and the path to the executable
 (@code{Solver.Executable0}, @code{Solver.Executable1}, etc.).  The list
 of all the solver options is given in @ref{Solver options
@@ -3213,16 +3213,16 @@ list}. Examples on how to interface solvers are available in the source
 distribution (in the
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/solvers,utils/solvers}
 directory). A full-featured solver interfaced in this manner is GetDP
-(@uref{http://getdp.info}), a general finite elements solver using mixed
+(@uref{http://getdp.info}), a general finite element solver using mixed
 finite elements.
 
-Using the Gmsh API, you can also directly embed gmsh in your own solver,
+Using the Gmsh API, you can also directly embed Gmsh in your own solver,
 and use ONELAB for interactive parameter definition and
 modification. See
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py,custom_gui.py}
 and
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp,custom_gui.cpp})for
-examples.
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp,custom_gui.cpp})
+for examples.
 
 @c =========================================================================
 @c Post-processing module

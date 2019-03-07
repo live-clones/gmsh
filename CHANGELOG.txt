@@ -1,5 +1,7 @@
-4.2.1 (March 7, 2019): fixed regression in STEP reader; added reading labels and
-colors in IGES files; small improvements.
+4.2.1 (March 7, 2019): fixed regression for STEP files without global compound
+shape; added support for reading IGES labels and colors; improved search for
+shared library in Python and Julia modules; improved Plugin(MeshVolume); updates
+to the reference manual.
 
 4.2.0 (March 5, 2019): changed type of node and element tags in API to support
 (very) large meshes (using size_t instead of int); new MSH4.1 revision of the
