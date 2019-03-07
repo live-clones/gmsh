@@ -3043,7 +3043,7 @@ static void setTargetUnit(const std::string &unit)
 
 #if defined(HAVE_OCC_CAF)
 
-static void setShapeAttributes(OCCAttributesRTree *meshAttributes,
+static void setShapeAttributes(OCCAttributesRTree *attributes,
                                const Handle_XCAFDoc_ShapeTool &shapeTool,
                                const Handle_XCAFDoc_ColorTool &colorTool,
                                const Handle_XCAFDoc_MaterialTool &materialTool,
@@ -3071,7 +3071,7 @@ static void setShapeAttributes(OCCAttributesRTree *meshAttributes,
 
   TDF_Label ref;
   if (shapeTool->IsReference(label) && shapeTool->GetReferredShape(label, ref)) {
-    setShapeAttributes(meshAttributes, shapeTool, colorTool, materialTool,
+    setShapeAttributes(attributes, shapeTool, colorTool, materialTool,
                        ref, partLoc, phys, true);
   }
 
@@ -3100,34 +3100,65 @@ static void setShapeAttributes(OCCAttributesRTree *meshAttributes,
       Msg::Info(" - Label '%s' (%dD)", phys.c_str(), dim);
     }
     if(phys.size()){
-      meshAttributes->insert(new OCCAttributes(dim, shape, phys));
+      attributes->insert(new OCCAttributes(dim, shape, phys));
     }
 
     Quantity_Color col;
     if (colorTool->GetColor(label, XCAFDoc_ColorGen, col)) {
       double r = col.Red(), g = col.Green(), b = col.Blue();
       Msg::Info(" - Color (%g, %g, %g) (%dD)", r, g, b, dim);
-      meshAttributes->insert(new OCCAttributes(dim, shape, r, g, b, 1.));
+      attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1.));
     }
     else if(colorTool->GetColor(label, XCAFDoc_ColorSurf, col)) {
       double r = col.Red(), g = col.Green(), b = col.Blue();
       Msg::Info(" - Color (%g, %g, %g) (%dD & Surf)", r, g, b, dim);
-      meshAttributes->insert(new OCCAttributes(dim, shape, r, g, b, 1., 1));
+      attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1., 1));
     }
     else if(colorTool->GetColor(label, XCAFDoc_ColorCurv, col)) {
       double r = col.Red(), g = col.Green(), b = col.Blue();
       Msg::Info(" - Color (%g, %g, %g) (%dD & Curv)", r, g, b, dim);
-      meshAttributes->insert(new OCCAttributes(dim, shape, r, g, b, 1, 2));
+      attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1, 2));
     }
 
   }
   else {
     for (TDF_ChildIterator it(label); it.More(); it.Next()) {
-      setShapeAttributes(meshAttributes, shapeTool, colorTool, materialTool,
+      setShapeAttributes(attributes, shapeTool, colorTool, materialTool,
                          it.Value(), partLoc, phys, isRef);
     }
   }
 }
+
+template <class T>
+void readAttributes(OCCAttributesRTree *attributes, T &reader,
+                    const std::string &format)
+{
+  // dummy XCAF Application to handle the STEP XCAF Document
+  static Handle_XCAFApp_Application dummy_app =
+    XCAFApp_Application::GetApplication();
+  // XCAF Document to contain the STEP/IGES file itself
+  Handle_TDocStd_Document doc;
+  // check if a file is already open under this handle, if so, close it to
+  // prevent segfaults when trying to create a new document
+  if(dummy_app->NbDocuments() > 0) {
+    dummy_app->GetDocument(1, doc);
+    dummy_app->Close(doc);
+  }
+  dummy_app->NewDocument(format.c_str(), doc);
+  // transfer STEP/IGES into the document, and get the main label
+  reader.Transfer(doc);
+  TDF_Label mainLabel = doc->Main();
+  Handle_XCAFDoc_ShapeTool shapeTool =
+    XCAFDoc_DocumentTool::ShapeTool(mainLabel);
+  Handle_XCAFDoc_ColorTool colorTool =
+    XCAFDoc_DocumentTool::ColorTool(mainLabel);
+  Handle_XCAFDoc_MaterialTool materialTool =
+    XCAFDoc_DocumentTool::MaterialTool(mainLabel);
+  // traverse the labels recursively to set attributes on shapes
+  setShapeAttributes(attributes, shapeTool, colorTool, materialTool,
+                     mainLabel, TopLoc_Location(), "", false);
+}
+
 #endif
 
 bool OCC_Internals::importShapes(const std::string &fileName,
@@ -3147,63 +3178,45 @@ bool OCC_Internals::importShapes(const std::string &fileName,
     }
     else if(format == "step" || split[2] == ".step" || split[2] == ".stp" ||
             split[2] == ".STEP" || split[2] == ".STP") {
-#if defined(HAVE_OCC_CAF)
-      STEPCAFControl_Reader reader;
-      setTargetUnit(CTX::instance()->geom.occTargetUnit);
-      if(reader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
-        Msg::Error("Could not read file '%s'", fileName.c_str());
-        return false;
-      }
-      // dummy XCAF Application to handle the STEP XCAF Document
-      static Handle_XCAFApp_Application dummy_app =
-        XCAFApp_Application::GetApplication();
-      // XCAF Document to contain the STEP file itself
-      Handle_TDocStd_Document step_doc;
-      // check if a STEP File is already open under this handle, if so, close it
-      // to prevent segfaults when trying to create a new document
-      if(dummy_app->NbDocuments() > 0) {
-        dummy_app->GetDocument(1, step_doc);
-        dummy_app->Close(step_doc);
-      }
-      dummy_app->NewDocument("STEP-XCAF", step_doc);
-      // transfer STEP into the document, and get the main label
-      reader.Transfer(step_doc);
-      TDF_Label mainLabel = step_doc->Main();
-      Handle_XCAFDoc_ShapeTool shapeTool =
-        XCAFDoc_DocumentTool::ShapeTool(mainLabel);
-      if(CTX::instance()->geom.occImportLabels){
-        Handle_XCAFDoc_ColorTool colorTool =
-          XCAFDoc_DocumentTool::ColorTool(mainLabel);
-        Handle_XCAFDoc_MaterialTool materialTool =
-          XCAFDoc_DocumentTool::MaterialTool(mainLabel);
-        // traverse the labels recursively to set attributes on shapes
-        setShapeAttributes(_attributes, shapeTool, colorTool, materialTool,
-                           mainLabel, TopLoc_Location(), "", false);
-      }
-      // the main shape (compound) is the first one
-      TDF_LabelSequence shapeLabels;
-      shapeTool->GetShapes(shapeLabels);
-      result = shapeTool->GetShape(shapeLabels.Value(1));
-#else
       STEPControl_Reader reader;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
+#if defined(HAVE_OCC_CAF)
+      STEPCAFControl_Reader cafreader;
+      if(cafreader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
+        Msg::Error("Could not read file '%s'", fileName.c_str());
+        return false;
+      }
+      if(CTX::instance()->geom.occImportLabels)
+        readAttributes(_attributes, cafreader, "STEP-XCAF");
+      reader = cafreader.ChangeReader();
+#else
       if(reader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
       }
+#endif
       reader.NbRootsForTransfer();
       reader.TransferRoots();
       result = reader.OneShape();
-#endif
     }
     else if(format == "iges" || split[2] == ".iges" || split[2] == ".igs" ||
             split[2] == ".IGES" || split[2] == ".IGS") {
-      IGESControl_Reader reader;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
+#if defined(HAVE_OCC_CAF)
+      IGESCAFControl_Reader reader;
       if(reader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
       }
+      if(CTX::instance()->geom.occImportLabels)
+        readAttributes(_attributes, reader, "IGES-XCAF");
+#else
+      IGESControl_Reader reader;
+      if(reader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
+        Msg::Error("Could not read file '%s'", fileName.c_str());
+        return false;
+      }
+#endif
       reader.NbRootsForTransfer();
       reader.TransferRoots();
       result = reader.OneShape();
