@@ -1031,8 +1031,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
     bool periodic = (pointTags.front() == pointTags.back());
     if(mode == 0) {
       // BSpline through points (called "Spline" in Gmsh; will be C2, whereas it
-      // is only C1 in the GEO kernel; also works for the periodic case,
-      // contrary to GEO kernel)
+      // is only C1 in the GEO kernel)
       int np = periodic ? ctrlPoints.Length() - 1 : ctrlPoints.Length();
       Handle(TColgp_HArray1OfPnt) p = new TColgp_HArray1OfPnt(1, np);
       for(int i = 1; i <= np; i++) p->SetValue(i, ctrlPoints(i));
@@ -1541,6 +1540,7 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
     Handle(Geom_Surface) s = BRep_Tool::Surface(tmp);
     result = BRepBuilderAPI_MakeFace(s, wire);
     ShapeFix_Face fix(result);
+    //fix.SetPrecision(CTX::instance()->geom.tolerance);
     fix.Perform();
     fix.FixOrientation(); // and I don't understand why this is necessary
     result = fix.Face();
