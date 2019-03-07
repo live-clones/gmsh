@@ -1246,6 +1246,10 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
 
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
     GEdge *tgt = *it;
+
+    // non complete periodic info (e.g. through extrusion)
+    if(tgt->vertexCounterparts.empty()) continue;
+
     GEdge *src = dynamic_cast<GEdge *>(tgt->getMeshMaster());
 
     if(src != NULL && src != tgt) {
@@ -1253,9 +1257,8 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
       std::map<MVertex *, MVertex *> &p2p = tgt->correspondingHOPoints;
       p2p.clear();
 
-      Msg::Info(
-        "Constructing high order periodicity for edge connection %d - %d",
-        tgt->tag(), src->tag());
+      Msg::Info("Reconstructing periodicity for curve connection %d - %d",
+                tgt->tag(), src->tag());
 
       std::map<MEdge, MLine *, Less_Edge> srcEdges;
       for(std::size_t i = 0; i < src->getNumMeshElements(); i++) {
@@ -1281,8 +1284,8 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
           std::map<MVertex *, MVertex *>::iterator tIter = v2v.find(vtx);
           if(tIter == v2v.end()) {
             Msg::Error("Cannot find periodic counterpart of vertex %d"
-                       " of edge %d on edge %d",
-                       vtx->getNum(), tgt->tag(), src->tag());
+                       " of curve %d on curve %d", vtx->getNum(), tgt->tag(),
+                       src->tag());
             return;
           }
           else
@@ -1292,8 +1295,8 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
         std::map<MEdge, MLine *, Less_Edge>::iterator srcIter =
           srcEdges.find(MEdge(vtcs[0], vtcs[1]));
         if(srcIter == srcEdges.end()) {
-          Msg::Error("Can't find periodic counterpart of edge %d-%d on edge %d"
-                     ", connected to edge %d-%d on %d",
+          Msg::Error("Can't find periodic counterpart of mesh edge %d-%d "
+                     "on curve %d, connected to mesh edge %d-%d on curve %d",
                      tgtLine->getVertex(0)->getNum(),
                      tgtLine->getVertex(1)->getNum(), tgt->tag(),
                      vtcs[0]->getNum(), vtcs[1]->getNum(), src->tag());
@@ -1322,11 +1325,14 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     GFace *tgt = *it;
+
+    // non complete periodic info (e.g. through extrusion)
+    if(tgt->vertexCounterparts.empty()) continue;
+
     GFace *src = dynamic_cast<GFace *>(tgt->getMeshMaster());
     if(src != NULL && src != tgt) {
-      Msg::Info(
-        "Constructing high order periodicity for face connection %d - %d",
-        tgt->tag(), src->tag());
+      Msg::Info("Reconstructing periodicity for surface connection %d - %d",
+                tgt->tag(), src->tag());
 
       std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
       std::map<MVertex *, MVertex *> &p2p = tgt->correspondingHOPoints;
@@ -1358,8 +1364,8 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
 
           std::map<MVertex *, MVertex *>::iterator tIter = v2v.find(vtx);
           if(tIter == v2v.end()) {
-            Msg::Error("Cannot find periodic counterpart of vertex %d"
-                       " of surface %d on surface %d",
+            Msg::Error("Cannot find periodic counterpart of vertex %d "
+                       "of surface %d on surface %d",
                        vtx->getNum(), tgt->tag(), src->tag());
             return;
           }
@@ -1373,8 +1379,8 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
           std::ostringstream faceDef;
           for(int iVtx = 0; iVtx < nbVtcs; iVtx++)
             faceDef << vtcs[iVtx]->getNum() << " ";
-          Msg::Error("Cannot find periodic counterpart of face %s in face %d "
-                     "connected to %d",
+          Msg::Error("Cannot find periodic counterpart of mesh face %s in "
+                     "surface %d on surface %d",
                      faceDef.str().c_str(), tgt->tag(), src->tag());
           return;
         }
@@ -1399,7 +1405,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
 #endif
   }
 
-  Msg::Debug("Finalized high order topology of periodic connections");
+  Msg::Debug("Finalized topology of periodic connections");
 }
 
 void SetOrder1(GModel *m, bool onlyVisible)
