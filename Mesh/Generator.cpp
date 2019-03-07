@@ -486,7 +486,7 @@ static void Mesh2D(GModel *m)
       if(static_cast<discreteFace *>(*it)->haveParametrization())
         Msg::SetNumThreads(1);
     }
-    // DelQuad and co are not yet thread-safe
+    // Frontal-Delaunay for quads and co are not yet thread-safe
     if((*it)->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
        (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
        (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
