@@ -3389,7 +3389,7 @@ void OCC_Internals::synchronize(GModel *model)
     std::vector<std::string> labels;
     _attributes->getLabels(0, vertex, labels);
     if(labels.size()) model->setElementaryName(0, occv->tag(), labels[0]);
-    unsigned int col, boundary;
+    unsigned int col = 0, boundary = 0;
     if(_attributes->getColor(0, vertex, col, boundary)){
       occv->setColor(col);
     }
@@ -3414,7 +3414,7 @@ void OCC_Internals::synchronize(GModel *model)
     std::vector<std::string> labels;
     _attributes->getLabels(1, edge, labels);
     if(labels.size()) model->setElementaryName(1, occe->tag(), labels[0]);
-    unsigned int col, boundary;
+    unsigned int col = 0, boundary = 0;
     if(_attributes->getColor(1, edge, col, boundary)){
       occe->setColor(col);
     }
@@ -3437,7 +3437,7 @@ void OCC_Internals::synchronize(GModel *model)
     std::vector<std::string> labels;
     _attributes->getLabels(2, face, labels);
     if(labels.size()) model->setElementaryName(2, occf->tag(), labels[0]);
-    unsigned int col, boundary;
+    unsigned int col = 0, boundary = 0;
     if(_attributes->getColor(2, face, col, boundary)){
       occf->setColor(col);
       if(boundary == 2){
@@ -3464,7 +3464,7 @@ void OCC_Internals::synchronize(GModel *model)
     std::vector<std::string> labels;
     _attributes->getLabels(3, region, labels);
     if(labels.size()) model->setElementaryName(3, occr->tag(), labels[0]);
-    unsigned int col, boundary;
+    unsigned int col = 0, boundary = 0;
     if(_attributes->getColor(3, region, col, boundary)){
       occr->setColor(col);
       if(boundary == 1){
