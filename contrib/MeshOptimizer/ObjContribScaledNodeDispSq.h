@@ -38,7 +38,7 @@ public:
   virtual ObjContrib *copy() const;
   virtual void initialize(Patch *mesh);
   virtual bool fail() { return false; }
-  virtual bool addContrib(double &Obj, alglib::real_1d_array &gradObj);
+  virtual bool addContrib(double &Obj, std::vector<double> &gradObj);
   virtual void updateParameters() { FuncType::updateParameters(_min, _max); }
   virtual bool targetReached() { return FuncType::targetReached(_min, _max); }
   virtual bool stagnated() { return FuncType::stagnated(_min, _max); }
@@ -75,8 +75,8 @@ void ObjContribScaledNodeDispSq<FuncType>::initialize(Patch *mesh)
 }
 
 template <class FuncType>
-bool ObjContribScaledNodeDispSq<FuncType>::addContrib(
-  double &Obj, alglib::real_1d_array &gradObj)
+bool ObjContribScaledNodeDispSq<FuncType>::addContrib(double &Obj,
+                                                      std::vector<double> &gradObj)
 {
   _min = BIGVAL;
   _max = -BIGVAL;

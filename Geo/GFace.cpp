@@ -26,9 +26,9 @@
 #include "BackgroundMeshTools.h"
 #endif
 
-#if defined(HAVE_BFGS)
-#include "stdafx.h"
-#include "optimization.h"
+#if defined(HAVE_ALGLIB)
+#include <stdafx.h>
+#include <optimization.h>
 #endif
 
 // TODO C++11 remove macro
@@ -1085,7 +1085,7 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p, bool onSurface) const
   return SPoint2(U, V);
 }
 
-#if defined(HAVE_BFGS)
+#if defined(HAVE_ALGLIB)
 
 class data_wrapper {
 private:
@@ -1137,7 +1137,7 @@ void bfgs_callback(const alglib::real_1d_array &x, double &func,
 GPoint GFace::closestPoint(const SPoint3 &queryPoint,
                            const double initialGuess[2]) const
 {
-#if defined(HAVE_BFGS)
+#if defined(HAVE_ALGLIB)
   // Test initial guess
   double min_u = initialGuess[0];
   double min_v = initialGuess[1];

@@ -894,19 +894,6 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
       C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
     V[3] = InterpolateCurve(
       C[3], C[3]->ubeg + (C[3]->uend - C[3]->ubeg) * (1. - v), 0);
-    /*
-#if defined(HAVE_BFGS)
-    printf("----- u %f v %f %g %g\n", u, v,C[1]->ubeg,C[1]->uend);
-    printf("S[0] %f %f %f\n", S[0]->Pos.X, S[0]->Pos.Y,S[0]->Pos.Z);
-    printf("S[1] %f %f %f\n", S[1]->Pos.X, S[1]->Pos.Y,S[1]->Pos.Z);
-    printf("S[2] %f %f %f\n", S[2]->Pos.X, S[2]->Pos.Y,S[2]->Pos.Z);
-    printf("S[3] %f %f %f\n", S[3]->Pos.X, S[3]->Pos.Y,S[3]->Pos.Z);
-    printf("V[0] %f %f %f\n", V[0].Pos.X, V[0].Pos.Y,V[0].Pos.Z);
-    printf("V[1] %f %f %f\n", V[1].Pos.X, V[1].Pos.Y,V[1].Pos.Z);
-    printf("V[2] %f %f %f\n", V[2].Pos.X, V[2].Pos.Y,V[2].Pos.Z);
-    printf("V[3] %f %f %f\n", V[3].Pos.X, V[3].Pos.Y,V[3].Pos.Z);
-#endif
-    */
     T =
       TransfiniteQua(V[0], V[1], V[2], V[3], *S[0], *S[1], *S[2], *S[3], u, v);
     if(isSphere) TransfiniteSph(*S[0], *O, &T);

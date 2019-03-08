@@ -158,7 +158,7 @@ the contrib/ directory, each governed by their own license:
 
 * contrib/bamg from Freefem++ copyright (C) Frederic Hecht;
 
-* contrib/lbfgs (C) Sergey Bochkanov (ALGLIB project);
+* contrib/ALGLIB (C) Sergey Bochkanov (ALGLIB project);
 
 * contrib/mmg3d from MMG3D Version 4.0 (C) 2004-2011 Cecile Dobrzynski and
   Pascal Frey (IPB - UPMC - INRIA);

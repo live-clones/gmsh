@@ -258,7 +258,7 @@ GPoint gmshFace::point(double par1, double par2) const
 GPoint gmshFace::closestPoint(const SPoint3 &qp,
                               const double initialGuess[2]) const
 {
-#if defined(HAVE_BFGS)
+#if defined(HAVE_ALGLIB)
   return GFace::closestPoint(qp, initialGuess);
 #endif
   if(s->Typ == MSH_SURF_PLAN && !s->geometry) {

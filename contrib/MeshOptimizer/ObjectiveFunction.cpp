@@ -137,10 +137,10 @@ std::string ObjectiveFunction::targetsNotReached()
   return fail;
 }
 
-bool ObjectiveFunction::compute(double &obj, alglib::real_1d_array &gradObj)
+bool ObjectiveFunction::compute(double &obj, std::vector<double> &gradObj)
 {
   obj = 0.;
-  for(int i = 0; i < gradObj.length(); i++) gradObj[i] = 0.;
+  for(std::size_t i = 0; i < gradObj.size(); i++) gradObj[i] = 0.;
   bool ok = true;
   for(std::vector<ObjContrib *>::iterator it = begin(); it != end(); it++)
     ok &= (*it)->addContrib(obj, gradObj);
