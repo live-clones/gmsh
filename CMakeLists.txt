@@ -544,7 +544,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Fltk AND ENABLE_FLTK)
   if(FLTK_CONFIG_SCRIPT)
     execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --api-version
                     OUTPUT_VARIABLE FLTK_VERSION)
-    string(STRIP ${FLTK_VERSION} FLTK_VERSION)
+    string(STRIP "${FLTK_VERSION}" FLTK_VERSION)
     if(FLTK_VERSION GREATER 1.1)
       add_subdirectory(Fltk)
       set_config_option(HAVE_FLTK "Fltk")
