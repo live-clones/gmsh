@@ -1,3 +1,5 @@
+4.2.2:
+
 4.2.1 (March 7, 2019): fixed regression for STEP files without global compound
 shape; added support for reading IGES labels and colors; improved search for
 shared library in Python and Julia modules; improved Plugin(MeshVolume); updates
