@@ -5440,13 +5440,13 @@ Physical groups are simply stored as integer tags in the entities.
 A mesh is composed of elements: mesh points
 (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MPoint.h,Geo/MPoint.h}),
 lines
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MLine.h,Geo/MLine.h}),
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MLine.h,Geo/MLine.h}),
 triangles
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MTriangle.h,Geo/MTriangle.h}),
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MTriangle.h,Geo/MTriangle.h}),
 quadrangles
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MQuadrangle.h,Geo/MQuadrangle.h}),
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MQuadrangle.h,Geo/MQuadrangle.h}),
 tetrahedra
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MTetrahedron.h,Geo/MTetrahedron.h}),
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MTetrahedron.h,Geo/MTetrahedron.h}),
 etc. All the mesh elements are derived from
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MElement.h,Geo/MElement.h},
 and are stored in the corresponding geometrical entities: one mesh point
@@ -5474,7 +5474,7 @@ and abstract data containers (derived from
 If you plan to contribute code to the Gmsh project, here are some easy rules
 to make the code easy to read/debug/maintain:
 
-@enumerate
+@itemize
 @item
 See @uref{https://gitlab.onelab.info/gmsh/gmsh/wikis/Git-cheat-sheet}
 for instructions on how to contribute to Gmsh's GIT source code
@@ -5494,32 +5494,11 @@ file.)
 Always use the @code{Msg::} class to print information or errors
 @item
 Use memory checking tools to detect memory leaks and other nasty memory
-problems. For example, you can use
-@itemize @bullet
-@item
-Valgrind on Linux:
-@example
-valgrind --leak-check=yes --show-reachable=yes gmsh file.geo -3
-@end example
-@item
-GMALLOC on Mac OS X:
-@example
-(gdb) set env DYLD_INSERT_LIBRARIES /usr/lib/libgmalloc.dylib
-@end example
-@item
-LIBNJAMD:
-@example
-export LD_PRELOAD=libnjamd.so
-kill -USR1
-@end example
-@item
-Purify
-@item
-Memprof
-@item
-@dots{}
+problems. For example, on Linux you can use
+@code{valgrind --leak-check=full gmsh file.geo -3}.
+@c macOS: (gdb) set env DYLD_INSERT_LIBRARIES /usr/lib/libgmalloc.dylib
+@c export LD_PRELOAD=libnjamd.so kill -USR1
 @end itemize
-@end enumerate
 
 @c -------------------------------------------------------------------------
 @c Adding a new option
