@@ -469,7 +469,8 @@ double taylorDistanceSq2D(const GradientBasis *gb,
 double taylorDistanceEdge(MLine *l, GEdge *ge)
 {
   const int nV = l->getNumVertices();
-  const GradientBasis *gb = BasisFactory::getGradientBasis(FuncSpaceData(l));
+  const GradientBasis *gb;
+  gb = BasisFactory::getGradientBasis(l->getTypeForMSH(), FuncSpaceData(l));
 
   // Coordinates of vertices
   fullMatrix<double> nodesXYZ(nV, 3);
@@ -491,7 +492,8 @@ double taylorDistanceEdge(MLine *l, GEdge *ge)
 double taylorDistanceFace(MElement *el, GFace *gf)
 {
   const int nV = el->getNumVertices();
-  const GradientBasis *gb = BasisFactory::getGradientBasis(FuncSpaceData(el));
+  const GradientBasis *gb;
+  gb = BasisFactory::getGradientBasis(el->getTypeForMSH(), FuncSpaceData(el));
 
   // Coordinates of vertices
   fullMatrix<double> nodesXYZ(nV, 3);

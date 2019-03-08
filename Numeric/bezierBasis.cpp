@@ -26,12 +26,12 @@ namespace {
     // Warning! duplicate code: see gmshGenerateOrderedPoints
     gmshGenerateMonomials(data, points);
 //    points.print("monomials");
-    if (data.elementType() != TYPE_PYR)
-      points.scale(1. / data.spaceOrder());
+    if (data.getType() != TYPE_PYR)
+      points.scale(1. / data.getSpaceOrder());
     else {
-      const int pyr = data.isPyramidalSpace();
-      const int nij = data.nij();
-      const int nk = data.nk();
+      const int pyr = data.getPyramidalSpace();
+      const int nij = data.getNij();
+      const int nk = data.getNk();
       const int div = pyr ? nij + nk : std::max(nij, nk);
       double scale = 1. / (nij + nk);
       for(int i = 0; i < points.size1(); ++i) {
@@ -49,7 +49,7 @@ namespace {
     std::vector<fullMatrix<double> > subPoints(2);
 
 #if defined(JACOBIAN_ORDERED)
-    FuncSpaceData data(false, TYPE_LIN, order);
+    FuncSpaceData data(TYPE_LIN, order, false);
     gmshGenerateOrderedPoints(data, subPoints[0], true);
     subPoints[0].scale(.5);
 #else
@@ -68,7 +68,7 @@ namespace {
     fullMatrix<double> prox;
 
 #if defined(JACOBIAN_ORDERED)
-    FuncSpaceData data(false, TYPE_TRI, order);
+    FuncSpaceData data(TYPE_TRI, order, false);
     gmshGenerateOrderedPoints(data, subPoints[0], true);
     subPoints[0].scale(.5);
 #else
@@ -96,7 +96,7 @@ namespace {
     fullMatrix<double> prox;
 
 #if defined(JACOBIAN_ORDERED)
-    FuncSpaceData data(false, TYPE_QUA, order);
+    FuncSpaceData data(TYPE_QUA, order, false);
     gmshGenerateOrderedPoints(data, subPoints[0], true);
     subPoints[0].scale(.5);
 #else
@@ -125,7 +125,7 @@ namespace {
     fullMatrix<double> prox2;
 
 #if defined(JACOBIAN_ORDERED)
-    FuncSpaceData data(false, TYPE_TET, order);
+    FuncSpaceData data(TYPE_TET, order, false);
     gmshGenerateOrderedPoints(data, subPoints[0], true);
     subPoints[0].scale(.5);
 #else
@@ -199,7 +199,7 @@ namespace {
     fullMatrix<double> prox;
 
 #if defined(JACOBIAN_ORDERED)
-    FuncSpaceData data(false, TYPE_PRI, order);
+    FuncSpaceData data(TYPE_PRI, order, false);
     gmshGenerateOrderedPoints(data, subPoints[0], true);
     subPoints[0].scale(.5);
 #else
@@ -245,7 +245,7 @@ namespace {
     fullMatrix<double> prox;
 
 #if defined(JACOBIAN_ORDERED)
-    FuncSpaceData data(false, TYPE_HEX, order);
+    FuncSpaceData data(TYPE_HEX, order, false);
     gmshGenerateOrderedPoints(data, subPoints[0], true);
     subPoints[0].scale(.5);
 #else
@@ -293,7 +293,7 @@ namespace {
       fullMatrix<double> prox;
 
 #if defined(JACOBIAN_ORDERED)
-      FuncSpaceData data(false, TYPE_PYR, false, nij, nk);
+      FuncSpaceData data(TYPE_PYR, false, nij, nk, false);
       gmshGenerateOrderedPoints(data, subPoints[0], true);
       subPoints[0].scale(.5);
 #else
@@ -322,7 +322,7 @@ namespace {
 #if defined(JACOBIAN_ORDERED)
       // FIXME: not sure what it should be
       Msg::Error("subpoints pyramids is certainly not rights! see bezierBasis");
-      FuncSpaceData data(false, TYPE_PYR, false, nij, nk);
+      FuncSpaceData data(TYPE_PYR, false, nij, nk, false);
       gmshGenerateOrderedPoints(data, subPoints[0], true);
       subPoints[0].scale(.5);
 #else
@@ -686,7 +686,7 @@ namespace {
 
 bezierBasis::bezierBasis(FuncSpaceData data) : _data(data), _raiser(NULL)
 {
-  if(_data.elementType() == TYPE_PYR)
+  if(_data.getType() == TYPE_PYR)
     _constructPyr();
   else
     _construct();
@@ -696,7 +696,7 @@ bezierBasis::~bezierBasis() { delete _raiser; }
 
 void bezierBasis::f(double u, double v, double w, double *sf) const
 {
-  const int tag = ElementType::getType(_data.elementType(), _data.spaceOrder());
+  const int tag = ElementType::getType(_data.getType(), _data.getSpaceOrder());
   const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
   double p[1256];
   // TODO Amaury: change (u,v,w)
@@ -713,7 +713,7 @@ void bezierBasis::f(double u, double v, double w, double *sf) const
 void bezierBasis::_fePoints2BezPoints(fullMatrix<double> &points) const
 {
   fullMatrix<double> tmp;
-  switch(_data.elementType()) {
+  switch(_data.getType()) {
   case TYPE_TRI:
   case TYPE_TET: break;
 
@@ -751,7 +751,7 @@ void bezierBasis::_fePoints2BezPoints(fullMatrix<double> &points) const
   default:
     Msg::Error("_fepoints2BezPoints not implemented for "
                "type of element %d",
-               _data.elementType());
+               _data.getType());
     return;
   }
 }
@@ -829,15 +829,15 @@ void bezierBasis::subdivideBezCoeff(const fullVector<double> &coeff,
 
 void bezierBasis::_construct()
 {
-  if(_data.elementType() == TYPE_PYR) {
+  if(_data.getType() == TYPE_PYR) {
     Msg::Error("This bezierBasis constructor is not for pyramids!");
     return;
   }
 
   std::vector<fullMatrix<double> > subPoints;
-  int order = _data.spaceOrder();
+  int order = _data.getSpaceOrder();
 
-  switch(_data.elementType()) {
+  switch(_data.getType()) {
   case TYPE_PNT:
     _numLagCoeff = 1;
     _dimSimplex = 0;
@@ -881,7 +881,7 @@ void bezierBasis::_construct()
     subPoints = generateSubPointsHex(order);
     break;
   default:
-    Msg::Error("Unknown function space for parentType %d", _data.elementType());
+    Msg::Error("Unknown function space for parentType %d", _data.getType());
     return;
   }
   _numDivisions = static_cast<int>(subPoints.size());
@@ -903,11 +903,11 @@ void bezierBasis::_construct()
   subDivisor = generateSubDivisor(_exponents, subPoints, matrixLag2Bez, order,
                                   _dimSimplex);
 
-  if(_data.elementType() == TYPE_QUA) {
+  if(_data.getType() == TYPE_QUA) {
     fullMatrix<double> oneDPoints = gmshGenerateMonomialsLine(order);
     if(order) oneDPoints.scale(1. / order);
     fullMatrix<double> oneDExponents;
-    generateExponents(FuncSpaceData(false, TYPE_LIN, order), oneDExponents);
+    generateExponents(FuncSpaceData(TYPE_LIN, order, false), oneDExponents);
     fullMatrix<double> oneDMatrixBez2Lag =
       generateBez2LagMatrix(oneDExponents, oneDPoints, order, 0);
     fullMatrix<double> oneDMatrixLag2Bez;
@@ -965,12 +965,12 @@ void bezierBasis::_construct()
 
 void bezierBasis::_constructPyr()
 {
-  if(_data.elementType() != TYPE_PYR) {
+  if(_data.getType() != TYPE_PYR) {
     Msg::Error("This bezierBasis constructor is for pyramids!");
   }
 
-  const bool pyr = _data.isPyramidalSpace();
-  const int nij = _data.nij(), nk = _data.nk();
+  const bool pyr = _data.getPyramidalSpace();
+  const int nij = _data.getNij(), nk = _data.getNk();
 
   _numLagCoeff = nk == 0 ? 4 : 8;
   _dimSimplex = 0;
@@ -1042,7 +1042,7 @@ void bezierBasisRaiser::_fillRaiserData()
       double2int(expD2, exp2);
       _raiser2.resize(exp2.size1());
       fullMatrix<double> expD2New;
-      FuncSpaceData data(false, _bfs->_data.elementType(), 2 * order);
+      FuncSpaceData data(_bfs->_data, 2 * order);
       generateExponents(data, expD2New);
       double2int(expD2New, exp2New);
       _raiser2New.resize(exp2New.size1());
@@ -1139,7 +1139,7 @@ void bezierBasisRaiser::_fillRaiserData()
       double2int(expD3, exp3);
       _raiser3.resize(exp3.size1());
       fullMatrix<double> expD3New;
-      FuncSpaceData data(false, _bfs->_data.elementType(), 3 * order);
+      FuncSpaceData data(_bfs->_data, 3 * order);
       generateExponents(data, expD3New);
       double2int(expD3New, exp3New);
       _raiser3New.resize(exp3New.size1());
@@ -1246,11 +1246,11 @@ void bezierBasisRaiser::_fillRaiserData()
 void bezierBasisRaiser::_fillRaiserDataPyr()
 {
   FuncSpaceData fsdata = _bfs->getFuncSpaceData();
-  if(fsdata.elementType() != TYPE_PYR) {
+  if(fsdata.getType() != TYPE_PYR) {
     _fillRaiserData();
     return;
   }
-  if(fsdata.isPyramidalSpace()) {
+  if(fsdata.getPyramidalSpace()) {
     Msg::Error("Bezier raiser not implemented for pyramidal space");
     return;
   }
@@ -1261,7 +1261,7 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
     double2int(expD, exp);
   }
   int ncoeff = exp.size1();
-  int order[3] = {fsdata.nij(), fsdata.nij(), fsdata.nk()};
+  int order[3] = {fsdata.getNij(), fsdata.getNij(), fsdata.getNk()};
   int orderHash = std::max(order[0], order[1]);
 
   // Speedup: Since the coefficients (num/den) are invariant from a permutation
@@ -1632,8 +1632,8 @@ bezierCoeff::~bezierCoeff()
 void bezierCoeff::_computeCoefficients(const double *lagCoeffData)
 {
   // FIXME: Use Leja order? (if yes, change gmshGenerateOrderedPoints)
-  const int type = _funcSpaceData.elementType();
-  const int order = _funcSpaceData.spaceOrder();
+  const int type = _funcSpaceData.getType();
+  const int order = _funcSpaceData.getSpaceOrder();
   const int npt = order + 1;
   const fullMatrix<double> lag(const_cast<double*>(lagCoeffData), _r, _c);
   const fullVector<double> &x = _basis->ordered1dBezPoints;
@@ -1703,8 +1703,8 @@ void bezierCoeff::updateDataPtr(long diff)
 int bezierCoeff::getIdxCornerCoeff(int i) const
 {
   //TODO: other types
-  const int order = _funcSpaceData.spaceOrder();
-  switch(_funcSpaceData.elementType()) {
+  const int order = _funcSpaceData.getSpaceOrder();
+  switch(_funcSpaceData.getType()) {
   case TYPE_TRI:
     switch(i) {
     case 0: return 0;
@@ -1746,7 +1746,7 @@ int bezierCoeff::getIdxCornerCoeff(int i) const
     case 5: return _r - 1;
     }
   case TYPE_PYR:
-    if (_funcSpaceData.isPyramidalSpace()) {
+    if (_funcSpaceData.getPyramidalSpace()) {
       switch(i) {
       case 0: return 0;
       case 1: return order;
@@ -1756,8 +1756,8 @@ int bezierCoeff::getIdxCornerCoeff(int i) const
       }
     }
     else {
-      const int nij = _funcSpaceData.nij();
-      const int nk = _funcSpaceData.nk();
+      const int nij = _funcSpaceData.getNij();
+      const int nk = _funcSpaceData.getNk();
       switch(i) {
       case 0: return 0;
       case 1: return nij;
@@ -1770,7 +1770,8 @@ int bezierCoeff::getIdxCornerCoeff(int i) const
       }
     }
   default:
-    Msg::Error("type %d not implemented in getIdxCornerCoeff", _funcSpaceData.elementType());
+    Msg::Error("type %d not implemented in getIdxCornerCoeff",
+               _funcSpaceData.getType());
     return 0;
   }
 }
@@ -1804,7 +1805,7 @@ void bezierCoeff::subdivide(std::vector<bezierCoeff *> &subCoeff) const
   }
 
   // TODO: other types
-  switch(_funcSpaceData.elementType()) {
+  switch(_funcSpaceData.getType()) {
   case TYPE_TRI:
     for(int i = 0; i < 4; ++i) subCoeff.push_back(new bezierCoeff(*this));
     _subdivideTriangle(*this, 0, subCoeff);
@@ -2219,8 +2220,8 @@ void bezierCoeff::_subdividePrism(const bezierCoeff &coeff,
 void bezierCoeff::_subdividePyramid(const bezierCoeff &coeff,
                                     std::vector<bezierCoeff *> &subCoeff)
 {
-  const int nij = coeff._funcSpaceData.nij();
-  const int nk = coeff._funcSpaceData.nk();
+  const int nij = coeff._funcSpaceData.getNij();
+  const int nk = coeff._funcSpaceData.getNk();
   const int Nij = 2 * nij - 1;
   const int Nk = 2 * nk - 1;
   const int dim = coeff._c;

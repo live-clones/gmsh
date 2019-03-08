@@ -138,7 +138,8 @@ namespace {
 
 } // namespace
 
-GradientBasis::GradientBasis(FuncSpaceData data) : _data(data)
+GradientBasis::GradientBasis(int elementTag, FuncSpaceData data)
+  : _elementTag(elementTag), _data(data)
 {
   // Matrix gradShapeMatX, when multiplied by Lagrange coefficients,
   // gives the first derivative with respect to first reference coordinate at
@@ -157,7 +158,7 @@ GradientBasis::GradientBasis(FuncSpaceData data) : _data(data)
 
   // Store shape function gradients of mapping at Jacobian nodes
   fullMatrix<double> allDPsi;
-  const nodalBasis *mapBasis = BasisFactory::getNodalBasis(_data.elementTag());
+  const nodalBasis *mapBasis = BasisFactory::getNodalBasis(_elementTag);
   mapBasis->df(samplingPoints, allDPsi);
   const int numMapNodes = allDPsi.size2();
 
@@ -175,7 +176,7 @@ GradientBasis::GradientBasis(FuncSpaceData data) : _data(data)
   gradShapeIdealMatX = gradShapeMatX;
   gradShapeIdealMatY = gradShapeMatY;
   gradShapeIdealMatZ = gradShapeMatZ;
-  mapFromIdealElement(_data.elementType(), gradShapeIdealMatX,
+  mapFromIdealElement(_data.getType(), gradShapeIdealMatX,
                       gradShapeIdealMatY, gradShapeIdealMatZ);
 }
 
@@ -259,10 +260,10 @@ void GradientBasis::lag2Bez(const fullMatrix<double> &lag,
   getBezier()->matrixLag2Bez.mult(lag, bez);
 }
 
-JacobianBasis::JacobianBasis(FuncSpaceData data)
-  : _data(data), _dim(data.dimension())
+JacobianBasis::JacobianBasis(int elementTag, FuncSpaceData data)
+  : _elementTag(elementTag), _data(data), _dim(data.getDimension())
 {
-  const int parentType = data.elementType();
+  const int parentType = data.getType();
   const int primJacobianOrder = jacobianOrder(parentType, 1);
 
   fullMatrix<double> samplingPoints;
@@ -270,7 +271,7 @@ JacobianBasis::JacobianBasis(FuncSpaceData data)
   numJacNodes = samplingPoints.size1();
 
   // Store shape function gradients of mapping at Jacobian nodes
-  _gradBasis = BasisFactory::getGradientBasis(data);
+  _gradBasis = BasisFactory::getGradientBasis(elementTag, data);
 
   // Compute matrix for lifting from primary Jacobian basis to Jacobian basis
   int primJacType = ElementType::getType(parentType, primJacobianOrder, false);
@@ -328,7 +329,7 @@ JacobianBasis::JacobianBasis(FuncSpaceData data)
   lagPointsFast(numPrimMapNodes, 2) = barycenter[2];
 
   fullMatrix<double> allDPsiFast;
-  const nodalBasis *mapBasis = BasisFactory::getNodalBasis(data.elementTag());
+  const nodalBasis *mapBasis = BasisFactory::getNodalBasis(_elementTag);
   mapBasis->df(lagPointsFast, allDPsiFast);
   numMapNodes = mapBasis->getNumShapeFunctions();
 
@@ -885,7 +886,7 @@ FuncSpaceData JacobianBasis::jacobianMatrixSpace(int type, int order)
 {
   if(type == TYPE_PYR) {
     Msg::Error("jacobianMatrixSpace not yet implemented for pyramids");
-    return FuncSpaceData(false, type, false, 1, 0);
+    return FuncSpaceData(type, false, 1, 0, false);
   }
   int jacOrder = -1;
   switch(type) {
@@ -897,8 +898,8 @@ FuncSpaceData JacobianBasis::jacobianMatrixSpace(int type, int order)
   case TYPE_PRI:
   case TYPE_HEX: jacOrder = order; break;
   default:
-    Msg::Error("Unknown element type %d, return order 0", type);
-    return 0;
+    Msg::Error("Unknown element type %d, return default space", type);
+    return FuncSpaceData();
   }
-  return FuncSpaceData(true, ElementType::getType(type, order), jacOrder);
+  return FuncSpaceData(type, jacOrder, false);
 }

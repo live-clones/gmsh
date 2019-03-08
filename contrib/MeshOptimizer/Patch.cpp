@@ -583,8 +583,9 @@ void Patch::scaledCADDistSqAndGradients(int iBndEl, double &scaledDist,
 {
   const std::vector<int> &iV = _bndEl2V[iBndEl], &iFV = _bndEl2FV[iBndEl];
   const int nV = iV.size();
-  const GradientBasis *gb =
-    BasisFactory::getGradientBasis(FuncSpaceData(_bndEl[iBndEl]));
+  const GradientBasis *gb;
+  const int tag = _bndEl[iBndEl]->getTypeForMSH();
+  gb = BasisFactory::getGradientBasis(tag, FuncSpaceData(_bndEl[iBndEl]));
 
   // Coordinates of nodes
   fullMatrix<double> nodesXYZ(nV, 3);

@@ -19,12 +19,13 @@ public:
   fullMatrix<double> gradShapeIdealMatX, gradShapeIdealMatY, gradShapeIdealMatZ;
 
 private:
+  const int _elementTag;
   const FuncSpaceData _data;
 
 public:
-  GradientBasis(FuncSpaceData);
+  GradientBasis(int elementTag, FuncSpaceData);
 
-  inline int getPolynomialOrder() const { return _data.spaceOrder(); }
+  inline int getPolynomialOrder() const { return _data.getSpaceOrder(); }
   int getNumSamplingPoints() const { return gradShapeMatX.size1(); }
   int getNumMapNodes() const { return gradShapeMatX.size2(); }
   const bezierBasis *getBezier() const;
@@ -44,14 +45,14 @@ public:
                            fullMatrix<double> &dxyzdY,
                            fullMatrix<double> &dxyzdZ) const
   {
-    GradientBasis::mapFromIdealElement(_data.elementType(), dxyzdX, dxyzdY,
+    GradientBasis::mapFromIdealElement(_data.getType(), dxyzdX, dxyzdY,
                                        dxyzdZ);
   }
   void mapFromIdealElement(fullVector<double> &dxyzdX,
                            fullVector<double> &dxyzdY,
                            fullVector<double> &dxyzdZ) const
   {
-    GradientBasis::mapFromIdealElement(_data.elementType(), dxyzdX, dxyzdY,
+    GradientBasis::mapFromIdealElement(_data.getType(), dxyzdX, dxyzdY,
                                        dxyzdZ);
   }
   static void mapFromIdealElement(int type, fullMatrix<double> &gSMatX,
@@ -67,6 +68,7 @@ public:
 class JacobianBasis {
 private:
   const GradientBasis *_gradBasis;
+  const int _elementTag;
   const FuncSpaceData _data;
   const int _dim;
   fullMatrix<double> gradShapeMatXFast, gradShapeMatYFast, gradShapeMatZFast;
@@ -80,10 +82,10 @@ private:
   int numJacNodesFast;
 
 public:
-  JacobianBasis(FuncSpaceData);
+  JacobianBasis(int elementTag, FuncSpaceData);
 
   // Get methods
-  inline int getJacOrder() const { return _data.spaceOrder(); }
+  inline int getJacOrder() const { return _data.getSpaceOrder(); }
   inline int getNumJacNodes() const { return numJacNodes; }
   inline int getNumJacNodesFast() const { return numJacNodesFast; }
   inline int getNumMapNodes() const { return numMapNodes; }

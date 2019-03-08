@@ -734,8 +734,9 @@ namespace {
   {
     const int nbVert = bndElt->getNumVertices();
     const int nbPrimVert = bndElt->getNumPrimaryVertices();
-    const GradientBasis *gb =
-      BasisFactory::getGradientBasis(FuncSpaceData(bndElt));
+    const GradientBasis *gb;
+    const int tag = bndElt->getTypeForMSH();
+    gb = BasisFactory::getGradientBasis(tag, FuncSpaceData(bndElt));
 
     // Coordinates of nodes
     fullMatrix<double> nodesXYZ(nbVert, 3);

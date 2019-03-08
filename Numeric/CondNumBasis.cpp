@@ -350,12 +350,11 @@ CondNumBasis::CondNumBasis(int tag, int cnOrder)
     _nPrimMapNodes = 4;
     return;
   }
-  const bool serendip = false;
 
-  FuncSpaceData data =
-    (ElementType::getParentType(tag) == TYPE_PYR) ?
-      FuncSpaceData(true, tag, true, 1, _condNumOrder - 1, &serendip) :
-      FuncSpaceData(true, tag, _condNumOrder, &serendip);
+  const int parentType = ElementType::getParentType(tag);
+  FuncSpaceData data = parentType == TYPE_PYR ?
+      FuncSpaceData(parentType, true, 1, _condNumOrder - 1, false) :
+      FuncSpaceData(parentType, _condNumOrder, false);
 
   fullMatrix<double> lagPoints; // Sampling points
   gmshGeneratePoints(data, lagPoints);
@@ -363,11 +362,10 @@ CondNumBasis::CondNumBasis(int tag, int cnOrder)
   _nMapNodes = BasisFactory::getNodalBasis(tag)->getNumShapeFunctions();
 
   // Store shape function gradients of mapping at condition number nodes
-  _gradBasis = BasisFactory::getGradientBasis(data);
+  _gradBasis = BasisFactory::getGradientBasis(tag, data);
 
   // Compute shape function gradients of primary mapping at barycenter,
   // in order to compute normal to straight element
-  const int parentType = ElementType::getParentType(tag);
   const int primMapType = ElementType::getType(parentType, 1, false);
   const nodalBasis *primMapBasis = BasisFactory::getNodalBasis(primMapType);
   _nPrimMapNodes = primMapBasis->getNumShapeFunctions();

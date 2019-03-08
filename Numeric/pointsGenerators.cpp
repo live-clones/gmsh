@@ -16,37 +16,36 @@
 
 void gmshGeneratePoints(FuncSpaceData data, fullMatrix<double> &points)
 {
-  switch(data.elementType()) {
+  const int order = data.getSpaceOrder();
+  const bool serendip = data.getSerendipity();
+  switch(data.getType()) {
   case TYPE_PNT: points = gmshGeneratePointsLine(0); return;
-  case TYPE_LIN: points = gmshGeneratePointsLine(data.spaceOrder()); return;
+  case TYPE_LIN: points = gmshGeneratePointsLine(order); return;
   case TYPE_TRI:
     points =
-      gmshGeneratePointsTriangle(data.spaceOrder(), data.spaceIsSerendipity());
+      gmshGeneratePointsTriangle(order, serendip);
     return;
   case TYPE_QUA:
-    points = gmshGeneratePointsQuadrangle(data.spaceOrder(),
-                                          data.spaceIsSerendipity());
+    points = gmshGeneratePointsQuadrangle(order, serendip);
     return;
   case TYPE_TET:
-    points = gmshGeneratePointsTetrahedron(data.spaceOrder(),
-                                           data.spaceIsSerendipity());
+    points = gmshGeneratePointsTetrahedron(order, serendip);
     return;
   case TYPE_PRI:
     points =
-      gmshGeneratePointsPrism(data.spaceOrder(), data.spaceIsSerendipity());
+      gmshGeneratePointsPrism(order, serendip);
     return;
   case TYPE_HEX:
-    points = gmshGeneratePointsHexahedron(data.spaceOrder(),
-                                          data.spaceIsSerendipity());
+    points = gmshGeneratePointsHexahedron(order, serendip);
     return;
   case TYPE_PYR:
     points =
-      gmshGeneratePointsPyramidGeneral(data.isPyramidalSpace(), data.nij(),
-                                       data.nk(), data.spaceIsSerendipity());
+      gmshGeneratePointsPyramidGeneral(data.getPyramidalSpace(), data.getNij(),
+                                       data.getNk(), serendip);
     return;
   default:
-    Msg::Error("Unknown element type %d (tag %d) for points generation",
-               data.elementType(), data.elementTag());
+    Msg::Error("Unknown element type %d for points generation",
+               data.getType());
     return;
   }
 }
@@ -149,39 +148,37 @@ fullMatrix<double> gmshGeneratePointsPyramidGeneral(bool pyr, int nij, int nk,
 
 void gmshGenerateMonomials(FuncSpaceData data, fullMatrix<double> &monomials)
 {
-  switch(data.elementType()) {
+  const int order = data.getSpaceOrder();
+  const bool serendip = data.getSerendipity();
+  switch(data.getType()) {
   case TYPE_PNT: monomials = gmshGenerateMonomialsLine(0); return;
   case TYPE_LIN:
-    monomials = gmshGenerateMonomialsLine(data.spaceOrder());
+    monomials = gmshGenerateMonomialsLine(order);
     return;
   case TYPE_TRI:
-    monomials = gmshGenerateMonomialsTriangle(data.spaceOrder(),
-                                              data.spaceIsSerendipity());
+    monomials = gmshGenerateMonomialsTriangle(order, serendip);
     return;
   case TYPE_QUA:
-    monomials = gmshGenerateMonomialsQuadrangle(data.spaceOrder(),
-                                                data.spaceIsSerendipity());
+    monomials = gmshGenerateMonomialsQuadrangle(order, serendip);
     return;
   case TYPE_TET:
-    monomials = gmshGenerateMonomialsTetrahedron(data.spaceOrder(),
-                                                 data.spaceIsSerendipity());
+    monomials = gmshGenerateMonomialsTetrahedron(order, serendip);
     return;
   case TYPE_PRI:
-    monomials =
-      gmshGenerateMonomialsPrism(data.spaceOrder(), data.spaceIsSerendipity());
+    monomials = gmshGenerateMonomialsPrism(order, serendip);
     return;
   case TYPE_HEX:
-    monomials = gmshGenerateMonomialsHexahedron(data.spaceOrder(),
-                                                data.spaceIsSerendipity());
+    monomials = gmshGenerateMonomialsHexahedron(order, serendip);
     return;
   case TYPE_PYR:
     monomials =
-      gmshGenerateMonomialsPyramidGeneral(data.isPyramidalSpace(), data.nij(),
-                                          data.nk(), data.spaceIsSerendipity());
+      gmshGenerateMonomialsPyramidGeneral(data.getPyramidalSpace(),
+                                          data.getNij(), data.getNk(),
+                                          serendip);
     return;
   default:
-    Msg::Error("Unknown element type %d (tag %d) for monomials generation",
-               data.elementType(), data.elementTag());
+    Msg::Error("Unknown element type %d for monomials generation",
+               data.getType());
     return;
   }
 }
@@ -1151,9 +1148,9 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
   gmshGenerateOrderedMonomials(data, points);
   if(points.size1() == 1) return;
 
-  const int type = data.elementType();
-  const int order = data.spaceOrder();
-  const bool pyr = data.isPyramidalSpace();
+  const int type = data.getType();
+  const int order = data.getSpaceOrder();
+  const bool pyr = data.getPyramidalSpace();
 
   if(bezierSpace) {
     // Warning! duplicate code: see bezierBasis::generateGmshBezierPoints
@@ -1168,8 +1165,8 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
       // else:
       //   div = max(nij, nk)
       //   monomial(i, j, k) -> (i/nij*(1-k'), j/nij*(1-k'), (nk-k)/div)
-      const int nij = data.nij();
-      const int nk = data.nk();
+      const int nij = data.getNij();
+      const int nk = data.getNk();
       const int div = pyr ? nij + nk : std::max(nij, nk);
       double scale = 1. / (nij + nk);
       for(int i = 0; i < points.size1(); ++i) {
@@ -1212,8 +1209,8 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
     // else:
     //   div = max(nij, nk)
     //   monomial(i, j, k) -> (-1+2*i/nij)*(1-k'), (-1+2*j/nij)*(1-k'), (nk-k)/div)
-    const int nij = data.nij();
-    const int nk = data.nk();
+    const int nij = data.getNij();
+    const int nk = data.getNk();
     const int div = pyr ? nij + nk : std::max(nij, nk);
     double scale = 2. / div;
     for(int i = 0; i < points.size1(); ++i) {
@@ -1232,12 +1229,12 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
 
 void gmshGenerateOrderedMonomials(FuncSpaceData data, fullMatrix<double> &monomials)
 {
-  if(data.spaceIsSerendipity())
+  if(data.getSerendipity())
     Msg::Warning("Ordered monomials for serendipity elements not implemented");
 
-  int idx, order = data.spaceOrder();
+  int idx, order = data.getSpaceOrder();
 
-  switch(data.elementType()) {
+  switch(data.getType()) {
   case TYPE_LIN:
     monomials.resize(order + 1, 1);
     idx = 0;
@@ -1311,9 +1308,9 @@ void gmshGenerateOrderedMonomials(FuncSpaceData data, fullMatrix<double> &monomi
     }
     return;
   case TYPE_PYR: {
-    const int nij = data.nij();
-    const int nk = data.nk();
-    if(data.isPyramidalSpace()) {
+    const int nij = data.getNij();
+    const int nk = data.getNk();
+    if(data.getPyramidalSpace()) {
       int n = nk + nij;
       int numMonomials = (n + 1) * (n + 2) * (2 * n + 3) / 6;
       numMonomials -= nij * (nij + 1) * (2 * nij + 1) / 6;
@@ -1347,7 +1344,7 @@ void gmshGenerateOrderedMonomials(FuncSpaceData data, fullMatrix<double> &monomi
     return;
   }
   default:
-    Msg::Error("Unknown element type for ordered monomials: %d", data.elementType());
+    Msg::Error("Unknown element type for ordered monomials: %d", data.getType());
     monomials.resize(1,1);
     return;
   }

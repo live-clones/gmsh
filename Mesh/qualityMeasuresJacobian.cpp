@@ -189,7 +189,6 @@ static void _getQualityFunctionSpace(MElement *el,
                                      int orderSamplingPoints = 0)
 {
   const int type = el->getType();
-  const bool serendipFalse = false;
 
   if (orderSamplingPoints < 1) { // For computing bounds
     const int order = el->getPolynomialOrder();
@@ -197,23 +196,23 @@ static void _getQualityFunctionSpace(MElement *el,
 
     switch(type) {
     case TYPE_TRI:
-      fsGrad = FuncSpaceData(el, order - 1, &serendipFalse);
-      fsDet = FuncSpaceData(el, jacOrder - 2, &serendipFalse);
+      fsGrad = FuncSpaceData(el, order - 1, false);
+      fsDet = FuncSpaceData(el, jacOrder - 2, false);
       break;
     case TYPE_TET:
-      fsGrad = FuncSpaceData(el, order - 1, &serendipFalse);
-      fsDet = FuncSpaceData(el, jacOrder - 3, &serendipFalse);
+      fsGrad = FuncSpaceData(el, order - 1, false);
+      fsDet = FuncSpaceData(el, jacOrder - 3, false);
       break;
     case TYPE_QUA:
     case TYPE_HEX:
     case TYPE_PRI:
-      fsGrad = FuncSpaceData(el, order, &serendipFalse);
-      fsDet = FuncSpaceData(el, jacOrder, &serendipFalse);
+      fsGrad = FuncSpaceData(el, order, false);
+      fsDet = FuncSpaceData(el, jacOrder, false);
       break;
     case TYPE_PYR:
-      fsGrad = FuncSpaceData(el, false, order, order - 1, &serendipFalse);
+      fsGrad = FuncSpaceData(el, false, order, order - 1, false);
       fsDet =
-        FuncSpaceData(el, false, jacOrder, jacOrder - 3, &serendipFalse);
+        FuncSpaceData(el, false, jacOrder, jacOrder - 3, false);
       break;
     default:
       Msg::Error("Quality measure not implemented for type of element %d",
@@ -230,12 +229,12 @@ static void _getQualityFunctionSpace(MElement *el,
     case TYPE_QUA:
     case TYPE_HEX:
     case TYPE_PRI:
-      fsGrad = FuncSpaceData(el, orderSamplingPoints, &serendipFalse);
-      fsDet = FuncSpaceData(el, orderSamplingPoints, &serendipFalse);
+      fsGrad = FuncSpaceData(el, orderSamplingPoints, false);
+      fsDet = FuncSpaceData(el, orderSamplingPoints, false);
       break;
     case TYPE_PYR:
-      fsGrad = FuncSpaceData(el, true, 1, orderSamplingPoints - 1, &serendipFalse);
-      fsDet = FuncSpaceData(el, true, 1, orderSamplingPoints - 1, &serendipFalse);
+      fsGrad = FuncSpaceData(el, true, 1, orderSamplingPoints - 1, false);
+      fsDet = FuncSpaceData(el, true, 1, orderSamplingPoints - 1, false);
       break;
     default:
       Msg::Error("IGE not implemented for type of element %d", el->getType());
@@ -380,7 +379,7 @@ namespace jacobianBasedQuality {
     //  std::cout << "time old " << tm1 << " (" << tm1/N << ")" << std::endl;
 
     //  time = Cpu();
-    //  bezierCoeff bez(FuncSpaceData(el, jfs->getJacOrder()), coeffLag, 0);
+    //  bezierCoeff bez(FuncSpaceData(el, jfs->getJacOrder(), false), coeffLag, 0);
     //  for (int i = 0; i < N; ++i) {
     //    std::vector<bezierCoeff> vec;
     //    bez.subdivide(vec);
@@ -447,10 +446,13 @@ namespace jacobianBasedQuality {
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
     el->getNodesCoord(nodesXYZ);
 
+    const GradientBasis *gradBasis;
+    const JacobianBasis *jacBasis;
+    const int tag = el->getTypeForMSH();
     FuncSpaceData jacMatSpace, jacDetSpace;
     _getQualityFunctionSpace(el, jacMatSpace, jacDetSpace);
-    const JacobianBasis *jacBasis = BasisFactory::getJacobianBasis(jacDetSpace);
-    const GradientBasis *gradBasis = BasisFactory::getGradientBasis(jacMatSpace);
+    gradBasis = BasisFactory::getGradientBasis(tag, jacMatSpace);
+    jacBasis = BasisFactory::getJacobianBasis(tag, jacDetSpace);
 
     fullVector<double> coeffDetBez;
     fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
@@ -516,11 +518,13 @@ namespace jacobianBasedQuality {
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
     el->getNodesCoord(nodesXYZ);
 
-
+    const GradientBasis *gradBasis;
+    const JacobianBasis *jacBasis;
+    const int tag = el->getTypeForMSH();
     FuncSpaceData jacMatSpace, jacDetSpace;
     _getQualityFunctionSpace(el, jacMatSpace, jacDetSpace);
-    const JacobianBasis *jacBasis = BasisFactory::getJacobianBasis(jacDetSpace);
-    const GradientBasis *gradBasis = BasisFactory::getGradientBasis(jacMatSpace);
+    gradBasis = BasisFactory::getGradientBasis(tag, jacMatSpace);
+    jacBasis = BasisFactory::getJacobianBasis(tag, jacDetSpace);
 
     fullVector<double> coeffDetBez;
     fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
@@ -612,11 +616,12 @@ namespace jacobianBasedQuality {
   {
     FuncSpaceData sampleSpace;
     if (el->getType() != TYPE_PYR)
-      sampleSpace = FuncSpaceData(el, deg);
+      sampleSpace = FuncSpaceData(el, deg, false);
     else
-      sampleSpace = FuncSpaceData(true, el->getTypeForMSH(), true, 1, deg-1);
+      sampleSpace = FuncSpaceData(TYPE_PYR, true, 1, deg-1, false);
 
-    const JacobianBasis *jacBasis = BasisFactory::getJacobianBasis(sampleSpace);
+    const JacobianBasis *jacBasis;
+    jacBasis = BasisFactory::getJacobianBasis(el->getTypeForMSH(), sampleSpace);
 
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
     el->getNodesCoord(nodesXYZ);
@@ -630,11 +635,13 @@ namespace jacobianBasedQuality {
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
     el->getNodesCoord(nodesXYZ);
 
+    const GradientBasis *gradBasis;
+    const JacobianBasis *jacBasis;
+    const int tag = el->getTypeForMSH();
     FuncSpaceData jacMatSpace, jacDetSpace;
     _getQualityFunctionSpace(el, jacMatSpace, jacDetSpace, deg);
-
-    const GradientBasis *gradBasis = BasisFactory::getGradientBasis(jacMatSpace);
-    const JacobianBasis *jacBasis = BasisFactory::getJacobianBasis(jacDetSpace);
+    gradBasis = BasisFactory::getGradientBasis(tag, jacMatSpace);
+    jacBasis = BasisFactory::getJacobianBasis(tag, jacDetSpace);
 
     fullVector<double> determinant(jacBasis->getNumJacNodes());
     jacBasis->getSignedJacobian(nodesXYZ, determinant);
@@ -654,11 +661,13 @@ namespace jacobianBasedQuality {
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
     el->getNodesCoord(nodesXYZ);
 
+    const GradientBasis *gradBasis;
+    const JacobianBasis *jacBasis;
+    const int tag = el->getTypeForMSH();
     FuncSpaceData jacMatSpace, jacDetSpace;
     _getQualityFunctionSpace(el, jacMatSpace, jacDetSpace, deg);
-
-    const GradientBasis *gradBasis = BasisFactory::getGradientBasis(jacMatSpace);
-    const JacobianBasis *jacBasis = BasisFactory::getJacobianBasis(jacDetSpace);
+    gradBasis = BasisFactory::getGradientBasis(tag, jacMatSpace);
+    jacBasis = BasisFactory::getJacobianBasis(tag, jacDetSpace);
 
     fullVector<double> determinant(jacBasis->getNumJacNodes());
     jacBasis->getSignedJacobian(nodesXYZ, determinant);

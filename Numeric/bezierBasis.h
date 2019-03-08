@@ -45,8 +45,8 @@ public:
 
   // get methods
   inline int getDim() const { return _exponents.size2(); }
-  inline int getType() const { return _data.elementType(); }
-  inline int getOrder() const { return _data.spaceOrder(); }
+  inline int getType() const { return _data.getType(); }
+  inline int getOrder() const { return _data.getSpaceOrder(); }
   inline int getDimSimplex() const { return _dimSimplex; }
   inline int getNumCoeff() const { return _exponents.size1(); }
   inline int getNumLagCoeff() const { return _numLagCoeff; }
@@ -237,7 +237,7 @@ public:
   static void releasePools();
   void updateDataPtr(long diff);
 
-  inline int getPolynomialOrder() const { return _funcSpaceData.spaceOrder(); }
+  inline int getPolynomialOrder() const { return _funcSpaceData.getSpaceOrder(); }
   inline int getNumCoeff() const { return _r; }
   inline int getNumColumns() const { return _c; }
   inline int getNumCornerCoeff() const { return _basis->getNumLagCoeff(); }

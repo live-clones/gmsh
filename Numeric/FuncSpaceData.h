@@ -17,19 +17,13 @@ class FuncSpaceData {
   // bezier and metric bases.
 
 private:
-  int _tag, _spaceOrder;
+  int _parentType, _spaceOrder;
   bool _serendipity;
-  // '_tag' determine the type and the order of the element and if it is
-  // serendipity.
-  //
-  // For non-pyramidal elements, the space is the space of the same type element
-  // at order '_spaceOrder'. It is a serendipity space if '_serendipity' is
-  // true.
-  //
-  // Pyramids
+  // For pyramids, '_spaceOrder' is not used.
+
+  // Pyramids:
   int _nij, _nk;
   bool _pyramidalSpace;
-  // For pyramids, '_spaceOrder' is not used.
   // There are two possible spaces in function of '_pyramidalSpace'.
   // if '_pyramidalSpace' == true, the space is a pyramid-like space:
   //   {X^i Y^j Z^k | i,j <= k+'_nij', k <= '_nk'},
@@ -39,48 +33,48 @@ private:
 
 public:
   FuncSpaceData()
-    : _tag(-1), _spaceOrder(-1), _serendipity(false), _nij(-1), _nk(-1),
+    : _parentType(-1), _spaceOrder(-1), _serendipity(false), _nij(-1), _nk(-1),
       _pyramidalSpace(false)
   {
   }
 
   // Constructors for the function space of a different order
-  FuncSpaceData(const FuncSpaceData &fsd, int order,
-                const bool *serendip = NULL);
-  FuncSpaceData(const FuncSpaceData &fsd, int nij, int nk,
-                const bool *serendip = NULL);
+  FuncSpaceData(const FuncSpaceData &fsd, int order);
+  FuncSpaceData(const FuncSpaceData &fsd, int nij, int nk);
 
   // Constructors using MElement*
-  FuncSpaceData(const MElement *el, const bool *serendip = NULL);
-  FuncSpaceData(const MElement *el, int order, const bool *serendip = NULL);
-  FuncSpaceData(const MElement *el, bool pyr, int nij, int nk,
-                const bool *serendip = NULL);
+  FuncSpaceData(const MElement *el);
+  FuncSpaceData(const MElement *el, int order, bool serendip);
+  FuncSpaceData(const MElement *el, bool pyr, int nij, int nk, bool serendip);
 
-  // Constructor using element tag
-  FuncSpaceData(int tag, const bool *serendip = NULL);
-
-  // constructors using element tag or element type
-  FuncSpaceData(bool isTag, int tagOrType, int order,
-                const bool *serendip = NULL, bool elemIsSerendip = false);
-  FuncSpaceData(bool isTag, int tagOrType, bool pyr, int nij, int nk,
-                const bool *serendip = NULL, bool elemIsSerendip = false);
+  // Constructor using element type or (parentType, order, serendip)
+  FuncSpaceData(int tag);
+  FuncSpaceData(int type, int order, bool serendip);
+  FuncSpaceData(int type, bool pyr, int nij, int nk, bool serendip);
 
   // Print
   void print() const
   {
-    Msg::Info("FuncSpaceData: tag%d, order%d, nij%d, nk%d, pyr%d, serendip%d",
-              _tag, _spaceOrder, _nij, _nk, _pyramidalSpace, _serendipity);
+    Msg::Info("FuncSpaceData: type%d, order%d, nij%d, nk%d, pyr%d, serendip%d",
+              _parentType, _spaceOrder, _nij, _nk, _pyramidalSpace, _serendipity);
   }
 
   // Get methods
-  int elementTag() const { return _tag; }
-  int elementType() const { return ElementType::getParentType(_tag); }
-  int dimension() const { return ElementType::getDimension(_tag); }
-  int spaceOrder() const { return _spaceOrder; }
-  int nij() const { return _nij; }
-  int nk() const { return _nk; }
-  bool spaceIsSerendipity() const { return _serendipity; }
-  bool isPyramidalSpace() const { return _pyramidalSpace; }
+  int getType() const { return _parentType; }
+  int getDimension() const {
+    switch(_parentType) {
+    case TYPE_PNT: return 0;
+    case TYPE_LIN: return 1;
+    case TYPE_TRI: case TYPE_QUA: return 2;
+    case TYPE_TET: case TYPE_PRI: case TYPE_HEX: case TYPE_PYR: return 3;
+    default: return -1;
+    }
+  }
+  int getSpaceOrder() const { return _spaceOrder; }
+  int getNij() const { return _nij; }
+  int getNk() const { return _nk; }
+  bool getSerendipity() const { return _serendipity; }
+  bool getPyramidalSpace() const { return _pyramidalSpace; }
 
   void getOrderForBezier(int[3], int exponentZ = -1) const;
 
@@ -90,11 +84,11 @@ public:
   //
   inline bool operator<(const FuncSpaceData &other) const
   {
-    if(_tag == other._tag) {
+    if(_parentType == other._parentType) {
       if(_spaceOrder == other._spaceOrder) {
         if(_nij == other._nij) {
           if(_nk == other._nk) {
-            return _pyramidalSpace == true ? false : other._pyramidalSpace;
+            return _pyramidalSpace ? false : other._pyramidalSpace;
           }
           else
             return _nk < other._nk;
@@ -106,11 +100,12 @@ public:
         return _spaceOrder < other._spaceOrder;
     }
     else
-      return _tag < other._tag;
+      return _parentType < other._parentType;
   }
   inline bool operator==(const FuncSpaceData &other) const
   {
-    return _tag == other._tag && _spaceOrder == other._spaceOrder &&
+    return _parentType == other._parentType &&
+           _spaceOrder == other._spaceOrder &&
            _nij == other._nij && _nk == other._nk &&
            _pyramidalSpace == other._pyramidalSpace;
   }
