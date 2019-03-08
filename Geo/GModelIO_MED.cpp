@@ -26,9 +26,7 @@
 #include "discreteVertex.h"
 #include "Context.h"
 
-extern "C" {
 #include <med.h>
-}
 
 #if(MED_MAJOR_NUM >= 3)
 // To avoid too many ifdefs below we use defines for the bits of the

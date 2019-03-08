@@ -469,9 +469,7 @@ void PViewDataGModel::importLists(int N[24], std::vector<double> *V[24])
 
 #if defined(HAVE_MED)
 
-extern "C" {
 #include <med.h>
-}
 
 #if(MED_MAJOR_NUM >= 3)
 // To avoid too many ifdefs below we use defines for the bits of the
