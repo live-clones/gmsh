@@ -18,6 +18,8 @@
 #include "Numeric.h"
 #include "cartesian.h"
 #include "GmshConfig.h"
+#include "mathEvaluator.h"
+
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
 #endif
@@ -867,6 +869,11 @@ gLevelsetMathEval::gLevelsetMathEval(const std::string &f, int tag)
   _expr = new mathEvaluator(expressions, variables);
 }
 
+gLevelsetMathEval::~gLevelsetMathEval()
+{
+  if(_expr) delete _expr;
+}
+
 double gLevelsetMathEval::operator()(double x, double y, double z) const
 {
   std::vector<double> values(3), res(1);
@@ -887,6 +894,11 @@ gLevelsetMathEvalAll::gLevelsetMathEvalAll(std::vector<std::string> expressions,
   variables[1] = "y";
   variables[2] = "z";
   _expr = new mathEvaluator(expressions, variables);
+}
+
+gLevelsetMathEvalAll::~gLevelsetMathEvalAll()
+{
+  if(_expr) delete _expr;
 }
 
 double gLevelsetMathEvalAll::operator()(double x, double y, double z) const
