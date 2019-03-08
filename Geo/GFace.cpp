@@ -1105,7 +1105,7 @@ public:
   void set_point(const SPoint3 &_point) { point = SPoint3(_point); }
 };
 
-// Callback function for BFGS
+// Callback function for ALGLIB
 void bfgs_callback(const alglib::real_1d_array &x, double &func,
                    alglib::real_1d_array &grad, void *ptr)
 {
