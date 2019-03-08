@@ -75,22 +75,16 @@ public:
   // Get methods
   int elementTag() const { return _tag; }
   int elementType() const { return ElementType::getParentType(_tag); }
-  int elementOrder() const { return ElementType::getOrder(_tag); }
   int dimension() const { return ElementType::getDimension(_tag); }
   int spaceOrder() const { return _spaceOrder; }
   int nij() const { return _nij; }
   int nk() const { return _nk; }
-  bool elementIsOnlySerendipity() const
-  {
-    return ElementType::getSerendipity(_tag) > 1;
-  }
   bool spaceIsSerendipity() const { return _serendipity; }
   bool isPyramidalSpace() const { return _pyramidalSpace; }
 
   void getOrderForBezier(int[3], int exponentZ = -1) const;
 
   // Change space
-  FuncSpaceData getForPrimaryElement() const;
   FuncSpaceData getForNonSerendipitySpace() const;
 
   //

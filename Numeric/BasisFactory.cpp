@@ -129,7 +129,7 @@ const GradientBasis *BasisFactory::getGradientBasis(int tag)
 
 const bezierBasis *BasisFactory::getBezierBasis(FuncSpaceData fsd)
 {
-  FuncSpaceData data = fsd.getForPrimaryElement();
+  FuncSpaceData data = fsd.getForNonSerendipitySpace();
 
   std::map<FuncSpaceData, bezierBasis *>::const_iterator it = bs.find(data);
   if(it != bs.end()) return it->second;

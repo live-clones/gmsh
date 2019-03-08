@@ -265,9 +265,9 @@ JacobianBasis::JacobianBasis(FuncSpaceData data)
   const int parentType = data.elementType();
   const int primJacobianOrder = jacobianOrder(parentType, 1);
 
-  fullMatrix<double> lagPoints; // Sampling points
-  gmshGeneratePoints(data, lagPoints);
-  numJacNodes = lagPoints.size1();
+  fullMatrix<double> samplingPoints;
+  gmshGeneratePoints(data, samplingPoints);
+  numJacNodes = samplingPoints.size1();
 
   // Store shape function gradients of mapping at Jacobian nodes
   _gradBasis = BasisFactory::getGradientBasis(data);
@@ -278,7 +278,7 @@ JacobianBasis::JacobianBasis(FuncSpaceData data)
   numPrimJacNodes = primJacBasis->getNumShapeFunctions();
 
   matrixPrimJac2Jac.resize(numJacNodes, numPrimJacNodes);
-  primJacBasis->f(lagPoints, matrixPrimJac2Jac);
+  primJacBasis->f(samplingPoints, matrixPrimJac2Jac);
 
   // Compute shape function gradients of primary mapping at barycenter, in order
   // to compute normal to straight element

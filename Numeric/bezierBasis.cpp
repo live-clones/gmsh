@@ -1034,7 +1034,7 @@ void bezierBasisRaiser::_fillRaiserData()
   {
     // Construction of raiser 2
     fullMatrix<int> exp2;
-    fullMatrix<int> exp2New;
+    fullMatrix<int> exp2New; // FIXME: delete one of them
     {
       fullMatrix<double> expD2;
       FuncSpaceData dataRaiser2(_bfs->_data, 2 * order);
@@ -1131,7 +1131,7 @@ void bezierBasisRaiser::_fillRaiserData()
   std::map<int, int> hashToInd3New;
   {
     fullMatrix<int> exp3;
-    fullMatrix<int> exp3New;
+    fullMatrix<int> exp3New; // FIXME: delete one of them
     {
       fullMatrix<double> expD3;
       FuncSpaceData dataRaiser3(_bfs->_data, 3 * order);

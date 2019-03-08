@@ -103,20 +103,6 @@ void FuncSpaceData::getOrderForBezier(int order[3], int exponentZ) const
     order[0] = order[1] = order[2] = _spaceOrder;
 }
 
-FuncSpaceData FuncSpaceData::getForPrimaryElement() const
-{
-  int type = elementType();
-  int primTag = ElementType::getType(type, 1, elementIsOnlySerendipity());
-
-  if(primTag == _tag) return *this;
-
-  if(type == TYPE_PYR)
-    return FuncSpaceData(true, primTag, _pyramidalSpace, _nij, _nk,
-                         &_serendipity);
-  else
-    return FuncSpaceData(true, primTag, _spaceOrder, &_serendipity);
-}
-
 FuncSpaceData FuncSpaceData::getForNonSerendipitySpace() const
 {
   if(!_serendipity) return *this;

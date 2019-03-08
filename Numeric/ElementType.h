@@ -14,15 +14,15 @@ namespace ElementType {
   int getOrder(int type);
   int getDimension(int type);
 
-  // Give the number of node corresponding to a msh type 'tag'.
+  // Give the number of node corresponding to any element MSH type.
   int getNumVertices(int type);
 
-  // Gives > 0 if element tag is in Serendipity Family.
-  // Gives < 2 if element tag is in 'Normal' Family.
-  // 1 is for element that is either Serendipity or not !
+  // Gives > 0 if element MSH type is in Serendipity Family.
+  // Gives < 2 if element MSH type is in 'Normal' Family.
+  // 1 is for element MSH type that is either Serendipity or not !
   int getSerendipity(int type);
 
-  // Give element tag from type, order & serendip
+  // Give element MSH type from parent type, order & serendip
   int getType(int parentType, int order, bool serendip = false);
 
   // Give first order element tag
