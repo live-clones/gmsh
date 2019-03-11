@@ -202,8 +202,9 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
     to->correspondingVertices[newv] = v;
     pos.insert(newv);
   }
+
   std::vector<double> tfo;
-  ep->GetAffineTransform(tfo);
+  //ep->GetAffineTransform(tfo); // TODO: check transform
   to->GEntity::setMeshMaster(from, tfo, false);
 
 #if defined(HAVE_QUADTRI)
