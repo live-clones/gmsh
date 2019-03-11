@@ -1651,7 +1651,6 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffData)
   switch(type) {
   case TYPE_TRI:
   case TYPE_TET:
-  case TYPE_PYR:
   case TYPE_PRI:
     _basis->matrixLag2Bez2.mult(lag, bez);
     return;
@@ -1675,6 +1674,27 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffData)
       convertLag2Bez(bez, order, x, bez, jk * npt, 1);
     }
     return;
+  case TYPE_PYR:
+  {
+    // Pyramids space is tensorial like the hex
+    const int nbij = _funcSpaceData.getNij() + 1;
+    const int nbk = _funcSpaceData.getNk() + 1;
+    fullVector<double> xij, xk;
+    gmshGenerateOrderedPointsLine(nbij - 1, xij);
+    gmshGenerateOrderedPointsLine(nbk - 1, xk);
+    for(int ij = 0; ij < nbij * nbij; ++ij) {
+      convertLag2Bez(lag, nbk - 1, xk, bez, ij, nbij * nbij);
+    }
+    for(int i = 0; i < nbij; ++i) {
+      for(int k = 0; k < nbk; ++k) {
+        convertLag2Bez(bez, nbij - 1, xij, bez, i + k * nbij * nbij, nbij);
+      }
+    }
+    for(int jk = 0; jk < nbij * nbk; ++jk) {
+      convertLag2Bez(bez, nbij - 1, xij, bez, jk * nbij, 1);
+    }
+    return;
+  }
   }
 }
 
