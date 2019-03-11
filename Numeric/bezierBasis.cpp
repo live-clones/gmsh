@@ -23,23 +23,19 @@ namespace {
   }
   void generateBezierPoints(FuncSpaceData data, fullMatrix<double> &points)
   {
-    // Warning! duplicate code: see gmshGenerateOrderedPoints
+    // FIXME: to be removed with JACOBIAN_ORDERED
     gmshGenerateMonomials(data, points);
 //    points.print("monomials");
     if (data.getType() != TYPE_PYR)
       points.scale(1. / data.getSpaceOrder());
     else {
-      const int pyr = data.getPyramidalSpace();
-      const int nij = data.getNij();
-      const int nk = data.getNk();
-      const int div = pyr ? nij + nk : std::max(nij, nk);
-      double scale = 1. / (nij + nk);
-      for(int i = 0; i < points.size1(); ++i) {
-        points(i, 2) = (nk - points(i, 2)) / div;
-        if (!pyr) scale = (1 - points(i, 2)) / nij;
-        points(i, 0) = points(i, 0) * scale;
-        points(i, 1) = points(i, 1) * scale;
-      }
+      // For pyramids, the space is tensorial (like the hex). The bezier
+      // points are on a grid (like the hex).
+      fullMatrix<double> prox;
+      prox.setAsProxy(points, 2, 1);
+      prox.scale(-1);
+      prox.add(data.getNk());
+      points.scale(1. / data.getSpaceOrder());
     }
   }
 
@@ -320,8 +316,6 @@ namespace {
       fullMatrix<double> prox;
 
 #if defined(JACOBIAN_ORDERED)
-      // FIXME: not sure what it should be
-      Msg::Error("subpoints pyramids is certainly not rights! see bezierBasis");
       FuncSpaceData data(TYPE_PYR, false, nij, nk, false);
       gmshGenerateOrderedPoints(data, subPoints[0], true);
       subPoints[0].scale(.5);
@@ -362,6 +356,7 @@ namespace {
       prox.add(.5);
 
 #if defined(JACOBIAN_ORDERED)
+      // Nothing to do
 #else
       for(int i = 0; i < 8; ++i) {
         prox.setAsProxy(subPoints[i], 2, 1);
@@ -437,6 +432,8 @@ namespace {
                                const fullMatrix<double> &point, bool pyr,
                                int nij, int nk)
   {
+    // For pyramids, the space is hex-like and thus tensorial.
+    // 'point' is the list of points on a grid.
     if(exponent.size1() != point.size1() || exponent.size2() != point.size2() ||
        exponent.size2() != 3) {
       Msg::Error(
@@ -453,8 +450,10 @@ namespace {
       for(int j = 0; j < ndofs; j++) {
         if(pyr) n01 = exponent(j, 2) + nij;
         bez2Lag(i, j) =
-          nChoosek(n01, exponent(j, 0)) * nChoosek(n01, exponent(j, 1)) *
-          nChoosek(nk, exponent(j, 2)) * pow_int(point(i, 0), exponent(j, 0)) *
+          nChoosek(n01, exponent(j, 0)) *
+          nChoosek(n01, exponent(j, 1)) *
+          nChoosek(nk, exponent(j, 2)) *
+          pow_int(point(i, 0), exponent(j, 0)) *
           pow_int(point(i, 1), exponent(j, 1)) *
           pow_int(point(i, 2), exponent(j, 2)) *
           pow_int(1. - point(i, 0), n01 - exponent(j, 0)) *
@@ -976,8 +975,15 @@ void bezierBasis::_constructPyr()
   _dimSimplex = 0;
   gmshGenerateMonomials(_data, _exponents);
 
+  // Note that the sampling points for the Jacobian determinant of pyramids are
+  // for z in [0, a] with a < 1. The third coordinate of Bezier points should
+  // also be in [0, a]. The same for subpoints.
   fullMatrix<double> bezierPoints;
+#if defined(JACOBIAN_ORDERED)
+  gmshGenerateOrderedPoints(_data, bezierPoints, true);
+#else
   generateBezierPoints(_data, bezierPoints);
+#endif
   generateExponents(_data, _exponents2);
   matrixBez2Lag =
     generateBez2LagMatrixPyramid(_exponents, bezierPoints, pyr, nij, nk);

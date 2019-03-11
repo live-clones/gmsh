@@ -1153,25 +1153,27 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
   const bool pyr = data.getPyramidalSpace();
 
   if(bezierSpace) {
-    // Warning! duplicate code: see bezierBasis::generateGmshBezierPoints
     if(type != TYPE_PYR) {
       points.scale(1. / order);
       return;
     }
     else {
+      // This is used for creating the matrices bez2lag and lag2bez and we want
+      // the points of the "unshrinked" pyramid. In other words, we want them
+      // mapped from the pyramid to the cube.
       // if pyr:
       //   div = nk + nij
-      //   monomial(i, j, k) -> (i/div, j/div, (nk-k)/div)
+      //   monomial(i, j, k) -> (i/div/(1-k'), j/div/(1-k'), (nk-k)/div)
       // else:
       //   div = max(nij, nk)
-      //   monomial(i, j, k) -> (i/nij*(1-k'), j/nij*(1-k'), (nk-k)/div)
+      //   monomial(i, j, k) -> (i/nij, j/nij, (nk-k)/div)
       const int nij = data.getNij();
       const int nk = data.getNk();
       const int div = pyr ? nij + nk : std::max(nij, nk);
-      double scale = 1. / (nij + nk);
+      double scale = 1. / nij;
       for(int i = 0; i < points.size1(); ++i) {
         points(i, 2) = (nk - points(i, 2)) / div;
-        if (!pyr) scale = (1 - points(i, 2)) / nij;
+        if (pyr) scale = 1. / div / (1 - points(i, 2));
         points(i, 0) = points(i, 0) * scale;
         points(i, 1) = points(i, 1) * scale;
       }
@@ -1203,6 +1205,8 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
     return;
   }
   case TYPE_PYR: {
+    // This is used e.g. for creating sampling points. We want the points to be
+    // inside the reference pyramids.
     // if pyr:
     //   div = nk + nij
     //   monomial(i, j, k) -> (-(1-k')+2*i/div, -(1-k')+2*j/div, (nk-k)/div)
