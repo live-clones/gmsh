@@ -355,6 +355,12 @@ namespace jacobianBasedQuality {
       return;
     }
 
+#if defined(JACOBIAN_ORDERED)
+    std::cout << "jacobian ordered" << std::endl;
+#else
+    std::cout << "jacobian not ordered" << std::endl;
+#endif
+
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
     el->getNodesCoord(nodesXYZ);
 
@@ -409,19 +415,20 @@ namespace jacobianBasedQuality {
       min2 = std::min(min2, domains[i]->minB2());
       max2 = std::max(max2, domains[i]->maxB2());
       minL = std::min(minL, domains[i]->minL());
-      maxL = std::min(maxL, domains[i]->maxL());
+      maxL = std::max(maxL, domains[i]->maxL());
       minL2 = std::min(minL2, domains[i]->minL2());
       maxL2 = std::max(maxL2, domains[i]->maxL2());
       domains[i]->deleteBezierCoeff();
       delete domains[i];
     }
     std::cout << "size domains " << domains.size() << std::endl;
-    std::cout << "minMeasure: " << min << " vs " << min2 << " + " << minL
+    std::cout << "minMeasure: " << min << " vs " << min2 << " < " << minL
               << " vs " << minL2 << std::endl;
-    std::cout << "maxMeasure: " << max << " vs " << max2 << " + " << maxL
+    std::cout << "maxMeasure: " << max << " vs " << max2 << " > " << maxL
               << " vs " << maxL2 << std::endl;
     //  std::cout << "" << min << " [" << min2 << "," << minL2 << "] " << max <<
-    //  " [" << maxL2 << "," << max2 << "] " << std::endl;
+    //  " [" << maxL2 << "," << max2 << "] ";
+    std::cout << std::endl;
     min = min2;
     max = max2;
   }
@@ -724,7 +731,7 @@ namespace jacobianBasedQuality {
       _maxL2 = std::max(_maxL2, _coeffs2->getCornerCoeff(i));
     }
     _minB2 = _maxB2 = (*_coeffs2)(0);
-    for(; i < v.size(); i++) {
+    for(int i = 1; i < _coeffs2->getNumCoeff(); i++) {
       _minB2 = std::min(_minB2, (*_coeffs2)(i));
       _maxB2 = std::max(_maxB2, (*_coeffs2)(i));
     }

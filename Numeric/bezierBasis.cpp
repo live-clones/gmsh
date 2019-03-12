@@ -885,19 +885,19 @@ void bezierBasis::_construct()
   }
   _numDivisions = static_cast<int>(subPoints.size());
 
-  fullMatrix<double> bezierPoints;
+  fullMatrix<double> bezSamplingPoints;
 #if defined(JACOBIAN_ORDERED)
-  gmshGenerateOrderedPoints(_data, bezierPoints, true);
+  gmshGenerateOrderedPoints(_data, bezSamplingPoints, true);
 #else
   generateBezierPoints(_data, bezierPoints);
 #endif
   generateExponents(_data, _exponents2);
 
   matrixBez2Lag =
-    generateBez2LagMatrix(_exponents, bezierPoints, order, _dimSimplex);
+    generateBez2LagMatrix(_exponents, bezSamplingPoints, order, _dimSimplex);
   matrixBez2Lag.invert(matrixLag2Bez);
   matrixBez2Lag2 =
-    generateBez2LagMatrix(_exponents2, bezierPoints, order, _dimSimplex);
+    generateBez2LagMatrix(_exponents2, bezSamplingPoints, order, _dimSimplex);
   matrixBez2Lag2.invert(matrixLag2Bez2);
   subDivisor = generateSubDivisor(_exponents, subPoints, matrixLag2Bez, order,
                                   _dimSimplex);
@@ -1652,6 +1652,9 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffData)
   case TYPE_TRI:
   case TYPE_TET:
   case TYPE_PRI:
+    // Note: For simplices, less significant errors in matrixLag2Bez2 but
+    // an algorithm exists (see same paper than algo convertLag2Bez), yet
+    // it is complex. It may be implemented it in the future if it is necessary.
     _basis->matrixLag2Bez2.mult(lag, bez);
     return;
   case TYPE_LIN:
@@ -1728,7 +1731,6 @@ void bezierCoeff::updateDataPtr(long diff)
 
 int bezierCoeff::getIdxCornerCoeff(int i) const
 {
-  //TODO: other types
   const int order = _funcSpaceData.getSpaceOrder();
   switch(_funcSpaceData.getType()) {
   case TYPE_TRI:
