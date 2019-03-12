@@ -1424,6 +1424,78 @@ int bdfFileDialog(const char *name)
 
 // Generic mesh dialog
 
+int stlFileDialog(const char *name)
+{
+  struct _stlFileDialog {
+    Fl_Window *window;
+    Fl_Choice *c;
+    Fl_Check_Button *b[2];
+    Fl_Button *ok, *cancel;
+  };
+  static _stlFileDialog *dialog = NULL;
+
+  static Fl_Menu_Item formatmenu[] = {
+    {"ASCII", 0, 0, 0},
+    {"Binary", 0, 0, 0},
+    {0}
+  };
+
+  int BBB = BB + 9; // labels too long
+
+  if(!dialog) {
+    dialog = new _stlFileDialog;
+    int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    dialog->window = new Fl_Double_Window(w, h, "STL Options");
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
+    dialog->c = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Format");
+    y += BH;
+    dialog->c->menu(formatmenu);
+    dialog->c->align(FL_ALIGN_RIGHT);
+    dialog->b[0] = new Fl_Check_Button
+      (WB, y, 2 * BBB + WB, BH, "Save all elements");
+    y += BH;
+    dialog->b[0]->type(FL_TOGGLE_BUTTON);
+    dialog->b[1] = new Fl_Check_Button
+      (WB, y, 2 * BBB + WB, BH, "Save one solid per surface");
+    y += BH;
+    dialog->b[1]->type(FL_TOGGLE_BUTTON);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+
+  dialog->c->value(CTX::instance()->mesh.binary ? 1 : 0);
+  dialog->b[0]->value(CTX::instance()->mesh.saveAll ? 1 : 0);
+  dialog->b[1]->value(CTX::instance()->mesh.stlOneSolidPerSurface ? 1 : 0);
+  dialog->window->show();
+
+  while(dialog->window->shown()) {
+    Fl::wait();
+    for(;;) {
+      Fl_Widget *o = Fl::readqueue();
+      if(!o) break;
+      if(o == dialog->ok) {
+        opt_mesh_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
+        opt_mesh_stl_one_solid_per_surface(0, GMSH_SET | GMSH_GUI,
+                                           dialog->b[1]->value() ? 1 : 0);
+        CreateOutputFile(name, FORMAT_STL);
+        dialog->window->hide();
+        return 1;
+      }
+      if(o == dialog->window || o == dialog->cancel) {
+        dialog->window->hide();
+        return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+// Generic mesh dialog
+
 int genericMeshFileDialog(const char *name, const char *title, int format,
                           bool binary_support, bool element_tag_support)
 {

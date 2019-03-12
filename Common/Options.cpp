@@ -5936,6 +5936,14 @@ double opt_mesh_stl_remove_duplicate_triangles(OPT_ARGS_NUM)
   return CTX::instance()->mesh.stlRemoveDuplicateTriangles;
 }
 
+double opt_mesh_stl_one_solid_per_surface(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.stlOneSolidPerSurface = (int)val;
+  }
+  return CTX::instance()->mesh.stlOneSolidPerSurface;
+}
+
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

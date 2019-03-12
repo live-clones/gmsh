@@ -314,8 +314,7 @@ static int _save_p3d(const char *name){ return genericMeshFileDialog
     (name, "P3D Options", FORMAT_P3D, false, false); }
 static int _save_ir3(const char *name){ return genericMeshFileDialog
     (name, "Iridium Options", FORMAT_IR3, false, true); }
-static int _save_stl(const char *name){ return genericMeshFileDialog
-    (name, "STL Options", FORMAT_STL, true, false); }
+static int _save_stl(const char *name){ return stlFileDialog(name); }
 static int _save_vrml(const char *name){ return genericMeshFileDialog
     (name, "VRML Options", FORMAT_VRML, false, false); }
 static int _save_ply2(const char *name){ return genericMeshFileDialog

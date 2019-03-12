@@ -46,7 +46,7 @@ struct contextMeshOptions {
   double mshFileVersion, medFileMinorVersion, scalingFactor;
   int medImportGroupsOfNodes;
   int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
-  int unvStrictFormat, stlRemoveDuplicateTriangles;
+  int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
   int cgnsImportOrder, cgnsConstructTopology;
