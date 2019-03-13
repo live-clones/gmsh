@@ -122,25 +122,25 @@ public:
 
   void computeCoeff(const fullVector<double> &coeffA,
                     const fullVector<double> &coeffB,
-                    fullVector<double> &coeffSquare);
+                    fullVector<double> &coeffSquare) const;
   void computeCoeff2(const fullVector<double> &coeffA,
                      const fullVector<double> &coeffB,
-                     fullVector<double> &coeffSquare);
+                     fullVector<double> &coeffSquare) const;
   void computeCoeff(const fullMatrix<double> &coeffA,
                     const fullMatrix<double> &coeffB,
-                    fullMatrix<double> &coeffSquare);
+                    fullMatrix<double> &coeffSquare) const;
   void computeCoeff(const fullVector<double> &coeffA,
                     const fullVector<double> &coeffB,
                     const fullVector<double> &coeffC,
-                    fullVector<double> &coeffCubic);
+                    fullVector<double> &coeffCubic) const;
   void computeCoeff2(const fullVector<double> &coeffA,
                      const fullVector<double> &coeffB,
                      const fullVector<double> &coeffC,
-                     fullVector<double> &coeffCubic);
+                     fullVector<double> &coeffCubic) const;
   void computeCoeff(const fullVector<double> &coeffA,
                     const fullMatrix<double> &coeffB,
                     const fullMatrix<double> &coeffC,
-                    fullMatrix<double> &coeffCubic);
+                    fullMatrix<double> &coeffCubic) const;
 
 private:
   void _fillRaiserData();
@@ -279,8 +279,8 @@ private:
   };
   static void _subdivideTet(_SubdivisionTet which, int n, bezierCoeff &coeff);
 
-  static void _subdivide(fullMatrix<double> &coeff, int n, int start);
-  static void _subdivide(fullMatrix<double> &coeff, int n, int start, int inc);
+  static void _subdivide(fullMatrix<double> &coeff, int npts, int start);
+  static void _subdivide(fullMatrix<double> &coeff, int npts, int start, int inc);
   static void _subdivideTriangle(const bezierCoeff &coeff, int start,
                                  std::vector<bezierCoeff *> &subCoeff);
   static void _subdivideTetrahedron(const bezierCoeff &coeff,

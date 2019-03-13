@@ -1360,14 +1360,14 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
 
 void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
                                      const fullVector<double> &coeffB,
-                                     fullVector<double> &coeffSquare)
+                                     fullVector<double> &coeffSquare) const
 {
   coeffSquare.resize(_raiser2.size(), true);
 
   if(&coeffA == &coeffB) {
     for(std::size_t ind = 0; ind < _raiser2.size(); ++ind) {
       for(std::size_t l = 0; l < _raiser2[ind].size(); ++l) {
-        _data &d = _raiser2[ind][l];
+        const _data &d = _raiser2[ind][l];
         coeffSquare(ind) += d.val * coeffA(d.i) * coeffB(d.j);
       }
     }
@@ -1375,7 +1375,7 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
   else {
     for(std::size_t ind = 0; ind < _raiser2.size(); ++ind) {
       for(std::size_t l = 0; l < _raiser2[ind].size(); ++l) {
-        _data &d = _raiser2[ind][l];
+        const _data &d = _raiser2[ind][l];
         coeffSquare(ind) +=
           d.val / 2 * (coeffA(d.i) * coeffB(d.j) + coeffA(d.j) * coeffB(d.i));
       }
@@ -1385,14 +1385,14 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
 
 void bezierBasisRaiser::computeCoeff2(const fullVector<double> &coeffA,
                                       const fullVector<double> &coeffB,
-                                      fullVector<double> &coeffSquare)
+                                      fullVector<double> &coeffSquare) const
 {
   coeffSquare.resize(_raiser2New.size(), true);
 
   if(&coeffA == &coeffB) {
     for(std::size_t ind = 0; ind < _raiser2New.size(); ++ind) {
       for(std::size_t l = 0; l < _raiser2New[ind].size(); ++l) {
-        _data &d = _raiser2New[ind][l];
+        const _data &d = _raiser2New[ind][l];
         coeffSquare(ind) += d.val * coeffA(d.i) * coeffB(d.j);
       }
     }
@@ -1400,7 +1400,7 @@ void bezierBasisRaiser::computeCoeff2(const fullVector<double> &coeffA,
   else {
     for(std::size_t ind = 0; ind < _raiser2New.size(); ++ind) {
       for(std::size_t l = 0; l < _raiser2New[ind].size(); ++l) {
-        _data &d = _raiser2New[ind][l];
+        const _data &d = _raiser2New[ind][l];
         coeffSquare(ind) +=
           d.val / 2 * (coeffA(d.i) * coeffB(d.j) + coeffA(d.j) * coeffB(d.i));
       }
@@ -1411,14 +1411,14 @@ void bezierBasisRaiser::computeCoeff2(const fullVector<double> &coeffA,
 void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
                                      const fullVector<double> &coeffB,
                                      const fullVector<double> &coeffC,
-                                     fullVector<double> &coeffCubic)
+                                     fullVector<double> &coeffCubic) const
 {
   coeffCubic.resize(_raiser3.size(), true);
 
   if(&coeffA == &coeffB && &coeffB == &coeffC) {
     for(std::size_t ind = 0; ind < _raiser3.size(); ++ind) {
       for(std::size_t l = 0; l < _raiser3[ind].size(); ++l) {
-        _data &d = _raiser3[ind][l];
+        const _data &d = _raiser3[ind][l];
         coeffCubic(ind) += d.val * coeffA(d.i) * coeffB(d.j) * coeffC(d.k);
       }
     }
@@ -1426,7 +1426,7 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
   else if(&coeffA != &coeffB && &coeffB != &coeffC) {
     for(std::size_t ind = 0; ind < _raiser3.size(); ++ind) {
       for(std::size_t l = 0; l < _raiser3[ind].size(); ++l) {
-        _data &d = _raiser3[ind][l];
+        const _data &d = _raiser3[ind][l];
         coeffCubic(ind) += d.val / 6 *
                            (coeffA(d.i) * coeffB(d.j) * coeffC(d.k) +
                             coeffA(d.i) * coeffB(d.k) * coeffC(d.j) +
@@ -1446,14 +1446,14 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
 void bezierBasisRaiser::computeCoeff2(const fullVector<double> &coeffA,
                                       const fullVector<double> &coeffB,
                                       const fullVector<double> &coeffC,
-                                      fullVector<double> &coeffCubic)
+                                      fullVector<double> &coeffCubic) const
 {
   coeffCubic.resize(_raiser3New.size(), true);
 
   if(&coeffA == &coeffB && &coeffB == &coeffC) {
     for(std::size_t ind = 0; ind < _raiser3New.size(); ++ind) {
       for(std::size_t l = 0; l < _raiser3New[ind].size(); ++l) {
-        _data &d = _raiser3New[ind][l];
+        const _data &d = _raiser3New[ind][l];
         coeffCubic(ind) += d.val * coeffA(d.i) * coeffB(d.j) * coeffC(d.k);
       }
     }
@@ -1461,7 +1461,7 @@ void bezierBasisRaiser::computeCoeff2(const fullVector<double> &coeffA,
   else if(&coeffA != &coeffB && &coeffB != &coeffC) {
     for(std::size_t ind = 0; ind < _raiser3New.size(); ++ind) {
       for(std::size_t l = 0; l < _raiser3New[ind].size(); ++l) {
-        _data &d = _raiser3New[ind][l];
+        const _data &d = _raiser3New[ind][l];
         coeffCubic(ind) += d.val / 6 *
                            (coeffA(d.i) * coeffB(d.j) * coeffC(d.k) +
                             coeffA(d.i) * coeffB(d.k) * coeffC(d.j) +
@@ -1480,14 +1480,14 @@ void bezierBasisRaiser::computeCoeff2(const fullVector<double> &coeffA,
 
 void bezierBasisRaiser::computeCoeff(const fullMatrix<double> &coeffA,
                                      const fullMatrix<double> &coeffB,
-                                     fullMatrix<double> &coeffSquare)
+                                     fullMatrix<double> &coeffSquare) const
 {
   coeffSquare.resize(_raiser2.size(), coeffA.size2(), true);
 
   if(&coeffA == &coeffB) {
     for(std::size_t ind = 0; ind < _raiser2.size(); ++ind) {
       for(std::size_t l = 0; l < _raiser2[ind].size(); ++l) {
-        _data &d = _raiser2[ind][l];
+        const _data &d = _raiser2[ind][l];
         for(int ind2 = 0; ind2 < coeffA.size2(); ++ind2) {
           coeffSquare(ind, ind2) +=
             d.val * coeffA(d.i, ind2) * coeffB(d.j, ind2);
@@ -1498,7 +1498,7 @@ void bezierBasisRaiser::computeCoeff(const fullMatrix<double> &coeffA,
   else {
     for(std::size_t ind = 0; ind < _raiser2.size(); ++ind) {
       for(std::size_t l = 0; l < _raiser2[ind].size(); ++l) {
-        _data &d = _raiser2[ind][l];
+        const _data &d = _raiser2[ind][l];
         double val = d.val / 2;
         for(int ind2 = 0; ind2 < coeffA.size2(); ++ind2) {
           coeffSquare(ind, ind2) +=
@@ -1513,14 +1513,14 @@ void bezierBasisRaiser::computeCoeff(const fullMatrix<double> &coeffA,
 void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
                                      const fullMatrix<double> &coeffB,
                                      const fullMatrix<double> &coeffC,
-                                     fullMatrix<double> &coeffCubic)
+                                     fullMatrix<double> &coeffCubic) const
 {
   coeffCubic.resize(_raiser3.size(), coeffB.size2(), true);
 
   if(&coeffB == &coeffC) {
     for(std::size_t ind = 0; ind < _raiser3.size(); ++ind) {
       for(std::size_t l = 0; l < _raiser3[ind].size(); ++l) {
-        _data &d = _raiser3[ind][l];
+        const _data &d = _raiser3[ind][l];
         double val = d.val / 3;
         for(int ind2 = 0; ind2 < coeffB.size2(); ++ind2) {
           coeffCubic(ind, ind2) +=
@@ -1534,7 +1534,7 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
   else {
     for(std::size_t ind = 0; ind < _raiser3.size(); ++ind) {
       for(std::size_t l = 0; l < _raiser3[ind].size(); ++l) {
-        _data &d = _raiser3[ind][l];
+        const _data &d = _raiser3[ind][l];
         double val = d.val / 6;
         for(int ind2 = 0; ind2 < coeffB.size2(); ++ind2) {
           coeffCubic(ind, ind2) +=
@@ -1861,12 +1861,12 @@ void bezierCoeff::subdivide(std::vector<bezierCoeff *> &subCoeff) const
   }
 }
 
-void bezierCoeff::_subdivide(fullMatrix<double> &coeff, int n, int start)
+void bezierCoeff::_subdivide(fullMatrix<double> &coeff, int npts, int start)
 {
   // One-dimensional De Casteljau algorithm if consecutive data
   const int dim = coeff.size2();
-  for(int iter = 1; iter < n; ++iter) {
-    for(int I = start + iter; I < start + 2 * n - iter; I += 2) {
+  for(int iter = 1; iter < npts; ++iter) {
+    for(int I = start + iter; I < start + 2 * npts - iter; I += 2) {
       for(int K = 0; K < dim; ++K) {
         coeff(I, K) = .5 * (coeff(I - 1, K) + coeff(I + 1, K));
       }
@@ -1874,13 +1874,13 @@ void bezierCoeff::_subdivide(fullMatrix<double> &coeff, int n, int start)
   }
 }
 
-void bezierCoeff::_subdivide(fullMatrix<double> &coeff, int n, int start,
+void bezierCoeff::_subdivide(fullMatrix<double> &coeff, int npts, int start,
                              int inc)
 {
   // One-dimensional De Casteljau algorithm if non-consecutive data
   const int dim = coeff.size2();
-  for(int iter = 1; iter < n; ++iter) {
-    for(int i = iter; i < 2 * n - iter; i += 2) {
+  for(int iter = 1; iter < npts; ++iter) {
+    for(int i = iter; i < 2 * npts - iter; i += 2) {
       int I = start + i * inc;
       for(int K = 0; K < dim; ++K) {
         coeff(I, K) = .5 * (coeff(I - inc, K) + coeff(I + inc, K));

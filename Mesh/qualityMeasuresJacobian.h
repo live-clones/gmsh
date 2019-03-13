@@ -155,7 +155,8 @@ namespace jacobianBasedQuality {
                                const fullVector<double> &denominator,
                                bool lower, bool positiveDenom = true);
 
-  void _subdivideDomains(std::vector<_coefData *> &domains);
+  void _subdivideDomains(std::vector<_coefData *> &domains,
+                         bool alsoMax = true);
   double _getMinAndDeleteDomains(std::vector<_coefData *> &domains);
 
 } // namespace jacobianBasedQuality

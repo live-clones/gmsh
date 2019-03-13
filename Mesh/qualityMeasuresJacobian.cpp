@@ -491,7 +491,7 @@ namespace jacobianBasedQuality {
       coeffDetBez, coeffMatBez, jacBasis->getBezier(), gradBasis->getBezier(),
       0, el->getType(), bezDet, bezMat));
 
-    _subdivideDomains(domains);
+    _subdivideDomains(domains, false);
     //  if (domains.size()/7 > 500) {//fordebug
     //    Msg::Info("S too much subdivision: %d (el %d, type %d, tag %d)",
     //        domains.size()/7, el->getNum(), el->getType(),
@@ -563,7 +563,7 @@ namespace jacobianBasedQuality {
                                         jacBasis->getBezier(),
                                         gradBasis->getBezier(), 0, el->getDim(), bezDet, bezMat));
 
-    _subdivideDomains(domains);
+    _subdivideDomains(domains, false);
     //  if (domains.size()/7 > 500) {//fordebug
     //    Msg::Info("I too much subdivision: %d (el %d, type %d, tag %d)",
     //               domains.size()/7, el->getNum(), el->getType(),
@@ -677,10 +677,10 @@ namespace jacobianBasedQuality {
     jacBasis = BasisFactory::getJacobianBasis(tag, jacDetSpace);
 
     fullVector<double> determinant(jacBasis->getNumJacNodes());
-    jacBasis->getSignedJacobian(nodesXYZ, determinant);
+    jacBasis->getSignedIdealJacobian(nodesXYZ, determinant);
 
     fullMatrix<double> gradients(gradBasis->getNumSamplingPoints(), 9);
-    gradBasis->getAllGradientsFromNodes(nodesXYZ, gradients);
+    gradBasis->getAllIdealGradientsFromNodes(nodesXYZ, gradients);
 
     _computeICN(determinant, gradients, icn, el->getDim());
   }
@@ -1301,15 +1301,15 @@ namespace jacobianBasedQuality {
       }
     }
 
+    const bezierBasisRaiser *raiser = _coeffMat2->getBezierBasis()->getRaiser();
     if(_dim == 2) {
       fullVector<double> coeffDenominator;
       {
-        bezierBasisRaiser *raiser = _bfsMat->getRaiser();
         fullVector<double> prox;
         for(int k = 0; k < mat.size2(); ++k) {
           prox.setAsProxy(mat, k);
           fullVector<double> tmp;
-          raiser->computeCoeff(prox, prox, tmp);
+          raiser->computeCoeff2(prox, prox, tmp);
           if(k == 0) coeffDenominator.resize(tmp.size());
           coeffDenominator.axpy(tmp, 1);
         }
@@ -1329,7 +1329,7 @@ namespace jacobianBasedQuality {
         }
         P(i) = std::sqrt(P(i));
       }
-      _bfsMat->getRaiser()->computeCoeff(P, P, P, coeffDenominator);
+      raiser->computeCoeff2(P, P, P, coeffDenominator);
     }
 
     const double boundFraction =
@@ -1368,7 +1368,7 @@ namespace jacobianBasedQuality {
     }
   }
 
-  void _subdivideDomains(std::vector<_coefData *> &domains)
+  void _subdivideDomains(std::vector<_coefData *> &domains, bool alsoMax)
   {
     if(domains.empty()) {
       Msg::Warning("empty vector in Bezier subdivision, nothing to do");
@@ -1382,7 +1382,7 @@ namespace jacobianBasedQuality {
     }
 
     _subdivideDomainsMinOrMax<_lessMinB>(domains, minL, maxL);
-    _subdivideDomainsMinOrMax<_lessMaxB>(domains, minL, maxL);
+    if (alsoMax) _subdivideDomainsMinOrMax<_lessMaxB>(domains, minL, maxL);
   }
 
   double _getMinAndDeleteDomains(std::vector<_coefData *> &domains)
