@@ -1,4 +1,4 @@
-4.2.2 (March 11, 2019): fixed regression in reading of extruded meshes; added
+4.2.2 (March 13, 2019): fixed regression in reading of extruded meshes; added
 ability to export one solid per surface in STL format.
 
 4.2.1 (March 7, 2019): fixed regression for STEP files without global compound
