@@ -136,8 +136,8 @@ int GModel::readSTL(const std::string &name, double tolerance)
     names.resize(points.size());
   }
   for(std::size_t i = 0; i < names.size(); i++){
-    if(names[i].back() == '\r')
-      names[i].pop_back();
+    if(!names[i].empty() && names[i].at(names[i].size() - 1) == '\r')
+      names[i].resize(names[i].size() - 1);
   }
 
   std::vector<GFace *> faces;
