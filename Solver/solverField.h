@@ -7,8 +7,8 @@
 //   Eric Bechet
 //
 
-#ifndef _SOLVERFIELD_H_
-#define _SOLVERFIELD_H_
+#ifndef SOLVERFIELD_H
+#define SOLVERFIELD_H
 
 #include <vector>
 #include <iostream>
@@ -60,7 +60,7 @@ public:
     dm->getDofValue(D, DMVals);
     fs->f(ele, u, v, w, SFVals);
     val = ValType();
-    for(unsigned int i = 0; i < D.size(); ++i) val += SFVals[i] * DMVals[i];
+    for(std::size_t i = 0; i < D.size(); ++i) val += SFVals[i] * DMVals[i];
   }
 
   virtual void f(MElement *ele, double u, double v, double w,
@@ -81,7 +81,7 @@ public:
     dm->getDofValue(D, DMVals);
     fs->gradf(ele, u, v, w, SFGrads);
     grad = GradType();
-    for(unsigned int i = 0; i < D.size(); ++i) grad += SFGrads[i] * DMVals[i];
+    for(std::size_t i = 0; i < D.size(); ++i) grad += SFGrads[i] * DMVals[i];
   }
 
   // A quoi sert cette fonction ?? (Evalue le hessien au noeuds

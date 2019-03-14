@@ -48,7 +48,7 @@ bool PViewDataGModel::addData(GModel *model,
   return true;
 }
 
-bool PViewDataGModel::addData(GModel *model, const std::vector<int> &tags,
+bool PViewDataGModel::addData(GModel *model, const std::vector<std::size_t> &tags,
                               const std::vector<std::vector<double> > &data,
                               int step, double time, int partition, int numComp)
 {
@@ -56,7 +56,7 @@ bool PViewDataGModel::addData(GModel *model, const std::vector<int> &tags,
 
   if(numComp < 0) {
     numComp = 9;
-    for(unsigned int i = 0; i < data.size(); i++)
+    for(std::size_t i = 0; i < data.size(); i++)
       numComp = std::min(numComp, (int)data[i].size());
   }
 
@@ -70,7 +70,7 @@ bool PViewDataGModel::addData(GModel *model, const std::vector<int> &tags,
                                      model->getNumMeshElements();
   _steps[step]->resizeData(numEnt);
 
-  for(unsigned int i = 0; i < data.size(); i++) {
+  for(std::size_t i = 0; i < data.size(); i++) {
     int mult = data[i].size() / numComp;
     double *d = _steps[step]->getData(tags[i], true, mult);
     for(int j = 0; j < numComp * mult; j++) d[j] = data[i][j];
@@ -82,7 +82,7 @@ bool PViewDataGModel::addData(GModel *model, const std::vector<int> &tags,
 
 void PViewDataGModel::destroyData()
 {
-  for(unsigned int i = 0; i < _steps.size(); i++) _steps[i]->destroyData();
+  for(std::size_t i = 0; i < _steps.size(); i++) _steps[i]->destroyData();
 }
 
 bool PViewDataGModel::readMSH(const std::string &viewName,
@@ -106,7 +106,7 @@ bool PViewDataGModel::readMSH(const std::string &viewName,
   /*
   // if we already have maxSteps for this view, return
   int numSteps = 0, maxSteps = 1000000000;
-  for(unsigned int i = 0; i < _steps.size(); i++)
+  for(std::size_t i = 0; i < _steps.size(); i++)
     numSteps += _steps[i]->getNumData() ? 1 : 0;
   if(numSteps > maxSteps) return true;
   */
@@ -247,9 +247,9 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
     fprintf(fp, "$EndInterpolationScheme\n");
   }
 
-  for(unsigned int step = 0; step < _steps.size(); step++) {
+  for(std::size_t step = 0; step < _steps.size(); step++) {
     int numEnt = 0, numComp = _steps[step]->getNumComponents();
-    for(int i = 0; i < _steps[step]->getNumData(); i++)
+    for(std::size_t i = 0; i < _steps[step]->getNumData(); i++)
       if(_steps[step]->getData(i)) numEnt++;
     if(numEnt) {
       if(_type == NodeData) {
@@ -257,11 +257,11 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
         fprintf(fp, "1\n\"%s\"\n", getName().c_str());
         fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
         if(partitionNum)
-          fprintf(fp, "4\n%d\n%d\n%d\n%d\n", step, numComp, numEnt,
+          fprintf(fp, "4\n%lu\n%d\n%d\n%d\n", step, numComp, numEnt,
                   partitionNum);
         else
-          fprintf(fp, "3\n%d\n%d\n%d\n", step, numComp, numEnt);
-        for(int i = 0; i < _steps[step]->getNumData(); i++) {
+          fprintf(fp, "3\n%lu\n%d\n%d\n", step, numComp, numEnt);
+        for(std::size_t i = 0; i < _steps[step]->getNumData(); i++) {
           if(_steps[step]->getData(i)) {
             MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(i);
             if(!v) {
@@ -298,11 +298,11 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
 
         fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
         if(partitionNum)
-          fprintf(fp, "4\n%d\n%d\n%d\n%d\n", step, numComp, numEnt,
+          fprintf(fp, "4\n%lu\n%d\n%d\n%d\n", step, numComp, numEnt,
                   partitionNum);
         else
-          fprintf(fp, "3\n%d\n%d\n%d\n", step, numComp, numEnt);
-        for(int i = 0; i < _steps[step]->getNumData(); i++) {
+          fprintf(fp, "3\n%lu\n%d\n%d\n", step, numComp, numEnt);
+        for(std::size_t i = 0; i < _steps[step]->getNumData(); i++) {
           if(_steps[step]->getData(i)) {
             MElement *e = model->getMeshElementByTag(i);
             if(!e) {
@@ -453,7 +453,7 @@ void PViewDataGModel::importLists(int N[24], std::vector<double> *V[24])
       _steps[step]->computeBoundingBox();
       _steps[step]->setTime(step);
       _steps[step]->resizeData(nbe);
-      for(unsigned int j = 0; j < list->size(); j += stride) {
+      for(std::size_t j = 0; j < list->size(); j += stride) {
         double *tmp = &(*list)[j];
         int num = (int)tmp[0];
         double *d = _steps[step]->getData(num, true, nn);
@@ -469,9 +469,7 @@ void PViewDataGModel::importLists(int N[24], std::vector<double> *V[24])
 
 #if defined(HAVE_MED)
 
-extern "C" {
 #include <med.h>
-}
 
 #if(MED_MAJOR_NUM >= 3)
 // To avoid too many ifdefs below we use defines for the bits of the
@@ -587,7 +585,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
     return false;
   }
 
-  Msg::Info("Reading %d-component field <<%s>>", numComp, name);
+  Msg::Info("Reading %d-component field '%s'", numComp, name);
   setName(name);
   setFileName(fileName);
   setFileIndex(fileIndex);
@@ -623,8 +621,8 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
 #endif
 
   std::vector<std::pair<int, int> > pairs;
-  for(unsigned int i = 0; i < sizeof(entType) / sizeof(entType[0]); i++) {
-    for(unsigned int j = 0; j < sizeof(eleType) / sizeof(eleType[0]); j++) {
+  for(std::size_t i = 0; i < sizeof(entType) / sizeof(entType[0]); i++) {
+    for(std::size_t j = 0; j < sizeof(eleType) / sizeof(eleType[0]); j++) {
       if((!i && !j) || j) {
 #if(MED_MAJOR_NUM >= 3)
         med_int n = numSteps;
@@ -652,7 +650,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
     // FIXME: MED3 allows to store multi-step meshes; we should
     // interface this with our own gmodel-per-step structure
 
-    for(unsigned int pair = 0; pair < pairs.size(); pair++) {
+    for(std::size_t pair = 0; pair < pairs.size(); pair++) {
       // get step info
       med_entite_maillage ent = entType[pairs[pair].first];
       med_geometrie_element ele = eleType[pairs[pair].second];
@@ -676,7 +674,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
       if(!pair) {
         GModel *m = GModel::findByName(meshName);
         if(!m) {
-          Msg::Error("Could not find mesh <<%s>>", meshName);
+          Msg::Error("Could not find mesh '%s'", meshName);
           return false;
         }
         while(step >= (int)_steps.size())
@@ -794,7 +792,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
       if(profile.empty()) {
         Msg::Debug("MED profile is empty -- using continuous sequence");
         profile.resize(numVal / mult);
-        for(unsigned int i = 0; i < profile.size(); i++) profile[i] = i + 1;
+        for(std::size_t i = 0; i < profile.size(); i++) profile[i] = i + 1;
       }
 
       // get size of full array and tags (if any) of entities
@@ -825,9 +823,9 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
 
       // if we don't have tags, compute the starting index (i.e., how many
       // elements of different type are in the mesh before these ones)
-      int startIndex = 0;
+      std::size_t startIndex = 0;
       if(tags.empty()) {
-        int maxv, maxe;
+        std::size_t maxv, maxe;
         _steps[step]->getModel()->getCheckPointedMaxNumbers(maxv, maxe);
         if(nodal) {
           startIndex += maxv;
@@ -846,12 +844,12 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
           }
           startIndex += maxe;
         }
-        Msg::Debug("MED has no tags -- assuming starting index %d", startIndex);
+        Msg::Debug("MED has no tags -- assuming starting index %lu", startIndex);
       }
 
       // compute entity numbers using profile, then fill step data
-      for(unsigned int i = 0; i < profile.size(); i++) {
-        int num;
+      for(std::size_t i = 0; i < profile.size(); i++) {
+        std::size_t num;
         if(tags.empty()) {
           num = startIndex + profile[i];
         }
@@ -926,7 +924,7 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
   // compute profile
   char *profileName = (char *)"nodeProfile";
   std::vector<med_int> profile, indices;
-  for(int i = 0; i < _steps[0]->getNumData(); i++) {
+  for(std::size_t i = 0; i < _steps[0]->getNumData(); i++) {
     if(_steps[0]->getData(i)) {
       MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
       if(!v) {
@@ -979,9 +977,9 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
     Msg::Error("Could not get valid number of nodes in mesh");
     return false;
   }
-  for(unsigned int step = 0; step < _steps.size(); step++) {
-    unsigned int n = 0;
-    for(int i = 0; i < _steps[step]->getNumData(); i++)
+  for(std::size_t step = 0; step < _steps.size(); step++) {
+    std::size_t n = 0;
+    for(std::size_t i = 0; i < _steps[step]->getNumData(); i++)
       if(_steps[step]->getData(i)) n++;
     if(n != profile.size() || numComp != _steps[step]->getNumComponents()) {
       Msg::Error("Skipping incompatible step");
@@ -989,7 +987,7 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
     }
     double time = _steps[step]->getTime();
     std::vector<double> val(profile.size() * numComp);
-    for(unsigned int i = 0; i < profile.size(); i++)
+    for(std::size_t i = 0; i < profile.size(); i++)
       for(int k = 0; k < numComp; k++)
         val[i * numComp + k] = _steps[step]->getData(indices[i])[k];
 #if(MED_MAJOR_NUM >= 3)
@@ -1046,10 +1044,10 @@ void PViewDataGModel::sendToServer(const std::string &name)
   }
 
   int numEnt = 0, numComp = 0;
-  for(unsigned int step = 0; step < _steps.size(); step++) {
+  for(std::size_t step = 0; step < _steps.size(); step++) {
     int nc = _steps[step]->getNumComponents();
     int ne = 0;
-    for(int i = 0; i < _steps[step]->getNumData(); i++)
+    for(std::size_t i = 0; i < _steps[step]->getNumData(); i++)
       if(_steps[step]->getData(i)) ne++;
     if(!step){
       numEnt = ne;
@@ -1066,7 +1064,7 @@ void PViewDataGModel::sendToServer(const std::string &name)
   std::vector<double> exp;
   exp.push_back(numEnt);
 
-  for(int i = 0; i < _steps[0]->getNumData(); i++) {
+  for(std::size_t i = 0; i < _steps[0]->getNumData(); i++) {
     if(_steps[0]->getData(i)) {
       MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
       if(!v) {
@@ -1075,7 +1073,7 @@ void PViewDataGModel::sendToServer(const std::string &name)
       }
       int num = v->getNum();
       exp.push_back(num);
-      for(unsigned int step = 0; step < _steps.size(); step++){
+      for(std::size_t step = 0; step < _steps.size(); step++){
         for(int k = 0; k < numComp; k++){
           double data = _steps[step]->getData(i)[k];
           exp.push_back(data);

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CONTEXT_H_
-#define _CONTEXT_H_
+#ifndef CONTEXT_H
+#define CONTEXT_H
 
 #include <vector>
 #include <map>
@@ -32,7 +32,7 @@ struct contextMeshOptions {
   int recombine3DConformity, flexibleTransfinite;
   int order, secondOrderLinear, secondOrderIncomplete, secondOrderExperimental;
   int meshOnlyVisible, minCircPoints, minCurvPoints;
-  int hoOptimize, hoPeriodic, hoNLayers, hoOptPrimSurfMesh;
+  int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   std::map<int, int> algo2dPerFace;
   std::map<int, int> curvatureControlPerFace;
@@ -44,8 +44,9 @@ struct contextMeshOptions {
   // mesh IO
   int fileFormat;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
+  int medImportGroupsOfNodes;
   int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
-  int unvStrictFormat, stlRemoveDuplicateTriangles;
+  int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
   int cgnsImportOrder, cgnsConstructTopology;
@@ -78,7 +79,7 @@ struct contextGeometryOptions {
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
   int occAutoFix, occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occParallel, occBooleanPreserveNumbering;
-  int occDisableSTL;
+  int occDisableSTL, occImportLabels;
   double occScaling;
   std::string occTargetUnit;
   int copyMeshingMethod, exactExtrusion;

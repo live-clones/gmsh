@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _OPENFILE_H_
-#define _OPENFILE_H_
+#ifndef OPENFILE_H
+#define OPENFILE_H
 
 #include <string>
 

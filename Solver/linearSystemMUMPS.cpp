@@ -76,12 +76,12 @@ void linearSystemMUMPS<double>::zeroMatrix()
 
 void linearSystemMUMPS<double>::zeroRightHandSide()
 {
-  for(unsigned int i = 0; i < _b.size(); i++) _b[i] = 0.;
+  for(std::size_t i = 0; i < _b.size(); i++) _b[i] = 0.;
 }
 
 void linearSystemMUMPS<double>::zeroSolution()
 {
-  for(unsigned int i = 0; i < _x.size(); i++) _x[i] = 0.;
+  for(std::size_t i = 0; i < _x.size(); i++) _x[i] = 0.;
 }
 
 int linearSystemMUMPS<double>::systemSolve()
@@ -110,8 +110,8 @@ int linearSystemMUMPS<double>::systemSolve()
   id.n = _n;
   id.nz = _nz;
   // Fortran indices start from 1
-  for(unsigned int i = 0; i < _irn.size(); i++) _irn[i]++;
-  for(unsigned int i = 0; i < _jcn.size(); i++) _jcn[i]++;
+  for(std::size_t i = 0; i < _irn.size(); i++) _irn[i]++;
+  for(std::size_t i = 0; i < _jcn.size(); i++) _jcn[i]++;
   id.irn = &*_irn.begin();
   id.jcn = &*_jcn.begin();
   id.a = &*_a.begin();
@@ -139,8 +139,8 @@ int linearSystemMUMPS<double>::systemSolve()
   _x.clear();
   _x = _b;
   _b = b;
-  for(unsigned int i = 0; i < _irn.size(); i++) _irn[i]--;
-  for(unsigned int i = 0; i < _jcn.size(); i++) _jcn[i]--;
+  for(std::size_t i = 0; i < _irn.size(); i++) _irn[i]--;
+  for(std::size_t i = 0; i < _jcn.size(); i++) _jcn[i]--;
 
   return 1;
 }
@@ -150,7 +150,7 @@ void linearSystemMUMPS<double>::insertInSparsityPattern(int row, int col) {}
 double linearSystemMUMPS<double>::normInfRightHandSide() const
 {
   DMUMPS_REAL norm = 0.;
-  for(unsigned int i = 0; i < _b.size(); i++) {
+  for(std::size_t i = 0; i < _b.size(); i++) {
     DMUMPS_REAL temp = fabs(_b[i]);
     if(temp > norm) norm = temp;
   }
@@ -160,7 +160,7 @@ double linearSystemMUMPS<double>::normInfRightHandSide() const
 double linearSystemMUMPS<double>::normInfSolution() const
 {
   DMUMPS_REAL norm = 0.;
-  for(unsigned int i = 0; i < _x.size(); i++) {
+  for(std::size_t i = 0; i < _x.size(); i++) {
     DMUMPS_REAL temp = fabs(_x[i]);
     if(temp > norm) norm = temp;
   }

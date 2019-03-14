@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _REMOVE_H_
-#define _REMOVE_H_
+#ifndef REMOVE_H
+#define REMOVE_H
 
 #include "Plugin.h"
 

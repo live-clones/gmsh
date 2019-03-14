@@ -1144,7 +1144,7 @@ int mshFileDialog(const char *name)
           0, GMSH_SET | GMSH_GUI,
           (dialog->c->value() == 0) ?
             1.0 :
-            (dialog->c->value() == 1 || dialog->c->value() == 2) ? 2.2 : 4.0);
+            (dialog->c->value() == 1 || dialog->c->value() == 2) ? 2.2 : 4.1);
         opt_mesh_binary(
           0, GMSH_SET | GMSH_GUI,
           (dialog->c->value() == 2 || dialog->c->value() == 4) ? 1 : 0);
@@ -1424,6 +1424,78 @@ int bdfFileDialog(const char *name)
 
 // Generic mesh dialog
 
+int stlFileDialog(const char *name)
+{
+  struct _stlFileDialog {
+    Fl_Window *window;
+    Fl_Choice *c;
+    Fl_Check_Button *b[2];
+    Fl_Button *ok, *cancel;
+  };
+  static _stlFileDialog *dialog = NULL;
+
+  static Fl_Menu_Item formatmenu[] = {
+    {"ASCII", 0, 0, 0},
+    {"Binary", 0, 0, 0},
+    {0}
+  };
+
+  int BBB = BB + 9; // labels too long
+
+  if(!dialog) {
+    dialog = new _stlFileDialog;
+    int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    dialog->window = new Fl_Double_Window(w, h, "STL Options");
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
+    dialog->c = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Format");
+    y += BH;
+    dialog->c->menu(formatmenu);
+    dialog->c->align(FL_ALIGN_RIGHT);
+    dialog->b[0] = new Fl_Check_Button
+      (WB, y, 2 * BBB + WB, BH, "Save all elements");
+    y += BH;
+    dialog->b[0]->type(FL_TOGGLE_BUTTON);
+    dialog->b[1] = new Fl_Check_Button
+      (WB, y, 2 * BBB + WB, BH, "Save one solid per surface");
+    y += BH;
+    dialog->b[1]->type(FL_TOGGLE_BUTTON);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+
+  dialog->c->value(CTX::instance()->mesh.binary ? 1 : 0);
+  dialog->b[0]->value(CTX::instance()->mesh.saveAll ? 1 : 0);
+  dialog->b[1]->value(CTX::instance()->mesh.stlOneSolidPerSurface ? 1 : 0);
+  dialog->window->show();
+
+  while(dialog->window->shown()) {
+    Fl::wait();
+    for(;;) {
+      Fl_Widget *o = Fl::readqueue();
+      if(!o) break;
+      if(o == dialog->ok) {
+        opt_mesh_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
+        opt_mesh_stl_one_solid_per_surface(0, GMSH_SET | GMSH_GUI,
+                                           dialog->b[1]->value() ? 1 : 0);
+        CreateOutputFile(name, FORMAT_STL);
+        dialog->window->hide();
+        return 1;
+      }
+      if(o == dialog->window || o == dialog->cancel) {
+        dialog->window->hide();
+        return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+// Generic mesh dialog
+
 int genericMeshFileDialog(const char *name, const char *title, int format,
                           bool binary_support, bool element_tag_support)
 {
@@ -1524,12 +1596,12 @@ static void _saveViews(const std::string &name, int which, int format,
   }
   else if(which == 1) {
     int numVisible = 0;
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(PView::list[i]->getOptions()->visible) numVisible++;
     if(!numVisible) { Msg::Error("No visible view"); }
     else {
       bool first = true;
-      for(unsigned int i = 0; i < PView::list.size(); i++) {
+      for(std::size_t i = 0; i < PView::list.size(); i++) {
         if(PView::list[i]->getOptions()->visible) {
           std::string fileName = name;
           if(!canAppend && numVisible > 1) {
@@ -1544,7 +1616,7 @@ static void _saveViews(const std::string &name, int which, int format,
     }
   }
   else {
-    for(unsigned int i = 0; i < PView::list.size(); i++) {
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
       std::string fileName = name;
       if(!canAppend && PView::list.size() > 1) {
         std::ostringstream os;
@@ -1640,12 +1712,12 @@ static void _saveAdaptedViews(const std::string &name, int useDefaultName,
   }
   else if(which == 1) {
     int numVisible = 0;
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(PView::list[i]->getOptions()->visible) numVisible++;
     if(!numVisible) { Msg::Error("No visible view"); }
     else {
       bool first = true;
-      for(unsigned int i = 0; i < PView::list.size(); i++) {
+      for(std::size_t i = 0; i < PView::list.size(); i++) {
         if(PView::list[i]->getOptions()->visible) {
           std::string fileName = name;
           if(!canAppend && numVisible > 1) {
@@ -1662,7 +1734,7 @@ static void _saveAdaptedViews(const std::string &name, int useDefaultName,
     }
   }
   else {
-    for(unsigned int i = 0; i < PView::list.size(); i++) {
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
       std::string fileName = name;
       if(!canAppend && PView::list.size() > 1) {
         std::ostringstream os;

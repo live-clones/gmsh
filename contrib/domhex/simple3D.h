@@ -6,8 +6,8 @@
 // Contributor(s):
 //   Tristan Carrier François Henrotte
 
-#ifndef _SIMPLE3D_H_
-#define _SIMPLE3D_H_
+#ifndef SIMPLE3D_H
+#define SIMPLE3D_H
 
 #include "SVector3.h"
 #include <list>

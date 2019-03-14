@@ -72,3 +72,7 @@ Cohomology {{1}, {70, 71, 72, 73}};
 //  Homology;
 //  Homology {{1}, {80}};
 //  Homology {{}, {80}};
+
+// For more information, see M. Pellikka, S. Suuriniemi, L. Kettunen and
+// C. Geuzaine. Homology and cohomology computation in finite element
+// modeling. SIAM Journal on Scientific Computing 35(5), pp. 1195-1214, 2013.

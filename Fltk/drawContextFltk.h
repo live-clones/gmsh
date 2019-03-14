@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _DRAW_CONTEXT_FLTK_H_
-#define _DRAW_CONTEXT_FLTK_H_
+#ifndef DRAW_CONTEXT_FLTK_H
+#define DRAW_CONTEXT_FLTK_H
 
 #include "GmshConfig.h"
 #if !defined(HAVE_NO_STDINT_H)
@@ -31,8 +31,8 @@ public:
       FlGui::instance()->fullscreen->redraw();
     }
     else {
-      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++) {
-        for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size();
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
+        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size();
             j++) {
           FlGui::instance()->graph[i]->gl[j]->make_current();
           FlGui::instance()->graph[i]->gl[j]->redraw();

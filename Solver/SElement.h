@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SELEMENT_H_
-#define _SELEMENT_H_
+#ifndef SELEMENT_H
+#define SELEMENT_H
 
 #include "MElement.h"
 #include "simpleFunction.h"

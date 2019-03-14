@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _ONELAB_UTILS_H_
-#define _ONELAB_UTILS_H_
+#ifndef ONELAB_UTILS_H
+#define ONELAB_UTILS_H
 
 #include "onelab.h"
 

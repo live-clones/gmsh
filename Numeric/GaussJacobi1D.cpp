@@ -6,8 +6,8 @@
 // code to generate this file (using alglib) :
 #if 0
 //alglib
-#include "ap.h"
-#include "gq.h"
+#include <ap.h>
+#include <gq.h>
 int main(int argc, char **argv)
 {
   int maxA = 4;

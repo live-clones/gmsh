@@ -34,7 +34,7 @@ void PViewDataList::setXY(std::vector<double> &x, std::vector<double> &y)
 {
   NbSP = 0;
   SP.clear();
-  for(unsigned int i = 0; i < std::min(x.size(), y.size()); i++) {
+  for(std::size_t i = 0; i < std::min(x.size(), y.size()); i++) {
     SP.push_back(x[i]);
     SP.push_back(0.);
     SP.push_back(0.);
@@ -211,7 +211,7 @@ double PViewDataList::getMax(int step, bool onlyVisible, int tensorRep,
 void PViewDataList::_stat(std::vector<double> &D, std::vector<char> &C, int nb)
 {
   // compute statistics for text lists
-  for(unsigned int i = 0; i < D.size(); i += nb) {
+  for(std::size_t i = 0; i < D.size(); i += nb) {
     double beg = D[i + nb - 1];
     double end;
     if(i + 2 * nb > D.size())
@@ -225,7 +225,7 @@ void PViewDataList::_stat(std::vector<double> &D, std::vector<char> &C, int nb)
     if(nbtime > NbTimeStep) NbTimeStep = nbtime;
   }
   if(nb == 5) {
-    for(unsigned int i = 0; i < D.size(); i += nb)
+    for(std::size_t i = 0; i < D.size(); i += nb)
       BBox += SPoint3(D[i], D[i + 1], D[i + 2]);
   }
 }
@@ -568,10 +568,10 @@ void PViewDataList::reverseElement(int step, int ent, int ele)
 
   // copy data
   std::vector<double> XYZ(3 * _lastNumNodes);
-  for(unsigned int i = 0; i < XYZ.size(); i++) XYZ[i] = _lastXYZ[i];
+  for(std::size_t i = 0; i < XYZ.size(); i++) XYZ[i] = _lastXYZ[i];
 
   std::vector<double> V(_lastNumNodes * _lastNumComponents * getNumTimeSteps());
-  for(unsigned int i = 0; i < V.size(); i++) V[i] = _lastVal[i];
+  for(std::size_t i = 0; i < V.size(); i++) V[i] = _lastVal[i];
 
   // reverse node order
   for(int i = 0; i < _lastNumNodes; i++) {
@@ -596,7 +596,7 @@ static void generateConnectivities(std::vector<double> &list, int nbList,
   if(!nbList) return;
   double *vals = new double[nbTimeStep * nbComp];
   int nb = list.size() / nbList;
-  for(unsigned int i = 0; i < list.size(); i += nb) {
+  for(std::size_t i = 0; i < list.size(); i += nb) {
     double *x = &list[i];
     double *y = &list[i + nbVert];
     double *z = &list[i + 2 * nbVert];
@@ -617,7 +617,7 @@ static void smoothList(std::vector<double> &list, int nbList, int nbTimeStep,
   if(!nbList) return;
   double *vals = new double[nbTimeStep * nbComp];
   int nb = list.size() / nbList;
-  for(unsigned int i = 0; i < list.size(); i += nb) {
+  for(std::size_t i = 0; i < list.size(); i += nb) {
     double *x = &list[i];
     double *y = &list[i + nbVert];
     double *z = &list[i + 2 * nbVert];
@@ -674,7 +674,7 @@ double PViewDataList::getMemoryInMb()
 
 static void dVecMerge(std::vector<double> &v, std::vector<double> &dest)
 {
-  for(unsigned int i = 0; i < v.size(); i++) dest.push_back(v[i]);
+  for(std::size_t i = 0; i < v.size(); i++) dest.push_back(v[i]);
 }
 
 bool PViewDataList::combineSpace(nameData &nd)
@@ -682,14 +682,14 @@ bool PViewDataList::combineSpace(nameData &nd)
   // sanity checks
   if(nd.data.size() < 2) return false;
   int ts = nd.data[0]->getNumTimeSteps();
-  for(unsigned int i = 1; i < nd.data.size(); i++) {
+  for(std::size_t i = 1; i < nd.data.size(); i++) {
     if(!nd.data[i]->empty() && nd.data[i]->getNumTimeSteps() != ts) {
       Msg::Error("Cannot combine views having different number of time steps");
       return false;
     }
   }
 
-  for(unsigned int i = 0; i < nd.data.size(); i++) {
+  for(std::size_t i = 0; i < nd.data.size(); i++) {
     PViewDataList *l = dynamic_cast<PViewDataList *>(nd.data[i]);
     if(!l) {
       Msg::Error("Cannot combine hybrid data");
@@ -701,7 +701,7 @@ bool PViewDataList::combineSpace(nameData &nd)
           l->_interpolation.begin();
         it != l->_interpolation.end(); it++)
       if(_interpolation[it->first].empty())
-        for(unsigned int i = 0; i < it->second.size(); i++)
+        for(std::size_t i = 0; i < it->second.size(); i++)
           _interpolation[it->first].push_back(
             new fullMatrix<double>(*it->second[i]));
 
@@ -764,7 +764,7 @@ bool PViewDataList::combineSpace(nameData &nd)
     NbTR += l->NbTR;
 
     // merge strings
-    for(unsigned int i = 0; i < l->T2D.size(); i += 4) {
+    for(std::size_t i = 0; i < l->T2D.size(); i += 4) {
       T2D.push_back(l->T2D[i]);
       T2D.push_back(l->T2D[i + 1]);
       T2D.push_back(l->T2D[i + 2]);
@@ -779,7 +779,7 @@ bool PViewDataList::combineSpace(nameData &nd)
       for(int j = 0; j < (int)(end - beg); j++) T2C.push_back(c[j]);
       NbT2++;
     }
-    for(unsigned int i = 0; i < l->T3D.size(); i += 5) {
+    for(std::size_t i = 0; i < l->T3D.size(); i += 5) {
       T3D.push_back(l->T3D[i]);
       T3D.push_back(l->T3D[i + 1]);
       T3D.push_back(l->T3D[i + 2]);
@@ -817,7 +817,7 @@ bool PViewDataList::combineTime(nameData &nd)
   // sanity checks
   if(nd.data.size() < 2) return false;
   std::vector<PViewDataList *> data(nd.data.size());
-  for(unsigned int i = 0; i < nd.data.size(); i++) {
+  for(std::size_t i = 0; i < nd.data.size(); i++) {
     data[i] = dynamic_cast<PViewDataList *>(nd.data[i]);
     if(!data[i]) {
       Msg::Error("Cannot combine hybrid data");
@@ -840,7 +840,7 @@ bool PViewDataList::combineTime(nameData &nd)
         data[0]->_interpolation.begin();
       it != data[0]->_interpolation.end(); it++)
     if(_interpolation[it->first].empty())
-      for(unsigned int i = 0; i < it->second.size(); i++)
+      for(std::size_t i = 0; i < it->second.size(); i++)
         _interpolation[it->first].push_back(
           new fullMatrix<double>(*it->second[i]));
 
@@ -848,7 +848,7 @@ bool PViewDataList::combineTime(nameData &nd)
   for(int i = 0; i < 27; i++) {
     _getRawData(i, &list, &nbe, &nbc, &nbn);
     for(int j = 0; j < *nbe; j++) {
-      for(unsigned int k = 0; k < data.size(); k++) {
+      for(std::size_t k = 0; k < data.size(); k++) {
         data[k]->_getRawData(i, &list2, &nbe2, &nbc2, &nbn2);
         if(*nbe && *nbe == *nbe2) {
           int nb2 = list2->size() / *nbe2;
@@ -868,7 +868,7 @@ bool PViewDataList::combineTime(nameData &nd)
 
   // merge 2d strings
   for(int j = 0; j < NbT2; j++) {
-    for(unsigned int k = 0; k < data.size(); k++) {
+    for(std::size_t k = 0; k < data.size(); k++) {
       if(NbT2 == data[k]->NbT2) {
         if(!k) {
           // copy coordinates
@@ -893,7 +893,7 @@ bool PViewDataList::combineTime(nameData &nd)
 
   // merge 3d strings
   for(int j = 0; j < NbT3; j++) {
-    for(unsigned int k = 0; k < data.size(); k++) {
+    for(std::size_t k = 0; k < data.size(); k++) {
       if(NbT3 == data[k]->NbT3) {
         if(!k) {
           // copy coordinates
@@ -918,7 +918,7 @@ bool PViewDataList::combineTime(nameData &nd)
   }
 
   // create the time data
-  for(unsigned int i = 0; i < data.size(); i++) dVecMerge(data[i]->Time, Time);
+  for(std::size_t i = 0; i < data.size(); i++) dVecMerge(data[i]->Time, Time);
 
   // if all the time values are the same, it probably means that the
   // original views didn't have any time data: then we'll just use
@@ -926,7 +926,7 @@ bool PViewDataList::combineTime(nameData &nd)
   if(Time.size()) {
     double t0 = Time[0], ti;
     bool allTheSame = true;
-    for(unsigned int i = 1; i < Time.size(); i++) {
+    for(std::size_t i = 1; i < Time.size(); i++) {
       ti = Time[i];
       if(ti != t0) {
         allTheSame = false;

@@ -212,26 +212,31 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y,
   // default lc (mesh size == size of the model)
   double l1 = CTX::instance()->lc;
 
+  if(!ge)
+    Msg::Warning("No entity in background mesh size evaluation");
+
   // lc from points
   double l2 = MAX_LC;
-  if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2)
+  if(ge && CTX::instance()->mesh.lcFromPoints && ge->dim() < 2)
     l2 = LC_MVertex_PNTS(ge, U, V);
 
   // lc from curvature
   double l3 = MAX_LC;
-  if(CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3)
+  if(ge && CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3)
     l3 = LC_MVertex_CURV(ge, U, V);
 
   // lc from fields
   double l4 = MAX_LC;
-  FieldManager *fields = ge->model()->getFields();
-  if(fields->getBackgroundField() > 0) {
-    Field *f = fields->get(fields->getBackgroundField());
-    if(f) l4 = (*f)(X, Y, Z, ge);
+  if(ge){
+    FieldManager *fields = ge->model()->getFields();
+    if(fields->getBackgroundField() > 0) {
+      Field *f = fields->get(fields->getBackgroundField());
+      if(f) l4 = (*f)(X, Y, Z, ge);
+    }
   }
 
   // global lc from entity
-  double l5 = ge->getMeshSize();
+  double l5 = ge ? ge->getMeshSize() : MAX_LC;
 
   // take the minimum, then constrain by lcMin and lcMax
   double lc = std::min(std::min(std::min(std::min(l1, l2), l3), l4), l5);

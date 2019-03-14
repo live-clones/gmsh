@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _VOROMETAL_H_
-#define _VOROMETAL_H_
+#ifndef VOROMETAL_H
+#define VOROMETAL_H
 
 #include <vector>
 #include "Plugin.h"
@@ -23,7 +23,7 @@ public:
   ~geo_cell() {}
   int search_line(std::pair<int, int> line)
   {
-    unsigned int i;
+    std::size_t i;
     for(i = 0; i < lines.size(); i++) {
       if(lines[i].first == line.first && lines[i].second == line.second)
         return i;

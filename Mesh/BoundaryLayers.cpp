@@ -48,7 +48,7 @@ static void addExtrudeNormals(std::vector<T *> &elements, int invert,
 
   if(octree && !gouraud) { // get extrusion direction from post-processing view
     std::set<MVertex *> verts;
-    for(unsigned int i = 0; i < elements.size(); i++) {
+    for(std::size_t i = 0; i < elements.size(); i++) {
       if(!ExtrudeParams::calcLayerScaleFactor[index]) {
         for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++)
           verts.insert(elements[i]->getVertex(j));
@@ -59,7 +59,7 @@ static void addExtrudeNormals(std::vector<T *> &elements, int invert,
 
         double aveLength = skipScaleCalc ? 1.0 : GetAveEdgeLength(elem_verts);
 
-        for(unsigned int j = 0; j < elem_verts.size(); j++) {
+        for(std::size_t j = 0; j < elem_verts.size(); j++) {
           verts.insert(elem_verts[j]);
           // if scaleLastLayer selection, but not doing gouraud, then still
           // scale the last layer...  This might create weird behavior for the
@@ -82,7 +82,7 @@ static void addExtrudeNormals(std::vector<T *> &elements, int invert,
     }
   }
   else { // get extrusion direction from Gouraud-shaded element normals
-    for(unsigned int i = 0; i < elements.size(); i++) {
+    for(std::size_t i = 0; i < elements.size(); i++) {
       MElement *ele = elements[i];
       SVector3 n(0, 0, 0);
       if(ele->getDim() == 2)
@@ -105,7 +105,7 @@ static void addExtrudeNormals(std::vector<T *> &elements, int invert,
           aveLength = 1.0;
         else
           aveLength = GetAveEdgeLength(elem_verts);
-        for(unsigned int j = 0; j < elem_verts.size(); j++) {
+        for(std::size_t j = 0; j < elem_verts.size(); j++) {
           ExtrudeParams::normals[index]->add(
             elem_verts[j]->x(), elem_verts[j]->y(), elem_verts[j]->z(), 3, nn);
           if(aveLength != 0.0)
@@ -182,7 +182,7 @@ static void addExtrudeNormals(std::set<T *> &entities,
   }
 
   // enforce coherent normals at some points if necessary
-  for(unsigned int i = 0; i < ExtrudeParams::normalsCoherence.size(); i++) {
+  for(std::size_t i = 0; i < ExtrudeParams::normalsCoherence.size(); i++) {
     SPoint3 &p(ExtrudeParams::normalsCoherence[i]);
     double n0[3], n1[3];
     ExtrudeParams::normals[0]->get(p.x(), p.y(), p.z(), 3, n0);
@@ -225,7 +225,7 @@ static void addExtrudeNormals(std::set<T *> &entities,
       if(octrees.size()) { // scale normals by scalar views
         for(smooth_data::iter it = ExtrudeParams::normals[i]->begin();
             it != ExtrudeParams::normals[i]->end(); it++) {
-          for(unsigned int j = 0; j < octrees.size(); j++) {
+          for(std::size_t j = 0; j < octrees.size(); j++) {
             double d;
             if(octrees[j]->searchScalarWithTol(it->x, it->y, it->z, &d, 0)) {
               for(int k = 0; k < 3; k++) it->vals[k] *= d;
@@ -238,7 +238,7 @@ static void addExtrudeNormals(std::set<T *> &entities,
     }
   }
 
-  for(unsigned int i = 0; i < octrees.size(); i++) delete octrees[i];
+  for(std::size_t i = 0; i < octrees.size(); i++) delete octrees[i];
 }
 
 static void checkDepends(GModel *m, GFace *f, std::set<GFace *> &dep)
@@ -462,7 +462,8 @@ int Mesh2DWithBoundaryLayers(GModel *m)
       ExtrudeParams *ep = ge->meshAttributes.extrude;
       if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) {
         GVertex *vsrc, *vdest;
-        if(ge->getBeginVertex()->geomType() == GEntity::BoundaryLayerPoint) {
+        if(ge->getBeginVertex() &&
+           ge->getBeginVertex()->geomType() == GEntity::BoundaryLayerPoint) {
           vsrc = ge->getEndVertex();
           vdest = ge->getBeginVertex();
         }
@@ -470,12 +471,13 @@ int Mesh2DWithBoundaryLayers(GModel *m)
           vsrc = ge->getBeginVertex();
           vdest = ge->getEndVertex();
         }
-        GPoint p = vsrc->point();
-
-        ep->Extrude(ep->mesh.NbLayer - 1,
-                    ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], p.x(), p.y(),
-                    p.z());
-        vdest->setPosition(p);
+        if(vsrc && vdest){
+          GPoint p = vsrc->point();
+          ep->Extrude(ep->mesh.NbLayer - 1,
+                      ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], p.x(), p.y(),
+                      p.z());
+          vdest->setPosition(p);
+        }
       }
     }
   }

@@ -158,3 +158,14 @@ Physical Volume (10) = 186 ;
 // Hide {:}
 // Recursive Show { Volume{129}; }
 // Mesh.MeshOnlyVisible=1;
+
+// To generate a curvilinear mesh and optimize it to produce provably valid
+// curved elements (see A. Johnen, J.-F. Remacle and C. Geuzaine. Geometric
+// validity of curvilinear finite elements. Journal of Computational Physics
+// 233, pp. 359-372, 2013; and T. Toulorge, C. Geuzaine, J.-F. Remacle,
+// J. Lambrechts. Robust untangling of curvilinear meshes. Journal of
+// Computational Physics 254, pp. 8-26, 2013), you can uncomment the following
+// lines:
+//
+// Mesh.ElementOrder = 2;
+// Mesh.HighOrderOptimize = 2;

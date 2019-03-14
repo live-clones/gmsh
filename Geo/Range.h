@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _RANGE_H_
-#define _RANGE_H_
+#ifndef RANGE_H
+#define RANGE_H
 
 // represents a range of values of the template type
 template <class T> class Range {

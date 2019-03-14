@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MPYRAMID_H_
-#define _MPYRAMID_H_
+#ifndef MPYRAMID_H
+#define MPYRAMID_H
 
 #include "MElement.h"
 
@@ -258,7 +258,7 @@ public:
             int part = 0)
     : MPyramid(v0, v1, v2, v3, v4, num, part), _vs(v), _order(order)
   {
-    for(unsigned int i = 0; i < _vs.size(); i++)
+    for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
     getFunctionSpace(order);
   }
@@ -266,8 +266,8 @@ public:
             int part = 0)
     : MPyramid(v[0], v[1], v[2], v[3], v[4], num, part), _order(order)
   {
-    for(unsigned int i = 5; i < v.size(); i++) _vs.push_back(v[i]);
-    for(unsigned int i = 0; i < _vs.size(); i++)
+    for(std::size_t i = 5; i < v.size(); i++) _vs.push_back(v[i]);
+    for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
     getFunctionSpace(order);
   }

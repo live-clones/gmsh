@@ -7,8 +7,8 @@
 //   Boris Sedji
 //
 
-#ifndef _FUNCHEAVISIDE_H_
-#define _FUNCHEAVISIDE_H_
+#ifndef FUNCHEAVISIDE_H
+#define FUNCHEAVISIDE_H
 
 #include "simpleFunction.h"
 #include "gmshLevelset.h"

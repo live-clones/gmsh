@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _BACKGROUND_MESH_MANAGER_H_
-#define _BACKGROUND_MESH_MANAGER_H_
+#ifndef BACKGROUND_MESH_MANAGER_H
+#define BACKGROUND_MESH_MANAGER_H
 
 #include <map>
 #include "BGMBase.h"

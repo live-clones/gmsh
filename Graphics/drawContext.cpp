@@ -265,7 +265,7 @@ static int needPolygonOffset()
   if(m->getMeshStatus() == 3 && (CTX::instance()->mesh.surfacesEdges ||
                                  CTX::instance()->mesh.volumesEdges))
     return 1;
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     PViewOptions *opt = PView::list[i]->getOptions();
     if(opt->visible && opt->showElement) return 1;
   }
@@ -299,7 +299,7 @@ void drawContext::draw3d()
 
     // speedup drawing of textured fonts on cocoa mac version
 #if defined(HAVE_FLTK) && defined(__APPLE__)
-  int numStrings = GModel::current()->getNumVertices();
+  std::size_t numStrings = GModel::current()->getNumVertices();
   if(CTX::instance()->mesh.pointsNum)
     numStrings = std::max(numStrings, GModel::current()->getNumMeshVertices());
   if(CTX::instance()->mesh.linesNum || CTX::instance()->mesh.surfacesNum ||
@@ -402,7 +402,7 @@ bool drawContext::generateTextureForImage(const std::string &name, int page,
                                           GLuint &imageH)
 {
   if(StatFile(name)) {
-    Msg::Warning("Could not open file `%s'", name.c_str());
+    Msg::Error("Could not open file `%s'", name.c_str());
     return false;
   }
 
@@ -1034,10 +1034,10 @@ bool drawContext::select(int type, bool multiple, bool mesh, bool post, int x,
   // dimension" (point < line < surface < volume). Otherwise, return the closest
   // entity of type "type"
   GLuint typmin = 10;
-  for(unsigned int i = 0; i < hits.size(); i++)
+  for(std::size_t i = 0; i < hits.size(); i++)
     typmin = std::min(typmin, hits[i].type);
 
-  for(unsigned int i = 0; i < hits.size(); i++) {
+  for(std::size_t i = 0; i < hits.size(); i++) {
     if((type == ENT_ALL) || (type == ENT_NONE && hits[i].type == typmin) ||
        (type == ENT_POINT && hits[i].type == 0) ||
        (type == ENT_CURVE && hits[i].type == 1) ||

@@ -5,8 +5,8 @@
 //
 // Contributed by Anthony Royer
 
-#ifndef _GHOST_EDGE_H_
-#define _GHOST_EDGE_H_
+#ifndef GHOST_EDGE_H
+#define GHOST_EDGE_H
 
 #include "GModel.h"
 #include "discreteEdge.h"

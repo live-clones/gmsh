@@ -31,7 +31,7 @@ static void getAllBoundingVertices(
 
   while(it != faces.end()) {
     GFace *gf = (*it);
-    for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+    for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       MTriangle *t = gf->triangles[i];
       for(int k = 0; k < 3; k++)
         if(allBoundingVertices.find(t->getVertex(k)) ==
@@ -42,8 +42,8 @@ static void getAllBoundingVertices(
   }
 }
 
-Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
-                              std::vector<MVertex *> &numberedV)
+static Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
+                                     std::vector<MVertex *> &numberedV)
 {
   Ng_Init();
   Ng_Mesh *ngmesh = Ng_NewMesh();
@@ -66,7 +66,7 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
   }
 
   if(importVolumeMesh) {
-    for(unsigned int i = 0; i < gr->mesh_vertices.size(); i++) {
+    for(std::size_t i = 0; i < gr->mesh_vertices.size(); i++) {
       double tmp[3];
       tmp[0] = gr->mesh_vertices[i]->x();
       tmp[1] = gr->mesh_vertices[i]->y();
@@ -79,7 +79,7 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
   std::vector<GFace *>::iterator it = faces.begin();
   while(it != faces.end()) {
     GFace *gf = (*it);
-    for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+    for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       MTriangle *t = gf->triangles[i];
       int tmp[3];
       tmp[0] = t->getVertex(0)->getIndex();
@@ -91,7 +91,7 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
   }
 
   if(importVolumeMesh) {
-    for(unsigned int i = 0; i < gr->tetrahedra.size(); i++) {
+    for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
       MTetrahedron *t = gr->tetrahedra[i];
       // netgen expects tet with negative volume
       if(t->getVolumeSign() > 0) t->reverse();
@@ -107,8 +107,8 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
   return ngmesh;
 }
 
-void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh,
-                        std::vector<MVertex *> &numberedV)
+static void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh,
+                               std::vector<MVertex *> &numberedV)
 {
   // Gets total number of vertices of Netgen's mesh
   int nbv = Ng_GetNP(ngmesh);
@@ -139,15 +139,13 @@ void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh,
   }
 }
 
-#endif
-
 // X_1 (1-u-v) + X_2 u + X_3 v = P_x + t N_x
 // Y_1 (1-u-v) + Y_2 u + Y_3 v = P_y + t N_y
 // Z_1 (1-u-v) + Z_2 u + Z_3 v = P_z + t N_z
 
-static int intersect_line_triangle(double X[3], double Y[3], double Z[3],
-                                   double P[3], double N[3],
-                                   const double eps_prec)
+static int intersectLineTriangle(double X[3], double Y[3], double Z[3],
+                                 double P[3], double N[3],
+                                 const double eps_prec)
 {
   double mat[3][3], det;
   double b[3], res[3];
@@ -216,7 +214,7 @@ static void meshNormalsPointOutOfTheRegion(GRegion *gr)
   while(it != faces.end()) {
     GFace *gf = (*it);
     int nb_intersect = 0;
-    for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+    for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       MTriangle *t = gf->triangles[i];
       double X[3] = {t->getVertex(0)->x(), t->getVertex(1)->x(),
                      t->getVertex(2)->x()};
@@ -246,7 +244,7 @@ static void meshNormalsPointOutOfTheRegion(GRegion *gr)
       std::vector<GFace *>::iterator it_b = faces.begin();
       while(it_b != faces.end()) {
         GFace *gf_b = (*it_b);
-        for(unsigned int i_b = 0; i_b < gf_b->triangles.size(); i_b++) {
+        for(std::size_t i_b = 0; i_b < gf_b->triangles.size(); i_b++) {
           MTriangle *t_b = gf_b->triangles[i_b];
           if(t_b != t) {
             double X_b[3] = {t_b->getVertex(0)->x(), t_b->getVertex(1)->x(),
@@ -260,7 +258,7 @@ static void meshNormalsPointOutOfTheRegion(GRegion *gr)
               Y_b[j] /= scaling;
               Z_b[j] /= scaling;
             }
-            int inters = intersect_line_triangle(X_b, Y_b, Z_b, P, N, 1.e-9);
+            int inters = intersectLineTriangle(X_b, Y_b, Z_b, P, N, 1.e-9);
             nb_intersect += inters;
           }
         }
@@ -278,7 +276,7 @@ static void meshNormalsPointOutOfTheRegion(GRegion *gr)
     else {
       if(nb_intersect % 2 == 1) {
         // odd nb of intersections: the normal points inside the region
-        for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+        for(std::size_t i = 0; i < gf->triangles.size(); i++) {
           gf->triangles[i]->reverse();
         }
       }
@@ -291,12 +289,14 @@ static void meshNormalsPointOutOfTheRegion(GRegion *gr)
   //   fprintf(fp, "View \"debug\" {\n");
   //   for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end();
   //   it++)
-  //     for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+  //     for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
   //       (*it)->triangles[i]->writePOS(fp, 1., (*it)->tag());
   //   fprintf(fp, "};\n");
   //   fclose(fp);
   // }
 }
+
+#endif
 
 void meshGRegionNetgen(GRegion *gr)
 {

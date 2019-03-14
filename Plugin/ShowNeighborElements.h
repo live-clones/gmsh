@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SHOWNEIGHBORELEMENTS_H_
-#define _SHOWNEIGHBORELEMENTS_H_
+#ifndef SHOWNEIGHBORELEMENTS_H
+#define SHOWNEIGHBORELEMENTS_H
 
 #include "Plugin.h"
 #include <set>
@@ -18,7 +18,7 @@ GMSH_Plugin *GMSH_RegisterShowNeighborElementsPlugin();
 class GMSH_ShowNeighborElementsPlugin : public GMSH_PostPlugin {
 private:
   int _nLayers;
-  int _nel1, _nel2, _nel3, _nel4, _nel5;
+  std::size_t _nel1, _nel2, _nel3, _nel4, _nel5;
   std::multimap<MVertex *, MElement *> _vert2elem;
   std::set<MVertex *> _vertices;
 

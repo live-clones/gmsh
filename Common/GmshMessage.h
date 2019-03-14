@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GMSH_MESSAGE_H_
-#define _GMSH_MESSAGE_H_
+#ifndef GMSH_MESSAGE_H
+#define GMSH_MESSAGE_H
 
 #include <map>
 #include <vector>

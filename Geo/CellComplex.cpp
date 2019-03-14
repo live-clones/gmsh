@@ -75,7 +75,7 @@ bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain)
 
   double t1 = Cpu();
 
-  for(unsigned int i = 0; i < elements.size(); i++) {
+  for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *element = elements.at(i);
     int dim = element->getDim();
     int type = element->getType();
@@ -118,9 +118,9 @@ bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain)
     double t2 = Cpu();
     if(t2 - t1 > CellComplex::_patience && dim > 1) {
       if(domain == 0)
-        Msg::Info(" ... creating domain %d-cells", dim);
+        Msg::Info(" - Creating domain %d-cells", dim);
       else if(domain == 1)
-        Msg::Info(" ... creating subdomain %d-cells", dim);
+        Msg::Info(" - Creating subdomain %d-cells", dim);
     }
 
     for(citer cit = firstCell(dim); cit != lastCell(dim); cit++) {
@@ -162,7 +162,7 @@ bool CellComplex::_removeCells(std::vector<MElement *> &elements, int domain)
              (int)elements.size());
   std::set<Cell *, Less_Cell> removed[4];
 
-  for(unsigned int i = 0; i < elements.size(); i++) {
+  for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *element = elements.at(i);
     int type = element->getType();
     if(type == TYPE_PYR || type == TYPE_PRI || type == TYPE_POLYG ||
@@ -212,7 +212,7 @@ bool CellComplex::_removeCells(std::vector<MElement *> &elements, int domain)
 
 bool CellComplex::_immunizeCells(std::vector<MElement *> &elements)
 {
-  for(unsigned int i = 0; i < elements.size(); i++) {
+  for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *element = elements.at(i);
     Cell *cell = new Cell(element, 0);
     int dim = cell->getDim();
@@ -233,7 +233,7 @@ CellComplex::~CellComplex()
     }
   }
 
-  for(unsigned int i = 0; i < _removedcells.size(); i++) {
+  for(std::size_t i = 0; i < _removedcells.size(); i++) {
     delete _removedcells.at(i);
     _deleteCount++;
   }
@@ -428,7 +428,7 @@ int CellComplex::coreduction(int dim, int omit,
 int CellComplex::getSize(int dim, bool orig)
 {
   if(dim == -1) {
-    unsigned int size = 0;
+    std::size_t size = 0;
     if(!orig)
       for(int i = 0; i < 4; i++) size += _cells[i].size();
     else
@@ -517,14 +517,14 @@ int CellComplex::reduceComplex(int combine, bool omit, bool homseq)
       newCells.push_back(_omitCell(cell, false));
     }
 
-    for(unsigned int i = 0; i < newCells.size(); i++) {
+    for(std::size_t i = 0; i < newCells.size(); i++) {
       insertCell(newCells.at(i));
     }
   }
 
   double t2 = Cpu();
   if(t2 - t1 > CellComplex::_patience) {
-    Msg::Info(" .. %d volumes, %d faces, %d edges, and %d vertices", getSize(3),
+    Msg::Info(" - %d volumes, %d faces, %d edges, and %d vertices", getSize(3),
               getSize(2), getSize(1), getSize(0));
   }
 
@@ -562,7 +562,7 @@ void CellComplex::removeSubdomain()
       if(cell->inSubdomain()) toRemove.push_back(cell);
     }
   }
-  for(unsigned int i = 0; i < toRemove.size(); i++) removeCell(toRemove[i]);
+  for(std::size_t i = 0; i < toRemove.size(); i++) removeCell(toRemove[i]);
   _reduced = true;
 }
 
@@ -573,7 +573,7 @@ void CellComplex::removeCells(int dim)
   for(citer cit = firstCell(dim); cit != lastCell(dim); ++cit) {
     toRemove.push_back(*cit);
   }
-  for(unsigned int i = 0; i < toRemove.size(); i++) removeCell(toRemove[i]);
+  for(std::size_t i = 0; i < toRemove.size(); i++) removeCell(toRemove[i]);
   _reduced = true;
 }
 
@@ -619,14 +619,14 @@ int CellComplex::coreduceComplex(int combine, bool omit, int heuristic)
 
       newCells.push_back(_omitCell(cell, true));
     }
-    for(unsigned int i = 0; i < newCells.size(); i++) {
+    for(std::size_t i = 0; i < newCells.size(); i++) {
       insertCell(newCells.at(i));
     }
   }
 
   double t2 = Cpu();
   if(t2 - t1 > CellComplex::_patience) {
-    Msg::Info(" .. %d volumes, %d faces, %d edges, and %d vertices", getSize(3),
+    Msg::Info(" - %d volumes, %d faces, %d edges, and %d vertices", getSize(3),
               getSize(2), getSize(1), getSize(0));
   }
 
@@ -682,7 +682,7 @@ int CellComplex::combine(int dim)
     double t2 = Cpu();
     if(t2 - t1 > CellComplex::_patience) {
       t1 = Cpu();
-      Msg::Info(" ... %d volumes, %d faces, %d edges, and %d vertices",
+      Msg::Info(" - %d volumes, %d faces, %d edges, and %d vertices",
                 getSize(3), getSize(2), getSize(1), getSize(0));
     }
 
@@ -760,7 +760,7 @@ int CellComplex::cocombine(int dim)
     double t2 = Cpu();
     if(t2 - t1 > CellComplex::_patience) {
       t1 = Cpu();
-      Msg::Info(" ... %d volumes, %d faces, %d edges, and %d vertices",
+      Msg::Info(" - %d volumes, %d faces, %d edges, and %d vertices",
                 getSize(3), getSize(2), getSize(1), getSize(0));
     }
 
@@ -934,7 +934,7 @@ Cell *CellComplex::getACell(int dim, int domain)
 bool CellComplex::restoreComplex()
 {
   if(_saveorig) {
-    for(unsigned int i = 0; i < _removedcells.size(); i++) {
+    for(std::size_t i = 0; i < _removedcells.size(); i++) {
       Cell *cell = _removedcells.at(i);
       if(cell->isCombined()) {
         delete cell;
@@ -996,16 +996,16 @@ int CellComplex::saveComplex(const std::string &filename)
     printf("\nUnable to open file '%s' \n", filename.c_str());
     return 0;
   }
-  printf("\nWriting file '%s' ... \n", filename.c_str());
+  printf("\nWriting file '%s'...\n", filename.c_str());
 
   fprintf(fp, "$Cells\n");
   fprintf(fp, "%d\n", getSize(0)+getSize(1)+getSize(2)+getSize(3));
   for(int dim = 0; dim < 4; dim++){
     for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
       Cell* cell = *cit;
-      fprintf(fp, "%d %d %d %d %d", cell->getNum(), cell->getType(),
+      fprintf(fp, "%d %d %d %d %lu", cell->getNum(), cell->getType(),
           1, cell->getDomain(), cell->getNumVertices());
-      for(int i = 0; i < cell->getNumVertices(); i++){
+      for(std::size_t i = 0; i < cell->getNumVertices(); i++){
     fprintf(fp, " %d", cell->getVertex(i));
       }
       fprintf(fp, " %d", cell->getBoundarySize());

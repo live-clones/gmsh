@@ -5,8 +5,8 @@
 //
 // Contributed by Amaury Johnen
 
-#ifndef _INTERIOR_VERTEX_PLACEMENT_H_
-#define _INTERIOR_VERTEX_PLACEMENT_H_
+#ifndef INTERIOR_VERTEX_PLACEMENT_H
+#define INTERIOR_VERTEX_PLACEMENT_H
 
 #include "fullMatrix.h"
 

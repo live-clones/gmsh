@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _APPROXIMATION_ERROR_
-#define _APPROXIMATION_ERROR_
+#ifndef APPROXIMATION_ERROR
+#define APPROXIMATION_ERROR
 
 #include <map>
 #include "simpleFunction.h"

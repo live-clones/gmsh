@@ -23,27 +23,26 @@
 #if defined(HAVE_SOLVER)
 #include "dofManager.h"
 #include "laplaceTerm.h"
-#include "linearSystemGMM.h"
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
 #endif
 
 #if defined(HAVE_ANN)
-static const int _NBANN = 2;
+static const int NBANN = 2;
 #endif
 
-static const int _MAX_THREADS = 256;
+static const int MAX_THREADS = 256;
 
 std::vector<backgroundMesh *> backgroundMesh::_current =
-  std::vector<backgroundMesh *>(_MAX_THREADS, (backgroundMesh *)0);
+  std::vector<backgroundMesh *>(MAX_THREADS, (backgroundMesh *)0);
 
 void backgroundMesh::set(GFace *gf)
 {
   int t = Msg::GetThreadNum();
-  if(t >= _MAX_THREADS){
+  if(t >= MAX_THREADS){
     Msg::Error("Maximum number of threads (%d) exceeded in background mesh",
-               _MAX_THREADS);
+               MAX_THREADS);
     return;
   }
   if(_current[t]) delete _current[t];
@@ -53,7 +52,7 @@ void backgroundMesh::set(GFace *gf)
 void backgroundMesh::setCrossFieldsByDistance(GFace *gf)
 {
   int t = Msg::GetThreadNum();
-  if(t >= _MAX_THREADS) return;
+  if(t >= MAX_THREADS) return;
   if(_current[t]) delete _current[t];
   _current[t] = new backgroundMesh(gf, true);
 }
@@ -61,7 +60,7 @@ void backgroundMesh::setCrossFieldsByDistance(GFace *gf)
 void backgroundMesh::unset()
 {
   int t = Msg::GetThreadNum();
-  if(t >= _MAX_THREADS) return;
+  if(t >= MAX_THREADS) return;
   if(_current[t]) delete _current[t];
   _current[t] = 0;
 }
@@ -69,7 +68,7 @@ void backgroundMesh::unset()
 backgroundMesh *backgroundMesh::current()
 {
   int t = Msg::GetThreadNum();
-  if(t >= _MAX_THREADS) return 0;
+  if(t >= MAX_THREADS) return 0;
   return _current[t];
 }
 
@@ -89,7 +88,7 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
   // they do not depend on the actual mesh that can be deleted
 
   std::set<SPoint2> myBCNodes;
-  for(unsigned int i = 0; i < _gf->triangles.size(); i++) {
+  for(std::size_t i = 0; i < _gf->triangles.size(); i++) {
     MTriangle *e = _gf->triangles[i];
     MVertex *news[3];
     for(int j = 0; j < 3; j++) {
@@ -155,8 +154,8 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
 
 backgroundMesh::~backgroundMesh()
 {
-  for(unsigned int i = 0; i < _vertices.size(); i++) delete _vertices[i];
-  for(unsigned int i = 0; i < _triangles.size(); i++) delete _triangles[i];
+  for(std::size_t i = 0; i < _vertices.size(); i++) delete _vertices[i];
+  for(std::size_t i = 0; i < _triangles.size(); i++) delete _triangles[i];
   if(_octree) delete _octree;
 #if defined(HAVE_ANN)
   if(uv_kdtree) delete uv_kdtree;
@@ -174,15 +173,12 @@ static void propagateValuesOnFace(GFace *_gf,
                                   bool in_parametric_plane = false)
 {
 #if defined(HAVE_SOLVER)
-  linearSystem<double> *_lsys = 0;
 #if defined(HAVE_PETSC)
-  _lsys = new linearSystemPETSc<double>;
+  linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM)
-  linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
-  _lsysb->setGmres(1);
-  _lsys = _lsysb;
+  linearSystemCSRGmm<double> *_lsys = new linearSystemCSRGmm<double>;
 #else
-  _lsys = new linearSystemFull<double>;
+  linearSystemFull<double> *_lsys = new linearSystemFull<double>;
 #endif
 
   dofManager<double> myAssembler(_lsys);
@@ -195,9 +191,9 @@ static void propagateValuesOnFace(GFace *_gf,
 
   // Number vertices
   std::set<MVertex *> vs;
-  for(unsigned int k = 0; k < _gf->triangles.size(); k++)
+  for(std::size_t k = 0; k < _gf->triangles.size(); k++)
     for(int j = 0; j < 3; j++) vs.insert(_gf->triangles[k]->getVertex(j));
-  for(unsigned int k = 0; k < _gf->quadrangles.size(); k++)
+  for(std::size_t k = 0; k < _gf->quadrangles.size(); k++)
     for(int j = 0; j < 4; j++) vs.insert(_gf->quadrangles[k]->getVertex(j));
 
   std::map<MVertex *, SPoint3> theMap;
@@ -215,7 +211,7 @@ static void propagateValuesOnFace(GFace *_gf,
 
   // Assemble
   laplaceTerm l(0, 1, ONE);
-  for(unsigned int k = 0; k < _gf->triangles.size(); k++) {
+  for(std::size_t k = 0; k < _gf->triangles.size(); k++) {
     MTriangle *t = _gf->triangles[k];
     SElement se(t);
     l.addToMatrix(myAssembler, &se);
@@ -249,7 +245,7 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
 
   for(; it != e.end(); ++it) {
     if(!(*it)->isSeam(_gf)) {
-      for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
+      for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
         MVertex *v1 = (*it)->lines[i]->getVertex(0);
         MVertex *v2 = (*it)->lines[i]->getVertex(1);
         if(v1 != v2) {
@@ -304,7 +300,7 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
 
   for(; it != e.end(); ++it) {
     if(!(*it)->isSeam(_gf)) {
-      for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
+      for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
         MVertex *v[2];
         v[0] = (*it)->lines[i]->getVertex(0);
         v[1] = (*it)->lines[i]->getVertex(1);
@@ -338,8 +334,8 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
   }
 
 #if defined(HAVE_ANN)
-  index = new ANNidx[_NBANN];
-  dist = new ANNdist[_NBANN];
+  index = new ANNidx[NBANN];
+  dist = new ANNdist[NBANN];
   angle_nodes = annAllocPts(_cosines4.size(), 3);
   std::map<MVertex *, double>::iterator itp = _cosines4.begin();
   int ind = 0;
@@ -424,7 +420,7 @@ void backgroundMesh::propagateCrossField(GFace *_gf)
   //  int NSMOOTH = _gf->triangles.size();
   while(0) {
     // int NSMOOTH_NOW = 0;
-    for(unsigned int i = 0; i < _gf->triangles.size(); i++) {
+    for(std::size_t i = 0; i < _gf->triangles.size(); i++) {
       double smoothness = getSmoothness(_gf->triangles[i]);
       double val = smoothness < .5 ? 1.0 : 1.e-3; // exp(-absf/10);
       C.set(_gf->triangles[i], val);
@@ -460,7 +456,7 @@ void backgroundMesh::propagateCrossField(GFace *_gf,
   std::vector<GEdge *>::const_iterator it = e.begin();
   for(; it != e.end(); ++it) {
     if(!(*it)->isSeam(_gf)) {
-      for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
+      for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
         MVertex *v[2];
         v[0] = (*it)->lines[i]->getVertex(0);
         v[1] = (*it)->lines[i]->getVertex(1);
@@ -536,7 +532,7 @@ void backgroundMesh::updateSizes(GFace *_gf)
   // (Int. J. Numer. Meth. Engng. 43, 1143-1165 (1998) MESH GRADATION
   // CONTROL, BOROUCHAKI, HECHT, FREY)
   std::set<MEdge, Less_Edge> edges;
-  for(unsigned int i = 0; i < _triangles.size(); i++) {
+  for(std::size_t i = 0; i < _triangles.size(); i++) {
     for(int j = 0; j < _triangles[i]->getNumEdges(); j++) {
       edges.insert(_triangles[i]->getEdge(j));
     }
@@ -612,14 +608,14 @@ double backgroundMesh::getAngle(double u, double v, double w) const
   if(!_octree) {
 #if defined(HAVE_ANN)
     double angle = 0.;
-    if(angle_kdtree->nPoints() >= _NBANN) {
+    if(angle_kdtree->nPoints() >= NBANN) {
       double pt[3] = {u, v, 0.0};
 #if defined(_OPENMP)
 #pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
 #endif
-      angle_kdtree->annkSearch(pt, _NBANN, index, dist);
+      angle_kdtree->annkSearch(pt, NBANN, index, dist);
       double SINE = 0.0, COSINE = 0.0;
-      for(int i = 0; i < _NBANN; i++) {
+      for(int i = 0; i < NBANN; i++) {
         SINE += _sin[index[i]];
         COSINE += _cos[index[i]];
       }
@@ -692,7 +688,7 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
   }
   fprintf(f, "View \"Background Mesh\"{\n");
   if(smooth) {
-    for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+    for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       MVertex *v1 = gf->triangles[i]->getVertex(0);
       MVertex *v2 = gf->triangles[i]->getVertex(1);
       MVertex *v3 = gf->triangles[i]->getVertex(2);
@@ -703,7 +699,7 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
     }
   }
   else {
-    for(unsigned int i = 0; i < _triangles.size(); i++) {
+    for(std::size_t i = 0; i < _triangles.size(); i++) {
       MVertex *v1 = _triangles[i]->getVertex(0);
       MVertex *v2 = _triangles[i]->getVertex(1);
       MVertex *v3 = _triangles[i]->getVertex(2);

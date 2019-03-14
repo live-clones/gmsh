@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MODIFY_COMPONENT_H_
-#define _MODIFY_COMPONENT_H_
+#ifndef MODIFY_COMPONENT_H
+#define MODIFY_COMPONENT_H
 
 #include "Plugin.h"
 

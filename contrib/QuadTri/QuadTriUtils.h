@@ -13,8 +13,8 @@ Geuzaine and J.-F. Remacle with the understanding that his contribution shall be
 cited appropriately. See the LICENSE.txt file for license information.
 ********************************************************************************/
 
-#if !defined(_QUADTRIUTILS_H_)
-#define _QUADTRIUTILS_H_
+#ifndef QUADTRIUTILS_H
+#define QUADTRIUTILS_H
 
 #include <stdlib.h>
 #include "ExtrudeParams.h"

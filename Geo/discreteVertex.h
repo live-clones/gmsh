@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _DISCRETE_VERTEX_H_
-#define _DISCRETE_VERTEX_H_
+#ifndef DISCRETE_VERTEX_H
+#define DISCRETE_VERTEX_H
 
 #include "GModel.h"
 #include "GVertex.h"

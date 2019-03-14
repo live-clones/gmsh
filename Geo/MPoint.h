@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MPOINT_H_
-#define _MPOINT_H_
+#ifndef MPOINT_H
+#define MPOINT_H
 
 #include "MElement.h"
 #include "BasisFactory.h"

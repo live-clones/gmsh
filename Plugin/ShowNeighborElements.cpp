@@ -10,36 +10,42 @@
 #include "Options.h"
 #include "Context.h"
 #include "GmshDefines.h"
+
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
 
 StringXNumber ShowNeighborElementsOptions_Number[] = {
-  {GMSH_FULLRC, "NumLayers", NULL, 1}, {GMSH_FULLRC, "Element1", NULL, 0},
-  {GMSH_FULLRC, "Element2", NULL, 0},  {GMSH_FULLRC, "Element3", NULL, 0},
-  {GMSH_FULLRC, "Element4", NULL, 0},  {GMSH_FULLRC, "Element5", NULL, 0}};
+  {GMSH_FULLRC, "NumLayers", NULL, 1},
+  {GMSH_FULLRC, "Element1", NULL, 0},
+  {GMSH_FULLRC, "Element2", NULL, 0},
+  {GMSH_FULLRC, "Element3", NULL, 0},
+  {GMSH_FULLRC, "Element4", NULL, 0},
+  {GMSH_FULLRC, "Element5", NULL, 0}
+};
+
 extern "C" {
-GMSH_Plugin *GMSH_RegisterShowNeighborElementsPlugin()
-{
-  return new GMSH_ShowNeighborElementsPlugin();
+  GMSH_Plugin *GMSH_RegisterShowNeighborElementsPlugin()
+  {
+    return new GMSH_ShowNeighborElementsPlugin();
+  }
 }
-}
+
 int GMSH_ShowNeighborElementsPlugin::getNbOptions() const
 {
   return sizeof(ShowNeighborElementsOptions_Number) / sizeof(StringXNumber);
 }
+
 StringXNumber *GMSH_ShowNeighborElementsPlugin::getOption(int iopt)
 {
   return &ShowNeighborElementsOptions_Number[iopt];
 }
 std::string GMSH_ShowNeighborElementsPlugin::getHelp() const
 {
-  return "Plugin(ShowNeighborElements) allows to set visible some given "
-         "elements "
-         " and a layer of elements around them, the other being set invisible.";
+  return "Plugin(ShowNeighborElements) sets visible some elements "
+         "and a layer of elements around them, the other being set invisible.";
 }
 
-// Execution
 PView *GMSH_ShowNeighborElementsPlugin::execute(PView *v)
 {
   GModel *m = GModel::current();
@@ -64,7 +70,7 @@ PView *GMSH_ShowNeighborElementsPlugin::execute(PView *v)
   }
 
 #if defined(HAVE_OPENGL)
-  CTX::instance()->mesh.changed = (ENT_ALL);
+  CTX::instance()->mesh.changed = ENT_ALL;
   drawContext::global()->draw();
 #endif
 
@@ -97,13 +103,9 @@ void GMSH_ShowNeighborElementsPlugin::_init(GEntity *ent)
 
 void GMSH_ShowNeighborElementsPlugin::_showLayers(GEntity *ent, int nLayer)
 {
-  //  std::pair<std::multimap<MVertex*, MElement*>::iterator,
-  //            std::multimap<MVertex*, MElement*>::iterator> lowUpBound;
-
   if(_vertices.empty() || nLayer < 1) return;
 
   std::set<MVertex *> &vert = _vertices;
-  //  _vertices.clear();
   std::map<MElement *, int> el2cnt;
 
   std::set<MVertex *>::iterator it;
@@ -116,11 +118,6 @@ void GMSH_ShowNeighborElementsPlugin::_showLayers(GEntity *ent, int nLayer)
       MElement *el = ite->second;
       if(el2cnt.find(el) == el2cnt.end()) el2cnt[el] = 0;
       ++el2cnt[el];
-      //      el->setVisibility(true);
-      //      for (int k = 0; k < el->getNumVertices(); ++k) { // TODO only
-      //      corner vertices?
-      //        _vertices.insert(el->getVertex(k));
-      //      }
     }
   }
 
@@ -130,6 +127,4 @@ void GMSH_ShowNeighborElementsPlugin::_showLayers(GEntity *ent, int nLayer)
       it2->first->setVisibility(true);
     }
   }
-
-  //_showLayers(ent, nLayer-1);
 }

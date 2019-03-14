@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GMSH_LOCAL_NETWORK_CLIENT_H_
-#define _GMSH_LOCAL_NETWORK_CLIENT_H_
+#ifndef GMSH_LOCAL_NETWORK_CLIENT_H
+#define GMSH_LOCAL_NETWORK_CLIENT_H
 
 #include <vector>
 #include <algorithm>

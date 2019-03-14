@@ -63,8 +63,8 @@ PView *GMSH_GaussPointsPlugin::execute(PView *v)
 
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
-  for(unsigned int i = 0; i < entities.size(); i++) {
-    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
       MElement *e = entities[i]->getMeshElement(j);
       int npts;
       IntPt *gp;

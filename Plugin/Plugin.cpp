@@ -57,7 +57,7 @@ std::string GMSH_Plugin::serialize()
 PView *GMSH_PostPlugin::executeRemote(PView *view)
 {
   int j = -1, remoteIndex = -1;
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     if(PView::list[i]->getData()->isRemote()) j++;
     if(PView::list[i]->getTag() == view->getTag()) {
       remoteIndex = j;

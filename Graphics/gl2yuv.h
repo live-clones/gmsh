@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GL2YUV_H_
-#define _GL2YUV_H_
+#ifndef GL2YUV_H
+#define GL2YUV_H
 
 #include <stdio.h>
 #include "PixelBuffer.h"

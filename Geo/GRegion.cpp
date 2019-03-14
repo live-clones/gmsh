@@ -20,7 +20,7 @@
 
 GRegion::GRegion(GModel *model, int tag) : GEntity(model, tag)
 {
-  resetMeshAttributes();
+  GRegion::resetMeshAttributes();
 }
 
 GRegion::~GRegion()
@@ -30,40 +30,40 @@ GRegion::~GRegion()
     (*it)->delRegion(this);
     ++it;
   }
-  deleteMesh();
+  GRegion::deleteMesh();
 }
 
 void GRegion::deleteMesh(bool onlyDeleteElements)
 {
   if(!onlyDeleteElements) {
-    for(unsigned int i = 0; i < mesh_vertices.size(); i++)
+    for(std::size_t i = 0; i < mesh_vertices.size(); i++)
       delete mesh_vertices[i];
     mesh_vertices.clear();
     transfinite_vertices.clear();
   }
-  for(unsigned int i = 0; i < tetrahedra.size(); i++) delete tetrahedra[i];
+  for(std::size_t i = 0; i < tetrahedra.size(); i++) delete tetrahedra[i];
   tetrahedra.clear();
-  for(unsigned int i = 0; i < hexahedra.size(); i++) delete hexahedra[i];
+  for(std::size_t i = 0; i < hexahedra.size(); i++) delete hexahedra[i];
   hexahedra.clear();
-  for(unsigned int i = 0; i < prisms.size(); i++) delete prisms[i];
+  for(std::size_t i = 0; i < prisms.size(); i++) delete prisms[i];
   prisms.clear();
-  for(unsigned int i = 0; i < pyramids.size(); i++) delete pyramids[i];
+  for(std::size_t i = 0; i < pyramids.size(); i++) delete pyramids[i];
   pyramids.clear();
-  for(unsigned int i = 0; i < trihedra.size(); i++) delete trihedra[i];
+  for(std::size_t i = 0; i < trihedra.size(); i++) delete trihedra[i];
   trihedra.clear();
-  for(unsigned int i = 0; i < polyhedra.size(); i++) delete polyhedra[i];
+  for(std::size_t i = 0; i < polyhedra.size(); i++) delete polyhedra[i];
   polyhedra.clear();
   deleteVertexArrays();
   model()->destroyMeshCaches();
 }
 
-GRegion::size_type GRegion::getNumMeshElements() const
+std::size_t GRegion::getNumMeshElements() const
 {
   return tetrahedra.size() + hexahedra.size() + prisms.size() +
          pyramids.size() + trihedra.size() + polyhedra.size();
 }
 
-unsigned int GRegion::getNumMeshElementsByType(const int familyType) const
+std::size_t GRegion::getNumMeshElementsByType(const int familyType) const
 {
   if(familyType == TYPE_TET)
     return tetrahedra.size();
@@ -81,10 +81,10 @@ unsigned int GRegion::getNumMeshElementsByType(const int familyType) const
   return 0;
 }
 
-unsigned int GRegion::getNumMeshParentElements()
+std::size_t GRegion::getNumMeshParentElements()
 {
-  unsigned int n = 0;
-  for(unsigned int i = 0; i < polyhedra.size(); i++)
+  std::size_t n = 0;
+  for(std::size_t i = 0; i < polyhedra.size(); i++)
     if(polyhedra[i]->ownsParent()) n++;
   return n;
 }
@@ -124,7 +124,7 @@ MElement *const *GRegion::getStartElementType(int type) const
   return 0;
 }
 
-MElement *GRegion::getMeshElement(unsigned int index) const
+MElement *GRegion::getMeshElement(std::size_t index) const
 {
   if(index < tetrahedra.size())
     return tetrahedra[index];
@@ -149,7 +149,7 @@ MElement *GRegion::getMeshElement(unsigned int index) const
 }
 
 MElement *GRegion::getMeshElementByType(const int familyType,
-                                        const unsigned int index) const
+                                        const std::size_t index) const
 {
   if(familyType == TYPE_TET)
     return tetrahedra[index];
@@ -185,8 +185,8 @@ SBoundingBox3d GRegion::bounds(bool fast) const
   else {
     int ipp = getNumMeshElements() / 20;
     if(ipp < 1) ipp = 1;
-    for(unsigned int i = 0; i < getNumMeshElements(); i += ipp)
-      for(unsigned int j = 0; j < getMeshElement(i)->getNumVertices(); j++)
+    for(std::size_t i = 0; i < getNumMeshElements(); i += ipp)
+      for(std::size_t j = 0; j < getMeshElement(i)->getNumVertices(); j++)
         res += getMeshElement(i)->getVertex(j)->point();
   }
   return res;
@@ -214,13 +214,18 @@ SOrientedBoundingBox GRegion::getOBB()
             vertices.push_back(mv->point());
           }
           // Don't forget to add the first and last vertices...
-          SPoint3 pt1((*ed)->getBeginVertex()->x(),
-                      (*ed)->getBeginVertex()->y(),
-                      (*ed)->getBeginVertex()->z());
-          SPoint3 pt2((*ed)->getEndVertex()->x(), (*ed)->getEndVertex()->y(),
-                      (*ed)->getEndVertex()->z());
-          vertices.push_back(pt1);
-          vertices.push_back(pt2);
+          if((*ed)->getBeginVertex()){
+            SPoint3 pt1((*ed)->getBeginVertex()->x(),
+                        (*ed)->getBeginVertex()->y(),
+                        (*ed)->getBeginVertex()->z());
+            vertices.push_back(pt1);
+          }
+          if((*ed)->getEndVertex()){
+            SPoint3 pt2((*ed)->getEndVertex()->x(),
+                        (*ed)->getEndVertex()->y(),
+                        (*ed)->getEndVertex()->z());
+            vertices.push_back(pt2);
+          }
         }
       }
       else if((*b_face)->buildSTLTriangulation()) {
@@ -392,7 +397,7 @@ void GRegion::writeGEO(FILE *fp)
     fprintf(fp, "Transfinite Volume {%d}", tag());
     if(meshAttributes.corners.size()) {
       fprintf(fp, " = {");
-      for(unsigned int i = 0; i < meshAttributes.corners.size(); i++) {
+      for(std::size_t i = 0; i < meshAttributes.corners.size(); i++) {
         if(i) fprintf(fp, ",");
         fprintf(fp, "%d", meshAttributes.corners[i]->tag());
       }
@@ -447,7 +452,7 @@ double GRegion::computeSolidProperties(std::vector<double> cg,
   double surface = 0;
   cg[0] = cg[1] = cg[2] = 0.0;
   for(; it != l_faces.end(); ++it, ++itdir) {
-    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i) {
+    for(std::size_t i = 0; i < (*it)->triangles.size(); ++i) {
       MTriangle *e = (*it)->triangles[i];
       int npt;
       IntPt *pts;
@@ -489,7 +494,7 @@ double GRegion::computeSolidProperties(std::vector<double> cg,
     0.0;
 
   for(; it != l_faces.end(); ++it, ++itdir) {
-    for(unsigned int i = 0; i < (*it)->getNumMeshElements(); ++i) {
+    for(std::size_t i = 0; i < (*it)->getNumMeshElements(); ++i) {
       MElement *e = (*it)->getMeshElement(i);
       int npt;
       IntPt *pts;
@@ -586,19 +591,19 @@ void GRegion::removeElement(int type, MElement *e)
   }
 }
 
-bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
+bool GRegion::reorder(const int elementType, const std::vector<std::size_t> &ordering)
 {
   if(tetrahedra.size() != 0) {
     if(tetrahedra.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != tetrahedra.size()) return false;
 
-      for(std::vector<int>::const_iterator it = ordering.begin();
+      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
-        if(*it < 0 || *it >= static_cast<int>(tetrahedra.size())) return false;
+        if(*it >= tetrahedra.size()) return false;
       }
 
       std::vector<MTetrahedron *> newTetrahedraOrder(tetrahedra.size());
-      for(unsigned int i = 0; i < ordering.size(); i++) {
+      for(std::size_t i = 0; i < ordering.size(); i++) {
         newTetrahedraOrder[i] = tetrahedra[ordering[i]];
       }
 #if __cplusplus >= 201103L
@@ -615,13 +620,13 @@ bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
     if(hexahedra.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != hexahedra.size()) return false;
 
-      for(std::vector<int>::const_iterator it = ordering.begin();
+      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
-        if(*it < 0 || *it >= static_cast<int>(hexahedra.size())) return false;
+        if(*it >= hexahedra.size()) return false;
       }
 
       std::vector<MHexahedron *> newHexahedraOrder(hexahedra.size());
-      for(unsigned int i = 0; i < ordering.size(); i++) {
+      for(std::size_t i = 0; i < ordering.size(); i++) {
         newHexahedraOrder[i] = hexahedra[ordering[i]];
       }
 #if __cplusplus >= 201103L
@@ -638,13 +643,13 @@ bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
     if(prisms.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != prisms.size()) return false;
 
-      for(std::vector<int>::const_iterator it = ordering.begin();
+      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
-        if(*it < 0 || *it >= static_cast<int>(prisms.size())) return false;
+        if(*it >= prisms.size()) return false;
       }
 
       std::vector<MPrism *> newPrismsOrder(prisms.size());
-      for(unsigned int i = 0; i < ordering.size(); i++) {
+      for(std::size_t i = 0; i < ordering.size(); i++) {
         newPrismsOrder[i] = prisms[ordering[i]];
       }
 #if __cplusplus >= 201103L
@@ -661,13 +666,13 @@ bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
     if(pyramids.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != pyramids.size()) return false;
 
-      for(std::vector<int>::const_iterator it = ordering.begin();
+      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
-        if(*it < 0 || *it >= static_cast<int>(pyramids.size())) return false;
+        if(*it >= pyramids.size()) return false;
       }
 
       std::vector<MPyramid *> newPyramidsOrder(pyramids.size());
-      for(unsigned int i = 0; i < ordering.size(); i++) {
+      for(std::size_t i = 0; i < ordering.size(); i++) {
         newPyramidsOrder[i] = pyramids[ordering[i]];
       }
 #if __cplusplus >= 201103L
@@ -684,13 +689,13 @@ bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
     if(polyhedra.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != polyhedra.size()) return false;
 
-      for(std::vector<int>::const_iterator it = ordering.begin();
+      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
-        if(*it < 0 || *it >= static_cast<int>(polyhedra.size())) return false;
+        if(*it >= polyhedra.size()) return false;
       }
 
       std::vector<MPolyhedron *> newPolyhedraOrder(polyhedra.size());
-      for(unsigned int i = 0; i < ordering.size(); i++) {
+      for(std::size_t i = 0; i < ordering.size(); i++) {
         newPolyhedraOrder[i] = polyhedra[ordering[i]];
       }
 #if __cplusplus >= 201103L
@@ -707,13 +712,13 @@ bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
     if(trihedra.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != trihedra.size()) return false;
 
-      for(std::vector<int>::const_iterator it = ordering.begin();
+      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
           it != ordering.end(); ++it) {
-        if(*it < 0 || *it >= static_cast<int>(trihedra.size())) return false;
+        if(*it >= trihedra.size()) return false;
       }
 
       std::vector<MTrihedron *> newTrihedraOrder(trihedra.size());
-      for(unsigned int i = 0; i < ordering.size(); i++) {
+      for(std::size_t i = 0; i < ordering.size(); i++) {
         newTrihedraOrder[i] = trihedra[ordering[i]];
       }
 #if __cplusplus >= 201103L
@@ -803,7 +808,7 @@ bool GRegion::setOutwardOrientationMeshConstraint()
       return false;
     }
     int nb_intersect = 0;
-    for(unsigned int i = 0; i < gf->stl_triangles.size(); i += 3) {
+    for(std::size_t i = 0; i < gf->stl_triangles.size(); i += 3) {
       SPoint3 p1 = gf->stl_vertices_xyz[gf->stl_triangles[i]];
       SPoint3 p2 = gf->stl_vertices_xyz[gf->stl_triangles[i + 1]];
       SPoint3 p3 = gf->stl_vertices_xyz[gf->stl_triangles[i + 2]];
@@ -837,7 +842,7 @@ bool GRegion::setOutwardOrientationMeshConstraint()
                      gf_b->tag());
           return false;
         }
-        for(unsigned int i_b = 0; i_b < gf_b->stl_triangles.size(); i_b += 3) {
+        for(std::size_t i_b = 0; i_b < gf_b->stl_triangles.size(); i_b += 3) {
           SPoint3 p1 = gf_b->stl_vertices_xyz[gf_b->stl_triangles[i_b]];
           SPoint3 p2 = gf_b->stl_vertices_xyz[gf_b->stl_triangles[i_b + 1]];
           SPoint3 p3 = gf_b->stl_vertices_xyz[gf_b->stl_triangles[i_b + 2]];

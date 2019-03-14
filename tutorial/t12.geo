@@ -8,7 +8,10 @@
 
 // Compound geometrical entities can be defined to compute a new parametrization
 // of groups of elementary geometrical entities. This parametrization can then
-// be used for remeshing the compound as if it were a single CAD entity.
+// be used for remeshing the compound as if it were a single CAD entity. See
+// J.-F. Remacle, C. Geuzaine, G. Compere and E. Marchandise. High-quality
+// surface remeshing using harmonic maps. International Journal for Numerical
+// Methods in Engineering 83(4), pp. 403-425, 2010.
 
 lc = 0.1;
 
@@ -28,9 +31,9 @@ Curve Loop(13) = {9, -3, -10, -7}; Surface(5) = {13};
 Curve Loop(15) = {10, -2, -1, -8}; Surface(10) = {15};
 
 // Treat curves 2, 3 and 4 as a single curve
-Compound Curve{2, 3, 4}; 
+Compound Curve{2, 3, 4};
 // Idem with curves 6, 7 and 8
-Compound Curve{6, 7, 8}; 
+Compound Curve{6, 7, 8};
 
 // Treat surfaces 12, 14 and 16 as a single surface
 Compound Surface{1, 5, 10};

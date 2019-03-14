@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MFACE_HASH_H_
-#define _MFACE_HASH_H_
+#ifndef MFACE_HASH_H
+#define MFACE_HASH_H
 
 #include "MFace.h"
 #include "Hash.h"

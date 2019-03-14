@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _BUBBLES_H_
-#define _BUBBLES_H_
+#ifndef BUBBLES_H
+#define BUBBLES_H
 
 #include "Plugin.h"
 

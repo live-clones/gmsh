@@ -33,7 +33,7 @@
 
 static void computeAndSendVertexArrays(GmshClient *client, bool compute = true)
 {
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     PView *p = PView::list[i];
     if(compute) p->fillVertexArrays();
     PViewData *data = p->getData();
@@ -64,14 +64,14 @@ static void computeAndSendVertexArrays(GmshClient *client, bool compute = true)
 static void computeAndSendVertexArrays()
 {
   // compute...
-  for(unsigned int i = 0; i < PView::list.size(); i++)
+  for(std::size_t i = 0; i < PView::list.size(); i++)
     PView::list[i]->fillVertexArrays();
 
   // ...and send
   int nbArrays = PView::list.size() * 4;
   MPI_Send(&nbArrays, 1, MPI_INT, 0, MPI_GMSH_DATA_READY, MPI_COMM_WORLD);
 
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     PView *p = PView::list[i];
     PViewData *data = p->getData();
     PViewOptions *opt = p->getOptions();
@@ -140,7 +140,7 @@ static void gatherAndSendVertexArrays(GmshClient *client, bool swap)
   int mpi_msg = MPI_GMSH_COMPUTE_VIEW;
   MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
   // fill the arrays on the master node
-  for(unsigned int i = 0; i < PView::list.size(); i++)
+  for(std::size_t i = 0; i < PView::list.size(); i++)
     PView::list[i]->fillVertexArrays();
   // wait and send the data from every other node
   for(int i = 0; i < nbDaemon - 1; i++) {

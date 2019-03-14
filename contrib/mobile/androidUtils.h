@@ -1,5 +1,5 @@
-#ifndef _ANDROID_UTILS_ONELAB_H_
-#define _ANDROID_UTILS_ONELAB_H_
+#ifndef ONELAB_ANDROID_UTILS_H
+#define ONELAB_ANDROID_UTILS_H
 
 #include <jni.h>
 

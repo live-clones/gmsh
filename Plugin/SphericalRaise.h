@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SPHERICAL_RAISE_H_
-#define _SPHERICAL_RAISE_H_
+#ifndef SPHERICAL_RAISE_H
+#define SPHERICAL_RAISE_H
 
 #include "Plugin.h"
 

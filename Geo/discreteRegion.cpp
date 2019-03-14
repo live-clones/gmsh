@@ -45,7 +45,7 @@ void discreteRegion::setBoundFaces(const std::vector<int> &tagFaces,
     tags.insert(tagFaces.begin(), tagFaces.end());
     setBoundFaces(tags);
   }
-  for(unsigned int i = 0; i != tagFaces.size(); i++) {
+  for(std::size_t i = 0; i != tagFaces.size(); i++) {
     GFace *face = model()->getFaceByTag(tagFaces[i]);
     if(face) {
       l_faces.push_back(face);
@@ -62,7 +62,7 @@ void discreteRegion::findFaces(
   std::map<MFace, std::vector<int>, Less_Face> &map_faces)
 {
   std::set<MFace, Less_Face> bound_faces;
-  for(unsigned int elem = 0; elem < getNumMeshElements(); elem++) {
+  for(std::size_t elem = 0; elem < getNumMeshElements(); elem++) {
     MElement *e = getMeshElement(elem);
     for(int iFace = 0; iFace < e->getNumFaces(); iFace++) {
       MFace tmp_face = e->getFace(iFace);

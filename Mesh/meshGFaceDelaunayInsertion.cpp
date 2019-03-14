@@ -36,11 +36,11 @@ static void getDegeneratedVertices(GFace *gf, std::set<GEntity*> & degenerated)
 {
   degenerated.clear();
   const std::vector<GEdge *> &ed = gf->edges();
-  for (size_t i=0;i<ed.size();i++){
+  for (size_t i = 0; i < ed.size() ;i++){
     GEdge *e = ed[i];
-    if (e->getBeginVertex() == e->getEndVertex()){
+    if (e->getBeginVertex() && e->getBeginVertex() == e->getEndVertex()){
       if (e->geomType() == GEntity::Unknown){
-	degenerated.insert (e->getBeginVertex());
+	degenerated.insert(e->getBeginVertex());
       }
     }
   }
@@ -1475,7 +1475,7 @@ void buildBackgroundMesh(GFace *gf, bool crossFieldClosestPoint,
 
   if(!backgroundMesh::current()) {
     std::vector<MTriangle *> TR;
-    for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+    for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       TR.push_back(new MTriangle(gf->triangles[i]->getVertex(0),
                                  gf->triangles[i]->getVertex(1),
                                  gf->triangles[i]->getVertex(2)));
@@ -1667,7 +1667,7 @@ void bowyerWatsonParallelograms(
   SortHilbert(packed);
 
   MTri3 *oneNewTriangle = 0;
-  for(unsigned int i = 0; i < packed.size();) {
+  for(std::size_t i = 0; i < packed.size();) {
     MTri3 *worst = *AllTris.begin();
     if(worst->isDeleted()) {
       delete worst->tri();
@@ -1735,7 +1735,7 @@ void bowyerWatsonParallelogramsConstrained(
   std::sort(packed.begin(), packed.end(), MVertexLessThanLexicographic());
 
   MTri3 *oneNewTriangle = 0;
-  for(unsigned int i = 0; i < packed.size();) {
+  for(std::size_t i = 0; i < packed.size();) {
     MTri3 *worst = *AllTris.begin();
     if(worst->isDeleted()) {
       delete worst->tri();
@@ -1770,7 +1770,7 @@ void bowyerWatsonParallelogramsConstrained(
   }
 
   transferDataStructure(gf, AllTris, DATA);
-  for(unsigned int i = 0; i < gf->getNumMeshVertices(); i++) {
+  for(std::size_t i = 0; i < gf->getNumMeshVertices(); i++) {
     MVertex *vtest = gf->getMeshVertex(i);
     double para0, para1;
     vtest->getParameter(0, para0);
@@ -1804,7 +1804,7 @@ static void initialSquare(std::vector<MVertex *> &v, MVertex *box[4],
 static MTri3 *getTriToBreak(MVertex *v, std::vector<MTri3 *> &t, int &ITER)
 {
   // last inserted is used as starting point we know it is not deleted
-  unsigned int k = t.size() - 1;
+  std::size_t k = t.size() - 1;
   while(t[k]->isDeleted()) {
     k--;
   }
@@ -1865,7 +1865,7 @@ void delaunayMeshIn2D(std::vector<MVertex *> &v,
     AVG_CAVSIZE += (double)cavity.size();
 
     std::vector<MTri3 *> extended_cavity;
-    for(unsigned int count = 0; count < shell.size(); count++) {
+    for(std::size_t count = 0; count < shell.size(); count++) {
       const edgeXface &fxt = shell[count];
       MTriangle *tr;
       MTri3 *t3;
@@ -1888,9 +1888,9 @@ void delaunayMeshIn2D(std::vector<MVertex *> &v,
       if(otherSide) extended_cavity.push_back(otherSide);
     }
 
-    for(unsigned int k = 0; k < std::min(cavity.size(), shell.size()); k++) {
+    for(std::size_t k = 0; k < std::min(cavity.size(), shell.size()); k++) {
       cavity[k]->setDeleted(false);
-      for(unsigned int l = 0; l < 3; l++) {
+      for(std::size_t l = 0; l < 3; l++) {
         cavity[k]->setNeigh(l, 0);
       }
     }
@@ -1963,8 +1963,8 @@ static bool recoverEdgeBySwaps(std::vector<MTri3 *> &t, MVertex *mv1,
   SPoint3 pv1(mv1->x(), mv1->y(), 0);
   SPoint3 pv2(mv2->x(), mv2->y(), 0);
   double xcc[2];
-  for(unsigned int i = 0; i < t.size(); i++) {
-    for(unsigned int j = 0; j < 3; j++) {
+  for(std::size_t i = 0; i < t.size(); i++) {
+    for(std::size_t j = 0; j < 3; j++) {
       MVertex *v1 = t[i]->tri()->getVertex((j + 2) % 3);
       MVertex *v2 = t[i]->tri()->getVertex(j);
       MVertex *v3 = t[i]->tri()->getVertex((j + 1) % 3);
@@ -2007,7 +2007,7 @@ void recoverEdges(std::vector<MTri3 *> &t, std::vector<MEdge> &edges)
   }
 
   std::vector<MEdge> edgesToRecover;
-  for(unsigned int i = 0; i < edges.size(); i++) {
+  for(std::size_t i = 0; i < edges.size(); i++) {
     if(setOfMeshEdges.find(edges[i]) == setOfMeshEdges.end())
       edgesToRecover.push_back(edges[i]);
   }
@@ -2018,7 +2018,7 @@ void recoverEdges(std::vector<MTri3 *> &t, std::vector<MEdge> &edges)
   // char name[256];
   // sprintf(name,"iter%d.pos",iter++);
   // _printTris (name, t.begin(),t.end(),0);
-  for(unsigned int i = 0; i < edgesToRecover.size(); i++) {
+  for(std::size_t i = 0; i < edgesToRecover.size(); i++) {
     MVertex *mstart = edgesToRecover[i].getVertex(0);
     MVertex *mend = edgesToRecover[i].getVertex(1);
     Msg::Info("recovering edge %d %d", mstart->getNum(), mend->getNum());

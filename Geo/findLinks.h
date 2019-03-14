@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _FIND_LINKS_H_
-#define _FIND_LINKS_H_
+#ifndef FIND_LINKS_H
+#define FIND_LINKS_H
 
 #include "ListUtils.h"
 

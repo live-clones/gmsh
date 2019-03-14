@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _BNDRYLRDATA_
-#define _BNDRYLRDATA_
+#ifndef BNDRYLRDATA
+#define BNDRYLRDATA
 
 #include "SVector3.h"
 #include "STensor3.h"

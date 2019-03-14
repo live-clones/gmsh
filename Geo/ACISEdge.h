@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _ACIS_EDGE_H_
-#define _ACIS_EDGE_H_
+#ifndef ACIS_EDGE_H
+#define ACIS_EDGE_H
 
 #include "GmshConfig.h"
 #include "GEdge.h"

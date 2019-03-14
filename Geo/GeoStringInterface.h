@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GEO_STRING_INTERFACE_H_
-#define _GEO_STRING_INTERFACE_H_
+#ifndef GEO_STRING_INTERFACE_H
+#define GEO_STRING_INTERFACE_H
 
 #include <string>
 #include <vector>

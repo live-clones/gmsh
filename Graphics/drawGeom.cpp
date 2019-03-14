@@ -34,7 +34,7 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
   }
   else {
     strcpy(str, "");
-    for(unsigned int i = 0; i < e->physicals.size(); i++) {
+    for(std::size_t i = 0; i < e->physicals.size(); i++) {
       char tmp[32];
       if(i) strcat(str, ", ");
       sprintf(tmp, "%d", e->physicals[i]);
@@ -81,7 +81,9 @@ public:
       glPointSize((float)ps);
       gl2psPointSize((float)(CTX::instance()->geom.pointSize *
                              CTX::instance()->print.epsPointSizeFactor));
-      glColor4ubv((GLubyte *)&CTX::instance()->color.geom.point);
+      unsigned int col = v->useColor() ? v->getColor() :
+        CTX::instance()->color.geom.point;
+      glColor4ubv((GLubyte *)&col);
     }
 
     if(CTX::instance()->geom.highlightOrphans) {
@@ -156,7 +158,9 @@ public:
       glLineWidth((float)CTX::instance()->geom.curveWidth);
       gl2psLineWidth((float)(CTX::instance()->geom.curveWidth *
                              CTX::instance()->print.epsLineWidthFactor));
-      glColor4ubv((GLubyte *)&CTX::instance()->color.geom.curve);
+      unsigned int col = e->useColor() ? e->getColor() :
+        CTX::instance()->color.geom.curve;
+      glColor4ubv((GLubyte *)&col);
     }
 
     if(CTX::instance()->geom.highlightOrphans) {
@@ -311,7 +315,9 @@ public:
       glLineWidth((float)(CTX::instance()->geom.curveWidth / 2.));
       gl2psLineWidth((float)(CTX::instance()->geom.curveWidth / 2. *
                              CTX::instance()->print.epsLineWidthFactor));
-      glColor4ubv((GLubyte *)&CTX::instance()->color.geom.surface);
+      unsigned int col = f->useColor() ? f->getColor() :
+        CTX::instance()->color.geom.surface;
+      glColor4ubv((GLubyte *)&col);
     }
 
     if(CTX::instance()->geom.lightTwoSide)
@@ -340,9 +346,9 @@ public:
         glLineStipple(1, 0x0F0F);
         gl2psEnable(GL2PS_LINE_STIPPLE);
         for(int dim = 0; dim < 2; dim++) {
-          for(unsigned int i = 0; i < f->cross[dim].size(); i++) {
+          for(std::size_t i = 0; i < f->cross[dim].size(); i++) {
             glBegin(GL_LINE_STRIP);
-            for(unsigned int j = 0; j < f->cross[dim][i].size(); j++) {
+            for(std::size_t j = 0; j < f->cross[dim][i].size(); j++) {
               double x = f->cross[dim][i][j].x();
               double y = f->cross[dim][i][j].y();
               double z = f->cross[dim][i][j].z();
@@ -416,10 +422,14 @@ public:
     else
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
-    if(r->getSelection())
+    if(r->getSelection()){
       glColor4ubv((GLubyte *)&CTX::instance()->color.geom.selection);
-    else
-      glColor4ubv((GLubyte *)&CTX::instance()->color.geom.volume);
+    }
+    else{
+      unsigned int col = r->useColor() ? r->getColor() :
+        CTX::instance()->color.geom.volume;
+      glColor4ubv((GLubyte *)&col);
+    }
 
     const double size = 8.;
     double x = 0., y = 0., z = 0.;
@@ -464,7 +474,7 @@ void drawContext::drawGeom()
     else
       glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
-  for(unsigned int i = 0; i < GModel::list.size(); i++) {
+  for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
     if(m->getVisibility() && isVisible(m)) {
       std::for_each(m->firstVertex(), m->lastVertex(), drawGVertex(this));

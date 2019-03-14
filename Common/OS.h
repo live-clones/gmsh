@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _OS_H_
-#define _OS_H_
+#ifndef OS_H
+#define OS_H
 
 #include <string>
 #include <stdio.h>

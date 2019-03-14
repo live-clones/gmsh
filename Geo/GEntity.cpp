@@ -65,12 +65,23 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
     }
   }
 
+  {
+    std::string name = model()->getElementaryName(dim(), tag());
+    if(name.size()) {
+      if(multiline)
+        sstream << "\n";
+      else
+        sstream << ", ";
+      sstream << name;
+    }
+  }
+
   if(physicals.size()) {
-    if(multiline)
-      sstream << "\n";
-    else
-      sstream << " ";
-    for(unsigned int i = 0; i < physicals.size(); i++) {
+    for(std::size_t i = 0; i < physicals.size(); i++) {
+      if(multiline)
+        sstream << "\n";
+      else
+        sstream << ", ";
       sstream << "Physical ";
       switch(dim()) {
       case 0: sstream << "Point"; break;
@@ -89,6 +100,19 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
       }
     }
   }
+
+  if(useColor()){
+    int r = CTX::instance()->unpackRed(_color);
+    int g = CTX::instance()->unpackGreen(_color);
+    int b = CTX::instance()->unpackBlue(_color);
+    if(multiline)
+      sstream << "\n";
+    else
+      sstream << ", ";
+    sstream << "Color (" << r << ", " << g << ", " << b << ")";
+  }
+
+
 
   return sstream.str();
 }
@@ -118,7 +142,8 @@ void GEntity::setMeshMaster(GEntity *gMaster)
   _meshMaster = gMaster;
 }
 
-void GEntity::setMeshMaster(GEntity *gMaster, const std::vector<double> &tfo)
+void GEntity::setMeshMaster(GEntity *gMaster, const std::vector<double> &tfo,
+                            bool updateCorrespVert)
 {
   if(gMaster->dim() != dim()) {
     Msg::Error("Model entity %d of dimension %d cannot"
@@ -127,68 +152,21 @@ void GEntity::setMeshMaster(GEntity *gMaster, const std::vector<double> &tfo)
     return;
   }
 
+  if(tfo.empty()){
+    GEntity::setMeshMaster(gMaster);
+    return;
+  }
+
   if(tfo.size() != 16) {
     Msg::Error("Periodicity transformation from entity %d to %d (dim %d) has "
-               "%d components"
-               ", while 16 are required",
+               "%d components, while 16 are required",
                gMaster->tag(), tag(), gMaster->dim(), tfo.size());
     return;
   }
 
   affineTransform = tfo;
   _meshMaster = gMaster;
-  updateCorrespondingVertices();
-}
-
-void GEntity::updateVertices(const std::map<MVertex *, MVertex *> &old2new)
-{
-  // update the list of the vertices
-  std::vector<MVertex *> newMeshVertices;
-  std::vector<MVertex *>::iterator mIter = mesh_vertices.begin();
-  for(; mIter != mesh_vertices.end(); ++mIter) {
-    MVertex *vtx = *mIter;
-    std::map<MVertex *, MVertex *>::const_iterator cIter = old2new.find(vtx);
-    if(cIter != old2new.end()) vtx = cIter->second;
-    newMeshVertices.push_back(vtx);
-  }
-  mesh_vertices.clear();
-  mesh_vertices = newMeshVertices;
-
-  // update the periodic vertex lists
-  std::map<MVertex *, MVertex *> newCorrespondingVertices;
-  std::map<MVertex *, MVertex *>::iterator cIter =
-    correspondingVertices.begin();
-  for(; cIter != correspondingVertices.end(); ++cIter) {
-    MVertex *tgt = cIter->first;
-    MVertex *src = cIter->second;
-    std::map<MVertex *, MVertex *>::const_iterator tIter = old2new.find(tgt);
-    if(tIter != old2new.end()) tgt = tIter->second;
-    std::map<MVertex *, MVertex *>::const_iterator sIter = old2new.find(src);
-    if(sIter != old2new.end()) src = sIter->second;
-    newCorrespondingVertices.insert(std::make_pair(tgt, src));
-  }
-
-  correspondingVertices.clear();
-  correspondingVertices = newCorrespondingVertices;
-
-  newCorrespondingVertices.clear();
-
-  std::map<MVertex *, MVertex *>::iterator hIter =
-    correspondingHOPoints.begin();
-  for(; hIter != correspondingHOPoints.end(); ++hIter) {
-    MVertex *tgt = hIter->first;
-    MVertex *src = hIter->second;
-    std::map<MVertex *, MVertex *>::const_iterator tIter = old2new.find(tgt);
-    if(tIter != old2new.end()) tgt = tIter->second;
-    std::map<MVertex *, MVertex *>::const_iterator sIter = old2new.find(src);
-    if(sIter != old2new.end()) src = sIter->second;
-    newCorrespondingVertices.insert(std::make_pair(tgt, src));
-  }
-
-  correspondingHOPoints.clear();
-  correspondingHOPoints = newCorrespondingVertices;
-
-  copyMasterCoordinates();
+  if(updateCorrespVert) updateCorrespondingVertices();
 }
 
 void GEntity::addVerticesInSet(std::set<MVertex *> &vtcs, bool closure) const

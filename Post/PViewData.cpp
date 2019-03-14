@@ -20,7 +20,7 @@ PViewData::~PViewData()
   if(_adaptive) delete _adaptive;
   for(interpolationMatrices::iterator it = _interpolation.begin();
       it != _interpolation.end(); it++)
-    for(unsigned int i = 0; i < it->second.size(); i++) delete it->second[i];
+    for(std::size_t i = 0; i < it->second.size(); i++) delete it->second[i];
   if(_octree) delete _octree;
 }
 
@@ -200,7 +200,7 @@ void PViewData::removeInterpolationScheme(const std::string &name)
   if(it != _interpolationSchemes.end()) {
     for(interpolationMatrices::iterator it2 = it->second.begin();
         it2 != it->second.end(); it2++)
-      for(unsigned int i = 0; i < it2->second.size(); i++)
+      for(std::size_t i = 0; i < it2->second.size(); i++)
         delete it2->second[i];
     _interpolationSchemes.erase(it);
   }
@@ -213,7 +213,7 @@ void PViewData::removeAllInterpolationSchemes()
   for(; it != _interpolationSchemes.end(); it++)
     for(interpolationMatrices::iterator it2 = it->second.begin();
         it2 != it->second.end(); it2++)
-      for(unsigned int i = 0; i < it2->second.size(); i++)
+      for(std::size_t i = 0; i < it2->second.size(); i++)
         delete it2->second[i];
   _interpolationSchemes.clear();
   std::map<std::string, interpolationMatrices>().swap(_interpolationSchemes);

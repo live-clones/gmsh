@@ -373,7 +373,7 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
   clock_t T2 = clock();
 
   
-  HXT_INFO ("Curvature has been computed for %u vertices in %8.4f seconds",nVertices,(double)(T2-T1)/CLOCKS_PER_SEC);
+  //  HXT_INFO ("Curvature has been computed for %u vertices in %8.4f seconds",nVertices,(double)(T2-T1)/CLOCKS_PER_SEC);
 
   return HXT_STATUS_OK;
   

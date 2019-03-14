@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _LAMBDA2_H_
-#define _LAMBDA2_H_
+#ifndef LAMBDA2_H
+#define LAMBDA2_H
 
 #include "Plugin.h"
 

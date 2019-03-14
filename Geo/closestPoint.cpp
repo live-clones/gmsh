@@ -13,7 +13,7 @@
 static void oversample(std::vector<SPoint3> &s, double tol)
 {
   std::vector<SPoint3> t;
-  for(unsigned int i = 1; i < s.size(); i++) {
+  for(std::size_t i = 1; i < s.size(); i++) {
     SPoint3 p0 = s[i - 1];
     SPoint3 p1 = s[i];
     double d = p0.distance(p1);
@@ -47,7 +47,7 @@ closestPointFinder::closestPointFinder(GEntity *ge, double e) : _tolerance(e)
   index = new ANNidx[1];
   dist = new ANNdist[1];
   zeronodes = annAllocPts(pts.size(), 3);
-  for(unsigned int k = 0; k < pts.size(); k++) {
+  for(std::size_t k = 0; k < pts.size(); k++) {
     zeronodes[k][0] = pts[k].x();
     zeronodes[k][1] = pts[k].y();
     zeronodes[k][2] = pts[k].z();

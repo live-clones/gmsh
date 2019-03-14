@@ -86,7 +86,7 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
 
   if(points.size() < 4) {
     Msg::Error("Need at least 4 points to tetrahedralize");
-    for(unsigned int i = 0; i < points.size(); i++) delete points[i];
+    for(std::size_t i = 0; i < points.size(); i++) delete points[i];
     return v1;
   }
 
@@ -96,7 +96,7 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
   // create output
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
-  for(unsigned int i = 0; i < tets.size(); i++) {
+  for(std::size_t i = 0; i < tets.size(); i++) {
     bool ok = true;
     PointData *p[4];
     for(int j = 0; j < 4; j++){
@@ -146,8 +146,8 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
           vec->push_back(p[nod]->val[numComp * step + comp]);
   }
 
-  for(unsigned int i = 0; i < tets.size(); i++) delete tets[i];
-  for(unsigned int i = 0; i < points.size(); i++) delete points[i];
+  for(std::size_t i = 0; i < tets.size(); i++) delete tets[i];
+  for(std::size_t i = 0; i < points.size(); i++) delete points[i];
 
   for(int i = 0; i < data1->getNumTimeSteps(); i++)
     data2->Time.push_back(data1->getTime(i));

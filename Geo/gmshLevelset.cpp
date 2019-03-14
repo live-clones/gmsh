@@ -18,6 +18,8 @@
 #include "Numeric.h"
 #include "cartesian.h"
 #include "GmshConfig.h"
+#include "mathEvaluator.h"
+
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
 #endif
@@ -154,7 +156,7 @@ void computeLevelset(GModel *gm, cartesianBox<double> &box)
   std::vector<SPoint3> dummy;
   for(GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++) {
     if((*fit)->geomType() == GEntity::DiscreteSurface) {
-      for(unsigned int k = 0; k < (*fit)->getNumMeshElements(); k++) {
+      for(std::size_t k = 0; k < (*fit)->getNumMeshElements(); k++) {
         std::vector<double> iDistances;
         std::vector<SPoint3> iClosePts;
         std::vector<double> iDistancesE;
@@ -172,7 +174,7 @@ void computeLevelset(GModel *gm, cartesianBox<double> &box)
         if(dist.empty())
           dist = localdist;
         else {
-          for(unsigned int j = 0; j < localdist.size(); j++) {
+          for(std::size_t j = 0; j < localdist.size(); j++) {
             dist[j] =
               (fabs(dist[j]) < fabs(localdist[j])) ? dist[j] : localdist[j];
           }
@@ -185,7 +187,7 @@ void computeLevelset(GModel *gm, cartesianBox<double> &box)
     }
   }
 
-  for(unsigned int j = 0; j < dist.size(); j++)
+  for(std::size_t j = 0; j < dist.size(); j++)
     box.setNodalValue(indices[j], dist[j]);
 
   if(box.getChildBox()) computeLevelset(gm, *box.getChildBox());
@@ -587,13 +589,13 @@ double gLevelsetPoints::operator()(double x, double y, double z) const
 void gLevelsetPoints::computeLS(std::vector<MVertex *> &vert)
 {
   fullMatrix<double> xyz_eval(vert.size(), 3), surf_eval(vert.size(), 1);
-  for(unsigned int i = 0; i < vert.size(); i++) {
+  for(std::size_t i = 0; i < vert.size(); i++) {
     xyz_eval(i, 0) = vert[i]->x();
     xyz_eval(i, 1) = vert[i]->y();
     xyz_eval(i, 2) = vert[i]->z();
   }
   evalRbfDer(0, 1, points, xyz_eval, surf, surf_eval);
-  for(unsigned int i = 0; i < vert.size(); i++) {
+  for(std::size_t i = 0; i < vert.size(); i++) {
     mapP[SPoint3(vert[i]->x(), vert[i]->y(), vert[i]->z())] = surf_eval(i, 0);
   }
 }
@@ -809,17 +811,17 @@ double gLevelsetShamrock::operator()(double x, double y, double z) const
   return sign * distance;
 }
 
-gLevelsetPopcorn::gLevelsetPopcorn(double _xc, double _yc, double _zc,
-                                   double _r0, double _A, double _sigma,
+gLevelsetPopcorn::gLevelsetPopcorn(double myxc, double myyc, double myzc,
+                                   double myr0, double myA, double mysigma,
                                    int tag)
   : gLevelsetPrimitive(tag)
 {
-  A = _A;
-  sigma = _sigma;
-  r0 = _r0;
-  xc = _xc;
-  yc = _yc;
-  zc = _zc;
+  A = myA;
+  sigma = mysigma;
+  r0 = myr0;
+  xc = myxc;
+  yc = myyc;
+  zc = myzc;
 }
 
 double gLevelsetPopcorn::operator()(double x, double y, double z) const
@@ -867,6 +869,11 @@ gLevelsetMathEval::gLevelsetMathEval(const std::string &f, int tag)
   _expr = new mathEvaluator(expressions, variables);
 }
 
+gLevelsetMathEval::~gLevelsetMathEval()
+{
+  if(_expr) delete _expr;
+}
+
 double gLevelsetMathEval::operator()(double x, double y, double z) const
 {
   std::vector<double> values(3), res(1);
@@ -887,6 +894,11 @@ gLevelsetMathEvalAll::gLevelsetMathEvalAll(std::vector<std::string> expressions,
   variables[1] = "y";
   variables[2] = "z";
   _expr = new mathEvaluator(expressions, variables);
+}
+
+gLevelsetMathEvalAll::~gLevelsetMathEvalAll()
+{
+  if(_expr) delete _expr;
 }
 
 double gLevelsetMathEvalAll::operator()(double x, double y, double z) const
@@ -956,8 +968,8 @@ gLevelsetDistMesh::gLevelsetDistMesh(GModel *gm, const std::string &physical,
 
   // setup
   std::set<MVertex *> _all;
-  for(unsigned int i = 0; i < _entities.size(); i++) {
-    for(unsigned int k = 0; k < _entities[i]->getNumMeshElements(); k++) {
+  for(std::size_t i = 0; i < _entities.size(); i++) {
+    for(std::size_t k = 0; k < _entities[i]->getNumMeshElements(); k++) {
       MElement *e = _entities[i]->getMeshElement(k);
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
         MVertex *v = _entities[i]->getMeshElement(k)->getVertex(j);
@@ -1060,7 +1072,7 @@ double gLevelsetDistMesh::operator()(double x, double y, double z) const
                  closestElements[1]->getFace(0).normal();
     }
     else { // closestPoint on vertex
-      for(unsigned int i = 0; i < closestElements.size(); i++) {
+      for(std::size_t i = 0; i < closestElements.size(); i++) {
         double alpha = 0.;
         SPoint3 p1;
         bool found = false;
@@ -1222,9 +1234,9 @@ gLevelsetYarn::gLevelsetYarn(int dim, int phys, double minA, double majA,
 double gLevelsetYarn::operator()(double x, double y, double z) const
 {
   double dist = 0.0;
-  for(unsigned int i = 0; i < entities.size(); i++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *g = entities[i];
-    for(unsigned int j = 0; j < g->getNumMeshElements(); j++) {
+    for(std::size_t j = 0; j < g->getNumMeshElements(); j++) {
       MElement *e = g->getMeshElement(j);
       MVertex *v1 = e->getVertex(0);
       MVertex *v2 = e->getVertex(1);

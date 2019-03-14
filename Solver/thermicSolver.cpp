@@ -8,7 +8,6 @@
 #include "thermicSolver.h"
 #include "linearSystemCSR.h"
 #include "linearSystemPETSc.h"
-#include "linearSystemGMM.h"
 #include "linearSystemFull.h"
 #include "Numeric.h"
 #include "GModel.h"
@@ -19,6 +18,7 @@
 #include "solverField.h"
 #include "MPoint.h"
 #include "gmshLevelset.h"
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
@@ -42,8 +42,9 @@ void thermicSolver::solve()
 #if defined(HAVE_PETSC)
   linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM)
-  linearSystemGmm<double> *lsys = new linearSystemGmm<double>;
-  lsys->setNoisy(2);
+  linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
+  lsys->setGmres(1);
+  lsys->setNoisy(1);
 #else
   linearSystemFull<double> *lsys = new linearSystemFull<double>;
 #endif
@@ -69,7 +70,7 @@ void thermicSolver::setThermicDomain(int phys, double k)
 
 void thermicSolver::changeLMTau(int tag, double tau)
 {
-  for(unsigned int i = 0; i < LagrangeMultiplierFields.size(); i++) {
+  for(std::size_t i = 0; i < LagrangeMultiplierFields.size(); i++) {
     if(LagrangeMultiplierFields[i]._tag == tag) {
       LagrangeMultiplierFields[i]._tau = tau;
     }
@@ -117,25 +118,25 @@ void thermicSolver::assemble(linearSystem<double> *lsys)
   // numbered afterwards
 
   // Dirichlet conditions
-  for(unsigned int i = 0; i < allDirichlet.size(); i++) {
+  for(std::size_t i = 0; i < allDirichlet.size(); i++) {
     FilterDofTrivial filter;
     FixNodalDofs(*LagSpace, allDirichlet[i].g->begin(),
                  allDirichlet[i].g->end(), *pAssembler, *allDirichlet[i]._f,
                  filter);
   }
   // LagrangeMultipliers
-  for(unsigned int i = 0; i < LagrangeMultiplierFields.size(); ++i) {
+  for(std::size_t i = 0; i < LagrangeMultiplierFields.size(); ++i) {
     NumberDofs(*LagrangeMultiplierSpace, LagrangeMultiplierFields[i].g->begin(),
                LagrangeMultiplierFields[i].g->end(), *pAssembler);
   }
   // Thermic Fields
-  for(unsigned int i = 0; i < thermicFields.size(); ++i) {
+  for(std::size_t i = 0; i < thermicFields.size(); ++i) {
     NumberDofs(*LagSpace, thermicFields[i].g->begin(),
                thermicFields[i].g->end(), *pAssembler);
   }
   // Neumann conditions
   GaussQuadrature Integ_Boundary(GaussQuadrature::Val);
-  for(unsigned int i = 0; i < allNeumann.size(); i++) {
+  for(std::size_t i = 0; i < allNeumann.size(); i++) {
     std::cout << "Neumann BC" << std::endl;
     LoadTerm<double> Lterm(*LagSpace, allNeumann[i]._f);
     Assemble(Lterm, *LagSpace, allNeumann[i].g->begin(), allNeumann[i].g->end(),
@@ -144,7 +145,7 @@ void thermicSolver::assemble(linearSystem<double> *lsys)
   // Assemble cross term, laplace term and rhs term for LM
   GaussQuadrature Integ_LagrangeMult(GaussQuadrature::ValVal);
   GaussQuadrature Integ_Laplace(GaussQuadrature::GradGrad);
-  for(unsigned int i = 0; i < LagrangeMultiplierFields.size(); i++) {
+  for(std::size_t i = 0; i < LagrangeMultiplierFields.size(); i++) {
     printf("Lagrange Mult Lag\n");
     LagrangeMultiplierTerm<double> LagTerm(*LagSpace, *LagrangeMultiplierSpace,
                                            1.);
@@ -167,7 +168,7 @@ void thermicSolver::assemble(linearSystem<double> *lsys)
   }
   // Assemble thermic term
   GaussQuadrature Integ_Bulk(GaussQuadrature::ValVal);
-  for(unsigned int i = 0; i < thermicFields.size(); i++) {
+  for(std::size_t i = 0; i < thermicFields.size(); i++) {
     printf("Thermic Term\n");
     LaplaceTerm<double, double> Tterm(*LagSpace, thermicFields[i]._k);
     Assemble(Tterm, *LagSpace, thermicFields[i].g->begin(),
@@ -191,7 +192,7 @@ double thermicSolver::computeL2Norm(simpleFunction<double> *sol)
 {
   double val = 0.0;
   SolverField<double> solField(pAssembler, LagSpace);
-  for(unsigned int i = 0; i < thermicFields.size(); ++i) {
+  for(std::size_t i = 0; i < thermicFields.size(); ++i) {
     for(groupOfElements::elementContainer::const_iterator it =
           thermicFields[i].g->begin();
         it != thermicFields[i].g->end(); ++it) {
@@ -229,7 +230,7 @@ double thermicSolver::computeLagNorm(int tag, simpleFunction<double> *sol)
 {
   double val = 0.0, val2 = 0.0;
   SolverField<double> solField(pAssembler, LagrangeMultiplierSpace);
-  for(unsigned int i = 0; i < LagrangeMultiplierFields.size(); ++i) {
+  for(std::size_t i = 0; i < LagrangeMultiplierFields.size(); ++i) {
     if(tag != LagrangeMultiplierFields[i]._tag) continue;
     for(groupOfElements::elementContainer::const_iterator it =
           LagrangeMultiplierFields[i].g->begin();
@@ -273,7 +274,7 @@ PView *thermicSolver::buildTemperatureView(const std::string postFileName)
   std::cout << "build Temperature View" << std::endl;
   std::set<MVertex *> v;
   std::map<MVertex *, MElement *> vCut;
-  for(unsigned int i = 0; i < thermicFields.size(); ++i) {
+  for(std::size_t i = 0; i < thermicFields.size(); ++i) {
     for(groupOfElements::elementContainer::const_iterator it =
           thermicFields[i].g->begin();
         it != thermicFields[i].g->end(); ++it) {
@@ -317,12 +318,12 @@ PView *thermicSolver::buildTemperatureView(const std::string postFileName)
 }
 
 PView *
-thermicSolver::buildLagrangeMultiplierView(const std::string postFileName)
+thermicSolver::buildLagrangeMultiplierView(const std::string &postFileName)
 {
   std::cout << "build Lagrange Multiplier View" << std::endl;
   if(!LagrangeMultiplierSpace) return new PView();
   std::set<MVertex *> v;
-  for(unsigned int i = 0; i < LagrangeMultiplierFields.size(); ++i) {
+  for(std::size_t i = 0; i < LagrangeMultiplierFields.size(); ++i) {
     for(groupOfElements::elementContainer::const_iterator it =
           LagrangeMultiplierFields[i].g->begin();
         it != LagrangeMultiplierFields[i].g->end(); ++it) {
@@ -345,14 +346,14 @@ thermicSolver::buildLagrangeMultiplierView(const std::string postFileName)
   return pv;
 }
 
-PView *thermicSolver::buildErrorEstimateView(const std::string errorFileName,
+PView *thermicSolver::buildErrorEstimateView(const std::string &errorFileName,
                                              simpleFunction<double> *sol)
 {
   std::cout << "build Error View" << std::endl;
   std::map<int, std::vector<double> > data;
 
   SolverField<double> solField(pAssembler, LagSpace);
-  for(unsigned int i = 0; i < thermicFields.size(); ++i) {
+  for(std::size_t i = 0; i < thermicFields.size(); ++i) {
     for(groupOfElements::elementContainer::const_iterator it =
           thermicFields[i].g->begin();
         it != thermicFields[i].g->end(); ++it) {
@@ -387,20 +388,20 @@ PView *thermicSolver::buildErrorEstimateView(const std::string errorFileName,
 }
 
 #else
-PView *thermicSolver::buildTemperatureView(const std::string postFileName)
+PView *thermicSolver::buildTemperatureView(const std::string &postFileName)
 {
   Msg::Error("Post-pro module not available");
   return 0;
 }
 
 PView *
-thermicSolver::buildLagrangeMultiplierView(const std::string postFileName)
+thermicSolver::buildLagrangeMultiplierView(const std::string &postFileName)
 {
   Msg::Error("Post-pro module not available");
   return 0;
 }
 
-PView *thermicSolver::buildErrorEstimateView(const std::string errorFileName,
+PView *thermicSolver::buildErrorEstimateView(const std::string &errorFileName,
                                              simpleFunction<double> *sol)
 {
   Msg::Error("Post-pro module not available");

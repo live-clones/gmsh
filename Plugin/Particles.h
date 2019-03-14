@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _PARTICLES_H_
-#define _PARTICLES_H_
+#ifndef PARTICLES_H
+#define PARTICLES_H
 
 #include "Plugin.h"
 

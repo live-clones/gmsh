@@ -602,7 +602,7 @@ Element :
 #if defined(HAVE_POST)
       if(ViewValueList){
 	for(int i = 0; i < 3; i++)
-	  for(unsigned int j = 0; j < ViewCoord.size() / 3; j++)
+	  for(std::size_t j = 0; j < ViewCoord.size() / 3; j++)
 	    ViewValueList->push_back(ViewCoord[3 * j + i]);
       }
 #endif
@@ -1767,7 +1767,7 @@ Shape :
         int degree = (int)$10;
         std::vector<double> weights, knots;
         std::vector<int> mults;
-        for(unsigned int i = 0; i < seqknots.size(); i++){
+        for(std::size_t i = 0; i < seqknots.size(); i++){
           if(!i || (i && fabs(seqknots[i] - seqknots[i - 1]) > 1e-12)){
             knots.push_back(seqknots[i]);
             mults.push_back(1);
@@ -1851,7 +1851,7 @@ Shape :
           std::vector<int> points, surfaces, continuity;
           if(constraints.size() >= 3 && constraints[0] < 0){
             // {-1, type, ent, type, ent, ...}
-            for(unsigned int i = 2; i < constraints.size(); i+=2){
+            for(std::size_t i = 2; i < constraints.size(); i+=2){
               int type = constraints[i - 1];
               if(type == 0){
                 points.push_back(constraints[i]);
@@ -2143,7 +2143,7 @@ Shape :
           int in = (int)param[0];
           double offset = param[1];
           std::vector<int> exclude;
-          for(unsigned int i = 2; i < param.size(); i++)
+          for(std::size_t i = 2; i < param.size(); i++)
             exclude.push_back(param[i]);
           std::vector<std::pair<int, int> > outDimTags;
           r = GModel::current()->getOCCInternals()->addThickSolid
@@ -2231,7 +2231,7 @@ Shape :
   | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints "
-            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Line");
+            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Curve");
       $$.Type = 0;
       $$.Num = 0;
     }
@@ -2239,7 +2239,7 @@ Shape :
       '{' RecursiveListOfListOfDouble '}' tEND
     {
       yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints "
-            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Line");
+            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Curve");
       $$.Type = 0;
       $$.Num = 0;
     }
@@ -2476,7 +2476,7 @@ Transform :
         std::vector<int> in, out; ListOfDouble2Vector($4, in);
         r = GModel::current()->getGEOInternals()->intersectCurvesWithSurface
           (in, (int)$8, out);
-        for(unsigned int i = 0; i < out.size(); i++){
+        for(std::size_t i = 0; i < out.size(); i++){
           Shape s;
           s.Type = MSH_POINT;
           s.Num = out[i];
@@ -2498,7 +2498,7 @@ Transform :
         std::vector<int> vertices, curves; ListOfDouble2Vector($7, vertices);
         r = GModel::current()->getGEOInternals()->splitCurve
           ((int)$4, vertices, curves);
-        for(unsigned int i = 0; i < curves.size(); i++){
+        for(std::size_t i = 0; i < curves.size(); i++){
           Shape s;
           s.Type = MSH_SEGM_LINE;
           s.Num = curves[i];
@@ -3124,13 +3124,14 @@ Colorify :
 SetPartition :
     tSetPartition FExpr '{' ListOfShapes '}'
     {
+      yymsg(2, "'SetPartition' command is deprecated");
       std::vector<std::pair<int, int> > dimTags;
       ListOfShapes2VectorOfPairs($4, dimTags);
-      for(unsigned int i = 0; i < dimTags.size(); i++){
+      for(std::size_t i = 0; i < dimTags.size(); i++){
         GEntity *ge = GModel::current()->getEntityByTag
           (dimTags[i].first, dimTags[i].second);
         if(ge){
-          for(unsigned int j = 0; j < ge->getNumMeshElements(); j++)
+          for(std::size_t j = 0; j < ge->getNumMeshElements(); j++)
             ge->getMeshElement(j)->setPartition((int)$2);
         }
       }
@@ -3438,7 +3439,7 @@ Command :
     {
 #if defined(HAVE_OPENGL)
      CTX::instance()->mesh.changed = ENT_ALL;
-     for(unsigned int index = 0; index < PView::list.size(); index++)
+     for(std::size_t index = 0; index < PView::list.size(); index++)
        PView::list[index]->setChanged(true);
 #endif
     }
@@ -4347,7 +4348,7 @@ Constraints :
             gf->meshAttributes.method = MESH_TRANSFINITE;
             gf->meshAttributes.transfiniteArrangement = $5;
             if(corners.empty() || corners.size() == 3 || corners.size() == 4){
-              for(unsigned int j = 0; j < corners.size(); j++){
+              for(std::size_t j = 0; j < corners.size(); j++){
                 GVertex *gv = GModel::current()->getVertexByTag(corners[j]);
                 if(gv)
                   gf->meshAttributes.corners.push_back(gv);
@@ -4389,7 +4390,7 @@ Constraints :
           if(gr){
             gr->meshAttributes.method = MESH_TRANSFINITE;
             if(corners.empty() || corners.size() == 6 || corners.size() == 8){
-              for(unsigned int i = 0; i < corners.size(); i++){
+              for(std::size_t i = 0; i < corners.size(); i++){
                 GVertex *gv = GModel::current()->getVertexByTag(corners[i]);
                 if(gv)
                   gr->meshAttributes.corners.push_back(gv);
@@ -5691,7 +5692,7 @@ FExpr_Multi :
 	yymsg(0, "Unknown variable '%s'", $1);
       else{
         gmsh_yysymbol &s(gmsh_yysymbols[$1]);
-	for(unsigned int i = 0; i < s.value.size(); i++)
+	for(std::size_t i = 0; i < s.value.size(); i++)
 	  List_Add($$, &s.value[i]);
       }
       Free($1);
@@ -5712,7 +5713,7 @@ FExpr_Multi :
 	yymsg(0, "Unknown variable '%s'", $3);
       else{
         gmsh_yysymbol &s(gmsh_yysymbols[$3]);
-	for(unsigned int i = 0; i < s.value.size(); i++)
+	for(std::size_t i = 0; i < s.value.size(); i++)
 	  List_Add($$, &s.value[i]);
       }
       Free($3);
@@ -5814,7 +5815,7 @@ FExpr_Multi :
       tmp.erase(last, tmp.end());
       $$ = $3;
       List_Reset($$);
-      for(unsigned int i = 0; i < tmp.size(); i++){
+      for(std::size_t i = 0; i < tmp.size(); i++){
         List_Add($$, &tmp[i]);
       }
     }
@@ -5991,27 +5992,15 @@ StringExprVar :
       strcpy($$, out.c_str());
       Free($1); Free($6);
     }
-  | tPhysical tPoint '{' FExpr '}'
+  | GeoEntity '{' FExpr '}'
     {
-      std::string name = GModel::current()->getPhysicalName(0, (int)$4);
+      std::string name = GModel::current()->getElementaryName($1, (int)$3);
       $$ = (char*)Malloc((name.size() + 1) * sizeof(char));
       strcpy($$, name.c_str());
     }
-  | tPhysical tCurve '{' FExpr '}'
+  | tPhysical GeoEntity '{' FExpr '}'
     {
-      std::string name = GModel::current()->getPhysicalName(1, (int)$4);
-      $$ = (char*)Malloc((name.size() + 1) * sizeof(char));
-      strcpy($$, name.c_str());
-    }
-  | tPhysical tSurface '{' FExpr '}'
-    {
-      std::string name = GModel::current()->getPhysicalName(2, (int)$4);
-      $$ = (char*)Malloc((name.size() + 1) * sizeof(char));
-      strcpy($$, name.c_str());
-    }
-  | tPhysical tVolume '{' FExpr '}'
-    {
-      std::string name = GModel::current()->getPhysicalName(3, (int)$4);
+      std::string name = GModel::current()->getPhysicalName($2, (int)$4);
       $$ = (char*)Malloc((name.size() + 1) * sizeof(char));
       strcpy($$, name.c_str());
     }
@@ -6355,7 +6344,7 @@ MultiStringExprVar :
 	yymsg(0, "Unknown string variable '%s'", $1);
       else{
         std::vector<std::string> &s(gmsh_yystringsymbols[$1]);
-	for(unsigned int i = 0; i < s.size(); i++) {
+	for(std::size_t i = 0; i < s.size(); i++) {
           char * val_ = strsave((char*)s.at(i).c_str());
 	  List_Add($$, &val_);
         }
@@ -6510,7 +6499,7 @@ int printListOfDouble(char *format, List_T *list, char *buffer)
   // if format does not contain formatting characters, dump the list (useful for
   // quick debugging of lists)
   int numFormats = 0;
-  for(unsigned int i = 0; i < strlen(format); i++)
+  for(std::size_t i = 0; i < strlen(format); i++)
     if(format[i] == '%') numFormats++;
   if(!numFormats){
     strcpy(buffer, format);
@@ -6570,7 +6559,7 @@ void PrintParserSymbols(bool help, std::vector<std::string> &vec)
     sstream << it->first;
     if(s.list){
       sstream << "[] = {";
-      for(unsigned int i = 0; i < s.value.size(); i++){
+      for(std::size_t i = 0; i < s.value.size(); i++){
         if(i) sstream << ", ";
         sstream << s.value[i];
       }
@@ -6592,7 +6581,7 @@ void PrintParserSymbols(bool help, std::vector<std::string> &vec)
       vec.push_back(it->first + " = \"" + it->second[0] + "\";");
     else{
       std::string s = it->first + "[] = Str({";
-      for(unsigned int i = 0; i < it->second.size(); i++){
+      for(std::size_t i = 0; i < it->second.size(); i++){
         if(i) s += ", ";
         s += std::string("\"") + it->second[i] + "\"";
       }
@@ -6672,7 +6661,7 @@ void ListOfShapes2VectorOfPairs(List_T *list, std::vector<std::pair<int, int> > 
 
 void VectorOfPairs2ListOfShapes(const std::vector<std::pair<int, int> > &v, List_T *list)
 {
-  for(unsigned int i = 0; i < v.size(); i++){
+  for(std::size_t i = 0; i < v.size(); i++){
     int dim = v[i].first;
     int tag = v[i].second;
     Shape s;
@@ -6827,7 +6816,7 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
       yymsg(0, "Unknown model surface with tag %d", tag2);
       return;
     }
-    for(unsigned int i = 0; i < tags.size(); i++){
+    for(std::size_t i = 0; i < tags.size(); i++){
       if(dim == 0){
         GVertex *gv = GModel::current()->getVertexByTag(tags[i]);
         if(gv)
@@ -6850,7 +6839,7 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
       yymsg(0, "Unknown model volume with tag %d", tag2);
       return;
     }
-    for(unsigned int i = 0; i < tags.size(); i++){
+    for(std::size_t i = 0; i < tags.size(); i++){
       if(dim == 0){
         GVertex *gv = GModel::current()->getVertexByTag(tags[i]);
         if(gv)
@@ -6886,7 +6875,7 @@ void getAllElementaryTags(int dim, List_T *out)
 
   std::vector<GEntity*> entities;
   GModel::current()->getEntities(entities, dim);
-  for(unsigned int i = 0; i < entities.size(); i++){
+  for(std::size_t i = 0; i < entities.size(); i++){
     double tag = entities[i]->tag();
     List_Add(out, &tag);
   }
@@ -6941,7 +6930,7 @@ void getElementaryTagsInBoundingBox(int dim, double x1, double y1, double z1,
   SBoundingBox3d box(x1, y1, z1, x2, y2, z2);
   std::vector<GEntity*> entities;
   GModel::current()->getEntitiesInBox(entities, box, dim);
-  for(unsigned int i = 0; i < entities.size(); i++){
+  for(std::size_t i = 0; i < entities.size(); i++){
     double d = entities[i]->tag();
     List_Add(out, &d);
   }
@@ -7002,7 +6991,7 @@ void setVisibility(int dim, int visible, bool recursive)
 
   std::vector<GEntity*> entities;
   GModel::current()->getEntities(entities, dim);
-  for(unsigned int i = 0; i < entities.size(); i++){
+  for(std::size_t i = 0; i < entities.size(); i++){
     entities[i]->setVisibility(visible);
   }
 }
@@ -7016,7 +7005,7 @@ void setVisibility(const std::vector<std::pair<int, int> > &dimTags,
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
-  for(unsigned int i = 0; i < dimTags.size(); i++){
+  for(std::size_t i = 0; i < dimTags.size(); i++){
     GEntity *ge = GModel::current()->getEntityByTag
       (dimTags[i].first, std::abs(dimTags[i].second));
     if(ge) ge->setVisibility(visible, recursive);
@@ -7032,7 +7021,7 @@ void setColor(const std::vector<std::pair<int, int> > &dimTags,
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
-  for(unsigned int i = 0; i < dimTags.size(); i++){
+  for(std::size_t i = 0; i < dimTags.size(); i++){
     GEntity *ge = GModel::current()->getEntityByTag
       (dimTags[i].first, std::abs(dimTags[i].second));
     if(ge) ge->setColor(val, recursive);
@@ -7140,7 +7129,7 @@ List_T * treat_Struct_FullName_dot_tSTRING_ListOfFloat
           (struct_namespace, struct_name, key_member, out_vector)) {
   case 0:
     out = List_Create(out_vector->size(), 1, sizeof(double));
-    for(unsigned int i = 0; i < out_vector->size(); i++) {
+    for(std::size_t i = 0; i < out_vector->size(); i++) {
       val_ = out_vector->at(i);
       List_Add(out, &val_);
     }
@@ -7257,7 +7246,7 @@ List_T * treat_Struct_FullName_dot_tSTRING_ListOfString
           (struct_namespace, struct_name, key_member, out_vector)) {
   case 0:
     out = List_Create(out_vector->size(), 1, sizeof(char *));
-    for(unsigned int i = 0; i < out_vector->size(); i++) {
+    for(std::size_t i = 0; i < out_vector->size(); i++) {
       val_ = strsave((char*)out_vector->at(i).c_str());
       List_Add(out, &val_);
     }

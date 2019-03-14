@@ -11,11 +11,15 @@
 #include "GModel.h"
 #include "MElement.h"
 
-StringXNumber NewViewOptions_Number[] = {{GMSH_FULLRC, "NumComp", NULL, 1.},
-                                         {GMSH_FULLRC, "ViewTag", NULL, -1.}};
+StringXNumber NewViewOptions_Number[] = {
+  {GMSH_FULLRC, "NumComp", NULL, 1.},
+  {GMSH_FULLRC, "Value", NULL, 0.},
+  {GMSH_FULLRC, "ViewTag", NULL, -1.}
+};
 
 StringXString NewViewOptions_String[] = {
-  {GMSH_FULLRC, "Type", NULL, "NodeData"}};
+  {GMSH_FULLRC, "Type", NULL, "NodeData"}
+};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterNewViewPlugin() { return new GMSH_NewViewPlugin(); }
@@ -24,7 +28,8 @@ GMSH_Plugin *GMSH_RegisterNewViewPlugin() { return new GMSH_NewViewPlugin(); }
 std::string GMSH_NewViewPlugin::getHelp() const
 {
   return "Plugin(NewView) creates a new model-based view from the "
-         "current mesh, with `NumComp' field components.\n\n"
+         "current mesh, with `NumComp' field components, set to value "
+         "`Value'.\n\n"
          "If `ViewTag' is positive, force that tag for the created view.";
 }
 
@@ -51,7 +56,8 @@ StringXString *GMSH_NewViewPlugin::getOptionStr(int iopt)
 PView *GMSH_NewViewPlugin::execute(PView *v)
 {
   int numComp = (int)NewViewOptions_Number[0].def;
-  int tag = (int)NewViewOptions_Number[1].def;
+  int value = NewViewOptions_Number[1].def;
+  int tag = (int)NewViewOptions_Number[2].def;
   std::string type = NewViewOptions_String[0].def;
 
   if(GModel::current()->getMeshStatus() < 1) {
@@ -69,10 +75,10 @@ PView *GMSH_NewViewPlugin::execute(PView *v)
   std::map<int, std::vector<double> > d;
   std::vector<GEntity *> entities;
   GModel::current()->getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++) {
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
       MVertex *ve = entities[i]->mesh_vertices[j];
-      d[ve->getNum()].resize(numComp);
+      d[ve->getNum()].resize(numComp, value);
     }
   }
 

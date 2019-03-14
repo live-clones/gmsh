@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _QUALITY_MEASURES_H_
-#define _QUALITY_MEASURES_H_
+#ifndef QUALITY_MEASURES_H
+#define QUALITY_MEASURES_H
 
 //#include "fullMatrix.h"
 #include <vector>

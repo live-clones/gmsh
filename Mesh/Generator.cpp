@@ -46,8 +46,8 @@
 #endif
 
 #if defined(HAVE_OPTHOM)
-#include "OptHomRun.h"
-#include "OptHomElastic.h"
+#include "HighOrderMeshOptimizer.h"
+#include "HighOrderMeshElasticAnalogy.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -67,7 +67,7 @@ public:
     std::vector<GEdge *>::const_iterator it = e.begin();
     std::vector<GFace *>::const_iterator itf = f.begin();
     for(; it != e.end(); ++it) {
-      for(unsigned int i = 0; i < (*it)->lines.size(); ++i) {
+      for(std::size_t i = 0; i < (*it)->lines.size(); ++i) {
         if(distance((*it)->lines[i]->getVertex(0),
                     (*it)->lines[i]->getVertex(1)) > 1.e-12)
           edges.insert(std::make_pair(
@@ -76,7 +76,7 @@ public:
       }
     }
     for(; itf != f.end(); ++itf) {
-      for(unsigned int i = 0; i < (*itf)->triangles.size(); ++i) {
+      for(std::size_t i = 0; i < (*itf)->triangles.size(); ++i) {
         faces.insert(std::make_pair(MFace((*itf)->triangles[i]->getVertex(0),
                                           (*itf)->triangles[i]->getVertex(1),
                                           (*itf)->triangles[i]->getVertex(2)),
@@ -86,7 +86,7 @@ public:
     Msg::Info("Searching for %d embedded mesh edges and %d embedded mesh faces "
               "in region %d",
               edges.size(), faces.size(), gr->tag());
-    for(unsigned int k = 0; k < gr->getNumMeshElements(); k++) {
+    for(std::size_t k = 0; k < gr->getNumMeshElements(); k++) {
       for(int j = 0; j < gr->getMeshElement(k)->getNumEdges(); j++) {
         edges.erase(gr->getMeshElement(k)->getEdge(j));
       }
@@ -149,7 +149,7 @@ GetQualityMeasure(std::vector<T *> &ele, double &gamma, double &gammaMin,
                   double &minSICNMax, double &minSIGE, double &minSIGEMin,
                   double &minSIGEMax, double quality[3][100])
 {
-  for(unsigned int i = 0; i < ele.size(); i++) {
+  for(std::size_t i = 0; i < ele.size(); i++) {
     double g = ele[i]->gammaShapeMeasure();
     gamma += g;
     gammaMin = std::min(gammaMin, g);
@@ -170,7 +170,8 @@ GetQualityMeasure(std::vector<T *> &ele, double &gamma, double &gammaMin,
   }
 }
 
-void GetStatistics(double stat[50], double quality[3][100])
+void GetStatistics(double stat[50], double quality[3][100],
+                   bool visibleOnly)
 {
   for(int i = 0; i < 50; i++) stat[i] = 0.;
 
@@ -189,22 +190,26 @@ void GetStatistics(double stat[50], double quality[3][100])
              physicals[3].size();
 
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it) {
+    if(visibleOnly && !(*it)->getVisibility()) continue;
     stat[4] += (*it)->mesh_vertices.size();
     stat[5] += (*it)->points.size();
   }
 
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
+    if(visibleOnly && !(*it)->getVisibility()) continue;
     stat[4] += (*it)->mesh_vertices.size();
     stat[6] += (*it)->lines.size();
   }
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+    if(visibleOnly && !(*it)->getVisibility()) continue;
     stat[4] += (*it)->mesh_vertices.size();
     stat[7] += (*it)->triangles.size();
     stat[8] += (*it)->quadrangles.size();
   }
 
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+    if(visibleOnly && !(*it)->getVisibility()) continue;
     stat[4] += (*it)->mesh_vertices.size();
     stat[9] += (*it)->tetrahedra.size();
     stat[10] += (*it)->hexahedra.size();
@@ -227,6 +232,7 @@ void GetStatistics(double stat[50], double quality[3][100])
     double N = stat[9] + stat[10] + stat[11] + stat[12] + stat[13];
     if(N) { // if we have 3D elements
       for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+        if(visibleOnly && !(*it)->getVisibility()) continue;
         GetQualityMeasure((*it)->tetrahedra, gamma, gammaMin, gammaMax, minSICN,
                           minSICNMin, minSICNMax, minSIGE, minSIGEMin,
                           minSIGEMax, quality);
@@ -244,6 +250,7 @@ void GetStatistics(double stat[50], double quality[3][100])
     else { // 2D elements
       N = stat[7] + stat[8];
       for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+        if(visibleOnly && !(*it)->getVisibility()) continue;
         GetQualityMeasure((*it)->quadrangles, gamma, gammaMin, gammaMax,
                           minSICN, minSICNMin, minSICNMax, minSIGE, minSIGEMin,
                           minSIGEMax, quality);
@@ -267,7 +274,7 @@ void GetStatistics(double stat[50], double quality[3][100])
 
 #if defined(HAVE_POST)
   stat[27] = PView::list.size();
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     PViewData *data = PView::list[i]->getData(true);
     stat[28] += data->getNumPoints();
     stat[29] += data->getNumLines();
@@ -442,7 +449,7 @@ static void PrintMesh2dStatistics(GModel *m)
     }
   }
 
-  Msg::Info("*** Efficiency index for surface mesh tau=%g ",
+  Msg::Info("Efficiency index for surface mesh tau=%g ",
             100 * exp(e_avg / (double)nTotE));
 
   fprintf(statreport, "\t%16s\t%d\t\t%d\t\t", m->getName().c_str(), numFaces,
@@ -479,7 +486,7 @@ static void Mesh2D(GModel *m)
       if(static_cast<discreteFace *>(*it)->haveParametrization())
         Msg::SetNumThreads(1);
     }
-    // DelQuad and co are not yet thread-safe
+    // Frontal-Delaunay for quads and co are not yet thread-safe
     if((*it)->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
        (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
        (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
@@ -551,7 +558,7 @@ FindConnectedRegions(const std::vector<GRegion *> &del,
   std::vector<GRegion *> delaunay = del;
   // test: connected.resize(1); connected[0] = delaunay; return;
 
-  const unsigned int nbVolumes = delaunay.size();
+  const std::size_t nbVolumes = delaunay.size();
   if(!nbVolumes) return;
   while(delaunay.size()) {
     std::set<GRegion *> oneDomain;
@@ -573,7 +580,7 @@ FindConnectedRegions(const std::vector<GRegion *> &del,
       }
     }
     std::vector<GRegion *> temp1, temp2;
-    for(unsigned int i = 0; i < delaunay.size(); i++) {
+    for(std::size_t i = 0; i < delaunay.size(); i++) {
       r = delaunay[i];
       if(oneDomain.find(r) == oneDomain.end())
         temp1.push_back(r);
@@ -604,7 +611,7 @@ FindConnectedRegions(const std::vector<GRegion *> &del,
 
 void buildUniqueFaces(GRegion *gr, std::set<MFace, Less_Face> &bnd)
 {
-  for(unsigned int i = 0; i < gr->getNumMeshElements(); i++) {
+  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *e = gr->getMeshElement(i);
     for(int j = 0; j < e->getNumFaces(); j++) {
       MFace f = e->getFace(j);
@@ -672,7 +679,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
   for(GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
     GRegion *gr = *rit;
     std::vector<MHexahedron *> remainingHexes;
-    for(unsigned int i = 0; i < gr->hexahedra.size(); i++) {
+    for(std::size_t i = 0; i < gr->hexahedra.size(); i++) {
       MHexahedron *e = gr->hexahedra[i];
       std::vector<MFace> faces;
       for(int j = 0; j < e->getNumFaces(); j++) {
@@ -696,7 +703,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
         SPoint3 pp = e->barycenter();
         MVertex *newv = new MVertex(pp.x(), pp.y(), pp.z(), gr);
         gr->mesh_vertices.push_back(newv);
-        for(unsigned int j = 0; j < faces.size(); j++) {
+        for(std::size_t j = 0; j < faces.size(); j++) {
           MFace &f = faces[j];
           if(f.getNumVertices() == 4) {
             gr->pyramids.push_back(new MPyramid(f.getVertex(0), f.getVertex(1),
@@ -713,7 +720,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
     gr->hexahedra = remainingHexes;
     remainingHexes.clear();
     std::vector<MPrism *> remainingPrisms;
-    for(unsigned int i = 0; i < gr->prisms.size(); i++) {
+    for(std::size_t i = 0; i < gr->prisms.size(); i++) {
       MPrism *e = gr->prisms[i];
       std::vector<MFace> faces;
       for(int j = 0; j < e->getNumFaces(); j++) {
@@ -737,7 +744,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
         SPoint3 pp = e->barycenter();
         MVertex *newv = new MVertex(pp.x(), pp.y(), pp.z(), gr);
         gr->mesh_vertices.push_back(newv);
-        for(unsigned int j = 0; j < faces.size(); j++) {
+        for(std::size_t j = 0; j < faces.size(); j++) {
           MFace &f = faces[j];
           if(f.getNumVertices() == 4) {
             gr->pyramids.push_back(new MPyramid(f.getVertex(0), f.getVertex(1),
@@ -767,7 +774,7 @@ static void TestConformity(GModel *gm)
     GRegion *gr = *rit;
     std::set<MFace, Less_Face> bnd;
     double vol = 0.0;
-    for(unsigned int i = 0; i < gr->getNumMeshElements(); i++) {
+    for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
       MElement *e = gr->getMeshElement(i);
       vol += fabs(e->getVolume());
       for(int j = 0; j < e->getNumFaces(); j++) {
@@ -836,8 +843,8 @@ static void Mesh3D(GModel *m)
   FindConnectedRegions(delaunay, connected);
 
   // remove quads elements for volumes that are recombined
-  for(unsigned int i = 0; i < connected.size(); i++) {
-    for(unsigned j = 0; j < connected[i].size(); j++) {
+  for(std::size_t i = 0; i < connected.size(); i++) {
+    for(std::size_t j = 0; j < connected[i].size(); j++) {
       GRegion *gr = connected[i][j];
       if(CTX::instance()->mesh.recombine3DAll ||
          gr->meshAttributes.recombine3D) {
@@ -854,13 +861,13 @@ static void Mesh3D(GModel *m)
   int nb_elements_recombination = 0, nb_hexa_recombination = 0;
 #endif
 
-  for(unsigned int i = 0; i < connected.size(); i++) {
+  for(std::size_t i = 0; i < connected.size(); i++) {
     MeshDelaunayVolume(connected[i]);
 
 #if defined(HAVE_DOMHEX)
     // additional code for experimental hex mesh - will eventually be replaced
     // by new HXT-based code
-    for(unsigned j = 0; j < connected[i].size(); j++) {
+    for(std::size_t j = 0; j < connected[i].size(); j++) {
       GRegion *gr = connected[i][j];
       bool treat_region_ok = false;
       if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
@@ -911,14 +918,14 @@ static void Mesh3D(GModel *m)
 
 #if defined(HAVE_DOMHEX)
   if(CTX::instance()->mesh.recombine3DAll) {
-    Msg::Info("RECOMBINATION timing:");
-    Msg::Info(" --- CUMULATIVE TIME RECOMBINATION : %g s.", time_recombination);
-    Msg::Info("RECOMBINATION CUMULATIVE STATISTICS:");
-    Msg::Info(".... Percentage of hexahedra   (#) : %g",
+    Msg::Info("Recombination timing:");
+    Msg::Info(" - Cumulative time recombination: %g s", time_recombination);
+    Msg::Info("Recombination cumulative statistics:");
+    Msg::Info(" - Percentage of hexahedra (#)  : %g",
               nb_hexa_recombination * 100. / nb_elements_recombination);
-    Msg::Info(".... Percentage of hexahedra (Vol) : %g",
+    Msg::Info(" - Percentage of hexahedra (Vol): %g",
               vol_hexa_recombination * 100. / vol_element_recombination);
-    // MakeMeshConformal (m, 1);
+    // MakeMeshConformal(m, 1);
     TestConformity(m);
   }
 #endif
@@ -1111,18 +1118,20 @@ void GenerateMesh(GModel *m, int ask)
   // Optimize high order elements
   if(CTX::instance()->mesh.hoOptimize) {
 #if defined(HAVE_OPTHOM)
-    if(CTX::instance()->mesh.hoOptimize < 0) {
-      ElasticAnalogy(GModel::current(), false);
+    if(CTX::instance()->mesh.hoOptimize < 0 ||
+       CTX::instance()->mesh.hoOptimize >= 2) {
+      HighOrderMeshElasticAnalogy(GModel::current(), false);
     }
-    else {
+    if(CTX::instance()->mesh.hoOptimize >= 1){
       OptHomParameters p;
       p.nbLayers = CTX::instance()->mesh.hoNLayers;
       p.BARRIER_MIN = CTX::instance()->mesh.hoThresholdMin;
       p.BARRIER_MAX = CTX::instance()->mesh.hoThresholdMax;
+      p.itMax = CTX::instance()->mesh.hoIterMax;
+      p.optPassMax = CTX::instance()->mesh.hoPassMax;
       p.dim = GModel::current()->getDim();
-      p.optPrimSurfMesh = CTX::instance()->mesh.hoOptPrimSurfMesh;
-      // HighOrderMeshOptimizer(GModel::current(), p);
-      HighOrderMeshOptimizerNew(GModel::current(), p);
+      p.optPrimSurfMesh = CTX::instance()->mesh.hoPrimSurfMesh;
+      HighOrderMeshOptimizer(GModel::current(), p);
     }
 #else
     Msg::Error("High-order mesh optimization requires the OPTHOM module");

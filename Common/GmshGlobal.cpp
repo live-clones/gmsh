@@ -24,6 +24,7 @@ typedef unsigned long intptr_t;
 #include "OS.h"
 #include "Context.h"
 #include "robustPredicates.h"
+#include "BasisFactory.h"
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -243,9 +244,15 @@ int GmshFinalize()
   while(PView::list.size() > 0) delete PView::list[PView::list.size() - 1];
   std::vector<PView *>().swap(PView::list);
 
+  // reset global view tag
+  PView::setGlobalTag(0);
+
   // Delete static _interpolationSchemes of PViewData class
   PViewData::removeAllInterpolationSchemes();
 #endif
+
+  // Delete static interpolation bases
+  BasisFactory::clearAll();
 
   // Delete all Gmodels
   while(GModel::list.size() > 0) delete GModel::list[GModel::list.size() - 1];
@@ -278,7 +285,7 @@ int GmshBatch()
 
   OpenProject(GModel::current()->getFileName());
   bool open = false;
-  for(unsigned int i = 0; i < CTX::instance()->files.size(); i++) {
+  for(std::size_t i = 0; i < CTX::instance()->files.size(); i++) {
     if(i == 0 && CTX::instance()->files[0][0] != '-') continue;
     if(CTX::instance()->files[i] == "-new")
       new GModel();
@@ -310,7 +317,7 @@ int GmshBatch()
 #if defined(HAVE_PARSER)
     std::vector<std::string> s;
     PrintParserSymbols(0, s);
-    for(unsigned int i = 0; i < s.size(); i++) Msg::Direct("%s", s[i].c_str());
+    for(std::size_t i = 0; i < s.size(); i++) Msg::Direct("%s", s[i].c_str());
 #endif
   }
   else if(CTX::instance()->batch == -1) {
@@ -375,7 +382,7 @@ int GmshFLTK(int argc, char **argv)
   else {
     OpenProject(GModel::current()->getFileName());
     bool open = false;
-    for(unsigned int i = 0; i < CTX::instance()->files.size(); i++) {
+    for(std::size_t i = 0; i < CTX::instance()->files.size(); i++) {
       if(i == 0 && CTX::instance()->files[0][0] != '-') continue;
       if(CTX::instance()->files[i] == "-new") {
         GModel::current()->setVisibility(0);

@@ -5,8 +5,8 @@
 //
 // Contributed by Matti Pellikka <matti.pellikka@microsoft.com>.
 
-#ifndef _HOMOLOGY_POST_PROCESSING_H_
-#define _HOMOLOGY_POST_PROCESSING_H_
+#ifndef HOMOLOGY_POST_PROCESSING_H
+#define HOMOLOGY_POST_PROCESSING_H
 
 #include <string>
 #include "Plugin.h"

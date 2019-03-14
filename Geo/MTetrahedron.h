@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MTETRAHEDRON_H_
-#define _MTETRAHEDRON_H_
+#ifndef MTETRAHEDRON_H
+#define MTETRAHEDRON_H
 
 #include "MElement.h"
 
@@ -367,15 +367,15 @@ public:
                 int part = 0)
     : MTetrahedron(v0, v1, v2, v3, num, part), _vs(v), _order(order)
   {
-    for(unsigned int i = 0; i < _vs.size(); i++)
+    for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
   MTetrahedronN(const std::vector<MVertex *> &v, char order, int num = 0,
                 int part = 0)
     : MTetrahedron(v[0], v[1], v[2], v[3], num, part), _order(order)
   {
-    for(unsigned int i = 4; i < v.size(); i++) _vs.push_back(v[i]);
-    for(unsigned int i = 0; i < _vs.size(); i++)
+    for(std::size_t i = 4; i < v.size(); i++) _vs.push_back(v[i]);
+    for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
   ~MTetrahedronN() {}

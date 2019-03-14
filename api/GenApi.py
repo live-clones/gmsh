@@ -36,13 +36,6 @@ class arg:
 
 # input types
 
-def isize(name, value=None, python_value=None, julia_value=None):
-    a = arg(name, value, python_value, julia_value,
-          "const size_t", "const size_t", False)
-    a.python_arg = "c_size_t(" + name + ")"
-    a.julia_ctype = "Csize_t"
-    return a
-
 def ibool(name, value=None, python_value=None, julia_value=None):
     a = arg(name, value, python_value, julia_value,
             "const bool", "const int", False)
@@ -56,6 +49,13 @@ def iint(name, value=None, python_value=None, julia_value=None):
             "const int", "const int", False)
     a.python_arg = "c_int(" + name + ")"
     a.julia_ctype = "Cint"
+    return a
+
+def isize(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "const std::size_t", "const size_t", False)
+    a.python_arg = "c_size_t(" + name + ")"
+    a.julia_ctype = "Csize_t"
     return a
 
 def idouble(name, value=None, python_value=None, julia_value=None):
@@ -99,6 +99,27 @@ def ivectorint(name, value=None, python_value=None, julia_value=None):
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cint}, Csize_t"
     a.julia_arg = "convert(Vector{Cint}, " + name + "), length(" + name + ")"
+    return a
+
+def ivectorsize(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Csize_t[]"
+    a = arg(name, value, python_value, julia_value,
+            "const std::vector<std::size_t> &", "const size_t *", False)
+    api_name = "api_" + name + "_"
+    api_name_n = "api_" + name + "_n_"
+    a.c_pre = ("    std::vector<std::size_t> " + api_name + "(" + name + ", " + name +
+               " + " + name + "_n);\n")
+    a.c_arg = api_name
+    a.c = "size_t * " + name + ", size_t " + name + "_n"
+    a.cwrap_pre = ("size_t *" + api_name + "; size_t " + api_name_n + "; " +
+                   "vector2ptr(" + name + ", &" + api_name + ", &" + api_name_n + ");\n")
+    a.cwrap_arg = api_name + ", " + api_name_n
+    a.cwrap_post = ns + "Free(" + api_name + ");\n"
+    a.python_pre = api_name + ", " + api_name_n + " = _ivectorsize(" + name + ")"
+    a.python_arg = api_name + ", " + api_name_n
+    a.julia_ctype = "Ptr{Csize_t}, Csize_t"
+    a.julia_arg = "convert(Vector{Csize_t}, " + name + "), length(" + name + ")"
     return a
 
 def ivectordouble(name, value=None, python_value=None, julia_value=None):
@@ -202,6 +223,39 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
                    ", length(" + name + ")")
     return a
 
+def ivectorvectorsize(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Vector{Csize_t}[]"
+    a = arg(name, value, python_value, julia_value,
+            "const std::vector<std::vector<std::size_t> > &", "const size_t **", False)
+    api_name = "api_" + name + "_"
+    api_name_n = "api_" + name + "_n_"
+    api_name_nn = "api_" + name + "_nn_"
+    a.c_pre = ("    std::vector<std::vector<std::size_t> > " + api_name +
+               "(" + name + "_nn);\n" +
+               "    for(size_t i = 0; i < " + name + "_nn; ++i)\n" +
+               "      " + api_name + "[i] = std::vector<std::size_t>(" + name + "[i], " +
+               name + "[i] + " + name + "_n[i]);\n")
+    a.c_arg = api_name
+    a.c = ("const size_t ** " + name + ", const size_t * " + name + "_n, " +
+           "size_t " + name + "_nn")
+    a.cwrap_pre = ("size_t **" + api_name + "; size_t *" + api_name_n + ", " +
+                   api_name_nn + "; " + "vectorvector2ptrptr(" + name + ", &" +
+                   api_name + ", &" + api_name_n + ", &" + api_name_nn + ");\n")
+    a.cwrap_arg = "(const size_t **)" + api_name + ", " + api_name_n + ", " + api_name_nn
+    a.cwrap_post = ("for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +
+                    ns + "Free(" + api_name + "[i]); } " +
+                    ns + "Free(" + api_name + "); " + ns + "Free(" + api_name_n + ");\n")
+    a.python_pre = (api_name + ", " + api_name_n + ", " +
+                    api_name_nn + " = _ivectorvectorsize(" + name + ")")
+    a.python_arg = api_name + ", " + api_name_n + ", " + api_name_nn
+    a.julia_ctype = "Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Csize_t"
+    a.julia_pre = (api_name_n + " = [ length(" + name + "[i]) for i in 1:length(" +
+                   name + ") ]")
+    a.julia_arg = ("convert(Vector{Vector{Csize_t}}," + name + "), " + api_name_n +
+                   ", length(" + name + ")")
+    return a
+
 def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
     if julia_value == "[]":
         julia_value = "Vector{Cdouble}[]"
@@ -254,6 +308,25 @@ class oint(arg):
         self.python_return = api_name + ".value"
         self.julia_ctype = "Ptr{Cint}"
         self.julia_pre = api_name + " = Ref{Cint}()"
+        self.julia_arg = api_name
+        self.julia_return = api_name + "[]"
+
+class osize(arg):
+    rcpp_type = "std::size_t"
+    rc_type = "size_t"
+    rtexi_type = "size value"
+    rjulia_type = "Csize_t"
+    def __init__(self, name, value=None, python_value=None, julia_value=None):
+        arg.__init__(self, name, value, python_value, julia_value,
+                     "std::size_t &", "size_t *", True)
+        api_name = "api_" + name + "_"
+        self.c_arg = "*" + name
+        self.cwrap_arg = "&" + name
+        self.python_pre = api_name + " = c_size_t()"
+        self.python_arg = "byref(" + api_name + ")"
+        self.python_return = api_name + ".value"
+        self.julia_ctype = "Ptr{Csize_t}"
+        self.julia_pre = api_name + " = Ref{Csize_t}()"
         self.julia_arg = api_name
         self.julia_return = api_name + "[]"
 
@@ -314,6 +387,30 @@ def ovectorint(name, value=None, python_value=None, julia_value=None):
     a.python_return = "_ovectorint(" + api_name + ", " + api_name_n + ".value)"
     a.julia_ctype = "Ptr{Ptr{Cint}}, Ptr{Csize_t}"
     a.julia_pre = (api_name + " = Ref{Ptr{Cint}}()\n    " +
+                   api_name_n + " = Ref{Csize_t}()")
+    a.julia_arg = api_name + ", " + api_name_n
+    a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[], " +
+                    api_name_n + "[], own=true)")
+    return a
+
+def ovectorsize(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "std::vector<std::size_t> &", "size_t **", True)
+    api_name = "api_" + name + "_"
+    api_name_n = api_name + "n_"
+    a.c_pre = "    std::vector<std::size_t> " + api_name + ";\n"
+    a.c_arg = api_name
+    a.c_post = "    vector2ptr(" + api_name + ", " + name + ", " + name + "_n);\n"
+    a.c = "size_t ** " + name + ", size_t * " + name + "_n"
+    a.cwrap_pre = "size_t *" + api_name + "; size_t " + api_name_n + ";\n"
+    a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
+    a.cwrap_post = (name + ".assign(" + api_name + ", " + api_name + " + " +
+                    api_name_n + "); " + ns + "Free(" + api_name + ");\n")
+    a.python_pre = api_name + ", " + api_name_n + " = POINTER(c_size_t)(), c_size_t()"
+    a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
+    a.python_return = "_ovectorsize(" + api_name + ", " + api_name_n + ".value)"
+    a.julia_ctype = "Ptr{Ptr{Csize_t}}, Ptr{Csize_t}"
+    a.julia_pre = (api_name + " = Ref{Ptr{Csize_t}}()\n    " +
                    api_name_n + " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[], " +
@@ -429,6 +526,44 @@ def ovectorvectorint(name, value=None, python_value=None, julia_value=None):
                        api_name_nn + ")")
     a.julia_ctype = "Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}"
     a.julia_pre = (api_name + " = Ref{Ptr{Ptr{Cint}}}()\n    " +
+                   api_name_n + " = Ref{Ptr{Csize_t}}()\n    " +
+                   api_name_nn + " = Ref{Csize_t}()")
+    a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
+    a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[], " +
+                    api_name_nn + "[], own=true)\n    " +
+                    "tmp_" + api_name_n + " = unsafe_wrap(Array, " + api_name_n + "[], " +
+                    api_name_nn + "[], own=true)\n    " +
+                    name + " = [ unsafe_wrap(Array, tmp_" + api_name + "[i], " +
+                    "tmp_" + api_name_n + "[i], own=true) for i in 1:" +
+                    api_name_nn + "[] ]")
+    return a
+
+def ovectorvectorsize(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "std::vector<std::vector<std::size_t> > &", "size_t **", True)
+    api_name = "api_" + name + "_"
+    api_name_n = api_name + "n_"
+    api_name_nn = api_name + "nn_"
+    a.c_pre = "    std::vector<std::vector<std::size_t> > " + api_name + ";\n"
+    a.c_arg = api_name
+    a.c_post = ("    vectorvector2ptrptr(" + api_name + ", " + name + ", " +
+                name + "_n, " + name + "_nn);\n")
+    a.c  = "size_t *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
+    a.cwrap_pre = "size_t **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + ";\n"
+    a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n + ", " + "&" + api_name_nn
+    a.cwrap_post = (name + ".resize(" + api_name_nn + "); " +
+                    "for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +
+                    name + "[i].assign(" + api_name + "[i], " + api_name + "[i] + " +
+                    api_name_n + "[i]); " + ns + "Free(" + api_name + "[i]); } " +
+                    ns + "Free(" + api_name + "); " + ns + "Free(" + api_name_n + ");\n")
+    a.python_pre = (api_name + ", " + api_name_n + ", " + api_name_nn +
+                    " = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()")
+    a.python_arg = ("byref(" + api_name + "), byref(" + api_name_n + "), byref(" +
+                    api_name_nn + ")")
+    a.python_return = ("_ovectorvectorsize(" + api_name + ", " + api_name_n + ", " +
+                       api_name_nn + ")")
+    a.julia_ctype = "Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}"
+    a.julia_pre = (api_name + " = Ref{Ptr{Ptr{Csize_t}}}()\n    " +
                    api_name_n + " = Ref{Ptr{Csize_t}}()\n    " +
                    api_name_nn + " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
@@ -568,10 +703,10 @@ cpp_header="""// {0}
 // See the LICENSE.txt file for license information. Please report all
 // issues on {1}
 
-#ifndef _{2}_H_
-#define _{2}_H_
+#ifndef {2}_H
+#define {2}_H
 
-// This file defines the {3} C++ API (v{4}).
+// This file defines the {3} C++ API (v{4}.{5}).
 //
 // Do not edit it directly: it is automatically generated by `api/gen.py'.
 //
@@ -587,7 +722,9 @@ cpp_header="""// {0}
 #include <string>
 #include <utility>
 
-#define {2}_API_VERSION "{4}"
+#define {2}_API_VERSION "{4}.{5}"
+#define {2}_API_VERSION_MAJOR {4}
+#define {2}_API_VERSION_MINOR {5}
 
 #if defined({2}_DLL)
 #if defined({2}_DLL_EXPORT)
@@ -599,7 +736,7 @@ cpp_header="""// {0}
 #define {2}_API
 #endif
 
-namespace {5} {{
+namespace {6} {{
 
   // A geometrical entity in the {3} API is represented by two integers: its
   // dimension (dim = 0, 1, 2 or 3) and its tag (its unique, strictly positive
@@ -622,11 +759,11 @@ c_header="""/*
  * issues on {1}
  */
 
-#ifndef _{2}C_H_
-#define _{2}C_H_
+#ifndef {2}C_H
+#define {2}C_H
 
 /*
- * This file defines the {3} C API (v{4}).
+ * This file defines the {3} C API (v{4}.{5}).
  *
  * Do not edit it directly: it is automatically generated by `api/gen.py'.
  *
@@ -636,7 +773,9 @@ c_header="""/*
 
 #include <stddef.h>
 
-#define {2}_API_VERSION "{4}"
+#define {2}_API_VERSION "{4}.{5}"
+#define {2}_API_VERSION_MAJOR {4}
+#define {2}_API_VERSION_MINOR {5}
 
 #if defined({2}_DLL)
 #if defined({2}_DLL_EXPORT)
@@ -648,8 +787,8 @@ c_header="""/*
 #define {2}_API
 #endif
 
-{2}_API void {5}Free(void *p);
-{2}_API void *{5}Malloc(size_t n);
+{2}_API void {6}Free(void *p);
+{2}_API void *{6}Malloc(size_t n);
 """
 
 c_footer="""
@@ -696,19 +835,19 @@ cwrap_header="""// {0}
 // See the LICENSE.txt file for license information. Please report all
 // issues on {1}
 
-#ifndef _{2}_H_
-#define _{2}_H_
+#ifndef {2}_H
+#define {2}_H
 
-// This file redefines the {3} C++ API in terms of the C API (v{4}).
+// This file redefines the {3} C++ API in terms of the C API (v{4}.{5}).
 //
 // This is provided as a convenience for users of the binary {3} SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
-// the SDK (and who can thus not directly use the C++ API defined in `{5}.h').
+// the SDK (and who can thus not directly use the C++ API defined in `{6}.h').
 //
-// To use this header file in your C++ code, simply rename it as `{5}.h'.
+// To use this header file in your C++ code, simply rename it as `{6}.h'.
 //
 // Note that using this header file will lead to (slightly) reduced performance
-// compared to using the native {3} C++ API from the original `{5}.h', as it
+// compared to using the native {3} C++ API from the original `{6}.h', as it
 // entails additional data copies between this C++ wrapper, the C API and the
 // native C++ code.
 //
@@ -725,10 +864,10 @@ cwrap_header="""// {0}
 #include <string.h>
 
 extern \"C\" {{
-  #include "{5}c.h"
+  #include "{6}c.h"
 }}
 
-namespace {5} {{
+namespace {6} {{
 
   // A geometrical entity in the {3} API is represented by two integers: its
   // dimension (dim = 0, 1, 2 or 3) and its tag (its unique, strictly positive
@@ -790,7 +929,7 @@ python_header = """# {0}
 # See the LICENSE.txt file for license information. Please report all
 # issues on {1}
 
-# This file defines the {2} Python API (v{3}).
+# This file defines the {2} Python API (v{3}.{4}).
 #
 # Do not edit it directly: it is automatically generated by `api/gen.py'.
 #
@@ -799,21 +938,29 @@ python_header = """# {0}
 # examples.
 
 from ctypes import *
+from ctypes.util import find_library
 import signal
 import os
 import platform
 from math import pi
 
-{4}_API_VERSION = "{3}"
+{5}_API_VERSION = "{3}.{4}"
+{5}_API_VERSION_MAJOR = {3}
+{5}_API_VERSION_MINOR = {4}
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
-if platform.system() == 'Windows':
-    lib = CDLL(os.path.join(libdir, "{5}-{3}.dll"))
-elif platform.system() == 'Darwin':
-    lib = CDLL(os.path.join(libdir, "lib{5}.dylib"))
+if platform.system() == "Windows":
+    libpath = os.path.join(libdir, "{6}-{3}.{4}.dll")
+elif platform.system() == "Darwin":
+    libpath = os.path.join(libdir, "lib{6}.dylib")
 else:
-    lib = CDLL(os.path.join(libdir, "lib{5}.so"))
+    libpath = os.path.join(libdir, "lib{6}.so")
+
+if not os.path.exists(libpath):
+    libpath = find_library("{6}")
+
+lib = CDLL(libpath)
 
 use_numpy = False
 try:
@@ -830,53 +977,68 @@ except:
 
 def _ostring(s):
     sp = s.value.decode("utf-8")
-    lib.{5}Free(s)
+    lib.{6}Free(s)
     return sp
 
 def _ovectorpair(ptr, size):
     v = list((ptr[i * 2], ptr[i * 2 + 1]) for i in range(size//2))
-    lib.{5}Free(ptr)
+    lib.{6}Free(ptr)
     return v
 
 def _ovectorint(ptr, size):
     if use_numpy:
         v = numpy.ctypeslib.as_array(ptr, (size, ))
-        weakreffinalize(v, lib.{5}Free, ptr)
+        weakreffinalize(v, lib.{6}Free, ptr)
     else:
         v = list(ptr[i] for i in range(size))
-        lib.{5}Free(ptr)
+        lib.{6}Free(ptr)
+    return v
+
+def _ovectorsize(ptr, size):
+    if use_numpy:
+        v = numpy.ctypeslib.as_array(ptr, (size, ))
+        weakreffinalize(v, lib.{6}Free, ptr)
+    else:
+        v = list(ptr[i] for i in range(size))
+        lib.{6}Free(ptr)
     return v
 
 def _ovectordouble(ptr, size):
     if use_numpy:
         v = numpy.ctypeslib.as_array(ptr, (size, ))
-        weakreffinalize(v, lib.{5}Free, ptr)
+        weakreffinalize(v, lib.{6}Free, ptr)
     else:
         v = list(ptr[i] for i in range(size))
-        lib.{5}Free(ptr)
+        lib.{6}Free(ptr)
     return v
 
 def _ovectorstring(ptr, size):
     v = list(_ostring(cast(ptr[i], c_char_p)) for i in range(size))
-    lib.{5}Free(ptr)
+    lib.{6}Free(ptr)
     return v
 
 def _ovectorvectorint(ptr, size, n):
     v = [_ovectorint(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
-    lib.{5}Free(size)
-    lib.{5}Free(ptr)
+    lib.{6}Free(size)
+    lib.{6}Free(ptr)
+    return v
+
+def _ovectorvectorsize(ptr, size, n):
+    v = [_ovectorint(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
+    lib.{6}Free(size)
+    lib.{6}Free(ptr)
     return v
 
 def _ovectorvectordouble(ptr, size, n):
     v = [_ovectordouble(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
-    lib.{5}Free(size)
-    lib.{5}Free(ptr)
+    lib.{6}Free(size)
+    lib.{6}Free(ptr)
     return v
 
 def _ovectorvectorpair(ptr, size, n):
     v = [_ovectorpair(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
-    lib.{5}Free(size)
-    lib.{5}Free(ptr)
+    lib.{6}Free(size)
+    lib.{6}Free(ptr)
     return v
 
 def _ivectorint(o):
@@ -884,6 +1046,12 @@ def _ivectorint(o):
         return numpy.ascontiguousarray(o, numpy.int32).ctypes, c_size_t(len(o))
     else:
         return (c_int * len(o))(*o), c_size_t(len(o))
+
+def _ivectorsize(o):
+    if use_numpy:
+        return numpy.ascontiguousarray(o, numpy.uintp).ctypes, c_size_t(len(o))
+    else:
+        return (c_size_t * len(o))(*o), c_size_t(len(o))
 
 def _ivectordouble(o):
     if use_numpy:
@@ -915,6 +1083,15 @@ def _ivectorvectorint(os):
     size = c_size_t(n)
     return arrays, sizes, size
 
+def _ivectorvectorsize(os):
+    n = len(os)
+    parrays = [_ivectorsize(o) for o in os]
+    sizes = (c_size_t * n)(*(a[1] for a in parrays))
+    arrays = (POINTER(c_size_t) * n)(*(cast(a[0], POINTER(c_size_t)) for a in parrays))
+    arrays.ref = [a[0] for a in parrays]
+    size = c_size_t(n)
+    return arrays, sizes, size
+
 def _ivectorvectordouble(os):
     n = len(os)
     parrays = [_ivectordouble(o) for o in os]
@@ -935,7 +1112,7 @@ julia_header = """# {0}
 # See the LICENSE.txt file for license information. Please report all
 # issues on {1}
 
-# This file defines the {2} Julia API (v{3}).
+# This file defines the {2} Julia API (v{3}.{4}).
 #
 # Do not edit it directly: it is automatically generated by `api/gen.py'.
 #
@@ -945,10 +1122,11 @@ julia_header = """# {0}
 
 class API:
 
-    def __init__(self, version, namespace="gmsh", code="Gmsh",
+    def __init__(self, version_major, version_minor, namespace="gmsh", code="Gmsh",
                  copyright="Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle",
                  issues="https://gitlab.onelab.info/gmsh/gmsh/issues."):
-        self.version = version
+        self.version_major = version_major
+        self.version_minor = version_minor
         global ns
         ns = namespace
         self.code = code
@@ -978,8 +1156,8 @@ class API:
                 write_module(m, indent)
             f.write(indent[:-2] + "} // namespace " + module.name + "\n\n")
         with open(ns + ".h", "w") as f:
-            f.write(cpp_header.format(self.copyright, self.issues, ns.upper(),
-                                      self.code, self.version, ns))
+            f.write(cpp_header.format(self.copyright, self.issues, ns.upper(), self.code,
+                                      self.version_major, self.version_minor, ns))
             for m in self.modules:
                 write_module(m, "")
             f.write(cpp_footer)
@@ -1059,7 +1237,8 @@ class API:
             with open(ns + "c.cpp", "w") as fc:
                 with open(ns + ".h_cwrap", "w") as fcwrap:
                     f.write(c_header.format(self.copyright, self.issues, ns.upper(),
-                                            self.code, self.version, ns))
+                                            self.code, self.version_major,
+                                            self.version_minor, ns))
                     fc.write(c_cpp_header.format(self.copyright, self.issues, ns,
                                                  ns.upper()))
                     fc.write(cwrap_utils.format(ns))
@@ -1067,7 +1246,8 @@ class API:
                     fc.write("\n")
                     fcwrap.write(cwrap_header.format(self.copyright, self.issues,
                                                      ns.upper(), self.code,
-                                                     self.version, ns))
+                                                     self.version_major,
+                                                     self.version_minor, ns))
                     fcwrap.write("namespace " + ns + " {\n")
                     s = string.split(cwrap_utils.format(ns), '\n')
                     for line in s:
@@ -1137,7 +1317,8 @@ class API:
                 f.write(indentm + '"""\n')
                 write_module(f, module, modulepath, indentm)
         with open(ns + ".py", "w") as f:
-            f.write(python_header.format(self.copyright, self.issues, self.code, self.version,
+            f.write(python_header.format(self.copyright, self.issues, self.code,
+                                         self.version_major, self.version_minor,
                                          ns.upper(), ns))
             for module in self.modules:
                 write_module(f, module, "", "")
@@ -1194,10 +1375,18 @@ class API:
             f.write('"""\n')
             f.write("module " + m.name + "\n\n")
             if level == 1:
-                f.write('const ' + ns.upper() + '_API_VERSION = "' + self.version + '"\n')
+                f.write('const {0}_API_VERSION = "{1}.{2}"\n'.
+                        format(ns.upper(), self.version_major, self.version_minor))
+                f.write('const {0}_API_VERSION_MAJOR = {1}\n'.
+                        format(ns.upper(), self.version_major))
+                f.write('const {0}_API_VERSION_MINOR = {1}\n'.
+                        format(ns.upper(), self.version_minor))
                 f.write('const libdir = dirname(@__FILE__)\n')
-                f.write('const lib = joinpath(libdir, Sys.iswindows() ? "' + ns + '-' + self.version +
-                        '" : "lib' + ns + '")\n')
+                f.write('const libname = Sys.iswindows() ? "' + ns +
+                        '-{0}.{1}'.format(self.version_major, self.version_minor) +
+                        '" : "lib' + ns + '"\n')
+                f.write('import Libdl\n')
+                f.write('const lib = Libdl.find_library([libname], [libdir])\n')
             else:
                 f.write("import " + ("." * level) + ns + "\n")
             if c_mpath:
@@ -1213,7 +1402,7 @@ class API:
             f.write("\nend # end of module " + m.name + "\n")
         with open(ns + ".jl", "w") as f:
             f.write(julia_header.format(self.copyright, self.issues, self.code,
-                                        self.version,))
+                                        self.version_major, self.version_minor))
             for module in self.modules:
                 write_module(f, module, "", "", 1)
 

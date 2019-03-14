@@ -54,19 +54,19 @@ static void update_edges_cb(Fl_Widget *w, void *data)
 
   if(!e->selected) return;
 
-  for(unsigned int i = 0; i < e->selected->lines.size(); i++)
+  for(std::size_t i = 0; i < e->selected->lines.size(); i++)
     delete e->selected->lines[i];
   e->selected->lines.clear();
 
   double threshold = e->inputs[CLASS_VALUE_ANGLE]->value() / 180. * M_PI;
-  for(unsigned int i = 0; i < e->edges_detected.size(); i++) {
+  for(std::size_t i = 0; i < e->edges_detected.size(); i++) {
     edge_angle ea = e->edges_detected[i];
     if(ea.angle <= threshold) break;
     e->selected->lines.push_back(new MLine(ea.v1, ea.v2));
   }
 
   if(e->toggles[CLASS_TOGGLE_BOUNDARY]->value()) {
-    for(unsigned int i = 0; i < e->edges_lonly.size(); i++) {
+    for(std::size_t i = 0; i < e->edges_lonly.size(); i++) {
       edge_angle ea = e->edges_lonly[i];
       e->selected->lines.push_back(new MLine(ea.v1, ea.v2));
     }
@@ -112,7 +112,7 @@ static void select_elements_cb(Fl_Widget *w, void *data)
 
       char ib = FlGui::instance()->selectEntity(ENT_ALL);
       if(ib == 'l') {
-        for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size();
+        for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
             i++) {
           MElement *me = FlGui::instance()->selectedElements[i];
           if(me->getDim() == 2 && me->getVisibility() != 2) {
@@ -122,7 +122,7 @@ static void select_elements_cb(Fl_Widget *w, void *data)
         }
       }
       if(ib == 'r') {
-        for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size();
+        for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
             i++) {
           MElement *me = FlGui::instance()->selectedElements[i];
           if(me->getVisibility() == 2)
@@ -196,7 +196,7 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
 
     char ib = FlGui::instance()->selectEntity(ENT_ALL);
     if(ib == 'l') {
-      for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size();
+      for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
           i++) {
         MElement *me = FlGui::instance()->selectedElements[i];
         if(me->getType() == TYPE_LIN && me->getVisibility() != 2) {
@@ -206,7 +206,7 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
       }
     }
     if(ib == 'r') {
-      for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size();
+      for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
           i++) {
         MElement *me = FlGui::instance()->selectedElements[i];
         if(me->getVisibility() == 2)
@@ -230,7 +230,7 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
   // look in all selected edges if a deleted one is present and delete it
   std::vector<MLine *> temp = e->selected->lines;
   e->selected->lines.clear();
-  for(unsigned int i = 0; i < temp.size(); i++) {
+  for(std::size_t i = 0; i < temp.size(); i++) {
     std::vector<MLine *>::iterator it =
       std::find(ele.begin(), ele.end(), temp[i]);
     if(it != ele.end())
@@ -252,7 +252,7 @@ static void reset_selection_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor *)data;
   if(!e->selected) return;
-  for(unsigned int i = 0; i < e->selected->lines.size(); i++)
+  for(std::size_t i = 0; i < e->selected->lines.size(); i++)
     delete e->selected->lines[i];
   e->selected->lines.clear();
   e->selected->deleteVertexArrays();
@@ -282,7 +282,7 @@ static void select_surfaces_cb(Fl_Widget *w, void *data)
                     "[Press 'e' to end selection or 'q' to abort]");
       char ib = FlGui::instance()->selectEntity(ENT_SURFACE);
       if(ib == 'l') {
-        for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size();
+        for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size();
             i++) {
           FlGui::instance()->selectedFaces[i]->setSelection(1);
           temp.push_back(FlGui::instance()->selectedFaces[i]);
@@ -290,7 +290,7 @@ static void select_surfaces_cb(Fl_Widget *w, void *data)
       }
       if(ib == 'e') { // store the list of gfaces
         GModel::current()->setSelection(0);
-        for(unsigned int i = 0; i < temp.size(); i++) e->faces.insert(temp[i]);
+        for(std::size_t i = 0; i < temp.size(); i++) e->faces.insert(temp[i]);
         break;
       }
       if(ib == 'q') { // do nothing

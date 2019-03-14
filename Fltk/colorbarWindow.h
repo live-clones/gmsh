@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _COLORBAR_WINDOW_H
-#define _COLORBAR_WINDOW_H
+#ifndef COLORBAR_WINDOWH
+#define COLORBAR_WINDOWH
 
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>

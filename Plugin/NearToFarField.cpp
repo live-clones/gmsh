@@ -112,7 +112,7 @@ double GMSH_NearToFarFieldPlugin::getFarFieldJin(
   }
 
   int i = 0;
-  for(unsigned int ele = 0; ele < allElems.size(); ele++) {
+  for(std::size_t ele = 0; ele < allElems.size(); ele++) {
     element *e = allElems[ele];
     int numNodes = e->getNumNodes();
 
@@ -213,7 +213,7 @@ double GMSH_NearToFarFieldPlugin::getFarFieldMonk(
 
   double integral_r[3] = {0., 0., 0.}, integral_i[3] = {0., 0., 0.};
   int i = 0;
-  for(unsigned int ele = 0; ele < allElems.size(); ele++) {
+  for(std::size_t ele = 0; ele < allElems.size(); ele++) {
     element *e = allElems[ele];
     int numNodes = e->getNumNodes();
     std::vector<double> integrand_r(numNodes * 3), integrand_i(numNodes * 3);
@@ -269,8 +269,8 @@ static void printVector(FILE *fp, const std::string &name,
                         std::vector<std::vector<double> > &vec)
 {
   fprintf(fp, "%s = [", name.c_str());
-  for(unsigned int i = 0; i < vec.size(); i++)
-    for(unsigned int j = 0; j < vec[i].size(); j++)
+  for(std::size_t i = 0; i < vec.size(); i++)
+    for(std::size_t j = 0; j < vec[i].size(); j++)
       fprintf(fp, "%.16g ", vec[i][j]);
   fprintf(fp, "];\n");
 }
@@ -280,10 +280,10 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
   double _k0 = (double)NearToFarFieldOptions_Number[0].def;
   double _phiStart = (double)NearToFarFieldOptions_Number[1].def;
   double _phiEnd = (double)NearToFarFieldOptions_Number[2].def;
-  int _NbPhi = (int)NearToFarFieldOptions_Number[3].def;
+  int _nbPhi = (int)NearToFarFieldOptions_Number[3].def;
   double _thetaStart = (double)NearToFarFieldOptions_Number[4].def;
   double _thetaEnd = (double)NearToFarFieldOptions_Number[5].def;
-  int _NbThe = (int)NearToFarFieldOptions_Number[6].def;
+  int _nbThe = (int)NearToFarFieldOptions_Number[6].def;
   int _eView = (int)NearToFarFieldOptions_Number[7].def;
   int _hView = (int)NearToFarFieldOptions_Number[8].def;
   bool _normalize = (bool)NearToFarFieldOptions_Number[9].def;
@@ -391,42 +391,42 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
   PView *vf = new PView();
   PViewDataList *dataFar = getDataList(vf);
 
-  std::vector<std::vector<double> > phi(_NbPhi + 1), theta(_NbPhi + 1);
-  std::vector<std::vector<double> > x(_NbPhi + 1), y(_NbPhi + 1), z(_NbPhi + 1);
-  std::vector<std::vector<double> > farField(_NbPhi + 1);
-  std::vector<std::vector<double> > farField1r(_NbPhi + 1);
-  std::vector<std::vector<double> > farField2r(_NbPhi + 1);
-  std::vector<std::vector<double> > farField3r(_NbPhi + 1);
-  std::vector<std::vector<double> > farField1i(_NbPhi + 1);
-  std::vector<std::vector<double> > farField2i(_NbPhi + 1);
-  std::vector<std::vector<double> > farField3i(_NbPhi + 1);
+  std::vector<std::vector<double> > phi(_nbPhi + 1), theta(_nbPhi + 1);
+  std::vector<std::vector<double> > x(_nbPhi + 1), y(_nbPhi + 1), z(_nbPhi + 1);
+  std::vector<std::vector<double> > farField(_nbPhi + 1);
+  std::vector<std::vector<double> > farField1r(_nbPhi + 1);
+  std::vector<std::vector<double> > farField2r(_nbPhi + 1);
+  std::vector<std::vector<double> > farField3r(_nbPhi + 1);
+  std::vector<std::vector<double> > farField1i(_nbPhi + 1);
+  std::vector<std::vector<double> > farField2i(_nbPhi + 1);
+  std::vector<std::vector<double> > farField3i(_nbPhi + 1);
   std::vector<std::vector<double> > farFieldVec(3);
   for(int comp = 0; comp < 3; comp++) {
     farFieldVec[comp].resize(2, 0.);
   }
 
-  for(int i = 0; i <= _NbPhi; i++) {
-    phi[i].resize(_NbThe + 1);
-    theta[i].resize(_NbThe + 1);
-    x[i].resize(_NbThe + 1);
-    y[i].resize(_NbThe + 1);
-    z[i].resize(_NbThe + 1);
-    farField[i].resize(_NbThe + 1);
+  for(int i = 0; i <= _nbPhi; i++) {
+    phi[i].resize(_nbThe + 1);
+    theta[i].resize(_nbThe + 1);
+    x[i].resize(_nbThe + 1);
+    y[i].resize(_nbThe + 1);
+    z[i].resize(_nbThe + 1);
+    farField[i].resize(_nbThe + 1);
 
-    farField1r[i].resize(_NbThe + 1);
-    farField2r[i].resize(_NbThe + 1);
-    farField3r[i].resize(_NbThe + 1);
-    farField1i[i].resize(_NbThe + 1);
-    farField2i[i].resize(_NbThe + 1);
-    farField3i[i].resize(_NbThe + 1);
+    farField1r[i].resize(_nbThe + 1);
+    farField2r[i].resize(_nbThe + 1);
+    farField3r[i].resize(_nbThe + 1);
+    farField1i[i].resize(_nbThe + 1);
+    farField2i[i].resize(_nbThe + 1);
+    farField3i[i].resize(_nbThe + 1);
   }
 
-  double dPhi = (_phiEnd - _phiStart) / _NbPhi;
-  double dTheta = (_thetaEnd - _thetaStart) / _NbThe;
+  double dPhi = (_phiEnd - _phiStart) / _nbPhi;
+  double dTheta = (_thetaEnd - _thetaStart) / _nbThe;
   double ffmin = 1e200, ffmax = -1e200;
   Msg::ResetProgressMeter();
-  for(int i = 0; i <= _NbPhi; i++) {
-    for(int j = 0; j <= _NbThe; j++) {
+  for(int i = 0; i <= _nbPhi; i++) {
+    for(int j = 0; j <= _nbThe; j++) {
       phi[i][j] = _phiStart + i * dPhi;
       theta[i][j] = _thetaStart + j * dTheta;
       if(_negativeTime) {
@@ -447,23 +447,23 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
       ffmin = std::min(ffmin, farField[i][j]);
       ffmax = std::max(ffmax, farField[i][j]);
     }
-    Msg::ProgressMeter(i, _NbPhi, true, "Computing far field");
+    Msg::ProgressMeter(i, _nbPhi, true, "Computing far field");
   }
-  for(unsigned int i = 0; i < allElems.size(); i++) delete allElems[i];
+  for(std::size_t i = 0; i < allElems.size(); i++) delete allElems[i];
 
   if(_normalize) {
     if(!ffmax)
       Msg::Warning("Cannot normalize far field (max = 0)");
     else
-      for(int i = 0; i <= _NbPhi; i++)
-        for(int j = 0; j <= _NbThe; j++) farField[i][j] /= ffmax;
+      for(int i = 0; i <= _nbPhi; i++)
+        for(int j = 0; j <= _nbThe; j++) farField[i][j] /= ffmax;
   }
 
   if(_dB) {
     ffmin = 1e200;
     ffmax = -1e200;
-    for(int i = 0; i <= _NbPhi; i++) {
-      for(int j = 0; j <= _NbThe; j++) {
+    for(int i = 0; i <= _nbPhi; i++) {
+      for(int j = 0; j <= _nbThe; j++) {
         farField[i][j] = 10 * log10(farField[i][j]);
         ffmin = std::min(ffmin, farField[i][j]);
         ffmax = std::max(ffmax, farField[i][j]);
@@ -471,8 +471,8 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
     }
   }
 
-  for(int i = 0; i <= _NbPhi; i++) {
-    for(int j = 0; j <= _NbThe; j++) {
+  for(int i = 0; i <= _nbPhi; i++) {
+    for(int j = 0; j <= _nbThe; j++) {
       double df = (ffmax - ffmin);
       if(!df) {
         Msg::Warning("zero far field range");
@@ -510,9 +510,9 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
       Msg::Error("Could not open file '%s'", _outFile.c_str());
   }
 
-  for(int i = 0; i < _NbPhi; i++) {
-    for(int j = 0; j < _NbThe; j++) {
-      if(_NbPhi == 1 || _NbThe == 1) {
+  for(int i = 0; i < _nbPhi; i++) {
+    for(int j = 0; j < _nbThe; j++) {
+      if(_nbPhi == 1 || _nbThe == 1) {
         dataFar->NbSP++;
         dataFar->SP.push_back(x[i][j]);
         dataFar->SP.push_back(y[i][j]);

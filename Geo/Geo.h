@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GEO_H_
-#define _GEO_H_
+#ifndef GEO_H
+#define GEO_H
 
 // Internal data structures and functions for the built-in CAD kernel. This is
 // legacy code and should never be used directly: use GEO_Internals instead, or
@@ -246,6 +246,13 @@ int RecognizeSurfaceLoop(List_T *liste, int *loop);
 void SortEdgesInLoop(int num, List_T *edges, bool orient = false);
 void SetSurfaceGeneratrices(Surface *s, List_T *loops);
 void SetVolumeSurfaces(Volume *v, List_T *loops);
+
+void SetTranslationMatrix(double matrix[4][4], double T[3]);
+void SetSymmetryMatrix(double matrix[4][4], double A, double B, double C,
+                       double D);
+void SetDilatationMatrix(double matrix[4][4], double T[3], double A,
+                         double B, double C);
+void SetRotationMatrix(double matrix[4][4], double Axe[3], double alpha);
 
 int NEWPOINT();
 int NEWLINE();

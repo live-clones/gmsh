@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _DEFAULT_OPTIONS_H_
-#define _DEFAULT_OPTIONS_H_
+#ifndef DEFAULT_OPTIONS_H
+#define DEFAULT_OPTIONS_H
 
 #include "GmshConfig.h"
 #include "GmshDefines.h"
@@ -144,7 +144,7 @@ StringXString GeometryOptions_String[] = {
   { F|O, "DoubleClickedVolumeCommand" , opt_geometry_double_clicked_volume_command, "" ,
     "Command parsed when double-clicking on a volume" },
 
-  { F|O, "OCCTargetUnit" , opt_geometry_occ_target_unit , "M" ,
+  { F|O, "OCCTargetUnit" , opt_geometry_occ_target_unit , "" ,
     "Length unit to which coordinates from STEP and IGES files are converted to when "
     "imported by OpenCASCADE, e.g. 'M' for meters (leave empty to keep the unit defined "
     "in the STEP and IGES file)"},
@@ -559,10 +559,10 @@ StringXNumber GeneralOptions_Number[] = {
     "Width (in pixels) of the graphic window" },
 
   { F|S, "HighOrderToolsPositionX" , opt_general_hot_position0 , 650. ,
-    "Horizontal position (in pixels) of the upper left corner of the high order "
+    "Horizontal position (in pixels) of the upper left corner of the high-order "
     "tools window" },
   { F|S, "HighOrderToolsPositionY" , opt_general_hot_position1 , 150. ,
-    "Vertical position (in pixels) of the upper left corner of the high order "
+    "Vertical position (in pixels) of the upper left corner of the high-order "
     "tools window" },
   { F|O, "HighResolutionGraphics" , opt_general_high_resolution_graphics , 1. ,
     "Use high-resolution OpenGL graphics (e.g. for Macs with retina displays)" },
@@ -881,6 +881,8 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "OCCAutoFix" , opt_geometry_occ_auto_fix , 1. ,
     "Automatically fix orientation of wires, faces, shells and volumes when creating"
     " new entities" },
+  { F|O, "OCCBooleanPreserveNumbering" , opt_geometry_occ_boolean_preserve_numbering , 1. ,
+    "Try to preserve numbering of entities through OCC boolean operations" },
   { F|O, "OCCDisableSTL" , opt_geometry_occ_disable_stl , 0. ,
     "Disable STL computation" },
   { F|O, "OCCFixDegenerated" , opt_geometry_occ_fix_degenerated , 0. ,
@@ -889,14 +891,14 @@ StringXNumber GeometryOptions_Number[] = {
     "Fix small edges in STEP, IGES and BRep models" },
   { F|O, "OCCFixSmallFaces" , opt_geometry_occ_fix_small_faces , 0. ,
     "Fix small faces in STEP, IGES and BRep models" },
-  { F|O, "OCCSewFaces" , opt_geometry_occ_sew_faces , 0. ,
-    "Sew faces in STEP, IGES and BRep models" },
+  { F|O, "OCCImportLabels" , opt_geometry_occ_import_labels , 1. ,
+    "Import labels and colors from STEP models" },
   { F|O, "OCCParallel" , opt_geometry_occ_parallel , 0. ,
     "Use multi-threaded OCC boolean operators" },
-  { F|O, "OCCBooleanPreserveNumbering" , opt_geometry_occ_boolean_preserve_numbering , 1. ,
-    "Try to preserve numbering of entities through OCC boolean operations" },
   { F|O, "OCCScaling" , opt_geometry_occ_scaling , 1. ,
     "Scale STEP, IGES and BRep model by given factor" },
+  { F|O, "OCCSewFaces" , opt_geometry_occ_sew_faces , 0. ,
+    "Sew faces in STEP, IGES and BRep models" },
   { F,   "OffsetX" , opt_geometry_offset0 , 0. ,
     "Model display offset along X-axis (in model coordinates)" },
   { F,   "OffsetY" , opt_geometry_offset1 , 0. ,
@@ -980,11 +982,10 @@ StringXNumber GeometryOptions_Number[] = {
 
 StringXNumber MeshOptions_Number[] = {
   { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_AUTO ,
-    "2D mesh algorithm (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal, 7: BAMG, "
-    "8: DelQuad)" },
+    "2D mesh algorithm (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, "
+    "7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)" },
   { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY ,
-    "3D mesh algorithm (1: Delaunay, 4: Frontal, 5: Frontal Delaunay, 6: Frontal Hex, "
-    "7: MMG3D, 9: R-tree, 10: HXT)" },
+    "3D mesh algorithm (1: Delaunay, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT)" },
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" },
   { F|O, "AngleToleranceFacetOverlap" , opt_mesh_angle_tolerance_facet_overlap , 0.1,
@@ -1037,7 +1038,7 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "ElementOrder" , opt_mesh_order , 1. ,
     // "Order" is a reserved token in the parser
-    "Element order (1: linear elements, N (<6): elements of higher order)" },
+    "Element order (1: first order elements)" },
   { F|O, "Explode" , opt_mesh_explode , 1.0 ,
     "Element shrinking factor (between 0 and 1)" },
 
@@ -1052,21 +1053,25 @@ StringXNumber MeshOptions_Number[] = {
     "38: ir3, 39: inp, 40: ply2, 41: celum, 42: su2, 47: tochnog, 49: neu, 50: matlab)" },
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. ,
     "Display mesh hexahedra?" },
-  { F|0, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,
-    "Number of high order mesh elements to consider for optimization"},
+  { F|O, "HighOrderIterMax", opt_mesh_ho_iter_max, 100,
+    "Maximum number of iterations in high-order optimization pass"},
+  { F|O, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,
+    "Number of layers around a problematic element to consider for high-order optimization"},
   { F|O, "HighOrderOptimize" , opt_mesh_ho_optimize , 0.,
-    "Optimize high order meshes?" },
+    "Optimize high-order meshes? (-1: elastic smoothing, 1: optimization, 2: both)" },
+  { F|O, "HighOrderPassMax", opt_mesh_ho_pass_max, 25,
+    "Maximum number of high-order optimization passes (moving barrier)"},
   { F|O, "HighOrderPeriodic" , opt_mesh_ho_periodic , 0.,
-    "Correct high order optimization for periodic connections?" },
-  { F|0, "HighOrderPoissonRatio", opt_mesh_ho_poisson, 0.33,
-    "Poisson ratio of the material used in the elastic smoother for high order meshes"
-    "Must be between -1.0 and 0.5, excluded"},
+    "Correct high-order optimization for periodic connections?" },
+  { F|O, "HighOrderPoissonRatio", opt_mesh_ho_poisson, 0.33,
+    "Poisson ratio of the material used in the elastic smoother for high-order meshes "
+    "(between -1.0 and 0.5, excluded)"},
+  { F|O, "HighOrderPrimSurfMesh", opt_mesh_ho_prim_surf_mesh, 0,
+    "Try to fix flipped surface mesh elements in high-order optimizer?"},
   { F|O, "HighOrderThresholdMin", opt_mesh_ho_threshold_min, 0.1,
-    "Minimum threshold for high order element optimization"},
+    "Minimum threshold for high-order element optimization"},
   { F|O, "HighOrderThresholdMax", opt_mesh_ho_threshold_max, 2.0,
-    "Maximum threshold for high order element optimization"},
-  { F|O, "HighOrderOptPrimSurfMesh", opt_mesh_ho_opt_prim_surf_mesh, 0,
-    "Try to fix flipped surface mesh elements in high-order optimizer"},
+    "Maximum threshold for high-order element optimization"},
 
   { F|O, "LabelSampling" , opt_mesh_label_sampling , 1. ,
     "Label sampling rate (display one label every `LabelSampling' elements)" },
@@ -1108,10 +1113,12 @@ StringXNumber MeshOptions_Number[] = {
     "radians when the mesh size of adapted to the curvature)" },
   { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
     "Minimum number of points used to mesh a (non-straight) curve" },
-  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.0 ,
+  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.1 ,
     "Version of the MSH file format to use" },
   { F|O, "MedFileMinorVersion" , opt_mesh_med_file_minor_version , -1. ,
     "Minor version of the MED file format to use (-1: use minor version of the MED library)" },
+  { F|O, "MedImportGroupsOfNodes" , opt_mesh_med_import_groups_of_nodes , 0. ,
+    "Import groups of nodes (0: no; 1: create geometrical point for each node)?" },
   { F|O, "PartitionHexWeight" , opt_mesh_partition_hex_weight , -1 ,
     "Weight of hexahedral element for METIS load balancing (-1: automatic)" },
   { F|O, "PartitionLineWeight" , opt_mesh_partition_line_weight , -1 ,
@@ -1165,7 +1172,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Normals" , opt_mesh_normals , 0.0 ,
     "Display size of normal vectors (in pixels)" },
   { F|O, "NumSubEdges" , opt_mesh_num_sub_edges , 2. ,
-    "Number of edge subdivisions when displaying high order elements" },
+    "Number of edge subdivisions when displaying high-order elements" },
 
   { F|O, "Optimize" , opt_mesh_optimize , 1. ,
     "Optimize the mesh to improve the quality of tetrahedral elements" },
@@ -1271,6 +1278,8 @@ StringXNumber MeshOptions_Number[] = {
     "Smooth the mesh normals?" },
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,
     "Ratio between mesh sizes at nodes of a same edge (used in BAMG)" },
+  { F|O, "StlOneSolidPerSurface" , opt_mesh_stl_one_solid_per_surface, 0. ,
+    "Create one solid per surface when exporting STL files?" },
   { F|O, "StlRemoveDuplicateTriangles" , opt_mesh_stl_remove_duplicate_triangles, 0. ,
     "Remove duplicate triangles when importing STL files?" },
   { F|O, "SubdivisionAlgorithm" , opt_mesh_algo_subdivide , 0 ,

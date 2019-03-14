@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CUT_GRID_H_
-#define _CUT_GRID_H_
+#ifndef CUT_GRID_H
+#define CUT_GRID_H
 
 #include "Plugin.h"
 

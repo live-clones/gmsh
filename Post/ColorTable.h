@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _COLORTABLE_H_
-#define _COLORTABLE_H_
+#ifndef COLORTABLE_H
+#define COLORTABLE_H
 
 #include <stdio.h>
 #include <vector>

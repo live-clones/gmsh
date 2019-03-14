@@ -83,9 +83,9 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
       else if(opt->lineType == 1)
         ctx->drawCylinder(opt->lineWidth, x, y, z, opt->light);
       else { // 2D (for now) MNT diagrams for frames
-        float l = sqrt((p0[0] - p1[0]) * (p0[0] - p1[0]) +
-                       (p0[1] - p1[1]) * (p0[1] - p1[1]) +
-                       (p0[2] - p1[2]) * (p0[2] - p1[2]));
+        float l = std::sqrt((p0[0] - p1[0]) * (p0[0] - p1[0]) +
+                            (p0[1] - p1[1]) * (p0[1] - p1[1]) +
+                            (p0[2] - p1[2]) * (p0[2] - p1[2]));
 #if defined(HAVE_VISUDEV)
         double v0 = *va->getNormalArray(3 * i);
         double v1 = *va->getNormalArray(3 * (i + 1));
@@ -140,11 +140,9 @@ static void drawEllipseArray(drawContext *ctx, PView *p, VertexArray *va)
     double lmin = opt->arrowSizeMin * ctx->pixel_equiv_x / ctx->s[0] / 2;
     for(int j = 0; j < 3; j++) {
       float *v = va->getVertexArray(3 * (i + j + 1));
-      double l = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+      double l = std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
       double l2 = std::min(1., l / lmax);
-      for(int k = 0; k < 3; k++) {
-        vv[j][k] = v[k] / l * (scale * l2 + lmin);
-      }
+      for(int k = 0; k < 3; k++) { vv[j][k] = v[k] / l * (scale * l2 + lmin); }
     }
     glColor4ubv((GLubyte *)va->getColorArray(4 * i));
     if(opt->tensorType == PViewOptions::Ellipsoid)
@@ -614,7 +612,7 @@ void drawContext::drawPost()
 
   if(!CTX::instance()->post.draw) return;
 
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     bool changed = PView::list[i]->fillVertexArrays();
     if(changed) Msg::Debug("post-pro vertex arrays have changed");
 #if defined(HAVE_FLTK) && defined(__APPLE__)

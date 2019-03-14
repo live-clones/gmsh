@@ -19,7 +19,9 @@
 #endif
 
 StringXNumber TriangulateOptions_Number[] = {
-  {GMSH_FULLRC, "Algorithm", NULL, 0.}, {GMSH_FULLRC, "View", NULL, -1.}};
+  {GMSH_FULLRC, "Algorithm", NULL, 1.},
+  {GMSH_FULLRC, "View", NULL, -1.}
+};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterTriangulatePlugin()
@@ -98,13 +100,13 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
 
   if(points.size() < 3) {
     Msg::Error("Need at least 3 points to triangulate");
-    for(unsigned int i = 0; i < points.size(); i++) delete points[i];
+    for(std::size_t i = 0; i < points.size(); i++) delete points[i];
     return v1;
   }
 
   // get bounding box
   SBoundingBox3d bbox;
-  for(unsigned int i = 0; i < points.size(); i++) bbox += points[i]->point();
+  for(std::size_t i = 0; i < points.size(); i++) bbox += points[i]->point();
   double lc = 10 * norm(SVector3(bbox.max(), bbox.min()));
 
   // project points onto plane
@@ -113,7 +115,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   s->computeMeanPlane(points);
   double x, y, z, VX[3], VY[3];
   s->getMeanPlaneData(VX, VY, x, y, z);
-  for(unsigned int i = 0; i < points.size(); i++) {
+  for(std::size_t i = 0; i < points.size(); i++) {
     double vec[3] = {points[i]->x() - x, points[i]->y() - y,
                      points[i]->z() - z};
     double u = prosca(vec, VX);
@@ -131,7 +133,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
 
     // build a point record structure for the divide and conquer algorithm
     DocRecord doc(points.size());
-    for(unsigned int i = 0; i < points.size(); i++) {
+    for(std::size_t i = 0; i < points.size(); i++) {
       double XX = CTX::instance()->mesh.randFactor * lc * (double)rand() /
                   (double)RAND_MAX;
       double YY = CTX::instance()->mesh.randFactor * lc * (double)rand() /
@@ -199,7 +201,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
 
     Msg::Info("Using new triangulation code");
     std::vector<MTriangle *> tris;
-    for(unsigned int i = 0; i < points.size(); i++) {
+    for(std::size_t i = 0; i < points.size(); i++) {
       double XX = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
       double YY = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
       points[i]->x() += XX;
@@ -209,7 +211,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
 
     v2 = new PView();
     data2 = getDataList(v2);
-    for(unsigned int i = 0; i < tris.size(); i++) {
+    for(std::size_t i = 0; i < tris.size(); i++) {
       PointData *p[3];
       p[0] = (PointData *)tris[i]->getVertex(0);
       p[1] = (PointData *)tris[i]->getVertex(1);
@@ -246,7 +248,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
     }
   }
 
-  for(unsigned int i = 0; i < points.size(); i++) delete points[i];
+  for(std::size_t i = 0; i < points.size(); i++) delete points[i];
 
   for(int i = 0; i < data1->getNumTimeSteps(); i++)
     data2->Time.push_back(data1->getTime(i));

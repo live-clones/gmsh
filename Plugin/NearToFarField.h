@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _NEARTOFARFIELD_H_
-#define _NEARTOFARFIELD_H_
+#ifndef NEARTOFARFIELD_H
+#define NEARTOFARFIELD_H
 
 #include "Plugin.h"
 #include "shapeFunctions.h"

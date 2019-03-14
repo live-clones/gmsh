@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MEDGE_H_
-#define _MEDGE_H_
+#ifndef MEDGE_H
+#define MEDGE_H
 
 #include "MVertex.h"
 #include "SVector3.h"

@@ -132,7 +132,7 @@ void SetBoundingBox(bool aroundVisible)
 
 #if defined(HAVE_POST)
   if(bb.empty()) {
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(!PView::list[i]->getData()->getBoundingBox().empty())
         if(!aroundVisible || PView::list[i]->getOptions()->visible)
           bb += PView::list[i]->getData()->getBoundingBox();
@@ -208,7 +208,7 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
   while(!feof(gmsh_yyin)) {
     gmsh_yyparse();
     if(gmsh_yyerrorstate > 20) {
-      if(gmsh_yyerrorstate != 999) // 999 is a volontary exit
+      if(gmsh_yyerrorstate != 999) // 999 is a voluntary exit
         Msg::Error("Too many errors: aborting parser...");
       gmsh_yyflush();
       break;
@@ -558,7 +558,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
   if(FlGui::available()) {
     // go directly to the first non-empty step after the one that is requested
-    for(unsigned int i = numViewsBefore; i < PView::list.size(); i++)
+    for(std::size_t i = numViewsBefore; i < PView::list.size(); i++)
       opt_view_timestep(i, GMSH_SET | GMSH_GUI,
                         PView::list[i]->getData()->getFirstNonEmptyTimeStep(
                           opt_view_timestep(i, GMSH_GET, 0)));
@@ -610,10 +610,10 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
   fclose(fp);
 
   // store old step values
-  unsigned int n = PView::list.size();
+  std::size_t n = PView::list.size();
   std::vector<int> steps(n, 0);
   if(showLastStep) {
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       steps[i] = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
   }
 
@@ -631,7 +631,7 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
 
   // hide everything except the onelab X-Y graphs
   if(showViews == 0) {
-    for(unsigned int i = 0; i < PView::list.size(); i++) {
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
       if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB")
         PView::list[i]->getOptions()->visible = 0;
     }
@@ -639,7 +639,7 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
   else if(showViews == 2 && n < PView::list.size()) {
     // if we created new views, assume we only want to see those (and the
     // onelab X-Y graphs)
-    for(unsigned int i = 0; i < n; i++) {
+    for(std::size_t i = 0; i < n; i++) {
       if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB")
         PView::list[i]->getOptions()->visible = 0;
     }
@@ -649,7 +649,7 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
   // imaginary part for complex fields), go to the last one
   if(showLastStep) {
     steps.resize(PView::list.size(), 0);
-    for(unsigned int i = 0; i < PView::list.size(); i++) {
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
       int step = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
       if(step > steps[i] && steps[i] > 1)
         opt_view_timestep(i, GMSH_SET | GMSH_GUI, step - 1);
@@ -678,7 +678,7 @@ void ClearProject()
 
   // close the files that might have been left open by ParseFile
   if(openedFiles.size()) {
-    for(unsigned int i = 0; i < openedFiles.size(); i++) fclose(openedFiles[i]);
+    for(std::size_t i = 0; i < openedFiles.size(); i++) fclose(openedFiles[i]);
     openedFiles.clear();
   }
   Msg::Info("Done clearing all models and views");
@@ -748,7 +748,7 @@ void OpenProject(const std::string &fileName)
   std::vector<std::string> tmp = CTX::instance()->recentFiles;
   CTX::instance()->recentFiles.clear();
   CTX::instance()->recentFiles.push_back(fileName);
-  for(unsigned int i = 0; i < tmp.size(); i++) {
+  for(std::size_t i = 0; i < tmp.size(); i++) {
     if(tmp[i] != fileName) CTX::instance()->recentFiles.push_back(tmp[i]);
   }
   CTX::instance()->recentFiles.resize(10);
@@ -758,7 +758,7 @@ void OpenProject(const std::string &fileName)
 
   // close the files that might have been left open by ParseFile
   if(openedFiles.size()) {
-    for(unsigned int i = 0; i < openedFiles.size(); i++) fclose(openedFiles[i]);
+    for(std::size_t i = 0; i < openedFiles.size(); i++) fclose(openedFiles[i]);
     openedFiles.clear();
   }
 

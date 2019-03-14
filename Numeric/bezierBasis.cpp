@@ -309,7 +309,7 @@ namespace {
                                            int order, int dimSimplex)
   {
     if(exponent.size1() != point.size1() || exponent.size2() != point.size2()) {
-      Msg::Fatal("Wrong sizes for bez2lag matrix generation %d %d -- %d %d",
+      Msg::Error("Wrong sizes for bez2lag matrix generation %d %d -- %d %d",
                  exponent.size1(), point.size1(), exponent.size2(),
                  point.size2());
       return fullMatrix<double>(1, 1);
@@ -352,7 +352,7 @@ namespace {
   {
     if(exponent.size1() != point.size1() || exponent.size2() != point.size2() ||
        exponent.size2() != 3) {
-      Msg::Fatal(
+      Msg::Error(
         "Wrong sizes for pyramid's bez2lag matrix generation %d %d -- %d %d",
         exponent.size1(), point.size1(), exponent.size2(), point.size2());
       return fullMatrix<double>(1, 1);
@@ -398,7 +398,7 @@ namespace {
     fullMatrix<double> intermediate2(nbPts, nbPts);
     fullMatrix<double> subDivisor(nbSubPts, nbPts);
 
-    for(unsigned int i = 0; i < subPoints.size(); i++) {
+    for(std::size_t i = 0; i < subPoints.size(); i++) {
       fullMatrix<double> intermediate1 =
         generateBez2LagMatrix(exponents, subPoints[i], order, dimSimplex);
       lag2Bez.mult(intermediate1, intermediate2);
@@ -427,7 +427,7 @@ namespace {
     fullMatrix<double> intermediate2(nbPts, nbPts);
     fullMatrix<double> subDivisor(nbSubPts, nbPts);
 
-    for(unsigned int i = 0; i < subPoints.size(); i++) {
+    for(std::size_t i = 0; i < subPoints.size(); i++) {
       fullMatrix<double> intermediate1 =
         generateBez2LagMatrixPyramid(exponents, subPoints[i], pyr, nij, nk);
       lag2Bez.mult(intermediate1, intermediate2);
@@ -485,7 +485,7 @@ void bezierBasis::generateBezierPoints(fullMatrix<double> &points) const
   }
 }
 
-void bezierBasis::_FEpoints2BezPoints(fullMatrix<double> &points) const
+void bezierBasis::_fePoints2BezPoints(fullMatrix<double> &points) const
 {
   fullMatrix<double> tmp;
   switch(_data.elementType()) {
@@ -524,7 +524,7 @@ void bezierBasis::_FEpoints2BezPoints(fullMatrix<double> &points) const
     break;
 
   default:
-    Msg::Error("_FEpoints2BezPoints not implemented for "
+    Msg::Error("_fePoints2BezPoints not implemented for "
                "type of element %d",
                _data.elementType());
     return;
@@ -539,7 +539,7 @@ void bezierBasis::interpolate(const fullMatrix<double> &coeffs,
     result.resize(uvw.size1(), coeffs.size2());
 
   fullMatrix<double> bezuvw = uvw;
-  if(!bezCoord) _FEpoints2BezPoints(bezuvw);
+  if(!bezCoord) _fePoints2BezPoints(bezuvw);
 
   const int numCoeff = _exponents.size1();
   const int dim = _exponents.size2();
@@ -792,7 +792,7 @@ void bezierBasisRaiser::_fillRaiserData()
       for(int l = 0; l < dim; l++) {
         hash += (exp(i, l) + exp(j, l)) * pow_int(2 * order + 1, l);
       }
-      _raiser2[hashToInd2[hash]].push_back(_Data(num / den, i, j));
+      _raiser2[hashToInd2[hash]].push_back(_data(num / den, i, j));
     }
   }
 
@@ -851,7 +851,7 @@ void bezierBasisRaiser::_fillRaiserData()
           hash +=
             (exp(i, l) + exp(j, l) + exp(k, l)) * pow_int(3 * order + 1, l);
         }
-        _raiser3[hashToInd3[hash]].push_back(_Data(num / den, i, j, k));
+        _raiser3[hashToInd3[hash]].push_back(_data(num / den, i, j, k));
       }
     }
   }
@@ -916,7 +916,7 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
       for(int l = 0; l < 3; l++) {
         hash += (exp(i, l) + exp(j, l)) * pow_int(2 * orderHash + 1, l);
       }
-      _raiser2[hashToInd2[hash]].push_back(_Data(num / den, i, j));
+      _raiser2[hashToInd2[hash]].push_back(_data(num / den, i, j));
     }
   }
 
@@ -960,7 +960,7 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
           hash +=
             (exp(i, l) + exp(j, l) + exp(k, l)) * pow_int(3 * orderHash + 1, l);
         }
-        _raiser3[hashToInd3[hash]].push_back(_Data(num / den, i, j, k));
+        _raiser3[hashToInd3[hash]].push_back(_data(num / den, i, j, k));
       }
     }
   }
@@ -973,17 +973,17 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
   coeffSquare.resize(_raiser2.size(), true);
 
   if(&coeffA == &coeffB) {
-    for(unsigned int ind = 0; ind < _raiser2.size(); ++ind) {
-      for(unsigned int l = 0; l < _raiser2[ind].size(); ++l) {
-        _Data &d = _raiser2[ind][l];
+    for(std::size_t ind = 0; ind < _raiser2.size(); ++ind) {
+      for(std::size_t l = 0; l < _raiser2[ind].size(); ++l) {
+        _data &d = _raiser2[ind][l];
         coeffSquare(ind) += d.val * coeffA(d.i) * coeffB(d.j);
       }
     }
   }
   else {
-    for(unsigned int ind = 0; ind < _raiser2.size(); ++ind) {
-      for(unsigned int l = 0; l < _raiser2[ind].size(); ++l) {
-        _Data &d = _raiser2[ind][l];
+    for(std::size_t ind = 0; ind < _raiser2.size(); ++ind) {
+      for(std::size_t l = 0; l < _raiser2[ind].size(); ++l) {
+        _data &d = _raiser2[ind][l];
         coeffSquare(ind) +=
           d.val / 2 * (coeffA(d.i) * coeffB(d.j) + coeffA(d.j) * coeffB(d.i));
       }
@@ -999,17 +999,17 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
   coeffCubic.resize(_raiser3.size(), true);
 
   if(&coeffA == &coeffB && &coeffB == &coeffC) {
-    for(unsigned int ind = 0; ind < _raiser3.size(); ++ind) {
-      for(unsigned int l = 0; l < _raiser3[ind].size(); ++l) {
-        _Data &d = _raiser3[ind][l];
+    for(std::size_t ind = 0; ind < _raiser3.size(); ++ind) {
+      for(std::size_t l = 0; l < _raiser3[ind].size(); ++l) {
+        _data &d = _raiser3[ind][l];
         coeffCubic(ind) += d.val * coeffA(d.i) * coeffB(d.j) * coeffC(d.k);
       }
     }
   }
   else if(&coeffA != &coeffB && &coeffB != &coeffC) {
-    for(unsigned int ind = 0; ind < _raiser3.size(); ++ind) {
-      for(unsigned int l = 0; l < _raiser3[ind].size(); ++l) {
-        _Data &d = _raiser3[ind][l];
+    for(std::size_t ind = 0; ind < _raiser3.size(); ++ind) {
+      for(std::size_t l = 0; l < _raiser3[ind].size(); ++l) {
+        _data &d = _raiser3[ind][l];
         coeffCubic(ind) += d.val / 6 *
                            (coeffA(d.i) * coeffB(d.j) * coeffC(d.k) +
                             coeffA(d.i) * coeffB(d.k) * coeffC(d.j) +
@@ -1033,9 +1033,9 @@ void bezierBasisRaiser::computeCoeff(const fullMatrix<double> &coeffA,
   coeffSquare.resize(_raiser2.size(), coeffA.size2(), true);
 
   if(&coeffA == &coeffB) {
-    for(unsigned int ind = 0; ind < _raiser2.size(); ++ind) {
-      for(unsigned int l = 0; l < _raiser2[ind].size(); ++l) {
-        _Data &d = _raiser2[ind][l];
+    for(std::size_t ind = 0; ind < _raiser2.size(); ++ind) {
+      for(std::size_t l = 0; l < _raiser2[ind].size(); ++l) {
+        _data &d = _raiser2[ind][l];
         for(int ind2 = 0; ind2 < coeffA.size2(); ++ind2) {
           coeffSquare(ind, ind2) +=
             d.val * coeffA(d.i, ind2) * coeffB(d.j, ind2);
@@ -1044,9 +1044,9 @@ void bezierBasisRaiser::computeCoeff(const fullMatrix<double> &coeffA,
     }
   }
   else {
-    for(unsigned int ind = 0; ind < _raiser2.size(); ++ind) {
-      for(unsigned int l = 0; l < _raiser2[ind].size(); ++l) {
-        _Data &d = _raiser2[ind][l];
+    for(std::size_t ind = 0; ind < _raiser2.size(); ++ind) {
+      for(std::size_t l = 0; l < _raiser2[ind].size(); ++l) {
+        _data &d = _raiser2[ind][l];
         double val = d.val / 2;
         for(int ind2 = 0; ind2 < coeffA.size2(); ++ind2) {
           coeffSquare(ind, ind2) +=
@@ -1066,9 +1066,9 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
   coeffCubic.resize(_raiser3.size(), coeffB.size2(), true);
 
   if(&coeffB == &coeffC) {
-    for(unsigned int ind = 0; ind < _raiser3.size(); ++ind) {
-      for(unsigned int l = 0; l < _raiser3[ind].size(); ++l) {
-        _Data &d = _raiser3[ind][l];
+    for(std::size_t ind = 0; ind < _raiser3.size(); ++ind) {
+      for(std::size_t l = 0; l < _raiser3[ind].size(); ++l) {
+        _data &d = _raiser3[ind][l];
         double val = d.val / 3;
         for(int ind2 = 0; ind2 < coeffB.size2(); ++ind2) {
           coeffCubic(ind, ind2) +=
@@ -1080,9 +1080,9 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
     }
   }
   else {
-    for(unsigned int ind = 0; ind < _raiser3.size(); ++ind) {
-      for(unsigned int l = 0; l < _raiser3[ind].size(); ++l) {
-        _Data &d = _raiser3[ind][l];
+    for(std::size_t ind = 0; ind < _raiser3.size(); ++ind) {
+      for(std::size_t l = 0; l < _raiser3[ind].size(); ++l) {
+        _data &d = _raiser3[ind][l];
         double val = d.val / 6;
         for(int ind2 = 0; ind2 < coeffB.size2(); ++ind2) {
           coeffCubic(ind, ind2) +=

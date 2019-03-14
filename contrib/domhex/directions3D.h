@@ -6,8 +6,8 @@
 // Contributor(s):
 //   Tristan Carrier François Henrotte
 
-#ifndef _DIRECTION_3D_H_
-#define _DIRECTION_3D_H_
+#ifndef DIRECTION_3D_H
+#define DIRECTION_3D_H
 
 #include "GFace.h"
 #include "MEdge.h"

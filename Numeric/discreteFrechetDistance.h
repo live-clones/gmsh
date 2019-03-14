@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _DISCRETE_FRECHET_DISTANCE_
-#define _DISCRETE_FRECHET_DISTANCE_
+#ifndef DISCRETE_FRECHET_DISTANCE
+#define DISCRETE_FRECHET_DISTANCE
 
 #include <vector>
 #include "SPoint3.h"

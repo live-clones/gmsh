@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SCAL2VEC_H_
-#define _SCAL2VEC_H_
+#ifndef SCAL2VEC_H
+#define SCAL2VEC_H
 
 #include "Plugin.h"
 

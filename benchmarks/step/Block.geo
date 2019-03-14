@@ -1,5 +1,4 @@
 SetFactory("OpenCASCADE");
-Geometry.OCCTargetUnit = "MM";
 
 Merge "Block.stp";
 

@@ -49,7 +49,7 @@ void sortVertices(const std::vector<MVertex *> &v, std::vector<char> &s)
   std::vector<MVertex *> sorted = v;
   std::sort(sorted.begin(), sorted.end(), compare);
   s.reserve(sorted.size());
-  for(unsigned int i = 0; i < sorted.size(); i++)
+  for(std::size_t i = 0; i < sorted.size(); i++)
     s.push_back(
       std::distance(v.begin(), std::find(v.begin(), v.end(), sorted[i])));
 }
@@ -67,7 +67,7 @@ MFace::MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3)
 MFace::MFace(const std::vector<MVertex *> &v)
 {
   _v.reserve(v.size());
-  for(unsigned int i = 0; i < v.size(); i++) _v.push_back(v[i]);
+  for(std::size_t i = 0; i < v.size(); i++) _v.push_back(v[i]);
   sortVertices(_v, _si);
 }
 
@@ -114,7 +114,7 @@ MFaceN::MFaceN(int type, int order, const std::vector<MVertex *> &v)
   : _type(type), _order(order)
 {
   _v.resize(v.size());
-  for(unsigned int i = 0; i < v.size(); i++) _v[i] = v[i];
+  for(std::size_t i = 0; i < v.size(); i++) _v[i] = v[i];
 }
 
 MEdgeN MFaceN::getHighOrderEdge(int num, int sign) const

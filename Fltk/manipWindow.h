@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MANIP_WINDOW_H_
-#define _MANIP_WINDOW_H_
+#ifndef MANIP_WINDOW_H
+#define MANIP_WINDOW_H
 
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Value_Input.H>

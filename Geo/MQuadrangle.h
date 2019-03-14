@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MQUADRANGLE_H_
-#define _MQUADRANGLE_H_
+#ifndef MQUADRANGLE_H
+#define MQUADRANGLE_H
 
 #include "MElement.h"
 
@@ -448,15 +448,15 @@ public:
                int part = 0)
     : MQuadrangle(v0, v1, v2, v3, num, part), _vs(v), _order(order)
   {
-    for(unsigned int i = 0; i < _vs.size(); i++)
+    for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
   MQuadrangleN(const std::vector<MVertex *> &v, char order, int num = 0,
                int part = 0)
     : MQuadrangle(v[0], v[1], v[2], v[3], num, part), _order(order)
   {
-    for(unsigned int i = 4; i < v.size(); i++) _vs.push_back(v[i]);
-    for(unsigned int i = 0; i < _vs.size(); i++)
+    for(std::size_t i = 4; i < v.size(); i++) _vs.push_back(v[i]);
+    for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
   ~MQuadrangleN() {}
@@ -497,7 +497,7 @@ public:
   {
     v.resize(4 + _vs.size());
     MQuadrangle::_getFaceVertices(v);
-    for(unsigned int i = 0; i != _vs.size(); ++i) v[i + 4] = _vs[i];
+    for(std::size_t i = 0; i != _vs.size(); ++i) v[i + 4] = _vs[i];
   }
   virtual const char *getStringForPOS() const
   {

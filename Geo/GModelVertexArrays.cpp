@@ -148,14 +148,14 @@ bool isElementVisible(MElement *ele)
 
 template <class T> static bool areAllElementsVisible(std::vector<T *> &elements)
 {
-  for(unsigned int i = 0; i < elements.size(); i++)
+  for(std::size_t i = 0; i < elements.size(); i++)
     if(!isElementVisible(elements[i])) return false;
   return true;
 }
 
 template <class T> static bool areSomeElementsCurved(std::vector<T *> &elements)
 {
-  for(unsigned int i = 0; i < elements.size(); i++)
+  for(std::size_t i = 0; i < elements.size(); i++)
     if(elements[i]->getPolynomialOrder() > 1) return true;
   return false;
 }
@@ -163,7 +163,7 @@ template <class T> static bool areSomeElementsCurved(std::vector<T *> &elements)
 template <class T>
 static void addSmoothNormals(GEntity *e, std::vector<T *> &elements)
 {
-  for(unsigned int i = 0; i < elements.size(); i++) {
+  for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
     const bool curved =
       (ele->getPolynomialOrder() > 1) &&
@@ -193,7 +193,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
 #endif
-  for(unsigned int i = 0; i < elements.size(); i++) {
+  for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
 
     if(!isElementVisible(ele) || ele->getDim() < 1) continue;
@@ -382,7 +382,7 @@ private:
     if(CTX::instance()->mesh.volumesEdges) {
       // suppose edge shared by 4 elements on averge (pessmistic)
       int numLP = 0;
-      for(unsigned int i = 0; i < r->polyhedra.size(); i++)
+      for(std::size_t i = 0; i < r->polyhedra.size(); i++)
         numLP += 2 * r->polyhedra[i]->getNumEdges();
       num += (12 * r->tetrahedra.size() + 24 * r->hexahedra.size() +
               18 * r->prisms.size() + 16 * r->pyramids.size() +
@@ -399,7 +399,7 @@ private:
     int num = 0;
     if(CTX::instance()->mesh.volumesFaces) {
       int numFP = 0;
-      for(unsigned int i = 0; i < r->polyhedra.size(); i++)
+      for(std::size_t i = 0; i < r->polyhedra.size(); i++)
         numFP += r->polyhedra[i]->getNumFaces();
       num += (4 * r->tetrahedra.size() + 12 * r->hexahedra.size() +
               8 * r->prisms.size() + 6 * r->pyramids.size() +

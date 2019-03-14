@@ -15,9 +15,9 @@ mathEvaluator::mathEvaluator(std::vector<std::string> &expressions,
   _expressions.resize(expressions.size());
   _variables.resize(variables.size(), 0.);
   bool error = false;
-  for(unsigned int i = 0; i < expressions.size(); i++) {
+  for(std::size_t i = 0; i < expressions.size(); i++) {
     _expressions[i] = new smlib::mathex();
-    for(unsigned int j = 0; j < variables.size(); j++)
+    for(std::size_t j = 0; j < variables.size(); j++)
       _expressions[i]->addvar(variables[j], &_variables[j]);
     try {
       _expressions[i]->expression(expressions[i]);
@@ -35,7 +35,7 @@ mathEvaluator::mathEvaluator(std::vector<std::string> &expressions,
     }
   }
   if(error) {
-    for(unsigned int i = 0; i < _expressions.size(); i++)
+    for(std::size_t i = 0; i < _expressions.size(); i++)
       delete(_expressions[i]);
     _expressions.clear();
     expressions.clear();
@@ -44,7 +44,7 @@ mathEvaluator::mathEvaluator(std::vector<std::string> &expressions,
 
 mathEvaluator::~mathEvaluator()
 {
-  for(unsigned int i = 0; i < _expressions.size(); i++) delete(_expressions[i]);
+  for(std::size_t i = 0; i < _expressions.size(); i++) delete(_expressions[i]);
 }
 
 bool mathEvaluator::eval(const std::vector<double> &values,
@@ -62,15 +62,15 @@ bool mathEvaluator::eval(const std::vector<double> &values,
     return false;
   }
 
-  for(unsigned int i = 0; i < values.size(); i++) _variables[i] = values[i];
+  for(std::size_t i = 0; i < values.size(); i++) _variables[i] = values[i];
 
-  for(unsigned int i = 0; i < _expressions.size(); i++) {
+  for(std::size_t i = 0; i < _expressions.size(); i++) {
     try {
       res[i] = _expressions[i]->eval();
     } catch(smlib::mathex::error &e) {
       Msg::Error(e.what());
       double eps = 1.e-20;
-      for(unsigned int j = 0; j < values.size(); j++)
+      for(std::size_t j = 0; j < values.size(); j++)
         _variables[j] = values[j] + eps;
       try {
         res[i] = _expressions[i]->eval();

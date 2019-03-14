@@ -272,7 +272,7 @@ static void drawScale(drawContext *ctx, PView *p, double xmin, double ymin,
 void drawContext::drawScales()
 {
   std::vector<PView *> scales;
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     PViewData *data = PView::list[i]->getData();
     PViewOptions *opt = PView::list[i]->getOptions();
     if(!data->getDirty() && opt->visible && opt->showScale &&
@@ -286,7 +286,7 @@ void drawContext::drawScales()
                                  CTX::instance()->glFontSize);
   char label[1024];
   double maxw = 0.;
-  for(unsigned int i = 0; i < scales.size(); i++) {
+  for(std::size_t i = 0; i < scales.size(); i++) {
     PViewOptions *opt = scales[i]->getOptions();
     sprintf(label, opt->format.c_str(), -M_PI * 1.e-4);
     maxw = std::max(maxw, drawContext::global()->getStringWidth(label));
@@ -295,7 +295,7 @@ void drawContext::drawScales()
   const double tic = 10., bar_size = 16.;
   double width = 0., width_prev = 0., width_total = 0.;
 
-  for(unsigned int i = 0; i < scales.size(); i++) {
+  for(std::size_t i = 0; i < scales.size(); i++) {
     PView *p = scales[i];
     PViewData *data = p->getData();
     PViewOptions *opt = p->getOptions();

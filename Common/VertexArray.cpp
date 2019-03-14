@@ -266,7 +266,7 @@ char *VertexArray::toChar(int num, const std::string &name, int type,
   memcpy(&bytes[index], &nn, is); index += is;
   if(ns){ memcpy(&bytes[index], &_normals[0], ns); index += ns; }
   memcpy(&bytes[index], &cn, is); index += is;
-  if(cs){ memcpy(&bytes[index], &_colors[0], cs); index += cs; }
+  if(cs){ memcpy(&bytes[index], &_colors[0], cs); /* index += cs; */ }
   return bytes;
 }
 
@@ -294,7 +294,7 @@ int VertexArray::decodeHeader(int length, const char *bytes, int swap,
   if(ss){
     std::vector<char> n(ss);
     memcpy(&n[0], &bytes[index], ss); index += ss;
-    for(unsigned int i = 0; i < n.size(); i++) name += n[i];
+    for(std::size_t i = 0; i < n.size(); i++) name += n[i];
   }
   memcpy(&type, &bytes[index], is); index += is;
   memcpy(&min, &bytes[index], ds); index += ds;
@@ -336,7 +336,7 @@ void VertexArray::fromChar(int length, const char *bytes, int swap)
   int cn; memcpy(&cn, &bytes[index], is); index += is;
   if(cn){
     _colors.resize(cn); int cs = cn * sizeof(unsigned char);
-    memcpy(&_colors[0], &bytes[index], cs); index += cs;
+    memcpy(&_colors[0], &bytes[index], cs); /* index += cs; */
   }
 }
 

@@ -336,36 +336,29 @@ Default value: @code{10}
 @end table
 
 @item Plugin(Distance)
-Plugin(Distance) computes distances to physical entities in a mesh.@*
+Plugin(Distance) computes distances to entities in a mesh.@*
 @*
-Define the physical entities to which the distance is computed. If Point=0, Line=0, and Surface=0, then the distance is computed to all the boundaries of the mesh (edges in 2D and faces in 3D).@*
+If `PhysicalPoint', `PhysicalLine' and `PhysicalSurface' are 0, the distance is computed to all the boundaries. Otherwise the distance is computed to the given physical group.@*
 @*
-Computation<0. computes the geometrical euclidian distance (warning: different than the geodesic distance), and  Computation=a>0.0 solves a PDE on the mesh with the diffusion constant mu = a*bbox, with bbox being the max size of the bounding box of the mesh (see paper Legrand 2006).@*
+If `DistanceType' is 0, the plugin computes the geometrical Euclidean distance using the naive O(N^2) algorithm. If `DistanceType' > 0, the plugin computes an approximate distance by solving a PDE with a diffusion constant equal to `DistanceType' time the maximum size of the bounding box of the mesh as in [Legrand et al. 2006].@*
 @*
-Min Scale and max Scale, scale the distance function. If min Scale<0 and max Scale<0, then no scaling is applied to the distance function.@*
+Positive `MinScale' and `MaxScale' scale the distance function.@*
 @*
-Plugin(Distance) creates a new distance view and also saves the view in the fileName.pos file.
-String options:
-@table @code
-@item Filename
-Default value: @code{"distance.pos"}
-@end table
+Plugin(Distance) creates one new view.
 Numeric options:
 @table @code
-@item PhysPoint
+@item PhysicalPoint
 Default value: @code{0}
-@item PhysLine
+@item PhysicalLine
 Default value: @code{0}
-@item PhysSurface
+@item PhysicalSurface
 Default value: @code{0}
-@item Computation
-Default value: @code{-1}
+@item DistanceType
+Default value: @code{0}
 @item MinScale
-Default value: @code{-1}
+Default value: @code{0}
 @item MaxScale
-Default value: @code{-1}
-@item Orthogonal
-Default value: @code{-1}
+Default value: @code{0}
 @end table
 
 @item Plugin(Divergence)
@@ -440,27 +433,6 @@ Default value: @code{1}
 Default value: @code{-1}
 @item View
 Default value: @code{-1}
-@end table
-
-@item Plugin(FaultZone)
-Plugin(FaultZone) convert all the embedded lines of an existing surfacic mesh to flat quadrangles. Flat quadrangles represent joint elements suitable to model a fault zone with Code_Aster.@*
-@*
-`SurfaceTag' must be an existing plane surface containing embedded lines. Embedded lines must have been added to the surface via the command Line In Surface. The surface must be meshed with quadratic incomplete elements.@*
-@*
-`Thickness' is the thickness of the flat quadrangles. Set a value different to zero can be helpful to check the connectivity. @*
-@*
-`Prefix' is the prefix of the name of physicals containing the new embedded. All physicals containing embedded lines are replaced by physicals containing the corresponding joint elements.
-String options:
-@table @code
-@item Prefix
-Default value: @code{"FAMI_"}
-@end table
-Numeric options:
-@table @code
-@item SurfaceTag
-Default value: @code{1}
-@item Thickness
-Default value: @code{0}
 @end table
 
 @item Plugin(FieldFromAmplitudePhase)
@@ -784,7 +756,11 @@ Default value: @code{2000}
 @end table
 
 @item Plugin(MeshVolume)
-Plugin(MeshVolume) computes the volume of the mesh. Only the elements tagged with the physical given in 'Physical' and with the dimension given in 'Dimension' are taken into account. If 'Physical' is equal to -1, the entire mesh (of the given dimension) is considered.
+Plugin(MeshVolume) computes the volume of the mesh.@*
+@*
+Only the elements in the physical group `Physical' of dimension `Dimension' are taken into account, unless 'Physical' is negative, in which case all the elements of the given `Dimension' are considered. If `Dimension` is negative, all the elments are considered.@*
+@*
+Plugin(MeshVolume) creates one new view.
 Numeric options:
 @table @code
 @item Physical
@@ -940,7 +916,7 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(NewView)
-Plugin(NewView) creates a new model-based view from the current mesh, with `NumComp' field components.@*
+Plugin(NewView) creates a new model-based view from the current mesh, with `NumComp' field components, set to value `Value'.@*
 @*
 If `ViewTag' is positive, force that tag for the created view.
 String options:
@@ -952,6 +928,8 @@ Numeric options:
 @table @code
 @item NumComp
 Default value: @code{1}
+@item Value
+Default value: @code{0}
 @item ViewTag
 Default value: @code{-1}
 @end table
@@ -1117,7 +1095,7 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(ShowNeighborElements)
-Plugin(ShowNeighborElements) allows to set visible some given elements  and a layer of elements around them, the other being set invisible.
+Plugin(ShowNeighborElements) sets visible some elements and a layer of elements around them, the other being set invisible.
 Numeric options:
 @table @code
 @item NumLayers
@@ -1135,18 +1113,26 @@ Default value: @code{0}
 @end table
 
 @item Plugin(SimplePartition)
-Plugin(SimplePartition) partitions the current mesh into `NumSlices' slices, along the X-, Y- or Z-axis depending on the value of `Direction' (0,1,2). The plugin creates partition topology if `CreateTopology' is set.
+Plugin(SimplePartition) partitions the current mesh into `NumSlicesX', `NumSlicesY' and `NumSlicesZ' slices along the X-, Y- and Z-axis, respectively. The distribtion of these slices is governed by `MappingX', `MappingY' and `MappingZ', where `t' is a normalized absissa along each direction. (Setting `MappingX' to `t' will thus lead to equidistant slices along the X-axis.)@*
+@*
+The plugin creates the topology of the partitioned entities if `CreateTopology' is set.
 String options:
 @table @code
-@item Mapping
+@item MappingX
+Default value: @code{"t"}
+@item MappingY
+Default value: @code{"t"}
+@item MappingZ
 Default value: @code{"t"}
 @end table
 Numeric options:
 @table @code
-@item NumSlices
+@item NumSlicesX
 Default value: @code{4}
-@item Direction
-Default value: @code{0}
+@item NumSlicesY
+Default value: @code{1}
+@item NumSlicesZ
+Default value: @code{1}
 @item CreateTopology
 Default value: @code{1}
 @end table
@@ -1301,9 +1287,6 @@ Numeric options:
 Default value: @code{-1}
 @end table
 
-@item Plugin(ThinLayerFixMesh)
-Fix the mesh in thin parts
-
 @item Plugin(Transform)
 Plugin(Transform) transforms the homogeneous node coordinates (x,y,z,1) of the elements in the view `View' by the matrix@*
 @*
@@ -1357,7 +1340,7 @@ Plugin(Triangulate) creates one new view.
 Numeric options:
 @table @code
 @item Algorithm
-Default value: @code{0}
+Default value: @code{1}
 @item View
 Default value: @code{-1}
 @end table

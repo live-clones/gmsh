@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MELEMENT_OCTREE_
-#define _MELEMENT_OCTREE_
+#ifndef MELEMENT_OCTREE
+#define MELEMENT_OCTREE
 
 #include <vector>
 

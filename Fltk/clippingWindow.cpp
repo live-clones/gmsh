@@ -28,7 +28,7 @@ static void clip_update_cb(Fl_Widget *w, void *data)
     int idx = FlGui::instance()->clipping->choice->value();
     CTX::instance()->geom.clip &= ~(1 << idx);
     CTX::instance()->mesh.clip &= ~(1 << idx);
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       PView::list[i]->getOptions()->clip &= ~(1 << idx);
     for(int i = 0; i < FlGui::instance()->clipping->browser->size(); i++) {
       if(FlGui::instance()->clipping->browser->selected(i + 1)) {
@@ -48,7 +48,7 @@ static void clip_update_cb(Fl_Widget *w, void *data)
   else { // box tab
     CTX::instance()->geom.clip = 0;
     CTX::instance()->mesh.clip = 0;
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       PView::list[i]->getOptions()->clip = 0;
     for(int i = 0; i < FlGui::instance()->clipping->browser->size(); i++) {
       if(FlGui::instance()->clipping->browser->selected(i + 1)) {
@@ -111,7 +111,7 @@ static void clip_update_cb(Fl_Widget *w, void *data)
     for(int clip = 0; clip < 6; clip++) {
       if(CTX::instance()->mesh.clip)
         CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
-      for(unsigned int index = 0; index < PView::list.size(); index++)
+      for(std::size_t index = 0; index < PView::list.size(); index++)
         if(PView::list[index]->getOptions()->clip)
           PView::list[index]->setChanged(true);
     }
@@ -145,7 +145,7 @@ static void clip_reset_cb(Fl_Widget *w, void *data)
 {
   CTX::instance()->geom.clip = 0;
   CTX::instance()->mesh.clip = 0;
-  for(unsigned int index = 0; index < PView::list.size(); index++)
+  for(std::size_t index = 0; index < PView::list.size(); index++)
     PView::list[index]->getOptions()->clip = 0;
 
   // Warning: for consistency these reset values should match the
@@ -164,7 +164,7 @@ static void clip_reset_cb(Fl_Widget *w, void *data)
 
   if(CTX::instance()->clipWholeElements) {
     CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
-    for(unsigned int index = 0; index < PView::list.size(); index++)
+    for(std::size_t index = 0; index < PView::list.size(); index++)
       PView::list[index]->setChanged(true);
   }
 
@@ -291,8 +291,8 @@ void clippingWindow::resetBrowser()
   browser->clear();
   browser->add("Geometry");
   browser->add("Mesh");
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
-    sprintf(str, "View [%d]", i);
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
+    sprintf(str, "View [%lu]", i);
     browser->add(str);
   }
 

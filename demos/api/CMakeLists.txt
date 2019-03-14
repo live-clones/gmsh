@@ -42,6 +42,26 @@ foreach(DEMO ${DEMOS})
   if(GUI)
     add_executable(${DEMONAME} WIN32 MACOSX_BUNDLE ${DEMO})
     if(APPLE)
+      file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${DEMONAME}.plist
+           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
+            <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\"\
+             \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n\
+            <plist version=\"1.0\">\n\
+              <dict>\n\
+                <key>CFBundleName</key><string>${DEMONAME}</string>\n\
+                <key>CFBundleExecutable</key><string>${DEMONAME}</string>\n\
+                <key>CFBundlePackageType</key><string>APPL</string>\n\
+                <key>CFBundleVersion</key><string>1.0.0</string>\n\
+                <key>CFBundleShortVersionString</key><string>1.0.0</string>\n\
+                <key>CFBundleIconFile</key><string></string>\n\
+                <key>CFBundleSignature</key><string>????</string>\n\
+                <key>CFBundleGetInfoString</key><string></string>\n\
+                <key>CFBundleIdentifier</key><string></string>\n\
+                <key>NSHighResolutionCapable</key><true/>\n\
+              </dict>\n\
+            </plist>")
+      set_target_properties(${DEMONAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST
+                            ${CMAKE_CURRENT_BINARY_DIR}/${DEMONAME}.plist)
       add_test(${DEMONAME} ${DEMONAME}.app/Contents/MacOS/${DEMONAME})
     else()
       add_test(${DEMONAME} ${DEMONAME})

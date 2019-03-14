@@ -6,8 +6,8 @@
 // Contributor(s):
 //   Gaetan Bricteux
 
-#ifndef _GMSH_LEVELSET_H_
-#define _GMSH_LEVELSET_H_
+#ifndef GMSH_LEVELSET_H
+#define GMSH_LEVELSET_H
 
 #include <string>
 #include <cmath>
@@ -19,17 +19,19 @@
 #include "GModel.h"
 #include "MVertex.h"
 #include "GmshConfig.h"
-#include "mathEvaluator.h"
 #include "cartesian.h"
 #include "simpleFunction.h"
 
 #if defined(HAVE_ANN)
 class ANNkd_tree;
 #endif
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "OctreePost.h"
 #endif
+
+class mathEvaluator;
 
 // PRIMITIVE LEVELSET
 #define UNKNOWN 0
@@ -341,10 +343,7 @@ class gLevelsetMathEval : public gLevelsetPrimitive {
 
 public:
   gLevelsetMathEval(const std::string &f, int tag = 0);
-  ~gLevelsetMathEval()
-  {
-    if(_expr) delete _expr;
-  }
+  ~gLevelsetMathEval();
   double operator()(double x, double y, double z) const;
   int type() const { return UNKNOWN; }
 };
@@ -354,10 +353,7 @@ class gLevelsetMathEvalAll : public gLevelsetPrimitive {
 
 public:
   gLevelsetMathEvalAll(std::vector<std::string> f, int tag = 0);
-  ~gLevelsetMathEvalAll()
-  {
-    if(_expr) delete _expr;
-  }
+  ~gLevelsetMathEvalAll();
   double operator()(double x, double y, double z) const;
   void gradient(double x, double y, double z, double &dfdx, double &dfdy,
                 double &dfdz) const;

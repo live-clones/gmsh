@@ -23,7 +23,7 @@
 gmshFace::gmshFace(GModel *m, Surface *face) : GFace(m, face->Num)
 {
   resetNativePtr(face);
-  resetMeshAttributes();
+  gmshFace::resetMeshAttributes();
 }
 
 // a face is degenerate if
@@ -82,7 +82,7 @@ void gmshFace::resetNativePtr(Surface *face)
   l_wire.reserve(eds.size());
 
   GVertex *first = 0;
-  for(unsigned int i = 0; i < eds.size(); i++) {
+  for(std::size_t i = 0; i < eds.size(); i++) {
     GEdge *e = eds[i];
     int num = nums[i];
     GVertex *start = (num > 0) ? e->getBeginVertex() : e->getEndVertex();
@@ -258,7 +258,7 @@ GPoint gmshFace::point(double par1, double par2) const
 GPoint gmshFace::closestPoint(const SPoint3 &qp,
                               const double initialGuess[2]) const
 {
-#if defined(HAVE_BFGS)
+#if defined(HAVE_ALGLIB)
   return GFace::closestPoint(qp, initialGuess);
 #endif
   if(s->Typ == MSH_SURF_PLAN && !s->geometry) {
@@ -380,7 +380,7 @@ bool gmshFace::buildSTLTriangulation(bool force)
 
   std::map<MVertex *, int> _v;
   int COUNT = 0;
-  for(unsigned int j = 0; j < triangles.size(); j++) {
+  for(std::size_t j = 0; j < triangles.size(); j++) {
     for(int i = 0; i < 3; i++) {
       MVertex *v = triangles[j]->getVertex(i);
       std::map<MVertex *, int>::iterator it = _v.find(v);

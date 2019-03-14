@@ -23,7 +23,7 @@ void writeElementsMATLAB(FILE *fp, const GEntity *entity, int filetype,
                          bool binary, int physical)
 {
   if(filetype != 0) return;
-  for(unsigned int j = 0; j < entity->getNumMeshElements(); j++) {
+  for(std::size_t j = 0; j < entity->getNumMeshElements(); j++) {
     if(entity->getMeshElement(j)->getTypeForMSH())
       entity->getMeshElement(j)->writeMATLAB(fp, filetype, entity->tag(),
                                              physical, binary);
@@ -35,7 +35,7 @@ void storePairMATLAB(
   const GEntity *entity, int physical,
   std::vector<std::vector<std::pair<MElement *, int> > > &elems)
 {
-  for(unsigned int j = 0; j < entity->getNumMeshElements(); j++) {
+  for(std::size_t j = 0; j < entity->getNumMeshElements(); j++) {
     int elemtype = entity->getMeshElement(j)->getTypeForMSH();
     if(elemtype)
       elems[elemtype - 1].push_back(
@@ -89,19 +89,19 @@ int GModel::writeMATLAB(const std::string &name, bool binary, bool saveAll,
   if(filetype == SIMPLE) {
     fprintf(fp, "gVertices = %d;\n", numVertices);
     fprintf(fp, "gXYZ = [\n");
-    for(unsigned int i = 0; i < entities.size(); i++)
-      for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+    for(std::size_t i = 0; i < entities.size(); i++)
+      for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
         entities[i]->mesh_vertices[j]->writeMATLAB(fp, filetype, binary,
                                                    scalingFactor);
     fprintf(fp, "];\n");
     // triangles
     fprintf(fp, "\%\%\n");
     fprintf(fp, "gTri=[\n");
-    for(unsigned int i = 0; i < entities.size(); i++) {
+    for(std::size_t i = 0; i < entities.size(); i++) {
       if(saveAll)
         writeElementsMATLAB(fp, entities[i], filetype, binary, 0);
       else if(entities[i]->getPhysicalEntities().size()) {
-        for(unsigned k = 0; k < entities[i]->getPhysicalEntities().size();
+        for(std::size_t k = 0; k < entities[i]->getPhysicalEntities().size();
             k++) {
           int physical = entities[i]->getPhysicalEntities()[k];
           writeElementsMATLAB(fp, entities[i], filetype, binary, physical);
@@ -117,8 +117,8 @@ int GModel::writeMATLAB(const std::string &name, bool binary, bool saveAll,
     fprintf(fp, "clear msh;\n");
     fprintf(fp, "msh.nbNod = %d;\n", numVertices);
     fprintf(fp, "msh.POS = [\n");
-    for(unsigned int i = 0; i < entities.size(); i++)
-      for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+    for(std::size_t i = 0; i < entities.size(); i++)
+      for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
         entities[i]->mesh_vertices[j]->writeMATLAB(fp, filetype, binary,
                                                    scalingFactor);
     fprintf(fp, "];\n");
@@ -128,11 +128,11 @@ int GModel::writeMATLAB(const std::string &name, bool binary, bool saveAll,
     // file.
     std::vector<std::vector<std::pair<MElement *, int> > > elems(MSH_MAX_NUM);
     // loop on each element and fill the vectors of connectivity
-    for(unsigned int i = 0; i < entities.size(); i++) {
+    for(std::size_t i = 0; i < entities.size(); i++) {
       if(saveAll)
         storePairMATLAB(entities[i], 0, elems);
       else {
-        for(unsigned int iphys = 0;
+        for(std::size_t iphys = 0;
             iphys < entities[i]->getPhysicalEntities().size(); iphys++) {
           int physical = entities[i]->getPhysicalEntities()[iphys];
           storePairMATLAB(entities[i], physical, elems);
@@ -144,7 +144,7 @@ int GModel::writeMATLAB(const std::string &name, bool binary, bool saveAll,
       if(elems[elemtype - 1].empty()) continue;
       fprintf(fp, "msh.%s =[\n", getMATLABName(elemtype).c_str());
       // writes
-      for(unsigned int i = 0; i < elems[elemtype - 1].size(); i++) {
+      for(std::size_t i = 0; i < elems[elemtype - 1].size(); i++) {
         elems[elemtype - 1][i].first->writeMATLAB(
           fp, filetype, elems[elemtype - 1][i].second, binary);
       }

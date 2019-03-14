@@ -17,8 +17,8 @@ gmsh.option.setNumber("General.ShowModuleMenu", 0)
 # it will set the "ONELAB/Action" parameter to "should compute")
 parameters = """
 [
-  { "type":"number", "name":"My App/Iterations", "values":[1e6],
-    "attributes":{"Highlight":"AliceBlue"} },
+  { "type":"number", "name":"My App/Iterations", "values":[1e6], "min":1e4,
+    "max":1e9, "step":1e5, "attributes":{"Highlight":"AliceBlue"} },
   { "type":"number", "name":"My App/Number of threads", "values":[2],
     "min":1, "max":16, "step":1, "attributes":{"Highlight":"AliceBlue"} },
   { "type":"number", "name":"My App/Show progress?", "values":[1],

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _ACIS_VERTEX_H_
-#define _ACIS_VERTEX_H_
+#ifndef ACIS_VERTEX_H
+#define ACIS_VERTEX_H
 
 #include "GmshConfig.h"
 #include "GModel.h"

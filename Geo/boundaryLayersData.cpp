@@ -167,7 +167,7 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
       itm != _columns->_normals.upper_bound(e2); ++itm)
     N2.push_back(itm->second);
   if(N1.size() == N2.size()) {
-    for(unsigned int SIDE = 0; SIDE < N1.size(); SIDE++) {
+    for(std::size_t SIDE = 0; SIDE < N1.size(); SIDE++) {
       if(!fan) {
         SVector3 x = N1[SIDE] * 1.01 + N2[SIDE];
         x.normalize();
@@ -304,7 +304,7 @@ static void getEdgesData(GFace *gf, BoundaryLayerField *blf,
   while(ite != edges.end()) {
     // check if this edge generates a boundary layer
     if(isEdgeOfFaceBL(gf, *ite, blf)) {
-      for(unsigned int i = 0; i < (*ite)->lines.size(); i++) {
+      for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
         MVertex *v1 = (*ite)->lines[i]->getVertex(0);
         MVertex *v2 = (*ite)->lines[i]->getVertex(1);
         allEdges.insert(MEdge(v1, v2));
@@ -332,7 +332,7 @@ static void getNormals(GFace *gf, BoundaryLayerField *blf,
 {
   // assume that the initial mesh has been created i.e. that there exist
   // triangles inside the domain. Triangles are used to define exterior normals
-  for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     SPoint2 p0, p1, p2;
     MVertex *v0 = gf->triangles[i]->getVertex(0);
     MVertex *v1 = gf->triangles[i]->getVertex(1);
@@ -365,19 +365,21 @@ static void addColumnAtTheEndOfTheBL(GEdge *ge, GVertex *gv,
                                      BoundaryLayerField *blf)
 {
   if(!blf->isEdgeBL(ge->tag())) {
+    std::vector<MVertex *> invert;
+    for(std::size_t i = 0; i < ge->mesh_vertices.size(); i++)
+      invert.push_back(ge->mesh_vertices[ge->mesh_vertices.size() - i - 1]);
     GVertex *g0 = ge->getBeginVertex();
     GVertex *g1 = ge->getEndVertex();
-    MVertex *v0 = g0->mesh_vertices[0];
-    MVertex *v1 = g1->mesh_vertices[0];
-    std::vector<MVertex *> invert;
-    for(unsigned int i = 0; i < ge->mesh_vertices.size(); i++)
-      invert.push_back(ge->mesh_vertices[ge->mesh_vertices.size() - i - 1]);
-    SVector3 t(v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z());
-    t.normalize();
-    if(g0 == gv)
-      _columns->addColumn(t, v0, ge->mesh_vertices);
-    else if(g1 == gv)
-      _columns->addColumn(t * -1.0, v1, invert);
+    if(g0 && g1){
+      MVertex *v0 = g0->mesh_vertices[0];
+      MVertex *v1 = g1->mesh_vertices[0];
+      SVector3 t(v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z());
+      t.normalize();
+      if(g0 == gv)
+        _columns->addColumn(t, v0, ge->mesh_vertices);
+      else if(g1 == gv)
+        _columns->addColumn(t * -1.0, v1, invert);
+    }
   }
 }
 
@@ -394,15 +396,17 @@ void getLocalInfoAtNode(MVertex *v, BoundaryLayerField *blf, double &hwall)
     double t_end = bounds.high();
     double t;
     v->getParameter(0, t);
-    double hwall_beg = blf->hwall(ge->getBeginVertex()->tag());
-    double hwall_end = blf->hwall(ge->getEndVertex()->tag());
-    double x = (t - t_begin) / (t_end - t_begin);
-    double hwallLin = hwall_beg + x * (hwall_end - hwall_beg);
-    double hwall_mid = std::min(hwall_beg, hwall_end);
-    double hwallQuad = hwall_beg * (1 - x) * (1 - x) +
-                       hwall_mid * 2 * x * (1 - x) + hwall_end * x * x;
-    // we prefer a quadratic growing:
-    hwall = 0 * hwallLin + 1 * hwallQuad;
+    if(ge->getBeginVertex() && ge->getEndVertex()){
+      double hwall_beg = blf->hwall(ge->getBeginVertex()->tag());
+      double hwall_end = blf->hwall(ge->getEndVertex()->tag());
+      double x = (t - t_begin) / (t_end - t_begin);
+      double hwallLin = hwall_beg + x * (hwall_end - hwall_beg);
+      double hwall_mid = std::min(hwall_beg, hwall_end);
+      double hwallQuad = hwall_beg * (1 - x) * (1 - x) +
+        hwall_mid * 2 * x * (1 - x) + hwall_end * x * x;
+      // we prefer a quadratic growing:
+      hwall = 0 * hwallLin + 1 * hwallQuad;
+    }
   }
 }
 
@@ -542,7 +546,7 @@ bool buildAdditionalPoints2D(GFace *gf)
       // if(_dirs.size() > 1)printf("%d directions\n",_dirs.size());
 
       // now create the BL points
-      for(unsigned int DIR = 0; DIR < _dirs.size(); DIR++) {
+      for(std::size_t DIR = 0; DIR < _dirs.size(); DIR++) {
         SVector3 n = _dirs[DIR];
 
         // < ------------------------------- > //
@@ -595,7 +599,7 @@ bool buildAdditionalPoints2D(GFace *gf)
       MVertex *v = *it;
       for(int i=0;i<_columns->getNbColumns(v);i++){
         const BoundaryLayerData &data = _columns->getColumn(v,i);
-        for(unsigned int j = 0; j < data._column.size(); j++){
+        for(std::size_t j = 0; j < data._column.size(); j++){
           MVertex *blv = data._column[j];
           fprintf(f,"SP(%g,%g,%g){%d};\n",blv->x(),blv->y(),blv->z(),v->getNum());
         }

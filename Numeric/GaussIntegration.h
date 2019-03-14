@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GAUSS_INTEGRATION_H_
-#define _GAUSS_INTEGRATION_H_
+#ifndef GAUSS_INTEGRATION_H
+#define GAUSS_INTEGRATION_H
 
 #include "fullMatrix.h"
 

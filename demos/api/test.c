@@ -39,7 +39,8 @@ void printMesh() {
   gmshModelGetEntities(&dimTags, &ndimTags, -1,&ierr); chk(ierr);
 
   for (size_t ie = 0; ie < ndimTags/2; ++ie) {
-    int *types, **elementTags, **vertexTags;
+    int *types;
+    size_t **elementTags, **vertexTags;
     size_t ntypes, *nelementTags, nnelementTags, *nvertexTags, nnvertexTags;
 
     gmshModelMeshGetElements(&types, &ntypes, &elementTags, &nelementTags,
@@ -52,9 +53,9 @@ void printMesh() {
       printf("  %lu elements of type %i : ", nelementTags[i], types[i]);
       size_t nnodesbyel = nvertexTags[i]/nelementTags[i];
       for (size_t j = 0; j < nelementTags[i] && j < 3; ++j) {
-        printf("%i ( ", elementTags[i][j]);
+        printf("%lu ( ", elementTags[i][j]);
         for (size_t k = 0; k < nnodesbyel; ++k)
-          printf("%i ", vertexTags[i][j*nnodesbyel+k]);
+          printf("%lu ", vertexTags[i][j*nnodesbyel+k]);
         printf(") ");
       }
       if (nelementTags[i] > 3)

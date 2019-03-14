@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SPOINT3_H_
-#define _SPOINT3_H_
+#ifndef SPOINT3_H
+#define SPOINT3_H
 
 #include <cmath>
 // A point in 3-space

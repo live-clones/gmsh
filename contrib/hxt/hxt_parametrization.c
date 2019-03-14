@@ -456,7 +456,7 @@ static HXTStatus hxtCheckConnectivity(HXTEdges *e,HXTVector *partitions)
       }
   }
 
-  printf("HXT_INFO \t There is/are %d connected part(s).\n",count);
+  //  printf("HXT_INFO \t There is/are %d connected part(s).\n",count);
 
   for(uint64_t i=0; i<m->triangles.num; i++){
     uint32_t *refVert = &m->triangles.node[3*queue[i]];
@@ -637,14 +637,14 @@ HXTStatus hxtParametrizationCreate(HXTMesh *mesh, int nrefinements, HXTParametri
   HXT_CHECK(hxtVectorInit(&connect));  
   HXT_CHECK(hxtCheckConnectivity(edges,connect));
 
-  printf("connectivity is done\n");
+  //  printf("connectivity is done\n");
   
   HXTVector *toparam;
   HXT_CHECK(hxtVectorInit(&toparam));
   for(int i=0; i<connect->last+1; i++)
     HXT_CHECK(hxtCuttingProcess(connect->ptr[i],1,0,toparam));
 
-  printf("initial cutting process is done\n");
+  //  printf("initial cutting process is done\n");
   
   HXTVector *atlas;
   HXT_CHECK(hxtVectorInit(&atlas));

@@ -9,7 +9,6 @@ Mesh.CharacteristicLengthMax = 4.0; //-clmax
 Mesh.MinimumCirclePoints=15; //default=7
 //Mesh.CharacteristicLengthExtendFromBoundary=0;
 
-Geometry.OCCTargetUnit = "MM";
 Merge "linkrods.step";
 
 //Characteristic Length {5} = 0.001;

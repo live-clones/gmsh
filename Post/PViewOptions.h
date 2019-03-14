@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _PVIEW_OPTIONS_H_
-#define _PVIEW_OPTIONS_H_
+#ifndef PVIEW_OPTIONS_H
+#define PVIEW_OPTIONS_H
 
 #include <string>
 #include "ColorTable.h"

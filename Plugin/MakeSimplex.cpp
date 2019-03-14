@@ -44,7 +44,7 @@ static void decomposeList(PViewDataList *data, int nbNod, int nbComp,
   MakeSimplex dec(nbNod, nbComp, data->getNumTimeSteps());
 
   int nb = listIn.size() / (*nbIn);
-  for(unsigned int i = 0; i < listIn.size(); i += nb) {
+  for(std::size_t i = 0; i < listIn.size(); i += nb) {
     double *x = &listIn[i];
     double *y = &listIn[i + nbNod];
     double *z = &listIn[i + 2 * nbNod];

@@ -5,8 +5,8 @@
 //
 // Contributed by Matti Pellikka <matti.pellikka@microsoft.com>.
 
-#ifndef _HOMOLOGY_COMPUTATION_H_
-#define _HOMOLOGY_COMPUTATION_H_
+#ifndef HOMOLOGY_COMPUTATION_H
+#define HOMOLOGY_COMPUTATION_H
 
 #include <string>
 #include "Plugin.h"
