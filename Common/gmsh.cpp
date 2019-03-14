@@ -2037,7 +2037,10 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   delete basis;
   basis = 0;
 }
-
+/*
+ *  #>>>>> This is not what we need.
+ *          Idea: Knowing elementType, order, dim and tag, let's fill in the edge and face's hash maps with tag and let's create keys.
+ */
 GMSH_API void gmsh::model::mesh::getInformationForElements(
   const gmsh::vectorpair &keys, gmsh::vectorpair &info, const int order,
   const int elementType)
