@@ -54,7 +54,7 @@ Recombine Surface{100};
 // to generate full-quad meshes, you can either subdivide the resulting hybrid
 // mesh (with Mesh.SubdivisionAlgorithm = 1), or use the full-quad recombination
 // algorithm, which will automatically perform a coarser mesh followed by
-// recombination, smoothing and subdivision. Uncomment the followin line to
+// recombination, smoothing and subdivision. Uncomment the following line to
 // try the full-quad algorithm:
 //
 // Mesh.RecombinationAlgorithm = 2; // or 3

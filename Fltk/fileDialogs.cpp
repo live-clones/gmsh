@@ -1428,8 +1428,8 @@ int stlFileDialog(const char *name)
 {
   struct _stlFileDialog {
     Fl_Window *window;
-    Fl_Choice *c;
-    Fl_Check_Button *b[2];
+    Fl_Choice *c[2];
+    Fl_Check_Button *b;
     Fl_Button *ok, *cancel;
   };
   static _stlFileDialog *dialog = NULL;
@@ -1437,6 +1437,12 @@ int stlFileDialog(const char *name)
   static Fl_Menu_Item formatmenu[] = {
     {"ASCII", 0, 0, 0},
     {"Binary", 0, 0, 0},
+    {0}
+  };
+  static Fl_Menu_Item solidmenu[] = {
+    {"Single", 0, 0, 0},
+    {"Per surface", 0, 0, 0},
+    {"Per physical surface", 0, 0, 0},
     {0}
   };
 
@@ -1448,27 +1454,34 @@ int stlFileDialog(const char *name)
     dialog->window = new Fl_Double_Window(w, h, "STL Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
-    dialog->c = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Format");
+    dialog->c[0] = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Format");
     y += BH;
-    dialog->c->menu(formatmenu);
-    dialog->c->align(FL_ALIGN_RIGHT);
-    dialog->b[0] = new Fl_Check_Button
+    dialog->c[0]->menu(formatmenu);
+    dialog->c[0]->align(FL_ALIGN_RIGHT);
+    dialog->b = new Fl_Check_Button
       (WB, y, 2 * BBB + WB, BH, "Save all elements");
     y += BH;
-    dialog->b[0]->type(FL_TOGGLE_BUTTON);
-    dialog->b[1] = new Fl_Check_Button
-      (WB, y, 2 * BBB + WB, BH, "Save one solid per surface");
+    dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->c[1] = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Solid");
     y += BH;
-    dialog->b[1]->type(FL_TOGGLE_BUTTON);
+    dialog->c[1]->menu(solidmenu);
+    dialog->c[1]->align(FL_ALIGN_RIGHT);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
 
-  dialog->c->value(CTX::instance()->mesh.binary ? 1 : 0);
-  dialog->b[0]->value(CTX::instance()->mesh.saveAll ? 1 : 0);
-  dialog->b[1]->value(CTX::instance()->mesh.stlOneSolidPerSurface ? 1 : 0);
+  dialog->c[0]->value(CTX::instance()->mesh.binary ? 1 : 0);
+  dialog->b->value(CTX::instance()->mesh.saveAll ? 1 : 0);
+  dialog->c[1]->value(CTX::instance()->mesh.stlOneSolidPerSurface == 2 ? 2 :
+                      CTX::instance()->mesh.stlOneSolidPerSurface == 1 ? 1 :0);
+
+  if(dialog->c[1]->value() == 2)
+    dialog->b->deactivate();
+  else
+    dialog->b->activate();
+
   dialog->window->show();
 
   while(dialog->window->shown()) {
@@ -1476,11 +1489,17 @@ int stlFileDialog(const char *name)
     for(;;) {
       Fl_Widget *o = Fl::readqueue();
       if(!o) break;
+      if(o == dialog->c[1]) {
+        if(dialog->c[1]->value() == 2)
+          dialog->b->deactivate();
+        else
+          dialog->b->activate();
+      }
       if(o == dialog->ok) {
-        opt_mesh_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
-        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
+        opt_mesh_binary(0, GMSH_SET | GMSH_GUI, dialog->c[0]->value());
+        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
         opt_mesh_stl_one_solid_per_surface(0, GMSH_SET | GMSH_GUI,
-                                           dialog->b[1]->value() ? 1 : 0);
+                                           dialog->c[1]->value());
         CreateOutputFile(name, FORMAT_STL);
         dialog->window->hide();
         return 1;

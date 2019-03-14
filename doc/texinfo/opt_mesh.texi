@@ -626,6 +626,11 @@ Ratio between mesh sizes at nodes of a same edge (used in BAMG)@*
 Default value: @code{1.8}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.StlOneSolidPerSurface
+Create one solid per surface when exporting STL files? (0: single solid, 1: one solid per face, 2: one solid per physical surface)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.StlRemoveDuplicateTriangles
 Remove duplicate triangles when importing STL files?@*
 Default value: @code{0}@*

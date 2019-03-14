@@ -130,9 +130,14 @@ int GModel::readSTL(const std::string &name, double tolerance)
     }
   }
 
+  // cleanup names
   if(names.size() != points.size()){
     Msg::Debug("Invalid number of names in STL file - should never happen");
     names.resize(points.size());
+  }
+  for(std::size_t i = 0; i < names.size(); i++){
+    if(names[i].back() == '\r')
+      names[i].pop_back();
   }
 
   std::vector<GFace *> faces;
@@ -205,7 +210,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
 }
 
 static void writeSTLfaces(FILE *fp, std::vector<GFace*> &faces, bool binary,
-                          double scalingFactor)
+                          double scalingFactor, const std::string &name)
 {
   bool useGeoSTL = false;
   unsigned int nfacets = 0;
@@ -217,16 +222,6 @@ static void writeSTLfaces(FILE *fp, std::vector<GFace*> &faces, bool binary,
     for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it) {
       (*it)->buildSTLTriangulation();
       nfacets += (*it)->stl_triangles.size() / 3;
-    }
-  }
-
-  std::string name = "Created by Gmsh";
-  if(faces.size() == 1){
-    name = faces[0]->model()->getElementaryName(2, faces[0]->tag());
-    if(name.empty()){
-      std::ostringstream s;
-      s << "Gmsh surface " << faces[0]->tag();
-      name = s.str();
     }
   }
 
@@ -291,7 +286,7 @@ static void writeSTLfaces(FILE *fp, std::vector<GFace*> &faces, bool binary,
 }
 
 int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
-                     double scalingFactor, bool oneSolidPerSurface)
+                     double scalingFactor, int oneSolidPerSurface)
 {
   FILE *fp = Fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp) {
@@ -301,21 +296,49 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
 
   if(noPhysicalGroups()) saveAll = true;
 
-  std::vector<GFace*> faces;
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
-    if(saveAll || (*it)->physicals.size()) {
-      if(oneSolidPerSurface){
-        std::vector<GFace*> oneface(1, *it);
-        writeSTLfaces(fp, oneface, binary, scalingFactor);
-      }
-      else{
-        faces.push_back(*it);
+  if(oneSolidPerSurface == 1){ // one solid per surface
+    for(fiter it = firstFace(); it != lastFace(); ++it) {
+      if(saveAll || (*it)->physicals.size()) {
+        std::vector<GFace*> faces(1, *it);
+        std::string name = getElementaryName(2, (*it)->tag());
+        if(name.empty()){
+          std::ostringstream s;
+          s << "Gmsh Surface " << (*it)->tag();
+          name = s.str();
+        }
+        writeSTLfaces(fp, faces, binary, scalingFactor, name);
       }
     }
   }
-  if(!oneSolidPerSurface) {
-    writeSTLfaces(fp, faces, binary, scalingFactor);
+  else if(oneSolidPerSurface == 2){ // one solid per physical surface
+    std::map<int, std::vector<GEntity *> > phys;
+    getPhysicalGroups(2, phys);
+    for(std::map<int, std::vector<GEntity *> >::iterator it = phys.begin();
+        it != phys.end(); it++){
+      std::vector<GFace*> faces;
+      for(std::size_t i = 0; i < it->second.size(); i++){
+        faces.push_back(static_cast<GFace*>(it->second[i]));
+      }
+      std::string name = getPhysicalName(2, it->first);
+      if(name.empty()){
+        std::ostringstream s;
+        s << "Gmsh Physical Surface " << it->first;
+        name = s.str();
+      }
+      writeSTLfaces(fp, faces, binary, scalingFactor, name);
+    }
   }
+  else{ // one solid
+    std::vector<GFace*> faces;
+    for(fiter it = firstFace(); it != lastFace(); ++it) {
+      if(saveAll || (*it)->physicals.size()) {
+        faces.push_back(*it);
+      }
+    }
+    std::string name = "Created by Gmsh";
+    writeSTLfaces(fp, faces, binary, scalingFactor, name);
+  }
+
   fclose(fp);
   return 1;
 }

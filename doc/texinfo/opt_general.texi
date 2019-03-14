@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildOptions
 Gmsh build options (read-only)@*
-Default value: @code{" 64Bit Ann Bamg Bfgs Blas[veclib] Blossom Cairo Cgns DIntegration Dlopen DomHex Fltk GMP Gmm Hxt Hxt3D Jpeg[fltk] Kbipack Lapack[veclib] MathEx Med Mesh Metis Mmg3d Mpeg NativeFileChooser Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[MacPorts] OptHom Parser Plugins Png[fltk] Post QuadTri Solver TetGen/BR Voro++ Zlib"}@*
+Default value: @code{" 64Bit ALGLIB Ann Bamg Blas[veclib] Blossom Cairo Cgns DIntegration Dlopen DomHex Fltk GMP Gmm Hxt Hxt3D Jpeg[fltk] Kbipack Lapack[veclib] MathEx Med Mesh Metis Mmg3d Mpeg NativeFileChooser Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[MacPorts] OptHom Parser Plugins Png[fltk] Post QuadTri Solver TetGen/BR Voro++ Zlib"}@*
 Saved in: @code{-}
 
 @item General.DefaultFileName
@@ -158,7 +158,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"4.2.1-git-b1dec903b"}@*
+Default value: @code{"4.2.2-git-0766f664d"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern

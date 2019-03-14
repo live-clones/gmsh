@@ -4103,11 +4103,12 @@ sizes.
 
 @cindex Nodes, ordering
 
-Historically, Gmsh developers have started by implementing linear elements (lines,
-triangles, quads, tets, prisms and hexes). Then, second and sometimes third
-order elements have been hardcoded. We here distinguish ``low order elements'' that
-have been hardcoded initially and ``high order elements'' that have been coded in
-a general fashion, theoretically valid for any order.
+Historically, Gmsh first supported linear elements (lines, triangles,
+quadrangles, tetrahedar, prisms and hexahedra). Then, support for second
+and some third order elements has been added. Below we distinguish such
+``low order elements'', which are hardcoded (i.e. they are explicitly
+defined in the code), and general ``high order elements'', that have
+been coded in a more general fashion, theoretically valid for any order.
 
 @subsection Low order elements
 
@@ -5374,14 +5375,14 @@ any) in Python and Julia.}):
 
 Gmsh is written in C++, the scripting language is parsed using Lex and
 Yacc (actually, Flex and Bison), and the GUI relies on OpenGL for the 3D
-graphics and FLTK (@uref{http://www.fltk.org}) for the widget
-set. Gmsh's build system is based on CMake
+graphics and FLTK (@uref{http://www.fltk.org}) for the widgets (menus,
+buttons, etc.). Gmsh's build system is based on CMake
 (@uref{http://www.cmake.org}). Practical notes on how to compile Gmsh's
 source code are provided in @ref{Compiling the source code} (see also
 @ref{Frequently asked questions}).
 
 This section is for developers who would like to contribute directly to
-the Gmsh source code. Gmsh's official GIT repository is located at
+the Gmsh source code. Gmsh's official Git repository is located at
 @uref{https://gitlab.onelab.info/gmsh/gmsh}. The wiki
 (@uref{https://gitlab.onelab.info/gmsh/gmsh/wikis/Git-cheat-sheet})
 contains instructions on how to create feature branches and submit merge
@@ -5426,11 +5427,11 @@ curves
 surfaces
 (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GFace.h,Geo/GFace.h})
 and volumes
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GRegion.h,Geo/GRegion.h}). Concrete
-implementations of these classes are provided for each supported CAD
-kernel
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GRegion.h,Geo/GRegion.h}).
+Concrete implementations of these classes are provided for each
+supported CAD kernel
 (e.g. @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/gmshVertex.h,Geo/gmshVertex.h}
-for geometry points in Gmsh's native CAD format, or
+for geometry points in Gmsh's built-in CAD kernel, or
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/OCCVertex.h,Geo/OCCVertex.h}
 for geometry points from OpenCASCADE). All these elementary geometry
 entities derive from
@@ -5477,7 +5478,7 @@ to make the code easy to read/debug/maintain:
 @itemize
 @item
 See @uref{https://gitlab.onelab.info/gmsh/gmsh/wikis/Git-cheat-sheet}
-for instructions on how to contribute to Gmsh's GIT source code
+for instructions on how to contribute to Gmsh's Git source code
 repository. All branches are tested; make sure that all tests pass and
 that your code does not produce any warnings before submitting merge
 requests.

@@ -642,7 +642,7 @@ public:
   int readSTL(const std::string &name, double tolerance = 1.e-3);
   int writeSTL(const std::string &name, bool binary = false,
                bool saveAll = false, double scalingFactor = 1.0,
-               bool oneSolidPerSurface = false);
+               int oneSolidPerSurface = 0);
 
   // PLY(2) format (ascii text format)
   int readPLY(const std::string &name);
