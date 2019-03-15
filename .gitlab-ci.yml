@@ -10,7 +10,7 @@ variables:
 # Continuous integration builds for all branches
 # ----------------------------------------------
 
-linux64_ci:
+.linux64_ci:
   image: onelab/ubuntu18.04
   script:
     - mkdir build
@@ -26,7 +26,7 @@ linux64_ci:
   except:
     - tags
 
-linux64_compatibility_ci:
+.linux64_compatibility_ci:
   image: onelab/ubuntu18.04
   script:
     - mkdir build
@@ -49,7 +49,7 @@ linux64_compatibility_ci:
   except:
     - tags
 
-windows64_ci:
+.windows64_ci:
   script:
     - md build
     - cd build
@@ -62,7 +62,7 @@ windows64_ci:
   except:
     - tags
 
-windows64_msvc_ci:
+.windows64_msvc_ci:
   script:
     - md build
     - cd build
