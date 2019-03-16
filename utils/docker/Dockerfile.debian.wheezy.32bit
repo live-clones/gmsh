@@ -14,7 +14,7 @@ ENV CXXFLAGS=-fPIC
 RUN curl -L -O https://ftpmirror.gnu.org/gcc/gcc-5.5.0/gcc-5.5.0.tar.gz && tar xf gcc-5.5.0.tar.gz && cd gcc-5.5.0 && ./contrib/download_prerequisites && cd .. && mkdir gccbuild && cd gccbuild && ../gcc-5.5.0/configure -v --build=i386-linux-gnu --host=i386-linux-gnu --target=i386-linux-gnu --prefix=/usr/local --enable-checking=release --enable-languages=c,c++,fortran --disable-multilib --with-pic && make -j 4 && make install && cd .. && rm -rf gcc-5.5.0.tar.gz gcc-5.5.0 gccbuild
 
 ENV PATH=/usr/local/bin:${PATH}
-ENV LD_LIBRARY_PATH=/usr/local/lib32:${LD_LIBRARY_PATH}
+ENV LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}
 ENV CC=/usr/local/bin/gcc
 ENV CXX=/usr/local/bin/g++
 ENV FC=/usr/local/bin/gfortran
@@ -23,7 +23,7 @@ ENV FC=/usr/local/bin/gfortran
 # OpenBLAS
 # -----------------------
 
-RUN git clone https://github.com/xianyi/OpenBLAS.git && cd OpenBLAS && git checkout v0.3.5 && make libs netlib NUM_THREADS=8 TARGET=CORE2 && cp libopenblas_core2p-r0.3.5.a /usr/local/lib/libopenblas.a && cd .. && rm -rf OpenBLAS
+RUN git clone https://github.com/xianyi/OpenBLAS.git && cd OpenBLAS && git checkout v0.2.20 && make NUM_THREADS=8 TARGET=CORE2 && cp libopenblas_core2p-r0.2.20.a /usr/local/lib/libopenblas.a && cd .. && rm -rf OpenBLAS
 
 # -----------------------
 # Freetype
@@ -51,9 +51,9 @@ RUN curl -O http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.10.2.tar.
 RUN tar zxf petsc-3.10.2.tar.gz
 ENV PETSC_DIR ${PWD}/petsc-3.10.2
 ENV PETSC_ARCH real_mumps_seq
-RUN cd ${PETSC_DIR} && ./configure CC=$CC CXX=$CXX FC=$FC CFLAGS=$CFLAGS CXXFLAGS=$CXXFLAGS --with-clanguage=cxx --with-debugging=0 --with-mpi=0 --with-mpiuni-fortran-binding=0 --download-mumps=yes --with-mumps-serial --with-shared-libraries=0 --with-x=0 --with-ssl=0 --with-scalar-type=real --with-blaslapack-lib="/usr/local/lib/libopenblas.a /usr/local/lib32/libgfortran.a /usr/local/lib32/libquadmath.a -lpthread" && make
+RUN cd ${PETSC_DIR} && ./configure CC=$CC CXX=$CXX FC=$FC CFLAGS=$CFLAGS CXXFLAGS=$CXXFLAGS --with-clanguage=cxx --with-debugging=0 --with-mpi=0 --with-mpiuni-fortran-binding=0 --download-mumps=yes --with-mumps-serial --with-shared-libraries=0 --with-x=0 --with-ssl=0 --with-scalar-type=real --with-blaslapack-lib="/usr/local/lib/libopenblas.a /usr/local/lib/libgfortran.a /usr/local/lib/libquadmath.a -lpthread" && make
 ENV PETSC_ARCH complex_mumps_seq
-RUN cd ${PETSC_DIR} && ./configure CC=$CC CXX=$CXX FC=$FC CFLAGS=$CFLAGS CXXFLAGS=$CXXFLAGS --with-clanguage=cxx --with-debugging=0 --with-mpi=0 --with-mpiuni-fortran-binding=0 --download-mumps=yes --with-mumps-serial --with-shared-libraries=0 --with-x=0 --with-ssl=0 --with-scalar-type=complex --with-blaslapack-lib="/usr/local/lib/libopenblas.a /usr/local/lib32/libgfortran.a /usr/local/lib32/libquadmath.a -lpthread" && make
+RUN cd ${PETSC_DIR} && ./configure CC=$CC CXX=$CXX FC=$FC CFLAGS=$CFLAGS CXXFLAGS=$CXXFLAGS --with-clanguage=cxx --with-debugging=0 --with-mpi=0 --with-mpiuni-fortran-binding=0 --download-mumps=yes --with-mumps-serial --with-shared-libraries=0 --with-x=0 --with-ssl=0 --with-scalar-type=complex --with-blaslapack-lib="/usr/local/lib/libopenblas.a /usr/local/lib/libgfortran.a /usr/local/lib/libquadmath.a -lpthread" && make
 
 # -----------------------
 # SLEPc
@@ -105,4 +105,4 @@ RUN mkdir -p ~/.ssh
 RUN chmod 700 ~/.ssh
 
 # RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git
-# RUN cd gmsh && mkdir build && cd build && cmake -DENABLE_BUILD_DYNAMIC=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib32/libgfortran.a;/usr/local/lib32/libquadmath.a;-lpthread' ${EXTRA_OPTION} ..
+# RUN cd gmsh && mkdir build && cd build && cmake -DENABLE_BUILD_DYNAMIC=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread' ${EXTRA_OPTION} ..
