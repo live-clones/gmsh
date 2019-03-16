@@ -10,7 +10,7 @@ variables:
 # Continuous integration builds for all branches
 # ----------------------------------------------
 
-.linux64_ci:
+linux64_ci:
   image: onelab/ubuntu18.04
   script:
     - mkdir build
@@ -26,7 +26,7 @@ variables:
   except:
     - tags
 
-.linux64_compatibility_ci:
+linux64_compatibility_ci:
   image: onelab/ubuntu18.04
   script:
     - mkdir build
@@ -49,7 +49,7 @@ variables:
   except:
     - tags
 
-.windows64_ci:
+windows64_ci:
   script:
     - md build
     - cd build
@@ -62,7 +62,7 @@ variables:
   except:
     - tags
 
-.windows64_msvc_ci:
+windows64_msvc_ci:
   script:
     - md build
     - cd build
@@ -73,6 +73,10 @@ variables:
     - shared
   except:
     - tags
+
+# ------------------------------------------
+# Beta Linux builds (Docker + GCC 5 PIC)
+# ------------------------------------------
 
 .linux_beta: &linux_beta
   script:
@@ -87,15 +91,31 @@ variables:
     - PKG=`ls gmsh-*.tar*`
     - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/beta/${PKG/\.tar\.gz/\.tgz}
     - ctest -j 8 --output-on-failure
+  tags:
+    - linux64
+    - docker
+
+linux64_beta_snapshot:
+  image: onelab/debian.wheezy.64bit
+  variables:
+    EXTRA_OPTION: "-DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread'"
+  <<: *linux_beta
+  except:
+    - tags
 
 linux64-sdk_beta_snapshot:
   image: onelab/debian.wheezy.64bit
   variables:
     EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread'"
   <<: *linux_beta
-  tags:
-    - linux64
-    - docker
+  except:
+    - tags
+
+linux32_beta_snapshot:
+  image: onelab/debian.wheezy.32bit
+  variables:
+    EXTRA_OPTION: "-DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread'"
+  <<: *linux_beta
   except:
     - tags
 
@@ -104,9 +124,6 @@ linux32-sdk_beta_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread'"
   <<: *linux_beta
-  tags:
-    - linux64
-    - docker
   except:
     - tags
 
