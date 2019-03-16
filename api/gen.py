@@ -731,25 +731,25 @@ onelab.add('run',doc,None,istring('name', '""'),istring('command', '""'))
 
 ################################################################################
 
-onelab = gmsh.add_module('logger','Message logger functions')
+logger = gmsh.add_module('logger','Message logger functions')
 
 doc = '''Write a `message'. `level' can be "info", "warning" or "error".'''
-onelab.add('write',doc,None,istring('message'),istring('level','"info"'))
+logger.add('write',doc,None,istring('message'),istring('level','"info"'))
 
 doc = '''Start logging messages.'''
-onelab.add('start',doc,None)
+logger.add('start',doc,None)
 
 doc = '''Get logged messages.'''
-onelab.add('get',doc,None,ovectorstring('log'))
+logger.add('get',doc,None,ovectorstring('log'))
 
 doc = '''Stop logging messages.'''
-onelab.add('stop',doc,None)
+logger.add('stop',doc,None)
 
 doc = '''Return wall clock time.'''
-onelab.add('time',doc,odouble)
+logger.add('time',doc,odouble)
 
 doc = '''Return CPU time.'''
-onelab.add('cputime',doc,odouble)
+logger.add('cputime',doc,odouble)
 
 ################################################################################
 

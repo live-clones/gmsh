@@ -882,7 +882,7 @@ namespace {6} {{
 
 cwrap_utils="""
 template<typename t>
-void vector2ptr(const std::vector<t> &v, t **p, size_t *size)
+{1}void vector2ptr(const std::vector<t> &v, t **p, size_t *size)
 {{
   *p = (t*){0}Malloc(sizeof(t) * v.size());
   for(size_t i = 0; i < v.size(); ++i){{
@@ -891,7 +891,7 @@ void vector2ptr(const std::vector<t> &v, t **p, size_t *size)
   *size = v.size();
 }}
 
-void vectorpair2intptr(const {0}::vectorpair &v, int **p, size_t *size)
+{1}void vectorpair2intptr(const {0}::vectorpair &v, int **p, size_t *size)
 {{
   *p = (int*){0}Malloc(sizeof(int) * v.size() * 2);
   for(size_t i = 0; i < v.size(); ++i){{
@@ -901,7 +901,7 @@ void vectorpair2intptr(const {0}::vectorpair &v, int **p, size_t *size)
   *size = v.size() * 2;
 }}
 
-void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
+{1}void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
 {{
   *p = (char**){0}Malloc(sizeof(char*) * v.size());
   for(size_t i = 0; i < v.size(); ++i){{
@@ -911,7 +911,7 @@ void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_
 }}
 
 template<typename t>
-void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t **size, size_t *sizeSize)
+{1}void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t **size, size_t *sizeSize)
 {{
   *p = (t**){0}Malloc(sizeof(t*) * v.size());
   *size = (size_t*){0}Malloc(sizeof(size_t) * v.size());
@@ -1207,7 +1207,7 @@ class API:
                 fcwrap.write(indent + "// " + ("\n" + indent + "// ").join
                              (textwrap.wrap(doc, 80-len(indent))) + "\n")
                 rt = rtype.rcpp_type if rtype else "void"
-                fnameapi = indent + ns.upper() + "_API " + rt + " " + name + "(";
+                fnameapi = indent + "inline " + rt + " " + name + "(";
                 fcwrap.write(fnameapi)
                 if args:
                     fcwrap.write((",\n" + ' ' * len(fnameapi)).join(a.cpp for a in args))
@@ -1241,7 +1241,7 @@ class API:
                                             self.version_minor, ns))
                     fc.write(c_cpp_header.format(self.copyright, self.issues, ns,
                                                  ns.upper()))
-                    fc.write(cwrap_utils.format(ns))
+                    fc.write(cwrap_utils.format(ns, ""))
                     fc.write(c_cpp_utils.format(ns))
                     fc.write("\n")
                     fcwrap.write(cwrap_header.format(self.copyright, self.issues,
@@ -1249,7 +1249,7 @@ class API:
                                                      self.version_major,
                                                      self.version_minor, ns))
                     fcwrap.write("namespace " + ns + " {\n")
-                    s = string.split(cwrap_utils.format(ns), '\n')
+                    s = string.split(cwrap_utils.format(ns, "inline "), '\n')
                     for line in s:
                         fcwrap.write("  " + line + "\n")
                     fcwrap.write("}\n\n")

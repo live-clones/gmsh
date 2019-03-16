@@ -30,9 +30,6 @@ Notes:
   * The C++ API will only work if your compiler has the same Application Binary
     Interface (ABI) as the compiler used to build this SDK.
 
-    For example, the Linux SDK is currently compiled with GCC 4. You would need
-    to specify "-D_GLIBCXX_USE_CXX11_ABI=0" if you use GCC 5 or newer.
-
   * If your C++ compiler does not provide the same ABI as the C++ compiler used
     to build the SDK and if there are no compatibility flags available, you can
     rename `gmsh.h_cwrap' as `gmsh.h': this implementation redefines the C++ API
