@@ -75,10 +75,12 @@ windows64_msvc_ci:
     - tags
 
 # ------------------------------------------
-# Beta Linux builds (Docker + GCC 5 PIC)
+# Official Linux builds (master branch only)
 # ------------------------------------------
 
-.linux_beta: &linux_beta
+.linux_official: &linux_official
+  only:
+    - master@gmsh/gmsh
   script:
     - echo "$SSH_TOKEN" > ~/.ssh/id_rsa
     - echo "Host *" > ~/.ssh/config
@@ -89,133 +91,73 @@ windows64_msvc_ci:
     - cmake -DGMSH_HOST=gmsh.info ${EXTRA_OPTION} ..
     - make package -j 8
     - PKG=`ls gmsh-*.tar*`
-    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/beta/${PKG/\.tar\.gz/\.tgz}
+    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
     - ctest -j 8 --output-on-failure
   tags:
     - linux64
     - docker
 
-linux64_beta_snapshot:
+linux64_official_snapshot:
   image: onelab/debian.wheezy.64bit
   variables:
     EXTRA_OPTION: "-DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
-  <<: *linux_beta
-  except:
-    - tags
-
-linux64-sdk_beta_snapshot:
-  image: onelab/debian.wheezy.64bit
-  variables:
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
-  <<: *linux_beta
-  except:
-    - tags
-
-linux32_beta_snapshot:
-  image: onelab/debian.wheezy.32bit
-  variables:
-    EXTRA_OPTION: "-DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
-  <<: *linux_beta
-  except:
-    - tags
-
-linux32-sdk_beta_snapshot:
-  image: onelab/debian.wheezy.32bit
-  variables:
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
-  <<: *linux_beta
-  except:
-    - tags
-
-# ------------------------------------------
-# Official Linux builds (master branch only)
-# ------------------------------------------
-
-.linux_official: &linux_official
-  only:
-    - master@gmsh/gmsh
-  script:
-    - mkdir build
-    - cd build
-    - /usr/local/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DENABLE_NATIVE_FILE_CHOOSER:bool=FALSE -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lpthread' ${EXTRA_OPTION} ..
-    - make package -j 1
-    - PKG=`ls gmsh-*.tar*`
-    - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
-    - /usr/local/bin/ctest -j 1 --output-on-failure
-
-linux64_official_snapshot:
   <<: *linux_official
-  tags:
-    - linux64
-    - official
   except:
     - tags
 
 linux64_official_release:
+  image: onelab/debian.wheezy.64bit
   variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1"
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
   <<: *linux_official
-  tags:
-    - linux64
-    - official
   only:
     - /^gmsh_.*$/
 
 linux64-sdk_official_snapshot:
+  image: onelab/debian.wheezy.64bit
   variables:
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
   <<: *linux_official
-  tags:
-    - linux64
-    - official
   except:
     - tags
 
 linux64-sdk_official_release:
+  image: onelab/debian.wheezy.64bit
   variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
   <<: *linux_official
-  tags:
-    - linux64
-    - official
   only:
     - /^gmsh_.*$/
 
 linux32_official_snapshot:
+  image: onelab/debian.wheezy.32bit
+  variables:
+    EXTRA_OPTION: "-DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
   <<: *linux_official
-  tags:
-    - linux32
-    - official
   except:
     - tags
 
 linux32_official_release:
+  image: onelab/debian.wheezy.32bit
   variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1"
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
   <<: *linux_official
-  tags:
-    - linux32
-    - official
   only:
     - /^gmsh_.*$/
 
 linux32-sdk_official_snapshot:
+  image: onelab/debian.wheezy.32bit
   variables:
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
   <<: *linux_official
-  tags:
-    - linux32
-    - official
   except:
     - tags
 
 linux32-sdk_official_release:
+  image: onelab/debian.wheezy.32bit
   variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
   <<: *linux_official
-  tags:
-    - linux32
-    - official
   only:
     - /^gmsh_.*$/
 

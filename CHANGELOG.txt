@@ -1,3 +1,5 @@
+4.2.3: small improvements.
+
 4.2.2 (March 13, 2019): fixed regression in reading of extruded meshes; added
 ability to export one solid per surface in STL format.
 
