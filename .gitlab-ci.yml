@@ -78,14 +78,18 @@ windows64_msvc_ci:
 # Official Linux builds (master branch only)
 # ------------------------------------------
 
-.linux_official: &linux_official
-  only:
-    - master@gmsh/gmsh
-  script:
+.ssh_config: &ssh_config
+  before_script:
     - echo "$SSH_TOKEN" > ~/.ssh/id_rsa
     - echo "Host *" > ~/.ssh/config
     - echo "StrictHostKeyChecking no" >> ~/.ssh/config
     - chmod 700 ~/.ssh/id_rsa ~/.ssh/config
+
+.linux_official: &linux_official
+  only:
+    - master@gmsh/gmsh
+  <<: *ssh_config
+  script:
     - mkdir build
     - cd build
     - cmake -DGMSH_HOST=gmsh.info ${EXTRA_OPTION} ..
@@ -172,9 +176,9 @@ linux32-sdk_official_release:
     - md build
     - cd build
     - bash -c "/usr/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/mingw32-windres.exe -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lquadmath' -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} .."
-    - bash -c "/usr/bin/make package -j 2"
+    - bash -c "/usr/bin/make package -j 3"
     - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
-    - bash -c "/usr/bin/ctest -j 2 --output-on-failure"
+    - bash -c "/usr/bin/ctest -j 3 --output-on-failure"
 
 windows64_official_snapshot:
   <<: *windows_official
@@ -305,18 +309,20 @@ macos64-sdk_official_release:
 # ----------------------------------------------
 
 .source_official: &source_official
+  image: onelab/debian.wheezy.64bit
   only:
     - master@gmsh/gmsh
+  <<: *ssh_config
   script:
     - mkdir build_src
     - cd build_src
-    - /usr/local/bin/cmake ${EXTRA_OPTION} ..
+    - cmake ${EXTRA_OPTION} ..
     - make package_source
     - PKG=`ls gmsh-*.tar*`
-    - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/src/${PKG/\.tar\.gz/\.tgz}
+    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/src/${PKG/\.tar\.gz/\.tgz}
   tags:
     - linux64
-    - official
+    - docker
 
 source_official_snapshot:
   <<: *source_official
@@ -335,36 +341,40 @@ source_official_release:
 # ----------------------------------------------
 
 doc_official_snapshot:
+  image: onelab/debian.wheezy.64bit
   only:
     - master@gmsh/gmsh
+  <<: *ssh_config
   script:
     - mkdir build_doc
     - cd build_doc
-    - /usr/local/bin/cmake ${EXTRA_OPTION} ..
+    - cmake ${EXTRA_OPTION} ..
     - make doc
-    - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
-    - ssh -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa geuzaine@gmsh.info 'cd .wwwgmsh/dev && tar zxvf ../doc.tgz'
+    - scp gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
+    - ssh geuzaine@gmsh.info 'cd .wwwgmsh/dev && tar zxvf ../doc.tgz'
   tags:
     - linux64
-    - official
+    - docker
   except:
     - tags
 
 doc_official_release:
+  image: onelab/debian.wheezy.64bit
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   only:
     - master@gmsh/gmsh
+  <<: *ssh_config
   script:
     - mkdir build_doc
     - cd build_doc
-    - /usr/local/bin/cmake ${EXTRA_OPTION} ..
+    - cmake ${EXTRA_OPTION} ..
     - make doc
-    - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
-    - ssh -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa geuzaine@gmsh.info 'cd .wwwgmsh && tar zxvf doc.tgz'
-    - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ../doc/gmsh.html geuzaine@gmsh.info:.wwwgmsh/
+    - scp gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
+    - ssh geuzaine@gmsh.info 'cd .wwwgmsh && tar zxvf doc.tgz'
+    - scp ../doc/gmsh.html geuzaine@gmsh.info:.wwwgmsh/
   tags:
     - linux64
-    - official
+    - docker
   only:
     - /^gmsh_.*$/
