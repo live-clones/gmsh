@@ -6,6 +6,13 @@
 variables:
   EXTRA_OPTION: ""
 
+.ssh_config: &ssh_config
+  before_script:
+    - echo "$SSH_TOKEN" > ~/.ssh/id_rsa
+    - echo "Host *" > ~/.ssh/config
+    - echo "StrictHostKeyChecking no" >> ~/.ssh/config
+    - chmod 700 ~/.ssh/id_rsa ~/.ssh/config
+
 # ----------------------------------------------
 # Continuous integration builds for all branches
 # ----------------------------------------------
@@ -77,13 +84,6 @@ windows64_msvc_ci:
 # ------------------------------------------
 # Official Linux builds (master branch only)
 # ------------------------------------------
-
-.ssh_config: &ssh_config
-  before_script:
-    - echo "$SSH_TOKEN" > ~/.ssh/id_rsa
-    - echo "Host *" > ~/.ssh/config
-    - echo "StrictHostKeyChecking no" >> ~/.ssh/config
-    - chmod 700 ~/.ssh/id_rsa ~/.ssh/config
 
 .linux_official: &linux_official
   only:
