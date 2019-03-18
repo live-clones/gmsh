@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CONJUGATEGRADIENTS
-#define _CONJUGATEGRADIENTS
+#ifndef CONJUGATE_GRADIENTS_H
+#define CONJUGATE_GRADIENTS_H
 
 #include <vector>
 

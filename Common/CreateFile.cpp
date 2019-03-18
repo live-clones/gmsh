@@ -327,7 +327,8 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_STL:
     GModel::current()->writeSTL
       (name, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
-       CTX::instance()->mesh.scalingFactor);
+       CTX::instance()->mesh.scalingFactor,
+       CTX::instance()->mesh.stlOneSolidPerSurface);
     break;
 
   case FORMAT_VRML:

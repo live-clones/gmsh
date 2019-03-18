@@ -34,7 +34,7 @@
 #endif
 
 #if defined(HAVE_MED)
-#include "med.h"
+#include <med.h>
 #endif
 
 static const char *help_link(Fl_Widget *w, const char *uri)

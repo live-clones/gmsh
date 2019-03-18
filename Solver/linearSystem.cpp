@@ -5,7 +5,7 @@
 
 #include "linearSystemFull.h"
 #include "linearSystemCSR.h"
-#include "linearSystemGMM.h"
+#include "linearSystemGmm.h"
 
 void linearSystemBase::setParameter(const std::string &key, std::string value)
 {

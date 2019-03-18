@@ -25,6 +25,8 @@
 #ifndef OBJ_CONTRIB_INV_COND_H
 #define OBJ_CONTRIB_INV_COND_H
 
+#include <vector>
+#include <algorithm>
 #include "Patch.h"
 #include "ObjContrib.h"
 
@@ -38,7 +40,7 @@ public:
   virtual ObjContrib *copy() const;
   virtual void initialize(Patch *mesh);
   virtual bool fail() { return false; }
-  virtual bool addContrib(double &Obj, alglib::real_1d_array &gradObj);
+  virtual bool addContrib(double &Obj, std::vector<double> &gradObj);
   virtual void updateParameters() { FuncType::updateParameters(_min, _max); }
   virtual bool targetReached() { return FuncType::targetReached(_min, _max); }
   virtual bool stagnated() { return FuncType::stagnated(_min, _max); }
@@ -73,7 +75,7 @@ void ObjContribInvCondNum<FuncType>::initialize(Patch *mesh)
 
 template <class FuncType>
 bool ObjContribInvCondNum<FuncType>::addContrib(double &Obj,
-                                                alglib::real_1d_array &gradObj)
+                                                std::vector<double> &gradObj)
 {
   _min = BIGVAL;
   _max = -BIGVAL;

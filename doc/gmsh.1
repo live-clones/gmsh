@@ -1,4 +1,4 @@
-.TH Gmsh 1 "13 January 2019" "4.1" "Gmsh Manual Pages"
+.TH Gmsh 1 "5 March 2019" "4.2" "Gmsh Manual Pages"
 .UC 4
 .\" ********************************************************************
 .SH NAME
@@ -36,7 +36,7 @@ perform 1D, 2D or 3D mesh generation, then exit.
 specify output file name.
 .TP 4
 .B \-format string
-set output mesh format (auto, msh, msh1, msh2, unv, vrml, stl, mesh, bdf, med, ...).
+set output mesh format (auto, msh, msh1, msh2, msh4, unv, vrml, stl, mesh, bdf, med, ...).
 .TP 4
 .B \-bin
 use binary format when available.
@@ -45,7 +45,7 @@ use binary format when available.
 save all elements (discard physical group definitions)
 .TP 4
 .B \-algo string
-select mesh algorithm (meshadapt, del2d, front2d, del3d, front3d, ...).
+select mesh algorithm (meshadapt, del2d, front2d, del3d, front3d, hxt, ...).
 .TP 4
 .B \-parametric
 save nodes with their parametric coordinates.
@@ -148,7 +148,7 @@ show detailed version information.
 show help message.
 .\" ********************************************************************
 .SH AUTHORS
-Christophe Geuzaine (cgeuzaine@ulg.ac.be) and Jean-Francois Remacle
+Christophe Geuzaine (cgeuzaine@uliege.be) and Jean-Francois Remacle
 (jean-francois.remacle@uclouvain.be).
 .\" ********************************************************************
 .SH SEE ALSO

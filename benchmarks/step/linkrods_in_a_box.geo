@@ -1,7 +1,6 @@
 Mesh.CharacteristicLengthFactor=.2;
 Mesh.CharacteristicLengthMin = 0.25; //-clmin
 Mesh.CharacteristicLengthMax = 4.0; //-clmax
-Geometry.OCCTargetUnit = "MM";
 
 Merge "linkrods.step";
 

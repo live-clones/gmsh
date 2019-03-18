@@ -8,21 +8,20 @@
 
 #include "Plugin.h"
 
-extern "C"{
-  GMSH_Plugin *GMSH_RegisterMeshVolumePlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterMeshVolumePlugin();
 }
 
-class GMSH_MeshVolumePlugin: public GMSH_MeshPlugin{
+class GMSH_MeshVolumePlugin : public GMSH_PostPlugin {
 public:
-  GMSH_MeshVolumePlugin(){}
-  std::string    getName()      const{ return "MeshVolume"; }
-  std::string    getShortHelp() const{ return "Volume of a mesh"; }
-  std::string    getHelp()      const;
-  std::string    getAuthor()    const{ return "N. Marsic"; }
-  int            getNbOptions() const;
-  StringXNumber* getOption(int iopt);
-
-  void run();
+  GMSH_MeshVolumePlugin() {}
+  std::string getName() const { return "MeshVolume"; }
+  std::string getShortHelp() const { return "Volume of a mesh"; }
+  std::string getHelp() const;
+  std::string getAuthor() const { return "N. Marsic"; }
+  int getNbOptions() const;
+  StringXNumber *getOption(int iopt);
+  PView *execute(PView *);
 };
 
 #endif

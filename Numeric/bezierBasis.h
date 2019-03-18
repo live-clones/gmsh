@@ -79,14 +79,14 @@ public:
 private:
   void _construct();
   void _constructPyr();
-  void _FEpoints2BezPoints(fullMatrix<double> &) const;
+  void _fePoints2BezPoints(fullMatrix<double> &) const;
 };
 
 class bezierBasisRaiser {
   // Let f, g, h be three function whose Bezier coefficients are given.
   // This class allows to compute the Bezier coefficients of f*g and f*g*h.
 private:
-  class _Data {
+  class _data {
     friend class bezierBasisRaiser;
 
   private:
@@ -94,12 +94,12 @@ private:
     double val;
 
   public:
-    _Data(double vv, int ii, int jj = -1, int kk = -1)
+    _data(double vv, int ii, int jj = -1, int kk = -1)
       : i(ii), j(jj), k(kk), val(vv)
     {
     }
   };
-  std::vector<std::vector<_Data> > _raiser2, _raiser3;
+  std::vector<std::vector<_data> > _raiser2, _raiser3;
   const bezierBasis *_bfs;
 
 public:

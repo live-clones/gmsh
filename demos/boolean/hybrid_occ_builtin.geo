@@ -1,4 +1,4 @@
-
+Geometry.OCCTargetUnit = "M";
 Merge "component8.step";
 
 xmin = General.MinX;

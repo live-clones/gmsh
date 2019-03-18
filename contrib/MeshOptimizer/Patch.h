@@ -169,7 +169,7 @@ private:
   enum NormalScaling { NS_UNIT, NS_INVNORM, NS_SQRTNORM };
   std::vector<int> _nBezEl; // Number of Bezier poly. for an el.
   std::vector<fullMatrix<double> >
-    _JacNormEl; // Normals to 2D elements for Jacobian regularization and
+    _jacNormEl; // Normals to 2D elements for Jacobian regularization and
                 // scaling
   std::vector<double> _invStraightJac; // Initial Jacobians for 3D elements
   std::vector<MElement *> _bndEl; // Boundary elements

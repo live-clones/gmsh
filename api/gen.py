@@ -95,6 +95,12 @@ model.add('setCurrent',doc,None,istring('name'))
 doc = '''Get all the (elementary) geometrical entities in the current model. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0). The entities are returned as a vector of (dim, tag) integer pairs.'''
 model.add('getEntities',doc,None,ovectorpair('dimTags'),iint('dim','-1'))
 
+doc = '''Set the name of the entity of dimension `dim' and tag `tag'.'''
+model.add('setEntityName',doc,None,iint('dim'),iint('tag'),istring('name'))
+
+doc = '''Get the name of the entity of dimension `dim' and tag `tag'.'''
+model.add('getEntityName',doc,None,iint('dim'),iint('tag'),ostring('name'))
+
 doc = '''Get all the physical groups in the current model. If `dim' is >= 0, return only the entities of the specified dimension (e.g. physical points if `dim' == 0). The entities are returned as a vector of (dim, tag) integer pairs.'''
 model.add('getPhysicalGroups',doc,None,ovectorpair('dimTags'),iint('dim','-1'))
 
@@ -131,10 +137,13 @@ model.add('addDiscreteEntity',doc,oint,iint('dim'),iint('tag','-1'),ivectorint('
 doc = '''Remove the entities `dimTags' of the current model. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
 model.add('removeEntities',doc,None,ivectorpair('dimTags'),ibool('recursive','false','False'))
 
+doc = '''Remove the entity name `name' from the current model.'''
+model.add('removeEntityName',doc,None,istring('name'))
+
 doc = '''Remove the physical groups `dimTags' of the current model. If `dimTags' is empty, remove all groups.'''
 model.add('removePhysicalGroups',doc,None,ivectorpair('dimTags','gmsh::vectorpair()',"[]","[]"))
 
-doc = '''Remove the physical name `name' of the current model.'''
+doc = '''Remove the physical name `name' from the current model.'''
 model.add('removePhysicalName',doc,None,istring('name'))
 
 doc = '''Get the type of the entity of dimension `dim' and tag `tag'.'''
@@ -315,10 +324,10 @@ mesh.add('embed',doc,None,iint('dim'),ivectorint('tags'),iint('inDim'),iint('inT
 doc = '''Reorder the elements of type `elementType' classified on the entity of tag `tag' according to `ordering'.'''
 mesh.add('reorderElements',doc,None,iint('elementType'),iint('tag'),ivectorsize('ordering'))
 
-doc = '''Renumber the node tags in a contiunous sequence.'''
+doc = '''Renumber the node tags in a continuous sequence.'''
 mesh.add('renumberNodes',doc,None)
 
-doc = '''Renumber the element tags in a contiunous sequence.'''
+doc = '''Renumber the element tags in a continuous sequence.'''
 mesh.add('renumberElements',doc,None)
 
 doc = '''Set the meshes of the entities of dimension `dim' and tag `tags' as periodic copies of the meshes of entities `tagsMaster', using the affine transformation specified in `affineTransformation' (16 entries of a 4x4 matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.'''
@@ -517,8 +526,8 @@ occ.add('addDisk',doc,oint,idouble('xc'),idouble('yc'),idouble('zc'),idouble('rx
 doc = '''Add a plane surface defined by one or more curve loops (or closed wires) `wireTags'. The first curve loop defines the exterior contour; additional curve loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
 occ.add('addPlaneSurface',doc,oint,ivectorint('wireTags'),iint('tag','-1'))
 
-doc = '''Add a surface filling the curve loops in `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
-occ.add('addSurfaceFilling',doc,oint,iint('wireTag'),iint('tag','-1'))
+doc = '''Add a surface filling the curve loops in `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface. If `pointTags' are provided, force the surface to pass through the given points.'''
+occ.add('addSurfaceFilling',doc,oint,iint('wireTag'),iint('tag','-1'),ivectorint('pointTags','std::vector<int>()',"[]","[]"))
 
 doc = '''Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface loop.'''
 occ.add('addSurfaceLoop',doc,oint,ivectorint('surfaceTags'),iint('tag','-1'))

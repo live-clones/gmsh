@@ -995,13 +995,13 @@ static Tet *randomTet(int thread, tetContainer &allocator)
   }
 }
 
-//#define _VERBOSE
+//#define VERBOSE
 
 void delaunayTrgl(const std::size_t numThreads,
                   const std::size_t NPTS_AT_ONCE, std::size_t Npts,
                   std::vector<Vert *> assignTo[], tetContainer &allocator)
 {
-#if defined(_VERBOSE)
+#if defined(VERBOSE)
   double totSearchGlob = 0;
   double totCavityGlob = 0;
   printf("%d threads for inserting %d points\n", numThreads, Npts);
@@ -1153,7 +1153,7 @@ void delaunayTrgl(const std::size_t numThreads,
         }
       }
     }
-#if defined(_VERBOSE)
+#if defined(VERBOSE)
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
@@ -1177,7 +1177,7 @@ void delaunayTrgl(const std::size_t numThreads,
 
   if(invalidCavities[0]) Msg::Error("%d invalid cavities", invalidCavities[0]);
 
-#if defined(_VERBOSE)
+#if defined(VERBOSE)
   printf("average searches per point  %12.5E\n", totSearchGlob / Npts);
   printf("average size for del cavity %12.5E\n", totCavityGlob / Npts);
   printf("cache misses: ");

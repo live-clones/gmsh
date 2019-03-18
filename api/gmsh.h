@@ -124,6 +124,16 @@ namespace gmsh { // Top-level functions
     GMSH_API void getEntities(gmsh::vectorpair & dimTags,
                               const int dim = -1);
 
+    // Set the name of the entity of dimension `dim' and tag `tag'.
+    GMSH_API void setEntityName(const int dim,
+                                const int tag,
+                                const std::string & name);
+
+    // Get the name of the entity of dimension `dim' and tag `tag'.
+    GMSH_API void getEntityName(const int dim,
+                                const int tag,
+                                std::string & name);
+
     // Get all the physical groups in the current model. If `dim' is >= 0, return
     // only the entities of the specified dimension (e.g. physical points if `dim'
     // == 0). The entities are returned as a vector of (dim, tag) integer pairs.
@@ -213,11 +223,14 @@ namespace gmsh { // Top-level functions
     GMSH_API void removeEntities(const gmsh::vectorpair & dimTags,
                                  const bool recursive = false);
 
+    // Remove the entity name `name' from the current model.
+    GMSH_API void removeEntityName(const std::string & name);
+
     // Remove the physical groups `dimTags' of the current model. If `dimTags' is
     // empty, remove all groups.
     GMSH_API void removePhysicalGroups(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
-    // Remove the physical name `name' of the current model.
+    // Remove the physical name `name' from the current model.
     GMSH_API void removePhysicalName(const std::string & name);
 
     // Get the type of the entity of dimension `dim' and tag `tag'.
@@ -753,10 +766,10 @@ namespace gmsh { // Top-level functions
                                     const int tag,
                                     const std::vector<std::size_t> & ordering);
 
-      // Renumber the node tags in a contiunous sequence.
+      // Renumber the node tags in a continuous sequence.
       GMSH_API void renumberNodes();
 
-      // Renumber the element tags in a contiunous sequence.
+      // Renumber the element tags in a continuous sequence.
       GMSH_API void renumberElements();
 
       // Set the meshes of the entities of dimension `dim' and tag `tags' as
@@ -1286,9 +1299,11 @@ namespace gmsh { // Top-level functions
 
       // Add a surface filling the curve loops in `wireTags'. If `tag' is positive,
       // set the tag explicitly; otherwise a new tag is selected automatically.
-      // Return the tag of the surface.
+      // Return the tag of the surface. If `pointTags' are provided, force the
+      // surface to pass through the given points.
       GMSH_API int addSurfaceFilling(const int wireTag,
-                                     const int tag = -1);
+                                     const int tag = -1,
+                                     const std::vector<int> & pointTags = std::vector<int>());
 
       // Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
       // positive, set the tag explicitly; otherwise a new tag is selected

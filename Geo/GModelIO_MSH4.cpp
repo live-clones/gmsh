@@ -1020,14 +1020,14 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
     }
 
     if(!slave) {
-      Msg::Error("Could not find periodic slave entity %d of dimension %d",
+      Msg::Info("Could not find periodic entity %d of dimension %d",
                  slaveTag, slaveDim);
-      return false;
+      continue;
     }
     if(!master) {
-      Msg::Error("Could not find periodic master entity %d of dimension %d",
+      Msg::Info("Could not find periodic source entity %d of dimension %d",
                  masterTag, slaveDim);
-      return false;
+      continue;
     }
 
     std::size_t correspondingVertexSize = 0;
@@ -1127,14 +1127,17 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
       MVertex *mv1 = model->getMeshVertexByTag(v1);
       MVertex *mv2 = model->getMeshVertexByTag(v2);
 
-      if(!mv1) {
-        Msg::Error("Could not find periodic node %d", v1);
+      if(mv1 && mv2){
+        slave->correspondingVertices[mv1] = mv2;
       }
-      if(!mv2) {
-        Msg::Error("Could not find periodic node %d", v2);
+      else{
+        if(!mv1) {
+          Msg::Info("Could not find periodic node %d", v1);
+        }
+        else if(!mv2) {
+          Msg::Info("Could not find periodic node %d", v2);
+        }
       }
-
-      slave->correspondingVertices[mv1] = mv2;
     }
   }
   return true;
@@ -1975,6 +1978,79 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
   }
 }
 
+static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
+                                 int saveParametric, double scalingFactor,
+                                 double version)
+{
+  if(binary) {
+    int entityDim = ge->dim();
+    int entityTag = ge->tag();
+    std::size_t numVerts = ge->getNumMeshVertices();
+    fwrite(&entityDim, sizeof(int), 1, fp);
+    fwrite(&entityTag, sizeof(int), 1, fp);
+    fwrite(&saveParametric, sizeof(int), 1, fp);
+    fwrite(&numVerts, sizeof(std::size_t), 1, fp);
+  }
+  else {
+    fprintf(fp, "%d %d %d %lu\n",
+            (version >= 4.1) ? ge->dim() : ge->tag(),
+            (version >= 4.1) ? ge->tag() : ge->dim(),
+            saveParametric, ge->getNumMeshVertices());
+  }
+
+  std::size_t N = ge->getNumMeshVertices();
+  std::size_t n = 3;
+  if(saveParametric){
+    if(ge->dim() == 1) n = 4;
+    else if(ge->dim() == 2) n = 5;
+  }
+
+  if(binary) {
+    std::vector<size_t> tags(N);
+    for(std::size_t i = 0; i < N; i++)
+      tags[i] = ge->getMeshVertex(i)->getNum();
+    fwrite(&tags[0], sizeof(std::size_t), N, fp);
+    std::vector<double> coord(n * N);
+    std::size_t j = 0;
+    for(std::size_t i = 0; i < N; i++){
+      MVertex *mv = ge->getMeshVertex(i);
+      coord[j++] = mv->x() * scalingFactor;
+      coord[j++] = mv->y() * scalingFactor;
+      coord[j++] = mv->z() * scalingFactor;
+      if(n >= 4) mv->getParameter(0, coord[j++]);
+      if(n == 5) mv->getParameter(1, coord[j++]);
+    }
+    fwrite(&coord[0], sizeof(double), n * N, fp);
+  }
+  else {
+    if(version >= 4.1){
+      for(std::size_t i = 0; i < N; i++)
+        fprintf(fp, "%lu\n", ge->getMeshVertex(i)->getNum());
+    }
+    for(std::size_t i = 0; i < N; i++){
+      MVertex *mv = ge->getMeshVertex(i);
+      double x = mv->x() * scalingFactor;
+      double y = mv->y() * scalingFactor;
+      double z = mv->z() * scalingFactor;
+      if(version < 4.1) fprintf(fp, "%lu ", mv->getNum());
+      if(n == 5){
+        double u, v;
+        mv->getParameter(0, u);
+        mv->getParameter(1, v);
+        fprintf(fp, "%.16g %.16g %.16g %.16g %.16g\n", x, y, z, u, v);
+      }
+      else if(n == 4){
+        double u;
+        mv->getParameter(0, u);
+        fprintf(fp, "%.16g %.16g %.16g %.16g\n", x, y, z, u);
+      }
+      else{
+        fprintf(fp, "%.16g %.16g %.16g\n", x, y, z);
+      }
+    }
+  }
+}
+
 static std::size_t
 getAdditionalEntities(std::set<GRegion *, GEntityLessThan> &regions,
                       std::set<GFace *, GEntityLessThan> &faces,
@@ -2117,88 +2193,13 @@ getAdditionalEntities(std::set<GRegion *, GEntityLessThan> &regions,
   return numVertices;
 }
 
-static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
-                                 int saveParametric, double scalingFactor,
-                                 double version)
+static std::size_t
+getEntitiesForNodes(GModel *const model, bool partitioned, bool saveAll,
+                    std::set<GRegion *, GEntityLessThan> &regions,
+                    std::set<GFace *, GEntityLessThan> &faces,
+                    std::set<GEdge *, GEntityLessThan> &edges,
+                    std::set<GVertex *, GEntityLessThan> &vertices)
 {
-  if(binary) {
-    int entityDim = ge->dim();
-    int entityTag = ge->tag();
-    std::size_t numVerts = ge->getNumMeshVertices();
-    fwrite(&entityDim, sizeof(int), 1, fp);
-    fwrite(&entityTag, sizeof(int), 1, fp);
-    fwrite(&saveParametric, sizeof(int), 1, fp);
-    fwrite(&numVerts, sizeof(std::size_t), 1, fp);
-  }
-  else {
-    fprintf(fp, "%d %d %d %lu\n",
-            (version >= 4.1) ? ge->dim() : ge->tag(),
-            (version >= 4.1) ? ge->tag() : ge->dim(),
-            saveParametric, ge->getNumMeshVertices());
-  }
-
-  std::size_t N = ge->getNumMeshVertices();
-  std::size_t n = 3;
-  if(saveParametric){
-    if(ge->dim() == 1) n = 4;
-    else if(ge->dim() == 2) n = 5;
-  }
-
-  if(binary) {
-    std::vector<size_t> tags(N);
-    for(std::size_t i = 0; i < N; i++)
-      tags[i] = ge->getMeshVertex(i)->getNum();
-    fwrite(&tags[0], sizeof(std::size_t), N, fp);
-    std::vector<double> coord(n * N);
-    std::size_t j = 0;
-    for(std::size_t i = 0; i < N; i++){
-      MVertex *mv = ge->getMeshVertex(i);
-      coord[j++] = mv->x() * scalingFactor;
-      coord[j++] = mv->y() * scalingFactor;
-      coord[j++] = mv->z() * scalingFactor;
-      if(n >= 4) mv->getParameter(0, coord[j++]);
-      if(n == 5) mv->getParameter(1, coord[j++]);
-    }
-    fwrite(&coord[0], sizeof(double), n * N, fp);
-  }
-  else {
-    if(version >= 4.1){
-      for(std::size_t i = 0; i < N; i++)
-        fprintf(fp, "%lu\n", ge->getMeshVertex(i)->getNum());
-    }
-    for(std::size_t i = 0; i < N; i++){
-      MVertex *mv = ge->getMeshVertex(i);
-      double x = mv->x() * scalingFactor;
-      double y = mv->y() * scalingFactor;
-      double z = mv->z() * scalingFactor;
-      if(version < 4.1) fprintf(fp, "%lu ", mv->getNum());
-      if(n == 5){
-        double u, v;
-        mv->getParameter(0, u);
-        mv->getParameter(1, v);
-        fprintf(fp, "%.16g %.16g %.16g %.16g %.16g\n", x, y, z, u, v);
-      }
-      else if(n == 4){
-        double u;
-        mv->getParameter(0, u);
-        fprintf(fp, "%.16g %.16g %.16g %.16g\n", x, y, z, u);
-      }
-      else{
-        fprintf(fp, "%.16g %.16g %.16g\n", x, y, z);
-      }
-    }
-  }
-}
-
-static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
-                           bool binary, int saveParametric,
-                           double scalingFactor, bool saveAll, double version)
-{
-  std::set<GRegion *, GEntityLessThan> regions;
-  std::set<GFace *, GEntityLessThan> faces;
-  std::set<GEdge *, GEntityLessThan> edges;
-  std::set<GVertex *, GEntityLessThan> vertices;
-
   if(partitioned) {
     for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
         ++it)
@@ -2251,6 +2252,19 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   if(!saveAll && !partitioned) {
     numVertices = getAdditionalEntities(regions, faces, edges, vertices);
   }
+  return numVertices;
+}
+
+static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
+                           bool binary, int saveParametric,
+                           double scalingFactor, bool saveAll, double version)
+{
+  std::set<GRegion *, GEntityLessThan> regions;
+  std::set<GFace *, GEntityLessThan> faces;
+  std::set<GEdge *, GEntityLessThan> edges;
+  std::set<GVertex *, GEntityLessThan> vertices;
+  std::size_t numNodes = getEntitiesForNodes(model, partitioned, saveAll,
+                                             regions, faces, edges, vertices);
 
   std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
   for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it) {
@@ -2282,7 +2296,7 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
     std::size_t numSection =
       vertices.size() + edges.size() + faces.size() + regions.size();
     fwrite(&numSection, sizeof(std::size_t), 1, fp);
-    fwrite(&numVertices, sizeof(std::size_t), 1, fp);
+    fwrite(&numNodes, sizeof(std::size_t), 1, fp);
     fwrite(&minTag, sizeof(std::size_t), 1, fp);
     fwrite(&maxTag, sizeof(std::size_t), 1, fp);
   }
@@ -2290,12 +2304,12 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
     if(version >= 4.1){
       fprintf(fp, "%lu %lu %lu %lu\n",
               vertices.size() + edges.size() + faces.size() + regions.size(),
-              numVertices, minTag, maxTag);
+              numNodes, minTag, maxTag);
     }
     else{
       fprintf(fp, "%lu %lu\n",
               vertices.size() + edges.size() + faces.size() + regions.size(),
-              numVertices);
+              numNodes);
     }
   }
 
@@ -2525,6 +2539,14 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
 static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
                                    bool partitioned, bool binary, double version)
 {
+  // To avoid saving correspondances bwteen nodes that are not saved (either in
+  // the same file or not at all, e.g. in the partitioned case, or simply if
+  // some physical entities are not defined), we could only apply the code below
+  // to the entities returned by getEntitiesForNodes().
+
+  // The current choice is to save everything, and not complain if a node is not
+  // found when reading the file. This should be reevaluated at some point.
+
   std::size_t count = 0;
   std::vector<GEntity *> entities;
   model->getEntities(entities);

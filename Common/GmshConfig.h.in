@@ -3,14 +3,14 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GMSH_CONFIG_H_
-#define _GMSH_CONFIG_H_
+#ifndef GMSH_CONFIG_H
+#define GMSH_CONFIG_H
 
 #cmakedefine HAVE_3M
 #cmakedefine HAVE_ACIS
+#cmakedefine HAVE_ALGLIB
 #cmakedefine HAVE_ANN
 #cmakedefine HAVE_BAMG
-#cmakedefine HAVE_BFGS
 #cmakedefine HAVE_BLAS
 #cmakedefine HAVE_BLOSSOM
 #cmakedefine HAVE_CAIRO

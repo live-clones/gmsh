@@ -52,7 +52,7 @@ private:
 
   // for 1d, 2d, 3d
   bool _computedJac[3], _computedIGE[3], _computedICN[3];
-  bool _PViewJac[3], _PViewIGE[3], _PViewICN[3];
+  bool _pviewJac[3], _pviewIGE[3], _pviewICN[3];
 
   std::vector<data_elementMinMax> _data;
 
@@ -65,9 +65,9 @@ public:
       _computedJac[i] = false;
       _computedIGE[i] = false;
       _computedICN[i] = false;
-      _PViewJac[i] = false;
-      _PViewIGE[i] = false;
-      _PViewICN[i] = false;
+      _pviewJac[i] = false;
+      _pviewIGE[i] = false;
+      _pviewICN[i] = false;
     }
   }
   std::string getName() const { return "AnalyseCurvedMesh"; }

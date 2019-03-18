@@ -208,6 +208,30 @@ integer pairs.
 -
 @end table
 
+@item setEntityName
+Set the name of the entity of dimension @code{dim} and tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{name}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item getEntityName
+Get the name of the entity of dimension @code{dim} and tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{name}
+@item Return:
+-
+@end table
+
 @item getPhysicalGroups
 Get all the physical groups in the current model. If @code{dim} is >= 0, return
 only the entities of the specified dimension (e.g. physical points if @code{dim}
@@ -374,6 +398,18 @@ true, remove all the entities on their boundaries, down to dimension 0.
 -
 @end table
 
+@item removeEntityName
+Remove the entity name @code{name} from the current model.
+
+@table @asis
+@item Input:
+@code{name}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item removePhysicalGroups
 Remove the physical groups @code{dimTags} of the current model. If
 @code{dimTags} is empty, remove all groups.
@@ -388,7 +424,7 @@ Remove the physical groups @code{dimTags} of the current model. If
 @end table
 
 @item removePhysicalName
-Remove the physical name @code{name} of the current model.
+Remove the physical name @code{name} from the current model.
 
 @table @asis
 @item Input:
@@ -1297,7 +1333,7 @@ Reorder the elements of type @code{elementType} classified on the entity of tag
 @end table
 
 @item renumberNodes
-Renumber the node tags in a contiunous sequence.
+Renumber the node tags in a continuous sequence.
 
 @table @asis
 @item Input:
@@ -1309,7 +1345,7 @@ Renumber the node tags in a contiunous sequence.
 @end table
 
 @item renumberElements
-Renumber the element tags in a contiunous sequence.
+Renumber the element tags in a continuous sequence.
 
 @table @asis
 @item Input:
@@ -2233,11 +2269,12 @@ integer value
 @item addSurfaceFilling
 Add a surface filling the curve loops in @code{wireTags}. If @code{tag} is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
-Return the tag of the surface.
+Return the tag of the surface. If @code{pointTags} are provided, force the
+surface to pass through the given points.
 
 @table @asis
 @item Input:
-@code{wireTag}, @code{tag}
+@code{wireTag}, @code{tag}, @code{pointTags}
 @item Output:
 -
 @item Return:

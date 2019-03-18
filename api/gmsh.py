@@ -12,6 +12,7 @@
 # examples.
 
 from ctypes import *
+from ctypes.util import find_library
 import signal
 import os
 import platform
@@ -23,12 +24,17 @@ GMSH_API_VERSION_MINOR = 2
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
-if platform.system() == 'Windows':
-    lib = CDLL(os.path.join(libdir, "gmsh-4.2.dll"))
-elif platform.system() == 'Darwin':
-    lib = CDLL(os.path.join(libdir, "libgmsh.dylib"))
+if platform.system() == "Windows":
+    libpath = os.path.join(libdir, "gmsh-4.2.dll")
+elif platform.system() == "Darwin":
+    libpath = os.path.join(libdir, "libgmsh.dylib")
 else:
-    lib = CDLL(os.path.join(libdir, "libgmsh.so"))
+    libpath = os.path.join(libdir, "libgmsh.so")
+
+if not os.path.exists(libpath):
+    libpath = find_library("gmsh")
+
+lib = CDLL(libpath)
 
 use_numpy = False
 try:
@@ -430,6 +436,42 @@ class model:
         return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
 
     @staticmethod
+    def setEntityName(dim, tag, name):
+        """
+        Set the name of the entity of dimension `dim' and tag `tag'.
+        """
+        ierr = c_int()
+        lib.gmshModelSetEntityName(
+            c_int(dim),
+            c_int(tag),
+            c_char_p(name.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelSetEntityName returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
+    def getEntityName(dim, tag):
+        """
+        Get the name of the entity of dimension `dim' and tag `tag'.
+
+        Return `name'.
+        """
+        api_name_ = c_char_p()
+        ierr = c_int()
+        lib.gmshModelGetEntityName(
+            c_int(dim),
+            c_int(tag),
+            byref(api_name_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetEntityName returned non-zero error code: ",
+                ierr.value)
+        return _ostring(api_name_)
+
+    @staticmethod
     def getPhysicalGroups(dim=-1):
         """
         Get all the physical groups in the current model. If `dim' is >= 0, return
@@ -702,6 +744,20 @@ class model:
                 ierr.value)
 
     @staticmethod
+    def removeEntityName(name):
+        """
+        Remove the entity name `name' from the current model.
+        """
+        ierr = c_int()
+        lib.gmshModelRemoveEntityName(
+            c_char_p(name.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelRemoveEntityName returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
     def removePhysicalGroups(dimTags=[]):
         """
         Remove the physical groups `dimTags' of the current model. If `dimTags' is
@@ -720,7 +776,7 @@ class model:
     @staticmethod
     def removePhysicalName(name):
         """
-        Remove the physical name `name' of the current model.
+        Remove the physical name `name' from the current model.
         """
         ierr = c_int()
         lib.gmshModelRemovePhysicalName(
@@ -2143,7 +2199,7 @@ class model:
         @staticmethod
         def renumberNodes():
             """
-            Renumber the node tags in a contiunous sequence.
+            Renumber the node tags in a continuous sequence.
             """
             ierr = c_int()
             lib.gmshModelMeshRenumberNodes(
@@ -2156,7 +2212,7 @@ class model:
         @staticmethod
         def renumberElements():
             """
-            Renumber the element tags in a contiunous sequence.
+            Renumber the element tags in a continuous sequence.
             """
             ierr = c_int()
             lib.gmshModelMeshRenumberElements(
@@ -3503,18 +3559,21 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSurfaceFilling(wireTag, tag=-1):
+        def addSurfaceFilling(wireTag, tag=-1, pointTags=[]):
             """
             Add a surface filling the curve loops in `wireTags'. If `tag' is positive,
             set the tag explicitly; otherwise a new tag is selected automatically.
-            Return the tag of the surface.
+            Return the tag of the surface. If `pointTags' are provided, force the
+            surface to pass through the given points.
 
             Return an integer value.
             """
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddSurfaceFilling(
                 c_int(wireTag),
                 c_int(tag),
+                api_pointTags_, api_pointTags_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

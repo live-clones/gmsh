@@ -247,6 +247,28 @@ namespace gmsh { // Top-level functions
       dimTags.resize(api_dimTags_n_ / 2); for(size_t i = 0; i < api_dimTags_n_ / 2; ++i){ dimTags[i].first = api_dimTags_[i * 2 + 0]; dimTags[i].second = api_dimTags_[i * 2 + 1]; } gmshFree(api_dimTags_);
     }
 
+    // Set the name of the entity of dimension `dim' and tag `tag'.
+    GMSH_API void setEntityName(const int dim,
+                                const int tag,
+                                const std::string & name)
+    {
+      int ierr = 0;
+      gmshModelSetEntityName(dim, tag, name.c_str(), &ierr);
+      if(ierr) throw ierr;
+    }
+
+    // Get the name of the entity of dimension `dim' and tag `tag'.
+    GMSH_API void getEntityName(const int dim,
+                                const int tag,
+                                std::string & name)
+    {
+      int ierr = 0;
+      char *api_name_;
+      gmshModelGetEntityName(dim, tag, &api_name_, &ierr);
+      if(ierr) throw ierr;
+      name = std::string(api_name_); gmshFree(api_name_);
+    }
+
     // Get all the physical groups in the current model. If `dim' is >= 0, return
     // only the entities of the specified dimension (e.g. physical points if `dim'
     // == 0). The entities are returned as a vector of (dim, tag) integer pairs.
@@ -419,6 +441,14 @@ namespace gmsh { // Top-level functions
       gmshFree(api_dimTags_);
     }
 
+    // Remove the entity name `name' from the current model.
+    GMSH_API void removeEntityName(const std::string & name)
+    {
+      int ierr = 0;
+      gmshModelRemoveEntityName(name.c_str(), &ierr);
+      if(ierr) throw ierr;
+    }
+
     // Remove the physical groups `dimTags' of the current model. If `dimTags' is
     // empty, remove all groups.
     GMSH_API void removePhysicalGroups(const gmsh::vectorpair & dimTags = gmsh::vectorpair())
@@ -430,7 +460,7 @@ namespace gmsh { // Top-level functions
       gmshFree(api_dimTags_);
     }
 
-    // Remove the physical name `name' of the current model.
+    // Remove the physical name `name' from the current model.
     GMSH_API void removePhysicalName(const std::string & name)
     {
       int ierr = 0;
@@ -1406,7 +1436,7 @@ namespace gmsh { // Top-level functions
         gmshFree(api_ordering_);
       }
 
-      // Renumber the node tags in a contiunous sequence.
+      // Renumber the node tags in a continuous sequence.
       GMSH_API void renumberNodes()
       {
         int ierr = 0;
@@ -1414,7 +1444,7 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
       }
 
-      // Renumber the element tags in a contiunous sequence.
+      // Renumber the element tags in a continuous sequence.
       GMSH_API void renumberElements()
       {
         int ierr = 0;
@@ -2380,13 +2410,17 @@ namespace gmsh { // Top-level functions
 
       // Add a surface filling the curve loops in `wireTags'. If `tag' is positive,
       // set the tag explicitly; otherwise a new tag is selected automatically.
-      // Return the tag of the surface.
+      // Return the tag of the surface. If `pointTags' are provided, force the
+      // surface to pass through the given points.
       GMSH_API int addSurfaceFilling(const int wireTag,
-                                     const int tag = -1)
+                                     const int tag = -1,
+                                     const std::vector<int> & pointTags = std::vector<int>())
       {
         int ierr = 0;
-        int result_api_ = gmshModelOccAddSurfaceFilling(wireTag, tag, &ierr);
+        int *api_pointTags_; size_t api_pointTags_n_; vector2ptr(pointTags, &api_pointTags_, &api_pointTags_n_);
+        int result_api_ = gmshModelOccAddSurfaceFilling(wireTag, tag, api_pointTags_, api_pointTags_n_, &ierr);
         if(ierr) throw ierr;
+        gmshFree(api_pointTags_);
         return result_api_;
       }
 

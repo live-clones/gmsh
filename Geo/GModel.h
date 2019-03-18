@@ -423,6 +423,9 @@ public:
     _elementaryNames[std::pair<int, int>(dim, tag)] = name;
   }
 
+  // remove elememtary name(s)
+  void removeElementaryName(const std::string &name);
+
   // get the highest dimension of the GModel
   int getDim() const;
 
@@ -646,7 +649,8 @@ public:
   // Stereo lithography format
   int readSTL(const std::string &name, double tolerance = 1.e-3);
   int writeSTL(const std::string &name, bool binary = false,
-               bool saveAll = false, double scalingFactor = 1.0);
+               bool saveAll = false, double scalingFactor = 1.0,
+               bool oneSolidPerSurface = false);
 
   // PLY(2) format (ascii text format)
   int readPLY(const std::string &name);

@@ -240,6 +240,30 @@ GMSH_API void gmshModelGetEntities(int ** dimTags, size_t * dimTags_n, const int
   }
 }
 
+GMSH_API void gmshModelSetEntityName(const int dim, const int tag, const char * name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::setEntityName(dim, tag, name);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelGetEntityName(const int dim, const int tag, char ** name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::string api_name_;
+    gmsh::model::getEntityName(dim, tag, api_name_);
+    *name = strdup(api_name_.c_str());
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelGetPhysicalGroups(int ** dimTags, size_t * dimTags_n, const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -396,6 +420,17 @@ GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n, const int
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
     gmsh::model::removeEntities(api_dimTags_, recursive);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelRemoveEntityName(const char * name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::removeEntityName(name);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -2047,12 +2082,13 @@ GMSH_API int gmshModelOccAddPlaneSurface(int * wireTags, size_t wireTags_n, cons
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag, const int tag, int * ierr)
+GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag, const int tag, int * pointTags, size_t pointTags_n, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::model::occ::addSurfaceFilling(wireTag, tag);
+    std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
+    result_api_ = gmsh::model::occ::addSurfaceFilling(wireTag, tag, api_pointTags_);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

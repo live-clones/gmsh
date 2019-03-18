@@ -25,7 +25,6 @@
 #include "ExtractElements.h"
 #include "SimplePartition.h"
 #include "Crack.h"
-#include "ThinLayerFixMesh.h"
 #include "HarmonicToTime.h"
 #include "ModulusPhase.h"
 #include "Integrate.h"
@@ -61,7 +60,6 @@
 #include "Scal2Vec.h"
 #include "CutMesh.h"
 #include "NewView.h"
-#include "FaultZone.h"
 #include "MeshSubEntities.h"
 #include "MeshVolume.h"
 #include "CVTRemesh.h"
@@ -262,10 +260,6 @@ void PluginManager::registerDefaultPlugins()
       "SimplePartition", GMSH_RegisterSimplePartitionPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "Crack", GMSH_RegisterCrackPlugin()));
-    allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
-      "FaultZone", GMSH_RegisterFaultZonePlugin()));
-    allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
-      "ThinLayerFixMesh", GMSH_RegisterThinLayerFixMeshPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "ShowNeighborElements", GMSH_RegisterShowNeighborElementsPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(

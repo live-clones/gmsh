@@ -607,7 +607,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
       int dim = outDimTags[i].first;
       int tag = outDimTags[i].second;
       if(dim >= 0 && dim < 3) {
-        std::set<int>::iterator it = c[dim].find(tag);
+        std::set<int, AbsIntLessThan>::iterator it = c[dim].find(tag);
         if(it == c[dim].end())
           c[dim].insert(tag);
         else {
@@ -617,7 +617,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
     }
     outDimTags.clear();
     for(int dim = 0; dim < 3; dim++) {
-      for(std::set<int>::iterator it = c[dim].begin(); it != c[dim].end(); it++)
+      for(std::set<int, AbsIntLessThan>::iterator it = c[dim].begin(); it != c[dim].end(); it++)
         outDimTags.push_back(std::pair<int, int>(dim, *it));
     }
   }
@@ -786,7 +786,7 @@ void GModel::removePhysicalName(const std::string &name)
     _physicalNames.begin();
   while(it != _physicalNames.end()) {
     if(it->second == name)
-      // it = physicalNames.erase(it); // C++11 only
+      // it = _physicalNames.erase(it); // C++11 only
       _physicalNames.erase(it++);
     else
       ++it;
@@ -827,6 +827,19 @@ std::string GModel::getElementaryName(int dim, int number)
     _elementaryNames.find(std::pair<int, int>(dim, number));
   if(it != _elementaryNames.end()) return it->second;
   return "";
+}
+
+void GModel::removeElementaryName(const std::string &name)
+{
+  std::map<std::pair<int, int>, std::string>::iterator it =
+    _elementaryNames.begin();
+  while(it != _elementaryNames.end()) {
+    if(it->second == name)
+      // it = _elementaryNames.erase(it); // C++11 only
+      _elementaryNames.erase(it++);
+    else
+      ++it;
+  }
 }
 
 void GModel::setSelection(int val)
@@ -895,7 +908,7 @@ addToMap(std::multimap<MFace, MElement *, Less_Face> &faceToElement,
            &elToNeighbors,
          const MFace &face, MElement *el)
 {
-  std::map<MFace, MElement *, Less_Face>::iterator fit =
+  std::multimap<MFace, MElement *, Less_Face>::iterator fit =
     faceToElement.find(face);
   if(fit == faceToElement.end()) {
     faceToElement.insert(std::pair<MFace, MElement *>(face, el));

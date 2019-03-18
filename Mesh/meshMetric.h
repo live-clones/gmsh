@@ -35,7 +35,7 @@ private:
   // the "most anisotropic" metric
   void updateMetrics();
   int _dim;
-  double _epsilon, _E, _E_moins, _Np;
+  double _epsilon, _e, _e_moins, _np;
   bool needMetricUpdate;
   bool hasAnalyticalMetric;
   meshMetric::MetricComputationTechnique _technique;

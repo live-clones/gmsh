@@ -34,6 +34,7 @@ typedef unsigned long intptr_t;
 #include "GeoStringInterface.h"
 #include "Options.h"
 #include "Context.h"
+#include "StringUtils.h"
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -483,7 +484,10 @@ public:
 static void _add_vertex(GVertex *gv, Fl_Tree *tree, const std::string &path)
 {
   std::ostringstream vertex;
-  vertex << path << "Point " << gv->tag() << "/";
+  vertex << path << "Point " << gv->tag();
+  std::string name = gv->model()->getElementaryName(0, gv->tag());
+  if(!name.empty()) vertex << " - " << ReplaceSubString("/", "|", name);
+  vertex << "/";
   Fl_Tree_Item *n = tree->add(vertex.str().c_str());
   if(!n) return;
   if(gv->getVisibility()) n->select(1);
@@ -494,7 +498,10 @@ static void _add_vertex(GVertex *gv, Fl_Tree *tree, const std::string &path)
 static void _add_edge(GEdge *ge, Fl_Tree *tree, const std::string &path)
 {
   std::ostringstream edge;
-  edge << path << "Curve " << ge->tag() << "/";
+  edge << path << "Curve " << ge->tag();
+  std::string name = ge->model()->getElementaryName(1, ge->tag());
+  if(!name.empty()) edge << " - " << ReplaceSubString("/", "|", name);
+  edge << "/";
   Fl_Tree_Item *n = tree->add(edge.str().c_str());
   if(!n) return;
   if(ge->getVisibility()) n->select(1);
@@ -507,7 +514,10 @@ static void _add_edge(GEdge *ge, Fl_Tree *tree, const std::string &path)
 static void _add_face(GFace *gf, Fl_Tree *tree, const std::string &path)
 {
   std::ostringstream face;
-  face << path << "Surface " << gf->tag() << "/";
+  face << path << "Surface " << gf->tag();
+  std::string name = gf->model()->getElementaryName(2, gf->tag());
+  if(!name.empty()) face << " - " << ReplaceSubString("/", "|", name);
+  face << "/";
   Fl_Tree_Item *n = tree->add(face.str().c_str());
   if(!n) return;
   if(gf->getVisibility()) n->select(1);
@@ -522,7 +532,10 @@ static void _add_face(GFace *gf, Fl_Tree *tree, const std::string &path)
 static void _add_region(GRegion *gr, Fl_Tree *tree, const std::string &path)
 {
   std::ostringstream region;
-  region << path << "Volume " << gr->tag() << "/";
+  region << path << "Volume " << gr->tag();
+  std::string name = gr->model()->getElementaryName(3, gr->tag());
+  if(!name.empty()) region << " - " << ReplaceSubString("/", "|", name);
+  region << "/";
   Fl_Tree_Item *n = tree->add(region.str().c_str());
   if(!n) return;
   if(gr->getVisibility()) n->select(1);
@@ -541,7 +554,7 @@ static void _add_physical_group(int dim, int num, std::vector<GEntity *> &ge,
   if(ge.empty()) return;
   std::string name = ge[0]->model()->getPhysicalName(dim, num);
   if(name.empty()) name = oldLabels[num];
-  if(name.size()) name = std::string(" <<") + name + ">>";
+  if(name.size()) name = std::string(" - ") + name;
 
   Fl_Tree_Item *n;
   std::ostringstream group;
@@ -588,7 +601,7 @@ static void _rebuild_tree_browser(bool force)
         GModel::list[i]->getNumRegions() + GModel::list[i]->getNumFaces() +
         GModel::list[i]->getNumEdges() + GModel::list[i]->getNumVertices();
     }
-    if(numEnt > 10000) {
+    if(numEnt > 50000) {
       FlGui::instance()->visibility->tree->hide();
       FlGui::instance()->visibility->tree_create->show();
       return;
@@ -602,7 +615,8 @@ static void _rebuild_tree_browser(bool force)
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
     std::ostringstream model;
-    model << "Model [" << i << "] <<" << m->getName() << ">>";
+    model << "Model " << i;
+    if(m->getName().size()) model << " - " << m->getName();
     if(m == GModel::current()) model << " (Current Model)";
     model << "/";
 
@@ -1265,7 +1279,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 
     tree_create =
       new Fl_Button(2 * WB, 2 * WB + BH, brw, height - 6 * WB - 3 * BH,
-                    "The model contains more than ten thousand entities,\n"
+                    "The model contains more than 50 thousand entities,\n"
                     "which might slow down the tree browser.\n\n"
                     "Create tree browser anyway?");
     tree_create->callback(build_tree_cb);
@@ -1515,7 +1529,8 @@ void visibilityWindow::updatePerWindow(bool force)
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
     std::ostringstream sstream;
-    sstream << "Model [" << i << "] <<" << m->getName() << ">>";
+    sstream << "Model " << i;
+    if(m->getName().size()) sstream << " - " << m->getName();
     per_window->add(sstream.str().c_str());
     if(ctx->isVisible(m)) per_window->select(line, 1);
     line++;
@@ -1524,7 +1539,8 @@ void visibilityWindow::updatePerWindow(bool force)
   for(std::size_t i = 0; i < PView::list.size(); i++) {
     PView *v = PView::list[i];
     std::ostringstream sstream;
-    sstream << "View [" << i << "] <<" << v->getData()->getName() << ">>";
+    sstream << "View [" << i << "]";
+    if(v->getData()->getName().size()) sstream << " - " << v->getData()->getName();
     per_window->add(sstream.str().c_str());
     if(ctx->isVisible(v)) per_window->select(line, 1);
     line++;

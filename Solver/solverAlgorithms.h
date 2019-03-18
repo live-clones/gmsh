@@ -351,4 +351,4 @@ void NumberDofs(FunctionSpaceBase &space, Iterator itbegin, Iterator itend,
   //  }
   //}
 
-#endif // _SOLVERALGORITHMS_H_
+#endif

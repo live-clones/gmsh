@@ -39,13 +39,13 @@ Recombine Surface{100};
 // Journal for Numerical Methods in Engineering 89, pp. 1102-1119, 2012.
 
 // For even better 2D (planar) quadrilateral meshes, you can try the
-// experimental "Delaunay for quads" (DelQuad) meshing algorithm: DelQuad is a
+// experimental "Frontal-Delaunay for quads" meshing algorithm, which is a
 // triangulation algorithm that enables to create right triangles almost
 // everywhere: J.-F. Remacle, F. Henrotte, T. Carrier-Baudouin, E. Bechet,
 // E. Marchandise, C. Geuzaine and T. Mouton. A frontal Delaunay quad mesh
 // generator using the L^inf norm. International Journal for Numerical Methods
 // in Engineering, 94, pp. 494-512, 2013. Uncomment the following line to try
-// DelQuad:
+// the Frontal-Delaunay algorithms for quads:
 //
 // Mesh.Algorithm = 8;
 

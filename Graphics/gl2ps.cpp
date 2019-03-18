@@ -109,9 +109,9 @@ typedef enum {
 
 typedef GLfloat GL2PSplane[4];
 
-typedef struct _GL2PSbsptree2d GL2PSbsptree2d;
+typedef struct GL2PSbsptree2d_ GL2PSbsptree2d;
 
-struct _GL2PSbsptree2d {
+struct GL2PSbsptree2d_ {
   GL2PSplane plane;
   GL2PSbsptree2d *front, *back;
 };
@@ -121,9 +121,9 @@ typedef struct {
   char *array;
 } GL2PSlist;
 
-typedef struct _GL2PSbsptree GL2PSbsptree;
+typedef struct GL2PSbsptree_ GL2PSbsptree;
 
-struct _GL2PSbsptree {
+struct GL2PSbsptree_ {
   GL2PSplane plane;
   GL2PSlist *primitives;
   GL2PSbsptree *front, *back;
@@ -153,9 +153,9 @@ typedef struct {
   GLfloat *pixels;
 } GL2PSimage;
 
-typedef struct _GL2PSimagemap GL2PSimagemap;
+typedef struct GL2PSimagemap_ GL2PSimagemap;
 
-struct _GL2PSimagemap {
+struct GL2PSimagemap_ {
   GL2PSimage *image;
   GL2PSimagemap *next;
 };

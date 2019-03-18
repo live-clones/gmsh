@@ -28,6 +28,7 @@
 #define MESH_OPT_COMMON_H
 
 #include <vector>
+#include <list>
 #include "GmshMessage.h"
 #include "MeshOptimizerConfig.h"
 

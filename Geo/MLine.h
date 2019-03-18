@@ -239,18 +239,21 @@ public:
   }
   virtual int getTypeForMSH() const
   {
-    if(_vs.size() == 0) return MSH_LIN_2;
-    if(_vs.size() == 1) return MSH_LIN_3;
-    if(_vs.size() == 2) return MSH_LIN_4;
-    if(_vs.size() == 3) return MSH_LIN_5;
-    if(_vs.size() == 4) return MSH_LIN_6;
-    if(_vs.size() == 5) return MSH_LIN_7;
-    if(_vs.size() == 6) return MSH_LIN_8;
-    if(_vs.size() == 7) return MSH_LIN_9;
-    if(_vs.size() == 8) return MSH_LIN_10;
-    if(_vs.size() == 9) return MSH_LIN_11;
-    Msg::Error("no tag matches a line with %d vertices", 8 + _vs.size());
-    return 0;
+    switch(_vs.size()){
+    case 0: return MSH_LIN_2;
+    case 1: return MSH_LIN_3;
+    case 2: return MSH_LIN_4;
+    case 3: return MSH_LIN_5;
+    case 4: return MSH_LIN_6;
+    case 5: return MSH_LIN_7;
+    case 6: return MSH_LIN_8;
+    case 7: return MSH_LIN_9;
+    case 8: return MSH_LIN_10;
+    case 9: return MSH_LIN_11;
+    default:
+      Msg::Error("no tag matches a line with %d vertices", 8 + _vs.size());
+      return 0;
+    }
   }
   virtual void reverse()
   {

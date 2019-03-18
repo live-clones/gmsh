@@ -22,8 +22,8 @@ Curve Loop(5) = {1,2,3,4}; Plane Surface(6) = {5};
 
 // Say we would like to obtain mesh elements with size lc/30 near curve 2 and
 // point 5, and size lc elsewhere. To achieve this, we can use two fields:
-// "Distance", and "Threshold". We first define an Distance field (Field[1])
-// on points 5 and on curve 2. This field returns the distance to point 5 and to
+// "Distance", and "Threshold". We first define a Distance field (Field[1]) on
+// points 5 and on curve 2. This field returns the distance to point 5 and to
 // (100 equidistant points on) curve 2.
 Field[1] = Distance;
 Field[1].NodesList = {5};
@@ -54,7 +54,7 @@ Field[3] = MathEval;
 Field[3].F = "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101";
 
 // We could also combine MathEval with values coming from other fields. For
-// example, let's define an Distance field around point 1
+// example, let's define a Distance field around point 1
 Field[4] = Distance;
 Field[4].NodesList = {1};
 

@@ -579,14 +579,15 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                   (o->mesh.choice[2]->value() == 1) ? ALGO_2D_MESHADAPT :
                   (o->mesh.choice[2]->value() == 2) ? ALGO_2D_DELAUNAY :
                   (o->mesh.choice[2]->value() == 3) ? ALGO_2D_FRONTAL :
-                  (o->mesh.choice[2]->value() == 4) ? ALGO_2D_FRONTAL_QUAD :
-                  (o->mesh.choice[2]->value() == 5) ? ALGO_2D_PACK_PRLGRMS :
+                  (o->mesh.choice[2]->value() == 4) ? ALGO_2D_BAMG :
+                  (o->mesh.choice[2]->value() == 5) ? ALGO_2D_FRONTAL_QUAD :
+                  (o->mesh.choice[2]->value() == 6) ? ALGO_2D_PACK_PRLGRMS :
                   ALGO_2D_AUTO);
   opt_mesh_algo3d(0, GMSH_SET,
                   (o->mesh.choice[3]->value() == 1) ? ALGO_3D_FRONTAL :
-                  (o->mesh.choice[3]->value() == 2) ? ALGO_3D_MMG3D :
-                  (o->mesh.choice[3]->value() == 3) ? ALGO_3D_RTREE :
-                  (o->mesh.choice[3]->value() == 4) ? ALGO_3D_HXT :
+                  (o->mesh.choice[3]->value() == 2) ? ALGO_3D_HXT :
+                  (o->mesh.choice[3]->value() == 3) ? ALGO_3D_MMG3D :
+                  (o->mesh.choice[3]->value() == 4) ? ALGO_3D_RTREE :
                   ALGO_3D_DELAUNAY);
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
@@ -2291,17 +2292,18 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Automatic", 0, 0, 0},
         {"MeshAdapt", 0, 0, 0},
         {"Delaunay", 0, 0, 0},
-        {"Frontal", 0, 0, 0},
-        {"Delaunay for Quads (experimental)", 0, 0, 0},
+        {"Frontal-Delaunay", 0, 0, 0},
+        {"BAMG (experimental)", 0, 0, 0},
+        {"Frontal-Delaunay for Quads (experimental)", 0, 0, 0},
         {"Packing of Parallelograms (experimental)", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Delaunay", 0, 0, 0},
         {"Frontal", 0, 0, 0},
+        {"HXT (experimental)", 0, 0, 0},
         {"MMG3D (experimental)", 0, 0, 0},
         {"R-Tree (experimental)", 0, 0, 0},
-        {"HXT (experimental)", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_recombination_algo[] = {

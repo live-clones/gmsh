@@ -18,7 +18,6 @@
 #if defined(HAVE_SOLVER)
 #include "linearSystemCSR.h"
 #include "linearSystemPETSc.h"
-#include "linearSystemGMM.h"
 #include "linearSystemFull.h"
 #include "dofManager.h"
 #include "laplaceTerm.h"
@@ -1220,7 +1219,7 @@ void Size_field::solve(GRegion *gr)
 #if defined(HAVE_PETSC)
   linearSystemPETSc<double> *system = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM)
-  linearSystemGmm<double> *system = new linearSystemGmm<double>;
+  linearSystemCSRGmm<double> *system = new linearSystemCSRGmm<double>;
 #else
   linearSystemFull<double> *system = new linearSystemFull<double>;
 #endif

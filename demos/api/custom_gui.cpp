@@ -57,8 +57,8 @@ int main(int argc, char **argv)
   // threads, the progress display and the custom ONELAB button (when pressed,
   // it will set the "ONELAB/Action" parameter to "should compute")
   std::string parameters = R"( [
-    { "type":"number", "name":"My App/Iterations", "values":[1e6],
-      "attributes":{"Highlight":"AliceBlue"} },
+    { "type":"number", "name":"My App/Iterations", "values":[1e6], "min":1e4,
+      "max":1e9, "step":1e5, "attributes":{"Highlight":"AliceBlue"} },
     { "type":"number", "name":"My App/Number of threads", "values":[2],
       "choices":[1, 2, 3, 4], "attributes":{"Highlight":"AliceBlue"} },
     { "type":"number", "name":"My App/Show progress?", "values":[1],

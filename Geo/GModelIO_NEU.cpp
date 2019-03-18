@@ -7,6 +7,7 @@
 
 #include <time.h>
 #include <algorithm>
+#include <iterator>
 #include <limits>
 #if __cplusplus >= 201103L
 #include <unordered_map>

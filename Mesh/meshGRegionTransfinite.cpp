@@ -143,23 +143,23 @@ transfiniteHex(GRegion *gr, MVertex *f1, MVertex *f2, MVertex *f3, MVertex *f4,
 class GOrientedTransfiniteFace {
 private:
   GFace *_gf;
-  int _LL, _HH;
+  int _ll, _hh;
   int _permutation, _index;
   std::vector<MVertex *> _list;
 
 public:
   GOrientedTransfiniteFace()
-    : _gf(0), _LL(0), _HH(0), _permutation(-1), _index(-1)
+    : _gf(0), _ll(0), _hh(0), _permutation(-1), _index(-1)
   {
   }
   GOrientedTransfiniteFace(GFace *gf, std::vector<MVertex *> &corners)
-    : _gf(gf), _LL(0), _HH(0), _permutation(-1), _index(-1)
+    : _gf(gf), _ll(0), _hh(0), _permutation(-1), _index(-1)
   {
-    _LL = gf->transfinite_vertices.size() - 1;
-    if(_LL <= 0) return;
-    _HH = gf->transfinite_vertices[0].size() - 1;
-    if(_HH <= 0) return;
-    Msg::Debug("Face %d: L = %d  H = %d", gf->tag(), _LL, _HH);
+    _ll = gf->transfinite_vertices.size() - 1;
+    if(_ll <= 0) return;
+    _hh = gf->transfinite_vertices[0].size() - 1;
+    if(_hh <= 0) return;
+    Msg::Debug("Face %d: L = %d  H = %d", gf->tag(), _ll, _hh);
 
     // get the corners of the transfinite volume interpolation
     std::vector<MVertex *> s(8);
@@ -184,14 +184,14 @@ public:
     if(_gf->meshAttributes.corners.empty() ||
        _gf->meshAttributes.corners.size() == 4) {
       c[0] = _gf->transfinite_vertices[0][0];
-      c[1] = _gf->transfinite_vertices[_LL][0];
-      c[2] = _gf->transfinite_vertices[_LL][_HH];
-      c[3] = _gf->transfinite_vertices[0][_HH];
+      c[1] = _gf->transfinite_vertices[_ll][0];
+      c[2] = _gf->transfinite_vertices[_ll][_hh];
+      c[3] = _gf->transfinite_vertices[0][_hh];
     }
     else if(_gf->meshAttributes.corners.size() == 3) {
       c[0] = _gf->transfinite_vertices[0][0];
-      c[1] = _gf->transfinite_vertices[_LL][0];
-      c[2] = _gf->transfinite_vertices[_LL][_HH];
+      c[1] = _gf->transfinite_vertices[_ll][0];
+      c[2] = _gf->transfinite_vertices[_ll][_hh];
       c[3] = _gf->transfinite_vertices[0][0];
     }
     else
@@ -215,8 +215,8 @@ public:
       }
     }
     Msg::Debug("Found face index %d  (permutation = %d)", _index, _permutation);
-    for(int i = 0; i <= _LL; i++)
-      for(int j = 0; j <= _HH; j++)
+    for(int i = 0; i <= _ll; i++)
+      for(int j = 0; j <= _hh; j++)
         _list.push_back(_gf->transfinite_vertices[i][j]);
   }
   // returns the index of the face in the reference hexahedron
@@ -228,8 +228,8 @@ public:
   }
   // returns the number or points in the transfinite mesh in both
   // parameter directions
-  int getNumU() { return (_permutation % 2) ? _HH + 1 : _LL + 1; }
-  int getNumV() { return (_permutation % 2) ? _LL + 1 : _HH + 1; }
+  int getNumU() { return (_permutation % 2) ? _hh + 1 : _ll + 1; }
+  int getNumV() { return (_permutation % 2) ? _ll + 1 : _hh + 1; }
   // returns the (i,j) vertex in the face, i and j being defined in
   // the coordinate system of the reference transfinite hexahedron
   MVertex *getVertex(int i, int j)

@@ -50,7 +50,7 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
   int npts = d.u.size();
   m.setAll(0.);
 
-  double FACT = _E / (1 + _nu);
+  double FACT = _e / (1 + _nu);
   double C11 = FACT * (1 - _nu) / (1 - 2 * _nu);
   double C12 = FACT * _nu / (1 - 2 * _nu);
   double C44 = (C11 - C12) / 2;
@@ -182,13 +182,13 @@ void elasticityMixedTerm::elementMatrix(SElement *se,
   fullMatrix<double> KGG(_sizeM, _sizeM);
   fullMatrix<double> KPP(_sizeM, _sizeM); // stabilization
 
-  double FACT = _E / ((1 + _nu) * (1. - 2 * _nu));
+  double FACT = _e / ((1 + _nu) * (1. - 2 * _nu));
   double C11 = FACT * (1 - _nu);
   double C12 = FACT * _nu;
   double C44 = FACT * (1 - 2. * _nu) * .5;
-  // double _K = 3*_E / (1 - 2 * _nu);
+  // double _k = 3*_e / (1 - 2 * _nu);
   // FIXME : PLANE STRESS !!!
-  //  FACT = _E / (1-_nu*_nu);
+  //  FACT = _e / (1-_nu*_nu);
   //  C11  = FACT;
   //  C12  = _nu * FACT;
   //  C44 = (1.-_nu)*.5*FACT;
@@ -248,7 +248,7 @@ void elasticityMixedTerm::elementMatrix(SElement *se,
     }
 
     /*
-    const double K3 = weight * detJ * _E/(2*(1+_nu));
+    const double K3 = weight * detJ * _e/(2*(1+_nu));
     for (int j = 0; j < _sizeN; j++){
       for (int k = 0; k < _sizeN; k++){
     const double fa = (Grads[j][0] * Grads[k][0] +
@@ -300,8 +300,8 @@ void elasticityMixedTerm::elementMatrix(SElement *se,
       MT(j, 0) = M(0, j) = SF[j];
     }
 
-    //    printf("BT (%d %d) x H (%d,%d) = BTH(%d,%d)\n",BT.size1(),BT.size2(),
-    //    H.size1(),H.size2(),BTH.size1(),BTH.size2());
+    // printf("BT (%d %d) x H (%d,%d) = BTH(%d,%d)\n",BT.size1(),BT.size2(),
+    // H.size1(),H.size2(),BTH.size1(),BTH.size2());
 
     BTH.setAll(0.);
     BTH.gemm(BT, H);
@@ -311,10 +311,10 @@ void elasticityMixedTerm::elementMatrix(SElement *se,
     }
 
     KUU.gemm(BTH, B, weight * detJ);
-    //    KUP.gemm(BDILT, M, weight * detJ);
-    //    KPG.gemm(MT, M, -weight * detJ);
-    //    KUG.gemm(trBTH, M, weight * detJ/_dimension);
-    //    KGG.gemm(MT, M, weight * detJ * (_K)/(_dimension*_dimension));
+    // KUP.gemm(BDILT, M, weight * detJ);
+    // KPG.gemm(MT, M, -weight * detJ);
+    // KUG.gemm(trBTH, M, weight * detJ/_dimension);
+    // KGG.gemm(MT, M, weight * detJ * (_k)/(_dimension*_dimension));
   }
   /*
           3*_sizeN  _sizeM _sizeM

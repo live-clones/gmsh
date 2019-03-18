@@ -21,7 +21,9 @@ const GMSH_API_VERSION = "4.2"
 const GMSH_API_VERSION_MAJOR = 4
 const GMSH_API_VERSION_MINOR = 2
 const libdir = dirname(@__FILE__)
-const lib = joinpath(libdir, Sys.iswindows() ? "gmsh-4.2" : "libgmsh")
+const libname = Sys.iswindows() ? "gmsh-4.2" : "libgmsh"
+import Libdl
+const lib = Libdl.find_library([libname], [libdir])
 
 """
     gmsh.initialize(argv = Vector{String}(), readConfigFiles = true)
@@ -290,6 +292,38 @@ function getEntities(dim = -1)
 end
 
 """
+    gmsh.model.setEntityName(dim, tag, name)
+
+Set the name of the entity of dimension `dim` and tag `tag`.
+"""
+function setEntityName(dim, tag, name)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelSetEntityName, gmsh.lib), Nothing,
+          (Cint, Cint, Ptr{Cchar}, Ptr{Cint}),
+          dim, tag, name, ierr)
+    ierr[] != 0 && error("gmshModelSetEntityName returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.getEntityName(dim, tag)
+
+Get the name of the entity of dimension `dim` and tag `tag`.
+
+Return `name`.
+"""
+function getEntityName(dim, tag)
+    api_name_ = Ref{Ptr{Cchar}}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetEntityName, gmsh.lib), Nothing,
+          (Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}),
+          dim, tag, api_name_, ierr)
+    ierr[] != 0 && error("gmshModelGetEntityName returned non-zero error code: $(ierr[])")
+    name = unsafe_string(api_name_[])
+    return name
+end
+
+"""
     gmsh.model.getPhysicalGroups(dim = -1)
 
 Get all the physical groups in the current model. If `dim` is >= 0, return only
@@ -523,6 +557,20 @@ function removeEntities(dimTags, recursive = false)
 end
 
 """
+    gmsh.model.removeEntityName(name)
+
+Remove the entity name `name` from the current model.
+"""
+function removeEntityName(name)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelRemoveEntityName, gmsh.lib), Nothing,
+          (Ptr{Cchar}, Ptr{Cint}),
+          name, ierr)
+    ierr[] != 0 && error("gmshModelRemoveEntityName returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
 
 Remove the physical groups `dimTags` of the current model. If `dimTags` is
@@ -540,7 +588,7 @@ end
 """
     gmsh.model.removePhysicalName(name)
 
-Remove the physical name `name` of the current model.
+Remove the physical name `name` from the current model.
 """
 function removePhysicalName(name)
     ierr = Ref{Cint}()
@@ -1799,7 +1847,7 @@ end
 """
     gmsh.model.mesh.renumberNodes()
 
-Renumber the node tags in a contiunous sequence.
+Renumber the node tags in a continuous sequence.
 """
 function renumberNodes()
     ierr = Ref{Cint}()
@@ -1813,7 +1861,7 @@ end
 """
     gmsh.model.mesh.renumberElements()
 
-Renumber the element tags in a contiunous sequence.
+Renumber the element tags in a continuous sequence.
 """
 function renumberElements()
     ierr = Ref{Cint}()
@@ -2950,19 +2998,20 @@ function addPlaneSurface(wireTags, tag = -1)
 end
 
 """
-    gmsh.model.occ.addSurfaceFilling(wireTag, tag = -1)
+    gmsh.model.occ.addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[])
 
 Add a surface filling the curve loops in `wireTags`. If `tag` is positive, set
 the tag explicitly; otherwise a new tag is selected automatically. Return the
-tag of the surface.
+tag of the surface. If `pointTags` are provided, force the surface to pass
+through the given points.
 
 Return an integer value.
 """
-function addSurfaceFilling(wireTag, tag = -1)
+function addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[])
     ierr = Ref{Cint}()
     api__result__ = ccall((:gmshModelOccAddSurfaceFilling, gmsh.lib), Cint,
-          (Cint, Cint, Ptr{Cint}),
-          wireTag, tag, ierr)
+          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          wireTag, tag, convert(Vector{Cint}, pointTags), length(pointTags), ierr)
     ierr[] != 0 && error("gmshModelOccAddSurfaceFilling returned non-zero error code: $(ierr[])")
     return api__result__
 end

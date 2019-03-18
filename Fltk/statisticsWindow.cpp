@@ -40,6 +40,7 @@ static void statistics_update_cb(Fl_Widget *w, void *data)
 static void statistics_histogram_cb(Fl_Widget *w, void *data)
 {
   QM_HISTO qmh = *(QM_HISTO *)data;
+  bool visibleOnly = FlGui::instance()->stats->visible->value() ? true : false;
 
   std::vector<double> x, y;
 
@@ -65,13 +66,14 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
     new PView("SIGE", "# Elements", x, y);
   }
   else {
-    std::vector<GEntity *> entities_;
-    GModel::current()->getEntities(entities_);
+    std::vector<GEntity *> entities;
+    GModel::current()->getEntities(entities);
     std::map<int, std::vector<double> > d;
-    for(std::size_t i = 0; i < entities_.size(); i++) {
-      if(entities_[i]->dim() < 2) continue;
-      for(std::size_t j = 0; j < entities_[i]->getNumMeshElements(); j++) {
-        MElement *e = entities_[i]->getMeshElement(j);
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      if(visibleOnly && !entities[i]->getVisibility()) continue;
+      if(entities[i]->dim() < 2) continue;
+      for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+        MElement *e = entities[i]->getMeshElement(j);
         if(qmh == QMH_SICN_3D)
           d[e->getNum()].push_back(e->minSICNShapeMeasure());
         else if(qmh == QMH_GAMMA_3D)
@@ -97,7 +99,7 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
 
   int num = 0;
   int width = 26 * FL_NORMAL_SIZE;
-  int height = 5 * WB + 18 * BH;
+  int height = 6 * WB + 19 * BH;
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
@@ -172,6 +174,9 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
       butt[4]->callback(statistics_histogram_cb, (void *)&qmh4);
       butt[5]->callback(statistics_histogram_cb, (void *)&qmh5);
 
+      visible = new Fl_Check_Button(2 * WB, 2 * WB + 17 * BH + WB,  width - 4 * WB,
+                                    BH, "Compute statistics for visible entities only");
+
       group[1]->end();
     }
     {
@@ -224,11 +229,12 @@ void statisticsWindow::compute(bool elementQuality)
   int num = 0;
   static double s[50];
   static char label[50][256];
+  bool visibleOnly = visible->value() ? true : false;
 
   if(elementQuality)
-    GetStatistics(s, quality);
+    GetStatistics(s, quality, visibleOnly);
   else
-    GetStatistics(s);
+    GetStatistics(s, 0, visibleOnly);
 
   // geom
   sprintf(label[num], "%g", s[0]);

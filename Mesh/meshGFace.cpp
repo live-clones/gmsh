@@ -1244,8 +1244,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     gf->meshStatistics.status = GFace::DONE;
     return true;
   }
-  if(all_vertices.size() == 3) {
-    MVertex *vv[3];
+  else if(all_vertices.size() == 3) {
+    MVertex *vv[3] = {0, 0, 0};
     int i = 0;
     for(std::set<MVertex *, MVertexLessThanNum>::iterator it =
           all_vertices.begin();
@@ -1260,7 +1260,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   // Buid a BDS_Mesh structure that is convenient for doing the actual
   // meshing procedure
   BDS_Mesh *m = new BDS_Mesh;
-
 
   std::vector<BDS_Point *> points(all_vertices.size());
   SBoundingBox3d bbox;
@@ -2147,15 +2146,16 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     delete m;
     return true;
   }
-  if(nbPointsTotal == 3) {
-    MVertex *vv[3];
+  else if(nbPointsTotal == 3) {
+    MVertex *vv[3] = {0, 0, 0};
     int i = 0;
     for(std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
           recoverMap.begin();
         it != recoverMap.end(); it++) {
       vv[i++] = it->second;
     }
-    gf->triangles.push_back(new MTriangle(vv[0], vv[1], vv[2]));
+    if(vv[0] && vv[1] && vv[2])
+      gf->triangles.push_back(new MTriangle(vv[0], vv[1], vv[2]));
     gf->meshStatistics.status = GFace::DONE;
     delete m;
     return true;

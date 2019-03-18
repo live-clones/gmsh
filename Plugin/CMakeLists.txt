@@ -32,8 +32,7 @@ set(SRC
   Scal2Tens.cpp Scal2Vec.cpp
   CutMesh.cpp
   NewView.cpp
-  SimplePartition.cpp Crack.cpp ThinLayerFixMesh.cpp
-  FaultZone.cpp
+  SimplePartition.cpp Crack.cpp
   MeshSubEntities.cpp
   MeshVolume.cpp
   CVTRemesh.cpp

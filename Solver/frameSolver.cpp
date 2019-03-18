@@ -10,7 +10,6 @@
 #include "frameSolver.h"
 #include "linearSystemCSR.h"
 #include "linearSystemPETSc.h"
-#include "linearSystemGMM.h"
 #include "linearSystemFull.h"
 
 #if defined(HAVE_POST)
@@ -127,8 +126,8 @@ void frameSolver2d::createDofs()
 void frameSolver2d::computeStiffnessMatrix(int iBeam, fullMatrix<double> &K)
 {
   const gmshBeam2d &b = _beams[iBeam];
-  const double BS = b._E * b._I / (b._L * b._L * b._L);
-  const double TS = b._E * b._A / b._L;
+  const double BS = b._e * b._i / (b._l * b._l * b._l);
+  const double TS = b._e * b._a / b._l;
   const MVertex *v1 = b._element->getVertex(0);
   const MVertex *v2 = b._element->getVertex(1);
   const double alpha = atan2(v2->y() - v1->y(), v2->x() - v1->x());
@@ -150,11 +149,11 @@ void frameSolver2d::computeStiffnessMatrix(int iBeam, fullMatrix<double> &K)
   k(0, 3) = k(3, 0) = -TS;
   // bending stiffness
   k(1, 1) = k(4, 4) = 12 * BS;
-  k(2, 2) = k(5, 5) = 4. * BS * b._L * b._L;
-  k(1, 2) = k(2, 1) = k(1, 5) = k(5, 1) = 6 * BS * b._L;
-  k(4, 2) = k(2, 4) = k(4, 5) = k(5, 4) = -6 * BS * b._L;
+  k(2, 2) = k(5, 5) = 4. * BS * b._l * b._l;
+  k(1, 2) = k(2, 1) = k(1, 5) = k(5, 1) = 6 * BS * b._l;
+  k(4, 2) = k(2, 4) = k(4, 5) = k(5, 4) = -6 * BS * b._l;
   k(4, 1) = k(1, 4) = -12 * BS;
-  k(5, 2) = k(2, 5) = -2 * BS * b._L * b._L;
+  k(5, 2) = k(2, 5) = -2 * BS * b._l * b._l;
 
   fullMatrix<double> Rt(R), temp(6, 6);
   Rt.transposeInPlace();
@@ -167,8 +166,9 @@ void frameSolver2d::solve()
 #if defined(HAVE_PETSC)
   linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM)
-  linearSystemGmm<double> *lsys = new linearSystemGmm<double>;
-  lsys->setNoisy(2);
+  linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
+  lsys->setGmres(1);
+  lsys->setNoisy(1);
 #else
   linearSystemFull<double> *lsys = new linearSystemFull<double>;
 #endif
@@ -243,9 +243,9 @@ void frameSolver2d::exportFrameData(const char *DISPL, const char *M)
     std::map<int, std::vector<double> > data;
     for(std::size_t i = 0; i < _beams.size(); i++) {
       std::vector<double> tmp;
-      //      tmp.push_back(_beams[i]._E);
-      //      tmp.push_back(_beams[i]._I);
-      //      tmp.push_back(_beams[i]._A);
+      // tmp.push_back(_beams[i]._e);
+      // tmp.push_back(_beams[i]._i);
+      // tmp.push_back(_beams[i]._a);
       tmp.reserve(6);
       for(int j = 0; j < 6; j++) {
         tmp.push_back(_beams[i]._displacement[j]);
