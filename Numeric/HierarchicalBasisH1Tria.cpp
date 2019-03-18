@@ -163,8 +163,8 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
   gradientVertex[1][1] = jacob * dlambda3V;
   gradientVertex[2][0] = jacob * dlambda1U;
   gradientVertex[2][1] = jacob * dlambda1V;
-  double tablIntermU[_nBubbleFunction];
-  double tablIntermV[_nBubbleFunction];
+  std::vector<double> tablIntermU(_nBubbleFunction);
+  std::vector<double> tablIntermV(_nBubbleFunction);
   // edge 0  gradient  and a part of bubble functions gradient :
   int iterator2 = 0;
   for(int k = 0; k <= _pOrderEdge[0] - 2; k++) {

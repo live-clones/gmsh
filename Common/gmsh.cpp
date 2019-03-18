@@ -1328,13 +1328,9 @@ GMSH_API void gmsh::model::mesh::setElementsByType(
   const std::vector<std::size_t> &elementTags,
   const std::vector<std::size_t> &nodeTags)
 {
-<<<<<<< HEAD
-  if(!_isInitialized()) { throw - 1; }
-=======
   if(!_isInitialized()) {
     throw -1;
   }
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
   int dim = ElementType::getDimension(elementType);
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge) {
@@ -2361,16 +2357,13 @@ GMSH_API void gmsh::model::mesh::preallocateBarycenters(
 }
 
 GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
-<<<<<<< HEAD
-  const int elementType, std::vector<std::size_t> &nodeTags, const int tag,
-  const bool primary, const std::size_t task, const std::size_t numTasks)
-=======
   const int elementType, std::vector<std::size_t> &nodeTags,
   const int tag, const bool primary,
   const std::size_t task, const std::size_t numTasks)
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
 {
-  if(!_isInitialized()) { throw - 1; }
+  if(!_isInitialized()) {
+    throw -1;
+  }
   int dim = ElementType::getDimension(elementType);
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
@@ -2381,12 +2374,14 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     int n = ge->getNumMeshElementsByType(familyType);
-    if(n && !numNodesPerEdge) {
+    if(n && !numNodesPerEdge){
       MElement *e = ge->getMeshElementByType(familyType, i);
       numEdgesPerEle = e->getNumEdges();
-      if(primary) { numNodesPerEdge = 2; }
-      else {
-        std::vector<MVertex *> v;
+      if(primary){
+        numNodesPerEdge = 2;
+      }
+      else{
+        std::vector<MVertex*> v;
         // we could use e->getHighOrderEdge() here if we decide to remove
         // getEdgeVertices
         e->getEdgeVertices(0, v);
@@ -2395,19 +2390,15 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
     }
     numElements += n;
   }
-  if(!numTasks) {
+  if(!numTasks){
     Msg::Error("Number of tasks should be > 0");
     throw 4;
   }
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
   if(numEdgesPerEle * numNodesPerEdge * end > nodeTags.size()) {
-<<<<<<< HEAD
-    if(numTasks > 1) Msg::Error("Nodes should be preallocated if numTasks > 1");
-=======
     if(numTasks > 1)
       Msg::Error("Nodes should be preallocated if numTasks > 1");
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
     nodeTags.resize(numEdgesPerEle * numNodesPerEdge * numElements);
   }
   size_t o = 0;
@@ -2417,17 +2408,13 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
     for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
       if(o >= begin && o < end) {
         MElement *e = ge->getMeshElementByType(familyType, j);
-        for(int k = 0; k < numEdgesPerEle; k++) {
-          std::vector<MVertex *> v;
+        for(int k = 0; k < numEdgesPerEle; k++){
+          std::vector<MVertex*> v;
           // we could use e->getHighOrderEdge() here if we decide to remove
           // getEdgeVertices
           e->getEdgeVertices(k, v);
           std::size_t N = primary ? 2 : v.size();
-<<<<<<< HEAD
-          for(std::size_t l = 0; l < N; l++) {
-=======
           for(std::size_t l = 0; l < N; l++){
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
             nodeTags[idx++] = v[l]->getNum();
           }
         }
@@ -2438,18 +2425,14 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
 }
 
 GMSH_API void gmsh::model::mesh::getElementFaceNodes(
-<<<<<<< HEAD
-  const int elementType, const int faceType, std::vector<std::size_t> &nodeTags,
-  const int tag, const bool primary, const std::size_t task,
-  const std::size_t numTasks)
-=======
   const int elementType, const int faceType,
   std::vector<std::size_t> &nodeTags,
   const int tag, const bool primary,
   const std::size_t task, const std::size_t numTasks)
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
 {
-  if(!_isInitialized()) { throw - 1; }
+  if(!_isInitialized()) {
+    throw -1;
+  }
   int dim = ElementType::getDimension(elementType);
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
@@ -2460,17 +2443,20 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     int n = ge->getNumMeshElementsByType(familyType);
-    if(n && !numNodesPerFace) {
+    if(n && !numNodesPerFace){
       MElement *e = ge->getMeshElementByType(familyType, i);
       int nf = e->getNumFaces();
       numFacesPerEle = 0;
-      for(int j = 0; j < nf; j++) {
+      for(int j = 0; j < nf; j++){
         MFace f = e->getFace(j);
-        if(faceType == (int)f.getNumVertices()) numFacesPerEle++;
+        if(faceType == (int)f.getNumVertices())
+          numFacesPerEle++;
       }
-      if(primary) { numNodesPerFace = faceType; }
-      else {
-        std::vector<MVertex *> v;
+      if(primary){
+        numNodesPerFace = faceType;
+      }
+      else{
+        std::vector<MVertex*> v;
         // we could use e->getHighOrderFace() here if we decide to remove
         // getFaceVertices
         e->getFaceVertices(0, v);
@@ -2479,19 +2465,15 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
     }
     numElements += n;
   }
-  if(!numTasks) {
+  if(!numTasks){
     Msg::Error("Number of tasks should be > 0");
     throw 4;
   }
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
   if(numFacesPerEle * numNodesPerFace * end > nodeTags.size()) {
-<<<<<<< HEAD
-    if(numTasks > 1) Msg::Error("Nodes should be preallocated if numTasks > 1");
-=======
     if(numTasks > 1)
       Msg::Error("Nodes should be preallocated if numTasks > 1");
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
     nodeTags.resize(numFacesPerEle * numNodesPerFace * numElements);
   }
   size_t o = 0;
@@ -2502,19 +2484,15 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
       if(o >= begin && o < end) {
         MElement *e = ge->getMeshElementByType(familyType, j);
         int nf = e->getNumFaces();
-        for(int k = 0; k < nf; k++) {
+        for(int k = 0; k < nf; k++){
           MFace f = e->getFace(k);
           if(faceType != (int)f.getNumVertices()) continue;
-          std::vector<MVertex *> v;
+          std::vector<MVertex*> v;
           // we could use e->getHighOrderFace() here if we decide to remove
           // getFaceVertices
           e->getFaceVertices(k, v);
           std::size_t N = primary ? faceType : v.size();
-<<<<<<< HEAD
-          for(std::size_t l = 0; l < N; l++) {
-=======
           for(std::size_t l = 0; l < N; l++){
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
             nodeTags[idx++] = v[l]->getNum();
           }
         }
@@ -2524,19 +2502,14 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
   }
 }
 
-<<<<<<< HEAD
-GMSH_API void
-gmsh::model::mesh::getGhostElements(const int dim, const int tag,
-                                    std::vector<std::size_t> &elementTags,
-                                    std::vector<int> &partitions)
-=======
 GMSH_API void gmsh::model::mesh::getGhostElements(
   const int dim, const int tag,
   std::vector<std::size_t> &elementTags,
   std::vector<int> &partitions)
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
 {
-  if(!_isInitialized()) { throw - 1; }
+  if(!_isInitialized()) {
+    throw -1;
+  }
   elementTags.clear();
   partitions.clear();
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
@@ -2546,15 +2519,14 @@ GMSH_API void gmsh::model::mesh::getGhostElements(
   }
   std::map<MElement *, unsigned int> ghostCells;
   if(ge->geomType() == GEntity::GhostCurve)
-    ghostCells = static_cast<ghostEdge *>(ge)->getGhostCells();
+    ghostCells = static_cast<ghostEdge*>(ge)->getGhostCells();
   else if(ge->geomType() == GEntity::GhostSurface)
-    ghostCells = static_cast<ghostFace *>(ge)->getGhostCells();
+    ghostCells = static_cast<ghostFace*>(ge)->getGhostCells();
   else if(ge->geomType() == GEntity::GhostVolume)
-    ghostCells = static_cast<ghostRegion *>(ge)->getGhostCells();
+    ghostCells = static_cast<ghostRegion*>(ge)->getGhostCells();
 
-  for(std::map<MElement *, unsigned int>::const_iterator it =
-        ghostCells.begin();
-      it != ghostCells.end(); it++) {
+  for(std::map<MElement *, unsigned int>::const_iterator it = ghostCells.begin();
+      it != ghostCells.end(); it++){
     elementTags.push_back(it->first->getNum());
     partitions.push_back(it->second);
   }
@@ -4274,20 +4246,12 @@ GMSH_API void gmsh::view::getModelData(const int tag, const int step,
 }
 
 // for better performance, manual C implementation of gmsh::view::getModelData
-<<<<<<< HEAD
-GMSH_API void gmshViewGetModelData(const int tag, const int step,
-                                   char **dataType, size_t **tags,
-                                   size_t *tags_n, double ***data,
-                                   size_t **data_n, size_t *data_nn,
-                                   double *time, int *numComponents, int *ierr)
-=======
 GMSH_API void gmshViewGetModelData(const int tag, const int step, char **dataType,
                                    size_t **tags, size_t *tags_n,
                                    double ***data, size_t **data_n, size_t *data_nn,
                                    double *time,
                                    int *numComponents,
                                    int *ierr)
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
 {
   if(!_isInitialized()) {
     if(ierr) *ierr = -1;
@@ -4707,13 +4671,9 @@ GMSH_API int gmsh::fltk::selectEntities(vectorpair &dimTags, const int dim)
 
 GMSH_API int gmsh::fltk::selectElements(std::vector<std::size_t> &elementTags)
 {
-<<<<<<< HEAD
-  if(!_isInitialized()) { throw - 1; }
-=======
   if(!_isInitialized()) {
     throw -1;
   }
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
   elementTags.clear();
 #if defined(HAVE_FLTK)
   if(!FlGui::available()) FlGui::instance(_argc, _argv);
@@ -4732,13 +4692,9 @@ GMSH_API int gmsh::fltk::selectElements(std::vector<std::size_t> &elementTags)
 
 GMSH_API int gmsh::fltk::selectViews(std::vector<int> &viewTags)
 {
-<<<<<<< HEAD
-  if(!_isInitialized()) { throw - 1; }
-=======
   if(!_isInitialized()) {
     throw -1;
   }
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
   viewTags.clear();
 #if defined(HAVE_FLTK)
   if(!FlGui::available()) FlGui::instance(_argc, _argv);
