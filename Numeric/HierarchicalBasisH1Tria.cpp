@@ -305,7 +305,7 @@ void HierarchicalBasisH1Tria::orientateEdge(int const &flagOrientation,
     default: throw std::string("edgeNumber  must be : 0<=edgeNumber<=2");
     }
       for(int k = const1; k <= const2; k++) {
-        if(k % 2 != 0) { edgeBasis[k] = edgeBasis[k] * (-1); }
+        if((k-const1) % 2 != 0) { edgeBasis[k] = edgeBasis[k] * (-1); }
       }
     }
   }
@@ -339,7 +339,7 @@ void HierarchicalBasisH1Tria::orientateEdgeGrad(
     default: throw std::string("edgeNumber  must be : 0<=edgeNumber<=2");
     }
     for(int k = const1; k <= const2; k++) {
-      if(k % 2 != 0) {
+      if((k-const1) % 2 != 0) {
         gradientEdge[k][0] = gradientEdge[k][0] * (-1);
         gradientEdge[k][1] = gradientEdge[k][1] * (-1);
       }

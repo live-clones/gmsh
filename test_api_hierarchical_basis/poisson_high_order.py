@@ -20,7 +20,7 @@ import sys
 
 
 INTEGRATION = 'Gauss8'
-RECOMBINE = 1
+RECOMBINE = 0
 order=4#polynomial order
 
 def create_geometry_legendre():
@@ -113,14 +113,14 @@ def fem_solve_legendre():
                 # Assembly of stiffness matrix for all 2 dimensional elements
                 # (triangles or quadrangles)
                 if dimEntity==2 :
-                    sf, weights ,ky = model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType, 'Legendre',
-                                                                                 order,tagEntity)            
+                    sf, weights ,ky,_ = model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType, 'Legendre',
+                                                                                 order,False,tagEntity)            
                    
                     numGaussPoints = len(weights)
                     weights=np.array(weights)
                     sf = np.array(sf).reshape((numGaussPoints,numElements,-1))    
-                    dsf,_, _ = model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType,
-                                                                         'GradLegendre',order,tagEntity) 
+                    dsf,_, _ ,_= model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType,
+                                                                         'GradLegendre',order,False,tagEntity) 
                  
                    
                     dsf = np.array(dsf).reshape((numGaussPoints,numElements,-1))

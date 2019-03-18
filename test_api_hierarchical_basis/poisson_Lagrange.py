@@ -11,7 +11,7 @@ import sys
 # $ python demos/api/poisson.py
 # with usual gmsh line arguments, e.g., -clscale 0.5 -order 2
 
-INTEGRATION = 'Gauss2'
+INTEGRATION = 'Gauss8'
 DEBUG = 0
 RECOMBINE = 0
 
@@ -236,7 +236,7 @@ fem_solve()
 
 gmsh.option.setNumber("View[0].IntervalsType", 3)
 gmsh.option.setNumber("View[0].NbIso", 20)
-#gmsh.fltk.run()
+gmsh.fltk.run()
 
 gmsh.finalize()
 

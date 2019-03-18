@@ -395,7 +395,7 @@ void HierarchicalBasisH1Quad::orientateEdge(int const &flagOrientation,
     default: throw std::string("edgeNumber  must be : 0<=edgeNumber<=3");
     }
     for(int k = constant1; k <= constant2; k++) {
-      if(k % 2 != 0) { edgeBasis[k] = edgeBasis[k] * (-1); }
+      if((k-constant1) % 2 != 0) { edgeBasis[k] = edgeBasis[k] * (-1); }
     }
   }
 }
@@ -430,7 +430,7 @@ void HierarchicalBasisH1Quad::orientateEdgeGrad(
     default: throw std::string("edgeNumber  must be : 0<=edgeNumber<=3");
     }
     for(int k = constant1; k <= constant2; k++) {
-      if(k % 2 != 0) {
+      if((k-constant1) % 2 != 0) {
         gradientEdge[k][0] = gradientEdge[k][0] * (-1);
         gradientEdge[k][1] = gradientEdge[k][1] * (-1);
       }
