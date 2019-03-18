@@ -92,10 +92,9 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
          "- ICNMeasure = {0, 1}\n"
          "\n"
          "- HidingThreshold = [0, 1]: Hides all element for which min(mu) is "
-         "strictly greater than the threshold, where mu is \n"
-         "the ICN if ICN measure == 1, otherwise \n"
-         "the IGE if IGE measure == 1, otherwise \n"
-         "the Jacobian determinant.\n"
+         "strictly greater than the threshold, where mu is ICN if"
+         "ICNMeasure == 1, otherwise it is IGE if IGEMeasure == 1. "
+         "If ICNMeasure == IGEMeasure == 0, nothing happens. "
          "If threshold == 0, hides all elements except invalid.\n"
          "\n"
          "- DrawPView = {0, 1}: Creates a PView of min(J)/max(J), min(IGE) "
@@ -430,7 +429,7 @@ int GMSH_AnalyseCurvedMeshPlugin::_hideWithThreshold(int askedDim,
                                                      int whichMeasure)
 {
   // only hide for quality measures
-  if(_threshold > 1 || whichMeasure == -1) return 0;
+  if(_threshold > 1 || whichMeasure < 1) return 0;
 
   int nHidden = 0;
 

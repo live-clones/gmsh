@@ -109,12 +109,8 @@ namespace jacobianBasedQuality {
 
     bool boundsOk(double minL, double maxL) const;
     void getSubCoeff(std::vector<_coefData *> &) const;
-    void deleteBezierCoeff()
-    {
-      delete _coeffDet2;
-      delete _coeffMat2;
-    }
-    int getNumMeasure() const { return 2; } // fordebug
+    void deleteBezierCoeff() { delete _coeffDet2; delete _coeffMat2; }
+    int getNumMeasure() const { return 2; } // FIXMEDEBUG
 
   private:
     void _computeAtCorner(double &min, double &max, double &min2,
@@ -140,8 +136,13 @@ namespace jacobianBasedQuality {
     ~_coefDataICN() {}
 
     bool boundsOk(double minL, double maxL) const;
+<<<<<<< HEAD
     void getSubCoeff(std::vector<_coefData *> &) const;
     void deleteBezierCoeff() {} // delete _coeffDet2; delete _coeffMat2;}
+=======
+    void getSubCoeff(std::vector<_CoeffData *> &) const;
+    void deleteBezierCoeff() { delete _coeffDet2; delete _coeffMat2; }
+>>>>>>> misc
     int getNumMeasure() const { return 4; } // fordebug
 
   private:

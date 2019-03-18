@@ -739,8 +739,8 @@ namespace jacobianBasedQuality {
 
   bool _coefDataJac::boundsOk(double minL, double maxL) const
   {
-    double tol = std::max(std::abs(minL), std::abs(maxL)) * 1e-3;
-    return (minL <= 0 || _minB > 0) && minL - _minB < tol && _maxB - maxL < tol;
+    double tol = std::max(std::abs(minL), std::abs(maxL)) * 1e-7; //FIXMEDEBUG
+    return (minL <= 0 || _minB2 > 0) && minL - _minB2 < tol && _maxB2 - maxL < tol;
   }
 
   void _coefDataJac::getSubCoeff(std::vector<_coefData *> &v) const
@@ -825,7 +825,6 @@ namespace jacobianBasedQuality {
     int szM1 = _coeffsJacMat.size1();
     int szM2 = _coeffsJacMat.size2();
     for(int i = 0; i < _bfsDet->getNumDivision(); i++) {
-//      std::cout << "subdiv " << i << std::endl;
       fullVector<double> coeffD(szD);
       fullMatrix<double> coeffM(szM1, szM2);
       coeffD.copy(subCoeffD, i * szD, szD, 0);
