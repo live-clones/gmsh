@@ -1328,13 +1328,7 @@ GMSH_API void gmsh::model::mesh::setElementsByType(
   const std::vector<std::size_t> &elementTags,
   const std::vector<std::size_t> &nodeTags)
 {
-<<<<<<< HEAD
   if(!_isInitialized()) { throw - 1; }
-=======
-  if(!_isInitialized()) {
-    throw -1;
-  }
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
   int dim = ElementType::getDimension(elementType);
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge) {
@@ -2361,14 +2355,9 @@ GMSH_API void gmsh::model::mesh::preallocateBarycenters(
 }
 
 GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
-<<<<<<< HEAD
-  const int elementType, std::vector<std::size_t> &nodeTags, const int tag,
-  const bool primary, const std::size_t task, const std::size_t numTasks)
-=======
   const int elementType, std::vector<std::size_t> &nodeTags,
   const int tag, const bool primary,
   const std::size_t task, const std::size_t numTasks)
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
 {
   if(!_isInitialized()) { throw - 1; }
   int dim = ElementType::getDimension(elementType);
@@ -2402,12 +2391,8 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
   if(numEdgesPerEle * numNodesPerEdge * end > nodeTags.size()) {
-<<<<<<< HEAD
-    if(numTasks > 1) Msg::Error("Nodes should be preallocated if numTasks > 1");
-=======
     if(numTasks > 1)
       Msg::Error("Nodes should be preallocated if numTasks > 1");
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
     nodeTags.resize(numEdgesPerEle * numNodesPerEdge * numElements);
   }
   size_t o = 0;
@@ -2423,11 +2408,7 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
           // getEdgeVertices
           e->getEdgeVertices(k, v);
           std::size_t N = primary ? 2 : v.size();
-<<<<<<< HEAD
-          for(std::size_t l = 0; l < N; l++) {
-=======
           for(std::size_t l = 0; l < N; l++){
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
             nodeTags[idx++] = v[l]->getNum();
           }
         }
@@ -2438,16 +2419,9 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
 }
 
 GMSH_API void gmsh::model::mesh::getElementFaceNodes(
-<<<<<<< HEAD
   const int elementType, const int faceType, std::vector<std::size_t> &nodeTags,
   const int tag, const bool primary, const std::size_t task,
   const std::size_t numTasks)
-=======
-  const int elementType, const int faceType,
-  std::vector<std::size_t> &nodeTags,
-  const int tag, const bool primary,
-  const std::size_t task, const std::size_t numTasks)
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
 {
   if(!_isInitialized()) { throw - 1; }
   int dim = ElementType::getDimension(elementType);
@@ -2486,12 +2460,7 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
   if(numFacesPerEle * numNodesPerFace * end > nodeTags.size()) {
-<<<<<<< HEAD
     if(numTasks > 1) Msg::Error("Nodes should be preallocated if numTasks > 1");
-=======
-    if(numTasks > 1)
-      Msg::Error("Nodes should be preallocated if numTasks > 1");
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
     nodeTags.resize(numFacesPerEle * numNodesPerFace * numElements);
   }
   size_t o = 0;
@@ -2510,11 +2479,7 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
           // getFaceVertices
           e->getFaceVertices(k, v);
           std::size_t N = primary ? faceType : v.size();
-<<<<<<< HEAD
           for(std::size_t l = 0; l < N; l++) {
-=======
-          for(std::size_t l = 0; l < N; l++){
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
             nodeTags[idx++] = v[l]->getNum();
           }
         }
@@ -2524,17 +2489,10 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
   }
 }
 
-<<<<<<< HEAD
-GMSH_API void
-gmsh::model::mesh::getGhostElements(const int dim, const int tag,
-                                    std::vector<std::size_t> &elementTags,
-                                    std::vector<int> &partitions)
-=======
 GMSH_API void gmsh::model::mesh::getGhostElements(
   const int dim, const int tag,
   std::vector<std::size_t> &elementTags,
   std::vector<int> &partitions)
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
 {
   if(!_isInitialized()) { throw - 1; }
   elementTags.clear();
@@ -4274,20 +4232,11 @@ GMSH_API void gmsh::view::getModelData(const int tag, const int step,
 }
 
 // for better performance, manual C implementation of gmsh::view::getModelData
-<<<<<<< HEAD
 GMSH_API void gmshViewGetModelData(const int tag, const int step,
                                    char **dataType, size_t **tags,
                                    size_t *tags_n, double ***data,
                                    size_t **data_n, size_t *data_nn,
                                    double *time, int *numComponents, int *ierr)
-=======
-GMSH_API void gmshViewGetModelData(const int tag, const int step, char **dataType,
-                                   size_t **tags, size_t *tags_n,
-                                   double ***data, size_t **data_n, size_t *data_nn,
-                                   double *time,
-                                   int *numComponents,
-                                   int *ierr)
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
 {
   if(!_isInitialized()) {
     if(ierr) *ierr = -1;
@@ -4707,13 +4656,7 @@ GMSH_API int gmsh::fltk::selectEntities(vectorpair &dimTags, const int dim)
 
 GMSH_API int gmsh::fltk::selectElements(std::vector<std::size_t> &elementTags)
 {
-<<<<<<< HEAD
   if(!_isInitialized()) { throw - 1; }
-=======
-  if(!_isInitialized()) {
-    throw -1;
-  }
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
   elementTags.clear();
 #if defined(HAVE_FLTK)
   if(!FlGui::available()) FlGui::instance(_argc, _argv);
@@ -4732,13 +4675,7 @@ GMSH_API int gmsh::fltk::selectElements(std::vector<std::size_t> &elementTags)
 
 GMSH_API int gmsh::fltk::selectViews(std::vector<int> &viewTags)
 {
-<<<<<<< HEAD
   if(!_isInitialized()) { throw - 1; }
-=======
-  if(!_isInitialized()) {
-    throw -1;
-  }
->>>>>>> b7c568f1fbf0531f0d5acc5127ce0f721d831872
   viewTags.clear();
 #if defined(HAVE_FLTK)
   if(!FlGui::available()) FlGui::instance(_argc, _argv);
