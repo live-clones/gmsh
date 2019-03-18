@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _LINEAR_SYSTEM_GMM_H_
-#define _LINEAR_SYSTEM_GMM_H_
+#ifndef LINEAR_SYSTEM_GMM_H
+#define LINEAR_SYSTEM_GMM_H
 
 // Interface to GMM++
 
@@ -75,18 +75,18 @@ public:
   virtual void zeroMatrix() { gmm::clear(*_a); }
   virtual void zeroRightHandSide()
   {
-    for(unsigned int i = 0; i < _b->size(); i++) (*_b)[i] = 0.;
+    for(std::size_t i = 0; i < _b->size(); i++) (*_b)[i] = 0.;
   }
   virtual void zeroSolution()
   {
-    for(unsigned int i = 0; i < _x->size(); i++) (*_x)[i] = 0.;
+    for(std::size_t i = 0; i < _x->size(); i++) (*_x)[i] = 0.;
   }
 
   virtual double normInfRightHandSide() const
   {
     double nor = 0.;
     double temp;
-    for(unsigned int i = 0; i < _b->size(); i++) {
+    for(std::size_t i = 0; i < _b->size(); i++) {
       temp = abs((*_b)[i]); // this is valid also for complex
       // if(temp<0) temp = -temp;
       if(nor < temp) nor = temp;

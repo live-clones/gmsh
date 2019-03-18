@@ -474,7 +474,7 @@ int GModel::_readMSH2(const std::string &name)
           elems[num] = e;
           elemreg[num] = elementary;
           elemphy[num] = physical;
-          for(unsigned int j = 0; j < ghosts.size(); j++)
+          for(std::size_t j = 0; j < ghosts.size(); j++)
             _ghostCells.insert(std::pair<MElement *, short>(e, ghosts[j]));
           if(numElements > 100000)
             Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
@@ -695,7 +695,7 @@ static void writeElementMSH(FILE *fp, GModel *model, GEntity *ge, T *ele,
                    dom1Num, dom2Num, &ghosts);
   else {
     if(parentNum) parentNum = parentNum - physicals.size() + 1;
-    for(unsigned int j = 0; j < physicals.size(); j++) {
+    for(std::size_t j = 0; j < physicals.size(); j++) {
       ele->writeMSH2(fp, version, binary, ++num, elementary, physicals[j],
                      parentNum, dom1Num, dom2Num, &ghosts);
       if(parentNum) parentNum++;
@@ -724,12 +724,12 @@ static void writeElementsMSH(FILE *fp, GModel *model, GEntity *ge,
     if(ele.empty()) return;
     int offset = -saveSinglePartition;
     int maxPhysical = model->getMaxPhysicalNumber(ele[0]->getDim());
-    for(unsigned int i = 0; i < ele.size(); i++) {
+    for(std::size_t i = 0; i < ele.size(); i++) {
       std::vector<int> newPhysicals;
       int newElementary = elementary;
       if(elementary > 0) { // classical entity
         newElementary = elementary * offset + ele[i]->getPartition();
-        for(unsigned int j = 0; j < physicals.size(); j++)
+        for(std::size_t j = 0; j < physicals.size(); j++)
           newPhysicals.push_back(physicals[j] * offset +
                                  ele[i]->getPartition());
       }
@@ -743,7 +743,7 @@ static void writeElementsMSH(FILE *fp, GModel *model, GEntity *ge,
     return;
   }
 
-  for(unsigned int i = 0; i < ele.size(); i++) {
+  for(std::size_t i = 0; i < ele.size(); i++) {
     if(saveSinglePartition && ele[i]->getPartition() != saveSinglePartition)
       continue;
     if(ele[i]->getDomain(0)) continue;
@@ -768,7 +768,7 @@ static int getNumElementsMSH(GEntity *ge, bool saveAll, int saveSinglePartition)
   if(saveSinglePartition <= 0)
     n = p * ge->getNumMeshElements();
   else
-    for(unsigned int i = 0; i < ge->getNumMeshElements(); i++)
+    for(std::size_t i = 0; i < ge->getNumMeshElements(); i++)
       if(ge->getMeshElement(i)->getPartition() == saveSinglePartition) n += p;
   return n;
 }
@@ -779,7 +779,7 @@ static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it) {
     n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
     if(!CTX::instance()->mesh.saveTri) {
-      for(unsigned int i = 0; i < (*it)->points.size(); i++)
+      for(std::size_t i = 0; i < (*it)->points.size(); i++)
         if((*it)->points[i]->ownsParent())
           n += (saveAll ? 1 : (*it)->physicals.size());
     }
@@ -787,7 +787,7 @@ static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
     n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
     if(!CTX::instance()->mesh.saveTri) {
-      for(unsigned int i = 0; i < (*it)->lines.size(); i++)
+      for(std::size_t i = 0; i < (*it)->lines.size(); i++)
         if((*it)->lines[i]->ownsParent())
           n += (saveAll ? 1 : (*it)->physicals.size());
     }
@@ -795,16 +795,16 @@ static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
     if(CTX::instance()->mesh.saveTri) {
-      for(unsigned int i = 0; i < (*it)->polygons.size(); i++) {
+      for(std::size_t i = 0; i < (*it)->polygons.size(); i++) {
         int nbC = (*it)->polygons[i]->getNumChildren() - 1;
         n += (saveAll ? nbC : nbC * (*it)->physicals.size());
       }
     }
     else {
-      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+      for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
         if((*it)->triangles[i]->ownsParent())
           n += (saveAll ? 1 : (*it)->physicals.size());
-      for(unsigned int i = 0; i < (*it)->polygons.size(); i++)
+      for(std::size_t i = 0; i < (*it)->polygons.size(); i++)
         if((*it)->polygons[i]->ownsParent())
           n += (saveAll ? 1 : (*it)->physicals.size());
     }
@@ -812,16 +812,16 @@ static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
     n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
     if(CTX::instance()->mesh.saveTri) {
-      for(unsigned int i = 0; i < (*it)->polyhedra.size(); i++) {
+      for(std::size_t i = 0; i < (*it)->polyhedra.size(); i++) {
         int nbC = (*it)->polyhedra[i]->getNumChildren() - 1;
         n += (saveAll ? nbC : nbC * (*it)->physicals.size());
       }
     }
     else {
-      for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
+      for(std::size_t i = 0; i < (*it)->tetrahedra.size(); i++)
         if((*it)->tetrahedra[i]->ownsParent())
           n += (saveAll ? 1 : (*it)->physicals.size());
-      for(unsigned int i = 0; i < (*it)->polyhedra.size(); i++)
+      for(std::size_t i = 0; i < (*it)->polyhedra.size(); i++)
         if((*it)->polyhedra[i]->ownsParent())
           n += (saveAll ? 1 : (*it)->physicals.size());
     }
@@ -913,8 +913,8 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
 
   std::vector<GEntity *> entities;
   getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeMSH2(fp, binary, saveParametric,
                                                scalingFactor);
 
@@ -940,42 +940,42 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
   // parents
   if(!CTX::instance()->mesh.saveTri) {
     for(viter it = firstVertex(); it != lastVertex(); ++it) {
-      for(unsigned int i = 0; i < (*it)->points.size(); i++)
+      for(std::size_t i = 0; i < (*it)->points.size(); i++)
         if((*it)->points[i]->ownsParent())
           writeElementMSH(fp, this, *it, (*it)->points[i]->getParent(), saveAll,
                           version, binary, num, _getElementary(*it),
                           (*it)->physicals);
     }
     for(eiter it = firstEdge(); it != lastEdge(); ++it) {
-      for(unsigned int i = 0; i < (*it)->lines.size(); i++)
+      for(std::size_t i = 0; i < (*it)->lines.size(); i++)
         if((*it)->lines[i]->ownsParent())
           writeElementMSH(fp, this, *it, (*it)->lines[i]->getParent(), saveAll,
                           version, binary, num, _getElementary(*it),
                           (*it)->physicals);
     }
     for(fiter it = firstFace(); it != lastFace(); ++it) {
-      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+      for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
         if((*it)->triangles[i]->ownsParent())
           writeElementMSH(fp, this, *it, (*it)->triangles[i]->getParent(), saveAll,
                           version, binary, num, _getElementary(*it),
                           (*it)->physicals);
     }
     for(riter it = firstRegion(); it != lastRegion(); ++it) {
-      for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
+      for(std::size_t i = 0; i < (*it)->tetrahedra.size(); i++)
         if((*it)->tetrahedra[i]->ownsParent())
           writeElementMSH(fp, this, *it, (*it)->tetrahedra[i]->getParent(), saveAll,
                           version, binary, num, _getElementary(*it),
                           (*it)->physicals);
     }
     for(fiter it = firstFace(); it != lastFace(); ++it) {
-      for(unsigned int i = 0; i < (*it)->polygons.size(); i++)
+      for(std::size_t i = 0; i < (*it)->polygons.size(); i++)
         if((*it)->polygons[i]->ownsParent())
           writeElementMSH(fp, this, *it, (*it)->polygons[i]->getParent(), saveAll,
                           version, binary, num, _getElementary(*it),
                           (*it)->physicals);
     }
     for(riter it = firstRegion(); it != lastRegion(); ++it) {
-      for(unsigned int i = 0; i < (*it)->polyhedra.size(); i++)
+      for(std::size_t i = 0; i < (*it)->polyhedra.size(); i++)
         if((*it)->polyhedra[i]->ownsParent())
           writeElementMSH(fp, this, *it, (*it)->polyhedra[i]->getParent(), saveAll,
                           version, binary, num, _getElementary(*it),
@@ -1044,7 +1044,7 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
   }
   // level set faces
   for(fiter it = firstFace(); it != lastFace(); ++it) {
-    for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
       MTriangle *t = (*it)->triangles[i];
       if(t->getDomain(0))
         writeElementMSH(fp, this, *it, t, saveAll, version, binary, num,
@@ -1052,7 +1052,7 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
                         getMeshElementIndex(t->getDomain(0)),
                         getMeshElementIndex(t->getDomain(1)));
     }
-    for(unsigned int i = 0; i < (*it)->polygons.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->polygons.size(); i++) {
       MPolygon *p = (*it)->polygons[i];
       if(p->getDomain(0))
         writeElementMSH(fp, this, *it, p, saveAll, version, binary, num,
@@ -1063,7 +1063,7 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
   }
   // level set lines
   for(eiter it = firstEdge(); it != lastEdge(); ++it) {
-    for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
+    for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       MLine *l = (*it)->lines[i];
       if(l->getDomain(0))
         writeElementMSH(fp, this, *it, l, saveAll, version, binary, num,
@@ -1095,7 +1095,7 @@ int GModel::_writePartitionedMSH2(const std::string &baseName, bool binary,
 {
   int numElements;
   int startNum = 0;
-  for(unsigned int partition = 1; partition <= getNumPartitions();
+  for(std::size_t partition = 1; partition <= getNumPartitions();
       partition++) {
     std::ostringstream sstream;
     sstream << baseName << "_" << partition << ".msh";

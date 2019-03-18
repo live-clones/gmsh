@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _PARTITION_REGION_H_
-#define _PARTITION_REGION_H_
+#ifndef PARTITION_REGION_H
+#define PARTITION_REGION_H
 
 #include "GModel.h"
 #include "discreteRegion.h"

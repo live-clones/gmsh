@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MESH_VOLUME_H_
-#define _MESH_VOLUME_H_
+#ifndef MESH_VOLUME_H
+#define MESH_VOLUME_H
 
 #include "Plugin.h"
 

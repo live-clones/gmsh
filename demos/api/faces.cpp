@@ -51,13 +51,13 @@ int main(int argc, char **argv)
   gmsh::model::getEntities(entities, 3);
   for(std::size_t i = 0; i < entities.size(); i++){
     int v = entities[i].second;
-    std::vector<int> elementTags, nodeTags;
+    std::vector<std::size_t> elementTags, nodeTags;
     gmsh::model::mesh::getElementsByType(eleType3D, elementTags, nodeTags, v);
     gmsh::logger::write("- " + std::to_string(elementTags.size()) +
                         " elements in volume " + std::to_string(v));
 
     // get the nodes on the triangular faces of the 3D elements
-    std::vector<int> nodes;
+    std::vector<std::size_t> nodes;
     gmsh::model::mesh::getElementFaceNodes(eleType3D, 3, nodes, v);
 
     // create a new discrete entity of dimension 2
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 
     // and add new 2D elements to it, for all faces
     int eleType2D = gmsh::model::mesh::getElementType("triangle", order);
-    gmsh::model::mesh::setElementsByType(2, s, eleType2D, {}, nodes);
+    gmsh::model::mesh::setElementsByType(s, eleType2D, {}, nodes);
 
     // this will create two 2D elements for each face; to create unique elements
     // it would be useful to call getElementFaceNodes() with the extra `primary'
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
   gmsh::model::getEntities(entities, 2);
   for(std::size_t i = 0; i < entities.size(); i++){
     int s = entities[i].second;
-    std::vector<int> elementTags, nodeTags;
+    std::vector<std::size_t> elementTags, nodeTags;
     gmsh::model::mesh::getElementsByType(eleType2D, elementTags, nodeTags, s);
     gmsh::logger::write("- " + std::to_string(elementTags.size()) +
                         " elements on surface " + std::to_string(s));

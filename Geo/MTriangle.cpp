@@ -471,7 +471,7 @@ void MTriangleN::reorient(int rot, bool swap)
   for(int i = 0; i < 3; ++i) {
     _v[i] = oldv[indices[i]];
   }
-  for(unsigned int i = 0; i < _vs.size(); ++i) {
+  for(std::size_t i = 0; i < _vs.size(); ++i) {
     _vs[i] = oldv[indices[3 + i]];
   }
 }

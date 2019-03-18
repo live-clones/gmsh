@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _DELAUNAY3D_H_
-#define _DELAUNAY3D_H_
+#ifndef DELAUNAY3D_H
+#define DELAUNAY3D_H
 
 class MVertex;
 class MTetrahedron;

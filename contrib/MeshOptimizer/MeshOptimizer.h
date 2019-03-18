@@ -1,4 +1,4 @@
-// Copyright (C) 2014 ULg-UCL
+// MeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -24,12 +24,14 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-#ifndef _MESHOPTIMIZER_H_
-#define _MESHOPTIMIZER_H_
+#ifndef MESH_OPTIMIZER_H
+#define MESH_OPTIMIZER_H
+
+#include <vector>
 
 class GEntity;
 class MeshOptParameters;
 
-void meshOptimizer(std::vector<GEntity*> &entities, MeshOptParameters &par);
+void MeshOptimizer(std::vector<GEntity *> &entities, MeshOptParameters &par);
 
 #endif

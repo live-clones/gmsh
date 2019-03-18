@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GMODEL_H_
-#define _GMODEL_H_
+#ifndef GMODEL_H
+#define GMODEL_H
 
 #include <algorithm>
 #include <vector>
@@ -50,8 +50,8 @@ private:
   std::set<GVertex *, GEntityLessThan> _chainVertices;
   hashmap<int, MEdge> _mapEdgeNum;
   // the maximum vertex and element id number in the mesh
-  int _maxVertexNum, _maxElementNum;
-  int _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
+  std::size_t _maxVertexNum, _maxElementNum;
+  std::size_t _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
   // flag set to true when the model is being destroyed
   bool _destroying;
 
@@ -136,10 +136,10 @@ protected:
 
   // map between the pair <dimension, elementary or physical number>
   // and an optional associated name
-  std::map<std::pair<int, int>, std::string> physicalNames, elementaryNames;
+  std::map<std::pair<int, int>, std::string> _physicalNames, _elementaryNames;
 
   // the set of all used mesh partition numbers
-  unsigned int _numPartitions;
+  std::size_t _numPartitions;
 
 protected:
   void _createGEOInternals();
@@ -191,8 +191,6 @@ public:
   // elementary/physical name iterator
   typedef std::map<std::pair<int, int>, std::string>::iterator piter;
 
-  typedef std::set<GVertex *, GEntityLessThan>::size_type size_type;
-
 public:
   GModel(const std::string &name = "");
   virtual ~GModel();
@@ -220,16 +218,16 @@ public:
   bool isBeingDestroyed() const { return _destroying; }
 
   // get/set global vertex/element num
-  int getMaxVertexNumber() { return _maxVertexNum; }
-  int getMaxElementNumber() { return _maxElementNum; }
-  void setMaxVertexNumber(int num) { _maxVertexNum = num; }
-  void setMaxElementNumber(int num) { _maxElementNum = num; }
+  std::size_t getMaxVertexNumber() const { return _maxVertexNum; }
+  std::size_t getMaxElementNumber() const { return _maxElementNum; }
+  void setMaxVertexNumber(std::size_t num) { _maxVertexNum = num; }
+  void setMaxElementNumber(std::size_t num) { _maxElementNum = num; }
   void checkPointMaxNumbers()
   {
     _checkPointedMaxVertexNum = _maxVertexNum;
     _checkPointedMaxVertexNum = _maxVertexNum;
   }
-  void getCheckPointedMaxNumbers(int &maxv, int &maxe)
+  void getCheckPointedMaxNumbers(std::size_t &maxv, std::size_t &maxe) const
   {
     maxv = _checkPointedMaxVertexNum;
     maxe = _checkPointedMaxElementNum;
@@ -263,25 +261,25 @@ public:
 
   // get/set the model name
   void setName(const std::string &name) { _name = name; }
-  std::string getName() { return _name; }
+  std::string getName() const { return _name; }
 
   // get/set the model file name
   void setFileName(const std::string &fileName);
-  std::string getFileName() { return _fileName; }
-  bool hasFileName(const std::string &name)
+  std::string getFileName() const { return _fileName; }
+  bool hasFileName(const std::string &name) const
   {
     return _fileNames.find(name) != _fileNames.end();
   }
 
   // get/set the visibility flag
-  char getVisibility() { return _visible; }
+  char getVisibility() const { return _visible; }
   void setVisibility(char val) { _visible = val; }
 
   // get the number of entities in this model
-  int getNumRegions() const { return regions.size(); }
-  int getNumFaces() const { return faces.size(); }
-  int getNumEdges() const { return edges.size(); }
-  size_type getNumVertices() const { return vertices.size(); }
+  std::size_t getNumRegions() const { return regions.size(); }
+  std::size_t getNumFaces() const { return faces.size(); }
+  std::size_t getNumEdges() const { return edges.size(); }
+  std::size_t getNumVertices() const { return vertices.size(); }
 
   // quickly check if the model is empty (i.e., if it contains no
   // entities)
@@ -362,11 +360,11 @@ public:
                          std::map<int, std::vector<GEntity *> > &groups) const;
   const std::map<std::pair<int, int>, std::string> &getPhysicalNames() const
   {
-    return physicalNames;
+    return _physicalNames;
   }
   void setPhysicalNames(const std::map<std::pair<int, int>, std::string> &names)
   {
-    physicalNames = names;
+    _physicalNames = names;
   }
 
   // remove physical groups in the model
@@ -378,13 +376,13 @@ public:
   int getMaxPhysicalNumber(int dim);
 
   // get an iterator on the elementary/physical names
-  piter firstPhysicalName() { return physicalNames.begin(); }
-  piter lastPhysicalName() { return physicalNames.end(); }
-  piter firstElementaryName() { return elementaryNames.begin(); }
-  piter lastElementaryName() { return elementaryNames.end(); }
+  piter firstPhysicalName() { return _physicalNames.begin(); }
+  piter lastPhysicalName() { return _physicalNames.end(); }
+  piter firstElementaryName() { return _elementaryNames.begin(); }
+  piter lastElementaryName() { return _elementaryNames.end(); }
 
   // get the number of physical names
-  int numPhysicalNames() { return physicalNames.size(); }
+  int numPhysicalNames() const { return _physicalNames.size(); }
 
   // get iterators to the last physical name of each dimension
   void getInnerPhysicalNamesIterators(std::vector<piter> &iterators);
@@ -409,22 +407,21 @@ public:
   // get all tags of elementary entities associated with a given physical group
   // name
   std::vector<int> getTagsForPhysicalName(int dim, const std::string &name);
-  // deprecated
-  std::vector<int> getEdgesByStringTag(const std::string &name)
-  {
-    return getTagsForPhysicalName(1, name);
-  }
 
   // set physical tags to entities in a given bounding box
   void setPhysicalNumToEntitiesInBox(int EntityDimension, int PhysicalNumber,
                                      std::vector<double> p1,
                                      std::vector<double> p2);
   void setPhysicalNumToEntitiesInBox(int EntityDimension, int PhysicalNumber,
-                                     SBoundingBox3d box);
+                                     const SBoundingBox3d &box);
 
   // get the name (if any) of a given elementary entity of dimension
   // "dim" and id number "num"
   std::string getElementaryName(int dim, int num);
+  void setElementaryName(int dim, int tag, const std::string &name)
+  {
+    _elementaryNames[std::pair<int, int>(dim, tag)] = name;
+  }
 
   // get the highest dimension of the GModel
   int getDim() const;
@@ -442,12 +439,12 @@ public:
   int getMeshStatus(bool countDiscrete = true);
 
   // return the total number of elements in the mesh
-  int getNumMeshElements(int dim = -1) const;
-  int getNumMeshParentElements() const;
+  std::size_t getNumMeshElements(int dim = -1) const;
+  std::size_t getNumMeshParentElements() const;
 
   // get the number of each type of element in the mesh at the largest
   // dimension and return the dimension
-  int getNumMeshElements(unsigned c[6]);
+  std::size_t getNumMeshElements(unsigned c[6]);
 
   // access a mesh element by coordinates (using an octree search)
   MElement *getMeshElementByCoord(SPoint3 &p, int dim = -1, bool strict = true);
@@ -462,7 +459,7 @@ public:
   void setMeshElementIndex(MElement *e, int index);
 
   // return the total number of vertices in the mesh
-  int getNumMeshVertices(int dim = -1) const;
+  std::size_t getNumMeshVertices(int dim = -1) const;
 
   // recompute _vertexVectorCache if there is a dense vertex numbering or
   // _vertexMapCache if not.
@@ -478,8 +475,8 @@ public:
 
   // index all the (used) mesh vertices in a continuous sequence,
   // starting at 1
-  int indexMeshVertices(bool all, int singlePartition = 0,
-                        bool renumber = true);
+  std::size_t indexMeshVertices(bool all, int singlePartition = 0,
+                                bool renumber = true);
 
   // scale the mesh by the given factor
   void scaleMesh(double factor);
@@ -506,7 +503,7 @@ public:
   void removeInvisibleElements();
 
   // the list of partitions
-  unsigned int getNumPartitions() const { return _numPartitions; }
+  std::size_t getNumPartitions() const { return _numPartitions; }
   void setNumPartitions(unsigned int npart) { _numPartitions = npart; }
 
   // partition the mesh
@@ -586,29 +583,6 @@ public:
   // if cutElem is set to false, split the model without cutting the elements
   GModel *buildCutGModel(gLevelset *ls, bool cutElem = true,
                          bool saveTri = false);
-
-  // create a GModel by importing a mesh (vertexMap has a dim equal to the
-  // number of vertices and all the other vectors have a dim equal to the number
-  // of elements)
-  static GModel *createGModel(std::map<int, MVertex *> &vertexMap,
-                              std::vector<int> &numElement,
-                              std::vector<std::vector<int> > &vertexIndices,
-                              std::vector<int> &elementType,
-                              std::vector<int> &physical,
-                              std::vector<int> &elementary,
-                              std::vector<int> &partition);
-
-  // create a GModel from newly created mesh elements (with their own newly
-  // created mesh vertices), and let element entities have given physical group
-  // tags
-  static GModel *
-  createGModel(std::map<int, std::vector<MElement *> > &entityToElementsMap,
-               std::map<int, std::vector<int> > &entityToPhysicalsMap);
-
-  // for elements cut having new vertices
-  void store(std::vector<MVertex *> &vertices, int dim,
-             std::map<int, std::vector<MElement *> > &entityMap,
-             std::map<int, std::map<int, std::string> > &physicalMap);
 
   // store mesh elements of a chain in a new elementary and physical entity
   void storeChain(int dim, std::map<int, std::vector<MElement *> > &entityMap,

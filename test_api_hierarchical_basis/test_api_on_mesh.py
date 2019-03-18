@@ -54,29 +54,29 @@ order=6
 #print(info)
 #gmsh.finalize()
 
-#
-##test_2
-#
-#gmsh.initialize(sys.argv)
-#gmsh.model.add("square_element")
-#factory = model.occ
-#model.add("mesh_square")
-#surf = factory.addRectangle(0, 0, 0, 1, 1)
-#factory.synchronize()
-#model.addPhysicalGroup(2, [surf], 4)
-#model.setPhysicalName(2, 4, 'Domain')
-#
-##model.mesh.setRecombine(2,1)
-#model.mesh.generate(2)
-#gmsh.write("mesh_square.msh")
-#bs, we ,ky=model.mesh.getBasisFunctionsForElements(INTEGRATION,2, 'Legendre',order) 
-##print(len(bs))
-##print(bs)
-##print(len(ky))
-##print(ky)
-#info=model.mesh.getInformationForElements(ky,order,2)
-#print(info)
-#gmsh.finalize()
+
+#test_2
+
+gmsh.initialize(sys.argv)
+gmsh.model.add("square_element")
+factory = model.occ
+model.add("mesh_square")
+surf = factory.addRectangle(0, 0, 0, 1, 1)
+factory.synchronize()
+model.addPhysicalGroup(2, [surf], 4)
+model.setPhysicalName(2, 4, 'Domain')
+
+#model.mesh.setRecombine(2,1)
+model.mesh.generate(2)
+gmsh.write("mesh_square.msh")
+bs, we ,ky=model.mesh.getBasisFunctionsForElements(INTEGRATION,2, 'Legendre',order) 
+#print(len(bs))
+#print(bs)
+#print(len(ky))
+#print(ky)
+info=model.mesh.getInformationForElements(ky,order,2)
+print(info)
+gmsh.finalize()
 
 #test3
 ##

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MEDGE_HASH_H_
-#define _MEDGE_HASH_H_
+#ifndef MEDGE_HASH_H
+#define MEDGE_HASH_H
 
 #include "MEdge.h"
 #include "Hash.h"

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _NUMERIC_H_
-#define _NUMERIC_H_
+#ifndef NUMERIC_H
+#define NUMERIC_H
 
 #include <cmath>
 #include <vector>

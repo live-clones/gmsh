@@ -3,9 +3,10 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _OPTION_WINDOW_H_
-#define _OPTION_WINDOW_H_
+#ifndef OPTION_WINDOW_H
+#define OPTION_WINDOW_H
 
+#include <vector>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Value_Slider.H>
 #include <FL/Fl_Multi_Browser.H>
@@ -30,65 +31,65 @@ public:
   Fl_Window *win;
   Fl_Multi_Browser *browser;
   Fl_Return_Button *redraw;
+  gamepadWindow *gmpdoption;
 
   struct {
     Fl_Group *group;
-    Fl_Check_Button *butt[24];
-    Fl_Button *push[20];
-    Fl_Value_Input *value[50];
-    Fl_Button *color[50];
-    Fl_Input *input[20];
-    Fl_Choice *choice[20];
+    std::vector<Fl_Check_Button *> butt;
+    std::vector<Fl_Button *> push;
+    std::vector<Fl_Value_Input *> value;
+    std::vector<Fl_Button *> color;
+    std::vector<Fl_Input *> input;
+    std::vector<Fl_Choice *> choice;
     Fl_Button *gamepadconfig;
     spherePositionWidget *sphere;
   } general;
   struct {
     Fl_Group *group;
-    Fl_Check_Button *butt[20];
-    Fl_Value_Input *value[25];
-    Fl_Button *color[50];
-    Fl_Choice *choice[20];
+    std::vector<Fl_Check_Button *> butt;
+    std::vector<Fl_Value_Input *> value;
+    std::vector<Fl_Button *> color;
+    std::vector<Fl_Choice *> choice;
   } geo;
   struct {
     Fl_Group *group;
-    Fl_Check_Button *butt[50];
-    Fl_Return_Button *retbutt[50];
-    Fl_Input *input[20];
-    Fl_Value_Input *value[50];
-    Fl_Button *color[50];
-    Fl_Choice *choice[20];
+    std::vector<Fl_Check_Button *> butt;
+    std::vector<Fl_Return_Button *> retbutt;
+    std::vector<Fl_Input *> input;
+    std::vector<Fl_Value_Input *> value;
+    std::vector<Fl_Button *> color;
+    std::vector<Fl_Choice *> choice;
     Fl_Menu_Button *menu;
   } mesh;
   struct {
     Fl_Group *group;
-    Fl_Check_Button *butt[20];
-    Fl_Value_Input *value[20];
-    Fl_Input *input[20];
+    std::vector<Fl_Check_Button *> butt;
+    std::vector<Fl_Value_Input *> value;
+    std::vector<Fl_Input *> input;
   } solver;
   struct {
     Fl_Group *group;
-    Fl_Check_Button *butt[20];
-    Fl_Value_Input *value[20];
-    Fl_Choice *choice[20];
+    std::vector<Fl_Check_Button *> butt;
+    std::vector<Fl_Value_Input *> value;
+    std::vector<Fl_Choice *> choice;
   } post;
   struct {
     int index;
     Fl_Group *group, *range;
-    Fl_Check_Button *butt[100];
-    Fl_Value_Input *value[100];
-    Fl_Input *input[100];
-    Fl_Button *push[100];
-    Fl_Choice *choice[100];
-    Fl_Button *color[50];
-    Fl_Box *label[5];
+    std::vector<Fl_Check_Button *> butt;
+    std::vector<Fl_Value_Input *> value;
+    std::vector<Fl_Input *> input;
+    std::vector<Fl_Button *> push;
+    std::vector<Fl_Choice *> choice;
+    std::vector<Fl_Button *> color;
+    std::vector<Fl_Box *> label;
+    std::vector<Fl_Menu_Button *> menu;
     colorbarWindow *colorbar;
     Fl_Return_Button *ok;
-    Fl_Menu_Button *menu[2];
   } view;
 
 public:
   optionWindow(int deltaFontSize = 0);
-  gamepadWindow *gmpdoption;
   void showGroup(int num, bool showWindow = true,
                  bool allowMultipleSelections = false);
   void resetBrowser();

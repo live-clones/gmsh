@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _AFFINETRANSFORMATION_H_
-#define _AFFINETRANSFORMATION_H_
+#ifndef AFFINETRANSFORMATION_H
+#define AFFINETRANSFORMATION_H
 
 #include <vector>
 

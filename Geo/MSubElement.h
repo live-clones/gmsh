@@ -6,8 +6,8 @@
 // Contributor(s):
 //   Frederic Duboeuf
 
-#ifndef _MSUBELEMENT_H_
-#define _MSUBELEMENT_H_
+#ifndef MSUBELEMENT_H
+#define MSUBELEMENT_H
 
 #include "GmshMessage.h"
 #include "MElement.h"

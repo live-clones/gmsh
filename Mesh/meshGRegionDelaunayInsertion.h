@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MESH_GREGION_DELAUNAY_INSERTION_H_
-#define _MESH_GREGION_DELAUNAY_INSERTION_H_
+#ifndef MESH_GREGION_DELAUNAY_INSERTION_H
+#define MESH_GREGION_DELAUNAY_INSERTION_H
 
 #include <list>
 #include <set>
@@ -16,7 +16,7 @@
 #include "qualityMeasures.h"
 #include "robustPredicates.h"
 
-//#define _GMSH_PRE_ALLOCATE_STRATEGY_ 1
+//#define GMSH_PRE_ALLOCATE_STRATEGY 1
 class GRegion;
 class GFace;
 class GModel;

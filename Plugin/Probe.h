@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _PROBE_H_
-#define _PROBE_H_
+#ifndef PROBE_H
+#define PROBE_H
 
 #include "Plugin.h"
 

@@ -3,10 +3,11 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _OCC_MESH_ATTRIBUTES_
-#define _OCC_MESH_ATTRIBUTES_
+#ifndef OCC_MESH_ATTRIBUTES
+#define OCC_MESH_ATTRIBUTES
 
 #include <vector>
+#include <string>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "OS.h"
@@ -27,6 +28,7 @@ private:
   ExtrudeParams *_extrude;
   int _sourceDim;
   TopoDS_Shape _sourceShape;
+  std::string _label;
 
 public:
   OCCMeshAttributes() : _dim(-1), _meshSize(MAX_LC), _extrude(0), _sourceDim(-1)
@@ -46,6 +48,11 @@ public:
       _sourceDim(sourceDim), _sourceShape(sourceShape)
   {
   }
+  OCCMeshAttributes(int dim, TopoDS_Shape shape, const std::string &label)
+    : _dim(dim), _shape(shape), _meshSize(MAX_LC), _extrude(0), _sourceDim(-1),
+      _label(label)
+  {
+  }
   ~OCCMeshAttributes() {}
   int getDim() { return _dim; }
   TopoDS_Shape getShape() { return _shape; }
@@ -53,6 +60,7 @@ public:
   ExtrudeParams *getExtrudeParams() { return _extrude; }
   int getSourceDim() { return _sourceDim; }
   TopoDS_Shape getSourceShape() { return _sourceShape; }
+  const std::string &getLabel() { return _label; }
 };
 
 // mesh attributes are stored according to the center of their associated shape
@@ -87,7 +95,7 @@ public:
   void clear()
   {
     for(int dim = 0; dim < 4; dim++) _rtree[dim]->RemoveAll();
-    for(unsigned int i = 0; i < _all.size(); i++) delete _all[i];
+    for(std::size_t i = 0; i < _all.size(); i++) delete _all[i];
     _all.clear();
   }
   void print(const std::string &fileName = "")
@@ -101,7 +109,7 @@ public:
       }
     }
     fprintf(fp, "View(\"rtree mesh sizes\"){\n");
-    for(unsigned int i = 0; i < _all.size(); i++) {
+    for(std::size_t i = 0; i < _all.size(); i++) {
       if(_all[i]->getDim() != 0) continue;
       if(_all[i]->getMeshSize() == MAX_LC) continue;
       gp_Pnt pnt = BRep_Tool::Pnt(TopoDS::Vertex(_all[i]->getShape()));
@@ -162,7 +170,7 @@ public:
   }
   void find(int dim, const TopoDS_Shape &shape,
             std::vector<OCCMeshAttributes *> &attr, bool requireMeshSize,
-            bool requireExtrudeParams, bool excludeSame)
+            bool requireExtrudeParams, bool requireLabel, bool excludeSame)
   {
     attr.clear();
     if(dim < 0 || dim > 3) return;
@@ -193,9 +201,10 @@ public:
       return;
     }
     if(!excludeSame) {
-      for(unsigned int i = 0; i < tmp.size(); i++) {
+      for(std::size_t i = 0; i < tmp.size(); i++) {
         if(requireMeshSize && tmp[i]->getMeshSize() == MAX_LC) continue;
         if(requireExtrudeParams && !tmp[i]->getExtrudeParams()) continue;
+        if(requireLabel && tmp[i]->getLabel().empty()) continue;
         if(shape.IsSame(tmp[i]->getShape())) { // exact match: same shape
           attr.push_back(tmp[i]);
           Msg::Debug("OCCRTree exact match");
@@ -204,9 +213,10 @@ public:
       }
     }
     // potential matches based on bounding box
-    for(unsigned int i = 0; i < tmp.size(); i++) {
+    for(std::size_t i = 0; i < tmp.size(); i++) {
       if(requireMeshSize && tmp[i]->getMeshSize() == MAX_LC) continue;
       if(requireExtrudeParams && !tmp[i]->getExtrudeParams()) continue;
+      if(requireLabel && tmp[i]->getLabel().empty()) continue;
       Bnd_Box box2;
       BRepBndLib::Add(tmp[i]->getShape(), box2);
       if(box.Distance(box2) < _tol) {
@@ -219,8 +229,8 @@ public:
   double getMeshSize(int dim, TopoDS_Shape shape)
   {
     std::vector<OCCMeshAttributes *> attr;
-    find(dim, shape, attr, true, false, false);
-    for(unsigned int i = 0; i < attr.size(); i++) {
+    find(dim, shape, attr, true, false, false, false);
+    for(std::size_t i = 0; i < attr.size(); i++) {
       if(attr[i]->getMeshSize() < MAX_LC) return attr[i]->getMeshSize();
     }
     return MAX_LC;
@@ -229,8 +239,8 @@ public:
                                   TopoDS_Shape &sourceShape)
   {
     std::vector<OCCMeshAttributes *> attr;
-    find(dim, shape, attr, false, true, false);
-    for(unsigned int i = 0; i < attr.size(); i++) {
+    find(dim, shape, attr, false, true, false, false);
+    for(std::size_t i = 0; i < attr.size(); i++) {
       if(attr[i]->getExtrudeParams()) {
         sourceDim = attr[i]->getSourceDim();
         sourceShape = attr[i]->getSourceShape();
@@ -239,12 +249,22 @@ public:
     }
     return 0;
   }
+  void getLabels(int dim, TopoDS_Shape shape, std::vector<std::string> &labels)
+  {
+    labels.clear();
+    std::vector<OCCMeshAttributes *> attr;
+    find(dim, shape, attr, false, false, true, false);
+    for(std::size_t i = 0; i < attr.size(); i++) {
+      if(!attr[i]->getLabel().empty())
+        labels.push_back(attr[i]->getLabel());
+    }
+  }
   void getSimilarShapes(int dim, TopoDS_Shape shape,
                         std::vector<TopoDS_Shape> &other)
   {
     std::vector<OCCMeshAttributes *> attr;
-    find(dim, shape, attr, false, false, true);
-    for(unsigned int i = 0; i < attr.size(); i++) {
+    find(dim, shape, attr, false, false, false, true);
+    for(std::size_t i = 0; i < attr.size(); i++) {
       TopoDS_Shape s = attr[i]->getShape();
       if(!s.IsNull()) other.push_back(s);
     }

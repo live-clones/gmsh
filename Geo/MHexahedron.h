@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MHEXAHEDRON_H_
-#define _MHEXAHEDRON_H_
+#ifndef MHEXAHEDRON_H
+#define MHEXAHEDRON_H
 
 #include "MElement.h"
 
@@ -190,14 +190,14 @@ public:
   static int edges_hexa(const int edge, const int vert)
   {
     static const int e[12][2] = {{0, 1}, {0, 3}, {0, 4}, {1, 2},
-                                 {1, 5}, {2, 3}, {2, 6}, {3, 7},
-                                 {4, 5}, {4, 7}, {5, 6}, {6, 7}};
+                                 {1, 5}, {3, 2}, {2, 6}, {3, 7},
+                                 {4, 5}, {4, 7}, {5, 6}, {7, 6}};
     return e[edge][vert];
   }
   static int faces_hexa(const int face, const int vert)
   {
-    static const int f[6][4] = {{0, 3, 2, 1}, {0, 1, 5, 4}, {0, 4, 7, 3},
-                                {1, 2, 6, 5}, {2, 3, 7, 6}, {4, 5, 6, 7}};
+    static const int f[6][4] = {{0, 1, 3, 2}, {0, 1, 4, 5}, {0, 3, 4, 7},
+                                {1, 2, 5, 6}, {2, 3, 6, 7}, {4, 5, 7, 6}};
     return f[face][vert];
   }
   static int faces2edge_hexa(const int face, const int edge)
@@ -596,7 +596,7 @@ public:
     : MHexahedron(v0, v1, v2, v3, v4, v5, v6, v7, num, part), _order(order),
       _vs(v)
   {
-    for(unsigned int i = 0; i < _vs.size(); i++)
+    for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
   MHexahedronN(const std::vector<MVertex *> &v, char order, int num = 0,
@@ -604,8 +604,8 @@ public:
     : MHexahedron(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], num, part),
       _order(order)
   {
-    for(unsigned int i = 8; i < v.size(); i++) _vs.push_back(v[i]);
-    for(unsigned int i = 0; i < _vs.size(); i++)
+    for(std::size_t i = 8; i < v.size(); i++) _vs.push_back(v[i]);
+    for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
   ~MHexahedronN() {}

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _ROBUST_PREDICATES_H_
-#define _ROBUST_PREDICATES_H_
+#ifndef ROBUST_PREDICATES_H
+#define ROBUST_PREDICATES_H
 
 // namespace necessary to avoid conflicts with predicates used by Tetgen
 namespace robustPredicates{

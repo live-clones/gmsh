@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MVERTEX_H_
-#define _MVERTEX_H_
+#ifndef MVERTEX_H
+#define MVERTEX_H
 
 #include <cmath>
 #include <stdio.h>
@@ -20,18 +20,21 @@ class GEdge;
 class GFace;
 class MVertex;
 
-// A mesh vertex.
+// A mesh vertex (a "node").
 class MVertex {
 protected:
-  // the immutable id number of the vertex (this number is unique and is
-  // guaranteed never to change once a vertex has been created, unless the mesh
-  // is explicitely renumbered)
-  int _num;
-  // a vertex index, used for example during mesh generation or when saving a
-  // mesh (this index is not necessarily unique, can change after mesh
-  // renumbering, etc.). By convention, vertices with negative indices are not
-  // saved
-  int _index;
+  // the id of the vertex: this number is unique and is guaranteed never to
+  // change once a vertex has been created, unless the mesh is explicitely
+  // renumbered
+  std::size_t _num;
+  // a vertex index, used during mesh generation or for some IO operations (this
+  // index is not necessarily unique, can change after mesh renumbering,
+  // etc.). By convention, vertices with negative indices are not saved. (On
+  // some architectures _index will be smaller than _num: this is OK, as _index
+  // is only used for partial indexing in 2D and 3D meshing, or for IO formats
+  // that don't support 64 bit indexing; _index is destined to be eventually
+  // removed anyway.)
+  long int _index;
   // a visibility and polynomial order flags
   char _visible, _order;
   // the cartesian coordinates of the vertex
@@ -40,7 +43,7 @@ protected:
   GEntity *_ge;
 
 public:
-  MVertex(double x, double y, double z, GEntity *ge = 0, int num = 0);
+  MVertex(double x, double y, double z, GEntity *ge = 0, std::size_t num = 0);
   virtual ~MVertex() {}
   void deleteLast();
 
@@ -73,15 +76,15 @@ public:
   void setEntity(GEntity *ge) { _ge = ge; }
 
   // get the immutab vertex number
-  int getNum() const { return _num; }
+  std::size_t getNum() const { return _num; }
 
   // force the immutable number (this should never be used, except when
   // explicitly renumbering the mesh)
-  void forceNum(int num);
+  void forceNum(std::size_t num);
 
   // get/set the index
-  int getIndex() const { return _index; }
-  void setIndex(int index) { _index = index; }
+  long int getIndex() const { return _index; }
+  void setIndex(long int index) { _index = index; }
 
   // get/set ith parameter
   virtual bool getParameter(int i, double &par) const
@@ -104,8 +107,6 @@ public:
   void writeMSH(FILE *fp, bool binary = false, bool saveParametric = false,
                 double scalingFactor = 1.0);
   void writeMSH2(FILE *fp, bool binary = false, bool saveParametric = false,
-                 double scalingFactor = 1.0);
-  void writeMSH4(FILE *fp, bool binary = false, bool saveParametric = false,
                  double scalingFactor = 1.0);
   void writePLY2(FILE *fp);
   void writeVRML(FILE *fp, double scalingFactor = 1.0);
@@ -131,8 +132,8 @@ protected:
 public:
   MVertexBoundaryLayerData *bl_data;
 
-  MEdgeVertex(double x, double y, double z, GEntity *ge, double u, int num = 0,
-              double lc = -1.0)
+  MEdgeVertex(double x, double y, double z, GEntity *ge, double u,
+              std::size_t num = 0, double lc = -1.0)
     : MVertex(x, y, z, ge, num), _u(u), _lc(lc), bl_data(0)
   {
   }
@@ -161,7 +162,7 @@ public:
   MVertexBoundaryLayerData *bl_data;
 
   MFaceVertex(double x, double y, double z, GEntity *ge, double u, double v,
-              int num = 0)
+              std::size_t num = 0)
     : MVertex(x, y, z, ge, num), _u(u), _v(v), bl_data(0)
   {
   }

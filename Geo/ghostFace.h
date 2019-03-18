@@ -5,8 +5,8 @@
 //
 // Contributed by Anthony Royer
 
-#ifndef _GHOST_FACE_H_
-#define _GHOST_FACE_H_
+#ifndef GHOST_FACE_H
+#define GHOST_FACE_H
 
 #include "GModel.h"
 #include "discreteFace.h"

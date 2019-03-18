@@ -5,8 +5,8 @@
 //
 // Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
 
-#ifndef _CHAIN_H_
-#define _CHAIN_H_
+#ifndef CHAIN_H
+#define CHAIN_H
 
 #include <sstream>
 #include "GModel.h"
@@ -254,10 +254,10 @@ template <class C> Chain<C>::Chain(GModel *m, int physicalGroup)
   std::vector<GEntity *> entities;
   findEntitiesInPhysicalGroups(m, groups, entities);
 
-  for(unsigned int i = 0; i < entities.size(); i++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *e = entities.at(i);
     _dim = e->dim();
-    for(unsigned int j = 0; j < e->getNumMeshElements(); j++) {
+    for(std::size_t j = 0; j < e->getNumMeshElements(); j++) {
       this->addMeshElement(e->getMeshElement(j));
     }
     this->setName(m->getPhysicalName(this->getDim(), physicalGroup));
@@ -383,7 +383,7 @@ Chain<C> Chain<C>::_getTraceOrProject(const std::vector<GEntity *> &entities,
   Chain<C> result;
   for(cecit it = _elemChains.begin(); it != _elemChains.end(); it++) {
     bool inDomain = false;
-    for(unsigned int i = 0; i < entities.size(); i++) {
+    for(std::size_t i = 0; i < entities.size(); i++) {
       if(it->first.inEntity(entities.at(i))) {
         inDomain = true;
         break;

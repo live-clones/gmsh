@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _LINEAR_SYSTEM_CSR_H_
-#define _LINEAR_SYSTEM_CSR_H_
+#ifndef LINEAR_SYSTEM_CSR_H
+#define LINEAR_SYSTEM_CSR_H
 
 #include <vector>
 #include "GmshConfig.h"
@@ -151,19 +151,19 @@ public:
   virtual void zeroRightHandSide()
   {
     if(!_b) return;
-    for(unsigned int i = 0; i < _b->size(); i++) (*_b)[i] = scalar();
+    for(std::size_t i = 0; i < _b->size(); i++) (*_b)[i] = scalar();
   }
   virtual void zeroSolution()
   {
     if(!_x) return;
-    for(unsigned int i = 0; i < _x->size(); i++) (*_x)[i] = scalar();
+    for(std::size_t i = 0; i < _x->size(); i++) (*_x)[i] = scalar();
   }
   virtual double normInfRightHandSide() const
   {
     if(!_b) return 0.;
     double nor = 0.;
     double temp;
-    for(unsigned int i = 0; i < _b->size(); i++) {
+    for(std::size_t i = 0; i < _b->size(); i++) {
       temp = std::abs((*_b)[i]);
       if(nor < temp) nor = temp;
     }

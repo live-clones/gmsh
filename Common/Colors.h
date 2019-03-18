@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _COLORS_H_
-#define _COLORS_H_
+#ifndef COLORS_H
+#define COLORS_H
 
 #include "Options.h"
 

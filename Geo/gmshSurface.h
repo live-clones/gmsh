@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GMSH_SURFACE_H_
-#define _GMSH_SURFACE_H_
+#ifndef GMSH_SURFACE_H
+#define GMSH_SURFACE_H
 
 #include <cmath>
 #include <map>

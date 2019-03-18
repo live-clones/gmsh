@@ -8,8 +8,8 @@
 // what is visible in post-processing screen.
 // contact : gilles.marckmann@ec-nantes.fr
 
-#ifndef _PVIEWX3D_H_
-#define _PVIEWX3D_H_
+#ifndef PVIEWX3D_H
+#define PVIEWX3D_H
 
 static inline void UnsignedChar2rgba(unsigned char *glc, double *rgba)
 {

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SVECTOR3_H_
-#define _SVECTOR3_H_
+#ifndef SVECTOR3_H
+#define SVECTOR3_H
 
 #include "SPoint3.h"
 #include <string>

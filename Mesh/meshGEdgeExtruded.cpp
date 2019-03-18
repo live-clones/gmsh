@@ -37,7 +37,7 @@ static void copyMesh(GEdge *from, GEdge *to)
   double u_min = u_bounds.low();
   double u_max = u_bounds.high();
 
-  for(unsigned int i = 0; i < from->mesh_vertices.size(); i++) {
+  for(std::size_t i = 0; i < from->mesh_vertices.size(); i++) {
     int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
     MVertex *v = from->mesh_vertices[index];
     double x = v->x(), y = v->y(), z = v->z();
@@ -55,6 +55,11 @@ int MeshExtrudedCurve(GEdge *ge)
   ExtrudeParams *ep = ge->meshAttributes.extrude;
 
   if(!ep || !ep->mesh.ExtrudeMesh) return 0;
+
+  if(!ge->getBeginVertex() || !ge->getEndVertex()){
+    Msg::Error("Cannot extrude curve %d with no begin or end point", ge->tag());
+    return 0;
+  }
 
   Msg::Info("Meshing curve %d (extruded)", ge->tag());
 
@@ -78,12 +83,13 @@ int MeshExtrudedCurve(GEdge *ge)
   }
 
   // create elements
-  for(unsigned int i = 0; i < ge->mesh_vertices.size() + 1; i++) {
-    MVertex *v0 = (i == 0) ? ge->getBeginVertex()->mesh_vertices[0] :
-                             ge->mesh_vertices[i - 1];
+  for(std::size_t i = 0; i < ge->mesh_vertices.size() + 1; i++) {
+    MVertex *v0 = (i == 0) ?
+      ge->getBeginVertex()->mesh_vertices[0] :
+      ge->mesh_vertices[i - 1];
     MVertex *v1 = (i == ge->mesh_vertices.size()) ?
-                    ge->getEndVertex()->mesh_vertices[0] :
-                    ge->mesh_vertices[i];
+      ge->getEndVertex()->mesh_vertices[0] :
+      ge->mesh_vertices[i];
     MLine *newElem = new MLine(v0, v1);
     ge->lines.push_back(newElem);
   }

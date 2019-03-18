@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _EXTRACT_ELEMENTS_H_
-#define _EXTRACT_ELEMENTS_H_
+#ifndef EXTRACT_ELEMENTS_H
+#define EXTRACT_ELEMENTS_H
 
 #include "Plugin.h"
 

@@ -93,7 +93,7 @@ PluginManager::~PluginManager()
     delete it->second;
 }
 
-GMSH_Plugin *PluginManager::find(std::string pluginName)
+GMSH_Plugin *PluginManager::find(const std::string &pluginName)
 {
   std::map<std::string, GMSH_Plugin *>::iterator it =
     allPlugins.find(pluginName);
@@ -114,8 +114,8 @@ GMSH_SolverPlugin *PluginManager::findSolverPlugin()
   return 0;
 }
 
-void PluginManager::action(std::string pluginName, std::string action,
-                           void *data)
+void PluginManager::action(const std::string &pluginName,
+                           const std::string &action, void *data)
 {
   GMSH_Plugin *plugin = find(pluginName);
   if(!plugin) throw "Unknown plugin name";
@@ -129,8 +129,9 @@ void PluginManager::action(std::string pluginName, std::string action,
     throw "Unknown plugin action";
 }
 
-void PluginManager::setPluginOption(std::string pluginName, std::string option,
-                                    std::string value)
+void PluginManager::setPluginOption(const std::string &pluginName,
+                                    const std::string &option,
+                                    const std::string &value)
 {
   GMSH_Plugin *plugin = find(pluginName);
   if(!plugin) throw "Unknown plugin name";
@@ -145,8 +146,9 @@ void PluginManager::setPluginOption(std::string pluginName, std::string option,
   throw "Unknown plugin option name";
 }
 
-void PluginManager::setPluginOption(std::string pluginName, std::string option,
-                                    double value)
+void PluginManager::setPluginOption(const std::string &pluginName,
+                                    const std::string &option,
+                                    double const value)
 {
   GMSH_Plugin *plugin = find(pluginName);
   if(!plugin) throw "Unknown plugin name";
@@ -288,9 +290,9 @@ void PluginManager::registerDefaultPlugins()
 #endif
 #if defined(HAVE_KBIPACK)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
-      "Homology", GMSH_RegisterHomologyComputationPlugin()));
+      "HomologyComputation", GMSH_RegisterHomologyComputationPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
-      "HomologyPost", GMSH_RegisterHomologyPostProcessingPlugin()));
+      "HomologyPostProcessing", GMSH_RegisterHomologyPostProcessingPlugin()));
 #endif
 #if defined(HAVE_SOLVER)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
@@ -321,7 +323,7 @@ void PluginManager::registerDefaultPlugins()
 #endif
 }
 
-void PluginManager::addPlugin(std::string fileName)
+void PluginManager::addPlugin(const std::string &fileName)
 {
 #if !defined(HAVE_DLOPEN) || !defined(HAVE_FLTK)
   Msg::Warning("No dynamic plugin loading on this platform");

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _TETRAHEDRALIZE_H_
-#define _TETRAHEDRALIZE_H_
+#ifndef TETRAHEDRALIZE_H
+#define TETRAHEDRALIZE_H
 
 #include "Plugin.h"
 

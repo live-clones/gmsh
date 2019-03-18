@@ -4,20 +4,20 @@ HierarchicalBasisH1::~HierarchicalBasisH1() {}
 
 int HierarchicalBasisH1::getnEdgeFunction() const
 {
-  return this->nEdgeFunction;
+  return _nEdgeFunction;
 }
 
 int HierarchicalBasisH1::getnFaceFunction() const
 {
-  return this->nFaceFunction;
+  return _nFaceFunction;
 }
 
 int HierarchicalBasisH1::getnBubbleFunction() const
 {
-  return this->nBubbleFunction;
+  return _nBubbleFunction;
 }
 
 int HierarchicalBasisH1::getnVertexFunction() const
 {
-  return this->nVertexFunction;
+  return _nVertexFunction;
 }

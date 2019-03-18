@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _READ_IMG_
-#define _READ_IMG_
+#ifndef READ_IMG
+#define READ_IMG
 
 #include <string>
 

@@ -99,7 +99,9 @@ are listed in the Gmsh reference manual.
 @end table
 
 @item getNumber
-Get the @code{value} of a numerical option.
+Get the @code{value} of a numerical option. @code{name} is of the form
+"category.option" or "category[num].option". Available categories and options
+are listed in the Gmsh reference manual.
 
 @table @asis
 @item Input:
@@ -111,7 +113,9 @@ Get the @code{value} of a numerical option.
 @end table
 
 @item setString
-Set a string option to @code{value}.
+Set a string option to @code{value}. @code{name} is of the form
+"category.option" or "category[num].option". Available categories and options
+are listed in the Gmsh reference manual.
 
 @table @asis
 @item Input:
@@ -123,7 +127,9 @@ Set a string option to @code{value}.
 @end table
 
 @item getString
-Get the @code{value} of a string option.
+Get the @code{value} of a string option. @code{name} is of the form
+"category.option" or "category[num].option". Available categories and options
+are listed in the Gmsh reference manual.
 
 @table @asis
 @item Input:
@@ -738,7 +744,7 @@ length of @code{nodeTags} that contains the x, y, z coordinates of the nodes,
 concatenated: [n1x, n1y, n1z, n2x, ...]. The optional @code{parametricCoord}
 vector contains the parametric coordinates of the nodes, if any. The length of
 @code{parametricCoord} can be 0 or @code{dim} times the length of
-@code{nodeTags}. If the @code{nodeTag} vector is empty, new tags are
+@code{nodeTags}. If the @code{nodeTags} vector is empty, new tags are
 automatically assigned to the nodes.
 
 @table @asis
@@ -934,17 +940,17 @@ elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
 @end table
 
 @item setElementsByType
-Set the elements of type @code{elementType} in the entity of dimension
-@code{dim} and tag @code{tag}. @code{elementTags} contains the tags (unique,
-strictly positive identifiers) of the elements of the corresponding type.
-@code{nodeTags} is a vector of length equal to the number of elements times the
-number N of nodes per element, that contains the node tags of all the elements,
-concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the @code{elementTag}
-vector is empty, new tags are automatically assigned to the elements.
+Set the elements of type @code{elementType} in the entity of tag @code{tag}.
+@code{elementTags} contains the tags (unique, strictly positive identifiers) of
+the elements of the corresponding type. @code{nodeTags} is a vector of length
+equal to the number of elements times the number N of nodes per element, that
+contains the node tags of all the elements, concatenated: [e1n1, e1n2, ...,
+e1nN, e2n1, ...]. If the @code{elementTag} vector is empty, new tags are
+automatically assigned to the elements.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{elementType}, @code{elementTags}, @code{nodeTags}
+@code{tag}, @code{elementType}, @code{elementTags}, @code{nodeTags}
 @item Output:
 -
 @item Return:
@@ -1052,16 +1058,17 @@ if @code{getBarycenters} is called with @code{numTasks} > 1.
 
 @item getElementEdgeNodes
 Get the nodes on the edges of all elements of type @code{elementType} classified
-on the entity of tag @code{tag}. If @code{primary} is set, only the primary
-(begin/end) nodes of the edges are returned. If @code{tag} < 0, get the edge
-nodes for all entities. If @code{numTasks} > 1, only compute and return the part
-of the data indexed by @code{task}.
+on the entity of tag @code{tag}. @code{nodeTags} contains the node tags. If
+@code{primary} is set, only the primary (begin/end) nodes of the edges are
+returned. If @code{tag} < 0, get the edge nodes for all entities. If
+@code{numTasks} > 1, only compute and return the part of the data indexed by
+@code{task}.
 
 @table @asis
 @item Input:
 @code{elementType}, @code{tag}, @code{primary}, @code{task}, @code{numTasks}
 @item Output:
-@code{nodes}
+@code{nodeTags}
 @item Return:
 -
 @end table
@@ -1069,16 +1076,17 @@ of the data indexed by @code{task}.
 @item getElementFaceNodes
 Get the nodes on the faces of type @code{faceType} (3 for triangular faces, 4
 for quadrangular faces) of all elements of type @code{elementType} classified on
-the entity of tag @code{tag}. If @code{primary} is set, only the primary
-(corner) nodes of the faces are returned. If @code{tag} < 0, get the face nodes
-for all entities. If @code{numTasks} > 1, only compute and return the part of
-the data indexed by @code{task}.
+the entity of tag @code{tag}. @code{nodeTags} contains the node tags. If
+@code{primary} is set, only the primary (corner) nodes of the faces are
+returned. If @code{tag} < 0, get the face nodes for all entities. If
+@code{numTasks} > 1, only compute and return the part of the data indexed by
+@code{task}.
 
 @table @asis
 @item Input:
 @code{elementType}, @code{faceType}, @code{tag}, @code{primary}, @code{task}, @code{numTasks}
 @item Output:
-@code{nodes}
+@code{nodeTags}
 @item Return:
 -
 @end table
@@ -1267,14 +1275,14 @@ Renumber the element tags in a contiunous sequence.
 
 @item setPeriodic
 Set the meshes of the entities of dimension @code{dim} and tag @code{tags} as
-periodic copies of the meshes of entities @code{tagsSource}, using the affine
+periodic copies of the meshes of entities @code{tagsMaster}, using the affine
 transformation specified in @code{affineTransformation} (16 entries of a 4x4
 matrix, by row). Currently only available for @code{dim} == 1 and @code{dim} ==
 2.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tags}, @code{tagsSource}, @code{affineTransform}
+@code{dim}, @code{tags}, @code{tagsMaster}, @code{affineTransform}
 @item Output:
 -
 @item Return:
@@ -1282,14 +1290,16 @@ matrix, by row). Currently only available for @code{dim} == 1 and @code{dim} ==
 @end table
 
 @item getPeriodicNodes
-Get the master entity, periodic node pairs and affine transform for the entity
-of dimension @code{dim} and tag @code{tag}.
+Get the master entity @code{tagMaster}, the node tags @code{nodeTags} and their
+corresponding master node tags @code{nodeTagsMaster}, and the affine transform
+@code{affineTransform} for the entity of dimension @code{dim} and tag
+@code{tag}.
 
 @table @asis
 @item Input:
 @code{dim}, @code{tag}
 @item Output:
-@code{tagMaster}, @code{nodes}, @code{affineTransform}
+@code{tagMaster}, @code{nodeTags}, @code{nodeTagsMaster}, @code{affineTransform}
 @item Return:
 -
 @end table
@@ -1352,7 +1362,8 @@ underlying model). Warning: this is an experimental feature.
 @item createGeometry
 Create a parametrization for curves and surfaces that do not have one (i.e.
 discrete curves and surfaces represented solely by meshes, without an underlying
-CAD description). Warning: this is an experimental feature.
+CAD description). @code{createGeometry} automatically calls
+@code{createTopology}. Warning: this is an experimental feature.
 
 @table @asis
 @item Input:
@@ -2994,7 +3005,7 @@ Select elements in the user interface.
 @item Input:
 -
 @item Output:
-@code{tags}
+@code{elementTags}
 @item Return:
 integer value
 @end table
@@ -3006,7 +3017,7 @@ Select views in the user interface.
 @item Input:
 -
 @item Output:
-@code{tags}
+@code{viewTags}
 @item Return:
 integer value
 @end table
@@ -3135,7 +3146,19 @@ Write a @code{message}. @code{level} can be "info", "warning" or "error".
 @end table
 
 @item start
-Start logging messages in @code{log}.
+Start logging messages.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item get
+Get logged messages.
 
 @table @asis
 @item Input:

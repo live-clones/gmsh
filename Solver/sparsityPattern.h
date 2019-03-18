@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SPARSITY_PATTERN_H_
-#define _SPARSITY_PATTERN_H_
+#ifndef SPARSITY_PATTERN_H
+#define SPARSITY_PATTERN_H
 
 // this class has been optimized, please before changing anything, check twice :
 // - the impact on the performance to assemble typical High Order FE problems

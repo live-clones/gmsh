@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _VIEW_BUTTON_H_
-#define _VIEW_BUTTON_H_
+#ifndef VIEW_BUTTON_H
+#define VIEW_BUTTON_H
 
 #include <string>
 #include <FL/Fl.H>

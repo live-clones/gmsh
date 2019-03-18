@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SPOINT2_H_
-#define _SPOINT2_H_
+#ifndef SPOINT2_H
+#define SPOINT2_H
 
 #include <cmath>
 

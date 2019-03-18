@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _THERMIC_SOLVER_H_
-#define _THERMIC_SOLVER_H_
+#ifndef THERMIC_SOLVER_H
+#define THERMIC_SOLVER_H
 
 #include <map>
 #include <string>
@@ -90,10 +90,10 @@ public:
   void setFaceTemp(int face, simpleFunction<double> *f);
   void solve();
   virtual PView *buildTemperatureView(const std::string postFileName);
-  virtual PView *buildLagrangeMultiplierView(const std::string postFileName);
+  virtual PView *buildLagrangeMultiplierView(const std::string &postFileName);
   double computeL2Norm(simpleFunction<double> *f);
   double computeLagNorm(int tag, simpleFunction<double> *f);
-  PView *buildErrorEstimateView(const std::string errorFileName,
+  PView *buildErrorEstimateView(const std::string &errorFileName,
                                 simpleFunction<double> *sol);
   // std::pair<PView *, PView*> buildErrorEstimateView
   //   (const std::string &errorFileName, const elasticityData &ref, double,

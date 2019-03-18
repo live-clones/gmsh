@@ -1,5 +1,5 @@
-#ifndef _DRAW_CONTEXT_H_
-#define _DRAW_CONTEXT_H_
+#ifndef ONELAB_DRAW_CONTEXT_H
+#define ONELAB_DRAW_CONTEXT_H
 
 #include <string>
 

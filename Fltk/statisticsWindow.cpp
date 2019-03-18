@@ -68,9 +68,9 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
     std::vector<GEntity *> entities_;
     GModel::current()->getEntities(entities_);
     std::map<int, std::vector<double> > d;
-    for(unsigned int i = 0; i < entities_.size(); i++) {
+    for(std::size_t i = 0; i < entities_.size(); i++) {
       if(entities_[i]->dim() < 2) continue;
-      for(unsigned int j = 0; j < entities_[i]->getNumMeshElements(); j++) {
+      for(std::size_t j = 0; j < entities_[i]->getNumMeshElements(); j++) {
         MElement *e = entities_[i]->getMeshElement(j);
         if(qmh == QMH_SICN_3D)
           d[e->getNum()].push_back(e->minSICNShapeMeasure());

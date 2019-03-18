@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _ELASTICITY_TERM_H_
-#define _ELASTICITY_TERM_H_
+#ifndef ELASTICITY_TERM_H
+#define ELASTICITY_TERM_H
 
 #include "femTerm.h"
 #include "GmshGlobal.h"

@@ -12,7 +12,7 @@
 #include "CurvedBndDist.h"
 
 #if defined(HAVE_OPTHOM)
-#include "OptHomIntegralBoundaryDist.h"
+#include "IntegralBoundaryDist.h"
 #endif
 
 extern "C" {

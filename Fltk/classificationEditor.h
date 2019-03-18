@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CLASSIFICATION_EDITOR_H_
-#define _CLASSIFICATION_EDITOR_H_
+#ifndef CLASSIFICATION_EDITOR_H
+#define CLASSIFICATION_EDITOR_H
 
 #include <vector>
 #include <set>
@@ -34,9 +34,9 @@ public:
   std::vector<MElement *> elements;
   std::set<GFace *> faces;
   Fl_Window *window;
-  Fl_Button *buttons[10];
-  Fl_Check_Button *toggles[10];
-  Fl_Value_Input *inputs[10];
+  Fl_Button *buttons[7];
+  Fl_Check_Button *toggles[3];
+  Fl_Value_Input *inputs[1];
   GEdge *selected;
   std::vector<edge_angle> edges_detected, edges_lonly;
   classificationEditor();

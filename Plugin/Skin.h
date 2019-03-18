@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SKIN_H_
-#define _SKIN_H_
+#ifndef SKIN_H
+#define SKIN_H
 
 #include "Plugin.h"
 

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CROSS_CONF_TERM_H_
-#define _CROSS_CONF_TERM_H_
+#ifndef CROSS_CONF_TERM_H
+#define CROSS_CONF_TERM_H
 
 #include "femTerm.h"
 #include "simpleFunction.h"

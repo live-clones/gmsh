@@ -44,7 +44,7 @@ double BDS_Face_Validity(GFace *gf, BDS_Face *f)
 void outputScalarField(std::vector<BDS_Face *> &t, const char *iii, int param,
                        GFace *gf)
 {
-  if(gf) {
+  if(gf && 0) {
     FILE *view_c = Fopen("param_mesh_as_it_is_in_3D.pos", "w");
     if(!view_c) {
       Msg::Error("Could not open file param_mesh_as_it_is_in_3D.pos");
@@ -343,7 +343,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
   BDS_Point *p2 = find_point(num2);
 
   if(!p1 || !p2) {
-    Msg::Fatal("Could not find points %d or %d in BDS mesh", num1, num2);
+    Msg::Error("Could not find points %d or %d in BDS mesh", num1, num2);
     return 0;
   }
 
@@ -489,7 +489,7 @@ BDS_Edge *BDS_Mesh::add_edge(int const p1, int const p2)
   BDS_Point *pp2 = find_point(p2);
 
   if(!pp1 || !pp2) {
-    Msg::Fatal("Could not find points %d or %d in BDS mesh", p1, p2);
+    Msg::Error("Could not find points %d or %d in BDS mesh", p1, p2);
     return 0;
   }
   edges.push_back(new BDS_Edge(pp1, pp2));
@@ -533,8 +533,8 @@ void BDS_Mesh::del_edge(BDS_Edge *e)
 
 void BDS_Mesh::del_point(BDS_Point *p)
 {
-  points.erase(p);
-  delete p;
+  if(points.erase(p))
+    delete p;
 }
 
 void BDS_Mesh::add_geom(int p1, int p2)
@@ -1164,7 +1164,7 @@ int BDS_Edge::numTriangles() const
 {
   // TODO C++11 use std::count_if
   int NT = 0;
-  for(unsigned int i = 0; i < _faces.size(); i++)
+  for(std::size_t i = 0; i < _faces.size(); i++)
     if(faces(i)->numEdges() == 3) NT++;
   return NT;
 }

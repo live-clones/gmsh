@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MTRIANGLE_H_
-#define _MTRIANGLE_H_
+#ifndef MTRIANGLE_H
+#define MTRIANGLE_H
 
 #include "MElement.h"
 
@@ -319,15 +319,15 @@ public:
              int part = 0)
     : MTriangle(v0, v1, v2, num, part), _vs(v), _order(order)
   {
-    for(unsigned int i = 0; i < _vs.size(); i++)
+    for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
   MTriangleN(const std::vector<MVertex *> &v, char order, int num = 0,
              int part = 0)
     : MTriangle(v[0], v[1], v[2], num, part), _order(order)
   {
-    for(unsigned int i = 3; i < v.size(); i++) _vs.push_back(v[i]);
-    for(unsigned int i = 0; i < _vs.size(); i++)
+    for(std::size_t i = 3; i < v.size(); i++) _vs.push_back(v[i]);
+    for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
   ~MTriangleN() {}
@@ -379,7 +379,7 @@ public:
   {
     v.resize(3 + _vs.size());
     MTriangle::_getFaceVertices(v);
-    for(unsigned int i = 0; i != _vs.size(); ++i) v[i + 3] = _vs[i];
+    for(std::size_t i = 0; i != _vs.size(); ++i) v[i + 3] = _vs[i];
   }
   virtual int getTypeForMSH() const
   {
@@ -445,10 +445,12 @@ template <class T> void sort3(T t[3])
 struct compareMTriangleLexicographic {
   bool operator()(MTriangle *t1, MTriangle *t2) const
   {
-    int _v1[3] = {t1->getVertex(0)->getNum(), t1->getVertex(1)->getNum(),
-                  t1->getVertex(2)->getNum()};
-    int _v2[3] = {t2->getVertex(0)->getNum(), t2->getVertex(1)->getNum(),
-                  t2->getVertex(2)->getNum()};
+    std::size_t _v1[3] = {t1->getVertex(0)->getNum(),
+                          t1->getVertex(1)->getNum(),
+                          t1->getVertex(2)->getNum()};
+    std::size_t _v2[3] = {t2->getVertex(0)->getNum(),
+                          t2->getVertex(1)->getNum(),
+                          t2->getVertex(2)->getNum()};
     sort3(_v1);
     sort3(_v2);
     if(_v1[0] < _v2[0]) return true;

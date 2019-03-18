@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MVERTEXBOUNDARYLAYERDATA_H_
-#define _MVERTEXBOUNDARYLAYERDATA_H_
+#ifndef MVERTEXBOUNDARYLAYERDATA_H
+#define MVERTEXBOUNDARYLAYERDATA_H
 
 #include <vector>
 

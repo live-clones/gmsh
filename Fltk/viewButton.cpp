@@ -33,7 +33,7 @@ static void view_toggle_cb(Fl_Widget *w, void *data)
   viewButton *but = FlGui::instance()->onelab->getViewButton(num);
   if(but) {
     if(Fl::event_state(FL_SHIFT)) {
-      for(unsigned int i = 0; i < PView::list.size(); i++) {
+      for(std::size_t i = 0; i < PView::list.size(); i++) {
         if((int)i != num)
           opt_view_visible(i, GMSH_SET | GMSH_GUI, 0);
         else
@@ -86,13 +86,13 @@ static void view_reload_cb(Fl_Widget *w, void *data)
 
 static void view_reload_all_cb(Fl_Widget *w, void *data)
 {
-  for(unsigned int i = 0; i < PView::list.size(); i++) view_reload(i);
+  for(std::size_t i = 0; i < PView::list.size(); i++) view_reload(i);
   drawContext::global()->draw();
 }
 
 static void view_reload_visible_cb(Fl_Widget *w, void *data)
 {
-  for(unsigned int i = 0; i < PView::list.size(); i++)
+  for(std::size_t i = 0; i < PView::list.size(); i++)
     if(opt_view_visible(i, GMSH_GET, 0)) view_reload(i);
   drawContext::global()->draw();
 }
@@ -249,15 +249,12 @@ static void view_all_visible_cb(Fl_Widget *w, void *data)
   int mode = (intptr_t)data;
   std::string name;
   if(mode >= 0) name = PView::list[mode]->getData()->getName();
-  for(unsigned int i = 0; i < PView::list.size(); i++)
+  for(std::size_t i = 0; i < PView::list.size(); i++)
     opt_view_visible(i, GMSH_SET | GMSH_GUI,
-                     (mode == -1) ?
-                       1 :
-                       (mode == -2) ?
-                       0 :
-                       (mode == -3) ?
-                       !opt_view_visible(i, GMSH_GET, 0) :
-                       (name == PView::list[i]->getData()->getName()) ? 1 : 0);
+                     (mode == -1) ? 1 :
+                     (mode == -2) ? 0 :
+                     (mode == -3) ? !opt_view_visible(i, GMSH_GET, 0) :
+                     (name == PView::list[i]->getData()->getName()) ? 1 : 0);
   drawContext::global()->draw();
 }
 

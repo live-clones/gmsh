@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CONTEXT_H_
-#define _CONTEXT_H_
+#ifndef CONTEXT_H
+#define CONTEXT_H
 
 #include <vector>
 #include <map>
@@ -32,7 +32,7 @@ struct contextMeshOptions {
   int recombine3DConformity, flexibleTransfinite;
   int order, secondOrderLinear, secondOrderIncomplete, secondOrderExperimental;
   int meshOnlyVisible, minCircPoints, minCurvPoints;
-  int hoOptimize, hoPeriodic, hoNLayers, hoOptPrimSurfMesh;
+  int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   std::map<int, int> algo2dPerFace;
   std::map<int, int> curvatureControlPerFace;

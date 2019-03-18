@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _EIGENVALUES_H_
-#define _EIGENVALUES_H_
+#ifndef EIGENVALUES_H
+#define EIGENVALUES_H
 
 #include "Plugin.h"
 

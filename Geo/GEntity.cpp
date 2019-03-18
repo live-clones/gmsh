@@ -70,7 +70,7 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
       sstream << "\n";
     else
       sstream << " ";
-    for(unsigned int i = 0; i < physicals.size(); i++) {
+    for(std::size_t i = 0; i < physicals.size(); i++) {
       sstream << "Physical ";
       switch(dim()) {
       case 0: sstream << "Point"; break;

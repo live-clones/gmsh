@@ -290,7 +290,7 @@ void PrintUsage(const std::string &name)
 {
   Msg::Direct("Usage: %s [options] [files]", name.c_str());
   std::vector<std::pair<std::string, std::string> > s = GetUsage();
-  for(unsigned int i = 0; i < s.size(); i++){
+  for(std::size_t i = 0; i < s.size(); i++){
     std::string a = s[i].first, b = s[i].second;
     if(b.empty()){
       Msg::Direct("%s", a.c_str());
@@ -609,7 +609,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       else if(!strcmp(argv[i] + 1, "optimize_ho") ||
               !strcmp(argv[i] + 1, "hoOptimize")) {
         i++;
-        opt_mesh_ho_optimize(0, GMSH_SET, 1);
+        opt_mesh_ho_optimize(0, GMSH_SET, 2);
       }
       else if(!strcmp(argv[i] + 1, "ho_min")) {
         i++;
@@ -819,17 +819,17 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         while(i < argc) {
           std::string fileName = std::string(argv[i]) + "_new";
 #if defined(HAVE_POST)
-          unsigned int n = PView::list.size();
+          std::size_t n = PView::list.size();
 #endif
           OpenProject(argv[i]);
 #if defined(HAVE_POST)
           // convert post-processing views to latest binary format
-          for(unsigned int j = n; j < PView::list.size(); j++)
+          for(std::size_t j = n; j < PView::list.size(); j++)
             PView::list[j]->write(fileName, 1, (j == n) ? false : true);
 #endif
           // convert mesh to latest binary format
           if(GModel::current()->getMeshStatus() > 0){
-            CTX::instance()->mesh.mshFileVersion = 4.0;
+            CTX::instance()->mesh.mshFileVersion = 4.1;
             CTX::instance()->mesh.binary = 1;
             CreateOutputFile(fileName, FORMAT_MSH);
           }
@@ -1153,7 +1153,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       else if(!strcmp(argv[i] + 1, "help_options")) {
         std::vector<std::string> s;
         PrintOptions(0, GMSH_FULLRC, 0, 1, 0, &s);
-        for(unsigned int i = 0; i < s.size(); i++)
+        for(std::size_t i = 0; i < s.size(); i++)
           Msg::Direct("%s\n", s[i].c_str());
         Msg::Exit(0);
       }

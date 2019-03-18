@@ -37,8 +37,6 @@ void elasticityTerm::createData(MElement *e) const
     d.w.push_back(w);
     d.weight.push_back(weight);
   }
-  //  printf("coucou creation of a data for %d with %d
-  //  points\n",e->getTypeForMSH(),npts);
   _data[e->getTypeForMSH()] = d;
 }
 
@@ -87,7 +85,6 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
     BT.setAll(0.);
 
     if(se->getShapeEnrichement() == se->getTestEnrichement()) {
-      //      printf("coucou\n");
       for(int j = 0; j < nbSF; j++) {
         BT(j, 0) = B(0, j) = Grads[j][0];
         BT(j, 3) = B(3, j) = Grads[j][1];
@@ -125,7 +122,6 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
     BTH.gemm(BT, H);
     m.gemm(BTH, B, weight * detJ, 1.);
   }
-  return;
 }
 
 void elasticityTerm::elementVector(SElement *se, fullVector<double> &m) const

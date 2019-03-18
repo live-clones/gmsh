@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GMSH_REGION_H_
-#define _GMSH_REGION_H_
+#ifndef GMSH_REGION_H
+#define GMSH_REGION_H
 
 #include "GRegion.h"
 

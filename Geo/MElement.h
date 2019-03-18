@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MELEMENT_H_
-#define _MELEMENT_H_
+#ifndef MELEMENT_H
+#define MELEMENT_H
 
 #include <stdio.h>
 #include <algorithm>
@@ -30,7 +30,7 @@ private:
   // the id number of the element (this number is unique and is guaranteed never
   // to change once a mesh has been generated, unless the mesh is explicitly
   // renumbered)
-  int _num;
+  std::size_t _num;
   // the number of the mesh partition the element belongs to
   short _partition;
   // a visibility flag
@@ -55,18 +55,18 @@ protected:
                            int &rot);
 
 public:
-  MElement(int num = 0, int part = 0);
+  MElement(std::size_t num = 0, int part = 0);
   virtual ~MElement() {}
   // set/get the tolerance for isInside() test
   static void setTolerance(const double tol);
   static double getTolerance();
 
   // return the tag of the element
-  virtual int getNum() const { return _num; }
+  virtual std::size_t getNum() const { return _num; }
 
   // force the immutable number (this should never be used, except when
   // explicitly renumbering the mesh)
-  void forceNum(int num);
+  void forceNum(std::size_t num);
 
   // return the geometrical dimension of the element
   virtual int getDim() const = 0;
@@ -423,6 +423,8 @@ public:
   {
     Msg::Error("No integration points defined for this type of element: %d",
                this->getType());
+    *npts = 0;
+    *pts = 0;
   }
   double integrate(double val[], int pOrder, int stride = 1, int order = -1);
   // val[] must contain interpolation data for face/edge vertices of given
@@ -431,13 +433,12 @@ public:
   double integrateFlux(double val[], int face, int pOrder, int order = -1);
 
   // IO routines
-  virtual void writeMSH(FILE *fp, bool binary = false, int elementary = 1,
-                        std::vector<short> *ghosts = 0);
   virtual void writeMSH2(FILE *fp, double version = 1.0, bool binary = false,
                          int num = 0, int elementary = 1, int physical = 1,
                          int parentNum = 0, int dom1Num = 0, int dom2Num = 0,
                          std::vector<short> *ghosts = 0);
-  virtual void writeMSH4(FILE *fp, bool binary = false);
+  virtual void writeMSH3(FILE *fp, bool binary = false, int elementary = 1,
+                         std::vector<short> *ghosts = 0);
   virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber,
                         bool printSICN, bool printSIGE, bool printGamma,
                         bool printDisto, double scalingFactor = 1.0,
@@ -497,7 +498,7 @@ public:
 
 class MElementFactory {
 public:
-  MElement *create(int type, std::vector<MVertex *> &v, int num = 0,
+  MElement *create(int type, std::vector<MVertex *> &v, std::size_t num = 0,
                    int part = 0, bool owner = false, int parent = 0,
                    MElement *parent_ptr = NULL, MElement *d1 = 0,
                    MElement *d2 = 0);

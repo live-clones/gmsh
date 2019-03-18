@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _LINEAR_SYSTEM_H_
-#define _LINEAR_SYSTEM_H_
+#ifndef LINEAR_SYSTEM_H
+#define LINEAR_SYSTEM_H
 
 #include <map>
 #include <string>
@@ -28,8 +28,8 @@ public:
   // x = A*b
   virtual int matMult() { return 0; }
 
-  void setParameter(std::string key, std::string value);
-  std::string getParameter(std::string key) const;
+  void setParameter(const std::string &key, std::string value);
+  std::string getParameter(const std::string &key) const;
   virtual void insertInSparsityPattern(int _row, int _col){};
   virtual double normInfRightHandSide() const = 0;
   virtual double normInfSolution() const { return 0; };

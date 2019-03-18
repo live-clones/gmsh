@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SMOOTH_DATA_H_
-#define _SMOOTH_DATA_H_
+#ifndef SMOOTH_DATA_H
+#define SMOOTH_DATA_H
 
 #include <set>
 #include <vector>

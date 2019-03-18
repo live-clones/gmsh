@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _INPUT_RANGE_H_
-#define _INPUT_RANGE_H_
+#ifndef INPUT_RANGE_H
+#define INPUT_RANGE_H
 
 #include <string>
 #include <sstream>
@@ -35,7 +35,7 @@ private:
     tmp.precision(12);
     if(_choices.size()) {
       // construct range string using choices
-      for(unsigned int i = 0; i < _choices.size(); i++) {
+      for(std::size_t i = 0; i < _choices.size(); i++) {
         if(i) tmp << ", ";
         tmp << _choices[i];
       }

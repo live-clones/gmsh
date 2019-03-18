@@ -4,14 +4,16 @@
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 set(SRC
+  MeshOptimizer.cpp
   MeshOpt.cpp
   MeshOptCommon.cpp
-  MeshOptimizer.cpp
-  MeshOptPatch.cpp
-  MeshOptObjectiveFunction.cpp
-  MeshOptObjContrib.cpp
-  MeshOptObjContribFunc.cpp
-  MeshOptVertexCoord.cpp
+  Patch.cpp
+  ObjectiveFunction.cpp
+  ObjContrib.cpp
+  ObjContribFunc.cpp
+  VertexCoord.cpp
+  CADDistances.cpp
+  IntegralBoundaryDist.cpp
 )
 
 

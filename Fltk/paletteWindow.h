@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _PALETTE_WINDOW_H
-#define _PALETTE_WINDOW_H
+#ifndef PALETTE_WINDOWH
+#define PALETTE_WINDOWH
 
 #include <FL/Fl.H>
 #include <FL/Fl_Double_Window.H>

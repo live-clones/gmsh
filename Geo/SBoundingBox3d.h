@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SBOUNDING_BOX_3D_H_
-#define _SBOUNDING_BOX_3D_H_
+#ifndef SBOUNDING_BOX_3D_H
+#define SBOUNDING_BOX_3D_H
 
 #include <float.h>
 #include "SPoint3.h"

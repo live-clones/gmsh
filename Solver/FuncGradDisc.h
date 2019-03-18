@@ -7,8 +7,8 @@
 //   Boris Sedji
 //
 
-#ifndef _FUNCGRADDISC_H_
-#define _FUNCGRADDISC_H_
+#ifndef FUNCGRADDISC_H
+#define FUNCGRADDISC_H
 
 #include "gmshLevelset.h"
 #include "MVertex.h"

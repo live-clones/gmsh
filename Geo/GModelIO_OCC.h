@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GMODELIO_OCC_H_
-#define _GMODELIO_OCC_H_
+#ifndef GMODELIO_OCC_H
+#define GMODELIO_OCC_H
 
 #include <vector>
 #include <map>
@@ -346,12 +346,12 @@ public:
   GRegion *getRegionForOCCShape(GModel *model, const TopoDS_Solid &toFind);
 
   // STL utilities
-  bool makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices_uv,
+  bool makeFaceSTL(const TopoDS_Face &s, std::vector<SPoint2> &vertices_uv,
                    std::vector<int> &triangles);
-  bool makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices_uv,
+  bool makeFaceSTL(const TopoDS_Face &s, std::vector<SPoint2> &vertices_uv,
                    std::vector<SPoint3> &vertices,
                    std::vector<SVector3> &normals, std::vector<int> &triangles);
-  bool makeFaceSTL(TopoDS_Face s, std::vector<SPoint3> &vertices,
+  bool makeFaceSTL(const TopoDS_Face &s, std::vector<SPoint3> &vertices,
                    std::vector<SVector3> &normals, std::vector<int> &triangles);
   bool makeSolidSTL(const TopoDS_Solid &s, std::vector<SPoint3> &vertices,
                     std::vector<SVector3> &normals,

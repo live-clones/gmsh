@@ -7,8 +7,8 @@
 //   Boris Sedji
 //
 
-#ifndef _FILTERS_H_
-#define _FILTERS_H_
+#ifndef FILTERS_H
+#define FILTERS_H
 
 #include "dofManager.h"
 #include "GModel.h"

@@ -312,7 +312,7 @@ static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
     std::string gmshPath = SplitFileName(CTX::instance()->exeFileName)[0];
     if(gmshPath.size()) {
       std::string name = c->getName();
-      for(unsigned int i = 0; i < name.size(); i++) name[i] = tolower(name[i]);
+      for(std::size_t i = 0; i < name.size(); i++) name[i] = tolower(name[i]);
       std::string path1 = gmshPath + name;
       std::string path2 = gmshPath + "data/" + name;
 #if defined(WIN32)
@@ -371,7 +371,7 @@ static void setClosed(const std::string &path, std::vector<T> &ps,
                       const std::string &value)
 {
   onelab::server::instance()->get(ps);
-  for(unsigned int i = 0; i < ps.size(); i++) {
+  for(std::size_t i = 0; i < ps.size(); i++) {
     if(ps[i].getPath() == path) {
       ps[i].setAttribute("Closed", value);
       onelab::server::instance()->set(ps[i]);
@@ -407,7 +407,7 @@ static void setOpenedClosed(Fl_Tree_Item *item, int reason)
     FlGui::instance()->onelab->removeFromManuallyClosed(path);
     setClosed(path, numbers, "0");
     setClosed(path, strings, "0");
-    for(unsigned int i = 0; i < PView::list.size(); i++) {
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
       if(getViewPath(i) == path) PView::list[i]->getOptions()->closed = 0;
     }
     break;
@@ -415,7 +415,7 @@ static void setOpenedClosed(Fl_Tree_Item *item, int reason)
     FlGui::instance()->onelab->insertInManuallyClosed(path);
     setClosed(path, numbers, "1");
     setClosed(path, strings, "1");
-    for(unsigned int i = 0; i < PView::list.size(); i++) {
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
       if(getViewPath(i) == path) PView::list[i]->getOptions()->closed = 1;
     }
     break;
@@ -729,7 +729,7 @@ static bool serverAction(const std::string &action)
   else if(!action.compare(0, 5, "Reset")) { // reset some variables
     std::vector<std::string> what =
       onelab::parameter::split(action.substr(5), ',');
-    for(unsigned int i = 0; i < what.size(); i++) {
+    for(std::size_t i = 0; i < what.size(); i++) {
       std::string var = onelab::parameter::trim(what[i]);
       Msg::Debug("Clearing variable '%s'", var.c_str());
       onelab::server::instance()->clear(var);
@@ -849,7 +849,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
     std::vector<Fl_Menu_Item> menu;
     std::vector<double> choices = p.getChoices();
     std::map<double, std::string> labels(p.getValueLabels());
-    for(unsigned int i = 0; i < choices.size(); i++) {
+    for(std::size_t i = 0; i < choices.size(); i++) {
       char *str = strdup(labels[choices[i]].c_str());
       _treeStrings.push_back(str);
       Fl_Menu_Item menuItem = {str, 0, 0, 0, 0};
@@ -859,7 +859,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
     Fl_Menu_Item it = {0};
     menu.push_back(it);
     but->copy(&menu[0]);
-    for(unsigned int i = 0; i < choices.size(); i++) {
+    for(std::size_t i = 0; i < choices.size(); i++) {
       if(p.getValue() == choices[i]) {
         but->value(i);
         break;
@@ -1134,7 +1134,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
   if(multipleSelection.size())
     but->menubutton()->callback(multiple_selection_menu_cb, but);
   std::vector<Fl_Menu_Item> menu;
-  for(unsigned int j = 0; j < p.getChoices().size(); j++) {
+  for(std::size_t j = 0; j < p.getChoices().size(); j++) {
     char *str = strdup(p.getChoices()[j].c_str());
     _treeStrings.push_back(str);
     bool divider = ((p.getKind() == "file" || multipleSelection.size()) &&
@@ -1187,7 +1187,7 @@ static void view_group_cb(Fl_Widget *w, void *data)
   while(group.size() && group[0] == '/') group = group.substr(1);
   while(group.size() && group[group.size() - 1] == '/')
     group = group.substr(0, group.size() - 1);
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     PViewOptions *opt = PView::list[i]->getOptions();
     if(opt->group.find(group) == 0)
       opt_view_visible(i, GMSH_SET | GMSH_GUI, !opt->visible);
@@ -1231,7 +1231,7 @@ static void highlight_physical_group_cb(Fl_Widget *w, void *data)
   m->getPhysicalGroups(dim, groups);
   std::vector<GEntity *> entities = groups[num];
 
-  for(unsigned int i = 0; i < entities.size(); i++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
     entities[i]->setVisibility(1);
     if(!entities[i]->getSelection()) {
       entities[i]->setSelection(2);
@@ -1271,7 +1271,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
 
   // hide all the widgets we have added in the tree to make sure they don't get
   // spurious events (until they are deleted)
-  for(unsigned int i = 0; i < _treeWidgets.size(); i++) _treeWidgets[i]->hide();
+  for(std::size_t i = 0; i < _treeWidgets.size(); i++) _treeWidgets[i]->hide();
 
   // we don't delete widgets everytime the tree is rebuilt to minimize potential
   // race conditions (e.g. during heavy user interaction with autoCheck, with
@@ -1290,7 +1290,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
 
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
-  for(unsigned int i = 0; i < numbers.size(); i++) {
+  for(std::size_t i = 0; i < numbers.size(); i++) {
     if(numbers[i].getAttribute("Closed") == "1")
       closed.insert(numbers[i].getPath());
     if(!numbers[i].getVisible() &&
@@ -1301,7 +1301,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
 
   std::vector<onelab::string> strings;
   onelab::server::instance()->get(strings);
-  for(unsigned int i = 0; i < strings.size(); i++) {
+  for(std::size_t i = 0; i < strings.size(); i++) {
     if(strings[i].getAttribute("Closed") == "1")
       closed.insert(strings[i].getPath());
     if(!strings[i].getVisible() &&
@@ -1371,9 +1371,9 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   if(deleteWidgets) {
     // this needs to be performed after FlGui::check()
     Msg::Debug("Deleting onelabGroup widgets (%d)", (int)_treeWidgets.size());
-    for(unsigned int i = 0; i < delWidgets.size(); i++)
+    for(std::size_t i = 0; i < delWidgets.size(); i++)
       Fl::delete_widget(delWidgets[i]);
-    for(unsigned int i = 0; i < delStrings.size(); i++) free(delStrings[i]);
+    for(std::size_t i = 0; i < delStrings.size(); i++) free(delStrings[i]);
   }
 
 #if 0 // test
@@ -1419,7 +1419,7 @@ void onelabGroup::setButtonVisibility()
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
   bool visible = false;
-  for(unsigned int i = 0; i < numbers.size(); i++) {
+  for(std::size_t i = 0; i < numbers.size(); i++) {
     if(numbers[i].getVisible()) {
       visible = true;
       break;
@@ -1567,7 +1567,7 @@ void onelabGroup::rebuildSolverList()
       hosts.push_back(opt_solver_remote_login(i, GMSH_GET, ""));
     }
   }
-  for(unsigned int i = 0; i < NUM_SOLVERS; i++) {
+  for(std::size_t i = 0; i < NUM_SOLVERS; i++) {
     if(i < names.size()) {
       onelab::server::citer it =
         onelab::server::instance()->findClient(names[i]);
@@ -1615,7 +1615,7 @@ void onelabGroup::addSolver(const std::string &name,
   for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++)
     if((*it)->isNetworkClient()) networkClients.push_back(*it);
-  for(unsigned int i = 0; i < networkClients.size(); i++) {
+  for(std::size_t i = 0; i < networkClients.size(); i++) {
     delete networkClients[i];
   }
 

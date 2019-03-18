@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _ANNOTATE_H_
-#define _ANNOTATE_H_
+#ifndef ANNOTATE_H
+#define ANNOTATE_H
 
 #include <string>
 #include "Plugin.h"

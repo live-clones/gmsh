@@ -22,29 +22,37 @@
  */
 class HierarchicalBasisH1Line : public HierarchicalBasisH1 {
 public:
-  HierarchicalBasisH1Line(int pb1);
+  HierarchicalBasisH1Line(int pb);
   virtual ~HierarchicalBasisH1Line();
   // vertexBasis=[v0,v1]
-  // bubbleBasis=[phieb_{2},...,phieb_{pb}]
+  // BubbleBasis=[phie_{2},...,phie_{pe}]
   virtual void generateBasis(double const &u, double const &v, double const &w,
-                             double *vertexBasis, double *edgeBasis,
-                             double *faceBasis, double *bubbleBasis);
+                             std::vector<double> &vertexBasis,
+                             std::vector<double> &edgeBasis,
+                             std::vector<double> &faceBasis,
+                             std::vector<double> &bubbleBasis);
   virtual void
   generateGradientBasis(double const &u, double const &v, double const &w,
-                        double gradientVertex[][3], double gradientEdge[][3],
-                        double gradientFace[][3], double gradientBubble[][3]);
+                        std::vector<std::vector<double> > &gradientVertex,
+                        std::vector<std::vector<double> > &gradientEdge,
+                        std::vector<std::vector<double> > &gradientFace,
+                        std::vector<std::vector<double> > &gradientBubble);
 
   virtual void orientateEdge(int const &flagOrientation, int const &edgeNumber,
-                             double *edgeBasis){};
-  virtual void orientateEdgeGrad(int const &flagOrientation,
-                                 int const &edgeNumber,
-                                 double gradientEdge[][3]){};
+                             std::vector<double> &edgeBasis){};
+  virtual void
+  orientateEdgeGrad(int const &flagOrientation, int const &edgeNumber,
+                    std::vector<std::vector<double> > &gradientEdge){};
+
+  virtual void orientateFace(int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,std::vector<double> &faceBasis){};
+  virtual void reverseFaceBubbleFor3D(const bool belongBoundary){};
+  virtual void reverseEdgeBubbleFor2D(const bool belongBoundary);
 
 private:
-  int pb1; // bubble function order in  direction u
-  static double affineCoordinate(int j,
+  int _pb; //  bubble function order in  direction u
+  static double _affineCoordinate(int j,
                                  double u); // affine coordinate lambdaj j={1,2}
-  double getDetJacobian(); // for transformation [-1;1] -> [0,1]
+  double _getDetJacobian(); // for transformation [-1;1] -> [0,1]
 };
 
 #endif

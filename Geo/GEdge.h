@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GEDGE_H_
-#define _GEDGE_H_
+#ifndef GEDGE_H
+#define GEDGE_H
 
 #include <string>
 #include <vector>
@@ -173,19 +173,19 @@ public:
   int getNumElementTypes() const { return 1; }
 
   // get total/by-type number of elements in the mesh
-  size_type getNumMeshElements() const { return lines.size(); }
-  unsigned int getNumMeshElementsByType(const int familyType) const;
-  unsigned int getNumMeshParentElements();
+  std::size_t getNumMeshElements() const { return lines.size(); }
+  std::size_t getNumMeshElementsByType(const int familyType) const;
+  std::size_t getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
 
   // get the start of the array of a type of element
   MElement *const *getStartElementType(int type) const;
 
   // get the element at the given index
-  MElement *getMeshElement(unsigned int index) const;
+  MElement *getMeshElement(std::size_t index) const;
   // get the element at the given index for a given familyType
   MElement *getMeshElementByType(const int familyType,
-                                 const unsigned int index) const;
+                                 const std::size_t index) const;
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
@@ -244,7 +244,7 @@ public:
   SPoint3 closestPoint(SPoint3 &p, double tolerance);
   virtual void mesh(bool verbose);
 
-  virtual bool reorder(const int elementType, const std::vector<int> &ordering);
+  virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering);
 };
 
 #endif

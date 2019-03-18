@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GL2PGF_H_
-#define _GL2PGF_H_
+#ifndef GL2PGF_H
+#define GL2PGF_H
 
 #include <string>
 #include "PixelBuffer.h"

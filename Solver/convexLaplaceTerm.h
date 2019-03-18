@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
-#ifndef _CONVEX_LAPLACE_TERM_H_
-#define _CONVEX_LAPLACE_TERM_H_
+#ifndef CONVEX_LAPLACE_TERM_H
+#define CONVEX_LAPLACE_TERM_H
 
 #include "laplaceTerm.h"
 

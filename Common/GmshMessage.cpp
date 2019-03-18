@@ -122,7 +122,7 @@ void Msg::Init(int argc, char **argv)
   if(!flag) MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &_commRank);
   MPI_Comm_size(MPI_COMM_WORLD, &_commSize);
-  MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+  MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 #endif
 #if defined(HAVE_PETSC)
   int sargc = 0;

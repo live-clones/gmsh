@@ -1,4 +1,4 @@
-// Copyright (C) 2013 ULg-UCL
+// HighOrderMeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -24,32 +24,34 @@
 //
 // Contributor: Thomas Toulorge
 
-#ifndef _METAEL_H_
-#define _METAEL_H_
+#ifndef METAEL_H
+#define METAEL_H
 
 #include <string>
 #include "MElement.h"
 
-class MetaEl
-{
+class MetaEl {
 public:
-  MetaEl(int type, int order, const std::vector<MVertex*> &baseVert,
-         const std::vector<MVertex*> &topPrimVert);
+  MetaEl(int type, int order, const std::vector<MVertex *> &baseVert,
+         const std::vector<MVertex *> &topPrimVert);
   ~MetaEl();
   void placeOtherNodes();
   void setCurvedTop(double factor);
   void setFlatTop();
   bool isOK() const { return _metaEl; }
-  bool isPointIn(const SPoint3 p) const;
+  bool isPointIn(const SPoint3 &p) const;
   bool straightToCurved(double *xyzS, double *xyzC) const;
   std::string printPOS();
   void printCoord()
   {
     std::cout << "DBGTT: metaEl -> ";
-    for(int i = 0; i < _metaVert.size(); i++){
+    for(int i = 0; i < _metaVert.size(); i++) {
       std::cout << "v" << i << " = (" << _metaVert[i]->x() << ","
-                <<  _metaVert[i]->y() << "," <<  _metaVert[i]->z() << ")";
-      if (i == _metaVert.size()-1) std::cout << "\n"; else std::cout << ", ";
+                << _metaVert[i]->y() << "," << _metaVert[i]->z() << ")";
+      if(i == _metaVert.size() - 1)
+        std::cout << "\n";
+      else
+        std::cout << ", ";
     }
   }
   MElement *getMElement() { return _metaEl; }
@@ -67,15 +69,15 @@ private:
   static std::map<int, metaInfoType> _metaInfo;
 
   const metaInfoType &_mInfo;
-  std::vector<MVertex*> _metaVert;
+  std::vector<MVertex *> _metaVert;
   MElement *_metaEl, *_metaEl0;
   std::vector<SVector3> _baseNorm;
 
   const metaInfoType &getMetaInfo(int elType, int order);
   void computeBaseNorm(const SVector3 &metaNorm,
-                       const std::vector<MVertex*> &baseVert,
-                       const std::vector<MVertex*> &topPrimVert,
+                       const std::vector<MVertex *> &baseVert,
+                       const std::vector<MVertex *> &topPrimVert,
                        std::vector<SVector3> &baseNorm);
 };
 
-#endif  // _METAEL_H_
+#endif

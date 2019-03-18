@@ -24,7 +24,7 @@ PViewDataGModel::PViewDataGModel(DataType type)
 
 PViewDataGModel::~PViewDataGModel()
 {
-  for(unsigned int i = 0; i < _steps.size(); i++) delete _steps[i];
+  for(std::size_t i = 0; i < _steps.size(); i++) delete _steps[i];
 }
 
 static MElement *_getOneElementOfGivenType(GModel *m, int type)
@@ -97,7 +97,7 @@ bool PViewDataGModel::finalize(bool computeMinMax,
       if(_type == NodeData || _type == ElementData) {
         // treat these 2 special cases separately for maximum efficiency
         int numComp = _steps[step]->getNumComponents();
-        for(int i = 0; i < _steps[step]->getNumData(); i++) {
+        for(std::size_t i = 0; i < _steps[step]->getNumData(); i++) {
           double *d = _steps[step]->getData(i);
           if(d) {
             double val = ComputeScalarRep(numComp, d, tensorRep);
@@ -189,7 +189,7 @@ bool PViewDataGModel::finalize(bool computeMinMax,
     // interpolation: it's constant)
     int types[] = {TYPE_PNT, TYPE_LIN, TYPE_TRI, TYPE_QUA,   TYPE_TET,
                    TYPE_HEX, TYPE_PRI, TYPE_PYR, TYPE_POLYG, TYPE_POLYH};
-    for(unsigned int i = 0; i < sizeof(types) / sizeof(types[0]); i++) {
+    for(std::size_t i = 0; i < sizeof(types) / sizeof(types[0]); i++) {
       if(!haveInterpolationMatrices(types[i])) {
         MElement *e = _getOneElementOfGivenType(model, types[i]);
         if(e) {
@@ -270,7 +270,7 @@ int PViewDataGModel::getNumTimeSteps() { return _steps.size(); }
 
 int PViewDataGModel::getFirstNonEmptyTimeStep(int start)
 {
-  for(unsigned int i = start; i < _steps.size(); i++)
+  for(std::size_t i = start; i < _steps.size(); i++)
     if(_steps[i]->getNumData()) return i;
   return start;
 }
@@ -337,7 +337,7 @@ SBoundingBox3d PViewDataGModel::getBoundingBox(int step)
 {
   if(step < 0 || _steps.empty()) {
     SBoundingBox3d tmp;
-    for(unsigned int i = 0; i < _steps.size(); i++) {
+    for(std::size_t i = 0; i < _steps.size(); i++) {
       if(!_steps[i]->getBoundingBox().empty())
         tmp += _steps[i]->getBoundingBox();
     }
@@ -710,7 +710,7 @@ void PViewDataGModel::smooth()
 {
   if(_type == NodeData || _type == GaussPointData) return;
   std::vector<stepData<double> *> _steps2;
-  for(unsigned int step = 0; step < _steps.size(); step++) {
+  for(std::size_t step = 0; step < _steps.size(); step++) {
     GModel *m = _steps[step]->getModel();
     int numComp = _steps[step]->getNumComponents();
     _steps2.push_back(new stepData<double>(
@@ -737,7 +737,7 @@ void PViewDataGModel::smooth()
         }
       }
     }
-    for(int i = 0; i < _steps2.back()->getNumData(); i++) {
+    for(std::size_t i = 0; i < _steps2.back()->getNumData(); i++) {
       double *d = _steps2.back()->getData(i);
       if(d) {
         double f = nodeConnect[i];
@@ -746,7 +746,7 @@ void PViewDataGModel::smooth()
       }
     }
   }
-  for(unsigned int i = 0; i < _steps.size(); i++) delete _steps[i];
+  for(std::size_t i = 0; i < _steps.size(); i++) delete _steps[i];
   _steps = _steps2;
   _type = NodeData;
   finalize();
@@ -755,7 +755,7 @@ void PViewDataGModel::smooth()
 double PViewDataGModel::getMemoryInMb()
 {
   double m = 0.;
-  for(unsigned int i = 0; i < _steps.size(); i++)
+  for(std::size_t i = 0; i < _steps.size(); i++)
     m += _steps[i]->getMemoryInMb();
   return m;
 }
@@ -765,7 +765,7 @@ bool PViewDataGModel::combineTime(nameData &nd)
   // sanity checks
   if(nd.data.size() < 2) return false;
   std::vector<PViewDataGModel *> data(nd.data.size());
-  for(unsigned int i = 0; i < nd.data.size(); i++) {
+  for(std::size_t i = 0; i < nd.data.size(); i++) {
     data[i] = dynamic_cast<PViewDataGModel *>(nd.data[i]);
     if(!data[i]) {
       Msg::Error("Cannot combine hybrid data");
@@ -778,13 +778,13 @@ bool PViewDataGModel::combineTime(nameData &nd)
         data[0]->_interpolation.begin();
       it != data[0]->_interpolation.end(); it++)
     if(_interpolation[it->first].empty())
-      for(unsigned int i = 0; i < it->second.size(); i++)
+      for(std::size_t i = 0; i < it->second.size(); i++)
         _interpolation[it->first].push_back(
           new fullMatrix<double>(*it->second[i]));
 
   // (deep) copy step data
-  for(unsigned int i = 0; i < data.size(); i++)
-    for(unsigned int j = 0; j < data[i]->_steps.size(); j++)
+  for(std::size_t i = 0; i < data.size(); i++)
+    for(std::size_t j = 0; j < data[i]->_steps.size(); j++)
       if(data[i]->hasTimeStep(j))
         _steps.push_back(new stepData<double>(*data[i]->_steps[j]));
 
@@ -845,7 +845,7 @@ bool PViewDataGModel::hasMultipleMeshes()
 {
   if(_steps.size() <= 1) return false;
   GModel *m = _steps[0]->getModel();
-  for(unsigned int i = 1; i < _steps.size(); i++)
+  for(std::size_t i = 1; i < _steps.size(); i++)
     if(m != _steps[i]->getModel()) return true;
   return false;
 }
@@ -853,7 +853,7 @@ bool PViewDataGModel::hasMultipleMeshes()
 bool PViewDataGModel::hasModel(GModel *model, int step)
 {
   if(step < 0) {
-    for(unsigned int i = 0; i < _steps.size(); i++)
+    for(std::size_t i = 0; i < _steps.size(); i++)
       if(model == _steps[i]->getModel()) return true;
     return false;
   }

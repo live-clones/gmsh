@@ -3,9 +3,10 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _DISCRETE_FACE_H_
-#define _DISCRETE_FACE_H_
+#ifndef DISCRETE_FACE_H
+#define DISCRETE_FACE_H
 
+#include <algorithm>
 #include "GmshConfig.h"
 #include "GModel.h"
 #include "GFace.h"
@@ -15,17 +16,19 @@
 #include "MElementCut.h"
 #include "MEdge.h"
 #include "MLine.h"
+#include "rtree.h"
 
 #if defined(HAVE_HXT)
-#include <algorithm>
-#include "rtree.h"
-class MElementOctree;
+
 extern "C" {
 #include "hxt_mesh.h"
 #include "hxt_parametrization.h"
 #include "hxt_linear_system.h"
 #include "hxt_curvature.h"
 }
+
+class MElementOctree;
+
 class hxt_reparam_surf {
 public:
   MElementOctree *oct;
@@ -34,31 +37,26 @@ public:
   std::vector<MVertex> v3d;
   std::vector<MTriangle> t2d;
   std::vector<MTriangle> t3d;
-  std::vector<discreteEdge *> bnd;
-  std::vector<discreteEdge *> emb;
+  std::vector<GEdge *> bnd;
+  std::vector<GEdge *> emb;
   hxt_reparam_surf() : oct(NULL) {}
   ~hxt_reparam_surf();
 };
+
 #endif
 
 class discreteFace : public GFace {
 private:
-  void checkAndFixOrientation();
-
+  bool _checkAndFixOrientation();
 #if defined(HAVE_HXT)
-  int _current_parametrization;
+  int _currentParametrization;
   std::vector<hxt_reparam_surf> _parametrizations;
-  std::vector<discreteEdge *> e_internals;
-  std::vector<discreteVertex *> v_internals;
-  HXTStatus reparametrize_through_hxt();
-  bool
-  compute_topology_of_partition(int nbColors, int *colors, int *nNodes,
-                                int *nodes, double *uv, double angle_threshold,
-                                std::vector<MVertex *> &c2v,
-                                std::vector<std::vector<MEdge> > &boundaries,
-                                std::vector<std::vector<MEdge> > &internals);
+  HXTStatus _reparametrizeThroughHxt();
+  bool _computeTopologyOfPartition(int nbColors, int *colors, int *nNodes,
+                                   int *nodes, double *uv,
+                                   std::vector<MVertex *> &c2v,
+                                   std::vector<std::vector<MEdge> > &boundaries);
 #endif
-
 public:
   discreteFace(GModel *model, int num);
   virtual ~discreteFace() {}

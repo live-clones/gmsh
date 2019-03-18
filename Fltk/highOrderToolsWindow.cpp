@@ -26,9 +26,9 @@
 #include "HighOrder.h"
 
 #if defined(HAVE_OPTHOM)
-#include "OptHomRun.h"
-#include "OptHomElastic.h"
-#include "OptHomFastCurving.h"
+#include "HighOrderMeshOptimizer.h"
+#include "HighOrderMeshElasticAnalogy.h"
+#include "HighOrderMeshFastCurving.h"
 #endif
 
 // static void change_completeness_cb(Fl_Widget *w, void *data)
@@ -199,12 +199,11 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     p.adaptBlobLayerFact = (int)o->value[10]->value();
     p.adaptBlobDistFact = o->value[11]->value();
     p.optPrimSurfMesh = false;
-    // HighOrderMeshOptimizer(GModel::current(), p);
-    HighOrderMeshOptimizerNew(GModel::current(), p);
+    HighOrderMeshOptimizer(GModel::current(), p);
     break;
   }
   case 1: { // Elastic analogy
-    ElasticAnalogy(GModel::current(), onlyVisible);
+    HighOrderMeshElasticAnalogy(GModel::current(), onlyVisible);
     break;
   }
   case 2: { // Fast curving
@@ -247,20 +246,20 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
-                          "High order tools");
+                          "High-order tools");
   win->box(GMSH_WINDOW_BOX);
 
   int y = WB;
   int x = 2 * WB;
 
-  box[0] = new Fl_Box(x, y, width - 4 * WB, BH);
-  box[0]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+  box = new Fl_Box(x, y, width - 4 * WB, BH);
+  box->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
   y += BH;
 
   butt[1] =
     new Fl_Check_Button(x, y, width - 4 * WB, BH,
-                        "Only apply high order tools to visible entities");
+                        "Only apply high-order tools to visible entities");
   butt[1]->type(FL_TOGGLE_BUTTON);
   butt[1]->value(1);
 
@@ -281,7 +280,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   {
     y += BH;
     Fl_Box *b =
-      new Fl_Box(x - WB, y, width, BH, "1. Generation of high order nodes");
+      new Fl_Box(x - WB, y, width, BH, "1. Generation of high-order nodes");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   }
 
@@ -326,7 +325,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   {
     y += BH;
     Fl_Box *b = new Fl_Box(x - WB, y, width, BH,
-                           "2. Regularization of high order elements");
+                           "2. Regularization of high-order elements");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   }
 
@@ -392,7 +391,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[3]->maximum(10000);
   value[3]->step(10);
   value[3]->align(FL_ALIGN_RIGHT);
-  value[3]->value(300);
+  value[3]->value(CTX::instance()->mesh.hoIterMax);
 
   y += BH;
   value[4] = new Fl_Value_Input(x, y, IW, BH, "Max. number of barrier updates");
@@ -400,7 +399,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[4]->maximum(100);
   value[4]->step(1);
   value[4]->align(FL_ALIGN_RIGHT);
-  value[4]->value(50);
+  value[4]->value(CTX::instance()->mesh.hoPassMax);
 
   static Fl_Menu_Item menu_strategy[] = {{"Disjoint strong", 0, 0, 0},
                                          {"Adaptive one-by-one", 0, 0, 0},
@@ -461,11 +460,11 @@ void highOrderToolsWindow::show(bool redrawOnly)
     value[0]->value(meshOrder);
     butt[0]->value(!complete);
     if(CAD) {
-      box[0]->label("CAD model is available");
+      box->label("CAD model is available");
       choice[0]->value(1);
     }
     else {
-      box[0]->label("CAD model is not available");
+      box->label("CAD model is not available");
       choice[0]->deactivate();
     }
     win->show();

@@ -33,7 +33,7 @@ int drawContext::fix2dCoordinates(double *x, double *y)
 
 void drawContext::drawText2d()
 {
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     PViewData *data = PView::list[i]->getData();
     PViewOptions *opt = PView::list[i]->getOptions();
     if(opt->visible && opt->drawStrings && isVisible(PView::list[i])) {
@@ -165,10 +165,10 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
   if(opt->abscissaRangeType == PViewOptions::Custom) {
     std::vector<double> x2;
     std::vector<std::vector<double> > y2(y.size());
-    for(unsigned int i = 0; i < x.size(); i++) {
+    for(std::size_t i = 0; i < x.size(); i++) {
       if(x[i] >= opt->customAbscissaMin && x[i] <= opt->customAbscissaMax) {
         x2.push_back(x[i]);
-        for(unsigned int j = 0; j < y2.size(); j++) y2[j].push_back(y[j][i]);
+        for(std::size_t j = 0; j < y2.size(); j++) y2[j].push_back(y[j][i]);
       }
     }
     x = x2;
@@ -177,7 +177,7 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
 
   if(space) {
     xmin = xmax = x[0];
-    for(unsigned int i = 1; i < x.size(); i++) {
+    for(std::size_t i = 1; i < x.size(); i++) {
       xmin = std::min(xmin, x[i]);
       xmax = std::max(xmax, x[i]);
     }
@@ -188,13 +188,13 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
   }
 
   if(opt->scaleType == PViewOptions::Logarithmic)
-    for(unsigned int i = 0; i < y.size(); i++)
-      for(unsigned int j = 0; j < y[i].size(); j++) y[i][j] = log10(y[i][j]);
+    for(std::size_t i = 0; i < y.size(); i++)
+      for(std::size_t j = 0; j < y[i].size(); j++) y[i][j] = log10(y[i][j]);
 
   ymin = VAL_INF;
   ymax = -VAL_INF;
-  for(unsigned int i = 0; i < y.size(); i++) {
-    for(unsigned int j = 0; j < y[i].size(); j++) {
+  for(std::size_t i = 0; i < y.size(); i++) {
+    for(std::size_t j = 0; j < y[i].size(); j++) {
       ymin = std::min(ymin, y[i][j]);
       ymax = std::max(ymax, y[i][j]);
     }
@@ -498,14 +498,14 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
 
   if(opt->intervalsType == PViewOptions::Discrete ||
      opt->intervalsType == PViewOptions::Continuous) {
-    for(unsigned int i = 0; i < y.size(); i++) {
+    for(std::size_t i = 0; i < y.size(); i++) {
       if(opt->useStipple) {
         glEnable(GL_LINE_STIPPLE);
         glLineStipple(opt->stipple[i % 10][0], opt->stipple[i % 10][1]);
         gl2psEnable(GL2PS_LINE_STIPPLE);
       }
       glBegin(GL_LINE_STRIP);
-      for(unsigned int j = 0; j < x.size(); j++)
+      for(std::size_t j = 0; j < x.size(); j++)
         addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], xmin,
                       xmax, opt->tmpMin, opt->tmpMax, false, false,
                       inModelCoordinates);
@@ -520,16 +520,16 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
   if(opt->intervalsType == PViewOptions::Iso ||
      opt->intervalsType == PViewOptions::Discrete ||
      opt->intervalsType == PViewOptions::Numeric) {
-    for(unsigned int i = 0; i < y.size(); i++)
-      for(unsigned int j = 0; j < x.size(); j++)
+    for(std::size_t i = 0; i < y.size(); i++)
+      for(std::size_t j = 0; j < x.size(); j++)
         addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], xmin,
                       xmax, opt->tmpMin, opt->tmpMax, false, true,
                       inModelCoordinates);
   }
 
   if(opt->intervalsType == PViewOptions::Numeric) {
-    for(unsigned int i = 0; i < y.size(); i++)
-      for(unsigned int j = 0; j < x.size(); j++)
+    for(std::size_t i = 0; i < y.size(); i++)
+      for(std::size_t j = 0; j < x.size(); j++)
         addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], xmin,
                       xmax, opt->tmpMin, opt->tmpMax, true, true,
                       inModelCoordinates);
@@ -580,7 +580,7 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
 void drawContext::drawGraph2d(bool inModelCoordinates)
 {
   std::vector<PView *> graphs;
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     PViewData *data = PView::list[i]->getData();
     PViewOptions *opt = PView::list[i]->getOptions();
     if(!data->getDirty() && opt->visible && opt->type != PViewOptions::Plot3D &&
@@ -595,7 +595,7 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
   double mx = 25, my = 5; // x- and y-margin
   double xsep = 0., ysep = drawContext::global()->getStringHeight() + tic;
   char label[1024];
-  for(unsigned int i = 0; i < graphs.size(); i++) {
+  for(std::size_t i = 0; i < graphs.size(); i++) {
     PViewOptions *opt = graphs[i]->getOptions();
     sprintf(label, opt->format.c_str(), -M_PI * 1.e4);
     xsep = std::max(xsep, drawContext::global()->getStringWidth(label));
@@ -630,7 +630,7 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
   int overlay[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   double winw = viewport[2] - viewport[0];
   double winh = viewport[3] - viewport[1];
-  for(unsigned int i = 0; i < graphs.size(); i++) {
+  for(std::size_t i = 0; i < graphs.size(); i++) {
     double x = viewport[0] + mx + xsep;
     double y = viewport[1] + my + 3 * ysep;
     PView *p = graphs[i];

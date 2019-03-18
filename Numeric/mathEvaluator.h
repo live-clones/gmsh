@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MATH_EVALUATOR_H_
-#define _MATH_EVALUATOR_H_
+#ifndef MATH_EVALUATOR_H
+#define MATH_EVALUATOR_H
 
 #include <vector>
 #include <string>

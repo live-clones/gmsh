@@ -15,12 +15,12 @@
 static double _norm(std::vector<double> &x)
 {
   double n = 0.0;
-  for(unsigned int i = 0; i < x.size(); i++) n += x[i] * x[i];
+  for(std::size_t i = 0; i < x.size(); i++) n += x[i] * x[i];
   return sqrt(n);
 }
 static void scale(std::vector<double> &x, double s)
 {
-  for(unsigned int i = 0; i < x.size(); i++) x[i] *= s;
+  for(std::size_t i = 0; i < x.size(); i++) x[i] *= s;
 }
 
 static void gmshLineSearch(void (*func)(std::vector<double> &x, double &Obj,

@@ -5,8 +5,8 @@
 //
 // Contributed by Jonathan Lambrechts
 
-#ifndef _DRAW_CONTEXT_FLTK_STRING_TEXTURE_H_
-#define _DRAW_CONTEXT_FLTK_STRING_TEXTURE_H_
+#ifndef DRAW_CONTEXT_FLTK_STRING_TEXTURE_H
+#define DRAW_CONTEXT_FLTK_STRING_TEXTURE_H
 
 #include "drawContextFltk.h"
 

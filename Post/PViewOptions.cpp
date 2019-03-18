@@ -121,12 +121,12 @@ void PViewOptions::createGeneralRaise()
 {
   const char *names[] = {"x",  "y",  "z",  "v0", "v1", "v2", "v3",
                          "v4", "v5", "v6", "v7", "v8", "s",  "t"};
-  unsigned int numVariables = sizeof(names) / sizeof(names[0]);
+  std::size_t numVariables = sizeof(names) / sizeof(names[0]);
   std::vector<std::string> expressions(3), variables(numVariables);
   expressions[0] = genRaiseX;
   expressions[1] = genRaiseY;
   expressions[2] = genRaiseZ;
-  for(unsigned int i = 0; i < numVariables; i++) variables[i] = names[i];
+  for(std::size_t i = 0; i < numVariables; i++) variables[i] = names[i];
 
   if(genRaiseEvaluator) delete genRaiseEvaluator;
   genRaiseEvaluator = new mathEvaluator(expressions, variables);

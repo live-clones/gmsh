@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _FIELD_H_
-#define _FIELD_H_
+#ifndef FIELD_H
+#define FIELD_H
 
 #include <string>
 #include <map>
@@ -152,14 +152,14 @@ public:
   inline void setBackgroundFieldId(int id) { _background_field = id; };
   inline void addBoundaryLayerFieldId(int id)
   {
-    for(unsigned int i = 0; i < _boundaryLayer_fields.size(); ++i) {
+    for(std::size_t i = 0; i < _boundaryLayer_fields.size(); ++i) {
       if(_boundaryLayer_fields[i] == id) return;
     }
     _boundaryLayer_fields.push_back(id);
   }
   inline void addBoundaryLayerFieldId(std::vector<int> &tags)
   {
-    for(unsigned int i = 0; i < tags.size(); ++i)
+    for(std::size_t i = 0; i < tags.size(); ++i)
       addBoundaryLayerFieldId(tags[i]);
   }
   inline int getBackgroundField() { return _background_field; }
@@ -181,6 +181,7 @@ private:
   std::list<double> hwall_n_nodes;
   std::list<int> nodes_id, edges_id;
   std::list<int> edges_id_saved, nodes_id_saved, fan_nodes_id;
+  std::list<int> excluded_faces_id;
   void operator()(DistanceField *cc, double dist, double x, double y, double z,
                   SMetric3 &metr, GEntity *ge);
 

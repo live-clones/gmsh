@@ -4,7 +4,7 @@
 int main(int argc, char **argv)
 {
   if(argc < 2){
-    std::cout << "Usage: " << argv[0] << " file.msh [options]" << std::endl;
+    std::cout << "Usage: " << argv[0] << " file.msh" << std::endl;
     return 0;
   }
 
@@ -18,14 +18,14 @@ int main(int argc, char **argv)
 
   for(unsigned int i = 0; i < entities.size(); i++){
     // get the mesh nodes for each elementary entity
-    std::vector<int> nodeTags;
+    std::vector<std::size_t> nodeTags;
     std::vector<double> nodeCoords, nodeParams;
     int dim = entities[i].first, tag = entities[i].second;
     gmsh::model::mesh::getNodes(nodeTags, nodeCoords, nodeParams, dim, tag);
 
     // get the mesh elements for each elementary entity
     std::vector<int> elemTypes;
-    std::vector<std::vector<int> > elemTags, elemNodeTags;
+    std::vector<std::vector<std::size_t> > elemTags, elemNodeTags;
     gmsh::model::mesh::getElements(elemTypes, elemTags, elemNodeTags, dim, tag);
 
     // report some statistics

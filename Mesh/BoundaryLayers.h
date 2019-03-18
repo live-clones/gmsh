@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _BOUNDARY_LAYERS_H_
-#define _BOUNDARY_LAYERS_H_
+#ifndef BOUNDARY_LAYERS_H
+#define BOUNDARY_LAYERS_H
 
 #include "GModel.h"
 

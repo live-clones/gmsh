@@ -259,8 +259,8 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
   fprintf(fp, " %d\n", numVertices);
   std::vector<GEntity *> entities;
   getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeMESH(fp, scalingFactor);
 
   int numEdges = 0, numTriangles = 0, numQuadrangles = 0;
@@ -292,7 +292,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
     for(eiter it = firstEdge(); it != lastEdge(); ++it) {
       int numPhys = (*it)->physicals.size();
       if(saveAll || numPhys) {
-        for(unsigned int i = 0; i < (*it)->lines.size(); i++)
+        for(std::size_t i = 0; i < (*it)->lines.size(); i++)
           (*it)->lines[i]->writeMESH(fp, elementTagType, (*it)->tag(),
                                      numPhys ? (*it)->physicals[0] : 0);
       }
@@ -307,7 +307,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
     for(fiter it = firstFace(); it != lastFace(); ++it) {
       int numPhys = (*it)->physicals.size();
       if(saveAll || numPhys) {
-        for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+        for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
           (*it)->triangles[i]->writeMESH(fp, elementTagType, (*it)->tag(),
                                          numPhys ? (*it)->physicals[0] : 0);
       }
@@ -319,7 +319,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
     for(fiter it = firstFace(); it != lastFace(); ++it) {
       int numPhys = (*it)->physicals.size();
       if(saveAll || numPhys) {
-        for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
+        for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++)
           (*it)->quadrangles[i]->writeMESH(fp, elementTagType, (*it)->tag(),
                                            numPhys ? (*it)->physicals[0] : 0);
       }
@@ -334,7 +334,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
     for(riter it = firstRegion(); it != lastRegion(); ++it) {
       int numPhys = (*it)->physicals.size();
       if(saveAll || numPhys) {
-        for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
+        for(std::size_t i = 0; i < (*it)->tetrahedra.size(); i++)
           (*it)->tetrahedra[i]->writeMESH(fp, elementTagType, (*it)->tag(),
                                           numPhys ? (*it)->physicals[0] : 0);
       }
@@ -346,7 +346,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
     for(riter it = firstRegion(); it != lastRegion(); ++it) {
       int numPhys = (*it)->physicals.size();
       if(saveAll || numPhys) {
-        for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
+        for(std::size_t i = 0; i < (*it)->hexahedra.size(); i++)
           (*it)->hexahedra[i]->writeMESH(fp, elementTagType, (*it)->tag(),
                                          numPhys ? (*it)->physicals[0] : 0);
       }

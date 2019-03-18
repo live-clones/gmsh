@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CUTMESH_H_
-#define _CUTMESH_H_
+#ifndef CUTMESH_H
+#define CUTMESH_H
 
 #include "Plugin.h"
 

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GROUPOFELEMENTS_H_
-#define _GROUPOFELEMENTS_H_
+#ifndef GROUPOFELEMENTS_H
+#define GROUPOFELEMENTS_H
 
 #include <set>
 #include "GFace.h"

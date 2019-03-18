@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _HASH_H_
-#define _HASH_H_
+#ifndef HASH_H
+#define HASH_H
 
 //--FNV hashing parameters
 

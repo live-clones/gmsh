@@ -139,7 +139,7 @@ public:
       }
       else {
         std::vector<std::string> cl = onelabUtils::getCommandLine(_client);
-        for(unsigned int i = 0; i < cl.size(); i++) args.append(" " + cl[i]);
+        for(std::size_t i = 0; i < cl.size(); i++) args.append(" " + cl[i]);
       }
       args.append(" " + _client->getSocketSwitch() + " \"" +
                   _client->getName() + "\" %s");
@@ -391,7 +391,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     else
       Msg::Error("Unknown ONELAB parameter type in query: %s", ptype.c_str());
 
-    for(unsigned int i = 0; i < replies.size(); i++)
+    for(std::size_t i = 0; i < replies.size(); i++)
       getGmshServer()->SendMessage(GmshSocket::GMSH_PARAMETER_QUERY_ALL,
                                    replies[i].size(), &replies[i][0]);
     reply = "Sent all ONELAB " + ptype + "s";
@@ -415,7 +415,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     break;
   case GmshSocket::GMSH_MERGE_FILE:
     if(CTX::instance()->solver.autoMergeFile) {
-      unsigned int n = PView::list.size();
+      std::size_t n = PView::list.size();
       bool changedBeforeMerge = onelab::server::instance()->getChanged("Gmsh");
       MergePostProcessingFile(message, CTX::instance()->solver.autoShowViews,
                               CTX::instance()->solver.autoShowLastStep, true);
@@ -440,7 +440,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 #endif
     break;
   case GmshSocket::GMSH_SPEED_TEST:
-    Msg::Info("got %d Mb message in %g seconds", length / 1024 / 1024,
+    Msg::Info("Got %d Mb message in %g seconds", length / 1024 / 1024,
               TimeOfDay() - timer);
     break;
   case GmshSocket::GMSH_VERTEX_ARRAY: {
@@ -588,7 +588,7 @@ new_connection:
         }
       }
     }
-    for(unsigned int i = 0; i < toDelete.size(); i++) {
+    for(std::size_t i = 0; i < toDelete.size(); i++) {
       removeClient(toDelete[i]);
       delete toDelete[i];
     }
@@ -624,7 +624,7 @@ new_connection:
       toDelete.push_back(c);
     }
   }
-  for(unsigned int i = 0; i < toDelete.size(); i++) {
+  for(std::size_t i = 0; i < toDelete.size(); i++) {
     removeClient(toDelete[i]);
     delete toDelete[i];
   }

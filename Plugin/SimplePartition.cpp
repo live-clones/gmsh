@@ -83,11 +83,9 @@ void GMSH_SimplePartitionPlugin::run()
   std::vector<std::string> expr(1);
   expr[0] = SimplePartitionOptions_String[0].def;
 
-  // partition the highest dimension elements in the current model (lower
-  // dimension elements on boundaries cannot be tagged a priori: there are
-  // special geometrical cases where this will fail)
-  Msg::Info("Partitioning highest dimension elements");
   GModel *m = GModel::current();
+  m->unpartitionMesh();
+
   SBoundingBox3d bbox = m->bounds();
   double pmin = bbox.min()[direction], pmax = bbox.max()[direction];
   std::vector<double> pp(numSlices + 1);
@@ -105,9 +103,9 @@ void GMSH_SimplePartitionPlugin::run()
   std::vector<GEntity *> entities;
   m->getEntities(entities);
   hashmap<MElement *, unsigned int> elmToPartition;
-  for(unsigned int i = 0; i < entities.size(); i++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
-    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++) {
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       SPoint3 point = e->barycenter();
       for(int k = 0; k < numSlices; k++) {

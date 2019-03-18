@@ -156,7 +156,7 @@ static std::string list2String(List_T *list)
 static std::string vector2String(const std::vector<int> &v)
 {
   std::ostringstream sstream;
-  for(unsigned int i = 0; i < v.size(); i++) {
+  for(std::size_t i = 0; i < v.size(); i++) {
     if(i) sstream << ", ";
     sstream << v[i];
   }
@@ -166,7 +166,7 @@ static std::string vector2String(const std::vector<int> &v)
 static std::string dimTags2String(const std::vector<std::pair<int, int> > &l)
 {
   std::ostringstream sstream;
-  for(unsigned int i = 0; i < l.size(); i++) {
+  for(std::size_t i = 0; i < l.size(); i++) {
     switch(l[i].first) {
     case 0: sstream << "Point{" << l[i].second << "}; "; break;
     case 1: sstream << "Curve{" << l[i].second << "}; "; break;
@@ -207,7 +207,7 @@ void add_trsfline(std::vector<int> &l, const std::string &fileName,
 {
   std::ostringstream sstream;
   sstream << "Transfinite Curve {";
-  for(unsigned int i = 0; i < l.size(); i++) {
+  for(std::size_t i = 0; i < l.size(); i++) {
     if(i) sstream << ", ";
     sstream << l[i];
   }
@@ -224,7 +224,7 @@ void add_trsfsurf(std::vector<int> &l, const std::string &fileName,
   sstream << "Transfinite Surface {" << l[0] << "}";
   if(l.size() > 1) {
     sstream << " = {";
-    for(unsigned int i = 1; i < l.size(); i++) {
+    for(std::size_t i = 1; i < l.size(); i++) {
       if(i > 1) sstream << ", ";
       sstream << l[i];
     }
@@ -239,7 +239,7 @@ void add_trsfvol(std::vector<int> &l, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Transfinite Volume{" << l[0] << "} = {";
-  for(unsigned int i = 1; i < l.size(); i++) {
+  for(std::size_t i = 1; i < l.size(); i++) {
     if(i > 1) sstream << ", ";
     sstream << l[i];
   }
@@ -329,7 +329,7 @@ void add_multline(const std::string &type, std::vector<int> &p,
   std::ostringstream sstream;
   sstream << type << "(" << GModel::current()->getMaxElementaryNumber(1) + 1
           << ") = {";
-  for(unsigned int i = 0; i < p.size(); i++) {
+  for(std::size_t i = 0; i < p.size(); i++) {
     if(i) sstream << ", ";
     sstream << p[i];
   }

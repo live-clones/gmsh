@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _ONELAB_GROUP_H_
-#define _ONELAB_GROUP_H_
+#ifndef ONELAB_GROUP_H
+#define ONELAB_GROUP_H
 
 #include <vector>
 #include <FL/Fl.H>

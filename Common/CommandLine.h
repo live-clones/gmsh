@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _COMMAND_LINE_H_
-#define _COMMAND_LINE_H_
+#ifndef COMMAND_LINE_H
+#define COMMAND_LINE_H
 
 #include <string>
 

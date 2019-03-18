@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CARTESIAN_H_
-#define _CARTESIAN_H_
+#ifndef CARTESIAN_H
+#define CARTESIAN_H
 
 #include <set>
 #include <map>

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GREGION_H_
-#define _GREGION_H_
+#ifndef GREGION_H
+#define GREGION_H
 
 #include <list>
 #include <string>
@@ -111,19 +111,19 @@ public:
   int getNumElementTypes() const { return 6; }
 
   // get total/by-type number of elements in the mesh
-  size_type getNumMeshElements() const;
-  unsigned int getNumMeshElementsByType(const int familyType) const;
-  unsigned int getNumMeshParentElements();
+  std::size_t getNumMeshElements() const;
+  std::size_t getNumMeshElementsByType(const int familyType) const;
+  std::size_t getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
 
   // get the start of the array of a type of element
   MElement *const *getStartElementType(int type) const;
 
   // get the element at the given index
-  MElement *getMeshElement(unsigned int index) const;
+  MElement *getMeshElement(std::size_t index) const;
   // get the element at the given index for a given familyType
   MElement *getMeshElementByType(const int familyType,
-                                 const unsigned int index) const;
+                                 const std::size_t index) const;
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
@@ -164,7 +164,7 @@ public:
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns() { return &_columns; }
 
-  virtual bool reorder(const int elementType, const std::vector<int> &ordering);
+  virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering);
 
   // set the reverseMesh constraint in the bounding surfaces so that the
   // boundary mesh has outward pointing normals, based on the STL triangulation

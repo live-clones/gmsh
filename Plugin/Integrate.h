@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _INTEGRATE_H_
-#define _INTEGRATE_H_
+#ifndef INTEGRATE_H
+#define INTEGRATE_H
 
 #include "Plugin.h"
 

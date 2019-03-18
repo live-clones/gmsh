@@ -6,8 +6,8 @@
 // Contributed by Gilles Marckmann <gilles.marckmann@ec-nantes.fr>
 //
 
-#ifndef _NAVIGATOR_H_
-#define _NAVIGATOR_H_
+#ifndef NAVIGATOR_H
+#define NAVIGATOR_H
 
 #include "drawContext.h"
 #include "Camera.h"

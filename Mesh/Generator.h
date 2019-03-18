@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GENERATOR_H_
-#define _GENERATOR_H_
+#ifndef GENERATOR_H
+#define GENERATOR_H
 
 class GModel;
 class GRegion;

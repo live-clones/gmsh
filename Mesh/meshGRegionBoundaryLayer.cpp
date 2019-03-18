@@ -65,7 +65,7 @@ public:
   GRegion *_gr;
   GFace *_f[2];
   double max_angle, min_angle;
-  int _N_SUBNORMALS;
+  std::size_t _N_SUBNORMALS;
 
   void computeType(double angle)
   {
@@ -298,7 +298,7 @@ public:
         MLine *l = ge->lines[j];
         MVertex *l0 = l->getVertex(0);
         MVertex *l1 = l->getVertex(1);
-        MVertex *op0, *op1;
+        MVertex *op1 = 0;
         SVector3 N[2];
         std::set<blyr_mvertex>::iterator it = _vertices.find(l->getVertex(0));
         for(size_t k = 0; k < it->_triangles.size(); k++) {
@@ -309,7 +309,6 @@ public:
           if((v0 == l0 && v1 == l1) || (v0 == l1 && v1 == l0)) {
             if(gf == f0) {
               N[0] = it->_normals[k];
-              op0 = v2;
             }
             if(gf == f1) {
               N[1] = it->_normals[k];
@@ -319,7 +318,6 @@ public:
           if((v0 == l0 && v2 == l1) || (v0 == l1 && v2 == l0)) {
             if(gf == f0) {
               N[0] = it->_normals[k];
-              op0 = v1;
             }
             if(gf == f1) {
               N[1] = it->_normals[k];
@@ -329,7 +327,6 @@ public:
           if((v1 == l0 && v2 == l1) || (v1 == l1 && v2 == l0)) {
             if(gf == f0) {
               N[0] = it->_normals[k];
-              op0 = v0;
             }
             if(gf == f1) {
               N[1] = it->_normals[k];
@@ -338,16 +335,16 @@ public:
           }
         }
         double alpha = angle(N[0], N[1]);
-        //	printf("%g %g %g vs %g %g %g\n",N[0].x(),N[0].y(),N[0].z(),
-        //	       N[1].x(),N[1].y(),N[1].z());
-        SVector3 dir(0.5 * (l0->x() + l1->x()) - op1->x(),
-                     0.5 * (l0->y() + l1->y()) - op1->y(),
-                     0.5 * (l0->z() + l1->z()) - op1->z());
-        dir.normalize();
-        // sign < 0 ---> re-intrant corner
-        double sign = dot(dir, N[0]);
+        if(op1){
+          SVector3 dir(0.5 * (l0->x() + l1->x()) - op1->x(),
+                       0.5 * (l0->y() + l1->y()) - op1->y(),
+                       0.5 * (l0->z() + l1->z()) - op1->z());
+          dir.normalize();
+          // sign < 0 ---> re-intrant corner
+          double sign = dot(dir, N[0]);
+          if(sign < 0) alpha = -alpha;
+        }
 
-        if(sign < 0) alpha = -alpha;
         _ridges[i].max_angle = std::max(alpha, _ridges[i].max_angle);
         _ridges[i].min_angle = std::min(alpha, _ridges[i].min_angle);
         _ridges[i].computeType(_threshold_angle);
@@ -407,8 +404,8 @@ public:
         SVector3 n0 = v._n_per_vertex[i];
         SVector3 n1 = v._n_per_vertex[j];
         std::vector<MVertex *> fan;
-        for(int i = 0; i < num_subnormals; i++) {
-          double u = (double)(i + 1) / (num_subnormals + 1);
+        for(int k = 0; k < num_subnormals; k++) {
+          double u = (double)(k + 1) / (num_subnormals + 1);
           SVector3 n = n0 * (1. - u) + n1 * u;
           n.normalize();
           MVertex *new_v =
@@ -946,11 +943,13 @@ public:
           _externals.empty() || ridge->getType() == blyr_ridge::EXTERNAL;
         if(create_vertices_on_edge) {
           double t = 0.0;
-          if(v == ge->getBeginVertex()->mesh_vertices[0]) {
+          if(ge->getBeginVertex() &&
+             v == ge->getBeginVertex()->mesh_vertices[0]) {
             SVector3 tgt = ge->firstDer(bounds.low());
             t = bounds.low() + thk / tgt.norm();
           }
-          else if(v == ge->getEndVertex()->mesh_vertices[0]) {
+          else if(ge->getEndVertex() &&
+                  v == ge->getEndVertex()->mesh_vertices[0]) {
             SVector3 tgt = ge->firstDer(bounds.high());
             t = bounds.high() - thk / tgt.norm();
           }
@@ -1241,7 +1240,7 @@ public:
 
           //	  printf("%d %d %d\n",fan0.size(),fan1.size(),r._N_SUBNORMALS);
           if(fan0.size() == r._N_SUBNORMALS && fan1.size() == r._N_SUBNORMALS) {
-            for(int k = 0; k <= r._N_SUBNORMALS; k++) {
+            for(std::size_t k = 0; k <= r._N_SUBNORMALS; k++) {
               MVertex *v00 = (k == 0 ? o00 : fan0[k - 1]);
               MVertex *v10 = (k == 0 ? o10 : fan1[k - 1]);
               MVertex *v01 = (k == r._N_SUBNORMALS ? o01 : fan0[k]);

@@ -7,8 +7,8 @@
 //   Eric Bechet
 //
 
-#ifndef _TERMS_H_
-#define _TERMS_H_
+#ifndef TERMS_H
+#define TERMS_H
 
 #include "SVector3.h"
 #include "STensor3.h"

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _LINEAR_SYSTEM_MUMPS_H_
-#define _LINEAR_SYSTEM_MUMPS_H_
+#ifndef LINEAR_SYSTEM_MUMPS_H
+#define LINEAR_SYSTEM_MUMPS_H
 
 // Interface to a linear system with MUMPS
 

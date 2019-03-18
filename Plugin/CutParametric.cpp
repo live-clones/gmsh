@@ -111,7 +111,7 @@ void GMSH_CutParametricPlugin::draw(void *context)
   if(CutParametricOptions_Number[6].def && x.size() > 1) {
     if(nbU == 1 || nbV == 1) {
       glBegin(GL_LINES);
-      for(unsigned int i = 1; i < x.size(); ++i) {
+      for(std::size_t i = 1; i < x.size(); ++i) {
         glVertex3d(x[i - 1], y[i - 1], z[i - 1]);
         glVertex3d(x[i], y[i], z[i]);
       }
@@ -136,7 +136,7 @@ void GMSH_CutParametricPlugin::draw(void *context)
   }
   else {
     drawContext *ctx = (drawContext *)context;
-    for(unsigned int i = 0; i < x.size(); ++i)
+    for(std::size_t i = 0; i < x.size(); ++i)
       ctx->drawSphere(CTX::instance()->pointSize, x[i], y[i], z[i], 1);
   }
 #endif
@@ -351,7 +351,7 @@ PView *GMSH_CutParametricPlugin::execute(PView *v)
   for(int k = 0; k < 9 * numSteps; ++k) res0[k] = res1[k] = 0.;
 
   if(nbU == 1 || nbV == 1 || !connect) {
-    for(unsigned int i = 0; i < x.size(); ++i) {
+    for(std::size_t i = 0; i < x.size(); ++i) {
       if(i && connect) {
         x0 = x1;
         y0 = y1;

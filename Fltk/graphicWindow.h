@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GRAPHIC_WINDOW_H_
-#define _GRAPHIC_WINDOW_H_
+#ifndef GRAPHIC_WINDOW_H
+#define GRAPHIC_WINDOW_H
 
 #include <string>
 #include <vector>
@@ -35,7 +35,7 @@ private:
   messageBrowser *_browser;
   onelabGroup *_onelab;
   Fl_Box *_bottom;
-  Fl_Button *_butt[14];
+  Fl_Button *_butt[12];
   Fl_Progress *_label;
   int _minWidth, _minHeight;
   std::vector<std::string> _messages;

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _FUNCTION_MANAGER_H_
-#define _FUNCTION_MANAGER_H_
+#ifndef FUNCTION_MANAGER_H
+#define FUNCTION_MANAGER_H
 
 #include <cstdio>
 #include <string>

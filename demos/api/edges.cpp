@@ -51,13 +51,13 @@ int main(int argc, char **argv)
   gmsh::model::getEntities(entities, 2);
   for(std::size_t i = 0; i < entities.size(); i++){
     int s = entities[i].second;
-    std::vector<int> elementTags, nodeTags;
+    std::vector<std::size_t> elementTags, nodeTags;
     gmsh::model::mesh::getElementsByType(eleType2D, elementTags, nodeTags, s);
     gmsh::logger::write("- " + std::to_string(elementTags.size()) +
                         " elements in surface " + std::to_string(s));
 
     // get the nodes on the edges of the 2D elements
-    std::vector<int> nodes;
+    std::vector<std::size_t> nodes;
     gmsh::model::mesh::getElementEdgeNodes(eleType2D, nodes, s);
 
     // create a new discrete entity of dimension 1
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 
     // and add new 1D elements to it, for all edges
     int eleType1D = gmsh::model::mesh::getElementType("line", order);
-    gmsh::model::mesh::setElementsByType(1, c, eleType1D, {}, nodes);
+    gmsh::model::mesh::setElementsByType(c, eleType1D, {}, nodes);
 
     // this will create two 1D elements for each edge; to create unique elements
     // it would be useful to call getElementEdgeNodes() with the extra `primary'
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
   gmsh::model::getEntities(entities, 1);
   for(std::size_t i = 0; i < entities.size(); i++){
     int c = entities[i].second;
-    std::vector<int> elementTags, nodeTags;
+    std::vector<std::size_t> elementTags, nodeTags;
     gmsh::model::mesh::getElementsByType(eleType1D, elementTags, nodeTags, c);
     gmsh::logger::write("- " + std::to_string(elementTags.size()) +
                         " elements on curve " + std::to_string(c));

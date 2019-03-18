@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CURL_H_
-#define _CURL_H_
+#ifndef CURL_H
+#define CURL_H
 
 #include "Plugin.h"
 

@@ -111,9 +111,14 @@
 #include <XCAFDoc_ShapeTool.hxx>
 #include <XCAFDoc_DocumentTool.hxx>
 #include <XCAFDoc_ColorTool.hxx>
+#include <XCAFDoc_Color.hxx>
+#include <XCAFDoc_MaterialTool.hxx>
+#include <XCAFDoc_Location.hxx>
 #include <STEPCAFControl_Reader.hxx>
 #include <IGESCAFControl_Reader.hxx>
 #include <TDataStd_Name.hxx>
+#include <TDF_Tool.hxx>
+#include <TDF_ChildIterator.hxx>
 #endif
 
 OCC_Internals::OCC_Internals()
@@ -1013,7 +1018,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
   try {
     TColgp_Array1OfPnt ctrlPoints(1, pointTags.size());
     TopoDS_Vertex start, end;
-    for(unsigned int i = 0; i < pointTags.size(); i++) {
+    for(std::size_t i = 0; i < pointTags.size(); i++) {
       if(!_tagVertex.IsBound(pointTags[i])) {
         Msg::Error("Unknown OpenCASCADE point with tag %d", pointTags[i]);
         return false;
@@ -1079,7 +1084,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
         Msg::Error("Number of BSpline knots (%d) should be >= 2", knots.size());
         return false;
       }
-      for(unsigned int i = 0; i < knots.size() - 1; i++) {
+      for(std::size_t i = 0; i < knots.size() - 1; i++) {
         if(knots[i] >= knots[i + 1]) {
           Msg::Error("BSpline knots should be increasing: knot %d (%g) > "
                      "knot %d (%g)",
@@ -1087,7 +1092,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
           return false;
         }
       }
-      for(unsigned int i = 0; i < multiplicities.size(); i++) {
+      for(std::size_t i = 0; i < multiplicities.size(); i++) {
         if(multiplicities[i] < 1) {
           Msg::Error("BSpline multiplicities should be >= 1");
           return false;
@@ -1114,7 +1119,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
         }
         // TODO C++11 std::accumulate
         std::size_t sum = 0;
-        for(unsigned int i = 0; i < multiplicities.size() - 1; i++)
+        for(std::size_t i = 0; i < multiplicities.size() - 1; i++)
           sum += multiplicities[i];
         if(pointTags.size() - 1 != sum) {
           Msg::Error(
@@ -1126,7 +1131,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       }
       else {
         std::size_t sum = 0;
-        for(unsigned int i = 0; i < multiplicities.size(); i++)
+        for(std::size_t i = 0; i < multiplicities.size(); i++)
           sum += multiplicities[i];
         if(pointTags.size() != sum - degree - 1) {
           Msg::Error("Number of control points for non-periodic BSpline should "
@@ -1142,10 +1147,9 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
         w.SetValue(i, weights[i - 1]);
       }
       TColStd_Array1OfReal k(1, knots.size());
-      for(unsigned int i = 0; i < knots.size(); i++)
-        k.SetValue(i + 1, knots[i]);
+      for(std::size_t i = 0; i < knots.size(); i++) k.SetValue(i + 1, knots[i]);
       TColStd_Array1OfInteger m(1, multiplicities.size());
-      for(unsigned int i = 0; i < multiplicities.size(); i++)
+      for(std::size_t i = 0; i < multiplicities.size(); i++)
         m.SetValue(i + 1, multiplicities[i]);
       Handle(Geom_BSplineCurve) curve =
         new Geom_BSplineCurve(p, w, k, m, degree, periodic);
@@ -1219,14 +1223,14 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
         return false;
       }
       k.resize(num_knots);
-      for(unsigned int i = 0; i < k.size(); i++) k[i] = i;
+      for(std::size_t i = 0; i < k.size(); i++) k[i] = i;
       m.resize(num_knots, 1);
       m.front() = d + 1;
       m.back() = d + 1;
     }
     else {
       k.resize(pointTags.size() - 1);
-      for(unsigned int i = 0; i < k.size(); i++) k[i] = i;
+      for(std::size_t i = 0; i < k.size(); i++) k[i] = i;
       m.resize(k.size(), 1);
       m.front() = d - 1;
       m.back() = d - 1;
@@ -1246,7 +1250,7 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
   TopoDS_Wire result;
   try {
     BRepBuilderAPI_MakeWire w;
-    for(unsigned int i = 0; i < curveTags.size(); i++) {
+    for(std::size_t i = 0; i < curveTags.size(); i++) {
       if(!_tagEdge.IsBound(curveTags[i])) {
         Msg::Error("Unknown OpenCASCADE curve with tag %d", curveTags[i]);
         return false;
@@ -1273,7 +1277,7 @@ bool OCC_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags)
   std::vector<int> tags(curveTags);
   // all curve tags are > 0 for OCC : to improve compatibility between GEO and
   // OCC factories, allow negative tags - and simply ignore the sign here
-  for(unsigned int i = 0; i < tags.size(); i++) tags[i] = std::abs(tags[i]);
+  for(std::size_t i = 0; i < tags.size(); i++) tags[i] = std::abs(tags[i]);
   return addWire(tag, tags, true);
 }
 
@@ -1436,7 +1440,7 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
   }
 
   std::vector<TopoDS_Wire> wires;
-  for(unsigned int i = 0; i < wireTags.size(); i++) {
+  for(std::size_t i = 0; i < wireTags.size(); i++) {
     // all wire tags are > 0 for OCC : to improve compatibility between GEO and
     // OCC factories, allow negative tags - and simply ignore the sign here
     int wireTag = std::abs(wireTags[i]);
@@ -1456,7 +1460,7 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 
   try {
     BRepBuilderAPI_MakeFace f(wires[0]);
-    for(unsigned int i = 1; i < wires.size(); i++) {
+    for(std::size_t i = 1; i < wires.size(); i++) {
       // holes
       TopoDS_Wire w = wires[i];
       w.Orientation(TopAbs_REVERSED);
@@ -1525,7 +1529,7 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
       i++;
     }
     // point constraints
-    for(unsigned int i = 0; i < pointTags.size(); i++) {
+    for(std::size_t i = 0; i < pointTags.size(); i++) {
       if(!_tagVertex.IsBound(pointTags[i])) {
         Msg::Error("Unknown OpenCASCADE point with tag %d", pointTags[i]);
         return false;
@@ -1569,7 +1573,7 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
   TopoDS_Shape result;
   try {
     BRepBuilderAPI_Sewing s;
-    for(unsigned int i = 0; i < surfaceTags.size(); i++) {
+    for(std::size_t i = 0; i < surfaceTags.size(); i++) {
       if(!_tagFace.IsBound(surfaceTags[i])) {
         Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[i]);
         return false;
@@ -1595,9 +1599,7 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
       shell = fix.Shell();
     }
     int t = tag;
-    if(first) {
-      first = false;
-    }
+    if(first) { first = false; }
     else {
       t = getMaxTag(-2) + 1;
       Msg::Warning("Creating additional surface loop %d", t);
@@ -1639,7 +1641,7 @@ bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
   TopoDS_Solid result;
   try {
     BRepBuilderAPI_MakeSolid s;
-    for(unsigned int i = 0; i < shellTags.size(); i++) {
+    for(std::size_t i = 0; i < shellTags.size(); i++) {
       if(!_tagShell.IsBound(shellTags[i])) {
         Msg::Error("Unknown OpenCASCADE surface loop with tag %d",
                    shellTags[i]);
@@ -1929,7 +1931,7 @@ bool OCC_Internals::addThruSections(
   TopoDS_Shape result;
   try {
     BRepOffsetAPI_ThruSections ts(makeSolid, makeRuled);
-    for(unsigned int i = 0; i < wireTags.size(); i++) {
+    for(std::size_t i = 0; i < wireTags.size(); i++) {
       if(!_tagWire.IsBound(wireTags[i])) {
         Msg::Error("Unknown OpenCASCADE wire or line loop with tag %d",
                    wireTags[i]);
@@ -1974,7 +1976,7 @@ bool OCC_Internals::addThickSolid(int tag, int solidTag,
   try {
     TopoDS_Shape shape = _find(3, solidTag);
     TopTools_ListOfShape exclude;
-    for(unsigned int i = 0; i < excludeFaceTags.size(); i++) {
+    for(std::size_t i = 0; i < excludeFaceTags.size(); i++) {
       if(!_tagFace.IsBound(excludeFaceTags[i])) {
         Msg::Error("Unknown OpenCASCADE surface with tag %d",
                    excludeFaceTags[i]);
@@ -2081,18 +2083,14 @@ int OCC_Internals::_getFuzzyTag(int dim, const TopoDS_Shape &s)
   _meshAttributes->getSimilarShapes(dim, s, candidates);
 
   int num = 0;
-  for(unsigned int i = 0; i < candidates.size(); i++) {
-    if(_isBound(dim, candidates[i])) {
-      num++;
-    }
+  for(std::size_t i = 0; i < candidates.size(); i++) {
+    if(_isBound(dim, candidates[i])) { num++; }
   }
   Msg::Info("Extruded mesh constraint fuzzy search: found %d candidates "
             "(dim=%d, %d bound)",
             (int)candidates.size(), dim, num);
-  for(unsigned int i = 0; i < candidates.size(); i++) {
-    if(_isBound(dim, candidates[i])) {
-      return _find(dim, candidates[i]);
-    }
+  for(std::size_t i = 0; i < candidates.size(); i++) {
+    if(_isBound(dim, candidates[i])) { return _find(dim, candidates[i]); }
   }
   return -1;
 }
@@ -2199,7 +2197,7 @@ bool OCC_Internals::_extrude(int mode,
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  for(unsigned int i = 0; i < inDimTags.size(); i++) {
+  for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
     if(!_isBound(dim, tag)) {
@@ -2281,7 +2279,7 @@ bool OCC_Internals::_extrude(int mode,
   if(dim >= 1 && dim <= 3 && top.size() == inDimTags.size() &&
      top.size() == body.size()) {
     outDimTags.clear();
-    for(unsigned int i = 0; i < top.size(); i++) {
+    for(std::size_t i = 0; i < top.size(); i++) {
       if(_isBound(dim - 1, top[i]))
         outDimTags.push_back(
           std::pair<int, int>(dim - 1, _find(dim - 1, top[i])));
@@ -2289,7 +2287,7 @@ bool OCC_Internals::_extrude(int mode,
         outDimTags.push_back(std::pair<int, int>(dim, _find(dim, body[i])));
       if(CTX::instance()->geom.extrudeReturnLateral &&
          top.size() == lateral.size()) {
-        for(unsigned int j = 0; j < lateral[i].size(); j++) {
+        for(std::size_t j = 0; j < lateral[i].size(); j++) {
           if(_isBound(dim - 1, lateral[i][j]))
             outDimTags.push_back(
               std::pair<int, int>(dim - 1, _find(dim - 1, lateral[i][j])));
@@ -2335,7 +2333,7 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
                             bool removeVolume)
 {
   std::vector<TopoDS_Edge> edges;
-  for(unsigned int i = 0; i < curveTags.size(); i++) {
+  for(std::size_t i = 0; i < curveTags.size(); i++) {
     if(!_tagEdge.IsBound(curveTags[i])) {
       Msg::Error("Unknown OpenCASCADE curve with tag %d", curveTags[i]);
       return false;
@@ -2344,7 +2342,7 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
   }
 
   std::vector<TopoDS_Face> faces;
-  for(unsigned int i = 0; i < surfaceTags.size(); i++) {
+  for(std::size_t i = 0; i < surfaceTags.size(); i++) {
     if(!_tagFace.IsBound(surfaceTags[i])) {
       Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[i]);
       return false;
@@ -2360,7 +2358,7 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  for(unsigned int i = 0; i < volumeTags.size(); i++) {
+  for(std::size_t i = 0; i < volumeTags.size(); i++) {
     if(!_isBound(3, volumeTags[i])) {
       Msg::Error("Unknown OpenCASCADE volume with tag %d", volumeTags[i]);
       return false;
@@ -2379,7 +2377,7 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
   try {
     if(mode == 0) { // fillet
       BRepFilletAPI_MakeFillet f(c);
-      for(unsigned int i = 0; i < edges.size(); i++) {
+      for(std::size_t i = 0; i < edges.size(); i++) {
         if(param.size() == 1)
           f.Add(param[0], edges[i]);
         else if(param.size() == edges.size())
@@ -2396,7 +2394,7 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
     }
     else { // chamfer
       BRepFilletAPI_MakeChamfer f(c);
-      for(unsigned int i = 0; i < edges.size(); i++) {
+      for(std::size_t i = 0; i < edges.size(); i++) {
         if(param.size() == 1)
           f.Add(param[0], param[0], edges[i], faces[i]);
         else if(param.size() == edges.size())
@@ -2451,7 +2449,7 @@ static void _filterTags(std::vector<std::pair<int, int> > &outDimTags,
 {
   std::vector<std::pair<int, int> > tmp(outDimTags);
   outDimTags.clear();
-  for(unsigned int i = 0; i < tmp.size(); i++) {
+  for(std::size_t i = 0; i < tmp.size(); i++) {
     if(tmp[i].first >= minDim) outDimTags.push_back(tmp[i]);
   }
 }
@@ -2477,7 +2475,7 @@ bool OCC_Internals::booleanOperator(
 
   int minDim = 3;
   TopTools_ListOfShape objectShapes, toolShapes;
-  for(unsigned int i = 0; i < objectDimTags.size(); i++) {
+  for(std::size_t i = 0; i < objectDimTags.size(); i++) {
     int dim = objectDimTags[i].first;
     int t = objectDimTags[i].second;
     if(!_isBound(dim, t)) {
@@ -2491,7 +2489,7 @@ bool OCC_Internals::booleanOperator(
     }
     minDim = std::min(minDim, dim);
   }
-  for(unsigned int i = 0; i < toolDimTags.size(); i++) {
+  for(std::size_t i = 0; i < toolDimTags.size(); i++) {
     int dim = toolDimTags[i].first;
     int t = toolDimTags[i].second;
     if(!_isBound(dim, t)) {
@@ -2626,12 +2624,12 @@ bool OCC_Internals::booleanOperator(
   std::vector<std::pair<int, int> > inDimTags;
   inDimTags.insert(inDimTags.end(), objectDimTags.begin(), objectDimTags.end());
   inDimTags.insert(inDimTags.end(), toolDimTags.begin(), toolDimTags.end());
-  unsigned int numObjects = objectDimTags.size();
+  std::size_t numObjects = objectDimTags.size();
 
   if(tag >= 0 || !preserveNumbering) {
     // if we specify the tag explicitly, or if we don't care about preserving
     // the numering, just go ahead and bind the resulting shape (and sub-shapes)
-    for(unsigned int i = 0; i < inDimTags.size(); i++) {
+    for(std::size_t i = 0; i < inDimTags.size(); i++) {
       bool remove = (i < numObjects) ? removeObject : removeTool;
       if(remove) {
         int d = inDimTags[i].first;
@@ -2648,7 +2646,7 @@ bool OCC_Internals::booleanOperator(
     // the numbering of smaller dimension entities (on boundaries) they should
     // appear *before* higher dimensional entities in the object/tool lists.
     _toPreserve.clear();
-    for(unsigned int i = 0; i < inDimTags.size(); i++) {
+    for(std::size_t i = 0; i < inDimTags.size(); i++) {
       int dim = inDimTags[i].first;
       int tag = inDimTags[i].second;
       bool remove = (i < numObjects) ? removeObject : removeTool;
@@ -2687,7 +2685,7 @@ bool OCC_Internals::booleanOperator(
   }
 
   // return input/output correspondance maps
-  for(unsigned int i = 0; i < inDimTags.size(); i++) {
+  for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
     std::pair<int, int> dimTag(dim, tag);
@@ -2715,7 +2713,7 @@ bool OCC_Internals::booleanOperator(
     }
     std::ostringstream sstream;
     sstream << "BOOL in (" << dim << "," << tag << ") -> out";
-    for(unsigned int j = 0; j < dimTags.size(); j++)
+    for(std::size_t j = 0; j < dimTags.size(); j++)
       sstream << " (" << dimTags[j].first << "," << dimTags[j].second << ")";
     Msg::Debug("%s", sstream.str().c_str());
     outDimTagsMap.push_back(dimTags);
@@ -2811,7 +2809,7 @@ bool OCC_Internals::mergeVertices(const std::vector<int> &tags)
 {
   std::vector<std::pair<int, int> > objectDimTags, toolDimTags, outDimTags;
   std::vector<std::vector<std::pair<int, int> > > outDimTagsMap;
-  for(unsigned int i = 0; i < tags.size(); i++)
+  for(std::size_t i = 0; i < tags.size(); i++)
     objectDimTags.push_back(std::pair<int, int>(0, tags[i]));
   return booleanFragments(-1, objectDimTags, toolDimTags, outDimTags,
                           outDimTagsMap, true, true);
@@ -2852,7 +2850,7 @@ bool OCC_Internals::_transform(
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  for(unsigned int i = 0; i < inDimTags.size(); i++) {
+  for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
     if(!_isBound(dim, tag)) {
@@ -2910,7 +2908,7 @@ bool OCC_Internals::_transform(
     Msg::Error("OpenCASCADE transform changed the number of shapes");
     return false;
   }
-  for(unsigned int i = 0; i < inDimTags.size(); i++) {
+  for(std::size_t i = 0; i < inDimTags.size(); i++) {
     // FIXME we should implement rebind(object, result, dim) which would
     // unbind/bind all subshapes to the same tags
     int dim = inDimTags[i].first;
@@ -2973,14 +2971,13 @@ bool OCC_Internals::affine(const std::vector<std::pair<int, int> > &inDimTags,
                            const std::vector<double> &mat)
 {
   std::vector<double> a(mat);
-  if(a.size() < 12){
+  if(a.size() < 12) {
     Msg::Warning("%d < 12 entries in affine transform matrix", (int)a.size());
     a.resize(12, 0.);
   }
   gp_GTrsf gt;
-  gt.SetVectorialPart(gp_Mat(a[0], a[1], a[2],
-                             a[4], a[5], a[6],
-                             a[8], a[9], a[10]));
+  gt.SetVectorialPart(
+    gp_Mat(a[0], a[1], a[2], a[4], a[5], a[6], a[8], a[9], a[10]));
   gt.SetTranslationPart(gp_XYZ(a[3], a[7], a[11]));
   BRepBuilderAPI_GTransform gtfo(gt);
   return _transform(inDimTags, 0, &gtfo);
@@ -2990,7 +2987,7 @@ bool OCC_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
                          std::vector<std::pair<int, int> > &outDimTags)
 {
   bool ret = true;
-  for(unsigned int i = 0; i < inDimTags.size(); i++) {
+  for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
     if(!_isBound(dim, tag)) {
@@ -3022,7 +3019,7 @@ bool OCC_Internals::remove(const std::vector<std::pair<int, int> > &dimTags,
                            bool recursive)
 {
   bool ret = true;
-  for(unsigned int i = 0; i < dimTags.size(); i++) {
+  for(std::size_t i = 0; i < dimTags.size(); i++) {
     if(!remove(dimTags[i].first, dimTags[i].second, recursive)) ret = false;
   }
   return ret;
@@ -3034,6 +3031,61 @@ static void setTargetUnit(const std::string &unit)
   if(!Interface_Static::SetCVal("xstep.cascade.unit", unit.c_str()))
     Msg::Error("Could not set OpenCASCADE target unit '%s'", unit.c_str());
 }
+
+#if defined(HAVE_OCC_CAF)
+
+static void setShapeAttributes(OCCMeshAttributesRTree *meshAttributes,
+                               const Handle_XCAFDoc_ShapeTool &shapeTool,
+                               const Handle_XCAFDoc_ColorTool &colorTool,
+                               const Handle_XCAFDoc_MaterialTool &materialTool,
+                               const TDF_Label &label,
+                               const TopLoc_Location &loc,
+                               const std::string &pathName,
+                               bool isRef, int dep)
+{
+  std::string phys = pathName;
+  Handle(TDataStd_Name) n;
+  if(label.FindAttribute(TDataStd_Name::GetID(), n)) {
+    TCollection_ExtendedString name = n->Get();
+    if(!phys.empty()) phys += "/";
+    phys += TCollection_AsciiString(name).ToCString();
+  }
+
+  TopLoc_Location partLoc = loc;
+  Handle(XCAFDoc_Location) l;
+  if (label.FindAttribute(XCAFDoc_Location::GetID(), l)) {
+    if (isRef)
+      partLoc = partLoc * l->Get();
+    else
+      partLoc = l->Get();
+  }
+
+  TDF_Label ref;
+  if (shapeTool->IsReference(label) && shapeTool->GetReferredShape(label, ref)) {
+    setShapeAttributes(meshAttributes, shapeTool, colorTool, materialTool,
+                       ref, partLoc, phys, true, dep + 1);
+  }
+
+  if (shapeTool->IsSimpleShape(label) && (isRef || shapeTool->IsFree(label))) {
+    TopoDS_Shape shape = shapeTool->GetShape(label);
+    shape.Location(isRef ? loc : partLoc);
+    int dim =
+      (shape.ShapeType() == TopAbs_VERTEX) ? 0 :
+      (shape.ShapeType() == TopAbs_EDGE ||
+       shape.ShapeType() == TopAbs_WIRE) ? 1 :
+      (shape.ShapeType() == TopAbs_FACE ||
+       shape.ShapeType() == TopAbs_SHELL) ? 2 : 3;
+    Msg::Debug("Inserting attribute '%s'", phys.c_str());
+    meshAttributes->insert(new OCCMeshAttributes(dim, shape, phys));
+  }
+  else {
+    for (TDF_ChildIterator it(label); it.More(); it.Next()) {
+      setShapeAttributes(meshAttributes, shapeTool, colorTool, materialTool,
+                         it.Value(), partLoc, phys, isRef, dep + 1);
+    }
+  }
+}
+#endif
 
 bool OCC_Internals::importShapes(const std::string &fileName,
                                  bool highestDimOnly,
@@ -3053,60 +3105,40 @@ bool OCC_Internals::importShapes(const std::string &fileName,
     else if(format == "step" || split[2] == ".step" || split[2] == ".stp" ||
             split[2] == ".STEP" || split[2] == ".STP") {
 #if defined(HAVE_OCC_CAF)
-      // Initiate a dummy XCAF Application to handle the STEP XCAF Document
-      static Handle_XCAFApp_Application dummy_app =
-        XCAFApp_Application::GetApplication();
-      // Create an XCAF Document to contain the STEP file itself
-      Handle_TDocStd_Document step_doc;
-      // Check if a STEP File is already open under this handle, if so, close it
-      // to prevent Segmentation Faults when trying to create a new document
-      if(dummy_app->NbDocuments() > 0) {
-        dummy_app->GetDocument(1, step_doc);
-        dummy_app->Close(step_doc);
-      }
-      dummy_app->NewDocument("STEP-XCAF", step_doc);
       STEPCAFControl_Reader reader;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
       if(reader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
       }
+      // dummy XCAF Application to handle the STEP XCAF Document
+      static Handle_XCAFApp_Application dummy_app =
+        XCAFApp_Application::GetApplication();
+      // XCAF Document to contain the STEP file itself
+      Handle_TDocStd_Document step_doc;
+      // check if a STEP File is already open under this handle, if so, close it
+      // to prevent segfaults when trying to create a new document
+      if(dummy_app->NbDocuments() > 0) {
+        dummy_app->GetDocument(1, step_doc);
+        dummy_app->Close(step_doc);
+      }
+      dummy_app->NewDocument("STEP-XCAF", step_doc);
+      // transfer STEP into the document, and get the main label
       reader.Transfer(step_doc);
-      // Read in the shape(s) and the colours present in the STEP File
-      Handle_XCAFDoc_ShapeTool step_shape_contents =
-        XCAFDoc_DocumentTool::ShapeTool(step_doc->Main());
-      Handle_XCAFDoc_ColorTool step_colour_contents =
-        XCAFDoc_DocumentTool::ColorTool(step_doc->Main());
-      TDF_LabelSequence step_shapes;
-      step_shape_contents->GetShapes(step_shapes);
-      for(int i = 1; i <= step_shapes.Length(); i++) {
-        printf("step shape %d: \n", i);
-        TDF_Label label = step_shapes.Value(i);
-        Handle(TDataStd_Name) N;
-        if(label.FindAttribute(TDataStd_Name::GetID(), N)) {
-          TCollection_ExtendedString name = N->Get();
-          std::string s1 = TCollection_AsciiString(name).ToCString();
-          printf("hey %s\n", s1.c_str());
-        }
-      }
-
-      /*
-      // List out the available colours in the STEP File as Colour Names
-      TDF_LabelSequence all_colours;
-      step_colour_contents->GetColors(all_colours);
-      Msg::Info("Number of colours in STEP File: ", all_colours.Length());
-      for(int i = 1; i <= all_colours.Length(); i++){
-        Quantity_Color col;
-        std::stringstream col_rgb;
-        step_colour_contents->GetColor(all_colours.Value(i),col);
-        col_rgb << " : (" << col.Red() << "," << col.Green() << "," <<
-      col.Blue() << ")"; Msg::Info("Colour [", i, "] = ",
-      col.StringName(col.Name()), col_rgb.str().c_str());
-      }
-      // For the STEP File Reader in OCC, the 1st Shape contains the entire
-      */
-      // compound geometry as one shape
-      result = step_shape_contents->GetShape(step_shapes.Value(1));
+      TDF_Label mainLabel = step_doc->Main();
+      Handle_XCAFDoc_ShapeTool shapeTool =
+        XCAFDoc_DocumentTool::ShapeTool(mainLabel);
+      Handle_XCAFDoc_ColorTool colorTool =
+        XCAFDoc_DocumentTool::ColorTool(mainLabel);
+      Handle_XCAFDoc_MaterialTool materialTool =
+        XCAFDoc_DocumentTool::MaterialTool(mainLabel);
+      // traverse the labels recursively to set attributes on shapes
+      setShapeAttributes(_meshAttributes, shapeTool, colorTool, materialTool,
+                         mainLabel, TopLoc_Location(), "", false, 0);
+      // the main shape (compound) is the first one
+      TDF_LabelSequence shapeLabels;
+      shapeTool->GetShapes(shapeLabels);
+      result = shapeTool->GetShape(shapeLabels.Value(1));
 #else
       STEPControl_Reader reader;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
@@ -3346,12 +3378,14 @@ void OCC_Internals::synchronize(GModel *model)
       model->add(occr);
     }
     _copyExtrudedMeshAttributes(region, occr);
+    std::vector<std::string> labels;
+    _meshAttributes->getLabels(3, region, labels);
+    if(labels.size()) model->setElementaryName(3, occr->tag(), labels[0]);
   }
 
   // if fuzzy boolean tolerance was used, some vertex positions should be
   // recomputed (e.g. end point of curves
-  if(CTX::instance()->geom.toleranceBoolean)
-    model->snapVertices();
+  if(CTX::instance()->geom.toleranceBoolean) model->snapVertices();
 
   // recompute global boundind box in CTX
   SetBoundingBox();
@@ -3540,9 +3574,7 @@ void OCC_Internals::_addShapeToMaps(const TopoDS_Shape &shape)
   // Free Vertices
   for(exp5.Init(shape, TopAbs_VERTEX, TopAbs_EDGE); exp5.More(); exp5.Next()) {
     TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
-    if(_vmap.FindIndex(vertex) < 1) {
-      _vmap.Add(vertex);
-    }
+    if(_vmap.FindIndex(vertex) < 1) { _vmap.Add(vertex); }
   }
 }
 
@@ -3552,7 +3584,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
                                bool makesolids, double scaling)
 {
   if(scaling != 1.0) {
-    Msg::Info("Scaling geometry by factor %g", scaling);
+    Msg::Info("Scaling geometry (factor: %g)", scaling);
     gp_Trsf t;
     t.SetScaleFactor(scaling);
     BRepBuilderAPI_Transform trsf(myshape, t);
@@ -3563,7 +3595,8 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
      !makesolids)
     return;
 
-  Msg::Info("Starting shape healing (tolerance: %g)", tolerance);
+  Msg::Info("Healing shapes (tolerance: %g)", tolerance);
+  double t1 = Cpu();
 
   _somap.Clear();
   _shmap.Clear();
@@ -3589,7 +3622,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   }
 
   if(fixdegenerated) {
-    Msg::Info("- fix degenerated edges and faces");
+    Msg::Info(" - Fixing degenerated edges and faces");
 
     {
       Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
@@ -3624,17 +3657,17 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
         if(sff->Status(ShapeExtend_DONE1) || sff->Status(ShapeExtend_DONE2) ||
            sff->Status(ShapeExtend_DONE3) || sff->Status(ShapeExtend_DONE4) ||
            sff->Status(ShapeExtend_DONE5)) {
-          Msg::Info("  repaired face %d", _fmap.FindIndex(face));
+          Msg::Info(" . Repaired face %d", _fmap.FindIndex(face));
           if(sff->Status(ShapeExtend_DONE1))
-            Msg::Info("  (some wires are fixed)");
+            Msg::Info(" . Some wires are fixed");
           else if(sff->Status(ShapeExtend_DONE2))
-            Msg::Info("  (orientation of wires fixed)");
+            Msg::Info(" . Orientation of wires fixed");
           else if(sff->Status(ShapeExtend_DONE3))
-            Msg::Info("  (missing seam added)");
+            Msg::Info(" . Missing seam added");
           else if(sff->Status(ShapeExtend_DONE4))
-            Msg::Info("  (small area wire removed)");
+            Msg::Info(" . Small area wire removed");
           else if(sff->Status(ShapeExtend_DONE5))
-            Msg::Info("  (natural bounds added)");
+            Msg::Info(" . Natural bounds added");
           TopoDS_Face newface = sff->Face();
 
           rebuild->Replace(face, newface);
@@ -3655,7 +3688,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   }
 
   if(fixsmalledges) {
-    Msg::Info("- fixing small edges");
+    Msg::Info(" - Fixing small edges");
 
     Handle(ShapeFix_Wire) sfw;
     Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
@@ -3679,7 +3712,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
            !(sfw->StatusSmall(ShapeExtend_FAIL1) ||
              sfw->StatusSmall(ShapeExtend_FAIL2) ||
              sfw->StatusSmall(ShapeExtend_FAIL3))) {
-          Msg::Info("  fixed small edge in wire %d", _wmap.FindIndex(oldwire));
+          Msg::Info(" . Fixed small edge in wire %d", _wmap.FindIndex(oldwire));
           replace = true;
         }
         else if(sfw->StatusSmall(ShapeExtend_FAIL1))
@@ -3730,7 +3763,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
           BRepGProp::LinearProperties(edge, system);
           if(system.Mass() < tolerance) {
             Msg::Info(
-              "  removing degenerated edge %d from vertex %d to vertex %d",
+              "  - Removing degenerated edge %d from vertex %d to vertex %d",
               _emap.FindIndex(edge), _vmap.FindIndex(TopExp::FirstVertex(edge)),
               _vmap.FindIndex(TopExp::LastVertex(edge)));
             rebuild->Remove(edge);
@@ -3756,35 +3789,35 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     sfwf->ModeDropSmallEdges() = Standard_True;
 
     if(sfwf->FixWireGaps()) {
-      Msg::Info("- fixing wire gaps");
+      Msg::Info(" - Fixing wire gaps");
       if(sfwf->StatusWireGaps(ShapeExtend_OK)) Msg::Info("  no gaps found");
       if(sfwf->StatusWireGaps(ShapeExtend_DONE1))
-        Msg::Info("  some 2D gaps fixed");
+        Msg::Info(" . Some 2D gaps fixed");
       if(sfwf->StatusWireGaps(ShapeExtend_DONE2))
-        Msg::Info("  some 3D gaps fixed");
+        Msg::Info(" . Some 3D gaps fixed");
       if(sfwf->StatusWireGaps(ShapeExtend_FAIL1))
-        Msg::Info("  failed to fix some 2D gaps");
+        Msg::Info(" . Failed to fix some 2D gaps");
       if(sfwf->StatusWireGaps(ShapeExtend_FAIL2))
-        Msg::Info("  failed to fix some 3D gaps");
+        Msg::Info(" . Failed to fix some 3D gaps");
     }
 
     sfwf->SetPrecision(tolerance);
 
     if(sfwf->FixSmallEdges()) {
-      Msg::Info("- fixing wire frames");
+      Msg::Info(" - Fixing wire frames");
       if(sfwf->StatusSmallEdges(ShapeExtend_OK))
-        Msg::Info("  no small edges found");
+        Msg::Info(" . No small edges found");
       if(sfwf->StatusSmallEdges(ShapeExtend_DONE1))
-        Msg::Info("  some small edges fixed");
+        Msg::Info(" . Some small edges fixed");
       if(sfwf->StatusSmallEdges(ShapeExtend_FAIL1))
-        Msg::Info("  failed to fix some small edges");
+        Msg::Info(" . Failed to fix some small edges");
     }
 
     myshape = sfwf->Shape();
   }
 
   if(fixspotstripfaces) {
-    Msg::Info("- fixing spot and strip faces");
+    Msg::Info(" - Fixing spot and strip faces");
     Handle(ShapeFix_FixSmallFace) sffsm = new ShapeFix_FixSmallFace();
     sffsm->Init(myshape);
     sffsm->SetPrecision(tolerance);
@@ -3794,7 +3827,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   }
 
   if(sewfaces) {
-    Msg::Info("- sewing faces");
+    Msg::Info(" - Sewing faces");
 
     BRepOffsetAPI_Sewing sewedObj(tolerance);
 
@@ -3808,7 +3841,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     if(!sewedObj.SewedShape().IsNull())
       myshape = sewedObj.SewedShape();
     else
-      Msg::Info("  not possible");
+      Msg::Info(" . Could not sew");
   }
 
   {
@@ -3822,7 +3855,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   }
 
   if(makesolids) {
-    Msg::Info("- making solids");
+    Msg::Info(" - Making solids");
 
     BRepBuilderAPI_MakeSolid ms;
     int count = 0;
@@ -3831,9 +3864,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
       ms.Add(TopoDS::Shell(exp0.Current()));
     }
 
-    if(!count) {
-      Msg::Info("  not possible (no shells)");
-    }
+    if(!count) { Msg::Info(" . Could not make solid (no shells)"); }
     else {
       BRepCheck_Analyzer ba(ms);
       if(ba.IsValid()) {
@@ -3858,7 +3889,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
         }
       }
       else
-        Msg::Info("  not possible");
+        Msg::Info(" . Could not make solid");
     }
   }
 
@@ -3883,17 +3914,17 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   for(exp0.Init(myshape, TopAbs_COMPOUND); exp0.More(); exp0.Next()) nnrc++;
   for(exp0.Init(myshape, TopAbs_COMPSOLID); exp0.More(); exp0.Next()) nnrcs++;
 
-  Msg::Info("-----------------------------------");
-  Msg::Info("Compounds          : %d (%d)", nnrc, nrc);
-  Msg::Info("Composite solids   : %d (%d)", nnrcs, nrcs);
-  Msg::Info("Solids             : %d (%d)", nnrso, nrso);
-  Msg::Info("Shells             : %d (%d)", nnrsh, nrsh);
-  Msg::Info("Wires              : %d (%d)", nnrw, nrw);
-  Msg::Info("Faces              : %d (%d)", nnrf, nrf);
-  Msg::Info("Edges              : %d (%d)", nnre, nre);
-  Msg::Info("Vertices           : %d (%d)", nnrv, nrv);
-  Msg::Info("Totol surface area : %g (%g)", newsurfacecont, surfacecont);
-  Msg::Info("-----------------------------------");
+  double t2 = Cpu();
+  Msg::Info("Done healing shapes (%g s):", t2 - t1);
+  Msg::Info(" - Compounds          : %d (%d)", nnrc, nrc);
+  Msg::Info(" - Composite solids   : %d (%d)", nnrcs, nrcs);
+  Msg::Info(" - Solids             : %d (%d)", nnrso, nrso);
+  Msg::Info(" - Shells             : %d (%d)", nnrsh, nrsh);
+  Msg::Info(" - Wires              : %d (%d)", nnrw, nrw);
+  Msg::Info(" - Faces              : %d (%d)", nnrf, nrf);
+  Msg::Info(" - Edges              : %d (%d)", nnre, nre);
+  Msg::Info(" - Vertices           : %d (%d)", nnrv, nrv);
+  Msg::Info(" - Totol surface area : %g (%g)", newsurfacecont, surfacecont);
 }
 
 static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
@@ -3901,7 +3932,6 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
                     std::vector<SVector3> *normals, std::vector<int> &triangles)
 {
   if(CTX::instance()->geom.occDisableSTL) return false;
-
 
 #if OCC_VERSION_HEX > 0x070300
   BRepMesh_IncrementalMesh aMesher(s, 0.1, Standard_False, 0.35, Standard_True);
@@ -3991,14 +4021,14 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
   return true;
 }
 
-bool OCC_Internals::makeFaceSTL(TopoDS_Face s,
+bool OCC_Internals::makeFaceSTL(const TopoDS_Face &s,
                                 std::vector<SPoint2> &vertices_uv,
                                 std::vector<int> &triangles)
 {
   return makeSTL(s, &vertices_uv, 0, 0, triangles);
 }
 
-bool OCC_Internals::makeFaceSTL(TopoDS_Face s,
+bool OCC_Internals::makeFaceSTL(const TopoDS_Face &s,
                                 std::vector<SPoint2> &vertices_uv,
                                 std::vector<SPoint3> &vertices,
                                 std::vector<SVector3> &normals,
@@ -4007,7 +4037,8 @@ bool OCC_Internals::makeFaceSTL(TopoDS_Face s,
   return makeSTL(s, &vertices_uv, &vertices, &normals, triangles);
 }
 
-bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint3> &vertices,
+bool OCC_Internals::makeFaceSTL(const TopoDS_Face &s,
+                                std::vector<SPoint3> &vertices,
                                 std::vector<SVector3> &normals,
                                 std::vector<int> &triangles)
 {

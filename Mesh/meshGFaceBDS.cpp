@@ -359,7 +359,7 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
 
   bool faceDiscrete = gf->geomType() == GEntity::DiscreteSurface;
 
-  for(unsigned int i = 0; i < edges.size(); ++i) {
+  for(std::size_t i = 0; i < edges.size(); ++i) {
     BDS_Edge *e = edges[i].second;
     BDS_Point *mid = NULL;
     if(!e->deleted) {
@@ -398,7 +398,7 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
     mids[i] = mid;
   }
 
-  for(unsigned int i = 0; i < edges.size(); ++i) {
+  for(std::size_t i = 0; i < edges.size(); ++i) {
     BDS_Edge *e = edges[i].second;
     if(!e->deleted) {
       BDS_Point *mid = mids[i];
@@ -488,7 +488,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
 
   std::sort(edges.begin(), edges.end(), edges_sort);
 
-  for(unsigned int i = 0; i < edges.size(); i++) {
+  for(std::size_t i = 0; i < edges.size(); i++) {
     BDS_Edge *e = edges[i].second;
     if(!e->deleted) {
       double lone1 = 0.;
@@ -1084,7 +1084,7 @@ BDS_Mesh *gmsh2BDS(std::list<GFace *> &l)
     GFace *gf = *it;
     m->add_geom(gf->tag(), 2);
     BDS_GeomEntity *g2 = m->get_geom(gf->tag(), 2);
-    for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+    for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       MTriangle *e = gf->triangles[i];
       BDS_Point *p[3];
       for(int j = 0; j < 3; j++) {

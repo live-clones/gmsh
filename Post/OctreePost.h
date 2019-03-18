@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _OCTREE_POST_H_
-#define _OCTREE_POST_H_
+#ifndef OCTREE_POST_H
+#define OCTREE_POST_H
 
 #include "Octree.h"
 

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _PLUGIN_H_
-#define _PLUGIN_H_
+#ifndef PLUGIN_H
+#define PLUGIN_H
 
 // To create a plugin:
 // 1) Create a dynamic lib containing GMSH_RegisterPlugin();

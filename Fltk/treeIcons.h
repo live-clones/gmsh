@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _TREE_ICONS_H_
-#define _TREE_ICONS_H_
+#ifndef TREE_ICONS_H
+#define TREE_ICONS_H
 
 #include <FL/Fl_Pixmap.H>
 

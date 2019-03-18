@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GEO_INTERPOLATION_H_
-#define _GEO_INTERPOLATION_H_
+#ifndef GEO_INTERPOLATION_H
+#define GEO_INTERPOLATION_H
 
 #include "SPoint3.h"
 

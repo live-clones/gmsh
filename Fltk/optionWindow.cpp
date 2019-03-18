@@ -253,7 +253,7 @@ void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
 void general_options_axes_fit_cb(Fl_Widget *w, void *data)
 {
   SBoundingBox3d bbox = GModel::current()->bounds(true);
-  for(unsigned int i = 0; i < PView::list.size(); i++){
+  for(std::size_t i = 0; i < PView::list.size(); i++){
     if(PView::list[i]->getOptions()->visible &&
        !PView::list[i]->getData()->getBoundingBox().empty())
       bbox += PView::list[i]->getData()->getBoundingBox();
@@ -342,7 +342,7 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_options_save(0, GMSH_SET, o->general.butt[9]->value());
   opt_general_expert_mode(0, GMSH_SET, o->general.butt[10]->value());
 #if defined(HAVE_VISUDEV)
-  opt_general_heavy_visualization(0, GMSH_SET, o->general.butt[23]->value());
+  opt_general_heavy_visualization(0, GMSH_SET, o->general.butt[20]->value());
 #endif
 
   if(opt_general_gui_color_scheme(0, GMSH_GET, 0) !=
@@ -429,7 +429,7 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_camera_aperture(0, GMSH_SET, o->general.value[31]->value());
   if(opt_general_stereo_mode(0, GMSH_GET, 0) != o->general.butt[17]->value()) {
     opt_general_stereo_mode(0, GMSH_SET, o->general.butt[17]->value());
-    for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       FlGui::instance()->graph[i]->setStereo((bool)CTX::instance()->stereo);
   }
 
@@ -1307,6 +1307,37 @@ static void view_options_max_recursion_cb(Fl_Widget *w, void *data)
 
 optionWindow::optionWindow(int deltaFontSize)
 {
+  general.butt.resize(50, 0);
+  general.push.resize(50, 0);
+  general.value.resize(50, 0);
+  general.color.resize(50, 0);
+  general.input.resize(50, 0);
+  general.choice.resize(50, 0);
+  geo.butt.resize(50, 0);
+  geo.value.resize(50, 0);
+  geo.color.resize(50, 0);
+  geo.choice.resize(50, 0);
+  mesh.butt.resize(50, 0);
+  mesh.retbutt.resize(50, 0);
+  mesh.input.resize(50, 0);
+  mesh.value.resize(50, 0);
+  mesh.color.resize(50, 0);
+  mesh.choice.resize(50, 0);
+  solver.butt.resize(50, 0);
+  solver.value.resize(50, 0);
+  solver.input.resize(50, 0);
+  post.butt.resize(50, 0);
+  post.value.resize(50, 0);
+  post.choice.resize(50, 0);
+  view.butt.resize(50, 0);
+  view.value.resize(100, 0);
+  view.input.resize(50, 0);
+  view.push.resize(50, 0);
+  view.choice.resize(50, 0);
+  view.color.resize(50, 0);
+  view.label.resize(50, 0);
+  view.menu.resize(50, 0);
+
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 37 * FL_NORMAL_SIZE + WB;
@@ -1494,11 +1525,11 @@ optionWindow::optionWindow(int deltaFontSize)
 #endif
 
 #if defined(HAVE_VISUDEV)
-      general.butt[23] =
+      general.butt[20] =
        new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW / 2 - WB, BH,
                             "Enable heavy visualization capabilities");
-      general.butt[23]->type(FL_TOGGLE_BUTTON);
-      general.butt[23]->callback(general_options_ok_cb);
+      general.butt[20]->type(FL_TOGGLE_BUTTON);
+      general.butt[20]->callback(general_options_ok_cb);
 #endif
 
       Fl_Button *b2 = new Fl_Button(L + 2 * WB, 2 * WB + 11 * BH, BW, BH,
@@ -1842,7 +1873,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 6 * BH, IW + 20,
                                    height - 5 * WB - 6 * BH);
-      int i = 0;
+      std::size_t i = 0;
       while(GeneralOptions_Color[i].str) {
         general.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (6 + i) * BH, IW,
                                          BH, GeneralOptions_Color[i].str);
@@ -1851,6 +1882,10 @@ optionWindow::optionWindow(int deltaFontSize)
         general.color[i]->callback(color_cb,
                                    (void *)GeneralOptions_Color[i].function);
         i++;
+        if(i >= general.color.size()){
+          Msg::Error("General color widget vector should be resized");
+          break;
+        }
       }
       s->end();
 
@@ -2222,13 +2257,17 @@ optionWindow::optionWindow(int deltaFontSize)
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 2 * WB + 4 * BH, IW + 20,
                                    height - 4 * WB - 4 * BH);
-      int i = 0;
+      std::size_t i = 0;
       while(GeometryOptions_Color[i].str) {
         geo.color[i] = new Fl_Button(L + 2 * WB, 2 * WB + (4 + i) * BH, IW, BH,
                                      GeometryOptions_Color[i].str);
         geo.color[i]->callback(color_cb,
                                (void *)GeometryOptions_Color[i].function);
         i++;
+        if(i >= geo.color.size()){
+          Msg::Error("Geometry color widget vector should be resized");
+          break;
+        }
       }
       s->end();
 
@@ -2389,7 +2428,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.butt[3] =
         new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
-                            "Optimize high order meshes (experimental)");
+                            "Optimize high-order meshes (experimental)");
       mesh.butt[3]->type(FL_TOGGLE_BUTTON);
       mesh.butt[3]->callback(mesh_options_ok_cb);
 
@@ -2669,13 +2708,17 @@ optionWindow::optionWindow(int deltaFontSize)
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 7 * BH, IW + 20,
                                    height - 5 * WB - 7 * BH);
-      int i = 0;
+      std::size_t i = 0;
       while(MeshOptions_Color[i].str) {
         mesh.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (7 + i) * BH, IW, BH,
                                       MeshOptions_Color[i].str);
         mesh.color[i]->callback(color_cb,
                                 (void *)MeshOptions_Color[i].function);
         i++;
+        if(i >= mesh.color.size()){
+          Msg::Error("Mesh color widget vector should be resized");
+          break;
+        }
       }
       s->end();
 
@@ -3490,13 +3533,17 @@ optionWindow::optionWindow(int deltaFontSize)
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 7 * BH, IW + 20,
                                    height - 5 * WB - 7 * BH);
-      int i = 0;
+      std::size_t i = 0;
       while(ViewOptions_Color[i].str) {
         view.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (7 + i) * BH, IW, BH,
                                       ViewOptions_Color[i].str);
         view.color[i]->callback(view_color_cb,
                                 (void *)ViewOptions_Color[i].function);
         i++;
+        if(i >= view.color.size()){
+          Msg::Error("View color widget vector should be resized");
+          break;
+        }
       }
       s->end();
 
@@ -3585,9 +3632,9 @@ void optionWindow::resetBrowser()
   browser->add("Mesh");
   browser->add("Solver");
   browser->add("Post-pro");
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     char str[128];
-    sprintf(str, "View [%d]", i);
+    sprintf(str, "View [%lu]", i);
     browser->add(str);
   }
   int num = (select <= browser->size()) ? select : browser->size();
@@ -3601,8 +3648,8 @@ void optionWindow::resetExternalViewList()
   view.choice[11]->clear();
   view.choice[10]->add("Self");
   view.choice[11]->add("Self");
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
-    sprintf(str, "View [%d]", i);
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
+    sprintf(str, "View [%lu]", i);
     view.choice[10]->add(str, 0, NULL);
     view.choice[11]->add(str, 0, NULL);
   }

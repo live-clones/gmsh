@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _HARMONIC_TO_TIME_H_
-#define _HARMONIC_TO_TIME_H_
+#ifndef HARMONIC_TO_TIME_H
+#define HARMONIC_TO_TIME_H
 
 #include "Plugin.h"
 

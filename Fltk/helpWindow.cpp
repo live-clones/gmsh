@@ -267,7 +267,7 @@ void help_options_cb(Fl_Widget *w, void *data)
 
   int top = FlGui::instance()->help->browser->topline();
   FlGui::instance()->help->browser->clear();
-  for(unsigned int i = 0; i < s0.size(); i++) {
+  for(std::size_t i = 0; i < s0.size(); i++) {
     std::string::size_type sep = s0[i].rfind('\0');
     void *d = 0;
     if(sep != std::string::npos) {
@@ -372,7 +372,7 @@ helpWindow::helpWindow()
     {
       std::vector<std::pair<std::string, std::string> > s0 =
         GetShortcutsUsage();
-      for(unsigned int i = 0; i < s0.size(); i++)
+      for(std::size_t i = 0; i < s0.size(); i++)
         s +=
           "<tr><td>" + s0[i].first + "</td><td>" + s0[i].second + "</td></tr>";
     }
@@ -382,7 +382,7 @@ helpWindow::helpWindow()
     s += "<table border=1>";
     {
       std::vector<std::pair<std::string, std::string> > s0 = GetMouseUsage();
-      for(unsigned int i = 0; i < s0.size(); i++)
+      for(std::size_t i = 0; i < s0.size(); i++)
         s +=
           "<tr><td>" + s0[i].first + "</td><td>" + s0[i].second + "</td></tr>";
     }
@@ -395,7 +395,7 @@ helpWindow::helpWindow()
     s += "<table border=1>";
     {
       std::vector<std::pair<std::string, std::string> > s0 = GetUsage();
-      for(unsigned int i = 0; i < s0.size(); i++)
+      for(std::size_t i = 0; i < s0.size(); i++)
         if(s0[i].first.size() && s0[i].second.size())
           s += "<tr><td>" + s0[i].first + "</td><td>" + s0[i].second +
                "</td></tr>";

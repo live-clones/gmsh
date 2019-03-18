@@ -7,8 +7,8 @@
 //   Eric Bechet
 //
 
-#ifndef _STENSOR33_H_
-#define _STENSOR33_H_
+#ifndef STENSOR33_H
+#define STENSOR33_H
 
 #include "STensor3.h"
 #include "fullMatrix.h"

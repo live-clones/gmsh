@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _PARTITION_VERTEX_H_
-#define _PARTITION_VERTEX_H_
+#ifndef PARTITION_VERTEX_H
+#define PARTITION_VERTEX_H
 
 #include "GModel.h"
 #include "discreteVertex.h"

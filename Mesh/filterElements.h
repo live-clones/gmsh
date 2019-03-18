@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _FILTER_OVERLAPPING_ELEMENTS_
-#define _FILTER_OVERLAPPING_ELEMENTS_
+#ifndef FILTER_OVERLAPPING_ELEMENTS
+#define FILTER_OVERLAPPING_ELEMENTS
 
 #include <map>
 #include <vector>

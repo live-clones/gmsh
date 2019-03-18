@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _STREAM_LINES_H_
-#define _STREAM_LINES_H_
+#ifndef STREAM_LINES_H
+#define STREAM_LINES_H
 
 #include "Plugin.h"
 

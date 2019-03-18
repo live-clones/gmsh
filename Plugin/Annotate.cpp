@@ -238,7 +238,7 @@ PView *GMSH_AnnotatePlugin::execute(PView *v)
     data2->T3D.push_back(Z);
     data2->T3D.push_back(style);
     data2->T3D.push_back(data2->T3C.size());
-    for(unsigned int i = 0; i < text.size(); i++) data2->T3C.push_back(text[i]);
+    for(std::size_t i = 0; i < text.size(); i++) data2->T3C.push_back(text[i]);
     data2->T3C.push_back('\0');
     data2->NbT3++;
   }
@@ -247,7 +247,7 @@ PView *GMSH_AnnotatePlugin::execute(PView *v)
     data2->T2D.push_back(Y);
     data2->T2D.push_back(style);
     data2->T2D.push_back(data2->T2C.size());
-    for(unsigned int i = 0; i < text.size(); i++) data2->T2C.push_back(text[i]);
+    for(std::size_t i = 0; i < text.size(); i++) data2->T2C.push_back(text[i]);
     data2->T2C.push_back('\0');
     data2->NbT2++;
   }

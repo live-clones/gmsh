@@ -5,8 +5,8 @@
 //
 // Contributed by J. Lambrechts
 
-#ifndef _DECASTELJAU_H_
-#define _DECASTELJAU_H_
+#ifndef DECASTELJAU_H
+#define DECASTELJAU_H
 
 #include <vector>
 class SPoint3;

@@ -38,6 +38,11 @@ static int ComparePosition(const void *a, const void *b)
   Vertex *q = *(Vertex **)a;
   Vertex *w = *(Vertex **)b;
 
+  if(!q || !w){
+    Msg::Error("Cannot compare position of null points");
+    return 99;
+  }
+
   // Warning: tolerance (before 1.61, it was set to 1.e-10 *
   // CTX::instance()->lc)
   double eps = CTX::instance()->geom.tolerance * CTX::instance()->lc;
@@ -1714,13 +1719,13 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
   }
 
   int start = Tree_Nbr(GModel::current()->getGEOInternals()->Points);
-  for(unsigned int i = 0; i < unused.size(); i++) {
+  for(std::size_t i = 0; i < unused.size(); i++) {
     Vertex *V = v2V[unused[i]];
     Tree_Suppress(GModel::current()->getGEOInternals()->Points, &V);
     Tree_Add(GModel::current()->getGEOInternals()->DelPoints, &V);
     delete unused[i];
   }
-  for(unsigned int i = 0; i < used.size(); i++) {
+  for(std::size_t i = 0; i < used.size(); i++) {
     delete used[i];
   }
   int end = Tree_Nbr(GModel::current()->getGEOInternals()->Points);
@@ -3443,7 +3448,7 @@ void SetSurfaceGeneratrices(Surface *s, List_T *loops)
             List_Add(s->Generatrices, &c);
         }
       }
-      for(unsigned int j = 0; j < fromModel.size(); j++) {
+      for(std::size_t j = 0; j < fromModel.size(); j++) {
         ic = fromModel[j];
         GEdge *ge = GModel::current()->getEdgeByTag(abs(ic));
         if(ge) {
