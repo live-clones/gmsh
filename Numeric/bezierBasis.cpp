@@ -1013,6 +1013,10 @@ bezierBasisRaiser *bezierBasis::getRaiser() const
 
 void bezierBasisRaiser::_fillRaiserData()
 {
+  // Let f and g be two function whose Bezier coefficients f_i, g_i are
+  // given and let F = f*g. The Bézier coefficients of Fcan be computed as
+  // F_i = sum_(j,k) a_jk f_j * g_k
+  // This function compute the coefficients a_jk (and similarly for 3 functions)
   if(_bfs->getType() == TYPE_PYR) {
     _fillRaiserDataPyr();
     return;
@@ -1035,10 +1039,11 @@ void bezierBasisRaiser::_fillRaiserData()
   // of the indices (i, j) or (i, j, k), we fill only the raiser data for
   // i <= j <= k (and adapt the value to take into account the multiplicity).
 
+  // Construction of raiser 2
+
   std::map<int, int> hashToInd2;
   std::map<int, int> hashToInd2New;
   {
-    // Construction of raiser 2
     fullMatrix<int> exp2;
     fullMatrix<int> exp2New; // FIXME: delete one of them
     {
@@ -1133,6 +1138,7 @@ void bezierBasisRaiser::_fillRaiserData()
   }
 
   // Construction of raiser 3
+
   std::map<int, int> hashToInd3;
   std::map<int, int> hashToInd3New;
   {
@@ -1251,6 +1257,10 @@ void bezierBasisRaiser::_fillRaiserData()
 
 void bezierBasisRaiser::_fillRaiserDataPyr()
 {
+  // Let f and g be two function whose Bezier coefficients f_i, g_i are
+  // given and let F = f*g. The Bézier coefficients of Fcan be computed as
+  // F_i = sum_(j,k) a_jk f_j * g_k
+  // This function compute the coefficients a_jk (and similarly for 3 functions)
   FuncSpaceData fsdata = _bfs->getFuncSpaceData();
   if(fsdata.getType() != TYPE_PYR) {
     _fillRaiserData();
@@ -1262,35 +1272,55 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
   }
 
   fullMatrix<int> exp;
+  fullMatrix<int> expNew;
   {
     const fullMatrix<double> &expD = _bfs->_exponents;
+    const fullMatrix<double> &expDNew = _bfs->_exponents2;
     double2int(expD, exp);
+    double2int(expDNew, expNew);
   }
   int ncoeff = exp.size1();
   int order[3] = {fsdata.getNij(), fsdata.getNij(), fsdata.getNk()};
-  int orderHash = std::max(order[0], order[1]);
+  int orderHash = std::max(order[0], order[2]);
 
   // Speedup: Since the coefficients (num/den) are invariant from a permutation
   // of the indices (i, j) or (i, j, k), we fill only the raiser data for i <= j
   // <= k (and adapt the value to take into account the multiplicity).
 
-  // Construction of raiser 2
-  fullMatrix<int> exp2;
-  {
-    fullMatrix<double> expD2;
-    FuncSpaceData dataRaiser2(_bfs->_data, 2 * order[0], 2 * order[2]);
-    gmshGenerateMonomials(dataRaiser2, expD2);
-    double2int(expD2, exp2);
-    _raiser2.resize(exp2.size1());
-  }
-
   std::map<int, int> hashToInd2;
-  for(int i = 0; i < exp2.size1(); ++i) {
-    int hash = 0;
-    for(int l = 0; l < 3; l++) {
-      hash += exp2(i, l) * pow_int(2 * orderHash + 1, l);
+  std::map<int, int> hashToInd2New;
+  {
+    fullMatrix<int> exp2;
+    fullMatrix<int> exp2New; // FIXME: delete one of them
+    {
+      fullMatrix<double> expD2;
+      FuncSpaceData dataRaiser2(_bfs->_data, 2 * order[0], 2 * order[2]);
+      gmshGenerateMonomials(dataRaiser2, expD2);
+      double2int(expD2, exp2);
+      _raiser2.resize(exp2.size1());
+      fullMatrix<double> expD2New;
+      FuncSpaceData data(_bfs->_data, 2 * order[0], 2 * order[2]);
+      generateExponents(data, expD2New);
+      double2int(expD2New, exp2New);
+      _raiser2New.resize(exp2New.size1());
     }
-    hashToInd2[hash] = i;
+
+//    std::map<int, int> hashToInd2;
+    for(int i = 0; i < exp2.size1(); ++i) {
+      int hash = 0;
+      for(int l = 0; l < 3; l++) {
+        hash += static_cast<int>(exp2(i, l) * pow_int(2 * orderHash + 1, l));
+      }
+      hashToInd2[hash] = i;
+    }
+    //    std::map<int, int> hashToInd2New;
+    for(int i = 0; i < exp2New.size1(); ++i) {
+      int hash = 0;
+      for(int l = 0; l < 3; l++) {
+        hash += static_cast<int>(exp2New(i, l) * pow_int(2 * orderHash + 1, l));
+      }
+      hashToInd2New[hash] = i;
+    }
   }
 
   for(int i = 0; i < ncoeff; i++) {
@@ -1300,35 +1330,66 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
         num *= nChoosek(order[l], exp(i, l)) * nChoosek(order[l], exp(j, l));
         den *= nChoosek(2 * order[l], exp(i, l) + exp(j, l));
       }
+      double numNew = 1, denNew = 1;
+      for(int l = 0; l < 3; l++) {
+        numNew *= nChoosek(order[l], expNew(i, l)) * nChoosek(order[l], expNew(j, l));
+        denNew *= nChoosek(2 * order[l], expNew(i, l) + expNew(j, l));
+      }
 
       // taking into account the multiplicity (reminder: i <= j)
       if(i < j) num *= 2;
+      if(i < j) numNew *= 2;
 
       int hash = 0;
       for(int l = 0; l < 3; l++) {
-        hash += (exp(i, l) + exp(j, l)) * pow_int(2 * orderHash + 1, l);
+        hash += static_cast<int>((exp(i, l) + exp(j, l)) * pow_int(2 * orderHash + 1, l));
       }
       _raiser2[hashToInd2[hash]].push_back(_data(num / den, i, j));
+
+      int hashNew = 0;
+      for(int l = 0; l < 3; l++) {
+        hash += static_cast<int>((expNew(i, l) + expNew(j, l)) * pow_int(2 * orderHash + 1, l));
+      }
+      _raiser2New[hashToInd2New[hashNew]].push_back(_data(numNew / denNew, i, j));
     }
   }
 
   // Construction of raiser 3
-  fullMatrix<int> exp3;
-  {
-    fullMatrix<double> expD3;
-    FuncSpaceData dataRaiser3(_bfs->_data, 3 * order[0], 3 * order[2]);
-    gmshGenerateMonomials(dataRaiser3, expD3);
-    double2int(expD3, exp3);
-    _raiser3.resize(exp3.size1());
-  }
 
   std::map<int, int> hashToInd3;
-  for(int i = 0; i < exp3.size1(); ++i) {
-    int hash = 0;
-    for(int l = 0; l < 3; l++) {
-      hash += exp3(i, l) * pow_int(3 * orderHash + 1, l);
+  std::map<int, int> hashToInd3New;
+  {
+    fullMatrix<int> exp3;
+    fullMatrix<int> exp3New;
+    {
+      fullMatrix<double> expD3;
+      FuncSpaceData dataRaiser3(_bfs->_data, 3 * order[0], 3 * order[2]);
+      gmshGenerateMonomials(dataRaiser3, expD3);
+      double2int(expD3, exp3);
+      _raiser3.resize(exp3.size1());
+      fullMatrix<double> expD3New;
+      FuncSpaceData data(_bfs->_data, 3 * order[0], 3 * order[2]);
+      generateExponents(data, expD3New);
+      double2int(expD3New, exp3New);
+      _raiser3New.resize(exp3New.size1());
     }
-    hashToInd3[hash] = i;
+
+//    std::map<int, int> hashToInd3;
+    for(int i = 0; i < exp3.size1(); ++i) {
+      int hash = 0;
+      for(int l = 0; l < 3; l++) {
+        hash += static_cast<int>(exp3(i, l) * pow_int(3 * orderHash + 1, l));
+      }
+      hashToInd3[hash] = i;
+    }
+//    std::map<int, int> hashToInd3New;
+    for(int i = 0; i < exp3New.size1(); ++i) {
+      int hash = 0;
+      for(int l = 0; l < 3; l++) {
+        hash += static_cast<int>(exp3New(i, l) * pow_int(3 * orderHash + 1, l));
+      }
+      hashToInd3New[hash] = i;
+    }
   }
 
   for(int i = 0; i < ncoeff; i++) {
@@ -1340,12 +1401,22 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
                  nChoosek(order[l], exp(k, l));
           den *= nChoosek(3 * order[l], exp(i, l) + exp(j, l) + exp(k, l));
         }
+        double numNew = 1, denNew = 1;
+        for(int l = 0; l < 3; l++) {
+          numNew *= nChoosek(order[l], expNew(i, l)) * nChoosek(order[l], expNew(j, l)) *
+                 nChoosek(order[l], expNew(k, l));
+          denNew *= nChoosek(3 * order[l], expNew(i, l) + expNew(j, l) + expNew(k, l));
+        }
 
         // taking into account the multiplicity (Reminder: i <= j <= k)
         if(i < j && j < k)
           num *= 6;
         else if(i < j || j < k)
           num *= 3;
+        if(i < j && j < k)
+          numNew *= 6;
+        else if(i < j || j < k)
+          numNew *= 3;
 
         int hash = 0;
         for(int l = 0; l < 3; l++) {
@@ -1353,6 +1424,12 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
             (exp(i, l) + exp(j, l) + exp(k, l)) * pow_int(3 * orderHash + 1, l);
         }
         _raiser3[hashToInd3[hash]].push_back(_data(num / den, i, j, k));
+        int hashNew = 0;
+        for(int l = 0; l < 3; l++) {
+          hashNew +=
+            (expNew(i, l) + expNew(j, l) + expNew(k, l)) * pow_int(3 * orderHash + 1, l);
+        }
+        _raiser3New[hashToInd3New[hashNew]].push_back(_data(numNew / denNew, i, j, k));
       }
     }
   }
@@ -2381,7 +2458,8 @@ bezierMemoryPool::bezierMemoryPool()
 void bezierMemoryPool::setSizeBlocks(int size)
 {
   if(_numUsedBlocks) {
-    Msg::Error("Cannot change size of blocks if blocks are still being used!");
+    Msg::Error("Cannot change size of blocks if %d blocks are still being "
+               "used!", _numUsedBlocks);
     return;
   }
   _currentIndexOfSearch = 0;
