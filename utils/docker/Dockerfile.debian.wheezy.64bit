@@ -95,7 +95,9 @@ RUN cd ${SLEPC_DIR} && ./configure && make
 # FLTK
 # -----------------------
 
-RUN git clone https://github.com/fltk/fltk.git && cd fltk && mkdir build && cd build && cmake .. && make -j 4 && make install && cd ../.. && rm -rf fltk
+RUN apt-get install -y autoconf libxft-dev libxinerama-dev libxcursor-dev libxfixes-dev
+
+RUN git clone https://github.com/fltk/fltk.git && cd fltk && make -j 4 && make install && cd ../.. && rm -rf fltk
 
 # -----------------------
 # Minimal Gmsh library
