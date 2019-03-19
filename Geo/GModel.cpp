@@ -1294,6 +1294,18 @@ int GModel::addMEdge(MEdge edge)
   return edgeGlobalIndice;
 }
 
+int GModel::addMFace(MFace face){
+  hashmap<int, MFace>::iterator it = _mapFaceNum.begin();
+  while(it != _mapFaceNum.end()) {
+    if(it->second == face) { return it->first; }
+    ++it;
+
+  }
+  int faceGlobalIndice=_mapFaceNum.size();
+  _mapFaceNum[faceGlobalIndice] = face;
+  return faceGlobalIndice;
+}
+
 void GModel::renumberMeshVertices()
 {
   destroyMeshCaches();

@@ -49,6 +49,7 @@ private:
   std::set<GEdge *, GEntityLessThan> _chainEdges;
   std::set<GVertex *, GEntityLessThan> _chainVertices;
   hashmap<int, MEdge> _mapEdgeNum;
+  hashmap<int, MFace> _mapFaceNum;
   // the maximum vertex and element id number in the mesh
   std::size_t _maxVertexNum, _maxElementNum;
   std::size_t _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
@@ -232,8 +233,10 @@ public:
     maxv = _checkPointedMaxVertexNum;
     maxe = _checkPointedMaxElementNum;
   }
-  // number the edges 
+  // number the edges
   int addMEdge(MEdge edge); // to _mapEdgeNum
+  //number the faces
+  int addMFace(MFace face); // to _mapFaceNum
   // renumber mesh vertices and elements in a continuous sequence (this
   // invalidates the mesh caches)
   void renumberMeshVertices();

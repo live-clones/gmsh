@@ -50,17 +50,26 @@ public:
   orientateEdgeGrad(int const &flagOrientation, int const &edgeNumber,
                     std::vector<std::vector<double> > &gradientEdge);
 
-  virtual void orientateFace(int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,std::vector<double> &faceBasis){};
+  virtual void orientateFace(double const &u, double const &v, double const &w,
+                             int const &flag1, int const &flag2,
+                             int const &flag3, int const &faceNumber,
+                             std::vector<double> &faceBasis){};
+
+  virtual void
+  orientateFaceGrad(double const &u, double const &v, double const &w,
+                    int const &flag1, int const &flag2, int const &flag3,
+                    int const &faceNumber,
+                    std::vector<std::vector<double> > &gradientFace){};
   virtual void reverseFaceBubbleFor3D(const bool belongBoundary);
   virtual void reverseEdgeBubbleFor2D(const bool belongBoundary){};
 
 private:
   int _pb; // bubble function order
   int _pOrderEdge[3]; // Edge functions order (pOrderEdge[0] matches the edge 0
-                     // order)
+                      // order)
   static double
   _affineCoordinate(int const &j, double const &u,
-                   double const &v); // affine coordinate lambdaj j=1..3
+                    double const &v); // affine coordinate lambdaj j=1..3
 };
 
 #endif

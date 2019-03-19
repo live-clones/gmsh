@@ -21,3 +21,13 @@ int HierarchicalBasisH1::getnVertexFunction() const
 {
   return _nVertexFunction;
 }
+
+int  HierarchicalBasisH1::getNumFace() const
+{
+  return _nface;
+}
+
+int HierarchicalBasisH1::getNumEdge() const
+{
+  return _nedge;
+}

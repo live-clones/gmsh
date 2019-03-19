@@ -70,7 +70,84 @@ MFace::MFace(const std::vector<MVertex *> &v)
   for(std::size_t i = 0; i < v.size(); i++) _v.push_back(v[i]);
   sortVertices(_v, _si);
 }
+void MFace::orientateFace(std::vector<int> &axis1,
+                          std::vector<int> &faceOrientationFlag)
+{
+  if(_v.size() == 3) { // triangular face
+    axis1[0] = _v[int(_si[0])]->getNum();
+    axis1[1] = _v[int(_si[1])]->getNum();
+    // not yet face orientation for triangular
+  }
+  else { // quadrilateral face
+  int c = 0;
+    for(int i = 0; i < 4; i++) {
+      if(_v[int(_si[0])]->getNum() == unsigned(_v[i]->getNum())) { c = i; }
+    }
+    int indexopposedVertex;
+    switch(c) {
+    case(0): indexopposedVertex = 3; break;
+    case(1): indexopposedVertex = 2; break;
+    case(2): indexopposedVertex = 1; break;
+    case(3): indexopposedVertex = 0; break;
+    }
+    int numVertexOpposed = _v[indexopposedVertex]->getNum();
+    axis1[0] = unsigned(_v[int(_si[0])]->getNum());
+    if(_v[int(_si[1])]->getNum() == unsigned(numVertexOpposed)) {
+      axis1[1] = _v[int(_si[2])]->getNum();
+    }
+    else {
+      axis1[1] = _v[int(_si[1])]->getNum();
+    }
 
+    if(unsigned(axis1[0]) == _v[0]->getNum() && unsigned(axis1[1]) == _v[1]->getNum()) {
+      faceOrientationFlag[0] = 1;
+      faceOrientationFlag[1] = 1;
+      faceOrientationFlag[2] = 1;
+    }
+    else if(unsigned(axis1[0])==_v[1]->getNum() && unsigned(axis1[1])==_v[0]->getNum())
+    {
+      faceOrientationFlag[0] = -1;
+      faceOrientationFlag[1] = 1;
+      faceOrientationFlag[2] = 1;
+    }
+    else if(unsigned(axis1[0])==_v[3]->getNum() && unsigned(axis1[1])==_v[2]->getNum())
+    {
+      faceOrientationFlag[0] = 1;
+      faceOrientationFlag[1] = -1;
+      faceOrientationFlag[2] = 1;
+    }
+    else if(unsigned(axis1[0])==_v[2]->getNum() && unsigned(axis1[1])==_v[3]->getNum())
+    {
+      faceOrientationFlag[0] = -1;
+      faceOrientationFlag[1] = -1;
+      faceOrientationFlag[2] = 1;
+    }
+    else if(unsigned(axis1[0])==_v[0]->getNum() && unsigned(axis1[1])==_v[3]->getNum())
+    {
+      faceOrientationFlag[0] = 1;
+      faceOrientationFlag[1] = 1;
+      faceOrientationFlag[2] = -1;
+    }
+    else if(unsigned(axis1[0])==_v[3]->getNum() && unsigned(axis1[1])==_v[0]->getNum())
+    {
+      faceOrientationFlag[0] = 1;
+      faceOrientationFlag[1] = -1;
+      faceOrientationFlag[2] = -1;
+    }
+    else if(unsigned(axis1[0])==_v[1]->getNum() && unsigned(axis1[1])==_v[2]->getNum())
+    {
+      faceOrientationFlag[0] = -1;
+      faceOrientationFlag[1] = 1;
+      faceOrientationFlag[2] = -1;
+    }
+    else
+    {
+      faceOrientationFlag[0] = -1;
+      faceOrientationFlag[1] = -1;
+      faceOrientationFlag[2] = -1;
+    }
+  }
+}
 double MFace::approximateArea() const
 {
   SPoint3 p0 = _v[0]->point(), p1 = _v[1]->point(), p2 = _v[2]->point();

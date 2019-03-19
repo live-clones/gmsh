@@ -19,6 +19,8 @@ public:
   int getnEdgeFunction() const;
   int getnFaceFunction() const;
   int getnBubbleFunction() const;
+  int getNumFace() const;
+  int getNumEdge() const;
   virtual void generateBasis(double const &u, double const &v, double const &w,
                              std::vector<double> &vertexBasis,
                              std::vector<double> &edgeBasis,
@@ -36,7 +38,16 @@ public:
   orientateEdgeGrad(int const &flagOrientation, int const &edgeNumber,
                     std::vector<std::vector<double> > &gradientEdge) = 0;
 
-  virtual void orientateFace(int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,std::vector<double> &faceBasis)=0;
+  virtual void orientateFace(double const &u, double const &v, double const &w,
+                             int const &flag1, int const &flag2,
+                             int const &flag3, int const &faceNumber,
+                             std::vector<double> &faceBasis) = 0;
+
+  virtual void
+  orientateFaceGrad(double const &u, double const &v, double const &w,
+                    int const &flag1, int const &flag2, int const &flag3,
+                    int const &faceNumber,
+                    std::vector<std::vector<double> > &gradientFace) = 0;
   virtual void reverseFaceBubbleFor3D(const bool belongBoundary) = 0;
   virtual void reverseEdgeBubbleFor2D(const bool belongBoundary) = 0;
 };

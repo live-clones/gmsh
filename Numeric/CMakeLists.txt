@@ -44,6 +44,7 @@ set(SRC
   HierarchicalBasisH1Quad.cpp
   HierarchicalBasisH1Tria.cpp
   HierarchicalBasisH1Line.cpp
+  HierarchicalBasisH1Brick.cpp	
 
 )
 
