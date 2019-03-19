@@ -1892,7 +1892,6 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   HierarchicalBasisH1 *basis(0);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
-
   switch(familyType) {
   case TYPE_HEX: {
     basis = new HierarchicalBasisH1Brick(order);
@@ -2182,8 +2181,6 @@ GMSH_API void gmsh::model::mesh::getKeyForElements(gmsh::vectorpair &keys,
           coord.push_back(e->getVertex(k)->z());
         }
         int numberEdge = e->getNumEdges();
-        std::vector<std::vector<double> > allEdgeCenter(
-          numberEdge, std::vector<double>(3, 0.));
         for(int jj = 0; jj < numberEdge; jj++) {
           MEdge edge = e->getEdge(jj);
           MVertex *v1 = edge.getVertex(0);
@@ -2192,7 +2189,6 @@ GMSH_API void gmsh::model::mesh::getKeyForElements(gmsh::vectorpair &keys,
           coordEdge[0] = (v1->x() + v2->x()) / 2;
           coordEdge[1] = (v1->y() + v2->y()) / 2;
           coordEdge[2] = (v1->z() + v2->z()) / 2;
-          allEdgeCenter[jj] = coordEdge;
           int edgeGlobalIndice = GModel::current()->addMEdge(edge);
           for(int k = 0; k < numEdgeFunction; k++) {
             keys.push_back(std::pair<int, int>(k + 3, edgeGlobalIndice));
@@ -2224,14 +2220,14 @@ GMSH_API void gmsh::model::mesh::getKeyForElements(gmsh::vectorpair &keys,
           }
         }
         std::vector<double> bubbleCenterCoord(3);
-        for(int k = 0; k < numberEdge; k++) {
-          bubbleCenterCoord[0] += allEdgeCenter[k][0];
-          bubbleCenterCoord[1] += allEdgeCenter[k][1];
-          bubbleCenterCoord[2] += allEdgeCenter[k][2];
+        for(int k = 0; k < e->getNumVertices(); k++) {
+          bubbleCenterCoord[0] += e->getVertex(k)->x();
+          bubbleCenterCoord[1] += e->getVertex(k)->y();
+          bubbleCenterCoord[2] += e->getVertex(k)->z();
         }
-        bubbleCenterCoord[0] = bubbleCenterCoord[0] / numberEdge;
-        bubbleCenterCoord[1] = bubbleCenterCoord[1] / numberEdge;
-        bubbleCenterCoord[2] = bubbleCenterCoord[2] / numberEdge;
+        bubbleCenterCoord[0] = bubbleCenterCoord[0] / e->getNumVertices();
+        bubbleCenterCoord[1] = bubbleCenterCoord[1] / e->getNumVertices();
+        bubbleCenterCoord[2] = bubbleCenterCoord[2] / e->getNumVertices();
         for(int k = 0; k < bSize; k++) {
           keys.push_back(std::pair<int, int>(k + const2, e->getNum()));
           coord.push_back(bubbleCenterCoord[0]);
