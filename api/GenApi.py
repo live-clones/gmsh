@@ -1249,7 +1249,7 @@ class API:
                                                      self.version_major,
                                                      self.version_minor, ns))
                     fcwrap.write("namespace " + ns + " {\n")
-                    s = string.split(cwrap_utils.format(ns, "inline "), '\n')
+                    s = cwrap_utils.format(ns, "inline ").split('\n')
                     for line in s:
                         fcwrap.write("  " + line + "\n")
                     fcwrap.write("}\n\n")

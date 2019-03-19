@@ -996,12 +996,13 @@ automatically assigned to the elements.
 @item getJacobians
 Get the Jacobians of all the elements of type @code{elementType} classified on
 the entity of dimension @code{dim} and tag @code{tag}, at the G integration
-points required by the @code{integrationType} integration rule (e.g. "Gauss4").
-Data is returned by element, with elements in the same order as in
-@code{getElements} and @code{getElementsByType}. @code{jacobians} contains for
-each element the 9 entries of a 3x3 Jacobian matrix (by row), for each
-integration point: [e1g1Jxx, e1g1Jxy, e1g1Jxz, ... e1g1Jzz, e1g2Jxx, ...,
-e1gGJzz, e2g1Jxx, ...]. @code{determinants} contains for each element the
+points required by the @code{integrationType} integration rule (e.g. "Gauss4"
+for a Gauss quadrature suited for integrating 4th order polynomials). Data is
+returned by element, with elements in the same order as in @code{getElements}
+and @code{getElementsByType}. @code{jacobians} contains for each element the 9
+entries of a 3x3 Jacobian matrix (by row), for each integration point: [e1g1Jxu,
+e1g1Jxv, e1g1Jxw, ... e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with
+Jxu=dx/du, Jxv=dx/dv, etc. @code{determinants} contains for each element the
 determinant of the Jacobian matrix for each integration point: [e1g1, e1g2, ...
 e1gG, e2g1, ...]. @code{points} contains for each element the x, y, z
 coordinates of the integration points. If @code{tag} < 0, get the Jacobian data
@@ -1032,8 +1033,10 @@ Preallocate the data required by @code{getJacobians}. This is necessary only if
 
 @item getBasisFunctions
 Get the basis functions of the element of type @code{elementType} for the given
-@code{integrationType} integration rule (e.g. "Gauss4") and
-@code{functionSpaceType} function space (e.g. "IsoParametric").
+@code{integrationType} integration rule (e.g. "Gauss4" for a Gauss quadrature
+suited for integrating 4th order polynomials) and @code{functionSpaceType}
+function space (e.g. "Lagrange" or "GradLagrange" for Lagrange basis functions
+or their gradient, in the u, v, w coordinates of the reference element).
 @code{integrationPoints} contains the parametric coordinates u, v, w and the
 weight q for each integeration point, concatenated: [g1u, g1v, g1w, g1q, g2u,
 ...]. @code{numComponents} returns the number C of components of a basis
