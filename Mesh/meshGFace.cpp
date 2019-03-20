@@ -723,7 +723,7 @@ static bool algoDelaunay2D(GFace *gf)
   return false;
 }
 
-static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
+static bool recoverEdge(BDS_Mesh *m, GFace *gf, GEdge *ge,
                         std::map<MVertex *, BDS_Point *> &recoverMapInv,
                         std::set<EdgeToRecover> *e2r,
                         std::set<EdgeToRecover> *notRecovered, int pass)
@@ -758,7 +758,7 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
             Msg::Error(
               "Unable to recover the edge %d (%d/%d) on curve %d (on surface %d)",
               ge->lines[i]->getNum(), i + 1, ge->lines.size(), ge->tag(),
-              ge->faces().back()->tag());
+              gf->tag());
             if(Msg::GetVerbosity() == 99){
               outputScalarField(m->triangles, "wrongmesh.pos", 0);
               outputScalarField(m->triangles, "wrongparam.pos", 1);
@@ -1414,15 +1414,15 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   ite = edges.begin();
   while(ite != edges.end()) {
     if(!(*ite)->isMeshDegenerated())
-      recoverEdge(m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered,
-                  1);
+      recoverEdge(m, gf, *ite, recoverMapInv, &edgesToRecover,
+                  &edgesNotRecovered, 1);
     ++ite;
   }
   ite = emb_edges.begin();
   while(ite != emb_edges.end()) {
     if(!(*ite)->isMeshDegenerated())
-      recoverEdge(m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered,
-                  1);
+      recoverEdge(m, gf, *ite, recoverMapInv, &edgesToRecover,
+                  &edgesNotRecovered, 1);
     ++ite;
   }
 
@@ -1430,7 +1430,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   ite = edges.begin();
   while(ite != edges.end()) {
     if(!(*ite)->isMeshDegenerated()) {
-      if(!recoverEdge(m, *ite, recoverMapInv, &edgesToRecover,
+      if(!recoverEdge(m, gf, *ite, recoverMapInv, &edgesToRecover,
                       &edgesNotRecovered, 2)) {
         delete m;
         gf->meshStatistics.status = GFace::FAILED;
@@ -1563,8 +1563,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   ite = emb_edges.begin();
   while(ite != emb_edges.end()) {
     if(!(*ite)->isMeshDegenerated())
-      recoverEdge(m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered,
-                  2);
+      recoverEdge(m, gf, *ite, recoverMapInv, &edgesToRecover,
+                  &edgesNotRecovered, 2);
     ++ite;
   }
 
