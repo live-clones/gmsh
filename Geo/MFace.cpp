@@ -98,7 +98,6 @@ void MFace::orientateFace(std::vector<int> &axis1,
     else {
       axis1[1] = _v[int(_si[1])]->getNum();
     }
-
     if(unsigned(axis1[0]) == _v[0]->getNum() && unsigned(axis1[1]) == _v[1]->getNum()) {
       faceOrientationFlag[0] = 1;
       faceOrientationFlag[1] = 1;
@@ -110,31 +109,31 @@ void MFace::orientateFace(std::vector<int> &axis1,
       faceOrientationFlag[1] = 1;
       faceOrientationFlag[2] = 1;
     }
-    else if(unsigned(axis1[0])==_v[3]->getNum() && unsigned(axis1[1])==_v[2]->getNum())
+    else if(unsigned(axis1[0])==_v[2]->getNum() && unsigned(axis1[1])==_v[3]->getNum())
     {
       faceOrientationFlag[0] = 1;
       faceOrientationFlag[1] = -1;
       faceOrientationFlag[2] = 1;
     }
-    else if(unsigned(axis1[0])==_v[2]->getNum() && unsigned(axis1[1])==_v[3]->getNum())
+    else if(unsigned(axis1[0])==_v[3]->getNum() && unsigned(axis1[1])==_v[2]->getNum())
     {
       faceOrientationFlag[0] = -1;
       faceOrientationFlag[1] = -1;
       faceOrientationFlag[2] = 1;
     }
-    else if(unsigned(axis1[0])==_v[0]->getNum() && unsigned(axis1[1])==_v[3]->getNum())
+    else if(unsigned(axis1[0])==_v[0]->getNum() && unsigned(axis1[1])==_v[2]->getNum())
     {
       faceOrientationFlag[0] = 1;
       faceOrientationFlag[1] = 1;
       faceOrientationFlag[2] = -1;
     }
-    else if(unsigned(axis1[0])==_v[3]->getNum() && unsigned(axis1[1])==_v[0]->getNum())
+    else if(unsigned(axis1[0])==_v[2]->getNum() && unsigned(axis1[1])==_v[0]->getNum())
     {
       faceOrientationFlag[0] = 1;
       faceOrientationFlag[1] = -1;
       faceOrientationFlag[2] = -1;
     }
-    else if(unsigned(axis1[0])==_v[1]->getNum() && unsigned(axis1[1])==_v[2]->getNum())
+    else if(unsigned(axis1[0])==_v[1]->getNum() && unsigned(axis1[1])==_v[3]->getNum())
     {
       faceOrientationFlag[0] = -1;
       faceOrientationFlag[1] = 1;

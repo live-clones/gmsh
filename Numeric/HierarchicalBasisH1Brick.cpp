@@ -1,5 +1,4 @@
 #include "HierarchicalBasisH1Brick.h"
-
 HierarchicalBasisH1Brick::HierarchicalBasisH1Brick(int order) {
   _pb1 = order;
   _pb2 = order;

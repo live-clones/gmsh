@@ -1895,6 +1895,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   switch(familyType) {
   case TYPE_HEX: {
     basis = new HierarchicalBasisH1Brick(order);
+    break;
   }
   case TYPE_QUA: {
     basis = new HierarchicalBasisH1Quad(order);
@@ -2143,7 +2144,7 @@ GMSH_API void gmsh::model::mesh::getKeyForElements(gmsh::vectorpair &keys,
     switch(familyType) {
     case TYPE_HEX: {
       basis = new HierarchicalBasisH1Brick(order);
-    }
+    } break;
     case TYPE_QUA: {
       basis = new HierarchicalBasisH1Quad(order);
     } break;
@@ -2220,7 +2221,7 @@ GMSH_API void gmsh::model::mesh::getKeyForElements(gmsh::vectorpair &keys,
           }
         }
         std::vector<double> bubbleCenterCoord(3);
-        for(int k = 0; k < e->getNumVertices(); k++) {
+        for(unsigned int k = 0; k < e->getNumVertices(); k++) {
           bubbleCenterCoord[0] += e->getVertex(k)->x();
           bubbleCenterCoord[1] += e->getVertex(k)->y();
           bubbleCenterCoord[2] += e->getVertex(k)->z();
@@ -2246,8 +2247,6 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
   int familyType = ElementType::getParentType(elementType);
   switch(familyType) {
   case TYPE_QUA: {
-    int bnumElement = 0;
-    int it2 = 0;
     std::vector<int> bubbleOrder((order - 1) * (order - 1));
     int it = 0;
     for(int n1 = 2; n1 <= order; n1++) {
@@ -2256,10 +2255,12 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
         it++;
       }
     }
+    int bnumElement = 0;
+    int it2 = 0;
     for(std::size_t i = 0; i < keys.size(); i++) {
       if(keys[i].first == 2) { info.push_back(std::pair<int, int>(2, 1)); }
       else {
-        if(keys[i].first > 2 && keys[i].first < order + 2) {
+        if(keys[i].first > 2 && keys[i].first <order+ 2) {
           info.push_back(std::pair<int, int>(keys[i].first, 2));
         }
         else {
@@ -2300,6 +2301,12 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     }
 
   } break;
+  case TYPE_HEX:
+    std::cout<<"not done yet"<<std::endl;
+  break;
+  case TYPE_LIN:
+    std::cout<<"not done yet"<<std::endl;
+  break;
   default: Msg::Error("Unknown familyType "); throw 2;
   }
 }

@@ -12,10 +12,49 @@ import numpy as np
 INTEGRATION = 'Gauss2'
 model = gmsh.model
 factory = model.occ
-order=6
+order=3
+gmsh.initialize()
+#gmsh.option.setNumber("General.Terminal", 1)
+#
+gmsh.model.add("brick_element");
 
-                  
+# add discrete surface with tag 1
+gmsh.model.addDiscreteEntity(3, 1)
 
+## add 4 mesh nodes
+gmsh.model.mesh.setNodes(3, 1,
+                         [4, 5, 3, 1,2,10,7,9], # node tags: 1, 2, 3, and 4
+                         [0., 0., 0., # coordinates of node 1
+                          1., 0., 0., # coordinates of node 2
+                          1., 1., 0., # ...
+                          0., 1., 0.,
+                          0., 0., 1., # coordinates of node 1
+                          1., 0., 1., # coordinates of node 2
+                          1., 1., 1.,
+                          0., 1., 1.]) # ...
+      
+# add 1 quadrangle
+gmsh.model.mesh.setElements(3, 1,
+                            [5], 
+                            [[1]], # Quadrangle tag: 1 
+                            [[4, 5, 3, 1,2,10,7,9]]) #Quadrangle 1: nodes 1, 2, 3,4
+                              
+
+# export the mesh ; use explore.py to read and examine the mesh
+gmsh.write("brick_element.msh")
+elementType=5
+#ky,coord=gmsh.model.mesh.getKeyForElements(3, 1, order,False)
+bs, we ,ky,numDof=model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType, 'GradLegendre',order,False) 
+
+print( "Evaluation of de the basis functions at the integration points: ")
+print(bs)
+print("key :")
+print(ky)
+print(len(ky))
+print(numDof)
+#print("coord:")
+#print(coord)
+gmsh.finalize()
 #gmsh.initialize()
 #gmsh.option.setNumber("General.Terminal", 1)
 #
@@ -57,26 +96,26 @@ order=6
 
 #test_2
 
-gmsh.initialize(sys.argv)
-gmsh.model.add("square_element")
-factory = model.occ
-model.add("mesh_square")
-surf = factory.addRectangle(0, 0, 0, 1, 1)
-factory.synchronize()
-model.addPhysicalGroup(2, [surf], 4)
-model.setPhysicalName(2, 4, 'Domain')
-
-#model.mesh.setRecombine(2,1)
-model.mesh.generate(2)
-gmsh.write("mesh_square.msh")
-bs, we ,ky=model.mesh.getBasisFunctionsForElements(INTEGRATION,2, 'Legendre',order) 
-#print(len(bs))
-#print(bs)
-#print(len(ky))
-#print(ky)
-info=model.mesh.getInformationForElements(ky,order,2)
-print(info)
-gmsh.finalize()
+#gmsh.initialize(sys.argv)
+#gmsh.model.add("square_element")
+#factory = model.occ
+#model.add("mesh_square")
+#surf = factory.addRectangle(0, 0, 0, 1, 1)
+#factory.synchronize()
+#model.addPhysicalGroup(2, [surf], 4)
+#model.setPhysicalName(2, 4, 'Domain')
+#
+##model.mesh.setRecombine(2,1)
+#model.mesh.generate(2)
+#gmsh.write("mesh_square.msh")
+#bs, we ,ky=model.mesh.getBasisFunctionsForElements(INTEGRATION,2, 'Legendre',order) 
+##print(len(bs))
+##print(bs)
+##print(len(ky))
+##print(ky)
+#info=model.mesh.getInformationForElements(ky,order,2)
+#print(info)
+#gmsh.finalize()
 
 #test3
 ##
