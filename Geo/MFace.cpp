@@ -83,7 +83,7 @@ void MFace::orientateFace(std::vector<int> &axis1,
     for(int i = 0; i < 4; i++) {
       if(_v[int(_si[0])]->getNum() == unsigned(_v[i]->getNum())) { c = i; }
     }
-    int indexopposedVertex;
+    int indexopposedVertex=0;
     switch(c) {
     case(0): indexopposedVertex = 3; break;
     case(1): indexopposedVertex = 2; break;
