@@ -1854,7 +1854,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
 
 GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   const std::string &integrationType, const int elementType,
-  std::vector<double> &basisFunctions, std::vector<double> &weight,
+  std::vector<double> &basisFunctions, std::vector<double> &integrationPoints,
   const std::string &functionSpaceType, const int order, gmsh::vectorpair &keys,
   int &numDof, const bool belongBoundary, const int tag)
 {
@@ -1881,12 +1881,11 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     throw 3;
   }
   int dim = ElementType::getDimension(elementType);
-  std::vector<double> integrationPoints;
   for(int i = 0; i < pts.size1(); i++) {
     integrationPoints.push_back(pts(i, 0));
     integrationPoints.push_back(pts(i, 1));
     integrationPoints.push_back(pts(i, 2));
-    weight.push_back(weights(i));
+    integrationPoints.push_back(weights(i));
   }
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
