@@ -47,15 +47,15 @@ public:
                              std::vector<double> &bubbleBasis);
   virtual void
   generateGradientBasis(double const &u, double const &v, double const &w,
-                        std::vector<std::vector<double>> &gradientVertex,
-                        std::vector<std::vector<double>> &gradientEdge,
-                        std::vector<std::vector<double>> &gradientFace,
-                        std::vector<std::vector<double>> &gradientBubble);
+                        std::vector<std::vector<double> > &gradientVertex,
+                        std::vector<std::vector<double> > &gradientEdge,
+                        std::vector<std::vector<double> > &gradientFace,
+                        std::vector<std::vector<double> > &gradientBubble);
   virtual void orientateEdge(int const &flagOrientation, int const &edgeNumber,
                              std::vector<double> &edgeBasis);
   virtual void
   orientateEdgeGrad(int const &flagOrientation, int const &edgeNumber,
-                    std::vector<std::vector<double>> &gradientEdge);
+                    std::vector<std::vector<double> > &gradientEdge);
 
   virtual void orientateFace(double const &u, double const &v, double const &w,
                              int const &flag1, int const &flag2,
@@ -65,14 +65,14 @@ public:
   orientateFaceGrad(double const &u, double const &v, double const &w,
                     int const &flag1, int const &flag2, int const &flag3,
                     int const &faceNumber,
-                    std::vector<std::vector<double>> &gradientFace);
+                    std::vector<std::vector<double> > &gradientFace);
   virtual void reverseFaceBubbleFor3D(const bool belongBoundary){};
   virtual void reverseEdgeBubbleFor2D(const bool belongBoundary){};
 
 private:
-  int _pb1;            // bubble function order in  direction u
-  int _pb2;            // bubble function order in  direction v
-  int _pb3;            // bubble function order in  direction w
+  int _pb1; // bubble function order in  direction u
+  int _pb2; // bubble function order in  direction v
+  int _pb3; // bubble function order in  direction w
   int _pOrderEdge[12]; // Edge functions order (pOrderEdge[0] matches the order
                        // of the edge 0)
   int _pOrderFace1[6]; // Face functions order in direction u  (pOrderFace1[0]
@@ -88,10 +88,10 @@ private:
   inline void
   _someProductGrad(double const &u, double const &v, double const &w,
                    std::vector<double> &product,
-                   std::vector<std::vector<double>> &gradientProduct,
+                   std::vector<std::vector<double> > &gradientProduct,
                    std::vector<double> &lambda,
-                   std::vector<std::vector<double>>
-                       &gradientLambda); // compute some product and fill the
-                                         // vector gradientVertex
+                   std::vector<std::vector<double> >
+                     &gradientLambda); // compute some product and fill the
+                                       // vector gradientVertex
 };
 #endif

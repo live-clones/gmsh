@@ -2260,7 +2260,7 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     for(std::size_t i = 0; i < keys.size(); i++) {
       if(keys[i].first == 2) { info.push_back(std::pair<int, int>(2, 1)); }
       else {
-        if(keys[i].first > 2 && keys[i].first <order+ 2) {
+        if(keys[i].first > 2 && keys[i].first < order + 2) {
           info.push_back(std::pair<int, int>(keys[i].first, 2));
         }
         else {
@@ -2301,12 +2301,8 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     }
 
   } break;
-  case TYPE_HEX:
-    std::cout<<"not done yet"<<std::endl;
-  break;
-  case TYPE_LIN:
-    std::cout<<"not done yet"<<std::endl;
-  break;
+  case TYPE_HEX: std::cout << "not done yet" << std::endl; break;
+  case TYPE_LIN: std::cout << "not done yet" << std::endl; break;
   default: Msg::Error("Unknown familyType "); throw 2;
   }
 }
