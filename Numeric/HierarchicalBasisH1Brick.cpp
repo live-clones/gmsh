@@ -169,6 +169,7 @@ void HierarchicalBasisH1Brick::generateBasis(double const &u, double const &v,
       for(int ipb3 = 0; ipb3 < _pb3 - 1; ipb3++) {
         bubbleBasis[indexBubbleBasis] =
           lkVectorU[ipb1] * lkVectorV[ipb2] * lkVectorW[ipb3];
+        indexBubbleBasis++;
       }
     }
   }
@@ -397,6 +398,7 @@ void HierarchicalBasisH1Brick::generateGradientBasis(
           dlkVectorU[ipb1][0] * lkVectorV[ipb2] * lkVectorW[ipb3],
           lkVectorU[ipb1] * dlkVectorV[ipb2][1] * lkVectorW[ipb3],
           lkVectorU[ipb1] * lkVectorV[ipb2] * dlkVectorW[ipb3][2]};
+        indexBubbleBasis++;
       }
     }
   }

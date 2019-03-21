@@ -70,13 +70,34 @@ MFace::MFace(const std::vector<MVertex *> &v)
   for(std::size_t i = 0; i < v.size(); i++) _v.push_back(v[i]);
   sortVertices(_v, _si);
 }
-void MFace::orientateFace(std::vector<int> &axis1,
-                          std::vector<int> &faceOrientationFlag)
+void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
 {
   if(_v.size() == 3) { // triangular face
-    axis1[0] = _v[int(_si[0])]->getNum();
-    axis1[1] = _v[int(_si[1])]->getNum();
-    // not yet face orientation for triangular
+    if(_v[int(_si[0])]->getNum()==_v[0]->getNum() && _v[int(_si[1])]->getNum()==_v[1]->getNum()){
+      faceOrientationFlag[0]=0;
+      faceOrientationFlag[1]=1 ;
+    }
+    if(_v[int(_si[0])]->getNum()==_v[2]->getNum() && _v[int(_si[1])]->getNum()==_v[0]->getNum()){
+      faceOrientationFlag[0]=1;
+      faceOrientationFlag[1]=1 ;
+    }
+    if(_v[int(_si[0])]->getNum()==_v[1]->getNum() && _v[int(_si[1])]->getNum()==_v[2]->getNum()){
+      faceOrientationFlag[0]=2;
+      faceOrientationFlag[1]=1 ;
+    }
+    if(_v[int(_si[0])]->getNum()==_v[0]->getNum() && _v[int(_si[1])]->getNum()==_v[2]->getNum()){
+      faceOrientationFlag[0]=0;
+      faceOrientationFlag[1]=-1 ;
+    }
+    if(_v[int(_si[0])]->getNum()==_v[1]->getNum() && _v[int(_si[1])]->getNum()==_v[0]->getNum()){
+      faceOrientationFlag[0]=1;
+      faceOrientationFlag[1]=-1 ;
+    }
+    if(_v[int(_si[0])]->getNum()==_v[2]->getNum() && _v[int(_si[1])]->getNum()==_v[1]->getNum()){
+      faceOrientationFlag[0]=2;
+      faceOrientationFlag[1]=-1 ;
+    }
+
   }
   else { // quadrilateral face
     int c = 0;
@@ -91,51 +112,53 @@ void MFace::orientateFace(std::vector<int> &axis1,
     case(3): indexopposedVertex = 0; break;
     }
     int numVertexOpposed = _v[indexopposedVertex]->getNum();
-    axis1[0] = unsigned(_v[int(_si[0])]->getNum());
+
+    int axis1A =_v[int(_si[0])]->getNum();
+    int axis1B=0;
     if(_v[int(_si[1])]->getNum() == unsigned(numVertexOpposed)) {
-      axis1[1] = _v[int(_si[2])]->getNum();
+      axis1B  = _v[int(_si[2])]->getNum();
     }
     else {
-      axis1[1] = _v[int(_si[1])]->getNum();
+      axis1B  = _v[int(_si[1])]->getNum();
     }
-    if(unsigned(axis1[0]) == _v[0]->getNum() &&
-       unsigned(axis1[1]) == _v[1]->getNum()) {
+    if(unsigned(axis1A) == _v[0]->getNum() &&
+       unsigned(axis1B) == _v[1]->getNum()) {
       faceOrientationFlag[0] = 1;
       faceOrientationFlag[1] = 1;
       faceOrientationFlag[2] = 1;
     }
-    else if(unsigned(axis1[0]) == _v[1]->getNum() &&
-            unsigned(axis1[1]) == _v[0]->getNum()) {
+    else if(unsigned(axis1A) == _v[1]->getNum() &&
+            unsigned(axis1B) == _v[0]->getNum()) {
       faceOrientationFlag[0] = -1;
       faceOrientationFlag[1] = 1;
       faceOrientationFlag[2] = 1;
     }
-    else if(unsigned(axis1[0]) == _v[2]->getNum() &&
-            unsigned(axis1[1]) == _v[3]->getNum()) {
+    else if(unsigned(axis1A) == _v[2]->getNum() &&
+            unsigned(axis1B) == _v[3]->getNum()) {
       faceOrientationFlag[0] = 1;
       faceOrientationFlag[1] = -1;
       faceOrientationFlag[2] = 1;
     }
-    else if(unsigned(axis1[0]) == _v[3]->getNum() &&
-            unsigned(axis1[1]) == _v[2]->getNum()) {
+    else if(unsigned(axis1A) == _v[3]->getNum() &&
+            unsigned(axis1B) == _v[2]->getNum()) {
       faceOrientationFlag[0] = -1;
       faceOrientationFlag[1] = -1;
       faceOrientationFlag[2] = 1;
     }
-    else if(unsigned(axis1[0]) == _v[0]->getNum() &&
-            unsigned(axis1[1]) == _v[2]->getNum()) {
+    else if(unsigned(axis1A) == _v[0]->getNum() &&
+            unsigned(axis1B) == _v[2]->getNum()) {
       faceOrientationFlag[0] = 1;
       faceOrientationFlag[1] = 1;
       faceOrientationFlag[2] = -1;
     }
-    else if(unsigned(axis1[0]) == _v[2]->getNum() &&
-            unsigned(axis1[1]) == _v[0]->getNum()) {
+    else if(unsigned(axis1A) == _v[2]->getNum() &&
+            unsigned(axis1B) == _v[0]->getNum()) {
       faceOrientationFlag[0] = 1;
       faceOrientationFlag[1] = -1;
       faceOrientationFlag[2] = -1;
     }
-    else if(unsigned(axis1[0]) == _v[1]->getNum() &&
-            unsigned(axis1[1]) == _v[3]->getNum()) {
+    else if(unsigned(axis1A) == _v[1]->getNum() &&
+            unsigned(axis1B) == _v[3]->getNum()) {
       faceOrientationFlag[0] = -1;
       faceOrientationFlag[1] = 1;
       faceOrientationFlag[2] = -1;

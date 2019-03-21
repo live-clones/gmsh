@@ -45,6 +45,7 @@
 #include "HierarchicalBasisH1Tria.h"
 #include "HierarchicalBasisH1Line.h"
 #include "HierarchicalBasisH1Brick.h"
+#include "HierarchicalBasisH1Tetra.h"
 #if defined(HAVE_MESH)
 #include "Field.h"
 #include "meshGFaceOptimize.h"
@@ -1859,7 +1860,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   int &numDof, const bool belongBoundary, const int tag)
 {
   basisFunctions.clear();
-  weight.clear();
+  integrationPoints.clear();
   std::string intName = "";
   int intOrder = 0;
   if(!_getIntegrationInfo(integrationType, intName, intOrder)) {
@@ -1896,6 +1897,10 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     basis = new HierarchicalBasisH1Brick(order);
     break;
   }
+  case TYPE_TET: {
+    basis = new HierarchicalBasisH1Tetra(order);
+    break;
+  }
   case TYPE_QUA: {
     basis = new HierarchicalBasisH1Quad(order);
   } break;
@@ -1907,7 +1912,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   } break;
   default: Msg::Error("Unknown familyType "); throw 2;
   }
-  int nq = weight.size();
+  int nq = weights.size();
   int vSize = basis->getnVertexFunction();
   int bSize = basis->getnBubbleFunction();
   int eSize = basis->getnEdgeFunction();
@@ -1980,28 +1985,31 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           int numberEdge = e->getNumEdges();
           std::vector<double> eTableCopy(eSize);
           for(int r = 0; r < eSize; r++) { eTableCopy[r] = eTable[r]; }
-          for(int jj = 0; jj < numberEdge; jj++) {
-            MEdge edge = e->getEdge(jj);
-            int orientationFlag = 1;
-            if(edge.getMinVertex()->getNum() != edge.getVertex(0)->getNum()) {
-              orientationFlag = -1;
+          if(eSize > 0) {
+            for(int jj = 0; jj < numberEdge; jj++) {
+              MEdge edge = e->getEdge(jj);
+              int orientationFlag = 1;
+              if(edge.getMinVertex()->getNum() != edge.getVertex(0)->getNum()) {
+                orientationFlag = -1;
+              }
+              else {
+                orientationFlag = 1;
+              }
+              basis->orientateEdge(orientationFlag, jj, eTableCopy);
             }
-            else {
-              orientationFlag = 1;
-            }
-            basis->orientateEdge(orientationFlag, jj, eTableCopy);
           }
           int numberFace = e->getNumFaces();
           std::vector<double> fTableCopy(fSize);
           for(int r = 0; r < fSize; r++) { fTableCopy[r] = fTable[r]; }
-          for(int jj = 0; jj < numberFace; jj++) {
-            MFace face = e->getFace(jj);
-            std::vector<int> axis1(2);
-            std::vector<int> faceOrientationFlag(3);
-            face.orientateFace(axis1, faceOrientationFlag);
-            basis->orientateFace(u, v, w, faceOrientationFlag[0],
-                                 faceOrientationFlag[1], faceOrientationFlag[2],
-                                 jj, fTableCopy);
+          if(fSize > 0) {
+            for(int jj = 0; jj < numberFace; jj++) {
+              MFace face = e->getFace(jj);
+              std::vector<int> faceOrientationFlag(3);
+              face.getOrientationFlagForFace(faceOrientationFlag);
+              basis->orientateFace(u, v, w, faceOrientationFlag[0],
+                                   faceOrientationFlag[1],
+                                   faceOrientationFlag[2], jj, fTableCopy);
+            }
           }
           for(int k = 0; k < vSize; k++) {
             basisFunctions[functionIterator] = vTable[k];
@@ -2053,16 +2061,18 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
             eTableCopy[r][1] = gradientEdge[r][1];
             eTableCopy[r][2] = gradientEdge[r][2];
           }
-          for(int jj = 0; jj < numberEdge; jj++) {
-            MEdge edge = e->getEdge(jj);
-            int orientationFlag = 1;
-            if(edge.getMinVertex()->getNum() != edge.getVertex(0)->getNum()) {
-              orientationFlag = -1;
+          if(eSize > 0) {
+            for(int jj = 0; jj < numberEdge; jj++) {
+              MEdge edge = e->getEdge(jj);
+              int orientationFlag = 1;
+              if(edge.getMinVertex()->getNum() != edge.getVertex(0)->getNum()) {
+                orientationFlag = -1;
+              }
+              else {
+                orientationFlag = 1;
+              }
+              basis->orientateEdgeGrad(orientationFlag, jj, eTableCopy);
             }
-            else {
-              orientationFlag = 1;
-            }
-            basis->orientateEdgeGrad(orientationFlag, jj, eTableCopy);
           }
           int numberFace = e->getNumFaces();
           std::vector<std::vector<double> > fTableCopy(
@@ -2072,14 +2082,15 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
             fTableCopy[r][1] = gradientFace[r][1];
             fTableCopy[r][2] = gradientFace[r][2];
           }
-          for(int jj = 0; jj < numberFace; jj++) {
-            MFace face = e->getFace(jj);
-            std::vector<int> axis1(2);
-            std::vector<int> faceOrientationFlag(3);
-            face.orientateFace(axis1, faceOrientationFlag);
-            basis->orientateFaceGrad(u, v, w, faceOrientationFlag[0],
-                                     faceOrientationFlag[1],
-                                     faceOrientationFlag[2], jj, fTableCopy);
+          if(fSize > 0) {
+            for(int jj = 0; jj < numberFace; jj++) {
+              MFace face = e->getFace(jj);
+              std::vector<int> faceOrientationFlag(3);
+              face.getOrientationFlagForFace(faceOrientationFlag);
+              basis->orientateFaceGrad(u, v, w, faceOrientationFlag[0],
+                                       faceOrientationFlag[1],
+                                       faceOrientationFlag[2], jj, fTableCopy);
+            }
           }
           for(int k = 0; k < vSize; k++) {
             basisFunctions[functionIterator] = gradientVertex[k][0];
@@ -2302,6 +2313,7 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
   } break;
   case TYPE_HEX: std::cout << "not done yet" << std::endl; break;
   case TYPE_LIN: std::cout << "not done yet" << std::endl; break;
+  case TYPE_TET: std::cout << "not done yet" << std::endl; break;
   default: Msg::Error("Unknown familyType "); throw 2;
   }
 }

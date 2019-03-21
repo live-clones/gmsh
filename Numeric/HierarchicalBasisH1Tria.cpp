@@ -63,11 +63,11 @@ void HierarchicalBasisH1Tria::generateBasis(double const &u, double const &v,
   double lambda2 = _affineCoordinate(2, uc, vc);
   double lambda3 = _affineCoordinate(3, uc, vc);
   double product32 = lambda2 * lambda3;
-  double subst32 = lambda3 - lambda2;
+  double subtraction32 = lambda3 - lambda2;
   double product13 = lambda3 * lambda1;
-  double subst13 = lambda1 - lambda3;
+  double subtraction13 = lambda1 - lambda3;
   double product21 = lambda2 * lambda1;
-  double subst21 = lambda2 - lambda1;
+  double subtraction21 = lambda2 - lambda1;
   double product = lambda1 * lambda2 * lambda3;
   // vertex shape functions:
   vertexBasis[0] = lambda2;
@@ -76,7 +76,7 @@ void HierarchicalBasisH1Tria::generateBasis(double const &u, double const &v,
   // edge 0  shape functions and a part of bubble functions :
   int iterator2 = 0;
   for(int k = 0; k <= _pOrderEdge[0] - 2; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subst32);
+    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction32);
     edgeBasis[k] = product32 * kernel;
     int iterator = 0;
     while(iterator <= _pb - 3 - k) {
@@ -86,7 +86,7 @@ void HierarchicalBasisH1Tria::generateBasis(double const &u, double const &v,
     iterator2 = iterator2 + _pb - 2 - k;
   }
   for(int k = _pOrderEdge[0] - 1; k <= _pb - 3; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subst32);
+    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction32);
     int iterator = 0;
     while(iterator <= _pb - 3 - k) {
       bubbleBasis[iterator2 + iterator] = product * kernel;
@@ -97,11 +97,11 @@ void HierarchicalBasisH1Tria::generateBasis(double const &u, double const &v,
   // edge 1 shape functions  :
   for(int k = 0; k <= _pOrderEdge[1] - 2; k++) {
     edgeBasis[_pOrderEdge[0] + k - 1] =
-      product13 * OrthogonalPoly::EvalKernelFunction(k, subst13);
+      product13 * OrthogonalPoly::EvalKernelFunction(k, subtraction13);
   }
   // edge 2  shape functions and a part of bubble functions :
   for(int k = 0; k <= _pOrderEdge[2] - 2; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subst21);
+    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction21);
     edgeBasis[k + _pOrderEdge[0] + _pOrderEdge[1] - 2] = product21 * kernel;
     int iterator2 = k;
     int iterator1 = 0;
@@ -114,7 +114,7 @@ void HierarchicalBasisH1Tria::generateBasis(double const &u, double const &v,
     }
   }
   for(int k = _pOrderEdge[2] - 1; k <= _pb - 3; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subst21);
+    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction21);
     int iterator2 = k;
     int iterator1 = 0;
     int iterator3 = _pb - 2;
@@ -150,11 +150,11 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
   double lambda2 = _affineCoordinate(2, uc, vc);
   double lambda3 = _affineCoordinate(3, uc, vc);
   double product32 = lambda2 * lambda3;
-  double subst32 = lambda3 - lambda2;
+  double subtraction32 = lambda3 - lambda2;
   double product13 = lambda3 * lambda1;
-  double subst13 = lambda1 - lambda3;
+  double subtraction13 = lambda1 - lambda3;
   double product21 = lambda2 * lambda1;
-  double subst21 = lambda2 - lambda1;
+  double subtraction21 = lambda2 - lambda1;
   double product = lambda1 * lambda2 * lambda3;
   // vertex gradient functions:
   gradientVertex[0][0] = jacob * dlambda2U;
@@ -168,8 +168,8 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
   // edge 0  gradient  and a part of bubble functions gradient :
   int iterator2 = 0;
   for(int k = 0; k <= _pOrderEdge[0] - 2; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subst32);
-    double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subst32);
+    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction32);
+    double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subtraction32);
     gradientEdge[k][0] =
       (gradientVertex[1][0] * lambda2 + gradientVertex[0][0] * lambda3) *
         kernel +
@@ -200,8 +200,8 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
     iterator2 = iterator2 + _pb - 2 - k;
   }
   for(int k = _pOrderEdge[0] - 1; k <= _pb - 3; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subst32);
-    double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subst32);
+    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction32);
+    double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subtraction32);
     int iterator = 0;
     while(iterator <= _pb - 3 - k) {
       gradientBubble[iterator2 + iterator][0] =
@@ -225,8 +225,8 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
   }
   // edge 1 shape functions gradient  :
   for(int k = 0; k <= _pOrderEdge[1] - 2; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subst13);
-    double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subst13);
+    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction13);
+    double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subtraction13);
     gradientEdge[_pOrderEdge[0] + k - 1][0] =
       (lambda3 * gradientVertex[2][0] + lambda1 * gradientVertex[1][0]) *
         kernel +
@@ -238,8 +238,8 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
   }
   // edge 2  gradient  and a part of bubble functions gradient :
   for(int k = 0; k <= _pOrderEdge[2] - 2; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subst21);
-    double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subst21);
+    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction21);
+    double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subtraction21);
     gradientEdge[k + _pOrderEdge[0] + _pOrderEdge[1] - 2][0] =
       (lambda2 * gradientVertex[2][0] + lambda1 * gradientVertex[0][0]) *
         kernel +
@@ -262,8 +262,8 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
     }
   }
   for(int k = _pOrderEdge[2] - 1; k <= _pb - 3; k++) {
-    double kernel = OrthogonalPoly::EvalKernelFunction(k, subst21);
-    double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subst21);
+    double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction21);
+    double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subtraction21);
     int iterator2 = k;
     int iterator1 = 0;
     int iterator3 = _pb - 2;
