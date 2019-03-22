@@ -73,7 +73,7 @@ static void eigen(std::vector<double> &inList, int inNb,
 
   // loop on elements
   int nb = inList.size() / inNb;
-  for(unsigned int i = 0; i < inList.size(); i += nb) {
+  for(std::size_t i = 0; i < inList.size(); i += nb) {
     // copy node coordinates
     for(int j = 0; j < 3 * nbNod; j++) outList.push_back(inList[i + j]);
 

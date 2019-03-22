@@ -53,17 +53,17 @@ namespace {
                            std::vector<int> &closureRef,
                            polynomialBasis::clCont &closures)
   {
-    for(unsigned int i = 0; i < closures.size(); i++){
+    for(std::size_t i = 0; i < closures.size(); i++){
       printf("%3i  (%2i): ", i, closureRef[i]);
       if(closureRef[i]==-1){
         printf("\n");
         continue;
       }
-      for(unsigned int j = 0; j < fullClosure[i].size(); j++){
+      for(std::size_t j = 0; j < fullClosure[i].size(); j++){
         printf("%2i ", fullClosure[i][j]);
       }
       printf ("  --  ");
-      for(unsigned int j = 0; j < closures[closureRef[i]].size(); j++){
+      for(std::size_t j = 0; j < closures[closureRef[i]].size(); j++){
         std::string equalSign = "-";
         if(fullClosure[i][closures[closureRef[i]][j]] != closures[i][j])
           equalSign = "#";

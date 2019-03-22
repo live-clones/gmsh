@@ -1157,7 +1157,7 @@ void Size_field::init_region(GRegion *gr)
   for(it = faces.begin(); it != faces.end(); it++) {
     GFace *gf = *it;
 
-    for(GRegion::size_type i = 0; i < gf->storage1.size(); i++) {
+    for(std::size_t i = 0; i < gf->storage1.size(); i++) {
       SPoint3 point = gf->storage1[i];
       double const h = gf->storage4[i];
 
@@ -1167,7 +1167,7 @@ void Size_field::init_region(GRegion *gr)
 
   ANNpointArray duplicate = annAllocPts(field.size(), 3);
 
-  for(GRegion::size_type i = 0; i < field.size(); i++) {
+  for(std::size_t i = 0; i < field.size(); i++) {
     duplicate[i][0] = field[i].first.x();
     duplicate[i][1] = field[i].first.y();
     duplicate[i][2] = field[i].first.z();
@@ -1187,7 +1187,7 @@ void Size_field::init_region(GRegion *gr)
   for(it = faces.begin(); it != faces.end(); it++) {
     GFace *gf = *it;
 
-    for(GRegion::size_type i = 0; i < gf->getNumMeshElements(); i++) {
+    for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
       MElement *element = gf->getMeshElement(i);
       for(std::size_t j = 0; j < element->getNumVertices(); j++) {
         MVertex *vertex = element->getVertex(j);
@@ -1699,9 +1699,9 @@ void Nearest_point::print_field(GRegion *gr)
   std::ofstream file("nearest.pos");
   file << "View \"test\" {\n";
 
-  for(GRegion::size_type i = 0; i < gr->getNumMeshElements(); i++) {
+  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *element = gr->getMeshElement(i);
-    for(GRegion::size_type j = 0; j < element->getNumVertices(); j++) {
+    for(std::size_t j = 0; j < element->getNumVertices(); j++) {
       MVertex *vertex = element->getVertex(j);
       double x = vertex->x();
       double y = vertex->y();

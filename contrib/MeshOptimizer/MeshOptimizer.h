@@ -24,12 +24,14 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-#ifndef _MESHOPTIMIZER_H_
-#define _MESHOPTIMIZER_H_
+#ifndef _MESH_OPTIMIZER_H_
+#define _MESH_OPTIMIZER_H_
+
+#include <vector>
 
 class GEntity;
 class MeshOptParameters;
 
-void meshOptimizer(std::vector<GEntity *> &entities, MeshOptParameters &par);
+void MeshOptimizer(std::vector<GEntity *> &entities, MeshOptParameters &par);
 
 #endif

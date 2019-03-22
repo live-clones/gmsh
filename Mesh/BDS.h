@@ -46,84 +46,6 @@ public:
   }
 };
 
-class BDS_Vector {
-public:
-  double x, y, z;
-  bool operator<(const BDS_Vector &o) const
-  {
-    if(x - o.x > t) return true;
-    if(x - o.x < -t) return false;
-    if(y - o.y > t) return true;
-    if(y - o.y < -t) return false;
-    if(z - o.z > t) return true;
-    return false;
-  }
-  BDS_Vector operator+(const BDS_Vector &v)
-  {
-    return BDS_Vector(x + v.x, y + v.y, z + v.z);
-  }
-  BDS_Vector operator-(const BDS_Vector &v)
-  {
-    return BDS_Vector(x - v.x, y - v.y, z - v.z);
-  }
-  BDS_Vector operator%(const BDS_Vector &other) const
-  {
-    return BDS_Vector(y * other.z - z * other.y, z * other.x - x * other.z,
-                      x * other.y - y * other.x);
-  }
-  BDS_Vector &operator+=(const BDS_Vector &v)
-  {
-    x += v.x;
-    y += v.y;
-    z += v.z;
-    return *this;
-  }
-  BDS_Vector &operator*=(const double &v)
-  {
-    x *= v;
-    y *= v;
-    z *= v;
-    return *this;
-  }
-  BDS_Vector &operator/=(const double &v)
-  {
-    x /= v;
-    y /= v;
-    z /= v;
-    return *this;
-  }
-  BDS_Vector operator/(const double &v)
-  {
-    return BDS_Vector(x / v, y / v, z / v);
-  }
-  BDS_Vector operator*(const double &v)
-  {
-    return BDS_Vector(x * v, y * v, z * v);
-  }
-  double angle(const BDS_Vector &v) const
-  {
-    double const a[3] = {x, y, z};
-    double const b[3] = {v.x, v.y, v.z};
-    double c[3];
-    c[2] = a[0] * b[1] - a[1] * b[0];
-    c[1] = -a[0] * b[2] + a[2] * b[0];
-    c[0] = a[1] * b[2] - a[2] * b[1];
-    double const cosa = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-    double const sina = std::sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
-    return std::atan2(sina, cosa);
-  }
-  double angle_deg(const BDS_Vector &v) const { return angle(v) * 180. / M_PI; }
-  double operator*(const BDS_Vector &v) const
-  {
-    return (x * v.x + y * v.y + z * v.z);
-  }
-  BDS_Vector(const BDS_Point &p2, const BDS_Point &p1);
-  BDS_Vector(const double X = 0., const double Y = 0., const double Z = 0.)
-    : x(X), y(Y), z(Z)
-  {
-  }
-  static double t;
-};
 
 class BDS_Point {
   // the first size is the one dictated by the Background Mesh the
@@ -160,9 +82,7 @@ public:
 };
 
 class BDS_Edge {
-  double _length;
   std::vector<BDS_Face *> _faces;
-
 public:
   BDS_Edge(BDS_Point *A, BDS_Point *B) : deleted(false), g(0)
   {
@@ -176,14 +96,15 @@ public:
     }
     p1->edges.push_back(this);
     p2->edges.push_back(this);
-    update();
   }
 
   BDS_Face *faces(std::size_t const i) const { return _faces[i]; }
-  double length() const { return _length; }
+  double length() const { return  std::sqrt((p1->X - p2->X) * (p1->X - p2->X) +
+					    (p1->Y - p2->Y) * (p1->Y - p2->Y) +
+					    (p1->Z - p2->Z) * (p1->Z - p2->Z));}
   int numfaces() const { return static_cast<int>(_faces.size()); }
   int numTriangles() const;
-  BDS_Point *commonvertex(const BDS_Edge *other) const
+  inline BDS_Point *commonvertex(const BDS_Edge *other) const
   {
     if(p1 == other->p1 || p1 == other->p2) return p1;
     if(p2 == other->p1 || p2 == other->p2) return p2;
@@ -206,13 +127,13 @@ public:
   BDS_Face *otherFace(const BDS_Face *f) const
   {
     if(numfaces() != 2) {
-      Msg::Fatal("otherFace wrong, ony %d faces attached to edge %d %d",
+      Msg::Error("otherFace wrong, ony %d faces attached to edge %d %d",
                  numfaces(), p1->iD, p2->iD);
       return 0;
     }
     if(f == _faces[0]) return _faces[1];
     if(f == _faces[1]) return _faces[0];
-    Msg::Fatal("otherFace wrong: the edge does not belong to the face");
+    Msg::Error("otherFace wrong: the edge does not belong to the face");
     return 0;
   }
   void del(BDS_Face *t)
@@ -224,13 +145,6 @@ public:
   void oppositeof(BDS_Point *oface[2]) const;
   void computeNeighborhood(BDS_Point *oface[2], BDS_Point *t1[4],
                            BDS_Point *t2[4]) const;
-  void update()
-  {
-    _length = std::sqrt((p1->X - p2->X) * (p1->X - p2->X) +
-                        (p1->Y - p2->Y) * (p1->Y - p2->Y) +
-                        (p1->Z - p2->Z) * (p1->Z - p2->Z));
-  }
-
 public:
   bool deleted;
   BDS_Point *p1, *p2;
@@ -252,26 +166,26 @@ public:
   BDS_Edge *oppositeEdge(BDS_Point *p)
   {
     if(e4) {
-      Msg::Fatal("oppositeEdge to point %d cannot be applied to a quad", p->iD);
+      Msg::Error("oppositeEdge to point %d cannot be applied to a quad", p->iD);
       return 0;
     }
     if(e1->p1 != p && e1->p2 != p) return e1;
     if(e2->p1 != p && e2->p2 != p) return e2;
     if(e3->p1 != p && e3->p2 != p) return e3;
-    Msg::Fatal("point %d does not belong to this triangle", p->iD);
+    Msg::Error("point %d does not belong to this triangle", p->iD);
     return 0;
   }
   BDS_Point *oppositeVertex(BDS_Edge *e)
   {
     if(e4) {
-      Msg::Fatal("oppositeVertex to edge %d %d cannot be applied to a quad",
+      Msg::Error("oppositeVertex to edge %d %d cannot be applied to a quad",
                  e->p1->iD, e->p2->iD);
       return 0;
     }
     if(e == e1) return e2->commonvertex(e3);
     if(e == e2) return e1->commonvertex(e3);
     if(e == e3) return e1->commonvertex(e2);
-    Msg::Fatal("edge  %d %d does not belong to this triangle", e->p1->iD,
+    Msg::Error("edge  %d %d does not belong to this triangle", e->p1->iD,
                e->p2->iD);
     return 0;
   }
@@ -455,9 +369,7 @@ public:
   bool swap_edge(BDS_Edge *, const BDS_SwapEdgeTest &theTest,
                  bool force = false);
   bool collapse_edge_parametric(BDS_Edge *, BDS_Point *, bool = false);
-  bool smooth_point_parametric(BDS_Point *const p, GFace *const gf);
-  bool smooth_point_centroid(BDS_Point *p, GFace *gf,
-                             bool test_quality = false);
+  bool smooth_point_centroid(BDS_Point *p, GFace *gf, double thresh);
   bool split_edge(BDS_Edge *, BDS_Point *);
   bool edge_constraint(BDS_Point *p1, BDS_Point *p2);
   // Global operators

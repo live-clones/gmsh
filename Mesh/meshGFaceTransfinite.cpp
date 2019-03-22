@@ -41,7 +41,7 @@ void findTransfiniteCorners(GFace *gf, std::vector<MVertex *> &corners)
 {
   if(gf->meshAttributes.corners.size()) {
     // corners have been specified explicitly
-    for(unsigned int i = 0; i < gf->meshAttributes.corners.size(); i++)
+    for(std::size_t i = 0; i < gf->meshAttributes.corners.size(); i++)
       corners.push_back(gf->meshAttributes.corners[i]->mesh_vertices[0]);
   }
   else {
@@ -96,9 +96,10 @@ static void computeEdgeLoops(const GFace *gf,
     ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
   GVertex *v_end =
     ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
+
   all_mvertices.push_back(start->mesh_vertices[0]);
   if(*ito == 1)
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+    for(std::size_t i = 0; i < (*it)->mesh_vertices.size(); i++)
       all_mvertices.push_back((*it)->mesh_vertices[i]);
   else
     for(int i = (*it)->mesh_vertices.size() - 1; i >= 0; i--)
@@ -129,7 +130,7 @@ static void computeEdgeLoops(const GFace *gf,
     }
     all_mvertices.push_back(v_start->mesh_vertices[0]);
     if(*ito == 1)
-      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+      for(std::size_t i = 0; i < (*it)->mesh_vertices.size(); i++)
         all_mvertices.push_back((*it)->mesh_vertices[i]);
     else
       for(int i = (*it)->mesh_vertices.size() - 1; i >= 0; i--)
@@ -142,6 +143,18 @@ int MeshTransfiniteSurface(GFace *gf)
   if(gf->meshAttributes.method != MESH_TRANSFINITE) return 0;
 
   Msg::Info("Meshing surface %d (transfinite)", gf->tag());
+
+  // make sure that all bounding edges have begin/end points: everything in here
+  // depends on it
+  const std::vector<GEdge *> &edges = gf->edges();
+  for(std::vector<GEdge *>::const_iterator it = edges.begin();
+      it != edges.end(); it++){
+    if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()){
+      Msg::Error("Transfinite algorithm cannot be applied with curve %d which "
+                 "has no begin or end point", (*it)->tag());
+      return 0;
+    }
+  }
 
   std::vector<MVertex *> corners;
   findTransfiniteCorners(gf, corners);
@@ -164,17 +177,17 @@ int MeshTransfiniteSurface(GFace *gf)
   // create a list of all boundary vertices, starting at the first
   // transfinite corner
   std::vector<MVertex *> m_vertices;
-  unsigned int I;
+  std::size_t I;
   for(I = 0; I < d_vertices.size(); I++)
     if(d_vertices[I] == corners[0]) break;
-  for(unsigned int j = 0; j < d_vertices.size(); j++)
+  for(std::size_t j = 0; j < d_vertices.size(); j++)
     m_vertices.push_back(d_vertices[(I + j) % d_vertices.size()]);
 
   // make the ordering of the list consistent with the ordering of the
   // first two corners (if the second found corner is not the second
   // corner, just reverse the list)
   bool reverse = false;
-  for(unsigned int i = 1; i < m_vertices.size(); i++) {
+  for(std::size_t i = 1; i < m_vertices.size(); i++) {
     MVertex *v = m_vertices[i];
     if(v == corners[1] || v == corners[2] ||
        (corners.size() == 4 && v == corners[3])) {
@@ -193,7 +206,7 @@ int MeshTransfiniteSurface(GFace *gf)
   // coordinates of all the boundary vertices
   int iCorner = 0, N[4] = {0, 0, 0, 0};
   std::vector<double> U, V;
-  for(unsigned int i = 0; i < m_vertices.size(); i++) {
+  for(std::size_t i = 0; i < m_vertices.size(); i++) {
     MVertex *v = m_vertices[i];
     if(v == corners[0] || v == corners[1] || v == corners[2] ||
        (corners.size() == 4 && v == corners[3])) {

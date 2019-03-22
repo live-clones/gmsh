@@ -77,13 +77,13 @@ PView *GMSH_ExtractEdgesPlugin::execute(PView *v)
   buildListOfEdgeAngle(adj, edges_detected, edges_lonly);
 
   double threshold = ExtractEdgesOptions_Number[0].def / 180. * M_PI;
-  for(unsigned int i = 0; i < edges_detected.size(); i++) {
+  for(std::size_t i = 0; i < edges_detected.size(); i++) {
     if(edges_detected[i].angle <= threshold) break;
     add_edge(edges_detected[i], data2);
   }
 
   if(ExtractEdgesOptions_Number[1].def) {
-    for(unsigned int i = 0; i < edges_lonly.size(); i++) {
+    for(std::size_t i = 0; i < edges_lonly.size(); i++) {
       add_edge(edges_lonly[i], data2);
     }
   }

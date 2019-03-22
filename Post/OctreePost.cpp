@@ -216,7 +216,7 @@ static void pyrCentroid(void *a, double *x)
 
 static void addListOfStuff(Octree *o, std::vector<double> &l, int nbelm)
 {
-  for(unsigned int i = 0; i < l.size(); i += nbelm) Octree_Insert(&l[i], o);
+  for(std::size_t i = 0; i < l.size(); i += nbelm) Octree_Insert(&l[i], o);
 }
 
 // OctreePost implementation
@@ -407,7 +407,7 @@ static void *getElement(double P[3], Octree *octree, int nbNod, int qn,
       // try to use the value from the same geometrical element as the one
       // provided in qx/y/z
       double eps = CTX::instance()->geom.tolerance;
-      for(unsigned int i = 0; i < v.size(); i++) {
+      for(std::size_t i = 0; i < v.size(); i++) {
         double *X = (double *)v[i], *Y = &X[qn], *Z = &X[2 * qn];
         bool ok = true;
         for(int j = 0; j < qn; j++) {
@@ -434,7 +434,7 @@ static MElement *getElement(double P[3], GModel *m, int qn, double *qx,
     // provided in qx/y/z
     double eps = CTX::instance()->geom.tolerance;
     std::vector<MElement *> elements = m->getMeshElementsByCoord(pt);
-    for(unsigned int i = 0; i < elements.size(); i++) {
+    for(std::size_t i = 0; i < elements.size(); i++) {
       if(qn == static_cast<int>(elements[i]->getNumVertices())) {
         bool ok = true;
         for(int j = 0; j < qn; j++) {

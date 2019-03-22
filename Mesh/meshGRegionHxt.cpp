@@ -33,8 +33,8 @@ HXTStatus hxtGmshMsgCallback(HXTMessage *msg)
   return HXT_STATUS_OK;
 }
 
-static double hxtMeshSizeGmshCallBack(double x, double y, double z,
-                                      void *userData)
+double hxtMeshSizeGmshCallBack(double x, double y, double z,
+                               void *userData)
 {
   GRegion *gr = (GRegion *)userData;
   double lc2 = BGM_MeshSize(gr, 0, 0, x, y, z);
@@ -52,7 +52,7 @@ static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions,
                                m->brep.numVolumes * sizeof(uint32_t)));
   }
   uint32_t to_alloc = 0;
-  for(unsigned int i = 0; i < regions.size(); i++) {
+  for(std::size_t i = 0; i < regions.size(); i++) {
     std::vector<GFace *> const &f = regions[i]->faces();
     std::vector<GFace *> const &f_e = regions[i]->embeddedFaces();
     if(m) {
@@ -70,7 +70,7 @@ static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions,
     hxtAlignedMalloc(&m->brep.surfacesPerVolume, to_alloc * sizeof(uint32_t)));
 
   uint32_t counter = 0;
-  for(unsigned int i = 0; i < regions.size(); i++) {
+  for(std::size_t i = 0; i < regions.size(); i++) {
     std::vector<GFace *> const &f = regions[i]->faces();
     std::vector<GFace *> const &f_e = regions[i]->embeddedFaces();
     for(size_t j = 0; j < f.size(); j++)
@@ -97,7 +97,7 @@ static HXTStatus getAllEdgesOfAllFaces(std::vector<GFace *> &faces, HXTMesh *m,
   uint32_t to_alloc = 0;
 
   std::set<GEdge *, GEntityLessThan> allEdgesSet;
-  for(unsigned int i = 0; i < faces.size(); i++) {
+  for(std::size_t i = 0; i < faces.size(); i++) {
     std::vector<GEdge *> const &f = faces[i]->edges();
     std::vector<GEdge *> const &f_e = faces[i]->embeddedEdges();
     if(m) {
@@ -115,7 +115,7 @@ static HXTStatus getAllEdgesOfAllFaces(std::vector<GFace *> &faces, HXTMesh *m,
     hxtAlignedMalloc(&m->brep.curvesPerSurface, to_alloc * sizeof(uint32_t)));
 
   uint32_t counter = 0;
-  for(unsigned int i = 0; i < faces.size(); i++) {
+  for(std::size_t i = 0; i < faces.size(); i++) {
     std::vector<GEdge *> const &f = faces[i]->edges();
     std::vector<GEdge *> const &f_e = faces[i]->embeddedEdges();
     for(size_t j = 0; j < f.size(); j++)
@@ -350,7 +350,7 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 			 threshold, hxt_boundary_recovery,
 			 NULL, // hxtMeshSizeGmshCallBack, // FIXME does not work yet
 			 regions[0]));
-  
+
   //  HXT_CHECK(hxtMeshWriteGmsh(mesh, "hxt.msh"));
 
   HXT_CHECK(Hxt2Gmsh(regions, mesh, v2c, c2v));

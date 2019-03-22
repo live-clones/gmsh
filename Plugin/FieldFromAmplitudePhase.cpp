@@ -110,8 +110,8 @@ PView *GMSH_FieldFromAmplitudePhasePlugin::execute(PView *v)
   std::map<int, std::vector<double> > dataR;
   std::map<int, std::vector<double> > dataI;
 
-  for(unsigned int ent = 0; ent < _entities.size(); ent++)
-    for(unsigned int ele = 0; ele < _entities[ent]->getNumMeshElements();
+  for(std::size_t ent = 0; ent < _entities.size(); ent++)
+    for(std::size_t ele = 0; ele < _entities[ent]->getNumMeshElements();
         ele++) {
       MElement *e = _entities[ent]->getMeshElement(ele);
       for(std::size_t nod = 0; nod < e->getNumVertices(); nod++)

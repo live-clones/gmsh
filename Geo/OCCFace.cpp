@@ -43,13 +43,13 @@
 #include <BRepTools.hxx>
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
-  : GFace(m, num), s(_s), _radius(-1)
+: GFace(m, num), s(_s),sf(_s, Standard_True), _radius(-1)
 {
   setup();
   if(model()->getOCCInternals()) model()->getOCCInternals()->bind(s, num);
 
   if(CTX::instance()->debugSurface > 0 &&
-     tag() == CTX::instance()->debugSurface) 
+     tag() == CTX::instance()->debugSurface)
     writeBREP("debugSurface.brep");
 }
 
@@ -89,7 +89,8 @@ void OCCFace::setup()
       else {
         l_wire.push_back(e);
         Msg::Debug("Edge %d (%d --> %d) ori %d", e->tag(),
-                   e->getBeginVertex()->tag(), e->getEndVertex()->tag(),
+                   e->getBeginVertex() ? e->getBeginVertex()->tag() : -1,
+                   e->getEndVertex() ? e->getEndVertex()->tag() : -1,
                    edge.Orientation());
         e->addFace(this);
         if(!e->is3D()) {
@@ -128,10 +129,12 @@ void OCCFace::setup()
   // we do that for the projections to converge on the borders of the surface
   const double du = umax - umin;
   const double dv = vmax - vmin;
-  umin -= fabs(du) / 100.0;
-  vmin -= fabs(dv) / 100.0;
-  umax += fabs(du) / 100.0;
-  vmax += fabs(dv) / 100.0;
+  // make sure that the boundaries are large enough in case of a slender surface
+  const auto tol = BRep_Tool::Tolerance(TopoDS::Face(s));
+  umin -= std::max(fabs(du) / 100.0, 2. * tol);
+  vmin -= std::max(fabs(dv) / 100.0, 2. * tol);
+  umax += std::max(fabs(du) / 100.0, 2. * tol);
+  vmax += std::max(fabs(dv) / 100.0, 2. * tol);
   occface = BRep_Tool::Surface(s);
 
   for(exp2.Init(s.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, TopAbs_EDGE);
@@ -318,7 +321,7 @@ GEntity::GeomType OCCFace::geomType() const
 double OCCFace::curvatureMax(const SPoint2 &param) const
 {
   const double eps = 1.e-12;
-  BRepAdaptor_Surface sf(s, Standard_True);
+  //  BRepAdaptor_Surface sf(s, Standard_True);
   BRepLProp_SLProps prop(sf, 2, eps);
   prop.SetParameters(param.x(), param.y());
 
@@ -334,7 +337,7 @@ double OCCFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
                            double &curvMin) const
 {
   const double eps = 1.e-12;
-  BRepAdaptor_Surface sf(s, Standard_True);
+  //  BRepAdaptor_Surface sf(s, Standard_True);
   BRepLProp_SLProps prop(sf, 2, eps);
   prop.SetParameters(param.x(), param.y());
 
@@ -441,7 +444,7 @@ bool OCCFace::containsParam(const SPoint2 &pt)
     return GFace::containsParam(pt);
   }
   SPoint2 mine = pt;
-  for(unsigned int i = 0; i < stl_triangles.size(); i += 3){
+  for(std::size_t i = 0; i < stl_triangles.size(); i += 3){
     SPoint2 gp1 = stl_vertices_uv[stl_triangles[i]];
     SPoint2 gp2 = stl_vertices_uv[stl_triangles[i + 1]];
     SPoint2 gp3 = stl_vertices_uv[stl_triangles[i + 2]];

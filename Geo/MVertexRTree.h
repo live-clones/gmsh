@@ -63,7 +63,7 @@ public:
              std::set<MVertex *> *duplicates = 0)
   {
     int num = 0;
-    for(unsigned int i = 0; i < v.size(); i++)
+    for(std::size_t i = 0; i < v.size(); i++)
       num += (insert(v[i], warnIfExists, duplicates) ? 1 : 0);
     return num; // number of vertices not inserted
   }
@@ -75,7 +75,7 @@ public:
     if(_rtree->Search(_min, _max, rtree_callback, &out)) return out;
     return 0;
   }
-  unsigned int size() { return _rtree->Count(); }
+  std::size_t size() { return _rtree->Count(); }
 };
 
 #endif

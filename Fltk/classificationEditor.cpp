@@ -19,6 +19,7 @@
 #include "meshGFaceDelaunayInsertion.h"
 #include "discreteEdge.h"
 #include "discreteFace.h"
+#include "GModelParametrize.h"
 
 static void NoElementsSelectedMode(classificationEditor *e)
 {
@@ -55,19 +56,19 @@ static void update_edges_cb(Fl_Widget *w, void *data)
 
   if(!e->selected) return;
 
-  for(unsigned int i = 0; i < e->selected->lines.size(); i++)
+  for(std::size_t i = 0; i < e->selected->lines.size(); i++)
     delete e->selected->lines[i];
   e->selected->lines.clear();
 
   double threshold = e->inputs[CLASS_VALUE_ANGLE]->value() / 180. * M_PI;
-  for(unsigned int i = 0; i < e->edges_detected.size(); i++) {
+  for(std::size_t i = 0; i < e->edges_detected.size(); i++) {
     edge_angle ea = e->edges_detected[i];
     if(ea.angle <= threshold) break;
     e->selected->lines.push_back(new MLine(ea.v1, ea.v2));
   }
 
   if(e->toggles[CLASS_TOGGLE_BOUNDARY]->value()) {
-    for(unsigned int i = 0; i < e->edges_lonly.size(); i++) {
+    for(std::size_t i = 0; i < e->edges_lonly.size(); i++) {
       edge_angle ea = e->edges_lonly[i];
       e->selected->lines.push_back(new MLine(ea.v1, ea.v2));
     }
@@ -113,7 +114,7 @@ static void select_elements_cb(Fl_Widget *w, void *data)
 
       char ib = FlGui::instance()->selectEntity(ENT_ALL);
       if(ib == 'l') {
-        for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size();
+        for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
             i++) {
           MElement *me = FlGui::instance()->selectedElements[i];
           if(me->getDim() == 2 && me->getVisibility() != 2) {
@@ -123,7 +124,7 @@ static void select_elements_cb(Fl_Widget *w, void *data)
         }
       }
       if(ib == 'r') {
-        for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size();
+        for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
             i++) {
           MElement *me = FlGui::instance()->selectedElements[i];
           if(me->getVisibility() == 2)
@@ -197,7 +198,7 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
 
     char ib = FlGui::instance()->selectEntity(ENT_ALL);
     if(ib == 'l') {
-      for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size();
+      for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
           i++) {
         MElement *me = FlGui::instance()->selectedElements[i];
         if(me->getType() == TYPE_LIN && me->getVisibility() != 2) {
@@ -207,7 +208,7 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
       }
     }
     if(ib == 'r') {
-      for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size();
+      for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
           i++) {
         MElement *me = FlGui::instance()->selectedElements[i];
         if(me->getVisibility() == 2)
@@ -231,7 +232,7 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
   // look in all selected edges if a deleted one is present and delete it
   std::vector<MLine *> temp = e->selected->lines;
   e->selected->lines.clear();
-  for(unsigned int i = 0; i < temp.size(); i++) {
+  for(std::size_t i = 0; i < temp.size(); i++) {
     std::vector<MLine *>::iterator it =
       std::find(ele.begin(), ele.end(), temp[i]);
     if(it != ele.end())
@@ -253,7 +254,7 @@ static void reset_selection_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor *)data;
   if(!e->selected) return;
-  for(unsigned int i = 0; i < e->selected->lines.size(); i++)
+  for(std::size_t i = 0; i < e->selected->lines.size(); i++)
     delete e->selected->lines[i];
   e->selected->lines.clear();
   e->selected->deleteVertexArrays();
@@ -262,87 +263,42 @@ static void reset_selection_cb(Fl_Widget *w, void *data)
   NoElementsSelectedMode(e);
 }
 
-static void select_surfaces_cb(Fl_Widget *w, void *data)
-{
-  classificationEditor *e = (classificationEditor *)data;
-
-  bool all = (w == e->buttons[CLASS_BUTTON_SELECT_ALL_SURFACES]);
-
-  if(all) {
-    for(GModel::fiter it = GModel::current()->firstFace();
-        it != GModel::current()->lastFace(); ++it)
-      e->faces.insert(*it);
+/*
+static void printttt(std::vector<MTriangle *> &t, int p){
+  char name [256];
+  sprintf(name, "f%d.pos",p);
+  FILE *f = fopen(name,"w");
+  fprintf(f,"View \" \"{\n");
+  for (size_t i=0;i<t.size();++i){
+    fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+	    t[i]->getVertex(0)->x(),t[i]->getVertex(0)->y(),t[i]->getVertex(0)->z(),
+	    t[i]->getVertex(1)->x(),t[i]->getVertex(1)->y(),t[i]->getVertex(1)->z(),
+	    t[i]->getVertex(2)->x(),t[i]->getVertex(2)->y(),t[i]->getVertex(2)->z(),
+	    p,p,p);
   }
-  else {
-    std::vector<GFace *> temp;
-    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
-    while(1) {
-      CTX::instance()->mesh.changed = ENT_ALL;
-      drawContext::global()->draw();
-      Msg::StatusGl("Select Surface\n"
-                    "[Press 'e' to end selection or 'q' to abort]");
-      char ib = FlGui::instance()->selectEntity(ENT_SURFACE);
-      if(ib == 'l') {
-        for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size();
-            i++) {
-          FlGui::instance()->selectedFaces[i]->setSelection(1);
-          temp.push_back(FlGui::instance()->selectedFaces[i]);
-        }
-      }
-      if(ib == 'e') { // store the list of gfaces
-        GModel::current()->setSelection(0);
-        for(unsigned int i = 0; i < temp.size(); i++) e->faces.insert(temp[i]);
-        break;
-      }
-      if(ib == 'q') { // do nothing
-        GModel::current()->setSelection(0);
-        break;
-      }
-    }
-  }
-
-  if(e->faces.size()) e->buttons[CLASS_BUTTON_CLASSIFY]->activate();
-
-  CTX::instance()->mesh.changed = ENT_ALL;
-  drawContext::global()->draw();
-  Msg::StatusGl("");
+  fprintf(f,"};\n");
+  fclose(f);
 }
+*/
 
-static void ensureGenusOnePartitions(std::set<GFace*> &faces, GEdge *e){
-
-  std::vector<MEdge> _e;
-  std::set<GFace*>::iterator it = faces.begin();
-  for (;it !=faces.end();++it){
-    discreteFace* df = dynamic_cast<discreteFace*>(*it);
-    if (df && df->triangles.size()){
-      printf("face %d %d triangles\n",df->tag(),df->triangles.size());
-      df->computsSplitEdgesForPartitionIntoGenusOneSurfaces(_e);
-    }
-    else Msg::Error("not a discrete face");
-  }
-  printf("addinfg some %d edges (%d faces)\n",_e.size(),faces.size());
-  for (size_t i=0;i<_e.size();i++){
-    e->lines.push_back(new MLine (_e[i].getVertex(0),_e[i].getVertex(1)));
-  }
-}
 
 static void classify_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor *)data;
 
-  for(GModel::fiter it = GModel::current()->firstFace();
-      it != GModel::current()->lastFace(); ++it)
-    e->faces.insert(*it);
-
-  if (e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()){
-    if (!e->selected) e->selected =
-			new discreteEdge(GModel::current(),
-					 GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
+  if (!e->selected) {
+    e->selected =
+      new discreteEdge(GModel::current(),
+		       GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
     GModel::current()->add(e->selected);
-    ensureGenusOnePartitions(e->faces, e->selected);
   }
+  
+  if (e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
+    computeEdgeCut (GModel::current(), e->selected->lines,100000);
+  
+  computeNonManifoldEdges(GModel::current(), e->selected->lines, true);
 
-  GModel::current()->classifyFaces(e->faces);
+  GModel::current()->classifyFaces();
 
   // remove selected, but do not delete its elements
   if(e->selected) {
@@ -351,10 +307,14 @@ static void classify_cb(Fl_Widget *w, void *data)
     delete e->selected;
     e->selected = 0;
   }
+
   e->elements.clear();
   e->edges_detected.clear();
   GModel::current()->pruneMeshVertexAssociations();
   NoElementsSelectedMode(e);
+
+  if (e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
+    parametrizeAllGFace(GModel::current());
 }
 
 classificationEditor::classificationEditor() : selected(0)
@@ -460,15 +420,6 @@ classificationEditor::classificationEditor() : selected(0)
     x += WB;
     y += BH;
 
-    //    buttons[CLASS_BUTTON_SELECT_SURFACES] =
-    //      new Fl_Button(x, y, BBB, BH, "Select surfaces");
-    //    buttons[CLASS_BUTTON_SELECT_SURFACES]->callback(select_surfaces_cb, this);
-
-    //    buttons[CLASS_BUTTON_SELECT_ALL_SURFACES] =
-    //      new Fl_Button(x + BBB + WB, y, (int)(0.5 * BBB) - WB, BH, "All");
-    //    buttons[CLASS_BUTTON_SELECT_ALL_SURFACES]->callback(select_surfaces_cb,
-    //                                                        this);
-
     buttons[CLASS_BUTTON_CLASSIFY] =
       new Fl_Return_Button((int)(x /*+ 1.5 * BBB + WB*/), y, BBB, BH, "Reclassify");
     buttons[CLASS_BUTTON_CLASSIFY]->callback(classify_cb, this);
@@ -478,7 +429,7 @@ classificationEditor::classificationEditor() : selected(0)
     x -= WB;
 
     y += BH;
-    toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES] = new Fl_Check_Button( x, y, width - x - 2 * WB, BH, "Ensure Genus one surfaces (needed for parametrization)");
+    toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES] = new Fl_Check_Button( x, y, width - x - 2 * WB, BH, "Create parametrized discrete model");
     toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->type(FL_TOGGLE_BUTTON);
 
   }

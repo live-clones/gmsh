@@ -89,7 +89,7 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
   // they do not depend on the actual mesh that can be deleted
 
   std::set<SPoint2> myBCNodes;
-  for(unsigned int i = 0; i < _gf->triangles.size(); i++) {
+  for(std::size_t i = 0; i < _gf->triangles.size(); i++) {
     MTriangle *e = _gf->triangles[i];
     MVertex *news[3];
     for(int j = 0; j < 3; j++) {
@@ -155,8 +155,8 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
 
 backgroundMesh::~backgroundMesh()
 {
-  for(unsigned int i = 0; i < _vertices.size(); i++) delete _vertices[i];
-  for(unsigned int i = 0; i < _triangles.size(); i++) delete _triangles[i];
+  for(std::size_t i = 0; i < _vertices.size(); i++) delete _vertices[i];
+  for(std::size_t i = 0; i < _triangles.size(); i++) delete _triangles[i];
   if(_octree) delete _octree;
 #if defined(HAVE_ANN)
   if(uv_kdtree) delete uv_kdtree;
@@ -195,9 +195,9 @@ static void propagateValuesOnFace(GFace *_gf,
 
   // Number vertices
   std::set<MVertex *> vs;
-  for(unsigned int k = 0; k < _gf->triangles.size(); k++)
+  for(std::size_t k = 0; k < _gf->triangles.size(); k++)
     for(int j = 0; j < 3; j++) vs.insert(_gf->triangles[k]->getVertex(j));
-  for(unsigned int k = 0; k < _gf->quadrangles.size(); k++)
+  for(std::size_t k = 0; k < _gf->quadrangles.size(); k++)
     for(int j = 0; j < 4; j++) vs.insert(_gf->quadrangles[k]->getVertex(j));
 
   std::map<MVertex *, SPoint3> theMap;
@@ -215,7 +215,7 @@ static void propagateValuesOnFace(GFace *_gf,
 
   // Assemble
   laplaceTerm l(0, 1, ONE);
-  for(unsigned int k = 0; k < _gf->triangles.size(); k++) {
+  for(std::size_t k = 0; k < _gf->triangles.size(); k++) {
     MTriangle *t = _gf->triangles[k];
     SElement se(t);
     l.addToMatrix(myAssembler, &se);
@@ -249,7 +249,7 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
 
   for(; it != e.end(); ++it) {
     if(!(*it)->isSeam(_gf)) {
-      for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
+      for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
         MVertex *v1 = (*it)->lines[i]->getVertex(0);
         MVertex *v2 = (*it)->lines[i]->getVertex(1);
         if(v1 != v2) {
@@ -304,7 +304,7 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
 
   for(; it != e.end(); ++it) {
     if(!(*it)->isSeam(_gf)) {
-      for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
+      for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
         MVertex *v[2];
         v[0] = (*it)->lines[i]->getVertex(0);
         v[1] = (*it)->lines[i]->getVertex(1);
@@ -424,7 +424,7 @@ void backgroundMesh::propagateCrossField(GFace *_gf)
   //  int NSMOOTH = _gf->triangles.size();
   while(0) {
     // int NSMOOTH_NOW = 0;
-    for(unsigned int i = 0; i < _gf->triangles.size(); i++) {
+    for(std::size_t i = 0; i < _gf->triangles.size(); i++) {
       double smoothness = getSmoothness(_gf->triangles[i]);
       double val = smoothness < .5 ? 1.0 : 1.e-3; // exp(-absf/10);
       C.set(_gf->triangles[i], val);
@@ -460,7 +460,7 @@ void backgroundMesh::propagateCrossField(GFace *_gf,
   std::vector<GEdge *>::const_iterator it = e.begin();
   for(; it != e.end(); ++it) {
     if(!(*it)->isSeam(_gf)) {
-      for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
+      for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
         MVertex *v[2];
         v[0] = (*it)->lines[i]->getVertex(0);
         v[1] = (*it)->lines[i]->getVertex(1);
@@ -536,7 +536,7 @@ void backgroundMesh::updateSizes(GFace *_gf)
   // (Int. J. Numer. Meth. Engng. 43, 1143-1165 (1998) MESH GRADATION
   // CONTROL, BOROUCHAKI, HECHT, FREY)
   std::set<MEdge, Less_Edge> edges;
-  for(unsigned int i = 0; i < _triangles.size(); i++) {
+  for(std::size_t i = 0; i < _triangles.size(); i++) {
     for(int j = 0; j < _triangles[i]->getNumEdges(); j++) {
       edges.insert(_triangles[i]->getEdge(j));
     }
@@ -692,7 +692,7 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
   }
   fprintf(f, "View \"Background Mesh\"{\n");
   if(smooth) {
-    for(unsigned int i = 0; i < gf->triangles.size(); i++) {
+    for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       MVertex *v1 = gf->triangles[i]->getVertex(0);
       MVertex *v2 = gf->triangles[i]->getVertex(1);
       MVertex *v3 = gf->triangles[i]->getVertex(2);
@@ -703,7 +703,7 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
     }
   }
   else {
-    for(unsigned int i = 0; i < _triangles.size(); i++) {
+    for(std::size_t i = 0; i < _triangles.size(); i++) {
       MVertex *v1 = _triangles[i]->getVertex(0);
       MVertex *v2 = _triangles[i]->getVertex(1);
       MVertex *v3 = _triangles[i]->getVertex(2);

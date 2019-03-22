@@ -1112,7 +1112,7 @@ StringXNumber MeshOptions_Number[] = {
     "radians when the mesh size of adapted to the curvature)" },
   { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
     "Minimum number of points used to mesh a (non-straight) curve" },
-  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.0 ,
+  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.1 ,
     "Version of the MSH file format to use" },
   { F|O, "MedFileMinorVersion" , opt_mesh_med_file_minor_version , -1. ,
     "Minor version of the MED file format to use (-1: use minor version of the MED library)" },

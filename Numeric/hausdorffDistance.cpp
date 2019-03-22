@@ -51,7 +51,7 @@ double closestPoint(const std::vector<SPoint3> &P, const SPoint3 &p,
                     SPoint3 &result)
 {
   double closestDistance = 1.e22;
-  for(unsigned int i = 1; i < P.size(); i++) {
+  for(std::size_t i = 1; i < P.size(); i++) {
     SPoint3 q = closestPoint(P[i - 1], P[i], p);
     const double pq = p.distance(q);
     if(pq < closestDistance) {
@@ -71,7 +71,7 @@ double oneSidedHausdorffDistance(const std::vector<SPoint3> &P,
   const double hausdorffDistance = 0.0;
 
   // first test the points
-  for(unsigned int i = 0; i < P.size(); i++) {
+  for(std::size_t i = 0; i < P.size(); i++) {
     SPoint3 result;
     double d = closestPoint(Q, P[i], result);
     if(d > hausdorffDistance) {
@@ -82,7 +82,7 @@ double oneSidedHausdorffDistance(const std::vector<SPoint3> &P,
   }
   // compute angle bissectors intersections
   std::vector<SPoint3> intersections;
-  for(unsigned int i = 1; i < Q.size() - 1; i++) {
+  for(std::size_t i = 1; i < Q.size() - 1; i++) {
     SPoint3 a = Q[i - 1];
     SPoint3 b = Q[i];
     SPoint3 c = Q[i + 1];
@@ -99,14 +99,14 @@ double oneSidedHausdorffDistance(const std::vector<SPoint3> &P,
       n = crossprod(b, bissector);
       n.normalize();
     }
-    for(unsigned int i = 1; i < P.size(); i++) {
+    for(std::size_t i = 1; i < P.size(); i++) {
       SPoint3 result;
       const double t = intersect(b, n, P[i - 1], P[i], result);
       if(t >= 0 && t <= 1) intersections.push_back(result);
     }
   }
 
-  for(unsigned int i = 0; i < intersections.size(); i++) {
+  for(std::size_t i = 0; i < intersections.size(); i++) {
     SPoint3 result;
     double d = closestPoint(Q, intersections[i], result);
     if(d > hausdorffDistance) {

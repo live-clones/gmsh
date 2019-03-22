@@ -17,7 +17,7 @@
 
 static int getFormatBDF(char *buffer, int &keySize)
 {
-  for(unsigned int i = 0; i < strlen(buffer); i++) {
+  for(std::size_t i = 0; i < strlen(buffer); i++) {
     if(buffer[i] == ',') { // free fields
       if(buffer[keySize] == '*') { // will contine on next line
         keySize = i;
@@ -102,7 +102,7 @@ static int readVertexBDF(FILE *fp, char *buffer, int keySize, int *num,
     strncpy(tmp[2], &buffer[40], 16);
     strncpy(tmp[3], &buffer[56], 16);
     char buffer2[256];
-    for(unsigned int i = 0; i < sizeof(buffer2); i++) buffer2[i] = '\0';
+    for(std::size_t i = 0; i < sizeof(buffer2); i++) buffer2[i] = '\0';
     if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
     strncpy(tmp[4], &buffer2[8], 16);
     break;
@@ -130,7 +130,7 @@ static void readLineBDF(char *buffer, int format, std::vector<char *> &fields)
   int nmax = (format == 2) ? 4 : 8; // max num of (center) fields per line
 
   if(format <= 0) { // free fields
-    for(unsigned int i = 0; i < strlen(buffer); i++) {
+    for(std::size_t i = 0; i < strlen(buffer); i++) {
       if(buffer[i] == ',') fields.push_back(&buffer[i + 1]);
     }
   }
@@ -151,7 +151,7 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
   std::vector<char *> fields;
   int format = getFormatBDF(buffer, keySize);
 
-  for(unsigned int i = 0; i < sizeof(buffer2); i++)
+  for(std::size_t i = 0; i < sizeof(buffer2); i++)
     buffer2[i] = buffer3[i] = '\0';
 
   readLineBDF(buffer, format, fields);
@@ -183,7 +183,7 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
   num = atoi(tmp);
   strncpy(tmp, fields[1], cmax);
   region = atoi(tmp);
-  for(unsigned int i = 2; i < fields.size(); i++) {
+  for(std::size_t i = 2; i < fields.size(); i++) {
     strncpy(tmp, fields[i], cmax);
     n[i - 2] = atoi(tmp);
   }
@@ -217,7 +217,7 @@ int GModel::readBDF(const std::string &name)
   // nodes can be defined after elements, so parse the file twice
 
   while(!feof(fp)) {
-    for(unsigned int i = 0; i < sizeof(buffer); i++) buffer[i] = '\0';
+    for(std::size_t i = 0; i < sizeof(buffer); i++) buffer[i] = '\0';
     if(!fgets(buffer, sizeof(buffer), fp)) break;
     if(buffer[0] != '$') { // skip comments
       if(!strncmp(buffer, "GRID", 4)) {
@@ -232,7 +232,7 @@ int GModel::readBDF(const std::string &name)
 
   rewind(fp);
   while(!feof(fp)) {
-    for(unsigned int i = 0; i < sizeof(buffer); i++) buffer[i] = '\0';
+    for(std::size_t i = 0; i < sizeof(buffer); i++) buffer[i] = '\0';
     if(!fgets(buffer, sizeof(buffer), fp)) break;
     if(buffer[0] != '$') { // skip comments
       int num, region;
@@ -350,13 +350,13 @@ int GModel::writeBDF(const std::string &name, int format, int elementTagType,
   getEntities(entities);
 
   // nodes
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeBDF(fp, format, scalingFactor);
 
   // elements
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
       int numPhys = entities[i]->physicals.size();
       if(saveAll || numPhys)
         entities[i]->getMeshElement(j)->writeBDF(

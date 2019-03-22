@@ -15,6 +15,7 @@ linux64_ci:
   script:
     - mkdir build
     - cd build
+    - export CXXFLAGS=-Werror
     - cmake ${EXTRA_OPTION} ..
     - make -j 8
     - ctest -j 8 --output-on-failure

@@ -1759,10 +1759,10 @@ public:
   {
     iField = 1;
     options["IField"] = new FieldOptionInt(iField, "Field index");
-    options["VerticesList"] = new FieldOptionList(vertices, "Point indices");
-    options["EdgesList"] = new FieldOptionList(edges, "Curve indices");
-    options["FacesList"] = new FieldOptionList(faces, "Surface indices");
-    options["RegionsList"] = new FieldOptionList(regions, "Volume indices");
+    options["VerticesList"] = new FieldOptionList(vertices, "Point tags");
+    options["EdgesList"] = new FieldOptionList(edges, "Curve tags");
+    options["FacesList"] = new FieldOptionList(faces, "Surface tags");
+    options["RegionsList"] = new FieldOptionList(regions, "Volume tags");
   }
   std::string getDescription()
   {
@@ -1824,7 +1824,7 @@ public:
     lMaxNormal = 0.5;
     lMaxTangent = 0.5;
     options["EdgesList"] = new FieldOptionList(
-      edges_id, "Indices of curves in the geometric model", &update_needed);
+      edges_id, "Tags of curves in the geometric model", &update_needed);
     options["NNodesByEdge"] = new FieldOptionInt(
       n_nodes_by_edge, "Number of nodes used to discretized each curve",
       &update_needed);
@@ -1973,15 +1973,15 @@ public:
     dist = new ANNdist[1];
     n_nodes_by_edge = 20;
     options["NodesList"] = new FieldOptionList(
-      nodes_id, "Indices of nodes in the geometric model", &update_needed);
+      nodes_id, "Tags of points in the geometric model", &update_needed);
     options["EdgesList"] = new FieldOptionList(
-      edges_id, "Indices of curves in the geometric model", &update_needed);
+      edges_id, "Tags of curves in the geometric model", &update_needed);
     options["NNodesByEdge"] = new FieldOptionInt(
       n_nodes_by_edge, "Number of nodes used to discretized each curve",
       &update_needed);
     options["FacesList"] = new FieldOptionList(
       faces_id,
-      "Indices of surfaces in the geometric model (Warning, this feature "
+      "Tags of surfaces in the geometric model (Warning, this feature "
       "is still experimental. It might (read: will probably) give wrong "
       "results "
       "for complex surfaces)",
@@ -2045,7 +2045,7 @@ public:
         GFace *f = GModel::current()->getFaceByTag(*it);
         if(f) {
           if(f->mesh_vertices.size()) {
-            for(unsigned int i = 0; i < f->mesh_vertices.size(); i++) {
+            for(std::size_t i = 0; i < f->mesh_vertices.size(); i++) {
               MVertex *v = f->mesh_vertices[i];
               double uu, vv;
               v->getParameter(0, uu);
@@ -2083,7 +2083,7 @@ public:
         GEdge *e = GModel::current()->getEdgeByTag(*it);
         if(e) {
           if(e->mesh_vertices.size()) {
-            for(unsigned int i = 0; i < e->mesh_vertices.size(); i++) {
+            for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
               double u;
               e->mesh_vertices[i]->getParameter(0, u);
               GPoint gp = e->point(u);
@@ -2415,24 +2415,24 @@ class DistanceField : public Field {
   PointCloud P;
   my_kd_tree_t *index;
   PC2KD pc2kd;
-  size_t out_index;
+  std::size_t out_index;
   double out_dist_sqr;
 
 public:
   DistanceField()
-    : index(NULL), pc2kd(P), out_index(-1), out_dist_sqr(0)
+    : index(NULL), pc2kd(P), out_index(0), out_dist_sqr(0)
   {
     n_nodes_by_edge = 20;
     options["NodesList"] = new FieldOptionList(
-      nodes_id, "Indices of nodes in the geometric model", &update_needed);
+      nodes_id, "Tags of points in the geometric model", &update_needed);
     options["EdgesList"] = new FieldOptionList(
-      edges_id, "Indices of curves in the geometric model", &update_needed);
+      edges_id, "Tags of curves in the geometric model", &update_needed);
     options["NNodesByEdge"] = new FieldOptionInt(
       n_nodes_by_edge, "Number of nodes used to discretized each curve",
       &update_needed);
     options["FacesList"] = new FieldOptionList(
       faces_id,
-      "Indices of surfaces in the geometric model (Warning, this feature "
+      "Tags of surfaces in the geometric model (Warning, this feature "
       "is still experimental. It might (read: will probably) give wrong "
       "results "
       "for complex surfaces)",
@@ -2446,7 +2446,7 @@ public:
       _zFieldId, "Id of the field to use as z coordinate.", &update_needed);
   }
   DistanceField(int dim, int tag, int nbe)
-    : n_nodes_by_edge(nbe), index(NULL), pc2kd(P), out_index(-1), out_dist_sqr(0)
+    : n_nodes_by_edge(nbe), index(NULL), pc2kd(P), out_index(0), out_dist_sqr(0)
   {
     if(dim == 0)
       nodes_id.push_back(tag);
@@ -2472,9 +2472,7 @@ public:
   }
   std::pair<AttractorInfo, SPoint3> getAttractorInfo() const
   {
-    if(out_index >= 0 &&
-       out_index < _infos.size() &&
-       out_index < P.pts.size())
+    if(out_index < _infos.size() && out_index < P.pts.size())
       return std::make_pair(_infos[out_index], P.pts[out_index]);
     return std::make_pair(AttractorInfo(), SPoint3());
   }
@@ -2494,7 +2492,7 @@ public:
         GFace *f = GModel::current()->getFaceByTag(*it);
         if(f) {
           if(f->mesh_vertices.size()) {
-            for(unsigned int i = 0; i < f->mesh_vertices.size(); i++) {
+            for(std::size_t i = 0; i < f->mesh_vertices.size(); i++) {
               MVertex *v = f->mesh_vertices[i];
               points.push_back(SPoint3(v->x(), v->y(), v->z()));
               double uu = 0., vv = 0.;
@@ -2530,7 +2528,7 @@ public:
         GEdge *e = GModel::current()->getEdgeByTag(*it);
         if(e) {
           if(e->mesh_vertices.size()) {
-            for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
+            for(std::size_t i = 0; i < e->mesh_vertices.size(); i++){
               points.push_back(SPoint3(e->mesh_vertices[i]->x(),
                                        e->mesh_vertices[i]->y(),
                                        e->mesh_vertices[i]->z()));
@@ -2586,39 +2584,36 @@ BoundaryLayerField::BoundaryLayerField()
   tgt_aniso_ratio = 1.e10;
   iRecombine = 0;
   iIntersect = 0;
-  options["EdgesList"] = new FieldOptionList(
-    edges_id,
-    "Indices of curves in the geometric model for which a boundary "
-    "layer is needed",
-    &update_needed);
-  options["FanNodesList"] = new FieldOptionList(
-    fan_nodes_id,
-    "Indices of vertices in the geometric model for which a fan "
-    "is created",
-    &update_needed);
-  options["NodesList"] = new FieldOptionList(
-    nodes_id,
-    "Indices of vertices in the geometric model for which a BL "
-    "ends",
-    &update_needed);
-  options["Quads"] = new FieldOptionInt(
-    iRecombine, "Generate recombined elements in the boundary layer");
-  options["IntersectMetrics"] =
-    new FieldOptionInt(iIntersect, "Intersect metrics of all faces");
-  options["hwall_n"] =
-    new FieldOptionDouble(hwall_n, "Mesh Size Normal to the The Wall");
-  options["hwall_n_nodes"] = new FieldOptionListDouble(
-    hwall_n_nodes, "Mesh Size Normal to the The Wall at nodes (overwrite "
-                   "hwall_n when defined)");
-  options["AnisoMax"] = new FieldOptionDouble(
-    tgt_aniso_ratio,
-    "Threshold angle for creating a mesh fan in the boundary layer");
-  options["ratio"] =
-    new FieldOptionDouble(ratio, "Size Ratio Between Two Successive Layers");
-  options["hfar"] =
-    new FieldOptionDouble(hfar, "Element size far from the wall");
-  options["thickness"] =
-    new FieldOptionDouble(thickness, "Maximal thickness of the boundary layer");
+  options["EdgesList"] = new FieldOptionList
+    (edges_id, "Tags of curves in the geometric model for which a boundary "
+     "layer is needed", &update_needed);
+  options["FanNodesList"] = new FieldOptionList
+    (fan_nodes_id, "Tags of points in the geometric model for which a fan "
+     "is created", &update_needed);
+  options["NodesList"] = new FieldOptionList
+    (nodes_id, "Tags of points in the geometric model for which a boundary "
+     "layer ends", &update_needed);
+  options["Quads"] = new FieldOptionInt
+    (iRecombine, "Generate recombined elements in the boundary layer");
+  options["IntersectMetrics"] = new FieldOptionInt
+    (iIntersect, "Intersect metrics of all faces");
+  options["hwall_n"] = new FieldOptionDouble
+    (hwall_n, "Mesh Size Normal to the The Wall");
+  options["hwall_n_nodes"] = new FieldOptionListDouble
+    (hwall_n_nodes, "Mesh Size Normal to the The Wall at nodes (overwrite "
+     "hwall_n when defined)");
+  options["AnisoMax"] = new FieldOptionDouble
+    (tgt_aniso_ratio, "Threshold angle for creating a mesh fan in the boundary "
+     "layer");
+  options["ratio"] = new FieldOptionDouble
+    (ratio, "Size Ratio Between Two Successive Layers");
+  options["hfar"] = new FieldOptionDouble
+    (hfar, "Element size far from the wall");
+  options["thickness"] = new FieldOptionDouble
+    (thickness, "Maximal thickness of the boundary layer");
+  options["ExcludedFaceList"] = new FieldOptionList
+    (excluded_faces_id, "Tags of surfaces in the geometric model where the "
+     "boundary layer should not be applied", &update_needed);
 }
 
 void BoundaryLayerField::removeAttractors()
@@ -2646,19 +2641,27 @@ void BoundaryLayerField::setupFor1d(int iE)
   if(!found) {
     GEdge *ge = GModel::current()->getEdgeByTag(iE);
     GVertex *gv0 = ge->getBeginVertex();
-    found = std::find(nodes_id_saved.begin(), nodes_id_saved.end(),
-                      gv0->tag()) != nodes_id_saved.end();
-    if(found) nodes_id.push_back(gv0->tag());
+    if(gv0){
+      found = std::find(nodes_id_saved.begin(), nodes_id_saved.end(),
+                        gv0->tag()) != nodes_id_saved.end();
+      if(found) nodes_id.push_back(gv0->tag());
+    }
     GVertex *gv1 = ge->getEndVertex();
-    found = std::find(nodes_id_saved.begin(), nodes_id_saved.end(),
-                      gv1->tag()) != nodes_id_saved.end();
-    if(found) nodes_id.push_back(gv1->tag());
+    if(gv1){
+      found = std::find(nodes_id_saved.begin(), nodes_id_saved.end(),
+                        gv1->tag()) != nodes_id_saved.end();
+      if(found) nodes_id.push_back(gv1->tag());
+    }
   }
   removeAttractors();
 }
 
 void BoundaryLayerField::setupFor2d(int iF)
 {
+  if(std::find(excluded_faces_id.begin(), excluded_faces_id.end(), iF) !=
+     excluded_faces_id.end())
+    return;
+
   // remove GFaces from the attractors (only used in 2D) for edges and vertices
   if(edges_id_saved.empty()) {
     edges_id_saved = edges_id;
@@ -2682,15 +2685,18 @@ void BoundaryLayerField::setupFor2d(int iF)
     bool isIn = false;
     int iE = (*it)->tag();
     bool found = std::find(edges_id_saved.begin(), edges_id_saved.end(), iE) !=
-                 edges_id_saved.end();
+      edges_id_saved.end();
     // this edge is a BL Edge
     if(found) {
       std::vector<GFace *> fc = (*it)->faces();
       int numf = 0;
-      for(std::vector<GFace *>::iterator it = fc.begin(); it != fc.end();
-          it++) {
+      for(std::vector<GFace *>::iterator it = fc.begin(); it != fc.end(); it++) {
         if((*it)->meshAttributes.extrude &&
            (*it)->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY) {
+          // ok
+        }
+        else if(std::find(excluded_faces_id.begin(), excluded_faces_id.end(),
+                          (*it)->tag()) != excluded_faces_id.end()){
           // ok
         }
         else {
@@ -2701,15 +2707,16 @@ void BoundaryLayerField::setupFor2d(int iF)
       if(numf <= 1)
         isIn = true;
       else {
-        Msg::Error("Only 2D Boundary Layers are supported (edge %d is adjacet "
-                   "to %d faces",
-                   iE, fc.size());
+        Msg::Error("Only 2D Boundary Layers are supported (curve %d is adjacet "
+                   "to %d surfaces)", iE, fc.size());
       }
     }
     if(isIn) {
       edges_id.push_back(iE);
-      nodes_id.push_back((*it)->getBeginVertex()->tag());
-      nodes_id.push_back((*it)->getEndVertex()->tag());
+      if((*it)->getBeginVertex())
+        nodes_id.push_back((*it)->getBeginVertex()->tag());
+      if((*it)->getEndVertex())
+        nodes_id.push_back((*it)->getEndVertex()->tag());
     }
   }
 
@@ -2911,7 +2918,7 @@ void BoundaryLayerField::operator()(double x, double y, double z,
     }
   }
   if(iIntersect)
-    for(unsigned int i = 0; i < hop.size(); i++)
+    for(std::size_t i = 0; i < hop.size(); i++)
       v = intersection_conserveM1(v, hop[i]);
   metr = v;
 }
@@ -2984,8 +2991,8 @@ void Field::putOnNewView()
   std::map<int, std::vector<double> > d;
   std::vector<GEntity *> entities;
   GModel::current()->getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++) {
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
       MVertex *v = entities[i]->mesh_vertices[j];
       d[v->getNum()].push_back((*this)(v->x(), v->y(), v->z(), entities[i]));
     }

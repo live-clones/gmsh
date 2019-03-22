@@ -55,9 +55,9 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) continue;
 
     std::vector<GFace*> faces = gr->faces();
-    for(unsigned int i = 0; i < faces.size(); i++){
+    for(std::size_t i = 0; i < faces.size(); i++){
       GFace *gf = faces[i];
-      for(unsigned int j = 0; j < gf->quadrangles.size(); j++){
+      for(std::size_t j = 0; j < gf->quadrangles.size(); j++){
         std::map<MFace, MVertex *, Less_Face>::iterator it2 =
           _quad.find(gf->quadrangles[j]->getFace(0));
         if(it2 != _quad.end()){
@@ -101,7 +101,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   GRegion *gr = regions[0];
   std::vector<GFace *> faces = gr->faces();
   std::set<GFace *, GEntityLessThan> allFacesSet;
-  for(unsigned int i = 0; i < regions.size(); i++) {
+  for(std::size_t i = 0; i < regions.size(); i++) {
     std::vector<GFace *> const &f = regions[i]->faces();
     std::vector<GFace *> const &f_e = regions[i]->embeddedFaces();
     allFacesSet.insert(f.begin(), f.end());
@@ -111,7 +111,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   gr->set(allFaces);
 
   std::set<GEdge *> allEmbEdgesSet;
-  for(unsigned int i = 0; i < regions.size(); i++) {
+  for(std::size_t i = 0; i < regions.size(); i++) {
     std::vector<GEdge *> const &e = regions[i]->embeddedEdges();
     allEmbEdgesSet.insert(e.begin(), e.end());
   }
@@ -121,7 +121,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   gr->embeddedEdges() = allEmbEdges;
 
   std::set<GVertex *> allEmbVerticesSet;
-  for(unsigned int i = 0; i < regions.size(); i++) {
+  for(std::size_t i = 0; i < regions.size(); i++) {
     std::vector<GVertex *> const &e = regions[i]->embeddedVertices();
     allEmbVerticesSet.insert(e.begin(), e.end());
   }
@@ -230,7 +230,7 @@ bool buildFaceSearchStructure(GModel *model, fs_cont &search,
 
   std::set<GFace *>::iterator fit = faces_to_consider.begin();
   while(fit != faces_to_consider.end()) {
-    for(unsigned int i = 0; i < (*fit)->getNumMeshElements(); i++) {
+    for(std::size_t i = 0; i < (*fit)->getNumMeshElements(); i++) {
       MFace ff = (*fit)->getMeshElement(i)->getFace(0);
       if(!onlyTriangles || ff.getNumVertices() == 3)
         search[ff] = *fit;
@@ -246,7 +246,7 @@ bool buildEdgeSearchStructure(GModel *model, es_cont &search)
 
   GModel::eiter eit = model->firstEdge();
   while(eit != model->lastEdge()) {
-    for(unsigned int i = 0; i < (*eit)->lines.size(); i++) {
+    for(std::size_t i = 0; i < (*eit)->lines.size(); i++) {
       MVertex *p1 = (*eit)->lines[i]->getVertex(0);
       MVertex *p2 = (*eit)->lines[i]->getVertex(1);
       MVertex *p = std::min(p1, p2);

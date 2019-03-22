@@ -2864,7 +2864,7 @@ void Supplementary::build_vertex_to_vertices(GRegion *gr)
   std::set<MVertex *> bin;
   vertex_to_vertices.clear();
 
-  for(GRegion::size_type i = 0; i < gr->getNumMeshElements(); i++) {
+  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *element = gr->getMeshElement(i);
     if(four(element)) {
       for(std::size_t j = 0; j < element->getNumVertices(); j++) {
@@ -2897,7 +2897,7 @@ void Supplementary::build_vertex_to_tetrahedra(GRegion *gr)
   std::set<MElement *> bin;
   vertex_to_tetrahedra.clear();
 
-  for(GRegion::size_type i = 0; i < gr->getNumMeshElements(); i++) {
+  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *element = gr->getMeshElement(i);
     if(four(element)) {
       for(std::size_t j = 0; j < element->getNumVertices(); j++) {
@@ -5291,7 +5291,7 @@ void PostOp::build_vertex_to_pyramids(GRegion *gr)
 {
   vertex_to_pyramids.clear();
 
-  for(GRegion::size_type i = 0; i < gr->getNumMeshElements(); i++) {
+  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *element = gr->getMeshElement(i);
     if(five(element)) {
       build_vertex_to_pyramids(element);
@@ -5335,7 +5335,7 @@ void PostOp::build_vertex_to_hexPrism(GRegion *gr)
 {
   vertex_to_hexPrism.clear();
 
-  for(GRegion::size_type i = 0; i < gr->getNumMeshElements(); i++) {
+  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *element = gr->getMeshElement(i);
     if(six(element) || eight(element)) {
       build_vertex_to_hexPrism(element);

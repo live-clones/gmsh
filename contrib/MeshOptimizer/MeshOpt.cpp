@@ -25,11 +25,12 @@
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
 #include <iostream>
+#include <sstream>
 #include <algorithm>
 #include "GmshMessage.h"
 #include "GmshConfig.h"
-#include "MeshOptObjContrib.h"
-#include "MeshOptObjectiveFunction.h"
+#include "ObjContrib.h"
+#include "ObjectiveFunction.h"
 #include "MeshOptCommon.h"
 #include "MeshOpt.h"
 
@@ -158,9 +159,8 @@ void MeshOpt::printProgress(const alglib::real_1d_array &x, double Obj)
     mvprintList(22, 5, _iterHistory, 1);
   }
   if((_verbose > 2) && (_iter % _intervDisplay == 0 || _nCurses))
-    Msg::Info(("--> Iteration %3d --- OBJ %12.5E (relative decrease = %12.5E)" +
-               _objFunc->minMaxStr())
-                .c_str(),
+    Msg::Info(("Iteration %3d " + _objFunc->minMaxStr() +
+               " (obj %5E, rel decr %5E)").c_str(),
               _iter, Obj, Obj / _initObj);
 }
 
@@ -262,18 +262,18 @@ void MeshOpt::runOptim(alglib::real_1d_array &x,
     mvprintList(22, 5, _iterHistory, 1);
   }
   if(_verbose > 2) {
-    Msg::Info(
-      "Optimization finalized after %d iterations (%d function evaluations),",
-      iterationscount, nfev);
+    std::ostringstream sstream;
+    sstream << "Optimization finalized after " << iterationscount
+            << " iterations (" << nfev << " function evaluations)";
     switch(int(terminationtype)) {
-    case 1:
-      Msg::Info("because relative function improvement is no more than EpsF");
-      break;
-    case 2: Msg::Info("because relative step is no more than EpsX"); break;
-    case 4: Msg::Info("because gradient norm is no more than EpsG"); break;
-    case 5: Msg::Info("because the maximum number of steps was taken"); break;
-    default: Msg::Info("with code %d", int(terminationtype)); break;
+    case 1: sstream <<
+        ", because relative function improvement is no more than EpsF"; break;
+    case 2: sstream << ", because relative step is no more than EpsX"; break;
+    case 4: sstream << ", because gradient norm is no more than EpsG"; break;
+    case 5: sstream << ", because the maximum number of steps was taken"; break;
+    default: sstream << ", with code "<< int(terminationtype); break;
     }
+    Msg::Info("%s", sstream.str().c_str());
   }
 }
 
@@ -303,7 +303,7 @@ int MeshOpt::optimize(const MeshOptParameters &par)
     _objFunc = &_allObjFunc[_iPass];
     if(_verbose > 2) {
       std::string msgStr =
-        "* Pass %d with contributions: " + _objFunc->contribNames();
+        " - Pass %d with contributions: " + _objFunc->contribNames();
       Msg::Info(msgStr.c_str(), _iPass);
     }
 
@@ -335,8 +335,8 @@ int MeshOpt::optimize(const MeshOptParameters &par)
         mvprintList(19, -8, _optHistory, 2);
       }
       if(_verbose > 2) {
-        Msg::Info("--- Optimization run %d", iBar);
-        Msg::Info("%s", _objFunc->minMaxStr().c_str());
+        Msg::Info("Optimization run with barrier %d", iBar);
+        Msg::Info(("Iteration %3d " + _objFunc->minMaxStr()).c_str(), 0);
       }
       _objFunc->updateParameters();
       runOptim(x, gradObj, par.pass[_iPass].maxOptIter, iBar);

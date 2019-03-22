@@ -6,6 +6,7 @@
 #ifndef _DISCRETE_FACE_H_
 #define _DISCRETE_FACE_H_
 
+#include <algorithm>
 #include "GmshConfig.h"
 #include "GModel.h"
 #include "GFace.h"
@@ -15,17 +16,19 @@
 #include "MElementCut.h"
 #include "MEdge.h"
 #include "MLine.h"
+#include "rtree.h"
 
 #if defined(HAVE_HXT)
-#include <algorithm>
-#include "rtree.h"
-class MElementOctree;
+
 extern "C" {
 #include "hxt_mesh.h"
 #include "hxt_parametrization.h"
 #include "hxt_linear_system.h"
 #include "hxt_curvature.h"
 }
+
+class MElementOctree;
+
 class hxt_reparam_surf {
 public:
   MElementOctree *oct;
@@ -39,31 +42,26 @@ public:
   std::vector<GEdge *> emb;
   hxt_reparam_surf() : oct(NULL) {}
   ~hxt_reparam_surf();
+  bool checkPlanar();
 };
+
 #endif
 
 class discreteFace : public GFace {
 private:
-  void checkAndFixOrientation();
-
+  bool _checkAndFixOrientation();
 #if defined(HAVE_HXT)
-  int _current_parametrization;
+  int _currentParametrization;
   std::vector<hxt_reparam_surf> _parametrizations;
-  std::vector<discreteEdge *> e_internals;
-  std::vector<discreteVertex *> v_internals;
-  HXTStatus reparametrize_through_hxt();
   bool
-    compute_topology_of_partition(int nbColors, int *colors, int *nNodes,
+    _compute_topology_of_partition(int nbColors, int *colors, int *nNodes,
 				  int *nodes, double *uv, double* nodalCurvatures,
 				  std::vector<MVertex *> &c2v);
-  bool
-    compute_topology_of_partition2(int nbColors, int *colors, int *nNodes,
-				   int *nodes, double *uv, double* nodalCurvatures,
-				   std::vector<MVertex *> &c2v);
   void
     computeSplitEdges(int nbColors, int *colors, std::vector<MEdge> &splitEdges);
-#endif
+  HXTStatus _reparametrizeThroughHxt();
 
+#endif
 public:
   discreteFace(GModel *model, int num);
   virtual ~discreteFace() {}

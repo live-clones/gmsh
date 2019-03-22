@@ -281,46 +281,6 @@ HXTStatus hxtMeanValueAspectRatio(HXTMeanValues *meanValues, int *aspectRatio)
 {
 
   if(meanValues->aspectRatio<0){
-    /* FIXME: Gmsh - reverted to old code below
-
-    *aspectRatio = 1;
-    HXTMesh *mesh = meanValues->initialEdges->edg2mesh;
-
-
-    double grad[3][2] = {{-1./2.,-sqrt(3)/6.},{1./2.,-sqrt(3)/6.},{0.,sqrt(3)/3.}};
-
-    uint64_t nTri = mesh->triangles.num;
-    double *uv = meanValues->uv;
-    for(uint64_t it=0; it<nTri; it++){
-
-      uint32_t *nodes = mesh->triangles.node + 3*it;
-
-
-      double jac[2][2] = {{0.,0.},{0.,0.}};
-      for(int i=0; i<3; i++){
-
-
-        jac[0][0] += uv[2*nodes[i]+0]*grad[i][0];// dx dxi
-        jac[0][1] += uv[2*nodes[i]+0]*grad[i][1];// dx deta
-        jac[1][0] += uv[2*nodes[i]+1]*grad[i][0];// dy dxi
-        jac[1][1] += uv[2*nodes[i]+1]*grad[i][1];// dy deta
-      }
-
-      double det = jac[0][0]*jac[1][1]-jac[1][0]*jac[0][1];
-      double frob = 0.;
-      for(int i =0; i<2; i++)
-        for(int j=0; j<2; j++)
-          frob += jac[i][j]*jac[i][j];
-
-      double quality = 2*det/frob;
-      if(quality<.1){
-        printf("wrong aspect ratio !!!!!!! D-: \t %f\n",quality);
-        *aspectRatio = 0;
-        break;
-      }
-
-    }
-    */
     *aspectRatio = 1;
 
     uint32_t numEdges = meanValues->initialEdges->numEdges;
@@ -329,8 +289,8 @@ HXTStatus hxtMeanValueAspectRatio(HXTMeanValues *meanValues, int *aspectRatio)
     for(uint32_t i=0; i<numEdges; i++){
       double du = uv[2*nodes[2*i+1]+0] - uv[2*nodes[2*i+0]+0];
       double dv = uv[2*nodes[2*i+1]+1] - uv[2*nodes[2*i+0]+1];
-
       if(sqrt(du*du+dv*dv) < 1e-4){
+	//	printf("coucou %12.5E %12.5E\n",du,dv);
         *aspectRatio = 0;
         break;
       }
@@ -350,6 +310,7 @@ HXTStatus hxtMeanValuesGetData(HXTMeanValues *mv, uint64_t **global,uint32_t **g
   *nv = mv->initialEdges->edg2mesh->vertices.num;
   *ne = mv->initialEdges->edg2mesh->triangles.num;
 
+  
   if (uv!=NULL){
     double *uv_;
     HXT_CHECK(hxtMalloc(&uv_,2*(*nv)*sizeof(double)));
@@ -357,10 +318,12 @@ HXTStatus hxtMeanValuesGetData(HXTMeanValues *mv, uint64_t **global,uint32_t **g
       uv_[iv] = mv->uv[iv];
     *uv=uv_;
   }
+  //  return HXT_STATUS_OK;
 
   uint64_t *global_;
   HXT_CHECK(hxtMalloc(&global_,(*ne)*sizeof(uint64_t)));
   uint32_t *gn_;
+
   if (gn!=NULL)
     HXT_CHECK(hxtMalloc(&gn_,sizeof(uint32_t)*3*(*ne)));
   for(int ie=0; ie<(*ne); ie++){

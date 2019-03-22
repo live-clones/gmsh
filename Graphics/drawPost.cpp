@@ -614,7 +614,7 @@ void drawContext::drawPost()
 
   if(!CTX::instance()->post.draw) return;
 
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     bool changed = PView::list[i]->fillVertexArrays();
     if(changed) Msg::Debug("post-pro vertex arrays have changed");
 #if defined(HAVE_FLTK) && defined(__APPLE__)

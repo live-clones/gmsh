@@ -336,7 +336,7 @@ void Filler::treat_region(GRegion *gr)
   for(it2 = faces.begin(); it2 != faces.end(); it2++) {
     gf = *it2;
     limit = code(gf->tag());
-    for(GFace::size_type i = 0; i < gf->getNumMeshElements(); i++) {
+    for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
       MElement *element = gf->getMeshElement(i);
       for(std::size_t j = 0; j < element->getNumVertices(); j++) {
         MVertex *vertex = element->getVertex(j);

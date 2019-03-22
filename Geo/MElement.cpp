@@ -35,7 +35,7 @@
 
 double MElement::_isInsideTolerance = 1.e-6;
 
-MElement::MElement(int num, int part) : _visible(1)
+MElement::MElement(std::size_t num, int part) : _visible(1)
 {
 #if defined(_OPENMP)
 #pragma omp critical
@@ -55,7 +55,7 @@ MElement::MElement(int num, int part) : _visible(1)
   }
 }
 
-void MElement::forceNum(int num)
+void MElement::forceNum(std::size_t num)
 {
 #if defined(_OPENMP)
 #pragma omp critical
@@ -214,7 +214,7 @@ bool MElement::getEdgeInfo(const MEdge &edge, int &ithEdge, int &sign) const
       return true;
     }
   }
-  Msg::Error("Could not get edge information for element %d", getNum());
+  Msg::Error("Could not get edge information for element %lu", getNum());
   return false;
 }
 
@@ -236,7 +236,7 @@ MFaceN MElement::getHighOrderFace(int num, int sign, int rot)
   const std::vector<int> &closure = fs->getClosure(id);
 
   std::vector<MVertex *> vertices(closure.size());
-  for(unsigned int i = 0; i < closure.size(); ++i) {
+  for(std::size_t i = 0; i < closure.size(); ++i) {
     vertices[i] = getVertex(closure[i]);
   }
 
@@ -940,7 +940,7 @@ double MElement::getJacobian(const std::vector<SVector3> &gsf,
 double MElement::getJacobian(const std::vector<SVector3> &gsf,
                              double *jac) const
 {
-  for(unsigned int i = 0; i < 9; i++) {
+  for(std::size_t i = 0; i < 9; i++) {
     jac[i] = 0.;
   }
 
@@ -1351,7 +1351,7 @@ double MElement::integrateFlux(double val[], int face, int pOrder, int order)
 void MElement::writeMSH(FILE *fp, bool binary, int entity,
                         std::vector<short> *ghosts)
 {
-  int num = getNum();
+  int num = (int)getNum();
   int type = getTypeForMSH();
   if(!type) return;
 
@@ -1429,10 +1429,10 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
     }
   }
 
-  if(CTX::instance()->mesh.preserveNumberingMsh2) num = _num;
+  if(CTX::instance()->mesh.preserveNumberingMsh2) num = (int)_num;
 
   if(!binary) {
-    fprintf(fp, "%d %d", num ? num : _num, type);
+    fprintf(fp, "%d %d", num ? num : (int)_num, type);
     if(version < 2.0)
       fprintf(fp, " %d %d %d", abs(physical), elementary, n);
     else if(version < 2.2)
@@ -1446,7 +1446,7 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
       int numGhosts = ghosts->size();
       fprintf(fp, " %d %d %d %d %d", 4 + numGhosts + par + dom, abs(physical),
               elementary, 1 + numGhosts, _partition);
-      for(unsigned int i = 0; i < ghosts->size(); i++)
+      for(std::size_t i = 0; i < ghosts->size(); i++)
         fprintf(fp, " %d", -(*ghosts)[i]);
     }
     if(version >= 2.0 && par) fprintf(fp, " %d", parentNum);
@@ -1469,7 +1469,7 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
     // tags change from element to element (third-party codes can
     // still write MSH file optimized for reading speed, by grouping
     // elements with the same number of tags in blobs)
-    int blob[60] = {type,          1,          numTags,       num ? num : _num,
+    int blob[60] = {type,          1,          numTags,       num ? num : (int)_num,
                     abs(physical), elementary, 1 + numGhosts, _partition};
     if(ghosts)
       for(int i = 0; i < numGhosts; i++) blob[8 + i] = -(*ghosts)[i];
@@ -1499,17 +1499,17 @@ void MElement::writeMSH4(FILE *fp, bool binary)
   std::vector<MVertex *> verts;
   getVertices(verts);
 
-  if(binary) { // Implemented but not used in practice
-    fwrite(&_num, sizeof(int), 1, fp);
-    for(unsigned int i = 0; i < verts.size(); i++) {
-      int vertNum = verts[i]->getNum();
-      fwrite(&vertNum, sizeof(int), 1, fp);
+  if(binary) { // implemented but not used in practice
+    fwrite(&_num, sizeof(std::size_t), 1, fp);
+    for(std::size_t i = 0; i < verts.size(); i++) {
+      std::size_t vertNum = verts[i]->getNum();
+      fwrite(&vertNum, sizeof(std::size_t), 1, fp);
     }
   }
   else {
-    fprintf(fp, "%d ", _num);
-    for(unsigned int i = 0; i < verts.size(); i++) {
-      fprintf(fp, "%d ", verts[i]->getNum());
+    fprintf(fp, "%lu ", _num);
+    for(std::size_t i = 0; i < verts.size(); i++) {
+      fprintf(fp, "%lu ", verts[i]->getNum());
     }
     fprintf(fp, "\n");
   }
@@ -1547,7 +1547,7 @@ void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
         first = false;
       else
         fprintf(fp, ",");
-      fprintf(fp, "%d", getNum());
+      fprintf(fp, "%lu", getNum());
     }
   }
   if(printSICN) {
@@ -1578,7 +1578,6 @@ void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
       else
         fprintf(fp, ",");
       fprintf(fp, "%g", gamma);
-      // fprintf(fp, "%d", getVertex(i)->getNum());
     }
   }
   if(printDisto) {
@@ -1648,14 +1647,14 @@ void MElement::writePLY2(FILE *fp)
 {
   fprintf(fp, "3 ");
   for(std::size_t i = 0; i < getNumVertices(); i++)
-    fprintf(fp, " %d", getVertex(i)->getIndex() - 1);
+    fprintf(fp, " %ld", getVertex(i)->getIndex() - 1);
   fprintf(fp, "\n");
 }
 
 void MElement::writeVRML(FILE *fp)
 {
   for(std::size_t i = 0; i < getNumVertices(); i++)
-    fprintf(fp, "%d,", getVertex(i)->getIndex() - 1);
+    fprintf(fp, "%ld,", getVertex(i)->getIndex() - 1);
   fprintf(fp, "-1,\n");
 }
 
@@ -1667,7 +1666,7 @@ void MElement::writeTOCHNOG(FILE *fp, int num)
   int n = getNumVertices();
   fprintf(fp, "element %d %s ", num, str);
   for(int i = 0; i < n; i++) {
-    fprintf(fp, " %d", getVertexTOCHNOG(i)->getIndex());
+    fprintf(fp, " %ld", getVertexTOCHNOG(i)->getIndex());
   }
   fprintf(fp, "\n");
 }
@@ -1680,7 +1679,7 @@ void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
   if(binary) {
     int verts[60];
     verts[0] = n;
-    for(int i = 0; i < n; i++) verts[i + 1] = getVertexVTK(i)->getIndex() - 1;
+    for(int i = 0; i < n; i++) verts[i + 1] = (int)getVertexVTK(i)->getIndex() - 1;
     // VTK always expects big endian binary data
     if(!bigEndian) SwapBytes((char *)verts, sizeof(int), n + 1);
     fwrite(verts, sizeof(int), n + 1, fp);
@@ -1688,7 +1687,7 @@ void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
   else {
     fprintf(fp, "%d", n);
     for(int i = 0; i < n; i++)
-      fprintf(fp, " %d", getVertexVTK(i)->getIndex() - 1);
+      fprintf(fp, " %ld", getVertexVTK(i)->getIndex() - 1);
     fprintf(fp, "\n");
   }
 }
@@ -1708,7 +1707,7 @@ void MElement::writeMATLAB(FILE *fp, int filetype, int elementary, int physical,
   if(filetype == 0) {
     int n = getNumVertices();
     for(int i = 0; i < n; i++)
-      fprintf(fp, " %d", getVertexMATLAB(i)->getIndex());
+      fprintf(fp, " %ld", getVertexMATLAB(i)->getIndex());
     fprintf(fp, ";\n");
   }
   // same as load_gmsh2.m
@@ -1716,7 +1715,7 @@ void MElement::writeMATLAB(FILE *fp, int filetype, int elementary, int physical,
     if(physical < 0) reverse();
 
     for(std::size_t i = 0; i < getNumVertices(); i++)
-      fprintf(fp, " %d", getVertex(i)->getIndex());
+      fprintf(fp, " %ld", getVertex(i)->getIndex());
     fprintf(fp, " %d\n", physical ? abs(physical) : elementary);
 
     if(physical < 0) reverse();
@@ -1737,7 +1736,7 @@ void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
   int physical_property = elementary;
   int material_property = abs(physical);
   int color = 7;
-  fprintf(fp, "%10d%10d%10d%10d%10d%10d\n", num ? num : _num, type,
+  fprintf(fp, "%10d%10d%10d%10d%10d%10d\n", num ? num : (int)_num, type,
           physical_property, material_property, color, n);
   if(type == 21 || type == 24) // linear beam or parabolic beam
     fprintf(fp, "%10d%10d%10d\n", 0, 0, 0);
@@ -1745,7 +1744,7 @@ void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
   if(physical < 0) reverse();
 
   for(int k = 0; k < n; k++) {
-    fprintf(fp, "%10d", getVertexUNV(k)->getIndex());
+    fprintf(fp, "%10ld", getVertexUNV(k)->getIndex());
     if(k % 8 == 7) fprintf(fp, "\n");
   }
   if(n - 1 % 8 != 7) fprintf(fp, "\n");
@@ -1760,11 +1759,11 @@ void MElement::writeMESH(FILE *fp, int elementTagType, int elementary,
 
   for(std::size_t i = 0; i < getNumVertices(); i++)
     if(getTypeForMSH() == MSH_TET_10 && i == 8)
-      fprintf(fp, " %d", getVertex(9)->getIndex());
+      fprintf(fp, " %ld", getVertex(9)->getIndex());
     else if(getTypeForMSH() == MSH_TET_10 && i == 9)
-      fprintf(fp, " %d", getVertex(8)->getIndex());
+      fprintf(fp, " %ld", getVertex(8)->getIndex());
     else
-      fprintf(fp, " %d", getVertex(i)->getIndex());
+      fprintf(fp, " %ld", getVertex(i)->getIndex());
   fprintf(fp, " %d\n",
           (elementTagType == 3) ?
             _partition :
@@ -1777,9 +1776,9 @@ void MElement::writeNEU(FILE *fp, unsigned gambitType, int idAdjust, int phys)
 {
   if(phys < 0) reverse();
 
-  fprintf(fp, "%8d %2d %2lu ", _num - idAdjust, gambitType, getNumVertices());
+  fprintf(fp, "%8lu %2d %2lu ", _num - idAdjust, gambitType, getNumVertices());
   for(std::size_t i = 0; i < getNumVertices(); ++i) {
-    fprintf(fp, "%8d", getVertex(i)->getIndex());
+    fprintf(fp, "%8ld", getVertex(i)->getIndex());
   }
   fprintf(fp, "\n");
 
@@ -1797,7 +1796,8 @@ void MElement::writeIR3(FILE *fp, int elementTagType, int num, int elementary,
             _partition :
             (elementTagType == 2) ? abs(physical) : elementary,
           numVert);
-  for(int i = 0; i < numVert; i++) fprintf(fp, " %d", getVertex(i)->getIndex());
+  for(int i = 0; i < numVert; i++)
+    fprintf(fp, " %ld", getVertex(i)->getIndex());
   fprintf(fp, "\n");
 
   if(physical < 0) reverse();
@@ -1820,11 +1820,11 @@ void MElement::writeBDF(FILE *fp, int format, int elementTagType,
               (elementTagType == 2) ? abs(physical) : elementary;
 
   if(format == 0) { // free field format
-    fprintf(fp, "%s,%d,%d", str, _num, tag);
+    fprintf(fp, "%s,%lu,%d", str, _num, tag);
     for(int i = 0; i < n; i++) {
-      fprintf(fp, ",%d", getVertexBDF(i)->getIndex());
+      fprintf(fp, ",%ld", getVertexBDF(i)->getIndex());
       if(i != n - 1 && !((i + 3) % 8)) {
-        fprintf(fp, ",+%s%d\n+%s%d", cont[ncont], _num, cont[ncont], _num);
+        fprintf(fp, ",+%s%lu\n+%s%lu", cont[ncont], _num, cont[ncont], _num);
         ncont++;
       }
     }
@@ -1833,11 +1833,11 @@ void MElement::writeBDF(FILE *fp, int format, int elementTagType,
     fprintf(fp, "\n");
   }
   else { // small or large field format
-    fprintf(fp, "%-8s%-8d%-8d", str, _num, tag);
+    fprintf(fp, "%-8s%-8lu%-8d", str, _num, tag);
     for(int i = 0; i < n; i++) {
-      fprintf(fp, "%-8d", getVertexBDF(i)->getIndex());
+      fprintf(fp, "%-8ld", getVertexBDF(i)->getIndex());
       if(i != n - 1 && !((i + 3) % 8)) {
-        fprintf(fp, "+%s%-6d\n+%s%-6d", cont[ncont], _num, cont[ncont], _num);
+        fprintf(fp, "+%s%-6lu\n+%s%-6lu", cont[ncont], _num, cont[ncont], _num);
         ncont++;
       }
     }
@@ -1862,7 +1862,8 @@ void MElement::writeDIFF(FILE *fp, int num, bool binary, int physical)
   }
   else {
     fprintf(fp, "%d %s %d ", num, str, abs(physical));
-    for(int i = 0; i < n; i++) fprintf(fp, " %d", getVertexDIFF(i)->getIndex());
+    for(int i = 0; i < n; i++)
+      fprintf(fp, " %ld", getVertexDIFF(i)->getIndex());
     fprintf(fp, "\n");
   }
 
@@ -1874,7 +1875,7 @@ void MElement::writeINP(FILE *fp, int num)
   fprintf(fp, "%d, ", num);
   int n = getNumVertices();
   for(int i = 0; i < n; i++) {
-    fprintf(fp, "%d", getVertexINP(i)->getIndex());
+    fprintf(fp, "%ld", getVertexINP(i)->getIndex());
     if(i != n - 1) {
       fprintf(fp, ", ");
       if(i && !((i + 2) % 16)) fprintf(fp, "\n");
@@ -1889,7 +1890,7 @@ void MElement::writeKEY(FILE *fp, int pid, int num)
   int n = getNumVertices();
   int nid[64];
   int i;
-  for(i = 0; i < n; i++) nid[i] = getVertexKEY(i)->getIndex();
+  for(i = 0; i < n; i++) nid[i] = (int)getVertexKEY(i)->getIndex();
   if(getDim() == 3) {
     if(n == 4) { /* tet4, repeating n4 */
       nid[7] = nid[6] = nid[5] = nid[4] = nid[3];
@@ -1934,7 +1935,7 @@ void MElement::writeSU2(FILE *fp, int num)
 {
   fprintf(fp, "%d ", getTypeForVTK());
   for(std::size_t i = 0; i < getNumVertices(); i++)
-    fprintf(fp, "%d ", getVertexVTK(i)->getIndex() - 1);
+    fprintf(fp, "%ld ", getVertexVTK(i)->getIndex() - 1);
   if(num >= 0)
     fprintf(fp, "%d\n", num);
   else
@@ -2360,7 +2361,7 @@ void MElement::getVerticesIdForMSH(std::vector<int> &verts)
 {
   int n = getNumVerticesForMSH();
   verts.resize(n);
-  for(int i = 0; i < n; i++) verts[i] = getVertex(i)->getIndex();
+  for(int i = 0; i < n; i++) verts[i] = (int)getVertex(i)->getIndex();
 }
 
 MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
@@ -2374,7 +2375,7 @@ MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
   if(getNumChildren() == 0) {
     for(std::size_t i = 0; i < getNumVertices(); i++) {
       MVertex *v = getVertex(i);
-      int numV = v->getNum(); // Index();
+      std::size_t numV = v->getNum();
       if(vertexMap.count(numV))
         vmv.push_back(vertexMap[numV]);
       else {
@@ -2388,7 +2389,7 @@ MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
     for(int i = 0; i < getNumChildren(); i++) {
       for(std::size_t j = 0; j < getChild(i)->getNumVertices(); j++) {
         MVertex *v = getChild(i)->getVertex(j);
-        int numV = v->getNum(); // Index();
+        std::size_t numV = v->getNum();
         if(vertexMap.count(numV))
           vmv.push_back(vertexMap[numV]);
         else {
@@ -2433,7 +2434,8 @@ MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
   return newEl;
 }
 
-MElement *MElementFactory::create(int type, std::vector<MVertex *> &v, int num,
+MElement *MElementFactory::create(int type, std::vector<MVertex *> &v,
+                                  std::size_t num,
                                   int part, bool owner, int parent,
                                   MElement *parent_ptr, MElement *d1,
                                   MElement *d2)
@@ -2622,9 +2624,9 @@ MElement *MElementFactory::create(int num, int type,
 
   MElement *element = create(type, vertices, num, part, false, parent);
 
-  for(unsigned int j = 0; j < ghosts.size(); j++) {
-    // model->getGhostCells().insert(std::pair<MElement*, short>(element,
-    // ghosts[j]));
+  for(std::size_t j = 0; j < ghosts.size(); j++) {
+    // model->getGhostCells().insert(std::pair<MElement*, short>
+    //                               (element, ghosts[j]));
   }
   if(part > model->getNumPartitions()) model->setNumPartitions(part);
 

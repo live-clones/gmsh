@@ -33,7 +33,6 @@
 class classificationEditor {
 public:
   std::vector<MElement *> elements;
-  std::set<GFace *> faces;
   Fl_Window *window;
   Fl_Button *buttons[10];
   Fl_Check_Button *toggles[10];

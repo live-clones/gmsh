@@ -81,7 +81,7 @@ void voroMetal3D::execute(GRegion *gr, double h)
   std::set<MVertex *> vertices;
   std::set<MVertex *>::iterator it;
 
-  for(GRegion::size_type i = 0; i < gr->getNumMeshElements(); i++) {
+  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *element = gr->getMeshElement(i);
     for(std::size_t j = 0; j < element->getNumVertices(); j++) {
       MVertex *vertex = element->getVertex(j);
@@ -107,7 +107,7 @@ void voroMetal3D::execute(GRegion *gr, double h)
 void voroMetal3D::execute(std::vector<double> &properties, int radical,
                           double h, double xMax, double yMax, double zMax)
 {
-  unsigned int i;
+  std::size_t i;
   std::vector<SPoint3> vertices;
   std::vector<double> radii;
   for(i = 0; i < properties.size() / 4; i++) {
@@ -122,11 +122,11 @@ void voroMetal3D::execute(std::vector<SPoint3> &vertices,
                           std::vector<double> &radii, int radical, double h,
                           double xMax, double yMax, double zMax)
 {
-  unsigned int i;
-  unsigned int j;
-  unsigned int k;
+  std::size_t i;
+  std::size_t j;
+  std::size_t k;
   int start;
-  unsigned int end;
+  std::size_t end;
   int index1;
   int index2;
   int val;
@@ -448,7 +448,7 @@ void voroMetal3D::print_geo_line_loop(int index, std::vector<int> &indices,
                                       std::vector<int> &orientations,
                                       std::ofstream &file)
 {
-  unsigned int i;
+  std::size_t i;
   file << "Line Loop(" << index << ")={";
   for(i = 0; i < indices.size(); i++) {
     if(orientations[i] == 1) file << "-";
@@ -461,7 +461,7 @@ void voroMetal3D::print_geo_line_loop(int index, std::vector<int> &indices,
 void voroMetal3D::print_geo_face_loop(int index, std::vector<int> &indices,
                                       std::ofstream &file)
 {
-  unsigned int i;
+  std::size_t i;
   file << "Surface Loop(" << index << ")={";
   for(i = 0; i < indices.size(); i++) {
     file << indices[i];
@@ -473,8 +473,8 @@ void voroMetal3D::print_geo_face_loop(int index, std::vector<int> &indices,
 void voroMetal3D::correspondance(double e, double xMax, double yMax,
                                  double zMax)
 {
-  unsigned int i;
-  unsigned int j;
+  std::size_t i;
+  std::size_t j;
   int count;
   int val;
   int phase;
@@ -1108,7 +1108,7 @@ static void computeBestSeeds(const char *filename)
         propertiesModified.clear();
         propertiesModified.resize(4 * max);
         std::cout << "before assign propModif" << std::endl;
-        for(unsigned int k = 0; k < properties.size(); k++) {
+        for(std::size_t k = 0; k < properties.size(); k++) {
           propertiesModified[k] = properties[k];
         }
         std::cout << "after assign propModif" << std::endl;
@@ -1149,7 +1149,7 @@ static void computeBestSeeds(const char *filename)
         propertiesModified.clear();
         propertiesModified.resize(4 * max);
         std::cout << "before assign propModif" << std::endl;
-        for(unsigned int k = 0; k < properties.size(); k++) {
+        for(std::size_t k = 0; k < properties.size(); k++) {
           propertiesModified[k] = properties[k];
         }
         std::cout << "after assign propModif" << std::endl;
@@ -1190,7 +1190,7 @@ static void computeBestSeeds(const char *filename)
         propertiesModified.clear();
         propertiesModified.resize(4 * max);
         std::cout << "before assign propModif" << std::endl;
-        for(unsigned int k = 0; k < properties.size(); k++) {
+        for(std::size_t k = 0; k < properties.size(); k++) {
           propertiesModified[k] = properties[k];
         }
         std::cout << "after assign propModif" << std::endl;
@@ -1231,7 +1231,7 @@ static void computeBestSeeds(const char *filename)
         propertiesModified.clear();
         propertiesModified.resize(4 * max);
         std::cout << "before assign propModif" << std::endl;
-        for(unsigned int k = 0; k < properties.size(); k++) {
+        for(std::size_t k = 0; k < properties.size(); k++) {
           propertiesModified[k] = properties[k];
         }
         std::cout << "after assign propModif" << std::endl;
@@ -1272,7 +1272,7 @@ static void computeBestSeeds(const char *filename)
         propertiesModified.clear();
         propertiesModified.resize(4 * max);
         std::cout << "before assign propModif" << std::endl;
-        for(unsigned int k = 0; k < properties.size(); k++) {
+        for(std::size_t k = 0; k < properties.size(); k++) {
           propertiesModified[k] = properties[k];
         }
         std::cout << "after assign propModif" << std::endl;
@@ -1313,7 +1313,7 @@ static void computeBestSeeds(const char *filename)
         propertiesModified.clear();
         propertiesModified.resize(4 * max);
         std::cout << "before assign propModif" << std::endl;
-        for(unsigned int k = 0; k < properties.size(); k++) {
+        for(std::size_t k = 0; k < properties.size(); k++) {
           propertiesModified[k] = properties[k];
         }
         std::cout << "after assign propModif" << std::endl;
@@ -1380,12 +1380,12 @@ static void computeBestSeeds(const char *filename)
     GModel::current()->load("MicrostructurePolycrystal3D.geo");
     voroMetal3D vm2;
     vm2.correspondance(0.00001, xMax, yMax, zMax);
-    for(unsigned int iTmp = 0; iTmp < listDistances.size(); iTmp++) {
+    for(std::size_t iTmp = 0; iTmp < listDistances.size(); iTmp++) {
       std::cout << "distMinGlobal " << iTmp << " egale a "
                 << listDistances[iTmp] << std::endl;
     }
     std::cout << "liste des nouveaux seeds :" << std::endl;
-    for(unsigned int iTmp = 0; iTmp < max; iTmp++) {
+    for(std::size_t iTmp = 0; iTmp < max; iTmp++) {
       std::cout << properties[4 * iTmp] << " " << properties[4 * iTmp + 1]
                 << " " << properties[4 * iTmp + 2] << " "
                 << properties[4 * iTmp + 3] << std::endl;

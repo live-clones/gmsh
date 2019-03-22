@@ -228,7 +228,7 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   if(!parseStringOpt(4, projectPhysicals)) return 0;
 
   std::vector<Chain<int> > curBasis;
-  for(unsigned int i = 0; i < basisPhysicals.size(); i++) {
+  for(std::size_t i = 0; i < basisPhysicals.size(); i++) {
     curBasis.push_back(Chain<int>(m, basisPhysicals.at(i)));
   }
   if(curBasis.empty()) {
@@ -238,7 +238,7 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   int dim = curBasis.at(0).getDim();
 
   std::vector<Chain<int> > curBasis2;
-  for(unsigned int i = 0; i < basisPhysicals2.size(); i++) {
+  for(std::size_t i = 0; i < basisPhysicals2.size(); i++) {
     curBasis2.push_back(Chain<int>(m, basisPhysicals2.at(i)));
   }
 
@@ -287,27 +287,27 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
 
   if(bd) {
     Msg::Info("Applying boundary operator to the result %d-chains", dim);
-    for(unsigned int i = 0; i < newBasis.size(); i++)
+    for(std::size_t i = 0; i < newBasis.size(); i++)
       newBasis.at(i) = newBasis.at(i).getBoundary();
   }
 
   if(!tracePhysicals.empty()) {
     Msg::Info("Taking trace of result %d-chains to domain %s", dim,
               traceString.c_str());
-    for(unsigned int i = 0; i < newBasis.size(); i++)
+    for(std::size_t i = 0; i < newBasis.size(); i++)
       newBasis.at(i) = newBasis.at(i).getTrace(m, tracePhysicals);
   }
   if(!projectPhysicals.empty()) {
     Msg::Info("Taking projection of result %d-chains to the complement of the "
               "domain %s",
               dim, projectString.c_str());
-    for(unsigned int i = 0; i < newBasis.size(); i++)
+    for(std::size_t i = 0; i < newBasis.size(); i++)
       newBasis.at(i) = newBasis.at(i).getProject(m, projectPhysicals);
   }
   if(!tracePhysicals.empty() || !projectPhysicals.empty())
     ElemChain::clearVertexCache();
 
-  for(unsigned int i = 0; i < newBasis.size(); i++) {
+  for(std::size_t i = 0; i < newBasis.size(); i++) {
     std::string dims = convertInt(newBasis.at(i).getDim());
     std::string nums = convertInt(i + 1);
     newBasis.at(i).setName("C" + dims + " " + cname + nums);

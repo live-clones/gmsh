@@ -96,8 +96,8 @@ opt(WRAP_PYTHON "Enable generation of Python wrappers for private API" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
-set(GMSH_MINOR_VERSION 1)
-set(GMSH_PATCH_VERSION 5)
+set(GMSH_MINOR_VERSION 2)
+set(GMSH_PATCH_VERSION 0)
 set(GMSH_EXTRA_VERSION "")
 set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION}")
 
@@ -1150,6 +1150,9 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND
     file(GLOB_RECURSE HXT_SRC contrib/hxt/*.c)
     set_compile_flags(HXT_SRC "/TP")
   endif()
+  if(HAVE_PETSC)
+    add_definitions(-DHXT_HAVE_PETSC)
+  endif()
 endif()
 
 if(ENABLE_OCC)
@@ -1416,8 +1419,7 @@ endif()
 # don't issue warnings for contributed libraries
 check_cxx_compiler_flag("-w" NOWARN)
 if(NOWARN)
-  file(GLOB_RECURSE NOWARN_SRC contrib/*.cpp contrib/*.cc contrib/*.cxx contrib/*.c
-      ${CMAKE_CURRENT_BINARY_DIR}/contrib/taucs/*.c)
+  file(GLOB_RECURSE NOWARN_SRC contrib/*.cpp contrib/*.cc contrib/*.cxx contrib/*.c)
   set_compile_flags(NOWARN_SRC "-w")
 endif()
 

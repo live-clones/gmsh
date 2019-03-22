@@ -434,7 +434,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
         itf++) {
       GFace *gf = *itf;
       boundaryIndicators.push_back(gf->tag());
-      for(unsigned int i = 0; i < gf->getNumMeshElements(); i++) {
+      for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
         MElement *e = gf->getMeshElement(i);
         for(std::size_t j = 0; j < e->getNumVertices(); j++) {
           MVertex *v = e->getVertex(j);
@@ -457,16 +457,16 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
 
   // find max dimension of mesh elements we need to save
   int dim = 0;
-  for(unsigned int i = 0; i < entities.size(); i++)
+  for(std::size_t i = 0; i < entities.size(); i++)
     if(entities[i]->physicals.size() || saveAll)
-      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
+      for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
         dim = std::max(dim, entities[i]->getMeshElement(j)->getDim());
 
   // loop over all elements we need to save
   std::size_t numElements = 0, maxNumNodesPerElement = 0;
-  for(unsigned int i = 0; i < entities.size(); i++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
     if(entities[i]->physicals.size() || saveAll) {
-      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
+      for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
         MElement *e = entities[i]->getMeshElement(j);
         if(e->getStringForDIFF() && e->getDim() == dim) {
           numElements++;
@@ -502,8 +502,8 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   fprintf(fp, "#\n");
 
   // write mesh vertices
-  for(unsigned int i = 0; i < entities.size(); i++) {
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
       MVertex *v = entities[i]->mesh_vertices[j];
       if(v->getIndex() > 0) {
         v->writeDIFF(fp, binary, scalingFactor);
@@ -528,9 +528,9 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
 
   // write mesh elements
   int num = 0;
-  for(unsigned int i = 0; i < entities.size(); i++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
     if(entities[i]->physicals.size() || saveAll) {
-      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
+      for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
         MElement *e = entities[i]->getMeshElement(j);
         if(e->getStringForDIFF() && e->getDim() == dim)
           e->writeDIFF(fp, ++num, binary, entities[i]->tag());

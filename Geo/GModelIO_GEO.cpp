@@ -158,7 +158,7 @@ bool GEO_Internals::addLine(int &tag, const std::vector<int> &pointTags)
   }
   if(tag < 0) tag = getMaxTag(1) + 1;
   List_T *tmp = List_Create(2, 2, sizeof(int));
-  for(unsigned int i = 0; i < pointTags.size(); i++) {
+  for(std::size_t i = 0; i < pointTags.size(); i++) {
     int t = pointTags[i];
     List_Add(tmp, &t);
   }
@@ -248,7 +248,7 @@ bool GEO_Internals::addSpline(int &tag, const std::vector<int> &pointTags)
   }
   if(tag < 0) tag = getMaxTag(1) + 1;
   List_T *tmp = List_Create(2, 2, sizeof(int));
-  for(unsigned int i = 0; i < pointTags.size(); i++) {
+  for(std::size_t i = 0; i < pointTags.size(); i++) {
     int t = pointTags[i];
     List_Add(tmp, &t);
   }
@@ -272,7 +272,7 @@ bool GEO_Internals::addBezier(int &tag, const std::vector<int> &pointTags)
     return false;
   }
   List_T *tmp = List_Create(2, 2, sizeof(int));
-  for(unsigned int i = 0; i < pointTags.size(); i++) {
+  for(std::size_t i = 0; i < pointTags.size(); i++) {
     int t = pointTags[i];
     List_Add(tmp, &t);
   }
@@ -297,7 +297,7 @@ bool GEO_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
   }
   if(tag < 0) tag = getMaxTag(1) + 1;
   List_T *tmp = List_Create(2, 2, sizeof(int));
-  for(unsigned int i = 0; i < pointTags.size(); i++) {
+  for(std::size_t i = 0; i < pointTags.size(); i++) {
     int t = pointTags[i];
     List_Add(tmp, &t);
   }
@@ -308,7 +308,7 @@ bool GEO_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
   else {
     int order = seqknots.size() - pointTags.size() - 1;
     List_T *knotsList = List_Create(2, 2, sizeof(double));
-    for(unsigned int i = 0; i < seqknots.size(); i++) {
+    for(std::size_t i = 0; i < seqknots.size(); i++) {
       double d = seqknots[i];
       List_Add(knotsList, &d);
     }
@@ -329,7 +329,7 @@ bool GEO_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags)
   }
   if(tag < 0) tag = getMaxTag(-1) + 1;
   List_T *tmp = List_Create(2, 2, sizeof(int));
-  for(unsigned int i = 0; i < curveTags.size(); i++) {
+  for(std::size_t i = 0; i < curveTags.size(); i++) {
     int t = curveTags[i];
     List_Add(tmp, &t);
   }
@@ -353,7 +353,7 @@ bool GEO_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
     return false;
   }
   List_T *tmp = List_Create(2, 2, sizeof(int));
-  for(unsigned int i = 0; i < wireTags.size(); i++) {
+  for(std::size_t i = 0; i < wireTags.size(); i++) {
     int t = wireTags[i];
     List_Add(tmp, &t);
   }
@@ -409,7 +409,7 @@ bool GEO_Internals::addSurfaceFilling(int &tag,
     return false;
   }
   List_T *tmp = List_Create(2, 2, sizeof(int));
-  for(unsigned int i = 0; i < wireTags.size(); i++) {
+  for(std::size_t i = 0; i < wireTags.size(); i++) {
     int t = wireTags[i];
     List_Add(tmp, &t);
   }
@@ -438,7 +438,7 @@ bool GEO_Internals::addSurfaceLoop(int &tag,
   if(tag < 0) tag = getMaxTag(-2) + 1;
 
   List_T *tmp = List_Create(2, 2, sizeof(int));
-  for(unsigned int i = 0; i < surfaceTags.size(); i++) {
+  for(std::size_t i = 0; i < surfaceTags.size(); i++) {
     int t = surfaceTags[i];
     List_Add(tmp, &t);
   }
@@ -458,7 +458,7 @@ bool GEO_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
   if(tag < 0) tag = getMaxTag(3) + 1;
 
   List_T *tmp = List_Create(2, 2, sizeof(int));
-  for(unsigned int i = 0; i < shellTags.size(); i++) {
+  for(std::size_t i = 0; i < shellTags.size(); i++) {
     int t = shellTags[i];
     List_Add(tmp, &t);
   }
@@ -481,7 +481,7 @@ bool GEO_Internals::_extrude(int mode,
   List_T *in = List_Create(inDimTags.size() + 1, 10, sizeof(Shape));
   List_T *out = List_Create(3 * inDimTags.size() + 1, 10, sizeof(Shape));
 
-  for(unsigned int i = 0; i < inDimTags.size(); i++) {
+  for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
     Shape s;
@@ -566,7 +566,7 @@ bool GEO_Internals::_transform(int mode,
                                double c, double d)
 {
   List_T *list = List_Create(dimTags.size() + 1, 10, sizeof(Shape));
-  for(unsigned int i = 0; i < dimTags.size(); i++) {
+  for(std::size_t i = 0; i < dimTags.size(); i++) {
     int dim = dimTags[i].first;
     int tag = dimTags[i].second;
     Shape s;
@@ -617,7 +617,7 @@ bool GEO_Internals::splitCurve(int tag, const std::vector<int> &pointTags,
                                std::vector<int> &curveTags)
 {
   List_T *tmp = List_Create(10, 10, sizeof(int));
-  for(unsigned int i = 0; i < pointTags.size(); i++) {
+  for(std::size_t i = 0; i < pointTags.size(); i++) {
     int t = pointTags[i];
     List_Add(tmp, &t);
   }
@@ -640,7 +640,7 @@ bool GEO_Internals::intersectCurvesWithSurface(
 {
   List_T *curves = List_Create(10, 10, sizeof(double));
   List_T *shapes = List_Create(10, 10, sizeof(Shape));
-  for(unsigned int i = 0; i < curveTags.size(); i++) {
+  for(std::size_t i = 0; i < curveTags.size(); i++) {
     double d = curveTags[i];
     List_Add(curves, &d);
   }
@@ -664,7 +664,7 @@ bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
                          std::vector<std::pair<int, int> > &outDimTags)
 {
   bool ret = true;
-  for(unsigned int i = 0; i < inDimTags.size(); i++) {
+  for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
     if(dim == 0) {
@@ -734,7 +734,7 @@ bool GEO_Internals::remove(int dim, int tag, bool recursive)
 bool GEO_Internals::remove(const std::vector<std::pair<int, int> > &dimTags,
                            bool recursive)
 {
-  for(unsigned int i = 0; i < dimTags.size(); i++)
+  for(std::size_t i = 0; i < dimTags.size(); i++)
     remove(dimTags[i].first, dimTags[i].second, recursive);
   return true;
 }
@@ -783,7 +783,7 @@ bool GEO_Internals::modifyPhysicalGroup(int dim, int tag, int op,
   }
   else if(op == 0) {
     List_T *tmp = List_Create(10, 10, sizeof(int));
-    for(unsigned int i = 0; i < tags.size(); i++) {
+    for(std::size_t i = 0; i < tags.size(); i++) {
       int t = tags[i];
       List_Add(tmp, &t);
     }
@@ -792,13 +792,13 @@ bool GEO_Internals::modifyPhysicalGroup(int dim, int tag, int op,
     List_Add(PhysicalGroups, &p);
   }
   else if(op == 1) {
-    for(unsigned int i = 0; i < tags.size(); i++) {
+    for(std::size_t i = 0; i < tags.size(); i++) {
       int t = tags[i];
       List_Add(p->Entities, &t);
     }
   }
   else if(op == 2) {
-    for(unsigned int i = 0; i < tags.size(); i++) {
+    for(std::size_t i = 0; i < tags.size(); i++) {
       int t = tags[i];
       List_Suppress(p->Entities, &t, fcmp_int);
     }
@@ -835,7 +835,7 @@ bool GEO_Internals::mergeVertices(const std::vector<int> &tags)
   }
 
   double x = target->Pos.X, y = target->Pos.Y, z = target->Pos.Z;
-  for(unsigned int i = 1; i < tags.size(); i++) {
+  for(std::size_t i = 1; i < tags.size(); i++) {
     Vertex *source = FindPoint(tags[i]);
     if(!source) {
       Msg::Error("Could not find GEO point with tag %d", tags[i]);
@@ -927,7 +927,7 @@ void GEO_Internals::setTransfiniteSurface(int tag, int arrangement,
       List_Reset(s->TrsfPoints);
       if(cornerTags.empty() || cornerTags.size() == 3 ||
          cornerTags.size() == 4) {
-        for(unsigned int j = 0; j < cornerTags.size(); j++) {
+        for(std::size_t j = 0; j < cornerTags.size(); j++) {
           Vertex *v = FindPoint(std::abs(cornerTags[j]));
           if(v)
             List_Add(s->TrsfPoints, &v);
@@ -963,7 +963,7 @@ void GEO_Internals::setTransfiniteVolume(int tag,
       List_Reset(v->TrsfPoints);
       if(cornerTags.empty() || cornerTags.size() == 6 ||
          cornerTags.size() == 8) {
-        for(unsigned int i = 0; i < cornerTags.size(); i++) {
+        for(std::size_t i = 0; i < cornerTags.size(); i++) {
           Vertex *vert = FindPoint(std::abs(cornerTags[i]));
           if(vert)
             List_Add(v->TrsfPoints, &vert);
@@ -1269,7 +1269,7 @@ void GEO_Internals::synchronize(GModel *model)
     int dim = it->first;
     std::vector<int> compound = it->second;
     std::vector<GEntity *> ents;
-    for(unsigned int i = 0; i < compound.size(); i++) {
+    for(std::size_t i = 0; i < compound.size(); i++) {
       int tag = compound[i];
       GEntity *ent = NULL;
       switch(dim) {
@@ -1280,7 +1280,7 @@ void GEO_Internals::synchronize(GModel *model)
       }
       if(ent) ents.push_back(ent);
     }
-    for(unsigned int i = 0; i < ents.size(); i++) {
+    for(std::size_t i = 0; i < ents.size(); i++) {
       ents[i]->_compound = ents;
     }
   }
@@ -1439,7 +1439,7 @@ public:
       fprintf(geo, "(\"%s\") = {", newName.c_str());
     else
       fprintf(geo, "(%d) = {", g.first);
-    for(unsigned int i = 0; i < g.second.size(); i++) {
+    for(std::size_t i = 0; i < g.second.size(); i++) {
       if(i) fprintf(geo, ", ");
       fprintf(geo, "%d", g.second[i]->tag());
     }
@@ -1528,7 +1528,7 @@ int GModel::writeGEO(const std::string &name, bool printLabels,
   for(std::map<std::string, gmsh_yysymbol>::iterator it =
         gmsh_yysymbols.begin();
       it != gmsh_yysymbols.end(); ++it)
-    for(unsigned int i = 0; i < it->second.value.size(); i++)
+    for(std::size_t i = 0; i < it->second.value.size(); i++)
       labels[(int)it->second.value[i]] = it->first;
 #endif
 
@@ -1584,11 +1584,11 @@ int GModel::exportDiscreteGEOInternals()
       for(int i = 0; i < List_Nbr(points); i++) {
         Vertex *v;
         List_Read(points, i, &v);
-        if(v->Num == gvb->tag()) {
+        if(gvb && gvb->tag() == v->Num) {
           List_Add(c->Control_Points, &v);
           c->beg = v;
         }
-        if(v->Num == gve->tag()) {
+        if(gve && gve->tag() == v->Num) {
           List_Add(c->Control_Points, &v);
           c->end = v;
         }

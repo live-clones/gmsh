@@ -189,9 +189,9 @@ void filterColumns(std::vector<MElement *> &elem,
         _elemColumns.begin();
       it != _elemColumns.end(); ++it) {
     const std::vector<MElement *> &c = it->second;
-    unsigned int MAX = c.size();
+    std::size_t MAX = c.size();
     //    printf("size of column %d\n",c.size());
-    for(unsigned int i = 0; i < c.size(); i++) {
+    for(std::size_t i = 0; i < c.size(); i++) {
       if(!std::binary_search(elem.begin(), elem.end(), c[i])) {
         MAX = i;
         break;
@@ -199,13 +199,13 @@ void filterColumns(std::vector<MElement *> &elem,
     }
     if(!MAX) MAX = 1;
     //    if (MAX != c.size())    printf("MAX = %d c = %d\n",MAX,c.size());
-    for(unsigned int i = 0; i < MAX; i++) {
+    for(std::size_t i = 0; i < MAX; i++) {
       if(orientationTest(c[i]->getVertex(0), c[i]->getVertex(1),
                          c[i]->getVertex(2)) < 0)
         c[i]->reverse();
       toKeep.push_back(c[i]);
     }
-    // for (unsigned int i=MAX;i<c.size();i++){
+    // for (std::size_t i=MAX;i<c.size();i++){
     // FIXME !!!
     //   delete c[i];
     // }
@@ -222,14 +222,14 @@ static void filterOverlappingElements(
   std::vector<MElement *> newEls;
   RTree<MElement *, double, 3, double> rtree;
 
-  for(unsigned int i = 0; i < lines.size(); i++) {
+  for(std::size_t i = 0; i < lines.size(); i++) {
     MElement *e = lines[i];
     double _min[3], _max[3];
     MElementBB(e, _min, _max);
     rtree.Insert(_min, _max, e);
   }
 
-  for(unsigned int i = 0; i < els.size(); i++) {
+  for(std::size_t i = 0; i < els.size(); i++) {
     MElement *e = els[i];
     double _min[3], _max[3];
     MElementBB(e, _min, _max);
@@ -265,7 +265,7 @@ void filterOverlappingElements(
   filterColumns(vvv, _elemColumns);
   blTris.clear();
   blQuads.clear();
-  for(unsigned int i = 0; i < vvv.size(); i++) {
+  for(std::size_t i = 0; i < vvv.size(); i++) {
     if(vvv[i]->getType() == TYPE_TRI)
       blTris.push_back((MTriangle *)vvv[i]);
     else if(vvv[i]->getType() == TYPE_QUA)

@@ -87,7 +87,7 @@ def fem_solve():
                 vTags, vNodes = model.mesh.getElementsByType(elementType, tagEntity)
                 numElements = len(vTags)
                 numGroupNodes = len(vNodes)
-                enode = np.array(vNodes).reshape((numElements,-1))
+                enode = np.array(vNodes, dtype=np.int32).reshape((numElements,-1))
                 numElementNodes = enode.shape[1]
                 debug('\nIn group', namGroup, ' with tag ', tagGroup,
                       ', numElements = e =', numElements)

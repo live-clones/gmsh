@@ -295,7 +295,7 @@ void drawContext::drawAxes(int mode, double tics[3], std::string format[3],
 void drawContext::drawAxes()
 {
   bool geometryExists = false;
-  for(unsigned int i = 0; i < GModel::list.size(); i++) {
+  for(std::size_t i = 0; i < GModel::list.size(); i++) {
     if(!GModel::list[i]->empty()) {
       geometryExists = true;
       break;

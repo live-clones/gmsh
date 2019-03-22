@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 
   // test getting data back
   std::string dataType;
-  std::vector<int> tags;
+  std::vector<std::size_t> tags;
   std::vector<std::vector<double> > data;
   double time;
   int numComp;
@@ -46,13 +46,14 @@ int main(int argc, char **argv)
   gmsh::view::remove(t);
 
   // check how many views the plugin created (a priori, a single list-based one)
-  gmsh::view::getTags(tags);
-  if(tags.size() == 1){
-    gmsh::view::write(tags[0], "iso.msh");
+  std::vector<int> viewTags;
+  gmsh::view::getTags(viewTags);
+  if(viewTags.size() == 1){
+    gmsh::view::write(viewTags[0], "iso.msh");
     // test getting data back
     std::vector<std::string> dataTypes;
     std::vector<int> numElements;
-    gmsh::view::getListData(tags[0], dataTypes, numElements, data);
+    gmsh::view::getListData(viewTags[0], dataTypes, numElements, data);
     for(unsigned int i = 0; i < dataTypes.size(); i++)
       std::cout << dataTypes[i] << " ";
     for(unsigned int i = 0; i < numElements.size(); i++)

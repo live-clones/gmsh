@@ -70,8 +70,6 @@ public: // these will become protected at some point
   // Set of high-order elements fixed by "fast curving"
   std::set<MElement *> curvedBLElements;
 
-  typedef std::vector<MVertex *>::size_type size_type;
-
 public:
   // make a set of all the vertices in the entity, with/without closure
   void addVerticesInSet(std::set<MVertex *> &, bool closure) const;
@@ -345,22 +343,22 @@ public:
   virtual int getNumElementTypes() const { return 0; }
 
   // get the number of mesh elements (total and by type) in the entity
-  virtual size_type getNumMeshElements() const { return 0; }
-  virtual unsigned int getNumMeshElementsByType(const int familyType) const
+  virtual std::size_t getNumMeshElements() const { return 0; }
+  virtual std::size_t getNumMeshElementsByType(const int familyType) const
   {
     return 0;
   }
-  virtual unsigned int getNumMeshParentElements() { return 0; }
+  virtual std::size_t getNumMeshParentElements() { return 0; }
   virtual void getNumMeshElements(unsigned *const c) const {}
 
   // get the start of the array of a type of element
   virtual MElement *const *getStartElementType(int type) const { return 0; }
 
   // get the element at the given index
-  virtual MElement *getMeshElement(unsigned int index) const { return 0; }
+  virtual MElement *getMeshElement(std::size_t index) const { return 0; }
   // get the element at the given index for a given familyType
   virtual MElement *getMeshElementByType(const int familyType,
-                                         const unsigned int index) const
+                                         const std::size_t index) const
   {
     return 0;
   }
@@ -370,10 +368,10 @@ public:
   void setAllElementsVisible(bool val) { _allElementsVisible = val ? 1 : 0; }
 
   // get the number of mesh vertices in the entity
-  unsigned int getNumMeshVertices() { return mesh_vertices.size(); }
+  std::size_t getNumMeshVertices() { return mesh_vertices.size(); }
 
   // get the mesh vertex at the given index
-  MVertex *getMeshVertex(unsigned int index) { return mesh_vertices[index]; }
+  MVertex *getMeshVertex(std::size_t index) { return mesh_vertices[index]; }
 
   // add a MeshVertex
   void addMeshVertex(MVertex *v) { mesh_vertices.push_back(v); }
@@ -407,7 +405,7 @@ public:
   std::map<MVertex *, MVertex *> correspondingHOPoints;
 
   // reorder the mesh elements of the given type, according to ordering
-  virtual bool reorder(const int elementType, const std::vector<int> &ordering)
+  virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering)
   {
     return false;
   }

@@ -106,9 +106,9 @@ int sys2x2(double mat[2][2], double b[2], double res[2])
 
   // TOLERANCE ! WARNING WARNING
   if(norm == 0.0 || std::abs(det) / norm < 1.e-12) {
-    if(norm)
-      Msg::Debug("Assuming 2x2 matrix is singular (det/norm == %.16g)",
-                 std::abs(det) / norm);
+    //    if(norm)
+    //      Msg::Debug("Assuming 2x2 matrix is singular (det/norm == %.16g)",
+    //                 std::abs(det) / norm);
     res[0] = res[1] = 0.0;
     return 0;
   }
@@ -842,7 +842,7 @@ void signedDistancesPointsTriangle(std::vector<double> &distances,
   closePts.clear();
   closePts.resize(pts_size);
 
-  for(unsigned int i = 0; i < pts_size; ++i) distances[i] = 1.e22;
+  for(std::size_t i = 0; i < pts_size; ++i) distances[i] = 1.e22;
 
   SVector3 t1 = p2 - p1;
   SVector3 t2 = p3 - p1;
@@ -859,7 +859,7 @@ void signedDistancesPointsTriangle(std::vector<double> &distances,
   double det = inv3x3(mat, inv);
   if(det == 0.0) return;
 
-  for(unsigned int i = 0; i < pts.size(); i++) {
+  for(std::size_t i = 0; i < pts.size(); i++) {
     double d;
     SPoint3 closePt;
     const SPoint3 &p = pts[i];
@@ -940,7 +940,7 @@ void signedDistancesPointsLine(std::vector<double> &distances,
   distances.resize(pts.size());
   closePts.clear();
   closePts.resize(pts.size());
-  for(unsigned int i = 0; i < pts.size(); i++) {
+  for(std::size_t i = 0; i < pts.size(); i++) {
     double d;
     SPoint3 closePt;
     const SPoint3 &p = pts[i];
@@ -1140,7 +1140,7 @@ void signedDistancesPointsEllipsePoint(std::vector<double> &distances,
   closePts.clear();
   closePts.resize(pts.size());
   double d;
-  for(unsigned int i = 0; i < pts.size(); i++) {
+  for(std::size_t i = 0; i < pts.size(); i++) {
     SPoint3 closePt;
     const SPoint3 &p = pts[i];
     signedDistancePointLine(p1, p2, p, d, closePt);
@@ -1173,7 +1173,7 @@ void signedDistancesPointsEllipseLine(
   closePts.clear();
   closePts.resize(pts.size());
   double d;
-  for(unsigned int i = 0; i < pts.size(); i++) {
+  for(std::size_t i = 0; i < pts.size(); i++) {
     SPoint3 closePt;
     const SPoint3 &p = pts[i];
     signedDistancePointLine(p1, p2, p, d, closePt);
@@ -1539,7 +1539,7 @@ void projectPointsToPlane(const std::vector<SPoint3> &pts,
                           const mean_plane &meanPlane)
 {
   ptsProj.resize(pts.size());
-  for(unsigned int i = 0; i < pts.size(); i++) {
+  for(std::size_t i = 0; i < pts.size(); i++) {
     projectPointToPlane(pts[i], ptsProj[i], meanPlane);
   }
 }
@@ -1554,7 +1554,7 @@ void transformPointsIntoOrthoBasis(const std::vector<SPoint3> &ptsProj,
   SVector3 tangent, binormal;
   buildOrthoBasis(normal, tangent, binormal);
 
-  for(unsigned int i = 0; i < ptsProj.size(); i++) {
+  for(std::size_t i = 0; i < ptsProj.size(); i++) {
     SVector3 pp(ptsProj[i][0] - ptCG[0], ptsProj[i][1] - ptCG[1],
                 ptsProj[i][2] - ptCG[2]);
     pointsUV[i][0] = dot(pp, tangent);

@@ -3074,7 +3074,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
                 if(physical_num.size() == 0) {
                   physical_num = vertBo.vertex->onWhat()->physicals;
                 }
-                for(unsigned int ii = 0; ii < physical_num.size(); ++ii) {
+                for(std::size_t ii = 0; ii < physical_num.size(); ++ii) {
                   if(physical_name == "") {
                     physical_name = model.getPhysicalName(model.getDim() - 1,
                                                           physical_num[ii]);
@@ -3296,14 +3296,14 @@ static int isInterfaceFace(GModel *const model, MVertex *v0, MVertex *v1, MVerte
       regions.push_back(*it);
     }
 
-  for(unsigned int iRegion = 0; iRegion < regions.size(); iRegion++) {
+  for(std::size_t iRegion = 0; iRegion < regions.size(); iRegion++) {
     GRegion *gr = regions[iRegion];
     std::vector<GFace *> faces = gr->faces();
     if(faces.size() != 6) {
       Msg::Warning("Error in Number of faces in Structured Mesh Region (!=6) ");
     }
 
-    for(unsigned int iFace = 0; iFace < faces.size(); iFace++) {
+    for(std::size_t iFace = 0; iFace < faces.size(); iFace++) {
       std::vector<GVertex *> vf = faces[iFace]->vertices();
       if(vf.size() != 4) {
         Msg::Warning(
@@ -3368,7 +3368,7 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
 
   // Start writing mesh if it is a Structured mesh
   if(options.structuredMesh == 1) {
-    Msg::Info("Writing Structured Mesh...............");
+    Msg::Info("Writing Structured Mesh...");
     /* This part (Structured CGNS file output) is written with the financial aid
     of Indian Institute of Technology Hyderabad - BRNS sponsored project in 2018
     Under the guidance of Prof. Vinayak Eswaran <eswar@iith.ac.in>
@@ -3436,7 +3436,7 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
      */
     if(meshDim == 3) {
       int numTotFaces(0);
-      for(unsigned int i = 0; i < regions.size(); i++) {
+      for(std::size_t i = 0; i < regions.size(); i++) {
         std::vector<GFace *> const &faces = regions[i]->faces();
         numTotFaces += faces.size();
       }
@@ -3449,7 +3449,7 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
      */
     if(meshDim == 2) {
       int numTotEdges(0);
-      for(unsigned int i = 0; i < faces.size(); i++) {
+      for(std::size_t i = 0; i < faces.size(); i++) {
         std::vector<GEdge *> const &edges = faces[i]->edges();
         numTotEdges += edges.size();
       }
@@ -3464,7 +3464,7 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
                    "Normals are not consistent,");
       Msg::Warning("you may need to reverse the order of the vertices for "
                    "'Transfinite Surface' in your .geo file.");
-      for(unsigned int iFace = 0; iFace < faces.size(); iFace++) {
+      for(std::size_t iFace = 0; iFace < faces.size(); iFace++) {
         GFace *gf = faces[iFace];
         double *Face_Orientation = NULL;
         Face_Orientation = new double[3];
@@ -3482,7 +3482,7 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
                    "below - if Volume mesh orientations are not consistent,");
       Msg::Warning("you may need to change the order of the vertices for "
                    "'Transfinite Volume' in your .geo file.");
-      for(unsigned int iRegion = 0; iRegion < regions.size(); iRegion++) {
+      for(std::size_t iRegion = 0; iRegion < regions.size(); iRegion++) {
         GRegion *gr = regions[iRegion];
         int volOri = volumeOrientationTransfinite(gr);
         Msg::Info("iRegion= %i \t Orientation=   %i", iRegion, volOri);
@@ -3520,7 +3520,7 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
       static int patchIndex(-1);
       static int interfaceIndex(-1);
 
-      for(unsigned int iFace = 0; iFace < faces.size(); iFace++) {
+      for(std::size_t iFace = 0; iFace < faces.size(); iFace++) {
         GFace *gf = faces[iFace];
         std::vector<GEdge *> const &edges = gf->edges();
         if(edges.size() != 4) {
@@ -3564,8 +3564,8 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
         dBuffer.resize(cgZoneSize[0] * cgZoneSize[1]);
 
         // x-coordinates for this zone
-        for(unsigned int k = 0; k < gf->transfinite_vertices[0].size(); k++) {
-          for(unsigned int j = 0; j < gf->transfinite_vertices.size(); j++) {
+        for(std::size_t k = 0; k < gf->transfinite_vertices[0].size(); k++) {
+          for(std::size_t j = 0; j < gf->transfinite_vertices.size(); j++) {
             MVertex *v = gf->transfinite_vertices[j][k];
             dBuffer[cgZoneSize[0] * k + j] = v->x() * scalingFactor;
           }
@@ -3576,8 +3576,8 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
           return cgnsErr();
 
         // y-coordinates for this zone
-        for(unsigned int k = 0; k < gf->transfinite_vertices[0].size(); k++) {
-          for(unsigned int j = 0; j < gf->transfinite_vertices.size(); j++) {
+        for(std::size_t k = 0; k < gf->transfinite_vertices[0].size(); k++) {
+          for(std::size_t j = 0; j < gf->transfinite_vertices.size(); j++) {
             MVertex *v = gf->transfinite_vertices[j][k];
             dBuffer[cgZoneSize[0] * k + j] = v->y() * scalingFactor;
           }
@@ -3590,8 +3590,8 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
         // z-coordinates for this zone - writes only Z=0 value (even if the mesh
         // is in different Z)
         if(vectorDim == 3) {
-          for(unsigned int k = 0; k < gf->transfinite_vertices[0].size(); k++) {
-            for(unsigned int j = 0; j < gf->transfinite_vertices.size(); j++) {
+          for(std::size_t k = 0; k < gf->transfinite_vertices[0].size(); k++) {
+            for(std::size_t j = 0; j < gf->transfinite_vertices.size(); j++) {
               // MVertex *v = gf->transfinite_vertices[j][k];
               // dBuffer[cgZoneSize[0]*k+j] = v->z() * scalingFactor ;
               dBuffer[cgZoneSize[0] * k + j] = 0;
@@ -3618,7 +3618,7 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
         Point_Donor_Range = new cgsize_t[4];
         Transform = new int[2];
 
-        for(unsigned int iBc = 0; iBc < 4; ++iBc) {
+        for(std::size_t iBc = 0; iBc < 4; ++iBc) {
           interfaceEdge = 0;
           interfaceWritten = 0;
 
@@ -3699,7 +3699,7 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
 
           if(numInterfaceEdges >
              0) { // Note: An Edge can have interface with only one more edge
-            for(unsigned int jFace = 0; jFace < faces.size(); jFace++) {
+            for(std::size_t jFace = 0; jFace < faces.size(); jFace++) {
               if(jFace != iFace) {
                 interfaceEdge = 0;
                 GFace *gf2 = faces[jFace];
@@ -3890,7 +3890,7 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
       static int patchIndex(-1);
       static int interfaceIndex(-1);
 
-      for(unsigned int iRegion = 0; iRegion < regions.size(); iRegion++) {
+      for(std::size_t iRegion = 0; iRegion < regions.size(); iRegion++) {
         GRegion *gr = regions[iRegion];
         std::vector<GFace *> faces = gr->faces();
         if(faces.size() != 6) {
@@ -3942,11 +3942,11 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
         dBuffer.resize(imax * jmax * kmax);
 
         // x-coordinates for this zone
-        for(unsigned int kk = 0; kk < gr->transfinite_vertices[0][0].size();
+        for(std::size_t kk = 0; kk < gr->transfinite_vertices[0][0].size();
             kk++) {
-          for(unsigned int jj = 0; jj < gr->transfinite_vertices[0].size();
+          for(std::size_t jj = 0; jj < gr->transfinite_vertices[0].size();
               jj++) {
-            for(unsigned int ii = 0; ii < gr->transfinite_vertices.size();
+            for(std::size_t ii = 0; ii < gr->transfinite_vertices.size();
                 ii++) {
               MVertex *v = gr->transfinite_vertices[ii][jj][kk];
               dBuffer[imax * jmax * kk + imax * jj + ii] =
@@ -3959,11 +3959,11 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
           return cgnsErr();
 
         // y-coordinates for this zone
-        for(unsigned int kk = 0; kk < gr->transfinite_vertices[0][0].size();
+        for(std::size_t kk = 0; kk < gr->transfinite_vertices[0][0].size();
             kk++) {
-          for(unsigned int jj = 0; jj < gr->transfinite_vertices[0].size();
+          for(std::size_t jj = 0; jj < gr->transfinite_vertices[0].size();
               jj++) {
-            for(unsigned int ii = 0; ii < gr->transfinite_vertices.size();
+            for(std::size_t ii = 0; ii < gr->transfinite_vertices.size();
                 ii++) {
               MVertex *v = gr->transfinite_vertices[ii][jj][kk];
               dBuffer[imax * jmax * kk + imax * jj + ii] =
@@ -3976,11 +3976,11 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
           return cgnsErr();
 
         // z-coordinates for this zone
-        for(unsigned int kk = 0; kk < gr->transfinite_vertices[0][0].size();
+        for(std::size_t kk = 0; kk < gr->transfinite_vertices[0][0].size();
             kk++) {
-          for(unsigned int jj = 0; jj < gr->transfinite_vertices[0].size();
+          for(std::size_t jj = 0; jj < gr->transfinite_vertices[0].size();
               jj++) {
-            for(unsigned int ii = 0; ii < gr->transfinite_vertices.size();
+            for(std::size_t ii = 0; ii < gr->transfinite_vertices.size();
                 ii++) {
               MVertex *v = gr->transfinite_vertices[ii][jj][kk];
               dBuffer[imax * jmax * kk + imax * jj + ii] =
@@ -4007,7 +4007,7 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
         Point_Donor_Range = new cgsize_t[6];
         Transform = new int[3];
 
-        for(unsigned int iBc = 0; iBc < 6; ++iBc) {
+        for(std::size_t iBc = 0; iBc < 6; ++iBc) {
           interfaceFace = 0;
           interfaceFaceWritten = 0;
 
@@ -4152,7 +4152,7 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
           if(numInterfaceFaces >
              0) { // Note: An Face can have interface with only one ore Face
             if(isInterfaceFace(this, v0Tmp, v1Tmp, v2Tmp, v3Tmp)) {
-              for(unsigned int jRegion = 0; jRegion < regions.size();
+              for(std::size_t jRegion = 0; jRegion < regions.size();
                   jRegion++) {
                 if(jRegion != iRegion) {
                   interfaceFace = 0;

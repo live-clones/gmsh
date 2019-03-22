@@ -3602,10 +3602,11 @@ cases.)
 @cindex File format, mesh
 @cindex MSH4 file
 
-The MSH file format (version 4) contains one mandatory section giving
-information about the file (@code{$MeshFormat}), followed by several
-sections defining the physical group names (@code{$PhysicalName},
-optional), the entities (@code{$Entities}), the partitioned entities
+The MSH file format 4 (at its current revision, version 4.1) contains
+one mandatory section giving information about the file
+(@code{$MeshFormat}), followed by several sections defining the physical
+group names (@code{$PhysicalName}, optional), the entities
+(@code{$Entities}, optional), the partitioned entities
 (@code{$PartitionedEntities}, optional), nodes (@code{$Nodes}), elements
 (@code{$Elements}), periodicity relations (@code{$Periodic}, optional),
 ghost elements (@code{$GhostElements}, optional) and post-processing
@@ -3632,14 +3633,40 @@ assumed to be defined before elements.
 
 In binary mode (@code{Mesh.Binary=1} or @code{-bin} on the command
 line), all the numerical values (integer and floating point) not marked
-as ASCII in what follows are written in binary form. Note that the
-binary mode will evolve in a future minor revision of the format to
-allow for 64-bit node and element tags.
+as ASCII in what follows are written in binary form.
+
+The 4.1 revision of format includes the following modifications with
+respect to the initial 4.0 version:
+@itemize @bullet
+@item
+All the @code{unsigned long} entries are changed to @code{size_t}. All
+the entries designating counts which were previsouly encoded as
+@code{int} are also changed to @code{size_t}. (This only impacts binary
+files.)
+@item
+The @code{$Entities} section is now optional.
+@item
+The bounding box for point entities is simply replaced by the 3
+coordinates of the point (instead of the six bounding box values).
+@item
+The @code{entityDim} and @code{entityTag} values are switched in the
+@code{$Nodes} and @code{$Elements} sections (for consistency with the
+ordering used elsewhere).
+@item
+The minimum and the maximum tag of nodes (resp. elements) is added in
+the header of the @code{$Nodes} (resp. @code{$Elements}) section, to
+facilitate the detection of sparse or dense numberings when reading the
+file.
+@item
+The @code{$Periodic} section has been changed to always provide the
+number of values in the affine transform (which can be zero).
+@end itemize
 
 @example
 $MeshFormat // same as MSH version 2
-  version(ASCII double; currently 4.0) file-type(ASCII int; 1 for binary mode)
-    data-size(ASCII int; currently unused)
+  version(ASCII double; currently 4.1)
+    file-type(ASCII int; 0 for ASCII mode, 1 for binary mode)
+    data-size(ASCII int; sizeof(size_t))
   <int with value one; only in binary mode, to detect endianness>
 $EndMeshFormat
 
@@ -3649,74 +3676,68 @@ $EndMeshFormat
   ...
 <$EndPhysicalNames>
 
-$Entities
-  numPoints(unsigned long) numCurves(unsigned long)
-    numSurfaces(unsigned long) numVolumes(unsigned long)
-  // points
-  tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
-    boxMaxX(double) boxMaxY(double) boxMaxZ(double)
-    numPhysicals(unsigned long) physicalTag(int) ...
+<$Entities>
+  numPoints(size_t) numCurves(size_t)
+    numSurfaces(size_t) numVolumes(size_t)
+  pointTag(int) X(double) Y(double) Z(double)
+    numPhysicals(size_t) physicalTag(int) ...
   ...
-  // curves
-  tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
-     boxMaxX(double) boxMaxY(double) boxMaxZ(double)
-     numPhysicals(unsigned long) physicalTag(int) ...
-     numBoundingPoints(unsigned long) tagPoint(int) ...
+  curveTag(int) minX(double) minY(double) minZ(double)
+    maxX(double) maxY(double) maxZ(double)
+    numPhysicals(size_t) physicalTag(int) ...
+    numBoundingPoints(size_t) pointTag(int) ...
   ...
-  // surfaces
-  tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
-    boxMaxX(double) boxMaxY(double) boxMaxZ(double)
-    numPhysicals(unsigned long) physicalTag(int) ...
-    numBoundingCurves(unsigned long) tagCurve(int) ...
+  surfaceTag(int) minX(double) minY(double) minZ(double)
+    maxX(double) maxY(double) maxZ(double)
+    numPhysicals(size_t) physicalTag(int) ...
+    numBoundingCurves(size_t) curveTag(int) ...
   ...
-  // volumes
-  tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
-    boxMaxX(double) boxMaxY(double) boxMaxZ(double)
-    numPhysicals(unsigned long) physicalTag(int) ...
-    numBoundngSurfaces(unsigned long) tagSurfaces(int) ...
+  volumeTag(int) minX(double) minY(double) minZ(double)
+    maxX(double) maxY(double) maxZ(double)
+    numPhysicals(size_t) physicalTag(int) ...
+    numBoundngSurfaces(size_t) surfaceTag(int) ...
   ...
-$EndEntities
+<$EndEntities>
 
 <$PartitionedEntities>
-  numPartitions(int)
-  numGhostEntities(int)
-  ghostEntityTag(int) partition(int)
+  numPartitions(size_t)
+  numGhostEntities(size_t)
+    ghostEntityTag(int) partition(int)
+    ...
+  numPoints(size_t) numCurves(size_t)
+    numSurfaces(size_t) numVolumes(size_t)
+  pointTag(int) parentDim(int) parentTag(int)
+    numPartitions(size_t) partitionTag(int) ...
+    X(double) Y(double) Z(double)
+    numPhysicals(size_t) physicalTag(int) ...
   ...
-  numPoints(unsigned long) numCurves(unsigned long)
-    numSurfaces(unsigned long) numVolumes(unsigned long)
-  // points
-  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag(int) ...
-    boxMinX(double) boxMinY(double) boxMinZ(double)
-    boxMaxX(double) boxMaxY(double) boxMaxZ(double)
-    numPhysicals(unsigned long) physicalTag(int) ...
+  curveTag(int) parentDim(int) parentTag(int)
+    numPartitions(size_t) partitionTag(int) ...
+    minX(double) minY(double) minZ(double)
+    maxX(double) maxY(double) maxZ(double)
+    numPhysicals(size_t) physicalTag(int) ...
+    numBoundingPoints(size_t) pointTag(int) ...
   ...
-  // curves
-  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag(int) ...
-    boxMinX(double) boxMinY(double) boxMinZ(double)
-    boxMaxX(double) boxMaxY(double) boxMaxZ(double)
-    numPhysicals(unsigned long) physicalTag(int) ...
-    numBoundingPoints(unsigned long) tagPoint(int) ...
+  surfaceTag(int) parentDim(int) parentTag(int)
+    numPartitions(size_t) partitionTag(int) ...
+    minX(double) minY(double) minZ(double)
+    maxX(double) maxY(double) maxZ(double)
+    numPhysicals(size_t) physicalTag(int) ...
+    numBoundingCurves(size_t) curveTag(int) ...
   ...
-  // surfaces
-  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag(int) ...
-    boxMinX(double) boxMinY(double) boxMinZ(double)
-    boxMaxX(double) boxMaxY(double) boxMaxZ(double)
-    numPhysicals(unsigned long) physicalTag(int) ...
-    numBoundingCurves(unsigned long) tagCurve(int) ...
-  ...
-  // volumes
-  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag(int) ...
-    boxMinX(double) boxMinY(double) boxMinZ(double)
-    boxMaxX(double) boxMaxY(double) boxMaxZ(double)
-    numPhysicals(unsigned long) physicalTag(int) ...
-    numBoundingSurfaces(unsigned long) tagSurfaces(int) ...
+  volumeTag(int) parentDim(int) parentTag(int)
+    numPartitions(size_t) partitionTag(int) ...
+    minX(double) minY(double) minZ(double)
+    maxX(double) maxY(double) maxZ(double)
+    numPhysicals(size_t) physicalTag(int) ...
+    numBoundingSurfaces(size_t) surfaceTag(int) ...
   ...
 <$EndPartitionedEntities>
 
 $Nodes
-  numEntityBlocks(unsigned long) numNodes(unsigned long)
-  tagEntity(int) dimEntity(int) parametric(int; see below) numNodes(unsigned long)
-    tag(int) x(double) y(double) z(double)
+  numEntityBlocks(size_t) numNodes(size_t)
+  entityTag(int) entityDim(int) parametric(int; 0 or 1) numNodes(size_t)
+    nodeTag(size_t) x(double) y(double) z(double)
        <u(double; if parametric and on curve or surface)>
        <v(double; if parametric and on surface)>
     ...
@@ -3724,26 +3745,28 @@ $Nodes
 $EndNodes
 
 $Elements
-  numEntityBlocks(unsigned long) numElements(unsigned long)
-  tagEntity(int) dimEntity(int) typeEle(int; see below) numElements(unsigned long)
-    tag(int) numVert(int) ...
+  numEntityBlocks(size_t) numElements(size_t)
+  entityTag(int) entityDim(int) elementType(int; see below) numElements(size_t)
+    elementTag(size_t) nodeTag(size_t) ...
     ...
   ...
 $EndElements
 
-<$Periodic> // same as in MSH version 2
-  numPeriodicLinks(int)
-  slaveDim(int) slaveTag(int) masterTag(int)
-    < Affine value(double) ... >
-    correspondingVertexSize(unsigned long)
-      numVert(int) numVert(int)
-      ...
+<$Periodic>
+  numPeriodicLinks(size_t)
+  slaveEntityDim(int) slaveEntityTag(int) masterEntityTag(int)
+  numAffine(size_t) value(double) ...
+  numCorrespondingNodes(size_t)
+    nodeTag(size_t) nodeTag(size_t)
+    ...
   ...
 <$EndPeriodic>
 
 <$GhostElements>
-  numGhostElement(int)
-  elementTag(int) partition(int) numGhostPartitions(int) ghostPartition(int) ...
+  numGhostElements(size_t)
+  elementTag(size_t) partitionTag(int)
+    numGhostPartitions(size_t) ghostPartitionTag(int) ...
+  ...
 <$EndGhostElements>
 
 <$NodeData>
@@ -3753,7 +3776,8 @@ $EndElements
   realTag(ASCII double) ...
   numIntegerTags(ASCII int)
   integerTag(ASCII int) ...
-  nodeNumber(int) value(double) ...
+  nodeTag(size_t) value(double) ...
+  ...
 <$EndNodeData>
 
 <$ElementData>
@@ -3763,7 +3787,8 @@ $EndElements
   realTag(ASCII double) ...
   numIntegerTags(ASCII int)
   integerTag(ASCII int) ...
-  elementNumber(int) value(double) ...
+  elementTag(size_t) value(double) ...
+  ...
 <$EndElementData>
 
 <$ElementNodeData>
@@ -3773,7 +3798,8 @@ $EndElements
   realTag(ASCII double) ...
   numIntegerTags(ASCII int)
   integerTag(ASCII int) ...
-  elementNumber(int) numNodesPerElement(int) value(double) ...
+  elementTag(size_t) numNodesPerElement(int) value(double) ...
+  ...
 <$EndElementNodeData>
 
 <$InterpolationScheme>
@@ -3785,7 +3811,7 @@ $EndElements
 <$EndInterpolationScheme>
 @end example
 
-@code{typeEle} is e.g.:
+@code{elementType} is e.g.:
 @table @code
 @item 1
 2-node line.
@@ -3888,6 +3914,48 @@ The post-processing sections are identical to the ones in the version 2
 file format (@pxref{MSH file format version 2}). These sections will be
 reworked in a future minor revision of the version 4 format
 (e.g. version 4.1 or 4.2).
+
+Below is a small example (a mesh consisting of two quadrangles with an
+associated nodal scalar dataset; the comments are not part of the actual
+file!):
+
+@smallexample
+$MeshFormat
+4.1 0 8          @emph{MSH4.1, ASCII}
+$EndMeshFormat
+$Nodes
+1 6 1 6          @emph{1 entity, 6 nodes, min/max node tags: 1 and 6}
+2 1 0 6          @emph{surface 1, no parametric coordinates, 6 nodes}
+1 0. 0. 0.       @emph{  node #1: coordinates (0., 0., 0.)}
+2 1. 0. 0.       @emph{  node #2: coordinates (1., 0., 0.)}
+3 1. 1. 0.       @emph{  etc.}
+4 0. 1. 0.
+5 2. 0. 0.
+6 2. 1. 0.
+$EndNodes
+$Elements
+1 2 1 2          @emph{1 entity, 2 elements, min/max element tags: 1 and 2}
+2 1 3 2          @emph{surface 1, element type 3 (4-node quad), 2 elements}
+1 1 2 3 4        @emph{  quad #1: nodes 1 2 3 4}
+2 2 5 6 3        @emph{  quad #2: nodes 2 5 6 3}
+$EndElements
+$NodeData
+1                @emph{one string tag:}
+"A scalar view"  @emph{  the name of the view ("A scalar view")}
+1                @emph{one real tag:}
+0.0              @emph{  the time value (0.0)}
+3                @emph{three integer tags:}
+0                @emph{  the time step (0; time steps always start at 0)}
+1                @emph{  1-component (scalar) field}
+6                @emph{  six associated nodal values}
+1 0.0            @emph{value associated with node #1 (0.0)}
+2 0.1            @emph{value associated with node #2 (0.1)}
+3 0.2            @emph{etc.}
+4 0.0
+5 0.2
+6 0.4
+$EndNodeData
+@end smallexample
 
 @c -------------------------------------------------------------------------
 @c Node ordering

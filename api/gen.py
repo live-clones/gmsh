@@ -68,13 +68,13 @@ option = gmsh.add_module('option','Global option handling functions')
 doc = '''Set a numerical option to `value'. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('setNumber',doc,None,istring('name'),idouble('value'))
 
-doc = '''Get the `value' of a numerical option.'''
+doc = '''Get the `value' of a numerical option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('getNumber',doc,None,istring('name'),odouble('value'))
 
-doc = '''Set a string option to `value'.'''
+doc = '''Set a string option to `value'. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('setString',doc,None,istring('name'),istring('value'))
 
-doc = '''Get the `value' of a string option.'''
+doc = '''Get the `value' of a string option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('getString',doc,None,istring('name'),ostring('value'))
 
 ################################################################################
@@ -197,22 +197,22 @@ doc = '''Get the last entities (if any) where a meshing error occurred. Currentl
 mesh.add('getLastEntityError',doc,None,ovectorpair('dimTags'))
 
 doc = '''Get the last nodes (if any) where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''
-mesh.add('getLastNodeError',doc,None,ovectorint('nodeTags'))
+mesh.add('getLastNodeError',doc,None,ovectorsize('nodeTags'))
 
 doc = '''Get the nodes classified on the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim' >= 0, `parametricCoord' contains the parametric coordinates ([u1, u2, ...] or [u1, v1, u2, ...]) of the nodes, if available. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If `includeBoundary' is set, also return the nodes classified on the boundary of the entity (wich will be reparametrized on the entity if `dim' >= 0 in order to compute their parametric coordinates).'''
-mesh.add('getNodes',doc,None,ovectorint('nodeTags'),ovectordouble('coord'),ovectordouble('parametricCoord'),iint('dim', '-1'),iint('tag', '-1'),ibool('includeBoundary','false','False'))
+mesh.add('getNodes',doc,None,ovectorsize('nodeTags'),ovectordouble('coord'),ovectordouble('parametricCoord'),iint('dim', '-1'),iint('tag', '-1'),ibool('includeBoundary','false','False'))
 
 doc = '''Get the coordinates and the parametric coordinates (if any) of the node with tag `tag'. This is a sometimes useful but inefficient way of accessing nodes, as it relies on a cache stored in the model. For large meshes all the nodes in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
-mesh.add('getNode',doc,None,iint('nodeTag'),ovectordouble('coord'),ovectordouble('parametricCoord'))
+mesh.add('getNode',doc,None,isize('nodeTag'),ovectordouble('coord'),ovectordouble('parametricCoord'))
 
 doc = '''Rebuild the node cache.'''
 mesh.add('rebuildNodeCache',doc,None,ibool('onlyIfNecessary', 'true', 'True'))
 
 doc = '''Get the nodes from all the elements belonging to the physical group of dimension `dim' and tag `tag'. `nodeTags' contains the node tags; `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...].'''
-mesh.add('getNodesForPhysicalGroup',doc,None,iint('dim'),iint('tag'),ovectorint('nodeTags'),ovectordouble('coord'))
+mesh.add('getNodesForPhysicalGroup',doc,None,iint('dim'),iint('tag'),ovectorsize('nodeTags'),ovectordouble('coord'))
 
-doc = '''Set the nodes classified on the geometrical entity of dimension `dim' and tag `tag'. `nodeTags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord' vector contains the parametric coordinates of the nodes, if any. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If the `nodeTag' vector is empty, new tags are automatically assigned to the nodes.'''
-mesh.add('setNodes',doc,None,iint('dim'),iint('tag'),ivectorint('nodeTags'),ivectordouble('coord'),ivectordouble('parametricCoord','std::vector<double>()',"[]","[]"))
+doc = '''Set the nodes classified on the geometrical entity of dimension `dim' and tag `tag'. `nodeTags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord' vector contains the parametric coordinates of the nodes, if any. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If the `nodeTags' vector is empty, new tags are automatically assigned to the nodes.'''
+mesh.add('setNodes',doc,None,iint('dim'),iint('tag'),ivectorsize('nodeTags'),ivectordouble('coord'),ivectordouble('parametricCoord','std::vector<double>()',"[]","[]"))
 
 doc = '''Reclassify all nodes on their associated geometrical entity, based on the elements. Can be used when importing nodes in bulk (e.g. by associating them all to a single volume), to reclassify them correctly on model surfaces, curves, etc. after the elements have been set.'''
 mesh.add('reclassifyNodes',doc,None)
@@ -221,13 +221,13 @@ doc = '''Relocate the nodes classified on the entity of dimension `dim' and tag 
 mesh.add('relocateNodes',doc,None,iint('dim', '-1'),iint('tag', '-1'))
 
 doc = '''Get the elements classified on the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the elements for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the elements in the mesh. `elementTypes' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see `getElementProperties' to obtain the properties for a given element type). `elementTags' is a vector of the same length as `elementTypes'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is also a vector of the same length as `elementTypes'; each entry is a vector of length equal to the number of elements of the given type times the number N of nodes for this type of element, that contains the node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].'''
-mesh.add('getElements',doc,None,ovectorint('elementTypes'),ovectorvectorint('elementTags'),ovectorvectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'))
+mesh.add('getElements',doc,None,ovectorint('elementTypes'),ovectorvectorsize('elementTags'),ovectorvectorsize('nodeTags'),iint('dim', '-1'),iint('tag', '-1'))
 
 doc = '''Get the type and node tags of the element with tag `tag'. This is a sometimes useful but inefficient way of accessing elements, as it relies on a cache stored in the model. For large meshes all the elements in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
-mesh.add('getElement',doc,None,iint('elementTag'),oint('elementType'),ovectorint('nodeTags'))
+mesh.add('getElement',doc,None,isize('elementTag'),oint('elementType'),ovectorsize('nodeTags'))
 
 doc = '''Get the tag, type and node tags of the element located at coordinates (`x', `y', `z'). This is a sometimes useful but inefficient way of accessing elements, as it relies on a search in a spatial octree.'''
-mesh.add('getElementByCoordinates',doc,None,idouble('x'),idouble('y'),idouble('z'),oint('elementTag'),oint('elementType'),ovectorint('nodeTags'))
+mesh.add('getElementByCoordinates',doc,None,idouble('x'),idouble('y'),idouble('z'),osize('elementTag'),oint('elementType'),ovectorsize('nodeTags'))
 
 doc = '''Get the types of elements in the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the types for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the types in the mesh.'''
 mesh.add('getElementTypes',doc,None,ovectorint('elementTypes'),iint('dim', '-1'),iint('tag', '-1'))
@@ -239,16 +239,16 @@ doc = '''Get the properties of an element of type `elementType': its name (`elem
 mesh.add('getElementProperties',doc,None,iint('elementType'),ostring('elementName'),oint('dim'),oint('order'),oint('numNodes'),ovectordouble('parametricCoord'))
 
 doc = '''Get the elements of type `elementType' classified on the entity of of tag `tag'. If `tag' < 0, get the elements for all entities. `elementTags' is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is a vector of length equal to the number of elements of the given type times the number N of nodes for this type of element, that contains the node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
-mesh.add('getElementsByType',doc,None,iint('elementType'),ovectorint('elementTags'),ovectorint('nodeTags'),iint('tag', '-1'),isize('task', '0'),isize('numTasks', '1'))
+mesh.add('getElementsByType',doc,None,iint('elementType'),ovectorsize('elementTags'),ovectorsize('nodeTags'),iint('tag', '-1'),isize('task', '0'),isize('numTasks', '1'))
 
 doc = '''Preallocate the data for `getElementsByType'. This is necessary only if `getElementsByType' is called with `numTasks' > 1.'''
-mesh.add('preallocateElementsByType',doc,None,iint('elementType'),ibool('elementTag'),ibool('nodeTag'),ovectorint('elementTags'),ovectorint('nodeTags'),iint('tag', '-1'))
+mesh.add('preallocateElementsByType',doc,None,iint('elementType'),ibool('elementTag'),ibool('nodeTag'),ovectorsize('elementTags'),ovectorsize('nodeTags'),iint('tag', '-1'))
 
 doc = '''Set the elements of the entity of dimension `dim' and tag `tag'. `types' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of the same length as `types'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is also a vector of the same length as `types'; each entry is a vector of length equal to the number of elements of the given type times the number N of nodes per element, that contains the node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].'''
-mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('elementTypes'),ivectorvectorint('elementTags'),ivectorvectorint('nodeTags'))
+mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('elementTypes'),ivectorvectorsize('elementTags'),ivectorvectorsize('nodeTags'))
 
 doc = '''Set the elements of type `elementType' in the entity of dimension `dim' and tag `tag'. `elementTags' contains the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is a vector of length equal to the number of elements times the number N of nodes per element, that contains the node tags of all the elements, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the `elementTag' vector is empty, new tags are automatically assigned to the elements.'''
-mesh.add('setElementsByType',doc,None,iint('dim'),iint('tag'),iint('elementType'),ivectorint('elementTags'),ivectorint('nodeTags'))
+mesh.add('setElementsByType',doc,None,iint('dim'),iint('tag'),iint('elementType'),ivectorsize('elementTags'),ivectorsize('nodeTags'))
 
 doc = '''Get the Jacobians of all the elements of type `elementType' classified on the entity of dimension `dim' and tag `tag', at the G integration points required by the `integrationType' integration rule (e.g. \"Gauss4\"). Data is returned by element, with elements in the same order as in `getElements' and `getElementsByType'. `jacobians' contains for each element the 9 entries of a 3x3 Jacobian matrix (by row), for each integration point: [e1g1Jxx, e1g1Jxy, e1g1Jxz, ... e1g1Jzz, e1g2Jxx, ..., e1gGJzz, e2g1Jxx, ...]. `determinants' contains for each element the determinant of the Jacobian matrix for each integration point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each element the x, y, z coordinates of the integration points. If `tag' < 0, get the Jacobian data for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getJacobians',doc,None,iint('elementType'),istring('integrationType'),ovectordouble('jacobians'),ovectordouble('determinants'),ovectordouble('points'),iint('tag', '-1'),isize('task', '0'),isize('numTasks', '1'))
@@ -268,14 +268,14 @@ mesh.add('getBarycenters',doc,None,iint('elementType'),iint('tag'),ibool('fast')
 doc = '''Preallocate the data required by `getBarycenters'. This is necessary only if `getBarycenters' is called with `numTasks' > 1.'''
 mesh.add('preallocateBarycenters',doc,None,iint('elementType'),ovectordouble('barycenters'),iint('tag', '-1'))
 
-doc = '''Get the nodes on the edges of all elements of type `elementType' classified on the entity of tag `tag'. If `primary' is set, only the primary (begin/end) nodes of the edges are returned. If `tag' < 0, get the edge nodes for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
-mesh.add('getElementEdgeNodes',doc,None,iint('elementType'),ovectorint('nodes'),iint('tag','-1'),ibool('primary','false','False'),isize('task', '0'),isize('numTasks', '1'))
+doc = '''Get the nodes on the edges of all elements of type `elementType' classified on the entity of tag `tag'. `nodeTags' contains the node tags. If `primary' is set, only the primary (begin/end) nodes of the edges are returned. If `tag' < 0, get the edge nodes for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
+mesh.add('getElementEdgeNodes',doc,None,iint('elementType'),ovectorsize('nodeTags'),iint('tag','-1'),ibool('primary','false','False'),isize('task', '0'),isize('numTasks', '1'))
 
-doc = '''Get the nodes on the faces of type `faceType' (3 for triangular faces, 4 for quadrangular faces) of all elements of type `elementType' classified on the entity of tag `tag'. If `primary' is set, only the primary (corner) nodes of the faces are returned. If `tag' < 0, get the face nodes for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
-mesh.add('getElementFaceNodes',doc,None,iint('elementType'),iint('faceType'),ovectorint('nodes'),iint('tag','-1'),ibool('primary','false','False'),isize('task', '0'),isize('numTasks', '1'))
+doc = '''Get the nodes on the faces of type `faceType' (3 for triangular faces, 4 for quadrangular faces) of all elements of type `elementType' classified on the entity of tag `tag'. `nodeTags' contains the node tags. If `primary' is set, only the primary (corner) nodes of the faces are returned. If `tag' < 0, get the face nodes for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
+mesh.add('getElementFaceNodes',doc,None,iint('elementType'),iint('faceType'),ovectorsize('nodeTags'),iint('tag','-1'),ibool('primary','false','False'),isize('task', '0'),isize('numTasks', '1'))
 
 doc = '''Get the ghost elements `elementTags' and their associated `partitions' stored in the ghost entity of dimension `dim' and tag `tag'.'''
-mesh.add('getGhostElements',doc,None,iint('dim'),iint('tag'),ovectorint('elementTags'),ovectorint('partitions'))
+mesh.add('getGhostElements',doc,None,iint('dim'),iint('tag'),ovectorsize('elementTags'),ovectorint('partitions'))
 
 doc = '''Set a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize',doc,None,ivectorpair('dimTags'),idouble('size'))
@@ -305,7 +305,7 @@ doc = '''Embed the geometrical entities of dimension `dim' and tags `tags' in th
 mesh.add('embed',doc,None,iint('dim'),ivectorint('tags'),iint('inDim'),iint('inTag'))
 
 doc = '''Reorder the elements of type `elementType' classified on the entity of tag `tag' according to `ordering'.'''
-mesh.add('reorderElements',doc,None,iint('elementType'),iint('tag'),ivectorint('ordering'))
+mesh.add('reorderElements',doc,None,iint('elementType'),iint('tag'),ivectorsize('ordering'))
 
 doc = '''Renumber the node tags in a contiunous sequence.'''
 mesh.add('renumberNodes',doc,None)
@@ -316,8 +316,8 @@ mesh.add('renumberElements',doc,None)
 doc = '''Set the meshes of the entities of dimension `dim' and tag `tags' as periodic copies of the meshes of entities `tagsSource', using the affine transformation specified in `affineTransformation' (16 entries of a 4x4 matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.'''
 mesh.add('setPeriodic',doc,None,iint('dim'),ivectorint('tags'),ivectorint('tagsSource'),ivectordouble('affineTransform'))
 
-doc = '''Get the master entity, periodic node pairs and affine transform for the entity of dimension `dim' and tag `tag'.'''
-mesh.add('getPeriodicNodes',doc,None,iint('dim'),iint('tag'),oint('tagMaster'),ovectorpair('nodes'),ovectordouble('affineTransform'))
+doc = '''Get the master entity `tagMaster', the node tags `nodeTags' and their corresponding master node tags `nodeTagsMaster', and the affine transform `affineTransform' for the entity of dimension `dim' and tag `tag'.'''
+mesh.add('getPeriodicNodes',doc,None,iint('dim'),iint('tag'),oint('tagMaster'),ovectorsize('nodeTags'),ovectorsize('nodeTagsMaster'),ovectordouble('affineTransform'))
 
 doc = '''Remove duplicate nodes in the mesh of the current model.'''
 mesh.add('removeDuplicateNodes',doc,None)
@@ -331,7 +331,7 @@ mesh.add('classifySurfaces',doc,None,idouble('angle'),ibool('boundary','true','T
 doc = '''Create a boundary representation from the mesh if the model does not have one (e.g. when imported from mesh file formats with no BRep representation of the underlying model). Warning: this is an experimental feature.'''
 mesh.add('createTopology',doc,None)
 
-doc = '''Create a parametrization for curves and surfaces that do not have one (i.e. discrete curves and surfaces represented solely by meshes, without an underlying CAD description). Warning: this is an experimental feature.'''
+doc = '''Create a parametrization for curves and surfaces that do not have one (i.e. discrete curves and surfaces represented solely by meshes, without an underlying CAD description). `createGeometry' automatically calls `createTopology'. Warning: this is an experimental feature.'''
 mesh.add('createGeometry',doc,None)
 
 doc = '''Compute a basis representation for homology spaces after a mesh has been generated. The computation domain is given in a list of physical group tags `domainTags'; if empty, the whole mesh is the domain. The computation subdomain for relative homology computation is given in a list of physical group tags `subdomainTags'; if empty, absolute homology is computed. The dimensions homology bases to be computed are given in the list `dim'; if empty, all bases are computed. Resulting basis representation chains are stored as physical groups in the mesh.'''
@@ -622,10 +622,10 @@ doc = '''Get the tags of all views.'''
 view.add('getTags',doc,None,ovectorint('tags'))
 
 doc = '''Add model-based post-processing data to the view with tag `tag'. `modelName' identifies the model the data is attached to. `dataType' specifies the type of data, currently either "NodeData", "ElementData" or "ElementNodeData". `step' specifies the identifier (>= 0) of the data in a sequence. `tags' gives the tags of the nodes or elements in the mesh to which the data is associated. `data' is a vector of the same length as `tags': each entry is the vector of double precision numbers representing the data associated with the corresponding tag. The optional `time' argument associate a time value with the data. `numComponents' gives the number of data components (1 for scalar data, 3 for vector data, etc.) per entity; if negative, it is automatically inferred (when possible) from the input data. `partition' allows to specify data in several sub-sets.'''
-view.add('addModelData',doc,None,iint('tag'),iint('step'),istring('modelName'),istring('dataType'),ivectorint('tags'),ivectorvectordouble('data'),idouble('time','0.'),iint('numComponents','-1'),iint('partition','0'))
+view.add('addModelData',doc,None,iint('tag'),iint('step'),istring('modelName'),istring('dataType'),ivectorsize('tags'),ivectorvectordouble('data'),idouble('time','0.'),iint('numComponents','-1'),iint('partition','0'))
 
 doc = '''Get model-based post-processing data from the view with tag `tag' at step `step'. Return the `data' associated to the nodes or the elements with tags `tags', as well as the `dataType' and the number of components `numComponents'.'''
-view.add_rawc('getModelData',doc,None,iint('tag'),iint('step'),ostring('dataType'),ovectorint('tags'),ovectorvectordouble('data'),odouble('time'),oint('numComponents'))
+view.add_rawc('getModelData',doc,None,iint('tag'),iint('step'),ostring('dataType'),ovectorsize('tags'),ovectorvectordouble('data'),odouble('time'),oint('numComponents'))
 
 doc = '''Add list-based post-processing data to the view with tag `tag'. `dataType' identifies the data: "SP" for scalar points, "VP", for vector points, etc. `numEle' gives the number of elements in the data. `data' contains the data for the `numEle' elements.'''
 view.add('addListData',doc,None,iint('tag'),istring('dataType'),iint('numEle'),ivectordouble('data'))
@@ -688,10 +688,10 @@ doc = '''Select entities in the user interface. If `dim' is >= 0, return only th
 fltk.add('selectEntities',doc,oint,ovectorpair('dimTags'),iint('dim','-1'))
 
 doc = '''Select elements in the user interface.'''
-fltk.add('selectElements',doc,oint,ovectorint('tags'))
+fltk.add('selectElements',doc,oint,ovectorsize('elementTags'))
 
 doc = '''Select views in the user interface.'''
-fltk.add('selectViews',doc,oint,ovectorint('tags'))
+fltk.add('selectViews',doc,oint,ovectorint('viewTags'))
 
 ################################################################################
 
@@ -728,8 +728,11 @@ onelab = gmsh.add_module('logger','Message logger functions')
 doc = '''Write a `message'. `level' can be "info", "warning" or "error".'''
 onelab.add('write',doc,None,istring('message'),istring('level','"info"'))
 
-doc = '''Start logging messages in `log'.'''
-onelab.add('start',doc,None,ovectorstring('log'))
+doc = '''Start logging messages.'''
+onelab.add('start',doc,None)
+
+doc = '''Get logged messages.'''
+onelab.add('get',doc,None,ovectorstring('log'))
 
 doc = '''Stop logging messages.'''
 onelab.add('stop',doc,None)

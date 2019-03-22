@@ -605,8 +605,8 @@ FlGui::FlGui(int argc, char **argv)
   callForSolverPlugin(-1);
 
   // draw
-  for(unsigned int i = 0; i < graph.size(); i++)
-    for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+  for(std::size_t i = 0; i < graph.size(); i++)
+    for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
       graph[i]->gl[j]->redraw();
 
   if(CTX::instance()->showOptionsOnStartup) options->win->show();
@@ -703,32 +703,32 @@ int FlGui::testGlobalShortcuts(int event)
     status = 1;
   }
   else if(Fl::test_shortcut('e')) {
-    for(unsigned int i = 0; i < graph.size(); i++)
-      for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+    for(std::size_t i = 0; i < graph.size(); i++)
+      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
         graph[i]->gl[j]->endSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('u')) {
-    for(unsigned int i = 0; i < graph.size(); i++)
-      for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+    for(std::size_t i = 0; i < graph.size(); i++)
+      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
         graph[i]->gl[j]->undoSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('i')) {
-    for(unsigned int i = 0; i < graph.size(); i++)
-      for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+    for(std::size_t i = 0; i < graph.size(); i++)
+      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
         graph[i]->gl[j]->invertSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('q')) {
-    for(unsigned int i = 0; i < graph.size(); i++)
-      for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+    for(std::size_t i = 0; i < graph.size(); i++)
+      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
         graph[i]->gl[j]->quitSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('-')) {
-    for(unsigned int i = 0; i < graph.size(); i++)
-      for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+    for(std::size_t i = 0; i < graph.size(); i++)
+      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
         graph[i]->gl[j]->invertSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
@@ -773,12 +773,12 @@ int FlGui::testGlobalShortcuts(int event)
     }
     else {
       bool lasso = false;
-      for(unsigned int i = 0; i < graph.size(); i++)
-        for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+      for(std::size_t i = 0; i < graph.size(); i++)
+        for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
           if(graph[i]->gl[j]->lassoMode) lasso = true;
       if(lasso) {
-        for(unsigned int i = 0; i < graph.size(); i++)
-          for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+        for(std::size_t i = 0; i < graph.size(); i++)
+          for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
             graph[i]->gl[j]->lassoMode = false;
         status = 2;
       }
@@ -837,7 +837,7 @@ int FlGui::testGlobalShortcuts(int event)
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'i')) {
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_show_scale(i, GMSH_SET | GMSH_GUI,
                             !opt_view_show_scale(i, GMSH_GET, 0));
@@ -849,7 +849,7 @@ int FlGui::testGlobalShortcuts(int event)
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'c')) {
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_colormap_number(i, GMSH_SET | GMSH_GUI,
                                  opt_view_colormap_number(i, GMSH_GET, 0) + 1);
@@ -859,7 +859,7 @@ int FlGui::testGlobalShortcuts(int event)
     opt_geometry_light(0, GMSH_SET | GMSH_GUI,
                        !opt_geometry_light(0, GMSH_GET, 0));
     opt_mesh_light(0, GMSH_SET | GMSH_GUI, !opt_mesh_light(0, GMSH_GET, 0));
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_light(i, GMSH_SET | GMSH_GUI, !opt_view_light(i, GMSH_GET, 0));
     status = 2;
@@ -886,7 +886,7 @@ int FlGui::testGlobalShortcuts(int event)
   else if(Fl::test_shortcut(FL_ALT + 'a')) {
     opt_general_axes(0, GMSH_SET | GMSH_GUI,
                      opt_general_axes(0, GMSH_GET, 0) + 1);
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_axes(i, GMSH_SET | GMSH_GUI,
                       opt_view_axes(i, GMSH_GET, 0) + 1);
@@ -955,7 +955,7 @@ int FlGui::testGlobalShortcuts(int event)
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 't')) {
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0)) {
         int t = opt_view_intervals_type(i, GMSH_GET, 0) + 1;
         if(t == 4) t = 1; // skip numeric display
@@ -964,21 +964,21 @@ int FlGui::testGlobalShortcuts(int event)
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 't')) {
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_intervals_type(i, GMSH_SET | GMSH_GUI,
                                 opt_view_intervals_type(i, GMSH_GET, 0) + 1);
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'r')) {
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_range_type(i, GMSH_SET | GMSH_GUI,
                             opt_view_range_type(i, GMSH_GET, 0) + 1);
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'n')) {
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_draw_strings(i, GMSH_SET | GMSH_GUI,
                               !opt_view_draw_strings(i, GMSH_GET, 0));
@@ -986,7 +986,7 @@ int FlGui::testGlobalShortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_ALT + 'e') ||
           Fl::test_shortcut(FL_ALT + FL_SHIFT + 'e')) {
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_show_element(i, GMSH_SET | GMSH_GUI,
                               !opt_view_show_element(i, GMSH_GET, 0));
@@ -994,7 +994,7 @@ int FlGui::testGlobalShortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_ALT + 'h')) {
     static int show = 0;
-    for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(std::size_t i = 0; i < PView::list.size(); i++)
       opt_view_visible(i, GMSH_SET | GMSH_GUI, show);
     show = !show;
     status = 2;
@@ -1050,7 +1050,7 @@ int FlGui::testArrowShortcuts()
 
 void FlGui::setGraphicTitle(const std::string &title)
 {
-  for(unsigned int i = 0; i < graph.size(); i++) {
+  for(std::size_t i = 0; i < graph.size(); i++) {
     std::ostringstream sstream;
     if(title.empty())
       sstream << "Gmsh";
@@ -1064,7 +1064,7 @@ void FlGui::setGraphicTitle(const std::string &title)
 
 void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
 {
-  for(unsigned int i = 0; i < graph.size(); i++) graph[i]->checkAnimButtons();
+  for(std::size_t i = 0; i < graph.size(); i++) graph[i]->checkAnimButtons();
   if(numberOfViewsHasChanged) {
     if(onelab) onelab->rebuildTree(deleteWidgets);
     options->resetBrowser();
@@ -1097,7 +1097,7 @@ openglWindow *FlGui::getCurrentOpenglWindow()
 void FlGui::splitCurrentOpenglWindow(char how)
 {
   openglWindow *g = getCurrentOpenglWindow();
-  for(unsigned int i = 0; i < graph.size(); i++) {
+  for(std::size_t i = 0; i < graph.size(); i++) {
     if(graph[i]->split(g, how)) break;
   }
 }
@@ -1188,7 +1188,7 @@ void FlGui::setStatus(const std::string &msg, bool opengl)
     }
     strncpy(buff, tmp.c_str(), sizeof(buff) - 1);
     buff[sizeof(buff) - 1] = '\0';
-    for(unsigned int i = 0; i < graph.size(); i++) {
+    for(std::size_t i = 0; i < graph.size(); i++) {
       graph[i]->getProgress()->label(buff);
       graph[i]->getProgress()->redraw();
     }
@@ -1211,7 +1211,7 @@ void FlGui::setStatus(const std::string &msg, bool opengl)
 
 void FlGui::setLastStatus(int col)
 {
-  for(unsigned int i = 0; i < graph.size(); i++) {
+  for(std::size_t i = 0; i < graph.size(); i++) {
     if(col >= 0 && graph[0]->getMessageHeight() < FL_NORMAL_SIZE) {
       if(CTX::instance()->guiColorScheme) // dark
         graph[i]->getProgress()->color(col);
@@ -1229,7 +1229,7 @@ void FlGui::setLastStatus(int col)
 void FlGui::setProgress(const std::string &msg, double val, double min,
                         double max)
 {
-  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++) {
+  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
     if(FlGui::instance()->graph[i]->getProgress()->value() != val)
       FlGui::instance()->graph[i]->getProgress()->value(val);
     if(FlGui::instance()->graph[i]->getProgress()->minimum() != min)
@@ -1305,7 +1305,7 @@ void window_cb(Fl_Widget *w, void *data)
   std::string str((const char *)data);
 
   if(str == "minimize") {
-    for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       if(FlGui::instance()->graph[i]->getWindow()->shown())
         FlGui::instance()->graph[i]->getWindow()->iconize();
     if(FlGui::instance()->options->win->shown())
@@ -1351,17 +1351,17 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->fullscreen->getDrawContext()->copyViewAttributes(
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
       openglWindow::setLastHandled(FlGui::instance()->fullscreen);
-      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->getWindow()->hide();
       drawContext::global()->draw();
       fullscreen = 1;
     }
     else {
-      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->gl[0]->valid(0);
-      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->getWindow()->show();
-      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         while(!FlGui::instance()->graph[i]->gl[0]->valid()) FlGui::wait();
       FlGui::instance()->graph[0]->gl[0]->getDrawContext()->copyViewAttributes(
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
@@ -1373,7 +1373,7 @@ void window_cb(Fl_Widget *w, void *data)
   }
   else if(str == "front") {
     // the order is important!
-    for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       FlGui::instance()->graph[i]->getWindow()->show();
     if(FlGui::instance()->options->win->shown())
       FlGui::instance()->options->win->show();
@@ -1404,7 +1404,7 @@ void window_cb(Fl_Widget *w, void *data)
 
 void FlGui::addMessage(const char *msg)
 {
-  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++) {
+  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
     FlGui::instance()->graph[i]->addMessage(msg);
   }
 }

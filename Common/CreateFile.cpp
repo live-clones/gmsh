@@ -39,7 +39,7 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".msh1")     { if(version) *version = 1.0; return FORMAT_MSH; }
   else if(ext == ".msh2")     { if(version) *version = 2.2; return FORMAT_MSH; }
   else if(ext == ".msh3")     { if(version) *version = 3.0; return FORMAT_MSH; }
-  else if(ext == ".msh4")     { if(version) *version = 4.0; return FORMAT_MSH; }
+  else if(ext == ".msh4")     { if(version) *version = 4.1; return FORMAT_MSH; }
   else if(ext == ".x3d")      return FORMAT_X3D;
   else if(ext == ".pos")      return FORMAT_POS;
   else if(ext == ".pvtu")     return FORMAT_PVTU;
@@ -217,8 +217,8 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
   }
   else{
     graphicWindow *g = FlGui::instance()->graph[0];
-    for(unsigned int i = 1; i < FlGui::instance()->graph.size(); i++){
-      for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++){
+    for(std::size_t i = 1; i < FlGui::instance()->graph.size(); i++){
+      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++){
         if(FlGui::instance()->graph[i]->gl[j] ==
            FlGui::instance()->getCurrentOpenglWindow()){
           g = FlGui::instance()->graph[i];
@@ -228,7 +228,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
     }
     int ww = 0, hh = 0;
     std::vector<PixelBuffer*> buffers;
-    for(unsigned int i = 0; i < g->gl.size(); i++){
+    for(std::size_t i = 0; i < g->gl.size(); i++){
       openglWindow::setLastHandled(g->gl[i]);
       buffer = new PixelBuffer(g->gl[i]->pixel_w(), g->gl[i]->pixel_h(), format, type);
       buffer->fill(CTX::instance()->batch);
@@ -237,7 +237,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
       hh = std::max(hh, g->gl[i]->y() + g->gl[i]->pixel_h());
     }
     buffer = new PixelBuffer(ww, hh, format, type);
-    for(unsigned int i = 0; i < g->gl.size(); i++){
+    for(std::size_t i = 0; i < g->gl.size(); i++){
       buffer->copyPixels(g->gl[i]->x(), hh - g->gl[i]->h() - g->gl[i]->y(),
                          buffers[i]);
       delete buffers[i];
@@ -624,7 +624,7 @@ void CreateOutputFile(const std::string &fileName, int format,
       opt_general_small_axes(0, GMSH_SET, 0);
       int num = -1; // id of the post view
       int cnt = 0; // no of scales/colorbars active
-      for(unsigned int i = 0; i < opt_post_nb_views(0,GMSH_GET,0); i++) {
+      for(std::size_t i = 0; i < opt_post_nb_views(0,GMSH_GET,0); i++) {
         if(opt_view_visible(i, GMSH_GET, 0)) {
           if (opt_view_show_scale(i, GMSH_GET, 0)) {
             opt_view_show_scale(i, GMSH_SET, 0);
@@ -691,7 +691,7 @@ void CreateOutputFile(const std::string &fileName, int format,
       }
       if(cycle != 2)
         status_play_manual(!cycle, 0, false);
-      for(unsigned int i = 0; i < frames.size(); i++){
+      for(std::size_t i = 0; i < frames.size(); i++){
         if(cycle == 2)
           change_print_parameter(i);
         if(fp)
@@ -718,7 +718,7 @@ void CreateOutputFile(const std::string &fileName, int format,
                 "OUTPUT %s\nINPUT_CONVERT *\nINPUT_DIR %s\nINPUT\n",
                 pattern.c_str(), repeat, name.c_str(),
                 CTX::instance()->homeDir.c_str());
-        for(unsigned int i = 0; i < frames.size(); i++){
+        for(std::size_t i = 0; i < frames.size(); i++){
           fprintf(fp, "%s", frames[i].c_str());
           if(repeat > 1) fprintf(fp, " [1-%d]", repeat);
           fprintf(fp, "\n");
@@ -736,7 +736,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         }
         if(opt_print_delete_tmp_files(0, GMSH_GET, 0)){
           UnlinkFile(parFileName);
-          for(unsigned int i = 0; i < frames.size(); i++)
+          for(std::size_t i = 0; i < frames.size(); i++)
             UnlinkFile(CTX::instance()->homeDir + frames[i]);
         }
       }

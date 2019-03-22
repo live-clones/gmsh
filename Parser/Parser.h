@@ -143,7 +143,7 @@ public:
       str += it_attrib->first + " ";
       char tmp[32];
       if (it_attrib->second.size() > 1) str += "{ ";
-      for (unsigned int i = 0; i < it_attrib->second.size(); i++) {
+      for (std::size_t i = 0; i < it_attrib->second.size(); i++) {
         if (i) str += ", ";
         sprintf(tmp, "%g", it_attrib->second[i]); str += tmp;
       }
@@ -156,7 +156,7 @@ public:
       if (flag_comma) str += ", ";
       str += it_attrib->first + " ";
       if (it_attrib->second.size() > 1) str += "Str[{ ";
-      for (unsigned int i = 0; i < it_attrib->second.size(); i++) {
+      for (std::size_t i = 0; i < it_attrib->second.size(); i++) {
         if (i) str += ", ";
         str += "\"" + it_attrib->second[i] + "\"";
       }

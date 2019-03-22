@@ -34,7 +34,7 @@ void carveHole(std::vector<T *> &elements, double distance, ANNkd_tree *kdtree)
   ANNidxArray index = new ANNidx[1];
   ANNdistArray dist = new ANNdist[1];
   std::vector<T *> temp;
-  for(unsigned int i = 0; i < elements.size(); i++) {
+  for(std::size_t i = 0; i < elements.size(); i++) {
     for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++) {
       MVertex *v = elements[i]->getVertex(j);
       double xyz[3] = {v->x(), v->y(), v->z()};
@@ -57,7 +57,7 @@ void carveHole(std::vector<T *> &elements, double distance, ANNkd_tree *kdtree)
 template <class T>
 void addFaces(std::vector<T *> &elements, std::set<MFace, Less_Face> &faces)
 {
-  for(unsigned int i = 0; i < elements.size(); i++) {
+  for(std::size_t i = 0; i < elements.size(); i++) {
     for(int j = 0; j < elements[i]->getNumFaces(); j++) {
       MFace f = elements[i]->getFace(j);
       std::set<MFace, Less_Face>::iterator it = faces.find(f);
@@ -78,7 +78,7 @@ void carveHole(GRegion *gr, int num, double distance,
 
   // add all points from carving surfaces into kdtree
   int numnodes = 0;
-  for(unsigned int i = 0; i < surfaces.size(); i++) {
+  for(std::size_t i = 0; i < surfaces.size(); i++) {
     GFace *gf = m->getFaceByTag(surfaces[i]);
     if(!gf) {
       Msg::Error("Unknown carving surface %d", surfaces[i]);
@@ -89,9 +89,9 @@ void carveHole(GRegion *gr, int num, double distance,
 
   ANNpointArray kdnodes = annAllocPts(numnodes, 3);
   int k = 0;
-  for(unsigned int i = 0; i < surfaces.size(); i++) {
+  for(std::size_t i = 0; i < surfaces.size(); i++) {
     GFace *gf = m->getFaceByTag(surfaces[i]);
-    for(unsigned int j = 0; j < gf->mesh_vertices.size(); j++) {
+    for(std::size_t j = 0; j < gf->mesh_vertices.size(); j++) {
       kdnodes[k][0] = gf->mesh_vertices[j]->x();
       kdnodes[k][1] = gf->mesh_vertices[j]->y();
       kdnodes[k][2] = gf->mesh_vertices[j]->z();

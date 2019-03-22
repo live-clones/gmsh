@@ -621,6 +621,7 @@ HXTStatus hxtParametrizationCreate(HXTMesh *mesh, int nrefinements, HXTParametri
   *initialMesh = *mesh;
   HXT_CHECK(hxtEdgesCreate(initialMesh, &param0->edges));
 
+  //  printf("checking connectivity ...\n");
   HXT_CHECK(hxtCheckConnectivity(param0->edges,NULL));
   //  HXT_CHECK(hxtLongestEdgeBisection(param0->edges,nrefinements));
   
@@ -641,10 +642,12 @@ HXTStatus hxtParametrizationCreate(HXTMesh *mesh, int nrefinements, HXTParametri
   
   HXTVector *toparam;
   HXT_CHECK(hxtVectorInit(&toparam));
-  for(int i=0; i<connect->last+1; i++)
+  for(int i=0; i<connect->last+1; i++){
     HXT_CHECK(hxtCuttingProcess(connect->ptr[i],1,0,toparam));
-
-  printf("initial cutting process is done\n");
+  }
+  printf("initial cutting process is done, %d\n",  param0->n);
+  //  return HXT_STATUS_OK;
+  
   
   HXTVector *atlas;
   HXT_CHECK(hxtVectorInit(&atlas));
@@ -653,10 +656,10 @@ HXTStatus hxtParametrizationCreate(HXTMesh *mesh, int nrefinements, HXTParametri
     HXTEdges *current = (HXTEdges *)(toparam->ptr[i]);
     HXT_CHECK(hxtMeanValuesCreate(current,&param));
     HXT_CHECK(hxtMeanValuesCompute(param));        
-    int ar;
+    int ar = 0;
     HXT_CHECK(hxtMeanValueAspectRatio(param,&ar));
     
-    if (ar==0)
+    if (0 && ar==0)
       HXT_CHECK(hxtCuttingProcess(current,ar,toparam->last,toparam));
     else
       HXT_CHECK(hxtVectorPushBack(atlas,param));

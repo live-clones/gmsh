@@ -82,14 +82,20 @@ void fullVector<std::complex<double> >::setAll(
 
 template <> void fullMatrix<int>::setAll(const fullMatrix<int> &m)
 {
-  if(_r != m._r || _c != m._c) Msg::Fatal("fullMatrix size does not match");
+  if(_r != m._r || _c != m._c){
+    Msg::Error("fullMatrix size does not match");
+    return;
+  }
   int N = _r * _c;
   for(int i = 0; i < N; ++i) _data[i] = m._data[i];
 }
 
 template <> void fullMatrix<double>::setAll(const fullMatrix<double> &m)
 {
-  if(_r != m._r || _c != m._c) Msg::Fatal("fullMatrix size does not match");
+  if(_r != m._r || _c != m._c){
+    Msg::Error("fullMatrix size does not match");
+    return;
+  }
   int N = _r * _c;
   int stride = 1;
   F77NAME(dcopy)(&N, m._data, &stride, _data, &stride);
@@ -99,7 +105,10 @@ template <>
 void fullMatrix<std::complex<double> >::setAll(
   const fullMatrix<std::complex<double> > &m)
 {
-  if(_r != m._r || _c != m._c) Msg::Fatal("fullMatrix size does not match");
+  if(_r != m._r || _c != m._c){
+    Msg::Error("fullMatrix size does not match");
+    return;
+  }
   int N = _r * _c;
   int stride = 1;
   F77NAME(zcopy)(&N, m._data, &stride, _data, &stride);
@@ -371,8 +380,10 @@ template <> bool fullMatrix<double>::invert(fullMatrix<double> &result) const
   if(result.size2() != M || result.size1() != N) {
     if(result._own_data || !result._data)
       result.resize(M, N, false);
-    else
-      Msg::Fatal("FullMatrix: Bad dimension, I cannot write in proxy");
+    else{
+      Msg::Error("FullMatrix: Bad dimension, I cannot write in proxy");
+      return false;
+    }
   }
   result.setAll(*this);
   F77NAME(dgetrf)(&M, &N, result._data, &lda, ipiv, &info);

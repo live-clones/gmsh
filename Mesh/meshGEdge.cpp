@@ -37,7 +37,7 @@ static double smoothPrimitive(GEdge *ge, double alpha,
 
     // use a gauss-seidel iteration; iterate forward and then backward;
     // convergence is usually very fast
-    for(unsigned int i = 1; i < Points.size(); i++) {
+    for(std::size_t i = 1; i < Points.size(); i++) {
       double dh =
         (Points[i].xp / Points[i].lc - Points[i - 1].xp / Points[i - 1].lc);
       double dt = Points[i].t - Points[i - 1].t;
@@ -93,9 +93,9 @@ struct F_Lc {
     double t_begin = bounds.low();
     double t_end = bounds.high();
     double lc_here;
-    if(t == t_begin)
+    if(t == t_begin && ge->getBeginVertex())
       lc_here = BGM_MeshSize(ge->getBeginVertex(), t, 0, p.x(), p.y(), p.z());
-    else if(t == t_end)
+    else if(t == t_end && ge->getEndVertex())
       lc_here = BGM_MeshSize(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
     else
       lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
@@ -114,9 +114,9 @@ struct F_Lc_aniso {
     double t_begin = bounds.low();
     double t_end = bounds.high();
 
-    if(t == t_begin)
+    if(t == t_begin && ge->getBeginVertex())
       lc_here = BGM_MeshMetric(ge->getBeginVertex(), t, 0, p.x(), p.y(), p.z());
-    else if(t == t_end)
+    else if(t == t_end && ge->getEndVertex())
       lc_here = BGM_MeshMetric(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
     else
       lc_here = BGM_MeshMetric(ge, t, 0, p.x(), p.y(), p.z());
@@ -275,6 +275,12 @@ static double Integration(GEdge *ge, double t1, double t2, function f,
 
 void copyMesh(GEdge *from, GEdge *to, int direction)
 {
+  if(!from->getBeginVertex() || !from->getEndVertex() ||
+     !to->getBeginVertex() || !to->getEndVertex()){
+    Msg::Error("Cannot copy mesh on curves without begin/end points");
+    return;
+  }
+
   Range<double> u_bounds = from->parBounds(0);
   double u_min = u_bounds.low();
   double u_max = u_bounds.high();
@@ -293,7 +299,7 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
   to->correspondingVertices[vt0] = direction > 0 ? vs0 : vs1;
   to->correspondingVertices[vt1] = direction > 0 ? vs1 : vs0;
 
-  for(unsigned int i = 0; i < from->mesh_vertices.size(); i++) {
+  for(std::size_t i = 0; i < from->mesh_vertices.size(); i++) {
     int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
     MVertex *v = from->mesh_vertices[index];
     double u;
@@ -305,7 +311,7 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
     to->mesh_vertices.push_back(vv);
     to->correspondingVertices[vv] = v;
   }
-  for(unsigned int i = 0; i < to->mesh_vertices.size() + 1; i++) {
+  for(std::size_t i = 0; i < to->mesh_vertices.size() + 1; i++) {
     MVertex *v0 = (i == 0) ? to->getBeginVertex()->mesh_vertices[0] :
                              to->mesh_vertices[i - 1];
     MVertex *v1 = (i == to->mesh_vertices.size()) ?
@@ -335,7 +341,7 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
   FILE *f = Fopen(name, "w");
   if(!f) return;
   double l = 0;
-  for (unsigned int i = 0; i < Points.size(); i++){
+  for (std::size_t i = 0; i < Points.size(); i++){
     const IntPoint &P = Points[i];
     if(i) l += (P.t - Points[i-1].t) * P.xp;
     fprintf(f, "%g %g %g %g %g\n", P.t, P.xp/P.lc, P.p, P.lc, l);
@@ -357,7 +363,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
 {
   if(ge->mesh_vertices.empty()) return;
   if(ge->meshAttributes.method == MESH_TRANSFINITE) return;
-  // if(ge->mesh_vertices.size() <= 3) return;
+
   bool forceOdd = false;
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
@@ -367,9 +373,11 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
     }
   }
 
+  if(!ge->getBeginVertex() || !ge->getEndVertex()) return;
+
   MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
   std::vector<std::pair<double, MVertex *> > lengths;
-  for(unsigned int i = 0; i < ge->mesh_vertices.size(); i++) {
+  for(std::size_t i = 0; i < ge->mesh_vertices.size(); i++) {
     MEdgeVertex *v = dynamic_cast<MEdgeVertex *>(ge->mesh_vertices[i]);
     if(!v) {
       Msg::Error("in 1D mesh filterPoints");
@@ -431,6 +439,8 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
 static void createPoints(GVertex *gv, GEdge *ge, BoundaryLayerField *blf,
                          std::vector<MVertex *> &v, const SVector3 &dir)
 {
+  if(!ge->getBeginVertex() || !ge->getEndVertex()) return;
+
   const double hwall = blf->hwall(gv->tag());
   double L = hwall;
   double LEdge = distance(ge->getBeginVertex()->mesh_vertices[0],
@@ -461,6 +471,8 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
   int n = fields->getNumBoundaryLayerFields();
 
   if(n == 0) return;
+
+  if(!ge->getBeginVertex() || !ge->getEndVertex()) return;
 
   // Check if edge is a BL edge
   for(int i = 0; i < n; ++i) {
@@ -645,10 +657,6 @@ void meshGEdge::operator()(GEdge *ge)
     N = std::max(filterMinimumN, (int)(a + 1.99));
   }
 
-  if (ge->tag() == 236){
-    printf("%g %d\n",length,N);
-  }
-  
   // force odd number of points if blossom is used for recombination
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
@@ -682,8 +690,8 @@ void meshGEdge::operator()(GEdge *ge)
   std::vector<MVertex *> &mesh_vertices = ge->mesh_vertices;
 
   GPoint beg_p, end_p;
-  if(!ge->getBeginVertex() && !ge->getEndVertex()) {
-    Msg::Warning("Skipping curve with no begin nor end vertex");
+  if(!ge->getBeginVertex() || !ge->getEndVertex()) {
+    Msg::Warning("Skipping curve with no begin or end point");
     return;
   }
   else if(ge->getBeginVertex() == ge->getEndVertex() &&
@@ -735,7 +743,7 @@ void meshGEdge::operator()(GEdge *ge)
     std::vector<MVertex *> vv;
     vv.insert(vv.end(), _addBegin.begin(), _addBegin.end());
     vv.insert(vv.end(), mesh_vertices.begin(), mesh_vertices.end());
-    for(unsigned int i = 0; i < _addEnd.size(); i++)
+    for(std::size_t i = 0; i < _addEnd.size(); i++)
       vv.push_back(_addEnd[_addEnd.size() - 1 - i]);
     //    vv.insert(vv.end(), _addEnd.rend(), _addEnd.rbegin());
     mesh_vertices = vv;
@@ -771,6 +779,6 @@ void orientMeshGEdge::operator()(GEdge *ge)
 {
   // apply user-specified mesh orientation constraints
   if(ge->meshAttributes.reverseMesh)
-    for(unsigned int k = 0; k < ge->getNumMeshElements(); k++)
+    for(std::size_t k = 0; k < ge->getNumMeshElements(); k++)
       ge->getMeshElement(k)->reverse();
 }

@@ -76,8 +76,10 @@ bool eigenSolver::solve(int numEigenValues, std::string which,
     _check(EPSSetType(eps, EPSARPACK));
   else if(method == "power")
     _check(EPSSetType(eps, EPSPOWER));
-  else
-    Msg::Fatal("eigenSolver: method '%s' not available", method.c_str());
+  else{
+    Msg::Error("eigenSolver: method '%s' not available", method.c_str());
+    _check(EPSSetType(eps, EPSKRYLOVSCHUR));
+  }
 
   // override these options at runtime, petsc-style
   _check(EPSSetFromOptions(eps));
@@ -207,10 +209,10 @@ bool eigenSolver::solve(int numEigenValues, std::string which,
 void eigenSolver::normalize_mode(std::vector<int> modeView, double scale)
 {
   Msg::Info("Normalize all eigenvectors");
-  for(unsigned int imode = 0; imode < modeView.size(); imode++) {
+  for(std::size_t imode = 0; imode < modeView.size(); imode++) {
     int i = modeView[imode];
     double norm = 0.;
-    for(unsigned int j = 0; j < _eigenVectors[i].size(); j++) {
+    for(std::size_t j = 0; j < _eigenVectors[i].size(); j++) {
       std::complex<double> val = _eigenVectors[i][j];
       double normval = std::abs(val);
       if(normval > norm) norm = normval;
@@ -219,7 +221,7 @@ void eigenSolver::normalize_mode(std::vector<int> modeView, double scale)
       Msg::Error("zero eigenvector");
       return;
     }
-    for(unsigned int j = 0; j < _eigenVectors[i].size(); j++) {
+    for(std::size_t j = 0; j < _eigenVectors[i].size(); j++) {
       _eigenVectors[i][j] *= (scale / norm);
     }
   }

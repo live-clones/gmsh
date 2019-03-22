@@ -104,8 +104,8 @@ MElementOctree::MElementOctree(GModel *m) : _gm(m)
   std::vector<GEntity *> entities;
   m->getEntities(entities);
   // do not add Gvertex non-associated to any GEdge
-  for(unsigned int i = 0; i < entities.size(); i++) {
-    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
       if(entities[i]->dim() == 0) {
         GVertex *gv = dynamic_cast<GVertex *>(entities[i]);
         if(gv && gv->edges().size() > 0) {
@@ -142,7 +142,7 @@ MElementOctree::MElementOctree(const std::vector<MElement *> &v)
   const int maxElePerBucket = 100; // memory vs. speed trade-off
   _octree = Octree_Create(maxElePerBucket, min, size, MElementBB,
                           MElementCentroid, MElementInEle);
-  for(unsigned int i = 0; i < v.size(); i++) Octree_Insert(v[i], _octree);
+  for(std::size_t i = 0; i < v.size(); i++) Octree_Insert(v[i], _octree);
   Octree_Arrange(_octree);
 }
 
@@ -170,8 +170,8 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
       MElement::setTolerance(tol);
       std::vector<GEntity *> entities;
       _gm->getEntities(entities);
-      for(unsigned int i = 0; i < entities.size(); i++) {
-        for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
+      for(std::size_t i = 0; i < entities.size(); i++) {
+        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
           MElement *el = entities[i]->getMeshElement(j);
           if(dim == -1 || el->getDim() == dim) {
             if(MElementInEle(el, P)) {
@@ -193,7 +193,7 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
     while(tol < maxTol) {
       tol *= tolIncr;
       MElement::setTolerance(tol);
-      for(unsigned int i = 0; i < _elems.size(); i++) {
+      for(std::size_t i = 0; i < _elems.size(); i++) {
         MElement *el = _elems[i];
         if(dim == -1 || el->getDim() == dim) {
           if(MElementInEle(el, P)) {
@@ -236,8 +236,8 @@ MElement *MElementOctree::find(double x, double y, double z, int dim,
       MElement::setTolerance(tol);
       std::vector<GEntity *> entities;
       _gm->getEntities(entities);
-      for(unsigned int i = 0; i < entities.size(); i++) {
-        for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++) {
+      for(std::size_t i = 0; i < entities.size(); i++) {
+        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
           e = entities[i]->getMeshElement(j);
           if(dim == -1 || e->getDim() == dim) {
             if(MElementInEle(e, P)) {
@@ -257,7 +257,7 @@ MElement *MElementOctree::find(double x, double y, double z, int dim,
     while(tol < 0.1) {
       tol *= 10.0;
       MElement::setTolerance(tol);
-      for(unsigned int i = 0; i < _elems.size(); i++) {
+      for(std::size_t i = 0; i < _elems.size(); i++) {
         e = _elems[i];
         if(dim == -1 || e->getDim() == dim) {
           if(MElementInEle(e, P)) {

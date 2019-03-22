@@ -294,7 +294,7 @@ int VertexArray::decodeHeader(int length, const char *bytes, int swap,
   if(ss){
     std::vector<char> n(ss);
     memcpy(&n[0], &bytes[index], ss); index += ss;
-    for(unsigned int i = 0; i < n.size(); i++) name += n[i];
+    for(std::size_t i = 0; i < n.size(); i++) name += n[i];
   }
   memcpy(&type, &bytes[index], is); index += is;
   memcpy(&min, &bytes[index], ds); index += ds;

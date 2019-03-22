@@ -151,16 +151,16 @@ bool SOrientedBoundingBox::intersects(SOrientedBoundingBox &obb)
   sizes[0] = getSize();
   sizes[1] = obb.getSize();
 
-  for(unsigned int i = 0; i < 3; i++) {
-    for(unsigned int j = 3; j < 6; j++) {
+  for(std::size_t i = 0; i < 3; i++) {
+    for(std::size_t j = 3; j < 6; j++) {
       collide_axes[3 * i + j + 3] = crossprod(collide_axes[i], collide_axes[j]);
     }
   }
   SVector3 T = obb.getCenter() - getCenter();
 
-  for(unsigned int i = 0; i < 15; i++) {
+  for(std::size_t i = 0; i < 15; i++) {
     double val = 0.0;
-    for(unsigned int j = 0; j < 6; j++) {
+    for(std::size_t j = 0; j < 6; j++) {
       val += 0.5 * (sizes[j < 3 ? 0 : 1])(j % 3) *
              fabs(dot(collide_axes[j], collide_axes[i]));
     }
@@ -324,7 +324,7 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
   DocRecord record(points.size());
   record.numPoints = points.size();
   srand((unsigned)time(0));
-  for(unsigned int i = 0; i < points.size(); i++) {
+  for(std::size_t i = 0; i < points.size(); i++) {
     record.points[i].where.h =
       points[i]->x() + (10e-6) * sizes[smallest_comp == 0 ? 1 : 0] *
                          (-0.5 + ((double)rand()) / RAND_MAX);
