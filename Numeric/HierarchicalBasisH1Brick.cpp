@@ -67,8 +67,8 @@ void HierarchicalBasisH1Brick::generateBasis(double const &u, double const &v,
                                              std::vector<double> &faceBasis,
                                              std::vector<double> &bubbleBasis)
 {
-  std::vector<double> product(12);
-  std::vector<double> lambda(6);
+  std::vector<double> product(12,0);
+  std::vector<double> lambda(6,0);
   HierarchicalBasisH1Brick::_someProduct(u, v, w, product, lambda);
   // vertex shape functions:
   vertexBasis[0] = lambda[1] * product[0];
@@ -188,12 +188,12 @@ void HierarchicalBasisH1Brick::_someProductGrad(
   lambda[3] = _affineCoordinate(4, u, v, w);
   lambda[4] = _affineCoordinate(5, u, v, w);
   lambda[5] = _affineCoordinate(6, u, v, w);
-  gradientLambda[0] = std::vector<double>{0.5, 0., 0.};
-  gradientLambda[1] = std::vector<double>{-0.5, 0., 0.};
-  gradientLambda[2] = std::vector<double>{0., 0.5, 0.};
-  gradientLambda[3] = std::vector<double>{0., -0.5, 0.};
-  gradientLambda[4] = std::vector<double>{0., 0., 0.5};
-  gradientLambda[5] = std::vector<double>{0., 0., -0.5};
+  gradientLambda[0][0] = 0.5;
+  gradientLambda[1][0] = -0.5;
+  gradientLambda[2][1] = 0.5;
+  gradientLambda[3][1] = -0.5;
+  gradientLambda[4][2] = 0.5;
+  gradientLambda[5][2] = -0.5;
   product[0] = lambda[3] * lambda[5];
   product[1] = lambda[1] * lambda[5];
   product[2] = lambda[1] * lambda[3];
@@ -206,30 +206,36 @@ void HierarchicalBasisH1Brick::_someProductGrad(
   product[9] = lambda[4] * lambda[1];
   product[10] = lambda[4] * lambda[0];
   product[11] = lambda[4] * lambda[2];
-  gradientProduct[0] =
-    std::vector<double>{0., -0.5 * lambda[5], -0.5 * lambda[3]};
-  gradientProduct[1] =
-    std::vector<double>{-0.5 * lambda[5], 0., -0.5 * lambda[1]};
-  gradientProduct[2] =
-    std::vector<double>{-0.5 * lambda[3], -0.5 * lambda[1], 0.};
-  gradientProduct[3] =
-    std::vector<double>{0.5 * lambda[5], 0., -0.5 * lambda[0]};
-  gradientProduct[4] =
-    std::vector<double>{0.5 * lambda[3], -0.5 * lambda[0], 0.};
-  gradientProduct[5] =
-    std::vector<double>{0., 0.5 * lambda[5], -0.5 * lambda[2]};
-  gradientProduct[6] =
-    std::vector<double>{0.5 * lambda[2], 0.5 * lambda[0], 0.};
-  gradientProduct[7] =
-    std::vector<double>{-0.5 * lambda[2], 0.5 * lambda[1], 0.};
-  gradientProduct[8] =
-    std::vector<double>{0., -0.5 * lambda[4], 0.5 * lambda[3]};
-  gradientProduct[9] =
-    std::vector<double>{-0.5 * lambda[4], 0., 0.5 * lambda[1]};
-  gradientProduct[10] =
-    std::vector<double>{0.5 * lambda[4], 0., 0.5 * lambda[0]};
-  gradientProduct[11] =
-    std::vector<double>{0., 0.5 * lambda[4], 0.5 * lambda[2]};
+  gradientProduct[0][1] = -0.5 * lambda[5];
+  gradientProduct[0][2] = -0.5 * lambda[3];
+  gradientProduct[1][0] = -0.5 * lambda[5];
+  gradientProduct[1][2] = -0.5 * lambda[1];
+  gradientProduct[2][0] = -0.5 * lambda[3];
+  gradientProduct[2][1] = -0.5 * lambda[1];
+  gradientProduct[0][1] = -0.5 * lambda[5];
+  gradientProduct[0][2] = -0.5 * lambda[3];
+  gradientProduct[1][0] = -0.5 * lambda[5];
+  gradientProduct[1][2] = -0.5 * lambda[1];
+  gradientProduct[2][0] = -0.5 * lambda[3];
+  gradientProduct[2][1] = -0.5 * lambda[1];
+  gradientProduct[3][0] = 0.5 * lambda[5];
+  gradientProduct[3][2] = -0.5 * lambda[0];
+  gradientProduct[4][0] = 0.5 * lambda[3];
+  gradientProduct[4][1] = -0.5 * lambda[0];
+  gradientProduct[5][1] = 0.5 * lambda[5];
+  gradientProduct[5][2] = -0.5 * lambda[2];
+  gradientProduct[6][0] = 0.5 * lambda[2];
+  gradientProduct[6][1] = 0.5 * lambda[0];
+  gradientProduct[7][0] = -0.5 * lambda[2];
+  gradientProduct[7][1] = 0.5 * lambda[1];
+  gradientProduct[8][1] = -0.5 * lambda[4];
+  gradientProduct[8][2] = 0.5 * lambda[3];
+  gradientProduct[9][0] = -0.5 * lambda[4];
+  gradientProduct[9][2] = 0.5 * lambda[1];
+  gradientProduct[10][0] = 0.5 * lambda[4];
+  gradientProduct[10][1] = 0.5 * lambda[0];
+  gradientProduct[11][1] = 0.5 * lambda[4];
+  gradientProduct[11][2] = 0.5 * lambda[2];
 }
 
 void HierarchicalBasisH1Brick::generateGradientBasis(
@@ -239,10 +245,12 @@ void HierarchicalBasisH1Brick::generateGradientBasis(
   std::vector<std::vector<double> > &gradientFace,
   std::vector<std::vector<double> > &gradientBubble)
 {
-  std::vector<double> product(12);
-  std::vector<std::vector<double> > gradientProduct(12);
-  std::vector<double> lambda(6);
-  std::vector<std::vector<double> > gradientLambda(6);
+  std::vector<double> product(12,0);
+  std::vector<std::vector<double> > gradientProduct(12,
+                                                    std::vector<double>(3, 0));
+  std::vector<double> lambda(6,0);
+  std::vector<std::vector<double> > gradientLambda(6,
+                                                   std::vector<double>(3, 0));
   HierarchicalBasisH1Brick::_someProductGrad(u, v, w, product, gradientProduct,
                                              lambda, gradientLambda);
   // vertex gradient:
@@ -394,10 +402,12 @@ void HierarchicalBasisH1Brick::generateGradientBasis(
   for(int ipb1 = 0; ipb1 < _pb1 - 1; ipb1++) {
     for(int ipb2 = 0; ipb2 < _pb2 - 1; ipb2++) {
       for(int ipb3 = 0; ipb3 < _pb3 - 1; ipb3++) {
-        gradientBubble[indexBubbleBasis] = {
-          dlkVectorU[ipb1][0] * lkVectorV[ipb2] * lkVectorW[ipb3],
-          lkVectorU[ipb1] * dlkVectorV[ipb2][1] * lkVectorW[ipb3],
-          lkVectorU[ipb1] * lkVectorV[ipb2] * dlkVectorW[ipb3][2]};
+        gradientBubble[indexBubbleBasis][0] =
+          dlkVectorU[ipb1][0] * lkVectorV[ipb2] * lkVectorW[ipb3];
+        gradientBubble[indexBubbleBasis][1] =
+          lkVectorU[ipb1] * dlkVectorV[ipb2][1] * lkVectorW[ipb3];
+        gradientBubble[indexBubbleBasis][2] =
+          lkVectorU[ipb1] * lkVectorV[ipb2] * dlkVectorW[ipb3][2];
         indexBubbleBasis++;
       }
     }
@@ -562,47 +572,50 @@ void HierarchicalBasisH1Brick::orientateFaceGrad(
       }
     }
     else {
-      std::vector<double> uvw = {u, v, w};
+      std::vector<double> uvw(3);
+      uvw[0] = u;
+      uvw[1] = v;
+      uvw[2] = w;
       double lambda = 0;
       int var1 = 0;
       int var2 = 0;
-      std::vector<double> gradientLambda(3);
+      std::vector<double> gradientLambda(3, 0);
       switch(faceNumber) {
       case(0):
         lambda = _affineCoordinate(6, u, v, w);
         var1 = 0;
         var2 = 1;
-        gradientLambda = std::vector<double>{0., 0., -0.5};
+        gradientLambda[2] = -0.5;
         break;
       case(1):
         lambda = _affineCoordinate(4, u, v, w);
         var1 = 0;
         var2 = 2;
-        gradientLambda = std::vector<double>{0., -0.5, 0.};
+        gradientLambda[1] = -0.5;
         break;
       case(2):
         lambda = _affineCoordinate(2, u, v, w);
         var1 = 1;
         var2 = 2;
-        gradientLambda = std::vector<double>{-0.5, 0., 0.};
+        gradientLambda[0] = -0.5;
         break;
       case(3):
         lambda = _affineCoordinate(1, u, v, w);
         var1 = 1;
         var2 = 2;
-        gradientLambda = std::vector<double>{0.5, 0., 0.};
+        gradientLambda[0] = 0.5;
         break;
       case(4):
         lambda = _affineCoordinate(3, u, v, w);
         var1 = 0;
         var2 = 2;
-        gradientLambda = std::vector<double>{0., 0.5, 0.};
+        gradientLambda[1] = 0.5;
         break;
       case(5):
         lambda = _affineCoordinate(5, u, v, w);
         var1 = 0;
         var2 = 1;
-        gradientLambda = std::vector<double>{0., 0., 0.5};
+        gradientLambda[2] = 0.5;
         break;
       }
       std::vector<double> lkVector1(_pOrderFace2[faceNumber] - 1);

@@ -61,17 +61,23 @@ void HierarchicalBasisH1Tetra::generateBasis(double const &u, double const &v,
   substraction[4] = lambda4 - lambda1;
   substraction[5] = lambda4 - lambda3;
   std::vector<std::vector<double> > phi(_nedge);
-  phi[0] = std::vector<double>(std::max(
-    {_pOrderEdge[0] - 1, _pOrderFace[0] - 2, _pOrderFace[1] - 2, _pb - 3}));
+  phi[0] = std::vector<double>(
+    std::max(std::max(std::max(_pOrderEdge[0] - 1, _pOrderFace[0] - 2),
+                      _pOrderFace[1] - 2),
+             _pb - 3));
   phi[1] =
-    std::vector<double>(std::max({_pOrderEdge[1] - 1, _pOrderFace[3] - 2}));
-  phi[2] = std::vector<double>(std::max(
-    {_pOrderEdge[2] - 1, _pOrderFace[0] - 2, _pOrderFace[2] - 2, _pb - 3}));
-  phi[3] = std::vector<double>(std::max(
-    {_pOrderEdge[3] - 1, _pOrderFace[1] - 2, _pOrderFace[2] - 2, _pb - 3}));
+    std::vector<double>(std::max(_pOrderEdge[1] - 1, _pOrderFace[3] - 2));
+  phi[2] = std::vector<double>(
+    std::max(std::max(std::max(_pOrderEdge[2] - 1, _pOrderFace[0] - 2),
+                      _pOrderFace[2] - 2),
+             _pb - 3));
+  phi[3] = std::vector<double>(
+    std::max(std::max(std::max(_pOrderEdge[3] - 1, _pOrderFace[1] - 2),
+                      _pOrderFace[2] - 2),
+             _pb - 3));
   phi[4] = std::vector<double>(_pOrderEdge[4] - 1);
   phi[5] =
-    std::vector<double>(std::max({_pOrderEdge[5] - 1, _pOrderFace[3] - 2}));
+    std::vector<double>(std::max(_pOrderEdge[5] - 1, _pOrderFace[3] - 2));
   for(int i = 0; i < _nedge; i++) {
     for(unsigned int j = 0; j < phi[i].size(); j++) {
       phi[i][j] = OrthogonalPoly::EvalKernelFunction(j, substraction[i]);
@@ -301,23 +307,34 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
   double lambda4 = _affineCoordinate(4, uc, vc, wc);
   double prod = lambda1 * lambda2 * lambda3 * lambda4;
   // gradient:
-  std::vector<double> dlambda1 = {0., 0.5, 0.};
-  std::vector<double> dlambda2 = {-0.5, -0.5, -0.5};
-  std::vector<double> dlambda3 = {0.5, 0., 0.};
-  std::vector<double> dlambda4 = {0., 0., 0.5};
-  std::vector<double> dprod = {
-    jacob * (lambda1 * dlambda2[0] * lambda3 * lambda4 +
-             lambda1 * lambda2 * dlambda3[0] * lambda4),
-    jacob * (dlambda1[1] * lambda2 * lambda3 * lambda4 +
-             lambda1 * dlambda2[1] * lambda3 * lambda4),
-    jacob * (lambda1 * dlambda2[2] * lambda3 * lambda4 +
-             lambda1 * lambda2 * lambda3 * dlambda4[2])};
+  std::vector<double> dlambda1(3, 0);
+  std::vector<double> dlambda2(3, -0.5);
+  std::vector<double> dlambda3(3, 0);
+  std::vector<double> dlambda4(3, 0);
+  dlambda1[1] = 0.5;
+  dlambda3[0] = 0.5;
+  dlambda4[2] = 0.5;
+  std::vector<double> dprod(3);
+  dprod[0] = jacob * (lambda1 * dlambda2[0] * lambda3 * lambda4 +
+                      lambda1 * lambda2 * dlambda3[0] * lambda4);
+  dprod[1] = jacob * (dlambda1[1] * lambda2 * lambda3 * lambda4 +
+                      lambda1 * dlambda2[1] * lambda3 * lambda4);
+  dprod[2] = jacob * (lambda1 * dlambda2[2] * lambda3 * lambda4 +
+                      lambda1 * lambda2 * lambda3 * dlambda4[2]);
   // gradient of vertex functions:
   // jacob *dlambda
-  gradientVertex[0] = {-1, -1, -1};
-  gradientVertex[1] = {1, 0, 0};
-  gradientVertex[2] = {0, 1, 0};
-  gradientVertex[3] = {0, 0, 1};
+  gradientVertex[0][0] = -1;
+  gradientVertex[0][1] = -1;
+  gradientVertex[0][2] = -1;
+  gradientVertex[1][0] = 1;
+  gradientVertex[1][1] = 0;
+  gradientVertex[1][2] = 0;
+  gradientVertex[2][0] = 0;
+  gradientVertex[2][1] = 1;
+  gradientVertex[2][2] = 0;
+  gradientVertex[3][0] = 0;
+  gradientVertex[3][1] = 0;
+  gradientVertex[3][2] = 1;
   // compute the terms to assemble
   std::vector<double> substraction(_nedge);
   substraction[0] = lambda3 - lambda2;
@@ -327,36 +344,45 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
   substraction[4] = lambda4 - lambda1;
   substraction[5] = lambda4 - lambda3;
   std::vector<std::vector<double> > dsubstraction(
-    _nedge); // = dsubstraction*jacob
-  dsubstraction[0] = {2., 1, 1};
-  dsubstraction[1] = {-1, 1, 0};
-  dsubstraction[2] = {1, 2., 1};
-  dsubstraction[3] = {1, 1, 2.};
-  dsubstraction[4] = {0, -1, 1};
-  dsubstraction[5] = {-1, 0., 1};
+    _nedge, std::vector<double>(3, 1)); // = dsubstraction*jacob
+  dsubstraction[0][0] = 2;
+  dsubstraction[1][0] = -1;
+  dsubstraction[1][2] = 0;
+  dsubstraction[2][1] = 2.;
+  dsubstraction[3][2] = 2.;
+  dsubstraction[4][0] = 0;
+  dsubstraction[4][1] = -1;
+  dsubstraction[5][0] = -1;
+  dsubstraction[5][1] = 0;
   std::vector<std::vector<double> > phi(_nedge);
   std::vector<std::vector<double> > dphi(_nedge);
   for(int i = 0; i < _nedge; i++) {
     int vectorSize = 0;
     switch(i) {
     case 0:
-      vectorSize = std::max(
-        {_pOrderEdge[0] - 1, _pOrderFace[0] - 2, _pOrderFace[1] - 2, _pb - 3});
+      vectorSize =
+        std::max(std::max(std::max(_pOrderEdge[0] - 1, _pOrderFace[0] - 2),
+                          _pOrderFace[1] - 2),
+                 _pb - 3);
       break;
     case 1:
-      vectorSize = std::max({_pOrderEdge[1] - 1, _pOrderFace[3] - 2});
+      vectorSize = std::max(_pOrderEdge[1] - 1, _pOrderFace[3] - 2);
       break;
     case 2:
-      vectorSize = std::max(
-        {_pOrderEdge[2] - 1, _pOrderFace[0] - 2, _pOrderFace[2] - 2, _pb - 3});
+      vectorSize =
+        std::max(std::max(std::max(_pOrderEdge[2] - 1, _pOrderFace[0] - 2),
+                          _pOrderFace[2] - 2),
+                 _pb - 3);
       break;
     case 3:
-      vectorSize = std::max(
-        {_pOrderEdge[3] - 1, _pOrderFace[1] - 2, _pOrderFace[2] - 2, _pb - 3});
+      vectorSize =
+        std::max(std::max(std::max(_pOrderEdge[3] - 1, _pOrderFace[1] - 2),
+                          _pOrderFace[2] - 2),
+                 _pb - 3);
       break;
     case 4: vectorSize = _pOrderEdge[4] - 1; break;
     case 5:
-      vectorSize = std::max({_pOrderEdge[5] - 1, _pOrderFace[3] - 2});
+      vectorSize = std::max(_pOrderEdge[5] - 1, _pOrderFace[3] - 2);
       break;
     }
     phi[i] = std::vector<double>(vectorSize);
@@ -507,58 +533,64 @@ void HierarchicalBasisH1Tetra::orientateFaceGrad(
       iterator += int((_pOrderFace[i] - 1) * (_pOrderFace[i] - 2) / 2);
     }
     std::vector<double> lambda(3);
-    std::vector<std::vector<double> > dlambda(3, std::vector<double>(3));
+    std::vector<std::vector<double> > dlambda(3, std::vector<double>(3, 0));
     std::vector<double> dProduct(3); // gradient of (lambdaA*lambdaB*lambdaC)
-    std::vector<double> dlambda1 = {0., 1, 0.};
-    std::vector<double> dlambda2 = {-1, -1, -1};
-    std::vector<double> dlambda3 = {1, 0., 0.};
-    std::vector<double> dlambda4 = {0., 0., 1};
     switch(faceNumber) {
     case(0): {
       lambda[0] = _affineCoordinate(2, uc, vc, wc);
       lambda[1] = _affineCoordinate(3, uc, vc, wc);
       lambda[2] = _affineCoordinate(1, uc, vc, wc);
-      dlambda[0] = {-1, -1, -1}; //* jacobian
-      dlambda[1] = {1, 0., 0.}; //* jacobian
-      dlambda[2] = {0., 1, 0.}; //* jacobian
+      dlambda[0][0] = -1; //* jacobian
+      dlambda[0][1] = -1; //* jacobian
+      dlambda[0][2] = -1; //* jacobian
+      dlambda[1][0] = 1; //* jacobian
+      dlambda[2][1] = 1; //* jacobian
       double pl3l1 = lambda[1] * lambda[2];
-      dProduct = {lambda[2] * lambda[0] - pl3l1, lambda[2] * lambda[1] - pl3l1,
-                  -pl3l1}; //*jacobian
+      dProduct[0] = lambda[2] * lambda[0] - pl3l1;
+      dProduct[1] = lambda[2] * lambda[1] - pl3l1;
+      dProduct[2] = -pl3l1; //*jacobian
       break;
     }
     case(1): {
       lambda[0] = _affineCoordinate(2, uc, vc, wc);
       lambda[1] = _affineCoordinate(3, uc, vc, wc);
       lambda[2] = _affineCoordinate(4, uc, vc, wc);
-      dlambda[0] = {-1, -1, -1}; //* jacobian
-      dlambda[1] = {1, 0., 0.}; //* jacobian
-      dlambda[2] = {0., 0., 1}; //* jacobian
+      dlambda[0][0] = -1; //* jacobian
+      dlambda[0][1] = -1; //* jacobian
+      dlambda[0][2] = -1; //* jacobian
+      dlambda[1][0] = 1; //* jacobian
+      dlambda[2][2] = 1; //* jacobian
       double pl3l4 = lambda[1] * lambda[2];
-      dProduct = {lambda[2] * lambda[0] - pl3l4, -pl3l4,
-                  lambda[0] * lambda[1] - pl3l4}; //*jacobian
+      dProduct[0] = lambda[2] * lambda[0] - pl3l4; //*jacobian
+      dProduct[1] = -pl3l4;
+      dProduct[2] = lambda[0] * lambda[1] - pl3l4;
       break;
     }
     case(2): {
       lambda[0] = _affineCoordinate(2, uc, vc, wc);
       lambda[1] = _affineCoordinate(1, uc, vc, wc);
       lambda[2] = _affineCoordinate(4, uc, vc, wc);
-      dlambda[0] = {-1, -1, -1}; //* jacobian
-      dlambda[1] = {0., 1, 0.}; //* jacobian
-      dlambda[2] = {0., 0., 1}; //* jacobian
+      dlambda[0][0] = -1; //* jacobian
+      dlambda[0][1] = -1; //* jacobian
+      dlambda[0][2] = -1; //* jacobian
+      dlambda[1][1] = 1; //* jacobian
+      dlambda[2][2] = 1; //* jacobian
       double pl1l4 = lambda[1] * lambda[2];
-      dProduct = {-pl1l4, lambda[0] * lambda[2] - pl1l4,
-                  lambda[0] * lambda[1] - pl1l4}; //*jacobian
+      dProduct[0] = -pl1l4;
+      dProduct[1] = lambda[0] * lambda[2] - pl1l4;
+      dProduct[2] = lambda[0] * lambda[1] - pl1l4; //*jacobian
       break;
     }
     case(3): {
       lambda[0] = _affineCoordinate(3, uc, vc, wc);
       lambda[1] = _affineCoordinate(1, uc, vc, wc);
       lambda[2] = _affineCoordinate(4, uc, vc, wc);
-      dlambda[0] = {1, 0., 0.}; //* jacobian
-      dlambda[1] = {0., 1, 0.}; //* jacobian
-      dlambda[2] = {0., 0., 1}; //* jacobian
-      dProduct = {lambda[1] * lambda[2], lambda[0] * lambda[2],
-                  lambda[0] * lambda[1]};
+      dlambda[0][0] = 1; //* jacobian
+      dlambda[1][1] = 1; //* jacobian
+      dlambda[2][2] = 1; //* jacobian
+      dProduct[0] = lambda[1] * lambda[2];
+      dProduct[1] = lambda[0] * lambda[2];
+      dProduct[2] = lambda[0] * lambda[1];
       break;
     }
     }
