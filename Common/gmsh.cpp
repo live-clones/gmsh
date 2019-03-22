@@ -1917,10 +1917,15 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   int bSize = basis->getnBubbleFunction();
   int eSize = basis->getnEdgeFunction();
   int fSize = basis->getnFaceFunction();
-  int numFaceFunction =
-    fSize / basis->getNumFace(); // number of face functions for one face
-  int numEdgeFunction =
-    eSize / basis->getNumEdge(); // number of edge functions for one edge
+  int numFaceFunction = 0;
+  if(basis->getNumFace()!=0){
+    numFaceFunction = fSize / basis->getNumFace(); // number of face functions for one face
+  }
+    int numEdgeFunction =0;
+  if(basis->getNumEdge()!=0){
+    numEdgeFunction =
+      eSize / basis->getNumEdge(); // number of edge functions for one edge
+  }
   int const1 = numEdgeFunction + 3;
   int const2 = const1 + numFaceFunction;
   numDof = vSize + bSize + eSize + fSize;
@@ -2172,10 +2177,16 @@ GMSH_API void gmsh::model::mesh::getKeyForElements(gmsh::vectorpair &keys,
     int bSize = basis->getnBubbleFunction();
     int eSize = basis->getnEdgeFunction();
     int fSize = basis->getnFaceFunction();
-    int numFaceFunction =
-      fSize / basis->getNumFace(); // number of face functions for one face
-    int numEdgeFunction =
-      eSize / basis->getNumEdge(); // number of edge functions for one edge
+    int numFaceFunction = 0;
+    if(basis->getNumFace()!=0){
+      numFaceFunction = fSize / basis->getNumFace(); // number of face functions for one face
+    }
+      int numEdgeFunction =0;
+    if(basis->getNumEdge()!=0){
+      numEdgeFunction =
+        eSize / basis->getNumEdge(); // number of edge functions for one edge
+    }
+
     int const1 = numEdgeFunction + 3;
     int const2 = const1 + numFaceFunction;
     delete basis;
