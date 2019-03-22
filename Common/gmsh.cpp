@@ -1944,6 +1944,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
         keys.push_back(std::pair<int, int>(2, e->getVertex(k)->getNum()));
       }
       // edges
+      if(eSize>0){
       int numberEdge = e->getNumEdges();
       for(int jj = 0; jj < numberEdge; jj++) {
         // Number the edges
@@ -1953,7 +1954,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           keys.push_back(std::pair<int, int>(k + 3, edgeGlobalIndice));
         }
       }
+      }
       // faces
+      if(fSize>0){
       int numberFace = e->getNumFaces();
       for(int jj = 0; jj < numberFace; jj++) {
         // Number the faces
@@ -1963,9 +1966,12 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           keys.push_back(std::pair<int, int>(k + const1, faceGlobalIndice));
         }
       }
+    }
       // bubble
+      if(bSize>0){
       for(int k = 0; k < bSize; k++) {
         keys.push_back(std::pair<int, int>(k + const2, e->getNum()));
+      }
       }
     }
   }
@@ -2202,6 +2208,7 @@ GMSH_API void gmsh::model::mesh::getKeyForElements(gmsh::vectorpair &keys,
           coord.push_back(e->getVertex(k)->y());
           coord.push_back(e->getVertex(k)->z());
         }
+        if(eSize>0){
         int numberEdge = e->getNumEdges();
         for(int jj = 0; jj < numberEdge; jj++) {
           MEdge edge = e->getEdge(jj);
@@ -2219,7 +2226,9 @@ GMSH_API void gmsh::model::mesh::getKeyForElements(gmsh::vectorpair &keys,
             coord.push_back(coordEdge[2]);
           }
         }
+      }
         // faces
+        if(fSize>0){
         int numberFace = e->getNumFaces();
         for(int jj = 0; jj < numberFace; jj++) {
           // Number the faces
@@ -2241,6 +2250,8 @@ GMSH_API void gmsh::model::mesh::getKeyForElements(gmsh::vectorpair &keys,
             coord.push_back(coordFace[2]);
           }
         }
+      }
+      if(bSize>0){
         std::vector<double> bubbleCenterCoord(3);
         for(unsigned int k = 0; k < e->getNumVertices(); k++) {
           bubbleCenterCoord[0] += e->getVertex(k)->x();
@@ -2256,6 +2267,7 @@ GMSH_API void gmsh::model::mesh::getKeyForElements(gmsh::vectorpair &keys,
           coord.push_back(bubbleCenterCoord[1]);
           coord.push_back(bubbleCenterCoord[2]);
         }
+      }
       }
     }
   }
