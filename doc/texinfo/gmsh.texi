@@ -3795,8 +3795,9 @@ $Nodes
     nodeTag(size_t)
     ...
     x(double) y(double) z(double)
-       < u(double; if parametric and entityDim = 1 or entityDim = 2) >
-       < v(double; if parametric and entityDim = 2) >
+       < u(double; if parametric and entityDim >= 1) >
+       < v(double; if parametric and entityDim >= 2) >
+       < w(double; if parametric and entityDim == 3) >
     ...
   ...
 $EndNodes

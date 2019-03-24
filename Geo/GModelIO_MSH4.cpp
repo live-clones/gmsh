@@ -611,10 +611,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
     }
 
     std::size_t n = 3;
-    if(parametric){
-      if(entityDim == 1) n = 4;
-      else if(entityDim == 2) n = 5;
-    }
+    if(parametric) n += entityDim;
 
     std::vector<std::size_t> tags(numNodes);
     if(binary){
@@ -698,6 +695,14 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
           if(fscanf(fp, "%lf %lf %lf", &x, &y, &z) != 3){
             delete [] vertexCache;
             return 0;
+          }
+          // discard extra parametric coordinates, as Gmsh does not use them
+          for(std::size_t k = 3; k < n; k++){
+            double dummy;
+            if(fscanf(fp, "%lf", &dummy) != 1){
+              delete [] vertexCache;
+              return 0;
+            }
           }
           mv = new MVertex(x, y, z, entity, tagNode);
         }
@@ -1982,28 +1987,29 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
                                  int saveParametric, double scalingFactor,
                                  double version)
 {
+  int parametric = saveParametric;
+  if(ge->dim() != 1 && ge->dim() != 2)
+    parametric = 0; // Gmsh only stores parametric coordinates for dim 1 and 2
+
   if(binary) {
     int entityDim = ge->dim();
     int entityTag = ge->tag();
     std::size_t numVerts = ge->getNumMeshVertices();
     fwrite(&entityDim, sizeof(int), 1, fp);
     fwrite(&entityTag, sizeof(int), 1, fp);
-    fwrite(&saveParametric, sizeof(int), 1, fp);
+    fwrite(&parametric, sizeof(int), 1, fp);
     fwrite(&numVerts, sizeof(std::size_t), 1, fp);
   }
   else {
     fprintf(fp, "%d %d %d %lu\n",
             (version >= 4.1) ? ge->dim() : ge->tag(),
             (version >= 4.1) ? ge->tag() : ge->dim(),
-            saveParametric, ge->getNumMeshVertices());
+            parametric, ge->getNumMeshVertices());
   }
 
   std::size_t N = ge->getNumMeshVertices();
   std::size_t n = 3;
-  if(saveParametric){
-    if(ge->dim() == 1) n = 4;
-    else if(ge->dim() == 2) n = 5;
-  }
+  if(parametric) n += ge->dim();
 
   if(binary) {
     std::vector<size_t> tags(N);
