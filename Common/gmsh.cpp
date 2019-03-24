@@ -40,6 +40,7 @@
 #include "Context.h"
 #include "polynomialBasis.h"
 #include "pyramidalBasis.h"
+#include "Numeric.h"
 #include "OS.h"
 
 #if defined(HAVE_MESH)
@@ -495,25 +496,41 @@ GMSH_API int gmsh::model::addDiscreteEntity(const int dim, const int tag,
     Msg::Error("%s already exists", _getEntityName(dim, outTag).c_str());
     throw 2;
   }
-  // FIXME: check and set boundary entities to construct topology!
   switch(dim) {
   case 0: {
-    GVertex *gv = new discreteVertex(GModel::current(), outTag);
+    discreteVertex *gv = new discreteVertex(GModel::current(), outTag);
     GModel::current()->add(gv);
     break;
   }
   case 1: {
-    GEdge *ge = new discreteEdge(GModel::current(), outTag, 0, 0);
+    GVertex *v0 = 0, *v1 = 0;
+    if(boundary.size() >= 1)
+      v0 = GModel::current()->getVertexByTag(boundary[0]);
+    if(boundary.size() >= 2)
+      v1 = GModel::current()->getVertexByTag(boundary[1]);
+    discreteEdge *ge = new discreteEdge(GModel::current(), outTag, v0, v1);
     GModel::current()->add(ge);
     break;
   }
   case 2: {
-    GFace *gf = new discreteFace(GModel::current(), outTag);
+    discreteFace *gf = new discreteFace(GModel::current(), outTag);
+    std::vector<int> tagEdges, signEdges;
+    for(std::size_t i = 0; i < boundary.size(); i++){
+      tagEdges.push_back(std::abs(boundary[i]));
+      signEdges.push_back(gmsh_sign(boundary[i]));
+    }
+    if(!tagEdges.empty()) gf->setBoundEdges(tagEdges, signEdges);
     GModel::current()->add(gf);
     break;
   }
   case 3: {
-    GRegion *gr = new discreteRegion(GModel::current(), outTag);
+    discreteRegion *gr = new discreteRegion(GModel::current(), outTag);
+    std::vector<int> tagFaces, signFaces;
+    for(std::size_t i = 0; i < boundary.size(); i++){
+      tagFaces.push_back(std::abs(boundary[i]));
+      signFaces.push_back(gmsh_sign(boundary[i]));
+    }
+    if(!tagFaces.empty()) gr->setBoundFaces(tagFaces, signFaces);
     GModel::current()->add(gr);
     break;
   }
