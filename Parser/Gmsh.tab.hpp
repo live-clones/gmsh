@@ -286,7 +286,7 @@ extern int gmsh_yydebug;
 
 union YYSTYPE
 {
-#line 166 "Gmsh.y" /* yacc.c:1921  */
+#line 167 "Gmsh.y" /* yacc.c:1921  */
 
   char *c;
   int i;

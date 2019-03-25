@@ -727,6 +727,12 @@ namespace gmsh { // Top-level functions
                           const int inDim,
                           const int inTag);
 
+      // Remove embedded entities in the geometrical entities `dimTags'. if `dim'
+      // is >= 0, only remove embedded entities of the given dimension (e.g.
+      // embedded points if `dim' == 0).
+      GMSH_API void removeEmbedded(const gmsh::vectorpair & dimTags,
+                                   const int dim = -1);
+
       // Reorder the elements of type `elementType' classified on the entity of tag
       // `tag' according to `ordering'.
       GMSH_API void reorderElements(const int elementType,

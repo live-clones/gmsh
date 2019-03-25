@@ -1185,6 +1185,22 @@ GMSH_API void gmshModelMeshEmbed(const int dim, int * tags, size_t tags_n, const
   }
 }
 
+GMSH_API void gmshModelMeshRemoveEmbedded(int * dimTags, size_t dimTags_n, const int dim, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::mesh::removeEmbedded(api_dimTags_, dim);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshReorderElements(const int elementType, const int tag, size_t * ordering, size_t ordering_n, int * ierr)
 {
   if(ierr) *ierr = 0;

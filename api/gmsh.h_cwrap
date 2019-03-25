@@ -1361,6 +1361,19 @@ namespace gmsh { // Top-level functions
         gmshFree(api_tags_);
       }
 
+      // Remove embedded entities in the geometrical entities `dimTags'. if `dim'
+      // is >= 0, only remove embedded entities of the given dimension (e.g.
+      // embedded points if `dim' == 0).
+      inline void removeEmbedded(const gmsh::vectorpair & dimTags,
+                                 const int dim = -1)
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshRemoveEmbedded(api_dimTags_, api_dimTags_n_, dim, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_dimTags_);
+      }
+
       // Reorder the elements of type `elementType' classified on the entity of tag
       // `tag' according to `ordering'.
       inline void reorderElements(const int elementType,

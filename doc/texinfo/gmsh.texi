@@ -2478,6 +2478,10 @@ entity (for example, if a point is used as a control point of a curve),
 point can). The @code{Recursive} variant deletes the entities as well as
 all its sub-entities of lower dimension. @value{SYNC}
 
+@item Delete Embedded @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
+Deletes all the embedded entities in the elementary entities whose tags
+are given in @var{expression-list-or-all}. @value{SYNC}
+
 @item < Recursive > Hide @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Hide the entities listed in @var{expression-list-or-all}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{1}.

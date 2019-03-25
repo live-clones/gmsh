@@ -2507,6 +2507,36 @@ GMSH_API void gmsh::model::mesh::embed(const int dim,
   }
 }
 
+GMSH_API void gmsh::model::mesh::removeEmbedded(const vectorpair &dimTags,
+                                                const int rdim)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  for(std::size_t i = 0; i < dimTags.size(); i++){
+    int dim = dimTags[i].first, tag = dimTags[i].second;
+    if(dim == 2){
+      GFace *gf = GModel::current()->getFaceByTag(tag);
+      if(!gf) {
+        Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+        throw 2;
+      }
+      if(rdim < 0 || rdim == 1) gf->embeddedEdges().clear();
+      if(rdim < 0 || rdim == 0) gf->embeddedVertices().clear();
+    }
+    else if(dimTags[i].first == 3){
+      GRegion *gr = GModel::current()->getRegionByTag(tag);
+      if(!gr) {
+        Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+        throw 2;
+      }
+      if(rdim < 0 || rdim == 2) gr->embeddedFaces().clear();
+      if(rdim < 0 || rdim == 1) gr->embeddedEdges().clear();
+      if(rdim < 0 || rdim == 0) gr->embeddedVertices().clear();
+    }
+  }
+}
+
 GMSH_API void
 gmsh::model::mesh::reorderElements(const int elementType, const int tag,
                                    const std::vector<std::size_t> &ordering)

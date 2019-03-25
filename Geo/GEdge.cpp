@@ -16,6 +16,8 @@
 #include "Context.h"
 #include "closestPoint.h"
 #include "discreteEdge.h"
+#include "ExtrudeParams.h"
+
 #if defined(HAVE_MESH)
 #include "meshGEdge.h"
 #endif
@@ -321,7 +323,8 @@ std::string GEdge::getAdditionalInfoString(bool multline)
       sstream << " ";
   }
 
-  if(meshAttributes.method == MESH_TRANSFINITE || meshAttributes.extrude ||
+  if(meshAttributes.method == MESH_TRANSFINITE ||
+     (meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh) ||
      meshAttributes.reverseMesh) {
     sstream << "Mesh attributes:";
     if(meshAttributes.method == MESH_TRANSFINITE) {
@@ -333,7 +336,8 @@ std::string GEdge::getAdditionalInfoString(bool multline)
       else if(std::abs(type) == 2)
         sstream << ", bump " << meshAttributes.coeffTransfinite;
     }
-    if(meshAttributes.extrude) sstream << " extruded";
+    if(meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh)
+      sstream << " extruded";
     if(meshAttributes.reverseMesh) sstream << " reversed";
   }
   std::string str = sstream.str();

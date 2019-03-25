@@ -124,6 +124,7 @@ void addPeriodicFace(int, int, const std::vector<double>&);
 void computeAffineTransformation(SPoint3&, SPoint3&, double, SPoint3&,
                                  std::vector<double>&);
 void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2);
+void removeEmbedded(const std::vector<std::pair<int, int> > &dimTags, int dim);
 void getAllElementaryTags(int dim, List_T *in);
 void getAllPhysicalTags(int dim, List_T *in);
 void getElementaryTagsForPhysicalGroups(int dim, List_T *in, List_T *out);
@@ -3032,6 +3033,18 @@ Delete :
         GModel::current()->remove(dimTags, true);
       }
       List_Delete($4);
+    }
+  | tDelete tSTRING '{' ListOfShapes '}'
+    {
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($4, dimTags);
+      if(!strcmp($2, "Embedded")){
+        removeEmbedded(dimTags, -1);
+      }
+      else
+	yymsg(0, "Unknown command 'Delete %s'", $2);
+      List_Delete($4);
+      Free($2);
     }
   | tDelete tField '[' FExpr ']' tEND
     {
@@ -6861,6 +6874,39 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
         else
           yymsg(0, "Unknown model surface with tag %d", tags[i]);
       }
+    }
+  }
+}
+
+void removeEmbedded(const std::vector<std::pair<int, int> > &dimTags,
+                    int rdim)
+{
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  if(GModel::current()->getGEOInternals()->getChanged())
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+
+  for(std::size_t i = 0; i < dimTags.size(); i++){
+    int dim = dimTags[i].first, tag = dimTags[i].second;
+    if(dim == 2){
+      GFace *gf = GModel::current()->getFaceByTag(tag);
+      if(gf) {
+        if(rdim < 0 || rdim == 1) gf->embeddedEdges().clear();
+        if(rdim < 0 || rdim == 0) gf->embeddedVertices().clear();
+      }
+      else
+        yymsg(0, "Unknown model surface with tag %d", tag);
+    }
+    else if(dimTags[i].first == 3){
+      GRegion *gr = GModel::current()->getRegionByTag(tag);
+      if(gr) {
+        if(rdim < 0 || rdim == 2) gr->embeddedFaces().clear();
+        if(rdim < 0 || rdim == 1) gr->embeddedEdges().clear();
+        if(rdim < 0 || rdim == 0) gr->embeddedVertices().clear();
+      }
+      else
+        yymsg(0, "Unknown model volume with tag %d", tag);
     }
   }
 }

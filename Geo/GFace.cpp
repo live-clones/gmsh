@@ -19,6 +19,7 @@
 #include "Context.h"
 #include "OS.h"
 #include "discreteFace.h"
+#include "ExtrudeParams.h"
 
 #if defined(HAVE_MESH)
 #include "meshGFace.h"
@@ -428,11 +429,13 @@ std::string GFace::getAdditionalInfoString(bool multline)
   }
 
   if(meshAttributes.recombine || meshAttributes.method == MESH_TRANSFINITE ||
-     meshAttributes.extrude || meshAttributes.reverseMesh) {
+     (meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh) ||
+     meshAttributes.reverseMesh) {
     sstream << "Mesh attributes:";
     if(meshAttributes.recombine) sstream << " recombined";
     if(meshAttributes.method == MESH_TRANSFINITE) sstream << " transfinite";
-    if(meshAttributes.extrude) sstream << " extruded";
+    if(meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh)
+      sstream << " extruded";
     if(meshAttributes.reverseMesh) sstream << " reverse";
   }
   std::string str = sstream.str();

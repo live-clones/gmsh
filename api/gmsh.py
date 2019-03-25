@@ -2090,6 +2090,24 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def removeEmbedded(dimTags, dim=-1):
+            """
+            Remove embedded entities in the geometrical entities `dimTags'. if `dim' is
+            >= 0, only remove embedded entities of the given dimension (e.g. embedded
+            points if `dim' == 0).
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelMeshRemoveEmbedded(
+                api_dimTags_, api_dimTags_n_,
+                c_int(dim),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshRemoveEmbedded returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def reorderElements(elementType, tag, ordering):
             """
             Reorder the elements of type `elementType' classified on the entity of tag
