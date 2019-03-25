@@ -595,14 +595,14 @@ GMSH_API void gmshModelMeshSetElementsByType(const int tag,
  * Gauss quadrature suited for integrating 4th order polynomials). Data is
  * returned by element, with elements in the same order as in `getElements'
  * and `getElementsByType'. `jacobians' contains for each element the 9
- * entries of a 3x3 Jacobian matrix (by row), for each integration point:
- * [e1g1Jxu, e1g1Jxv, e1g1Jxw, ... e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu,
- * ...], with Jxu=dx/du, Jxv=dx/dv, etc. `determinants' contains for each
- * element the determinant of the Jacobian matrix for each integration point:
- * [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each element the
- * x, y, z coordinates of the integration points. If `tag' < 0, get the
- * Jacobian data for all entities. If `numTasks' > 1, only compute and return
- * the part of the data indexed by `task'. */
+ * entries of the 3x3 Jacobian matrix at each integration point, by row:
+ * [e1g1Jxu, e1g1Jxv, e1g1Jxw, e1g1Jyu, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw,
+ * e2g1Jxu, ...], with Jxu=dx/du, Jxv=dx/dv, etc. `determinants' contains for
+ * each element the determinant of the Jacobian matrix at each integration
+ * point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each
+ * element the x, y, z coordinates of the integration points. If `tag' < 0,
+ * get the Jacobian data for all entities. If `numTasks' > 1, only compute and
+ * return the part of the data indexed by `task'. */
 GMSH_API void gmshModelMeshGetJacobians(const int elementType,
                                         const char * integrationType,
                                         double ** jacobians, size_t * jacobians_n,
@@ -631,11 +631,12 @@ GMSH_API void gmshModelMeshPreallocateJacobians(const int elementType,
  * suited for integrating 4th order polynomials) and `functionSpaceType'
  * function space (e.g. "Lagrange" or "GradLagrange" for Lagrange basis
  * functions or their gradient, in the u, v, w coordinates of the reference
- * element). `integrationPoints' contains the parametric coordinates u, v, w
- * and the weight q for each integeration point, concatenated: [g1u, g1v, g1w,
- * g1q, g2u, ...]. `numComponents' returns the number C of components of a
- * basis function. `basisFunctions' contains the evaluation of the basis
- * functions at the integration points: [g1f1, ..., g1fC, g2f1, ...]. */
+ * element). `integrationPoints' contains the u, v, w coordinates of the
+ * integration points in the reference element as well as the associated
+ * weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. `numComponents'
+ * returns the number C of components of a basis function. `basisFunctions'
+ * contains the evaluation of the basis functions at the integration points:
+ * [g1f1, ..., g1fC, g2f1, ...]. */
 GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
                                              const char * integrationType,
                                              const char * functionSpaceType,
