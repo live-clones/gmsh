@@ -59,7 +59,10 @@ static void readMSHEntities(FILE *fp, GModel *gm)
       GVertex *v1 = 0, *v2 = 0;
       for(int j = 0; j < n; j++) {
         int tagv;
-        if(fscanf(fp, "%d", &tagv) != 1) return;
+        if(fscanf(fp, "%d", &tagv) != 1){
+          delete ge;
+          return;
+        }
         GVertex *v = gm->getVertexByTag(tagv);
         if(!v) Msg::Error("Unknown GVertex %d", tagv);
         if(j == 0) v1 = v;
@@ -79,7 +82,10 @@ static void readMSHEntities(FILE *fp, GModel *gm)
       std::vector<int> edges, signs;
       for(int j = 0; j < n; j++) {
         int tage;
-        if(fscanf(fp, "%d", &tage) != 1) return;
+        if(fscanf(fp, "%d", &tage) != 1){
+          delete df;
+          return;
+        }
         edges.push_back(std::abs(tage));
         int sign = tage > 0 ? 1 : -1;
         signs.push_back(sign);
@@ -99,7 +105,10 @@ static void readMSHEntities(FILE *fp, GModel *gm)
       std::vector<int> faces, signs;
       for(int j = 0; j < n; j++) {
         int tagf;
-        if(fscanf(fp, "%d", &tagf) != 1) return;
+        if(fscanf(fp, "%d", &tagf) != 1){
+          delete dr;
+          return;
+        }
         faces.push_back(std::abs(tagf));
         int sign = tagf > 0 ? 1 : -1;
         signs.push_back(sign);
@@ -642,10 +651,10 @@ static void writeElementMSH(FILE *fp, GModel *model, MElement *ele, bool binary,
     for(std::multimap<MElement *, short>::iterator it = itp.first;
         it != itp.second; it++)
       ghosts.push_back(it->second);
-    ele->writeMSH(fp, binary, elementary, &ghosts);
+    ele->writeMSH3(fp, binary, elementary, &ghosts);
   }
   else
-    ele->writeMSH(fp, binary, elementary);
+    ele->writeMSH3(fp, binary, elementary);
 }
 
 template <class T>

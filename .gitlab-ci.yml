@@ -6,6 +6,13 @@
 variables:
   EXTRA_OPTION: ""
 
+.ssh_config: &ssh_config
+  before_script:
+    - echo "$SSH_TOKEN" > ~/.ssh/id_rsa
+    - echo "Host *" > ~/.ssh/config
+    - echo "StrictHostKeyChecking no" >> ~/.ssh/config
+    - chmod 700 ~/.ssh/id_rsa ~/.ssh/config
+
 # ----------------------------------------------
 # Continuous integration builds for all branches
 # ----------------------------------------------
@@ -53,7 +60,7 @@ windows64_ci:
   script:
     - md build
     - cd build
-    - bash -c "/usr/bin/cmake -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/home/Administrateur/petsc -DSLEPC_DIR=/home/Administrateur/slepc -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} .."
+    - bash -c "/usr/bin/cmake -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lquadmath' -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} .."
     - bash -c "/usr/bin/make -j 8"
     - bash -c "/usr/bin/ctest -j 8 --output-on-failure"
   tags:
@@ -81,88 +88,80 @@ windows64_msvc_ci:
 .linux_official: &linux_official
   only:
     - master@gmsh/gmsh
+  <<: *ssh_config
   script:
     - mkdir build
     - cd build
-    - /usr/local/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DENABLE_NATIVE_FILE_CHOOSER:bool=FALSE -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc -DSLEPC_DIR=/home/geuzaine/src/slepc ${EXTRA_OPTION} ..
-    - make package -j 1
+    - cmake -DGMSH_HOST=gmsh.info -DENABLE_NATIVE_FILE_CHOOSER=0 ${EXTRA_OPTION} ..
+    - make package -j 8
     - PKG=`ls gmsh-*.tar*`
-    - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
-    - /usr/local/bin/ctest -j 1 --output-on-failure
-
-linux64_official_snapshot:
-  <<: *linux_official
+    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
+    - ctest -j 8 --output-on-failure
   tags:
     - linux64
-    - official
+    - docker
+
+linux64_official_snapshot:
+  image: onelab/debian.wheezy.64bit
+  variables:
+    EXTRA_OPTION: "-DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
+  <<: *linux_official
   except:
     - tags
 
 linux64_official_release:
+  image: onelab/debian.wheezy.64bit
   variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1"
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
   <<: *linux_official
-  tags:
-    - linux64
-    - official
   only:
     - /^gmsh_.*$/
 
 linux64-sdk_official_snapshot:
+  image: onelab/debian.wheezy.64bit
   variables:
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
   <<: *linux_official
-  tags:
-    - linux64
-    - official
   except:
     - tags
 
 linux64-sdk_official_release:
+  image: onelab/debian.wheezy.64bit
   variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
   <<: *linux_official
-  tags:
-    - linux64
-    - official
   only:
     - /^gmsh_.*$/
 
 linux32_official_snapshot:
+  image: onelab/debian.wheezy.32bit
+  variables:
+    EXTRA_OPTION: "-DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
   <<: *linux_official
-  tags:
-    - linux32
-    - official
   except:
     - tags
 
 linux32_official_release:
+  image: onelab/debian.wheezy.32bit
   variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1"
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
   <<: *linux_official
-  tags:
-    - linux32
-    - official
   only:
     - /^gmsh_.*$/
 
 linux32-sdk_official_snapshot:
+  image: onelab/debian.wheezy.32bit
   variables:
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
   <<: *linux_official
-  tags:
-    - linux32
-    - official
   except:
     - tags
 
 linux32-sdk_official_release:
+  image: onelab/debian.wheezy.32bit
   variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
   <<: *linux_official
-  tags:
-    - linux32
-    - official
   only:
     - /^gmsh_.*$/
 
@@ -176,10 +175,10 @@ linux32-sdk_official_release:
   script:
     - md build
     - cd build
-    - bash -c "/usr/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/mingw32-windres.exe -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc -DSLEPC_DIR=/home/geuzaine/src/slepc -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} .."
-    - bash -c "/usr/bin/make package -j 2"
+    - bash -c "/usr/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/mingw32-windres.exe -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lquadmath' -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} .."
+    - bash -c "/usr/bin/make package -j 3"
     - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
-    - bash -c "/usr/bin/ctest -j 2 --output-on-failure"
+    - bash -c "/usr/bin/ctest -j 3 --output-on-failure"
 
 windows64_official_snapshot:
   <<: *windows_official
@@ -267,7 +266,7 @@ windows32-sdk_official_release:
   script:
     - mkdir build
     - cd build
-    - /usr/local/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DCMAKE_C_COMPILER=/opt/local/bin/clang-mp-3.9 -DCMAKE_CXX_COMPILER=/opt/local/bin/clang++-mp-3.9 -DENABLE_CAIRO=0 -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc -DSLEPC_DIR=/Users/geuzaine/src/slepc -DBLAS_LAPACK_LIBRARIES=/usr/local/lib/libopenblas.a -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_GMP=0 ${EXTRA_OPTION} ..
+    - /usr/local/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DCMAKE_C_COMPILER=/opt/local/bin/clang-mp-3.9 -DCMAKE_CXX_COMPILER=/opt/local/bin/clang++-mp-3.9 -DENABLE_CAIRO=0 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/opt/local/lib/gcc5/libgfortran.a;/opt/local/lib/gcc5/libquadmath.a;/opt/local/lib/gcc5/gcc/x86_64-apple-darwin13/5.4.0/libgcc.a' -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_GMP=0 ${EXTRA_OPTION} ..
     - make package -j 2
     - PKG=`ls gmsh-*.[dt][ma][gr]*`
     - if [[ $PKG == *".dmg"* ]]; then scp ${PKG} ace@ace36.montefiore.ulg.ac.be:/tmp; fi
@@ -310,18 +309,20 @@ macos64-sdk_official_release:
 # ----------------------------------------------
 
 .source_official: &source_official
+  image: onelab/ubuntu18.04.simple
   only:
     - master@gmsh/gmsh
+  <<: *ssh_config
   script:
     - mkdir build_src
     - cd build_src
-    - /usr/local/bin/cmake ${EXTRA_OPTION} ..
+    - cmake ${EXTRA_OPTION} ..
     - make package_source
     - PKG=`ls gmsh-*.tar*`
-    - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/src/${PKG/\.tar\.gz/\.tgz}
+    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/src/${PKG/\.tar\.gz/\.tgz}
   tags:
     - linux64
-    - official
+    - docker
 
 source_official_snapshot:
   <<: *source_official
@@ -340,36 +341,40 @@ source_official_release:
 # ----------------------------------------------
 
 doc_official_snapshot:
+  image: onelab/ubuntu18.04.simple
   only:
     - master@gmsh/gmsh
+  <<: *ssh_config
   script:
     - mkdir build_doc
     - cd build_doc
-    - /usr/local/bin/cmake ${EXTRA_OPTION} ..
+    - cmake ${EXTRA_OPTION} ..
     - make doc
-    - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
-    - ssh -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa geuzaine@gmsh.info 'cd .wwwgmsh/dev && tar zxvf ../doc.tgz'
+    - scp gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
+    - ssh geuzaine@gmsh.info 'cd .wwwgmsh/dev && tar zxvf ../doc.tgz'
   tags:
     - linux64
-    - official
+    - docker
   except:
     - tags
 
 doc_official_release:
+  image: onelab/ubuntu18.04.simple
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   only:
     - master@gmsh/gmsh
+  <<: *ssh_config
   script:
     - mkdir build_doc
     - cd build_doc
-    - /usr/local/bin/cmake ${EXTRA_OPTION} ..
+    - cmake ${EXTRA_OPTION} ..
     - make doc
-    - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
-    - ssh -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa geuzaine@gmsh.info 'cd .wwwgmsh && tar zxvf doc.tgz'
-    - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ../doc/gmsh.html geuzaine@gmsh.info:.wwwgmsh/
+    - scp gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
+    - ssh geuzaine@gmsh.info 'cd .wwwgmsh && tar zxvf doc.tgz'
+    - scp ../doc/gmsh.html geuzaine@gmsh.info:.wwwgmsh/
   tags:
     - linux64
-    - official
+    - docker
   only:
     - /^gmsh_.*$/

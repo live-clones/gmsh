@@ -906,9 +906,9 @@ public:
   {
     // get id numbers of fields appearing in the function
     _fields.clear();
-    unsigned int i = 0;
+    std::size_t i = 0;
     while(i < f.size()) {
-      unsigned int j = 0;
+      std::size_t j = 0;
       if(f[i] == 'F') {
         std::string id("");
         while(i + 1 + j < f.size() && f[i + 1 + j] >= '0' &&
@@ -980,9 +980,9 @@ public:
   {
     // get id numbers of fields appearing in the function
     _fields[iFunction].clear();
-    unsigned int i = 0;
+    std::size_t i = 0;
     while(i < f.size()) {
-      unsigned int j = 0;
+      std::size_t j = 0;
       if(f[i] == 'F') {
         std::string id("");
         while(i + 1 + j < f.size() && f[i + 1 + j] >= '0' &&

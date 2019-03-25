@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _FIELD_WINDOW_H_
-#define _FIELD_WINDOW_H_
+#ifndef FIELD_WINDOW_H
+#define FIELD_WINDOW_H
 
 #include <list>
 #include <FL/Fl_Window.H>

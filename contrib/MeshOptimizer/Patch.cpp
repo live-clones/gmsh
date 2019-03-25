@@ -335,10 +335,10 @@ void Patch::initScaledJac()
 
   // Set normals to 2D elements (with magnitude of inverse Jacobian) or initial
   // Jacobians of 3D elements
-  if((_dim == 2) && _JacNormEl.empty()) {
-    _JacNormEl.resize(nEl());
+  if((_dim == 2) && _jacNormEl.empty()) {
+    _jacNormEl.resize(nEl());
     for(int iEl = 0; iEl < nEl(); iEl++)
-      calcNormalEl2D(iEl, NS_INVNORM, _JacNormEl[iEl], false);
+      calcNormalEl2D(iEl, NS_INVNORM, _jacNormEl[iEl], false);
   }
   else if(_invStraightJac.empty()) {
     _invStraightJac.resize(nEl(), 1.);
@@ -428,7 +428,7 @@ void Patch::scaledJacAndGradients(int iEl, std::vector<double> &sJ,
 
   // Calculate Jacobian and gradients, scale if 3D (already scaled by
   // regularization normals in 2D)
-  jacBasis->getSignedJacAndGradients(nodesXYZ, _JacNormEl[iEl], JDJ);
+  jacBasis->getSignedJacAndGradients(nodesXYZ, _jacNormEl[iEl], JDJ);
   if(_dim == 3) JDJ.scale(_invStraightJac[iEl]);
 
   // Transform Jacobian and gradients from Lagrangian to Bezier basis

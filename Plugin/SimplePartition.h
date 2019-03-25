@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SIMPLE_PARTITION_H_
-#define _SIMPLE_PARTITION_H_
+#ifndef SIMPLE_PARTITION_H
+#define SIMPLE_PARTITION_H
 
 #include "Plugin.h"
 

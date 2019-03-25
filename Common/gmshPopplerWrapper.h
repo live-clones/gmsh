@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GMSHPOPPLERWRAPPER_PDF_H_
-#define _GMSHPOPPLERWRAPPER_PDF_H_
+#ifndef GMSHPOPPLERWRAPPER_PDF_H
+#define GMSHPOPPLERWRAPPER_PDF_H
 
 #include "GmshConfig.h"
 #include "Context.h"

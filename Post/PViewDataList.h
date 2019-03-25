@@ -4,8 +4,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _PVIEW_DATA_LIST_H_
-#define _PVIEW_DATA_LIST_H_
+#ifndef PVIEW_DATA_LIST_H
+#define PVIEW_DATA_LIST_H
 
 #include <vector>
 #include <string>

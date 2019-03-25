@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _EXTRUDE_PARAMS_H_
-#define _EXTRUDE_PARAMS_H_
+#ifndef EXTRUDE_PARAMS_H
+#define EXTRUDE_PARAMS_H
 
 #include <vector>
 #include <map>
@@ -31,7 +31,7 @@ public:
   double u(int iLayer, int iElemLayer);
   void Extrude(int iLayer, int iElemLayer, double &dx, double &dy, double &dz);
   void Extrude(double t, double &x, double &y, double &z);
-  void Rotate(double matr[3][3]);
+  void GetAffineTransform(std::vector<double> &tfo);
   struct {
     bool ExtrudeMesh;
     bool Recombine;

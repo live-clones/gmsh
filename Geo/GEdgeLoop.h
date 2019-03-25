@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GEDGE_LOOP_H_
-#define _GEDGE_LOOP_H_
+#ifndef GEDGE_LOOP_H
+#define GEDGE_LOOP_H
 
 #include "GEdge.h"
 

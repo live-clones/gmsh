@@ -198,47 +198,6 @@ void MVertex::writeMSH2(FILE *fp, bool binary, bool saveParametric,
   }
 }
 
-void MVertex::writeMSH4(FILE *fp, bool binary, bool saveParametric,
-                        double scalingFactor)
-{
-  if(binary) {
-    fwrite(&_num, sizeof(std::size_t), 1, fp);
-    double data[5] = {_x * scalingFactor, _y * scalingFactor, _z * scalingFactor,
-                      0., 0.};
-    int n = 3;
-    if(saveParametric) {
-      if(_ge->dim() == 1) {
-        n = 4;
-        getParameter(0, data[3]);
-      }
-      else if(_ge->dim() == 2) {
-        n = 5;
-        getParameter(0, data[3]);
-        getParameter(1, data[4]);
-      }
-    }
-    fwrite(data, sizeof(double), n, fp);
-  }
-  else {
-    fprintf(fp, "%lu %.16g %.16g %.16g", _num, _x * scalingFactor,
-            _y * scalingFactor, _z * scalingFactor);
-    if(saveParametric) {
-      if(_ge->dim() == 1) {
-        double u;
-        getParameter(0, u);
-        fprintf(fp, " %.16g", u);
-      }
-      else if(_ge->dim() == 2) {
-        double u, v;
-        getParameter(0, u);
-        getParameter(1, v);
-        fprintf(fp, " %.16g %.16g", u, v);
-      }
-    }
-    fprintf(fp, "\n");
-  }
-}
-
 void MVertex::writePLY2(FILE *fp)
 {
   if(_index < 0) return; // negative index vertices are never saved

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MVERTEX_H_
-#define _MVERTEX_H_
+#ifndef MVERTEX_H
+#define MVERTEX_H
 
 #include <cmath>
 #include <stdio.h>
@@ -107,8 +107,6 @@ public:
   void writeMSH(FILE *fp, bool binary = false, bool saveParametric = false,
                 double scalingFactor = 1.0);
   void writeMSH2(FILE *fp, bool binary = false, bool saveParametric = false,
-                 double scalingFactor = 1.0);
-  void writeMSH4(FILE *fp, bool binary = false, bool saveParametric = false,
                  double scalingFactor = 1.0);
   void writePLY2(FILE *fp);
   void writeVRML(FILE *fp, double scalingFactor = 1.0);

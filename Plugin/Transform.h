@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _TRANSFORM_H_
-#define _TRANSFORM_H_
+#ifndef TRANSFORM_H
+#define TRANSFORM_H
 
 #include "Plugin.h"
 

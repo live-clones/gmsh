@@ -84,7 +84,6 @@ public class EssaiGmsh_v1 {
         System.out.println("$Nodes");
         // boolean which indicates if all elements are meshed
         final boolean all = m.noPhysicalGroups();
-        // number of nodes which is defined in mesh
         System.out.println(m.indexMeshVertices(all, 0));
 
         final GEntityVector entities = new GEntityVector();

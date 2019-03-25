@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _ISOSURFACE_H_
-#define _ISOSURFACE_H_
+#ifndef ISOSURFACE_H
+#define ISOSURFACE_H
 
 #include "Levelset.h"
 

@@ -696,7 +696,7 @@ namespace BoundaryLayerCurver {
 
   void getBisectorsAtCommonCorners(const MElement *surface1,
                                    const MElement *surface2,
-                                   const MEdgeN commonEdge, SVector3 &n1,
+                                   MEdgeN const &commonEdge, SVector3 &n1,
                                    SVector3 &n2)
   {
     // Assume that 't' is the tangent of the common edge between the two

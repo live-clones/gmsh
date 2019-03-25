@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _OCTREE_POST_H_
-#define _OCTREE_POST_H_
+#ifndef OCTREE_POST_H
+#define OCTREE_POST_H
 
 #include "Octree.h"
 
@@ -15,14 +15,14 @@ class PViewDataGModel;
 
 class OctreePost {
 private:
-  Octree *_SPP, *_VPP, *_TPP; // _SP & co reserved by win32
-  Octree *_SL, *_VL, *_TL;
-  Octree *_ST, *_VT, *_TT;
-  Octree *_SQ, *_VQ, *_TQ;
-  Octree *_SS, *_VS, *_TS;
-  Octree *_SH, *_VH, *_TH;
-  Octree *_SI, *_VI, *_TI;
-  Octree *_SY, *_VY, *_TY;
+  Octree *_sp, *_vp, *_tp;
+  Octree *_sl, *_vl, *_tl;
+  Octree *_st, *_vt, *_tt;
+  Octree *_sq, *_vq, *_tq;
+  Octree *_ss, *_vs, *_ts;
+  Octree *_sh, *_vh, *_th;
+  Octree *_si, *_vi, *_ti;
+  Octree *_sy, *_vy, *_ty;
   PViewDataList *_theViewDataList;
   PViewDataGModel *_theViewDataGModel;
   void _create(PViewData *data);

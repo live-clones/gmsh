@@ -244,6 +244,9 @@ int GmshFinalize()
   while(PView::list.size() > 0) delete PView::list[PView::list.size() - 1];
   std::vector<PView *>().swap(PView::list);
 
+  // reset global view tag
+  PView::setGlobalTag(0);
+
   // Delete static _interpolationSchemes of PViewData class
   PViewData::removeAllInterpolationSchemes();
 #endif

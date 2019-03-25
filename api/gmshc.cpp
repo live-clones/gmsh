@@ -240,6 +240,30 @@ GMSH_API void gmshModelGetEntities(int ** dimTags, size_t * dimTags_n, const int
   }
 }
 
+GMSH_API void gmshModelSetEntityName(const int dim, const int tag, const char * name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::setEntityName(dim, tag, name);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelGetEntityName(const int dim, const int tag, char ** name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::string api_name_;
+    gmsh::model::getEntityName(dim, tag, api_name_);
+    *name = strdup(api_name_.c_str());
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelGetPhysicalGroups(int ** dimTags, size_t * dimTags_n, const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -396,6 +420,17 @@ GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n, const int
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
     gmsh::model::removeEntities(api_dimTags_, recursive);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelRemoveEntityName(const char * name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::removeEntityName(name);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -903,13 +938,13 @@ GMSH_API void gmshModelMeshSetElements(const int dim, const int tag, int * eleme
   }
 }
 
-GMSH_API void gmshModelMeshSetElementsByType(const int dim, const int tag, const int elementType, size_t * elementTags, size_t elementTags_n, size_t * nodeTags, size_t nodeTags_n, int * ierr)
+GMSH_API void gmshModelMeshSetElementsByType(const int tag, const int elementType, size_t * elementTags, size_t elementTags_n, size_t * nodeTags, size_t nodeTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
     std::vector<std::size_t> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
-    gmsh::model::mesh::setElementsByType(dim, tag, elementType, api_elementTags_, api_nodeTags_);
+    gmsh::model::mesh::setElementsByType(tag, elementType, api_elementTags_, api_nodeTags_);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -1184,14 +1219,14 @@ GMSH_API void gmshModelMeshRenumberElements(int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshSetPeriodic(const int dim, int * tags, size_t tags_n, int * tagsSource, size_t tagsSource_n, double * affineTransform, size_t affineTransform_n, int * ierr)
+GMSH_API void gmshModelMeshSetPeriodic(const int dim, int * tags, size_t tags_n, int * tagsMaster, size_t tagsMaster_n, double * affineTransform, size_t affineTransform_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_tags_(tags, tags + tags_n);
-    std::vector<int> api_tagsSource_(tagsSource, tagsSource + tagsSource_n);
+    std::vector<int> api_tagsMaster_(tagsMaster, tagsMaster + tagsMaster_n);
     std::vector<double> api_affineTransform_(affineTransform, affineTransform + affineTransform_n);
-    gmsh::model::mesh::setPeriodic(dim, api_tags_, api_tagsSource_, api_affineTransform_);
+    gmsh::model::mesh::setPeriodic(dim, api_tags_, api_tagsMaster_, api_affineTransform_);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -1997,12 +2032,13 @@ GMSH_API int gmshModelOccAddPlaneSurface(int * wireTags, size_t wireTags_n, cons
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag, const int tag, int * ierr)
+GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag, const int tag, int * pointTags, size_t pointTags_n, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::model::occ::addSurfaceFilling(wireTag, tag);
+    std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
+    result_api_ = gmsh::model::occ::addSurfaceFilling(wireTag, tag, api_pointTags_);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GENTITY_H_
-#define _GENTITY_H_
+#ifndef GENTITY_H
+#define GENTITY_H
 
 #include <list>
 #include <string>
@@ -61,7 +61,7 @@ public: // these will become protected at some point
   // corresponding principal vertices
   std::map<GVertex *, GVertex *> vertexCounterparts;
 
-  // the physical entitites (if any) that contain this entity
+  // the physical entities (if any) that contain this entity
   std::vector<int> physicals;
 
   // vertex arrays to draw the mesh efficiently
@@ -287,7 +287,8 @@ public:
   // handle the master entity for periodic meshes
   GEntity *getMeshMaster() const { return _meshMaster; }
   void setMeshMaster(GEntity *);
-  void setMeshMaster(GEntity *, const std::vector<double> &);
+  void setMeshMaster(GEntity *, const std::vector<double> &,
+                     bool updateCorrespondingVertices = true);
   void updateCorrespondingVertices();
   void copyMasterCoordinates();
 
@@ -391,9 +392,6 @@ public:
   GEdge *cast2Edge();
   GFace *cast2Face();
   GRegion *cast2Region();
-
-  // update all vertex lists, including periodic connections
-  void updateVertices(const std::map<MVertex *, MVertex *> &);
 
   // transformation from master
   std::vector<double> affineTransform;

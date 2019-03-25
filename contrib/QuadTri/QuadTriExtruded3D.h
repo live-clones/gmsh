@@ -13,8 +13,8 @@ Geuzaine and J.-F. Remacle with the understanding that his contribution shall be
 cited appropriately. See the LICENSE.txt file for license information.
 ********************************************************************************/
 
-#if !defined(_QTEXTR3D_H_)
-#define _QTEXTR3D_H_
+#ifndef QTEXTR3D_H
+#define QTEXTR3D_H
 
 #include "GEntity.h"
 #include "GFace.h"

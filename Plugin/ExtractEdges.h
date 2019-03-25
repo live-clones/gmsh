@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _EXTRACT_EDGES_H_
-#define _EXTRACT_EDGES_H_
+#ifndef EXTRACT_EDGES_H
+#define EXTRACT_EDGES_H
 
 #include "Plugin.h"
 

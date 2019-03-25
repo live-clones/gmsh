@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _FIELD_PYTHON_H_
-#define _FIELD_PYTHON_H_
+#ifndef FIELD_PYTHON_H
+#define FIELD_PYTHON_H
 
 #include "Field.h"
 #include "Python.h"

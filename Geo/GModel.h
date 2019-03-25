@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GMODEL_H_
-#define _GMODEL_H_
+#ifndef GMODEL_H
+#define GMODEL_H
 
 #include <algorithm>
 #include <vector>
@@ -52,16 +52,15 @@ private:
   int _readMSH2(const std::string &name);
   int _writeMSH2(const std::string &name, double version, bool binary,
                  bool saveAll, bool saveParametric, double scalingFactor,
-                 int elementStartNum, int saveSinglePartition,
-                 bool append, bool renumberVertices);
+                 int elementStartNum, int saveSinglePartition, bool append,
+                 bool renumberVertices);
   int _writePartitionedMSH2(const std::string &baseName, bool binary,
                             bool saveAll, bool saveParametric,
                             double scalingFactor);
   int _readMSH3(const std::string &name);
   int _writeMSH3(const std::string &name, double version, bool binary,
                  bool saveAll, bool saveParametric, double scalingFactor,
-                 int elementStartNum, int saveSinglePartition,
-                 bool append);
+                 int elementStartNum, int saveSinglePartition, bool append);
   int _writePartitionedMSH3(const std::string &baseName, double version,
                             bool binary, bool saveAll, bool saveParametric,
                             double scalingFactor);
@@ -130,7 +129,7 @@ protected:
 
   // map between the pair <dimension, elementary or physical number>
   // and an optional associated name
-  std::map<std::pair<int, int>, std::string> physicalNames, elementaryNames;
+  std::map<std::pair<int, int>, std::string> _physicalNames, _elementaryNames;
 
   // the set of all used mesh partition numbers
   std::size_t _numPartitions;
@@ -212,8 +211,8 @@ public:
   bool isBeingDestroyed() const { return _destroying; }
 
   // get/set global vertex/element num
-  std::size_t getMaxVertexNumber() { return _maxVertexNum; }
-  std::size_t getMaxElementNumber() { return _maxElementNum; }
+  std::size_t getMaxVertexNumber() const { return _maxVertexNum; }
+  std::size_t getMaxElementNumber() const { return _maxElementNum; }
   void setMaxVertexNumber(std::size_t num) { _maxVertexNum = num; }
   void setMaxElementNumber(std::size_t num) { _maxElementNum = num; }
   void checkPointMaxNumbers()
@@ -221,7 +220,7 @@ public:
     _checkPointedMaxVertexNum = _maxVertexNum;
     _checkPointedMaxVertexNum = _maxVertexNum;
   }
-  void getCheckPointedMaxNumbers(std::size_t &maxv, std::size_t &maxe)
+  void getCheckPointedMaxNumbers(std::size_t &maxv, std::size_t &maxe) const
   {
     maxv = _checkPointedMaxVertexNum;
     maxe = _checkPointedMaxElementNum;
@@ -254,18 +253,18 @@ public:
 
   // get/set the model name
   void setName(const std::string &name) { _name = name; }
-  std::string getName() { return _name; }
+  std::string getName() const { return _name; }
 
   // get/set the model file name
   void setFileName(const std::string &fileName);
-  std::string getFileName() { return _fileName; }
-  bool hasFileName(const std::string &name)
+  std::string getFileName() const { return _fileName; }
+  bool hasFileName(const std::string &name) const
   {
     return _fileNames.find(name) != _fileNames.end();
   }
 
   // get/set the visibility flag
-  char getVisibility() { return _visible; }
+  char getVisibility() const { return _visible; }
   void setVisibility(char val) { _visible = val; }
 
   // get the number of entities in this model
@@ -353,11 +352,11 @@ public:
                          std::map<int, std::vector<GEntity *> > &groups) const;
   const std::map<std::pair<int, int>, std::string> &getPhysicalNames() const
   {
-    return physicalNames;
+    return _physicalNames;
   }
   void setPhysicalNames(const std::map<std::pair<int, int>, std::string> &names)
   {
-    physicalNames = names;
+    _physicalNames = names;
   }
 
   // remove physical groups in the model
@@ -369,13 +368,13 @@ public:
   int getMaxPhysicalNumber(int dim);
 
   // get an iterator on the elementary/physical names
-  piter firstPhysicalName() { return physicalNames.begin(); }
-  piter lastPhysicalName() { return physicalNames.end(); }
-  piter firstElementaryName() { return elementaryNames.begin(); }
-  piter lastElementaryName() { return elementaryNames.end(); }
+  piter firstPhysicalName() { return _physicalNames.begin(); }
+  piter lastPhysicalName() { return _physicalNames.end(); }
+  piter firstElementaryName() { return _elementaryNames.begin(); }
+  piter lastElementaryName() { return _elementaryNames.end(); }
 
   // get the number of physical names
-  int numPhysicalNames() { return physicalNames.size(); }
+  int numPhysicalNames() const { return _physicalNames.size(); }
 
   // get iterators to the last physical name of each dimension
   void getInnerPhysicalNamesIterators(std::vector<piter> &iterators);
@@ -406,11 +405,18 @@ public:
                                      std::vector<double> p1,
                                      std::vector<double> p2);
   void setPhysicalNumToEntitiesInBox(int EntityDimension, int PhysicalNumber,
-                                     SBoundingBox3d box);
+                                     const SBoundingBox3d &box);
 
   // get the name (if any) of a given elementary entity of dimension
   // "dim" and id number "num"
   std::string getElementaryName(int dim, int num);
+  void setElementaryName(int dim, int tag, const std::string &name)
+  {
+    _elementaryNames[std::pair<int, int>(dim, tag)] = name;
+  }
+
+  // remove elememtary name(s)
+  void removeElementaryName(const std::string &name);
 
   // get the highest dimension of the GModel
   int getDim() const;
@@ -464,8 +470,8 @@ public:
 
   // index all the (used) mesh vertices in a continuous sequence,
   // starting at 1
-  int indexMeshVertices(bool all, int singlePartition = 0,
-                        bool renumber = true);
+  std::size_t indexMeshVertices(bool all, int singlePartition = 0,
+                                bool renumber = true);
 
   // scale the mesh by the given factor
   void scaleMesh(double factor);
@@ -635,7 +641,8 @@ public:
   // Stereo lithography format
   int readSTL(const std::string &name, double tolerance = 1.e-3);
   int writeSTL(const std::string &name, bool binary = false,
-               bool saveAll = false, double scalingFactor = 1.0);
+               bool saveAll = false, double scalingFactor = 1.0,
+               int oneSolidPerSurface = 0);
 
   // PLY(2) format (ascii text format)
   int readPLY(const std::string &name);

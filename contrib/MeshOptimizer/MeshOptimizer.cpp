@@ -41,8 +41,6 @@
 #include "MeshOptCommon.h"
 #include "MeshOptimizer.h"
 
-#if defined(HAVE_BFGS)
-
 typedef std::vector<MElement *> elVec;
 typedef elVec::const_iterator elVecConstIter;
 typedef std::set<MElement *> elSet;
@@ -358,7 +356,7 @@ namespace {
                           const elSet &elts, elSet &bndElts,
                           MeshOptParameters &par)
   {
-    for(elSetIter itEl = elts.begin(); itEl != elts.end(); itEl++) {
+    for(elSet::const_iterator itEl = elts.begin(); itEl != elts.end(); itEl++) {
       elElMap::const_iterator itBndEl = el2BndEl.find(*itEl);
       if(itBndEl != el2BndEl.end()) {
         MElement *bndEl = itBndEl->second;
@@ -433,7 +431,7 @@ namespace {
       _patchHistory.push_front(_patchHistory.back());
       _patchHistory.pop_back();
     }
-    sprintf(_patchHistory.front(), objFunctionStr.c_str());
+    sprintf(_patchHistory.front(), "%s", objFunctionStr.c_str());
     mvprintList(9, -8, _patchHistory, 2);
   }
 
@@ -726,11 +724,8 @@ namespace {
 
 } // namespace
 
-#endif
-
 void MeshOptimizer(std::vector<GEntity *> &entities, MeshOptParameters &par)
 {
-#if defined(HAVE_BFGS)
   if(par.nCurses) mvinit();
   redirectMessage _logWriter(par.logFileName, !par.nCurses);
   if(par.logFileName.compare("") != 0 || par.nCurses)
@@ -851,8 +846,4 @@ void MeshOptimizer(std::vector<GEntity *> &entities, MeshOptParameters &par)
     mvterminate();
   }
   if(par.logFileName.compare("") != 0 || par.nCurses) Msg::SetCallback(NULL);
-
-#else
-  Msg::Error("Mesh optimizer requires BFGS");
-#endif
 }

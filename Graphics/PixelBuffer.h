@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _PIXEL_BUFFER_H_
-#define _PIXEL_BUFFER_H_
+#ifndef PIXEL_BUFFER_H
+#define PIXEL_BUFFER_H
 
 #include <string.h>
 #include "GmshConfig.h"

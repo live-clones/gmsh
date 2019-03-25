@@ -24,8 +24,8 @@
 //
 // Contributor: Thomas Toulorge
 
-#ifndef _METAEL_H_
-#define _METAEL_H_
+#ifndef METAEL_H
+#define METAEL_H
 
 #include <string>
 #include "MElement.h"
@@ -39,7 +39,7 @@ public:
   void setCurvedTop(double factor);
   void setFlatTop();
   bool isOK() const { return _metaEl; }
-  bool isPointIn(const SPoint3 p) const;
+  bool isPointIn(const SPoint3 &p) const;
   bool straightToCurved(double *xyzS, double *xyzC) const;
   std::string printPOS();
   void printCoord()

@@ -1201,7 +1201,7 @@ static int isCavityCompatibleWithEmbeddedFace(
 
 static void _deleteUnusedVertices(GRegion *gr)
 {
-  std::set<MVertex *> allverts;
+  std::set<MVertex *, MVertexLessThanNum> allverts;
   for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
     for(int j = 0; j < 4; j++) {
       if(gr->tetrahedra[i]->getVertex(j)->onWhat() == gr)
@@ -1209,9 +1209,9 @@ static void _deleteUnusedVertices(GRegion *gr)
     }
   }
   for(std::size_t i = 0; i < gr->mesh_vertices.size(); i++) {
-    // FIXME: investiagte crashes on exit (e.g. t16.geo)
-    //if(allverts.find(gr->mesh_vertices[i]) == allverts.end())
-    //  delete gr->mesh_vertices[i];
+    // FIXME: investigate crash on exit (e.g. t16.geo)
+    // if(allverts.find(gr->mesh_vertices[i]) == allverts.end())
+    //   delete gr->mesh_vertices[i];
   }
   gr->mesh_vertices.clear();
   gr->mesh_vertices.insert(gr->mesh_vertices.end(), allverts.begin(),

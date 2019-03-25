@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _EIGENVECTORS_H_
-#define _EIGENVECTORS_H_
+#ifndef EIGENVECTORS_H
+#define EIGENVECTORS_H
 
 #include "Plugin.h"
 

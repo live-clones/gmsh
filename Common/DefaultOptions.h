@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _DEFAULT_OPTIONS_H_
-#define _DEFAULT_OPTIONS_H_
+#ifndef DEFAULT_OPTIONS_H
+#define DEFAULT_OPTIONS_H
 
 #include "GmshConfig.h"
 #include "GmshDefines.h"
@@ -144,7 +144,7 @@ StringXString GeometryOptions_String[] = {
   { F|O, "DoubleClickedVolumeCommand" , opt_geometry_double_clicked_volume_command, "" ,
     "Command parsed when double-clicking on a volume" },
 
-  { F|O, "OCCTargetUnit" , opt_geometry_occ_target_unit , "M" ,
+  { F|O, "OCCTargetUnit" , opt_geometry_occ_target_unit , "" ,
     "Length unit to which coordinates from STEP and IGES files are converted to when "
     "imported by OpenCASCADE, e.g. 'M' for meters (leave empty to keep the unit defined "
     "in the STEP and IGES file)"},
@@ -881,6 +881,8 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "OCCAutoFix" , opt_geometry_occ_auto_fix , 1. ,
     "Automatically fix orientation of wires, faces, shells and volumes when creating"
     " new entities" },
+  { F|O, "OCCBooleanPreserveNumbering" , opt_geometry_occ_boolean_preserve_numbering , 1. ,
+    "Try to preserve numbering of entities through OCC boolean operations" },
   { F|O, "OCCDisableSTL" , opt_geometry_occ_disable_stl , 0. ,
     "Disable STL computation" },
   { F|O, "OCCFixDegenerated" , opt_geometry_occ_fix_degenerated , 0. ,
@@ -889,14 +891,14 @@ StringXNumber GeometryOptions_Number[] = {
     "Fix small edges in STEP, IGES and BRep models" },
   { F|O, "OCCFixSmallFaces" , opt_geometry_occ_fix_small_faces , 0. ,
     "Fix small faces in STEP, IGES and BRep models" },
-  { F|O, "OCCSewFaces" , opt_geometry_occ_sew_faces , 0. ,
-    "Sew faces in STEP, IGES and BRep models" },
+  { F|O, "OCCImportLabels" , opt_geometry_occ_import_labels , 1. ,
+    "Import labels and colors from STEP models" },
   { F|O, "OCCParallel" , opt_geometry_occ_parallel , 0. ,
     "Use multi-threaded OCC boolean operators" },
-  { F|O, "OCCBooleanPreserveNumbering" , opt_geometry_occ_boolean_preserve_numbering , 1. ,
-    "Try to preserve numbering of entities through OCC boolean operations" },
   { F|O, "OCCScaling" , opt_geometry_occ_scaling , 1. ,
     "Scale STEP, IGES and BRep model by given factor" },
+  { F|O, "OCCSewFaces" , opt_geometry_occ_sew_faces , 0. ,
+    "Sew faces in STEP, IGES and BRep models" },
   { F,   "OffsetX" , opt_geometry_offset0 , 0. ,
     "Model display offset along X-axis (in model coordinates)" },
   { F,   "OffsetY" , opt_geometry_offset1 , 0. ,
@@ -980,11 +982,10 @@ StringXNumber GeometryOptions_Number[] = {
 
 StringXNumber MeshOptions_Number[] = {
   { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_AUTO ,
-    "2D mesh algorithm (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal, 7: BAMG, "
-    "8: DelQuad)" },
+    "2D mesh algorithm (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, "
+    "7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)" },
   { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY ,
-    "3D mesh algorithm (1: Delaunay, 4: Frontal, 5: Frontal Delaunay, 6: Frontal Hex, "
-    "7: MMG3D, 9: R-tree, 10: HXT)" },
+    "3D mesh algorithm (1: Delaunay, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT)" },
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" },
   { F|O, "AngleToleranceFacetOverlap" , opt_mesh_angle_tolerance_facet_overlap , 0.1,
@@ -1037,7 +1038,7 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "ElementOrder" , opt_mesh_order , 1. ,
     // "Order" is a reserved token in the parser
-    "Element order (1: linear elements, N (<6): elements of higher order)" },
+    "Element order (1: first order elements)" },
   { F|O, "Explode" , opt_mesh_explode , 1.0 ,
     "Element shrinking factor (between 0 and 1)" },
 
@@ -1116,6 +1117,8 @@ StringXNumber MeshOptions_Number[] = {
     "Version of the MSH file format to use" },
   { F|O, "MedFileMinorVersion" , opt_mesh_med_file_minor_version , -1. ,
     "Minor version of the MED file format to use (-1: use minor version of the MED library)" },
+  { F|O, "MedImportGroupsOfNodes" , opt_mesh_med_import_groups_of_nodes , 0. ,
+    "Import groups of nodes (0: no; 1: create geometrical point for each node)?" },
   { F|O, "PartitionHexWeight" , opt_mesh_partition_hex_weight , -1 ,
     "Weight of hexahedral element for METIS load balancing (-1: automatic)" },
   { F|O, "PartitionLineWeight" , opt_mesh_partition_line_weight , -1 ,
@@ -1275,6 +1278,9 @@ StringXNumber MeshOptions_Number[] = {
     "Smooth the mesh normals?" },
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,
     "Ratio between mesh sizes at nodes of a same edge (used in BAMG)" },
+  { F|O, "StlOneSolidPerSurface" , opt_mesh_stl_one_solid_per_surface, 0. ,
+    "Create one solid per surface when exporting STL files? (0: single solid, "
+    "1: one solid per face, 2: one solid per physical surface)" },
   { F|O, "StlRemoveDuplicateTriangles" , opt_mesh_stl_remove_duplicate_triangles, 0. ,
     "Remove duplicate triangles when importing STL files?" },
   { F|O, "SubdivisionAlgorithm" , opt_mesh_algo_subdivide , 0 ,

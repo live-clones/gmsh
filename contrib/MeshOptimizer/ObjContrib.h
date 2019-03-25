@@ -22,11 +22,11 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _OBJ_CONTRIB_H_
-#define _OBJ_CONTRIB_H_
+#ifndef OBJ_CONTRIB_H
+#define OBJ_CONTRIB_H
 
+#include <vector>
 #include <string>
-#include "ap.h"
 #include "MeshOptCommon.h"
 
 class Patch;
@@ -42,7 +42,7 @@ public:
   const std::string &getMeasureName() const { return _measureName; }
   virtual void initialize(Patch *mesh) = 0;
   virtual bool fail() = 0;
-  virtual bool addContrib(double &Obj, alglib::real_1d_array &gradObj) = 0;
+  virtual bool addContrib(double &Obj, std::vector<double> &gradObj) = 0;
   virtual void updateParameters() = 0;
   virtual bool targetReached() = 0;
   virtual bool stagnated() = 0;

@@ -6,8 +6,8 @@
 // Contributor(s):
 //   François Henrotte
 
-#ifndef _CROSS_3D_H_
-#define _CROSS_3D_H_
+#ifndef CROSS_3D_H
+#define CROSS_3D_H
 
 #include <ostream>
 using std::ostream;

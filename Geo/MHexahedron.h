@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MHEXAHEDRON_H_
-#define _MHEXAHEDRON_H_
+#ifndef MHEXAHEDRON_H
+#define MHEXAHEDRON_H
 
 #include "MElement.h"
 

@@ -20,8 +20,8 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 // SOFTWARE.
 
-#ifndef _ONELAB_H_
-#define _ONELAB_H_
+#ifndef ONELAB_H
+#define ONELAB_H
 
 #include <time.h>
 #include <stdio.h>

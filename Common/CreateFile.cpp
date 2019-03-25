@@ -38,8 +38,11 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".msh")      return FORMAT_MSH;
   else if(ext == ".msh1")     { if(version) *version = 1.0; return FORMAT_MSH; }
   else if(ext == ".msh2")     { if(version) *version = 2.2; return FORMAT_MSH; }
+  else if(ext == ".msh22")    { if(version) *version = 2.2; return FORMAT_MSH; }
   else if(ext == ".msh3")     { if(version) *version = 3.0; return FORMAT_MSH; }
   else if(ext == ".msh4")     { if(version) *version = 4.1; return FORMAT_MSH; }
+  else if(ext == ".msh40")    { if(version) *version = 4.0; return FORMAT_MSH; }
+  else if(ext == ".msh41")    { if(version) *version = 4.1; return FORMAT_MSH; }
   else if(ext == ".x3d")      return FORMAT_X3D;
   else if(ext == ".pos")      return FORMAT_POS;
   else if(ext == ".pvtu")     return FORMAT_PVTU;
@@ -161,7 +164,7 @@ std::string GetDefaultFileName(int format)
 
 std::string GetKnownFileFormats(bool onlyMeshFormats)
 {
-  std::string all = "auto, msh1, msh2, msh3, msh4";
+  std::string all = "auto, msh1, msh2, msh22, msh3, msh4, msh40, msh41";
   for(int i = 1; i < 1000; i++){
     std::string ext = GetDefaultFileExtension(i, onlyMeshFormats);
     if(ext.size() > 1){
@@ -324,7 +327,8 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_STL:
     GModel::current()->writeSTL
       (name, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
-       CTX::instance()->mesh.scalingFactor);
+       CTX::instance()->mesh.scalingFactor,
+       CTX::instance()->mesh.stlOneSolidPerSurface);
     break;
 
   case FORMAT_VRML:

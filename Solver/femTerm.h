@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _FEM_TERM_H_
-#define _FEM_TERM_H_
+#ifndef FEM_TERM_H
+#define FEM_TERM_H
 
 #include <math.h>
 #include <map>

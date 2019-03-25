@@ -18,6 +18,8 @@
 #include "Numeric.h"
 #include "cartesian.h"
 #include "GmshConfig.h"
+#include "mathEvaluator.h"
+
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
 #endif
@@ -809,17 +811,17 @@ double gLevelsetShamrock::operator()(double x, double y, double z) const
   return sign * distance;
 }
 
-gLevelsetPopcorn::gLevelsetPopcorn(double _xc, double _yc, double _zc,
-                                   double _r0, double _A, double _sigma,
+gLevelsetPopcorn::gLevelsetPopcorn(double myxc, double myyc, double myzc,
+                                   double myr0, double myA, double mysigma,
                                    int tag)
   : gLevelsetPrimitive(tag)
 {
-  A = _A;
-  sigma = _sigma;
-  r0 = _r0;
-  xc = _xc;
-  yc = _yc;
-  zc = _zc;
+  A = myA;
+  sigma = mysigma;
+  r0 = myr0;
+  xc = myxc;
+  yc = myyc;
+  zc = myzc;
 }
 
 double gLevelsetPopcorn::operator()(double x, double y, double z) const
@@ -867,6 +869,11 @@ gLevelsetMathEval::gLevelsetMathEval(const std::string &f, int tag)
   _expr = new mathEvaluator(expressions, variables);
 }
 
+gLevelsetMathEval::~gLevelsetMathEval()
+{
+  if(_expr) delete _expr;
+}
+
 double gLevelsetMathEval::operator()(double x, double y, double z) const
 {
   std::vector<double> values(3), res(1);
@@ -887,6 +894,11 @@ gLevelsetMathEvalAll::gLevelsetMathEvalAll(std::vector<std::string> expressions,
   variables[1] = "y";
   variables[2] = "z";
   _expr = new mathEvaluator(expressions, variables);
+}
+
+gLevelsetMathEvalAll::~gLevelsetMathEvalAll()
+{
+  if(_expr) delete _expr;
 }
 
 double gLevelsetMathEvalAll::operator()(double x, double y, double z) const

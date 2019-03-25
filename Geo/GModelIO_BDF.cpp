@@ -106,6 +106,8 @@ static int readVertexBDF(FILE *fp, char *buffer, int keySize, int *num,
     if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
     strncpy(tmp[4], &buffer2[8], 16);
     break;
+  default:
+    return 0;
   }
 
   *num = atoi(tmp[0]);

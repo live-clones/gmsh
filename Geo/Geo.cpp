@@ -38,6 +38,11 @@ static int ComparePosition(const void *a, const void *b)
   Vertex *q = *(Vertex **)a;
   Vertex *w = *(Vertex **)b;
 
+  if(!q || !w){
+    Msg::Error("Cannot compare position of null points");
+    return 99;
+  }
+
   // Warning: tolerance (before 1.61, it was set to 1.e-10 *
   // CTX::instance()->lc)
   double eps = CTX::instance()->geom.tolerance * CTX::instance()->lc;
@@ -1162,7 +1167,7 @@ int RecognizeSurfaceLoop(List_T *liste, int *loop)
   return res;
 }
 
-static void SetTranslationMatrix(double matrix[4][4], double T[3])
+void SetTranslationMatrix(double matrix[4][4], double T[3])
 {
   for(int i = 0; i < 4; i++) {
     for(int j = 0; j < 4; j++) {
@@ -1172,8 +1177,8 @@ static void SetTranslationMatrix(double matrix[4][4], double T[3])
   for(int i = 0; i < 3; i++) matrix[i][3] = T[i];
 }
 
-static void SetSymmetryMatrix(double matrix[4][4], double A, double B, double C,
-                              double D)
+void SetSymmetryMatrix(double matrix[4][4], double A, double B, double C,
+                       double D)
 {
   double p = (A * A + B * B + C * C);
   if(!p) p = 1e-12;
@@ -1196,8 +1201,8 @@ static void SetSymmetryMatrix(double matrix[4][4], double A, double B, double C,
   matrix[3][3] = 1.0;
 }
 
-static void SetDilatationMatrix(double matrix[4][4], double T[3], double A,
-                                double B, double C)
+void SetDilatationMatrix(double matrix[4][4], double T[3], double A,
+                         double B, double C)
 {
   matrix[0][0] = A;
   matrix[0][1] = 0.0;
@@ -1230,7 +1235,7 @@ static void GramSchmidt(double v1[3], double v2[3], double v3[3])
   norme(v3);
 }
 
-static void SetRotationMatrix(double matrix[4][4], double Axe[3], double alpha)
+void SetRotationMatrix(double matrix[4][4], double Axe[3], double alpha)
 {
   double t1[3], t2[3];
   if(Axe[0] != 0.0) {

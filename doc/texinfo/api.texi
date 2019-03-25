@@ -99,7 +99,9 @@ are listed in the Gmsh reference manual.
 @end table
 
 @item getNumber
-Get the @code{value} of a numerical option.
+Get the @code{value} of a numerical option. @code{name} is of the form
+"category.option" or "category[num].option". Available categories and options
+are listed in the Gmsh reference manual.
 
 @table @asis
 @item Input:
@@ -111,7 +113,9 @@ Get the @code{value} of a numerical option.
 @end table
 
 @item setString
-Set a string option to @code{value}.
+Set a string option to @code{value}. @code{name} is of the form
+"category.option" or "category[num].option". Available categories and options
+are listed in the Gmsh reference manual.
 
 @table @asis
 @item Input:
@@ -123,7 +127,9 @@ Set a string option to @code{value}.
 @end table
 
 @item getString
-Get the @code{value} of a string option.
+Get the @code{value} of a string option. @code{name} is of the form
+"category.option" or "category[num].option". Available categories and options
+are listed in the Gmsh reference manual.
 
 @table @asis
 @item Input:
@@ -198,6 +204,30 @@ integer pairs.
 @code{dim}
 @item Output:
 @code{dimTags}
+@item Return:
+-
+@end table
+
+@item setEntityName
+Set the name of the entity of dimension @code{dim} and tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{name}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item getEntityName
+Get the name of the entity of dimension @code{dim} and tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{name}
 @item Return:
 -
 @end table
@@ -368,6 +398,18 @@ true, remove all the entities on their boundaries, down to dimension 0.
 -
 @end table
 
+@item removeEntityName
+Remove the entity name @code{name} from the current model.
+
+@table @asis
+@item Input:
+@code{name}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item removePhysicalGroups
 Remove the physical groups @code{dimTags} of the current model. If
 @code{dimTags} is empty, remove all groups.
@@ -382,7 +424,7 @@ Remove the physical groups @code{dimTags} of the current model. If
 @end table
 
 @item removePhysicalName
-Remove the physical name @code{name} of the current model.
+Remove the physical name @code{name} from the current model.
 
 @table @asis
 @item Input:
@@ -934,17 +976,17 @@ elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
 @end table
 
 @item setElementsByType
-Set the elements of type @code{elementType} in the entity of dimension
-@code{dim} and tag @code{tag}. @code{elementTags} contains the tags (unique,
-strictly positive identifiers) of the elements of the corresponding type.
-@code{nodeTags} is a vector of length equal to the number of elements times the
-number N of nodes per element, that contains the node tags of all the elements,
-concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the @code{elementTag}
-vector is empty, new tags are automatically assigned to the elements.
+Set the elements of type @code{elementType} in the entity of tag @code{tag}.
+@code{elementTags} contains the tags (unique, strictly positive identifiers) of
+the elements of the corresponding type. @code{nodeTags} is a vector of length
+equal to the number of elements times the number N of nodes per element, that
+contains the node tags of all the elements, concatenated: [e1n1, e1n2, ...,
+e1nN, e2n1, ...]. If the @code{elementTag} vector is empty, new tags are
+automatically assigned to the elements.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{elementType}, @code{elementTags}, @code{nodeTags}
+@code{tag}, @code{elementType}, @code{elementTags}, @code{nodeTags}
 @item Output:
 -
 @item Return:
@@ -954,12 +996,13 @@ vector is empty, new tags are automatically assigned to the elements.
 @item getJacobians
 Get the Jacobians of all the elements of type @code{elementType} classified on
 the entity of dimension @code{dim} and tag @code{tag}, at the G integration
-points required by the @code{integrationType} integration rule (e.g. "Gauss4").
-Data is returned by element, with elements in the same order as in
-@code{getElements} and @code{getElementsByType}. @code{jacobians} contains for
-each element the 9 entries of a 3x3 Jacobian matrix (by row), for each
-integration point: [e1g1Jxx, e1g1Jxy, e1g1Jxz, ... e1g1Jzz, e1g2Jxx, ...,
-e1gGJzz, e2g1Jxx, ...]. @code{determinants} contains for each element the
+points required by the @code{integrationType} integration rule (e.g. "Gauss4"
+for a Gauss quadrature suited for integrating 4th order polynomials). Data is
+returned by element, with elements in the same order as in @code{getElements}
+and @code{getElementsByType}. @code{jacobians} contains for each element the 9
+entries of a 3x3 Jacobian matrix (by row), for each integration point: [e1g1Jxu,
+e1g1Jxv, e1g1Jxw, ... e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with
+Jxu=dx/du, Jxv=dx/dv, etc. @code{determinants} contains for each element the
 determinant of the Jacobian matrix for each integration point: [e1g1, e1g2, ...
 e1gG, e2g1, ...]. @code{points} contains for each element the x, y, z
 coordinates of the integration points. If @code{tag} < 0, get the Jacobian data
@@ -990,8 +1033,10 @@ Preallocate the data required by @code{getJacobians}. This is necessary only if
 
 @item getBasisFunctions
 Get the basis functions of the element of type @code{elementType} for the given
-@code{integrationType} integration rule (e.g. "Gauss4") and
-@code{functionSpaceType} function space (e.g. "IsoParametric").
+@code{integrationType} integration rule (e.g. "Gauss4" for a Gauss quadrature
+suited for integrating 4th order polynomials) and @code{functionSpaceType}
+function space (e.g. "Lagrange" or "GradLagrange" for Lagrange basis functions
+or their gradient, in the u, v, w coordinates of the reference element).
 @code{integrationPoints} contains the parametric coordinates u, v, w and the
 weight q for each integeration point, concatenated: [g1u, g1v, g1w, g1q, g2u,
 ...]. @code{numComponents} returns the number C of components of a basis
@@ -1244,7 +1289,7 @@ Reorder the elements of type @code{elementType} classified on the entity of tag
 @end table
 
 @item renumberNodes
-Renumber the node tags in a contiunous sequence.
+Renumber the node tags in a continuous sequence.
 
 @table @asis
 @item Input:
@@ -1256,7 +1301,7 @@ Renumber the node tags in a contiunous sequence.
 @end table
 
 @item renumberElements
-Renumber the element tags in a contiunous sequence.
+Renumber the element tags in a continuous sequence.
 
 @table @asis
 @item Input:
@@ -1269,14 +1314,14 @@ Renumber the element tags in a contiunous sequence.
 
 @item setPeriodic
 Set the meshes of the entities of dimension @code{dim} and tag @code{tags} as
-periodic copies of the meshes of entities @code{tagsSource}, using the affine
+periodic copies of the meshes of entities @code{tagsMaster}, using the affine
 transformation specified in @code{affineTransformation} (16 entries of a 4x4
 matrix, by row). Currently only available for @code{dim} == 1 and @code{dim} ==
 2.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tags}, @code{tagsSource}, @code{affineTransform}
+@code{dim}, @code{tags}, @code{tagsMaster}, @code{affineTransform}
 @item Output:
 -
 @item Return:
@@ -2180,11 +2225,12 @@ integer value
 @item addSurfaceFilling
 Add a surface filling the curve loops in @code{wireTags}. If @code{tag} is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
-Return the tag of the surface.
+Return the tag of the surface. If @code{pointTags} are provided, force the
+surface to pass through the given points.
 
 @table @asis
 @item Input:
-@code{wireTag}, @code{tag}
+@code{wireTag}, @code{tag}, @code{pointTags}
 @item Output:
 -
 @item Return:

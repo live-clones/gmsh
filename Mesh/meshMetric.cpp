@@ -375,8 +375,8 @@ void meshMetric::computeMetricLevelSet(MVertex *ver, SMetric3 &hessian,
 
   SMetric3 H;
   double norm = gr(0) * gr(0) + gr(1) * gr(1) + gr(2) * gr(2);
-  if(dist < _E && norm != 0.0) {
-    double h = hmin * (hmax / hmin - 1) * dist / _E + hmin;
+  if(dist < _e && norm != 0.0) {
+    double h = hmin * (hmax / hmin - 1) * dist / _e + hmin;
     double C = 1. / (h * h) - 1. / (hmax * hmax);
     H(0, 0) += C * gr(0) * gr(0) / norm;
     H(1, 1) += C * gr(1) * gr(1) / norm;
@@ -473,11 +473,11 @@ void meshMetric::computeMetricFrey(MVertex *ver, SMetric3 &hessian,
 
   SMetric3 H(1. / (hmax * hmax));
   double norm = gr(0) * gr(0) + gr(1) * gr(1) + gr(2) * gr(2);
-  if(dist < _E && norm != 0.0) {
-    double h = hmin * (hmax / hmin - 1.0) * dist / _E + hmin;
+  if(dist < _e && norm != 0.0) {
+    double h = hmin * (hmax / hmin - 1.0) * dist / _e + hmin;
     double C = 1. / (h * h) - 1. / (hmax * hmax);
     double kappa = hessian(0, 0) + hessian(1, 1) + hessian(2, 2);
-    double epsGeom = 4.0 * 3.14 * 3.14 / (kappa * _Np * _Np);
+    double epsGeom = 4.0 * 3.14 * 3.14 / (kappa * _np * _np);
     H(0, 0) += C * gr(0) * gr(0) / (norm) + hessian(0, 0) / epsGeom;
     H(1, 1) += C * gr(1) * gr(1) / (norm) + hessian(1, 1) / epsGeom;
     H(2, 2) += C * gr(2) * gr(2) / (norm) + hessian(2, 2) / epsGeom;
@@ -495,7 +495,7 @@ void meshMetric::computeMetricFrey(MVertex *ver, SMetric3 &hessian,
   lambda2 = S(1);
   lambda3 = (_dim == 3) ? S(2) : 1.;
 
-  if(dist < _E) {
+  if(dist < _e) {
     lambda1 = std::min(std::max(fabs(S(0)) / _epsilon, 1. / (hmax * hmax)),
                        1. / (hmin * hmin));
     lambda2 = std::min(std::max(fabs(S(1)) / _epsilon, 1. / (hmax * hmax)),
@@ -539,13 +539,13 @@ void meshMetric::computeMetricEigenDir(MVertex *ver, SMetric3 &hessian,
   const double metric_value_hmax = 1. / (hmax * hmax);
   const double gMag = gVec.norm(), invGMag = 1. / gMag;
 
-  if(signed_dist < _E && signed_dist > _E_moins && gMag != 0.0) {
+  if(signed_dist < _e && signed_dist > _e_moins && gMag != 0.0) {
     const double metric_value_hmin = 1. / (hmin * hmin);
     const SVector3 nVec = invGMag * gVec; // Unit normal vector
     double lambda_n =
       0.; // Eigenvalues of metric for normal & tangential directions
     if(_technique == meshMetric::EIGENDIRECTIONS_LINEARINTERP_H) {
-      // const double h_dist = hmin + ((hmax-hmin)/_E)*dist;
+      // const double h_dist = hmin + ((hmax-hmin)/_e)*dist;
       // // Characteristic element size in the normal direction - linear interp
       // between hmin and hmax  lambda_n = 1./(h_dist*h_dist);
       double beta = CTX::instance()->mesh.smoothRatio;
@@ -554,7 +554,7 @@ void meshMetric::computeMetricEigenDir(MVertex *ver, SMetric3 &hessian,
     }
     else if(_technique == meshMetric::EIGENDIRECTIONS) {
       const double maximum_distance =
-        (signed_dist > 0.) ? _E : fabs(_E_moins); // ... or linear interpolation
+        (signed_dist > 0.) ? _e : fabs(_e_moins); // ... or linear interpolation
                                                   // between 1/h_min^2 and
                                                   // 1/h_max^2
       lambda_n =
@@ -623,8 +623,8 @@ void meshMetric::computeMetricEigenDir(MVertex *ver, SMetric3 &hessian,
       kappa.erase(kappa.begin() + i_N); // Remove normal dir.
       tVec.erase(tVec.begin() + i_N);
     }
-    const double invh_t0 = (_Np * kappa[0]) / 6.283185307,
-                 invh_t1 = (_Np * kappa[1]) /
+    const double invh_t0 = (_np * kappa[0]) / 6.283185307,
+                 invh_t1 = (_np * kappa[1]) /
                            6.283185307; // Inverse of tangential size 0
     const double lambda_t0 = invh_t0 * invh_t0, lambda_t1 = invh_t1 * invh_t1;
     const double lambdaP_n =
@@ -673,10 +673,10 @@ void meshMetric::computeMetricIsoLinInterp(MVertex *ver, SMetric3 &hessian,
   size = hmax; // the characteristic element size in all directions - linear
                // interp between hmin and hmax
   if(norm != 0.) {
-    if((signed_dist >= 0) && (signed_dist < _E))
-      size = hmin + ((hmax - hmin) / _E) * dist;
-    else if((signed_dist < 0) && (signed_dist > _E_moins))
-      size = hmin - ((hmax - hmin) / _E_moins) * dist;
+    if((signed_dist >= 0) && (signed_dist < _e))
+      size = hmin + ((hmax - hmin) / _e) * dist;
+    else if((signed_dist < 0) && (signed_dist > _e_moins))
+      size = hmin - ((hmax - hmin) / _e_moins) * dist;
   }
 
   double lambda = 1. / size / size;
@@ -756,12 +756,12 @@ void meshMetric::computeMetric(int metricNumber)
 
   hmin = parameters.size() >= 3 ? parameters[1] : CTX::instance()->mesh.lcMin;
   hmax = parameters.size() >= 3 ? parameters[2] : CTX::instance()->mesh.lcMax;
-  _E = parameters[0];
-  _E_moins = (parameters.size() >= 5) ? parameters[4] : -parameters[0];
-  if(_E_moins > 0.) _E_moins *= -1.;
+  _e = parameters[0];
+  _e_moins = (parameters.size() >= 5) ? parameters[4] : -parameters[0];
+  if(_e_moins > 0.) _e_moins *= -1.;
   _epsilon = parameters[0];
   _technique = (MetricComputationTechnique)technique;
-  _Np = (parameters.size() >= 4) ? parameters[3] : 15.;
+  _np = (parameters.size() >= 4) ? parameters[3] : 15.;
 
   computeValues();
   computeHessian();
@@ -956,66 +956,3 @@ SVector3 meshMetric::getGradient(MVertex *v)
   SVector3 gr = it->second;
   return gr;
 }
-
-/*void meshMetric::curvatureContributionToMetric (){
-  std::map<MVertex*,SMetric3>::iterator it = _nodalMetrics.begin();
-  std::map<MVertex*,double>::iterator its = _nodalSizes.begin();
-  for (; it != _nodalMetrics.end(); ++it,++its){
-  MVertex *v = it->first;
-  if (v->onWhat()->dim() == 0){
-  double l;
-  SMetric3 curvMetric = max_edge_curvature_metric((GVertex*)v->onWhat(),l);
-  it->second = intersection(it->second,curvMetric);
-  its->second = std::min(l,its->second);
-  }
-  else if (v->onWhat()->dim() == 1){
-  double u,l;
-  v->getParameter(0,u);
-  SMetric3 curvMetric = max_edge_curvature_metric((GEdge*)v->onWhat(),u,l);
-  it->second = intersection(it->second,curvMetric);
-  its->second = std::min(l,its->second);
-  }
-  }
-  }*/
-
-/*
-  void meshMetric::smoothMetric (dgDofContainer *sol){
-  return;
-  dgGroupCollection *groups = sol->getGroups();
-  std::set<MEdge,Less_Edge> edges;
-  for (int i=0;i<groups->getNbElementGroups();i++){
-  dgGroupOfElements *group = groups->getElementGroup(i);
-  for (int j=0;j<group->getNbElements();j++){
-  MElement *e = group->getElement(j);
-  for (int k=0;k<e->getNumEdges();k++){
-  edges.insert(e->getEdge(k));
-  }
-  }
-  }
-
-  std::set<MEdge,Less_Edge>::iterator it = edges.begin();
-  double logRatio = log (CTX::instance()->mesh.smoothRatio);
-  for ( ; it !=edges.end(); ++it){
-  MEdge e = *it;
-  std::map<MVertex*,SMetric3>::iterator it1 =
-  _nodalMetrics.find(e.getVertex(0)); std::map<MVertex*,SMetric3>::iterator it2
-  = _nodalMetrics.find(e.getVertex(1)); SVector3 aij
-  (e.getVertex(1)->x()-e.getVertex(0)->x(),
-  e.getVertex(1)->y()-e.getVertex(0)->y(),
-  e.getVertex(1)->z()-e.getVertex(0)->z());
-  SMetric3 m1 = it1->second;
-  double al1 = sqrt(dot(aij,m1,aij));
-  SMetric3 m2 = it2->second;
-  double al2 = sqrt(dot(aij,m2,aij));
-  //    it1->second.print("m1");
-  //    it2->second.print("m2");
-  m1 *= 1./((1+logRatio*al1)*(1+logRatio*al1));
-  m2 *= 1./((1+logRatio*al2)*(1+logRatio*al2));
-  it1->second = intersection (it1->second,m2);
-  it2->second = intersection (it2->second,m1);
-  //    it1->second.print("m1 after");
-  //    it2->second.print("m2 after");
-  //    getchar();
-  }
-  }
-*/

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CUT_BOX_H_
-#define _CUT_BOX_H_
+#ifndef CUT_BOX_H
+#define CUT_BOX_H
 
 #include "Plugin.h"
 

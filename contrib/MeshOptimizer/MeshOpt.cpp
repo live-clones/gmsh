@@ -34,29 +34,13 @@
 #include "MeshOptCommon.h"
 #include "MeshOpt.h"
 
-#if defined(HAVE_BFGS)
-
-#include "ap.h"
-#include "alglibinternal.h"
-#include "alglibmisc.h"
-#include "linalg.h"
-#include "optimization.h"
-
-namespace {
-
-  void evalObjGradFunc(const alglib::real_1d_array &x, double &Obj,
-                       alglib::real_1d_array &gradObj, void *MOInst)
-  {
-    (static_cast<MeshOpt *>(MOInst))->evalObjGrad(x, Obj, gradObj);
-  }
-
-  void printProgressFunc(const alglib::real_1d_array &x, double Obj,
-                         void *MOInst)
-  {
-    (static_cast<MeshOpt *>(MOInst))->printProgress(x, Obj);
-  }
-
-} // namespace
+#if defined(HAVE_ALGLIB)
+#include <ap.h>
+#include <alglibinternal.h>
+#include <alglibmisc.h>
+#include <linalg.h>
+#include <optimization.h>
+#endif
 
 MeshOpt::MeshOpt(const std::map<MElement *, GEntity *> &element2entity,
                  const std::map<MElement *, GEntity *> &bndEl2Ent,
@@ -128,21 +112,21 @@ MeshOpt::~MeshOpt()
   }
 }
 
-void MeshOpt::evalObjGrad(const alglib::real_1d_array &x, double &obj,
-                          alglib::real_1d_array &gradObj)
+void MeshOpt::evalObjGrad(const std::vector<double> &x, double &obj,
+                          std::vector<double> &gradObj)
 {
-  patch.updateMesh(x.getcontent());
+  patch.updateMesh(&x[0]);
   _objFunc->compute(obj, gradObj);
   if(_objFunc->targetReached()) {
     if(_verbose > 2) Msg::Info("Reached target values, setting null gradient");
     obj = 0.;
-    for(int i = 0; i < gradObj.length(); i++) gradObj[i] = 0.;
+    for(std::size_t i = 0; i < gradObj.size(); i++) gradObj[i] = 0.;
   }
 }
 
 ObjectiveFunction *MeshOpt::objFunction() { return _objFunc; }
 
-void MeshOpt::printProgress(const alglib::real_1d_array &x, double Obj)
+void MeshOpt::printProgress(const std::vector<double> &x, double Obj)
 {
   _iter++;
 
@@ -164,9 +148,9 @@ void MeshOpt::printProgress(const alglib::real_1d_array &x, double Obj)
               _iter, Obj, Obj / _initObj);
 }
 
-void MeshOpt::calcScale(alglib::real_1d_array &scale)
+void MeshOpt::calcScale(std::vector<double> &scale)
 {
-  scale.setlength(patch.nPC());
+  scale.resize(patch.nPC());
 
   // Calculate scale
   for(int iFV = 0; iFV < patch.nFV(); iFV++) {
@@ -179,8 +163,28 @@ void MeshOpt::calcScale(alglib::real_1d_array &scale)
 
 void MeshOpt::updateResults() { _objFunc->updateResults(); }
 
-void MeshOpt::runOptim(alglib::real_1d_array &x,
-                       const alglib::real_1d_array &initGradObj, int itMax,
+#if defined(HAVE_ALGLIB)
+
+static void evalObjGradFunc(const alglib::real_1d_array &x, double &Obj,
+                            alglib::real_1d_array &gradObj, void *MOInst)
+{
+  std::vector<double> x_(x.getcontent(), x.getcontent() + x.length());
+  std::vector<double> gradObj_(gradObj.length(), 0.);
+  (static_cast<MeshOpt *>(MOInst))->evalObjGrad(x_, Obj, gradObj_);
+  for(std::size_t i = 0; i < gradObj_.size(); i++) gradObj[i] = gradObj_[i];
+}
+
+static void printProgressFunc(const alglib::real_1d_array &x, double Obj,
+                              void *MOInst)
+{
+  std::vector<double> x_(x.getcontent(), x.getcontent() + x.length());
+  (static_cast<MeshOpt *>(MOInst))->printProgress(x_, Obj);
+}
+
+#endif
+
+void MeshOpt::runOptim(std::vector<double> &x,
+                       const std::vector<double> &initGradObj, int itMax,
                        int iBar)
 {
   static const double EPSG = 0.;
@@ -189,26 +193,38 @@ void MeshOpt::runOptim(alglib::real_1d_array &x,
 
   _iter = 0;
 
-  alglib::real_1d_array scale;
-  calcScale(scale);
+  std::vector<double> s;
+  calcScale(s);
 
   int iterationscount = 0, nfev = 0, terminationtype = -1;
+
+#if defined(HAVE_ALGLIB)
+  alglib::real_1d_array scale;
+  scale.setcontent(s.size(), &s[0]);
+  alglib::real_1d_array vec;
+  vec.setcontent(x.size(), &x[0]);
   alglib::mincgstate state;
   alglib::mincgreport rep;
   try {
-    mincgcreate(x, state);
+    mincgcreate(vec, state);
     mincgsetscale(state, scale);
     mincgsetprecscale(state);
     mincgsetcond(state, EPSG, EPSF, EPSX, itMax);
     mincgsetxrep(state, true);
     alglib::mincgoptimize(state, evalObjGradFunc, printProgressFunc, this);
-    mincgresults(state, x, rep);
+    mincgresults(state, vec, rep);
   } catch(alglib::ap_error &e) {
     Msg::Error("%s", e.msg.c_str());
   }
+  x.assign(vec.getcontent(), vec.getcontent() + vec.length());
   iterationscount = rep.iterationscount;
   nfev = rep.nfev;
   terminationtype = rep.terminationtype;
+#else
+  // TODO: provide our own implementation!
+  Msg::Error("Mesh optimizer requires ALGLIB");
+#endif
+
   if(_nCurses) {
     if(_optHistory.size() < 8) { _optHistory.push_front(new char[1000]); }
     else {
@@ -284,9 +300,8 @@ int MeshOpt::optimize(const MeshOptParameters &par)
   _nCurses = par.nCurses;
   // Set initial guess & result
   int result = 1;
-  alglib::real_1d_array x;
-  x.setlength(patch.nPC());
-  patch.getUvw(x.getcontent());
+  std::vector<double> x(patch.nPC());
+  patch.getUvw(&x[0]);
   if(_nCurses) {
     mvprintCenter(
       11, "%7i elements, %7i vertices, %7i free vertices, %7i variables",
@@ -313,9 +328,7 @@ int MeshOpt::optimize(const MeshOptParameters &par)
 
     // Calculate initial objective function value and gradient
     _initObj = 0.;
-    alglib::real_1d_array gradObj;
-    gradObj.setlength(patch.nPC());
-    for(int i = 0; i < patch.nPC(); i++) gradObj[i] = 0.;
+    std::vector<double> gradObj(patch.nPC(), 0.);
     evalObjGrad(x, _initObj, gradObj);
 
     // Loop for update of objective function parameters (barrier movement)
@@ -374,5 +387,3 @@ int MeshOpt::optimize(const MeshOptParameters &par)
 
   return result;
 }
-
-#endif

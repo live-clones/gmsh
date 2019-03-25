@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _OCTREE_H_
-#define _OCTREE_H_
+#ifndef OCTREE_H
+#define OCTREE_H
 
 #include <vector>
 #include "OctreeInternals.h"

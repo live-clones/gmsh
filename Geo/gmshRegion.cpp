@@ -12,7 +12,7 @@
 gmshRegion::gmshRegion(GModel *m, ::Volume *volume) : GRegion(m, volume->Num)
 {
   resetNativePtr(volume);
-  resetMeshAttributes();
+  gmshRegion::resetMeshAttributes();
 }
 
 void gmshRegion::resetNativePtr(::Volume *volume)

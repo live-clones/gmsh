@@ -152,7 +152,7 @@ void OCCFace::setup()
     }
   }
 
-  if(geomType() == GEntity::Sphere) {
+  if(OCCFace::geomType() == GEntity::Sphere) {
     BRepAdaptor_Surface surface(s);
     gp_Sphere sphere = surface.Sphere();
     _radius = sphere.Radius();
@@ -259,7 +259,11 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
                              const double initialGuess[2]) const
 {
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
-  GeomAPI_ProjectPointOnSurf proj(pnt, occface, umin, umax, vmin, vmax);
+  double a,b,c,d;
+  ShapeAnalysis::GetFaceUVBounds(s, a,b,c,d);
+
+  //  printf("minmax %g %g %g %g\n",umin, umax, vmin, vmax);
+  GeomAPI_ProjectPointOnSurf proj(pnt, occface, a,b,c,d);
 
   if(!proj.NbPoints()) {
     Msg::Debug("OCC Project Point on Surface FAIL");
@@ -271,7 +275,7 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
   double pp[2] = {initialGuess[0], initialGuess[1]};
   proj.LowerDistanceParameters(pp[0], pp[1]);
 
-  // Msg::Info("projection lower distance parameters %g %g",pp[0],pp[1]);
+   
 
   if((pp[0] < umin || umax < pp[0]) || (pp[1] < vmin || vmax < pp[1])) {
     Msg::Warning("Point projection is out of face bounds");
@@ -281,6 +285,7 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
   }
 
   pnt = proj.NearestPoint();
+  //  Msg::Info("%g %g %g vs %g %g %g\n",pnt.X(), pnt.Y(), pnt.Z(),qp.x(),qp.y(),qp.z());
   return GPoint(pnt.X(), pnt.Y(), pnt.Z(), this, pp);
 }
 

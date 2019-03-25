@@ -723,7 +723,7 @@ static bool algoDelaunay2D(GFace *gf)
   return false;
 }
 
-static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
+static bool recoverEdge(BDS_Mesh *m, GFace *gf, GEdge *ge,
                         std::map<MVertex *, BDS_Point *> &recoverMapInv,
                         std::set<EdgeToRecover> *e2r,
                         std::set<EdgeToRecover> *notRecovered, int pass)
@@ -758,7 +758,7 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
             Msg::Error(
               "Unable to recover the edge %d (%d/%d) on curve %d (on surface %d)",
               ge->lines[i]->getNum(), i + 1, ge->lines.size(), ge->tag(),
-              ge->faces().back()->tag());
+              gf->tag());
             if(Msg::GetVerbosity() == 99){
               outputScalarField(m->triangles, "wrongmesh.pos", 0);
               outputScalarField(m->triangles, "wrongparam.pos", 1);
@@ -1244,8 +1244,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     gf->meshStatistics.status = GFace::DONE;
     return true;
   }
-  if(all_vertices.size() == 3) {
-    MVertex *vv[3];
+  else if(all_vertices.size() == 3) {
+    MVertex *vv[3] = {0, 0, 0};
     int i = 0;
     for(std::set<MVertex *, MVertexLessThanNum>::iterator it =
           all_vertices.begin();
@@ -1260,7 +1260,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   // Buid a BDS_Mesh structure that is convenient for doing the actual
   // meshing procedure
   BDS_Mesh *m = new BDS_Mesh;
-
 
   std::vector<BDS_Point *> points(all_vertices.size());
   SBoundingBox3d bbox;
@@ -1415,15 +1414,15 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   ite = edges.begin();
   while(ite != edges.end()) {
     if(!(*ite)->isMeshDegenerated())
-      recoverEdge(m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered,
-                  1);
+      recoverEdge(m, gf, *ite, recoverMapInv, &edgesToRecover,
+                  &edgesNotRecovered, 1);
     ++ite;
   }
   ite = emb_edges.begin();
   while(ite != emb_edges.end()) {
     if(!(*ite)->isMeshDegenerated())
-      recoverEdge(m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered,
-                  1);
+      recoverEdge(m, gf, *ite, recoverMapInv, &edgesToRecover,
+                  &edgesNotRecovered, 1);
     ++ite;
   }
 
@@ -1431,7 +1430,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   ite = edges.begin();
   while(ite != edges.end()) {
     if(!(*ite)->isMeshDegenerated()) {
-      if(!recoverEdge(m, *ite, recoverMapInv, &edgesToRecover,
+      if(!recoverEdge(m, gf, *ite, recoverMapInv, &edgesToRecover,
                       &edgesNotRecovered, 2)) {
         delete m;
         gf->meshStatistics.status = GFace::FAILED;
@@ -1564,8 +1563,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   ite = emb_edges.begin();
   while(ite != emb_edges.end()) {
     if(!(*ite)->isMeshDegenerated())
-      recoverEdge(m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered,
-                  2);
+      recoverEdge(m, gf, *ite, recoverMapInv, &edgesToRecover,
+                  &edgesNotRecovered, 2);
     ++ite;
   }
 
@@ -1829,7 +1828,13 @@ static bool buildConsecutiveListOfVertices(
       MVertex *here = ges.ge->mesh_vertices[i];
       double u;
       here->getParameter(0, u);
-      mesh1d.push_back(ges.ge->reparamOnFace(gf, u, 1));
+      SPoint2 ppp = ges.ge->reparamOnFace(gf, u, 1);
+      //      GPoint A = gf->point(ppp);
+      //      double dd = sqrt((A.x()-here->x())*(A.x()-here->x())+
+      //		       (A.y()-here->y())*(A.y()-here->y())+
+      //		       (A.z()-here->z())*(A.z()-here->z()));
+      //      if (dd > tol)printf("DIST = %g\n",dd);
+      mesh1d.push_back(ppp);   
       if(seam) mesh1d_seam.push_back(ges.ge->reparamOnFace(gf, u, -1));
     }
     mesh1d.push_back(ges.ge->reparamOnFace(gf, range.high(), 1));
@@ -2084,8 +2089,15 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   SBoundingBox3d bbox;
   int nbPointsTotal = 0;
   {
+    //    printf("%d loops\n",gf->edgeLoops.size());
     for(std::list<GEdgeLoop>::iterator it = gf->edgeLoops.begin();
         it != gf->edgeLoops.end(); it++) {
+      if (it->count() == 0)continue;
+      //      for (GEdgeLoop::iter it2 = (it)->begin(); it2 != (it)->end() ; ++it2){
+      //	printf("%d ",(it2)->ge->tag());
+      //      }
+      //      printf("\n");
+      
       std::vector<BDS_Point *> edgeLoop_BDS;
       int nbPointsLocal;
       const double fact[4] = {1.e-12, 1.e-7, 1.e-5, 1.e-3};
@@ -2138,15 +2150,16 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     delete m;
     return true;
   }
-  if(nbPointsTotal == 3) {
-    MVertex *vv[3];
+  else if(nbPointsTotal == 3) {
+    MVertex *vv[3] = {0, 0, 0};
     int i = 0;
     for(std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
           recoverMap.begin();
         it != recoverMap.end(); it++) {
       vv[i++] = it->second;
     }
-    gf->triangles.push_back(new MTriangle(vv[0], vv[1], vv[2]));
+    if(vv[0] && vv[1] && vv[2])
+      gf->triangles.push_back(new MTriangle(vv[0], vv[1], vv[2]));
     gf->meshStatistics.status = GFace::DONE;
     delete m;
     return true;
@@ -2216,10 +2229,13 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       ++itvx;
     }
 
+    
     std::vector<GEdge *> const &emb_edges = gf->embeddedEdges();
     std::vector<GEdge *>::const_iterator ite = emb_edges.begin();
     std::set<MVertex *> vs;
     std::map<MVertex *, BDS_Point *> facile;
+    //    printf("face has %d embedded edges \n",emb_edges.size());
+    double uv[2] = {0, 0};
     while(ite != emb_edges.end()) {
       m->add_geom(-(*ite)->tag(), 1);
       for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
@@ -2272,9 +2288,11 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
           }
           if(pp == 0 && vs.find(v) == vs.end()) {
             vs.insert(v);
-            double uv[2] = {0, 0};
             GPoint gp = gf->closestPoint(SPoint3(v->x(), v->y(), v->z()), uv);
             BDS_Point *pp = m->add_point(++pNum, gp.u(), gp.v(), gf);
+	    //	    printf("%d %d %g %g (%g %g %g -- %g %g %g)\n",(*ite)->tag(),pp->iD,pp->u,pp->v,
+	    //		   v->x(), v->y(), v->z(),
+	    //		   gp.x(),gp.y(),gp.z());
             pp->g = m->get_geom(-(*ite)->tag(), 1);
             if(v->onWhat()->dim() == 0)
               pp->lcBGM() =
@@ -2320,10 +2338,12 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
         doc.points[count].where.v = pp->v + YY;
         doc.points[count].adjacent = NULL;
         doc.points[count].data = pp;
+	//	printf("PT %d %g %g\n",count,doc.points[count].where.h,doc.points[count].where.v);
         count++;
       }
     }
-
+    //    getchar();
+    
     // Increase the size of the bounding box, add 4 points that enclose
     // the domain, use negative number to distinguish those fake
     // vertices

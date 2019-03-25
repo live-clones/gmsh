@@ -26,9 +26,9 @@
 #include "BackgroundMeshTools.h"
 #endif
 
-#if defined(HAVE_BFGS)
-#include "stdafx.h"
-#include "optimization.h"
+#if defined(HAVE_ALGLIB)
+#include <stdafx.h>
+#include <optimization.h>
 #endif
 
 // TODO C++11 remove macro
@@ -39,7 +39,7 @@ GFace::GFace(GModel *model, int tag)
 {
   meshStatistics.status = GFace::PENDING;
   meshStatistics.refineAllEdges = false;
-  resetMeshAttributes();
+  GFace::resetMeshAttributes();
 }
 
 GFace::~GFace()
@@ -52,7 +52,7 @@ GFace::~GFace()
 
   if(va_geom_triangles) delete va_geom_triangles;
 
-  deleteMesh();
+  GFace::deleteMesh();
 }
 
 int GFace::getCurvatureControlParameter() const
@@ -1085,7 +1085,7 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p, bool onSurface) const
   return SPoint2(U, V);
 }
 
-#if defined(HAVE_BFGS)
+#if defined(HAVE_ALGLIB)
 
 class data_wrapper {
 private:
@@ -1105,7 +1105,7 @@ public:
   void set_point(const SPoint3 &_point) { point = SPoint3(_point); }
 };
 
-// Callback function for BFGS
+// Callback function for ALGLIB
 void bfgs_callback(const alglib::real_1d_array &x, double &func,
                    alglib::real_1d_array &grad, void *ptr)
 {
@@ -1137,7 +1137,7 @@ void bfgs_callback(const alglib::real_1d_array &x, double &func,
 GPoint GFace::closestPoint(const SPoint3 &queryPoint,
                            const double initialGuess[2]) const
 {
-#if defined(HAVE_BFGS)
+#if defined(HAVE_ALGLIB)
   // Test initial guess
   double min_u = initialGuess[0];
   double min_v = initialGuess[1];
@@ -1358,7 +1358,7 @@ bool GFace::fillVertexArray(bool force)
   if(stl_triangles.empty()) return false;
 
   va_geom_triangles = new VertexArray(3, stl_triangles.size() / 3);
-  unsigned int c = CTX::instance()->color.geom.surface;
+  unsigned int c = useColor() ? getColor() : CTX::instance()->color.geom.surface;
   unsigned int col[4] = {c, c, c, c};
   if(stl_vertices_xyz.size() &&
      (stl_vertices_xyz.size() == stl_normals.size())) {
@@ -1598,7 +1598,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
   std::vector<GEdge *>::const_iterator eIter;
   std::list<GVertex *>::iterator vIter;
 
-  Msg::Info("Setting mesh master using transformation ");
+  Msg::Info("Setting mesh master using transformation");
 
   // list all vertices and construct vertex to edge correspondence for local
   // edge

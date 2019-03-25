@@ -127,7 +127,7 @@ public:
 
 #if defined(HAVE_HXT)
 
-static SVector3 _NORMAL_(const MTriangle &t3d)
+static SVector3 NORMAL_(const MTriangle &t3d)
 {
   SVector3 v31(t3d.getVertex(2)->x() - t3d.getVertex(0)->x(),
                t3d.getVertex(2)->y() - t3d.getVertex(0)->y(),
@@ -259,7 +259,7 @@ SVector3 discreteFace::normal(const SPoint2 &param) const
     (int)((MTriangle *)e - &_parametrizations[_currentParametrization].t2d[0]);
   const MTriangle &t3d =
     _parametrizations[_currentParametrization].t3d[position];
-  return _NORMAL_(t3d);
+  return NORMAL_(t3d);
 #else
   Msg::Error("Cannot evaluate normal on discrete surface without HXT");
   return SVector3();

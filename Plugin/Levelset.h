@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _LEVELSET_H_
-#define _LEVELSET_H_
+#ifndef LEVELSET_H
+#define LEVELSET_H
 
 #include "Plugin.h"
 

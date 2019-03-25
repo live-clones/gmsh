@@ -42,6 +42,16 @@ RUN cd ${SLEPC_DIR} && ./configure && make
 RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git
 RUN cd gmsh && mkdir build && cd build && cmake -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_PRIVATE_API=1 .. && make -j8 lib && make install/fast
 
+# -----------------------
+# New stuff
+# -----------------------
+# will be moved at the begining once we're happy, to rebuild the whole container
+
+RUN apt-get install -y clang-tidy
+
+# -----------------------
+# Gmsh lib latest git
+# -----------------------
 # update to latest version and rebuild (docker build --build-arg REDO_FROM_HERE=yes)
 ARG REDO_FROM_HERE=
 RUN cd gmsh && git pull && cd build && make -j8 lib && make install/fast

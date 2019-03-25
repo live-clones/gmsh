@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MESH_GFACE_BDS_H_
-#define _MESH_GFACE_BDS_H_
+#ifndef MESH_GFACE_BDS_H
+#define MESH_GFACE_BDS_H
 
 #include <map>
 #include <list>

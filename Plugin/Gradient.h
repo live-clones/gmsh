@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GRADIENT_H_
-#define _GRADIENT_H_
+#ifndef GRADIENT_H
+#define GRADIENT_H
 
 #include "Plugin.h"
 

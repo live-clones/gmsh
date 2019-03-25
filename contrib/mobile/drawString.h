@@ -1,3 +1,6 @@
+#ifndef ONELAB_DRAW_STRING_H
+#define ONELAB_DRAW_STRING_H
+
 #include <stdlib.h>
 #include <string>
 
@@ -25,3 +28,5 @@ public:
   void setColor(float r, float g, float b, float a);
   void draw(float x, float y, float z, float w, float h, bool center=true);
 };
+
+#endif

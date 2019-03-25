@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _VERTEX_ARRAY_H_
-#define _VERTEX_ARRAY_H_
+#ifndef VERTEX_ARRAY_H
+#define VERTEX_ARRAY_H
 
 #include <vector>
 #include <set>

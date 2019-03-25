@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _DRAW_CONTEXT_H_
-#define _DRAW_CONTEXT_H_
+#ifndef DRAW_CONTEXT_H
+#define DRAW_CONTEXT_H
 
 #include <string>
 #include <vector>
@@ -61,7 +61,7 @@ private:
 public:
   drawTransformScaled(double mat[3][3], double tra[3] = 0) : drawTransform()
   {
-    setMatrix(mat, tra);
+    drawTransformScaled::setMatrix(mat, tra);
   }
   virtual void setMatrix(double mat[3][3], double tra[3] = 0)
   {

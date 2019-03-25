@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _LIST_UTILS_H_
-#define _LIST_UTILS_H_
+#ifndef LIST_UTILS_H
+#define LIST_UTILS_H
 
 class List_T {
 public:

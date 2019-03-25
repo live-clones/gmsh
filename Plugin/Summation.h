@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SUMMATION_H_
-#define _SUMMATION_H_
+#ifndef SUMMATION_H
+#define SUMMATION_H
 
 #include "Plugin.h"
 

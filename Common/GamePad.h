@@ -5,8 +5,8 @@
 //
 // Contributed by Gilles Marckmann <gilles.marckmann@ec-nantes.fr>
 
-#ifndef _GAMEPAD_H_
-#define _GAMEPAD_H_
+#ifndef GAMEPAD_H
+#define GAMEPAD_H
 
 #define GP_RANGE 1.0
 #define GP_DEV 16

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MPYRAMID_H_
-#define _MPYRAMID_H_
+#ifndef MPYRAMID_H
+#define MPYRAMID_H
 
 #include "MElement.h"
 

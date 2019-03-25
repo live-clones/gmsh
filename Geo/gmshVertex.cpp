@@ -15,7 +15,7 @@
 gmshVertex::gmshVertex(GModel *m, Vertex *_v)
   : GVertex(m, _v->Num, _v->lc), v(_v)
 {
-  resetMeshAttributes();
+  gmshVertex::resetMeshAttributes();
 }
 
 void gmshVertex::resetNativePtr(Vertex *_v) { v = _v; }

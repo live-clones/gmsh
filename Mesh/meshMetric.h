@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MESH_METRIC_H_
-#define _MESH_METRIC_H_
+#ifndef MESH_METRIC_H
+#define MESH_METRIC_H
 
 #include <map>
 #include <algorithm>
@@ -35,7 +35,7 @@ private:
   // the "most anisotropic" metric
   void updateMetrics();
   int _dim;
-  double _epsilon, _E, _E_moins, _Np;
+  double _epsilon, _e, _e_moins, _np;
   bool needMetricUpdate;
   bool hasAnalyticalMetric;
   meshMetric::MetricComputationTechnique _technique;

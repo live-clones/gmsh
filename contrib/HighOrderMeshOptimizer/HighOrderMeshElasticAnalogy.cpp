@@ -44,9 +44,9 @@
 #include "Numeric.h"
 #include "dofManager.h"
 #include "elasticityTerm.h"
-#include "linearSystemCSR.h"
-#include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
+#include "linearSystemFull.h"
+#include "linearSystemCSR.h"
 #include "OS.h"
 
 #define SQU(a) ((a) * (a))
@@ -278,11 +278,13 @@ void highOrderTools::_computeMetricInfo(GFace *gf, MElement *e,
 
 void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
 {
-#if !defined(HAVE_PETSC)
-  Msg::Error("Elastic analogy smoother on surface %d requires PETSc",
-             gf->tag());
-#else
+#if defined(HAVE_PETSC)
   linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
+#elif defined(HAVE_GMM)
+  linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
+#else
+  linearSystemFull<double> *lsys = new linearSystemFull<double>;
+#endif
 
   // compute the straight sided positions of high order nodes that are
   // on the edges of the face in the UV plane
@@ -371,7 +373,6 @@ void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
     }
   }
   delete lsys;
-#endif
 }
 
 double highOrderTools::_smoothMetric(std::vector<MElement *> &v, GFace *gf,
@@ -607,18 +608,18 @@ double highOrderTools::_applyIncrementalDisplacement(
   double max_incr, std::vector<MElement *> &v, bool mixed, double thres,
   char *meshName, std::vector<MElement *> &disto)
 {
-#if !defined(HAVE_PETSC)
-  Msg::Error("Elastic analogy smoother requires PETSc");
-#else
   if(v.empty()) return 1.;
 
-  // assume that the mesh is OK, yet already curved
+#if defined(HAVE_PETSC)
   linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
-  char opt[256];
-  sprintf(opt, "-pc_type ilu -ksp_monitor -petsc_prealloc %d",
-          100 * (v[0]->getPolynomialOrder() + 2));
-  lsys->setParameter("petscOptions", opt);
-  Msg::Info("Assembling linear system...");
+#elif defined(HAVE_GMM)
+  linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
+#else
+  linearSystemFull<double> *lsys = new linearSystemFull<double>;
+#endif
+
+  // assume that the mesh is OK, yet already curved
+  Msg::Info("Generating elastic system...");
   dofManager<double> myAssembler(lsys);
   elasticityMixedTerm El_mixed(0, 1.0, .333, _tag);
   elasticityTerm El(0, 1.0, .333, _tag);
@@ -733,8 +734,6 @@ double highOrderTools::_applyIncrementalDisplacement(
 
   delete lsys;
   return percentage;
-#endif
-  return 0.0;
 }
 
 // uncurve elements that are invalid

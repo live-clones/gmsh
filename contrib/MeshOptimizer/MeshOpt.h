@@ -24,8 +24,8 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-#ifndef _MESH_OPT_H_
-#define _MESH_OPT_H_
+#ifndef MESH_OPT_H
+#define MESH_OPT_H
 
 #include <iostream>
 #include <fstream>
@@ -35,11 +35,6 @@
 #include <set>
 #include "ObjectiveFunction.h"
 #include "Patch.h"
-#include "GmshConfig.h"
-
-#if defined(HAVE_BFGS)
-
-#include "ap.h"
 
 class MeshOptParameters;
 
@@ -52,11 +47,11 @@ public:
           const std::set<MElement *> &bndEls, const MeshOptParameters &par);
   ~MeshOpt();
   int optimize(const MeshOptParameters &par);
-  void updateMesh(const alglib::real_1d_array &x);
+  void updateMesh(const std::vector<double> &x);
   void updateResults();
-  void evalObjGrad(const alglib::real_1d_array &x, double &Obj,
-                   alglib::real_1d_array &gradObj);
-  void printProgress(const alglib::real_1d_array &x, double Obj);
+  void evalObjGrad(const std::vector<double> &x, double &Obj,
+                   std::vector<double> &gradObj);
+  void printProgress(const std::vector<double> &x, double Obj);
   ObjectiveFunction *objFunction();
 
 private:
@@ -72,11 +67,9 @@ private:
   int _iter, _intervDisplay;
   // Values for reporting
   double _initObj;
-  void calcScale(alglib::real_1d_array &scale);
-  void runOptim(alglib::real_1d_array &x,
-                const alglib::real_1d_array &initGradObj, int itMax, int iBar);
+  void calcScale(std::vector<double> &scale);
+  void runOptim(std::vector<double> &x,
+                const std::vector<double> &initGradObj, int itMax, int iBar);
 };
-
-#endif
 
 #endif

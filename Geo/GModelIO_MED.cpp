@@ -26,9 +26,7 @@
 #include "discreteVertex.h"
 #include "Context.h"
 
-extern "C" {
 #include <med.h>
-}
 
 #if(MED_MAJOR_NUM >= 3)
 // To avoid too many ifdefs below we use defines for the bits of the
@@ -271,7 +269,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
   setName(meshName);
   setFileName(name);
   if(meshType == MED_NON_STRUCTURE) {
-    Msg::Info("Reading %d-D unstructured mesh <<%s>>", spaceDim, meshName);
+    Msg::Info("Reading %d-D unstructured mesh '%s'", spaceDim, meshName);
   }
   else {
     Msg::Error("Reading structured MED meshes is not supported");
@@ -329,6 +327,14 @@ int GModel::readMED(const std::string &name, int meshIndex)
                            (spaceDim > 2) ? coord[spaceDim * i + 2] : 0., 0,
                            nodeTags.empty() ? 0 : nodeTags[i]);
 
+  std::vector<med_int> nodeFamily(numNodes, 0);
+#if(MED_MAJOR_NUM >= 3)
+  MEDmeshEntityFamilyNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT,
+                              MED_NODE, MED_NONE, &nodeFamily[0]);
+#else
+  MEDfamLire(fid, meshName, &nodeFamily[0], numEle, MED_NOEUD, MED_NONE);
+#endif
+
   // read elements (loop over all possible MSH element types)
   for(int mshType = 0; mshType < MSH_MAX_NUM + 1; mshType++) {
     med_geometrie_element type = msh2medElementType(mshType);
@@ -357,15 +363,14 @@ int GModel::readMED(const std::string &name, int meshIndex)
       Msg::Error("Could not read MED elements");
       return 0;
     }
-    std::vector<med_int> fam(numEle, 0);
+    std::vector<med_int> elementFamily(numEle, 0);
 #if(MED_MAJOR_NUM >= 3)
     if(MEDmeshEntityFamilyNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT,
-                                   MED_CELL, type, &fam[0]) < 0) {
+                                   MED_CELL, type, &elementFamily[0]) < 0) {
 #else
-    if(MEDfamLire(fid, meshName, &fam[0], numEle, MED_MAILLE, type) < 0) {
+    if(MEDfamLire(fid, meshName, &elementFamily[0], numEle, MED_MAILLE, type) < 0) {
 #endif
-      Msg::Info(
-        "No family number for elements: using 0 as default family number");
+      Msg::Info("No family number for elements: using 0 as default family number");
     }
     std::vector<med_int> eleTags(numEle);
 #if(MED_MAJOR_NUM >= 3)
@@ -393,10 +398,11 @@ int GModel::readMED(const std::string &name, int meshIndex)
       if(ok) {
         MElement *e =
           factory.create(mshType, v, eleTags.empty() ? 0 : eleTags[j]);
-        // according to the MED documentation, fam[j] should be negative; still,
-        // accept all family ids, even positive, as some code do not export
+        // according to the MED documentation, elementFamily[j] should be
+        // negative (positive families are reserved for node families); still,
+        // accept all family ids, even positive, as some codes do not export
         // valid MED files
-        if(e) elements[std::abs(fam[j])].push_back(e);
+        if(e) elements[std::abs(elementFamily[j])].push_back(e);
       }
     }
     _storeElementsInEntities(elements);
@@ -453,20 +459,14 @@ int GModel::readMED(const std::string &name, int meshIndex)
       continue;
     }
 #endif
-    // element family tags are unique (for all dimensions), and <= 0 (node
-    // family tags are positive - these will simply never match any Gmsh GEntity
-    // tag and will be ignored)
-    GEntity *ge;
-    if((ge = getRegionByTag(-familyNum))) {
-    }
-    else if((ge = getFaceByTag(-familyNum))) {
-    }
-    else if((ge = getEdgeByTag(-familyNum))) {
-    }
-    else
-      ge = getVertexByTag(-familyNum);
+
+    // element family tags are unique (for all dimensions!) and <= 0
+    GEntity *ge = getRegionByTag(-familyNum);
+    if(!ge) ge = getFaceByTag(-familyNum);
+    if(!ge) ge = getEdgeByTag(-familyNum);
+    if(!ge) ge = getVertexByTag(-familyNum);
     if(ge) {
-      elementaryNames[std::pair<int, int>(ge->dim(), -familyNum)] = familyName;
+      setElementaryName(ge->dim(), -familyNum, familyName);
       if(numGroups > 0) {
         for(int j = 0; j < numGroups; j++) {
           char tmp[MED_TAILLE_LNOM + 1];
@@ -479,6 +479,41 @@ int GModel::readMED(const std::string &name, int meshIndex)
           if(std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
              ge->physicals.end())
             ge->physicals.push_back(pnum);
+        }
+      }
+    }
+    else if(familyNum > 0 && CTX::instance()->mesh.medImportGroupsOfNodes){
+      // the concept of node family does not exist in Gmsh, so we simply create
+      // a geometrical point for each node (with a single point element); and we
+      // classify the node on the geometrical point if the node is not already
+      // classified on another entity. This is expensive, and should be disabled
+      // for large groups of nodes.
+      std::vector<GVertex*> newPoints;
+      for(int j = 0; j < numNodes; j++){
+        if(nodeFamily[j] == familyNum){
+          discreteVertex *gv = new discreteVertex
+            (this, getMaxElementaryNumber(0) + 1, verts[j]->x(), verts[j]->y(),
+             verts[j]->z());
+          add(gv);
+          if(!verts[j]->onWhat()){
+            verts[j]->setEntity(gv);
+            gv->mesh_vertices.push_back(verts[j]);
+          }
+          gv->points.push_back(new MPoint(verts[j]));
+          setElementaryName(0, gv->tag(), familyName);
+          newPoints.push_back(gv);
+        }
+      }
+      if(numGroups > 0) {
+        for(int j = 0; j < numGroups; j++) {
+          char tmp[MED_TAILLE_LNOM + 1];
+          strncpy(tmp, &groupNames[j * MED_TAILLE_LNOM], MED_TAILLE_LNOM);
+          tmp[MED_TAILLE_LNOM] = '\0';
+          // don't use same physical number across dimensions, as e.g. getdp
+          // does not support this
+          int pnum = setPhysicalName(tmp, 0, getMaxPhysicalNumber(-1) + 1);
+          for(std::size_t k = 0; k < newPoints.size(); k++)
+            newPoints[k]->physicals.push_back(pnum);
         }
       }
     }

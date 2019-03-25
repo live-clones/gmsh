@@ -266,7 +266,7 @@ char *VertexArray::toChar(int num, const std::string &name, int type,
   memcpy(&bytes[index], &nn, is); index += is;
   if(ns){ memcpy(&bytes[index], &_normals[0], ns); index += ns; }
   memcpy(&bytes[index], &cn, is); index += is;
-  if(cs){ memcpy(&bytes[index], &_colors[0], cs); index += cs; }
+  if(cs){ memcpy(&bytes[index], &_colors[0], cs); /* index += cs; */ }
   return bytes;
 }
 
@@ -336,7 +336,7 @@ void VertexArray::fromChar(int length, const char *bytes, int swap)
   int cn; memcpy(&cn, &bytes[index], is); index += is;
   if(cn){
     _colors.resize(cn); int cs = cn * sizeof(unsigned char);
-    memcpy(&_colors[0], &bytes[index], cs); index += cs;
+    memcpy(&_colors[0], &bytes[index], cs); /* index += cs; */
   }
 }
 

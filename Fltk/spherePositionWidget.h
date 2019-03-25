@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SPHERE_POSITION_WIDGET_H_
-#define _SPHERE_POSITION_WIDGET_H_
+#ifndef SPHERE_POSITION_WIDGET_H
+#define SPHERE_POSITION_WIDGET_H
 
 #include <cmath>
 #include <FL/Fl_Widget.H>

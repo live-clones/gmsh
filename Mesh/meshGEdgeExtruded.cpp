@@ -21,10 +21,16 @@ static void extrudeMesh(GVertex *from, GEdge *to)
       if(j != ep->mesh.NbLayer - 1 || k != ep->mesh.NbElmLayer[j] - 1) {
         Range<double> r = to->parBounds(0);
         double t = r.low() + ep->u(j, k + 1) * (r.high() - r.low());
-        to->mesh_vertices.push_back(new MEdgeVertex(x, y, z, to, t));
+        MEdgeVertex *newv = new MEdgeVertex(x, y, z, to, t);
+        to->mesh_vertices.push_back(newv);
       }
     }
   }
+  to->getEndVertex()->correspondingVertices[to->getEndVertex()->mesh_vertices[0]] = v;
+
+  std::vector<double> tfo;
+  //ep->GetAffineTransform(tfo); // TODO: check transform
+  to->getEndVertex()->GEntity::setMeshMaster(from, tfo, false);
 }
 
 static void copyMesh(GEdge *from, GEdge *to)
@@ -46,8 +52,14 @@ static void copyMesh(GEdge *from, GEdge *to)
     double u;
     v->getParameter(0, u);
     double newu = (direction > 0) ? u : (u_max - u + u_min);
-    to->mesh_vertices.push_back(new MEdgeVertex(x, y, z, to, newu));
+    MEdgeVertex *newv = new MEdgeVertex(x, y, z, to, newu);
+    to->mesh_vertices.push_back(newv);
+    to->correspondingVertices[newv] = v;
   }
+
+  std::vector<double> tfo;
+  //ep->GetAffineTransform(tfo); // TODO: check transform
+  to->GEntity::setMeshMaster(from, tfo, false);
 }
 
 int MeshExtrudedCurve(GEdge *ge)

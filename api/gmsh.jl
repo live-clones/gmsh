@@ -18,8 +18,12 @@ Top-level functions
 module gmsh
 
 const GMSH_API_VERSION = "4.2"
+const GMSH_API_VERSION_MAJOR = 4
+const GMSH_API_VERSION_MINOR = 2
 const libdir = dirname(@__FILE__)
-const lib = joinpath(libdir, Sys.iswindows() ? "gmsh-4.2" : "libgmsh")
+const libname = Sys.iswindows() ? "gmsh-4.2" : "libgmsh"
+import Libdl
+const lib = Libdl.find_library([libname], [libdir])
 
 """
     gmsh.initialize(argv = Vector{String}(), readConfigFiles = true)
@@ -288,6 +292,38 @@ function getEntities(dim = -1)
 end
 
 """
+    gmsh.model.setEntityName(dim, tag, name)
+
+Set the name of the entity of dimension `dim` and tag `tag`.
+"""
+function setEntityName(dim, tag, name)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelSetEntityName, gmsh.lib), Nothing,
+          (Cint, Cint, Ptr{Cchar}, Ptr{Cint}),
+          dim, tag, name, ierr)
+    ierr[] != 0 && error("gmshModelSetEntityName returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.getEntityName(dim, tag)
+
+Get the name of the entity of dimension `dim` and tag `tag`.
+
+Return `name`.
+"""
+function getEntityName(dim, tag)
+    api_name_ = Ref{Ptr{Cchar}}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetEntityName, gmsh.lib), Nothing,
+          (Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}),
+          dim, tag, api_name_, ierr)
+    ierr[] != 0 && error("gmshModelGetEntityName returned non-zero error code: $(ierr[])")
+    name = unsafe_string(api_name_[])
+    return name
+end
+
+"""
     gmsh.model.getPhysicalGroups(dim = -1)
 
 Get all the physical groups in the current model. If `dim` is >= 0, return only
@@ -521,6 +557,20 @@ function removeEntities(dimTags, recursive = false)
 end
 
 """
+    gmsh.model.removeEntityName(name)
+
+Remove the entity name `name` from the current model.
+"""
+function removeEntityName(name)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelRemoveEntityName, gmsh.lib), Nothing,
+          (Ptr{Cchar}, Ptr{Cint}),
+          name, ierr)
+    ierr[] != 0 && error("gmshModelRemoveEntityName returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
 
 Remove the physical groups `dimTags` of the current model. If `dimTags` is
@@ -538,7 +588,7 @@ end
 """
     gmsh.model.removePhysicalName(name)
 
-Remove the physical name `name` of the current model.
+Remove the physical name `name` from the current model.
 """
 function removePhysicalName(name)
     ierr = Ref{Cint}()
@@ -1313,21 +1363,21 @@ function setElements(dim, tag, elementTypes, elementTags, nodeTags)
 end
 
 """
-    gmsh.model.mesh.setElementsByType(dim, tag, elementType, elementTags, nodeTags)
+    gmsh.model.mesh.setElementsByType(tag, elementType, elementTags, nodeTags)
 
-Set the elements of type `elementType` in the entity of dimension `dim` and tag
-`tag`. `elementTags` contains the tags (unique, strictly positive identifiers)
-of the elements of the corresponding type. `nodeTags` is a vector of length
-equal to the number of elements times the number N of nodes per element, that
-contains the node tags of all the elements, concatenated: [e1n1, e1n2, ...,
-e1nN, e2n1, ...]. If the `elementTag` vector is empty, new tags are
-automatically assigned to the elements.
+Set the elements of type `elementType` in the entity of tag `tag`. `elementTags`
+contains the tags (unique, strictly positive identifiers) of the elements of the
+corresponding type. `nodeTags` is a vector of length equal to the number of
+elements times the number N of nodes per element, that contains the node tags of
+all the elements, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the
+`elementTag` vector is empty, new tags are automatically assigned to the
+elements.
 """
-function setElementsByType(dim, tag, elementType, elementTags, nodeTags)
+function setElementsByType(tag, elementType, elementTags, nodeTags)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetElementsByType, gmsh.lib), Nothing,
-          (Cint, Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
-          dim, tag, elementType, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Csize_t}, nodeTags), length(nodeTags), ierr)
+          (Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          tag, elementType, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Csize_t}, nodeTags), length(nodeTags), ierr)
     ierr[] != 0 && error("gmshModelMeshSetElementsByType returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -1337,16 +1387,17 @@ end
 
 Get the Jacobians of all the elements of type `elementType` classified on the
 entity of dimension `dim` and tag `tag`, at the G integration points required by
-the `integrationType` integration rule (e.g. "Gauss4"). Data is returned by
-element, with elements in the same order as in `getElements` and
-`getElementsByType`. `jacobians` contains for each element the 9 entries of a
-3x3 Jacobian matrix (by row), for each integration point: [e1g1Jxx, e1g1Jxy,
-e1g1Jxz, ... e1g1Jzz, e1g2Jxx, ..., e1gGJzz, e2g1Jxx, ...]. `determinants`
-contains for each element the determinant of the Jacobian matrix for each
-integration point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points` contains for each
-element the x, y, z coordinates of the integration points. If `tag` < 0, get the
-Jacobian data for all entities. If `numTasks` > 1, only compute and return the
-part of the data indexed by `task`.
+the `integrationType` integration rule (e.g. "Gauss4" for a Gauss quadrature
+suited for integrating 4th order polynomials). Data is returned by element, with
+elements in the same order as in `getElements` and `getElementsByType`.
+`jacobians` contains for each element the 9 entries of a 3x3 Jacobian matrix (by
+row), for each integration point: [e1g1Jxu, e1g1Jxv, e1g1Jxw, ... e1g1Jzw,
+e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jxv=dx/dv, etc.
+`determinants` contains for each element the determinant of the Jacobian matrix
+for each integration point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points` contains
+for each element the x, y, z coordinates of the integration points. If `tag` <
+0, get the Jacobian data for all entities. If `numTasks` > 1, only compute and
+return the part of the data indexed by `task`.
 
 Return `jacobians`, `determinants`, `points`.
 """
@@ -1398,12 +1449,15 @@ end
     gmsh.model.mesh.getBasisFunctions(elementType, integrationType, functionSpaceType)
 
 Get the basis functions of the element of type `elementType` for the given
-`integrationType` integration rule (e.g. "Gauss4") and `functionSpaceType`
-function space (e.g. "IsoParametric"). `integrationPoints` contains the
-parametric coordinates u, v, w and the weight q for each integeration point,
-concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. `numComponents` returns the number
-C of components of a basis function. `basisFunctions` contains the evaluation of
-the basis functions at the integration points: [g1f1, ..., g1fC, g2f1, ...].
+`integrationType` integration rule (e.g. "Gauss4" for a Gauss quadrature suited
+for integrating 4th order polynomials) and `functionSpaceType` function space
+(e.g. "Lagrange" or "GradLagrange" for Lagrange basis functions or their
+gradient, in the u, v, w coordinates of the reference element).
+`integrationPoints` contains the parametric coordinates u, v, w and the weight q
+for each integeration point, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
+`numComponents` returns the number C of components of a basis function.
+`basisFunctions` contains the evaluation of the basis functions at the
+integration points: [g1f1, ..., g1fC, g2f1, ...].
 
 Return `integrationPoints`, `numComponents`, `basisFunctions`.
 """
@@ -1716,7 +1770,7 @@ end
 """
     gmsh.model.mesh.renumberNodes()
 
-Renumber the node tags in a contiunous sequence.
+Renumber the node tags in a continuous sequence.
 """
 function renumberNodes()
     ierr = Ref{Cint}()
@@ -1730,7 +1784,7 @@ end
 """
     gmsh.model.mesh.renumberElements()
 
-Renumber the element tags in a contiunous sequence.
+Renumber the element tags in a continuous sequence.
 """
 function renumberElements()
     ierr = Ref{Cint}()
@@ -1742,18 +1796,18 @@ function renumberElements()
 end
 
 """
-    gmsh.model.mesh.setPeriodic(dim, tags, tagsSource, affineTransform)
+    gmsh.model.mesh.setPeriodic(dim, tags, tagsMaster, affineTransform)
 
 Set the meshes of the entities of dimension `dim` and tag `tags` as periodic
-copies of the meshes of entities `tagsSource`, using the affine transformation
+copies of the meshes of entities `tagsMaster`, using the affine transformation
 specified in `affineTransformation` (16 entries of a 4x4 matrix, by row).
 Currently only available for `dim` == 1 and `dim` == 2.
 """
-function setPeriodic(dim, tags, tagsSource, affineTransform)
+function setPeriodic(dim, tags, tagsMaster, affineTransform)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetPeriodic, gmsh.lib), Nothing,
           (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          dim, convert(Vector{Cint}, tags), length(tags), convert(Vector{Cint}, tagsSource), length(tagsSource), affineTransform, length(affineTransform), ierr)
+          dim, convert(Vector{Cint}, tags), length(tags), convert(Vector{Cint}, tagsMaster), length(tagsMaster), affineTransform, length(affineTransform), ierr)
     ierr[] != 0 && error("gmshModelMeshSetPeriodic returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2867,19 +2921,20 @@ function addPlaneSurface(wireTags, tag = -1)
 end
 
 """
-    gmsh.model.occ.addSurfaceFilling(wireTag, tag = -1)
+    gmsh.model.occ.addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[])
 
 Add a surface filling the curve loops in `wireTags`. If `tag` is positive, set
 the tag explicitly; otherwise a new tag is selected automatically. Return the
-tag of the surface.
+tag of the surface. If `pointTags` are provided, force the surface to pass
+through the given points.
 
 Return an integer value.
 """
-function addSurfaceFilling(wireTag, tag = -1)
+function addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[])
     ierr = Ref{Cint}()
     api__result__ = ccall((:gmshModelOccAddSurfaceFilling, gmsh.lib), Cint,
-          (Cint, Cint, Ptr{Cint}),
-          wireTag, tag, ierr)
+          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          wireTag, tag, convert(Vector{Cint}, pointTags), length(pointTags), ierr)
     ierr[] != 0 && error("gmshModelOccAddSurfaceFilling returned non-zero error code: $(ierr[])")
     return api__result__
 end

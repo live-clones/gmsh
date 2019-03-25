@@ -22,8 +22,8 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _CAD_DISTANCES_H_
-#define _CAD_DISTANCES_H_
+#ifndef CAD_DISTANCES_H
+#define CAD_DISTANCES_H
 
 #include "fullMatrix.h"
 #include <vector>

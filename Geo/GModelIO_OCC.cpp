@@ -92,7 +92,7 @@
 #include <gce_MakePln.hxx>
 #include <utility>
 
-#include "OCCMeshAttributes.h"
+#include "OCCAttributes.h"
 
 #if OCC_VERSION_HEX < 0x060900
 #error "Gmsh requires OpenCASCADE >= 6.9"
@@ -105,30 +105,35 @@
 #endif
 
 #if defined(HAVE_OCC_CAF)
+#include <IGESCAFControl_Reader.hxx>
 #include <Quantity_Color.hxx>
+#include <STEPCAFControl_Reader.hxx>
+#include <TDF_ChildIterator.hxx>
+#include <TDF_Tool.hxx>
+#include <TDataStd_Name.hxx>
 #include <TDocStd_Document.hxx>
 #include <XCAFApp_Application.hxx>
-#include <XCAFDoc_ShapeTool.hxx>
-#include <XCAFDoc_DocumentTool.hxx>
+#include <XCAFDoc_Color.hxx>
 #include <XCAFDoc_ColorTool.hxx>
-#include <STEPCAFControl_Reader.hxx>
-#include <IGESCAFControl_Reader.hxx>
-#include <TDataStd_Name.hxx>
+#include <XCAFDoc_DocumentTool.hxx>
+#include <XCAFDoc_Location.hxx>
+#include <XCAFDoc_MaterialTool.hxx>
+#include <XCAFDoc_ShapeTool.hxx>
 #endif
 
 OCC_Internals::OCC_Internals()
 {
   for(int i = 0; i < 6; i++) _maxTag[i] = 0;
   _changed = true;
-  _meshAttributes = new OCCMeshAttributesRTree(CTX::instance()->geom.tolerance);
+  _attributes = new OCCAttributesRTree(CTX::instance()->geom.tolerance);
 }
 
-OCC_Internals::~OCC_Internals() { delete _meshAttributes; }
+OCC_Internals::~OCC_Internals() { delete _attributes; }
 
 void OCC_Internals::reset()
 {
   for(int i = 0; i < 6; i++) _maxTag[i] = 0;
-  _meshAttributes->clear();
+  _attributes->clear();
   _somap.Clear();
   _shmap.Clear();
   _fmap.Clear();
@@ -197,7 +202,7 @@ void OCC_Internals::bind(const TopoDS_Vertex &vertex, int tag, bool recursive)
     _tagVertex.Bind(tag, vertex);
     setMaxTag(0, tag);
     _changed = true;
-    _meshAttributes->insert(new OCCMeshAttributes(0, vertex));
+    _attributes->insert(new OCCAttributes(0, vertex));
   }
 }
 
@@ -219,7 +224,7 @@ void OCC_Internals::bind(const TopoDS_Edge &edge, int tag, bool recursive)
     _tagEdge.Bind(tag, edge);
     setMaxTag(1, tag);
     _changed = true;
-    _meshAttributes->insert(new OCCMeshAttributes(1, edge));
+    _attributes->insert(new OCCAttributes(1, edge));
   }
   if(recursive) {
     TopExp_Explorer exp0;
@@ -282,7 +287,7 @@ void OCC_Internals::bind(const TopoDS_Face &face, int tag, bool recursive)
     _tagFace.Bind(tag, face);
     setMaxTag(2, tag);
     _changed = true;
-    _meshAttributes->insert(new OCCMeshAttributes(2, face));
+    _attributes->insert(new OCCAttributes(2, face));
   }
   if(recursive) {
     TopExp_Explorer exp0;
@@ -352,7 +357,7 @@ void OCC_Internals::bind(const TopoDS_Solid &solid, int tag, bool recursive)
     _tagSolid.Bind(tag, solid);
     setMaxTag(3, tag);
     _changed = true;
-    _meshAttributes->insert(new OCCMeshAttributes(3, solid));
+    _attributes->insert(new OCCAttributes(3, solid));
   }
   if(recursive) {
     TopExp_Explorer exp0;
@@ -739,7 +744,7 @@ bool OCC_Internals::addVertex(int &tag, double x, double y, double z,
     return false;
   }
   if(meshSize > 0 && meshSize < MAX_LC)
-    _meshAttributes->insert(new OCCMeshAttributes(0, result, meshSize));
+    _attributes->insert(new OCCAttributes(0, result, meshSize));
   if(tag < 0) tag = getMaxTag(0) + 1;
   bind(result, tag, true);
   return true;
@@ -1026,8 +1031,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
     bool periodic = (pointTags.front() == pointTags.back());
     if(mode == 0) {
       // BSpline through points (called "Spline" in Gmsh; will be C2, whereas it
-      // is only C1 in the GEO kernel; also works for the periodic case,
-      // contrary to GEO kernel)
+      // is only C1 in the GEO kernel)
       int np = periodic ? ctrlPoints.Length() - 1 : ctrlPoints.Length();
       Handle(TColgp_HArray1OfPnt) p = new TColgp_HArray1OfPnt(1, np);
       for(int i = 1; i <= np; i++) p->SetValue(i, ctrlPoints(i));
@@ -1064,15 +1068,12 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       }
       if(weights.size() != pointTags.size()) {
         Msg::Error("Number of BSpline weights (%d) and control points (%d) "
-                   "should equal",
-                   weights.size(), pointTags.size());
+                   "should be equal", weights.size(), pointTags.size());
         return false;
       }
       if(knots.size() != multiplicities.size()) {
-        Msg::Error(
-          "Number of BSpline knots (%d) and multiplicities (%d) should "
-          "equal",
-          knots.size(), multiplicities.size());
+        Msg::Error("Number of BSpline knots (%d) and multiplicities (%d) should "
+                   "equal", knots.size(), multiplicities.size());
         return false;
       }
       if(knots.size() < 2) {
@@ -1082,8 +1083,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       for(std::size_t i = 0; i < knots.size() - 1; i++) {
         if(knots[i] >= knots[i + 1]) {
           Msg::Error("BSpline knots should be increasing: knot %d (%g) > "
-                     "knot %d (%g)",
-                     i, knots[i], i + 1, knots[i + 1]);
+                     "knot %d (%g)", i, knots[i], i + 1, knots[i + 1]);
           return false;
         }
       }
@@ -1094,8 +1094,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
         }
         if(i != 0 && i != multiplicities.size() - 1 &&
            multiplicities[i] > degree) {
-          Msg::Error(
-            "BSpline interior knot multiplicities should be <= degree");
+          Msg::Error("BSpline interior knot multiplicities should be <= degree");
           return false;
         }
         if((i == 0 || i == multiplicities.size() - 1) &&
@@ -1106,10 +1105,8 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       }
       if(periodic) {
         if(multiplicities.front() != multiplicities.back()) {
-          Msg::Error(
-            "Periodic BSpline end knot multiplicies (%d and %d) should "
-            "be equal",
-            multiplicities.front(), multiplicities.back());
+          Msg::Error("Periodic BSpline end knot multiplicies (%d and %d) should "
+                     "be equal", multiplicities.front(), multiplicities.back());
           return false;
         }
         // TODO C++11 std::accumulate
@@ -1117,10 +1114,9 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
         for(std::size_t i = 0; i < multiplicities.size() - 1; i++)
           sum += multiplicities[i];
         if(pointTags.size() - 1 != sum) {
-          Msg::Error(
-            "Number of control points - 1 for periodic BSpline should "
-            "be equal to the sum of multiplicities for all knots except "
-            "the first (or last)");
+          Msg::Error("Number of control points - 1 for periodic BSpline should "
+                     "be equal to the sum of multiplicities for all knots "
+                     "except the first (or last)");
           return false;
         }
       }
@@ -1142,8 +1138,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
         w.SetValue(i, weights[i - 1]);
       }
       TColStd_Array1OfReal k(1, knots.size());
-      for(std::size_t i = 0; i < knots.size(); i++)
-        k.SetValue(i + 1, knots[i]);
+      for(std::size_t i = 0; i < knots.size(); i++) k.SetValue(i + 1, knots[i]);
       TColStd_Array1OfInteger m(1, multiplicities.size());
       for(std::size_t i = 0; i < multiplicities.size(); i++)
         m.SetValue(i + 1, multiplicities[i]);
@@ -1214,8 +1209,8 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
       int sum_of_all_mult = pointTags.size() + d + 1;
       int num_knots = sum_of_all_mult - 2 * d;
       if(num_knots < 2) {
-        Msg::Error(
-          "Not enough control points for building BSpline of degree %d", d);
+        Msg::Error("Not enough control points for building BSpline of "
+                   "degree %d", d);
         return false;
       }
       k.resize(num_knots);
@@ -1545,6 +1540,7 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
     Handle(Geom_Surface) s = BRep_Tool::Surface(tmp);
     result = BRepBuilderAPI_MakeFace(s, wire);
     ShapeFix_Face fix(result);
+    //fix.SetPrecision(CTX::instance()->geom.tolerance);
     fix.Perform();
     fix.FixOrientation(); // and I don't understand why this is necessary
     result = fix.Face();
@@ -1568,6 +1564,7 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
 
   TopoDS_Shape result;
   try {
+#if 1
     BRepBuilderAPI_Sewing s;
     for(std::size_t i = 0; i < surfaceTags.size(); i++) {
       if(!_tagFace.IsBound(surfaceTags[i])) {
@@ -1579,6 +1576,22 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
     }
     s.Perform();
     result = s.SewedShape();
+#else
+    // Another way: not sure which is better
+    BRep_Builder builder;
+    BRepPrim_Builder b(builder);
+    TopoDS_Shell shell;
+    b.MakeShell(shell);
+    for(std::size_t i = 0; i < surfaceTags.size(); i++) {
+      if(!_tagFace.IsBound(surfaceTags[i])) {
+        Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[i]);
+        return false;
+      }
+      TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTags[i]));
+      b.AddShellFace(shell, face);
+    }
+    result = shell;
+#endif
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
@@ -1595,9 +1608,7 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
       shell = fix.Shell();
     }
     int t = tag;
-    if(first) {
-      first = false;
-    }
+    if(first) { first = false; }
     else {
       t = getMaxTag(-2) + 1;
       Msg::Warning("Creating additional surface loop %d", t);
@@ -1998,7 +2009,7 @@ bool OCC_Internals::addThickSolid(int tag, int solidTag,
   return true;
 }
 
-void OCC_Internals::_setExtrudedMeshAttributes(
+void OCC_Internals::_setExtrudedAttributes(
   const TopoDS_Compound &c, BRepSweep_Prism *p, BRepSweep_Revol *r,
   ExtrudeParams *e, double x, double y, double z, double dx, double dy,
   double dz, double ax, double ay, double az, double angle)
@@ -2024,14 +2035,14 @@ void OCC_Internals::_setExtrudedMeshAttributes(
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
-      _meshAttributes->insert(new OCCMeshAttributes(2, top, ee, 2, bot));
+      _attributes->insert(new OCCAttributes(2, top, ee, 2, bot));
     }
     TopoDS_Shape vol = p ? p->Shape(face) : r->Shape(face);
     if(extrude_attributes) {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
-      _meshAttributes->insert(new OCCMeshAttributes(3, vol, ee, 2, bot));
+      _attributes->insert(new OCCAttributes(3, vol, ee, 2, bot));
     }
   }
 
@@ -2043,14 +2054,14 @@ void OCC_Internals::_setExtrudedMeshAttributes(
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
-      _meshAttributes->insert(new OCCMeshAttributes(1, top, ee, 1, bot));
+      _attributes->insert(new OCCAttributes(1, top, ee, 1, bot));
     }
     TopoDS_Shape sur = p ? p->Shape(edge) : r->Shape(edge);
     if(extrude_attributes) {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
-      _meshAttributes->insert(new OCCMeshAttributes(2, sur, ee, 1, bot));
+      _attributes->insert(new OCCAttributes(2, sur, ee, 1, bot));
     }
   }
 
@@ -2063,12 +2074,12 @@ void OCC_Internals::_setExtrudedMeshAttributes(
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
-      _meshAttributes->insert(new OCCMeshAttributes(1, lin, ee, 0, bot));
+      _attributes->insert(new OCCAttributes(1, lin, ee, 0, bot));
     }
     {
-      double lc = _meshAttributes->getMeshSize(0, bot);
+      double lc = _attributes->getMeshSize(0, bot);
       if(lc > 0 && lc < MAX_LC)
-        _meshAttributes->insert(new OCCMeshAttributes(0, top, lc));
+        _attributes->insert(new OCCAttributes(0, top, lc));
     }
   }
 }
@@ -2078,31 +2089,27 @@ int OCC_Internals::_getFuzzyTag(int dim, const TopoDS_Shape &s)
   if(_isBound(dim, s)) return _find(dim, s);
 
   std::vector<TopoDS_Shape> candidates;
-  _meshAttributes->getSimilarShapes(dim, s, candidates);
+  _attributes->getSimilarShapes(dim, s, candidates);
 
   int num = 0;
   for(std::size_t i = 0; i < candidates.size(); i++) {
-    if(_isBound(dim, candidates[i])) {
-      num++;
-    }
+    if(_isBound(dim, candidates[i])) { num++; }
   }
   Msg::Info("Extruded mesh constraint fuzzy search: found %d candidates "
             "(dim=%d, %d bound)",
             (int)candidates.size(), dim, num);
   for(std::size_t i = 0; i < candidates.size(); i++) {
-    if(_isBound(dim, candidates[i])) {
-      return _find(dim, candidates[i]);
-    }
+    if(_isBound(dim, candidates[i])) { return _find(dim, candidates[i]); }
   }
   return -1;
 }
 
-void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Edge edge, GEdge *ge)
+void OCC_Internals::_copyExtrudedAttributes(TopoDS_Edge edge, GEdge *ge)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
   ExtrudeParams *e =
-    _meshAttributes->getExtrudeParams(1, edge, sourceDim, sourceShape);
+    _attributes->getExtrudeParams(1, edge, sourceDim, sourceShape);
   if(!e) return;
   ge->meshAttributes.extrude = e;
   if(ge->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY) {
@@ -2116,12 +2123,12 @@ void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Edge edge, GEdge *ge)
   }
 }
 
-void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Face face, GFace *gf)
+void OCC_Internals::_copyExtrudedAttributes(TopoDS_Face face, GFace *gf)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
   ExtrudeParams *e =
-    _meshAttributes->getExtrudeParams(2, face, sourceDim, sourceShape);
+    _attributes->getExtrudeParams(2, face, sourceDim, sourceShape);
   if(!e) return;
   gf->meshAttributes.extrude = e;
   if(gf->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY) {
@@ -2135,12 +2142,12 @@ void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Face face, GFace *gf)
   }
 }
 
-void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Solid solid, GRegion *gr)
+void OCC_Internals::_copyExtrudedAttributes(TopoDS_Solid solid, GRegion *gr)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
   ExtrudeParams *e =
-    _meshAttributes->getExtrudeParams(3, solid, sourceDim, sourceShape);
+    _attributes->getExtrudeParams(3, solid, sourceDim, sourceShape);
   if(!e) return;
   gr->meshAttributes.extrude = e;
   if(gr->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY) {
@@ -2224,8 +2231,8 @@ bool OCC_Internals::_extrude(int mode,
       }
       result = p.Shape();
       const BRepSweep_Prism &prism(p.Prism());
-      _setExtrudedMeshAttributes(c, (BRepSweep_Prism *)&prism, 0, e, 0., 0., 0.,
-                                 dx, dy, dz, 0., 0., 0., 0.);
+      _setExtrudedAttributes(c, (BRepSweep_Prism *)&prism, 0, e, 0., 0., 0.,
+                             dx, dy, dz, 0., 0., 0., 0.);
       dim = getReturnedShapes(c, (BRepSweep_Prism *)&prism, top, body, lateral);
     }
     else if(mode == 1) { // revolve
@@ -2238,8 +2245,8 @@ bool OCC_Internals::_extrude(int mode,
       }
       result = r.Shape();
       const BRepSweep_Revol &revol(r.Revol());
-      _setExtrudedMeshAttributes(c, 0, (BRepSweep_Revol *)&revol, e, x, y, z,
-                                 0., 0., 0., ax, ay, az, angle);
+      _setExtrudedAttributes(c, 0, (BRepSweep_Revol *)&revol, e, x, y, z,
+                             0., 0., 0., ax, ay, az, angle);
       dim = getReturnedShapes(c, (BRepSweep_Revol *)&revol, top, body, lateral);
     }
     else if(mode == 2) { // pipe
@@ -2895,9 +2902,9 @@ bool OCC_Internals::_transform(
     else if(gtfo)
       transformed = gtfo->ModifiedShape(vertex);
     if(!transformed.IsNull()) {
-      double lc = _meshAttributes->getMeshSize(0, vertex);
+      double lc = _attributes->getMeshSize(0, vertex);
       if(lc > 0 && lc < MAX_LC)
-        _meshAttributes->insert(new OCCMeshAttributes(0, transformed, lc));
+        _attributes->insert(new OCCAttributes(0, transformed, lc));
     }
   }
 
@@ -2973,14 +2980,13 @@ bool OCC_Internals::affine(const std::vector<std::pair<int, int> > &inDimTags,
                            const std::vector<double> &mat)
 {
   std::vector<double> a(mat);
-  if(a.size() < 12){
+  if(a.size() < 12) {
     Msg::Warning("%d < 12 entries in affine transform matrix", (int)a.size());
     a.resize(12, 0.);
   }
   gp_GTrsf gt;
-  gt.SetVectorialPart(gp_Mat(a[0], a[1], a[2],
-                             a[4], a[5], a[6],
-                             a[8], a[9], a[10]));
+  gt.SetVectorialPart(
+    gp_Mat(a[0], a[1], a[2], a[4], a[5], a[6], a[8], a[9], a[10]));
   gt.SetTranslationPart(gp_XYZ(a[3], a[7], a[11]));
   BRepBuilderAPI_GTransform gtfo(gt);
   return _transform(inDimTags, 0, &gtfo);
@@ -3035,6 +3041,126 @@ static void setTargetUnit(const std::string &unit)
     Msg::Error("Could not set OpenCASCADE target unit '%s'", unit.c_str());
 }
 
+#if defined(HAVE_OCC_CAF)
+
+static void setShapeAttributes(OCCAttributesRTree *attributes,
+                               const Handle_XCAFDoc_ShapeTool &shapeTool,
+                               const Handle_XCAFDoc_ColorTool &colorTool,
+                               const Handle_XCAFDoc_MaterialTool &materialTool,
+                               const TDF_Label &label,
+                               const TopLoc_Location &loc,
+                               const std::string &pathName,
+                               bool isRef)
+{
+  std::string phys = pathName;
+  Handle(TDataStd_Name) n;
+  if(label.FindAttribute(TDataStd_Name::GetID(), n)) {
+    TCollection_ExtendedString name = n->Get();
+    if(!phys.empty()) phys += "/";
+    phys += TCollection_AsciiString(name).ToCString();
+  }
+
+  TopLoc_Location partLoc = loc;
+  Handle(XCAFDoc_Location) l;
+  if (label.FindAttribute(XCAFDoc_Location::GetID(), l)) {
+    if (isRef)
+      partLoc = partLoc * l->Get();
+    else
+      partLoc = l->Get();
+  }
+
+  TDF_Label ref;
+  if (shapeTool->IsReference(label) && shapeTool->GetReferredShape(label, ref)) {
+    setShapeAttributes(attributes, shapeTool, colorTool, materialTool,
+                       ref, partLoc, phys, true);
+  }
+
+  if (shapeTool->IsSimpleShape(label) && (isRef || shapeTool->IsFree(label))) {
+    TopoDS_Shape shape = shapeTool->GetShape(label);
+    shape.Location(isRef ? loc : partLoc);
+    int dim =
+      (shape.ShapeType() == TopAbs_VERTEX) ? 0 :
+      (shape.ShapeType() == TopAbs_EDGE ||
+       shape.ShapeType() == TopAbs_WIRE) ? 1 :
+      (shape.ShapeType() == TopAbs_FACE ||
+       shape.ShapeType() == TopAbs_SHELL) ? 2 : 3;
+
+    Handle(TCollection_HAsciiString) matName;
+    Handle(TCollection_HAsciiString) matDescription;
+    Standard_Real matDensity;
+    Handle(TCollection_HAsciiString) matDensName;
+    Handle(TCollection_HAsciiString) matDensValType;
+    if(materialTool->GetMaterial(label, matName, matDescription, matDensity,
+                                 matDensName, matDensValType)){
+      if(!phys.empty()) phys += " & ";
+      phys += matName->ToCString();
+      Msg::Info(" - Label & material '%s' (%dD)", phys.c_str());
+    }
+    else if(phys.size()){
+      Msg::Info(" - Label '%s' (%dD)", phys.c_str(), dim);
+    }
+    if(phys.size()){
+      attributes->insert(new OCCAttributes(dim, shape, phys));
+    }
+
+    Quantity_Color col;
+    if (colorTool->GetColor(label, XCAFDoc_ColorGen, col)) {
+      double r = col.Red(), g = col.Green(), b = col.Blue();
+      Msg::Info(" - Color (%g, %g, %g) (%dD)", r, g, b, dim);
+      attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1.));
+    }
+    else if(colorTool->GetColor(label, XCAFDoc_ColorSurf, col)) {
+      double r = col.Red(), g = col.Green(), b = col.Blue();
+      Msg::Info(" - Color (%g, %g, %g) (%dD & Surf)", r, g, b, dim);
+      attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1., 1));
+    }
+    else if(colorTool->GetColor(label, XCAFDoc_ColorCurv, col)) {
+      double r = col.Red(), g = col.Green(), b = col.Blue();
+      Msg::Info(" - Color (%g, %g, %g) (%dD & Curv)", r, g, b, dim);
+      attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1, 2));
+    }
+
+  }
+  else {
+    for (TDF_ChildIterator it(label); it.More(); it.Next()) {
+      setShapeAttributes(attributes, shapeTool, colorTool, materialTool,
+                         it.Value(), partLoc, phys, isRef);
+    }
+  }
+}
+
+template <class T>
+void readAttributes(OCCAttributesRTree *attributes, T &reader,
+                    const std::string &format)
+{
+  // dummy XCAF Application to handle the STEP XCAF Document
+  static Handle_XCAFApp_Application dummy_app =
+    XCAFApp_Application::GetApplication();
+  // XCAF Document to contain the STEP/IGES file itself
+  Handle_TDocStd_Document doc;
+  // check if a file is already open under this handle, if so, close it to
+  // prevent segfaults when trying to create a new document
+  if(dummy_app->NbDocuments() > 0) {
+    dummy_app->GetDocument(1, doc);
+    dummy_app->Close(doc);
+  }
+  dummy_app->NewDocument(format.c_str(), doc);
+  // transfer STEP/IGES into the document, and get the main label
+  reader.Transfer(doc);
+  TDF_Label mainLabel = doc->Main();
+  Handle_XCAFDoc_ShapeTool shapeTool =
+    XCAFDoc_DocumentTool::ShapeTool(mainLabel);
+  Handle_XCAFDoc_ColorTool colorTool =
+    XCAFDoc_DocumentTool::ColorTool(mainLabel);
+  Handle_XCAFDoc_MaterialTool materialTool =
+    XCAFDoc_DocumentTool::MaterialTool(mainLabel);
+  // traverse the labels recursively to set attributes on shapes
+  setShapeAttributes(attributes, shapeTool, colorTool, materialTool,
+                     mainLabel, TopLoc_Location(), "", false);
+}
+
+#endif
+
 bool OCC_Internals::importShapes(const std::string &fileName,
                                  bool highestDimOnly,
                                  std::vector<std::pair<int, int> > &outDimTags,
@@ -3052,81 +3178,45 @@ bool OCC_Internals::importShapes(const std::string &fileName,
     }
     else if(format == "step" || split[2] == ".step" || split[2] == ".stp" ||
             split[2] == ".STEP" || split[2] == ".STP") {
-#if defined(HAVE_OCC_CAF)
-      // Initiate a dummy XCAF Application to handle the STEP XCAF Document
-      static Handle_XCAFApp_Application dummy_app =
-        XCAFApp_Application::GetApplication();
-      // Create an XCAF Document to contain the STEP file itself
-      Handle_TDocStd_Document step_doc;
-      // Check if a STEP File is already open under this handle, if so, close it
-      // to prevent Segmentation Faults when trying to create a new document
-      if(dummy_app->NbDocuments() > 0) {
-        dummy_app->GetDocument(1, step_doc);
-        dummy_app->Close(step_doc);
-      }
-      dummy_app->NewDocument("STEP-XCAF", step_doc);
-      STEPCAFControl_Reader reader;
-      setTargetUnit(CTX::instance()->geom.occTargetUnit);
-      if(reader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
-        Msg::Error("Could not read file '%s'", fileName.c_str());
-        return false;
-      }
-      reader.Transfer(step_doc);
-      // Read in the shape(s) and the colours present in the STEP File
-      Handle_XCAFDoc_ShapeTool step_shape_contents =
-        XCAFDoc_DocumentTool::ShapeTool(step_doc->Main());
-      Handle_XCAFDoc_ColorTool step_colour_contents =
-        XCAFDoc_DocumentTool::ColorTool(step_doc->Main());
-      TDF_LabelSequence step_shapes;
-      step_shape_contents->GetShapes(step_shapes);
-      for(int i = 1; i <= step_shapes.Length(); i++) {
-        printf("step shape %d: \n", i);
-        TDF_Label label = step_shapes.Value(i);
-        Handle(TDataStd_Name) N;
-        if(label.FindAttribute(TDataStd_Name::GetID(), N)) {
-          TCollection_ExtendedString name = N->Get();
-          std::string s1 = TCollection_AsciiString(name).ToCString();
-          printf("hey %s\n", s1.c_str());
-        }
-      }
-
-      /*
-      // List out the available colours in the STEP File as Colour Names
-      TDF_LabelSequence all_colours;
-      step_colour_contents->GetColors(all_colours);
-      Msg::Info("Number of colours in STEP File: ", all_colours.Length());
-      for(int i = 1; i <= all_colours.Length(); i++){
-        Quantity_Color col;
-        std::stringstream col_rgb;
-        step_colour_contents->GetColor(all_colours.Value(i),col);
-        col_rgb << " : (" << col.Red() << "," << col.Green() << "," <<
-      col.Blue() << ")"; Msg::Info("Colour [", i, "] = ",
-      col.StringName(col.Name()), col_rgb.str().c_str());
-      }
-      // For the STEP File Reader in OCC, the 1st Shape contains the entire
-      */
-      // compound geometry as one shape
-      result = step_shape_contents->GetShape(step_shapes.Value(1));
-#else
       STEPControl_Reader reader;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
+#if defined(HAVE_OCC_CAF)
+      STEPCAFControl_Reader cafreader;
+      if(cafreader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
+        Msg::Error("Could not read file '%s'", fileName.c_str());
+        return false;
+      }
+      if(CTX::instance()->geom.occImportLabels)
+        readAttributes(_attributes, cafreader, "STEP-XCAF");
+      reader = cafreader.ChangeReader();
+#else
       if(reader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
       }
+#endif
       reader.NbRootsForTransfer();
       reader.TransferRoots();
       result = reader.OneShape();
-#endif
     }
     else if(format == "iges" || split[2] == ".iges" || split[2] == ".igs" ||
             split[2] == ".IGES" || split[2] == ".IGS") {
-      IGESControl_Reader reader;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
+#if defined(HAVE_OCC_CAF)
+      IGESCAFControl_Reader reader;
       if(reader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
       }
+      if(CTX::instance()->geom.occImportLabels)
+        readAttributes(_attributes, reader, "IGES-XCAF");
+#else
+      IGESControl_Reader reader;
+      if(reader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
+        Msg::Error("Could not read file '%s'", fileName.c_str());
+        return false;
+      }
+#endif
       reader.NbRootsForTransfer();
       reader.TransferRoots();
       result = reader.OneShape();
@@ -3219,10 +3309,10 @@ void OCC_Internals::setMeshSize(int dim, int tag, double size)
 {
   if(dim != 0) return;
   if(_tagVertex.IsBound(tag)) {
-    OCCMeshAttributes *a = new OCCMeshAttributes(0, _tagVertex.Find(tag), size);
+    OCCAttributes *a = new OCCAttributes(0, _tagVertex.Find(tag), size);
     // first remove any other constraint
-    _meshAttributes->remove(a);
-    _meshAttributes->insert(a);
+    _attributes->remove(a);
+    _attributes->insert(a);
   }
 }
 
@@ -3292,9 +3382,16 @@ void OCC_Internals::synchronize(GModel *model)
         tag = ++vTagMax;
         Msg::Info("Binding unbound OpenCASCADE point to tag %d", tag);
       }
-      double lc = _meshAttributes->getMeshSize(0, vertex);
+      double lc = _attributes->getMeshSize(0, vertex);
       occv = new OCCVertex(model, tag, vertex, lc);
       model->add(occv);
+    }
+    std::vector<std::string> labels;
+    _attributes->getLabels(0, vertex, labels);
+    if(labels.size()) model->setElementaryName(0, occv->tag(), labels[0]);
+    unsigned int col = 0, boundary = 0;
+    if(_attributes->getColor(0, vertex, col, boundary)){
+      occv->setColor(col);
     }
   }
   for(int i = 1; i <= _emap.Extent(); i++) {
@@ -3313,7 +3410,14 @@ void OCC_Internals::synchronize(GModel *model)
       occe = new OCCEdge(model, edge, tag, v1, v2);
       model->add(occe);
     }
-    _copyExtrudedMeshAttributes(edge, occe);
+    _copyExtrudedAttributes(edge, occe);
+    std::vector<std::string> labels;
+    _attributes->getLabels(1, edge, labels);
+    if(labels.size()) model->setElementaryName(1, occe->tag(), labels[0]);
+    unsigned int col = 0, boundary = 0;
+    if(_attributes->getColor(1, edge, col, boundary)){
+      occe->setColor(col);
+    }
   }
   for(int i = 1; i <= _fmap.Extent(); i++) {
     TopoDS_Face face = TopoDS::Face(_fmap(i));
@@ -3329,7 +3433,18 @@ void OCC_Internals::synchronize(GModel *model)
       occf = new OCCFace(model, face, tag);
       model->add(occf);
     }
-    _copyExtrudedMeshAttributes(face, occf);
+    _copyExtrudedAttributes(face, occf);
+    std::vector<std::string> labels;
+    _attributes->getLabels(2, face, labels);
+    if(labels.size()) model->setElementaryName(2, occf->tag(), labels[0]);
+    unsigned int col = 0, boundary = 0;
+    if(_attributes->getColor(2, face, col, boundary)){
+      occf->setColor(col);
+      if(boundary == 2){
+        std::vector<GEdge *> edges = occf->edges();
+        for(std::size_t j = 0; j < edges.size(); j++) edges[j]->setColor(col);
+      }
+    }
   }
   for(int i = 1; i <= _somap.Extent(); i++) {
     TopoDS_Solid region = TopoDS::Solid(_somap(i));
@@ -3345,13 +3460,27 @@ void OCC_Internals::synchronize(GModel *model)
       occr = new OCCRegion(model, region, tag);
       model->add(occr);
     }
-    _copyExtrudedMeshAttributes(region, occr);
+    _copyExtrudedAttributes(region, occr);
+    std::vector<std::string> labels;
+    _attributes->getLabels(3, region, labels);
+    if(labels.size()) model->setElementaryName(3, occr->tag(), labels[0]);
+    unsigned int col = 0, boundary = 0;
+    if(_attributes->getColor(3, region, col, boundary)){
+      occr->setColor(col);
+      if(boundary == 1){
+        std::vector<GFace *> faces = occr->faces();
+        for(std::size_t j = 0; j < faces.size(); j++) faces[j]->setColor(col);
+      }
+      else if(boundary == 2){
+        std::vector<GEdge *> edges = occr->edges();
+        for(std::size_t j = 0; j < edges.size(); j++) edges[j]->setColor(col);
+      }
+    }
   }
 
   // if fuzzy boolean tolerance was used, some vertex positions should be
   // recomputed (e.g. end point of curves
-  if(CTX::instance()->geom.toleranceBoolean)
-    model->snapVertices();
+  if(CTX::instance()->geom.toleranceBoolean) model->snapVertices();
 
   // recompute global boundind box in CTX
   SetBoundingBox();
@@ -3540,9 +3669,7 @@ void OCC_Internals::_addShapeToMaps(const TopoDS_Shape &shape)
   // Free Vertices
   for(exp5.Init(shape, TopAbs_VERTEX, TopAbs_EDGE); exp5.More(); exp5.Next()) {
     TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
-    if(_vmap.FindIndex(vertex) < 1) {
-      _vmap.Add(vertex);
-    }
+    if(_vmap.FindIndex(vertex) < 1) { _vmap.Add(vertex); }
   }
 }
 
@@ -3832,9 +3959,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
       ms.Add(TopoDS::Shell(exp0.Current()));
     }
 
-    if(!count) {
-      Msg::Info(" . Could not make solid (no shells)");
-    }
+    if(!count) { Msg::Info(" . Could not make solid (no shells)"); }
     else {
       BRepCheck_Analyzer ba(ms);
       if(ba.IsValid()) {
@@ -3894,7 +4019,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   Msg::Info(" - Faces              : %d (%d)", nnrf, nrf);
   Msg::Info(" - Edges              : %d (%d)", nnre, nre);
   Msg::Info(" - Vertices           : %d (%d)", nnrv, nrv);
-  Msg::Info(" - Totol surface area : %g (%g)", newsurfacecont, surfacecont);
+  Msg::Info(" - Total surface area : %g (%g)", newsurfacecont, surfacecont);
 }
 
 static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
@@ -3903,9 +4028,8 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
 {
   if(CTX::instance()->geom.occDisableSTL) return false;
 
-
 #if OCC_VERSION_HEX > 0x070300
-  BRepMesh_IncrementalMesh aMesher(s, 0.1, Standard_False, 0.35, Standard_True);
+  BRepMesh_IncrementalMesh aMesher(s, 0.01, Standard_False, 0.35, Standard_True);
 #elif OCC_VERSION_HEX > 0x070000
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
@@ -3960,46 +4084,31 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
       normals->push_back(n);
     }
   }
-  bool reverse = false;
   for(int i = 1; i <= triangulation->NbTriangles(); i++) {
     Poly_Triangle triangle = (triangulation->Triangles())(i);
     int p1, p2, p3;
     triangle.Get(p1, p2, p3);
-    if(i == 1 && normals) { // verify orientation
-      SVector3 nn = (*normals)[start + p1 - 1];
-      gp_Pnt pp1 = (triangulation->Nodes())(p1);
-      gp_Pnt pp2 = (triangulation->Nodes())(p2);
-      gp_Pnt pp3 = (triangulation->Nodes())(p3);
-      double n[3];
-      normal3points(pp1.X(), pp1.Y(), pp1.Z(), pp2.X(), pp2.Y(), pp2.Z(),
-                    pp3.X(), pp3.Y(), pp3.Z(), n);
-      SVector3 ne(n[0], n[1], n[2]);
-      if(dot(ne, nn) < 0) {
-        Msg::Debug("Reversing orientation of STL mesh");
-        reverse = true;
-      }
-    }
     triangles.push_back(start + p1 - 1);
-    if(!reverse) {
-      triangles.push_back(start + p2 - 1);
+    if(s.Orientation() == TopAbs_REVERSED) {
       triangles.push_back(start + p3 - 1);
+      triangles.push_back(start + p2 - 1);
     }
     else {
-      triangles.push_back(start + p3 - 1);
       triangles.push_back(start + p2 - 1);
+      triangles.push_back(start + p3 - 1);
     }
   }
   return true;
 }
 
-bool OCC_Internals::makeFaceSTL(TopoDS_Face s,
+bool OCC_Internals::makeFaceSTL(const TopoDS_Face &s,
                                 std::vector<SPoint2> &vertices_uv,
                                 std::vector<int> &triangles)
 {
   return makeSTL(s, &vertices_uv, 0, 0, triangles);
 }
 
-bool OCC_Internals::makeFaceSTL(TopoDS_Face s,
+bool OCC_Internals::makeFaceSTL(const TopoDS_Face &s,
                                 std::vector<SPoint2> &vertices_uv,
                                 std::vector<SPoint3> &vertices,
                                 std::vector<SVector3> &normals,
@@ -4008,7 +4117,8 @@ bool OCC_Internals::makeFaceSTL(TopoDS_Face s,
   return makeSTL(s, &vertices_uv, &vertices, &normals, triangles);
 }
 
-bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint3> &vertices,
+bool OCC_Internals::makeFaceSTL(const TopoDS_Face &s,
+                                std::vector<SPoint3> &vertices,
                                 std::vector<SVector3> &normals,
                                 std::vector<int> &triangles)
 {

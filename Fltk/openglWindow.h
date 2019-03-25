@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _OPENGL_WINDOW_H_
-#define _OPENGL_WINDOW_H_
+#ifndef OPENGL_WINDOW_H
+#define OPENGL_WINDOW_H
 
 #include <vector>
 #include <string>

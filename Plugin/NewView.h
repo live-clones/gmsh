@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _NEWVIEW_H_
-#define _NEWVIEW_H_
+#ifndef NEWVIEW_H
+#define NEWVIEW_H
 
 #include "Plugin.h"
 

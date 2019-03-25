@@ -3,10 +3,11 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _LINEAR_SYSTEM_CSR_H_
-#define _LINEAR_SYSTEM_CSR_H_
+#ifndef LINEAR_SYSTEM_CSR_H
+#define LINEAR_SYSTEM_CSR_H
 
 #include <vector>
+#include <string>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "linearSystem.h"
@@ -174,15 +175,18 @@ public:
 template <class scalar>
 class linearSystemCSRGmm : public linearSystemCSR<scalar> {
 private:
-  double _prec;
-  int _noisy, _gmres;
+  std::string _method;
+  double _tol;
+  int _noisy;
 
 public:
-  linearSystemCSRGmm() : _prec(1.e-8), _noisy(0), _gmres(0) {}
+  linearSystemCSRGmm(const std::string &method = "gmres", double tol = 1e-8,
+                     int noisy = 1)
+    : _method(method), _tol(tol), _noisy(noisy) {}
   virtual ~linearSystemCSRGmm() {}
-  void setPrec(double p) { _prec = p; }
+  void setPrec(double p) { _tol = p; }
   void setNoisy(int n) { _noisy = n; }
-  void setGmres(int n) { _gmres = n; }
+  void setGmres(int n) { _method = (n ? "gmres" : "cg"); }
   virtual int systemSolve()
 #if !defined(HAVE_GMM)
   {

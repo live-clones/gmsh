@@ -4,8 +4,8 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 
-#ifndef _SURFACEFILLER_H_
-#define _SURFACEFILLER_H_
+#ifndef SURFACEFILLER_H
+#define SURFACEFILLER_H
 
 #include <vector>
 #include <set>

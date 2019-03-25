@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _FULL_MATRIX_H_
-#define _FULL_MATRIX_H_
+#ifndef FULL_MATRIX_H
+#define FULL_MATRIX_H
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -355,9 +355,7 @@ public:
   {
     printf("double %s[%d]=\n", name, size());
     printf("{  ");
-    for(int I = 0; I < size(); I++) {
-      printf("%12.5E ", (*this)(I));
-    }
+    for(int I = 0; I < size(); I++) { printf("%12.5E ", (*this)(I)); }
     printf("};\n");
   }
 
@@ -773,7 +771,8 @@ public:
 #endif
   ;
 
-  void print(const std::string name = "", const std::string format = "") const;
+  void print(const std::string &name = "",
+             const std::string &format = "") const;
 
   void binarySave(FILE *f) const { fwrite(_data, sizeof(scalar), _r * _c, f); }
   void binaryLoad(FILE *f)

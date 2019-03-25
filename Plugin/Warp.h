@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _WARP_H_
-#define _WARP_H_
+#ifndef WARP_H
+#define WARP_H
 
 #include "Plugin.h"
 

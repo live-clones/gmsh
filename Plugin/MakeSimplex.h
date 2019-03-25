@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MAKE_SIMPLEX_H_
-#define _MAKE_SIMPLEX_H_
+#ifndef MAKE_SIMPLEX_H
+#define MAKE_SIMPLEX_H
 
 #include "Plugin.h"
 

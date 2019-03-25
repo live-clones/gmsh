@@ -22,9 +22,11 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _OBJ_CONTRIB_CAD_DIST_H_
-#define _OBJ_CONTRIB_CAD_DIST_H_
+#ifndef OBJ_CONTRIB_CAD_DIST_H
+#define OBJ_CONTRIB_CAD_DIST_H
 
+#include <vector>
+#include <algorithm>
 #include "ObjContrib.h"
 
 template <class FuncType>
@@ -37,7 +39,7 @@ public:
   virtual ObjContrib *copy() const;
   virtual void initialize(Patch *mesh);
   virtual bool fail() { return false; }
-  virtual bool addContrib(double &Obj, alglib::real_1d_array &gradObj);
+  virtual bool addContrib(double &Obj, std::vector<double> &gradObj);
   virtual void updateParameters() { FuncType::updateParameters(_min, _max); }
   virtual bool targetReached() { return FuncType::targetReached(_min, _max); }
   virtual bool stagnated() { return FuncType::stagnated(_min, _max); }
@@ -75,7 +77,7 @@ void ObjContribCADDistSq<FuncType>::initialize(Patch *mesh)
 
 template <class FuncType>
 bool ObjContribCADDistSq<FuncType>::addContrib(double &Obj,
-                                               alglib::real_1d_array &gradObj)
+                                               std::vector<double> &gradObj)
 {
   _min = BIGVAL;
   _max = -BIGVAL;

@@ -22,12 +22,11 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _OBJECTIVE_FUNCTION_H_
-#define _OBJECTIVE_FUNCTION_H_
+#ifndef OBJECTIVE_FUNCTION_H
+#define OBJECTIVE_FUNCTION_H
 
 #include <string>
 #include <vector>
-#include "ap.h"
 
 class ObjContrib;
 class Patch;
@@ -49,7 +48,7 @@ public:
   bool targetReached();
   std::string failMeasures();
   std::string targetsNotReached();
-  bool compute(double &obj, alglib::real_1d_array &gradObj);
+  bool compute(double &obj, std::vector<double> &gradObj);
 };
 
 #endif

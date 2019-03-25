@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _INTERSECT_CURVE_SURFACE_
-#define _INTERSECT_CURVE_SURFACE_
+#ifndef INTERSECT_CURVE_SURFACE
+#define INTERSECT_CURVE_SURFACE
 
 // Intersection of a curve and a surface using newton's method
 // FD are used to compute derivatives of the parametrizations

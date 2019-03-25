@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SIMPLE_FUNCTION_PYTHON_H_
-#define _SIMPLE_FUNCTION_PYTHON_H_
+#ifndef SIMPLE_FUNCTION_PYTHON_H
+#define SIMPLE_FUNCTION_PYTHON_H
 
 #include "Python.h"
 #include "simpleFunction.h"

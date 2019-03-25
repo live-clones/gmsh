@@ -5,8 +5,8 @@
  * issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
  */
 
-#ifndef _GMSHC_H_
-#define _GMSHC_H_
+#ifndef GMSHC_H
+#define GMSHC_H
 
 /*
  * This file defines the Gmsh C API (v4.2).
@@ -20,6 +20,8 @@
 #include <stddef.h>
 
 #define GMSH_API_VERSION "4.2"
+#define GMSH_API_VERSION_MAJOR 4
+#define GMSH_API_VERSION_MINOR 2
 
 #if defined(GMSH_DLL)
 #if defined(GMSH_DLL_EXPORT)
@@ -115,6 +117,18 @@ GMSH_API void gmshModelSetCurrent(const char * name,
 GMSH_API void gmshModelGetEntities(int ** dimTags, size_t * dimTags_n,
                                    const int dim,
                                    int * ierr);
+
+/* Set the name of the entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelSetEntityName(const int dim,
+                                     const int tag,
+                                     const char * name,
+                                     int * ierr);
+
+/* Get the name of the entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelGetEntityName(const int dim,
+                                     const int tag,
+                                     char ** name,
+                                     int * ierr);
 
 /* Get all the physical groups in the current model. If `dim' is >= 0, return
  * only the entities of the specified dimension (e.g. physical points if `dim'
@@ -216,12 +230,16 @@ GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n,
                                       const int recursive,
                                       int * ierr);
 
+/* Remove the entity name `name' from the current model. */
+GMSH_API void gmshModelRemoveEntityName(const char * name,
+                                        int * ierr);
+
 /* Remove the physical groups `dimTags' of the current model. If `dimTags' is
  * empty, remove all groups. */
 GMSH_API void gmshModelRemovePhysicalGroups(int * dimTags, size_t dimTags_n,
                                             int * ierr);
 
-/* Remove the physical name `name' of the current model. */
+/* Remove the physical name `name' from the current model. */
 GMSH_API void gmshModelRemovePhysicalName(const char * name,
                                           int * ierr);
 
@@ -558,15 +576,14 @@ GMSH_API void gmshModelMeshSetElements(const int dim,
                                        const size_t ** nodeTags, const size_t * nodeTags_n, size_t nodeTags_nn,
                                        int * ierr);
 
-/* Set the elements of type `elementType' in the entity of dimension `dim' and
- * tag `tag'. `elementTags' contains the tags (unique, strictly positive
- * identifiers) of the elements of the corresponding type. `nodeTags' is a
- * vector of length equal to the number of elements times the number N of
- * nodes per element, that contains the node tags of all the elements,
- * concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the `elementTag'
- * vector is empty, new tags are automatically assigned to the elements. */
-GMSH_API void gmshModelMeshSetElementsByType(const int dim,
-                                             const int tag,
+/* Set the elements of type `elementType' in the entity of tag `tag'.
+ * `elementTags' contains the tags (unique, strictly positive identifiers) of
+ * the elements of the corresponding type. `nodeTags' is a vector of length
+ * equal to the number of elements times the number N of nodes per element,
+ * that contains the node tags of all the elements, concatenated: [e1n1, e1n2,
+ * ..., e1nN, e2n1, ...]. If the `elementTag' vector is empty, new tags are
+ * automatically assigned to the elements. */
+GMSH_API void gmshModelMeshSetElementsByType(const int tag,
                                              const int elementType,
                                              size_t * elementTags, size_t elementTags_n,
                                              size_t * nodeTags, size_t nodeTags_n,
@@ -574,17 +591,18 @@ GMSH_API void gmshModelMeshSetElementsByType(const int dim,
 
 /* Get the Jacobians of all the elements of type `elementType' classified on
  * the entity of dimension `dim' and tag `tag', at the G integration points
- * required by the `integrationType' integration rule (e.g. "Gauss4"). Data is
+ * required by the `integrationType' integration rule (e.g. "Gauss4" for a
+ * Gauss quadrature suited for integrating 4th order polynomials). Data is
  * returned by element, with elements in the same order as in `getElements'
  * and `getElementsByType'. `jacobians' contains for each element the 9
  * entries of a 3x3 Jacobian matrix (by row), for each integration point:
- * [e1g1Jxx, e1g1Jxy, e1g1Jxz, ... e1g1Jzz, e1g2Jxx, ..., e1gGJzz, e2g1Jxx,
- * ...]. `determinants' contains for each element the determinant of the
- * Jacobian matrix for each integration point: [e1g1, e1g2, ... e1gG, e2g1,
- * ...]. `points' contains for each element the x, y, z coordinates of the
- * integration points. If `tag' < 0, get the Jacobian data for all entities.
- * If `numTasks' > 1, only compute and return the part of the data indexed by
- * `task'. */
+ * [e1g1Jxu, e1g1Jxv, e1g1Jxw, ... e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu,
+ * ...], with Jxu=dx/du, Jxv=dx/dv, etc. `determinants' contains for each
+ * element the determinant of the Jacobian matrix for each integration point:
+ * [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each element the
+ * x, y, z coordinates of the integration points. If `tag' < 0, get the
+ * Jacobian data for all entities. If `numTasks' > 1, only compute and return
+ * the part of the data indexed by `task'. */
 GMSH_API void gmshModelMeshGetJacobians(const int elementType,
                                         const char * integrationType,
                                         double ** jacobians, size_t * jacobians_n,
@@ -609,13 +627,15 @@ GMSH_API void gmshModelMeshPreallocateJacobians(const int elementType,
                                                 int * ierr);
 
 /* Get the basis functions of the element of type `elementType' for the given
- * `integrationType' integration rule (e.g. "Gauss4") and `functionSpaceType'
- * function space (e.g. "IsoParametric"). `integrationPoints' contains the
- * parametric coordinates u, v, w and the weight q for each integeration
- * point, concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. `numComponents'
- * returns the number C of components of a basis function. `basisFunctions'
- * contains the evaluation of the basis functions at the integration points:
- * [g1f1, ..., g1fC, g2f1, ...]. */
+ * `integrationType' integration rule (e.g. "Gauss4" for a Gauss quadrature
+ * suited for integrating 4th order polynomials) and `functionSpaceType'
+ * function space (e.g. "Lagrange" or "GradLagrange" for Lagrange basis
+ * functions or their gradient, in the u, v, w coordinates of the reference
+ * element). `integrationPoints' contains the parametric coordinates u, v, w
+ * and the weight q for each integeration point, concatenated: [g1u, g1v, g1w,
+ * g1q, g2u, ...]. `numComponents' returns the number C of components of a
+ * basis function. `basisFunctions' contains the evaluation of the basis
+ * functions at the integration points: [g1f1, ..., g1fC, g2f1, ...]. */
 GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
                                              const char * integrationType,
                                              const char * functionSpaceType,
@@ -769,19 +789,19 @@ GMSH_API void gmshModelMeshReorderElements(const int elementType,
                                            size_t * ordering, size_t ordering_n,
                                            int * ierr);
 
-/* Renumber the node tags in a contiunous sequence. */
+/* Renumber the node tags in a continuous sequence. */
 GMSH_API void gmshModelMeshRenumberNodes(int * ierr);
 
-/* Renumber the element tags in a contiunous sequence. */
+/* Renumber the element tags in a continuous sequence. */
 GMSH_API void gmshModelMeshRenumberElements(int * ierr);
 
 /* Set the meshes of the entities of dimension `dim' and tag `tags' as
- * periodic copies of the meshes of entities `tagsSource', using the affine
+ * periodic copies of the meshes of entities `tagsMaster', using the affine
  * transformation specified in `affineTransformation' (16 entries of a 4x4
  * matrix, by row). Currently only available for `dim' == 1 and `dim' == 2. */
 GMSH_API void gmshModelMeshSetPeriodic(const int dim,
                                        int * tags, size_t tags_n,
-                                       int * tagsSource, size_t tagsSource_n,
+                                       int * tagsMaster, size_t tagsMaster_n,
                                        double * affineTransform, size_t affineTransform_n,
                                        int * ierr);
 
@@ -1336,9 +1356,11 @@ GMSH_API int gmshModelOccAddPlaneSurface(int * wireTags, size_t wireTags_n,
 
 /* Add a surface filling the curve loops in `wireTags'. If `tag' is positive,
  * set the tag explicitly; otherwise a new tag is selected automatically.
- * Return the tag of the surface. */
+ * Return the tag of the surface. If `pointTags' are provided, force the
+ * surface to pass through the given points. */
 GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag,
                                            const int tag,
+                                           int * pointTags, size_t pointTags_n,
                                            int * ierr);
 
 /* Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is

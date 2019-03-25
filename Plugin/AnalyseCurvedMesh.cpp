@@ -140,17 +140,17 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
       _computedJac[askedDim - 1] = false;
       _computedIGE[askedDim - 1] = false;
       _computedICN[askedDim - 1] = false;
-      _PViewJac[askedDim - 1] = false;
-      _PViewIGE[askedDim - 1] = false;
-      _PViewICN[askedDim - 1] = false;
+      _pviewJac[askedDim - 1] = false;
+      _pviewIGE[askedDim - 1] = false;
+      _pviewICN[askedDim - 1] = false;
     }
     else {
       _computedJac[1] = _computedJac[2] = false;
       _computedIGE[1] = _computedIGE[2] = false;
       _computedICN[1] = _computedICN[2] = false;
-      _PViewJac[1] = _PViewJac[2] = false;
-      _PViewIGE[1] = _PViewIGE[2] = false;
-      _PViewICN[1] = _PViewICN[2] = false;
+      _pviewJac[1] = _pviewJac[2] = false;
+      _pviewIGE[1] = _pviewIGE[2] = false;
+      _pviewICN[1] = _pviewICN[2] = false;
     }
   }
 
@@ -198,8 +198,8 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   if(drawPView)
     for(int dim = 1; dim <= 3; ++dim) {
       if((askedDim == 4 && dim > 1) || dim == askedDim) {
-        if(!_PViewJac[dim - 1] && computeJac) {
-          _PViewJac[dim - 1] = true;
+        if(!_pviewJac[dim - 1] && computeJac) {
+          _pviewJac[dim - 1] = true;
           std::map<int, std::vector<double> > dataPV;
           for(std::size_t i = 0; i < _data.size(); ++i) {
             MElement *const el = _data[i].element();
@@ -218,8 +218,8 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
             new PView(name.str().c_str(), "ElementData", _m, dataPV);
           }
         }
-        if(!_PViewIGE[dim - 1] && computeIGE) {
-          _PViewIGE[dim - 1] = true;
+        if(!_pviewIGE[dim - 1] && computeIGE) {
+          _pviewIGE[dim - 1] = true;
           std::map<int, std::vector<double> > dataPV;
           for(std::size_t i = 0; i < _data.size(); ++i) {
             MElement *const el = _data[i].element();
@@ -232,8 +232,8 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
             new PView(name.str().c_str(), "ElementData", _m, dataPV);
           }
         }
-        if(!_PViewICN[dim - 1] && computeICN) {
-          _PViewICN[dim - 1] = true;
+        if(!_pviewICN[dim - 1] && computeICN) {
+          _pviewICN[dim - 1] = true;
           std::map<int, std::vector<double> > dataPV;
           for(std::size_t i = 0; i < _data.size(); ++i) {
             MElement *const el = _data[i].element();

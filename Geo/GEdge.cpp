@@ -27,7 +27,7 @@ GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
   if(v0) v0->addEdge(this);
   if(v1 && v1 != v0) v1->addEdge(this);
   meshStatistics.status = GEdge::PENDING;
-  resetMeshAttributes();
+  GEdge::resetMeshAttributes();
 }
 
 GEdge::GEdge(GModel *model, int tag)
@@ -35,7 +35,7 @@ GEdge::GEdge(GModel *model, int tag)
     masterOrientation(0), compound_edge(NULL)
 {
   meshStatistics.status = GEdge::PENDING;
-  resetMeshAttributes();
+  GEdge::resetMeshAttributes();
 }
 
 GEdge::~GEdge()
@@ -43,7 +43,7 @@ GEdge::~GEdge()
   if(v0) v0->delEdge(this);
   if(v1 && v1 != v0) v1->delEdge(this);
   if(_cp) delete _cp;
-  deleteMesh();
+  GEdge::deleteMesh();
 }
 
 void GEdge::deleteMesh(bool onlyDeleteElements)
@@ -430,6 +430,10 @@ double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
 {
   double *t = 0, *w = 0;
   gmshGaussLegendre1D(nbQuadPoints, &t, &w);
+  if(!t) {
+    Msg::Error("Gauss-Legendre integration returned no points");
+    return 0;
+  }
   double L = 0.0;
   const double rapJ = (u1 - u0) * 0.5;
   for(int i = 0; i < nbQuadPoints; i++) {

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GMSH_H_
-#define _GMSH_H_
+#ifndef GMSH_H
+#define GMSH_H
 
 // This file defines the Gmsh C++ API (v4.2).
 //
@@ -23,6 +23,8 @@
 #include <utility>
 
 #define GMSH_API_VERSION "4.2"
+#define GMSH_API_VERSION_MAJOR 4
+#define GMSH_API_VERSION_MINOR 2
 
 #if defined(GMSH_DLL)
 #if defined(GMSH_DLL_EXPORT)
@@ -122,6 +124,16 @@ namespace gmsh { // Top-level functions
     GMSH_API void getEntities(gmsh::vectorpair & dimTags,
                               const int dim = -1);
 
+    // Set the name of the entity of dimension `dim' and tag `tag'.
+    GMSH_API void setEntityName(const int dim,
+                                const int tag,
+                                const std::string & name);
+
+    // Get the name of the entity of dimension `dim' and tag `tag'.
+    GMSH_API void getEntityName(const int dim,
+                                const int tag,
+                                std::string & name);
+
     // Get all the physical groups in the current model. If `dim' is >= 0, return
     // only the entities of the specified dimension (e.g. physical points if `dim'
     // == 0). The entities are returned as a vector of (dim, tag) integer pairs.
@@ -211,11 +223,14 @@ namespace gmsh { // Top-level functions
     GMSH_API void removeEntities(const gmsh::vectorpair & dimTags,
                                  const bool recursive = false);
 
+    // Remove the entity name `name' from the current model.
+    GMSH_API void removeEntityName(const std::string & name);
+
     // Remove the physical groups `dimTags' of the current model. If `dimTags' is
     // empty, remove all groups.
     GMSH_API void removePhysicalGroups(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
-    // Remove the physical name `name' of the current model.
+    // Remove the physical name `name' from the current model.
     GMSH_API void removePhysicalName(const std::string & name);
 
     // Get the type of the entity of dimension `dim' and tag `tag'.
@@ -524,32 +539,32 @@ namespace gmsh { // Top-level functions
                                 const std::vector<std::vector<std::size_t> > & elementTags,
                                 const std::vector<std::vector<std::size_t> > & nodeTags);
 
-      // Set the elements of type `elementType' in the entity of dimension `dim'
-      // and tag `tag'. `elementTags' contains the tags (unique, strictly positive
-      // identifiers) of the elements of the corresponding type. `nodeTags' is a
-      // vector of length equal to the number of elements times the number N of
-      // nodes per element, that contains the node tags of all the elements,
-      // concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the `elementTag'
-      // vector is empty, new tags are automatically assigned to the elements.
-      GMSH_API void setElementsByType(const int dim,
-                                      const int tag,
+      // Set the elements of type `elementType' in the entity of tag `tag'.
+      // `elementTags' contains the tags (unique, strictly positive identifiers) of
+      // the elements of the corresponding type. `nodeTags' is a vector of length
+      // equal to the number of elements times the number N of nodes per element,
+      // that contains the node tags of all the elements, concatenated: [e1n1,
+      // e1n2, ..., e1nN, e2n1, ...]. If the `elementTag' vector is empty, new tags
+      // are automatically assigned to the elements.
+      GMSH_API void setElementsByType(const int tag,
                                       const int elementType,
                                       const std::vector<std::size_t> & elementTags,
                                       const std::vector<std::size_t> & nodeTags);
 
       // Get the Jacobians of all the elements of type `elementType' classified on
       // the entity of dimension `dim' and tag `tag', at the G integration points
-      // required by the `integrationType' integration rule (e.g. "Gauss4"). Data
-      // is returned by element, with elements in the same order as in
-      // `getElements' and `getElementsByType'. `jacobians' contains for each
-      // element the 9 entries of a 3x3 Jacobian matrix (by row), for each
-      // integration point: [e1g1Jxx, e1g1Jxy, e1g1Jxz, ... e1g1Jzz, e1g2Jxx, ...,
-      // e1gGJzz, e2g1Jxx, ...]. `determinants' contains for each element the
-      // determinant of the Jacobian matrix for each integration point: [e1g1,
-      // e1g2, ... e1gG, e2g1, ...]. `points' contains for each element the x, y, z
-      // coordinates of the integration points. If `tag' < 0, get the Jacobian data
-      // for all entities. If `numTasks' > 1, only compute and return the part of
-      // the data indexed by `task'.
+      // required by the `integrationType' integration rule (e.g. "Gauss4" for a
+      // Gauss quadrature suited for integrating 4th order polynomials). Data is
+      // returned by element, with elements in the same order as in `getElements'
+      // and `getElementsByType'. `jacobians' contains for each element the 9
+      // entries of a 3x3 Jacobian matrix (by row), for each integration point:
+      // [e1g1Jxu, e1g1Jxv, e1g1Jxw, ... e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu,
+      // ...], with Jxu=dx/du, Jxv=dx/dv, etc. `determinants' contains for each
+      // element the determinant of the Jacobian matrix for each integration point:
+      // [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each element the
+      // x, y, z coordinates of the integration points. If `tag' < 0, get the
+      // Jacobian data for all entities. If `numTasks' > 1, only compute and return
+      // the part of the data indexed by `task'.
       GMSH_API void getJacobians(const int elementType,
                                  const std::string & integrationType,
                                  std::vector<double> & jacobians,
@@ -572,13 +587,15 @@ namespace gmsh { // Top-level functions
                                          const int tag = -1);
 
       // Get the basis functions of the element of type `elementType' for the given
-      // `integrationType' integration rule (e.g. "Gauss4") and `functionSpaceType'
-      // function space (e.g. "IsoParametric"). `integrationPoints' contains the
-      // parametric coordinates u, v, w and the weight q for each integeration
-      // point, concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. `numComponents'
-      // returns the number C of components of a basis function. `basisFunctions'
-      // contains the evaluation of the basis functions at the integration points:
-      // [g1f1, ..., g1fC, g2f1, ...].
+      // `integrationType' integration rule (e.g. "Gauss4" for a Gauss quadrature
+      // suited for integrating 4th order polynomials) and `functionSpaceType'
+      // function space (e.g. "Lagrange" or "GradLagrange" for Lagrange basis
+      // functions or their gradient, in the u, v, w coordinates of the reference
+      // element). `integrationPoints' contains the parametric coordinates u, v, w
+      // and the weight q for each integeration point, concatenated: [g1u, g1v,
+      // g1w, g1q, g2u, ...]. `numComponents' returns the number C of components of
+      // a basis function. `basisFunctions' contains the evaluation of the basis
+      // functions at the integration points: [g1f1, ..., g1fC, g2f1, ...].
       GMSH_API void getBasisFunctions(const int elementType,
                                       const std::string & integrationType,
                                       const std::string & functionSpaceType,
@@ -715,19 +732,19 @@ namespace gmsh { // Top-level functions
                                     const int tag,
                                     const std::vector<std::size_t> & ordering);
 
-      // Renumber the node tags in a contiunous sequence.
+      // Renumber the node tags in a continuous sequence.
       GMSH_API void renumberNodes();
 
-      // Renumber the element tags in a contiunous sequence.
+      // Renumber the element tags in a continuous sequence.
       GMSH_API void renumberElements();
 
       // Set the meshes of the entities of dimension `dim' and tag `tags' as
-      // periodic copies of the meshes of entities `tagsSource', using the affine
+      // periodic copies of the meshes of entities `tagsMaster', using the affine
       // transformation specified in `affineTransformation' (16 entries of a 4x4
       // matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.
       GMSH_API void setPeriodic(const int dim,
                                 const std::vector<int> & tags,
-                                const std::vector<int> & tagsSource,
+                                const std::vector<int> & tagsMaster,
                                 const std::vector<double> & affineTransform);
 
       // Get the master entity `tagMaster', the node tags `nodeTags' and their
@@ -1248,9 +1265,11 @@ namespace gmsh { // Top-level functions
 
       // Add a surface filling the curve loops in `wireTags'. If `tag' is positive,
       // set the tag explicitly; otherwise a new tag is selected automatically.
-      // Return the tag of the surface.
+      // Return the tag of the surface. If `pointTags' are provided, force the
+      // surface to pass through the given points.
       GMSH_API int addSurfaceFilling(const int wireTag,
-                                     const int tag = -1);
+                                     const int tag = -1,
+                                     const std::vector<int> & pointTags = std::vector<int>());
 
       // Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
       // positive, set the tag explicitly; otherwise a new tag is selected

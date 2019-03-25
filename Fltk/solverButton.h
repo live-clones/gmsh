@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SOLVER_BUTTON_H_
-#define _SOLVER_BUTTON_H_
+#ifndef SOLVER_BUTTON_H
+#define SOLVER_BUTTON_H
 
 #include <string>
 #include <FL/Fl.H>

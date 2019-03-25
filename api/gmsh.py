@@ -12,21 +12,29 @@
 # examples.
 
 from ctypes import *
+from ctypes.util import find_library
 import signal
 import os
 import platform
 from math import pi
 
 GMSH_API_VERSION = "4.2"
+GMSH_API_VERSION_MAJOR = 4
+GMSH_API_VERSION_MINOR = 2
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
-if platform.system() == 'Windows':
-    lib = CDLL(os.path.join(libdir, "gmsh-4.2.dll"))
-elif platform.system() == 'Darwin':
-    lib = CDLL(os.path.join(libdir, "libgmsh.dylib"))
+if platform.system() == "Windows":
+    libpath = os.path.join(libdir, "gmsh-4.2.dll")
+elif platform.system() == "Darwin":
+    libpath = os.path.join(libdir, "libgmsh.dylib")
 else:
-    lib = CDLL(os.path.join(libdir, "libgmsh.so"))
+    libpath = os.path.join(libdir, "libgmsh.so")
+
+if not os.path.exists(libpath):
+    libpath = find_library("gmsh")
+
+lib = CDLL(libpath)
 
 use_numpy = False
 try:
@@ -428,6 +436,42 @@ class model:
         return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
 
     @staticmethod
+    def setEntityName(dim, tag, name):
+        """
+        Set the name of the entity of dimension `dim' and tag `tag'.
+        """
+        ierr = c_int()
+        lib.gmshModelSetEntityName(
+            c_int(dim),
+            c_int(tag),
+            c_char_p(name.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelSetEntityName returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
+    def getEntityName(dim, tag):
+        """
+        Get the name of the entity of dimension `dim' and tag `tag'.
+
+        Return `name'.
+        """
+        api_name_ = c_char_p()
+        ierr = c_int()
+        lib.gmshModelGetEntityName(
+            c_int(dim),
+            c_int(tag),
+            byref(api_name_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetEntityName returned non-zero error code: ",
+                ierr.value)
+        return _ostring(api_name_)
+
+    @staticmethod
     def getPhysicalGroups(dim=-1):
         """
         Get all the physical groups in the current model. If `dim' is >= 0, return
@@ -700,6 +744,20 @@ class model:
                 ierr.value)
 
     @staticmethod
+    def removeEntityName(name):
+        """
+        Remove the entity name `name' from the current model.
+        """
+        ierr = c_int()
+        lib.gmshModelRemoveEntityName(
+            c_char_p(name.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelRemoveEntityName returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
     def removePhysicalGroups(dimTags=[]):
         """
         Remove the physical groups `dimTags' of the current model. If `dimTags' is
@@ -718,7 +776,7 @@ class model:
     @staticmethod
     def removePhysicalName(name):
         """
-        Remove the physical name `name' of the current model.
+        Remove the physical name `name' from the current model.
         """
         ierr = c_int()
         lib.gmshModelRemovePhysicalName(
@@ -1579,21 +1637,20 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setElementsByType(dim, tag, elementType, elementTags, nodeTags):
+        def setElementsByType(tag, elementType, elementTags, nodeTags):
             """
-            Set the elements of type `elementType' in the entity of dimension `dim' and
-            tag `tag'. `elementTags' contains the tags (unique, strictly positive
-            identifiers) of the elements of the corresponding type. `nodeTags' is a
-            vector of length equal to the number of elements times the number N of
-            nodes per element, that contains the node tags of all the elements,
-            concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the `elementTag'
-            vector is empty, new tags are automatically assigned to the elements.
+            Set the elements of type `elementType' in the entity of tag `tag'.
+            `elementTags' contains the tags (unique, strictly positive identifiers) of
+            the elements of the corresponding type. `nodeTags' is a vector of length
+            equal to the number of elements times the number N of nodes per element,
+            that contains the node tags of all the elements, concatenated: [e1n1, e1n2,
+            ..., e1nN, e2n1, ...]. If the `elementTag' vector is empty, new tags are
+            automatically assigned to the elements.
             """
             api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
             api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
             ierr = c_int()
             lib.gmshModelMeshSetElementsByType(
-                c_int(dim),
                 c_int(tag),
                 c_int(elementType),
                 api_elementTags_, api_elementTags_n_,
@@ -1609,17 +1666,18 @@ class model:
             """
             Get the Jacobians of all the elements of type `elementType' classified on
             the entity of dimension `dim' and tag `tag', at the G integration points
-            required by the `integrationType' integration rule (e.g. "Gauss4"). Data is
+            required by the `integrationType' integration rule (e.g. "Gauss4" for a
+            Gauss quadrature suited for integrating 4th order polynomials). Data is
             returned by element, with elements in the same order as in `getElements'
             and `getElementsByType'. `jacobians' contains for each element the 9
             entries of a 3x3 Jacobian matrix (by row), for each integration point:
-            [e1g1Jxx, e1g1Jxy, e1g1Jxz, ... e1g1Jzz, e1g2Jxx, ..., e1gGJzz, e2g1Jxx,
-            ...]. `determinants' contains for each element the determinant of the
-            Jacobian matrix for each integration point: [e1g1, e1g2, ... e1gG, e2g1,
-            ...]. `points' contains for each element the x, y, z coordinates of the
-            integration points. If `tag' < 0, get the Jacobian data for all entities.
-            If `numTasks' > 1, only compute and return the part of the data indexed by
-            `task'.
+            [e1g1Jxu, e1g1Jxv, e1g1Jxw, ... e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu,
+            ...], with Jxu=dx/du, Jxv=dx/dv, etc. `determinants' contains for each
+            element the determinant of the Jacobian matrix for each integration point:
+            [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each element the
+            x, y, z coordinates of the integration points. If `tag' < 0, get the
+            Jacobian data for all entities. If `numTasks' > 1, only compute and return
+            the part of the data indexed by `task'.
 
             Return `jacobians', `determinants', `points'.
             """
@@ -1682,13 +1740,15 @@ class model:
         def getBasisFunctions(elementType, integrationType, functionSpaceType):
             """
             Get the basis functions of the element of type `elementType' for the given
-            `integrationType' integration rule (e.g. "Gauss4") and `functionSpaceType'
-            function space (e.g. "IsoParametric"). `integrationPoints' contains the
-            parametric coordinates u, v, w and the weight q for each integeration
-            point, concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. `numComponents'
-            returns the number C of components of a basis function. `basisFunctions'
-            contains the evaluation of the basis functions at the integration points:
-            [g1f1, ..., g1fC, g2f1, ...].
+            `integrationType' integration rule (e.g. "Gauss4" for a Gauss quadrature
+            suited for integrating 4th order polynomials) and `functionSpaceType'
+            function space (e.g. "Lagrange" or "GradLagrange" for Lagrange basis
+            functions or their gradient, in the u, v, w coordinates of the reference
+            element). `integrationPoints' contains the parametric coordinates u, v, w
+            and the weight q for each integeration point, concatenated: [g1u, g1v, g1w,
+            g1q, g2u, ...]. `numComponents' returns the number C of components of a
+            basis function. `basisFunctions' contains the evaluation of the basis
+            functions at the integration points: [g1f1, ..., g1fC, g2f1, ...].
 
             Return `integrationPoints', `numComponents', `basisFunctions'.
             """
@@ -2049,7 +2109,7 @@ class model:
         @staticmethod
         def renumberNodes():
             """
-            Renumber the node tags in a contiunous sequence.
+            Renumber the node tags in a continuous sequence.
             """
             ierr = c_int()
             lib.gmshModelMeshRenumberNodes(
@@ -2062,7 +2122,7 @@ class model:
         @staticmethod
         def renumberElements():
             """
-            Renumber the element tags in a contiunous sequence.
+            Renumber the element tags in a continuous sequence.
             """
             ierr = c_int()
             lib.gmshModelMeshRenumberElements(
@@ -2073,21 +2133,21 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setPeriodic(dim, tags, tagsSource, affineTransform):
+        def setPeriodic(dim, tags, tagsMaster, affineTransform):
             """
             Set the meshes of the entities of dimension `dim' and tag `tags' as
-            periodic copies of the meshes of entities `tagsSource', using the affine
+            periodic copies of the meshes of entities `tagsMaster', using the affine
             transformation specified in `affineTransformation' (16 entries of a 4x4
             matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.
             """
             api_tags_, api_tags_n_ = _ivectorint(tags)
-            api_tagsSource_, api_tagsSource_n_ = _ivectorint(tagsSource)
+            api_tagsMaster_, api_tagsMaster_n_ = _ivectorint(tagsMaster)
             api_affineTransform_, api_affineTransform_n_ = _ivectordouble(affineTransform)
             ierr = c_int()
             lib.gmshModelMeshSetPeriodic(
                 c_int(dim),
                 api_tags_, api_tags_n_,
-                api_tagsSource_, api_tagsSource_n_,
+                api_tagsMaster_, api_tagsMaster_n_,
                 api_affineTransform_, api_affineTransform_n_,
                 byref(ierr))
             if ierr.value != 0:
@@ -3409,18 +3469,21 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSurfaceFilling(wireTag, tag=-1):
+        def addSurfaceFilling(wireTag, tag=-1, pointTags=[]):
             """
             Add a surface filling the curve loops in `wireTags'. If `tag' is positive,
             set the tag explicitly; otherwise a new tag is selected automatically.
-            Return the tag of the surface.
+            Return the tag of the surface. If `pointTags' are provided, force the
+            surface to pass through the given points.
 
             Return an integer value.
             """
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddSurfaceFilling(
                 c_int(wireTag),
                 c_int(tag),
+                api_pointTags_, api_pointTags_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

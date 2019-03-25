@@ -1,5 +1,5 @@
-#ifndef _AVL_H_
-#define _AVL_H_
+#ifndef AVL_H
+#define AVL_H
 
 /*
  * avl package

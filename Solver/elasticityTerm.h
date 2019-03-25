@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _ELASTICITY_TERM_H_
-#define _ELASTICITY_TERM_H_
+#ifndef ELASTICITY_TERM_H
+#define ELASTICITY_TERM_H
 
 #include "femTerm.h"
 #include "GmshGlobal.h"
@@ -20,7 +20,7 @@ struct elasticityDataAtGaussPoint {
 
 class elasticityTerm : public femTerm<double> {
 protected:
-  double _E, _nu;
+  double _e, _nu;
   int _iFieldR, _iFieldC;
   SVector3 _volumeForce;
   mutable std::map<int, elasticityDataAtGaussPoint> _data;
@@ -59,11 +59,11 @@ public:
 
 public:
   elasticityTerm(GModel *gm, double E, double nu, int fieldr, int fieldc)
-    : femTerm<double>(gm), _E(E), _nu(nu), _iFieldR(fieldr), _iFieldC(fieldc)
+    : femTerm<double>(gm), _e(E), _nu(nu), _iFieldR(fieldr), _iFieldC(fieldc)
   {
   }
   elasticityTerm(GModel *gm, double E, double nu, int fieldr)
-    : femTerm<double>(gm), _E(E), _nu(nu), _iFieldR(fieldr), _iFieldC(fieldr)
+    : femTerm<double>(gm), _e(E), _nu(nu), _iFieldR(fieldr), _iFieldC(fieldr)
   {
   }
   void setVector(const SVector3 &f) { _volumeForce = f; }
@@ -84,7 +84,7 @@ public:
 
 class elasticityMixedTerm : public femTerm<double> {
 protected:
-  double _E, _nu;
+  double _e, _nu;
   mutable int _iField, _polyOrderN, _polyOrderM, _sizeN, _sizeM;
   mutable polynomialBasis *_pN, *_pM;
   void setPolynomialBasis(SElement *se) const
@@ -136,12 +136,12 @@ public:
 
 public:
   elasticityMixedTerm(GModel *gm, double E, double nu, int field)
-    : femTerm<double>(gm), _E(E), _nu(nu), _iField(field)
+    : femTerm<double>(gm), _e(E), _nu(nu), _iField(field)
   {
   }
   void elementMatrix(SElement *se, fullMatrix<double> &m) const;
   void elementVector(SElement *se, fullVector<double> &m) const {}
-  void setYoung(double E) { _E = E; }
+  void setYoung(double E) { _e = E; }
 };
 
 #endif

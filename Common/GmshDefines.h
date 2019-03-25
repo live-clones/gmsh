@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _GMSH_DEFINES_H_
-#define _GMSH_DEFINES_H_
+#ifndef GMSH_DEFINES_H
+#define GMSH_DEFINES_H
 
 // IO file formats (numbers should not be changed)
 #define FORMAT_MSH          1

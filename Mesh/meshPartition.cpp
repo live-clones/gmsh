@@ -2629,6 +2629,7 @@ int ConvertOldPartitioningToNewOne(GModel *const model) { return 0; }
 int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
                             hashmap<MElement *, unsigned int> &elmToPartition)
 {
+  Msg::Error("Gmsh must be compiled with METIS support to partition meshes");
   return 0;
 }
 

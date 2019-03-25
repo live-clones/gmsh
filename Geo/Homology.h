@@ -5,8 +5,8 @@
 //
 // Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
 
-#ifndef _HOMOLOGY_H_
-#define _HOMOLOGY_H_
+#ifndef HOMOLOGY_H
+#define HOMOLOGY_H
 
 #include <sstream>
 #include "CellComplex.h"

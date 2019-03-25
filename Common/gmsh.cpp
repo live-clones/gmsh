@@ -279,6 +279,24 @@ GMSH_API void gmsh::model::getEntities(vectorpair &dimTags, const int dim)
       std::pair<int, int>(entities[i]->dim(), entities[i]->tag()));
 }
 
+GMSH_API void gmsh::model::setEntityName(const int dim, const int tag,
+                                           const std::string &name)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  GModel::current()->setElementaryName(dim, tag, name);
+}
+
+GMSH_API void gmsh::model::getEntityName(const int dim, const int tag,
+                                         std::string &name)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  name = GModel::current()->getElementaryName(dim, tag);
+}
+
 GMSH_API void gmsh::model::getPhysicalGroups(vectorpair &dimTags, const int dim)
 {
   if(!_isInitialized()) {
@@ -511,6 +529,14 @@ GMSH_API void gmsh::model::removeEntities(const vectorpair &dimTags,
     throw -1;
   }
   GModel::current()->remove(dimTags, recursive);
+}
+
+GMSH_API void gmsh::model::removeEntityName(const std::string &name)
+{
+  if(!_isInitialized()) {
+    throw -1;
+  }
+  GModel::current()->removeElementaryName(name);
 }
 
 GMSH_API void gmsh::model::removePhysicalGroups(const vectorpair &dimTags)
@@ -1430,13 +1456,14 @@ GMSH_API void gmsh::model::mesh::setElements(
 }
 
 GMSH_API void gmsh::model::mesh::setElementsByType(
-  const int dim, const int tag, const int elementType,
+  const int tag, const int elementType,
   const std::vector<std::size_t> &elementTags,
   const std::vector<std::size_t> &nodeTags)
 {
   if(!_isInitialized()) {
     throw -1;
   }
+  int dim = ElementType::getDimension(elementType);
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge) {
     Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
@@ -3469,15 +3496,16 @@ GMSH_API int gmsh::model::occ::addPlaneSurface(const std::vector<int> &wireTags,
 }
 
 GMSH_API int gmsh::model::occ::addSurfaceFilling(const int wireTag,
-                                                 const int tag)
+                                                 const int tag,
+                                                 const std::vector<int> &pointTags)
 {
   if(!_isInitialized()) {
     throw -1;
   }
   _createOcc();
   int outTag = tag;
-  if(!GModel::current()->getOCCInternals()->addSurfaceFilling(outTag,
-                                                              wireTag)) {
+  if(!GModel::current()->getOCCInternals()->addSurfaceFilling
+     (outTag, wireTag, pointTags)) {
     throw 1;
   }
   return outTag;
@@ -4186,12 +4214,14 @@ GMSH_API void gmshViewGetModelData(const int tag, const int step, char **dataTyp
 {
   if(!_isInitialized()) {
     if(ierr) *ierr = -1;
+    return;
   }
 #if defined(HAVE_POST)
   PView *view = PView::getViewByTag(tag);
   if(!view) {
     Msg::Error("Unknown view with tag %d", tag);
     if(ierr) *ierr = 2;
+    return;
   }
   PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(view->getData());
   if(!d) {

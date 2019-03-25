@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MELEMENT_H_
-#define _MELEMENT_H_
+#ifndef MELEMENT_H
+#define MELEMENT_H
 
 #include <stdio.h>
 #include <algorithm>
@@ -424,6 +424,8 @@ public:
   {
     Msg::Error("No integration points defined for this type of element: %d",
                this->getType());
+    *npts = 0;
+    *pts = 0;
   }
   double integrate(double val[], int pOrder, int stride = 1, int order = -1);
   // val[] must contain interpolation data for face/edge vertices of given
@@ -432,13 +434,12 @@ public:
   double integrateFlux(double val[], int face, int pOrder, int order = -1);
 
   // IO routines
-  virtual void writeMSH(FILE *fp, bool binary = false, int elementary = 1,
-                        std::vector<short> *ghosts = 0);
   virtual void writeMSH2(FILE *fp, double version = 1.0, bool binary = false,
                          int num = 0, int elementary = 1, int physical = 1,
                          int parentNum = 0, int dom1Num = 0, int dom2Num = 0,
                          std::vector<short> *ghosts = 0);
-  virtual void writeMSH4(FILE *fp, bool binary = false);
+  virtual void writeMSH3(FILE *fp, bool binary = false, int elementary = 1,
+                         std::vector<short> *ghosts = 0);
   virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber,
                         bool printSICN, bool printSIGE, bool printGamma,
                         bool printDisto, double scalingFactor = 1.0,

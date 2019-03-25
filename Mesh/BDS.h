@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _BDS_H_
-#define _BDS_H_
+#ifndef BDS_H
+#define BDS_H
 
 // This is a 2D version of the Bidirectional Data Structure (BDS)
 // of shephard and beall
@@ -327,7 +327,7 @@ class BDS_Mesh {
 public:
   int MAXPOINTNUMBER;
   double Min[3], Max[3], LC;
-  BDS_Mesh(int _MAXX = 0) : MAXPOINTNUMBER(_MAXX) {}
+  BDS_Mesh(int MAXX = 0) : MAXPOINTNUMBER(MAXX) {}
   virtual ~BDS_Mesh();
   BDS_Mesh(const BDS_Mesh &other);
   std::set<BDS_GeomEntity *, GeomLessThan> geom;

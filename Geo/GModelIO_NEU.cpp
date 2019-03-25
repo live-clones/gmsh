@@ -7,6 +7,7 @@
 
 #include <time.h>
 #include <algorithm>
+#include <iterator>
 #include <limits>
 #if __cplusplus >= 201103L
 #include <unordered_map>
@@ -216,7 +217,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   fprintf(fp, "%s", ctime(&rawtime));
 
   fprintf(fp, "     NUMNP     NELEM     NGRPS    NBSETS     NDFCD     NDFVL\n");
-  fprintf(fp, " %9d %9d %9lu %9lu %9d %9d\n", indexMeshVertices(saveAll),
+  fprintf(fp, " %9ld %9d %9lu %9lu %9d %9d\n", indexMeshVertices(saveAll),
           numTetrahedra, elementGroups.size(), boundaryConditions.size(),
           getDim(), getDim());
   fprintf(fp, "ENDOFSECTION\n");

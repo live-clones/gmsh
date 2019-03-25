@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _LAPLACE_TERM_H_
-#define _LAPLACE_TERM_H_
+#ifndef LAPLACE_TERM_H
+#define LAPLACE_TERM_H
 
 #include "helmholtzTerm.h"
 

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _SHOWNEIGHBORELEMENTS_H_
-#define _SHOWNEIGHBORELEMENTS_H_
+#ifndef SHOWNEIGHBORELEMENTS_H
+#define SHOWNEIGHBORELEMENTS_H
 
 #include "Plugin.h"
 #include <set>

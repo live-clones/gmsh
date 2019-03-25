@@ -3,9 +3,10 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _PARSER_H_
-#define _PARSER_H_
+#ifndef PARSER_H
+#define PARSER_H
 
+#include <algorithm>
 #include <map>
 #include <string>
 #include <vector>

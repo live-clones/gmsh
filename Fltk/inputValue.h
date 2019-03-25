@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _INPUT_VALUE_H_
-#define _INPUT_VALUE_H_
+#ifndef INPUT_VALUE_H
+#define INPUT_VALUE_H
 
 #include <FL/Fl.H>
 #include <FL/Fl_Value_Input.H>

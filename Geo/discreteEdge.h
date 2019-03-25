@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _DISCRETE_EDGE_H_
-#define _DISCRETE_EDGE_H_
+#ifndef DISCRETE_EDGE_H
+#define DISCRETE_EDGE_H
 
 #include "GModel.h"
 #include "GEdge.h"

@@ -24,10 +24,11 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-#ifndef _MESH_OPT_COMMON_H_
-#define _MESH_OPT_COMMON_H_
+#ifndef MESH_OPT_COMMON_H
+#define MESH_OPT_COMMON_H
 
 #include <vector>
+#include <list>
 #include "GmshMessage.h"
 #include "MeshOptimizerConfig.h"
 

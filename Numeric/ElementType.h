@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _ELEMENT_TYPE_H_
-#define _ELEMENT_TYPE_H_
+#ifndef ELEMENT_TYPE_H
+#define ELEMENT_TYPE_H
 
 #include <string>
 

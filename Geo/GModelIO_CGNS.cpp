@@ -1835,7 +1835,7 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
     int tag = bIter->first;
     std::string name = bIter->second;
     physicalSurfaces[tag][tag] = name;
-    physicalNames[std::make_pair(meshDim - 1, tag)] = name;
+    _physicalNames[std::make_pair(meshDim - 1, tag)] = name;
   }
 
   _storePhysicalTagsInEntities(meshDim - 1, physicalSurfaces);
@@ -1847,7 +1847,7 @@ int GModel::_readCGNSUnstructured(const std::string &fileName)
     int tag = zIter->first;
     std::string name = zIter->second;
     physicalZones[tag][tag] = name;
-    physicalNames[std::make_pair(meshDim, tag)] = name;
+    _physicalNames[std::make_pair(meshDim, tag)] = name;
   }
 
   _storePhysicalTagsInEntities(meshDim, physicalZones);

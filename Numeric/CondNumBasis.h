@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CONDNUMBASIS_H_
-#define _CONDNUMBASIS_H_
+#ifndef CONDNUMBASIS_H
+#define CONDNUMBASIS_H
 
 #include <map>
 #include <vector>

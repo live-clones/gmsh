@@ -31,13 +31,12 @@ with open(os.path.join(dirname, '..', 'CMakeLists.txt'), 'rt') as f:
     contents = f.read()
     start = contents.find('GMSH_MAJOR_VERSION') + 18
     end = contents.find(')', start)
-    major = int(contents[start:end])
+    version_major = int(contents[start:end])
     start = contents.find('GMSH_MINOR_VERSION') + 18
     end = contents.find(')', start)
-    minor = int(contents[start:end])
+    version_minor = int(contents[start:end])
 
-version = str(major) + '.' + str(minor)
-api = API(version)
+api = API(version_major, version_minor)
 
 ################################################################################
 
@@ -96,6 +95,12 @@ model.add('setCurrent',doc,None,istring('name'))
 doc = '''Get all the (elementary) geometrical entities in the current model. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0). The entities are returned as a vector of (dim, tag) integer pairs.'''
 model.add('getEntities',doc,None,ovectorpair('dimTags'),iint('dim','-1'))
 
+doc = '''Set the name of the entity of dimension `dim' and tag `tag'.'''
+model.add('setEntityName',doc,None,iint('dim'),iint('tag'),istring('name'))
+
+doc = '''Get the name of the entity of dimension `dim' and tag `tag'.'''
+model.add('getEntityName',doc,None,iint('dim'),iint('tag'),ostring('name'))
+
 doc = '''Get all the physical groups in the current model. If `dim' is >= 0, return only the entities of the specified dimension (e.g. physical points if `dim' == 0). The entities are returned as a vector of (dim, tag) integer pairs.'''
 model.add('getPhysicalGroups',doc,None,ovectorpair('dimTags'),iint('dim','-1'))
 
@@ -132,10 +137,13 @@ model.add('addDiscreteEntity',doc,oint,iint('dim'),iint('tag','-1'),ivectorint('
 doc = '''Remove the entities `dimTags' of the current model. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
 model.add('removeEntities',doc,None,ivectorpair('dimTags'),ibool('recursive','false','False'))
 
+doc = '''Remove the entity name `name' from the current model.'''
+model.add('removeEntityName',doc,None,istring('name'))
+
 doc = '''Remove the physical groups `dimTags' of the current model. If `dimTags' is empty, remove all groups.'''
 model.add('removePhysicalGroups',doc,None,ivectorpair('dimTags','gmsh::vectorpair()',"[]","[]"))
 
-doc = '''Remove the physical name `name' of the current model.'''
+doc = '''Remove the physical name `name' from the current model.'''
 model.add('removePhysicalName',doc,None,istring('name'))
 
 doc = '''Get the type of the entity of dimension `dim' and tag `tag'.'''
@@ -247,16 +255,16 @@ mesh.add('preallocateElementsByType',doc,None,iint('elementType'),ibool('element
 doc = '''Set the elements of the entity of dimension `dim' and tag `tag'. `types' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of the same length as `types'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is also a vector of the same length as `types'; each entry is a vector of length equal to the number of elements of the given type times the number N of nodes per element, that contains the node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].'''
 mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('elementTypes'),ivectorvectorsize('elementTags'),ivectorvectorsize('nodeTags'))
 
-doc = '''Set the elements of type `elementType' in the entity of dimension `dim' and tag `tag'. `elementTags' contains the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is a vector of length equal to the number of elements times the number N of nodes per element, that contains the node tags of all the elements, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the `elementTag' vector is empty, new tags are automatically assigned to the elements.'''
-mesh.add('setElementsByType',doc,None,iint('dim'),iint('tag'),iint('elementType'),ivectorsize('elementTags'),ivectorsize('nodeTags'))
+doc = '''Set the elements of type `elementType' in the entity of tag `tag'. `elementTags' contains the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is a vector of length equal to the number of elements times the number N of nodes per element, that contains the node tags of all the elements, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If the `elementTag' vector is empty, new tags are automatically assigned to the elements.'''
+mesh.add('setElementsByType',doc,None,iint('tag'),iint('elementType'),ivectorsize('elementTags'),ivectorsize('nodeTags'))
 
-doc = '''Get the Jacobians of all the elements of type `elementType' classified on the entity of dimension `dim' and tag `tag', at the G integration points required by the `integrationType' integration rule (e.g. \"Gauss4\"). Data is returned by element, with elements in the same order as in `getElements' and `getElementsByType'. `jacobians' contains for each element the 9 entries of a 3x3 Jacobian matrix (by row), for each integration point: [e1g1Jxx, e1g1Jxy, e1g1Jxz, ... e1g1Jzz, e1g2Jxx, ..., e1gGJzz, e2g1Jxx, ...]. `determinants' contains for each element the determinant of the Jacobian matrix for each integration point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each element the x, y, z coordinates of the integration points. If `tag' < 0, get the Jacobian data for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
+doc = '''Get the Jacobians of all the elements of type `elementType' classified on the entity of dimension `dim' and tag `tag', at the G integration points required by the `integrationType' integration rule (e.g. \"Gauss4\" for a Gauss quadrature suited for integrating 4th order polynomials). Data is returned by element, with elements in the same order as in `getElements' and `getElementsByType'. `jacobians' contains for each element the 9 entries of a 3x3 Jacobian matrix (by row), for each integration point: [e1g1Jxu, e1g1Jxv, e1g1Jxw, ... e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jxv=dx/dv, etc. `determinants' contains for each element the determinant of the Jacobian matrix for each integration point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each element the x, y, z coordinates of the integration points. If `tag' < 0, get the Jacobian data for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getJacobians',doc,None,iint('elementType'),istring('integrationType'),ovectordouble('jacobians'),ovectordouble('determinants'),ovectordouble('points'),iint('tag', '-1'),isize('task', '0'),isize('numTasks', '1'))
 
 doc = '''Preallocate the data required by `getJacobians'. This is necessary only if `getJacobians' is called with `numTasks' > 1.'''
 mesh.add('preallocateJacobians',doc,None,iint('elementType'),istring('integrationType'),ibool('jacobian'),ibool('determinant'),ibool('point'),ovectordouble('jacobians'),ovectordouble('determinants'),ovectordouble('points'),iint('tag', '-1'))
 
-doc = '''Get the basis functions of the element of type `elementType' for the given `integrationType' integration rule (e.g. \"Gauss4\") and `functionSpaceType' function space (e.g. \"IsoParametric\"). `integrationPoints' contains the parametric coordinates u, v, w and the weight q for each integeration point, concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. `numComponents' returns the number C of components of a basis function. `basisFunctions' contains the evaluation of the basis functions at the integration points: [g1f1, ..., g1fC, g2f1, ...].'''
+doc = '''Get the basis functions of the element of type `elementType' for the given `integrationType' integration rule (e.g. \"Gauss4\" for a Gauss quadrature suited for integrating 4th order polynomials) and `functionSpaceType' function space (e.g. \"Lagrange\" or \"GradLagrange\" for Lagrange basis functions or their gradient, in the u, v, w coordinates of the reference element). `integrationPoints' contains the parametric coordinates u, v, w and the weight q for each integeration point, concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. `numComponents' returns the number C of components of a basis function. `basisFunctions' contains the evaluation of the basis functions at the integration points: [g1f1, ..., g1fC, g2f1, ...].'''
 mesh.add('getBasisFunctions',doc,None,iint('elementType'),istring('integrationType'),istring('functionSpaceType'),ovectordouble('integrationPoints'),oint('numComponents'),ovectordouble('basisFunctions'))
 
 doc = '''Precomputes the basis functions corresponding to `elementType'.'''
@@ -307,14 +315,14 @@ mesh.add('embed',doc,None,iint('dim'),ivectorint('tags'),iint('inDim'),iint('inT
 doc = '''Reorder the elements of type `elementType' classified on the entity of tag `tag' according to `ordering'.'''
 mesh.add('reorderElements',doc,None,iint('elementType'),iint('tag'),ivectorsize('ordering'))
 
-doc = '''Renumber the node tags in a contiunous sequence.'''
+doc = '''Renumber the node tags in a continuous sequence.'''
 mesh.add('renumberNodes',doc,None)
 
-doc = '''Renumber the element tags in a contiunous sequence.'''
+doc = '''Renumber the element tags in a continuous sequence.'''
 mesh.add('renumberElements',doc,None)
 
-doc = '''Set the meshes of the entities of dimension `dim' and tag `tags' as periodic copies of the meshes of entities `tagsSource', using the affine transformation specified in `affineTransformation' (16 entries of a 4x4 matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.'''
-mesh.add('setPeriodic',doc,None,iint('dim'),ivectorint('tags'),ivectorint('tagsSource'),ivectordouble('affineTransform'))
+doc = '''Set the meshes of the entities of dimension `dim' and tag `tags' as periodic copies of the meshes of entities `tagsMaster', using the affine transformation specified in `affineTransformation' (16 entries of a 4x4 matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.'''
+mesh.add('setPeriodic',doc,None,iint('dim'),ivectorint('tags'),ivectorint('tagsMaster'),ivectordouble('affineTransform'))
 
 doc = '''Get the master entity `tagMaster', the node tags `nodeTags' and their corresponding master node tags `nodeTagsMaster', and the affine transform `affineTransform' for the entity of dimension `dim' and tag `tag'.'''
 mesh.add('getPeriodicNodes',doc,None,iint('dim'),iint('tag'),oint('tagMaster'),ovectorsize('nodeTags'),ovectorsize('nodeTagsMaster'),ovectordouble('affineTransform'))
@@ -509,8 +517,8 @@ occ.add('addDisk',doc,oint,idouble('xc'),idouble('yc'),idouble('zc'),idouble('rx
 doc = '''Add a plane surface defined by one or more curve loops (or closed wires) `wireTags'. The first curve loop defines the exterior contour; additional curve loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
 occ.add('addPlaneSurface',doc,oint,ivectorint('wireTags'),iint('tag','-1'))
 
-doc = '''Add a surface filling the curve loops in `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
-occ.add('addSurfaceFilling',doc,oint,iint('wireTag'),iint('tag','-1'))
+doc = '''Add a surface filling the curve loops in `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface. If `pointTags' are provided, force the surface to pass through the given points.'''
+occ.add('addSurfaceFilling',doc,oint,iint('wireTag'),iint('tag','-1'),ivectorint('pointTags','std::vector<int>()',"[]","[]"))
 
 doc = '''Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface loop.'''
 occ.add('addSurfaceLoop',doc,oint,ivectorint('surfaceTags'),iint('tag','-1'))
@@ -723,25 +731,25 @@ onelab.add('run',doc,None,istring('name', '""'),istring('command', '""'))
 
 ################################################################################
 
-onelab = gmsh.add_module('logger','Message logger functions')
+logger = gmsh.add_module('logger','Message logger functions')
 
 doc = '''Write a `message'. `level' can be "info", "warning" or "error".'''
-onelab.add('write',doc,None,istring('message'),istring('level','"info"'))
+logger.add('write',doc,None,istring('message'),istring('level','"info"'))
 
 doc = '''Start logging messages.'''
-onelab.add('start',doc,None)
+logger.add('start',doc,None)
 
 doc = '''Get logged messages.'''
-onelab.add('get',doc,None,ovectorstring('log'))
+logger.add('get',doc,None,ovectorstring('log'))
 
 doc = '''Stop logging messages.'''
-onelab.add('stop',doc,None)
+logger.add('stop',doc,None)
 
 doc = '''Return wall clock time.'''
-onelab.add('time',doc,odouble)
+logger.add('time',doc,odouble)
 
 doc = '''Return CPU time.'''
-onelab.add('cputime',doc,odouble)
+logger.add('cputime',doc,odouble)
 
 ################################################################################
 

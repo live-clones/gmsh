@@ -5,8 +5,8 @@
 //
 // Contributed by Tristan Carrier
 
-#ifndef _YAMAKAWA_H_
-#define _YAMAKAWA_H_
+#ifndef YAMAKAWA_H
+#define YAMAKAWA_H
 
 #include "GRegion.h"
 #include "MVertex.h"
@@ -21,7 +21,7 @@
 
 using namespace std;
 
-extern void export_gregion_mesh(GRegion *gr, const string &filename);
+extern void export_gregion_mesh(GRegion *gr, const std::string &filename);
 
 class Hex {
 private:
@@ -33,9 +33,7 @@ private:
   void set_hash()
   {
     hash = 0.;
-    for(int i = 0; i < 8; ++i) {
-      hash += vertices_[i]->getNum();
-    }
+    for(int i = 0; i < 8; ++i) { hash += vertices_[i]->getNum(); }
   }
   void compute_quality()
   {
@@ -73,9 +71,7 @@ public:
   double get_quality() const { return quality; }
   MVertex *getVertex(unsigned int i) const
   {
-    if(i < 8) {
-      return vertices_[i];
-    }
+    if(i < 8) { return vertices_[i]; }
     else {
       cout << "Hex: unknown vertex number " << i << endl;
       throw;
@@ -87,36 +83,28 @@ public:
   bool hasVertex(MVertex *v) const
   {
     for(int i = 0; i < 8; i++) {
-      if(getVertex(i) == v) {
-        return true;
-      }
+      if(getVertex(i) == v) { return true; }
     }
     return false;
   }
   bool same_vertices(Hex *h) const
   {
     for(int i = 0; i < 8; i++) {
-      if(!(h->hasVertex(getVertex(i)))) {
-        return false;
-      }
+      if(!(h->hasVertex(getVertex(i)))) { return false; }
     }
     return true;
   }
   int vertex_index(MVertex *v) const
   {
     for(unsigned int i = 0; i < 8; ++i) {
-      if(vertices_[i] == v) {
-        return i;
-      }
+      if(vertices_[i] == v) { return i; }
     }
     return -1;
   }
   bool contains(MVertex *v) const { return vertex_index(v) != -1; }
   unsigned long long get_hash()
   {
-    if(hash == 0. && vertices_[0] != NULL) {
-      set_hash();
-    }
+    if(hash == 0. && vertices_[0] != NULL) { set_hash(); }
     return hash;
   }
   bool operator<(const Hex &hex) const
@@ -371,9 +359,7 @@ private:
         MVertex *getVertex = tet->getVertex(j);
         std::map<MVertex *, std::set<MElement *> >::iterator it =
           vertex_to_elements_.find(getVertex);
-        if(it != vertex_to_elements_.end()) {
-          it->second.insert(tet);
-        }
+        if(it != vertex_to_elements_.end()) { it->second.insert(tet); }
         else {
           std::set<MElement *> bin;
           bin.insert(tet);
@@ -581,7 +567,7 @@ public:
   typedef std::map<int, T> ranking_data;
 
   typedef void (*ptrfunction_export)(cliques_compatibility_graph<T> &, int,
-                                     string);
+                                     const std::string &);
 
   cliques_compatibility_graph(graph &_g,
                               const map<T, std::vector<double> > &_hex_ranks,
@@ -648,7 +634,7 @@ public:
   typedef multimap<hash_key, T> graph_data;
   typedef multimap<hash_key, pair<T, graph_data> > graph;
   typedef void (*ptrfunction_export)(cliques_compatibility_graph<T> &, int,
-                                     string);
+                                     const std::string &);
 
   cliques_losses_graph(graph &_g,
                        const map<T, std::vector<double> > &_hex_ranks,
@@ -855,11 +841,11 @@ public:
   virtual void buildGraphOnly(GRegion *, unsigned int max_nb_cliques,
                               string filename = string());
   virtual void execute_blossom(unsigned int max_nb_cliques,
-                               string filename = string());
+                               const std::string &filename = string());
   // What is this function supposed to do?
   // Right now it throws at the first line. JP
   virtual void execute_blossom(GRegion *, unsigned int max_nb_cliques,
-                               string filename = string());
+                               const std::string &filename = "mygraph.dot");
   virtual void createBlossomInfo();
   void createBlossomInfo(GRegion *gr);
 

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MIN_MAX_H_
-#define _MIN_MAX_H_
+#ifndef MIN_MAX_H
+#define MIN_MAX_H
 
 #include "Plugin.h"
 

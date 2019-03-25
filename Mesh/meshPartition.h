@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MESH_PARTITION_H_
-#define _MESH_PARTITION_H_
+#ifndef MESH_PARTITION_H
+#define MESH_PARTITION_H
 
 class GModel;
 class MElement;

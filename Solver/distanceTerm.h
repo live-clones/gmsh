@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _DISTANCE_TERM_H_
-#define _DISTANCE_TERM_H_
+#ifndef DISTANCE_TERM_H
+#define DISTANCE_TERM_H
 
 #include "helmholtzTerm.h"
 

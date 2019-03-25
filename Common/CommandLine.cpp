@@ -40,7 +40,7 @@
 #endif
 
 #if defined(HAVE_MED)
-#include "med.h"
+#include <med.h>
 #endif
 
 #if defined(HAVE_POST)

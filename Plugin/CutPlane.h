@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CUT_PLANE_H_
-#define _CUT_PLANE_H_
+#ifndef CUT_PLANE_H
+#define CUT_PLANE_H
 
 #include "Levelset.h"
 

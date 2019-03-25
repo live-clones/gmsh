@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CARTESIAN_H_
-#define _CARTESIAN_H_
+#ifndef CARTESIAN_H
+#define CARTESIAN_H
 
 #include <set>
 #include <map>
@@ -33,16 +33,16 @@
 template <class scalar> class cartesianBox {
 private:
   // number of subdivisions along the xi-, eta- and zeta-axis
-  int _Nxi, _Neta, _Nzeta;
+  int _nxi, _neta, _nzeta;
   // origin of the grid and spacing along xi, eta and zeta
-  double _X0, _Y0, _Z0, _dxi, _deta, _dzeta;
+  double _x0, _y0, _z0, _dxi, _deta, _dzeta;
   // xi-, eta- and zeta-axis directions
   SVector3 _xiAxis, _etaAxis, _zetaAxis;
   // set of active cells; the value stored for cell (i,j,k) is the
-  // linear index (i + _Nxi * j + _Nxi *_Neta * k)
+  // linear index (i + _nxi * j + _nxi *_neta * k)
   std::set<int> _activeCells;
   // map of stored nodal values, indexed by the linear index (i +
-  // (_Nxi+1) * j + (_Nxi+1) * (_Neta+1) * k). Along with the value is
+  // (_nxi+1) * j + (_nxi+1) * (_neta+1) * k). Along with the value is
   // stored a node tag (used for global numbering of the nodes across
   // the grid levels)
   typename std::map<int, std::pair<scalar, int> > _nodalValues;
@@ -130,7 +130,7 @@ public:
   cartesianBox(double X0, double Y0, double Z0, const SVector3 &dxi,
                const SVector3 &deta, const SVector3 &dzeta, int Nxi, int Neta,
                int Nzeta, int level = 1)
-    : _Nxi(Nxi), _Neta(Neta), _Nzeta(Nzeta), _X0(X0), _Y0(Y0), _Z0(Z0),
+    : _nxi(Nxi), _neta(Neta), _nzeta(Nzeta), _x0(X0), _y0(Y0), _z0(Z0),
       _dxi(norm(dxi)), _deta(norm(deta)), _dzeta(norm(dzeta)), _xiAxis(dxi),
       _etaAxis(deta), _zetaAxis(dzeta), _level(level), _childBox(0)
   {
@@ -142,9 +142,9 @@ public:
         X0, Y0, Z0, dxi, deta, dzeta, 2 * Nxi, 2 * Neta, 2 * Nzeta, level - 1);
   }
   double getLC() { return sqrt(_dxi * _dxi + _deta * _deta + _dzeta * _dzeta); }
-  int getNxi() { return _Nxi; }
-  int getNeta() { return _Neta; }
-  int getNzeta() { return _Nzeta; }
+  int getNxi() { return _nxi; }
+  int getNeta() { return _neta; }
+  int getNzeta() { return _nzeta; }
   cartesianBox<scalar> *getChildBox() { return _childBox; }
   int getLevel() { return _level; }
   typedef std::set<int>::const_iterator cellIter;
@@ -173,7 +173,7 @@ public:
   }
   double getValueContainingPoint(double x, double y, double z)
   {
-    SVector3 DP(x - _X0, y - _Y0, z - _Z0);
+    SVector3 DP(x - _x0, y - _y0, z - _z0);
 
     int t = getCellContainingPoint(x, y, z);
     int i, j, k;
@@ -257,30 +257,30 @@ public:
   {
     // P = P_0 + xi * _vdx + eta * _vdy + zeta *vdz
     // DP = P-P_0 * _vdx = xi
-    SVector3 DP(x - _X0, y - _Y0, z - _Z0);
+    SVector3 DP(x - _x0, y - _y0, z - _z0);
     double xi = dot(DP, _xiAxis);
     double eta = dot(DP, _etaAxis);
     double zeta = dot(DP, _zetaAxis);
-    int i = xi / _dxi * _Nxi;
-    int j = eta / _deta * _Neta;
-    int k = zeta / _dzeta * _Nzeta;
+    int i = xi / _dxi * _nxi;
+    int j = eta / _deta * _neta;
+    int k = zeta / _dzeta * _nzeta;
     if(i < 0) i = 0;
-    if(i >= _Nxi) i = _Nxi - 1;
+    if(i >= _nxi) i = _nxi - 1;
     if(j < 0) j = 0;
-    if(j >= _Neta) j = _Neta - 1;
+    if(j >= _neta) j = _neta - 1;
     if(k < 0) k = 0;
-    if(k >= _Nzeta) k = _Nzeta - 1;
+    if(k >= _nzeta) k = _nzeta - 1;
     return getCellIndex(i, j, k);
   }
   SPoint3 getNodeCoordinates(int t) const
   {
     int i, j, k;
     getNodeIJK(t, i, j, k);
-    const double xi = i * _dxi / _Nxi;
-    const double eta = j * _deta / _Neta;
-    const double zeta = k * _dzeta / _Nzeta;
+    const double xi = i * _dxi / _nxi;
+    const double eta = j * _deta / _neta;
+    const double zeta = k * _dzeta / _nzeta;
     SVector3 D = xi * _xiAxis + eta * _etaAxis + zeta * _zetaAxis;
-    return SPoint3(_X0 + D.x(), _Y0 + D.y(), _Z0 + D.z());
+    return SPoint3(_x0 + D.x(), _y0 + D.y(), _z0 + D.z());
   }
   void insertActiveCell(int t) { _activeCells.insert(t); }
   void eraseActiveCell(int t) { _activeCells.erase(t); }
@@ -290,11 +290,11 @@ public:
   }
   int getCellIndex(int i, int j, int k) const
   {
-    return i + _Nxi * j + _Nxi * _Neta * k;
+    return i + _nxi * j + _nxi * _neta * k;
   }
   int getNodeIndex(int i, int j, int k) const
   {
-    return i + (_Nxi + 1) * j + (_Nxi + 1) * (_Neta + 1) * k;
+    return i + (_nxi + 1) * j + (_nxi + 1) * (_neta + 1) * k;
   }
   int getNodeTag(int index)
   {
@@ -306,15 +306,15 @@ public:
   }
   void getCellIJK(int index, int &i, int &j, int &k) const
   {
-    k = index / (_Nxi * _Neta);
-    j = (index - k * (_Nxi * _Neta)) / _Nxi;
-    i = (index - k * (_Nxi * _Neta) - j * _Nxi);
+    k = index / (_nxi * _neta);
+    j = (index - k * (_nxi * _neta)) / _nxi;
+    i = (index - k * (_nxi * _neta) - j * _nxi);
   }
   void getNodeIJK(int index, int &i, int &j, int &k) const
   {
-    k = index / ((_Nxi + 1) * (_Neta + 1));
-    j = (index - k * ((_Nxi + 1) * (_Neta + 1))) / (_Nxi + 1);
-    i = (index - k * ((_Nxi + 1) * (_Neta + 1)) - j * (_Nxi + 1));
+    k = index / ((_nxi + 1) * (_neta + 1));
+    j = (index - k * ((_nxi + 1) * (_neta + 1))) / (_nxi + 1);
+    i = (index - k * ((_nxi + 1) * (_neta + 1)) - j * (_nxi + 1));
   }
   void createNodalValues()
   {

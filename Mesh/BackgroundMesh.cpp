@@ -23,27 +23,26 @@
 #if defined(HAVE_SOLVER)
 #include "dofManager.h"
 #include "laplaceTerm.h"
-#include "linearSystemGMM.h"
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
 #endif
 
 #if defined(HAVE_ANN)
-static const int _NBANN = 2;
+static const int NBANN = 2;
 #endif
 
-static const int _MAX_THREADS = 256;
+static const int MAX_THREADS = 256;
 
 std::vector<backgroundMesh *> backgroundMesh::_current =
-  std::vector<backgroundMesh *>(_MAX_THREADS, (backgroundMesh *)0);
+  std::vector<backgroundMesh *>(MAX_THREADS, (backgroundMesh *)0);
 
 void backgroundMesh::set(GFace *gf)
 {
   int t = Msg::GetThreadNum();
-  if(t >= _MAX_THREADS){
+  if(t >= MAX_THREADS){
     Msg::Error("Maximum number of threads (%d) exceeded in background mesh",
-               _MAX_THREADS);
+               MAX_THREADS);
     return;
   }
   if(_current[t]) delete _current[t];
@@ -53,7 +52,7 @@ void backgroundMesh::set(GFace *gf)
 void backgroundMesh::setCrossFieldsByDistance(GFace *gf)
 {
   int t = Msg::GetThreadNum();
-  if(t >= _MAX_THREADS) return;
+  if(t >= MAX_THREADS) return;
   if(_current[t]) delete _current[t];
   _current[t] = new backgroundMesh(gf, true);
 }
@@ -61,7 +60,7 @@ void backgroundMesh::setCrossFieldsByDistance(GFace *gf)
 void backgroundMesh::unset()
 {
   int t = Msg::GetThreadNum();
-  if(t >= _MAX_THREADS) return;
+  if(t >= MAX_THREADS) return;
   if(_current[t]) delete _current[t];
   _current[t] = 0;
 }
@@ -69,7 +68,7 @@ void backgroundMesh::unset()
 backgroundMesh *backgroundMesh::current()
 {
   int t = Msg::GetThreadNum();
-  if(t >= _MAX_THREADS) return 0;
+  if(t >= MAX_THREADS) return 0;
   return _current[t];
 }
 
@@ -174,15 +173,12 @@ static void propagateValuesOnFace(GFace *_gf,
                                   bool in_parametric_plane = false)
 {
 #if defined(HAVE_SOLVER)
-  linearSystem<double> *_lsys = 0;
 #if defined(HAVE_PETSC)
-  _lsys = new linearSystemPETSc<double>;
+  linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM)
-  linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
-  _lsysb->setGmres(1);
-  _lsys = _lsysb;
+  linearSystemCSRGmm<double> *_lsys = new linearSystemCSRGmm<double>;
 #else
-  _lsys = new linearSystemFull<double>;
+  linearSystemFull<double> *_lsys = new linearSystemFull<double>;
 #endif
 
   dofManager<double> myAssembler(_lsys);
@@ -338,8 +334,8 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
   }
 
 #if defined(HAVE_ANN)
-  index = new ANNidx[_NBANN];
-  dist = new ANNdist[_NBANN];
+  index = new ANNidx[NBANN];
+  dist = new ANNdist[NBANN];
   angle_nodes = annAllocPts(_cosines4.size(), 3);
   std::map<MVertex *, double>::iterator itp = _cosines4.begin();
   int ind = 0;
@@ -612,14 +608,14 @@ double backgroundMesh::getAngle(double u, double v, double w) const
   if(!_octree) {
 #if defined(HAVE_ANN)
     double angle = 0.;
-    if(angle_kdtree->nPoints() >= _NBANN) {
+    if(angle_kdtree->nPoints() >= NBANN) {
       double pt[3] = {u, v, 0.0};
 #if defined(_OPENMP)
 #pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
 #endif
-      angle_kdtree->annkSearch(pt, _NBANN, index, dist);
+      angle_kdtree->annkSearch(pt, NBANN, index, dist);
       double SINE = 0.0, COSINE = 0.0;
-      for(int i = 0; i < _NBANN; i++) {
+      for(int i = 0; i < NBANN; i++) {
         SINE += _sin[index[i]];
         COSINE += _cos[index[i]];
       }

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _CREATE_TOPOLOGY_FROM_MESH
-#define _CREATE_TOPOLOGY_FROM_MESH
+#ifndef CREATE_TOPOLOGY_FROMMESH
+#define CREATE_TOPOLOGY_FROMMESH
 
 class GModel;
 void createTopologyFromMeshNew(GModel *gm);

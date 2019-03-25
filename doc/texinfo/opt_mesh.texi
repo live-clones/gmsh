@@ -2,12 +2,12 @@
 
 @ftable @code
 @item Mesh.Algorithm
-2D mesh algorithm (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal, 7: BAMG, 8: DelQuad)@*
+2D mesh algorithm (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm3D
-3D mesh algorithm (1: Delaunay, 4: Frontal, 5: Frontal Delaunay, 6: Frontal Hex, 7: MMG3D, 9: R-tree, 10: HXT)@*
+3D mesh algorithm (1: Delaunay, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -112,7 +112,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ElementOrder
-Element order (1: linear elements, N (<6): elements of higher order)@*
+Element order (1: first order elements)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -278,12 +278,17 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFileVersion
 Version of the MSH file format to use@*
-Default value: @code{4}@*
+Default value: @code{4.1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MedFileMinorVersion
 Minor version of the MED file format to use (-1: use minor version of the MED library)@*
 Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MedImportGroupsOfNodes
+Import groups of nodes (0: no; 1: create geometrical point for each node)?@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionHexWeight
@@ -619,6 +624,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.SmoothRatio
 Ratio between mesh sizes at nodes of a same edge (used in BAMG)@*
 Default value: @code{1.8}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.StlOneSolidPerSurface
+Create one solid per surface when exporting STL files? (0: single solid, 1: one solid per face, 2: one solid per physical surface)@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.StlRemoveDuplicateTriangles

@@ -6,8 +6,8 @@
 // Contributor(s):
 //   Gaetan Bricteux
 
-#ifndef _MELEMENTCUT_H_
-#define _MELEMENTCUT_H_
+#ifndef MELEMENTCUT_H
+#define MELEMENTCUT_H
 
 #include "GmshMessage.h"
 #include "MElement.h"

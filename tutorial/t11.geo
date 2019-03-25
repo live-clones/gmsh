@@ -36,9 +36,25 @@ Recombine Surface{100};
 // following paper: J.-F. Remacle, J. Lambrechts, B. Seny, E. Marchandise,
 // A. Johnen and C. Geuzaine, "Blossom-Quad: a non-uniform quadrilateral mesh
 // generator using a minimum cost perfect matching algorithm", International
-// Journal for Numerical Methods in Engineering, 2011 (in press).
+// Journal for Numerical Methods in Engineering 89, pp. 1102-1119, 2012.
 
-// For even better quadrilateral meshes, you can try the experimental "Delaunay
-// for quads" (DelQuad) meshing algorithm: DelQuad is a triangulation algorithm
-// that enables to create right triangles almost everywhere. Uncomment the
-// following line to try DelQuad: Mesh.Algorithm = 8;
+// For even better 2D (planar) quadrilateral meshes, you can try the
+// experimental "Frontal-Delaunay for quads" meshing algorithm, which is a
+// triangulation algorithm that enables to create right triangles almost
+// everywhere: J.-F. Remacle, F. Henrotte, T. Carrier-Baudouin, E. Bechet,
+// E. Marchandise, C. Geuzaine and T. Mouton. A frontal Delaunay quad mesh
+// generator using the L^inf norm. International Journal for Numerical Methods
+// in Engineering, 94, pp. 494-512, 2013. Uncomment the following line to try
+// the Frontal-Delaunay algorithms for quads:
+//
+// Mesh.Algorithm = 8;
+
+// The default recombination algorithm might leave some triangles in the mesh,
+// if recombining all the triangles leads to badly shaped quads. In such cases,
+// to generate full-quad meshes, you can either subdivide the resulting hybrid
+// mesh (with Mesh.SubdivisionAlgorithm = 1), or use the full-quad recombination
+// algorithm, which will automatically perform a coarser mesh followed by
+// recombination, smoothing and subdivision. Uncomment the following line to
+// try the full-quad algorithm:
+//
+// Mesh.RecombinationAlgorithm = 2; // or 3

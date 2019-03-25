@@ -7,8 +7,8 @@
 
 // FIXME: the contents of this file will be removed in a future release of Gmsh.
 
-#ifndef _CGNS_UTILS_H_
-#define _CGNS_UTILS_H_
+#ifndef CGNS_UTILS_H
+#define CGNS_UTILS_H
 
 #include <map>
 #include <vector>

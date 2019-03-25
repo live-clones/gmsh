@@ -3,7 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
-// Contributed by Anthony Royer
+// Contributor(s):
+//   Anthony Royer
 
 #include <cstdio>
 #include <fstream>
@@ -49,17 +50,15 @@ static bool readMSH4Physicals(GModel *const model, FILE *fp,
     }
     if(swap) SwapBytes((char *)&numPhy, sizeof(std::size_t), 1);
 
-    int *phyTags = new int[numPhy];
-    if(fread(phyTags, sizeof(int), numPhy, fp) != numPhy) {
-      delete[] phyTags;
+    std::vector<int> phyTags(numPhy);
+    if(fread(&phyTags[0], sizeof(int), numPhy, fp) != numPhy) {
       return false;
     }
-    if(swap) SwapBytes((char *)phyTags, sizeof(int), numPhy);
+    if(swap) SwapBytes((char *)&phyTags[0], sizeof(int), numPhy);
 
     for(std::size_t i = 0; i < numPhy; i++) {
       entity->addPhysicalEntity(phyTags[i]);
     }
-    delete[] phyTags;
   }
   else {
     sscanf(str, "%lu %[0-9- ]", &numPhy, str);
@@ -97,12 +96,11 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
     }
     if(swap) SwapBytes((char *)&numBrep, sizeof(std::size_t), 1);
 
-    int *brepTags = new int[numBrep];
-    if(fread(brepTags, sizeof(int), numBrep, fp) != numBrep) {
-      delete[] brepTags;
+    std::vector<int> brepTags(numBrep);
+    if(fread(&brepTags[0], sizeof(int), numBrep, fp) != numBrep) {
       return false;
     }
-    if(swap) SwapBytes((char *)brepTags, sizeof(int), numBrep);
+    if(swap) SwapBytes((char *)&brepTags[0], sizeof(int), numBrep);
 
     for(std::size_t i = 0; i < numBrep; i++) {
       GEntity *brep =
@@ -115,7 +113,6 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
       boundingEntities.push_back(brep);
       boundingSign.push_back((std::abs(brepTags[i]) == brepTags[i] ? 1 : -1));
     }
-    delete[] brepTags;
   }
   else {
     sscanf(str, "%lu %[0-9- ]", &numBrep, str);
@@ -303,7 +300,7 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
   if(partition) {
     std::size_t numPartitions = 0;
     std::size_t ghostSize = 0;
-    int *ghostTags = 0;
+    std::vector<int> ghostTags;
 
     if(binary) {
       if(fread(&numPartitions, sizeof(std::size_t), 1, fp) != 1) {
@@ -316,12 +313,11 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
       }
       if(swap) SwapBytes((char *)&ghostSize, sizeof(std::size_t), 1);
       if(ghostSize) {
-        ghostTags = new int[2 * ghostSize];
-        if(fread(ghostTags, sizeof(int), 2 * ghostSize, fp) != 2 * ghostSize) {
-          delete[] ghostTags;
+        ghostTags.resize(2 * ghostSize);
+        if(fread(&ghostTags[0], sizeof(int), 2 * ghostSize, fp) != 2 * ghostSize) {
           return false;
         }
-        if(swap) SwapBytes((char *)ghostTags, sizeof(int), 2 * ghostSize);
+        if(swap) SwapBytes((char *)&ghostTags[0], sizeof(int), 2 * ghostSize);
       }
     }
     else {
@@ -332,10 +328,9 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
         return false;
       }
       if(ghostSize) {
-        ghostTags = new int[2 * ghostSize];
+        ghostTags.resize(2 * ghostSize);
         for(std::size_t i = 0; i < 2 * ghostSize; i += 2) {
           if(fscanf(fp, "%d %d", &ghostTags[i], &ghostTags[i + 1]) != 2) {
-            delete[] ghostTags;
             return false;
           }
         }
@@ -363,10 +358,6 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
       } break;
       default: break;
       }
-    }
-
-    if(ghostTags != 0){
-      delete[] ghostTags;
     }
   }
 
@@ -501,12 +492,13 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
 static std::pair<std::size_t, MVertex *> *
 readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
-              std::size_t &nbrNodes, std::size_t &maxNodeNum, bool swap,
+              std::size_t &totalNumNodes, std::size_t &maxNodeNum, bool swap,
               double version)
 {
   std::size_t numBlock = 0, minTag = 0, maxTag = 0;
-  nbrNodes = 0;
+  totalNumNodes = 0;
   maxNodeNum = 0;
+
   if(binary) {
     std::size_t data[4];
     if(fread(data, sizeof(std::size_t), 4, fp) != 4) {
@@ -514,30 +506,31 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
     }
     if(swap) SwapBytes((char *)data, sizeof(std::size_t), 4);
     numBlock = data[0];
-    nbrNodes = data[1];
+    totalNumNodes = data[1];
     minTag = data[2];
     maxTag = data[3];
   }
   else {
     if(version >= 4.1){
-      if(fscanf(fp, "%lu %lu %lu %lu", &numBlock, &nbrNodes,
+      if(fscanf(fp, "%lu %lu %lu %lu", &numBlock, &totalNumNodes,
                 &minTag, &maxTag) != 4) {
         return 0;
       }
     }
     else{
-      if(fscanf(fp, "%lu %lu", &numBlock, &nbrNodes) != 2) {
+      if(fscanf(fp, "%lu %lu", &numBlock, &totalNumNodes) != 2) {
         return 0;
       }
     }
   }
 
   std::size_t nodeRead = 0;
-  std::size_t minNodeNum = nbrNodes + 1;
-  std::pair<std::size_t, MVertex *> *vertexCache =
-    new std::pair<std::size_t, MVertex *>[nbrNodes];
+  std::size_t minNodeNum = std::numeric_limits<std::size_t>::max();
 
-  Msg::Info("%lu nodes", nbrNodes);
+  std::pair<std::size_t, MVertex *> *vertexCache =
+    new std::pair<std::size_t, MVertex *>[totalNumNodes];
+
+  Msg::Info("%lu nodes", totalNumNodes);
   for(std::size_t i = 0; i < numBlock; i++) {
     int parametric = 0;
     int entityTag = 0, entityDim = 0;
@@ -608,173 +601,131 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         entity = gr;
         break;
       }
+      default: {
+        Msg::Error("Invalid dimension %d to create discrete entity",
+                   entityDim);
+        delete [] vertexCache;
+        return 0;
+      }
       }
     }
 
-    for(std::size_t j = 0; j < numNodes; j++) {
-      double xyz[3];
-      std::size_t nodeTag = 0;
-      MVertex *vertex = 0;
+    std::size_t n = 3;
+    if(parametric){
+      if(entityDim == 1) n = 4;
+      else if(entityDim == 2) n = 5;
+    }
 
-      if(parametric) {
-        double u = 0., v = 0.;
-
-        switch(entityDim) {
-        case 0:
-          if(binary) {
-            if(fread(&nodeTag, sizeof(std::size_t), 1, fp) != 1) {
-              delete [] vertexCache;
-              return 0;
-            }
-            if(swap) SwapBytes((char *)&nodeTag, sizeof(std::size_t), 1);
-
-            if(fread(xyz, sizeof(double), 3, fp) != 3) {
-              delete [] vertexCache;
-              return 0;
-            }
-            if(swap) SwapBytes((char *)xyz, sizeof(double), 3);
+    std::vector<std::size_t> tags(numNodes);
+    if(binary){
+      if(fread(&tags[0], sizeof(std::size_t), numNodes, fp) != numNodes) {
+        delete [] vertexCache;
+        return 0;
+      }
+      if(swap) SwapBytes((char *)&tags[0], sizeof(std::size_t), numNodes);
+      std::vector<double> coord(n * numNodes);
+      if(fread(&coord[0], sizeof(double), n * numNodes, fp) != n * numNodes) {
+        delete [] vertexCache;
+        return 0;
+      }
+      if(swap) SwapBytes((char *)&coord[0], sizeof(double), n * numNodes);
+      std::size_t k = 0;
+      for(std::size_t j = 0; j < numNodes; j++) {
+        MVertex *mv = 0;
+        std::size_t tagNode = tags[j];
+        if(n == 5){
+          mv = new MFaceVertex(coord[k], coord[k + 1], coord[k + 2], entity,
+                               coord[k + 3], coord[k + 4], tagNode);
+        }
+        else if(n == 4){
+          mv = new MEdgeVertex(coord[k], coord[k + 1], coord[k + 2], entity,
+                               coord[k + 3], tagNode);
+        }
+        else{
+          mv = new MVertex(coord[k], coord[k + 1], coord[k + 2], entity,
+                           tagNode);
+        }
+        k += n;
+        entity->addMeshVertex(mv);
+        mv->setEntity(entity);
+        minNodeNum = std::min(minNodeNum, tagNode);
+        maxNodeNum = std::max(maxNodeNum, tagNode);
+        vertexCache[nodeRead] = std::pair<std::size_t, MVertex *>(tagNode, mv);
+        nodeRead++;
+        if(totalNumNodes > 100000)
+          Msg::ProgressMeter(nodeRead, totalNumNodes, true, "Reading nodes");
+      }
+    }
+    else{
+      if(version >= 4.1){
+        for(std::size_t j = 0; j < numNodes; j++){
+          if(fscanf(fp, "%lu", &tags[j]) != 1){
+            delete [] vertexCache;
+            return 0;
           }
-          else {
-            if(fscanf(fp, "%lu %lf %lf %lf", &nodeTag, &xyz[0], &xyz[1],
-                      &xyz[2]) != 4) {
-              delete [] vertexCache;
-              return 0;
-            }
-          }
-          vertex = new MVertex(xyz[0], xyz[1], xyz[2], entity, nodeTag);
-          break;
-        case 1:
-          if(binary) {
-            if(fread(&nodeTag, sizeof(std::size_t), 1, fp) != 1) {
-              delete [] vertexCache;
-              return 0;
-            }
-            if(swap) SwapBytes((char *)&nodeTag, sizeof(std::size_t), 1);
-
-            if(fread(xyz, sizeof(double), 3, fp) != 3) {
-              delete [] vertexCache;
-              return 0;
-            }
-            if(swap) SwapBytes((char *)xyz, sizeof(double), 3);
-
-            if(fread(&u, sizeof(double), 1, fp) != 1) {
-              delete [] vertexCache;
-              return 0;
-            }
-            if(swap) SwapBytes((char *)&u, sizeof(double), 1);
-          }
-          else {
-            if(fscanf(fp, "%lu %lf %lf %lf %lf", &nodeTag, &xyz[0], &xyz[1],
-                      &xyz[2], &u) != 5) {
-              delete [] vertexCache;
-              return 0;
-            }
-          }
-          vertex =
-            new MEdgeVertex(xyz[0], xyz[1], xyz[2], entity, u, nodeTag);
-          break;
-        case 2:
-          if(binary) {
-            if(fread(&nodeTag, sizeof(std::size_t), 1, fp) != 1) {
-              delete [] vertexCache;
-              return 0;
-            }
-            if(swap) SwapBytes((char *)&nodeTag, sizeof(std::size_t), 1);
-
-            if(fread(xyz, sizeof(double), 3, fp) != 3) {
-              delete [] vertexCache;
-              return 0;
-            }
-            if(swap) SwapBytes((char *)xyz, sizeof(double), 3);
-
-            double uv[2];
-            if(fread(uv, sizeof(double), 2, fp) != 2) {
-              delete [] vertexCache;
-              return 0;
-            }
-            if(swap) SwapBytes((char *)uv, sizeof(double), 2);
-
-            u = uv[0];
-            v = uv[1];
-          }
-          else {
-            if(fscanf(fp, "%lu %lf %lf %lf %lf %lf", &nodeTag, &xyz[0], &xyz[1],
-                      &xyz[2], &u, &v) != 6) {
-              delete [] vertexCache;
-              return 0;
-            }
-          }
-          vertex =
-            new MFaceVertex(xyz[0], xyz[1], xyz[2], entity, u, v, nodeTag);
-          break;
-        case 3:
-          if(binary) {
-            if(fread(&nodeTag, sizeof(std::size_t), 1, fp) != 1) {
-              delete [] vertexCache;
-              return 0;
-            }
-            if(swap) SwapBytes((char *)&nodeTag, sizeof(std::size_t), 1);
-
-            if(fread(xyz, sizeof(double), 3, fp) != 3) {
-              delete [] vertexCache;
-              return 0;
-            }
-            if(swap) SwapBytes((char *)xyz, sizeof(double), 3);
-          }
-          else {
-            if(fscanf(fp, "%lu %lf %lf %lf", &nodeTag, &xyz[0], &xyz[1],
-                      &xyz[2]) != 4) {
-              delete [] vertexCache;
-              return 0;
-            }
-          }
-          vertex = new MVertex(xyz[0], xyz[1], xyz[2], entity, nodeTag);
-          break;
-        default: delete [] vertexCache; return 0; break;
         }
       }
-      else {
-        if(binary) {
-          if(fread(&nodeTag, sizeof(std::size_t), 1, fp) != 1) {
-            delete [] vertexCache;
-            return 0;
-          }
-          if(swap) SwapBytes((char *)&nodeTag, sizeof(std::size_t), 1);
-
-          if(fread(xyz, sizeof(double), 3, fp) != 3) {
-            delete [] vertexCache;
-            return 0;
-          }
-          if(swap) SwapBytes((char *)xyz, sizeof(double), 3);
+      for(std::size_t j = 0; j < numNodes; j++) {
+        std::size_t tagNode = 0;
+        if(version >= 4.1){
+          tagNode = tags[j];
         }
-        else {
-          if(fscanf(fp, "%lu %lf %lf %lf", &nodeTag, &xyz[0], &xyz[1],
-                    &xyz[2]) != 4) {
+        else{
+          if(fscanf(fp, "%lu", &tagNode) != 1){
             delete [] vertexCache;
             return 0;
           }
         }
-        vertex = new MVertex(xyz[0], xyz[1], xyz[2], entity, nodeTag);
+        MVertex *mv = 0;
+        if(n == 5){
+          double x, y, z, u, v;
+          if(fscanf(fp, "%lf %lf %lf %lf %lf", &x, &y, &z, &u, &v) != 5){
+            delete [] vertexCache;
+            return 0;
+          }
+          mv = new MFaceVertex(x, y, z, entity, u, v, tagNode);
+        }
+        else if(n == 4){
+          double x, y, z, u;
+          if(fscanf(fp, "%lf %lf %lf %lf", &x, &y, &z, &u) != 4){
+            delete [] vertexCache;
+            return 0;
+          }
+          mv = new MEdgeVertex(x, y, z, entity, u, tagNode);
+        }
+        else{
+          double x, y, z;
+          if(fscanf(fp, "%lf %lf %lf", &x, &y, &z) != 3){
+            delete [] vertexCache;
+            return 0;
+          }
+          mv = new MVertex(x, y, z, entity, tagNode);
+        }
+        entity->addMeshVertex(mv);
+        mv->setEntity(entity);
+        minNodeNum = std::min(minNodeNum, tagNode);
+        maxNodeNum = std::max(maxNodeNum, tagNode);
+        vertexCache[nodeRead] = std::pair<std::size_t, MVertex *>(tagNode, mv);
+        nodeRead++;
+        if(totalNumNodes > 100000)
+          Msg::ProgressMeter(nodeRead, totalNumNodes, true, "Reading nodes");
       }
-      entity->addMeshVertex(vertex);
-      vertex->setEntity(entity);
-      minNodeNum = std::min(minNodeNum, nodeTag);
-      maxNodeNum = std::max(maxNodeNum, nodeTag);
-
-      vertexCache[nodeRead] = std::pair<std::size_t, MVertex *>(nodeTag, vertex);
-      nodeRead++;
-
-      if(nbrNodes > 100000)
-        Msg::ProgressMeter(nodeRead, nbrNodes, true, "Reading nodes");
     }
   }
+
+  if(version >= 4.1){ // consistency check
+    if(minTag != minNodeNum || maxTag != maxNodeNum)
+      Msg::Warning("Min/Max node tags reported in section header are wrong: "
+                   "(%d/%d) != (%d/%d)", minTag, maxTag, minNodeNum, maxNodeNum);
+  }
+
   // if the vertex numbering is (fairly) dense, we fill the vector cache,
   // otherwise we fill the map cache
-  if(minNodeNum == 1 && maxNodeNum == nbrNodes) {
+  if(minNodeNum == 1 && maxNodeNum == totalNumNodes) {
     Msg::Debug("Vertex numbering is dense");
     dense = true;
   }
-  else if(maxNodeNum < 10 * nbrNodes) { //
+  else if(maxNodeNum < 10 * totalNumNodes) {
     Msg::Debug(
       "Vertex numbering is fairly dense - still caching with a vector");
     dense = true;
@@ -789,13 +740,14 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
 
 static std::pair<std::size_t, MElement *> *
 readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
-                 std::size_t &nbrElements, std::size_t &maxElementNum,
+                 std::size_t &totalNumElements, std::size_t &maxElementNum,
                  bool swap, double version)
 {
   char str[1024];
   std::size_t numBlock = 0, minTag = 0, maxTag = 0;
-  nbrElements = 0;
+  totalNumElements = 0;
   maxElementNum = 0;
+
   if(binary) {
     std::size_t data[4];
     if(fread(data, sizeof(std::size_t), 4, fp) != 4) {
@@ -803,29 +755,30 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
     }
     if(swap) SwapBytes((char *)data, sizeof(std::size_t), 4);
     numBlock = data[0];
-    nbrElements = data[1];
+    totalNumElements = data[1];
     minTag = data[2];
     maxTag = data[3];
   }
   else {
     if(version >= 4.1){
-      if(fscanf(fp, "%lu %lu %lu %lu", &numBlock, &nbrElements,
+      if(fscanf(fp, "%lu %lu %lu %lu", &numBlock, &totalNumElements,
                 &minTag, &maxTag) != 4) {
         return 0;
       }
     }
     else{
-      if(fscanf(fp, "%lu %lu", &numBlock, &nbrElements) != 2) {
+      if(fscanf(fp, "%lu %lu", &numBlock, &totalNumElements) != 2) {
         return 0;
       }
     }
   }
 
   std::size_t elementRead = 0;
-  std::size_t minElementNum = nbrElements + 1;
+  std::size_t minElementNum = std::numeric_limits<std::size_t>::max();
+
   std::pair<std::size_t, MElement *> *elementCache =
-    new std::pair<std::size_t, MElement *>[nbrElements];
-  Msg::Info("%lu elements", nbrElements);
+    new std::pair<std::size_t, MElement *>[totalNumElements];
+  Msg::Info("%lu elements", totalNumElements);
   for(std::size_t i = 0; i < numBlock; i++) {
     int entityTag = 0, entityDim = 0, elmType = 0;
     std::size_t numElements = 0;
@@ -880,26 +833,24 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
       static_cast<ghostRegion *>(entity)->haveMesh(true);
     }
 
-    int nbrVertices = MElement::getInfoMSH(elmType);
+    const int numVertPerElm = MElement::getInfoMSH(elmType);
     if(binary) {
-      std::size_t *data = new std::size_t[numElements * (nbrVertices + 1)];
-      if(fread(data, sizeof(std::size_t), numElements * (nbrVertices + 1), fp) !=
-         numElements * (nbrVertices + 1)) {
+      std::size_t n = 1 + numVertPerElm;
+      std::vector<std::size_t> data(numElements * n);
+      if(fread(&data[0], sizeof(std::size_t), numElements * n, fp) !=
+         numElements * n) {
         delete[] elementCache;
-        delete[] data;
         return 0;
       }
       if(swap)
-        SwapBytes((char *)data, sizeof(std::size_t),
-                  numElements * (nbrVertices + 1));
+        SwapBytes((char *)&data[0], sizeof(std::size_t), numElements * n);
 
-      std::vector<MVertex *> vertices(nbrVertices, (MVertex *)0);
-      for(std::size_t j = 0; j < numElements * (nbrVertices + 1);
-          j += (nbrVertices + 1)) {
-        for(int k = 0; k < nbrVertices; k++) {
+      std::vector<MVertex *> vertices(numVertPerElm, (MVertex *)0);
+      for(std::size_t j = 0; j < numElements * n; j += n) {
+        for(int k = 0; k < numVertPerElm; k++) {
           vertices[k] = model->getMeshVertexByTag(data[j + k + 1]);
           if(!vertices[k]) {
-            Msg::Error("Unknown vertex %lu in element %lu", data[j + k + 1],
+            Msg::Error("Unknown node %lu in element %lu", data[j + k + 1],
                        data[j]);
             delete[] elementCache;
             return 0;
@@ -909,7 +860,12 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         MElementFactory elementFactory;
         MElement *element = elementFactory.create(elmType, vertices, data[j], 0,
                                                   false, 0, 0, 0, 0);
-
+        if(!element){
+          Msg::Error("Could not create element %lu of type %d", data[j],
+                     elmType);
+          delete[] elementCache;
+          return 0;
+        }
         if(entity->geomType() != GEntity::GhostCurve &&
            entity->geomType() != GEntity::GhostSurface &&
            entity->geomType() != GEntity::GhostVolume) {
@@ -923,12 +879,10 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
           std::pair<std::size_t, MElement *>(data[j], element);
         elementRead++;
 
-        if(nbrElements > 100000)
-          Msg::ProgressMeter(elementRead, nbrElements, true,
+        if(totalNumElements > 100000)
+          Msg::ProgressMeter(elementRead, totalNumElements, true,
                              "Reading elements");
       }
-
-      delete[] data;
     }
     else {
       for(std::size_t j = 0; j < numElements; j++) {
@@ -942,11 +896,11 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
           return 0;
         }
 
-        std::vector<MVertex *> vertices(nbrVertices, (MVertex *)0);
+        std::vector<MVertex *> vertices(numVertPerElm, (MVertex *)0);
 
-        for(int k = 0; k < nbrVertices; k++) {
+        for(int k = 0; k < numVertPerElm; k++) {
           std::size_t vertexTag = 0;
-          if(k != nbrVertices - 1) {
+          if(k != numVertPerElm - 1) {
             if(sscanf(str, "%lu %[0-9- ]", &vertexTag, str) != 2) {
               delete[] elementCache;
               return 0;
@@ -961,7 +915,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
 
           vertices[k] = model->getMeshVertexByTag(vertexTag);
           if(!vertices[k]) {
-            Msg::Error("Unknown vertex %lu in element %lu", vertexTag, elmTag);
+            Msg::Error("Unknown node %lu in element %lu", vertexTag, elmTag);
             delete[] elementCache;
             return 0;
           }
@@ -970,7 +924,12 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         MElementFactory elementFactory;
         MElement *element = elementFactory.create(elmType, vertices, elmTag, 0,
                                                   false, 0, 0, 0, 0);
-
+        if(!element){
+          Msg::Error("Could not create element %lu of type %d", elmTag,
+                     elmType);
+          delete[] elementCache;
+          return 0;
+        }
         if(entity->geomType() != GEntity::GhostCurve &&
            entity->geomType() != GEntity::GhostSurface &&
            entity->geomType() != GEntity::GhostVolume) {
@@ -984,19 +943,19 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
           std::pair<std::size_t, MElement *>(elmTag, element);
         elementRead++;
 
-        if(nbrElements > 100000)
-          Msg::ProgressMeter(elementRead, nbrElements, true,
+        if(totalNumElements > 100000)
+          Msg::ProgressMeter(elementRead, totalNumElements, true,
                              "Reading elements");
       }
     }
   }
   // if the vertex numbering is dense, we fill the vector cache, otherwise we
   // fill the map cache
-  if(minElementNum == 1 && maxElementNum == nbrElements) {
+  if(minElementNum == 1 && maxElementNum == totalNumElements) {
     Msg::Debug("Element numbering is dense");
     dense = true;
   }
-  else if(maxElementNum < 10 * nbrElements) {
+  else if(maxElementNum < 10 * totalNumElements) {
     Msg::Debug(
       "Element numbering is fairly dense - still caching with a vector");
     dense = true;
@@ -1061,14 +1020,14 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
     }
 
     if(!slave) {
-      Msg::Error("Could not find periodic slave entity %d of dimension %d",
+      Msg::Info("Could not find periodic entity %d of dimension %d",
                  slaveTag, slaveDim);
-      return false;
+      continue;
     }
     if(!master) {
-      Msg::Error("Could not find periodic master entity %d of dimension %d",
+      Msg::Info("Could not find periodic source entity %d of dimension %d",
                  masterTag, slaveDim);
-      return false;
+      continue;
     }
 
     std::size_t correspondingVertexSize = 0;
@@ -1168,14 +1127,17 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
       MVertex *mv1 = model->getMeshVertexByTag(v1);
       MVertex *mv2 = model->getMeshVertexByTag(v2);
 
-      if(!mv1) {
-        Msg::Error("Could not find periodic node %d", v1);
+      if(mv1 && mv2){
+        slave->correspondingVertices[mv1] = mv2;
       }
-      if(!mv2) {
-        Msg::Error("Could not find periodic node %d", v2);
+      else{
+        if(!mv1) {
+          Msg::Info("Could not find periodic node %d", v1);
+        }
+        else if(!mv2) {
+          Msg::Info("Could not find periodic node %d", v2);
+        }
       }
-
-      slave->correspondingVertices[mv1] = mv2;
     }
   }
   return true;
@@ -1410,9 +1372,9 @@ int GModel::_readMSH4(const std::string &name)
       _vertexMapCache.clear();
       Msg::ResetProgressMeter();
       bool dense = false;
-      std::size_t nbrNodes = 0, maxNodeNum;
+      std::size_t totalNumNodes = 0, maxNodeNum;
       std::pair<std::size_t, MVertex *> *vertexCache =
-        readMSH4Nodes(this, fp, binary, dense, nbrNodes, maxNodeNum, swap,
+        readMSH4Nodes(this, fp, binary, dense, totalNumNodes, maxNodeNum, swap,
                       version);
       if(!vertexCache) {
         Msg::Error("Could not read nodes");
@@ -1421,7 +1383,7 @@ int GModel::_readMSH4(const std::string &name)
       }
       if(dense) {
         _vertexVectorCache.resize(maxNodeNum + 1, 0);
-        for(std::size_t i = 0; i < nbrNodes; i++) {
+        for(std::size_t i = 0; i < totalNumNodes; i++) {
           if(!_vertexVectorCache[vertexCache[i].first]) {
             _vertexVectorCache[vertexCache[i].first] = vertexCache[i].second;
           }
@@ -1431,7 +1393,7 @@ int GModel::_readMSH4(const std::string &name)
         }
       }
       else {
-        for(std::size_t i = 0; i < nbrNodes; i++) {
+        for(std::size_t i = 0; i < totalNumNodes; i++) {
           if(_vertexMapCache.count(vertexCache[i].first) == 0) {
             _vertexMapCache[vertexCache[i].first] = vertexCache[i].second;
           }
@@ -1445,9 +1407,9 @@ int GModel::_readMSH4(const std::string &name)
     else if(!strncmp(&str[1], "Elements", 8)) {
       Msg::ResetProgressMeter();
       bool dense = false;
-      std::size_t nbrElements = 0, maxElementNum = 0;
+      std::size_t totalNumElements = 0, maxElementNum = 0;
       std::pair<std::size_t, MElement *> *elementCache = readMSH4Elements
-        (this, fp, binary, dense, nbrElements, maxElementNum, swap, version);
+        (this, fp, binary, dense, totalNumElements, maxElementNum, swap, version);
       if(!elementCache) {
         Msg::Error("Could not read elements");
         fclose(fp);
@@ -1455,7 +1417,7 @@ int GModel::_readMSH4(const std::string &name)
       }
       if(dense) {
         _elementVectorCache.resize(maxElementNum + 1, (MElement *)0);
-        for(std::size_t i = 0; i < nbrElements; i++) {
+        for(std::size_t i = 0; i < totalNumElements; i++) {
           if(!_elementVectorCache[elementCache[i].first]) {
             _elementVectorCache[elementCache[i].first] = elementCache[i].second;
           }
@@ -1465,7 +1427,7 @@ int GModel::_readMSH4(const std::string &name)
         }
       }
       else {
-        for(std::size_t i = 0; i < nbrElements; i++) {
+        for(std::size_t i = 0; i < totalNumElements; i++) {
           if(_elementMapCache.count(elementCache[i].first) == 0) {
             _elementMapCache[elementCache[i].first] = elementCache[i].second;
           }
@@ -1654,9 +1616,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
       // write the ghostentities' tag
       std::size_t ghostSize = ghost.size();
-      int *tags = 0;
+      std::vector<int> tags;
       if(ghostSize) {
-        tags = new int[2 * ghostSize];
+        tags.resize(2 * ghostSize);
         int index = 0;
         for(std::set<GEntity *, GEntityLessThan>::iterator it = ghost.begin();
             it != ghost.end(); ++it) {
@@ -1676,9 +1638,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         }
       }
       fwrite(&ghostSize, sizeof(std::size_t), 1, fp);
-      if(tags) {
-        fwrite(tags, sizeof(int), 2 * ghostSize, fp);
-        delete[] tags;
+      if(ghostSize) {
+        fwrite(&tags[0], sizeof(int), 2 * ghostSize, fp);
       }
     }
     std::size_t verticesSize = vertices.size();
@@ -1846,9 +1807,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
       // write the ghostentities' tag
       std::size_t ghostSize = ghost.size();
-      int *tags = 0;
+      std::vector<int> tags;
       if(ghostSize) {
-        tags = new int[2 * ghostSize];
+        tags.resize(2 * ghostSize);
         int index = 0;
         for(std::set<GEntity *, GEntityLessThan>::iterator it = ghost.begin();
             it != ghost.end(); ++it) {
@@ -1868,11 +1829,10 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         }
       }
       fprintf(fp, "%lu\n", ghostSize);
-      if(tags) {
+      if(ghostSize) {
         for(std::size_t i = 0; i < 2 * ghostSize; i += 2) {
           fprintf(fp, "%d %d\n", tags[i], tags[i + 1]);
         }
-        delete[] tags;
       }
     }
     fprintf(fp, "%lu %lu %lu %lu\n", vertices.size(), edges.size(),
@@ -2014,6 +1974,79 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       }
       for(std::size_t i = 0; i < tags.size(); i++) fprintf(fp, "%d ", tags[i]);
       fprintf(fp, "\n");
+    }
+  }
+}
+
+static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
+                                 int saveParametric, double scalingFactor,
+                                 double version)
+{
+  if(binary) {
+    int entityDim = ge->dim();
+    int entityTag = ge->tag();
+    std::size_t numVerts = ge->getNumMeshVertices();
+    fwrite(&entityDim, sizeof(int), 1, fp);
+    fwrite(&entityTag, sizeof(int), 1, fp);
+    fwrite(&saveParametric, sizeof(int), 1, fp);
+    fwrite(&numVerts, sizeof(std::size_t), 1, fp);
+  }
+  else {
+    fprintf(fp, "%d %d %d %lu\n",
+            (version >= 4.1) ? ge->dim() : ge->tag(),
+            (version >= 4.1) ? ge->tag() : ge->dim(),
+            saveParametric, ge->getNumMeshVertices());
+  }
+
+  std::size_t N = ge->getNumMeshVertices();
+  std::size_t n = 3;
+  if(saveParametric){
+    if(ge->dim() == 1) n = 4;
+    else if(ge->dim() == 2) n = 5;
+  }
+
+  if(binary) {
+    std::vector<size_t> tags(N);
+    for(std::size_t i = 0; i < N; i++)
+      tags[i] = ge->getMeshVertex(i)->getNum();
+    fwrite(&tags[0], sizeof(std::size_t), N, fp);
+    std::vector<double> coord(n * N);
+    std::size_t j = 0;
+    for(std::size_t i = 0; i < N; i++){
+      MVertex *mv = ge->getMeshVertex(i);
+      coord[j++] = mv->x() * scalingFactor;
+      coord[j++] = mv->y() * scalingFactor;
+      coord[j++] = mv->z() * scalingFactor;
+      if(n >= 4) mv->getParameter(0, coord[j++]);
+      if(n == 5) mv->getParameter(1, coord[j++]);
+    }
+    fwrite(&coord[0], sizeof(double), n * N, fp);
+  }
+  else {
+    if(version >= 4.1){
+      for(std::size_t i = 0; i < N; i++)
+        fprintf(fp, "%lu\n", ge->getMeshVertex(i)->getNum());
+    }
+    for(std::size_t i = 0; i < N; i++){
+      MVertex *mv = ge->getMeshVertex(i);
+      double x = mv->x() * scalingFactor;
+      double y = mv->y() * scalingFactor;
+      double z = mv->z() * scalingFactor;
+      if(version < 4.1) fprintf(fp, "%lu ", mv->getNum());
+      if(n == 5){
+        double u, v;
+        mv->getParameter(0, u);
+        mv->getParameter(1, v);
+        fprintf(fp, "%.16g %.16g %.16g %.16g %.16g\n", x, y, z, u, v);
+      }
+      else if(n == 4){
+        double u;
+        mv->getParameter(0, u);
+        fprintf(fp, "%.16g %.16g %.16g %.16g\n", x, y, z, u);
+      }
+      else{
+        fprintf(fp, "%.16g %.16g %.16g\n", x, y, z);
+      }
     }
   }
 }
@@ -2160,40 +2193,13 @@ getAdditionalEntities(std::set<GRegion *, GEntityLessThan> &regions,
   return numVertices;
 }
 
-static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
-                                 int saveParametric, double scalingFactor,
-                                 double version)
+static std::size_t
+getEntitiesForNodes(GModel *const model, bool partitioned, bool saveAll,
+                    std::set<GRegion *, GEntityLessThan> &regions,
+                    std::set<GFace *, GEntityLessThan> &faces,
+                    std::set<GEdge *, GEntityLessThan> &edges,
+                    std::set<GVertex *, GEntityLessThan> &vertices)
 {
-  if(binary) {
-    int entityDim = ge->dim();
-    int entityTag = ge->tag();
-    std::size_t numVerts = ge->getNumMeshVertices();
-    fwrite(&entityDim, sizeof(int), 1, fp);
-    fwrite(&entityTag, sizeof(int), 1, fp);
-    fwrite(&saveParametric, sizeof(int), 1, fp);
-    fwrite(&numVerts, sizeof(std::size_t), 1, fp);
-  }
-  else {
-    fprintf(fp, "%d %d %d %lu\n",
-            (version >= 4.1) ? ge->dim() : ge->tag(),
-            (version >= 4.1) ? ge->tag() : ge->dim(),
-            saveParametric, ge->getNumMeshVertices());
-  }
-
-  for(std::size_t i = 0; i < ge->getNumMeshVertices(); i++)
-    ge->getMeshVertex(i)->writeMSH4(fp, binary, saveParametric,
-                                    scalingFactor);
-}
-
-static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
-                           bool binary, int saveParametric,
-                           double scalingFactor, bool saveAll, double version)
-{
-  std::set<GRegion *, GEntityLessThan> regions;
-  std::set<GFace *, GEntityLessThan> faces;
-  std::set<GEdge *, GEntityLessThan> edges;
-  std::set<GVertex *, GEntityLessThan> vertices;
-
   if(partitioned) {
     for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
         ++it)
@@ -2246,6 +2252,19 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   if(!saveAll && !partitioned) {
     numVertices = getAdditionalEntities(regions, faces, edges, vertices);
   }
+  return numVertices;
+}
+
+static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
+                           bool binary, int saveParametric,
+                           double scalingFactor, bool saveAll, double version)
+{
+  std::set<GRegion *, GEntityLessThan> regions;
+  std::set<GFace *, GEntityLessThan> faces;
+  std::set<GEdge *, GEntityLessThan> edges;
+  std::set<GVertex *, GEntityLessThan> vertices;
+  std::size_t numNodes = getEntitiesForNodes(model, partitioned, saveAll,
+                                             regions, faces, edges, vertices);
 
   std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
   for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it) {
@@ -2277,7 +2296,7 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
     std::size_t numSection =
       vertices.size() + edges.size() + faces.size() + regions.size();
     fwrite(&numSection, sizeof(std::size_t), 1, fp);
-    fwrite(&numVertices, sizeof(std::size_t), 1, fp);
+    fwrite(&numNodes, sizeof(std::size_t), 1, fp);
     fwrite(&minTag, sizeof(std::size_t), 1, fp);
     fwrite(&maxTag, sizeof(std::size_t), 1, fp);
   }
@@ -2285,12 +2304,12 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
     if(version >= 4.1){
       fprintf(fp, "%lu %lu %lu %lu\n",
               vertices.size() + edges.size() + faces.size() + regions.size(),
-              numVertices, minTag, maxTag);
+              numNodes, minTag, maxTag);
     }
     else{
       fprintf(fp, "%lu %lu\n",
               vertices.size() + edges.size() + faces.size() + regions.size(),
-              numVertices);
+              numNodes);
     }
   }
 
@@ -2485,27 +2504,30 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
                 elmType, numElm);
       }
 
+      std::size_t N = it->second.size();
       if(binary) {
-        const int nbrVertices = MElement::getInfoMSH(elmType);
-        std::size_t indexElement = 0;
-        std::size_t *elementData = new std::size_t[it->second.size() *
-                                                   (nbrVertices + 1)];
-        for(std::size_t i = 0; i < it->second.size() * (nbrVertices + 1);
-            i += (nbrVertices + 1)) {
-          elementData[i] = it->second[indexElement]->getNum();
-          for(int j = 0; j < nbrVertices; j++) {
-            elementData[i + 1 + j] =
-              it->second[indexElement]->getVertex(j)->getNum();
+        const int numVertPerElm = MElement::getInfoMSH(elmType);
+        std::size_t n = 1 + numVertPerElm;
+        std::vector<std::size_t> tags(N * n);
+        std::size_t k = 0;
+        for(std::size_t i = 0; i < N; i++){
+          MElement *e = it->second[i];
+          tags[k] = e->getNum();
+          for(int j = 0; j < numVertPerElm; j++) {
+            tags[k + 1 + j] = e->getVertex(j)->getNum();
           }
-          indexElement++;
+          k += n;
         }
-        fwrite(elementData, sizeof(std::size_t),
-               it->second.size() * (nbrVertices + 1), fp);
-        delete[] elementData;
+        fwrite(&tags[0], sizeof(std::size_t), N * n, fp);
       }
       else {
-        for(std::size_t i = 0; i < it->second.size(); i++) {
-          it->second[i]->writeMSH4(fp, binary);
+        for(std::size_t i = 0; i < N; i++) {
+          MElement *e = it->second[i];
+          fprintf(fp, "%lu ", e->getNum());
+          for(std::size_t i = 0; i < e->getNumVertices(); i++) {
+            fprintf(fp, "%lu ", e->getVertex(i)->getNum());
+          }
+          fprintf(fp, "\n");
         }
       }
     }
@@ -2517,6 +2539,14 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
 static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
                                    bool partitioned, bool binary, double version)
 {
+  // To avoid saving correspondances bwteen nodes that are not saved (either in
+  // the same file or not at all, e.g. in the partitioned case, or simply if
+  // some physical entities are not defined), we could only apply the code below
+  // to the entities returned by getEntitiesForNodes().
+
+  // The current choice is to save everything, and not complain if a node is not
+  // found when reading the file. This should be reevaluated at some point.
+
   std::size_t count = 0;
   std::vector<GEntity *> entities;
   model->getEntities(entities);

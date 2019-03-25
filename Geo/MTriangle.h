@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _MTRIANGLE_H_
-#define _MTRIANGLE_H_
+#ifndef MTRIANGLE_H
+#define MTRIANGLE_H
 
 #include "MElement.h"
 

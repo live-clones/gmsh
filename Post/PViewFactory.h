@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _PVIEW_FACTORY_H_
-#define _PVIEW_FACTORY_H_
+#ifndef PVIEW_FACTORY_H
+#define PVIEW_FACTORY_H
 
 // quick hack to have something that we can bind for the summer
 // school...  this class has probably to be removed or rewritten

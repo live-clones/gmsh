@@ -24,8 +24,8 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-#ifndef _MESHQUALITYOPTIMIZER_H_
-#define _MESHQUALITYOPTIMIZER_H_
+#ifndef MESHQUALITYOPTIMIZER_H
+#define MESHQUALITYOPTIMIZER_H
 
 class GModel;
 

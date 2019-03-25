@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _ONELAB_MESSAGE_H_
-#define _ONELAB_MESSAGE_H_
+#ifndef ONELAB_MESSAGE_H
+#define ONELAB_MESSAGE_H
 
 #include <map>
 #include <string>
@@ -14,7 +14,7 @@
 
 class GmshClient;
 
-#ifndef _GMSH_MESSAGE_H_
+#ifndef GMSH_MESSAGE_H
 // the external message handler
 class GmshMessage{
  public:
@@ -56,7 +56,7 @@ class OLMsg {
   static onelab::client *_onelabClient;
   // dictionnary for parameter names
   static std::set<std::string, fullNameLessThan> _fullNameDict;
-  // Gmsh wait function 
+  // Gmsh wait function
   static void (*gui_wait_fct)(double time);
  public:
   OLMsg() {}

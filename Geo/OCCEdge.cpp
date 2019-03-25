@@ -116,11 +116,13 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
     }
 
     if(c2d.IsNull()) {
-      Msg::Error("Reparam on face failed: curve %d is not on surface %d", tag(),
-                 face->tag());
+      Msg::Warning("Curve %d is not on surface %d - computing closest point",
+                   tag(), face->tag());
       const GPoint pt = point(epar);
       SPoint3 sp(pt.x(), pt.y(), pt.z());
-      return face->parFromPoint(sp);
+      double guess[2] = {0, 0};
+      GPoint pp = face->closestPoint(sp, guess);
+      return SPoint2(pp.u(), pp.v());
     }
 
     double u, v;
@@ -153,16 +155,13 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
         dz = p1.z() - p2.z();
         if(sqrt(dx * dx + dy * dy + dz * dz) >
            CTX::instance()->geom.tolerance) {
-          Msg::Error("Closest Point was inaccurate for curve %d on surface %d "
-                     "at point %g",
-                     tag(), face->tag(), epar);
-          Msg::Error("On the face %d local (%g %g) global (%g %g %g)",
-                     face->tag(), u, v, p2.x(), p2.y(), p2.z());
-          Msg::Error("On the edge %d local (%g) global (%g %g %g)", tag(), epar,
-                     p1.x(), p1.y(), p1.z());
+          Msg::Warning("Closest Point was inaccurate for curve %d on surface %d "
+                       "at point %g", tag(), face->tag(), epar);
+          Msg::Warning("On the face %d local (%g %g) global (%g %g %g)",
+                       face->tag(), u, v, p2.x(), p2.y(), p2.z());
+          Msg::Warning("On the edge %d local (%g) global (%g %g %g)", tag(), epar,
+                       p1.x(), p1.y(), p1.z());
         }
-        else
-          Msg::Info("OK");
       }
     }
     return SPoint2(u, v);

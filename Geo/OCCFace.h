@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _OCC_FACE_H_
-#define _OCC_FACE_H_
+#ifndef OCC_FACE_H
+#define OCC_FACE_H
 
 #include "GmshConfig.h"
 #include "GFace.h"

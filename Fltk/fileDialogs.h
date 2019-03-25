@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _FILE_DIALOGS_H_
-#define _FILE_DIALOGS_H_
+#ifndef FILE_DIALOGS_H
+#define FILE_DIALOGS_H
 
 #include <string>
 
@@ -37,6 +37,7 @@ int gl2psFileDialog(const char *filename, const char *title, int format);
 int optionsFileDialog(const char *filename);
 int meshStatFileDialog(const char *filename);
 int mshFileDialog(const char *filename);
+int stlFileDialog(const char *filename);
 void format_cb(Fl_Widget *widget, void *data);
 int unvinpFileDialog(const char *filename, const char *title, int format);
 int keyFileDialog(const char *filename, const char *title, int format);
