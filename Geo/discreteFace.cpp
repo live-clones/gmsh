@@ -279,6 +279,7 @@ double discreteFace::curvatureMax(const SPoint2 &param) const {
 #else
   Msg::Error(
     "Cannot evaluate curvature on discrete surface without HXT");
+  return 0.;
 #endif  
 }
 
@@ -322,6 +323,7 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 #else
   Msg::Error(
     "Cannot evaluate curvature on discrete surface without HXT");
+  return 0.;
 #endif  
 }
 
