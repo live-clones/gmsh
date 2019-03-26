@@ -2633,4 +2633,10 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
   return 0;
 }
 
+int PartitionFace(GFace *gf, int np, int *p){
+  Msg::Error("Gmsh must be compiled with METIS support to partition meshes");
+  return 0;
+}
+
+
 #endif
