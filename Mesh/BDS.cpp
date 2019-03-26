@@ -1363,7 +1363,7 @@ static inline bool getOrderedNeighboringVertices (BDS_Point *p,
     for (size_t i = 0 ; i < ts.size() ; i++){
       BDS_Point *pts[4];
       ts[i]->getNodes(pts);      
-      printf("TR %d : %d %d %d\n",i,pts[0]->iD,pts[1]->iD,pts[2]->iD);
+      //      printf("TR %d : %d %d %d\n",i,pts[0]->iD,pts[1]->iD,pts[2]->iD);
     }
   }
 
@@ -1530,7 +1530,7 @@ static inline void computeSomeKindOfKernel (const BDS_Point *p,
   }
 
 
-  bool changed = false;
+  //  bool changed = false;
   // we should compute the true kernel
   for (size_t i = 0; i<kernel.size();i++){
     SPoint2 p_now = kernel[i];

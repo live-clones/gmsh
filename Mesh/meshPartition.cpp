@@ -2243,7 +2243,7 @@ int PartitionFace(GFace *gf, int np, int *p){
   for (size_t i=0;i<gf->triangles.size();++i){
     for (size_t j=0;j<3;++j){
       int n = gf->triangles[i]->getVertex(j)->getNum();
-      if (n > m.getMaxVertexNumber())m.setMaxVertexNumber(n);
+      if (n > (int) m.getMaxVertexNumber())m.setMaxVertexNumber(n);
     }
   }
   Graph graph(&m);
