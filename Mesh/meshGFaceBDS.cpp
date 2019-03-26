@@ -547,6 +547,7 @@ void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q, double thr
   //  printf("%d %d %d smooth \n",__COUNT1, __COUNT2, __COUNT3);
 }
 
+/*
 static void CHECK_STRANGE(const char *c, BDS_Mesh &m)
 {
   return;
@@ -588,6 +589,7 @@ static void CHECK_STRANGE(const char *c, BDS_Mesh &m)
   printf("strange(%s) = %d\n",c,strange);
 #endif
 }
+*/
 
 static void computeNodalSizes(
   GFace *gf, BDS_Mesh &m,
