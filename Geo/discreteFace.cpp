@@ -292,7 +292,7 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
     return 0.0;
   if(_currentParametrization==-1)
     return 0.0;
-
+  
   MElement *e = _parametrizations[_currentParametrization].oct->find(
     param.x(), param.y(), 0.0);
   if(!e) {
