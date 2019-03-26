@@ -1544,7 +1544,7 @@ static inline void computeSomeKindOfKernel (const BDS_Point *p,
 	if (x[0] > 0 && x[0] < 1.0){
 	  p_now  = (pp * (1.-x[0])) + (p_now * x[0]);
 	  lc_now = ll * (1.-x[0]) + lc_now * x[0];
-	  changed = true;
+	  //	  changed = true;
 	}
       }
     }
