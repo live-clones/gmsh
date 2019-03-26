@@ -135,7 +135,8 @@ int parametrizeGFace (GFace *gf)
 
 int isTriangulationParametrizable(const std::vector<MTriangle*> &t, int Nmax, double ar){
 
-  if (t.size() > Nmax)return t.size()/Nmax + 1;
+  int XX = (int) t.size();
+  if (XX > Nmax)return XX/Nmax + 1;
   std::set<MVertex *> v;
   std::map<MEdge,int,Less_Edge> e;
   double surf = 0;
