@@ -4304,7 +4304,7 @@ GMSH_API void gmshViewGetModelData(const int tag, const int step, char **dataTyp
   }
   if(!numEnt) return;
   *tags_n = numEnt;
-  *tags = (size_t *)Malloc(numEnt * sizeof(int));
+  *tags = (size_t *)Malloc(numEnt * sizeof(size_t));
   *data_nn = numEnt;
   *data_n = (size_t *)Malloc(numEnt * sizeof(size_t *));
   *data = (double **)Malloc(numEnt * sizeof(double *));
