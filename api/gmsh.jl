@@ -1753,6 +1753,22 @@ function embed(dim, tags, inDim, inTag)
 end
 
 """
+    gmsh.model.mesh.removeEmbedded(dimTags, dim = -1)
+
+Remove embedded entities in the geometrical entities `dimTags`. if `dim` is >=
+0, only remove embedded entities of the given dimension (e.g. embedded points if
+`dim` == 0).
+"""
+function removeEmbedded(dimTags, dim = -1)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRemoveEmbedded, gmsh.lib), Nothing,
+          (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), dim, ierr)
+    ierr[] != 0 && error("gmshModelMeshRemoveEmbedded returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.mesh.reorderElements(elementType, tag, ordering)
 
 Reorder the elements of type `elementType` classified on the entity of tag `tag`

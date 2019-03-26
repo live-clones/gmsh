@@ -1276,6 +1276,20 @@ than @code{dim}.
 -
 @end table
 
+@item removeEmbedded
+Remove embedded entities in the geometrical entities @code{dimTags}. if
+@code{dim} is >= 0, only remove embedded entities of the given dimension (e.g.
+embedded points if @code{dim} == 0).
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{dim}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item reorderElements
 Reorder the elements of type @code{elementType} classified on the entity of tag
 @code{tag} according to @code{ordering}.

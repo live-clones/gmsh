@@ -16,6 +16,7 @@
 #include "GmshMessage.h"
 #include "VertexArray.h"
 #include "boundaryLayersData.h"
+#include "ExtrudeParams.h"
 #include "GmshDefines.h"
 
 GRegion::GRegion(GModel *model, int tag) : GEntity(model, tag)
@@ -353,10 +354,12 @@ std::string GRegion::getAdditionalInfoString(bool multline)
       sstream << " ";
   }
 
-  if(meshAttributes.method == MESH_TRANSFINITE || meshAttributes.extrude) {
+  if(meshAttributes.method == MESH_TRANSFINITE ||
+     (meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh)) {
     sstream << "Mesh attributes:";
     if(meshAttributes.method == MESH_TRANSFINITE) sstream << " transfinite";
-    if(meshAttributes.extrude) sstream << " extruded";
+    if(meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh)
+      sstream << " extruded";
   }
   std::string str = sstream.str();
   if(str.size() && (str[str.size() - 1] == '\n' || str[str.size() - 1] == ' '))

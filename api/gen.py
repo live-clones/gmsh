@@ -312,6 +312,9 @@ mesh.add('setOutwardOrientation',doc,None,iint('tag'))
 doc = '''Embed the geometrical entities of dimension `dim' and tags `tags' in the (inDim, inTag) geometrical entity. `inDim' must be strictly greater than `dim'.'''
 mesh.add('embed',doc,None,iint('dim'),ivectorint('tags'),iint('inDim'),iint('inTag'))
 
+doc = '''Remove embedded entities in the geometrical entities `dimTags'. if `dim' is >= 0, only remove embedded entities of the given dimension (e.g. embedded points if `dim' == 0).'''
+mesh.add('removeEmbedded',doc,None,ivectorpair('dimTags'),iint('dim', '-1'))
+
 doc = '''Reorder the elements of type `elementType' classified on the entity of tag `tag' according to `ordering'.'''
 mesh.add('reorderElements',doc,None,iint('elementType'),iint('tag'),ivectorsize('ordering'))
 

@@ -783,6 +783,13 @@ GMSH_API void gmshModelMeshEmbed(const int dim,
                                  const int inTag,
                                  int * ierr);
 
+/* Remove embedded entities in the geometrical entities `dimTags'. if `dim' is
+ * >= 0, only remove embedded entities of the given dimension (e.g. embedded
+ * points if `dim' == 0). */
+GMSH_API void gmshModelMeshRemoveEmbedded(int * dimTags, size_t dimTags_n,
+                                          const int dim,
+                                          int * ierr);
+
 /* Reorder the elements of type `elementType' classified on the entity of tag
  * `tag' according to `ordering'. */
 GMSH_API void gmshModelMeshReorderElements(const int elementType,

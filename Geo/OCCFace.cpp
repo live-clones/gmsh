@@ -129,12 +129,10 @@ void OCCFace::setup()
   // we do that for the projections to converge on the borders of the surface
   const double du = umax - umin;
   const double dv = vmax - vmin;
-  // make sure that the boundaries are large enough in case of a slender surface
-  const auto tol = BRep_Tool::Tolerance(TopoDS::Face(s));
-  umin -= std::max(fabs(du) / 100.0, 2. * tol);
-  vmin -= std::max(fabs(dv) / 100.0, 2. * tol);
-  umax += std::max(fabs(du) / 100.0, 2. * tol);
-  vmax += std::max(fabs(dv) / 100.0, 2. * tol);
+  umin -= std::max(fabs(du) / 100.0, 1e-12);
+  vmin -= std::max(fabs(dv) / 100.0, 1e-12);
+  umax += std::max(fabs(du) / 100.0, 1e-12);
+  vmax += std::max(fabs(dv) / 100.0, 1e-12);
   occface = BRep_Tool::Surface(s);
 
   for(exp2.Init(s.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, TopAbs_EDGE);
