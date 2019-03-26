@@ -168,7 +168,7 @@ double discreteEdge::curvature(double par) const
       iEdgeMinus = discrete_lines.size()-1;
     }
   }
-  else if (iEdge == discrete_lines.size()-1){
+  else if (iEdge == (int)(discrete_lines.size()-1)){
     iEdge--;
     iEdgePlus--;
     iEdgeMinus--;
@@ -336,7 +336,7 @@ void discreteEdge :: unsplit (void) {
   }
   // remove all internal model edges
   for (size_t k=0;k<l_edges.size();k++){
-    for (int l=0;l<l_edges[k]->lines.size();l++){
+    for (size_t l=0;l<l_edges[k]->lines.size();l++){
       lines.push_back(l_edges[k]->lines[l]);
       if (l_edges[k]->lines[l]->getVertex(0)->onWhat() != getBeginVertex() &&
 	  l_edges[k]->lines[l]->getVertex(0)->onWhat() != getEndVertex() &&

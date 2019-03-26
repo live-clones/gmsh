@@ -932,7 +932,7 @@ bool discreteFace::_compute_topology_of_partition(
 	// periodic
 	if (vi[0]->onWhat()->dim() == 0 && vi[vi.size()-1]->onWhat()->dim() == 0){
 	  Msg::Debug ("  Part %d of internal edge connects model vertices %d and %d",i,vi[vi.size()-1]->onWhat()->tag(), vi[0]->onWhat()->tag());
-	  int counter = 0;
+	  size_t counter = 0;
 	  while (counter < vi.size()-1){	  
 	    discreteEdge *de = new discreteEdge(gm, ++TAG+1, (GVertex*)vi[counter]->onWhat(), NULL);
 	    gm->add(de);
@@ -984,7 +984,7 @@ bool discreteFace::_compute_topology_of_partition(
         MEdge e((*it)->lines[k]->getVertex(0), (*it)->lines[k]->getVertex(1));
 	std::map<MEdge, std::pair<int, int>, Less_Edge >::iterator it2 =  internal_edges_inv.find(e);	
 	//	printf("(%d %d)",it2->second.first,it2->second.second);
-	if (it2 != internal_edges_inv.end() && (it2->second.first == i || it2->second.second == i)){
+	if (it2 != internal_edges_inv.end() && (it2->second.first == (int) i || it2->second.second == (int) i)){
           GEdge *de = *it;
 	  if (it2->second.first == it2->second.second){
 	    if(internals.find(de) == internals.end() ) {
