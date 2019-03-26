@@ -89,6 +89,8 @@ public:
   // add embedded vertices/edges
   void addEmbeddedVertex(GVertex *v) { embedded_vertices.insert(v); }
   void addEmbeddedEdge(GEdge *e) { embedded_edges.push_back(e); }
+  // FIXME DEBUG
+  void clearEmbeddedEdges() { embedded_edges.clear(); }
 
   // delete the edge from the face (the edge is supposed to be a free
   // edge in the face, not part of any edge loops--use with caution!)

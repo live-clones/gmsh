@@ -2060,6 +2060,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
                                   bool repairSelfIntersecting1dMesh,
                                   bool debug = true)
 {
+  //gf->clearEmbeddedEdges();
+  
   if(CTX::instance()->debugSurface > 0 &&
      gf->tag() != CTX::instance()->debugSurface) {
     gf->meshStatistics.status = GFace::DONE;
@@ -2236,6 +2238,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     std::map<MVertex *, BDS_Point *> facile;
     //    printf("face has %d embedded edges \n",emb_edges.size());
     double uv[2] = {0, 0};
+
     while(ite != emb_edges.end()) {
       m->add_geom(-(*ite)->tag(), 1);
       for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
