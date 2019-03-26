@@ -19,7 +19,9 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
   Surface *s = CreateSurface(num, MSH_SURF_DISCRETE);
   Tree_Add(model->getGEOInternals()->Surfaces, &s);
   meshStatistics.status = GFace::DONE;
+#if defined(HAVE_HXT)
   _currentParametrization = -1;
+#endif
 }
 
 void discreteFace::setBoundEdges(const std::vector<int> &tagEdges)
@@ -267,18 +269,24 @@ SVector3 discreteFace::normal(const SPoint2 &param) const
 }
 
 double discreteFace::curvatureMax(const SPoint2 &param) const {
+#if defined(HAVE_HXT)
   SVector3 dirMax, dirMin;
   double c, C;
   if(_currentParametrization==-1)
     return 0.0;
   curvatures(param, dirMax, dirMin, C, c);
   return std::max(c,C);
+#else
+  Msg::Error(
+    "Cannot evaluate curvature on discrete surface without HXT");
+#endif  
 }
 
 double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
                                 SVector3 &dirMin, double &curvMax,
                                 double &curvMin) const
 {
+#if defined(HAVE_HXT)
   if(_parametrizations.empty())
     return 0.0;
   if(_currentParametrization==-1)
@@ -311,6 +319,10 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
   dirMin = c0min.normalize();
   
   return false;
+#else
+  Msg::Error(
+    "Cannot evaluate curvature on discrete surface without HXT");
+#endif  
 }
 
 Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
