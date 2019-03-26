@@ -89,8 +89,6 @@ public:
   // add embedded vertices/edges
   void addEmbeddedVertex(GVertex *v) { embedded_vertices.insert(v); }
   void addEmbeddedEdge(GEdge *e) { embedded_edges.push_back(e); }
-  // FIXME DEBUG
-  void clearEmbeddedEdges() { embedded_edges.clear(); }
 
   // delete the edge from the face (the edge is supposed to be a free
   // edge in the face, not part of any edge loops--use with caution!)
@@ -363,7 +361,8 @@ public:
   std::vector<SVector3> storage3; // sizes and directions storage
   std::vector<double> storage4; // sizes and directions storage
 
-  virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering);
+  virtual bool reorder(const int elementType,
+                       const std::vector<std::size_t> &ordering);
 };
 
 #endif

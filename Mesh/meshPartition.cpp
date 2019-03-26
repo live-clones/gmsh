@@ -141,28 +141,38 @@ public:
        CTX::instance()->mesh.partitionPriWeight == -1 ||
        CTX::instance()->mesh.partitionHexWeight == -1) {
       for(unsigned int i = 0; i < _ne; i++) {
-        if(!_element[i]) {
-          _vwgt[i] = 1;
-        }
-        else{
+        if(!_element[i]) { _vwgt[i] = 1; }
+        else {
           _vwgt[i] = (_element[i]->getDim() == (int)_dim ? 1 : 0);
         }
       }
     }
-    else{
+    else {
       for(unsigned int i = 0; i < _ne; i++) {
-        if(!_element[i]) {
-          _vwgt[i] = 1;
-        }
-        else{
+        if(!_element[i]) { _vwgt[i] = 1; }
+        else {
           switch(_element[i]->getType()) {
-          case TYPE_LIN: _vwgt[i] = CTX::instance()->mesh.partitionLinWeight; break;
-          case TYPE_TRI: _vwgt[i] = CTX::instance()->mesh.partitionTriWeight; break;
-          case TYPE_QUA: _vwgt[i] = CTX::instance()->mesh.partitionQuaWeight; break;
-          case TYPE_TET: _vwgt[i] = CTX::instance()->mesh.partitionTetWeight; break;
-          case TYPE_PYR: _vwgt[i] = CTX::instance()->mesh.partitionPyrWeight; break;
-          case TYPE_PRI: _vwgt[i] = CTX::instance()->mesh.partitionPriWeight; break;
-          case TYPE_HEX: _vwgt[i] = CTX::instance()->mesh.partitionHexWeight; break;
+          case TYPE_LIN:
+            _vwgt[i] = CTX::instance()->mesh.partitionLinWeight;
+            break;
+          case TYPE_TRI:
+            _vwgt[i] = CTX::instance()->mesh.partitionTriWeight;
+            break;
+          case TYPE_QUA:
+            _vwgt[i] = CTX::instance()->mesh.partitionQuaWeight;
+            break;
+          case TYPE_TET:
+            _vwgt[i] = CTX::instance()->mesh.partitionTetWeight;
+            break;
+          case TYPE_PYR:
+            _vwgt[i] = CTX::instance()->mesh.partitionPyrWeight;
+            break;
+          case TYPE_PRI:
+            _vwgt[i] = CTX::instance()->mesh.partitionPriWeight;
+            break;
+          case TYPE_HEX:
+            _vwgt[i] = CTX::instance()->mesh.partitionHexWeight;
+            break;
           default: _vwgt[i] = 1; break;
           }
         }
@@ -354,7 +364,6 @@ public:
     int *nind = new int[_eptr[_ne]];
     for(unsigned int i = 0; i < _eptr[_ne]; i++) nind[i] = 0;
 
-    
     for(unsigned int i = 0; i < _ne; i++) {
       for(unsigned int j = _eptr[i]; j < _eptr[i + 1]; j++) {
         nptr[_eind[j]]++;
@@ -782,7 +791,8 @@ void removeVerticesEntity(ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it) {
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
-      for(std::size_t j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++) {
+      for(std::size_t j = 0; j < (*it)->getMeshElement(i)->getNumVertices();
+          j++) {
         (*it)->getMeshElement(i)->getVertex(j)->setEntity(0);
       }
     }
@@ -1518,9 +1528,7 @@ static PART_ENTITY *createPartitionEntity(
     for(typename std::multimap<PART_ENTITY *, GEntity *,
                                LESS_PART_ENTITY>::iterator it = ret.first;
         it != ret.second; ++it) {
-      if(referenceEntity == it->second) {
-        ppe = it->first;
-      }
+      if(referenceEntity == it->second) { ppe = it->first; }
     }
     if(!ppe) {
       // Create new entity and add them to the model
@@ -2237,28 +2245,27 @@ static void AssignPhysicalName(GModel *model)
   }
 }
 
-int PartitionFace(GFace *gf, int np, int *p){
+int PartitionFace(GFace *gf, int np, int *p)
+{
   GModel m;
   m.add(gf);
-  for (size_t i=0;i<gf->triangles.size();++i){
-    for (size_t j=0;j<3;++j){
+  for(size_t i = 0; i < gf->triangles.size(); ++i) {
+    for(size_t j = 0; j < 3; ++j) {
       int n = gf->triangles[i]->getVertex(j)->getNum();
-      if (n > (int) m.getMaxVertexNumber())m.setMaxVertexNumber(n);
+      if(n > (int)m.getMaxVertexNumber()) m.setMaxVertexNumber(n);
     }
   }
   Graph graph(&m);
   if(MakeGraph(&m, graph, -1)) return 1;
   graph.nparts(np);
-  if(PartitionGraph(graph)) return 1;  
+  if(PartitionGraph(graph)) return 1;
   m.remove(gf);
   //  for (size_t i=0;i<graph.ne();++i)p[i]=graph.partition(i);
-  for(unsigned int i = 0; i < graph.ne(); i++) 
+  for(unsigned int i = 0; i < graph.ne(); i++)
     graph.element(i)->setPartition(graph.partition(i));
-
 
   return 0;
 }
-
 
 // Partition a mesh into n parts. Returns: 0 = success, 1 = error
 
@@ -2275,7 +2282,7 @@ int PartitionMesh(GModel *const model)
   if(PartitionGraph(graph)) return 1;
 
   std::vector<int> elmCount[TYPE_MAX_NUM + 1];
-  for (int i = 0; i < TYPE_MAX_NUM + 1; i++) {
+  for(int i = 0; i < TYPE_MAX_NUM + 1; i++) {
     elmCount[i].resize(CTX::instance()->mesh.numPartitions, 0);
   }
 
@@ -2311,15 +2318,14 @@ int PartitionMesh(GModel *const model)
     int minCount = std::numeric_limits<int>::max();
     int maxCount = 0;
     int totCount = 0;
-    for (std::size_t j = 0; j < count.size(); j++) {
+    for(std::size_t j = 0; j < count.size(); j++) {
       minCount = std::min(count[j], minCount);
       maxCount = std::max(count[j], maxCount);
       totCount += count[j];
     }
     if(totCount > 0) {
-      Msg::Info(" - Repartition of %d %s(s): %d(min) %d(max) %g(avg)",
-                totCount, ElementType::nameOfParentType(i).c_str(),
-                minCount, maxCount,
+      Msg::Info(" - Repartition of %d %s(s): %d(min) %d(max) %g(avg)", totCount,
+                ElementType::nameOfParentType(i).c_str(), minCount, maxCount,
                 totCount / (double)CTX::instance()->mesh.numPartitions);
     }
   }
@@ -2542,9 +2548,7 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
 
   unsigned int *part = new unsigned int[graph.ne()];
   for(unsigned int i = 0; i < graph.ne(); i++) {
-    if(graph.element(i)) {
-      part[i] = elmToPartition[graph.element(i)] - 1;
-    }
+    if(graph.element(i)) { part[i] = elmToPartition[graph.element(i)] - 1; }
   }
 
   // Check and correct the topology
@@ -2633,10 +2637,10 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
   return 0;
 }
 
-int PartitionFace(GFace *gf, int np, int *p){
+int PartitionFace(GFace *gf, int np, int *p)
+{
   Msg::Error("Gmsh must be compiled with METIS support to partition meshes");
   return 0;
 }
-
 
 #endif

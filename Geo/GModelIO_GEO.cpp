@@ -21,8 +21,6 @@
 #include "Context.h"
 #include "Parser.h"
 
-#include "MLine.h"
-
 #if defined(HAVE_MESH)
 #include "Field.h"
 #endif
@@ -648,9 +646,7 @@ bool GEO_Internals::intersectCurvesWithSurface(
   for(int i = 0; i < List_Nbr(shapes); i++) {
     Shape s;
     List_Read(shapes, i, &s);
-    if(s.Type == MSH_POINT) {
-      pointTags.push_back(s.Num);
-    }
+    if(s.Type == MSH_POINT) { pointTags.push_back(s.Num); }
     else {
       Msg::Error("Degenerated curve-surface intersection not implemented");
       return false;
@@ -1027,9 +1023,7 @@ void GEO_Internals::setRecombine(int dim, int tag, double angle)
     }
     else {
       Volume *v = FindVolume(tag);
-      if(v) {
-        v->Recombine3D = 1;
-      }
+      if(v) { v->Recombine3D = 1; }
     }
   }
   _changed = true;
@@ -1234,8 +1228,7 @@ void GEO_Internals::synchronize(GModel *model)
   // delete all physical groups before sync only if there is no mesh (if there
   // is a mesh, it could have been loaded from a file with physical groups - we
   // don't want to remove those)
-  if(!model->getNumMeshElements())
-    model->removePhysicalGroups();
+  if(!model->getNumMeshElements()) model->removePhysicalGroups();
   // we might want to store physical groups directly in GModel; but I guess this
   // is OK for now:
   for(int i = 0; i < List_Nbr(PhysicalGroups); i++) {
@@ -1253,10 +1246,10 @@ void GEO_Internals::synchronize(GModel *model)
       case MSH_PHYSICAL_VOLUME: ge = model->getRegionByTag(tag); break;
       }
       int pnum = CTX::instance()->geom.orientedPhysicals ?
-        (gmsh_sign(num) * p->Num) :
-        p->Num;
+                   (gmsh_sign(num) * p->Num) :
+                   p->Num;
       if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
-         ge->physicals.end())
+                 ge->physicals.end())
         ge->physicals.push_back(pnum);
     }
   }
@@ -1280,9 +1273,7 @@ void GEO_Internals::synchronize(GModel *model)
       }
       if(ent) ents.push_back(ent);
     }
-    for(std::size_t i = 0; i < ents.size(); i++) {
-      ents[i]->_compound = ents;
-    }
+    for(std::size_t i = 0; i < ents.size(); i++) { ents[i]->_compound = ents; }
   }
 
   // recompute global boundind box in CTX
@@ -1559,7 +1550,6 @@ int GModel::exportDiscreteGEOInternals()
   }
   _geo_internals = new GEO_Internals;
 
-  
   for(viter it = firstVertex(); it != lastVertex(); it++) {
     Vertex *v = CreateVertex((*it)->tag(), (*it)->x(), (*it)->y(), (*it)->z(),
                              (*it)->prescribedMeshSizeAtVertex(), 1.0);
@@ -1573,11 +1563,10 @@ int GModel::exportDiscreteGEOInternals()
       List_T *points = Tree2List(_geo_internals->Points);
       GVertex *gvb = (*it)->getBeginVertex();
       GVertex *gve = (*it)->getEndVertex();
-      
-      if (!gvb || !gve){
-	Msg::Error("Discrete Edge %d has NULL endpoint(s) : %p %p",(*it)->tag(),gvb,gve);
-	//	for (int i=0;i<(*it)->lines.size();++it)printf("%d %d\n",(*it)->lines[i]->getVertex(0)->getNum(),
-	//						       (*it)->lines[i]->getVertex(1)->getNum());	
+
+      if(!gvb || !gve) {
+        Msg::Error("Discrete Edge %d has NULL endpoint(s) : %p %p",
+                   (*it)->tag(), gvb, gve);
       }
       int nb = 2;
       c->Control_Points = List_Create(nb, 1, sizeof(Vertex *));
@@ -1611,9 +1600,7 @@ int GModel::exportDiscreteGEOInternals()
           ite != edges.end(); ite++) {
         for(int i = 0; i < List_Nbr(curves); i++) {
           List_Read(curves, i, &c);
-          if(c->Num == (*ite)->tag()) {
-            List_Add(s->Generatrices, &c);
-          }
+          if(c->Num == (*ite)->tag()) { List_Add(s->Generatrices, &c); }
         }
       }
       Tree_Add(_geo_internals->Surfaces, &s);

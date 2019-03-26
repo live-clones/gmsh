@@ -239,7 +239,7 @@ public:
   }
   virtual int getTypeForMSH() const
   {
-    switch(_vs.size()){
+    switch(_vs.size()) {
     case 0: return MSH_LIN_2;
     case 1: return MSH_LIN_3;
     case 2: return MSH_LIN_4;

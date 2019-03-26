@@ -53,14 +53,13 @@ private:
 #if defined(HAVE_HXT)
   int _currentParametrization;
   std::vector<hxt_reparam_surf> _parametrizations;
-  bool
-    _compute_topology_of_partition(int nbColors, int *colors, int *nNodes,
-				  int *nodes, double *uv, double* nodalCurvatures,
-				  std::vector<MVertex *> &c2v);
-  void
-    computeSplitEdges(int nbColors, int *colors, std::vector<MEdge> &splitEdges);
+  bool _computeTopologyOfPartition(int nbColors, int *colors, int *nNodes,
+                                   int *nodes, double *uv,
+                                   double *nodalCurvatures,
+                                   std::vector<MVertex *> &c2v);
+  void _computeSplitEdges(int nbColors, int *colors,
+                          std::vector<MEdge> &splitEdges);
   HXTStatus _reparametrizeThroughHxt();
-
 #endif
 public:
   discreteFace(GModel *model, int num);
@@ -98,11 +97,14 @@ public:
                                 const SVector3 &p, const double &R,
                                 double uv[2]);
 #if defined(HAVE_HXT)
-  HXTStatus computsSplitEdgesForPartitionIntoGenusOneSurfaces(std::vector<MEdge> &splitEdges);
+  HXTStatus computsSplitEdgesForPartitionIntoGenusOneSurfaces(
+    std::vector<MEdge> &splitEdges);
 #else
-  bool computsSplitEdgesForPartitionIntoGenusOneSurfaces(std::vector<MEdge> &splitEdges){
+  bool computsSplitEdgesForPartitionIntoGenusOneSurfaces(
+    std::vector<MEdge> &splitEdges)
+  {
     return false;
-  }    
+  }
 #endif
 };
 

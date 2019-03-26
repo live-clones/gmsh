@@ -617,7 +617,8 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
     }
     outDimTags.clear();
     for(int dim = 0; dim < 3; dim++) {
-      for(std::set<int, AbsIntLessThan>::iterator it = c[dim].begin(); it != c[dim].end(); it++)
+      for(std::set<int, AbsIntLessThan>::iterator it = c[dim].begin();
+          it != c[dim].end(); it++)
         outDimTags.push_back(std::pair<int, int>(dim, *it));
     }
   }
@@ -2850,7 +2851,7 @@ GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
   int i1 = std::min(t1, t2);
   int i2 = std::max(t1, t2);
 
-  /// FIXME REMOVE INTERNAL EDGES !!!!
+  // FIXME remove internal edges!
   if(i1 == i2) return 0;
 
   std::map<std::pair<int, int>, GEdge *>::iterator it =
@@ -2860,7 +2861,7 @@ GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
       new discreteEdge(GModel::current(),
                        GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
     GModel::current()->add(ge);
-    if(i1 == i2) printf("internal edge %d\n",ge->tag());
+    //if(i1 == i2) printf("internal edge %d\n", ge->tag());
     newEdges[std::make_pair(i1, i2)] = ge;
     return ge;
   }
@@ -2942,11 +2943,11 @@ void recurClassifyEdges(MTri3 *t, std::map<MTriangle *, GFace *> &reverse,
       std::map<MLine *, GEdge *, compareMLinePtr>::iterator it =
         lines.find(&ml);
       if(it != lines.end()) {
-	if(touched.find(it->first) == touched.end()) {
+        if(touched.find(it->first) == touched.end()) {
           GEdge *ge = getNewModelEdge(gf1, gf2, newEdges);
           if(ge) ge->lines.push_back(it->first);
-	  touched.insert(it->first);
-	}
+          touched.insert(it->first);
+        }
       }
       if(tn)
         recurClassifyEdges(tn, reverse, lines, touched, trisTouched, newEdges);
@@ -2982,30 +2983,23 @@ void GModel::classifyFaces()
 #if defined(HAVE_MESH)
   // faces are ALL faces of the mesh, if not, this makes NO sense
   std::map<MLine *, GEdge *, compareMLinePtr> lines;
-  
-  /// create a structure from mesh edges edges to geometrical edges
-  /// remove existing GEdges but keep track of their traces ...
-  /// remove existing Model Vertices
-  std::vector<GEdge*> __edges;
+
+  // create a structure from mesh edges edges to geometrical edges
+  // remove existing GEdges but keep track of their traces ...
+  // remove existing Model Vertices
+  std::vector<GEdge *> edgesToRemove;
   for(GModel::eiter it = GModel::current()->firstEdge();
       it != GModel::current()->lastEdge(); ++it) {
-    for(std::size_t i = 0; i < (*it)->lines.size(); i++){
+    for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       lines[(*it)->lines[i]] = *it;
     }
-    if ((*it)->getBeginVertex())__edges.push_back(*it);
+    if((*it)->getBeginVertex()) edgesToRemove.push_back(*it);
   }
 
-  //  for(GModel::viter it = GModel::current()->firstVertex();
-  //      it != GModel::current()->lastVertex(); ++it) {
-    //    delete *it;
-  //  }
-  //  vertices.clear();
-  for (size_t i=0;i<__edges.size();++i){
-    remove(__edges[i]);
-    //    delete __edges[i];
+  for(size_t i = 0; i < edgesToRemove.size(); ++i) {
+    remove(edgesToRemove[i]);
   }
 
-  
   // create triangle 2 triangle connections
   std::map<MTriangle *, GFace *> reverse_old;
   std::list<MTri3 *> tris;
@@ -3091,7 +3085,8 @@ void GModel::classifyFaces()
 
   for(std::map<std::pair<int, int>, GEdge *>::iterator ite = newEdges.begin();
       ite != newEdges.end(); ++ite) {
-    //    printf("%d %d --> %d\n",ite->first.first,ite->first.second,ite->second->tag());
+    //    printf("%d %d -->
+    //    %d\n",ite->first.first,ite->first.second,ite->second->tag());
     std::list<MLine *> allSegments;
     for(std::size_t i = 0; i < ite->second->lines.size(); i++)
       allSegments.push_back(ite->second->lines[i]);
@@ -3162,7 +3157,7 @@ void GModel::classifyFaces()
       for(std::list<MLine *>::iterator itL =
             segmentsForThisDiscreteEdge.begin();
           itL != segmentsForThisDiscreteEdge.end(); ++itL) {
-        if(/*1 ||*/ (*itL)->getVertex(0)->onWhat()->dim() != 0) {
+        if((*itL)->getVertex(0)->onWhat()->dim() != 0) {
           newGe->mesh_vertices.push_back((*itL)->getVertex(0));
           (*itL)->getVertex(0)->setEntity(newGe);
         }
@@ -3210,39 +3205,12 @@ void GModel::classifyFaces()
         }
       }
     }
-    //    printf("FACE %d with %d triangles\n",(*fit)->tag(),(*fit)->triangles.size());
     if((*fit)->triangles.size())
       (*fit)->mesh_vertices.insert((*fit)->mesh_vertices.begin(),
                                    _verts.begin(), _verts.end());
     else
       remove(*fit);
   }
-
-  /*
-  std::vector<GEdge*> eds; eds.insert(eds.begin(),edges.begin(),edges.end());
-  std::vector<discreteEdge*> toSplit;
-  std::vector<MVertex*> vtoSplit;
-  for(size_t k = 0;k<eds.size();++k) {
-    for (size_t i=0;i<eds[k]->mesh_vertices.size();i++){
-      GEntity *ge = eds[k]->mesh_vertices[i]->onWhat();
-      if (ge != eds[k]->getBeginVertex() && ge != eds[k]->getEndVertex() ){
-	if (ge->dim() == 0 && eds[k]->getBeginVertex()){
-	  discreteEdge *de = dynamic_cast<discreteEdge*>(eds[k]);
-	  toSplit.push_back(de);
-	  vtoSplit.push_back(eds[k]->mesh_vertices[i]);
-	}
-      }
-    }
-  }
-  int TAG = getMaxElementNumber() + 1;
-  for (size_t i=0;i<toSplit.size();++i){
-    Msg::Info ("edge %d (%d %d)  split on model vertex %d",toSplit[i]->tag(),toSplit[i]->getBeginVertex()->tag(), toSplit[i]->getEndVertex()->tag(),vtoSplit[i]->onWhat()->tag());
-    printf("edge %d (%d %d)  split on model vertex %d \n",toSplit[i]->tag(),toSplit[i]->getBeginVertex()->tag(), toSplit[i]->getEndVertex()->tag(),vtoSplit[i]->onWhat()->tag());
-    toSplit[i]->split (vtoSplit[i],(GVertex*)vtoSplit[i]->onWhat(),TAG);
-  }
-  setMaxElementNumber(TAG);
-  */
-
 #endif
 }
 

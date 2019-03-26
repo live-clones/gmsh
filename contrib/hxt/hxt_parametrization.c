@@ -10,7 +10,7 @@
 
 int* colors; //gives colors of elements: colors[i] = color of i-th element
 int* nNodes; //gives  lower index of int* nodes for a color: nNodes[i] = first node index of i-th color
-int* nodes; //gives the global index of initial 'mesh': nodes[i] = if i=nNodes[c]+k, gives the global index of k-th node of c-th color 
+int* nodes; //gives the global index of initial 'mesh': nodes[i] = if i=nNodes[c]+k, gives the global index of k-th node of c-th color
 double* uv; //give the uv param coordinates of a local node: uv[2*i+p] = u/v component of the global k-node of the c-th color
 
  */
@@ -29,9 +29,9 @@ static HXTStatus hxtVectorInit(HXTVector **vecptr){
 
 
   HXT_CHECK(hxtMalloc(vecptr,sizeof(HXTVector)));
-  
+
   HXTVector *new = *vecptr;
-  
+
   new->ptr = NULL;
   new->last = -1;
   new->length = 0;
@@ -43,7 +43,7 @@ static HXTStatus hxtVectorInit(HXTVector **vecptr){
 static HXTStatus hxtVectorFree(HXTVector **vecptr){
 
   HXTVector *vector = *vecptr;
-  
+
   HXT_CHECK(hxtFree(&vector->ptr));
 
   HXT_CHECK(hxtFree(vecptr));
@@ -60,7 +60,7 @@ static HXTStatus hxtVectorPushBack(HXTVector *vector, void *object){
   if(i+1 >= length){
     if(length==0)
       length=1;
-    HXT_CHECK(hxtRealloc(&vector->ptr,2*(length)*sizeof(void *)));  
+    HXT_CHECK(hxtRealloc(&vector->ptr,2*(length)*sizeof(void *)));
     vector->length = 2*length;
   }
   vector->ptr[i+1] = object;
@@ -87,10 +87,10 @@ static HXTStatus hxtDoubleLongestEdge(HXTEdges *e, int tri, double *l)
 {
   uint32_t *ed = &e->tri2edg[3*tri];
   *l=0;
-  
+
   for(int i=0; i<3; i++){
     uint64_t *tr= &e->edg2tri[2*ed[i]];
-    
+
     if(tr[1]==(uint64_t)-1)
       continue;
 
@@ -107,7 +107,7 @@ static HXTStatus hxtLongestEdge(HXTEdges *edges, int tri,int *ie,int comp)
   *ie=comp;
   for(int i=0; i<3; i++){
     uint64_t *tr= &edges->edg2tri[2*ed[i]];
-    
+
     if(tr[1]==(uint64_t)-1)
       continue;
 
@@ -136,7 +136,7 @@ static HXTStatus hxtLongestEdgeBisection(HXTEdges *edges,int nrefinements)
     HXTMesh *m = edges->edg2mesh;
 
 
-    
+
     uint64_t *flag=NULL;
     HXT_CHECK(hxtMalloc(&flag,m->triangles.num*sizeof(uint64_t)));
     for(uint64_t it=0; it<m->triangles.num; it++){
@@ -167,7 +167,7 @@ static HXTStatus hxtLongestEdgeBisection(HXTEdges *edges,int nrefinements)
             break;
           }
         }
-        do{       
+        do{
           HXT_CHECK(hxtLongestEdge(e,ti,&ei,ej));
           tj = e->edg2tri[2*ei+0]==ti ? e->edg2tri[2*ei+1] : e->edg2tri[2*ei+0];
           HXT_CHECK(hxtLongestEdge(e,tj,&ej,ei));
@@ -272,10 +272,10 @@ static HXTStatus hxtLongestEdgeBisection(HXTEdges *edges,int nrefinements)
             if(t_[0]==tj)
               t_[0] = ttj;
             else
-              t_[1] = ttj;    
+              t_[1] = ttj;
 
           }
-        }//end for      
+        }//end for
         e->numEdges +=3;
         if(e->numEdges > maxEdg){
           maxEdg *= 2;
@@ -285,7 +285,7 @@ static HXTStatus hxtLongestEdgeBisection(HXTEdges *edges,int nrefinements)
         }
         e->node[2*ei+1] = m->vertices.num-1;
         e->edg2tri[2*ei+0] = ti;
-        e->edg2tri[2*ei+1] = ttj;       
+        e->edg2tri[2*ei+1] = ttj;
         e->node[2*e0+0] = m->vertices.num-1;
         e->node[2*e0+1] = nj;
         e->edg2tri[2*e0+0] = tti;
@@ -321,8 +321,8 @@ static HXTStatus hxtLongestEdgeBisection(HXTEdges *edges,int nrefinements)
 
   }//end refinement
 
- 
-  
+
+
 
   return HXT_STATUS_OK;
 }
@@ -331,29 +331,29 @@ static HXTStatus hxtPartitioning(HXTEdges *edges,int *part, int nPartitions,HXTV
 {
 
   HXTMesh *mesh = edges->edg2mesh;
-  
+
   uint32_t *flagVertices;
   HXT_CHECK(hxtMalloc(&flagVertices,mesh->vertices.num*sizeof(uint32_t)));
   for(int p = 0; p<nPartitions; p++){
     HXTMesh *msh=NULL;
     HXT_CHECK(hxtMeshCreate(mesh->ctx,&msh));
 
-    
+
     for(uint32_t iv=0; iv<mesh->vertices.num; iv++)
       flagVertices[iv] = -1;
-    
+
     uint32_t cv = 0;
     uint64_t ce = 0;
-    for(uint64_t ie=0; ie<mesh->triangles.num; ie++){      
+    for(uint64_t ie=0; ie<mesh->triangles.num; ie++){
       if(part[ie]==p){
         for(int jv=0; jv<3; jv++){
           uint32_t current = mesh->triangles.node[3*ie+jv];
           if(flagVertices[current] == (uint32_t)-1)
-            flagVertices[current] = cv++;         
+            flagVertices[current] = cv++;
         }
         ce++;
       }
-    }    
+    }
     /*
       printf("------------stat \t part %d---------------\n",p);
       printf("\t number of vertices:%u\n",cv);
@@ -368,13 +368,13 @@ static HXTStatus hxtPartitioning(HXTEdges *edges,int *part, int nPartitions,HXTV
         msh->vertices.coord[4*current+0] = mesh->vertices.coord[4*iv+0];
         msh->vertices.coord[4*current+1] = mesh->vertices.coord[4*iv+1];
         msh->vertices.coord[4*current+2] = mesh->vertices.coord[4*iv+2];
-        msh->vertices.coord[4*current+3] = mesh->vertices.coord[4*iv+3];        
+        msh->vertices.coord[4*current+3] = mesh->vertices.coord[4*iv+3];
       }
-    }   
+    }
 
     msh->triangles.num = ce;
     //<
-    uint64_t *global;    
+    uint64_t *global;
     HXT_CHECK(hxtMalloc(&global,ce*sizeof(uint64_t)));
     //>
     HXT_CHECK( hxtAlignedMalloc(&msh->triangles.node,ce*3*sizeof(uint32_t)) );
@@ -418,8 +418,8 @@ static HXTStatus hxtCheckConnectivity(HXTEdges *e,HXTVector *partitions)
 
   uint64_t *idx = NULL;
   HXT_CHECK(hxtMalloc(&idx,(m->triangles.num+1)*sizeof(uint64_t)));
-  
-  
+
+
   int count = 0;
   flag[0] = count;
   queue[0] = 0;
@@ -440,8 +440,8 @@ static HXTStatus hxtCheckConnectivity(HXTEdges *e,HXTVector *partitions)
           last++;
           idx[iq+1]++;
           flag[next] = (int) count;
-        }       
-      }      
+        }
+      }
     }
     count++;
     goOn = 0;
@@ -451,7 +451,7 @@ static HXTStatus hxtCheckConnectivity(HXTEdges *e,HXTVector *partitions)
         iq=last;
         queue[last] = i;
         last++;
-        flag[i] = count;        
+        flag[i] = count;
         break;
       }
   }
@@ -461,8 +461,8 @@ static HXTStatus hxtCheckConnectivity(HXTEdges *e,HXTVector *partitions)
   for(uint64_t i=0; i<m->triangles.num; i++){
     uint32_t *refVert = &m->triangles.node[3*queue[i]];
     for(uint64_t j=idx[i]+flag[queue[i]]; j<idx[i+1]+flag[queue[i]]; j++){
-      
-      int cond = 0; 
+
+      int cond = 0;
       uint32_t *checkVert = &m->triangles.node[3*queue[j]];
       for(int ii=0; ii<3; ii++){
         for(int jj=0; jj<3; jj++){
@@ -474,7 +474,7 @@ static HXTStatus hxtCheckConnectivity(HXTEdges *e,HXTVector *partitions)
         if(cond==1)
           break;
       }//end for ii
-      if(cond==0){      
+      if(cond==0){
         printf("Unconsistent orientation \t %lu (%u %u %u) ; (%u %u)-(%u %u)-(%u %u) [%d] ~ %lu (%u %u %u) ; (%u %u)-(%u %u)-(%u %u) [%d].\n",queue[i],refVert[0],refVert[1],refVert[2],e->node[2*e->tri2edg[3*queue[i]+0]+0],e->node[2*e->tri2edg[3*queue[i]+0]+1],e->node[2*e->tri2edg[3*queue[i]+1]+0],e->node[2*e->tri2edg[3*queue[i]+1]+1],e->node[2*e->tri2edg[3*queue[i]+2]+0],e->node[2*e->tri2edg[3*queue[i]+2]+1],flag[queue[i]],queue[j],checkVert[0],checkVert[1],checkVert[2],e->node[2*e->tri2edg[3*queue[j]+0]+0],e->node[2*e->tri2edg[3*queue[j]+0]+1],e->node[2*e->tri2edg[3*queue[j]+1]+0],e->node[2*e->tri2edg[3*queue[j]+1]+1],e->node[2*e->tri2edg[3*queue[j]+2]+0],e->node[2*e->tri2edg[3*queue[j]+2]+1],flag[queue[j]]);
         uint64_t temp = m->triangles.node[3*queue[j]+0];
         m->triangles.node[3*queue[j]+0] = m->triangles.node[3*queue[j]+1];
@@ -484,9 +484,9 @@ static HXTStatus hxtCheckConnectivity(HXTEdges *e,HXTVector *partitions)
         e->tri2edg[3*queue[j]+2] = te;
 
         printf("Consistent (?) orientation \t %lu (%u %u %u) ; (%u %u)-(%u %u)-(%u %u) [%d] ~ %lu (%u %u %u) ; (%u %u)-(%u %u)-(%u %u) [%d].\n",queue[i],refVert[0],refVert[1],refVert[2],e->node[2*e->tri2edg[3*queue[i]+0]+0],e->node[2*e->tri2edg[3*queue[i]+0]+1],e->node[2*e->tri2edg[3*queue[i]+1]+0],e->node[2*e->tri2edg[3*queue[i]+1]+1],e->node[2*e->tri2edg[3*queue[i]+2]+0],e->node[2*e->tri2edg[3*queue[i]+2]+1],flag[queue[i]],queue[j],checkVert[0],checkVert[1],checkVert[2],e->node[2*e->tri2edg[3*queue[j]+0]+0],e->node[2*e->tri2edg[3*queue[j]+0]+1],e->node[2*e->tri2edg[3*queue[j]+1]+0],e->node[2*e->tri2edg[3*queue[j]+1]+1],e->node[2*e->tri2edg[3*queue[j]+2]+0],e->node[2*e->tri2edg[3*queue[j]+2]+1],flag[queue[j]]);
-        
+
       }//end if cond==0
-    }//end for j 
+    }//end for j
   }//end for i
 
   if (partitions!=NULL)
@@ -500,10 +500,10 @@ static HXTStatus hxtSplitEdges(HXTEdges *edges,int nPartitions,HXTVector *partit
 {
 
   HXTMesh *mesh = edges->edg2mesh;
-  
+
   uint32_t *tri2edg = edges->tri2edg;
-  uint64_t *edg2tri = edges->edg2tri; 
-  
+  uint64_t *edg2tri = edges->edg2tri;
+
   HXTBoundaries *boundaries;
   HXT_CHECK(hxtEdgesSetBoundaries(edges, &boundaries));
   int nbedg;
@@ -511,42 +511,42 @@ static HXTStatus hxtSplitEdges(HXTEdges *edges,int nPartitions,HXTVector *partit
 
   int nVertex = (int) mesh->triangles.num;
   int nEdge = (int) (edges->numEdges) - nbedg;
-  
+
   int *idx=NULL;
   HXT_CHECK(hxtMalloc(&idx,(nVertex+1)*sizeof(int)));
   int *nbh=NULL;
   HXT_CHECK(hxtMalloc(&nbh, 2*nEdge*sizeof(int)));
   int *weights=NULL;
   HXT_CHECK(hxtMalloc(&weights,2*nEdge*sizeof(int)));
-  
+
   idx[0] = 0;
   for(int i=0; i<nVertex; i++){// triangle by triangle
     uint32_t *current = &tri2edg[3*i];
     int temp = 0;
-    for(int j=0; j<3; j++){      
+    for(int j=0; j<3; j++){
       uint64_t *local = &edg2tri[2*current[j]];
       if(local[1]==(uint64_t)-1)
         continue;
-      else{             
+      else{
         nbh[idx[i]+temp] = i == (int) local[0] ? (int) local[1] : (int) local[0];
         weights[idx[i]+temp] = (int) (hxtEdgesLength(edges,current[j])+1);
         temp++;
       }
     }
-    
+
     idx[i+1] = idx[i] + temp;
   }
 
-  
-  // only for k-way  
+
+  // only for k-way
   idx_t options[METIS_NOPTIONS];
   METIS_SetDefaultOptions(options);
   options[METIS_OPTION_NCUTS] = nPartitions;
   //options[METIS_OPTION_MINCONN] = 1;
   //options[METIS_OPTION_CCORDER] = 1;
-  options[METIS_OPTION_CONTIG] = 1;  
+  options[METIS_OPTION_CONTIG] = 1;
   //options[METIS_OPTION_DBGLVL] = 1;
-  
+
   int edgeCut;
   int *part;
   HXT_CHECK(hxtMalloc(&part,nVertex*sizeof(int)));
@@ -559,7 +559,7 @@ static HXTStatus hxtSplitEdges(HXTEdges *edges,int nPartitions,HXTVector *partit
   HXT_CHECK(hxtFree(&idx));
 
   HXT_CHECK(hxtPartitioning(edges,part,nPartitions,partitions));
-  
+
   return HXT_STATUS_OK;
 }
 
@@ -571,9 +571,9 @@ static HXTStatus hxtCuttingProcess(HXTEdges *edges, int ar, int bool, HXTVector 
   HXT_CHECK(hxtBoundariesGetNumberOfLineLoops(boundaries,&nll));
   int g = (edges->numEdges - edges->edg2mesh->vertices.num - edges->edg2mesh->triangles.num + 2 - nll)/2;
   HXT_CHECK(hxtBoundariesGetSeamPoint(boundaries,&seamPoint));
-  
+
   HXTVector *toSplit;
-  HXT_CHECK(hxtVectorInit(&toSplit));  
+  HXT_CHECK(hxtVectorInit(&toSplit));
   if(seamPoint!=0 || ar==0 || g!=0 || nll == 0)
     HXT_CHECK(hxtVectorPushBack(toSplit,edges));
   else
@@ -583,7 +583,7 @@ static HXTStatus hxtCuttingProcess(HXTEdges *edges, int ar, int bool, HXTVector 
     HXT_CHECK(hxtVectorInit(&split));
     HXTEdges *beingSplitted = (HXTEdges*) toSplit->ptr[i];
     HXT_CHECK(hxtSplitEdges(beingSplitted,2,split));
-    if(bool>0){     
+    if(bool>0){
       HXT_CHECK(hxtMeshDelete(&beingSplitted->edg2mesh));
       HXT_CHECK(hxtEdgesDelete(&beingSplitted));
     }
@@ -606,7 +606,7 @@ static HXTStatus hxtCuttingProcess(HXTEdges *edges, int ar, int bool, HXTVector 
   }
   HXT_CHECK(hxtVectorFree(&toSplit));
   // free boundaries
-  
+
   return HXT_STATUS_OK;
 }
 
@@ -624,7 +624,7 @@ HXTStatus hxtParametrizationCreate(HXTMesh *mesh, int nrefinements, HXTParametri
   //  printf("checking connectivity ...\n");
   HXT_CHECK(hxtCheckConnectivity(param0->edges,NULL));
   //  HXT_CHECK(hxtLongestEdgeBisection(param0->edges,nrefinements));
-  
+
   HXTEdges *edges=NULL;
   HXT_CHECK(hxtEdgesCreate(initialMesh, &edges));
   uint64_t *global;
@@ -634,43 +634,43 @@ HXTStatus hxtParametrizationCreate(HXTMesh *mesh, int nrefinements, HXTParametri
   edges->global = global;
   param0->edges->global = global;
 
-  HXTVector *connect;  
-  HXT_CHECK(hxtVectorInit(&connect));  
+  HXTVector *connect;
+  HXT_CHECK(hxtVectorInit(&connect));
   HXT_CHECK(hxtCheckConnectivity(edges,connect));
 
   //  printf("connectivity is done\n");
-  
+
   HXTVector *toparam;
   HXT_CHECK(hxtVectorInit(&toparam));
   for(int i=0; i<connect->last+1; i++){
     HXT_CHECK(hxtCuttingProcess(connect->ptr[i],1,0,toparam));
   }
-  printf("initial cutting process is done, %d\n",  param0->n);
+  //printf("initial cutting process is done, %d\n",  param0->n);
   //  return HXT_STATUS_OK;
-  
-  
+
+
   HXTVector *atlas;
   HXT_CHECK(hxtVectorInit(&atlas));
   for(int i=0; i<toparam->last+1; i++){
     HXTMeanValues *param;
     HXTEdges *current = (HXTEdges *)(toparam->ptr[i]);
     HXT_CHECK(hxtMeanValuesCreate(current,&param));
-    HXT_CHECK(hxtMeanValuesCompute(param));        
+    HXT_CHECK(hxtMeanValuesCompute(param));
     int ar = 0;
     HXT_CHECK(hxtMeanValueAspectRatio(param,&ar));
-    
+
     if (0 && ar==0)
       HXT_CHECK(hxtCuttingProcess(current,ar,toparam->last,toparam));
     else
       HXT_CHECK(hxtVectorPushBack(atlas,param));
   }
   hxtVectorFree(&toparam);
-  
+
   param0->n = atlas->last+1;
   HXT_CHECK(hxtMalloc(&param0->maps,param0->n*sizeof(HXTMeanValues*)));
-  for(int i=0; i<param0->n; i++)    
+  for(int i=0; i<param0->n; i++)
     param0->maps[i] = (HXTMeanValues *) atlas->ptr[i];
-  
+
   HXT_CHECK(hxtVectorFree(&atlas));
   return HXT_STATUS_OK;
 }
@@ -688,7 +688,7 @@ HXTStatus hxtParametrizationCompute(HXTParametrization *parametrization, int **_
 
   int *colors=NULL, *nNodes=NULL, *nodes=NULL;
   double *uv=NULL;
-  
+
   *m = parametrization->edges->edg2mesh;
   int Ncolors = parametrization->n;
   *nc=Ncolors;
@@ -699,33 +699,33 @@ HXTStatus hxtParametrizationCompute(HXTParametrization *parametrization, int **_
   for(int c=0; c<Ncolors; c++){
 
     uint64_t *global=NULL;
-    int nv, ne;    
+    int nv, ne;
     HXT_CHECK(hxtMeanValuesGetData(parametrization->maps[c],&global, NULL, NULL, &nv,&ne));
     nNodes[c+1] = nNodes[c]+nv;
 
     for(int ie=0; ie<ne; ie++)
       colors[global[ie]] = c;
-    
+
     HXT_CHECK(hxtFree(&global));
-    
+
   }
 
-  
+
   HXT_CHECK(hxtMalloc(&uv,2*nNodes[Ncolors]*sizeof(double)));//
   HXT_CHECK(hxtMalloc(&nodes,nNodes[Ncolors]*sizeof(int)));
   for(int it=0; it<nNodes[Ncolors]; it++)
     nodes[it] = -1;
-  
+
   for(int c=0; c<Ncolors; c++){
 
     uint64_t *global=NULL;
     uint32_t *gn=NULL;
     double *uvc=NULL;
-    int nv, ne;    
+    int nv, ne;
     HXT_CHECK(hxtMeanValuesGetData(parametrization->maps[c],&global, &gn, &uvc, &nv,&ne));
     for(int iv=0; iv<2*nv; iv++)
       uv[2*nNodes[c]+iv] = uvc[iv];
-    
+
     for(int ie=0; ie<ne; ie++){
       for(int kk=0; kk<3; kk++){
         int gvn = (int) parametrization->edges->edg2mesh->triangles.node[3*global[ie]+kk];
@@ -738,7 +738,7 @@ HXTStatus hxtParametrizationCompute(HXTParametrization *parametrization, int **_
     HXT_CHECK(hxtFree(&uvc));
   }
 
-  
+
   *_colors_=colors;
   *_nNodes_=nNodes;
   *_nodes_=nodes;
@@ -748,7 +748,7 @@ HXTStatus hxtParametrizationCompute(HXTParametrization *parametrization, int **_
 }
 
 HXTStatus hxtParametrizationWrite(HXTParametrization *parametrization, const char *filename)
-{  
+{
 
   return HXT_STATUS_OK;
 }
