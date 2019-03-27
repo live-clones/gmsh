@@ -1655,12 +1655,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     }
   }
 
-  {
-    int nb_swap;
-    Msg::Debug("Delaunizing the initial mesh");
-    delaunayizeBDS(gf, *m, nb_swap);
-  }
-
   // only delete the mesh data stored in the base GFace class
   gf->GFace::deleteMesh();
 
@@ -2615,13 +2609,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     outputScalarField(m->triangles, name, 0, gf);
     sprintf(name, "surface%d-recovered-param.pos", gf->tag());
     outputScalarField(m->triangles, name, 1, gf);
-  }
-
-  {
-    // Call this function to untangle elements in Cartesian space
-    int nb_swap;
-    Msg::Debug("Delaunizing the initial mesh");
-    delaunayizeBDS(gf, *m, nb_swap);
   }
 
   // start mesh generation for periodic face
