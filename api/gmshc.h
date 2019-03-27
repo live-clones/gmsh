@@ -643,23 +643,21 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
 
 /* Get the basis function of the element of type `elementType' for the given
  * `integrationType' integration rule. 'basisFunctions' contains the
- * evaluation of de the basis functions at the integration points. 'weight'
- * conntains the Gauss weights. 'order' is the polynomial order. Each physical
- * mesh edge (or Face) will  be assigned a unique orientation,and all edges
- * (or Faces) of physical mesh will be equipped with an orientation tag ,
- * indicating whether the image of the corresponding edge (or Face) of the
+ * evaluation of de the basis functions at the integration points.
+ * 'integrationPoints' contains the Gauss weights and integration points. Each
+ * physical mesh edge (or Face) will  be assigned a unique orientation,and all
+ * edges (or Faces) of physical mesh will be equipped with an orientation tag
+ * , indicating whether the image of the corresponding edge (or Face) of the
  * reference domain through the reference map has the same or opposite
  * orientation.The global edge orientation always pointing from the vertex
  * with the lower global vertex number to the one with the higher one. */
 GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const char * integrationType,
                                                         const int elementType,
-                                                        double ** basisFunctions, size_t * basisFunctions_n,
-                                                        double ** weight, size_t * weight_n,
                                                         const char * functionSpaceType,
-                                                        const int order,
-                                                        int ** keys, size_t * keys_n,
-                                                        int * numDof,
-                                                        const int belongBoundary,
+                                                        double ** basisFunctions, size_t * basisFunctions_n,
+                                                        double ** integrationPoints, size_t * integrationPoints_n,
+                                                        int * numComponents,
+                                                        int * numDofsByElement,
                                                         const int tag,
                                                         int * ierr);
 
@@ -673,12 +671,12 @@ GMSH_API void gmshModelMeshGetInformationForElements(int * keys, size_t keys_n,
                                                      int * ierr);
 
 /*  generate the vectorpair 'Keys' . */
-GMSH_API void gmshModelMeshGetKeyForElements(int ** keys, size_t * keys_n,
-                                             const int dim,
+GMSH_API void gmshModelMeshGetKeyForElements(const int dim,
                                              const int tag,
-                                             const int order,
+                                             const char * functionSpaceType,
                                              double ** coord, size_t * coord_n,
-                                             const int belongBoundary,
+                                             int ** keys, size_t * keys_n,
+                                             const int elementType,
                                              int * ierr);
 
 /* Precomputes the basis functions corresponding to `elementType'. */

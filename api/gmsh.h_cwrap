@@ -1141,34 +1141,31 @@ namespace gmsh { // Top-level functions
 
       // Get the basis function of the element of type `elementType' for the given
       // `integrationType' integration rule. 'basisFunctions' contains the
-      // evaluation of de the basis functions at the integration points. 'weight'
-      // conntains the Gauss weights. 'order' is the polynomial order. Each
-      // physical mesh edge (or Face) will  be assigned a unique orientation,and
-      // all edges (or Faces) of physical mesh will be equipped with an orientation
-      // tag , indicating whether the image of the corresponding edge (or Face) of
-      // the reference domain through the reference map has the same or opposite
-      // orientation.The global edge orientation always pointing from the vertex
-      // with the lower global vertex number to the one with the higher one.
+      // evaluation of de the basis functions at the integration points.
+      // 'integrationPoints' contains the Gauss weights and integration points.
+      // Each physical mesh edge (or Face) will  be assigned a unique
+      // orientation,and all edges (or Faces) of physical mesh will be equipped
+      // with an orientation tag , indicating whether the image of the
+      // corresponding edge (or Face) of the reference domain through the reference
+      // map has the same or opposite orientation.The global edge orientation
+      // always pointing from the vertex with the lower global vertex number to the
+      // one with the higher one.
       GMSH_API void getBasisFunctionsForElements(const std::string & integrationType,
                                                  const int elementType,
-                                                 std::vector<double> & basisFunctions,
-                                                 std::vector<double> & weight,
                                                  const std::string & functionSpaceType,
-                                                 const int order,
-                                                 gmsh::vectorpair & keys,
-                                                 int & numDof,
-                                                 const bool belongBoundary,
+                                                 std::vector<double> & basisFunctions,
+                                                 std::vector<double> & integrationPoints,
+                                                 int & numComponents,
+                                                 int & numDofsByElement,
                                                  const int tag = -1)
       {
         int ierr = 0;
         double *api_basisFunctions_; size_t api_basisFunctions_n_;
-        double *api_weight_; size_t api_weight_n_;
-        int *api_keys_; size_t api_keys_n_;
-        gmshModelMeshGetBasisFunctionsForElements(integrationType.c_str(), elementType, &api_basisFunctions_, &api_basisFunctions_n_, &api_weight_, &api_weight_n_, functionSpaceType.c_str(), order, &api_keys_, &api_keys_n_, &numDof, (int)belongBoundary, tag, &ierr);
+        double *api_integrationPoints_; size_t api_integrationPoints_n_;
+        gmshModelMeshGetBasisFunctionsForElements(integrationType.c_str(), elementType, functionSpaceType.c_str(), &api_basisFunctions_, &api_basisFunctions_n_, &api_integrationPoints_, &api_integrationPoints_n_, &numComponents, &numDofsByElement, tag, &ierr);
         if(ierr) throw ierr;
         basisFunctions.assign(api_basisFunctions_, api_basisFunctions_ + api_basisFunctions_n_); gmshFree(api_basisFunctions_);
-        weight.assign(api_weight_, api_weight_ + api_weight_n_); gmshFree(api_weight_);
-        keys.resize(api_keys_n_ / 2); for(size_t i = 0; i < api_keys_n_ / 2; ++i){ keys[i].first = api_keys_[i * 2 + 0]; keys[i].second = api_keys_[i * 2 + 1]; } gmshFree(api_keys_);
+        integrationPoints.assign(api_integrationPoints_, api_integrationPoints_ + api_integrationPoints_n_); gmshFree(api_integrationPoints_);
       }
 
       //  get information about the vectorpair 'Keys' . 'info' contains the order
@@ -1189,20 +1186,20 @@ namespace gmsh { // Top-level functions
       }
 
       //  generate the vectorpair 'Keys' .
-      GMSH_API void getKeyForElements(gmsh::vectorpair & keys,
-                                      const int dim,
+      GMSH_API void getKeyForElements(const int dim,
                                       const int tag,
-                                      const int order,
+                                      const std::string & functionSpaceType,
                                       std::vector<double> & coord,
-                                      const bool belongBoundary)
+                                      gmsh::vectorpair & keys,
+                                      const int elementType = -1)
       {
         int ierr = 0;
-        int *api_keys_; size_t api_keys_n_;
         double *api_coord_; size_t api_coord_n_;
-        gmshModelMeshGetKeyForElements(&api_keys_, &api_keys_n_, dim, tag, order, &api_coord_, &api_coord_n_, (int)belongBoundary, &ierr);
+        int *api_keys_; size_t api_keys_n_;
+        gmshModelMeshGetKeyForElements(dim, tag, functionSpaceType.c_str(), &api_coord_, &api_coord_n_, &api_keys_, &api_keys_n_, elementType, &ierr);
         if(ierr) throw ierr;
-        keys.resize(api_keys_n_ / 2); for(size_t i = 0; i < api_keys_n_ / 2; ++i){ keys[i].first = api_keys_[i * 2 + 0]; keys[i].second = api_keys_[i * 2 + 1]; } gmshFree(api_keys_);
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
+        keys.resize(api_keys_n_ / 2); for(size_t i = 0; i < api_keys_n_ / 2; ++i){ keys[i].first = api_keys_[i * 2 + 0]; keys[i].second = api_keys_[i * 2 + 1]; } gmshFree(api_keys_);
       }
 
       // Precomputes the basis functions corresponding to `elementType'.

@@ -1497,14 +1497,16 @@ static bool _getIntegrationInfo(const std::string &intType,
   return false;
 }
 static bool _getHierarchicalFunctionSpaceInfo(const std::string &fsType,
-                                              int &fsComp)
+                                              int &fsComp, int &basisOrder)
 {
-  if(fsType == "Legendre") {
+  if(fsType.substr(0, 10) == "Solin0Form") {
     fsComp = 1;
+    basisOrder = atoi(fsType.substr(10).c_str());
     return true;
   }
-  if(fsType == "GradLegendre") {
+  if(fsType.substr(0, 14) == "GradSolin0Form") {
     fsComp = 3;
+    basisOrder = atoi(fsType.substr(14).c_str());
     return true;
   }
   return false;
@@ -1855,9 +1857,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
 
 GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   const std::string &integrationType, const int elementType,
-  std::vector<double> &basisFunctions, std::vector<double> &integrationPoints,
-  const std::string &functionSpaceType, const int order, gmsh::vectorpair &keys,
-  int &numDof, const bool belongBoundary, const int tag)
+  const std::string &functionSpaceType, std::vector<double> &basisFunctions,
+  std::vector<double> &integrationPoints, int &numComponents,
+  int &numDofsByElement, const int tag)
 {
   basisFunctions.clear();
   integrationPoints.clear();
@@ -1867,8 +1869,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     Msg::Error("Unknown quadrature type '%s'", integrationType.c_str());
     throw 2;
   }
-  int numComponents = 0;
-  if(!_getHierarchicalFunctionSpaceInfo(functionSpaceType, numComponents)) {
+  int basisOrder = 0;
+  if(!_getHierarchicalFunctionSpaceInfo(functionSpaceType, numComponents,
+                                        basisOrder)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     throw 2;
   }
@@ -1882,6 +1885,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     throw 3;
   }
   int dim = ElementType::getDimension(elementType);
+  integrationPoints.reserve(pts.size1() * 4);
   for(int i = 0; i < pts.size1(); i++) {
     integrationPoints.push_back(pts(i, 0));
     integrationPoints.push_back(pts(i, 1));
@@ -1894,21 +1898,21 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   switch(familyType) {
   case TYPE_HEX: {
-    basis = new HierarchicalBasisH1Brick(order);
+    basis = new HierarchicalBasisH1Brick(basisOrder);
     break;
   }
   case TYPE_TET: {
-    basis = new HierarchicalBasisH1Tetra(order);
+    basis = new HierarchicalBasisH1Tetra(basisOrder);
     break;
   }
   case TYPE_QUA: {
-    basis = new HierarchicalBasisH1Quad(order);
+    basis = new HierarchicalBasisH1Quad(basisOrder);
   } break;
   case TYPE_TRI: {
-    basis = new HierarchicalBasisH1Tria(order);
+    basis = new HierarchicalBasisH1Tria(basisOrder);
   } break;
   case TYPE_LIN: {
-    basis = new HierarchicalBasisH1Line(order);
+    basis = new HierarchicalBasisH1Line(basisOrder);
   } break;
   default: Msg::Error("Unknown familyType "); throw 2;
   }
@@ -1917,67 +1921,16 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   int bSize = basis->getnBubbleFunction();
   int eSize = basis->getnEdgeFunction();
   int fSize = basis->getnFaceFunction();
-  int numFaceFunction = 0;
-  if(basis->getNumFace()!=0){
-    numFaceFunction = fSize / basis->getNumFace(); // number of face functions for one face
-  }
-    int numEdgeFunction =0;
-  if(basis->getNumEdge()!=0){
-    numEdgeFunction =
-      eSize / basis->getNumEdge(); // number of edge functions for one edge
-  }
-  int const1 = numEdgeFunction + 3;
-  int const2 = const1 + numFaceFunction;
-  numDof = vSize + bSize + eSize + fSize;
-  basis->reverseFaceBubbleFor3D(belongBoundary);
-  basis->reverseEdgeBubbleFor2D(belongBoundary);
-  // compute the number of Element , generate Keys for each Element:
+  numDofsByElement = vSize + bSize + eSize + fSize;
+  // compute the number of Element :
   std::size_t numElements = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     std::size_t numElementsInEntitie = ge->getNumMeshElementsByType(familyType);
     numElements += numElementsInEntitie;
-    for(std::size_t j = 0; j < numElementsInEntitie; j++) {
-      MElement *e = ge->getMeshElementByType(familyType, j);
-      // vertices
-      for(int k = 0; k < vSize; k++) {
-        keys.push_back(std::pair<int, int>(2, e->getVertex(k)->getNum()));
-      }
-      // edges
-      if(eSize>0){
-      int numberEdge = e->getNumEdges();
-      for(int jj = 0; jj < numberEdge; jj++) {
-        // Number the edges
-        MEdge edge = e->getEdge(jj);
-        int edgeGlobalIndice = GModel::current()->addMEdge(edge);
-        for(int k = 0; k < numEdgeFunction; k++) {
-          keys.push_back(std::pair<int, int>(k + 3, edgeGlobalIndice));
-        }
-      }
-      }
-      // faces
-      if(fSize>0){
-      int numberFace = e->getNumFaces();
-      for(int jj = 0; jj < numberFace; jj++) {
-        // Number the faces
-        MFace face = e->getFace(jj);
-        int faceGlobalIndice = GModel::current()->addMFace(face);
-        for(int k = 0; k < numFaceFunction; k++) {
-          keys.push_back(std::pair<int, int>(k + const1, faceGlobalIndice));
-        }
-      }
-    }
-      // bubble
-      if(bSize>0){
-      for(int k = 0; k < bSize; k++) {
-        keys.push_back(std::pair<int, int>(k + const2, e->getNum()));
-      }
-      }
-    }
   }
-  basis->reverseFaceBubbleFor3D(belongBoundary);
-  basis->reverseEdgeBubbleFor2D(belongBoundary);
-  basisFunctions.resize(numDof * numElements * numComponents * nq, 0.);
+  basisFunctions.resize(
+    (vSize + bSize + eSize + fSize) * numElements * numComponents * nq, 0.);
   switch(numComponents) {
   case 1: {
     int functionIterator = 0;
@@ -1993,14 +1946,15 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
         for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
             j++) {
           MElement *e = ge->getMeshElementByType(familyType, j);
-          int numberEdge = e->getNumEdges();
+
           std::vector<double> eTableCopy(eSize);
           for(int r = 0; r < eSize; r++) { eTableCopy[r] = eTable[r]; }
-          if(eSize > 0) {
-            for(int jj = 0; jj < numberEdge; jj++) {
+          if(eSize > 0 && basis->getNumEdge() > 1) {
+            for(int jj = 0; jj < basis->getNumEdge(); jj++) {
               MEdge edge = e->getEdge(jj);
               int orientationFlag = 1;
-              if(edge.getMinVertex()->getNum() != edge.getVertex(0)->getNum()) {
+              if(edge.getMinVertex()->getNum() !=
+                 unsigned(e->getVertexSolin(jj, 0))) {
                 orientationFlag = -1;
               }
               else {
@@ -2009,12 +1963,11 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
               basis->orientateEdge(orientationFlag, jj, eTableCopy);
             }
           }
-          int numberFace = e->getNumFaces();
           std::vector<double> fTableCopy(fSize);
           for(int r = 0; r < fSize; r++) { fTableCopy[r] = fTable[r]; }
-          if(fSize > 0) {
-            for(int jj = 0; jj < numberFace; jj++) {
-              MFace face = e->getFace(jj);
+          if(fSize > 0 && basis->getNumFace() > 1) {
+            for(int jj = 0; jj < basis->getNumFace(); jj++) {
+              MFace face = e->getFaceSolin(jj);
               std::vector<int> faceOrientationFlag(3);
               face.getOrientationFlagForFace(faceOrientationFlag);
               basis->orientateFace(u, v, w, faceOrientationFlag[0],
@@ -2064,7 +2017,6 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
         for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
             j++) {
           MElement *e = ge->getMeshElementByType(familyType, j);
-          int numberEdge = e->getNumEdges();
           std::vector<std::vector<double> > eTableCopy(
             eSize, std::vector<double>(3, 0.));
           for(int r = 0; r < eSize; r++) {
@@ -2072,11 +2024,12 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
             eTableCopy[r][1] = gradientEdge[r][1];
             eTableCopy[r][2] = gradientEdge[r][2];
           }
-          if(eSize > 0) {
-            for(int jj = 0; jj < numberEdge; jj++) {
+          if(eSize > 0 && basis->getNumEdge() > 1) {
+            for(int jj = 0; jj < basis->getNumEdge(); jj++) {
               MEdge edge = e->getEdge(jj);
               int orientationFlag = 1;
-              if(edge.getMinVertex()->getNum() != edge.getVertex(0)->getNum()) {
+              if(edge.getMinVertex()->getNum() !=
+                 unsigned(e->getVertexSolin(jj, 0))) {
                 orientationFlag = -1;
               }
               else {
@@ -2085,7 +2038,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
               basis->orientateEdgeGrad(orientationFlag, jj, eTableCopy);
             }
           }
-          int numberFace = e->getNumFaces();
+
           std::vector<std::vector<double> > fTableCopy(
             fSize, std::vector<double>(3, 0.));
           for(int r = 0; r < fSize; r++) {
@@ -2093,9 +2046,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
             fTableCopy[r][1] = gradientFace[r][1];
             fTableCopy[r][2] = gradientFace[r][2];
           }
-          if(fSize > 0) {
-            for(int jj = 0; jj < numberFace; jj++) {
-              MFace face = e->getFace(jj);
+          if(fSize > 0 && basis->getNumFace() > 1) {
+            for(int jj = 0; jj < basis->getNumFace(); jj++) {
+              MFace face = e->getFaceSolin(jj);
               std::vector<int> faceOrientationFlag(3);
               face.getOrientationFlagForFace(faceOrientationFlag);
               basis->orientateFaceGrad(u, v, w, faceOrientationFlag[0],
@@ -2145,22 +2098,151 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   basis = 0;
 }
 
-GMSH_API void gmsh::model::mesh::getKeyForElements(gmsh::vectorpair &keys,
-                                                   const int dim, const int tag,
-                                                   const int order,
-                                                   std::vector<double> &coord,
-                                                   const bool belongBoundary)
+GMSH_API void gmsh::model::mesh::getKeyForElements(
+  const int dim, const int tag, const std::string &functionSpaceType,
+  std::vector<double> &coord, gmsh::vectorpair &keys, const int elementType)
 {
   if(!_isInitialized()) { throw - 1; }
   coord.clear();
-  std::vector<int> elementTypes;
-  gmsh::model::mesh::getElementTypes(elementTypes, dim, tag);
-  std::map<int, std::vector<GEntity *> > typeEnt;
-  _getEntitiesForElementTypes(dim, tag, typeEnt);
-  for(unsigned int typeIndex = 0; typeIndex < elementTypes.size();
-      ++typeIndex) {
-    const std::vector<GEntity *> &entities(typeEnt[elementTypes[typeIndex]]);
-    int familyType = ElementType::getParentType(elementTypes[typeIndex]);
+  keys.clear();
+  int order = 0;
+  int numComponents = 0;
+  if(!_getHierarchicalFunctionSpaceInfo(functionSpaceType, numComponents,
+                                        order)) {
+    Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
+    throw 2;
+  }
+  if(elementType == -1) {
+    std::vector<int> elementTypes;
+    gmsh::model::mesh::getElementTypes(elementTypes, dim, tag);
+    std::map<int, std::vector<GEntity *> > typeEnt;
+    _getEntitiesForElementTypes(dim, tag, typeEnt);
+    for(unsigned int typeIndex = 0; typeIndex < elementTypes.size();
+        ++typeIndex) {
+      const std::vector<GEntity *> &entities(typeEnt[elementTypes[typeIndex]]);
+      int familyType = ElementType::getParentType(elementTypes[typeIndex]);
+      HierarchicalBasisH1 *basis(0);
+      switch(familyType) {
+      case TYPE_HEX: {
+        basis = new HierarchicalBasisH1Brick(order);
+      } break;
+      case TYPE_QUA: {
+        basis = new HierarchicalBasisH1Quad(order);
+      } break;
+      case TYPE_TRI: {
+        basis = new HierarchicalBasisH1Tria(order);
+      } break;
+      case TYPE_LIN: {
+        basis = new HierarchicalBasisH1Line(order);
+      } break;
+      default: Msg::Error("Unknown familyType "); throw 2;
+      }
+      int vSize = basis->getnVertexFunction();
+      int bSize = basis->getnBubbleFunction();
+      int eSize = basis->getnEdgeFunction();
+      int fSize = basis->getnFaceFunction();
+      int numDofsByElement = vSize + bSize + eSize + fSize;
+      int numFaceFunction = 0;
+      if(basis->getNumFace() != 0) {
+        numFaceFunction =
+          fSize / basis->getNumFace(); // number of face functions for one face
+      }
+      int numEdgeFunction = 0;
+      if(basis->getNumEdge() != 0) {
+        numEdgeFunction =
+          eSize / basis->getNumEdge(); // number of edge functions for one edge
+      }
+
+      int const1 = numEdgeFunction + 3;
+      int const2 = const1 + numFaceFunction;
+      delete basis;
+      for(std::size_t i = 0; i < entities.size(); i++) {
+        GEntity *ge = entities[i];
+        std::size_t numElementsInEntitie =
+          ge->getNumMeshElementsByType(familyType);
+
+        coord.reserve(coord.size() +
+                      numElementsInEntitie * numDofsByElement * 3);
+        keys.reserve(keys.size() + numElementsInEntitie * numDofsByElement);
+        for(std::size_t j = 0; j < numElementsInEntitie; j++) {
+          MElement *e = ge->getMeshElementByType(familyType, j);
+          for(int k = 0; k < vSize; k++) {
+            keys.push_back(std::pair<int, int>(2, e->getVertex(k)->getNum()));
+            coord.push_back(e->getVertex(k)->x());
+            coord.push_back(e->getVertex(k)->y());
+            coord.push_back(e->getVertex(k)->z());
+          }
+          if(eSize > 0) {
+            int numberEdge = e->getNumEdges();
+            for(int jj = 0; jj < numberEdge; jj++) {
+              MEdge edge = e->getEdge(jj);
+              MVertex *v1 = edge.getVertex(0);
+              MVertex *v2 = edge.getVertex(1);
+              std::vector<double> coordEdge(3);
+              coordEdge[0] = (v1->x() + v2->x()) / 2;
+              coordEdge[1] = (v1->y() + v2->y()) / 2;
+              coordEdge[2] = (v1->z() + v2->z()) / 2;
+              int edgeGlobalIndice = GModel::current()->addMEdge(edge);
+              for(int k = 0; k < numEdgeFunction; k++) {
+                keys.push_back(std::pair<int, int>(k + 3, edgeGlobalIndice));
+                coord.push_back(coordEdge[0]);
+                coord.push_back(coordEdge[1]);
+                coord.push_back(coordEdge[2]);
+              }
+            }
+          }
+          // faces
+          if(fSize > 0) {
+            int numberFace = e->getNumFaces();
+            for(int jj = 0; jj < numberFace; jj++) {
+              // Number the faces
+              MFace face = e->getFace(jj);
+              std::vector<double> coordFace(3, 0);
+              for(std::size_t i = 0; i < face.getNumVertices(); i++) {
+                coordFace[0] += face.getVertex(i)->x();
+                coordFace[1] += face.getVertex(i)->y();
+                coordFace[2] += face.getVertex(i)->z();
+              }
+              coordFace[0] = coordFace[0] / face.getNumVertices();
+              coordFace[1] = coordFace[1] / face.getNumVertices();
+              coordFace[2] = coordFace[2] / face.getNumVertices();
+              int faceGlobalIndice = GModel::current()->addMFace(face);
+              for(int k = 0; k < numFaceFunction; k++) {
+                keys.push_back(
+                  std::pair<int, int>(k + const1, faceGlobalIndice));
+                coord.push_back(coordFace[0]);
+                coord.push_back(coordFace[1]);
+                coord.push_back(coordFace[2]);
+              }
+            }
+          }
+          if(bSize > 0) {
+            std::vector<double> bubbleCenterCoord(3, 0);
+            for(unsigned int k = 0; k < e->getNumVertices(); k++) {
+              bubbleCenterCoord[0] += e->getVertex(k)->x();
+              bubbleCenterCoord[1] += e->getVertex(k)->y();
+              bubbleCenterCoord[2] += e->getVertex(k)->z();
+            }
+            bubbleCenterCoord[0] = bubbleCenterCoord[0] / e->getNumVertices();
+            bubbleCenterCoord[1] = bubbleCenterCoord[1] / e->getNumVertices();
+            bubbleCenterCoord[2] = bubbleCenterCoord[2] / e->getNumVertices();
+            for(int k = 0; k < bSize; k++) {
+              keys.push_back(std::pair<int, int>(k + const2, e->getNum()));
+              coord.push_back(bubbleCenterCoord[0]);
+              coord.push_back(bubbleCenterCoord[1]);
+              coord.push_back(bubbleCenterCoord[2]);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  else {
+    std::map<int, std::vector<GEntity *> > typeEnt;
+    _getEntitiesForElementTypes(dim, tag, typeEnt);
+    const std::vector<GEntity *> &entities(typeEnt[elementType]);
+    int familyType = ElementType::getParentType(elementType);
     HierarchicalBasisH1 *basis(0);
     switch(familyType) {
     case TYPE_HEX: {
@@ -2177,18 +2259,18 @@ GMSH_API void gmsh::model::mesh::getKeyForElements(gmsh::vectorpair &keys,
     } break;
     default: Msg::Error("Unknown familyType "); throw 2;
     }
-    basis->reverseFaceBubbleFor3D(belongBoundary);
-    basis->reverseEdgeBubbleFor2D(belongBoundary);
     int vSize = basis->getnVertexFunction();
     int bSize = basis->getnBubbleFunction();
     int eSize = basis->getnEdgeFunction();
     int fSize = basis->getnFaceFunction();
+    int numDofsByElement = vSize + bSize + eSize + fSize;
     int numFaceFunction = 0;
-    if(basis->getNumFace()!=0){
-      numFaceFunction = fSize / basis->getNumFace(); // number of face functions for one face
+    if(basis->getNumFace() != 0) {
+      numFaceFunction =
+        fSize / basis->getNumFace(); // number of face functions for one face
     }
-      int numEdgeFunction =0;
-    if(basis->getNumEdge()!=0){
+    int numEdgeFunction = 0;
+    if(basis->getNumEdge() != 0) {
       numEdgeFunction =
         eSize / basis->getNumEdge(); // number of edge functions for one edge
     }
@@ -2200,79 +2282,43 @@ GMSH_API void gmsh::model::mesh::getKeyForElements(gmsh::vectorpair &keys,
       GEntity *ge = entities[i];
       std::size_t numElementsInEntitie =
         ge->getNumMeshElementsByType(familyType);
+      keys.reserve(keys.size() + numElementsInEntitie * numDofsByElement);
       for(std::size_t j = 0; j < numElementsInEntitie; j++) {
         MElement *e = ge->getMeshElementByType(familyType, j);
         for(int k = 0; k < vSize; k++) {
           keys.push_back(std::pair<int, int>(2, e->getVertex(k)->getNum()));
-          coord.push_back(e->getVertex(k)->x());
-          coord.push_back(e->getVertex(k)->y());
-          coord.push_back(e->getVertex(k)->z());
         }
-        if(eSize>0){
-        int numberEdge = e->getNumEdges();
-        for(int jj = 0; jj < numberEdge; jj++) {
-          MEdge edge = e->getEdge(jj);
-          MVertex *v1 = edge.getVertex(0);
-          MVertex *v2 = edge.getVertex(1);
-          std::vector<double> coordEdge(3);
-          coordEdge[0] = (v1->x() + v2->x()) / 2;
-          coordEdge[1] = (v1->y() + v2->y()) / 2;
-          coordEdge[2] = (v1->z() + v2->z()) / 2;
-          int edgeGlobalIndice = GModel::current()->addMEdge(edge);
-          for(int k = 0; k < numEdgeFunction; k++) {
-            keys.push_back(std::pair<int, int>(k + 3, edgeGlobalIndice));
-            coord.push_back(coordEdge[0]);
-            coord.push_back(coordEdge[1]);
-            coord.push_back(coordEdge[2]);
+        if(eSize > 0) {
+          int numberEdge = e->getNumEdges();
+          for(int jj = 0; jj < numberEdge; jj++) {
+            MEdge edge = e->getEdge(jj);
+            int edgeGlobalIndice = GModel::current()->addMEdge(edge);
+            for(int k = 0; k < numEdgeFunction; k++) {
+              keys.push_back(std::pair<int, int>(k + 3, edgeGlobalIndice));
+            }
           }
         }
-      }
         // faces
-        if(fSize>0){
-        int numberFace = e->getNumFaces();
-        for(int jj = 0; jj < numberFace; jj++) {
-          // Number the faces
-          MFace face = e->getFace(jj);
-          std::vector<double> coordFace(3, 0.);
-          for(std::size_t i = 0; i < face.getNumVertices(); i++) {
-            coordFace[0] += face.getVertex(i)->x();
-            coordFace[1] += face.getVertex(i)->y();
-            coordFace[2] += face.getVertex(i)->z();
-          }
-          coordFace[0] = coordFace[0] / face.getNumVertices();
-          coordFace[1] = coordFace[1] / face.getNumVertices();
-          coordFace[2] = coordFace[2] / face.getNumVertices();
-          int faceGlobalIndice = GModel::current()->addMFace(face);
-          for(int k = 0; k < numFaceFunction; k++) {
-            keys.push_back(std::pair<int, int>(k + const1, faceGlobalIndice));
-            coord.push_back(coordFace[0]);
-            coord.push_back(coordFace[1]);
-            coord.push_back(coordFace[2]);
+        if(fSize > 0) {
+          int numberFace = e->getNumFaces();
+          for(int jj = 0; jj < numberFace; jj++) {
+            // Number the faces
+            MFace face = e->getFace(jj);
+            int faceGlobalIndice = GModel::current()->addMFace(face);
+            for(int k = 0; k < numFaceFunction; k++) {
+              keys.push_back(std::pair<int, int>(k + const1, faceGlobalIndice));
+            }
           }
         }
-      }
-      if(bSize>0){
-        std::vector<double> bubbleCenterCoord(3);
-        for(unsigned int k = 0; k < e->getNumVertices(); k++) {
-          bubbleCenterCoord[0] += e->getVertex(k)->x();
-          bubbleCenterCoord[1] += e->getVertex(k)->y();
-          bubbleCenterCoord[2] += e->getVertex(k)->z();
+        if(bSize > 0) {
+          for(int k = 0; k < bSize; k++) {
+            keys.push_back(std::pair<int, int>(k + const2, e->getNum()));
+          }
         }
-        bubbleCenterCoord[0] = bubbleCenterCoord[0] / e->getNumVertices();
-        bubbleCenterCoord[1] = bubbleCenterCoord[1] / e->getNumVertices();
-        bubbleCenterCoord[2] = bubbleCenterCoord[2] / e->getNumVertices();
-        for(int k = 0; k < bSize; k++) {
-          keys.push_back(std::pair<int, int>(k + const2, e->getNum()));
-          coord.push_back(bubbleCenterCoord[0]);
-          coord.push_back(bubbleCenterCoord[1]);
-          coord.push_back(bubbleCenterCoord[2]);
-        }
-      }
       }
     }
   }
 }
-
 GMSH_API void gmsh::model::mesh::getInformationForElements(
   const gmsh::vectorpair &keys, gmsh::vectorpair &info, const int order,
   const int elementType)

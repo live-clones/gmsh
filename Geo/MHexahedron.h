@@ -190,14 +190,14 @@ public:
   static int edges_hexa(const int edge, const int vert)
   {
     static const int e[12][2] = {{0, 1}, {0, 3}, {0, 4}, {1, 2},
-                                 {1, 5}, {3, 2}, {2, 6}, {3, 7},
-                                 {4, 5}, {4, 7}, {5, 6}, {7, 6}};
+                                 {1, 5}, {2, 3}, {2, 6}, {3, 7},
+                                 {4, 5}, {4, 7}, {5, 6}, {6, 7}};
     return e[edge][vert];
   }
   static int faces_hexa(const int face, const int vert)
   {
-    static const int f[6][4] = {{0, 1, 3, 2}, {0, 1, 4, 5}, {0, 3, 4, 7},
-                                {1, 2, 5, 6}, {2, 3, 6, 7}, {4, 5, 7, 6}};
+    static const int f[6][4] = {{0, 3, 2, 1}, {0, 1, 5, 4}, {0, 4, 7, 3},
+                                {1, 2, 6, 5}, {2, 3, 7, 6}, {4, 5, 6, 7}};
     return f[face][vert];
   }
   static int faces2edge_hexa(const int face, const int edge)
@@ -210,6 +210,18 @@ public:
     return e[face][edge];
   }
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
+  virtual int getVertexSolin(int numEdge, int numVertex){
+    static const int eSolin[12][2] =  {{0, 1}, {0, 3}, {0, 4}, {1, 2},
+                                 {1, 5}, {3, 2}, {2, 6}, {3, 7},
+                                 {4, 5}, {4, 7}, {5, 6}, {7, 6}};
+    return getVertex(eSolin[numEdge][numVertex])->getNum();
+  }
+  virtual MFace getFaceSolin(int numFace){
+    static const int fSolin[6][4] = {{0, 1, 3, 2}, {0, 1, 4, 5}, {0, 3, 4, 7},
+                                {1, 2, 5, 6}, {2, 3, 6, 7}, {4, 5, 7, 6}};
+    return MFace(_v[fSolin[numFace][0]], _v[fSolin[numFace][1]],
+                 _v[fSolin[numFace][2]], _v[fSolin[numFace][3]]);
+  }
 };
 
 /*

@@ -181,12 +181,12 @@ public:
   virtual SPoint3 circumcenter();
   static int edges_tetra(const int edge, const int vert)
   {
-    static const int e[6][2] = {{0, 1}, {1, 2}, {2, 0}, {0, 3}, {2, 3}, {1, 3}};
+    static const int e[6][2] = {{0, 1}, {1, 2}, {2, 0}, {3, 0}, {3, 2}, {3, 1}};
     return e[edge][vert];
   }
   static int faces_tetra(const int face, const int vert)
   {
-    static const int f[4][3] = {{0, 1, 2}, {0, 1, 3}, {0, 2, 3}, {1, 2, 3}};
+    static const int f[4][3] = {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
     return f[face][vert];
   }
   static int faces2edge_tetra(const int face, const int edge)
@@ -198,6 +198,15 @@ public:
     return e[face][edge];
   }
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
+  virtual int getVertexSolin(int numEdge, int numVertex){
+    static const int eSolin[6][2] =  {{0, 1}, {1, 2}, {2, 0}, {0, 3}, {2, 3}, {1, 3}};
+    return getVertex(eSolin[numEdge][numVertex])->getNum();
+  }
+  virtual MFace getFaceSolin(int numFace){
+    static const int fSolin[4][3] = {{0, 1, 2}, {0, 1, 3}, {0, 2, 3}, {1, 2, 3}};
+    return MFace(_v[fSolin[numFace][0]], _v[fSolin[numFace][1]],
+                 _v[fSolin[numFace][2]]);
+  }
 };
 
 /*

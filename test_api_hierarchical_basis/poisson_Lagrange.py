@@ -11,7 +11,7 @@ import sys
 # $ python demos/api/poisson.py
 # with usual gmsh line arguments, e.g., -clscale 0.5 -order 2
 
-INTEGRATION = 'Gauss8'
+INTEGRATION = 'Gauss6'
 DEBUG = 0
 RECOMBINE = 0
 
@@ -125,7 +125,6 @@ def fem_solve():
                     debug('Gauss integr:', len(qjac), len(qdet), len(qpoint),
                            '= (9, 1, 3) x', numGaussPoints, 'x', numElements)
                     qdet = np.array(qdet).reshape((numElements, numGaussPoints))
-                   
                     debug('%qdet (e,g) =', qdet.shape)
                     # remove components of dxdu useless in dimEntity dimensions (here 2D)
                     dxdu = np.array(qjac).reshape(

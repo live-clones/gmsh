@@ -66,8 +66,6 @@ public:
                     int const &flag1, int const &flag2, int const &flag3,
                     int const &faceNumber,
                     std::vector<std::vector<double> > &gradientFace);
-  virtual void reverseFaceBubbleFor3D(const bool belongBoundary){};
-  virtual void reverseEdgeBubbleFor2D(const bool belongBoundary){};
 
 private:
   int _pb1; // bubble function order in  direction u

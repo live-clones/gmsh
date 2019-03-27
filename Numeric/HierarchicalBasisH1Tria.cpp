@@ -1,7 +1,7 @@
 
 #include "HierarchicalBasisH1Tria.h"
 
-HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int pb, int pe0, int pe1,
+HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int pf, int pe0, int pe1,
                                                  int pe2)
 {
   _nvertex = 3;
@@ -9,12 +9,12 @@ HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int pb, int pe0, int pe1,
   _nface = 1;
   _nVertexFunction = 3;
   _nEdgeFunction = pe0 + pe1 + pe2 - 3;
-  _nFaceFunction = 0;
-  _nBubbleFunction = (pb - 1) * (pb - 2) / 2;
-  _pb = pb;
+  _nFaceFunction = (pf - 1) * (pf - 2) / 2;
+  _nBubbleFunction = 0;
+  _pf = pf;
 
-  if(pe0 > pb || pe2 > pb || pe1 > pb) {
-    throw std::string("pe0, pe1  and pe2  must be <=pb");
+  if(pe0 > pf || pe2 > pf || pe1 > pf) {
+    throw std::string("pe0, pe1  and pe2  must be <=pf");
   }
   _pOrderEdge[0] = pe0;
   _pOrderEdge[1] = pe1;
@@ -27,9 +27,9 @@ HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int order)
   _nface = 1;
   _nVertexFunction = 3;
   _nEdgeFunction = 3 * order - 3;
-  _nFaceFunction = 0;
-  _nBubbleFunction = (order - 1) * (order - 2) / 2;
-  _pb = order;
+  _nFaceFunction = (order - 1) * (order - 2) / 2;
+  _nBubbleFunction = 0;
+  _pf = order;
   _pOrderEdge[0] = order;
   _pOrderEdge[1] = order;
   _pOrderEdge[2] = order;
@@ -73,53 +73,53 @@ void HierarchicalBasisH1Tria::generateBasis(double const &u, double const &v,
   vertexBasis[0] = lambda2;
   vertexBasis[1] = lambda3;
   vertexBasis[2] = lambda1;
-  // edge 0  shape functions and a part of bubble functions :
+  // edge 0  shape functions and a part of face functions :
   int iterator2 = 0;
   for(int k = 0; k <= _pOrderEdge[0] - 2; k++) {
     double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction32);
     edgeBasis[k] = product32 * kernel;
     int iterator = 0;
-    while(iterator <= _pb - 3 - k) {
-      bubbleBasis[iterator2 + iterator] = product * kernel;
+    while(iterator <= _pf - 3 - k) {
+      faceBasis[iterator2 + iterator] = product * kernel;
       iterator++;
     }
-    iterator2 = iterator2 + _pb - 2 - k;
+    iterator2 = iterator2 + _pf - 2 - k;
   }
-  for(int k = _pOrderEdge[0] - 1; k <= _pb - 3; k++) {
+  for(int k = _pOrderEdge[0] - 1; k <= _pf - 3; k++) {
     double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction32);
     int iterator = 0;
-    while(iterator <= _pb - 3 - k) {
-      bubbleBasis[iterator2 + iterator] = product * kernel;
+    while(iterator <= _pf - 3 - k) {
+      faceBasis[iterator2 + iterator] = product * kernel;
       iterator++;
     }
-    iterator2 = iterator2 + _pb - 2 - k;
+    iterator2 = iterator2 + _pf - 2 - k;
   }
   // edge 1 shape functions  :
   for(int k = 0; k <= _pOrderEdge[1] - 2; k++) {
     edgeBasis[_pOrderEdge[0] + k - 1] =
       product13 * OrthogonalPoly::EvalKernelFunction(k, subtraction13);
   }
-  // edge 2  shape functions and a part of bubble functions :
+  // edge 2  shape functions and a part of face functions :
   for(int k = 0; k <= _pOrderEdge[2] - 2; k++) {
     double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction21);
     edgeBasis[k + _pOrderEdge[0] + _pOrderEdge[1] - 2] = product21 * kernel;
     int iterator2 = k;
     int iterator1 = 0;
-    int iterator3 = _pb - 2;
-    while(iterator1 <= _pb - 3 - k) {
-      bubbleBasis[iterator2] = bubbleBasis[iterator2] * kernel;
+    int iterator3 = _pf - 2;
+    while(iterator1 <= _pf - 3 - k) {
+      faceBasis[iterator2] = faceBasis[iterator2] * kernel;
       iterator2 = iterator2 + iterator3;
       iterator1++;
       iterator3--;
     }
   }
-  for(int k = _pOrderEdge[2] - 1; k <= _pb - 3; k++) {
+  for(int k = _pOrderEdge[2] - 1; k <= _pf - 3; k++) {
     double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction21);
     int iterator2 = k;
     int iterator1 = 0;
-    int iterator3 = _pb - 2;
-    while(iterator1 <= _pb - 3 - k) {
-      bubbleBasis[iterator2] = bubbleBasis[iterator2] * kernel;
+    int iterator3 = _pf - 2;
+    while(iterator1 <= _pf - 3 - k) {
+      faceBasis[iterator2] = faceBasis[iterator2] * kernel;
       iterator2 = iterator2 + iterator3;
       iterator1++;
       iterator3--;
@@ -163,9 +163,9 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
   gradientVertex[1][1] = jacob * dlambda3V;
   gradientVertex[2][0] = jacob * dlambda1U;
   gradientVertex[2][1] = jacob * dlambda1V;
-  std::vector<double> tablIntermU(_nBubbleFunction);
-  std::vector<double> tablIntermV(_nBubbleFunction);
-  // edge 0  gradient  and a part of bubble functions gradient :
+  std::vector<double> tablIntermU(_nFaceFunction);
+  std::vector<double> tablIntermV(_nFaceFunction);
+  // edge 0  gradient  and a part of face functions gradient :
   int iterator2 = 0;
   for(int k = 0; k <= _pOrderEdge[0] - 2; k++) {
     double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction32);
@@ -179,13 +179,13 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
         kernel +
       product32 * (gradientVertex[1][1] - gradientVertex[0][1]) * dKernel;
     int iterator = 0;
-    while(iterator <= _pb - 3 - k) {
-      gradientBubble[iterator2 + iterator][0] =
+    while(iterator <= _pf - 3 - k) {
+      gradientFace[iterator2 + iterator][0] =
         (gradientVertex[1][0] * product21 + gradientVertex[0][0] * product13 +
          gradientVertex[2][0] * product32) *
           kernel +
         product * (gradientVertex[1][0] - gradientVertex[0][0]) * dKernel;
-      gradientBubble[iterator2 + iterator][1] =
+      gradientFace[iterator2 + iterator][1] =
         (gradientVertex[1][1] * product21 + gradientVertex[0][1] * product13 +
          gradientVertex[2][1] * product32) *
           kernel +
@@ -197,19 +197,19 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
       iterator++;
     }
 
-    iterator2 = iterator2 + _pb - 2 - k;
+    iterator2 = iterator2 + _pf - 2 - k;
   }
-  for(int k = _pOrderEdge[0] - 1; k <= _pb - 3; k++) {
+  for(int k = _pOrderEdge[0] - 1; k <= _pf - 3; k++) {
     double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction32);
     double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subtraction32);
     int iterator = 0;
-    while(iterator <= _pb - 3 - k) {
-      gradientBubble[iterator2 + iterator][0] =
+    while(iterator <= _pf - 3 - k) {
+      gradientFace[iterator2 + iterator][0] =
         (gradientVertex[1][0] * product21 + gradientVertex[0][0] * product13 +
          gradientVertex[2][0] * product32) *
           kernel +
         product * (gradientVertex[1][0] - gradientVertex[0][0]) * dKernel;
-      gradientBubble[iterator2 + iterator][1] =
+      gradientFace[iterator2 + iterator][1] =
         (gradientVertex[1][1] * product21 + gradientVertex[0][1] * product13 +
          gradientVertex[2][1] * product32) *
           kernel +
@@ -221,7 +221,7 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
       iterator++;
     }
 
-    iterator2 = iterator2 + _pb - 2 - k;
+    iterator2 = iterator2 + _pf - 2 - k;
   }
   // edge 1 shape functions gradient  :
   for(int k = 0; k <= _pOrderEdge[1] - 2; k++) {
@@ -236,7 +236,7 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
         kernel +
       product13 * (gradientVertex[2][1] - gradientVertex[1][1]) * dKernel;
   }
-  // edge 2  gradient  and a part of bubble functions gradient :
+  // edge 2  gradient  and a part of face functions gradient :
   for(int k = 0; k <= _pOrderEdge[2] - 2; k++) {
     double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction21);
     double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subtraction21);
@@ -250,27 +250,27 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
       product21 * (gradientVertex[0][1] - gradientVertex[2][1]) * dKernel;
     int iterator2 = k;
     int iterator1 = 0;
-    int iterator3 = _pb - 2;
-    while(iterator1 <= _pb - 3 - k) {
-      gradientBubble[iterator2][0] = gradientBubble[iterator2][0] * kernel +
+    int iterator3 = _pf - 2;
+    while(iterator1 <= _pf - 3 - k) {
+      gradientFace[iterator2][0] = gradientFace[iterator2][0] * kernel +
                                      tablIntermU[iterator2] * dKernel;
-      gradientBubble[iterator2][1] = gradientBubble[iterator2][1] * kernel +
+      gradientFace[iterator2][1] = gradientFace[iterator2][1] * kernel +
                                      tablIntermV[iterator2] * dKernel;
       iterator2 = iterator2 + iterator3;
       iterator1++;
       iterator3--;
     }
   }
-  for(int k = _pOrderEdge[2] - 1; k <= _pb - 3; k++) {
+  for(int k = _pOrderEdge[2] - 1; k <= _pf - 3; k++) {
     double kernel = OrthogonalPoly::EvalKernelFunction(k, subtraction21);
     double dKernel = OrthogonalPoly::EvalDKernelFunction(k, subtraction21);
     int iterator2 = k;
     int iterator1 = 0;
-    int iterator3 = _pb - 2;
-    while(iterator1 <= _pb - 3 - k) {
-      gradientBubble[iterator2][0] = gradientBubble[iterator2][0] * kernel +
+    int iterator3 = _pf - 2;
+    while(iterator1 <= _pf - 3 - k) {
+      gradientFace[iterator2][0] = gradientFace[iterator2][0] * kernel +
                                      tablIntermU[iterator2] * dKernel;
-      gradientBubble[iterator2][1] = gradientBubble[iterator2][1] * kernel +
+      gradientFace[iterator2][1] = gradientFace[iterator2][1] * kernel +
                                      tablIntermV[iterator2] * dKernel;
       iterator2 = iterator2 + iterator3;
       iterator1++;
@@ -344,12 +344,5 @@ void HierarchicalBasisH1Tria::orientateEdgeGrad(
         gradientEdge[k][1] = gradientEdge[k][1] * (-1);
       }
     }
-  }
-}
-void HierarchicalBasisH1Tria::reverseFaceBubbleFor3D(const bool belongBoundary){
-  if(belongBoundary){
-    int copy=_nFaceFunction ;
-    _nFaceFunction = _nBubbleFunction;
-    _nBubbleFunction = copy;
   }
 }

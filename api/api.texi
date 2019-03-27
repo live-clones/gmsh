@@ -1052,20 +1052,20 @@ at the integration points: [g1f1, ..., g1fC, g2f1, ...].
 @item getBasisFunctionsForElements
 Get the basis function of the element of type @code{elementType} for the given
 @code{integrationType} integration rule. }basisFunctions} contains the
-evaluation of de the basis functions at the integration points. }weight}
-conntains the Gauss weights. }order} is the polynomial order. Each physical mesh
-edge (or Face) will  be assigned a unique orientation,and all edges (or Faces)
-of physical mesh will be equipped with an orientation tag , indicating whether
-the image of the corresponding edge (or Face) of the reference domain through
-the reference map has the same or opposite orientation.The global edge
-orientation always pointing from the vertex with the lower global vertex number
-to the one with the higher one.
+evaluation of de the basis functions at the integration points.
+}integrationPoints} contains the Gauss weights and integration points. Each
+physical mesh edge (or Face) will  be assigned a unique orientation,and all
+edges (or Faces) of physical mesh will be equipped with an orientation tag ,
+indicating whether the image of the corresponding edge (or Face) of the
+reference domain through the reference map has the same or opposite
+orientation.The global edge orientation always pointing from the vertex with the
+lower global vertex number to the one with the higher one.
 
 @table @asis
 @item Input:
-@code{integrationType}, @code{elementType}, @code{functionSpaceType}, @code{order}, @code{belongBoundary}, @code{tag}
+@code{integrationType}, @code{elementType}, @code{functionSpaceType}, @code{tag}
 @item Output:
-@code{basisFunctions}, @code{weight}, @code{keys}, @code{numDof}
+@code{basisFunctions}, @code{integrationPoints}, @code{numComponents}, @code{numDofsByElement}
 @item Return:
 -
 @end table
@@ -1089,9 +1089,9 @@ of all element
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{order}, @code{belongBoundary}
+@code{dim}, @code{tag}, @code{functionSpaceType}, @code{elementType}
 @item Output:
-@code{keys}, @code{coord}
+@code{coord}, @code{keys}
 @item Return:
 -
 @end table

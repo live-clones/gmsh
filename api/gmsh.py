@@ -1771,36 +1771,34 @@ class model:
                 _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value))
 
         @staticmethod
-        def getBasisFunctionsForElements(integrationType, elementType, functionSpaceType, order, belongBoundary, tag=-1):
+        def getBasisFunctionsForElements(integrationType, elementType, functionSpaceType, tag=-1):
             """
             Get the basis function of the element of type `elementType' for the given
             `integrationType' integration rule. 'basisFunctions' contains the
-            evaluation of de the basis functions at the integration points. 'weight'
-            conntains the Gauss weights. 'order' is the polynomial order. Each physical
-            mesh edge (or Face) will  be assigned a unique orientation,and all edges
-            (or Faces) of physical mesh will be equipped with an orientation tag ,
-            indicating whether the image of the corresponding edge (or Face) of the
+            evaluation of de the basis functions at the integration points.
+            'integrationPoints' contains the Gauss weights and integration points. Each
+            physical mesh edge (or Face) will  be assigned a unique orientation,and all
+            edges (or Faces) of physical mesh will be equipped with an orientation tag
+            , indicating whether the image of the corresponding edge (or Face) of the
             reference domain through the reference map has the same or opposite
             orientation.The global edge orientation always pointing from the vertex
             with the lower global vertex number to the one with the higher one.
 
-            Return `basisFunctions', `weight', `keys', `numDof'.
+            Return `basisFunctions', `integrationPoints', `numComponents', `numDofsByElement'.
             """
             api_basisFunctions_, api_basisFunctions_n_ = POINTER(c_double)(), c_size_t()
-            api_weight_, api_weight_n_ = POINTER(c_double)(), c_size_t()
-            api_keys_, api_keys_n_ = POINTER(c_int)(), c_size_t()
-            api_numDof_ = c_int()
+            api_integrationPoints_, api_integrationPoints_n_ = POINTER(c_double)(), c_size_t()
+            api_numComponents_ = c_int()
+            api_numDofsByElement_ = c_int()
             ierr = c_int()
             lib.gmshModelMeshGetBasisFunctionsForElements(
                 c_char_p(integrationType.encode()),
                 c_int(elementType),
-                byref(api_basisFunctions_), byref(api_basisFunctions_n_),
-                byref(api_weight_), byref(api_weight_n_),
                 c_char_p(functionSpaceType.encode()),
-                c_int(order),
-                byref(api_keys_), byref(api_keys_n_),
-                byref(api_numDof_),
-                c_int(bool(belongBoundary)),
+                byref(api_basisFunctions_), byref(api_basisFunctions_n_),
+                byref(api_integrationPoints_), byref(api_integrationPoints_n_),
+                byref(api_numComponents_),
+                byref(api_numDofsByElement_),
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
@@ -1809,9 +1807,9 @@ class model:
                     ierr.value)
             return (
                 _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value),
-                _ovectordouble(api_weight_, api_weight_n_.value),
-                _ovectorpair(api_keys_, api_keys_n_.value),
-                api_numDof_.value)
+                _ovectordouble(api_integrationPoints_, api_integrationPoints_n_.value),
+                api_numComponents_.value,
+                api_numDofsByElement_.value)
 
         @staticmethod
         def getInformationForElements(keys, order, elementType):
@@ -1838,30 +1836,30 @@ class model:
             return _ovectorpair(api_info_, api_info_n_.value)
 
         @staticmethod
-        def getKeyForElements(dim, tag, order, belongBoundary):
+        def getKeyForElements(dim, tag, functionSpaceType, elementType=-1):
             """
              generate the vectorpair 'Keys' .
 
-            Return `keys', `coord'.
+            Return `coord', `keys'.
             """
-            api_keys_, api_keys_n_ = POINTER(c_int)(), c_size_t()
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
+            api_keys_, api_keys_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetKeyForElements(
-                byref(api_keys_), byref(api_keys_n_),
                 c_int(dim),
                 c_int(tag),
-                c_int(order),
+                c_char_p(functionSpaceType.encode()),
                 byref(api_coord_), byref(api_coord_n_),
-                c_int(bool(belongBoundary)),
+                byref(api_keys_), byref(api_keys_n_),
+                c_int(elementType),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelMeshGetKeyForElements returned non-zero error code: ",
                     ierr.value)
             return (
-                _ovectorpair(api_keys_, api_keys_n_.value),
-                _ovectordouble(api_coord_, api_coord_n_.value))
+                _ovectordouble(api_coord_, api_coord_n_.value),
+                _ovectorpair(api_keys_, api_keys_n_.value))
 
         @staticmethod
         def precomputeBasisFunctions(elementType):

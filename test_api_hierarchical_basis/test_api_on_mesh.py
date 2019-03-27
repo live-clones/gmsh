@@ -9,89 +9,90 @@ import gmsh
 import sys
 import numpy as np
 
-INTEGRATION = 'Gauss2'
+INTEGRATION = 'Gauss1'
 model = gmsh.model
 factory = model.occ
 order=3
 gmsh.initialize()
 #gmsh.option.setNumber("General.Terminal", 1)
 #
-gmsh.model.add("brick_element");
-
-# add discrete surface with tag 1
-gmsh.model.addDiscreteEntity(3, 1)
-
-## add 4 mesh nodes
-gmsh.model.mesh.setNodes(3, 1,
-                         [4, 5, 3, 1,2,10,7,9], # node tags: 1, 2, 3, and 4
-                         [0., 0., 0., # coordinates of node 1
-                          1., 0., 0., # coordinates of node 2
-                          1., 1., 0., # ...
-                          0., 1., 0.,
-                          0., 0., 1., # coordinates of node 1
-                          1., 0., 1., # coordinates of node 2
-                          1., 1., 1.,
-                          0., 1., 1.]) # ...
-      
-# add 1 quadrangle
-gmsh.model.mesh.setElements(3, 1,
-                            [5], 
-                            [[1]], # Quadrangle tag: 1 
-                            [[4, 5, 3, 1,2,10,7,9]]) #Quadrangle 1: nodes 1, 2, 3,4
-                              
-
-# export the mesh ; use explore.py to read and examine the mesh
-gmsh.write("brick_element.msh")
-elementType=5
-#ky,coord=gmsh.model.mesh.getKeyForElements(3, 1, order,False)
-bs, we ,ky,numDof=model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType, 'GradLegendre',order,False) 
-
-print( "Evaluation of de the basis functions at the integration points: ")
-print(bs)
-print("key :")
-print(ky)
-print(len(ky))
-print(numDof)
-#print("coord:")
-#print(coord)
-gmsh.finalize()
-#gmsh.initialize()
-#gmsh.option.setNumber("General.Terminal", 1)
-#
-#gmsh.model.add("square_element");
+#gmsh.model.add("brick_element");
 #
 ## add discrete surface with tag 1
-#gmsh.model.addDiscreteEntity(2, 1)
+#gmsh.model.addDiscreteEntity(3, 1)
 #
 ### add 4 mesh nodes
-#gmsh.model.mesh.setNodes(2, 1,
-#                         [1, 2, 3, 4], # node tags: 1, 2, 3, and 4
+#gmsh.model.mesh.setNodes(3, 1,
+#                         [4, 5, 3, 1,2,10,7,9], # node tags: 1, 2, 3, and 4
 #                         [0., 0., 0., # coordinates of node 1
 #                          1., 0., 0., # coordinates of node 2
 #                          1., 1., 0., # ...
-#                          0., 1., 0.])
-#
+#                          0., 1., 0.,
+#                          0., 0., 1., # coordinates of node 1
+#                          1., 0., 1., # coordinates of node 2
+#                          1., 1., 1.,
+#                          0., 1., 1.]) # ...
+#      
 ## add 1 quadrangle
-#gmsh.model.mesh.setElements(2, 1,
-#                            [3], # single type : 4-node Quadrangle
+#gmsh.model.mesh.setElements(3, 1,
+#                            [5], 
 #                            [[1]], # Quadrangle tag: 1 
-#                            [[1, 2, 3,4]]) #Quadrangle 1: nodes 1, 2, 3,4
+#                            [[4, 5, 3, 1,2,10,7,9]]) #Quadrangle 1: nodes 1, 2, 3,4
 #                              
 #
 ## export the mesh ; use explore.py to read and examine the mesh
-#gmsh.write("square_element.msh")
-#vElementTypes = model.mesh.getElementTypes(2,1)
-#elementType=vElementTypes[0]
-#bs, we ,ky=model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType, 'GradLegendre',order) 
+#gmsh.write("brick_element.msh")
+#elementType=5
+##ky,coord=gmsh.model.mesh.getKeyForElements(3, 1, order,False)
+#bs, we ,ky,numDof=model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType, 'GradLegendre',order,False) 
+#
 #print( "Evaluation of de the basis functions at the integration points: ")
 #print(bs)
 #print("key :")
 #print(ky)
-#
-#print("getInformationForElements() :")
-#info=model.mesh.getInformationForElements(ky,order,elementType)
-#print(info)
+#print(len(ky))
+#print(numDof)
+##print("coord:")
+##print(coord)
 #gmsh.finalize()
+gmsh.initialize()
+gmsh.option.setNumber("General.Terminal", 1)
+
+gmsh.model.add("square_element");
+
+# add discrete surface with tag 1
+gmsh.model.addDiscreteEntity(2, 1)
+
+## add 4 mesh nodes
+gmsh.model.mesh.setNodes(2, 1,
+                         [1, 2, 3, 4], # node tags: 1, 2, 3, and 4
+                         [0., 0., 0., # coordinates of node 1
+                          1., 0., 0., # coordinates of node 2
+                          1., 1., 0., # ...
+                          0., 1., 0.])
+
+# add 1 quadrangle
+gmsh.model.mesh.setElements(2, 1,
+                            [3], # single type : 4-node Quadrangle
+                            [[1]], # Quadrangle tag: 1 
+                            [[1, 2, 3,4]]) #Quadrangle 1: nodes 1, 2, 3,4
+                              
+
+# export the mesh ; use explore.py to read and examine the mesh
+gmsh.write("square_element.msh")
+vElementTypes = model.mesh.getElementTypes(2,1)
+elementType=vElementTypes[0]
+dsf,_, _ ,_=model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType,'GradSolin0Form1',1)
+coord,ky=gmsh.model.mesh.getKeyForElements(2, 1, "GradSolin0Form1")
+print( "Evaluation of de the basis functions at the integration points: ")
+print(dsf)
+print("key :")
+print(ky)
+
+print("getInformationForElements() :")
+info=model.mesh.getInformationForElements(ky,order,elementType)
+print(info)
+gmsh.finalize()
 
 
 #test_2
@@ -155,11 +156,7 @@ gmsh.finalize()
 #model.mesh.setRecombine(2,4)
 #model.mesh.generate(2)
 #gmsh.write("poisson.msh")
-#   
-#sf, weights ,ky = model.mesh.getBasisFunctionsForElements(INTEGRATION,3, 'Legendre',order)           
-#print(sf)
-#print(len(sf))
-#print(ky)
-#info=model.mesh.getInformationForElements(ky,order)
+#coord,ky=gmsh.model.mesh.getKeyForElements(2, 2, "GradSolin0Form1")
+#
 ##print(info)
 #gmsh.finalize()
