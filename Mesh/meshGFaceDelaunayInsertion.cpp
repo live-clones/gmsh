@@ -1304,7 +1304,9 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   }
 
   // delaunise the initial mesh
-  edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
+  int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
+  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
+  //  _printTris ("a.pos", AllTris.begin(), AllTris.end(), &DATA);
 
   int ITER = 0, active_edge;
   // compute active triangle
