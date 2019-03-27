@@ -1039,9 +1039,6 @@ void bowyerWatson(GFace *gf, int MAXPNT,
     return;
   }
 
-  int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
-  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
-
   if(AllTris.empty()) {
     Msg::Error("No triangles in initial mesh");
     return;
@@ -1083,7 +1080,6 @@ void bowyerWatson(GFace *gf, int MAXPNT,
       insertAPoint(gf, AllTris.begin(), center, metric, DATA, AllTris);
     }
   }
-  nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
   splitElementsInBoundaryLayerIfNeeded(gf);
   transferDataStructure(gf, AllTris, DATA);
 }
@@ -1303,9 +1299,6 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
     return;
   }
 
-  // delaunise the initial mesh
-  edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
-
   int ITER = 0, active_edge;
   // compute active triangle
   std::set<MTri3 *, compareTri3Ptr>::iterator it = AllTris.begin();
@@ -1356,21 +1349,6 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
       }
     }
   }
-
-  //  nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
-  //     char name[245];
-  //     sprintf(name, "delFrontal_GFace_%d.pos", gf->tag());
-  //     _printTris(name, AllTris.begin(), AllTris.end(), &DATA);
-  //   sprintf(name, "delFrontal_GFace_NEW_%d.pos", gf->tag());
-  //   _printTris(name, AllTris.begin(), AllTris.end(), &DATA,NULL,&degenerated);
-  //     sprintf(name, "delFrontal_GFace_%d_Real.pos", gf->tag());
-  //     _printTris(name, AllTris.begin(), AllTris.end(), NULL);
-  //   sprintf(name, "delFrontal_GFace_%d_Real_Curved.pos", gf->tag());
-  //   _printTris(name, AllTris.begin(), AllTris.end(), &DATA,gf,&degenerated);
-  // sprintf(name,"delFrontal_GFace_%d_Layer_Real%d.pos",gf->tag(),ITERATION);
-  // _printTris (name, AllTris.begin(), AllTris.end(),NULL);
-  // sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
-  // _printTris (name, ActiveTris.begin(), ActiveTris.end(), &DATA);
 
   transferDataStructure(gf, AllTris, DATA);
 
@@ -1525,10 +1503,6 @@ void bowyerWatsonFrontalLayers(
     return;
   }
 
-  // delaunise the initial mesh
-  int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
-  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
-
   int ITER = 0, active_edge;
   // compute active triangle
   std::set<MTri3 *, compareTri3Ptr>::iterator it = AllTris.begin();
@@ -1659,10 +1633,6 @@ void bowyerWatsonParallelograms(
     return;
   }
 
-  // delaunise the initial mesh
-  int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
-  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
-
   // std::sort(packed.begin(), packed.end(), MVertexLessThanLexicographic());
   SortHilbert(packed);
 
@@ -1727,10 +1697,6 @@ void bowyerWatsonParallelogramsConstrained(
     Msg::Error("Invalid meshing data structure");
     return;
   }
-
-  // delaunise the initial mesh
-  int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
-  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
 
   std::sort(packed.begin(), packed.end(), MVertexLessThanLexicographic());
 
