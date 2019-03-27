@@ -68,7 +68,8 @@ static void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug)
     char name[245];
     sprintf(name, "trueBoundary%d.pos", gf->tag());
     view_t = Fopen(name, "w");
-    if(view_t) fprintf(view_t, "View \"True Boundary\"{\n");
+    if(view_t)
+      fprintf(view_t, "View \"True Boundary\"{\n");
   }
   std::vector<GEdge *> edg = gf->edges();
   std::set<GEdge *> edges(edg.begin(), edg.end());
@@ -154,12 +155,12 @@ private:
         else {
           v[j] = it->second;
           v[j]->onWhat()->mesh_vertices.push_back(v[j]);
-          if(!CTX::instance()->mesh.secondOrderLinear) {
+          if(!CTX::instance()->mesh.secondOrderLinear){
             // re-push middle vertex on the curve (this can of course lead to an
             // invalid mesh)
             double u = 0.;
-            if(v[j]->getParameter(0, u) && v[j]->onWhat()->dim() == 1) {
-              GEdge *ge = static_cast<GEdge *>(v[j]->onWhat());
+            if(v[j]->getParameter(0, u) && v[j]->onWhat()->dim() == 1){
+              GEdge *ge = static_cast<GEdge*>(v[j]->onWhat());
               GPoint p = ge->point(u);
               v[j]->x() = p.x();
               v[j]->y() = p.y();
@@ -208,12 +209,12 @@ private:
         else {
           v[j] = it->second;
           v[j]->onWhat()->mesh_vertices.push_back(v[j]);
-          if(!CTX::instance()->mesh.secondOrderLinear) {
+          if(!CTX::instance()->mesh.secondOrderLinear){
             // re-push middle vertex on the curve (this can of course lead to an
             // invalid mesh)
             double u = 0.;
-            if(v[j]->getParameter(0, u) && v[j]->onWhat()->dim() == 1) {
-              GEdge *ge = static_cast<GEdge *>(v[j]->onWhat());
+            if(v[j]->getParameter(0, u) && v[j]->onWhat()->dim() == 1){
+              GEdge *ge = static_cast<GEdge*>(v[j]->onWhat());
               GPoint p = ge->point(u);
               v[j]->x() = p.x();
               v[j]->y() = p.y();
@@ -254,7 +255,6 @@ private:
       ++ite;
     }
   }
-
 public:
   // remove one point every two and remember middle points
   quadMeshRemoveHalfOfOneDMesh(GFace *gf, bool periodic) : _gf(gf)
@@ -262,8 +262,9 @@ public:
     // only do it if a full recombination has to (and can) be done
     if(!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine)
       return;
-    if(CTX::instance()->mesh.algoRecombine < 2) return;
-    if(periodic) {
+    if(CTX::instance()->mesh.algoRecombine < 2)
+      return;
+    if(periodic){
       Msg::Error("Full-quad recombination not ready yet for periodic surfaces");
       return;
     }
@@ -754,11 +755,11 @@ static bool recoverEdge(BDS_Mesh *m, GFace *gf, GEdge *ge,
           e->g = g;
         else {
           if(_fatallyFailed) {
-            Msg::Error("Unable to recover the edge %d (%d/%d) on curve %d (on "
-                       "surface %d)",
-                       ge->lines[i]->getNum(), i + 1, ge->lines.size(),
-                       ge->tag(), gf->tag());
-            if(Msg::GetVerbosity() == 99) {
+            Msg::Error(
+              "Unable to recover the edge %d (%d/%d) on curve %d (on surface %d)",
+              ge->lines[i]->getNum(), i + 1, ge->lines.size(), ge->tag(),
+              gf->tag());
+            if(Msg::GetVerbosity() == 99){
               outputScalarField(m->triangles, "wrongmesh.pos", 0);
               outputScalarField(m->triangles, "wrongparam.pos", 1);
             }
@@ -1113,13 +1114,13 @@ static void _deleteUnusedVertices(GFace *gf)
 {
   std::set<MVertex *> allverts;
   for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-    for(int j = 0; j < 3; j++) {
+    for(int j = 0; j < 3; j++){
       if(gf->triangles[i]->getVertex(j)->onWhat() == gf)
         allverts.insert(gf->triangles[i]->getVertex(j));
     }
   }
   for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
-    for(int j = 0; j < 4; j++) {
+    for(int j = 0; j < 4; j++){
       if(gf->quadrangles[i]->getVertex(j)->onWhat() == gf)
         allverts.insert(gf->quadrangles[i]->getVertex(j));
     }
@@ -1239,8 +1240,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 
   if(all_vertices.size() < 3) {
     Msg::Warning("Mesh generation of surface %d skipped: only %d nodes on "
-                 "the boundary",
-                 gf->tag(), all_vertices.size());
+                 "the boundary", gf->tag(), all_vertices.size());
     gf->meshStatistics.status = GFace::DONE;
     return true;
   }
@@ -1281,6 +1281,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     bbox += SPoint3(param[0], param[1], 0);
     count++;
   }
+
+
 
   bbox.makeCube();
 
@@ -1655,6 +1657,14 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     }
   }
 
+  {
+    int nb_swap;
+    Msg::Debug("Delaunizing the initial mesh");
+    delaunayizeBDS(gf, *m, nb_swap);
+  }
+  // gf->triangles.clear();
+  // gf->quadrangles.clear();
+
   // only delete the mesh data stored in the base GFace class
   gf->GFace::deleteMesh();
 
@@ -1663,8 +1673,10 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   if(!algoDelaunay2D(gf) && !onlyInitialMesh) {
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true,
                   &recoverMapInv, NULL);
+    optimizeMeshBDS(gf, *m, 2);
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, false,
                   &recoverMapInv, NULL);
+    optimizeMeshBDS(gf, *m, 2);
   }
 
   gf->meshStatistics.status = GFace::DONE;
@@ -1677,13 +1689,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   std::set<MVertex *> verts;
 
   bool infty = false;
-  if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
+  if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD){
     infty = true;
     if(!onlyInitialMesh)
       buildBackgroundMesh(gf, CTX::instance()->mesh.crossFieldClosestPoint);
   }
   else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
-          gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
+          gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR){
     infty = true;
     if(!onlyInitialMesh) buildBackgroundMesh(gf, false);
   }
@@ -1694,7 +1706,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   // the delaunay algo is based directly on internal gmsh structures BDS mesh is
   // passed in order not to recompute local coordinates of vertices
   if(algoDelaunay2D(gf) && !onlyInitialMesh) {
-    if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL) { bowyerWatsonFrontal(gf); }
+    if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL) {
+      bowyerWatsonFrontal(gf);
+    }
     else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
       bowyerWatsonFrontalLayers(gf, true);
     }
@@ -1739,7 +1753,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   splitElementsInBoundaryLayerIfNeeded(gf);
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     !onlyInitialMesh && CTX::instance()->mesh.algoRecombine <= 1) {
+     !onlyInitialMesh && CTX::instance()->mesh.algoRecombine <= 1){
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
     recombineIntoQuads(gf, blossom, topo, true, 0.1);
@@ -1751,7 +1765,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
                        gf->meshStatistics.nbTriangle,
                        gf->meshStatistics.nbGoodQuality);
 
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
+    directions_storage(gf);
+  }
 
   // remove unused vertices, generated e.g. during background mesh
   _deleteUnusedVertices(gf);
@@ -1821,13 +1837,7 @@ static bool buildConsecutiveListOfVertices(
       MVertex *here = ges.ge->mesh_vertices[i];
       double u;
       here->getParameter(0, u);
-      SPoint2 ppp = ges.ge->reparamOnFace(gf, u, 1);
-      // GPoint A = gf->point(ppp);
-      // double dd = sqrt((A.x()-here->x())*(A.x()-here->x())+
-      //                  (A.y()-here->y())*(A.y()-here->y())+
-      //                  (A.z()-here->z())*(A.z()-here->z()));
-      // if (dd > tol) printf("DIST = %g\n",dd);
-      mesh1d.push_back(ppp);
+      mesh1d.push_back(ges.ge->reparamOnFace(gf, u, 1));
       if(seam) mesh1d_seam.push_back(ges.ge->reparamOnFace(gf, u, -1));
     }
     mesh1d.push_back(ges.ge->reparamOnFace(gf, range.high(), 1));
@@ -1860,7 +1870,9 @@ static bool buildConsecutiveListOfVertices(
       GEdge *ge = (*it).ge;
       bool seam = ge->isSeam(gf);
       mesh1d = meshes[ge];
-      if(seam) { mesh1d_seam = meshes_seam[ge]; }
+      if(seam) {
+        mesh1d_seam = meshes_seam[ge];
+      }
       mesh1d_reversed.insert(mesh1d_reversed.begin(), mesh1d.rbegin(),
                              mesh1d.rend());
       if(seam)
@@ -1940,8 +1952,7 @@ static bool buildConsecutiveListOfVertices(
       // has to be taken with the other parametric coordinates (because it is
       // only present once in the closure of the domain).
       for(std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
-            recoverMapLocal.begin();
-          it != recoverMapLocal.end(); ++it) {
+            recoverMapLocal.begin(); it != recoverMapLocal.end(); ++it) {
         m->del_point(it->first);
       }
       return false;
@@ -2083,7 +2094,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   {
     for(std::list<GEdgeLoop>::iterator it = gf->edgeLoops.begin();
         it != gf->edgeLoops.end(); it++) {
-      if(it->count() == 0) continue;
       std::vector<BDS_Point *> edgeLoop_BDS;
       int nbPointsLocal;
       const double fact[4] = {1.e-12, 1.e-7, 1.e-5, 1.e-3};
@@ -2131,8 +2141,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
   if(nbPointsTotal < 3) {
     Msg::Warning("Mesh generation of surface %d skipped: only %d nodes on "
-                 "the boundary",
-                 gf->tag(), nbPointsTotal);
+                 "the boundary", gf->tag(), nbPointsTotal);
     gf->meshStatistics.status = GFace::DONE;
     delete m;
     return true;
@@ -2220,8 +2229,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     std::vector<GEdge *>::const_iterator ite = emb_edges.begin();
     std::set<MVertex *> vs;
     std::map<MVertex *, BDS_Point *> facile;
-    double uv[2] = {0, 0};
-
     while(ite != emb_edges.end()) {
       m->add_geom(-(*ite)->tag(), 1);
       for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
@@ -2274,6 +2281,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
           }
           if(pp == 0 && vs.find(v) == vs.end()) {
             vs.insert(v);
+            double uv[2] = {0, 0};
             GPoint gp = gf->closestPoint(SPoint3(v->x(), v->y(), v->z()), uv);
             BDS_Point *pp = m->add_point(++pNum, gp.u(), gp.v(), gf);
             pp->g = m->get_geom(-(*ite)->tag(), 1);
@@ -2324,7 +2332,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
         count++;
       }
     }
-    //    getchar();
 
     // Increase the size of the bounding box, add 4 points that enclose
     // the domain, use negative number to distinguish those fake
@@ -2458,8 +2465,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     if(Msg::GetNumThreads() != 1) {
       gf->meshStatistics.status = GFace::PENDING;
       delete m;
-      Msg::Info("Surface %d has self-intersections in its 1D mesh: serializing "
-                "this one",
+      Msg::Info("Surface %d has self-intersections in its 1D mesh: serializing this one",
                 gf->tag());
       return true;
     }
@@ -2468,12 +2474,11 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       std::ostringstream sstream;
       for(std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
           itr != edgesNotRecovered.end(); ++itr)
-        sstream
-          << " " << itr->ge->tag() << "("
-          << (itr->ge->getBeginVertex() ? itr->ge->getBeginVertex()->tag() : -1)
-          << ","
-          << (itr->ge->getEndVertex() ? itr->ge->getEndVertex()->tag() : -1)
-          << ")";
+        sstream << " " << itr->ge->tag() << "("
+                << (itr->ge->getBeginVertex() ?
+                    itr->ge->getBeginVertex()->tag() : -1) << ","
+                << (itr->ge->getEndVertex() ?
+                    itr->ge->getEndVertex()->tag() : -1) << ")";
       Msg::Info(":-( There are %d intersections in the 1D mesh (curves%s)",
                 edgesNotRecovered.size(), sstream.str().c_str());
     }
@@ -2581,7 +2586,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     std::vector<BDS_Face *>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()) {
       BDS_Face *t = *itt;
-      if(!t->g) { m->del_face(t); }
+      if(!t->g) {
+        m->del_face(t);
+      }
       ++itt;
     }
   }
@@ -2620,6 +2627,13 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     outputScalarField(m->triangles, name, 1, gf);
   }
 
+  {
+    // Call this function to untangle elements in Cartesian space
+    int nb_swap;
+    Msg::Debug("Delaunizing the initial mesh");
+    delaunayizeBDS(gf, *m, nb_swap);
+  }
+
   // start mesh generation for periodic face
 
   if(!algoDelaunay2D(gf)) {
@@ -2634,6 +2648,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       sprintf(name, "surface%d-phase1-param.pos", gf->tag());
       outputScalarField(m->triangles, name, 1, gf);
     }
+    optimizeMeshBDS(gf, *m, 2);
     if(debug) {
       char name[245];
       sprintf(name, "surface%d-phase2-real.pos", gf->tag());
@@ -2650,6 +2665,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       sprintf(name, "surface%d-phase3-param.pos", gf->tag());
       outputScalarField(m->triangles, name, 1, gf);
     }
+    optimizeMeshBDS(gf, *m, 2, &recoverMap); // fix periodic shit if broken
     if(debug) {
       char name[245];
       sprintf(name, "surface%d-phase4-real.pos", gf->tag());
@@ -2737,13 +2753,13 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   }
 
   bool infty = false;
-  if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
+  if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD){
     infty = true;
     buildBackgroundMesh(gf, CTX::instance()->mesh.crossFieldClosestPoint,
                         &equivalence, &parametricCoordinates);
   }
   else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
-          gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
+          gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR){
     infty = true;
     buildBackgroundMesh(gf, false, &equivalence, &parametricCoordinates);
   }
@@ -2792,7 +2808,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   delete m;
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     CTX::instance()->mesh.algoRecombine <= 1) {
+     CTX::instance()->mesh.algoRecombine <= 1){
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
     recombineIntoQuads(gf, blossom, topo, false, 0.1); // no node repositioning
@@ -2813,8 +2829,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
 void deMeshGFace::operator()(GFace *gf)
 {
-  if(gf->geomType() == GEntity::DiscreteSurface) {
-    if(!static_cast<discreteFace *>(gf)->haveParametrization()) return;
+  if(gf->geomType() == GEntity::DiscreteSurface){
+    if(!static_cast<discreteFace *>(gf)->haveParametrization())
+      return;
   }
   gf->deleteMesh();
   gf->meshStatistics.status = GFace::PENDING;
@@ -2886,8 +2903,7 @@ void meshGFace::operator()(GFace *gf, bool print)
       return;
     }
     else
-      Msg::Warning("Unknown mesh master surface %d",
-                   gf->getMeshMaster()->tag());
+      Msg::Warning("Unknown mesh master surface %d", gf->getMeshMaster()->tag());
   }
 
   const char *algo = "Unknown";
@@ -2903,7 +2919,9 @@ void meshGFace::operator()(GFace *gf, bool print)
     algo = (gf->geomType() == GEntity::Plane) ? "Delaunay" : "MeshAdapt";
     break;
   }
-  if(!algoDelaunay2D(gf)) { algo = "MeshAdapt"; }
+  if(!algoDelaunay2D(gf)) {
+    algo = "MeshAdapt";
+  }
 
   if(print)
     Msg::Info("Meshing surface %d (%s, %s)", gf->tag(),
@@ -2917,7 +2935,7 @@ void meshGFace::operator()(GFace *gf, bool print)
   }
 
   bool periodic = (gf->getNativeType() != GEntity::GmshModel) &&
-                  (gf->periodic(0) || gf->periodic(1) || singularEdges);
+    (gf->periodic(0) || gf->periodic(1) || singularEdges);
 
   quadMeshRemoveHalfOfOneDMesh halfmesh(gf, periodic);
 
@@ -2945,8 +2963,7 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   // test validity for non-Gmsh models (currently we cannot reliably evaluate
   // the normal on the boundary of surfaces with the Gmsh kernel)
-  if(gf->geomType() != GEntity::DiscreteSurface &&
-     gf->getNativeType() != GEntity::GmshModel && algoDelaunay2D(gf) &&
+  if(gf->getNativeType() != GEntity::GmshModel && algoDelaunay2D(gf) &&
      !isMeshValid(gf)) {
     Msg::Debug(
       "Delaunay-based mesher failed on surface %d -> moving to MeshAdapt",
@@ -3074,7 +3091,7 @@ void orientMeshGFace::operator()(GFace *gf)
             // ... reverse if needed
             if(orientNonBL == -1) e->reverse();
           }
-          else { // If el. in BL ... reverse if needed
+          else{ // If el. in BL ... reverse if needed
             if(orientBL == -1) e->reverse();
           }
         }
