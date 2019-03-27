@@ -1655,6 +1655,12 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     }
   }
 
+  {
+    int nb_swap;
+    Msg::Debug("Delaunizing the initial mesh");
+    delaunayizeBDS(gf, *m, nb_swap);
+  }
+
   // only delete the mesh data stored in the base GFace class
   gf->GFace::deleteMesh();
 
@@ -1821,13 +1827,7 @@ static bool buildConsecutiveListOfVertices(
       MVertex *here = ges.ge->mesh_vertices[i];
       double u;
       here->getParameter(0, u);
-      SPoint2 ppp = ges.ge->reparamOnFace(gf, u, 1);
-      // GPoint A = gf->point(ppp);
-      // double dd = sqrt((A.x()-here->x())*(A.x()-here->x())+
-      //                  (A.y()-here->y())*(A.y()-here->y())+
-      //                  (A.z()-here->z())*(A.z()-here->z()));
-      // if (dd > tol) printf("DIST = %g\n",dd);
-      mesh1d.push_back(ppp);
+      mesh1d.push_back(ges.ge->reparamOnFace(gf, u, 1));
       if(seam) mesh1d_seam.push_back(ges.ge->reparamOnFace(gf, u, -1));
     }
     mesh1d.push_back(ges.ge->reparamOnFace(gf, range.high(), 1));
@@ -2083,7 +2083,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   {
     for(std::list<GEdgeLoop>::iterator it = gf->edgeLoops.begin();
         it != gf->edgeLoops.end(); it++) {
-      if(it->count() == 0) continue;
       std::vector<BDS_Point *> edgeLoop_BDS;
       int nbPointsLocal;
       const double fact[4] = {1.e-12, 1.e-7, 1.e-5, 1.e-3};
@@ -2220,8 +2219,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     std::vector<GEdge *>::const_iterator ite = emb_edges.begin();
     std::set<MVertex *> vs;
     std::map<MVertex *, BDS_Point *> facile;
-    double uv[2] = {0, 0};
-
     while(ite != emb_edges.end()) {
       m->add_geom(-(*ite)->tag(), 1);
       for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
@@ -2274,6 +2271,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
           }
           if(pp == 0 && vs.find(v) == vs.end()) {
             vs.insert(v);
+            double uv[2] = {0, 0};
             GPoint gp = gf->closestPoint(SPoint3(v->x(), v->y(), v->z()), uv);
             BDS_Point *pp = m->add_point(++pNum, gp.u(), gp.v(), gf);
             pp->g = m->get_geom(-(*ite)->tag(), 1);
@@ -2324,7 +2322,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
         count++;
       }
     }
-    //    getchar();
 
     // Increase the size of the bounding box, add 4 points that enclose
     // the domain, use negative number to distinguish those fake
@@ -2618,6 +2615,13 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     outputScalarField(m->triangles, name, 0, gf);
     sprintf(name, "surface%d-recovered-param.pos", gf->tag());
     outputScalarField(m->triangles, name, 1, gf);
+  }
+
+  {
+    // Call this function to untangle elements in Cartesian space
+    int nb_swap;
+    Msg::Debug("Delaunizing the initial mesh");
+    delaunayizeBDS(gf, *m, nb_swap);
   }
 
   // start mesh generation for periodic face
@@ -2945,8 +2949,7 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   // test validity for non-Gmsh models (currently we cannot reliably evaluate
   // the normal on the boundary of surfaces with the Gmsh kernel)
-  if(gf->geomType() != GEntity::DiscreteSurface &&
-     gf->getNativeType() != GEntity::GmshModel && algoDelaunay2D(gf) &&
+  if(gf->getNativeType() != GEntity::GmshModel && algoDelaunay2D(gf) &&
      !isMeshValid(gf)) {
     Msg::Debug(
       "Delaunay-based mesher failed on surface %d -> moving to MeshAdapt",
