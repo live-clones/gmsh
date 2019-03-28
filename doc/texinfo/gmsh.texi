@@ -2602,12 +2602,16 @@ by means of Delaunay triangulation and Bowyer-Watson algorithm},
 J. Comput.  Phys. 106, pp. 25--138, 1993.}.
 @item
 Other experimental algorithms with specific features are also
-available. In particular, ``Frontal-Delaunay for Quads'' is a variant of
-the ``Frontal-Delaunay'' algorithm aiming at generating right-angle
-triangles suitable for recombination; and ``BAMG''@footnote{F. Hecht,
-@emph{BAMG: bidimensional anisotropic mesh generator}, User Guide,
-INRIA, Rocquencourt, 1998.} allows to generate anisotropic
-triangulations.
+available. In particular, ``Frontal-Delaunay for
+Quads''@footnote{J.-F. Remacle, F. Henrotte, T. Carrier-Baudouin,
+E. Béchet, E. Marchandise, C. Geuzaine and T. Mouton, @emph{A frontal
+Delaunay quad mesh generator using the Linf norm}, International Journal
+for Numerical Methods in Engineering, 94(5), pp. 494-512, 2013.} is a
+variant of the ``Frontal-Delaunay'' algorithm aiming at generating
+right-angle triangles suitable for recombination; and
+``BAMG''@footnote{F. Hecht, @emph{BAMG: bidimensional anisotropic mesh
+generator}, User Guide, INRIA, Rocquencourt, 1998.} allows to generate
+anisotropic triangulations.
 @end itemize
 
 For very complex curved surfaces the ``MeshAdapt'' algorithm is the most
@@ -2710,9 +2714,9 @@ To save all mesh element wether or not physical groups are defined, use
 The mesh module commands allow to modify the mesh element sizes and
 specify structured grid parameters. Certain mesh ``actions'' (i.e.,
 ``mesh the curves'', ``mesh the surfaces'' and ``mesh the volumes'') can
-also be specified in the script files but are performed either in the
-GUI or on the command line (see @ref{Running Gmsh on your system}, and
-@ref{Command-line options}).
+also be specified in the script files but are usually performed either
+in the GUI or on the command line (see @ref{Running Gmsh on your
+system}, and @ref{Command-line options}).
 
 In the Gmsh API, the mesh commands are available in the
 @code{gmsh/model/mesh} module (@pxref{Gmsh API}).
