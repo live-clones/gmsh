@@ -648,16 +648,16 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
 /* Get the basis function of the element of type `elementType' for the given
  * `integrationType' integration rule and `functionSpaceType' (e.g. for order
  * 3 : "Solin0Form3" or "GradSolin0Form3" ) . 'basisFunctions' contains the
- * evaluation of de the basis functions at the integration points:
- * [{gausspoint_1}:e1f1, ..., e1fC, e2f1, ..,e2fC.,enfC,{gausspoint_2}:...].
- * 'integrationPoints' contains the Gauss weights and integration points.
- * `numComponents' returns the number C of components of a basis function.
- * Each physical mesh edge (or Face) will  be assigned a unique
- * orientation,and all edges (or Faces) of physical mesh will be equipped with
- * an orientation tag , indicating whether the image of the corresponding edge
- * (or Face) of the reference domain through the reference map has the same or
- * opposite orientation.The global edge orientation always pointing from the
- * vertex with the lower global vertex number to the one with the higher one. */
+ * evaluation of de the basis functions at the integration points: [g1e1f1,
+ * ..., g1e1fC, g1e2f1, ...,g1e2fC,g1enfC,g2e1f1, ...]. 'integrationPoints'
+ * contains the Gauss weights and integration points. `numComponents' returns
+ * the number C of components of a basis function. Each physical mesh edge (or
+ * Face) will  be assigned a unique orientation,and all edges (or Faces) of
+ * physical mesh will be equipped with an orientation tag , indicating whether
+ * the image of the corresponding edge (or Face) of the reference domain
+ * through the reference map has the same or opposite orientation.The global
+ * edge orientation always pointing from the vertex with the lower global
+ * vertex number to the one with the higher one. */
 GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const char * integrationType,
                                                         const int elementType,
                                                         const char * functionSpaceType,
