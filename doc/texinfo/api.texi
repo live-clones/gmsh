@@ -1064,7 +1064,7 @@ od the reference elements). @code{integrationPoints} contains the u, v, w
 coordinates of the integration points in the reference element as well as the
 associated weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
 @code{numComponents} returns the number C of components of a basis function.
-@code{numBasisFunctions@code{ returns the number of basis functions per element.
+@code{numBasisFunctions} returns the number of basis functions per element.
 @code{basisFunctions} returns the value of the basis functions at the
 integration points for each element: [g1e1f1, ..., g1e1fC, g1e2f1, ...,g1e2fC,
 g1enfC, g2e1f1, ...]. Warning: this is an experimental feature and will probably

@@ -614,7 +614,7 @@ namespace gmsh { // Top-level functions
       // of the integration points in the reference element as well as the
       // associated weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
       // `numComponents' returns the number C of components of a basis function.
-      // `numBasisFunctions` returns the number of basis functions per element.
+      // `numBasisFunctions' returns the number of basis functions per element.
       // `basisFunctions' returns the value of the basis functions at the
       // integration points for each element: [g1e1f1, ..., g1e1fC, g1e2f1,
       // ...,g1e2fC, g1enfC, g2e1f1, ...]. Warning: this is an experimental feature
