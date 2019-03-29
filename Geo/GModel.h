@@ -17,14 +17,19 @@
 #include "GRegion.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
+#include "MFaceHash.h"
+#include "MEdgeHash.h"
 
-
+// TODO C++11 remove this nasty stuff
 #if __cplusplus >= 201103L
 #include <unordered_map>
-#define hashmap std::unordered_map
+#define hashmapMFace std::unordered_map<MFace, int, Hash_Face, Equal_Face>
+#define hashmapMEdge std::unordered_map<MEdge, int, Hash_Edge, Equal_Edge>
 #else
-#define hashmap std::map
+#define hashmapMFace std::map<MFace, int, Less_Face>
+#define hashmapMEdge std::map<MEdge, int, Less_Edge>
 #endif
+
 template <class scalar> class simpleFunction;
 
 class GEO_Internals;
@@ -48,8 +53,8 @@ private:
   std::set<GFace *, GEntityLessThan> _chainFaces;
   std::set<GEdge *, GEntityLessThan> _chainEdges;
   std::set<GVertex *, GEntityLessThan> _chainVertices;
-  hashmap<MEdge,int> _mapEdgeNum;
-  hashmap<MFace,int> _mapFaceNum;
+  hashmapMEdge _mapEdgeNum;
+  hashmapMFace _mapFaceNum;
   // the maximum vertex and element id number in the mesh
   std::size_t _maxVertexNum, _maxElementNum;
   std::size_t _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
@@ -233,10 +238,12 @@ public:
     maxv = _checkPointedMaxVertexNum;
     maxe = _checkPointedMaxElementNum;
   }
+
   // number the edges
-  int addMEdge(const MEdge & edge); // to _mapEdgeNum
+  int addMEdge(const MEdge &edge);
   //number the faces
-  int addMFace(const MFace &face); // to _mapFaceNum
+  int addMFace(const MFace &face);
+
   // renumber mesh vertices and elements in a continuous sequence (this
   // invalidates the mesh caches)
   void renumberMeshVertices();

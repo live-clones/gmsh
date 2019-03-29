@@ -1053,6 +1053,59 @@ g2f1, ...].
 -
 @end table
 
+@item getBasisFunctionsForElements
+Get the basis function of the element of type @code{elementType} for the given
+@code{integrationType} integration rule and @code{functionSpaceType} (e.g. for
+order 3 : "Solin0Form3" or "GradSolin0Form3" ) . }basisFunctions} contains the
+evaluation of de the basis functions at the integration points:
+[{gausspoint_1}:e1f1, ..., e1fC, e2f1, ..,e2fC.,enfC,{gausspoint_2}:...].
+}integrationPoints} contains the Gauss weights and integration points.
+@code{numComponents} returns the number C of components of a basis function.
+Each physical mesh edge (or Face) will  be assigned a unique orientation,and all
+edges (or Faces) of physical mesh will be equipped with an orientation tag ,
+indicating whether the image of the corresponding edge (or Face) of the
+reference domain through the reference map has the same or opposite
+orientation.The global edge orientation always pointing from the vertex with the
+lower global vertex number to the one with the higher one.
+
+@table @asis
+@item Input:
+@code{integrationType}, @code{elementType}, @code{functionSpaceType}, @code{tag}
+@item Output:
+@code{basisFunctions}, @code{integrationPoints}, @code{numComponents}, @code{numDofsByElement}
+@item Return:
+-
+@end table
+
+@item getInformationForElements
+ get information about the vectorpair }Keys} . }info} contains the order and the
+type of fonction (vertex=1,edge=2 or bubble=4). }order} is the polynomial order
+of all element
+
+@table @asis
+@item Input:
+@code{keys}, @code{order}, @code{elementType}
+@item Output:
+@code{info}
+@item Return:
+-
+@end table
+
+@item getKeyForElements
+ generate the vectorpair }Keys} of the element of type @code{elementType} for
+the given entity }tag} and @code{functionSpaceType} (e.g. for order 3 :
+"Solin0Form3" ) . Each element of }Keys} numbers a dof. @code{coord} is a vector
+that contains the x, y, z coordinates of the dof
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{functionSpaceType}, @code{elementType}, @code{generateCoord}
+@item Output:
+@code{coord}, @code{keys}
+@item Return:
+-
+@end table
+
 @item precomputeBasisFunctions
 Precomputes the basis functions corresponding to @code{elementType}.
 

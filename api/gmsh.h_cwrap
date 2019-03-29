@@ -1157,14 +1157,14 @@ namespace gmsh { // Top-level functions
       // map has the same or opposite orientation.The global edge orientation
       // always pointing from the vertex with the lower global vertex number to the
       // one with the higher one.
-      GMSH_API void getBasisFunctionsForElements(const std::string & integrationType,
-                                                 const int elementType,
-                                                 const std::string & functionSpaceType,
-                                                 std::vector<double> & basisFunctions,
-                                                 std::vector<double> & integrationPoints,
-                                                 int & numComponents,
-                                                 int & numDofsByElement,
-                                                 const int tag = -1)
+      inline void getBasisFunctionsForElements(const std::string & integrationType,
+                                               const int elementType,
+                                               const std::string & functionSpaceType,
+                                               std::vector<double> & basisFunctions,
+                                               std::vector<double> & integrationPoints,
+                                               int & numComponents,
+                                               int & numDofsByElement,
+                                               const int tag = -1)
       {
         int ierr = 0;
         double *api_basisFunctions_; size_t api_basisFunctions_n_;
@@ -1178,10 +1178,10 @@ namespace gmsh { // Top-level functions
       //  get information about the vectorpair 'Keys' . 'info' contains the order
       // and the type of fonction (vertex=1,edge=2 or bubble=4). 'order' is the
       // polynomial order of all element
-      GMSH_API void getInformationForElements(const gmsh::vectorpair & keys,
-                                              gmsh::vectorpair & info,
-                                              const int order,
-                                              const int elementType)
+      inline void getInformationForElements(const gmsh::vectorpair & keys,
+                                            gmsh::vectorpair & info,
+                                            const int order,
+                                            const int elementType)
       {
         int ierr = 0;
         int *api_keys_; size_t api_keys_n_; vectorpair2intptr(keys, &api_keys_, &api_keys_n_);
@@ -1196,13 +1196,13 @@ namespace gmsh { // Top-level functions
       // the given entity 'tag' and `functionSpaceType' (e.g. for order 3 :
       // "Solin0Form3" ) . Each element of 'Keys' numbers a dof. `coord' is a
       // vector that contains the x, y, z coordinates of the dof
-      GMSH_API void getKeyForElements(const int dim,
-                                      const int tag,
-                                      const std::string & functionSpaceType,
-                                      const int elementType,
-                                      const bool generateCoord,
-                                      std::vector<double> & coord,
-                                      gmsh::vectorpair & keys)
+      inline void getKeyForElements(const int dim,
+                                    const int tag,
+                                    const std::string & functionSpaceType,
+                                    const int elementType,
+                                    const bool generateCoord,
+                                    std::vector<double> & coord,
+                                    gmsh::vectorpair & keys)
       {
         int ierr = 0;
         double *api_coord_; size_t api_coord_n_;

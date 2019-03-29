@@ -1,10 +1,17 @@
-#ifndef _HierarchicalBasisH1Line_H_
-#define _HierarchicalBasisH1Line_H_
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributed by Ismail Badia.
+
+#ifndef HIERARCHICAL_BASIS_H1_LINE_H
+#define HIERARCHICAL_BASIS_H1_LINE_H
+
+#include <algorithm>
+#include <vector>
 
 #include "HierarchicalBasisH1.h"
-#include <algorithm>
-
-#include <vector>
 /*
  *
  *

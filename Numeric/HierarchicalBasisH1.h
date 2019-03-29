@@ -1,9 +1,18 @@
-//Reference : "Higher-Order Finite Element Methods", Solin
-#ifndef _HierarchicalBasisH1_H_
-#define _HierarchicalBasisH1_H_
+// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributed by Ismail Badia.
 
+// Reference : "Higher-Order Finite Element Methods", Solin
+
+#ifndef HIERARCHICAL_BASIS_H1_H
+#define HIERARCHICAL_BASIS_H1_H
+
+#include <vector>
 #include "OrthogonalPoly.h"
-#include "vector"
+
 class HierarchicalBasisH1 {
 protected:
   int _nvertex;

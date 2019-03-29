@@ -1504,7 +1504,7 @@ function getBasisFunctionsForElements(integrationType, elementType, functionSpac
     api_numComponents_ = Ref{Cint}()
     api_numDofsByElement_ = Ref{Cint}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetBasisFunctionsForElements, gmsh.lib), Nothing,
+    ccall((:gmshModelMeshGetBasisFunctionsForElements, gmsh.lib), Cvoid,
           (Ptr{Cchar}, Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}, Cint, Ptr{Cint}),
           integrationType, elementType, functionSpaceType, api_basisFunctions_, api_basisFunctions_n_, api_integrationPoints_, api_integrationPoints_n_, api_numComponents_, api_numDofsByElement_, tag, ierr)
     ierr[] != 0 && error("gmshModelMeshGetBasisFunctionsForElements returned non-zero error code: $(ierr[])")
@@ -1526,7 +1526,7 @@ function getInformationForElements(keys, order, elementType)
     api_info_ = Ref{Ptr{Cint}}()
     api_info_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetInformationForElements, gmsh.lib), Nothing,
+    ccall((:gmshModelMeshGetInformationForElements, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           convert(Vector{Cint}, collect(Cint, Iterators.flatten(keys))), 2 * length(keys), api_info_, api_info_n_, order, elementType, ierr)
     ierr[] != 0 && error("gmshModelMeshGetInformationForElements returned non-zero error code: $(ierr[])")
@@ -1551,7 +1551,7 @@ function getKeyForElements(dim, tag, functionSpaceType, elementType, generateCoo
     api_keys_ = Ref{Ptr{Cint}}()
     api_keys_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetKeyForElements, gmsh.lib), Nothing,
+    ccall((:gmshModelMeshGetKeyForElements, gmsh.lib), Cvoid,
           (Cint, Cint, Ptr{Cchar}, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, functionSpaceType, elementType, generateCoord, api_coord_, api_coord_n_, api_keys_, api_keys_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetKeyForElements returned non-zero error code: $(ierr[])")

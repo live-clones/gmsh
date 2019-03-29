@@ -377,10 +377,3 @@ void MFaceN::repositionInnerVertices(const fullMatrix<double> *placement) const
     }
   }
 }
-
-size_t MFace::hash() const{
-   size_t seed=_v[int(_si[0])]->getNum();
-   seed ^=_v[int(_si[1])]->getNum()+ 0x9e3779b9 + (seed << 6) + (seed >> 2);
-  seed ^=_v[int(_si[2])]->getNum()+ 0x9e3779b9 + (seed << 6) + (seed >> 2);
-   return seed;
-}

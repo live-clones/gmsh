@@ -102,7 +102,6 @@ public:
         "Cannot interpolate inside a polygonal MFace with more than 4 edges");
     return p;
   }
-  size_t hash() const;
 };
 
 inline bool operator==(const MFace &f1, const MFace &f2)
@@ -172,16 +171,5 @@ public:
 
   void repositionInnerVertices(const fullMatrix<double> *) const;
 };
-
-
-namespace std {
-
-    template<> struct hash<MFace>{
-    inline size_t operator()(const MFace& face) const
-    {
-      return face.hash();
-    }
-    };
-} // namespace std
 
 #endif
