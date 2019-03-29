@@ -21,17 +21,17 @@
  *
  * Oriented Edges:
  *  e0={v0;v1}    e1={v1;v2}  e2={v2;v0}
- *  pe0,pe1,pe2<=pb
+ *  pe0,pe1,pe2<=pf
  *
  */
 class HierarchicalBasisH1Tria : public HierarchicalBasisH1 {
 public:
-  HierarchicalBasisH1Tria(int pb, int pe0, int pe1, int pe2);
+  HierarchicalBasisH1Tria(int pf, int pe0, int pe1, int pe2);
   HierarchicalBasisH1Tria(int order);
   virtual ~HierarchicalBasisH1Tria();
   // vertexBasis=[v0,...,v2]
   // edgeBasis=[phie0_{2},...phie0_{pe0-1},phie1_{2},...phie1_{pe1-1}...]
-  // bubbleBasis=[phieb_{1,1},...,phieb_{1,pb-2},phieb_{2,1},...,phieb_{2,pb2-3},phieb_{1,1}...]
+  // faceBasis=[phief_{1,1},...,phief_{1,pf-2},phief_{2,1},...,phief_{2,pf2-3},phief_{1,1}...]
   virtual void generateBasis(double const &u, double const &v, double const &w,
                              std::vector<double> &vertexBasis,
                              std::vector<double> &edgeBasis,
@@ -60,11 +60,9 @@ public:
                     int const &flag1, int const &flag2, int const &flag3,
                     int const &faceNumber,
                     std::vector<std::vector<double> > &gradientFace){};
-  virtual void reverseFaceBubbleFor3D(const bool belongBoundary);
-  virtual void reverseEdgeBubbleFor2D(const bool belongBoundary){};
 
 private:
-  int _pb; // bubble function order
+  int _pf; // face function order
   int _pOrderEdge[3]; // Edge functions order (pOrderEdge[0] matches the edge 0
                       // order)
   static double

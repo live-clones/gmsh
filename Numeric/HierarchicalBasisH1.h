@@ -1,3 +1,4 @@
+//Reference : "Higher-Order Finite Element Methods", Solin
 #ifndef _HierarchicalBasisH1_H_
 #define _HierarchicalBasisH1_H_
 
@@ -48,8 +49,6 @@ public:
                     int const &flag1, int const &flag2, int const &flag3,
                     int const &faceNumber,
                     std::vector<std::vector<double> > &gradientFace) = 0;
-  virtual void reverseFaceBubbleFor3D(const bool belongBoundary) = 0;
-  virtual void reverseEdgeBubbleFor2D(const bool belongBoundary) = 0;
 };
 
 #endif

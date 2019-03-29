@@ -1,4 +1,5 @@
-#!/usr/bin/env python2
+
+
 # -*- coding: utf-8 -*-
 """
 Created on Sat Feb 23 19:33:36 2019
@@ -19,9 +20,9 @@ import sys
 # $ python poisson.py
 
 
-INTEGRATION = 'Gauss8'
+INTEGRATION = 'Gauss4'
 RECOMBINE = 0
-order=4#polynomial order
+order=2#polynomial order
 
 def create_geometry_legendre():
     model.add("poisson_legendre")
@@ -113,16 +114,17 @@ def fem_solve_legendre():
                 # Assembly of stiffness matrix for all 2 dimensional elements
                 # (triangles or quadrangles)
                 if dimEntity==2 :
-                    sf, weights ,ky,_ = model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType, 'Legendre',
-                                                                                 order,False,tagEntity)            
-                   
-                    numGaussPoints = len(weights)
-                    weights=np.array(weights)
-                    sf = np.array(sf).reshape((numGaussPoints,numElements,-1))    
-                    dsf,_, _ ,_= model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType,
-                                                                         'GradLegendre',order,False,tagEntity) 
-                 
-                   
+                
+                    #sf, weigh ,_,_ = model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType,'Solin0Form1',tagEntity)
+                    _,ky=gmsh.model.mesh.getKeyForElements(dimEntity,tagEntity,'Solin0Form2',elementType)
+                    sf, weigh ,_ ,_= model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType, 'Solin0Form2',tagEntity)           
+                    weights = np.array(weigh).reshape((-1,4))[:,3]
+                    numGaussPoints = weights.shape[0]
+                    sf = np.array(sf).reshape((numGaussPoints,numElements,-1))  
+                    
+                    dsf,_,_,_= model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType,
+                                                                         'GradSolin0Form2',tagEntity) 
+
                     dsf = np.array(dsf).reshape((numGaussPoints,numElements,-1))
                     qjac, qdet, qpoint = model.mesh.getJacobians(
                         elementType, INTEGRATION, tagEntity)

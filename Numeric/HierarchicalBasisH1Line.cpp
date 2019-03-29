@@ -8,10 +8,10 @@ HierarchicalBasisH1Line::HierarchicalBasisH1Line(int pe)
   _nedge = 1;
   _nface = 0;
   _nVertexFunction = 2;
-  _nEdgeFunction = 0;
+  _nEdgeFunction = (pe - 1);
   _nFaceFunction = 0;
-  _nBubbleFunction = (pe - 1);
-  _pb = pe;
+  _nBubbleFunction = 0;
+  _pe=pe;
 }
 
 HierarchicalBasisH1Line::~HierarchicalBasisH1Line() {}
@@ -41,8 +41,8 @@ void HierarchicalBasisH1Line::generateBasis(double const &u, double const &v,
   vertexBasis[0] = lambda2;
   vertexBasis[1] = lambda1;
   // edge functions :
-  for(int k = 2; k <= _pb; k++) {
-    bubbleBasis[k - 2] =
+  for(int k = 2; k <= _pe; k++) {
+    edgeBasis[k - 2] =
       product * OrthogonalPoly::EvalKernelFunction(k - 2, substraction);
   }
 }
@@ -61,19 +61,10 @@ void HierarchicalBasisH1Line::generateGradientBasis(
   // vertex gradient functions:
   gradientVertex[0][0] = detJacob * dlambda2;
   gradientVertex[1][0] = detJacob * dlambda1;
-  for(int k = 2; k <= _pb; k++) {
-    gradientBubble[k - 2][0] =
+  for(int k = 2; k <= _pe; k++) {
+    gradientEdge[k - 2][0] =
       OrthogonalPoly::EvalDLobatto(k, uc) * _getDetJacobian();
   }
 }
 
 double HierarchicalBasisH1Line::_getDetJacobian() { return 2; }
-
-
-void HierarchicalBasisH1Line::reverseEdgeBubbleFor2D(const bool belongBoundary){
-  if(belongBoundary){
-    int copy=_nEdgeFunction ;
-    _nEdgeFunction = _nBubbleFunction;
-    _nBubbleFunction = copy;
-  }
-}

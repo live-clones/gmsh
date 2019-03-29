@@ -2,7 +2,7 @@
 
 #include "HierarchicalBasisH1Quad.h"
 
-HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int pb1, int pb2, int pe0,
+HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int pf1, int pf2, int pe0,
                                                  int pe1, int pe2, int pe3)
 
 {
@@ -11,13 +11,13 @@ HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int pb1, int pb2, int pe0,
   _nface = 1;
   _nVertexFunction = 4;
   _nEdgeFunction = pe0 + pe1 + pe2 + pe3 - 4;
-  _nFaceFunction = 0;
-  _nBubbleFunction = (pb1 - 1) * (pb2 - 1);
-  _pb1 = pb1;
-  _pb2 = pb2;
-  if(pe1 > pb2 || pe3 > pb2) { throw std::string("pe1 and pe3 must be <=pb2"); }
-  if(pe0 > pb1 || pe2 > pb1) {
-    throw std::string("pe0  and pe2  must be <=pb1");
+  _nFaceFunction = (pf1 - 1) * (pf2 - 1);
+  _nBubbleFunction = 0;
+  _pf1 = pf1;
+  _pf2 = pf2;
+  if(pe1 > pf2 || pe3 > pf2) { throw std::string("pe1 and pe3 must be <=pf2"); }
+  if(pe0 > pf1 || pe2 > pf1) {
+    throw std::string("pe0  and pe2  must be <=pf1");
   }
   _pOrderEdge[0] = pe0;
   _pOrderEdge[1] = pe1;
@@ -32,10 +32,10 @@ HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int order)
   _nface = 1;
   _nVertexFunction = 4;
   _nEdgeFunction = 4 * order - 4;
-  _nFaceFunction = 0;
-  _nBubbleFunction = (order - 1) * (order - 1);
-  _pb1 = order;
-  _pb2 = order;
+  _nFaceFunction = (order - 1) * (order - 1);
+  _nBubbleFunction = 0;
+  _pf1 = order;
+  _pf2 = order;
   _pOrderEdge[0] = order;
   _pOrderEdge[1] = order;
   _pOrderEdge[2] = order;
@@ -72,7 +72,7 @@ void HierarchicalBasisH1Quad::generateBasis(double const &u, double const &v,
   vertexBasis[1] = lambda1 * lambda4;
   vertexBasis[2] = lambda1 * lambda3;
   vertexBasis[3] = lambda2 * lambda3;
-  // edge 0  & 2 shape functions and a part of bubble functions (all lk(u)):
+  // edge 0  & 2 shape functions and a part of face functions (all lk(u)):
   int minpe0pe2 = std::min(_pOrderEdge[0], _pOrderEdge[2]);
   int const1 = _pOrderEdge[0] + _pOrderEdge[1] - 4;
   for(int k = 2; k <= minpe0pe2; k++) {
@@ -82,11 +82,11 @@ void HierarchicalBasisH1Quad::generateBasis(double const &u, double const &v,
     int const2 = k - 2;
     edgeBasis[const2] = phie0;
     edgeBasis[k + const1] = phie2;
-    int const3 = _pb2 - 1;
+    int const3 = _pf2 - 1;
     int iterator = 0;
     while(iterator < const3) {
       int nbr = const2 * const3 + iterator;
-      bubbleBasis[nbr] = lk;
+      faceBasis[nbr] = lk;
       iterator++;
     }
   }
@@ -96,11 +96,11 @@ void HierarchicalBasisH1Quad::generateBasis(double const &u, double const &v,
       double phie0 = lambda4 * lk;
       int const2 = k - 2;
       edgeBasis[const2] = phie0;
-      int const3 = _pb2 - 1;
+      int const3 = _pf2 - 1;
       int iterator = 0;
       while(iterator < const3) {
         int nbr = const2 * const3 + iterator;
-        bubbleBasis[nbr] = lk;
+        faceBasis[nbr] = lk;
         iterator++;
       }
     }
@@ -111,26 +111,26 @@ void HierarchicalBasisH1Quad::generateBasis(double const &u, double const &v,
       double phie2= lambda3 * lk;
       edgeBasis[k + const1] = phie2;
       int iterator = 0;
-      int const3 = _pb2 - 1;
+      int const3 = _pf2 - 1;
       while(iterator < const3) {
         int nbr = (k - 2) * const3 + iterator;
-        bubbleBasis[nbr] = lk;
+        faceBasis[nbr] = lk;
         iterator++;
       }
     }
   }
   int maxpe0pe2 = std::max(_pOrderEdge[0], _pOrderEdge[2]);
-  for(int k = maxpe0pe2 + 1; k <= _pb1; k++) {
+  for(int k = maxpe0pe2 + 1; k <= _pf1; k++) {
     double lk = OrthogonalPoly::EvalLobatto(k, u);
     int iterator = 0;
-    int const3 = _pb2 - 1;
+    int const3 = _pf2 - 1;
     while(iterator < const3) {
       int nbr = (k - 2) * const3 + iterator;
-      bubbleBasis[nbr] = lk;
+      faceBasis[nbr] = lk;
       iterator++;
     }
   }
-  // edge 1 & 3 shape functions and a part of  bubble functions (all lk(v)) :
+  // edge 1 & 3 shape functions and a part of  face functions (all lk(v)) :
   int minpe1pe3 = std::min(_pOrderEdge[1], _pOrderEdge[3]);
   int const3 = _pOrderEdge[0] - 3;
   int const4 =
@@ -143,9 +143,9 @@ void HierarchicalBasisH1Quad::generateBasis(double const &u, double const &v,
     edgeBasis[k + const4] = phie3;
     int s = k - 2;
     int iterator = 1;
-    while(iterator <= _pb1 - 1) {
-      bubbleBasis[s] = bubbleBasis[s] * lk;
-      s = s + _pb2 - 1;
+    while(iterator <= _pf1 - 1) {
+      faceBasis[s] = faceBasis[s] * lk;
+      s = s + _pf2 - 1;
       iterator++;
     }
   }
@@ -156,9 +156,9 @@ void HierarchicalBasisH1Quad::generateBasis(double const &u, double const &v,
       edgeBasis[k + const3] = phie1;
       int s = k - 2;
       int iterator = 1;
-      while(iterator <= _pb1 - 1) {
-        bubbleBasis[s] = bubbleBasis[s] * lk;
-        s = s + _pb2 - 1;
+      while(iterator <= _pf1 - 1) {
+        faceBasis[s] = faceBasis[s] * lk;
+        s = s + _pf2 - 1;
         iterator++;
       }
     }
@@ -170,21 +170,21 @@ void HierarchicalBasisH1Quad::generateBasis(double const &u, double const &v,
       edgeBasis[k + const4] = phie3;
       int s = k - 2;
       int iterator = 1;
-      while(iterator <= _pb1 - 1) {
-        bubbleBasis[s] = bubbleBasis[s] * lk;
-        s = s + _pb2 - 1;
+      while(iterator <= _pf1 - 1) {
+        faceBasis[s] = faceBasis[s] * lk;
+        s = s + _pf2 - 1;
         iterator++;
       }
     }
   }
   int maxpe1pe3 = std::max(_pOrderEdge[1], _pOrderEdge[3]);
-  for(int k = maxpe1pe3 + 1; k <= _pb2; k++) {
+  for(int k = maxpe1pe3 + 1; k <= _pf2; k++) {
     double lk = OrthogonalPoly::EvalLobatto(k, v);
     int s = k - 2;
     int iterator = 1;
-    while(iterator <= _pb1 - 1) {
-      bubbleBasis[s] = bubbleBasis[s] * lk;
-      s = s + _pb2 - 1;
+    while(iterator <= _pf1 - 1) {
+      faceBasis[s] = faceBasis[s] * lk;
+      s = s + _pf2 - 1;
       iterator++;
     }
   }
@@ -214,7 +214,7 @@ void HierarchicalBasisH1Quad::generateGradientBasis(
   gradientVertex[2][1] = lambda1 * dlambda3;
   gradientVertex[3][0] = dlambda2 * lambda3;
   gradientVertex[3][1] = lambda2 * dlambda3;
-  // edge 0  & 2 gradient  and a part of bubble gradient  ( in the direction u
+  // edge 0  & 2 gradient  and a part of face gradient  ( in the direction u
   // ):
   int const1 = _pOrderEdge[0] + _pOrderEdge[1] - 4;
   int minpe0pe2 = std::min(_pOrderEdge[0], _pOrderEdge[2]);
@@ -226,7 +226,7 @@ void HierarchicalBasisH1Quad::generateGradientBasis(
     double dphie2U = lambda3 * dlk;
     double dphie2V = dlambda3 * lk;
     int const2 = k - 2;
-    int const3 = _pb2 - 1;
+    int const3 = _pf2 - 1;
     gradientEdge[const2][0] = dphie0U;
     gradientEdge[const2][1] = dphie0V;
     gradientEdge[k + const1][0] = dphie2U;
@@ -234,8 +234,8 @@ void HierarchicalBasisH1Quad::generateGradientBasis(
     int iterator = 0;
     while(iterator < const3) {
       int nbr = const2 * const3 + iterator;
-      gradientBubble[nbr][0] = dlk;
-      gradientBubble[nbr][1] = lk;
+      gradientFace[nbr][0] = dlk;
+      gradientFace[nbr][1] = lk;
       iterator++;
     }
   }
@@ -246,14 +246,14 @@ void HierarchicalBasisH1Quad::generateGradientBasis(
       double dphie0U = lambda4 * dlk;
       double dphie0V = dlambda4 * lk;
       int const2 = k - 2;
-      int const3 = _pb2 - 1;
+      int const3 = _pf2 - 1;
       gradientEdge[const2][0] = dphie0U;
       gradientEdge[const2][1] = dphie0V;
       int iterator = 0;
       while(iterator < const3) {
         int nbr = const2 * const3 + iterator;
-        gradientBubble[nbr][0] = dlk;
-        gradientBubble[nbr][1] = lk;
+        gradientFace[nbr][0] = dlk;
+        gradientFace[nbr][1] = lk;
         iterator++;
       }
     }
@@ -266,30 +266,30 @@ void HierarchicalBasisH1Quad::generateGradientBasis(
       double  dphie2V = dlambda3 * lk;
       gradientEdge[k + const1][0] = dphie2U;
       gradientEdge[k + const1][1] = dphie2V;
-      int const3 = _pb2 - 1;
+      int const3 = _pf2 - 1;
       int iterator = 0;
       while(iterator < const3) {
         int nbr = (k - 2) * (const3) + iterator;
-        gradientBubble[nbr][0] = dlk;
-        gradientBubble[nbr][1] = lk;
+        gradientFace[nbr][0] = dlk;
+        gradientFace[nbr][1] = lk;
         iterator++;
       }
     }
   }
   int maxpe0pe2 = std::max(_pOrderEdge[0], _pOrderEdge[2]);
-  for(int k = maxpe0pe2 + 1; k <= _pb1; k++) {
+  for(int k = maxpe0pe2 + 1; k <= _pf1; k++) {
     double lk = OrthogonalPoly::EvalLobatto(k, u);
     double dlk = OrthogonalPoly::EvalDLobatto(k, u);
     int iterator = 1;
-    while(iterator < _pb2) {
-      int nbr = (k - 2) * (_pb2 - 1) + iterator;
-      gradientBubble[nbr][0] = dlk;
-      gradientBubble[nbr][1] = lk;
+    while(iterator < _pf2) {
+      int nbr = (k - 2) * (_pf2 - 1) + iterator;
+      gradientFace[nbr][0] = dlk;
+      gradientFace[nbr][1] = lk;
       iterator++;
     }
   }
 
-  // edge 1 & 3 shape functions and a part of  bubble functions (all lk(v)) :
+  // edge 1 & 3 shape functions and a part of  face functions (all lk(v)) :
   int minpe1pe3 = std::min(_pOrderEdge[1], _pOrderEdge[3]);
   int const3 = _pOrderEdge[0] - 3;
   int const4 =
@@ -307,10 +307,10 @@ void HierarchicalBasisH1Quad::generateGradientBasis(
     gradientEdge[k + const4][1] = dphie3V;
     int s = k - 2;
     int iterator = 1;
-    while(iterator <= _pb1 - 1) {
-      gradientBubble[s][0] = gradientBubble[s][0] * lk;
-      gradientBubble[s][1] = gradientBubble[s][1] * dlk;
-      s = s + _pb2 - 1;
+    while(iterator <= _pf1 - 1) {
+      gradientFace[s][0] = gradientFace[s][0] * lk;
+      gradientFace[s][1] = gradientFace[s][1] * dlk;
+      s = s + _pf2 - 1;
       iterator++;
     }
   }
@@ -324,10 +324,10 @@ void HierarchicalBasisH1Quad::generateGradientBasis(
       gradientEdge[k + const3][1] = dphie1V;
       int s = k - 2;
       int iterator = 1;
-      while(iterator <= _pb1 - 1) {
-        gradientBubble[s][0] = gradientBubble[s][0] * lk;
-        gradientBubble[s][1] = gradientBubble[s][1] * dlk;
-        s = s + _pb2 - 1;
+      while(iterator <= _pf1 - 1) {
+        gradientFace[s][0] = gradientFace[s][0] * lk;
+        gradientFace[s][1] = gradientFace[s][1] * dlk;
+        s = s + _pf2 - 1;
         iterator++;
       }
     }
@@ -342,24 +342,24 @@ void HierarchicalBasisH1Quad::generateGradientBasis(
       gradientEdge[k + const4][1] = dphie3V;
       int s = k - 2;
       int iterator = 1;
-      while(iterator <= _pb1 - 1) {
-        gradientBubble[s][0] = gradientBubble[s][0] * lk;
-        gradientBubble[s][1] = gradientBubble[s][1] * dlk;
-        s = s + _pb2 - 1;
+      while(iterator <= _pf1 - 1) {
+        gradientFace[s][0] = gradientFace[s][0] * lk;
+        gradientFace[s][1] = gradientFace[s][1] * dlk;
+        s = s + _pf2 - 1;
         iterator++;
       }
     }
   }
   int maxpe1pe3 = std::max(_pOrderEdge[1], _pOrderEdge[3]);
-  for(int k = maxpe1pe3 + 1; k <= _pb2; k++) {
+  for(int k = maxpe1pe3 + 1; k <= _pf2; k++) {
     double lk = OrthogonalPoly::EvalLobatto(k, v);
     double dlk = OrthogonalPoly::EvalDLobatto(k, v);
     int s = k - 2;
     int iterator = 1;
-    while(iterator <= _pb1 - 1) {
-      gradientBubble[s][0] = gradientBubble[s][0] * lk;
-      gradientBubble[s][1] = gradientBubble[s][1] * dlk;
-      s = s + _pb2 - 1;
+    while(iterator <= _pf1 - 1) {
+      gradientFace[s][0] = gradientFace[s][0] * lk;
+      gradientFace[s][1] = gradientFace[s][1] * dlk;
+      s = s + _pf2 - 1;
       iterator++;
     }
   }
@@ -435,13 +435,5 @@ void HierarchicalBasisH1Quad::orientateEdgeGrad(
         gradientEdge[k][1] = gradientEdge[k][1] * (-1);
       }
     }
-  }
-}
-
-void HierarchicalBasisH1Quad::reverseFaceBubbleFor3D(const bool belongBoundary){
-  if(belongBoundary){
-    int copy=_nFaceFunction ;
-    _nFaceFunction = _nBubbleFunction;
-    _nBubbleFunction = copy;
   }
 }

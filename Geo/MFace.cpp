@@ -71,7 +71,7 @@ MFace::MFace(const std::vector<MVertex *> &v)
   sortVertices(_v, _si);
 }
 void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
-{
+{//cf. "Higher-Order Finite Element Methods" , Solin
   if(_v.size() == 3) { // triangular face
     if(_v[int(_si[0])]->getNum()==_v[0]->getNum() && _v[int(_si[1])]->getNum()==_v[1]->getNum()){
       faceOrientationFlag[0]=0;
@@ -376,4 +376,11 @@ void MFaceN::repositionInnerVertices(const fullMatrix<double> *placement) const
       v->z() += coeff * _v[j]->z();
     }
   }
+}
+
+size_t MFace::hash() const{
+   size_t seed=_v[int(_si[0])]->getNum();
+   seed ^=_v[int(_si[1])]->getNum()+ 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  seed ^=_v[int(_si[2])]->getNum()+ 0x9e3779b9 + (seed << 6) + (seed >> 2);
+   return seed;
 }

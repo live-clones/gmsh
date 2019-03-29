@@ -617,7 +617,8 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
     }
     outDimTags.clear();
     for(int dim = 0; dim < 3; dim++) {
-      for(std::set<int, AbsIntLessThan>::iterator it = c[dim].begin(); it != c[dim].end(); it++)
+      for(std::set<int, AbsIntLessThan>::iterator it = c[dim].begin();
+          it != c[dim].end(); it++)
         outDimTags.push_back(std::pair<int, int>(dim, *it));
     }
   }
@@ -1281,29 +1282,18 @@ std::size_t GModel::getNumMeshParentElements() const
   return n;
 }
 
-int GModel::addMEdge(MEdge edge)
+int GModel::addMEdge(const MEdge &edge)
 {
-  hashmap<int, MEdge>::iterator it = _mapEdgeNum.begin();
-  while(it != _mapEdgeNum.end()) {
-    if(it->second == edge) { return it->first; }
-    ++it;
-
-  }
-  int edgeGlobalIndice=_mapEdgeNum.size();
-  _mapEdgeNum[edgeGlobalIndice] = edge;
-  return edgeGlobalIndice;
+  std::pair<MEdge, int> key(edge, _mapEdgeNum.size());
+  std::pair<hashmap<MEdge, int>::iterator, bool> it = _mapEdgeNum.insert(key);
+  return it.first->second;
 }
 
-int GModel::addMFace(MFace face){
-  hashmap<int, MFace>::iterator it = _mapFaceNum.begin();
-  while(it != _mapFaceNum.end()) {
-    if(it->second == face) { return it->first; }
-    ++it;
-
-  }
-  int faceGlobalIndice=_mapFaceNum.size();
-  _mapFaceNum[faceGlobalIndice] = face;
-  return faceGlobalIndice;
+int GModel::addMFace(const MFace &face)
+{
+  std::pair<MFace, int> key(face, _mapFaceNum.size());
+  std::pair<hashmap<MFace, int>::iterator, bool> it = _mapFaceNum.insert(key);
+  return it.first->second;
 }
 
 void GModel::renumberMeshVertices()
