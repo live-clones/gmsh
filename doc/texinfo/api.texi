@@ -1040,9 +1040,9 @@ or their gradient, in the u, v, w coordinates of the reference element).
 @code{integrationPoints} contains the u, v, w coordinates of the integration
 points in the reference element as well as the associated weight q,
 concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. @code{numComponents} returns the
-number C of components of a basis function. @code{basisFunctions} contains the
-evaluation of the basis functions at the integration points: [g1f1, ..., g1fC,
-g2f1, ...].
+number C of components of a basis function. @code{basisFunctions} returns the
+value of the basis functions at the integration points: [g1f1, ..., g1fC, g2f1,
+...].
 
 @table @asis
 @item Input:
@@ -1054,38 +1054,44 @@ g2f1, ...].
 @end table
 
 @item getBasisFunctionsForElements
-Get the basis functions of the elements of type @code{elementType} for the given
-@code{integrationType} integration rule and @code{functionSpaceType} (e.g. for
-3rd order hierarchical H1 functions: "Solin0Form3" or "GradSolin0Form3").
-@code{basisFunctions} contains the evaluation of the basis functions at the
-integration points: [g1e1f1, ..., g1e1fC, g1e2f1, ...,g1e2fC, g1enfC, g2e1f1,
-...]. the u, v, w coordinates of the integration points in the reference element
-as well as the associated weight q, concatenated: [g1u, g1v, g1w, g1q, g2u,
-...]. @code{numComponents} returns the number C of components of a basis
-function. Warning: this is an experimental feature and will probably change in a
-future release.
+Get the element-dependent basis functions of the elements of type
+@code{elementType} in the entity of tag @code{tag}, for the given
+@code{integrationType} integration rule (e.g. "Gauss4" for a Gauss quadrature
+suited for integrating 4th order polynomials) and @code{functionSpaceType}
+function space (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order
+hierarchical H1 Legendre functions or their gradient, in the u, v, w coordinates
+od the reference elements). @code{integrationPoints} contains the u, v, w
+coordinates of the integration points in the reference element as well as the
+associated weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
+@code{numComponents} returns the number C of components of a basis function.
+@code{numBasisFunctions@code{ returns the number of basis functions per element.
+@code{basisFunctions} returns the value of the basis functions at the
+integration points for each element: [g1e1f1, ..., g1e1fC, g1e2f1, ...,g1e2fC,
+g1enfC, g2e1f1, ...]. Warning: this is an experimental feature and will probably
+change in a future release.
 
 @table @asis
 @item Input:
-@code{integrationType}, @code{elementType}, @code{functionSpaceType}, @code{tag}
+@code{elementType}, @code{integrationType}, @code{functionSpaceType}, @code{tag}
 @item Output:
-@code{basisFunctions}, @code{integrationPoints}, @code{numComponents}, @code{numDofsByElement}
+@code{integrationPoints}, @code{numComponents}, @code{numFunctionsPerElements}, @code{basisFunctions}
 @item Return:
 -
 @end table
 
-@item getKeyForElements
-Generate @code{keys} for the elements of type @code{elementType} for the given
-entity }tag} and @code{functionSpaceType} (e.g. "Solin0Form3"). Each keyuniquely
-identifies a basis function. @code{coord} is a vector that contains x, y, z
-coordinates locating basis functions for sorting purposes.  Warning: this is an
-experimental feature and will probably change in a future release.
+@item getKeysForElements
+Generate the @code{keys} for the elements of type @code{elementType} in the
+entity of tag @code{tag},for the @code{functionSpaceType} function space. Each
+key uniquely identifies a basis function in the function space. @code{coord} is
+a vector that contains x, y, z coordinates locating basis functions for sorting
+purposes. Warning: this is an experimental feature and will probably change in a
+future release.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{functionSpaceType}, @code{elementType}, @code{generateCoord}
+@code{elementType}, @code{functionSpaceType}, @code{tag}, @code{generateCoord}
 @item Output:
-@code{coord}, @code{keys}
+@code{keys}, @code{coord}
 @item Return:
 -
 @end table

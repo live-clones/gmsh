@@ -1456,8 +1456,8 @@ gradient, in the u, v, w coordinates of the reference element).
 `integrationPoints` contains the u, v, w coordinates of the integration points
 in the reference element as well as the associated weight q, concatenated: [g1u,
 g1v, g1w, g1q, g2u, ...]. `numComponents` returns the number C of components of
-a basis function. `basisFunctions` contains the evaluation of the basis
-functions at the integration points: [g1f1, ..., g1fC, g2f1, ...].
+a basis function. `basisFunctions` returns the value of the basis functions at
+the integration points: [g1f1, ..., g1fC, g2f1, ...].
 
 Return `integrationPoints`, `numComponents`, `basisFunctions`.
 """
@@ -1478,62 +1478,67 @@ function getBasisFunctions(elementType, integrationType, functionSpaceType)
 end
 
 """
-    gmsh.model.mesh.getBasisFunctionsForElements(integrationType, elementType, functionSpaceType, tag = -1)
+    gmsh.model.mesh.getBasisFunctionsForElements(elementType, integrationType, functionSpaceType, tag = -1)
 
-Get the basis functions of the elements of type `elementType` for the given
-`integrationType` integration rule and `functionSpaceType` (e.g. for 3rd order
-hierarchical H1 functions: "Solin0Form3" or "GradSolin0Form3"). `basisFunctions`
-contains the evaluation of the basis functions at the integration points:
-[g1e1f1, ..., g1e1fC, g1e2f1, ...,g1e2fC, g1enfC, g2e1f1, ...]. the u, v, w
-coordinates of the integration points in the reference element as well as the
-associated weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
-`numComponents` returns the number C of components of a basis function. Warning:
-this is an experimental feature and will probably change in a future release.
+Get the element-dependent basis functions of the elements of type `elementType`
+in the entity of tag `tag`, for the given `integrationType` integration rule
+(e.g. "Gauss4" for a Gauss quadrature suited for integrating 4th order
+polynomials) and `functionSpaceType` function space (e.g. "H1Legendre3" or
+"GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions or their
+gradient, in the u, v, w coordinates od the reference elements).
+`integrationPoints` contains the u, v, w coordinates of the integration points
+in the reference element as well as the associated weight q, concatenated: [g1u,
+g1v, g1w, g1q, g2u, ...]. `numComponents` returns the number C of components of
+a basis function. `numBasisFunctions` returns the number of basis functions per
+element. `basisFunctions` returns the value of the basis functions at the
+integration points for each element: [g1e1f1, ..., g1e1fC, g1e2f1, ...,g1e2fC,
+g1enfC, g2e1f1, ...]. Warning: this is an experimental feature and will probably
+change in a future release.
 
-Return `basisFunctions`, `integrationPoints`, `numComponents`, `numDofsByElement`.
+Return `integrationPoints`, `numComponents`, `numFunctionsPerElements`, `basisFunctions`.
 """
-function getBasisFunctionsForElements(integrationType, elementType, functionSpaceType, tag = -1)
-    api_basisFunctions_ = Ref{Ptr{Cdouble}}()
-    api_basisFunctions_n_ = Ref{Csize_t}()
+function getBasisFunctionsForElements(elementType, integrationType, functionSpaceType, tag = -1)
     api_integrationPoints_ = Ref{Ptr{Cdouble}}()
     api_integrationPoints_n_ = Ref{Csize_t}()
     api_numComponents_ = Ref{Cint}()
-    api_numDofsByElement_ = Ref{Cint}()
+    api_numFunctionsPerElements_ = Ref{Cint}()
+    api_basisFunctions_ = Ref{Ptr{Cdouble}}()
+    api_basisFunctions_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetBasisFunctionsForElements, gmsh.lib), Cvoid,
-          (Ptr{Cchar}, Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}, Cint, Ptr{Cint}),
-          integrationType, elementType, functionSpaceType, api_basisFunctions_, api_basisFunctions_n_, api_integrationPoints_, api_integrationPoints_n_, api_numComponents_, api_numDofsByElement_, tag, ierr)
+          (Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_numComponents_, api_numFunctionsPerElements_, api_basisFunctions_, api_basisFunctions_n_, tag, ierr)
     ierr[] != 0 && error("gmshModelMeshGetBasisFunctionsForElements returned non-zero error code: $(ierr[])")
-    basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], own=true)
     integrationPoints = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_n_[], own=true)
-    return basisFunctions, integrationPoints, api_numComponents_[], api_numDofsByElement_[]
+    basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], own=true)
+    return integrationPoints, api_numComponents_[], api_numFunctionsPerElements_[], basisFunctions
 end
 
 """
-    gmsh.model.mesh.getKeyForElements(dim, tag, functionSpaceType, elementType, generateCoord)
+    gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag = -1, generateCoord = true)
 
-Generate `keys` for the elements of type `elementType` for the given entity
-`tag` and `functionSpaceType` (e.g. "Solin0Form3"). Each keyuniquely identifies
-a basis function. `coord` is a vector that contains x, y, z coordinates locating
-basis functions for sorting purposes.  Warning: this is an experimental feature
-and will probably change in a future release.
+Generate the `keys` for the elements of type `elementType` in the entity of tag
+`tag`,for the `functionSpaceType` function space. Each key uniquely identifies a
+basis function in the function space. `coord` is a vector that contains x, y, z
+coordinates locating basis functions for sorting purposes. Warning: this is an
+experimental feature and will probably change in a future release.
 
-Return `coord`, `keys`.
+Return `keys`, `coord`.
 """
-function getKeyForElements(dim, tag, functionSpaceType, elementType, generateCoord)
-    api_coord_ = Ref{Ptr{Cdouble}}()
-    api_coord_n_ = Ref{Csize_t}()
+function getKeysForElements(elementType, functionSpaceType, tag = -1, generateCoord = true)
     api_keys_ = Ref{Ptr{Cint}}()
     api_keys_n_ = Ref{Csize_t}()
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetKeyForElements, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Cchar}, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, functionSpaceType, elementType, generateCoord, api_coord_, api_coord_n_, api_keys_, api_keys_n_, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetKeyForElements returned non-zero error code: $(ierr[])")
-    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
+    ccall((:gmshModelMeshGetKeysForElements, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          elementType, functionSpaceType, api_keys_, api_keys_n_, api_coord_, api_coord_n_, tag, generateCoord, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetKeysForElements returned non-zero error code: $(ierr[])")
     tmp_api_keys_ = unsafe_wrap(Array, api_keys_[], api_keys_n_[], own=true)
     keys = [ (tmp_api_keys_[i], tmp_api_keys_[i+1]) for i in 1:2:length(tmp_api_keys_) ]
-    return coord, keys
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
+    return keys, coord
 end
 
 """
