@@ -1477,11 +1477,14 @@ end
     gmsh.model.mesh.getBasisFunctionsForElements(integrationType, elementType, functionSpaceType, tag = -1)
 
 Get the basis function of the element of type `elementType` for the given
-`integrationType` integration rule. `basisFunctions` contains the evaluation of
-de the basis functions at the integration points. `integrationPoints` contains
-the Gauss weights and integration points. Each physical mesh edge (or Face) will
-be assigned a unique orientation,and all edges (or Faces) of physical mesh will
-be equipped with an orientation tag , indicating whether the image of the
+`integrationType` integration rule and `functionSpaceType` (e.g. for order 3 :
+"Solin0Form3" or "GradSolin0Form3" ) . `basisFunctions` contains the evaluation
+of de the basis functions at the integration points: [{gausspoint_1}:e1f1, ...,
+e1fC, e2f1, ..,e2fC.,enfC,{gausspoint_2}:...]. `integrationPoints` contains the
+Gauss weights and integration points. `numComponents` returns the number C of
+components of a basis function. Each physical mesh edge (or Face) will  be
+assigned a unique orientation,and all edges (or Faces) of physical mesh will be
+equipped with an orientation tag , indicating whether the image of the
 corresponding edge (or Face) of the reference domain through the reference map
 has the same or opposite orientation.The global edge orientation always pointing
 from the vertex with the lower global vertex number to the one with the higher
@@ -1529,21 +1532,24 @@ function getInformationForElements(keys, order, elementType)
 end
 
 """
-    gmsh.model.mesh.getKeyForElements(dim, tag, functionSpaceType, elementType = -1)
+    gmsh.model.mesh.getKeyForElements(dim, tag, functionSpaceType, elementType, generateCoord)
 
- generate the vectorpair `Keys` .
+ generate the vectorpair `Keys` of the element of type `elementType` for the
+given entity `tag` and `functionSpaceType` (e.g. for order 3 : "Solin0Form3" ) .
+Each element of `Keys` numbers a dof. `coord` is a vector that contains the x,
+y, z coordinates of the dof
 
 Return `coord`, `keys`.
 """
-function getKeyForElements(dim, tag, functionSpaceType, elementType = -1)
+function getKeyForElements(dim, tag, functionSpaceType, elementType, generateCoord)
     api_coord_ = Ref{Ptr{Cdouble}}()
     api_coord_n_ = Ref{Csize_t}()
     api_keys_ = Ref{Ptr{Cint}}()
     api_keys_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetKeyForElements, gmsh.lib), Nothing,
-          (Cint, Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          dim, tag, functionSpaceType, api_coord_, api_coord_n_, api_keys_, api_keys_n_, elementType, ierr)
+          (Cint, Cint, Ptr{Cchar}, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, functionSpaceType, elementType, generateCoord, api_coord_, api_coord_n_, api_keys_, api_keys_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetKeyForElements returned non-zero error code: $(ierr[])")
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
     tmp_api_keys_ = unsafe_wrap(Array, api_keys_[], api_keys_n_[], own=true)

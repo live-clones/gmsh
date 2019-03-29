@@ -1033,13 +1033,13 @@ GMSH_API void gmshModelMeshGetInformationForElements(int * keys, size_t keys_n, 
   }
 }
 
-GMSH_API void gmshModelMeshGetKeyForElements(const int dim, const int tag, const char * functionSpaceType, double ** coord, size_t * coord_n, int ** keys, size_t * keys_n, const int elementType, int * ierr)
+GMSH_API void gmshModelMeshGetKeyForElements(const int dim, const int tag, const char * functionSpaceType, const int elementType, const int generateCoord, double ** coord, size_t * coord_n, int ** keys, size_t * keys_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_coord_;
     gmsh::vectorpair api_keys_;
-    gmsh::model::mesh::getKeyForElements(dim, tag, functionSpaceType, api_coord_, api_keys_, elementType);
+    gmsh::model::mesh::getKeyForElements(dim, tag, functionSpaceType, elementType, generateCoord, api_coord_, api_keys_);
     vector2ptr(api_coord_, coord, coord_n);
     vectorpair2intptr(api_keys_, keys, keys_n);
   }

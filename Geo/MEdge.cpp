@@ -65,6 +65,12 @@ bool MEdge::isInside(MVertex *v) const
   return true;
 }
 
+size_t MEdge::hash() const{
+    size_t seed = getMinVertex()->getNum();
+    seed ^= getMaxVertex()->getNum()+ 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    return seed;
+}
+
 bool SortEdgeConsecutive(const std::vector<MEdge> &e,
                          std::vector<std::vector<MVertex *> > &vs)
 {

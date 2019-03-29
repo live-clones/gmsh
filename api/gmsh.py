@@ -1774,15 +1774,18 @@ class model:
         def getBasisFunctionsForElements(integrationType, elementType, functionSpaceType, tag=-1):
             """
             Get the basis function of the element of type `elementType' for the given
-            `integrationType' integration rule. 'basisFunctions' contains the
-            evaluation of de the basis functions at the integration points.
-            'integrationPoints' contains the Gauss weights and integration points. Each
-            physical mesh edge (or Face) will  be assigned a unique orientation,and all
-            edges (or Faces) of physical mesh will be equipped with an orientation tag
-            , indicating whether the image of the corresponding edge (or Face) of the
-            reference domain through the reference map has the same or opposite
-            orientation.The global edge orientation always pointing from the vertex
-            with the lower global vertex number to the one with the higher one.
+            `integrationType' integration rule and `functionSpaceType' (e.g. for order
+            3 : "Solin0Form3" or "GradSolin0Form3" ) . 'basisFunctions' contains the
+            evaluation of de the basis functions at the integration points:
+            [{gausspoint_1}:e1f1, ..., e1fC, e2f1, ..,e2fC.,enfC,{gausspoint_2}:...].
+            'integrationPoints' contains the Gauss weights and integration points.
+            `numComponents' returns the number C of components of a basis function.
+            Each physical mesh edge (or Face) will  be assigned a unique
+            orientation,and all edges (or Faces) of physical mesh will be equipped with
+            an orientation tag , indicating whether the image of the corresponding edge
+            (or Face) of the reference domain through the reference map has the same or
+            opposite orientation.The global edge orientation always pointing from the
+            vertex with the lower global vertex number to the one with the higher one.
 
             Return `basisFunctions', `integrationPoints', `numComponents', `numDofsByElement'.
             """
@@ -1836,9 +1839,12 @@ class model:
             return _ovectorpair(api_info_, api_info_n_.value)
 
         @staticmethod
-        def getKeyForElements(dim, tag, functionSpaceType, elementType=-1):
+        def getKeyForElements(dim, tag, functionSpaceType, elementType, generateCoord):
             """
-             generate the vectorpair 'Keys' .
+             generate the vectorpair 'Keys' of the element of type `elementType' for
+            the given entity 'tag' and `functionSpaceType' (e.g. for order 3 :
+            "Solin0Form3" ) . Each element of 'Keys' numbers a dof. `coord' is a vector
+            that contains the x, y, z coordinates of the dof
 
             Return `coord', `keys'.
             """
@@ -1849,9 +1855,10 @@ class model:
                 c_int(dim),
                 c_int(tag),
                 c_char_p(functionSpaceType.encode()),
+                c_int(elementType),
+                c_int(bool(generateCoord)),
                 byref(api_coord_), byref(api_coord_n_),
                 byref(api_keys_), byref(api_keys_n_),
-                c_int(elementType),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

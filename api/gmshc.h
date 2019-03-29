@@ -642,15 +642,18 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
                                              int * ierr);
 
 /* Get the basis function of the element of type `elementType' for the given
- * `integrationType' integration rule. 'basisFunctions' contains the
- * evaluation of de the basis functions at the integration points.
- * 'integrationPoints' contains the Gauss weights and integration points. Each
- * physical mesh edge (or Face) will  be assigned a unique orientation,and all
- * edges (or Faces) of physical mesh will be equipped with an orientation tag
- * , indicating whether the image of the corresponding edge (or Face) of the
- * reference domain through the reference map has the same or opposite
- * orientation.The global edge orientation always pointing from the vertex
- * with the lower global vertex number to the one with the higher one. */
+ * `integrationType' integration rule and `functionSpaceType' (e.g. for order
+ * 3 : "Solin0Form3" or "GradSolin0Form3" ) . 'basisFunctions' contains the
+ * evaluation of de the basis functions at the integration points:
+ * [{gausspoint_1}:e1f1, ..., e1fC, e2f1, ..,e2fC.,enfC,{gausspoint_2}:...].
+ * 'integrationPoints' contains the Gauss weights and integration points.
+ * `numComponents' returns the number C of components of a basis function.
+ * Each physical mesh edge (or Face) will  be assigned a unique
+ * orientation,and all edges (or Faces) of physical mesh will be equipped with
+ * an orientation tag , indicating whether the image of the corresponding edge
+ * (or Face) of the reference domain through the reference map has the same or
+ * opposite orientation.The global edge orientation always pointing from the
+ * vertex with the lower global vertex number to the one with the higher one. */
 GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const char * integrationType,
                                                         const int elementType,
                                                         const char * functionSpaceType,
@@ -670,13 +673,17 @@ GMSH_API void gmshModelMeshGetInformationForElements(int * keys, size_t keys_n,
                                                      const int elementType,
                                                      int * ierr);
 
-/*  generate the vectorpair 'Keys' . */
+/*  generate the vectorpair 'Keys' of the element of type `elementType' for
+ * the given entity 'tag' and `functionSpaceType' (e.g. for order 3 :
+ * "Solin0Form3" ) . Each element of 'Keys' numbers a dof. `coord' is a vector
+ * that contains the x, y, z coordinates of the dof */
 GMSH_API void gmshModelMeshGetKeyForElements(const int dim,
                                              const int tag,
                                              const char * functionSpaceType,
+                                             const int elementType,
+                                             const int generateCoord,
                                              double ** coord, size_t * coord_n,
                                              int ** keys, size_t * keys_n,
-                                             const int elementType,
                                              int * ierr);
 
 /* Precomputes the basis functions corresponding to `elementType'. */

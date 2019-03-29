@@ -1936,18 +1936,17 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     int functionIterator = 0;
     for(int i = 0; i < nq; i++) {
       double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
-      std::vector<double> vTable(vSize);
-      std::vector<double> bTable(bSize);
-      std::vector<double> fTable(fSize);
-      std::vector<double> eTable(eSize);
+      std::vector<double> vTable(vSize); //Vertex functions of one element
+      std::vector<double> bTable(bSize);// bubble functions of one element
+      std::vector<double> fTable(fSize);// face functions of one element
+      std::vector<double> eTable(eSize);// edge functions of one element
       basis->generateBasis(u, v, w, vTable, eTable, fTable, bTable);
       for(std::size_t ii = 0; ii < entities.size(); ii++) {
         GEntity *ge = entities[ii];
         for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
             j++) {
           MElement *e = ge->getMeshElementByType(familyType, j);
-
-          std::vector<double> eTableCopy(eSize);
+          std::vector<double> eTableCopy(eSize); // use eTableCopy to orientate the edges
           for(int r = 0; r < eSize; r++) { eTableCopy[r] = eTable[r]; }
           if(eSize > 0 && basis->getNumEdge() > 1) {
             for(int jj = 0; jj < basis->getNumEdge(); jj++) {
@@ -2100,8 +2099,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
 
 GMSH_API void gmsh::model::mesh::getKeyForElements(
   const int dim, const int tag, const std::string &functionSpaceType,
-  std::vector<double> &coord, gmsh::vectorpair &keys, const int elementType)
-{
+  const int elementType, const bool generateCoord,  std::vector<double> &coord,
+  gmsh::vectorpair &keys)
+{//fix me!!!
   if(!_isInitialized()) { throw - 1; }
   coord.clear();
   keys.clear();
@@ -2112,55 +2112,51 @@ GMSH_API void gmsh::model::mesh::getKeyForElements(
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     throw 2;
   }
-  if(elementType == -1) {
-    std::vector<int> elementTypes;
-    gmsh::model::mesh::getElementTypes(elementTypes, dim, tag);
-    std::map<int, std::vector<GEntity *> > typeEnt;
-    _getEntitiesForElementTypes(dim, tag, typeEnt);
-    for(unsigned int typeIndex = 0; typeIndex < elementTypes.size();
-        ++typeIndex) {
-      const std::vector<GEntity *> &entities(typeEnt[elementTypes[typeIndex]]);
-      int familyType = ElementType::getParentType(elementTypes[typeIndex]);
-      HierarchicalBasisH1 *basis(0);
-      switch(familyType) {
-      case TYPE_HEX: {
-        basis = new HierarchicalBasisH1Brick(order);
-      } break;
-      case TYPE_QUA: {
-        basis = new HierarchicalBasisH1Quad(order);
-      } break;
-      case TYPE_TRI: {
-        basis = new HierarchicalBasisH1Tria(order);
-      } break;
-      case TYPE_LIN: {
-        basis = new HierarchicalBasisH1Line(order);
-      } break;
-      default: Msg::Error("Unknown familyType "); throw 2;
-      }
-      int vSize = basis->getnVertexFunction();
-      int bSize = basis->getnBubbleFunction();
-      int eSize = basis->getnEdgeFunction();
-      int fSize = basis->getnFaceFunction();
-      int numDofsByElement = vSize + bSize + eSize + fSize;
-      int numFaceFunction = 0;
-      if(basis->getNumFace() != 0) {
-        numFaceFunction =
-          fSize / basis->getNumFace(); // number of face functions for one face
-      }
-      int numEdgeFunction = 0;
-      if(basis->getNumEdge() != 0) {
-        numEdgeFunction =
-          eSize / basis->getNumEdge(); // number of edge functions for one edge
-      }
 
-      int const1 = numEdgeFunction + 3;
-      int const2 = const1 + numFaceFunction;
-      delete basis;
+      std::map<int, std::vector<GEntity *> > typeEnt;
+      _getEntitiesForElementTypes(dim, tag, typeEnt);
+        const std::vector<GEntity *> &entities(typeEnt[elementType]);
+        int familyType = ElementType::getParentType(elementType);
+        HierarchicalBasisH1 *basis(0);
+        switch(familyType) {
+        case TYPE_HEX: {
+          basis = new HierarchicalBasisH1Brick(order);
+        } break;
+        case TYPE_QUA: {
+          basis = new HierarchicalBasisH1Quad(order);
+        } break;
+        case TYPE_TRI: {
+          basis = new HierarchicalBasisH1Tria(order);
+        } break;
+        case TYPE_LIN: {
+          basis = new HierarchicalBasisH1Line(order);
+        } break;
+        default: Msg::Error("Unknown familyType "); throw 2;
+        }
+        int vSize = basis->getnVertexFunction();
+        int bSize = basis->getnBubbleFunction();
+        int eSize = basis->getnEdgeFunction();
+        int fSize = basis->getnFaceFunction();
+        int numDofsByElement = vSize + bSize + eSize + fSize;
+        int numFaceFunction = 0;
+        if(basis->getNumFace() != 0) {
+          numFaceFunction =
+            fSize / basis->getNumFace(); // number of face functions for one face
+        }
+        int numEdgeFunction = 0;
+        if(basis->getNumEdge() != 0) {
+          numEdgeFunction =
+            eSize / basis->getNumEdge(); // number of edge functions for one edge
+        }
+
+        int const1 = numEdgeFunction + 3;
+        int const2 = const1 + numFaceFunction;
+        delete basis;
+  if(generateCoord) {
       for(std::size_t i = 0; i < entities.size(); i++) {
         GEntity *ge = entities[i];
         std::size_t numElementsInEntitie =
           ge->getNumMeshElementsByType(familyType);
-
         coord.reserve(coord.size() +
                       numElementsInEntitie * numDofsByElement * 3);
         keys.reserve(keys.size() + numElementsInEntitie * numDofsByElement);
@@ -2233,51 +2229,11 @@ GMSH_API void gmsh::model::mesh::getKeyForElements(
               coord.push_back(bubbleCenterCoord[2]);
             }
           }
-        }
       }
     }
   }
 
   else {
-    std::map<int, std::vector<GEntity *> > typeEnt;
-    _getEntitiesForElementTypes(dim, tag, typeEnt);
-    const std::vector<GEntity *> &entities(typeEnt[elementType]);
-    int familyType = ElementType::getParentType(elementType);
-    HierarchicalBasisH1 *basis(0);
-    switch(familyType) {
-    case TYPE_HEX: {
-      basis = new HierarchicalBasisH1Brick(order);
-    } break;
-    case TYPE_QUA: {
-      basis = new HierarchicalBasisH1Quad(order);
-    } break;
-    case TYPE_TRI: {
-      basis = new HierarchicalBasisH1Tria(order);
-    } break;
-    case TYPE_LIN: {
-      basis = new HierarchicalBasisH1Line(order);
-    } break;
-    default: Msg::Error("Unknown familyType "); throw 2;
-    }
-    int vSize = basis->getnVertexFunction();
-    int bSize = basis->getnBubbleFunction();
-    int eSize = basis->getnEdgeFunction();
-    int fSize = basis->getnFaceFunction();
-    int numDofsByElement = vSize + bSize + eSize + fSize;
-    int numFaceFunction = 0;
-    if(basis->getNumFace() != 0) {
-      numFaceFunction =
-        fSize / basis->getNumFace(); // number of face functions for one face
-    }
-    int numEdgeFunction = 0;
-    if(basis->getNumEdge() != 0) {
-      numEdgeFunction =
-        eSize / basis->getNumEdge(); // number of edge functions for one edge
-    }
-
-    int const1 = numEdgeFunction + 3;
-    int const2 = const1 + numFaceFunction;
-    delete basis;
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       std::size_t numElementsInEntitie =
@@ -2322,7 +2278,7 @@ GMSH_API void gmsh::model::mesh::getKeyForElements(
 GMSH_API void gmsh::model::mesh::getInformationForElements(
   const gmsh::vectorpair &keys, gmsh::vectorpair &info, const int order,
   const int elementType)
-{
+{//to finish ,this function return the global order!
   int familyType = ElementType::getParentType(elementType);
   switch(familyType) {
   case TYPE_QUA: {

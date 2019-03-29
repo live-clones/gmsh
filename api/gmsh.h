@@ -601,9 +601,12 @@ namespace gmsh { // Top-level functions
                                       std::vector<double> & basisFunctions);
 
       // Get the basis function of the element of type `elementType' for the given
-      // `integrationType' integration rule. 'basisFunctions' contains the
-      // evaluation of de the basis functions at the integration points.
+      // `integrationType' integration rule and `functionSpaceType' (e.g. for order
+      // 3 : "Solin0Form3" or "GradSolin0Form3" ) . 'basisFunctions' contains the
+      // evaluation of de the basis functions at the integration points:
+      // [{gausspoint_1}:e1f1, ..., e1fC, e2f1, ..,e2fC.,enfC,{gausspoint_2}:...].
       // 'integrationPoints' contains the Gauss weights and integration points.
+      // `numComponents' returns the number C of components of a basis function.
       // Each physical mesh edge (or Face) will  be assigned a unique
       // orientation,and all edges (or Faces) of physical mesh will be equipped
       // with an orientation tag , indicating whether the image of the
@@ -628,13 +631,17 @@ namespace gmsh { // Top-level functions
                                               const int order,
                                               const int elementType);
 
-      //  generate the vectorpair 'Keys' .
+      //  generate the vectorpair 'Keys' of the element of type `elementType' for
+      // the given entity 'tag' and `functionSpaceType' (e.g. for order 3 :
+      // "Solin0Form3" ) . Each element of 'Keys' numbers a dof. `coord' is a
+      // vector that contains the x, y, z coordinates of the dof
       GMSH_API void getKeyForElements(const int dim,
                                       const int tag,
                                       const std::string & functionSpaceType,
+                                      const int elementType,
+                                      const bool generateCoord,
                                       std::vector<double> & coord,
-                                      gmsh::vectorpair & keys,
-                                      const int elementType = -1);
+                                      gmsh::vectorpair & keys);
 
       // Precomputes the basis functions corresponding to `elementType'.
       GMSH_API void precomputeBasisFunctions(const int elementType);

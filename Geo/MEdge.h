@@ -8,7 +8,7 @@
 
 #include "MVertex.h"
 #include "SVector3.h"
-
+#include <iostream>
 // A mesh edge.
 class MEdge {
 private:
@@ -103,6 +103,7 @@ public:
                    t * _v[1]->z() + (1. - t) * _v[0]->z());
   }
   bool isInside(MVertex *v) const;
+  size_t hash() const;
 };
 
 inline bool operator==(const MEdge &e1, const MEdge &e2)
@@ -118,7 +119,10 @@ inline bool operator!=(const MEdge &e1, const MEdge &e2)
 }
 
 struct Equal_Edge {
-  bool operator()(const MEdge &e1, const MEdge &e2) const { return (e1 == e2); }
+  bool operator()(const MEdge &e1, const MEdge &e2) const {
+    std::cout<<"jj"<<std::endl;
+    return (e1 == e2);
+  }
 };
 
 struct Less_Edge {
@@ -157,5 +161,15 @@ public:
 
   double interpolate(const double val[], double u, int stride = 1) const;
 };
+
+namespace std {
+
+    template<> struct hash<MEdge>{
+    inline size_t operator()(const MEdge& edge) const
+    {
+      return edge.hash();
+    }
+    };
+} // namespace std
 
 #endif

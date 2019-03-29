@@ -1,3 +1,4 @@
+//Reference : "Higher-Order Finite Element Methods", Solin
 #ifndef _HierarchicalBasisH1_H_
 #define _HierarchicalBasisH1_H_
 
