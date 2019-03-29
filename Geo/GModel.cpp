@@ -617,7 +617,8 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
     }
     outDimTags.clear();
     for(int dim = 0; dim < 3; dim++) {
-      for(std::set<int, AbsIntLessThan>::iterator it = c[dim].begin(); it != c[dim].end(); it++)
+      for(std::set<int, AbsIntLessThan>::iterator it = c[dim].begin();
+          it != c[dim].end(); it++)
         outDimTags.push_back(std::pair<int, int>(dim, *it));
     }
   }
@@ -1279,6 +1280,20 @@ std::size_t GModel::getNumMeshParentElements() const
   for(std::size_t i = 0; i < entities.size(); i++)
     n += entities[i]->getNumMeshParentElements();
   return n;
+}
+
+int GModel::addMEdge(const MEdge &edge)
+{
+  std::pair<MEdge, int> key(edge, _mapEdgeNum.size());
+  std::pair<hashmap<MEdge, int>::iterator, bool> it = _mapEdgeNum.insert(key);
+  return it.first->second;
+}
+
+int GModel::addMFace(const MFace &face)
+{
+  std::pair<MFace, int> key(face, _mapFaceNum.size());
+  std::pair<hashmap<MFace, int>::iterator, bool> it = _mapFaceNum.insert(key);
+  return it.first->second;
 }
 
 void GModel::renumberMeshVertices()

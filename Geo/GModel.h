@@ -18,6 +18,13 @@
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
 
+
+#if __cplusplus >= 201103L
+#include <unordered_map>
+#define hashmap std::unordered_map
+#else
+#define hashmap std::map
+#endif
 template <class scalar> class simpleFunction;
 
 class GEO_Internals;
@@ -41,7 +48,8 @@ private:
   std::set<GFace *, GEntityLessThan> _chainFaces;
   std::set<GEdge *, GEntityLessThan> _chainEdges;
   std::set<GVertex *, GEntityLessThan> _chainVertices;
-
+  hashmap<MEdge,int> _mapEdgeNum;
+  hashmap<MFace,int> _mapFaceNum;
   // the maximum vertex and element id number in the mesh
   std::size_t _maxVertexNum, _maxElementNum;
   std::size_t _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
@@ -225,7 +233,10 @@ public:
     maxv = _checkPointedMaxVertexNum;
     maxe = _checkPointedMaxElementNum;
   }
-
+  // number the edges
+  int addMEdge(const MEdge & edge); // to _mapEdgeNum
+  //number the faces
+  int addMFace(const MFace &face); // to _mapFaceNum
   // renumber mesh vertices and elements in a continuous sequence (this
   // invalidates the mesh caches)
   void renumberMeshVertices();

@@ -109,6 +109,8 @@ public:
     return ((other->getType() == TYPE_LIN || other->getType() == TYPE_PNT) ? 1 :
                                                                              2);
   }
+  virtual int getVertexSolin(int numEdge, int numVertex){return 0;}
+  virtual MFace getFaceSolin(int numFace){return getFace(numFace);}
 };
 
 /*

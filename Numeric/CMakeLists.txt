@@ -39,6 +39,14 @@ set(SRC
   Iso.cpp
   approximationError.cpp
   ConjugateGradients.cpp
+  OrthogonalPoly.cpp
+  HierarchicalBasisH1.cpp
+  HierarchicalBasisH1Quad.cpp
+  HierarchicalBasisH1Tria.cpp
+  HierarchicalBasisH1Line.cpp
+  HierarchicalBasisH1Brick.cpp	
+  HierarchicalBasisH1Tetra.cpp
+
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 

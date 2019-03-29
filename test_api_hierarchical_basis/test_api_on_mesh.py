@@ -1,0 +1,162 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Feb 19 11:37:14 2019
+
+@author: badia
+"""
+import gmsh
+import sys
+import numpy as np
+
+INTEGRATION = 'Gauss1'
+model = gmsh.model
+factory = model.occ
+order=3
+gmsh.initialize()
+#gmsh.option.setNumber("General.Terminal", 1)
+#
+#gmsh.model.add("brick_element");
+#
+## add discrete surface with tag 1
+#gmsh.model.addDiscreteEntity(3, 1)
+#
+### add 4 mesh nodes
+#gmsh.model.mesh.setNodes(3, 1,
+#                         [4, 5, 3, 1,2,10,7,9], # node tags: 1, 2, 3, and 4
+#                         [0., 0., 0., # coordinates of node 1
+#                          1., 0., 0., # coordinates of node 2
+#                          1., 1., 0., # ...
+#                          0., 1., 0.,
+#                          0., 0., 1., # coordinates of node 1
+#                          1., 0., 1., # coordinates of node 2
+#                          1., 1., 1.,
+#                          0., 1., 1.]) # ...
+#      
+## add 1 quadrangle
+#gmsh.model.mesh.setElements(3, 1,
+#                            [5], 
+#                            [[1]], # Quadrangle tag: 1 
+#                            [[4, 5, 3, 1,2,10,7,9]]) #Quadrangle 1: nodes 1, 2, 3,4
+#                              
+#
+## export the mesh ; use explore.py to read and examine the mesh
+#gmsh.write("brick_element.msh")
+#elementType=5
+##ky,coord=gmsh.model.mesh.getKeyForElements(3, 1, order,False)
+#bs, we ,ky,numDof=model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType, 'GradLegendre',order,False) 
+#
+#print( "Evaluation of de the basis functions at the integration points: ")
+#print(bs)
+#print("key :")
+#print(ky)
+#print(len(ky))
+#print(numDof)
+##print("coord:")
+##print(coord)
+#gmsh.finalize()
+gmsh.initialize()
+gmsh.option.setNumber("General.Terminal", 1)
+
+gmsh.model.add("square_element");
+
+# add discrete surface with tag 1
+gmsh.model.addDiscreteEntity(2, 1)
+
+## add 4 mesh nodes
+gmsh.model.mesh.setNodes(2, 1,
+                         [1, 2, 3, 4], # node tags: 1, 2, 3, and 4
+                         [0., 0., 0., # coordinates of node 1
+                          1., 0., 0., # coordinates of node 2
+                          1., 1., 0., # ...
+                          0., 1., 0.])
+
+# add 1 quadrangle
+gmsh.model.mesh.setElements(2, 1,
+                            [3], # single type : 4-node Quadrangle
+                            [[1]], # Quadrangle tag: 1 
+                            [[1, 2, 3,4]]) #Quadrangle 1: nodes 1, 2, 3,4
+                              
+
+# export the mesh ; use explore.py to read and examine the mesh
+gmsh.write("square_element.msh")
+vElementTypes = model.mesh.getElementTypes(2,1)
+elementType=vElementTypes[0]
+dsf,_, _ ,_=model.mesh.getBasisFunctionsForElements(INTEGRATION,elementType,'GradSolin0Form1',1)
+coord,ky=gmsh.model.mesh.getKeyForElements(2, 1, "GradSolin0Form1")
+print( "Evaluation of de the basis functions at the integration points: ")
+print(dsf)
+print("key :")
+print(ky)
+
+print("getInformationForElements() :")
+info=model.mesh.getInformationForElements(ky,order,elementType)
+print(info)
+gmsh.finalize()
+
+
+#test_2
+
+#gmsh.initialize(sys.argv)
+#gmsh.model.add("square_element")
+#factory = model.occ
+#model.add("mesh_square")
+#surf = factory.addRectangle(0, 0, 0, 1, 1)
+#factory.synchronize()
+#model.addPhysicalGroup(2, [surf], 4)
+#model.setPhysicalName(2, 4, 'Domain')
+#
+##model.mesh.setRecombine(2,1)
+#model.mesh.generate(2)
+#gmsh.write("mesh_square.msh")
+#bs, we ,ky=model.mesh.getBasisFunctionsForElements(INTEGRATION,2, 'Legendre',order) 
+##print(len(bs))
+##print(bs)
+##print(len(ky))
+##print(ky)
+#info=model.mesh.getInformationForElements(ky,order,2)
+#print(info)
+#gmsh.finalize()
+
+#test3
+##
+#def create_geometry():
+#    model.add("poisson")
+#    surf = []
+#   
+#    surf.append((2, factory.addRectangle(0, 0, 0, 1, 1)))
+#    surf.append((2, factory.addDisk(0.7, 0.5, 0, 0.1, 0.1)))
+#   
+#    surf.append((2, factory.addRectangle(0.2, 0.4, 0, 0.2, 0.2)))
+#    
+#    surf, _ = factory.fragment(surf, [])
+#    
+#    factory.synchronize()
+#    
+#    bnd = model.getBoundary(surf, combined=True, oriented=False, recursive=False)
+#    bnd = np.array(bnd)
+#    
+#    model.addPhysicalGroup(2, [surf[0][1]], 2)
+#    model.setPhysicalName(2, 2, 'SourceCircle')
+#    model.addPhysicalGroup(2, [surf[1][1]], 3)
+#    model.setPhysicalName(2, 3, 'SourceSquare')
+#    model.addPhysicalGroup(2, [surf[2][1]], 4)
+#    model.setPhysicalName(2, 4, 'Domain')
+#    model.addPhysicalGroup(1, bnd[:,1], 11)
+#    model.setPhysicalName(1, 11, 'Boundary')
+#    model.mesh.setSize(model.getEntities(0), 0.1);
+#    return
+#
+#
+#gmsh.initialize()
+#gmsh.option.setNumber("General.Terminal", 0 )
+#create_geometry()
+#model.mesh.setRecombine(2,2)
+#model.mesh.setRecombine(2,3)
+#model.mesh.setRecombine(2,4)
+#model.mesh.generate(2)
+#gmsh.write("poisson.msh")
+#coord,ky=gmsh.model.mesh.getKeyForElements(2, 2, "GradSolin0Form1")
+#
+##print(info)
+#gmsh.finalize()
