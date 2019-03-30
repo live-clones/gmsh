@@ -1,40 +1,44 @@
 import gmsh
+import sys
 
-# small example showing how one could use the api to compute neighboring
-# tetetradra (connected by a triangular face)
+# small example showing how the api can be used to compute the neighbours (by a
+# face) of all tets in the mesh
 
-gmsh.initialize()
+gmsh.initialize(sys.argv)
+gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("my test model");
 gmsh.model.occ.addBox(0,0,0, 1,1,1);
 gmsh.model.occ.synchronize()
 gmsh.model.mesh.generate(3)
 
-# get tets and faces
+print "--- getting tets and face nodes"
 tets, _ = gmsh.model.mesh.getElementsByType(4)
-faces = gmsh.model.mesh.getElementFaceNodes(4, 3)
+fnodes = gmsh.model.mesh.getElementFaceNodes(4, 3)
 
-# compute face x tet incidence
+print "--- computing face x tet incidence"
+faces = []
 fxt = {}
-for i in range(0, len(faces), 3):
-    f = tuple(sorted(faces[i:i+3]))
+for i in range(0, len(fnodes), 3):
+    f = tuple(sorted(fnodes[i:i+3]))
+    faces.append(f)
     t = tets[i/12]
     if not f in fxt:
         fxt[f] = [t]
     else:
         fxt[f].append(t)
 
-# compute neighbors by face
+print "--- computing neighbors by face"
 txt = {}
-for i in range(0, len(faces), 3):
-    f = tuple(sorted(faces[i:i+3]))
-    t = tets[i/12]
+for i in range(0, len(faces)):
+    f = faces[i]
+    t = tets[i/4]
     if not t in txt:
         txt[t] = set()
     for tt in fxt[f]:
         if tt != t:
             txt[t].add(tt)
 
-print("neighbors by face: ", txt)
+print "--- done: neighbors by face =", txt
 
 gmsh.finalize()

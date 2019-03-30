@@ -5923,6 +5923,26 @@ In the API: @code{gmsh::option::setNumber("Mesh.MshFileVersion", x.y)}.
 As an alternative method, you can also not specify the format
 explicitely, and just choose a filename with the @code{.msh2} or
 @code{.msh4} extension.
+
+@item Why isn't neighboring element information stored in the MSH file?
+
+Each numerical method has its own requirements: it might need
+neighboring elements connected by a node, an edge or a face; it might
+require a single layer or multiple layers; it should include elements of
+lower dimension (boundaries) or not, go across geometrical entities or
+mesh partitions or not, etc. Given the number of possibilities,
+generating the appropriate information is thus best performed in
+numerical solver. The Gmsh API makes these computations easy: see for
+example
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/neighbors.py,demos/api/neighbors.py}.
+
+@item Could mesh edges/faces be stored in the MSH file?
+
+Edge/faces can be easily generated from the information already
+available, i.e. nodes and elements. The Gmsh API makes the generation of
+edges/faces easy: see for example
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/faces.cpp,demos/api/faces.cpp}.
+
 @end enumerate
 
 @c -------------------------------------------------------------------------
