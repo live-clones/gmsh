@@ -2,13 +2,11 @@ FROM ubuntu:18.04
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update && apt-get install -y git cmake python curl g++ gfortran texlive texinfo valgrind libopenblas-dev libfltk1.3-dev libfreetype6-dev libgl1-mesa-dev libxi-dev libxmu-dev mesa-common-dev tcl-dev tk-dev libhdf5-dev libcgns-dev
+RUN apt-get update && apt-get install -y git cmake python curl g++ gfortran texlive texinfo valgrind libopenblas-dev libfltk1.3-dev libfreetype6-dev libgl1-mesa-dev libxi-dev libxmu-dev mesa-common-dev tcl-dev tk-dev libhdf5-dev libcgns-dev clang-tidy
 
 # -----------------------
 # OpenCASCADE
 # -----------------------
-
-# could simply use apt-get install libocct-data-exchange-dev
 
 RUN curl -L -o occ73.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=snapshot;h=refs/tags/V7_3_0;sf=tgz"
 RUN tar xf occ73.tgz
@@ -41,13 +39,6 @@ RUN cd ${SLEPC_DIR} && ./configure && make
 
 RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git
 RUN cd gmsh && mkdir build && cd build && cmake -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_PRIVATE_API=1 .. && make -j8 lib && make install/fast
-
-# -----------------------
-# New stuff
-# -----------------------
-# will be moved at the begining once we're happy, to rebuild the whole container
-
-RUN apt-get install -y clang-tidy
 
 # -----------------------
 # Gmsh lib latest git
