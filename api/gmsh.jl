@@ -1624,10 +1624,12 @@ end
     gmsh.model.mesh.getElementEdgeNodes(elementType, tag = -1, primary = false, task = 0, numTasks = 1)
 
 Get the nodes on the edges of all elements of type `elementType` classified on
-the entity of tag `tag`. `nodeTags` contains the node tags. If `primary` is set,
-only the primary (begin/end) nodes of the edges are returned. If `tag` < 0, get
-the edge nodes for all entities. If `numTasks` > 1, only compute and return the
-part of the data indexed by `task`.
+the entity of tag `tag`. `nodeTags` contains the node tags of the edges for all
+the elements: [e1a1n1, e1a1n2, e1a2n1, ...]. Data is returned by element, with
+elements in the same order as in `getElements` and `getElementsByType`. If
+`primary` is set, only the primary (begin/end) nodes of the edges are returned.
+If `tag` < 0, get the edge nodes for all entities. If `numTasks` > 1, only
+compute and return the part of the data indexed by `task`.
 
 Return `nodeTags`.
 """
@@ -1648,10 +1650,12 @@ end
 
 Get the nodes on the faces of type `faceType` (3 for triangular faces, 4 for
 quadrangular faces) of all elements of type `elementType` classified on the
-entity of tag `tag`. `nodeTags` contains the node tags. If `primary` is set,
-only the primary (corner) nodes of the faces are returned. If `tag` < 0, get the
-face nodes for all entities. If `numTasks` > 1, only compute and return the part
-of the data indexed by `task`.
+entity of tag `tag`. `nodeTags` contains the node tags of the faces for all
+elements: [e1f1n1, ..., e1f1nFaceType, e1f2n1, ...]. Data is returned by
+element, with elements in the same order as in `getElements` and
+`getElementsByType`. If `primary` is set, only the primary (corner) nodes of the
+faces are returned. If `tag` < 0, get the face nodes for all entities. If
+`numTasks` > 1, only compute and return the part of the data indexed by `task`.
 
 Return `nodeTags`.
 """

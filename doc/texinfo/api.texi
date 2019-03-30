@@ -1154,11 +1154,13 @@ if @code{getBarycenters} is called with @code{numTasks} > 1.
 
 @item getElementEdgeNodes
 Get the nodes on the edges of all elements of type @code{elementType} classified
-on the entity of tag @code{tag}. @code{nodeTags} contains the node tags. If
-@code{primary} is set, only the primary (begin/end) nodes of the edges are
-returned. If @code{tag} < 0, get the edge nodes for all entities. If
-@code{numTasks} > 1, only compute and return the part of the data indexed by
-@code{task}.
+on the entity of tag @code{tag}. @code{nodeTags} contains the node tags of the
+edges for all the elements: [e1a1n1, e1a1n2, e1a2n1, ...]. Data is returned by
+element, with elements in the same order as in @code{getElements} and
+@code{getElementsByType}. If @code{primary} is set, only the primary (begin/end)
+nodes of the edges are returned. If @code{tag} < 0, get the edge nodes for all
+entities. If @code{numTasks} > 1, only compute and return the part of the data
+indexed by @code{task}.
 
 @table @asis
 @item Input:
@@ -1172,11 +1174,13 @@ returned. If @code{tag} < 0, get the edge nodes for all entities. If
 @item getElementFaceNodes
 Get the nodes on the faces of type @code{faceType} (3 for triangular faces, 4
 for quadrangular faces) of all elements of type @code{elementType} classified on
-the entity of tag @code{tag}. @code{nodeTags} contains the node tags. If
-@code{primary} is set, only the primary (corner) nodes of the faces are
-returned. If @code{tag} < 0, get the face nodes for all entities. If
-@code{numTasks} > 1, only compute and return the part of the data indexed by
-@code{task}.
+the entity of tag @code{tag}. @code{nodeTags} contains the node tags of the
+faces for all elements: [e1f1n1, ..., e1f1nFaceType, e1f2n1, ...]. Data is
+returned by element, with elements in the same order as in @code{getElements}
+and @code{getElementsByType}. If @code{primary} is set, only the primary
+(corner) nodes of the faces are returned. If @code{tag} < 0, get the face nodes
+for all entities. If @code{numTasks} > 1, only compute and return the part of
+the data indexed by @code{task}.
 
 @table @asis
 @item Input:
