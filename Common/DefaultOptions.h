@@ -146,8 +146,8 @@ StringXString GeometryOptions_String[] = {
 
   { F|O, "OCCTargetUnit" , opt_geometry_occ_target_unit , "" ,
     "Length unit to which coordinates from STEP and IGES files are converted to when "
-    "imported by OpenCASCADE, e.g. 'M' for meters (leave empty to keep the unit defined "
-    "in the STEP and IGES file)"},
+    "imported by OpenCASCADE, e.g. 'M' for meters (leave empty to use OpenCASCADE "
+    "default bahavior)"},
 
   { 0, 0 , 0 , "" , 0 }
 } ;
