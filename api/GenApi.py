@@ -948,6 +948,8 @@ from math import pi
 {5}_API_VERSION_MAJOR = {3}
 {5}_API_VERSION_MINOR = {4}
 
+__version__ = {5}_API_VERSION
+
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == "Windows":

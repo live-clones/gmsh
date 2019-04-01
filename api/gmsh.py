@@ -22,6 +22,8 @@ GMSH_API_VERSION = "4.2"
 GMSH_API_VERSION_MAJOR = 4
 GMSH_API_VERSION_MINOR = 2
 
+__version__ = GMSH_API_VERSION
+
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == "Windows":
