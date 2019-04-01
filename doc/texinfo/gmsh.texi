@@ -5931,16 +5931,16 @@ neighboring elements connected by a node, an edge or a face; it might
 require a single layer or multiple layers; it should include elements of
 lower dimension (boundaries) or not, go across geometrical entities or
 mesh partitions or not, etc. Given the number of possibilities,
-generating the appropriate information is thus best performed in
-numerical solver. The Gmsh API makes these computations easy: see for
-example
+generating the appropriate information is thus best performed in the
+numerical solver itself. The Gmsh API makes these computations easy: see
+for example
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/neighbors.py,demos/api/neighbors.py}.
 
 @item Could mesh edges/faces be stored in the MSH file?
 
 Edge/faces can be easily generated from the information already
-available, i.e. nodes and elements. The Gmsh API makes the generation of
-edges/faces easy: see for example
+available in the file (i.e. nodes and elements), or through the Gmsh
+API: see for example
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/faces.cpp,demos/api/faces.cpp}.
 
 @end enumerate
