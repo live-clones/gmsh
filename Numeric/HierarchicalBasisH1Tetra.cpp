@@ -4,6 +4,8 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
+// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel Segeth ,
+//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
 #include "HierarchicalBasisH1Tetra.h"
 
@@ -168,7 +170,7 @@ void HierarchicalBasisH1Tetra::generateBasis(double const &u, double const &v,
   }
 }
 
-void HierarchicalBasisH1Tetra::orientateEdge(int const &flagOrientation,
+void HierarchicalBasisH1Tetra::orientEdge(int const &flagOrientation,
                                              int const &edgeNumber,
                                              std::vector<double> &edgeBasis)
 {
@@ -186,7 +188,7 @@ void HierarchicalBasisH1Tetra::orientateEdge(int const &flagOrientation,
     }
   }
 }
-void HierarchicalBasisH1Tetra::orientateEdgeGrad(
+void HierarchicalBasisH1Tetra::orientEdgeGrad(
   int const &flagOrientation, int const &edgeNumber,
   std::vector<std::vector<double> > &gradientEdge)
 {
@@ -209,7 +211,7 @@ void HierarchicalBasisH1Tetra::orientateEdgeGrad(
   }
 }
 
-void HierarchicalBasisH1Tetra::orientateFace(double const &u, double const &v,
+void HierarchicalBasisH1Tetra::orientFace(double const &u, double const &v,
                                              double const &w, int const &flag1,
                                              int const &flag2, int const &flag3,
                                              int const &faceNumber,
@@ -522,7 +524,7 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
   }
 }
 
-void HierarchicalBasisH1Tetra::orientateFaceGrad(
+void HierarchicalBasisH1Tetra::orientFaceGrad(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector<std::vector<double> > &gradientFace)

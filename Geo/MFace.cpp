@@ -71,7 +71,8 @@ MFace::MFace(const std::vector<MVertex *> &v)
   sortVertices(_v, _si);
 }
 void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
-{//cf. "Higher-Order Finite Element Methods" , Solin
+{  //Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel Segeth ,
+ //                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
   if(_v.size() == 3) { // triangular face
     if(_v[int(_si[0])]->getNum()==_v[0]->getNum() && _v[int(_si[1])]->getNum()==_v[1]->getNum()){
       faceOrientationFlag[0]=0;

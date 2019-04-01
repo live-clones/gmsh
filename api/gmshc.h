@@ -650,16 +650,16 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
  * integration rule (e.g. "Gauss4" for a Gauss quadrature suited for
  * integrating 4th order polynomials) and `functionSpaceType' function space
  * (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1
- * Legendre functions or their gradient, in the u, v, w coordinates od the
+ * Legendre functions or their gradient, in the u, v, w coordinates of the
  * reference elements). `integrationPoints' contains the u, v, w coordinates
  * of the integration points in the reference element as well as the
- * associated weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
- * `numComponents' returns the number C of components of a basis function.
- * `numBasisFunctions' returns the number of basis functions per element.
- * `basisFunctions' returns the value of the basis functions at the
- * integration points for each element: [g1e1f1, ..., g1e1fC, g1e2f1,
- * ...,g1e2fC, g1enfC, g2e1f1, ...]. Warning: this is an experimental feature
- * and will probably change in a future release. */
+ * associated weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...,gGu, gGv,
+ * gGw, gGq]. `numComponents' returns the number C of components of a basis
+ * function. `numBasisFunctions' returns the number nBF of basis functions per
+ * element. `basisFunctions' returns the value of the basis functions at the
+ * integration points for each element: [e1g1f1,..., e1g1f(C*nBF),
+ * e1g2f1,...,e1g2f(C*nBC),..., e1gGf(C*nBC), e2g1f1, ...]. Warning: this is
+ * an experimental feature and will probably change in a future release. */
 GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType,
                                                         const char * integrationType,
                                                         const char * functionSpaceType,

@@ -4,6 +4,8 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
+// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel Segeth ,
+//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
 #include "HierarchicalBasisH1Brick.h"
 
@@ -422,7 +424,7 @@ void HierarchicalBasisH1Brick::generateGradientBasis(
   }
 }
 
-void HierarchicalBasisH1Brick::orientateEdge(int const &flagOrientation,
+void HierarchicalBasisH1Brick::orientEdge(int const &flagOrientation,
                                              int const &edgeNumber,
                                              std::vector<double> &edgeBasis)
 {
@@ -441,7 +443,7 @@ void HierarchicalBasisH1Brick::orientateEdge(int const &flagOrientation,
   }
 }
 
-void HierarchicalBasisH1Brick::orientateEdgeGrad(
+void HierarchicalBasisH1Brick::orientEdgeGrad(
   int const &flagOrientation, int const &edgeNumber,
   std::vector<std::vector<double> > &gradientEdge)
 {
@@ -464,7 +466,7 @@ void HierarchicalBasisH1Brick::orientateEdgeGrad(
   }
 }
 
-void HierarchicalBasisH1Brick::orientateFace(double const &u, double const &v,
+void HierarchicalBasisH1Brick::orientFace(double const &u, double const &v,
                                              double const &w, int const &flag1,
                                              int const &flag2, int const &flag3,
                                              int const &faceNumber,
@@ -549,7 +551,7 @@ void HierarchicalBasisH1Brick::orientateFace(double const &u, double const &v,
     }
   }
 }
-void HierarchicalBasisH1Brick::orientateFaceGrad(
+void HierarchicalBasisH1Brick::orientFaceGrad(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector<std::vector<double> > &gradientFace)

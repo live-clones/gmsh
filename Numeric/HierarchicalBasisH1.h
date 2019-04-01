@@ -4,8 +4,8 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
-
-// Reference : "Higher-Order Finite Element Methods", Solin
+// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel Segeth ,
+//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
 #ifndef HIERARCHICAL_BASIS_H1_H
 #define HIERARCHICAL_BASIS_H1_H
@@ -42,19 +42,19 @@ public:
                         std::vector<std::vector<double> > &gradientEdge,
                         std::vector<std::vector<double> > &gradientFace,
                         std::vector<std::vector<double> > &gradientBubble) = 0;
-  virtual void orientateEdge(int const &flagOrientation, int const &edgeNumber,
+  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
                              std::vector<double> &edgeBasis) = 0;
   virtual void
-  orientateEdgeGrad(int const &flagOrientation, int const &edgeNumber,
+  orientEdgeGrad(int const &flagOrientation, int const &edgeNumber,
                     std::vector<std::vector<double> > &gradientEdge) = 0;
 
-  virtual void orientateFace(double const &u, double const &v, double const &w,
+  virtual void orientFace(double const &u, double const &v, double const &w,
                              int const &flag1, int const &flag2,
                              int const &flag3, int const &faceNumber,
                              std::vector<double> &faceBasis) = 0;
 
   virtual void
-  orientateFaceGrad(double const &u, double const &v, double const &w,
+  orientFaceGrad(double const &u, double const &v, double const &w,
                     int const &flag1, int const &flag2, int const &flag3,
                     int const &faceNumber,
                     std::vector<std::vector<double> > &gradientFace) = 0;

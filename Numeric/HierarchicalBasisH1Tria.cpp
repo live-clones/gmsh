@@ -4,6 +4,8 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
+// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel Segeth ,
+//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
 #include "HierarchicalBasisH1Tria.h"
 
@@ -285,7 +287,7 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
   }
 }
 
-void HierarchicalBasisH1Tria::orientateEdge(int const &flagOrientation,
+void HierarchicalBasisH1Tria::orientEdge(int const &flagOrientation,
                                             int const &edgeNumber,
                                             std::vector<double> &edgeBasis)
 {
@@ -317,7 +319,7 @@ void HierarchicalBasisH1Tria::orientateEdge(int const &flagOrientation,
   }
 }
 
-void HierarchicalBasisH1Tria::orientateEdgeGrad(
+void HierarchicalBasisH1Tria::orientEdgeGrad(
   int const &flagOrientation, int const &edgeNumber,
   std::vector<std::vector<double> > &gradientEdge)
 {
