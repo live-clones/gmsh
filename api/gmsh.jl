@@ -527,7 +527,7 @@ end
 Add a discrete geometrical entity (defined by a mesh) of dimension `dim` in the
 current model. Return the tag of the new discrete entity, equal to `tag` if
 `tag` is positive, or a new tag if `tag` < 0. `boundary` specifies the tags of
-the entities on the boundary of the discrete entity, if any. Specyfing
+the entities on the boundary of the discrete entity, if any. Specifying
 `boundary` allows Gmsh to construct the topology of the overall model.
 
 Return an integer value.
@@ -985,7 +985,7 @@ the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim` >= 0,
 `parametricCoord` contains the parametric coordinates ([u1, u2, ...] or [u1, v1,
 u2, ...]) of the nodes, if available. The length of `parametricCoord` can be 0
 or `dim` times the length of `nodeTags`. If `includeBoundary` is set, also
-return the nodes classified on the boundary of the entity (wich will be
+return the nodes classified on the boundary of the entity (which will be
 reparametrized on the entity if `dim` >= 0 in order to compute their parametric
 coordinates).
 
@@ -1016,7 +1016,7 @@ Get the coordinates and the parametric coordinates (if any) of the node with tag
 `tag`. This is a sometimes useful but inefficient way of accessing nodes, as it
 relies on a cache stored in the model. For large meshes all the nodes in the
 model should be numbered in a continuous sequence of tags from 1 to N to
-maintain reasonnable performance (in this case the internal cache is based on a
+maintain reasonable performance (in this case the internal cache is based on a
 vector; otherwise it uses a map).
 
 Return `coord`, `parametricCoord`.
@@ -1178,7 +1178,7 @@ end
 Get the type and node tags of the element with tag `tag`. This is a sometimes
 useful but inefficient way of accessing elements, as it relies on a cache stored
 in the model. For large meshes all the elements in the model should be numbered
-in a continuous sequence of tags from 1 to N to maintain reasonnable performance
+in a continuous sequence of tags from 1 to N to maintain reasonable performance
 (in this case the internal cache is based on a vector; otherwise it uses a map).
 
 Return `elementType`, `nodeTags`.
@@ -1485,7 +1485,7 @@ in the entity of tag `tag`, for the given `integrationType` integration rule
 (e.g. "Gauss4" for a Gauss quadrature suited for integrating 4th order
 polynomials) and `functionSpaceType` function space (e.g. "H1Legendre3" or
 "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions or their
-gradient, in the u, v, w coordinates od the reference elements).
+gradient, in the u, v, w coordinates of the reference elements).
 `integrationPoints` contains the u, v, w coordinates of the integration points
 in the reference element as well as the associated weight q, concatenated: [g1u,
 g1v, g1w, g1q, g2u, ...]. `numComponents` returns the number C of components of
@@ -2079,7 +2079,7 @@ import ....gmsh
     gmsh.model.mesh.field.add(fieldType, tag = -1)
 
 Add a new mesh size field of type `fieldType`. If `tag` is positive, assign the
-tag explcitly; otherwise a new tag is assigned automatically. Return the field
+tag explicitly; otherwise a new tag is assigned automatically. Return the field
 tag.
 
 Return an integer value.
@@ -2232,10 +2232,10 @@ end
 """
     gmsh.model.geo.addCircleArc(startTag, centerTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.)
 
-Add a circle arc (stricly smaller than Pi) between the two points with tags
+Add a circle arc (strictly smaller than Pi) between the two points with tags
 `startTag` and `endTag`, with center `centertag`. If `tag` is positive, set the
 tag explicitly; otherwise a new tag is selected automatically. If (`nx`, `ny`,
-`nz`) != (0,0,0), explicitely set the plane of the circle arc. Return the tag of
+`nz`) != (0,0,0), explicitly set the plane of the circle arc. Return the tag of
 the circle arc.
 
 Return an integer value.
@@ -2252,11 +2252,11 @@ end
 """
     gmsh.model.geo.addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.)
 
-Add an ellipse arc (stricly smaller than Pi) between the two points `startTag`
+Add an ellipse arc (strictly smaller than Pi) between the two points `startTag`
 and `endTag`, with center `centertag` and major axis point `majorTag`. If `tag`
 is positive, set the tag explicitly; otherwise a new tag is selected
-automatically. If (`nx`, `ny`, `nz`) != (0,0,0), explicitely set the plane of
-the circle arc. Return the tag of the ellipse arc.
+automatically. If (`nx`, `ny`, `nz`) != (0,0,0), explicitly set the plane of the
+circle arc. Return the tag of the ellipse arc.
 
 Return an integer value.
 """
@@ -2426,7 +2426,7 @@ end
 Extrude the geometrical entities `dimTags` by translation along (`dx`, `dy`,
 `dz`). Return extruded entities in `outDimTags`. If `numElements` is not empty,
 also extrude the mesh: the entries in `numElements` give the number of elements
-in each layer. If `height` is not empty, it provides the (cummulative) height of
+in each layer. If `height` is not empty, it provides the (cumulative) height of
 the different layers, normalized to 1.
 
 Return `outDimTags`.
@@ -2452,7 +2452,7 @@ the axis of revolution defined by the point (`x`, `y`, `z`) and the direction
 (`ax`, `ay`, `az`). Return extruded entities in `outDimTags`. If `numElements`
 is not empty, also extrude the mesh: the entries in `numElements` give the
 number of elements in each layer. If `height` is not empty, it provides the
-(cummulative) height of the different layers, normalized to 1.
+(cumulative) height of the different layers, normalized to 1.
 
 Return `outDimTags`.
 """
@@ -2477,7 +2477,7 @@ rotation of `angle` radians, along (`dx`, `dy`, `dz`) and around the axis of
 revolution defined by the point (`x`, `y`, `z`) and the direction (`ax`, `ay`,
 `az`). Return extruded entities in `outDimTags`. If `numElements` is not empty,
 also extrude the mesh: the entries in `numElements` give the number of elements
-in each layer. If `height` is not empty, it provides the (cummulative) height of
+in each layer. If `height` is not empty, it provides the (cumulative) height of
 the different layers, normalized to 1.
 
 Return `outDimTags`.
@@ -2652,7 +2652,7 @@ end
 Set a transfinite meshing constraint on the curve `tag`, with `numNodes` nodes
 distributed according to `meshType` and `coef`. Currently supported types are
 "Progression" (geometrical progression with power `coef`) and "Bump" (refinement
-toward both extreminties of the curve).
+toward both extremities of the curve).
 """
 function setTransfiniteCurve(tag, nPoints, meshType = "Progression", coef = 1.)
     ierr = Ref{Cint}()
@@ -3253,7 +3253,7 @@ end
 Extrude the geometrical entities `dimTags` by translation along (`dx`, `dy`,
 `dz`). Return extruded entities in `outDimTags`. If `numElements` is not empty,
 also extrude the mesh: the entries in `numElements` give the number of elements
-in each layer. If `height` is not empty, it provides the (cummulative) height of
+in each layer. If `height` is not empty, it provides the (cumulative) height of
 the different layers, normalized to 1.
 
 Return `outDimTags`.
@@ -3279,7 +3279,7 @@ the axis of revolution defined by the point (`x`, `y`, `z`) and the direction
 (`ax`, `ay`, `az`). Return extruded entities in `outDimTags`. If `numElements`
 is not empty, also extrude the mesh: the entries in `numElements` give the
 number of elements in each layer. If `height` is not empty, it provides the
-(cummulative) height of the different layers, normalized to 1.
+(cumulative) height of the different layers, normalized to 1.
 
 Return `outDimTags`.
 """
@@ -3372,7 +3372,7 @@ end
 
 Compute the boolean union (the fusion) of the entities `objectDimTags` and
 `toolDimTags`. Return the resulting entities in `outDimTags`. If `tag` is
-positive, try to set the tag explicitly (ony valid if the boolean operation
+positive, try to set the tag explicitly (only valid if the boolean operation
 results in a single entity). Remove the object if `removeObject` is set. Remove
 the tool if `removeTool` is set.
 
@@ -3407,7 +3407,7 @@ end
 
 Compute the boolean intersection (the common parts) of the entities
 `objectDimTags` and `toolDimTags`. Return the resulting entities in
-`outDimTags`. If `tag` is positive, try to set the tag explicitly (ony valid if
+`outDimTags`. If `tag` is positive, try to set the tag explicitly (only valid if
 the boolean operation results in a single entity). Remove the object if
 `removeObject` is set. Remove the tool if `removeTool` is set.
 
@@ -3442,7 +3442,7 @@ end
 
 Compute the boolean difference between the entities `objectDimTags` and
 `toolDimTags`. Return the resulting entities in `outDimTags`. If `tag` is
-positive, try to set the tag explicitly (ony valid if the boolean operation
+positive, try to set the tag explicitly (only valid if the boolean operation
 results in a single entity). Remove the object if `removeObject` is set. Remove
 the tool if `removeTool` is set.
 
@@ -3477,7 +3477,7 @@ end
 
 Compute the boolean fragments (general fuse) of the entities `objectDimTags` and
 `toolDimTags`. Return the resulting entities in `outDimTags`. If `tag` is
-positive, try to set the tag explicitly (ony valid if the boolean operation
+positive, try to set the tag explicitly (only valid if the boolean operation
 results in a single entity). Remove the object if `removeObject` is set. Remove
 the tool if `removeTool` is set.
 

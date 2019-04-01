@@ -217,7 +217,7 @@ GMSH_API int gmshModelGetDimension(int * ierr);
  * the current model. Return the tag of the new discrete entity, equal to
  * `tag' if `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies
  * the tags of the entities on the boundary of the discrete entity, if any.
- * Specyfing `boundary' allows Gmsh to construct the topology of the overall
+ * Specifying `boundary' allows Gmsh to construct the topology of the overall
  * model. */
 GMSH_API int gmshModelAddDiscreteEntity(const int dim,
                                         const int tag,
@@ -397,7 +397,7 @@ GMSH_API void gmshModelMeshGetLastNodeError(size_t ** nodeTags, size_t * nodeTag
  * ...] or [u1, v1, u2, ...]) of the nodes, if available. The length of
  * `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If
  * `includeBoundary' is set, also return the nodes classified on the boundary
- * of the entity (wich will be reparametrized on the entity if `dim' >= 0 in
+ * of the entity (which will be reparametrized on the entity if `dim' >= 0 in
  * order to compute their parametric coordinates). */
 GMSH_API void gmshModelMeshGetNodes(size_t ** nodeTags, size_t * nodeTags_n,
                                     double ** coord, size_t * coord_n,
@@ -411,7 +411,7 @@ GMSH_API void gmshModelMeshGetNodes(size_t ** nodeTags, size_t * nodeTags_n,
  * with tag `tag'. This is a sometimes useful but inefficient way of accessing
  * nodes, as it relies on a cache stored in the model. For large meshes all
  * the nodes in the model should be numbered in a continuous sequence of tags
- * from 1 to N to maintain reasonnable performance (in this case the internal
+ * from 1 to N to maintain reasonable performance (in this case the internal
  * cache is based on a vector; otherwise it uses a map). */
 GMSH_API void gmshModelMeshGetNode(const size_t nodeTag,
                                    double ** coord, size_t * coord_n,
@@ -486,7 +486,7 @@ GMSH_API void gmshModelMeshGetElements(int ** elementTypes, size_t * elementType
  * sometimes useful but inefficient way of accessing elements, as it relies on
  * a cache stored in the model. For large meshes all the elements in the model
  * should be numbered in a continuous sequence of tags from 1 to N to maintain
- * reasonnable performance (in this case the internal cache is based on a
+ * reasonable performance (in this case the internal cache is based on a
  * vector; otherwise it uses a map). */
 GMSH_API void gmshModelMeshGetElement(const size_t elementTag,
                                       int * elementType,
@@ -650,7 +650,7 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
  * integration rule (e.g. "Gauss4" for a Gauss quadrature suited for
  * integrating 4th order polynomials) and `functionSpaceType' function space
  * (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1
- * Legendre functions or their gradient, in the u, v, w coordinates od the
+ * Legendre functions or their gradient, in the u, v, w coordinates of the
  * reference elements). `integrationPoints' contains the u, v, w coordinates
  * of the integration points in the reference element as well as the
  * associated weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
@@ -932,7 +932,7 @@ GMSH_API void gmshModelMeshComputeCohomology(int * domainTags, size_t domainTags
                                              int * ierr);
 
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
- * the tag explcitly; otherwise a new tag is assigned automatically. Return
+ * the tag explicitly; otherwise a new tag is assigned automatically. Return
  * the field tag. */
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType,
                                    const int tag,
@@ -989,11 +989,11 @@ GMSH_API int gmshModelGeoAddLine(const int startTag,
                                  const int tag,
                                  int * ierr);
 
-/* Add a circle arc (stricly smaller than Pi) between the two points with tags
- * `startTag' and `endTag', with center `centertag'. If `tag' is positive, set
- * the tag explicitly; otherwise a new tag is selected automatically. If
- * (`nx', `ny', `nz') != (0,0,0), explicitely set the plane of the circle arc.
- * Return the tag of the circle arc. */
+/* Add a circle arc (strictly smaller than Pi) between the two points with
+ * tags `startTag' and `endTag', with center `centertag'. If `tag' is
+ * positive, set the tag explicitly; otherwise a new tag is selected
+ * automatically. If (`nx', `ny', `nz') != (0,0,0), explicitly set the plane
+ * of the circle arc. Return the tag of the circle arc. */
 GMSH_API int gmshModelGeoAddCircleArc(const int startTag,
                                       const int centerTag,
                                       const int endTag,
@@ -1003,12 +1003,11 @@ GMSH_API int gmshModelGeoAddCircleArc(const int startTag,
                                       const double nz,
                                       int * ierr);
 
-/* Add an ellipse arc (stricly smaller than Pi) between the two points
+/* Add an ellipse arc (strictly smaller than Pi) between the two points
  * `startTag' and `endTag', with center `centertag' and major axis point
  * `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new
- * tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0),
- * explicitely set the plane of the circle arc. Return the tag of the ellipse
- * arc. */
+ * tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0), explicitly
+ * set the plane of the circle arc. Return the tag of the ellipse arc. */
 GMSH_API int gmshModelGeoAddEllipseArc(const int startTag,
                                        const int centerTag,
                                        const int majorTag,
@@ -1088,7 +1087,7 @@ GMSH_API int gmshModelGeoAddVolume(int * shellTags, size_t shellTags_n,
  * `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is
  * not empty, also extrude the mesh: the entries in `numElements' give the
  * number of elements in each layer. If `height' is not empty, it provides the
- * (cummulative) height of the different layers, normalized to 1. */
+ * (cumulative) height of the different layers, normalized to 1. */
 GMSH_API void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,
                                   const double dx,
                                   const double dy,
@@ -1104,7 +1103,7 @@ GMSH_API void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,
  * direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
  * `numElements' is not empty, also extrude the mesh: the entries in
  * `numElements' give the number of elements in each layer. If `height' is not
- * empty, it provides the (cummulative) height of the different layers,
+ * empty, it provides the (cumulative) height of the different layers,
  * normalized to 1. */
 GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
@@ -1126,7 +1125,7 @@ GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
  * `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is
  * not empty, also extrude the mesh: the entries in `numElements' give the
  * number of elements in each layer. If `height' is not empty, it provides the
- * (cummulative) height of the different layers, normalized to 1. */
+ * (cumulative) height of the different layers, normalized to 1. */
 GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,
                                 const double x,
                                 const double y,
@@ -1215,7 +1214,7 @@ GMSH_API void gmshModelGeoMeshSetSize(int * dimTags, size_t dimTags_n,
 /* Set a transfinite meshing constraint on the curve `tag', with `numNodes'
  * nodes distributed according to `meshType' and `coef'. Currently supported
  * types are "Progression" (geometrical progression with power `coef') and
- * "Bump" (refinement toward both extreminties of the curve). */
+ * "Bump" (refinement toward both extremities of the curve). */
 GMSH_API void gmshModelGeoMeshSetTransfiniteCurve(const int tag,
                                                   const int nPoints,
                                                   const char * meshType,
@@ -1559,7 +1558,7 @@ GMSH_API void gmshModelOccAddThickSolid(const int volumeTag,
  * `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is
  * not empty, also extrude the mesh: the entries in `numElements' give the
  * number of elements in each layer. If `height' is not empty, it provides the
- * (cummulative) height of the different layers, normalized to 1. */
+ * (cumulative) height of the different layers, normalized to 1. */
 GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
                                   const double dx,
                                   const double dy,
@@ -1575,7 +1574,7 @@ GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
  * direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
  * `numElements' is not empty, also extrude the mesh: the entries in
  * `numElements' give the number of elements in each layer. If `height' is not
- * empty, it provides the (cummulative) height of the different layers,
+ * empty, it provides the (cumulative) height of the different layers,
  * normalized to 1. */
 GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
@@ -1629,9 +1628,9 @@ GMSH_API void gmshModelOccChamfer(int * volumeTags, size_t volumeTags_n,
 
 /* Compute the boolean union (the fusion) of the entities `objectDimTags' and
  * `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is
- * positive, try to set the tag explicitly (ony valid if the boolean operation
- * results in a single entity). Remove the object if `removeObject' is set.
- * Remove the tool if `removeTool' is set. */
+ * positive, try to set the tag explicitly (only valid if the boolean
+ * operation results in a single entity). Remove the object if `removeObject'
+ * is set. Remove the tool if `removeTool' is set. */
 GMSH_API void gmshModelOccFuse(int * objectDimTags, size_t objectDimTags_n,
                                int * toolDimTags, size_t toolDimTags_n,
                                int ** outDimTags, size_t * outDimTags_n,
@@ -1643,7 +1642,7 @@ GMSH_API void gmshModelOccFuse(int * objectDimTags, size_t objectDimTags_n,
 
 /* Compute the boolean intersection (the common parts) of the entities
  * `objectDimTags' and `toolDimTags'. Return the resulting entities in
- * `outDimTags'. If `tag' is positive, try to set the tag explicitly (ony
+ * `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
  * valid if the boolean operation results in a single entity). Remove the
  * object if `removeObject' is set. Remove the tool if `removeTool' is set. */
 GMSH_API void gmshModelOccIntersect(int * objectDimTags, size_t objectDimTags_n,
@@ -1657,9 +1656,9 @@ GMSH_API void gmshModelOccIntersect(int * objectDimTags, size_t objectDimTags_n,
 
 /* Compute the boolean difference between the entities `objectDimTags' and
  * `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is
- * positive, try to set the tag explicitly (ony valid if the boolean operation
- * results in a single entity). Remove the object if `removeObject' is set.
- * Remove the tool if `removeTool' is set. */
+ * positive, try to set the tag explicitly (only valid if the boolean
+ * operation results in a single entity). Remove the object if `removeObject'
+ * is set. Remove the tool if `removeTool' is set. */
 GMSH_API void gmshModelOccCut(int * objectDimTags, size_t objectDimTags_n,
                               int * toolDimTags, size_t toolDimTags_n,
                               int ** outDimTags, size_t * outDimTags_n,
@@ -1671,7 +1670,7 @@ GMSH_API void gmshModelOccCut(int * objectDimTags, size_t objectDimTags_n,
 
 /* Compute the boolean fragments (general fuse) of the entities
  * `objectDimTags' and `toolDimTags'. Return the resulting entities in
- * `outDimTags'. If `tag' is positive, try to set the tag explicitly (ony
+ * `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
  * valid if the boolean operation results in a single entity). Remove the
  * object if `removeObject' is set. Remove the tool if `removeTool' is set. */
 GMSH_API void gmshModelOccFragment(int * objectDimTags, size_t objectDimTags_n,
