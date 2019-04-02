@@ -1125,8 +1125,9 @@ namespace gmsh { // Top-level functions
       // integration points in the reference element as well as the associated
       // weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. `numComponents'
       // returns the number C of components of a basis function. `basisFunctions'
-      // returns the value of the basis functions at the integration points: [g1f1,
-      // ..., g1fC, g2f1, ...].
+      // returns the value of the N basis functions at the integration points, i.e.
+      // [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w,
+      // g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.
       inline void getBasisFunctions(const int elementType,
                                     const std::string & integrationType,
                                     const std::string & functionSpaceType,
