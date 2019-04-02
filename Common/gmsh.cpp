@@ -1948,7 +1948,6 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   }
   basisFunctions.resize(
     numFunctionsPerElement * numElements * numComponents * nq, 0.);
-  size_t indexNumElement=0;
   int const1 = nq*numFunctionsPerElement*numComponents;
   switch(numComponents) {
   case 1: {
@@ -1959,6 +1958,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
       std::vector<double> fTable(fSize);// face functions of one element
       std::vector<double> eTable(eSize);// edge functions of one element
       basis->generateBasis(u, v, w, vTable, eTable, fTable, bTable);
+      size_t indexNumElement=0;
       int const2= i * numFunctionsPerElement;
       for(std::size_t ii = 0; ii < entities.size(); ii++) {
         GEntity *ge = entities[ii];
@@ -2016,6 +2016,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     break;
   }
   case 3: {
+    int prod1=vSize*numComponents;
+    int prod2=eSize*numComponents;
+    int prod3= fSize*numComponents;
     for(int i = 0; i < nq; i++) {
       double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
       std::vector<std::vector<double> > gradientVertex(
@@ -2029,6 +2032,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
       basis->generateGradientBasis(u, v, w, gradientVertex, gradientEdge,
                                    gradientFace, gradientBubble);
       int const2= i * numFunctionsPerElement * numComponents;
+      size_t indexNumElement=0;
       for(std::size_t ii = 0; ii < entities.size(); ii++) {
         GEntity *ge = entities[ii];
         for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
@@ -2074,9 +2078,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
                                        faceOrientationFlag[2], jj, fTableCopy);
             }
           }
-          std::size_t const4=const3+vSize*numComponents;
-          std::size_t const5=const4 + eSize*numComponents;
-          std::size_t const6=const5+fSize*numComponents;
+          std::size_t const4=const3+prod1;
+          std::size_t const5=const4 + prod2;
+          std::size_t const6=const5+prod3;
           for(int indexNumComp=0;indexNumComp<numComponents;indexNumComp++){
             for(int k = 0; k < vSize; k++) {
               basisFunctions[const3+ k*numComponents+indexNumComp] = gradientVertex[k][indexNumComp];
@@ -2277,11 +2281,12 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
   }
 }
 
+
 GMSH_API void gmsh::model::mesh::getInformationForElements(
   const gmsh::vectorpair &keys, gmsh::vectorpair &info, const int order,
   const int elementType)
 {
-  // to finish ,this function return the global order!
+  // to modify ,this function returns the global order!
   int familyType = ElementType::getParentType(elementType);
   switch(familyType) {
   case TYPE_QUA: {
