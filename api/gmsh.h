@@ -212,7 +212,7 @@ namespace gmsh { // Top-level functions
     // the current model. Return the tag of the new discrete entity, equal to `tag'
     // if `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies the
     // tags of the entities on the boundary of the discrete entity, if any.
-    // Specyfing `boundary' allows Gmsh to construct the topology of the overall
+    // Specifying `boundary' allows Gmsh to construct the topology of the overall
     // model.
     GMSH_API int addDiscreteEntity(const int dim,
                                    const int tag = -1,
@@ -373,7 +373,7 @@ namespace gmsh { // Top-level functions
       // coordinates ([u1, u2, ...] or [u1, v1, u2, ...]) of the nodes, if
       // available. The length of `parametricCoord' can be 0 or `dim' times the
       // length of `nodeTags'. If `includeBoundary' is set, also return the nodes
-      // classified on the boundary of the entity (wich will be reparametrized on
+      // classified on the boundary of the entity (which will be reparametrized on
       // the entity if `dim' >= 0 in order to compute their parametric
       // coordinates).
       GMSH_API void getNodes(std::vector<std::size_t> & nodeTags,
@@ -387,7 +387,7 @@ namespace gmsh { // Top-level functions
       // with tag `tag'. This is a sometimes useful but inefficient way of
       // accessing nodes, as it relies on a cache stored in the model. For large
       // meshes all the nodes in the model should be numbered in a continuous
-      // sequence of tags from 1 to N to maintain reasonnable performance (in this
+      // sequence of tags from 1 to N to maintain reasonable performance (in this
       // case the internal cache is based on a vector; otherwise it uses a map).
       GMSH_API void getNode(const std::size_t nodeTag,
                             std::vector<double> & coord,
@@ -456,7 +456,7 @@ namespace gmsh { // Top-level functions
       // sometimes useful but inefficient way of accessing elements, as it relies
       // on a cache stored in the model. For large meshes all the elements in the
       // model should be numbered in a continuous sequence of tags from 1 to N to
-      // maintain reasonnable performance (in this case the internal cache is based
+      // maintain reasonable performance (in this case the internal cache is based
       // on a vector; otherwise it uses a map).
       GMSH_API void getElement(const std::size_t elementTag,
                                int & elementType,
@@ -610,7 +610,7 @@ namespace gmsh { // Top-level functions
       // integration rule (e.g. "Gauss4" for a Gauss quadrature suited for
       // integrating 4th order polynomials) and `functionSpaceType' function space
       // (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1
-      // Legendre functions or their gradient, in the u, v, w coordinates od the
+      // Legendre functions or their gradient, in the u, v, w coordinates of the
       // reference elements). `integrationPoints' contains the u, v, w coordinates
       // of the integration points in the reference element as well as the
       // associated weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
@@ -868,8 +868,8 @@ namespace gmsh { // Top-level functions
       namespace field { // Per-model mesh size field functions
 
         // Add a new mesh size field of type `fieldType'. If `tag' is positive,
-        // assign the tag explcitly; otherwise a new tag is assigned automatically.
-        // Return the field tag.
+        // assign the tag explicitly; otherwise a new tag is assigned
+        // automatically. Return the field tag.
         GMSH_API int add(const std::string & fieldType,
                          const int tag = -1);
 
@@ -923,10 +923,10 @@ namespace gmsh { // Top-level functions
                            const int endTag,
                            const int tag = -1);
 
-      // Add a circle arc (stricly smaller than Pi) between the two points with
+      // Add a circle arc (strictly smaller than Pi) between the two points with
       // tags `startTag' and `endTag', with center `centertag'. If `tag' is
       // positive, set the tag explicitly; otherwise a new tag is selected
-      // automatically. If (`nx', `ny', `nz') != (0,0,0), explicitely set the plane
+      // automatically. If (`nx', `ny', `nz') != (0,0,0), explicitly set the plane
       // of the circle arc. Return the tag of the circle arc.
       GMSH_API int addCircleArc(const int startTag,
                                 const int centerTag,
@@ -936,11 +936,11 @@ namespace gmsh { // Top-level functions
                                 const double ny = 0.,
                                 const double nz = 0.);
 
-      // Add an ellipse arc (stricly smaller than Pi) between the two points
+      // Add an ellipse arc (strictly smaller than Pi) between the two points
       // `startTag' and `endTag', with center `centertag' and major axis point
       // `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new
       // tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0),
-      // explicitely set the plane of the circle arc. Return the tag of the ellipse
+      // explicitly set the plane of the circle arc. Return the tag of the ellipse
       // arc.
       GMSH_API int addEllipseArc(const int startTag,
                                  const int centerTag,
@@ -1012,7 +1012,7 @@ namespace gmsh { // Top-level functions
       // `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is
       // not empty, also extrude the mesh: the entries in `numElements' give the
       // number of elements in each layer. If `height' is not empty, it provides
-      // the (cummulative) height of the different layers, normalized to 1.
+      // the (cumulative) height of the different layers, normalized to 1.
       GMSH_API void extrude(const gmsh::vectorpair & dimTags,
                             const double dx,
                             const double dy,
@@ -1027,7 +1027,7 @@ namespace gmsh { // Top-level functions
       // direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
       // `numElements' is not empty, also extrude the mesh: the entries in
       // `numElements' give the number of elements in each layer. If `height' is
-      // not empty, it provides the (cummulative) height of the different layers,
+      // not empty, it provides the (cumulative) height of the different layers,
       // normalized to 1.
       GMSH_API void revolve(const gmsh::vectorpair & dimTags,
                             const double x,
@@ -1048,7 +1048,7 @@ namespace gmsh { // Top-level functions
       // (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
       // `numElements' is not empty, also extrude the mesh: the entries in
       // `numElements' give the number of elements in each layer. If `height' is
-      // not empty, it provides the (cummulative) height of the different layers,
+      // not empty, it provides the (cumulative) height of the different layers,
       // normalized to 1.
       GMSH_API void twist(const gmsh::vectorpair & dimTags,
                           const double x,
@@ -1133,7 +1133,7 @@ namespace gmsh { // Top-level functions
         // Set a transfinite meshing constraint on the curve `tag', with `numNodes'
         // nodes distributed according to `meshType' and `coef'. Currently
         // supported types are "Progression" (geometrical progression with power
-        // `coef') and "Bump" (refinement toward both extreminties of the curve).
+        // `coef') and "Bump" (refinement toward both extremities of the curve).
         GMSH_API void setTransfiniteCurve(const int tag,
                                           const int nPoints,
                                           const std::string & meshType = "Progression",
@@ -1454,7 +1454,7 @@ namespace gmsh { // Top-level functions
       // `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is
       // not empty, also extrude the mesh: the entries in `numElements' give the
       // number of elements in each layer. If `height' is not empty, it provides
-      // the (cummulative) height of the different layers, normalized to 1.
+      // the (cumulative) height of the different layers, normalized to 1.
       GMSH_API void extrude(const gmsh::vectorpair & dimTags,
                             const double dx,
                             const double dy,
@@ -1469,7 +1469,7 @@ namespace gmsh { // Top-level functions
       // direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
       // `numElements' is not empty, also extrude the mesh: the entries in
       // `numElements' give the number of elements in each layer. If `height' is
-      // not empty, it provides the (cummulative) height of the different layers,
+      // not empty, it provides the (cumulative) height of the different layers,
       // normalized to 1.
       GMSH_API void revolve(const gmsh::vectorpair & dimTags,
                             const double x,
@@ -1519,7 +1519,7 @@ namespace gmsh { // Top-level functions
 
       // Compute the boolean union (the fusion) of the entities `objectDimTags' and
       // `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is
-      // positive, try to set the tag explicitly (ony valid if the boolean
+      // positive, try to set the tag explicitly (only valid if the boolean
       // operation results in a single entity). Remove the object if `removeObject'
       // is set. Remove the tool if `removeTool' is set.
       GMSH_API void fuse(const gmsh::vectorpair & objectDimTags,
@@ -1532,7 +1532,7 @@ namespace gmsh { // Top-level functions
 
       // Compute the boolean intersection (the common parts) of the entities
       // `objectDimTags' and `toolDimTags'. Return the resulting entities in
-      // `outDimTags'. If `tag' is positive, try to set the tag explicitly (ony
+      // `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
       // valid if the boolean operation results in a single entity). Remove the
       // object if `removeObject' is set. Remove the tool if `removeTool' is set.
       GMSH_API void intersect(const gmsh::vectorpair & objectDimTags,
@@ -1545,7 +1545,7 @@ namespace gmsh { // Top-level functions
 
       // Compute the boolean difference between the entities `objectDimTags' and
       // `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is
-      // positive, try to set the tag explicitly (ony valid if the boolean
+      // positive, try to set the tag explicitly (only valid if the boolean
       // operation results in a single entity). Remove the object if `removeObject'
       // is set. Remove the tool if `removeTool' is set.
       GMSH_API void cut(const gmsh::vectorpair & objectDimTags,
@@ -1558,7 +1558,7 @@ namespace gmsh { // Top-level functions
 
       // Compute the boolean fragments (general fuse) of the entities
       // `objectDimTags' and `toolDimTags'. Return the resulting entities in
-      // `outDimTags'. If `tag' is positive, try to set the tag explicitly (ony
+      // `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
       // valid if the boolean operation results in a single entity). Remove the
       // object if `removeObject' is set. Remove the tool if `removeTool' is set.
       GMSH_API void fragment(const gmsh::vectorpair & objectDimTags,
