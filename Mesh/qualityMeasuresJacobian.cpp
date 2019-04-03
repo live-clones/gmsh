@@ -1049,6 +1049,11 @@ namespace jacobianBasedQuality {
       result += _computeBoundRational(det, coeffDenominator, true);
       raiser->computeCoeff2(prox[1], prox[2], coeffDenominator);
       result += _computeBoundRational(det, coeffDenominator, true);
+      // The bound is not sharp, which can lead to a lot of subdivision. This
+      // can be avoided by bounding the total function instead of bounding each
+      // rational function and summing the three bounds. This is done for
+      // TYPE_TET and TYPE_PYR. In order to do that for triangles, it is
+      // needed to implement raising bezier coefficient from different spaces.
       return cTri * result / 3;
 
     case TYPE_HEX:
@@ -1062,6 +1067,7 @@ namespace jacobianBasedQuality {
       result += _computeBoundRational(det, coeffDenominator, true);
       raiser->computeCoeff2(prox[1], prox[3], prox[2], coeffDenominator);
       result += _computeBoundRational(det, coeffDenominator, true);
+      // Same comment than for TYPE_TRI.
       return cTri * result / 3;
 
     case TYPE_TET: {

@@ -1712,13 +1712,13 @@ bezierCoeff::~bezierCoeff()
   }
 }
 
-void bezierCoeff::_computeCoefficients(const double *lagCoeffData)
+void bezierCoeff::_computeCoefficients(const double *lagCoeffDataConst)
 {
   // FIXME: Use Leja order? (if yes, change gmshGenerateOrderedPoints)
   const int type = _funcSpaceData.getType();
   const int order = _funcSpaceData.getSpaceOrder();
   const int npt = order + 1;
-  const fullMatrix<double> lag(const_cast<double*>(lagCoeffData), _r, _c);
+  const fullMatrix<double> lag(const_cast<double*>(lagCoeffDataConst), _r, _c);
   const fullVector<double> &x = _basis->ordered1dBezPoints;
   fullMatrix<double> bez(_data, _r, _c);
 
@@ -1728,10 +1728,9 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffData)
   switch(type) {
   case TYPE_TRI:
   case TYPE_TET:
-  case TYPE_PRI:
     // Note: For simplices, less significant errors in matrixLag2Bez2 but
     // an algorithm exists (see same paper than algo convertLag2Bez), yet
-    // it is complex. It may be implemented it in the future if it is necessary.
+    // it is complex. It may be implemented in the future if it is necessary.
     _basis->matrixLag2Bez2.mult(lag, bez);
     return;
   case TYPE_LIN:
@@ -1772,6 +1771,27 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffData)
     }
     for(int jk = 0; jk < nbij * nbk; ++jk) {
       convertLag2Bez(bez, nbij - 1, xij, bez, jk * nbij, 1);
+    }
+    return;
+  }
+  case TYPE_PRI:
+  {
+    // Prism space is a mix of triangular space and linear space
+    double *lagCoeffData = const_cast<double*>(lagCoeffDataConst);
+    const bezierBasis *fsTri = BasisFactory::getBezierBasis(TYPE_TRI, order);
+    const int nptTri = (order + 2) * (order + 1) / 2;
+    fullVector<double> proxLag;
+    fullVector<double> proxBez;
+    for(int k = 0; k < npt; ++k) {
+      for(int c = 0; c < _c; ++c) {
+        const int inc = c * _r + k * nptTri;
+        proxLag.setAsProxy(lagCoeffData + inc, nptTri);
+        proxBez.setAsProxy(_data + inc, nptTri);
+        fsTri->matrixLag2Bez2.mult(proxLag, proxBez);
+      }
+    }
+    for(int ij = 0; ij < nptTri; ++ij) {
+      convertLag2Bez(lag, order, x, bez, ij, nptTri);
     }
     return;
   }
@@ -1978,7 +1998,7 @@ void bezierCoeff::_subdivideTriangle(const bezierCoeff &coeff, int start,
   bezierCoeff &sub4 = *vSubCoeff[3];
 
   // copy into first subdomain
-  _copy(coeff, start, (n + 1) * n / 2, sub1);
+  if (&coeff != &sub1) _copy(coeff, start, (n + 1) * n / 2, sub1);
 
   // Subdivide in u direction
   // TODO: consider precompute vector<pair<int, int>> for this
@@ -2294,6 +2314,8 @@ void bezierCoeff::_subdividePrism(const bezierCoeff &coeff,
   const int ntri = (n + 1) * n / 2;
   const int N = 2 * n - 1;
   const int dim = coeff._c;
+
+  // First, use De Casteljau algorithm in 3rd direction (=> 2 subdomains):
   _sub.resize(N * ntri, dim, false);
   for(int k = 0; k < n; ++k) {
     for(int i = 0; i < ntri; ++i) {
@@ -2308,6 +2330,7 @@ void bezierCoeff::_subdividePrism(const bezierCoeff &coeff,
     _subdivide(_sub, n, i, ntri);
   }
 
+  // Copy first subdomain into subCoeff[0] and second one into subCoeff2[0]
   std::vector<bezierCoeff *> subCoeff2;
   subCoeff2.push_back(subCoeff[4]);
   subCoeff2.push_back(subCoeff[5]);
@@ -2315,6 +2338,8 @@ void bezierCoeff::_subdividePrism(const bezierCoeff &coeff,
   subCoeff2.push_back(subCoeff[7]);
   _copyLine(_sub, n * ntri, 0, *subCoeff[0]);
   _copyLine(_sub, n * ntri, (n - 1) * ntri, *subCoeff2[0]);
+
+  // Second, subdivide in the triangular space:
   for(int k = 0; k < n; ++k) {
     _subdivideTriangle(*subCoeff[0], k*ntri, subCoeff);
     _subdivideTriangle(*subCoeff2[0], k*ntri, subCoeff2);
