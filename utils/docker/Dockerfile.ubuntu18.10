@@ -11,8 +11,8 @@ RUN apt-get install -y libc6-dbg
 ENV LD_LIBRARY_PATH /usr/local/lib:$LD_LIBRARY_PATH
 ENV PATH /usr/local/bin:$PATH
 
-# "docker build --build-arg REDO_FROM_HERE=yes"
-ARG REDO_FROM_HERE=
+# "docker build --build-arg REBUILD_GMSH=yes"
+ARG REBUILD_GMSH=
 
 RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git && cd gmsh && mkdir build && cd build && cmake -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_PRIVATE_API=1 .. && make -j8 shared && make install/fast && cd .. && rm -rf gmsh
 
