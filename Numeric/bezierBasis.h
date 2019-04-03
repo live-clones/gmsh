@@ -212,9 +212,9 @@ private:
   int _numPool;
   FuncSpaceData _funcSpaceData;
   const bezierBasis *_basis;
-  bool _own_data; // should data be freed on delete ?
   int _r, _c; // size of the matrix
   double *_data; // pointer on the first element
+  bool _own_data; // to know if data should be freed when object is deleted
 
   static bezierMemoryPool *_pool0;
   static bezierMemoryPool *_pool1;

@@ -80,12 +80,12 @@ static void _computeCoeffLengthVectors(const fullMatrix<double> &mat,
   }
   else {
     for(int i = 0; i < sz1; i++) {
-      coeff(i, 0) =
-        std::sqrt(pow_int(2 * mat(i, 0), 2) + pow_int(2 * mat(i, 1), 2) +
-                  pow_int(2 * mat(i, 2), 2));
-      coeff(i, 1) =
-        std::sqrt(pow_int(2 * mat(i, 3), 2) + pow_int(2 * mat(i, 4), 2) +
-                  pow_int(2 * mat(i, 5), 2));
+      coeff(i, 0) = std::sqrt(pow_int(2 * mat(i, 0), 2) +
+                              pow_int(2 * mat(i, 1), 2) +
+                              pow_int(2 * mat(i, 2), 2));
+      coeff(i, 1) = std::sqrt(pow_int(2 * mat(i, 3), 2) +
+                              pow_int(2 * mat(i, 4), 2) +
+                              pow_int(2 * mat(i, 5), 2));
       coeff(i, 2) = std::sqrt(pow_int(mat(i, 6) + mat(i, 0) + mat(i, 3), 2) +
                               pow_int(mat(i, 7) + mat(i, 1) + mat(i, 4), 2) +
                               pow_int(mat(i, 8) + mat(i, 2) + mat(i, 5), 2));

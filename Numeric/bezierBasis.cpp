@@ -1348,7 +1348,7 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
 
       int hashNew = 0;
       for(int l = 0; l < 3; l++) {
-        hash += static_cast<int>((expNew(i, l) + expNew(j, l)) * pow_int(2 * orderHash + 1, l));
+        hashNew += static_cast<int>((expNew(i, l) + expNew(j, l)) * pow_int(2 * orderHash + 1, l));
       }
       _raiser2New[hashToInd2New[hashNew]].push_back(_data(numNew / denNew, i, j));
     }
