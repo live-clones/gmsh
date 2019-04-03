@@ -1000,30 +1000,30 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType, const char *
   }
 }
 
-GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const char * integrationType, const int elementType, const char * functionSpaceType, double ** basisFunctions, size_t * basisFunctions_n, double ** integrationPoints, size_t * integrationPoints_n, int * numComponents, int * numDofsByElement, const int tag, int * ierr)
+GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType, const char * integrationType, const char * functionSpaceType, double ** integrationPoints, size_t * integrationPoints_n, int * numComponents, int * numFunctionsPerElements, double ** basisFunctions, size_t * basisFunctions_n, const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_basisFunctions_;
     std::vector<double> api_integrationPoints_;
-    gmsh::model::mesh::getBasisFunctionsForElements(integrationType, elementType, functionSpaceType, api_basisFunctions_, api_integrationPoints_, *numComponents, *numDofsByElement, tag);
-    vector2ptr(api_basisFunctions_, basisFunctions, basisFunctions_n);
+    std::vector<double> api_basisFunctions_;
+    gmsh::model::mesh::getBasisFunctionsForElements(elementType, integrationType, functionSpaceType, api_integrationPoints_, *numComponents, *numFunctionsPerElements, api_basisFunctions_, tag);
     vector2ptr(api_integrationPoints_, integrationPoints, integrationPoints_n);
+    vector2ptr(api_basisFunctions_, basisFunctions, basisFunctions_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
   }
 }
 
-GMSH_API void gmshModelMeshGetKeyForElements(const int dim, const int tag, const char * functionSpaceType, const int elementType, const int generateCoord, double ** coord, size_t * coord_n, int ** keys, size_t * keys_n, int * ierr)
+GMSH_API void gmshModelMeshGetKeysForElements(const int elementType, const char * functionSpaceType, int ** keys, size_t * keys_n, double ** coord, size_t * coord_n, const int tag, const int generateCoord, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_coord_;
     gmsh::vectorpair api_keys_;
-    gmsh::model::mesh::getKeyForElements(dim, tag, functionSpaceType, elementType, generateCoord, api_coord_, api_keys_);
-    vector2ptr(api_coord_, coord, coord_n);
+    std::vector<double> api_coord_;
+    gmsh::model::mesh::getKeysForElements(elementType, functionSpaceType, api_keys_, api_coord_, tag, generateCoord);
     vectorpair2intptr(api_keys_, keys, keys_n);
+    vector2ptr(api_coord_, coord, coord_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

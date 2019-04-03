@@ -595,8 +595,8 @@ namespace gmsh { // Top-level functions
       // integration points in the reference element as well as the associated
       // weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. `numComponents'
       // returns the number C of components of a basis function. `basisFunctions'
-      // contains the evaluation of the basis functions at the integration points:
-      // [g1f1, ..., g1fC, g2f1, ...].
+      // returns the value of the basis functions at the integration points: [g1f1,
+      // ..., g1fC, g2f1, ...].
       GMSH_API void getBasisFunctions(const int elementType,
                                       const std::string & integrationType,
                                       const std::string & functionSpaceType,
@@ -604,38 +604,42 @@ namespace gmsh { // Top-level functions
                                       int & numComponents,
                                       std::vector<double> & basisFunctions);
 
-      // Get the basis functions of the elements of type `elementType' for the
-      // given `integrationType' integration rule and `functionSpaceType' (e.g. for
-      // 3rd order hierarchical H1 functions: "Solin0Form3" or "GradSolin0Form3").
-      // `basisFunctions' contains the evaluation of the basis functions at the
-      // integration points: [g1e1f1, ..., g1e1fC, g1e2f1, ...,g1e2fC, g1enfC,
-      // g2e1f1, ...]. the u, v, w coordinates of the integration points in the
-      // reference element as well as the associated weight q, concatenated: [g1u,
-      // g1v, g1w, g1q, g2u, ...]. `numComponents' returns the number C of
-      // components of a basis function. Warning: this is an experimental feature
+      // Get the element-dependent basis functions of the elements of type
+      // `elementType' in the entity of tag `tag', for the given `integrationType'
+      // integration rule (e.g. "Gauss4" for a Gauss quadrature suited for
+      // integrating 4th order polynomials) and `functionSpaceType' function space
+      // (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1
+      // Legendre functions or their gradient, in the u, v, w coordinates od the
+      // reference elements). `integrationPoints' contains the u, v, w coordinates
+      // of the integration points in the reference element as well as the
+      // associated weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
+      // `numComponents' returns the number C of components of a basis function.
+      // `numBasisFunctions' returns the number of basis functions per element.
+      // `basisFunctions' returns the value of the basis functions at the
+      // integration points for each element: [g1e1f1, ..., g1e1fC, g1e2f1,
+      // ...,g1e2fC, g1enfC, g2e1f1, ...]. Warning: this is an experimental feature
       // and will probably change in a future release.
-      GMSH_API void getBasisFunctionsForElements(const std::string & integrationType,
-                                                 const int elementType,
+      GMSH_API void getBasisFunctionsForElements(const int elementType,
+                                                 const std::string & integrationType,
                                                  const std::string & functionSpaceType,
-                                                 std::vector<double> & basisFunctions,
                                                  std::vector<double> & integrationPoints,
                                                  int & numComponents,
-                                                 int & numDofsByElement,
+                                                 int & numFunctionsPerElements,
+                                                 std::vector<double> & basisFunctions,
                                                  const int tag = -1);
 
-      // Generate `keys' for the elements of type `elementType' for the given
-      // entity 'tag' and `functionSpaceType' (e.g. "Solin0Form3"). Each
-      // keyuniquely identifies a basis function. `coord' is a vector that contains
-      // x, y, z coordinates locating basis functions for sorting purposes.
-      // Warning: this is an experimental feature and will probably change in a
-      // future release.
-      GMSH_API void getKeyForElements(const int dim,
-                                      const int tag,
-                                      const std::string & functionSpaceType,
-                                      const int elementType,
-                                      const bool generateCoord,
-                                      std::vector<double> & coord,
-                                      gmsh::vectorpair & keys);
+      // Generate the `keys' for the elements of type `elementType' in the entity
+      // of tag `tag',for the `functionSpaceType' function space. Each key uniquely
+      // identifies a basis function in the function space. `coord' is a vector
+      // that contains x, y, z coordinates locating basis functions for sorting
+      // purposes. Warning: this is an experimental feature and will probably
+      // change in a future release.
+      GMSH_API void getKeysForElements(const int elementType,
+                                       const std::string & functionSpaceType,
+                                       gmsh::vectorpair & keys,
+                                       std::vector<double> & coord,
+                                       const int tag = -1,
+                                       const bool generateCoord = true);
 
       // Get information about the `keys'. Warning: this is an experimental feature
       // and will probably change in a future release.

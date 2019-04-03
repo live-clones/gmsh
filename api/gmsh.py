@@ -1748,8 +1748,8 @@ class model:
             integration points in the reference element as well as the associated
             weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. `numComponents'
             returns the number C of components of a basis function. `basisFunctions'
-            contains the evaluation of the basis functions at the integration points:
-            [g1f1, ..., g1fC, g2f1, ...].
+            returns the value of the basis functions at the integration points: [g1f1,
+            ..., g1fC, g2f1, ...].
 
             Return `integrationPoints', `numComponents', `basisFunctions'.
             """
@@ -1775,34 +1775,39 @@ class model:
                 _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value))
 
         @staticmethod
-        def getBasisFunctionsForElements(integrationType, elementType, functionSpaceType, tag=-1):
+        def getBasisFunctionsForElements(elementType, integrationType, functionSpaceType, tag=-1):
             """
-            Get the basis functions of the elements of type `elementType' for the given
-            `integrationType' integration rule and `functionSpaceType' (e.g. for 3rd
-            order hierarchical H1 functions: "Solin0Form3" or "GradSolin0Form3").
-            `basisFunctions' contains the evaluation of the basis functions at the
-            integration points: [g1e1f1, ..., g1e1fC, g1e2f1, ...,g1e2fC, g1enfC,
-            g2e1f1, ...]. the u, v, w coordinates of the integration points in the
-            reference element as well as the associated weight q, concatenated: [g1u,
-            g1v, g1w, g1q, g2u, ...]. `numComponents' returns the number C of
-            components of a basis function. Warning: this is an experimental feature
+            Get the element-dependent basis functions of the elements of type
+            `elementType' in the entity of tag `tag', for the given `integrationType'
+            integration rule (e.g. "Gauss4" for a Gauss quadrature suited for
+            integrating 4th order polynomials) and `functionSpaceType' function space
+            (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1
+            Legendre functions or their gradient, in the u, v, w coordinates od the
+            reference elements). `integrationPoints' contains the u, v, w coordinates
+            of the integration points in the reference element as well as the
+            associated weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
+            `numComponents' returns the number C of components of a basis function.
+            `numBasisFunctions' returns the number of basis functions per element.
+            `basisFunctions' returns the value of the basis functions at the
+            integration points for each element: [g1e1f1, ..., g1e1fC, g1e2f1,
+            ...,g1e2fC, g1enfC, g2e1f1, ...]. Warning: this is an experimental feature
             and will probably change in a future release.
 
-            Return `basisFunctions', `integrationPoints', `numComponents', `numDofsByElement'.
+            Return `integrationPoints', `numComponents', `numFunctionsPerElements', `basisFunctions'.
             """
-            api_basisFunctions_, api_basisFunctions_n_ = POINTER(c_double)(), c_size_t()
             api_integrationPoints_, api_integrationPoints_n_ = POINTER(c_double)(), c_size_t()
             api_numComponents_ = c_int()
-            api_numDofsByElement_ = c_int()
+            api_numFunctionsPerElements_ = c_int()
+            api_basisFunctions_, api_basisFunctions_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetBasisFunctionsForElements(
-                c_char_p(integrationType.encode()),
                 c_int(elementType),
+                c_char_p(integrationType.encode()),
                 c_char_p(functionSpaceType.encode()),
-                byref(api_basisFunctions_), byref(api_basisFunctions_n_),
                 byref(api_integrationPoints_), byref(api_integrationPoints_n_),
                 byref(api_numComponents_),
-                byref(api_numDofsByElement_),
+                byref(api_numFunctionsPerElements_),
+                byref(api_basisFunctions_), byref(api_basisFunctions_n_),
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
@@ -1810,41 +1815,41 @@ class model:
                     "gmshModelMeshGetBasisFunctionsForElements returned non-zero error code: ",
                     ierr.value)
             return (
-                _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value),
                 _ovectordouble(api_integrationPoints_, api_integrationPoints_n_.value),
                 api_numComponents_.value,
-                api_numDofsByElement_.value)
+                api_numFunctionsPerElements_.value,
+                _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value))
 
         @staticmethod
-        def getKeyForElements(dim, tag, functionSpaceType, elementType, generateCoord):
+        def getKeysForElements(elementType, functionSpaceType, tag=-1, generateCoord=True):
             """
-            Generate `keys' for the elements of type `elementType' for the given entity
-            'tag' and `functionSpaceType' (e.g. "Solin0Form3"). Each keyuniquely
-            identifies a basis function. `coord' is a vector that contains x, y, z
-            coordinates locating basis functions for sorting purposes.  Warning: this
-            is an experimental feature and will probably change in a future release.
+            Generate the `keys' for the elements of type `elementType' in the entity of
+            tag `tag',for the `functionSpaceType' function space. Each key uniquely
+            identifies a basis function in the function space. `coord' is a vector that
+            contains x, y, z coordinates locating basis functions for sorting purposes.
+            Warning: this is an experimental feature and will probably change in a
+            future release.
 
-            Return `coord', `keys'.
+            Return `keys', `coord'.
             """
-            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             api_keys_, api_keys_n_ = POINTER(c_int)(), c_size_t()
+            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetKeyForElements(
-                c_int(dim),
-                c_int(tag),
-                c_char_p(functionSpaceType.encode()),
+            lib.gmshModelMeshGetKeysForElements(
                 c_int(elementType),
-                c_int(bool(generateCoord)),
-                byref(api_coord_), byref(api_coord_n_),
+                c_char_p(functionSpaceType.encode()),
                 byref(api_keys_), byref(api_keys_n_),
+                byref(api_coord_), byref(api_coord_n_),
+                c_int(tag),
+                c_int(bool(generateCoord)),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetKeyForElements returned non-zero error code: ",
+                    "gmshModelMeshGetKeysForElements returned non-zero error code: ",
                     ierr.value)
             return (
-                _ovectordouble(api_coord_, api_coord_n_.value),
-                _ovectorpair(api_keys_, api_keys_n_.value))
+                _ovectorpair(api_keys_, api_keys_n_.value),
+                _ovectordouble(api_coord_, api_coord_n_.value))
 
         @staticmethod
         def getInformationForElements(keys, order, elementType):

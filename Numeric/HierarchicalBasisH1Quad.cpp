@@ -370,7 +370,7 @@ void HierarchicalBasisH1Quad::generateGradientBasis(
   }
 }
 
-void HierarchicalBasisH1Quad::orientateEdge(int const &flagOrientation,
+void HierarchicalBasisH1Quad::orientEdge(int const &flagOrientation,
                                             int const &edgeNumber,
                                             std::vector<double> &edgeBasis)
 {
@@ -405,7 +405,7 @@ void HierarchicalBasisH1Quad::orientateEdge(int const &flagOrientation,
   }
 }
 
-void HierarchicalBasisH1Quad::orientateEdgeGrad(
+void HierarchicalBasisH1Quad::orientEdgeGrad(
   int const &flagOrientation, int const &edgeNumber,
   std::vector<std::vector<double> > &gradientEdge)
 {

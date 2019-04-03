@@ -4,6 +4,9 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
+// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel Segeth ,
+//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
+
 
 #include "HierarchicalBasisH1Line.h"
 

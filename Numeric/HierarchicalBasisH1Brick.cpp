@@ -4,6 +4,8 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
+// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel Segeth ,
+//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
 #include "HierarchicalBasisH1Brick.h"
 
@@ -220,12 +222,6 @@ void HierarchicalBasisH1Brick::_someProductGrad(
   gradientProduct[1][2] = -0.5 * lambda[1];
   gradientProduct[2][0] = -0.5 * lambda[3];
   gradientProduct[2][1] = -0.5 * lambda[1];
-  gradientProduct[0][1] = -0.5 * lambda[5];
-  gradientProduct[0][2] = -0.5 * lambda[3];
-  gradientProduct[1][0] = -0.5 * lambda[5];
-  gradientProduct[1][2] = -0.5 * lambda[1];
-  gradientProduct[2][0] = -0.5 * lambda[3];
-  gradientProduct[2][1] = -0.5 * lambda[1];
   gradientProduct[3][0] = 0.5 * lambda[5];
   gradientProduct[3][2] = -0.5 * lambda[0];
   gradientProduct[4][0] = 0.5 * lambda[3];
@@ -241,7 +237,7 @@ void HierarchicalBasisH1Brick::_someProductGrad(
   gradientProduct[9][0] = -0.5 * lambda[4];
   gradientProduct[9][2] = 0.5 * lambda[1];
   gradientProduct[10][0] = 0.5 * lambda[4];
-  gradientProduct[10][1] = 0.5 * lambda[0];
+  gradientProduct[10][2] = 0.5 * lambda[0];
   gradientProduct[11][1] = 0.5 * lambda[4];
   gradientProduct[11][2] = 0.5 * lambda[2];
 }
@@ -281,7 +277,6 @@ void HierarchicalBasisH1Brick::generateGradientBasis(
       gradientLambda[1][it] * product[11] + gradientProduct[11][it] * lambda[1];
   }
   std::vector<double> lkVectorU(_pb1 - 1);
-  ;
   std::vector<double> lkVectorV(_pb2 - 1);
   std::vector<double> lkVectorW(_pb3 - 1);
   std::vector<std::vector<double> > dlkVectorU(_pb1 - 1,
@@ -422,7 +417,7 @@ void HierarchicalBasisH1Brick::generateGradientBasis(
   }
 }
 
-void HierarchicalBasisH1Brick::orientateEdge(int const &flagOrientation,
+void HierarchicalBasisH1Brick::orientEdge(int const &flagOrientation,
                                              int const &edgeNumber,
                                              std::vector<double> &edgeBasis)
 {
@@ -441,7 +436,7 @@ void HierarchicalBasisH1Brick::orientateEdge(int const &flagOrientation,
   }
 }
 
-void HierarchicalBasisH1Brick::orientateEdgeGrad(
+void HierarchicalBasisH1Brick::orientEdgeGrad(
   int const &flagOrientation, int const &edgeNumber,
   std::vector<std::vector<double> > &gradientEdge)
 {
@@ -464,7 +459,7 @@ void HierarchicalBasisH1Brick::orientateEdgeGrad(
   }
 }
 
-void HierarchicalBasisH1Brick::orientateFace(double const &u, double const &v,
+void HierarchicalBasisH1Brick::orientFace(double const &u, double const &v,
                                              double const &w, int const &flag1,
                                              int const &flag2, int const &flag3,
                                              int const &faceNumber,
@@ -483,8 +478,8 @@ void HierarchicalBasisH1Brick::orientateFace(double const &u, double const &v,
         for(int it2 = 2; it2 <= _pOrderFace2[faceNumber]; it2++) {
           int impactFlag1 = 1;
           int impactFlag2 = 1;
-          if(it1 % 2 != 0) { impactFlag1 = -1; }
-          if(it2 % 2 != 0) { impactFlag2 = -1; }
+          if(flag1==-1 && it1 % 2 != 0) { impactFlag1 = -1; }
+          if(flag2==-1 && it2 % 2 != 0) { impactFlag2 = -1; }
           faceBasis[iterator] = faceBasis[iterator] * impactFlag1 * impactFlag2;
           iterator++;
         }
@@ -539,8 +534,8 @@ void HierarchicalBasisH1Brick::orientateFace(double const &u, double const &v,
         for(int it2 = 2; it2 <= _pOrderFace2[faceNumber]; it2++) {
           int impactFlag1 = 1;
           int impactFlag2 = 1;
-          if(it1 % 2 != 0) { impactFlag1 = -1; }
-          if(it2 % 2 != 0) { impactFlag2 = -1; }
+          if(flag1==-1 && it1 % 2 != 0) { impactFlag1 = -1; }
+          if(flag2==-1 && it2 % 2 != 0) { impactFlag2 = -1; }
           faceBasis[iterator] = lambda * lkVector1[it2 - 2] *
                                 lkVector2[it1 - 2] * impactFlag1 * impactFlag2;
           iterator++;
@@ -549,7 +544,7 @@ void HierarchicalBasisH1Brick::orientateFace(double const &u, double const &v,
     }
   }
 }
-void HierarchicalBasisH1Brick::orientateFaceGrad(
+void HierarchicalBasisH1Brick::orientFaceGrad(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector<std::vector<double> > &gradientFace)
@@ -567,8 +562,8 @@ void HierarchicalBasisH1Brick::orientateFaceGrad(
         for(int it2 = 2; it2 <= _pOrderFace2[faceNumber]; it2++) {
           int impactFlag1 = 1;
           int impactFlag2 = 1;
-          if(it1 % 2 != 0) { impactFlag1 = -1; }
-          if(it2 % 2 != 0) { impactFlag2 = -1; }
+          if(flag1==-1 && it1 % 2 != 0) { impactFlag1 = -1; }
+          if(flag2==-1 && it2 % 2 != 0) { impactFlag2 = -1; }
           gradientFace[iterator][0] =
             gradientFace[iterator][0] * impactFlag1 * impactFlag2;
           gradientFace[iterator][1] =
@@ -648,8 +643,8 @@ void HierarchicalBasisH1Brick::orientateFaceGrad(
         for(int it2 = 2; it2 <= _pOrderFace2[faceNumber]; it2++) {
           int impactFlag1 = 1;
           int impactFlag2 = 1;
-          if(it1 % 2 != 0) { impactFlag1 = -1; }
-          if(it2 % 2 != 0) { impactFlag2 = -1; }
+          if(flag1==-1 && it1 % 2 != 0) { impactFlag1 = -1; }
+          if(flag2==-1 && it2 % 2 != 0) { impactFlag2 = -1; }
           for(int itVector = 0; itVector < 3; itVector++) {
             gradientFace[iterator][itVector] =
               (gradientLambda[itVector] * lkVector1[it2 - 2] *
