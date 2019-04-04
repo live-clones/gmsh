@@ -31,3 +31,13 @@ BooleanFragments{ Volume{v()}; Delete; }{ Surface{1000+1:1000+N-1}; Delete; }
 Delete { Surface{:}; Curve{:}; Point{:}; }
 
 // Et voila :-)
+
+// To slice the mesh instead the CAD, one can use the "SimplePartition" Plugin:
+/*
+  Plugin("SimplePartition").NumSlicesX = 1;
+  Plugin("SimplePartition").NumSlicesY = 1;
+  Plugin("SimplePartition").NumSlicesZ = N;
+  Plugin("SimplePartition").Run
+*/
+
+// For general mesh partitions of course, use "PartitionMesh N;"
