@@ -4116,7 +4116,7 @@ Historically, Gmsh first supported linear elements (lines, triangles,
 quadrangles, tetrahedar, prisms and hexahedra). Then, support for second
 and some third order elements has been added. Below we distinguish such
 ``low order elements'', which are hardcoded (i.e. they are explicitly
-defined in the code), and general ``high order elements'', that have
+defined in the code), and general ``high-order elements'', that have
 been coded in a more general fashion, theoretically valid for any order.
 
 @subsection Low order elements
@@ -4263,7 +4263,7 @@ Pyramid:                     Pyramid13:                   Pyramid14:
 @end group
 @end smallexample
 
-@subsection High order elements
+@subsection High-order elements
 
 The node ordering of a higher order (possibly curved) element is
 compatible with the numbering of low order element (it is a
@@ -5849,7 +5849,7 @@ algorithm with smoothing (e.g., with @code{Mesh.Smoothing = 10}).
 @item Does Gmsh support curved elements?
 
 Yes, just choose the appropriate order in the mesh menu after the mesh is
-completed. High order optimization tools are in development and also available
+completed. High-order optimization tools are in development and also available
 in the mesh menu. You can select the order on the command line with e.g.
 @code{-order 2}.
 
