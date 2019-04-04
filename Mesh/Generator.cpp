@@ -937,11 +937,14 @@ static void Mesh3D(GModel *m)
     std::for_each(m->firstRegion(), m->lastRegion(), EmbeddedCompatibilityTest());
 
   std::stringstream debugInfo;
-  debugInfo << "No elements in region ";
+  debugInfo << "No elements in volume ";
   bool emptyRegionFound = false;
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
-    if((*it)->getNumMeshElements() == 0) {
-      debugInfo << (*it)->tag() << " ";
+    GRegion *gr = *it;
+    if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility())
+      continue;
+    if(gr->getNumMeshElements() == 0) {
+      debugInfo << gr->tag() << " ";
       emptyRegionFound = true;
     }
   }
