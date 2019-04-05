@@ -97,8 +97,8 @@ opt(WRAP_PYTHON "Enable generation of Python wrappers for private API" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
-set(GMSH_MINOR_VERSION 2)
-set(GMSH_PATCH_VERSION 4)
+set(GMSH_MINOR_VERSION 3)
+set(GMSH_PATCH_VERSION 0)
 set(GMSH_EXTRA_VERSION "")
 set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION}")
 
