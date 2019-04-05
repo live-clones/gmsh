@@ -1,8 +1,12 @@
-4.2.4: small bug fixes.
+4.3.0: improved meshing of surfaces with singular parametrizations; added STL
+export by physical surface; added ability to remove embedded entities; added
+handling of boundary entities in addDiscreteEntity; small bug fixes.
 
 4.2.3 (April 3, 2019): added STL export by physical surface; added ability to
 remove embedded entities; added handling of boundary entities in
 addDiscreteEntity; small bug fixes.
+=======
+>>>>>>> improve_singular_param
 
 4.2.2 (March 13, 2019): fixed regression in reading of extruded meshes; added
 ability to export one solid per surface in STL format.

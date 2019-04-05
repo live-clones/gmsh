@@ -14,11 +14,13 @@
 #if defined(HAVE_OCC)
 
 #include <TopoDS_Face.hxx>
+#include <BRepLProp_SLProps.hxx>
 
 class OCCFace : public GFace {
 protected:
   TopoDS_Face s;
   Handle(Geom_Surface) occface;
+  const BRepAdaptor_Surface sf;
   double umin, umax, vmin, vmax;
   bool _periodic[2];
   double _period[2];
