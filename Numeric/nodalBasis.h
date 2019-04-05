@@ -37,11 +37,11 @@ public:
 
   // Basis functions & gradients evaluation
   virtual void f(double u, double v, double w, double *sf) const = 0;
-  virtual void f(const fullMatrix<double> &coord,
-                 fullMatrix<double> &sf) const = 0;
+  virtual void f(const fullMatrix<double> &coord, fullMatrix<double> &sf) const = 0;
+  virtual void f(double u, double v, double w, int i, double *sf) const = 0;
   virtual void df(double u, double v, double w, double grads[][3]) const = 0;
-  virtual void df(const fullMatrix<double> &coord,
-                  fullMatrix<double> &dfm) const = 0;
+  virtual void df(const fullMatrix<double> &coord, fullMatrix<double> &dfm) const = 0;
+  virtual void df(double u, double v, double w, int i, double grad[3]) const = 0;
   virtual void ddf(double u, double v, double w, double grads[][3][3]) const
   {
     Msg::Error("ddf not implemented for this basis");

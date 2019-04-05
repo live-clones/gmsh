@@ -193,6 +193,8 @@ public:
   {
     return 1;
   }
+  virtual int getVertexSolin(int numEdge, int numVertex){return 0;}
+  virtual MFace getFaceSolin(int numFace){return getFace(numFace);}
 };
 
 class MPolygon : public MElement {
@@ -357,6 +359,8 @@ public:
   {
     return 1;
   }
+  virtual int getVertexSolin(int numEdge, int numVertex){return 0;}
+  virtual MFace getFaceSolin(int numFace){return getFace(numFace);}
 };
 
 class MLineChild : public MLine {

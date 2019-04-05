@@ -413,8 +413,9 @@ void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
   std::sort(edges_detected.begin(), edges_detected.end());
 }
 
-void parametricCoordinates(MElement *t, GFace *gf, double u[4], double v[4],
-                           MVertex *close = 0)
+static void parametricCoordinates(MElement *t, GFace *gf,
+                                  double u[4], double v[4],
+                                  MVertex *close = 0)
 {
   for(std::size_t j = 0; j < t->getNumVertices(); j++) {
     MVertex *ver = t->getVertex(j);
@@ -430,9 +431,15 @@ void parametricCoordinates(MElement *t, GFace *gf, double u[4], double v[4],
 
 double surfaceFaceUV(MElement *t, GFace *gf, bool maximal = true)
 {
+  const int N = t->getNumVertices();
+  if(N > 4){
+    Msg::Warning("surfaceFaceUV only for first order elements");
+    return 0;
+  }
+
   double u[4], v[4];
   parametricCoordinates(t, gf, u, v);
-  if(t->getNumVertices() == 3)
+  if(N == 3)
     return 0.5 *
            fabs((u[1] - u[0]) * (v[2] - v[0]) - (u[2] - u[0]) * (v[1] - v[0]));
   else {
@@ -912,7 +919,6 @@ static void _relocate(GFace *gf, MVertex *ver,
 
 void getAllBoundaryLayerVertices(GFace *gf, std::set<MVertex *> &vs)
 {
-  //  return;
   vs.clear();
   BoundaryLayerColumns *_columns = gf->getColumns();
   if(!_columns) return;
@@ -926,6 +932,13 @@ void getAllBoundaryLayerVertices(GFace *gf, std::set<MVertex *> &vs)
 
 void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
 {
+  if((gf->triangles.size() > 0 && gf->triangles[0]->getPolynomialOrder() > 1) ||
+     (gf->quadrangles.size() > 0 && gf->quadrangles[0]->getPolynomialOrder() > 1)){
+    Msg::Error("Surface mesh smoothing only valid for first order mesh (use the high-"
+               "order optimization tools for high-order meshes)");
+    return;
+  }
+
   if(!niter) return;
   std::set<MVertex *> vs;
   getAllBoundaryLayerVertices(gf, vs);

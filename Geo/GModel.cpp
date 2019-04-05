@@ -1282,6 +1282,20 @@ std::size_t GModel::getNumMeshParentElements() const
   return n;
 }
 
+int GModel::addMEdge(const MEdge &edge)
+{
+  std::pair<MEdge, int> key(edge, _mapEdgeNum.size());
+  std::pair<hashmapMEdge::iterator, bool> it = _mapEdgeNum.insert(key);
+  return it.first->second;
+}
+
+int GModel::addMFace(const MFace &face)
+{
+  std::pair<MFace, int> key(face, _mapFaceNum.size());
+  std::pair<hashmapMFace::iterator, bool> it = _mapFaceNum.insert(key);
+  return it.first->second;
+}
+
 void GModel::renumberMeshVertices()
 {
   destroyMeshCaches();

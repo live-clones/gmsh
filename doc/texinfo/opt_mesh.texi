@@ -291,6 +291,11 @@ Import groups of nodes (0: no; 1: create geometrical point for each node)?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.MedSingleModel
+Import MED meshes in the current model, even if several MED mesh names exist@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.PartitionHexWeight
 Weight of hexahedral element for METIS load balancing (-1: automatic)@*
 Default value: @code{-1}@*

@@ -77,7 +77,7 @@ def ivoidstar(name, value=None, python_value=None, julia_value=None):
     a = arg(name, value, python_value, julia_value,
             "const void *", "const void *", False)
     a.python_arg = "c_void_p(" + name + ")"
-    a.julia_ctype = "Ptr{Nothing}"
+    a.julia_ctype = "Ptr{Cvoid}"
     return a
 
 def ivectorint(name, value=None, python_value=None, julia_value=None):
@@ -948,6 +948,8 @@ from math import pi
 {5}_API_VERSION_MAJOR = {3}
 {5}_API_VERSION_MINOR = {4}
 
+__version__ = {5}_API_VERSION
+
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == "Windows":
@@ -1350,7 +1352,7 @@ class API:
             c_name = c_mpath + name[0].upper() + name[1:]
             f.write("ccall((:" + c_name + ", " +
                     ("" if c_mpath == ns else ns + ".") + "lib), " +
-                    ("Nothing" if rtype is None else rtype.rjulia_type) + ",\n" +
+                    ("Cvoid" if rtype is None else rtype.rjulia_type) + ",\n" +
                     " " * 10 + "(" + ", ".join(
                         (tuple(a.julia_ctype for a in args) + ("Ptr{Cint}",))) +
                     ("," if not len(args) else "") + "),\n" +

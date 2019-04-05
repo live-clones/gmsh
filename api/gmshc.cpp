@@ -1000,6 +1000,54 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType, const char *
   }
 }
 
+GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType, const char * integrationType, const char * functionSpaceType, double ** integrationPoints, size_t * integrationPoints_n, int * numComponents, int * numFunctionsPerElements, double ** basisFunctions, size_t * basisFunctions_n, const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_integrationPoints_;
+    std::vector<double> api_basisFunctions_;
+    gmsh::model::mesh::getBasisFunctionsForElements(elementType, integrationType, functionSpaceType, api_integrationPoints_, *numComponents, *numFunctionsPerElements, api_basisFunctions_, tag);
+    vector2ptr(api_integrationPoints_, integrationPoints, integrationPoints_n);
+    vector2ptr(api_basisFunctions_, basisFunctions, basisFunctions_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshGetKeysForElements(const int elementType, const char * functionSpaceType, int ** keys, size_t * keys_n, double ** coord, size_t * coord_n, const int tag, const int generateCoord, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_keys_;
+    std::vector<double> api_coord_;
+    gmsh::model::mesh::getKeysForElements(elementType, functionSpaceType, api_keys_, api_coord_, tag, generateCoord);
+    vectorpair2intptr(api_keys_, keys, keys_n);
+    vector2ptr(api_coord_, coord, coord_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshGetInformationForElements(int * keys, size_t keys_n, int ** info, size_t * info_n, const int order, const int elementType, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_keys_(keys_n/2);
+    for(size_t i = 0; i < keys_n/2; ++i){
+      api_keys_[i].first = keys[i * 2 + 0];
+      api_keys_[i].second = keys[i * 2 + 1];
+    }
+    gmsh::vectorpair api_info_;
+    gmsh::model::mesh::getInformationForElements(api_keys_, api_info_, order, elementType);
+    vectorpair2intptr(api_info_, info, info_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshPrecomputeBasisFunctions(const int elementType, int * ierr)
 {
   if(ierr) *ierr = 0;

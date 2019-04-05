@@ -373,7 +373,7 @@ Add a discrete geometrical entity (defined by a mesh) of dimension @code{dim} in
 the current model. Return the tag of the new discrete entity, equal to
 @code{tag} if @code{tag} is positive, or a new tag if @code{tag} < 0.
 @code{boundary} specifies the tags of the entities on the boundary of the
-discrete entity, if any. Specyfing @code{boundary} allows Gmsh to construct the
+discrete entity, if any. Specifying @code{boundary} allows Gmsh to construct the
 topology of the overall model.
 
 @table @asis
@@ -715,7 +715,7 @@ concatenated: [n1x, n1y, n1z, n2x, ...]. If @code{dim} >= 0,
 [u1, v1, u2, ...]) of the nodes, if available. The length of
 @code{parametricCoord} can be 0 or @code{dim} times the length of
 @code{nodeTags}. If @code{includeBoundary} is set, also return the nodes
-classified on the boundary of the entity (wich will be reparametrized on the
+classified on the boundary of the entity (which will be reparametrized on the
 entity if @code{dim} >= 0 in order to compute their parametric coordinates).
 
 @table @asis
@@ -732,7 +732,7 @@ Get the coordinates and the parametric coordinates (if any) of the node with tag
 @code{tag}. This is a sometimes useful but inefficient way of accessing nodes,
 as it relies on a cache stored in the model. For large meshes all the nodes in
 the model should be numbered in a continuous sequence of tags from 1 to N to
-maintain reasonnable performance (in this case the internal cache is based on a
+maintain reasonable performance (in this case the internal cache is based on a
 vector; otherwise it uses a map).
 
 @table @asis
@@ -850,7 +850,7 @@ that contains the node tags of all the elements of the given type, concatenated:
 Get the type and node tags of the element with tag @code{tag}. This is a
 sometimes useful but inefficient way of accessing elements, as it relies on a
 cache stored in the model. For large meshes all the elements in the model should
-be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable
+be numbered in a continuous sequence of tags from 1 to N to maintain reasonable
 performance (in this case the internal cache is based on a vector; otherwise it
 uses a map).
 
@@ -1040,15 +1040,72 @@ or their gradient, in the u, v, w coordinates of the reference element).
 @code{integrationPoints} contains the u, v, w coordinates of the integration
 points in the reference element as well as the associated weight q,
 concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. @code{numComponents} returns the
-number C of components of a basis function. @code{basisFunctions} contains the
-evaluation of the basis functions at the integration points: [g1f1, ..., g1fC,
-g2f1, ...].
+number C of components of a basis function. @code{basisFunctions} returns the
+value of the N basis functions at the integration points, i.e. [g1f1, g1f2, ...,
+g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u,
+...] when C == 3.
 
 @table @asis
 @item Input:
 @code{elementType}, @code{integrationType}, @code{functionSpaceType}
 @item Output:
 @code{integrationPoints}, @code{numComponents}, @code{basisFunctions}
+@item Return:
+-
+@end table
+
+@item getBasisFunctionsForElements
+Get the element-dependent basis functions of the elements of type
+@code{elementType} in the entity of tag @code{tag}, for the given
+@code{integrationType} integration rule (e.g. "Gauss4" for a Gauss quadrature
+suited for integrating 4th order polynomials) and @code{functionSpaceType}
+function space (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order
+hierarchical H1 Legendre functions or their gradient, in the u, v, w coordinates
+of the reference elements). @code{integrationPoints} contains the u, v, w
+coordinates of the integration points in the reference element as well as the
+associated weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
+@code{numComponents} returns the number C of components of a basis function.
+@code{numBasisFunctions} returns the number of basis functions per element.
+@code{basisFunctions} returns the value of the basis functions at the
+integration points for each element: [g1e1f1, ..., g1e1fC, g1e2f1, ...,g1e2fC,
+g1enfC, g2e1f1, ...]. Warning: this is an experimental feature and will probably
+change in a future release.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{integrationType}, @code{functionSpaceType}, @code{tag}
+@item Output:
+@code{integrationPoints}, @code{numComponents}, @code{numFunctionsPerElements}, @code{basisFunctions}
+@item Return:
+-
+@end table
+
+@item getKeysForElements
+Generate the @code{keys} for the elements of type @code{elementType} in the
+entity of tag @code{tag},for the @code{functionSpaceType} function space. Each
+key uniquely identifies a basis function in the function space. @code{coord} is
+a vector that contains x, y, z coordinates locating basis functions for sorting
+purposes. Warning: this is an experimental feature and will probably change in a
+future release.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{functionSpaceType}, @code{tag}, @code{generateCoord}
+@item Output:
+@code{keys}, @code{coord}
+@item Return:
+-
+@end table
+
+@item getInformationForElements
+Get information about the @code{keys}. Warning: this is an experimental feature
+and will probably change in a future release.
+
+@table @asis
+@item Input:
+@code{keys}, @code{order}, @code{elementType}
+@item Output:
+@code{info}
 @item Return:
 -
 @end table
@@ -1098,11 +1155,13 @@ if @code{getBarycenters} is called with @code{numTasks} > 1.
 
 @item getElementEdgeNodes
 Get the nodes on the edges of all elements of type @code{elementType} classified
-on the entity of tag @code{tag}. @code{nodeTags} contains the node tags. If
-@code{primary} is set, only the primary (begin/end) nodes of the edges are
-returned. If @code{tag} < 0, get the edge nodes for all entities. If
-@code{numTasks} > 1, only compute and return the part of the data indexed by
-@code{task}.
+on the entity of tag @code{tag}. @code{nodeTags} contains the node tags of the
+edges for all the elements: [e1a1n1, e1a1n2, e1a2n1, ...]. Data is returned by
+element, with elements in the same order as in @code{getElements} and
+@code{getElementsByType}. If @code{primary} is set, only the primary (begin/end)
+nodes of the edges are returned. If @code{tag} < 0, get the edge nodes for all
+entities. If @code{numTasks} > 1, only compute and return the part of the data
+indexed by @code{task}.
 
 @table @asis
 @item Input:
@@ -1116,11 +1175,13 @@ returned. If @code{tag} < 0, get the edge nodes for all entities. If
 @item getElementFaceNodes
 Get the nodes on the faces of type @code{faceType} (3 for triangular faces, 4
 for quadrangular faces) of all elements of type @code{elementType} classified on
-the entity of tag @code{tag}. @code{nodeTags} contains the node tags. If
-@code{primary} is set, only the primary (corner) nodes of the faces are
-returned. If @code{tag} < 0, get the face nodes for all entities. If
-@code{numTasks} > 1, only compute and return the part of the data indexed by
-@code{task}.
+the entity of tag @code{tag}. @code{nodeTags} contains the node tags of the
+faces for all elements: [e1f1n1, ..., e1f1nFaceType, e1f2n1, ...]. Data is
+returned by element, with elements in the same order as in @code{getElements}
+and @code{getElementsByType}. If @code{primary} is set, only the primary
+(corner) nodes of the faces are returned. If @code{tag} < 0, get the face nodes
+for all entities. If @code{numTasks} > 1, only compute and return the part of
+the data indexed by @code{task}.
 
 @table @asis
 @item Input:
@@ -1472,7 +1533,7 @@ stored as physical groups in the mesh.
 @ftable @code
 @item add
 Add a new mesh size field of type @code{fieldType}. If @code{tag} is positive,
-assign the tag explcitly; otherwise a new tag is assigned automatically. Return
+assign the tag explicitly; otherwise a new tag is assigned automatically. Return
 the field tag.
 
 @table @asis
@@ -1595,10 +1656,10 @@ integer value
 @end table
 
 @item addCircleArc
-Add a circle arc (stricly smaller than Pi) between the two points with tags
+Add a circle arc (strictly smaller than Pi) between the two points with tags
 @code{startTag} and @code{endTag}, with center @code{centertag}. If @code{tag}
 is positive, set the tag explicitly; otherwise a new tag is selected
-automatically. If (@code{nx}, @code{ny}, @code{nz}) != (0,0,0), explicitely set
+automatically. If (@code{nx}, @code{ny}, @code{nz}) != (0,0,0), explicitly set
 the plane of the circle arc. Return the tag of the circle arc.
 
 @table @asis
@@ -1611,11 +1672,11 @@ integer value
 @end table
 
 @item addEllipseArc
-Add an ellipse arc (stricly smaller than Pi) between the two points
+Add an ellipse arc (strictly smaller than Pi) between the two points
 @code{startTag} and @code{endTag}, with center @code{centertag} and major axis
 point @code{majorTag}. If @code{tag} is positive, set the tag explicitly;
 otherwise a new tag is selected automatically. If (@code{nx}, @code{ny},
-@code{nz}) != (0,0,0), explicitely set the plane of the circle arc. Return the
+@code{nz}) != (0,0,0), explicitly set the plane of the circle arc. Return the
 tag of the ellipse arc.
 
 @table @asis
@@ -1752,7 +1813,7 @@ Extrude the geometrical entities @code{dimTags} by translation along (@code{dx},
 @code{dy}, @code{dz}). Return extruded entities in @code{outDimTags}. If
 @code{numElements} is not empty, also extrude the mesh: the entries in
 @code{numElements} give the number of elements in each layer. If @code{height}
-is not empty, it provides the (cummulative) height of the different layers,
+is not empty, it provides the (cumulative) height of the different layers,
 normalized to 1.
 
 @table @asis
@@ -1770,8 +1831,8 @@ radians around the axis of revolution defined by the point (@code{x}, @code{y},
 @code{z}) and the direction (@code{ax}, @code{ay}, @code{az}). Return extruded
 entities in @code{outDimTags}. If @code{numElements} is not empty, also extrude
 the mesh: the entries in @code{numElements} give the number of elements in each
-layer. If @code{height} is not empty, it provides the (cummulative) height of
-the different layers, normalized to 1.
+layer. If @code{height} is not empty, it provides the (cumulative) height of the
+different layers, normalized to 1.
 
 @table @asis
 @item Input:
@@ -1789,8 +1850,8 @@ around the axis of revolution defined by the point (@code{x}, @code{y},
 @code{z}) and the direction (@code{ax}, @code{ay}, @code{az}). Return extruded
 entities in @code{outDimTags}. If @code{numElements} is not empty, also extrude
 the mesh: the entries in @code{numElements} give the number of elements in each
-layer. If @code{height} is not empty, it provides the (cummulative) height of
-the different layers, normalized to 1.
+layer. If @code{height} is not empty, it provides the (cumulative) height of the
+different layers, normalized to 1.
 
 @table @asis
 @item Input:
@@ -1930,7 +1991,7 @@ only entities of dimension 0 (points) are handled.
 Set a transfinite meshing constraint on the curve @code{tag}, with
 @code{numNodes} nodes distributed according to @code{meshType} and @code{coef}.
 Currently supported types are "Progression" (geometrical progression with power
-@code{coef}) and "Bump" (refinement toward both extreminties of the curve).
+@code{coef}) and "Bump" (refinement toward both extremities of the curve).
 
 @table @asis
 @item Input:
@@ -2417,7 +2478,7 @@ Extrude the geometrical entities @code{dimTags} by translation along (@code{dx},
 @code{dy}, @code{dz}). Return extruded entities in @code{outDimTags}. If
 @code{numElements} is not empty, also extrude the mesh: the entries in
 @code{numElements} give the number of elements in each layer. If @code{height}
-is not empty, it provides the (cummulative) height of the different layers,
+is not empty, it provides the (cumulative) height of the different layers,
 normalized to 1.
 
 @table @asis
@@ -2435,8 +2496,8 @@ radians around the axis of revolution defined by the point (@code{x}, @code{y},
 @code{z}) and the direction (@code{ax}, @code{ay}, @code{az}). Return extruded
 entities in @code{outDimTags}. If @code{numElements} is not empty, also extrude
 the mesh: the entries in @code{numElements} give the number of elements in each
-layer. If @code{height} is not empty, it provides the (cummulative) height of
-the different layers, normalized to 1.
+layer. If @code{height} is not empty, it provides the (cumulative) height of the
+different layers, normalized to 1.
 
 @table @asis
 @item Input:
@@ -2499,7 +2560,7 @@ original volume if @code{removeVolume} is set.
 @item fuse
 Compute the boolean union (the fusion) of the entities @code{objectDimTags} and
 @code{toolDimTags}. Return the resulting entities in @code{outDimTags}. If
-@code{tag} is positive, try to set the tag explicitly (ony valid if the boolean
+@code{tag} is positive, try to set the tag explicitly (only valid if the boolean
 operation results in a single entity). Remove the object if @code{removeObject}
 is set. Remove the tool if @code{removeTool} is set.
 
@@ -2515,9 +2576,10 @@ is set. Remove the tool if @code{removeTool} is set.
 @item intersect
 Compute the boolean intersection (the common parts) of the entities
 @code{objectDimTags} and @code{toolDimTags}. Return the resulting entities in
-@code{outDimTags}. If @code{tag} is positive, try to set the tag explicitly (ony
-valid if the boolean operation results in a single entity). Remove the object if
-@code{removeObject} is set. Remove the tool if @code{removeTool} is set.
+@code{outDimTags}. If @code{tag} is positive, try to set the tag explicitly
+(only valid if the boolean operation results in a single entity). Remove the
+object if @code{removeObject} is set. Remove the tool if @code{removeTool} is
+set.
 
 @table @asis
 @item Input:
@@ -2531,7 +2593,7 @@ valid if the boolean operation results in a single entity). Remove the object if
 @item cut
 Compute the boolean difference between the entities @code{objectDimTags} and
 @code{toolDimTags}. Return the resulting entities in @code{outDimTags}. If
-@code{tag} is positive, try to set the tag explicitly (ony valid if the boolean
+@code{tag} is positive, try to set the tag explicitly (only valid if the boolean
 operation results in a single entity). Remove the object if @code{removeObject}
 is set. Remove the tool if @code{removeTool} is set.
 
@@ -2547,9 +2609,10 @@ is set. Remove the tool if @code{removeTool} is set.
 @item fragment
 Compute the boolean fragments (general fuse) of the entities
 @code{objectDimTags} and @code{toolDimTags}. Return the resulting entities in
-@code{outDimTags}. If @code{tag} is positive, try to set the tag explicitly (ony
-valid if the boolean operation results in a single entity). Remove the object if
-@code{removeObject} is set. Remove the tool if @code{removeTool} is set.
+@code{outDimTags}. If @code{tag} is positive, try to set the tag explicitly
+(only valid if the boolean operation results in a single entity). Remove the
+object if @code{removeObject} is set. Remove the tool if @code{removeTool} is
+set.
 
 @table @asis
 @item Input:

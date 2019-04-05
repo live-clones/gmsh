@@ -56,6 +56,7 @@ public:
     for(int i = 0; i < 4; i++) _v[i] = v[i];
   }
   ~MQuadrangle() {}
+
   virtual double etaShapeMeasure();
   virtual double gammaShapeMeasure();
   virtual int getDim() const { return 2; }
@@ -171,10 +172,17 @@ public:
   virtual double getOuterRadius();
   static int edges_quad(const int edge, const int vert)
   {
-    static const int e[4][2] = {{0, 1}, {1, 2}, {2, 3}, {3, 0}};
+    static const int e[4][2] =  {{0, 1}, {1, 2}, {2, 3}, {3, 0}};
     return e[edge][vert];
   }
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
+  virtual int getVertexSolin(int numEdge, int numVertex){
+    static const int eSolin[4][2] =  {{0, 1}, {1, 2}, {3, 2}, {0, 3}};
+    return getVertex(eSolin[numEdge][numVertex])->getNum();
+  }
+  virtual MFace getFaceSolin(int numFace){
+    return  MFace(_v[0], _v[1], _v[3], _v[2]);
+  }
 };
 
 /*
@@ -228,6 +236,7 @@ public:
     else
       _vs[num - 4] = v;
   }
+
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[8] = {0, 4, 1, 5, 2, 6, 3, 7};

@@ -477,6 +477,7 @@ double opt_mesh_newton_convergence_test_xyz(OPT_ARGS_NUM);
 double opt_mesh_msh_file_version(OPT_ARGS_NUM);
 double opt_mesh_med_file_minor_version(OPT_ARGS_NUM);
 double opt_mesh_med_import_groups_of_nodes(OPT_ARGS_NUM);
+double opt_mesh_med_single_model(OPT_ARGS_NUM);
 double opt_mesh_partition_split_mesh_files(OPT_ARGS_NUM);
 double opt_mesh_partition_save_topology_file(OPT_ARGS_NUM);
 double opt_mesh_partition_num(OPT_ARGS_NUM);
