@@ -1574,7 +1574,7 @@ static partitionFace *assignPartitionBoundary(
     }
     else {
       MTriangleN *element =
-        new MTriangleN(verts, verts[0]->getPolynomialOrder());
+        new MTriangleN(verts, verts.back()->getPolynomialOrder());
       ppf->addTriangle(element);
     }
   }
@@ -1596,7 +1596,7 @@ static partitionFace *assignPartitionBoundary(
     }
     else {
       MQuadrangleN *element =
-        new MQuadrangleN(verts, verts[0]->getPolynomialOrder());
+        new MQuadrangleN(verts, verts.back()->getPolynomialOrder());
       ppf->addQuadrangle(element);
     }
   }

@@ -253,7 +253,7 @@ public:
     case 8: return MSH_LIN_10;
     case 9: return MSH_LIN_11;
     default:
-      Msg::Error("no tag matches a line with %d vertices", 8 + _vs.size());
+      Msg::Error("No MSH type found for line with %d nodes", 8 + _vs.size());
       return 0;
     }
   }

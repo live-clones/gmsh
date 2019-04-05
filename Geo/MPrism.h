@@ -604,7 +604,7 @@ public:
       if(_vs.size() == 72) return MSH_PRI_78;
       break;
     }
-    Msg::Error("No tag matches a p%d prism with %d vertices", _order,
+    Msg::Error("No MSH type found for P%d prism with %d nodes", _order,
                6 + _vs.size());
     return 0;
   }
