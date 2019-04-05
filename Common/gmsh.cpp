@@ -334,6 +334,10 @@ GMSH_API int gmsh::model::addPhysicalGroup(const int dim,
 {
   if(!_isInitialized()) { throw -1; }
   int outTag = tag;
+  // FIXME: this is one more instance of the problem linked to storing physical
+  // groups in the GEO internals. If one merge a mesh that contains phsyical
+  // groups, getGEOInternals()->getMaxPhysicalTag() will not reflect the correct
+  // max number stored in GModel.
   if(outTag < 0)
     outTag = GModel::current()->getGEOInternals()->getMaxPhysicalTag() + 1;
   if(!GModel::current()->getGEOInternals()->modifyPhysicalGroup(dim, outTag, 0,

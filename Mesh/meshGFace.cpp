@@ -2611,10 +2611,18 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     outputScalarField(m->triangles, name, 1, gf);
   }
 
-  // start mesh generation for periodic face
-
-  if(!algoDelaunay2D(gf)) {
+  if(algoDelaunay2D(gf)){
+    // Call this function to untangle elements in Cartesian space
+    Msg::Debug("Delaunizing the initial mesh");
+    int nb_swap;
+    delaunayizeBDS(gf, *m, nb_swap);
+  }
+  else{
     modifyInitialMeshToRemoveDegeneracies(gf, *m, &recoverMap);
+
+    Msg::Debug("Delaunizing the initial mesh");
+    int nb_swap;
+    delaunayizeBDS(gf, *m, nb_swap);
 
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true, NULL,
                   &recoverMap, &true_boundary);
