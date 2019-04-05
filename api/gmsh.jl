@@ -676,7 +676,7 @@ function getValue(dim, tag, parametricCoord)
     ierr = Ref{Cint}()
     ccall((:gmshModelGetValue, gmsh.lib), Cvoid,
           (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, parametricCoord, length(parametricCoord), api_points_, api_points_n_, ierr)
+          dim, tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), api_points_, api_points_n_, ierr)
     ierr[] != 0 && error("gmshModelGetValue returned non-zero error code: $(ierr[])")
     points = unsafe_wrap(Array, api_points_[], api_points_n_[], own=true)
     return points
@@ -703,7 +703,7 @@ function getDerivative(dim, tag, parametricCoord)
     ierr = Ref{Cint}()
     ccall((:gmshModelGetDerivative, gmsh.lib), Cvoid,
           (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, parametricCoord, length(parametricCoord), api_derivatives_, api_derivatives_n_, ierr)
+          dim, tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), api_derivatives_, api_derivatives_n_, ierr)
     ierr[] != 0 && error("gmshModelGetDerivative returned non-zero error code: $(ierr[])")
     derivatives = unsafe_wrap(Array, api_derivatives_[], api_derivatives_n_[], own=true)
     return derivatives
@@ -726,7 +726,7 @@ function getCurvature(dim, tag, parametricCoord)
     ierr = Ref{Cint}()
     ccall((:gmshModelGetCurvature, gmsh.lib), Cvoid,
           (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, parametricCoord, length(parametricCoord), api_curvatures_, api_curvatures_n_, ierr)
+          dim, tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), api_curvatures_, api_curvatures_n_, ierr)
     ierr[] != 0 && error("gmshModelGetCurvature returned non-zero error code: $(ierr[])")
     curvatures = unsafe_wrap(Array, api_curvatures_[], api_curvatures_n_[], own=true)
     return curvatures
@@ -754,7 +754,7 @@ function getPrincipalCurvatures(tag, parametricCoord)
     ierr = Ref{Cint}()
     ccall((:gmshModelGetPrincipalCurvatures, gmsh.lib), Cvoid,
           (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          tag, parametricCoord, length(parametricCoord), api_curvatureMax_, api_curvatureMax_n_, api_curvatureMin_, api_curvatureMin_n_, api_directionMax_, api_directionMax_n_, api_directionMin_, api_directionMin_n_, ierr)
+          tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), api_curvatureMax_, api_curvatureMax_n_, api_curvatureMin_, api_curvatureMin_n_, api_directionMax_, api_directionMax_n_, api_directionMin_, api_directionMin_n_, ierr)
     ierr[] != 0 && error("gmshModelGetPrincipalCurvatures returned non-zero error code: $(ierr[])")
     curvatureMax = unsafe_wrap(Array, api_curvatureMax_[], api_curvatureMax_n_[], own=true)
     curvatureMin = unsafe_wrap(Array, api_curvatureMin_[], api_curvatureMin_n_[], own=true)
@@ -779,7 +779,7 @@ function getNormal(tag, parametricCoord)
     ierr = Ref{Cint}()
     ccall((:gmshModelGetNormal, gmsh.lib), Cvoid,
           (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          tag, parametricCoord, length(parametricCoord), api_normals_, api_normals_n_, ierr)
+          tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), api_normals_, api_normals_n_, ierr)
     ierr[] != 0 && error("gmshModelGetNormal returned non-zero error code: $(ierr[])")
     normals = unsafe_wrap(Array, api_normals_[], api_normals_n_[], own=true)
     return normals
@@ -1091,7 +1091,7 @@ function setNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetNodes, gmsh.lib), Cvoid,
           (Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          dim, tag, convert(Vector{Csize_t}, nodeTags), length(nodeTags), coord, length(coord), parametricCoord, length(parametricCoord), ierr)
+          dim, tag, convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), ierr)
     ierr[] != 0 && error("gmshModelMeshSetNodes returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -1913,7 +1913,7 @@ function setPeriodic(dim, tags, tagsMaster, affineTransform)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetPeriodic, gmsh.lib), Cvoid,
           (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          dim, convert(Vector{Cint}, tags), length(tags), convert(Vector{Cint}, tagsMaster), length(tagsMaster), affineTransform, length(affineTransform), ierr)
+          dim, convert(Vector{Cint}, tags), length(tags), convert(Vector{Cint}, tagsMaster), length(tagsMaster), convert(Vector{Cdouble}, affineTransform), length(affineTransform), ierr)
     ierr[] != 0 && error("gmshModelMeshSetPeriodic returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2145,7 +2145,7 @@ function setNumbers(tag, option, value)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshFieldSetNumbers, gmsh.lib), Cvoid,
           (Cint, Ptr{Cchar}, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          tag, option, value, length(value), ierr)
+          tag, option, convert(Vector{Cdouble}, value), length(value), ierr)
     ierr[] != 0 && error("gmshModelMeshFieldSetNumbers returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2438,7 +2438,7 @@ function extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[],
     ierr = Ref{Cint}()
     ccall((:gmshModelGeoExtrude, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
     ierr[] != 0 && error("gmshModelGeoExtrude returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -2463,7 +2463,7 @@ function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heig
     ierr = Ref{Cint}()
     ccall((:gmshModelGeoRevolve, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
     ierr[] != 0 && error("gmshModelGeoRevolve returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -2489,7 +2489,7 @@ function twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = Ci
     ierr = Ref{Cint}()
     ccall((:gmshModelGeoTwist, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, dx, dy, dz, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, dx, dy, dz, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
     ierr[] != 0 && error("gmshModelGeoTwist returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -2908,7 +2908,7 @@ function addBSpline(pointTags, tag = -1, degree = 3, weights = Cdouble[], knots 
     ierr = Ref{Cint}()
     api__result__ = ccall((:gmshModelOccAddBSpline, gmsh.lib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
-          convert(Vector{Cint}, pointTags), length(pointTags), tag, degree, weights, length(weights), knots, length(knots), convert(Vector{Cint}, multiplicities), length(multiplicities), ierr)
+          convert(Vector{Cint}, pointTags), length(pointTags), tag, degree, convert(Vector{Cdouble}, weights), length(weights), convert(Vector{Cdouble}, knots), length(knots), convert(Vector{Cint}, multiplicities), length(multiplicities), ierr)
     ierr[] != 0 && error("gmshModelOccAddBSpline returned non-zero error code: $(ierr[])")
     return api__result__
 end
@@ -3265,7 +3265,7 @@ function extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[],
     ierr = Ref{Cint}()
     ccall((:gmshModelOccExtrude, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
     ierr[] != 0 && error("gmshModelOccExtrude returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -3290,7 +3290,7 @@ function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heig
     ierr = Ref{Cint}()
     ccall((:gmshModelOccRevolve, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
     ierr[] != 0 && error("gmshModelOccRevolve returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -3335,7 +3335,7 @@ function fillet(volumeTags, curveTags, radii, removeVolume = true)
     ierr = Ref{Cint}()
     ccall((:gmshModelOccFillet, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, volumeTags), length(volumeTags), convert(Vector{Cint}, curveTags), length(curveTags), radii, length(radii), api_outDimTags_, api_outDimTags_n_, removeVolume, ierr)
+          convert(Vector{Cint}, volumeTags), length(volumeTags), convert(Vector{Cint}, curveTags), length(curveTags), convert(Vector{Cdouble}, radii), length(radii), api_outDimTags_, api_outDimTags_n_, removeVolume, ierr)
     ierr[] != 0 && error("gmshModelOccFillet returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -3361,7 +3361,7 @@ function chamfer(volumeTags, curveTags, surfaceTags, distances, removeVolume = t
     ierr = Ref{Cint}()
     ccall((:gmshModelOccChamfer, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, volumeTags), length(volumeTags), convert(Vector{Cint}, curveTags), length(curveTags), convert(Vector{Cint}, surfaceTags), length(surfaceTags), distances, length(distances), api_outDimTags_, api_outDimTags_n_, removeVolume, ierr)
+          convert(Vector{Cint}, volumeTags), length(volumeTags), convert(Vector{Cint}, curveTags), length(curveTags), convert(Vector{Cint}, surfaceTags), length(surfaceTags), convert(Vector{Cdouble}, distances), length(distances), api_outDimTags_, api_outDimTags_n_, removeVolume, ierr)
     ierr[] != 0 && error("gmshModelOccChamfer returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -3580,7 +3580,7 @@ function affineTransform(dimTags, a)
     ierr = Ref{Cint}()
     ccall((:gmshModelOccAffineTransform, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), a, length(a), ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), convert(Vector{Cdouble}, a), length(a), ierr)
     ierr[] != 0 && error("gmshModelOccAffineTransform returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -3867,7 +3867,7 @@ function addListData(tag, dataType, numEle, data)
     ierr = Ref{Cint}()
     ccall((:gmshViewAddListData, gmsh.lib), Cvoid,
           (Cint, Ptr{Cchar}, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          tag, dataType, numEle, data, length(data), ierr)
+          tag, dataType, numEle, convert(Vector{Cdouble}, data), length(data), ierr)
     ierr[] != 0 && error("gmshViewAddListData returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -3922,7 +3922,7 @@ function probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, toleranc
     ierr = Ref{Cint}()
     ccall((:gmshViewProbe, gmsh.lib), Cvoid,
           (Cint, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          tag, x, y, z, api_value_, api_value_n_, step, numComp, gradient, tolerance, xElemCoord, length(xElemCoord), yElemCoord, length(yElemCoord), zElemCoord, length(zElemCoord), ierr)
+          tag, x, y, z, api_value_, api_value_n_, step, numComp, gradient, tolerance, convert(Vector{Cdouble}, xElemCoord), length(xElemCoord), convert(Vector{Cdouble}, yElemCoord), length(yElemCoord), convert(Vector{Cdouble}, zElemCoord), length(zElemCoord), ierr)
     ierr[] != 0 && error("gmshViewProbe returned non-zero error code: $(ierr[])")
     value = unsafe_wrap(Array, api_value_[], api_value_n_[], own=true)
     return value
@@ -4251,7 +4251,7 @@ function setNumber(name, value)
     ierr = Ref{Cint}()
     ccall((:gmshOnelabSetNumber, gmsh.lib), Cvoid,
           (Ptr{Cchar}, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          name, value, length(value), ierr)
+          name, convert(Vector{Cdouble}, value), length(value), ierr)
     ierr[] != 0 && error("gmshOnelabSetNumber returned non-zero error code: $(ierr[])")
     return nothing
 end

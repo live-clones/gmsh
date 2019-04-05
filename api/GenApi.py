@@ -140,7 +140,7 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     a.python_pre = api_name + ", " + api_name_n + " = _ivectordouble(" + name + ")"
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cdouble}, Csize_t"
-    a.julia_arg = name + ", length(" + name + ")"
+    a.julia_arg = "convert(Vector{Cdouble}, " + name + "), length(" + name + ")"
     return a
 
 def ivectorstring(name, value=None, python_value=None, julia_value=None):
