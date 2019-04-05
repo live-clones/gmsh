@@ -1375,6 +1375,7 @@ bool GFace::fillVertexArray(bool force)
       SVector3 n[3] = {stl_normals[stl_triangles[i]],
                        stl_normals[stl_triangles[i + 1]],
                        stl_normals[stl_triangles[i + 2]]};
+      //      printf("%g %g %g %g %g %g %g %g %g  \n",x[0],y[0],z[0],x[1],y[1],z[1],x[2],y[2],z[2]);
       va_geom_triangles->add(x, y, z, n, col);
     }
   }

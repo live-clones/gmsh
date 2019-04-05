@@ -275,7 +275,7 @@ static void classify_cb(Fl_Widget *w, void *data)
     computeEdgeCut(GModel::current(), e->selected->lines, 100000);
 
   computeNonManifoldEdges(GModel::current(), e->selected->lines, true);
-
+  
   GModel::current()->classifyFaces();
 
   // remove selected, but do not delete its elements
@@ -291,8 +291,11 @@ static void classify_cb(Fl_Widget *w, void *data)
   GModel::current()->pruneMeshVertexAssociations();
   NoElementsSelectedMode(e);
 
-  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
+  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value()){
+    parametrizeAllGEdge(GModel::current());
     parametrizeAllGFace(GModel::current());
+  }
+
 }
 
 classificationEditor::classificationEditor() : selected(0)

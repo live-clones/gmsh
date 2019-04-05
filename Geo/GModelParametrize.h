@@ -14,6 +14,7 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
 void computeNonManifoldEdges(GModel *gm, std::vector<MLine *> &cut,
                              bool addBoundary);
 int parametrizeAllGFace(GModel *gm);
+void parametrizeAllGEdge(GModel *gm);
 int parametrizeGFace(discreteFace *gf);
 
 #endif

@@ -80,6 +80,7 @@ public:
   virtual void secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
                          SVector3 &dudv) const;
   void createGeometry();
+  void createGeometryFromSTL();
   virtual bool haveParametrization()
   {
 #if defined(HAVE_HXT)

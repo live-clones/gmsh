@@ -52,7 +52,7 @@ HXTStatus hxtMeanValuesCreate(HXTEdges *edges, HXTMeanValues **meanValues)
     }
   }
 
-  HXT_CHECK(hxtMalloc(&map->hole,(nBoundaries-1)*sizeof(int)));
+  HXT_CHECK(hxtMalloc(&map->hole,(nBoundaries+1)*sizeof(int)));
   int c = 0;
   for(int i=0; i<nBoundaries; i++)
     if(i!=map->boundary){
@@ -305,7 +305,7 @@ HXTStatus hxtMeanValueAspectRatio(HXTMeanValues *meanValues, int *aspectRatio)
 
 
 
-HXTStatus hxtMeanValuesGetData(HXTMeanValues *mv, uint64_t **global,uint32_t **gn, double **uv, int *nv, int *ne){
+HXTStatus hxtMeanValuesGetData(HXTMeanValues *mv, uint64_t **global,uint32_t **gn, double **uv, int *nv, int *ne, int onlyuv){
 
   *nv = mv->initialEdges->edg2mesh->vertices.num;
   *ne = mv->initialEdges->edg2mesh->triangles.num;
@@ -318,7 +318,7 @@ HXTStatus hxtMeanValuesGetData(HXTMeanValues *mv, uint64_t **global,uint32_t **g
       uv_[iv] = mv->uv[iv];
     *uv=uv_;
   }
-  //  return HXT_STATUS_OK;
+  if (onlyuv) return HXT_STATUS_OK;
 
   uint64_t *global_;
   HXT_CHECK(hxtMalloc(&global_,(*ne)*sizeof(uint64_t)));

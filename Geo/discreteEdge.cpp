@@ -36,12 +36,12 @@ discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
 
 discreteEdge::~discreteEdge()
 {
-  for(std::size_t i = 0; i < discrete_lines.size(); i++)
-    delete discrete_lines[i];
-  for(std::size_t i = 0; i < discrete_vertices.size(); i++)
-    delete discrete_vertices[i];
-  discrete_lines.clear();
-  discrete_vertices.clear();
+  //  for(std::size_t i = 0; i < discrete_lines.size(); i++)
+  //    delete discrete_lines[i];
+  //  for(std::size_t i = 0; i < discrete_vertices.size(); i++)
+  //    delete discrete_vertices[i];
+  //  discrete_lines.clear();
+  //  discrete_vertices.clear();
   _split[0] = _split[1] = NULL;
 }
 
@@ -100,7 +100,7 @@ void discreteEdge::orderMLines()
 bool discreteEdge::getLocalParameter(const double &t, int &iLine,
                                      double &tLoc) const
 {
-  for(iLine = 0; iLine < (int)discrete_lines.size(); iLine++) {
+  for(iLine = 0; iLine < (int)_discretization.size() - 1; iLine++) {
     double tmin = _pars[iLine];
     double tmax = _pars[iLine + 1];
     if(t >= tmin && t <= tmax) {
@@ -118,16 +118,15 @@ GPoint discreteEdge::point(double par) const
 
   if(!getLocalParameter(par, iEdge, tLoc)) return GPoint();
 
-  double x, y, z;
-  MVertex *vB = discrete_lines[iEdge]->getVertex(0);
-  MVertex *vE = discrete_lines[iEdge]->getVertex(1);
-  if(!vB || !vE) return GPoint();
+  SPoint3 vB = _discretization[iEdge];
+  SPoint3 vE = _discretization[iEdge+1];
+  //  MVertex *vB = discrete_lines[iEdge]->getVertex(0);
+  //  MVertex *vE = discrete_lines[iEdge]->getVertex(1);
+  //  if(!vB || !vE) return GPoint();
 
   // linear Lagrange mesh
-  x = vB->x() + tLoc * (vE->x() - vB->x());
-  y = vB->y() + tLoc * (vE->y() - vB->y());
-  z = vB->z() + tLoc * (vE->z() - vB->z());
-  return GPoint(x, y, z, this, par);
+  SPoint3 v = vB + (vE-vB)*tLoc;
+  return GPoint(v.x(), v.y(), v.z(), this, par);
 }
 
 SVector3 discreteEdge::firstDer(double par) const
@@ -137,15 +136,17 @@ SVector3 discreteEdge::firstDer(double par) const
 
   if(!getLocalParameter(par, iEdge, tLoc)) return SVector3();
 
-  MVertex *vB = discrete_lines[iEdge]->getVertex(0);
-  MVertex *vE = discrete_lines[iEdge]->getVertex(1);
+  SPoint3 vB = _discretization[iEdge];
+  SPoint3 vE = _discretization[iEdge+1];
 
-  if(!vB || !vE) return SVector3();
+  //MVertex *vB = discrete_lines[iEdge]->getVertex(0);
+  //  MVertex *vE = discrete_lines[iEdge]->getVertex(1);
+  //  if(!vB || !vE) return SVector3();
 
   double dx, dy, dz;
-  dx = (vE->x() - vB->x()); // / dt;
-  dy = (vE->y() - vB->y()); // / dt;
-  dz = (vE->z() - vB->z()); // / dt;
+  dx = (vE.x() - vB.x()); // / dt;
+  dy = (vE.y() - vB.y()); // / dt;
+  dz = (vE.z() - vB.z()); // / dt;
 
   SVector3 der(dx, dy, dz);
   return der;
@@ -155,125 +156,152 @@ double discreteEdge::curvature(double par) const
 {
   double tLoc;
   int iEdge;
-  if(discrete_lines.size() <= 2)
+  if(_discretization.size() <= 3)
     return 0.0; // no clue on how to compute curvature with so few data...
 
   if(!getLocalParameter(par, iEdge, tLoc)) return 0.0;
 
   // Take 3 points x y z : radius of curvature is equal to  |x-y| |x-z| |z-y| /
   // area (x,y,z)
+
   int iEdgePlus = iEdge + 1, iEdgeMinus = iEdge - 1;
+
   if(iEdge == 0) {
     iEdge++;
     iEdgePlus++;
     iEdgeMinus++;
-    if(periodic(0)) { iEdgeMinus = discrete_lines.size() - 1; }
+    if(periodic(0)) { iEdgeMinus = _discretization.size() - 2; }
   }
-  else if(iEdge == (int)(discrete_lines.size() - 1)) {
+  else if(iEdge == (int)(_discretization.size() - 2)) {
     iEdge--;
     iEdgePlus--;
     iEdgeMinus--;
     if(periodic(0)) { iEdgePlus = 0; }
   }
 
-  SPoint3 a((discrete_lines[iEdgeMinus]->getVertex(0)->x() +
-             discrete_lines[iEdgeMinus]->getVertex(1)->x()) *
-              .5,
-            (discrete_lines[iEdgeMinus]->getVertex(0)->y() +
-             discrete_lines[iEdgeMinus]->getVertex(1)->y()) *
-              .5,
-            (discrete_lines[iEdgeMinus]->getVertex(0)->z() +
-             discrete_lines[iEdgeMinus]->getVertex(1)->z()) *
-              .5);
-  SPoint3 b((discrete_lines[iEdge]->getVertex(0)->x() +
-             discrete_lines[iEdge]->getVertex(1)->x()) *
-              .5,
-            (discrete_lines[iEdge]->getVertex(0)->y() +
-             discrete_lines[iEdge]->getVertex(1)->y()) *
-              .5,
-            (discrete_lines[iEdge]->getVertex(0)->z() +
-             discrete_lines[iEdge]->getVertex(1)->z()) *
-              .5);
-  SPoint3 c((discrete_lines[iEdgePlus]->getVertex(0)->x() +
-             discrete_lines[iEdgePlus]->getVertex(1)->x()) *
-              .5,
-            (discrete_lines[iEdgePlus]->getVertex(0)->y() +
-             discrete_lines[iEdgePlus]->getVertex(1)->y()) *
-              .5,
-            (discrete_lines[iEdgePlus]->getVertex(0)->z() +
-             discrete_lines[iEdgePlus]->getVertex(1)->z()) *
-              .5);
+  SPoint3 a = (_discretization[iEdgeMinus] + _discretization[iEdgeMinus+1]) *.5;
+  SPoint3 b = (_discretization[iEdge] + _discretization[iEdge+1]) *.5;
+  SPoint3 c = (_discretization[iEdgePlus] + _discretization[iEdgePlus+1]) *.5;
+  
+  // SPoint3 a((discrete_lines[iEdgeMinus]->getVertex(0)->x() +
+  //            discrete_lines[iEdgeMinus]->getVertex(1)->x()) *
+  //             .5,
+  //           (discrete_lines[iEdgeMinus]->getVertex(0)->y() +
+  //            discrete_lines[iEdgeMinus]->getVertex(1)->y()) *
+  //             .5,
+  //           (discrete_lines[iEdgeMinus]->getVertex(0)->z() +
+  //            discrete_lines[iEdgeMinus]->getVertex(1)->z()) *
+  //             .5);
+  // SPoint3 b((discrete_lines[iEdge]->getVertex(0)->x() +
+  //            discrete_lines[iEdge]->getVertex(1)->x()) *
+  //             .5,
+  //           (discrete_lines[iEdge]->getVertex(0)->y() +
+  //            discrete_lines[iEdge]->getVertex(1)->y()) *
+  //             .5,
+  //           (discrete_lines[iEdge]->getVertex(0)->z() +
+  //            discrete_lines[iEdge]->getVertex(1)->z()) *
+  //             .5);
+  // SPoint3 c((discrete_lines[iEdgePlus]->getVertex(0)->x() +
+  //            discrete_lines[iEdgePlus]->getVertex(1)->x()) *
+  //             .5,
+  //           (discrete_lines[iEdgePlus]->getVertex(0)->y() +
+  //            discrete_lines[iEdgePlus]->getVertex(1)->y()) *
+  //             .5,
+  //           (discrete_lines[iEdgePlus]->getVertex(0)->z() +
+  //            discrete_lines[iEdgePlus]->getVertex(1)->z()) *
+  //             .5);
+
   double A = b.distance(c);
   double B = c.distance(a);
   double C = a.distance(b);
-
+  
   // radius of the circumcircle ...
   // Heron's formula for the area of a triangle
   double R =
     A * B * C / sqrt((A + B + C) * (-A + B + C) * (A - B + C) * (A + B - C));
-
+  
   //  printf("R(%d,%g) = %g\n",tag(),par,R);
-
+  
   return R = 0.0 ? 1.E22 : 1. / R;
 }
 
 Range<double> discreteEdge::parBounds(int i) const
 {
-  return Range<double>(0, (double)discrete_lines.size());
+  return Range<double>(0, (double)(_discretization.size()-1));
 }
 
 void discreteEdge::createGeometry()
 {
+  std::vector<MVertex *> discrete_vertices;
+  std::vector<MLine *> discrete_lines;
+
   if(lines.empty()) return;
 
-  if(discrete_lines.empty()) {
-    orderMLines();
-
-    bool reverse = false;
-    if(getEndVertex())
-      reverse = (lines[0]->getVertex(0) == getEndVertex()->mesh_vertices[0]);
-
-    std::map<MVertex *, MVertex *> old2new;
-
-    for(std::size_t i = 0; i < lines.size(); i++) {
-      for(std::size_t j = 0; j < 2; j++) {
-        MVertex *v = lines[i]->getVertex(j);
-        if(old2new.find(v) == old2new.end()) {
-          MVertex *vnew = new MVertex(v->x(), v->y(), v->z(), this);
-          old2new[v] = vnew;
-        }
+  if(!_discretization.empty()) return;
+  
+  orderMLines();
+  
+  bool reverse = false;
+  if(getEndVertex())
+    reverse = (lines[0]->getVertex(0) == getEndVertex()->mesh_vertices[0]);
+    
+  std::map<MVertex *, MVertex *> old2new;
+  
+  for(std::size_t i = 0; i < lines.size(); i++) {
+    for(std::size_t j = 0; j < 2; j++) {
+      MVertex *v = lines[i]->getVertex(j);
+      if(old2new.find(v) == old2new.end()) {
+	MVertex *vnew = new MVertex(v->x(), v->y(), v->z(), this);
+	old2new[v] = vnew;
       }
     }
-
-    std::vector<MLine *> _temp;
-    discrete_lines.resize(lines.size());
-    for(std::size_t i = 0; i < lines.size(); i++) {
-      MVertex *v0 = lines[i]->getVertex(0);
-      MVertex *v1 = lines[i]->getVertex(1);
-      MVertex *v00 = old2new[v0];
-      MVertex *v01 = old2new[v1];
-      if(reverse)
-        discrete_lines[lines.size() - i - 1] = new MLine(v01, v00);
-      else
-        discrete_lines[i] = new MLine(v00, v01);
-    }
-    // compute parameters and recompute the vertices
-    _pars.push_back(0.0);
-    for(std::size_t i = 1; i < discrete_lines.size(); i++) {
-      _pars.push_back((double)i);
-      MVertex *newv = discrete_lines[i]->getVertex(0);
-      discrete_vertices.push_back(newv);
-    }
-    _pars.push_back((double)discrete_lines.size());
-    mesh_vertices.clear();
-    lines.clear();
   }
+  
+  std::vector<MLine *> _temp;
+  discrete_lines.resize(lines.size());
+  for(std::size_t i = 0; i < lines.size(); i++) {
+    MVertex *v0 = lines[i]->getVertex(0);
+    MVertex *v1 = lines[i]->getVertex(1);
+    MVertex *v00 = old2new[v0];
+    MVertex *v01 = old2new[v1];
+    if(reverse)
+      discrete_lines[lines.size() - i - 1] = new MLine(v01, v00);
+    else
+      discrete_lines[i] = new MLine(v00, v01);
+  }
+
+  // compute parameters and recompute the vertices
+  _discretization.push_back(SPoint3(discrete_lines[0]->getVertex(0)->x(),
+				    discrete_lines[0]->getVertex(0)->y(),
+				    discrete_lines[0]->getVertex(0)->z()));
+
+  for(std::size_t i = 0; i < discrete_lines.size(); i++) {
+    _discretization.push_back(SPoint3(discrete_lines[i]->getVertex(1)->x(),
+				      discrete_lines[i]->getVertex(1)->y(),
+				      discrete_lines[i]->getVertex(1)->z()));
+  }
+  
+  _pars.push_back(0.0);
+  for(std::size_t i = 1; i < discrete_lines.size(); i++) {
+    _pars.push_back((double)i);
+    MVertex *newv = discrete_lines[i]->getVertex(0);
+    discrete_vertices.push_back(newv);
+  }
+  _pars.push_back((double)discrete_lines.size());
+  //  mesh_vertices.clear();
+  //  lines.clear();
+  for(std::size_t i = 0; i < discrete_lines.size(); i++)
+    delete discrete_lines[i];
+  for(std::size_t i = 0; i < discrete_vertices.size(); i++)
+    delete discrete_vertices[i];
+  discrete_lines.clear();
+  discrete_vertices.clear();
 }
 
 void discreteEdge::mesh(bool verbose)
 {
 #if defined(HAVE_MESH)
-  if(discrete_lines.empty()) return;
+  if(_discretization.empty()) return;
   meshGEdge mesher;
   mesher(this);
 #endif
@@ -392,3 +420,28 @@ void discreteEdge::unsplit(void)
     f[i]->set(new_eds);
   }
 }
+
+void discreteEdge::writeParametrization (FILE *fp, bool binary){
+  fprintf(fp,"%lu\n",_discretization.size());
+  for (size_t i=0;i<_discretization.size();i++){
+    fprintf(fp,"%g %g %g %g\n",_discretization[i].x(),
+	    _discretization[i].y(),_discretization[i].z(),_pars[i]);
+  }
+}
+
+void discreteEdge::readParametrization (FILE *fp, bool binary){
+  int N;
+  fscanf(fp,"%d",&N);
+  //  printf("%d %d\n",tag(),N);
+  _pars.resize(N);
+  _discretization.resize(N);
+  for (int i=0;i<N;i++){
+    double x,y,z,t;
+    fscanf(fp,"%lf %lf %lf %lf\n",&x,&y,&z,&t);
+    _pars[i] = t;   
+    _discretization[i]= SPoint3 (x,y,z);
+  }
+}
+
+
+

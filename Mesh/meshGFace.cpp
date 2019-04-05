@@ -2945,7 +2945,7 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   // test validity for non-Gmsh models (currently we cannot reliably evaluate
   // the normal on the boundary of surfaces with the Gmsh kernel)
-  if(gf->geomType() != GEntity::DiscreteSurface &&
+  if(/*gf->geomType() != GEntity::DiscreteSurface &&*/
      gf->getNativeType() != GEntity::GmshModel && algoDelaunay2D(gf) &&
      !isMeshValid(gf)) {
     Msg::Debug(

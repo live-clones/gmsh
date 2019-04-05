@@ -700,7 +700,7 @@ HXTStatus hxtParametrizationCompute(HXTParametrization *parametrization, int **_
 
     uint64_t *global=NULL;
     int nv, ne;
-    HXT_CHECK(hxtMeanValuesGetData(parametrization->maps[c],&global, NULL, NULL, &nv,&ne));
+    HXT_CHECK(hxtMeanValuesGetData(parametrization->maps[c],&global, NULL, NULL, &nv,&ne,0));
     nNodes[c+1] = nNodes[c]+nv;
 
     for(int ie=0; ie<ne; ie++)
@@ -722,7 +722,7 @@ HXTStatus hxtParametrizationCompute(HXTParametrization *parametrization, int **_
     uint32_t *gn=NULL;
     double *uvc=NULL;
     int nv, ne;
-    HXT_CHECK(hxtMeanValuesGetData(parametrization->maps[c],&global, &gn, &uvc, &nv,&ne));
+    HXT_CHECK(hxtMeanValuesGetData(parametrization->maps[c],&global, &gn, &uvc, &nv,&ne,0));
     for(int iv=0; iv<2*nv; iv++)
       uv[2*nNodes[c]+iv] = uvc[iv];
 

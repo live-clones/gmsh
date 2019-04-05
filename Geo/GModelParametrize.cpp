@@ -11,6 +11,7 @@
 #include "GModel.h"
 #include "GFace.h"
 #include "discreteFace.h"
+#include "discreteEdge.h"
 #include "MTriangle.h"
 #include "MEdge.h"
 #include "GEdge.h"
@@ -78,6 +79,14 @@ static HXTStatus gmsh2hxt(GFace *gf, HXTMesh **pm,
   return HXT_STATUS_OK;
 }
 
+void parametrizeAllGEdge(GModel *gm)
+{
+  for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
+    discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
+    if (de) de->createGeometry();
+  }
+}
+
 int parametrizeAllGFace(GModel *gm)
 {
   int result = 0;
@@ -106,14 +115,16 @@ int parametrizeGFace(discreteFace *gf)
   HXT_CHECK(hxtMeanValuesCompute(param));
   double *uvc = NULL;
   int nv, ne;
-  HXT_CHECK(hxtMeanValuesGetData(param, NULL, NULL, &uvc, &nv, &ne));
+  HXT_CHECK(hxtMeanValuesGetData(param, NULL, NULL, &uvc, &nv, &ne,1));
   gf->stl_vertices_uv.clear();
-  //  gf->stl_vertices_uv.resize(nv);
+  gf->stl_vertices_uv.resize(nv);
   gf->stl_vertices_xyz.clear();
+  gf->stl_vertices_xyz.resize(nv);
   gf->stl_normals.clear();
   gf->stl_normals.resize(nv);
+  
   for(int iv = 0; iv < nv; iv++) {
-    //    gf->stl_vertices_uv[iv]  = SPoint2(uvc[2*iv],uvc[2*iv+1]);
+    gf->stl_vertices_uv[iv]  = SPoint2(uvc[2*iv],uvc[2*iv+1]);
 
     gf->stl_vertices_xyz[iv] =
       SPoint3(m->vertices.coord[4 * iv + 0], m->vertices.coord[4 * iv + 1],
@@ -297,4 +308,8 @@ void computeNonManifoldEdges(GModel *gm, std::vector<MLine *> &cut,
         countNM, countBND);
   }
   makeMLinesUnique(cut);
+}
+
+// todo...
+void detectPlanarFaces (GModel *gm, std::vector<MLine *> &cut){
 }

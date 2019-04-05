@@ -272,6 +272,7 @@ double discreteFace::curvatureMax(const SPoint2 &param) const
   SVector3 dirMax, dirMin;
   double c, C;
   if(_currentParametrization == -1) return 0.0;
+  if(_parametrizations[_currentParametrization].CURV.empty()) return 0.0;
   curvatures(param, dirMax, dirMin, C, c);
   return std::max(c, C);
 #else
@@ -287,7 +288,8 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 #if defined(HAVE_HXT)
   if(_parametrizations.empty()) return 0.0;
   if(_currentParametrization == -1) return 0.0;
-
+  if(_parametrizations[_currentParametrization].CURV.empty()) return 0.0;
+  
   MElement *e = _parametrizations[_currentParametrization].oct->find(
     param.x(), param.y(), 0.0);
   if(!e) {
@@ -389,6 +391,7 @@ void discreteFace::secondDer(const SPoint2 &param, SVector3 &dudu,
 
 void discreteFace::createGeometry()
 {
+  printf("ARGH\n");
 #if defined(HAVE_HXT)
   if(_parametrizations.size()) return;
   if(!_checkAndFixOrientation()) return;
@@ -397,6 +400,91 @@ void discreteFace::createGeometry()
     Msg::Error("Could not create geometry of discrete surface %d", tag());
 #endif
 }
+
+void discreteFace::createGeometryFromSTL()
+{
+  if (stl_triangles.empty() || stl_vertices_uv.empty() || stl_vertices_xyz.empty())return;  
+  _parametrizations.clear();
+  _parametrizations.resize(1);
+
+  for (size_t i=0;i<stl_vertices_uv.size();i++){
+    _parametrizations[0].v2d.push_back(MVertex(stl_vertices_uv[i].x(),stl_vertices_uv[i].y(),0.0));
+    _parametrizations[0].v3d.push_back(MVertex(stl_vertices_xyz[i].x(),stl_vertices_xyz[i].y(),stl_vertices_xyz[i].z()));
+  }    
+  for (size_t i=0;i<stl_triangles.size()/3;i++){
+    int a = stl_triangles[3*i];
+    int b = stl_triangles[3*i+1];
+    int c = stl_triangles[3*i+2];
+    _parametrizations[0].t2d.push_back(MTriangle(&_parametrizations[0].v2d[a],&_parametrizations[0].v2d[b],&_parametrizations[0].v2d[c]));
+    _parametrizations[0].t3d.push_back(MTriangle(&_parametrizations[0].v3d[a],&_parametrizations[0].v3d[b],&_parametrizations[0].v3d[c]));
+    //    _parametrizations[0].t3d.push_back(MTriangle(v0,v1,v2));
+    //    _parametrizations[0].t2d.push_back(MTriangle(vv0,vv1,vv2));
+  }
+  _parametrizations[0].bnd = edges();
+  _parametrizations[0].emb = embedded_edges;
+  if(_parametrizations[0].checkPlanar())
+    Msg::Info("Discrete surface %d is planar, simplifying parametrization",
+	      tag());
+
+  std::vector<MElement *> temp;
+  for(size_t j = 0; j < _parametrizations[0].t2d.size(); j++) {
+    temp.push_back(&_parametrizations[0].t2d[j]);
+    double MIN[3] = {_parametrizations[0].t3d[j].getVertex(0)->x(),  _parametrizations[0].t3d[j].getVertex(0)->y(),
+		     _parametrizations[0].t3d[j].getVertex(0)->z()};
+    double MAX[3] = {_parametrizations[0].t3d[j].getVertex(0)->x(),  _parametrizations[0].t3d[j].getVertex(0)->y(),
+		     _parametrizations[0].t3d[j].getVertex(0)->z()};
+    for(int k = 1; k < 3; k++) {
+      MAX[0] =	std::max(MAX[0], _parametrizations[0].t3d[j].getVertex(k)->x());
+      MIN[0] =	std::min(MIN[0], _parametrizations[0].t3d[j].getVertex(k)->x());
+      MAX[1] =	std::max(MAX[1], _parametrizations[0].t3d[j].getVertex(k)->y());
+      MIN[1] =	std::min(MIN[1], _parametrizations[0].t3d[j].getVertex(k)->y());
+      MAX[2] =	std::max(MAX[2], _parametrizations[0].t3d[j].getVertex(k)->z());
+      MIN[2] =	std::min(MIN[2], _parametrizations[0].t3d[j].getVertex(k)->z());
+    }
+    std::pair<MTriangle *, MTriangle *> *tt =
+      new std::pair<MTriangle *, MTriangle *>(&_parametrizations[0].t3d[j],&_parametrizations[0].t2d[j]);
+    _parametrizations[0].rtree3d.Insert(MIN, MAX, tt);
+  }
+  _parametrizations[0].oct = new MElementOctree(temp);
+
+#define debug
+#ifdef debug
+  // save the atlas in pos files for checking - debugging
+  char zz[256];
+  sprintf(zz, "parametrization_P%d.pos", tag());
+  FILE *f = fopen(zz, "w");
+  fprintf(f, "View \"\"{\n");
+  sprintf(zz, "parametrization_R%d.pos", tag());
+  FILE *f2 = fopen(zz, "w");
+  fprintf(f2, "View \"\"{\n");
+  for(size_t i = 0; i < _parametrizations.size(); i++) {
+    int c = i;
+    for(size_t j = 0; j < _parametrizations[i].t2d.size(); j++) {
+      MTriangle *t2 = &_parametrizations[i].t2d[j];
+      MTriangle *t3 = &_parametrizations[i].t3d[j];
+      MVertex *vv0 = t2->getVertex(0);
+      MVertex *vv1 = t2->getVertex(1);
+      MVertex *vv2 = t2->getVertex(2);
+      MVertex *v0 = t3->getVertex(0);
+      MVertex *v1 = t3->getVertex(1);
+      MVertex *v2 = t3->getVertex(2);
+      fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+              vv0->x() + 2.2 * c, vv0->y(), vv0->z(), vv1->x() + 2.2 * c,
+              vv1->y(), vv1->z(), vv2->x() + 2.2 * c, vv2->y(), vv2->z(), c, c,
+              c);
+      fprintf(f2, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g};\n", v0->x(),
+              v0->y(), v0->z(), v1->x(), v1->y(), v1->z(), v2->x(), v2->y(),
+              v2->z(), vv0->x() , vv1->x() , vv2->x(), vv0->y() , vv1->y() , vv2->y());
+    }
+  }
+  fprintf(f, "};\n");
+  fclose(f);
+  fprintf(f2, "};\n");
+  fclose(f2);
+#endif
+
+}
+
 
 bool discreteFace::_checkAndFixOrientation()
 {
@@ -1100,6 +1188,7 @@ bool hxt_reparam_surf::checkPlanar()
       v.push_back(p);
     }
   }
+
   computeMeanPlaneSimple(v, mp);
   projectPointsToPlane(v, vp, mp);
   for(size_t i = 0; i < v.size(); i++) {
@@ -1118,7 +1207,7 @@ bool hxt_reparam_surf::checkPlanar()
   //  printf("%g %g %g\n",mp.plan[0][0],mp.plan[0][1],mp.plan[0][2]);
   //  printf("%g %g %g\n",mp.plan[1][0],mp.plan[1][1],mp.plan[1][2]);
   //  printf("%g %g %g\n",mp.x,mp.y,mp.z);
-
+  
   int count = 0;
   for(size_t i = 0; i < t2d.size(); i++) {
     for(int j = 0; j < 3; j++) {
@@ -1215,7 +1304,7 @@ HXTStatus discreteFace::_reparametrizeThroughHxt()
   }
 
   // count how much triangles per partition
-//#define debug
+#define debug
 #ifdef debug
   // save the atlas in pos files for checking - debugging
   char zz[256];
@@ -1240,9 +1329,9 @@ HXTStatus discreteFace::_reparametrizeThroughHxt()
               vv0->x() + 2.2 * c, vv0->y(), vv0->z(), vv1->x() + 2.2 * c,
               vv1->y(), vv1->z(), vv2->x() + 2.2 * c, vv2->y(), vv2->z(), c, c,
               c);
-      fprintf(f2, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n", v0->x(),
+      fprintf(f2, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g};\n", v0->x(),
               v0->y(), v0->z(), v1->x(), v1->y(), v1->z(), v2->x(), v2->y(),
-              v2->z(), c, c, c);
+              v2->z(), vv0->x() , vv1->x() , vv2->x(), vv0->y() , vv1->y() , vv2->y());
     }
   }
   fprintf(f, "};\n");

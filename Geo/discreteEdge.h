@@ -12,8 +12,7 @@
 class discreteEdge : public GEdge {
 protected:
   std::vector<double> _pars;
-  std::vector<MVertex *> discrete_vertices;
-  std::vector<MLine *> discrete_lines;
+  std::vector<SPoint3> _discretization;
   void orderMLines();
   bool getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
   discreteEdge *_split[3];
@@ -54,6 +53,8 @@ public:
   }
   void unsplit();
   bool split(MVertex *v, GVertex *gv, int &TAG);
+  void writeParametrization (FILE *fp, bool binary);
+  void readParametrization (FILE *fp, bool binary);
 };
 
 #endif
