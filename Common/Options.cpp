@@ -5788,6 +5788,13 @@ double opt_mesh_med_import_groups_of_nodes(OPT_ARGS_NUM)
   return CTX::instance()->mesh.medImportGroupsOfNodes;
 }
 
+double opt_mesh_med_single_model(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.medSingleModel = (int)val;
+  return CTX::instance()->mesh.medSingleModel;
+}
+
 double opt_mesh_partition_split_mesh_files(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

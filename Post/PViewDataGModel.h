@@ -276,6 +276,8 @@ public:
                         bool forceElementData = false);
   bool readMED(const std::string &fileName, int fileIndex);
   bool writeMED(const std::string &fileName);
+  bool readPCH(const std::string &fileName, int fileIndex);
+
   void importLists(int N[24], std::vector<double> *V[24]);
   stepData<double> *getStepData(int step)
   {

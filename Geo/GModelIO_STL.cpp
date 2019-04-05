@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <string>
+#include <algorithm>
 #include <sstream>
 #include "GModel.h"
 #include "OS.h"
@@ -15,6 +16,8 @@
 #include "discreteFace.h"
 #include "StringUtils.h"
 #include "Context.h"
+
+static bool invalidChar(char c) { return !(c >= 32 && c <= 126); }
 
 int GModel::readSTL(const std::string &name, double tolerance)
 {
@@ -136,8 +139,8 @@ int GModel::readSTL(const std::string &name, double tolerance)
     names.resize(points.size());
   }
   for(std::size_t i = 0; i < names.size(); i++){
-    if(!names[i].empty() && names[i].at(names[i].size() - 1) == '\r')
-      names[i].resize(names[i].size() - 1);
+    names[i].erase(remove_if(names[i].begin(), names[i].end(), invalidChar),
+                   names[i].end());
   }
 
   std::vector<GFace *> faces;

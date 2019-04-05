@@ -2602,12 +2602,16 @@ by means of Delaunay triangulation and Bowyer-Watson algorithm},
 J. Comput.  Phys. 106, pp. 25--138, 1993.}.
 @item
 Other experimental algorithms with specific features are also
-available. In particular, ``Frontal-Delaunay for Quads'' is a variant of
-the ``Frontal-Delaunay'' algorithm aiming at generating right-angle
-triangles suitable for recombination; and ``BAMG''@footnote{F. Hecht,
-@emph{BAMG: bidimensional anisotropic mesh generator}, User Guide,
-INRIA, Rocquencourt, 1998.} allows to generate anisotropic
-triangulations.
+available. In particular, ``Frontal-Delaunay for
+Quads''@footnote{J.-F. Remacle, F. Henrotte, T. Carrier-Baudouin,
+E. Béchet, E. Marchandise, C. Geuzaine and T. Mouton, @emph{A frontal
+Delaunay quad mesh generator using the Linf norm}, International Journal
+for Numerical Methods in Engineering, 94(5), pp. 494-512, 2013.} is a
+variant of the ``Frontal-Delaunay'' algorithm aiming at generating
+right-angle triangles suitable for recombination; and
+``BAMG''@footnote{F. Hecht, @emph{BAMG: bidimensional anisotropic mesh
+generator}, User Guide, INRIA, Rocquencourt, 1998.} allows to generate
+anisotropic triangulations.
 @end itemize
 
 For very complex curved surfaces the ``MeshAdapt'' algorithm is the most
@@ -2710,9 +2714,9 @@ To save all mesh element wether or not physical groups are defined, use
 The mesh module commands allow to modify the mesh element sizes and
 specify structured grid parameters. Certain mesh ``actions'' (i.e.,
 ``mesh the curves'', ``mesh the surfaces'' and ``mesh the volumes'') can
-also be specified in the script files but are performed either in the
-GUI or on the command line (see @ref{Running Gmsh on your system}, and
-@ref{Command-line options}).
+also be specified in the script files but are usually performed either
+in the GUI or on the command line (see @ref{Running Gmsh on your
+system}, and @ref{Command-line options}).
 
 In the Gmsh API, the mesh commands are available in the
 @code{gmsh/model/mesh} module (@pxref{Gmsh API}).
@@ -4112,7 +4116,7 @@ Historically, Gmsh first supported linear elements (lines, triangles,
 quadrangles, tetrahedar, prisms and hexahedra). Then, support for second
 and some third order elements has been added. Below we distinguish such
 ``low order elements'', which are hardcoded (i.e. they are explicitly
-defined in the code), and general ``high order elements'', that have
+defined in the code), and general ``high-order elements'', that have
 been coded in a more general fashion, theoretically valid for any order.
 
 @subsection Low order elements
@@ -4259,7 +4263,7 @@ Pyramid:                     Pyramid13:                   Pyramid14:
 @end group
 @end smallexample
 
-@subsection High order elements
+@subsection High-order elements
 
 The node ordering of a higher order (possibly curved) element is
 compatible with the numbering of low order element (it is a
@@ -5845,7 +5849,7 @@ algorithm with smoothing (e.g., with @code{Mesh.Smoothing = 10}).
 @item Does Gmsh support curved elements?
 
 Yes, just choose the appropriate order in the mesh menu after the mesh is
-completed. High order optimization tools are in development and also available
+completed. High-order optimization tools are in development and also available
 in the mesh menu. You can select the order on the command line with e.g.
 @code{-order 2}.
 
@@ -5919,6 +5923,26 @@ In the API: @code{gmsh::option::setNumber("Mesh.MshFileVersion", x.y)}.
 As an alternative method, you can also not specify the format
 explicitely, and just choose a filename with the @code{.msh2} or
 @code{.msh4} extension.
+
+@item Why isn't neighboring element information stored in the MSH file?
+
+Each numerical method has its own requirements: it might need
+neighboring elements connected by a node, an edge or a face; it might
+require a single layer or multiple layers; it should include elements of
+lower dimension (boundaries) or not, go across geometrical entities or
+mesh partitions or not, etc. Given the number of possibilities,
+generating the appropriate information is thus best performed in the
+numerical solver itself. The Gmsh API makes these computations easy: see
+for example
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/neighbors.py,demos/api/neighbors.py}.
+
+@item Could mesh edges/faces be stored in the MSH file?
+
+Edge/faces can be easily generated from the information already
+available in the file (i.e. nodes and elements), or through the Gmsh
+API: see for example
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/faces.cpp,demos/api/faces.cpp}.
+
 @end enumerate
 
 @c -------------------------------------------------------------------------

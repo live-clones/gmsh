@@ -131,6 +131,7 @@ public:
   static bool readMSH(const std::string &fileName, int fileIndex = -1,
                       int partitionToRead = -1);
   static bool readMED(const std::string &fileName, int fileIndex = -1);
+  static bool readPCH(const std::string &fileName, int fileIndex = -1);
   static bool writeX3D(const std::string &fileName);
   // IO write routine
   bool write(const std::string &fileName, int format, bool append = false);

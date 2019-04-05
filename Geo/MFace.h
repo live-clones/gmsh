@@ -33,7 +33,7 @@ public:
   {
     return MEdge(getVertex(i), getVertex((i + 1) % getNumVertices()));
   }
-
+  void getOrientationFlagForFace(std::vector<int> &faceOrientationFlag);
   bool computeCorrespondence(const MFace &, int &, bool &) const;
 
   void getOrderedVertices(std::vector<MVertex *> &verts) const

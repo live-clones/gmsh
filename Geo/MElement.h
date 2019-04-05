@@ -57,7 +57,6 @@ protected:
 public:
   MElement(std::size_t num = 0, int part = 0);
   virtual ~MElement() {}
-
   // set/get the tolerance for isInside() test
   static void setTolerance(const double tol);
   static double getTolerance();
@@ -114,7 +113,10 @@ public:
   {
     Msg::Error("Vertex information not available for this element");
   }
-
+  //get the face  using the local orientation defined by Solin
+  virtual MFace getFaceSolin(int numFace)=0;
+  //get the global vertex num of a edge using the local orientation defined by Solin
+  virtual int getVertexSolin(int numEdge, int numVertex)=0;
   // get the vertex using the I-deas UNV ordering
   virtual MVertex *getVertexUNV(int num) { return getVertex(num); }
 

@@ -146,8 +146,8 @@ StringXString GeometryOptions_String[] = {
 
   { F|O, "OCCTargetUnit" , opt_geometry_occ_target_unit , "" ,
     "Length unit to which coordinates from STEP and IGES files are converted to when "
-    "imported by OpenCASCADE, e.g. 'M' for meters (leave empty to keep the unit defined "
-    "in the STEP and IGES file)"},
+    "imported by OpenCASCADE, e.g. 'M' for meters (leave empty to use OpenCASCADE "
+    "default bahavior)"},
 
   { 0, 0 , 0 , "" , 0 }
 } ;
@@ -1119,6 +1119,8 @@ StringXNumber MeshOptions_Number[] = {
     "Minor version of the MED file format to use (-1: use minor version of the MED library)" },
   { F|O, "MedImportGroupsOfNodes" , opt_mesh_med_import_groups_of_nodes , 0. ,
     "Import groups of nodes (0: no; 1: create geometrical point for each node)?" },
+  { F|O, "MedSingleModel" , opt_mesh_med_single_model , 0. ,
+    "Import MED meshes in the current model, even if several MED mesh names exist" },
   { F|O, "PartitionHexWeight" , opt_mesh_partition_hex_weight , -1 ,
     "Weight of hexahedral element for METIS load balancing (-1: automatic)" },
   { F|O, "PartitionLineWeight" , opt_mesh_partition_line_weight , -1 ,
