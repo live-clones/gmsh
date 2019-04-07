@@ -351,12 +351,6 @@ void transferDataStructure(GFace *gf,
   computeEquivalences(gf, data);
 }
 
-void buildVertexToTriangle(std::vector<MTriangle *> &eles, v2t_cont &adj)
-{
-  adj.clear();
-  buildVertexToElement(eles, adj);
-}
-
 template <class T>
 void buildEdgeToElement(std::vector<T *> &elements, e2t_cont &adj)
 {
