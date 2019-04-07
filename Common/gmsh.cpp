@@ -2131,6 +2131,10 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
   case TYPE_HEX: {
     basis = new HierarchicalBasisH1Brick(order);
   } break;
+  case TYPE_TET: {
+    basis = new HierarchicalBasisH1Tetra(order);
+    break;
+  }
   case TYPE_QUA: {
     basis = new HierarchicalBasisH1Quad(order);
   } break;
@@ -2285,7 +2289,7 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
   const gmsh::vectorpair &keys, gmsh::vectorpair &info, const int order,
   const int elementType)
 {
-  // to finish ,this function return the global order!
+  // // to modify! ,this function will return the global order!
   int familyType = ElementType::getParentType(elementType);
   switch(familyType) {
   case TYPE_QUA: {

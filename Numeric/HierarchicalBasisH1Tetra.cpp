@@ -4,11 +4,11 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
-// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel Segeth ,
+// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
+// Segeth ,
 //                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
 #include "HierarchicalBasisH1Tetra.h"
-
 HierarchicalBasisH1Tetra::HierarchicalBasisH1Tetra(int order)
 {
   _nvertex = 4;
@@ -171,8 +171,8 @@ void HierarchicalBasisH1Tetra::generateBasis(double const &u, double const &v,
 }
 
 void HierarchicalBasisH1Tetra::orientEdge(int const &flagOrientation,
-                                             int const &edgeNumber,
-                                             std::vector<double> &edgeBasis)
+                                          int const &edgeNumber,
+                                          std::vector<double> &edgeBasis)
 {
   if(flagOrientation == -1) {
     int constant1 = 0;
@@ -212,10 +212,10 @@ void HierarchicalBasisH1Tetra::orientEdgeGrad(
 }
 
 void HierarchicalBasisH1Tetra::orientFace(double const &u, double const &v,
-                                             double const &w, int const &flag1,
-                                             int const &flag2, int const &flag3,
-                                             int const &faceNumber,
-                                             std::vector<double> &faceBasis)
+                                          double const &w, int const &flag1,
+                                          int const &flag2, int const &flag3,
+                                          int const &faceNumber,
+                                          std::vector<double> &faceBasis)
 {
   if(!(flag1 == 0 && flag2 == 1)) {
     // to map onto the reference domain of gmsh:
@@ -225,7 +225,7 @@ void HierarchicalBasisH1Tetra::orientFace(double const &u, double const &v,
     //*****
     int iterator = 0;
     if(faceNumber > 3) {
-      throw std::string("edgeNumber  must be : 0<=faceNumber<=3");
+      throw std::string("faceNumber  must be : 0<=faceNumber<=3");
     }
     for(int i = 0; i < faceNumber; i++) {
       iterator += int((_pOrderFace[i] - 1) * (_pOrderFace[i] - 2) / 2);
@@ -324,7 +324,7 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
   dlambda1[1] = 0.5;
   dlambda3[0] = 0.5;
   dlambda4[2] = 0.5;
-  std::vector<double> dprod(3);
+  std::vector<double> dprod(3); // d(lambda1*lambda2*lambda3*lambda4)
   dprod[0] = jacob * (lambda1 * dlambda2[0] * lambda3 * lambda4 +
                       lambda1 * lambda2 * dlambda3[0] * lambda4);
   dprod[1] = jacob * (dlambda1[1] * lambda2 * lambda3 * lambda4 +
@@ -432,7 +432,6 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
   faceProduct[3] = edgeProduct[1] * lambda4;
   std::vector<std::vector<double> > dfaceProduct(_nface,
                                                  std::vector<double>(3));
-
   for(int i = 0; i < 3; i++) {
     dfaceProduct[0][i] =
       jacob * (edgeProduct[0] * dlambda1[i]) + dEdgeProduct[0][i] * lambda1;
@@ -449,16 +448,14 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
     for(int indexEdgeFunc = 0; indexEdgeFunc < _pOrderEdge[iEdge] - 1;
         indexEdgeFunc++) {
       int impact1 = 1;
-      int impact2 = 1;
       if(iEdge == 2) {
         impact1 = 1;
-        impact2 = -1;
         if(indexEdgeFunc % 2 != 0) { impact1 = -1; }
       }
       for(int i = 0; i < 3; i++) {
         gradientEdge[indexEdgeBasis][i] =
           impact1 * (dEdgeProduct[iEdge][i] * phi[iEdge][indexEdgeFunc] +
-                     impact2 * edgeProduct[iEdge] * dphi[iEdge][indexEdgeFunc] *
+                     edgeProduct[iEdge] * dphi[iEdge][indexEdgeFunc] *
                        dsubstraction[iEdge][i]);
       }
       indexEdgeBasis++;
@@ -497,7 +494,7 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
                         phi[indexVectorTarget2][n2] +
                       faceProduct[iFace] * dphi[indexVectorTarget1][n1] *
                         dsubstraction[indexVectorTarget1][i] *
-                        phi[indexVectorTarget2][n2] -
+                        phi[indexVectorTarget2][n2] +
                       faceProduct[iFace] * phi[indexVectorTarget1][n1] *
                         dsubstraction[indexVectorTarget2][i] *
                         dphi[indexVectorTarget2][n2]);
@@ -537,7 +534,7 @@ void HierarchicalBasisH1Tetra::orientFaceGrad(
     //*****
     int iterator = 0;
     if(faceNumber > 3) {
-      throw std::string("edgeNumber  must be : 0<=faceNumber<=3");
+      throw std::string("faceNumber  must be : 0<=faceNumber<=3");
     }
     for(int i = 0; i < faceNumber; i++) {
       iterator += int((_pOrderFace[i] - 1) * (_pOrderFace[i] - 2) / 2);
@@ -557,7 +554,7 @@ void HierarchicalBasisH1Tetra::orientFaceGrad(
       dlambda[2][1] = 1; //* jacobian
       double pl3l1 = lambda[1] * lambda[2];
       dProduct[0] = lambda[2] * lambda[0] - pl3l1;
-      dProduct[1] = lambda[2] * lambda[1] - pl3l1;
+      dProduct[1] = lambda[0] * lambda[1] - pl3l1;
       dProduct[2] = -pl3l1; //*jacobian
       break;
     }

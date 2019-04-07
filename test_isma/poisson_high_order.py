@@ -1,4 +1,4 @@
-#
+    #
 # -*- coding: utf-8 -*-
 """
 Created on Sat Feb 23 19:33:36 2019
@@ -11,7 +11,7 @@ import numpy as np
 import scipy.sparse
 import scipy.sparse.linalg
 import sys
-
+from numpy import linalg as LA
 # This scripts solves the 2D Poisson equation '-\Delta u = f' with homogeneous
 # boundary conditions using the finite element method and the Legendre Basis.
 
@@ -19,7 +19,7 @@ import sys
 # $ python poisson.py
 
 
-INTEGRATION = 'Gauss2'
+INTEGRATION = 'Gauss10'
 RECOMBINE =0
 order=1#polynomial order
 
@@ -221,6 +221,10 @@ def fem_solve_legendre():
     rhsrow=np.array(rhsrow)
     rhscol=np.array(rhscol)
     globalmat = scipy.sparse.coo_matrix((mat,(row,col) ),  shape=(len(allConnectivity), len(allConnectivity))).tocsr() 
+    norm_A = scipy.sparse.linalg.norm(globalmat)
+    norm_invA = scipy.sparse.linalg.norm(scipy.sparse.linalg.inv(globalmat))
+    cond = norm_A*norm_invA
+    print(cond)
     globalrhs = scipy.sparse.coo_matrix(
         (rhsflat, (rhsrow,rhscol) )).toarray()
     # Solve linear system Ax=b
