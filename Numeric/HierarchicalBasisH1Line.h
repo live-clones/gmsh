@@ -18,9 +18,9 @@
  *
  *
  *
- *
- *   0          +1
- * --+-----------+---> u
+ *          |
+ *   0      |     1
+ * --+------+-----+---> u
  *
  *
  *
@@ -69,7 +69,6 @@ private:
   static double
   _affineCoordinate(int j,
                     double u); // affine coordinate lambdaj j={1,2}
-  double _getDetJacobian(); // for transformation [-1;1] -> [0,1]
 };
 
 #endif

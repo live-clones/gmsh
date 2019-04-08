@@ -40,9 +40,8 @@ void HierarchicalBasisH1Line::generateBasis(double const &u, double const &v,
                                             std::vector<double> &faceBasis,
                                             std::vector<double> &bubbleBasis)
 {
-  int uc = 2 * u - 1; // for transformation [-1;1] -> [0,1]
-  double lambda1 = _affineCoordinate(1, uc);
-  double lambda2 = _affineCoordinate(2, uc);
+  double lambda1 = _affineCoordinate(1, u);
+  double lambda2 = _affineCoordinate(2, u);
   double product = lambda1 * lambda2;
   double substraction = lambda1 - lambda2;
   // vertex shape functions:
@@ -62,17 +61,13 @@ void HierarchicalBasisH1Line::generateGradientBasis(
   std::vector<std::vector<double> > &gradientFace,
   std::vector<std::vector<double> > &gradientBubble)
 {
-  int uc = 2 * u - 1; // for transformation [-1;1] -> [0,1]
   double dlambda1 = 0.5;
   double dlambda2 = -0.5;
-  double detJacob = _getDetJacobian();
   // vertex gradient functions:
-  gradientVertex[0][0] = detJacob * dlambda2;
-  gradientVertex[1][0] = detJacob * dlambda1;
+  gradientVertex[0][0] =  dlambda2;
+  gradientVertex[1][0] =  dlambda1;
   for(int k = 2; k <= _pe; k++) {
     gradientEdge[k - 2][0] =
-      OrthogonalPoly::EvalDLobatto(k, uc) * _getDetJacobian();
+      OrthogonalPoly::EvalDLobatto(k, u);
   }
 }
-
-double HierarchicalBasisH1Line::_getDetJacobian() { return 2; }
