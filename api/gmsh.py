@@ -2854,7 +2854,8 @@ class model:
             `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is
             not empty, also extrude the mesh: the entries in `numElements' give the
             number of elements in each layer. If `height' is not empty, it provides the
-            (cumulative) height of the different layers, normalized to 1.
+            (cumulative) height of the different layers, normalized to 1. If `dx' ==
+            `dy' == `dz' == 0, the entities are extruded along their normal.
 
             Return `outDimTags'.
             """
