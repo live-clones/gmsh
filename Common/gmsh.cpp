@@ -332,16 +332,20 @@ GMSH_API int gmsh::model::addPhysicalGroup(const int dim,
                                            const std::vector<int> &tags,
                                            const int tag)
 {
+  // FIXME: We currently still store the "original" physical groups in
+  // GEOInternals, because some operations in the built-in kernel directly
+  // manipulate physicals (most notably Coherence). Until we fully move the
+  // physicals to GModel, we need to add the physicals in GEOInternals and
+  // perform a hidden sync.
   if(!_isInitialized()) { throw -1; }
   int outTag = tag;
-  // FIXME: this is one more instance of the problem linked to storing physical
-  // groups in the GEO internals. If one merge a mesh that contains phsyical
-  // groups, getGEOInternals()->getMaxPhysicalTag() will not reflect the correct
-  // max number stored in GModel.
-  if(outTag < 0)
-    outTag = GModel::current()->getGEOInternals()->getMaxPhysicalTag() + 1;
-  if(!GModel::current()->getGEOInternals()->modifyPhysicalGroup(dim, outTag, 0,
-                                                                tags)) {
+  if(outTag < 0){
+    outTag = std::max
+      (GModel::current()->getMaxPhysicalNumber(dim),
+       GModel::current()->getGEOInternals()->getMaxPhysicalTag()) + 1;
+  }
+  if(!GModel::current()->getGEOInternals()->modifyPhysicalGroup
+     (dim, outTag, 0, tags)) {
     throw 1;
   }
   GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -3340,10 +3344,19 @@ GMSH_API void gmsh::model::geo::extrude(const vectorpair &dimTags,
 {
   if(!_isInitialized()) { throw -1; }
   outDimTags.clear();
-  if(!GModel::current()->getGEOInternals()->extrude(
-       dimTags, dx, dy, dz, outDimTags,
-       _getExtrudeParams(numElements, heights, recombine))) {
-    throw 1;
+  if(dx || dy || dz){
+    if(!GModel::current()->getGEOInternals()->extrude
+       (dimTags, dx, dy, dz, outDimTags,
+        _getExtrudeParams(numElements, heights, recombine))) {
+      throw 1;
+    }
+  }
+  else{
+    if(!GModel::current()->getGEOInternals()->boundaryLayer
+       (dimTags, outDimTags,
+        _getExtrudeParams(numElements, heights, recombine))) {
+      throw 1;
+    }
   }
 }
 
