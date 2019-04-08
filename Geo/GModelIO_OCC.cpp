@@ -1189,24 +1189,25 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
                                const std::vector<double> &knots,
                                const std::vector<int> &multiplicities)
 {
-  if(pointTags.size() < 2) {
+  int np = pointTags.size();
+  if(np < 2) {
     Msg::Error("BSpline curve requires at least 2 control points");
     return false;
   }
   int d = degree;
   std::vector<double> w(weights), k(knots);
   std::vector<int> m(multiplicities);
-  // degree 3 if not specified:
+  // degree 3 if not specified...
   if(d <= 0) d = 3;
-  // But degree nPts-1 if nPts is 2 or 3:
-  if(d > static_cast<int>(pointTags.size()) - 1) d = pointTags.size() - 1;
+  // ... or number of control points - 1 if not enough points
+  if(d > np - 1) d = np - 1;
   // automatic default weights if not provided:
-  if(w.empty()) w.resize(pointTags.size(), 1);
+  if(w.empty()) w.resize(np, 1);
   // automatic default knots and multiplicities if not provided:
   if(k.empty()) {
     bool periodic = (pointTags.front() == pointTags.back());
     if(!periodic) {
-      int sum_of_all_mult = pointTags.size() + d + 1;
+      int sum_of_all_mult = np + d + 1;
       int num_knots = sum_of_all_mult - 2 * d;
       if(num_knots < 2) {
         Msg::Error("Not enough control points for building BSpline of "
@@ -1220,7 +1221,7 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
       m.back() = d + 1;
     }
     else {
-      k.resize(pointTags.size() - 1);
+      k.resize(np - d + 2);
       for(std::size_t i = 0; i < k.size(); i++) k[i] = i;
       m.resize(k.size(), 1);
       m.front() = d - 1;
