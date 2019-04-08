@@ -3905,6 +3905,56 @@ function getListData(tag)
 end
 
 """
+    gmsh.view.addAlias(refTag, copyOptions = false, tag = -1)
+
+Add a post-processing view as an `alias` of the reference view with tag
+`refTag`. If `copyOptions` is set, copy the options of the reference view. If
+`tag` is positive use it (and remove the view with that tag if it already
+exists), otherwise associate a new tag. Return the view tag.
+
+Return an integer value.
+"""
+function addAlias(refTag, copyOptions = false, tag = -1)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshViewAddAlias, gmsh.lib), Cint,
+          (Cint, Cint, Cint, Ptr{Cint}),
+          refTag, copyOptions, tag, ierr)
+    ierr[] != 0 && error("gmshViewAddAlias returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
+    gmsh.view.copyOptions(refTag, tag)
+
+Copy the options from the view with tag `refTag` to the view with tag `tag`.
+"""
+function copyOptions(refTag, tag)
+    ierr = Ref{Cint}()
+    ccall((:gmshViewCopyOptions, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cint}),
+          refTag, tag, ierr)
+    ierr[] != 0 && error("gmshViewCopyOptions returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.view.combine(what, how, remove = false)
+
+Combine elements (if `what` == "elements") or steps (if `what` == "steps") of
+all views (`how` == "all"), all visible views (`how` == "visible") or all views
+having the same name (`how` == "name"). Remove original views if `remove` is
+set.
+"""
+function combine(what, how, remove = false)
+    ierr = Ref{Cint}()
+    ccall((:gmshViewCombine, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cchar}, Cint, Ptr{Cint}),
+          what, how, remove, ierr)
+    ierr[] != 0 && error("gmshViewCombine returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.view.probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[])
 
 Probe the view `tag` for its `value` at point (`x`, `y`, `z`). Return only the

@@ -4517,6 +4517,69 @@ GMSH_API void gmsh::view::getListData(const int tag,
 #endif
 }
 
+GMSH_API int gmsh::view::addAlias(const int refTag, const bool copyOptions,
+                                  const int tag)
+{
+  if(!_isInitialized()) { throw -1; }
+#if defined(HAVE_POST)
+  PView *ref = PView::getViewByTag(refTag);
+  if(!ref){
+    Msg::Error("Unknown view with tag %d", refTag);
+    throw 2;
+  }
+  PView *view = new PView(ref, copyOptions, tag);
+#if defined(HAVE_FLTK)
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+#endif
+  return view->getTag();
+#else
+  Msg::Error("Views require the post-processing module");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::view::copyOptions(const int refTag, const int tag)
+{
+  if(!_isInitialized()) { throw -1; }
+#if defined(HAVE_POST)
+  PView *ref = PView::getViewByTag(refTag);
+  if(!ref){
+    Msg::Error("Unknown view with tag %d", refTag);
+    throw 2;
+  }
+  PView *view = PView::getViewByTag(tag);
+  if(!view){
+    Msg::Error("Unknown view with tag %d", tag);
+    throw 2;
+  }
+  view->setOptions(ref->getOptions());
+#if defined(HAVE_FLTK)
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+#endif
+#else
+  Msg::Error("Views require the post-processing module");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::view::combine(const std::string &what,
+                                  const std::string &how,
+                                  const bool remove)
+{
+  if(!_isInitialized()) { throw -1; }
+#if defined(HAVE_POST)
+  bool time = (what == "steps") ? true : false; // "elements"
+  int ihow = (how == "all") ? 1 : (how == "name") ? 2 : 0; // "visible"
+  PView::combine(time, ihow, remove);
+#if defined(HAVE_FLTK)
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+#endif
+#else
+  Msg::Error("Views require the post-processing module");
+  throw -1;
+#endif
+}
+
 GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
                                 const double z, std::vector<double> &value,
                                 const int step, const int numComp,

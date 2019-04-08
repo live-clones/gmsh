@@ -1858,6 +1858,30 @@ GMSH_API void gmshViewGetListData(const int tag,
                                   double *** data, size_t ** data_n, size_t *data_nn,
                                   int * ierr);
 
+/* Add a post-processing view as an `alias' of the reference view with tag
+ * `refTag'. If `copyOptions' is set, copy the options of the reference view.
+ * If `tag' is positive use it (and remove the view with that tag if it
+ * already exists), otherwise associate a new tag. Return the view tag. */
+GMSH_API int gmshViewAddAlias(const int refTag,
+                              const int copyOptions,
+                              const int tag,
+                              int * ierr);
+
+/* Copy the options from the view with tag `refTag' to the view with tag
+ * `tag'. */
+GMSH_API void gmshViewCopyOptions(const int refTag,
+                                  const int tag,
+                                  int * ierr);
+
+/* Combine elements (if `what' == "elements") or steps (if `what' == "steps")
+ * of all views (`how' == "all"), all visible views (`how' == "visible") or
+ * all views having the same name (`how' == "name"). Remove original views if
+ * `remove' is set. */
+GMSH_API void gmshViewCombine(const char * what,
+                              const char * how,
+                              const int remove,
+                              int * ierr);
+
 /* Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only
  * the value at step `step' is `step' is positive. Return only values with
  * `numComp' if `numComp' is positive. Return the gradient of the `value' if

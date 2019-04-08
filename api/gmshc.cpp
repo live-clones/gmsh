@@ -2708,6 +2708,41 @@ GMSH_API void gmshViewGetListData(const int tag, char *** dataType, size_t * dat
   }
 }
 
+GMSH_API int gmshViewAddAlias(const int refTag, const int copyOptions, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::view::addAlias(refTag, copyOptions, tag);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
+GMSH_API void gmshViewCopyOptions(const int refTag, const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::view::copyOptions(refTag, tag);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshViewCombine(const char * what, const char * how, const int remove, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::view::combine(what, how, remove);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshViewProbe(const int tag, const double x, const double y, const double z, double ** value, size_t * value_n, const int step, const int numComp, const int gradient, const double tolerance, double * xElemCoord, size_t xElemCoord_n, double * yElemCoord, size_t yElemCoord_n, double * zElemCoord, size_t zElemCoord_n, int * ierr)
 {
   if(ierr) *ierr = 0;
