@@ -666,6 +666,17 @@ namespace gmsh { // Top-level functions
       if(ierr) throw ierr;
     }
 
+    // Set the `x', `y', `z' coordinates of a geometrical point.
+    inline void setCoordinates(const int tag,
+                               const double x,
+                               const double y,
+                               const double z)
+    {
+      int ierr = 0;
+      gmshModelSetCoordinates(tag, x, y, z, &ierr);
+      if(ierr) throw ierr;
+    }
+
     namespace mesh { // Per-model meshing functions
 
       // Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or

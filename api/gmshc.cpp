@@ -631,6 +631,17 @@ GMSH_API void gmshModelGetColor(const int dim, const int tag, int * r, int * g, 
   }
 }
 
+GMSH_API void gmshModelSetCoordinates(const int tag, const double x, const double y, const double z, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::setCoordinates(tag, x, y, z);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshGenerate(const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;

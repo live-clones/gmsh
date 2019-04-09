@@ -359,6 +359,13 @@ GMSH_API void gmshModelGetColor(const int dim,
                                 int * a,
                                 int * ierr);
 
+/* Set the `x', `y', `z' coordinates of a geometrical point. */
+GMSH_API void gmshModelSetCoordinates(const int tag,
+                                      const double x,
+                                      const double y,
+                                      const double z,
+                                      int * ierr);
+
 /* Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3). */
 GMSH_API void gmshModelMeshGenerate(const int dim,
                                     int * ierr);

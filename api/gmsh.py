@@ -1089,6 +1089,23 @@ class model:
             api_b_.value,
             api_a_.value)
 
+    @staticmethod
+    def setCoordinates(tag, x, y, z):
+        """
+        Set the `x', `y', `z' coordinates of a geometrical point.
+        """
+        ierr = c_int()
+        lib.gmshModelSetCoordinates(
+            c_int(tag),
+            c_double(x),
+            c_double(y),
+            c_double(z),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelSetCoordinates returned non-zero error code: ",
+                ierr.value)
+
 
     class mesh:
         """

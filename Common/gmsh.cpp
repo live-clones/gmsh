@@ -790,6 +790,19 @@ GMSH_API void gmsh::model::getColor(const int dim, const int tag, int &r,
   a = CTX::instance()->unpackAlpha(value);
 }
 
+GMSH_API void gmsh::model::setCoordinates(const int tag, const double x,
+                                         const double y, const double z)
+{
+  if(!_isInitialized()) { throw -1; }
+  GVertex *gv = GModel::current()->getVertexByTag(tag);
+  if(!gv) {
+    Msg::Error("%s does not exist", _getEntityName(0, tag).c_str());
+    throw 2;
+  }
+  GPoint p(x, y, z);
+  gv->setPosition(p);
+}
+
 // gmsh::model::mesh
 
 GMSH_API void gmsh::model::mesh::generate(const int dim)

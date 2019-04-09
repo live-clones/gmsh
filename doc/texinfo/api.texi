@@ -613,6 +613,18 @@ Get the color of the geometrical entity of dimension @code{dim} and tag
 -
 @end table
 
+@item setCoordinates
+Set the @code{x}, @code{y}, @code{z} coordinates of a geometrical point.
+
+@table @asis
+@item Input:
+@code{tag}, @code{x}, @code{y}, @code{z}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @end ftable
 
 @heading Module @code{/gmsh/model/mesh}

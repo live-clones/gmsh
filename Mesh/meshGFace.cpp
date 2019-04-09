@@ -1208,6 +1208,10 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     Msg::Error("The 1D mesh seems not to be forming a closed loop (%d boundary "
                "nodes are considered once)",
                boundary.size());
+    for(std::set<MVertex *, MVertexLessThanNum>::iterator it = boundary.begin();
+        it != boundary.end(); it++){
+      Msg::Debug("Remaining node %lu", (*it)->getNum());
+    }
     gf->meshStatistics.status = GFace::FAILED;
     return false;
   }

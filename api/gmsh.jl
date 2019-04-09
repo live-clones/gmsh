@@ -854,6 +854,20 @@ function getColor(dim, tag)
 end
 
 """
+    gmsh.model.setCoordinates(tag, x, y, z)
+
+Set the `x`, `y`, `z` coordinates of a geometrical point.
+"""
+function setCoordinates(tag, x, y, z)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelSetCoordinates, gmsh.lib), Cvoid,
+          (Cint, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
+          tag, x, y, z, ierr)
+    ierr[] != 0 && error("gmshModelSetCoordinates returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     module gmsh.model.mesh
 
 Per-model meshing functions

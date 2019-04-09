@@ -337,6 +337,12 @@ namespace gmsh { // Top-level functions
                            int & b,
                            int & a);
 
+    // Set the `x', `y', `z' coordinates of a geometrical point.
+    GMSH_API void setCoordinates(const int tag,
+                                 const double x,
+                                 const double y,
+                                 const double z);
+
     namespace mesh { // Per-model meshing functions
 
       // Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or

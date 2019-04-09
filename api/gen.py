@@ -182,6 +182,9 @@ model.add('setColor',doc,None,ivectorpair('dimTags'),iint('r'),iint('g'),iint('b
 doc = '''Get the color of the geometrical entity of dimension `dim' and tag `tag'.'''
 model.add('getColor',doc,None,iint('dim'),iint('tag'),oint('r'),oint('g'),oint('b'),oint('a'))
 
+doc = '''Set the `x', `y', `z' coordinates of a geometrical point.'''
+model.add('setCoordinates',doc,None,iint('tag'),idouble('x'),idouble('y'),idouble('z'))
+
 ################################################################################
 
 mesh = model.add_module('mesh','Per-model meshing functions')
