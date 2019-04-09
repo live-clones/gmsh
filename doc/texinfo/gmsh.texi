@@ -5581,8 +5581,8 @@ Gmsh is an automatic three-dimensional finite element mesh generator
 with built-in pre- and post-processing facilities. With Gmsh you can
 create or import 1D, 2D and 3D geometrical models, mesh them, launch
 external finite element solvers and visualize solutions. Gmsh can be
-used either as a stand-alone program (graphical or not) or as a C++
-library.
+used either as a stand-alone program (graphical or not) or as a library
+to integrate in C++, C, Python or Julia codes.
 
 @item What are the terms and conditions of use?
 
@@ -5623,7 +5623,9 @@ database} and a searchable archive of the Gmsh mailing list
 @enumerate
 @item Which OSes does Gmsh run on?
 
-Gmsh runs on Windows, Mac OS X, Linux and most Unix variants.
+Gmsh runs on Windows, Mac OS X, Linux and most Unix variants. Gmsh is
+also available as part of the ONELAB package on Android and iOS tablets
+and phones.
 
 @item Are there additional requirements to run Gmsh?
 
@@ -5634,9 +5636,7 @@ found at @url{http://www.mesa3d.org}.
 @item How do I compile Gmsh from the source code?
 
 You need cmake (@url{http://www.cmake.org}) and a C++ compiler. See
-@ref{Compiling the source code} and the
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/README.txt,README.txt}
-file in the top-level source directory for more information.
+@ref{Compiling the source code} for more information.
 
 @item Where does Gmsh save its configuration files?
 
@@ -5693,6 +5693,14 @@ guesses the format from the file extension, so you can just type
 @file{myfile.jpg} in the dialog and Gmsh will automatically create a JPEG
 image file.
 
+@item How save high-resolution images?
+
+You can specify the dimension in the dialog (e.g. set the width of the
+image to 5000 pixels; leaving one dimension negative will rescale using
+the natural aspect ratio), or through the @code{Print.Width} and
+@code{Print.Height} options. The maximum image size is graphics hardware
+dependent.
+
 @item How can I save MPEG, AVI, ..., animations?
 
 You can create simple MPEG animations by choosing MPEG as the format in
@@ -5725,16 +5733,17 @@ clipboard.
 @section Geometry module
 
 @enumerate
-@item Does Gmsh support NURBS curves/surfaces?
+@item Does Gmsh support trimmed NURBS surfaces?
 
 Yes, but only with the OpenCASCADE kernel.
 
-@item Gmsh is very slow when I use many transformations (Translate, Rotate, Symmetry, Extrude, etc. ). What's wrong?
+@item Gmsh is very slow when I use many transformations (Translate, Rotate, Symmetry, Extrude, etc.) with the built-in CAD kernel. What's wrong?
 
 The default behavior of Gmsh is to check and suppress all duplicate
-entities (points, curves and surfaces) each time a transformation command
-is issued. This can slow down things a lot if many transformations are
-performed. There are two solutions to this problem:
+entities (points, curves and surfaces) each time a transformation
+command is issued with the built-in CAD kernel. This can slow down
+things a lot if many transformations are performed. There are two
+solutions to this problem:
 @itemize
 @item
 you may save the unrolled geometry in another file (e.g. with gmsh
@@ -5755,15 +5764,27 @@ a list or tree browser, by tag, interactively, or per window).
 
 @item Can I edit STEP/IGES/BRep models?
 
-Yes. With the OpenCASCADE kernel (@code{SetFactory("OpenCASCADE");}),
-load the file (@code{Merge "file.step";} or @code{ShapeFromFile("file.step");})
-and add the relevant scripting commands after that to delete parts,
-create new parts or apply boolean operators.
+Yes: with the OpenCASCADE kernel (@code{SetFactory("OpenCASCADE");}),
+load the file (@code{Merge "file.step";} or
+@code{ShapeFromFile("file.step");}) and add the relevant scripting
+commands after that to delete parts, create new parts or apply boolean
+operators. See
+e.g. @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean/import.geo,demos/boolean/import.geo}.
+
+@item Why are there surfaces missing when I export a STEP as an unrolled .geo file?
+
+You should @emph{not} export STEP models as .geo files. By design, Gmsh
+never translates from one CAD format to another. The ``unrolled GEO''
+feature is there for unrolling complex GEO scripts. While it can indeed
+export a limited subset of geometrical entities created by other CAD
+kernels, it's there only for debugging purposes. If you want to modify a
+STEP model, see the previous question.
 
 @item How can I build modular geometries?
 
 Define common geometrical objects and options in separate files or using
-@code{Macro}, reusable in all your problem definition structures.
+@code{Macro}, reusable in all your problem definition structures. Or use
+the features of your language of choice and the Gmsh API.
 
 @item Some files take much more time to load with Gmsh 4 compared to Gmsh 3: what's happening?
 
@@ -5832,13 +5853,14 @@ Use `Optimize quality' in the mesh menu.
 
 @item Non-recombined 3D extruded meshes sometimes fail.
 
-The swapping algorithm is not very clever at the moment. Try to change
-the surface mesh a bit, or recombine your mesh to generate prisms or
-hexahedra instead of tetrahedra.
+The swapping algorithm is not very clever. Try to change the surface
+mesh a bit, or recombine your mesh to generate prisms or hexahedra
+instead of tetrahedra.
 
 @item Does Gmsh automatically couple unstructured tetrahedral meshes and structured hexahedral meshed using pyramids?
 
-Only in simple geometrical cases. We need your help to improve this.
+Yes, but only if pyramids need to be created on a single side of the
+quadrangular surface mesh.
 
 @item Can I explicitly assign region tags to extruded layers?
 
@@ -5852,10 +5874,11 @@ algorithm with smoothing (e.g., with @code{Mesh.Smoothing = 10}).
 
 @item Does Gmsh support curved elements?
 
-Yes, just choose the appropriate order in the mesh menu after the mesh is
-completed. High-order optimization tools are in development and also available
-in the mesh menu. You can select the order on the command line with e.g.
-@code{-order 2}.
+Yes, just choose the appropriate order in the mesh menu after the mesh
+is completed. High-order optimization tools are also available in the
+mesh menu. You can select the order on the command line with e.g.
+@code{-order 2}, and activcate high-order optization with
+@code{-optimize_ho}.
 
 @item Can I import an existing surface mesh in Gmsh and use it to build a 3D mesh?
 
@@ -5960,21 +5983,28 @@ API: see for example
 @item How do I integrate my own solver with Gmsh?
 
 Gmsh uses the ONELAB interface (@url{http://www.onelab.info}) to
-interact with external solvers. Have a look at the GetDP finite element
-solver (@url{http://getdp.info}) to see how this is done.
+interact with external solvers. See @ref{Solver module}.
 
 @item Can I launch Gmsh from my solver (instead of launching my solver from Gmsh) in order to monitor a solution?
 
-Sure. The simplest (but rather crude) approach if to re-launch Gmsh
-everytime you want to visualize something (a simple C program showing
-how to do this is given in
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/misc/callgmsh.c,utils/misc/callgmsh.c}). A
-better approach is to modify your program so that it can communicate
-with Gmsh over a socket (see ``How do I integrate my own solver with
-Gmsh?''  above; you can skip the option file creation). Then select
-`Always listen to incoming connection requests' in the solver option
-panel (or run gmsh with the @code{-listen} command line option) and Gmsh
-will always listen for your program on the Solver.SocketName socket.
+The simplest (but rather crude) approach if to re-launch Gmsh everytime
+you want to visualize something (a simple C program showing how to do
+this is given in
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/misc/callgmsh.c,utils/misc/callgmsh.c}).
+
+Another approach is to modify your program so that it can communicate
+with Gmsh through ONELAB over a socket, select `Always listen to
+incoming connection requests' in the solver option panel (or run gmsh
+with the @code{-listen} command line option), and Gmsh will always
+listen for your program on the @code{Solver.SocketName} socket.
+
+Using the Gmsh API, you can also directly embed Gmsh in your own solver,
+and use ONELAB for interactive parameter definition and
+modification. See
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py,custom_gui.py}
+and
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp,custom_gui.cpp})
+for examples.
 @end enumerate
 
 @c -------------------------------------------------------------------------
