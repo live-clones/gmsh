@@ -39,6 +39,8 @@ int GModel::readSTL(const std::string &name, double tolerance)
     return 0;
   }
 
+  //SPoint3 p0(1.9e6, 4e6, 0);
+
   bool binary = strncmp(buffer, "solid", 5) && strncmp(buffer, "SOLID", 5);
 
   // ASCII STL
@@ -73,6 +75,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
         double x, y, z;
         if(sscanf(buffer, "%s %lf %lf %lf", s1, &x, &y, &z) != 4) break;
         SPoint3 p(x, y, z);
+        //p -= p0;
         points.back().push_back(p);
         bbox += p;
       }
@@ -123,6 +126,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
             if(swap) SwapBytes((char *)xyz, sizeof(float), 12);
             for(int j = 0; j < 3; j++) {
               SPoint3 p(xyz[3 + 3 * j], xyz[3 + 3 * j + 1], xyz[3 + 3 * j + 2]);
+              //p -= p0;
               points.back().push_back(p);
               bbox += p;
             }
