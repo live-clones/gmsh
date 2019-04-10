@@ -909,50 +909,14 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
   else
     fprintf(fp, "$NOD\n");
 
-//  fprintf(fp, "%d\n", numVertices);
-//
-//  std::vector<GEntity *> entities;
-//  getEntities(entities);
-//  for(unsigned int i = 0; i < entities.size(); i++)
-//    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
-//      entities[i]->mesh_vertices[j]->writeMSH2(fp, binary, saveParametric,
-//                                               scalingFactor);
+  fprintf(fp, "%d\n", numVertices);
 
-  std::set<MVertex*> vertSet;
-  for(riter it = firstRegion(); it != lastRegion(); ++it) {
-    for(std::size_t i = 0; i < (*it)->tetrahedra.size(); ++i) {
-      MElement *el = (*it)->tetrahedra[i];
-      int num = el->getNum();
-      if (num != 413 && num != 1314 && num != 1463 && num != 758) continue;
-      for(std::size_t j = 0; j < el->getNumVertices(); ++j)
-        vertSet.insert(el->getVertex(j));
-    }
-    for(std::size_t i = 0; i < (*it)->hexahedra.size(); ++i) {
-      MElement *el = (*it)->hexahedra[i];
-      int num = el->getNum();
-      if (num != 413 && num != 1314 && num != 1463 && num != 758) continue;
-      for(std::size_t j = 0; j < el->getNumVertices(); ++j)
-        vertSet.insert(el->getVertex(j));
-    }
-    for(std::size_t i = 0; i < (*it)->prisms.size(); ++i) {
-      MElement *el = (*it)->prisms[i];
-      int num = el->getNum();
-      if (num != 413 && num != 1314 && num != 1463 && num != 758) continue;
-      for(std::size_t j = 0; j < el->getNumVertices(); ++j)
-        vertSet.insert(el->getVertex(j));
-    }
-    for(std::size_t i = 0; i < (*it)->pyramids.size(); ++i) {
-      MElement *el = (*it)->pyramids[i];
-      int num = el->getNum();
-      if (num != 413 && num != 1314 && num != 1463 && num != 758) continue;
-      for(std::size_t j = 0; j < el->getNumVertices(); ++j)
-        vertSet.insert(el->getVertex(j));
-    }
-  }
-  fprintf(fp, "%d\n", vertSet.size());
-  for(std::set<MVertex*>::iterator it = vertSet.begin(); it != vertSet.end(); ++it) {
-    (*it)->writeMSH2(fp, binary, saveParametric, scalingFactor);
-  }
+  std::vector<GEntity *> entities;
+  getEntities(entities);
+  for(std::size_t i = 0; i < entities.size(); i++)
+    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
+      entities[i]->mesh_vertices[j]->writeMSH2(fp, binary, saveParametric,
+                                               scalingFactor);
 
   if(binary) fprintf(fp, "\n");
 
