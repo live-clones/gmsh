@@ -13,10 +13,12 @@ HierarchicalBasisH1Tetra::HierarchicalBasisH1Tetra(int order)
 {
   _nvertex = 4;
   _nedge = 6;
-  _nface = 4;
+  _nfaceTri = 4;
+  _nfaceQuad = 0;
   _nVertexFunction = 4;
   _nEdgeFunction = 6 * order - 6;
-  _nFaceFunction = 2 * (order - 2) * (order - 1);
+  _nQuadFaceFunction = 0;
+  _nTriFaceFunction = 2 * (order - 2) * (order - 1);
   _nBubbleFunction = (order - 1) * (order - 2) * (order - 3) / 6;
   _pb = order;
   for(int i = 0; i < 4; i++) { _pOrderFace[i] = order; }
@@ -100,7 +102,7 @@ void HierarchicalBasisH1Tetra::generateBasis(double const &u, double const &v,
   edgeProduct[3] = lambda4 * lambda2;
   edgeProduct[4] = lambda4 * lambda1;
   edgeProduct[5] = lambda4 * lambda3;
-  std::vector<double> faceProduct(_nface);
+  std::vector<double> faceProduct(_nfaceTri);
   faceProduct[0] = edgeProduct[0] * lambda1;
   faceProduct[1] = edgeProduct[0] * lambda4;
   faceProduct[2] = edgeProduct[2] * lambda4;
@@ -124,7 +126,7 @@ void HierarchicalBasisH1Tetra::generateBasis(double const &u, double const &v,
   }
   // face shape functions:
   int indexFaceFunction = 0;
-  for(int iFace = 0; iFace < _nface; iFace++) {
+  for(int iFace = 0; iFace < _nfaceTri; iFace++) {
     int indexVectorTarget1 = 0;
     int indexVectorTarget2 = 0;
     switch(iFace) {
@@ -425,12 +427,12 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
     dEdgeProduct[5][i] =
       jacob * (dlambda4[i] * lambda3 + lambda4 * dlambda3[i]);
   }
-  std::vector<double> faceProduct(_nface);
+  std::vector<double> faceProduct(_nfaceTri);
   faceProduct[0] = edgeProduct[0] * lambda1;
   faceProduct[1] = edgeProduct[0] * lambda4;
   faceProduct[2] = edgeProduct[2] * lambda4;
   faceProduct[3] = edgeProduct[1] * lambda4;
-  std::vector<std::vector<double> > dfaceProduct(_nface,
+  std::vector<std::vector<double> > dfaceProduct(_nfaceTri,
                                                  std::vector<double>(3));
   for(int i = 0; i < 3; i++) {
     dfaceProduct[0][i] =
@@ -463,7 +465,7 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
   }
   // face shape functions:
   int indexFaceFunction = 0;
-  for(int iFace = 0; iFace < _nface; iFace++) {
+  for(int iFace = 0; iFace < _nfaceTri; iFace++) {
     int indexVectorTarget1 = 0;
     int indexVectorTarget2 = 0;
     switch(iFace) {

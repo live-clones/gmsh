@@ -13,10 +13,12 @@ HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int pf1, int pf2, int pe0,
 {
   _nvertex = 4;
   _nedge = 4;
-  _nface = 1;
+  _nfaceQuad = 1;
+  _nfaceTri = 0;
   _nVertexFunction = 4;
   _nEdgeFunction = pe0 + pe1 + pe2 + pe3 - 4;
-  _nFaceFunction = (pf1 - 1) * (pf2 - 1);
+  _nQuadFaceFunction = (pf1 - 1) * (pf2 - 1);
+  _nTriFaceFunction = 0;
   _nBubbleFunction = 0;
   _pf1 = pf1;
   _pf2 = pf2;
@@ -34,10 +36,12 @@ HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int order)
 {
   _nvertex = 4;
   _nedge = 4;
-  _nface = 1;
+  _nfaceQuad = 1;
+  _nfaceTri = 0;
   _nVertexFunction = 4;
   _nEdgeFunction = 4 * order - 4;
-  _nFaceFunction = (order - 1) * (order - 1);
+  _nQuadFaceFunction = (order - 1) * (order - 1);
+  _nTriFaceFunction = 0;
   _nBubbleFunction = 0;
   _pf1 = order;
   _pf2 = order;
@@ -50,7 +54,7 @@ HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int order)
 HierarchicalBasisH1Quad::~HierarchicalBasisH1Quad() {}
 
 double HierarchicalBasisH1Quad::_affineCoordinate(int const &j, double const &u,
-                                                 double const &v)
+                                                  double const &v)
 {
   switch(j) {
   case(1): return 0.5 * (1 + u);
@@ -83,7 +87,7 @@ void HierarchicalBasisH1Quad::generateBasis(double const &u, double const &v,
   for(int k = 2; k <= minpe0pe2; k++) {
     double lk = OrthogonalPoly::EvalLobatto(k, u);
     double phie0 = lambda4 * lk;
-    double phie2= lambda3 * lk;
+    double phie2 = lambda3 * lk;
     int const2 = k - 2;
     edgeBasis[const2] = phie0;
     edgeBasis[k + const1] = phie2;
@@ -113,7 +117,7 @@ void HierarchicalBasisH1Quad::generateBasis(double const &u, double const &v,
   else {
     for(int k = minpe0pe2 + 1; k <= _pOrderEdge[2]; k++) {
       double lk = OrthogonalPoly::EvalLobatto(k, u);
-      double phie2= lambda3 * lk;
+      double phie2 = lambda3 * lk;
       edgeBasis[k + const1] = phie2;
       int iterator = 0;
       int const3 = _pf2 - 1;
@@ -138,8 +142,7 @@ void HierarchicalBasisH1Quad::generateBasis(double const &u, double const &v,
   // edge 1 & 3 shape functions and a part of  face functions (all lk(v)) :
   int minpe1pe3 = std::min(_pOrderEdge[1], _pOrderEdge[3]);
   int const3 = _pOrderEdge[0] - 3;
-  int const4 =
-    _pOrderEdge[0] + _pOrderEdge[1] + _pOrderEdge[2] - 5;
+  int const4 = _pOrderEdge[0] + _pOrderEdge[1] + _pOrderEdge[2] - 5;
   for(int k = 2; k <= minpe1pe3; k++) {
     double lk = OrthogonalPoly::EvalLobatto(k, v);
     double phie3 = lambda2 * lk;
@@ -267,8 +270,8 @@ void HierarchicalBasisH1Quad::generateGradientBasis(
     for(int k = minpe0pe2 + 1; k <= _pOrderEdge[2]; k++) {
       double lk = OrthogonalPoly::EvalLobatto(k, u);
       double dlk = OrthogonalPoly::EvalDLobatto(k, u);
-      double  dphie2U = lambda3 * dlk;
-      double  dphie2V = dlambda3 * lk;
+      double dphie2U = lambda3 * dlk;
+      double dphie2V = dlambda3 * lk;
       gradientEdge[k + const1][0] = dphie2U;
       gradientEdge[k + const1][1] = dphie2V;
       int const3 = _pf2 - 1;
@@ -297,8 +300,7 @@ void HierarchicalBasisH1Quad::generateGradientBasis(
   // edge 1 & 3 shape functions and a part of  face functions (all lk(v)) :
   int minpe1pe3 = std::min(_pOrderEdge[1], _pOrderEdge[3]);
   int const3 = _pOrderEdge[0] - 3;
-  int const4 =
-    _pOrderEdge[0] + _pOrderEdge[1] + _pOrderEdge[2] - 5;
+  int const4 = _pOrderEdge[0] + _pOrderEdge[1] + _pOrderEdge[2] - 5;
   for(int k = 2; k <= minpe1pe3; k++) {
     double lk = OrthogonalPoly::EvalLobatto(k, v);
     double dlk = OrthogonalPoly::EvalDLobatto(k, v);
@@ -371,8 +373,8 @@ void HierarchicalBasisH1Quad::generateGradientBasis(
 }
 
 void HierarchicalBasisH1Quad::orientEdge(int const &flagOrientation,
-                                            int const &edgeNumber,
-                                            std::vector<double> &edgeBasis)
+                                         int const &edgeNumber,
+                                         std::vector<double> &edgeBasis)
 {
   if(flagOrientation == -1) {
     int constant1;
@@ -388,19 +390,17 @@ void HierarchicalBasisH1Quad::orientEdge(int const &flagOrientation,
     } break;
     case(2): {
       constant1 = _pOrderEdge[0] + _pOrderEdge[1] - 2;
-      constant2 =
-        _pOrderEdge[1] + _pOrderEdge[0] + _pOrderEdge[2] - 4;
+      constant2 = _pOrderEdge[1] + _pOrderEdge[0] + _pOrderEdge[2] - 4;
     } break;
     case(3): {
-      constant1 =
-        _pOrderEdge[0] + _pOrderEdge[1] + _pOrderEdge[2] - 3;
-      constant2 = _pOrderEdge[1] + _pOrderEdge[0] +
-                  _pOrderEdge[2] + _pOrderEdge[3] - 5;
+      constant1 = _pOrderEdge[0] + _pOrderEdge[1] + _pOrderEdge[2] - 3;
+      constant2 =
+        _pOrderEdge[1] + _pOrderEdge[0] + _pOrderEdge[2] + _pOrderEdge[3] - 5;
     } break;
     default: throw std::string("edgeNumber  must be : 0<=edgeNumber<=3");
     }
     for(int k = constant1; k <= constant2; k++) {
-      if((k-constant1) % 2 != 0) { edgeBasis[k] = edgeBasis[k] * (-1); }
+      if((k - constant1) % 2 != 0) { edgeBasis[k] = edgeBasis[k] * (-1); }
     }
   }
 }
@@ -423,19 +423,17 @@ void HierarchicalBasisH1Quad::orientEdgeGrad(
     } break;
     case(2): {
       constant1 = _pOrderEdge[0] + _pOrderEdge[1] - 2;
-      constant2 =
-        _pOrderEdge[1] + _pOrderEdge[0] + _pOrderEdge[2] - 4;
+      constant2 = _pOrderEdge[1] + _pOrderEdge[0] + _pOrderEdge[2] - 4;
     } break;
     case(3): {
-      constant1 =
-        _pOrderEdge[0] + _pOrderEdge[1] + _pOrderEdge[2] - 3;
-      constant2 = _pOrderEdge[1] + _pOrderEdge[0] +
-                  _pOrderEdge[2] + _pOrderEdge[3] - 5;
+      constant1 = _pOrderEdge[0] + _pOrderEdge[1] + _pOrderEdge[2] - 3;
+      constant2 =
+        _pOrderEdge[1] + _pOrderEdge[0] + _pOrderEdge[2] + _pOrderEdge[3] - 5;
     } break;
     default: throw std::string("edgeNumber  must be : 0<=edgeNumber<=3");
     }
     for(int k = constant1; k <= constant2; k++) {
-      if((k-constant1) % 2 != 0) {
+      if((k - constant1) % 2 != 0) {
         gradientEdge[k][0] = gradientEdge[k][0] * (-1);
         gradientEdge[k][1] = gradientEdge[k][1] * (-1);
       }

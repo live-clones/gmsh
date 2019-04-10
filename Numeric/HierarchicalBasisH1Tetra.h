@@ -4,7 +4,8 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
-// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel Segeth ,
+// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
+// Segeth ,
 //                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
 #ifndef HIERARCHICAL_BASIS_H1_TETRA_H
@@ -69,21 +70,19 @@ public:
                         std::vector<std::vector<double> > &gradientBubble);
 
   virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
-                             std::vector<double> &edgeBasis);
+                          std::vector<double> &edgeBasis);
 
-  virtual void
-  orientEdgeGrad(int const &flagOrientation, int const &edgeNumber,
-                    std::vector<std::vector<double> > &gradientEdge);
+  virtual void orientEdgeGrad(int const &flagOrientation, int const &edgeNumber,
+                              std::vector<std::vector<double> > &gradientEdge);
 
   virtual void orientFace(double const &u, double const &v, double const &w,
-                             int const &flag1, int const &flag2,
-                             int const &flag3, int const &faceNumber,
-                             std::vector<double> &faceBasis);
-  virtual void
-  orientFaceGrad(double const &u, double const &v, double const &w,
-                    int const &flag1, int const &flag2, int const &flag3,
-                    int const &faceNumber,
-                    std::vector<std::vector<double> > &gradientFace);
+                          int const &flag1, int const &flag2, int const &flag3,
+                          int const &faceNumber,
+                          std::vector<double> &faceBasis);
+  virtual void orientFaceGrad(double const &u, double const &v, double const &w,
+                              int const &flag1, int const &flag2,
+                              int const &flag3, int const &faceNumber,
+                              std::vector<std::vector<double> > &gradientFace);
 
 private:
   int _pb; // bubble function order

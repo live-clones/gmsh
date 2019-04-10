@@ -4,9 +4,9 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
-// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel Segeth ,
+// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
+// Segeth ,
 //                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
-
 
 #include "HierarchicalBasisH1Line.h"
 
@@ -14,12 +14,14 @@ HierarchicalBasisH1Line::HierarchicalBasisH1Line(int pe)
 {
   _nvertex = 2;
   _nedge = 1;
-  _nface = 0;
+  _nfaceTri = 0;
+  _nfaceQuad = 0;
   _nVertexFunction = 2;
   _nEdgeFunction = (pe - 1);
-  _nFaceFunction = 0;
+  _nQuadFaceFunction = 0;
+  _nTriFaceFunction = 0;
   _nBubbleFunction = 0;
-  _pe=pe;
+  _pe = pe;
 }
 
 HierarchicalBasisH1Line::~HierarchicalBasisH1Line() {}
@@ -64,10 +66,9 @@ void HierarchicalBasisH1Line::generateGradientBasis(
   double dlambda1 = 0.5;
   double dlambda2 = -0.5;
   // vertex gradient functions:
-  gradientVertex[0][0] =  dlambda2;
-  gradientVertex[1][0] =  dlambda1;
+  gradientVertex[0][0] = dlambda2;
+  gradientVertex[1][0] = dlambda1;
   for(int k = 2; k <= _pe; k++) {
-    gradientEdge[k - 2][0] =
-      OrthogonalPoly::EvalDLobatto(k, u);
+    gradientEdge[k - 2][0] = OrthogonalPoly::EvalDLobatto(k, u);
   }
 }
