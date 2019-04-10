@@ -8,17 +8,17 @@
 #if defined(HAVE_MESH)
 
 #include "AnalyseCurvedMesh.h"
+#include "qualityMeasuresJacobian.h"
 #include "OS.h"
 #include "Context.h"
-#if defined(HAVE_OPENGL)
-#include "drawContext.h"
-#endif
 #include "PView.h"
 #include "GModel.h"
 #include "MElement.h"
 #include <sstream>
 #include <fstream>
-#include "qualityMeasuresJacobian.h"
+#if defined(HAVE_OPENGL)
+#include "drawContext.h"
+#endif
 #if defined(HAVE_VISUDEV)
 #include "BasisFactory.h"
 #endif
@@ -392,7 +392,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinIGE(int dim)
   for(std::size_t i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
     if(el->getDim() != dim) continue;
-    if(_data[i].minJ() <= 0 && _data[i].maxJ() > 0) {
+    if(_data[i].minJ() <= 0 && _data[i].maxJ() >= 0) {
       _data[i].setMinS(0);
     }
     else {
@@ -413,7 +413,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinICN(int dim)
   for(std::size_t i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
     if(el->getDim() != dim) continue;
-    if(_data[i].minJ() <= 0 && _data[i].maxJ() > 0) {
+    if(_data[i].minJ() <= 0 && _data[i].maxJ() >= 0) {
       _data[i].setMinI(0);
     }
     else {

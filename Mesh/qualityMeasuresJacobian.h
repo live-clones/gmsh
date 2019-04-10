@@ -18,13 +18,16 @@ class MElement;
 namespace jacobianBasedQuality {
 
   void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
-                                 const fullMatrix<double> *normals = NULL);
+                                 const fullMatrix<double> *normals = NULL,
+                                 bool debug = false);
   double minIGEMeasure(MElement *el, bool knownValid = false,
                        bool reversedOk = false,
-                       const fullMatrix<double> *normals = NULL);
+                       const fullMatrix<double> *normals = NULL,
+                       bool debug = false);
   double minICNMeasure(MElement *el, bool knownValid = false,
                        bool reversedOk = false,
-                       const fullMatrix<double> *normals = NULL);
+                       const fullMatrix<double> *normals = NULL,
+                       bool debug = false);
   void sampleJacobianDeterminant(MElement *el, int order, double &min,
                                  double &max,
                                  const fullMatrix<double> *normals = NULL);
@@ -35,6 +38,10 @@ namespace jacobianBasedQuality {
                                  const fullMatrix<double> *normals = NULL);
   void sampleIGEMeasure(MElement *el, int order, fullVector<double> &ige);
   void sampleICNMeasure(MElement *el, int order, fullVector<double> &icn);
+
+  // For regression tests:
+  void testAllMeasuresAllElements();
+  void testAllMeasures(MElement *el, const fullMatrix<double> *normals = NULL);
 
   class _coefData {
   protected:
@@ -152,8 +159,8 @@ namespace jacobianBasedQuality {
                                bool lower, bool positiveDenom = true);
 
   void _subdivideDomains(std::vector<_coefData *> &domains,
-                         bool alsoMax = true);
-  double _getMinAndDeleteDomains(std::vector<_coefData *> &domains);
+                         bool alsoMax = true, bool debug = false);
+  double _getMinAndDeleteDomains(std::vector<_coefData *> &domains, double min); //FIXMEDEBUG min argument
 
 } // namespace jacobianBasedQuality
 

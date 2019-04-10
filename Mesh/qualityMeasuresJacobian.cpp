@@ -12,6 +12,7 @@
 #include "Numeric.h"
 
 // For debugging
+#include "GModel.h"
 #include <sstream>
 #include <iomanip>
 #include "pointsGenerators.h"
@@ -343,7 +344,8 @@ namespace jacobianBasedQuality {
   }
 
   void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
-                                 const fullMatrix<double> *normals)
+                                 const fullMatrix<double> *normals,
+                                 bool debug)
   {
     const JacobianBasis *jfs = el->getJacobianFuncSpace();
     if(!jfs) {
@@ -393,7 +395,7 @@ namespace jacobianBasedQuality {
     //  double tm2 = Cpu() - time;
     //  std::cout << "time new " << tm2 << " (" << tm2/N << ")" << std::endl;
 
-    _subdivideDomains(domains);
+    _subdivideDomains(domains, true, debug);
 
     double mmin, mmax;
     sampleJacobianDeterminant(el, 10, mmin, mmax, normals);
@@ -434,20 +436,14 @@ namespace jacobianBasedQuality {
   }
 
   double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk,
-                       const fullMatrix<double> *normals)
+                       const fullMatrix<double> *normals, bool debug)
   {
-    bool isReversed = false;
     if(!knownValid) {
       // Computation of the measure should never
       // be performed to invalid elements (for which the measure is 0).
       double jmin, jmax;
       minMaxJacobianDeterminant(el, jmin, jmax, normals);
-      if(jmax < 0) {
-        if(!reversedOk) return 0;
-        isReversed = true;
-      }
-      else if(jmin <= 0)
-        return 0;
+      if((jmin <= 0 && jmax >=0) || (jmax < 0 && !reversedOk)) return 0;
     }
 
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
@@ -465,7 +461,8 @@ namespace jacobianBasedQuality {
     fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
     {
       jacBasis->getSignedJacobian(nodesXYZ, coeffDetLag, normals);
-      if(isReversed) coeffDetLag.scale(-1);
+      // If coeffDetLag(0) is negative, then all coefficients are negative
+      if(coeffDetLag(0) < 0) coeffDetLag.scale(-1);
 
       coeffDetBez.resize(jacBasis->getNumJacNodes());
       jacBasis->lag2Bez(coeffDetLag, coeffDetBez);
@@ -491,7 +488,7 @@ namespace jacobianBasedQuality {
       coeffDetBez, coeffMatBez, jacBasis->getBezier(), gradBasis->getBezier(),
       0, el->getType(), bezDet, bezMat));
 
-    _subdivideDomains(domains, false);
+    _subdivideDomains(domains, false, debug);
     //  if (domains.size()/7 > 500) {//fordebug
     //    Msg::Info("S too much subdivision: %d (el %d, type %d, tag %d)",
     //        domains.size()/7, el->getNum(), el->getType(),
@@ -502,24 +499,18 @@ namespace jacobianBasedQuality {
     sampleIGEMeasure(el, 10, mmin, mmax);
     std::cout << "sampled: " << mmin << " " << mmax << std::endl;
 
-    return _getMinAndDeleteDomains(domains);
+    return _getMinAndDeleteDomains(domains, mmin);
   }
 
   double minICNMeasure(MElement *el, bool knownValid, bool reversedOk,
-                       const fullMatrix<double> *normals)
+                       const fullMatrix<double> *normals, bool debug)
   {
-    bool isReversed = false;
     if(!knownValid) {
       // Computation of the measure should never
       // be performed to invalid elements (for which the measure is 0).
       double jmin, jmax;
       minMaxJacobianDeterminant(el, jmin, jmax, normals);
-      if(jmax < 0) {
-        if(!reversedOk) return 0;
-        isReversed = true;
-      }
-      else if(jmin <= 0)
-        return 0;
+      if((jmin <= 0 && jmax >=0) || (jmax < 0 && !reversedOk)) return 0;
     }
 
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
@@ -537,7 +528,8 @@ namespace jacobianBasedQuality {
     fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
     {
       jacBasis->getSignedIdealJacobian(nodesXYZ, coeffDetLag, normals);
-      if(isReversed) coeffDetLag.scale(-1);
+      // If coeffDetLag(0) is negative, then all coefficients are negative
+      if(coeffDetLag(0) < 0) coeffDetLag.scale(-1);
 
       coeffDetBez.resize(jacBasis->getNumJacNodes());
       jacBasis->lag2Bez(coeffDetLag, coeffDetBez);
@@ -563,7 +555,7 @@ namespace jacobianBasedQuality {
                                         jacBasis->getBezier(),
                                         gradBasis->getBezier(), 0, el->getDim(), bezDet, bezMat));
 
-    _subdivideDomains(domains, false);
+    _subdivideDomains(domains, false, debug);
     //  if (domains.size()/7 > 500) {//fordebug
     //    Msg::Info("I too much subdivision: %d (el %d, type %d, tag %d)",
     //               domains.size()/7, el->getNum(), el->getType(),
@@ -574,7 +566,7 @@ namespace jacobianBasedQuality {
     sampleICNMeasure(el, 10, mmin, mmax);
     std::cout << "sampled: " << mmin << " " << mmax << std::endl;
 
-    return _getMinAndDeleteDomains(domains);
+    return _getMinAndDeleteDomains(domains, mmin);
   }
 
   void sampleJacobianDeterminant(MElement *el, int deg, double &min,
@@ -740,7 +732,11 @@ namespace jacobianBasedQuality {
   bool _coefDataJac::boundsOk(double minL, double maxL) const
   {
     double tol = std::max(std::abs(minL), std::abs(maxL)) * 1e-7; //FIXMEDEBUG
-    return (minL <= 0 || _minB2 > 0) && minL - _minB2 < tol && _maxB2 - maxL < tol;
+    return (minL <= 0 || _minB2 > 0) &&
+           (maxL >= 0 || _maxB2 < 0) &&
+           minL - _minB2 < tol &&
+           _maxB2 - maxL < tol;
+    // NB: First condition implies minL and minB both positive or both negative
   }
 
   void _coefDataJac::getSubCoeff(std::vector<_coefData *> &v) const
@@ -1054,6 +1050,9 @@ namespace jacobianBasedQuality {
       // rational function and summing the three bounds. This is done for
       // TYPE_TET and TYPE_PYR. In order to do that for triangles, it is
       // needed to implement raising bezier coefficient from different spaces.
+      // If computation of sharp bounds is implemented, change also function
+      // _getMinAndDeleteDomains(..) so that it returns minB instead of some
+      // combination of minB and minL.
       return cTri * result / 3;
 
     case TYPE_HEX:
@@ -1346,13 +1345,13 @@ namespace jacobianBasedQuality {
   // Miscellaneous
   template <typename Comp>
   void _subdivideDomainsMinOrMax(std::vector<_coefData *> &domains,
-                                 double &minL, double &maxL)
+                                 double &minL, double &maxL, bool debug)
   {
     std::vector<_coefData *> subs;
     make_heap(domains.begin(), domains.end(), Comp());
     int k = 0;
     const int max_subdivision = 1000;
-    while(!domains[0]->boundsOk(minL, maxL) && k++ < max_subdivision) {
+    while(!domains[0]->boundsOk(minL, maxL) && k+1 < max_subdivision) {
       _coefData *cd = domains[0];
       pop_heap(domains.begin(), domains.end(), Comp());
       domains.pop_back();
@@ -1366,14 +1365,17 @@ namespace jacobianBasedQuality {
         domains.push_back(subs[i]);
         push_heap(domains.begin(), domains.end(), Comp());
       }
+      ++k;
     }
-    if(k > max_subdivision) {
-      Msg::Error("Max subdivision (%d) (size %d)", max_subdivision,
+    if (debug) { std::cout << "Number of subbdivisions: " << k << std::endl; }
+    else if(k == max_subdivision) {
+      Msg::Error("Max subdivision (%d) (size domains %d)", max_subdivision,
                  domains.size());
     }
   }
 
-  void _subdivideDomains(std::vector<_coefData *> &domains, bool alsoMax)
+  void _subdivideDomains(std::vector<_coefData *> &domains, bool alsoMax,
+                         bool debug)
   {
     if(domains.empty()) {
       Msg::Warning("empty vector in Bezier subdivision, nothing to do");
@@ -1386,11 +1388,12 @@ namespace jacobianBasedQuality {
       maxL = std::max(maxL, domains[i]->maxL2());
     }
 
-    _subdivideDomainsMinOrMax<_lessMinB>(domains, minL, maxL);
-    if (alsoMax) _subdivideDomainsMinOrMax<_lessMaxB>(domains, minL, maxL);
+    _subdivideDomainsMinOrMax<_lessMinB>(domains, minL, maxL, debug);
+    if (alsoMax)
+      _subdivideDomainsMinOrMax<_lessMaxB>(domains, minL, maxL, debug);
   }
 
-  double _getMinAndDeleteDomains(std::vector<_coefData *> &domains)
+  double _getMinAndDeleteDomains(std::vector<_coefData *> &domains, double min)
   {
     std::cout << "size domains " << domains.size() << std::endl;
     double minB = domains[0]->minB();
@@ -1414,6 +1417,14 @@ namespace jacobianBasedQuality {
     std::cout << "minMeasure: " << minB << " vs " << minB2 << " + " << minL
               << " vs " << minL2 << std::endl;
     double fact = .5 * (minB + minL);
+    // This is done because, for triangles and prisms, currently, the
+    // computation of bounds is not sharp. It can happen than the IGE measure
+    // is very close to 1 everywhere but that the bound is close to 1 only
+    // after a huge amount of subdivision. In this case, it is better to
+    // return minL instead of minB. The best solution would be to implement
+    // sharp bounds for triangles and prisms, see function
+    // _coefDataIGE::_computeLowerBound2(..). If it is done, change this to
+    // return minB.
     return fact * minL + (1 - fact) * minB;
   }
 
@@ -1471,6 +1482,70 @@ namespace jacobianBasedQuality {
       else
         return lowerBound;
     }
+  }
+
+  void testAllMeasuresAllElements()
+  {
+    GModel *m = GModel::current();
+    std::set<GEntity *, GEntityLessThan> entities;
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
+      entities.insert(*it);
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
+      entities.insert(*it);
+    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
+      entities.insert(*it);
+
+    std::set<GEntity *, GEntityLessThan>::iterator it;
+    for(it = entities.begin(); it != entities.end(); ++it) {
+      unsigned num = (*it)->getNumMeshElements();
+      for(unsigned i = 0; i < num; ++i) {
+        MElement *el = (*it)->getMeshElement(i);
+        testAllMeasures(el);
+      }
+    }
+  }
+
+  void testAllMeasures(MElement *el, const fullMatrix<double> *normals)
+  {
+    static int orderSampling = 50;
+    static double tol = 1e-5;
+    double minSampled, maxSampled, minAlgo, maxAlgo;
+    std::cout << std::endl;
+    std::cout << "Element #" << el->getNum() << " (type: " << el->getType();
+    std::cout << ", " << el->getTypeForMSH() << ")" << std::endl;
+
+    sampleJacobianDeterminant(el, orderSampling, minSampled, maxSampled, normals);
+    minMaxJacobianDeterminant(el, minAlgo, maxAlgo, normals, true);
+    std::cout << "JAC sampled: " << minSampled << " " << maxSampled;
+    std::cout << " v.s. computed: " << minAlgo << " " << maxAlgo << std::endl;
+    if (minSampled < minAlgo * (1-tol) || maxSampled > maxAlgo * (1+tol)) {
+      std::cout << "ERROR sampled measure outside the bounds" << std::endl;
+      return;
+    }
+
+    if (minAlgo <= 0 && maxAlgo >= 0) {
+      std::cout << "Invalid" << std::endl;
+      return;
+    }
+
+    sampleIGEMeasure(el, orderSampling, minSampled, maxSampled);
+    minAlgo = minIGEMeasure(el, true, true, normals, true);
+    std::cout << "IGE sampled: " << minSampled << " " << maxSampled;
+    std::cout << " v.s. computed: " << minAlgo << " -" << std::endl;
+    if (minSampled < minAlgo * (1-tol)) {
+      std::cout << "ERROR sampled measure smaller than the bound" << std::endl;
+      return;
+    }
+
+    sampleICNMeasure(el, orderSampling, minSampled, maxSampled);
+    minAlgo = minICNMeasure(el, true, true, normals, true);
+    std::cout << "ICN sampled: " << minSampled << " " << maxSampled;
+    std::cout << " v.s. computed: " << minAlgo << " -" << std::endl;
+    if (minSampled < minAlgo * (1-tol)) {
+      std::cout << "ERROR sampled measure smaller than the bound" << std::endl;
+      return;
+    }
+    std::cout << "GOOD" << std::endl;
   }
 
 } // end namespace jacobianBasedQuality
