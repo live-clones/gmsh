@@ -499,7 +499,7 @@ namespace jacobianBasedQuality {
     sampleIGEMeasure(el, 10, mmin, mmax);
     std::cout << "sampled: " << mmin << " " << mmax << std::endl;
 
-    return _getMinAndDeleteDomains(domains, mmin);
+    return _getMinAndDeleteDomains(domains);
   }
 
   double minICNMeasure(MElement *el, bool knownValid, bool reversedOk,
@@ -566,7 +566,7 @@ namespace jacobianBasedQuality {
     sampleICNMeasure(el, 10, mmin, mmax);
     std::cout << "sampled: " << mmin << " " << mmax << std::endl;
 
-    return _getMinAndDeleteDomains(domains, mmin);
+    return _getMinAndDeleteDomains(domains);
   }
 
   void sampleJacobianDeterminant(MElement *el, int deg, double &min,
@@ -1393,7 +1393,7 @@ namespace jacobianBasedQuality {
       _subdivideDomainsMinOrMax<_lessMaxB>(domains, minL, maxL, debug);
   }
 
-  double _getMinAndDeleteDomains(std::vector<_coefData *> &domains, double min)
+  double _getMinAndDeleteDomains(std::vector<_coefData *> &domains)
   {
     std::cout << "size domains " << domains.size() << std::endl;
     double minB = domains[0]->minB();
@@ -1416,7 +1416,7 @@ namespace jacobianBasedQuality {
     }
     std::cout << "minMeasure: " << minB << " vs " << minB2 << " + " << minL
               << " vs " << minL2 << std::endl;
-    double fact = .5 * (minB + minL);
+    double fact = .5 * (minB2 + minL2);
     // This is done because, for triangles and prisms, currently, the
     // computation of bounds is not sharp. It can happen than the IGE measure
     // is very close to 1 everywhere but that the bound is close to 1 only
@@ -1425,7 +1425,7 @@ namespace jacobianBasedQuality {
     // sharp bounds for triangles and prisms, see function
     // _coefDataIGE::_computeLowerBound2(..). If it is done, change this to
     // return minB.
-    return fact * minL + (1 - fact) * minB;
+    return fact * minL2 + (1 - fact) * minB2;
   }
 
   double _computeBoundRational(const fullVector<double> &numerator,
@@ -1524,7 +1524,7 @@ namespace jacobianBasedQuality {
     }
 
     if (minAlgo <= 0 && maxAlgo >= 0) {
-      std::cout << "Invalid" << std::endl;
+      std::cout << "GOOD (Invalid)" << std::endl;
       return;
     }
 

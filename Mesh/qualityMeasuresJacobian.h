@@ -160,7 +160,7 @@ namespace jacobianBasedQuality {
 
   void _subdivideDomains(std::vector<_coefData *> &domains,
                          bool alsoMax = true, bool debug = false);
-  double _getMinAndDeleteDomains(std::vector<_coefData *> &domains, double min); //FIXMEDEBUG min argument
+  double _getMinAndDeleteDomains(std::vector<_coefData *> &domains);
 
 } // namespace jacobianBasedQuality
 

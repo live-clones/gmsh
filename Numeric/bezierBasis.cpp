@@ -1791,7 +1791,7 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffDataConst)
       }
     }
     for(int ij = 0; ij < nptTri; ++ij) {
-      convertLag2Bez(lag, order, x, bez, ij, nptTri);
+      convertLag2Bez(bez, order, x, bez, ij, nptTri);
     }
     return;
   }
