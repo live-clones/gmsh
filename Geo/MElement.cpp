@@ -1354,6 +1354,7 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
                          int elementary, int physical, int parentNum,
                          int dom1Num, int dom2Num, std::vector<short> *ghosts)
 {
+  if (_num != 413 && _num != 1314 && _num != 1463 && _num != 758) return;
   int type = getTypeForMSH();
 
   if(!type) return;
