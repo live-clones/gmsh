@@ -279,6 +279,9 @@ static void GoodbyeMessage()
   Msg::Info("Stopped on %s", currtime.c_str());
 }
 
+#include "AnalyseCurvedMesh.h"
+#include "qualityMeasuresJacobian.h"
+
 int GmshBatch()
 {
   StartupMessage();
@@ -354,6 +357,9 @@ int GmshBatch()
     }
     CreateOutputFile(name, CTX::instance()->mesh.fileFormat);
   }
+
+//  GMSH_AnalyseCurvedMeshPlugin().execute(NULL);
+  jacobianBasedQuality::testAllMeasuresAllElements();
 
   // launch solver (if requested)
 #if defined(HAVE_ONELAB)

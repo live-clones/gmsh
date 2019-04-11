@@ -9,6 +9,7 @@
 #include <vector>
 #include "fullMatrix.h"
 #include "bezierBasis.h"
+#include <iostream> //FIXMEDEBUG
 
 class GradientBasis;
 // class bezierBasis;
@@ -67,6 +68,8 @@ namespace jacobianBasedQuality {
     inline double minB2() const { return _minB2; }
     inline double maxB2() const { return _maxB2; }
     inline int depth() const { return _depth; }
+
+    virtual void print() const {}
 
     virtual bool boundsOk(double minL, double maxL) const = 0;
     virtual void getSubCoeff(std::vector<_coefData *> &) const = 0;
@@ -142,6 +145,15 @@ namespace jacobianBasedQuality {
                   const bezierCoeff *mat2 = NULL);
     ~_coefDataICN() {}
 
+    void print() const {
+      std::cout << "PRINTING" << std::endl;
+      _coeffDet2->printOldOrder("_coeffDet2");
+      _coeffMat2->printOldOrder("_coeffMat2");
+      double a, b, c, d;
+      _computeAtCorner(a, b, c, d);
+      std::cout << "minmax " << a << " " << b << " & minmax2 " << c << " " << d << std::endl;
+      std::cout << "minB " << _computeLowerBound() << " " << _computeLowerBound2() << std::endl;
+    }
     bool boundsOk(double minL, double maxL) const;
     void getSubCoeff(std::vector<_coefData *> &) const;
     void deleteBezierCoeff() { delete _coeffDet2; delete _coeffMat2; }

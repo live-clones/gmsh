@@ -376,30 +376,41 @@ namespace jacobianBasedQuality {
     bezierCoeff *bez = new bezierCoeff(jfs->getFuncSpaceData(), coeffLag, 0);
     domains.push_back(new _coefDataJac(coeffBez, jfs->getBezier(), 0, bez));
 
-    //  int N = 5e5;
-    //  double time = Cpu();
+//    coeffLag.print("coeffLag");
+//    coeffBez.print("coeffBez");
+//    bez->printOldOrder("bez");
+//    bez->print("bez");
+//
 
-    //  for (int i = 0; i < N; ++i) {
-    //    fullVector<double> subCoeff;
-    //    jfs->getBezier()->subdivideBezCoeff(coeffBez, subCoeff);
-    //  }
-    //  double tm1 = Cpu() - time;
-    //  std::cout << "time old " << tm1 << " (" << tm1/N << ")" << std::endl;
 
-    //  time = Cpu();
-    //  bezierCoeff bez(FuncSpaceData(el, jfs->getJacOrder(), false), coeffLag, 0);
-    //  for (int i = 0; i < N; ++i) {
-    //    std::vector<bezierCoeff> vec;
-    //    bez.subdivide(vec);
-    //  }
-    //  double tm2 = Cpu() - time;
-    //  std::cout << "time new " << tm2 << " (" << tm2/N << ")" << std::endl;
+//    {
+//      int N = 5e5;
+//      double time = Cpu();
+//
+//      fullVector<double> subCoeff;
+//      for (int i = 0; i < N; ++i) {
+//        jfs->getBezier()->subdivideBezCoeff(coeffBez, subCoeff);
+//      }
+//      double tm1 = Cpu() - time;
+//      std::cout << "time old " << tm1 << " (" << tm1/N << ")" << std::endl;
+//
+//      time = Cpu();
+//      bezierCoeff bez(FuncSpaceData(el, jfs->getJacOrder(), false), coeffLag, 0);
+//      for (int i = 0; i < N; ++i) {
+//        std::vector<bezierCoeff *> vec;
+//        bez.subdivide(vec);
+//        for (int j = 0; j < vec.size(); ++j) delete vec[j];
+//      }
+//      double tm2 = Cpu() - time;
+//      std::cout << "time new " << tm2 << " (" << tm2/N << ")" << std::endl;
+//    }
 
     _subdivideDomains(domains, true, debug);
 
-    double mmin, mmax;
-    sampleJacobianDeterminant(el, 10, mmin, mmax, normals);
-    std::cout << "sampled: " << mmin << " " << mmax << std::endl;
+//    std::cout << "elem " << el->getNum() << " " << el->getType() << std::endl;
+//    double mmin, mmax;
+//    sampleJacobianDeterminant(el, 50, mmin, mmax, normals);
+//    std::cout << "sampled: " << mmin << " " << mmax << std::endl;
 
     double min2 = domains[0]->minB2();
     double max2 = domains[0]->maxB2();
@@ -423,14 +434,18 @@ namespace jacobianBasedQuality {
       domains[i]->deleteBezierCoeff();
       delete domains[i];
     }
-    std::cout << "size domains " << domains.size() << std::endl;
-    std::cout << "minMeasure: " << min << " vs " << min2 << " < " << minL
-              << " vs " << minL2 << std::endl;
-    std::cout << "maxMeasure: " << max << " vs " << max2 << " > " << maxL
-              << " vs " << maxL2 << std::endl;
+//    std::cout << "size domains " << domains.size() << std::endl;
+//    std::cout << "minMeasure: " << min << " vs " << min2 << " < " << minL
+//              << " vs " << minL2 << std::endl;
+//    std::cout << "maxMeasure: " << max << " vs " << max2 << " > " << maxL
+//              << " vs " << maxL2 << std::endl;
     //  std::cout << "" << min << " [" << min2 << "," << minL2 << "] " << max <<
     //  " [" << maxL2 << "," << max2 << "] ";
-    std::cout << std::endl;
+//    double e = 1e-5;
+//    if (mmin < min2*(1-e) || mmax > max2*(1+e)) {
+//      Msg::Error("Aaaargh;");
+//    }
+//    std::cout << std::endl;
     min = min2;
     max = max2;
   }
@@ -495,9 +510,10 @@ namespace jacobianBasedQuality {
     //        el->getTypeForMSH());
     //  }
 
-    double mmin, mmax;
-    sampleIGEMeasure(el, 10, mmin, mmax);
-    std::cout << "sampled: " << mmin << " " << mmax << std::endl;
+//    std::cout << "elem " << el->getNum() << " " << el->getType() << std::endl;
+//    double mmin, mmax;
+//    sampleIGEMeasure(el, 50, mmin, mmax);
+//    std::cout << "sampled ige: " << mmin << " " << mmax << std::endl;
 
     return _getMinAndDeleteDomains(domains);
   }
@@ -562,9 +578,10 @@ namespace jacobianBasedQuality {
     //               el->getTypeForMSH());
     //  }
 
-    double mmin, mmax;
-    sampleICNMeasure(el, 10, mmin, mmax);
-    std::cout << "sampled: " << mmin << " " << mmax << std::endl;
+//    std::cout << "elem " << el->getNum() << " " << el->getType() << std::endl;
+//    double mmin, mmax;
+//    sampleICNMeasure(el, 50, mmin, mmax);
+//    std::cout << "sampled: icn " << mmin << " " << mmax << std::endl;
 
     return _getMinAndDeleteDomains(domains);
   }
@@ -731,7 +748,7 @@ namespace jacobianBasedQuality {
 
   bool _coefDataJac::boundsOk(double minL, double maxL) const
   {
-    double tol = std::max(std::abs(minL), std::abs(maxL)) * 1e-7; //FIXMEDEBUG
+    double tol = std::max(std::abs(minL), std::abs(maxL)) * 1e-3; //FIXMEDEBUG
     return (minL <= 0 || _minB2 > 0) &&
            (maxL >= 0 || _maxB2 < 0) &&
            minL - _minB2 < tol &&
@@ -1349,6 +1366,23 @@ namespace jacobianBasedQuality {
   {
     std::vector<_coefData *> subs;
     make_heap(domains.begin(), domains.end(), Comp());
+//
+//    std::cout << "START" << std::endl;
+//    double currentMinB = domains[0]->minB();
+//    double currentMinB2 = domains[0]->minB2();
+//    int i = 0;
+//    for(; i < std::min(10, (int)domains.size()); ++i) {
+//      currentMinB = std::min(currentMinB, domains[i]->minB());
+//      currentMinB2 = std::min(currentMinB2, domains[i]->minB2());
+//      std::cout << "bounds: " << domains[i]->minB2() << " " << domains[i]->minL2() << std::endl;
+//    }
+//    for(; i < domains.size(); ++i) {
+//      currentMinB = std::min(currentMinB, domains[i]->minB());
+//      currentMinB2 = std::min(currentMinB2, domains[i]->minB2());
+//    }
+//    std::cout << "current bounds: " << currentMinB << "/" << currentMinB2 << " " <<  minL << std::endl;
+//    std::cout << std::endl;
+
     int k = 0;
     const int max_subdivision = 1000;
     while(!domains[0]->boundsOk(minL, maxL) && k+1 < max_subdivision) {
@@ -1366,8 +1400,23 @@ namespace jacobianBasedQuality {
         push_heap(domains.begin(), domains.end(), Comp());
       }
       ++k;
+//
+//      double currentMinB = domains[0]->minB();
+//      double currentMinB2 = domains[0]->minB2();
+//      int i = 0;
+//      for(; i < std::min(10, (int)domains.size()); ++i) {
+//        currentMinB = std::min(currentMinB, domains[i]->minB());
+//        currentMinB2 = std::min(currentMinB2, domains[i]->minB2());
+//        std::cout << "bounds: " << domains[i]->minB2() << " " << domains[i]->minL2() << std::endl;
+//      }
+//      for(; i < domains.size(); ++i) {
+//        currentMinB = std::min(currentMinB, domains[i]->minB());
+//        currentMinB2 = std::min(currentMinB2, domains[i]->minB2());
+//      }
+//      std::cout << "current bounds: " << currentMinB << "/" << currentMinB2 << " " <<  minL << std::endl;
+//      std::cout << std::endl;
     }
-    if (debug) { std::cout << "Number of subbdivisions: " << k << std::endl; }
+    if (debug) { std::cout << "Number of subdivisions: " << k << std::endl; }
     else if(k == max_subdivision) {
       Msg::Error("Max subdivision (%d) (size domains %d)", max_subdivision,
                  domains.size());
@@ -1395,7 +1444,7 @@ namespace jacobianBasedQuality {
 
   double _getMinAndDeleteDomains(std::vector<_coefData *> &domains)
   {
-    std::cout << "size domains " << domains.size() << std::endl;
+//    std::cout << "size domains " << domains.size() << std::endl;
     double minB = domains[0]->minB();
     double minL = domains[0]->minL();
     double minB2 = domains[0]->minB2();
@@ -1414,8 +1463,13 @@ namespace jacobianBasedQuality {
       domains[i]->deleteBezierCoeff();
       delete domains[i];
     }
-    std::cout << "minMeasure: " << minB << " vs " << minB2 << " + " << minL
-              << " vs " << minL2 << std::endl;
+//    std::cout << "minMeasure: " << minB << " vs " << minB2 << " < " << minL
+//              << " vs " << minL2 << std::endl;
+//    double e = 1e-5;
+//    if (min < minB2*(1-e)) {
+//      Msg::Error("Aaaargh2;");
+//    }
+//    std::cout << std::endl;
     double fact = .5 * (minB2 + minL2);
     // This is done because, for triangles and prisms, currently, the
     // computation of bounds is not sharp. It can happen than the IGE measure
