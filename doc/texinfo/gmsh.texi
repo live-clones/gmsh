@@ -5365,6 +5365,50 @@ that this will lead to (slightly) reduced performance compared to using
 the native Gmsh C++ API, as it entails additional data copies between
 the C++ wrapper, the C API and the native C++ code.
 
+The structure of the API reflects the underlying Gmsh data model
+(@pxref{Source code structure}):
+@itemize
+@item
+There are two top-level containers: models (which hold the geometrical
+and the mesh data) and views (which hold post-processing
+data). Operations which do not directly reference a model (resp. a view)
+are performed on the @emph{current} model (resp. view).
+@item
+Geometrical data is made of model @emph{entities}, called @emph{points}
+(entities of dimension 0), @emph{curves} (entities of dimension 1),
+@emph{surfaces} (entities of dimension 2) or @emph{volumes} (entities of
+dimension 3). Model entities are identified by their dimension and by a
+@emph{tag}: a strictly positive identification number. @emph{Physical
+groups} are collections of model entities.
+@item
+Model entities can be either CAD entities (from the built-in @emph{geo}
+kernel or the OpenCASCADE @emph{occ} kernel) or discrete entities
+(defined by a mesh). Operations on CAD entities are performed directly
+within their respective CAD kernels; they must be @emph{synchronized}
+with the model in order to be meshed.
+@item
+Mesh data is made of @emph{elements} (points, lines, triangles,
+quadrangles, tetrahedra, hexahedra, prisms, pyramids, ...), defined by
+an ordered list of their @emph{nodes}. Elements and nodes are identified
+by @emph{tags} (strictly positive identification numbers), and are
+stored in the geometrical entity they discretize. Once meshed, a
+geometrical entity of dimension 0 (a geometrical point) will thus
+contain a mesh element of type point, as well as a mesh node. A
+geometrical curve will contain line elements as well as its interior
+nodes, while its boundary nodes will be stored in the bounding
+geometrical points. A geometrical surface will contain triangular and/or
+quadrangular elements as well as its interior nodes, while its boundary
+nodes will be stored in the boundary curves and points. A geometrical
+volume will contain tetrahedra, hexahedra, etc. and its interior nodes,
+the boundary nodes being stored in its bounding surfaces, curves and
+points.
+@item
+Post-processing data can contain one or more @emph{steps}, and can be
+either linked to one or more models (@emph{mesh-based} data, as stored
+in MSH files) or independent from any model (@emph{list-based} data, as
+stored in Parsed POS files).
+@end itemize
+
 The functions available in the API are given below (see the relevant
 header/module file for the exact definition in each supported
 language@footnote{In C++ @code{/gmsh/model/geo/addPoint} will lead to a

@@ -48,10 +48,10 @@ gmsh.add('initialize',doc,None,argcargv(),ibool('readConfigFiles','true','True')
 doc = '''Finalize Gmsh. This must be called when you are done using the Gmsh API.'''
 gmsh.add('finalize',doc,None)
 
-doc = '''Open a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling of the file depends on its extension and/or its contents.'''
+doc = '''Open a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling of the file depends on its extension and/or its contents: opening a file with model data will create a new model.'''
 gmsh.add('open',doc,None,istring('fileName'))
 
-doc = '''Merge a file. Equivalent to the `File->Merge' menu in the Gmsh app. Handling of the file depends on its extension and/or its contents.'''
+doc = '''Merge a file. Equivalent to the `File->Merge' menu in the Gmsh app. Handling of the file depends on its extension and/or its contents. Merging a file with model data will add the data to the current model.'''
 gmsh.add('merge',doc,None,istring('fileName'))
 
 doc = '''Write a file. The export format is determined by the file extension.'''

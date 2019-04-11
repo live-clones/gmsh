@@ -61,11 +61,13 @@ namespace gmsh { // Top-level functions
   GMSH_API void finalize();
 
   // Open a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling of
-  // the file depends on its extension and/or its contents.
+  // the file depends on its extension and/or its contents: opening a file with
+  // model data will create a new model.
   GMSH_API void open(const std::string & fileName);
 
   // Merge a file. Equivalent to the `File->Merge' menu in the Gmsh app. Handling
-  // of the file depends on its extension and/or its contents.
+  // of the file depends on its extension and/or its contents. Merging a file with
+  // model data will add the data to the current model.
   GMSH_API void merge(const std::string & fileName);
 
   // Write a file. The export format is determined by the file extension.

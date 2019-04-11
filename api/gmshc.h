@@ -49,12 +49,14 @@ GMSH_API void gmshInitialize(int argc, char ** argv,
 GMSH_API void gmshFinalize(int * ierr);
 
 /* Open a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling
- * of the file depends on its extension and/or its contents. */
+ * of the file depends on its extension and/or its contents: opening a file
+ * with model data will create a new model. */
 GMSH_API void gmshOpen(const char * fileName,
                        int * ierr);
 
 /* Merge a file. Equivalent to the `File->Merge' menu in the Gmsh app.
- * Handling of the file depends on its extension and/or its contents. */
+ * Handling of the file depends on its extension and/or its contents. Merging
+ * a file with model data will add the data to the current model. */
 GMSH_API void gmshMerge(const char * fileName,
                         int * ierr);
 

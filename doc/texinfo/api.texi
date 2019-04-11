@@ -32,7 +32,8 @@ Finalize Gmsh. This must be called when you are done using the Gmsh API.
 
 @item open
 Open a file. Equivalent to the @code{File->Open} menu in the Gmsh app. Handling
-of the file depends on its extension and/or its contents.
+of the file depends on its extension and/or its contents: opening a file with
+model data will create a new model.
 
 @table @asis
 @item Input:
@@ -45,7 +46,8 @@ of the file depends on its extension and/or its contents.
 
 @item merge
 Merge a file. Equivalent to the @code{File->Merge} menu in the Gmsh app.
-Handling of the file depends on its extension and/or its contents.
+Handling of the file depends on its extension and/or its contents. Merging a
+file with model data will add the data to the current model.
 
 @table @asis
 @item Input:
