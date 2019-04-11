@@ -126,9 +126,6 @@ public:
   void computeCoeff2(const fullVector<double> &coeffA,
                      const fullVector<double> &coeffB,
                      fullVector<double> &coeffSquare) const;
-  void computeCoeff(const fullMatrix<double> &coeffA,
-                    const fullMatrix<double> &coeffB,
-                    fullMatrix<double> &coeffSquare) const;
   void computeCoeff(const fullVector<double> &coeffA,
                     const fullVector<double> &coeffB,
                     const fullVector<double> &coeffC,
@@ -137,10 +134,6 @@ public:
                      const fullVector<double> &coeffB,
                      const fullVector<double> &coeffC,
                      fullVector<double> &coeffCubic) const;
-  void computeCoeff(const fullVector<double> &coeffA,
-                    const fullMatrix<double> &coeffB,
-                    const fullMatrix<double> &coeffC,
-                    fullMatrix<double> &coeffCubic) const;
 
 private:
   void _fillRaiserData();
