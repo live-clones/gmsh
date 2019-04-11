@@ -1111,7 +1111,7 @@ BDS2GMSH(BDS_Mesh *m, GFace *gf,
 
 static void _deleteUnusedVertices(GFace *gf)
 {
-  std::set<MVertex *> allverts;
+  std::set<MVertex *, MVertexLessThanNum> allverts;
   for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     for(int j = 0; j < 3; j++) {
       if(gf->triangles[i]->getVertex(j)->onWhat() == gf)
