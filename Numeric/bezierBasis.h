@@ -26,10 +26,10 @@ private:
   bezierBasisRaiser *_raiser;
 
   friend class bezierBasisRaiser;
+  fullMatrix<double> _exponents;
+  fullMatrix<double> _exponents2;
 
 public:
-  fullMatrix<double> _exponents; // FIXMEDEBUG public for bezierCoeff::printOldOrder
-  fullMatrix<double> _exponents2; // FIXMEDEBUG public for bezierCoeff::printOldOrder
   fullMatrix<double> matrixLag2Bez;
   fullMatrix<double> matrixBez2Lag;
   fullMatrix<double> matrixLag2Bez2;
@@ -271,9 +271,6 @@ public:
 
   inline double &operator()(int i) { return _data[i]; }
   inline double &operator()(int i, int j) { return _data[i + _r * j]; }
-
-  void print(const std::string name = "", const std::string format = "", bool prism = false) const;
-  void printOldOrder(const std::string name = "", const std::string format = "") const; //FIXMEDEBUG
 
 private:
   enum _SubdivisionTet {

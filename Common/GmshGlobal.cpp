@@ -358,10 +358,7 @@ int GmshBatch()
     CreateOutputFile(name, CTX::instance()->mesh.fileFormat);
   }
 
-//  GMSH_AnalyseCurvedMeshPlugin().execute(NULL);
-  jacobianBasedQuality::testAllMeasuresAllElements();
-
-  // launch solver (if requested)
+    // launch solver (if requested)
 #if defined(HAVE_ONELAB)
   onelabUtils::runClient();
 #endif

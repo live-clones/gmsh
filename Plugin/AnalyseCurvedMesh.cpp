@@ -27,10 +27,10 @@ class bezierBasis;
 
 StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "JacobianDeterminant", NULL, 0},
-  {GMSH_FULLRC, "IGEMeasure", NULL, 1},
-  {GMSH_FULLRC, "ICNMeasure", NULL, 1},
+  {GMSH_FULLRC, "IGEMeasure", NULL, 0},
+  {GMSH_FULLRC, "ICNMeasure", NULL, 0},
   {GMSH_FULLRC, "HidingThreshold", NULL, 9},
-  {GMSH_FULLRC, "DrawPView", NULL, 1},
+  {GMSH_FULLRC, "DrawPView", NULL, 0},
   {GMSH_FULLRC, "Recompute", NULL, 0},
   {GMSH_FULLRC, "DimensionOfElements", NULL, -1}
 #if defined(HAVE_VISUDEV)
@@ -363,22 +363,9 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
     MsgProgressStatus progress(num);
 
     _data.reserve(_data.size() + num);
-//    bool doe = true;
     for(unsigned i = 0; i < num; ++i) {
       MElement *el = entity->getMeshElement(i);
       double min, max;
-//      if (el->getNum() != 668) continue; //(0-qua)
-//      if (el->getNum() != 549) continue; //(1-quaLow)
-//      if (el->getNum() != 3985) continue; //(3-tet) : check ICN
-//      if (el->getNum() != 413) continue; //(4-hex-jac)
-//      if (el->getNum() != 1314) continue; //(4-pri)
-//      if (el->getNum() < 1449) continue; //(4-hex)
-//      if (el->getNum() < 1463) continue; //(4-hex)
-//      if (el->getNum() != 1463) continue; //(4-pyr)
-////      if (el->getNum() != 758) continue; //(4-pri)
-//      if (el->getNum() != 758 && el->getNum() != 757) continue; //(4-pri)
-//      if (!doe) continue;
-//      doe = false;
       jacobianBasedQuality::minMaxJacobianDeterminant(el, min, max, normals);
       _data.push_back(data_elementMinMax(el, min, max));
       if(min < 0 && max < 0) ++cntInverted;

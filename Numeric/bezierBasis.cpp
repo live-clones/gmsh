@@ -2472,60 +2472,6 @@ bezierCoeff::_copyPyr(const fullMatrix<double> &allSub, int nij, int nk,
   }
 }
 
-void bezierCoeff::print(const std::string name, const std::string format, bool prism) const
-{
-  if (_c == 1) {
-    fullVector<double> prox(_data, _r);
-    prox.print(name, format);
-  }
-  else {
-    fullMatrix<double> prox(_data, _r, _c);
-    prox.print(name, format);
-  }
-}
-
-void bezierCoeff::printOldOrder(const std::string name,
-                                const std::string format) const
-{
-  const int dim = _basis->_exponents2.size2();
-  if (_c == 1) {
-    fullVector<double> inOldOrder(_r);
-    for(int i = 0; i < _r; ++i) {
-      const int u = _basis->_exponents(i, 0);
-      const int v = dim > 1 ? _basis->_exponents(i, 1) : 0;
-      const int w = dim > 2 ? _basis->_exponents(i, 2) : 0;
-      int K = 0;
-      while(K < _r &&
-        (_basis->_exponents2(K, 0) - .5 >= u || _basis->_exponents2(K, 0) + .5 <= u ||
-        (dim > 1 && (_basis->_exponents2(K, 1) - .5 >= v || _basis->_exponents2(K, 1) + .5 <= v)) ||
-        (dim > 2 && (_basis->_exponents2(K, 2) - .5 >= w || _basis->_exponents2(K, 2) + .5 <= w))))
-        ++K;
-      if (K == _r) Msg::Error("Aaaaargh");
-      inOldOrder(i) = (*this)(K);
-    }
-    inOldOrder.print(name, format);
-  }
-  else {
-    fullMatrix<double> inOldOrder(_r, _c);
-    for(int i = 0; i < _r; ++i) {
-      const int u = _basis->_exponents(i, 0);
-      const int v = dim > 1 ? _basis->_exponents(i, 1) : 0;
-      const int w = dim > 2 ? _basis->_exponents(i, 2) : 0;
-      int K = 0;
-      while(K < _r &&
-            (_basis->_exponents2(K, 0) - .5 >= u || _basis->_exponents2(K, 0) + .5 <= u ||
-             (dim > 1 && (_basis->_exponents2(K, 1) - .5 >= v || _basis->_exponents2(K, 1) + .5 <= v)) ||
-             (dim > 2 && (_basis->_exponents2(K, 2) - .5 >= w || _basis->_exponents2(K, 2) + .5 <= w))))
-        ++K;
-      if (K == _r) Msg::Error("Aaaaargh");
-      for(int j = 0; j < _c; ++j) {
-        inOldOrder(i, j) = (*this)(K, j);
-      }
-    }
-    inOldOrder.print(name, format);
-  }
-}
-
 bezierMemoryPool::bezierMemoryPool()
 {
   _sizeBlocks = 0;
