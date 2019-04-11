@@ -911,9 +911,6 @@ void bezierBasis::_construct()
       generateBez2LagMatrix(oneDExponents, oneDPoints, order, 0);
     fullMatrix<double> oneDMatrixLag2Bez;
     oneDMatrixBez2Lag.invert(oneDMatrixLag2Bez);
-//    fullMatrix<double> b(oneDMatrixLag2Bez);
-//    b.reshape(1, oneDMatrixLag2Bez.size1() * oneDMatrixLag2Bez.size2());
-//    b.print("oneDMatrixLag2Bez");
     matrixLag2Bez3.resize(matrixLag2Bez2.size1(), matrixLag2Bez2.size2());
     matrixLag2Bez4.resize(matrixLag2Bez2.size1(), matrixLag2Bez2.size2());
 
@@ -923,7 +920,6 @@ void bezierBasis::_construct()
     for(int i = 0; i <= order; ++i) {
       for(int j = 0; j <= order; ++j) {
         int I = i + (order + 1) * j;
-        //        std::cout << std::endl;
         for(int k = 0; k <= order; ++k) {
           for(int l = 0; l <= order; ++l) {
             int K = 0;

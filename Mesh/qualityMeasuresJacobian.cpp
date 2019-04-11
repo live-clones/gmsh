@@ -376,30 +376,7 @@ namespace jacobianBasedQuality {
     bezierCoeff *bez = new bezierCoeff(jfs->getFuncSpaceData(), coeffLag, 0);
     domains.push_back(new _coefDataJac(coeffBez, jfs->getBezier(), 0, bez));
 
-    //  int N = 5e5;
-    //  double time = Cpu();
-
-    //  for (int i = 0; i < N; ++i) {
-    //    fullVector<double> subCoeff;
-    //    jfs->getBezier()->subdivideBezCoeff(coeffBez, subCoeff);
-    //  }
-    //  double tm1 = Cpu() - time;
-    //  std::cout << "time old " << tm1 << " (" << tm1/N << ")" << std::endl;
-
-    //  time = Cpu();
-    //  bezierCoeff bez(FuncSpaceData(el, jfs->getJacOrder(), false), coeffLag, 0);
-    //  for (int i = 0; i < N; ++i) {
-    //    std::vector<bezierCoeff> vec;
-    //    bez.subdivide(vec);
-    //  }
-    //  double tm2 = Cpu() - time;
-    //  std::cout << "time new " << tm2 << " (" << tm2/N << ")" << std::endl;
-
     _subdivideDomains(domains, true, debug);
-
-    double mmin, mmax;
-    sampleJacobianDeterminant(el, 10, mmin, mmax, normals);
-    std::cout << "sampled: " << mmin << " " << mmax << std::endl;
 
     double min2 = domains[0]->minB2();
     double max2 = domains[0]->maxB2();
@@ -423,14 +400,6 @@ namespace jacobianBasedQuality {
       domains[i]->deleteBezierCoeff();
       delete domains[i];
     }
-    std::cout << "size domains " << domains.size() << std::endl;
-    std::cout << "minMeasure: " << min << " vs " << min2 << " < " << minL
-              << " vs " << minL2 << std::endl;
-    std::cout << "maxMeasure: " << max << " vs " << max2 << " > " << maxL
-              << " vs " << maxL2 << std::endl;
-    //  std::cout << "" << min << " [" << min2 << "," << minL2 << "] " << max <<
-    //  " [" << maxL2 << "," << max2 << "] ";
-    std::cout << std::endl;
     min = min2;
     max = max2;
   }
@@ -461,7 +430,7 @@ namespace jacobianBasedQuality {
     fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
     {
       jacBasis->getSignedJacobian(nodesXYZ, coeffDetLag, normals);
-      // If coeffDetLag(0) is negative, then all coefficients are negative
+      // NB: If coeffDetLag(0) is negative, then all coefficients are negative
       if(coeffDetLag(0) < 0) coeffDetLag.scale(-1);
 
       coeffDetBez.resize(jacBasis->getNumJacNodes());
@@ -489,15 +458,6 @@ namespace jacobianBasedQuality {
       0, el->getType(), bezDet, bezMat));
 
     _subdivideDomains(domains, false, debug);
-    //  if (domains.size()/7 > 500) {//fordebug
-    //    Msg::Info("S too much subdivision: %d (el %d, type %d, tag %d)",
-    //        domains.size()/7, el->getNum(), el->getType(),
-    //        el->getTypeForMSH());
-    //  }
-
-    double mmin, mmax;
-    sampleIGEMeasure(el, 10, mmin, mmax);
-    std::cout << "sampled: " << mmin << " " << mmax << std::endl;
 
     return _getMinAndDeleteDomains(domains);
   }
@@ -528,7 +488,7 @@ namespace jacobianBasedQuality {
     fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
     {
       jacBasis->getSignedIdealJacobian(nodesXYZ, coeffDetLag, normals);
-      // If coeffDetLag(0) is negative, then all coefficients are negative
+      // NB: If coeffDetLag(0) is negative, then all coefficients are negative
       if(coeffDetLag(0) < 0) coeffDetLag.scale(-1);
 
       coeffDetBez.resize(jacBasis->getNumJacNodes());
@@ -556,15 +516,7 @@ namespace jacobianBasedQuality {
                                         gradBasis->getBezier(), 0, el->getDim(), bezDet, bezMat));
 
     _subdivideDomains(domains, false, debug);
-    //  if (domains.size()/7 > 500) {//fordebug
-    //    Msg::Info("I too much subdivision: %d (el %d, type %d, tag %d)",
-    //               domains.size()/7, el->getNum(), el->getType(),
-    //               el->getTypeForMSH());
-    //  }
 
-    double mmin, mmax;
-    sampleICNMeasure(el, 10, mmin, mmax);
-    std::cout << "sampled: " << mmin << " " << mmax << std::endl;
 
     return _getMinAndDeleteDomains(domains);
   }
@@ -731,7 +683,7 @@ namespace jacobianBasedQuality {
 
   bool _coefDataJac::boundsOk(double minL, double maxL) const
   {
-    double tol = std::max(std::abs(minL), std::abs(maxL)) * 1e-7; //FIXMEDEBUG
+    double tol = std::max(std::abs(minL), std::abs(maxL)) * 1e-3;
     return (minL <= 0 || _minB2 > 0) &&
            (maxL >= 0 || _maxB2 < 0) &&
            minL - _minB2 < tol &&
@@ -844,20 +796,10 @@ namespace jacobianBasedQuality {
 
     min = std::numeric_limits<double>::infinity();
     max = -min;
-    //    fullVector<double> det(ige.size());
     for(int i = 0; i < ige.size(); ++i) {
       min = std::min(min, ige(i));
       max = std::max(max, ige(i));
-      //      det(i) = _coeffsJacDet(i);
-      //      for(int j = 0; j < _coeffsJacMat.size2(); ++j) {
-      //        m(i, j) = _coeffsJacMat(i, j);
-      //      }
     }
-    //    _coeffsJacDet.print("_coeffsJacDet");
-    //    det.print("det");
-    //    m.print("m");
-    //    v.print("v");
-    //    ige.print("ige");
 
     //
     fullVector<double> det, ige2;
@@ -868,18 +810,6 @@ namespace jacobianBasedQuality {
     fullMatrix<double> v2;
     _computeCoeffLengthVectors(mat, v2, _type);
     _computeIGE(det, v2, ige2, _type);
-
-    //    fullVector<double> det2(_coeffDet2->getNumCoeff());
-    //    for(int k = 0; k < det2.size(); ++k) {
-    //      det2(k) = (*_coeffDet2)(k);
-    //    }
-
-    //    det2.print("_coeffDet2");
-    //    det.print("det");
-    //    mat.print("mat");
-    //    v2.print("v2");
-    //    ige2.print("ige2");
-    //    std::cout << std::endl;
 
     min2 = std::numeric_limits<double>::infinity();
     max2 = -min2;
@@ -1367,7 +1297,7 @@ namespace jacobianBasedQuality {
       }
       ++k;
     }
-    if (debug) { std::cout << "Number of subbdivisions: " << k << std::endl; }
+    if (debug) { std::cout << "Number of subdivisions: " << k << std::endl; }
     else if(k == max_subdivision) {
       Msg::Error("Max subdivision (%d) (size domains %d)", max_subdivision,
                  domains.size());
@@ -1395,18 +1325,13 @@ namespace jacobianBasedQuality {
 
   double _getMinAndDeleteDomains(std::vector<_coefData *> &domains)
   {
-    std::cout << "size domains " << domains.size() << std::endl;
     double minB = domains[0]->minB();
     double minL = domains[0]->minL();
     double minB2 = domains[0]->minB2();
     double minL2 = domains[0]->minL2();
-    //    std::cout << "minB2 " << minB << " " << minL2 << std::endl;
     domains[0]->deleteBezierCoeff();
     delete domains[0];
     for(std::size_t i = 1; i < domains.size(); ++i) {
-      //      std::cout << "minB2 " << domains[i]->minB2() << " " <<
-      //      domains[i]->minL2()
-      //                << std::endl;
       minB = std::min(minB, domains[i]->minB());
       minL = std::min(minL, domains[i]->minL());
       minB2 = std::min(minB2, domains[i]->minB2());
@@ -1414,8 +1339,6 @@ namespace jacobianBasedQuality {
       domains[i]->deleteBezierCoeff();
       delete domains[i];
     }
-    std::cout << "minMeasure: " << minB << " vs " << minB2 << " + " << minL
-              << " vs " << minL2 << std::endl;
     double fact = .5 * (minB2 + minL2);
     // This is done because, for triangles and prisms, currently, the
     // computation of bounds is not sharp. It can happen than the IGE measure
