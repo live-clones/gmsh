@@ -130,6 +130,7 @@ bool GEO_Internals::addVertex(int &tag, double x, double y,
     return false;
   }
   if(tag < 0) tag = getMaxTag(0) + 1;
+  if(!lc) lc = MAX_LC;
   Vertex *v = CreateVertex(tag, x, y, surface, lc);
   Tree_Add(Points, &v);
   _changed = true;
