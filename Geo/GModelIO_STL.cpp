@@ -181,7 +181,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
   pos.insert(vertices);
 
   std::set<MFace, Less_Face> unique;
-  int nbDuplic = 0;
+  int nbDuplic = 0, nbDegen = 0;
   for(std::size_t i = 0; i < points.size(); i++) {
     for(std::size_t j = 0; j < points[i].size(); j += 3) {
       MVertex *v[3];
@@ -202,11 +202,20 @@ int GModel::readSTL(const std::string &name, double tolerance)
         }
       }
       else{
-        faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+        if(v[0] == v[1] || v[0] == v[2] || v[1] == v[2]){
+          Msg::Debug("Skipping degenerated triangle %lu %lu %lu",
+                     v[0]->getNum(), v[1]->getNum(), v[2]->getNum());
+          nbDegen++;
+        }
+        else{
+          faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+        }
       }
     }
   }
-  if(nbDuplic) Msg::Warning("%d duplicate triangles in STL file", nbDuplic);
+  if(nbDuplic || nbDegen)
+    Msg::Warning("%d duplicate/%d degenerate triangles in STL file",
+                 nbDuplic, nbDegen);
 
   _associateEntityWithMeshVertices();
 
