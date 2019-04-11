@@ -1,6 +1,8 @@
 4.3.0: improved meshing of surfaces with singular parametrizations; added API
 support for aliasing and combining views, copying view options, setting point
-coordinates and extruding built-in CAD entities along normals; small bug fixes.
+coordinates and extruding built-in CAD entities along normals; fixed regression
+introduced in 4.1.4 that could lead to non-deterministic 2D meshes; small bug
+fixes.
 
 4.2.3 (April 3, 2019): added STL export by physical surface; added ability to
 remove embedded entities; added handling of boundary entities in
