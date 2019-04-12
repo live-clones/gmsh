@@ -5369,23 +5369,34 @@ The structure of the API reflects the underlying Gmsh data model
 (@pxref{Source code structure}):
 @itemize
 @item
-There are two top-level containers: models (which hold the geometrical
-and the mesh data) and views (which hold post-processing
-data). Operations which do not directly reference a model (resp. a view)
-are performed on the @emph{current} model (resp. view).
+There are two top-level containers: @emph{models} (which hold the
+geometrical and the mesh data) and @emph{views} (which hold
+post-processing data). Operations which do not directly reference a
+model are performed on the @emph{current} model.
 @item
 Geometrical data is made of model @emph{entities}, called @emph{points}
 (entities of dimension 0), @emph{curves} (entities of dimension 1),
 @emph{surfaces} (entities of dimension 2) or @emph{volumes} (entities of
-dimension 3). Model entities are identified by their dimension and by a
-@emph{tag}: a strictly positive identification number. @emph{Physical
-groups} are collections of model entities.
+dimension 3). Model entities are stored using a boundary representation:
+a volume is bounded by a set of surfaces, a surface is bounded by a
+series of curves, and a curve is bounded by two end points. Volumes,
+surfaces and curves can also store @emph{embedded} entities of lower
+dimension, to force a subsequent mesh to be conformal to internal
+features like a point in the middle of a surface.  Model entities are
+identified by their dimension and by a @emph{tag}: a strictly positive
+identification number. @emph{Physical groups} are collections of model
+entities.
 @item
 Model entities can be either CAD entities (from the built-in @emph{geo}
-kernel or the OpenCASCADE @emph{occ} kernel) or discrete entities
+kernel or the OpenCASCADE @emph{occ} kernel) or @emph{discrete} entities
 (defined by a mesh). Operations on CAD entities are performed directly
-within their respective CAD kernels; they must be @emph{synchronized}
-with the model in order to be meshed.
+within their respective CAD kernels, as Gmsh does not translate across
+CAD formats but rather directly accesses the native representation. CAD
+entities must be @emph{synchronized} with the model in order to be
+meshed: 1D and 2D meshing algorithms use the @emph{parametrization} of
+the underlying geometrical curve or surface to generate the
+mesh. Discrete entities can be remeshed provided that a parametrization
+is explicitly recomputed for them.
 @item
 Mesh data is made of @emph{elements} (points, lines, triangles,
 quadrangles, tetrahedra, hexahedra, prisms, pyramids, ...), defined by
