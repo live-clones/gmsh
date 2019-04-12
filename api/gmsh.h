@@ -1810,7 +1810,7 @@ namespace gmsh { // Top-level functions
 
   namespace fltk { // FLTK graphical user interface functions
 
-    // Create the Fltk graphical user interface. Can only be called in the main
+    // Create the FLTK graphical user interface. Can only be called in the main
     // thread.
     GMSH_API void initialize();
 

@@ -1934,7 +1934,7 @@ GMSH_API void gmshPluginRun(const char * name,
 /* Draw all the OpenGL scenes. */
 GMSH_API void gmshGraphicsDraw(int * ierr);
 
-/* Create the Fltk graphical user interface. Can only be called in the main
+/* Create the FLTK graphical user interface. Can only be called in the main
  * thread. */
 GMSH_API void gmshFltkInitialize(int * ierr);
 

@@ -4100,7 +4100,7 @@ import ..gmsh
 """
     gmsh.fltk.initialize()
 
-Create the Fltk graphical user interface. Can only be called in the main thread.
+Create the FLTK graphical user interface. Can only be called in the main thread.
 """
 function initialize()
     ierr = Ref{Cint}()

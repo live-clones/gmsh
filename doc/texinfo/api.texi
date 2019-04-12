@@ -3106,7 +3106,7 @@ Draw all the OpenGL scenes.
 
 @ftable @code
 @item initialize
-Create the Fltk graphical user interface. Can only be called in the main thread.
+Create the FLTK graphical user interface. Can only be called in the main thread.
 
 @table @asis
 @item Input:

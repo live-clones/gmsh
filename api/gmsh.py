@@ -4817,7 +4817,7 @@ class fltk:
     @staticmethod
     def initialize():
         """
-        Create the Fltk graphical user interface. Can only be called in the main
+        Create the FLTK graphical user interface. Can only be called in the main
         thread.
         """
         ierr = c_int()
