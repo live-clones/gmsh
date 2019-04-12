@@ -5371,12 +5371,12 @@ The structure of the API reflects the underlying Gmsh data model
 @item
 There are two main top-level containers: @emph{models} (which hold the
 geometrical and the mesh data) and @emph{views} (which hold
-post-processing data). Additional top-level containers: @emph{options}
+post-processing data). The other top-level containers are @emph{options}
 (which hold all options), @emph{plugins} (which extend core Gmsh
 functionality), @emph{graphics} (which handle drawing), @emph{fltk}
 (which handles the graphical user interface), @emph{onelab} (which
 handles ONELAB parameters and communications with external codes) and
-@emph{logger} (for information loggin).
+@emph{logger} (for information logging).
 @item
 Geometrical data is made of model @emph{entities}, called @emph{points}
 (entities of dimension 0), @emph{curves} (entities of dimension 1),
@@ -5393,15 +5393,15 @@ entities. Operations which do not directly reference a model are
 performed on the @emph{current} model.
 @item
 Model entities can be either CAD entities (from the built-in @emph{geo}
-kernel or the OpenCASCADE @emph{occ} kernel) or @emph{discrete} entities
-(defined by a mesh). Operations on CAD entities are performed directly
-within their respective CAD kernels, as Gmsh does not translate across
-CAD formats but rather directly accesses the native representation. CAD
-entities must be @emph{synchronized} with the model in order to be
-meshed: 1D and 2D meshing algorithms use the @emph{parametrization} of
-the underlying geometrical curve or surface to generate the
-mesh. Discrete entities can be remeshed provided that a parametrization
-is explicitly recomputed for them.
+kernel or from the OpenCASCADE @emph{occ} kernel) or @emph{discrete}
+entities (defined by a mesh). Operations on CAD entities are performed
+directly within their respective CAD kernels, as Gmsh does not translate
+across CAD formats but rather directly accesses the native
+representation. CAD entities must be @emph{synchronized} with the model
+in order to be meshed: 1D and 2D meshing algorithms use the
+@emph{parametrization} of the underlying geometrical curve or surface to
+generate the mesh. Discrete entities can be remeshed provided that a
+parametrization is explicitly recomputed for them.
 @item
 Mesh data is made of @emph{elements} (points, lines, triangles,
 quadrangles, tetrahedra, hexahedra, prisms, pyramids, ...), defined by
@@ -5409,21 +5409,23 @@ an ordered list of their @emph{nodes}. Elements and nodes are identified
 by @emph{tags} (strictly positive identification numbers), and are
 stored (@emph{classified}) in the geometrical entity they
 discretize. Once meshed, a geometrical entity of dimension 0 (a
-geometrical point) will thus contain a mesh element of type point, as
-well as a mesh node. A geometrical curve will contain line elements as
-well as its interior nodes, while its boundary nodes will be stored in
-the bounding geometrical points. A geometrical surface will contain
-triangular and/or quadrangular elements and all the nodes not classified
-on its boundary or embedded entities (curves and points). A geometrical
-volume will contain tetrahedra, hexahedra, etc. and all the nodes not
-classified on its boundary or embedded entities (surfaces, curves and
-points). This allows to easily and efficiently handle the creation,
-modification and destruction of conformal meshes.
+geometrical point) will thus contain a mesh element of type point (MSH
+type 15, @ref{MSH file format}), as well as a mesh node. A geometrical
+curve will contain line elements (MSH type 1, 8 or 26 at order 1, 2 or 3
+respectively) as well as its interior nodes, while its boundary nodes
+will be stored in the bounding geometrical points. A geometrical surface
+will contain triangular and/or quadrangular elements and all the nodes
+not classified on its boundary or embedded entities (curves and
+points). A geometrical volume will contain tetrahedra, hexahedra,
+etc. and all the nodes not classified on its boundary or embedded
+entities (surfaces, curves and points). This data model allows to easily
+and efficiently handle the creation, modification and destruction of
+conformal meshes.
 @item
 Post-processing data can contain one or more @emph{steps}, and can be
 either linked to one or more models (@emph{mesh-based} data, as stored
 in MSH files) or independent from any model (@emph{list-based} data, as
-stored in Parsed POS files).
+stored in parsed POS files).
 @end itemize
 
 The functions available in the API are given below (see the relevant
