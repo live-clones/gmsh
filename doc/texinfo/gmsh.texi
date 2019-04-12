@@ -5369,10 +5369,14 @@ The structure of the API reflects the underlying Gmsh data model
 (@pxref{Source code structure}):
 @itemize
 @item
-There are two top-level containers: @emph{models} (which hold the
+There are two main top-level containers: @emph{models} (which hold the
 geometrical and the mesh data) and @emph{views} (which hold
-post-processing data). Operations which do not directly reference a
-model are performed on the @emph{current} model.
+post-processing data). Additional top-level containers: @emph{options}
+(which hold all options), @emph{plugins} (which extend core Gmsh
+functionality), @emph{graphics} (which handle drawing), @emph{fltk}
+(which handles the graphical user interface), @emph{onelab} (which
+handles ONELAB parameters and communications with external codes) and
+@emph{logger} (for information loggin).
 @item
 Geometrical data is made of model @emph{entities}, called @emph{points}
 (entities of dimension 0), @emph{curves} (entities of dimension 1),
@@ -5385,7 +5389,8 @@ dimension, to force a subsequent mesh to be conformal to internal
 features like a point in the middle of a surface.  Model entities are
 identified by their dimension and by a @emph{tag}: a strictly positive
 identification number. @emph{Physical groups} are collections of model
-entities.
+entities. Operations which do not directly reference a model are
+performed on the @emph{current} model.
 @item
 Model entities can be either CAD entities (from the built-in @emph{geo}
 kernel or the OpenCASCADE @emph{occ} kernel) or @emph{discrete} entities
