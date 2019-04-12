@@ -243,7 +243,7 @@ API}. A brief description of the four modules is given hereafter.
 @c -------------------------------------------------------------------------
 
 @node Geometry, Mesh, Overview, Overview
-@section Geometry: geometrical entity definition
+@section Geometry: model entity creation
 
 A model in Gmsh is defined using its Boundary Representation (BRep): a
 volume is bounded by a set of surfaces, a surface is bounded by a series
@@ -265,11 +265,11 @@ crucial for complex models where translations invariably introduce
 issues linked to slightly different representations.
 
 Gmsh's scripting language and the Gmsh API allow to parametrize all
-geometrical entities. The entities can either be built in a
+model entities. The entities can either be built in a
 ``bottom-up'' manner (first points, then curves, surfaces and volumes)
 or in a ``Constructive Solid Geometry'' fashion (solids on which boolean
 operations are performed). Both methodologies can also be
-combined. Finally, groups of geometrical entities (called ``physical
+combined. Finally, groups of model entities (called ``physical
 groups'') can be defined, based on the elementary geometric entities.
 
 @c -------------------------------------------------------------------------
@@ -1721,7 +1721,7 @@ planes, etc.
 
 @item BoundingBox;
 Recomputes the bounding box of the scene (which is normally computed only
-after new geometrical entities are added or after files are included or
+after new model entities are added or after files are included or
 merged). The bounding box is computed as follows:
 @enumerate
 @item
@@ -1743,7 +1743,7 @@ Forces the bounding box of the scene to the given @w{@var{expression}s} (X
 min, X max, Y min, Y max, Z min, Z max).
 
 @item Delete Model;
-Deletes the current model (all geometrical entities and their associated
+Deletes the current model (all model entities and their associated
 meshes).
 
 @item Delete Physicals;
@@ -1830,7 +1830,7 @@ Geometries can be constructed in Gmsh using different underlying CAD
 kernels. Selecting the CAD kernel in @code{.geo} files is done with the
 @code{SetFactory} command. In the Gmsh API, the kernel appears
 explicitely in all the relevant functions from the @code{gmsh/model}
-module, with @code{geo} or @code{occ} prefixes for the built-in and
+namespace, with @code{geo} or @code{occ} prefixes for the built-in and
 OpenCASCADE kernel, respectively.
 
 The built-in CAD kernel (@code{SetFactory("Built-in")}) provides a
@@ -1846,26 +1846,26 @@ bottom-up manner, or by using a constructive solid geometry approach
 where solids are defined first. Boolean operations can then be performed
 to modify them.
 
-These geometrical entities are dubbed ``elementary'' in Gmsh's jargon,
-and are assigned tags (stricly positive global identification numbers)
-when they are created:
+These geometrical model entities are also referred to as ``elementary
+entities'' in Gmsh, and are assigned tags (stricly positive global
+identification numbers) when they are created:
 
 @enumerate
-@item each elementary point must possess a unique tag;
-@item each elementary curve must possess a unique tag;
-@item each elementary surface must possess a unique tag;
-@item each elementary volume must possess a unique tag.
+@item each point must possess a unique tag;
+@item each curve must possess a unique tag;
+@item each surface must possess a unique tag;
+@item each volume must possess a unique tag.
 @end enumerate
 
-@noindent Elementary geometrical entities can then be manipulated in various
+@noindent Elementary entities can then be manipulated in various
 ways, for example using the @code{Translate}, @code{Rotate},
 @code{Scale} or @code{Symmetry} commands. They can be deleted with the
 @code{Delete} command, provided that no higher-dimension entity
 references them. Zero or negative tags are reserved by the system for
 special uses: do not use them in your scripts.
 
-Groups of elementary geometrical entities can also be defined and are
-called ``physical'' groups. These physical groups cannot be modified by
+Groups of elementary entities can also be defined and are called
+``physical'' groups. These physical groups cannot be modified by
 geometry commands: their only purpose is to assemble elementary entities
 into larger groups so that they can be referred to later as single
 entities. As is the case with elementary entities, each physical point,
@@ -1890,12 +1890,12 @@ physical groups affect the way meshes are saved.
 
 The next subsections describe all the available geometry commands in the
 scripting language. For the equivalent commands in the Gmsh API, see the
-@code{gmsh/model/geo} and @code{gmsh/model/occ} modules in @ref{Gmsh
+@code{gmsh/model/geo} and @code{gmsh/model/occ} namespaces in @ref{Gmsh
 API}.
 
 Note that the following general syntax rule is followed for the
-definition of geometrical entities: ``If an @var{expression} defines a
-new entity, it is enclosed between parentheses. If an @var{expression}
+definition of model entities: ``If an @var{expression} defines a new
+entity, it is enclosed between parentheses. If an @var{expression}
 refers to a previously defined entity, it is enclosed between braces.''
 
 @menu
@@ -2462,13 +2462,13 @@ Here is a list of all other geometry commands currently available:
 
 @ftable @code
 @item Coherence;
-Removes all duplicate elementary geometrical entities (e.g., points
-having identical coordinates). Note that with the built-in geometry
-kernel Gmsh executes the @code{Coherence} command automatically after
-each geometrical transformation, unless @code{Geometry.AutoCoherence} is
-set to zero (@pxref{Geometry options list}). With the OpenCASCADE
-geoemtry kernel, @code{Coherence} is simply a shortcut for a
-@code{BooleanFragments} operation on all entities.
+Removes all duplicate elementary entities (e.g., points having identical
+coordinates). Note that with the built-in geometry kernel Gmsh executes
+the @code{Coherence} command automatically after each geometrical
+transformation, unless @code{Geometry.AutoCoherence} is set to zero
+(@pxref{Geometry options list}). With the OpenCASCADE geoemtry kernel,
+@code{Coherence} is simply a shortcut for a @code{BooleanFragments}
+operation on all entities.
 
 @item < Recursive > Delete @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Deletes all elementary entities whose tags are given
@@ -2511,8 +2511,8 @@ or @code{1}.
 @cindex Geometry, options
 
 The list of all the options that control the behavior of geometry
-commands, as well as the way geometrical entities are handled in the
-GUI, is given in @ref{Geometry options list}.
+commands, as well as the way model entities are handled in the GUI, is
+given in @ref{Geometry options list}.
 
 @c =========================================================================
 @c Mesh module
@@ -2653,10 +2653,9 @@ tetrahedralizations.
 @end itemize
 
 The ``Delaunay'' algorithm is currently the most robust and is the only
-one that supports embedded geometrical entities, the @code{Field}
-mechanism to specify element sizes (@pxref{Specifying mesh element
-sizes}) and the automatic generation of hybrid meshes with
-pyramids.
+one that supports embedded model entities, the @code{Field} mechanism to
+specify element sizes (@pxref{Specifying mesh element sizes}) and the
+automatic generation of hybrid meshes with pyramids.
 
 If your version of Gmsh is compiled with OpenMP support
 (@pxref{Compiling the source code}), most of the meshing steps can be
@@ -2684,8 +2683,8 @@ command line (@pxref{Command-line options}), or with the
 @node Elementary entities vs physical groups, Mesh commands, Choosing the right unstructured algorithm, Mesh module
 @section Elementary entities vs. physical groups
 
-It is usually convenient to combine geometrical entities into more
-meaningful groups, e.g. to define some mathematical (``domain'',
+It is usually convenient to combine elementary geometrical entities into
+more meaningful groups, e.g. to define some mathematical (``domain'',
 ``boundary with Neumann condition''), functional (``left wing'',
 ``fuselage'') or material (``steel'', ``carbon'') properties.  Such
 grouping is done in Gmsh's geometry module (@pxref{Geometry module})
@@ -2758,9 +2757,8 @@ advanced methods explained below.
 @item
 Second, if @code{Mesh.CharacteristicLengthFromCurvature} is set (it is
 not by default), the mesh will be adapted with respect to the curvature
-of the geometrical entities and the value of
-@code{Mesh.MinimumCirclePoints}, which gives the number of points per 2
-pi radians.
+of the model entities and the value of @code{Mesh.MinimumCirclePoints},
+which gives the number of points per 2 pi radians.
 @item
 Finally, you can specify a general background mesh size, expressed as a
 combination of so-called mesh size fields:
@@ -2770,7 +2768,7 @@ The @code{Box} field specifies the size of the elements inside and outside
 of a parallelepipedic region.
 @item
 The @code{Distance} field specifies the size of the mesh according to the
-distance to some geometrical entities.
+distance to some model entities.
 @item
 The @code{MathEval} field specifies the size of the mesh using an explicit
 mathematical function.
@@ -3676,7 +3674,7 @@ cases.)
 The MSH file format version 4 (current revision: version 4.1) contains
 one mandatory section giving information about the file
 (@code{$MeshFormat}), followed by several optional sections defining the
-physical group names (@code{$PhysicalName}), the elementary geometrical
+physical group names (@code{$PhysicalName}), the elementary model
 entities (@code{$Entities}), the partitioned entities
 (@code{$PartitionedEntities}), the nodes (@code{$Nodes}), the elements
 (@code{$Elements}), the periodicity relations (@code{$Periodic}), the
@@ -4435,10 +4433,10 @@ file format}.
 gives the number of integer tags that follow for the @var{n}-th
 element. By default, the first @var{tag} is the tag of the physical
 entity to which the element belongs; the second is the tag of the
-elementary geometrical entity to which the element belongs; the third is
-the number of mesh partitions to which the element belongs, followed by
-the partition ids (negative partition ids indicate ghost cells). A zero
-tag is equivalent to no tag. Gmsh and most codes using the MSH 2 format
+elementary model entity to which the element belongs; the third is the
+number of mesh partitions to which the element belongs, followed by the
+partition ids (negative partition ids indicate ghost cells). A zero tag
+is equivalent to no tag. Gmsh and most codes using the MSH 2 format
 require at least the first two tags (physical and elementary tags).
 
 @item @var{node-number-list}
@@ -5207,7 +5205,7 @@ options' button in `Tools->Options->General->Advanced', or erase the
 by hand.
 
 All the options can be manipulated through the Gmsh API through the
-@code{gmsh/option} module (@pxref{Gmsh API}).
+@code{gmsh/option} namespace (@pxref{Gmsh API}).
 
 @c All the included files are generated automatically with `gmsh -doc'
 
@@ -5369,66 +5367,72 @@ The structure of the API reflects the underlying Gmsh data model
 (@pxref{Source code structure}):
 @itemize
 @item
-There are two main top-level containers: @emph{models} (which hold the
+There are two main data containers: @emph{models} (which hold the
 geometrical and the mesh data) and @emph{views} (which hold
-post-processing data). The other top-level containers are @emph{options}
-(which hold all options), @emph{plugins} (which extend core Gmsh
-functionality), @emph{graphics} (which handle drawing), @emph{fltk}
-(which handles the graphical user interface), @emph{onelab} (which
-handles ONELAB parameters and communications with external codes) and
-@emph{logger} (for information logging).
+post-processing data). These are manipulated by the API functions in the
+top-level namespaces @code{gmsh/model} and @code{gmsh/view},
+respectively. The other top-level namespaces are @code{gmsh/option}
+(which handles all options), @code{gmsh/plugin} (which handles
+extensions to core Gmsh functionality), @code{gmsh/graphics} (which
+handles drawing), @code{gmsh/fltk} (which handles the graphical user
+interface), @code{gmsh/onelab} (which handles ONELAB parameters and
+communications with external codes) and @code{gmsh/logger} (which
+handles information logging).
 @item
 Geometrical data is made of model @emph{entities}, called @emph{points}
 (entities of dimension 0), @emph{curves} (entities of dimension 1),
 @emph{surfaces} (entities of dimension 2) or @emph{volumes} (entities of
 dimension 3). Model entities are stored using a boundary representation:
 a volume is bounded by a set of surfaces, a surface is bounded by a
-series of curves, and a curve is bounded by two end points. Volumes,
-surfaces and curves can also store @emph{embedded} entities of lower
-dimension, to force a subsequent mesh to be conformal to internal
-features like a point in the middle of a surface.  Model entities are
-identified by their dimension and by a @emph{tag}: a strictly positive
-identification number. @emph{Physical groups} are collections of model
+series of curves, and a curve is bounded by two end points. Volumes and
+surfaces can also store @emph{embedded} entities of lower dimension, to
+force a subsequent mesh to be conformal to internal features like a
+point in the middle of a surface.  Model entities are identified by
+their dimension and by a @emph{tag}: a strictly positive identification
+number. @emph{Physical groups} are collections of model
 entities. Operations which do not directly reference a model are
 performed on the @emph{current} model.
 @item
 Model entities can be either CAD entities (from the built-in @emph{geo}
 kernel or from the OpenCASCADE @emph{occ} kernel) or @emph{discrete}
 entities (defined by a mesh). Operations on CAD entities are performed
-directly within their respective CAD kernels, as Gmsh does not translate
-across CAD formats but rather directly accesses the native
-representation. CAD entities must be @emph{synchronized} with the model
-in order to be meshed: 1D and 2D meshing algorithms use the
-@emph{parametrization} of the underlying geometrical curve or surface to
-generate the mesh. Discrete entities can be remeshed provided that a
-parametrization is explicitly recomputed for them.
+directly within their respective CAD kernels (i.e. using functions from
+the @code{gmsh/model/geo} or @code{gmsh/model/occ} namespaces,
+respectively), as Gmsh does not translate across CAD formats but rather
+directly accesses the native representation. CAD entities must be
+@emph{synchronized} with the model in order to be meshed.  1D and 2D
+meshing algorithms use the @emph{parametrization} of the underlying
+geometrical curve or surface to generate the mesh. Discrete entities can
+be remeshed provided that a parametrization is explicitly recomputed for
+them.
 @item
 Mesh data is made of @emph{elements} (points, lines, triangles,
 quadrangles, tetrahedra, hexahedra, prisms, pyramids, ...), defined by
 an ordered list of their @emph{nodes}. Elements and nodes are identified
 by @emph{tags} (strictly positive identification numbers), and are
-stored (@emph{classified}) in the geometrical entity they
-discretize. Once meshed, a geometrical entity of dimension 0 (a
-geometrical point) will thus contain a mesh element of type point (MSH
-type 15, @ref{MSH file format}), as well as a mesh node. A geometrical
-curve will contain line elements (MSH type 1, 8 or 26 at order 1, 2 or 3
-respectively) as well as its interior nodes, while its boundary nodes
-will be stored in the bounding geometrical points. A geometrical surface
-will contain triangular and/or quadrangular elements and all the nodes
-not classified on its boundary or embedded entities (curves and
-points). A geometrical volume will contain tetrahedra, hexahedra,
-etc. and all the nodes not classified on its boundary or embedded
-entities (surfaces, curves and points). This data model allows to easily
-and efficiently handle the creation, modification and destruction of
-conformal meshes.
+stored (@emph{classified}) in the model entity they discretize. Once
+meshed, a model entity of dimension 0 (a geometrical point) will thus
+contain a mesh element of type point (MSH type 15: cf. @ref{MSH file
+format}), as well as a mesh node. A model curve will contain line
+elements (MSH type 1, 8 or 26 at order 1, 2 or 3 respectively) as well
+as its interior nodes, while its boundary nodes will be stored in the
+bounding model points. A model surface will contain triangular and/or
+quadrangular elements and all the nodes not classified on its boundary
+or embedded entities (curves and points). A model volume will contain
+tetrahedra, hexahedra, etc. and all the nodes not classified on its
+boundary or embedded entities (surfaces, curves and points). This data
+model allows to easily and efficiently handle the creation, modification
+and destruction of conformal meshes. All the mesh-related functions are
+provided in the @code{gmsh/model/mesh} namespace.
 @item
 Post-processing data can contain one or more @emph{steps}, and can be
 either linked to one or more models (@emph{mesh-based} data, as stored
-in MSH files) or independent from any model (@emph{list-based} data, as
-stored in parsed POS files).
+in MSH files: cf. @ref{MSH file format}) or independent from any model
+(@emph{list-based} data, as stored in parsed POS files:
+cf. @ref{Post-processing commands}).
 @end itemize
 
-The functions available in the API are given below (see the relevant
+All the functions available in the API are given below (see the relevant
 header/module file for the exact definition in each supported
 language@footnote{In C++ @code{/gmsh/model/geo/addPoint} will lead to a
 namespaced function @code{gmsh::model::geo::addPoint}, while in Python
@@ -5507,10 +5511,10 @@ and volumes
 Concrete implementations of these classes are provided for each
 supported CAD kernel
 (e.g. @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/gmshVertex.h,Geo/gmshVertex.h}
-for geometry points in Gmsh's built-in CAD kernel, or
+for points in Gmsh's built-in CAD kernel, or
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/OCCVertex.h,Geo/OCCVertex.h}
-for geometry points from OpenCASCADE). All these elementary geometry
-entities derive from
+for points from OpenCASCADE). All these elementary model entities derive
+from
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GEntity.h,Geo/GEntity.h}.
 Physical groups are simply stored as integer tags in the entities.
 
@@ -5526,14 +5530,14 @@ tetrahedra
 (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MTetrahedron.h,Geo/MTetrahedron.h}),
 etc. All the mesh elements are derived from
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MElement.h,Geo/MElement.h},
-and are stored in the corresponding geometrical entities: one mesh point
-per geometrical point, mesh lines in geometrical curves, triangles and
+and are stored in the corresponding model entities: one mesh point per
+geometrical point, mesh lines in geometrical curves, triangles and
 quadrangles in surfaces, etc. The elements are defined in terms of their
 nodes
 (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MVertex.h,Geo/MVertex.h}).
-Each geometrical entity stores only its internal nodes: nodes on
-boundaries or on embedded entities are stored in the associated
-bounding/embedded entity.
+Each model entity stores only its internal nodes: nodes on boundaries or
+on embedded entities are stored in the associated bounding/embedded
+entity.
 
 The post-processing module is based on the concept of views
 (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PView.h,Post/PView.h})

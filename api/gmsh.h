@@ -76,7 +76,7 @@ namespace gmsh { // Top-level functions
   // Clear all loaded models and post-processing data, and add a new empty model.
   GMSH_API void clear();
 
-  namespace option { // Global option handling functions
+  namespace option { // Option handling functions
 
     // Set a numerical option to `value'. `name' is of the form "category.option"
     // or "category[num].option". Available categories and options are listed in
@@ -104,7 +104,7 @@ namespace gmsh { // Top-level functions
 
   } // namespace option
 
-  namespace model { // Per-model functions
+  namespace model { // Model functions
 
     // Add a new model, with name `name', and set it as the current model.
     GMSH_API void add(const std::string & name);
@@ -119,10 +119,9 @@ namespace gmsh { // Top-level functions
     // the same name, select the one that was added first.
     GMSH_API void setCurrent(const std::string & name);
 
-    // Get all the (elementary) geometrical entities in the current model. If `dim'
-    // is >= 0, return only the entities of the specified dimension (e.g. points if
-    // `dim' == 0). The entities are returned as a vector of (dim, tag) integer
-    // pairs.
+    // Get all the entities in the current model. If `dim' is >= 0, return only the
+    // entities of the specified dimension (e.g. points if `dim' == 0). The
+    // entities are returned as a vector of (dim, tag) integer pairs.
     GMSH_API void getEntities(gmsh::vectorpair & dimTags,
                               const int dim = -1);
 
@@ -142,21 +141,21 @@ namespace gmsh { // Top-level functions
     GMSH_API void getPhysicalGroups(gmsh::vectorpair & dimTags,
                                     const int dim = -1);
 
-    // Get the tags of the geometrical entities making up the physical group of
-    // dimension `dim' and tag `tag'.
+    // Get the tags of the model entities making up the physical group of dimension
+    // `dim' and tag `tag'.
     GMSH_API void getEntitiesForPhysicalGroup(const int dim,
                                               const int tag,
                                               std::vector<int> & tags);
 
-    // Get the tags of the physical groups (if any) to which the geometrical entity
-    // of dimension `dim' and tag `tag' belongs.
+    // Get the tags of the physical groups (if any) to which the model entity of
+    // dimension `dim' and tag `tag' belongs.
     GMSH_API void getPhysicalGroupsForEntity(const int dim,
                                              const int tag,
                                              std::vector<int> & physicalTags);
 
-    // Add a physical group of dimension `dim', grouping the elementary entities
-    // with tags `tags'. Return the tag of the physical group, equal to `tag' if
-    // `tag' is positive, or a new tag if `tag' < 0.
+    // Add a physical group of dimension `dim', grouping the model entities with
+    // tags `tags'. Return the tag of the physical group, equal to `tag' if `tag'
+    // is positive, or a new tag if `tag' < 0.
     GMSH_API int addPhysicalGroup(const int dim,
                                   const std::vector<int> & tags,
                                   const int tag = -1);
@@ -171,22 +170,22 @@ namespace gmsh { // Top-level functions
                                   const int tag,
                                   std::string & name);
 
-    // Get the boundary of the geometrical entities `dimTags'. Return in
-    // `outDimTags' the boundary of the individual entities (if `combined' is
-    // false) or the boundary of the combined geometrical shape formed by all input
-    // entities (if `combined' is true). Return tags multiplied by the sign of the
-    // boundary entity if `oriented' is true. Apply the boundary operator
-    // recursively down to dimension 0 (i.e. to points) if `recursive' is true.
+    // Get the boundary of the model entities `dimTags'. Return in `outDimTags' the
+    // boundary of the individual entities (if `combined' is false) or the boundary
+    // of the combined geometrical shape formed by all input entities (if
+    // `combined' is true). Return tags multiplied by the sign of the boundary
+    // entity if `oriented' is true. Apply the boundary operator recursively down
+    // to dimension 0 (i.e. to points) if `recursive' is true.
     GMSH_API void getBoundary(const gmsh::vectorpair & dimTags,
                               gmsh::vectorpair & outDimTags,
                               const bool combined = true,
                               const bool oriented = true,
                               const bool recursive = false);
 
-    // Get the (elementary) geometrical entities in the bounding box defined by the
-    // two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim'
-    // is >= 0, return only the entities of the specified dimension (e.g. points if
-    // `dim' == 0).
+    // Get the model entities in the bounding box defined by the two points
+    // (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,
+    // return only the entities of the specified dimension (e.g. points if `dim' ==
+    // 0).
     GMSH_API void getEntitiesInBoundingBox(const double xmin,
                                            const double ymin,
                                            const double zmin,
@@ -197,7 +196,7 @@ namespace gmsh { // Top-level functions
                                            const int dim = -1);
 
     // Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
-    // the geometrical entity of dimension `dim' and tag `tag'.
+    // the model entity of dimension `dim' and tag `tag'.
     GMSH_API void getBoundingBox(const int dim,
                                  const int tag,
                                  double & xmin,
@@ -210,12 +209,11 @@ namespace gmsh { // Top-level functions
     // Get the geometrical dimension of the current model.
     GMSH_API int getDimension();
 
-    // Add a discrete geometrical entity (defined by a mesh) of dimension `dim' in
-    // the current model. Return the tag of the new discrete entity, equal to `tag'
-    // if `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies the
-    // tags of the entities on the boundary of the discrete entity, if any.
-    // Specifying `boundary' allows Gmsh to construct the topology of the overall
-    // model.
+    // Add a discrete model entity (defined by a mesh) of dimension `dim' in the
+    // current model. Return the tag of the new discrete entity, equal to `tag' if
+    // `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies the tags
+    // of the entities on the boundary of the discrete entity, if any. Specifying
+    // `boundary' allows Gmsh to construct the topology of the overall model.
     GMSH_API int addDiscreteEntity(const int dim,
                                    const int tag = -1,
                                    const std::vector<int> & boundary = std::vector<int>());
@@ -309,21 +307,20 @@ namespace gmsh { // Top-level functions
                             const std::vector<double> & parametricCoord,
                             std::vector<double> & normals);
 
-    // Set the visibility of the geometrical entities `dimTags' to `value'. Apply
-    // the visibility setting recursively if `recursive' is true.
+    // Set the visibility of the model entities `dimTags' to `value'. Apply the
+    // visibility setting recursively if `recursive' is true.
     GMSH_API void setVisibility(const gmsh::vectorpair & dimTags,
                                 const int value,
                                 const bool recursive = false);
 
-    // Get the visibility of the geometrical entity of dimension `dim' and tag
-    // `tag'.
+    // Get the visibility of the model entity of dimension `dim' and tag `tag'.
     GMSH_API void getVisibility(const int dim,
                                 const int tag,
                                 int & value);
 
-    // Set the color of the geometrical entities `dimTags' to the RGBA value (`r',
-    // `g', `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and
-    // 255. Apply the color setting recursively if `recursive' is true.
+    // Set the color of the model entities `dimTags' to the RGBA value (`r', `g',
+    // `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and 255.
+    // Apply the color setting recursively if `recursive' is true.
     GMSH_API void setColor(const gmsh::vectorpair & dimTags,
                            const int r,
                            const int g,
@@ -331,7 +328,7 @@ namespace gmsh { // Top-level functions
                            const int a = 0,
                            const bool recursive = false);
 
-    // Get the color of the geometrical entity of dimension `dim' and tag `tag'.
+    // Get the color of the model entity of dimension `dim' and tag `tag'.
     GMSH_API void getColor(const int dim,
                            const int tag,
                            int & r,
@@ -345,7 +342,7 @@ namespace gmsh { // Top-level functions
                                  const double y,
                                  const double z);
 
-    namespace mesh { // Per-model meshing functions
+    namespace mesh { // Meshing functions
 
       // Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or
       // 3).
@@ -413,22 +410,22 @@ namespace gmsh { // Top-level functions
                                              std::vector<std::size_t> & nodeTags,
                                              std::vector<double> & coord);
 
-      // Set the nodes classified on the geometrical entity of dimension `dim' and
-      // tag `tag'. `nodeTags' contains the node tags (their unique, strictly
-      // positive identification numbers). `coord' is a vector of length 3 times
-      // the length of `nodeTags' that contains the x, y, z coordinates of the
-      // nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. The optional
-      // `parametricCoord' vector contains the parametric coordinates of the nodes,
-      // if any. The length of `parametricCoord' can be 0 or `dim' times the length
-      // of `nodeTags'. If the `nodeTags' vector is empty, new tags are
-      // automatically assigned to the nodes.
+      // Set the nodes classified on the model entity of dimension `dim' and tag
+      // `tag'. `nodeTags' contains the node tags (their unique, strictly positive
+      // identification numbers). `coord' is a vector of length 3 times the length
+      // of `nodeTags' that contains the x, y, z coordinates of the nodes,
+      // concatenated: [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord'
+      // vector contains the parametric coordinates of the nodes, if any. The
+      // length of `parametricCoord' can be 0 or `dim' times the length of
+      // `nodeTags'. If the `nodeTags' vector is empty, new tags are automatically
+      // assigned to the nodes.
       GMSH_API void setNodes(const int dim,
                              const int tag,
                              const std::vector<std::size_t> & nodeTags,
                              const std::vector<double> & coord,
                              const std::vector<double> & parametricCoord = std::vector<double>());
 
-      // Reclassify all nodes on their associated geometrical entity, based on the
+      // Reclassify all nodes on their associated model entity, based on the
       // elements. Can be used when importing nodes in bulk (e.g. by associating
       // them all to a single volume), to reclassify them correctly on model
       // surfaces, curves, etc. after the elements have been set.
@@ -720,8 +717,8 @@ namespace gmsh { // Top-level functions
                                      std::vector<std::size_t> & elementTags,
                                      std::vector<int> & partitions);
 
-      // Set a mesh size constraint on the geometrical entities `dimTags'.
-      // Currently only entities of dimension 0 (points) are handled.
+      // Set a mesh size constraint on the model entities `dimTags'. Currently only
+      // entities of dimension 0 (points) are handled.
       GMSH_API void setSize(const gmsh::vectorpair & dimTags,
                             const double size);
 
@@ -751,23 +748,23 @@ namespace gmsh { // Top-level functions
       GMSH_API void setTransfiniteVolume(const int tag,
                                          const std::vector<int> & cornerTags = std::vector<int>());
 
-      // Set a recombination meshing constraint on the geometrical entity of
-      // dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to
-      // recombine triangles into quadrangles) are supported.
+      // Set a recombination meshing constraint on the model entity of dimension
+      // `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
+      // triangles into quadrangles) are supported.
       GMSH_API void setRecombine(const int dim,
                                  const int tag);
 
-      // Set a smoothing meshing constraint on the geometrical entity of dimension
-      // `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied.
+      // Set a smoothing meshing constraint on the model entity of dimension `dim'
+      // and tag `tag'. `val' iterations of a Laplace smoother are applied.
       GMSH_API void setSmoothing(const int dim,
                                  const int tag,
                                  const int val);
 
-      // Set a reverse meshing constraint on the geometrical entity of dimension
-      // `dim' and tag `tag'. If `val' is true, the mesh orientation will be
-      // reversed with respect to the natural mesh orientation (i.e. the
-      // orientation consistent with the orientation of the geometrical entity). If
-      // `val' is false, the mesh is left as-is.
+      // Set a reverse meshing constraint on the model entity of dimension `dim'
+      // and tag `tag'. If `val' is true, the mesh orientation will be reversed
+      // with respect to the natural mesh orientation (i.e. the orientation
+      // consistent with the orientation of the geometry). If `val' is false, the
+      // mesh is left as-is.
       GMSH_API void setReverse(const int dim,
                                const int tag,
                                const bool val = true);
@@ -778,17 +775,16 @@ namespace gmsh { // Top-level functions
       // STL triangulation.
       GMSH_API void setOutwardOrientation(const int tag);
 
-      // Embed the geometrical entities of dimension `dim' and tags `tags' in the
-      // (inDim, inTag) geometrical entity. `inDim' must be strictly greater than
-      // `dim'.
+      // Embed the model entities of dimension `dim' and tags `tags' in the (inDim,
+      // inTag) model entity. `inDim' must be strictly greater than `dim'.
       GMSH_API void embed(const int dim,
                           const std::vector<int> & tags,
                           const int inDim,
                           const int inTag);
 
-      // Remove embedded entities in the geometrical entities `dimTags'. if `dim'
-      // is >= 0, only remove embedded entities of the given dimension (e.g.
-      // embedded points if `dim' == 0).
+      // Remove embedded entities in the model entities `dimTags'. if `dim' is >=
+      // 0, only remove embedded entities of the given dimension (e.g. embedded
+      // points if `dim' == 0).
       GMSH_API void removeEmbedded(const gmsh::vectorpair & dimTags,
                                    const int dim = -1);
 
@@ -873,7 +869,7 @@ namespace gmsh { // Top-level functions
                                       const std::vector<int> & subdomainTags = std::vector<int>(),
                                       const std::vector<int> & dims = std::vector<int>());
 
-      namespace field { // Per-model mesh size field functions
+      namespace field { // Mesh size field functions
 
         // Add a new mesh size field of type `fieldType'. If `tag' is positive,
         // assign the tag explicitly; otherwise a new tag is assigned
@@ -909,7 +905,7 @@ namespace gmsh { // Top-level functions
 
     } // namespace mesh
 
-    namespace geo { // Internal per-model GEO CAD kernel functions
+    namespace geo { // Built-in CAD kernel functions
 
       // Add a geometrical point in the internal GEO CAD representation, at
       // coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing
@@ -980,11 +976,11 @@ namespace gmsh { // Top-level functions
                              const int tag = -1);
 
       // Add a curve loop (a closed wire) formed by the curves `curveTags'.
-      // `curveTags' should contain (signed) tags of geometrical enties of
-      // dimension 1 forming a closed loop: a negative tag signifies that the
-      // underlying curve is considered with reversed orientation. If `tag' is
-      // positive, set the tag explicitly; otherwise a new tag is selected
-      // automatically. Return the tag of the curve loop.
+      // `curveTags' should contain (signed) tags of model enties of dimension 1
+      // forming a closed loop: a negative tag signifies that the underlying curve
+      // is considered with reversed orientation. If `tag' is positive, set the tag
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
+      // of the curve loop.
       GMSH_API int addCurveLoop(const std::vector<int> & curveTags,
                                 const int tag = -1);
 
@@ -1016,12 +1012,12 @@ namespace gmsh { // Top-level functions
       GMSH_API int addVolume(const std::vector<int> & shellTags,
                              const int tag = -1);
 
-      // Extrude the geometrical entities `dimTags' by translation along (`dx',
-      // `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is
-      // not empty, also extrude the mesh: the entries in `numElements' give the
-      // number of elements in each layer. If `height' is not empty, it provides
-      // the (cumulative) height of the different layers, normalized to 1. If `dx'
-      // == `dy' == `dz' == 0, the entities are extruded along their normal.
+      // Extrude the model entities `dimTags' by translation along (`dx', `dy',
+      // `dz'). Return extruded entities in `outDimTags'. If `numElements' is not
+      // empty, also extrude the mesh: the entries in `numElements' give the number
+      // of elements in each layer. If `height' is not empty, it provides the
+      // (cumulative) height of the different layers, normalized to 1. If `dx' ==
+      // `dy' == `dz' == 0, the entities are extruded along their normal.
       GMSH_API void extrude(const gmsh::vectorpair & dimTags,
                             const double dx,
                             const double dy,
@@ -1031,8 +1027,8 @@ namespace gmsh { // Top-level functions
                             const std::vector<double> & heights = std::vector<double>(),
                             const bool recombine = false);
 
-      // Extrude the geometrical entities `dimTags' by rotation of `angle' radians
-      // around the axis of revolution defined by the point (`x', `y', `z') and the
+      // Extrude the model entities `dimTags' by rotation of `angle' radians around
+      // the axis of revolution defined by the point (`x', `y', `z') and the
       // direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
       // `numElements' is not empty, also extrude the mesh: the entries in
       // `numElements' give the number of elements in each layer. If `height' is
@@ -1051,7 +1047,7 @@ namespace gmsh { // Top-level functions
                             const std::vector<double> & heights = std::vector<double>(),
                             const bool recombine = false);
 
-      // Extrude the geometrical entities `dimTags' by a combined translation and
+      // Extrude the model entities `dimTags' by a combined translation and
       // rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis
       // of revolution defined by the point (`x', `y', `z') and the direction
       // (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
@@ -1075,15 +1071,15 @@ namespace gmsh { // Top-level functions
                           const std::vector<double> & heights = std::vector<double>(),
                           const bool recombine = false);
 
-      // Translate the geometrical entities `dimTags' along (`dx', `dy', `dz').
+      // Translate the model entities `dimTags' along (`dx', `dy', `dz').
       GMSH_API void translate(const gmsh::vectorpair & dimTags,
                               const double dx,
                               const double dy,
                               const double dz);
 
-      // Rotate the geometrical entities `dimTags' of `angle' radians around the
-      // axis of revolution defined by the point (`x', `y', `z') and the direction
-      // (`ax', `ay', `az').
+      // Rotate the model entities `dimTags' of `angle' radians around the axis of
+      // revolution defined by the point (`x', `y', `z') and the direction (`ax',
+      // `ay', `az').
       GMSH_API void rotate(const gmsh::vectorpair & dimTags,
                            const double x,
                            const double y,
@@ -1093,9 +1089,9 @@ namespace gmsh { // Top-level functions
                            const double az,
                            const double angle);
 
-      // Scale the geometrical entities `dimTag' by factors `a', `b' and `c' along
-      // the three coordinate axes; use (`x', `y', `z') as the center of the
-      // homothetic transformation.
+      // Scale the model entities `dimTag' by factors `a', `b' and `c' along the
+      // three coordinate axes; use (`x', `y', `z') as the center of the homothetic
+      // transformation.
       GMSH_API void dilate(const gmsh::vectorpair & dimTags,
                            const double x,
                            const double y,
@@ -1104,7 +1100,7 @@ namespace gmsh { // Top-level functions
                            const double b,
                            const double c);
 
-      // Apply a symmetry transformation to the geometrical entities `dimTag', with
+      // Apply a symmetry transformation to the model entities `dimTag', with
       // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
       GMSH_API void symmetrize(const gmsh::vectorpair & dimTags,
                                const double a,
@@ -1132,10 +1128,10 @@ namespace gmsh { // Top-level functions
       // be minimized.
       GMSH_API void synchronize();
 
-      namespace mesh { // GEO-specific meshing constraints
+      namespace mesh { // Built-in CAD kernel meshing constraints
 
-        // Set a mesh size constraint on the geometrical entities `dimTags'.
-        // Currently only entities of dimension 0 (points) are handled.
+        // Set a mesh size constraint on the model entities `dimTags'. Currently
+        // only entities of dimension 0 (points) are handled.
         GMSH_API void setSize(const gmsh::vectorpair & dimTags,
                               const double size);
 
@@ -1165,25 +1161,24 @@ namespace gmsh { // Top-level functions
         GMSH_API void setTransfiniteVolume(const int tag,
                                            const std::vector<int> & cornerTags = std::vector<int>());
 
-        // Set a recombination meshing constraint on the geometrical entity of
-        // dimension `dim' and tag `tag'. Currently only entities of dimension 2
-        // (to recombine triangles into quadrangles) are supported.
+        // Set a recombination meshing constraint on the model entity of dimension
+        // `dim' and tag `tag'. Currently only entities of dimension 2 (to
+        // recombine triangles into quadrangles) are supported.
         GMSH_API void setRecombine(const int dim,
                                    const int tag,
                                    const double angle = 45.);
 
-        // Set a smoothing meshing constraint on the geometrical entity of
-        // dimension `dim' and tag `tag'. `val' iterations of a Laplace smoother
-        // are applied.
+        // Set a smoothing meshing constraint on the model entity of dimension
+        // `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied.
         GMSH_API void setSmoothing(const int dim,
                                    const int tag,
                                    const int val);
 
-        // Set a reverse meshing constraint on the geometrical entity of dimension
-        // `dim' and tag `tag'. If `val' is true, the mesh orientation will be
-        // reversed with respect to the natural mesh orientation (i.e. the
-        // orientation consistent with the orientation of the geometrical entity).
-        // If `val' is false, the mesh is left as-is.
+        // Set a reverse meshing constraint on the model entity of dimension `dim'
+        // and tag `tag'. If `val' is true, the mesh orientation will be reversed
+        // with respect to the natural mesh orientation (i.e. the orientation
+        // consistent with the orientation of the geometry). If `val' is false, the
+        // mesh is left as-is.
         GMSH_API void setReverse(const int dim,
                                  const int tag,
                                  const bool val = true);
@@ -1192,7 +1187,7 @@ namespace gmsh { // Top-level functions
 
     } // namespace geo
 
-    namespace occ { // Internal per-model OpenCASCADE CAD kernel functions
+    namespace occ { // OpenCASCADE CAD kernel functions
 
       // Add a geometrical point in the internal OpenCASCADE CAD representation, at
       // coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing
@@ -1459,11 +1454,11 @@ namespace gmsh { // Top-level functions
                                   gmsh::vectorpair & outDimTags,
                                   const int tag = -1);
 
-      // Extrude the geometrical entities `dimTags' by translation along (`dx',
-      // `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is
-      // not empty, also extrude the mesh: the entries in `numElements' give the
-      // number of elements in each layer. If `height' is not empty, it provides
-      // the (cumulative) height of the different layers, normalized to 1.
+      // Extrude the model entities `dimTags' by translation along (`dx', `dy',
+      // `dz'). Return extruded entities in `outDimTags'. If `numElements' is not
+      // empty, also extrude the mesh: the entries in `numElements' give the number
+      // of elements in each layer. If `height' is not empty, it provides the
+      // (cumulative) height of the different layers, normalized to 1.
       GMSH_API void extrude(const gmsh::vectorpair & dimTags,
                             const double dx,
                             const double dy,
@@ -1473,8 +1468,8 @@ namespace gmsh { // Top-level functions
                             const std::vector<double> & heights = std::vector<double>(),
                             const bool recombine = false);
 
-      // Extrude the geometrical entities `dimTags' by rotation of `angle' radians
-      // around the axis of revolution defined by the point (`x', `y', `z') and the
+      // Extrude the model entities `dimTags' by rotation of `angle' radians around
+      // the axis of revolution defined by the point (`x', `y', `z') and the
       // direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
       // `numElements' is not empty, also extrude the mesh: the entries in
       // `numElements' give the number of elements in each layer. If `height' is
@@ -1578,15 +1573,15 @@ namespace gmsh { // Top-level functions
                              const bool removeObject = true,
                              const bool removeTool = true);
 
-      // Translate the geometrical entities `dimTags' along (`dx', `dy', `dz').
+      // Translate the model entities `dimTags' along (`dx', `dy', `dz').
       GMSH_API void translate(const gmsh::vectorpair & dimTags,
                               const double dx,
                               const double dy,
                               const double dz);
 
-      // Rotate the geometrical entities `dimTags' of `angle' radians around the
-      // axis of revolution defined by the point (`x', `y', `z') and the direction
-      // (`ax', `ay', `az').
+      // Rotate the model entities `dimTags' of `angle' radians around the axis of
+      // revolution defined by the point (`x', `y', `z') and the direction (`ax',
+      // `ay', `az').
       GMSH_API void rotate(const gmsh::vectorpair & dimTags,
                            const double x,
                            const double y,
@@ -1596,9 +1591,9 @@ namespace gmsh { // Top-level functions
                            const double az,
                            const double angle);
 
-      // Scale the geometrical entities `dimTag' by factors `a', `b' and `c' along
-      // the three coordinate axes; use (`x', `y', `z') as the center of the
-      // homothetic transformation.
+      // Scale the model entities `dimTag' by factors `a', `b' and `c' along the
+      // three coordinate axes; use (`x', `y', `z') as the center of the homothetic
+      // transformation.
       GMSH_API void dilate(const gmsh::vectorpair & dimTags,
                            const double x,
                            const double y,
@@ -1607,7 +1602,7 @@ namespace gmsh { // Top-level functions
                            const double b,
                            const double c);
 
-      // Apply a symmetry transformation to the geometrical entities `dimTag', with
+      // Apply a symmetry transformation to the model entities `dimTag', with
       // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
       GMSH_API void symmetrize(const gmsh::vectorpair & dimTags,
                                const double a,
@@ -1617,7 +1612,7 @@ namespace gmsh { // Top-level functions
 
       // Apply a general affine transformation matrix `a' (16 entries of a 4x4
       // matrix, by row; only the 12 first can be provided for convenience) to the
-      // geometrical entities `dimTag'.
+      // model entities `dimTag'.
       GMSH_API void affineTransform(const gmsh::vectorpair & dimTags,
                                     const std::vector<double> & a);
 
@@ -1656,8 +1651,8 @@ namespace gmsh { // Top-level functions
                                               gmsh::vectorpair & outDimTags,
                                               const bool highestDimOnly = true);
 
-      // Set a mesh size constraint on the geometrical entities `dimTags'.
-      // Currently only entities of dimension 0 (points) are handled.
+      // Set a mesh size constraint on the model entities `dimTags'. Currently only
+      // entities of dimension 0 (points) are handled.
       GMSH_API void setMeshSize(const gmsh::vectorpair & dimTags,
                                 const double size);
 
@@ -1813,7 +1808,7 @@ namespace gmsh { // Top-level functions
 
   } // namespace graphics
 
-  namespace fltk { // Fltk graphical user interface functions
+  namespace fltk { // FLTK graphical user interface functions
 
     // Create the Fltk graphical user interface. Can only be called in the main
     // thread.
@@ -1904,7 +1899,7 @@ namespace gmsh { // Top-level functions
 
   } // namespace onelab
 
-  namespace logger { // Message logger functions
+  namespace logger { // Information logging functions
 
     // Write a `message'. `level' can be "info", "warning" or "error".
     GMSH_API void write(const std::string & message,

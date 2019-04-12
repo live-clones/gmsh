@@ -272,7 +272,7 @@ def clear():
 
 class option:
     """
-    Global option handling functions
+    Option handling functions
     """
 
     @staticmethod
@@ -354,7 +354,7 @@ class option:
 
 class model:
     """
-    Per-model functions
+    Model functions
     """
 
     @staticmethod
@@ -420,10 +420,9 @@ class model:
     @staticmethod
     def getEntities(dim=-1):
         """
-        Get all the (elementary) geometrical entities in the current model. If
-        `dim' is >= 0, return only the entities of the specified dimension (e.g.
-        points if `dim' == 0). The entities are returned as a vector of (dim, tag)
-        integer pairs.
+        Get all the entities in the current model. If `dim' is >= 0, return only
+        the entities of the specified dimension (e.g. points if `dim' == 0). The
+        entities are returned as a vector of (dim, tag) integer pairs.
 
         Return `dimTags'.
         """
@@ -499,7 +498,7 @@ class model:
     @staticmethod
     def getEntitiesForPhysicalGroup(dim, tag):
         """
-        Get the tags of the geometrical entities making up the physical group of
+        Get the tags of the model entities making up the physical group of
         dimension `dim' and tag `tag'.
 
         Return `tags'.
@@ -520,8 +519,8 @@ class model:
     @staticmethod
     def getPhysicalGroupsForEntity(dim, tag):
         """
-        Get the tags of the physical groups (if any) to which the geometrical
-        entity of dimension `dim' and tag `tag' belongs.
+        Get the tags of the physical groups (if any) to which the model entity of
+        dimension `dim' and tag `tag' belongs.
 
         Return `physicalTags'.
         """
@@ -541,9 +540,9 @@ class model:
     @staticmethod
     def addPhysicalGroup(dim, tags, tag=-1):
         """
-        Add a physical group of dimension `dim', grouping the elementary entities
-        with tags `tags'. Return the tag of the physical group, equal to `tag' if
-        `tag' is positive, or a new tag if `tag' < 0.
+        Add a physical group of dimension `dim', grouping the model entities with
+        tags `tags'. Return the tag of the physical group, equal to `tag' if `tag'
+        is positive, or a new tag if `tag' < 0.
 
         Return an integer value.
         """
@@ -599,12 +598,12 @@ class model:
     @staticmethod
     def getBoundary(dimTags, combined=True, oriented=True, recursive=False):
         """
-        Get the boundary of the geometrical entities `dimTags'. Return in
-        `outDimTags' the boundary of the individual entities (if `combined' is
-        false) or the boundary of the combined geometrical shape formed by all
-        input entities (if `combined' is true). Return tags multiplied by the sign
-        of the boundary entity if `oriented' is true. Apply the boundary operator
-        recursively down to dimension 0 (i.e. to points) if `recursive' is true.
+        Get the boundary of the model entities `dimTags'. Return in `outDimTags'
+        the boundary of the individual entities (if `combined' is false) or the
+        boundary of the combined geometrical shape formed by all input entities (if
+        `combined' is true). Return tags multiplied by the sign of the boundary
+        entity if `oriented' is true. Apply the boundary operator recursively down
+        to dimension 0 (i.e. to points) if `recursive' is true.
 
         Return `outDimTags'.
         """
@@ -627,10 +626,10 @@ class model:
     @staticmethod
     def getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1):
         """
-        Get the (elementary) geometrical entities in the bounding box defined by
-        the two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If
-        `dim' is >= 0, return only the entities of the specified dimension (e.g.
-        points if `dim' == 0).
+        Get the model entities in the bounding box defined by the two points
+        (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,
+        return only the entities of the specified dimension (e.g. points if `dim'
+        == 0).
 
         Return `tags'.
         """
@@ -656,7 +655,7 @@ class model:
     def getBoundingBox(dim, tag):
         """
         Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
-        the geometrical entity of dimension `dim' and tag `tag'.
+        the model entity of dimension `dim' and tag `tag'.
 
         Return `xmin', `ymin', `zmin', `xmax', `ymax', `zmax'.
         """
@@ -708,12 +707,11 @@ class model:
     @staticmethod
     def addDiscreteEntity(dim, tag=-1, boundary=[]):
         """
-        Add a discrete geometrical entity (defined by a mesh) of dimension `dim' in
-        the current model. Return the tag of the new discrete entity, equal to
-        `tag' if `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies
-        the tags of the entities on the boundary of the discrete entity, if any.
-        Specifying `boundary' allows Gmsh to construct the topology of the overall
-        model.
+        Add a discrete model entity (defined by a mesh) of dimension `dim' in the
+        current model. Return the tag of the new discrete entity, equal to `tag' if
+        `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies the tags
+        of the entities on the boundary of the discrete entity, if any. Specifying
+        `boundary' allows Gmsh to construct the topology of the overall model.
 
         Return an integer value.
         """
@@ -1003,8 +1001,8 @@ class model:
     @staticmethod
     def setVisibility(dimTags, value, recursive=False):
         """
-        Set the visibility of the geometrical entities `dimTags' to `value'. Apply
-        the visibility setting recursively if `recursive' is true.
+        Set the visibility of the model entities `dimTags' to `value'. Apply the
+        visibility setting recursively if `recursive' is true.
         """
         api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
         ierr = c_int()
@@ -1021,8 +1019,7 @@ class model:
     @staticmethod
     def getVisibility(dim, tag):
         """
-        Get the visibility of the geometrical entity of dimension `dim' and tag
-        `tag'.
+        Get the visibility of the model entity of dimension `dim' and tag `tag'.
 
         Return `value'.
         """
@@ -1042,9 +1039,9 @@ class model:
     @staticmethod
     def setColor(dimTags, r, g, b, a=0, recursive=False):
         """
-        Set the color of the geometrical entities `dimTags' to the RGBA value (`r',
-        `g', `b', `a'), where `r', `g', `b' and `a' should be integers between 0
-        and 255. Apply the color setting recursively if `recursive' is true.
+        Set the color of the model entities `dimTags' to the RGBA value (`r', `g',
+        `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and
+        255. Apply the color setting recursively if `recursive' is true.
         """
         api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
         ierr = c_int()
@@ -1064,7 +1061,7 @@ class model:
     @staticmethod
     def getColor(dim, tag):
         """
-        Get the color of the geometrical entity of dimension `dim' and tag `tag'.
+        Get the color of the model entity of dimension `dim' and tag `tag'.
 
         Return `r', `g', `b', `a'.
         """
@@ -1111,7 +1108,7 @@ class model:
 
     class mesh:
         """
-        Per-model meshing functions
+        Meshing functions
         """
 
         @staticmethod
@@ -1331,10 +1328,10 @@ class model:
         @staticmethod
         def setNodes(dim, tag, nodeTags, coord, parametricCoord=[]):
             """
-            Set the nodes classified on the geometrical entity of dimension `dim' and
-            tag `tag'. `nodeTags' contains the node tags (their unique, strictly
-            positive identification numbers). `coord' is a vector of length 3 times the
-            length of `nodeTags' that contains the x, y, z coordinates of the nodes,
+            Set the nodes classified on the model entity of dimension `dim' and tag
+            `tag'. `nodeTags' contains the node tags (their unique, strictly positive
+            identification numbers). `coord' is a vector of length 3 times the length
+            of `nodeTags' that contains the x, y, z coordinates of the nodes,
             concatenated: [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord'
             vector contains the parametric coordinates of the nodes, if any. The length
             of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If
@@ -1360,7 +1357,7 @@ class model:
         @staticmethod
         def reclassifyNodes():
             """
-            Reclassify all nodes on their associated geometrical entity, based on the
+            Reclassify all nodes on their associated model entity, based on the
             elements. Can be used when importing nodes in bulk (e.g. by associating
             them all to a single volume), to reclassify them correctly on model
             surfaces, curves, etc. after the elements have been set.
@@ -2051,8 +2048,8 @@ class model:
         @staticmethod
         def setSize(dimTags, size):
             """
-            Set a mesh size constraint on the geometrical entities `dimTags'. Currently
-            only entities of dimension 0 (points) are handled.
+            Set a mesh size constraint on the model entities `dimTags'. Currently only
+            entities of dimension 0 (points) are handled.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -2129,9 +2126,9 @@ class model:
         @staticmethod
         def setRecombine(dim, tag):
             """
-            Set a recombination meshing constraint on the geometrical entity of
-            dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to
-            recombine triangles into quadrangles) are supported.
+            Set a recombination meshing constraint on the model entity of dimension
+            `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
+            triangles into quadrangles) are supported.
             """
             ierr = c_int()
             lib.gmshModelMeshSetRecombine(
@@ -2146,8 +2143,8 @@ class model:
         @staticmethod
         def setSmoothing(dim, tag, val):
             """
-            Set a smoothing meshing constraint on the geometrical entity of dimension
-            `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied.
+            Set a smoothing meshing constraint on the model entity of dimension `dim'
+            and tag `tag'. `val' iterations of a Laplace smoother are applied.
             """
             ierr = c_int()
             lib.gmshModelMeshSetSmoothing(
@@ -2163,11 +2160,11 @@ class model:
         @staticmethod
         def setReverse(dim, tag, val=True):
             """
-            Set a reverse meshing constraint on the geometrical entity of dimension
-            `dim' and tag `tag'. If `val' is true, the mesh orientation will be
-            reversed with respect to the natural mesh orientation (i.e. the orientation
-            consistent with the orientation of the geometrical entity). If `val' is
-            false, the mesh is left as-is.
+            Set a reverse meshing constraint on the model entity of dimension `dim' and
+            tag `tag'. If `val' is true, the mesh orientation will be reversed with
+            respect to the natural mesh orientation (i.e. the orientation consistent
+            with the orientation of the geometry). If `val' is false, the mesh is left
+            as-is.
             """
             ierr = c_int()
             lib.gmshModelMeshSetReverse(
@@ -2200,9 +2197,8 @@ class model:
         @staticmethod
         def embed(dim, tags, inDim, inTag):
             """
-            Embed the geometrical entities of dimension `dim' and tags `tags' in the
-            (inDim, inTag) geometrical entity. `inDim' must be strictly greater than
-            `dim'.
+            Embed the model entities of dimension `dim' and tags `tags' in the (inDim,
+            inTag) model entity. `inDim' must be strictly greater than `dim'.
             """
             api_tags_, api_tags_n_ = _ivectorint(tags)
             ierr = c_int()
@@ -2220,9 +2216,9 @@ class model:
         @staticmethod
         def removeEmbedded(dimTags, dim=-1):
             """
-            Remove embedded entities in the geometrical entities `dimTags'. if `dim' is
-            >= 0, only remove embedded entities of the given dimension (e.g. embedded
-            points if `dim' == 0).
+            Remove embedded entities in the model entities `dimTags'. if `dim' is >= 0,
+            only remove embedded entities of the given dimension (e.g. embedded points
+            if `dim' == 0).
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -2467,7 +2463,7 @@ class model:
 
         class field:
             """
-            Per-model mesh size field functions
+            Mesh size field functions
             """
 
             @staticmethod
@@ -2584,7 +2580,7 @@ class model:
 
     class geo:
         """
-        Internal per-model GEO CAD kernel functions
+        Built-in CAD kernel functions
         """
 
         @staticmethod
@@ -2758,8 +2754,8 @@ class model:
         def addCurveLoop(curveTags, tag=-1):
             """
             Add a curve loop (a closed wire) formed by the curves `curveTags'.
-            `curveTags' should contain (signed) tags of geometrical enties of dimension
-            1 forming a closed loop: a negative tag signifies that the underlying curve
+            `curveTags' should contain (signed) tags of model enties of dimension 1
+            forming a closed loop: a negative tag signifies that the underlying curve
             is considered with reversed orientation. If `tag' is positive, set the tag
             explicitly; otherwise a new tag is selected automatically. Return the tag
             of the curve loop.
@@ -2869,10 +2865,10 @@ class model:
         @staticmethod
         def extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False):
             """
-            Extrude the geometrical entities `dimTags' by translation along (`dx',
-            `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is
-            not empty, also extrude the mesh: the entries in `numElements' give the
-            number of elements in each layer. If `height' is not empty, it provides the
+            Extrude the model entities `dimTags' by translation along (`dx', `dy',
+            `dz'). Return extruded entities in `outDimTags'. If `numElements' is not
+            empty, also extrude the mesh: the entries in `numElements' give the number
+            of elements in each layer. If `height' is not empty, it provides the
             (cumulative) height of the different layers, normalized to 1. If `dx' ==
             `dy' == `dz' == 0, the entities are extruded along their normal.
 
@@ -2902,8 +2898,8 @@ class model:
         @staticmethod
         def revolve(dimTags, x, y, z, ax, ay, az, angle, numElements=[], heights=[], recombine=False):
             """
-            Extrude the geometrical entities `dimTags' by rotation of `angle' radians
-            around the axis of revolution defined by the point (`x', `y', `z') and the
+            Extrude the model entities `dimTags' by rotation of `angle' radians around
+            the axis of revolution defined by the point (`x', `y', `z') and the
             direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
             `numElements' is not empty, also extrude the mesh: the entries in
             `numElements' give the number of elements in each layer. If `height' is not
@@ -2940,9 +2936,9 @@ class model:
         @staticmethod
         def twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements=[], heights=[], recombine=False):
             """
-            Extrude the geometrical entities `dimTags' by a combined translation and
-            rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis
-            of revolution defined by the point (`x', `y', `z') and the direction (`ax',
+            Extrude the model entities `dimTags' by a combined translation and rotation
+            of `angle' radians, along (`dx', `dy', `dz') and around the axis of
+            revolution defined by the point (`x', `y', `z') and the direction (`ax',
             `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is
             not empty, also extrude the mesh: the entries in `numElements' give the
             number of elements in each layer. If `height' is not empty, it provides the
@@ -2981,7 +2977,7 @@ class model:
         @staticmethod
         def translate(dimTags, dx, dy, dz):
             """
-            Translate the geometrical entities `dimTags' along (`dx', `dy', `dz').
+            Translate the model entities `dimTags' along (`dx', `dy', `dz').
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -2999,9 +2995,9 @@ class model:
         @staticmethod
         def rotate(dimTags, x, y, z, ax, ay, az, angle):
             """
-            Rotate the geometrical entities `dimTags' of `angle' radians around the
-            axis of revolution defined by the point (`x', `y', `z') and the direction
-            (`ax', `ay', `az').
+            Rotate the model entities `dimTags' of `angle' radians around the axis of
+            revolution defined by the point (`x', `y', `z') and the direction (`ax',
+            `ay', `az').
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -3023,9 +3019,9 @@ class model:
         @staticmethod
         def dilate(dimTags, x, y, z, a, b, c):
             """
-            Scale the geometrical entities `dimTag' by factors `a', `b' and `c' along
-            the three coordinate axes; use (`x', `y', `z') as the center of the
-            homothetic transformation.
+            Scale the model entities `dimTag' by factors `a', `b' and `c' along the
+            three coordinate axes; use (`x', `y', `z') as the center of the homothetic
+            transformation.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -3046,7 +3042,7 @@ class model:
         @staticmethod
         def symmetrize(dimTags, a, b, c, d):
             """
-            Apply a symmetry transformation to the geometrical entities `dimTag', with
+            Apply a symmetry transformation to the model entities `dimTag', with
             respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -3133,14 +3129,14 @@ class model:
 
         class mesh:
             """
-            GEO-specific meshing constraints
+            Built-in CAD kernel meshing constraints
             """
 
             @staticmethod
             def setSize(dimTags, size):
                 """
-                Set a mesh size constraint on the geometrical entities `dimTags'. Currently
-                only entities of dimension 0 (points) are handled.
+                Set a mesh size constraint on the model entities `dimTags'. Currently only
+                entities of dimension 0 (points) are handled.
                 """
                 api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
                 ierr = c_int()
@@ -3217,9 +3213,9 @@ class model:
             @staticmethod
             def setRecombine(dim, tag, angle=45.):
                 """
-                Set a recombination meshing constraint on the geometrical entity of
-                dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to
-                recombine triangles into quadrangles) are supported.
+                Set a recombination meshing constraint on the model entity of dimension
+                `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
+                triangles into quadrangles) are supported.
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetRecombine(
@@ -3235,8 +3231,8 @@ class model:
             @staticmethod
             def setSmoothing(dim, tag, val):
                 """
-                Set a smoothing meshing constraint on the geometrical entity of dimension
-                `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied.
+                Set a smoothing meshing constraint on the model entity of dimension `dim'
+                and tag `tag'. `val' iterations of a Laplace smoother are applied.
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetSmoothing(
@@ -3252,11 +3248,11 @@ class model:
             @staticmethod
             def setReverse(dim, tag, val=True):
                 """
-                Set a reverse meshing constraint on the geometrical entity of dimension
-                `dim' and tag `tag'. If `val' is true, the mesh orientation will be
-                reversed with respect to the natural mesh orientation (i.e. the orientation
-                consistent with the orientation of the geometrical entity). If `val' is
-                false, the mesh is left as-is.
+                Set a reverse meshing constraint on the model entity of dimension `dim' and
+                tag `tag'. If `val' is true, the mesh orientation will be reversed with
+                respect to the natural mesh orientation (i.e. the orientation consistent
+                with the orientation of the geometry). If `val' is false, the mesh is left
+                as-is.
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetReverse(
@@ -3272,7 +3268,7 @@ class model:
 
     class occ:
         """
-        Internal per-model OpenCASCADE CAD kernel functions
+        OpenCASCADE CAD kernel functions
         """
 
         @staticmethod
@@ -3908,10 +3904,10 @@ class model:
         @staticmethod
         def extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False):
             """
-            Extrude the geometrical entities `dimTags' by translation along (`dx',
-            `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is
-            not empty, also extrude the mesh: the entries in `numElements' give the
-            number of elements in each layer. If `height' is not empty, it provides the
+            Extrude the model entities `dimTags' by translation along (`dx', `dy',
+            `dz'). Return extruded entities in `outDimTags'. If `numElements' is not
+            empty, also extrude the mesh: the entries in `numElements' give the number
+            of elements in each layer. If `height' is not empty, it provides the
             (cumulative) height of the different layers, normalized to 1.
 
             Return `outDimTags'.
@@ -3940,8 +3936,8 @@ class model:
         @staticmethod
         def revolve(dimTags, x, y, z, ax, ay, az, angle, numElements=[], heights=[], recombine=False):
             """
-            Extrude the geometrical entities `dimTags' by rotation of `angle' radians
-            around the axis of revolution defined by the point (`x', `y', `z') and the
+            Extrude the model entities `dimTags' by rotation of `angle' radians around
+            the axis of revolution defined by the point (`x', `y', `z') and the
             direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
             `numElements' is not empty, also extrude the mesh: the entries in
             `numElements' give the number of elements in each layer. If `height' is not
@@ -4196,7 +4192,7 @@ class model:
         @staticmethod
         def translate(dimTags, dx, dy, dz):
             """
-            Translate the geometrical entities `dimTags' along (`dx', `dy', `dz').
+            Translate the model entities `dimTags' along (`dx', `dy', `dz').
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -4214,9 +4210,9 @@ class model:
         @staticmethod
         def rotate(dimTags, x, y, z, ax, ay, az, angle):
             """
-            Rotate the geometrical entities `dimTags' of `angle' radians around the
-            axis of revolution defined by the point (`x', `y', `z') and the direction
-            (`ax', `ay', `az').
+            Rotate the model entities `dimTags' of `angle' radians around the axis of
+            revolution defined by the point (`x', `y', `z') and the direction (`ax',
+            `ay', `az').
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -4238,9 +4234,9 @@ class model:
         @staticmethod
         def dilate(dimTags, x, y, z, a, b, c):
             """
-            Scale the geometrical entities `dimTag' by factors `a', `b' and `c' along
-            the three coordinate axes; use (`x', `y', `z') as the center of the
-            homothetic transformation.
+            Scale the model entities `dimTag' by factors `a', `b' and `c' along the
+            three coordinate axes; use (`x', `y', `z') as the center of the homothetic
+            transformation.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -4261,7 +4257,7 @@ class model:
         @staticmethod
         def symmetrize(dimTags, a, b, c, d):
             """
-            Apply a symmetry transformation to the geometrical entities `dimTag', with
+            Apply a symmetry transformation to the model entities `dimTag', with
             respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -4283,7 +4279,7 @@ class model:
             """
             Apply a general affine transformation matrix `a' (16 entries of a 4x4
             matrix, by row; only the 12 first can be provided for convenience) to the
-            geometrical entities `dimTag'.
+            model entities `dimTag'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_a_, api_a_n_ = _ivectordouble(a)
@@ -4402,8 +4398,8 @@ class model:
         @staticmethod
         def setMeshSize(dimTags, size):
             """
-            Set a mesh size constraint on the geometrical entities `dimTags'. Currently
-            only entities of dimension 0 (points) are handled.
+            Set a mesh size constraint on the model entities `dimTags'. Currently only
+            entities of dimension 0 (points) are handled.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -4815,7 +4811,7 @@ class graphics:
 
 class fltk:
     """
-    Fltk graphical user interface functions
+    FLTK graphical user interface functions
     """
 
     @staticmethod
@@ -5135,7 +5131,7 @@ class onelab:
 
 class logger:
     """
-    Message logger functions
+    Information logging functions
     """
 
     @staticmethod

@@ -112,10 +112,9 @@ GMSH_API void gmshModelList(char *** names, size_t * names_n,
 GMSH_API void gmshModelSetCurrent(const char * name,
                                   int * ierr);
 
-/* Get all the (elementary) geometrical entities in the current model. If
- * `dim' is >= 0, return only the entities of the specified dimension (e.g.
- * points if `dim' == 0). The entities are returned as a vector of (dim, tag)
- * integer pairs. */
+/* Get all the entities in the current model. If `dim' is >= 0, return only
+ * the entities of the specified dimension (e.g. points if `dim' == 0). The
+ * entities are returned as a vector of (dim, tag) integer pairs. */
 GMSH_API void gmshModelGetEntities(int ** dimTags, size_t * dimTags_n,
                                    const int dim,
                                    int * ierr);
@@ -139,23 +138,23 @@ GMSH_API void gmshModelGetPhysicalGroups(int ** dimTags, size_t * dimTags_n,
                                          const int dim,
                                          int * ierr);
 
-/* Get the tags of the geometrical entities making up the physical group of
+/* Get the tags of the model entities making up the physical group of
  * dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelGetEntitiesForPhysicalGroup(const int dim,
                                                    const int tag,
                                                    int ** tags, size_t * tags_n,
                                                    int * ierr);
 
-/* Get the tags of the physical groups (if any) to which the geometrical
- * entity of dimension `dim' and tag `tag' belongs. */
+/* Get the tags of the physical groups (if any) to which the model entity of
+ * dimension `dim' and tag `tag' belongs. */
 GMSH_API void gmshModelGetPhysicalGroupsForEntity(const int dim,
                                                   const int tag,
                                                   int ** physicalTags, size_t * physicalTags_n,
                                                   int * ierr);
 
-/* Add a physical group of dimension `dim', grouping the elementary entities
- * with tags `tags'. Return the tag of the physical group, equal to `tag' if
- * `tag' is positive, or a new tag if `tag' < 0. */
+/* Add a physical group of dimension `dim', grouping the model entities with
+ * tags `tags'. Return the tag of the physical group, equal to `tag' if `tag'
+ * is positive, or a new tag if `tag' < 0. */
 GMSH_API int gmshModelAddPhysicalGroup(const int dim,
                                        int * tags, size_t tags_n,
                                        const int tag,
@@ -173,12 +172,12 @@ GMSH_API void gmshModelGetPhysicalName(const int dim,
                                        char ** name,
                                        int * ierr);
 
-/* Get the boundary of the geometrical entities `dimTags'. Return in
- * `outDimTags' the boundary of the individual entities (if `combined' is
- * false) or the boundary of the combined geometrical shape formed by all
- * input entities (if `combined' is true). Return tags multiplied by the sign
- * of the boundary entity if `oriented' is true. Apply the boundary operator
- * recursively down to dimension 0 (i.e. to points) if `recursive' is true. */
+/* Get the boundary of the model entities `dimTags'. Return in `outDimTags'
+ * the boundary of the individual entities (if `combined' is false) or the
+ * boundary of the combined geometrical shape formed by all input entities (if
+ * `combined' is true). Return tags multiplied by the sign of the boundary
+ * entity if `oriented' is true. Apply the boundary operator recursively down
+ * to dimension 0 (i.e. to points) if `recursive' is true. */
 GMSH_API void gmshModelGetBoundary(int * dimTags, size_t dimTags_n,
                                    int ** outDimTags, size_t * outDimTags_n,
                                    const int combined,
@@ -186,10 +185,10 @@ GMSH_API void gmshModelGetBoundary(int * dimTags, size_t dimTags_n,
                                    const int recursive,
                                    int * ierr);
 
-/* Get the (elementary) geometrical entities in the bounding box defined by
- * the two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If
- * `dim' is >= 0, return only the entities of the specified dimension (e.g.
- * points if `dim' == 0). */
+/* Get the model entities in the bounding box defined by the two points
+ * (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,
+ * return only the entities of the specified dimension (e.g. points if `dim'
+ * == 0). */
 GMSH_API void gmshModelGetEntitiesInBoundingBox(const double xmin,
                                                 const double ymin,
                                                 const double zmin,
@@ -201,7 +200,7 @@ GMSH_API void gmshModelGetEntitiesInBoundingBox(const double xmin,
                                                 int * ierr);
 
 /* Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
- * the geometrical entity of dimension `dim' and tag `tag'. */
+ * the model entity of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelGetBoundingBox(const int dim,
                                       const int tag,
                                       double * xmin,
@@ -215,12 +214,11 @@ GMSH_API void gmshModelGetBoundingBox(const int dim,
 /* Get the geometrical dimension of the current model. */
 GMSH_API int gmshModelGetDimension(int * ierr);
 
-/* Add a discrete geometrical entity (defined by a mesh) of dimension `dim' in
- * the current model. Return the tag of the new discrete entity, equal to
- * `tag' if `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies
- * the tags of the entities on the boundary of the discrete entity, if any.
- * Specifying `boundary' allows Gmsh to construct the topology of the overall
- * model. */
+/* Add a discrete model entity (defined by a mesh) of dimension `dim' in the
+ * current model. Return the tag of the new discrete entity, equal to `tag' if
+ * `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies the tags
+ * of the entities on the boundary of the discrete entity, if any. Specifying
+ * `boundary' allows Gmsh to construct the topology of the overall model. */
 GMSH_API int gmshModelAddDiscreteEntity(const int dim,
                                         const int tag,
                                         int * boundary, size_t boundary_n,
@@ -327,23 +325,22 @@ GMSH_API void gmshModelGetNormal(const int tag,
                                  double ** normals, size_t * normals_n,
                                  int * ierr);
 
-/* Set the visibility of the geometrical entities `dimTags' to `value'. Apply
- * the visibility setting recursively if `recursive' is true. */
+/* Set the visibility of the model entities `dimTags' to `value'. Apply the
+ * visibility setting recursively if `recursive' is true. */
 GMSH_API void gmshModelSetVisibility(int * dimTags, size_t dimTags_n,
                                      const int value,
                                      const int recursive,
                                      int * ierr);
 
-/* Get the visibility of the geometrical entity of dimension `dim' and tag
- * `tag'. */
+/* Get the visibility of the model entity of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelGetVisibility(const int dim,
                                      const int tag,
                                      int * value,
                                      int * ierr);
 
-/* Set the color of the geometrical entities `dimTags' to the RGBA value (`r',
- * `g', `b', `a'), where `r', `g', `b' and `a' should be integers between 0
- * and 255. Apply the color setting recursively if `recursive' is true. */
+/* Set the color of the model entities `dimTags' to the RGBA value (`r', `g',
+ * `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and
+ * 255. Apply the color setting recursively if `recursive' is true. */
 GMSH_API void gmshModelSetColor(int * dimTags, size_t dimTags_n,
                                 const int r,
                                 const int g,
@@ -352,7 +349,7 @@ GMSH_API void gmshModelSetColor(int * dimTags, size_t dimTags_n,
                                 const int recursive,
                                 int * ierr);
 
-/* Get the color of the geometrical entity of dimension `dim' and tag `tag'. */
+/* Get the color of the model entity of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelGetColor(const int dim,
                                 const int tag,
                                 int * r,
@@ -441,10 +438,10 @@ GMSH_API void gmshModelMeshGetNodesForPhysicalGroup(const int dim,
                                                     double ** coord, size_t * coord_n,
                                                     int * ierr);
 
-/* Set the nodes classified on the geometrical entity of dimension `dim' and
- * tag `tag'. `nodeTags' contains the node tags (their unique, strictly
- * positive identification numbers). `coord' is a vector of length 3 times the
- * length of `nodeTags' that contains the x, y, z coordinates of the nodes,
+/* Set the nodes classified on the model entity of dimension `dim' and tag
+ * `tag'. `nodeTags' contains the node tags (their unique, strictly positive
+ * identification numbers). `coord' is a vector of length 3 times the length
+ * of `nodeTags' that contains the x, y, z coordinates of the nodes,
  * concatenated: [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord'
  * vector contains the parametric coordinates of the nodes, if any. The length
  * of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If
@@ -457,7 +454,7 @@ GMSH_API void gmshModelMeshSetNodes(const int dim,
                                     double * parametricCoord, size_t parametricCoord_n,
                                     int * ierr);
 
-/* Reclassify all nodes on their associated geometrical entity, based on the
+/* Reclassify all nodes on their associated model entity, based on the
  * elements. Can be used when importing nodes in bulk (e.g. by associating
  * them all to a single volume), to reclassify them correctly on model
  * surfaces, curves, etc. after the elements have been set. */
@@ -771,8 +768,8 @@ GMSH_API void gmshModelMeshGetGhostElements(const int dim,
                                             int ** partitions, size_t * partitions_n,
                                             int * ierr);
 
-/* Set a mesh size constraint on the geometrical entities `dimTags'. Currently
- * only entities of dimension 0 (points) are handled. */
+/* Set a mesh size constraint on the model entities `dimTags'. Currently only
+ * entities of dimension 0 (points) are handled. */
 GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n,
                                    const double size,
                                    int * ierr);
@@ -806,25 +803,25 @@ GMSH_API void gmshModelMeshSetTransfiniteVolume(const int tag,
                                                 int * cornerTags, size_t cornerTags_n,
                                                 int * ierr);
 
-/* Set a recombination meshing constraint on the geometrical entity of
- * dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to
- * recombine triangles into quadrangles) are supported. */
+/* Set a recombination meshing constraint on the model entity of dimension
+ * `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
+ * triangles into quadrangles) are supported. */
 GMSH_API void gmshModelMeshSetRecombine(const int dim,
                                         const int tag,
                                         int * ierr);
 
-/* Set a smoothing meshing constraint on the geometrical entity of dimension
- * `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied. */
+/* Set a smoothing meshing constraint on the model entity of dimension `dim'
+ * and tag `tag'. `val' iterations of a Laplace smoother are applied. */
 GMSH_API void gmshModelMeshSetSmoothing(const int dim,
                                         const int tag,
                                         const int val,
                                         int * ierr);
 
-/* Set a reverse meshing constraint on the geometrical entity of dimension
- * `dim' and tag `tag'. If `val' is true, the mesh orientation will be
- * reversed with respect to the natural mesh orientation (i.e. the orientation
- * consistent with the orientation of the geometrical entity). If `val' is
- * false, the mesh is left as-is. */
+/* Set a reverse meshing constraint on the model entity of dimension `dim' and
+ * tag `tag'. If `val' is true, the mesh orientation will be reversed with
+ * respect to the natural mesh orientation (i.e. the orientation consistent
+ * with the orientation of the geometry). If `val' is false, the mesh is left
+ * as-is. */
 GMSH_API void gmshModelMeshSetReverse(const int dim,
                                       const int tag,
                                       const int val,
@@ -837,18 +834,17 @@ GMSH_API void gmshModelMeshSetReverse(const int dim,
 GMSH_API void gmshModelMeshSetOutwardOrientation(const int tag,
                                                  int * ierr);
 
-/* Embed the geometrical entities of dimension `dim' and tags `tags' in the
- * (inDim, inTag) geometrical entity. `inDim' must be strictly greater than
- * `dim'. */
+/* Embed the model entities of dimension `dim' and tags `tags' in the (inDim,
+ * inTag) model entity. `inDim' must be strictly greater than `dim'. */
 GMSH_API void gmshModelMeshEmbed(const int dim,
                                  int * tags, size_t tags_n,
                                  const int inDim,
                                  const int inTag,
                                  int * ierr);
 
-/* Remove embedded entities in the geometrical entities `dimTags'. if `dim' is
- * >= 0, only remove embedded entities of the given dimension (e.g. embedded
- * points if `dim' == 0). */
+/* Remove embedded entities in the model entities `dimTags'. if `dim' is >= 0,
+ * only remove embedded entities of the given dimension (e.g. embedded points
+ * if `dim' == 0). */
 GMSH_API void gmshModelMeshRemoveEmbedded(int * dimTags, size_t dimTags_n,
                                           const int dim,
                                           int * ierr);
@@ -1052,8 +1048,8 @@ GMSH_API int gmshModelGeoAddBezier(int * pointTags, size_t pointTags_n,
                                    int * ierr);
 
 /* Add a curve loop (a closed wire) formed by the curves `curveTags'.
- * `curveTags' should contain (signed) tags of geometrical enties of dimension
- * 1 forming a closed loop: a negative tag signifies that the underlying curve
+ * `curveTags' should contain (signed) tags of model enties of dimension 1
+ * forming a closed loop: a negative tag signifies that the underlying curve
  * is considered with reversed orientation. If `tag' is positive, set the tag
  * explicitly; otherwise a new tag is selected automatically. Return the tag
  * of the curve loop. */
@@ -1093,10 +1089,10 @@ GMSH_API int gmshModelGeoAddVolume(int * shellTags, size_t shellTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Extrude the geometrical entities `dimTags' by translation along (`dx',
- * `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is
- * not empty, also extrude the mesh: the entries in `numElements' give the
- * number of elements in each layer. If `height' is not empty, it provides the
+/* Extrude the model entities `dimTags' by translation along (`dx', `dy',
+ * `dz'). Return extruded entities in `outDimTags'. If `numElements' is not
+ * empty, also extrude the mesh: the entries in `numElements' give the number
+ * of elements in each layer. If `height' is not empty, it provides the
  * (cumulative) height of the different layers, normalized to 1. If `dx' ==
  * `dy' == `dz' == 0, the entities are extruded along their normal. */
 GMSH_API void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,
@@ -1109,8 +1105,8 @@ GMSH_API void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,
                                   const int recombine,
                                   int * ierr);
 
-/* Extrude the geometrical entities `dimTags' by rotation of `angle' radians
- * around the axis of revolution defined by the point (`x', `y', `z') and the
+/* Extrude the model entities `dimTags' by rotation of `angle' radians around
+ * the axis of revolution defined by the point (`x', `y', `z') and the
  * direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
  * `numElements' is not empty, also extrude the mesh: the entries in
  * `numElements' give the number of elements in each layer. If `height' is not
@@ -1130,9 +1126,9 @@ GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
                                   const int recombine,
                                   int * ierr);
 
-/* Extrude the geometrical entities `dimTags' by a combined translation and
- * rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis
- * of revolution defined by the point (`x', `y', `z') and the direction (`ax',
+/* Extrude the model entities `dimTags' by a combined translation and rotation
+ * of `angle' radians, along (`dx', `dy', `dz') and around the axis of
+ * revolution defined by the point (`x', `y', `z') and the direction (`ax',
  * `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is
  * not empty, also extrude the mesh: the entries in `numElements' give the
  * number of elements in each layer. If `height' is not empty, it provides the
@@ -1154,16 +1150,16 @@ GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,
                                 const int recombine,
                                 int * ierr);
 
-/* Translate the geometrical entities `dimTags' along (`dx', `dy', `dz'). */
+/* Translate the model entities `dimTags' along (`dx', `dy', `dz'). */
 GMSH_API void gmshModelGeoTranslate(int * dimTags, size_t dimTags_n,
                                     const double dx,
                                     const double dy,
                                     const double dz,
                                     int * ierr);
 
-/* Rotate the geometrical entities `dimTags' of `angle' radians around the
- * axis of revolution defined by the point (`x', `y', `z') and the direction
- * (`ax', `ay', `az'). */
+/* Rotate the model entities `dimTags' of `angle' radians around the axis of
+ * revolution defined by the point (`x', `y', `z') and the direction (`ax',
+ * `ay', `az'). */
 GMSH_API void gmshModelGeoRotate(int * dimTags, size_t dimTags_n,
                                  const double x,
                                  const double y,
@@ -1174,9 +1170,9 @@ GMSH_API void gmshModelGeoRotate(int * dimTags, size_t dimTags_n,
                                  const double angle,
                                  int * ierr);
 
-/* Scale the geometrical entities `dimTag' by factors `a', `b' and `c' along
- * the three coordinate axes; use (`x', `y', `z') as the center of the
- * homothetic transformation. */
+/* Scale the model entities `dimTag' by factors `a', `b' and `c' along the
+ * three coordinate axes; use (`x', `y', `z') as the center of the homothetic
+ * transformation. */
 GMSH_API void gmshModelGeoDilate(int * dimTags, size_t dimTags_n,
                                  const double x,
                                  const double y,
@@ -1186,7 +1182,7 @@ GMSH_API void gmshModelGeoDilate(int * dimTags, size_t dimTags_n,
                                  const double c,
                                  int * ierr);
 
-/* Apply a symmetry transformation to the geometrical entities `dimTag', with
+/* Apply a symmetry transformation to the model entities `dimTag', with
  * respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0. */
 GMSH_API void gmshModelGeoSymmetrize(int * dimTags, size_t dimTags_n,
                                      const double a,
@@ -1216,8 +1212,8 @@ GMSH_API void gmshModelGeoRemoveAllDuplicates(int * ierr);
  * be minimized. */
 GMSH_API void gmshModelGeoSynchronize(int * ierr);
 
-/* Set a mesh size constraint on the geometrical entities `dimTags'. Currently
- * only entities of dimension 0 (points) are handled. */
+/* Set a mesh size constraint on the model entities `dimTags'. Currently only
+ * entities of dimension 0 (points) are handled. */
 GMSH_API void gmshModelGeoMeshSetSize(int * dimTags, size_t dimTags_n,
                                       const double size,
                                       int * ierr);
@@ -1251,26 +1247,26 @@ GMSH_API void gmshModelGeoMeshSetTransfiniteVolume(const int tag,
                                                    int * cornerTags, size_t cornerTags_n,
                                                    int * ierr);
 
-/* Set a recombination meshing constraint on the geometrical entity of
- * dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to
- * recombine triangles into quadrangles) are supported. */
+/* Set a recombination meshing constraint on the model entity of dimension
+ * `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
+ * triangles into quadrangles) are supported. */
 GMSH_API void gmshModelGeoMeshSetRecombine(const int dim,
                                            const int tag,
                                            const double angle,
                                            int * ierr);
 
-/* Set a smoothing meshing constraint on the geometrical entity of dimension
- * `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied. */
+/* Set a smoothing meshing constraint on the model entity of dimension `dim'
+ * and tag `tag'. `val' iterations of a Laplace smoother are applied. */
 GMSH_API void gmshModelGeoMeshSetSmoothing(const int dim,
                                            const int tag,
                                            const int val,
                                            int * ierr);
 
-/* Set a reverse meshing constraint on the geometrical entity of dimension
- * `dim' and tag `tag'. If `val' is true, the mesh orientation will be
- * reversed with respect to the natural mesh orientation (i.e. the orientation
- * consistent with the orientation of the geometrical entity). If `val' is
- * false, the mesh is left as-is. */
+/* Set a reverse meshing constraint on the model entity of dimension `dim' and
+ * tag `tag'. If `val' is true, the mesh orientation will be reversed with
+ * respect to the natural mesh orientation (i.e. the orientation consistent
+ * with the orientation of the geometry). If `val' is false, the mesh is left
+ * as-is. */
 GMSH_API void gmshModelGeoMeshSetReverse(const int dim,
                                          const int tag,
                                          const int val,
@@ -1565,10 +1561,10 @@ GMSH_API void gmshModelOccAddThickSolid(const int volumeTag,
                                         const int tag,
                                         int * ierr);
 
-/* Extrude the geometrical entities `dimTags' by translation along (`dx',
- * `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is
- * not empty, also extrude the mesh: the entries in `numElements' give the
- * number of elements in each layer. If `height' is not empty, it provides the
+/* Extrude the model entities `dimTags' by translation along (`dx', `dy',
+ * `dz'). Return extruded entities in `outDimTags'. If `numElements' is not
+ * empty, also extrude the mesh: the entries in `numElements' give the number
+ * of elements in each layer. If `height' is not empty, it provides the
  * (cumulative) height of the different layers, normalized to 1. */
 GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
                                   const double dx,
@@ -1580,8 +1576,8 @@ GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
                                   const int recombine,
                                   int * ierr);
 
-/* Extrude the geometrical entities `dimTags' by rotation of `angle' radians
- * around the axis of revolution defined by the point (`x', `y', `z') and the
+/* Extrude the model entities `dimTags' by rotation of `angle' radians around
+ * the axis of revolution defined by the point (`x', `y', `z') and the
  * direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
  * `numElements' is not empty, also extrude the mesh: the entries in
  * `numElements' give the number of elements in each layer. If `height' is not
@@ -1693,16 +1689,16 @@ GMSH_API void gmshModelOccFragment(int * objectDimTags, size_t objectDimTags_n,
                                    const int removeTool,
                                    int * ierr);
 
-/* Translate the geometrical entities `dimTags' along (`dx', `dy', `dz'). */
+/* Translate the model entities `dimTags' along (`dx', `dy', `dz'). */
 GMSH_API void gmshModelOccTranslate(int * dimTags, size_t dimTags_n,
                                     const double dx,
                                     const double dy,
                                     const double dz,
                                     int * ierr);
 
-/* Rotate the geometrical entities `dimTags' of `angle' radians around the
- * axis of revolution defined by the point (`x', `y', `z') and the direction
- * (`ax', `ay', `az'). */
+/* Rotate the model entities `dimTags' of `angle' radians around the axis of
+ * revolution defined by the point (`x', `y', `z') and the direction (`ax',
+ * `ay', `az'). */
 GMSH_API void gmshModelOccRotate(int * dimTags, size_t dimTags_n,
                                  const double x,
                                  const double y,
@@ -1713,9 +1709,9 @@ GMSH_API void gmshModelOccRotate(int * dimTags, size_t dimTags_n,
                                  const double angle,
                                  int * ierr);
 
-/* Scale the geometrical entities `dimTag' by factors `a', `b' and `c' along
- * the three coordinate axes; use (`x', `y', `z') as the center of the
- * homothetic transformation. */
+/* Scale the model entities `dimTag' by factors `a', `b' and `c' along the
+ * three coordinate axes; use (`x', `y', `z') as the center of the homothetic
+ * transformation. */
 GMSH_API void gmshModelOccDilate(int * dimTags, size_t dimTags_n,
                                  const double x,
                                  const double y,
@@ -1725,7 +1721,7 @@ GMSH_API void gmshModelOccDilate(int * dimTags, size_t dimTags_n,
                                  const double c,
                                  int * ierr);
 
-/* Apply a symmetry transformation to the geometrical entities `dimTag', with
+/* Apply a symmetry transformation to the model entities `dimTag', with
  * respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0. */
 GMSH_API void gmshModelOccSymmetrize(int * dimTags, size_t dimTags_n,
                                      const double a,
@@ -1736,7 +1732,7 @@ GMSH_API void gmshModelOccSymmetrize(int * dimTags, size_t dimTags_n,
 
 /* Apply a general affine transformation matrix `a' (16 entries of a 4x4
  * matrix, by row; only the 12 first can be provided for convenience) to the
- * geometrical entities `dimTag'. */
+ * model entities `dimTag'. */
 GMSH_API void gmshModelOccAffineTransform(int * dimTags, size_t dimTags_n,
                                           double * a, size_t a_n,
                                           int * ierr);
@@ -1779,8 +1775,8 @@ GMSH_API void gmshModelOccImportShapesNativePointer(const void * shape,
                                                     const int highestDimOnly,
                                                     int * ierr);
 
-/* Set a mesh size constraint on the geometrical entities `dimTags'. Currently
- * only entities of dimension 0 (points) are handled. */
+/* Set a mesh size constraint on the model entities `dimTags'. Currently only
+ * entities of dimension 0 (points) are handled. */
 GMSH_API void gmshModelOccSetMeshSize(int * dimTags, size_t dimTags_n,
                                       const double size,
                                       int * ierr);

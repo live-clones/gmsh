@@ -120,7 +120,7 @@ end
 """
     module gmsh.option
 
-Global option handling functions
+Option handling functions
 """
 module option
 
@@ -202,7 +202,7 @@ end # end of module option
 """
     module gmsh.model
 
-Per-model functions
+Model functions
 """
 module model
 
@@ -274,9 +274,9 @@ end
 """
     gmsh.model.getEntities(dim = -1)
 
-Get all the (elementary) geometrical entities in the current model. If `dim` is
->= 0, return only the entities of the specified dimension (e.g. points if `dim`
-== 0). The entities are returned as a vector of (dim, tag) integer pairs.
+Get all the entities in the current model. If `dim` is >= 0, return only the
+entities of the specified dimension (e.g. points if `dim` == 0). The entities
+are returned as a vector of (dim, tag) integer pairs.
 
 Return `dimTags`.
 """
@@ -350,8 +350,8 @@ end
 """
     gmsh.model.getEntitiesForPhysicalGroup(dim, tag)
 
-Get the tags of the geometrical entities making up the physical group of
-dimension `dim` and tag `tag`.
+Get the tags of the model entities making up the physical group of dimension
+`dim` and tag `tag`.
 
 Return `tags`.
 """
@@ -370,7 +370,7 @@ end
 """
     gmsh.model.getPhysicalGroupsForEntity(dim, tag)
 
-Get the tags of the physical groups (if any) to which the geometrical entity of
+Get the tags of the physical groups (if any) to which the model entity of
 dimension `dim` and tag `tag` belongs.
 
 Return `physicalTags`.
@@ -390,8 +390,8 @@ end
 """
     gmsh.model.addPhysicalGroup(dim, tags, tag = -1)
 
-Add a physical group of dimension `dim`, grouping the elementary entities with
-tags `tags`. Return the tag of the physical group, equal to `tag` if `tag` is
+Add a physical group of dimension `dim`, grouping the model entities with tags
+`tags`. Return the tag of the physical group, equal to `tag` if `tag` is
 positive, or a new tag if `tag` < 0.
 
 Return an integer value.
@@ -440,9 +440,9 @@ end
 """
     gmsh.model.getBoundary(dimTags, combined = true, oriented = true, recursive = false)
 
-Get the boundary of the geometrical entities `dimTags`. Return in `outDimTags`
-the boundary of the individual entities (if `combined` is false) or the boundary
-of the combined geometrical shape formed by all input entities (if `combined` is
+Get the boundary of the model entities `dimTags`. Return in `outDimTags` the
+boundary of the individual entities (if `combined` is false) or the boundary of
+the combined geometrical shape formed by all input entities (if `combined` is
 true). Return tags multiplied by the sign of the boundary entity if `oriented`
 is true. Apply the boundary operator recursively down to dimension 0 (i.e. to
 points) if `recursive` is true.
@@ -465,9 +465,9 @@ end
 """
     gmsh.model.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
 
-Get the (elementary) geometrical entities in the bounding box defined by the two
-points (`xmin`, `ymin`, `zmin`) and (`xmax`, `ymax`, `zmax`). If `dim` is >= 0,
-return only the entities of the specified dimension (e.g. points if `dim` == 0).
+Get the model entities in the bounding box defined by the two points (`xmin`,
+`ymin`, `zmin`) and (`xmax`, `ymax`, `zmax`). If `dim` is >= 0, return only the
+entities of the specified dimension (e.g. points if `dim` == 0).
 
 Return `tags`.
 """
@@ -488,7 +488,7 @@ end
     gmsh.model.getBoundingBox(dim, tag)
 
 Get the bounding box (`xmin`, `ymin`, `zmin`), (`xmax`, `ymax`, `zmax`) of the
-geometrical entity of dimension `dim` and tag `tag`.
+model entity of dimension `dim` and tag `tag`.
 
 Return `xmin`, `ymin`, `zmin`, `xmax`, `ymax`, `zmax`.
 """
@@ -526,7 +526,7 @@ end
 """
     gmsh.model.addDiscreteEntity(dim, tag = -1, boundary = Cint[])
 
-Add a discrete geometrical entity (defined by a mesh) of dimension `dim` in the
+Add a discrete model entity (defined by a mesh) of dimension `dim` in the
 current model. Return the tag of the new discrete entity, equal to `tag` if
 `tag` is positive, or a new tag if `tag` < 0. `boundary` specifies the tags of
 the entities on the boundary of the discrete entity, if any. Specifying
@@ -790,7 +790,7 @@ end
 """
     gmsh.model.setVisibility(dimTags, value, recursive = false)
 
-Set the visibility of the geometrical entities `dimTags` to `value`. Apply the
+Set the visibility of the model entities `dimTags` to `value`. Apply the
 visibility setting recursively if `recursive` is true.
 """
 function setVisibility(dimTags, value, recursive = false)
@@ -805,7 +805,7 @@ end
 """
     gmsh.model.getVisibility(dim, tag)
 
-Get the visibility of the geometrical entity of dimension `dim` and tag `tag`.
+Get the visibility of the model entity of dimension `dim` and tag `tag`.
 
 Return `value`.
 """
@@ -822,9 +822,9 @@ end
 """
     gmsh.model.setColor(dimTags, r, g, b, a = 0, recursive = false)
 
-Set the color of the geometrical entities `dimTags` to the RGBA value (`r`, `g`,
-`b`, `a`), where `r`, `g`, `b` and `a` should be integers between 0 and 255.
-Apply the color setting recursively if `recursive` is true.
+Set the color of the model entities `dimTags` to the RGBA value (`r`, `g`, `b`,
+`a`), where `r`, `g`, `b` and `a` should be integers between 0 and 255. Apply
+the color setting recursively if `recursive` is true.
 """
 function setColor(dimTags, r, g, b, a = 0, recursive = false)
     ierr = Ref{Cint}()
@@ -838,7 +838,7 @@ end
 """
     gmsh.model.getColor(dim, tag)
 
-Get the color of the geometrical entity of dimension `dim` and tag `tag`.
+Get the color of the model entity of dimension `dim` and tag `tag`.
 
 Return `r`, `g`, `b`, `a`.
 """
@@ -872,7 +872,7 @@ end
 """
     module gmsh.model.mesh
 
-Per-model meshing functions
+Meshing functions
 """
 module mesh
 
@@ -1094,8 +1094,8 @@ end
 """
     gmsh.model.mesh.setNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
 
-Set the nodes classified on the geometrical entity of dimension `dim` and tag
-`tag`. `nodeTags` contains the node tags (their unique, strictly positive
+Set the nodes classified on the model entity of dimension `dim` and tag `tag`.
+`nodeTags` contains the node tags (their unique, strictly positive
 identification numbers). `coord` is a vector of length 3 times the length of
 `nodeTags` that contains the x, y, z coordinates of the nodes, concatenated:
 [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord` vector contains the
@@ -1115,10 +1115,10 @@ end
 """
     gmsh.model.mesh.reclassifyNodes()
 
-Reclassify all nodes on their associated geometrical entity, based on the
-elements. Can be used when importing nodes in bulk (e.g. by associating them all
-to a single volume), to reclassify them correctly on model surfaces, curves,
-etc. after the elements have been set.
+Reclassify all nodes on their associated model entity, based on the elements.
+Can be used when importing nodes in bulk (e.g. by associating them all to a
+single volume), to reclassify them correctly on model surfaces, curves, etc.
+after the elements have been set.
 """
 function reclassifyNodes()
     ierr = Ref{Cint}()
@@ -1714,7 +1714,7 @@ end
 """
     gmsh.model.mesh.setSize(dimTags, size)
 
-Set a mesh size constraint on the geometrical entities `dimTags`. Currently only
+Set a mesh size constraint on the model entities `dimTags`. Currently only
 entities of dimension 0 (points) are handled.
 """
 function setSize(dimTags, size)
@@ -1781,9 +1781,9 @@ end
 """
     gmsh.model.mesh.setRecombine(dim, tag)
 
-Set a recombination meshing constraint on the geometrical entity of dimension
-`dim` and tag `tag`. Currently only entities of dimension 2 (to recombine
-triangles into quadrangles) are supported.
+Set a recombination meshing constraint on the model entity of dimension `dim`
+and tag `tag`. Currently only entities of dimension 2 (to recombine triangles
+into quadrangles) are supported.
 """
 function setRecombine(dim, tag)
     ierr = Ref{Cint}()
@@ -1797,8 +1797,8 @@ end
 """
     gmsh.model.mesh.setSmoothing(dim, tag, val)
 
-Set a smoothing meshing constraint on the geometrical entity of dimension `dim`
-and tag `tag`. `val` iterations of a Laplace smoother are applied.
+Set a smoothing meshing constraint on the model entity of dimension `dim` and
+tag `tag`. `val` iterations of a Laplace smoother are applied.
 """
 function setSmoothing(dim, tag, val)
     ierr = Ref{Cint}()
@@ -1812,11 +1812,10 @@ end
 """
     gmsh.model.mesh.setReverse(dim, tag, val = true)
 
-Set a reverse meshing constraint on the geometrical entity of dimension `dim`
-and tag `tag`. If `val` is true, the mesh orientation will be reversed with
-respect to the natural mesh orientation (i.e. the orientation consistent with
-the orientation of the geometrical entity). If `val` is false, the mesh is left
-as-is.
+Set a reverse meshing constraint on the model entity of dimension `dim` and tag
+`tag`. If `val` is true, the mesh orientation will be reversed with respect to
+the natural mesh orientation (i.e. the orientation consistent with the
+orientation of the geometry). If `val` is false, the mesh is left as-is.
 """
 function setReverse(dim, tag, val = true)
     ierr = Ref{Cint}()
@@ -1846,8 +1845,8 @@ end
 """
     gmsh.model.mesh.embed(dim, tags, inDim, inTag)
 
-Embed the geometrical entities of dimension `dim` and tags `tags` in the (inDim,
-inTag) geometrical entity. `inDim` must be strictly greater than `dim`.
+Embed the model entities of dimension `dim` and tags `tags` in the (inDim,
+inTag) model entity. `inDim` must be strictly greater than `dim`.
 """
 function embed(dim, tags, inDim, inTag)
     ierr = Ref{Cint}()
@@ -1861,9 +1860,9 @@ end
 """
     gmsh.model.mesh.removeEmbedded(dimTags, dim = -1)
 
-Remove embedded entities in the geometrical entities `dimTags`. if `dim` is >=
-0, only remove embedded entities of the given dimension (e.g. embedded points if
-`dim` == 0).
+Remove embedded entities in the model entities `dimTags`. if `dim` is >= 0, only
+remove embedded entities of the given dimension (e.g. embedded points if `dim`
+== 0).
 """
 function removeEmbedded(dimTags, dim = -1)
     ierr = Ref{Cint}()
@@ -2086,7 +2085,7 @@ end
 """
     module gmsh.model.mesh.field
 
-Per-model mesh size field functions
+Mesh size field functions
 """
 module field
 
@@ -2201,7 +2200,7 @@ end # end of module mesh
 """
     module gmsh.model.geo
 
-Internal per-model GEO CAD kernel functions
+Built-in CAD kernel functions
 """
 module geo
 
@@ -2346,10 +2345,10 @@ end
     gmsh.model.geo.addCurveLoop(curveTags, tag = -1)
 
 Add a curve loop (a closed wire) formed by the curves `curveTags`. `curveTags`
-should contain (signed) tags of geometrical enties of dimension 1 forming a
-closed loop: a negative tag signifies that the underlying curve is considered
-with reversed orientation. If `tag` is positive, set the tag explicitly;
-otherwise a new tag is selected automatically. Return the tag of the curve loop.
+should contain (signed) tags of model enties of dimension 1 forming a closed
+loop: a negative tag signifies that the underlying curve is considered with
+reversed orientation. If `tag` is positive, set the tag explicitly; otherwise a
+new tag is selected automatically. Return the tag of the curve loop.
 
 Return an integer value.
 """
@@ -2440,12 +2439,12 @@ end
 """
     gmsh.model.geo.extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
 
-Extrude the geometrical entities `dimTags` by translation along (`dx`, `dy`,
-`dz`). Return extruded entities in `outDimTags`. If `numElements` is not empty,
-also extrude the mesh: the entries in `numElements` give the number of elements
-in each layer. If `height` is not empty, it provides the (cumulative) height of
-the different layers, normalized to 1. If `dx` == `dy` == `dz` == 0, the
-entities are extruded along their normal.
+Extrude the model entities `dimTags` by translation along (`dx`, `dy`, `dz`).
+Return extruded entities in `outDimTags`. If `numElements` is not empty, also
+extrude the mesh: the entries in `numElements` give the number of elements in
+each layer. If `height` is not empty, it provides the (cumulative) height of the
+different layers, normalized to 1. If `dx` == `dy` == `dz` == 0, the entities
+are extruded along their normal.
 
 Return `outDimTags`.
 """
@@ -2465,12 +2464,12 @@ end
 """
     gmsh.model.geo.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
 
-Extrude the geometrical entities `dimTags` by rotation of `angle` radians around
-the axis of revolution defined by the point (`x`, `y`, `z`) and the direction
-(`ax`, `ay`, `az`). Return extruded entities in `outDimTags`. If `numElements`
-is not empty, also extrude the mesh: the entries in `numElements` give the
-number of elements in each layer. If `height` is not empty, it provides the
-(cumulative) height of the different layers, normalized to 1.
+Extrude the model entities `dimTags` by rotation of `angle` radians around the
+axis of revolution defined by the point (`x`, `y`, `z`) and the direction (`ax`,
+`ay`, `az`). Return extruded entities in `outDimTags`. If `numElements` is not
+empty, also extrude the mesh: the entries in `numElements` give the number of
+elements in each layer. If `height` is not empty, it provides the (cumulative)
+height of the different layers, normalized to 1.
 
 Return `outDimTags`.
 """
@@ -2490,13 +2489,13 @@ end
 """
     gmsh.model.geo.twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
 
-Extrude the geometrical entities `dimTags` by a combined translation and
-rotation of `angle` radians, along (`dx`, `dy`, `dz`) and around the axis of
-revolution defined by the point (`x`, `y`, `z`) and the direction (`ax`, `ay`,
-`az`). Return extruded entities in `outDimTags`. If `numElements` is not empty,
-also extrude the mesh: the entries in `numElements` give the number of elements
-in each layer. If `height` is not empty, it provides the (cumulative) height of
-the different layers, normalized to 1.
+Extrude the model entities `dimTags` by a combined translation and rotation of
+`angle` radians, along (`dx`, `dy`, `dz`) and around the axis of revolution
+defined by the point (`x`, `y`, `z`) and the direction (`ax`, `ay`, `az`).
+Return extruded entities in `outDimTags`. If `numElements` is not empty, also
+extrude the mesh: the entries in `numElements` give the number of elements in
+each layer. If `height` is not empty, it provides the (cumulative) height of the
+different layers, normalized to 1.
 
 Return `outDimTags`.
 """
@@ -2516,7 +2515,7 @@ end
 """
     gmsh.model.geo.translate(dimTags, dx, dy, dz)
 
-Translate the geometrical entities `dimTags` along (`dx`, `dy`, `dz`).
+Translate the model entities `dimTags` along (`dx`, `dy`, `dz`).
 """
 function translate(dimTags, dx, dy, dz)
     ierr = Ref{Cint}()
@@ -2530,7 +2529,7 @@ end
 """
     gmsh.model.geo.rotate(dimTags, x, y, z, ax, ay, az, angle)
 
-Rotate the geometrical entities `dimTags` of `angle` radians around the axis of
+Rotate the model entities `dimTags` of `angle` radians around the axis of
 revolution defined by the point (`x`, `y`, `z`) and the direction (`ax`, `ay`,
 `az`).
 """
@@ -2546,8 +2545,8 @@ end
 """
     gmsh.model.geo.dilate(dimTags, x, y, z, a, b, c)
 
-Scale the geometrical entities `dimTag` by factors `a`, `b` and `c` along the
-three coordinate axes; use (`x`, `y`, `z`) as the center of the homothetic
+Scale the model entities `dimTag` by factors `a`, `b` and `c` along the three
+coordinate axes; use (`x`, `y`, `z`) as the center of the homothetic
 transformation.
 """
 function dilate(dimTags, x, y, z, a, b, c)
@@ -2562,8 +2561,8 @@ end
 """
     gmsh.model.geo.symmetrize(dimTags, a, b, c, d)
 
-Apply a symmetry transformation to the geometrical entities `dimTag`, with
-respect to the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
+Apply a symmetry transformation to the model entities `dimTag`, with respect to
+the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
 """
 function symmetrize(dimTags, a, b, c, d)
     ierr = Ref{Cint}()
@@ -2643,7 +2642,7 @@ end
 """
     module gmsh.model.geo.mesh
 
-GEO-specific meshing constraints
+Built-in CAD kernel meshing constraints
 """
 module mesh
 
@@ -2652,7 +2651,7 @@ import ....gmsh
 """
     gmsh.model.geo.mesh.setSize(dimTags, size)
 
-Set a mesh size constraint on the geometrical entities `dimTags`. Currently only
+Set a mesh size constraint on the model entities `dimTags`. Currently only
 entities of dimension 0 (points) are handled.
 """
 function setSize(dimTags, size)
@@ -2719,9 +2718,9 @@ end
 """
     gmsh.model.geo.mesh.setRecombine(dim, tag, angle = 45.)
 
-Set a recombination meshing constraint on the geometrical entity of dimension
-`dim` and tag `tag`. Currently only entities of dimension 2 (to recombine
-triangles into quadrangles) are supported.
+Set a recombination meshing constraint on the model entity of dimension `dim`
+and tag `tag`. Currently only entities of dimension 2 (to recombine triangles
+into quadrangles) are supported.
 """
 function setRecombine(dim, tag, angle = 45.)
     ierr = Ref{Cint}()
@@ -2735,8 +2734,8 @@ end
 """
     gmsh.model.geo.mesh.setSmoothing(dim, tag, val)
 
-Set a smoothing meshing constraint on the geometrical entity of dimension `dim`
-and tag `tag`. `val` iterations of a Laplace smoother are applied.
+Set a smoothing meshing constraint on the model entity of dimension `dim` and
+tag `tag`. `val` iterations of a Laplace smoother are applied.
 """
 function setSmoothing(dim, tag, val)
     ierr = Ref{Cint}()
@@ -2750,11 +2749,10 @@ end
 """
     gmsh.model.geo.mesh.setReverse(dim, tag, val = true)
 
-Set a reverse meshing constraint on the geometrical entity of dimension `dim`
-and tag `tag`. If `val` is true, the mesh orientation will be reversed with
-respect to the natural mesh orientation (i.e. the orientation consistent with
-the orientation of the geometrical entity). If `val` is false, the mesh is left
-as-is.
+Set a reverse meshing constraint on the model entity of dimension `dim` and tag
+`tag`. If `val` is true, the mesh orientation will be reversed with respect to
+the natural mesh orientation (i.e. the orientation consistent with the
+orientation of the geometry). If `val` is false, the mesh is left as-is.
 """
 function setReverse(dim, tag, val = true)
     ierr = Ref{Cint}()
@@ -2772,7 +2770,7 @@ end # end of module geo
 """
     module gmsh.model.occ
 
-Internal per-model OpenCASCADE CAD kernel functions
+OpenCASCADE CAD kernel functions
 """
 module occ
 
@@ -3268,11 +3266,11 @@ end
 """
     gmsh.model.occ.extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
 
-Extrude the geometrical entities `dimTags` by translation along (`dx`, `dy`,
-`dz`). Return extruded entities in `outDimTags`. If `numElements` is not empty,
-also extrude the mesh: the entries in `numElements` give the number of elements
-in each layer. If `height` is not empty, it provides the (cumulative) height of
-the different layers, normalized to 1.
+Extrude the model entities `dimTags` by translation along (`dx`, `dy`, `dz`).
+Return extruded entities in `outDimTags`. If `numElements` is not empty, also
+extrude the mesh: the entries in `numElements` give the number of elements in
+each layer. If `height` is not empty, it provides the (cumulative) height of the
+different layers, normalized to 1.
 
 Return `outDimTags`.
 """
@@ -3292,12 +3290,12 @@ end
 """
     gmsh.model.occ.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
 
-Extrude the geometrical entities `dimTags` by rotation of `angle` radians around
-the axis of revolution defined by the point (`x`, `y`, `z`) and the direction
-(`ax`, `ay`, `az`). Return extruded entities in `outDimTags`. If `numElements`
-is not empty, also extrude the mesh: the entries in `numElements` give the
-number of elements in each layer. If `height` is not empty, it provides the
-(cumulative) height of the different layers, normalized to 1.
+Extrude the model entities `dimTags` by rotation of `angle` radians around the
+axis of revolution defined by the point (`x`, `y`, `z`) and the direction (`ax`,
+`ay`, `az`). Return extruded entities in `outDimTags`. If `numElements` is not
+empty, also extrude the mesh: the entries in `numElements` give the number of
+elements in each layer. If `height` is not empty, it provides the (cumulative)
+height of the different layers, normalized to 1.
 
 Return `outDimTags`.
 """
@@ -3528,7 +3526,7 @@ end
 """
     gmsh.model.occ.translate(dimTags, dx, dy, dz)
 
-Translate the geometrical entities `dimTags` along (`dx`, `dy`, `dz`).
+Translate the model entities `dimTags` along (`dx`, `dy`, `dz`).
 """
 function translate(dimTags, dx, dy, dz)
     ierr = Ref{Cint}()
@@ -3542,7 +3540,7 @@ end
 """
     gmsh.model.occ.rotate(dimTags, x, y, z, ax, ay, az, angle)
 
-Rotate the geometrical entities `dimTags` of `angle` radians around the axis of
+Rotate the model entities `dimTags` of `angle` radians around the axis of
 revolution defined by the point (`x`, `y`, `z`) and the direction (`ax`, `ay`,
 `az`).
 """
@@ -3558,8 +3556,8 @@ end
 """
     gmsh.model.occ.dilate(dimTags, x, y, z, a, b, c)
 
-Scale the geometrical entities `dimTag` by factors `a`, `b` and `c` along the
-three coordinate axes; use (`x`, `y`, `z`) as the center of the homothetic
+Scale the model entities `dimTag` by factors `a`, `b` and `c` along the three
+coordinate axes; use (`x`, `y`, `z`) as the center of the homothetic
 transformation.
 """
 function dilate(dimTags, x, y, z, a, b, c)
@@ -3574,8 +3572,8 @@ end
 """
     gmsh.model.occ.symmetrize(dimTags, a, b, c, d)
 
-Apply a symmetry transformation to the geometrical entities `dimTag`, with
-respect to the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
+Apply a symmetry transformation to the model entities `dimTag`, with respect to
+the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
 """
 function symmetrize(dimTags, a, b, c, d)
     ierr = Ref{Cint}()
@@ -3590,8 +3588,8 @@ end
     gmsh.model.occ.affineTransform(dimTags, a)
 
 Apply a general affine transformation matrix `a` (16 entries of a 4x4 matrix, by
-row; only the 12 first can be provided for convenience) to the geometrical
-entities `dimTag`.
+row; only the 12 first can be provided for convenience) to the model entities
+`dimTag`.
 """
 function affineTransform(dimTags, a)
     ierr = Ref{Cint}()
@@ -3704,7 +3702,7 @@ end
 """
     gmsh.model.occ.setMeshSize(dimTags, size)
 
-Set a mesh size constraint on the geometrical entities `dimTags`. Currently only
+Set a mesh size constraint on the model entities `dimTags`. Currently only
 entities of dimension 0 (points) are handled.
 """
 function setMeshSize(dimTags, size)
@@ -4093,7 +4091,7 @@ end # end of module graphics
 """
     module gmsh.fltk
 
-Fltk graphical user interface functions
+FLTK graphical user interface functions
 """
 module fltk
 
@@ -4414,7 +4412,7 @@ end # end of module onelab
 """
     module gmsh.logger
 
-Message logger functions
+Information logging functions
 """
 module logger
 
