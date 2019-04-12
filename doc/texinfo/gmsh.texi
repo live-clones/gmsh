@@ -5414,16 +5414,17 @@ stored (@emph{classified}) in the model entity they discretize. Once
 meshed, a model entity of dimension 0 (a geometrical point) will thus
 contain a mesh element of type point (MSH type 15: cf. @ref{MSH file
 format}), as well as a mesh node. A model curve will contain line
-elements (MSH type 1, 8 or 26 at order 1, 2 or 3 respectively) as well
-as its interior nodes, while its boundary nodes will be stored in the
-bounding model points. A model surface will contain triangular and/or
-quadrangular elements and all the nodes not classified on its boundary
-or embedded entities (curves and points). A model volume will contain
-tetrahedra, hexahedra, etc. and all the nodes not classified on its
-boundary or embedded entities (surfaces, curves and points). This data
-model allows to easily and efficiently handle the creation, modification
-and destruction of conformal meshes. All the mesh-related functions are
-provided in the @code{gmsh/model/mesh} namespace.
+elements (e.g. of MSH type 1 or 8 for first order or second order
+meshes, respectively) as well as its interior nodes, while its boundary
+nodes will be stored in the bounding model points. A model surface will
+contain triangular and/or quadrangular elements and all the nodes not
+classified on its boundary or on its embedded entities (curves and
+points). A model volume will contain tetrahedra, hexahedra, etc. and all
+the nodes not classified on its boundary or on its embedded entities
+(surfaces, curves and points). This data model allows to easily and
+efficiently handle the creation, modification and destruction of
+conformal meshes. All the mesh-related functions are provided in the
+@code{gmsh/model/mesh} namespace.
 @item
 Post-processing data can contain one or more @emph{steps}, and can be
 either linked to one or more models (@emph{mesh-based} data, as stored
