@@ -5402,17 +5402,18 @@ Mesh data is made of @emph{elements} (points, lines, triangles,
 quadrangles, tetrahedra, hexahedra, prisms, pyramids, ...), defined by
 an ordered list of their @emph{nodes}. Elements and nodes are identified
 by @emph{tags} (strictly positive identification numbers), and are
-stored in the geometrical entity they discretize. Once meshed, a
-geometrical entity of dimension 0 (a geometrical point) will thus
-contain a mesh element of type point, as well as a mesh node. A
-geometrical curve will contain line elements as well as its interior
-nodes, while its boundary nodes will be stored in the bounding
-geometrical points. A geometrical surface will contain triangular and/or
-quadrangular elements as well as its interior nodes, while its boundary
-nodes will be stored in the boundary curves and points. A geometrical
-volume will contain tetrahedra, hexahedra, etc. and its interior nodes,
-the boundary nodes being stored in its bounding surfaces, curves and
-points.
+stored (@emph{classified}) in the geometrical entity they
+discretize. Once meshed, a geometrical entity of dimension 0 (a
+geometrical point) will thus contain a mesh element of type point, as
+well as a mesh node. A geometrical curve will contain line elements as
+well as its interior nodes, while its boundary nodes will be stored in
+the bounding geometrical points. A geometrical surface will contain
+triangular and/or quadrangular elements and all the nodes not classified
+on its boundary or embedded entities (curves and points). A geometrical
+volume will contain tetrahedra, hexahedra, etc. and all the nodes not
+classified on its boundary or embedded entities (surfaces, curves and
+points). This allows to easily and efficiently handle the creation,
+modification and destruction of conformal meshes.
 @item
 Post-processing data can contain one or more @emph{steps}, and can be
 either linked to one or more models (@emph{mesh-based} data, as stored
@@ -5523,15 +5524,20 @@ per geometrical point, mesh lines in geometrical curves, triangles and
 quadrangles in surfaces, etc. The elements are defined in terms of their
 nodes
 (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MVertex.h,Geo/MVertex.h}).
-Each geometrical entity stores only its internal nodes: boundary nodes
-are stored in the bounding entities. This allows to easily and
-efficiently handle the creation, modification and destruction of
-conformal meshes.
+Each geometrical entity stores only its internal nodes: nodes on
+boundaries or on embedded entities are stored in the associated
+bounding/embedded entity.
 
 The post-processing module is based on the concept of views
 (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PView.h,Post/PView.h})
 and abstract data containers (derived from
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PViewData.h,Post/PViewData.h}).
+Data can be either mesh-based
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PViewDataGModel.h,Post/PViewDataGModel.h}),
+in which case the view is linked to one or more models, or list-based
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PViewDataList.h,Post/PViewDataLis.h}),
+in which case all the relevant geometrical information is self-contained
+in the view.
 
 @c -------------------------------------------------------------------------
 @c Coding style
