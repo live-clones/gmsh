@@ -5433,14 +5433,19 @@ in MSH files: cf. @ref{MSH file format}) or independent from any model
 cf. @ref{Post-processing commands}).
 @end itemize
 
-All the functions available in the API are given below (see the relevant
-header/module file for the exact definition in each supported
-language@footnote{In C++ @code{/gmsh/model/geo/addPoint} will lead to a
-namespaced function @code{gmsh::model::geo::addPoint}, while in Python
-and Julia it will lead to @code{gmsh.model.geo.addPoint}, and in C to
+All the functions available in the API are given below. See the relevant
+header/module file for the exact definition in each supported language:
+in @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.h,C++}
+@code{gmsh/model/geo/addPoint} will lead to a namespaced function
+@code{gmsh::model::geo::addPoint}, while in
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.py,Python}
+and
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.jl,Julia}
+it will lead to @code{gmsh.model.geo.addPoint}, and in
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmshc.h,C} to
 @code{gmshModelGeoAddPoint}. Output values are passed by reference in
 C++, as pointers in C and directly returned (after the return value, if
-any) in Python and Julia.}):
+any) in Python and Julia.
 
 @include api.texi
 
