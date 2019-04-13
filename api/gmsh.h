@@ -1656,6 +1656,25 @@ namespace gmsh { // Top-level functions
       GMSH_API void setMeshSize(const gmsh::vectorpair & dimTags,
                                 const double size);
 
+      // Get the mass of the model entity of dimension `dim' and tag `tag'.
+      GMSH_API void getMass(const int dim,
+                            const int tag,
+                            double & mass);
+
+      // Get the center of mass of the model entity of dimension `dim' and tag
+      // `tag'.
+      GMSH_API void getCenterOfMass(const int dim,
+                                    const int tag,
+                                    double & x,
+                                    double & y,
+                                    double & z);
+
+      // Get the matrix of inertia (by row) of the model entity of dimension `dim'
+      // and tag `tag'.
+      GMSH_API void getMatrixOfInertia(const int dim,
+                                       const int tag,
+                                       std::vector<double> & mat);
+
       // Synchronize the internal OpenCASCADE CAD representation with the current
       // Gmsh model. This can be called at any time, but since it involves a non
       // trivial amount of processing, the number of synchronization points should

@@ -3329,6 +3329,67 @@ bool OCC_Internals::getVertex(int tag, double &x, double &y, double &z)
   return false;
 }
 
+bool OCC_Internals::getMass(int dim, int tag, double &mass)
+{
+  if(!_isBound(dim, tag)) {
+    Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
+               tag);
+    return false;
+  }
+  TopoDS_Shape shape = _find(dim, tag);
+  GProp_GProps System;
+  switch(dim){
+  case 1: BRepGProp::LinearProperties(shape, System); break;
+  case 2: BRepGProp::SurfaceProperties(shape, System); break;
+  case 3: BRepGProp::VolumeProperties(shape, System); break;
+  }
+  mass = System.Mass();
+  return true;
+}
+
+bool OCC_Internals::getCenterOfMass(int dim, int tag, double &x, double &y, double &z)
+{
+  if(!_isBound(dim, tag)) {
+    Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
+               tag);
+    return false;
+  }
+  TopoDS_Shape shape = _find(dim, tag);
+  GProp_GProps System;
+  switch(dim){
+  case 1: BRepGProp::LinearProperties(shape, System); break;
+  case 2: BRepGProp::SurfaceProperties(shape, System); break;
+  case 3: BRepGProp::VolumeProperties(shape, System); break;
+  }
+  gp_Pnt c = System.CentreOfMass();
+  x = c.X();
+  y = c.Y();
+  z = c.Z();
+  return true;
+}
+
+bool OCC_Internals::getMatrixOfInertia(int dim, int tag, std::vector<double> &mat)
+{
+  if(!_isBound(dim, tag)) {
+    Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
+               tag);
+    return false;
+  }
+  TopoDS_Shape shape = _find(dim, tag);
+  GProp_GProps System;
+  switch(dim){
+  case 1: BRepGProp::LinearProperties(shape, System); break;
+  case 2: BRepGProp::SurfaceProperties(shape, System); break;
+  case 3: BRepGProp::VolumeProperties(shape, System); break;
+  }
+  gp_Mat m = System.MatrixOfInertia();
+  mat.clear();
+  for(int i = 1; i <= 3; i++)
+    for(int j = 1; j <= 3; j++)
+      mat.push_back(m.Value(i, j));
+  return true;
+}
+
 bool const sortByInvDim(std::pair<int, int> const &lhs,
                         std::pair<int, int> const &rhs)
 {

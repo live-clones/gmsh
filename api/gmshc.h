@@ -1781,6 +1781,28 @@ GMSH_API void gmshModelOccSetMeshSize(int * dimTags, size_t dimTags_n,
                                       const double size,
                                       int * ierr);
 
+/* Get the mass of the model entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelOccGetMass(const int dim,
+                                  const int tag,
+                                  double * mass,
+                                  int * ierr);
+
+/* Get the center of mass of the model entity of dimension `dim' and tag
+ * `tag'. */
+GMSH_API void gmshModelOccGetCenterOfMass(const int dim,
+                                          const int tag,
+                                          double * x,
+                                          double * y,
+                                          double * z,
+                                          int * ierr);
+
+/* Get the matrix of inertia (by row) of the model entity of dimension `dim'
+ * and tag `tag'. */
+GMSH_API void gmshModelOccGetMatrixOfInertia(const int dim,
+                                             const int tag,
+                                             double ** mat, size_t * mat_n,
+                                             int * ierr);
+
 /* Synchronize the internal OpenCASCADE CAD representation with the current
  * Gmsh model. This can be called at any time, but since it involves a non
  * trivial amount of processing, the number of synchronization points should

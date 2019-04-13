@@ -4413,6 +4413,75 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def getMass(dim, tag):
+            """
+            Get the mass of the model entity of dimension `dim' and tag `tag'.
+
+            Return `mass'.
+            """
+            api_mass_ = c_double()
+            ierr = c_int()
+            lib.gmshModelOccGetMass(
+                c_int(dim),
+                c_int(tag),
+                byref(api_mass_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccGetMass returned non-zero error code: ",
+                    ierr.value)
+            return api_mass_.value
+
+        @staticmethod
+        def getCenterOfMass(dim, tag):
+            """
+            Get the center of mass of the model entity of dimension `dim' and tag
+            `tag'.
+
+            Return `x', `y', `z'.
+            """
+            api_x_ = c_double()
+            api_y_ = c_double()
+            api_z_ = c_double()
+            ierr = c_int()
+            lib.gmshModelOccGetCenterOfMass(
+                c_int(dim),
+                c_int(tag),
+                byref(api_x_),
+                byref(api_y_),
+                byref(api_z_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccGetCenterOfMass returned non-zero error code: ",
+                    ierr.value)
+            return (
+                api_x_.value,
+                api_y_.value,
+                api_z_.value)
+
+        @staticmethod
+        def getMatrixOfInertia(dim, tag):
+            """
+            Get the matrix of inertia (by row) of the model entity of dimension `dim'
+            and tag `tag'.
+
+            Return `mat'.
+            """
+            api_mat_, api_mat_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelOccGetMatrixOfInertia(
+                c_int(dim),
+                c_int(tag),
+                byref(api_mat_), byref(api_mat_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelOccGetMatrixOfInertia returned non-zero error code: ",
+                    ierr.value)
+            return _ovectordouble(api_mat_, api_mat_n_.value)
+
+        @staticmethod
         def synchronize():
             """
             Synchronize the internal OpenCASCADE CAD representation with the current

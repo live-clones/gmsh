@@ -625,6 +625,15 @@ occ.add('importShapesNativePointer',doc,None,ivoidstar('shape'),ovectorpair('out
 doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 occ.add('setMeshSize',doc,None,ivectorpair('dimTags'),idouble('size'))
 
+doc = '''Get the mass of the model entity of dimension `dim' and tag `tag'.'''
+occ.add('getMass',doc,None,iint('dim'),iint('tag'),odouble('mass'))
+
+doc = '''Get the center of mass of the model entity of dimension `dim' and tag `tag'.'''
+occ.add('getCenterOfMass',doc,None,iint('dim'),iint('tag'),odouble('x'),odouble('y'),odouble('z'))
+
+doc = '''Get the matrix of inertia (by row) of the model entity of dimension `dim' and tag `tag'.'''
+occ.add('getMatrixOfInertia',doc,None,iint('dim'),iint('tag'),ovectordouble('mat'))
+
 doc = '''Synchronize the internal OpenCASCADE CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
 occ.add('synchronize',doc,None)
 

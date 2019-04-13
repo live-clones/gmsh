@@ -4184,6 +4184,36 @@ GMSH_API void gmsh::model::occ::setMeshSize(const vectorpair &dimTags,
   }
 }
 
+GMSH_API void gmsh::model::occ::getMass(const int dim, const int tag,
+                                        double &mass)
+{
+  if(!_isInitialized()) { throw -1; }
+  _createOcc();
+  if(!GModel::current()->getOCCInternals()->getMass(dim, tag, mass)){
+    throw 1;
+  }
+}
+
+GMSH_API void gmsh::model::occ::getCenterOfMass(const int dim, const int tag,
+                                                double &x, double &y, double &z)
+{
+  if(!_isInitialized()) { throw -1; }
+  _createOcc();
+  if(!GModel::current()->getOCCInternals()->getCenterOfMass(dim, tag, x, y, z)){
+    throw 1;
+  }
+}
+
+GMSH_API void gmsh::model::occ::getMatrixOfInertia(const int dim, const int tag,
+                                                   std::vector<double> &m)
+{
+  if(!_isInitialized()) { throw -1; }
+  _createOcc();
+  if(!GModel::current()->getOCCInternals()->getMatrixOfInertia(dim, tag, m)){
+    throw 1;
+  }
+}
+
 GMSH_API void gmsh::model::occ::synchronize()
 {
   if(!_isInitialized()) { throw -1; }

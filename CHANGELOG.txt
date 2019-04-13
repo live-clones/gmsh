@@ -1,6 +1,7 @@
 4.3.0: improved meshing of surfaces with singular parametrizations; added API
 support for aliasing and combining views, copying view options, setting point
-coordinates and extruding built-in CAD entities along normals; fixed regression
+coordinates, extruding built-in CAD entities along normals and retrieving mass,
+center of mass and inertia from OpenCASCADE CAD entities; fixed regression
 introduced in 4.1.4 that could lead to non-deterministic 2D meshes; small bug
 fixes.
 

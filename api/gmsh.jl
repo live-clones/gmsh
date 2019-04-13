@@ -3715,6 +3715,62 @@ function setMeshSize(dimTags, size)
 end
 
 """
+    gmsh.model.occ.getMass(dim, tag)
+
+Get the mass of the model entity of dimension `dim` and tag `tag`.
+
+Return `mass`.
+"""
+function getMass(dim, tag)
+    api_mass_ = Ref{Cdouble}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccGetMass, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cdouble}, Ptr{Cint}),
+          dim, tag, api_mass_, ierr)
+    ierr[] != 0 && error("gmshModelOccGetMass returned non-zero error code: $(ierr[])")
+    return api_mass_[]
+end
+
+"""
+    gmsh.model.occ.getCenterOfMass(dim, tag)
+
+Get the center of mass of the model entity of dimension `dim` and tag `tag`.
+
+Return `x`, `y`, `z`.
+"""
+function getCenterOfMass(dim, tag)
+    api_x_ = Ref{Cdouble}()
+    api_y_ = Ref{Cdouble}()
+    api_z_ = Ref{Cdouble}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccGetCenterOfMass, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cint}),
+          dim, tag, api_x_, api_y_, api_z_, ierr)
+    ierr[] != 0 && error("gmshModelOccGetCenterOfMass returned non-zero error code: $(ierr[])")
+    return api_x_[], api_y_[], api_z_[]
+end
+
+"""
+    gmsh.model.occ.getMatrixOfInertia(dim, tag)
+
+Get the matrix of inertia (by row) of the model entity of dimension `dim` and
+tag `tag`.
+
+Return `mat`.
+"""
+function getMatrixOfInertia(dim, tag)
+    api_mat_ = Ref{Ptr{Cdouble}}()
+    api_mat_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccGetMatrixOfInertia, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, api_mat_, api_mat_n_, ierr)
+    ierr[] != 0 && error("gmshModelOccGetMatrixOfInertia returned non-zero error code: $(ierr[])")
+    mat = unsafe_wrap(Array, api_mat_[], api_mat_n_[], own=true)
+    return mat
+end
+
+"""
     gmsh.model.occ.synchronize()
 
 Synchronize the internal OpenCASCADE CAD representation with the current Gmsh

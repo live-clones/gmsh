@@ -2614,6 +2614,41 @@ GMSH_API void gmshModelOccSetMeshSize(int * dimTags, size_t dimTags_n, const dou
   }
 }
 
+GMSH_API void gmshModelOccGetMass(const int dim, const int tag, double * mass, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::occ::getMass(dim, tag, *mass);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelOccGetCenterOfMass(const int dim, const int tag, double * x, double * y, double * z, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::occ::getCenterOfMass(dim, tag, *x, *y, *z);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelOccGetMatrixOfInertia(const int dim, const int tag, double ** mat, size_t * mat_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_mat_;
+    gmsh::model::occ::getMatrixOfInertia(dim, tag, api_mat_);
+    vector2ptr(api_mat_, mat, mat_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelOccSynchronize(int * ierr)
 {
   if(ierr) *ierr = 0;
