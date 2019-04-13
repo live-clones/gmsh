@@ -399,18 +399,20 @@ GMSH_API void gmshModelMeshGetLastNodeError(size_t ** nodeTags, size_t * nodeTag
  * node tags (their unique, strictly positive identification numbers). `coord'
  * is a vector of length 3 times the length of `nodeTags' that contains the x,
  * y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. If
- * `dim' >= 0, `parametricCoord' contains the parametric coordinates ([u1, u2,
- * ...] or [u1, v1, u2, ...]) of the nodes, if available. The length of
- * `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If
- * `includeBoundary' is set, also return the nodes classified on the boundary
- * of the entity (which will be reparametrized on the entity if `dim' >= 0 in
- * order to compute their parametric coordinates). */
+ * `dim' >= 0 and `returnParamtricCoord' is set, `parametricCoord' contains
+ * the parametric coordinates ([u1, u2, ...] or [u1, v1, u2, ...]) of the
+ * nodes, if available. The length of `parametricCoord' can be 0 or `dim'
+ * times the length of `nodeTags'. If `includeBoundary' is set, also return
+ * the nodes classified on the boundary of the entity (which will be
+ * reparametrized on the entity if `dim' >= 0 in order to compute their
+ * parametric coordinates). */
 GMSH_API void gmshModelMeshGetNodes(size_t ** nodeTags, size_t * nodeTags_n,
                                     double ** coord, size_t * coord_n,
                                     double ** parametricCoord, size_t * parametricCoord_n,
                                     const int dim,
                                     const int tag,
                                     const int includeBoundary,
+                                    const int returnParametricCoord,
                                     int * ierr);
 
 /* Get the coordinates and the parametric coordinates (if any) of the node
@@ -679,16 +681,16 @@ GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType,
 
 /* Generate the `keys' for the elements of type `elementType' in the entity of
  * tag `tag',for the `functionSpaceType' function space. Each key uniquely
- * identifies a basis function in the function space. `coord' is a vector that
- * contains x, y, z coordinates locating basis functions for sorting purposes.
- * Warning: this is an experimental feature and will probably change in a
- * future release. */
+ * identifies a basis function in the function space. If `returnCoord' is set,
+ * the `coord' vector contains the x, y, z coordinates locating basis
+ * functions for sorting purposes. Warning: this is an experimental feature
+ * and will probably change in a future release. */
 GMSH_API void gmshModelMeshGetKeysForElements(const int elementType,
                                               const char * functionSpaceType,
                                               int ** keys, size_t * keys_n,
                                               double ** coord, size_t * coord_n,
                                               const int tag,
-                                              const int generateCoord,
+                                              const int returnCoord,
                                               int * ierr);
 
 /* Get information about the `keys'. Warning: this is an experimental feature

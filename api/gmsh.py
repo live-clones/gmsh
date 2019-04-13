@@ -1218,7 +1218,7 @@ class model:
             return _ovectorsize(api_nodeTags_, api_nodeTags_n_.value)
 
         @staticmethod
-        def getNodes(dim=-1, tag=-1, includeBoundary=False):
+        def getNodes(dim=-1, tag=-1, includeBoundary=False, returnParametricCoord=True):
             """
             Get the nodes classified on the entity of dimension `dim' and tag `tag'. If
             `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and
@@ -1226,12 +1226,13 @@ class model:
             node tags (their unique, strictly positive identification numbers). `coord'
             is a vector of length 3 times the length of `nodeTags' that contains the x,
             y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. If
-            `dim' >= 0, `parametricCoord' contains the parametric coordinates ([u1, u2,
-            ...] or [u1, v1, u2, ...]) of the nodes, if available. The length of
-            `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If
-            `includeBoundary' is set, also return the nodes classified on the boundary
-            of the entity (which will be reparametrized on the entity if `dim' >= 0 in
-            order to compute their parametric coordinates).
+            `dim' >= 0 and `returnParamtricCoord' is set, `parametricCoord' contains
+            the parametric coordinates ([u1, u2, ...] or [u1, v1, u2, ...]) of the
+            nodes, if available. The length of `parametricCoord' can be 0 or `dim'
+            times the length of `nodeTags'. If `includeBoundary' is set, also return
+            the nodes classified on the boundary of the entity (which will be
+            reparametrized on the entity if `dim' >= 0 in order to compute their
+            parametric coordinates).
 
             Return `nodeTags', `coord', `parametricCoord'.
             """
@@ -1246,6 +1247,7 @@ class model:
                 c_int(dim),
                 c_int(tag),
                 c_int(bool(includeBoundary)),
+                c_int(bool(returnParametricCoord)),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -1840,14 +1842,14 @@ class model:
                 _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value))
 
         @staticmethod
-        def getKeysForElements(elementType, functionSpaceType, tag=-1, generateCoord=True):
+        def getKeysForElements(elementType, functionSpaceType, tag=-1, returnCoord=True):
             """
             Generate the `keys' for the elements of type `elementType' in the entity of
             tag `tag',for the `functionSpaceType' function space. Each key uniquely
-            identifies a basis function in the function space. `coord' is a vector that
-            contains x, y, z coordinates locating basis functions for sorting purposes.
-            Warning: this is an experimental feature and will probably change in a
-            future release.
+            identifies a basis function in the function space. If `returnCoord' is set,
+            the `coord' vector contains the x, y, z coordinates locating basis
+            functions for sorting purposes. Warning: this is an experimental feature
+            and will probably change in a future release.
 
             Return `keys', `coord'.
             """
@@ -1860,7 +1862,7 @@ class model:
                 byref(api_keys_), byref(api_keys_n_),
                 byref(api_coord_), byref(api_coord_n_),
                 c_int(tag),
-                c_int(bool(generateCoord)),
+                c_int(bool(returnCoord)),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

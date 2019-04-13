@@ -374,19 +374,20 @@ namespace gmsh { // Top-level functions
       // the node tags (their unique, strictly positive identification numbers).
       // `coord' is a vector of length 3 times the length of `nodeTags' that
       // contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y,
-      // n1z, n2x, ...]. If `dim' >= 0, `parametricCoord' contains the parametric
-      // coordinates ([u1, u2, ...] or [u1, v1, u2, ...]) of the nodes, if
-      // available. The length of `parametricCoord' can be 0 or `dim' times the
-      // length of `nodeTags'. If `includeBoundary' is set, also return the nodes
-      // classified on the boundary of the entity (which will be reparametrized on
-      // the entity if `dim' >= 0 in order to compute their parametric
-      // coordinates).
+      // n1z, n2x, ...]. If `dim' >= 0 and `returnParamtricCoord' is set,
+      // `parametricCoord' contains the parametric coordinates ([u1, u2, ...] or
+      // [u1, v1, u2, ...]) of the nodes, if available. The length of
+      // `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If
+      // `includeBoundary' is set, also return the nodes classified on the boundary
+      // of the entity (which will be reparametrized on the entity if `dim' >= 0 in
+      // order to compute their parametric coordinates).
       GMSH_API void getNodes(std::vector<std::size_t> & nodeTags,
                              std::vector<double> & coord,
                              std::vector<double> & parametricCoord,
                              const int dim = -1,
                              const int tag = -1,
-                             const bool includeBoundary = false);
+                             const bool includeBoundary = false,
+                             const bool returnParametricCoord = true);
 
       // Get the coordinates and the parametric coordinates (if any) of the node
       // with tag `tag'. This is a sometimes useful but inefficient way of
@@ -636,16 +637,16 @@ namespace gmsh { // Top-level functions
 
       // Generate the `keys' for the elements of type `elementType' in the entity
       // of tag `tag',for the `functionSpaceType' function space. Each key uniquely
-      // identifies a basis function in the function space. `coord' is a vector
-      // that contains x, y, z coordinates locating basis functions for sorting
-      // purposes. Warning: this is an experimental feature and will probably
-      // change in a future release.
+      // identifies a basis function in the function space. If `returnCoord' is
+      // set, the `coord' vector contains the x, y, z coordinates locating basis
+      // functions for sorting purposes. Warning: this is an experimental feature
+      // and will probably change in a future release.
       GMSH_API void getKeysForElements(const int elementType,
                                        const std::string & functionSpaceType,
                                        gmsh::vectorpair & keys,
                                        std::vector<double> & coord,
                                        const int tag = -1,
-                                       const bool generateCoord = true);
+                                       const bool returnCoord = true);
 
       // Get information about the `keys'. Warning: this is an experimental feature
       // and will probably change in a future release.

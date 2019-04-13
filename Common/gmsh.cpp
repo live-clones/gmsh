@@ -957,7 +957,8 @@ GMSH_API void gmsh::model::mesh::getNodes(std::vector<std::size_t> &nodeTags,
                                           std::vector<double> &coord,
                                           std::vector<double> &parametricCoord,
                                           const int dim, const int tag,
-                                          const bool includeBoundary)
+                                          const bool includeBoundary,
+                                          const bool returnParametricCoord)
 {
   if(!_isInitialized()) { throw -1; }
   nodeTags.clear();
@@ -983,7 +984,7 @@ GMSH_API void gmsh::model::mesh::getNodes(std::vector<std::size_t> &nodeTags,
       coord.push_back(v->x());
       coord.push_back(v->y());
       coord.push_back(v->z());
-      if(dim > 0) {
+      if(dim > 0 && returnParametricCoord) {
         double par;
         for(int k = 0; k < dim; k++) {
           if(v->getParameter(k, par)) parametricCoord.push_back(par);
@@ -992,7 +993,7 @@ GMSH_API void gmsh::model::mesh::getNodes(std::vector<std::size_t> &nodeTags,
     }
     if(includeBoundary)
       _getAdditionalNodesOnBoundary(ge, nodeTags, coord, parametricCoord,
-                                    dim > 0);
+                                    dim > 0 && returnParametricCoord);
   }
 }
 

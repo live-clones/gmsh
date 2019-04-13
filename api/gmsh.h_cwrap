@@ -747,25 +747,26 @@ namespace gmsh { // Top-level functions
       // the node tags (their unique, strictly positive identification numbers).
       // `coord' is a vector of length 3 times the length of `nodeTags' that
       // contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y,
-      // n1z, n2x, ...]. If `dim' >= 0, `parametricCoord' contains the parametric
-      // coordinates ([u1, u2, ...] or [u1, v1, u2, ...]) of the nodes, if
-      // available. The length of `parametricCoord' can be 0 or `dim' times the
-      // length of `nodeTags'. If `includeBoundary' is set, also return the nodes
-      // classified on the boundary of the entity (which will be reparametrized on
-      // the entity if `dim' >= 0 in order to compute their parametric
-      // coordinates).
+      // n1z, n2x, ...]. If `dim' >= 0 and `returnParamtricCoord' is set,
+      // `parametricCoord' contains the parametric coordinates ([u1, u2, ...] or
+      // [u1, v1, u2, ...]) of the nodes, if available. The length of
+      // `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If
+      // `includeBoundary' is set, also return the nodes classified on the boundary
+      // of the entity (which will be reparametrized on the entity if `dim' >= 0 in
+      // order to compute their parametric coordinates).
       inline void getNodes(std::vector<std::size_t> & nodeTags,
                            std::vector<double> & coord,
                            std::vector<double> & parametricCoord,
                            const int dim = -1,
                            const int tag = -1,
-                           const bool includeBoundary = false)
+                           const bool includeBoundary = false,
+                           const bool returnParametricCoord = true)
       {
         int ierr = 0;
         size_t *api_nodeTags_; size_t api_nodeTags_n_;
         double *api_coord_; size_t api_coord_n_;
         double *api_parametricCoord_; size_t api_parametricCoord_n_;
-        gmshModelMeshGetNodes(&api_nodeTags_, &api_nodeTags_n_, &api_coord_, &api_coord_n_, &api_parametricCoord_, &api_parametricCoord_n_, dim, tag, (int)includeBoundary, &ierr);
+        gmshModelMeshGetNodes(&api_nodeTags_, &api_nodeTags_n_, &api_coord_, &api_coord_n_, &api_parametricCoord_, &api_parametricCoord_n_, dim, tag, (int)includeBoundary, (int)returnParametricCoord, &ierr);
         if(ierr) throw ierr;
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
@@ -1189,21 +1190,21 @@ namespace gmsh { // Top-level functions
 
       // Generate the `keys' for the elements of type `elementType' in the entity
       // of tag `tag',for the `functionSpaceType' function space. Each key uniquely
-      // identifies a basis function in the function space. `coord' is a vector
-      // that contains x, y, z coordinates locating basis functions for sorting
-      // purposes. Warning: this is an experimental feature and will probably
-      // change in a future release.
+      // identifies a basis function in the function space. If `returnCoord' is
+      // set, the `coord' vector contains the x, y, z coordinates locating basis
+      // functions for sorting purposes. Warning: this is an experimental feature
+      // and will probably change in a future release.
       inline void getKeysForElements(const int elementType,
                                      const std::string & functionSpaceType,
                                      gmsh::vectorpair & keys,
                                      std::vector<double> & coord,
                                      const int tag = -1,
-                                     const bool generateCoord = true)
+                                     const bool returnCoord = true)
       {
         int ierr = 0;
         int *api_keys_; size_t api_keys_n_;
         double *api_coord_; size_t api_coord_n_;
-        gmshModelMeshGetKeysForElements(elementType, functionSpaceType.c_str(), &api_keys_, &api_keys_n_, &api_coord_, &api_coord_n_, tag, (int)generateCoord, &ierr);
+        gmshModelMeshGetKeysForElements(elementType, functionSpaceType.c_str(), &api_keys_, &api_keys_n_, &api_coord_, &api_coord_n_, tag, (int)returnCoord, &ierr);
         if(ierr) throw ierr;
         keys.resize(api_keys_n_ / 2); for(size_t i = 0; i < api_keys_n_ / 2; ++i){ keys[i].first = api_keys_[i * 2 + 0]; keys[i].second = api_keys_[i * 2 + 1]; } gmshFree(api_keys_);
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);

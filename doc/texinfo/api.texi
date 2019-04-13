@@ -747,17 +747,17 @@ Get the nodes classified on the entity of dimension @code{dim} and tag
 mesh. @code{nodeTags} contains the node tags (their unique, strictly positive
 identification numbers). @code{coord} is a vector of length 3 times the length
 of @code{nodeTags} that contains the x, y, z coordinates of the nodes,
-concatenated: [n1x, n1y, n1z, n2x, ...]. If @code{dim} >= 0,
-@code{parametricCoord} contains the parametric coordinates ([u1, u2, ...] or
-[u1, v1, u2, ...]) of the nodes, if available. The length of
-@code{parametricCoord} can be 0 or @code{dim} times the length of
-@code{nodeTags}. If @code{includeBoundary} is set, also return the nodes
-classified on the boundary of the entity (which will be reparametrized on the
-entity if @code{dim} >= 0 in order to compute their parametric coordinates).
+concatenated: [n1x, n1y, n1z, n2x, ...]. If @code{dim} >= 0 and
+@code{returnParamtricCoord} is set, @code{parametricCoord} contains the
+parametric coordinates ([u1, u2, ...] or [u1, v1, u2, ...]) of the nodes, if
+available. The length of @code{parametricCoord} can be 0 or @code{dim} times the
+length of @code{nodeTags}. If @code{includeBoundary} is set, also return the
+nodes classified on the boundary of the entity (which will be reparametrized on
+the entity if @code{dim} >= 0 in order to compute their parametric coordinates).
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{includeBoundary}
+@code{dim}, @code{tag}, @code{includeBoundary}, @code{returnParametricCoord}
 @item Output:
 @code{nodeTags}, @code{coord}, @code{parametricCoord}
 @item Return:
@@ -1120,14 +1120,14 @@ change in a future release.
 @item getKeysForElements
 Generate the @code{keys} for the elements of type @code{elementType} in the
 entity of tag @code{tag},for the @code{functionSpaceType} function space. Each
-key uniquely identifies a basis function in the function space. @code{coord} is
-a vector that contains x, y, z coordinates locating basis functions for sorting
-purposes. Warning: this is an experimental feature and will probably change in a
-future release.
+key uniquely identifies a basis function in the function space. If
+@code{returnCoord} is set, the @code{coord} vector contains the x, y, z
+coordinates locating basis functions for sorting purposes. Warning: this is an
+experimental feature and will probably change in a future release.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{functionSpaceType}, @code{tag}, @code{generateCoord}
+@code{elementType}, @code{functionSpaceType}, @code{tag}, @code{returnCoord}
 @item Output:
 @code{keys}, @code{coord}
 @item Return:

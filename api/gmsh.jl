@@ -990,24 +990,24 @@ function getLastNodeError()
 end
 
 """
-    gmsh.model.mesh.getNodes(dim = -1, tag = -1, includeBoundary = false)
+    gmsh.model.mesh.getNodes(dim = -1, tag = -1, includeBoundary = false, returnParametricCoord = true)
 
 Get the nodes classified on the entity of dimension `dim` and tag `tag`. If
 `tag` < 0, get the nodes for all entities of dimension `dim`. If `dim` and `tag`
 are negative, get all the nodes in the mesh. `nodeTags` contains the node tags
 (their unique, strictly positive identification numbers). `coord` is a vector of
 length 3 times the length of `nodeTags` that contains the x, y, z coordinates of
-the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim` >= 0,
-`parametricCoord` contains the parametric coordinates ([u1, u2, ...] or [u1, v1,
-u2, ...]) of the nodes, if available. The length of `parametricCoord` can be 0
-or `dim` times the length of `nodeTags`. If `includeBoundary` is set, also
-return the nodes classified on the boundary of the entity (which will be
-reparametrized on the entity if `dim` >= 0 in order to compute their parametric
-coordinates).
+the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim` >= 0 and
+`returnParamtricCoord` is set, `parametricCoord` contains the parametric
+coordinates ([u1, u2, ...] or [u1, v1, u2, ...]) of the nodes, if available. The
+length of `parametricCoord` can be 0 or `dim` times the length of `nodeTags`. If
+`includeBoundary` is set, also return the nodes classified on the boundary of
+the entity (which will be reparametrized on the entity if `dim` >= 0 in order to
+compute their parametric coordinates).
 
 Return `nodeTags`, `coord`, `parametricCoord`.
 """
-function getNodes(dim = -1, tag = -1, includeBoundary = false)
+function getNodes(dim = -1, tag = -1, includeBoundary = false, returnParametricCoord = true)
     api_nodeTags_ = Ref{Ptr{Csize_t}}()
     api_nodeTags_n_ = Ref{Csize_t}()
     api_coord_ = Ref{Ptr{Cdouble}}()
@@ -1016,8 +1016,8 @@ function getNodes(dim = -1, tag = -1, includeBoundary = false)
     api_parametricCoord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetNodes, gmsh.lib), Cvoid,
-          (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
-          api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, dim, tag, includeBoundary, ierr)
+          (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Cint, Ptr{Cint}),
+          api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, dim, tag, includeBoundary, returnParametricCoord, ierr)
     ierr[] != 0 && error("gmshModelMeshGetNodes returned non-zero error code: $(ierr[])")
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
@@ -1532,17 +1532,18 @@ function getBasisFunctionsForElements(elementType, integrationType, functionSpac
 end
 
 """
-    gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag = -1, generateCoord = true)
+    gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoord = true)
 
 Generate the `keys` for the elements of type `elementType` in the entity of tag
 `tag`,for the `functionSpaceType` function space. Each key uniquely identifies a
-basis function in the function space. `coord` is a vector that contains x, y, z
-coordinates locating basis functions for sorting purposes. Warning: this is an
-experimental feature and will probably change in a future release.
+basis function in the function space. If `returnCoord` is set, the `coord`
+vector contains the x, y, z coordinates locating basis functions for sorting
+purposes. Warning: this is an experimental feature and will probably change in a
+future release.
 
 Return `keys`, `coord`.
 """
-function getKeysForElements(elementType, functionSpaceType, tag = -1, generateCoord = true)
+function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoord = true)
     api_keys_ = Ref{Ptr{Cint}}()
     api_keys_n_ = Ref{Csize_t}()
     api_coord_ = Ref{Ptr{Cdouble}}()
@@ -1550,7 +1551,7 @@ function getKeysForElements(elementType, functionSpaceType, tag = -1, generateCo
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetKeysForElements, gmsh.lib), Cvoid,
           (Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          elementType, functionSpaceType, api_keys_, api_keys_n_, api_coord_, api_coord_n_, tag, generateCoord, ierr)
+          elementType, functionSpaceType, api_keys_, api_keys_n_, api_coord_, api_coord_n_, tag, returnCoord, ierr)
     ierr[] != 0 && error("gmshModelMeshGetKeysForElements returned non-zero error code: $(ierr[])")
     tmp_api_keys_ = unsafe_wrap(Array, api_keys_[], api_keys_n_[], own=true)
     keys = [ (tmp_api_keys_[i], tmp_api_keys_[i+1]) for i in 1:2:length(tmp_api_keys_) ]
