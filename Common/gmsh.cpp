@@ -2076,7 +2076,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           if(fSize > 0 &&
              basis->getNumTriFace() + basis->getNumQuadFace() > 1) {
             for(int jj = 0;
-                jj < basis->getNumTriFace() + basis->getNumQuadFace(); jj++) {
+                jj < basis->getNumTriFace() +basis->getNumQuadFace(); jj++) {
               MFace face = e->getFaceSolin(jj);
               std::vector<int> faceOrientationFlag(3);
               face.getOrientationFlagForFace(faceOrientationFlag);
