@@ -2,8 +2,8 @@
 
 double OrthogonalPoly::EvalLobatto(int order, double x)
   {
-   
-      
+
+
     double L=0;
     double xsquare=pow(x,2);
     switch(order) {
@@ -69,13 +69,13 @@ double OrthogonalPoly::EvalLobatto(int order, double x)
       L=x*(-429 +xsquare*(15015+xsquare*(-153153+xsquare*(692835+xsquare*(-1616615+xsquare*(2028117+xsquare*(-1300075+334305*xsquare)))))));
       L=L*1./2048.*pow(29./2.,0.5);
       return L;
-    
+
     default:
 
          throw std::string("Lobatto functions are written for orders =< 15");
-    
+
     }
- 
+
   }
 
 double OrthogonalPoly::EvalDLobatto(int order, double x){
@@ -144,11 +144,11 @@ double OrthogonalPoly::EvalDLobatto(int order, double x){
       dL=-429 +xsquare*(45045+xsquare*(-765765+xsquare*(4849845+xsquare*(-14549535+xsquare*(22309287+xsquare*(-16900975+5014575*xsquare))))));
       dL=dL*1./2048.*pow(29./2.,0.5);
       return dL;
-    
+
     default:
-    
+
          throw std::string("Lobatto functions are written for orders =< 15");
-  
+
     }
 
 }
@@ -215,7 +215,7 @@ double OrthogonalPoly::EvalKernelFunction(int order, double x){
      return phi;
   default:
       throw std::string("Lobatto functions are written for orders =< 15");
-  
+
     }
   }
 
@@ -269,7 +269,7 @@ double OrthogonalPoly::EvalDKernelFunction(int order, double x){
    dphi=dphi*1./256.*pow(23./2.,0.5);
    return dphi;
  case(11):
-   dphi=231+xsquare*(-17325+xsquare*(196350+xsquare*(-746130+xsquare*(1119195-572033*xsquare)))); 
+   dphi=231+xsquare*(-17325+xsquare*(196350+xsquare*(-746130+xsquare*(1119195-572033*xsquare))));
    dphi=dphi*5./256.*pow(2,-0.5);
     return dphi;
  case(12):
@@ -282,9 +282,110 @@ double OrthogonalPoly::EvalDKernelFunction(int order, double x){
      return dphi;
   default:
       throw std::string("Lobatto functions are written for orders =< 15");
-  
+
     }
   }
 
+  double OrthogonalPoly::EvalLegendre(int order, double x){
+    double L=0;
+    double xsquare=pow(x,2);
+    switch(order) {
+    case(0):
+       L =1;
+       return L;
+    case(1):
+       L =x;
+       return L;
+    case(2):
+      L=3./2.*xsquare-1./2.;
+      return L;
+    case(3):
+      L=0.5*x*(5*xsquare-3);
+      return L;
+    case(4):
+      L=(3+xsquare*(35*xsquare-30));
+      L=1./8.*L;
+      return L;
+    case(5):
+      L=x*(xsquare*(63*xsquare-70)+15);
+      L=1./8.*L;
+      return L;
+    case(6):
+      L=((231*xsquare-315)*xsquare+105)*xsquare-5;
+      L=1./16.*L;
+      return L;
+    case(7):
+      L=x*(((429*xsquare-693)*xsquare+315)*xsquare-35);
+      L=1./16.*L;
+      return L;
+    case(8):
+      L=(((6435*xsquare-12012)*xsquare+6930)*xsquare-1260)*xsquare+35;
+      L=1./128.*L;
+      return L;
+    case(9):
+      L=((((12155*xsquare-25740)*xsquare+18018)*xsquare-4620)*xsquare+315)*x;
+      L=1./128.*L;
+      return L;
+    case(10):
+      L=((((46189*xsquare-109395)*xsquare+90090)*xsquare-30030)*xsquare+3465)*xsquare- 63;
+      L=1./256.*L;
+      return L;
+    default:
+
+         throw std::string("Legendre functions are written for orders =< 10");
+
+    }
+
+  }
 
 
+  double OrthogonalPoly::EvalDLegendre(int order, double x){
+    double dL=0;
+    double xsquare=pow(x,2);
+    switch(order) {
+    case(0):
+       dL =0;
+       return dL;
+    case(1):
+       dL =1;
+       return dL;
+    case(2):
+      dL=3*x;
+      return dL;
+    case(3):
+      dL=0.5*(15*xsquare-3);
+      return dL;
+    case(4):
+      dL=x*(140*xsquare-60);
+      dL=1./8.*dL;
+      return dL;
+    case(5):
+      dL=15+xsquare*(315*xsquare-210);
+      dL=1./8.*dL;
+      return dL;
+    case(6):
+      dL=x*(210+xsquare*(1386*xsquare-1260));
+      dL=1./16.*dL;
+      return dL;
+    case(7):
+      dL=((xsquare*3003-3465)*xsquare+945)*xsquare-35;
+      dL=1./16.*dL;
+      return dL;
+    case(8):
+      dL=x*(((51480*xsquare-72072)*xsquare+27720)*xsquare-2520);
+      dL=1./128.*dL;
+      return dL;
+    case(9):
+      dL=315+xsquare*(-13860+xsquare*(90090+xsquare*(-180180+109395*xsquare)));
+      dL=1./128.*dL;
+      return dL;
+    case(10):
+      dL=x*(6930+xsquare*(-120120+xsquare*(540540+xsquare*(-875160+461890*xsquare))));
+      dL=1./256.*dL;
+      return dL;
+    default:
+
+         throw std::string("Legendre functions are written for orders =< 10");
+
+    }
+  }
