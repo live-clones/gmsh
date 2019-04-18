@@ -664,6 +664,21 @@ void Msg::Direct(const char *fmt, ...)
   }
 }
 
+void Msg::Auto(const char *fmt, ...)
+{
+  char str[5000];
+  va_list args;
+  va_start(args, fmt);
+  vsnprintf(str, sizeof(str), fmt, args);
+  va_end(args);
+  if(strstr(str, "Error") || strstr(str, "error"))
+    Msg::Error("%s", str);
+  else if(strstr(str, "Warning") || strstr(str, "warning"))
+    Msg::Warning("%s", str);
+  else
+    Msg::Info("%s", str);
+}
+
 void Msg::StatusBar(bool log, const char *fmt, ...)
 {
   if(GetVerbosity() < 4) return;
