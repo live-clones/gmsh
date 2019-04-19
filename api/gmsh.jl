@@ -1213,26 +1213,33 @@ function getElement(elementTag)
 end
 
 """
-    gmsh.model.mesh.getElementByCoordinates(x, y, z)
+    gmsh.model.mesh.getElementByCoordinates(x, y, z, dim = -1, strict = false)
 
-Get the tag, type and node tags of the element located at coordinates (`x`, `y`,
-`z`). This is a sometimes useful but inefficient way of accessing elements, as
-it relies on a search in a spatial octree.
+Search the mesh for an element located at coordinates (`x`, `y`, `z`). This is a
+sometimes useful but inefficient way of accessing elements, as it relies on a
+search in a spatial octree. If an element is found, return its tag, type and
+node tags, as well as the local coordinates (`u`, `v`, `w`) within the element
+corresponding to search location. If `dim` is >= 0, only search for elements of
+the given dimension. If `strict` is not set, use a tolerance to find elements
+near the search location.
 
-Return `elementTag`, `elementType`, `nodeTags`.
+Return `elementTag`, `elementType`, `nodeTags`, `u`, `v`, `w`.
 """
-function getElementByCoordinates(x, y, z)
+function getElementByCoordinates(x, y, z, dim = -1, strict = false)
     api_elementTag_ = Ref{Csize_t}()
     api_elementType_ = Ref{Cint}()
     api_nodeTags_ = Ref{Ptr{Csize_t}}()
     api_nodeTags_n_ = Ref{Csize_t}()
+    api_u_ = Ref{Cdouble}()
+    api_v_ = Ref{Cdouble}()
+    api_w_ = Ref{Cdouble}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElementByCoordinates, gmsh.lib), Cvoid,
-          (Cdouble, Cdouble, Cdouble, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          x, y, z, api_elementTag_, api_elementType_, api_nodeTags_, api_nodeTags_n_, ierr)
+          (Cdouble, Cdouble, Cdouble, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Cint, Cint, Ptr{Cint}),
+          x, y, z, api_elementTag_, api_elementType_, api_nodeTags_, api_nodeTags_n_, api_u_, api_v_, api_w_, dim, strict, ierr)
     ierr[] != 0 && error("gmshModelMeshGetElementByCoordinates returned non-zero error code: $(ierr[])")
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
-    return api_elementTag_[], api_elementType_[], nodeTags
+    return api_elementTag_[], api_elementType_[], nodeTags, api_u_[], api_v_[], api_w_[]
 end
 
 """

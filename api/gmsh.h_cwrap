@@ -914,19 +914,28 @@ namespace gmsh { // Top-level functions
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
       }
 
-      // Get the tag, type and node tags of the element located at coordinates
-      // (`x', `y', `z'). This is a sometimes useful but inefficient way of
-      // accessing elements, as it relies on a search in a spatial octree.
+      // Search the mesh for an element located at coordinates (`x', `y', `z').
+      // This is a sometimes useful but inefficient way of accessing elements, as
+      // it relies on a search in a spatial octree. If an element is found, return
+      // its tag, type and node tags, as well as the local coordinates (`u', `v',
+      // `w') within the element corresponding to search location. If `dim' is >=
+      // 0, only search for elements of the given dimension. If `strict' is not
+      // set, use a tolerance to find elements near the search location.
       inline void getElementByCoordinates(const double x,
                                           const double y,
                                           const double z,
                                           std::size_t & elementTag,
                                           int & elementType,
-                                          std::vector<std::size_t> & nodeTags)
+                                          std::vector<std::size_t> & nodeTags,
+                                          double & u,
+                                          double & v,
+                                          double & w,
+                                          const int dim = -1,
+                                          const bool strict = false)
       {
         int ierr = 0;
         size_t *api_nodeTags_; size_t api_nodeTags_n_;
-        gmshModelMeshGetElementByCoordinates(x, y, z, &elementTag, &elementType, &api_nodeTags_, &api_nodeTags_n_, &ierr);
+        gmshModelMeshGetElementByCoordinates(x, y, z, &elementTag, &elementType, &api_nodeTags_, &api_nodeTags_n_, &u, &v, &w, dim, (int)strict, &ierr);
         if(ierr) throw ierr;
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
       }

@@ -901,15 +901,19 @@ uses a map).
 @end table
 
 @item getElementByCoordinates
-Get the tag, type and node tags of the element located at coordinates (@code{x},
-@code{y}, @code{z}). This is a sometimes useful but inefficient way of accessing
-elements, as it relies on a search in a spatial octree.
+Search the mesh for an element located at coordinates (@code{x}, @code{y},
+@code{z}). This is a sometimes useful but inefficient way of accessing elements,
+as it relies on a search in a spatial octree. If an element is found, return its
+tag, type and node tags, as well as the local coordinates (@code{u}, @code{v},
+@code{w}) within the element corresponding to search location. If @code{dim} is
+>= 0, only search for elements of the given dimension. If @code{strict} is not
+set, use a tolerance to find elements near the search location.
 
 @table @asis
 @item Input:
-@code{x}, @code{y}, @code{z}
+@code{x}, @code{y}, @code{z}, @code{dim}, @code{strict}
 @item Output:
-@code{elementTag}, @code{elementType}, @code{nodeTags}
+@code{elementTag}, @code{elementType}, @code{nodeTags}, @code{u}, @code{v}, @code{w}
 @item Return:
 -
 @end table

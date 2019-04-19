@@ -1231,11 +1231,12 @@ GMSH_API void gmsh::model::mesh::getElement(const std::size_t elementTag,
 
 GMSH_API void gmsh::model::mesh::getElementByCoordinates(
   const double x, const double y, const double z, std::size_t &elementTag,
-  int &elementType, std::vector<std::size_t> &nodeTags)
+  int &elementType, std::vector<std::size_t> &nodeTags,
+  double &u, double &v, double &w, const int dim, const bool strict)
 {
   if(!_isInitialized()) { throw -1; }
-  SPoint3 p(x, y, z);
-  MElement *e = GModel::current()->getMeshElementByCoord(p);
+  SPoint3 xyz(x, y, z), uvw;
+  MElement *e = GModel::current()->getMeshElementByCoord(xyz, uvw, dim, strict);
   if(!e) {
     Msg::Error("No element found at (%g, %g, %g)", x, y, z);
     throw 2;
@@ -1251,6 +1252,9 @@ GMSH_API void gmsh::model::mesh::getElementByCoordinates(
     }
     nodeTags.push_back(v->getNum());
   }
+  u = uvw.x();
+  v = uvw.y();
+  w = uvw.z();
 }
 
 template <class T>

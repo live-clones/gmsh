@@ -1437,13 +1437,23 @@ std::size_t GModel::getNumMeshElements(unsigned c[6])
   return 0;
 }
 
-MElement *GModel::getMeshElementByCoord(SPoint3 &p, int dim, bool strict)
+MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param,
+                                        int dim, bool strict)
 {
   if(!_elementOctree) {
     Msg::Debug("Rebuilding mesh element octree");
     _elementOctree = new MElementOctree(this);
   }
-  return _elementOctree->find(p.x(), p.y(), p.z(), dim, strict);
+  MElement *e = _elementOctree->find(p.x(), p.y(), p.z(), dim, strict);
+  if(e){
+    double xyz[3] = {p.x(), p.y(), p.z()}, uvw[3];
+    e->xyz2uvw(xyz, uvw);
+    param.setPosition(uvw[0], uvw[1], uvw[2]);
+  }
+  else{
+    param.setPosition(0, 0, 0);
+  }
+  return e;
 }
 
 std::vector<MElement *> GModel::getMeshElementsByCoord(SPoint3 &p, int dim,

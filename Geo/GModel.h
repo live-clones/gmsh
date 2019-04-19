@@ -460,7 +460,8 @@ public:
   std::size_t getNumMeshElements(unsigned c[6]);
 
   // access a mesh element by coordinates (using an octree search)
-  MElement *getMeshElementByCoord(SPoint3 &p, int dim = -1, bool strict = true);
+  MElement *getMeshElementByCoord(SPoint3 &p, SPoint3 &param,
+                                  int dim = -1, bool strict = true);
   std::vector<MElement *> getMeshElementsByCoord(SPoint3 &p, int dim = -1,
                                                  bool strict = true);
 

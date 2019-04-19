@@ -1458,17 +1458,24 @@ class model:
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value))
 
         @staticmethod
-        def getElementByCoordinates(x, y, z):
+        def getElementByCoordinates(x, y, z, dim=-1, strict=False):
             """
-            Get the tag, type and node tags of the element located at coordinates (`x',
-            `y', `z'). This is a sometimes useful but inefficient way of accessing
-            elements, as it relies on a search in a spatial octree.
+            Search the mesh for an element located at coordinates (`x', `y', `z'). This
+            is a sometimes useful but inefficient way of accessing elements, as it
+            relies on a search in a spatial octree. If an element is found, return its
+            tag, type and node tags, as well as the local coordinates (`u', `v', `w')
+            within the element corresponding to search location. If `dim' is >= 0, only
+            search for elements of the given dimension. If `strict' is not set, use a
+            tolerance to find elements near the search location.
 
-            Return `elementTag', `elementType', `nodeTags'.
+            Return `elementTag', `elementType', `nodeTags', `u', `v', `w'.
             """
             api_elementTag_ = c_size_t()
             api_elementType_ = c_int()
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_u_ = c_double()
+            api_v_ = c_double()
+            api_w_ = c_double()
             ierr = c_int()
             lib.gmshModelMeshGetElementByCoordinates(
                 c_double(x),
@@ -1477,6 +1484,11 @@ class model:
                 byref(api_elementTag_),
                 byref(api_elementType_),
                 byref(api_nodeTags_), byref(api_nodeTags_n_),
+                byref(api_u_),
+                byref(api_v_),
+                byref(api_w_),
+                c_int(dim),
+                c_int(bool(strict)),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -1485,7 +1497,10 @@ class model:
             return (
                 api_elementTag_.value,
                 api_elementType_.value,
-                _ovectorsize(api_nodeTags_, api_nodeTags_n_.value))
+                _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
+                api_u_.value,
+                api_v_.value,
+                api_w_.value)
 
         @staticmethod
         def getElementTypes(dim=-1, tag=-1):

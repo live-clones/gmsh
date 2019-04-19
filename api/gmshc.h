@@ -501,15 +501,24 @@ GMSH_API void gmshModelMeshGetElement(const size_t elementTag,
                                       size_t ** nodeTags, size_t * nodeTags_n,
                                       int * ierr);
 
-/* Get the tag, type and node tags of the element located at coordinates (`x',
- * `y', `z'). This is a sometimes useful but inefficient way of accessing
- * elements, as it relies on a search in a spatial octree. */
+/* Search the mesh for an element located at coordinates (`x', `y', `z'). This
+ * is a sometimes useful but inefficient way of accessing elements, as it
+ * relies on a search in a spatial octree. If an element is found, return its
+ * tag, type and node tags, as well as the local coordinates (`u', `v', `w')
+ * within the element corresponding to search location. If `dim' is >= 0, only
+ * search for elements of the given dimension. If `strict' is not set, use a
+ * tolerance to find elements near the search location. */
 GMSH_API void gmshModelMeshGetElementByCoordinates(const double x,
                                                    const double y,
                                                    const double z,
                                                    size_t * elementTag,
                                                    int * elementType,
                                                    size_t ** nodeTags, size_t * nodeTags_n,
+                                                   double * u,
+                                                   double * v,
+                                                   double * w,
+                                                   const int dim,
+                                                   const int strict,
                                                    int * ierr);
 
 /* Get the types of elements in the entity of dimension `dim' and tag `tag'.
