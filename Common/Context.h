@@ -193,8 +193,8 @@ public:
   double min[3], max[3];
   // "center of mass" of the current geometry, used for graphics only
   double cg[3];
-  // characteristic length for the whole problem (never used in mesh
-  // generation ->only for geo/post)
+  // characteristic length for the whole problem, measuring the overall bounding
+  // box (used to set tolerances relative to the overall model size)
   double lc;
   // double buffer/antialias/stereo graphics?
   int db, antialiasing, stereo, camera;
