@@ -2290,18 +2290,12 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
               }
             }
           }
-        }
-        // faces
-        if(fSize > 0) {
-          int numberFace = e->getNumFaces();
-          for(int jj = 0; jj < numberFace; jj++) {
-            // Number the faces
-            MFace face = e->getFace(jj);
-            std::vector<double> coordFace(3, 0);
-            for(std::size_t i = 0; i < face.getNumVertices(); i++) {
-              coordFace[0] += face.getVertex(i)->x();
-              coordFace[1] += face.getVertex(i)->y();
-              coordFace[2] += face.getVertex(i)->z();
+          if(bSize > 0) {
+            std::vector<double> bubbleCenterCoord(3, 0);
+            for(unsigned int k = 0; k < e->getNumVertices(); k++) {
+              bubbleCenterCoord[0] += e->getVertex(k)->x();
+              bubbleCenterCoord[1] += e->getVertex(k)->y();
+              bubbleCenterCoord[2] += e->getVertex(k)->z();
             }
             bubbleCenterCoord[0] = bubbleCenterCoord[0] / e->getNumVertices();
             bubbleCenterCoord[1] = bubbleCenterCoord[1] / e->getNumVertices();
