@@ -4,6 +4,9 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
+// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
+// Segeth ,
+//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
 #include "HierarchicalBasisH1Tria.h"
 
@@ -12,10 +15,12 @@ HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int pf, int pe0, int pe1,
 {
   _nvertex = 3;
   _nedge = 3;
-  _nface = 1;
+  _nfaceTri = 1;
+  _nfaceQuad = 0;
   _nVertexFunction = 3;
   _nEdgeFunction = pe0 + pe1 + pe2 - 3;
-  _nFaceFunction = (pf - 1) * (pf - 2) / 2;
+  _nQuadFaceFunction = 0;
+  _nTriFaceFunction = (pf - 1) * (pf - 2) / 2;
   _nBubbleFunction = 0;
   _pf = pf;
 
@@ -30,10 +35,12 @@ HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int order)
 {
   _nvertex = 3;
   _nedge = 3;
-  _nface = 1;
+  _nfaceTri = 1;
+  _nfaceQuad = 0;
   _nVertexFunction = 3;
   _nEdgeFunction = 3 * order - 3;
-  _nFaceFunction = (order - 1) * (order - 2) / 2;
+  _nQuadFaceFunction = 0;
+  _nTriFaceFunction = (order - 1) * (order - 2) / 2;
   _nBubbleFunction = 0;
   _pf = order;
   _pOrderEdge[0] = order;
@@ -43,7 +50,7 @@ HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int order)
 HierarchicalBasisH1Tria::~HierarchicalBasisH1Tria() {}
 
 double HierarchicalBasisH1Tria::_affineCoordinate(int const &j, double const &u,
-                                                 double const &v)
+                                                  double const &v)
 {
   switch(j) {
   case(1): return 0.5 * (1 + v);
@@ -169,8 +176,8 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
   gradientVertex[1][1] = jacob * dlambda3V;
   gradientVertex[2][0] = jacob * dlambda1U;
   gradientVertex[2][1] = jacob * dlambda1V;
-  std::vector<double> tablIntermU(_nFaceFunction);
-  std::vector<double> tablIntermV(_nFaceFunction);
+  std::vector<double> tablIntermU(_nTriFaceFunction);
+  std::vector<double> tablIntermV(_nTriFaceFunction);
   // edge 0  gradient  and a part of face functions gradient :
   int iterator2 = 0;
   for(int k = 0; k <= _pOrderEdge[0] - 2; k++) {
@@ -258,10 +265,10 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
     int iterator1 = 0;
     int iterator3 = _pf - 2;
     while(iterator1 <= _pf - 3 - k) {
-      gradientFace[iterator2][0] = gradientFace[iterator2][0] * kernel +
-                                     tablIntermU[iterator2] * dKernel;
-      gradientFace[iterator2][1] = gradientFace[iterator2][1] * kernel +
-                                     tablIntermV[iterator2] * dKernel;
+      gradientFace[iterator2][0] =
+        gradientFace[iterator2][0] * kernel + tablIntermU[iterator2] * dKernel;
+      gradientFace[iterator2][1] =
+        gradientFace[iterator2][1] * kernel + tablIntermV[iterator2] * dKernel;
       iterator2 = iterator2 + iterator3;
       iterator1++;
       iterator3--;
@@ -274,10 +281,10 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
     int iterator1 = 0;
     int iterator3 = _pf - 2;
     while(iterator1 <= _pf - 3 - k) {
-      gradientFace[iterator2][0] = gradientFace[iterator2][0] * kernel +
-                                     tablIntermU[iterator2] * dKernel;
-      gradientFace[iterator2][1] = gradientFace[iterator2][1] * kernel +
-                                     tablIntermV[iterator2] * dKernel;
+      gradientFace[iterator2][0] =
+        gradientFace[iterator2][0] * kernel + tablIntermU[iterator2] * dKernel;
+      gradientFace[iterator2][1] =
+        gradientFace[iterator2][1] * kernel + tablIntermV[iterator2] * dKernel;
       iterator2 = iterator2 + iterator3;
       iterator1++;
       iterator3--;
@@ -285,9 +292,9 @@ void HierarchicalBasisH1Tria::generateGradientBasis(
   }
 }
 
-void HierarchicalBasisH1Tria::orientateEdge(int const &flagOrientation,
-                                            int const &edgeNumber,
-                                            std::vector<double> &edgeBasis)
+void HierarchicalBasisH1Tria::orientEdge(int const &flagOrientation,
+                                         int const &edgeNumber,
+                                         std::vector<double> &edgeBasis)
 {
   if(flagOrientation == -1) {
     int const1;
@@ -303,21 +310,20 @@ void HierarchicalBasisH1Tria::orientateEdge(int const &flagOrientation,
     } break;
     case(2): {
       const1 = _pOrderEdge[0] + _pOrderEdge[1] - 2;
-      const2 =
-        _pOrderEdge[2] + _pOrderEdge[0] + _pOrderEdge[1] - 4;
+      const2 = _pOrderEdge[2] + _pOrderEdge[0] + _pOrderEdge[1] - 4;
 
     } break;
 
     default: throw std::string("edgeNumber  must be : 0<=edgeNumber<=2");
     }
       for(int k = const1; k <= const2; k++) {
-        if((k-const1) % 2 != 0) { edgeBasis[k] = edgeBasis[k] * (-1); }
+        if((k - const1) % 2 != 0) { edgeBasis[k] = edgeBasis[k] * (-1); }
       }
     }
   }
 }
 
-void HierarchicalBasisH1Tria::orientateEdgeGrad(
+void HierarchicalBasisH1Tria::orientEdgeGrad(
   int const &flagOrientation, int const &edgeNumber,
   std::vector<std::vector<double> > &gradientEdge)
 {
@@ -337,15 +343,14 @@ void HierarchicalBasisH1Tria::orientateEdgeGrad(
     } break;
     case(2): {
       const1 = _pOrderEdge[0] + _pOrderEdge[1] - 2;
-      const2 =
-        _pOrderEdge[2] + _pOrderEdge[0] + _pOrderEdge[1] - 4;
+      const2 = _pOrderEdge[2] + _pOrderEdge[0] + _pOrderEdge[1] - 4;
 
     } break;
 
     default: throw std::string("edgeNumber  must be : 0<=edgeNumber<=2");
     }
     for(int k = const1; k <= const2; k++) {
-      if((k-const1) % 2 != 0) {
+      if((k - const1) % 2 != 0) {
         gradientEdge[k][0] = gradientEdge[k][0] * (-1);
         gradientEdge[k][1] = gradientEdge[k][1] * (-1);
       }

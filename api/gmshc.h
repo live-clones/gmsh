@@ -673,11 +673,12 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
  * of the integration points in the reference element as well as the
  * associated weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
  * `numComponents' returns the number C of components of a basis function.
- * `numBasisFunctions' returns the number of basis functions per element.
+ * `numBasisFunctions' returns the number N of basis functions per element.
  * `basisFunctions' returns the value of the basis functions at the
- * integration points for each element: [g1e1f1, ..., g1e1fC, g1e2f1,
- * ...,g1e2fC, g1enfC, g2e1f1, ...]. Warning: this is an experimental feature
- * and will probably change in a future release. */
+ * integration points for each element: [e1g1f1,..., e1g1fN, e1g2f1,...,
+ * e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,...,
+ * e2g1f1u, ...]. Warning: this is an experimental feature and will probably
+ * change in a future release. */
 GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType,
                                                         const char * integrationType,
                                                         const char * functionSpaceType,
@@ -689,7 +690,7 @@ GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType,
                                                         int * ierr);
 
 /* Generate the `keys' for the elements of type `elementType' in the entity of
- * tag `tag',for the `functionSpaceType' function space. Each key uniquely
+ * tag `tag', for the `functionSpaceType' function space. Each key uniquely
  * identifies a basis function in the function space. If `returnCoord' is set,
  * the `coord' vector contains the x, y, z coordinates locating basis
  * functions for sorting purposes. Warning: this is an experimental feature

@@ -1513,11 +1513,12 @@ gradient, in the u, v, w coordinates of the reference elements).
 `integrationPoints` contains the u, v, w coordinates of the integration points
 in the reference element as well as the associated weight q, concatenated: [g1u,
 g1v, g1w, g1q, g2u, ...]. `numComponents` returns the number C of components of
-a basis function. `numBasisFunctions` returns the number of basis functions per
-element. `basisFunctions` returns the value of the basis functions at the
-integration points for each element: [g1e1f1, ..., g1e1fC, g1e2f1, ...,g1e2fC,
-g1enfC, g2e1f1, ...]. Warning: this is an experimental feature and will probably
-change in a future release.
+a basis function. `numBasisFunctions` returns the number N of basis functions
+per element. `basisFunctions` returns the value of the basis functions at the
+integration points for each element: [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1,
+...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...].
+Warning: this is an experimental feature and will probably change in a future
+release.
 
 Return `integrationPoints`, `numComponents`, `numFunctionsPerElements`, `basisFunctions`.
 """
@@ -1542,8 +1543,8 @@ end
     gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoord = true)
 
 Generate the `keys` for the elements of type `elementType` in the entity of tag
-`tag`,for the `functionSpaceType` function space. Each key uniquely identifies a
-basis function in the function space. If `returnCoord` is set, the `coord`
+`tag`, for the `functionSpaceType` function space. Each key uniquely identifies
+a basis function in the function space. If `returnCoord` is set, the `coord`
 vector contains the x, y, z coordinates locating basis functions for sorting
 purposes. Warning: this is an experimental feature and will probably change in a
 future release.

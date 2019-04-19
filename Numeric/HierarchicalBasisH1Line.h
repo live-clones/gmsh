@@ -4,6 +4,9 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
+// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
+// Segeth ,
+//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
 #ifndef HIERARCHICAL_BASIS_H1_LINE_H
 #define HIERARCHICAL_BASIS_H1_LINE_H
@@ -16,9 +19,9 @@
  *
  *
  *
- *
- *   0          +1
- * --+-----------+---> u
+ *          |
+ *   0      |     1
+ * --+------+-----+---> u
  *
  *
  *
@@ -45,29 +48,28 @@ public:
                         std::vector<std::vector<double> > &gradientFace,
                         std::vector<std::vector<double> > &gradientBubble);
 
-  virtual void orientateEdge(int const &flagOrientation, int const &edgeNumber,
-                             std::vector<double> &edgeBasis){};
+  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
+                          std::vector<double> &edgeBasis){};
   virtual void
-  orientateEdgeGrad(int const &flagOrientation, int const &edgeNumber,
-                    std::vector<std::vector<double> > &gradientEdge){};
+  orientEdgeGrad(int const &flagOrientation, int const &edgeNumber,
+                 std::vector<std::vector<double> > &gradientEdge){};
 
-  virtual void orientateFace(double const &u, double const &v, double const &w,
-                             int const &flag1, int const &flag2,
-                             int const &flag3, int const &faceNumber,
-                             std::vector<double> &faceBasis){};
+  virtual void orientFace(double const &u, double const &v, double const &w,
+                          int const &flag1, int const &flag2, int const &flag3,
+                          int const &faceNumber,
+                          std::vector<double> &faceBasis){};
 
   virtual void
-  orientateFaceGrad(double const &u, double const &v, double const &w,
-                    int const &flag1, int const &flag2, int const &flag3,
-                    int const &faceNumber,
-                    std::vector<std::vector<double> > &gradientFace){};
+  orientFaceGrad(double const &u, double const &v, double const &w,
+                 int const &flag1, int const &flag2, int const &flag3,
+                 int const &faceNumber,
+                 std::vector<std::vector<double> > &gradientFace){};
 
 private:
   int _pe; //  edge function order in  direction u
   static double
   _affineCoordinate(int j,
                     double u); // affine coordinate lambdaj j={1,2}
-  double _getDetJacobian(); // for transformation [-1;1] -> [0,1]
 };
 
 #endif
