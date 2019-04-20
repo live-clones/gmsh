@@ -1102,11 +1102,17 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
     "Mesh only visible entities (experimental: use with caution!)" },
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
-    "METIS partitioning algorithm (1: Recursive, 2: K-way)" },
+    "METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way)" },
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 2. ,
-    "METIS edge matching type (1: Random, 2: Sorted Heavy-Edge)" },
+    "METIS edge matching type 'ctype' (1: Random, 2: Sorted Heavy-Edge)" },
+  { F|O, "MetisMaxLoadImbalance" , opt_mesh_partition_metis_max_load_imbalance, -1. ,
+    "METIS maximum load imbalance 'ufactor' (-1: default, i.e. 30 for K-way and 1 for Recursive)" },
+  { F|O, "MetisObjective" , opt_mesh_partition_metis_objective, 1. ,
+    "METIS objective type 'objtype' (1: min. edge-cut, 2: min. communication volume)" },
+  { F|O, "MetisMinConn" , opt_mesh_partition_metis_min_conn, -1. ,
+    "METIS minimize maximum connectivity of partitions 'minconn' (-1: default)" },
   { F|O, "MetisRefinementAlgorithm" , opt_mesh_partition_metis_refinement_algorithm, 2. ,
-    "METIS algorithm for k-way refinement (1: FM-based cut, 2: Greedy, "
+    "METIS algorithm for k-way refinement 'rtype' (1: FM-based cut, 2: Greedy, "
     "3: Two-sided node FM, 4: One-sided node FM)" },
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
     "Minimum number of nodes used to mesh a circle (and number of nodes per 2*pi "

@@ -60,6 +60,8 @@ struct contextMeshOptions {
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
   int partitionOldStyleMsh2;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
+  int metisObjective, metisMinConn;
+  double metisMaxLoadImbalance;
   // mesh display
   int draw, changed, light, lightTwoSide, lightLines, pointType;
   int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms;

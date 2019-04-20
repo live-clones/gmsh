@@ -630,54 +630,108 @@ static int MakeGraph(GModel *const model, Graph &graph, int selectDim)
 static int PartitionGraph(Graph &graph)
 {
 #ifdef HAVE_METIS
-  Msg::Info("Running METIS graph partitioner");
-
+  std::stringstream opt;
   try {
     int metisOptions[METIS_NOPTIONS];
     METIS_SetDefaultOptions((idx_t *)metisOptions);
 
+    opt << "ptype:";
     switch(CTX::instance()->mesh.metisAlgorithm) {
     case 1: // Recursive
       metisOptions[METIS_OPTION_PTYPE] = METIS_PTYPE_RB;
+      opt << "rb";
       break;
     case 2: // K-way
       metisOptions[METIS_OPTION_PTYPE] = METIS_PTYPE_KWAY;
+      opt << "kway";
       break;
-    default: Msg::Info("Unknown partitioning algorithm"); break;
+    default:
+      opt << "default";
+      break;
     }
 
+    opt << ", ufactor:";
+    if(CTX::instance()->mesh.metisMaxLoadImbalance >= 0) {
+      metisOptions[METIS_OPTION_UFACTOR] =
+        CTX::instance()->mesh.metisMaxLoadImbalance;
+      opt << CTX::instance()->mesh.metisMaxLoadImbalance;
+    }
+    else {
+      opt << "default";
+    }
+
+    opt << ", ctype:";
     switch(CTX::instance()->mesh.metisEdgeMatching) {
     case 1: // Random matching
       metisOptions[METIS_OPTION_CTYPE] = METIS_CTYPE_RM;
+      opt << "rm";
       break;
     case 2: // Sorted heavy-edge matching
       metisOptions[METIS_OPTION_CTYPE] = METIS_CTYPE_SHEM;
+      opt << "shem";
       break;
-    default: Msg::Info("Unknown partitioning edge matching"); break;
+    default:
+      opt << "default";
+      break;
     }
 
+    opt << ", rtype:";
     switch(CTX::instance()->mesh.metisRefinementAlgorithm) {
     case 1: // FM-based cut refinement
       metisOptions[METIS_OPTION_RTYPE] = METIS_RTYPE_FM;
+      opt << "fm";
       break;
     case 2: // Greedy boundary refinement
       metisOptions[METIS_OPTION_RTYPE] = METIS_RTYPE_GREEDY;
+      opt << "greedy";
       break;
     case 3: // Two-sided node FM refinement
       metisOptions[METIS_OPTION_RTYPE] = METIS_RTYPE_SEP2SIDED;
+      opt << "sep2sided";
       break;
     case 4: // One-sided node FM refinement
       metisOptions[METIS_OPTION_RTYPE] = METIS_RTYPE_SEP1SIDED;
+      opt << "sep1sided";
       break;
-    default: Msg::Info("Unknown partitioning refinement algorithm"); break;
+    default:
+      opt << "default";
+      break;
     }
+
+    opt << ", objtype:";
+    switch(CTX::instance()->mesh.metisObjective) {
+    case 1: // Min. cut
+      metisOptions[METIS_OPTION_OBJTYPE] = METIS_OBJTYPE_CUT;
+      opt << "cut";
+      break;
+    case 2: // Min. communication volume (slower)
+      metisOptions[METIS_OPTION_OBJTYPE] = METIS_OBJTYPE_VOL;
+      opt << "vol";
+      break;
+    default:
+      opt << "default";
+      break;
+    }
+
+    opt << ", minconn:";
+    switch(CTX::instance()->mesh.metisMinConn) {
+    case 0:
+      metisOptions[METIS_OPTION_MINCONN] = 0;
+      opt << 0;
+      break;
+    case 1:
+      metisOptions[METIS_OPTION_MINCONN] = 1;
+      opt << 1;
+      break;
+    default:
+      opt << "default";
+      break;
+    }
+
+    Msg::Info("Running METIS with %s", opt.str().c_str());
 
     // C numbering
     metisOptions[METIS_OPTION_NUMBERING] = 0;
-    // Specifies the type of objective
-    metisOptions[METIS_OPTION_OBJTYPE] = METIS_OBJTYPE_CUT;
-    // Forces contiguous partitions.
-    // metisOptions[METIS_OPTION_CONTIG] = 1;
 
     int objval;
     unsigned int *epart = new unsigned int[graph.ne()];

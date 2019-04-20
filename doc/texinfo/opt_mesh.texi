@@ -261,6 +261,21 @@ METIS edge matching type (1: Random, 2: Sorted Heavy-Edge)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.MetisMaxLoadImbalance
+METIS maximum load imbalance (-1: default, i.e. 30 for K-way and 1 for Recursive)@*
+Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MetisObjective
+METIS objective type (1: min. edge-cut, 2: min. communication volume)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MetisMinConn
+METIS minimize maximum connectivity of partitions (-1: default)@*
+Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.MetisRefinementAlgorithm
 METIS algorithm for k-way refinement (1: FM-based cut, 2: Greedy, 3: Two-sided node FM, 4: One-sided node FM)@*
 Default value: @code{2}@*
