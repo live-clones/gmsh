@@ -5389,11 +5389,12 @@ a volume is bounded by a set of surfaces, a surface is bounded by a
 series of curves, and a curve is bounded by two end points. Volumes and
 surfaces can also store @emph{embedded} entities of lower dimension, to
 force a subsequent mesh to be conformal to internal features like a
-point in the middle of a surface.  Model entities are identified by
-their dimension and by a @emph{tag}: a strictly positive identification
-number. @emph{Physical groups} are collections of model
-entities. Operations which do not directly reference a model are
-performed on the @emph{current} model.
+point in the middle of a surface. Model entities are identified by their
+dimension and by a @emph{tag}: a strictly positive identification
+number. @emph{Physical groups} are collections of model entities and are
+identified by their dimension and by a @emph{tag}. Operations which do
+not directly reference a model are performed on the @emph{current}
+model.
 @item
 Model entities can be either CAD entities (from the built-in @emph{geo}
 kernel or from the OpenCASCADE @emph{occ} kernel) or @emph{discrete}
@@ -5428,11 +5429,20 @@ efficiently handle the creation, modification and destruction of
 conformal meshes. All the mesh-related functions are provided in the
 @code{gmsh/model/mesh} namespace.
 @item
-Post-processing data can contain one or more @emph{steps}, and can be
-either linked to one or more models (@emph{mesh-based} data, as stored
-in MSH files: cf. @ref{MSH file format}) or independent from any model
-(@emph{list-based} data, as stored in parsed POS files:
-cf. @ref{Post-processing commands}).
+Post-processing data is made of @emph{views}. Each view is identified by
+a @emph{tag}, and can be also be accessed by its @emph{index} (which can
+change when views are sorted, added or deleted). A view stores both
+display @emph{options} and @emph{data}, unless the view is an
+@emph{alias} of another view (in which case it only stores display
+options, and the data points to a reference view).  View data can
+contain several @emph{steps} (e.g. to store time series) and can be
+either linked to one or more models@footnote{Each step can be linked to
+a different model, which allows to have a single time series based on
+multiple (e.g. deforming or moving) meshes.} (@emph{mesh-based} data, as
+stored in MSH files: cf. @ref{MSH file format}) or independent from any
+model (@emph{list-based} data, as stored in parsed POS files:
+cf. @ref{Post-processing commands}). Various @emph{plugins} exist to
+modify and create views.
 @end itemize
 
 All the functions available in the API are given below. See the relevant
