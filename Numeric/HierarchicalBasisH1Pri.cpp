@@ -524,7 +524,7 @@ void HierarchicalBasisH1Pri::orientEdge(int const &flagOrientation,
     }
   }
 }
-void HierarchicalBasisH1Pri::orientEdgeGrad(
+void HierarchicalBasisH1Pri::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
   std::vector<std::vector<double> > &gradientEdge)
 {
@@ -712,7 +712,7 @@ void HierarchicalBasisH1Pri::orientFace(double const &u, double const &v,
   }
 }
 
-void HierarchicalBasisH1Pri::orientFaceGrad(
+void HierarchicalBasisH1Pri::orientFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector<std::vector<double> > &gradientFace)

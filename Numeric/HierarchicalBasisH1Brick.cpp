@@ -325,7 +325,7 @@ void HierarchicalBasisH1Brick::generateGradientBasis(
     case(6):
     case(7):
       vectorTarget1 = &lkVectorW;
-      dvectorTarget1 = &dlkVectorV;
+      dvectorTarget1 = &dlkVectorW;
       break;
     }
     for(int indexEdgeFunc = 0; indexEdgeFunc < _pOrderEdge[iEdge] - 1;
@@ -439,7 +439,7 @@ void HierarchicalBasisH1Brick::orientEdge(int const &flagOrientation,
   }
 }
 
-void HierarchicalBasisH1Brick::orientEdgeGrad(
+void HierarchicalBasisH1Brick::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
   std::vector<std::vector<double> > &gradientEdge)
 {
@@ -547,7 +547,7 @@ void HierarchicalBasisH1Brick::orientFace(double const &u, double const &v,
     }
   }
 }
-void HierarchicalBasisH1Brick::orientFaceGrad(
+void HierarchicalBasisH1Brick::orientFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector<std::vector<double> > &gradientFace)

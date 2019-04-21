@@ -41,35 +41,42 @@ public:
                              std::vector<double> &edgeBasis,
                              std::vector<double> &faceBasis,
                              std::vector<double> &bubbleBasis);
-  virtual void
-  generateGradientBasis(double const &u, double const &v, double const &w,
-                        std::vector<std::vector<double> > &gradientVertex,
-                        std::vector<std::vector<double> > &gradientEdge,
-                        std::vector<std::vector<double> > &gradientFace,
-                        std::vector<std::vector<double> > &gradientBubble);
+  virtual void generateBasis(double const &u, double const &v, double const &w,
+                             std::vector<std::vector<double> > &vertexBasis,
+                             std::vector<std::vector<double> > &edgeBasis,
+                             std::vector<std::vector<double> > &faceBasis,
+                             std::vector<std::vector<double> > &bubbleBasis,
+                             std::string typeFunction = "GradLegendre")
+  {
+    generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis,
+                          bubbleBasis);
+  }
 
   virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
                           std::vector<double> &edgeBasis){};
-  virtual void
-  orientEdgeGrad(int const &flagOrientation, int const &edgeNumber,
-                 std::vector<std::vector<double> > &gradientEdge){};
+  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
+                          std::vector<std::vector<double> > &edgeBasis){};
 
   virtual void orientFace(double const &u, double const &v, double const &w,
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,
                           std::vector<double> &faceBasis){};
 
-  virtual void
-  orientFaceGrad(double const &u, double const &v, double const &w,
-                 int const &flag1, int const &flag2, int const &flag3,
-                 int const &faceNumber,
-                 std::vector<std::vector<double> > &gradientFace){};
+  virtual void orientFace(double const &u, double const &v, double const &w,
+                          int const &flag1, int const &flag2, int const &flag3,
+                          int const &faceNumber,
+                          std::vector<std::vector<double> > &faceBasis){};
 
 private:
   int _pe; //  edge function order in  direction u
   static double
   _affineCoordinate(int j,
                     double u); // affine coordinate lambdaj j={1,2}
+  void generateGradientBasis(double const &u, double const &v, double const &w,
+                             std::vector<std::vector<double> > &gradientVertex,
+                             std::vector<std::vector<double> > &gradientEdge,
+                             std::vector<std::vector<double> > &gradientFace,
+                             std::vector<std::vector<double> > &gradientBubble);
 };
 
 #endif

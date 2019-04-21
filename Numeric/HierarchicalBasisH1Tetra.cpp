@@ -190,7 +190,7 @@ void HierarchicalBasisH1Tetra::orientEdge(int const &flagOrientation,
     }
   }
 }
-void HierarchicalBasisH1Tetra::orientEdgeGrad(
+void HierarchicalBasisH1Tetra::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
   std::vector<std::vector<double> > &gradientEdge)
 {
@@ -523,7 +523,7 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
   }
 }
 
-void HierarchicalBasisH1Tetra::orientFaceGrad(
+void HierarchicalBasisH1Tetra::orientFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector<std::vector<double> > &gradientFace)

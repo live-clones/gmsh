@@ -323,7 +323,7 @@ void HierarchicalBasisH1Tria::orientEdge(int const &flagOrientation,
   }
 }
 
-void HierarchicalBasisH1Tria::orientEdgeGrad(
+void HierarchicalBasisH1Tria::orientEdge(
   int const &flagOrientation, int const &edgeNumber,
   std::vector<std::vector<double> > &gradientEdge)
 {

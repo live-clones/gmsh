@@ -8,13 +8,34 @@
 // Segeth ,
 //                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
-#ifndef HIERARCHICAL_BASIS_H1_H
-#define HIERARCHICAL_BASIS_H1_H
-#include "HierarchicalBasis.h"
-class HierarchicalBasisH1 : public HierarchicalBasis {
-public:
-  virtual ~HierarchicalBasisH1() = 0;
+#ifndef HIERARCHICAL_BASIS_H
+#define HIERARCHICAL_BASIS_H
 
+#include <vector>
+#include "OrthogonalPoly.h"
+
+class HierarchicalBasis {
+protected:
+  int _nvertex;
+  int _nedge;
+  int _nfaceQuad; // number of quadrilateral faces
+  int _nfaceTri; // number of triangular faces
+  int _nVertexFunction;
+  int _nEdgeFunction;
+  int _nQuadFaceFunction;
+  int _nTriFaceFunction;
+  int _nBubbleFunction;
+
+public:
+  virtual ~HierarchicalBasis() = 0;
+  int getnVertexFunction() const;
+  int getnEdgeFunction() const;
+  int getnTriFaceFunction() const;
+  int getnQuadFaceFunction() const;
+  int getnBubbleFunction() const;
+  int getNumTriFace() const;
+  int getNumQuadFace() const;
+  int getNumEdge() const;
   virtual void generateBasis(double const &u, double const &v, double const &w,
                              std::vector<double> &vertexBasis,
                              std::vector<double> &edgeBasis,
@@ -27,10 +48,9 @@ public:
                 std::vector<std::vector<double> > &edgeBasis,
                 std::vector<std::vector<double> > &faceBasis,
                 std::vector<std::vector<double> > &bubbleBasis,
-                std::string typeFunction =
-                  "GradLegendre") = 0; // typeFunction =GradLegendre
-  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
-                          std::vector<double> &edgeBasis) = 0;
+                std::string typeFunction) = 0; // typeFunction =GradLegendre ,
+                                               // HcurlLegendre, curlLegendre
+
   virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
                           std::vector<std::vector<double> > &edgeBasis) = 0;
 
@@ -38,11 +58,6 @@ public:
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,
                           std::vector<double> &faceBasis) = 0;
-
-  virtual void orientFace(double const &u, double const &v, double const &w,
-                          int const &flag1, int const &flag2, int const &flag3,
-                          int const &faceNumber,
-                          std::vector<std::vector<double> > &faceBasis) = 0;
 };
 
 #endif

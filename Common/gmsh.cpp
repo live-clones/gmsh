@@ -1999,21 +1999,22 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
                                 jj, fTableCopy);
             }
           }
-          for(int k = 0; k < vSize; k++) {
-            basisFunctions[const3 + k] = vTable[k];
-          }
-          std::size_t const4 = const3 + vSize;
-          for(int k = 0; k < eSize; k++) {
-            basisFunctions[const4 + k] = eTableCopy[k];
-          }
-          std::size_t const5 = const4 + eSize;
-          for(int k = 0; k < fSize; k++) {
-            basisFunctions[const5 + k] = fTableCopy[k];
-          }
-          std::size_t const6 = const5 + fSize;
-          for(int k = 0; k < bSize; k++) {
-            basisFunctions[const6 + k] = bTable[k];
-          }
+           for(int k = 0; k < vSize; k++) {
+             basisFunctions[const3 + k] = vTable[k];
+           }
+           std::size_t const4 = const3 + vSize;
+           for(int k = 0; k < eSize; k++) {
+             basisFunctions[const4 + k] = eTableCopy[k];
+           }
+           std::size_t const5 = const4 + eSize;
+           for(int k = 0; k < fSize; k++) {
+             basisFunctions[const5 + k] = fTableCopy[k];
+           }
+           std::size_t const6 = const5 + fSize;
+           for(int k = 0; k < bSize; k++) {
+             basisFunctions[const6 + k] = bTable[k];
+           }
+
           indexNumElement++;
         }
       }
@@ -2034,7 +2035,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
         fSize, std::vector<double>(3, 0.));
       std::vector<std::vector<double> > gradientBubble(
         bSize, std::vector<double>(3, 0.));
-      basis->generateGradientBasis(u, v, w, gradientVertex, gradientEdge,
+     basis->generateBasis(u, v, w, gradientVertex, gradientEdge,
                                    gradientFace, gradientBubble);
       int const2 = i * numFunctionsPerElement * numComponents;
       size_t indexNumElement = 0;
@@ -2062,7 +2063,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
               else {
                 orientationFlag = 1;
               }
-              basis->orientEdgeGrad(orientationFlag, jj, eTableCopy);
+              basis->orientEdge(orientationFlag, jj, eTableCopy);
             }
           }
 
@@ -2080,7 +2081,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
               MFace face = e->getFaceSolin(jj);
               std::vector<int> faceOrientationFlag(3);
               face.getOrientationFlagForFace(faceOrientationFlag);
-              basis->orientFaceGrad(u, v, w, faceOrientationFlag[0],
+              basis->orientFace(u, v, w, faceOrientationFlag[0],
                                     faceOrientationFlag[1],
                                     faceOrientationFlag[2], jj, fTableCopy);
             }
@@ -2089,23 +2090,23 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
           std::size_t const5 = const4 + prod2;
           std::size_t const6 = const5 + prod3;
           for(int indexNumComp = 0; indexNumComp < numComponents;
-              indexNumComp++) {
-            for(int k = 0; k < vSize; k++) {
-              basisFunctions[const3 + k * numComponents + indexNumComp] =
-                gradientVertex[k][indexNumComp];
-            }
-            for(int k = 0; k < eSize; k++) {
-              basisFunctions[const4 + k * numComponents + indexNumComp] =
-                eTableCopy[k][indexNumComp];
-            }
-            for(int k = 0; k < fSize; k++) {
-              basisFunctions[const5 + k * numComponents + indexNumComp] =
-                fTableCopy[k][indexNumComp];
-            }
-            for(int k = 0; k < bSize; k++) {
-              basisFunctions[const6 + k * numComponents + indexNumComp] =
-                gradientBubble[k][indexNumComp];
-            }
+               indexNumComp++) {
+             for(int k = 0; k < vSize; k++) {
+               basisFunctions[const3 + k * numComponents + indexNumComp] =
+                 gradientVertex[k][indexNumComp];
+             }
+             for(int k = 0; k < eSize; k++) {
+               basisFunctions[const4 + k * numComponents + indexNumComp] =
+                 eTableCopy[k][indexNumComp];
+             }
+             for(int k = 0; k < fSize; k++) {
+               basisFunctions[const5 + k * numComponents + indexNumComp] =
+                 fTableCopy[k][indexNumComp];
+             }
+             for(int k = 0; k < bSize; k++) {
+               basisFunctions[const6 + k * numComponents + indexNumComp] =
+                 gradientBubble[k][indexNumComp];
+             }
           }
           indexNumElement++;
         }
@@ -2125,7 +2126,6 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
   if(!_isInitialized()) { throw - 1; }
   coord.clear();
   keys.clear();
-
   int order = 0;
   int numComponents = 0;
   if(!_getHierarchicalFunctionSpaceInfo(functionSpaceType, numComponents,
@@ -2284,6 +2284,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
         }
       }
     }
+
     else {
       for(std::size_t i = 0; i < entities.size(); i++) {
         GEntity *ge = entities[i];

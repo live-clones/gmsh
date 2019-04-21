@@ -5,6 +5,6 @@
 //
 // Contributed by Ismail Badia.
 
-#include "HierarchicalBasisH1.h"
+#include "HierarchicalBasisHcurl.h"
 
-HierarchicalBasisH1::~HierarchicalBasisH1() {}
+HierarchicalBasisHcurl::~HierarchicalBasisHcurl() {}
