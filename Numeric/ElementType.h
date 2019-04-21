@@ -27,7 +27,7 @@ namespace ElementType {
 
   // Give first order element tag
   int getPrimaryType(int type);
-  std::string nameOfParentType(int type);
+  std::string nameOfParentType(int type, bool plural = false);
 } // namespace ElementType
 
 #endif

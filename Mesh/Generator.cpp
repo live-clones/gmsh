@@ -120,7 +120,7 @@ public:
     if(faces.size()) {
       char name[256];
       sprintf(name, "missingFacesOnRegion%d.pos", gr->tag());
-      Msg::Error("Region %d : %d mesh faces that should be embedded are "
+      Msg::Error("Volume %d : %d mesh faces that should be embedded are "
                  "missing in the final mesh",
                  gr->tag(), (int)faces.size());
       Msg::Error("Saving the missing faces in file %s", name);

@@ -588,7 +588,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
         }
       }
       else {
-        Msg::Error("Unknown model edge with tag %d", tag);
+        Msg::Error("Unknown model curve with tag %d", tag);
         ret = false;
       }
     }
@@ -2315,7 +2315,7 @@ void GModel::alignPeriodicBoundaries()
       for(std::size_t i = 0; i < src->getNumMeshElements(); i++) {
         MLine *srcLine = dynamic_cast<MLine *>(src->getMeshElement(i));
         if(!srcLine) {
-          Msg::Error("Master element %d is not an edge ",
+          Msg::Error("Master element %d is not a line",
                      src->getMeshElement(i)->getNum());
           return;
         }
@@ -2330,7 +2330,7 @@ void GModel::alignPeriodicBoundaries()
         MLine *tgtLine = dynamic_cast<MLine *>(tgt->getMeshElement(i));
 
         if(!tgtLine) {
-          Msg::Error("Slave element %d is not an edge ",
+          Msg::Error("Slave element %d is not a line",
                      tgt->getMeshElement(i)->getNum());
           return;
         }

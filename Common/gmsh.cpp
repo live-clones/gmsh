@@ -946,7 +946,7 @@ static void _getAdditionalNodesOnBoundary(GEntity *entity,
       else if(entity->dim() == 1 && parametric) {
         double param;
         if(!reparamMeshVertexOnEdge(v, (GEdge *)entity, param))
-          Msg::Warning("Failed to compute parameters of node %d on edge %d",
+          Msg::Warning("Failed to compute parameters of node %d on curve %d",
                        v->getNum(), entity->tag());
         parametricCoord.push_back(param);
       }

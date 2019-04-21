@@ -1898,8 +1898,8 @@ static void CreatePartitionTopology(
   std::set<GEdge *, GEntityLessThan> edges = model->getEdges();
   std::set<GVertex *, GEntityLessThan> vertices = model->getVertices();
 
-  if(meshDim >= 3) { // Create partition faces
-    Msg::Info(" - Creating partition faces");
+  if(meshDim >= 3) {
+    Msg::Info(" - Creating partition surfaces");
 
     for(unsigned int i = 0; i < model->getNumPartitions(); i++) {
       for(std::set<MElement *>::iterator it = boundaryElements[i].begin();
@@ -1943,8 +1943,8 @@ static void CreatePartitionTopology(
     fillElementToEntity(model, elementToEntity, 2);
   }
 
-  if(meshDim >= 2) { // Create partition edges
-    Msg::Info(" - Creating partition edges");
+  if(meshDim >= 2) {
+    Msg::Info(" - Creating partition curves");
 
     if(meshDim == 2) {
       for(unsigned int i = 0; i < model->getNumPartitions(); i++) {
@@ -2037,8 +2037,8 @@ static void CreatePartitionTopology(
     fillElementToEntity(model, elementToEntity, 1);
   }
 
-  if(meshDim >= 1) { // Create partition vertices
-    Msg::Info(" - Creating partition vertices");
+  if(meshDim >= 1) {
+    Msg::Info(" - Creating partition points");
     if(meshDim == 1) {
       for(unsigned int i = 0; i < model->getNumPartitions(); i++) {
         for(std::set<MElement *>::iterator it = boundaryElements[i].begin();
@@ -2347,8 +2347,8 @@ int PartitionMesh(GModel *const model)
       totCount += count[j];
     }
     if(totCount > 0) {
-      Msg::Info(" - Repartition of %d %s(s): %d(min) %d(max) %g(avg)",
-                totCount, ElementType::nameOfParentType(i).c_str(),
+      Msg::Info(" - Repartition of %d %s: %d(min) %d(max) %g(avg)",
+                totCount, ElementType::nameOfParentType(i, totCount > 1).c_str(),
                 minCount, maxCount,
                 totCount / (double)CTX::instance()->mesh.numPartitions);
     }
