@@ -5430,7 +5430,7 @@ conformal meshes. All the mesh-related functions are provided in the
 @code{gmsh/model/mesh} namespace.
 @item
 Post-processing data is made of @emph{views}. Each view is identified by
-a @emph{tag}, and can be also be accessed by its @emph{index} (which can
+a @emph{tag}, and can also be accessed by its @emph{index} (which can
 change when views are sorted, added or deleted). A view stores both
 display @emph{options} and @emph{data}, unless the view is an
 @emph{alias} of another view (in which case it only stores display
