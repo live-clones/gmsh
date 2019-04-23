@@ -2495,6 +2495,34 @@ GMSH_API void gmsh::model::mesh::getBarycenters(
   }
 }
 
+GMSH_API void gmsh::model::mesh::getGaussPoints(
+  const int elementType, const std::string &integrationType, std::vector< double > &integrationPoints)
+{
+  if(!_isInitialized()) { throw -1; }
+  integrationPoints.clear();
+  std::string intName = "";
+  int intOrder = 0;
+  if(!_getIntegrationInfo(integrationType, intName, intOrder)) {
+    Msg::Error("Unknown quadrature type '%s'", integrationType.c_str());
+    throw 2;
+  }
+  // get quadrature info
+  int familyType = ElementType::getParentType(elementType);
+  fullMatrix<double> pts;
+  fullVector<double> weights;
+  gaussIntegration::get(familyType, intOrder, pts, weights);
+  if(pts.size1() != weights.size() || pts.size2() != 3) {
+    Msg::Error("Wrong integration point format");
+    throw 3;
+  }
+  for(int i = 0; i < pts.size1(); i++) {
+    integrationPoints.push_back(pts(i, 0));
+    integrationPoints.push_back(pts(i, 1));
+    integrationPoints.push_back(pts(i, 2));
+    integrationPoints.push_back(weights(i));
+  }
+}
+
 GMSH_API void gmsh::model::mesh::preallocateBarycenters(
   const int elementType, std::vector<double> &barycenters, const int tag)
 {

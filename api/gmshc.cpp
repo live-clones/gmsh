@@ -1070,6 +1070,19 @@ GMSH_API void gmshModelMeshPrecomputeBasisFunctions(const int elementType, int *
   }
 }
 
+GMSH_API void gmshModelMeshGetGaussPoints(const int elementType, const char * integrationType, double ** integrationPoints, size_t * integrationPoints_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_integrationPoints_;
+    gmsh::model::mesh::getGaussPoints(elementType, integrationType, api_integrationPoints_);
+    vector2ptr(api_integrationPoints_, integrationPoints, integrationPoints_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshGetBarycenters(const int elementType, const int tag, const int fast, const int primary, double ** barycenters, size_t * barycenters_n, const size_t task, const size_t numTasks, int * ierr)
 {
   if(ierr) *ierr = 0;

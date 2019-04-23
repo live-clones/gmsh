@@ -1603,6 +1603,30 @@ function precomputeBasisFunctions(elementType)
 end
 
 """
+    gmsh.model.mesh.getGaussPoints(elementType, integrationType)
+
+Get the Gauss quadrature information for the given `integrationType` integration
+rule (e.g. "Gauss4" for a Gauss quadrature suited for integrating 4th order
+polynomials) and for the elements of type `elementType`. `integrationPoints`
+contains the u, v, w coordinates of the integration points in the reference
+element as well as the associated weight q, concatenated: [g1u, g1v, g1w, g1q,
+g2u, ...].
+
+Return `integrationPoints`.
+"""
+function getGaussPoints(elementType, integrationType)
+    api_integrationPoints_ = Ref{Ptr{Cdouble}}()
+    api_integrationPoints_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetGaussPoints, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          elementType, integrationType, api_integrationPoints_, api_integrationPoints_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetGaussPoints returned non-zero error code: $(ierr[])")
+    integrationPoints = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_n_[], own=true)
+    return integrationPoints
+end
+
+"""
     gmsh.model.mesh.getBarycenters(elementType, tag, fast, primary, task = 0, numTasks = 1)
 
 Get the barycenters of all elements of type `elementType` classified on the
