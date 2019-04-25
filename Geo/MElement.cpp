@@ -26,6 +26,7 @@
 #include "Numeric.h"
 #include "CondNumBasis.h"
 #include "Context.h"
+#include "FuncSpaceData.h"
 
 #if defined(HAVE_MESH)
 #include "qualityMeasuresJacobian.h"
@@ -714,18 +715,24 @@ const nodalBasis *MElement::getFunctionSpace(int order, bool serendip) const
   return type ? BasisFactory::getNodalBasis(type) : NULL;
 }
 
-const JacobianBasis *MElement::getJacobianFuncSpace(int order) const
+const FuncSpaceData MElement::getFuncSpaceData(int order, bool serendip) const
 {
-  if(order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-  int tag = ElementType::getType(getType(), order);
-  return BasisFactory::getJacobianBasis(tag);
+  if(order == -1) return FuncSpaceData(this);
+  return FuncSpaceData(this, order, serendip);
 }
 
-const JacobianBasis *MElement::getJacobianFuncSpaceData(int order) const
+const JacobianBasis *MElement::getJacobianFuncSpace(int orderElement) const
 {
-  if(order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-  int tag = ElementType::getType(getType(), order);
-  return BasisFactory::getJacobianBasis(tag);
+  if(orderElement == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
+  int tag = ElementType::getType(getType(), orderElement);
+  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
+}
+
+const FuncSpaceData MElement::getJacobianFuncSpaceData(int orderElement) const
+{
+  if(orderElement == -1) orderElement = getPolynomialOrder();
+  int orderJac = JacobianBasis::jacobianOrder(this->getType(), orderElement);
+  return FuncSpaceData(this, orderJac, false);
 }
 
 static double _computeDeterminantAndRegularize(const MElement *ele,

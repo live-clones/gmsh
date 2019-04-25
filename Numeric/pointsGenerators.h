@@ -7,7 +7,8 @@
 #define POINTSGENERATORS_H
 
 #include "fullMatrix.h"
-#include "FuncSpaceData.h"
+
+class FuncSpaceData;
 
 // Functions to generate point distributions on the references elements, for all
 // orders and functions generating exponents of Pascal monomials in the same

@@ -11,6 +11,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "FuncSpaceData.h"
 
 // Points Generators
 
