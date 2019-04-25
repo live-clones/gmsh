@@ -275,30 +275,15 @@ namespace jacobianBasedQuality {
 
     _subdivideDomains(domains, true, debug);
 
-    double min2 = domains[0]->minB2();
-    double max2 = domains[0]->maxB2();
-    double minL = domains[0]->minL();
-    double maxL = domains[0]->maxL();
-    double minL2 = domains[0]->minL2();
-    double maxL2 = domains[0]->maxL2();
-    min = domains[0]->minB();
-    max = domains[0]->maxB();
-    domains[0]->deleteBezierCoeff();
-    delete domains[0];
-    for(std::size_t i = 1; i < domains.size(); ++i) {
-      min = std::min(min, domains[i]->minB());
-      max = std::max(max, domains[i]->maxB());
-      min2 = std::min(min2, domains[i]->minB2());
-      max2 = std::max(max2, domains[i]->maxB2());
-      minL = std::min(minL, domains[i]->minL());
-      maxL = std::max(maxL, domains[i]->maxL());
-      minL2 = std::min(minL2, domains[i]->minL2());
-      maxL2 = std::max(maxL2, domains[i]->maxL2());
+    // FIXME renames
+    min = std::numeric_limits<double>::infinity();
+    max = -min;
+    for(std::size_t i = 0; i < domains.size(); ++i) {
+      min = std::min(min, domains[i]->minB2());
+      max = std::max(max, domains[i]->maxB2());
       domains[i]->deleteBezierCoeff();
       delete domains[i];
     }
-    min = min2;
-    max = max2;
   }
 
   double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk,
@@ -556,27 +541,17 @@ namespace jacobianBasedQuality {
     v.setOwnData(false);
     const_cast<fullVector<double> &>(_coeffs).setOwnData(true);
 
-    _minL = _maxL = v(0);
-    int i = 1;
-    for(; i < bfs->getNumLagCoeff(); i++) {
-      _minL = std::min(_minL, v(i));
-      _maxL = std::max(_maxL, v(i));
+    const bezierCoeff &coeff = (*_coeffs2);
+
+    _minL2 = _maxL2 = coeff.getCornerCoeff(0);
+    for(int i = 1; i < coeff.getNumCornerCoeff(); i++) {
+      _minL2 = std::min(_minL2, coeff.getCornerCoeff(i));
+      _maxL2 = std::max(_maxL2, coeff.getCornerCoeff(i));
     }
-    _minB = _minL;
-    _maxB = _maxL;
-    for(; i < v.size(); i++) {
-      _minB = std::min(_minB, v(i));
-      _maxB = std::max(_maxB, v(i));
-    }
-    _minL2 = _maxL2 = _coeffs2->getCornerCoeff(0);
-    for(int i = 1; i < _coeffs2->getNumCornerCoeff(); i++) {
-      _minL2 = std::min(_minL2, _coeffs2->getCornerCoeff(i));
-      _maxL2 = std::max(_maxL2, _coeffs2->getCornerCoeff(i));
-    }
-    _minB2 = _maxB2 = (*_coeffs2)(0);
-    for(int i = 1; i < _coeffs2->getNumCoeff(); i++) {
-      _minB2 = std::min(_minB2, (*_coeffs2)(i));
-      _maxB2 = std::max(_maxB2, (*_coeffs2)(i));
+    _minB2 = _maxB2 = coeff(0);
+    for(int i = 1; i < coeff.getNumCoeff(); i++) {
+      _minB2 = std::min(_minB2, coeff(i));
+      _maxB2 = std::max(_maxB2, coeff(i));
     }
   }
 
@@ -638,14 +613,12 @@ namespace jacobianBasedQuality {
     const_cast<fullVector<double> &>(_coeffsJacDet).setOwnData(true);
     const_cast<fullMatrix<double> &>(_coeffsJacMat).setOwnData(true);
 
-    _computeAtCorner(_minL, _maxL, _minL2, _maxL2);
+    _computeAtCorner(_minL2, _maxL2);
 
-    _minB = 0;
     _minB2 = 0;
-    if(boundsOk(_minL2, _maxL))
+    if(boundsOk(_minL2, _maxL2))
       return;
     else {
-      _minB = _computeLowerBound();
       _minB2 = _computeLowerBound2();
     }
     // computation of _maxB not implemented for now
@@ -694,24 +667,9 @@ namespace jacobianBasedQuality {
     delete _coeffMat2;
   }
 
-  void _coeffDataIGE::_computeAtCorner(double &min, double &max, double &min2,
-                                       double &max2) const
+  // FIXME renames
+  void _coeffDataIGE::_computeAtCorner(double &min2, double &max2) const
   {
-    fullMatrix<double> v, m(_bfsDet->getNumLagCoeff(), _coeffsJacMat.size2());
-    _computeCoeffLengthVectors(_coeffsJacMat, v, _type,
-                               _bfsDet->getNumLagCoeff());
-
-    fullVector<double> ige;
-    _computeIGE(_coeffsJacDet, v, ige, _type);
-
-    min = std::numeric_limits<double>::infinity();
-    max = -min;
-    for(int i = 0; i < ige.size(); ++i) {
-      min = std::min(min, ige(i));
-      max = std::max(max, ige(i));
-    }
-
-    //
     fullVector<double> det, ige2;
     fullMatrix<double> mat;
     _coeffDet2->getCornerCoeffs(det);
@@ -726,122 +684,6 @@ namespace jacobianBasedQuality {
     for(int i = 0; i < ige2.size(); ++i) {
       min2 = std::min(min2, ige2(i));
       max2 = std::max(max2, ige2(i));
-    }
-  }
-
-  double _coeffDataIGE::_computeLowerBound() const
-  {
-    // Speedup: If one coeff _coeffsJacDet is negative, without bounding
-    // J^2/(a^2+b^2), we would get with certainty a negative lower bound.
-    // Returning 0.
-    for(int i = 0; i < _coeffsJacDet.size(); ++i) {
-      if(_coeffsJacDet(i) < 0) {
-        return 0;
-      }
-    }
-
-    fullMatrix<double> v;
-    _computeCoeffLengthVectors(_coeffsJacMat, v, _type);
-
-    fullVector<double> prox[6];
-    for(int i = 0; i < v.size2(); ++i) {
-      prox[i].setAsProxy(v, i);
-    }
-
-    bezierBasisRaiser *raiser = _bfsMat->getRaiser();
-    fullVector<double> coeffDenominator;
-    double result = 0;
-
-    switch(_type) {
-    case TYPE_QUA:
-      raiser->computeCoeff(prox[0], prox[1], coeffDenominator);
-      return _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-
-    case TYPE_TRI:
-      raiser->computeCoeff(prox[0], prox[1], coeffDenominator);
-      result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-      raiser->computeCoeff(prox[0], prox[2], coeffDenominator);
-      result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-      raiser->computeCoeff(prox[1], prox[2], coeffDenominator);
-      result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-      return cTri * result / 3;
-
-    case TYPE_HEX:
-      raiser->computeCoeff(prox[0], prox[1], prox[2], coeffDenominator);
-      return _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-
-    case TYPE_PRI:
-      raiser->computeCoeff(prox[0], prox[1], prox[2], coeffDenominator);
-      result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-      raiser->computeCoeff(prox[0], prox[3], prox[2], coeffDenominator);
-      result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-      raiser->computeCoeff(prox[1], prox[3], prox[2], coeffDenominator);
-      result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-      return cTri * result / 3;
-
-    case TYPE_TET: {
-      fullVector<double> thirdTerm, coeffNum1, tmp;
-      thirdTerm = prox[1];
-      thirdTerm.axpy(prox[2]);
-      thirdTerm.axpy(prox[3]);
-      thirdTerm.axpy(prox[4]);
-      raiser->computeCoeff(prox[0], prox[5], thirdTerm, coeffNum1);
-      thirdTerm = prox[0];
-      thirdTerm.axpy(prox[2]);
-      thirdTerm.axpy(prox[3]);
-      thirdTerm.axpy(prox[5]);
-      raiser->computeCoeff(prox[1], prox[4], thirdTerm, tmp);
-      coeffNum1.axpy(tmp);
-      thirdTerm = prox[0];
-      thirdTerm.axpy(prox[1]);
-      thirdTerm.axpy(prox[4]);
-      thirdTerm.axpy(prox[5]);
-      raiser->computeCoeff(prox[2], prox[3], thirdTerm, tmp);
-      coeffNum1.axpy(tmp);
-
-      fullVector<double> coeffDen1, coeffDen2;
-      raiser->computeCoeff(prox[0], prox[1], prox[2], coeffDen1);
-      raiser->computeCoeff(prox[3], prox[4], prox[5], coeffDen2);
-
-      fullVector<double> &coeffNumerator = tmp;
-      bezierBasisRaiser *raiserBis = _bfsDet->getRaiser();
-      raiserBis->computeCoeff(coeffNum1, _coeffsJacDet, coeffNumerator);
-      raiserBis->computeCoeff(coeffDen1, coeffDen2, coeffDenominator);
-
-      result = _computeBoundRational(coeffNumerator, coeffDenominator, true);
-      return cTet * result / 12;
-    }
-
-    case TYPE_PYR: {
-      fullVector<double> thirdTerm, coeffNum1, tmp;
-      thirdTerm = prox[2];
-      thirdTerm.axpy(prox[3]);
-      thirdTerm.axpy(prox[4]);
-      thirdTerm.axpy(prox[5]);
-      raiser->computeCoeff(prox[0], prox[1], thirdTerm, coeffNum1);
-      thirdTerm = prox[4];
-      thirdTerm.axpy(prox[5]);
-      raiser->computeCoeff(prox[2], prox[3], thirdTerm, tmp);
-      coeffNum1.axpy(tmp);
-      thirdTerm = prox[2];
-      thirdTerm.axpy(prox[3]);
-      raiser->computeCoeff(prox[4], prox[5], thirdTerm, tmp);
-      coeffNum1.axpy(tmp);
-
-      fullVector<double> coeffDen1, coeffDen2;
-      raiser->computeCoeff(prox[0], prox[1], prox[2], coeffDen1);
-      raiser->computeCoeff(prox[3], prox[4], prox[5], coeffDen2);
-
-      fullVector<double> &coeffNumerator = tmp;
-      bezierBasisRaiser *raiserBis = _bfsDet->getRaiser();
-      raiserBis->computeCoeff(coeffNum1, _coeffsJacDet, coeffNumerator);
-      raiserBis->computeCoeff(coeffDen1, coeffDen2, coeffDenominator);
-
-      result = _computeBoundRational(coeffNumerator, coeffDenominator, true);
-      return cPyr * result / 8;
-    }
-
-    default: Msg::Info("Unknown type for IGE (%d)", _type); return -1;
     }
   }
 
@@ -998,14 +840,12 @@ namespace jacobianBasedQuality {
     const_cast<fullVector<double> &>(_coeffsJacDet).setOwnData(true);
     const_cast<fullMatrix<double> &>(_coeffsJacMat).setOwnData(true);
 
-    _computeAtCorner(_minL, _maxL, _minL2, _maxL2);
+    _computeAtCorner(_minL2, _maxL2);
 
-    _minB = 0;
     _minB2 = 0;
-    if(boundsOk(_minL2, _maxL))
+    if(boundsOk(_minL2, _maxL2))
       return;
     else {
-      _minB = _computeLowerBound();
       _minB2 = _computeLowerBound2();
     }
     // _maxB not used for now
@@ -1053,26 +893,8 @@ namespace jacobianBasedQuality {
     delete _coeffMat2;
   }
 
-  void _coeffDataICN::_computeAtCorner(double &min, double &max, double &min2, double &max2) const
+  void _coeffDataICN::_computeAtCorner(double &min2, double &max2) const
   {
-    min = std::numeric_limits<double>::infinity();
-    max = -min;
-
-    for(int i = 0; i < _bfsMat->getNumLagCoeff(); i++) {
-      double p = 0;
-      for(int k = 0; k < _coeffsJacMat.size2(); ++k) {
-        p += pow_int(_coeffsJacMat(i, k), 2);
-      }
-      double qual;
-      if(_coeffsJacMat.size2() == 6) // if 2D
-        qual = 2 * _coeffsJacDet(i) / p;
-      else // 3D
-        qual = 3 * std::pow(_coeffsJacDet(i), 2 / 3.) / p;
-      min = std::min(min, qual);
-      max = std::max(max, qual);
-    }
-
-    //
     fullVector<double> det, icn;
     fullMatrix<double> mat;
     _coeffDet2->getCornerCoeffs(det);
@@ -1080,60 +902,12 @@ namespace jacobianBasedQuality {
     _computeICN(det, mat, icn, _dim);
 
     min2 = std::numeric_limits<double>::infinity();
-    max2 = -min;
+    max2 = -min2;
 
     for(int i = 0; i < icn.size(); i++) {
       min2 = std::min(min2, icn(i));
       max2 = std::max(max2, icn(i));
     }
-  }
-
-  double _coeffDataICN::_computeLowerBound() const
-  {
-    // Speedup: If one coeff _coeffsJacDet is negative, we would get
-    // a negative lower bound. For now, returning 0.
-    for(int i = 0; i < _coeffsJacDet.size(); ++i) {
-      if(_coeffsJacDet(i) < 0) {
-        return 0;
-      }
-    }
-
-    // 2D element
-    if(_coeffsJacMat.size2() == 6) {
-      fullVector<double> coeffDenominator;
-      {
-        bezierBasisRaiser *raiser = _bfsMat->getRaiser();
-        fullVector<double> prox;
-        for(int k = 0; k < _coeffsJacMat.size2(); ++k) {
-          prox.setAsProxy(_coeffsJacMat, k);
-          fullVector<double> tmp;
-          raiser->computeCoeff(prox, prox, tmp);
-          if(k == 0) coeffDenominator.resize(tmp.size());
-          coeffDenominator.axpy(tmp, 1);
-        }
-      }
-      return 2 * _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-    }
-
-    // 3D element NEW
-    fullVector<double> coeffDenominator;
-    {
-      // P: coefficients of function that bound from above the Frobenius norm of
-      // J element of P are automatically set to 0
-      fullVector<double> P(_coeffsJacMat.size1());
-      for(int i = 0; i < _coeffsJacMat.size1(); ++i) {
-        for(int k = 0; k < _coeffsJacMat.size2(); ++k) {
-          P(i) += _coeffsJacMat(i, k) * _coeffsJacMat(i, k);
-        }
-        P(i) = std::sqrt(P(i));
-      }
-      _bfsMat->getRaiser()->computeCoeff(P, P, P, coeffDenominator);
-    }
-
-    const double boundFraction =
-      _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-
-    return 3 * std::pow(boundFraction * boundFraction, 1. / 3);
   }
 
   double _coeffDataICN::_computeLowerBound2() const
@@ -1241,15 +1015,12 @@ namespace jacobianBasedQuality {
 
   double _getMinAndDeleteDomains(std::vector<_coeffData *> &domains)
   {
-    double minB = domains[0]->minB();
-    double minL = domains[0]->minL();
+    // FIXME renames
     double minB2 = domains[0]->minB2();
     double minL2 = domains[0]->minL2();
     domains[0]->deleteBezierCoeff();
     delete domains[0];
     for(std::size_t i = 1; i < domains.size(); ++i) {
-      minB = std::min(minB, domains[i]->minB());
-      minL = std::min(minL, domains[i]->minL());
       minB2 = std::min(minB2, domains[i]->minB2());
       minL2 = std::min(minL2, domains[i]->minL2());
       domains[i]->deleteBezierCoeff();
