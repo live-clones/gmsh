@@ -70,21 +70,16 @@ namespace {
     }
   }
 
-  void drawBezierControlPolygon(const fullMatrix<double> &controlPoints,
+  void drawBezierControlPolygon(const bezierCoeff &controlPoints,
                                 GEdge *gedge)
   {
-    const int nVert = controlPoints.size1();
-    std::vector<int> idx(nVert);
-    idx[0] = 0;
-    for(int i = 1; i < nVert - 1; ++i) idx[i] = i + 1;
-    idx[nVert - 1] = 1;
+    const int nVert = controlPoints.getNumCoeff();
 
     MVertex *previous = NULL;
-    for(int i = 0; i < nVert; ++i) {
-      MVertex *v =
-        new MVertex(controlPoints(idx[i], 0), controlPoints(idx[i], 1),
-                    controlPoints(idx[i], 2), gedge);
-      if(previous) {
+    for (int i = 0; i < nVert; ++i) {
+      MVertex *v = new MVertex(controlPoints(i, 0), controlPoints(i, 1),
+                               controlPoints(i, 2), gedge);
+      if (previous) {
         MLine *line = new MLine(v, previous);
         gedge->addLine(line);
       }
@@ -99,50 +94,30 @@ namespace {
     if(!gedge) { gedge = *GModel::current()->firstEdge(); }
 
     const int nVert = (int)vertices.size();
-    const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
-
     fullMatrix<double> xyz(nVert, 3);
     for(int i = 0; i < nVert; ++i) {
       xyz(i, 0) = vertices[i]->x();
       xyz(i, 1) = vertices[i]->y();
       xyz(i, 2) = vertices[i]->z();
     }
-    fullMatrix<double> controlPoints(nVert, 3);
-    fs->lag2Bez(xyz, controlPoints);
 
-    bool subdivide = false;
-    bool subdivide2 = false;
-    if(subdivide) {
-      fullMatrix<double> allSubs(2 * nVert, 3);
-      fs->subdivideBezCoeff(controlPoints, allSubs);
-      fullMatrix<double> sub(nVert, 3);
-      sub.copy(allSubs, 0, nVert, 0, 3, 0, 0);
-      if(subdivide2) {
-        fullMatrix<double> allSubs2(2 * nVert, 3);
-        fs->subdivideBezCoeff(sub, allSubs2);
-        fullMatrix<double> sub2(nVert, 3);
-        sub2.copy(allSubs2, 0, nVert, 0, 3, 0, 0);
-        drawBezierControlPolygon(sub2, gedge);
-        sub2.copy(allSubs2, nVert, nVert, 0, 3, 0, 0);
-        drawBezierControlPolygon(sub2, gedge);
+    bezierCoeff *controlPoints =
+      new bezierCoeff(FuncSpaceData(TYPE_LIN, nVert-1, false), xyz);
+    std::vector<bezierCoeff*> allControlPoints(1, controlPoints);
+
+    int numSubdivision = 0; // change this to choose num subdivision
+    while (numSubdivision-- > 0) {
+      std::vector<bezierCoeff*> gatherSubs;
+      for(std::size_t i = 0; i < allControlPoints.size(); ++i) {
+        std::vector<bezierCoeff*> tmp;
+        allControlPoints[i]->subdivide(tmp);
+        gatherSubs.insert(allControlPoints.end(), tmp.begin(), tmp.end());
       }
-      else
-        drawBezierControlPolygon(sub, gedge);
-      sub.copy(allSubs, nVert, nVert, 0, 3, 0, 0);
-      if(subdivide2) {
-        fullMatrix<double> allSubs2(2 * nVert, 3);
-        fs->subdivideBezCoeff(sub, allSubs2);
-        fullMatrix<double> sub2(nVert, 3);
-        sub2.copy(allSubs2, 0, nVert, 0, 3, 0, 0);
-        drawBezierControlPolygon(sub2, gedge);
-        sub2.copy(allSubs2, nVert, nVert, 0, 3, 0, 0);
-        drawBezierControlPolygon(sub2, gedge);
-      }
-      else
-        drawBezierControlPolygon(sub, gedge);
+      allControlPoints.swap(gatherSubs);
     }
-    else {
-      drawBezierControlPolygon(controlPoints, gedge);
+
+    for(std::size_t i = 0; i < allControlPoints.size(); ++i) {
+      drawBezierControlPolygon(*allControlPoints[i], gedge);
     }
   }
 

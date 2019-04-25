@@ -35,10 +35,7 @@ void MElementBB(void *a, double *min, double *max)
     fullMatrix<double> nodesXYZ(e->getNumVertices(), 3);
     e->getNodesCoord(nodesXYZ);
 
-    fullMatrix<double> bezNodes(e->getNumVertices(), 3);
-
-    const bezierBasis *bez = BasisFactory::getBezierBasis(FuncSpaceData(e));
-    bez->lag2Bez(nodesXYZ, bezNodes);
+    bezierCoeff *bezNodes = new bezierCoeff(FuncSpaceData(e), nodesXYZ);
     min[0] = max[0] = bezNodes(0, 0);
     min[1] = max[1] = bezNodes(0, 1);
     min[2] = max[2] = bezNodes(0, 2);
