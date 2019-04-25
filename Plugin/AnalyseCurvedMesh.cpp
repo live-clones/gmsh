@@ -381,6 +381,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
     Msg::Warning("%d elements are completely inverted", cntInverted);
   }
   _computedJac[dim - 1] = true;
+  bezierCoeff::releasePools();
 }
 
 void GMSH_AnalyseCurvedMeshPlugin::_computeMinIGE(int dim)

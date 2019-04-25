@@ -19,7 +19,7 @@ class bezierCoeff;
 
 class bezierBasis {
 private:
-  // the 'numLagCoeff' first exponents are related to 'real' values
+  // Number of corner coeff which are 'real' values of the expanded function
   int _numLagCoeff;
   int _numDivisions, _dimSimplex;
   const FuncSpaceData _data;
@@ -140,49 +140,25 @@ private:
   void _fillRaiserDataPyr();
 };
 
-// class bezierCoeffSubdivisor {
-//  // Two type of operation are perform for subdividing simplices:
-//  // 1) [ coeff(I) + coeff(Ib) ] / 2     :> coeff(I)
-//  // 2) coeff(Ia) + coeff(Ib) - coeff(I) :> coeff(I)
-//  typedef std::vector<std::pair<int, int> >  data1;
-//  typedef std::vector<std::pair<int, std::pair<int, int> > >  data2;
-//
-//  struct {
-//    data1 subdivideU;
-//    data1 subdivideV;
-//    data2 return2;
-//  };
-//
-// private:
-//  // mapTri (order) -> list (data1 or data2)
-//
-//
-//  static std::map<int, data1> _triangleSubU;
-//  static std::map<int, data1> _triangleSubV;
-//  static std::map<int, data1> _triangleSubV;
-//  static std::map<int, data1> _triangleSubV;
-//  static std::map<int, data1> _triangleSubV;
-//};
-
-class bezierMemoryPool {
+class bezierCoeffMemoryPool {
   // This class is to avoid multiple allocation / deallocation during
   // the subdivision algorithm.
 private:
   std::vector<double> _memory;
-  int _sizeBlocks;
-  int _numUsedBlocks;
-  unsigned int _currentIndexOfSearch;
-  unsigned int _endOfSearch;
+  std::size_t _sizeBlocks;
+  std::size_t _numUsedBlocks;
+  std::size_t _currentIndexOfSearch;
+  std::size_t _endOfSearch;
   // if a reallocation is performed, the pointers must be updated, we need to
   // know which bezierCoeff have to be updated:
   std::vector<bezierCoeff *> _bezierCoeff;
 
 public:
-  bezierMemoryPool();
-  ~bezierMemoryPool() {}
+  bezierCoeffMemoryPool();
+  ~bezierCoeffMemoryPool() {}
 
   // before to be used, the size of the blocks has to be specified
-  void setSizeBlocks(int size);
+  void setSizeBlocks(std::size_t size);
 
   double *giveBlock(bezierCoeff *bez); // gives a block of size _sizeBlocks[num]
   void releaseBlock(double *block, bezierCoeff *bez);
@@ -193,14 +169,6 @@ private:
 };
 
 class bezierCoeff {
-  // TODO: test if access would be faster if fullMatrix::operator(int r) was
-  // implemented (for fullmatrix with only 1 column)
-  //  typedef std::vector<std::pair<int, int> >  data1;
-  //  typedef std::vector<std::pair<int, std::pair<int, int> > >  data2;
-  //  // map (type, order, num) -> (data1 or data2)
-  //  static std::map<int, data1> _triangleSubU;
-  //  static std::map<int, data1> _triangleSubV;
-
 private:
   int _numPool;
   FuncSpaceData _funcSpaceData;
@@ -209,8 +177,8 @@ private:
   double *_data; // pointer on the first element
   bool _own_data; // to know if data should be freed when object is deleted
 
-  static bezierMemoryPool *_pool0;
-  static bezierMemoryPool *_pool1;
+  static bezierCoeffMemoryPool *_pool0;
+  static bezierCoeffMemoryPool *_pool1;
   static fullMatrix<double> _sub;
   // FIXME: not thread safe. We shoud use one pool and one _sub per thread.
   //        The best would be to give the pool to the constructor.
@@ -220,13 +188,15 @@ private:
 public:
   bezierCoeff(){};
   bezierCoeff(const bezierCoeff &other, bool swap = false);
+  // numOfPool is the number of the pool (0 or 1) that should be used. To use
+  // this functionality, first call usePools(..) function.
   bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
-              int num = -1);
+              int numOfPool = -1);
   bezierCoeff(FuncSpaceData data, const fullMatrix<double> &lagCoeff,
-              int num = -1);
+              int numOfPool = -1);
   ~bezierCoeff();
 
-  static void usePools(int size0, int size1);
+  static void usePools(std::size_t size0, std::size_t size1);
   static void releasePools();
   void updateDataPtr(long diff);
 

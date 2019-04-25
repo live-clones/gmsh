@@ -220,7 +220,7 @@ MFaceN::MFaceN(int type, int order, const std::vector<MVertex *> &v)
 MEdgeN MFaceN::getHighOrderEdge(int num, int sign) const
 {
   int nCorner = getNumCorners();
-  std::vector<MVertex *> vertices((unsigned int)_order + 1);
+  std::vector<MVertex *> vertices(static_cast<std::size_t>(_order) + 1);
   if(sign == 1) {
     vertices[0] = _v[num];
     vertices[1] = _v[(num + 1) % nCorner];

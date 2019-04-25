@@ -490,7 +490,7 @@ namespace BoundaryLayerCurver {
       data->invA.mult(xyz, newxyzLow);
 
       std::vector<MVertex *> vertices = edge->getVertices();
-      vertices.resize((unsigned int)order + 1);
+      vertices.resize(static_cast<std::size_t>(order) + 1);
       MEdgeN lowOrderEdge(vertices);
 
       for(std::size_t i = 2; i < vertices.size(); ++i) {

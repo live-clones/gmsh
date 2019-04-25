@@ -181,7 +181,7 @@ char MElement::getVisibility() const
 MEdgeN MElement::getHighOrderEdge(int num, int sign)
 {
   const int order = getPolynomialOrder();
-  std::vector<MVertex *> vertices((unsigned int)order + 1);
+  std::vector<MVertex *> vertices(static_cast<std::size_t>(order) + 1);
   vertices[0] = getVertex(numEdge2numVertex(num, sign > 0 ? 0 : 1));
   vertices[1] = getVertex(numEdge2numVertex(num, sign > 0 ? 1 : 0));
   const int start = getNumPrimaryVertices() + num * (order - 1);

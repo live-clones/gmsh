@@ -1551,8 +1551,8 @@ void bezierBasisRaiser::computeCoeff2(const fullVector<double> &coeffA,
       "or A != B == C");
 }
 
-bezierMemoryPool *bezierCoeff::_pool0 = NULL;
-bezierMemoryPool *bezierCoeff::_pool1 = NULL;
+bezierCoeffMemoryPool *bezierCoeff::_pool0 = NULL;
+bezierCoeffMemoryPool *bezierCoeff::_pool1 = NULL;
 fullMatrix<double> bezierCoeff::_sub = fullMatrix<double>();
 
 bezierCoeff::bezierCoeff(FuncSpaceData data, const fullMatrix<double> &lagCoeff,
@@ -1722,14 +1722,14 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffDataConst)
   }
 }
 
-void bezierCoeff::usePools(int size0, int size1)
+void bezierCoeff::usePools(std::size_t size0, std::size_t size1)
 {
   if(size0) {
-    if(!_pool0) _pool0 = new bezierMemoryPool();
+    if(!_pool0) _pool0 = new bezierCoeffMemoryPool();
     _pool0->setSizeBlocks(size0);
   }
   if(size1) {
-    if(!_pool1) _pool1 = new bezierMemoryPool();
+    if(!_pool1) _pool1 = new bezierCoeffMemoryPool();
     _pool1->setSizeBlocks(size1);
   }
 }
@@ -2396,7 +2396,7 @@ bezierCoeff::_copyPyr(const fullMatrix<double> &allSub, int nij, int nk,
   }
 }
 
-bezierMemoryPool::bezierMemoryPool()
+bezierCoeffMemoryPool::bezierCoeffMemoryPool()
 {
   _sizeBlocks = 0;
   _numUsedBlocks = 0;
@@ -2404,7 +2404,7 @@ bezierMemoryPool::bezierMemoryPool()
   _endOfSearch = 0;
 }
 
-void bezierMemoryPool::setSizeBlocks(int size)
+void bezierCoeffMemoryPool::setSizeBlocks(std::size_t size)
 {
   if(_numUsedBlocks) {
     Msg::Error("Cannot change size of blocks if %d blocks are still being "
@@ -2416,12 +2416,12 @@ void bezierMemoryPool::setSizeBlocks(int size)
   _endOfSearch = 0;
 }
 
-double *bezierMemoryPool::giveBlock(bezierCoeff *bez)
+double *bezierCoeffMemoryPool::giveBlock(bezierCoeff *bez)
 {
   _checkEnoughMemory();
 
   if(_numUsedBlocks == _endOfSearch) {
-    int idx = _endOfSearch;
+    std::size_t idx = _endOfSearch;
     if(_bezierCoeff.size() == idx)
       _bezierCoeff.push_back(bez);
     else if(_bezierCoeff[idx]) {
@@ -2435,8 +2435,8 @@ double *bezierMemoryPool::giveBlock(bezierCoeff *bez)
     return &_memory.front() + _sizeBlocks * idx;
   }
 
-  for(int i = 0; i < _endOfSearch; ++i) {
-    int idx = _currentIndexOfSearch;
+  for(std::size_t i = 0; i < _endOfSearch; ++i) {
+    std::size_t idx = _currentIndexOfSearch;
     ++_currentIndexOfSearch;
     if(_currentIndexOfSearch == _endOfSearch) _currentIndexOfSearch = 0;
     if(!_bezierCoeff[idx]) {
@@ -2450,15 +2450,15 @@ double *bezierMemoryPool::giveBlock(bezierCoeff *bez)
   // _numUsedBlocks < _endOfSearch
   // and _bezierCoeff[i] for i < _endOfSearch are all different from
   // NULL which should never happens.
-  Msg::Error("Wrong state of bezierMemoryPool."
+  Msg::Error("Wrong state of bezierCoeffMemoryPool."
              "_bezierCoeff[i] not correct?");
   return NULL;
 }
 
-void bezierMemoryPool::releaseBlock(double *block, bezierCoeff *bez)
+void bezierCoeffMemoryPool::releaseBlock(double *block, bezierCoeff *bez)
 {
   long diff = block - &_memory.front();
-  int idx = diff / _sizeBlocks;
+  std::size_t idx = diff / _sizeBlocks;
   //  if (_bezierCoeff[idx] == bez)
   //    Msg::Info("It's a good guess!");
   //  else
@@ -2474,7 +2474,7 @@ void bezierMemoryPool::releaseBlock(double *block, bezierCoeff *bez)
   --_numUsedBlocks;
 }
 
-void bezierMemoryPool::freeMemory()
+void bezierCoeffMemoryPool::freeMemory()
 {
   if(_numUsedBlocks) {
     Msg::Error("I cannot free memory if some is still in use!");
@@ -2485,7 +2485,7 @@ void bezierMemoryPool::freeMemory()
   _memory.swap(dummy);
 }
 
-void bezierMemoryPool::_checkEnoughMemory()
+void bezierCoeffMemoryPool::_checkEnoughMemory()
 {
   if(_numUsedBlocks < _memory.size() / _sizeBlocks) return;
 

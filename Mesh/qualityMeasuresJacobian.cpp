@@ -371,7 +371,7 @@ namespace jacobianBasedQuality {
     jfs->getSignedJacobian(nodesXYZ, coeffLag, normals);
     jfs->lag2Bez(coeffLag, coeffBez);
 
-    bezierCoeff::usePools(coeffLag.size(), 0);
+    bezierCoeff::usePools(static_cast<std::size_t>(coeffLag.size()), 0);
     std::vector<_coefData *> domains;
     bezierCoeff *bez = new bezierCoeff(jfs->getFuncSpaceData(), coeffLag, 0);
     domains.push_back(new _coefDataJac(coeffBez, jfs->getBezier(), 0, bez));
@@ -448,8 +448,9 @@ namespace jacobianBasedQuality {
       gradBasis->lag2Bez(coeffMatLag, coeffMatBez);
     }
 
-    bezierCoeff::usePools(coeffDetLag.size(),
-                          coeffMatLag.size1() * coeffMatLag.size2());
+    bezierCoeff::usePools(static_cast<std::size_t>(coeffDetLag.size()),
+                          static_cast<std::size_t>(coeffMatLag.size1()) *
+                            static_cast<std::size_t>(coeffMatLag.size2()));
     std::vector<_coefData *> domains;
     bezierCoeff *bezDet = new bezierCoeff(jacDetSpace, coeffDetLag, 0);
     bezierCoeff *bezMat = new bezierCoeff(jacMatSpace, coeffMatLag, 1);
@@ -506,8 +507,9 @@ namespace jacobianBasedQuality {
       gradBasis->lag2Bez(coeffMatLag, coeffMatBez);
     }
 
-    bezierCoeff::usePools(coeffDetLag.size(),
-                          coeffMatLag.size1() * coeffMatLag.size2());
+    bezierCoeff::usePools(static_cast<std::size_t>(coeffDetLag.size()),
+                          static_cast<std::size_t>(coeffMatLag.size1()) *
+                            static_cast<std::size_t>(coeffMatLag.size2()));
     std::vector<_coefData *> domains;
     bezierCoeff *bezDet = new bezierCoeff(jacDetSpace, coeffDetLag, 0);
     bezierCoeff *bezMat = new bezierCoeff(jacMatSpace, coeffMatLag, 1);
