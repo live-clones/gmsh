@@ -43,7 +43,7 @@ namespace jacobianBasedQuality {
   void testAllMeasuresAllElements();
   void testAllMeasures(MElement *el, const fullMatrix<double> *normals = NULL);
 
-  class _coefData {
+  class _coeffData {
   protected:
     double _minL, _maxL; // Extremum of Jac at corners
     double _minB, _maxB; // Extremum of bezier coefficients
@@ -52,11 +52,11 @@ namespace jacobianBasedQuality {
     const int _depth;
 
   public:
-    _coefData(int depth)
+    _coeffData(int depth)
       : _minL(0), _maxL(0), _minB(0), _maxB(0), _depth(depth)
     {
     }
-    virtual ~_coefData() {}
+    virtual ~_coeffData() {}
 
     inline double minL() const { return _minL; }
     inline double maxL() const { return _maxL; }
@@ -69,36 +69,36 @@ namespace jacobianBasedQuality {
     inline int depth() const { return _depth; }
 
     virtual bool boundsOk(double minL, double maxL) const = 0;
-    virtual void getSubCoeff(std::vector<_coefData *> &) const = 0;
+    virtual void getSubCoeff(std::vector<_coeffData *> &) const = 0;
     virtual void deleteBezierCoeff() = 0;
     virtual int getNumMeasure() const { return 0; } // fordebug
   };
 
   struct _lessMinB {
-    bool operator()(_coefData *, _coefData *) const;
+    bool operator()(_coeffData *, _coeffData *) const;
   };
   struct _lessMaxB {
-    bool operator()(_coefData *, _coefData *) const;
+    bool operator()(_coeffData *, _coeffData *) const;
   };
 
-  class _coefDataJac : public _coefData {
+  class _coeffDataJac : public _coeffData {
   private:
     const fullVector<double> _coeffs;
     const bezierBasis *_bfs;
     const bezierCoeff *_coeffs2;
 
   public:
-    _coefDataJac(fullVector<double> &v, const bezierBasis *bfs, int depth,
+    _coeffDataJac(fullVector<double> &v, const bezierBasis *bfs, int depth,
                   const bezierCoeff *coeffs2 = NULL);
-    ~_coefDataJac() {}
+    ~_coeffDataJac() {}
 
     bool boundsOk(double minL, double maxL) const;
-    void getSubCoeff(std::vector<_coefData *> &) const;
+    void getSubCoeff(std::vector<_coeffData *> &) const;
     void deleteBezierCoeff() { delete _coeffs2; }
     int getNumMeasure() const { return 1; } // fordebug
   };
 
-  class _coefDataIGE : public _coefData {
+  class _coeffDataIGE : public _coeffData {
   private:
     const fullVector<double> _coeffsJacDet;
     const fullMatrix<double> _coeffsJacMat;
@@ -108,14 +108,14 @@ namespace jacobianBasedQuality {
     const int _type;
 
   public:
-    _coefDataIGE(fullVector<double> &det, fullMatrix<double> &mat,
+    _coeffDataIGE(fullVector<double> &det, fullMatrix<double> &mat,
                   const bezierBasis *bfsDet, const bezierBasis *bfsMat,
                   int depth, int type, const bezierCoeff *det2 = NULL,
                   const bezierCoeff *mat2 = NULL);
-    ~_coefDataIGE() {}
+    ~_coeffDataIGE() {}
 
     bool boundsOk(double minL, double maxL) const;
-    void getSubCoeff(std::vector<_coefData *> &) const;
+    void getSubCoeff(std::vector<_coeffData *> &) const;
     void deleteBezierCoeff() { delete _coeffDet2; delete _coeffMat2; }
     int getNumMeasure() const { return 2; } // FIXMEDEBUG
 
@@ -126,7 +126,7 @@ namespace jacobianBasedQuality {
     double _computeLowerBound2() const;
   };
 
-  class _coefDataICN : public _coefData {
+  class _coeffDataICN : public _coeffData {
   private:
     const fullVector<double> _coeffsJacDet;
     const fullMatrix<double> _coeffsJacMat;
@@ -136,14 +136,14 @@ namespace jacobianBasedQuality {
     const int _dim;
 
   public:
-    _coefDataICN(fullVector<double> &det, fullMatrix<double> &metric,
+    _coeffDataICN(fullVector<double> &det, fullMatrix<double> &metric,
                   const bezierBasis *bfsDet, const bezierBasis *bfsMet,
                   int depth, int dim, const bezierCoeff *det2 = NULL,
                   const bezierCoeff *mat2 = NULL);
-    ~_coefDataICN() {}
+    ~_coeffDataICN() {}
 
     bool boundsOk(double minL, double maxL) const;
-    void getSubCoeff(std::vector<_coefData *> &) const;
+    void getSubCoeff(std::vector<_coeffData *> &) const;
     void deleteBezierCoeff() { delete _coeffDet2; delete _coeffMat2; }
     int getNumMeasure() const { return 4; } // fordebug
 
@@ -158,9 +158,9 @@ namespace jacobianBasedQuality {
                                const fullVector<double> &denominator,
                                bool lower, bool positiveDenom = true);
 
-  void _subdivideDomains(std::vector<_coefData *> &domains,
+  void _subdivideDomains(std::vector<_coeffData *> &domains,
                          bool alsoMax = true, bool debug = false);
-  double _getMinAndDeleteDomains(std::vector<_coefData *> &domains);
+  double _getMinAndDeleteDomains(std::vector<_coeffData *> &domains);
 
 } // namespace jacobianBasedQuality
 

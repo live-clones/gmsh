@@ -372,9 +372,9 @@ namespace jacobianBasedQuality {
     jfs->lag2Bez(coeffLag, coeffBez);
 
     bezierCoeff::usePools(static_cast<std::size_t>(coeffLag.size()), 0);
-    std::vector<_coefData *> domains;
+    std::vector<_coeffData *> domains;
     bezierCoeff *bez = new bezierCoeff(jfs->getFuncSpaceData(), coeffLag, 0);
-    domains.push_back(new _coefDataJac(coeffBez, jfs->getBezier(), 0, bez));
+    domains.push_back(new _coeffDataJac(coeffBez, jfs->getBezier(), 0, bez));
 
     _subdivideDomains(domains, true, debug);
 
@@ -451,10 +451,10 @@ namespace jacobianBasedQuality {
     bezierCoeff::usePools(static_cast<std::size_t>(coeffDetLag.size()),
                           static_cast<std::size_t>(coeffMatLag.size1()) *
                             static_cast<std::size_t>(coeffMatLag.size2()));
-    std::vector<_coefData *> domains;
+    std::vector<_coeffData *> domains;
     bezierCoeff *bezDet = new bezierCoeff(jacDetSpace, coeffDetLag, 0);
     bezierCoeff *bezMat = new bezierCoeff(jacMatSpace, coeffMatLag, 1);
-    domains.push_back(new _coefDataIGE(
+    domains.push_back(new _coeffDataIGE(
       coeffDetBez, coeffMatBez, jacBasis->getBezier(), gradBasis->getBezier(),
       0, el->getType(), bezDet, bezMat));
 
@@ -510,10 +510,10 @@ namespace jacobianBasedQuality {
     bezierCoeff::usePools(static_cast<std::size_t>(coeffDetLag.size()),
                           static_cast<std::size_t>(coeffMatLag.size1()) *
                             static_cast<std::size_t>(coeffMatLag.size2()));
-    std::vector<_coefData *> domains;
+    std::vector<_coeffData *> domains;
     bezierCoeff *bezDet = new bezierCoeff(jacDetSpace, coeffDetLag, 0);
     bezierCoeff *bezMat = new bezierCoeff(jacMatSpace, coeffMatLag, 1);
-    domains.push_back(new _coefDataICN(coeffDetBez, coeffMatBez,
+    domains.push_back(new _coeffDataICN(coeffDetBez, coeffMatBez,
                                         jacBasis->getBezier(),
                                         gradBasis->getBezier(), 0, el->getDim(), bezDet, bezMat));
 
@@ -631,25 +631,25 @@ namespace jacobianBasedQuality {
     _computeICN(determinant, gradients, icn, el->getDim());
   }
 
-  // Virtual class _coefData
-  bool _lessMinB::operator()(_coefData *cd1, _coefData *cd2) const
+  // Virtual class _coeffData
+  bool _lessMinB::operator()(_coeffData *cd1, _coeffData *cd2) const
   {
     return cd1->minB2() > cd2->minB2();
   }
 
-  bool _lessMaxB::operator()(_coefData *cd1, _coefData *cd2) const
+  bool _lessMaxB::operator()(_coeffData *cd1, _coeffData *cd2) const
   {
     return cd1->maxB2() < cd2->maxB2();
   }
 
   // Jacobian determinant (for validity of all elements)
-  _coefDataJac::_coefDataJac(fullVector<double> &v, const bezierBasis *bfs,
+  _coeffDataJac::_coeffDataJac(fullVector<double> &v, const bezierBasis *bfs,
                                int depth, const bezierCoeff *coeffs2)
-    : _coefData(depth), _coeffs(v.getDataPtr(), v.size()), _bfs(bfs),
+    : _coeffData(depth), _coeffs(v.getDataPtr(), v.size()), _bfs(bfs),
       _coeffs2(coeffs2)
   {
     if(!v.getOwnData()) {
-      Msg::Fatal("Cannot create an instance of _coefDataJac from a "
+      Msg::Fatal("Cannot create an instance of _coeffDataJac from a "
                  "fullVector that does not own its data.");
       return;
     }
@@ -683,7 +683,7 @@ namespace jacobianBasedQuality {
     }
   }
 
-  bool _coefDataJac::boundsOk(double minL, double maxL) const
+  bool _coeffDataJac::boundsOk(double minL, double maxL) const
   {
     double tol = std::max(std::abs(minL), std::abs(maxL)) * 1e-3;
     return (minL <= 0 || _minB2 > 0) &&
@@ -693,7 +693,7 @@ namespace jacobianBasedQuality {
     // NB: First condition implies minL and minB both positive or both negative
   }
 
-  void _coefDataJac::getSubCoeff(std::vector<_coefData *> &v) const
+  void _coeffDataJac::getSubCoeff(std::vector<_coeffData *> &v) const
   {
     v.clear();
     v.reserve(_bfs->getNumDivision());
@@ -707,24 +707,24 @@ namespace jacobianBasedQuality {
     for(int i = 0; i < _bfs->getNumDivision(); i++) {
       fullVector<double> coeff(sz);
       coeff.copy(subCoeff, i * sz, sz, 0);
-      _coefDataJac *newData =
-        new _coefDataJac(coeff, _bfs, _depth + 1, sub[i]);
+      _coeffDataJac *newData =
+        new _coeffDataJac(coeff, _bfs, _depth + 1, sub[i]);
       v.push_back(newData);
     }
   }
 
   // IGE measure (Inverse Gradient Error)
-  _coefDataIGE::_coefDataIGE(fullVector<double> &det, fullMatrix<double> &mat,
+  _coeffDataIGE::_coeffDataIGE(fullVector<double> &det, fullMatrix<double> &mat,
                                const bezierBasis *bfsDet,
                                const bezierBasis *bfsMat, int depth, int type,
                                const bezierCoeff *det2, const bezierCoeff *mat2)
-    : _coefData(depth), _coeffsJacDet(det.getDataPtr(), det.size()),
+    : _coeffData(depth), _coeffsJacDet(det.getDataPtr(), det.size()),
       _coeffsJacMat(mat.getDataPtr(), mat.size1(), mat.size2()),
       _bfsDet(bfsDet), _bfsMat(bfsMat), _coeffDet2(det2), _coeffMat2(mat2),
       _type(type)
   {
     if(!det.getOwnData() || !mat.getOwnData()) {
-      Msg::Error("Cannot create an instance of _coefDataIGE from a "
+      Msg::Error("Cannot create an instance of _coeffDataIGE from a "
                  "fullVector or a fullMatrix that does not own its data.");
       return;
     }
@@ -749,7 +749,7 @@ namespace jacobianBasedQuality {
     // computation of _maxB not implemented for now
   }
 
-  bool _coefDataIGE::boundsOk(double minL, double maxL) const
+  bool _coeffDataIGE::boundsOk(double minL, double maxL) const
   {
     static const double tolmin = 1e-3;
     static const double tolmax = 1e-2;
@@ -757,7 +757,7 @@ namespace jacobianBasedQuality {
     return minL - _minB2 < tol;
   }
 
-  void _coefDataIGE::getSubCoeff(std::vector<_coefData *> &v) const
+  void _coeffDataIGE::getSubCoeff(std::vector<_coeffData *> &v) const
   {
     v.clear();
     v.reserve(_bfsDet->getNumDivision());
@@ -779,14 +779,14 @@ namespace jacobianBasedQuality {
       fullMatrix<double> coeffM(szM1, szM2);
       coeffD.copy(subCoeffD, i * szD, szD, 0);
       coeffM.copy(subCoeffM, i * szM1, szM1, 0, szM2, 0, 0);
-      _coefDataIGE *newData;
-      newData = new _coefDataIGE(coeffD, coeffM, _bfsDet, _bfsMat, _depth + 1,
+      _coeffDataIGE *newData;
+      newData = new _coeffDataIGE(coeffD, coeffM, _bfsDet, _bfsMat, _depth + 1,
                                   _type, subD[i], subM[i]);
       v.push_back(newData);
     }
   }
 
-  void _coefDataIGE::_computeAtCorner(double &min, double &max, double &min2,
+  void _coeffDataIGE::_computeAtCorner(double &min, double &max, double &min2,
                                        double &max2) const
   {
     fullMatrix<double> v, m(_bfsDet->getNumLagCoeff(), _coeffsJacMat.size2());
@@ -821,7 +821,7 @@ namespace jacobianBasedQuality {
     }
   }
 
-  double _coefDataIGE::_computeLowerBound() const
+  double _coeffDataIGE::_computeLowerBound() const
   {
     // Speedup: If one coeff _coeffsJacDet is negative, without bounding
     // J^2/(a^2+b^2), we would get with certainty a negative lower bound.
@@ -937,7 +937,7 @@ namespace jacobianBasedQuality {
     }
   }
 
-  double _coefDataIGE::_computeLowerBound2() const
+  double _coeffDataIGE::_computeLowerBound2() const
   {
     fullVector<double> det;
     fullMatrix<double> mat;
@@ -1068,17 +1068,17 @@ namespace jacobianBasedQuality {
   }
 
   // ICN measure (Inverse Condition Number)
-  _coefDataICN::_coefDataICN(fullVector<double> &det, fullMatrix<double> &mat,
+  _coeffDataICN::_coeffDataICN(fullVector<double> &det, fullMatrix<double> &mat,
                                const bezierBasis *bfsDet,
                                const bezierBasis *bfsMat, int depth, int dim,
                                const bezierCoeff *det2, const bezierCoeff *mat2)
-    : _coefData(depth), _coeffsJacDet(det.getDataPtr(), det.size()),
+    : _coeffData(depth), _coeffsJacDet(det.getDataPtr(), det.size()),
       _coeffsJacMat(mat.getDataPtr(), mat.size1(), mat.size2()),
       _bfsDet(bfsDet), _bfsMat(bfsMat), _coeffDet2(det2), _coeffMat2(mat2),
       _dim(dim)
   {
     if(!det.getOwnData() || !mat.getOwnData()) {
-      Msg::Error("Cannot create an instance of _coefDataIGE from a "
+      Msg::Error("Cannot create an instance of _coeffDataIGE from a "
                  "fullVector or a fullMatrix that does not own its data.");
       return;
     }
@@ -1103,7 +1103,7 @@ namespace jacobianBasedQuality {
     // _maxB not used for now
   }
 
-  bool _coefDataICN::boundsOk(double minL, double maxL) const
+  bool _coeffDataICN::boundsOk(double minL, double maxL) const
   {
     static const double tolmin = 1e-3;
     static const double tolmax = 1e-2;
@@ -1111,7 +1111,7 @@ namespace jacobianBasedQuality {
     return minL - _minB2 < tol;
   }
 
-  void _coefDataICN::getSubCoeff(std::vector<_coefData *> &v) const
+  void _coeffDataICN::getSubCoeff(std::vector<_coeffData *> &v) const
   {
     v.clear();
     v.reserve(_bfsMat->getNumDivision());
@@ -1133,13 +1133,13 @@ namespace jacobianBasedQuality {
       fullMatrix<double> coeffM(szM1, szM2);
       coeffD.copy(subCoeffD, i * szD, szD, 0);
       coeffM.copy(subCoeffM, i * szM1, szM1, 0, szM2, 0, 0);
-      _coefDataICN *newData =
-        new _coefDataICN(coeffD, coeffM, _bfsDet, _bfsMat, _depth + 1, _dim, subD[i], subM[i]);
+      _coeffDataICN *newData =
+        new _coeffDataICN(coeffD, coeffM, _bfsDet, _bfsMat, _depth + 1, _dim, subD[i], subM[i]);
       v.push_back(newData);
     }
   }
 
-  void _coefDataICN::_computeAtCorner(double &min, double &max, double &min2, double &max2) const
+  void _coeffDataICN::_computeAtCorner(double &min, double &max, double &min2, double &max2) const
   {
     min = std::numeric_limits<double>::infinity();
     max = -min;
@@ -1174,7 +1174,7 @@ namespace jacobianBasedQuality {
     }
   }
 
-  double _coefDataICN::_computeLowerBound() const
+  double _coeffDataICN::_computeLowerBound() const
   {
     // Speedup: If one coeff _coeffsJacDet is negative, we would get
     // a negative lower bound. For now, returning 0.
@@ -1222,7 +1222,7 @@ namespace jacobianBasedQuality {
     return 3 * std::pow(boundFraction * boundFraction, 1. / 3);
   }
 
-  double _coefDataICN::_computeLowerBound2() const
+  double _coeffDataICN::_computeLowerBound2() const
   {
     fullVector<double> det;
     fullMatrix<double> mat;
@@ -1276,15 +1276,15 @@ namespace jacobianBasedQuality {
 
   // Miscellaneous
   template <typename Comp>
-  void _subdivideDomainsMinOrMax(std::vector<_coefData *> &domains,
+  void _subdivideDomainsMinOrMax(std::vector<_coeffData *> &domains,
                                  double &minL, double &maxL, bool debug)
   {
-    std::vector<_coefData *> subs;
+    std::vector<_coeffData *> subs;
     make_heap(domains.begin(), domains.end(), Comp());
     int k = 0;
     const int max_subdivision = 1000;
     while(!domains[0]->boundsOk(minL, maxL) && k+1 < max_subdivision) {
-      _coefData *cd = domains[0];
+      _coeffData *cd = domains[0];
       pop_heap(domains.begin(), domains.end(), Comp());
       domains.pop_back();
       cd->getSubCoeff(subs);
@@ -1306,7 +1306,7 @@ namespace jacobianBasedQuality {
     }
   }
 
-  void _subdivideDomains(std::vector<_coefData *> &domains, bool alsoMax,
+  void _subdivideDomains(std::vector<_coeffData *> &domains, bool alsoMax,
                          bool debug)
   {
     if(domains.empty()) {
@@ -1325,7 +1325,7 @@ namespace jacobianBasedQuality {
       _subdivideDomainsMinOrMax<_lessMaxB>(domains, minL, maxL, debug);
   }
 
-  double _getMinAndDeleteDomains(std::vector<_coefData *> &domains)
+  double _getMinAndDeleteDomains(std::vector<_coeffData *> &domains)
   {
     double minB = domains[0]->minB();
     double minL = domains[0]->minL();
@@ -1348,7 +1348,7 @@ namespace jacobianBasedQuality {
     // after a huge amount of subdivision. In this case, it is better to
     // return minL instead of minB. The best solution would be to implement
     // sharp bounds for triangles and prisms, see function
-    // _coefDataIGE::_computeLowerBound2(..). If it is done, change this to
+    // _coeffDataIGE::_computeLowerBound2(..). If it is done, change this to
     // return minB.
     return fact * minL2 + (1 - fact) * minB2;
   }
