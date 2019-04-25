@@ -58,9 +58,6 @@ public:
   // The exponent matrix gives the ordering of the coefficients
   inline const fullMatrix<double>& getCoeffOrdering() const { return _exponents; }
 
-  // Evaluate Bezier functions at the point (u, v, w)
-  void f(double u, double v, double w, double *sf) const;
-
   // Subdivide Bezier coefficients
   void subdivideBezCoeff(const fullMatrix<double> &coeff,
                          fullMatrix<double> &subCoeff) const;
@@ -70,7 +67,6 @@ public:
 private:
   void _construct();
   void _constructPyr();
-  void _fePoints2BezPoints(fullMatrix<double> &) const;
 };
 
 class bezierBasisRaiser {

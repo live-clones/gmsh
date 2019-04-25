@@ -693,68 +693,6 @@ bezierBasis::bezierBasis(FuncSpaceData data) : _data(data), _raiser(NULL)
 
 bezierBasis::~bezierBasis() { delete _raiser; }
 
-void bezierBasis::f(double u, double v, double w, double *sf) const
-{
-  const int tag = ElementType::getType(_data.getType(), _data.getSpaceOrder());
-  const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
-  double p[1256];
-  // TODO Amaury: change (u,v,w)
-  fs->f(u, v, w, p);
-
-  for(int i = 0; i < matrixBez2Lag.size1(); i++) {
-    sf[i] = 0.0;
-    for(int j = 0; j < matrixBez2Lag.size2(); j++) {
-      sf[i] += matrixBez2Lag(j, i) * p[j];
-    }
-  }
-}
-
-void bezierBasis::_fePoints2BezPoints(fullMatrix<double> &points) const
-{
-  fullMatrix<double> tmp;
-  switch(_data.getType()) {
-  case TYPE_TRI:
-  case TYPE_TET: break;
-
-  case TYPE_LIN:
-    tmp.setAsProxy(points, 0, 1);
-    tmp.add(1);
-    tmp.scale(.5);
-    break;
-
-  case TYPE_QUA:
-    tmp.setAsProxy(points, 0, 2);
-    tmp.add(1);
-    tmp.scale(.5);
-    break;
-
-  case TYPE_HEX:
-    points.add(1);
-    points.scale(.5);
-    break;
-
-  case TYPE_PRI:
-    tmp.setAsProxy(points, 2, 1);
-    tmp.add(1);
-    tmp.scale(.5);
-    break;
-
-  case TYPE_PYR:
-    for(int i = 0; i < points.size1(); ++i) {
-      points(i, 2) = 1. - points(i, 2);
-      points(i, 0) = .5 * (1 + points(i, 0) / points(i, 2));
-      points(i, 1) = .5 * (1 + points(i, 1) / points(i, 2));
-    }
-    break;
-
-  default:
-    Msg::Error("_fepoints2BezPoints not implemented for "
-               "type of element %d",
-               _data.getType());
-    return;
-  }
-}
-
 void bezierBasis::subdivideBezCoeff(const fullMatrix<double> &coeff,
                                     fullMatrix<double> &subCoeff) const
 {
