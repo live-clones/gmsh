@@ -47,11 +47,9 @@ namespace jacobianBasedQuality {
     // FIXME renames
     double _minL2, _maxL2; // Extremum of measure at corners
     double _minB2, _maxB2; // Extremum of measure
-    const int _depth;
 
   public:
-    _coeffData(int depth)
-      : _minL2(0), _maxL2(0), _minB2(0), _maxB2(0), _depth(depth) {}
+    _coeffData() : _minL2(0), _maxL2(0), _minB2(0), _maxB2(0) {}
     virtual ~_coeffData() {}
 
     // FIXME renames
@@ -59,7 +57,6 @@ namespace jacobianBasedQuality {
     inline double maxL2() const { return _maxL2; }
     inline double minB2() const { return _minB2; }
     inline double maxB2() const { return _maxB2; }
-    inline int depth() const { return _depth; }
 
     virtual bool boundsOk(double minL, double maxL) const = 0;
     virtual void getSubCoeff(std::vector<_coeffData *> &) const = 0;
@@ -80,7 +77,7 @@ namespace jacobianBasedQuality {
     const bezierCoeff *_coeffs2;
 
   public:
-    _coeffDataJac(fullVector<double> &v, const bezierBasis *bfs, int depth,
+    _coeffDataJac(fullVector<double> &v, const bezierBasis *bfs,
                   const bezierCoeff *coeffs2 = NULL);
     ~_coeffDataJac() {}
 
@@ -101,7 +98,7 @@ namespace jacobianBasedQuality {
   public:
     _coeffDataIGE(fullVector<double> &det, fullMatrix<double> &mat,
                   const bezierBasis *bfsDet, const bezierBasis *bfsMat,
-                  int depth, int type, const bezierCoeff *det2 = NULL,
+                  int type, const bezierCoeff *det2 = NULL,
                   const bezierCoeff *mat2 = NULL);
     ~_coeffDataIGE() {}
 
@@ -126,7 +123,7 @@ namespace jacobianBasedQuality {
   public:
     _coeffDataICN(fullVector<double> &det, fullMatrix<double> &metric,
                   const bezierBasis *bfsDet, const bezierBasis *bfsMet,
-                  int depth, int dim, const bezierCoeff *det2 = NULL,
+                  int dim, const bezierCoeff *det2 = NULL,
                   const bezierCoeff *mat2 = NULL);
     ~_coeffDataICN() {}
 

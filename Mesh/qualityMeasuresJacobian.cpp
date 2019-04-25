@@ -271,7 +271,7 @@ namespace jacobianBasedQuality {
     bezierCoeff::usePools(static_cast<std::size_t>(coeffLag.size()), 0);
     std::vector<_coeffData *> domains;
     bezierCoeff *bez = new bezierCoeff(jfs->getFuncSpaceData(), coeffLag, 0);
-    domains.push_back(new _coeffDataJac(coeffBez, jfs->getBezier(), 0, bez));
+    domains.push_back(new _coeffDataJac(coeffBez, jfs->getBezier(), bez));
 
     _subdivideDomains(domains, true, debug);
 
@@ -338,7 +338,7 @@ namespace jacobianBasedQuality {
     bezierCoeff *bezMat = new bezierCoeff(jacMatSpace, coeffMatLag, 1);
     domains.push_back(new _coeffDataIGE(
       coeffDetBez, coeffMatBez, jacBasis->getBezier(), gradBasis->getBezier(),
-      0, el->getType(), bezDet, bezMat));
+      el->getType(), bezDet, bezMat));
 
     _subdivideDomains(domains, false, debug);
 
@@ -397,7 +397,7 @@ namespace jacobianBasedQuality {
     bezierCoeff *bezMat = new bezierCoeff(jacMatSpace, coeffMatLag, 1);
     domains.push_back(new _coeffDataICN(coeffDetBez, coeffMatBez,
                                         jacBasis->getBezier(),
-                                        gradBasis->getBezier(), 0, el->getDim(), bezDet, bezMat));
+                                        gradBasis->getBezier(), el->getDim(), bezDet, bezMat));
 
     _subdivideDomains(domains, false, debug);
 
@@ -526,8 +526,8 @@ namespace jacobianBasedQuality {
 
   // Jacobian determinant (for validity of all elements)
   _coeffDataJac::_coeffDataJac(fullVector<double> &v, const bezierBasis *bfs,
-                               int depth, const bezierCoeff *coeffs2)
-    : _coeffData(depth), _coeffs(v.getDataPtr(), v.size()), _bfs(bfs),
+                               const bezierCoeff *coeffs2)
+    : _coeffData(), _coeffs(v.getDataPtr(), v.size()), _bfs(bfs),
       _coeffs2(coeffs2)
   {
     if(!v.getOwnData()) {
@@ -580,7 +580,7 @@ namespace jacobianBasedQuality {
       fullVector<double> coeff(sz);
       coeff.copy(subCoeff, i * sz, sz, 0);
       _coeffDataJac *newData =
-        new _coeffDataJac(coeff, _bfs, _depth + 1, sub[i]);
+        new _coeffDataJac(coeff, _bfs, sub[i]);
       v.push_back(newData);
     }
   }
@@ -593,9 +593,9 @@ namespace jacobianBasedQuality {
   // IGE measure (Inverse Gradient Error)
   _coeffDataIGE::_coeffDataIGE(fullVector<double> &det, fullMatrix<double> &mat,
                                const bezierBasis *bfsDet,
-                               const bezierBasis *bfsMat, int depth, int type,
+                               const bezierBasis *bfsMat, int type,
                                const bezierCoeff *det2, const bezierCoeff *mat2)
-    : _coeffData(depth), _coeffsJacDet(det.getDataPtr(), det.size()),
+    : _coeffData(), _coeffsJacDet(det.getDataPtr(), det.size()),
       _coeffsJacMat(mat.getDataPtr(), mat.size1(), mat.size2()),
       _bfsDet(bfsDet), _bfsMat(bfsMat), _coeffDet2(det2), _coeffMat2(mat2),
       _type(type)
@@ -655,7 +655,7 @@ namespace jacobianBasedQuality {
       coeffD.copy(subCoeffD, i * szD, szD, 0);
       coeffM.copy(subCoeffM, i * szM1, szM1, 0, szM2, 0, 0);
       _coeffDataIGE *newData;
-      newData = new _coeffDataIGE(coeffD, coeffM, _bfsDet, _bfsMat, _depth + 1,
+      newData = new _coeffDataIGE(coeffD, coeffM, _bfsDet, _bfsMat,
                                   _type, subD[i], subM[i]);
       v.push_back(newData);
     }
@@ -820,9 +820,9 @@ namespace jacobianBasedQuality {
   // ICN measure (Inverse Condition Number)
   _coeffDataICN::_coeffDataICN(fullVector<double> &det, fullMatrix<double> &mat,
                                const bezierBasis *bfsDet,
-                               const bezierBasis *bfsMat, int depth, int dim,
+                               const bezierBasis *bfsMat, int dim,
                                const bezierCoeff *det2, const bezierCoeff *mat2)
-    : _coeffData(depth), _coeffsJacDet(det.getDataPtr(), det.size()),
+    : _coeffData(), _coeffsJacDet(det.getDataPtr(), det.size()),
       _coeffsJacMat(mat.getDataPtr(), mat.size1(), mat.size2()),
       _bfsDet(bfsDet), _bfsMat(bfsMat), _coeffDet2(det2), _coeffMat2(mat2),
       _dim(dim)
@@ -882,7 +882,7 @@ namespace jacobianBasedQuality {
       coeffD.copy(subCoeffD, i * szD, szD, 0);
       coeffM.copy(subCoeffM, i * szM1, szM1, 0, szM2, 0, 0);
       _coeffDataICN *newData =
-        new _coeffDataICN(coeffD, coeffM, _bfsDet, _bfsMat, _depth + 1, _dim, subD[i], subM[i]);
+        new _coeffDataICN(coeffD, coeffM, _bfsDet, _bfsMat, _dim, subD[i], subM[i]);
       v.push_back(newData);
     }
   }
