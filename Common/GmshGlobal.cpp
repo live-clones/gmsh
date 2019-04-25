@@ -279,9 +279,6 @@ static void GoodbyeMessage()
   Msg::Info("Stopped on %s", currtime.c_str());
 }
 
-#include "AnalyseCurvedMesh.h"
-#include "qualityMeasuresJacobian.h"
-
 int GmshBatch()
 {
   StartupMessage();

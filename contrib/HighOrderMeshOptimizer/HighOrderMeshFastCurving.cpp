@@ -49,6 +49,7 @@
 #include "Field.h"
 #include "boundaryLayersData.h"
 #include "BoundaryLayerCurver.h"
+#include "FuncSpaceData.h"
 
 namespace {
 

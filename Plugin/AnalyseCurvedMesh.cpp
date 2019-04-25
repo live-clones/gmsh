@@ -14,6 +14,7 @@
 #include "PView.h"
 #include "GModel.h"
 #include "MElement.h"
+#include "bezierBasis.h"
 #include <sstream>
 #include <fstream>
 #if defined(HAVE_OPENGL)

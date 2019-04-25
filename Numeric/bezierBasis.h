@@ -48,10 +48,8 @@ public:
   inline int getType() const { return _data.getType(); }
   inline int getOrder() const { return _data.getSpaceOrder(); }
   inline int getDimSimplex() const { return _dimSimplex; }
-  inline int getNumCoeff() const { return _exponents.size1(); }
   inline int getNumLagCoeff() const { return _numLagCoeff; }
   inline int getNumDivision() const { return _numDivisions; }
-  inline int getNumSubNodes() const { return subDivisor.size1(); }
   inline FuncSpaceData getFuncSpaceData() const { return _data; }
   bezierBasisRaiser *getRaiser() const;
 

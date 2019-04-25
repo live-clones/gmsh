@@ -713,6 +713,11 @@ namespace jacobianBasedQuality {
     }
   }
 
+  void _coeffDataJac::deleteBezierCoeff()
+  {
+    delete _coeffs2;
+  }
+
   // IGE measure (Inverse Gradient Error)
   _coeffDataIGE::_coeffDataIGE(fullVector<double> &det, fullMatrix<double> &mat,
                                const bezierBasis *bfsDet,
@@ -784,6 +789,12 @@ namespace jacobianBasedQuality {
                                   _type, subD[i], subM[i]);
       v.push_back(newData);
     }
+  }
+
+  void _coeffDataIGE::deleteBezierCoeff()
+  {
+    delete _coeffDet2;
+    delete _coeffMat2;
   }
 
   void _coeffDataIGE::_computeAtCorner(double &min, double &max, double &min2,
@@ -1137,6 +1148,12 @@ namespace jacobianBasedQuality {
         new _coeffDataICN(coeffD, coeffM, _bfsDet, _bfsMat, _depth + 1, _dim, subD[i], subM[i]);
       v.push_back(newData);
     }
+  }
+
+  void _coeffDataICN::deleteBezierCoeff()
+  {
+    delete _coeffDet2;
+    delete _coeffMat2;
   }
 
   void _coeffDataICN::_computeAtCorner(double &min, double &max, double &min2, double &max2) const

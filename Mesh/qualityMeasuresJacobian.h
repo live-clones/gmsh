@@ -8,11 +8,10 @@
 
 #include <vector>
 #include "fullMatrix.h"
-#include "bezierBasis.h"
 
 class GradientBasis;
-// class bezierBasis;
-// class bezierCoeff;
+class bezierBasis;
+class bezierCoeff;
 class MElement;
 
 namespace jacobianBasedQuality {
@@ -94,7 +93,7 @@ namespace jacobianBasedQuality {
 
     bool boundsOk(double minL, double maxL) const;
     void getSubCoeff(std::vector<_coeffData *> &) const;
-    void deleteBezierCoeff() { delete _coeffs2; }
+    void deleteBezierCoeff();
     int getNumMeasure() const { return 1; } // fordebug
   };
 
@@ -102,9 +101,9 @@ namespace jacobianBasedQuality {
   private:
     const fullVector<double> _coeffsJacDet;
     const fullMatrix<double> _coeffsJacMat;
+    const bezierBasis *_bfsDet, *_bfsMat;
     const bezierCoeff *_coeffDet2;
     const bezierCoeff *_coeffMat2;
-    const bezierBasis *_bfsDet, *_bfsMat;
     const int _type;
 
   public:
@@ -116,7 +115,7 @@ namespace jacobianBasedQuality {
 
     bool boundsOk(double minL, double maxL) const;
     void getSubCoeff(std::vector<_coeffData *> &) const;
-    void deleteBezierCoeff() { delete _coeffDet2; delete _coeffMat2; }
+    void deleteBezierCoeff();
     int getNumMeasure() const { return 2; } // FIXMEDEBUG
 
   private:
@@ -130,9 +129,9 @@ namespace jacobianBasedQuality {
   private:
     const fullVector<double> _coeffsJacDet;
     const fullMatrix<double> _coeffsJacMat;
+    const bezierBasis *_bfsDet, *_bfsMat;
     const bezierCoeff *_coeffDet2;
     const bezierCoeff *_coeffMat2;
-    const bezierBasis *_bfsDet, *_bfsMat;
     const int _dim;
 
   public:
@@ -144,7 +143,7 @@ namespace jacobianBasedQuality {
 
     bool boundsOk(double minL, double maxL) const;
     void getSubCoeff(std::vector<_coeffData *> &) const;
-    void deleteBezierCoeff() { delete _coeffDet2; delete _coeffMat2; }
+    void deleteBezierCoeff();
     int getNumMeasure() const { return 4; } // fordebug
 
   private:

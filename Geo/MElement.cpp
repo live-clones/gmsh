@@ -27,6 +27,7 @@
 #include "CondNumBasis.h"
 #include "Context.h"
 #include "FuncSpaceData.h"
+#include "bezierBasis.h"
 
 #if defined(HAVE_MESH)
 #include "qualityMeasuresJacobian.h"
