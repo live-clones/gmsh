@@ -721,6 +721,13 @@ const JacobianBasis *MElement::getJacobianFuncSpace(int order) const
   return BasisFactory::getJacobianBasis(tag);
 }
 
+const JacobianBasis *MElement::getJacobianFuncSpaceData(int order) const
+{
+  if(order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
+  int tag = ElementType::getType(getType(), order);
+  return BasisFactory::getJacobianBasis(tag);
+}
+
 static double _computeDeterminantAndRegularize(const MElement *ele,
                                                double jac[3][3])
 {

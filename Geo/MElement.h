@@ -321,6 +321,7 @@ public:
 
   // get the function space for the jacobian of the element
   virtual const JacobianBasis *getJacobianFuncSpace(int order = -1) const;
+  virtual const JacobianBasis *getJacobianFuncSpaceData(int order = -1) const;
 
   // return parametric coordinates (u,v,w) of a vertex
   virtual void getNode(int num, double &u, double &v, double &w) const;
