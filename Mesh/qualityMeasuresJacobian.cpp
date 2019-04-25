@@ -271,7 +271,7 @@ namespace jacobianBasedQuality {
     bezierCoeff::usePools(static_cast<std::size_t>(coeffLag.size()), 0);
     std::vector<_coeffData *> domains;
     bezierCoeff *bez = new bezierCoeff(jfs->getFuncSpaceData(), coeffLag, 0);
-    domains.push_back(new _coeffDataJac(coeffBez, jfs->getBezier(), bez));
+    domains.push_back(new _coeffDataJac(jfs->getBezier(), bez));
 
     _subdivideDomains(domains, true, debug);
 
@@ -336,8 +336,7 @@ namespace jacobianBasedQuality {
     std::vector<_coeffData *> domains;
     bezierCoeff *bezDet = new bezierCoeff(jacDetSpace, coeffDetLag, 0);
     bezierCoeff *bezMat = new bezierCoeff(jacMatSpace, coeffMatLag, 1);
-    domains.push_back(new _coeffDataIGE(
-      coeffDetBez, coeffMatBez, jacBasis->getBezier(), gradBasis->getBezier(),
+    domains.push_back(new _coeffDataIGE(jacBasis->getBezier(), gradBasis->getBezier(),
       el->getType(), bezDet, bezMat));
 
     _subdivideDomains(domains, false, debug);
@@ -395,8 +394,7 @@ namespace jacobianBasedQuality {
     std::vector<_coeffData *> domains;
     bezierCoeff *bezDet = new bezierCoeff(jacDetSpace, coeffDetLag, 0);
     bezierCoeff *bezMat = new bezierCoeff(jacMatSpace, coeffMatLag, 1);
-    domains.push_back(new _coeffDataICN(coeffDetBez, coeffMatBez,
-                                        jacBasis->getBezier(),
+    domains.push_back(new _coeffDataICN(jacBasis->getBezier(),
                                         gradBasis->getBezier(), el->getDim(), bezDet, bezMat));
 
     _subdivideDomains(domains, false, debug);
@@ -525,22 +523,10 @@ namespace jacobianBasedQuality {
   }
 
   // Jacobian determinant (for validity of all elements)
-  _coeffDataJac::_coeffDataJac(fullVector<double> &v, const bezierBasis *bfs,
+  _coeffDataJac::_coeffDataJac(const bezierBasis *bfs,
                                const bezierCoeff *coeffs2)
-    : _coeffData(), _coeffs(v.getDataPtr(), v.size()), _bfs(bfs),
-      _coeffs2(coeffs2)
+    : _coeffData(), _bfs(bfs), _coeffs2(coeffs2)
   {
-    if(!v.getOwnData()) {
-      Msg::Fatal("Cannot create an instance of _coeffDataJac from a "
-                 "fullVector that does not own its data.");
-      return;
-    }
-    // _coeffs reuses the data of v, this avoid to allocate a new array and to
-    // copy data that are not used outside of this object.
-    // It remains to swap ownership:
-    v.setOwnData(false);
-    const_cast<fullVector<double> &>(_coeffs).setOwnData(true);
-
     const bezierCoeff &coeff = (*_coeffs2);
 
     _minL2 = _maxL2 = coeff.getCornerCoeff(0);
@@ -569,19 +555,12 @@ namespace jacobianBasedQuality {
   {
     v.clear();
     v.reserve(_bfs->getNumDivision());
-    fullVector<double> subCoeff;
-    _bfs->subdivideBezCoeff(_coeffs, subCoeff);
 
     std::vector<bezierCoeff *> sub;
     _coeffs2->subdivide(sub);
 
-    int sz = _coeffs.size();
     for(int i = 0; i < _bfs->getNumDivision(); i++) {
-      fullVector<double> coeff(sz);
-      coeff.copy(subCoeff, i * sz, sz, 0);
-      _coeffDataJac *newData =
-        new _coeffDataJac(coeff, _bfs, sub[i]);
-      v.push_back(newData);
+      v.push_back(new _coeffDataJac(_bfs, sub[i]));
     }
   }
 
@@ -591,28 +570,13 @@ namespace jacobianBasedQuality {
   }
 
   // IGE measure (Inverse Gradient Error)
-  _coeffDataIGE::_coeffDataIGE(fullVector<double> &det, fullMatrix<double> &mat,
-                               const bezierBasis *bfsDet,
+  _coeffDataIGE::_coeffDataIGE(const bezierBasis *bfsDet,
                                const bezierBasis *bfsMat, int type,
                                const bezierCoeff *det2, const bezierCoeff *mat2)
-    : _coeffData(), _coeffsJacDet(det.getDataPtr(), det.size()),
-      _coeffsJacMat(mat.getDataPtr(), mat.size1(), mat.size2()),
+    : _coeffData(),
       _bfsDet(bfsDet), _bfsMat(bfsMat), _coeffDet2(det2), _coeffMat2(mat2),
       _type(type)
   {
-    if(!det.getOwnData() || !mat.getOwnData()) {
-      Msg::Error("Cannot create an instance of _coeffDataIGE from a "
-                 "fullVector or a fullMatrix that does not own its data.");
-      return;
-    }
-    // _coeffsJacDet and _coeffsJacMat reuse data, this avoid to allocate new
-    // arrays and to copy data that are not used outside of this object.
-    // It remains to swap ownerships:
-    det.setOwnData(false);
-    mat.setOwnData(false);
-    const_cast<fullVector<double> &>(_coeffsJacDet).setOwnData(true);
-    const_cast<fullMatrix<double> &>(_coeffsJacMat).setOwnData(true);
-
     _computeAtCorner(_minL2, _maxL2);
 
     _minB2 = 0;
@@ -636,28 +600,14 @@ namespace jacobianBasedQuality {
   {
     v.clear();
     v.reserve(_bfsDet->getNumDivision());
-    fullVector<double> subCoeffD;
-    fullMatrix<double> subCoeffM;
-    _bfsDet->subdivideBezCoeff(_coeffsJacDet, subCoeffD);
-    _bfsMat->subdivideBezCoeff(_coeffsJacMat, subCoeffM);
 
     std::vector<bezierCoeff *> subD;
     std::vector<bezierCoeff *> subM;
     _coeffDet2->subdivide(subD);
     _coeffMat2->subdivide(subM);
 
-    int szD = _coeffsJacDet.size();
-    int szM1 = _coeffsJacMat.size1();
-    int szM2 = _coeffsJacMat.size2();
     for(int i = 0; i < _bfsDet->getNumDivision(); i++) {
-      fullVector<double> coeffD(szD);
-      fullMatrix<double> coeffM(szM1, szM2);
-      coeffD.copy(subCoeffD, i * szD, szD, 0);
-      coeffM.copy(subCoeffM, i * szM1, szM1, 0, szM2, 0, 0);
-      _coeffDataIGE *newData;
-      newData = new _coeffDataIGE(coeffD, coeffM, _bfsDet, _bfsMat,
-                                  _type, subD[i], subM[i]);
-      v.push_back(newData);
+      v.push_back(new _coeffDataIGE(_bfsDet, _bfsMat, _type, subD[i], subM[i]));
     }
   }
 
@@ -694,7 +644,7 @@ namespace jacobianBasedQuality {
     _coeffDet2->setVectorAsProxy(det);
     _coeffMat2->setMatrixAsProxy(mat);
 
-    // Speedup: If one coeff _coeffsJacDet is negative, without bounding
+    // Speedup: If one coeff _coeffDet2 is negative, without bounding
     // J^2/(a^2+b^2), we would get with certainty a negative lower bound.
     // Returning 0.
     for(int i = 0; i < det.size(); ++i) {
@@ -818,28 +768,13 @@ namespace jacobianBasedQuality {
   }
 
   // ICN measure (Inverse Condition Number)
-  _coeffDataICN::_coeffDataICN(fullVector<double> &det, fullMatrix<double> &mat,
-                               const bezierBasis *bfsDet,
+  _coeffDataICN::_coeffDataICN(const bezierBasis *bfsDet,
                                const bezierBasis *bfsMat, int dim,
                                const bezierCoeff *det2, const bezierCoeff *mat2)
-    : _coeffData(), _coeffsJacDet(det.getDataPtr(), det.size()),
-      _coeffsJacMat(mat.getDataPtr(), mat.size1(), mat.size2()),
+    : _coeffData(),
       _bfsDet(bfsDet), _bfsMat(bfsMat), _coeffDet2(det2), _coeffMat2(mat2),
       _dim(dim)
   {
-    if(!det.getOwnData() || !mat.getOwnData()) {
-      Msg::Error("Cannot create an instance of _coeffDataIGE from a "
-                 "fullVector or a fullMatrix that does not own its data.");
-      return;
-    }
-    // _coeffsJacDet and _coeffsMetric reuse data, this avoid to allocate new
-    // arrays and to copy data that are not used outside of this object.
-    // It remains to swap ownerships:
-    det.setOwnData(false);
-    mat.setOwnData(false);
-    const_cast<fullVector<double> &>(_coeffsJacDet).setOwnData(true);
-    const_cast<fullMatrix<double> &>(_coeffsJacMat).setOwnData(true);
-
     _computeAtCorner(_minL2, _maxL2);
 
     _minB2 = 0;
@@ -863,27 +798,14 @@ namespace jacobianBasedQuality {
   {
     v.clear();
     v.reserve(_bfsMat->getNumDivision());
-    fullMatrix<double> subCoeffM;
-    fullVector<double> subCoeffD;
-    _bfsMat->subdivideBezCoeff(_coeffsJacMat, subCoeffM);
-    _bfsDet->subdivideBezCoeff(_coeffsJacDet, subCoeffD);
 
     std::vector<bezierCoeff *> subD;
     std::vector<bezierCoeff *> subM;
     _coeffDet2->subdivide(subD);
     _coeffMat2->subdivide(subM);
 
-    int szD = _coeffsJacDet.size();
-    int szM1 = _coeffsJacMat.size1();
-    int szM2 = _coeffsJacMat.size2();
     for(int i = 0; i < _bfsMat->getNumDivision(); i++) {
-      fullVector<double> coeffD(szD);
-      fullMatrix<double> coeffM(szM1, szM2);
-      coeffD.copy(subCoeffD, i * szD, szD, 0);
-      coeffM.copy(subCoeffM, i * szM1, szM1, 0, szM2, 0, 0);
-      _coeffDataICN *newData =
-        new _coeffDataICN(coeffD, coeffM, _bfsDet, _bfsMat, _dim, subD[i], subM[i]);
-      v.push_back(newData);
+      v.push_back(new _coeffDataICN(_bfsDet, _bfsMat, _dim, subD[i], subM[i]));
     }
   }
 
@@ -917,7 +839,7 @@ namespace jacobianBasedQuality {
     _coeffDet2->setVectorAsProxy(det);
     _coeffMat2->setMatrixAsProxy(mat);
 
-    // Speedup: If one coeff _coeffsJacDet is negative, we would get
+    // Speedup: If one coeff _coeffDet2 is negative, we would get
     // a negative lower bound. For now, returning 0.
     for(int i = 0; i < det.size(); ++i) {
       if(det(i) < 0) {

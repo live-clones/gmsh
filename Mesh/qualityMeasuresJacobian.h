@@ -72,12 +72,13 @@ namespace jacobianBasedQuality {
 
   class _coeffDataJac : public _coeffData {
   private:
-    const fullVector<double> _coeffs;
+    // FIXME necessary?
     const bezierBasis *_bfs;
+    // FIXME renames
     const bezierCoeff *_coeffs2;
 
   public:
-    _coeffDataJac(fullVector<double> &v, const bezierBasis *bfs,
+    _coeffDataJac(const bezierBasis *bfs,
                   const bezierCoeff *coeffs2 = NULL);
     ~_coeffDataJac() {}
 
@@ -88,16 +89,15 @@ namespace jacobianBasedQuality {
 
   class _coeffDataIGE : public _coeffData {
   private:
-    const fullVector<double> _coeffsJacDet;
-    const fullMatrix<double> _coeffsJacMat;
+    // FIXME necessary?
     const bezierBasis *_bfsDet, *_bfsMat;
+    // FIXME renames
     const bezierCoeff *_coeffDet2;
     const bezierCoeff *_coeffMat2;
     const int _type;
 
   public:
-    _coeffDataIGE(fullVector<double> &det, fullMatrix<double> &mat,
-                  const bezierBasis *bfsDet, const bezierBasis *bfsMat,
+    _coeffDataIGE(const bezierBasis *bfsDet, const bezierBasis *bfsMat,
                   int type, const bezierCoeff *det2 = NULL,
                   const bezierCoeff *mat2 = NULL);
     ~_coeffDataIGE() {}
@@ -113,16 +113,15 @@ namespace jacobianBasedQuality {
 
   class _coeffDataICN : public _coeffData {
   private:
-    const fullVector<double> _coeffsJacDet;
-    const fullMatrix<double> _coeffsJacMat;
+    // FIXME necessary?
     const bezierBasis *_bfsDet, *_bfsMat;
+    // FIXME renames
     const bezierCoeff *_coeffDet2;
     const bezierCoeff *_coeffMat2;
     const int _dim;
 
   public:
-    _coeffDataICN(fullVector<double> &det, fullMatrix<double> &metric,
-                  const bezierBasis *bfsDet, const bezierBasis *bfsMet,
+    _coeffDataICN(const bezierBasis *bfsDet, const bezierBasis *bfsMet,
                   int dim, const bezierCoeff *det2 = NULL,
                   const bezierCoeff *mat2 = NULL);
     ~_coeffDataICN() {}
