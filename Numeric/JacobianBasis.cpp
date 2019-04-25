@@ -254,12 +254,6 @@ void GradientBasis::mapFromIdealElement(int type, double jac[3][3])
   mapFromIdealElement(type, dxyzdX, dxyzdY, dxyzdZ);
 }
 
-void GradientBasis::lag2Bez(const fullMatrix<double> &lag,
-                            fullMatrix<double> &bez) const
-{
-  getBezier()->matrixLag2Bez.mult(lag, bez);
-}
-
 JacobianBasis::JacobianBasis(int elementTag, FuncSpaceData data)
   : _elementTag(elementTag), _data(data), _dim(data.getDimension())
 {
@@ -823,36 +817,6 @@ void JacobianBasis::getMetricMinAndGradients(
       gradLambdaJ(l, i + 1 * numMapNodes) = aetaxi * dPhidX + aetaeta * dPhidY;
     }
   }
-}
-
-void JacobianBasis::lag2Bez(const fullVector<double> &lag,
-                            fullVector<double> &bez) const
-{
-  getBezier()->matrixLag2Bez.mult(lag, bez);
-}
-
-void JacobianBasis::lag2Bez(const fullMatrix<double> &lag,
-                            fullMatrix<double> &bez) const
-{
-  getBezier()->matrixLag2Bez.mult(lag, bez);
-}
-
-// Research purpose (to be removed ?)
-void JacobianBasis::interpolate(const fullVector<double> &jacobian,
-                                const fullMatrix<double> &uvw,
-                                fullMatrix<double> &result,
-                                bool areBezier) const
-{
-  fullMatrix<double> bezM(jacobian.size(), 1);
-  fullVector<double> bez;
-  bez.setAsProxy(bezM, 0);
-
-  if(areBezier)
-    bez.setAll(jacobian);
-  else
-    lag2Bez(jacobian, bez);
-
-  getBezier()->interpolate(bezM, uvw, result);
 }
 
 int JacobianBasis::jacobianOrder(int tag)

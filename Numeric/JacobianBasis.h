@@ -62,7 +62,6 @@ public:
                                   fullVector<double> &gSVecY,
                                   fullVector<double> &gSVecZ);
   static void mapFromIdealElement(int type, double jac[3][3]);
-  void lag2Bez(const fullMatrix<double> &lag, fullMatrix<double> &bez) const;
 };
 
 class JacobianBasis {
@@ -203,18 +202,12 @@ public:
                        normals);
   }
 
-  void lag2Bez(const fullVector<double> &lag, fullVector<double> &bez) const;
-  void lag2Bez(const fullMatrix<double> &lag, fullMatrix<double> &bez) const;
   inline void primJac2Jac(const fullVector<double> &primJac,
                           fullVector<double> &jac) const
   {
     matrixPrimJac2Jac.mult(primJac, jac);
   }
 
-  // Research purpose (to be removed ?)
-  void interpolate(const fullVector<double> &jacobian,
-                   const fullMatrix<double> &uvw, fullMatrix<double> &result,
-                   bool areBezier = false) const;
   static int jacobianOrder(int tag);
   static int jacobianOrder(int parentType, int order);
   static FuncSpaceData jacobianMatrixSpace(int type, int order);

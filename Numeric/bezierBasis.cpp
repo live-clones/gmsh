@@ -755,58 +755,6 @@ void bezierBasis::_fePoints2BezPoints(fullMatrix<double> &points) const
   }
 }
 
-void bezierBasis::interpolate(const fullMatrix<double> &coeffs,
-                              const fullMatrix<double> &uvw,
-                              fullMatrix<double> &result, bool bezCoord) const
-{
-  if(result.size1() != uvw.size1() || result.size2() != coeffs.size2())
-    result.resize(uvw.size1(), coeffs.size2());
-
-  fullMatrix<double> bezuvw = uvw;
-  if(!bezCoord) _fePoints2BezPoints(bezuvw);
-
-  const int numCoeff = _exponents.size1();
-  const int dim = _exponents.size2();
-  int order[3];
-
-  for(int m = 0; m < uvw.size1(); ++m) {
-    for(int n = 0; n < coeffs.size2(); ++n) result(m, n) = 0;
-    for(int i = 0; i < numCoeff; i++) {
-      _data.getOrderForBezier(order, _exponents(i, dim - 1));
-      double dd = 1;
-      double pointCompl = 1.;
-      int exponentCompl = order[0];
-      for(int k = 0; k < _dimSimplex; k++) {
-        dd *= nChoosek(exponentCompl, (int)_exponents(i, k)) *
-              pow(bezuvw(m, k), _exponents(i, k));
-        pointCompl -= bezuvw(m, k);
-        exponentCompl -= (int)_exponents(i, k);
-      }
-      dd *= pow_int(pointCompl, exponentCompl);
-
-      for(int k = _dimSimplex; k < dim; k++) {
-        dd *= nChoosek(order[k], (int)_exponents(i, k)) *
-              pow_int(bezuvw(m, k), _exponents(i, k)) *
-              pow_int(1. - bezuvw(m, k), order[k] - _exponents(i, k));
-      }
-      for(int n = 0; n < coeffs.size2(); ++n) result(m, n) += coeffs(i, n) * dd;
-    }
-  }
-}
-
-void bezierBasis::lag2Bez(const fullMatrix<double> &lag,
-                          fullMatrix<double> &bez) const
-{
-  if(lag.size1() != matrixLag2Bez.size1()) {
-    Msg::Error("matrix not the right size in lag2Bez function %d vs %d",
-               lag.size1(), matrixLag2Bez.size1());
-  }
-  if(bez.size1() != lag.size1() || bez.size2() != lag.size2()) {
-    bez.resize(lag.size1(), lag.size2());
-  }
-  matrixLag2Bez.mult(lag, bez);
-}
-
 void bezierBasis::subdivideBezCoeff(const fullMatrix<double> &coeff,
                                     fullMatrix<double> &subCoeff) const
 {

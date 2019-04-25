@@ -369,7 +369,7 @@ namespace jacobianBasedQuality {
     fullVector<double> coeffLag(jfs->getNumJacNodes());
     fullVector<double> coeffBez(jfs->getNumJacNodes());
     jfs->getSignedJacobian(nodesXYZ, coeffLag, normals);
-    jfs->lag2Bez(coeffLag, coeffBez);
+//    jfs->lag2Bez(coeffLag, coeffBez);
 
     bezierCoeff::usePools(static_cast<std::size_t>(coeffLag.size()), 0);
     std::vector<_coeffData *> domains;
@@ -434,7 +434,7 @@ namespace jacobianBasedQuality {
       if(coeffDetLag(0) < 0) coeffDetLag.scale(-1);
 
       coeffDetBez.resize(jacBasis->getNumJacNodes());
-      jacBasis->lag2Bez(coeffDetLag, coeffDetBez);
+//      jacBasis->lag2Bez(coeffDetLag, coeffDetBez);
     }
 
     fullMatrix<double> coeffMatBez;
@@ -445,7 +445,7 @@ namespace jacobianBasedQuality {
       if(dim == 2) coeffMatLag.resize(coeffMatLag.size1(), 6, false);
 
       coeffMatBez.resize(gradBasis->getNumSamplingPoints(), dim == 2 ? 6 : 9);
-      gradBasis->lag2Bez(coeffMatLag, coeffMatBez);
+//      gradBasis->lag2Bez(coeffMatLag, coeffMatBez);
     }
 
     bezierCoeff::usePools(static_cast<std::size_t>(coeffDetLag.size()),
@@ -493,7 +493,7 @@ namespace jacobianBasedQuality {
       if(coeffDetLag(0) < 0) coeffDetLag.scale(-1);
 
       coeffDetBez.resize(jacBasis->getNumJacNodes());
-      jacBasis->lag2Bez(coeffDetLag, coeffDetBez);
+//      jacBasis->lag2Bez(coeffDetLag, coeffDetBez);
     }
 
     fullMatrix<double> coeffMatBez;
@@ -504,7 +504,7 @@ namespace jacobianBasedQuality {
       if(dim == 2) coeffMatLag.resize(coeffMatLag.size1(), 6, false);
 
       coeffMatBez.resize(gradBasis->getNumSamplingPoints(), dim == 2 ? 6 : 9);
-      gradBasis->lag2Bez(coeffMatLag, coeffMatBez);
+//      gradBasis->lag2Bez(coeffMatLag, coeffMatBez);
     }
 
     bezierCoeff::usePools(static_cast<std::size_t>(coeffDetLag.size()),

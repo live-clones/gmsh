@@ -61,31 +61,11 @@ public:
   // Evaluate Bezier functions at the point (u, v, w)
   void f(double u, double v, double w, double *sf) const;
 
-  // transform coeff Lagrange into Bezier coeff
-  void lag2Bez(const fullMatrix<double> &lag, fullMatrix<double> &bez) const;
-
   // Subdivide Bezier coefficients
   void subdivideBezCoeff(const fullMatrix<double> &coeff,
                          fullMatrix<double> &subCoeff) const;
   void subdivideBezCoeff(const fullVector<double> &coeff,
                          fullVector<double> &subCoeff) const;
-
-  // Interpolation of n functions on N points :
-  // coeffs(numCoeff, n) and uvw(N, dim)
-  // => result(N, n)
-  void interpolate(const fullMatrix<double> &coeffs,
-                   const fullMatrix<double> &uvw, fullMatrix<double> &result,
-                   bool bezCoord = false) const;
-  void interpolate(const fullVector<double> &coeffs,
-                   const fullMatrix<double> &uvw, fullVector<double> &result,
-                   bool bezCoord = false) const
-  {
-    int size = uvw.size1();
-    result.resize(size);
-    fullMatrix<double> c(const_cast<double *>(coeffs.getDataPtr()), size, 1);
-    fullMatrix<double> r(const_cast<double *>(result.getDataPtr()), size, 1);
-    interpolate(c, uvw, r, bezCoord);
-  }
 
 private:
   void _construct();
