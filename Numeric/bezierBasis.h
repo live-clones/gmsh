@@ -53,9 +53,6 @@ public:
   inline FuncSpaceData getFuncSpaceData() const { return _data; }
   bezierBasisRaiser *getRaiser() const;
 
-  // The exponent matrix gives the ordering of the coefficients
-  inline const fullMatrix<double>& getCoeffOrdering() const { return _exponents; }
-
   // Subdivide Bezier coefficients
   void subdivideBezCoeff(const fullMatrix<double> &coeff,
                          fullMatrix<double> &subCoeff) const;
