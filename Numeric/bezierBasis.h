@@ -171,7 +171,7 @@ private:
 class bezierCoeff {
 private:
   int _numPool;
-  FuncSpaceData _funcSpaceData;
+  FuncSpaceData _funcSpaceData; // FIXME really needed?
   const bezierBasis *_basis;
   int _r, _c; // size of the matrix
   double *_data; // pointer on the first element

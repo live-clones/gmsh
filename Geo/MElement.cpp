@@ -346,7 +346,7 @@ void MElement::scaledJacRange(double &jmin, double &jmax, GEntity *ge) const
   const int numJacNodes = jac->getNumJacNodes();
   fullMatrix<double> nodesXYZ(jac->getNumMapNodes(), 3);
   getNodesCoord(nodesXYZ);
-  fullVector<double> SJi(numJacNodes), Bi(numJacNodes);
+  fullVector<double> SJi(numJacNodes);
   jac->getScaledJacobian(nodesXYZ, SJi);
   if(ge && (ge->dim() == 2) && ge->haveParametrization()) {
     // If parametrized surface entity provided...
@@ -372,9 +372,9 @@ void MElement::scaledJacRange(double &jmin, double &jmax, GEntity *ge) const
                         geoNorm(2) * elNorm(0, 2);
     if(scal < 0.) SJi.scale(-1.);
   }
-  jac->lag2Bez(SJi, Bi);
-  jmin = *std::min_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.size());
-  jmax = *std::max_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.size());
+  bezierCoeff Bi(jac->getFuncSpaceData(), SJi);
+  jmin = *std::min_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.getNumCoeff());
+  jmax = *std::max_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.getNumCoeff());
 #endif
 }
 
@@ -386,7 +386,7 @@ void MElement::idealJacRange(double &jmin, double &jmax, GEntity *ge)
   const int numJacNodes = jac->getNumJacNodes();
   fullMatrix<double> nodesXYZ(jac->getNumMapNodes(), 3);
   getNodesCoord(nodesXYZ);
-  fullVector<double> iJi(numJacNodes), Bi(numJacNodes);
+  fullVector<double> iJi(numJacNodes);
   jac->getSignedIdealJacobian(nodesXYZ, iJi);
   const int nEd = getNumEdges(), dim = getDim();
   double sumEdLength = 0.;
@@ -426,10 +426,9 @@ void MElement::idealJacRange(double &jmin, double &jmax, GEntity *ge)
                       geoNorm(2) * elNorm(0, 2);
     if(dp < 0.) scale = -scale;
   }
-  iJi.scale(scale);
-  jac->lag2Bez(iJi, Bi);
-  jmin = *std::min_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.size());
-  jmax = *std::max_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.size());
+  bezierCoeff Bi(jac->getFuncSpaceData(), iJi);
+  jmin = *std::min_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.getNumCoeff());
+  jmax = *std::max_element(Bi.getDataPtr(), Bi.getDataPtr() + Bi.getNumCoeff());
 #endif
 }
 

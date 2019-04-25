@@ -32,6 +32,8 @@
 #include "CADDistances.h"
 #include "qualityMeasures.h"
 #include "Patch.h"
+#include "bezierBasis.h"
+
 
 Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
              const std::map<MElement *, GEntity *> &bndEl2Ent,
@@ -414,8 +416,7 @@ void Patch::scaledJacAndGradients(int iEl, std::vector<double> &sJ,
   const JacobianBasis *jacBasis = _el[iEl]->getJacobianFuncSpace();
   const int &numJacNodes = _nBezEl[iEl];
   const int &numMapNodes = _nNodEl[iEl];
-  fullMatrix<double> JDJ(numJacNodes, 3 * numMapNodes + 1),
-    BDB(numJacNodes, 3 * numMapNodes + 1);
+  fullMatrix<double> JDJ(numJacNodes, 3 * numMapNodes + 1);
 
   // Coordinates of nodes
   fullMatrix<double> nodesXYZ(numMapNodes, 3), normals(_dim, 3);
@@ -432,7 +433,7 @@ void Patch::scaledJacAndGradients(int iEl, std::vector<double> &sJ,
   if(_dim == 3) JDJ.scale(_invStraightJac[iEl]);
 
   // Transform Jacobian and gradients from Lagrangian to Bezier basis
-  jacBasis->lag2Bez(JDJ, BDB);
+  bezierCoeff BDB(jacBasis->getFuncSpaceData(), JDJ);
 
   // Scaled jacobian
   for(int l = 0; l < numJacNodes; l++) sJ[l] = BDB(l, 3 * numMapNodes);
@@ -794,8 +795,7 @@ void Patch::idealJacAndGradients(int iEl, std::vector<double> &iJ,
   const JacobianBasis *jacBasis = _el[iEl]->getJacobianFuncSpace();
   const int &numJacNodes = _nIJacEl[iEl];
   const int &numMapNodes = _nNodEl[iEl];
-  fullMatrix<double> JDJ(numJacNodes, 3 * numMapNodes + 1),
-    BDB(numJacNodes, 3 * numMapNodes + 1);
+  fullMatrix<double> JDJ(numJacNodes, 3 * numMapNodes + 1);
 
   // Coordinates of nodes
   fullMatrix<double> nodesXYZ(numMapNodes, 3), normals(_dim, 3);
@@ -812,7 +812,7 @@ void Patch::idealJacAndGradients(int iEl, std::vector<double> &iJ,
   if(_dim == 3) JDJ.scale(_invIJac[iEl]);
 
   // Transform Jacobian and gradients from Lagrangian to Bezier basis
-  jacBasis->lag2Bez(JDJ, BDB);
+  bezierCoeff BDB(jacBasis->getFuncSpaceData(), JDJ);
 
   // Scaled jacobian
   for(int l = 0; l < numJacNodes; l++) iJ[l] = BDB(l, 3 * numMapNodes);
