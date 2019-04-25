@@ -149,11 +149,7 @@ GradientBasis::GradientBasis(int elementTag, FuncSpaceData data)
   // and is thus different from the Gmsh ordering convention. This is for being
   // able to convert sampling of jacobian from lagrange to bezier space easily.
   fullMatrix<double> samplingPoints;
-#if defined(JACOBIAN_ORDERED)
   gmshGenerateOrderedPoints(data, samplingPoints);
-#else
-  gmshGeneratePoints(data, samplingPoints);
-#endif
   const int numSampPnts = samplingPoints.size1();
 
   // Store shape function gradients of mapping at Jacobian nodes

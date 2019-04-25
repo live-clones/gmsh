@@ -6,8 +6,6 @@
 #ifndef JACOBIAN_BASIS_H
 #define JACOBIAN_BASIS_H
 
-#define JACOBIAN_ORDERED //FIXMEDEBUG
-
 #include "fullMatrix.h"
 #include "FuncSpaceData.h"
 

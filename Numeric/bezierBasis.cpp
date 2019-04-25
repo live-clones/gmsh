@@ -21,37 +21,15 @@ namespace {
   {
     gmshGenerateOrderedMonomials(data, exp);
   }
-  void generateBezierPoints(FuncSpaceData data, fullMatrix<double> &points)
-  {
-    // FIXME: to be removed with JACOBIAN_ORDERED
-    gmshGenerateMonomials(data, points);
-//    points.print("monomials");
-    if (data.getType() != TYPE_PYR)
-      points.scale(1. / data.getSpaceOrder());
-    else {
-      // For pyramids, the space is tensorial (like the hex). The bezier
-      // points are on a grid (like the hex).
-      fullMatrix<double> prox;
-      prox.setAsProxy(points, 2, 1);
-      prox.scale(-1);
-      prox.add(data.getNk());
-      points.scale(1. / data.getSpaceOrder());
-    }
-  }
 
   // Sub Control Points
   std::vector<fullMatrix<double> > generateSubPointsLine(int order)
   {
     std::vector<fullMatrix<double> > subPoints(2);
 
-#if defined(JACOBIAN_ORDERED)
     FuncSpaceData data(TYPE_LIN, order, false);
     gmshGenerateOrderedPoints(data, subPoints[0], true);
     subPoints[0].scale(.5);
-#else
-    subPoints[0] = gmshGenerateMonomialsLine(order);
-    subPoints[0].scale(.5 / order);
-#endif
 
     subPoints[1].copy(subPoints[0]);
     subPoints[1].add(.5);
@@ -63,14 +41,9 @@ namespace {
     std::vector<fullMatrix<double> > subPoints(4);
     fullMatrix<double> prox;
 
-#if defined(JACOBIAN_ORDERED)
     FuncSpaceData data(TYPE_TRI, order, false);
     gmshGenerateOrderedPoints(data, subPoints[0], true);
     subPoints[0].scale(.5);
-#else
-    subPoints[0] = gmshGenerateMonomialsTriangle(order);
-    subPoints[0].scale(.5 / order);
-#endif
 
     subPoints[1].copy(subPoints[0]);
     prox.setAsProxy(subPoints[1], 0, 1);
@@ -91,14 +64,9 @@ namespace {
     std::vector<fullMatrix<double> > subPoints(4);
     fullMatrix<double> prox;
 
-#if defined(JACOBIAN_ORDERED)
     FuncSpaceData data(TYPE_QUA, order, false);
     gmshGenerateOrderedPoints(data, subPoints[0], true);
     subPoints[0].scale(.5);
-#else
-    subPoints[0] = gmshGenerateMonomialsQuadrangle(order);
-    subPoints[0].scale(.5 / order);
-#endif
 
     subPoints[1].copy(subPoints[0]);
     prox.setAsProxy(subPoints[1], 0, 1);
@@ -120,14 +88,9 @@ namespace {
     fullMatrix<double> prox1;
     fullMatrix<double> prox2;
 
-#if defined(JACOBIAN_ORDERED)
     FuncSpaceData data(TYPE_TET, order, false);
     gmshGenerateOrderedPoints(data, subPoints[0], true);
     subPoints[0].scale(.5);
-#else
-    subPoints[0] = gmshGenerateMonomialsTetrahedron(order);
-    subPoints[0].scale(.5 / order);
-#endif
 
     subPoints[1].copy(subPoints[0]);
     prox1.setAsProxy(subPoints[1], 0, 1);
@@ -194,14 +157,9 @@ namespace {
     std::vector<fullMatrix<double> > subPoints(8);
     fullMatrix<double> prox;
 
-#if defined(JACOBIAN_ORDERED)
     FuncSpaceData data(TYPE_PRI, order, false);
     gmshGenerateOrderedPoints(data, subPoints[0], true);
     subPoints[0].scale(.5);
-#else
-    subPoints[0] = gmshGenerateMonomialsPrism(order);
-    subPoints[0].scale(.5 / order);
-#endif
 
     subPoints[1].copy(subPoints[0]);
     prox.setAsProxy(subPoints[1], 0, 1);
@@ -240,14 +198,9 @@ namespace {
     std::vector<fullMatrix<double> > subPoints(8);
     fullMatrix<double> prox;
 
-#if defined(JACOBIAN_ORDERED)
     FuncSpaceData data(TYPE_HEX, order, false);
     gmshGenerateOrderedPoints(data, subPoints[0], true);
     subPoints[0].scale(.5);
-#else
-    subPoints[0] = gmshGenerateMonomialsHexahedron(order);
-    subPoints[0].scale(.5 / order);
-#endif
 
     subPoints[1].copy(subPoints[0]);
     prox.setAsProxy(subPoints[1], 0, 1);
@@ -288,14 +241,9 @@ namespace {
       std::vector<fullMatrix<double> > subPoints(4);
       fullMatrix<double> prox;
 
-#if defined(JACOBIAN_ORDERED)
       FuncSpaceData data(TYPE_PYR, false, nij, nk, false);
       gmshGenerateOrderedPoints(data, subPoints[0], true);
       subPoints[0].scale(.5);
-#else
-      subPoints[0] = gmshGenerateMonomialsPyramidGeneral(false, nij, nk);
-      subPoints[0].scale(.5 / nij);
-#endif
 
       subPoints[1].copy(subPoints[0]);
       prox.setAsProxy(subPoints[1], 0, 1);
@@ -315,17 +263,9 @@ namespace {
       std::vector<fullMatrix<double> > subPoints(8);
       fullMatrix<double> prox;
 
-#if defined(JACOBIAN_ORDERED)
       FuncSpaceData data(TYPE_PYR, false, nij, nk, false);
       gmshGenerateOrderedPoints(data, subPoints[0], true);
       subPoints[0].scale(.5);
-#else
-      subPoints[0] = gmshGenerateMonomialsPyramidGeneral(false, nij, nk);
-      prox.setAsProxy(subPoints[0], 2, 1);
-      prox.scale(-1);
-      prox.add(nk);
-      subPoints[0].scale(.5 / std::max(nij, nk));
-#endif
 
       subPoints[1].copy(subPoints[0]);
       prox.setAsProxy(subPoints[1], 0, 1);
@@ -354,16 +294,6 @@ namespace {
       subPoints[7].copy(subPoints[3]);
       prox.setAsProxy(subPoints[7], 2, 1);
       prox.add(.5);
-
-#if defined(JACOBIAN_ORDERED)
-      // Nothing to do
-#else
-      for(int i = 0; i < 8; ++i) {
-        prox.setAsProxy(subPoints[i], 2, 1);
-        prox.scale(-1);
-        prox.add(1);
-      }
-#endif
 
       return subPoints;
     }
@@ -772,11 +702,7 @@ void bezierBasis::_construct()
   _numDivisions = static_cast<int>(subPoints.size());
 
   fullMatrix<double> bezSamplingPoints;
-#if defined(JACOBIAN_ORDERED)
   gmshGenerateOrderedPoints(_data, bezSamplingPoints, true);
-#else
-  generateBezierPoints(_data, bezierPoints);
-#endif
   generateExponents(_data, _exponents2);
 
   matrixBez2Lag =
@@ -861,11 +787,7 @@ void bezierBasis::_constructPyr()
   // for z in [0, a] with a < 1. The third coordinate of Bezier points should
   // also be in [0, a]. The same for subpoints.
   fullMatrix<double> bezierPoints;
-#if defined(JACOBIAN_ORDERED)
   gmshGenerateOrderedPoints(_data, bezierPoints, true);
-#else
-  generateBezierPoints(_data, bezierPoints);
-#endif
   generateExponents(_data, _exponents2);
   matrixBez2Lag =
     generateBez2LagMatrixPyramid(_exponents, bezierPoints, pyr, nij, nk);

@@ -260,12 +260,6 @@ namespace jacobianBasedQuality {
       return;
     }
 
-#if defined(JACOBIAN_ORDERED)
-    std::cout << "jacobian ordered" << std::endl;
-#else
-    std::cout << "jacobian not ordered" << std::endl;
-#endif
-
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
     el->getNodesCoord(nodesXYZ);
 
