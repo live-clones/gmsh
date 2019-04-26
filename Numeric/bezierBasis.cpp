@@ -392,16 +392,13 @@ void bezierBasisRaiser::_fillRaiserData()
     return;
   }
 
-  fullMatrix<int> exp;
-  fullMatrix<int> expNew;
+  fullMatrix<int> expNew; // FIXME rename
   {
-    const fullMatrix<double> &expD = _bfs->_exponents;
-    const fullMatrix<double> &expDNew = _bfs->_exponents2;
-    double2int(expD, exp);
+    const fullMatrix<double> &expDNew = _bfs->_exponents2; // FIXME rename
     double2int(expDNew, expNew);
   }
   int order = _bfs->getOrder();
-  int ncoeff = exp.size1();
+  int ncoeff = expNew.size1();
   int dim = _bfs->getDim();
   int dimSimplex = _bfs->getDimSimplex();
 
@@ -411,33 +408,17 @@ void bezierBasisRaiser::_fillRaiserData()
 
   // Construction of raiser 2
 
-  std::map<int, int> hashToInd2;
-  std::map<int, int> hashToInd2New;
+  std::map<int, int> hashToInd2New; // FIXME rename
   {
-    fullMatrix<int> exp2;
-    fullMatrix<int> exp2New; // FIXME: delete one of them
+    fullMatrix<int> exp2New; // FIXME rename
     {
-      fullMatrix<double> expD2;
-      FuncSpaceData dataRaiser2(_bfs->_data, 2 * order);
-      gmshGenerateMonomials(dataRaiser2, expD2);
-      double2int(expD2, exp2);
-      _raiser2.resize(exp2.size1());
-      fullMatrix<double> expD2New;
+      fullMatrix<double> expD2New; // FIXME rename
       FuncSpaceData data(_bfs->_data, 2 * order);
       generateExponents(data, expD2New);
       double2int(expD2New, exp2New);
       _raiser2New.resize(exp2New.size1());
     }
 
-    //    std::map<int, int> hashToInd2;
-    for(int i = 0; i < exp2.size1(); ++i) {
-      int hash = 0;
-      for(int l = 0; l < dim; l++) {
-        hash += static_cast<int>(exp2(i, l) * pow_int(2 * order + 1, l));
-      }
-      hashToInd2[hash] = i;
-    }
-    //    std::map<int, int> hashToInd2New;
     for(int i = 0; i < exp2New.size1(); ++i) {
       int hash = 0;
       for(int l = 0; l < dim; l++) {
@@ -449,24 +430,7 @@ void bezierBasisRaiser::_fillRaiserData()
 
   for(int i = 0; i < ncoeff; i++) {
     for(int j = i; j < ncoeff; j++) {
-      double num = 1, den = 1;
-      {
-        int compl1 = order;
-        int compl2 = order;
-        int compltot = 2 * order;
-        for(int l = 0; l < dimSimplex; l++) {
-          num *= nChoosek(compl1, exp(i, l)) * nChoosek(compl2, exp(j, l));
-          den *= nChoosek(compltot, exp(i, l) + exp(j, l));
-          compl1 -= exp(i, l);
-          compl2 -= exp(j, l);
-          compltot -= exp(i, l) + exp(j, l);
-        }
-        for(int l = dimSimplex; l < dim; l++) {
-          num *= nChoosek(order, exp(i, l)) * nChoosek(order, exp(j, l));
-          den *= nChoosek(2 * order, exp(i, l) + exp(j, l));
-        }
-      }
-      double numNew = 1, denNew = 1;
+      double numNew = 1, denNew = 1; // FIXME rename
       {
         int compl1 = order;
         int compl2 = order;
@@ -487,17 +451,9 @@ void bezierBasisRaiser::_fillRaiserData()
       }
 
       // taking into account the multiplicity (reminder: i <= j)
-      if(i < j) num *= 2;
       if(i < j) numNew *= 2;
 
-      int hash = 0;
-      for(int l = 0; l < dim; l++) {
-        hash +=
-          static_cast<int>((exp(i, l) + exp(j, l)) * pow_int(2 * order + 1, l));
-      }
-      _raiser2[hashToInd2[hash]].push_back(_data(num / den, i, j));
-
-      int hashNew = 0;
+      int hashNew = 0; // FIXME rename
       for(int l = 0; l < dim; l++) {
         hashNew += static_cast<int>((expNew(i, l) + expNew(j, l)) *
                                     pow_int(2 * order + 1, l));
@@ -509,33 +465,17 @@ void bezierBasisRaiser::_fillRaiserData()
 
   // Construction of raiser 3
 
-  std::map<int, int> hashToInd3;
-  std::map<int, int> hashToInd3New;
+  std::map<int, int> hashToInd3New; // FIXME rename
   {
-    fullMatrix<int> exp3;
-    fullMatrix<int> exp3New; // FIXME: delete one of them
+    fullMatrix<int> exp3New; // FIXME rename
     {
-      fullMatrix<double> expD3;
-      FuncSpaceData dataRaiser3(_bfs->_data, 3 * order);
-      gmshGenerateMonomials(dataRaiser3, expD3);
-      double2int(expD3, exp3);
-      _raiser3.resize(exp3.size1());
-      fullMatrix<double> expD3New;
+      fullMatrix<double> expD3New; // FIXME rename
       FuncSpaceData data(_bfs->_data, 3 * order);
       generateExponents(data, expD3New);
       double2int(expD3New, exp3New);
       _raiser3New.resize(exp3New.size1());
     }
 
-    //    std::map<int, int> hashToInd3;
-    for(int i = 0; i < exp3.size1(); ++i) {
-      int hash = 0;
-      for(int l = 0; l < dim; l++) {
-        hash += static_cast<int>(exp3(i, l) * pow_int(3 * order + 1, l));
-      }
-      hashToInd3[hash] = i;
-    }
-    //    std::map<int, int> hashToInd3New;
     for(int i = 0; i < exp3New.size1(); ++i) {
       int hash = 0;
       for(int l = 0; l < dim; l++) {
@@ -548,29 +488,7 @@ void bezierBasisRaiser::_fillRaiserData()
   for(int i = 0; i < ncoeff; i++) {
     for(int j = i; j < ncoeff; j++) {
       for(int k = j; k < ncoeff; ++k) {
-        double num = 1, den = 1;
-        {
-          int compl1 = order;
-          int compl2 = order;
-          int compl3 = order;
-          int compltot = 3 * order;
-          for(int l = 0; l < dimSimplex; l++) {
-            num *= nChoosek(compl1, exp(i, l)) * nChoosek(compl2, exp(j, l)) *
-                   nChoosek(compl3, exp(k, l));
-            den *= nChoosek(compltot, exp(i, l) + exp(j, l) + exp(k, l));
-            compl1 -= exp(i, l);
-            compl2 -= exp(j, l);
-            compl3 -= exp(k, l);
-            compltot -= exp(i, l) + exp(j, l) + exp(k, l);
-          }
-          for(int l = dimSimplex; l < dim; l++) {
-            num *= nChoosek(order, exp(i, l)) * nChoosek(order, exp(j, l)) *
-                   nChoosek(order, exp(k, l));
-            den *= nChoosek(3 * order, exp(i, l) + exp(j, l) + exp(k, l));
-          }
-        }
-
-        double numNew = 1, denNew = 1;
+        double numNew = 1, denNew = 1; // FIXME rename
         {
           int compl1 = order;
           int compl2 = order;
@@ -598,21 +516,11 @@ void bezierBasisRaiser::_fillRaiserData()
 
         // taking into account the multiplicity (Reminder: i <= j <= k)
         if(i < j && j < k)
-          num *= 6;
-        else if(i < j || j < k)
-          num *= 3;
-        if(i < j && j < k)
           numNew *= 6;
         else if(i < j || j < k)
           numNew *= 3;
 
-        int hash = 0;
-        for(int l = 0; l < dim; l++) {
-          hash += static_cast<int>((exp(i, l) + exp(j, l) + exp(k, l)) *
-                                   pow_int(3 * order + 1, l));
-        }
-        _raiser3[hashToInd3[hash]].push_back(_data(num / den, i, j, k));
-        int hashNew = 0;
+        int hashNew = 0; // FIXME rename
         for(int l = 0; l < dim; l++) {
           hashNew +=
             static_cast<int>((expNew(i, l) + expNew(j, l) + expNew(k, l)) *
@@ -641,15 +549,12 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
     return;
   }
 
-  fullMatrix<int> exp;
-  fullMatrix<int> expNew;
+  fullMatrix<int> expNew; // FIXME rename
   {
-    const fullMatrix<double> &expD = _bfs->_exponents;
-    const fullMatrix<double> &expDNew = _bfs->_exponents2;
-    double2int(expD, exp);
+    const fullMatrix<double> &expDNew = _bfs->_exponents2; // FIXME rename
     double2int(expDNew, expNew);
   }
-  int ncoeff = exp.size1();
+  int ncoeff = expNew.size1();
   int order[3] = {fsdata.getNij(), fsdata.getNij(), fsdata.getNk()};
   int orderHash = std::max(order[0], order[2]);
 
@@ -657,33 +562,17 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
   // of the indices (i, j) or (i, j, k), we fill only the raiser data for i <= j
   // <= k (and adapt the value to take into account the multiplicity).
 
-  std::map<int, int> hashToInd2;
-  std::map<int, int> hashToInd2New;
+  std::map<int, int> hashToInd2New; // FIXME rename
   {
-    fullMatrix<int> exp2;
-    fullMatrix<int> exp2New; // FIXME: delete one of them
+    fullMatrix<int> exp2New; // FIXME rename
     {
-      fullMatrix<double> expD2;
-      FuncSpaceData dataRaiser2(_bfs->_data, 2 * order[0], 2 * order[2]);
-      gmshGenerateMonomials(dataRaiser2, expD2);
-      double2int(expD2, exp2);
-      _raiser2.resize(exp2.size1());
-      fullMatrix<double> expD2New;
+      fullMatrix<double> expD2New; // FIXME rename
       FuncSpaceData data(_bfs->_data, 2 * order[0], 2 * order[2]);
       generateExponents(data, expD2New);
       double2int(expD2New, exp2New);
       _raiser2New.resize(exp2New.size1());
     }
 
-//    std::map<int, int> hashToInd2;
-    for(int i = 0; i < exp2.size1(); ++i) {
-      int hash = 0;
-      for(int l = 0; l < 3; l++) {
-        hash += static_cast<int>(exp2(i, l) * pow_int(2 * orderHash + 1, l));
-      }
-      hashToInd2[hash] = i;
-    }
-    //    std::map<int, int> hashToInd2New;
     for(int i = 0; i < exp2New.size1(); ++i) {
       int hash = 0;
       for(int l = 0; l < 3; l++) {
@@ -695,28 +584,16 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
 
   for(int i = 0; i < ncoeff; i++) {
     for(int j = i; j < ncoeff; j++) {
-      double num = 1, den = 1;
-      for(int l = 0; l < 3; l++) {
-        num *= nChoosek(order[l], exp(i, l)) * nChoosek(order[l], exp(j, l));
-        den *= nChoosek(2 * order[l], exp(i, l) + exp(j, l));
-      }
-      double numNew = 1, denNew = 1;
+      double numNew = 1, denNew = 1; // FIXME rename
       for(int l = 0; l < 3; l++) {
         numNew *= nChoosek(order[l], expNew(i, l)) * nChoosek(order[l], expNew(j, l));
         denNew *= nChoosek(2 * order[l], expNew(i, l) + expNew(j, l));
       }
 
       // taking into account the multiplicity (reminder: i <= j)
-      if(i < j) num *= 2;
       if(i < j) numNew *= 2;
 
-      int hash = 0;
-      for(int l = 0; l < 3; l++) {
-        hash += static_cast<int>((exp(i, l) + exp(j, l)) * pow_int(2 * orderHash + 1, l));
-      }
-      _raiser2[hashToInd2[hash]].push_back(_data(num / den, i, j));
-
-      int hashNew = 0;
+      int hashNew = 0; // FIXME rename
       for(int l = 0; l < 3; l++) {
         hashNew += static_cast<int>((expNew(i, l) + expNew(j, l)) * pow_int(2 * orderHash + 1, l));
       }
@@ -726,33 +603,17 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
 
   // Construction of raiser 3
 
-  std::map<int, int> hashToInd3;
-  std::map<int, int> hashToInd3New;
+  std::map<int, int> hashToInd3New; // FIXME rename
   {
-    fullMatrix<int> exp3;
-    fullMatrix<int> exp3New;
+    fullMatrix<int> exp3New; // FIXME rename
     {
-      fullMatrix<double> expD3;
-      FuncSpaceData dataRaiser3(_bfs->_data, 3 * order[0], 3 * order[2]);
-      gmshGenerateMonomials(dataRaiser3, expD3);
-      double2int(expD3, exp3);
-      _raiser3.resize(exp3.size1());
-      fullMatrix<double> expD3New;
+      fullMatrix<double> expD3New; // FIXME rename
       FuncSpaceData data(_bfs->_data, 3 * order[0], 3 * order[2]);
       generateExponents(data, expD3New);
       double2int(expD3New, exp3New);
       _raiser3New.resize(exp3New.size1());
     }
 
-//    std::map<int, int> hashToInd3;
-    for(int i = 0; i < exp3.size1(); ++i) {
-      int hash = 0;
-      for(int l = 0; l < 3; l++) {
-        hash += static_cast<int>(exp3(i, l) * pow_int(3 * orderHash + 1, l));
-      }
-      hashToInd3[hash] = i;
-    }
-//    std::map<int, int> hashToInd3New;
     for(int i = 0; i < exp3New.size1(); ++i) {
       int hash = 0;
       for(int l = 0; l < 3; l++) {
@@ -765,13 +626,7 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
   for(int i = 0; i < ncoeff; i++) {
     for(int j = i; j < ncoeff; j++) {
       for(int k = j; k < ncoeff; ++k) {
-        double num = 1, den = 1;
-        for(int l = 0; l < 3; l++) {
-          num *= nChoosek(order[l], exp(i, l)) * nChoosek(order[l], exp(j, l)) *
-                 nChoosek(order[l], exp(k, l));
-          den *= nChoosek(3 * order[l], exp(i, l) + exp(j, l) + exp(k, l));
-        }
-        double numNew = 1, denNew = 1;
+        double numNew = 1, denNew = 1; // FIXME rename
         for(int l = 0; l < 3; l++) {
           numNew *= nChoosek(order[l], expNew(i, l)) * nChoosek(order[l], expNew(j, l)) *
                  nChoosek(order[l], expNew(k, l));
@@ -780,21 +635,11 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
 
         // taking into account the multiplicity (Reminder: i <= j <= k)
         if(i < j && j < k)
-          num *= 6;
-        else if(i < j || j < k)
-          num *= 3;
-        if(i < j && j < k)
           numNew *= 6;
         else if(i < j || j < k)
           numNew *= 3;
 
-        int hash = 0;
-        for(int l = 0; l < 3; l++) {
-          hash +=
-            (exp(i, l) + exp(j, l) + exp(k, l)) * pow_int(3 * orderHash + 1, l);
-        }
-        _raiser3[hashToInd3[hash]].push_back(_data(num / den, i, j, k));
-        int hashNew = 0;
+        int hashNew = 0; // FIXME rename
         for(int l = 0; l < 3; l++) {
           hashNew +=
             (expNew(i, l) + expNew(j, l) + expNew(k, l)) * pow_int(3 * orderHash + 1, l);

@@ -30,9 +30,9 @@ private:
   fullMatrix<double> _exponents2;
 
 public:
-  // FIXME rename
-  fullMatrix<double> matrixLag2Bez2;
-  fullMatrix<double> matrixBez2Lag2;
+  // FIXME to set private
+  fullMatrix<double> matrixLag2Bez2; // FIXME rename
+  fullMatrix<double> matrixBez2Lag2; // FIXME rename
   fullVector<double> ordered1dBezPoints;
 
   // Constructors
@@ -70,8 +70,7 @@ private:
     {
     }
   };
-  std::vector<std::vector<_data> > _raiser2, _raiser3;
-  std::vector<std::vector<_data> > _raiser2New, _raiser3New;
+  std::vector<std::vector<_data> > _raiser2New, _raiser3New; // FIXME rename
   const bezierBasis *_bfs;
 
 public:
