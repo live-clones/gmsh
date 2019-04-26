@@ -342,9 +342,6 @@ void bezierBasis::_construct()
   gmshGenerateOrderedPoints(_data, bezSamplingPoints, true);
   generateExponents(_data, _exponents2);
 
-  matrixBez2Lag =
-    generateBez2LagMatrix(_exponents, bezSamplingPoints, order, _dimSimplex);
-  matrixBez2Lag.invert(matrixLag2Bez);
   matrixBez2Lag2 =
     generateBez2LagMatrix(_exponents2, bezSamplingPoints, order, _dimSimplex);
   matrixBez2Lag2.invert(matrixLag2Bez2);
@@ -371,9 +368,6 @@ void bezierBasis::_constructPyr()
   fullMatrix<double> bezierPoints;
   gmshGenerateOrderedPoints(_data, bezierPoints, true);
   generateExponents(_data, _exponents2);
-  matrixBez2Lag =
-    generateBez2LagMatrixPyramid(_exponents, bezierPoints, pyr, nij, nk);
-  matrixBez2Lag.invert(matrixLag2Bez);
   matrixBez2Lag2 =
     generateBez2LagMatrixPyramid(_exponents2, bezierPoints, pyr, nij, nk);
   matrixBez2Lag2.invert(matrixLag2Bez2);

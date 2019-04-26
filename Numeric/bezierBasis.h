@@ -30,8 +30,7 @@ private:
   fullMatrix<double> _exponents2;
 
 public:
-  fullMatrix<double> matrixLag2Bez;
-  fullMatrix<double> matrixBez2Lag;
+  // FIXME rename
   fullMatrix<double> matrixLag2Bez2;
   fullMatrix<double> matrixBez2Lag2;
   fullVector<double> ordered1dBezPoints;
