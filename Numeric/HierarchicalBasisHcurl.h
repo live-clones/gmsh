@@ -34,7 +34,14 @@ public:
   virtual void orientFace(double const &u, double const &v, double const &w,
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,
-                          std::vector<std::vector<double> > &faceFunctions) = 0;
+                          std::vector<std::vector<double> > &faceFunctions,std::string typeFunction) = 0;
+
+  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
+                          std::vector<double>  &edgeFunctions){};
+  virtual void orientFace(double const &u, double const &v, double const &w,
+                          int const &flag1, int const &flag2, int const &flag3,
+                          int const &faceNumber,
+                              std::vector<double>  &faceFunctions){};
 };
 
 #endif

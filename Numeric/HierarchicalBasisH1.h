@@ -28,7 +28,7 @@ public:
                 std::vector<std::vector<double> > &faceBasis,
                 std::vector<std::vector<double> > &bubbleBasis,
                 std::string typeFunction =
-                  "GradLegendre") = 0; // typeFunction =GradLegendre
+                  "GradH1Legendre") = 0;
   virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
                           std::vector<double> &edgeBasis) = 0;
   virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
@@ -42,7 +42,8 @@ public:
   virtual void orientFace(double const &u, double const &v, double const &w,
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,
-                          std::vector<std::vector<double> > &faceBasis) = 0;
+                          std::vector<std::vector<double> > &faceBasis,std::string typeFunction =
+                            "GradH1Legendre") = 0;
 };
 
 #endif

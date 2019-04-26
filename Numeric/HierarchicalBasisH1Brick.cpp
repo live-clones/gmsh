@@ -533,8 +533,8 @@ void HierarchicalBasisH1Brick::orientFace(double const &u, double const &v,
         lkVector2[it - 2] = OrthogonalPoly::EvalLobatto(it, var2);
       }
 
-      for(int it1 = 2; it1 <= _pOrderFace1[faceNumber]; it1++) {
-        for(int it2 = 2; it2 <= _pOrderFace2[faceNumber]; it2++) {
+      for(int it1 = 2; it1 <= _pOrderFace2[faceNumber]; it1++) {
+        for(int it2 = 2; it2 <= _pOrderFace1[faceNumber]; it2++) {
           int impactFlag1 = 1;
           int impactFlag2 = 1;
           if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
@@ -550,7 +550,7 @@ void HierarchicalBasisH1Brick::orientFace(double const &u, double const &v,
 void HierarchicalBasisH1Brick::orientFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double> > &gradientFace)
+  std::vector<std::vector<double> > &gradientFace,std::string typeFunction)
 {
   if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
     int iterator = 0;
@@ -642,8 +642,8 @@ void HierarchicalBasisH1Brick::orientFace(
       for(int it = 2; it <= _pOrderFace1[faceNumber]; it++) {
         dlkVector2[it - 2][var2] = OrthogonalPoly::EvalDLobatto(it, uvw[var2]);
       }
-      for(int it1 = 2; it1 <= _pOrderFace1[faceNumber]; it1++) {
-        for(int it2 = 2; it2 <= _pOrderFace2[faceNumber]; it2++) {
+      for(int it1 = 2; it1 <= _pOrderFace2[faceNumber]; it1++) {
+        for(int it2 = 2; it2 <= _pOrderFace1[faceNumber]; it2++) {
           int impactFlag1 = 1;
           int impactFlag2 = 1;
           if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }

@@ -48,8 +48,8 @@ public:
                 std::vector<std::vector<double> > &edgeBasis,
                 std::vector<std::vector<double> > &faceBasis,
                 std::vector<std::vector<double> > &bubbleBasis,
-                std::string typeFunction) = 0; // typeFunction =GradLegendre ,
-                                               // HcurlLegendre, curlLegendre
+                std::string typeFunction) = 0; // typeFunction =GradH1Legendre ,
+                                               // HcurlLegendre,curlHcurlLegendre
 
   virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
                           std::vector<std::vector<double> > &edgeBasis) = 0;
@@ -57,7 +57,17 @@ public:
   virtual void orientFace(double const &u, double const &v, double const &w,
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,
-                          std::vector<double> &faceBasis) = 0;
+                          std::vector<std::vector<double>> &faceBasis,
+                          std::string typeFunction) = 0; // typeFunction =GradH1Legendre ,
+                                                           // HcurlLegendre,curlHcurlLegendre
+
+  virtual void orientEdge(int const &flagOrientation, int const &edgeNumber,
+                          std::vector<double>  &edgeFunctions) = 0;
+  virtual void orientFace(double const &u, double const &v, double const &w,
+                            int const &flag1, int const &flag2, int const &flag3,
+                            int const &faceNumber,
+                              std::vector<double>  &faceFunctions )=0;
+
 };
 
 #endif

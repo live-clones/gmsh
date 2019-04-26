@@ -715,7 +715,7 @@ void HierarchicalBasisH1Pri::orientFace(double const &u, double const &v,
 void HierarchicalBasisH1Pri::orientFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double> > &gradientFace)
+  std::vector<std::vector<double> > &gradientFace,std::string typeFunction)
 {
   if(faceNumber < 3) {
     if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {

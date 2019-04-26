@@ -526,7 +526,7 @@ void HierarchicalBasisH1Tetra::generateGradientBasis(
 void HierarchicalBasisH1Tetra::orientFace(
   double const &u, double const &v, double const &w, int const &flag1,
   int const &flag2, int const &flag3, int const &faceNumber,
-  std::vector<std::vector<double> > &gradientFace)
+  std::vector<std::vector<double> > &gradientFace,std::string typeFunction)
 {
   if(!(flag1 == 0 && flag2 == 1)) {
     // to map onto the reference domain of gmsh:

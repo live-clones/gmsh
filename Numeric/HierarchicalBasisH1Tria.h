@@ -53,7 +53,7 @@ public:
                              std::vector<std::vector<double> > &edgeBasis,
                              std::vector<std::vector<double> > &faceBasis,
                              std::vector<std::vector<double> > &bubbleBasis,
-                             std::string typeFunction = "GradLegendre")
+                             std::string typeFunction = "GradH1Legendre")
   {
     generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis,
                           bubbleBasis);
@@ -72,7 +72,7 @@ public:
   virtual void orientFace(double const &u, double const &v, double const &w,
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,
-                          std::vector<std::vector<double> > &faceBasis){};
+                          std::vector<std::vector<double> > &faceBasis,std::string typeFunction="GradH1Legendre"){};
 
 private:
   int _pf; // face function order

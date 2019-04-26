@@ -49,6 +49,7 @@ set(SRC
   HierarchicalBasisH1Pri.cpp
   HierarchicalBasis.cpp
   HierarchicalBasisHcurl.cpp
+  HierarchicalBasisHcurlQuad.cpp
 
 )
 

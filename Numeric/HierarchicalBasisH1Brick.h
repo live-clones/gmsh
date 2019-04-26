@@ -35,7 +35,7 @@
  *
  * Oritented Surface:
  *  s0={0, 1, 3, 2}, s1={0, 1, 4, 5}, s2={0, 3, 4, 7},
- *  s3={1, 2, 5, 5}, s4={2, 3, 6, 6}, s5={4, 5, 7, 6}
+ *  s3={1, 2, 5, 5}, s4={3,2,7,6}, s5={4, 5, 7, 6}
  * Local (directional) orders on mesh faces are not allowed to exceed the mini-
  * mum of the (appropriate directional) orders of approximation associated with
  * the interior of the adjacent elements. Local orders of approximation on mesh
@@ -60,7 +60,7 @@ public:
                              std::vector<std::vector<double> > &edgeBasis,
                              std::vector<std::vector<double> > &faceBasis,
                              std::vector<std::vector<double> > &bubbleBasis,
-                             std::string typeFunction = "GradLegendre")
+                             std::string typeFunction = "GradH1Legendre")
   {
     generateGradientBasis(u, v, w, vertexBasis, edgeBasis, faceBasis,
                           bubbleBasis);
@@ -78,7 +78,8 @@ public:
   virtual void orientFace(double const &u, double const &v, double const &w,
                           int const &flag1, int const &flag2, int const &flag3,
                           int const &faceNumber,
-                          std::vector<std::vector<double> > &faceBasis);
+                          std::vector<std::vector<double> > &faceBasis,std::string typeFunction =
+                            "GradH1Legendre");
 
 private:
   int _pb1; // bubble function order in  direction u
