@@ -12,12 +12,8 @@
 #include "JacobianBasis.h"
 #include "Numeric.h"
 
-// For debugging
+// For regression tests:
 #include "GModel.h"
-#include <sstream>
-#include <iomanip>
-#include "pointsGenerators.h"
-#include "OS.h"
 
 static const double cTri = 2 / std::sqrt(3);
 static const double cTet = std::sqrt(2);
@@ -280,8 +276,8 @@ namespace jacobianBasedQuality {
     min = std::numeric_limits<double>::infinity();
     max = -min;
     for(std::size_t i = 0; i < domains.size(); ++i) {
-      min = std::min(min, domains[i]->minB2());
-      max = std::max(max, domains[i]->maxB2());
+      min = std::min(min, domains[i]->minB());
+      max = std::max(max, domains[i]->maxB());
       domains[i]->deleteBezierCoeff();
       delete domains[i];
     }
@@ -492,49 +488,48 @@ namespace jacobianBasedQuality {
   // Virtual class _coeffData
   bool _lessMinB::operator()(_coeffData *cd1, _coeffData *cd2) const
   {
-    return cd1->minB2() > cd2->minB2();
+    return cd1->minB() > cd2->minB();
   }
 
   bool _lessMaxB::operator()(_coeffData *cd1, _coeffData *cd2) const
   {
-    return cd1->maxB2() < cd2->maxB2();
+    return cd1->maxB() < cd2->maxB();
   }
 
   // Jacobian determinant (for validity of all elements)
-  // FIXME renames
-  _coeffDataJac::_coeffDataJac(const bezierCoeff *coeffs2)
-    : _coeffData(), _coeffs2(coeffs2)
+  _coeffDataJac::_coeffDataJac(const bezierCoeff *coeffs)
+    : _coeffData(), _coeffs(coeffs)
   {
-    const bezierCoeff &coeff = (*_coeffs2);
+    const bezierCoeff &coeff = (*_coeffs);
 
-    _minL2 = _maxL2 = coeff.getCornerCoeff(0);
+    _minL = _maxL = coeff.getCornerCoeff(0);
     for(int i = 1; i < coeff.getNumCornerCoeff(); i++) {
-      _minL2 = std::min(_minL2, coeff.getCornerCoeff(i));
-      _maxL2 = std::max(_maxL2, coeff.getCornerCoeff(i));
+      _minL = std::min(_minL, coeff.getCornerCoeff(i));
+      _maxL = std::max(_maxL, coeff.getCornerCoeff(i));
     }
-    _minB2 = _maxB2 = coeff(0);
+    _minB = _maxB = coeff(0);
     for(int i = 1; i < coeff.getNumCoeff(); i++) {
-      _minB2 = std::min(_minB2, coeff(i));
-      _maxB2 = std::max(_maxB2, coeff(i));
+      _minB = std::min(_minB, coeff(i));
+      _maxB = std::max(_maxB, coeff(i));
     }
   }
 
   bool _coeffDataJac::boundsOk(double minL, double maxL) const
   {
     double tol = std::max(std::abs(minL), std::abs(maxL)) * 1e-3;
-    return (minL <= 0 || _minB2 > 0) &&
-           (maxL >= 0 || _maxB2 < 0) &&
-           minL - _minB2 < tol &&
-           _maxB2 - maxL < tol;
+    return (minL <= 0 || _minB > 0) &&
+           (maxL >= 0 || _maxB < 0) &&
+           minL - _minB < tol &&
+           _maxB - maxL < tol;
     // NB: First condition implies minL and minB both positive or both negative
   }
 
   void _coeffDataJac::getSubCoeff(std::vector<_coeffData *> &v) const
   {
-    const int numDiv = _coeffs2->getNumDivision();
+    const int numDiv = _coeffs->getNumDivision();
 
     std::vector<bezierCoeff *> sub;
-    _coeffs2->subdivide(sub);
+    _coeffs->subdivide(sub);
 
     v.clear();
     for(int i = 0; i < numDiv; i++) {
@@ -544,23 +539,22 @@ namespace jacobianBasedQuality {
 
   void _coeffDataJac::deleteBezierCoeff()
   {
-    delete _coeffs2;
+    delete _coeffs;
   }
 
   // IGE measure (Inverse Gradient Error)
-  // FIXME renames
   _coeffDataIGE::_coeffDataIGE(int type,
-                               const bezierCoeff *det2,
-                               const bezierCoeff *mat2)
-    : _coeffData(), _coeffDet2(det2), _coeffMat2(mat2), _type(type)
+                               const bezierCoeff *det,
+                               const bezierCoeff *mat)
+    : _coeffData(), _coeffDet(det), _coeffMat(mat), _type(type)
   {
-    _computeAtCorner(_minL2, _maxL2);
+    _computeAtCorner(_minL, _maxL);
 
-    _minB2 = 0;
-    if(boundsOk(_minL2, _maxL2))
+    _minB = 0;
+    if(boundsOk(_minL, _maxL))
       return;
     else {
-      _minB2 = _computeLowerBound2();
+      _minB = _computeLowerBound();
     }
     // computation of _maxB not implemented for now
   }
@@ -569,18 +563,18 @@ namespace jacobianBasedQuality {
   {
     static const double tolmin = 1e-3;
     static const double tolmax = 1e-2;
-    const double tol = tolmin + (tolmax - tolmin) * std::max(_minB2, .0);
-    return minL - _minB2 < tol;
+    const double tol = tolmin + (tolmax - tolmin) * std::max(_minB, .0);
+    return minL - _minB < tol;
   }
 
   void _coeffDataIGE::getSubCoeff(std::vector<_coeffData *> &v) const
   {
-    const int numDiv = _coeffDet2->getNumDivision();
+    const int numDiv = _coeffDet->getNumDivision();
 
     std::vector<bezierCoeff *> subD;
     std::vector<bezierCoeff *> subM;
-    _coeffDet2->subdivide(subD);
-    _coeffMat2->subdivide(subM);
+    _coeffDet->subdivide(subD);
+    _coeffMat->subdivide(subM);
 
     v.clear();
     for(int i = 0; i < numDiv; i++) {
@@ -590,38 +584,37 @@ namespace jacobianBasedQuality {
 
   void _coeffDataIGE::deleteBezierCoeff()
   {
-    delete _coeffDet2;
-    delete _coeffMat2;
+    delete _coeffDet;
+    delete _coeffMat;
   }
 
-  // FIXME renames
-  void _coeffDataIGE::_computeAtCorner(double &min2, double &max2) const
+  void _coeffDataIGE::_computeAtCorner(double &min, double &max) const
   {
-    fullVector<double> det, ige2;
+    fullVector<double> det, ige;
     fullMatrix<double> mat;
-    _coeffDet2->getCornerCoeffs(det);
-    _coeffMat2->getCornerCoeffs(mat);
+    _coeffDet->getCornerCoeffs(det);
+    _coeffMat->getCornerCoeffs(mat);
 
-    fullMatrix<double> v2;
-    _computeCoeffLengthVectors(mat, v2, _type);
-    _computeIGE(det, v2, ige2, _type);
+    fullMatrix<double> v;
+    _computeCoeffLengthVectors(mat, v, _type);
+    _computeIGE(det, v, ige, _type);
 
-    min2 = std::numeric_limits<double>::infinity();
-    max2 = -min2;
-    for(int i = 0; i < ige2.size(); ++i) {
-      min2 = std::min(min2, ige2(i));
-      max2 = std::max(max2, ige2(i));
+    min = std::numeric_limits<double>::infinity();
+    max = -min;
+    for(int i = 0; i < ige.size(); ++i) {
+      min = std::min(min, ige(i));
+      max = std::max(max, ige(i));
     }
   }
 
-  double _coeffDataIGE::_computeLowerBound2() const
+  double _coeffDataIGE::_computeLowerBound() const
   {
     fullVector<double> det;
     fullMatrix<double> mat;
-    _coeffDet2->setVectorAsProxy(det);
-    _coeffMat2->setMatrixAsProxy(mat);
+    _coeffDet->setVectorAsProxy(det);
+    _coeffMat->setMatrixAsProxy(mat);
 
-    // Speedup: If one coeff _coeffDet2 is negative, without bounding
+    // Speedup: If one coeff _coeffDet is negative, without bounding
     // J^2/(a^2+b^2), we would get with certainty a negative lower bound.
     // Returning 0.
     for(int i = 0; i < det.size(); ++i) {
@@ -638,7 +631,7 @@ namespace jacobianBasedQuality {
       prox[i].setAsProxy(v, i);
     }
 
-    const bezierBasisRaiser *raiser = _coeffMat2->getBezierBasis()->getRaiser();
+    const bezierBasisRaiser *raiser = _coeffMat->getBezierBasis()->getRaiser();
     fullVector<double> coeffDenominator;
     double result = 0;
 
@@ -704,7 +697,7 @@ namespace jacobianBasedQuality {
 
       fullVector<double> &coeffNumerator = tmp;
       const bezierBasisRaiser *raiserBis =
-        _coeffDet2->getBezierBasis()->getRaiser();
+        _coeffDet->getBezierBasis()->getRaiser();
       raiserBis->computeCoeff2(coeffNum1, det, coeffNumerator);
       raiserBis->computeCoeff2(coeffDen1, coeffDen2, coeffDenominator);
 
@@ -734,7 +727,7 @@ namespace jacobianBasedQuality {
 
       fullVector<double> &coeffNumerator = tmp;
       const bezierBasisRaiser *raiserBis =
-        _coeffDet2->getBezierBasis()->getRaiser();
+        _coeffDet->getBezierBasis()->getRaiser();
       raiserBis->computeCoeff2(coeffNum1, det, coeffNumerator);
       raiserBis->computeCoeff2(coeffDen1, coeffDen2, coeffDenominator);
 
@@ -748,17 +741,17 @@ namespace jacobianBasedQuality {
 
   // ICN measure (Inverse Condition Number)
   _coeffDataICN::_coeffDataICN(int dim,
-                               const bezierCoeff *det2,
-                               const bezierCoeff *mat2)
-    : _coeffData(), _coeffDet2(det2), _coeffMat2(mat2), _dim(dim)
+                               const bezierCoeff *det,
+                               const bezierCoeff *mat)
+    : _coeffData(), _coeffDet(det), _coeffMat(mat), _dim(dim)
   {
-    _computeAtCorner(_minL2, _maxL2);
+    _computeAtCorner(_minL, _maxL);
 
-    _minB2 = 0;
-    if(boundsOk(_minL2, _maxL2))
+    _minB = 0;
+    if(boundsOk(_minL, _maxL))
       return;
     else {
-      _minB2 = _computeLowerBound2();
+      _minB = _computeLowerBound();
     }
     // _maxB not used for now
   }
@@ -767,18 +760,18 @@ namespace jacobianBasedQuality {
   {
     static const double tolmin = 1e-3;
     static const double tolmax = 1e-2;
-    const double tol = tolmin + (tolmax - tolmin) * std::max(_minB2, .0);
-    return minL - _minB2 < tol;
+    const double tol = tolmin + (tolmax - tolmin) * std::max(_minB, .0);
+    return minL - _minB < tol;
   }
 
   void _coeffDataICN::getSubCoeff(std::vector<_coeffData *> &v) const
   {
-    const int numDiv = _coeffDet2->getNumDivision();
+    const int numDiv = _coeffDet->getNumDivision();
 
     std::vector<bezierCoeff *> subD;
     std::vector<bezierCoeff *> subM;
-    _coeffDet2->subdivide(subD);
-    _coeffMat2->subdivide(subM);
+    _coeffDet->subdivide(subD);
+    _coeffMat->subdivide(subM);
 
     v.clear();
     for(int i = 0; i < numDiv; i++) {
@@ -788,35 +781,35 @@ namespace jacobianBasedQuality {
 
   void _coeffDataICN::deleteBezierCoeff()
   {
-    delete _coeffDet2;
-    delete _coeffMat2;
+    delete _coeffDet;
+    delete _coeffMat;
   }
 
-  void _coeffDataICN::_computeAtCorner(double &min2, double &max2) const
+  void _coeffDataICN::_computeAtCorner(double &min, double &max) const
   {
     fullVector<double> det, icn;
     fullMatrix<double> mat;
-    _coeffDet2->getCornerCoeffs(det);
-    _coeffMat2->getCornerCoeffs(mat);
+    _coeffDet->getCornerCoeffs(det);
+    _coeffMat->getCornerCoeffs(mat);
     _computeICN(det, mat, icn, _dim);
 
-    min2 = std::numeric_limits<double>::infinity();
-    max2 = -min2;
+    min = std::numeric_limits<double>::infinity();
+    max = -min;
 
     for(int i = 0; i < icn.size(); i++) {
-      min2 = std::min(min2, icn(i));
-      max2 = std::max(max2, icn(i));
+      min = std::min(min, icn(i));
+      max = std::max(max, icn(i));
     }
   }
 
-  double _coeffDataICN::_computeLowerBound2() const
+  double _coeffDataICN::_computeLowerBound() const
   {
     fullVector<double> det;
     fullMatrix<double> mat;
-    _coeffDet2->setVectorAsProxy(det);
-    _coeffMat2->setMatrixAsProxy(mat);
+    _coeffDet->setVectorAsProxy(det);
+    _coeffMat->setMatrixAsProxy(mat);
 
-    // Speedup: If one coeff _coeffDet2 is negative, we would get
+    // Speedup: If one coeff _coeffDet is negative, we would get
     // a negative lower bound. For now, returning 0.
     for(int i = 0; i < det.size(); ++i) {
       if(det(i) < 0) {
@@ -824,7 +817,7 @@ namespace jacobianBasedQuality {
       }
     }
 
-    const bezierBasisRaiser *raiser = _coeffMat2->getBezierBasis()->getRaiser();
+    const bezierBasisRaiser *raiser = _coeffMat->getBezierBasis()->getRaiser();
     if(_dim == 2) {
       fullVector<double> coeffDenominator;
       {
@@ -879,8 +872,8 @@ namespace jacobianBasedQuality {
       delete cd;
 
       for(std::size_t i = 0; i < subs.size(); i++) {
-        minL = std::min(minL, subs[i]->minL2());
-        maxL = std::max(maxL, subs[i]->maxL2());
+        minL = std::min(minL, subs[i]->minL());
+        maxL = std::max(maxL, subs[i]->maxL());
         domains.push_back(subs[i]);
         push_heap(domains.begin(), domains.end(), Comp());
       }
@@ -900,11 +893,11 @@ namespace jacobianBasedQuality {
       Msg::Warning("empty vector in Bezier subdivision, nothing to do");
       return;
     }
-    double minL = domains[0]->minL2();
-    double maxL = domains[0]->maxL2();
+    double minL = domains[0]->minL();
+    double maxL = domains[0]->maxL();
     for(std::size_t i = 1; i < domains.size(); ++i) {
-      minL = std::min(minL, domains[i]->minL2());
-      maxL = std::max(maxL, domains[i]->maxL2());
+      minL = std::min(minL, domains[i]->minL());
+      maxL = std::max(maxL, domains[i]->maxL());
     }
 
     _subdivideDomainsMinOrMax<_lessMinB>(domains, minL, maxL, debug);
@@ -914,27 +907,26 @@ namespace jacobianBasedQuality {
 
   double _getMinAndDeleteDomains(std::vector<_coeffData *> &domains)
   {
-    // FIXME renames
-    double minB2 = domains[0]->minB2();
-    double minL2 = domains[0]->minL2();
+    double minB = domains[0]->minB();
+    double minL = domains[0]->minL();
     domains[0]->deleteBezierCoeff();
     delete domains[0];
     for(std::size_t i = 1; i < domains.size(); ++i) {
-      minB2 = std::min(minB2, domains[i]->minB2());
-      minL2 = std::min(minL2, domains[i]->minL2());
+      minB = std::min(minB, domains[i]->minB());
+      minL = std::min(minL, domains[i]->minL());
       domains[i]->deleteBezierCoeff();
       delete domains[i];
     }
-    double fact = .5 * (minB2 + minL2);
+    double fact = .5 * (minB + minL);
     // This is done because, for triangles and prisms, currently, the
     // computation of bounds is not sharp. It can happen than the IGE measure
     // is very close to 1 everywhere but that the bound is close to 1 only
     // after a huge amount of subdivision. In this case, it is better to
     // return minL instead of minB. The best solution would be to implement
     // sharp bounds for triangles and prisms, see function
-    // _coeffDataIGE::_computeLowerBound2(..). If it is done, change this to
+    // _coeffDataIGE::_computeLowerBound(..). If it is done, change this to
     // return minB.
-    return fact * minL2 + (1 - fact) * minB2;
+    return fact * minL + (1 - fact) * minB;
   }
 
   double _computeBoundRational(const fullVector<double> &numerator,

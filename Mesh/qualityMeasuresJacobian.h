@@ -44,19 +44,17 @@ namespace jacobianBasedQuality {
 
   class _coeffData {
   protected:
-    // FIXME renames
-    double _minL2, _maxL2; // Extremum of measure at corners
-    double _minB2, _maxB2; // Extremum of measure
+    double _minL, _maxL; // Extremum of measure at corners
+    double _minB, _maxB; // Extremum of measure
 
   public:
-    _coeffData() : _minL2(0), _maxL2(0), _minB2(0), _maxB2(0) {}
+    _coeffData() : _minL(0), _maxL(0), _minB(0), _maxB(0) {}
     virtual ~_coeffData() {}
 
-    // FIXME renames
-    inline double minL2() const { return _minL2; }
-    inline double maxL2() const { return _maxL2; }
-    inline double minB2() const { return _minB2; }
-    inline double maxB2() const { return _maxB2; }
+    inline double minL() const { return _minL; }
+    inline double maxL() const { return _maxL; }
+    inline double minB() const { return _minB; }
+    inline double maxB() const { return _maxB; }
 
     virtual bool boundsOk(double minL, double maxL) const = 0;
     virtual void getSubCoeff(std::vector<_coeffData *> &) const = 0;
@@ -72,12 +70,10 @@ namespace jacobianBasedQuality {
 
   class _coeffDataJac : public _coeffData {
   private:
-    // FIXME renames
-    const bezierCoeff *_coeffs2;
+    const bezierCoeff *_coeffs;
 
   public:
-    // FIXME renames
-    _coeffDataJac(const bezierCoeff *coeffs2);
+    _coeffDataJac(const bezierCoeff *coeffs);
     ~_coeffDataJac() {}
 
     bool boundsOk(double minL, double maxL) const;
@@ -87,14 +83,12 @@ namespace jacobianBasedQuality {
 
   class _coeffDataIGE : public _coeffData {
   private:
-    // FIXME renames
-    const bezierCoeff *_coeffDet2;
-    const bezierCoeff *_coeffMat2;
+    const bezierCoeff *_coeffDet;
+    const bezierCoeff *_coeffMat;
     const int _type;
 
   public:
-    // FIXME renames
-    _coeffDataIGE(int type, const bezierCoeff *det2, const bezierCoeff *mat2);
+    _coeffDataIGE(int type, const bezierCoeff *det, const bezierCoeff *mat);
     ~_coeffDataIGE() {}
 
     bool boundsOk(double minL, double maxL) const;
@@ -103,19 +97,17 @@ namespace jacobianBasedQuality {
 
   private:
     void _computeAtCorner(double &min, double &max) const;
-    double _computeLowerBound2() const; // FIXME rename
+    double _computeLowerBound() const;
   };
 
   class _coeffDataICN : public _coeffData {
   private:
-    // FIXME renames
-    const bezierCoeff *_coeffDet2;
-    const bezierCoeff *_coeffMat2;
+    const bezierCoeff *_coeffDet;
+    const bezierCoeff *_coeffMat;
     const int _dim;
 
   public:
-    // FIXME renames
-    _coeffDataICN(int dim, const bezierCoeff *det2, const bezierCoeff *mat2);
+    _coeffDataICN(int dim, const bezierCoeff *det, const bezierCoeff *mat);
     ~_coeffDataICN() {}
 
     bool boundsOk(double minL, double maxL) const;
@@ -124,7 +116,7 @@ namespace jacobianBasedQuality {
 
   private:
     void _computeAtCorner(double &min, double &max) const;
-    double _computeLowerBound2() const; // FIXME rename
+    double _computeLowerBound() const;
   };
 
   double _computeBoundRational(const fullVector<double> &numerator,

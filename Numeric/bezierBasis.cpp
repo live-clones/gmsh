@@ -1264,6 +1264,7 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
   }
 }
 
+// FIXME rename
 void bezierBasisRaiser::computeCoeff2(const fullVector<double> &coeffA,
                                       const fullVector<double> &coeffB,
                                       fullVector<double> &coeffSquare) const
@@ -1324,6 +1325,7 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
       "or A != B == C");
 }
 
+// FIXME rename
 void bezierBasisRaiser::computeCoeff2(const fullVector<double> &coeffA,
                                       const fullVector<double> &coeffB,
                                       const fullVector<double> &coeffC,
