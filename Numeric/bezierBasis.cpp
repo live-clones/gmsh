@@ -22,283 +22,6 @@ namespace {
     gmshGenerateOrderedMonomials(data, exp);
   }
 
-  // Sub Control Points
-  std::vector<fullMatrix<double> > generateSubPointsLine(int order)
-  {
-    std::vector<fullMatrix<double> > subPoints(2);
-
-    FuncSpaceData data(TYPE_LIN, order, false);
-    gmshGenerateOrderedPoints(data, subPoints[0], true);
-    subPoints[0].scale(.5);
-
-    subPoints[1].copy(subPoints[0]);
-    subPoints[1].add(.5);
-    return subPoints;
-  }
-
-  std::vector<fullMatrix<double> > generateSubPointsTriangle(int order)
-  {
-    std::vector<fullMatrix<double> > subPoints(4);
-    fullMatrix<double> prox;
-
-    FuncSpaceData data(TYPE_TRI, order, false);
-    gmshGenerateOrderedPoints(data, subPoints[0], true);
-    subPoints[0].scale(.5);
-
-    subPoints[1].copy(subPoints[0]);
-    prox.setAsProxy(subPoints[1], 0, 1);
-    prox.add(.5);
-
-    subPoints[2].copy(subPoints[0]);
-    prox.setAsProxy(subPoints[2], 1, 1);
-    prox.add(.5);
-
-    subPoints[3].copy(subPoints[0]);
-    subPoints[3].scale(-1.);
-    subPoints[3].add(.5);
-    return subPoints;
-  }
-
-  std::vector<fullMatrix<double> > generateSubPointsQuad(int order)
-  {
-    std::vector<fullMatrix<double> > subPoints(4);
-    fullMatrix<double> prox;
-
-    FuncSpaceData data(TYPE_QUA, order, false);
-    gmshGenerateOrderedPoints(data, subPoints[0], true);
-    subPoints[0].scale(.5);
-
-    subPoints[1].copy(subPoints[0]);
-    prox.setAsProxy(subPoints[1], 0, 1);
-    prox.add(.5);
-
-    subPoints[2].copy(subPoints[0]);
-    prox.setAsProxy(subPoints[2], 1, 1);
-    prox.add(.5);
-
-    subPoints[3].copy(subPoints[1]);
-    prox.setAsProxy(subPoints[3], 1, 1);
-    prox.add(.5);
-    return subPoints;
-  }
-
-  std::vector<fullMatrix<double> > generateSubPointsTetrahedron(int order)
-  {
-    std::vector<fullMatrix<double> > subPoints(8);
-    fullMatrix<double> prox1;
-    fullMatrix<double> prox2;
-
-    FuncSpaceData data(TYPE_TET, order, false);
-    gmshGenerateOrderedPoints(data, subPoints[0], true);
-    subPoints[0].scale(.5);
-
-    subPoints[1].copy(subPoints[0]);
-    prox1.setAsProxy(subPoints[1], 0, 1);
-    prox1.add(.5);
-
-    subPoints[2].copy(subPoints[0]);
-    prox1.setAsProxy(subPoints[2], 1, 1);
-    prox1.add(.5);
-
-    subPoints[3].copy(subPoints[0]);
-    prox1.setAsProxy(subPoints[3], 2, 1);
-    prox1.add(.5);
-
-    // u := .5-u-w
-    // v := .5-v-w
-    // w := w
-    subPoints[4].copy(subPoints[0]);
-    prox1.setAsProxy(subPoints[4], 0, 2);
-    prox1.scale(-1.);
-    prox1.add(.5);
-    prox1.setAsProxy(subPoints[4], 0, 1);
-    prox2.setAsProxy(subPoints[4], 2, 1);
-    prox1.add(prox2, -1.);
-    prox1.setAsProxy(subPoints[4], 1, 1);
-    prox1.add(prox2, -1.);
-
-    // u := u
-    // v := .5-v
-    // w := w+v
-    subPoints[5].copy(subPoints[0]);
-    prox1.setAsProxy(subPoints[5], 2, 1);
-    prox2.setAsProxy(subPoints[5], 1, 1);
-    prox1.add(prox2);
-    prox2.scale(-1.);
-    prox2.add(.5);
-
-    // u := .5-u
-    // v := v
-    // w := w+u
-    subPoints[6].copy(subPoints[0]);
-    prox1.setAsProxy(subPoints[6], 2, 1);
-    prox2.setAsProxy(subPoints[6], 0, 1);
-    prox1.add(prox2);
-    prox2.scale(-1.);
-    prox2.add(.5);
-
-    // u := u+w
-    // v := v+w
-    // w := .5-w
-    subPoints[7].copy(subPoints[0]);
-    prox1.setAsProxy(subPoints[7], 0, 1);
-    prox2.setAsProxy(subPoints[7], 2, 1);
-    prox1.add(prox2);
-    prox1.setAsProxy(subPoints[7], 1, 1);
-    prox1.add(prox2);
-    prox2.scale(-1.);
-    prox2.add(.5);
-
-    return subPoints;
-  }
-
-  std::vector<fullMatrix<double> > generateSubPointsPrism(int order)
-  {
-    std::vector<fullMatrix<double> > subPoints(8);
-    fullMatrix<double> prox;
-
-    FuncSpaceData data(TYPE_PRI, order, false);
-    gmshGenerateOrderedPoints(data, subPoints[0], true);
-    subPoints[0].scale(.5);
-
-    subPoints[1].copy(subPoints[0]);
-    prox.setAsProxy(subPoints[1], 0, 1);
-    prox.add(.5);
-
-    subPoints[2].copy(subPoints[0]);
-    prox.setAsProxy(subPoints[2], 1, 1);
-    prox.add(.5);
-
-    subPoints[3].copy(subPoints[0]);
-    prox.setAsProxy(subPoints[3], 0, 2);
-    prox.scale(-1.);
-    prox.add(.5);
-
-    subPoints[4].copy(subPoints[0]);
-    prox.setAsProxy(subPoints[4], 2, 1);
-    prox.add(.5);
-
-    subPoints[5].copy(subPoints[1]);
-    prox.setAsProxy(subPoints[5], 2, 1);
-    prox.add(.5);
-
-    subPoints[6].copy(subPoints[2]);
-    prox.setAsProxy(subPoints[6], 2, 1);
-    prox.add(.5);
-
-    subPoints[7].copy(subPoints[3]);
-    prox.setAsProxy(subPoints[7], 2, 1);
-    prox.add(.5);
-
-    return subPoints;
-  }
-
-  std::vector<fullMatrix<double> > generateSubPointsHex(int order)
-  {
-    std::vector<fullMatrix<double> > subPoints(8);
-    fullMatrix<double> prox;
-
-    FuncSpaceData data(TYPE_HEX, order, false);
-    gmshGenerateOrderedPoints(data, subPoints[0], true);
-    subPoints[0].scale(.5);
-
-    subPoints[1].copy(subPoints[0]);
-    prox.setAsProxy(subPoints[1], 0, 1);
-    prox.add(.5);
-
-    subPoints[2].copy(subPoints[0]);
-    prox.setAsProxy(subPoints[2], 1, 1);
-    prox.add(.5);
-
-    subPoints[3].copy(subPoints[1]);
-    prox.setAsProxy(subPoints[3], 1, 1);
-    prox.add(.5);
-
-    subPoints[4].copy(subPoints[0]);
-    prox.setAsProxy(subPoints[4], 2, 1);
-    prox.add(.5);
-
-    subPoints[5].copy(subPoints[1]);
-    prox.setAsProxy(subPoints[5], 2, 1);
-    prox.add(.5);
-
-    subPoints[6].copy(subPoints[2]);
-    prox.setAsProxy(subPoints[6], 2, 1);
-    prox.add(.5);
-
-    subPoints[7].copy(subPoints[3]);
-    prox.setAsProxy(subPoints[7], 2, 1);
-    prox.add(.5);
-
-    return subPoints;
-  }
-
-  std::vector<fullMatrix<double> > generateSubPointsPyr(int nij, int nk)
-  {
-    // Note: We suppose that the space is hex-like because  subpoint is for
-    // subdivision and pyramidal space is not subdivable.
-    if(nk == 0) { // quad-like space
-      std::vector<fullMatrix<double> > subPoints(4);
-      fullMatrix<double> prox;
-
-      FuncSpaceData data(TYPE_PYR, false, nij, nk, false);
-      gmshGenerateOrderedPoints(data, subPoints[0], true);
-      subPoints[0].scale(.5);
-
-      subPoints[1].copy(subPoints[0]);
-      prox.setAsProxy(subPoints[1], 0, 1);
-      prox.add(.5);
-
-      subPoints[2].copy(subPoints[0]);
-      prox.setAsProxy(subPoints[2], 1, 1);
-      prox.add(.5);
-
-      subPoints[3].copy(subPoints[1]);
-      prox.setAsProxy(subPoints[3], 1, 1);
-      prox.add(.5);
-
-      return subPoints;
-    }
-    else { // hex-like space
-      std::vector<fullMatrix<double> > subPoints(8);
-      fullMatrix<double> prox;
-
-      FuncSpaceData data(TYPE_PYR, false, nij, nk, false);
-      gmshGenerateOrderedPoints(data, subPoints[0], true);
-      subPoints[0].scale(.5);
-
-      subPoints[1].copy(subPoints[0]);
-      prox.setAsProxy(subPoints[1], 0, 1);
-      prox.add(.5);
-
-      subPoints[2].copy(subPoints[0]);
-      prox.setAsProxy(subPoints[2], 1, 1);
-      prox.add(.5);
-
-      subPoints[3].copy(subPoints[1]);
-      prox.setAsProxy(subPoints[3], 1, 1);
-      prox.add(.5);
-
-      subPoints[4].copy(subPoints[0]);
-      prox.setAsProxy(subPoints[4], 2, 1);
-      prox.add(.5);
-
-      subPoints[5].copy(subPoints[1]);
-      prox.setAsProxy(subPoints[5], 2, 1);
-      prox.add(.5);
-
-      subPoints[6].copy(subPoints[2]);
-      prox.setAsProxy(subPoints[6], 2, 1);
-      prox.add(.5);
-
-      subPoints[7].copy(subPoints[3]);
-      prox.setAsProxy(subPoints[7], 2, 1);
-      prox.add(.5);
-
-      return subPoints;
-    }
-  }
-
   // Matrices generation
   int nChoosek(int n, int k)
   {
@@ -392,64 +115,6 @@ namespace {
       }
     }
     return bez2Lag;
-  }
-
-  fullMatrix<double>
-  generateSubDivisor(const fullMatrix<double> &exponents,
-                     const std::vector<fullMatrix<double> > &subPoints,
-                     const fullMatrix<double> &lag2Bez, int order,
-                     int dimSimplex)
-  {
-    if(exponents.size1() != lag2Bez.size1() ||
-       exponents.size1() != lag2Bez.size2()) {
-      Msg::Error("Wrong sizes for Bezier Divisor %d %d -- %d %d",
-                 exponents.size1(), lag2Bez.size1(), exponents.size1(),
-                 lag2Bez.size2());
-      return fullMatrix<double>(1, 1);
-    }
-
-    int nbPts = lag2Bez.size1();
-    int nbSubPts = nbPts * subPoints.size();
-
-    fullMatrix<double> intermediate2(nbPts, nbPts);
-    fullMatrix<double> subDivisor(nbSubPts, nbPts);
-
-    for(std::size_t i = 0; i < subPoints.size(); i++) {
-      fullMatrix<double> intermediate1 =
-        generateBez2LagMatrix(exponents, subPoints[i], order, dimSimplex);
-      lag2Bez.mult(intermediate1, intermediate2);
-      subDivisor.copy(intermediate2, 0, nbPts, 0, nbPts, i * nbPts, 0);
-    }
-    return subDivisor;
-  }
-
-  fullMatrix<double>
-  generateSubDivisorPyramid(const fullMatrix<double> &exponents,
-                            const std::vector<fullMatrix<double> > &subPoints,
-                            const fullMatrix<double> &lag2Bez, bool pyr,
-                            int nij, int nk)
-  {
-    if(exponents.size1() != lag2Bez.size1() ||
-       exponents.size1() != lag2Bez.size2()) {
-      Msg::Error("Wrong sizes for Bezier Divisor %d %d -- %d %d",
-                 exponents.size1(), lag2Bez.size1(), exponents.size1(),
-                 lag2Bez.size2());
-      return fullMatrix<double>(1, 1);
-    }
-
-    int nbPts = lag2Bez.size1();
-    int nbSubPts = nbPts * subPoints.size();
-
-    fullMatrix<double> intermediate2(nbPts, nbPts);
-    fullMatrix<double> subDivisor(nbSubPts, nbPts);
-
-    for(std::size_t i = 0; i < subPoints.size(); i++) {
-      fullMatrix<double> intermediate1 =
-        generateBez2LagMatrixPyramid(exponents, subPoints[i], pyr, nij, nk);
-      lag2Bez.mult(intermediate1, intermediate2);
-      subDivisor.copy(intermediate2, 0, nbPts, 0, nbPts, i * nbPts, 0);
-    }
-    return subDivisor;
   }
 
   void double2int(const fullMatrix<double> &matDouble, fullMatrix<int> &matInt)
@@ -623,25 +288,6 @@ bezierBasis::bezierBasis(FuncSpaceData data) : _data(data), _raiser(NULL)
 
 bezierBasis::~bezierBasis() { delete _raiser; }
 
-void bezierBasis::subdivideBezCoeff(const fullMatrix<double> &coeff,
-                                    fullMatrix<double> &subCoeff) const
-{
-  if(subCoeff.size1() != subDivisor.size1() ||
-     subCoeff.size2() != coeff.size2()) {
-    subCoeff.resize(subDivisor.size1(), coeff.size2());
-  }
-  subDivisor.mult(coeff, subCoeff);
-}
-
-void bezierBasis::subdivideBezCoeff(const fullVector<double> &coeff,
-                                    fullVector<double> &subCoeff) const
-{
-  if(subCoeff.size() != subDivisor.size1()) {
-    subCoeff.resize(subDivisor.size1());
-  }
-  subDivisor.mult(coeff, subCoeff);
-}
-
 void bezierBasis::_construct()
 {
   if(_data.getType() == TYPE_PYR) {
@@ -649,7 +295,6 @@ void bezierBasis::_construct()
     return;
   }
 
-  std::vector<fullMatrix<double> > subPoints;
   int order = _data.getSpaceOrder();
 
   switch(_data.getType()) {
@@ -657,49 +302,41 @@ void bezierBasis::_construct()
     _numLagCoeff = 1;
     _dimSimplex = 0;
     _exponents = gmshGenerateMonomialsLine(0);
-    subPoints.push_back(gmshGeneratePointsLine(0));
     break;
   case TYPE_LIN:
     _numLagCoeff = order ? 2 : 1;
     _dimSimplex = 0;
     _exponents = gmshGenerateMonomialsLine(order);
-    subPoints = generateSubPointsLine(order);
     break;
   case TYPE_TRI:
     _numLagCoeff = order ? 3 : 1;
     _dimSimplex = 2;
     _exponents = gmshGenerateMonomialsTriangle(order);
-    subPoints = generateSubPointsTriangle(order);
     break;
   case TYPE_QUA:
     _numLagCoeff = order ? 4 : 1;
     _dimSimplex = 0;
     _exponents = gmshGenerateMonomialsQuadrangle(order);
-    subPoints = generateSubPointsQuad(order);
     break;
   case TYPE_TET:
     _numLagCoeff = order ? 4 : 1;
     _dimSimplex = 3;
     _exponents = gmshGenerateMonomialsTetrahedron(order);
-    subPoints = generateSubPointsTetrahedron(order);
     break;
   case TYPE_PRI:
     _numLagCoeff = order ? 6 : 1;
     _dimSimplex = 2;
     _exponents = gmshGenerateMonomialsPrism(order);
-    subPoints = generateSubPointsPrism(order);
     break;
   case TYPE_HEX:
     _numLagCoeff = order ? 8 : 1;
     _dimSimplex = 0;
     _exponents = gmshGenerateMonomialsHexahedron(order);
-    subPoints = generateSubPointsHex(order);
     break;
   default:
     Msg::Error("Unknown function space for parentType %d", _data.getType());
     return;
   }
-  _numDivisions = static_cast<int>(subPoints.size());
 
   fullMatrix<double> bezSamplingPoints;
   gmshGenerateOrderedPoints(_data, bezSamplingPoints, true);
@@ -711,8 +348,6 @@ void bezierBasis::_construct()
   matrixBez2Lag2 =
     generateBez2LagMatrix(_exponents2, bezSamplingPoints, order, _dimSimplex);
   matrixBez2Lag2.invert(matrixLag2Bez2);
-  subDivisor = generateSubDivisor(_exponents, subPoints, matrixLag2Bez, order,
-                                  _dimSimplex);
 
   if(_data.getType() == TYPE_QUA) {
     fullMatrix<double> oneDPoints = gmshGenerateMonomialsLine(order);
@@ -795,16 +430,6 @@ void bezierBasis::_constructPyr()
   matrixBez2Lag2 =
     generateBez2LagMatrixPyramid(_exponents2, bezierPoints, pyr, nij, nk);
   matrixBez2Lag2.invert(matrixLag2Bez2);
-  if(pyr) {
-    _numDivisions = 0;
-  }
-  else {
-    std::vector<fullMatrix<double> > subPoints;
-    subPoints = generateSubPointsPyr(nij, nk);
-    _numDivisions = static_cast<int>(subPoints.size());
-    subDivisor = generateSubDivisorPyramid(_exponents, subPoints, matrixLag2Bez,
-                                           pyr, nij, nk);
-  }
 }
 
 const bezierBasisRaiser *bezierBasis::getRaiser() const
@@ -1239,31 +864,6 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
   }
 }
 
-void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
-                                     const fullVector<double> &coeffB,
-                                     fullVector<double> &coeffSquare) const
-{
-  coeffSquare.resize(_raiser2.size(), true);
-
-  if(&coeffA == &coeffB) {
-    for(std::size_t ind = 0; ind < _raiser2.size(); ++ind) {
-      for(std::size_t l = 0; l < _raiser2[ind].size(); ++l) {
-        const _data &d = _raiser2[ind][l];
-        coeffSquare(ind) += d.val * coeffA(d.i) * coeffB(d.j);
-      }
-    }
-  }
-  else {
-    for(std::size_t ind = 0; ind < _raiser2.size(); ++ind) {
-      for(std::size_t l = 0; l < _raiser2[ind].size(); ++l) {
-        const _data &d = _raiser2[ind][l];
-        coeffSquare(ind) +=
-          d.val / 2 * (coeffA(d.i) * coeffB(d.j) + coeffA(d.j) * coeffB(d.i));
-      }
-    }
-  }
-}
-
 // FIXME rename
 void bezierBasisRaiser::computeCoeff2(const fullVector<double> &coeffA,
                                       const fullVector<double> &coeffB,
@@ -1288,41 +888,6 @@ void bezierBasisRaiser::computeCoeff2(const fullVector<double> &coeffA,
       }
     }
   }
-}
-
-void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
-                                     const fullVector<double> &coeffB,
-                                     const fullVector<double> &coeffC,
-                                     fullVector<double> &coeffCubic) const
-{
-  coeffCubic.resize(_raiser3.size(), true);
-
-  if(&coeffA == &coeffB && &coeffB == &coeffC) {
-    for(std::size_t ind = 0; ind < _raiser3.size(); ++ind) {
-      for(std::size_t l = 0; l < _raiser3[ind].size(); ++l) {
-        const _data &d = _raiser3[ind][l];
-        coeffCubic(ind) += d.val * coeffA(d.i) * coeffB(d.j) * coeffC(d.k);
-      }
-    }
-  }
-  else if(&coeffA != &coeffB && &coeffB != &coeffC) {
-    for(std::size_t ind = 0; ind < _raiser3.size(); ++ind) {
-      for(std::size_t l = 0; l < _raiser3[ind].size(); ++l) {
-        const _data &d = _raiser3[ind][l];
-        coeffCubic(ind) += d.val / 6 *
-                           (coeffA(d.i) * coeffB(d.j) * coeffC(d.k) +
-                            coeffA(d.i) * coeffB(d.k) * coeffC(d.j) +
-                            coeffA(d.j) * coeffB(d.i) * coeffC(d.k) +
-                            coeffA(d.j) * coeffB(d.k) * coeffC(d.i) +
-                            coeffA(d.k) * coeffB(d.i) * coeffC(d.j) +
-                            coeffA(d.k) * coeffB(d.j) * coeffC(d.i));
-      }
-    }
-  }
-  else
-    Msg::Error(
-      "bezierBasisRaiser::computeCoeff not implemented for A == B != C "
-      "or A != B == C");
 }
 
 // FIXME rename
@@ -1663,7 +1228,6 @@ void bezierCoeff::subdivide(std::vector<bezierCoeff *> &subCoeff) const
     subCoeff.clear();
   }
 
-  // TODO: other types
   switch(_funcSpaceData.getType()) {
   case TYPE_TRI:
     for(int i = 0; i < 4; ++i) subCoeff.push_back(new bezierCoeff(*this));

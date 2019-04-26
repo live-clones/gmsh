@@ -526,13 +526,11 @@ namespace jacobianBasedQuality {
 
   void _coeffDataJac::getSubCoeff(std::vector<_coeffData *> &v) const
   {
-    const int numDiv = _coeffs->getNumDivision();
-
     std::vector<bezierCoeff *> sub;
     _coeffs->subdivide(sub);
 
     v.clear();
-    for(int i = 0; i < numDiv; i++) {
+    for(std::size_t i = 0; i < sub.size(); i++) {
       v.push_back(new _coeffDataJac(sub[i]));
     }
   }
@@ -569,15 +567,13 @@ namespace jacobianBasedQuality {
 
   void _coeffDataIGE::getSubCoeff(std::vector<_coeffData *> &v) const
   {
-    const int numDiv = _coeffDet->getNumDivision();
-
     std::vector<bezierCoeff *> subD;
     std::vector<bezierCoeff *> subM;
     _coeffDet->subdivide(subD);
     _coeffMat->subdivide(subM);
 
     v.clear();
-    for(int i = 0; i < numDiv; i++) {
+    for(std::size_t i = 0; i < subD.size(); i++) {
       v.push_back(new _coeffDataIGE(_type, subD[i], subM[i]));
     }
   }
@@ -766,15 +762,13 @@ namespace jacobianBasedQuality {
 
   void _coeffDataICN::getSubCoeff(std::vector<_coeffData *> &v) const
   {
-    const int numDiv = _coeffDet->getNumDivision();
-
     std::vector<bezierCoeff *> subD;
     std::vector<bezierCoeff *> subM;
     _coeffDet->subdivide(subD);
     _coeffMat->subdivide(subM);
 
     v.clear();
-    for(int i = 0; i < numDiv; i++) {
+    for(std::size_t i = 0; i < subD.size(); i++) {
       v.push_back(new _coeffDataICN(_dim, subD[i], subM[i]));
     }
   }

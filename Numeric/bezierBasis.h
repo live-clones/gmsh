@@ -21,7 +21,7 @@ class bezierBasis {
 private:
   // Number of corner coeff which are 'real' values of the expanded function
   int _numLagCoeff;
-  int _numDivisions, _dimSimplex;
+  int _dimSimplex;
   const FuncSpaceData _data;
   bezierBasisRaiser *_raiser;
 
@@ -36,7 +36,6 @@ public:
   fullMatrix<double> matrixBez2Lag2;
   fullMatrix<double> matrixLag2Bez3;
   fullMatrix<double> matrixLag2Bez4;
-  fullMatrix<double> subDivisor;
   fullVector<double> ordered1dBezPoints;
 
   // Constructors
@@ -49,15 +48,8 @@ public:
   inline int getOrder() const { return _data.getSpaceOrder(); }
   inline int getDimSimplex() const { return _dimSimplex; }
   inline int getNumLagCoeff() const { return _numLagCoeff; }
-  inline int getNumDivision() const { return _numDivisions; }
   inline FuncSpaceData getFuncSpaceData() const { return _data; }
   const bezierBasisRaiser *getRaiser() const;
-
-  // Subdivide Bezier coefficients
-  void subdivideBezCoeff(const fullMatrix<double> &coeff,
-                         fullMatrix<double> &subCoeff) const;
-  void subdivideBezCoeff(const fullVector<double> &coeff,
-                         fullVector<double> &subCoeff) const;
 
 private:
   void _construct();
@@ -91,16 +83,9 @@ public:
     _fillRaiserData();
   };
 
-  void computeCoeff(const fullVector<double> &coeffA,
-                    const fullVector<double> &coeffB,
-                    fullVector<double> &coeffSquare) const;
   void computeCoeff2(const fullVector<double> &coeffA,
                      const fullVector<double> &coeffB,
                      fullVector<double> &coeffSquare) const;
-  void computeCoeff(const fullVector<double> &coeffA,
-                    const fullVector<double> &coeffB,
-                    const fullVector<double> &coeffC,
-                    fullVector<double> &coeffCubic) const;
   void computeCoeff2(const fullVector<double> &coeffA,
                      const fullVector<double> &coeffB,
                      const fullVector<double> &coeffC,
@@ -175,7 +160,6 @@ public:
   inline int getNumCoeff() const { return _r; }
   inline int getNumColumns() const { return _c; }
   inline int getNumCornerCoeff() const { return _basis->getNumLagCoeff(); }
-  inline int getNumDivision() const { return _basis->getNumDivision(); }
   int getIdxCornerCoeff(int i) const;
   inline double getCornerCoeff(int k) const
   {
