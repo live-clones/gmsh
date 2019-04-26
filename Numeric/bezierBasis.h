@@ -34,8 +34,6 @@ public:
   fullMatrix<double> matrixBez2Lag;
   fullMatrix<double> matrixLag2Bez2;
   fullMatrix<double> matrixBez2Lag2;
-  fullMatrix<double> matrixLag2Bez3;
-  fullMatrix<double> matrixLag2Bez4;
   fullVector<double> ordered1dBezPoints;
 
   // Constructors

@@ -349,59 +349,6 @@ void bezierBasis::_construct()
     generateBez2LagMatrix(_exponents2, bezSamplingPoints, order, _dimSimplex);
   matrixBez2Lag2.invert(matrixLag2Bez2);
 
-  if(_data.getType() == TYPE_QUA) {
-    fullMatrix<double> oneDPoints = gmshGenerateMonomialsLine(order);
-    if(order) oneDPoints.scale(1. / order);
-    fullMatrix<double> oneDExponents;
-    generateExponents(FuncSpaceData(TYPE_LIN, order, false), oneDExponents);
-    fullMatrix<double> oneDMatrixBez2Lag =
-      generateBez2LagMatrix(oneDExponents, oneDPoints, order, 0);
-    fullMatrix<double> oneDMatrixLag2Bez;
-    oneDMatrixBez2Lag.invert(oneDMatrixLag2Bez);
-    matrixLag2Bez3.resize(matrixLag2Bez2.size1(), matrixLag2Bez2.size2());
-    matrixLag2Bez4.resize(matrixLag2Bez2.size1(), matrixLag2Bez2.size2());
-
-    fullMatrix<double> oneDMatrixLag2Bez4;
-    generateOneDMatrixLag2Bez(order, oneDMatrixLag2Bez4);
-
-    for(int i = 0; i <= order; ++i) {
-      for(int j = 0; j <= order; ++j) {
-        int I = i + (order + 1) * j;
-        for(int k = 0; k <= order; ++k) {
-          for(int l = 0; l <= order; ++l) {
-            int K = 0;
-            while(K < _exponents.size1() &&
-                  (_exponents(K, 0) - .5 >= k || _exponents(K, 0) + .5 <= k ||
-                   _exponents(K, 1) - .5 >= l || _exponents(K, 1) + .5 <= l))
-              ++K;
-            if(K == _exponents.size1()) {
-              Msg::Error("ARRAGRGRAG");
-            }
-            int kk = k;
-            if(kk == order)
-              kk = 1;
-            else if(kk != 0)
-              ++kk;
-            int ll = l;
-            if(ll == order)
-              ll = 1;
-            else if(ll != 0)
-              ++ll;
-            matrixLag2Bez3(I, K) =
-              oneDMatrixLag2Bez(i, kk) * oneDMatrixLag2Bez(j, ll);
-            matrixLag2Bez4(I, K) =
-              oneDMatrixLag2Bez4(i, kk) * oneDMatrixLag2Bez4(j, ll);
-          }
-        }
-      }
-    }
-  }
-
-  //  matrixBez2Lag.print("matrixBez2Lag");
-  //  matrixBez2Lag2.print("matrixBez2Lag2");
-  //  matrixLag2Bez.print("matrixLag2Bez");
-  //  matrixLag2Bez2.print("matrixLag2Bez2");
-
   gmshGenerateOrderedPointsLine(order, ordered1dBezPoints);
 }
 
