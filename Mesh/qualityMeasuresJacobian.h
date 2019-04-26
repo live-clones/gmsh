@@ -76,6 +76,7 @@ namespace jacobianBasedQuality {
     const bezierCoeff *_coeffs2;
 
   public:
+    // FIXME renames
     _coeffDataJac(const bezierCoeff *coeffs2);
     ~_coeffDataJac() {}
 
@@ -92,6 +93,7 @@ namespace jacobianBasedQuality {
     const int _type;
 
   public:
+    // FIXME renames
     _coeffDataIGE(int type, const bezierCoeff *det2, const bezierCoeff *mat2);
     ~_coeffDataIGE() {}
 
@@ -101,7 +103,7 @@ namespace jacobianBasedQuality {
 
   private:
     void _computeAtCorner(double &min, double &max) const;
-    double _computeLowerBound2() const;
+    double _computeLowerBound2() const; // FIXME rename
   };
 
   class _coeffDataICN : public _coeffData {
@@ -112,6 +114,7 @@ namespace jacobianBasedQuality {
     const int _dim;
 
   public:
+    // FIXME renames
     _coeffDataICN(int dim, const bezierCoeff *det2, const bezierCoeff *mat2);
     ~_coeffDataICN() {}
 
@@ -121,7 +124,7 @@ namespace jacobianBasedQuality {
 
   private:
     void _computeAtCorner(double &min, double &max) const;
-    double _computeLowerBound2() const;
+    double _computeLowerBound2() const; // FIXME rename
   };
 
   double _computeBoundRational(const fullVector<double> &numerator,

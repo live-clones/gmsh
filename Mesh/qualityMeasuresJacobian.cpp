@@ -5,6 +5,7 @@
 
 #include <limits>
 #include "qualityMeasuresJacobian.h"
+#include "FuncSpaceData.h"
 #include "MElement.h"
 #include "BasisFactory.h"
 #include "bezierBasis.h"
@@ -250,6 +251,7 @@ namespace jacobianBasedQuality {
                                  const fullMatrix<double> *normals,
                                  bool debug)
   {
+    // Get Jacobian basis
     const JacobianBasis *jfs = el->getJacobianFuncSpace();
     if(!jfs) {
       Msg::Error(
@@ -260,21 +262,21 @@ namespace jacobianBasedQuality {
       return;
     }
 
+    // Sample jacobian determinant
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
-    el->getNodesCoord(nodesXYZ);
-
     fullVector<double> coeffLag(jfs->getNumJacNodes());
-    fullVector<double> coeffBez(jfs->getNumJacNodes());
+    el->getNodesCoord(nodesXYZ);
     jfs->getSignedJacobian(nodesXYZ, coeffLag, normals);
-//    jfs->lag2Bez(coeffLag, coeffBez);
 
+    // Convert into Bezier coeff
     bezierCoeff::usePools(static_cast<std::size_t>(coeffLag.size()), 0);
-    std::vector<_coeffData *> domains;
     bezierCoeff *bez = new bezierCoeff(jfs->getFuncSpaceData(), coeffLag, 0);
-    domains.push_back(new _coeffDataJac(bez));
 
+    // Refine coefficients
+    std::vector<_coeffData *> domains(1, new _coeffDataJac(bez));
     _subdivideDomains(domains, true, debug);
 
+    // Get extrema
     min = std::numeric_limits<double>::infinity();
     max = -min;
     for(std::size_t i = 0; i < domains.size(); ++i) {
@@ -296,9 +298,7 @@ namespace jacobianBasedQuality {
       if((jmin <= 0 && jmax >=0) || (jmax < 0 && !reversedOk)) return 0;
     }
 
-    fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
-    el->getNodesCoord(nodesXYZ);
-
+    // Get Jacobian and gradient bases
     const GradientBasis *gradBasis;
     const JacobianBasis *jacBasis;
     const int tag = el->getTypeForMSH();
@@ -307,36 +307,27 @@ namespace jacobianBasedQuality {
     gradBasis = BasisFactory::getGradientBasis(tag, jacMatSpace);
     jacBasis = BasisFactory::getJacobianBasis(tag, jacDetSpace);
 
-    fullVector<double> coeffDetBez;
+    // Sample gradients and jacobian determinant
+    fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
     fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
-    {
-      jacBasis->getSignedJacobian(nodesXYZ, coeffDetLag, normals);
-      // NB: If coeffDetLag(0) is negative, then all coefficients are negative
-      if(coeffDetLag(0) < 0) coeffDetLag.scale(-1);
-
-      coeffDetBez.resize(jacBasis->getNumJacNodes());
-//      jacBasis->lag2Bez(coeffDetLag, coeffDetBez);
-    }
-
-    fullMatrix<double> coeffMatBez;
     fullMatrix<double> coeffMatLag(gradBasis->getNumSamplingPoints(), 9);
-    {
-      const int dim = el->getDim();
-      gradBasis->getAllGradientsFromNodes(nodesXYZ, coeffMatLag);
-      if(dim == 2) coeffMatLag.resize(coeffMatLag.size1(), 6, false);
+    el->getNodesCoord(nodesXYZ);
+    jacBasis->getSignedJacobian(nodesXYZ, coeffDetLag, normals);
+    gradBasis->getAllGradientsFromNodes(nodesXYZ, coeffMatLag);
+    // NB: If coeffDetLag(0) is negative, then all coefficients are negative
+    if(coeffDetLag(0) < 0) coeffDetLag.scale(-1);
+    if(el->getDim() == 2) coeffMatLag.resize(coeffMatLag.size1(), 6, false);
 
-      coeffMatBez.resize(gradBasis->getNumSamplingPoints(), dim == 2 ? 6 : 9);
-//      gradBasis->lag2Bez(coeffMatLag, coeffMatBez);
-    }
-
+    // Convert into Bezier coeff
     bezierCoeff::usePools(static_cast<std::size_t>(coeffDetLag.size()),
                           static_cast<std::size_t>(coeffMatLag.size1()) *
                             static_cast<std::size_t>(coeffMatLag.size2()));
-    std::vector<_coeffData *> domains;
     bezierCoeff *bezDet = new bezierCoeff(jacDetSpace, coeffDetLag, 0);
     bezierCoeff *bezMat = new bezierCoeff(jacMatSpace, coeffMatLag, 1);
-    domains.push_back(new _coeffDataIGE(el->getType(), bezDet, bezMat));
 
+    // Compute measure and refine
+    std::vector<_coeffData *> domains;
+    domains.push_back(new _coeffDataIGE(el->getType(), bezDet, bezMat));
     _subdivideDomains(domains, false, debug);
 
     return _getMinAndDeleteDomains(domains);
@@ -353,9 +344,7 @@ namespace jacobianBasedQuality {
       if((jmin <= 0 && jmax >=0) || (jmax < 0 && !reversedOk)) return 0;
     }
 
-    fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
-    el->getNodesCoord(nodesXYZ);
-
+    // Get Jacobian and gradient bases
     const GradientBasis *gradBasis;
     const JacobianBasis *jacBasis;
     const int tag = el->getTypeForMSH();
@@ -364,38 +353,28 @@ namespace jacobianBasedQuality {
     gradBasis = BasisFactory::getGradientBasis(tag, jacMatSpace);
     jacBasis = BasisFactory::getJacobianBasis(tag, jacDetSpace);
 
-    fullVector<double> coeffDetBez;
+    // Sample gradients and jacobian determinant
+    fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
     fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
-    {
-      jacBasis->getSignedIdealJacobian(nodesXYZ, coeffDetLag, normals);
-      // NB: If coeffDetLag(0) is negative, then all coefficients are negative
-      if(coeffDetLag(0) < 0) coeffDetLag.scale(-1);
-
-      coeffDetBez.resize(jacBasis->getNumJacNodes());
-//      jacBasis->lag2Bez(coeffDetLag, coeffDetBez);
-    }
-
-    fullMatrix<double> coeffMatBez;
     fullMatrix<double> coeffMatLag(gradBasis->getNumSamplingPoints(), 9);
-    {
-      const int dim = el->getDim();
-      gradBasis->getAllIdealGradientsFromNodes(nodesXYZ, coeffMatLag);
-      if(dim == 2) coeffMatLag.resize(coeffMatLag.size1(), 6, false);
+    el->getNodesCoord(nodesXYZ);
+    jacBasis->getSignedIdealJacobian(nodesXYZ, coeffDetLag, normals);
+    gradBasis->getAllIdealGradientsFromNodes(nodesXYZ, coeffMatLag);
+    // NB: If coeffDetLag(0) is negative, then all coefficients are negative
+    if(coeffDetLag(0) < 0) coeffDetLag.scale(-1);
+    if(el->getDim() == 2) coeffMatLag.resize(coeffMatLag.size1(), 6, false);
 
-      coeffMatBez.resize(gradBasis->getNumSamplingPoints(), dim == 2 ? 6 : 9);
-//      gradBasis->lag2Bez(coeffMatLag, coeffMatBez);
-    }
-
+    // Convert into Bezier coeff
     bezierCoeff::usePools(static_cast<std::size_t>(coeffDetLag.size()),
                           static_cast<std::size_t>(coeffMatLag.size1()) *
                             static_cast<std::size_t>(coeffMatLag.size2()));
-    std::vector<_coeffData *> domains;
     bezierCoeff *bezDet = new bezierCoeff(jacDetSpace, coeffDetLag, 0);
     bezierCoeff *bezMat = new bezierCoeff(jacMatSpace, coeffMatLag, 1);
+
+    // Compute measure and refine
+    std::vector<_coeffData *> domains;
     domains.push_back(new _coeffDataICN(el->getDim(), bezDet, bezMat));
-
     _subdivideDomains(domains, false, debug);
-
 
     return _getMinAndDeleteDomains(domains);
   }
@@ -444,27 +423,25 @@ namespace jacobianBasedQuality {
   void sampleJacobianDeterminant(MElement *el, int deg, fullVector<double> &jac,
                                  const fullMatrix<double> *normals)
   {
+    // Get Jacobian basis
+    const JacobianBasis *jacBasis;
     FuncSpaceData sampleSpace;
     if (el->getType() != TYPE_PYR)
       sampleSpace = FuncSpaceData(el, deg, false);
     else
       sampleSpace = FuncSpaceData(TYPE_PYR, true, 1, deg-1, false);
-
-    const JacobianBasis *jacBasis;
     jacBasis = BasisFactory::getJacobianBasis(el->getTypeForMSH(), sampleSpace);
 
+    // Sample jacobian determinant
     fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
     el->getNodesCoord(nodesXYZ);
-
     jac.resize(jacBasis->getNumJacNodes());
     jacBasis->getSignedJacobian(nodesXYZ, jac, normals);
   }
 
   void sampleIGEMeasure(MElement *el, int deg, fullVector<double> &ige)
   {
-    fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
-    el->getNodesCoord(nodesXYZ);
-
+    // Get Jacobian and gradient bases
     const GradientBasis *gradBasis;
     const JacobianBasis *jacBasis;
     const int tag = el->getTypeForMSH();
@@ -473,13 +450,16 @@ namespace jacobianBasedQuality {
     gradBasis = BasisFactory::getGradientBasis(tag, jacMatSpace);
     jacBasis = BasisFactory::getJacobianBasis(tag, jacDetSpace);
 
+    // Sample gradients and jacobian determinant
+    fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
     fullVector<double> determinant(jacBasis->getNumJacNodes());
-    jacBasis->getSignedJacobian(nodesXYZ, determinant);
-
     fullMatrix<double> gradients(gradBasis->getNumSamplingPoints(), 9);
+    el->getNodesCoord(nodesXYZ);
+    jacBasis->getSignedJacobian(nodesXYZ, determinant);
     gradBasis->getAllGradientsFromNodes(nodesXYZ, gradients);
     if(el->getDim() == 2) gradients.resize(gradients.size1(), 6, false);
 
+    // Compute measure
     fullMatrix<double> v;
     const int type = el->getType();
     _computeCoeffLengthVectors(gradients, v, type);
@@ -488,9 +468,7 @@ namespace jacobianBasedQuality {
 
   void sampleICNMeasure(MElement *el, int deg, fullVector<double> &icn)
   {
-    fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
-    el->getNodesCoord(nodesXYZ);
-
+    // Get Jacobian and gradient bases
     const GradientBasis *gradBasis;
     const JacobianBasis *jacBasis;
     const int tag = el->getTypeForMSH();
@@ -499,12 +477,15 @@ namespace jacobianBasedQuality {
     gradBasis = BasisFactory::getGradientBasis(tag, jacMatSpace);
     jacBasis = BasisFactory::getJacobianBasis(tag, jacDetSpace);
 
+    // Sample gradients and jacobian determinant
+    fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
     fullVector<double> determinant(jacBasis->getNumJacNodes());
-    jacBasis->getSignedIdealJacobian(nodesXYZ, determinant);
-
     fullMatrix<double> gradients(gradBasis->getNumSamplingPoints(), 9);
+    el->getNodesCoord(nodesXYZ);
+    jacBasis->getSignedIdealJacobian(nodesXYZ, determinant);
     gradBasis->getAllIdealGradientsFromNodes(nodesXYZ, gradients);
 
+    // Compute measure
     _computeICN(determinant, gradients, icn, el->getDim());
   }
 
@@ -520,6 +501,7 @@ namespace jacobianBasedQuality {
   }
 
   // Jacobian determinant (for validity of all elements)
+  // FIXME renames
   _coeffDataJac::_coeffDataJac(const bezierCoeff *coeffs2)
     : _coeffData(), _coeffs2(coeffs2)
   {
@@ -566,6 +548,7 @@ namespace jacobianBasedQuality {
   }
 
   // IGE measure (Inverse Gradient Error)
+  // FIXME renames
   _coeffDataIGE::_coeffDataIGE(int type,
                                const bezierCoeff *det2,
                                const bezierCoeff *mat2)
