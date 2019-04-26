@@ -298,41 +298,13 @@ void bezierBasis::_construct()
   int order = _data.getSpaceOrder();
 
   switch(_data.getType()) {
-  case TYPE_PNT:
-    _numLagCoeff = 1;
-    _dimSimplex = 0;
-    _exponents = gmshGenerateMonomialsLine(0);
-    break;
-  case TYPE_LIN:
-    _numLagCoeff = order ? 2 : 1;
-    _dimSimplex = 0;
-    _exponents = gmshGenerateMonomialsLine(order);
-    break;
-  case TYPE_TRI:
-    _numLagCoeff = order ? 3 : 1;
-    _dimSimplex = 2;
-    _exponents = gmshGenerateMonomialsTriangle(order);
-    break;
-  case TYPE_QUA:
-    _numLagCoeff = order ? 4 : 1;
-    _dimSimplex = 0;
-    _exponents = gmshGenerateMonomialsQuadrangle(order);
-    break;
-  case TYPE_TET:
-    _numLagCoeff = order ? 4 : 1;
-    _dimSimplex = 3;
-    _exponents = gmshGenerateMonomialsTetrahedron(order);
-    break;
-  case TYPE_PRI:
-    _numLagCoeff = order ? 6 : 1;
-    _dimSimplex = 2;
-    _exponents = gmshGenerateMonomialsPrism(order);
-    break;
-  case TYPE_HEX:
-    _numLagCoeff = order ? 8 : 1;
-    _dimSimplex = 0;
-    _exponents = gmshGenerateMonomialsHexahedron(order);
-    break;
+  case TYPE_PNT: _numLagCoeff = 1; _dimSimplex = 0; break;
+  case TYPE_LIN: _numLagCoeff = order ? 2 : 1; _dimSimplex = 0; break;
+  case TYPE_TRI: _numLagCoeff = order ? 3 : 1; _dimSimplex = 2; break;
+  case TYPE_QUA: _numLagCoeff = order ? 4 : 1; _dimSimplex = 0; break;
+  case TYPE_TET: _numLagCoeff = order ? 4 : 1; _dimSimplex = 3; break;
+  case TYPE_PRI: _numLagCoeff = order ? 6 : 1; _dimSimplex = 2; break;
+  case TYPE_HEX: _numLagCoeff = order ? 8 : 1; _dimSimplex = 0; break;
   default:
     Msg::Error("Unknown function space for parentType %d", _data.getType());
     return;
@@ -360,7 +332,6 @@ void bezierBasis::_constructPyr()
 
   _numLagCoeff = nk == 0 ? 4 : 8;
   _dimSimplex = 0;
-  gmshGenerateMonomials(_data, _exponents);
 
   // Note that the sampling points for the Jacobian determinant of pyramids are
   // for z in [0, a] with a < 1. The third coordinate of Bezier points should

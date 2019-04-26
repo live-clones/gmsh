@@ -26,8 +26,7 @@ private:
   bezierBasisRaiser *_raiser;
 
   friend class bezierBasisRaiser;
-  fullMatrix<double> _exponents;
-  fullMatrix<double> _exponents2;
+  fullMatrix<double> _exponents2; // FIXME rename
 
 public:
   // FIXME to set private
@@ -40,7 +39,7 @@ public:
   ~bezierBasis();
 
   // get methods
-  inline int getDim() const { return _exponents.size2(); }
+  inline int getDim() const { return _exponents2.size2(); }
   inline int getType() const { return _data.getType(); }
   inline int getOrder() const { return _data.getSpaceOrder(); }
   inline int getDimSimplex() const { return _dimSimplex; }
