@@ -271,11 +271,10 @@ namespace jacobianBasedQuality {
     bezierCoeff::usePools(static_cast<std::size_t>(coeffLag.size()), 0);
     std::vector<_coeffData *> domains;
     bezierCoeff *bez = new bezierCoeff(jfs->getFuncSpaceData(), coeffLag, 0);
-    domains.push_back(new _coeffDataJac(jfs->getBezier(), bez));
+    domains.push_back(new _coeffDataJac(bez));
 
     _subdivideDomains(domains, true, debug);
 
-    // FIXME renames
     min = std::numeric_limits<double>::infinity();
     max = -min;
     for(std::size_t i = 0; i < domains.size(); ++i) {
@@ -336,8 +335,7 @@ namespace jacobianBasedQuality {
     std::vector<_coeffData *> domains;
     bezierCoeff *bezDet = new bezierCoeff(jacDetSpace, coeffDetLag, 0);
     bezierCoeff *bezMat = new bezierCoeff(jacMatSpace, coeffMatLag, 1);
-    domains.push_back(new _coeffDataIGE(jacBasis->getBezier(), gradBasis->getBezier(),
-      el->getType(), bezDet, bezMat));
+    domains.push_back(new _coeffDataIGE(el->getType(), bezDet, bezMat));
 
     _subdivideDomains(domains, false, debug);
 
@@ -394,8 +392,7 @@ namespace jacobianBasedQuality {
     std::vector<_coeffData *> domains;
     bezierCoeff *bezDet = new bezierCoeff(jacDetSpace, coeffDetLag, 0);
     bezierCoeff *bezMat = new bezierCoeff(jacMatSpace, coeffMatLag, 1);
-    domains.push_back(new _coeffDataICN(jacBasis->getBezier(),
-                                        gradBasis->getBezier(), el->getDim(), bezDet, bezMat));
+    domains.push_back(new _coeffDataICN(el->getDim(), bezDet, bezMat));
 
     _subdivideDomains(domains, false, debug);
 
@@ -523,9 +520,8 @@ namespace jacobianBasedQuality {
   }
 
   // Jacobian determinant (for validity of all elements)
-  _coeffDataJac::_coeffDataJac(const bezierBasis *bfs,
-                               const bezierCoeff *coeffs2)
-    : _coeffData(), _bfs(bfs), _coeffs2(coeffs2)
+  _coeffDataJac::_coeffDataJac(const bezierCoeff *coeffs2)
+    : _coeffData(), _coeffs2(coeffs2)
   {
     const bezierCoeff &coeff = (*_coeffs2);
 
@@ -553,14 +549,14 @@ namespace jacobianBasedQuality {
 
   void _coeffDataJac::getSubCoeff(std::vector<_coeffData *> &v) const
   {
-    v.clear();
-    v.reserve(_bfs->getNumDivision());
+    const int numDiv = _coeffs2->getNumDivision();
 
     std::vector<bezierCoeff *> sub;
     _coeffs2->subdivide(sub);
 
-    for(int i = 0; i < _bfs->getNumDivision(); i++) {
-      v.push_back(new _coeffDataJac(_bfs, sub[i]));
+    v.clear();
+    for(int i = 0; i < numDiv; i++) {
+      v.push_back(new _coeffDataJac(sub[i]));
     }
   }
 
@@ -570,12 +566,10 @@ namespace jacobianBasedQuality {
   }
 
   // IGE measure (Inverse Gradient Error)
-  _coeffDataIGE::_coeffDataIGE(const bezierBasis *bfsDet,
-                               const bezierBasis *bfsMat, int type,
-                               const bezierCoeff *det2, const bezierCoeff *mat2)
-    : _coeffData(),
-      _bfsDet(bfsDet), _bfsMat(bfsMat), _coeffDet2(det2), _coeffMat2(mat2),
-      _type(type)
+  _coeffDataIGE::_coeffDataIGE(int type,
+                               const bezierCoeff *det2,
+                               const bezierCoeff *mat2)
+    : _coeffData(), _coeffDet2(det2), _coeffMat2(mat2), _type(type)
   {
     _computeAtCorner(_minL2, _maxL2);
 
@@ -598,16 +592,16 @@ namespace jacobianBasedQuality {
 
   void _coeffDataIGE::getSubCoeff(std::vector<_coeffData *> &v) const
   {
-    v.clear();
-    v.reserve(_bfsDet->getNumDivision());
+    const int numDiv = _coeffDet2->getNumDivision();
 
     std::vector<bezierCoeff *> subD;
     std::vector<bezierCoeff *> subM;
     _coeffDet2->subdivide(subD);
     _coeffMat2->subdivide(subM);
 
-    for(int i = 0; i < _bfsDet->getNumDivision(); i++) {
-      v.push_back(new _coeffDataIGE(_bfsDet, _bfsMat, _type, subD[i], subM[i]));
+    v.clear();
+    for(int i = 0; i < numDiv; i++) {
+      v.push_back(new _coeffDataIGE(_type, subD[i], subM[i]));
     }
   }
 
@@ -661,7 +655,7 @@ namespace jacobianBasedQuality {
       prox[i].setAsProxy(v, i);
     }
 
-    bezierBasisRaiser *raiser = _bfsMat->getRaiser();
+    const bezierBasisRaiser *raiser = _coeffMat2->getBezierBasis()->getRaiser();
     fullVector<double> coeffDenominator;
     double result = 0;
 
@@ -726,7 +720,8 @@ namespace jacobianBasedQuality {
       raiser->computeCoeff2(prox[3], prox[4], prox[5], coeffDen2);
 
       fullVector<double> &coeffNumerator = tmp;
-      bezierBasisRaiser *raiserBis = _bfsDet->getRaiser();
+      const bezierBasisRaiser *raiserBis =
+        _coeffDet2->getBezierBasis()->getRaiser();
       raiserBis->computeCoeff2(coeffNum1, det, coeffNumerator);
       raiserBis->computeCoeff2(coeffDen1, coeffDen2, coeffDenominator);
 
@@ -755,7 +750,8 @@ namespace jacobianBasedQuality {
       raiser->computeCoeff2(prox[3], prox[4], prox[5], coeffDen2);
 
       fullVector<double> &coeffNumerator = tmp;
-      bezierBasisRaiser *raiserBis = _bfsDet->getRaiser();
+      const bezierBasisRaiser *raiserBis =
+        _coeffDet2->getBezierBasis()->getRaiser();
       raiserBis->computeCoeff2(coeffNum1, det, coeffNumerator);
       raiserBis->computeCoeff2(coeffDen1, coeffDen2, coeffDenominator);
 
@@ -768,12 +764,10 @@ namespace jacobianBasedQuality {
   }
 
   // ICN measure (Inverse Condition Number)
-  _coeffDataICN::_coeffDataICN(const bezierBasis *bfsDet,
-                               const bezierBasis *bfsMat, int dim,
-                               const bezierCoeff *det2, const bezierCoeff *mat2)
-    : _coeffData(),
-      _bfsDet(bfsDet), _bfsMat(bfsMat), _coeffDet2(det2), _coeffMat2(mat2),
-      _dim(dim)
+  _coeffDataICN::_coeffDataICN(int dim,
+                               const bezierCoeff *det2,
+                               const bezierCoeff *mat2)
+    : _coeffData(), _coeffDet2(det2), _coeffMat2(mat2), _dim(dim)
   {
     _computeAtCorner(_minL2, _maxL2);
 
@@ -796,16 +790,16 @@ namespace jacobianBasedQuality {
 
   void _coeffDataICN::getSubCoeff(std::vector<_coeffData *> &v) const
   {
-    v.clear();
-    v.reserve(_bfsMat->getNumDivision());
+    const int numDiv = _coeffDet2->getNumDivision();
 
     std::vector<bezierCoeff *> subD;
     std::vector<bezierCoeff *> subM;
     _coeffDet2->subdivide(subD);
     _coeffMat2->subdivide(subM);
 
-    for(int i = 0; i < _bfsMat->getNumDivision(); i++) {
-      v.push_back(new _coeffDataICN(_bfsDet, _bfsMat, _dim, subD[i], subM[i]));
+    v.clear();
+    for(int i = 0; i < numDiv; i++) {
+      v.push_back(new _coeffDataICN(_dim, subD[i], subM[i]));
     }
   }
 
@@ -863,7 +857,7 @@ namespace jacobianBasedQuality {
       return 2 * _computeBoundRational(det, coeffDenominator, true);
     }
 
-    // 3D element NEW
+    // 3D element
     fullVector<double> coeffDenominator;
     {
       // P: coefficients of function that bound from above the Frobenius norm of

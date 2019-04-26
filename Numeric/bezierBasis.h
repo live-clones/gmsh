@@ -51,7 +51,7 @@ public:
   inline int getNumLagCoeff() const { return _numLagCoeff; }
   inline int getNumDivision() const { return _numDivisions; }
   inline FuncSpaceData getFuncSpaceData() const { return _data; }
-  bezierBasisRaiser *getRaiser() const;
+  const bezierBasisRaiser *getRaiser() const;
 
   // Subdivide Bezier coefficients
   void subdivideBezCoeff(const fullMatrix<double> &coeff,
@@ -175,6 +175,7 @@ public:
   inline int getNumCoeff() const { return _r; }
   inline int getNumColumns() const { return _c; }
   inline int getNumCornerCoeff() const { return _basis->getNumLagCoeff(); }
+  inline int getNumDivision() const { return _basis->getNumDivision(); }
   int getIdxCornerCoeff(int i) const;
   inline double getCornerCoeff(int k) const
   {

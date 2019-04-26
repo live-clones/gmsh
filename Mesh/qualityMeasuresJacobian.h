@@ -72,14 +72,11 @@ namespace jacobianBasedQuality {
 
   class _coeffDataJac : public _coeffData {
   private:
-    // FIXME necessary?
-    const bezierBasis *_bfs;
     // FIXME renames
     const bezierCoeff *_coeffs2;
 
   public:
-    _coeffDataJac(const bezierBasis *bfs,
-                  const bezierCoeff *coeffs2 = NULL);
+    _coeffDataJac(const bezierCoeff *coeffs2);
     ~_coeffDataJac() {}
 
     bool boundsOk(double minL, double maxL) const;
@@ -89,17 +86,13 @@ namespace jacobianBasedQuality {
 
   class _coeffDataIGE : public _coeffData {
   private:
-    // FIXME necessary?
-    const bezierBasis *_bfsDet, *_bfsMat;
     // FIXME renames
     const bezierCoeff *_coeffDet2;
     const bezierCoeff *_coeffMat2;
     const int _type;
 
   public:
-    _coeffDataIGE(const bezierBasis *bfsDet, const bezierBasis *bfsMat,
-                  int type, const bezierCoeff *det2 = NULL,
-                  const bezierCoeff *mat2 = NULL);
+    _coeffDataIGE(int type, const bezierCoeff *det2, const bezierCoeff *mat2);
     ~_coeffDataIGE() {}
 
     bool boundsOk(double minL, double maxL) const;
@@ -113,17 +106,13 @@ namespace jacobianBasedQuality {
 
   class _coeffDataICN : public _coeffData {
   private:
-    // FIXME necessary?
-    const bezierBasis *_bfsDet, *_bfsMat;
     // FIXME renames
     const bezierCoeff *_coeffDet2;
     const bezierCoeff *_coeffMat2;
     const int _dim;
 
   public:
-    _coeffDataICN(const bezierBasis *bfsDet, const bezierBasis *bfsMet,
-                  int dim, const bezierCoeff *det2 = NULL,
-                  const bezierCoeff *mat2 = NULL);
+    _coeffDataICN(int dim, const bezierCoeff *det2, const bezierCoeff *mat2);
     ~_coeffDataICN() {}
 
     bool boundsOk(double minL, double maxL) const;

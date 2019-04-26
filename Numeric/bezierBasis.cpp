@@ -807,7 +807,7 @@ void bezierBasis::_constructPyr()
   }
 }
 
-bezierBasisRaiser *bezierBasis::getRaiser() const
+const bezierBasisRaiser *bezierBasis::getRaiser() const
 {
   if(!_raiser) {
     const_cast<bezierBasis *>(this)->_raiser = new bezierBasisRaiser(this);
