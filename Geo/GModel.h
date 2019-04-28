@@ -586,6 +586,12 @@ public:
   // optimize the mesh
   int optimizeMesh(const std::string &how);
 
+  // smooth the mesh
+  int smoothMesh();
+
+  // recombine the mesh
+  int recombineMesh();
+
   // fill the vertex arrays, given the current option and data
   bool fillVertexArrays();
 

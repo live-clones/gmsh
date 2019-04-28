@@ -690,8 +690,44 @@ Unpartition the mesh of the current model.
 -
 @end table
 
+@item optimize
+Optimize the mesh of the current model.
+
+@table @asis
+@item Input:
+@code{method}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item recombine
+Recombine the mesh of the current model.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item refine
 Refine the mesh of the current model by uniformly splitting the elements.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item smooth
+Smooth the mesh of the current model.
 
 @table @asis
 @item Input:

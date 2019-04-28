@@ -1200,6 +1200,28 @@ int GModel::refineMesh(int linear)
 #endif
 }
 
+int GModel::recombineMesh()
+{
+#if defined(HAVE_MESH)
+  RecombineMesh(this);
+  return 1;
+#else
+  Msg::Error("Mesh module not compiled");
+  return 0;
+#endif
+}
+
+int GModel::smoothMesh()
+{
+#if defined(HAVE_MESH)
+  SmoothMesh(this);
+  return 1;
+#else
+  Msg::Error("Mesh module not compiled");
+  return 0;
+#endif
+}
+
 int GModel::optimizeMesh(const std::string &how)
 {
 #if defined(HAVE_MESH)

@@ -2275,8 +2275,13 @@ bool OCC_Internals::_extrude(int mode,
       if(e)
         Msg::Warning(
           "Structured meshes not yet available with OpenCASCADE pipe");
-      // TODO - need to pass the profile, too
-      // dim = getReturnedShapes(c, (BRepFill_Pipe*)&pipe, top, body, lateral);
+      // Check if
+      //   pipe.FirstShape() gives us "bottom"
+      //   pipe.LastShape() gives us "top"
+      //   pipe.Shape() gives us "body"
+      //   using pipe.Spine(), pipe.{Face,Edge}(spine, c) gives us the lateral
+      //     entities
+      //dim = getReturnedShapesForPipe(c, pipe, top, body, lateral);
     }
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());

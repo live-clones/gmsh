@@ -354,8 +354,17 @@ namespace gmsh { // Top-level functions
       // Unpartition the mesh of the current model.
       GMSH_API void unpartition();
 
+      // Optimize the mesh of the current model.
+      GMSH_API void optimize(const std::string & method);
+
+      // Recombine the mesh of the current model.
+      GMSH_API void recombine();
+
       // Refine the mesh of the current model by uniformly splitting the elements.
       GMSH_API void refine();
+
+      // Smooth the mesh of the current model.
+      GMSH_API void smooth();
 
       // Set the order of the elements in the mesh of the current model to `order'.
       GMSH_API void setOrder(const int order);

@@ -921,6 +921,34 @@ function unpartition()
 end
 
 """
+    gmsh.model.mesh.optimize(method)
+
+Optimize the mesh of the current model.
+"""
+function optimize(method)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshOptimize, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cint}),
+          method, ierr)
+    ierr[] != 0 && error("gmshModelMeshOptimize returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.recombine()
+
+Recombine the mesh of the current model.
+"""
+function recombine()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRecombine, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelMeshRecombine returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.mesh.refine()
 
 Refine the mesh of the current model by uniformly splitting the elements.
@@ -931,6 +959,20 @@ function refine()
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshModelMeshRefine returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.smooth()
+
+Smooth the mesh of the current model.
+"""
+function smooth()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSmooth, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelMeshSmooth returned non-zero error code: $(ierr[])")
     return nothing
 end
 
