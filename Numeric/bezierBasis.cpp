@@ -278,9 +278,9 @@ namespace {
 
 } // namespace
 
-bezierBasis::bezierBasis(FuncSpaceData data) : _data(data), _raiser(NULL)
+bezierBasis::bezierBasis(FuncSpaceData data) : _funcSpaceData(data), _raiser(NULL)
 {
-  if(_data.getType() == TYPE_PYR)
+  if(_funcSpaceData.getType() == TYPE_PYR)
     _constructPyr();
   else
     _construct();
@@ -290,14 +290,14 @@ bezierBasis::~bezierBasis() { delete _raiser; }
 
 void bezierBasis::_construct()
 {
-  if(_data.getType() == TYPE_PYR) {
+  if(_funcSpaceData.getType() == TYPE_PYR) {
     Msg::Error("This bezierBasis constructor is not for pyramids!");
     return;
   }
 
-  int order = _data.getSpaceOrder();
+  int order = _funcSpaceData.getSpaceOrder();
 
-  switch(_data.getType()) {
+  switch(_funcSpaceData.getType()) {
   case TYPE_PNT: _numLagCoeff = 1; _dimSimplex = 0; break;
   case TYPE_LIN: _numLagCoeff = order ? 2 : 1; _dimSimplex = 0; break;
   case TYPE_TRI: _numLagCoeff = order ? 3 : 1; _dimSimplex = 2; break;
@@ -306,29 +306,29 @@ void bezierBasis::_construct()
   case TYPE_PRI: _numLagCoeff = order ? 6 : 1; _dimSimplex = 2; break;
   case TYPE_HEX: _numLagCoeff = order ? 8 : 1; _dimSimplex = 0; break;
   default:
-    Msg::Error("Unknown function space for parentType %d", _data.getType());
+    Msg::Error("Unknown function space for parentType %d", _funcSpaceData.getType());
     return;
   }
 
   fullMatrix<double> bezSamplingPoints;
-  gmshGenerateOrderedPoints(_data, bezSamplingPoints, true);
-  generateExponents(_data, _exponents2);
+  gmshGenerateOrderedPoints(_funcSpaceData, bezSamplingPoints, true);
+  generateExponents(_funcSpaceData, _exponents);
 
-  matrixBez2Lag2 =
-    generateBez2LagMatrix(_exponents2, bezSamplingPoints, order, _dimSimplex);
-  matrixBez2Lag2.invert(matrixLag2Bez2);
+  matrixBez2Lag =
+    generateBez2LagMatrix(_exponents, bezSamplingPoints, order, _dimSimplex);
+  matrixBez2Lag.invert(matrixLag2Bez);
 
   gmshGenerateOrderedPointsLine(order, ordered1dBezPoints);
 }
 
 void bezierBasis::_constructPyr()
 {
-  if(_data.getType() != TYPE_PYR) {
+  if(_funcSpaceData.getType() != TYPE_PYR) {
     Msg::Error("This bezierBasis constructor is for pyramids!");
   }
 
-  const bool pyr = _data.getPyramidalSpace();
-  const int nij = _data.getNij(), nk = _data.getNk();
+  const bool pyr = _funcSpaceData.getPyramidalSpace();
+  const int nij = _funcSpaceData.getNij(), nk = _funcSpaceData.getNk();
 
   _numLagCoeff = nk == 0 ? 4 : 8;
   _dimSimplex = 0;
@@ -337,11 +337,11 @@ void bezierBasis::_constructPyr()
   // for z in [0, a] with a < 1. The third coordinate of Bezier points should
   // also be in [0, a]. The same for subpoints.
   fullMatrix<double> bezierPoints;
-  gmshGenerateOrderedPoints(_data, bezierPoints, true);
-  generateExponents(_data, _exponents2);
-  matrixBez2Lag2 =
-    generateBez2LagMatrixPyramid(_exponents2, bezierPoints, pyr, nij, nk);
-  matrixBez2Lag2.invert(matrixLag2Bez2);
+  gmshGenerateOrderedPoints(_funcSpaceData, bezierPoints, true);
+  generateExponents(_funcSpaceData, _exponents);
+  matrixBez2Lag =
+    generateBez2LagMatrixPyramid(_exponents, bezierPoints, pyr, nij, nk);
+  matrixBez2Lag.invert(matrixLag2Bez);
 }
 
 const bezierBasisRaiser *bezierBasis::getRaiser() const
@@ -363,13 +363,13 @@ void bezierBasisRaiser::_fillRaiserData()
     return;
   }
 
-  fullMatrix<int> expNew; // FIXME rename
+  fullMatrix<int> exp;
   {
-    const fullMatrix<double> &expDNew = _bfs->_exponents2; // FIXME rename
-    double2int(expDNew, expNew);
+    const fullMatrix<double> &expD = _bfs->_exponents;
+    double2int(expD, exp);
   }
   int order = _bfs->getOrder();
-  int ncoeff = expNew.size1();
+  int ncoeff = exp.size1();
   int dim = _bfs->getDim();
   int dimSimplex = _bfs->getDimSimplex();
 
@@ -379,126 +379,119 @@ void bezierBasisRaiser::_fillRaiserData()
 
   // Construction of raiser 2
 
-  std::map<int, int> hashToInd2New; // FIXME rename
+  std::map<int, int> hashToInd2;
   {
-    fullMatrix<int> exp2New; // FIXME rename
+    fullMatrix<int> exp2;
     {
-      fullMatrix<double> expD2New; // FIXME rename
-      FuncSpaceData data(_bfs->_data, 2 * order);
-      generateExponents(data, expD2New);
-      double2int(expD2New, exp2New);
-      _raiser2New.resize(exp2New.size1());
+      fullMatrix<double> expD2;
+      FuncSpaceData data(_bfs->_funcSpaceData, 2 * order);
+      generateExponents(data, expD2);
+      double2int(expD2, exp2);
+      _raiser2.resize(exp2.size1());
     }
 
-    for(int i = 0; i < exp2New.size1(); ++i) {
+    for(int i = 0; i < exp2.size1(); ++i) {
       int hash = 0;
       for(int l = 0; l < dim; l++) {
-        hash += static_cast<int>(exp2New(i, l) * pow_int(2 * order + 1, l));
+        hash += static_cast<int>(exp2(i, l) * pow_int(2 * order + 1, l));
       }
-      hashToInd2New[hash] = i;
+      hashToInd2[hash] = i;
     }
   }
 
   for(int i = 0; i < ncoeff; i++) {
     for(int j = i; j < ncoeff; j++) {
-      double numNew = 1, denNew = 1; // FIXME rename
+      double num = 1, den = 1;
       {
         int compl1 = order;
         int compl2 = order;
         int compltot = 2 * order;
         for(int l = 0; l < dimSimplex; l++) {
-          numNew *=
-            nChoosek(compl1, expNew(i, l)) * nChoosek(compl2, expNew(j, l));
-          denNew *= nChoosek(compltot, expNew(i, l) + expNew(j, l));
-          compl1 -= expNew(i, l);
-          compl2 -= expNew(j, l);
-          compltot -= expNew(i, l) + expNew(j, l);
+          num *= nChoosek(compl1, exp(i, l)) * nChoosek(compl2, exp(j, l));
+          den *= nChoosek(compltot, exp(i, l) + exp(j, l));
+          compl1 -= exp(i, l);
+          compl2 -= exp(j, l);
+          compltot -= exp(i, l) + exp(j, l);
         }
         for(int l = dimSimplex; l < dim; l++) {
-          numNew *=
-            nChoosek(order, expNew(i, l)) * nChoosek(order, expNew(j, l));
-          denNew *= nChoosek(2 * order, expNew(i, l) + expNew(j, l));
+          num *= nChoosek(order, exp(i, l)) * nChoosek(order, exp(j, l));
+          den *= nChoosek(2 * order, exp(i, l) + exp(j, l));
         }
       }
 
       // taking into account the multiplicity (reminder: i <= j)
-      if(i < j) numNew *= 2;
+      if(i < j) num *= 2;
 
-      int hashNew = 0; // FIXME rename
+      int hash = 0;
       for(int l = 0; l < dim; l++) {
-        hashNew += static_cast<int>((expNew(i, l) + expNew(j, l)) *
-                                    pow_int(2 * order + 1, l));
+        hash += static_cast<int>((exp(i, l) + exp(j, l)) *
+                                  pow_int(2 * order + 1, l));
       }
-      _raiser2New[hashToInd2New[hashNew]].push_back(
-        _data(numNew / denNew, i, j));
+      _raiser2[hashToInd2[hash]].push_back(_data(num / den, i, j));
     }
   }
 
   // Construction of raiser 3
 
-  std::map<int, int> hashToInd3New; // FIXME rename
+  std::map<int, int> hashToInd3;
   {
-    fullMatrix<int> exp3New; // FIXME rename
+    fullMatrix<int> exp3;
     {
-      fullMatrix<double> expD3New; // FIXME rename
-      FuncSpaceData data(_bfs->_data, 3 * order);
-      generateExponents(data, expD3New);
-      double2int(expD3New, exp3New);
-      _raiser3New.resize(exp3New.size1());
+      fullMatrix<double> expD3;
+      FuncSpaceData data(_bfs->_funcSpaceData, 3 * order);
+      generateExponents(data, expD3);
+      double2int(expD3, exp3);
+      _raiser3.resize(exp3.size1());
     }
 
-    for(int i = 0; i < exp3New.size1(); ++i) {
+    for(int i = 0; i < exp3.size1(); ++i) {
       int hash = 0;
       for(int l = 0; l < dim; l++) {
-        hash += static_cast<int>(exp3New(i, l) * pow_int(3 * order + 1, l));
+        hash += static_cast<int>(exp3(i, l) * pow_int(3 * order + 1, l));
       }
-      hashToInd3New[hash] = i;
+      hashToInd3[hash] = i;
     }
   }
 
   for(int i = 0; i < ncoeff; i++) {
     for(int j = i; j < ncoeff; j++) {
       for(int k = j; k < ncoeff; ++k) {
-        double numNew = 1, denNew = 1; // FIXME rename
+        double num = 1, den = 1;
         {
           int compl1 = order;
           int compl2 = order;
           int compl3 = order;
           int compltot = 3 * order;
           for(int l = 0; l < dimSimplex; l++) {
-            numNew *= nChoosek(compl1, expNew(i, l)) *
-                      nChoosek(compl2, expNew(j, l)) *
-                      nChoosek(compl3, expNew(k, l));
-            denNew *=
-              nChoosek(compltot, expNew(i, l) + expNew(j, l) + expNew(k, l));
-            compl1 -= expNew(i, l);
-            compl2 -= expNew(j, l);
-            compl3 -= expNew(k, l);
-            compltot -= expNew(i, l) + expNew(j, l) + expNew(k, l);
+            num *= nChoosek(compl1, exp(i, l)) *
+                   nChoosek(compl2, exp(j, l)) *
+                   nChoosek(compl3, exp(k, l));
+            den *= nChoosek(compltot, exp(i, l) + exp(j, l) + exp(k, l));
+            compl1 -= exp(i, l);
+            compl2 -= exp(j, l);
+            compl3 -= exp(k, l);
+            compltot -= exp(i, l) + exp(j, l) + exp(k, l);
           }
           for(int l = dimSimplex; l < dim; l++) {
-            numNew *= nChoosek(order, expNew(i, l)) *
-                      nChoosek(order, expNew(j, l)) *
-                      nChoosek(order, expNew(k, l));
-            denNew *=
-              nChoosek(3 * order, expNew(i, l) + expNew(j, l) + expNew(k, l));
+            num *= nChoosek(order, exp(i, l)) *
+                   nChoosek(order, exp(j, l)) *
+                   nChoosek(order, exp(k, l));
+            den *= nChoosek(3 * order, exp(i, l) + exp(j, l) + exp(k, l));
           }
         }
 
         // taking into account the multiplicity (Reminder: i <= j <= k)
         if(i < j && j < k)
-          numNew *= 6;
+          num *= 6;
         else if(i < j || j < k)
-          numNew *= 3;
+          num *= 3;
 
-        int hashNew = 0; // FIXME rename
+        int hash = 0;
         for(int l = 0; l < dim; l++) {
-          hashNew +=
-            static_cast<int>((expNew(i, l) + expNew(j, l) + expNew(k, l)) *
-                             pow_int(3 * order + 1, l));
+          hash += static_cast<int>((exp(i, l) + exp(j, l) + exp(k, l)) *
+                                    pow_int(3 * order + 1, l));
         }
-        _raiser3New[hashToInd3New[hashNew]].push_back(
-          _data(numNew / denNew, i, j, k));
+        _raiser3[hashToInd3[hash]].push_back(_data(num / den, i, j, k));
       }
     }
   }
@@ -520,12 +513,12 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
     return;
   }
 
-  fullMatrix<int> expNew; // FIXME rename
+  fullMatrix<int> exp;
   {
-    const fullMatrix<double> &expDNew = _bfs->_exponents2; // FIXME rename
-    double2int(expDNew, expNew);
+    const fullMatrix<double> &expD = _bfs->_exponents;
+    double2int(expD, exp);
   }
-  int ncoeff = expNew.size1();
+  int ncoeff = exp.size1();
   int order[3] = {fsdata.getNij(), fsdata.getNij(), fsdata.getNk()};
   int orderHash = std::max(order[0], order[2]);
 
@@ -533,113 +526,113 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
   // of the indices (i, j) or (i, j, k), we fill only the raiser data for i <= j
   // <= k (and adapt the value to take into account the multiplicity).
 
-  std::map<int, int> hashToInd2New; // FIXME rename
+  std::map<int, int> hashToInd2;
   {
-    fullMatrix<int> exp2New; // FIXME rename
+    fullMatrix<int> exp2;
     {
-      fullMatrix<double> expD2New; // FIXME rename
-      FuncSpaceData data(_bfs->_data, 2 * order[0], 2 * order[2]);
-      generateExponents(data, expD2New);
-      double2int(expD2New, exp2New);
-      _raiser2New.resize(exp2New.size1());
+      fullMatrix<double> expD2;
+      FuncSpaceData data(_bfs->_funcSpaceData, 2 * order[0], 2 * order[2]);
+      generateExponents(data, expD2);
+      double2int(expD2, exp2);
+      _raiser2.resize(exp2.size1());
     }
 
-    for(int i = 0; i < exp2New.size1(); ++i) {
+    for(int i = 0; i < exp2.size1(); ++i) {
       int hash = 0;
       for(int l = 0; l < 3; l++) {
-        hash += static_cast<int>(exp2New(i, l) * pow_int(2 * orderHash + 1, l));
+        hash += static_cast<int>(exp2(i, l) * pow_int(2 * orderHash + 1, l));
       }
-      hashToInd2New[hash] = i;
+      hashToInd2[hash] = i;
     }
   }
 
   for(int i = 0; i < ncoeff; i++) {
     for(int j = i; j < ncoeff; j++) {
-      double numNew = 1, denNew = 1; // FIXME rename
+      double num = 1, den = 1;
       for(int l = 0; l < 3; l++) {
-        numNew *= nChoosek(order[l], expNew(i, l)) * nChoosek(order[l], expNew(j, l));
-        denNew *= nChoosek(2 * order[l], expNew(i, l) + expNew(j, l));
+        num *= nChoosek(order[l], exp(i, l)) * nChoosek(order[l], exp(j, l));
+        den *= nChoosek(2 * order[l], exp(i, l) + exp(j, l));
       }
 
       // taking into account the multiplicity (reminder: i <= j)
-      if(i < j) numNew *= 2;
+      if(i < j) num *= 2;
 
-      int hashNew = 0; // FIXME rename
+      int hash = 0;
       for(int l = 0; l < 3; l++) {
-        hashNew += static_cast<int>((expNew(i, l) + expNew(j, l)) * pow_int(2 * orderHash + 1, l));
+        hash += static_cast<int>((exp(i, l) + exp(j, l)) *
+                                  pow_int(2 * orderHash + 1, l));
       }
-      _raiser2New[hashToInd2New[hashNew]].push_back(_data(numNew / denNew, i, j));
+      _raiser2[hashToInd2[hash]].push_back(_data(num / den, i, j));
     }
   }
 
   // Construction of raiser 3
 
-  std::map<int, int> hashToInd3New; // FIXME rename
+  std::map<int, int> hashToInd3;
   {
-    fullMatrix<int> exp3New; // FIXME rename
+    fullMatrix<int> exp3;
     {
-      fullMatrix<double> expD3New; // FIXME rename
-      FuncSpaceData data(_bfs->_data, 3 * order[0], 3 * order[2]);
-      generateExponents(data, expD3New);
-      double2int(expD3New, exp3New);
-      _raiser3New.resize(exp3New.size1());
+      fullMatrix<double> expD3;
+      FuncSpaceData data(_bfs->_funcSpaceData, 3 * order[0], 3 * order[2]);
+      generateExponents(data, expD3);
+      double2int(expD3, exp3);
+      _raiser3.resize(exp3.size1());
     }
 
-    for(int i = 0; i < exp3New.size1(); ++i) {
+    for(int i = 0; i < exp3.size1(); ++i) {
       int hash = 0;
       for(int l = 0; l < 3; l++) {
-        hash += static_cast<int>(exp3New(i, l) * pow_int(3 * orderHash + 1, l));
+        hash += static_cast<int>(exp3(i, l) * pow_int(3 * orderHash + 1, l));
       }
-      hashToInd3New[hash] = i;
+      hashToInd3[hash] = i;
     }
   }
 
   for(int i = 0; i < ncoeff; i++) {
     for(int j = i; j < ncoeff; j++) {
       for(int k = j; k < ncoeff; ++k) {
-        double numNew = 1, denNew = 1; // FIXME rename
+        double num = 1, den = 1;
         for(int l = 0; l < 3; l++) {
-          numNew *= nChoosek(order[l], expNew(i, l)) * nChoosek(order[l], expNew(j, l)) *
-                 nChoosek(order[l], expNew(k, l));
-          denNew *= nChoosek(3 * order[l], expNew(i, l) + expNew(j, l) + expNew(k, l));
+          num *= nChoosek(order[l], exp(i, l)) * nChoosek(order[l], exp(j, l)) *
+                 nChoosek(order[l], exp(k, l));
+          den *= nChoosek(3 * order[l], exp(i, l) + exp(j, l) + exp(k, l));
         }
 
         // taking into account the multiplicity (Reminder: i <= j <= k)
         if(i < j && j < k)
-          numNew *= 6;
+          num *= 6;
         else if(i < j || j < k)
-          numNew *= 3;
+          num *= 3;
 
-        int hashNew = 0; // FIXME rename
+        int hash = 0;
         for(int l = 0; l < 3; l++) {
-          hashNew +=
-            (expNew(i, l) + expNew(j, l) + expNew(k, l)) * pow_int(3 * orderHash + 1, l);
+          hash += static_cast<int>((exp(i, l) + exp(j, l) + exp(k, l)) *
+                                    pow_int(3 * orderHash + 1, l));
         }
-        _raiser3New[hashToInd3New[hashNew]].push_back(_data(numNew / denNew, i, j, k));
+        _raiser3[hashToInd3[hash]].push_back(_data(num / den, i, j, k));
       }
     }
   }
 }
 
-// FIXME rename
-void bezierBasisRaiser::computeCoeff2(const fullVector<double> &coeffA,
-                                      const fullVector<double> &coeffB,
-                                      fullVector<double> &coeffSquare) const
+void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
+                                     const fullVector<double> &coeffB,
+                                     fullVector<double> &coeffSquare) const
 {
-  coeffSquare.resize(_raiser2New.size(), true);
+  coeffSquare.resize(_raiser2.size(), true);
 
   if(&coeffA == &coeffB) {
-    for(std::size_t ind = 0; ind < _raiser2New.size(); ++ind) {
-      for(std::size_t l = 0; l < _raiser2New[ind].size(); ++l) {
-        const _data &d = _raiser2New[ind][l];
+    for(std::size_t ind = 0; ind < _raiser2.size(); ++ind) {
+      for(std::size_t l = 0; l < _raiser2[ind].size(); ++l) {
+        const _data &d = _raiser2[ind][l];
         coeffSquare(ind) += d.val * coeffA(d.i) * coeffB(d.j);
       }
     }
   }
   else {
-    for(std::size_t ind = 0; ind < _raiser2New.size(); ++ind) {
-      for(std::size_t l = 0; l < _raiser2New[ind].size(); ++l) {
-        const _data &d = _raiser2New[ind][l];
+    for(std::size_t ind = 0; ind < _raiser2.size(); ++ind) {
+      for(std::size_t l = 0; l < _raiser2[ind].size(); ++l) {
+        const _data &d = _raiser2[ind][l];
         coeffSquare(ind) +=
           d.val / 2 * (coeffA(d.i) * coeffB(d.j) + coeffA(d.j) * coeffB(d.i));
       }
@@ -647,26 +640,25 @@ void bezierBasisRaiser::computeCoeff2(const fullVector<double> &coeffA,
   }
 }
 
-// FIXME rename
-void bezierBasisRaiser::computeCoeff2(const fullVector<double> &coeffA,
-                                      const fullVector<double> &coeffB,
-                                      const fullVector<double> &coeffC,
-                                      fullVector<double> &coeffCubic) const
+void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
+                                     const fullVector<double> &coeffB,
+                                     const fullVector<double> &coeffC,
+                                     fullVector<double> &coeffCubic) const
 {
-  coeffCubic.resize(_raiser3New.size(), true);
+  coeffCubic.resize(_raiser3.size(), true);
 
   if(&coeffA == &coeffB && &coeffB == &coeffC) {
-    for(std::size_t ind = 0; ind < _raiser3New.size(); ++ind) {
-      for(std::size_t l = 0; l < _raiser3New[ind].size(); ++l) {
-        const _data &d = _raiser3New[ind][l];
+    for(std::size_t ind = 0; ind < _raiser3.size(); ++ind) {
+      for(std::size_t l = 0; l < _raiser3[ind].size(); ++l) {
+        const _data &d = _raiser3[ind][l];
         coeffCubic(ind) += d.val * coeffA(d.i) * coeffB(d.j) * coeffC(d.k);
       }
     }
   }
   else if(&coeffA != &coeffB && &coeffB != &coeffC) {
-    for(std::size_t ind = 0; ind < _raiser3New.size(); ++ind) {
-      for(std::size_t l = 0; l < _raiser3New[ind].size(); ++l) {
-        const _data &d = _raiser3New[ind][l];
+    for(std::size_t ind = 0; ind < _raiser3.size(); ++ind) {
+      for(std::size_t l = 0; l < _raiser3[ind].size(); ++l) {
+        const _data &d = _raiser3[ind][l];
         coeffCubic(ind) += d.val / 6 *
                            (coeffA(d.i) * coeffB(d.j) * coeffC(d.k) +
                             coeffA(d.i) * coeffB(d.k) * coeffC(d.j) +
@@ -778,16 +770,13 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffDataConst)
   const fullVector<double> &x = _basis->ordered1dBezPoints;
   fullMatrix<double> bez(_data, _r, _c);
 
-  // For simplicial elements, do as before for now
-  // FIXME: for prisms, we should do a mix of triangle + convertLag2Bez()
-
   switch(type) {
   case TYPE_TRI:
   case TYPE_TET:
-    // Note: For simplices, less significant errors in matrixLag2Bez2 but
+    // Note: For simplices, less significant errors in matrixLag2Bez but
     // an algorithm exists (see same paper than algo convertLag2Bez), yet
     // it is complex. It may be implemented in the future if it is necessary.
-    _basis->matrixLag2Bez2.mult(lag, bez);
+    _basis->matrixLag2Bez.mult(lag, bez);
     return;
   case TYPE_LIN:
     convertLag2Bez(lag, order, x, bez);
@@ -843,7 +832,7 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffDataConst)
         const int inc = c * _r + k * nptTri;
         proxLag.setAsProxy(lagCoeffData + inc, nptTri);
         proxBez.setAsProxy(_data + inc, nptTri);
-        fsTri->matrixLag2Bez2.mult(proxLag, proxBez);
+        fsTri->matrixLag2Bez.mult(proxLag, proxBez);
       }
     }
     for(int ij = 0; ij < nptTri; ++ij) {

@@ -633,15 +633,15 @@ namespace jacobianBasedQuality {
 
     switch(_type) {
     case TYPE_QUA:
-      raiser->computeCoeff2(prox[0], prox[1], coeffDenominator);
+      raiser->computeCoeff(prox[0], prox[1], coeffDenominator);
       return _computeBoundRational(det, coeffDenominator, true);
 
     case TYPE_TRI:
-      raiser->computeCoeff2(prox[0], prox[1], coeffDenominator);
+      raiser->computeCoeff(prox[0], prox[1], coeffDenominator);
       result += _computeBoundRational(det, coeffDenominator, true);
-      raiser->computeCoeff2(prox[0], prox[2], coeffDenominator);
+      raiser->computeCoeff(prox[0], prox[2], coeffDenominator);
       result += _computeBoundRational(det, coeffDenominator, true);
-      raiser->computeCoeff2(prox[1], prox[2], coeffDenominator);
+      raiser->computeCoeff(prox[1], prox[2], coeffDenominator);
       result += _computeBoundRational(det, coeffDenominator, true);
       // The bound is not sharp, which can lead to a lot of subdivision. This
       // can be avoided by bounding the total function instead of bounding each
@@ -654,15 +654,15 @@ namespace jacobianBasedQuality {
       return cTri * result / 3;
 
     case TYPE_HEX:
-      raiser->computeCoeff2(prox[0], prox[1], prox[2], coeffDenominator);
+      raiser->computeCoeff(prox[0], prox[1], prox[2], coeffDenominator);
       return _computeBoundRational(det, coeffDenominator, true);
 
     case TYPE_PRI:
-      raiser->computeCoeff2(prox[0], prox[1], prox[2], coeffDenominator);
+      raiser->computeCoeff(prox[0], prox[1], prox[2], coeffDenominator);
       result += _computeBoundRational(det, coeffDenominator, true);
-      raiser->computeCoeff2(prox[0], prox[3], prox[2], coeffDenominator);
+      raiser->computeCoeff(prox[0], prox[3], prox[2], coeffDenominator);
       result += _computeBoundRational(det, coeffDenominator, true);
-      raiser->computeCoeff2(prox[1], prox[3], prox[2], coeffDenominator);
+      raiser->computeCoeff(prox[1], prox[3], prox[2], coeffDenominator);
       result += _computeBoundRational(det, coeffDenominator, true);
       // Same comment than for TYPE_TRI.
       return cTri * result / 3;
@@ -673,29 +673,29 @@ namespace jacobianBasedQuality {
       thirdTerm.axpy(prox[2]);
       thirdTerm.axpy(prox[3]);
       thirdTerm.axpy(prox[4]);
-      raiser->computeCoeff2(prox[0], prox[5], thirdTerm, coeffNum1);
+      raiser->computeCoeff(prox[0], prox[5], thirdTerm, coeffNum1);
       thirdTerm = prox[0];
       thirdTerm.axpy(prox[2]);
       thirdTerm.axpy(prox[3]);
       thirdTerm.axpy(prox[5]);
-      raiser->computeCoeff2(prox[1], prox[4], thirdTerm, tmp);
+      raiser->computeCoeff(prox[1], prox[4], thirdTerm, tmp);
       coeffNum1.axpy(tmp);
       thirdTerm = prox[0];
       thirdTerm.axpy(prox[1]);
       thirdTerm.axpy(prox[4]);
       thirdTerm.axpy(prox[5]);
-      raiser->computeCoeff2(prox[2], prox[3], thirdTerm, tmp);
+      raiser->computeCoeff(prox[2], prox[3], thirdTerm, tmp);
       coeffNum1.axpy(tmp);
 
       fullVector<double> coeffDen1, coeffDen2;
-      raiser->computeCoeff2(prox[0], prox[1], prox[2], coeffDen1);
-      raiser->computeCoeff2(prox[3], prox[4], prox[5], coeffDen2);
+      raiser->computeCoeff(prox[0], prox[1], prox[2], coeffDen1);
+      raiser->computeCoeff(prox[3], prox[4], prox[5], coeffDen2);
 
       fullVector<double> &coeffNumerator = tmp;
       const bezierBasisRaiser *raiserBis =
         _coeffDet->getBezierBasis()->getRaiser();
-      raiserBis->computeCoeff2(coeffNum1, det, coeffNumerator);
-      raiserBis->computeCoeff2(coeffDen1, coeffDen2, coeffDenominator);
+      raiserBis->computeCoeff(coeffNum1, det, coeffNumerator);
+      raiserBis->computeCoeff(coeffDen1, coeffDen2, coeffDenominator);
 
       result = _computeBoundRational(coeffNumerator, coeffDenominator, true);
       return cTet * result / 12;
@@ -707,25 +707,25 @@ namespace jacobianBasedQuality {
       thirdTerm.axpy(prox[3]);
       thirdTerm.axpy(prox[4]);
       thirdTerm.axpy(prox[5]);
-      raiser->computeCoeff2(prox[0], prox[1], thirdTerm, coeffNum1);
+      raiser->computeCoeff(prox[0], prox[1], thirdTerm, coeffNum1);
       thirdTerm = prox[4];
       thirdTerm.axpy(prox[5]);
-      raiser->computeCoeff2(prox[2], prox[3], thirdTerm, tmp);
+      raiser->computeCoeff(prox[2], prox[3], thirdTerm, tmp);
       coeffNum1.axpy(tmp);
       thirdTerm = prox[2];
       thirdTerm.axpy(prox[3]);
-      raiser->computeCoeff2(prox[4], prox[5], thirdTerm, tmp);
+      raiser->computeCoeff(prox[4], prox[5], thirdTerm, tmp);
       coeffNum1.axpy(tmp);
 
       fullVector<double> coeffDen1, coeffDen2;
-      raiser->computeCoeff2(prox[0], prox[1], prox[2], coeffDen1);
-      raiser->computeCoeff2(prox[3], prox[4], prox[5], coeffDen2);
+      raiser->computeCoeff(prox[0], prox[1], prox[2], coeffDen1);
+      raiser->computeCoeff(prox[3], prox[4], prox[5], coeffDen2);
 
       fullVector<double> &coeffNumerator = tmp;
       const bezierBasisRaiser *raiserBis =
         _coeffDet->getBezierBasis()->getRaiser();
-      raiserBis->computeCoeff2(coeffNum1, det, coeffNumerator);
-      raiserBis->computeCoeff2(coeffDen1, coeffDen2, coeffDenominator);
+      raiserBis->computeCoeff(coeffNum1, det, coeffNumerator);
+      raiserBis->computeCoeff(coeffDen1, coeffDen2, coeffDenominator);
 
       result = _computeBoundRational(coeffNumerator, coeffDenominator, true);
       return cPyr * result / 8;
@@ -819,7 +819,7 @@ namespace jacobianBasedQuality {
         for(int k = 0; k < mat.size2(); ++k) {
           prox.setAsProxy(mat, k);
           fullVector<double> tmp;
-          raiser->computeCoeff2(prox, prox, tmp);
+          raiser->computeCoeff(prox, prox, tmp);
           if(k == 0) coeffDenominator.resize(tmp.size());
           coeffDenominator.axpy(tmp, 1);
         }
@@ -839,7 +839,7 @@ namespace jacobianBasedQuality {
         }
         P(i) = std::sqrt(P(i));
       }
-      raiser->computeCoeff2(P, P, P, coeffDenominator);
+      raiser->computeCoeff(P, P, P, coeffDenominator);
     }
 
     const double boundFraction =

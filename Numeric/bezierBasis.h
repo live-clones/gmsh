@@ -22,16 +22,16 @@ private:
   // Number of corner coeff which are 'real' values of the expanded function
   int _numLagCoeff;
   int _dimSimplex;
-  const FuncSpaceData _data;
+  const FuncSpaceData _funcSpaceData;
   bezierBasisRaiser *_raiser;
 
   friend class bezierBasisRaiser;
-  fullMatrix<double> _exponents2; // FIXME rename
+  fullMatrix<double> _exponents;
 
 public:
   // FIXME to set private
-  fullMatrix<double> matrixLag2Bez2; // FIXME rename
-  fullMatrix<double> matrixBez2Lag2; // FIXME rename
+  fullMatrix<double> matrixLag2Bez;
+  fullMatrix<double> matrixBez2Lag;
   fullVector<double> ordered1dBezPoints;
 
   // Constructors
@@ -39,12 +39,12 @@ public:
   ~bezierBasis();
 
   // get methods
-  inline int getDim() const { return _exponents2.size2(); }
-  inline int getType() const { return _data.getType(); }
-  inline int getOrder() const { return _data.getSpaceOrder(); }
+  inline int getDim() const { return _exponents.size2(); }
+  inline int getType() const { return _funcSpaceData.getType(); }
+  inline int getOrder() const { return _funcSpaceData.getSpaceOrder(); }
   inline int getDimSimplex() const { return _dimSimplex; }
   inline int getNumLagCoeff() const { return _numLagCoeff; }
-  inline FuncSpaceData getFuncSpaceData() const { return _data; }
+  inline FuncSpaceData getFuncSpaceData() const { return _funcSpaceData; }
   const bezierBasisRaiser *getRaiser() const;
 
 private:
@@ -65,11 +65,9 @@ private:
 
   public:
     _data(double vv, int ii, int jj = -1, int kk = -1)
-      : i(ii), j(jj), k(kk), val(vv)
-    {
-    }
+      : i(ii), j(jj), k(kk), val(vv) {}
   };
-  std::vector<std::vector<_data> > _raiser2New, _raiser3New; // FIXME rename
+  std::vector<std::vector<_data> > _raiser2, _raiser3;
   const bezierBasis *_bfs;
 
 public:
@@ -78,13 +76,13 @@ public:
     _fillRaiserData();
   };
 
-  void computeCoeff2(const fullVector<double> &coeffA,
-                     const fullVector<double> &coeffB,
-                     fullVector<double> &coeffSquare) const;
-  void computeCoeff2(const fullVector<double> &coeffA,
-                     const fullVector<double> &coeffB,
-                     const fullVector<double> &coeffC,
-                     fullVector<double> &coeffCubic) const;
+  void computeCoeff(const fullVector<double> &coeffA,
+                    const fullVector<double> &coeffB,
+                    fullVector<double> &coeffSquare) const;
+  void computeCoeff(const fullVector<double> &coeffA,
+                    const fullVector<double> &coeffB,
+                    const fullVector<double> &coeffC,
+                    fullVector<double> &coeffCubic) const;
 
 private:
   void _fillRaiserData();
@@ -122,7 +120,7 @@ private:
 class bezierCoeff {
 private:
   int _numPool;
-  FuncSpaceData _funcSpaceData; // FIXME really needed?
+  FuncSpaceData _funcSpaceData;
   const bezierBasis *_basis;
   int _r, _c; // size of the matrix
   double *_data; // pointer on the first element
