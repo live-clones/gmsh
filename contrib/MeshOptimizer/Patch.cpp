@@ -34,7 +34,6 @@
 #include "Patch.h"
 #include "bezierBasis.h"
 
-
 Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
              const std::map<MElement *, GEntity *> &bndEl2Ent,
              const std::set<MElement *> &els, std::set<MVertex *> &toFix,
@@ -497,7 +496,9 @@ void Patch::metricMinAndGradients(int iEl, std::vector<double> &lambda,
   int iPC = 0;
   std::vector<SPoint3> gXyzV(numJacNodes);
   std::vector<SPoint3> gUvwV(numJacNodes);
-  for(int l = 0; l < numJacNodes; l++) { lambda[l] = lambdaB(l); }
+  for(int l = 0; l < numJacNodes; l++) {
+    lambda[l] = lambdaB(l);
+  }
   for(int i = 0; i < numMapNodes; i++) {
     int &iFVi = _el2FV[iEl][i];
     if(iFVi >= 0) {
@@ -563,7 +564,9 @@ bool Patch::bndDistAndGradients(int iEl, double &f, std::vector<double> &gradF,
         nodes[i] = _xyz[_el2V[iEl][closure[i]]];
         onedge[i] = element->getVertex(closure[i])->onWhat() == edge &&
                     _el2FV[iEl][closure[i]] >= 0;
-        if(onedge[i]) { params[i] = _uvw[_el2FV[iEl][closure[i]]].x(); }
+        if(onedge[i]) {
+          params[i] = _uvw[_el2FV[iEl][closure[i]]].x();
+        }
         else
           reparamMeshVertexOnEdge(element->getVertex(closure[i]), edge,
                                   params[i]);

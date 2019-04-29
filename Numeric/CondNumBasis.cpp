@@ -352,7 +352,8 @@ CondNumBasis::CondNumBasis(int tag, int cnOrder)
   }
 
   const int parentType = ElementType::getParentType(tag);
-  FuncSpaceData data = parentType == TYPE_PYR ?
+  FuncSpaceData data =
+    parentType == TYPE_PYR ?
       FuncSpaceData(parentType, true, 1, _condNumOrder - 1, false) :
       FuncSpaceData(parentType, _condNumOrder, false);
 

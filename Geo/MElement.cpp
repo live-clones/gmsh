@@ -1443,8 +1443,9 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
     // tags change from element to element (third-party codes can
     // still write MSH file optimized for reading speed, by grouping
     // elements with the same number of tags in blobs)
-    int blob[60] = {type,          1,          numTags,       num ? num : (int)_num,
-                    abs(physical), elementary, 1 + numGhosts, _partition};
+    int blob[60] = {
+      type,          1,          numTags,       num ? num : (int)_num,
+      abs(physical), elementary, 1 + numGhosts, _partition};
     if(ghosts)
       for(int i = 0; i < numGhosts; i++) blob[8 + i] = -(*ghosts)[i];
     if(par) blob[8 + numGhosts] = parentNum;
@@ -1674,7 +1675,8 @@ void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
   if(binary) {
     int verts[60];
     verts[0] = n;
-    for(int i = 0; i < n; i++) verts[i + 1] = (int)getVertexVTK(i)->getIndex() - 1;
+    for(int i = 0; i < n; i++)
+      verts[i + 1] = (int)getVertexVTK(i)->getIndex() - 1;
     // VTK always expects big endian binary data
     if(!bigEndian) SwapBytes((char *)verts, sizeof(int), n + 1);
     fwrite(verts, sizeof(int), n + 1, fp);
@@ -2430,10 +2432,9 @@ MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
 }
 
 MElement *MElementFactory::create(int type, std::vector<MVertex *> &v,
-                                  std::size_t num,
-                                  int part, bool owner, int parent,
-                                  MElement *parent_ptr, MElement *d1,
-                                  MElement *d2)
+                                  std::size_t num, int part, bool owner,
+                                  int parent, MElement *parent_ptr,
+                                  MElement *d1, MElement *d2)
 {
   switch(type) {
   case MSH_PNT: return new MPoint(v, num, part);

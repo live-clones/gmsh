@@ -40,15 +40,13 @@ public:
                            fullMatrix<double> &dxyzdY,
                            fullMatrix<double> &dxyzdZ) const
   {
-    GradientBasis::mapFromIdealElement(_data.getType(), dxyzdX, dxyzdY,
-                                       dxyzdZ);
+    GradientBasis::mapFromIdealElement(_data.getType(), dxyzdX, dxyzdY, dxyzdZ);
   }
   void mapFromIdealElement(fullVector<double> &dxyzdX,
                            fullVector<double> &dxyzdY,
                            fullVector<double> &dxyzdZ) const
   {
-    GradientBasis::mapFromIdealElement(_data.getType(), dxyzdX, dxyzdY,
-                                       dxyzdZ);
+    GradientBasis::mapFromIdealElement(_data.getType(), dxyzdX, dxyzdY, dxyzdZ);
   }
   static void mapFromIdealElement(int type, fullMatrix<double> &gSMatX,
                                   fullMatrix<double> &gSMatY,

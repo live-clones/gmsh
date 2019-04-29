@@ -83,8 +83,8 @@ const JacobianBasis *BasisFactory::getJacobianBasis(int tag, int order)
   if(type != TYPE_PYR)
     return getJacobianBasis(tag, FuncSpaceData(type, order, false));
   else
-    return getJacobianBasis(tag,
-      FuncSpaceData(type, false, order + 1, order, false));
+    return getJacobianBasis(
+      tag, FuncSpaceData(type, false, order + 1, order, false));
 }
 
 const JacobianBasis *BasisFactory::getJacobianBasis(int tag)
@@ -94,8 +94,8 @@ const JacobianBasis *BasisFactory::getJacobianBasis(int tag)
   if(type != TYPE_PYR)
     return getJacobianBasis(tag, FuncSpaceData(type, jacOrder, false));
   else
-    return getJacobianBasis(tag,
-      FuncSpaceData(type, false, jacOrder + 2, jacOrder, false));
+    return getJacobianBasis(
+      tag, FuncSpaceData(type, false, jacOrder + 2, jacOrder, false));
 }
 
 const CondNumBasis *BasisFactory::getCondNumBasis(int tag, int cnOrder)

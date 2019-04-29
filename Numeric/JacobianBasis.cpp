@@ -171,8 +171,8 @@ GradientBasis::GradientBasis(int elementTag, FuncSpaceData data)
   gradShapeIdealMatX = gradShapeMatX;
   gradShapeIdealMatY = gradShapeMatY;
   gradShapeIdealMatZ = gradShapeMatZ;
-  mapFromIdealElement(_data.getType(), gradShapeIdealMatX,
-                      gradShapeIdealMatY, gradShapeIdealMatZ);
+  mapFromIdealElement(_data.getType(), gradShapeIdealMatX, gradShapeIdealMatY,
+                      gradShapeIdealMatZ);
 }
 
 void GradientBasis::getGradientsFromNodes(const fullMatrix<double> &nodes,

@@ -102,10 +102,8 @@ namespace {
       for(int j = 0; j < ndofs; j++) {
         if(pyr) n01 = exponent(j, 2) + nij;
         bez2Lag(i, j) =
-          nChoosek(n01, exponent(j, 0)) *
-          nChoosek(n01, exponent(j, 1)) *
-          nChoosek(nk, exponent(j, 2)) *
-          pow_int(point(i, 0), exponent(j, 0)) *
+          nChoosek(n01, exponent(j, 0)) * nChoosek(n01, exponent(j, 1)) *
+          nChoosek(nk, exponent(j, 2)) * pow_int(point(i, 0), exponent(j, 0)) *
           pow_int(point(i, 1), exponent(j, 1)) *
           pow_int(point(i, 2), exponent(j, 2)) *
           pow_int(1. - point(i, 0), n01 - exponent(j, 0)) *
@@ -183,8 +181,8 @@ namespace {
                       const fullVector<double> &x, fullMatrix<double> &bez,
                       int start = -1, int inc = -1)
   {
-    if (start < 0) start = 0;
-    if (inc < 1) inc = 1;
+    if(start < 0) start = 0;
+    if(inc < 1) inc = 1;
     convertLag2Bez<double>(lag, order, start, inc, x, bez);
   }
 
@@ -246,7 +244,8 @@ namespace {
 
 } // namespace
 
-bezierBasis::bezierBasis(FuncSpaceData data) : _funcSpaceData(data), _raiser(NULL)
+bezierBasis::bezierBasis(FuncSpaceData data)
+  : _funcSpaceData(data), _raiser(NULL)
 {
   if(_funcSpaceData.getType() == TYPE_PYR)
     _constructPyr();
@@ -266,15 +265,37 @@ void bezierBasis::_construct()
   int order = _funcSpaceData.getSpaceOrder();
 
   switch(_funcSpaceData.getType()) {
-  case TYPE_PNT: _numLagCoeff = 1; _dimSimplex = 0; break;
-  case TYPE_LIN: _numLagCoeff = order ? 2 : 1; _dimSimplex = 0; break;
-  case TYPE_TRI: _numLagCoeff = order ? 3 : 1; _dimSimplex = 2; break;
-  case TYPE_QUA: _numLagCoeff = order ? 4 : 1; _dimSimplex = 0; break;
-  case TYPE_TET: _numLagCoeff = order ? 4 : 1; _dimSimplex = 3; break;
-  case TYPE_PRI: _numLagCoeff = order ? 6 : 1; _dimSimplex = 2; break;
-  case TYPE_HEX: _numLagCoeff = order ? 8 : 1; _dimSimplex = 0; break;
+  case TYPE_PNT:
+    _numLagCoeff = 1;
+    _dimSimplex = 0;
+    break;
+  case TYPE_LIN:
+    _numLagCoeff = order ? 2 : 1;
+    _dimSimplex = 0;
+    break;
+  case TYPE_TRI:
+    _numLagCoeff = order ? 3 : 1;
+    _dimSimplex = 2;
+    break;
+  case TYPE_QUA:
+    _numLagCoeff = order ? 4 : 1;
+    _dimSimplex = 0;
+    break;
+  case TYPE_TET:
+    _numLagCoeff = order ? 4 : 1;
+    _dimSimplex = 3;
+    break;
+  case TYPE_PRI:
+    _numLagCoeff = order ? 6 : 1;
+    _dimSimplex = 2;
+    break;
+  case TYPE_HEX:
+    _numLagCoeff = order ? 8 : 1;
+    _dimSimplex = 0;
+    break;
   default:
-    Msg::Error("Unknown function space for parentType %d", _funcSpaceData.getType());
+    Msg::Error("Unknown function space for parentType %d",
+               _funcSpaceData.getType());
     return;
   }
 
@@ -393,8 +414,8 @@ void bezierBasisRaiser::_fillRaiserData()
 
       int hash = 0;
       for(int l = 0; l < dim; l++) {
-        hash += static_cast<int>((exp(i, l) + exp(j, l)) *
-                                  pow_int(2 * order + 1, l));
+        hash +=
+          static_cast<int>((exp(i, l) + exp(j, l)) * pow_int(2 * order + 1, l));
       }
       _raiser2[hashToInd2[hash]].push_back(_data(num / den, i, j));
     }
@@ -432,8 +453,7 @@ void bezierBasisRaiser::_fillRaiserData()
           int compl3 = order;
           int compltot = 3 * order;
           for(int l = 0; l < dimSimplex; l++) {
-            num *= nChoosek(compl1, exp(i, l)) *
-                   nChoosek(compl2, exp(j, l)) *
+            num *= nChoosek(compl1, exp(i, l)) * nChoosek(compl2, exp(j, l)) *
                    nChoosek(compl3, exp(k, l));
             den *= nChoosek(compltot, exp(i, l) + exp(j, l) + exp(k, l));
             compl1 -= exp(i, l);
@@ -442,8 +462,7 @@ void bezierBasisRaiser::_fillRaiserData()
             compltot -= exp(i, l) + exp(j, l) + exp(k, l);
           }
           for(int l = dimSimplex; l < dim; l++) {
-            num *= nChoosek(order, exp(i, l)) *
-                   nChoosek(order, exp(j, l)) *
+            num *= nChoosek(order, exp(i, l)) * nChoosek(order, exp(j, l)) *
                    nChoosek(order, exp(k, l));
             den *= nChoosek(3 * order, exp(i, l) + exp(j, l) + exp(k, l));
           }
@@ -458,7 +477,7 @@ void bezierBasisRaiser::_fillRaiserData()
         int hash = 0;
         for(int l = 0; l < dim; l++) {
           hash += static_cast<int>((exp(i, l) + exp(j, l) + exp(k, l)) *
-                                    pow_int(3 * order + 1, l));
+                                   pow_int(3 * order + 1, l));
         }
         _raiser3[hashToInd3[hash]].push_back(_data(num / den, i, j, k));
       }
@@ -529,7 +548,7 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
       int hash = 0;
       for(int l = 0; l < 3; l++) {
         hash += static_cast<int>((exp(i, l) + exp(j, l)) *
-                                  pow_int(2 * orderHash + 1, l));
+                                 pow_int(2 * orderHash + 1, l));
       }
       _raiser2[hashToInd2[hash]].push_back(_data(num / den, i, j));
     }
@@ -576,7 +595,7 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
         int hash = 0;
         for(int l = 0; l < 3; l++) {
           hash += static_cast<int>((exp(i, l) + exp(j, l) + exp(k, l)) *
-                                    pow_int(3 * orderHash + 1, l));
+                                   pow_int(3 * orderHash + 1, l));
         }
         _raiser3[hashToInd3[hash]].push_back(_data(num / den, i, j, k));
       }
@@ -735,7 +754,7 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffDataConst)
   const int type = _funcSpaceData.getType();
   const int order = _funcSpaceData.getSpaceOrder();
   const int npt = order + 1;
-  const fullMatrix<double> lag(const_cast<double*>(lagCoeffDataConst), _r, _c);
+  const fullMatrix<double> lag(const_cast<double *>(lagCoeffDataConst), _r, _c);
   const fullVector<double> &x = _basis->ordered1dBezPoints;
   fullMatrix<double> bez(_data, _r, _c);
 
@@ -747,9 +766,7 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffDataConst)
     // it is complex. It may be implemented in the future if it is necessary.
     _basis->matrixLag2Bez.mult(lag, bez);
     return;
-  case TYPE_LIN:
-    convertLag2Bez(lag, order, x, bez);
-    return;
+  case TYPE_LIN: convertLag2Bez(lag, order, x, bez); return;
   case TYPE_QUA:
     for(int i = 0; i < npt; ++i) convertLag2Bez(lag, order, x, bez, i, npt);
     for(int j = 0; j < npt; ++j) convertLag2Bez(bez, order, x, bez, j * npt, 1);
@@ -767,8 +784,7 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffDataConst)
       convertLag2Bez(bez, order, x, bez, jk * npt, 1);
     }
     return;
-  case TYPE_PYR:
-  {
+  case TYPE_PYR: {
     // Pyramids space is tensorial like the hex
     const int nbij = _funcSpaceData.getNij() + 1;
     const int nbk = _funcSpaceData.getNk() + 1;
@@ -788,10 +804,9 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffDataConst)
     }
     return;
   }
-  case TYPE_PRI:
-  {
+  case TYPE_PRI: {
     // Prism space is a mix of triangular space and linear space
-    double *lagCoeffData = const_cast<double*>(lagCoeffDataConst);
+    double *lagCoeffData = const_cast<double *>(lagCoeffDataConst);
     const bezierBasis *fsTri = BasisFactory::getBezierBasis(TYPE_TRI, order);
     const int nptTri = (order + 2) * (order + 1) / 2;
     fullVector<double> proxLag;
@@ -885,7 +900,7 @@ int bezierCoeff::getIdxCornerCoeff(int i) const
     case 5: return _r - 1;
     }
   case TYPE_PYR:
-    if (_funcSpaceData.getPyramidalSpace()) {
+    if(_funcSpaceData.getPyramidalSpace()) {
       switch(i) {
       case 0: return 0;
       case 1: return order;
@@ -1011,7 +1026,7 @@ void bezierCoeff::_subdivideTriangle(const bezierCoeff &coeff, int start,
   bezierCoeff &sub4 = *vSubCoeff[3];
 
   // copy into first subdomain
-  if (&coeff != &sub1) _copy(coeff, start, (n + 1) * n / 2, sub1);
+  if(&coeff != &sub1) _copy(coeff, start, (n + 1) * n / 2, sub1);
 
   // Subdivide in u direction
   // TODO: consider precompute vector<pair<int, int>> for this
@@ -1091,7 +1106,7 @@ void bezierCoeff::_subdivideTet(_SubdivisionTet which, int n,
   //       consider precompute vector<pair<int, int, int>> for n_crosse_e
 
   const int dim = coeff.getNumColumns();
-  switch (which) {
+  switch(which) {
   case subdivU:
     for(int iter = 1; iter < n; ++iter) {
       for(int k = 0; k < n - iter; ++k) {
@@ -1354,8 +1369,8 @@ void bezierCoeff::_subdividePrism(const bezierCoeff &coeff,
 
   // Second, subdivide in the triangular space:
   for(int k = 0; k < n; ++k) {
-    _subdivideTriangle(*subCoeff[0], k*ntri, subCoeff);
-    _subdivideTriangle(*subCoeff2[0], k*ntri, subCoeff2);
+    _subdivideTriangle(*subCoeff[0], k * ntri, subCoeff);
+    _subdivideTriangle(*subCoeff2[0], k * ntri, subCoeff2);
   }
   return;
 }
@@ -1418,9 +1433,8 @@ void bezierCoeff::_copy(const bezierCoeff &from, int start, int num,
   }
 }
 
-void
-bezierCoeff::_copyLine(const fullMatrix<double> &allSub, int n, int start,
-                       bezierCoeff &sub)
+void bezierCoeff::_copyLine(const fullMatrix<double> &allSub, int n, int start,
+                            bezierCoeff &sub)
 {
   const int dim = allSub.size2();
   for(int i = 0; i < n; ++i) {
@@ -1430,9 +1444,8 @@ bezierCoeff::_copyLine(const fullMatrix<double> &allSub, int n, int start,
   }
 }
 
-void
-bezierCoeff::_copyQuad(const fullMatrix<double> &allSub, int n, int starti, int startj,
-                       bezierCoeff &sub)
+void bezierCoeff::_copyQuad(const fullMatrix<double> &allSub, int n, int starti,
+                            int startj, bezierCoeff &sub)
 {
   const int dim = allSub.size2();
   const int N = 2 * n - 1;
@@ -1447,9 +1460,8 @@ bezierCoeff::_copyQuad(const fullMatrix<double> &allSub, int n, int starti, int 
   }
 }
 
-void
-bezierCoeff::_copyHex(const fullMatrix<double> &allSub, int n, int starti, int startj,
-                      int startk, bezierCoeff &sub)
+void bezierCoeff::_copyHex(const fullMatrix<double> &allSub, int n, int starti,
+                           int startj, int startk, bezierCoeff &sub)
 {
   const int dim = allSub.size2();
   const int N = 2 * n - 1;
@@ -1466,9 +1478,8 @@ bezierCoeff::_copyHex(const fullMatrix<double> &allSub, int n, int starti, int s
   }
 }
 
-void
-bezierCoeff::_copyPyr(const fullMatrix<double> &allSub, int nij, int nk,
-                      int starti, int startj, int startk, bezierCoeff &sub)
+void bezierCoeff::_copyPyr(const fullMatrix<double> &allSub, int nij, int nk,
+                           int starti, int startj, int startk, bezierCoeff &sub)
 {
   const int dim = allSub.size2();
   const int Nij = 2 * nij - 1;
@@ -1476,7 +1487,8 @@ bezierCoeff::_copyPyr(const fullMatrix<double> &allSub, int nij, int nk,
     for(int j = 0; j < nij; ++j) {
       for(int k = 0; k < nk; ++k) {
         const int I1 = i + j * nij + k * nij * nij;
-        const int I2 = (starti + i) + (startj + j) * Nij + (startk + k) * Nij * Nij;
+        const int I2 =
+          (starti + i) + (startj + j) * Nij + (startk + k) * Nij * Nij;
         for(int K = 0; K < dim; ++K) {
           sub(I1, K) = allSub(I2, K);
         }
@@ -1497,7 +1509,8 @@ void bezierCoeffMemoryPool::setSizeBlocks(std::size_t size)
 {
   if(_numUsedBlocks) {
     Msg::Error("Cannot change size of blocks if %d blocks are still being "
-               "used!", _numUsedBlocks);
+               "used!",
+               _numUsedBlocks);
     return;
   }
   _currentIndexOfSearch = 0;

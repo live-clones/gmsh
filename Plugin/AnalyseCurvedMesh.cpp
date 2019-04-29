@@ -193,7 +193,7 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
 #endif
 
   // Create PView
-  if(drawPView)
+  if(drawPView) {
     for(int dim = 1; dim <= 3; ++dim) {
       if((askedDim == 4 && dim > 1) || dim == askedDim) {
         if(!_pviewJac[dim - 1] && computeJac) {
@@ -246,8 +246,9 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
         }
       }
     }
+  }
 
-      // Hide elements
+    // Hide elements
 #if defined(HAVE_OPENGL)
   _hideWithThreshold(askedDim,
                      computeICN ? 2 : computeIGE ? 1 : computeJac ? 0 : -1);
@@ -276,8 +277,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
     for(GModel::eiter it = _m->firstEdge(); it != _m->lastEdge(); it++)
       entities.insert(*it);
     break;
-  default:
-    return;
+  default: return;
   }
 
   int cntInverted = 0;

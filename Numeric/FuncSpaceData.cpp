@@ -8,8 +8,8 @@
 
 FuncSpaceData::FuncSpaceData(const FuncSpaceData &fsd, int order)
   : _parentType(fsd._parentType), _spaceOrder(order),
-    _serendipity(fsd._serendipity), _nij(0),
-    _nk(_spaceOrder), _pyramidalSpace(fsd._pyramidalSpace)
+    _serendipity(fsd._serendipity), _nij(0), _nk(_spaceOrder),
+    _pyramidalSpace(fsd._pyramidalSpace)
 {
 }
 
@@ -23,8 +23,8 @@ FuncSpaceData::FuncSpaceData(const FuncSpaceData &fsd, int nij, int nk)
 
 FuncSpaceData::FuncSpaceData(const MElement *el)
   : _parentType(el->getType()), _spaceOrder(el->getPolynomialOrder()),
-    _serendipity(el->getIsOnlySerendipity()), _nij(0),
-    _nk(_spaceOrder), _pyramidalSpace(el->getType() == TYPE_PYR)
+    _serendipity(el->getIsOnlySerendipity()), _nij(0), _nk(_spaceOrder),
+    _pyramidalSpace(el->getType() == TYPE_PYR)
 {
 }
 
@@ -46,15 +46,15 @@ FuncSpaceData::FuncSpaceData(const MElement *el, bool pyr, int nij, int nk,
 FuncSpaceData::FuncSpaceData(int tag)
   : _parentType(ElementType::getParentType(tag)),
     _spaceOrder(ElementType::getOrder(tag)),
-    _serendipity(ElementType::getSerendipity(tag) > 1),
-    _nij(0), _nk(_spaceOrder),
+    _serendipity(ElementType::getSerendipity(tag) > 1), _nij(0),
+    _nk(_spaceOrder),
     _pyramidalSpace(ElementType::getParentType(tag) == TYPE_PYR)
 {
 }
 
 FuncSpaceData::FuncSpaceData(int type, int order, bool serendip)
-  : _parentType(type), _spaceOrder(order), _serendipity(serendip),
-    _nij(0), _nk(_spaceOrder), _pyramidalSpace(type == TYPE_PYR)
+  : _parentType(type), _spaceOrder(order), _serendipity(serendip), _nij(0),
+    _nk(_spaceOrder), _pyramidalSpace(type == TYPE_PYR)
 {
 }
 

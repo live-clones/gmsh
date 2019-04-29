@@ -63,7 +63,9 @@ private:
 
   public:
     _data(double vv, int ii, int jj = -1, int kk = -1)
-      : i(ii), j(jj), k(kk), val(vv) {}
+      : i(ii), j(jj), k(kk), val(vv)
+    {
+    }
   };
   std::vector<std::vector<_data> > _raiser2, _raiser3;
   const bezierBasis *_bfs;
@@ -147,7 +149,10 @@ public:
   static void releasePools();
   void updateDataPtr(long diff);
 
-  inline int getPolynomialOrder() const { return _funcSpaceData.getSpaceOrder(); }
+  inline int getPolynomialOrder() const
+  {
+    return _funcSpaceData.getSpaceOrder();
+  }
   inline int getNumCoeff() const { return _r; }
   inline int getNumColumns() const { return _c; }
   inline int getNumCornerCoeff() const { return _basis->getNumLagCoeff(); }
@@ -184,13 +189,19 @@ public:
 
 private:
   enum _SubdivisionTet {
-    subdivU, subdivV, subdivW, node0CrossEdge12,
-    node3CrossEdge12, node1CrossEdge03, node2CrossEdge03
+    subdivU,
+    subdivV,
+    subdivW,
+    node0CrossEdge12,
+    node3CrossEdge12,
+    node1CrossEdge03,
+    node2CrossEdge03
   };
   static void _subdivideTet(_SubdivisionTet which, int n, bezierCoeff &coeff);
 
   static void _subdivide(fullMatrix<double> &coeff, int npts, int start);
-  static void _subdivide(fullMatrix<double> &coeff, int npts, int start, int inc);
+  static void _subdivide(fullMatrix<double> &coeff, int npts, int start,
+                         int inc);
   static void _subdivideTriangle(const bezierCoeff &coeff, int start,
                                  std::vector<bezierCoeff *> &subCoeff);
   static void _subdivideTetrahedron(const bezierCoeff &coeff,
@@ -220,10 +231,8 @@ private:
   inline static int _ijk2Index(int i, int j, int k, int n)
   {
     // the whole tet - the top tet + current triangle
-    return (n + 2) * (n + 1) * n / 6
-           - (n-k + 2) * (n-k + 1) * (n-k) / 6
-           + j * (n-k) - j * (j - 1) / 2
-           + i;
+    return (n + 2) * (n + 1) * n / 6 - (n - k + 2) * (n - k + 1) * (n - k) / 6 +
+           j * (n - k) - j * (j - 1) / 2 + i;
   }
   void _computeCoefficients(const double *lagCoeffData);
 };

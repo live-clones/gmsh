@@ -56,17 +56,23 @@ public:
   void print() const
   {
     Msg::Info("FuncSpaceData: type%d, order%d, nij%d, nk%d, pyr%d, serendip%d",
-              _parentType, _spaceOrder, _nij, _nk, _pyramidalSpace, _serendipity);
+              _parentType, _spaceOrder, _nij, _nk, _pyramidalSpace,
+              _serendipity);
   }
 
   // Get methods
   int getType() const { return _parentType; }
-  int getDimension() const {
+  int getDimension() const
+  {
     switch(_parentType) {
     case TYPE_PNT: return 0;
     case TYPE_LIN: return 1;
-    case TYPE_TRI: case TYPE_QUA: return 2;
-    case TYPE_TET: case TYPE_PRI: case TYPE_HEX: case TYPE_PYR: return 3;
+    case TYPE_TRI:
+    case TYPE_QUA: return 2;
+    case TYPE_TET:
+    case TYPE_PRI:
+    case TYPE_HEX:
+    case TYPE_PYR: return 3;
     default: return -1;
     }
   }
@@ -105,9 +111,8 @@ public:
   inline bool operator==(const FuncSpaceData &other) const
   {
     return _parentType == other._parentType &&
-           _spaceOrder == other._spaceOrder &&
-           _nij == other._nij && _nk == other._nk &&
-           _pyramidalSpace == other._pyramidalSpace;
+           _spaceOrder == other._spaceOrder && _nij == other._nij &&
+           _nk == other._nk && _pyramidalSpace == other._pyramidalSpace;
   }
 };
 

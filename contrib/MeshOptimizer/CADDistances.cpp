@@ -224,7 +224,9 @@ namespace {
                      const std::vector<SPoint3> &Q)
   {
     double CAij;
-    if(CA(i, j) > -1.) { CAij = CA(i, j); }
+    if(CA(i, j) > -1.) {
+      CAij = CA(i, j);
+    }
     else if(i == 0 && j == 0) {
       CA(i, j) = P[0].distance(Q[0]); // update the CA permanent
       CAij = CA(i, j); // set the current relevant value

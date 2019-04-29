@@ -593,7 +593,9 @@ template <> bool fullMatrix<double>::invert(fullMatrix<double> &result) const
 
   // inv = transpose of cofactor / Determinant
   for(int i = 0; i < _r; i++) {
-    for(int j = 0; j < _c; j++) { result(j, i) = cofactor(i, j) / det; }
+    for(int j = 0; j < _c; j++) {
+      result(j, i) = cofactor(i, j) / det;
+    }
   }
   return true;
 }

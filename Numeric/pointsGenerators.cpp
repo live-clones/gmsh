@@ -22,31 +22,19 @@ void gmshGeneratePoints(FuncSpaceData data, fullMatrix<double> &points)
   switch(data.getType()) {
   case TYPE_PNT: points = gmshGeneratePointsLine(0); return;
   case TYPE_LIN: points = gmshGeneratePointsLine(order); return;
-  case TYPE_TRI:
-    points =
-      gmshGeneratePointsTriangle(order, serendip);
-    return;
-  case TYPE_QUA:
-    points = gmshGeneratePointsQuadrangle(order, serendip);
-    return;
+  case TYPE_TRI: points = gmshGeneratePointsTriangle(order, serendip); return;
+  case TYPE_QUA: points = gmshGeneratePointsQuadrangle(order, serendip); return;
   case TYPE_TET:
     points = gmshGeneratePointsTetrahedron(order, serendip);
     return;
-  case TYPE_PRI:
-    points =
-      gmshGeneratePointsPrism(order, serendip);
-    return;
-  case TYPE_HEX:
-    points = gmshGeneratePointsHexahedron(order, serendip);
-    return;
+  case TYPE_PRI: points = gmshGeneratePointsPrism(order, serendip); return;
+  case TYPE_HEX: points = gmshGeneratePointsHexahedron(order, serendip); return;
   case TYPE_PYR:
-    points =
-      gmshGeneratePointsPyramidGeneral(data.getPyramidalSpace(), data.getNij(),
-                                       data.getNk(), serendip);
+    points = gmshGeneratePointsPyramidGeneral(
+      data.getPyramidalSpace(), data.getNij(), data.getNk(), serendip);
     return;
   default:
-    Msg::Error("Unknown element type %d for points generation",
-               data.getType());
+    Msg::Error("Unknown element type %d for points generation", data.getType());
     return;
   }
 }
@@ -128,7 +116,8 @@ fullMatrix<double> gmshGeneratePointsPyramidGeneral(bool pyr, int nij, int nk,
   //   monomial(i, j, k) -> (-(1-k')+2*i/div, -(1-k')+2*j/div, (nk-k)/div)
   // else:
   //   div = max(nij, nk)
-  //   monomial(i, j, k) -> (-1+2*i/nij)*(1-k'), (-1+2*j/nij)*(1-k'), (nk-k)/div)
+  //   monomial(i, j, k) -> (-1+2*i/nij)*(1-k'), (-1+2*j/nij)*(1-k'),
+  //   (nk-k)/div)
   fullMatrix<double> points =
     gmshGenerateMonomialsPyramidGeneral(pyr, nij, nk, forSerendipPoints);
   if(points.size1() == 1) return points;
@@ -137,7 +126,7 @@ fullMatrix<double> gmshGeneratePointsPyramidGeneral(bool pyr, int nij, int nk,
   for(int i = 0; i < points.size1(); ++i) {
     points(i, 2) = (nk - points(i, 2)) / div;
     const double duv = 1. - points(i, 2);
-    if (!pyr) scale = 2. / nij * duv;
+    if(!pyr) scale = 2. / nij * duv;
     points(i, 0) = -duv + points(i, 0) * scale;
     points(i, 1) = -duv + points(i, 1) * scale;
   }
@@ -152,9 +141,7 @@ void gmshGenerateMonomials(FuncSpaceData data, fullMatrix<double> &monomials)
   const bool serendip = data.getSerendipity();
   switch(data.getType()) {
   case TYPE_PNT: monomials = gmshGenerateMonomialsLine(0); return;
-  case TYPE_LIN:
-    monomials = gmshGenerateMonomialsLine(order);
-    return;
+  case TYPE_LIN: monomials = gmshGenerateMonomialsLine(order); return;
   case TYPE_TRI:
     monomials = gmshGenerateMonomialsTriangle(order, serendip);
     return;
@@ -171,10 +158,8 @@ void gmshGenerateMonomials(FuncSpaceData data, fullMatrix<double> &monomials)
     monomials = gmshGenerateMonomialsHexahedron(order, serendip);
     return;
   case TYPE_PYR:
-    monomials =
-      gmshGenerateMonomialsPyramidGeneral(data.getPyramidalSpace(),
-                                          data.getNij(), data.getNk(),
-                                          serendip);
+    monomials = gmshGenerateMonomialsPyramidGeneral(
+      data.getPyramidalSpace(), data.getNij(), data.getNk(), serendip);
     return;
   default:
     Msg::Error("Unknown element type %d for monomials generation",
@@ -1046,10 +1031,8 @@ fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij,
         int i0 = 4 + iedge;
         int i1 = 4 + (iedge + 1) % 4;
 
-        int u0 =
-          static_cast<int>((monomials(i1, 0) - monomials(i0, 0)) / nij);
-        int u1 =
-          static_cast<int>((monomials(i1, 1) - monomials(i0, 1)) / nij);
+        int u0 = static_cast<int>((monomials(i1, 0) - monomials(i0, 0)) / nij);
+        int u1 = static_cast<int>((monomials(i1, 1) - monomials(i0, 1)) / nij);
 
         for(int i = 1; i < nij; ++i, ++index) {
           monomials(index, 0) = monomials(i0, 0) + i * u0;
@@ -1125,7 +1108,7 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
       double scale = 1. / nij;
       for(int i = 0; i < points.size1(); ++i) {
         points(i, 2) = (nk - points(i, 2)) / div;
-        if (pyr) scale = 1. / div / (1 - points(i, 2));
+        if(pyr) scale = 1. / div / (1 - points(i, 2));
         points(i, 0) = points(i, 0) * scale;
         points(i, 1) = points(i, 1) * scale;
       }
@@ -1134,8 +1117,7 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
   }
 
   switch(type) {
-  case TYPE_PNT:
-    return;
+  case TYPE_PNT: return;
   case TYPE_LIN:
   case TYPE_QUA:
   case TYPE_HEX:
@@ -1143,11 +1125,8 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
     points.add(-1.);
     return;
   case TYPE_TRI:
-  case TYPE_TET:
-    points.scale(1. / order);
-    return;
-  case TYPE_PRI:
-  {
+  case TYPE_TET: points.scale(1. / order); return;
+  case TYPE_PRI: {
     fullMatrix<double> tmp;
     tmp.setAsProxy(points, 0, 2);
     tmp.scale(1. / order);
@@ -1164,7 +1143,8 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
     //   monomial(i, j, k) -> (-(1-k')+2*i/div, -(1-k')+2*j/div, (nk-k)/div)
     // else:
     //   div = max(nij, nk)
-    //   monomial(i, j, k) -> (-1+2*i/nij)*(1-k'), (-1+2*j/nij)*(1-k'), (nk-k)/div)
+    //   monomial(i, j, k) -> (-1+2*i/nij)*(1-k'), (-1+2*j/nij)*(1-k'),
+    //   (nk-k)/div)
     const int nij = data.getNij();
     const int nk = data.getNk();
     const int div = pyr ? nij + nk : std::max(nij, nk);
@@ -1172,18 +1152,18 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
     for(int i = 0; i < points.size1(); ++i) {
       points(i, 2) = (nk - points(i, 2)) / div;
       const double duv = 1. - points(i, 2);
-      if (!pyr) scale = 2. / nij * duv;
+      if(!pyr) scale = 2. / nij * duv;
       points(i, 0) = -duv + points(i, 0) * scale;
       points(i, 1) = -duv + points(i, 1) * scale;
     }
     return;
   }
-  default:
-    return;
+  default: return;
   }
 }
 
-void gmshGenerateOrderedMonomials(FuncSpaceData data, fullMatrix<double> &monomials)
+void gmshGenerateOrderedMonomials(FuncSpaceData data,
+                                  fullMatrix<double> &monomials)
 {
   if(data.getSerendipity())
     Msg::Warning("Ordered monomials for serendipity elements not implemented");
@@ -1300,9 +1280,9 @@ void gmshGenerateOrderedMonomials(FuncSpaceData data, fullMatrix<double> &monomi
     return;
   }
   default:
-    Msg::Error("Unknown element type for ordered monomials: %d", data.getType());
-    monomials.resize(1,1);
+    Msg::Error("Unknown element type for ordered monomials: %d",
+               data.getType());
+    monomials.resize(1, 1);
     return;
   }
 }
-
