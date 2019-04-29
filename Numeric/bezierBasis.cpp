@@ -186,62 +186,6 @@ namespace {
     convertLag2Bez<double>(lag, order, start, inc, x, bez);
   }
 
-  void lejaOrder(fullVector<double> &x, fullVector<int> &permutation)
-  {
-    // Leja ordering can be used to reduce numerical errors during conversion
-    // of Lagrange coefficients into Bezier coefficients with the algorithm
-    // above (see commit 8a329da6966ac57859a05090651df1e28b7ce031)
-    int n = x.size();
-    permutation.resize(n);
-    for(int i = 0; i < n; ++i) {
-      permutation(i) = i;
-    }
-
-    int I = 0;
-    double m = x(0);
-    for(int i = 1; i < n; ++i) {
-      if(std::abs(x(i)) > m) {
-        I = i;
-        m = std::abs(x(i));
-      }
-    }
-    if(I != 0) {
-      double temp1 = x(0);
-      x(0) = x(I);
-      x(I) = temp1;
-      int temp2 = permutation(0);
-      permutation(0) = permutation(I);
-      permutation(I) = temp2;
-    }
-
-    fullVector<double> p(n);
-    p.setAll(1);
-    for(int k = 1; k < n - 1; ++k) {
-      for(int i = k; i < n; ++i) {
-        p(i) = p(i) * (x(i) - x(k - 1));
-      }
-      int II = k;
-      double mm = p(k);
-      for(int i = k + 1; i < n; ++i) {
-        if(std::abs(p(i)) > mm) {
-          II = i;
-          mm = std::abs(p(i));
-        }
-      }
-      if(II != k) {
-        double temp1 = x(k);
-        x(k) = x(II);
-        x(II) = temp1;
-        int temp2 = permutation(k);
-        permutation(k) = permutation(II);
-        permutation(II) = temp2;
-        double temp3 = p(k);
-        p(k) = p(II);
-        p(II) = temp3;
-      }
-    }
-  }
-
 } // namespace
 
 bezierBasis::bezierBasis(FuncSpaceData data)
@@ -750,7 +694,8 @@ bezierCoeff::~bezierCoeff()
 
 void bezierCoeff::_computeCoefficients(const double *lagCoeffDataConst)
 {
-  // FIXME: Use Leja order? (if yes, change gmshGenerateOrderedPoints)
+  // FIXME: Use Leja order? (if yes, change gmshGenerateOrderedPoints and look
+  //  at commit c84dedaa878f5ad58f68ef098979379ed3b57514)
   const int type = _funcSpaceData.getType();
   const int order = _funcSpaceData.getSpaceOrder();
   const int npt = order + 1;
