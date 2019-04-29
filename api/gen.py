@@ -198,8 +198,17 @@ mesh.add('partition',doc,None,iint('numPart'))
 doc = '''Unpartition the mesh of the current model.'''
 mesh.add('unpartition',doc,None)
 
+doc = '''Optimize the mesh of the current model.'''
+mesh.add('optimize',doc,None,istring('method',''))
+
+doc = '''Recombine the mesh of the current model.'''
+mesh.add('recombine',doc,None)
+
 doc = '''Refine the mesh of the current model by uniformly splitting the elements.'''
 mesh.add('refine',doc,None)
+
+doc = '''Smooth the mesh of the current model.'''
+mesh.add('smooth',doc,None)
 
 doc = '''Set the order of the elements in the mesh of the current model to `order'.'''
 mesh.add('setOrder',doc,None,iint('order'))

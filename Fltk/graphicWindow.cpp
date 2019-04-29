@@ -2129,7 +2129,6 @@ static void mesh_smooth_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-
 static void mesh_recombine_cb(Fl_Widget *w, void *data)
 {
   RecombineMesh(GModel::current());

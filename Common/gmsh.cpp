@@ -835,6 +835,27 @@ GMSH_API void gmsh::model::mesh::refine()
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
+GMSH_API void gmsh::model::mesh::recombine()
+{
+  if(!_isInitialized()) { throw -1; }
+  GModel::current()->recombineMesh();
+  CTX::instance()->mesh.changed = ENT_ALL;
+}
+
+GMSH_API void gmsh::model::mesh::smooth()
+{
+  if(!_isInitialized()) { throw -1; }
+  GModel::current()->smoothMesh();
+  CTX::instance()->mesh.changed = ENT_ALL;
+}
+
+GMSH_API void gmsh::model::mesh::optimize(const std::string &how)
+{
+  if(!_isInitialized()) { throw -1; }
+  GModel::current()->optimizeMesh(how);
+  CTX::instance()->mesh.changed = ENT_ALL;
+}
+
 GMSH_API void gmsh::model::mesh::splitQuadrangles(const double quality,
                                                   const int tag)
 {

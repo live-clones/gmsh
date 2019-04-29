@@ -376,8 +376,18 @@ GMSH_API void gmshModelMeshPartition(const int numPart,
 /* Unpartition the mesh of the current model. */
 GMSH_API void gmshModelMeshUnpartition(int * ierr);
 
+/* Optimize the mesh of the current model. */
+GMSH_API void gmshModelMeshOptimize(const char * method,
+                                    int * ierr);
+
+/* Recombine the mesh of the current model. */
+GMSH_API void gmshModelMeshRecombine(int * ierr);
+
 /* Refine the mesh of the current model by uniformly splitting the elements. */
 GMSH_API void gmshModelMeshRefine(int * ierr);
+
+/* Smooth the mesh of the current model. */
+GMSH_API void gmshModelMeshSmooth(int * ierr);
 
 /* Set the order of the elements in the mesh of the current model to `order'. */
 GMSH_API void gmshModelMeshSetOrder(const int order,

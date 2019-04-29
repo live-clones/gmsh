@@ -1153,6 +1153,33 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def optimize(method):
+            """
+            Optimize the mesh of the current model.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshOptimize(
+                c_char_p(method.encode()),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshOptimize returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def recombine():
+            """
+            Recombine the mesh of the current model.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRecombine(
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshRecombine returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def refine():
             """
             Refine the mesh of the current model by uniformly splitting the elements.
@@ -1163,6 +1190,19 @@ class model:
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelMeshRefine returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def smooth():
+            """
+            Smooth the mesh of the current model.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshSmooth(
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshSmooth returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod

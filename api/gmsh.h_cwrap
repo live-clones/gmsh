@@ -703,11 +703,35 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
       }
 
+      // Optimize the mesh of the current model.
+      inline void optimize(const std::string & method)
+      {
+        int ierr = 0;
+        gmshModelMeshOptimize(method.c_str(), &ierr);
+        if(ierr) throw ierr;
+      }
+
+      // Recombine the mesh of the current model.
+      inline void recombine()
+      {
+        int ierr = 0;
+        gmshModelMeshRecombine(&ierr);
+        if(ierr) throw ierr;
+      }
+
       // Refine the mesh of the current model by uniformly splitting the elements.
       inline void refine()
       {
         int ierr = 0;
         gmshModelMeshRefine(&ierr);
+        if(ierr) throw ierr;
+      }
+
+      // Smooth the mesh of the current model.
+      inline void smooth()
+      {
+        int ierr = 0;
+        gmshModelMeshSmooth(&ierr);
         if(ierr) throw ierr;
       }
 
