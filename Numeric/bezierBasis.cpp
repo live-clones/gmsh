@@ -12,7 +12,6 @@
 #include "pointsGenerators.h"
 #include "BasisFactory.h"
 #include "Numeric.h"
-#include "JacobianBasis.h" //FIXMEDEBUG
 
 namespace {
 
@@ -127,40 +126,6 @@ namespace {
     }
   }
 
-  void generateOneDMatrixLag2Bez(int order, fullMatrix<double> &c)
-  {
-    c.resize(order + 1, order + 1, true);
-
-    fullVector<double> x(order + 1);
-    for(int i = 0; i <= order; ++i) {
-      int ii = i == 0 ? 0 : i == 1 ? order : i - 1;
-      x(i) = static_cast<double>(ii) / order;
-    }
-    fullVector<double> w(order + 1);
-    fullVector<double> f(order + 1);
-
-    for(int i = 0; i <= order; ++i) {
-      f.setAll(0);
-      f(i) = 1;
-      w.setAll(0);
-      w(0) = 1;
-      c(0, i) = f(0);
-      for(int s = 1; s <= order; ++s) {
-        for(int k = order; k >= s; --k) {
-          f(k) = (f(k) - f(k - 1)) / (x(k) - x(k - s));
-        }
-        for(int k = s; k >= 1; --k) {
-          const double kk = static_cast<double>(k);
-          w(k) =
-            kk / s * w(k - 1) * (1 - x(s - 1)) - (1 - kk / s) * w(k) * x(s - 1);
-          c(k, i) = kk / s * c(k - 1, i) + (1 - kk / s) * c(k, i) + f(s) * w(k);
-        }
-        w(0) = -w(0) * x(s - 1);
-        c(0, i) = c(0, i) + f(s) * w(0);
-      }
-    }
-  }
-
   template <typename D>
   void convertLag2Bez(const fullMatrix<double> &lag, int order, int start,
                       int inc, const fullVector<D> &x, fullMatrix<double> &bez)
@@ -225,6 +190,9 @@ namespace {
 
   void lejaOrder(fullVector<double> &x, fullVector<int> &permutation)
   {
+    // Leja ordering can be used to reduce numerical errors during conversion
+    // of Lagrange coefficients into Bezier coefficients with the algorithm
+    // above (see commit 8a329da6966ac57859a05090651df1e28b7ce031)
     int n = x.size();
     permutation.resize(n);
     for(int i = 0; i < n; ++i) {
@@ -314,9 +282,9 @@ void bezierBasis::_construct()
   gmshGenerateOrderedPoints(_funcSpaceData, bezSamplingPoints, true);
   generateExponents(_funcSpaceData, _exponents);
 
-  matrixBez2Lag =
+  fullMatrix<double> matBez2Lag =
     generateBez2LagMatrix(_exponents, bezSamplingPoints, order, _dimSimplex);
-  matrixBez2Lag.invert(matrixLag2Bez);
+  matBez2Lag.invert(matrixLag2Bez);
 
   gmshGenerateOrderedPointsLine(order, ordered1dBezPoints);
 }
@@ -339,9 +307,10 @@ void bezierBasis::_constructPyr()
   fullMatrix<double> bezierPoints;
   gmshGenerateOrderedPoints(_funcSpaceData, bezierPoints, true);
   generateExponents(_funcSpaceData, _exponents);
-  matrixBez2Lag =
+
+  fullMatrix<double> matBez2Lag =
     generateBez2LagMatrixPyramid(_exponents, bezierPoints, pyr, nij, nk);
-  matrixBez2Lag.invert(matrixLag2Bez);
+  matBez2Lag.invert(matrixLag2Bez);
 }
 
 const bezierBasisRaiser *bezierBasis::getRaiser() const

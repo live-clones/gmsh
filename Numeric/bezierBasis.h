@@ -24,16 +24,14 @@ private:
   int _dimSimplex;
   const FuncSpaceData _funcSpaceData;
   bezierBasisRaiser *_raiser;
-
-  friend class bezierBasisRaiser;
   fullMatrix<double> _exponents;
-
-public:
-  // FIXME to set private
   fullMatrix<double> matrixLag2Bez;
-  fullMatrix<double> matrixBez2Lag;
   fullVector<double> ordered1dBezPoints;
 
+  friend class bezierBasisRaiser;
+  friend class bezierCoeff;
+
+public:
   // Constructors
   bezierBasis(FuncSpaceData data);
   ~bezierBasis();

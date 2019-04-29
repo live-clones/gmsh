@@ -24,8 +24,6 @@
 #include "BasisFactory.h"
 #endif
 
-class bezierBasis;
-
 StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "JacobianDeterminant", NULL, 0},
   {GMSH_FULLRC, "IGEMeasure", NULL, 0},

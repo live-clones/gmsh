@@ -9,8 +9,6 @@
 #include <vector>
 #include "fullMatrix.h"
 
-class GradientBasis;
-class bezierBasis;
 class bezierCoeff;
 class MElement;
 

@@ -6,7 +6,6 @@
 #include "JacobianBasis.h"
 #include "pointsGenerators.h"
 #include "nodalBasis.h"
-#include "bezierBasis.h"
 #include "BasisFactory.h"
 #include "Numeric.h"
 #include <cmath>
@@ -176,11 +175,6 @@ GradientBasis::GradientBasis(int elementTag, FuncSpaceData data)
                       gradShapeIdealMatY, gradShapeIdealMatZ);
 }
 
-const bezierBasis *GradientBasis::getBezier() const
-{
-  return BasisFactory::getBezierBasis(_data);
-}
-
 void GradientBasis::getGradientsFromNodes(const fullMatrix<double> &nodes,
                                           fullMatrix<double> *dxyzdX,
                                           fullMatrix<double> *dxyzdY,
@@ -333,11 +327,6 @@ JacobianBasis::JacobianBasis(int elementTag, FuncSpaceData data)
       gradShapeMatZFast(i, j) = allDPsiFast(3 * i + 2, j);
     }
   }
-}
-
-const bezierBasis *JacobianBasis::getBezier() const
-{
-  return BasisFactory::getBezierBasis(_data);
 }
 
 // Computes (unit) normals to straight line element at barycenter (with norm of

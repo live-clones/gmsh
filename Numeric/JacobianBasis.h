@@ -9,8 +9,6 @@
 #include "fullMatrix.h"
 #include "FuncSpaceData.h"
 
-class bezierBasis;
-
 class GradientBasis {
 public:
   fullMatrix<double> gradShapeMatX, gradShapeMatY, gradShapeMatZ;
@@ -26,7 +24,6 @@ public:
   inline int getPolynomialOrder() const { return _data.getSpaceOrder(); }
   int getNumSamplingPoints() const { return gradShapeMatX.size1(); }
   int getNumMapNodes() const { return gradShapeMatX.size2(); }
-  const bezierBasis *getBezier() const;
   void getGradientsFromNodes(const fullMatrix<double> &nodes,
                              fullMatrix<double> *dxyzdX,
                              fullMatrix<double> *dxyzdY,
@@ -89,7 +86,6 @@ public:
   inline int getNumPrimJacNodes() const { return numPrimJacNodes; }
   inline int getNumPrimMapNodes() const { return numPrimMapNodes; }
   inline FuncSpaceData getFuncSpaceData() const { return _data; }
-  const bezierBasis *getBezier() const;
 
   // Jacobian evaluation methods
   double getPrimNormals1D(const fullMatrix<double> &nodesXYZ,
