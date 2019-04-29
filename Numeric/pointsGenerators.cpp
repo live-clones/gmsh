@@ -131,7 +131,6 @@ fullMatrix<double> gmshGeneratePointsPyramidGeneral(bool pyr, int nij, int nk,
   //   monomial(i, j, k) -> (-1+2*i/nij)*(1-k'), (-1+2*j/nij)*(1-k'), (nk-k)/div)
   fullMatrix<double> points =
     gmshGenerateMonomialsPyramidGeneral(pyr, nij, nk, forSerendipPoints);
-//  points.print("monomials");
   if(points.size1() == 1) return points;
   const int div = pyr ? nk + nij : std::max(nij, nk);
   double scale = 2. / div;
@@ -860,6 +859,7 @@ fullMatrix<double> gmshGenerateMonomialsPyramid(int order,
 
 fullMatrix<double> gmshGenerateMonomialsPyramidSerendipity(int order)
 {
+  // WARNING: Is it correct?
   int nbMonomials = order ? 5 + (order - 1) * 8 : 1;
 
   fullMatrix<double> monomials(nbMonomials, 3);
@@ -930,56 +930,7 @@ fullMatrix<double> gmshGenerateMonomialsPyramidSerendipity(int order)
       }
     }
   }
-  monomials.print("monomials");
   return monomials;
-
-  //    // monomials of plus a bit more
-  //    if(order > 1){
-  //      int idx = 5;
-  //      for(int i = 2; i <= order; ++i, ++idx){
-  //        monomials(idx, 0) = 0;
-  //        monomials(idx, 1) = 0;
-  //        monomials(idx, 2) = i;
-  //      }
-  //      for(int i = 2; i <= order; ++i, ++idx){
-  //        monomials(idx, 0) = 1;
-  //        monomials(idx, 1) = 0;
-  //        monomials(idx, 2) = i;
-  //      }
-  //      for(int i = 2; i <= order; ++i, ++idx){
-  //        monomials(idx, 0) = 0;
-  //        monomials(idx, 1) = 1;
-  //        monomials(idx, 2) = i;
-  //      }
-  //      for(int i = 2; i <= order; ++i, ++idx){
-  //        monomials(idx, 0) = 1;
-  //        monomials(idx, 1) = 1;
-  //        monomials(idx, 2) = i;
-  //      }
-  //      for(int i = 2; i <= order; ++i, ++idx){
-  //        monomials(idx, 0) = i;
-  //        monomials(idx, 1) = 0;
-  //        monomials(idx, 2) = order;
-  //      }
-  //      for(int i = 2; i <= order; ++i, ++idx){
-  //        monomials(idx, 0) = i;
-  //        monomials(idx, 1) = 1;
-  //        monomials(idx, 2) = order;
-  //      }
-  //      for(int i = 2; i <= order; ++i, ++idx){
-  //        monomials(idx, 0) = 0;
-  //        monomials(idx, 1) = i;
-  //        monomials(idx, 2) = order;
-  //      }
-  //      for(int i = 2; i <= order; ++i, ++idx){
-  //        monomials(idx, 0) = 1;
-  //        monomials(idx, 1) = i;
-  //        monomials(idx, 2) = order;
-  //      }
-  //    }
-  //  }
-  //  monomials.print("monomials");
-  //  return monomials;
 }
 
 fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij,

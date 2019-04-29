@@ -143,26 +143,6 @@ void fullMatrix<double>::mult(const fullMatrix<double> &b,
 }
 
 template <>
-void fullMatrix<long double>::mult(const fullMatrix<long double> &b,
-                                   fullMatrix<long double> &c) const
-{
-  c.setAll(0);
-  for(int i = 0; i < _r; i++)
-    for(int j = 0; j < b.size2(); j++)
-      for(int k = 0; k < _c; k++)
-        c._data[i + _r * j] += (*this)(i, k) * b(k, j);
-}
-
-template <>
-void fullMatrix<long double>::mult(const fullVector<long double> &b,
-                                   fullVector<long double> &c) const
-{
-  c.setAll(0);
-  for(int i = 0; i < _r; i++)
-    for(int j = 0; j < _c; j++) c._data[i] += (*this)(i, j) * b(j);
-}
-
-template <>
 void fullMatrix<std::complex<double> >::mult(
   const fullMatrix<std::complex<double> > &b,
   fullMatrix<std::complex<double> > &c) const

@@ -355,7 +355,7 @@ int GmshBatch()
     CreateOutputFile(name, CTX::instance()->mesh.fileFormat);
   }
 
-    // launch solver (if requested)
+  // launch solver (if requested)
 #if defined(HAVE_ONELAB)
   onelabUtils::runClient();
 #endif

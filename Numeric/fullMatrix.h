@@ -6,8 +6,6 @@
 #ifndef FULL_MATRIX_H
 #define FULL_MATRIX_H
 
-#define _DEBUG
-
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include <cmath>

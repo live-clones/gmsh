@@ -59,7 +59,7 @@ namespace {
   // Compute edge -> element connectivity (for 2D elements)
   void calcEdge2Elements(GEntity *entity, MEdgeVecMEltMap &ed2el)
   {
-    for(size_t iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
+    for(std::size_t iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
       MElement *elt = entity->getMeshElement(iEl);
       //    elt->setVisibility(0); // fordebug
       if(elt->getDim() == 2)
@@ -72,7 +72,7 @@ namespace {
   // Compute face -> element connectivity (for 3D elements)
   void calcFace2Elements(GEntity *entity, MFaceVecMEltMap &face2el)
   {
-    for(size_t iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
+    for(std::size_t iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
       MElement *elt = entity->getMeshElement(iEl);
       //    elt->setVisibility(0); // fordebug
       if(elt->getDim() == 3)
