@@ -104,6 +104,16 @@ GPoint discreteFace::point(double par1, double par2) const
   double X = 0, Y = 0, Z = 0;
   double eval[3] = {1. - uv[0] - uv[1], uv[0], uv[1]};
 
+  /*  if (position == 1332){
+    printf("%g %g %g\n",t3d.getVertex(0)->x() ,t3d.getVertex(0)->y() ,t3d.getVertex(0)->z());
+    printf("%g %g %g\n",t3d.getVertex(1)->x() ,t3d.getVertex(1)->y() ,t3d.getVertex(1)->z());
+    printf("%g %g %g\n",t3d.getVertex(2)->x() ,t3d.getVertex(2)->y() ,t3d.getVertex(2)->z());
+    printf("%22.15e %22.15e\n",e->getVertex(0)->x() ,e->getVertex(0)->y());
+    printf("%22.15e %22.15e\n",e->getVertex(1)->x() ,e->getVertex(1)->y());
+    printf("%22.15e %22.15e\n",e->getVertex(2)->x() ,e->getVertex(2)->y());
+    printf("%d %g %g %g %g\n",position, uv[0],uv[1],par1,par2);
+    }*/
+  
   for(int io = 0; io < 3; io++) {
     X += t3d.getVertex(io)->x() * eval[io];
     Y += t3d.getVertex(io)->y() * eval[io];
@@ -174,8 +184,9 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
                                   SVector3 *normal) const
 {
 #if defined(HAVE_HXT)
+  int currentParametrization = _parametrizations.size() == 1 ? 0 : _currentParametrization;
   if(_parametrizations.empty()) return GPoint();
-  if(_currentParametrization == -1) return GPoint();
+  if(currentParametrization == -1) return GPoint();
 
   dfWrapper wrapper(queryPoint);
   do {
@@ -184,7 +195,7 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
                      queryPoint.z() - maxDistance};
     double MAX[3] = {queryPoint.x() + maxDistance, queryPoint.y() + maxDistance,
                      queryPoint.z() + maxDistance};
-    _parametrizations[_currentParametrization].rtree3d.Search(
+    _parametrizations[currentParametrization].rtree3d.Search(
       MIN, MAX, discreteFace_rtree_callback, &wrapper);
     maxDistance *= 2.0;
   } while(!wrapper._t3d);
@@ -271,9 +282,12 @@ double discreteFace::curvatureMax(const SPoint2 &param) const
 #if defined(HAVE_HXT)
   SVector3 dirMax, dirMin;
   double c, C;
-  if(_currentParametrization == -1) return 0.0;
-  if(_parametrizations[_currentParametrization].CURV.empty()) return 0.0;
+  size_t a = _currentParametrization;
+  if (_parametrizations.size() == 1) a = 0;
+  if(a == -1) return 0.0;
+  if(_parametrizations[a].CURV.empty()) return 0.0;
   curvatures(param, dirMax, dirMin, C, c);
+  //  printf("%g %g = %12.5E %12.5E\n",param.x(),param.y(), C, c);
   return std::max(c, C);
 #else
   Msg::Error("Cannot evaluate curvature on discrete surface without HXT");
@@ -287,10 +301,11 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 {
 #if defined(HAVE_HXT)
   if(_parametrizations.empty()) return 0.0;
-  if(_currentParametrization == -1) return 0.0;
-  if(_parametrizations[_currentParametrization].CURV.empty()) return 0.0;
+  int currentParametrization = _parametrizations.size() == 1 ? 0 : _currentParametrization;
+  if(currentParametrization == -1) return 0.0;
+  if(_parametrizations[currentParametrization].CURV.empty()) return 0.0;
   
-  MElement *e = _parametrizations[_currentParametrization].oct->find(
+  MElement *e = _parametrizations[currentParametrization].oct->find(
     param.x(), param.y(), 0.0);
   if(!e) {
     Msg::Warning("Triangle not found for curvatures at uv=(%g,%g) on "
@@ -300,20 +315,20 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
   }
 
   int position =
-    (int)((MTriangle *)e - &_parametrizations[_currentParametrization].t2d[0]);
+    (int)((MTriangle *)e - &_parametrizations[currentParametrization].t2d[0]);
 
   SVector3 c0max =
-    _parametrizations[_currentParametrization].CURV[6 * position + 0];
+    _parametrizations[currentParametrization].CURV[6 * position + 0];
   SVector3 c1max =
-    _parametrizations[_currentParametrization].CURV[6 * position + 1];
+    _parametrizations[currentParametrization].CURV[6 * position + 1];
   SVector3 c2max =
-    _parametrizations[_currentParametrization].CURV[6 * position + 2];
+    _parametrizations[currentParametrization].CURV[6 * position + 2];
   SVector3 c0min =
-    _parametrizations[_currentParametrization].CURV[6 * position + 3];
+    _parametrizations[currentParametrization].CURV[6 * position + 3];
   SVector3 c1min =
-    _parametrizations[_currentParametrization].CURV[6 * position + 4];
+    _parametrizations[currentParametrization].CURV[6 * position + 4];
   SVector3 c2min =
-    _parametrizations[_currentParametrization].CURV[6 * position + 5];
+    _parametrizations[currentParametrization].CURV[6 * position + 5];
 
   curvMax = c0max.norm();
   curvMin = c0min.norm();
@@ -411,12 +426,21 @@ void discreteFace::createGeometryFromSTL()
     _parametrizations[0].v2d.push_back(MVertex(stl_vertices_uv[i].x(),stl_vertices_uv[i].y(),0.0));
     _parametrizations[0].v3d.push_back(MVertex(stl_vertices_xyz[i].x(),stl_vertices_xyz[i].y(),stl_vertices_xyz[i].z()));
   }    
+  
   for (size_t i=0;i<stl_triangles.size()/3;i++){
     int a = stl_triangles[3*i];
     int b = stl_triangles[3*i+1];
     int c = stl_triangles[3*i+2];
     _parametrizations[0].t2d.push_back(MTriangle(&_parametrizations[0].v2d[a],&_parametrizations[0].v2d[b],&_parametrizations[0].v2d[c]));
     _parametrizations[0].t3d.push_back(MTriangle(&_parametrizations[0].v3d[a],&_parametrizations[0].v3d[b],&_parametrizations[0].v3d[c]));
+    if (!stl_curvatures.empty()){
+      _parametrizations[0].CURV.push_back(stl_curvatures[2*a]);
+      _parametrizations[0].CURV.push_back(stl_curvatures[2*a+1]);
+      _parametrizations[0].CURV.push_back(stl_curvatures[2*b]);
+      _parametrizations[0].CURV.push_back(stl_curvatures[2*b+1]);
+      _parametrizations[0].CURV.push_back(stl_curvatures[2*c]);
+      _parametrizations[0].CURV.push_back(stl_curvatures[2*c+1]);
+    }
     //    _parametrizations[0].t3d.push_back(MTriangle(v0,v1,v2));
     //    _parametrizations[0].t2d.push_back(MTriangle(vv0,vv1,vv2));
   }
@@ -1177,6 +1201,10 @@ HXTStatus discreteFace::computsSplitEdgesForPartitionIntoGenusOneSurfaces(
 
 bool hxt_reparam_surf::checkPlanar()
 {
+#ifndef HAVE_LAPACK
+  return false;
+#endif
+
   SBoundingBox3d bb;
   mean_plane mp;
   std::vector<SPoint3> v, vp;
