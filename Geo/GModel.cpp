@@ -2365,14 +2365,14 @@ void GModel::alignPeriodicBoundaries()
           std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
           std::map<MVertex *, MVertex *>::iterator srcIter = v2v.find(tgtVtx);
           if(srcIter == v2v.end() || !srcIter->second) {
-            // Msg::Info("Cannot find periodic counterpart of vertex %d on edge
+            // Msg::Info("Cannot find periodic counterpart of node %d on curve
             // %d"
             //              ", looking on entity %d of dimension %d",
             //              tgtVtx->getNum(),tgt->tag(),ge->tag(),ge->dim());
             srcIter = geV2v.find(tgtVtx);
             if(srcIter == geV2v.end() || !srcIter->second) {
               Msg::Error(
-                "Cannot find periodic counterpart of vertex %d on edge %d"
+                "Cannot find periodic counterpart of node %d on curve %d"
                 " nor on %d",
                 tgtVtx->getNum(), tgt->tag(), ge->tag());
               return;
@@ -2390,8 +2390,8 @@ void GModel::alignPeriodicBoundaries()
           srcLines.find(tgtEdge);
 
         if(sIter == srcLines.end() || !sIter->second) {
-          Msg::Error("Can't find periodic counterpart of edge %d-%d on edge %d"
-                     ", connected to edge %d-%d on %d",
+          Msg::Error("Can't find periodic counterpart of curve %d-%d on curve %d"
+                     ", connected to curve %d-%d on %d",
                      tgtLine->getVertex(0)->getNum(),
                      tgtLine->getVertex(1)->getNum(), tgt->tag(),
                      tgtVtcs[0]->getNum(), tgtVtcs[1]->getNum(), src->tag());
@@ -2446,13 +2446,13 @@ void GModel::alignPeriodicBoundaries()
 
           std::map<MVertex *, MVertex *>::iterator vIter = v2v.find(vtx);
           if(vIter == v2v.end() || !vIter->second) {
-            Msg::Info("Could not find copy of vertex %d in face %d"
+            Msg::Info("Could not find copy of node %d in surface %d"
                       ", looking in entity %d of dimension %d",
                       vtx->getNum(), tgt->tag(), ge->tag(), ge->dim());
             vIter = geV2v.find(vtx);
             if(vIter == geV2v.end() || !vIter->second) {
-              Msg::Error("Could not find copy of vertex %d in %d nor in %d",
-                         vtx->getNum(), tgt->tag(), ge->tag());
+              Msg::Warning("Could not find copy of node %d in %d nor in %d",
+                           vtx->getNum(), tgt->tag(), ge->tag());
               return;
             }
             else

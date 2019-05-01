@@ -532,7 +532,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.IgnorePeriodicity
-Ignore alignment of periodic boundaries when reading the mesh (used by ParaView plugin)@*
+Ignore alignment of periodic boundaries when reading the mesh in MSH2 format (used by ParaView plugin)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
