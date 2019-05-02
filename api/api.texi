@@ -369,7 +369,8 @@ dimension (e.g. points if @code{dim} == 0).
 @item getBoundingBox
 Get the bounding box (@code{xmin}, @code{ymin}, @code{zmin}), (@code{xmax},
 @code{ymax}, @code{zmax}) of the model entity of dimension @code{dim} and tag
-@code{tag}.
+@code{tag}. If @code{dim} and @code{tag} are negative, get the bounding box of
+the whole model.
 
 @table @asis
 @item Input:
@@ -691,7 +692,10 @@ Unpartition the mesh of the current model.
 @end table
 
 @item optimize
-Optimize the mesh of the current model.
+Optimize the mesh of the current model using @code{method} (empty for default
+tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
+direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
+smoother).
 
 @table @asis
 @item Input:

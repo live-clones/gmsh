@@ -655,7 +655,8 @@ class model:
     def getBoundingBox(dim, tag):
         """
         Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
-        the model entity of dimension `dim' and tag `tag'.
+        the model entity of dimension `dim' and tag `tag'. If `dim' and `tag' are
+        negative, get the bounding box of the whole model.
 
         Return `xmin', `ymin', `zmin', `xmax', `ymax', `zmax'.
         """
@@ -1155,7 +1156,10 @@ class model:
         @staticmethod
         def optimize(method):
             """
-            Optimize the mesh of the current model.
+            Optimize the mesh of the current model using `method' (empty for default
+            tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
+            direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
+            smoother).
             """
             ierr = c_int()
             lib.gmshModelMeshOptimize(

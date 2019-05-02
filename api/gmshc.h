@@ -200,7 +200,8 @@ GMSH_API void gmshModelGetEntitiesInBoundingBox(const double xmin,
                                                 int * ierr);
 
 /* Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
- * the model entity of dimension `dim' and tag `tag'. */
+ * the model entity of dimension `dim' and tag `tag'. If `dim' and `tag' are
+ * negative, get the bounding box of the whole model. */
 GMSH_API void gmshModelGetBoundingBox(const int dim,
                                       const int tag,
                                       double * xmin,
@@ -376,7 +377,10 @@ GMSH_API void gmshModelMeshPartition(const int numPart,
 /* Unpartition the mesh of the current model. */
 GMSH_API void gmshModelMeshUnpartition(int * ierr);
 
-/* Optimize the mesh of the current model. */
+/* Optimize the mesh of the current model using `method' (empty for default
+ * tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
+ * direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
+ * smoother). */
 GMSH_API void gmshModelMeshOptimize(const char * method,
                                     int * ierr);
 

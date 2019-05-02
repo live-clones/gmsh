@@ -196,7 +196,8 @@ namespace gmsh { // Top-level functions
                                            const int dim = -1);
 
     // Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
-    // the model entity of dimension `dim' and tag `tag'.
+    // the model entity of dimension `dim' and tag `tag'. If `dim' and `tag' are
+    // negative, get the bounding box of the whole model.
     GMSH_API void getBoundingBox(const int dim,
                                  const int tag,
                                  double & xmin,
@@ -354,7 +355,10 @@ namespace gmsh { // Top-level functions
       // Unpartition the mesh of the current model.
       GMSH_API void unpartition();
 
-      // Optimize the mesh of the current model.
+      // Optimize the mesh of the current model using `method' (empty for default
+      // tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
+      // direct high-order mesh optimizer, "HighOrderElastic" for high-order
+      // elastic smoother).
       GMSH_API void optimize(const std::string & method);
 
       // Recombine the mesh of the current model.
