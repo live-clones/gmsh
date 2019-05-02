@@ -1225,7 +1225,11 @@ int GModel::smoothMesh()
 int GModel::optimizeMesh(const std::string &how)
 {
 #if defined(HAVE_MESH)
-  if(how == "Netgen")
+  if(how == "HighOrder")
+    OptimizeHighOrderMesh(this);
+  else if(how == "HighOrderElastic")
+    OptimizeHighOrderMeshElastic(this);
+  else if(how == "Netgen")
     OptimizeMeshNetgen(this);
   else
     OptimizeMesh(this);
