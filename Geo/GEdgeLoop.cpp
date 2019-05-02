@@ -112,8 +112,7 @@ static void loopTheLoop(std::list<GEdge *> &wire, std::list<GEdgeSigned> &loop,
     else
       ges = nextOne(prevOne, wire);
     if(ges.getSign() == 0) { // oops
-      Msg::Warning("Something wrong in curve loop of size=%d, no sign!",
-                   wire.size());
+      Msg::Debug("no sign in wire of size=%d: aborting loop construction");
       break;
     }
     prevOne = &ges;
