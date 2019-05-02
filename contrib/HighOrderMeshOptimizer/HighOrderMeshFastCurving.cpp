@@ -49,6 +49,7 @@
 #include "Field.h"
 #include "boundaryLayersData.h"
 #include "BoundaryLayerCurver.h"
+#include "FuncSpaceData.h"
 
 namespace {
 
@@ -58,7 +59,7 @@ namespace {
   // Compute edge -> element connectivity (for 2D elements)
   void calcEdge2Elements(GEntity *entity, MEdgeVecMEltMap &ed2el)
   {
-    for(size_t iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
+    for(std::size_t iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
       MElement *elt = entity->getMeshElement(iEl);
       //    elt->setVisibility(0); // fordebug
       if(elt->getDim() == 2)
@@ -71,7 +72,7 @@ namespace {
   // Compute face -> element connectivity (for 3D elements)
   void calcFace2Elements(GEntity *entity, MFaceVecMEltMap &face2el)
   {
-    for(size_t iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
+    for(std::size_t iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
       MElement *elt = entity->getMeshElement(iEl);
       //    elt->setVisibility(0); // fordebug
       if(elt->getDim() == 3)
@@ -734,8 +735,9 @@ namespace {
   {
     const int nbVert = bndElt->getNumVertices();
     const int nbPrimVert = bndElt->getNumPrimaryVertices();
-    const GradientBasis *gb =
-      BasisFactory::getGradientBasis(FuncSpaceData(bndElt));
+    const GradientBasis *gb;
+    const int tag = bndElt->getTypeForMSH();
+    gb = BasisFactory::getGradientBasis(tag, FuncSpaceData(bndElt));
 
     // Coordinates of nodes
     fullMatrix<double> nodesXYZ(nbVert, 3);

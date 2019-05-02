@@ -31,7 +31,7 @@ public:
   // Jacobian
   // Warning: bases returned by BasisFactory::getJacobianBasis(int tag) are the
   // only safe bases for using Bezier on the jacobian determinant!
-  static const JacobianBasis *getJacobianBasis(FuncSpaceData);
+  static const JacobianBasis *getJacobianBasis(int tag, FuncSpaceData);
   static const JacobianBasis *getJacobianBasis(int tag, int order);
   static const JacobianBasis *getJacobianBasis(int tag);
 
@@ -39,13 +39,13 @@ public:
   static const CondNumBasis *getCondNumBasis(int tag, int cnOrder = -1);
 
   // Gradients
-  static const GradientBasis *getGradientBasis(FuncSpaceData);
+  static const GradientBasis *getGradientBasis(int tag, FuncSpaceData);
   static const GradientBasis *getGradientBasis(int tag, int order);
   static const GradientBasis *getGradientBasis(int tag);
 
   // Bezier
   static const bezierBasis *getBezierBasis(FuncSpaceData);
-  static const bezierBasis *getBezierBasis(int parentTag, int order);
+  static const bezierBasis *getBezierBasis(int parentType, int order);
   static const bezierBasis *getBezierBasis(int tag);
 
   static void clearAll();

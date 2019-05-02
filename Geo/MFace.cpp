@@ -98,12 +98,13 @@ void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
       faceOrientationFlag[0]=2;
       faceOrientationFlag[1]=-1 ;
     }
-
   }
   else { // quadrilateral face
     int c = 0;
     for(int i = 0; i < 4; i++) {
-      if(_v[int(_si[0])]->getNum() == unsigned(_v[i]->getNum())) { c = i; }
+      if(_v[int(_si[0])]->getNum() == unsigned(_v[i]->getNum())) {
+        c = i;
+      }
     }
     int indexopposedVertex = 0;
     switch(c) {
@@ -114,13 +115,13 @@ void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
     }
     int numVertexOpposed = _v[indexopposedVertex]->getNum();
 
-    int axis1A =_v[int(_si[0])]->getNum();
-    int axis1B=0;
+    int axis1A = _v[int(_si[0])]->getNum();
+    int axis1B = 0;
     if(_v[int(_si[1])]->getNum() == unsigned(numVertexOpposed)) {
-      axis1B  = _v[int(_si[2])]->getNum();
+      axis1B = _v[int(_si[2])]->getNum();
     }
     else {
-      axis1B  = _v[int(_si[1])]->getNum();
+      axis1B = _v[int(_si[1])]->getNum();
     }
     if(unsigned(axis1A) == _v[0]->getNum() &&
        unsigned(axis1B) == _v[1]->getNum()) {
@@ -220,7 +221,7 @@ MFaceN::MFaceN(int type, int order, const std::vector<MVertex *> &v)
 MEdgeN MFaceN::getHighOrderEdge(int num, int sign) const
 {
   int nCorner = getNumCorners();
-  std::vector<MVertex *> vertices((unsigned int)_order + 1);
+  std::vector<MVertex *> vertices(static_cast<std::size_t>(_order) + 1);
   if(sign == 1) {
     vertices[0] = _v[num];
     vertices[1] = _v[(num + 1) % nCorner];

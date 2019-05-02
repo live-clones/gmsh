@@ -9,21 +9,21 @@
 #include "fullMatrix.h"
 #include "FuncSpaceData.h"
 
-class bezierBasis;
-
 class GradientBasis {
 public:
   fullMatrix<double> gradShapeMatX, gradShapeMatY, gradShapeMatZ;
   fullMatrix<double> gradShapeIdealMatX, gradShapeIdealMatY, gradShapeIdealMatZ;
 
 private:
+  const int _elementTag;
   const FuncSpaceData _data;
 
 public:
-  GradientBasis(FuncSpaceData);
+  GradientBasis(int elementTag, FuncSpaceData);
+
+  inline int getPolynomialOrder() const { return _data.getSpaceOrder(); }
   int getNumSamplingPoints() const { return gradShapeMatX.size1(); }
   int getNumMapNodes() const { return gradShapeMatX.size2(); }
-  const bezierBasis *getBezier() const;
   void getGradientsFromNodes(const fullMatrix<double> &nodes,
                              fullMatrix<double> *dxyzdX,
                              fullMatrix<double> *dxyzdY,
@@ -40,15 +40,13 @@ public:
                            fullMatrix<double> &dxyzdY,
                            fullMatrix<double> &dxyzdZ) const
   {
-    GradientBasis::mapFromIdealElement(_data.elementType(), dxyzdX, dxyzdY,
-                                       dxyzdZ);
+    GradientBasis::mapFromIdealElement(_data.getType(), dxyzdX, dxyzdY, dxyzdZ);
   }
   void mapFromIdealElement(fullVector<double> &dxyzdX,
                            fullVector<double> &dxyzdY,
                            fullVector<double> &dxyzdZ) const
   {
-    GradientBasis::mapFromIdealElement(_data.elementType(), dxyzdX, dxyzdY,
-                                       dxyzdZ);
+    GradientBasis::mapFromIdealElement(_data.getType(), dxyzdX, dxyzdY, dxyzdZ);
   }
   static void mapFromIdealElement(int type, fullMatrix<double> &gSMatX,
                                   fullMatrix<double> &gSMatY,
@@ -57,12 +55,12 @@ public:
                                   fullVector<double> &gSVecY,
                                   fullVector<double> &gSVecZ);
   static void mapFromIdealElement(int type, double jac[3][3]);
-  void lag2Bez(const fullMatrix<double> &lag, fullMatrix<double> &bez) const;
 };
 
 class JacobianBasis {
 private:
   const GradientBasis *_gradBasis;
+  const int _elementTag;
   const FuncSpaceData _data;
   const int _dim;
   fullMatrix<double> gradShapeMatXFast, gradShapeMatYFast, gradShapeMatZFast;
@@ -76,16 +74,16 @@ private:
   int numJacNodesFast;
 
 public:
-  JacobianBasis(FuncSpaceData);
+  JacobianBasis(int elementTag, FuncSpaceData);
 
   // Get methods
-  inline int getJacOrder() const { return _data.spaceOrder(); }
+  inline int getJacOrder() const { return _data.getSpaceOrder(); }
   inline int getNumJacNodes() const { return numJacNodes; }
   inline int getNumJacNodesFast() const { return numJacNodesFast; }
   inline int getNumMapNodes() const { return numMapNodes; }
   inline int getNumPrimJacNodes() const { return numPrimJacNodes; }
   inline int getNumPrimMapNodes() const { return numPrimMapNodes; }
-  const bezierBasis *getBezier() const;
+  inline FuncSpaceData getFuncSpaceData() const { return _data; }
 
   // Jacobian evaluation methods
   double getPrimNormals1D(const fullMatrix<double> &nodesXYZ,
@@ -196,18 +194,12 @@ public:
                        normals);
   }
 
-  void lag2Bez(const fullVector<double> &lag, fullVector<double> &bez) const;
-  void lag2Bez(const fullMatrix<double> &lag, fullMatrix<double> &bez) const;
   inline void primJac2Jac(const fullVector<double> &primJac,
                           fullVector<double> &jac) const
   {
     matrixPrimJac2Jac.mult(primJac, jac);
   }
 
-  // Research purpose (to be removed ?)
-  void interpolate(const fullVector<double> &jacobian,
-                   const fullMatrix<double> &uvw, fullMatrix<double> &result,
-                   bool areBezier = false) const;
   static int jacobianOrder(int tag);
   static int jacobianOrder(int parentType, int order);
   static FuncSpaceData jacobianMatrixSpace(int type, int order);

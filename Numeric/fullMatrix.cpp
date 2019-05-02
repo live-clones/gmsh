@@ -593,7 +593,9 @@ template <> bool fullMatrix<double>::invert(fullMatrix<double> &result) const
 
   // inv = transpose of cofactor / Determinant
   for(int i = 0; i < _r; i++) {
-    for(int j = 0; j < _c; j++) { result(j, i) = cofactor(i, j) / det; }
+    for(int j = 0; j < _c; j++) {
+      result(j, i) = cofactor(i, j) / det;
+    }
   }
   return true;
 }
@@ -640,6 +642,32 @@ void fullMatrix<int>::print(const std::string &name,
       printf("},\n");
     else
       printf("}\n");
+  }
+  printf("};\n");
+}
+
+template <>
+void fullVector<double>::print(const std::string name,
+                               const std::string format) const
+{
+  std::string rformat = (format == "") ? "%12.5E " : format;
+  printf("double %s[%d]=\n", name.c_str(), size());
+  printf("{  ");
+  for(int I = 0; I < size(); I++) {
+    printf(rformat.c_str(), (*this)(I));
+  }
+  printf("};\n");
+}
+
+template <>
+void fullVector<int>::print(const std::string name,
+                            const std::string format) const
+{
+  std::string rformat = (format == "") ? "%12d " : format;
+  printf("double %s[%d]=\n", name.c_str(), size());
+  printf("{  ");
+  for(int I = 0; I < size(); I++) {
+    printf(rformat.c_str(), (*this)(I));
   }
   printf("};\n");
 }

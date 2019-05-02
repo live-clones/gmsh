@@ -9,110 +9,108 @@
 #include <vector>
 #include "fullMatrix.h"
 
-class GradientBasis;
-class bezierBasis;
+class bezierCoeff;
 class MElement;
 
 namespace jacobianBasedQuality {
 
   void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
-                                 const fullMatrix<double> *normals = NULL);
+                                 const fullMatrix<double> *normals = NULL,
+                                 bool debug = false);
   double minIGEMeasure(MElement *el, bool knownValid = false,
                        bool reversedOk = false,
-                       const fullMatrix<double> *normals = NULL);
+                       const fullMatrix<double> *normals = NULL,
+                       bool debug = false);
   double minICNMeasure(MElement *el, bool knownValid = false,
                        bool reversedOk = false,
-                       const fullMatrix<double> *normals = NULL);
+                       const fullMatrix<double> *normals = NULL,
+                       bool debug = false);
+  void sampleJacobianDeterminant(MElement *el, int order, double &min,
+                                 double &max,
+                                 const fullMatrix<double> *normals = NULL);
   void sampleIGEMeasure(MElement *el, int order, double &min, double &max);
-  void sampleJacobian(MElement *el, int order, fullVector<double> &jac,
-                      const fullMatrix<double> *normals = NULL);
+  void sampleICNMeasure(MElement *el, int order, double &min, double &max);
+  void sampleJacobianDeterminant(MElement *el, int order,
+                                 fullVector<double> &jac,
+                                 const fullMatrix<double> *normals = NULL);
   void sampleIGEMeasure(MElement *el, int order, fullVector<double> &ige);
   void sampleICNMeasure(MElement *el, int order, fullVector<double> &icn);
-  double minSampledICNMeasure(MElement *el, int order); // fordebug
-  double minSampledIGEMeasure(MElement *el, int order); // fordebug
 
-  class _coefData {
+  // For regression tests:
+  void testAllMeasuresAllElements();
+  void testAllMeasures(MElement *el, const fullMatrix<double> *normals = NULL);
+
+  class _coeffData {
   protected:
-    double _minL, _maxL; // Extremum of Jac at corners
-    double _minB, _maxB; // Extremum of bezier coefficients
-    const int _depth;
+    double _minL, _maxL; // Extremum of measure at corners
+    double _minB, _maxB; // Extremum of measure
 
   public:
-    _coefData(int depth)
-      : _minL(0), _maxL(0), _minB(0), _maxB(0), _depth(depth)
-    {
-    }
-    virtual ~_coefData() {}
+    _coeffData() : _minL(0), _maxL(0), _minB(0), _maxB(0) {}
+    virtual ~_coeffData() {}
 
     inline double minL() const { return _minL; }
     inline double maxL() const { return _maxL; }
     inline double minB() const { return _minB; }
     inline double maxB() const { return _maxB; }
-    inline int depth() const { return _depth; }
 
     virtual bool boundsOk(double minL, double maxL) const = 0;
-    virtual void getSubCoeff(std::vector<_coefData *> &) const = 0;
-    virtual int getNumMeasure() const { return 0; } // fordebug
+    virtual void getSubCoeff(std::vector<_coeffData *> &) const = 0;
+    virtual void deleteBezierCoeff() = 0;
   };
 
   struct _lessMinB {
-    bool operator()(_coefData *, _coefData *) const;
+    bool operator()(_coeffData *, _coeffData *) const;
   };
   struct _lessMaxB {
-    bool operator()(_coefData *, _coefData *) const;
+    bool operator()(_coeffData *, _coeffData *) const;
   };
 
-  class _coefDataJac : public _coefData {
+  class _coeffDataJac : public _coeffData {
   private:
-    const fullVector<double> _coeffs;
-    const bezierBasis *_bfs;
+    const bezierCoeff *_coeffs;
 
   public:
-    _coefDataJac(fullVector<double> &v, const bezierBasis *bfs, int depth);
-    ~_coefDataJac() {}
+    _coeffDataJac(const bezierCoeff *coeffs);
+    ~_coeffDataJac() {}
 
     bool boundsOk(double minL, double maxL) const;
-    void getSubCoeff(std::vector<_coefData *> &) const;
-    int getNumMeasure() const { return 1; } // fordebug
+    void getSubCoeff(std::vector<_coeffData *> &) const;
+    void deleteBezierCoeff();
   };
 
-  class _coefDataIGE : public _coefData {
+  class _coeffDataIGE : public _coeffData {
   private:
-    const fullVector<double> _coeffsJacDet;
-    const fullMatrix<double> _coeffsJacMat;
-    const bezierBasis *_bfsDet, *_bfsMat;
+    const bezierCoeff *_coeffDet;
+    const bezierCoeff *_coeffMat;
     const int _type;
 
   public:
-    _coefDataIGE(fullVector<double> &det, fullMatrix<double> &mat,
-                  const bezierBasis *bfsDet, const bezierBasis *bfsMat,
-                  int depth, int type);
-    ~_coefDataIGE() {}
+    _coeffDataIGE(int type, const bezierCoeff *det, const bezierCoeff *mat);
+    ~_coeffDataIGE() {}
 
     bool boundsOk(double minL, double maxL) const;
-    void getSubCoeff(std::vector<_coefData *> &) const;
-    int getNumMeasure() const { return 2; } // fordebug
+    void getSubCoeff(std::vector<_coeffData *> &) const;
+    void deleteBezierCoeff();
 
   private:
     void _computeAtCorner(double &min, double &max) const;
     double _computeLowerBound() const;
   };
 
-  class _coefDataICN : public _coefData {
+  class _coeffDataICN : public _coeffData {
   private:
-    const fullVector<double> _coeffsJacDet;
-    const fullMatrix<double> _coeffsJacMat;
-    const bezierBasis *_bfsDet, *_bfsMat;
+    const bezierCoeff *_coeffDet;
+    const bezierCoeff *_coeffMat;
+    const int _dim;
 
   public:
-    _coefDataICN(fullVector<double> &det, fullMatrix<double> &metric,
-                  const bezierBasis *bfsDet, const bezierBasis *bfsMet,
-                  int depth);
-    ~_coefDataICN() {}
+    _coeffDataICN(int dim, const bezierCoeff *det, const bezierCoeff *mat);
+    ~_coeffDataICN() {}
 
     bool boundsOk(double minL, double maxL) const;
-    void getSubCoeff(std::vector<_coefData *> &) const;
-    int getNumMeasure() const { return 4; } // fordebug
+    void getSubCoeff(std::vector<_coeffData *> &) const;
+    void deleteBezierCoeff();
 
   private:
     void _computeAtCorner(double &min, double &max) const;
@@ -123,8 +121,9 @@ namespace jacobianBasedQuality {
                                const fullVector<double> &denominator,
                                bool lower, bool positiveDenom = true);
 
-  void _subdivideDomains(std::vector<_coefData *> &domains);
-  double _getMinAndDeleteDomains(std::vector<_coefData *> &domains);
+  void _subdivideDomains(std::vector<_coeffData *> &domains,
+                         bool alsoMax = true, bool debug = false);
+  double _getMinAndDeleteDomains(std::vector<_coeffData *> &domains);
 
 } // namespace jacobianBasedQuality
 
