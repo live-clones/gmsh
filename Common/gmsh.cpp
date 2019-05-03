@@ -2495,8 +2495,9 @@ GMSH_API void gmsh::model::mesh::getBarycenters(
   }
 }
 
-GMSH_API void gmsh::model::mesh::getGaussPoints(
-  const int elementType, const std::string &integrationType, std::vector< double > &integrationPoints)
+GMSH_API void gmsh::model::mesh::getIntegrationPoints(
+  const int elementType, const std::string &integrationType,
+  std::vector< double > &integrationPoints)
 {
   if(!_isInitialized()) { throw -1; }
   integrationPoints.clear();

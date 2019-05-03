@@ -1926,7 +1926,7 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def getGaussPoints(elementType, integrationType):
+        def getIntegrationPoints(elementType, integrationType):
             """
             Get the Gauss quadrature information for the given `integrationType'
             integration rule (e.g. "Gauss4" for a Gauss quadrature suited for
@@ -1939,14 +1939,14 @@ class model:
             """
             api_integrationPoints_, api_integrationPoints_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetGaussPoints(
+            lib.gmshModelMeshGetIntegrationPoints(
                 c_int(elementType),
                 c_char_p(integrationType.encode()),
                 byref(api_integrationPoints_), byref(api_integrationPoints_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetGaussPoints returned non-zero error code: ",
+                    "gmshModelMeshGetIntegrationPoints returned non-zero error code: ",
                     ierr.value)
             return _ovectordouble(api_integrationPoints_, api_integrationPoints_n_.value)
 

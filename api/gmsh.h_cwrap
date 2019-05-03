@@ -1250,13 +1250,13 @@ namespace gmsh { // Top-level functions
       // `elementType'. `integrationPoints' contains the u, v, w coordinates of the
       // integration points in the reference element as well as the associated
       // weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
-      inline void getGaussPoints(const int elementType,
-                                 const std::string & integrationType,
-                                 std::vector<double> & integrationPoints)
+      inline void getIntegrationPoints(const int elementType,
+                                       const std::string & integrationType,
+                                       std::vector<double> & integrationPoints)
       {
         int ierr = 0;
         double *api_integrationPoints_; size_t api_integrationPoints_n_;
-        gmshModelMeshGetGaussPoints(elementType, integrationType.c_str(), &api_integrationPoints_, &api_integrationPoints_n_, &ierr);
+        gmshModelMeshGetIntegrationPoints(elementType, integrationType.c_str(), &api_integrationPoints_, &api_integrationPoints_n_, &ierr);
         if(ierr) throw ierr;
         integrationPoints.assign(api_integrationPoints_, api_integrationPoints_ + api_integrationPoints_n_); gmshFree(api_integrationPoints_);
       }

@@ -1164,7 +1164,7 @@ Precomputes the basis functions corresponding to @code{elementType}.
 -
 @end table
 
-@item getGaussPoints
+@item getIntegrationPoints
 Get the Gauss quadrature information for the given @code{integrationType}
 integration rule (e.g. "Gauss4" for a Gauss quadrature suited for integrating
 4th order polynomials) and for the elements of type @code{elementType}.

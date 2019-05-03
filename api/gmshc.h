@@ -721,10 +721,10 @@ GMSH_API void gmshModelMeshPrecomputeBasisFunctions(const int elementType,
  * `elementType'. `integrationPoints' contains the u, v, w coordinates of the
  * integration points in the reference element as well as the associated
  * weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. */
-GMSH_API void gmshModelMeshGetGaussPoints(const int elementType,
-                                          const char * integrationType,
-                                          double ** integrationPoints, size_t * integrationPoints_n,
-                                          int * ierr);
+GMSH_API void gmshModelMeshGetIntegrationPoints(const int elementType,
+                                                const char * integrationType,
+                                                double ** integrationPoints, size_t * integrationPoints_n,
+                                                int * ierr);
 
 /* Get the barycenters of all elements of type `elementType' classified on the
  * entity of tag `tag'. If `primary' is set, only the primary nodes of the

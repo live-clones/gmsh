@@ -674,9 +674,9 @@ namespace gmsh { // Top-level functions
       // `elementType'. `integrationPoints' contains the u, v, w coordinates of the
       // integration points in the reference element as well as the associated
       // weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
-      GMSH_API void getGaussPoints(const int elementType,
-                                   const std::string & integrationType,
-                                   std::vector<double> & integrationPoints);
+      GMSH_API void getIntegrationPoints(const int elementType,
+                                         const std::string & integrationType,
+                                         std::vector<double> & integrationPoints);
 
       // Get the barycenters of all elements of type `elementType' classified on
       // the entity of tag `tag'. If `primary' is set, only the primary nodes of
