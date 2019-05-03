@@ -1970,6 +1970,31 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def getIntegrationPoints(elementType, integrationType):
+            """
+            Get the Gauss quadrature information for the given `integrationType'
+            integration rule (e.g. "Gauss4" for a Gauss quadrature suited for
+            integrating 4th order polynomials) and for the elements of type
+            `elementType'. `integrationPoints' contains the u, v, w coordinates of the
+            integration points in the reference element as well as the associated
+            weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
+
+            Return `integrationPoints'.
+            """
+            api_integrationPoints_, api_integrationPoints_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetIntegrationPoints(
+                c_int(elementType),
+                c_char_p(integrationType.encode()),
+                byref(api_integrationPoints_), byref(api_integrationPoints_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetIntegrationPoints returned non-zero error code: ",
+                    ierr.value)
+            return _ovectordouble(api_integrationPoints_, api_integrationPoints_n_.value)
+
+        @staticmethod
         def getBarycenters(elementType, tag, fast, primary, task=0, numTasks=1):
             """
             Get the barycenters of all elements of type `elementType' classified on the

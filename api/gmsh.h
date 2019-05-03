@@ -681,6 +681,16 @@ namespace gmsh { // Top-level functions
       // Precomputes the basis functions corresponding to `elementType'.
       GMSH_API void precomputeBasisFunctions(const int elementType);
 
+      // Get the Gauss quadrature information for the given `integrationType'
+      // integration rule (e.g. "Gauss4" for a Gauss quadrature suited for
+      // integrating 4th order polynomials) and for the elements of type
+      // `elementType'. `integrationPoints' contains the u, v, w coordinates of the
+      // integration points in the reference element as well as the associated
+      // weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
+      GMSH_API void getIntegrationPoints(const int elementType,
+                                         const std::string & integrationType,
+                                         std::vector<double> & integrationPoints);
+
       // Get the barycenters of all elements of type `elementType' classified on
       // the entity of tag `tag'. If `primary' is set, only the primary nodes of
       // the elements are taken into account for the barycenter calculation. If
