@@ -1108,9 +1108,9 @@ automatically assigned to the elements.
 @item getJacobians
 Get the Jacobians of all the elements of type @code{elementType} classified on
 the entity of dimension @code{dim} and tag @code{tag}, at the G integration
-points @code{integrationPoints} given as concatenated triplets of parametric
-coordinates [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by element,
-with elements in the same order as in @code{getElements} and
+points @code{integrationPoints} given as concatenated triplets of coordinates in
+the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by
+element, with elements in the same order as in @code{getElements} and
 @code{getElementsByType}. @code{jacobians} contains for each element the 9
 entries of the 3x3 Jacobian matrix at each integration point, by row: [e1g1Jxu,
 e1g1Jxv, e1g1Jxw, e1g1Jyu, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...],
@@ -1146,13 +1146,13 @@ Preallocate the data required by @code{getJacobians}. This is necessary only if
 @item getBasisFunctions
 Get the basis functions of the element of type @code{elementType} at the
 integration points @code{integrationPoints} (given as concatenated triplets of
-parametric coordinates [g1u, g1v, g1w, ..., gGu, gGv, gGw], for the function
-space @code{functionSpaceType} (e.g. "Lagrange" or "GradLagrange" for Lagrange
-basis functions or their gradient, in the u, v, w coordinates of the reference
-element). @code{numComponents} returns the number C of components of a basis
-function. @code{basisFunctions} returns the value of the N basis functions at
-the integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
-[g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.
+coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for
+the function space @code{functionSpaceType} (e.g. "Lagrange" or "GradLagrange"
+for Lagrange basis functions or their gradient, in the u, v, w coordinates of
+the reference element). @code{numComponents} returns the number C of components
+of a basis function. @code{basisFunctions} returns the value of the N basis
+functions at the integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...]
+when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.
 
 @table @asis
 @item Input:
@@ -1166,8 +1166,8 @@ the integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
 @item getBasisFunctionsForElements
 Get the element-dependent basis functions of the elements of type
 @code{elementType} in the entity of tag @code{tag}at the integration points
-@code{integrationPoints} (given as concatenated triplets of parametric
-coordinates [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space
+@code{integrationPoints} (given as concatenated triplets of coordinates in the
+reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space
 @code{functionSpaceType} (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order
 hierarchical H1 Legendre functions or their gradient, in the u, v, w coordinates
 of the reference elements). @code{numComponents} returns the number C of

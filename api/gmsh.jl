@@ -1497,17 +1497,17 @@ end
 
 Get the Jacobians of all the elements of type `elementType` classified on the
 entity of dimension `dim` and tag `tag`, at the G integration points
-`integrationPoints` given as concatenated triplets of parametric coordinates
-[g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by element, with elements
-in the same order as in `getElements` and `getElementsByType`. `jacobians`
-contains for each element the 9 entries of the 3x3 Jacobian matrix at each
-integration point, by row: [e1g1Jxu, e1g1Jxv, e1g1Jxw, e1g1Jyu, ..., e1g1Jzw,
-e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jxv=dx/dv, etc.
-`determinants` contains for each element the determinant of the Jacobian matrix
-at each integration point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points` contains
-for each element the x, y, z coordinates of the integration points. If `tag` <
-0, get the Jacobian data for all entities. If `numTasks` > 1, only compute and
-return the part of the data indexed by `task`.
+`integrationPoints` given as concatenated triplets of coordinates in the
+reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by
+element, with elements in the same order as in `getElements` and
+`getElementsByType`. `jacobians` contains for each element the 9 entries of the
+3x3 Jacobian matrix at each integration point, by row: [e1g1Jxu, e1g1Jxv,
+e1g1Jxw, e1g1Jyu, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with
+Jxu=dx/du, Jxv=dx/dv, etc. `determinants` contains for each element the
+determinant of the Jacobian matrix at each integration point: [e1g1, e1g2, ...
+e1gG, e2g1, ...]. `points` contains for each element the x, y, z coordinates of
+the integration points. If `tag` < 0, get the Jacobian data for all entities. If
+`numTasks` > 1, only compute and return the part of the data indexed by `task`.
 
 Return `jacobians`, `determinants`, `points`.
 """
@@ -1559,8 +1559,8 @@ end
     gmsh.model.mesh.getBasisFunctions(elementType, integrationPoints, functionSpaceType)
 
 Get the basis functions of the element of type `elementType` at the integration
-points `integrationPoints` (given as concatenated triplets of parametric
-coordinates [g1u, g1v, g1w, ..., gGu, gGv, gGw], for the function space
+points `integrationPoints` (given as concatenated triplets of coordinates in the
+reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space
 `functionSpaceType` (e.g. "Lagrange" or "GradLagrange" for Lagrange basis
 functions or their gradient, in the u, v, w coordinates of the reference
 element). `numComponents` returns the number C of components of a basis
@@ -1588,16 +1588,17 @@ end
 
 Get the element-dependent basis functions of the elements of type `elementType`
 in the entity of tag `tag`at the integration points `integrationPoints` (given
-as concatenated triplets of parametric coordinates [g1u, g1v, g1w, ..., gGu,
-gGv, gGw]), for the function space `functionSpaceType` (e.g. "H1Legendre3" or
-"GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions or their
-gradient, in the u, v, w coordinates of the reference elements). `numComponents`
-returns the number C of components of a basis function. `numBasisFunctions`
-returns the number N of basis functions per element. `basisFunctions` returns
-the value of the basis functions at the integration points for each element:
-[e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u,
-e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: this is an
-experimental feature and will probably change in a future release.
+as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w,
+..., gGu, gGv, gGw]), for the function space `functionSpaceType` (e.g.
+"H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1 Legendre
+functions or their gradient, in the u, v, w coordinates of the reference
+elements). `numComponents` returns the number C of components of a basis
+function. `numBasisFunctions` returns the number N of basis functions per
+element. `basisFunctions` returns the value of the basis functions at the
+integration points for each element: [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1,
+...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...].
+Warning: this is an experimental feature and will probably change in a future
+release.
 
 Return `numComponents`, `numFunctionsPerElements`, `basisFunctions`.
 """

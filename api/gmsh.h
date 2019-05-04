@@ -602,8 +602,8 @@ namespace gmsh { // Top-level functions
 
       // Get the Jacobians of all the elements of type `elementType' classified on
       // the entity of dimension `dim' and tag `tag', at the G integration points
-      // `integrationPoints' given as concatenated triplets of parametric
-      // coordinates [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by
+      // `integrationPoints' given as concatenated triplets of coordinates in the
+      // reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by
       // element, with elements in the same order as in `getElements' and
       // `getElementsByType'. `jacobians' contains for each element the 9 entries
       // of the 3x3 Jacobian matrix at each integration point, by row: [e1g1Jxu,
@@ -637,14 +637,14 @@ namespace gmsh { // Top-level functions
 
       // Get the basis functions of the element of type `elementType' at the
       // integration points `integrationPoints' (given as concatenated triplets of
-      // parametric coordinates [g1u, g1v, g1w, ..., gGu, gGv, gGw], for the
-      // function space `functionSpaceType' (e.g. "Lagrange" or "GradLagrange" for
-      // Lagrange basis functions or their gradient, in the u, v, w coordinates of
-      // the reference element). `numComponents' returns the number C of components
-      // of a basis function. `basisFunctions' returns the value of the N basis
-      // functions at the integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1,
-      // ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...]
-      // when C == 3.
+      // coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]),
+      // for the function space `functionSpaceType' (e.g. "Lagrange" or
+      // "GradLagrange" for Lagrange basis functions or their gradient, in the u,
+      // v, w coordinates of the reference element). `numComponents' returns the
+      // number C of components of a basis function. `basisFunctions' returns the
+      // value of the N basis functions at the integration points, i.e. [g1f1,
+      // g1f2, ..., g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u,
+      // ..., g1fNw, g2f1u, ...] when C == 3.
       GMSH_API void getBasisFunctions(const int elementType,
                                       const std::vector<double> & integrationPoints,
                                       const std::string & functionSpaceType,
@@ -653,10 +653,10 @@ namespace gmsh { // Top-level functions
 
       // Get the element-dependent basis functions of the elements of type
       // `elementType' in the entity of tag `tag'at the integration points
-      // `integrationPoints' (given as concatenated triplets of parametric
-      // coordinates [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space
-      // `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order
-      // hierarchical H1 Legendre functions or their gradient, in the u, v, w
+      // `integrationPoints' (given as concatenated triplets of coordinates in the
+      // reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function
+      // space `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd
+      // order hierarchical H1 Legendre functions or their gradient, in the u, v, w
       // coordinates of the reference elements). `numComponents' returns the number
       // C of components of a basis function. `numBasisFunctions' returns the
       // number N of basis functions per element. `basisFunctions' returns the
