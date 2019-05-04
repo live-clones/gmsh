@@ -181,6 +181,28 @@ GMSH_API void gmshOptionGetString(const char * name, char ** value, int * ierr)
   }
 }
 
+GMSH_API void gmshOptionSetColor(const char * name, const int r, const int g, const int b, const int a, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::option::setColor(name, r, g, b, a);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshOptionGetColor(const char * name, int * r, int * g, int * b, int * a, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::option::getColor(name, *r, *g, *b, *a);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelAdd(const char * name, int * ierr)
 {
   if(ierr) *ierr = 0;

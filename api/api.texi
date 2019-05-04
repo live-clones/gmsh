@@ -163,6 +163,37 @@ are listed in the Gmsh reference manual.
 -
 @end table
 
+@item setColor
+Set a color option to the RGBA value (@code{r}, @code{g}, @code{b}, @code{a}),
+where where @code{r}, @code{g}, @code{b} and @code{a} should be integers between
+0 and 255. @code{name} is of the form "category.option" or
+"category[num].option". Available categories and options are listed in the Gmsh
+reference manual, with the "Color." middle string removed.
+
+@table @asis
+@item Input:
+@code{name}, @code{r}, @code{g}, @code{b}, @code{a}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item getColor
+Get the @code{r}, @code{g}, @code{b}, @code{a} value of a color option.
+@code{name} is of the form "category.option" or "category[num].option".
+Available categories and options are listed in the Gmsh reference manual, with
+the "Color." middle string removed.
+
+@table @asis
+@item Input:
+@code{name}
+@item Output:
+@code{r}, @code{g}, @code{b}, @code{a}
+@item Return:
+-
+@end table
+
 @end ftable
 
 @node Namespace gmsh/model, Namespace gmsh/model/mesh, Namespace gmsh/option, Gmsh API
@@ -1004,7 +1035,7 @@ vector, of length @code{dim} times @code{numNodes}).
 @end table
 
 @item getElementsByType
-Get the elements of type @code{elementType} classified on the entity of of tag
+Get the elements of type @code{elementType} classified on the entity of tag
 @code{tag}. If @code{tag} < 0, get the elements for all entities.
 @code{elementTags} is a vector containing the tags (unique, strictly positive
 identifiers) of the elements of the corresponding type. @code{nodeTags} is a

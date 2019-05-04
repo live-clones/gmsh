@@ -96,6 +96,29 @@ GMSH_API void gmshOptionGetString(const char * name,
                                   char ** value,
                                   int * ierr);
 
+/* Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
+ * `g', `b' and `a' should be integers between 0 and 255. `name' is of the
+ * form "category.option" or "category[num].option". Available categories and
+ * options are listed in the Gmsh reference manual, with the "Color." middle
+ * string removed. */
+GMSH_API void gmshOptionSetColor(const char * name,
+                                 const int r,
+                                 const int g,
+                                 const int b,
+                                 const int a,
+                                 int * ierr);
+
+/* Get the `r', `g', `b', `a' value of a color option. `name' is of the form
+ * "category.option" or "category[num].option". Available categories and
+ * options are listed in the Gmsh reference manual, with the "Color." middle
+ * string removed. */
+GMSH_API void gmshOptionGetColor(const char * name,
+                                 int * r,
+                                 int * g,
+                                 int * b,
+                                 int * a,
+                                 int * ierr);
+
 /* Add a new model, with name `name', and set it as the current model. */
 GMSH_API void gmshModelAdd(const char * name,
                            int * ierr);
@@ -564,7 +587,7 @@ GMSH_API void gmshModelMeshGetElementProperties(const int elementType,
                                                 double ** parametricCoord, size_t * parametricCoord_n,
                                                 int * ierr);
 
-/* Get the elements of type `elementType' classified on the entity of of tag
+/* Get the elements of type `elementType' classified on the entity of tag
  * `tag'. If `tag' < 0, get the elements for all entities. `elementTags' is a
  * vector containing the tags (unique, strictly positive identifiers) of the
  * elements of the corresponding type. `nodeTags' is a vector of length equal

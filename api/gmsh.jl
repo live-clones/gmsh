@@ -197,6 +197,47 @@ function getString(name)
     return value
 end
 
+"""
+    gmsh.option.setColor(name, r, g, b, a = 0)
+
+Set a color option to the RGBA value (`r`, `g`, `b`, `a`), where where `r`, `g`,
+`b` and `a` should be integers between 0 and 255. `name` is of the form
+"category.option" or "category[num].option". Available categories and options
+are listed in the Gmsh reference manual, with the "Color." middle string
+removed.
+"""
+function setColor(name, r, g, b, a = 0)
+    ierr = Ref{Cint}()
+    ccall((:gmshOptionSetColor, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Cint, Cint, Cint, Cint, Ptr{Cint}),
+          name, r, g, b, a, ierr)
+    ierr[] != 0 && error("gmshOptionSetColor returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.option.getColor(name)
+
+Get the `r`, `g`, `b`, `a` value of a color option. `name` is of the form
+"category.option" or "category[num].option". Available categories and options
+are listed in the Gmsh reference manual, with the "Color." middle string
+removed.
+
+Return `r`, `g`, `b`, `a`.
+"""
+function getColor(name)
+    api_r_ = Ref{Cint}()
+    api_g_ = Ref{Cint}()
+    api_b_ = Ref{Cint}()
+    api_a_ = Ref{Cint}()
+    ierr = Ref{Cint}()
+    ccall((:gmshOptionGetColor, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}),
+          name, api_r_, api_g_, api_b_, api_a_, ierr)
+    ierr[] != 0 && error("gmshOptionGetColor returned non-zero error code: $(ierr[])")
+    return api_r_[], api_g_[], api_b_[], api_a_[]
+end
+
 end # end of module option
 
 """
@@ -1358,8 +1399,8 @@ end
 """
     gmsh.model.mesh.getElementsByType(elementType, tag = -1, task = 0, numTasks = 1)
 
-Get the elements of type `elementType` classified on the entity of of tag `tag`.
-If `tag` < 0, get the elements for all entities. `elementTags` is a vector
+Get the elements of type `elementType` classified on the entity of tag `tag`. If
+`tag` < 0, get the elements for all entities. `elementTags` is a vector
 containing the tags (unique, strictly positive identifiers) of the elements of
 the corresponding type. `nodeTags` is a vector of length equal to the number of
 elements of the given type times the number N of nodes for this type of element,

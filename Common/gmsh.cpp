@@ -208,6 +208,38 @@ GMSH_API void gmsh::option::getString(const std::string &name,
   throw 1;
 }
 
+GMSH_API void gmsh::option::setColor(const std::string &name,
+                                     const int r, const int g,
+                                     const int b, const int a)
+{
+  if(!_isInitialized()) { throw -1; }
+  std::string c, n;
+  int i;
+  SplitOptionName(name, c, n, i);
+  unsigned int value = CTX::instance()->packColor(r, g, b, a);
+  if(GmshSetOption(c, n, value, i)) return;
+  throw 1;
+}
+
+GMSH_API void gmsh::option::getColor(const std::string &name,
+                                     int &r, int &g,
+                                     int &b, int &a)
+{
+  if(!_isInitialized()) { throw -1; }
+  std::string c, n;
+  int i;
+  SplitOptionName(name, c, n, i);
+  unsigned int value;
+  if(GmshGetOption(c, n, value, i)){
+    r = CTX::instance()->unpackRed(value);
+    g = CTX::instance()->unpackGreen(value);
+    b = CTX::instance()->unpackBlue(value);
+    a = CTX::instance()->unpackAlpha(value);
+    return;
+  }
+  throw 1;
+}
+
 // gmsh::model
 
 GMSH_API void gmsh::model::add(const std::string &name)

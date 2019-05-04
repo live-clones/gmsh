@@ -351,6 +351,60 @@ class option:
                 ierr.value)
         return _ostring(api_value_)
 
+    @staticmethod
+    def setColor(name, r, g, b, a=0):
+        """
+        Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
+        `g', `b' and `a' should be integers between 0 and 255. `name' is of the
+        form "category.option" or "category[num].option". Available categories and
+        options are listed in the Gmsh reference manual, with the "Color." middle
+        string removed.
+        """
+        ierr = c_int()
+        lib.gmshOptionSetColor(
+            c_char_p(name.encode()),
+            c_int(r),
+            c_int(g),
+            c_int(b),
+            c_int(a),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshOptionSetColor returned non-zero error code: ",
+                ierr.value)
+
+    @staticmethod
+    def getColor(name):
+        """
+        Get the `r', `g', `b', `a' value of a color option. `name' is of the form
+        "category.option" or "category[num].option". Available categories and
+        options are listed in the Gmsh reference manual, with the "Color." middle
+        string removed.
+
+        Return `r', `g', `b', `a'.
+        """
+        api_r_ = c_int()
+        api_g_ = c_int()
+        api_b_ = c_int()
+        api_a_ = c_int()
+        ierr = c_int()
+        lib.gmshOptionGetColor(
+            c_char_p(name.encode()),
+            byref(api_r_),
+            byref(api_g_),
+            byref(api_b_),
+            byref(api_a_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshOptionGetColor returned non-zero error code: ",
+                ierr.value)
+        return (
+            api_r_.value,
+            api_g_.value,
+            api_b_.value,
+            api_a_.value)
+
 
 class model:
     """
@@ -1628,7 +1682,7 @@ class model:
         @staticmethod
         def getElementsByType(elementType, tag=-1, task=0, numTasks=1):
             """
-            Get the elements of type `elementType' classified on the entity of of tag
+            Get the elements of type `elementType' classified on the entity of tag
             `tag'. If `tag' < 0, get the elements for all entities. `elementTags' is a
             vector containing the tags (unique, strictly positive identifiers) of the
             elements of the corresponding type. `nodeTags' is a vector of length equal
