@@ -1108,10 +1108,10 @@ automatically assigned to the elements.
 @item getJacobians
 Get the Jacobians of all the elements of type @code{elementType} classified on
 the entity of dimension @code{dim} and tag @code{tag}, at the G integration
-points required by the @code{integrationType} integration rule (e.g. "Gauss4"
-for a Gauss quadrature suited for integrating 4th order polynomials). Data is
-returned by element, with elements in the same order as in @code{getElements}
-and @code{getElementsByType}. @code{jacobians} contains for each element the 9
+points @code{integrationPoints} given as concatenated triplets of parametric
+coordinates [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by element,
+with elements in the same order as in @code{getElements} and
+@code{getElementsByType}. @code{jacobians} contains for each element the 9
 entries of the 3x3 Jacobian matrix at each integration point, by row: [e1g1Jxu,
 e1g1Jxv, e1g1Jxw, e1g1Jyu, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...],
 with Jxu=dx/du, Jxv=dx/dv, etc. @code{determinants} contains for each element
@@ -1123,7 +1123,7 @@ the data indexed by @code{task}.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{integrationType}, @code{tag}, @code{task}, @code{numTasks}
+@code{elementType}, @code{integrationPoints}, @code{tag}, @code{task}, @code{numTasks}
 @item Output:
 @code{jacobians}, @code{determinants}, @code{points}
 @item Return:
@@ -1136,7 +1136,7 @@ Preallocate the data required by @code{getJacobians}. This is necessary only if
 
 @table @asis
 @item Input:
-@code{elementType}, @code{integrationType}, @code{jacobian}, @code{determinant}, @code{point}, @code{tag}
+@code{elementType}, @code{numIntegrationPoints}, @code{jacobian}, @code{determinant}, @code{point}, @code{tag}
 @item Output:
 @code{jacobians}, @code{determinants}, @code{points}
 @item Return:
@@ -1144,51 +1144,45 @@ Preallocate the data required by @code{getJacobians}. This is necessary only if
 @end table
 
 @item getBasisFunctions
-Get the basis functions of the element of type @code{elementType} for the given
-@code{integrationType} integration rule (e.g. "Gauss4" for a Gauss quadrature
-suited for integrating 4th order polynomials) and @code{functionSpaceType}
-function space (e.g. "Lagrange" or "GradLagrange" for Lagrange basis functions
-or their gradient, in the u, v, w coordinates of the reference element).
-@code{integrationPoints} contains the u, v, w coordinates of the integration
-points in the reference element as well as the associated weight q,
-concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. @code{numComponents} returns the
-number C of components of a basis function. @code{basisFunctions} returns the
-value of the N basis functions at the integration points, i.e. [g1f1, g1f2, ...,
-g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u,
-...] when C == 3.
+Get the basis functions of the element of type @code{elementType} at the
+integration points @code{integrationPoints} (given as concatenated triplets of
+parametric coordinates [g1u, g1v, g1w, ..., gGu, gGv, gGw], for the function
+space @code{functionSpaceType} (e.g. "Lagrange" or "GradLagrange" for Lagrange
+basis functions or their gradient, in the u, v, w coordinates of the reference
+element). @code{numComponents} returns the number C of components of a basis
+function. @code{basisFunctions} returns the value of the N basis functions at
+the integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
+[g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{integrationType}, @code{functionSpaceType}
+@code{elementType}, @code{integrationPoints}, @code{functionSpaceType}
 @item Output:
-@code{integrationPoints}, @code{numComponents}, @code{basisFunctions}
+@code{numComponents}, @code{basisFunctions}
 @item Return:
 -
 @end table
 
 @item getBasisFunctionsForElements
 Get the element-dependent basis functions of the elements of type
-@code{elementType} in the entity of tag @code{tag}, for the given
-@code{integrationType} integration rule (e.g. "Gauss4" for a Gauss quadrature
-suited for integrating 4th order polynomials) and @code{functionSpaceType}
-function space (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order
+@code{elementType} in the entity of tag @code{tag}at the integration points
+@code{integrationPoints} (given as concatenated triplets of parametric
+coordinates [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space
+@code{functionSpaceType} (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order
 hierarchical H1 Legendre functions or their gradient, in the u, v, w coordinates
-of the reference elements). @code{integrationPoints} contains the u, v, w
-coordinates of the integration points in the reference element as well as the
-associated weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
-@code{numComponents} returns the number C of components of a basis function.
-@code{numBasisFunctions} returns the number N of basis functions per element.
-@code{basisFunctions} returns the value of the basis functions at the
-integration points for each element: [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1,
-...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...].
-Warning: this is an experimental feature and will probably change in a future
-release.
+of the reference elements). @code{numComponents} returns the number C of
+components of a basis function. @code{numBasisFunctions} returns the number N of
+basis functions per element. @code{basisFunctions} returns the value of the
+basis functions at the integration points for each element: [e1g1f1,..., e1g1fN,
+e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw,
+e1g2f1u,..., e2g1f1u, ...]. Warning: this is an experimental feature and will
+probably change in a future release.
 
 @table @asis
 @item Input:
-@code{elementType}, @code{integrationType}, @code{functionSpaceType}, @code{tag}
+@code{elementType}, @code{integrationPoints}, @code{functionSpaceType}, @code{tag}
 @item Output:
-@code{integrationPoints}, @code{numComponents}, @code{numFunctionsPerElements}, @code{basisFunctions}
+@code{numComponents}, @code{numFunctionsPerElements}, @code{basisFunctions}
 @item Return:
 -
 @end table
@@ -1236,18 +1230,18 @@ Precomputes the basis functions corresponding to @code{elementType}.
 @end table
 
 @item getIntegrationPoints
-Get the Gauss quadrature information for the given @code{integrationType}
-integration rule (e.g. "Gauss4" for a Gauss quadrature suited for integrating
-4th order polynomials) and for the elements of type @code{elementType}.
-@code{integrationPoints} contains the u, v, w coordinates of the integration
-points in the reference element as well as the associated weight q,
-concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
+Get the numerical quadrature information for the given element type
+@code{elementType@code{ and integration rule @code{integrationType} (e.g.
+"Gauss4" for a Gauss quadrature suited for integrating 4th order polynomials).
+@code{integrationPoints} contains the u, v, w coordinates of the G integration
+points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
+@code{integrationWeigths@code{ contains the associated weights: [g1q, ..., gGq].
 
 @table @asis
 @item Input:
 @code{elementType}, @code{integrationType}
 @item Output:
-@code{integrationPoints}
+@code{integrationPoints}, @code{integrationWeights}
 @item Return:
 -
 @end table

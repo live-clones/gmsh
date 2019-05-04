@@ -645,20 +645,20 @@ GMSH_API void gmshModelMeshSetElementsByType(const int tag,
 
 /* Get the Jacobians of all the elements of type `elementType' classified on
  * the entity of dimension `dim' and tag `tag', at the G integration points
- * required by the `integrationType' integration rule (e.g. "Gauss4" for a
- * Gauss quadrature suited for integrating 4th order polynomials). Data is
- * returned by element, with elements in the same order as in `getElements'
- * and `getElementsByType'. `jacobians' contains for each element the 9
- * entries of the 3x3 Jacobian matrix at each integration point, by row:
- * [e1g1Jxu, e1g1Jxv, e1g1Jxw, e1g1Jyu, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw,
- * e2g1Jxu, ...], with Jxu=dx/du, Jxv=dx/dv, etc. `determinants' contains for
- * each element the determinant of the Jacobian matrix at each integration
- * point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each
- * element the x, y, z coordinates of the integration points. If `tag' < 0,
- * get the Jacobian data for all entities. If `numTasks' > 1, only compute and
- * return the part of the data indexed by `task'. */
+ * `integrationPoints' given as concatenated triplets of parametric
+ * coordinates [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by
+ * element, with elements in the same order as in `getElements' and
+ * `getElementsByType'. `jacobians' contains for each element the 9 entries of
+ * the 3x3 Jacobian matrix at each integration point, by row: [e1g1Jxu,
+ * e1g1Jxv, e1g1Jxw, e1g1Jyu, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu,
+ * ...], with Jxu=dx/du, Jxv=dx/dv, etc. `determinants' contains for each
+ * element the determinant of the Jacobian matrix at each integration point:
+ * [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each element the
+ * x, y, z coordinates of the integration points. If `tag' < 0, get the
+ * Jacobian data for all entities. If `numTasks' > 1, only compute and return
+ * the part of the data indexed by `task'. */
 GMSH_API void gmshModelMeshGetJacobians(const int elementType,
-                                        const char * integrationType,
+                                        double * integrationPoints, size_t integrationPoints_n,
                                         double ** jacobians, size_t * jacobians_n,
                                         double ** determinants, size_t * determinants_n,
                                         double ** points, size_t * points_n,
@@ -670,7 +670,7 @@ GMSH_API void gmshModelMeshGetJacobians(const int elementType,
 /* Preallocate the data required by `getJacobians'. This is necessary only if
  * `getJacobians' is called with `numTasks' > 1. */
 GMSH_API void gmshModelMeshPreallocateJacobians(const int elementType,
-                                                const char * integrationType,
+                                                const int numIntegrationPoints,
                                                 const int jacobian,
                                                 const int determinant,
                                                 const int point,
@@ -680,46 +680,39 @@ GMSH_API void gmshModelMeshPreallocateJacobians(const int elementType,
                                                 const int tag,
                                                 int * ierr);
 
-/* Get the basis functions of the element of type `elementType' for the given
- * `integrationType' integration rule (e.g. "Gauss4" for a Gauss quadrature
- * suited for integrating 4th order polynomials) and `functionSpaceType'
- * function space (e.g. "Lagrange" or "GradLagrange" for Lagrange basis
- * functions or their gradient, in the u, v, w coordinates of the reference
- * element). `integrationPoints' contains the u, v, w coordinates of the
- * integration points in the reference element as well as the associated
- * weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. `numComponents'
- * returns the number C of components of a basis function. `basisFunctions'
- * returns the value of the N basis functions at the integration points, i.e.
- * [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w,
- * g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. */
+/* Get the basis functions of the element of type `elementType' at the
+ * integration points `integrationPoints' (given as concatenated triplets of
+ * parametric coordinates [g1u, g1v, g1w, ..., gGu, gGv, gGw], for the
+ * function space `functionSpaceType' (e.g. "Lagrange" or "GradLagrange" for
+ * Lagrange basis functions or their gradient, in the u, v, w coordinates of
+ * the reference element). `numComponents' returns the number C of components
+ * of a basis function. `basisFunctions' returns the value of the N basis
+ * functions at the integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1,
+ * ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...]
+ * when C == 3. */
 GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
-                                             const char * integrationType,
+                                             double * integrationPoints, size_t integrationPoints_n,
                                              const char * functionSpaceType,
-                                             double ** integrationPoints, size_t * integrationPoints_n,
                                              int * numComponents,
                                              double ** basisFunctions, size_t * basisFunctions_n,
                                              int * ierr);
 
 /* Get the element-dependent basis functions of the elements of type
- * `elementType' in the entity of tag `tag', for the given `integrationType'
- * integration rule (e.g. "Gauss4" for a Gauss quadrature suited for
- * integrating 4th order polynomials) and `functionSpaceType' function space
- * (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1
- * Legendre functions or their gradient, in the u, v, w coordinates of the
- * reference elements). `integrationPoints' contains the u, v, w coordinates
- * of the integration points in the reference element as well as the
- * associated weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...].
- * `numComponents' returns the number C of components of a basis function.
- * `numBasisFunctions' returns the number N of basis functions per element.
- * `basisFunctions' returns the value of the basis functions at the
- * integration points for each element: [e1g1f1,..., e1g1fN, e1g2f1,...,
- * e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,...,
- * e2g1f1u, ...]. Warning: this is an experimental feature and will probably
- * change in a future release. */
+ * `elementType' in the entity of tag `tag'at the integration points
+ * `integrationPoints' (given as concatenated triplets of parametric
+ * coordinates [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space
+ * `functionSpaceType' (e.g. "H1Legendre3" or "GradH1Legendre3" for 3rd order
+ * hierarchical H1 Legendre functions or their gradient, in the u, v, w
+ * coordinates of the reference elements). `numComponents' returns the number
+ * C of components of a basis function. `numBasisFunctions' returns the number
+ * N of basis functions per element. `basisFunctions' returns the value of the
+ * basis functions at the integration points for each element: [e1g1f1,...,
+ * e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u, e1g1f1v,...,
+ * e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: this is an experimental
+ * feature and will probably change in a future release. */
 GMSH_API void gmshModelMeshGetBasisFunctionsForElements(const int elementType,
-                                                        const char * integrationType,
+                                                        double * integrationPoints, size_t integrationPoints_n,
                                                         const char * functionSpaceType,
-                                                        double ** integrationPoints, size_t * integrationPoints_n,
                                                         int * numComponents,
                                                         int * numFunctionsPerElements,
                                                         double ** basisFunctions, size_t * basisFunctions_n,
@@ -752,15 +745,16 @@ GMSH_API void gmshModelMeshGetInformationForElements(int * keys, size_t keys_n,
 GMSH_API void gmshModelMeshPrecomputeBasisFunctions(const int elementType,
                                                     int * ierr);
 
-/* Get the Gauss quadrature information for the given `integrationType'
- * integration rule (e.g. "Gauss4" for a Gauss quadrature suited for
- * integrating 4th order polynomials) and for the elements of type
- * `elementType'. `integrationPoints' contains the u, v, w coordinates of the
- * integration points in the reference element as well as the associated
- * weight q, concatenated: [g1u, g1v, g1w, g1q, g2u, ...]. */
+/* Get the numerical quadrature information for the given element type
+ * `elementType` and integration rule `integrationType' (e.g. "Gauss4" for a
+ * Gauss quadrature suited for integrating 4th order polynomials).
+ * `integrationPoints' contains the u, v, w coordinates of the G integration
+ * points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
+ * `integrationWeigths` contains the associated weights: [g1q, ..., gGq]. */
 GMSH_API void gmshModelMeshGetIntegrationPoints(const int elementType,
                                                 const char * integrationType,
                                                 double ** integrationPoints, size_t * integrationPoints_n,
+                                                double ** integrationWeights, size_t * integrationWeights_n,
                                                 int * ierr);
 
 /* Get the barycenters of all elements of type `elementType' classified on the

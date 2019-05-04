@@ -1583,16 +1583,6 @@ GMSH_API void gmsh::model::mesh::preallocateElementsByType(
   }
 }
 
-static bool _getIntegrationInfo(const std::string &intType,
-                                std::string &intName, int &intOrder)
-{
-  if(intType.substr(0, 5) == "Gauss") {
-    intName = "Gauss";
-    intOrder = atoi(intType.substr(5).c_str());
-    return true;
-  }
-  return false;
-}
 static bool _getHierarchicalFunctionSpaceInfo(const std::string &fsType,
                                               int &fsComp, int &basisOrder)
 {
@@ -1635,7 +1625,7 @@ static bool _getFunctionSpaceInfo(const std::string &fsType,
 }
 
 GMSH_API void gmsh::model::mesh::getJacobians(
-  const int elementType, const std::string &integrationType,
+  const int elementType, const std::vector<double> &integrationPoints,
   std::vector<double> &jacobians, std::vector<double> &determinants,
   std::vector<double> &points, const int tag, const std::size_t task,
   const std::size_t numTasks)
@@ -1645,22 +1635,8 @@ GMSH_API void gmsh::model::mesh::getJacobians(
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
-  std::string intName = "";
-  int intOrder = 0;
-  if(!_getIntegrationInfo(integrationType, intName, intOrder)) {
-    Msg::Error("Unknown quadrature type '%s'", integrationType.c_str());
-    throw 2;
-  }
-  // get quadrature info
   int familyType = ElementType::getParentType(elementType);
-  fullMatrix<double> pts;
-  fullVector<double> weights;
-  gaussIntegration::get(familyType, intOrder, pts, weights);
-  if(pts.size1() != weights.size() || pts.size2() != 3) {
-    Msg::Error("Wrong integration point format");
-    throw 3;
-  }
-  int numIntPoints = weights.size();
+  int numIntegrationPoints = integrationPoints.size() / 3;
   // check arrays
   bool haveJacobians = jacobians.size();
   bool haveDeterminants = determinants.size();
@@ -1670,7 +1646,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(
       Msg::Error("Jacobians, determinants and points should be preallocated "
                  "if numTasks > 1");
     haveJacobians = haveDeterminants = havePoints = true;
-    preallocateJacobians(elementType, integrationType, haveJacobians,
+    preallocateJacobians(elementType, numIntegrationPoints, haveJacobians,
                          haveDeterminants, havePoints, jacobians, determinants,
                          points, tag);
   }
@@ -1687,25 +1663,25 @@ GMSH_API void gmsh::model::mesh::getJacobians(
     }
     const size_t begin = (task * numElements) / numTasks;
     const size_t end = ((task + 1) * numElements) / numTasks;
-    if(haveDeterminants && (end * numIntPoints > determinants.size())) {
+    if(haveDeterminants && (end * numIntegrationPoints > determinants.size())) {
       Msg::Error("Wrong size of determinants array (%d < %d)",
-                 determinants.size(), end * numIntPoints);
+                 determinants.size(), end * numIntegrationPoints);
       throw 4;
     }
-    if(haveJacobians && (9 * end * numIntPoints > jacobians.size())) {
+    if(haveJacobians && (9 * end * numIntegrationPoints > jacobians.size())) {
       Msg::Error("Wrong size of jacobians array (%d < %d)", jacobians.size(),
-                 9 * end * numIntPoints);
+                 9 * end * numIntegrationPoints);
       throw 4;
     }
-    if(havePoints && (3 * end * numIntPoints > points.size())) {
+    if(havePoints && (3 * end * numIntegrationPoints > points.size())) {
       Msg::Error("Wrong size of points array (%d < %d)", points.size(),
-                 3 * end * numIntPoints);
+                 3 * end * numIntegrationPoints);
       throw 4;
     }
     if(haveDeterminants && haveJacobians && havePoints) {
       std::vector<std::vector<SVector3> > gsf;
       size_t o = 0;
-      size_t idx = begin * numIntPoints;
+      size_t idx = begin * numIntegrationPoints;
       for(std::size_t i = 0; i < entities.size(); i++) {
         GEntity *ge = entities[i];
         for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
@@ -1713,10 +1689,12 @@ GMSH_API void gmsh::model::mesh::getJacobians(
           if(o >= begin && o < end) {
             MElement *e = ge->getMeshElementByType(familyType, j);
             if(gsf.size() == 0) {
-              gsf.resize(numIntPoints);
-              for(int k = 0; k < numIntPoints; k++) {
+              gsf.resize(numIntegrationPoints);
+              for(int k = 0; k < numIntegrationPoints; k++) {
                 double value[1256][3];
-                e->getGradShapeFunctions(pts(k, 0), pts(k, 1), pts(k, 2),
+                e->getGradShapeFunctions(integrationPoints[3 * k],
+                                         integrationPoints[3 * k + 1],
+                                         integrationPoints[3 * k + 2],
                                          value);
                 gsf[k].resize(e->getNumShapeFunctions());
                 for(int l = 0; l < e->getNumShapeFunctions(); l++) {
@@ -1726,8 +1704,10 @@ GMSH_API void gmsh::model::mesh::getJacobians(
                 }
               }
             }
-            for(int k = 0; k < numIntPoints; k++) {
-              e->pnt(pts(k, 0), pts(k, 1), pts(k, 2), &points[idx * 3]);
+            for(int k = 0; k < numIntegrationPoints; k++) {
+              e->pnt(integrationPoints[3 * k],
+                     integrationPoints[3 * k + 1],
+                     integrationPoints[3 * k + 2], &points[idx * 3]);
               determinants[idx] = e->getJacobian(gsf[k], &jacobians[idx * 9]);
               idx++;
             }
@@ -1739,7 +1719,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(
     else if(haveDeterminants && haveJacobians && !havePoints) {
       std::vector<std::vector<SVector3> > gsf;
       size_t o = 0;
-      size_t idx = begin * numIntPoints;
+      size_t idx = begin * numIntegrationPoints;
       for(std::size_t i = 0; i < entities.size(); i++) {
         GEntity *ge = entities[i];
         for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
@@ -1747,10 +1727,12 @@ GMSH_API void gmsh::model::mesh::getJacobians(
           if(o >= begin && o < end) {
             MElement *e = ge->getMeshElementByType(familyType, j);
             if(gsf.size() == 0) {
-              gsf.resize(numIntPoints);
-              for(int k = 0; k < numIntPoints; k++) {
+              gsf.resize(numIntegrationPoints);
+              for(int k = 0; k < numIntegrationPoints; k++) {
                 double value[1256][3];
-                e->getGradShapeFunctions(pts(k, 0), pts(k, 1), pts(k, 2),
+                e->getGradShapeFunctions(integrationPoints[3 * k],
+                                         integrationPoints[3 * k + 1],
+                                         integrationPoints[3 * k + 2],
                                          value);
                 gsf[k].resize(e->getNumShapeFunctions());
                 for(int l = 0; l < e->getNumShapeFunctions(); l++) {
@@ -1760,7 +1742,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(
                 }
               }
             }
-            for(int k = 0; k < numIntPoints; k++) {
+            for(int k = 0; k < numIntegrationPoints; k++) {
               determinants[idx] = e->getJacobian(gsf[k], &jacobians[idx * 9]);
               idx++;
             }
@@ -1773,7 +1755,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(
       std::vector<double> jac(9, 0.);
       std::vector<std::vector<SVector3> > gsf;
       size_t o = 0;
-      size_t idx = begin * numIntPoints;
+      size_t idx = begin * numIntegrationPoints;
       for(std::size_t i = 0; i < entities.size(); i++) {
         GEntity *ge = entities[i];
         for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
@@ -1781,10 +1763,12 @@ GMSH_API void gmsh::model::mesh::getJacobians(
           if(o >= begin && o < end) {
             MElement *e = ge->getMeshElementByType(familyType, j);
             if(gsf.size() == 0) {
-              gsf.resize(numIntPoints);
-              for(int k = 0; k < numIntPoints; k++) {
+              gsf.resize(numIntegrationPoints);
+              for(int k = 0; k < numIntegrationPoints; k++) {
                 double value[1256][3];
-                e->getGradShapeFunctions(pts(k, 0), pts(k, 1), pts(k, 2),
+                e->getGradShapeFunctions(integrationPoints[3 * k],
+                                         integrationPoints[3 * k + 1],
+                                         integrationPoints[3 * k + 2],
                                          value);
                 gsf[k].resize(e->getNumShapeFunctions());
                 for(int l = 0; l < e->getNumShapeFunctions(); l++) {
@@ -1794,8 +1778,10 @@ GMSH_API void gmsh::model::mesh::getJacobians(
                 }
               }
             }
-            for(int k = 0; k < numIntPoints; k++) {
-              e->pnt(pts(k, 0), pts(k, 1), pts(k, 2), &points[idx * 3]);
+            for(int k = 0; k < numIntegrationPoints; k++) {
+              e->pnt(integrationPoints[3 * k],
+                     integrationPoints[3 * k + 1],
+                     integrationPoints[3 * k + 2], &points[idx * 3]);
               determinants[idx] = e->getJacobian(gsf[k], &jac[0]);
               idx++;
             }
@@ -1808,7 +1794,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(
       std::vector<double> jac(9, 0.);
       std::vector<std::vector<SVector3> > gsf;
       size_t o = 0;
-      size_t idx = begin * numIntPoints;
+      size_t idx = begin * numIntegrationPoints;
       for(std::size_t i = 0; i < entities.size(); i++) {
         GEntity *ge = entities[i];
         for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType);
@@ -1816,10 +1802,12 @@ GMSH_API void gmsh::model::mesh::getJacobians(
           if(o >= begin && o < end) {
             MElement *e = ge->getMeshElementByType(familyType, j);
             if(gsf.size() == 0) {
-              gsf.resize(numIntPoints);
-              for(int k = 0; k < numIntPoints; k++) {
+              gsf.resize(numIntegrationPoints);
+              for(int k = 0; k < numIntegrationPoints; k++) {
                 double value[1256][3];
-                e->getGradShapeFunctions(pts(k, 0), pts(k, 1), pts(k, 2),
+                e->getGradShapeFunctions(integrationPoints[3 * k],
+                                         integrationPoints[3 * k + 1],
+                                         integrationPoints[3 * k + 2],
                                          value);
                 gsf[k].resize(e->getNumShapeFunctions());
                 for(int l = 0; l < e->getNumShapeFunctions(); l++) {
@@ -1829,7 +1817,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(
                 }
               }
             }
-            for(int k = 0; k < numIntPoints; k++) {
+            for(int k = 0; k < numIntegrationPoints; k++) {
               determinants[idx] = e->getJacobian(gsf[k], &jac[0]);
               idx++;
             }
@@ -1843,7 +1831,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(
 }
 
 GMSH_API void gmsh::model::mesh::preallocateJacobians(
-  const int elementType, const std::string &integrationType,
+  const int elementType, const int numIntegrationPoints,
   const bool jacobian, const bool determinant, const bool point,
   std::vector<double> &jacobians, std::vector<double> &determinants,
   std::vector<double> &points, const int tag)
@@ -1857,83 +1845,55 @@ GMSH_API void gmsh::model::mesh::preallocateJacobians(
   std::size_t numElements = 0;
   for(std::size_t i = 0; i < entities.size(); i++)
     numElements += entities[i]->getNumMeshElementsByType(familyType);
-  std::string intName = "";
-  int intOrder = 0;
-  if(!_getIntegrationInfo(integrationType, intName, intOrder)) {
-    Msg::Error("Unknown quadrature type '%s'", integrationType.c_str());
-    throw 2;
-  }
-  fullMatrix<double> pts;
-  fullVector<double> weights;
-  gaussIntegration::get(familyType, intOrder, pts, weights);
-  const std::size_t numIntPoints = weights.size();
   if(jacobian) {
     jacobians.clear();
-    jacobians.resize(9 * numElements * numIntPoints, 0.);
+    jacobians.resize(9 * numElements * numIntegrationPoints, 0.);
   }
   if(determinant) {
     determinants.clear();
-    determinants.resize(numElements * numIntPoints, 0.);
+    determinants.resize(numElements * numIntegrationPoints, 0.);
   }
   if(point) {
     points.clear();
-    points.resize(3 * numElements * numIntPoints, 0.);
+    points.resize(3 * numElements * numIntegrationPoints, 0.);
   }
 }
 
 GMSH_API void gmsh::model::mesh::getBasisFunctions(
-  const int elementType, const std::string &integrationType,
-  const std::string &functionSpaceType, std::vector<double> &integrationPoints,
-  int &numComponents, std::vector<double> &basisFunctions)
+  const int elementType, const std::vector<double> &integrationPoints,
+  const std::string &functionSpaceType, int &numComponents,
+  std::vector<double> &basisFunctions)
 {
   if(!_isInitialized()) { throw -1; }
-  integrationPoints.clear();
   numComponents = 0;
   basisFunctions.clear();
-  std::string intName = "", fsName = "";
-  int intOrder = 0, fsOrder = 0;
-  if(!_getIntegrationInfo(integrationType, intName, intOrder)) {
-    Msg::Error("Unknown quadrature type '%s'", integrationType.c_str());
-    throw 2;
-  }
+  std::string fsName = "";
+  int fsOrder = 0;
   if(!_getFunctionSpaceInfo(functionSpaceType, fsName, fsOrder,
                             numComponents)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     throw 2;
   }
-  // get quadrature info
-  int familyType = ElementType::getParentType(elementType);
-  fullMatrix<double> pts;
-  fullVector<double> weights;
-  gaussIntegration::get(familyType, intOrder, pts, weights);
-  if(pts.size1() != weights.size() || pts.size2() != 3) {
-    Msg::Error("Wrong integration point format");
-    throw 3;
-  }
-  for(int i = 0; i < pts.size1(); i++) {
-    integrationPoints.push_back(pts(i, 0));
-    integrationPoints.push_back(pts(i, 1));
-    integrationPoints.push_back(pts(i, 2));
-    integrationPoints.push_back(weights(i));
-  }
-  // get function space info
   const nodalBasis *basis = 0;
   if(numComponents) {
     if(fsOrder == -1) { // isoparametric
       basis = BasisFactory::getNodalBasis(elementType);
     }
     else {
+      int familyType = ElementType::getParentType(elementType);
       int newType = ElementType::getType(familyType, fsOrder, false);
       basis = BasisFactory::getNodalBasis(newType);
     }
   }
   if(basis) {
-    int nq = weights.size();
+    int nq = integrationPoints.size() / 3;
     int n = basis->getNumShapeFunctions();
     basisFunctions.resize(n * numComponents * nq, 0.);
     double s[1256], ds[1256][3];
     for(int i = 0; i < nq; i++) {
-      double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
+      double u = integrationPoints[i * 3];
+      double v = integrationPoints[i * 3 + 1];
+      double w = integrationPoints[i * 3 + 2];
       switch(numComponents) {
       case 1:
         basis->f(u, v, w, s);
@@ -1953,46 +1913,24 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
 }
 
 GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
-  const int elementType, const std::string &integrationType,
-  const std::string &functionSpaceType, std::vector<double> &integrationPoints,
-  int &numComponents, int &numFunctionsPerElement,
-  std::vector<double> &basisFunctions, const int tag)
+  const int elementType, const std::vector<double> &integrationPoints,
+  const std::string &functionSpaceType, int &numComponents,
+  int &numFunctionsPerElement, std::vector<double> &basisFunctions,
+  const int tag)
 {
   basisFunctions.clear();
-  integrationPoints.clear();
-  std::string intName = "";
-  int intOrder = 0;
-  if(!_getIntegrationInfo(integrationType, intName, intOrder)) {
-    Msg::Error("Unknown quadrature type '%s'", integrationType.c_str());
-    throw 2;
-  }
   int basisOrder = 0;
   if(!_getHierarchicalFunctionSpaceInfo(functionSpaceType, numComponents,
                                         basisOrder)) {
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     throw 2;
   }
-  // get quadrature info
-  int familyType = ElementType::getParentType(elementType);
-  fullMatrix<double> pts;
-  fullVector<double> weights;
-  gaussIntegration::get(familyType, intOrder, pts, weights);
-  if(pts.size1() != weights.size() || pts.size2() != 3) {
-    Msg::Error("Wrong integration point format");
-    throw 3;
-  }
   int dim = ElementType::getDimension(elementType);
-  integrationPoints.reserve(pts.size1() * 4);
-  for(int i = 0; i < pts.size1(); i++) {
-    integrationPoints.push_back(pts(i, 0));
-    integrationPoints.push_back(pts(i, 1));
-    integrationPoints.push_back(pts(i, 2));
-    integrationPoints.push_back(weights(i));
-  }
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   HierarchicalBasisH1 *basis(0);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
+  int familyType = ElementType::getParentType(elementType);
   switch(familyType) {
   case TYPE_HEX: {
     basis = new HierarchicalBasisH1Brick(basisOrder);
@@ -2014,7 +1952,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   } break;
   default: Msg::Error("Unknown familyType "); throw 2;
   }
-  int nq = weights.size();
+  int nq = integrationPoints.size() / 3;
   int vSize = basis->getnVertexFunction();
   int bSize = basis->getnBubbleFunction();
   int eSize = basis->getnEdgeFunction();
@@ -2033,7 +1971,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
   switch(numComponents) {
   case 1: {
     for(int i = 0; i < nq; i++) {
-      double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
+      double u = integrationPoints[3 * i];
+      double v = integrationPoints[3 * i + 1];
+      double w = integrationPoints[3 * i + 2];
       std::vector<double> vTable(vSize); // Vertex functions of one element
       std::vector<double> bTable(bSize); // bubble functions of one element
       std::vector<double> fTable(fSize); // face functions of one element
@@ -2104,7 +2044,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsForElements(
     int prod2 = eSize * numComponents;
     int prod3 = fSize * numComponents;
     for(int i = 0; i < nq; i++) {
-      double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
+      double u = integrationPoints[3 * i];
+      double v = integrationPoints[3 * i + 1];
+      double w = integrationPoints[3 * i + 2];
       std::vector<std::vector<double> > gradientVertex(
         vSize, std::vector<double>(3, 0.));
       std::vector<std::vector<double> > gradientEdge(
@@ -2548,12 +2490,25 @@ GMSH_API void gmsh::model::mesh::getBarycenters(
   }
 }
 
+static bool _getIntegrationInfo(const std::string &intType,
+                                std::string &intName, int &intOrder)
+{
+  if(intType.substr(0, 5) == "Gauss") {
+    intName = "Gauss";
+    intOrder = atoi(intType.substr(5).c_str());
+    return true;
+  }
+  return false;
+}
+
 GMSH_API void gmsh::model::mesh::getIntegrationPoints(
   const int elementType, const std::string &integrationType,
-  std::vector< double > &integrationPoints)
+  std::vector<double> &integrationPoints,
+  std::vector<double> &integrationWeigths)
 {
   if(!_isInitialized()) { throw -1; }
   integrationPoints.clear();
+  integrationWeigths.clear();
   std::string intName = "";
   int intOrder = 0;
   if(!_getIntegrationInfo(integrationType, intName, intOrder)) {
@@ -2569,11 +2524,13 @@ GMSH_API void gmsh::model::mesh::getIntegrationPoints(
     Msg::Error("Wrong integration point format");
     throw 3;
   }
+  integrationPoints.resize(3 * pts.size1());
+  integrationWeigths.resize(pts.size1());
   for(int i = 0; i < pts.size1(); i++) {
-    integrationPoints.push_back(pts(i, 0));
-    integrationPoints.push_back(pts(i, 1));
-    integrationPoints.push_back(pts(i, 2));
-    integrationPoints.push_back(weights(i));
+    integrationPoints[3 * i] = pts(i, 0);
+    integrationPoints[3 * i + 1] = pts(i, 1);
+    integrationPoints[3 * i + 2] = pts(i, 2);
+    integrationWeigths[i] = weights(i);
   }
 }
 

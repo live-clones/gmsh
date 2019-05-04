@@ -1493,16 +1493,16 @@ function setElementsByType(tag, elementType, elementTags, nodeTags)
 end
 
 """
-    gmsh.model.mesh.getJacobians(elementType, integrationType, tag = -1, task = 0, numTasks = 1)
+    gmsh.model.mesh.getJacobians(elementType, integrationPoints, tag = -1, task = 0, numTasks = 1)
 
 Get the Jacobians of all the elements of type `elementType` classified on the
-entity of dimension `dim` and tag `tag`, at the G integration points required by
-the `integrationType` integration rule (e.g. "Gauss4" for a Gauss quadrature
-suited for integrating 4th order polynomials). Data is returned by element, with
-elements in the same order as in `getElements` and `getElementsByType`.
-`jacobians` contains for each element the 9 entries of the 3x3 Jacobian matrix
-at each integration point, by row: [e1g1Jxu, e1g1Jxv, e1g1Jxw, e1g1Jyu, ...,
-e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jxv=dx/dv, etc.
+entity of dimension `dim` and tag `tag`, at the G integration points
+`integrationPoints` given as concatenated triplets of parametric coordinates
+[g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by element, with elements
+in the same order as in `getElements` and `getElementsByType`. `jacobians`
+contains for each element the 9 entries of the 3x3 Jacobian matrix at each
+integration point, by row: [e1g1Jxu, e1g1Jxv, e1g1Jxw, e1g1Jyu, ..., e1g1Jzw,
+e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jxv=dx/dv, etc.
 `determinants` contains for each element the determinant of the Jacobian matrix
 at each integration point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points` contains
 for each element the x, y, z coordinates of the integration points. If `tag` <
@@ -1511,7 +1511,7 @@ return the part of the data indexed by `task`.
 
 Return `jacobians`, `determinants`, `points`.
 """
-function getJacobians(elementType, integrationType, tag = -1, task = 0, numTasks = 1)
+function getJacobians(elementType, integrationPoints, tag = -1, task = 0, numTasks = 1)
     api_jacobians_ = Ref{Ptr{Cdouble}}()
     api_jacobians_n_ = Ref{Csize_t}()
     api_determinants_ = Ref{Ptr{Cdouble}}()
@@ -1520,8 +1520,8 @@ function getJacobians(elementType, integrationType, tag = -1, task = 0, numTasks
     api_points_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetJacobians, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
-          elementType, integrationType, api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_points_, api_points_n_, tag, task, numTasks, ierr)
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_points_, api_points_n_, tag, task, numTasks, ierr)
     ierr[] != 0 && error("gmshModelMeshGetJacobians returned non-zero error code: $(ierr[])")
     jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], own=true)
     determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], own=true)
@@ -1530,14 +1530,14 @@ function getJacobians(elementType, integrationType, tag = -1, task = 0, numTasks
 end
 
 """
-    gmsh.model.mesh.preallocateJacobians(elementType, integrationType, jacobian, determinant, point, tag = -1)
+    gmsh.model.mesh.preallocateJacobians(elementType, numIntegrationPoints, jacobian, determinant, point, tag = -1)
 
 Preallocate the data required by `getJacobians`. This is necessary only if
 `getJacobians` is called with `numTasks` > 1.
 
 Return `jacobians`, `determinants`, `points`.
 """
-function preallocateJacobians(elementType, integrationType, jacobian, determinant, point, tag = -1)
+function preallocateJacobians(elementType, numIntegrationPoints, jacobian, determinant, point, tag = -1)
     api_jacobians_ = Ref{Ptr{Cdouble}}()
     api_jacobians_n_ = Ref{Csize_t}()
     api_determinants_ = Ref{Ptr{Cdouble}}()
@@ -1546,8 +1546,8 @@ function preallocateJacobians(elementType, integrationType, jacobian, determinan
     api_points_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshPreallocateJacobians, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cchar}, Cint, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          elementType, integrationType, jacobian, determinant, point, api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_points_, api_points_n_, tag, ierr)
+          (Cint, Cint, Cint, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, numIntegrationPoints, jacobian, determinant, point, api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_points_, api_points_n_, tag, ierr)
     ierr[] != 0 && error("gmshModelMeshPreallocateJacobians returned non-zero error code: $(ierr[])")
     jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], own=true)
     determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], own=true)
@@ -1556,74 +1556,63 @@ function preallocateJacobians(elementType, integrationType, jacobian, determinan
 end
 
 """
-    gmsh.model.mesh.getBasisFunctions(elementType, integrationType, functionSpaceType)
+    gmsh.model.mesh.getBasisFunctions(elementType, integrationPoints, functionSpaceType)
 
-Get the basis functions of the element of type `elementType` for the given
-`integrationType` integration rule (e.g. "Gauss4" for a Gauss quadrature suited
-for integrating 4th order polynomials) and `functionSpaceType` function space
-(e.g. "Lagrange" or "GradLagrange" for Lagrange basis functions or their
-gradient, in the u, v, w coordinates of the reference element).
-`integrationPoints` contains the u, v, w coordinates of the integration points
-in the reference element as well as the associated weight q, concatenated: [g1u,
-g1v, g1w, g1q, g2u, ...]. `numComponents` returns the number C of components of
-a basis function. `basisFunctions` returns the value of the N basis functions at
-the integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
+Get the basis functions of the element of type `elementType` at the integration
+points `integrationPoints` (given as concatenated triplets of parametric
+coordinates [g1u, g1v, g1w, ..., gGu, gGv, gGw], for the function space
+`functionSpaceType` (e.g. "Lagrange" or "GradLagrange" for Lagrange basis
+functions or their gradient, in the u, v, w coordinates of the reference
+element). `numComponents` returns the number C of components of a basis
+function. `basisFunctions` returns the value of the N basis functions at the
+integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
 [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.
 
-Return `integrationPoints`, `numComponents`, `basisFunctions`.
+Return `numComponents`, `basisFunctions`.
 """
-function getBasisFunctions(elementType, integrationType, functionSpaceType)
-    api_integrationPoints_ = Ref{Ptr{Cdouble}}()
-    api_integrationPoints_n_ = Ref{Csize_t}()
+function getBasisFunctions(elementType, integrationPoints, functionSpaceType)
     api_numComponents_ = Ref{Cint}()
     api_basisFunctions_ = Ref{Ptr{Cdouble}}()
     api_basisFunctions_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetBasisFunctions, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementType, integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_numComponents_, api_basisFunctions_, api_basisFunctions_n_, ierr)
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), functionSpaceType, api_numComponents_, api_basisFunctions_, api_basisFunctions_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetBasisFunctions returned non-zero error code: $(ierr[])")
-    integrationPoints = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_n_[], own=true)
     basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], own=true)
-    return integrationPoints, api_numComponents_[], basisFunctions
+    return api_numComponents_[], basisFunctions
 end
 
 """
-    gmsh.model.mesh.getBasisFunctionsForElements(elementType, integrationType, functionSpaceType, tag = -1)
+    gmsh.model.mesh.getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1)
 
 Get the element-dependent basis functions of the elements of type `elementType`
-in the entity of tag `tag`, for the given `integrationType` integration rule
-(e.g. "Gauss4" for a Gauss quadrature suited for integrating 4th order
-polynomials) and `functionSpaceType` function space (e.g. "H1Legendre3" or
+in the entity of tag `tag`at the integration points `integrationPoints` (given
+as concatenated triplets of parametric coordinates [g1u, g1v, g1w, ..., gGu,
+gGv, gGw]), for the function space `functionSpaceType` (e.g. "H1Legendre3" or
 "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions or their
-gradient, in the u, v, w coordinates of the reference elements).
-`integrationPoints` contains the u, v, w coordinates of the integration points
-in the reference element as well as the associated weight q, concatenated: [g1u,
-g1v, g1w, g1q, g2u, ...]. `numComponents` returns the number C of components of
-a basis function. `numBasisFunctions` returns the number N of basis functions
-per element. `basisFunctions` returns the value of the basis functions at the
-integration points for each element: [e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1,
-...] when C == 1 or [e1g1f1u, e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...].
-Warning: this is an experimental feature and will probably change in a future
-release.
+gradient, in the u, v, w coordinates of the reference elements). `numComponents`
+returns the number C of components of a basis function. `numBasisFunctions`
+returns the number N of basis functions per element. `basisFunctions` returns
+the value of the basis functions at the integration points for each element:
+[e1g1f1,..., e1g1fN, e1g2f1,..., e2g1f1, ...] when C == 1 or [e1g1f1u,
+e1g1f1v,..., e1g1fNw, e1g2f1u,..., e2g1f1u, ...]. Warning: this is an
+experimental feature and will probably change in a future release.
 
-Return `integrationPoints`, `numComponents`, `numFunctionsPerElements`, `basisFunctions`.
+Return `numComponents`, `numFunctionsPerElements`, `basisFunctions`.
 """
-function getBasisFunctionsForElements(elementType, integrationType, functionSpaceType, tag = -1)
-    api_integrationPoints_ = Ref{Ptr{Cdouble}}()
-    api_integrationPoints_n_ = Ref{Csize_t}()
+function getBasisFunctionsForElements(elementType, integrationPoints, functionSpaceType, tag = -1)
     api_numComponents_ = Ref{Cint}()
     api_numFunctionsPerElements_ = Ref{Cint}()
     api_basisFunctions_ = Ref{Ptr{Cdouble}}()
     api_basisFunctions_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetBasisFunctionsForElements, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          elementType, integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_numComponents_, api_numFunctionsPerElements_, api_basisFunctions_, api_basisFunctions_n_, tag, ierr)
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), functionSpaceType, api_numComponents_, api_numFunctionsPerElements_, api_basisFunctions_, api_basisFunctions_n_, tag, ierr)
     ierr[] != 0 && error("gmshModelMeshGetBasisFunctionsForElements returned non-zero error code: $(ierr[])")
-    integrationPoints = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_n_[], own=true)
     basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], own=true)
-    return integrationPoints, api_numComponents_[], api_numFunctionsPerElements_[], basisFunctions
+    return api_numComponents_[], api_numFunctionsPerElements_[], basisFunctions
 end
 
 """
@@ -1692,25 +1681,28 @@ end
 """
     gmsh.model.mesh.getIntegrationPoints(elementType, integrationType)
 
-Get the Gauss quadrature information for the given `integrationType` integration
-rule (e.g. "Gauss4" for a Gauss quadrature suited for integrating 4th order
-polynomials) and for the elements of type `elementType`. `integrationPoints`
-contains the u, v, w coordinates of the integration points in the reference
-element as well as the associated weight q, concatenated: [g1u, g1v, g1w, g1q,
-g2u, ...].
+Get the numerical quadrature information for the given element type
+`elementType` and integration rule `integrationType` (e.g. "Gauss4" for a Gauss
+quadrature suited for integrating 4th order polynomials). `integrationPoints`
+contains the u, v, w coordinates of the G integration points in the reference
+element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `integrationWeigths` contains the
+associated weights: [g1q, ..., gGq].
 
-Return `integrationPoints`.
+Return `integrationPoints`, `integrationWeights`.
 """
 function getIntegrationPoints(elementType, integrationType)
     api_integrationPoints_ = Ref{Ptr{Cdouble}}()
     api_integrationPoints_n_ = Ref{Csize_t}()
+    api_integrationWeights_ = Ref{Ptr{Cdouble}}()
+    api_integrationWeights_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetIntegrationPoints, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementType, integrationType, api_integrationPoints_, api_integrationPoints_n_, ierr)
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          elementType, integrationType, api_integrationPoints_, api_integrationPoints_n_, api_integrationWeights_, api_integrationWeights_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetIntegrationPoints returned non-zero error code: $(ierr[])")
     integrationPoints = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_n_[], own=true)
-    return integrationPoints
+    integrationWeights = unsafe_wrap(Array, api_integrationWeights_[], api_integrationWeights_n_[], own=true)
+    return integrationPoints, integrationWeights
 end
 
 """
