@@ -297,7 +297,7 @@ mesh.add('getInformationForElements',doc,None,ivectorpair('keys'),ovectorpair('i
 doc = '''Precomputes the basis functions corresponding to `elementType'. '''
 mesh.add('precomputeBasisFunctions',doc,None,iint('elementType'))
 
-doc = '''Get the numerical quadrature information for the given element type `elementType` and integration rule `integrationType' (e.g. "Gauss4" for a Gauss quadrature suited for integrating 4th order polynomials). `integrationPoints' contains the u, v, w coordinates of the G integration points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `integrationWeigths` contains the associated weights: [g1q, ..., gGq].'''
+doc = '''Get the numerical quadrature information for the given element type `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a Gauss quadrature suited for integrating 4th order polynomials). `integrationPoints' contains the u, v, w coordinates of the G integration points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `integrationWeigths' contains the associated weights: [g1q, ..., gGq].'''
 mesh.add('getIntegrationPoints',doc,None,iint('elementType'),istring('integrationType'),ovectordouble('integrationPoints'),ovectordouble('integrationWeights'))
 
 doc = '''Get the barycenters of all elements of type `elementType' classified on the entity of tag `tag'. If `primary' is set, only the primary nodes of the elements are taken into account for the barycenter calculation. If `fast' is set, the function returns the sum of the primary node coordinates (without normalizing by the number of nodes). If `tag' < 0, get the barycenters for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''

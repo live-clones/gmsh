@@ -1231,11 +1231,11 @@ Precomputes the basis functions corresponding to @code{elementType}.
 
 @item getIntegrationPoints
 Get the numerical quadrature information for the given element type
-@code{elementType@code{ and integration rule @code{integrationType} (e.g.
-"Gauss4" for a Gauss quadrature suited for integrating 4th order polynomials).
+@code{elementType} and integration rule @code{integrationType} (e.g. "Gauss4"
+for a Gauss quadrature suited for integrating 4th order polynomials).
 @code{integrationPoints} contains the u, v, w coordinates of the G integration
 points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
-@code{integrationWeigths@code{ contains the associated weights: [g1q, ..., gGq].
+@code{integrationWeigths} contains the associated weights: [g1q, ..., gGq].
 
 @table @asis
 @item Input:

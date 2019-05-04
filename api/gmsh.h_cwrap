@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.3).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.4).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -1299,11 +1299,11 @@ namespace gmsh { // Top-level functions
       }
 
       // Get the numerical quadrature information for the given element type
-      // `elementType` and integration rule `integrationType' (e.g. "Gauss4" for a
+      // `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a
       // Gauss quadrature suited for integrating 4th order polynomials).
       // `integrationPoints' contains the u, v, w coordinates of the G integration
       // points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
-      // `integrationWeigths` contains the associated weights: [g1q, ..., gGq].
+      // `integrationWeigths' contains the associated weights: [g1q, ..., gGq].
       inline void getIntegrationPoints(const int elementType,
                                        const std::string & integrationType,
                                        std::vector<double> & integrationPoints,
