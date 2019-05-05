@@ -570,7 +570,7 @@ FlGui::FlGui(int argc, char **argv)
   }
   setGraphicTitle(GModel::current()->getFileName());
 
-  // create fullscreen window
+  // create window that will be used for fullscreen display
   fullscreen = new openglWindow(100, 100, 100, 100);
   int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
   if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
@@ -580,7 +580,6 @@ FlGui::FlGui(int argc, char **argv)
   }
   fullscreen->mode(mode);
   fullscreen->end();
-  fullscreen->fullscreen();
 #if !defined(__APPLE__)
   fullscreen->icon(graph[0]->getWindow()->icon());
 #endif
@@ -1347,6 +1346,7 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->fullscreen->resize(x, y, w, h);
       FlGui::instance()->fullscreen->valid(0);
       FlGui::instance()->fullscreen->show();
+      FlGui::instance()->fullscreen->fullscreen();
       while(!FlGui::instance()->fullscreen->valid()) FlGui::wait();
       FlGui::instance()->fullscreen->getDrawContext()->copyViewAttributes(
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
@@ -1366,6 +1366,7 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->graph[0]->gl[0]->getDrawContext()->copyViewAttributes(
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
       openglWindow::setLastHandled(FlGui::instance()->graph[0]->gl[0]);
+      FlGui::instance()->fullscreen->fullscreen_off();
       FlGui::instance()->fullscreen->hide();
       drawContext::global()->draw();
       fullscreen = 0;
