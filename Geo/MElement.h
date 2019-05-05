@@ -19,10 +19,10 @@
 #include "nodalBasis.h"
 #include "polynomialBasis.h"
 #include "GaussIntegration.h"
+#include "FuncSpaceData.h"
 
 class GModel;
 class JacobianBasis;
-class FuncSpaceData;
 
 // A mesh element.
 class MElement {
