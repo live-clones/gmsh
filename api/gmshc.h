@@ -604,8 +604,8 @@ GMSH_API void gmshModelMeshGetElementsByType(const int elementType,
                                              const size_t numTasks,
                                              int * ierr);
 
-/* Preallocate the data for `getElementsByType'. This is necessary only if
- * `getElementsByType' is called with `numTasks' > 1. */
+/* Preallocate data before calling `getElementsByType' with `numTasks' > 1.
+ * For C and C++ only. */
 GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType,
                                                      const int elementTag,
                                                      const int nodeTag,
@@ -679,8 +679,8 @@ GMSH_API void gmshModelMeshGetJacobians(const int elementType,
                                         const size_t numTasks,
                                         int * ierr);
 
-/* Preallocate the data required by `getJacobians'. This is necessary only if
- * `getJacobians' is called with `numTasks' > 1. */
+/* Preallocate data before calling `getJacobians' with `numTasks' > 1. For C
+ * and C++ only. */
 GMSH_API void gmshModelMeshPreallocateJacobians(const int elementType,
                                                 const int numIntegrationPoints,
                                                 const int jacobian,
@@ -773,8 +773,8 @@ GMSH_API void gmshModelMeshGetBarycenters(const int elementType,
                                           const size_t numTasks,
                                           int * ierr);
 
-/* Preallocate the data required by `getBarycenters'. This is necessary only
- * if `getBarycenters' is called with `numTasks' > 1. */
+/* Preallocate data before calling `getBarycenters' with `numTasks' > 1. For C
+ * and C++ only. */
 GMSH_API void gmshModelMeshPreallocateBarycenters(const int elementType,
                                                   double ** barycenters, size_t * barycenters_n,
                                                   const int tag,
@@ -1822,8 +1822,8 @@ GMSH_API void gmshModelOccImportShapes(const char * fileName,
  * OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The
  * imported entities are returned in `outDimTags'. If the optional argument
  * `highestDimOnly' is set, only import the highest dimensional entities in
- * `shape'. Warning: this function is unsafe, as providing an invalid pointer
- * will lead to undefined behavior. */
+ * `shape'. For C and C++ only. Warning: this function is unsafe, as providing
+ * an invalid pointer will lead to undefined behavior. */
 GMSH_API void gmshModelOccImportShapesNativePointer(const void * shape,
                                                     int ** outDimTags, size_t * outDimTags_n,
                                                     const int highestDimOnly,

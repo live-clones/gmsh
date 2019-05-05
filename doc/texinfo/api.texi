@@ -1055,8 +1055,8 @@ indexed by @code{task}.
 @end table
 
 @item preallocateElementsByType
-Preallocate the data for @code{getElementsByType}. This is necessary only if
-@code{getElementsByType} is called with @code{numTasks} > 1.
+Preallocate data before calling @code{getElementsByType} with @code{numTasks} >
+1. For C and C++ only.
 
 @table @asis
 @item Input:
@@ -1148,8 +1148,8 @@ the data indexed by @code{task}.
 @end table
 
 @item preallocateJacobians
-Preallocate the data required by @code{getJacobians}. This is necessary only if
-@code{getJacobians} is called with @code{numTasks} > 1.
+Preallocate data before calling @code{getJacobians} with @code{numTasks} > 1.
+For C and C++ only.
 
 @table @asis
 @item Input:
@@ -1265,8 +1265,8 @@ the part of the data indexed by @code{task}.
 @end table
 
 @item preallocateBarycenters
-Preallocate the data required by @code{getBarycenters}. This is necessary only
-if @code{getBarycenters} is called with @code{numTasks} > 1.
+Preallocate data before calling @code{getBarycenters} with @code{numTasks} > 1.
+For C and C++ only.
 
 @table @asis
 @item Input:
@@ -2884,8 +2884,8 @@ Imports an OpenCASCADE @code{shape} by providing a pointer to a native
 OpenCASCADE @code{TopoDS_Shape} object (passed as a pointer to void). The
 imported entities are returned in @code{outDimTags}. If the optional argument
 @code{highestDimOnly} is set, only import the highest dimensional entities in
-@code{shape}. Warning: this function is unsafe, as providing an invalid pointer
-will lead to undefined behavior.
+@code{shape}. For C and C++ only. Warning: this function is unsafe, as providing
+an invalid pointer will lead to undefined behavior.
 
 @table @asis
 @item Input:

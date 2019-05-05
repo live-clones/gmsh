@@ -1426,29 +1426,6 @@ function getElementsByType(elementType, tag = -1, task = 0, numTasks = 1)
 end
 
 """
-    gmsh.model.mesh.preallocateElementsByType(elementType, elementTag, nodeTag, tag = -1)
-
-Preallocate the data for `getElementsByType`. This is necessary only if
-`getElementsByType` is called with `numTasks` > 1.
-
-Return `elementTags`, `nodeTags`.
-"""
-function preallocateElementsByType(elementType, elementTag, nodeTag, tag = -1)
-    api_elementTags_ = Ref{Ptr{Csize_t}}()
-    api_elementTags_n_ = Ref{Csize_t}()
-    api_nodeTags_ = Ref{Ptr{Csize_t}}()
-    api_nodeTags_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshPreallocateElementsByType, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          elementType, elementTag, nodeTag, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, tag, ierr)
-    ierr[] != 0 && error("gmshModelMeshPreallocateElementsByType returned non-zero error code: $(ierr[])")
-    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
-    return elementTags, nodeTags
-end
-
-"""
     gmsh.model.mesh.setElements(dim, tag, elementTypes, elementTags, nodeTags)
 
 Set the elements of the entity of dimension `dim` and tag `tag`. `types`
@@ -1550,32 +1527,6 @@ function getJacobians(elementType, integrationPoints, tag = -1, task = 0, numTas
           (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
           elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_points_, api_points_n_, tag, task, numTasks, ierr)
     ierr[] != 0 && error("gmshModelMeshGetJacobians returned non-zero error code: $(ierr[])")
-    jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], own=true)
-    determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], own=true)
-    points = unsafe_wrap(Array, api_points_[], api_points_n_[], own=true)
-    return jacobians, determinants, points
-end
-
-"""
-    gmsh.model.mesh.preallocateJacobians(elementType, numIntegrationPoints, jacobian, determinant, point, tag = -1)
-
-Preallocate the data required by `getJacobians`. This is necessary only if
-`getJacobians` is called with `numTasks` > 1.
-
-Return `jacobians`, `determinants`, `points`.
-"""
-function preallocateJacobians(elementType, numIntegrationPoints, jacobian, determinant, point, tag = -1)
-    api_jacobians_ = Ref{Ptr{Cdouble}}()
-    api_jacobians_n_ = Ref{Csize_t}()
-    api_determinants_ = Ref{Ptr{Cdouble}}()
-    api_determinants_n_ = Ref{Csize_t}()
-    api_points_ = Ref{Ptr{Cdouble}}()
-    api_points_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshPreallocateJacobians, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          elementType, numIntegrationPoints, jacobian, determinant, point, api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_points_, api_points_n_, tag, ierr)
-    ierr[] != 0 && error("gmshModelMeshPreallocateJacobians returned non-zero error code: $(ierr[])")
     jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], own=true)
     determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], own=true)
     points = unsafe_wrap(Array, api_points_[], api_points_n_[], own=true)
@@ -1726,26 +1677,6 @@ function getBarycenters(elementType, tag, fast, primary, task = 0, numTasks = 1)
           (Cint, Cint, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Csize_t, Csize_t, Ptr{Cint}),
           elementType, tag, fast, primary, api_barycenters_, api_barycenters_n_, task, numTasks, ierr)
     ierr[] != 0 && error("gmshModelMeshGetBarycenters returned non-zero error code: $(ierr[])")
-    barycenters = unsafe_wrap(Array, api_barycenters_[], api_barycenters_n_[], own=true)
-    return barycenters
-end
-
-"""
-    gmsh.model.mesh.preallocateBarycenters(elementType, tag = -1)
-
-Preallocate the data required by `getBarycenters`. This is necessary only if
-`getBarycenters` is called with `numTasks` > 1.
-
-Return `barycenters`.
-"""
-function preallocateBarycenters(elementType, tag = -1)
-    api_barycenters_ = Ref{Ptr{Cdouble}}()
-    api_barycenters_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshPreallocateBarycenters, gmsh.lib), Cvoid,
-          (Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          elementType, api_barycenters_, api_barycenters_n_, tag, ierr)
-    ierr[] != 0 && error("gmshModelMeshPreallocateBarycenters returned non-zero error code: $(ierr[])")
     barycenters = unsafe_wrap(Array, api_barycenters_[], api_barycenters_n_[], own=true)
     return barycenters
 end
@@ -3783,30 +3714,6 @@ function importShapes(fileName, highestDimOnly = true, format = "")
           (Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cchar}, Ptr{Cint}),
           fileName, api_outDimTags_, api_outDimTags_n_, highestDimOnly, format, ierr)
     ierr[] != 0 && error("gmshModelOccImportShapes returned non-zero error code: $(ierr[])")
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
-    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
-    return outDimTags
-end
-
-"""
-    gmsh.model.occ.importShapesNativePointer(shape, highestDimOnly = true)
-
-Imports an OpenCASCADE `shape` by providing a pointer to a native OpenCASCADE
-`TopoDS_Shape` object (passed as a pointer to void). The imported entities are
-returned in `outDimTags`. If the optional argument `highestDimOnly` is set, only
-import the highest dimensional entities in `shape`. Warning: this function is
-unsafe, as providing an invalid pointer will lead to undefined behavior.
-
-Return `outDimTags`.
-"""
-function importShapesNativePointer(shape, highestDimOnly = true)
-    api_outDimTags_ = Ref{Ptr{Cint}}()
-    api_outDimTags_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelOccImportShapesNativePointer, gmsh.lib), Cvoid,
-          (Ptr{Cvoid}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          shape, api_outDimTags_, api_outDimTags_n_, highestDimOnly, ierr)
-    ierr[] != 0 && error("gmshModelOccImportShapesNativePointer returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags

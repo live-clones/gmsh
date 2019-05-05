@@ -1714,33 +1714,6 @@ class model:
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value))
 
         @staticmethod
-        def preallocateElementsByType(elementType, elementTag, nodeTag, tag=-1):
-            """
-            Preallocate the data for `getElementsByType'. This is necessary only if
-            `getElementsByType' is called with `numTasks' > 1.
-
-            Return `elementTags', `nodeTags'.
-            """
-            api_elementTags_, api_elementTags_n_ = POINTER(c_size_t)(), c_size_t()
-            api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshPreallocateElementsByType(
-                c_int(elementType),
-                c_int(bool(elementTag)),
-                c_int(bool(nodeTag)),
-                byref(api_elementTags_), byref(api_elementTags_n_),
-                byref(api_nodeTags_), byref(api_nodeTags_n_),
-                c_int(tag),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshPreallocateElementsByType returned non-zero error code: ",
-                    ierr.value)
-            return (
-                _ovectorsize(api_elementTags_, api_elementTags_n_.value),
-                _ovectorsize(api_nodeTags_, api_nodeTags_n_.value))
-
-        @staticmethod
         def setElements(dim, tag, elementTypes, elementTags, nodeTags):
             """
             Set the elements of the entity of dimension `dim' and tag `tag'. `types'
@@ -1861,38 +1834,6 @@ class model:
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelMeshGetJacobians returned non-zero error code: ",
-                    ierr.value)
-            return (
-                _ovectordouble(api_jacobians_, api_jacobians_n_.value),
-                _ovectordouble(api_determinants_, api_determinants_n_.value),
-                _ovectordouble(api_points_, api_points_n_.value))
-
-        @staticmethod
-        def preallocateJacobians(elementType, numIntegrationPoints, jacobian, determinant, point, tag=-1):
-            """
-            Preallocate the data required by `getJacobians'. This is necessary only if
-            `getJacobians' is called with `numTasks' > 1.
-
-            Return `jacobians', `determinants', `points'.
-            """
-            api_jacobians_, api_jacobians_n_ = POINTER(c_double)(), c_size_t()
-            api_determinants_, api_determinants_n_ = POINTER(c_double)(), c_size_t()
-            api_points_, api_points_n_ = POINTER(c_double)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshPreallocateJacobians(
-                c_int(elementType),
-                c_int(numIntegrationPoints),
-                c_int(bool(jacobian)),
-                c_int(bool(determinant)),
-                c_int(bool(point)),
-                byref(api_jacobians_), byref(api_jacobians_n_),
-                byref(api_determinants_), byref(api_determinants_n_),
-                byref(api_points_), byref(api_points_n_),
-                c_int(tag),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshPreallocateJacobians returned non-zero error code: ",
                     ierr.value)
             return (
                 _ovectordouble(api_jacobians_, api_jacobians_n_.value),
@@ -2071,27 +2012,6 @@ class model:
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelMeshGetBarycenters returned non-zero error code: ",
-                    ierr.value)
-            return _ovectordouble(api_barycenters_, api_barycenters_n_.value)
-
-        @staticmethod
-        def preallocateBarycenters(elementType, tag=-1):
-            """
-            Preallocate the data required by `getBarycenters'. This is necessary only
-            if `getBarycenters' is called with `numTasks' > 1.
-
-            Return `barycenters'.
-            """
-            api_barycenters_, api_barycenters_n_ = POINTER(c_double)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshPreallocateBarycenters(
-                c_int(elementType),
-                byref(api_barycenters_), byref(api_barycenters_n_),
-                c_int(tag),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshPreallocateBarycenters returned non-zero error code: ",
                     ierr.value)
             return _ovectordouble(api_barycenters_, api_barycenters_n_.value)
 
@@ -4504,31 +4424,6 @@ class model:
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelOccImportShapes returned non-zero error code: ",
-                    ierr.value)
-            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
-
-        @staticmethod
-        def importShapesNativePointer(shape, highestDimOnly=True):
-            """
-            Imports an OpenCASCADE `shape' by providing a pointer to a native
-            OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The
-            imported entities are returned in `outDimTags'. If the optional argument
-            `highestDimOnly' is set, only import the highest dimensional entities in
-            `shape'. Warning: this function is unsafe, as providing an invalid pointer
-            will lead to undefined behavior.
-
-            Return `outDimTags'.
-            """
-            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelOccImportShapesNativePointer(
-                c_void_p(shape),
-                byref(api_outDimTags_), byref(api_outDimTags_n_),
-                c_int(bool(highestDimOnly)),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccImportShapesNativePointer returned non-zero error code: ",
                     ierr.value)
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 

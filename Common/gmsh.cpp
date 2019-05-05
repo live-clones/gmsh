@@ -1523,8 +1523,8 @@ GMSH_API void gmsh::model::mesh::getElementsByType(
   bool haveNodeTags = nodeTags.size();
   if(!haveElementTags && !haveNodeTags) {
     if(numTasks > 1)
-      Msg::Error("ElementTags and nodeTags should be preallocated "
-                 "if numTasks > 1");
+      Msg::Warning("ElementTags and nodeTags should be preallocated "
+                   "if numTasks > 1");
     haveElementTags = haveNodeTags = true;
     preallocateElementsByType(elementType, haveElementTags, haveNodeTags,
                               elementTags, nodeTags, tag);
@@ -1643,8 +1643,8 @@ GMSH_API void gmsh::model::mesh::getJacobians(
   bool havePoints = points.size();
   if(!haveDeterminants && !haveJacobians && !havePoints) {
     if(numTasks > 1)
-      Msg::Error("Jacobians, determinants and points should be preallocated "
-                 "if numTasks > 1");
+      Msg::Warning("Jacobians, determinants and points should be preallocated "
+                   "if numTasks > 1");
     haveJacobians = haveDeterminants = havePoints = true;
     preallocateJacobians(elementType, numIntegrationPoints, haveJacobians,
                          haveDeterminants, havePoints, jacobians, determinants,
@@ -2451,7 +2451,7 @@ GMSH_API void gmsh::model::mesh::getBarycenters(
   const size_t end = ((task + 1) * numElements) / numTasks;
   if(3 * end > barycenters.size()) {
     if(numTasks > 1)
-      Msg::Error("Barycenters should be preallocated if numTasks > 1");
+      Msg::Warning("Barycenters should be preallocated if numTasks > 1");
     barycenters.resize(3 * numElements);
   }
   size_t o = 0;
@@ -2586,7 +2586,8 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
   if(numEdgesPerEle * numNodesPerEdge * end > nodeTags.size()) {
-    if(numTasks > 1) Msg::Error("Nodes should be preallocated if numTasks > 1");
+    if(numTasks > 1)
+      Msg::Warning("Nodes should be preallocated if numTasks > 1");
     nodeTags.resize(numEdgesPerEle * numNodesPerEdge * numElements);
   }
   size_t o = 0;
@@ -2654,7 +2655,8 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
   if(numFacesPerEle * numNodesPerFace * end > nodeTags.size()) {
-    if(numTasks > 1) Msg::Error("Nodes should be preallocated if numTasks > 1");
+    if(numTasks > 1)
+      Msg::Warning("Nodes should be preallocated if numTasks > 1");
     nodeTags.resize(numFacesPerEle * numNodesPerFace * numElements);
   }
   size_t o = 0;

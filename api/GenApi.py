@@ -686,11 +686,10 @@ class Module:
         self.submodules = []
 
     def add(self, name, doc, rtype, *args):
-        self.fs.append((rtype, name, args, doc, ''))
+        self.fs.append((rtype, name, args, doc, []))
 
-    # a raw C implementation of the function is available
-    def add_rawc(self, name, doc, rtype, *args):
-        self.fs.append((rtype, name, args, doc, 'rawc'))
+    def add_special(self, name, doc, special, rtype, *args):
+        self.fs.append((rtype, name, args, doc, special))
 
     def add_module(self, name, doc):
         module = Module(name, doc)
@@ -1186,7 +1185,7 @@ class API:
                         + (",\n" + ' ' * len(fnameapi)).join(
                             list((a.c for a in args + (oint("ierr"), ))))
                         + ");\n")
-                if special != 'rawc':
+                if "rawc" not in special:
                     # *c.cpp
                     fc.write(ns.upper() + "_API " + (rtype.rc_type if rtype else "void"))
                     fc.write(" " + fname + "(" +
@@ -1269,6 +1268,7 @@ class API:
             return a.name + (("=" + a.python_value) if a.python_value else "")
         def write_function(f, fun, modulepath, indent):
             (rtype, name, args, doc, special) = fun
+            if "onlycc++" in special: return
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write("\n")
@@ -1335,6 +1335,7 @@ class API:
             return a.name + ((" = " + a.julia_value) if a.julia_value else "")
         def write_function(f, fun, c_mpath, jl_mpath):
             (rtype, name, args, doc, special) = fun
+            if "onlycc++" in special: return
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write('\n"""\n    ')

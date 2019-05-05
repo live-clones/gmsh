@@ -267,8 +267,8 @@ mesh.add('getElementProperties',doc,None,iint('elementType'),ostring('elementNam
 doc = '''Get the elements of type `elementType' classified on the entity of tag `tag'. If `tag' < 0, get the elements for all entities. `elementTags' is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is a vector of length equal to the number of elements of the given type times the number N of nodes for this type of element, that contains the node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getElementsByType',doc,None,iint('elementType'),ovectorsize('elementTags'),ovectorsize('nodeTags'),iint('tag', '-1'),isize('task', '0'),isize('numTasks', '1'))
 
-doc = '''Preallocate the data for `getElementsByType'. This is necessary only if `getElementsByType' is called with `numTasks' > 1.'''
-mesh.add('preallocateElementsByType',doc,None,iint('elementType'),ibool('elementTag'),ibool('nodeTag'),ovectorsize('elementTags'),ovectorsize('nodeTags'),iint('tag', '-1'))
+doc = '''Preallocate data before calling `getElementsByType' with `numTasks' > 1. For C and C++ only.'''
+mesh.add_special('preallocateElementsByType',doc,['onlycc++'],None,iint('elementType'),ibool('elementTag'),ibool('nodeTag'),ovectorsize('elementTags'),ovectorsize('nodeTags'),iint('tag', '-1'))
 
 doc = '''Set the elements of the entity of dimension `dim' and tag `tag'. `types' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of the same length as `types'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is also a vector of the same length as `types'; each entry is a vector of length equal to the number of elements of the given type times the number N of nodes per element, that contains the node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].'''
 mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('elementTypes'),ivectorvectorsize('elementTags'),ivectorvectorsize('nodeTags'))
@@ -282,8 +282,8 @@ mesh.add('getIntegrationPoints',doc,None,iint('elementType'),istring('integratio
 doc = '''Get the Jacobians of all the elements of type `elementType' classified on the entity of dimension `dim' and tag `tag', at the G integration points `integrationPoints' given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by element, with elements in the same order as in `getElements' and `getElementsByType'. `jacobians' contains for each element the 9 entries of the 3x3 Jacobian matrix at each integration point, by row: [e1g1Jxu, e1g1Jxv, e1g1Jxw, e1g1Jyu, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jxv=dx/dv, etc. `determinants' contains for each element the determinant of the Jacobian matrix at each integration point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each element the x, y, z coordinates of the integration points. If `tag' < 0, get the Jacobian data for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getJacobians',doc,None,iint('elementType'),ivectordouble('integrationPoints'),ovectordouble('jacobians'),ovectordouble('determinants'),ovectordouble('points'),iint('tag', '-1'),isize('task', '0'),isize('numTasks', '1'))
 
-doc = '''Preallocate the data required by `getJacobians'. This is necessary only if `getJacobians' is called with `numTasks' > 1.'''
-mesh.add('preallocateJacobians',doc,None,iint('elementType'),iint('numIntegrationPoints'),ibool('jacobian'),ibool('determinant'),ibool('point'),ovectordouble('jacobians'),ovectordouble('determinants'),ovectordouble('points'),iint('tag', '-1'))
+doc = '''Preallocate data before calling `getJacobians' with `numTasks' > 1. For C and C++ only.'''
+mesh.add_special('preallocateJacobians',doc,['onlycc++'],None,iint('elementType'),iint('numIntegrationPoints'),ibool('jacobian'),ibool('determinant'),ibool('point'),ovectordouble('jacobians'),ovectordouble('determinants'),ovectordouble('points'),iint('tag', '-1'))
 
 doc = '''Get the basis functions of the element of type `elementType' at the integration points `integrationPoints' (given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space `functionSpaceType' (e.g. "Lagrange" or "GradLagrange" for Lagrange basis functions or their gradient, in the u, v, w coordinates of the reference element). `numComponents' returns the number C of components of a basis function. `basisFunctions' returns the value of the N basis functions at the integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3.'''
 mesh.add('getBasisFunctions',doc,None,iint('elementType'),ivectordouble('integrationPoints'),istring('functionSpaceType'),oint('numComponents'),ovectordouble('basisFunctions'))
@@ -303,8 +303,8 @@ mesh.add('precomputeBasisFunctions',doc,None,iint('elementType'))
 doc = '''Get the barycenters of all elements of type `elementType' classified on the entity of tag `tag'. If `primary' is set, only the primary nodes of the elements are taken into account for the barycenter calculation. If `fast' is set, the function returns the sum of the primary node coordinates (without normalizing by the number of nodes). If `tag' < 0, get the barycenters for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getBarycenters',doc,None,iint('elementType'),iint('tag'),ibool('fast'),ibool('primary'),ovectordouble('barycenters'),isize('task', '0'),isize('numTasks', '1'))
 
-doc = '''Preallocate the data required by `getBarycenters'. This is necessary only if `getBarycenters' is called with `numTasks' > 1.'''
-mesh.add('preallocateBarycenters',doc,None,iint('elementType'),ovectordouble('barycenters'),iint('tag', '-1'))
+doc = '''Preallocate data before calling `getBarycenters' with `numTasks' > 1. For C and C++ only.'''
+mesh.add_special('preallocateBarycenters',doc,['onlycc++'],None,iint('elementType'),ovectordouble('barycenters'),iint('tag', '-1'))
 
 doc = '''Get the nodes on the edges of all elements of type `elementType' classified on the entity of tag `tag'. `nodeTags' contains the node tags of the edges for all the elements: [e1a1n1, e1a1n2, e1a2n1, ...]. Data is returned by element, with elements in the same order as in `getElements' and `getElementsByType'. If `primary' is set, only the primary (begin/end) nodes of the edges are returned. If `tag' < 0, get the edge nodes for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getElementEdgeNodes',doc,None,iint('elementType'),ovectorsize('nodeTags'),iint('tag','-1'),ibool('primary','false','False'),isize('task', '0'),isize('numTasks', '1'))
@@ -637,8 +637,8 @@ occ.add('removeAllDuplicates',doc,None)
 doc = '''Import BREP, STEP or IGES shapes from the file `fileName'. The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in the file. The optional argument `format' can be used to force the format of the file (currently "brep", "step" or "iges").'''
 occ.add('importShapes',doc,None,istring('fileName'),ovectorpair('outDimTags'),ibool('highestDimOnly','true','True'),istring('format','""'))
 
-doc = '''Imports an OpenCASCADE `shape' by providing a pointer to a native OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in `shape'. Warning: this function is unsafe, as providing an invalid pointer will lead to undefined behavior.'''
-occ.add('importShapesNativePointer',doc,None,ivoidstar('shape'),ovectorpair('outDimTags'),ibool('highestDimOnly','true','True'))
+doc = '''Imports an OpenCASCADE `shape' by providing a pointer to a native OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in `shape'. For C and C++ only. Warning: this function is unsafe, as providing an invalid pointer will lead to undefined behavior.'''
+occ.add_special('importShapesNativePointer',doc,['onlycc++'],None,ivoidstar('shape'),ovectorpair('outDimTags'),ibool('highestDimOnly','true','True'))
 
 doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 occ.add('setMeshSize',doc,None,ivectorpair('dimTags'),idouble('size'))
@@ -675,7 +675,7 @@ doc = '''Add model-based post-processing data to the view with tag `tag'. `model
 view.add('addModelData',doc,None,iint('tag'),iint('step'),istring('modelName'),istring('dataType'),ivectorsize('tags'),ivectorvectordouble('data'),idouble('time','0.'),iint('numComponents','-1'),iint('partition','0'))
 
 doc = '''Get model-based post-processing data from the view with tag `tag' at step `step'. Return the `data' associated to the nodes or the elements with tags `tags', as well as the `dataType' and the number of components `numComponents'.'''
-view.add_rawc('getModelData',doc,None,iint('tag'),iint('step'),ostring('dataType'),ovectorsize('tags'),ovectorvectordouble('data'),odouble('time'),oint('numComponents'))
+view.add_special('getModelData',doc,['rawc'],None,iint('tag'),iint('step'),ostring('dataType'),ovectorsize('tags'),ovectorvectordouble('data'),odouble('time'),oint('numComponents'))
 
 doc = '''Add list-based post-processing data to the view with tag `tag'. `dataType' identifies the data: "SP" for scalar points, "VP", for vector points, etc. `numEle' gives the number of elements in the data. `data' contains the data for the `numEle' elements.'''
 view.add('addListData',doc,None,iint('tag'),istring('dataType'),iint('numEle'),ivectordouble('data'))

@@ -563,8 +563,8 @@ namespace gmsh { // Top-level functions
                                       const std::size_t task = 0,
                                       const std::size_t numTasks = 1);
 
-      // Preallocate the data for `getElementsByType'. This is necessary only if
-      // `getElementsByType' is called with `numTasks' > 1.
+      // Preallocate data before calling `getElementsByType' with `numTasks' > 1.
+      // For C and C++ only.
       GMSH_API void preallocateElementsByType(const int elementType,
                                               const bool elementTag,
                                               const bool nodeTag,
@@ -634,8 +634,8 @@ namespace gmsh { // Top-level functions
                                  const std::size_t task = 0,
                                  const std::size_t numTasks = 1);
 
-      // Preallocate the data required by `getJacobians'. This is necessary only if
-      // `getJacobians' is called with `numTasks' > 1.
+      // Preallocate data before calling `getJacobians' with `numTasks' > 1. For C
+      // and C++ only.
       GMSH_API void preallocateJacobians(const int elementType,
                                          const int numIntegrationPoints,
                                          const bool jacobian,
@@ -721,8 +721,8 @@ namespace gmsh { // Top-level functions
                                    const std::size_t task = 0,
                                    const std::size_t numTasks = 1);
 
-      // Preallocate the data required by `getBarycenters'. This is necessary only
-      // if `getBarycenters' is called with `numTasks' > 1.
+      // Preallocate data before calling `getBarycenters' with `numTasks' > 1. For
+      // C and C++ only.
       GMSH_API void preallocateBarycenters(const int elementType,
                                            std::vector<double> & barycenters,
                                            const int tag = -1);
@@ -1694,8 +1694,8 @@ namespace gmsh { // Top-level functions
       // OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The
       // imported entities are returned in `outDimTags'. If the optional argument
       // `highestDimOnly' is set, only import the highest dimensional entities in
-      // `shape'. Warning: this function is unsafe, as providing an invalid pointer
-      // will lead to undefined behavior.
+      // `shape'. For C and C++ only. Warning: this function is unsafe, as
+      // providing an invalid pointer will lead to undefined behavior.
       GMSH_API void importShapesNativePointer(const void * shape,
                                               gmsh::vectorpair & outDimTags,
                                               const bool highestDimOnly = true);
