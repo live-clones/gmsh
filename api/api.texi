@@ -1105,6 +1105,23 @@ automatically assigned to the elements.
 -
 @end table
 
+@item getIntegrationPoints
+Get the numerical quadrature information for the given element type
+@code{elementType} and integration rule @code{integrationType} (e.g. "Gauss4"
+for a Gauss quadrature suited for integrating 4th order polynomials).
+@code{integrationPoints} contains the u, v, w coordinates of the G integration
+points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
+@code{integrationWeigths} contains the associated weights: [g1q, ..., gGq].
+
+@table @asis
+@item Input:
+@code{elementType}, @code{integrationType}
+@item Output:
+@code{integrationPoints}, @code{integrationWeights}
+@item Return:
+-
+@end table
+
 @item getJacobians
 Get the Jacobians of all the elements of type @code{elementType} classified on
 the entity of dimension @code{dim} and tag @code{tag}, at the G integration
@@ -1225,23 +1242,6 @@ Precomputes the basis functions corresponding to @code{elementType}.
 @code{elementType}
 @item Output:
 -
-@item Return:
--
-@end table
-
-@item getIntegrationPoints
-Get the numerical quadrature information for the given element type
-@code{elementType} and integration rule @code{integrationType} (e.g. "Gauss4"
-for a Gauss quadrature suited for integrating 4th order polynomials).
-@code{integrationPoints} contains the u, v, w coordinates of the G integration
-points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
-@code{integrationWeigths} contains the associated weights: [g1q, ..., gGq].
-
-@table @asis
-@item Input:
-@code{elementType}, @code{integrationType}
-@item Output:
-@code{integrationPoints}, @code{integrationWeights}
 @item Return:
 -
 @end table

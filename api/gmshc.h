@@ -643,6 +643,18 @@ GMSH_API void gmshModelMeshSetElementsByType(const int tag,
                                              size_t * nodeTags, size_t nodeTags_n,
                                              int * ierr);
 
+/* Get the numerical quadrature information for the given element type
+ * `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a
+ * Gauss quadrature suited for integrating 4th order polynomials).
+ * `integrationPoints' contains the u, v, w coordinates of the G integration
+ * points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
+ * `integrationWeigths' contains the associated weights: [g1q, ..., gGq]. */
+GMSH_API void gmshModelMeshGetIntegrationPoints(const int elementType,
+                                                const char * integrationType,
+                                                double ** integrationPoints, size_t * integrationPoints_n,
+                                                double ** integrationWeights, size_t * integrationWeights_n,
+                                                int * ierr);
+
 /* Get the Jacobians of all the elements of type `elementType' classified on
  * the entity of dimension `dim' and tag `tag', at the G integration points
  * `integrationPoints' given as concatenated triplets of coordinates in the
@@ -744,18 +756,6 @@ GMSH_API void gmshModelMeshGetInformationForElements(int * keys, size_t keys_n,
 /* Precomputes the basis functions corresponding to `elementType'. */
 GMSH_API void gmshModelMeshPrecomputeBasisFunctions(const int elementType,
                                                     int * ierr);
-
-/* Get the numerical quadrature information for the given element type
- * `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a
- * Gauss quadrature suited for integrating 4th order polynomials).
- * `integrationPoints' contains the u, v, w coordinates of the G integration
- * points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
- * `integrationWeigths' contains the associated weights: [g1q, ..., gGq]. */
-GMSH_API void gmshModelMeshGetIntegrationPoints(const int elementType,
-                                                const char * integrationType,
-                                                double ** integrationPoints, size_t * integrationPoints_n,
-                                                double ** integrationWeights, size_t * integrationWeights_n,
-                                                int * ierr);
 
 /* Get the barycenters of all elements of type `elementType' classified on the
  * entity of tag `tag'. If `primary' is set, only the primary nodes of the

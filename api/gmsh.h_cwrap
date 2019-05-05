@@ -1138,6 +1138,26 @@ namespace gmsh { // Top-level functions
         gmshFree(api_nodeTags_);
       }
 
+      // Get the numerical quadrature information for the given element type
+      // `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a
+      // Gauss quadrature suited for integrating 4th order polynomials).
+      // `integrationPoints' contains the u, v, w coordinates of the G integration
+      // points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
+      // `integrationWeigths' contains the associated weights: [g1q, ..., gGq].
+      inline void getIntegrationPoints(const int elementType,
+                                       const std::string & integrationType,
+                                       std::vector<double> & integrationPoints,
+                                       std::vector<double> & integrationWeights)
+      {
+        int ierr = 0;
+        double *api_integrationPoints_; size_t api_integrationPoints_n_;
+        double *api_integrationWeights_; size_t api_integrationWeights_n_;
+        gmshModelMeshGetIntegrationPoints(elementType, integrationType.c_str(), &api_integrationPoints_, &api_integrationPoints_n_, &api_integrationWeights_, &api_integrationWeights_n_, &ierr);
+        if(ierr) throw ierr;
+        integrationPoints.assign(api_integrationPoints_, api_integrationPoints_ + api_integrationPoints_n_); gmshFree(api_integrationPoints_);
+        integrationWeights.assign(api_integrationWeights_, api_integrationWeights_ + api_integrationWeights_n_); gmshFree(api_integrationWeights_);
+      }
+
       // Get the Jacobians of all the elements of type `elementType' classified on
       // the entity of dimension `dim' and tag `tag', at the G integration points
       // `integrationPoints' given as concatenated triplets of coordinates in the
@@ -1296,26 +1316,6 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         gmshModelMeshPrecomputeBasisFunctions(elementType, &ierr);
         if(ierr) throw ierr;
-      }
-
-      // Get the numerical quadrature information for the given element type
-      // `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a
-      // Gauss quadrature suited for integrating 4th order polynomials).
-      // `integrationPoints' contains the u, v, w coordinates of the G integration
-      // points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
-      // `integrationWeigths' contains the associated weights: [g1q, ..., gGq].
-      inline void getIntegrationPoints(const int elementType,
-                                       const std::string & integrationType,
-                                       std::vector<double> & integrationPoints,
-                                       std::vector<double> & integrationWeights)
-      {
-        int ierr = 0;
-        double *api_integrationPoints_; size_t api_integrationPoints_n_;
-        double *api_integrationWeights_; size_t api_integrationWeights_n_;
-        gmshModelMeshGetIntegrationPoints(elementType, integrationType.c_str(), &api_integrationPoints_, &api_integrationPoints_n_, &api_integrationWeights_, &api_integrationWeights_n_, &ierr);
-        if(ierr) throw ierr;
-        integrationPoints.assign(api_integrationPoints_, api_integrationPoints_ + api_integrationPoints_n_); gmshFree(api_integrationPoints_);
-        integrationWeights.assign(api_integrationWeights_, api_integrationWeights_ + api_integrationWeights_n_); gmshFree(api_integrationWeights_);
       }
 
       // Get the barycenters of all elements of type `elementType' classified on

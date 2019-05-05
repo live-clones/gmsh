@@ -1017,6 +1017,21 @@ GMSH_API void gmshModelMeshSetElementsByType(const int tag, const int elementTyp
   }
 }
 
+GMSH_API void gmshModelMeshGetIntegrationPoints(const int elementType, const char * integrationType, double ** integrationPoints, size_t * integrationPoints_n, double ** integrationWeights, size_t * integrationWeights_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_integrationPoints_;
+    std::vector<double> api_integrationWeights_;
+    gmsh::model::mesh::getIntegrationPoints(elementType, integrationType, api_integrationPoints_, api_integrationWeights_);
+    vector2ptr(api_integrationPoints_, integrationPoints, integrationPoints_n);
+    vector2ptr(api_integrationWeights_, integrationWeights, integrationWeights_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshGetJacobians(const int elementType, double * integrationPoints, size_t integrationPoints_n, double ** jacobians, size_t * jacobians_n, double ** determinants, size_t * determinants_n, double ** points, size_t * points_n, const int tag, const size_t task, const size_t numTasks, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -1118,21 +1133,6 @@ GMSH_API void gmshModelMeshPrecomputeBasisFunctions(const int elementType, int *
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::precomputeBasisFunctions(elementType);
-  }
-  catch(int api_ierr_){
-    if(ierr) *ierr = api_ierr_;
-  }
-}
-
-GMSH_API void gmshModelMeshGetIntegrationPoints(const int elementType, const char * integrationType, double ** integrationPoints, size_t * integrationPoints_n, double ** integrationWeights, size_t * integrationWeights_n, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<double> api_integrationPoints_;
-    std::vector<double> api_integrationWeights_;
-    gmsh::model::mesh::getIntegrationPoints(elementType, integrationType, api_integrationPoints_, api_integrationWeights_);
-    vector2ptr(api_integrationPoints_, integrationPoints, integrationPoints_n);
-    vector2ptr(api_integrationWeights_, integrationWeights, integrationWeights_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

@@ -1795,6 +1795,35 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def getIntegrationPoints(elementType, integrationType):
+            """
+            Get the numerical quadrature information for the given element type
+            `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a
+            Gauss quadrature suited for integrating 4th order polynomials).
+            `integrationPoints' contains the u, v, w coordinates of the G integration
+            points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
+            `integrationWeigths' contains the associated weights: [g1q, ..., gGq].
+
+            Return `integrationPoints', `integrationWeights'.
+            """
+            api_integrationPoints_, api_integrationPoints_n_ = POINTER(c_double)(), c_size_t()
+            api_integrationWeights_, api_integrationWeights_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetIntegrationPoints(
+                c_int(elementType),
+                c_char_p(integrationType.encode()),
+                byref(api_integrationPoints_), byref(api_integrationPoints_n_),
+                byref(api_integrationWeights_), byref(api_integrationWeights_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetIntegrationPoints returned non-zero error code: ",
+                    ierr.value)
+            return (
+                _ovectordouble(api_integrationPoints_, api_integrationPoints_n_.value),
+                _ovectordouble(api_integrationWeights_, api_integrationWeights_n_.value))
+
+        @staticmethod
         def getJacobians(elementType, integrationPoints, tag=-1, task=0, numTasks=1):
             """
             Get the Jacobians of all the elements of type `elementType' classified on
@@ -2014,35 +2043,6 @@ class model:
                 raise ValueError(
                     "gmshModelMeshPrecomputeBasisFunctions returned non-zero error code: ",
                     ierr.value)
-
-        @staticmethod
-        def getIntegrationPoints(elementType, integrationType):
-            """
-            Get the numerical quadrature information for the given element type
-            `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a
-            Gauss quadrature suited for integrating 4th order polynomials).
-            `integrationPoints' contains the u, v, w coordinates of the G integration
-            points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
-            `integrationWeigths' contains the associated weights: [g1q, ..., gGq].
-
-            Return `integrationPoints', `integrationWeights'.
-            """
-            api_integrationPoints_, api_integrationPoints_n_ = POINTER(c_double)(), c_size_t()
-            api_integrationWeights_, api_integrationWeights_n_ = POINTER(c_double)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetIntegrationPoints(
-                c_int(elementType),
-                c_char_p(integrationType.encode()),
-                byref(api_integrationPoints_), byref(api_integrationPoints_n_),
-                byref(api_integrationWeights_), byref(api_integrationWeights_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetIntegrationPoints returned non-zero error code: ",
-                    ierr.value)
-            return (
-                _ovectordouble(api_integrationPoints_, api_integrationPoints_n_.value),
-                _ovectordouble(api_integrationWeights_, api_integrationWeights_n_.value))
 
         @staticmethod
         def getBarycenters(elementType, tag, fast, primary, task=0, numTasks=1):

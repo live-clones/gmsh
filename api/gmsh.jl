@@ -1493,6 +1493,33 @@ function setElementsByType(tag, elementType, elementTags, nodeTags)
 end
 
 """
+    gmsh.model.mesh.getIntegrationPoints(elementType, integrationType)
+
+Get the numerical quadrature information for the given element type
+`elementType` and integration rule `integrationType` (e.g. "Gauss4" for a Gauss
+quadrature suited for integrating 4th order polynomials). `integrationPoints`
+contains the u, v, w coordinates of the G integration points in the reference
+element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `integrationWeigths` contains the
+associated weights: [g1q, ..., gGq].
+
+Return `integrationPoints`, `integrationWeights`.
+"""
+function getIntegrationPoints(elementType, integrationType)
+    api_integrationPoints_ = Ref{Ptr{Cdouble}}()
+    api_integrationPoints_n_ = Ref{Csize_t}()
+    api_integrationWeights_ = Ref{Ptr{Cdouble}}()
+    api_integrationWeights_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetIntegrationPoints, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          elementType, integrationType, api_integrationPoints_, api_integrationPoints_n_, api_integrationWeights_, api_integrationWeights_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetIntegrationPoints returned non-zero error code: $(ierr[])")
+    integrationPoints = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_n_[], own=true)
+    integrationWeights = unsafe_wrap(Array, api_integrationWeights_[], api_integrationWeights_n_[], own=true)
+    return integrationPoints, integrationWeights
+end
+
+"""
     gmsh.model.mesh.getJacobians(elementType, integrationPoints, tag = -1, task = 0, numTasks = 1)
 
 Get the Jacobians of all the elements of type `elementType` classified on the
@@ -1677,33 +1704,6 @@ function precomputeBasisFunctions(elementType)
           elementType, ierr)
     ierr[] != 0 && error("gmshModelMeshPrecomputeBasisFunctions returned non-zero error code: $(ierr[])")
     return nothing
-end
-
-"""
-    gmsh.model.mesh.getIntegrationPoints(elementType, integrationType)
-
-Get the numerical quadrature information for the given element type
-`elementType` and integration rule `integrationType` (e.g. "Gauss4" for a Gauss
-quadrature suited for integrating 4th order polynomials). `integrationPoints`
-contains the u, v, w coordinates of the G integration points in the reference
-element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `integrationWeigths` contains the
-associated weights: [g1q, ..., gGq].
-
-Return `integrationPoints`, `integrationWeights`.
-"""
-function getIntegrationPoints(elementType, integrationType)
-    api_integrationPoints_ = Ref{Ptr{Cdouble}}()
-    api_integrationPoints_n_ = Ref{Csize_t}()
-    api_integrationWeights_ = Ref{Ptr{Cdouble}}()
-    api_integrationWeights_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetIntegrationPoints, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementType, integrationType, api_integrationPoints_, api_integrationPoints_n_, api_integrationWeights_, api_integrationWeights_n_, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetIntegrationPoints returned non-zero error code: $(ierr[])")
-    integrationPoints = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_n_[], own=true)
-    integrationWeights = unsafe_wrap(Array, api_integrationWeights_[], api_integrationWeights_n_[], own=true)
-    return integrationPoints, integrationWeights
 end
 
 """
