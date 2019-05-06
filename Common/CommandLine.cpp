@@ -929,7 +929,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         if(argv[i]) {
           CTX::instance()->mesh.toleranceEdgeLength = atof(argv[i++]);
           if(CTX::instance()->mesh.toleranceEdgeLength <= 0.0){
-            Msg::Error("Tolerance for model edge length must be > 0 (here %g)",
+            Msg::Error("Tolerance for model curve length must be > 0 (here %g)",
                        CTX::instance()->mesh.toleranceEdgeLength);
             if(exitOnError) Msg::Exit(1);
           }

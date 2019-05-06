@@ -604,7 +604,8 @@ void meshGEdge::operator()(GEdge *ge)
     length = 0.0; // special case to avoid infinite loop in integration
   else
     length = Integration(ge, t_begin, t_end, F_One(), Points,
-                         1.e-12 * CTX::instance()->lc);
+                         CTX::instance()->mesh.lcIntegrationPrecision *
+                         CTX::instance()->lc);
   ge->setLength(length);
   Points.clear();
 

@@ -340,6 +340,9 @@ public:
 
   // queries
   bool getVertex(int tag, double &x, double &y, double &z);
+  bool getMass(int dim, int tag, double &mass);
+  bool getCenterOfMass(int dim, int tag, double &x, double &y, double &z);
+  bool getMatrixOfInertia(int dim, int tag, std::vector<double> &mat);
   GVertex *getVertexForOCCShape(GModel *model, const TopoDS_Vertex &toFind);
   GEdge *getEdgeForOCCShape(GModel *model, const TopoDS_Edge &toFind);
   GFace *getFaceForOCCShape(GModel *model, const TopoDS_Face &toFind);
@@ -668,6 +671,15 @@ public:
   void setMeshSize(int dim, int tag, double size) {}
   void synchronize(GModel *model) {}
   bool getVertex(int tag, double &x, double &y, double &z) { return false; }
+  bool getMass(int dim, int tag, double &mass) { return false; }
+  bool getCenterOfMass(int dim, int tag, double &x, double &y, double &z)
+  {
+    return false;
+  }
+  bool getMatrixOfInertia(int dim, int tag, std::vector<double> &mat)
+  {
+    return false;
+  }
   bool makeRectangleSTL(double x, double y, double z, double dx, double dy,
                         double roundedRadius, std::vector<SPoint3> &vertices,
                         std::vector<SVector3> &normals,

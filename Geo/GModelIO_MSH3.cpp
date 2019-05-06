@@ -672,18 +672,25 @@ static void writeElementsMSH(FILE *fp, GModel *model, GEntity *ge,
 }
 
 void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
-                           bool renumber) // also used in MSH2
+                           bool renumber, bool saveAll) // also used in MSH2
 {
   int count = 0;
-  for(std::size_t i = 0; i < entities.size(); i++)
-    if(entities[i]->getMeshMaster() != entities[i]) count++;
+  for(std::size_t i = 0; i < entities.size(); i++){
+    if(entities[i]->getMeshMaster() != entities[i] &&
+       (saveAll || (entities[i]->physicals.size() &&
+                    entities[i]->getMeshMaster()->physicals.size()))){
+      count++;
+    }
+  }
   if(!count) return;
   fprintf(fp, "$Periodic\n");
   fprintf(fp, "%d\n", count);
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *g_slave = entities[i];
     GEntity *g_master = g_slave->getMeshMaster();
-    if(g_slave != g_master) {
+    if(g_slave != g_master &&
+       (saveAll || (entities[i]->physicals.size() &&
+                    entities[i]->getMeshMaster()->physicals.size()))){
       fprintf(fp, "%d %d %d\n", g_slave->dim(), g_slave->tag(),
               g_master->tag());
 
@@ -819,7 +826,7 @@ int GModel::_writeMSH3(const std::string &name, double version, bool binary,
   fprintf(fp, "$EndElements\n");
 
   // save periodic nodes
-  writeMSHPeriodicNodes(fp, entities, renumber);
+  writeMSHPeriodicNodes(fp, entities, renumber, saveAll);
 
   fclose(fp);
 

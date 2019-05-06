@@ -71,16 +71,10 @@ public:
     l_dirs.push_back(orientation);
   }
 
-  // vertices that are embedded in the region
-  virtual std::vector<GVertex *> &embeddedVertices()
-  {
-    return embedded_vertices;
-  }
-  // edges that are embedded in the region
-  virtual std::vector<GEdge *> embeddedEdges() const { return embedded_edges; }
-  virtual std::vector<GEdge *> &embeddedEdges() { return embedded_edges; }
-  // faces that are embedded in the region
-  virtual std::vector<GFace *> embeddedFaces() const { return embedded_faces; }
+  // direct access to embedded entities
+  std::vector<GVertex *> &embeddedVertices() { return embedded_vertices; }
+  std::vector<GEdge *> &embeddedEdges() { return embedded_edges; }
+  std::vector<GFace *> &embeddedFaces() { return embedded_faces; }
 
   // edges that bound the region
   virtual std::vector<GEdge *> const &edges() const;

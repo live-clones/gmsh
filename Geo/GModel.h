@@ -17,6 +17,18 @@
 #include "GRegion.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
+#include "MFaceHash.h"
+#include "MEdgeHash.h"
+
+// TODO C++11 remove this nasty stuff
+#if __cplusplus >= 201103L
+#include <unordered_map>
+#define hashmapMFace std::unordered_map<MFace, int, Hash_Face, Equal_Face>
+#define hashmapMEdge std::unordered_map<MEdge, int, Hash_Edge, Equal_Edge>
+#else
+#define hashmapMFace std::map<MFace, int, Less_Face>
+#define hashmapMEdge std::map<MEdge, int, Less_Edge>
+#endif
 
 template <class scalar> class simpleFunction;
 
@@ -41,7 +53,8 @@ private:
   std::set<GFace *, GEntityLessThan> _chainFaces;
   std::set<GEdge *, GEntityLessThan> _chainEdges;
   std::set<GVertex *, GEntityLessThan> _chainVertices;
-
+  hashmapMEdge _mapEdgeNum;
+  hashmapMFace _mapFaceNum;
   // the maximum vertex and element id number in the mesh
   std::size_t _maxVertexNum, _maxElementNum;
   std::size_t _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
@@ -225,6 +238,11 @@ public:
     maxv = _checkPointedMaxVertexNum;
     maxe = _checkPointedMaxElementNum;
   }
+
+  // number the edges
+  int addMEdge(const MEdge &edge);
+  //number the faces
+  int addMFace(const MFace &face);
 
   // renumber mesh vertices and elements in a continuous sequence (this
   // invalidates the mesh caches)
@@ -442,7 +460,8 @@ public:
   std::size_t getNumMeshElements(unsigned c[6]);
 
   // access a mesh element by coordinates (using an octree search)
-  MElement *getMeshElementByCoord(SPoint3 &p, int dim = -1, bool strict = true);
+  MElement *getMeshElementByCoord(SPoint3 &p, SPoint3 &param,
+                                  int dim = -1, bool strict = true);
   std::vector<MElement *> getMeshElementsByCoord(SPoint3 &p, int dim = -1,
                                                  bool strict = true);
 
@@ -566,6 +585,12 @@ public:
 
   // optimize the mesh
   int optimizeMesh(const std::string &how);
+
+  // smooth the mesh
+  int smoothMesh();
+
+  // recombine the mesh
+  int recombineMesh();
 
   // fill the vertex arrays, given the current option and data
   bool fillVertexArrays();

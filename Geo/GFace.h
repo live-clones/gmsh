@@ -118,11 +118,9 @@ public:
     return false;
   }
 
-  // edges that are embedded in the face
-  virtual std::vector<GEdge *> embeddedEdges() const { return embedded_edges; }
-
-  // edges that are embedded in the face
-  virtual std::set<GVertex *, GEntityLessThan> embeddedVertices() const
+  // direct access to embedded entities
+  std::vector<GEdge *> &embeddedEdges() { return embedded_edges; }
+  std::set<GVertex *, GEntityLessThan> &embeddedVertices()
   {
     return embedded_vertices;
   }

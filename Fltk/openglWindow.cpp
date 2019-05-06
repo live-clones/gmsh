@@ -85,11 +85,19 @@ openglWindow::openglWindow(int x, int y, int w, int h)
 
   if(CTX::instance()->gamepad)
     Fl::add_timeout(.5, navigator_handler, (void *)this);
+
+#if defined(NEW_TOOLTIPS)
+  _tooltip = new tooltipWindow();
+  _tooltip->hide();
+#endif
 }
 
 openglWindow::~openglWindow()
 {
   delete _ctx;
+#if defined(NEW_TOOLTIPS)
+  delete _tooltip;
+#endif
   if(Nautilus) delete Nautilus;
 }
 
@@ -871,6 +879,16 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
 
 void openglWindow::drawTooltip(const std::string &text)
 {
+#if defined(NEW_TOOLTIPS)
+  if(text.empty()){
+    _tooltip->hide();
+  }
+  else{
+    _tooltip->position(Fl::event_x_root(), Fl::event_y_root()+20);
+    _tooltip->value(text);
+    _tooltip->show();
+  }
+#else
   static char str[1024];
   strncpy(str, text.c_str(), sizeof(str) - 1);
   str[sizeof(str) - 1] = '\0';
@@ -885,6 +903,7 @@ void openglWindow::drawTooltip(const std::string &text)
   Fl_Tooltip::delay(d1);
   Fl_Tooltip::hoverdelay(d2);
   if(!enabled) Fl_Tooltip::disable();
+#endif
 }
 
 void openglWindow::moveWithGamepad()

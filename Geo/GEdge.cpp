@@ -16,6 +16,8 @@
 #include "Context.h"
 #include "closestPoint.h"
 #include "discreteEdge.h"
+#include "ExtrudeParams.h"
+
 #if defined(HAVE_MESH)
 #include "meshGEdge.h"
 #endif
@@ -136,7 +138,7 @@ void GEdge::setMeshMaster(GEdge *ge, const std::vector<double> &tfo)
     return;
   }
 
-  Msg::Info("Error in transformation from edge %d (%d-%d) to %d (%d-%d)"
+  Msg::Info("Error in transformation from curve %d (%d-%d) to %d (%d-%d)"
             "(minimal transformed node distances %g %g, tolerance %g)",
             ge->tag(), ge->getBeginVertex()->tag(), ge->getEndVertex()->tag(),
             this->tag(), this->getBeginVertex()->tag(),
@@ -321,7 +323,8 @@ std::string GEdge::getAdditionalInfoString(bool multline)
       sstream << " ";
   }
 
-  if(meshAttributes.method == MESH_TRANSFINITE || meshAttributes.extrude ||
+  if(meshAttributes.method == MESH_TRANSFINITE ||
+     (meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh) ||
      meshAttributes.reverseMesh) {
     sstream << "Mesh attributes:";
     if(meshAttributes.method == MESH_TRANSFINITE) {
@@ -333,7 +336,8 @@ std::string GEdge::getAdditionalInfoString(bool multline)
       else if(std::abs(type) == 2)
         sstream << ", bump " << meshAttributes.coeffTransfinite;
     }
-    if(meshAttributes.extrude) sstream << " extruded";
+    if(meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh)
+      sstream << " extruded";
     if(meshAttributes.reverseMesh) sstream << " reversed";
   }
   std::string str = sstream.str();
@@ -598,9 +602,8 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z, double &u,
 
   u = errorVsParameter.begin()->second;
   if(first) {
-    Msg::Warning("Could not converge parametrisation of (%g,%g,%g) on edge %d, "
-                 "taking parameter with lowest error ",
-                 X, Y, Z, tag());
+    Msg::Warning("Could not converge parametrisation of (%g,%g,%g) on curve %d, "
+                 "taking parameter with lowest error", X, Y, Z, tag());
   }
 
   return false;
@@ -690,7 +693,7 @@ void GEdge::addElement(int type, MElement *e)
 {
   switch(type) {
   case TYPE_LIN: addLine(reinterpret_cast<MLine *>(e)); break;
-  default: Msg::Error("Trying to add unsupported element in edge");
+  default: Msg::Error("Trying to add unsupported element in curve %d", tag());
   }
 }
 
@@ -702,7 +705,7 @@ void GEdge::removeElement(int type, MElement *e)
       std::find(lines.begin(), lines.end(), reinterpret_cast<MLine *>(e));
     if(it != lines.end()) lines.erase(it);
   } break;
-  default: Msg::Error("Trying to remove unsupported element in edge");
+  default: Msg::Error("Trying to remove unsupported element in curve %d", tag());
   }
 }
 

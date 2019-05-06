@@ -12,6 +12,10 @@
 /*
  * MLine
  *
+ *         v
+ *         ^
+ *         |
+ *         |
  *   0-----+-----1 --> u
  *
  */
@@ -109,12 +113,18 @@ public:
     return ((other->getType() == TYPE_LIN || other->getType() == TYPE_PNT) ? 1 :
                                                                              2);
   }
+  virtual int getVertexSolin(int numEdge, int numVertex){return 0;}
+  virtual MFace getFaceSolin(int numFace){return getFace(numFace);}
 };
 
 /*
  * MLine3
  *
- *   0-----2----1
+ *         v
+ *         ^
+ *         |
+ *         |
+ *   0-----2-----1 --> u
  *
  */
 class MLine3 : public MLine {
@@ -187,7 +197,11 @@ public:
 /*
  * MLineN
  *
- *   0---2---...-(N-1)-1
+ *         v
+ *         ^
+ *         |
+ *         |
+ *  0--2--...--(N-1)--1 --> u
  *
  */
 class MLineN : public MLine {
@@ -251,7 +265,7 @@ public:
     case 8: return MSH_LIN_10;
     case 9: return MSH_LIN_11;
     default:
-      Msg::Error("no tag matches a line with %d vertices", 8 + _vs.size());
+      Msg::Error("No MSH type found for line with %d nodes", 8 + _vs.size());
       return 0;
     }
   }

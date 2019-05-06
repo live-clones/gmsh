@@ -65,14 +65,14 @@ const nodalBasis *BasisFactory::getNodalBasis(int tag)
   return inserted.first->second;
 }
 
-const JacobianBasis *BasisFactory::getJacobianBasis(FuncSpaceData fsd)
+const JacobianBasis *BasisFactory::getJacobianBasis(int tag, FuncSpaceData fsd)
 {
   FuncSpaceData data = fsd.getForNonSerendipitySpace();
 
   std::map<FuncSpaceData, JacobianBasis *>::const_iterator it = js.find(data);
   if(it != js.end()) return it->second;
 
-  JacobianBasis *J = new JacobianBasis(data);
+  JacobianBasis *J = new JacobianBasis(tag, data);
   js.insert(std::make_pair(data, J));
   return J;
 }
@@ -81,9 +81,10 @@ const JacobianBasis *BasisFactory::getJacobianBasis(int tag, int order)
 {
   const int type = ElementType::getParentType(tag);
   if(type != TYPE_PYR)
-    return getJacobianBasis(FuncSpaceData(true, tag, order));
+    return getJacobianBasis(tag, FuncSpaceData(type, order, false));
   else
-    return getJacobianBasis(FuncSpaceData(true, tag, false, order + 1, order));
+    return getJacobianBasis(
+      tag, FuncSpaceData(type, false, order + 1, order, false));
 }
 
 const JacobianBasis *BasisFactory::getJacobianBasis(int tag)
@@ -91,10 +92,10 @@ const JacobianBasis *BasisFactory::getJacobianBasis(int tag)
   const int jacOrder = JacobianBasis::jacobianOrder(tag);
   const int type = ElementType::getParentType(tag);
   if(type != TYPE_PYR)
-    return getJacobianBasis(FuncSpaceData(true, tag, jacOrder));
+    return getJacobianBasis(tag, FuncSpaceData(type, jacOrder, false));
   else
     return getJacobianBasis(
-      FuncSpaceData(true, tag, false, jacOrder + 2, jacOrder));
+      tag, FuncSpaceData(type, false, jacOrder + 2, jacOrder, false));
 }
 
 const CondNumBasis *BasisFactory::getCondNumBasis(int tag, int cnOrder)
@@ -107,29 +108,32 @@ const CondNumBasis *BasisFactory::getCondNumBasis(int tag, int cnOrder)
   return M;
 }
 
-const GradientBasis *BasisFactory::getGradientBasis(FuncSpaceData data)
+const GradientBasis *BasisFactory::getGradientBasis(int tag, FuncSpaceData fsd)
 {
+  FuncSpaceData data = fsd.getForNonSerendipitySpace();
+
   std::map<FuncSpaceData, GradientBasis *>::const_iterator it = gs.find(data);
   if(it != gs.end()) return it->second;
 
-  GradientBasis *G = new GradientBasis(data);
+  GradientBasis *G = new GradientBasis(tag, data);
   gs.insert(std::make_pair(data, G));
   return G;
 }
 
 const GradientBasis *BasisFactory::getGradientBasis(int tag, int order)
 {
-  return getGradientBasis(FuncSpaceData(true, tag, order));
+  const int type = ElementType::getParentType(tag);
+  return getGradientBasis(tag, FuncSpaceData(type, order, false));
 }
 
 const GradientBasis *BasisFactory::getGradientBasis(int tag)
 {
-  return getGradientBasis(FuncSpaceData(tag));
+  return getGradientBasis(tag, FuncSpaceData(tag));
 }
 
 const bezierBasis *BasisFactory::getBezierBasis(FuncSpaceData fsd)
 {
-  FuncSpaceData data = fsd.getForPrimaryElement();
+  FuncSpaceData data = fsd.getForNonSerendipitySpace();
 
   std::map<FuncSpaceData, bezierBasis *>::const_iterator it = bs.find(data);
   if(it != bs.end()) return it->second;
@@ -139,10 +143,9 @@ const bezierBasis *BasisFactory::getBezierBasis(FuncSpaceData fsd)
   return B;
 }
 
-const bezierBasis *BasisFactory::getBezierBasis(int parentTag, int order)
+const bezierBasis *BasisFactory::getBezierBasis(int parentType, int order)
 {
-  int primaryTag = ElementType::getType(parentTag, 1);
-  return getBezierBasis(FuncSpaceData(true, primaryTag, order));
+  return getBezierBasis(FuncSpaceData(parentType, order, false));
 }
 
 const bezierBasis *BasisFactory::getBezierBasis(int tag)

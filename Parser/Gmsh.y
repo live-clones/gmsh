@@ -124,6 +124,7 @@ void addPeriodicFace(int, int, const std::vector<double>&);
 void computeAffineTransformation(SPoint3&, SPoint3&, double, SPoint3&,
                                  std::vector<double>&);
 void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2);
+void removeEmbedded(const std::vector<std::pair<int, int> > &dimTags, int dim);
 void getAllElementaryTags(int dim, List_T *in);
 void getAllPhysicalTags(int dim, List_T *in);
 void getElementaryTagsForPhysicalGroups(int dim, List_T *in, List_T *out);
@@ -186,7 +187,7 @@ struct doubleXstring{
 %token tFind tStrFind tStrCmp tStrChoice tUpperCase tLowerCase tLowerCaseIn
 %token tTextAttributes
 %token tBoundingBox tDraw tSetChanged tToday tFixRelativePath tCurrentDirectory
-%token tSyncModel tNewModel
+%token tSyncModel tNewModel tMass tCenterOfMass
 %token tOnelabAction tOnelabRun tCodeName
 %token tCpu tMemory tTotalMemory
 %token tCreateTopology tCreateGeometry tRenumberMeshNodes tRenumberMeshElements
@@ -3033,6 +3034,18 @@ Delete :
       }
       List_Delete($4);
     }
+  | tDelete tSTRING '{' ListOfShapes '}'
+    {
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($4, dimTags);
+      if(!strcmp($2, "Embedded")){
+        removeEmbedded(dimTags, -1);
+      }
+      else
+	yymsg(0, "Unknown command 'Delete %s'", $2);
+      List_Delete($4);
+      Free($2);
+    }
   | tDelete tField '[' FExpr ']' tEND
     {
 #if defined(HAVE_MESH)
@@ -5164,12 +5177,10 @@ FExpr_Single :
       }
       Free($2);
     }
-
   | '#' Struct_FullName '.' tSTRING_Member LP RP
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float_getDim($2.char1, $2.char2, $4);
     }
-
   | tDimNameSpace LP String__Index RP
     {
       std::string struct_namespace($3);
@@ -5181,7 +5192,6 @@ FExpr_Single :
       std::string struct_namespace(std::string(""));
       $$ = (double)gmsh_yynamespaces[struct_namespace].size();
     }
-
   | String__Index NumericIncrement
     {
       if(!gmsh_yysymbols.count($1)){
@@ -5221,7 +5231,6 @@ FExpr_Single :
       }
       Free($1);
     }
-
   | String__Index '(' FExpr ')' NumericIncrement
     {
       int index = (int)$3;
@@ -5242,7 +5251,6 @@ FExpr_Single :
       }
       Free($1);
     }
-
   // Option Strings
 /* not any more ...
   | tSTRING '.' tSTRING
@@ -5251,7 +5259,6 @@ FExpr_Single :
       Free($1); Free($3);
     }
 */
-
 //+++ ... extention to structures
 // PD: TO FIX (to avoid shift/reduce conflict)
 //  | Struct_FullName '.' tSTRING_Member
@@ -5263,7 +5270,6 @@ FExpr_Single :
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5);
     }
-
   | String__Index '.' tSTRING_Member '(' FExpr ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3, (int)$5);
@@ -5280,7 +5286,6 @@ FExpr_Single :
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5, (int)$7);
     }
-
   | String__Index '[' FExpr ']' '.' tSTRING
     {
       NumberOption(GMSH_GET, $1, (int)$3, $6, $$);
@@ -5654,6 +5659,32 @@ FExpr_Multi :
       $$ = List_Create(10, 10, sizeof(double));
       getBoundingBox($2, $4, $$);
       List_Delete($4);
+    }
+   | tMass GeoEntity123 '{' FExpr '}'
+    {
+      $$ = List_Create(1, 1, sizeof(double));
+      double m = 0;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        GModel::current()->getOCCInternals()->getMass($2, (int)$4, m);
+      }
+      else{
+        yymsg(0, "Mass only available with OpenCASCADE geometry kernel");
+      }
+      List_Add($$, &m);
+    }
+   | tCenterOfMass GeoEntity123 '{' FExpr '}'
+    {
+      $$ = List_Create(3, 1, sizeof(double));
+      double x = 0., y = 0., z = 0.;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        GModel::current()->getOCCInternals()->getCenterOfMass($2, (int)$4, x, y, z);
+      }
+      else{
+        yymsg(0, "CenterOfMass only available with OpenCASCADE geometry kernel");
+      }
+      List_Add($$, &x);
+      List_Add($$, &y);
+      List_Add($$, &z);
     }
   | Transform
     {
@@ -6861,6 +6892,39 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
         else
           yymsg(0, "Unknown model surface with tag %d", tags[i]);
       }
+    }
+  }
+}
+
+void removeEmbedded(const std::vector<std::pair<int, int> > &dimTags,
+                    int rdim)
+{
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  if(GModel::current()->getGEOInternals()->getChanged())
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+
+  for(std::size_t i = 0; i < dimTags.size(); i++){
+    int dim = dimTags[i].first, tag = dimTags[i].second;
+    if(dim == 2){
+      GFace *gf = GModel::current()->getFaceByTag(tag);
+      if(gf) {
+        if(rdim < 0 || rdim == 1) gf->embeddedEdges().clear();
+        if(rdim < 0 || rdim == 0) gf->embeddedVertices().clear();
+      }
+      else
+        yymsg(0, "Unknown model surface with tag %d", tag);
+    }
+    else if(dimTags[i].first == 3){
+      GRegion *gr = GModel::current()->getRegionByTag(tag);
+      if(gr) {
+        if(rdim < 0 || rdim == 2) gr->embeddedFaces().clear();
+        if(rdim < 0 || rdim == 1) gr->embeddedEdges().clear();
+        if(rdim < 0 || rdim == 0) gr->embeddedVertices().clear();
+      }
+      else
+        yymsg(0, "Unknown model volume with tag %d", tag);
     }
   }
 }
